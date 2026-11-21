@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan). ONE TEXT FOR EVERY PIN: it holds no image numeral, so the same
    blob builds on the old pin (f8f98a95bc52, twin 3b5e1a099b53) and on the #102 pin B' (d663f82d7f48, twin c90d4fa54d43); each
    tree's own record files (YD2l, the B listing, YF0m, YCej) decide the values, and every field closes by vm_compute there.
    The ONE HOME of the image-instance facts every image-B program walk takes as Section stand-ins: YC1fP.PALib at
    the whole-program listing PI_prog_B and B := TfibB (lib/Reusable/YD2l.v), the head length and the laws of
    h-mani-a8's second allocator instance ARcf rsegs TfibB at CfParams_preset. Proves nothing about the program.
-   MOVED from h-rw-pre-7's lib/B/Prog/ExvB_ImgFacts.v at origin/cold/h-rw-pre-7-b-ex_value 96eea692f6cd (blob
+   MOVED from h-rw-pre-7's lib/B/Prog/ExvB_ImgFacts.v (blob
    da1be778494f): exvi_eh_errno :186, exvi_eh_palib :196, exvi_eh_head :211, exvi_eh_laws :214 (h-rw-pre-7 agreed
    2026-10-29 12:15Z). Changes, none to a statement: the errno cell fact (strtod_row.strtod_cells_B's third conjunct)
    moved here as palib_errno_cells_B at as_errno TB; the errno bound and the GOT / uar disjointness are computed from

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); addresses and numbers. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -84,7 +85,7 @@ Section Arm.
     intros vals kn LB LK cr A M model can S HK OKb P0 P3 D HS1 HS2 HS16 MV. pose proof Hsp as Hsp'.
     unfold dg_kn_ok in OKb. apply andb_prop in OKb as (OKb & HW). rewrite forallb_forall in OKb.
     assert (KB : forall K, In K (DG_KN ++ XKN) -> existsb (kentry_eqb K) kn = true) by (intros K HKin; exact (OKb K HKin)).
-    assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    assert (WIN : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
       by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV kn a n HK HW P0 Ha Hn d k Hd Hk)).
     pose proof (kimg_clear (ENVG vals) MV kn 1300928 1301168 HK (KB (KImg 1300928 1301168) ltac:(unfold DG_KN; cbn [In app]; tauto))) as CLe.
     assert (ICe : forall a (n : nat) bs, rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> (1300928 <=? a) && (a + Z.of_nat n <=? 1301168) = true -> rdn ASEGS MV (Z_to_bv 64 a) n = Some bs).
@@ -115,7 +116,7 @@ Section Arm.
 
   #[using="Hsp M0"] Lemma dg_init_of : forall vals kn (MV : word -> option byte),
     know_ok ASEGS (ENVG vals) MV kn -> dg_kn_ok kn = true -> vals_ev vals 0 = sp0 ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
     /\ (forall i, 65536 <= i < 1286144 -> MV (Z_to_bv 64 i) = None)
     /\ exitE (bv_unsigned (vals_ev vals 4)) MV /\ stdoutPA MV.
   Proof.
@@ -196,10 +197,10 @@ Section Arm.
              (fun x _ _ => eq_refl) (mem_grows_refl _) ltac:(unfold S; lia) ltac:(unfold S; lia) HS16 WINi IMGi XAi SOPi FD2 CH).
   Qed.
 
-  #[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdg"] Theorem refuse_armA : forall path fs0 p0 p1 can LK0 A0,
-    refuse_kA scfg ar HI sp0 path fs0 fdata p0 p1 can M0 LK0 A0 (t_die msg_refused fs0).
+  #[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdg"] Theorem refuse_armA : forall path fs0 auxvp p1 can LK0 A0,
+    refuse_kA scfg ar HI sp0 path fs0 fdata auxvp p1 can M0 LK0 A0 (t_die msg_refused fs0).
   Proof.
-    intros path fs0 p0 p1 can LK0 A0. unfold refuse_kA.
+    intros path fs0 auxvp p1 can LK0 A0. unfold refuse_kA.
     intros A1 vals R M model A cr HL HV P38 P48 P70 HR HK DI HINC (MF & MS).
     pose proof HV as (P0 & _ & _ & P3). pose proof Hsp as Hsp'.
     drv_block0 HIok Hsp DL HR HK DI P0 (SCR [true; true] [] []) 71%nat.

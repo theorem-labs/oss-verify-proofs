@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif1k.v (a working branch ced28ed2383, file sha256 48748393de25) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif1k.v (a working branch, file sha256 48748393de25) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: the instance's trace premise is fs's `fun tr S => tr_admit (as_universe B) S tr` (FS-INSTANCE.md 1.4, L; fs's YG07.malloc_ok takes tr_admit), and post_cgif_k takes it too; the proof text is unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file instance of the k path's interface AGif0n.AIfaceK (0 <= n <= 48, redzone 16): the k twins of
    AGif1.post_cgif and AGif1.owned_cgif.  The post comes from AGjf's AR_transport (the k twin of AGj1's, YFj1) at the
    post-tick state, over the k walk's post at_RETkw (AGj6.at_RET without its fill-byte clause, which AR_transport does not

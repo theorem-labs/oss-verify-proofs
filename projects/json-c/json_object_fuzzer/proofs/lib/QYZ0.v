@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: pe_epilogue_AG takes it after alloc_ceiling <= lo; the jo_get_num_A_stmt proofs name jo_preA's conjunct; the PI64 and stack_malloc_full calls discharge it; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -70,7 +71,7 @@ Definition GI64_STK_A : Z := 96 + PI64_STK_A.
 
 Lemma get_int64_A : jo_get_num_A_stmt HIx 0x9cb08 GI64_STK_A.
 Proof.
-unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
+unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
 unfold GI64_STK_A, PI64_STK_A in LOS. subst a0 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -99,6 +100,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -377,7 +379,7 @@ lazymatch type of SHB with bytes_at _ _ _ ?wb => eapply (unpoisoned_gran8 asegs 
 - replace (((Fr + 32) / 8 + A_SB) mod 8) with 4 by (unfold A_SB; clear - HFal; Z.div_mod_to_equations; lia). reflexivity. }
 evt_done5.
 eapply PI64 with (LB := BS ++ LB) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (str := str0) (SA := TX) (R := Fr + 32) (lo := lo);
-[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
+[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | first [assumption | lia] | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | unfold A_ERRNO, A_TP; eassumption | reflexivity | rewrite unsigned_lit by lia; reflexivity
 | reflexivity | reflexivity | exact BY | exact NIN
@@ -468,7 +470,7 @@ Forall (fun iv => snd iv <= hl_img_lo A4H \/ hl_img_hi A4H <= fst iv) W -> GA m'
 Let PRW := PE_REST_A_private_write HIx GA GA_outside.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -622,7 +624,7 @@ rw_cells asegs m (pf_spf pf + 312) [CB (Z.to_nat (pa_sp0 pa - 104 - (pf_spf pf +
 rw_cells asegs m (pa_sp0 pa - 104) (pe_savedA_cells sv) ->
 rw_cells asegs m (pa_F pa) [CB 248 jff] ->
 rw_cells asegs m (shA (pa_F pa)) [CB 32 jsh] ->
-stk asegs m lo (pf_spf pf) -> alloc_ceiling <= lo -> lo <= pf_spf pf - 12288 ->
+stk asegs m lo (pf_spf pf) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= pf_spf pf - 12288 ->
 bv_unsigned (pe_ra sv) mod 2 = 0 ->
 (forall m' md' (A' : ASA A4L HIx) (fp : Z),
 model_vm_only (cfg_model md) (cfg_model md') ->
@@ -642,7 +644,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (shA (pa_F pa))) s3 s4 (Z_to_bv 64 (pa_F pa)) s6 s7 (Z_to_bv 64 (pa_F pa)) s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 APE_EPI) fc None m (seg_rom asegs)).
 Proof.
-intros until fc. intros HP GEO SP0 SLOTS GAP SAVED FF FSH ST LO LOS RAE K.
+intros until fc. intros HP GEO SP0 SLOTS GAP SAVED FF FSH ST LO HBT LOS RAE K.
 pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
 destruct pa as [sp0 Ff oldloc newloc bsl dsl]; cbn [pa_sp0 pa_F pa_oldloc pa_newloc pa_bslack pa_dslack] in *.
@@ -755,7 +757,7 @@ Forall (fun iv => snd iv <= hl_img_lo A4H \/ hl_img_hi A4H <= fst iv) W -> GA m'
 Let PRW := PE_REST_A_private_write HIx GA GA_outside.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -964,7 +966,7 @@ PE_BASE_A HIx GA pf pa LB0 LM FRS payload me lo m2 md2 A2 B2 LBall2 errv2.
 Proof.
 intros pf pa LB0 LM FRS payload me lo m1 m2 md md2 A A2 B B2 LBall LBall2 errv errv2 LBc STC
 (HP & ST & ERR & STR & PLEN & SBin & HPR & MDV & G) VM12 HPRc LG2 Hincl HP2 ST2 ERR2.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
 split; [exact HP2|]. split; [exact ST2|]. split; [exact ERR2|].
 assert (SBin2 := payload_locA_presx a4_volatile pf pa LB0 FRS _ _ _ _ _ _ _ LBc _ _ _ HP (incl_tl _ (incl_refl _)) HPRc SBin).
 assert (FRI : incl (fr_ivs A4L FRS) (LBc ++ LM ++ fr_ivs A4L ((pa_F pa, 2) :: FRS))).
@@ -1067,7 +1069,7 @@ Definition GI64_STK_A : Z := 96 + PI64_STK_A.
 
 Lemma get_int64_A : jo_get_num_A_stmt HIx 0x9e4a0 GI64_STK_A.
 Proof.
-unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
+unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
 unfold GI64_STK_A, PI64_STK_A in LOS. subst a0 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -1096,6 +1098,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -1404,7 +1407,7 @@ lazymatch type of SHB with bytes_at _ _ _ ?wb => eapply (unpoisoned_gran8 asegs 
 - replace (((Fr + 32) / 8 + A_SB) mod 8) with 4 by (unfold A_SB; clear - HFal; Z.div_mod_to_equations; lia). reflexivity. }
 evt_done5.
 eapply PI64 with (LB := BS ++ LB) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (str := str0) (SA := TX) (R := Fr + 32) (lo := lo);
-[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
+[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | first [assumption | lia] | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | unfold A_ERRNO, A_TP; eassumption | reflexivity | rewrite unsigned_lit by lia; reflexivity
 | reflexivity | reflexivity | exact BY | exact NIN
@@ -1495,7 +1498,7 @@ Forall (fun iv => snd iv <= hl_img_lo A4H \/ hl_img_hi A4H <= fst iv) W -> GA m'
 Let PRW := PE_REST_A_private_write HIx GA GA_outside.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1618,7 +1621,7 @@ rw_cells asegs m (pf_spf pf + 312) [CB (Z.to_nat (pa_sp0 pa - 104 - (pf_spf pf +
 rw_cells asegs m (pa_sp0 pa - 104) (pe_savedA_cells sv) ->
 rw_cells asegs m (pa_F pa) [CB 248 jff] ->
 rw_cells asegs m (shA (pa_F pa)) [CB 32 jsh] ->
-stk asegs m lo (pf_spf pf) -> alloc_ceiling <= lo -> lo <= pf_spf pf - 12288 ->
+stk asegs m lo (pf_spf pf) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= pf_spf pf - 12288 ->
 bv_unsigned (pe_ra sv) mod 2 = 0 ->
 (forall m' md' (A' : ASA A4L HIx) (fp : Z),
 model_vm_only (cfg_model md) (cfg_model md') ->
@@ -1638,7 +1641,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (shA (pa_F pa))) s3 s4 s5 (Z_to_bv 64 (pa_F pa)) (Z_to_bv 64 (pa_F pa)) s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 APE_EPI1) fc None m (seg_rom asegs)).
 Proof.
-intros until fc. intros HP GEO SP0 SLOTS GAP SAVED FF FSH ST LO LOS RAE K.
+intros until fc. intros HP GEO SP0 SLOTS GAP SAVED FF FSH ST LO HBT LOS RAE K.
 pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
 destruct pa as [sp0 Ff oldloc newloc bsl dsl]; cbn [pa_sp0 pa_F pa_oldloc pa_newloc pa_bslack pa_dslack] in *.
@@ -1747,7 +1750,7 @@ Forall (fun iv => snd iv <= hl_img_lo A4H \/ hl_img_hi A4H <= fst iv) W -> GA m'
 Let PRW := PE_REST_A_private_write HIx GA GA_outside.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1944,7 +1947,7 @@ PE_BASE_A HIx GA pf pa LB0 LM FRS payload me lo m2 md2 A2 B2 LBall2 errv2.
 Proof.
 intros pf pa LB0 LM FRS payload me lo m1 m2 md md2 A A2 B B2 LBall LBall2 errv errv2 LBc STC
 (HP & ST & ERR & STR & PLEN & SBin & HPR & MDV & G) VM12 HPRc LG2 Hincl HP2 ST2 ERR2.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
 split; [exact HP2|]. split; [exact ST2|]. split; [exact ERR2|].
 assert (SBin2 := payload_locA_presx a4_volatile pf pa LB0 FRS _ _ _ _ _ _ _ LBc _ _ _ HP (incl_tl _ (incl_refl _)) HPRc SBin).
 assert (FRI : incl (fr_ivs A4L FRS) (LBc ++ LM ++ fr_ivs A4L ((pa_F pa, 2) :: FRS))).

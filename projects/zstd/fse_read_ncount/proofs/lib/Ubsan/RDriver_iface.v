@@ -1,21 +1,23 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch values (launchT); dvalid_sp also requires the entry stack block (header sized by the rseq flag, strings, exec name, 8-byte slot) to end at or below the stack VMA's end L_TOP, with L_TOP at most 2,101,782 above sp and at most 0x800000000000; new lemma dvalid_padok extracts the first bound; imports InitMem). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
-From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Tac Image ZBridge SysStep ITree Nodes Decode Arr FP.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Tac Image ZBridge SysStep ITree Nodes Decode Arr FP InitMem.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import DrvAgree.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import UImgX F_syscalls StdioFiles Startup F_atexit.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Malloc Require Import MallocBlocks Malloc_iface.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import RMallocRep RMallocTree RMalloc_iface Harness_iface.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Spec Require Import Prelim Malloc Monad Stdio Driver Adapter Harness Prog.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Ubsan Require Import RunDraw.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Tac Image ZBridge SysStep ITree Nodes Decode Arr FP InitMem.
 Import ListNotations.
 Import ITree.Exc.
 Open Scope Z_scope.
 Notation mem := (word -> option byte).
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {lx : launchT}.
 Definition PMAIN : Z := 0x13088.
 Definition PSTAGE2_RET : Z := 0x14a68.
 Definition PEXIT : Z := 0x14fb0.
@@ -52,7 +54,15 @@ F (Z_to_bv 64 PEXIT) fc None m (seg_rom usegs)
 /\ bv_unsigned sp < 2^47.
 Definition STG (m : mem) : Prop := exists sj, rw_cells usegs m UREAD_STAGE [CB PSTAGE_LEN sj].
 Definition dvalid_sp (sp0 : word) (argv envp : list (list byte)) : Prop :=
-valid_sp sp0 /\ ATOP = bv_unsigned sp0 - 8388608 /\ entry_stack_fits sp0 argv envp.
+  valid_sp sp0 /\ ATOP = bv_unsigned sp0 - 8388608 /\ entry_stack_fits sp0 argv envp
+  (* 08b1429: the block runs from sp0 to the stack VMA's end L_TOP. *)
+  /\ (bv_unsigned sp0 + hsz (la_rseq L_LA) argv envp + lstr argv envp L_EXECFN + 8 <= bv_unsigned L_TOP)
+  /\ (bv_unsigned L_TOP - bv_unsigned sp0 <= 2101782)
+  /\ (bv_unsigned L_TOP <= 0x800000000000).
+Lemma dvalid_padok : forall sp0 argv envp, dvalid_sp sp0 argv envp ->
+  (bv_unsigned sp0 + hsz (la_rseq L_LA) argv envp + lstr argv envp L_EXECFN + 8 <= bv_unsigned L_TOP).
+Proof. intros sp0 argv envp (_ & _ & _ & H & _). exact H. Qed.   (* [comment removed for export] *)
+
 Definition pmain_stmt : Prop :=
 forall (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (ms : machine_state),
 dvalid_sp sp0 argv envp -> valid_argv argv -> valid_envp envp -> SECRET = InitMem.draw_secret draw ->

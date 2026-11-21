@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TASK_SIZE bound of the string read and the EINVAL answer to an unaligned mmap offset). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -101,35 +102,49 @@ Proof.
   apply read_bytes_aux_bytes_in, H.
 Qed.
 
-(* [comment removed for export] *)
+(* At the revision [read_cstr_aux] refuses a byte at or above TASK_SIZE
+   ([access_okb a 1]) instead of fetching it, so both walks need the bound
+   the model's own port ([Common/FileSim.v] read_cstr_aux_of_rdn) asks for. *)
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (a + Z.of_nat (length str) < TASK_SIZE)%Z ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
+  induction str as [|b str IH]; intros fuel mp a Hf Hnz Hlo H; pose proof H as (Ha0 & _ & _).
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [read_cstr_aux]. rewrite Hb. reflexivity.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; cbn [length] in *; lia);
+          apply Z.ltb_lt; unfold TASK_SIZE in *; cbn [length] in *; lia).
+    rewrite Hb. reflexivity.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [read_cstr_aux]. rewrite Hb.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; cbn [length] in *; lia);
+          apply Z.ltb_lt; unfold TASK_SIZE in *; cbn [length] in *; lia).
+    rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-    intro Hin. apply Hnz. right. exact Hin.
+    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1));
+      [reflexivity| cbn in Hf; lia | intro Hin; apply Hnz; right; exact Hin | cbn [length] in Hlo; lia | exact H].
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
   (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (a + Z.of_nat fuel <= TASK_SIZE)%Z ->
   bytes_in mp a str ->
   read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
+  induction fuel as [|fuel IH]; intros str mp a Hf Hnz Hlo H; [reflexivity|].
+  pose proof H as (Ha0 & _ & _).
   destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-  cbn [read_cstr_aux]. rewrite Hb.
+  rewrite read_cstr_aux_accepted
+    by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; lia);
+        apply Z.ltb_lt; unfold TASK_SIZE in *; lia).
+  rewrite Hb.
   assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-  intro Hin. apply Hnz. right. exact Hin.
+  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1));
+    [reflexivity| cbn in Hf; lia | intro Hin; apply Hnz; right; exact Hin | lia | exact H].
 Qed.
 
 (* [comment removed for export] *)
@@ -513,7 +528,7 @@ Definition mprotect_safe_b (addr len prot : word) (h : VmMaps) : bool :=
 (* [comment removed for export] *)
 Definition mmap_safe_b (addr len prot flags fd off : word) (h : VmMaps) : bool :=
   negb (mmap_noreserve_b flags) &&   (* [comment removed for export] *)
-  (if negb (mmap_off_aligned_b off) then mmap_pglen_ok_b len
+  (if negb (mmap_off_aligned_b off) then true   (* the revision answers EINVAL outright *)
    else if negb (mmap_anon_b flags) then false
    else if w_is0 len then mmap_plain_anon_b flags
    else if mmap_modeled_b prot flags off then true

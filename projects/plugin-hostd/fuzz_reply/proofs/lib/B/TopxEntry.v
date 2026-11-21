@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, a Theorem Labs lane's internal work row): image B's twin of lib/A/TopxEntry.v
-   (a working branch e54949cc0b3, room form): B top_x's Section hypothesis HFP_pro
-   (W_LLVMFuzzerTestOneInput_top_x.v:266-273 at a working branch 96a88cd5efd) as a LEMMA, and its FPCOV
+   (a working branch, room form): B top_x's Section hypothesis HFP_pro
+   (W_LLVMFuzzerTestOneInput_top_x.v:267-274 at a working branch) as a LEMMA, and its FPCOV
    (:264-265) discharged at the B driver's footprint YCfn_cf.fr_FP_b.
 
    hfp_pro_x: HFP_pro's text over a generic ARx / G_fr / fr_FP, from the pre's input clause and HB (B _cut_x.v

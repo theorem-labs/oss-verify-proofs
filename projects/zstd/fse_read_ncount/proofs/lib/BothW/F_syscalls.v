@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TASK_SIZE bound on paths: open_spec takes a0 + length path < TASK_SIZE). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require Import Namei.
@@ -249,12 +250,13 @@ rng RNG lo (bv_unsigned sp - lo) ->
 rng RNG (errno_addr tp) 4 ->
 rng RNG (bv_unsigned a0) (Z.of_nat (length path) + 1) ->
 rng_aimg RNG ->
+(bv_unsigned a0 + Z.of_nat (length path) < TASK_SIZE)%Z ->
 implA bsegs RNG (enode (NOpen path) dec_open)
 (epostF (open_post RNG ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc (bv_unsigned a0) path errv canary lo m))
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0x896a0) fc None m (seg_rom bsegs)).
 Proof.
-intros until lo. intros ST SRC ERR GOT SSP MI -> NUL NSL LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP RSTK RERR RSRC RIMG.
+intros until lo. intros ST SRC ERR GOT SSP MI -> NUL NSL LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP RSTK RERR RSRC RIMG TS.
 unfold got_ssp, ssp_guard in *.
 pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
 pose proof (wmono_refl bsegs m) as WM.

@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v; 288 of its 301 lines of code are new or changed and 235 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_cases0c.v at a working branch d69f7c708f6 (proved v1.9
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_cases0c.v at a working branch (proved v1.9
    run of record) over lib/Lib/StepF, from its proof scripts with RIr / ROr for RI / RO, C0C.nsi / C0C.nso for nsi / nso, `hide_sec.` moved first in blk68_F and blk8c_F, `unfold BCASES0A.H8` for `unfold H8`, and `f_equal; lia` for `f_equal. lia` in blk68_F's last step.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: none read (the two runs of this file write the out block
    [o, o + 32) through __asan_memset at 0x86674 and read the row fields ic / oc already in registers; they read no
    image or runtime cell with a fixed value. The pcs 0x86630, 0x86654, 0x86674 / 0x86678 are of the v1.9.0 image).
@@ -82,7 +83,7 @@ Set Default Proof Mode "Classic".
 (* An opaque wrapper: a hypothesis of type mb_hide T is invisible to lia. *)
 Definition mb_hide (P : Prop) : Prop := P.
 
-(* The store hook of the evtF walk of this function (reac_box_model_blockF.v of 3c9fcc93205, as
+(* The store hook of the evtF walk of this function (reac_box_model_blockF.v, as
    reac_box_model_block_cases0aF.v re-issues it): it also transports rd_mono. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with

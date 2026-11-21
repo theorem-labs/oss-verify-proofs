@@ -1,6 +1,6 @@
-(* copy of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v@0ddf65fd8cc; module paths fuzz_manifest -> fuzz_preset, lib.A -> lib.Reusable *)
+(* copy of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v; module paths fuzz_manifest -> fuzz_preset, lib.A -> lib.Reusable *)
 (* The snprintf contracts every Pau target shares (statements): h-rw-dis-5's lib/Rt/SnprintfDef.v and VsnprintfDef.v
-   (origin/cold/h-rw-dis-5-s4printf 4a8b5df89c3) restated over fm's library, with pieces, parser and renderer in
+   restated over fm's library, with pieces, parser and renderer in
    FMsnprintfPf.v. Kept as there: the arguments (va_words: a3..a7 then the caller's stack slots at sp; words_at ap for
    the v* entries), the read-only constants a run reads (consts_view cr), the stack-protector cells gc -> gv -> cval,
    the disjointness lists (no alloc_ceiling: the destination and the strings may lie on the machine stack outside the

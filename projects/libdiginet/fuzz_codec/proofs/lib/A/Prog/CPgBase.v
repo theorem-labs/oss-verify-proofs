@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: lines 18-46 of proofs/libreac/fuzz_knock/lib/A/APgBase.v
-   (origin/ossv/recipes 4b6f0df50aa7: in_roP, arodata_okP, ro_below_ofl, ro_spares, arodata_ok_journalP), in the
+   (in_roP, arodata_okP, ro_below_ofl, ro_spares, arodata_ok_journalP), in the
    form projects/reac-pw/fuzz_qdisc/proofs/lib/A/QPgBase.v states them, for libdiginet/fuzz_codec's ASan builds; knock's
    afobj / apost_base are not carried (codec hands its callees objects that are 4-aligned, so the contracts use
    the caller-journal shapes of lib/A/Prog/CodecCJ.v instead). The rest of this file is codec's own. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The vocabulary the A-level contracts of fuzz_codec's own functions are stated over.
    - the image's read-only data (in_roP / arodata_okP), image-independent;
    - the register forms of the C arguments, the byte-list results and the call record, carried from the

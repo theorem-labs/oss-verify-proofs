@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sstep_into_halted gains the vDSO call arm, whose post-model is with_vdso_bump of the materialized model; realizes_mreach's induction names rz_node's RomBase.sys_rob premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -24,7 +25,7 @@ Inductive mreach : config -> Prop :=
 
 #[using="Type"] Lemma realizes_mreach : forall c T, realizes segs c T -> mreach c.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - destruct Hnode as [Hcomp Hsound]. apply mr_run.
     + exists (evs i0), (SNext (nx i0)). apply Hcomp.
     + intros e st Hss. destruct (Hsound e st Hss) as (i & -> & ->). exists (nx i). reflexivity.
@@ -45,6 +46,13 @@ Proof.
     exfalso. apply Hh. match goal with Ha : mi_account_step _ _ _ = MachineOk _ |- _ =>
       destruct (mi_account_step_model_frame _ _ _ _ _ Ha) as (_ & _ & _ & _ & _ & Hp & _) end.
     unfold m_halted in *. rewrite Hp. assumption.
+  - (* LPS 727298f3: a vDSO call; its post-model is with_vdso_bump of the materialized one, with the call's process state *)
+    exfalso. apply Hh. match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ =>
+      destruct (materialize_model_accesses_frame _ _ _ Hm) as (_ & _ & _ & _ & _ & Hp & _) end.
+    unfold m_halted in *.
+    match goal with H0 : procst_halted (m_proc ?m') = None, Hq : m_proc ?m'' = m_proc ?m'
+                    |- procst_halted (m_proc (with_vdso_bump ?m'')) = None =>
+      change (procst_halted (m_proc m'') = None); rewrite Hq; exact H0 end.
   - (* [comment removed for export] *)
     exfalso. apply Hh. match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ =>
       destruct (materialize_model_accesses_frame _ _ _ Hm) as (_ & _ & _ & _ & _ & Hp & _) end.

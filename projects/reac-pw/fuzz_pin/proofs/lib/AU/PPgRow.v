@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_Klib.v:146-200
-   (aj_strlen_at) at origin/ossv/recipes f26f9fbd8777 [Apache-2.0]; proofs/reac-pw/fuzz_pin/lib/Reusable/YCbq.v:2262-2310 (aj_bcmp_at)
+   (aj_strlen_at) [Apache-2.0]; proofs/reac-pw/fuzz_pin/lib/Reusable/YCbq.v:2262-2310 (aj_bcmp_at)
    [Apache-2.0 OR MIT]; proofs/reac-pw/fuzz_qdisc/lib/A/QPgSlots.v, QPgCheck.v, QPgRt.v [Apache-2.0] and QPgLoop0.v [Apache-2.0 OR MIT]
    at 160c9b4d5750 (walk tactics and plumbing lemmas); proofs/reac-pw/fuzz_pin/lib/A/ACep.v (reseat) [Apache-2.0]; for
    reac-pw/fuzz_pin's image A walk of fuzz_catalogue_row: the two call lemmas keep the wrappers' same_but_materialized
@@ -18,6 +18,7 @@
    AWalkFw2 YCfm, lib/AU/Rt WrapRo StrlenDef; YCeh.ro_tfa_below_ofl for ACeh's). The wrapper trampolines 0x41908 and
    0x41924 are the same in both images. The contract lib/A/PPgCSpec.v and lib/A/PPgBase.v are the same text, and the
    proof text is image A's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_pin, image B (fuzz_pin.asan-ubsan, sha256 d6f83d301522...): the walk of fuzz_catalogue_row
    (0x80fb4, 200 bytes; catalogue.c:29-35) against lib/A/PPgCSpec.v's tpin_row_specX at the table
    fuzz_catalogue (0x98000), and the two call-site lemmas pin_strlen_site_row (0x81014) and pin_bcmp_site
@@ -135,7 +136,7 @@ Definition rw_SH : list shent := [mkSHE 33 0 8].
 (* ------------------------------------------------------------------------------------------------
    The walk tactics. rw_add_atom_win, rw_pin_by and rw_join are proofs/reac-pw/fuzz_qdisc/lib/A/QPgLoop0.v's
    add_atom_win, pin_by and ra_join_win (reac-pw/fuzz_qdisc image A at 160c9b4d5750, made from
-   proofs/libreac/fuzz_knock/lib/A/APgLoop0.v at origin/ossv/recipes 6ebe35ba632) with their names prefixed;
+   proofs/libreac/fuzz_knock/lib/A/APgLoop0.v) with their names prefixed;
    rw_ewpeel is that file's ewpeel, made to skip an occurrence it cannot peel; rw_awr_stk (below) is
    QPgCheck.v's awr_stk with the stack atom's value found from the state. *)
 Ltac rw_ewpeel := repeat match goal with
@@ -381,8 +382,8 @@ repeat match goal with |- _ /\ _ => split end; lia.
 Qed.
 
 (* The strlen wrapper in the journal form: a pin copy of
-   proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_Klib.v:146-196 aj_strlen_at
-   (origin/ossv/recipes f26f9fbd87), on the concrete image tfibsegs, which also keeps the wrapper's
+   proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_Klib.v:146-196 aj_strlen_at,
+   on the concrete image tfibsegs, which also keeps the wrapper's
    same_but_materialized (pin_post_simple asks same_io of the call's model). *)
 Lemma rw_aj_strlen_at : forall pc, astrlen_realizes tfibsegs B pc ->
 forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc kj x k (o : Z) raw,

@@ -7,6 +7,7 @@
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (tcbb_loopX, a loop with inline checks, re-seeded at each iteration). The
    plain proof of the same loop is lib/Prog/answer.v:120-226 (an_loop). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/answer_l.v, with its module paths, module names and numbers changed; 490 of its 561 lines of code are new or changed and 716 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the fold loop of segment A11a of reac_segconf_parse_file's walk
    (lib/A/Prog/pf_a11a_k.v's cut LOOP 0x8829c), a11a_loop_ok : (forall j, A11_ZST_stmt B n j) ->
    forall li, A11_LOOP_stmt B n li. Part of segment A11a's proof (the fold loop), by the G3 walk owner, 2026-10-30. No Section hypothesis.
@@ -20,7 +21,7 @@
      0x882e0 j ZST                                       val[li + 1] = 0: ZST with a3 = li + 1
    Each pass is re-seeded by pa_entry_st_ok_full (a11l_entry, trim_l.v tl_entry's shape) with two one-byte regions,
    low146[li] (written) and val[li + 1] (read, its value the extra atom 34), and two aliases that fold the code's
-   sums s4 + a0 and a1 + a0 to the atoms 32 and 33 (RECIPE-state.md section 2.4; answer_l.v at 501c0d516c69).
+   sums s4 + a0 and a1 + a0 to the atoms 32 and 33 (RECIPE-state.md section 2.4; answer_l.v).
    The cut's facts are carried across a pass by a11l_cx_move (the pass writes one byte of low146; the keep argument
    of pf_a6_k.v a6_base_move and pf_a5_k.v a5_keep_*, over that write set, with no SSPX / VRO); the loop closes by
    induction on 23 - li (trim_l.v tr_lead_ok). *)

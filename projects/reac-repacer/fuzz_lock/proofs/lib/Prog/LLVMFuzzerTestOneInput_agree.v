@@ -2,7 +2,7 @@
    (AgreeRet.v agree_ret_hyp, proved by AgreeRetOk.v agree_ret_ok) and the two slot contracts of
    LLVMFuzzerTestOneInput, the plain one (lib/Prog/LLVMFuzzerTestOneInput_gfr.v lock_slot_g_frame) and the
    crash-free UBSan one (lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v lock_slot_cg_frame), in the form of
-   libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_agree.v (25e3d17bdb50). Both are taken for the
+   libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_agree.v. Both are taken for the
    same return function lock_ret, so the two builds return the same value on a payload and the driver writes the
    same row after each call. The crash-free contracts of the UBSan harness functions come from
    lib/U/Prog/LLVMFuzzerTestOneInput_cflink.v checks_cf_link. *)

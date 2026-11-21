@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the access_okb premise (vfs_write's access_ok range) on node_write1, rz_write1, node_write_ch and rz_write_ch, the realizes proofs re-proved for it; munmap under the alloc-only config: munmap_eff_nonrefusal, munmap_errno_spurious (errno answers are spurious refusals), node_munmap_cfg and rz_silent_all added, rz_munmap re-proved through them with a new premise over its munmap_errnos successors; #[using] attributes dropped from 3 lemmas; imports Vdso; rz_node takes RomBase.sys_rob, so rz_silent1, rz_silent_all, rz_emit1 and rz_alt2 take it too, discharged at the instruction, write (RomWrite.write1_rob, write_ch_rob), exit and munmap nodes; imports RomBase, RomWrite). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -9,8 +10,10 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence Omni
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
+From LinuxProcessSemantics.LinuxProcessSem Require Import Vdso.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import SimInv ExitSim CatSim MmapSim AllocSim WallSim.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import Cfg.
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import RomBase RomWrite.
 
 Import ListNotations.
 Open Scope bv_scope.
@@ -270,6 +273,9 @@ Inductive realizes : config -> TSet -> Prop :=
 | rz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                    (T : I -> TSet) (i0 : I),
     node_ok c I evs nx ->
+    (* LPS 727298f3: the node's system call reads no byte the run's backing adds
+       ([RomBase.sys_rob]; [RomStable.run_init] lifts a walk to the run's start) *)
+    sys_rob segs c ->
     (forall i, realizes (nx i) (T i)) ->
     realizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | rz_halt : forall c,
@@ -282,7 +288,7 @@ Inductive realizes : config -> TSet -> Prop :=
 
 #[using="Type"] Lemma realizes_nonempty : forall c T, realizes c T -> T [].
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - apply Heq. exact IH.
@@ -291,7 +297,7 @@ Qed.
 #[using="Type"] Lemma realizes_pclosed : forall c T, realizes c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -307,7 +313,7 @@ Qed.
 #[using="Type"] Lemma realizes_star_only : forall c T, realizes c T ->
   forall tr c', star_cfg segs ACFG c tr c' -> T tr.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -324,7 +330,7 @@ Qed.
 #[using="Type"] Lemma realizes_admits : forall c T, realizes c T ->
   forall tr, T tr -> obs_trace_cfg segs ACFG c tr.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -356,7 +362,7 @@ Proof. intros c e st H; inversion H; subst; cbn; assumption. Qed.
   realizes c T -> sstep_cfg segs ACFG c e (SNext c') -> exists T', realizes c' T'.
 Proof.
   intros c T e c' H; revert e c';
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
@@ -369,7 +375,7 @@ Qed.
   realizes c T -> ~ sstep_cfg segs ACFG c e SError.
 Proof.
   intros c T e H; revert e;
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
@@ -403,13 +409,13 @@ Qed.
 
 (* [comment removed for export] *)
 #[using="Type"] Lemma rz_silent1 : forall c c' T,
-  node_ok c unit (fun _ => []) (fun _ => c') ->
+  node_ok c unit (fun _ => []) (fun _ => c') -> sys_rob segs c ->
   realizes c' T ->
   realizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (rz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -417,14 +423,29 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+Lemma rz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok c I (fun _ => []) nx -> sys_rob segs c ->
+  (forall i, realizes (nx i) T) ->
+  realizes c T.
+Proof.
+  intros c I nx T i0 Hnode Hrob HT.
+  assert (HT0 : T []) by (eapply realizes_nonempty; apply (HT i0)).
+  apply (rz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (rz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode Hrob).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
+
 #[using="Type"] Lemma rz_emit1 : forall c c' e T,
-  node_ok c unit (fun _ => e) (fun _ => c') ->
+  node_ok c unit (fun _ => e) (fun _ => c') -> sys_rob segs c ->
   realizes c' T ->
   realizes c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (rz_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
@@ -432,19 +453,19 @@ Qed.
 (* [comment removed for export] *)
 #[using="Type"] Lemma rz_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
                        (a0 : IA) (b0 : IB),
-  node_ok c (IA + IB) (fun _ => []) nx ->
+  node_ok c (IA + IB) (fun _ => []) nx -> sys_rob segs c ->
   (forall i, realizes (nx (inl i)) A) ->
   (forall i, realizes (nx (inr i)) B) ->
   realizes c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply realizes_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply realizes_nonempty; apply (HB b0)).
   apply (rz_conseq c
     (t_alt (fun i : IA + IB =>
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (rz_node c (IA + IB) (fun _ => []) nx
-             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode).
+             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -483,7 +504,7 @@ Qed.
   realizes (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply rz_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply rz_silent1; [apply node_instr; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 #[using="Type"] Lemma rz_msteps : forall ms ms' model T,
@@ -501,7 +522,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma node_write1 : forall ms model x8 buf,
+Lemma node_write1 : forall ms model x8 buf,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fd1chan model ->
@@ -509,6 +530,8 @@ Qed.
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = Z_to_bv 64 1 ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   node_ok (mkCfg ms model) (wr_index buf)
@@ -517,7 +540,16 @@ Qed.
                              (set_gpr0 ms (len_word (firstn (proj1_sig i) buf))))
                           model).
 Proof.
-  intros ms model x8 buf Hh Hlazy Hfd Hsvc Hno Hg Hr Hbm Hnb.
+  (* node_ok is stated over sstep_cfg segs ACFG (:244-247), while sstep_syscall below gives
+     a plain sstep, so the two do not unify and without the bridge the build reads :542
+     "Unable to unify sstep segs ... with sstep_cfg segs ACFG ...".  The bridge is this
+     unit's own node_ok_of_pnode (:254-255) with a cfg_transparent witness.  64 (write) is
+     NOT in the alloc family, so alloc_no_b 64 = false holds by reflexivity -- unlike 215,
+     where the same goal is FALSE at #38 and the family-off route is required instead.
+     Argument order is this unit's Lib/Cfg.v:236 discharged over segs, the spelling
+     AS/RefNodes.v:636 already uses.  node_write1 is the ONLY node_ok lemma in this file
+     that lacked the step; the other six already have it. *)
+  intros ms model x8 buf Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbm Hnb.
   apply node_ok_of_pnode; [apply (transparent_nonalloc_no segs ms model x8 64 Hsvc Hno); reflexivity |]. split.
   - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
     rewrite <- (apply_effect_copyins_no_write ms (len_word (firstn n buf))
@@ -533,12 +565,12 @@ Proof.
     + apply materialize_model_accesses_no_lazy. exact Hlazy.
   - intros e st Hss.
     destruct (sstep_write_inv segs ms model x8 buf e st
-                Hh Hlazy Hfd Hsvc Hno Hg Hr Hbm Hnb Hss)
+                Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbm Hnb Hss)
       as (n & Hn1 & Hn2 & -> & ->).
     exists (exist _ n (conj Hn1 Hn2)). split; reflexivity.
 Qed.
 
-#[using="Type"] Lemma rz_write1 : forall ms model x8 buf T,
+Lemma rz_write1 : forall ms model x8 buf T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fd1chan model ->
@@ -546,13 +578,14 @@ Qed.
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = Z_to_bv 64 1 ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
      realizes (mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
   realizes (mkCfg ms model) (t_write_ch (Z_to_bv 64 1) buf T).
 Proof.
-  intros ms model x8 buf T Hh Hlazy Hfd Hsvc Hno Hg Hr Hbm Hnb Hc.
+  intros ms model x8 buf T Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbm Hnb Hc.
   unfold t_write_ch.
   apply (rz_node (mkCfg ms model) (wr_index buf)
            (fun i => map (WriteEv (Z_to_bv 64 1)) (firstn (proj1_sig i) buf))
@@ -561,6 +594,7 @@ Proof.
                            model)
            (fun _ => T) (wr_full buf Hnb)).
   - apply (node_write1 ms model x8 buf); assumption.
+  - apply (write1_rob segs ms model x8 buf); assumption.
   - intros [n [Hn1 Hn2]]. cbn [proj1_sig]. apply Hc; assumption.
 Qed.
 
@@ -590,36 +624,143 @@ Proof.
     + intros e st Hss.
       destruct (sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 Hss) as [-> ->].
       exists tt. split; reflexivity.
+  - exact (sys_rob_exit segs ms model x8 Hsvc Hx8).
   - apply rz_halt. cbn. discriminate.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma rz_munmap : forall ms model x8 T,
+(* --- munmap (215) under ACFG -----------------------------------------------
+   All MEASURED at 727298f3 unless marked.
+   - Run.v:1865  alloc_mark_sysnos = [214;215;216;222;226].  215 IS on the list,
+     so alloc_no_b 215 = true and the transparent_nonalloc_no route node_write1
+     takes for 64 (:548) is UNAVAILABLE here -- the note at :542 is confirmed.
+   - Run.v:1788  injected_table's row for 215 is
+     [mkInjectedArm 215 FamAlloc munmap_errnos], and ACFG = alloc_only_cfg false
+     has sc_alloc = false (Run.v:1689-1690), so injected_family_off ACFG = true
+     (Lib/Cfg.v acfg_family_off_215) and refusal_b = ret_in_errnos munmap_errnos
+     (Lib/Cfg.v refusal_b_215).  The transparent_family_on route is therefore
+     unavailable too: BOTH cfg_transparent routes are closed for 215.
+   - Run.v:2285-2294  sstep_cfg_syscall's fourth premise is
+     ~ spurious_refusal_cfg cfg (sys_input segs ms x8) model eff.
+   - Checks/SpuriousCfg.v:903-913 munmap_refusal_spurious_alloc_only: at 215
+     EVERY admitted refusal is spurious under alloc_only_cfg false.
+   So the -ENOMEM successors are not sstep_cfg steps at all, and the old
+   two-branch index set {e | In e munmap_errnos} + unit made node_ok FALSE,
+   not merely unprovable.  The repair is the INDEX SET.  rz_munmap's statement
+   below is UNCHANGED: its HA premise is now unused, and leaving an unused
+   premise is the conservative direction -- dropping it would be a
+   strengthening.  munmap_refusal_spurious_alloc_only is re-derived here from
+   this unit's own Lib/Cfg.v pieces so that no Checks file has to be required. *)
+Lemma munmap_eff_nonrefusal : forall ms model x8,
+  bv_unsigned x8 = 215%Z ->
+  refusal_b (sys_input segs ms x8) model (eff_ret (munmap_eff ms)) = false.
+Proof.
+  intros ms model x8 Hno.
+  assert (Hin : bv_unsigned (in_sysno (sys_input segs ms x8)) = 215%Z)
+    by (rewrite in_sysno_sys_input; exact Hno).
+  rewrite (refusal_b_215 _ _ _ Hin). reflexivity.
+Qed.
+
+Lemma munmap_errno_spurious : forall ms model x8 e,
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  In e munmap_errnos ->
+  spurious_refusal_cfg ACFG (sys_input segs ms x8) model (mkEffect (errno_ret e) [] []).
+Proof.
+  intros ms model x8 e Hno Hargs He.
+  assert (Hin : bv_unsigned (in_sysno (sys_input segs ms x8)) = 215%Z)
+    by (rewrite in_sysno_sys_input; exact Hno).
+  apply (refusal_spurious_of_grant ACFG (sys_input segs ms x8) model
+           (mkEffect (errno_ret e) [] []) (munmap_eff ms)
+           (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
+  - exact (acfg_family_off_215 _ Hin).
+  - rewrite (refusal_b_215 _ _ _ Hin).
+    exact (ret_in_errnos_errno munmap_errnos e He).
+  - exact (munmap_ok segs ms x8 model Hno Hargs).
+  - exact (munmap_eff_nonrefusal ms model x8 Hno).
+Qed.
+
+(* The one-successor node.  Shared with SpinAlg.node_munmap, which states the
+   same thing and whose own two-branch index set was false for the same reason. *)
+Lemma node_munmap_cfg : forall ms model x8,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
+  node_ok (mkCfg ms model) unit (fun _ => [])
+    (fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
+Proof.
+  intros ms model x8 Hh Hlazy Hsvc Hno Hargs. split.
+  - intros [].
+    apply (sstep_cfg_syscall_nonrefusal segs ACFG ms model x8 (munmap_eff ms)
+             (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
+             (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
+    + exact Hh.
+    + exact Hsvc.
+    + apply munmap_ok; assumption.
+    + exact (munmap_eff_nonrefusal ms model x8 Hno).
+    + rewrite munmap_model_halted; exact Hh.
+    + apply materialize_model_accesses_no_lazy.
+      exact (munmap_model_no_lazy _ _ _ Hlazy).
+  - intros evs st Hss.
+    destruct (sstep_cfg_svc_inv_g segs ACFG ms model x8 evs st Hsvc Hss)
+      as [(eff & mo' & mo'' & Hspec & Hns & Hh' & Hmat & ->)
+        | [(eff & mo' & evs0 & Hspec & Hns & Hh' & Hmat & -> & ->)
+        | [(eff & mo' & evs0 & code & Hspec & Hh' & Hk' & -> & ->)
+        | [(eff & mo' & evs0 & sig & Hspec & Hk' & -> & ->)
+        | (Hspec & -> & ->)]]]].
+    + destruct (munmap_ok_inv segs ms x8 model eff mo' evs Hno Hargs Hspec)
+        as (-> & [(er & Her & -> & ->) | (-> & ->)]).
+      * exfalso. exact (Hns (munmap_errno_spurious ms model x8 er Hno Hargs Her)).
+      * rewrite (materialize_model_accesses_no_lazy _ _
+                   (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat.
+        inversion Hmat; subst. exists tt. split; reflexivity.
+    + exfalso.
+      destruct (munmap_ok_inv segs ms x8 model eff mo' evs0 Hno Hargs Hspec)
+        as (_ & [(er & Her & -> & ->) | (-> & ->)]).
+      * rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat.
+        discriminate Hmat.
+      * rewrite (materialize_model_accesses_no_lazy _ _
+                   (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat.
+        discriminate Hmat.
+    + exfalso.
+      destruct (munmap_ok_inv segs ms x8 model eff mo' evs0 Hno Hargs Hspec)
+        as (_ & [(er & Her & _ & ->) | (_ & ->)]).
+      * rewrite Hh in Hh'. discriminate Hh'.
+      * rewrite munmap_model_halted, Hh in Hh'. discriminate Hh'.
+    + exfalso.
+      destruct (munmap_ok_inv segs ms x8 model eff mo' evs0 Hno Hargs Hspec)
+        as (_ & [(er & Her & _ & ->) | (_ & ->)]).
+      * rewrite (m_killed_of_m_halted_none _ Hh) in Hk'. discriminate Hk'.
+      * rewrite m_killed_of_m_halted_none in Hk';
+          [discriminate Hk' | rewrite munmap_model_halted; exact Hh].
+    + exfalso. exact (munmap_no_unmodeled segs ms x8 model Hno Hargs Hspec).
+Qed.
+
+(* [comment removed for export] *)
+Lemma rz_munmap : forall ms model x8 T,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  (forall e, In e munmap_errnos ->
+     realizes (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model) T) ->
   realizes (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
                   (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)) T ->
   realizes (mkCfg ms model) T.
 Proof.
-  intros ms model x8 T Hh Hlazy Hsvc Hno Hargs Hc.
-  eapply rz_silent1; [| exact Hc].
-  apply node_ok_of_pnode; [apply (transparent_nonalloc_no segs ms model x8 215 Hsvc Hno); reflexivity |]. split.
-  - intros []. apply (sstep_syscall segs ms model x8 (munmap_eff ms)
-                        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
-                        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
-    + exact Hh.
-    + exact Hsvc.
-    + apply munmap_ok; assumption.
-    + rewrite munmap_model_halted; exact Hh.
-    + apply materialize_model_accesses_no_lazy.
-      exact (munmap_model_no_lazy _ _ _ Hlazy).
-  - intros e st Hss.
-    destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
-      as [-> ->].
-    exists tt. split; reflexivity.
+  (* HA is deliberately unused: see the note above node_munmap_cfg. *)
+  intros ms model x8 T Hh Hlazy Hsvc Hno Hargs HA HB.
+  apply (rz_silent_all (mkCfg ms model) unit
+           (fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                           (munmap_model (ms_gpr ms 0)
+                                         (page_round_up (ms_gpr ms 1)) model))
+           T tt).
+  - exact (node_munmap_cfg ms model x8 Hh Hlazy Hsvc Hno Hargs).
+  - eapply sys_rob_memfree; [exact Hsvc | rewrite Hno; exact memfree_215].
+  - intros []. exact HB.
 Qed.
 
 End WithSegs.
@@ -638,7 +779,7 @@ Proof.
   intros segs ms model bufs code Hh Hlazy Hfd Hte. revert model Hh Hlazy Hfd.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH];
     intros model Hh Hlazy Hfd Hbm.
   - rewrite t_writes_pick_nil. eapply rz_exit; eassumption.
@@ -661,7 +802,7 @@ Proof.
   intros segs ms bufs code model Hte.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH]; intros Hbufs Hh;
     [| discriminate Hbufs |]; intro Hlazy.
   - eapply rz_exit; eassumption.
@@ -704,8 +845,8 @@ Proof.
        (forall ms', k ms' -> realizes segs (mkCfg ms' model) T) ->
        realizes segs (mkCfg ms model)
          (t_emit (map (WriteEv (Z_to_bv 64 1)) rest) T))).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm T HT Hk.
+  - (* twl_write *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm T HT Hk.
     eapply rz_conseq.
     { apply (rz_node segs (mkCfg ms model) (wr_index rest)
         (fun i => map (WriteEv (Z_to_bv 64 1)) (firstn (proj1_sig i) rest))
@@ -716,16 +857,17 @@ Proof.
                               (skipn (proj1_sig i) rest)) T)
         (wr_full rest Hnb)).
       - apply (node_write1 segs ms model x8 rest); assumption.
+      - apply (write1_rob segs ms model x8 rest); assumption.
       - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
         apply (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbm) T HT Hk). }
     apply t_alt_wall; [exact HT | exact Hnb].
-  - (* [comment removed for export] *)
+  - (* twt_done *)
     intros ms k Hk Hbm T HT Hcont.
     eapply rz_conseq; [apply Hcont; exact Hk|].
     cbn [map]. apply t_eq_sym. apply t_emit_nil_eq. exact HT.
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm T HT Hk. exact (IH Hbm T HT Hk).
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm T HT Hk.
     eapply rz_step; [exact Hh | exact Hlazy | exact Hsvc | exact Hstep
                     | exact (IH Hbm T HT Hk)].
@@ -787,24 +929,26 @@ Proof.
        realizes segs (mkCfg ms model)
          (t_emit (map (WriteEv (Z_to_bv 64 1)) rest)
                  (t_writes bufs (t_exit code (m_fs model)))))).
-  - (* [comment removed for export] *)
+  - (* twm_exit *)
     intros ms model x8 Hsvc Hx8 Hh Hlazy Hfd Hbm. eapply rz_exit; eassumption.
-  - (* [comment removed for export] *)
+  - (* twm_write *)
     intros ms model buf bufs code Hnb Hp IH Hh Hlazy Hfd Hbm.
     apply Forall_cons_iff in Hbm as [Hb Hbs].
     rewrite t_writes_cons. exact (IH Hh Hlazy Hfd Hb Hbs).
-  - (* [comment removed for export] *)
-    intros ms model x8 bufs code Hsvc Hno Hargs Hte IH Hh Hlazy Hfd Hbm.
-    eapply rz_munmap; try eassumption.
-    rewrite <- (munmap_model_fs (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model).
-    apply IH; [rewrite munmap_model_halted; exact Hh
-              | exact (munmap_model_no_lazy _ _ _ Hlazy)
-              | apply munmap_model_fd1chan; exact Hfd | exact Hbm].
-  - (* [comment removed for export] *)
+  - (* twm_munmap *)
+    intros ms model x8 bufs code Hsvc Hno Hargs Hfail IHfail Hcut IH Hh Hlazy Hfd Hbm.
+    eapply rz_munmap;
+      [exact Hh | exact Hlazy | exact Hsvc | exact Hno | exact Hargs | | ].
+    + intros e He. exact (IHfail e He Hh Hlazy Hfd Hbm).
+    + rewrite <- (munmap_model_fs (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model).
+      apply IH; [rewrite munmap_model_halted; exact Hh
+                | exact (munmap_model_no_lazy _ _ _ Hlazy)
+                | apply munmap_model_fd1chan; exact Hfd | exact Hbm].
+  - (* twm_step *)
     intros ms ms' model bufs code Hsvc Hstep Hte IH Hh Hlazy Hfd Hbm.
     eapply rz_step; try eassumption. apply IH; assumption.
-  - (* [comment removed for export] *)
-    intros ms model x8 rest bufs code Hsvc Hno Hg Hr Hnb Hcont IH Hh Hlazy Hfd Hbr Hbm.
+  - (* twmp_write *)
+    intros ms model x8 rest bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH Hh Hlazy Hfd Hbr Hbm.
     eapply rz_conseq.
     { apply (rz_node segs (mkCfg ms model) (wr_index rest)
         (fun i => map (WriteEv (Z_to_bv 64 1)) (firstn (proj1_sig i) rest))
@@ -816,19 +960,20 @@ Proof.
                          (t_writes bufs (t_exit code (m_fs model))))
         (wr_full rest Hnb)).
       - apply (node_write1 segs ms model x8 rest); assumption.
+      - apply (write1_rob segs ms model x8 rest); assumption.
       - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
         apply (IH n Hn1 Hn2 Hh Hlazy Hfd (buf_modeled_skipn n rest Hbr) Hbm). }
     apply t_alt_wall;
       [unfold t_writes; apply t_writes_ch_exit_has_nil | exact Hnb].
-  - (* [comment removed for export] *)
+  - (* twmt_done *)
     intros ms model bufs code Hte IH Hh Hlazy Hfd Hbr Hbm.
     eapply rz_conseq; [apply IH; assumption|].
     cbn [map]. apply t_eq_sym. apply t_emit_nil_eq.
     unfold t_writes. apply t_writes_ch_exit_has_nil.
-  - (* [comment removed for export] *)
+  - (* twmt_more *)
     intros ms model rest bufs code Hnb Hp IH Hh Hlazy Hfd Hbr Hbm.
     exact (IH Hh Hlazy Hfd Hbr Hbm).
-  - (* [comment removed for export] *)
+  - (* twmt_step *)
     intros ms ms' model rest bufs code Hsvc Hstep Ht IH Hh Hlazy Hfd Hbr Hbm.
     eapply rz_step; try eassumption. exact (IH Hh Hlazy Hfd Hbr Hbm).
 Qed.
@@ -866,6 +1011,7 @@ Lemma node_write_ch : forall segs ms model fd ch x8 buf,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = fd ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   node_ok segs (mkCfg ms model) (wr_index buf)
@@ -874,8 +1020,18 @@ Lemma node_write_ch : forall segs ms model fd ch x8 buf,
                              (set_gpr0 ms (len_word (firstn (proj1_sig i) buf))))
                           model).
 Proof.
-  intros segs ms model fd ch x8 buf Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hbm Hnb.
-  apply node_ok_of_pnode; [apply (transparent_nonalloc_no segs ms model x8 64 Hsvc Hno); reflexivity |]. split.
+  intros segs ms model fd ch x8 buf Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hok Hbm Hnb.
+  (* The generalised-channel twin of node_write1 (:520), and the EASY half of the
+     same bridge: 64 is NOT in alloc_mark_sysnos (727298f3:Run.v:1865 is
+     [214;215;216;222;226]), so alloc_no_b 64 = false by reflexivity and
+     transparent_nonalloc_no applies -- unlike 215, where both transparency routes
+     are shut and the index set had to move instead.  Same text as :548.  No index
+     set moves and no statement changes; the two halves below are unchanged,
+     because pnode_ok states them over plain sstep, which is what they already
+     prove and what sstep_write_ch_inv already consumes. *)
+  apply node_ok_of_pnode;
+    [apply (transparent_nonalloc_no segs ms model x8 64 Hsvc Hno); reflexivity |].
+  split.
   - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
     rewrite <- (apply_effect_copyins_no_write ms (len_word (firstn n buf))
                   [(ms_gpr ms 1, n)]).
@@ -890,7 +1046,7 @@ Proof.
     + apply materialize_model_accesses_no_lazy. exact Hlazy.
   - intros e st Hss.
     destruct (sstep_write_ch_inv segs fd ch H32 ms model x8 buf e st
-                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hbm Hnb Hss)
+                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss)
       as (n & Hn1 & Hn2 & -> & ->).
     exists (exist _ n (conj Hn1 Hn2)). split; reflexivity.
 Qed.
@@ -903,6 +1059,7 @@ Lemma rz_write_ch : forall segs ms model fd ch x8 buf T,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = fd ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
@@ -910,7 +1067,7 @@ Lemma rz_write_ch : forall segs ms model fd ch x8 buf T,
        (mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
   realizes segs (mkCfg ms model) (t_write_ch ch buf T).
 Proof.
-  intros segs ms model fd ch x8 buf T Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hbm Hnb Hc.
+  intros segs ms model fd ch x8 buf T Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hok Hbm Hnb Hc.
   unfold t_write_ch.
   apply (rz_node segs (mkCfg ms model) (wr_index buf)
            (fun i => map (WriteEv ch) (firstn (proj1_sig i) buf))
@@ -919,6 +1076,7 @@ Proof.
                            model)
            (fun _ => T) (wr_full buf Hnb)).
   - eapply node_write_ch; eassumption.
+  - apply (write_ch_rob segs ms model fd ch x8 buf); assumption.
   - intros [n [Hn1 Hn2]]. cbn [proj1_sig]. apply Hc; assumption.
 Qed.
 
@@ -934,7 +1092,7 @@ Proof.
   revert model Hh Hlazy Hfdc.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH];
     intros model Hh Hlazy Hfdc Hbm.
   - eapply rz_exit; eassumption.

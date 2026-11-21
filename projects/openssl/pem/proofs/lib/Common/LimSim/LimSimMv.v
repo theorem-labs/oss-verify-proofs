@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's ledger cut). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -174,7 +175,7 @@ Proof.
   change (m_vm_materialized (with_vm_backing ?lz ?mt ?mm)) with mt.
   change (m_vmmaps (with_vmmaps ?hh m)) with hh. cbn [vm_maps vm_noaccess].
   change (m_vm_lazy (with_vmmaps ?hh m)) with (m_vm_lazy m). change (m_vm_materialized (with_vmmaps ?hh m)) with (m_vm_materialized m).
-  set (M := map_remove (vm_maps h) old). set (NA := vm_noaccess h). set (LZ := m_vm_lazy m). set (MT := m_vm_materialized m).
+  set (M := maps_subtract (vm_maps h) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)). set (NA := vm_noaccess h). set (LZ := m_vm_lazy m). set (MT := m_vm_materialized m).
   set (sl := mremap_source_lazy_b m old old_n).
   set (olo := bv_unsigned old). set (dlo := bv_unsigned dst).
   set (KL := maps_subtract LZ olo (olo + bv_unsigned old_n)).
@@ -186,7 +187,7 @@ Proof.
   assert (LEN2 : length (if sl then List.map (move_page_base old dst) FL else []) = length (if sl then FL else [])) by (destruct sl; [apply length_map | reflexivity]).
   rewrite LEN2.
   (* [comment removed for export] *)
-  assert (NWM : nwr M) by (subst M; unfold map_remove; apply nwr_filter; exact HWF).
+  assert (NWM : nwr M) by (subst M; apply nwr_maps_subtract; [pose proof (word_range old); lia | pose proof (word_range old_n); lia | exact HWF]).
   assert (NWD : nwr ((dst, new_n) :: M)) by (constructor; [unfold phi, plo, psz; cbn [fst snd]; fold dlo; rewrite Rn; lia | exact NWM]).
   rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all ((dst, new_n) :: M) NA) _)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWD).
   rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all M NA) KL)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWM).
@@ -194,8 +195,13 @@ Proof.
   assert (IND : zsum (fun x => if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0) 0 N64 = nnz) by (rewrite zsum_indicator; rewrite ?N64_Z; lia).
   (* [comment removed for export] *)
   assert (FREE_M : forall x, dlo <= x < dlo + nnz -> owners M x = 0%nat).
-  { intros x Hx. pose proof (owners_filter_le (fun p => negb (bv_eqb (fst p) old)) (vm_maps h) x) as LE.
-    change (List.filter (fun p => negb (bv_eqb (fst p) old)) (vm_maps h)) with M in LE.
+  { intros x Hx.
+    assert (LE : (owners M x <= owners (vm_maps h) x)%nat).
+    { subst M. rewrite owners_maps_subtract;
+        [| pose proof (word_range old); lia
+         | pose proof (word_range old_n); pose proof (word_range old); lia
+         | right; exact HWF ].
+      destruct ((bv_unsigned old <=? x) && (x <? bv_unsigned old + bv_unsigned old_n))%bool; lia. }
     rewrite (region_free_no_owner (vm_maps h) dst new_n x (region_free_app_r _ _ _ _ FREE)) in LE; [lia|].
     apply owns_intro; fold dlo; [lia | rewrite Rn; lia]. }
   (* [comment removed for export] *)

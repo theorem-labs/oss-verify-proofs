@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the brk node reads the packed reservation ledger, the image's reservations plus the launch's extra intervals, and proves the heap grant apart from all of it; node_munmap_sound restated with a refusal continuation and an alternation conclusion, its cut now a range subtraction shown equal to removing the entry, the ledger invariant rebuilt by co_res_frame and the mmap base kept; the YMunmap sys node now vacuous; new node_munmap2_sound and node_munmap2_sound_OBL for the two-child munmap node; cs_ok's new co_split and co_rdr fields proved at the brk grant, whose heap ends at or below KHI, and at the munmap cut, which only removes an entry). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -560,7 +561,9 @@ Proof.
   destruct (brk_req_sound E cs R FULL model d HC Hreq) as (D1 & D2 & D3 & Dm).
   destruct (brk_base_ok_sound E cs R FULL model d HC Hbase) as (B1 & B2 & B3 & B4).
   pose proof (brk_req_val E cs R FULL model d HC Hreq Hbase) as G10.
-  pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
+  (* #108 (LPS 75d69e00): [APS.co_res] is packed; the ledger is the image's reservations
+     followed by the launch's extra intervals [rx], whose geometry [Hrx] the brk grant needs. *)
+  destruct (co_resx _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & Hrx & _ & _).
   pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
   pose proof (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hlim. pose proof (co_sbrk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hsbrk.
   pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk.
@@ -690,6 +693,22 @@ Proof.
         fold csB; try assumption; try reflexivity.
       all: try (change (m_halted model') with (m_halted model); assumption).
       all: lazymatch goal with
+      | |- (exists _ : list (word * word), _) /\ _ =>
+          (* #108: the heap grant is apart from the WHOLE ledger - the image's reservations end
+             at [img_hi A] and the brk base is at or above it ([B3]), the launch's extra
+             intervals start a page above [KHI] and the grown brk ends at or below it ([B4]).
+             Shape from the bzip2/bzip2_compress_target unit's
+             K/AS/AsanNodesMmB.v. *)
+          destruct co_res0 as (Xx & Xm & Xv);
+          split; [rewrite Hvm'; unfold h'; cbn [vm_reserved]; exact Xx|];
+          split; [|rewrite Hvm'; unfold h'; cbn [vm_reserved vm_mmap_base vm_init_sp]; exact Xv];
+          rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps]; constructor; [|exact Xm];
+          apply Forall_forall; intros [a0 s0] Hin0; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+          rewrite Hres in Hin0; apply in_app_iff in Hin0 as [Hin0|Hin0];
+          [ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin0) as [R1 R2]; cbn [fst snd] in R1, R2;
+            right; clear - R1 R2 B3; lia
+          | pose proof (proj1 (Forall_forall _ _) Hrx _ Hin0) as (_ & _ & _ & _ & Hk & _); cbn [fst] in Hk;
+            left; clear - Hk B4; unfold KHI in *; lia ]
       | |- regs_ok _ _ _ =>
           apply regs_ok_regupd_same; [exact co_regs0 | exact G10 | intros X; apply (f_equal bv_unsigned) in X; discriminate]
       | |- know_ok _ _ _ _ =>
@@ -708,7 +727,7 @@ Proof.
           rewrite Hmaps; apply Forall_forall; intros iv Hin; apply in_map_iff in Hin as (m & <- & Hin);
           unfold iv_disjoint, amap_den; cbn [fst snd]; rewrite Udw; destruct (APART m Hin); lia
       | |- model_ivs_wf _ =>
-          apply model_ivs_wf_with_vmmaps; [exact co_wf0 | apply ivs_wf_cons; [exact Wb | exact Wf] | exact (proj1 (proj2 co_wf0)) | reflexivity]  (* [comment removed for export] *)
+          apply model_ivs_wf_with_vmmaps; [exact co_wf0 | apply ivs_wf_cons; [exact Wb | exact Wf] | exact (proj1 (proj2 co_wf0)) | reflexivity | reflexivity]  (* [comment removed for export] *)
       | |- Forall _ (vm_maps _) =>
           rewrite Hvm'; unfold h'; cbn [vm_maps]; constructor; [|exact co_bounds0];
           cbn [fst snd]; rewrite Udw; unfold hull_apart; unfold KHI in *; generalize B2; lia   (* [comment removed for export] *)
@@ -781,6 +800,14 @@ Proof.
           rewrite Hvm', Hlz'; unfold h'; cbn [vm_maps vm_noaccess];
           apply Forall_forall; intros t Ht; pose proof (proj1 (Forall_forall _ _) co_sub0 t Ht) as (S1 & (iv & Hiv & C1 & C2) & S3 & S4);
           split; [exact S1|]; split; [exists iv; split; [right; exact Hiv|]; split; assumption | split; [exact S3 | exact S4]]
+      | |- APS.ysplit _ _ =>    (* LPS 727298f3: co_split; the heap grant ends at or below KHI ([B4]) *)
+          apply (APS.ysplit_cons_low _ (m_vmmaps model) _ (vm_brk (m_vmmaps model)) dw co_split0);
+          [ rewrite Hvm'; apply APS.mmap_top_eq; unfold h'; reflexivity
+          | rewrite Hvm'; unfold h'; reflexivity
+          | rewrite Hvm'; unfold h'; reflexivity
+          | rewrite Udw; change kHighMemBeg with KHI; exact B4 ]
+      | |- m_channel_reader _ = true =>    (* LPS 727298f3: co_rdr; [with_vmmaps] keeps the channel reader *)
+          exact co_rdr0
       | |- ?g => idtac "UNSOLVED FIELD:" g
       end.
     + (* [comment removed for export] *)
@@ -1127,14 +1154,25 @@ Proof.
   destruct (g x); cbn; rewrite IH; destruct (h x); cbn; rewrite ?orb_true_r; reflexivity.
 Qed.
 
-Lemma node_munmap_sound : forall cs cs' E R FULL model T,
+(** #38 (LPS 75d69e00): munmap of an exact entry may be REFUSED with an errno from
+    [munmap_errnos] (75d69e00 Mmap.v:426-439), the ledgers untouched and only x10 changed.
+    The plan reaches a munmap only through [PMunmap2] now ([node_sys YMunmap] is [None],
+    AsanPlan.v:110), whose soundness [mm2_stmt] keeps the two resolutions APART: the refusal
+    realises [TA] ([srealizes0]), the cut realises [TB], the node their alternation.  So this
+    lemma takes the refusal continuation as a premise ([HKr]) beside the cut one ([HK]) and
+    concludes [t_alt2 TA TB] through [AsanNodesLibE.srz_munmap_lazy2]; the cut half of the
+    proof is the pre-#38 one, unchanged. *)
+Lemma node_munmap_sound : forall cs cs' E R FULL model TA TB,
   CSOK E cs R FULL model -> is_ecall_at SEGS cs = true ->
   node_munmap A cs = Some cs' ->
+  (forall e, In e munmap_errnos ->
+     srealizes0 SEGS (mkCfg (mkst (regupd R 10 (errno_ret e)) (v_addi (Z_to_bv 64 (pc cs)) 4)
+                               FULL (seg_rom SEGS)) model) TA) ->
   (forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> CSOK E' cs' R' FULL' model' -> m_fs model' = m_fs model ->
-      srealizes SEGS (cfg R' (pc cs') FULL' model') T) ->
-  srealizes SEGS (cfg R (pc cs) FULL model) T.
+      srealizes SEGS (cfg R' (pc cs') FULL' model') TB) ->
+  srealizes SEGS (cfg R (pc cs) FULL model) (t_alt2 TA TB).
 Proof.
-  intros cs cs' E R FULL model T HC Hec Hn HK.
+  intros cs cs' E R FULL model TA TB HC Hec Hn HKr HK.
   destruct (AsanNodesMmLib.is_ecall_at_sound SEGS cs Hec) as (w & Hf & He & Hp0 & Hp4).
   pose proof (co_know _ _ _ _ _ _ _ _ _ _ _ _ HC) as HKN.
   rewrite node_munmap_eq in Hn. (* [comment removed for export] *) unfold node_munmap_ref in Hn.
@@ -1287,9 +1325,10 @@ Proof.
   (* [comment removed for export] *)
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt. pose proof (co_wf _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hwf. pose proof Hwf as (W1 & W2 & W3 & Wsp).
   unfold cfg_of.
-  eapply (srz_munmap_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len T Hf He Hhalt R17 R10 B2 R11 ltac:(lia)).
+  eapply (srz_munmap_lazy2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len TA TB Hf He Hhalt R17 R10 B2 R11 ltac:(lia)).
   { unfold TASK_SIZE. fold nZ. unfold APS.ATOP in *. lia. }  (* [comment removed for export] *)
   { fold nZ. rewrite HnZw. apply map_has_intro. rewrite <- Haddr. exact HIN. }
+  { intros e Herr. exact (HKr e Herr). }
   fold nZ. rewrite HnZw. rewrite (v_addi_pc (pc cs) Hp0 Hp4).
   set (model' := munmap_model addr n model). set (FULL' := unfill addr n FULL).
   match goal with |- srealizes _ (mkCfg _ ?mo) _ => change mo with model' end.
@@ -1297,10 +1336,39 @@ Proof.
   specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
   unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
   (* [comment removed for export] *)
-  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+  (* #38 (LPS 75d69e00): [munmap_model]'s cut is [Mmap.mmap_fixed_destroyed_next], which
+     SUBTRACTS the request from the ledger instead of removing whole entries
+     (75d69e00 theories/LinuxProcessSem/Sys/Mm/Mmap.v:1488; its own comment gives the reason -
+     the split remnants outside the request survive).  So this is no longer [reflexivity].
+     On THIS ledger the two agree, and the donor is in this tree, not another one:
+     MmapSim.maps_subtract_exact, added for this revision.  Its four premises
+     are facts this proof already has - the cut is exactly [(addr, n)], every entry is
+     positive ([BPOS]), that entry is the only one based at [addr] ([UNIQ]), and every other
+     entry misses the range ([DISJl]).  Same reading as this tree's AHeap/ASys.v:424-427 and
+     AHeap/AVm.v:1161-1175. *)
+  assert (Hmden : amap_den E m = (addr, n)) by (unfold amap_den; rewrite Haddr; fold n; reflexivity).
+  assert (PMsub : vm_maps (m_vmmaps model')
+                  = maps_subtract (vm_maps (m_vmmaps model))
+                      (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)) by reflexivity.
+  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+  { rewrite PMsub. apply maps_subtract_exact.
+    - exact B1.
+    - intros b s Hbs. exact (BPOS (b, s) Hbs).
+    (* Every binder this block introduces is prefixed [Hms]: node_munmap_sound's own context
+       already holds Hb (:1190/:1196), Hne, Hne2, Hiv and D, and maps_subtract_exact's premises
+       would shadow them by their natural names. *)
+    - intros b s Hbs Hmsbase. subst b.
+      pose proof (UNIQ (addr, s) Hbs eq_refl) as Hmsu. rewrite Hmden in Hmsu.
+      apply (f_equal snd) in Hmsu. cbn [snd] in Hmsu. exact Hmsu.
+    - intros b s Hbs Hmsne.
+      assert (Hmsne2 : (b, s) <> amap_den E m).
+      { rewrite Hmden. intros Heq. apply (f_equal fst) in Heq. cbn [fst] in Heq. exact (Hmsne Heq). }
+      pose proof (DISJl (b, s) Hbs Hmsne2) as Hmsd. cbn [fst snd] in Hmsd.
+      subst lo hi. clear - Hmsd Un. lia. }
   assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PL : m_vm_lazy model' = maps_subtract (m_vm_lazy model) lo (lo + bv_unsigned n)) by reflexivity.
-  assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.  (* [comment removed for export] *)
+  assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.
+  assert (PMB : vm_mmap_base (m_vmmaps model') = vm_mmap_base (m_vmmaps model)) by reflexivity.  (* AsanCeil.init_sp_ok's mmap-base floor *)  (* [comment removed for export] *)
   assert (PT : m_vm_materialized model' = List.filter (page_outside_range lo (lo + bv_unsigned n)) (m_vm_materialized model)) by reflexivity.
   rewrite Un in PN, PL, PT. fold hi in PN, PL, PT.
   (* [comment removed for export] *)
@@ -1391,7 +1459,7 @@ Proof.
   { intros iv Hiv Hneiv. apply (seps_In_disjoint (vm_maps (m_vmmaps model))); [exact (co_seps _ _ _ _ _ _ _ _ _ _ _ _ HC) | | exact Hiv | | exact Hneiv].
     - intros iv' Hiv'. exact (proj1 (proj1 (Forall_forall _ _) (co_bounds _ _ _ _ _ _ _ _ _ _ _ _ HC) iv' Hiv')).
     - rewrite <- Haddr. exact HIN. }
-  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xsplit Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xnk Xlzk Xsub Xdef Xnn Xcov].
+  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xsplit Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xnk Xlzk Xsub Xdef Xnn Xcov Xysp Xrdr].
   destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
   assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) kept ++ flat_map (APS.allow_sh A E) (gone ++ a_ghost cs)) by reflexivity.
   constructor; rewrite ?HAeq; subst cs'; cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn s_regs s_log s_know s_next mk_ss];
@@ -1418,7 +1486,12 @@ Proof.
   - unfold fds_ok in *. exact Xfds.
   - exact Xfs.
   - exact Xtid.
-  - exact Xres.
+  - (* #108: the ledger, the kernel build and the bounds [vdso_top] reads are all kept, and the
+       remaining mappings are a sublist of the old ones, so the packed [co_res] is rebuilt by
+       [AsanNodesMmLib.co_res_frame] (donor: bzip2 K/AS/AsanNodesMmB.v). *)
+    refine (AsanNodesMmLib.co_res_frame SEGS A RES_len HULL_ok model model' eq_refl eq_refl PMB PISP _ Xres).
+    rewrite PM. unfold map_remove. apply Forall_forall. intros q Hq. apply filter_In in Hq as [Hq _].
+    exact (proj1 (Forall_forall _ _) (proj1 (proj2 Xres)) q Hq).
   - exact Xlimit.
   - rewrite PM. exact MAPS'.
   - (* [comment removed for export] *)
@@ -1427,7 +1500,7 @@ Proof.
     intros iv Hiv. apply HF1. apply in_app_iff in Hiv as [Hiv|Hiv]; apply in_app_iff; [left; exact Hiv | right].
     unfold map_remove in Hiv. apply filter_In in Hiv as [Hiv _]. exact Hiv.
   - (* [comment removed for export] *) rewrite PM. unfold map_remove. apply seps_filter. exact Xseps.
-  - (* [comment removed for export] *) unfold model_ivs_wf. rewrite PM, PN, PL. split; [|split; [|split; [|unfold init_sp_ok in *; rewrite PISP; exact Wsp]]].
+  - (* [comment removed for export] *) unfold model_ivs_wf. rewrite PM, PN, PL. split; [|split; [|split; [|unfold init_sp_ok in *; rewrite PISP, PMB; exact Wsp]]].
     + unfold map_remove. apply ivs_wf_filter. exact W1.
     + apply maps_subtract_wf; [exact W2 | lia].
     + apply maps_subtract_wf; [exact W3 | lia].
@@ -1452,7 +1525,7 @@ Proof.
   - exact Xbrk.
   - exact Xsbrk.
   - (* [comment removed for export] *) rewrite (eager_used_sem model'), (eager_used_sem model Xwf) in *.
-    2: { unfold model_ivs_wf. rewrite PM, PN, PL. split; [unfold map_remove; apply ivs_wf_filter; exact W1|]. split; [apply maps_subtract_wf; try assumption; lia|]. split; [apply maps_subtract_wf; try assumption; lia | unfold init_sp_ok in *; rewrite PISP; exact Wsp]. }
+    2: { unfold model_ivs_wf. rewrite PM, PN, PL. split; [unfold map_remove; apply ivs_wf_filter; exact W1|]. split; [apply maps_subtract_wf; try assumption; lia|]. split; [apply maps_subtract_wf; try assumption; lia | unfold init_sp_ok in *; rewrite PISP, PMB; exact Wsp]. }
     rewrite PM. unfold map_remove.
     eapply Z.le_trans; [|exact Xeager]. apply sum_count_filter_le.
     intros q Hq Hkeep x Hx. apply negb_true_iff in Hkeep.
@@ -1493,7 +1566,7 @@ Proof.
     + pose proof HALLOW_bytes as HAB'.
       assert (EG : eager_used model' <= eager_used model); [|change (vm_limit (m_vmmaps model')) with (vm_limit (m_vmmaps model)); clear - EG HAB' N5; lia].
       rewrite (eager_used_sem model'), (eager_used_sem model Xwf).
-      2: { unfold model_ivs_wf. rewrite PM, PN, PL. split; [unfold map_remove; apply ivs_wf_filter; exact W1|]. split; [apply maps_subtract_wf; try assumption; lia|]. split; [apply maps_subtract_wf; try assumption; lia | unfold init_sp_ok in *; rewrite PISP; exact Wsp]. }
+      2: { unfold model_ivs_wf. rewrite PM, PN, PL. split; [unfold map_remove; apply ivs_wf_filter; exact W1|]. split; [apply maps_subtract_wf; try assumption; lia|]. split; [apply maps_subtract_wf; try assumption; lia | unfold init_sp_ok in *; rewrite PISP, PMB; exact Wsp]. }
       rewrite PM. unfold map_remove. apply sum_count_filter_le.
       intros q Hq Hkeep x Hx. apply negb_true_iff in Hkeep.
       assert (Hxo : x < lo \/ hi <= x).
@@ -1599,11 +1672,39 @@ Proof.
     destruct (proj1 (Forall_forall _ _) Xcov m1 Hm1 Hk1 z Hz) as [Hn|Htok]; [left | right; exact Htok].
     rewrite NOACC, Hn. cbn [andb]. apply negb_true_iff. unfold in_rng. apply andb_false_iff.
     unfold uE in Hz. subst lo hi. destruct D as [D|D]; first [left; apply Z.leb_gt; lia | right; apply Z.ltb_ge; lia].
+  - (* LPS 727298f3: co_split; the cut removes the entry, so the ledger is a sublist of the old one *)
+    apply (APS.ysplit_incl (a_ylo cs) (m_vmmaps model) (m_vmmaps model') Xysp (APS.mmap_top_eq _ _ PMB PISP)).
+    change (vm_reserved (m_vmmaps model')) with (vm_reserved (m_vmmaps model)). rewrite PM.
+    intros q Hq. apply in_app_iff in Hq as [Hq|Hq]; apply in_app_iff; [left; exact Hq | right].
+    unfold map_remove in Hq. apply filter_In in Hq as [Hq _]. exact Hq.
+  - (* LPS 727298f3: co_rdr; the cut keeps the channel reader *)
+    exact Xrdr.
 Qed.
 
 
+(** [node_sys YMunmap] is [None] at #38 (AsanPlan.v:110): a munmap is a [PMunmap2] node, so this
+    obligation is vacuous. *)
 Theorem node_sys_sound_YMunmap : sys_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 YMunmap.
-Proof. intros cs cs' E R FULL model T HC Hpre Hn HK. eapply node_munmap_sound; eauto. Qed.
+Proof. intros cs cs' E R FULL model T HC Hpre Hn HK. cbn [node_sys] in Hn. discriminate Hn. Qed.
+
+(** The [PMunmap2] node: [node_munmap2] is the refused child [refuse cs] (x10 := -ENOMEM, model
+    unchanged) beside [node_munmap_ref]'s cut child (AsanPlanCore.v:2474-2479).  The refusal
+    continuation comes from [AsanNodesMmLib.refuse_cont0], as for mmap/mprotect in
+    AsanNodesMmA; [munmap_errnos] is [ENOMEM] alone. *)
+Theorem node_munmap2_sound : mm2_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 (node_munmap2 A).
+Proof.
+  intros cs csa csb E R FULL model TA TB HC Hec Hn HkA HkB.
+  rewrite node_munmap2_eq in Hn.
+  destruct (node_munmap_ref A cs) as [csG|] eqn:Hg; [|discriminate].
+  injection Hn as <- <-.
+  destruct (AsanNodesMmLib.is_ecall_at_sound SEGS cs Hec) as (w & Hf & He & Hp0 & Hp4).
+  apply (node_munmap_sound cs csG E R FULL model TA TB HC Hec).
+  - rewrite node_munmap_eq. exact Hg.
+  - intros e Herr. destruct Herr as [<-|[]].
+    exact (AsanNodesMmLib.refuse_cont0 SEGS A nx0 LIMIT SINV argH FS0 RES_len SP0 SINV_frame
+             cs E R FULL model TA HC Hp0 Hp4 HkA).
+  - exact HkB.
+Qed.
 
 End SoundMunmap.
 
@@ -1639,3 +1740,22 @@ Proof.
   - eapply node_sys_sound_YSetTid; eassumption.
 Qed.
 End SoundSys.
+
+(** The closed form [AsanStartup.v:242] and [AsanMainEntry.v] pass to [check_sound], in the
+    argument order of [AsanNodesMmA.node_mmap2_sound_OBL]; its conclusion is
+    [AsanNodesIface.OBL_munmap2] unfolded. *)
+Theorem node_munmap2_sound_OBL : forall SEGS A nx0 LIMIT (SP0 : Z) SINV argH FS0,
+  (forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None) ->
+  res_len_ok SEGS A ->
+  Forall (fun iv => img_lo A <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= img_hi A) (segments_reserved SEGS) ->
+  hull_ok A -> shadow_ok A -> hull_cov SEGS A -> sp0_ok SP0 ->
+  (forall E (a : word), argH E a = true -> SP0 <= bv_unsigned a) ->
+  (forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a) ->
+  (forall E M M', (forall a, argH E a = true -> M' a = M a) -> (forall a : word, SP0 <= bv_unsigned a -> M a <> None -> M' a <> None) -> SINV E M -> SINV E M') ->
+  (forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M) ->
+  (forall E M, SINV E M -> uE_sp0 E = SP0) ->
+  mm2_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 (node_munmap2 A).
+Proof.
+  intros. eapply node_munmap2_sound; eauto.
+  Unshelve. all: first [exact (fun _ => None) | exact (fun _ _ _ => None)].
+Qed.

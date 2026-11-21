@@ -20,8 +20,8 @@ Open Scope Z_scope.
     Post in the spine's terms: a0 = b2z (SegModel.name_ok nm) for the C string nm at s (isalnum_c.v's alnum_b is
     SegModel.isalnum on a byte).
 
-    Callee contract its walk takes as a premise: isalnum_contract (Prog/isalnum_c.v, ISALNUM = 0x15e38; commit
-    d8911fcbf9ff): a0 = 1 or 0 by alnum_b, a leaf (no stack, no memory).
+    Callee contract its walk takes as a premise: isalnum_contract (Prog/isalnum_c.v, ISALNUM = 0x15e38):
+    a0 = 1 or 0 by alnum_b, a leaf (no stack, no memory).
 
     Call site: reac_declared_vlan_split 0x15bac (reac_declared_vlan.c:58) with a0 = parent: the memcpy of the plen <=
     15 bytes before the dot and the NUL stored at parent + plen (`sb zero` 0x15ba4) make it the C string

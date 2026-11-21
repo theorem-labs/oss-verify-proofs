@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded madvise_check and srz_madvise_lazy into plain statements, dropped the TCodec name table, and discharged the new read-only-memory premise in srz_madvise_lazy via RomBase.sys_rob_memfree with memfree_233; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanNodesMadvK.v, lines 14, 25-41, 72-74. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -11,19 +12,31 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AsanAcct.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim ShapeAlg SpinAlg Nodes StoreOk AgentLib AgentNodes RefNodes AsanAcctShape Scfg KitNodesS.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AsanNodesLibEK.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__AsanNodesMadvK () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Checks.ExecutableSpecs."; "LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm.Madvise."; "LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Prelude."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Madvise."; "LinuxProcessSemantics.LinuxProcessSem.Sys.Syscall."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.MmapSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1None"; "1O"; "1Some"; "1bool"; "1option"; "1true"; "2I"; "2eq"; "3Z"; "0K"; "4check_syscall"; "5check_madvise"; "6check_result"; "7fetch_word"; "7is_ecall"; "7machine_state"]; ["7ms_gpr"; "8mkCfg"; "8sys_input"; "9Model"; "9SyscallEffect"; "9m_halted"; "9m_vmmaps"; "9page_size"; ":madvise_dontneed_next"; ":madvise_dontneed_ok"; ";int32"; "<bvmap"; "=zfill"; ">getr"; ">mkst"; ">regupd"]; [">v_addi"; "?TSet"; "@srealizes"; "Aadd"; "Alt"; "Amodulo"; "Apow"; "0a"; "0eff"; "0fxg"; "0len"; "0mem"; "0model"; "0ms"; "0pc"; "0regs"]; ["0rom"; "0scfg"; "0segs"; "BBV"; "BZ_to_bv"; "Bbv"; "Bbv_unsigned"; "0w"; "0x8"]]).
 Section Madv.
 Context {fxg : PropExec.FPState}.
 Variable segs : list Segment.
 Variable scfg : SpuriousCfg.
 Hypothesis Halloc : sc_alloc scfg = false.
-Lemma madvise_check : ltac2:(TCodec.tc2 tcn__AsanNodesMadvK "Q7'?'QEyR0%211'C'D'7'8&QFr3%2281+W9%63521'<&:&BvQBr5r4%43321r2%7321<&;&@(1%2281u1%42:1&Ju2%72=1%311%:5751<G%K3D<1p0F1pRBN1pRJQ01pSBQ21pRLQ61").
+Lemma madvise_check : forall ms x8 model eff,
+bv_unsigned x8 = 233 ->
+check_syscall (sys_input segs ms x8) eff model
+= Madvise.check_madvise (ms_gpr ms 0) (ms_gpr ms 1) (int32 (ms_gpr ms 2)) eff model.
 Proof. intros ms x8 model eff Hno. unfold check_syscall. rewrite in_sysno_sys_input, Hno. reflexivity. Qed.
-Lemma srz_madvise_lazy : ltac2:(TCodec.tc2 tcn__AsanNodesMadvK "TC&Ky5'QEyR0%211%5241'4y8%611%311p061'CyQ0%;11'8&Q1'7%;14&=vQBr8%3221(2r4%22;1%93841'3&>r5%211(5%?3521%J1L&Er7%211(0%11Q1%F3631&Mr<(QC+A(6%33Q;21%6251&QD+W9%22Q=1%Q13Q=41r=+:%;3QC19%>231%Q63QB1D&Q5&QF%12QFQ5&G%4221z%Q=3Q?21r?+;%G3QO1E%J231%D2QOQ>%QC3QO21&Q4r9%22:1r:+TP0%B221%QJ3QL1>&Q3%D2R9Q4r;%3221&Q6+2+R0%3221%?251rC+<%Q=3RE1Q;%Q@231+4%Q;2RF1%R:3RF31&I&Fr@%211r>%QB2RMQ>%63321%RB3R81R4'Q2vQA(A&NvQ9&OrE%QL2S7Q>%332QG1&Q0rD%221F&L%R22S=A%23QC1MrB%=5<8521&HrA%231QH6%B241%E4S5D1R6rF%D5C1A=Q6%F219%I4S9H1Mp051p0L1p0Q51p0Q=1p0QG1p0QL1p0R01p0R71p0R?1p0RE1p0S11p0S91p0S@1pDSK1pRFSM1pR@T81pS@T01pRJT31pS2T51pRHT61pRNT=1pS0T=1").
+Lemma srz_madvise_lazy : forall regs (pc : word) mem rom model w (a : word) (len : Z) K,
+fetch_word segs pc = Some w -> is_ecall w = true ->
+m_halted model = None ->
+getr regs 17 = Z_to_bv 64 233 ->
+getr regs 10 = a -> (bv_unsigned a mod page_size = 0)%Z ->
+getr regs 11 = Z_to_bv 64 len -> (0 < len)%Z -> (len mod 4096 = 0)%Z -> (bv_unsigned a + len < 2 ^ 64)%Z ->
+getr regs 12 = Z_to_bv 64 4 ->
+madvise_dontneed_ok (m_vmmaps model) a (Z_to_bv 64 len) = true ->
+srealizes segs scfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) (zfill a (Z_to_bv 64 len) mem) rom)
+(madvise_dontneed_next model a (Z_to_bv 64 len))) K ->
+srealizes segs scfg (mkCfg (mkst regs pc mem rom) model) K.
 Proof.
 intros regs pc mem rom model w a len K HF HE Hh H17 H10 Hal H11 Hlen Hll Hend H12 Hok Hc.
 pose proof (u64_range a) as Hra.
@@ -54,7 +67,9 @@ rewrite Hok. reflexivity. }
 eapply (srz_det_noacc segs scfg ms model (getr regs 17)
 (mkEffectU (Z_to_bv 64 0) [] [(a, Z_to_bv 64 len)] [] [] [])
 (madvise_dontneed_next model a (Z_to_bv 64 len)));
-[exact Hh | reflexivity | rewrite Hno; reflexivity | | | | reflexivity |].
+[exact Hh | reflexivity | rewrite Hno; reflexivity
+| exact (RomBase.sys_rob_memfree segs ms model (getr regs 17) eq_refl ltac:(rewrite Hno; exact RomBase.memfree_233))
+| | | | reflexivity |].
 - intros eff m' evs. split.
 + intros Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
 destruct ws; [|discriminate]. destruct us; [|discriminate].

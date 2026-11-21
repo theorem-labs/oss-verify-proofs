@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader fact, the vDSO pair in the reserved ledger and the 6144513-byte init stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -63,12 +64,12 @@ Qed.
 
 Lemma stk_of_stack_writableZ : forall M sp0,
   stack_writableZ M sp0 -> 0x7fff80000000 <= sp0 <= 0x800000000000 ->
-  stk s0segs M (sp0 - 8388608) (sp0 - 128).
+  stk s0segs M (sp0 - 6144513) (sp0 - 128).
 Proof.
   intros M sp0 SW Hsp.
-  pose proof (SW 0 (Z.to_nat (8388608 - 128)) ltac:(lia) ltac:(lia)) as S. rewrite Z.add_0_r in S.
-  pose proof (stk_of_store_ok_off M (sp0 - 8388608) (Z.to_nat (8388608 - 128)) ltac:(lia) ltac:(lia) ltac:(lia) S) as K.
-  replace (sp0 - 8388608 + Z.of_nat (Z.to_nat (8388608 - 128))) with (sp0 - 128) in K by lia. exact K.
+  pose proof (SW 0 (Z.to_nat (6144513 - 128)) ltac:(lia) ltac:(lia)) as S. rewrite Z.add_0_r in S.
+  pose proof (stk_of_store_ok_off M (sp0 - 6144513) (Z.to_nat (6144513 - 128)) ltac:(lia) ltac:(lia) ltac:(lia) S) as K.
+  replace (sp0 - 6144513 + Z.of_nat (Z.to_nat (6144513 - 128))) with (sp0 - 128) in K by lia. exact K.
 Qed.
 
 Lemma img_clear_In : forall M lo hi,
@@ -93,10 +94,10 @@ Lemma statics_of_world : forall M sp0 tid g,
 Proof.
   intros M sp0 tid g Hsp SW MF W CT CC.
   pose proof (stk_of_stack_writableZ M sp0 SW Hsp) as ST0.
-  assert (STF : stk s0segs M (sp0 - 8388608) (sp0 - 48)).
-  { pose proof (SW 0 (Z.to_nat (8388608 - 48)) ltac:(lia) ltac:(lia)) as S. rewrite Z.add_0_r in S.
-    pose proof (stk_of_store_ok_off M (sp0 - 8388608) (Z.to_nat (8388608 - 48)) ltac:(lia) ltac:(lia) ltac:(lia) S) as K.
-    replace (sp0 - 8388608 + Z.of_nat (Z.to_nat (8388608 - 48))) with (sp0 - 48) in K by lia. exact K. }
+  assert (STF : stk s0segs M (sp0 - 6144513) (sp0 - 48)).
+  { pose proof (SW 0 (Z.to_nat (6144513 - 48)) ltac:(lia) ltac:(lia)) as S. rewrite Z.add_0_r in S.
+    pose proof (stk_of_store_ok_off M (sp0 - 6144513) (Z.to_nat (6144513 - 48)) ltac:(lia) ltac:(lia) ltac:(lia) S) as K.
+    replace (sp0 - 6144513 + Z.of_nat (Z.to_nat (6144513 - 48))) with (sp0 - 48) in K by lia. exact K. }
   constructor.
   - intros a Ha. cbn [in_ivs S_IVS] in Ha.
     assert (P1 : img_pristine M 0x10000 0x2a590) by img_of W 0x10000 0x2a590.
@@ -121,7 +122,7 @@ Proof.
     assert (WR : forall A, sp0 - 128 <= A -> A + 8 <= sp0 - 48 -> wr_at s0segs M A 8).
     { intros A HA HB. eapply wr_at_of_stk; [exact STF | lia | lia | lia]. }
     (* [comment removed for export] *)
-    destruct (stk_carve s0segs M (sp0 - 8388608) (sp0 - 120) 8 (proj1 (stk_split s0segs M (sp0 - 8388608) (sp0 - 120) (sp0 - 48) STF ltac:(lia))) ltac:(lia))
+    destruct (stk_carve s0segs M (sp0 - 6144513) (sp0 - 120) 8 (proj1 (stk_split s0segs M (sp0 - 6144513) (sp0 - 120) (sp0 - 48) STF ltac:(lia))) ltac:(lia))
       as [_ [junk8 JK]].
     replace (sp0 - 120 - Z.of_nat 8) with (sp0 - 128) in JK by lia.
     exists junk8.
@@ -156,6 +157,8 @@ Definition target_phase_stmt : Prop :=
          (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (model : Model),
     target_pre sp0 gm area brkv mas tid hw content R M -> target_vm gm area VM ->
     target_vmx sp0 gm area brkv mas VM -> auxv0 sp0 M -> SPSA.std_model VM model ->
+    (* the run's vDSO/vvar pair is in the ledger ([State.init_reserved]) *)
+    incl (vdso_reserved (m_kernel model) (vdso_top VM)) (vm_reserved VM) ->
     realizes s0segs (mkCfg (mkst R (Z_to_bv 64 0x13818) M (seg_rom s0segs)) model) (t_target content (m_fs model)).
 
 Section Phase.
@@ -176,6 +179,7 @@ Section Phase.
       target_pre sp0 gm area brkv mas tid hw content R M -> target_vm gm area VM -> target_vmx sp0 gm area brkv mas VM ->
       auxv0 sp0 M -> atop_ok VM ->
       m_vmmaps MD = VM -> m_halted MD = None -> m_vm_lazy MD = [] -> m_vm_materialized MD = [] ->
+      incl (vdso_reserved (m_kernel MD) (vdso_top VM)) (vm_reserved VM) ->
       entry_facts (gm + 32) (Z.of_nat (length content)) sp0 M MD.
 
   (* [comment removed for export] *)
@@ -201,10 +205,10 @@ Section Phase.
     stack_writableZ M sp0 -> main_frame sp0 M ->
     Forall (fun iv => img_clear M (fst iv) (snd iv)) img_clear_ivs ->
     cell M 0x3a638 4 tid -> (exists e, 0 <= e < 2 ^ 32 /\ cell M 0x3a63c 4 e) -> cell M 0x5a950 8 run_guard ->
-    entry_facts bufA Lc sp0 M MD -> m_fds MD = SPSA.fds_std ->
+    entry_facts bufA Lc sp0 M MD -> m_fds MD = SPSA.fds_std -> m_channel_reader MD = true ->
     realizes s0segs (mkCfg (mkst R (Z_to_bv 64 0x13818) M (seg_rom s0segs)) MD) (t_target content (m_fs MD)).
   Proof.
-    intros until MD. (intros Lc cfglen paylen R1 R2 R4 R10 R11 R12 R13 R9 R18 R20 R21 R22 SP0 ACV TID HL1 HL2 GD GLO GA GB GN CONT SW MF W CT [e [He CE]] CC; cps_intros (s & LB0 & pb & bufN & B & INV & BUFB & BUFN & AUX & HB & SYS & C21 & K0 & VM & K0LE); intros FDS).
+    intros until MD. (intros Lc cfglen paylen R1 R2 R4 R10 R11 R12 R13 R9 R18 R20 R21 R22 SP0 ACV TID HL1 HL2 GD GLO GA GB GN CONT SW MF W CT [e [He CE]] CC; cps_intros (s & LB0 & pb & bufN & B & INV & BUFB & BUFN & AUX & HB & SYS & C21 & K0 & VM & K0LE); intros FDS RDR).
     assert (P1 : img_pristine M 0x10000 0x2a590) by img_of W 0x10000 0x2a590.
     assert (P2 : img_pristine M 0x3a5d9 0x3a610) by img_of W 0x3a5d9 0x3a610.   (* [comment removed for export] *)
     eapply (run_cps AI AC HARN PF0 sp0 tid B bufA bufN content MD R M s LB0 pb (Z_to_bv 64 e) K0); try eassumption; try lia.
@@ -222,18 +226,18 @@ Section Phase.
       | |- rw_cells _ _ _ [C4 _] =>
           apply rw_cells_C4_of_rdn; [| change 4 with (Z.of_nat 4); eapply wr_at_img; [solve_img | unfold errno_cell, S0_layout; cbn [al_tp]; lia | unfold errno_cell, S0_layout; cbn [al_tp]; lia]];
           unfold cell in CE; unfold errno_cell, S0_layout; cbn [al_tp]; unfold wa; exact CE
-      | |- fds_ok _ _ => unfold fds_ok; rewrite FDS; reflexivity
-      | |- fds_ok _ => unfold fds_ok; rewrite FDS; reflexivity
+      | |- fds_ok _ _ => unfold fds_ok; split; [rewrite FDS; reflexivity | exact RDR]
+      | |- fds_ok _ => unfold fds_ok; split; [rewrite FDS; reflexivity | exact RDR]
       end.
   Qed.
 
   Theorem target_phase : target_phase_stmt.
   Proof.
-    intros sp0 gm area brkv mas tid hw content R M VM model TP TV TX AX SM.
-    destruct SM as [Sfds Svm Shalt Slazy Smat].
+    intros sp0 gm area brkv mas tid hw content R M VM model TP TV TX AX SM SMvi.
+    destruct SM as [Sfds Svm Shalt Slazy Smat Srdr].
     pose proof (HE0 _ _ _ _ _ _ _ _ _ _ _ _ TP TV TX AX
                   (atop_of_vmx _ _ _ _ _ _ TX (tp_ceil _ _ _ _ _ _ _ _ _ _ TP) ltac:(pose proof (tp_sp0 _ _ _ _ _ _ _ _ _ _ TP); lia))
-                  Svm Shalt Slazy Smat) as EF.
+                  Svm Shalt Slazy Smat SMvi) as EF.
     destruct TP as [Rra Rsp Rgp Rtp Ra0 Ra1 Ra2 Ra3 Rs0 Rs1 Rs2 Rs3 Rs4 Rs5 Rs6 Rs7 Gsp Gceil Glen Mstack Mframe Wd Mcontent].
     pose proof (w_grp_def _ _ _ _ _ _ _ Wd) as GD. pose proof (w_gm_rng _ _ _ _ _ _ _ Wd) as GR.
     pose proof (w_tid _ _ _ _ _ _ _ Wd) as CT. pose proof (w_tidr _ _ _ _ _ _ _ Wd) as TR.

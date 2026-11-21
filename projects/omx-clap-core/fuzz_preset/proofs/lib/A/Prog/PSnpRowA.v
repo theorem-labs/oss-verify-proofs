@@ -14,11 +14,11 @@
    - LAWS := YGcallcf.AR_laws_x_xs of YG0lawscf.AR_laws_ok_cf (YG0lawscf.v:22), at cf_head;
    - TB := AD2l.TfibB_syms (lib/A/AD2l.v:73);
    - alx_band_pres := YCbqG.alx_band_pres (AR_laws_x's field 20) of LAWS;
-   - W_H8 := the world's field YA0n.w_H8 (YA0n.v:25).
+   - W_H8 := the world's field YA0n.w_H8 (YA0n.v:26).
    The root's five side conditions are closed comparisons of the instance's bounds, decided by vm_compute. Its
    conclusion is the row by conversion only: pa_segs of PI_prog_A is Img0.rsegs (PAImg_prog.v:406, Img0.v:3), the
    loaded segments AB1v.tfibsegs is (AB1v.v:12); FF_preset_x and FF_esc have the same body (PSnpPfFam.v:75-76 and
-   :95-99, YGcallSnpCk.v:112-118); AE2p's canary cells are AImgCells' computed (AE2p.v:33-34); PSnpPcom.PCM_CR
+   :95-99, YGcallSnpCk.v:113-119); AE2p's canary cells are AImgCells' computed (AE2p.v:33-34); PSnpPcom.PCM_CR
    (PSnpPcom.v:83-84) is ps_snp_cr's map / filter (PRW_put_string_e.ps_snp_cr) over the same segments; and
    PSnpI.PC_snprintf (PSnpI.v:71) is pa_sigma AS___wrap_snprintf (PAImg_prog.v:81).
    Numerals: none typed. No image ADDRESS is typed. *)

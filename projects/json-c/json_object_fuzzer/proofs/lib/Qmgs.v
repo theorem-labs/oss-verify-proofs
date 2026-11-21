@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: jo_new_object_A3_stmt and lh_kchar_table_new_A3_cps take it after alloc_ceiling <= lo). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -55,7 +56,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A LB LM FRS B m md ->
 lh_globA m ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_calloc A4H) (Z_to_bv 64 0xa4170) u ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 48 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 48 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -68,7 +69,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 lh_kchar_table_new_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until u. intros HP G UW UWK ST LO LOS SPA HT ERR TP RA A0 A1 BB BD K.
+intros until u. intros HP G UW UWK ST LO HBT LOS SPA HT ERR TP RA A0 A1 BB BD K.
 unfold_consts. unfold lhnew_costB in BB. word_range sp SPR.
 destruct G as (G1 & [seed G2]). unfold GHASHA in G1. unfold GSEEDA in G2.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -294,7 +295,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A LB LM FRS B m md ->
 lh_globA m ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_malloc A4H) (Z_to_bv 64 0x9d38c) u ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 48 - 48 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 48 - 48 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -309,7 +310,7 @@ F (Z_to_bv 64 json_object_new_object_A_entry) fc None m (seg_rom asegs)).
 Lemma json_object_new_object_A3_cps : jo_new_object_A3_stmt.
 Proof.
 unfold jo_new_object_A3_stmt.
-intros until u. intros HP G UW UWK ST LO LOS SPA HT ERR TP RA BB BD K. pose proof OBL_AMEMSET as OBL_unused_on_B.
+intros until u. intros HP G UW UWK ST LO HBT LOS SPA HT ERR TP RA BB BD K. pose proof OBL_AMEMSET as OBL_unused_on_B.
 unfold_consts. unfold newobj_costB in BB. word_range sp SPR.
 pose proof G as G0. destruct G as (G1 & [seed G2]). unfold GHASHA in G1. unfold GSEEDA in G2.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -621,7 +622,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A LB LM FRS B m md ->
 lh_globA m ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_calloc A4H) (Z_to_bv 64 0xa1d8c) u ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 48 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 48 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -634,7 +635,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 lh_kchar_table_new_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until u. intros HP G UW UWK ST LO LOS SPA HT ERR TP RA A0 A1 BB BD K.
+intros until u. intros HP G UW UWK ST LO HBT LOS SPA HT ERR TP RA A0 A1 BB BD K.
 unfold_consts. unfold lhnew_costB in BB. word_range sp SPR.
 destruct G as (G1 & [seed G2]). unfold GHASHA in G1. unfold GSEEDA in G2.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -853,7 +854,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A LB LM FRS B m md ->
 lh_globA m ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_malloc A4H) (Z_to_bv 64 0x9bbfc) u ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 32 - 48 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 32 - 48 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -868,7 +869,7 @@ F (Z_to_bv 64 json_object_new_object_A_entry) fc None m (seg_rom asegs)).
 Lemma json_object_new_object_A3_cps : jo_new_object_A3_stmt.
 Proof.
 unfold jo_new_object_A3_stmt.
-intros until u. intros HP G UW UWK ST LO LOS SPA HT ERR TP RA BB BD K.
+intros until u. intros HP G UW UWK ST LO HBT LOS SPA HT ERR TP RA BB BD K.
 unfold_consts. unfold newobj_costB in BB. word_range sp SPR.
 pose proof G as G0. destruct G as (G1 & [seed G2]). unfold GHASHA in G1. unfold GSEEDA in G2.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.

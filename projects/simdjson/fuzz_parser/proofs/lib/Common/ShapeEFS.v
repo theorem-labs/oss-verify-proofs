@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the realization premises are stated over the run's segments (run_segments) and the configuration built from them, with a comment, and shape_strong_equiv_efs_eq is re-indented. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -19,10 +20,10 @@ Theorem shape_strong_equiv_efs :
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  srealizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  srealizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
@@ -34,30 +35,30 @@ Proof.
   - cbn. eapply realizes_no_error; exact Hsource.
   - cbn. eapply srealizes_no_error; exact Htarget.
   - intro tr. cbn.
-    rewrite (realizes_obs_iff source_segs _ T Hsource tr).
-    rewrite (srealizes_obs_iff target_segs _ T Htarget tr).
+    rewrite (realizes_obs_iff (run_segments source_segs inp rsp rmb) _ T Hsource tr).
+    rewrite (srealizes_obs_iff (run_segments target_segs inp asp amb) _ T Htarget tr).
     reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 Corollary shape_strong_equiv_efs_eq :
-  forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
-         target_segs apc aph asp abrk amb arnd (alim : Z)
-         (T T' : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  srealizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T' ->
-  t_eq T T' ->
-  error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-  /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
-  /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
-                 (bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
+forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
+target_segs apc aph asp abrk amb arnd (alim : Z)
+(T T' : TSet) (inp : ProcInput),
+realizes (run_segments source_segs inp rsp rmb)
+(init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+srealizes (run_segments target_segs inp asp amb)
+(init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T' ->
+t_eq T T' ->
+error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+/\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
+/\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
+(bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
-  intros until T'. intros inp Hs Ht Heq.
-  eapply shape_strong_equiv_efs; [exact Hs |].
-  eapply srz_conseq; [exact Ht |].
-  intro tr. split; intro H; apply Heq; exact H.
+intros until T'. intros inp Hs Ht Heq.
+eapply shape_strong_equiv_efs; [exact Hs |].
+eapply srz_conseq; [exact Ht |].
+intro tr. split; intro H; apply Heq; exact H.
 Qed.
 
 (* [comment removed for export] *)
@@ -65,10 +66,13 @@ Corollary shape_strong_equiv_ss :
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T : TSet) (inp : ProcInput),
-  srealizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  srealizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  (* LPS 75d69e00: [Run.run_scfg] runs over [Run.run_segments segs inp sp mbase]; the two
+     realizations are over that list and the configuration built from it, as
+     [shape_strong_equiv_efs] above takes them. *)
+  srealizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  srealizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
@@ -80,7 +84,7 @@ Proof.
   - cbn. eapply srealizes_no_error; exact Hsource.
   - cbn. eapply srealizes_no_error; exact Htarget.
   - intro tr. cbn.
-    rewrite (srealizes_obs_iff source_segs _ T Hsource tr).
-    rewrite (srealizes_obs_iff target_segs _ T Htarget tr).
+    rewrite (srealizes_obs_iff (run_segments source_segs inp rsp rmb) _ T Hsource tr).
+    rewrite (srealizes_obs_iff (run_segments target_segs inp asp amb) _ T Htarget tr).
     reflexivity.
 Qed.

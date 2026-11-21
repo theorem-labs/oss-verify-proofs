@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main_ret_exitA carries exit_preA's new channel-reader conjunct across the step to main's return, as it carries the fd table). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -78,7 +79,7 @@ Section Thm.
     intros mo' HK' MM'.
     eapply srzJ_conseq.
     - first [ apply (ref_exitA AL CS K IMG ALWF CSOK ASB GSB IMGCS K_halted K_mat K_vmonly su SUlo SUhi FRCS) | apply (ref_exitA AL CS K IMG ALWF CSOK ASB IMGCS K_halted K_mat K_vmonly su SUlo SUhi FRCS) ].
-      + apply exit_preA_set_ra. revert PRE. unfold exit_preA. destruct MM' as (Efd & _). unfold m_fds. rewrite Efd. intros PRE; exact PRE.
+      + apply exit_preA_set_ra. revert PRE. unfold exit_preA. destruct MM' as (Efd & _ & _ & _ & _ & Eproc & _). unfold m_fds, m_channel_reader. rewrite Efd, Eproc. intros PRE; exact PRE.
       + exact HK'.
     - rewrite (mo_mat_fs _ _ MM'). apply t_eq_refl.
   Qed.

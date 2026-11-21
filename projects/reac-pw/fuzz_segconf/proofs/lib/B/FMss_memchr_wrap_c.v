@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_memchr_wrap_c.v at cold/port-fm-int 5d8d8a15571, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
-(* lib/A/Prog/memchr_wrap_c.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8) with the one change
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_memchr_wrap_c.v, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
+(* lib/A/Prog/memchr_wrap_c.v (RtStr's port, unchanged) with the one change
    of the local-shadow variant (FMss_shv.v): `shadow_rw m` becomes `shvis m P N` for the checked range, and the post's
    `shadow_rw m'` becomes `shvis m' P N`.  The constants and memchr_n stay in the original module. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG0sshcf.v, sha256 af03230e5a53c96ecebcf1eb7763bd29591924fd2e40cd2da7e4cd35b9e117a8.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the SHADOW LAW over ARcf.
    cgif's AR_shadow_law_ok (YG0s.v:771-831) re-proved for AR_shadow_law_cf (YG0dcf.v). cgif's YG0s.v is NOT
    edited. The one new piece is the hidden head: a granule of a live block at or past p + hd_skip Hp p is in no

@@ -4,16 +4,17 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0n.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YP0n.v, with its module paths and module names changed; 1214 of its 1315 lines of code are new or changed and 1889 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Cno102A_Base.v, with its module names changed; 1363 of its 1481 lines of code are new or changed and 1197 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): the three
    parse_noting CALL STEPS of the re-walk of check_no_overread (CA6 / CA7 / CA8 of the internal file PLAN-cno-caw-102.md 5.1):
    cn_pn1_step (CN_PN1 0x81c10 -> CN_READ2), cn_pn2_step (CN_PN2 0x81ce4 -> CN_READ3), cn_pn3_step (CN_PN3 0x81d14 ->
    CN_CMP), each an instance of the one generic step cn_pn_call. First written on
-   a working branch ad7ca7b5a3be and finished after the 15:4xZ restart; re-fitted to the kit Batch 2,
+   a working branch and finished after the 15:4xZ restart; re-fitted to the kit Batch 2,
    to the #102 kit and then to the kit's CUT preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record).
    rule 24: no function proved
    rule 24: proves no function (kind: segment lemma)
    INPUTS (by path, blobs at this commit's parent): CONTRACT lib/A/Prog/Cno102A_Base.v at
-   a working branch 4b59cadb07a1, blob ba76a7bc31c9 (cn_at_pn1 / pn2 / pn3 -> cn_ex_read2 / read3 /
+   a working branch, blob ba76a7bc31c9 (cn_at_pn1 / pn2 / pn3 -> cn_ex_read2 / read3 /
    cmp; cn_pre without DW, read by name (the cn_pre_ projections); cn_base at the wild budget wk (cn_J: exists WS,
    ajournal_xw .. WS /\ wbudget [] wk WS), wk = 0 / 2 / 4 at the three starts and 2 / 4 / 6 at the exits; cn_room_pn;
    the free-order tie cn_fo of each struct a reading filled, carried to the exits), in its forms for the re-hiding
@@ -21,7 +22,7 @@
    (cn_at_read2R / cn_ex_read2R, cn_at_pn2R / pn3R, cn_at_read3R / cn_ex_read3R, cn_at_cmpR / cn_ex_cmpR) at wle',
    each cut's hull conjunct LAST (cn_hrest_copies / rd1 / rd2 / rd0) and the split lemmas cn_hrest_rd1_split / rd2_split /
    rd0_split. The text tparse_noting_specX
-   (lib/A/PRH_FnCheck.v blob c40cf3fdcd2a :596-730, the cut 7cdbb61b5fa0: no DW; the new premises RQ_pj_parse tb <= most
+   (lib/A/PRH_FnCheck.v blob c40cf3fdcd2a :596-730, the cut: no DW; the new premises RQ_pj_parse tb <= most
    and the wild room wild_room (as_universe B) [] (prh_wk F_parse_noting) (st_depot S); the post under fpostFbm ..
    (wbudget [] (prh_wk F_parse_noting)); prh_oks keyed on prh_ev_reqs tr against most; the refusal peak; the
    consumer-reading outcome clause; on the Some arm rd_blocks, the free order pj_foR .. = pj_frees jr_strtod ok tb

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_parse.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_parse.v to fuzz_transport's images *)
 (* Walk of diginet_frame_parse (src/diginet_frame.c:60-91 at 835f336c) in fuzz_transport.plain,
    0x1771c..0x178d8, against diginet_frame_parse_c.v. The binary inlines rd16 (0x1775c,
    0x17778, 0x177cc, 0x17838), rd32 (0x177e0, 0x1780c) and the diginet_sum16 loop

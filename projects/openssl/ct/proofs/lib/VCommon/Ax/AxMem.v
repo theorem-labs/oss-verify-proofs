@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the run's entry stack). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -18,11 +18,6 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Inductive cell : Type :=
 | CW (w : w64)
 | CB (l : list xb).
@@ -34,11 +29,11 @@ Definition cbyte (c : cell) (i : nat) : xb :=
   end.
 
 Inductive rkind : Type :=
-| KZero                        (* [comment removed for export] *)
-| KShadow                      (* [comment removed for export] *)
-| KUnk                         (* [comment removed for export] *)
-| KImg (w : bool) (i : nat)    (* [comment removed for export] *)
-| KEntry (ph : PhdrInfo).      (* [comment removed for export] *)
+| KZero
+| KShadow
+| KUnk
+| KImg (w : bool) (i : nat)
+| KEntry (r : bool) (ph : PhdrInfo).  (** [r]: the launch's rseq flag, which fixes the auxv's size *)
 
 Record region : Type := Rg {
   rg_ts : terms;              (* [comment removed for export] *)
@@ -53,17 +48,15 @@ Definition with_cells (R : region) (t : itrie cell) : region :=
   Rg (rg_ts R) (rg_bo R) (rg_n R) (rg_kind R) (rg_d R) t.
 
 Definition rk_writable (k : rkind) : bool :=
-  match k with KZero | KShadow | KUnk => true | KImg w _ => w | KEntry _ => false end.
+  match k with KZero | KShadow | KUnk => true | KImg w _ => w | KEntry _ _ => false end.
 
-Definition is_entry (R : region) : bool := match rg_kind R with KEntry _ => true | _ => false end.
+Definition is_entry (R : region) : bool := match rg_kind R with KEntry _ _ => true | _ => false end.
 
 Definition rbase (ρ : valuation) (R : region) : Z := smod ρ (rg_ts R) (rg_bo R).
 
-(* [comment removed for export] *)
 Definition same_fields (R R' : region) : Prop :=
   rg_ts R' = rg_ts R /\ rg_bo R' = rg_bo R /\ rg_n R' = rg_n R /\ rg_kind R' = rg_kind R /\ rg_d R' = rg_d R.
 
-(* [comment removed for export] *)
 Definition i2n (i : int) : nat :=
   if (i =? 0)%uint63 then 0%nat else if (i =? 1)%uint63 then 1%nat else if (i =? 2)%uint63 then 2%nat
   else if (i =? 3)%uint63 then 3%nat else if (i =? 4)%uint63 then 4%nat else if (i =? 5)%uint63 then 5%nat
@@ -74,29 +67,25 @@ Definition wz (a : Z) : word := Z_to_bv 64 a.
 Section WithSegs.
 Variable segs : list Segment.
 
-(* [comment removed for export] *)
 Definition default_byte (k : rkind) (x : int) : xb :=
   match k with
   | KZero | KShadow => BL 0%uint63
   | KUnk => BT
   | KImg _ i => match fimg_i segs i x with Some b => BL b | None => BT end
-  | KEntry _ => BT
+  | KEntry _ _ => BT
   end.
 
 Definition get_cell_opt (R : region) (k : int) : option cell := iget (rg_d R) (rg_cells R) k.
 
-(* [comment removed for export] *)
 Definition rbyte (R : region) (x : int) : xb :=
   match get_cell_opt R (x >> 3)%uint63 with
   | Some c => cbyte c (i2n (x land 7)%uint63)
   | None => default_byte (rg_kind R) x
   end.
 
-(* [comment removed for export] *)
 Definition rv (m : word -> option byte) (a : word) : option byte :=
   match m a with Some b => Some b | None => seg_rom segs a end.
 
-(* [comment removed for export] *)
 Definition region_wf (ρ : valuation) (R : region) : Prop :=
   rbase ρ R + to_Z (rg_n R) <= two64
   /\ to_Z (rg_n R) < 2 ^ 47
@@ -113,7 +102,6 @@ Fixpoint regions_ok (ρ : valuation) (A : list region) : Prop :=
   | R :: A' => region_wf ρ R /\ Forall (rdisj ρ R) A' /\ regions_ok ρ A'
   end.
 
-(* [comment removed for export] *)
 Definition RRegion0 (ρ : valuation) (m : word -> option byte) (R : region) : Prop :=
   forall y : int, to_Z y < to_Z (rg_n R) ->
     (exists b, rv m (wz (rbase ρ R + to_Z y)) = Some b /\ xb_bv ρ (rbyte R y) b)
@@ -121,7 +109,7 @@ Definition RRegion0 (ρ : valuation) (m : word -> option byte) (R : region) : Pr
 
 Definition RRegion (ρ : valuation) (m : word -> option byte) (R : region) : Prop :=
   match rg_kind R with
-  | KEntry ph => eb_rel ph ρ m (rbase ρ R) (to_Z (rg_n R))
+  | KEntry r ph => eb_rel r ph ρ m (rbase ρ R) (to_Z (rg_n R))
   | _ => RRegion0 ρ m R
   end.
 
@@ -133,10 +121,6 @@ Lemma RRegion_ne (ρ : valuation) (m : word -> option byte) (R : region) :
 Proof. unfold is_entry, RRegion. destruct (rg_kind R); first [reflexivity | discriminate]. Qed.
 
 End WithSegs.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma phi_add_small (x y : int) : to_Z x + to_Z y < 2 ^ 63 -> to_Z (x + y)%uint63 = to_Z x + to_Z y.
 Proof. intros H. rewrite add_spec. apply Z.mod_small. pose proof (to_Z_bounded x). pose proof (to_Z_bounded y). change wB with (2^63). lia. Qed.
@@ -196,10 +180,6 @@ Proof. intros H. unfold wz. rewrite Z_to_bv_unsigned. unfold bv_wrap. apply Z.mo
 Lemma Forall_nth {X : Type} (P : X -> Prop) (l : list X) (i : nat) (x : X) : Forall P l -> nth_error l i = Some x -> P x.
 Proof. intros H Hi. rewrite Forall_forall in H. apply H. exact (nth_error_In l i Hi). Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma regions_ok_nth (ρ : valuation) (A : list region) (i : nat) (R : region) :
   regions_ok ρ A -> nth_error A i = Some R -> region_wf ρ R.
 Proof.
@@ -254,7 +234,6 @@ Proof.
   - constructor; [apply Hrefl | exact (IH i Hi HP)].
 Qed.
 
-(* [comment removed for export] *)
 Lemma regions_ok_replace (ρ : valuation) (A : list region) (i : nat) (R R' : region) :
   regions_ok ρ A -> nth_error A i = Some R -> rbase ρ R' = rbase ρ R -> rg_n R' = rg_n R ->
   (region_wf ρ R -> region_wf ρ R') -> regions_ok ρ (replace_nth A i R').
@@ -270,11 +249,6 @@ Proof.
     + constructor; [exact HR2 | exact (IH2 Hd' i Hi)].
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition xaddr (v : xv) : option (terms * w64) :=
   match v with
   | XL x => Some ([], x)
@@ -282,12 +256,10 @@ Definition xaddr (v : xv) : option (terms * w64) :=
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Definition roff (R : region) (ts : terms) (o : w64) (n : int) : option int :=
   match rg_kind R with
-  | KEntry _ => None
+  | KEntry _ _ => None
   | _ =>
-      (* [comment removed for export] *)
       if teqb (rg_ts R) ts then
         let d := w_sub o (rg_bo R) in
         if wh d then None else
@@ -332,7 +304,6 @@ Qed.
 Lemma roff_ne (R : region) (ts : terms) (o : w64) (n x : int) : roff R ts o n = Some x -> is_entry R = false.
 Proof. unfold roff, is_entry. destruct (rg_kind R); first [reflexivity | discriminate]. Qed.
 
-(* [comment removed for export] *)
 Lemma roff_addr (ρ : valuation) (R : region) (ts : terms) (o : w64) (n x : int) (a : bv 64) :
   0 < to_Z n -> region_wf ρ R -> bv_unsigned a = smod ρ ts o -> roff R ts o n = Some x ->
   bv_unsigned a = rbase ρ R + to_Z x /\ to_Z x + to_Z n <= to_Z (rg_n R).
@@ -354,21 +325,15 @@ Proof.
     replace (i - j)%nat with (S (i - S j)) by lia. exact H2.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Section Reads.
 Variable segs : list Segment.
 
-(* [comment removed for export] *)
 Fixpoint rbytes (R : region) (x : int) (n : nat) : list xb :=
   match n with
   | O => []
   | S n' => rbyte segs R x :: rbytes R (x + 1)%uint63 n'
   end.
 
-(* [comment removed for export] *)
 Definition rbytes_fast (R : region) (x : int) (n : nat) : list xb :=
   let o := i2n (x land 7)%uint63 in
   if Nat.leb (o + n) 8 then
@@ -407,7 +372,6 @@ Proof.
     rewrite (phi_add_small (x + 1) (of_Z (Z.of_nat i))), (phi_add_small x (of_Z (Z.of_nat (S i)))); rewrite ?E1, ?E2, ?E3; lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma cell_split (x : int) (i : nat) :
   to_Z x + Z.of_nat i < 2 ^ 62 -> (Z.to_nat (to_Z x mod 8) + i < 8)%nat ->
   ((x + of_Z (Z.of_nat i)) >> 3)%uint63 = (x >> 3)%uint63
@@ -447,7 +411,6 @@ Lemma rdn_cons' (m : word -> option byte) (a : word) (n : nat) :
                        end.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
 Lemma rdn_region (ρ : valuation) (m : word -> option byte) (R : region) :
   RRegion0 segs ρ m R -> forall (n : nat) (x : int), to_Z x + Z.of_nat n <= to_Z (rg_n R) ->
   exists bs, rdn segs m (wz (rbase ρ R + to_Z x)) n = Some bs /\ Forall2 (xb_bv ρ) (rbytes R x n) bs.
@@ -487,7 +450,6 @@ Proof.
   - exact Hv.
 Qed.
 
-(* [comment removed for export] *)
 Lemma a_load_sound (ρ : valuation) (A : list region) (m : word -> option byte) (v : xv) (a : bv 64) (n : nat) (l : list xb) :
   RMem segs ρ A m -> xv_val ρ v a -> (1 <= n < 1000)%nat -> a_load A v n = Some l ->
   exists bs, rdn segs m a n = Some bs /\ Forall2 (xb_bv ρ) l bs.
@@ -509,20 +471,15 @@ Qed.
 
 End Reads.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Section Stores.
 Variable segs : list Segment.
 
 Definition unk_cell : cell := CB (repeat BT 8).
 
-(* [comment removed for export] *)
 Definition default_cell (kd : rkind) (k : int) : cell :=
   match kd with
   | KZero | KShadow => CW w_zero
-  | KUnk | KEntry _ => unk_cell
+  | KUnk | KEntry _ _ => unk_cell
   | KImg _ _ => let x := (k << 3)%uint63 in
                 CB [default_byte segs kd x; default_byte segs kd (x + 1)%uint63; default_byte segs kd (x + 2)%uint63;
                     default_byte segs kd (x + 3)%uint63; default_byte segs kd (x + 4)%uint63; default_byte segs kd (x + 5)%uint63;
@@ -532,12 +489,10 @@ Definition default_cell (kd : rkind) (k : int) : cell :=
 Definition cell_of (R : region) (k : int) : cell :=
   match get_cell_opt R k with Some c => c | None => default_cell (rg_kind R) k end.
 
-(* [comment removed for export] *)
 Definition cell_write (c : cell) (o : nat) (nb : list xb) : cell :=
   let e := (o + length nb)%nat in
   CB (map (fun j => if Nat.leb o j then if Nat.ltb j e then nth (j - o) nb BT else cbyte c j else cbyte c j) (seq 0 8)).
 
-(* [comment removed for export] *)
 Fixpoint lits (l : list xb) : option (list int) :=
   match l with
   | [] => Some []
@@ -557,7 +512,6 @@ Definition norm_cell (c : cell) : cell :=
   | _ => c
   end.
 
-(* [comment removed for export] *)
 Definition rwrite1 (nb : list xb) (R : region) (x : int) : region :=
   let k := (x >> 3)%uint63 in
   with_cells R (iset (rg_d R) (rg_cells R) k (norm_cell (cell_write (cell_of R k) (i2n (x land 7)%uint63) nb))).
@@ -568,7 +522,6 @@ Fixpoint rwrite_each (nb : list xb) (R : region) (x : int) : region :=
   | b :: nb' => rwrite_each nb' (rwrite1 [b] R x) (x + 1)%uint63
   end.
 
-(* [comment removed for export] *)
 Fixpoint rwrite_chunks (fuel : nat) (nb : list xb) (R : region) (x : int) : region :=
   match fuel, nb with
   | S fuel', _ :: _ =>
@@ -581,7 +534,6 @@ Fixpoint rwrite_chunks (fuel : nat) (nb : list xb) (R : region) (x : int) : regi
 Definition rwrite (nb : list xb) (R : region) (x : int) : region :=
   if Nat.leb (i2n (x land 7)%uint63 + length nb) 8 then rwrite1 nb R x else rwrite_chunks (length nb) nb R x.
 
-(* [comment removed for export] *)
 Definition a_store (A : list region) (v : xv) (nb : list xb) : option (list region) :=
   match xaddr v with
   | Some (ts, o) =>
@@ -636,7 +588,6 @@ Qed.
 Lemma w_byte_zero (j : nat) : (j < 8)%nat -> w_byte w_zero j = 0%uint63.
 Proof. intros Hj. do 8 (destruct j as [|j]; [reflexivity|]). lia. Qed.
 
-(* [comment removed for export] *)
 Lemma key_off (y : int) : to_Z y < 2 ^ 60 -> forall k : int, to_Z k = to_Z y mod 8 -> (((y >> 3) << 3) + k)%uint63 = y.
 Proof.
   intros Hy k Hk. pose proof (to_Z_bounded y) as Hb. change wB with (2 ^ 63) in Hb.
@@ -838,10 +789,6 @@ Qed.
 
 End StoreLemmas.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Section StoreSound.
 Variable segs : list Segment.
 
@@ -880,7 +827,6 @@ Proof.
         -- apply Z.ltb_ge in E1. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma RRegion_mframe (ρ : valuation) (m m' : word -> option byte) (R : region) :
   region_wf ρ R -> (forall z, rbase ρ R <= z < rbase ρ R + to_Z (rg_n R) -> m' (wz z) = m (wz z)) ->
   RRegion segs ρ m R -> RRegion segs ρ m' R.
@@ -894,7 +840,6 @@ Proof.
   intros z Hz. rewrite <- (Hbytes z Hz). apply (Hfr (rbase ρ R + z)). lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma a_store_sound_gen (ρ : valuation) (A A' : list region) (m m' : word -> option byte) (v : xv) (a : bv 64) (nb : list xb) :
   RMem segs ρ A m -> xv_val ρ v a -> (1 <= length nb)%nat -> Z.of_nat (length nb) < 2 ^ 40 -> a_store segs A v nb = Some A' ->
   (forall x : word, ~ (bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat (length nb)) -> m' x = m x) ->
@@ -954,7 +899,6 @@ Proof.
     + destruct (nth_error_Some A i) as [Hs _]. apply Hs. rewrite Hi. discriminate.
 Qed.
 
-(* [comment removed for export] *)
 Lemma a_store_addr (ρ : valuation) (A A' : list region) (v : xv) (a : bv 64) (nb : list xb) :
   regions_ok ρ A -> xv_val ρ v a -> (1 <= length nb)%nat -> Z.of_nat (length nb) < 2 ^ 40 -> a_store segs A v nb = Some A' ->
   bv_unsigned a + Z.of_nat (length nb) <= two64.
@@ -969,7 +913,6 @@ Proof.
   rewrite Hlz in Hfit. destruct Hwf as [W1 _]. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma a_store_sound (ρ : valuation) (A A' : list region) (m : word -> option byte) (v : xv) (a : bv 64) (nb : list xb) (bs : list byte) :
   RMem segs ρ A m -> xv_val ρ v a -> (1 <= length nb < 1000)%nat -> Forall2 (xb_bv ρ) nb bs ->
   a_store segs A v nb = Some A' ->
@@ -1005,10 +948,6 @@ Qed.
 
 End StoreSound.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma w_byte_lt (w : w64) (j : nat) : (j < 8)%nat -> (w_byte w j <? 256)%uint63 = true.
 Proof. intros Hj. apply Uint63.ltb_spec. rewrite w_byte_spec by exact Hj. change (to_Z 256%uint63) with 256. apply zbyte_range. Qed.
 
@@ -1024,7 +963,6 @@ Qed.
 
 Definition wbytes (w : w64) : list xb := map (fun i => BL (w_byte w i)) (seq 0 8).
 
-(* [comment removed for export] *)
 Fixpoint fimg_bytes (c : PrimString.string) (x : int) (n : nat) : option (list int) :=
   match n with
   | O => Some []
@@ -1048,7 +986,6 @@ Proof.
   injection H as <-. constructor; [exact (proj2 (fimg_c_spec c x b Eb)) | exact (IH _ _ E)].
 Qed.
 
-(* [comment removed for export] *)
 Lemma wbytes_of_bytes8 (l : list int) : length l = 8%nat -> Forall (fun b => to_Z b < 256) l -> wbytes (ExLoad.w_of_bytes8 l) = map BL l.
 Proof.
   intros Hl Hb. unfold wbytes.
@@ -1063,7 +1000,6 @@ Proof.
   cbn [seq map]. rewrite !E by lia. reflexivity.
 Qed.
 
-
 Section Fast.
 Variable segs : list Segment.
 
@@ -1076,7 +1012,6 @@ Definition img_word (i : nat) (x : int) : option w64 :=
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition absent_word (R : region) (x : int) : option w64 :=
   match rg_kind R with
   | KZero | KShadow => Some w_zero
@@ -1128,7 +1063,6 @@ Proof.
     symmetry. apply wbytes_of_bytes8; [exact (fimg_bytes_length c 8 x l El) | exact (fimg_bytes_lt c 8 x l El)].
 Qed.
 
-
 Definition a_loadw (A : list region) (v : xv) : option w64 :=
   match xaddr v with
   | Some (ts, o) =>
@@ -1177,7 +1111,6 @@ Proof.
   unfold norm_cell, lit8. cbn [lits]. rewrite !w_byte_lt by lia. cbn [length Nat.eqb]. f_equal. exact (w_bytes8 w).
 Qed.
 
-(* [comment removed for export] *)
 Definition cw_set (w0 w : w64) (j n : nat) : w64 :=
   ExLoad.w_of_bytes8 (map (fun t => if Nat.leb j t && Nat.ltb t (j + n) then w_byte w (t - j) else w_byte w0 t) (seq 0 8)).
 
@@ -1253,6 +1186,5 @@ Proof.
   destruct (Nat.leb_spec (i2n (x land 7)%uint63 + n) 8) as [_|N]; [|lia].
   unfold rwrite1. rewrite (old_word_cell R _ w0 Eo). rewrite cw_write_lit by lia. reflexivity.
 Qed.
-
 
 End Fast.

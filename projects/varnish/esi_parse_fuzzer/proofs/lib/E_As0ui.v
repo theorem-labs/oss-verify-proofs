@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the shape lemmas take vdso_image premises and lift each walk onto the run's segments; in both builds the header proofs state base_ok and the register pins over the entry draw's argv words p0C/p1C, give the stderr and stdout writes the channel-reader premise from the model records' reader fields, and read knT's stack-window row over the 6144512 bytes below sp0; body_all_holds no longer takes main's entry; ref_realizes_spec_lib and its _run form take the channel-reader and launch premises, which the assembly reads from valid_input and valid_entry by name, and the vDSO side conditions hold by computation). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -29,6 +30,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require CatSim.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require CatSim BWorld ShapeAlg.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.SimInv OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.CatSim.ExitSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.CatSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.BWorld OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.ShapeAlg.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomStable.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Import ListNotations.
@@ -46,20 +48,21 @@ Theorem shape_strong_equiv_ef_w :
     (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
   never_excused (BW:=BWs) source_segs (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) ->
   never_excused (BW:=BWt) target_segs (init_config target_segs apc aph asp abrk amb arnd alim inp) ->
+  vdso_image source_segs = None -> vdso_image target_segs = None ->
   error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
                  (bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
   intros BWs BWt source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    T inp Hsource Htarget Hns Hnt.
-  split; [| split].
-  - cbn. exact (realizes_no_error (BW:=BWs) source_segs _ T Hsource Hns).
-  - cbn. exact (realizes_no_error (BW:=BWt) target_segs _ T Htarget Hnt).
-  - intro tr. cbn.
-    rewrite (realizes_obs_iff (BW:=BWs) source_segs _ T Hsource Hns tr).
-    rewrite (realizes_obs_iff (BW:=BWt) target_segs _ T Htarget Hnt tr).
-    reflexivity.
+    T inp Hsource Htarget Hns Hnt Hvs Hvt.
+  (* LPS 727298f3: both runs read their binary against [run_segments]; each walk lifts there *)
+  destruct (RomStable.run_scfg_walk0 source_segs rpc rph rsp rbrk rmb rrnd rlim inp T Hvs
+              (rz_unwrap (BW:=BWs) source_segs _ T Hsource Hns)) as [Es Ts].
+  destruct (RomStable.run_scfg_walk0 target_segs apc aph asp abrk amb arnd alim inp T Hvt
+              (rz_unwrap (BW:=BWt) target_segs _ T Htarget Hnt)) as [Et Tt].
+  split; [exact Es | split; [exact Et |]].
+  intro tr. rewrite (Ts tr), (Tt tr). reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -71,15 +74,16 @@ Theorem shape_strong_equiv_ef :
     (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
   realizes (BW:=bw_pinned) target_segs
     (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  vdso_image source_segs = None -> vdso_image target_segs = None ->
   error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
                  (bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    T inp Hsource Htarget.
+    T inp Hsource Htarget Hvs Hvt.
   exact (shape_strong_equiv_ef_w bw_pinned bw_pinned _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ T inp Hsource Htarget
-           (never_excused_pinned _ _) (never_excused_pinned _ _)).
+           (never_excused_pinned _ _) (never_excused_pinned _ _) Hvs Hvt).
 Qed.
 
 (* [comment removed for export] *)
@@ -92,15 +96,16 @@ Theorem shape_strong_equiv_ef_budgets :
   realizes (BW:=bw_pinned) target_segs
     (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
   ~ reaches_budget_refused_cfg source_segs ACFG (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) ->
+  vdso_image source_segs = None -> vdso_image target_segs = None ->
   error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
                  (bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    T inp Hsource Htarget Hprem.
+    T inp Hsource Htarget Hprem Hvs Hvt.
   exact (shape_strong_equiv_ef_w (bw_premise rlim) bw_pinned _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ T inp Hsource Htarget
-           (never_excused_of_premise rlim _ _ Hprem) (never_excused_pinned _ _)).
+           (never_excused_of_premise rlim _ _ Hprem) (never_excused_pinned _ _) Hvs Hvt).
 Qed.
 
 (* [comment removed for export] *)
@@ -268,8 +273,8 @@ Section Leaves.
   Proof. intros. apply u_small. assumption. Qed.
 
   #[using="L Hplen Hvsp data"] Lemma sr_h_ok : forall vals R,
-    length vals = 70%nat -> vals_ev vals 0 = sp0 -> junk_at vals R -> pins_main sp0 (p1 sp0 a0s path envv) R ->
-    vals_ev vals 2 = p1 sp0 a0s path envv ->
+    length vals = 70%nat -> vals_ev vals 0 = sp0 -> junk_at vals R -> pins_main sp0 (p1C a0s path envv rdraw) R ->
+    vals_ev vals 2 = p1C a0s path envv rdraw ->
     getr R 9 = vals_ev vals 20 -> getr R 19 = vals_ev vals 21 -> getr R 21 = vals_ev vals 22 ->
     getr R 22 = vals_ev vals 13 -> getr R 23 = vals_ev vals 14 ->
     regs_ok (ENV a0s path rdraw vals) sr_h R.
@@ -316,7 +321,7 @@ Section Leaves.
   #[using="Hplen HCEIL Hvsp"] Lemma hdr_setup : forall k b vals R M md A calls,
     hdr_st sp0 a0s path envv rdraw tid mem0 fs0 data k b vals R M md A ->
     let V := VT vals R k b calls in
-    base_ok sp0 a0s path envv tid V /\ junk_at V R
+    base_ok sp0 a0s path envv rdraw tid V /\ junk_at V R
     /\ regs_ok (ENV a0s path rdraw V) sr_h R /\ know_ok RSEGS (ENV a0s path rdraw V) M knH
     /\ vals_ev V 20 = Z_to_bv 64 b /\ vals_ev V 21 = Z_to_bv 64 L /\ vals_ev V 22 = Z_to_bv 64 (cap k)
     /\ vals_ev V 6 = rd8 true (dbyte 1) /\ vals_ev V 7 = rd8 false (dbyte 0) /\ vals_ev V 12 = rd8 false (dbyte 2)
@@ -330,7 +335,7 @@ Section Leaves.
     pose proof (cap_range path data Hplen k Hk) as Hcap.
     assert (HLV : length V = 70%nat) by (subst V; apply valsT_length).
     assert (E0 : vals_ev V 0 = sp0) by (subst V; cbn; exact V0).
-    assert (E2 : vals_ev V 2 = p1 sp0 a0s path envv) by (subst V; cbn; exact V2).
+    assert (E2 : vals_ev V 2 = p1C a0s path envv rdraw) by (subst V; cbn; exact V2).
     assert (HJV : junk_at V R) by (subst V; unfold valsT; apply junk_at_app; reflexivity).
     assert (E20 : vals_ev V 20 = Z_to_bv 64 b) by reflexivity.
     assert (E21 : vals_ev V 21 = Z_to_bv 64 L) by reflexivity.
@@ -384,7 +389,7 @@ Section Leaves.
     intros k b vals R M md A ST HLc HL6.
     (first [ pose proof ((hdr_setup k b vals R M md A 1 ST)) as dR_3; dand11 dR_3 as HB HJ HR HK V20 V21 V22 V6 V7 V12 V25 | destruct (hdr_setup k b vals R M md A 1 ST) as (HB & HJ & HR & HK & V20 & V21 & V22 & V6 & V7 & V12 & V25) ]).
     set (V := VT vals R k b 1) in *.
-    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof BUF as [LIVE ONLY DS DATA Hk Hlen HlenL].
     (first [ pose proof (HB) as dR_4; dand5 dR_4 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]).
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
@@ -415,6 +420,7 @@ Section Leaves.
       rewrite (kimg_rdn RSEGS _ _ knS1 ltac:(let i := kidx knS1 (is_kimg_cov 0x123f3 31) in exact i) _ _ 0x123f3 31 HK eq_refl) by (cbn; lia).
       apply msg_short_img.
     - exact Mfd2.
+    - exact Mrdr.   (* LPS 727298f3: the stderr write needs a reading far end ([D_Dir.mc_rdr]) *)
     - exact Mh.
     - exact Mlz.
     - apply t_exit_has_nil.
@@ -499,7 +505,7 @@ Section Leaves.
     pose proof (dbyte_range 0) as B0. pose proof (dbyte_range 1) as B1.
     (first [ pose proof ((hdr_setup k b vals R M md A 1 ST)) as dR_6; dand11 dR_6 as HB HJ HR HK V20 V21 V22 V6 V7 V12 V25 | destruct (hdr_setup k b vals R M md A 1 ST) as (HB & HJ & HR & HK & V20 & V21 & V22 & V6 & V7 & V12 & V25) ]).
     set (V := VT vals R k b 1) in *.
-    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof BUF as [LIVE ONLY DS DATA Hk Hlen HlenL].
     (first [ pose proof (HB) as dR_7; dand5 dR_7 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]).
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
@@ -540,6 +546,7 @@ Section Leaves.
       rewrite (kimg_rdn RSEGS _ _ knV1 ltac:(let i := kidx knV1 (is_kimg_cov 0x10ce2 31) in exact i) _ _ 0x10ce2 31 HK eq_refl) by (cbn; lia).
       apply msg_overrun_img.
     - exact Mfd2.
+    - exact Mrdr.   (* LPS 727298f3: the stderr write needs a reading far end ([D_Dir.mc_rdr]) *)
     - exact Mh.
     - exact Mlz.
     - apply t_exit_has_nil.
@@ -693,8 +700,11 @@ Lemma knL_knTm : kn_incl knL knTm = true. Proof. vm_compute. reflexivity. Qed.
 Lemma knL_knT : kn_incl knL knT = true. Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition knT_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-8388608) 8388608) knT 0 with Some i => i | None => 0%nat end.
-Lemma knT_win : nth_error knT knT_iw = Some (KWr (SA (EVar 0) (-8388608)) 8388608). Proof. vm_compute. reflexivity. Qed.
+(* LPS 727298f3: knT inherits knD's stack-window row, the 6144512 bytes below sp0 that main_entry's
+   window certifies ([D_Tails.knD_win]); callH.ch_win asks for that row, which knT carries at
+   [knT_iw] ([knT_win], decided by vm_compute). *)
+Definition knT_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-6144512) 6144512) knT 0 with Some i => i | None => 0%nat end.
+Lemma knT_win : nth_error knT knT_iw = Some (KWr (SA (EVar 0) (-6144512)) 6144512). Proof. vm_compute. reflexivity. Qed.
 Lemma knTm_heap_incl : kn_incl knTm (kn_keep2 knTm RS_heap []) = true. Proof. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -945,7 +955,7 @@ Section Header.
   #[using="LIBOK limg_intro limg Hplen Htid HCEIL Hvsp mem0"] Lemma malloc_part : forall k b V R M md A,
     regs_ok (ENV a0s path rdraw V) sr_m R ->
     know_ok RSEGS (ENV a0s path rdraw V) M knT ->
-    base_ok sp0 a0s path envv tid V ->
+    base_ok sp0 a0s path envv rdraw tid V ->
     vals_ev V 6 = rd8 true (dbyte data 1) -> vals_ev V 7 = rd8 false (dbyte data 0) ->
     vals_ev V 20 = Z_to_bv 64 b -> vals_ev V 21 = Z_to_bv 64 L -> vals_ev V 25 = Z_to_bv 64 calls ->
     ainv A M md -> Mem.mem_inv RSEGS M -> MDcl fs0 md ->
@@ -955,7 +965,7 @@ Section Header.
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x22fc4) M (seg_rom RSEGS)) md) succ.   (* [comment removed for export] *)
   Proof.
     intros k b V R M md A HR HK HB V6 V7 V20 V21 V25 AI0 MI MD LIVE DS DATA Hk HLc HcL Hp.
-    (first [ pose proof (HB) as dR_5; dand5 dR_5 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    (first [ pose proof (HB) as dR_5; dand5 dR_5 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *. pose proof (u64_range sp0) as Hsp.
     pose proof (cap_range path data Hplen k Hk) as Hcap. pose proof cfg_range as Hcfg. pose proof calls_range as Hcalls.
@@ -1070,12 +1080,14 @@ Section Header.
       + exact S23.
       + exact AI3.
       + exact MI3.
-      + (first [ dand4 MF1 as FD _ FS _ | destruct MF1 as (FD & _ & FS & _) ]). split.
+      + (first [ dand5 MF1 as FD _ FS PR _ | destruct MF1 as (FD & _ & FS & PR & _) ]). split.
         * unfold m_fs. rewrite FS. exact Mfs.
         * unfold m_fds. rewrite FD. exact Mfd1.
         * unfold m_fds. rewrite FD. exact Mfd2.
         * exact Hh1.
         * exact Hl1.
+        * (* LPS 727298f3: md_ok's reader field; malloc keeps [m_proc] ([md_frame]) *)
+          unfold m_channel_reader. rewrite PR. exact Mrdr.
       + exact LIVEB1.
       + right. split; [exact LIVE1| exact IN3].
       + intros i Hi. rewrite OUT3 by (rewrite u64 by lia; lia). apply (knTm_img _ M1 HK). lia.
@@ -1117,7 +1129,7 @@ Section Header.
     (first [ pose proof ((hdr_setup sp0 a0s path envv rdraw tid mem0 fs0 data Hvsp HCEIL Hplen k b vals R M md A calls ST)) as dR_11; dand11 dR_11 as HB HJ HR HK V20 V21 V22 V6 V7 V12 V25 | destruct (hdr_setup sp0 a0s path envv rdraw tid mem0 fs0 data Hvsp HCEIL Hplen k b vals R M md A calls ST)
       as (HB & HJ & HR & HK & V20 & V21 & V22 & V6 & V7 & V12 & V25) ]).
     set (V := VT data vals R k b calls) in *.
-    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof BUF as [LIVE ONLY DS DATA Hk Hlen HlenL].
     (first [ pose proof (HB) as dR_12; dand5 dR_12 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]).
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
@@ -1367,7 +1379,7 @@ Section Top.
 
   Lemma body_all_holds : body_all.
   Proof.
-    intros AMB sp0 a0s path envv rdraw tid regs0 mem0 fs0 fdata Hva Hve Hvsp HCEIL Htid ME Hfile Hplen.
+    intros AMB sp0 a0s path envv rdraw tid mem0 fs0 fdata Hva Hve Hvsp HCEIL Htid Hfile Hplen.
     exact (body_ok_holds sp0 a0s path envv rdraw tid mem0 fs0 fdata Hvsp HCEIL Htid Hplen limg limg_intro LIBOK).
   Qed.
 
@@ -1378,6 +1390,8 @@ Section Top.
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
       entry_stack_fits sp (in_argv inp) (in_envp inp) ->
       in_abort_terminal inp = false ->
+      in_channel_reader inp = true ->
+      valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
       realizes rsegs
         (init_config rsegs rpc rph sp brk mbase rdraw D_Mah0u.LIM inp)   (* [comment removed for export] *)
         (spec (in_argv inp) (in_fs inp)).
@@ -1397,11 +1411,13 @@ Theorem ref_realizes_spec_lib_run {BW : BWorld}
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     in_abort_terminal inp = false ->
+    in_channel_reader inp = true ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
     realizes rsegs
       (init_config rsegs rpc rph sp brk mbase rdraw bw_lim inp)   (* [comment removed for export] *)
       (spec (in_argv inp) (in_fs inp)).
 Proof.
-  intros sp brk mbase rdraw inp Hsp Hbrk Hva Hve Hfit Hab.
+  intros sp brk mbase rdraw inp Hsp Hbrk Hva Hve Hfit Hab Hrd Hvl Hlau.
   apply (@ref_realizes_spec_lib (ceiling_of_sp (BW:=BW) sp Hsp) (AIc _) (DKc _) limg limg_intro (LIBOK _) sp brk mbase rdraw inp Hsp);
     try assumption.
   unfold alloc_ceiling, ceiling_of_sp. rewrite stack_max_size_val. reflexivity.
@@ -1565,8 +1581,8 @@ Section Leaves.
   Proof. intros. apply u_small. assumption. Qed.
 
   #[using="L Hplen Hvsp data"] Lemma sr_h_ok : forall vals R,
-    length vals = 70%nat -> vals_ev vals 0 = sp0 -> junk_at vals R -> pins_main sp0 (p1 sp0 a0s path envv) R ->
-    vals_ev vals 2 = p1 sp0 a0s path envv ->
+    length vals = 70%nat -> vals_ev vals 0 = sp0 -> junk_at vals R -> pins_main sp0 (p1C a0s path envv rdraw) R ->
+    vals_ev vals 2 = p1C a0s path envv rdraw ->
     getr R 9 = vals_ev vals 20 -> getr R 19 = vals_ev vals 21 -> getr R 21 = vals_ev vals 22 ->
     getr R 22 = vals_ev vals 13 -> getr R 23 = vals_ev vals 14 ->
     regs_ok (ENV a0s path rdraw vals) sr_h R.
@@ -1613,7 +1629,7 @@ Section Leaves.
   #[using="Hplen HCEIL Hvsp"] Lemma hdr_setup : forall k b vals R M md A calls,
     hdr_st sp0 a0s path envv rdraw tid mem0 fs0 data k b vals R M md A ->
     let V := VT vals R k b calls in
-    base_ok sp0 a0s path envv tid V /\ junk_at V R
+    base_ok sp0 a0s path envv rdraw tid V /\ junk_at V R
     /\ regs_ok (ENV a0s path rdraw V) sr_h R /\ know_ok RSEGS (ENV a0s path rdraw V) M knH
     /\ vals_ev V 20 = Z_to_bv 64 b /\ vals_ev V 21 = Z_to_bv 64 L /\ vals_ev V 22 = Z_to_bv 64 (cap k)
     /\ vals_ev V 6 = rd8 true (dbyte 1) /\ vals_ev V 7 = rd8 false (dbyte 0) /\ vals_ev V 12 = rd8 false (dbyte 2)
@@ -1627,7 +1643,7 @@ Section Leaves.
     pose proof (cap_range path data Hplen k Hk) as Hcap.
     assert (HLV : length V = 70%nat) by (subst V; apply valsT_length).
     assert (E0 : vals_ev V 0 = sp0) by (subst V; cbn; exact V0).
-    assert (E2 : vals_ev V 2 = p1 sp0 a0s path envv) by (subst V; cbn; exact V2).
+    assert (E2 : vals_ev V 2 = p1C a0s path envv rdraw) by (subst V; cbn; exact V2).
     assert (HJV : junk_at V R) by (subst V; unfold valsT; apply junk_at_app; reflexivity).
     assert (E20 : vals_ev V 20 = Z_to_bv 64 b) by reflexivity.
     assert (E21 : vals_ev V 21 = Z_to_bv 64 L) by reflexivity.
@@ -1681,7 +1697,7 @@ Section Leaves.
     intros k b vals R M md A ST HLc HL6.
     (first [ pose proof ((hdr_setup k b vals R M md A 1 ST)) as dR_3; dand11 dR_3 as HB HJ HR HK V20 V21 V22 V6 V7 V12 V25 | destruct (hdr_setup k b vals R M md A 1 ST) as (HB & HJ & HR & HK & V20 & V21 & V22 & V6 & V7 & V12 & V25) ]).
     set (V := VT vals R k b 1) in *.
-    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof BUF as [LIVE ONLY DS DATA Hk Hlen HlenL].
     (first [ pose proof (HB) as dR_4; dand5 dR_4 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]).
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
@@ -1712,6 +1728,7 @@ Section Leaves.
       rewrite (kimg_rdn RSEGS _ _ knS1 ltac:(let i := kidx knS1 (is_kimg_cov 0x123f3 31) in exact i) _ _ 0x123f3 31 HK eq_refl) by (cbn; lia).
       apply msg_short_img.
     - exact Mfd2.
+    - exact Mrdr.   (* LPS 727298f3: the stderr write needs a reading far end ([DU_Dir.mc_rdr]) *)
     - exact Mh.
     - exact Mlz.
     - apply t_exit_has_nil.
@@ -1796,7 +1813,7 @@ Section Leaves.
     pose proof (dbyte_range 0) as B0. pose proof (dbyte_range 1) as B1.
     (first [ pose proof ((hdr_setup k b vals R M md A 1 ST)) as dR_6; dand11 dR_6 as HB HJ HR HK V20 V21 V22 V6 V7 V12 V25 | destruct (hdr_setup k b vals R M md A 1 ST) as (HB & HJ & HR & HK & V20 & V21 & V22 & V6 & V7 & V12 & V25) ]).
     set (V := VT vals R k b 1) in *.
-    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof BUF as [LIVE ONLY DS DATA Hk Hlen HlenL].
     (first [ pose proof (HB) as dR_7; dand5 dR_7 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]).
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
@@ -1837,6 +1854,7 @@ Section Leaves.
       rewrite (kimg_rdn RSEGS _ _ knV1 ltac:(let i := kidx knV1 (is_kimg_cov 0x10ce2 31) in exact i) _ _ 0x10ce2 31 HK eq_refl) by (cbn; lia).
       apply msg_overrun_img.
     - exact Mfd2.
+    - exact Mrdr.   (* LPS 727298f3: the stderr write needs a reading far end ([DU_Dir.mc_rdr]) *)
     - exact Mh.
     - exact Mlz.
     - apply t_exit_has_nil.
@@ -1989,8 +2007,11 @@ Lemma knL_knTm : kn_incl knL knTm = true. Proof. vm_compute. reflexivity. Qed.
 Lemma knL_knT : kn_incl knL knT = true. Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition knT_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-8388608) 8388608) knT 0 with Some i => i | None => 0%nat end.
-Lemma knT_win : nth_error knT knT_iw = Some (KWr (SA (EVar 0) (-8388608)) 8388608). Proof. vm_compute. reflexivity. Qed.
+(* LPS 727298f3: knT inherits knD's stack-window row, the 6144512 bytes below sp0 that main_entry's
+   window certifies ([DU_Tails.knD_win]); callH.ch_win asks for that row, which knT carries at
+   [knT_iw] ([knT_win], decided by vm_compute). *)
+Definition knT_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-6144512) 6144512) knT 0 with Some i => i | None => 0%nat end.
+Lemma knT_win : nth_error knT knT_iw = Some (KWr (SA (EVar 0) (-6144512)) 6144512). Proof. vm_compute. reflexivity. Qed.
 Lemma knTm_heap_incl : kn_incl knTm (kn_keep2 knTm RS_heap []) = true. Proof. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -2243,7 +2264,7 @@ Section Header.
   #[using="LIBOK limg_intro limg Hlimg limg_hi limg_lo Hplen Htid HCEIL Hvsp mem0"] Lemma malloc_part : forall k b V R M md A,
     regs_ok (ENV a0s path rdraw V) sr_m R ->
     know_ok RSEGS (ENV a0s path rdraw V) M knT ->
-    base_ok sp0 a0s path envv tid V ->
+    base_ok sp0 a0s path envv rdraw tid V ->
     vals_ev V 6 = rd8 true (dbyte data 1) -> vals_ev V 7 = rd8 false (dbyte data 0) ->
     vals_ev V 20 = Z_to_bv 64 b -> vals_ev V 21 = Z_to_bv 64 L -> vals_ev V 25 = Z_to_bv 64 calls ->
     ainv A M md -> Mem.mem_inv RSEGS M -> MDcl fs0 md ->
@@ -2253,7 +2274,7 @@ Section Header.
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x23364) M (seg_rom RSEGS)) md) succ.   (* [comment removed for export] *)
   Proof.
     intros k b V R M md A HR HK HB V6 V7 V20 V21 V25 AI0 MI MD LIVE DS DATA Hk HLc HcL Hp.
-    (first [ pose proof (HB) as dR_5; dand5 dR_5 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    (first [ pose proof (HB) as dR_5; dand5 dR_5 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *. pose proof (u64_range sp0) as Hsp.
     pose proof (cap_range path data Hplen k Hk) as Hcap. pose proof cfg_range as Hcfg. pose proof calls_range as Hcalls.
@@ -2368,12 +2389,14 @@ Section Header.
       + exact S23.
       + exact AI3.
       + exact MI3.
-      + (first [ dand4 MF1 as FD _ FS _ | destruct MF1 as (FD & _ & FS & _) ]). split.
+      + (first [ dand5 MF1 as FD _ FS PR _ | destruct MF1 as (FD & _ & FS & PR & _) ]). split.
         * unfold m_fs. rewrite FS. exact Mfs.
         * unfold m_fds. rewrite FD. exact Mfd1.
         * unfold m_fds. rewrite FD. exact Mfd2.
         * exact Hh1.
         * exact Hl1.
+        * (* LPS 727298f3: md_ok's reader field; malloc keeps [m_proc] ([md_frame]) *)
+          unfold m_channel_reader. rewrite PR. exact Mrdr.
       + exact LIVEB1.
       + right. split; [exact LIVE1| exact IN3].
       + intros i Hi. rewrite OUT3 by (rewrite u64 by lia; lia). apply (knTm_img _ M1 HK). lia.
@@ -2415,7 +2438,7 @@ Section Header.
     (first [ pose proof ((hdr_setup sp0 a0s path envv rdraw tid mem0 fs0 data Hvsp HCEIL Hplen k b vals R M md A calls ST)) as dR_11; dand11 dR_11 as HB HJ HR HK V20 V21 V22 V6 V7 V12 V25 | destruct (hdr_setup sp0 a0s path envv rdraw tid mem0 fs0 data Hvsp HCEIL Hplen k b vals R M md A calls ST)
       as (HB & HJ & HR & HK & V20 & V21 & V22 & V6 & V7 & V12 & V25) ]).
     set (V := VT data vals R k b calls) in *.
-    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    pose proof ST as [HB0 _ HP _ HA S1 S3 S5 S6 S7 AI0 MI BUF MD]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof BUF as [LIVE ONLY DS DATA Hk Hlen HlenL].
     (first [ pose proof (HB) as dR_12; dand5 dR_12 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]).
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
@@ -2669,7 +2692,7 @@ Section Top.
 
   Lemma body_all_holds : body_all.
   Proof.
-    intros AMB sp0 a0s path envv rdraw tid regs0 mem0 fs0 fdata Hva Hve Hvsp HCEIL Htid ME Hfile Hplen.
+    intros AMB sp0 a0s path envv rdraw tid mem0 fs0 fdata Hva Hve Hvsp HCEIL Htid Hfile Hplen.
     exact (body_ok_holds sp0 a0s path envv rdraw tid mem0 fs0 fdata Hvsp HCEIL Htid Hplen limg_lo limg_hi Hlimg limg limg_intro LIBOK).
   Qed.
 
@@ -2680,6 +2703,8 @@ Section Top.
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
       entry_stack_fits sp (in_argv inp) (in_envp inp) ->
       in_abort_terminal inp = false ->
+      in_channel_reader inp = true ->
+      valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
       realizes rsegs
         (init_config rsegs rpc rph sp brk mbase rdraw DU_Mz0p.LIM inp)   (* [comment removed for export] *)
         (spec (in_argv inp) (in_fs inp)).
@@ -2700,11 +2725,13 @@ Theorem ref_realizes_spec_lib_run {BW : BWorld}
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     in_abort_terminal inp = false ->
+    in_channel_reader inp = true ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
     realizes rsegs
       (init_config rsegs rpc rph sp brk mbase rdraw bw_lim inp)   (* [comment removed for export] *)
       (spec (in_argv inp) (in_fs inp)).
 Proof.
-  intros sp brk mbase rdraw inp Hsp Hbrk Hva Hve Hfit Hab.
+  intros sp brk mbase rdraw inp Hsp Hbrk Hva Hve Hfit Hab Hrd Hvl Hlau.
   apply (@ref_realizes_spec_lib (ceiling_of_sp (BW:=BW) sp Hsp) (AIc _) (DKc _) limg_lo limg_hi Hlimg limg limg_intro (LIBOK _) sp brk mbase rdraw inp Hsp);
     try assumption.
   unfold alloc_ceiling, ceiling_of_sp. rewrite stack_max_size_val. reflexivity.
@@ -2766,41 +2793,49 @@ Section Assembly.
     (* [comment removed for export] *)
     pose proof (valid_input_va_size _ Hvalid) as Hsv48.
     rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-    destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-    (* [comment removed for export] *)
-    (first [ dand10 Hvalid as Hargv Henvp Hfs Hrel Hcreds Hnofile Hsigmask Hhwcap Habort _ | destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & Hcreds & Hnofile & Hsigmask & Hhwcap & Habort & _) ]).
+    destruct Hens as (Hrsp & Hrbrk & Hrmb & Hrfit & Hrlau). destruct Hent as (Hasp & Habrk & Hamb & Hafit & Halau).
+    (* LPS 727298f3: [valid_input]'s clauses by name, not by position *)
+    pose proof (valid_input_argv _ Hvalid) as Hargv. pose proof (valid_input_envp _ Hvalid) as Henvp.
+    pose proof (valid_input_abort_terminal _ Hvalid) as Habort.
+    pose proof (valid_input_channel_reader _ Hvalid) as Hrdr. pose proof (valid_input_launch _ Hvalid) as Hvl.
     apply (shape_strong_equiv_ef _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (spec (in_argv inp) (in_fs inp))).
     - exact (D_Mak2g.ref_realizes_spec_lib_run AI0 DK0 img_ok0 img_ok0_intro LIB0
-               rsp rbrk rmb rrnd inp Hrsp Hrbrk Hargv Henvp Hrfit Habort).
+               rsp rbrk rmb rrnd inp Hrsp Hrbrk Hargv Henvp Hrfit Habort Hrdr Hvl Hrlau).
     - (* [comment removed for export] *)
       apply rz_of_core.
       exact (rz_unwrap _ _ _ (DU_Mzdi.ref_realizes_spec_lib_run (BW:=bw_target) AIU DKU limg_lo limg_hi Hlimg limg limg_intro LIBU
-               asp abrk amb arnd inp Hasp Habrk Hargv Henvp Hafit Habort)
+               asp abrk amb arnd inp Hasp Habrk Hargv Henvp Hafit Habort Hrdr Hvl Halau)
                (never_excused_off (BW:=bw_target) _ eq_refl _)).
+    - reflexivity.
+    - reflexivity.
   Qed.
 
   (* [comment removed for export] *)
   Theorem plain_halts : halts_allowed_T_scfg ACFG AnyExit.codes SRC0.
   Proof.
     apply (halts_of_realizes _ _ _ (fun inp => spec (in_argv inp) (in_fs inp))
-             (fun inp => tgood_spec (in_argv inp) (in_fs inp))).
+             (fun inp => tgood_spec (in_argv inp) (in_fs inp))); [| reflexivity].
     intros sp brk mbase rdraw inp Hen Hvalid.
     pose proof (valid_input_va_size _ Hvalid) as Hsv48. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-    destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    destruct Hvalid as (Hargv & Henvp & _ & _ & _ & _ & _ & _ & Habort & _).
+    destruct Hen as (Hsp & Hbrk & Hmb & Hfit & Hlau).
+    pose proof (valid_input_argv _ Hvalid) as Hargv. pose proof (valid_input_envp _ Hvalid) as Henvp.
+    pose proof (valid_input_abort_terminal _ Hvalid) as Habort.
+    pose proof (valid_input_channel_reader _ Hvalid) as Hrdr. pose proof (valid_input_launch _ Hvalid) as Hvl.
     exact (D_Mak2g.ref_realizes_spec_lib_run (BW:=bw_pinned) AI0 DK0 img_ok0 img_ok0_intro LIB0
-             sp brk mbase rdraw inp Hsp Hbrk Hargv Henvp Hfit Habort).
+             sp brk mbase rdraw inp Hsp Hbrk Hargv Henvp Hfit Habort Hrdr Hvl Hlau).
   Qed.
 
   Theorem ubsan_halts : halts_allowed_T_scfg ACFG AnyExit.codes UBSAN.
   Proof.
     apply (halts_of_realizes _ _ _ (fun inp => spec (in_argv inp) (in_fs inp))
-             (fun inp => tgood_spec (in_argv inp) (in_fs inp))).
+             (fun inp => tgood_spec (in_argv inp) (in_fs inp))); [| reflexivity].
     intros sp brk mbase rdraw inp Hen Hvalid.
     pose proof (valid_input_va_size _ Hvalid) as Hsv48. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-    destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    destruct Hvalid as (Hargv & Henvp & _ & _ & _ & _ & _ & _ & Habort & _).
+    destruct Hen as (Hsp & Hbrk & Hmb & Hfit & Hlau).
+    pose proof (valid_input_argv _ Hvalid) as Hargv. pose proof (valid_input_envp _ Hvalid) as Henvp.
+    pose proof (valid_input_abort_terminal _ Hvalid) as Habort.
+    pose proof (valid_input_channel_reader _ Hvalid) as Hrdr. pose proof (valid_input_launch _ Hvalid) as Hvl.
     exact (DU_Mzdi.ref_realizes_spec_lib_run (BW:=bw_pinned) AIU DKU limg_lo limg_hi Hlimg limg limg_intro LIBU
-             sp brk mbase rdraw inp Hsp Hbrk Hargv Henvp Hfit Habort).
+             sp brk mbase rdraw inp Hsp Hbrk Hargv Henvp Hfit Habort Hrdr Hvl Hlau).
   Qed.
 End Assembly.

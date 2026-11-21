@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): new file, the asan-ubsan twin of the A fread closure
    (lib/A/Stdio/PFreadC.v, a Theorem Labs lane's sibling lane), in the shape of lib/A/Stdio/PFmemopenC.v
-   (a working branch c5180b0bcf1). *)
+   (a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* ---------------------------------------------------------------------------------------------- *)
 (* PFreadC: pcap's fread interceptor, CLOSED, for the ASAN-UBSAN image.                            *)

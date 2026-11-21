@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the CONFIG_RSEQ flag; the vDSO; the channel-reader premise of writev; the reserved-range ledger; new lemmas; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanPlanSoundK.v, 41 lines within its lines 77-4999. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -67,6 +67,10 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* the run's CONFIG_RSEQ flag as 0 or 1 ([APCK.rseq_z]): the auxv's size is in
+   the plan's string expressions through [node_pnscan] / [node_layout], so
+   [x_stmt] takes it too *)
+Variable rz : Z.
 Variable HS : nat -> option acs.
 
 Variable XN : nat -> list expr -> acs -> option acs.
@@ -104,7 +108,20 @@ Variable FS0 : Fs.Fs.
 
 Variable KC : nat.
 
-#[local] Notation CHECK := (APK.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  (** a PAGE clear of [KHI]: a FIXED range ending at or below [KHI]
+      ([APCK.resx_clear]) meets none of them *)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  (** NOT [<= CEIL].  The pair hangs off [mm->mmap_base], and
+      [Run.valid_mmap_base] admits a base up to [State.mmap_base_max] =
+      0x7ffff8000000, above [AsanCeil.alloc_ceiling]. *)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
+#[local] Notation CHECK := (APK.check SEGS IT A nx0 LIMIT rz XN XE XB HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -246,7 +263,12 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+
+  co_res   : exists rx : list (word * word),
+               vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+               /\ Forall resx_entry_ok rx
+               /\ (length rx <= n_resx A)%nat
+               /\ sum_sizes rx <= resx_bytes A;
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
 
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -288,7 +310,15 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
 
   co_hna   : vm_noaccess (m_vmmaps model) = RNA E (a_hna cs);
   co_hlz   : m_vm_lazy model = RLZ E (a_hlz cs);
-  co_tidv  : a_tidset cs = true -> exists t, m_tid model = Some t /\ 0 < bv_unsigned t < PID_MAX
+  co_tidv  : a_tidset cs = true -> exists t, m_tid model = Some t /\ 0 < bv_unsigned t < PID_MAX;
+
+  co_mres  : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                    (vm_maps (m_vmmaps model));
+
+  co_vdso  : incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                  (vm_reserved (m_vmmaps model));
+
+  co_rdr   : m_channel_reader model = true
 }.
 
 #[using="HS XN XE XB KC"] Lemma A_wf_allowA : forall E cs, A_wf (allowA E cs).
@@ -433,6 +463,8 @@ Proof.
   - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
   - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
   - intros Ht. replace (m_tid model') with (m_tid model) by (symmetry; apply Hfr). auto.
+  - (* co_rdr: materialisation leaves the process record alone *)
+    rewrite Hs. destruct model; assumption.
 Qed.
 
 #[using="Type"] Lemma know_ok_filter : forall E M f k, know_ok SEGS E M k -> know_ok SEGS E M (List.filter f k).
@@ -1531,9 +1563,7 @@ Definition node1_stmt (pre : acs -> bool) (node : acs -> option acs) : Prop :=
 Definition always (cs : acs) : bool := true.
 
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
-
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
-
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 
 Definition join_stmt : Prop := forall b off n, node1_stmt always (fun cs => node_join SEGS cs b off n).
@@ -1602,7 +1632,7 @@ Definition holes_stmt : Prop :=
 
 Hypothesis node_sys_sound : forall y, sys_stmt y.
 Hypothesis node_brk2_sound : brk2_stmt.
-Hypothesis node_mmap2_sound : forall split : bool, mm2_stmt (node_mmap2 A nx0 LIMIT split).
+Hypothesis node_mmap2_sound : forall split : bool, mm2_stmt (node_mmap2 A nx0 LIMIT rz split).
 Hypothesis node_mmapin_sound : forall hole : bool, mm3_stmt (node_mmapin A LIMIT hole).
 Hypothesis node_mprotect2_sound : mm2_stmt (node_mprotect2 A LIMIT).
 Hypothesis node_exit_sound : exit_stmt.
@@ -3255,7 +3285,7 @@ Proof. reflexivity. Qed.
 Proof. reflexivity. Qed.
 
 #[using="Type"] Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
-  check_all A chk k css = COk s ->
+  check_all A rz chk k css = COk s ->
   (exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
 Proof.
   intros chk k css s H. unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
@@ -3316,7 +3346,7 @@ Proof.
   - destruct (node_havocbig nx0 cs hbK) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (node_fresh nx0 cs r logc fb) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_sys A nx0 y cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
-  - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmap2 A nx0 LIMIT false cs) as [[csa csb]|]; [|discriminate].
+  - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmap2 A nx0 LIMIT rz false cs) as [[csa csb]|]; [|discriminate].
     exact (IH _ mb _ s Hc).
   - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|]; [|discriminate].
     exact (IH _ ib _ s Hc).
@@ -3327,7 +3357,7 @@ Proof.
     destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
     destruct (hole_only sa && hole_only sb)%bool; [|discriminate].
     injection Hc as <-. apply salt2_vars; [exact (IH _ ka _ sa H1) | exact (IH _ kb _ sb H2)].
-  - destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+  - destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -3376,7 +3406,7 @@ Proof.
   -   destruct (node_habs nx0 cs hai halo hahi hanl hanh) as [cs1|]; [|discriminate]. exact (IH _ hak cs1 s Hc).
   -   destruct (node_absword nx0 cs wb woff wn wlo whi) as [cs1|]; [|discriminate]. exact (IH _ wk cs1 s Hc).
   -
-    destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmap2 A nx0 LIMIT true cs) as [[csa csb]|]; [|discriminate].
+    destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmap2 A nx0 LIMIT rz true cs) as [[csa csb]|]; [|discriminate].
     destruct (kn_contra (kn csa)); [exact (IH _ lhb _ s Hc)|].
     destruct (kn_contra (kn csb)); [exact (IH _ lha _ s Hc)|].
     destruct (CHECK bfuel fuel lc csa lha) as [sa|] eqn:H1; [|discriminate].
@@ -4504,8 +4534,8 @@ Proof.
     eapply (node_sys_sound y cs cs1 E R FULL model); [exact HC | exact Hec | exact Hn |]. exact (CONT k cs1 s Hc).
   -
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
-    destruct (node_mmap2 A nx0 LIMIT false cs) as [[csa csb]|] eqn:Hn; [|discriminate].
-    pose proof (node_mmap2_nosplit_contra A nx0 LIMIT cs csa csb Hn) as Hka.
+    destruct (node_mmap2 A nx0 LIMIT rz false cs) as [[csa csb]|] eqn:Hn; [|discriminate].
+    pose proof (node_mmap2_nosplit_contra A nx0 LIMIT rz cs csa csb Hn) as Hka.
     eapply (node_mmap2_sound false cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | | exact (CONT mb csb s Hc)].
     intros E' R' FULL' model' _ HC' _. exfalso. exact (kn_contra_sound E' _ _ (co_know _ _ _ _ _ HC') Hka).
   -
@@ -4530,7 +4560,7 @@ Proof.
     eapply (node_brk2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT ka csa sa H1) | exact (CONT kb csb sb H2) |].
     apply hole_only_eq; assumption.
   -
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
   -
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].
@@ -4740,7 +4770,7 @@ Proof.
     exact (CONT wk cs1 s Hc E' R FULL model Hag HC1 eq_refl).
   -
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
-    destruct (node_mmap2 A nx0 LIMIT true cs) as [[csa csb]|] eqn:Hn; [|discriminate].
+    destruct (node_mmap2 A nx0 LIMIT rz true cs) as [[csa csb]|] eqn:Hn; [|discriminate].
     assert (DEAD : forall csx kx, kn_contra (kn csx) = true ->
               forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' csx R' FULL' model' ->
                 m_fs model' = m_fs model -> srealizes SEGS scfg (cfg R' (pc csx) FULL' model') (sd D E (m_fs model) kx)).

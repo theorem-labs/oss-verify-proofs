@@ -9,4 +9,4 @@ OK       Reusable/YA0j.v                = proofs/libreac/fuzz_boxreg/lib/Reusabl
 OK       Reusable/YWH8.v                = proofs/libreac/fuzz_boxreg/lib/Reusable/YWH8.v blob dc2018d14746, prefix OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib -> OssFuzzTheorems.Proofs.reac_pw.fuzz_link.lib
 RESULT FAIL
 rc=1
-(control: the same check on the tree of d726505293e, which carries 2cf45110572's hand notice lines in AsStackSz.v, StackFreeDef.v, StackFreeJournal.v and StackFreeRaw.v: those four DIFFER, RESULT FAIL, as expected)
+(control: the same check on the tree, which carries's hand notice lines in AsStackSz.v, StackFreeDef.v, StackFreeJournal.v and StackFreeRaw.v: those four DIFFER, RESULT FAIL, as expected)

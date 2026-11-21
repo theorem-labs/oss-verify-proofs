@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane W, ReallocPrimary.CfW.ReplyEnqReloc): reply's own twin, at image A
-   (fuzz_reply.asan), of CfF1's cgif instance file proofs/cgif/cgif_file_fuzzer/lib/YGcfInstF1Wcgif.v (commit
-   a8ad57cefdcd, sha256 e299071e9ebb; internal record), CUT to the one image fact the relocated Enqueue room arm (A/YFg4cf.v) reads:
+   (fuzz_reply.asan), of CfF1's cgif instance file proofs/cgif/cgif_file_fuzzer/lib/YGcfInstF1Wcgif.v (
+   sha256 e299071e9ebb; internal record), CUT to the one image fact the relocated Enqueue room arm (A/YFg4cf.v) reads:
    [IMG_COVER_reply], the kit's image premise YGcfDIface.IMG_COVER.  The cgif file's other witnesses (errno_img_cf,
    the depot premises, depot_spec, enq_pre_state_init_cf) are not taken: no file here uses them, and reply's image rows
    for them are other hands' (REPLY-IMG-ROWS.md sha256 a33a582e3ffd; internal record).
-   The proof is the cgif lemma's own script (YGcfInstF1Wcgif.v:67-74 at a8ad57cefdcd), which is reply's
+   The proof is the cgif lemma's own script (YGcfInstF1Wcgif.v:67-74), which is reply's
    A/AF0x.v:55-62 img_cover_of_ledger over ALedger_cf: image A's first and last loaded segments (Asan_segment_000,
    Asan_segment_003) give TFIB_IMG_LO (0x10000) and TFIB_IMG_END (0x5fb000, A/AF0x.v:25 / :37).
    rule 24: no function proved (kind: instance discharge of an image premise at reply's image A). *)

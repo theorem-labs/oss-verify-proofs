@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0x.v, with its module paths and addresses changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: libreac/fuzz_boxreg's repair of this file, with this unit's module paths and addresses. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -23,34 +24,42 @@ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Lemma msg_read_error_eq : forall p, msg_read_error p = strB "cli: read error on " ++ p ++ nl.
 Proof. intros p. unfold msg_read_error. vm_compute. reflexivity. Qed.
 Section b.
+Local Set Default Proof Using "All".
 Variable sp : word.
 Variable a0 path : list byte.
-Variable envp : list (list byte).
+Variable inp : ProcInput.
+Variables mbase brk : word.
 Variable tid : word.
 Variable rnd : EntryDraw.
+Local Notation envp := (in_envp inp) (only parsing).
+Hypothesis Hargv : in_argv inp = [a0; path].
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv [a0; path].
 Hypothesis Hve : valid_envp envp.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
 Hypothesis Hfits : entry_stack_fits sp [a0; path] envp.
+Lemma HvaI : valid_argv (in_argv inp). Proof. rewrite Hargv. exact Hva. Qed.
 Hypothesis Hlen60 : Z.of_nat (length path) <= 60.
 Theorem src0_read_error : forall (E : env) ms model,
-env_agree 10 (E_main sp [a0; path] envp tid rnd) E ->
+env_agree 10 (E_main sp inp tid rnd) E ->
 st_ok src0segs E ss_rderr ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main true sp [a0; path] envp rnd) ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main true sp inp rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 realizes src0segs (mkCfg ms model) (diag (msg_read_error path) (m_fs model)).
 Proof.
-intros E ms model HEA HS HR Hh Hlz Hfd2.
+intros E ms model HEA HS HR Hh Hlz Hfd2. unfold runs_main in HR. rewrite Hargv in HR.
+pose proof (stack_tail_end src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau) as STE. rewrite ?Hargv in STE.
 unfold diag, wr, ex, ch_stderr. rewrite msg_read_error_eq.
-pose proof (layout_facts sp [a0; path] envp Hsp Hva Hve) as L. unfold SP_LO, SP_HI in L.
-pose proof (z_argv_bounds sp [a0; path] envp 1 ltac:(cbn; lia)) as B1. cbn [nth] in B1.
-pose proof (argv_no_nul [a0; path] Hva 1 ltac:(cbn; lia)) as Hnul1. cbn [nth] in Hnul1.
-pose proof (argv_str_len [a0; path] Hva 1 ltac:(cbn; lia)) as Hlen1. cbn [nth] in Hlen1.
-pose proof (ew0 sp [a0; path] envp (xw_main sp [a0; path] envp tid rnd) (xd_main rnd)) as H0.
-change (E0 _ _ _ _ _) with (E_main sp [a0; path] envp tid rnd) in H0.
-pose proof (ew2' sp [a0; path] envp Hsp Hva Hve (xw_main sp [a0; path] envp tid rnd) (xd_main rnd) ltac:(cbn; lia)) as H2.
-change (E0 _ _ _ _ _) with (E_main sp [a0; path] envp tid rnd) in H2.
-pose proof (z_argv_fits sp [a0; path] envp Hfits 1 ltac:(cbn; lia)) as F1. cbn [nth] in F1. unfold SP_HI in F1.
+pose proof (layout_facts src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau) as L. rewrite ?Hargv in L. pose proof (auxv_bytes_range (kb_rseq (in_kernel inp))) as ARL. unfold SP_LO, SP_HI in L.
+pose proof (z_argv_bounds src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 1 ltac:(rewrite ?Hargv; cbn; lia)) as B1. rewrite ?Hargv in B1. cbn [nth] in B1.
+pose proof (argv_no_nul src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 1 ltac:(rewrite ?Hargv; cbn; lia)) as Hnul1. rewrite ?Hargv in Hnul1. cbn [nth] in Hnul1.
+pose proof (argv_str_len src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 1 ltac:(rewrite ?Hargv; cbn; lia)) as Hlen1. rewrite ?Hargv in Hlen1. cbn [nth] in Hlen1.
+pose proof (ew0 src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 1 ltac:(lia) (xw_main inp rnd tid) (xd_main rnd)) as H0.
+change (E0 _ _ _ _ _ _ _ _) with (E_main sp inp tid rnd) in H0. rewrite ?Hargv in H0.
+pose proof (ew2' src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 1 ltac:(lia) (xw_main inp rnd tid) (xd_main rnd) ltac:(rewrite ?Hargv; cbn; lia)) as H2.
+change (E0 _ _ _ _ _ _ _ _) with (E_main sp inp tid rnd) in H2. rewrite ?Hargv in H2.
+pose proof (z_argv_fits src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 1 ltac:(rewrite ?Hargv; cbn; lia)) as F1. rewrite ?Hargv in F1. cbn [nth] in F1. unfold SP_HI in F1.
 rewrite <- (proj1 HEA 0%nat ltac:(lia)) in H0. rewrite <- (proj1 HEA 2%nat ltac:(lia)) in H2.
 eapply rz_conseq; [| apply (shape_1 (strB "cli: read error on ") path nl)].
 sym_run_to_with src0tbl_ok HS 0x1e378.
@@ -88,7 +97,7 @@ Qed.
 End b.
 Theorem src0_read_error_hyp : read_error_hyp.
 Proof.
-unfold read_error_hyp. intros sp a0 path envp tid rnd E ms model Hsp Hva Hve Hfits Htid Hlen HEA HS HR Hh Hlz Hch.
-exact (src0_read_error sp a0 path envp tid rnd Hsp Hva Hve Hfits Hlen E ms model HEA HS HR Hh Hlz Hch).
+unfold read_error_hyp. intros sp inp mbase brk a0 path tid rnd E ms model Hargv Hsp Hva Hve Hvl Hlau Hfits Htid Hlen HEA HS HR Hh Hlz Hch.
+exact (src0_read_error sp a0 path inp mbase brk tid rnd Hargv Hsp Hva Hve Hvl Hlau Hfits Hlen E ms model HEA HS HR Hh Hlz Hch).
 Qed.
 End a.

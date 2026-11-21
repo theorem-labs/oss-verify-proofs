@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v; 872 of its 915 lines of code are new or changed and 802 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F2.v -- GLUE for stage seg_F2 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:741-742).  Written by a Theorem Labs lane; re-pointed to the narrowed run
    F2Fs.f2_evt_Fs (BLOCK_RT_HI dropped; F2Fs.v is not in this delivery) by a Theorem Labs lane's sub-lane; route (C) L3 switch by a Theorem Labs lane (the
@@ -23,9 +24,9 @@
 
    THE RUNS LIFTED (a Theorem Labs lane's footprint twins, lib/A/Prog/Seg/F2F.v (an earlier version, blob 0ba0d238585, not in this delivery), Required qualified, and
    this lane's narrowed len > 0 stretch in its route (C) form lib/A/Prog/Seg/F2Fs_on.v):
-   - len = 0: F2F.f2z_evt_F (F2F.v (at head lib/A/Prog/Seg/F2F.v:229)), 0x81da4 -> 0x81e54, write set the two spill words.
+   - len = 0: F2F.f2z_evt_F (F2F.v (at head lib/A/Prog/Seg/F2F.v:230)), 0x81da4 -> 0x81e54, write set the two spill words.
    - len > 0: F2Fs_on.f2_evt_Fs_on, 0x81da4 -> 0x81dd0 WHOLE (the call not split: a Theorem Labs lane's split rule 04:01Z).
-     It is F2Fs.f2_evt_Fs (itself F2F.f2_evt_F with F2F.v's (at head lib/A/Prog/Seg/F2F.v:88) `RT_HI <= phi` replaced by
+     It is F2Fs.f2_evt_Fs (itself F2F.f2_evt_F with F2F.v's (at head lib/A/Prog/Seg/F2F.v:89) `RT_HI <= phi` replaced by
      asan_memcpy_contract_F's own `phi + N <= RT_LO \/ RT_HI <= phi`, asan_memcpy_cF.v (at head lib/A/Prog/asan_memcpy_cF.v:56)) in route (C) form: the
      callee premise is a Theorem Labs lane's asan_memcpy_contract_F_on, DISCHARGED by its PROVED
      A.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on; the shadow premise is `shadow_rw_on (f2_evt_Fs_shadow_R phi S N)`
@@ -68,7 +69,7 @@
    SECTION HYPOTHESES (exact text below; source and why)
    - LAWS, RELRO_IMG, TFIB_SYMS: ACtl.v:244, :226, :259, verbatim (ajournal / frames / blocks laws; the
      read-only span in the image; ts_owned / ts_errno / ts_zsh for the kind-name table; ctl_rt_C_of_AR).
-   - RELRO_KIND_NAME: ACtl.v (at head lib/A/ACtl.v:238), verbatim (batch 3, from a working branch d36efc6152d; it replaces this file's earlier KN_RELRO,
+   - RELRO_KIND_NAME: ACtl.v (at head lib/A/ACtl.v:238), verbatim (batch 3, from a working branch; it replaces this file's earlier KN_RELRO,
      the same fact at KIND_NAME = 0x9e760).  b5_KN's bytes
      come only from ctl_base's arodata_okS RLO RHI (ACfn.v:43) carried by the journal's image clause
      (KitMem.kitmem_arodataS_journal): ro_agree gives nothing there (ro_addr rsegs 0x9e760 = false, measured:
@@ -77,8 +78,8 @@
      asked for; f2_evt_Fs asks for the contract's disjunction, paid in G2 from AR's client-image law.)
 
    ZERO-SHADOW ROW: f2g_kn reads the shadow of [0x9e760, 0x9e7d0) through ts_zsh from AF0m.Tfib_zero_shadow's
-   RECORD row (0x21aa0, 0x9e7d0 - 0x21aa0) (AF0m.v:2963 on the interim core 5da74c9c931, merged at glue base
-   29ddfc3ea99; the same row as a Theorem Labs lane's record AF0m e56483f863b), found in the list by membership.  The
+   RECORD row (0x21aa0, 0x9e7d0 - 0x21aa0) (AF0m.v:2964 on the interim core, merged at glue base;
+   the same row as a Theorem Labs lane's record AF0m), found in the list by membership.  The
    planning core's row (0x20ec0, 0xa4380 - 0x20ec0) is gone.  The owned-static and errno side conditions
    (Tfib_owned_static, TFIB_ERRNO = 0x5db76c) hold on it.
 
@@ -89,14 +90,14 @@
 
    CLOSURE (glue closure rule): every project module Required qualified, never Imported (the six doubled
    Reusable modules and lib/Lib by absolute Require).  Measured by a Theorem Labs lane's w2a-closure.py Require scan
-   (481 files on glue base 29ddfc3ea99): no lib/AZ/AsanW (not in this delivery), no SegCF / *_cfw / Cf* file; W6 only lib/A/W6/QSlot.v
+   (481 files on glue base): no lib/AZ/AsanW (not in this delivery), no SegCF / *_cfw / Cf* file; W6 only lib/A/W6/QSlot.v
    (via Seg/Tac_cls); AZ only AZ/Spec/{AsanCtrl, AsanCtrlProps, STree} and AZ/LibA/AcctCore.v (via lib/Lib/ExecF
    only).  Frame-route files at their blob of record (SlotModel 04dc7903221, SlotInv 4cf85db229a, Seg/Tac_slot
    de02ff45188, AsanRT b67d26f8ec7 mcs 30, ...): the full list is in the commit message.  STAND-INS: none; on the
-   interim core 5da74c9c931 no file of the closure carries a port_core_refused_<hex> name or an Admitted /
+   interim core no file of the closure carries a port_core_refused_<hex> name or an Admitted /
    admit (scripted scan), and A/AD2l.v is not in the closure.
 
-   BUILD STATE: cb build (BASE row 23b918fe0c2e, a build machine), NO
+   BUILD STATE: cb build (BASE row, a build machine), NO
    substitution; the result and its log are in the commit message.
    Every lemma of this file ends in Qed; Print Assumptions glue_seg_F2 is the last line. *)
 

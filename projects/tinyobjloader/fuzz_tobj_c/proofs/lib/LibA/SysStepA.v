@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writev lemmas take the model's channel-reader premise, LPS 08b1429, and pass it to writev2_inv, writev1_inv and their intro_prefix lemmas). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -280,15 +281,16 @@ S4S15S31Q40M0A1M1G1S0S3cS32G0R2A2Z1dA3S0SbS18A1S1bS19R4A1S3dS3R5U0A2A1A2SdS18S24
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length (bs1 ++ bs2)) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     (forall k, ranges_avoid (hid m tp) (writev2_reads (sys_input segs ms x8) b1 l1 b2 l2 k)) ->
     wstep segs (tr, mkCfg ms m) w' ->
     exists k, (1 <= k <= length (bs1 ++ bs2))%nat
       /\ w' = (tr ++ map (WriteEv ch) (firstn k (bs1 ++ bs2)),
                mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) (md_after m (writev2_reads (sys_input segs ms x8) b1 l1 b2 l2 k))).
   Proof using .
-    intros tp tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 w' Hp Hh HMI Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hav Hw.
+    intros tp tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 w' Hp Hh HMI Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hrdr Hav Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    destruct (@writev2_inv (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2 Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen _ Hspec) as (k & Hk & E).
+    destruct (@writev2_inv (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2 Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hrdr _ Hspec) as (k & Hk & E).
     unfold is_ret_ci in E. inversion E; subst.
     exists k. split; [exact Hk|].
     destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hc & _)]; [|congruence].
@@ -313,14 +315,15 @@ S4S15S31Q40M0A1M1G1S0S3cS32G0R2A2Z1dA3S0SbS18A1S1bS19R4A1S3dS3R5U0A2A1A2SdS18S24
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length (bs1 ++ bs2)) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     (1 <= k <= length (bs1 ++ bs2))%nat ->
     ranges_avoid (hid m tp) (writev2_reads (sys_input segs ms x8) b1 l1 b2 l2 k) ->
     wstep segs (tr, mkCfg ms m) (tr ++ map (WriteEv ch) (firstn k (bs1 ++ bs2)),
                                   mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) (md_after m (writev2_reads (sys_input segs ms x8) b1 l1 b2 l2 k))).
   Proof using .
-    intros tp tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 k Hp Hh HMI Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hk Hav.
+    intros tp tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 k Hp Hh HMI Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hrdr Hk Hav.
     eapply wstep_retci_introA; [exact Hp | exact Hh | | exact Hh | exact HMI | exact Hav].
-    exact (@writev2_intro_prefix (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2 Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen k Hk).
+    exact (@writev2_intro_prefix (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2 Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hrdr k Hk).
   Qed.
 
   Lemma writev2_only_okA : forall tp ms m x8 ch b1 l1 b2 l2 bs1 bs2,
@@ -339,15 +342,16 @@ S4S15S31Q40M0A1M1G1S0S3cS32G0R2A2Z1dA3S0SbS18A1S1bS19R4A1S3dS3R5U0A2A1A2SdS18S24
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length (bs1 ++ bs2)) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     (forall k, ranges_avoid (hid m tp) (writev2_reads (sys_input segs ms x8) b1 l1 b2 l2 k)) ->
     only_okA (sys_input segs ms x8) m.
   Proof using .
-    intros tp ms m x8 ch b1 l1 b2 l2 bs1 bs2 Hh HMI Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hav.
+    intros tp ms m x8 ch b1 l1 b2 l2 bs1 bs2 Hh HMI Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hrdr Hav.
     split.
-    - intros Hun. destruct (@writev2_inv (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2 Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen _ Hun) as (k & _ & E).
+    - intros Hun. destruct (@writev2_inv (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2 Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hrdr _ Hun) as (k & _ & E).
       unfold is_ret_ci in E. discriminate.
     - intros eff m' evs Hs Hh'.
-      destruct (@writev2_inv (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2 Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen _ Hs) as (k & _ & E).
+      destruct (@writev2_inv (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2 Hno Hfd Hch Hcnt R1 R2 R3 R4 B1 B2 Hiok Hok1 Hok2 Hlen Hrdr _ Hs) as (k & _ & E).
       unfold is_ret_ci in E. inversion E; subst.
       unfold syscall_effect_accesses. cbn [eff_copyins eff_writes write_accesses app]. rewrite app_nil_r.
       rewrite (proj1 (materialize_prepaid segs _ tp _ HMI (Hav k))). discriminate.
@@ -365,15 +369,16 @@ S4S15S31Q40M0A1M1G1S0S3cS32G0R2A2Z1dA3S0SbS18A1S1bS19R4A1S3dS3R5U0A2A1A2SdS18S24
     (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length bs1) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     (forall k, ranges_avoid (hid m tp) (writev1_reads (sys_input segs ms x8) b1 l1 k)) ->
     wstep segs (tr, mkCfg ms m) w' ->
     exists k, (1 <= k <= length bs1)%nat
       /\ w' = (tr ++ map (WriteEv ch) (firstn k bs1),
                mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) (md_after m (writev1_reads (sys_input segs ms x8) b1 l1 k))).
   Proof using .
-    intros tp tr ms m x8 ch b1 l1 bs1 w' Hp Hh HMI Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hav Hw.
+    intros tp tr ms m x8 ch b1 l1 bs1 w' Hp Hh HMI Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hrdr Hav Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    destruct (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen _ Hspec) as (k & Hk & E).
+    destruct (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hrdr _ Hspec) as (k & Hk & E).
     unfold is_ret_ci in E. inversion E; subst.
     exists k. split; [exact Hk|].
     destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hc & _)]; [|congruence].
@@ -394,14 +399,15 @@ S4S15S31Q40M0A1M1G1S0S3cS32G0R2A2Z1dA3S0SbS18A1S1bS19R4A1S3dS3R5U0A2A1A2SdS18S24
     (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length bs1) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     (1 <= k <= length bs1)%nat ->
     ranges_avoid (hid m tp) (writev1_reads (sys_input segs ms x8) b1 l1 k) ->
     wstep segs (tr, mkCfg ms m) (tr ++ map (WriteEv ch) (firstn k bs1),
                                   mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) (md_after m (writev1_reads (sys_input segs ms x8) b1 l1 k))).
   Proof using .
-    intros tp tr ms m x8 ch b1 l1 bs1 k Hp Hh HMI Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hk Hav.
+    intros tp tr ms m x8 ch b1 l1 bs1 k Hp Hh HMI Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hrdr Hk Hav.
     eapply wstep_retci_introA; [exact Hp | exact Hh | | exact Hh | exact HMI | exact Hav].
-    exact (@writev1_intro_prefix (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen k Hk).
+    exact (@writev1_intro_prefix (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hrdr k Hk).
   Qed.
 
   Lemma writev1_only_okA : forall tp ms m x8 ch b1 l1 bs1,
@@ -416,15 +422,16 @@ S4S15S31Q40M0A1M1G1S0S3cS32G0R2A2Z1dA3S0SbS18A1S1bS19R4A1S3dS3R5U0A2A1A2SdS18S24
     (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length bs1) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     (forall k, ranges_avoid (hid m tp) (writev1_reads (sys_input segs ms x8) b1 l1 k)) ->
     only_okA (sys_input segs ms x8) m.
   Proof using .
-    intros tp ms m x8 ch b1 l1 bs1 Hh HMI Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hav.
+    intros tp ms m x8 ch b1 l1 bs1 Hh HMI Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hrdr Hav.
     split.
-    - intros Hun. destruct (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen _ Hun) as (k & _ & E).
+    - intros Hun. destruct (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hrdr _ Hun) as (k & _ & E).
       unfold is_ret_ci in E. discriminate.
     - intros eff m' evs Hs Hh'.
-      destruct (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen _ Hs) as (k & _ & E).
+      destruct (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt R1 R2 B1 Hiok Hok1 Hlen Hrdr _ Hs) as (k & _ & E).
       unfold is_ret_ci in E. inversion E; subst.
       unfold syscall_effect_accesses. cbn [eff_copyins eff_writes write_accesses app]. rewrite app_nil_r.
       rewrite (proj1 (materialize_prepaid segs _ tp _ HMI (Hav k))). discriminate.

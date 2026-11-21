@@ -1,11 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (plain_main_closed taken over the launch values in a launchT section, plain_impl passing them; imports InitMem, which defines them). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
+(* LPS 727298f3: launchT (the launch values) lives in InitMem; imported first so later imports keep their names *)
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import InitMem.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import PropExec MState Mem Cells Exec Step Frame Tac ITree Nodes Decode RegsEquiv Image.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Ubsan Require Import UImg StdioFiles Startup Exit F_printf_iface Stdio_iface.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Ubsan Require Import F_fprintf F_fwritex_stderr F_stdio_flush F_fwrite F_vfprintf F_vfprintf_stdout F_fwritex_stdout F_stdio_exit.
@@ -30,12 +33,14 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+Section CANSEC2. Context {lx : launchT}.
 #[using="Type"] Lemma plain_main_closed : fuzz_one_stmt -> pmain_stmt.
 Proof.
   intros FUZZ.
   exact (plain_main_proof rmalloc_spec rfree_spec_proof (fprintf_diag_proof PState) fwritex_stderr_proof
            stdio_write_flush_proof fwrite_diag_proof towrite_proof (plain_target_run_closed FUZZ)).
 Qed.
+End CANSEC2.
 End CANSEC1.
 
 (* [comment removed for export] *)
@@ -46,5 +51,5 @@ Theorem plain_impl : (forall rc : runConstT, @fuzz_one_stmt rc) ->
     impl usegs (at_node usegs) (Prog.prog usegs UREAD_STAGE inp en) (epost (fun (_ : unit) (_ : machine_state) => True))
          (ms0 usegs u_init_pc u_phdrs en inp).
 Proof.
-  intros FUZZ. exact (plain_impl_from_main stdio_exit_proof_ps (fun rc => @plain_main_closed rc (FUZZ rc))).
+  intros FUZZ. exact (plain_impl_from_main stdio_exit_proof_ps (fun rc lx => @plain_main_closed rc lx (FUZZ rc))).
 Qed.

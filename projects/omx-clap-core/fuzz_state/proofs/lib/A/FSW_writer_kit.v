@@ -4,7 +4,7 @@
    ajournal_init at a raised window top).
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0, read from a file, not a pipe): put, indent,
    put_string, write_value, pj_write, preset_base64_encode and preset_base64_decode have RELEASED proofs for fs's
-   PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog, ossv/recipes@566eb6ffa5, release/pau-projects-recipes@b6a0088adc),
+   PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog, ossv/recipes, release/pau-projects-recipes),
    none for an ASan build. Those plain contracts / proofs are the templates used here, not drop-ins.
    Lemma names (git grep -w, the four released refs, under proofs/): fs_heads_uswap, uswap_new_head, uswap_kept_head: none. *)
 

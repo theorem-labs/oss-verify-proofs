@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0r.v (c8557374ad2e) for omx-clap-core/fuzz_preset's
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0r.v (theorem-labs/oss-verify-proofs@6b32741d849a) for omx-clap-core/fuzz_preset's
    ASan image A (rebuilt, sha256 f0d2e8d4..0b15): the class-1 walk setup of __asan_stack_malloc_1. Changes, all else as AF0r:
    module paths; YCe5 is not imported; the five class-1 pcs are FCimg's FS1_*; TP / TSD are AF0m's TFIB_TP / TFIB_TSD;
    fs_ranges is the class-1 body (FS1_ENTRY, FS1_ENTRY_WORDS) followed by FCimg.FS_CALLEE_RANGES (AF0r's eight callees,
@@ -11,8 +11,9 @@
    (FS_N, FS_FLOFF, FS_B, FS_FROFF, FS_HOFF) are the model's (YG00 fs_frames / fs_frame_bytes, YG0f kFakeFlagsOff /
    kFakeFramesOff, kStackSizeLog 20), the same in both images, and are checked by fs_frames_cid, frame_addr_cid and
    flag_addr_cid; the probe-loop words F_L* are checked against image A by fetch. *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch b120217aa206) to omx-clap-core/fuzz_state's ASan image A as the class-1 walk of fuzz_state's __asan_stack_malloc_1 at 0x3d5f8: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/FCm1r.v at cb01f65c0f3: the class-1 walk of fuzz_state.asan-ubsan's __asan_stack_malloc_1 at 0x3d668. Changes: module paths (lib.A -> lib.B: AB1v -> YB1v, AB1w -> YB1w, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x, AE2y -> YE2y, AE3d -> YE3d, and A's FCimg / FCxA / FCm<k>r / FCm<k>s / FCf5 / FSH_Base -> their lib/B twins; the image-generic lib/A FSupoison, FSupoisonU, FSifaceU, SetShadowDefU and FSuwalk stay), nothing else; every image numeral is image B's, from lib/B/FCimg.v (generated from fuzz_state.asan-ubsan by gen_fcimg_fs_b.py) and lib/B/YF0m.v (TFIB_TP, TFIB_TSD, Tfib_const); the probe-loop words F_L* are B's own words at FS1_LOOP 0x3d6fc, checked by fetch (B's class-1 body is A's word for word except two pc-relative fields). *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch) to omx-clap-core/fuzz_state's ASan image A as the class-1 walk of fuzz_state's __asan_stack_malloc_1 at 0x3d5f8: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/FCm1r.v: the class-1 walk of fuzz_state.asan-ubsan's __asan_stack_malloc_1 at 0x3d668. Changes: module paths (lib.A -> lib.B: AB1v -> YB1v, AB1w -> YB1w, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x, AE2y -> YE2y, AE3d -> YE3d, and A's FCimg / FCxA / FCm<k>r / FCm<k>s / FCf5 / FSH_Base -> their lib/B twins; the image-generic lib/A FSupoison, FSupoisonU, FSifaceU, SetShadowDefU and FSuwalk stay), nothing else; every image numeral is image B's, from lib/B/FCimg.v (generated from fuzz_state.asan-ubsan by gen_fcimg_fs_b.py) and lib/B/YF0m.v (TFIB_TP, TFIB_TSD, Tfib_const); the probe-loop words F_L* are B's own words at FS1_LOOP 0x3d6fc, checked by fetch (B's class-1 body is A's word for word except two pc-relative fields). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 342 of its 368 lines of code are new or changed and 492 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): what the three INTERCEPTOR calls of segment A7 of
    reac_segconf_parse_file's walk ask, derived once from a cut of A7 (segment A7's proof,
    2026-10-30). No instruction is walked here.
@@ -141,7 +142,7 @@ Let LAWS : AR_laws SEGS B := YG0q.AR_laws_ok SEGS B.
 (** ** The read-only view at the cut's reader *)
 (* rt_rom_view (RtDefs.v) is arodata_okP's read-only-segment arm: in_rom is in_roP's first disjunct, and the
    two exclusions are the same (aerrno_cell B a unfolds to arodata_okP's errno range). As segment A5's pf_a5_k.v
-   a5_rom (commit 385fd095481f), from a7_obj in place of pf_base. *)
+   a5_rom, from a7_obj in place of pf_base. *)
 Lemma a7_rom : forall v pos lyc Sc Wc memc mdc, a7_st B v pos lyc Sc Wc memc mdc ->
   rt_rom_view SEGS B Wc memc.
 Proof.

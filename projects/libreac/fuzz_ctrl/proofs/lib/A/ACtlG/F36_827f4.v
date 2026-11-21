@@ -25,7 +25,7 @@
    tfibsegs_rsegs + THE lift YA0nR.SRr_fevt_hid; G5 the run's end map R (registers 20 and 24 written, every other
    one reg_get regs3 r, so getr R r = getr regs3 r holds by reflexivity, as F38.v's K facts) is the exit cut's map.
 
-   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243; from a working branch 8ce82d7e310)): ctl_from's runtime premise is
+   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243; from a working branch)): ctl_from's runtime premise is
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (was ACtlCut.ctl_rt mem3).  This file reads no shadow byte itself: it hands Hrt
    to f36g_stage (F36_82814.v, whose window read is the (F) disjunct of cut_shadow) and passes f36g_stage's
    ctl_rt_C B ly3 S3 m' to both exits.  VIS0 / OWNED_RO are gone from the Section with glue_seg_F36_82810's switch.
@@ -48,11 +48,11 @@
    CLOSURE: every project Require names the FULL directory in its From clause; every lib/Reusable and lib/Lib module
    is used through a full-path Module alias (R_<X>, L_<X>) or a full-path notation; no STATEMENT names a frame-route
    identifier.  FRAC is not restated in this file (f36g_stage carries it, its trailer conjunct q64 m (fr + 4088)
-   (flag_addr ..) of Batch3 d36efc6152d included).  The lemma is
+   (flag_addr ..) of Batch3 included).  The lemma is
    `glue_seg_F36_827f4 {fx rc} B MT XM_LIB RLO RHI RELRO_IMG RELRO_CAT LAWS TFIB_SYMS CM_SPEC`
    (About).
 
-   BUILD STATE: type-check on 5da74c9c931, closure reaches no stand-in (glue base 121bf608343: AE2k / AF0m /
+   BUILD STATE: type-check, closure reaches no stand-in (glue base: AE2k / AF0m /
    AF0l / ACej / ACeh compiled from their own text, no port_core_refused substitution); reac_box_catalogue_match_c.v
    is the base's own ccd3e1f3c75.  No Axiom, no Parameter, no Admitted, no admit. *)
 

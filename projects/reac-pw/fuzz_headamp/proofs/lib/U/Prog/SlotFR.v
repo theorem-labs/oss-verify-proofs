@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths changed; 150 of its 167 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/Prog/FrameRet.v, with its module paths, module names, addresses and numbers changed; 257 of its 295 lines of code are new or changed and 129 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_pin/lib/U/Prog/SlotInvCF.v, with its module paths and numbers changed; 35 of its 157 lines of code are new or changed and 173 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot frame of reac-pw/fuzz_headamp LLVMFuzzerTestOneInput (UBSan, [0x12fa8, 0x148ac)): ghost values, the frame
    FR over a list hb of live harness blocks, CUTST, Inv_ENTRY, Post, Hcut and the slot obligation. Statement text:
    no function is proved here; the cut invariants are stated over CUTST in their own file.
-   The plain file (lib/Prog/SlotFR.v) with the UBSan numbers below. Taken from reac-pw/fuzz_pin's U/Prog/SlotInv.v, itself libreac/fuzz_ctrl's released Prog/SlotInv.v (origin/ossv/recipes
-   25e3d17bdb50, lines 98-194 and 318-393), by way of reac-pw/fuzz_role's U/Prog/SlotFR.v, with headamp's UBSan numbers:
+   The plain file (lib/Prog/SlotFR.v) with the UBSan numbers below. Taken from reac-pw/fuzz_pin's U/Prog/SlotInv.v, itself libreac/fuzz_ctrl's released Prog/SlotInv.v (
+   lines 98-194 and 318-393), by way of reac-pw/fuzz_role's U/Prog/SlotFR.v, with headamp's UBSan numbers:
    - Frame (0x12fa8 `addi sp,sp,-0x260`): SLOT_FRAME 608; the prologue saves ra, s0-s11 at S-8 .. S-104
      (0x12fac `sd ra,0x258(sp)` .. 0x12fdc `sd s11,0x1f8(sp)`), SLOT_SAVE 104: ctrl's thirteen saved registers.
      Headamp's prologue then saves fs0 .. fs3 at S-112 .. S-136 (0x12fe0 `fsd fs0,0x1f0(sp)` ..

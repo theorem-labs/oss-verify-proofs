@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSatSeg.v at ea8335784b52 (item 12: in_roPb,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSatSeg.v (item 12: in_roPb,
    img_bytes_ro_chk, img_val_ro_chk, img_static_chk and their soundness, rate_A_img_static, rate_A_static_of_facts,
    rate_A_static_full) for image B (fuzz_rate.asan-ubsan): the checkers run over image B's loaded segments
    (lib/AU/RtPgSatB.v segsB and its checkers), the record is RtPgImgB.rate_himg_B, the read-only range is image B's

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed ref_exit_ax, ref_exit_flush. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -122,10 +123,11 @@ Theorem ref_exit_flush :
   atexit_state mem hs -> HInv mem ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader model = true ->
   srealizes RSEGS scfg (mkCfg (mkst regs (0xa53ac : word) mem (seg_rom RSEGS)) model)
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
-  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP AS HI Hh Hlazy Hfd.
+  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP AS HI Hh Hlazy Hfd Hrdr.
   destruct (w1F regs mem sp tp code tid wp2 rp2 EC AS HI) as (regs1 & memF & RUN1 & R1sp & R1s0 & R1ra & FMF).
   destruct EC. destruct SP as [P1l P1wp P1wb P1wr P1buf P1bsz P1fd P1rp P1re RANGE LEN PMAX BYTES [Ggot Gcan]].
   zaddr P1l; zaddr P1wp; zaddr P1wb; zaddr P1wr; zaddr P1buf; zaddr P1bsz; zaddr P1fd; zaddr P1rp; zaddr P1re.
@@ -160,7 +162,7 @@ Proof.
     | lia | lia
     |   split; subst mem3; zaddr_goal; rdn_cross FMF
     |   split; subst mem3; rdn_cross FMF
-    | lia | exact Hfd | exact Hh | exact Hlazy
+    | lia | exact Hfd | exact Hrdr | exact Hh | exact Hlazy
     | lia | lia | exact LEN
     | cbn [length]; u_norm; reflexivity
     | cbn [length]; lia
@@ -197,7 +199,7 @@ Theorem ref_exit_ax : forall regs mem model code pending,
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
   intros regs mem model code pending (sp & tp & tid & wp2 & rp2 & EC & Hh & Hlazy & CASES) AS HI.
-  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd)].
+  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd & Hrdr)].
   - eapply srz_conseq; [ | apply t_emit_nil_exit ].
     eapply ref_exit_clean; eassumption.
   - eapply ref_exit_flush; eassumption.

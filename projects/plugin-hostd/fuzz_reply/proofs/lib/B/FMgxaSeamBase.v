@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamBase.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamBase.table); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamBase.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamBase.table); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
 (* Step 1 of the evt -> SRr seam at musl vfprintf: the PRIMITIVE BRIDGES between the harness's
    view of memory and the CJ tree's.
 
@@ -27,7 +27,7 @@ Local Open Scope Z_scope.
 Definition cjstore (H : word -> bool) (mem : word -> option byte) : word -> option byte :=
   mrestrict H mem.
 
-(* RtScan's premise (cold/port-fm-rtscan 445e498a469 lib/A/FMbz_str.v:288), restated here because
+(* RtScan's premise (lib/A/FMbz_str.v:288), restated here because
    port-fm dropped it from asnprintf_realizes (design/SNPRINTF-SHARED.md section 3): the mutable
    store holds no byte at a read-only address and none above the user address limit.  The CJ engine
    asks for it under the name mem_inv at every walk. *)

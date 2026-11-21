@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: drain's three literal facts HLIT5 / HLIT6 / HLIT7 (W_drain_cx_x.v Section c, lines 171-173
-   at 645f80c7a8c; dlit_at_x is the Definition at lines 166-170) at the instance of A's top_x: PI := PB_fr,
-   ARx := top_x's ARX (W_LLVMFuzzerTestOneInput_top_x.v:189, written out here as the same relation, as
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: drain's three literal facts HLIT5 / HLIT6 / HLIT7 (W_drain_cx_x.v Section c, lines 171-173;
+   dlit_at_x is the Definition at lines 166-170) at the instance of A's top_x: PI := PB_fr,
+   ARx := top_x's ARX (W_LLVMFuzzerTestOneInput_top_x.v:190, written out here as the same relation, as
    W_shadow_pin_x.v's ashp_str2_1_fr_cf does, so this file does not Require top_x), B := TfibB (B is not an argument of
    dlit_at_x: its three conjuncts read SEGS, VAL and ARx only).
      topx_HLIT5_x : dlit_at_x ARX 21 (K_GESTURE ++ [0])   .str.5 "param_gesture\0" at 0x20f20, 14 bytes
@@ -29,7 +30,7 @@
        (zero-shadow range (0x20f20, 8)), 0x7fffc1e5 = 6, 0x7fffc1e8 = 6, 0x7fffc1ec = 4; the hulls' other bytes
        0x7fffc1e0 = 5 (.str.4), 0x7fffc1e1-e3 / e6-e7 / e9-eb / ed-ef = 0xf9 (redzones).
    SATISFIABILITY (VERIFY rule 10): the only premise is ARX inside ashp_x.  ARX holds at the start-up hand-off state:
-   AD1pcf.v:148 proves ARcf TSEGS B ly init_state [] W' FULL model by Reusable/YGcfNilInit.v:96 ARcf_nil_init from the
+   AD1pcf.v:148 proves ARcf TSEGS B ly init_state [] W' FULL model by Reusable/YGcfNilInit.v:97 ARcf_nil_init from the
    start-up AR, with Hp = [] (B := TfibB by ReplyTFIBcf.v; ReplyDriverCf.v runs the driver at cp := CfParams_reply);
    so ashp_x's premise is met there and the first two conjuncts hold outright.
    proves no function (kind: image facts of the instance). *)
@@ -110,7 +111,7 @@ Proof.
   exact (AR_laws_x_cf (cp := CfParams_reply) segs TfibB (AR_laws_ok_cf (cp := CfParams_reply) segs TfibB)).
 Qed.
 
-(* HLIT5 (W_drain_cx_x.v:199) *)
+(* HLIT5 (W_drain_cx_x.v:200) *)
 Lemma topx_HLIT5_x : W_drain_cx_x.dlit_at_x (PI := PB_fr) ARX 21 (K_GESTURE ++ [0]).
 Proof.
   unfold W_drain_cx_x.dlit_at_x. split; [|split].
@@ -122,7 +123,7 @@ Proof.
     exact (W_shadow_pin_x.ashp_gesture_14_fr_x TfibB TfibB_syms ARX topx_dlit_ARX_laws).
 Qed.
 
-(* HLIT6 (W_drain_cx_x.v:200) *)
+(* HLIT6 (W_drain_cx_x.v:201) *)
 Lemma topx_HLIT6_x : W_drain_cx_x.dlit_at_x (PI := PB_fr) ARX 23 (W_BEGIN ++ [0]).
 Proof.
   unfold W_drain_cx_x.dlit_at_x. split; [|split].
@@ -134,7 +135,7 @@ Proof.
     exact (W_shadow_pin_x.ashp_begin_6_fr_x TfibB TfibB_syms ARX topx_dlit_ARX_laws).
 Qed.
 
-(* HLIT7 (W_drain_cx_x.v:201) *)
+(* HLIT7 (W_drain_cx_x.v:202) *)
 Lemma topx_HLIT7_x : W_drain_cx_x.dlit_at_x (PI := PB_fr) ARX 24 (W_END ++ [0]).
 Proof.
   unfold W_drain_cx_x.dlit_at_x. split; [|split].

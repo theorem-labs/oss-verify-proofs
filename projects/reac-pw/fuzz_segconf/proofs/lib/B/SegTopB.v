@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the closing file of the ASan+UBSan
    build, the two statements `Statements.asan_ubsan_halts` and `Statements.asan_ubsan_agrees` from named parts only.
-   The image-B twin of image A's lib/A/SegTop.v (commit 6f7a1561a103), in the place and under the name of
-   plugin-hostd/fuzz_command's lib/B/CmdTopB.v (origin/ossv/recipes 501c0d516c69).
+   The image-B twin of image A's lib/A/SegTop.v, in the place and under the name of
+   plugin-hostd/fuzz_command's lib/B/CmdTopB.v.
 
    The chain as fuzz_command's CmdTopB.v proves it, each link proved in its file and composed here:
      SegLibX.seg_lib_x_closed (lib/B/Prog/SegLibX.v, fuzz_command's lib/B/Prog/CmdLibX.v) -- the program contract C3

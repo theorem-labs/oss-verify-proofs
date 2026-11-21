@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO call arm of halt_inv_sstep; root_obligation_core_f and must_exit_in_of_root_f over the run's segment list; node_ok's third part RomBase.sys_rob read past in realizes_must_exit). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -151,6 +152,16 @@ Proof.
     end.
     apply halt_inv_of_running. cbn [cfg_model].
     rewrite (m_halted_proc _ _ Hp). assumption.
+  - (* the vDSO call arm (08b1429 Run.sstep_vdso_call): a running model, as a syscall's *)
+    match goal with
+    | [ Hm : materialize_model_accesses ?m1 _ = Some ?m2 |- _ ] =>
+        destruct (materialize_model_accesses_frame _ _ _ Hm) as (_&_&_&_&_&Hp&_)
+    end.
+    apply halt_inv_of_running. cbn [cfg_model].
+    try lazymatch goal with
+        | |- m_halted (with_vdso_bump ?m) = _ => transitivity (m_halted m); [reflexivity |]
+        end.
+    rewrite (m_halted_proc _ _ Hp). assumption.
   - (* [comment removed for export] *)
     match goal with
     | [ Hm : materialize_model_accesses ?m1 _ = Some ?m2 |- _ ] =>
@@ -185,7 +196,7 @@ Proof.
   intros S c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros Hkf Hex Hinv.
   - (* [comment removed for export] *)
-    destruct Hnode as [Hcomp Hsound].
+    destruct Hnode as [Hcomp [Hsound _]].
     apply must_exit_in_at_cfg_running.
     + exact (sstep_cfg_halted_none segs _ _ _ (Hcomp i0)).
     + exists (evs i0), (SNext (nx i0)). exact (Hcomp i0).
@@ -228,8 +239,10 @@ Definition root_obligation_core_f (img : Image) (lim : Z) (S : ProcInput -> TSet
   forall sp brk0 mb rnd inp,
     valid_entry img (mkEntry sp brk0 mb rnd) inp ->
     valid_input_core inp ->
-    realizes (img_segments img)
-      (init_config (img_segments img) (img_init_pc img) (img_phdrs img) sp brk0 mb rnd lim inp)
+    (* the run's segment list at 08b1429: [Run.image_run_segments] *)
+    realizes (run_segments (img_segments img) inp sp mb)
+      (init_config (run_segments (img_segments img) inp sp mb)
+         (img_init_pc img) (img_phdrs img) sp brk0 mb rnd lim inp)
       (S inp).
 
 (* [comment removed for export] *)
@@ -259,7 +272,7 @@ Proof.
   intros Codes [segs pc ph] lim S [sp brk0 mb rnd] inp Hroot Hkf Hex He Hv.
   pose proof (valid_input_core_of_valid_input _ Hv) as Hc.
   cbn [must_exit_in_scfg].
-  apply (realizes_must_exit_running segs Codes _ (S inp)).
+  apply (realizes_must_exit_running (run_segments segs inp sp mb) Codes _ (S inp)).
   - exact (Hroot sp brk0 mb rnd inp He Hc).
   - intros tr sig fs Htr. exact (Hkf inp tr sig fs Hc Htr).
   - intros tr code fs Htr. exact (Hex inp tr code fs Hc Htr).

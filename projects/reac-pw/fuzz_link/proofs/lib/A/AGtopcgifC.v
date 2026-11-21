@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGtopcgifC.v (a working branch 95e6f1d72b6, file sha256 847ee765efb4; written for cgif_file_fuzzer.asan-ubsan 1c29845fe605) onto libreac/fuzz_decode's asan image (pin 5973b76807d8, unstripped twin 4cb0a852e826); module paths changed, names TfibSyms -> GrantSyms; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGtopcgifC.v (a working branch, file sha256 847ee765efb4; written for cgif_file_fuzzer.asan-ubsan 1c29845fe605) onto libreac/fuzz_decode's asan image (pin 5973b76807d8, unstripped twin 4cb0a852e826); module paths changed, names TfibSyms -> GrantSyms; taken by path: no numeral of it names an image address, none changed. *)
 (* The cgif_file primary-size Allocate contract with its MISS arms discharged: AllocGcgif.aalloc_prim_realizes_cgif,
    from AGtopcgif.aalloc_prim_realizes_cgif_g, whose two premises ARM_MISSGc / ARM_MISSKc are the miss arms.
 
@@ -10,7 +10,7 @@
    cgif's AIfaceM instance is AGif1m.iface_cgif_m (a Theorem Labs lane's frozen-dm AGif0n), which takes tfib_depot_spec B
    ([HD1]) for the interface field if_depot_miss.  That field is what the arms read after a depot miss; it replaced
    if_U_refill, which is false for fuzz_state, whose universe reads st_nev.
-   The discharges follow a Theorem Labs lane's AGtop.aalloc_prim_realizes_if at a working branch 0b82402d3e3, which was
+   The discharges follow a Theorem Labs lane's AGtop.aalloc_prim_realizes_if at a working branch, which was
    written on the c5 tree before the AGtop split (a working branch); here they sit above the split
    AGtopcgif.v, and the AIfaceM instance is no longer a premise. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.

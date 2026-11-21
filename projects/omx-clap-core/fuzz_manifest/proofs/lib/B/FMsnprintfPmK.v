@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfPmK.v at a working branch b6bc009d623, relocated A->B by Theorem Labs tools; PIMG_RANGES is B's ReusableB/YE3i.v img_ro_chunks (gen_ye3i.py from B's YF0m), as the A file's list is A/AE3i.v's. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfPmK.v at a working branch, relocated A->B by Theorem Labs tools; PIMG_RANGES is B's ReusableB/YE3i.v img_ro_chunks (gen_ye3i.py from B's YF0m), as the A file's list is A/AE3i.v's. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
@@ -7,6 +7,7 @@
    pc_scheck with printf_common's own frame (sp0 = printf_common's entry sp, OSP = -2240), the string in any atom, the
    regions after the stack region constrained by the window they must avoid, and Poison's ARU in place of AR
    (pfs_check_srrU, lib/A/FMsnprintfPmChk.v); the entry regions (pimg, shz, slots) and their region_ok lemmas are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

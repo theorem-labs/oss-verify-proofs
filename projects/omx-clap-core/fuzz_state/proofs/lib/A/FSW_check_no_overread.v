@@ -7,12 +7,13 @@
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v, with its module paths, module names, addresses and numbers changed; 1014 of its 1163 lines of code are new or changed and 2537 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_overread 0x811c8 (fs.c), fs.asan, 230 instructions: the ASan WALK of FSH_Fn_cno.v
    check_no_overread_spec (the FROZEN statement; this file proves it, it does not restate it).
    Each callee's S0 contract is a Section hypothesis, as the lane rule asks, and so is each call site's call-trace row.
-   The kit steps are lemmas: FSW_K / FSW_K3 / FSW_rres / FSW_ret (S0 c6f2144975e), FSW_frame (a working branch
-   2fe0e09c2c7) and FSW_malloc_free (a working branch 1d5614a3cd0). The spec carries the stack-room
-   premise `spZ regs + 32 <= ly_top ly` (S0 8aeb3e036bf), which gives achain_push its fp < ly_top - 16 (cno_chain).
+   The kit steps are lemmas: FSW_K / FSW_K3 / FSW_rres / FSW_ret (S0), FSW_frame (a working branch)
+   and FSW_malloc_free (a working branch). The spec carries the stack-room
+   premise `spZ regs + 32 <= ly_top ly` (S0), which gives achain_push its fp < ly_top - 16 (cno_chain).
 
    CONTROL FLOW (MEASURED, capstone on the pinned fs.asan; every address below is from that disassembly):
    - 0x811c8-0x81238 prologue: frame 0xa0, ra + s0..s11 saved at s0-8 .. s0-104, s0 := entry sp, sp re-aligned down
@@ -43,8 +44,8 @@
    NET: 6 malloc + 6 free (EV_check_no_overread = 12), ablocks unchanged, g_count + 3 (the three decoder
    allocations), FP = FS_PSTAT_FP, U' = U.
    LOOKUP (rule 24, final form a Theorem Labs lane 02:12Z; outputs and dates, not absence claims):
-   (1) released refs: proof-index v5 built 2026-10-28T23:48:31Z (main d65b67070f2, ossv/recipes 568db058c1d,
-       ossv/candidates ee89628c997, release/pau-projects-recipes b6a0088adcb), run unpiped 2026-10-29 00:4xZ, exit 0:
+   (1) released refs: proof-index v5 built 2026-10-28T23:48:31Z (main,),
+       run unpiped 2026-10-29 00:4xZ, exit 0:
        20 named / 50 by address / 36 related, all lib/Prog, lib/Prog/CF, lib/U/Prog, lib/U/Prog/CF (plain and UBSan,
        fuzz_state + fuzz_preset + fuzz_manifest); a ls-tree of the four refs lists no lib/A or lib/B file for it.
        Templates used: fs's released plain/UBSan check_no_overread{,_blocks,_cmp}.v, fuzz_preset's
@@ -123,7 +124,7 @@ Proof.
 Qed.
 
 (* ===== entry and segment 0 of this lane (shape adapted from a Theorem Labs lane's crcs entry,
-   a working branch c4bfd3bc057) ===== *)
+   a working branch) ===== *)
 
 (* the entry state: fss0T (the shadow-base cells) with the use-after-return cells (FSW_K fs_uar_regions) and the
    0xa0-byte frame of the prologue *)
@@ -257,7 +258,7 @@ Variable B : asyms.
 (* ---- the frame-pointer chain at a callee's entry: check_no_overread keeps s0 = its entry sp with ra / s0 saved at
    sp0 - 8 / sp0 - 16, so a callee entered with s0 = sp0 sees check_no_overread's record on top of its own chain
    (YCbq.achain_push). Its room premise sp0 < ly_top - 16 is the spec's `spZ regs + 32 <= ly_top ly`
-   (FSH_Fn_cno.v, a working branch 5946b5cae2b; the donor's form, cgif ACid.v:59). ---- *)
+   (FSH_Fn_cno.v, a working branch; the donor's form, cgif ACid.v:59). ---- *)
 Lemma cno_chain : forall ly (rd rd' : reader) sp0 v ch ra spc,
   achain ly rd sp0 v ch -> sp0 + 32 <= ly_top ly -> ly_top ly <= 2 ^ 64 ->
   (forall a, sp0 <= a < 2 ^ 64 -> rd' a = rd a) ->
@@ -485,7 +486,7 @@ Definition cno_ssC : sstate := Eval vm_compute in fst (sym_run_toN tfibsegs cno_
    use). No call-trace row: the CTX drop (owner a Theorem Labs lane 05:05Z) removed `In (raZ regs :: spine ch) CTX` and its
    binder from check_no_overread_spec, past_nul_spec and the allocator specs; the runtime allocators take C5's
    `In (call_trace ..) (as_universe B) \/ st_nev S < EV_MAX`, closed by the room premise; decode_spec_ff (writer) is
-   CTX-free as well (a working branch faa7e2570e5). *)
+   CTX-free as well (a working branch). *)
 (* the callee contracts (S0 statements, lib/A/FSH_Fn_*.v, CTX-free) *)
 Hypothesis PN : past_nul_spec tfibsegs B.
 Hypothesis DEC : FSH_Fn_writer.decode_spec_ff B tfibsegs.
@@ -862,7 +863,7 @@ Definition cno_saved_regs : list (bv 5) := [1; 8; 9; 18; 19; 20; 21; 22; 23; 24;
 
 Section I. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-(* check_no_overread_spec's premises (FSH_Fn_cno.v, CTX-free form of a working branch 1566ec4f042), at the context *)
+(* check_no_overread_spec's premises (FSH_Fn_cno.v, CTX-free form of a working branch), at the context *)
 Definition cno_base (cx : cnocx) : Prop :=
   fpreU tfibsegs B STK_check_no_overread (c_ly cx) (c_S cx) (c_U cx) (c_W cx) (c_regs cx) (c_mem cx) (c_md cx)
     (c_ch cx) /\
@@ -1006,9 +1007,9 @@ Definition cno_call_mset_T : Prop :=
              ~ (cno_sp1 cx - ESTACK <= a < cno_sp1 cx) -> aview tfibsegs (w_H W') mem' a = aview tfibsegs (w_H W) mem a) /\
           range_addressable (aview tfibsegs (w_H W') mem') SHADOW_OFF t (cno_n cx + 18))).
 
-(* ---- the call step of a Theorem Labs lane (_dec.v cno_call_dec), its text verbatim (a Theorem Labs lane a188ffd7dd9, in this Section's form:
+(* ---- the call step of a Theorem Labs lane (_dec.v cno_call_dec), its text verbatim (a Theorem Labs lane, in this Section's form:
    B is a Section variable here), except the bad-text arm: `ablocks B ly' S' = ablocks B ly S` where decode_spec_ff
-   (FSH_Fn_writer.v:614 on faa7e2570e5) still says Permutation; owner decision (a), a Theorem Labs lane 05:5xZ: the writer's arm is
+   (FSH_Fn_writer.v:614) still says Permutation; owner decision (a), a Theorem Labs lane 05:5xZ: the writer's arm is
    strengthened to the equality (one malloc that appends, one free of that same block), since check_no_overread_spec's
    post (FSH_Fn_cno.v:63) and INV_R need the exact list. preset_base64_decode (text, lenp) at 0x81398 / 0x813a8 /
    0x813b8 (ra 0x8139c / 0x813ac / 0x813bc, lenp the frame locals at 0x20 / 0x40 / 0x60); the refused arm is closed
@@ -1030,7 +1031,7 @@ Definition cno_call_dec_T : Prop :=
   cstr_ok tfibsegs W mem text (c_db cx) ->
   (exists b m, In (b, m) (ablocks B ly S) /\ b <= text /\ text + cno_n cx + 1 <= b + m /\
      forall r, In r U -> text + cno_n cx + 1 <= fst r \/ fst r + snd r <= text) ->
-  (* decode_spec_ff's premise of a working branch 3f4c44b0426: *lenp's granule is addressable (its shadow
+  (* decode_spec_ff's premise of a working branch: *lenp's granule is addressable (its shadow
      byte is 00, written by the lifetime-start stores 0x81378 / 0x81380 / 0x81388 before the first decode) *)
   range_addressable (aview tfibsegs (w_H W) mem) SHADOW_OFF lenp 8 ->
   val_mem tfibsegs (mrestrict (w_H W) mem) lenp 8 v -> 0 <= v < 2 ^ 64 ->

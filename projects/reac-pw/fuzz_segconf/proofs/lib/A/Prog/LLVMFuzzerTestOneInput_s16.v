@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-366, for
    libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_D1p56.v, with its module paths and module names changed; 1306 of its 1358 lines of code are new or changed and 689 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): segment S06 of the walk of the
    test harness's entry function LLVMFuzzerTestOneInput (0x84d34), file group _s16: from K85208 (the last
    turn's m_file(m, text, NULL) returned, 0x85208) through the inlined m_cross loop (fuzz_segconf.c:296-310) to
    K853bc (0x853bc), lt_seg_S06_stmt of LLVMFuzzerTestOneInput_defs.v.
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; output pasted verbatim in
    the walk's shared brief; checker (fresh, read-only): CONFIRM; none: written new)
 

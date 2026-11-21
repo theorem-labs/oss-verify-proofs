@@ -4,6 +4,7 @@
    (fuzz_scene.asan, sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026): ONE turn of the
    whole_transfer loop, 0x82dc4 .. 0x82e70 (44 instructions), proved against the cut statements of
    lib/A/P_LLVMFuzzerTestOneInput_seg.v, which this file does not change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   The statement proved here is `seg_S3_turn_stmt SEGS B ameter_triv WK scene_geom_asan`: from `cut_T k` at the
    loop head (BASE + AF_LLVMFuzzerTestOneInput + 0x54c) the turn reaches either `cut_T (k+1)` at the same pc, or
@@ -11,13 +12,13 @@
    `sc_from_T ... (k+1)` and `sc_from_TX ...` as hypotheses and concludes `sc_from_T ... k`.
 
    BUILD REQUIREMENT (a Theorem Labs lane's 05:55Z ruling): scene_seg_S3 takes TLF (PALibF B) as an argument, and PALibF is
-   dischargeable only over a Theorem Labs lane's ruled lib/{A,AU}/Prog/SceneFrame.v from a working branch 8df4a950395
+   dischargeable only over a Theorem Labs lane's ruled lib/{A,AU}/Prog/SceneFrame.v from a working branch
    (the released lib/A/Prog/SceneFrame.v before its comment pass, file sha256 8c8597ed07af, where palf_sm8 = StackMalloc8Tbl.PC_STACK_MALLOC_8).  Over the frozen
    SceneFrame.v (sha256 fa3ffeab2cf2; internal record) PALibF is unsatisfiable (palf_sm8 demands pa_sigma SS___asan_stack_malloc_8 = 0), so this file must be
    built against the ruled SceneFrame.v.
 
    The cuts are SEMANTIC (no symbolic state is part of a cut).  The walk is written in the form of a Theorem Labs lane's
-   proved check_step segments (a working branch f6b5a0ae303 lib/A/P_check_step_S3.v): each straight
+   proved check_step segments (a working branch lib/A/P_check_step_S3.v): each straight
    run starts from a fresh, minimal symbolic state built with `pa_entry_st_ok_full` from the semantic facts that
    hold at its first pc, and what a run or a call leaves is carried as semantic facts (register equations, the
    bytes the run wrote, and "every other byte is kept").
@@ -60,10 +61,10 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.A.Prog Require Import PaJournal Sce
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A.Prog Require Import YC1g YC1h YC81 YC4b YC45 YC88 YC85 SceneACjr SceneACja.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOneInput_ctx.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOneInput_seg.
-(* A Theorem Labs lane (at f2a5e8f959d): reac_ctrl_build_scene_step's caller-journal
+(* A Theorem Labs lane: reac_ctrl_build_scene_step's caller-journal
    contract. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_reac_ctrl_build_scene_step.
-(* A Theorem Labs lane (at f6b5a0ae303): check_step's contract, its window, and the frame
+(* A Theorem Labs lane: check_step's contract, its window, and the frame
    object lemma afobj_of_own. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_check_step_frame P_check_step.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import AB1v.
@@ -189,7 +190,7 @@ Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.
 Hypothesis TL : PALib (L := scene_listing) (PI := PI_scene) B.
 Hypothesis TLF : PALibF (L := scene_listing) (PI := PI_scene) B.
 Hypothesis FFL : frame_flag_lawP SEGS B.
-(* -- the walk's budgets, as lib/A/P_LLVMFuzzerTestOneInput.v:187-190 fixes them for the record the composition
+(* -- the walk's budgets, as lib/A/P_LLVMFuzzerTestOneInput.v:188-191 fixes them for the record the composition
    supplies (240 is that file's LLVMF_SPDROP, 6 its LLVMF_EV, 65535 its LLVMF_NMAX) -- *)
 Hypothesis HSTK : 240 + ASTACK <= sw_stk WK.
 Hypothesis HSTK_CS : 240 + TCHECK_STEP_STK <= sw_stk WK.
@@ -200,13 +201,13 @@ Hypothesis HLIVE : 2 * 65535 <= sw_live WK.
 Hypothesis HWRLO : sw_rlo WK = @pa_relro_lo _ scene_listing PI_scene.
 Hypothesis HWRHI : sw_rhi WK = @pa_relro_hi _ scene_listing PI_scene.
 (* -- the static shadow and bytes of reac_ctrl_build_scene_step.TAIL_TRAILER (0x20e20, 12 bytes), which
-   build_scene_step's accepting premise names.  HB_Z_TT and HB_C_TT are lib/A/P_LLVMFuzzerTestOneInput.v:265-266
+   build_scene_step's accepting premise names.  HB_Z_TT and HB_C_TT are lib/A/P_LLVMFuzzerTestOneInput.v:266-267
    verbatim.  HRO_TT is the trailer's BYTES in a Theorem Labs lane's ro_bytes form (its HRO_CF for check_step's frame
    initializer): the 12 bytes are read-only, not runtime-owned, not the errno cell, and equal to scene_trailer in
    the image.  A static fact of the image and of B, closed by vm_compute at the composition. -- *)
 Hypothesis HB_Z_TT : in_zs B (A_TAIL_TRAILER - 0x20) (0x20 + (TAIL_TRAILER_N - TAIL_TRAILER_N mod 8)).
 Hypothesis HB_C_TT : forall ly, Forall (fun c => In c (as_const B ly)) TT_SHCELLS.
-(* = entry statement Section h, lib/A/P_LLVMFuzzerTestOneInput.v:202-203 at 327f73c7513 (announced 04:57Z); minimal
+(* = entry statement Section h, lib/A/P_LLVMFuzzerTestOneInput.v:203-204 (announced 04:57Z); minimal
    form, no longer conditional.  The in_roP half and the twelve ROM bytes are derived below (t3_tt_bytes), not assumed. *)
 Hypothesis HRO_TT : forall i, 0 <= i < 12 -> ~ Exists (in_zr (0x20e20 + i)) (as_owned_static B) /\
 ~ (as_errno B <= 0x20e20 + i < as_errno B + 4).
@@ -283,7 +284,7 @@ destruct Hc as [Hc | [-> | [-> | ->]]].
 - rewrite (t3_const1 ly S W mem md _ _ HAR C3). discriminate.
 Qed.
 (* the IMAGE half of the trailer, derived (not assumed), in the form of a Theorem Labs lane's s2u_in_ro / s2u_tt
-   (at 729b9b9d254, lib/AU/P_LLVMFuzzerTestOneInput_S2.v:258, :283-292): in_roP by an
+   (at lib/AU/P_LLVMFuzzerTestOneInput_S2.v:258, :283-292): in_roP by an
    existsb over SEGS at one literal address, and each ROM byte by vm_compute, both on the TWELVE concrete i (never
    a forallb / scan over all bytes, which does not terminate on this tree -- measured, a Theorem Labs lane 04:2xZ). *)
 Lemma t3_in_ro : forall a,
@@ -334,7 +335,7 @@ Qed.
 (* ================================================================================================================
    THE CHECK_STEP CALL, as its own state and lemma.  t3_pre_chk is the state at +0x5b8 (S3_K + 108), the `jal
    check_step`: BOTH k arms reach it with these facts, and they differ only in how the declared slot came to hold
-   8904.  t3_chk is the call itself: cl_callS (lib/A/Prog/YC85.v:383) with TCHECKX, whose afn_pre premises are
+   8904.  t3_chk is the call itself: cl_callS (lib/A/Prog/YC85.v:384) with TCHECKX, whose afn_pre premises are
    exactly what t3_pre_chk carries; what it must hand on is the OUTER journal at the cut's budget, the preserved
    registers and the new layout / state / world, from which the caller re-derives its memory facts through the
    journal's own clauses (Reusable/YCbq.v:359-372).
@@ -394,7 +395,7 @@ t3_pre_chk cx ly3 S3 W3 mem3 body again b k (sc_F SEGS scene_geom_asan cx) lyb S
 SRr SEGS Wb (mkCfg (mkst regsX (Z_to_bv 64 (SIGMA SS_check_step)) memX (seg_rom SEGS)) mdX) POST.
 Proof.
 intros cx POST k ly3 S3 W3 regs3 mem3 md3 bs body again b lyb Sb Wb regsX memX mdX HB Hk HC Hpre HK.
-(* ---------------- the entry (as scene_seg_S3, S3.v:475-477 at 1e5c1c2be13) ---------------- *)
+(* ---------------- the entry (as scene_seg_S3, S3.v:475-477) ---------------- *)
 pose proof HB as (HB0 & Hsp1eq).
 pose proof HB0 as (HPRE & Hra0 & Hp10 & Hp11 & Hin0 & HfrS & Hnev0 & Hbb0 & HRO0 & Hsink0 & Hfd0 & Hfs0 & Hmo0).
 pose proof HPRE as (HAR0 & Hrok0 & Hra40 & Hgp0 & Htp0 & Hstk0 & Hpres0 & Hch0 & Hqt0).
@@ -470,7 +471,7 @@ assert (Hra4 : 4096 <= raZ regsX).
 assert (HSVb : forall j, 0 <= j < 13 -> rdword (aview SEGS (w_H Wb) memX) (spZ (c_regs cx) - 8 - 8 * j)
   = Some (bv_unsigned (getr (c_regs cx) (nth (Z.to_nat j) sc_saved_regs 0%bv)))).
 { intros j Hj. rewrite <- (HSV j Hj). apply rdword_ext. intros i Hi. apply KX; lia. }
-(* ---------------- check_step's premises (a Theorem Labs lane's s3_chk_pre, 67cd72b99e4 AU S3.v:1781-1840) ---------------- *)
+(* ---------------- check_step's premises (a Theorem Labs lane's s3_chk_pre, AU S3.v:1781-1840) ---------------- *)
 assert (Hch : exists ch, achain lyb (aview SEGS (w_H Wb) memX) (spZ regsX) (s0Z regsX) ch).
 { rewrite EspX, Es0X.
   destruct (Z.ltb_spec (spZ (c_regs cx)) (ly_top (c_ly cx) - 16)) as [Hlo16 | Hhi16].
@@ -644,7 +645,7 @@ rdword (aview SEGS (w_H W5) memD) (c_sp1 cx + 0x50) = Some again /\
 
 (* ================================================================================================================
    THE STEP KIT, copied verbatim (names prefixed t3c_) from a Theorem Labs lane's proved segment S4,
-   at 2172fd006fcdec4e76fd263628b4680caf80c583,
+   at
    lib/A/P_LLVMFuzzerTestOneInput_S4.v: one concrete machine step per instruction form, through
    SRr_step (Reusable/YA0n.v:133) and the YK11 / YK14 step lemmas, with the instruction word taken from the
    position-abstract listing by ScenePaLib.pa_fetch_pw.  Each lemma takes the RAW decoded fields and an
@@ -1207,7 +1208,7 @@ apply (Htail _ md3' (t3c_jmat cx ly4 S4 W4 memY md2 md3' 2
 Qed.
 
 (* ================================================================================================================
-   t3z: a Theorem Labs lane's proof of t3_close (at 646014fbde56).  The re-poison stores and
+   t3z: a Theorem Labs lane's proof of t3_close.  The re-poison stores and
    the latch, +0x5d8 .. +0x5f8: ONE plain symbolic run (paj_run_shc over SRr_run_pi_AJ; the five stores write the
    frame's shadow, which the token executor refuses) from a fresh state holding only blk.i's five shadow cells as a
    writable region with no chunks, the branch split (psrr_branch_pi), and in each arm a run to the cut pc
@@ -1216,7 +1217,7 @@ Qed.
    Lemmas copied from another lane carry their citation.
    ================================================================================================================ *)
 (* ---- t3c: pure helpers, image-free ---- *)
-(* `addiw rd,rs,1` on k < 2^31 - 1: copied from a Theorem Labs lane's s3t_addiw1 (at 67cd72b99e4,
+(* `addiw rd,rs,1` on k < 2^31 - 1: copied from a Theorem Labs lane's s3t_addiw1 (at
    lib/AU/P_LLVMFuzzerTestOneInput_S3.v:2993-3000), with that lane's s3e_unsigned64 replaced by this tree's
    unsigned_lit_small (Reusable/YP03.v:651, the same statement). *)
 Lemma t3z_addiw1 : forall k, 0 <= k < 2 ^ 31 - 1 ->
@@ -1246,11 +1247,11 @@ first
   unfold zcanon, M64; rewrite Z.mod_small by lia; lia ].
 Qed.
 (* `declared` is 8904 at every head after the first: copied from a Theorem Labs lane's s3_decl_next
-   (at a17a864ad65, lib/AU/P_LLVMFuzzerTestOneInput_S3.v:923-924). *)
+   (at lib/AU/P_LLVMFuzzerTestOneInput_S3.v:923-924). *)
 Lemma t3z_decl_next : forall k, 0 <= k -> (if k + 1 =? 0 then 0 else 8904) = 8904.
 Proof. intros k Hk. destruct (Z.eqb_spec (k + 1) 0) as [He|_]; [lia | reflexivity]. Qed.
-(* block_shadow reads only the shadow cells of its object: copied from a Theorem Labs lane's s3n_open_keep (a17a864ad65,
-   lib/AU/P_LLVMFuzzerTestOneInput_S3.v:1891-1897). *)
+(* block_shadow reads only the shadow cells of its object: copied from a Theorem Labs lane's s3n_open_keep (
+   lib/AU/P_LLVMFuzzerTestOneInput_S3.v:1892-1898). *)
 Lemma t3z_open_keep : forall (rd rd' : Z -> option Z) p n,
 (forall i, 0 <= i < (n + 7) / 8 -> rd' (shadow_of_addr SHADOW_OFF p + i) = rd (shadow_of_addr SHADOW_OFF p + i)) ->
 block_shadow rd SHADOW_OFF p n -> block_shadow rd' SHADOW_OFF p n.
@@ -1258,7 +1259,7 @@ Proof.
 intros rd rd' p n HK (H1 & H2 & H3). split; [exact H1|]. split; [exact H2|].
 intros i Hi. rewrite HK by exact Hi. exact (H3 i Hi).
 Qed.
-(* the again buffer at the latch: copied from a Theorem Labs lane's s3_again_step_list (a17a864ad65, :894-908). *)
+(* the again buffer at the latch: copied from a Theorem Labs lane's s3_again_step_list (894-908). *)
 Lemma t3z_again_step_list : forall (b ja : list byte) (k : Z),
 length b = 8904%nat -> 0 <= k <= 342 -> Z.of_nat (length ja) = 8904 - scT_off k ->
 firstn (Z.to_nat (scT_off k)) b
@@ -1277,7 +1278,7 @@ Qed.
 
 (* ---- t3c: memory helpers at SEGS ---- *)
 (* a one-byte chunk of a run's region pins that byte, whatever symbolic value it holds: copied from a Theorem Labs lane's
-   s3t_chunk_byte (at 67cd72b99e4, lib/AU/P_LLVMFuzzerTestOneInput_S3.v:2980-2990), with
+   s3t_chunk_byte (at lib/AU/P_LLVMFuzzerTestOneInput_S3.v:2980-2990), with
    s3e_unsigned64 replaced by unsigned_lit_small (Reusable/YP03.v:651). *)
 Lemma t3z_chunk_byte : forall E (m : word -> option byte) base off e v,
 YP09.chunk_ok SEGS E m base (YP09.mkChunk off (CVal 1 e)) -> sv_denot E e = Z_to_bv 64 v -> 0 <= v < 2 ^ 64 ->
@@ -1302,7 +1303,7 @@ assert (Hd : sv_denot E (SOff 21 0) = Z_to_bv 64 (2 ^ 64 - 8))
   by (rewrite (denot_lit_U E (SOff 21 0)), (U_atom E 21 (2 ^ 64 - 8) H21) by lia; reflexivity).
 unfold aview. rewrite (t3z_chunk_byte _ _ _ _ _ _ Hck Hd ltac:(lia)). reflexivity.
 Qed.
-(* a spilled doubleword moves with the eight bytes it reads: copied from a Theorem Labs lane's s3n_spill (a17a864ad65, :1871-1878) *)
+(* a spilled doubleword moves with the eight bytes it reads: copied from a Theorem Labs lane's s3n_spill (1871-1878) *)
 Lemma t3z_spill : forall (W W' : world SEGS) (mem mem' : word -> option byte) (a v : Z),
 rdword (aview SEGS (w_H W) mem) a = Some v ->
 (forall i, 0 <= i < 8 -> aview SEGS (w_H W') mem' (a + i) = aview SEGS (w_H W) mem (a + i)) ->
@@ -1311,7 +1312,7 @@ Proof.
 intros W W' mem mem' a v Hv HK.
 rewrite (rdword_ext (aview SEGS (w_H W) mem)); [exact Hv|]. exact HK.
 Qed.
-(* copied from a Theorem Labs lane's s3_keep_garr8_pt (a17a864ad65, :654-661) *)
+(* copied from a Theorem Labs lane's s3_keep_garr8_pt (654-661) *)
 Lemma t3z_keep_garr8 : forall (W W' : world SEGS) (mem mem' : word -> option byte) (a0 : Z) (l : list Z),
 garr8 SEGS (mrestrict (w_H W) mem) a0 l ->
 (forall a, a0 <= a < a0 + Z.of_nat (length l) -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) ->
@@ -1320,7 +1321,7 @@ Proof.
 intros W W' mem mem' a0 l HG HK. apply (garr8_frame SEGS _ _ a0 l HG).
 intros a Ha. apply (mbyte_of_aview SEGS). exact (HK a Ha).
 Qed.
-(* copied from a Theorem Labs lane's s3_keep_saves_pt (a17a864ad65, :721-728) *)
+(* copied from a Theorem Labs lane's s3_keep_saves_pt (721-728) *)
 Lemma t3z_keep_saves : forall (cx : rtcx SEGS) (W W' : world SEGS) (mem mem' : word -> option byte),
 sc_saves SEGS cx W mem ->
 (forall a, spZ (c_regs cx) - 104 <= a < spZ (c_regs cx) -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) ->
@@ -1330,7 +1331,7 @@ intros cx W W' mem mem' HS HK j Hj.
 rewrite (rdword_ext (aview SEGS (w_H W) mem)); [exact (HS j Hj)|]. intros i Hi. apply HK. lia.
 Qed.
 (* the frame-object clauses of the cut, at the asan table, with F named: in the form of a Theorem Labs lane's s3_keep_frame_pt /
-   s3_keep_shr_pt (a17a864ad65, :519-537, :598-606). *)
+   s3_keep_shr_pt (519-537, :598-606). *)
 Lemma t3z_keep_frame : forall (cx : rtcx SEGS) F (W W' : world SEGS) (mem mem' : word -> option byte),
 F = sc_F SEGS scene_geom_asan cx ->
 sc_frame SEGS scene_geom_asan cx W mem ->
@@ -1365,7 +1366,7 @@ F = sc_F SEGS scene_geom_asan cx -> sc_open SEGS scene_geom_asan cx W mem off le
  = aview SEGS (w_H W) mem (shadow_of_addr SHADOW_OFF (F + off) + i)) ->
 sc_open SEGS scene_geom_asan cx W' mem' off len.
 Proof. intros cx F W W' mem mem' off len -> HO HK. unfold sc_open in *. exact (t3z_open_keep _ _ _ _ HK HO). Qed.
-(* the memcpy's bytes spliced into again: copied from a Theorem Labs lane's s3n_garr8_splice (a17a864ad65, :1901-1931) *)
+(* the memcpy's bytes spliced into again: copied from a Theorem Labs lane's s3n_garr8_splice (1901-1931) *)
 Lemma t3z_garr8_splice : forall (H H' : word -> bool) (m m' : word -> option byte) (a : Z) (pre src ja : list byte),
 garr8 SEGS (mrestrict H m) a (u8s (pre ++ ja)) ->
 (length src <= length ja)%nat ->
@@ -1397,8 +1398,8 @@ apply (proj2 (garr8_app SEGS (mrestrict H' m') a _ _)). split.
   intros x Hx. apply (mbyte_of_aview SEGS). apply Hktail.
   rewrite length_map, length_skipn in Hx. lia.
 Qed.
-(* the `exists ja` clause of cut_T at k + 1: copied from a Theorem Labs lane's s3n_again_next (a17a864ad65, :1935-1978), with
-   its one-byte view lemma replaced by this tree's val_mem1_of_aview (lib/A/Prog/YC88.v:75). *)
+(* the `exists ja` clause of cut_T at k + 1: copied from a Theorem Labs lane's s3n_again_next (1935-1978), with
+   its one-byte view lemma replaced by this tree's val_mem1_of_aview (lib/A/Prog/YC88.v:76). *)
 Lemma t3z_again_next : forall (W3 W' : world SEGS) (mem3 mem' : word -> option byte) (again : Z)
 (b ja : list byte) (k : Z),
 length b = 8904%nat -> 0 <= k <= 342 -> Z.of_nat (length ja) = 8904 - scT_off k ->
@@ -1516,7 +1517,7 @@ refine (conj (conj EFAF (conj HfrS3 (conj Hbin Hain))) _).
 repeat split; lia.
 Qed.
 
-(* ---- THE RE-ASSEMBLY of cut_T at k + 1 (the asan form of a Theorem Labs lane's s3_next_T, a17a864ad65 :1998-2165).
+(* ---- THE RE-ASSEMBLY of cut_T at k + 1 (the asan form of a Theorem Labs lane's s3_next_T, :1998-2165).
    The turn's effect, in the forms t3_post_memcpy and the run hand over: the journal at the new state with the block
    list, frames and live bytes of the cut; the registers as t3_rk at the new got and k; memory as the post-memcpy
    memory memD, equal to the cut's on each range the cut reads (the stack window, the frame, the frame's shadow,
@@ -1696,7 +1697,7 @@ split; [first [exact I | cbn; exact I]|].
 exact E21.
 Qed.
 
-(* the register a run leaves, with its symbolic value computed (prreg, lib/A/Prog/ScenePaLib.v:366, without the
+(* the register a run leaves, with its symbolic value computed (prreg, lib/A/Prog/ScenePaLib.v:367, without the
    normalisation of the denotation) *)
 Local Ltac t3z_reg HS r Hr :=
 lazymatch type of HS with

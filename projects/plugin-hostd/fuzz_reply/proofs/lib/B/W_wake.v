@@ -1,13 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's wake, against
-   W6Remove-2's B contract lib/B/W_wake_c.v wk_spec (a working branch 34e402d7967), on the B kit.
-   PORTED from the old-kit walk of the same function in the same build, lib/B/Prog/wake_b_seg.v and wake_b.v (commit
-   93815f5c3fd, sha256 3ee9ab499445 / ecebd57adb88 (internal record): the 64-byte frame, the `andi sp,sp,-32` (its land_m32), the class-0
+   W6Remove-2's B contract lib/B/W_wake_c.v wk_spec (a working branch), on the B kit.
+   PORTED from the old-kit walk of the same function in the same build, lib/B/Prog/wake_b_seg.v and wake_b.v (
+   sha256 3ee9ab499445 / ecebd57adb88 (internal record): the 64-byte frame, the `andi sp,sp,-32` (its land_m32), the class-0
    fake frame from __asan_stack_malloc_0, the g_wake[1] read, the frame's release), re-run on the kit's symbolic engine
-   in the form of the image-A fake-frame walks lib/A/W_rr_pro.v (a working branch 66cd27fe93c: the prologue,
+   in the form of the image-A fake-frame walks lib/A/W_rr_pro.v (a working branch: the prologue,
    the stack_malloc call with the call's own frame clause, the fake-frame seat, the flag store) and of the route file
-   lib/B/W_check_bounded.v (a working branch 7e062bb9b9c).  The released UBSan proof of the same function
+   lib/B/W_check_bounded.v (a working branch).  The released UBSan proof of the same function
    (lib/U/Prog/wake.v, ossv/recipes) is the secondary template.
    wake () at 0x82484 (B only; image A inlines it) = `char b = 0; if (g_wake[1] >= 0) write (g_wake[1], &b, 1);`:
    it saves six registers in a 64-byte frame, rounds sp down to 32 (Q = 32 ((sp - 64) / 32) = sp - 64 or sp - 80),
@@ -17,8 +17,9 @@
    0x82584 is not reached, retires the frame (magic 0x45e0360e, shadow 0xf5, flag cleared at 0x825c8) and returns.
    Its one UBSan trap (0x82570 `beq &g_wake, -4` -> unimp 0x82614, W_traps' PTR_EQK shape) is decided by the engine
    once g_wake's image atom carries its range (trap-kit recipe R1/R4): no trap lemma is cited.
-   wk_post's presence clause is for image bytes (34e402d7967): the kit's only stack-allocator contract,
-   astack_malloc_pres (W_frame.v:1098-1114), keeps presence for image bytes, the new frame and the scratch only. *)
+   wk_post's presence clause is for image bytes: the kit's only stack-allocator contract,
+   astack_malloc_pres (W_frame.v:1099-1115), keeps presence for image bytes, the new frame and the scratch only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -135,7 +136,7 @@ Let RUNP := SRr_run_pi_AJ (PL := PL_fr) B LAWS.
 Let RUNF := aj_flag_store_pi (PL := PL_fr) B LAWS ML ASF FFL.
 
 (* ---- Helpers. ---- *)
-(* presence of image bytes along the walk (lib/A/W_rr_pro.v:351 pres_grow) *)
+(* presence of image bytes along the walk (lib/A/W_rr_pro.v:352 pres_grow) *)
 Lemma wk_pres_grow : forall (H : word -> bool) (m0 m1 m2 : word -> option byte),
 (forall a, in_img SEGS a -> apresent H m0 a -> apresent H m1 a) ->
 mem_grows (mrestrict H m1) (mrestrict H m2) ->
@@ -153,7 +154,7 @@ repeat (destruct Hin as [<- | Hin];
   unfold SB in Hr; lia |]);
 destruct Hin.
 (* after a plain run: its frame over the unhidden memory as HFr, its growth as HGr; the raw frame dropped
-   (lib/A/W_rr_pro.v:373 rr_grab) *)
+   (lib/A/W_rr_pro.v:374 rr_grab) *)
 Ltac wk_grab :=
 lazymatch goal with Hf : frame_of _ _ (mrestrict _ _) (mrestrict _ _) |- _ => rename Hf into HFr_x; rename HFr_x into HFr end;
 lazymatch goal with Hg : mem_grows (mrestrict _ _) (mrestrict _ _) |- _ => rename Hg into HGr_x; rename HGr_x into HGr end;
@@ -161,7 +162,7 @@ try match goal with Hf : frame_of _ _ ?x _ |- _ => lazymatch x with mrestrict _ 
 
 (* ---- The entry state: the frame's two stack pieces written by the prologue (the zero word at sp - 64 and the six
    saved registers at sp - 48 .. sp - 8), the ASan frame-pointer slot Q + 8 (atom 34 = Q), the GOT slot of the shadow
-   cell, the cell, the GOT slot of the use-after-return cell and the cell (lib/A/W_rr_pro.v:98-185 rr_entry). ---- *)
+   cell, the cell, the GOT slot of the use-after-return cell and the cell (lib/A/W_rr_pro.v:99-186 rr_entry). ---- *)
 Definition Bx : sv := SOff 33 0.
 Definition Bspan : Z * Z := (SB, SB + 2 ^ 44 - 1).
 Definition wk_regions0 : smem :=

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths changed; 142 of its 194 lines of code are new or changed and 691 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch 86b50358d34) to libreac/fuzz_boxreg: module paths changed, no other change. *)
+(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch) to libreac/fuzz_boxreg: module paths changed, no other change. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/RT_mem_bz.v, with its module paths changed; 31 of its 62 lines of code are new or changed and 163 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/FRsl.v at commit debcdf3fa6a, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (4 numerals; per-numeral report). *)
-(* Port-from: origin/cold/port-state-rt-str 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSsl.v.
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/FRsl.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (4 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Port-from: proofs/omx-clap-core/fuzz_state/lib/A/FSsl.v.
    Changes (R1Str, 2026-10-29): module path fuzz_state -> fuzz_reply; 4 fuzz_state.asan address numerals moved to fuzz_reply.asan, each paired by code (instruction by instruction, relocation fields masked) or, for a data cell, by the instruction that loads it (table: lib/A/RT_kit.v); renamed from FSsl.v. *)
-(* Port-from: origin/cold/c-asan-rt-stateio-n 840c4afa7e2 proofs/plugin-hostd/fuzz_reply/lib/A/Prog/wrap_kit.v:39-68
+(* Port-from: proofs/plugin-hostd/fuzz_reply/lib/A/Prog/wrap_kit.v:39-68
    (bz_mem_inv_same, sl_proof, mch_proof) and lib/A/Prog/asan_memcpy.v:42-50 (msteps_to_bz, evt_to_bz, mem_inv_of_bz).
    Changes (h-rw-sta-4, 2026-10-28): restated without AsanRT / AsanRTFacts / BzBridge; the module aliases BzE / BzM / BzI
    (c-asan-rt BzBridge.v:15-17) and BzU / SLc / SLp / MHc / MHp (wrap_kit.v:22-27) are local; proofs unchanged.

@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 639 of its 687 lines of code are new or changed and 451 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_fuzz_free.v, with its module paths and module names changed; 530 of its 619 lines of code are new or changed and 598 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs ASan, group ALLOC, image B (fs.asan-ubsan): the walk of B's out-of-line own() (A_own = 0x82acc, alloc.c:41-49),
-   proving own_spec of lib/B/FSH_Fn_alloc.v (statement a working branch bd583ec73f2: FP =
+   proving own_spec of lib/B/FSH_Fn_alloc.v (statement a working branch: FP =
    FS_PSTAT_FP ++ [(b, b + 8)], exactly the 8 head bytes own writes; no CTX).
 
-   proves function own (B 0x82acc) (reuse search: proof-index on main@c4c03c57ba1 / ossv/recipes@e5e7eba2cc0 /
-   ossv/candidates@ee89628c997 / release/pau-projects-recipes@b6a0088adcb + lemma index over 11131 working branches + live
+   proves function own (B 0x82acc) (reuse search: proof-index on main / ossv/recipes /
+   ossv/candidates / release/pau-projects-recipes + lemma index over 11131 working branches + live
    working heads; by address on the four release refs / `proof-index fuzz_strdup fuzz_alloc_live fuzz_alloc_peak
    fuzz_alloc_peak_reset fuzz_alloc_fail own`, `git grep -l -i -e <addr> <ref> -- proofs/omx-clap-core/fuzz_state`).
    Result (a Theorem Labs lane, brief-B-walks.md): own: 0 files named for it, 0 by address; written new, porting ALLOC's A proof
@@ -707,7 +708,7 @@ Qed.
 
 End o.
 
-(* own_spec of lib/B/FSH_Fn_alloc.v: STK_own = FRAME_own + zmaxl [STK_RT_POISON] = 32 + ESTACK (S0 834df0ca5d9's
+(* own_spec of lib/B/FSH_Fn_alloc.v: STK_own = FRAME_own + zmaxl [STK_RT_POISON] = 32 + ESTACK (S0
    STK_RT_POISON := ESTACK) gives own_walk's stack premise *)
 Theorem own_holds : forall {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head} (B : asyms),
   fs_img_facts tfibsegs B -> FsShadowSyms B -> fs_poison16 tfibsegs B -> @own_spec fx rc SK tfibsegs B.

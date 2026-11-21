@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFk0.v at 25e3d17bdb50 into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; the image bounds cited from lib/Reusable/YImgTop.v; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: case splits on st_depot, the NB / SB extents as KnBlockExt.nb_ext / sb_ext, the layout relation layout_grow with the lemmas layout_gle_refl and layout_grow_refl, the StackDepot Put stated through AD3j, DPOST over the layout, world and model after the Put, depot_ok_mapped and the depot zone as KnBlockExt.DZONE_at. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFk0.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; the tactics zlia, numconst, off_by, addr_tac and ladder_arith, and the image-bound proof steps, which do not unfold YImgTop.IMG_LO / IMG_TOP, taken from proofs/libreac/fuzz_grant/lib/A/AFk0.v at 25e3d17bdb50. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFk0.v at theorem-labs/oss-verify-proofs@6b32741d849a into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; the image bounds cited from lib/Reusable/YImgTop.v; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: case splits on st_depot, the NB / SB extents as KnBlockExt.nb_ext / sb_ext, the layout relation layout_grow with the lemmas layout_gle_refl and layout_grow_refl, the StackDepot Put stated through AD3j, DPOST over the layout, world and model after the Put, depot_ok_mapped and the depot zone as KnBlockExt.DZONE_at. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFk0.v (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; the tactics zlia, numconst, off_by, addr_tac and ladder_arith, and the image-bound proof steps, which do not unfold YImgTop.IMG_LO / IMG_TOP, taken from proofs/libreac/fuzz_grant/lib/A/AFk0.v. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement for the NULL hint; the model's mmap grant test); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -893,7 +894,7 @@ Hypothesis Htr : In tr (as_universe B).
 Hypothesis D1 : AD3j.tfib_depot_put_any_spec layout_grow depot_ok AD3j.as_const_g2f B.
 Hypothesis HBC : BCELLS.
 Hypothesis HDP : forall l W' md'' z m, DPOST l W' md'' z m <-> exists Wc, DPOSTS Wc AD3j.as_const_g2f l W' md'' z m.
-Hypothesis GOK : grant_ok_na_pin mdN (w64 mb) MSv = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 mb) MSv = true.
 Hypothesis LE3 : wle W W3.
 Hypothesis SUB3 : hsub (w_H W3) (w_H W).
 Hypothesis MON3 : forall x : word, w_H W x = false -> w_H W3 x = false.
@@ -1587,7 +1588,7 @@ pose proof VM2 as (VMa & VMr & VMl & VMb).
 apply (nodeV W3 md2 sV KV QLEAF (fun _ => True) c4 EQ HN HAI).
 - clear; intros m m' _ _; exact I.
 - rewrite EcM. exact MWV.
-- rewrite EcM. exact (al_reserved _ _ _ _ (LV 0)).
+- rewrite EcM. destruct (al_reserved _ _ _ _ (LV 0)) as (rx & Hrx & _ & _ & RQ & _). exists rx. split; [exact Hrx | exact RQ].
 - exact (al_img_env tfibsegs lyF (SFS false 0) _ lyF_ok (LV 0)).
 - rewrite EcM. exact (al_Q _ _ _ _ (LV 0)).
 -

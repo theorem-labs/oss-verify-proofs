@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG00.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: EV_MAX raised from 8192 to 11776, as in omx-clap-core/fuzz_manifest's copy of this file (fuzz_manifest needs up to 8403 allocator events per run). *)
-(* Modified by Theorem Labs, 2026-10: the empty-depot switch (DepotCfg.depot_has_trace) taken from proofs/libreac/fuzz_knock/lib/Reusable/YG00.v at 88154566652a, hunk by hunk (provenance evidence/depot: depot-classes.tsv, depot_apply.py): hunks 1 3; hunks 2 keep this file's text. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YG00.v at 4f87de75d677 (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: the empty-depot switch (DepotCfg.depot_has_trace) taken from proofs/libreac/fuzz_knock/lib/Reusable/YG00.v, hunk by hunk (provenance evidence/depot: depot-classes.tsv, depot_apply.py): hunks 1 3; hunks 2 keep this file's text. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YG00.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import DepotCfg.
 Import ListNotations.

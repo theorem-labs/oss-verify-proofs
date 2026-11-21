@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (impl takes its new node post-state argument, fun _ => nret, on these trap nodes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -244,9 +245,9 @@ End GROW.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Lemma rimpl_enode_dec_weaken {A} n (dec dec' : resp -> option A) (G : A -> Prop) (P : A -> machine_state -> Prop) ms :
-  impl usegs (at_node usegs) (enode n dec) (epost P) ms ->
+  impl usegs (at_node usegs) (fun _ => nret) (enode n dec) (epost P) ms ->
   (forall rsp a, dec' rsp = Some a -> dec rsp = Some a /\ G a) ->
-  impl usegs (at_node usegs) (enode n dec') (epost (fun a ms' => P a ms' /\ G a)) ms.
+  impl usegs (at_node usegs) (fun _ => nret) (enode n dec') (epost (fun a ms' => P a ms' /\ G a)) ms.
 Proof. try hcb. try hsb.
   intros H HD. unfold enode in *. rewrite rimpl_vis_unfold in H. rewrite rimpl_vis_unfold.
   eapply evt_mono; [exact H|]. intros ms1 [Hat Hk]. split; [exact Hat|]. intros rsp. specialize (Hk rsp).

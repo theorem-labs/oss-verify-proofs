@@ -16,7 +16,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.plain (sha256
-   c8f4d6b8e567b0b1...), the unstripped twin of the pinned fuzz_preset.plain 805604bb0907ae1b... (facts 8f3e7e1a07f1):
+   c8f4d6b8e567b0b1...), the unstripped twin of the pinned fuzz_preset.plain 805604bb0907ae1b... (facts):
      round_trip_text FUNC LOCAL 0x14d88 size 384: addi sp, sp, -0x70 (ra s0 s1 s2 s3 s4 s5 saved); jal pj_write;
      rendered() inlined (struct text of 32 bytes at sp: b, n, cap, failed; tx_put "" / tx_value / tx_put "\n";
      lw failed; free(b) when failed); lbu g_own_ran_out; jal fuzz_alloc_ran_out;

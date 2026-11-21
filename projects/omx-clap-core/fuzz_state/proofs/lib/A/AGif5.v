@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif5.v (a working branch 84ee52cd012, file sha256 079585b7ae98) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 22 image addresses moved by code-verified function pairs (77 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif5.v (a working branch, file sha256 079585b7ae98) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 22 image addresses moved by code-verified function pairs (77 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: the low shadow band of the constant cells ends at 0x800b4000 (the page above fs's last constant shadow cell, which ends at 0x800b34c4; AF0m.v Tfib_const_shadow), as in fs's AFju.v, instead of the donor's 0x80050000 (the relocation tool had moved it to 0x80050398); two image addresses the tool left at their cgif values are moved as in fs's AFju.v / AFjz.v: 667336 (0xa2ec8) -> 674696 (0xa4b88) and the second 0xa5ad0 of the owned static range -> 0xa7790; fs's depot invariant (FS-INSTANCE.md 1.3, L): depot_ids_boundS takes depot_inv and gives 20481 (AFix.v:357-361 form), depot_ids_after and depot_mem_ok_agreeS are at 20482; the instance's trace premise is fs's `fun tr S => tr_admit (as_universe B) S tr` (FS-INSTANCE.md 1.4, L) in ifaceS_cgif / ifaceS_cgif_w and in depot_S / post_null_S / post_model / post_grant_g / post_grant_S (fs's YG07.malloc_ok takes tr_admit), and depot_S gives the depot callee fs's areq_ok premise by YG01.tr_admit_len. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (grant_AR takes the page-aligned size and the NULL hint grant_ok_na_pin now reads; ledger_AR states the reservation tail past the image's reservations, YG0n.res_tail_ok; post_grant_S takes the map's alignment from YK13.grant_ok_na_pin_facts at its own size). *)
 (* The cgif_file instance of the SECONDARY interface AGif4.AIfaceS: ARX = ARX_cgif (inst = TFIB_INST /\ AR),
    AOX = aowned, rpre = aregime /\ qmeter, mt = malloc, lpost = qtight and AGif1's depot post dpost_cgif.  It is the
    secondary twin of AGif1.iface_cgif.  The fields come from the released secondary route:
@@ -192,7 +193,7 @@ unfold VM_HEAD in MS. lia.
 Qed.
 
 Lemma ledger_AR : forall ly S W mem md, AR tfibsegs B ly S W mem md ->
-vm_reserved (m_vmmaps md) = segments_reserved tfibsegs /\
+(exists rx, vm_reserved (m_vmmaps md) = segments_reserved tfibsegs ++ rx /\ res_tail_ok ly rx) /\
 (forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) /\
 In (wiv (ly_Q ly, kPtrArrayResv)) (vm_maps (m_vmmaps md)) /\
 YM05.ceil_of_top (alloc_top (m_vmmaps md)).
@@ -208,16 +209,16 @@ Proof. intros ly S md mat L. exact (ALedger_same tfibsegs ly S md _ L (m_vmmaps_
 Lemma amwf_wvb : forall md mat, amwf md -> amwf (with_vm_backing (m_vm_lazy md) mat md).
 Proof. intros md mat MW. exact (amwf_same md _ (m_vmmaps_wvb _ _ _) (m_vm_lazy_wvb _ _ _) MW). Qed.
 
-Lemma grant_AR : forall ly S W mem md mat sz, AR tfibsegs B ly S W mem md -> 0 < sz <= YF06.NOB ->
-exists a, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true.
+Lemma grant_AR : forall ly S W mem md mat sz, AR tfibsegs B ly S W mem md -> 0 < sz <= YF06.NOB -> sz mod 4096 = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true.
 Proof.
-intros ly S W mem md mat sz (M & L & _ & MW & _) Hsz.
-exact (AFia.sec_grant_exists_AR B ly S _ _ sz M (ledger_wvb ly S md mat L) (amwf_wvb md mat MW) Hsz).
+intros ly S W mem md mat sz (M & L & _ & MW & _) Hsz Hal.
+exact (AFia.sec_grant_exists_AR B ly S _ _ sz M (ledger_wvb ly S md mat L) (amwf_wvb md mat MW) Hsz Hal).
 Qed.
 
 Lemma apart_AR : forall ly S W mem md mat sz (a : word), AR tfibsegs B ly S W mem md ->
 0 < sz <= MALLOC_MAX + 4 * 4096 -> sz mod 4096 = 0 ->
-grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
+grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
 zone3 (bv_unsigned a) sz /\
 Forall (zdisjoint (bv_unsigned a, sz)) (static_extents ly ++ vis0_zones ly ++ sec_extents ly S) /\
 (forall g, g mod 8 = 0 -> bv_unsigned a <= g -> g + 8 <= bv_unsigned a + sz ->
@@ -836,7 +837,7 @@ Qed.
 (* The ledger of the grown layout: the anonymous map (YG0j.ALedger_anon, AGk0.LED0) and, when the pointer array was
    full, its next commit (YG0j.ALedger_qcommit', AGk0.LED1). *)
 Lemma LED0 : forall z (mdN : Model), aregime S -> amwf mdN -> ALedger tfibsegs ly S mdN ->
-grant_ok_na_pin mdN (YG0d.w64 mb) MSv = true ->
+grant_ok_na_pin (Z_to_bv 64 0) mdN (YG0d.w64 mb) MSv = true ->
 ALedger tfibsegs lyF (SF false z) (mmap_model (YG0d.w64 mb) (YG0d.w64 MSv) mdN).
 Proof.
 intros z mdN Hev MWN LN GOK. pose proof (SF_parts false z) as (Rreg & _ & _ & Rres & _ & Rnev & Rregs & _).
@@ -1164,7 +1165,11 @@ intros inst ly S W mem0 md0 n tr regs0 mb grow z Wz mdz regs' mem' [-> HAR] [Hev
 pose proof (AGif4.sk_mbr _ _ _ _ _ _ _ _ _ SK) as Hmbr. destruct (AGif4.sk_md _ _ _ _ _ _ _ _ _ SK) as (mat & matV & mat' & _ & GOK & _).
 pose proof (size_facts_m n Nr) as (_ & _ & _ & _ & _ & _ & _ & Z8 & Z9 & _).
 pose proof (apart_AR ly S W mem0 md0 mat (AGjm.MSv n) (YG0d.w64 mb) HAR ltac:(unfold MALLOC_MAX in *; lia) Z9 GOK) as (ZN & GAP & _).
-pose proof (AFia.grant_parts _ _ _ GOK) as (AL & _).
+(* the map can pass AFia.grant_parts' bound MALLOC_MAX + 4 pages: its alignment from YK13.grant_ok_na_pin_facts,
+   which needs only a positive, page-aligned size *)
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ (AGjm.MSv n) ltac:(clear - Z8; lia) ltac:(unfold page_size; exact Z9) GOK) as AL.
+unfold YK13.grant_ok_na_pin_b in AL. apply andb_prop in AL as [AL _]. apply andb_prop in AL as [AL _].
+apply andb_prop in AL as [AL _]. apply Z.eqb_eq in AL. unfold page_size in AL.
 assert (Umb : bv_unsigned (YG0d.w64 mb) = mb) by (unfold YG0d.w64; apply unsigned_lit_small; exact Hmbr).
 rewrite Umb in ZN, GAP, AL.
 pose proof (w64_inst regs0 Hi11) as EI11. pose proof WFR as (_ & Htrlen & _).
@@ -1189,7 +1194,7 @@ intros TS HD1. constructor.
 - intros inst ly S W mem md [_ HAR]. exact (mwf_AR B ly S W mem md HAR).
 - intros inst ly S W mem md n [_ HAR] [_ HQ]. exact (room_AR B ly S W mem md HAR HQ).
 - intros inst ly S W mem md [_ HAR]. exact (ledger_AR B ly S W mem md HAR).
-- intros inst ly S W mem md mat sz [_ HAR] Hsz. exact (grant_AR B ly S W mem md mat sz HAR Hsz).
+- intros inst ly S W mem md mat sz [_ HAR] Hsz Hal. exact (grant_AR B ly S W mem md mat sz HAR Hsz Hal).
 - intros inst ly S W mem md mat sz a [_ HAR]. exact (apart_AR B ly S W mem md mat sz a HAR).
 - intros inst ly S W mem md [_ HAR]. exact (ar_oom_owned B TS ly S W mem md HAR).
 - intros inst ly S W mem0 md0 n tr regs0 regs' mem' mat HARX HRP Nr Hlive Htr WFR Hi11 SN.

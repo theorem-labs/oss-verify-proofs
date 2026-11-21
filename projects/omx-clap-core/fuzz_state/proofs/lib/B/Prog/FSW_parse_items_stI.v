@@ -9,9 +9,10 @@
                   FSW_ret.fsw_retU -> parse_items_spec k's post (pib_Q) for the object of all members
                   (FSW_parse_items_obj.pio_close).
    The B form of the post-run halves of the A walk's pi_step_Vc / pi_step_Ve (a working branch
-   4480a5df1ae lib/A/FSW_parse_items_stVc.v, stVe.v); pib_expect / pib_cs_eq / pib_expect_saved copy its pve_expect /
+   lib/A/FSW_parse_items_stVc.v, stVe.v); pib_expect / pib_cs_eq / pib_expect_saved copy its pve_expect /
    pve_cs_eq / pve_expect_saved over B's saved registers.
    rule 24: proves no function (kind: step lemmas). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the three sections restated over the whole process input, entry pc, mmap base and draw, with the start-up's launch hypotheses; the certificates take the CONFIG_RSEQ flag; the encoded (CDefT) statements written out; the two-outcome munmap node's soundness added to each check; comments written back and the using attributes dropped). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -67,31 +68,38 @@ Proof.
   intros MAIN s E fs' Hnil H1 H2 tr. split; [apply sd_only_holes; assumption | apply sd_has_hole_all; assumption].
 Qed.
 
+(** #108 (LPS 75d69e00): the three Sections below are restated over AsanInit's / AsanStartup's
+    whole-input interface: the run is [apc sp rdraw brk0 mbase inp] with AsanStartup's hypotheses,
+    the certificates carry the run's CONFIG_RSEQ flag [RZ := rseq_z (kb_rseq (in_kernel inp))], and
+    every statement that was encoded (CDefT.buildp) over the old 16 loose variables is written out
+    from its decode (cdeft_print.py) with those arities replaced; nothing is re-encoded.  The proofs
+    follow AsanStartup.asan_startup's (the same node-soundness chain at [nx]). *)
 Section MainEntry.
-  (* [comment removed for export] *)
-  Variable sp brk0 mbase : word.
+  Variable apc : N.
+  Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.   (* [comment removed for export] *)
-  Variable urandom : InputStream.   (* [comment removed for export] *)
+  Variables brk0 mbase : word.
+  Variable inp : ProcInput.
   Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hapc : Z.of_N apc = a_entry BOTH.
   Hypothesis Hbrk : valid_brk ASEGS brk0.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hzr : AsanCeil.zero_random_draw (ed_random rdraw).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 APH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH apc sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
+  #[local] Notation E0a := (E0 sp rdraw brk0 inp).
   #[local] Notation SP0 := (bv_unsigned sp).
+  #[local] Notation RZ := (rseq_z (kb_rseq (in_kernel inp))).
+  #[local] Notation fs := (in_fs inp).
 
-  (* [comment removed for export] *)
+  (** the start-up certificate *)
   Variable IT0 : itab.
   Hypothesis IT0_ok : itab_sound ASEGS IT0.
   Variable HS_asan : nat -> option acs.
@@ -99,12 +107,12 @@ Section MainEntry.
   Hypothesis HS_asan_only0 : forall h ch, HS_asan h = Some ch -> ch = HS0.
   Variable startup_plan : plan.
   Variable startup_shape : shape.
-  Hypothesis startup_cert : s1_check IT0 HS_asan startup_plan = COk startup_shape.
-  Hypothesis startup_guard : spin_guarded startup_plan = true.   (* [comment removed for export] *)
+  Hypothesis startup_cert : s1_check RZ IT0 HS_asan startup_plan = COk startup_shape.
+  Hypothesis startup_guard : spin_guarded startup_plan = true.
   Hypothesis startup_shape_holes : only_holes startup_shape = true.
   Hypothesis startup_shape_hole : has_hole_all startup_shape = true.
 
-  (* [comment removed for export] *)
+  (** the main-entry certificate, from the start-up's one hole state *)
   Variable NX1 : nat.
   Hypothesis HNX1 : (NX0 <= NX1)%nat.
   Variable IT1 : itab.
@@ -112,158 +120,182 @@ Section MainEntry.
   Variable HS_main : nat -> option acs.
   Variable mainentry_plan : plan.
   Variable mainentry_shape : shape.
-  Hypothesis mainentry_cert : s2_check NX1 IT1 HS_main HS0 mainentry_plan = COk mainentry_shape.
-  Hypothesis mainentry_guard : spin_guarded mainentry_plan = true.   (* [comment removed for export] *)
+  Hypothesis mainentry_cert : s2_check NX1 RZ IT1 HS_main HS0 mainentry_plan = COk mainentry_shape.
+  Hypothesis mainentry_guard : spin_guarded mainentry_plan = true.
   Hypothesis mainentry_shape_holes : only_holes mainentry_shape = true.
   Hypothesis mainentry_shape_hole : has_hole_all mainentry_shape = true.
 
-  (* [comment removed for export] *)
   Variable MAIN : env -> Fs.Fs -> TSet.
   Hypothesis MAIN_agree : forall E E' fs', env_agree NX0 E E' -> MAIN E fs' = MAIN E' fs'.
   Hypothesis MAIN_nil : forall E fs', MAIN E fs' [].
-  (* [comment removed for export] *)
   Hypothesis MAIN_sound : holes_stmt ASEGS BOTH ALIMIT HS_main SP0 SINV argH (fun _ => MAIN) fs.
 
-  Let SP0_ok := sp0_ok_usp sp Hsp.
-  Let AH := argH0_high APH sp rdraw argv envp uid hw Hva.
-  Let AA1 := argH0_agreeN NX1 sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame APH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH sp rdraw brk0 argv envp uid hw.
-  Let SA1 : forall E E' M, env_agree NX1 E E' -> SINV E M -> SINV E' M := SINV_agreeN NX1 HNX1 SINV SA.
-  Let SS := SINV0_sp APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit.
-  #[using="HNX1 MAIN_agree"] Lemma MAIN_agree1 : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "Ph,$<.PE,$0.PE',$0.Pfs',$1.P,(10.VNX1,R3.R2.)(6.$2.A3.L,$<.VMAIN,R5.R4.R2.A3.L,$<.VMAIN,R5.R3.R2.)")
-(* [comment removed for export] *).
+  Lemma MAIN_agree1 : forall (h : nat) (E E' : env) (fs' : Fs.Fs),
+    env_agree NX1 E E' -> (fun _ : nat => MAIN) h E fs' = (fun _ : nat => MAIN) h E' fs'.
   Proof. intros h E E' fs' Hag. apply MAIN_agree. exact (env_agree_le _ _ _ _ Hag HNX1). Qed.
-  #[using="MAIN_nil"] Lemma MAIN_nil1 : forall (h : nat) E fs', (fun _ : nat => MAIN) h E fs' [].
+  Lemma MAIN_nil1 : forall (h : nat) E fs', (fun _ : nat => MAIN) h E fs' [].
   Proof. intros. apply MAIN_nil. Qed.
 
-  (* [comment removed for export] *)
-  #[using="Hsp Hva Hve Hfit NX1 HNX1 IT1 IT1_ok HS_main mainentry_plan mainentry_cert mainentry_guard MAIN_agree MAIN_nil MAIN_sound SP0_ok AH AA1 SF SA SA1 SS"] Theorem mainentry_sound : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "PE,$0.PR,(11.&5.(12.&40.))PFULL,P,(12.&40.)(13.(12.&8.))Pmodel,$14.P,(15.$16.$17.$18.(19.&40.Vsp,)(1:.$1;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)(1<.$1;.Vsp,Vrdraw,Vargv,Venvp,Vuid,Vhw,)Vfs,R4.VHS0,R3.R2.R1.)(1=.$16.(1>.$16.R4.(1?.VHS0,)R3.R2.)(;.L,$<.VMAIN,$=.R5.(20.R2.)Vmainentry_shape,))")
-(* [comment removed for export] *).
+  Theorem mainentry_sound : forall (E : env) (R : bvmap 5 (bv 64)) (FULL : bv 64 -> option (bv 8)) (model : Model),
+    cs_ok ASEGS BOTH ALIMIT SP0 SINV argH fs E HS0 R FULL model ->
+    srealizes ASEGS (cfg_of ASEGS R (pc HS0) FULL model) (sd (fun _ => MAIN) t_nil E (m_fs model) mainentry_shape).
   Proof.
     intros E R FULL model HC.
-    pose proof (check_sound ASEGS IT1 IT1_ok BOTH NX1 ALIMIT HS_main (XN_A NX1) XE0 XB_A
+    pose proof asan_img_facts as IMG.
+    pose proof (run_sp0_ok sp Hsp) as SP0_ok.
+    assert (AH : forall E (a : word), argH E a = true -> SP0 <= bv_unsigned a)
+      by (intros E' a H; eapply run_argH_high; [asan_close .. | exact H]).
+    pose proof (argH0_agreeN NX1 sp rdraw inp) as AA1.
+    assert (SF : forall E M M', (forall a, argH E a = true -> M' a = M a) ->
+               (forall a : word, SP0 <= bv_unsigned a -> M a <> None -> M' a <> None) -> SINV E M -> SINV E M')
+      by (intros E' M M' H1 H2; eapply SINV0_frame; asan_close).
+    assert (SA : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M)
+      by (intros E' E'' M H1; eapply SINV0_agree; exact H1).
+    assert (SA1 : forall E E' M, env_agree NX1 E E' -> SINV E M -> SINV E' M)
+      by (intros E' E'' M H1; apply SA; exact (env_agree_le _ _ _ _ H1 HNX1)).
+    assert (SS : forall E M, SINV E M -> uE_sp0 E = SP0)
+      by (intros E' M H; eapply run_SINV_sp; [asan_close .. | exact H]).
+    assert (XS : forall x, x_stmt ASEGS BOTH NX1 ALIMIT RZ SP0 SINV argH fs x)
+      by (eapply (asan_node_x_sound_allN NX1 HNX1); first [ exact (fun E M H => H) | asan_close | exact SF | exact SA ]).
+    pose proof (check_sound ASEGS IT1 IT1_ok BOTH NX1 ALIMIT RZ HS_main (XN_A NX1) XE0 XB_A
               asan_wx asan_in_hull asan_hull_ok asan_shadow_ok SP0 SP0_ok SINV argH AH AA1 SF SA1
               (fun _ => MAIN) MAIN_agree1 MAIN_nil1 fs KC0) as C1.
     pose proof (C1
-              (AsanNodesMmB.node_sys_sound ASEGS BOTH NX1 ALIMIT SINV argH fs asan_res_len asan_hull_ok asan_shadow_ok SP0 SP0_ok AH AA1 SF SA1)
-              (AsanNodesMmB.node_brk2_sound ASEGS BOTH NX1 ALIMIT SINV argH fs asan_in_hull asan_res_len asan_hull_ok asan_hull_cov asan_shadow_ok SP0 SP0_ok AH SF SS)
+              (AsanNodesMmB.node_sys_sound ASEGS BOTH NX1 ALIMIT SINV argH fs SP0 AA1 SF SA1)
+              (AsanNodesMmB.node_brk2_sound ASEGS BOTH NX1 ALIMIT SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_hull_cov asan_shadow_ok SP0 SP0_ok AH SF SS)
               (node_mmap2_sound_OBL ASEGS BOTH NX1 ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
               (node_mmapin_sound_OBL ASEGS BOTH NX1 ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
               (node_mprotect2_sound_OBL ASEGS BOTH NX1 ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
+              (node_munmap2_sound_OBL ASEGS BOTH NX1 ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
               (AsanNodesMmB.node_exit_sound ASEGS BOTH ALIMIT SINV argH fs SP0)) as C2.
-    pose proof (C2 (asan_node_x_sound_allN NX1 HNX1 sp brk0 rdraw argv envp fs Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF SA)
-                   (asan_node_x_sound0_all NX1 ALIMIT SINV argH SP0 SP0_ok AH AA1 SF SA1 fs)) as C3.   (* [comment removed for export] *)
+    pose proof (C2 XS (asan_node_x_sound0_all NX1 ALIMIT RZ SINV argH SP0 SP0_ok AH AA1 SF SA1 fs)) as C3.
     pose proof (C3 (node_join_sound ASEGS BOTH NX1 ALIMIT SP0 SINV argH fs)) as C4.
     pose proof (C4 (node_ext_sound_OBL ASEGS BOTH NX1 ALIMIT SP0 SINV argH fs AA1 SA1) (XE0_sound _ _ _ _ _ _ _ _)
                    (node_noreplace_sound_OBL ASEGS BOTH NX1 ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
                    MAIN_sound) as C5.
-    pose proof (C5 FUEL BFUEL None mainentry_plan HS0 mainentry_shape mainentry_cert mainentry_guard E R FULL model t_nil HC I eq_refl) as R6.
-    exact R6.
+    exact (C5 FUEL BFUEL None mainentry_plan HS0 mainentry_shape mainentry_cert mainentry_guard E R FULL model t_nil HC I eq_refl).
   Qed.
 
-  (* [comment removed for export] *)
-  #[using="Hsp Hva Hve Hfit HS0 HS_asan_only0 NX1 HNX1 IT1 IT1_ok HS_main mainentry_plan mainentry_shape mainentry_cert mainentry_guard mainentry_guard mainentry_shape_holes mainentry_shape_hole MAIN_agree MAIN_nil MAIN_sound SP0_ok AH AA1 SF SA SA1 SS"] Theorem startup_holes_sound : holes_stmt ASEGS BOTH ALIMIT HS_asan SP0 SINV argH (fun _ => MAIN) fs.
+  Theorem startup_holes_sound : holes_stmt ASEGS BOTH ALIMIT HS_asan SP0 SINV argH (fun _ => MAIN) fs.
   Proof.
     intros h ch Hh E R FULL model HC. rewrite (HS_asan_only0 h ch Hh) in HC |- *.
     apply (srz_conseq ASEGS _ _ _ (mainentry_sound E R FULL model HC)).
     apply sd_main_eq; [exact MAIN_nil | exact mainentry_shape_holes | exact mainentry_shape_hole].
   Qed.
 
-  (* [comment removed for export] *)
-  #[using="Hsp Hbrk Hva Hve Hfit Huid IT0 IT0_ok HS_asan HS0 HS_asan_only0 startup_plan startup_cert startup_guard NX1 HNX1 IT1 IT1_ok HS_main mainentry_plan mainentry_shape mainentry_cert mainentry_guard mainentry_shape_holes mainentry_shape_hole MAIN_agree MAIN_nil MAIN_sound SP0_ok AH AA1 SF SA SA1 SS"] Theorem asan_boot_shape : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "(1=.$16.(21.$16.$22.$1;.Vsp,Vbrk0,Vmbase,Vrdraw,$23.(24.Vargv,Venvp,Vfs,Vstdin,Vuid,Vgid,Vhw,Vgroups,Vnet,Vnofile,Vsigmask,Vurandom,))(;.L,$<.VMAIN,$=.(25.$1;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)Vfs,Vstartup_shape,))")
-(* [comment removed for export] *).
+  Theorem asan_boot_shape :
+    srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw AsanInit.LIMIT inp)
+      (sd (fun _ => MAIN) t_nil E0a fs startup_shape).
   Proof.
-    exact (asan_startup sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask urandom Hsp Hbrk Hva Hve Hfit Huid
-             IT0 IT0_ok HS_asan startup_plan startup_shape startup_cert startup_guard (fun _ => MAIN)
-             (fun h E E' fs' Hag => MAIN_agree E E' fs' Hag) (fun h E fs' => MAIN_nil E fs') startup_holes_sound).
+    (* [asan_startup]'s conclusion fixes the run, the holes and the shape; the certificate fixes the
+       table, the instruction table and the plan, so it is closed first. *)
+    eapply asan_startup.
+    all: try exact startup_cert.
+    all: first [ exact startup_holes_sound | exact startup_guard | exact IT0_ok
+               | exact (fun h E E' fs' Hag => MAIN_agree E E' fs' Hag)
+               | exact (fun h E fs' => MAIN_nil E fs') | asan_close ].
   Qed.
 
-  #[using="Hsp Hbrk Hva Hve Hfit Huid IT0 IT0_ok HS_asan HS0 HS_asan_only0 startup_plan startup_shape startup_cert startup_guard startup_shape_holes startup_shape_hole NX1 HNX1 IT1 IT1_ok HS_main mainentry_plan mainentry_shape mainentry_cert mainentry_guard mainentry_shape_holes mainentry_shape_hole MAIN_agree MAIN_nil MAIN_sound SP0_ok AH AA1 SF SA SA1 SS"] Theorem asan_boot : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "(1=.$16.(21.$16.$22.$1;.Vsp,Vbrk0,Vmbase,Vrdraw,$23.(24.Vargv,Venvp,Vfs,Vstdin,Vuid,Vgid,Vhw,Vgroups,Vnet,Vnofile,Vsigmask,Vurandom,))A2.VMAIN,(25.$1;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)Vfs,)")
-(* [comment removed for export] *).
+  Theorem asan_boot :
+    srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw AsanInit.LIMIT inp) (MAIN E0a fs).
   Proof.
     apply (srz_conseq ASEGS _ _ _ asan_boot_shape).
     apply sd_main_eq; [exact MAIN_nil | exact startup_shape_holes | exact startup_shape_hole].
   Qed.
 End MainEntry.
 
-(* [comment removed for export] *)
+(** the start-up alone, when [MAIN] is given at the start-up's holes directly *)
 Section Boot1.
-  Variable sp brk0 mbase : word.
+  Variable apc : N.
+  Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.   (* [comment removed for export] *)
-  Variable urandom : InputStream.   (* [comment removed for export] *)
+  Variables brk0 mbase : word.
+  Variable inp : ProcInput.
   Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hapc : Z.of_N apc = a_entry BOTH.
   Hypothesis Hbrk : valid_brk ASEGS brk0.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid.
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 APH sp rdraw brk0 argv envp uid hw).
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hzr : AsanCeil.zero_random_draw (ed_random rdraw).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
+  #[local] Notation SINV := (SINV0 APH apc sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
+  #[local] Notation E0a := (E0 sp rdraw brk0 inp).
   #[local] Notation SP0 := (bv_unsigned sp).
+  #[local] Notation RZ := (rseq_z (kb_rseq (in_kernel inp))).
+  #[local] Notation fs := (in_fs inp).
 
   Variable IT0 : itab.
   Hypothesis IT0_ok : itab_sound ASEGS IT0.
   Variable HS_asan : nat -> option acs.
   Variable startup_plan : plan.
   Variable startup_shape : shape.
-  Hypothesis startup_cert : s1_check IT0 HS_asan startup_plan = COk startup_shape.
-  Hypothesis startup_guard : spin_guarded startup_plan = true.   (* [comment removed for export] *)
+  Hypothesis startup_cert : s1_check RZ IT0 HS_asan startup_plan = COk startup_shape.
+  Hypothesis startup_guard : spin_guarded startup_plan = true.
   Hypothesis startup_shape_holes : only_holes startup_shape = true.
   Hypothesis startup_shape_hole : has_hole_all startup_shape = true.
 
   Variable MAIN : env -> Fs.Fs -> TSet.
   Hypothesis MAIN_agree : forall E E' fs', env_agree NX0 E E' -> MAIN E fs' = MAIN E' fs'.
   Hypothesis MAIN_nil : forall E fs', MAIN E fs' [].
-  (* [comment removed for export] *)
   Hypothesis MAIN_sound : holes_stmt ASEGS BOTH ALIMIT HS_asan SP0 SINV argH (fun _ => MAIN) fs.
 
-  #[using="Hsp Hbrk Hva Hve Hfit Huid IT0 IT0_ok HS_asan startup_plan startup_shape startup_cert startup_guard startup_shape_holes startup_shape_hole MAIN_agree MAIN_nil MAIN_sound"] Theorem asan_boot1 : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "(1=.$16.(21.$16.$22.$1;.Vsp,Vbrk0,Vmbase,Vrdraw,$23.(24.Vargv,Venvp,Vfs,Vstdin,Vuid,Vgid,Vhw,Vgroups,Vnet,Vnofile,Vsigmask,Vurandom,))A2.VMAIN,(25.$1;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)Vfs,)")
-(* [comment removed for export] *).
+  Theorem asan_boot1 :
+    srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw AsanInit.LIMIT inp) (MAIN E0a fs).
   Proof.
-    apply (srz_conseq ASEGS _ _ _
-             (asan_startup sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask urandom Hsp Hbrk Hva Hve Hfit Huid
-                IT0 IT0_ok HS_asan startup_plan startup_shape startup_cert startup_guard (fun _ => MAIN)
-                (fun h E E' fs' Hag => MAIN_agree E E' fs' Hag) (fun h E fs' => MAIN_nil E fs') MAIN_sound)).
+    assert (S1 : srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw AsanInit.LIMIT inp)
+                   (sd (fun _ => MAIN) t_nil E0a fs startup_shape)).
+    { eapply asan_startup.
+      all: try exact startup_cert.
+      all: first [ exact MAIN_sound | exact startup_guard | exact IT0_ok
+                 | exact (fun h E E' fs' Hag => MAIN_agree E E' fs' Hag)
+                 | exact (fun h E fs' => MAIN_nil E fs') | asan_close ]. }
+    apply (srz_conseq ASEGS _ _ _ S1).
     apply sd_main_eq; [exact MAIN_nil | exact startup_shape_holes | exact startup_shape_hole].
   Qed.
 End Boot1.
 
-(* [comment removed for export] *)
+(** one certified piece, from a recorded state [cs0] *)
 Section Piece.
-  Variable sp brk0 : word.
+  Variable apc : N.
+  Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variables uid hw : word.
+  Variables brk0 mbase : word.
+  Variable inp : ProcInput.
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hapc : Z.of_N apc = a_entry BOTH.
+  Hypothesis Hbrk : valid_brk ASEGS brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hzr : AsanCeil.zero_random_draw (ed_random rdraw).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
+  #[local] Notation SINV := (SINV0 APH apc sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
   #[local] Notation SP0 := (bv_unsigned sp).
+  #[local] Notation RZ := (rseq_z (kb_rseq (in_kernel inp))).
+  #[local] Notation fs := (in_fs inp).
 
   Variable MAIN : env -> Fs.Fs -> TSet.
   Hypothesis MAIN_agree : forall E E' fs', env_agree NX0 E E' -> MAIN E fs' = MAIN E' fs'.
   Hypothesis MAIN_nil : forall E fs', MAIN E fs' [].
 
-  (* [comment removed for export] *)
-  Definition from_state (cs : acs) : Prop := ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "PE,$0.PR,(11.&5.(12.&40.))PFULL,P,(12.&40.)(13.(12.&8.))Pmodel,$14.P,(15.$16.$17.$18.(19.&40.Vsp,)(1:.$1;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)(1<.$1;.Vsp,Vrdraw,Vargv,Venvp,Vuid,Vhw,)Vfs,R4.O1.R3.R2.R1.)(1=.$16.(1>.$16.R4.(1?.O1.)R3.R2.)A2.VMAIN,R5.(20.R2.))")
-(* [comment removed for export] *).
+  (** the realization a state [cs] carries: from any concrete configuration it covers, the run reaches [MAIN] *)
+  Definition from_state (cs : acs) : Prop :=
+    forall (E : env) (R : bvmap 5 (bv 64)) (FULL : bv 64 -> option (bv 8)) (model : Model),
+      cs_ok ASEGS BOTH ALIMIT SP0 SINV argH fs E cs R FULL model ->
+      srealizes ASEGS (cfg_of ASEGS R (pc cs) FULL model) (MAIN E (m_fs model)).
 
-  (* [comment removed for export] *)
-  Lemma hs_tab_holes : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "Pl,(:.(26.$<.$27.))P,Ph,$<.Pcs,$27.P,(28.(26.$<.$27.)(29.$<.$27.R2.R1.)R3.)(2:.R2.)(2;.$16.$17.$18.(2<.R2.)(19.&40.Vsp,)(1:.$1;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)(1<.$1;.Vsp,Vrdraw,Vargv,Venvp,Vuid,Vhw,)L,$<.VMAIN,Vfs,)")
-(* [comment removed for export] *).
+  Lemma hs_tab_holes : forall l : list (nat * acs),
+    (forall h cs, In (h, cs) l -> from_state cs) ->
+    holes_stmt ASEGS BOTH ALIMIT (hs_tab l) SP0 SINV argH (fun _ => MAIN) fs.
   Proof.
     intros l Hl. induction l as [|[h0 cs0] l IH]; intros h ch Hh E R FULL model HC; cbn [hs_tab] in Hh; [discriminate Hh|].
     destruct (Nat.eqb h h0) eqn:He.
@@ -271,9 +303,9 @@ Section Piece.
     - exact (IH (fun h' cs' Hin => Hl h' cs' (or_intror Hin)) h ch Hh E R FULL model HC).
   Qed.
 
-  (* [comment removed for export] *)
-  Lemma hs_const_holes : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "PHS,P,$<.(13.$27.)Pcs0,$27.P,Ph,$<.Pch,$27.P,(6.(13.$27.)A1.R4.R2.(2=.$27.R1.))(6.$27.R2.R4.)P,(2:.R2.)(2;.$16.$17.$18.R4.(19.&40.Vsp,)(1:.$1;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)(1<.$1;.Vsp,Vrdraw,Vargv,Venvp,Vuid,Vhw,)L,$<.VMAIN,Vfs,)")
-(* [comment removed for export] *).
+  Lemma hs_const_holes : forall (HS : nat -> option acs) (cs0 : acs),
+    (forall h ch, HS h = Some ch -> ch = cs0) -> from_state cs0 ->
+    holes_stmt ASEGS BOTH ALIMIT HS SP0 SINV argH (fun _ => MAIN) fs.
   Proof. intros HS cs0 Honly H0 h ch Hh E R FULL model HC. rewrite (Honly h ch Hh) in HC |- *. exact (H0 E R FULL model HC). Qed.
 
   Variable nx : nat.
@@ -284,41 +316,51 @@ Section Piece.
   Variable cs0 : acs.
   Variable p : plan.
   Variable s : shape.
-  Hypothesis cert : s2_check nx IT HS cs0 p = COk s.
-  Hypothesis cert_guard : spin_guarded p = true.   (* [comment removed for export] *)
+  Hypothesis cert : s2_check nx RZ IT HS cs0 p = COk s.
+  Hypothesis cert_guard : spin_guarded p = true.
   Hypothesis s_holes : only_holes s = true.
   Hypothesis s_hole : has_hole_all s = true.
   Hypothesis HS_sound : holes_stmt ASEGS BOTH ALIMIT HS SP0 SINV argH (fun _ => MAIN) fs.
 
-  Let SP0_ok := sp0_ok_usp sp Hsp.
-  Let AH := argH0_high APH sp rdraw argv envp uid hw Hva.
-  Let AA1 := argH0_agreeN nx sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame APH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH sp rdraw brk0 argv envp uid hw.
-  Let SA1 : forall E E' M, env_agree nx E E' -> SINV E M -> SINV E' M := SINV_agreeN nx Hnx SINV SA.
-  Let SS := SINV0_sp APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit.
-  Lemma MAIN_agreeP : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "Ph,$<.PE,$0.PE',$0.Pfs',$1.P,(10.Vnx,R3.R2.)(6.$2.A3.L,$<.VMAIN,R5.R4.R2.A3.L,$<.VMAIN,R5.R3.R2.)")
-(* [comment removed for export] *).
+  Lemma MAIN_agreeP : forall (h : nat) (E E' : env) (fs' : Fs.Fs),
+    env_agree nx E E' -> (fun _ : nat => MAIN) h E fs' = (fun _ : nat => MAIN) h E' fs'.
   Proof. intros h E E' fs' Hag. apply MAIN_agree. exact (env_agree_le _ _ _ _ Hag Hnx). Qed.
   Lemma MAIN_nilP : forall (h : nat) E fs', (fun _ : nat => MAIN) h E fs' [].
   Proof. intros. apply MAIN_nil. Qed.
 
-  Theorem piece_shape_sound : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntry ()) "PE,$0.PR,(11.&5.(12.&40.))PFULL,P,(12.&40.)(13.(12.&8.))Pmodel,$14.P,(15.$16.$17.$18.(19.&40.Vsp,)(1:.$1;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)(1<.$1;.Vsp,Vrdraw,Vargv,Venvp,Vuid,Vhw,)Vfs,R4.Vcs0,R3.R2.R1.)(1=.$16.(1>.$16.R4.(1?.Vcs0,)R3.R2.)(;.L,$<.VMAIN,$=.R5.(20.R2.)Vs,))")
-(* [comment removed for export] *).
+  Theorem piece_shape_sound : forall (E : env) (R : bvmap 5 (bv 64)) (FULL : bv 64 -> option (bv 8)) (model : Model),
+    cs_ok ASEGS BOTH ALIMIT SP0 SINV argH fs E cs0 R FULL model ->
+    srealizes ASEGS (cfg_of ASEGS R (pc cs0) FULL model) (sd (fun _ => MAIN) t_nil E (m_fs model) s).
   Proof.
     intros E R FULL model HC.
-    pose proof (check_sound ASEGS IT IT_ok BOTH nx ALIMIT HS (XN_A nx) XE0 XB_A
+    pose proof asan_img_facts as IMG.
+    pose proof (run_sp0_ok sp Hsp) as SP0_ok.
+    assert (AH : forall E (a : word), argH E a = true -> SP0 <= bv_unsigned a)
+      by (intros E' a H; eapply run_argH_high; [asan_close .. | exact H]).
+    pose proof (argH0_agreeN nx sp rdraw inp) as AA1.
+    assert (SF : forall E M M', (forall a, argH E a = true -> M' a = M a) ->
+               (forall a : word, SP0 <= bv_unsigned a -> M a <> None -> M' a <> None) -> SINV E M -> SINV E M')
+      by (intros E' M M' H1 H2; eapply SINV0_frame; asan_close).
+    assert (SA : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M)
+      by (intros E' E'' M H1; eapply SINV0_agree; exact H1).
+    assert (SA1 : forall E E' M, env_agree nx E E' -> SINV E M -> SINV E' M)
+      by (intros E' E'' M H1; apply SA; exact (env_agree_le _ _ _ _ H1 Hnx)).
+    assert (SS : forall E M, SINV E M -> uE_sp0 E = SP0)
+      by (intros E' M H; eapply run_SINV_sp; [asan_close .. | exact H]).
+    assert (XS : forall x, x_stmt ASEGS BOTH nx ALIMIT RZ SP0 SINV argH fs x)
+      by (eapply (asan_node_x_sound_allN nx Hnx); first [ exact (fun E M H => H) | asan_close | exact SF | exact SA ]).
+    pose proof (check_sound ASEGS IT IT_ok BOTH nx ALIMIT RZ HS (XN_A nx) XE0 XB_A
               asan_wx asan_in_hull asan_hull_ok asan_shadow_ok SP0 SP0_ok SINV argH AH AA1 SF SA1
               (fun _ => MAIN) MAIN_agreeP MAIN_nilP fs KC0) as C1.
     pose proof (C1
-              (AsanNodesMmB.node_sys_sound ASEGS BOTH nx ALIMIT SINV argH fs asan_res_len asan_hull_ok asan_shadow_ok SP0 SP0_ok AH AA1 SF SA1)
-              (AsanNodesMmB.node_brk2_sound ASEGS BOTH nx ALIMIT SINV argH fs asan_in_hull asan_res_len asan_hull_ok asan_hull_cov asan_shadow_ok SP0 SP0_ok AH SF SS)
+              (AsanNodesMmB.node_sys_sound ASEGS BOTH nx ALIMIT SINV argH fs SP0 AA1 SF SA1)
+              (AsanNodesMmB.node_brk2_sound ASEGS BOTH nx ALIMIT SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_hull_cov asan_shadow_ok SP0 SP0_ok AH SF SS)
               (node_mmap2_sound_OBL ASEGS BOTH nx ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
               (node_mmapin_sound_OBL ASEGS BOTH nx ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
               (node_mprotect2_sound_OBL ASEGS BOTH nx ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
+              (node_munmap2_sound_OBL ASEGS BOTH nx ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)
               (AsanNodesMmB.node_exit_sound ASEGS BOTH ALIMIT SINV argH fs SP0)) as C2.
-    pose proof (C2 (asan_node_x_sound_allN nx Hnx sp brk0 rdraw argv envp fs Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF SA)
-                   (asan_node_x_sound0_all nx ALIMIT SINV argH SP0 SP0_ok AH AA1 SF SA1 fs)) as C3.   (* [comment removed for export] *)
+    pose proof (C2 XS (asan_node_x_sound0_all nx ALIMIT RZ SINV argH SP0 SP0_ok AH AA1 SF SA1 fs)) as C3.
     pose proof (C3 (node_join_sound ASEGS BOTH nx ALIMIT SP0 SINV argH fs)) as C4.
     pose proof (C4 (node_ext_sound_OBL ASEGS BOTH nx ALIMIT SP0 SINV argH fs AA1 SA1) (XE0_sound _ _ _ _ _ _ _ _)
                    (node_noreplace_sound_OBL ASEGS BOTH nx ALIMIT SP0 SINV argH fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok asan_hull_cov SP0_ok AH AA1 SF SA1 SS)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (interp_eff0's missed load answers MachineUnmodeled on the vvar range (range_meets_vvar), as the model's load does; interp_eff0_ELoad restated in plain text). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -26,7 +27,7 @@ Fixpoint interp_eff0 (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff0 (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -40,7 +41,8 @@ Proof using .
   unfold interp_eff.
   induction t; intros m; cbn; try reflexivity.
   -
-    destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
+    destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+  [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
     rewrite <- (H _ m).
     destruct (interp_eff_accesses segs _ m) as [[v acc]| |]; reflexivity.
   -
@@ -53,8 +55,14 @@ Lemma interp_eff0_EDone : ltac2:(tb__ "0|2|
 S18S0Q40A1S12S0Q8A1A1F_;M0S11S3S13S18G0A2M1A1S1dS1aR2A1R1A2S6G1S16S18G0R2R1A4A2A3Fm;Fc;").
 Proof using . reflexivity. Qed.
 
-Lemma interp_eff0_ELoad : ltac2:(tb__ "0|7|
-S20S0Q40M0A1M1S0R2A1S19F_;G1S12S0Q8A1M2A1F_;M3S11S3S13S18G3A2M4A1M5S1dS1bR4R3R2A3R1A2S12S15G2A1M6A1G5Lx;SdVsegs;R1R3S7R4A1A4G6S1dR3S1G0Q0R5S22R1A1A4A1R2A2Lbs;S5G4A1X12x2A3Fm;Fk;Fa;Fn;").
+(* 08b1429: the ELoad miss reads the vvar test (RiscvSemantics.interp_eff_accesses); the old
+   serialised statement fixed it at MachineFault. Restated in plain text; no callers. *)
+Lemma interp_eff0_ELoad : forall (n : N) (a : word) (k : bv n -> eff) (m : word -> option byte),
+  interp_eff0 (ELoad n a k) m =
+  match ov_read_bytes segs m a (width_bytes n) with
+  | Some bs => interp_eff0 (k (bv_extract 0 n (le_bytes_to_word bs))) m
+  | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
+  end.
 Proof using . reflexivity. Qed.
 
 Lemma interp_eff0_EStore : ltac2:(tb__ "0|5|

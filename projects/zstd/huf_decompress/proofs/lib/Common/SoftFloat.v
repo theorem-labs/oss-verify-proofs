@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (wrap64_mod, wrap64_range)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith Bool List Lia.
 From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
@@ -21,11 +22,9 @@ Definition SIGN64 : Z := 0x8000000000000000.                (* [comment removed 
 (* [comment removed for export] *)
 Definition wrap64 (x : Z) : Z := Z.land x ONES64.
 Lemma wrap64_mod : forall x, wrap64 x = x mod 2^64.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "h07__arithh14__ffh28__varmaph35__with41xp;1p;2p;4p;7p;3g0000j10Tg000Uj11Tg0013j15Tg001Sj14Tg0023j1DTg002Qj1<Tg002oj1;Tg003Zj22Tg004=j46Tg004hj77Tg005Lj28Tg005nj29Tg006Hj2:Tg0074j33Tg007Nj3CTg007mj4BTg008_j2=Tg009;j3>Tg009^j1?Tg00:Zj2@Tg00;7j2ATg00;WR0f0R1g00<5#0R2#0#0#0#0#0#1R3g00<ZR4#5%44%D0%<0%;0R4g00=Fg00=eR5P5g00>ER5P0g00>eR6,20g00?C1203C6g00?jF71845P1f2R5g00@JR4g00@jR7'91:15=347df19C06CBb1b2b31=63P1b03>%?1%12/@3,A1530eW4o"). Qed.
+Proof. intro x. unfold wrap64. change ONES64 with (Z.ones 64). apply Z.land_ones. lia. Qed.
 Lemma wrap64_range : forall x, 0 <= wrap64 x < 2^64.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "h02Hah17__arithh24__ffh36__sat0h46__sat1h58__varmaph65__with71xh81zp;1p;2p;3p;4p;7p;6g0000j10Tg000Uj13Tg00:Zj2<Tg00;7j25Tg008_j21Tg00AJj22Tg00Afj2=Tg00BAj2;Tg00Bij3:Tg0013j16Tg001Sj17Tg0023j18Tg002Qj19Tg002oj1LTg003Zj24Tg00CMj1KTg00Ckj3JTg004=j4ITg004hj7>Tg005Lj2?Tg005nj2@Tg006Hj2ATg0074j3BTg007Nj3CTg007mj4DTg00DNj3ETg009^j1FTg00E5j1GTg00F5j6HTg00;WR0P0f0R1g00<5#0R2#3R3%02#0#0#0#0R2#3R4'<R5'5g00>eR6/111215'=X801;34126311641265R7[[1163R8g00FSR9f1R:9:34UW01165\9^08g00<ZR8#6%78%80%90%L0R8g00=Fg00=eR9P9g00>ER9P01406g00Fo1403%K25J0CIg00?jF>1?89P1f2R9g00@JR8g00@jR2'@1A19=B82dAC06:CDb2b5b6P7P1b1b3b49E15%F1%G1EHW7o"). Qed.
+Proof. intro x. rewrite wrap64_mod. apply Z.mod_pos_bound. lia. Qed.
 
 Definition b2z (b : bool) : Z := if b then 1 else 0.       (* [comment removed for export] *)
 Definition lo64 (x : Z) : Z := wrap64 x.                    (* [comment removed for export] *)
@@ -1095,167 +1094,122 @@ Definition sf_dispatch (op a b : Z) : Z :=
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Example ex_of_d_15 : f128_of_d 0x3ff8000000000000 = 0x3fff8000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg000Uj15Tg005nj29Tg00GVj18Tg0074j37Tg00HUj13Tf0R0#3#3p=2%00#0p=4%00#0#0#0p=6%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;WR0g00<5#2#2#2#2#2R1#2#2#0#4#6#:#1#1#1#1#1#1#5R2'9%01#4#1#1#1#5#8=702do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_of_d_minsub : f128_of_d 0x0000000000000001 = 0x3bcd0000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj11Tg0000j10Tg000Uj13Tg005nj27Tg00GVj16Tg0074j35Tf0R0#0#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;WR0g00<5R1#1#1#0#1#1#1#1#4#1#1#0#1#2#2#2#2#2#2#2#3R2'7%31#6=502do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_of_d_maxsub : f128_of_d 0x800fffffffffffff = 0xbc00ffffffffffffe000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j11Tg00HUj10Tg000Uj14Tg005nj29Tg00GVj17Tg0074j38Tf0R0#0#0#0#0p=6%10#1p=5%10#1#1#1#1#1#1#1p=2%00#0p=;%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%10#1#1#1p=:g00;WR0g00<5#1R1#6#5#2#0#;#3#3#3#1#:#2#2#2#2#2#2#2#4R2'9%51#2#6#3#3#3#4#7=802do"). Qed.
-Example ex_of_d_snan : f128_of_d 0x7ff0000000000001 = 0x7fff0000000000001000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg00HUj13Tg000Uj15Tg005nj28Tg00GVj17Tg0074j36Tf0R0#3#3p=2%00#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0#0#0p=:%00#0#0#0#0#0#0#0p=9g00;WR0g00<5#2#2#2#2#2R1#2#2#0#4#1#1#1#3#:#9#1#1#1#5R2'8%01#4#1#1#1#3#5#7=602do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
+Example ex_of_d_snan : f128_of_d 0x7ff0000000000001 = 0x7fff0000000000001000000000000000.  (* [comment removed for export] *)
+Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Example ex_to_d_15 : f128_to_d 0x3fff8000000000000000000000000000 = 0x3ff8000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg000Uj15Tg005nj2:Tg00I:j17Tg0074j36Tg00HUj13Tf0R0#3#3p=2%00#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0#0#0p=9%00#0#0#0#0#0#0#0p=8g00;WR0g00<5#2#2#2#2#2R1#0#4#1#1#1#5R2':%21#2#0#4#9#8#1#1#1#1#1#1#5#7=602do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_d_tie_even : f128_to_d 0x3fff0000000000000800000000000000 = 0x3ff0000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg000Uj15Tg005nj2:Tg0000j10Tg00I:j17Tg0074j36Tf0R0#3#3p=2%00#0#0#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0p=9%00#0#0#0#0#0#0#0p=8g00;WR0g00<5#3#2#2#2#2R1#4#1#1#1#5R2':%21#2#4#1#1#1#3#0#9#8#1#1#1#5#7=602do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_d_tie_odd : f128_to_d 0x3fff0000000000001800000000000000 = 0x3ff0000000000002.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg0000j10Tg000Uj15Tg005nj29Tg00I:j17Tg0074j36Tf0R0#3#3p=2%00#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0#0#0#0#0#0#0p=8g00;WR0g00<5#3#2#2#2#2R1#4#1#1#1#3#0#5R2'9%21#2#0#4#1#1#1#2#0#4#8#1#1#1#5#7=602do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_d_maxcarry : f128_to_d 0x43fefffffffffffff800000000000000 = 0x7ff0000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj15Tg005nj2;Tg00HUj11Tg0000j10Tg00I:j19Tg0074j3:Tf0R0#1#1p=<%10#1#1#1#1#1#1#1p=2%00#0#0#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%10#1#1#1p=8%00#0p=7%00#0#0#0#0#0#0#0p=6g00;WR0g00<5R1#<#2#4#3#3#3#5R2';%41#1#2#0#1#8#2#2#2#2#2#2#0#7#6#3#3#3#5#9=:02do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_d_nan : f128_to_d 0x7fff0000000000123000000000000000 = 0x7ff8000000000123.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj11Tg0000j10Tg000Uj16Tg005nj2:Tg00I:j18Tg0074j37Tf0R0#1#1p=2%00#0p=4%00#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%00#0#0#0p=9g00;WR0g00<5#1#2#2#2#2#2R1#4#5#3#3#1#4#1#0#4#2#6R2':%11#2#0#4#5#3#3#1#4#1#0#4#2#9#5#3#3#3#6#8=702do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_d_halfminsub_sticky : f128_to_d 0x3bcc0000000000000000000000000001 = 0x0000000000000001.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj13Tg005nj27Tg00HUj11Tg0000j10Tg00I:j15Tg0074j34Tf0R0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;WR0g00<5R1#3R2'7%11#1#0#1#1#1#1#6#1#1#0#2#2#2#2#2#2#2#1#3#5=402do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_d_sub_carry : f128_to_d 0x3c00ffffffffffffffffffffffffffff = 0x0010000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj14Tg005nj25Tg00HUj10Tg00I:j16Tg0074j37Tg0000j11Tf0R0#1#1#1#1p=:%10#1#1#1#1#1#1#1p=3%00#0p=9%10#1p=8%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;WR0g00<5R1#:#3#3#3#3#3#3#4R2'5%01#9#8#3#2#2#2#2#2#2#2#4#6=702do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Example ex_le_lt : f128_le 0x3fff0000000000000000000000000000 0x40000000000000000000000000000000 = -1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00J9j1<Tg005nj2;Tg00HUj13Tg000Uj14Tg00JWj26Tg0074j38Tg0000j10Tf0R0#3#3p=1%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0p=:%00#0#0#0p=9%00#0#0#0#0#0#0#0p=7g00;WR0g00<5R1#<R2';%31#1#1#1#1#1#1#5#2#2#2#4%:1#9#7#5#2#2#2#4'6=802do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_le_zero : f128_le 0x80000000000000000000000000000000 0 = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj28Tg0000j10Tg000Uj16Tg00JWj24Tg0074j35Tf0R0#0#0p=3%00#0#0#0p=2%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;WR0g00>eR1'8g00<5#0#3#2#7#1#1#1#1#1#1#1#6/41=501do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_le_nan : f128_le 0x7fff8000000000000000000000000000 0 = 1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj14Tg005nj2:Tg00HUj13Tg0000j10Tg00JWj27Tg0074j35Tf0R0#3#3p=1%00#0p=9%00#0#0#0p=8%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;WR0g00<5R1#4R2':%31#1#1#1#1#1#1#1#0#9#8#6#2#2#2#2#2#2#4g00>e'7=502do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_ge_nan : f128_ge 0 0x7fff0000000000000000000000000001 = -1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00J9j1;Tg005nj2:Tg0000j10Tg00HUj13Tg000Uj15Tg00KTj24Tg0074j38Tf0R0#3#3p=1%00#0p=9%00#0#0#0p=7%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;WR0g00<5R1#;R2':g00>e%11#1#1#1#1#1#1#0#9#7#6#2#2#2#2#2#2#3#5'4=802do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_ge_neg : f128_ge 0xc0000000000000000000000000000000 0xbfff0000000000000000000000000000 = -1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00J9j1<Tg005nj2;Tg00HUj13Tg000Uj14Tg0000j10Tg00KTj28Tg0074j39Tf0R0#0#0p=6%00#0#0#0p=:%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%30#3p=1g00;WR0g00<5R1#<R2';%31#6#:#7#5#2#2#2#4%01#1#1#1#1#1#1#1#5#2#2#2#4'8=902do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_ge_gt : f128_ge 0x40000000000000000000000000000000 0x3fff0000000000000000000000000000 = 1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj14Tg005nj2;Tg00HUj13Tg00KTj28Tg0074j37Tg0000j10Tf0R0#0#0p=9%00#0#0#0p=6%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%30#3p=1g00;WR0g00<5R1#4R2';%91#6#:#5#2#2#2#4%31#1#1#1#1#1#1#5#2#2#2#4'8=702do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Example ex_to_u32_trunc : f128_to_u32 0x4000ffffffffffffffffffffffffffff = 3.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj10Tg000Uj14Tg005nj25Tg00LQj17Tg0074j36Tg0000j13Tf0R0#3#3p=1%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;WR0g00<5R1#0#4R2'5%11#1#1#1#1#1#1#2#2#2#2#2#2#2#4#7=602do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_u32_neg : f128_to_u32 0xbfff0000000000000000000000000000 = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj27Tg0000j10Tg000Uj16Tg00LQj15Tg0074j34Tg00HUj13Tf0R0#3#3p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;WR0g00>eR1'7g00<5#0#2#2#2#2#2#2#2#1#1#1#1#1#1#1#6#5=401do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_u32_sat : f128_to_u32 0x401f0000000000000000000000000000 = 0xffffffff.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj12Tg000Uj14Tg005nj28Tg0000j10Tg00LQj15Tg0074j36Tf0R0#2#2p=9%20#2#2#2p=1%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3g00;WR0g00<5R1#2#9#1#1#1#1#1#1#1#4R2'8%01#7#2#1#3#3#3#3#3#3#3#4#5=602do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_u32_sat_a0 : fixunstfsi_a0 0x7fff0000000000000000000000000000 = 0xffffffffffffffff.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj11Tg000Uj14Tg005nj27Tg00MRj15Tg0074j36Tg0000j10Tf0R0#1#1p=9%10#1#1#1p=8%10#1#1#1#1#1#1#1p=3%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;WR0g00<5#9#8#3R1#1#3#3#3#3#3#3#4R2'7%21#2#2#2#2#2#2#4#5=602do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_to_u32_max : f128_to_u32 0x401efffffffe00000000000000000000 = 0xffffffff.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj11Tg000Uj16Tg005nj2:Tg0000j10Tg00LQj18Tg0074j37Tf0R0#1#1p=5%10#1#1#1p=4%10#1#1#1#1#1#1#1p=2%00#0#0#0#0#0#0#0p=9%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3g00;WR0g00<5R1#1#5#4#2#2#2#6R2':%01#9#4#0#1#5#4#2#2#2#0#3#3#3#3#3#6#8=702do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Example ex_of_u32_0 : f128_of_u32 0 = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj22Tg00NUj11Tg0074j30Tg00;WR0g00>eR1'2%11=001do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_of_u32_max : f128_of_u32 0xffffffff = 0x401efffffffe00000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg00HUj11Tg000Uj15Tg005nj29Tg00NUj18Tg0074j37Tf0R0#0#0#0#0#0#0#0#0p=:%10#1#1#1p=4%10#1p=6%10#1#1#1#1#1#1#1p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3g00;WR0g00<5R1#0#:#4#0#1#6#4#2#2#2#0#3#3#3#3#3#5R2'9%11#6#4#2#2#2#5#8=702do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_of_i32_m5 : f128_of_i32 (-5) = 0xc0014000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj12Tg0000j10Tg000Uj19Tg005nj28Tg00J9j17Tg00OVj16Tg0074j35Tf0R0#0#0#0#0p=3%00#0#0#0#0#0#0#0p=4%00#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;WR0g00<5R1#2#0#3#4#2#0#2#:#3#4#1#1#1#1#1#1#9R2'8%01#2#7#6=502do"). Qed.
-Example ex_of_i32_m5_pattern : f128_of_i32 0xfffffffb = f128_of_i32 (-5).
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj11Tg0000j10Tg000Uj18Tg005nj2;Tg00OVj14Tg00J9j19Tg0074j3:Tf0R0#0#0#0#0p=7%00#0#0#0#0#0#0#0p=6%00#0p=<%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%10#1p=5%10#1#1#1p=2g00;WR0g00<5R1#1R2#0#7#6#1#0#1#<#7#6#3#3#3#3#3#3#8';%12#5#2#2#2#2#2#2#0#5#8#4%01#1#9#45:0do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
+Example ex_of_i32_m5_pattern : f128_of_i32 0xfffffffb = f128_of_i32 (-5).      (* [comment removed for export] *)
+Proof. vm_compute. reflexivity. Qed.
 Example ex_of_i32_min : f128_of_i32 (-2147483648) = 0xc01e0000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj12Tg0000j10Tg000Uj1:Tg005nj29Tg00J9j16Tg00OVj17Tg0074j34Tf0R0#0#0#0#0#0#0#0#0p=3%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0p=8%00#0#0#0p=5g00;WR0g00<5R1#2#0#3#2#2#2#2#0#1#1#1#1#1#1#1#:R2'9%01#8#5#3#1#6#7=402do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_of_i32_max : f128_of_i32 2147483647 = 0x401dfffffffc00000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg00HUj11Tg000Uj15Tg005nj28Tg00OVj17Tg0074j39Tf0R0#0#0#0#0#0#0#0#0p=;%10#1p=4%10#1#1#1p=6%10#1#1#1#1#1#1#1p=2%00#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3g00;WR0g00<5R1#0#;#1#4#0#1#4#6#2#2#2#:#3#3#3#3#3#5R2'8%41#6#2#2#2#5#7=902do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Example ex_mul_15_15 :
   f128_mul 0x3fff8000000000000000000000000000 0x3fff8000000000000000000000000000
   = 0x40002000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg0000j10Tg000Uj15Tg005nj2:Tg00PWj27Tg0074j38Tf0R0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=;%00#0#0#0p=4%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%30#3p=1%00#0p=9g00;WR0g00<5R1#;#3#0#4#6#2#2#2#5R2':%11#1#1#1#1#1#1#0#9#4#6#2#2#2#5R1/71=802do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_mul_denorm_one : f128_mul 0x1 0x3fff0000000000000000000000000000 = 0x1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj14Tg005nj27Tg00HUj13Tg00PWj26Tg0074j35Tg0000j10Tf0R0#3#3p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;WR0g00<5R1#4R2'7%31#2#2#2#2#2#2#1#1#1#1#1#1#1#4,62=502do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_mul_inf_zero : f128_mul 0x7fff0000000000000000000000000000 0x0 = 0x7fff8000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg0000j10Tg000Uj14Tg005nj26Tg00PWj28Tg0074j39Tf0R0#3#3p=1%00#0p=5%00#0#0#0p=;%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=7g00;WR0g00<5#1#1#1#1#1#1#1R1#3#0#5#;#:#2#2#2#4R2'6%71#2#2#2#4g00>e'8=902do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_mul_round :
   f128_mul 0x3fff0000000000000000000000000001 0x3fff0000000000000000000000000001
   = 0x3fff0000000000000000000000000002.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg0000j10Tg000Uj14Tg005nj28Tg00PWj26Tg0074j37Tf0R0#3#3p=2%00#0p=9%00#0#0#0p=5%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;WR0g00<5#3#2#2#2#2#2#2#9#5#:#1#1#1#1#1#1R1#3#0#4R2'8%01#3#4R1/61=702do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_mul_overflow :
   f128_mul 0xfffeffffffffffffffffffffffffffff 0x40000000000000000000000000000000
   = 0xffff0000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj11Tg000Uj14Tg005nj27Tg0000j10Tg00PWj2<Tg0074j3;Tf0R0#1#1p=>%10#1#1#1p==%10#1#1#1#1#1#1#1p=8%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%10#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=2%00#0p=6%00#0#0#0p=9%00#0#0#0#0#0#0#0p=:g00;WR0g00<5R1#>#=#8R2#1#5#3#3#3#4R3'7%02#2#2#2#2#2#2#2#4%61#9#:#5#3#3#3#4'<=;03do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Example ex_add_1_1 :
   f128_add 0x3fff0000000000000000000000000000 0x3fff0000000000000000000000000000
   = 0x40000000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj15Tg005nj29Tg00HUj13Tg00QUj27Tg0074j36Tg0000j10Tf0R0#0#0p=;%00#0#0#0p=:%00#0#0#0#0#0#0#0p=8%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%30#3p=1g00;WR0g00<5R1#;#:#8#4#2#2#2#5R2'9%31#1#1#1#1#1#1#4#2#2#2#5R1/71=602do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_add_tie_odd :
   f128_add 0x3fff0000000000000000000000000001 0x3f8e0000000000000000000000000000
   = 0x3fff0000000000000000000000000002.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg0000j10Tg000Uj14Tg005nj2:Tg00QUj27Tg0074j38Tf0R0#3#3p=1%00#0p=5%00#0#0#0p=6%00#0#0#0#0#0#0#0p=;%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=9g00;WR0g00<5#1#1#1R1#3#1#1#1#5#6#;#2#2#2R2#3#0#4R3':%02#3#4%01#5#3#1#0#9#2#2#2#4'7=803do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_sub_inf_inf :
   f128_sub 0x7fff0000000000000000000000000000 0x7fff0000000000000000000000000000
   = 0x7fff8000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg0000j10Tg000Uj14Tg005nj26Tg00RSj28Tg0074j39Tf0R0#3#3p=1%00#0p=5%00#0#0#0p=;%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=7g00;WR0g00<5#1#1#1#1#1#1#1R1#3#0#5#;#:#2#2#2#4R2'6%71#2#2#2#4R1/81=902do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_add_snan :
   f128_add 0x7fff0000000000000000000000000001 0x3fff0000000000000000000000000000
   = 0x7fff8000000000000000000000000001.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj12Tg000Uj14Tg005nj2;Tg0000j10Tg00QUj28Tg0074j39Tf0R0#2#2p=3%00#0p=6%00#0#0#0p=5%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=:g00;WR0g00<5#2#3#3#3#3#3#3R1#2R2#2#6#5#7#1#1#1#2#4R3';%02#6#5#7#1#1#1#2#4%:1#1#1#1#4'8=903do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_add_subnormal : f128_add 1 1 = 2.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j14Tg000Uj10Tg005nj22Tg00QUj21Tg0074j33Tg00;WR0g00<5R1#4#0R2'2%01R1/11=302do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_add_zeros : f128_add 0x80000000000000000000000000000000 0 = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj28Tg0000j10Tg000Uj16Tg00QUj24Tg0074j35Tf0R0#0#0p=3%00#0#0#0p=2%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;WR0g00>eR1'8g00<5#0#3#2#7#1#1#1#1#1#1#1#6/41=501do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_sub_cancel :
   f128_sub 0x3fff0000000000000000000000000000 0x3f8e0000000000000000000000000000
   = 0x3ffeffffffffffffffffffffffffffff.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg000Uj15Tg005nj2;Tg00HUj11Tg00RSj28Tg0074j39Tf0R0#1#1p=4%10#1#1#1p=7%10#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%00#0p=:g00;WR0g00<5#4#7R1#4#7R2#0#2#2#2#2#2#2#2#5R3';%12#6#3#3#3#5%01#:#1#4#0#6#3#3#3#5'8=903do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Example ex_div_1_3 :
   f128_div 0x3fff0000000000000000000000000000 0x40008000000000000000000000000000
   = 0x3ffd5555555555555555555555555555.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj11Tg000Uj15Tg005nj2=Tg00SQj2:Tg0074j3>Tg0000j10Tf0R0#1#1p=4%00#1p=;%00#1#0#1#0#1#0#1#0#1#0#1#0#1#0#1p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=<%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%00#0p=8%00#0#0#0p=7%00#0#0#0#0#0#0#0p=6%10#0p=9g00;WR0g00<5R1#1#4#4#4#4#4R2#;#2#2#2#2#2#2#2#5R3'=%42#<#3#3#3#5%81#7#6#9#8#7#6#3#3#3#5':=>03do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_div_u32_1e8 :
   f128_div 0x4019d6f3454000000000000000000000 0x40197d78400000000000000000000000
   = 0x3fff3c0ca4283de1b7eb69451304948f.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg000Uj1:Tg005nj2=Tg00SQj2?Tg0074j3>Tg0000j10Tf0R0#3#3#3#3p=4%00#0p=7%00#0#0#0p=8%30#3p=6%30#0p=2%00#3p=1%00#3#0#0p=5%00#0#0#0#0#0#0#0p=<%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=;%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=9g00;WR0g00<5R1#3#4#4#4#7#4#7#8#6#7#2#2#1#8#2#2#8#4#1#6#2#7#1#2#6#1#4#2#2#6#1#2#2#1#5#1#5#5#6#8#5#2#1#5#2#7#4#:R2'=%<1#1#2#1R1#6#1#1#2#4#7#6#5#1#1#5#8#;#9#9#:%11#4#1#1#6#2#7#5#8#<#;#9#9#:'?=>02do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_div_zero_zero : f128_div 0 0x80000000000000000000000000000000 = 0x7fff8000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00HUj13Tg0000j10Tg000Uj14Tg005nj2;Tg00SQj28Tg0074j39Tf0R0#3#3p=1%00#0p=5%00#0#0#0p=7%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=:g00;WR0g00<5R1#3#1#1#1#1#1#1#1#0#5#7#6#2#2#2#4R2';g00>e%01#5#7#6#:#2#2#2#4'8=902do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_div_minsub_almost2 :   (* [comment removed for export] *)
   f128_div 0x00000000000000000000000000000001 0x3fffffffffffffffffffffffffffffff = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj27Tg000Uj12Tg00HUj10Tg00SQj25Tg0074j34Tf0R0#0#0#0#0p=3%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;WR0g00>eR1'7g00<5R2#2%02#3#6#1#1#1#1#1#1#1#2'5=401do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example ex_div_sub_sub :
   f128_div 0x0000ffffffffffffffffffffffffffff 0x00000000000000000000000000000001
   = 0x406efffffffffffffffffffffffffffe.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j11Tg00HUj10Tg000Uj14Tg005nj29Tg00SQj28Tg0074j37Tf0R0#0#0p=3%00#0#0#0p=5%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;WR0g00<5R1#1#1#1#1#1#1#1#3#1#0#3#1#0#3#5#6#2#2#2#1#4R2'9%01#3#5#6#2#2#2#4%41'8=702do"). Qed.
+Proof. vm_compute. reflexivity. Qed.

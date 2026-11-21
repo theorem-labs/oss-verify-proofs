@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 ([chain_cover] stops once the range is covered (the reserved ledger ends with the vDSO/vvar pair, far above the image); the stack region claims only the whole pages of the launch's window under the entry's stack pointer, not 8 MiB). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63.
 From stdpp Require Import bitvector.
@@ -14,10 +15,12 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)
+(* LPS 727298f3: once the range is covered the rest of the list is not read (the reserved ledger
+   ends with the vDSO/vvar pair, far above the image) *)
 Fixpoint chain_cover (l : list (Z * Z)) (lo hi : Z) : bool :=
   match l with
   | [] => hi <=? lo
-  | (b, s) :: r => (b <=? lo) && chain_cover r (Z.max lo (b + s)) hi
+  | (b, s) :: r => (hi <=? lo) || ((b <=? lo) && chain_cover r (Z.max lo (b + s)) hi)
   end.
 
 Lemma chain_cover_sound : forall l lo hi, chain_cover l lo hi = true ->
@@ -25,7 +28,8 @@ Lemma chain_cover_sound : forall l lo hi, chain_cover l lo hi = true ->
 Proof.
   induction l as [|[b s] r IH]; intros lo hi H x Hx; cbn [chain_cover] in H.
   - apply Z.leb_le in H. lia.
-  - apply andb_true_iff in H as [Hb Hr]. apply Z.leb_le in Hb.
+  - apply orb_true_iff in H as [Hd | H]; [apply Z.leb_le in Hd; lia|].
+    apply andb_true_iff in H as [Hb Hr]. apply Z.leb_le in Hb.
     destruct (Z_lt_le_dec x (b + s)) as [Hlt | Hge].
     + exists b, s. split; [left; reflexivity | lia].
     + assert (Hx2 : Z.max lo (b + s) <= x < hi) by lia.
@@ -68,8 +72,10 @@ Section Built.
   Qed.
 
   (* [comment removed for export] *)
+  (* LPS c0dd863a: the stack region (tag 1) claims from offset 2244608 = 8388608 - 6144000 up: the whole FX pages
+     of the window the launch gives writable under the entry's stack pointer (6144513 bytes) *)
   Definition shapes4 (lo0 top nb : int) (d1 : option pkind) : list (int * int * int * int * option pkind) :=
-    [ (0%uint63, lo0, top, 0%uint63, None); (1%uint63, 0%uint63, 8388608%uint63, 4%uint63, d1);
+    [ (0%uint63, lo0, top, 0%uint63, None); (1%uint63, 2244608%uint63, 8388608%uint63, 4%uint63, d1);
       (2%uint63, 0%uint63, 8192%uint63, 12%uint63, None); (3%uint63, 0%uint63, nb, 12%uint63, None) ].
 
   Lemma built_region_get : forall pc lo0 top nb d1 (t : int),
@@ -79,7 +85,7 @@ Section Built.
     intros pc lo0 top nb d1 t Ht. unfold state_of, ho_build. cbn [f_mem sd_mem]. rewrite iget_iof_list.
     unfold shapes4. cbn [map rev app].
     destruct (region_desc_shape 0%uint63 lo0 top 0%uint63 None) as (E0 & _).
-    destruct (region_desc_shape 1%uint63 0%uint63 8388608%uint63 4%uint63 d1) as (E1 & _).
+    destruct (region_desc_shape 1%uint63 2244608%uint63 8388608%uint63 4%uint63 d1) as (E1 & _).
     destruct (region_desc_shape 2%uint63 0%uint63 8192%uint63 12%uint63 None) as (E2 & _).
     destruct (region_desc_shape 3%uint63 0%uint63 nb 12%uint63 None) as (E3 & _).
     cbn [find fst]. rewrite E0, E1, E2, E3.
@@ -125,7 +131,7 @@ Section Root.
     assert (Un : bv_unsigned (Z_to_bv 64 nb) = nb) by (apply u64z; lia).
     assert (U8 : bv_unsigned (Z_to_bv 64 8192) = 8192) by (apply u64z; lia).
     assert (Hshape : forall t rg, iget t (f_mem F) = Some rg ->
-              (t = 0%uint63 /\ rg_lo rg = lo0 /\ rg_len rg = top) \/ (t = 1%uint63 /\ rg_lo rg = 0%uint63 /\ rg_len rg = 8388608%uint63)
+              (t = 0%uint63 /\ rg_lo rg = lo0 /\ rg_len rg = top) \/ (t = 1%uint63 /\ rg_lo rg = 2244608%uint63 /\ rg_len rg = 8388608%uint63)
               \/ (t = 2%uint63 /\ rg_lo rg = 0%uint63 /\ rg_len rg = 8192%uint63) \/ (t = 3%uint63 /\ rg_lo rg = 0%uint63 /\ rg_len rg = nbi)).
     { intros t rg H. destruct (built_region_inv IM facts pc _ t rg H) as (s & Hin & Ht & Elo & Elen).
       unfold shapes4 in Hin. cbn [In] in Hin.
@@ -138,8 +144,9 @@ Section Root.
       + split; [exact Hlt|]. intros x Hxx. rewrite H0 in Hxx. change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hxx.
         left. destruct (res_cover R0 _ _ Hcov x ltac:(lia)) as (p & Hp & Hpx). exists p. split; [|exact Hpx].
         rewrite Vres. apply in_or_app. left. exact Hp.
-      + split; [reflexivity|]. intros x Hxx. rewrite H1, u64z in Hxx by lia. right. unfold alloc_top, stack_max_size. rewrite Visp.
-        change (to_Z 0) with 0 in Hxx. lia.
+      + split; [first [reflexivity | vm_compute; reflexivity | cbn; lia]|]. intros x Hxx. rewrite H1, u64z in Hxx by lia.
+        right. unfold alloc_top, stack_max_size. rewrite Visp.
+        try change (to_Z 2244608) with 2244608 in Hxx. lia.
       + split; [reflexivity|]. intros x Hxx. rewrite H2 in Hxx. left. exists (mb, Z_to_bv 64 8192). split.
         * rewrite Vmaps. apply in_or_app. right. right. left. reflexivity.
         * unfold e_hi, e_lo, e_sz. cbn [fst snd]. rewrite U8. change (to_Z 0) with 0 in Hxx. change (to_Z 8192) with 8192 in Hxx. lia.

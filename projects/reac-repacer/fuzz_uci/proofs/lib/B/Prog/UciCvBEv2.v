@@ -3,15 +3,16 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/reac-repacer/fuzz_uci/lib/Prog/check_value.v (the plain
    image's Section Ev: loop_dg, loop_tb, seg_trail, ev_tail, ev_ee8, ev_dgt and their model helpers) and from
-   proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v at origin/ossv/recipes 88154566652a (crt_sh1F, the shadow-check
+   proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v (crt_sh1F, the shadow-check
    site lemma cl1_F, takeF, crt_lits); the walk runs on image A's code (fuzz_uci.asan, the check_value addresses
    CV_AT 0x128 .. CV_AT 0x21c of lib/A/Prog/UciCvIface.v, its registers, and the ASan load check before each reply
    byte) as footprint runs (lib/Lib/ExecF.v evtF, stepped by lib/Lib/StepF.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCvEvB.v, with its module paths, module names, addresses and numbers changed; 147 of its 533 lines of code are new or changed and 102 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciCvBEv2: the second half of the inlined expected_value of check_value in image B (fuzz_uci.asan-ubsan), from the
    digit loop's set-up (+0x15c) to +0x25c: it proves lib/B/Prog/UciCvBIface.v's cv_dgt_stmt_F as cv_dgt_holds. The
    image-B twin of lib/A/Prog/UciCvEvB.v (lib/Prog/check_value.v's Section Ev, second half, as footprint runs, with
-   the shadow-check site lemma of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v at recipes commit 88154566652a),
+   the shadow-check site lemma of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v at recipes),
    on image B's code: its registers, its loop shapes and its UBSan checks.
 
    The code (offsets from CV_ENTRY):

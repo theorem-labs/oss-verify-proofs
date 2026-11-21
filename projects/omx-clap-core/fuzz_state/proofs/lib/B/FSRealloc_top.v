@@ -1,8 +1,8 @@
 (* fuzz_state image B: the composed realloc contract.  a Theorem Labs lane's c5 composition (lib/Reusable/RGtop.v rg_realloc_all,
-   relocated from proofs/cgif/cgif_file_fuzzer/lib/RGtop.v @ 2bd8ae006ef) at fs's image-B instance
+   relocated from proofs/cgif/cgif_file_fuzzer/lib/RGtop.v) at fs's image-B instance
    (lib/B/FSRealloc_inst.v fs_rg_realloc_all) with the five segments S1 / S2a / S2b / S3 / S4 discharged
    (lib/B/FSRealloc_S1.v .. FSRealloc_S4.v), and from it FSupoisonRealloc.FS_AREALLOC_BU, the contract fuzz_state's
-   ALLOC lane assumes for image B (the B twin of FSW_realloc.v:496 fsw_aj_reallocU's FS_AREALLOC_AU premise).  What
+   ALLOC lane assumes for image B (the B twin of FSW_realloc.v:497 fsw_aj_reallocU's FS_AREALLOC_AU premise).  What
    remains are a Theorem Labs lane's Allocate contract (AllocG.aalloc_realizes) and RAW Deallocate contract
    (DeallocG.adealloc_realizes_raw) at fs's pcA = tfib_A__ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18Buffered
    StackTraceENS_9AllocTypeEb 0x31f64 / pcD = tfib_A__ZN6__asan9Allocator10DeallocateEPvmmPN11__sanitizer18Buffered

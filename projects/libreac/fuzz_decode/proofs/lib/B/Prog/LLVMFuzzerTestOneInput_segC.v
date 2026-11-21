@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the copy segment of the image-B walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput (llvm_b_copy_stmt of LLVMFuzzerTestOneInput_segs.v), with proof steps adapted from proofs/libreac/fuzz_boxreg/lib/A/Prog/ReadName.v (a working branch: the run / branch / call pattern); ew_Eimg_Ereg_nat and img_env_atomP copied from this unit's lib/A/Prog/YC1g.v / YC1h.v at image B's PAImg; the malloc call step and eb_ch / eb_chain_at / eb_trace_at / eb_rdword_of_bytes / eb_rdword_of_val_mem copied from lib/B/Prog/LLVMFuzzerTestOneInput_segB.v (a working branch 84be2173fcc); the two leaf calls in the shape of lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v's dec_leafb_inspect; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: the copy segment of the image-B walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput (llvm_b_copy_stmt of LLVMFuzzerTestOneInput_segs.v), with proof steps adapted from proofs/libreac/fuzz_boxreg/lib/A/Prog/ReadName.v (a working branch: the run / branch / call pattern); ew_Eimg_Ereg_nat and img_env_atomP copied from this unit's lib/A/Prog/YC1g.v / YC1h.v at image B's PAImg; the malloc call step and eb_ch / eb_chain_at / eb_trace_at / eb_rdword_of_bytes / eb_rdword_of_val_mem copied from lib/B/Prog/LLVMFuzzerTestOneInput_segB.v (a working branch); the two leaf calls in the shape of lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v's dec_leafb_inspect; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1559,8 +1560,8 @@ Lemma cp_ra_sub : forall (r : Z -> option Z) s a n a' n', range_addressable r s 
   range_addressable r s a' n'.
 Proof. intros r s a n a' n' H H1 H2 x Hx. apply H. lia. Qed.
 
-(* The call chain malloc #2 sees, and its unwind trace: LLVMFuzzerTestOneInput_segB.v (a working branch
-   84be2173fcc) eb_ch / eb_chain_at / eb_trace_at, copied; the return address is +0x418. *)
+(* The call chain malloc #2 sees, and its unwind trace: LLVMFuzzerTestOneInput_segB.v (a working branch)
+   eb_ch / eb_chain_at / eb_trace_at, copied; the return address is +0x418. *)
 Definition cp_ch (cx : dctx) : list (Z * Z * Z) :=
   if d_sp0 cx + 16 <? ly_top (d_ly cx) then [(d_sp0 cx, raZ (d_regs cx), s0Z (d_regs cx))] else [].
 Lemma cp_chain_at : forall cx ly' S' (W' : world segs) mem' md' k (regsT : bvmap 5 word),
@@ -1713,7 +1714,7 @@ pose proof (Hpay Hnp) as Hinp.
 destruct (al_blocks _ _ LAWS _ _ _ _ _ _ _ HAR Hinp) as (_ & _ & Hpc & _).
 pose proof (req_size_pos (d_n cx) ltac:(lia)). lia.
 Qed.
-(* LLVMFuzzerTestOneInput_segB.v (a working branch 84be2173fcc) eb_rdword_of_bytes /
+(* LLVMFuzzerTestOneInput_segB.v (a working branch) eb_rdword_of_bytes /
    eb_rdword_of_val_mem, copied. *)
 Lemma cp_rdword_of_bytes : forall (r : reader) a v, 0 <= v < 2 ^ 64 ->
   (forall k, (k < 8)%nat -> r (a + Z.of_nat k) = Some (le_byte v 8 k)) -> rdword r a = Some v.
@@ -2322,7 +2323,7 @@ Qed.
 Lemma cp_olen_range : forall nch ns, -128 <= nch <= 127 -> -128 <= ns <= 127 -> 1 <= dec_b_olen nch ns <= 48387.
 Proof. intros nch ns H1 H2. unfold dec_b_olen. destruct (Z.ltb_spec 0 nch); destruct (Z.ltb_spec 0 ns); cbn; nia. Qed.
 
-(* The call step: LLVMFuzzerTestOneInput_segB.v's eb_tail_fx (a working branch 84be2173fcc, its
+(* The call step: LLVMFuzzerTestOneInput_segB.v's eb_tail_fx (a working branch, its
    malloc #1 step, lines 664-795), at malloc #2: amalloc04_sub, then every fact of llvm_b_st_418 from what the call
    keeps (the stack above sp1, the blocks, the frame and its shadow) and the registers it preserves. *)
 Lemma cp_stage_D3 : forall cx W' c',

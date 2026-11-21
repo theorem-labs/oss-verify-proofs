@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 1d255703e88 (m2_stack,
-   m2_pre_call, m2_core_step, m2_core_call) and proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v at 1d255703e88
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_stack,
+   m2_pre_call, m2_core_step, m2_core_call) and proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v
    (m2t_garr8_kept, the run-to-call / contract / return pattern of tl_s4 .. tl_s6) for reac-pw/fuzz_rate's image-A
    list segment M03: rate's cut vocabulary (lib/A/RtPgSeg.v, rt_ / q_ names); the seam is generic in the segment's
    write set and carries rt_cpost_g's O conjunct; the walk of C6 -> C7 (memset, reac_rate_drivable_csv, check_csv)
    is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW14Csv.v at 2d46ab19875e for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW14Csv.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs and callee entries (C6 0x82fb0, memset 0x51d54, reac_rate_drivable_csv
    0x842d8, check_csv 0x837c0 at T_csv_STK_B, C7 0x82fec), its registers (bl in s6, buflen in s4, the frame's shadow
    base in s3), the mask cell R+0x148, the 0x220-byte real frame, the class-4 frame for locals (1024 bytes, 128
    shadow bytes, the 88-byte pattern rsb_PB), and image B's cut vocabulary and record (lib/AU/RtPgSegB.v,
    RtPgImgB.v, RtPgMemB.v, RtPgStepsB.v, RtPgSiteB.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, the same loaded bytes): THE LIST SEGMENT M03 of

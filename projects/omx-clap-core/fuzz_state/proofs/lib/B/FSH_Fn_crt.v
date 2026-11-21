@@ -5,7 +5,7 @@
    lib/Prog/check_round_trip_stages_b.v; that plain proof is also the control-flow template for the walk.
    Statements only: nothing here is proved. Lane table: (internal path) row CRT.
    Ported from (form only; the content is new, from the released contract above): a Theorem Labs lane
-   proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Fn.v check_round_trip_spec (a working branch e48bf3cce32), in the
+   proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Fn.v check_round_trip_spec (a working branch), in the
    U form of FSH_Fn_FORM.md section 1. A new file: no licence lines (internal). rule 24: no function proved.
 
    U form throughout (a Theorem Labs lane, 20:42Z): fuzz_malloc poisons a 16-byte head per block, so every program function

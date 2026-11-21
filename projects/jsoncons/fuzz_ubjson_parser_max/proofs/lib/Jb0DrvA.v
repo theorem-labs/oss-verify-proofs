@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded the encoded statements of openat_errnos_rangeA, alu_add_w_litA and drv_openA into plain lemmas, replaced p0 with auxv pointer auxvp at vals index 5, and added a TASK_SIZE bound and with_fds_rdr obligation, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvA.v, 15 lines within its lines 50-191. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -15,8 +16,6 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__Jb0DrvA () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Fs."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.Open."; "LinuxProcessSemantics.Riscv.Instr."; "LinuxProcessSemantics.Riscv.Prelude."; "LinuxProcessSemantics.Riscv.Sem."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIfaceA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvA.FPX_1.DrvA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvEntry."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvLib."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2Sound.SX2S."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.AsanUbsan.M."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A0"; "1list"; "1nil"; "1prod"; "2and"; "2eq"; "3Z"; "0HI"; "0KA"; "0KF"; "0LK0"; "4Fs"; "5mkCfg"; "6FdEntry"; "6Model"; "6event"]; ["6m_fds"; "6m_fs"; "7openat_errnos"; "8ALU_ADD"; "9bvmap"; ":alu64"; "0M0"; "0R"; ";mrestrict"; "<ahid"; "=ENVA"; "=fds0"; "=file_kA"; "=open_err_kA"; ">kn_mainA"; ">sr_mainA"]; [">vals_mainA"; "?dinv"; "@mkst"; "@seg_rom"; "ATSet"; "At_alt2"; "Bsrealizes"; "Cknow_ok"; "Cregs_ok"; "Dloaded_segments"; "EIn"; "Fadd"; "Fle"; "0ar"; "0can"; "0cr0"]; ["0e"; "0fs0"; "0fx"; "0k"; "0model"; "0p0"; "0p1"; "0scfg"; "0sp0"; "GZ_to_bv"; "Gbv"; "Gbv_unsigned"; "0tid"; "0vals"; "0x"]]).
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Ltac drv_block_post HIok Hsp DL DI P0 bls Hbl HZ :=
 match goal with
@@ -46,7 +45,7 @@ let HZ := fresh "HZ" in
 pose proof (dinv_lzinv _ _ _ _ _ _ HIok _ DL _ _ _ _ _ _ _ DI) as HZ;
 run_block_lz_with HR HK HZ asegs_wx FUELA STOPSA scr NX true;
 [ .. | drv_block_post0 HIok Hsp DL DI P0 HZ ].
-Lemma openat_errnos_rangeA : ltac2:(TCodec.tc2 tcn__Jb0DrvA "?'6&Q:r1&B%33421'4&Q<+1r2%3221+SoO%5231%7231p091pS2>1").
+Lemma openat_errnos_rangeA : forall e, In e openat_errnos -> (1 <= e <= 4095)%Z.
 Proof.
 intros e He. unfold openat_errnos in He. cbn in He.
 unfold ENOMEM, EACCES, EMFILE, ENFILE in He. lia.
@@ -67,7 +66,7 @@ Hypothesis DL : drv_layoutA L ar IL sp0.
 Variables a0s path : list byte.
 Variable fs0 : Fs.Fs.
 Variable fdata : list byte.
-Variables p0 p1 can : word.
+Variables auxvp p1 can : word.
 Variable M0 : word -> option byte.
 Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
 Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
@@ -97,31 +96,30 @@ dinvA [] LK0 cr0 A0 M model -> m_fds model = fds0 -> m_fs model = fs0 ->
 srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x1277c0) M (seg_rom ASEGS)) model) KA.
 Definition file_kA (KF : TSet) : Prop :=
 forall vals R M (model : Model) A (A1 : Z),
-length vals = 70%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 1 = p0 -> vals_ev vals 2 = p1 -> vals_ev vals 3 = can ->
+length vals = 70%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 5 = auxvp -> vals_ev vals 2 = p1 -> vals_ev vals 3 = can ->
 vals_ev vals 48 = Z_to_bv 64 A1 ->
 regs_ok (ENVA vals) srC0 R -> know_ok ASEGS (ENVA vals) (mrestrict (ahid A model) M) knC0 ->
 dinvA [(A1, 65536)] LK0 (adebit L cr0 65536) A M model -> incl A0 A ->
 m_fds model = fds1 -> m_fs model = fs0 ->
 ablock_range L ar A1 65536 ->
 srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa74d0) M (seg_rom ASEGS)) model) KF.
-Lemma alu_add_w_litA : ltac2:(TCodec.tc2 tcn__Jb0DrvA "D'QJyR0%211'6'5&E(Cr2&QIr1%2291%63541&Q;&QK%12=7%3216%82?1%=3?61pS8?1pSNA1").
+Lemma alu_add_w_litA : forall (x : word) k, alu64 ALU_ADD x (Z_to_bv 64 k) = Z_to_bv 64 (bv_unsigned x + k).
 Proof.
 intros x k. rewrite alu_add. unfold v_add. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Zplus_mod_idemp_r. reflexivity.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_drv_openA := (ltac2:(TCodec.tc2 tcn__Jb0DrvA "S7&Q4&Dy5'QJyR0%211%5241'>'1%114&Q0vQHvQEvQFvQ>r1r3%76654321&Q8&J%115&Or4%53321&Q7&Q9r2%811&H&Iv0%2219vF%5221&N%;4:821'Q1vQ=v7(2'3'6%2211%411v:vQ?r5%;::9Q4?432A?1'5'=%:2Q=1%Q;11&@r6%211&K%83521&;&Ar7%211vQA%>3521&Mr;%211&L%113r<'?%O11%311'Q6vQG(<&Q2vQB&QI+dmSL%22R;1&Q3%11QH%756>3QB1%921C&Q5r>r=%3221%@4QO?51p0B1p0G1p0J1p0N1p0Q51p0Q?1p0QL1p0R91tSLRHR@1pSJRM1pS:RL1pQ@RN1pDS51pBS61")) (only parsing).
-Variable KA : ltac:(sec_ty2 constr:(SEC_T_drv_openA) 0%nat 0%nat).
-Variable KF : ltac:(sec_ty2 constr:(SEC_T_drv_openA) 1%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_drv_openA) 2%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_drv_openA) 3%nat 0%nat).
-Variable tid : ltac:(sec_ty2 constr:(SEC_T_drv_openA) 4%nat 0%nat).
-Theorem drv_openA : ltac:(sec_stmt2 constr:(SEC_T_drv_openA) 5%nat 0%nat).
+Theorem drv_openA : forall KA KF R (model : Model) (tid a0p : word),
+let vals := vals_mainA sp0 a0p p1 can tid auxvp R in
+regs_ok (ENVA vals) sr_mainA R -> know_ok ASEGS (ENVA vals) (mrestrict (ahid A0 model) M0) kn_mainA ->
+dinvA [] LK0 cr0 A0 M0 model -> m_fds model = fds0 -> m_fs model = fs0 ->
+open_err_kA KA -> file_kA KF -> KF [] ->
+srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa747c) M0 (seg_rom ASEGS)) model) (t_alt2 KA KF).
 Proof.
-intros vals HR HK DI Hfds Hfs0 HKA HKF HKF0.
+intros KA KF R model tid.
+intros a0p vals HR HK DI Hfds Hfs0 HKA HKF HKF0.
 pose proof Hsp as Hsp'. pose proof Hal as Hal'.
 assert (HL : length vals = 38%nat) by (subst vals; unfold vals_mainA; rewrite length_app, junk_vals_length; reflexivity).
 assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-assert (P1 : vals_ev vals 1 = p0) by reflexivity.
+assert (P1 : vals_ev vals 5 = auxvp) by reflexivity.
 assert (P2 : vals_ev vals 2 = p1) by reflexivity.
 assert (P3 : vals_ev vals 3 = can) by reflexivity.
 clearbody vals.
@@ -141,7 +139,9 @@ eapply (rz_openat_file_lz ASEGS scfg _ _ _ model0 ECALLW); try apply is_ecall_EC
 apply (nolazy_of_inv scfg L ar C IL HI HIok sp0 Hsp DL _ _ _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ _ _ _ _ DI0)); [lia|].
 intros k Hk. right. left. lia.
 - rewrite F1. reflexivity.
-- split; [exact Hplen|]. split; [exact Hnonul|].
+- split; [exact Hplen|]. split; [exact Hnonul|]. split.
+{ regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2.
+unfold TASK_SIZE. pose proof (proj2 P1lo). lia. }
 regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2. exact Sr'.
 - exact Hpne.
 - exact Hppl.
@@ -170,7 +170,7 @@ rewrite v_addi_pc4 by lia. change (0x1277bc + 4)%Z with 0x1277c0%Z.
 rewrite F1. change (alloc_fd fds0) with (Z_to_bv 64 3).
 set (model1 := with_fds (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0))) model0).
 assert (DI1 : dinvA [] LK0 cr0 A0 M model1).
-{ apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model0 model1 DI0); [apply with_fds_vm|].
+{ apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model0 model1 DI0); [apply with_fds_vm| |apply with_fds_rdr].
 unfold model1. rewrite with_fds_halted'. exact (di_halt _ _ _ _ _ _ _ _ _ _ DI0). }
 assert (HK1 : know_ok ASEGS (ENVA vals) (mrestrict (ahid A0 model1) M) knA) by exact HK0.
 assert (G1 : m_fds model1 = fds1) by (unfold model1; apply with_fds_fds).
@@ -214,6 +214,5 @@ apply (HKF (vals ++ junk_vals R') R' M' model' A' u); try assumption.
 * rewrite HL in HR'. exact HR'.
 * rewrite HL in HK'. exact HK'.
 Qed.
-End SE.
 End DrvA.
 End FPX_1.

@@ -5,7 +5,7 @@
    - [inst_low]: [fs_inst_low] at [fs_inst_ok inst := inst = TFIB_INST] (0xa48d8, AF0m.v:15; lib/A/FSRealloc_inst.v
      instantiates ARX with [inst = TFIB_INST]); [inst_low_window] for any window of cgif AGif0cgif.inst_ok's shape
      below the shadow.
-   - [zones_free]: [zones_free_shape] for every DZONE / CZONE of AGis.v:230's / AGif0cgif.CZONE's shape, from
+   - [zones_free]: [zones_free_shape] for every DZONE / CZONE of AGis.v:231's / AGif0cgif.CZONE's shape, from
      layout_ok (the NB, SB, thread, context and D extents are owned extents) and one ledger fact, a lower bound on the
      image's end; [fs_img_end] proves that bound for A from ALedger.al_img (AF0x.img_cover_of_ledger: TFIB_IMG_END =
      0x5fd000), so [fs_zones_free] needs only six linear inequalities on the zone's literal bounds.
@@ -51,7 +51,7 @@ Lemma inst_low_window : forall lo hi, 0 <= lo -> hi <= SHADOW_OFF -> inst_low (i
 Proof. intros lo hi H0 H1 inst (I1 & I2 & _). lia. Qed.
 
 (* fs's instance (image A): TFIB_INST = 0xa48d8 (AF0m.v:15), the [this] of asan_realloc's Reallocate call
-   (`auipc a0, 0x72` 0x32904 + `addi a0, a0, -0x2c` 0x32908; lib/A/FSRealloc_inst.v @ 6352f71b619, header).
+   (`auipc a0, 0x72` 0x32904 + `addi a0, a0, -0x2c` 0x32908; lib/A/FSRealloc_inst.v, header).
    fs's lib has no inst_ok text (no port of AGif0); FSRealloc_inst.v's ARX is [inst = TFIB_INST /\ ARU ..]. *)
 Definition fs_inst_ok (inst : Z) : Prop := inst = AF0m.TFIB_INST.
 
@@ -60,7 +60,7 @@ Proof. intros inst ->. unfold AF0m.TFIB_INST, SHADOW_OFF. lia. Qed.
 
 (* ---- zones_free ---- *)
 
-(* AGis.v:230's DZONE and AGif0.v:54's CZONE, with their literal bounds as parameters (cgif: DZONE_shape 0x178148
+(* AGis.v:231's DZONE and AGif0.v:54's CZONE, with their literal bounds as parameters (cgif: DZONE_shape 0x178148
    0x5c88d0; CZONE_shape 0x10000 0x5fb000 0x7fff8000 0x80050000 TFIB_TSD).  fs's relocated AGis text (AFis.v:228)
    is DZONE_shape 0x179e08 0x5ca590. *)
 Definition DZONE_shape (dlo dhi : Z) (ly : alayout) (a : Z) : Prop :=

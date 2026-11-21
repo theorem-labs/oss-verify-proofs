@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyLSBDrainPre.v, with its module names changed; 896 of its 1045 lines of code are new or changed and 537 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyB3LS3Peak.v, with its module names changed; 80 of its 164 lines of code are new or changed and 961 lines of the source are left out. *)
-(* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3cTopxRig.v at
-   1318828167d3 (sha256 c5c6daea7c2b; internal record), row G-BLS-drain:
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3cTopxRig.v
+    (sha256 c5c6daea7c2b; internal record), row G-BLS-drain:
    the v3 rig, top_x's LS_gone_rig at LS := lib/B/ReplyB3LS3.v
    fr_LS3 B CALL_ROOM_B and lib/B/ReplyB3LS3c.v fr_LS3c B CALL_ROOM_B, RINV := lib/B/ReplyRINVB.v fr_RINV,
    MMAX := fr_MMAX.  proves no function (kind: invariant lemma).

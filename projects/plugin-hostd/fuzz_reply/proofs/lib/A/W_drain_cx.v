@@ -35,9 +35,9 @@
 
    STATEMENT GAPS (facts the machine has that the first text lacked; each found at a prover's unprovable goal, each
    fixed by stating the fact, never by weakening; lane notes NOTES.md (sha256 7134ee3e0e22; internal record)):
-   - dr_all / dr_outer took composition statements nothing could feed (a Theorem Labs lane, DrAll): *_concl (7cbd5dbb9bf).
-   - dr_top's EINTR re-entry unguarded, OUTER had no measure (DrOuter): ds_eintr guard (7cbd5dbb9bf).
-   - DRB allowed k = dnum s1 though the byte loop is a do-while (a Theorem Labs lane): k < dnum s1 (2e0fc283c2c).
+   - dr_all / dr_outer took composition statements nothing could feed (a Theorem Labs lane, DrAll): *_concl.
+   - dr_top's EINTR re-entry unguarded, OUTER had no measure (DrOuter): ds_eintr guard.
+   - DRB allowed k = dnum s1 though the byte loop is a do-while (a Theorem Labs lane): k < dnum s1.
    - HV9 / HV12 / HSM (DrPro), HROMO (DrLinea), HGO (GsFree): placement / off-static facts of the header.
    - dlit_at's hull visibility (a Theorem Labs lane, LINEB: ASTRNCMP / ASTRCMP's achecked premise needs
      shadow_hull_vis of the literal at 0x83768 / 0x837a8 / 0x837c0; azs gives range_addressable only, and no AR law
@@ -48,6 +48,7 @@
      are 06 / 04).  dlit_at now states the one ashp (W_shadow_pin.v: range_addressable over exactly the literal's
      bytes plus the shadow hull, in every AR state - a theorem of AR's const pins, not an envelope); the string
      sites need exactly that.  Only dr_lineb closed through the false conjunct; it now takes ashp. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -124,7 +125,7 @@ Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 (* a ROM byte survives a callee's journal (W_journal.v rom_out / ajournal_gx_rom_view): it is not a walk global,
    errno or the sink's overflow head, and if it is an allocator static it is pinned as an AR const cell
-   (rom_pinned; W1 45a3cc9bdd0).  The instance discharges it at the pinned placement by vm_compute. *)
+   (rom_pinned; W1).  The instance discharges it at the pinned placement by vm_compute. *)
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
 (* aout_at's three read-only cells are program globals off the allocator's statics, so an allocator or program
    call keeps them (found by GsFree at free #2: they are not in G_DR; send_line's W_send_line_cx.v HGO) *)
@@ -209,7 +210,7 @@ Let RUNTO := paj_run_to_x B LAWS (G_DR B RG) HG 0 [].
 Let BR := paj_branch (PI := PI).
 Let RET := paj_ret_at (PL := PL_fr) (PI := PI).
 
-(* ---- `amem_range x 8`, which every string site takes (W_sites.v, W6 0dd2925324a). ----
+(* ---- `amem_range x 8`, which every string site takes (W_sites.v, W6). ----
    Where it comes from at drain's four kinds of string argument:
    - a line in the relay's buffer (strrchr 0x83750, strncmp 0x83768, strcmp 0x837a8 / 0x837c0, strncmp 0x83864):
      the buffer is a live block (aentry_okx's `In (re_buf e, re_cap e) (ablocks ...)`), and the argument lies

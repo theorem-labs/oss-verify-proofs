@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev to the standard channels, and the iovec entry accesses; the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Scfg HRelSpec HSimInv HExitSim HCatSim HCatExec HPropExec HSeqExec HHoare HShapeAlg HNodes HFileSim HAgentLib HAgentNodes.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase RomWrite.
 Import ListNotations.
 Open Scope bv_scope.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
@@ -161,7 +163,10 @@ Proof.
   { unfold access_okb. apply andb_true_iff. unfold TASK_SIZE in *. split; apply Z.leb_le; lia. }
   assert (Eacc2 : access_okb b1 (Z.min (bv_unsigned n1) MAX_RW_COUNT) = true).
   { unfold access_okb. apply andb_true_iff. unfold TASK_SIZE, MAX_RW_COUNT in *. split; apply Z.leb_le; lia. }
-  unfold import_iovecs, import_iovecs_accesses. rewrite bv_eqb_refl, Eacc. cbn [negb].
+  (* at the revision the one-entry ledger is [State.iovec_entry_accesses mp iov],
+     which is [[(iov, 16)]] exactly when both halves of the descriptor read *)
+  unfold import_iovecs, import_iovecs_accesses, iovec_entry_accesses.
+  rewrite bv_eqb_refl, Eacc. cbn [negb].
   unfold read_iovec_entry.
   rewrite (read_u64_rdn ms iov b1 Hrom Hb).
   rewrite bv_add_Zform. change (bv_unsigned (8 : word)) with 8%Z.
@@ -183,13 +188,19 @@ Lemma writev_chan_outcome30 : forall fd iov iovcnt i m o ch iovs bs,
   (iovs_total iovs <= 2 ^ 30)%Z ->
   gather_iovecs (in_mem i) iovs = Some bs ->
   (1 <= Z.of_nat (length bs))%Z ->
+  (* at the revision the channel arm tests the far end BEFORE it gathers:
+     without a reader it takes [ReadWrite.sigpipe_write] (SIGPIPE/-EPIPE).
+     The published statements pin it: [Run.valid_input] (Run.v:4571) and
+     [Run.valid_input_abort] (Run.v:4643) both give
+     [in_channel_reader inp = true] *)
+  m_channel_reader m = true ->
   let CA := import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt) in
   writev_spec fd iov iovcnt i m o <->
   exists k, (1 <= k <= length bs)%nat /\
     o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
            m (map (WriteEv ch) (firstn k bs)).
 Proof.
-  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1.
+  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1 Hrdr.
   cbv zeta.
   pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
   pose proof (cap_iovecs_id_30 iovs Htot) as Hcap.
@@ -212,6 +223,7 @@ Proof.
   { rewrite Himp. cbv zeta. unfold writev_gathered.
     rewrite Hcap, (gather_prefix_full _ _ _ Hg).
     replace (iovs_total iovs =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia).
+    rewrite Hrdr. cbn [negb].
     replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
     replace (addr_is_error_b (len_word bs)) with false
       by (symmetry; rewrite <- (firstn_all bs); rewrite (Herrk (length bs)) by lia; reflexivity).
@@ -240,6 +252,7 @@ Qed.
 Lemma writev_outcome : forall ms x8 model (fd : Z) (iov : word) iovs bss,
   ms_rom ms = seg_rom segs ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   bv_unsigned x8 = 66%Z ->
   ms_gpr ms 0 = Z_to_bv 64 fd ->
@@ -260,7 +273,7 @@ Lemma writev_outcome : forall ms x8 model (fd : Z) (iov : word) iovs bss,
       o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
              model (map (WriteEv (Z_to_bv 64 fd)) (firstn k bs)).
 Proof.
-  intros ms x8 model fd iov iovs bss Hrom Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hiov Hrng bs tot Ht1 Ht30 CA.
+  intros ms x8 model fd iov iovs bss Hrom Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hiov Hrng bs tot Ht1 Ht30 CA.
   pose proof (gather_of_bufs ms iovs bss Hrom Hbufs) as Hg. fold bs in Hg.
   pose proof (gather_iovecs_length _ _ _ Hg) as Hlen. fold tot in Hlen.
   split; [exact Hlen|].
@@ -285,6 +298,40 @@ Proof.
   - exact Ht30.
   - rewrite in_mem_si. exact Hg.
   - lia.
+  - exact Hrdr.
+Qed.
+
+(* LPS 08b1429: [RomBase.sys_rob] at a writev node to a channel whose iovec array and buffers
+   read in full ([RomWrite.writev_rob]), on [writev_outcome]'s premises. *)
+Lemma writev_rob : forall ms x8 model (fd : Z) (iov : word) iovs bss,
+  ms_rom ms = seg_rom segs ->
+  ms_svc_pending ms = Some x8 ->
+  fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (0 < fd < 2^31)%Z ->
+  bv_unsigned x8 = 66%Z ->
+  ms_gpr ms 0 = Z_to_bv 64 fd ->
+  ms_gpr ms 1 = iov ->
+  ms_gpr ms 2 = Z_to_bv 64 (Z.of_nat (length iovs)) ->
+  (1 <= length iovs <= 1024)%nat ->
+  iov_array (ms_mem ms) iov iovs ->
+  iov_bufs (ms_mem ms) iovs bss ->
+  (bv_unsigned iov + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
+  iov_ranges_ok iovs ->
+  (iovs_total iovs <= 2 ^ 30)%Z ->
+  RomBase.sys_rob segs (mkCfg ms model).
+Proof.
+  intros ms x8 model fd iov iovs bss Hrom Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hiov Hrng Ht30.
+  assert (Himp : import_iovecs (ms_read_byte ms) iov (Z_to_bv 64 (Z.of_nat (length iovs))) = ImpOk iovs).
+  { destruct iovs as [|[b1 n1] [|p r]]; [cbn in Hcnt; lia | |].
+    - cbn [length Z.of_nat Pos.of_succ_nat]. destruct Hrng as [Hr1 _].
+      exact (proj1 (import_iovecs_of_array1 ms b1 n1 iov Hrom Harr ltac:(cbn [length] in Hiov; lia) Hr1)).
+    - apply (proj1 (import_iovecs_of_array ms _ iov Hrom Harr ltac:(cbn [length] in *; lia) Hiov Hrng)). }
+  assert (Hcnt32 : iovcnt32 (Z_to_bv 64 (Z.of_nat (length iovs))) = Z_to_bv 64 (Z.of_nat (length iovs))).
+  { unfold iovcnt32, abi_low32. rewrite u64_lit by lia. rewrite Z.mod_small by lia. reflexivity. }
+  apply (RomWrite.writev_rob segs ms model x8 (Z_to_bv 64 fd) iovs (concat bss) Hsvc Hno).
+  - rewrite H0, fd32_id by (rewrite u64_lit; lia). exact Hfd.
+  - rewrite H1, H2, Hcnt32. exact Himp.
+  - rewrite cap_iovecs_id_30 by exact Ht30. exact (gather_of_bufs ms iovs bss Hrom Hbufs).
 Qed.
 
 End WithSegs.

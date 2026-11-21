@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_halts.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; module path only: ubsan_halts from the frame (lib/U/FrameProof.v) and this image's harness-body
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_halts.v;
+   module path only: ubsan_halts from the frame (lib/U/FrameProof.v) and this image's harness-body
    contract (lib/U/Prog/LLVMFuzzerTestOneInput_end.v). *)
 From Stdlib Require Import ZArith List Lia.
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib.U.Reusable Require Import YK11 YM05 YO0d YL0i.

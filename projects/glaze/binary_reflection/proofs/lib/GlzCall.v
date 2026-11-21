@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader and the vDSO reservation inclusion through the malloc, free and resize node specs and the call node's cs_ok). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -295,7 +296,7 @@ Lemma nalloc_post_ok_of : forall fx R M mdl Lc B C n sp fx' R' M' mdl' p,
   nalloc_post_ok SEGS SWIN PERMc SPTOPc AINV_f FXOK G fx R M mdl Lc B C n sp fx' R' M' mdl' p.
 Proof.
   intros fx R M mdl Lc B C n sp fx' R' M' mdl' p (HA & HP & HT & HF & HD) Hspc Hsptop Hn1 Hstk
-         (HFX' & Hkept & Ha0 & Hpal & Hblk & Hdisj & Hdef & Hfr & Hscr & HA' & Hh' & Hlz' & Hmat' & Hfs' & Hfds').
+         (HFX' & Hkept & Ha0 & Hpal & Hblk & Hdisj & Hdef & Hfr & Hscr & HA' & Hh' & Hlz' & Hmat' & Hfs' & Hfds' & Hrdr' & Hvdso').
   pose proof G_ro_img as GR. pose proof G_img_ceil as GC. pose proof stk_ok as SK.
   split; [exact HFX'|]. split; [exact Hkept|]. split; [exact Ha0|]. split; [exact Hpal|]. split; [exact Hblk|].
   split. { intros b m Hin. apply Hdisj. apply in_app_iff. left. exact Hin. }
@@ -343,12 +344,12 @@ Lemma alloc_pre_of : forall fx R M mdl Lc B C ret n sp,
   alloc_pre SEGS AINVH FXOK G stk GBUDGET GCOUNT fx R M mdl (Lc ++ HID) (B0 + B) (C0 + C) ret n sp.
 Proof.
   intros fx R M mdl Lc B C ret n sp
-         (Hh & Hlz & Hmat & HFX & (HA & HP & HT & HF & HD) & R1 & Rr & Re & Hn & Hnr & Hsp & Hal & Hspc & Hsptop & R4 & Hstk & HB & HC).
+         (Hh & Hlz & Hmat & HFX & (HA & HP & HT & HF & HD) & R1 & Rr & Re & Hn & Hnr & Hsp & Hal & Hspc & Hsptop & R4 & Hstk & HB & HC & Hvdso).
   pose proof stk_ok. pose proof bcap_ok. pose proof ccap_ok.
   split; [exact Hh|]. split; [exact Hlz|]. split; [exact Hmat|]. split; [exact HFX|]. split; [exact HA|].
   split; [exact R1|]. split; [exact Rr|]. split; [exact Re|]. split; [exact Hn|]. split; [exact Hnr|].
   split; [exact Hsp|]. split; [exact Hal|]. split; [lia|]. split; [exact R4|].
-  split; [intros a Ha; apply Hstk; lia|]. lia.
+  split; [intros a Ha; apply Hstk; lia|]. split; [lia|]. split; [lia|exact Hvdso].
 Qed.
 
 
@@ -360,7 +361,7 @@ Theorem malloc_nspec1_of_mspec1 : forall FRESH entry,
     (fun Lc B C M mdl n => FRESH (Lc ++ HID) (B0 + B) (C0 + C) M mdl n) entry.
 Proof.
   intros FRESH entry MS fx R M mdl Lc B C ret n sp Tok PRE HFR HT1 Hok.
-  pose proof PRE as (Hh & Hlz & Hmat & HFX & HAF & R1 & Rr & Re & Hn & Hnr & Hsp & Hal & Hspc & Hsptop & R4 & Hstk & HB & HC).
+  pose proof PRE as (Hh & Hlz & Hmat & HFX & HAF & R1 & Rr & Re & Hn & Hnr & Hsp & Hal & Hspc & Hsptop & R4 & Hstk & HB & HC & Hvdso).
   apply (MS fx R M mdl (Lc ++ HID) (B0 + B) (C0 + C) ret n sp Tok (alloc_pre_of _ _ _ _ _ _ _ _ _ _ PRE) HFR HT1).
   intros fx' R' M' mdl' p POST. apply (Hok fx' R' M' mdl' p). eapply nalloc_post_ok_of; [exact HAF | exact Hspc | exact Hsptop | lia | exact Hstk | exact POST].
 Qed.
@@ -370,7 +371,7 @@ Theorem opnew_nspec_of_mspec : forall entry,
   opnew_nspec SEGS SWIN PERMc SPTOPc AINV_f FXOK RZ G bcap ccap entry.
 Proof.
   intros entry MS fx R M mdl Lc B C ret n sp T PRE HT0 _ Hok.
-  pose proof PRE as (Hh & Hlz & Hmat & HFX & HAF & R1 & Rr & Re & Hn & Hnr & Hsp & Hal & Hspc & Hsptop & R4 & Hstk & HB & HC).
+  pose proof PRE as (Hh & Hlz & Hmat & HFX & HAF & R1 & Rr & Re & Hn & Hnr & Hsp & Hal & Hspc & Hsptop & R4 & Hstk & HB & HC & Hvdso).
   apply (MS fx R M mdl (Lc ++ HID) (B0 + B) (C0 + C) ret n sp T (alloc_pre_of _ _ _ _ _ _ _ _ _ _ PRE) HT0).
   intros fx' R' M' mdl' p POST. apply (Hok fx' R' M' mdl' p). eapply nalloc_post_ok_of; [exact HAF | exact Hspc | exact Hsptop | lia | exact Hstk | exact POST].
 Qed.
@@ -379,7 +380,7 @@ Theorem free_nspec_of_mspec : forall entry,
   free_mspecR SEGS AINVH FXOK RZ G stk entry ->
   free_nspec SEGS SWIN PERMc SPTOPc AINV_f FXOK RZ G entry.
 Proof.
-  intros entry FS fx R M mdl Lc Lc' B C B' C' ret sp p T Hh Hlz Hmat HFX (HA & HP & HT & HF & HD) R1 Rr Re Hp CASES Hsp Hal Hspc Hsptop R4 Hstk Hk.
+  intros entry FS fx R M mdl Lc Lc' B C B' C' ret sp p T Hh Hlz Hmat HFX (HA & HP & HT & HF & HD) R1 Rr Re Hp CASES Hsp Hal Hspc Hsptop R4 Hstk Hvdso Hk.
   pose proof G_ro_img as GR. pose proof G_img_ceil as GC. pose proof stk_ok as SK.
   (* [comment removed for export] *)
   assert (CASES' : exists Bq Cq,
@@ -396,7 +397,7 @@ Proof.
   apply (FS fx R M mdl (Lc ++ HID) (Lc' ++ HID) (B0 + B) (C0 + C) Bq Cq ret sp p T Hh Hlz Hmat HFX HA R1 Rr Re Hp HCASE Hsp Hal); try assumption.
   - lia.
   - intros a Ha. apply Hstk. lia.
-  - intros fx' R' M' mdl' HFX' Hkept Hfr Hscr HA' Hh' Hlz' Hmat' Hfs' Hfds'.
+  - intros fx' R' M' mdl' HFX' Hkept Hfr Hscr HA' Hh' Hlz' Hmat' Hfs' Hfds' Hrdr' Hvdso'.
     apply (Hk fx' R' M' mdl' HFX' Hkept).
     + intros a Hka. destruct (decide (M' a = M a)) as [Heq|Hne]; [exact Heq|]. exfalso.
       eapply (alloc_changed_not_kept (Lc' ++ HID) Lc' sp a); [exact HA' | intros x Hx; apply in_app_iff; left; exact Hx
@@ -421,6 +422,8 @@ Proof.
     + exact Hmat'.
     + exact Hfs'.
     + exact Hfds'.
+    + exact Hrdr'.
+    + exact Hvdso'.
 Qed.
 
 End Alloc.
@@ -551,7 +554,7 @@ Theorem growS_nspec_of_mspec : forall entry,
   resize_growS_nspec SEGS SWIN PERMc SPTOPc AINV_f FXOK RZ G bcap ccap entry.
 Proof.
   intros entry MS fx R M mdl Lc B C ret sp obj w0 cw s n T Hh Hlz Hmat HFX (HA & HP & HT & HF & HD) HTn
-         R1 Rr Re R10 R11 R12 Hsp Hal Hspc Hsptop R4 Hstk (Ho1 & Ho2 & Ho3 & Ho4) RD8 Hw0 Hs Hn HnN HB HC Hk.
+         R1 Rr Re R10 R11 R12 Hsp Hal Hspc Hsptop R4 Hstk (Ho1 & Ho2 & Ho3 & Ho4) RD8 Hw0 Hs Hn HnN HB HC Hvdso Hk.
   pose proof stk_ok as Sok. pose proof G_img_ceil as Gic.
   apply (MS fx R M mdl (Lc ++ HID) (B0 + B) (C0 + C) ret sp obj w0 cw s n T Hh Hlz Hmat HFX HA HTn R1 Rr Re R10 R11 R12 Hsp Hal);
     try assumption.
@@ -559,7 +562,7 @@ Proof.
   - intros a Ha. apply Hstk. unfold MSTK in *. lia.
   - unfold GBUDGET in *. pose proof bcap_ok. unfold GBUDGET in *. lia.
   - pose proof ccap_ok. lia.
-  - intros fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk Hdisj Hblk RD0' RD1' RD2' NUL Hfr Hscr Hobjd HA' Hh' Hlz' Hmat' Hfs' Hfds'.
+  - intros fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk Hdisj Hblk RD0' RD1' RD2' NUL Hfr Hscr Hobjd HA' Hh' Hlz' Hmat' Hfs' Hfds' Hrdr' Hvdso'.
     apply (Hk fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk).
     + intros b m Hin. apply Hdisj. apply in_app_iff. left. exact Hin.
     + intros lo hi Hin Hlh. eapply perm_disjoint; [exact HP | | exact Hpblk | apply galloc_pos; lia | exact Hin | exact Hlh].
@@ -593,6 +596,8 @@ Proof.
     + exact Hmat'.
     + exact Hfs'.
     + exact Hfds'.
+    + exact Hrdr'.
+    + exact Hvdso'.
 Qed.
 
 (* [comment removed for export] *)
@@ -664,7 +669,7 @@ Theorem growL_nspec_of_mspec : forall entry,
 Proof.
   intros entry MS fx R M mdl L1 L2 B C ret sp obj d w0 cw cap s n T Hh Hlz Hmat HFX (HA & HP & HT & HF & HD) HTn
          R1 Rr Re R10 R11 R12 Hsp Hal Hspc Hsptop R4 Hstk (Ho1 & Ho2 & Ho3 & Ho4) RD8 Hw0 Hcap8 Hcap23 RDs RDd
-         Hs Hn HnN HcN Hdobj Hblk HB HC Hk.
+         Hs Hn HnN HcN Hdobj Hblk HB HC Hvdso Hk.
   pose proof stk_ok as Sok. pose proof G_img_ceil as Gic. pose proof G_ro_img as Gri.
   assert (HAx : AINVH (L1 ++ (bv_unsigned d, cap + 1) :: L2 ++ HID) (B0 + B) (C0 + C) M mdl).
   { rewrite <- app_assoc in HA. exact HA. }
@@ -676,7 +681,7 @@ Proof.
   - intros a Ha. split; [| exact (Hblk a Ha)]. eapply (store_ok_defined SEGS G SEGS_out); [lia | exact (Hblk a Ha)].
   - pose proof bcap_ok. lia.
   - pose proof ccap_ok. lia.
-  - intros fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk Hdisj Hblk' RD0' RD1' RD2' NUL Hfr Hscr Hobjd HA' Hh' Hlz' Hmat' Hfs' Hfds'.
+  - intros fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk Hdisj Hblk' RD0' RD1' RD2' NUL Hfr Hscr Hobjd HA' Hh' Hlz' Hmat' Hfs' Hfds' Hrdr' Hvdso'.
     apply (Hk fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk).
     + intros b m Hin. apply Hdisj. rewrite app_assoc. apply in_app_iff. left. exact Hin.
     + intros lo hi Hin Hlh. eapply perm_disjoint; [exact HP | | exact Hpblk | apply galloc_pos; lia | exact Hin | exact Hlh].
@@ -722,6 +727,8 @@ Proof.
     + exact Hmat'.
     + exact Hfs'.
     + exact Hfds'.
+    + exact Hrdr'.
+    + exact Hvdso'.
 Qed.
 End Frame.
 End GlzFrameStr.
@@ -1069,7 +1076,8 @@ Proof.
   split; [exact (co_ainv HC)|]. split; [exact R1|]. split; [exact Rr|]. split; [exact Re|].
   split; [unfold n, uE; rewrite <- R10; reflexivity|]. split; [unfold n, uE; lia|].
   split; [unfold uE; rewrite <- R2; reflexivity|]. split; [exact Hal|]. split; [exact Hsplo|]. split; [exact Hsptop|].
-  split; [exact R4|]. split; [exact Hstk|]. split; [unfold mcost in *; unfold n, uE; lia | unfold GPS.bcount; lia].
+  split; [exact R4|]. split; [exact Hstk|]. split; [unfold mcost in *; unfold n, uE; lia |].
+  split; [unfold GPS.bcount; lia | exact (co_vdso HC)].
 Qed.
 
 (* [comment removed for export] *)
@@ -1082,7 +1090,7 @@ Lemma node_alloc_ok_sound : forall entry cs cs' ret E fx R M model fx' R' M' mdl
 Proof.
   intros entry cs cs' ret E fx R M model fx' R' M' mdl' p Gimg Gimg2 HC Hco Hn.
   node_alloc_prologue HC Hco Hn entry cs cs' ret E fx R M model.
-  intros (HFX' & Hkept & Ha0 & Hpal & Hblk & Hdisj & Hpermd & Hdef & Hfr & Hscr & HAINV' & Hh' & Hlz' & Hmat' & Hfs' & Hfds').
+  intros (HFX' & Hkept & Ha0 & Hpal & Hblk & Hdisj & Hpermd & Hdef & Hfr & Hscr & HAINV' & Hh' & Hlz' & Hmat' & Hfs' & Hfds' & Hrdr' & Hvdso').
   set (v := nxt cs) in *.
   set (E1 := ext1 E v p).
   set (E' := ext_call E1 (S v) R').
@@ -1214,6 +1222,9 @@ Proof.
     * rewrite (sptop_den_agree v E E' (a_brk cs) Hag Fbrk). exact (co_top HC).
     * exact Hmat'.
     * eapply GPS.floor_sem_agree; [exact Hag | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+    * (* co_rdr: the allocator carried the reader across the call. *)
+      rewrite Hrdr'. exact (co_rdr HC).
+    * exact Hvdso'.
 Qed.
 
 
@@ -1304,8 +1315,9 @@ Proof.
   - exact Hsptop.
   - exact R4.
   - exact Hstk.
+  - exact (co_vdso HC).
   - (* [comment removed for export] *)
-    intros fx' R' M' mdl' HFX' Hkept Hfr Hscr HAINV' Hh' Hlz' Hmat' Hfs' Hfds'.
+    intros fx' R' M' mdl' HFX' Hkept Hfr Hscr HAINV' Hh' Hlz' Hmat' Hfs' Hfds' Hrdr' Hvdso'.
     set (E' := ext_call E v R').
     assert (Hag : env_agree v E E') by apply ext_call_agree.
     assert (HLc : blocks_den E' live' = Lc') by (unfold Lc'; eapply blocks_den_agree; [exact Hag | exact Hvars']).
@@ -1338,6 +1350,9 @@ Proof.
       * cbn [a_brk]. rewrite (sptop_den_agree v E E' (a_brk cs) Hag Fbrk). exact (co_top HC).
       * exact Hmat'.
       * cbn [a_brk a_ylo a_maps]. eapply GPS.floor_sem_agree; [exact Hag | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+      * (* co_rdr: free carried the reader across the call. *)
+        rewrite Hrdr'. exact (co_rdr HC).
+      * exact Hvdso'.
     + exact Hfs'.
 Qed.
 
@@ -2500,7 +2515,10 @@ Proof.
         pose proof (GPS.in_floor_sound SEGS E M k (acs_floor (a_maps cs)) (a_brk cs) (a_ylo cs) (tsubst th f') 0 (ELit 1)
                       (edenot E (tsubst th f')) HK Hcf (co_floor HC)) as X.
         rewrite estart_SA, (APS.elenZ_lit E) in X by lia. apply X. lia.
-      + unfold TOPf in HTOPf |- *. rewrite HTOPf. specialize (Hyf2 eq_refl). lia. }
+      + unfold TOPf in HTOPf |- *. rewrite HTOPf. specialize (Hyf2 eq_refl). lia.
+    - (* co_rdr: the reader is the caller's; the model is unchanged *)
+      exact (co_rdr HC).
+    - exact (co_vdso HC). }
   (* [comment removed for export] *)
   exists th, keepblocks. split; [first [exact Hbind | reflexivity]|]. split; [first [exact Hrm | reflexivity]|].
   cbv zeta. fold Ef. fold PERMf TOPf. fold HIDf B0f C0f.
@@ -2774,6 +2792,9 @@ Proof.
       * rewrite (sptop_den_agree v E E'' (a_brk cs) Hag'' Fbrk). exact (co_top HC).
       * exact (co_mat HCo).
       * cbn [a_ylo a_maps a_brk]. eapply GPS.floor_sem_agree; [exact Hag'' | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+      * (* co_rdr: the callee's own [cs_ok] already carries the reader at [mdl']. *)
+        exact (co_rdr HCo).
+      * exact (co_vdso HCo).
     + rewrite Hfs'. reflexivity.
 Qed.
 

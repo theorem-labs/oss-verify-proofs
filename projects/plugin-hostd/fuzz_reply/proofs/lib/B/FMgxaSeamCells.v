@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamCells.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamCells.table); GXA symbol keys kept (0x22e18, 0x34288); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamCells.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamCells.table); GXA symbol keys kept (0x22e18, 0x34288); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
 (* Step 2 of the evt -> SRr seam at musl vfprintf: the harness's WORDS and WRITABILITY as the CJ
    tree's CELLS.
 

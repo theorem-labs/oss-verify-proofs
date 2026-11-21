@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/B/Prog/is_tagged_reac_F.v, with its module names changed; 228 of its 288 lines of code are new or changed and 132 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rp_ds_accept_FW: the footprint walk of reac-repacer/fuzz_wire's rp_ds_accept in image B (fuzz_wire.asan-ubsan).
    rp_ds_accept_holds_F proves the frozen lib/B/Prog/rp_ds_accept_cg.v wire_rp_ds_accept_holds_stmt: is_tagged_reac's
    footprint contract (lib/B/Prog/is_tagged_reac_F_c.v) implies rp_ds_accept's (lib/B/Prog/rp_ds_accept_F_c.v).
@@ -9,9 +10,9 @@
    `bv_unsigned a0 <> 0`, the tail jump to is_tagged_reac taken through that function's contract). The footprint form
    (StepF's step, one rng fact per access, the frame carved and released, the shadow base through its GOT word, the
    shadow loads read from the `addressable` premise, one check lemma per shadow test) is reac-repacer/fuzz_uci's
-   lib/B/Prog/rp_hot_clamp_FW.v (recipes commit 0295462466b2) for one-byte loads. The chained form
+   lib/B/Prog/rp_hot_clamp_FW.v (recipes) for one-byte loads. The chained form
    `<callee>_contract_F -> <fn>_contract_F`, the cut at the callee's entry and the composition of the two posts are
-   libreac/fuzz_decode's lib/B/Prog/reac_decode_F.v reac_decode_holds_F (recipes commit 48907dc7e8ca); the cell
+   libreac/fuzz_decode's lib/B/Prog/reac_decode_F.v reac_decode_holds_F (recipes); the cell
    transport is that commit's lib/B/Prog/ReacDecodeLib.v asan_cells_munch, restated at this unit's rows
    (lib/B/AsanCells.v). *)
 (* rp_ds_accept of fuzz_wire.asan-ubsan (objdump of record sha256 440b9550f4f5; entry 0x80f84, 0xb8 bytes):

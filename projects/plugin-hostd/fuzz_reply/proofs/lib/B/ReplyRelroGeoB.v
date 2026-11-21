@@ -10,17 +10,17 @@
    typed in a term except those of the owners' texts (65536, 8, the 0 of `ew E 0`, and the 0, 2 and 2 ^ 64 of 8's text).
 
    Eight facts (the eighth, zones_miss_relro_reply_B, is described at the end of the file):
-   1. relro_geo_reply_B: no write window of the driver (drv_win_ok, B/YD1ycf.v:52) covers a RELRO byte, when the stack
+   1. relro_geo_reply_B: no write window of the driver (drv_win_ok, B/YD1ycf.v:53) covers a RELRO byte, when the stack
       pointer is at least 65536 above cf_relro_hi (a Theorem Labs lane's ruling, 14:00Z: the stack premise is REQUIRED; without it
-      the stack window [sp - 65536, sp) can reach the range). From in_wrange_drv (B/YD1ycf.v:59) and DRVW_lo
-      (B/YD1ycf.v:42, the driver's image windows start at 0xa24f8, above cf_relro_hi = 0x9f000).
+      the stack window [sp - 65536, sp) can reach the range). From in_wrange_drv (B/YD1ycf.v:60) and DRVW_lo
+      (B/YD1ycf.v:43, the driver's image windows start at 0xa24f8, above cf_relro_hi = 0x9f000).
    2. relro_seg_reply_B: round 3's relro_seg_t (Reusable/YG0ncf.v:646-647) at tfibsegs: one segment holds the range.
    3. errno_relro_reply_B: round 3's errno_relro_t (Reusable/YG0ncf.v:648) at TfibSyms: errno (TFIB_ERRNO) is above.
-   4. pf_ial_apart_reply_B: the layer's pf_ial_apart_t (Reusable/YG0ncf.v:189 on this base, a working branch
-      b38406ef4b14) at TfibSyms: Printf's two cells lie outside the internal allocator's arena and its flag.
+   4. pf_ial_apart_reply_B: the layer's pf_ial_apart_t (Reusable/YG0ncf.v:189 on this base, a working branch)
+      at TfibSyms: Printf's two cells lie outside the internal allocator's arena and its flag.
    5. dzone_static_text_B: the FIRST disjunct of YFgi.DZONE (B/YFgi.v:484-485) is [dzone_static_lo, dzone_static_hi),
       by reflexivity. DZONE writes the two bounds as inline numerals; the names here are other files' names for the
-      same addresses: dzone_static_lo := TFIB_STORE (B/YF0m.v:17, __sanitizer::stackStore), dzone_static_hi :=
+      same addresses: dzone_static_lo := TFIB_STORE (B/YF0m.v:18, __sanitizer::stackStore), dzone_static_hi :=
       YD20.RS_LO (B/YD20.v:45, the start of the driver's global read_stage). Both read from the unstripped twin's
       .symtab for this file: stackStore 0x178508 (size 0x10010); read_stage 0x5c8c90 (size 0x10000), right after
       __ubsan::ubsan_flags, which ends at 0x5c8c90.
@@ -42,7 +42,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YM05.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require YF0x DGbase ImgBaseDG DGgm DGgi DGif0.
 Open Scope Z_scope.
 
-(* Image B's CfImg for the texts below, as B/CfRBridgeRulesB.v:581 takes it. *)
+(* Image B's CfImg for the texts below, as B/CfRBridgeRulesB.v:582 takes it. *)
 #[local] Existing Instance CfImg_B.
 
 (* 1. RELRO geometry. *)
@@ -113,7 +113,7 @@ Qed.
 (* 8. zones_miss_relro_reply_B (field round 3 part 3; the statement is a Theorem Labs lane's, 18:21Z, agreed with DeallocNmaxA, whose
    lib/B/DGmpcf.v is to Require this file and close its zones_miss_relro by exact): the unit image row behind the
    Deallocate walks' keep law of arodata_ok_cf (cgif: DGmpcf.zones_miss_relro_cgif, proofs/cgif/
-   cgif_file_fuzzer/lib/DGmpcf.v:82-117 at e8a7dd66acf; its proof with CfImg_cgif -> CfImg_B and YF0x -> YF0x). At the
+   cgif_file_fuzzer/lib/DGmpcf.v:82-117; its proof with CfImg_cgif -> CfImg_B and YF0x -> YF0x). At the
    seed's geometry (DGgm.free_hyps), no non-owned byte of the RELRO range lies in the walk's window (DGif0.dwin_m), the
    depot zone (DGgi.DZONE), the internal allocator's zone (DGgi.IZONE) or the freed block's shadow (DGif0.dshadow).
    Part 3c: the covered set is YG0dcf.aro_addr_cf (the RELRO range and the report reads cf_ro_reads).

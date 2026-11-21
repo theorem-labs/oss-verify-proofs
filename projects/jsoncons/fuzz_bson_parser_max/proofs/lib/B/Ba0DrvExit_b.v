@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed exit_pre, exit_preE, exit_run_2 and 2 more. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -160,7 +161,7 @@ Section Exit.
     /\ usp - 4096 <= S
     /\ S <= usp
     /\ S mod 16 = 0
-    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
+    /\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
     /\ L5Defs.L5.img_clear (mrestrict (ahid A model) M) 65536 1282048
     /\ exitA tid (mrestrict (ahid A model) M).
   Definition exit_preE (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : list (Z * Z)) (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
@@ -168,7 +169,7 @@ Section Exit.
     /\ usp - 4096 <= S
     /\ S <= usp
     /\ S mod 16 = 0
-    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
+    /\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
     /\ L5Defs.L5.img_clear (mrestrict (ahid A model) M) 65536 1282048
     /\ exitE tid (mrestrict (ahid A model) M).
 
@@ -376,6 +377,7 @@ Section Exit.
     - exact MI1.
     - exact (proj2 (proj2 (proj2 (proj2 LZ1)))).
     - rewrite (sbm_fds' _ _ SB1). exact FD1.
+    - rewrite (sbm_rdrA _ _ SB1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Dv).
     - unfold wv_regs. repeat split; match goal with Oc : getr R1 _ = _ |- _ => exact Oc end.
     - rewrite VE1. unfold wv_iov.
       pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (Wstk (S - 136) 32 ltac:(lia) ltac:(lia)) 0 32%nat ltac:(lia) ltac:(cbn; lia)) as W32.
@@ -550,6 +552,7 @@ Section Exit.
     - exact MI1.
     - exact (proj2 (proj2 (proj2 (proj2 LZ1)))).
     - rewrite (sbm_fds' _ _ SB1). exact FD1.
+    - rewrite (sbm_rdrA _ _ SB1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Dv).
     - unfold wv_regs. repeat split; match goal with Oc : getr R1 _ = _ |- _ => exact Oc end.
     - rewrite VE1. unfold wv_iov.
       pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (Wstk (S - 136) 32 ltac:(lia) ltac:(lia)) 0 32%nat ltac:(lia) ltac:(cbn; lia)) as W32.
@@ -725,6 +728,7 @@ Section Exit.
     - exact MI1.
     - exact (proj2 (proj2 (proj2 (proj2 LZ1)))).
     - rewrite (sbm_fds' _ _ SB1). exact FD1.
+    - rewrite (sbm_rdrA _ _ SB1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Dv).
     - unfold wv_regs. repeat split; match goal with Oc : getr R1 _ = _ |- _ => exact Oc end.
     - rewrite VE1. unfold wv_iov.
       pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (Wstk (S - 136) 32 ltac:(lia) ltac:(lia)) 0 32%nat ltac:(lia) ltac:(cbn; lia)) as W32.

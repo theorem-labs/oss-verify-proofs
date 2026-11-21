@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: init_ms takes the launch's input and mmap base, its memory wrap_mem built from them and the entry point). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -150,10 +151,10 @@ End WithSegs.
 Definition mkR_init (sp : word) : bvmap 5 word :=
 mkR w0 sp w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0 w0.
 
-Definition init_ms (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp : word)
-(argv envp : list (list byte)) (uid : word) (hw : word) (rnd : EntryDraw) : machine_state :=
+Definition init_ms (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp mbase : word) (rnd : EntryDraw)
+(inp : ProcInput) : machine_state :=
 MS (mkR_init sp) bvmap_empty (Z_to_bv 64 (Z.of_N pc)) (Z_to_bv 32 0) None
-(wrap_mem ph sp argv envp uid hw rnd) (seg_rom segs).
+(wrap_mem inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp rnd) (seg_rom segs).
 
 End Mq0.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QCUT QMow QwAs QoSL QJFf.

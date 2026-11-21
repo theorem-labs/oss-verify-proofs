@@ -5,11 +5,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 408 of its 431 lines of code are new or changed and 495 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a9_s1_k.v, with its module paths and module names changed; 231 of its 293 lines of code are new or changed and 369 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the PROGRAM call
    sites of segment B9 of reac_segconf_parse_file's walk (the key branch, KEY 0x883f8 -> ...; KREF 0x889a0 -> TAIL;
    a B9 sub-lane of the image-B G3 walk owner, 2026-10-30). proves no function (kind: segment lemma of
    reac_segconf_parse_file's walk: call-site premises of segment B9, image B). ADAPTED from the image-A G3 walk owner's image-A
-   file lib/A/Prog/pf_a7_s.v (commit a78dafc7ecfa, the image-A A7 segment lane), with a7_ renamed b9_, over
+   file lib/A/Prog/pf_a7_s.v (the image-A A7 segment lane), with a7_ renamed b9_, over
    image B's pf_pieces.v and pf_seg_B9_c.v's b9_st, and specialized to B9's program calls (VERIFY rule 1j-bis,
    one closed lemma per call site, showing that the site supplies the callee
    contract's premises). Each lemma below is stated over a state of the segment that satisfies b9_st, plus the

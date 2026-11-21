@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95b for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v for
    reac-pw/fuzz_headamp image A: its start-fact record hd_c3 / hd_c3_of, its bounds lemma hd_bounds and its walk hd_A
    (a nonzero test of a block, a register move, a zero test of the length, the __asan_memcpy, its return) restated for
    headamp's segment M04a (C7 0x83744 -> C8 0x83764) as h4a_c7 / h4a_c7_of / h4a_bounds / h4a_copy over HPgSeg.hs_scx,
@@ -14,18 +14,19 @@
    no copy (h4a_zero), the extra-atom register lemma h4a_reg_at and the post construction h4a_close are new; role's
    parse step, .rodata zone and string lemmas are not taken (M04a calls no parse). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgM04a.v, with its module paths and module names changed; 184 of its 222 lines of code are new or changed and 431 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanOuter.v at a5a28fb15bdf for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanOuter.v for
    reac-pw/fuzz_rate's image A: role's pcs (O 0x821bc, I 0x821e0, ABS 0x82380) become rate's (0x829c0, 0x829e4,
    0x82b7c), the registers are renamed as rate's code has them (n_ent t2 -> t3, at0 s5 -> s6, at + 1 s9 -> s7, the
    five operands t3 t6 t5 t4 s11 -> t2 t6 t5 t4 s10), the cut file is lib/A/RtPgSeg.v (rl_ -> rt_, e_ -> q_), the
    entry state and the list lemmas come from lib/A/RtPgScanKit.v and the image facts from lib/A/RtPgSteps.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanOuter.v at fa28558fbb17 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanOuter.v for image B
    (fuzz_rate.asan-ubsan); the pcs are image B's (O 0x82b48, I 0x82b74, ABS 0x82d1c) and so is the code (eleven
    words: at in a2, n_ent in s10, at zero-extended into s6, the trap-test bound a3 = max(at, 33), the offset
    s8 = 104 at by `mulhu`, the bound a4 = ~(&ent[0] + 8) - 104 at, and the loop head's `bnez a0` not taken); the
    entry state gives at's atom the range [0, 32] so that the engine decides the `bltu`; the cut file is
    lib/AU/RtPgSegB.v, the model facts lib/AU/RtPgScanFB.v, the image facts lib/AU/RtPgStepsB.v, and the post, its
    intro and the atom read-back are the kit's skb_post / skb_post_intro / skb_denot0 (lib/AU/RtPgScanKitB.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): the piece "outer scan head"

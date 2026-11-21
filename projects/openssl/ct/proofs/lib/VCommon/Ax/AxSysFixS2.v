@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -282,7 +283,8 @@ Proof.
     rewrite En, Eaddr. fold m'. apply Z.leb_le. rewrite Hlim. flia. }
   set (mem' := apply_zeros (ms_mem ms) [(Z_to_bv 64 a, Z_to_bv 64 nZ)]).
   apply (rzc_latch segs cfg ms model w (KT ρ o) H9 H3 Hf He).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl
+           (rob_sys_222 segs (latch ms) model (rg ms (Z_to_bv 5 17)) eq_refl R17)).
   - rewrite (check_syscall_222 segs (latch ms) _ _ model R17).
     exact (chk_fix_rw_modeled model addr (rg ms (Z_to_bv 5 11)) (rg ms (Z_to_bv 5 12)) flagsw (rg ms (Z_to_bv 5 14)) (rg ms (Z_to_bv 5 15)) S G _).
   - intros eff m1 evs Hc. rewrite (check_syscall_222 segs (latch ms) _ _ model R17) in Hc.

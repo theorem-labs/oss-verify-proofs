@@ -19,17 +19,18 @@
    state and are used at the entry's fx (pass 4b); astack_pres is gone (pass 5): socket_send's chain at s0 =
    the text (a heap block) is achain_low, the free wrapper's chain_pre is achain_chain_pre on afn_pre's chain. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/reply.v, with its module paths and module names changed; 377 of its 459 lines of code are new or changed and 293 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_parse (reac_segconf.c:327-332) on reac-pw/fuzz_segconf's ASan+UBSan image B (fuzz_segconf.asan-ubsan,
    pin c3796c0b38f3, twin 80e82127e8ca; 0x89784, 72 bytes, 18 instructions, frame 32 bytes, no inline check, no
    UBSan trap branch, no side-stack frame): the walk proving reac_segconf_parse_contract (lib/B/Prog/
-   reac_segconf_parse_c.v, the B copy of the image-A owner's image-independent text, closed against G3 FINAL at
-   6f783602b5e3) at image B's numbers. The image-B reac_segconf_parse walk lane of the image-B G3 walk owner, 2026-10-30.
-   RELOCATION of the image-A G3 walk owner's image-A walk lib/A/Prog/reac_segconf_parse.v (commit
-   5a66beb279ab, the image-A reac_segconf_parse walk lane): image B's code is image A's instruction for instruction except the auipc's
+   reac_segconf_parse_c.v, the B copy of the image-A owner's image-independent text, closed against G3 FINAL)
+   at image B's numbers. The image-B reac_segconf_parse walk lane of the image-B G3 walk owner, 2026-10-30.
+   RELOCATION of the image-A G3 walk owner's image-A walk lib/A/Prog/reac_segconf_parse.v (
+   the image-A reac_segconf_parse walk lane): image B's code is image A's instruction for instruction except the auipc's
    PC-relative immediate (the listing: the same 18 slots, `PHi 105` in place of `PHi 103`, the same object atom
    A_OBJ 34 for the label). Changed from the A text: the module paths (lib.A -> lib.B for the listing, the Pa engine,
    RtDefs, the contracts and the kit copies), the two return offsets (A 0x44c0 / 0x44cc -> B 0x49e8 / 0x49f4), and
-   the image values: image B's instantiation lib/B/Prog/SegInstB.v (the image-B harness owner, 1f771e2f2066), which keeps
+   the image values: image B's instantiation lib/B/Prog/SegInstB.v (the image-B harness owner), which keeps
    SegInstA's names (RLO_A, RHI_A, catA, gotwA, guardA, seg_litA_rc, STK_<F>) at image B's values, in place of A's
    SegInstA. The proof script is A's.
    THE B CUT PLAN (reac_segconf_parse.fuzz_segconf.asan-ubsan.s; listing lib/B/Prog/SegList.v,

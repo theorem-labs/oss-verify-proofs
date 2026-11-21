@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: the walk context of proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v (c8557374ad2e) for
+(* Modified by Theorem Labs, 2026-10: the walk context of proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v (theorem-labs/oss-verify-proofs@6b32741d849a) for
    libreac/fuzz_scene's walk of LLVMFuzzerTestOneInput, module paths changed. STATEMENTS ONLY (rule 24): no function is
    proved here, and the donor's two short lemmas are stated as Props for the walk to prove. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   This file names no image value. Every address, offset and frame class is a Section Variable, so the walk of the
    asan build (lib/A/P_LLVMFuzzerTestOneInput.v, which holds the measured numbers) and the asan-ubsan twin (lib/AU)
@@ -130,8 +131,8 @@ Context {SK : YI16.sink_head} {LS : lib_shape}.
    `sink_path` is cgif's literal "/tmp/out.gif" (YI16.v:12-13), which scene's released trunk carries unchanged: it
    is inert for scene, which never opens it (the string does not occur in the image), so the clause is true and
    is kept identical to the released plain form lib/Reusable/YI14.v:112-114 (a Theorem Labs lane 23:43Z).  No conjunct names a
-   sink string address (path, mode, rwa, trailer): those are the fields knock's deletion removes
-   (at 04aa7c1431f). *)
+   sink string address (path, mode, rwa, trailer): those are the fields knock's deletion removes.
+   *)
 Definition scene_sink_none (segs : list Segment) (SINK_OWNED : list (Z * Z))
 (m : word -> option byte) (md : Model) : Prop :=
 Forall (fun r => val_mem segs m (fst r) (Z.to_nat (snd r)) 0) SINK_OWNED /\

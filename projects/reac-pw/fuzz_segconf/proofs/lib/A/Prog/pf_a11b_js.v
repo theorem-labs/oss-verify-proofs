@@ -5,7 +5,7 @@
 
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk): no function of the binary is walked
    here; the rule-24 record of reac_segconf_parse_file is the unit's internal record,
-   commit dfb49d6ad789, path records/segp/g3-lookup.md (CONFIRMed
+    path records/segp/g3-lookup.md (CONFIRMed
    2026-10-30T15:42:08Z, reuse verdict none: written new).
 
    Row 4 as released is RtFormat.asnprintf_realizes = RtPFCmd.asnprintf_sh, i.e. cmd_asnprintf_realizes at the

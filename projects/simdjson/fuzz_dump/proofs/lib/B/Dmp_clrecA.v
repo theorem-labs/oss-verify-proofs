@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the client's hand-off fact is stated for each CONFIG_RSEQ value over the hand-off states the start-up certificate computes. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.Lib Require Import MState Mem Frame Cells Step Arr Exec ImageA RzCPS.
-From OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS Require Import PropExec ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound StartupHSBoth.
+From OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS Require Import PropExec ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound BothStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.A Require Import Shadow HandoffKit.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.B Require Import Layout RT_iface RT_iface2 D_defs D_libiface HandoffImage HandoffCLX RT_state RT_rep D_client Atp_activewA Pj_defsA Pj_handoffA El_defsA Dmp_hdefsA Dmp_pj_ifaceA Dmp_handoffA Dmp_recordA.
 Import ListNotations.
@@ -28,7 +29,7 @@ Proof.
   split; [exact HE| split; [exists false; exact HU| exact HTL]].
 Qed.
 
-Lemma client_dmp_hs : forall h ch, HS_both h = Some ch -> hs_libdmp_ok ch = true.
-Proof. intros h ch H. exact (HS_libdmp_ok h ch H). Qed.
+Lemma client_dmp_hs : forall (b : bool) h ch, HS_both (AP.rseq_z b) h = Some ch -> hs_libdmp_ok ch = true.
+Proof. intros b h ch H. exact (HS_libdmp_ok b h ch H). Qed.
 
 Definition client_dmp (PJ : forall PMc, pj_root_cpsA RTA PMc) : client_B := mkClientB el_libA el_lib_loc hs_libdmp_ok hs_libdmp_lib (dmp_cl_fuzz PJ).

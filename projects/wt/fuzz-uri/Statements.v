@@ -18,10 +18,14 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  No summary of this harness is recorded yet; its
-    checks, if any, are listed below.  The harness makes no check of its own
-    beyond not crashing, so a statement about it says only that the code it
-    calls never crashes, hangs or trips a sanitizer.
+    WHAT THE HARNESS CHECKS.  Copies the input (Size from 10 to 5120 bytes) into
+    a string and parses it as a URL with Wt::Http::Client::parseUrl into a new
+    Wt::Http::Client::URL, and drops the result and the parsed URL. It returns
+    -1 for an input with Size below 10 or above 5120.  The harness makes no
+    check of its own beyond not crashing.  Its halts statements say only that
+    the code it calls never crashes, hangs or trips a sanitizer.  Its agreement
+    statements say only that the code never crashes or trips a sanitizer, and
+    allow a run that never ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

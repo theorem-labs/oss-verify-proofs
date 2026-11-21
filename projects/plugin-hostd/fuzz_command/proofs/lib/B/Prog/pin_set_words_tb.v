@@ -8,10 +8,11 @@
    (s8 >> 3) + s7), a plain run through the 88 shadow stores to the branch on ntok < 3, and the cut facts (cw_pc)
    read back from the symbolic state at the cut. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s1.v, with its module paths and module names changed; 328 of its 374 lines of code are new or changed and 520 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment Tb of the walk of pin_set_words on the ASan+UBSan build of plugin-hostd/fuzz_command (image B,
    fuzz_command.asan-ubsan; interface: lib/B/Prog/pin_set_words_s4.v): from K2 (0x8e2dc = BASE + AF_pin_set_words
    + 0x160, pins_set has returned rc in a0) to the `ret`. The B twin of a Theorem Labs lane's A segment
-   (lib/A/Prog/pin_set_words_tb.v at c4ec90cd6c2 on a working branch); B keeps the result in s2
+   (lib/A/Prog/pin_set_words_tb.v on a working branch); B keeps the result in s2
    (A: s1) and has no UBSan check in this segment (gen/dis/pin_set_words.s).
 
      0x8e2dc  mv s2,a0

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: written for zlib/checksum_fuzzer on the frame of the cgif proof's library; 18 of its 48 lines of code, among them its imports, match lines of proofs/cgif/cgif_rgb_fuzzer/lib/YH05.v up to addresses and numbers, and the rest is new. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed zss0, z_init_st_ok); launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (** Symbolic initial memory for the fixed checksum_fuzzer plain image. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,24 +34,30 @@ Lemma zimg_ok : img_check zsegs zimg = true.
 Proof. vm_compute. reflexivity. Qed.
 Definition zpc0 : Z := 0x148f8.
 Definition zW : Z := 131072.
-Definition zss0 (two : bool) : sstate := ss0 zpc0 Ubsan.M.phdrs zW two zimg.
+Definition zss0 (rs two : bool) : sstate := ss0 rs zpc0 Ubsan.M.phdrs zW two zimg.
 Lemma z_init_pc_eq : Z.of_N Ubsan.M.init_pc = zpc0.
 Proof. reflexivity. Qed.
 
 Theorem z_init_st_ok : forall
-  (sp : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw)
+  (inp : ProcInput) (mbase sp brk : word) (rnd : EntryDraw)
   (xw : nat -> word) (xd : nat -> list byte) (two : bool),
-  valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  xd UID_DATOM = uid_bytes uid -> xd HWCAP_DATOM = hwcap_bytes hw ->
-  xd RAND_DATOM = rand_bytes rnd ->
-  (if two then 2 <= length argv else True)%nat ->
-  st_ok zsegs (E0 sp argv envp xw xd) (zss0 two)
-    (init_machine_state zsegs Ubsan.M.init_pc Ubsan.M.phdrs sp rnd argv envp uid hw).
+  valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+  valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+  xd UID_DATOM = uid_bytes (in_uid inp) -> xd HWCAP_DATOM = hwcap_bytes (in_hwcap inp) ->
+  xd RAND_DATOM = rand_bytes rnd -> xd GID_DATOM = gid_bytes (in_gid inp) ->
+  xd EHDR_DATOM = ehdr_bytes inp sp mbase ->
+  xd EXECFN_DATOM = execfn_ptr_bytes (ed_top rnd) (in_execfn inp) ->
+  (if two then 2 <= length (in_argv inp) else True)%nat ->
+  st_ok zsegs (E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) (in_execfn inp) xw xd)
+    (zss0 (kb_rseq (in_kernel inp)) two)
+    (init_machine_state zsegs Ubsan.M.init_pc Ubsan.M.phdrs sp mbase rnd inp).
 Proof.
-  intros sp argv envp uid hw rnd xw xd two Hsp Hva Hve Hfits Hxd Hxh Hxr Htwo.
+  intros inp mbase sp brk rnd xw xd two Hsp Hva Hve Hvl Hlau Hxd Hxh Hxr Hxg Hxe Hxf Htwo.
   unfold zss0. rewrite <- z_init_pc_eq.
-  apply (init_st_ok zsegs Ubsan.M.phdrs sp argv envp Hsp Hva Hve Hfits uid hw rnd
-    zW ltac:(unfold zW; lia) xw xd Hxd Hxh Hxr Ubsan.M.init_pc two zimg Htwo zimg_ok).
+  eapply init_st_ok;
+    first [ exact Hsp | exact Hva | exact Hve | exact Hvl | exact Hlau
+          | exact Hxd | exact Hxh | exact Hxr | exact Hxg | exact Hxe | exact Hxf
+          | exact Htwo | exact zimg_ok | (unfold zW; lia) ].
 Qed.
 
 Set Printing Fully Qualified.

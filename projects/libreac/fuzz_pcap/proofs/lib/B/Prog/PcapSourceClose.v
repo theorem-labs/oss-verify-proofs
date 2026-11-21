@@ -24,7 +24,7 @@
      0x81d68: s_and_ptr (Reusable/YP0m.v:969-980) rewrites ps & 7 to 0 from the alignment fact, so `bnez` sees 0 and is
               not taken.
    These are the decisions of the released UBSan proof for the v1.8 image (proofs/libreac/fuzz_pcap/lib/U/Prog/
-   pcap_source_close.v on origin/ossv/recipes c8557374ad2e): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
+   pcap_source_close.v): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
    :23) and :45-46 (ub_align A8, premise bv_unsigned a0 mod 8 = 0 at :23), close_pro :82 and :84-85 (premises :58).
 
    The contract is lib/A's, not a copy (the shared-text rule): pb_pcap_source_closeX proves lib/A's image-generic
@@ -37,6 +37,7 @@
    asan-ubsan instance of a Theorem Labs lane's fclose walk lib/A/Stdio/WFclose.v, whose lib/B walk twin is
    lib/B/Stdio/WFclose.v (lib/B/Stdio/PFcloseInstB.v's inst_AFCLOSE_U composes it with lib/B/Stdio/WFcloseI.v).
    getr / mkst / seg_rom come from YK11; nothing from lib/Lib is imported. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -119,7 +120,7 @@ Hypothesis LAWS : AR_laws SEGS B.
 Hypothesis TL : PALib B.
 Variable ra_fc1 ra_fc2 : Z.
 (* Discharged by the asan-ubsan instance of a Theorem Labs lane's fclose walk (lib/A/Stdio/WFclose.v; a Theorem Labs lane's lib/B twin). Its
-   data-buffer premise In (b, |C|) (a working branch a55f5f4a671) comes from the f <> 0 live-block fact Hinb. *)
+   data-buffer premise In (b, |C|) (a working branch) comes from the f <> 0 live-block fact Hinb. *)
 Hypothesis AFCLOSE : afclose_source_spec SK SEGS B K (SIGMA PS___interceptor_trampoline_fclose) ra_fc1 ra_fc2
   pa_relro_lo pa_relro_hi.
 Hypothesis HUfc1 : In [pc_free_ra0 (as_code B); ra_fc1] (as_universe B).

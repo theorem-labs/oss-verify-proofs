@@ -52,7 +52,7 @@
        kit_frac_move (registers) + f21_frac_mem (memory); HB / FLSI / B7K by f21_core_move; then the exit cut
        at the arm the run reached (0x82554 with the two type bytes 4 / 3, or 0x825a0 with a0 = s4 = t_want_v).
 
-   ROUTE (C), L3 switch (a Theorem Labs lane's L3 brief; a working branch 1899bed1aee, L3 recipe
+   ROUTE (C), L3 switch (a Theorem Labs lane's L3 brief; a working branch, L3 recipe
    L3-recipe.md (a working note, not in this delivery)).  ctl_from's premise is now
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (cells, shadow_rw_on cut_shadow, shadow_rw_on img_shadow, ro_agree).
    - ENTRY: the stage reads only the cells (HAC) from it.  The one shadow consumer the walk's cut fed before, the
@@ -65,14 +65,14 @@
      write window [sp - 16, sp) with A.ShadowRwOnK.fl_shadow_rw_on (the window misses the shadow), instead of
      ctl_rt_C_of_AR, which would need TFIB_SYMS as a new Section hypothesis.
    - The Section never had VIS0 / OWNED_RO and never called ctlrt_of_AR / rt_of_core: nothing to delete there.
-   The stage statement is unchanged (ACtl.v at 8ce82d7e310 and at a working branch 1899bed1aee, diffed).
+   The stage statement is unchanged (ACtl.v and at a working branch, diffed).
 
    SECTION HYPOTHESES: ONE, and it is ACtl.v's own.
    - LAWS: the core's AR law record (YCbq.v:207), ACtl.v:185's own Section hypothesis; ajournal_exec,
      frames_bounds, al_blocks and the two ProgWorldVis files are stated under it.
    THE KIT IS CITED, NOT RESTATED (a Theorem Labs lane via another Theorem Labs lane, 2026-10-29 ~05:1xZ): on the newer glue base
-   a working branch 46eb24cd4b3 lib/A/ACtlG/Kit.v (blob 7e164a09a73) BUILDS, so the three
-   placeholders this file carried on the eb89fed7fac base (kit_wx, kit_segs_low, kit_frac_move) are deleted
+   a working branch lib/A/ACtlG/Kit.v (blob 7e164a09a73) BUILDS, so the three
+   placeholders this file carried base (kit_wx, kit_segs_low, kit_frac_move) are deleted
    and A.ACtlG.Kit.kit_wx / kit_segs_low / kit_frac_move are cited instead.  The proof did not change: the
    placeholder text was the kit's.
    NO OTHER HYPOTHESIS IS LEFT: the callee contract is discharged inside Seg/F21F.v, and every bound is
@@ -84,7 +84,7 @@
    Reusable.YA0nR's SRr_xregs_eqv and SRr_fevt_hid; A.ProgBridge's fevt_of_evtF, tfibsegs_rsegs, cfg_at_MS,
    RNG_W, fp_avoids_RNG_W, rng_of_visible, range_visible_sub, rt_vis_W; A.ProgWorldVisHeap's heap_vis /
    heap_sh_vis and A.ProgWorldVisWin's win_vis - the RE-POINTED files (a Theorem Labs lane's consumer head
-   a working branch 240201dbe73), which prove A.ProgWorld.heap_vis_stmt / heap_sh_vis_stmt /
+   a working branch), which prove A.ProgWorld.heap_vis_stmt / heap_sh_vis_stmt /
    win_vis_stmt B themselves, not local look-alikes; the core's YCbq ajournal_exec / frames_bounds / asan_consts /
    seg_rom_none and YG0d's al_blocks.
 
@@ -108,15 +108,15 @@
    body).  No statement of this file names it.
 
    BUILD STATE (honest), on a working branch: the interim core
-   a working branch 5da74c9c931 (NO port_core_refused_ name in lib/A or lib/Reusable) merged
-   over the glue base 46eb24cd4b3, with the six Tk/AW files taken BY PATH from 5da74c9c931 and a Theorem Labs lane's
-   ProgWorld files taken BY PATH from a working branch fec8db0a380.  MEASURED Require closure:
+   a working branch (NO port_core_refused_ name in lib/A or lib/Reusable) merged
+   over the glue base, with the six Tk/AW files taken BY PATH and a Theorem Labs lane's
+   ProgWorld files taken BY PATH from a working branch.  MEASURED Require closure:
    406 lib files, NONE substituted - no closure file names port_core_refused_ in its code, the worktree
-   carries no modified file, and `git diff --name-status 5da74c9c931` over lib/Reusable, lib/A/A*.v and the
+   carries no modified file, and `git diff` over lib/Reusable, lib/A/A*.v and the
    two Tk trees lists only glue-side ADDITIONS (the walk / cut layer, this file and F22.v, a Theorem Labs lane's
    YA0nR / YK04R, a Theorem Labs lane's ShadowPresent), no modified core or Tk file.  lib/A/AE2k.v is the interim's resolved
    file; this proof reads none of its addresses except tfib_sink_head = A_ofl_head = 0x5fbf08, which no
-   resolution changed.  (On the eb89fed7fac / 46eb24cd4b3 bases this file was built with AE2k.v
+   resolution changed.  (On the bases this file was built with AE2k.v
    substituted in the working tree: those builds were provisional.)
    No Axiom, no Parameter, no unproved step.
    Print Assumptions glue_seg_F21: Rocq primitives (PrimInt63 / PrimString / PrimArray) and
@@ -226,7 +226,7 @@ Proof.
 Qed.
 
 (* FRAC's memory part (ACtlCutP.v, FRAC) across the window: the spills and the saved registers lie above the
-   cut's sp; the frame header words, the frame shadow and (batch 3, a Theorem Labs lane d36efc6152d) the class-6 frame's
+   cut's sp; the frame header words, the frame shadow and (batch 3, a Theorem Labs lane) the class-6 frame's
    TRAILER WORD q64 m (fr + 4088) (flag_addr (c_ly cx) 6 (c_fpos cx)) lie below the window.  The trailer is past
    FRAME_BYTES = 3136 but inside the class-6 frame of fs_frame_bytes 6 = 4096 bytes, so the frame premise is
    fr + 4096 <= lo (the stage gets it from frames_bounds, fr + 4096 <= alloc_ceiling, and the journal's astk_ok). *)

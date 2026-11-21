@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segment list). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import PropExec MState Mem Exec ITree Nodes Decode.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Spec Require Import Monad MSafe.
-From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import Realize SafeReach Bridge TSim DriverSim.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import RomBase Realize SafeReach Bridge TSim DriverSim.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.A0.T7 Require Import RealizeS.
 Import ListNotations.
 Import ITree.Exc.
@@ -53,8 +54,12 @@ Section RealizeS2.
         exists mo', V a mo' = moE' /\ m_halted mo' = Some code
           /\ sstep_cfg segs ACFG (mkCfg ms mo) [ExitEv code (m_fs moE')] (SNext (mkCfg ms mo')))
     /\ ((exists rsp moE' evs, nstep n (V a mo) rsp moE' evs) \/ (exists code moE', nexit n (V a mo) code moE')).
+  (* LPS 727298f3: the node's system call reads the same over every larger read-only backing
+     ([RomBase.sys_rob], asked by [rz_node]) *)
+  Hypothesis ROB : forall n ms mo a,
+    fdn n -> ATN n ms a -> INV (mkCfg ms mo) a -> sys_rob segs (mkCfg ms mo).
 
-  #[using="V_fs NODE"] Theorem implS_realizes_twf {R} : forall (t : itree node R) (Q : R -> machine_state -> AS -> Prop) (P : R -> Model -> Prop) (K : R -> Model -> TSet) ms a mo,
+  #[using="V_fs NODE ROB"] Theorem implS_realizes_twf {R} : forall (t : itree node R) (Q : R -> machine_state -> AS -> Prop) (P : R -> Model -> Prop) (K : R -> Model -> TSet) ms a mo,
     fdtree t ->
     implS t Q ms a -> INV (mkCfg ms mo) a ->
     twf t (V a mo) P -> (forall r m1 m2, meq m1 m2 -> P r m1 -> P r m2) ->
@@ -113,7 +118,7 @@ Section RealizeS2.
           rewrite <- EQ, V_fs in Hss. split; [exact Hss|]. split; [rewrite EQ; exact Hex| exact Hh']. }
       destruct Hi0 as [i0].
       apply (rz_conseq segs _ (t_alt (fun i : I1 + I2 => t_emit (evs i) (TT i)))).
-      + exact (rz_node segs _ (I1 + I2) evs nx TT i0 Hnode Hcont).
+      + exact (rz_node segs _ (I1 + I2) evs nx TT i0 Hnode (ROB n ms1 mo1 a1 Hn HAT HINV1) Hcont).
       + apply t_eq_alt_bi'.
         * intros [[[[rsp mo'] es] PF] | [[code mo'] PF]]; cbn.
           -- destruct PF as (Hss & Hst & HINV' & HG). exists (inl (exist _ (rsp, V a1 mo', es) Hst)). cbn. apply t_eq_refl.

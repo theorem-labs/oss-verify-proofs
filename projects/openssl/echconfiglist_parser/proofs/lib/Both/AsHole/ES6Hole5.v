@@ -1,16 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Section S6Hole is stated over the run's input with the LAUNCH0 launch fact and AsanInitL's SINV0L; the trans3h check takes the bounds RBX and RCX); Section S6Hole is generic in the Leaf class of fx_hole's walks; the trailing Check is dropped. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.openssl.echconfiglist_parser.images Require Import AsanUbsan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import W64 ITrie FxInstr FxState FxMem FxExec FxRel FxImage FxHandoff
   FxDrive FxDrive3 FxDrive3D FxDrive3O.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec ShapeAlg Scfg AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound AsanInit.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec ShapeAlg Scfg AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsanInitL.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import AsImages AsPlanImages EAsStartupHSA.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsHole Require Import ES6End5.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Br Require Import CXI BrEnv BrRev BrClass BrRevS BrDress BrTrans BrGen BrHole Br3Root Br3Leaf Br3Know Br3Trans.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsHole Require Import ES6Pcs ES6Img ES6Start ES6Data5 ES6Aux5.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
@@ -20,26 +22,29 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 Definition HK : hooksel := HK7 96 16 16.
 Lemma s6_trans_check :
-  trans3h_chk HK ASEGS IM code ASAN_H AsanInit.LIMIT APC.NX0 TT NTAG shapes [] classes START d bs L3 W RBYTES RC shp xask BP 20 64 END aux = true.
+  trans3h_chk HK ASEGS IM code ASAN_H AsanInit.LIMIT APC.NX0 TT NTAG shapes [] classes START d bs L3 W RBX RCX shp xask BP 20 64 END aux = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
 
 Section S6Hole.
+  Context {LF : Leaf}.
   Variable sp : word.
   Variable rdraw : EntryDraw.
   Variable brk0 : word.
-  Variables argv envp : list (list byte).
+  Variable inp : ProcInput.
   Variable fs : Fs.Fs.
-  Variables uid hw : word.
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  #[local] Notation SV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  (** #38: some launch base, never a chosen one ([AsanInitL]) *)
+  Hypothesis HL : LAUNCH0 sp rdraw brk0 inp.
+  #[local] Notation SV := (SINV0L APH AsanUbsan.M.init_pc sp rdraw brk0 inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
   #[local] Notation ISP := (bv_unsigned sp).
 
   (* [comment removed for export] *)
   Lemma argH0_highI : forall E (a : word), argH E a = true -> APC.CEIL <= bv_unsigned a /\ ISP <= bv_unsigned a.
   Proof.
-    intros E x Hx. split; [exact (argH0_high APH sp rdraw argv envp uid hw Hsp Hva E x Hx)|].
+    intros E x Hx. split; [exact (argH0_high_L sp rdraw brk0 inp Hsp Hva Hve HL E x Hx)|].
     unfold argH0 in Hx. apply andb_prop in Hx as [Hx _]. unfold argB0 in Hx.
     apply orb_prop in Hx as [Hx|Hx]; apply andb_prop in Hx as [Hx _]; apply Z.leb_le in Hx; lia.
   Qed.
@@ -51,12 +56,12 @@ Section S6Hole.
                   (mk_fimage_ok ASEGS IM IM_eq) (mk_fimage_wr_ok ASEGS IM IM_eq)
                   ASAN_H AsanInit.LIMIT SV argH ISP fs asan_in_hull asan_hull_ok
                   argH0_highI APC.NX0 eq_refl
-                  (argH0_agree APH sp rdraw argv envp uid hw)
-                  (SINV0_agree APH sp rdraw brk0 argv envp uid hw)
-                  (SINV0_frame APH sp rdraw brk0 argv envp uid hw)
-                  HK TT NTAG shapes [] classes START d bs L3 W RBYTES RC shp xask BP 20%nat 64%nat END aux
+                  (argH0_agree sp rdraw inp)
+                  (SINV0L_agree APH AsanUbsan.M.init_pc sp rdraw brk0 inp)
+                  (SINV0L_frame APH AsanUbsan.M.init_pc sp rdraw brk0 inp)
+                  (proj1 (Nat.ltb_lt APC.V_EHDR APC.NX0) eq_refl)
+                  HK TT NTAG shapes [] classes START d bs L3 W RBX RCX shp xask BP 20%nat 64%nat END aux
                   s6_trans_check ltac:(lia)) as Hh.
     exact Hh.
   Qed.
 End S6Hole.
-Check s6_hole_5.

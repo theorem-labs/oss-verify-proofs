@@ -1,14 +1,15 @@
-(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: carried BY PATH from commit a3d076d83cd2 (lane F2a's Deallocate instance stack, a working branch), proofs/cgif/cgif_file_fuzzer/lib/DGbigIF.v, sha256 65c8d35def001688. The only change is the module paths: OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib M -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable M, except lib.A for: DMspec DMiface DeallocG ImgBase ImgBaseDG DGif0. No numeral and no statement changed. *)
-(* Modified by Theorem Labs, 2026-10: then from plugin-hostd/fuzz_reply lib/A (commit 29bcc0b4b8f) to image B (fuzz_reply.asan-ubsan, pin 10ffb5f9202a, unstripped twin 3389287e1d61) by alreloc 56664a20986eb62e, same unit A -> B. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: carried BY PATH (lane F2a's Deallocate instance stack, a working branch), proofs/cgif/cgif_file_fuzzer/lib/DGbigIF.v, sha256 65c8d35def001688. The only change is the module paths: OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib M -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable M, except lib.A for: DMspec DMiface DeallocG ImgBase ImgBaseDG DGif0. No numeral and no statement changed. *)
+(* Modified by Theorem Labs, 2026-10: then from plugin-hostd/fuzz_reply lib/A to image B (fuzz_reply.asan-ubsan, pin 10ffb5f9202a, unstripped twin 3389287e1d61) by alreloc 56664a20986eb62e, same unit A -> B. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, DeallocNmaxA): the interface of Allocator::Deallocate's BIG-BLOCK arm, an additive
    companion of DGif0.DIface (DGif0.v is not edited).
 
    Quarantine::Put enqueues a chunk only when its user size is at most the quarantine's max_size (the cell
    inst + 0x318 = kQuarantineMax; compiler-rt llvmorg-20.1.8 sanitizer_quarantine.h:96-108; cgif 0x356e8
    `bgeu max_size, size`). Above it, RecyclePassThrough (asan_allocator.cpp:255-263) frees the chunk at once:
-   FromPrimary's test on the space base (the instance's primary.space cell, an image constant cell: cgif YF0m.v:26
+   FromPrimary's test on the space base (the instance's primary.space cell, an image constant cell: cgif YF0m.v:27
    `c8 (AInst o_space) (ASp 0)`), FillChunk (vacuous: flags()->max_free_fill_size = 0), then
    QuarantineCallback::Recycle (cgif 0x35764 -> 0x335f4), then Put's cache-size test, which finds the thread cache
    as it was (no drain), and the returns of Put and Deallocate. The model is YG00cf.free_cf's recycle side:

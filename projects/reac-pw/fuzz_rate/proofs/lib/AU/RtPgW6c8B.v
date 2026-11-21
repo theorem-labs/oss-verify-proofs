@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c8.v at cb9cdc023f20; image B's case 8:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c8.v; image B's case 8:
    its pcs and code table, the registers s2 / s6 / s10 / t1 / s4 / a6, the cells R + 0x130 / R + 0x150, e62 at
    F + 0x210 in the class-4 frame (1024 bytes), the three UBSan trap tests decided by the engine, and s2 / s6 / s10 at
    the entry of __asan_memset. *)

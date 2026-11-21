@@ -5,19 +5,37 @@ From OSSVerify.libreac.fuzz_knock Require Statements.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable Require Import
   YK11 YM05 YO0d YO0f YO09 YP09 YH00 YH02 YI06 YI14 YI16 YI5b YI5c YL01 YL0g YL0i YL0k YL0s YN03 YN2b YN33.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U Require Import
-  FrameSlotGMF FrameProof
+  FrameSlotGMF FrameProof ZAllocatorMF
   ZTraceSpec ZComplete ZAllocator SlotTopG Contract FrameAPI AllocCut BlocksNodup FrameSlotG Img0 ReallocCert.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Lib Require Mem.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable.R Require Import Cfg.
 Import ListNotations.
 Open Scope Z_scope.
-Lemma zlib_frame_allocator_mf : forall (rc : RunCeil) (fx : FPState), @frame_allocator_mf rc fx src0_msyms (@zlib_API rc).
+Lemma zlib_frame_allocator_mf : forall (rc : RunCeil) (fx : FPState), @frame_allocator_mf rc fx src0_msyms (@zlib_API_mf rc).
 Proof.
-  intros rc fx. destruct (zlib_frame_allocator rc fx) as (_ & _ & _ & _ & _ & H). exact H.
+  intros rc fx.
+  pose proof (@zlib_allocator_extra_mf rc) as AX.
+  assert (HX : forall L A mem md, aa_MR (@zlib_API_mf rc) L A mem md -> MRx (AM:=MayFail) src0_msyms L A mem md)
+    by (intros L A mem md H; exact H).
+  split; [exact (block_slack_present_ok src0_msyms (@zlib_API_mf rc) HX)|].
+  split; [exact (ctx_owned_ok src0_msyms (@zlib_API_mf rc) HX)|].
+  split; [exact (blocks_low_ok src0_msyms (@zlib_API_mf rc))|].
+  split; [exact (blocks_nodup_ok src0_msyms (@zlib_API_mf rc) HX)|].
+  split; [exact (blocks_writable_ok src0_msyms (@zlib_API_mf rc))|].
+  split; [exact (errno_unowned_ok src0_msyms (@zlib_API_mf rc) AX src0_errno_check)|].
+  split; [exact (guard_rw_ok src0_msyms (@zlib_API_mf rc) ltac:(vm_compute; reflexivity))|].
+  split; [exact (libc_no_locks_ok src0_msyms (@zlib_API_mf rc) AX)|].
+  split; [exact AX|].
+  split.
+  - intros L A mem md a HM Ha. destruct (frame_G_facts a Ha) as (Himg & Hst & Hctx & _).
+    intros [Ho|Ho]; [exact (Hctx (ax_img AX L A mem md a HM Himg Ho)) | exact (Hst Ho)].
+  - intros L A mem md a HM Ha. destruct (frame_RELRO_facts a Ha) as (Himg & Hst & Hctx & _).
+    intros [Ho|Ho]; [exact (Hctx (ax_img AX L A mem md a HM Himg Ho)) | exact (Hst Ho)].
 Qed.
 Theorem frame_ubsan_mf_holds : frame_ubsan_mf.
 Proof.
-  exists src0_msyms, (@zlib_API), checksum_shape, src0_sink_head, src0_sink, RA_LIB, EMPTY.
+  (* The may-fail statement's proof fixes the allocation mode here: the API is [zlib_API_mf], at [MayFail]. *)
+  exists src0_msyms, (@zlib_API_mf), checksum_shape, src0_sink_head, src0_sink, RA_LIB, EMPTY.
   split; [exact ms_segs_rsegs|].
   split; [vm_compute; reflexivity|].
   do 4 (split; [reflexivity|]).

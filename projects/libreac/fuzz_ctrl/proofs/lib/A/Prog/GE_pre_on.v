@@ -15,7 +15,7 @@
    compares it; with the range addressable the check passes and the error path is not reached.
 
    Glue closure rule (two Theorem Labs lanes, 2026-10-28 23:38Z): ctrl_emit_asF2_on and the _cF_on / _on files are
-   Required qualified only. rule 24: At ossv/recipes c5e779efe8c (2026-10-31), no released proof of ctrl_emit_as outside this unit. *)
+   Required qualified only. rule 24: At (2026-10-31), no released proof of ctrl_emit_as outside this unit. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import GEbase GE_row GE_img GE_buf GE_pre.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import MemNorm MemNormTr.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rebound onto the old-pin kit of record (4f18c75d4900, engine 459129c18903) on the ex_value
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rebound onto the old-pin kit of record (engine) on the ex_value
    rebind base: EXB's room conjunct is exv_rm (room / position from the entry state, memnorm keep from the entry
    memory). This segment makes no call and does not change S. memnorm is carried across each engine run by the
    table-engine _inv runners of the shared lib/B/Prog/ExvB_Loop_exw.v (P := exvl_P (e_mem E), started from EXB's exv_rm
@@ -271,8 +272,8 @@ intros E n v H. rewrite U_SOff, H, Z.add_0_r, Z_to_bv_unsigned. unfold bv_wrap. 
 apply zcanon_id. pose proof (Z.mod_pos_bound v (2 ^ 64) ltac:(lia)). unfold M64. lia.
 Qed.
 
-(* ExvOpen's T1, rebound onto the old-pin kit (lib/B/Prog/ExvB_Open_kt.v blob 7b89f08a32f8, cold/h-rw-pre-7-b-ex_value-open
-   ed8cdf7ea24e, on the rebind base): EXB across a stretch that writes only ex_value's frame area and the FP cursor
+(* ExvOpen's T1, rebound onto the old-pin kit (lib/B/Prog/ExvB_Open_kt.v blob 7b89f08a32f8,
+    on the rebind base): EXB across a stretch that writes only ex_value's frame area and the FP cursor
    cells, given the memnorm keep from the entry memory to the end memory *)
 Let KT := exv_kt B ARx SK HYP.
 

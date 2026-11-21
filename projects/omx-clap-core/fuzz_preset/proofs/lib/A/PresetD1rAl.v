@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset (asan image A), the three LINK statements of the per-call loop's
    proof (lib/A/PresetD1rAPf.v), in a file of their own so that any consumer needs no driver file. STATEMENTS ONLY;
-   nothing here proves a function (rule 24). The program interface lib/A/PresetCfnA.v (since 3f83c075b61f) makes
+   nothing here proves a function (rule 24). The program interface lib/A/PresetCfnA.v makes
    ablocks_cf, afn_pre_cf and ajournal_cf constants, abbreviations of lib/Reusable/YCbqG.v's journal layer at
    ARx := ARcf; each link states exactly the content the loop uses, and lib/A/PresetD1rAlPf.v proves all three at
    those constants by unfolding:

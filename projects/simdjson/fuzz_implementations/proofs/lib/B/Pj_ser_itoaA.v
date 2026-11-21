@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -203,7 +204,7 @@ Hypothesis SDLO : shad DST + 3 <= lo.
 Hypothesis SDD : shad DST + 3 <= DST \/ DST + 24 <= shad DST.
 Hypothesis FRS1 : rt_frames RT Σ1 = (f, 1%nat) :: FR.
 Hypothesis LV1 : rt_live RT Σ1 = L.
-Hypothesis SP1 : rt_sp0 RT Σ1 - STACK_WIN <= lo.
+Hypothesis SP1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo.
 Hypothesis INN : In (fN, kN) FR.
 Hypothesis DIN : fN <= DST /\ DST + 24 <= fN + fs_size kN - 8.
 Hypothesis SDIN : shad fN <= shad DST /\ shad DST + 3 <= shad (fN + fs_size kN).
@@ -565,7 +566,7 @@ Proof using AF RC RC2 FDO MST.
   { unfold call_ok. rewrite EU. split; [exact ST1l|]. split; [exact SPLO|]. split; [exact LOB|].
     split; [unfold b, USTACK_TOP; clear - QT DD; lia| exact B16]. }
   intros Σ1 f v0 v1 v2 e1 e2 e3 e4 e5 e6 e7 v3 v4 v5 v6 F1 m2 (ART2 & MI2 & WM2 & ST2) PRES2 WRF WRS FRS1 LV1 SPE1 CR1 F0 F64 FTOP.
-  assert (SP1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SPE1; exact SPLO).
+  assert (SP1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SPE1; exact SPLO).
   rewrite EU in ST2, PRES2. unfold PJ_ITOA_A. rewrite (ret_pc_even (0xb6f2c + 100)) by (clear; lia). change (0xb6f2c + 100) with 0xb6f90.
   change (fs_size 1 - 8) with 120 in WRF. change (fs_size 1 / 8) with 16 in WRS.
 

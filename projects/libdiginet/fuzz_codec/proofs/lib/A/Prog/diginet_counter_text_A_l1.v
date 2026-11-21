@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACez.v:26-243 (the harness entry
-   segment, tfib_lib_A_seg) at c8557374ad2e for fuzz_knock's ASan image (fuzz_knock.asan, sha256
+   segment, tfib_lib_A_seg) for fuzz_knock's ASan image (fuzz_knock.asan, sha256
    61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118), and the S0/S1 boundary state from the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/ACf7.v:27-28 (ss_A2). rule 24: no function proved (a port of the released
    cgif_file_fuzzer harness walk structure). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_knock/lib/A/APgMain0.v, with its module paths changed; 308 of its 337 lines of code are new or changed and 277 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/diginet_counter_text_A_s0.v; 15 of its 37 lines of code are new or changed and 315 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment L1 of diginet_counter_text's walk in image A (diginet_counter_text_A_inv.v ct_seg_L1): one pass of the
    first loop, from its three parts (diginet_counter_text_A_l1_base.v ct_seg_L1_of_parts): a, the loop head to the
    call of diginet_seg7 or the dot set (diginet_counter_text_A_l1_a.v); b, the call through diginet_seg7's contract

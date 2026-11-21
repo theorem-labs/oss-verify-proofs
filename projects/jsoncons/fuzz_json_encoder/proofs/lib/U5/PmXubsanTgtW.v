@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed pm_xubsan_tgt, tgt_specG. *)
 (* The ubsan target half: the ubsan image realizes the plain spec at target_alloc_limit (2^39 = nbr_limit) for every
    input whose payload satisfies PHI0U. The ubsan twin of the plain driver (Pm6DrvMainW_u5) realizes specG over the
    ubsan heap instance (HIU, L0U, credit (K0U, B0U)); its library call consumes PHI (LCU.lib_call_okU), so the
@@ -59,8 +60,8 @@ Section Tgt.
     - exact DLLF.
     - exact LIOKUF.
     - exact LXokF.
-    - intros lim sp a0s path envp uid hw rdraw tid regs mem brk mbase Hlim Hsp Hbrk Hmb Hva Hve Htid ME.
-      exact (main_hiu_heap0 sp a0s path envp uid hw rdraw tid regs mem Hva Hve Hsp Htid ME brk mbase lim Hlim Hbrk Hmb).
+    - intros lim sp a0s path envp uid hw rdraw tid regs mem brk mbase inp Hlim Hsp Hbrk Hmb Hva Hve Htid ME.
+      eapply (main_hiu_heap0 sp a0s path envp uid hw rdraw tid regs mem); eassumption.
     - exact cfgU_fs.
     - intros sp n Hsp Hn. exact (budget_of_lay (bv_unsigned sp) (LayF sp) n (LCREDF sp Hsp) Hn).
     - rewrite target_alloc_limit_val. lia.
@@ -68,9 +69,9 @@ Section Tgt.
 
   Theorem pm_xubsan_tgt : pm_xubsan_tgt_stmt cfgU PHI0U.
   Proof.
-    intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfits Hva Hve Hvfs Hcreds Hhw Hva48 HPHIOK.
+    intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfits Hva Hve Hvfs Hcreds Hhw Hva48 Hvl Hlau Hcr HPHIOK.
     apply (srz_conseq _ _ _ (specG (fun d => PHI0U (payload d)) (in_argv inp) (in_fs inp))).
-    - exact (tgt_specG sp brk mbase rdraw inp Hsp Hbrk Hmb Hfits Hva Hve Hvfs Hcreds HPHIOK).
+    - exact (tgt_specG sp brk mbase rdraw inp Hsp Hbrk Hmb Hvl Hlau Hva Hve Hvfs Hcreds Hcr HPHIOK).
     - apply specG_eq. intros a0 path data Hargv Hlen Hne Hnd Hlk Hhdr.
       exact (HPHIOK a0 path Hargv Hlen Hne Hnd data Hlk Hhdr).
   Qed.

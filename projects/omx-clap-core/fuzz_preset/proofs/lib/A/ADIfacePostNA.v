@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: DIface's di_post_n (c-asan DGif0.v:361-366 at aa322d8bb0b) for the event-free allocator
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: DIface's di_post_n (c-asan DGif0.v:361-366) for the event-free allocator
    instance AT PRESET'S ASAN IMAGE (suffix _A): the NULL arm of Allocator::Deallocate keeps ARX and qtight.
    Reusable/YGcfDIface.v states the field over c-asan's image classes with the machine half as its premise POST_N_MEM;
    this file proves the field at image A with no such premise:
    - the segments are lib/A's (A/AB1v.v:12, Asan.M.loaded_segments);
-   - dmem_n_A is DGif0.v:193-198's dmem_n at image A's DImg instance (A/ADIfaceA.v DImg_A: dg_izone := AFgn.IZONE,
+   - dmem_n_A is DGif0.v:194-199's dmem_n at image A's DImg instance (A/ADIfaceA.v DImg_A: dg_izone := AFgn.IZONE,
      dg_ial_post := AFgn.IAL_POST, over preset's TFIB_IAL_*, A/AF0m.v:15-16), written out; the two are convertible;
    - ARX is YGcfDIface.ARXs_cf at those segments.
    A/ADIfaceA.v restates the result at the instance (di_post_n_inst_A).
@@ -43,7 +44,7 @@ Local Notation DFSTACK := ImgBaseDG.DGbaseC.DFSTACK.
 
 Section PN. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 
-(* DGif0.v:193-198's dmem_n at preset's ASan image: lib/A's segments and relocated zones. *)
+(* DGif0.v:194-199's dmem_n at preset's ASan image: lib/A's segments and relocated zones. *)
 Definition dmem_n_A (W : world tfibsegs) (ly : alayout) (sp0 : Z) (mem0 mem' : word -> option byte) : Prop :=
 (forall x : word, ~ (sp0 - DFSTACK <= bv_unsigned x < sp0) -> ~ (ly_T ly + t_unwinding <= bv_unsigned x < ly_T ly + t_unwinding + 1) ->
  ~ AFgn.IZONE (bv_unsigned x) -> mem' x = mem0 x) /\
@@ -304,7 +305,7 @@ Qed.
 
 End H.
 
-(* di_post_n (DGif0.v:367-372) at preset's ASan image: ARX := ARXs_cf at A's segments and the ghost set Hp,
+(* di_post_n (DGif0.v:368-373) at preset's ASan image: ARX := ARXs_cf at A's segments and the ghost set Hp,
    dmem_n := dmem_n_A, ft := free_cf, lpost := qtight. fpre is left out (A/ADIfaceA.v restates it with fpre). *)
 Theorem di_post_n_A : forall B, TfibSyms B ->
 forall Hp inst ly S W mem0 md0 n tr sp0 mem' mat,

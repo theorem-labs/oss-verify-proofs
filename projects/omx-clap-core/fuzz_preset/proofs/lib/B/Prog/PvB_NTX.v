@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumFT.v, with its module paths and module names changed; 304 of its 392 lines of code are new or changed and 343 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image B (asan-ubsan), parse_value 0x8637c, SEGMENT N (the number arm), sub-piece TX of
    PvB_NCut.v: the arm's
    common tail T (B 0x8688c) to the shared exit X (B 0x8664c), pnTX_stmt.
@@ -26,7 +27,7 @@
    node and its blocks D only (PRH_PjOrder.pj_foR_frame, PvB_Frees.pvf_ncap_frame), as PvB_X.v moves them.
    pv_frame states no word at sp0 - 160 (PvB_Defs.v: the prologue's store there is a stack probe), so pv_at_exit's
    body is pn_at_T's with the shadow byte 4 back to 0xf8: no CUTFIX here. The exit cut's body is BUDGETED
-   (PvB_Defs.v pv_body_x, the batch kit's tip 240b06ed4fd4); the number arm made no budgeted call (fuzz_malloc and strtod are
+   (PvB_Defs.v pv_body_x, the batch kit's tip); the number arm made no budgeted call (fuzz_malloc and strtod are
    unbudgeted), so it is pv_body at no wild trace (PvB_Defs.pv_body_x_of).
    pv_at_exit's room post lives in pv_Qm (PvB_Defs.v rp_post, the conjunct after room_live_cf S', keyed on the trace):
    PvB_NQ.v's pnQ gives it from T's outcome pn_out at Sc, and tx_Qm_move carries it across the store (it reads no memory).

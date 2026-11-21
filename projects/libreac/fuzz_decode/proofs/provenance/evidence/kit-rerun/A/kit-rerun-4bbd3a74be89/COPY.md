@@ -6,17 +6,17 @@ a date or a time. Nothing else differs. `copycheck.py` beside this file proves i
 
 ## 1. The original
 
-- Commit `ec63ec6c4edeb4e7ee2360980dbd3f1070504c41`, the head of the other lane's re-run branch, its final reviewed
+- Commit, the head of the other lane's re-run branch, its final reviewed
   state. Its fourteen commits change only this directory:
-  - `c53a0cf3a289`, `4639e23e5c2d`, `d0b5ec3b38ca`: the re-run on cmpkit 4bbd3a74be89;
-  - `e88411a35760`: adds the exposure scans of cmpkit 86da41d3ef68 (`SCANS-86da41d3ef68.md` and 3 outputs);
-  - `f39105e6ace8`: adds the hand-trace of every lui through all ALU ops (`LUI-HANDTRACE.md`, `luitrace.py`, 5 outputs);
-  - `4870be5440a6`, `8d5e07101db5`, `944f3f95abda`, `032f7ba55aca`, `295eb9e170df`, `f3ebf71c45fb`, `23ce03c3683c`,
-    `ed324b3a30a3`, `ec63ec6c4ede`: the hand-trace through its reviews to ACCEPT. They change `LUI-HANDTRACE.md`,
+  -: the re-run on cmpkit 4bbd3a74be89;
+  -: adds the exposure scans of cmpkit 86da41d3ef68 (`SCANS-86da41d3ef68.md` and 3 outputs);
+  -: adds the hand-trace of every lui through all ALU ops (`LUI-HANDTRACE.md`, `luitrace.py`, 5 outputs);
+  -,:
+    the hand-trace through its reviews to ACCEPT. They change `LUI-HANDTRACE.md`,
     `luitrace.py` and 2 of its outputs, and add `plant_controls.py` and 9 outputs; a planted-control script and its
-    output that `4870be5440a6` added are deleted again by `8d5e07101db5` and are not in the original.
+    output that added are deleted again and are not in the original.
 
-  The 31 files of `e88411a35760` (the re-run and its scans) are unchanged at `ec63ec6c4ede` (checker step 1). The
+  The 31 files (the re-run and its scans) are unchanged (checker step 1). The
   branch name is a name the proofs-file rule keeps out of this tree, so this file gives the commits only.
 - Directory `proofs/libreac/fuzz_decode/provenance/alloc-reloc/A/kit-rerun-4bbd3a74be89/` at that commit:
   48 files. Every one of them is here, with the same name and mode. This copy lies at
@@ -47,7 +47,7 @@ and no line is added or removed.
 | `REVIEW_DIR3` | PATH_PREFIX | 2 | the reviewer's scratch directory of the third review; the kept tail `/imgaddr.py` names the script imgaddr_run() copies |
 | `REVIEW_DIR4` | PATH_PREFIX | 1 | the reviewer's scratch directory of the fourth review; the kept tail `/allstops.py` names the script the dead-argument walk copies |
 | `REVIEW_DIR6` | PATH_PREFIX | 2 | the reviewer's scratch directory of the final review; the kept tail `/frameesc_may2.py` names the script `frameesc` copies |
-| `BRANCH` | BRANCH | 9 | the name of the tools branch that holds the kit commits (3c3e62ee2786, and 6d8ff128a01 in luitrace.py line 2) |
+| `BRANCH` | BRANCH | 9 | the name of the tools branch that holds the kit commits (and in luitrace.py line 2) |
 | `WORKER` | NAME | 8 | a worker session name |
 | `AGENT` | NAME | 398 | a lead or reviewer session name |
 | `LANE` | NAME | 1 | a lane name |
@@ -76,7 +76,7 @@ Its output on this tree (scanner of record: `binscan_of_record.sh`, scanner `060
 
 ```
 $ python3 copycheck.py <hub clone> --scanner <scanner of record>
-copycheck: original ec63ec6c4ede proofs/libreac/fuzz_decode/provenance/alloc-reloc/A/kit-rerun-4bbd3a74be89: 48 files; chain from d0b5ec3b38ca (27 files), files added / changed / deleted per commit: e88411a35760 +4 ~0 -0, f39105e6ace8 +7 ~0 -0, 4870be5440a6 +2 ~3 -0, 8d5e07101db5 +3 ~3 -2, 944f3f95abda +1 ~7 -0, 032f7ba55aca +2 ~5 -0, 295eb9e170df +1 ~4 -0, f3ebf71c45fb +0 ~4 -0, 23ce03c3683c +2 ~4 -0, ed324b3a30a3 +1 ~2 -0, ec63ec6c4ede +0 ~4 -0; the 31 files of e88411a35760 unchanged at ec63ec6c4ede; 595 spans in 35 files {'BRANCH': 9, 'DATE': 8, 'NAME': 408, 'PATH': 79, 'PATH_PREFIX': 20, 'TIME': 71}; every other byte identical; COPY.diff and COPY.md file table match
+copycheck: original proofs/libreac/fuzz_decode/provenance/alloc-reloc/A/kit-rerun-4bbd3a74be89: 48 files; chain (27 files), files added / changed / deleted per commit: +4 ~0 -0, +7 ~0 -0, +2 ~3 -0, +3 ~3 -2, +1 ~7 -0, +2 ~5 -0, +1 ~4 -0, +0 ~4 -0, +2 ~4 -0, +1 ~2 -0, +0 ~4 -0; the 31 files unchanged; 595 spans in 35 files {'BRANCH': 9, 'DATE': 8, 'NAME': 408, 'PATH': 79, 'PATH_PREFIX': 20, 'TIME': 71}; every other byte identical; COPY.diff and COPY.md file table match
 copycheck: scanner on the 52 files here: exit 0, 0 blocking hits; listed, non-blocking, per file: {}
 copycheck: scanner on the original: 575 blocking hits, every one inside a replaced span (0 listed, non-blocking); 515 of 595 spans hold a hit; spans that hold none, by class: {'DATE': 8, 'NAME': 1, 'TIME': 71}
 ```
@@ -111,9 +111,9 @@ only a comment.
 | `dupzone.py:10` | `DONOR_TWIN` | `` C = 'DONOR_TWIN' `` |
 | `fulldiff.py:13` | `DECODE_A_TWIN` | `` A = 'DECODE_A_TWIN' `` |
 | `fulldiff.py:14` | `DONOR_TWIN` | `` C = 'DONOR_TWIN' `` |
-| `luitrace.py:2` | `AGENT` | `` """luitrace.py -- hand-trace helper for the KIT LIMIT of AGENT TIME (BRANCH 6d8ff128a01): `` |
-| `luitrace.py:2` | `TIME` | `` """luitrace.py -- hand-trace helper for the KIT LIMIT of AGENT TIME (BRANCH 6d8ff128a01): `` |
-| `luitrace.py:2` | `BRANCH` | `` """luitrace.py -- hand-trace helper for the KIT LIMIT of AGENT TIME (BRANCH 6d8ff128a01): `` |
+| `luitrace.py:2` | `AGENT` | `` """luitrace.py -- hand-trace helper for the KIT LIMIT of AGENT TIME (BRANCH): `` |
+| `luitrace.py:2` | `TIME` | `` """luitrace.py -- hand-trace helper for the KIT LIMIT of AGENT TIME (BRANCH): `` |
+| `luitrace.py:2` | `BRANCH` | `` """luitrace.py -- hand-trace helper for the KIT LIMIT of AGENT TIME (BRANCH): `` |
 | `luitrace.py:441` | `REVIEW_DIR` | `` reviewer scripts static_base.py + static_mem.py (REVIEW_DIR/, AGENT TIME and TIME), logic copied. `` |
 | `luitrace.py:441` | `AGENT` | `` reviewer scripts static_base.py + static_mem.py (REVIEW_DIR/, AGENT TIME and TIME), logic copied. `` |
 | `luitrace.py:441` | `TIME` | `` reviewer scripts static_base.py + static_mem.py (REVIEW_DIR/, AGENT TIME and TIME), logic copied. `` |
@@ -174,7 +174,7 @@ only a comment.
 | `resolve.py:27` | `DONOR_TWIN` | `` C = 'DONOR_TWIN' `` |
 | `resolve.py:28` | `DECODE_A_TWIN` | `` A = 'DECODE_A_TWIN' `` |
 | `run.sh:5` | `HUB` | `` HUB=${HUB:-HUB} `` |
-| `run.sh:6` | `BRANCH` | `` KITCOMMIT=3c3e62ee2786af6133699ff6684d17d66adcb03c          # BRANCH, the kit commit `` |
+| `run.sh:6` | `BRANCH` | `` KITCOMMIT=          # BRANCH, the kit commit `` |
 | `run.sh:8` | `DONOR_TWIN` | `` C=DONOR_TWIN          # donor twin ce511d541cda `` |
 | `run.sh:9` | `DECODE_A_TWIN` | `` A=DECODE_A_TWIN   # decode A twin 4cb0a852e826 `` |
 | `run.sh:11` | `DECODE_A_PIN` | `` APIN=DECODE_A_PIN       # decode pin 5973b76807d8 `` |
@@ -236,7 +236,7 @@ tokens. The checker proves that every byte outside a span is the author's byte.
 ## 4. Files (the manifest of this directory)
 
 Every file here except this one, with the sha256 of its bytes as shipped. For a file of the original, the file sha256
-it has at commit `ec63ec6c4ede` (the first 12 hex digits; a file of the check has `-`), and the number of replaced
+it has (the first 12 hex digits; a file of the check has `-`), and the number of replaced
 spans. `python3 copycheck.py <hub clone> --write-table` wrote this table from the original in git and the files here,
 and copycheck.py checks every row.
 

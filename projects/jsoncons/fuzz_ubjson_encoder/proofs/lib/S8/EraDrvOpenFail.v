@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); the model's access_ok checks. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -53,8 +54,8 @@ Section OpenFail.
   #[local] Abbreviation dinvA := (dinv ar HI sp0 M0).
   #[local] Abbreviation ENV0 := (ENVA []).
 
-  #[using="L C IL HIok Hsp Hal DL P1lo P1str"] Lemma of_blockAA : forall T R (model : Model) (tid : word),
-    let vals0 := vals_mainA sp0 p0 p1 can tid R in
+  #[using="L C IL HIok Hsp Hal DL P1lo P1str"] Lemma of_blockAA : forall T R (model : Model) (tid auxvp : word),
+    let vals0 := vals_mainA sp0 p0 p1 can tid auxvp R in
     regs_ok (ENV0 vals0) sr_mainA R -> know_ok ASEGS (ENV0 vals0) (mrestrict (ahid A0 model) M0) kn_mainA ->
     dinvA [] LK0 cr0 A0 M0 model -> m_fds model = fds0 -> m_fs model = fs0 ->
     (forall vals R' M (model' : Model),
@@ -65,7 +66,7 @@ Section OpenFail.
        srealizes ASEGS scfg (mkCfg (mkst R' (Z_to_bv 64 0x12c460) M (seg_rom ASEGS)) model') T) ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa8488) M0 (seg_rom ASEGS)) model) T.
   Proof.
-    intros T R model tid vals HR HK DI Hfds Hfs0 CONT.
+    intros T R model tid auxvp vals HR HK DI Hfds Hfs0 CONT.
     pose proof Hsp as Hsp'. pose proof Hal as Hal'.
     assert (HL : length vals = 38%nat) by (subst vals; unfold vals_mainA; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
@@ -106,16 +107,16 @@ Section OpenFail.
     - exact F2.
   Qed.
 
-  #[using="L C IL HIok Hsp Hal DL Hnonul P1lo P1str"] Theorem open_fail_nofileA : forall KA R (model : Model) (tid : word),
-    let vals0 := vals_mainA sp0 p0 p1 can tid R in
+  #[using="L C IL HIok Hsp Hal DL Hnonul P1lo P1str"] Theorem open_fail_nofileA : forall KA R (model : Model) (tid auxvp : word),
+    let vals0 := vals_mainA sp0 p0 p1 can tid auxvp R in
     (4096 <= length path)%nat \/ path = [] \/ (path <> [] /\ openat_plain_name path = true /\ fs_lookup fs0 path = None) ->
     regs_ok (ENV0 vals0) sr_mainA R -> know_ok ASEGS (ENV0 vals0) (mrestrict (ahid A0 model) M0) kn_mainA ->
     dinvA [] LK0 cr0 A0 M0 model -> m_fds model = fds0 -> m_fs model = fs0 ->
     open_err_kA scfg ar HI sp0 fs0 [] p1 M0 LK0 cr0 A0 KA ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa8488) M0 (seg_rom ASEGS)) model) KA.
   Proof.
-    intros KA R model tid vals0 Hcase HR HK DI Hfds Hfs0 HKA.
-    apply (of_blockAA KA R model tid HR HK DI Hfds Hfs0).
+    intros KA R model tid auxvp vals0 Hcase HR HK DI Hfds Hfs0 HKA.
+    apply (of_blockAA KA R model tid auxvp HR HK DI Hfds Hfs0).
     clear HR HK DI Hfds Hfs0. clear vals0 model R.
     intros vals R M model HL P0 P2 HR HK DI F1 F2 Sr.
     assert (A17 : getr R 17 = Z_to_bv 64 56) by (regv HR (17%bv : reg); reflexivity).
@@ -135,10 +136,12 @@ Section OpenFail.
           by (rewrite firstn_app; replace (4096 - length path)%nat with 0%nat by lia; cbn [firstn]; apply app_nil_r).
         apply (rdn_firstn ASEGS M (length path + 1)); [exact Sr | lia].
       + intros Hin. apply Hnonul. eapply In_firstnA. exact Hin.
+      + rewrite A11. unfold TASK_SIZE. pose proof (proj2 P1lo). lia.
       + apply (after_openat_failA KA ENAMETOOLONG vals); try assumption. unfold ENAMETOOLONG. lia.
     -
       eapply (rz_openat_empty_lz ASEGS scfg R _ M model ECALLW HF is_ecall_ECALLW Hh A17 A10 A12 Hnl).
-      + split; [cbn; lia|]. split; [intros [] |]. rewrite A11.
+      + split; [cbn; lia|]. split; [intros [] |].
+        split; [rewrite A11; cbn [length]; unfold TASK_SIZE; pose proof (proj2 P1lo); lia|]. rewrite A11.
         rewrite Hemp in Sr. exact Sr.
       + apply (after_openat_failA KA ENOENT vals); try assumption. unfold ENOENT. lia.
     -
@@ -149,9 +152,11 @@ Section OpenFail.
             by (rewrite firstn_app; replace (4096 - length path)%nat with 0%nat by lia; cbn [firstn]; apply app_nil_r).
           apply (rdn_firstn ASEGS M (length path + 1)); [exact Sr | lia].
         + intros Hin. apply Hnonul. eapply In_firstnA. exact Hin.
+        + rewrite A11. unfold TASK_SIZE. pose proof (proj2 P1lo). lia.
         + apply (after_openat_failA KA ENAMETOOLONG vals); try assumption. unfold ENAMETOOLONG. lia. }
       eapply (rz_openat_absent_lz ASEGS scfg R _ M model ECALLW HF is_ecall_ECALLW Hh A17 A10 A12 Hnl path).
-      + split; [lia|]. split; [exact Hnonul|]. rewrite A11. exact Sr.
+      + split; [lia|]. split; [exact Hnonul|].
+        split; [rewrite A11; unfold TASK_SIZE; pose proof (proj2 P1lo); lia|]. rewrite A11. exact Sr.
       + exact Hne.
       + exact Hppl.
       + rewrite F2. exact Hlk.
@@ -164,7 +169,7 @@ Theorem dg_nofile_of_openerr : forall scfg (L : asan_layout) (C : asan_statics_c
 Proof.
   intros scfg L C IL Lay LSt PayOk PayExport DG_OPENERR.
   unfold dg_nofile_stmt, drv_main_on.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hcase HPO ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hcase HPO ar HI p0 p1 can tid auxvp A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
   assert (Hal : bv_unsigned sp mod 16 = 0) by (destruct Hvsp as (_ & _ & H3); exact H3).
   pose proof CONSTS as CONSTS'. destruct CONSTS as (ILY & HRD & Hkpm & Hlin & Hovh & HPR & HEX & _).
@@ -181,7 +186,7 @@ Proof.
   pose proof (regs_ok_nb _ _ (blobs_ev [[]; []; []; []; []]) _ _ NB1 HR) as HR'.
   pose proof (know_ok_nb ASEGS _ _ (blobs_ev [[]; []; []; []; []]) _ _ NB2 HK) as HK'.
   apply (open_fail_nofileA scfg L ar C IL HI HIok sp Hsp Hal DL path fs p0 p1 can M0 Hnonul ltac:(lia) STRF [] cr0 A0
-           (t_die (msg_cannot_open path) fs) R model tid); try assumption.
+           (t_die (msg_cannot_open path) fs) R model tid auxvp); try assumption.
   - destruct Hcase as [H1|[H2|[Hnd Hlk]]]; [left; exact H1 | right; left; exact H2 |].
     destruct (list_byte_eqb path []) eqn:Hemp; [right; left; apply list_byte_eqb_iffA; exact Hemp|].
     right. right. split; [intros E; apply list_byte_eqb_iffA in E; rewrite E in Hemp; discriminate Hemp|]. split; [|exact Hlk].

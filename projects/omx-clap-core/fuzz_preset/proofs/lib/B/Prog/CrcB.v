@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43):
    the walk of check_reject_clean (#102 source fuzz_preset.c:538-555, body unchanged; B' 0x8208c, 21 instructions of
    the whole-program listing lib/B/Listing_prog.v c97cc46b3e13, no UBSan check branch) against the text
-   tcheck_reject_clean_specX (lib/A/PRH_FnCheck.v:537, blob 9ecd8eb167c6, the #102 kit tip f97c8b2f046b:
+   tcheck_reject_clean_specX (lib/A/PRH_FnCheck.v:537, blob 9ecd8eb167c6, the #102 kit tip:
    the ledger with `most own`, the five-conjunct fpre (raZ ceiling, frm_zero), the m-form post fpostm), proved VERBATIM at image B'
    (PI := prh_img_B, L := B_prog_listing, PA := PI_prog_B) and preset's CfParams (lib/A/CfParamsPreset.v), for ANY
    allocator relation ARx with its laws (AR_laws_x, YCbqG.v blob c3b5d0111037). Lane BCrs of h-rw-pre-5; relocated
-   from the old-pin walk (B 0x8211c, donor e63efdd8558c) by lane CrcBp: relocation only (the instruction words
+   from the old-pin walk (B 0x8211c, donor) by lane CrcBp: relocation only (the instruction words
    are equal on both images, every pc-relative target the same symbol + offset).
    Modelled on c-omx-alloc's lib/B/Prog/FuzzStrdupB.v (an intrinsic call, a program call, the branches, the return).
    The code: the frame (16 bytes: ra, s0); `beqz a0` (rc == 0) to the abort tail; s0 = live; bcmp (doc, &empty, 56)
@@ -22,7 +23,7 @@
    entry memory by YC1fPx.v's paj_run_x_inv (YSRrMemnorm.srr_inv_laws_imp), across bcmp by aj_bcmp_at_xm's keep and
    across fuzz_alloc_live by its text's fpostm.
    Numerals: 16 (LENGTH: the frame, `addi sp, sp, -16`); 56 (LENGTH: sizeof (struct pj), `li a2, 56`); 0x10fc0
-   (DERIVED: `empty`'s offset from the listing atom A_OBJ 2, the PAddHi slot of lib/B/Listing_prog.v:645); 52 (DERIVED:
+   (DERIVED: `empty`'s offset from the listing atom A_OBJ 2, the PAddHi slot of lib/B/Listing_prog.v:646); 52 (DERIVED:
    4 * 13, the slot after the jal to fuzz_alloc_live); 8 (LENGTH: a granule); 2 ^ 31, 2 ^ 32, 2 ^ 40, 2 ^ 44, 2 ^ 46,
    2 ^ 47, 2 ^ 63, 2 ^ 64 (DERIVED: int range, slot range, shadow and stack bounds, machine word); 4096 (LENGTH:
    ESTACK / zero page); 64 (LENGTH: GrantRo's hull margin); 8208 / 0 (DERIVED: STK_check_reject_clean /
@@ -264,7 +265,7 @@ end.
    as an image fact of B'. It replaces the stand-in pal_rom_ok (`forall a, in_rom SEGS a -> ~ owned /\ ~ errno`), which
    is FALSE at the instance: the owned-static redzones of .rodata globals lie in B's read-only segments
    (CrcBRomRefute.v cr_pal_rom_ok_false_B at B', the same proposition as g-ph-relay's #102 refutation
-   pal_rom_ok_false_B102, cold/g-ph-relay-p102-N9-ROMVIEW-102Bp 0d0f7930f0a3 lib/ZZRomviewProbe102Bp.v:46-49; their
+   pal_rom_ok_false_B102, lib/ZZRomviewProbe102Bp.v:46-49; their
    agreement is CrcBRomRefute.v cr_pal_rom_ok_txt_B102). Instance witness: CrcBRomRefute.v cr_empty_ro_B (vm_compute
    at YD2l.TfibB, blob 95803a8b9493). *)
 Definition cr_empty_ro (B : asyms) : Prop :=
@@ -282,12 +283,12 @@ Hypothesis LAWS : AR_laws_x SEGS B ARx HL.
 #[local] Notation LEDGER := (prh_ledger (cp := CP) (PI := prh_img_B) (PA := PA) B).
 (* the image's shadow bytes are present in every state, over image B's OWN bounds, the CfImg fields of image B's
    generated record (CLO / CTOP = @cf_img_lo / @cf_img_top CfImgB.CfImg_B): h-mani-a8's img_shadow_vis_cf text
-   (YGcfAmx2.v:47-49) at ci := CfImg_B with ARcf -> ARx (a8's rule 18:56Z; its B' instance
+   (YGcfAmx2.v:48-50) at ci := CfImg_B with ARcf -> ARx (a8's rule 18:56Z; its B' instance
    tfib_img_shadow_vis_cf_B, lib/AU/AImgShadowVisCfB.v on cold/h-mani-a8-alloc102, pending) *)
 Definition cr_img_shadow_vis_B : Prop :=
   forall ly S Hp (W : world SEGS) mem md a, ARx ly S Hp W mem md -> CLO <= a < CTOP ->
   aview SEGS (w_H W) mem (shadow_addr a) <> None.
-(* callee texts: fuzz_alloc_live's (a Theorem Labs lane, lib/A/PRH_FnAlloc.v:110, blob 740f4d11d144 at kit f97c8b2f046b: the
+(* callee texts: fuzz_alloc_live's (a Theorem Labs lane, lib/A/PRH_FnAlloc.v:110, blob 740f4d11d144 at kit: the
    ledger with `most own`, the m-form post fpostm; owner slice S2, the accessors) and the bcmp wrapper's in the keep form
    (YGcallMxmn.v:265 abcmp_realizes_xm, blob b47cf7942c3d: YGcallMx.v abcmp_realizes_x plus the memnorm keep; owner
    a Theorem Labs lane's bcmp row, po_bcmp_cf pays it) *)

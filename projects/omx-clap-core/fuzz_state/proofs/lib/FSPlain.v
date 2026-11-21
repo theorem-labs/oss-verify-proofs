@@ -11,7 +11,7 @@
      lib/AgreeTop.v:16 plain_rz_of_contracts_R (AgreeFrame.v:52-54), with driver_RI_AG over
      AgreeShape.ag_room_calls, omx_G_inside / omx_GI_local (Prog/StatementHalts.v:40, :51) and omx_GI_init
      (Prog/GIInit.v:20), as lib/AgreeState.v:93-99 instantiates them.
-   Template: proofs/libreac/fuzz_grant/lib/A/AsanTop.v:29-89 grant_plain_rz (a working branch c2edc13c0fa).
+   Template: proofs/libreac/fuzz_grant/lib/A/AsanTop.v:29-89 grant_plain_rz (a working branch).
    lead ruling 20:34Z: released slot-named plain-chain files used unchanged, each premise- and byte-checked by a Theorem Labs lane
    Imports: fs's plain lib only (no file of lib/U, no CF / _cf / _cfw / W6 file is named here). One transitive
    exception: lib/AgreeShape.v (ag_shape, ag_room_calls) requires lib/U/AgreeZlib.v for SBD_AG, a released, proved
@@ -19,11 +19,11 @@
    require (lib/U/Reusable/*_cf.v, *_cfw.v and lib/Reusable/YM06_cf.v, YO03_cf.v, YO04_cfw.v, YO0d_cf.v, YO0j_cf.v,
    YO0l_cf.v, YO0m_cf.v, YO0n_cf.v). Without that one edge the closure holds 796 other files and no lib/U, CF, _cf
    or _cfw file.
-   Every file of the closure except this one is in c8557374ad2e (none is an open lane's file) and in the closure of
+   Every file of the closure except this one is (none is an open lane's file) and in the closure of
    fs's released ubsan_agrees/Proof.v.
    The plain closure is fs's own: lib/Reusable/YH02.v:20-24 has ms_realloc = Some src0_A_realloc and
    mremap = Some src0_A_mremap, and Prog/AG/StatementHaltsAg.v:18 fixes ms_realloc B = Some 0x17e00; no file of
-   the raw cgif_file copy (d579ce160e2) is in this closure. *)
+   the raw cgif_file copy is in this closure. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

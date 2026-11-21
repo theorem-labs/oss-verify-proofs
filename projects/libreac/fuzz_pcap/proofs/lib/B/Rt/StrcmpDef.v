@@ -3,8 +3,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap's v1.9.0 ASan build. *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): new file, written for libreac/fuzz_pcap -- asan-ubsan twin of lib/A/Rt/StrcmpDef.v
-   (a working branch 4076c51a596, blob 3e995168297): same definitions and names, image numerals relocated by
+   (a working branch, blob 3e995168297): same definitions and names, image numerals relocated by
    address through code-verified pairs, and Requires lib.A.A<n> -> lib.Reusable.Y<n> (a Theorem Labs lane rule). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

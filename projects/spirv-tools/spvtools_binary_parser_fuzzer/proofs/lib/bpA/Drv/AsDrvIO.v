@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -48,6 +49,7 @@ Section IO.
     ap1H regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0xe8c04) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', ap1Post regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0xe8b58) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -55,9 +57,9 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit [WriteEv (Z_to_bv 64 1) (Z_to_bv 8 48); WriteEv (Z_to_bv 64 1) (Z_to_bv 8 10)] K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd1 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd1 Hrd1 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (aprintf0_first L S Zr regs mem msF mo sp can K PH OK RS Hfd1 HKnil).
+    apply (aprintf0_first L S Zr regs mem msF mo sp can K PH OK RS Hfd1 Hrd1 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.
@@ -91,6 +93,7 @@ Section IO.
     hfH regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0xe8964) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0xe89a0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -98,9 +101,9 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit (W 2 msg_short) K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd2 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd2 Hrd2 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (as_hdr_short_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 HKnil).
+    apply (as_hdr_short_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 Hrd2 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.
@@ -109,6 +112,7 @@ Section IO.
     hfH regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0xe8980) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0xe89a0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -116,9 +120,9 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit (W 2 msg_overrun) K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd2 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd2 Hrd2 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (as_hdr_overrun_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 HKnil).
+    apply (as_hdr_overrun_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 Hrd2 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.

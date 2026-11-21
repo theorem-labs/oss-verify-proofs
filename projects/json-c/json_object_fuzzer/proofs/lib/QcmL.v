@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: grs_kit_stmt and grs_kit_stmt_d take it after alloc_ceiling <= lo, and the lk_stack_malloc calls of their proofs discharge it). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -100,7 +101,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (X : TSet) (Kb : list byte -> TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z),
 HEAPAx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - GRS_STK ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - GRS_STK ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> Z.of_nat (length FRS) < 4096 ->
 (witK X -> exists bs, Z.of_nat (length bs) = 4 /\ witK (Kb bs)) ->
@@ -124,7 +125,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z),
 (bv_unsigned sp + -128) mod 32 = d ->
 HEAPAx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - GRS_STK ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - GRS_STK ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> Z.of_nat (length FRS) < 4096 ->
 (witK X -> exists bs, Z.of_nat (length bs) = 4 /\ witK (Kb bs)) ->
@@ -145,7 +146,7 @@ F (Z_to_bv 64 A_GRS) fc None m (seg_rom asegs)).
 Lemma grs_kit_d0 : grs_kit_stmt_d 0.
 Proof.
 unfold grs_kit_stmt_d.
-intros until lo. intros Hdm HP ST LO LOS SPA HT TP RAE FRN HW KK.
+intros until lo. intros Hdm HP ST LO HBT LOS SPA HT TP RAE FRN HW KK.
 unfold GRS_STK in LOS. subst tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof alloc_ceiling_range as ACR.
@@ -177,6 +178,7 @@ eapply (lk_stack_malloc A4L HIx VV T K) with (k := 2) (bytes := 224) (lo := lo) 
 all: rewrite ?unsigned_lit by lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -351,7 +353,7 @@ Qed.
 Lemma grs_kit_d16 : grs_kit_stmt_d 16.
 Proof.
 unfold grs_kit_stmt_d.
-intros until lo. intros Hdm HP ST LO LOS SPA HT TP RAE FRN HW KK.
+intros until lo. intros Hdm HP ST LO HBT LOS SPA HT TP RAE FRN HW KK.
 unfold GRS_STK in LOS. subst tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof alloc_ceiling_range as ACR.
@@ -383,6 +385,7 @@ eapply (lk_stack_malloc A4L HIx VV T K) with (k := 2) (bytes := 224) (lo := lo) 
 all: rewrite ?unsigned_lit by lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -559,7 +562,7 @@ Qed.
 
 Theorem grs_kit_cps : grs_kit_stmt.
 Proof.
-unfold grs_kit_stmt. intros until lo. intros HP ST LO LOS SPA HT TP RAE FRN HW KK.
+unfold grs_kit_stmt. intros until lo. intros HP ST LO HBT LOS SPA HT TP RAE FRN HW KK.
 assert (Hd : (bv_unsigned sp + -128) mod 32 = 0 \/ (bv_unsigned sp + -128) mod 32 = 16) by (clear - SPA; Z.div_mod_to_equations; lia).
 destruct Hd as [Hd | Hd]; [eapply (grs_kit_d0 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md X Kb A LB LM FRS B lo Hd) | eapply (grs_kit_d16 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md X Kb A LB LM FRS B lo Hd)]; eassumption.
 Qed.
@@ -616,7 +619,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (X : TSet) (Kb : list byte -> TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z),
 HEAPAx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - GRS_STK ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - GRS_STK ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> Z.of_nat (length FRS) < 4096 ->
 (witK X -> exists bs, Z.of_nat (length bs) = 4 /\ witK (Kb bs)) ->
@@ -640,7 +643,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z),
 (bv_unsigned sp + -128) mod 32 = d ->
 HEAPAx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - GRS_STK ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - GRS_STK ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> Z.of_nat (length FRS) < 4096 ->
 (witK X -> exists bs, Z.of_nat (length bs) = 4 /\ witK (Kb bs)) ->
@@ -661,7 +664,7 @@ F (Z_to_bv 64 A_GRS) fc None m (seg_rom asegs)).
 Lemma grs_kit_d0 : grs_kit_stmt_d 0.
 Proof.
 unfold grs_kit_stmt_d.
-intros until lo. intros Hdm HP ST LO LOS SPA HT TP RAE FRN HW KK.
+intros until lo. intros Hdm HP ST LO HBT LOS SPA HT TP RAE FRN HW KK.
 unfold GRS_STK in LOS. subst tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof alloc_ceiling_range as ACR.
@@ -693,6 +696,7 @@ eapply (lk_stack_malloc A4L HIx VV T K) with (k := 2) (bytes := 224) (lo := lo) 
 all: rewrite ?unsigned_lit by lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -867,7 +871,7 @@ Qed.
 Lemma grs_kit_d16 : grs_kit_stmt_d 16.
 Proof.
 unfold grs_kit_stmt_d.
-intros until lo. intros Hdm HP ST LO LOS SPA HT TP RAE FRN HW KK.
+intros until lo. intros Hdm HP ST LO HBT LOS SPA HT TP RAE FRN HW KK.
 unfold GRS_STK in LOS. subst tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof alloc_ceiling_range as ACR.
@@ -899,6 +903,7 @@ eapply (lk_stack_malloc A4L HIx VV T K) with (k := 2) (bytes := 224) (lo := lo) 
 all: rewrite ?unsigned_lit by lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -1075,7 +1080,7 @@ Qed.
 
 Theorem grs_kit_cps : grs_kit_stmt.
 Proof.
-unfold grs_kit_stmt. intros until lo. intros HP ST LO LOS SPA HT TP RAE FRN HW KK.
+unfold grs_kit_stmt. intros until lo. intros HP ST LO HBT LOS SPA HT TP RAE FRN HW KK.
 assert (Hd : (bv_unsigned sp + -128) mod 32 = 0 \/ (bv_unsigned sp + -128) mod 32 = 16) by (clear - SPA; Z.div_mod_to_equations; lia).
 destruct Hd as [Hd | Hd]; [eapply (grs_kit_d0 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md X Kb A LB LM FRS B lo Hd) | eapply (grs_kit_d16 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md X Kb A LB LM FRS B lo Hd)]; eassumption.
 Qed.

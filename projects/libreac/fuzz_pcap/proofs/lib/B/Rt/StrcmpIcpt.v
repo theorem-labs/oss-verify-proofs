@@ -2,14 +2,15 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap's v1.9.0 ASan build. *)
-(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): asan-ubsan twin of lib/A/Rt/StrcmpIcpt.v (a working branch
-   38a189401aa; it differs from the first copy's 4076c51a596 only at its line 339, the img_ro_chunks piece, which
+(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): asan-ubsan twin of lib/A/Rt/StrcmpIcpt.v (a working branch;
+   it differs from the first copy's only at its line 339, the img_ro_chunks piece, which
    this file replaces with the asan-ubsan chunk): the same proof, Requires lib.A.A<n> -> lib.Reusable.Y<n> and lib.A.Rt -> lib.B.Rt, and 37 image
    numerals relocated by symbol + offset, each containing symbol pair VERIFIED equal on the pinned images (code:
    same size and mnemonic + register sequence; data: equal bytes). Table and method:
    pcap-btwin-strcmp.md (sha256 8aa32cf20eb0; internal record). Not relocated (not addresses): the instruction words
    0x63603 / 0x6b683 / 0x73703 / 0x81010113 / 0x5c40006f / 0xff010113 (the same words at the same offsets in
    asan-ubsan), the shadow constants and byte masks. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of the strcmp interceptor at the one call site of the reach, in cgif_file's interceptor-contract
    vocabulary: the literal-instance form of A/AE2j.v (tfib_strchr_lit) over the symbolic-run phases of A/AE2s.v
    (mc_phase) and the shadow-word loads of A/AE6z.v (icpt_ld8, hull_rdword, ra_last).
@@ -347,8 +348,8 @@ change (Ereg regs (map (Z_to_bv 64) [b1; q])) with EE.
 - unfold memS. apply Forall_cons.
 { unfold stkS, SM_SCR. apply (region_ok_stack tfibsegs EE _ 2 sp0 (- 2208)); [exact EE2 | lia | lia |].
   intros a Ha. apply YE2y.apresent_writable. apply HpresW. unfold SM_SCR. lia. }
-(* asan-ubsan: the img_ro_chunks piece around the literal is Reusable/YE3i.v:34 (a working branch
-   0ee17446f70) `mkChunk 0x20a84 (CImg (0x20d0d - 0x20a84))`, which ends exactly at the literal's NUL (0x20d00 + 13 =
+(* asan-ubsan: the img_ro_chunks piece around the literal is Reusable/YE3i.v:34 (a working branch)
+   `mkChunk 0x20a84 (CImg (0x20d0d - 0x20a84))`, which ends exactly at the literal's NUL (0x20d00 + 13 =
    0x20d0d). The asan file's 0x20b80 / 0x20e0d is the asan image's chunk and does not exist in asan-ubsan. *)
 apply Forall_cons; [apply (img_piece_ok _ EE (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 67492)%Z) ((symaddr (Symbols.AsanUbsan.Sec.s_rodata + 68141)%Z) - (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 67492)%Z))); [exact HIMG | unfold img_ro_chunks; cbn; tauto | unfold A_FUZZ_PATH; lia | lia | unfold A_FUZZ_PATH; lia]|].
 apply Forall_cons.

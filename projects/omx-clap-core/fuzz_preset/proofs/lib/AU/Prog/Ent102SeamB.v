@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): THE SEAM of the
-   walk of LLVMFuzzerTestOneInput. The interface's slot statement preset_lib_x_stmt (lib/AU/PresetCfnB.v:1022), EXACTLY as
+   walk of LLVMFuzzerTestOneInput. The interface's slot statement preset_lib_x_stmt (lib/AU/PresetCfnB.v:1023), EXACTLY as
    the driver of record takes it (lib/AU/PresetD2pBPf.v:218, H_preset_lib_x_stmt_B), at the walk's fixed values:
-     sm := ReaderRes.jr_strtod (the walk's ec_pre asks e_sm E = jr_strtod, lib/AU/Ent102CutsB.v:273),
+     sm := ReaderRes.jr_strtod (the walk's ec_pre asks e_sm E = jr_strtod, lib/AU/Ent102CutsB.v:274),
      iface_room_np := YGcfRoomLive.room_live_cf at CfParams_preset (= the driver's np_live_B by conversion),
      A_MOD_AT / A_STAMP := Ent102InstB.ia_mod_at / ia_stamp (the literals ec_img_B fixes),
      MT := ameter_triv (the driver's: its mo_ok / mo_le are True).

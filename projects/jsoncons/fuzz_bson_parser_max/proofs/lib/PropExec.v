@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the rseq-dependent auxv): changed bsb_argc_prefix, entry_page_top_within_window, init_mkst and 7 more; added entry_stack_image_block, entry_stack_image_no_wrap, la_rseq_launch_auxv and 1 more; removed build_stack_bytes_within_span. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
-(* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -14,12 +14,6 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Class FPState := mkFP { fp_regs : bvmap 5 word; fp_csr : bv 32 }.
 Definition fx0 : FPState := mkFP bvmap_empty (Z_to_bv 32 0).
 
@@ -29,17 +23,12 @@ Definition mkst `{fx : FPState} (regs : bvmap 5 word) (pc : word) (mem rom : wor
      ms_mem := mem; ms_rom := rom |}.
 
 Section WithFP1.
-Context {fx : FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
+Context {fx : FPState}. Context {bmK : BMode}.
 
-(* [comment removed for export] *)
 Definition getr (regs : bvmap 5 word) (r : reg) : word :=
   if bv_eqb r 0 then Z_to_bv 64 0 else reg_get regs r.
 Definition regupd (regs : bvmap 5 word) (r : reg) (v : word) : bvmap 5 word :=
   bvmap_set r v regs.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma bv_eqb0_is_x0 : forall r : reg, bv_eqb r 0 = is_x0 r.
 Proof. reflexivity. Qed.
@@ -62,17 +51,12 @@ Proof.
   intro Hu. apply Hne. apply bv_eq. exact Hu.
 Qed.
 
-(* [comment removed for export] *)
 Lemma arg_reg_0 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg).
 Proof. apply bv_eq. reflexivity. Qed.
 Lemma arg_reg_1 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg).
 Proof. apply bv_eq. reflexivity. Qed.
 Lemma arg_reg_2 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg).
 Proof. apply bv_eq. reflexivity. Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma Z_testbit_high : forall n a k, (0 <= n)%Z -> (0 <= a < 2^n)%Z -> (n <= k)%Z ->
   Z.testbit a k = false.
@@ -128,7 +112,6 @@ Proof.
   apply Z.div_le_upper_bound; nia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma bv_swrap_add_idemp_l : forall n x y,
   bv_swrap n (bv_wrap n x + y) = bv_swrap n (x + y).
 Proof.
@@ -147,11 +130,6 @@ Qed.
 Lemma bv_swrap_wrap' : forall n z, bv_swrap n (bv_wrap n z) = bv_swrap n z.
 Proof. intros. apply bv_swrap_wrap. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition zsig (x : word) : Z := bv_signed x.
 
 Definition v_addi (x : word) (imm : Z) : word := Z_to_bv 64 (bv_unsigned x + imm).
@@ -171,7 +149,6 @@ Definition c_ltu (x y : word) : bool := bv_ltu x y.
 
 Definition btgt (pc : word) (imm : Z) : word := v_addi pc imm.
 
-(* [comment removed for export] *)
 Definition v_slti (x : word) (imm : Z) : word :=
   if (zsig x <? imm)%Z then Z_to_bv 64 1 else Z_to_bv 64 0.
 Definition v_sltiu (x : word) (imm : Z) : word :=
@@ -179,12 +156,10 @@ Definition v_sltiu (x : word) (imm : Z) : word :=
 Definition v_slt (x y : word) : word := if c_lts x y then Z_to_bv 64 1 else Z_to_bv 64 0.
 Definition v_sltu (x y : word) : word := if c_ltu x y then Z_to_bv 64 1 else Z_to_bv 64 0.
 
-(* [comment removed for export] *)
 Definition v_slli (x : word) (sh : Z) : word := Z_to_bv 64 (Z.shiftl (bv_unsigned x) sh).
 Definition v_srli (x : word) (sh : Z) : word := Z_to_bv 64 (Z.shiftr (bv_unsigned x) sh).
 Definition v_srai (x : word) (sh : Z) : word := Z_to_bv 64 (Z.shiftr (bv_signed x) sh).
 
-(* [comment removed for export] *)
 Definition v_sll (x y : word) : word :=
   Z_to_bv 64 (Z.shiftl (bv_unsigned x) (bv_unsigned y mod 64)).
 Definition v_srl (x y : word) : word :=
@@ -192,11 +167,9 @@ Definition v_srl (x y : word) : word :=
 Definition v_sra (x y : word) : word :=
   Z_to_bv 64 (Z.shiftr (bv_signed x) (bv_unsigned y mod 64)).
 
-(* [comment removed for export] *)
 Definition v_lui (imm : Z) : word := Z_to_bv 64 imm.
 Definition v_auipc (pc : word) (imm : Z) : word := Z_to_bv 64 (imm + bv_unsigned pc).
 
-(* [comment removed for export] *)
 Definition v_addiw (x : word) (imm : Z) : word :=
   Z_to_bv 64 (bv_swrap 32 (bv_unsigned x + imm)).
 Definition v_slliw (x : word) (sh : Z) : word :=
@@ -216,7 +189,6 @@ Definition v_srlw (x y : word) : word :=
 Definition v_sraw (x y : word) : word :=
   Z_to_bv 64 (bv_swrap 32 (Z.shiftr (bv_swrap 32 (bv_unsigned x)) (bv_unsigned y mod 32))).
 
-(* [comment removed for export] *)
 Definition v_mulh (x y : word) : word :=
   Z_to_bv 64 (Z.shiftr (bv_signed x * bv_signed y) 64).
 Definition v_mulhsu (x y : word) : word :=
@@ -226,7 +198,6 @@ Definition v_mulhu (x y : word) : word :=
 Definition v_mulw (x y : word) : word :=
   Z_to_bv 64 (bv_swrap 32 (bv_unsigned x * bv_unsigned y)).
 
-(* [comment removed for export] *)
 Definition v_div (x y : word) : word :=
   if (bv_unsigned y =? 0)%Z then Z_to_bv 64 (-1)
   else Z_to_bv 64 (Z.quot (zsig x) (zsig y)).
@@ -246,18 +217,12 @@ Definition v_remuw (x y : word) : word :=
   if (bv_wrap 32 (bv_unsigned y) =? 0)%Z then Z_to_bv 64 (bv_swrap 32 (bv_unsigned x))
   else Z_to_bv 64 (bv_swrap 32 (bv_wrap 32 (bv_unsigned x) mod bv_wrap 32 (bv_unsigned y))).
 
-(* [comment removed for export] *)
 Definition v_lb (b : byte) : word := Z_to_bv 64 (bv_signed b).
 Definition v_lh (v : word) : word := Z_to_bv 64 (bv_swrap 16 (bv_unsigned v)).
 Definition v_lw (v : word) : word := Z_to_bv 64 (bv_swrap 32 (bv_unsigned v)).
 
-(* [comment removed for export] *)
 Definition jalr_tgtZ (x : word) (imm : Z) : Z := Z.land (bv_unsigned x + imm) (-2).
 Definition jalr_tgt (x : word) (imm : Z) : word := Z_to_bv 64 (jalr_tgtZ x imm).
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition seg_rom (segs : list Segment) : word -> option byte :=
   fun addr => match memory_read segs addr 1 with Some (b :: _) => Some b | _ => None end.
@@ -272,7 +237,6 @@ Fixpoint rdn (segs : list Segment) (mem : word -> option byte) (a : word) (n : n
     end
   end.
 
-(* [comment removed for export] *)
 Lemma ov_rdn : forall segs (mem : word -> option byte) n a,
   ov_read_bytes segs mem a n = rdn segs mem a n.
 Proof.
@@ -283,7 +247,6 @@ Proof.
   - destruct (memory_read segs a 1) as [[|b rest]|]; [reflexivity| rewrite IH; reflexivity | reflexivity].
 Qed.
 
-(* [comment removed for export] *)
 Lemma le_word_1 : forall b : byte, le_bytes_to_word [b] = Z_to_bv 64 (bv_unsigned b).
 Proof.
   intro b. unfold le_bytes_to_word. cbn [bytes_le_to_Z].
@@ -307,7 +270,6 @@ Proof.
   apply bv_wrap_small. change (bv_modulus 8) with 256%Z. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma b_lb_val : forall b : byte, sext 64 (bv_extract 0 8 (le_bytes_to_word [b])) = v_lb b.
 Proof.
   intro b. rewrite le_word_1, b_extract8_id. apply bv_eq.
@@ -342,10 +304,6 @@ Proof.
     destruct (rdn segs mem (a+1) n) eqn:E; [|discriminate].
     inversion H; subst; cbn. f_equal. eauto.
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma bytes_le_to_Z_nonneg : forall bs, (0 <= bytes_le_to_Z bs)%Z.
 Proof.
@@ -410,10 +368,6 @@ Proof.
   rewrite bytes_le_app. cbn [length]. apply Z.lor_comm.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma ok_mkst_eq : forall (r1 r2 : bvmap 5 word) (p1 p2 : word) (m1 m2 ro : word -> option byte),
   r1 = r2 -> p1 = p2 -> (forall a, m1 a = m2 a) ->
   MachineOk (mkst r1 p1 m1 ro) = MachineOk (mkst r2 p2 m2 ro).
@@ -422,10 +376,6 @@ Proof.
   assert (Em : m1 = m2) by (apply functional_extensionality; exact Hm).
   subst. reflexivity.
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma u64_range : forall x : word, (0 <= bv_unsigned x < 2^64)%Z.
 Proof. intro x. exact (bv_unsigned_in_range _ x). Qed.
@@ -442,7 +392,6 @@ Proof. intro s. exact (bv_unsigned_in_range _ s). Qed.
 Lemma wrap64_range : forall z, (0 <= bv_wrap 64 z < 2^64)%Z.
 Proof. intro z. exact (bv_wrap_in_range 64 z). Qed.
 
-(* [comment removed for export] *)
 Lemma bv_swrap_congr : forall n x y,
   bv_wrap n x = bv_wrap n y -> bv_swrap n x = bv_swrap n y.
 Proof.
@@ -466,11 +415,6 @@ Lemma bv_swrap_add_swrap_r : forall n x y,
 Proof.
   intros n x y. rewrite Z.add_comm, bv_swrap_add_swrap_l, Z.add_comm. reflexivity.
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma b_addsext : forall (a : word) {n} (imm : bv n),
   a + sext 64 imm = v_addi a (bv_signed imm).
@@ -585,7 +529,6 @@ Proof.
   apply Z_lxor_range; apply u64_range.
 Qed.
 
-(* [comment removed for export] *)
 Lemma shamt6_mask : forall s : bv 6,
   bv_unsigned (bv_and (zext 64 s) (Z_to_bv 64 63)) = bv_unsigned s.
 Proof.
@@ -662,10 +605,6 @@ Proof.
   reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma low32_unsigned : forall a : word,
   bv_unsigned (low32 a) = bv_wrap 32 (bv_unsigned a).
 Proof.
@@ -680,7 +619,6 @@ Proof.
   change (Z.of_N 0) with 0%Z. rewrite Z.shiftr_0_r. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma shamt5_mask : forall s : bv 5,
   bv_unsigned (bv_and (zext 32 s) (Z_to_bv 32 31)) = bv_unsigned s.
 Proof.
@@ -704,7 +642,6 @@ Proof.
   exists (2^27)%Z. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma sext32_unsigned : forall v : bv 32,
   bv_unsigned (sext 64 v) = bv_wrap 64 (bv_swrap 32 (bv_unsigned v)).
 Proof.
@@ -823,10 +760,6 @@ Proof.
   rewrite bv_swrap_wrap'. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma m_mul : forall a b : word, mul_div M_MUL a b = v_mul a b.
 Proof. reflexivity. Qed.
 
@@ -859,7 +792,6 @@ Proof.
   reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma div0_32 : forall b : word,
   (bv_unsigned (low32 b) =? 0)%Z = (bv_wrap 32 (bv_unsigned b) =? 0)%Z.
 Proof. intro b. rewrite low32_unsigned. reflexivity. Qed.
@@ -911,10 +843,6 @@ Proof.
   - apply bv_eq. rewrite sext32_unsigned, Z_to_bv_unsigned.
     f_equal; rewrite ?bv_modu_unsigned, ?low32_unsigned; reflexivity.
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma bv_swrap_hi : forall n z, n <> 0%N ->
   (bv_half_modulus n <= z)%Z -> (z < bv_modulus n)%Z ->
@@ -994,9 +922,6 @@ Proof.
   apply Z_land_m2_wrap.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 End WithFP1.
 
 Ltac step_pipeline Hfetch Hecall Hdecode :=
@@ -1020,9 +945,8 @@ Ltac step_pipeline Hfetch Hecall Hdecode :=
   rewrite ?bv_eqb0_is_x0.
 
 Section WithFP2.
-Context {fx : FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
+Context {fx : FPState}. Context {bmK : BMode}.
 
-(* [comment removed for export] *)
 Lemma step_opimm_gen : forall segs regs pc mem rom w op rd rs (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (OpImm op rd rs imm, 4%Z) ->
@@ -1155,7 +1079,6 @@ Proof.
     rewrite ?b_npc4; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_branch_tk_gen : forall segs regs pc mem rom w c rs1 rs2 (imm : bv 13),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Branch c rs1 rs2 imm, 4%Z) ->
@@ -1185,10 +1108,6 @@ Proof.
     cbv beta iota; rewrite Hc; cbv beta iota;
     rewrite b_npc4; reflexivity.
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma step_addi : forall segs regs pc mem rom w rd rs (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
@@ -1580,10 +1499,6 @@ Proof.
   rewrite w_remuw. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma step_beq_tk : forall segs regs pc mem rom w rs1 rs2 (imm : bv 13),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Branch BC_EQ rs1 rs2 imm, 4%Z) ->
@@ -1608,7 +1523,6 @@ Proof.
   exact Hc.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_bne_tk : forall segs regs pc mem rom w rs1 rs2 (imm : bv 13),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Branch BC_NE rs1 rs2 imm, 4%Z) ->
@@ -1633,7 +1547,6 @@ Proof.
   cbn [branch_taken]. unfold c_eq in Hc. rewrite Hc. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_blt_tk : forall segs regs pc mem rom w rs1 rs2 (imm : bv 13),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Branch BC_LT rs1 rs2 imm, 4%Z) ->
@@ -1658,7 +1571,6 @@ Proof.
   exact Hc.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_bge_tk : forall segs regs pc mem rom w rs1 rs2 (imm : bv 13),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Branch BC_GE rs1 rs2 imm, 4%Z) ->
@@ -1707,7 +1619,6 @@ Proof.
   exact Hc.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_bgeu_tk : forall segs regs pc mem rom w rs1 rs2 (imm : bv 13),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Branch BC_GEU rs1 rs2 imm, 4%Z) ->
@@ -1732,11 +1643,6 @@ Proof.
   cbn [branch_taken]. unfold c_ltu in Hc. rewrite Hc. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma step_lui : forall segs regs pc mem rom w rd (imm : bv 20),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Lui rd imm, 4%Z) ->
@@ -1773,7 +1679,6 @@ Proof.
   rewrite b_addsext. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma step_jalr_gen : forall segs regs pc mem rom w rd rs1 (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Jalr rd rs1 imm, 4%Z) ->
@@ -1804,10 +1709,6 @@ Proof.
   rewrite Hecall. cbv beta iota.
   reflexivity.
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma step_lbu : forall segs regs pc mem rom w rd rs (imm : bv 12) b,
   fetch_word segs pc = Some w -> is_ecall w = false ->
@@ -1964,10 +1865,6 @@ Proof.
     reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma two64_pos : (0 < 2^64)%Z.
 Proof. lia. Qed.
 
@@ -2026,10 +1923,6 @@ Proof.
   rewrite bv_wrap_add_idemp_l. f_equal. lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma bv_signed_small : forall x : word, (bv_unsigned x < 2^63)%Z ->
   bv_signed x = bv_unsigned x.
 Proof.
@@ -2057,7 +1950,6 @@ Proof.
   rewrite !bv_signed_small by assumption. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma c_lts_neg_0 : forall x : word, (2^63 <= bv_unsigned x)%Z ->
   c_lts x (Z_to_bv 64 0) = true.
 Proof.
@@ -2076,7 +1968,6 @@ Proof.
   apply Z.ltb_ge. pose proof (u64_range x). lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma c_lts_0_pos : forall n : word,
   (1 <= bv_unsigned n)%Z -> (bv_unsigned n < 2^63)%Z ->
   c_lts (Z_to_bv 64 0) n = true.
@@ -2119,11 +2010,6 @@ Proof.
   apply c_lts_neg_0; assumption.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma c_eq_small : forall x y : word, c_eq x y = bv_eqb x y.
 Proof. reflexivity. Qed.
 
@@ -2137,7 +2023,6 @@ Proof.
   change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. exact Hnz.
 Qed.
 
-(* [comment removed for export] *)
 Lemma c_eq_0_of_u : forall x : word, bv_unsigned x = 0%Z ->
   c_eq x (Z_to_bv 64 0) = true.
 Proof.
@@ -2153,10 +2038,6 @@ Proof. intros x y Hne. unfold c_eq, bv_eqb. apply Z.eqb_neq. exact Hne. Qed.
 
 Lemma c_eq_refl : forall x : word, c_eq x x = true.
 Proof. intro x. apply bv_eqb_refl. Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma getr_same : forall regs (r : reg) v, r <> 0 -> getr (regupd regs r v) r = v.
 Proof.
@@ -2189,11 +2070,6 @@ Proof.
   intros. unfold regupd, reg_get. rewrite bvmap_get_set_same. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 End WithFP2.
 Ltac split_value_ifs :=
   repeat match goal with
@@ -2209,11 +2085,7 @@ Ltac split_value_ifs :=
   end.
 
 Section WithFP3.
-Context {fx : FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+Context {fx : FPState}. Context {bmK : BMode}.
 
 Lemma bytes_le_single : forall b : byte, bytes_le_to_Z [b] = bv_unsigned b.
 Proof. intro b. cbn. apply Z.lor_0_r. Qed.
@@ -2257,7 +2129,6 @@ Proof.
   apply bytes_le_Z_to_le. apply u64_range.
 Qed.
 
-(* [comment removed for export] *)
 Lemma n_to_le_8_spec : forall v : word, word_le8 v = word_to_le_bytes 8 v.
 Proof. reflexivity. Qed.
 
@@ -2267,10 +2138,6 @@ Proof.
   change (2 ^ (8 * Z.of_nat 8))%Z with (2^64)%Z.
   apply Z.mod_small. apply u64_range.
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma nth_error_skipn_cons : forall {A} (bs : list A) d, (d < length bs)%nat ->
   exists b, nth_error bs d = Some b /\ skipn d bs = b :: skipn (S d) bs.
@@ -2291,7 +2158,6 @@ Proof.
   pose proof (u64_range a). lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma rdn_stack : forall segs sp bytes k addr,
   (bv_unsigned sp <= bv_unsigned addr)%Z ->
   (Z.to_nat (bv_unsigned addr - bv_unsigned sp) + k <= length bytes)%nat ->
@@ -2333,10 +2199,6 @@ Proof.
     reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma length_n_to_le_8 : forall v : word, length (word_le8 v) = 8%nat.
 Proof. reflexivity. Qed.
 
@@ -2346,7 +2208,6 @@ Proof.
   cbn [flat_map length]. rewrite length_app, IH, length_n_to_le_8. lia.
 Qed.
 
-(* [comment removed for export] *)
 Definition total_arg_bytes_nat (args : list (list byte)) : nat :=
   fold_right (fun a acc => length a + 1 + acc)%nat 0%nat args.
 
@@ -2428,34 +2289,60 @@ Proof.
   rewrite string_addrs_fst_structure. cbn [length]. rewrite IH. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma build_stack_bytes_within_span : forall ph (sp : word) a e uid hw rnd,
-  (Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd))
-   <= entry_stack_span a e)%Z.
+Lemma entry_stack_image_block : forall inp mbase ph entry (sp : word) draw,
+  entry_stack_image inp mbase ph entry sp draw
+  = build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw.
+Proof. reflexivity. Qed.
+
+Lemma la_rseq_launch_auxv : forall inp sp mbase,
+  la_rseq (launch_auxv inp sp mbase) = kb_rseq (in_kernel inp).
+Proof. reflexivity. Qed.
+
+Lemma length_entry_stack_image_launch :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+  = (bv_unsigned (ed_top draw) - bv_unsigned sp)%Z.
 Proof.
-  intros ph sp a e uid hw rnd.
-  unfold entry_stack_span, build_stack_bytes. cbv zeta.
-  rewrite (string_addrs_pair a). cbv beta iota.
-  rewrite (string_addrs_pair e). cbv beta iota.
-  rewrite !length_app, repeat_length, !length_flat_map_le8,
-    !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-    !length_flatten_strings, length_at_random_bytes.
-  rewrite !total_arg_bytes_Z.
-  match goal with
-  | |- context [Z.to_nat ?pd] =>
-      assert (Hpd : (0 <= pd < 8)%Z) by (apply Z.mod_pos_bound; lia)
-  end.
-  unfold auxv_size. lia.
+  intros v inp mbase ph entry sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as (_ & (_ & _ & Hhi) & _).
+  unfold entry_stack_image.
+  rewrite length_build_stack_bytes, la_rseq_launch_auxv.
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp)))
+    16 ltac:(lia)) as Hm.
+  unfold block_pad_len.
+  rewrite !Nat2Z.inj_add.
+  rewrite Z2Nat.id by lia.
+  lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Lemma bsb_argc_prefix : forall ph (sp : word) argv envp uid hw rnd, exists tl,
-  build_stack_bytes ph sp argv envp uid hw rnd = word_le8 (len_word argv) ++ tl.
+Lemma entry_stack_image_no_wrap :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z.
 Proof.
-  intros ph sp argv envp uid hw rnd. unfold build_stack_bytes.
+  intros v inp mbase ph entry sp brk draw Hok.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw Hok).
+  pose proof (u64_range (ed_top draw)) as Hr. lia.
+Qed.
+
+Lemma bsb_argc_prefix :
+  forall la ph entry (sp top : word) argv envp execfn uid gid hwcap draw,
+  exists tl,
+  build_stack_bytes la ph entry sp top argv envp execfn uid gid hwcap draw
+  = word_le8 (len_word argv) ++ tl.
+Proof.
+  intros la ph entry sp top argv envp execfn uid gid hwcap draw.
+  unfold build_stack_bytes. cbv zeta.
   rewrite (string_addrs_pair argv). cbv beta iota.
   rewrite (string_addrs_pair envp). cbv beta iota.
   eexists. rewrite <- !app_assoc. reflexivity.
@@ -2486,55 +2373,48 @@ Proof.
   cbn [firstn]. rewrite app_nil_r. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma rdn_image_in_block :
-  forall segs ph (sp : word) argv envp uid hwcap draw (a : word) n,
-  (bv_unsigned a + Z.of_nat n
-   <= entry_block_top sp (build_stack_bytes ph sp argv envp uid hwcap draw))%Z ->
-  (bv_unsigned a + Z.of_nat n <= 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hwcap draw)) a n
-  = rdn segs (stack_to_mem sp (build_stack_bytes ph sp argv envp uid hwcap draw)) a n.
-Proof.
-  intros segs ph sp argv envp uid hwcap draw a n Hin Hnw.
-  apply rdn_ext; [exact Hnw|].
-  intros x Hx. apply stack_to_mem_image_in_block. lia.
-Qed.
+  forall segs inp mbase ph entry (sp : word) draw (a : word) n,
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw)) a n
+  = rdn segs (stack_to_mem sp
+        (build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+           (in_argv inp) (in_envp inp) (in_execfn inp)
+           (in_uid inp) (in_gid inp) (in_hwcap inp) draw)) a n.
+Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
 Lemma read_at_offset_image :
-  forall segs ph (sp : word) argv envp uid hwcap draw pre mid post k,
-  build_stack_bytes ph sp argv envp uid hwcap draw = pre ++ mid ++ post ->
+  forall segs inp mbase ph entry (sp : word) draw pre mid post k,
+  entry_stack_image inp mbase ph entry sp draw = pre ++ mid ++ post ->
   length mid = k ->
   (bv_unsigned sp
-   + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hwcap draw)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hwcap draw))
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
       (sp + nat_to_word (length pre)) k
   = Some mid.
 Proof.
-  intros segs ph sp argv envp uid hwcap draw pre mid post k Hb Hk Hnw.
-  pose proof (u64_range sp) as Hsp64.
-  assert (Hlen : (length pre + length mid <= length (build_stack_bytes ph sp argv envp uid hwcap draw))%nat)
-    by (rewrite Hb, !length_app; lia).
-  assert (Hu : bv_unsigned (sp + nat_to_word (length pre))
-               = (bv_unsigned sp + Z.of_nat (length pre))%Z).
-  { unfold nat_to_word. rewrite bv_add_unsigned, Z_to_bv_unsigned.
-    rewrite bv_wrap_add_idemp_r, bv_wrap64_mod. apply Z.mod_small. lia. }
-  rewrite rdn_image_in_block
-    by (unfold entry_block_top; rewrite Hu; lia).
+  intros segs inp mbase ph entry sp draw pre mid post k Hb Hk Hnw.
   exact (read_at_offset segs sp _ pre mid post k Hb Hk Hnw).
 Qed.
 
-Lemma read_argc : forall ph segs (sp : word) argv envp uid hw rnd,
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd)) sp 8%nat
-  = Some (word_le8 (len_word argv)).
+Lemma read_argc : forall inp mbase ph entry segs (sp : word) draw,
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      sp 8%nat
+  = Some (word_le8 (len_word (in_argv inp))).
 Proof.
-  intros ph segs sp argv envp uid hw rnd Hnw.
-  destruct (bsb_argc_prefix ph sp argv envp uid hw rnd) as [tl E].
-  pose proof (read_at_offset_image segs ph sp argv envp uid hw rnd [] (word_le8 (len_word argv)) tl 8%nat) as H.
+  intros inp mbase ph entry segs sp draw Hnw.
+  destruct (bsb_argc_prefix (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+              (in_argv inp) (in_envp inp) (in_execfn inp)
+              (in_uid inp) (in_gid inp) (in_hwcap inp) draw) as [tl E].
+  rewrite <- entry_stack_image_block in E.
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+                [] (word_le8 (len_word (in_argv inp))) tl 8%nat) as H.
   cbn [length] in H.
   rewrite word_add_0 in H.
-  apply H; [rewrite E; reflexivity|reflexivity|exact Hnw].
+  apply H; [exact E|reflexivity|exact Hnw].
 Qed.
 
 Lemma read_byte_at : forall segs (sp : word) bytes pre s post j,
@@ -2555,96 +2435,79 @@ Proof.
   rewrite Hb. rewrite Hsj at 1. rewrite <- !app_assoc. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma read_byte_at_image :
-  forall segs ph (sp : word) argv envp uid hwcap draw pre s post j,
-  build_stack_bytes ph sp argv envp uid hwcap draw = pre ++ s ++ post ->
+  forall segs inp mbase ph entry (sp : word) draw pre s post j,
+  entry_stack_image inp mbase ph entry sp draw = pre ++ s ++ post ->
   (j < length s)%nat ->
   (bv_unsigned sp
-   + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hwcap draw))
-     < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hwcap draw))
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
       (sp + nat_to_word (length pre + j)) 1%nat
   = Some [nth j s (Z_to_bv 8 0)].
 Proof.
-  intros segs ph sp argv envp uid hwcap draw pre s post j Hb Hj Hnw.
-  destruct (nth_error_skipn_cons s j Hj) as [b [Hnth Hskip]].
-  assert (Hsj : s = firstn j s ++ b :: skipn (S j) s)
-    by (rewrite <- Hskip; symmetry; apply firstn_skipn).
-  pose proof (read_at_offset_image segs ph sp argv envp uid hwcap draw
-                (pre ++ firstn j s) [b] (skipn (S j) s ++ post) 1%nat) as H.
-  rewrite length_app in H.
-  rewrite firstn_length_le in H by lia.
-  replace (nth j s (Z_to_bv 8 0)) with b by (symmetry; apply (nth_error_nth _ _ _ Hnth)).
-  apply H; [|reflexivity|exact Hnw].
-  rewrite Hb. rewrite Hsj at 1. rewrite <- !app_assoc. reflexivity.
+  intros segs inp mbase ph entry sp draw pre s post j Hb Hj Hnw.
+  exact (read_byte_at segs sp _ pre s post j Hb Hj Hnw).
 Qed.
 
-(* [comment removed for export] *)
 Lemma nth_app0_bound : forall (a1 : list byte) j,
   (bv_unsigned (nth j (a1 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)) < 256)%Z.
 Proof.
   intros a1 j. apply u8_range.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma entry_page_top_within_window :
-  forall ph (sp : word) argv envp uid hwcap draw,
-  entry_stack_fits sp argv envp ->
-  (entry_page_top sp (build_stack_bytes ph sp argv envp uid hwcap draw)
-   <= sp_window_hi)%Z.
+  forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (entry_page_top draw <= va_stack_top v)%Z.
 Proof.
-  intros ph sp argv envp uid hwcap draw Hfit.
-  pose proof (build_stack_bytes_within_span ph sp argv envp uid hwcap draw) as Hlen.
-  unfold entry_stack_fits in Hfit. unfold entry_page_top.
-  apply page_round_up_Z_le; [ unfold entry_block_top; lia | reflexivity ].
+  intros v inp mbase sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as ((_ & Htop & _) & _ & _).
+  unfold entry_page_top. exact Htop.
 Qed.
 
-Definition wrap_mem (ph : PhdrInfo) (sp : word) (argv envp : list (list byte))
-    (uid : word) (hw : word) (rnd : EntryDraw) : word -> option byte :=
+Definition wrap_mem (inp : ProcInput) (mbase : word) (ph : PhdrInfo)
+    (entry sp : word) (draw : EntryDraw) : word -> option byte :=
   fun addr =>
-    match stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) addr with
+    match stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) addr with
     | Some b => Some b
     | None =>
-      if andb (Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned addr))
+      if andb (Z.leb (stack_window_lo (in_kernel inp) mbase draw)
+                     (bv_unsigned addr))
               (Z.ltb (bv_unsigned addr) (bv_unsigned sp))
       then Some (Z_to_bv 8 0) else None
     end.
 
-Lemma init_mkst : forall segs (pc : N) ph (sp : word) argv envp uid hw rnd,
-  init_machine_state segs pc ph sp rnd argv envp uid hw =
+Lemma init_mkst : forall segs (pc : N) ph (sp mbase : word) draw inp,
+  init_machine_state segs pc ph sp mbase draw inp =
   @mkst fx0 (regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp)
-       (Z_to_bv 64 (Z.of_N pc)) (wrap_mem ph sp argv envp uid hw rnd) (seg_rom segs).
+       (Z_to_bv 64 (Z.of_N pc))
+       (wrap_mem inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw)
+       (seg_rom segs).
 Proof. intros. reflexivity. Qed.
 
-(* [comment removed for export] *)
-Lemma wrap_above_sp : forall ph (sp : word) argv envp (x : word) uid hw rnd,
+Lemma wrap_above_sp : forall inp mbase ph entry (sp : word) draw (x : word),
   (bv_unsigned sp <= bv_unsigned x)%Z ->
-  wrap_mem ph sp argv envp uid hw rnd x = stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x.
+  wrap_mem inp mbase ph entry sp draw x
+  = stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x.
 Proof.
-  intros ph sp argv envp x uid hw rnd Hx. unfold wrap_mem.
-  destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|] eqn:E; [reflexivity|].
-  assert (Hltf : Z.ltb (bv_unsigned x) (bv_unsigned sp) = false) by (apply Z.ltb_ge; lia).
+  intros inp mbase ph entry sp draw x Hx. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|] eqn:E; [reflexivity|].
+  assert (Hltf : Z.ltb (bv_unsigned x) (bv_unsigned sp) = false)
+    by (apply Z.ltb_ge; lia).
   rewrite Hltf, andb_false_r. reflexivity.
 Qed.
 
-Lemma rdn_wrap_stack_above : forall segs ph (sp : word) argv envp (a : word) n uid hw rnd,
+Lemma rdn_wrap_stack_above :
+  forall segs inp mbase ph entry (sp : word) draw (a : word) n,
   (bv_unsigned sp <= bv_unsigned a)%Z ->
-  (bv_unsigned a + Z.of_nat n <= 2^64)%Z ->
-  rdn segs (wrap_mem ph sp argv envp uid hw rnd) a n
-  = rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd)) a n.
+  (bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
+  rdn segs (wrap_mem inp mbase ph entry sp draw) a n
+  = rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw)) a n.
 Proof.
-  intros segs ph sp argv envp a n uid hw rnd Hsp Hnw.
+  intros segs inp mbase ph entry sp draw a n Hsp Hnw.
   apply rdn_ext; [exact Hnw|].
   intros x Hx. apply wrap_above_sp. lia.
 Qed.

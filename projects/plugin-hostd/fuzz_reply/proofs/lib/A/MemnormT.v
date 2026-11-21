@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormT.v (a working branch 30a1993588f, c5 + memnorm; file sha256 5e3ba9244793) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormT.v (a working branch, c5 + memnorm; file sha256 5e3ba9244793) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: memnorm-keeping twins of the frozen Allocate / Deallocate contracts (task MEMNORM, a Theorem Labs lane;
    integrator ReallocPrimary), image-free.  rule 24: no function proved (kind: top-level corollaries).
 
@@ -13,8 +14,8 @@
    - each contract twin is a corollary of the released one by amreal_mono, from the zone Props below; the per-leaf
      forms ([*_keep]) give a consumer the keep at the leaf's end configuration.
 
-   WHY IT IS A COROLLARY (and not a run invariant): the posts carry a RAW frame.  AllocG.alloc_post (AllocG.v:99-100)
-   and DeallocG.dealloc_post_raw (DeallocG.v:132-133) state `mem' x = mem x` for every x outside four zones: the
+   WHY IT IS A COROLLARY (and not a run invariant): the posts carry a RAW frame.  AllocG.alloc_post (AllocG.v:100-101)
+   and DeallocG.dealloc_post_raw (DeallocG.v:133-134) state `mem' x = mem x` for every x outside four zones: the
    owned sets AOX ly S and AOX ly' S', the scratch [ascratch B stk regs] (YG0d.v:219-220: the stack window
    [sp - stk, sp) and errno's 4 bytes) and E (the new / freed block).  memnorm (YAkMemnorm.v:41-43) says of the raw
    overlay only: no byte at a read-only address (ro_addr) and every byte in a segment or below TASK_SIZE.  So
@@ -27,7 +28,7 @@
    TASK_SIZE: neither countermodel is a state the post admits once the Props hold.
 
    WHERE THE PROPS FAIL (measured after this file was written): mn_owned_wr is FALSE at cgif_file.  tfibsegs' segment
-   [0x10000, 0x30000) is read-only, and the owned statics (YF0m.v:279-285 Tfib_owned_static, through YG0d.v:485
+   [0x10000, 0x30000) is read-only, and the owned statics (YF0m.v:280-286 Tfib_owned_static, through YG0d.v:485
    AR_owned_image_law) include bytes in it ((0x102e8, 8) ... (0x20e62, 0x1e)); a Theorem Labs lane reports the same at preset.  So
    at those instances the contract-level corollaries below do not close: the keep is taken instead from each arm's own
    raw frame (MemnormHitG.v, MemnormHitK.v, MemnormDnull.v, MemnormDcommon.v) and from the callee walks' window frames
@@ -94,7 +95,7 @@ intros segs Zs mem mem' HS Hf [Hi Ht]. split; intros x b E.
   rewrite (Hf x NZ) in E. exact (Ht x b E).
 Qed.
 
-(* the four-zone form of the posts' raw frames (AllocG.v:99-100, DeallocG.v:132-133) *)
+(* the four-zone form of the posts' raw frames (AllocG.v:100-101, DeallocG.v:133-134) *)
 Lemma memnorm_frame4 : forall segs (Z1 Z2 Z3 Z4 : Z -> Prop) (mem mem' : word -> option byte),
   (forall x : word, Z1 (bv_unsigned x) -> mn_safe segs x) ->
   (forall x : word, Z2 (bv_unsigned x) -> mn_safe segs x) ->
@@ -244,7 +245,7 @@ Hypothesis SC : mn_scratch segs B ARX AFSTACK_G.
 Hypothesis BL : mn_block segs B ARX.
 Hypothesis NB : mn_new_block.
 
-(* the keep from alloc_post's raw frame (AllocG.v:99-100) *)
+(* the keep from alloc_post's raw frame (AllocG.v:100-101) *)
 Lemma alloc_post_keep : forall inst so bp ly S W regs mem md n tr (r : sptr * astate) ly' W' regs' mem' md',
   alloc_pre segs B U ARX rpre nmax lmax al atp cf inst so bp ly S W regs mem md n tr ->
   (fst r <> PNull -> In (fst r, n) (blocks (snd r))) ->
@@ -491,7 +492,7 @@ forall inst so bp ly S W regs mem md p n tr,
 dealloc_pre segs B U ARX rpre fpre atp inst so bp ly S W regs mem md p n tr -> MP mem ->
 amreal segs (ft p tr S) W (cfg_at segs pcD regs mem md) (dealloc_leaf_em inst ly S W regs mem md p n tr).
 
-(* raw -> view: dealloc_post_raw (DeallocG.v:123-134) holds dealloc_post (DeallocG.v:99-107) *)
+(* raw -> view: dealloc_post_raw (DeallocG.v:124-135) holds dealloc_post (DeallocG.v:100-108) *)
 Lemma dealloc_post_raw_post : forall inst ly S W regs mem md E ly' S' W' regs' mem' md',
   dealloc_post_raw segs B ARX AOX inst ly S W regs mem md E ly' S' W' regs' mem' md' ->
   dealloc_post segs B ARX AOX inst ly S W regs mem md E ly' S' W' regs' mem' md'.
@@ -507,7 +508,7 @@ Hypothesis OW : mn_owned_wr segs ARX AOX.
 Hypothesis SC : mn_scratch segs B ARX DFSTACK_G.
 Hypothesis BL : mn_block segs B ARX.
 
-(* the keep from dealloc_post_raw's raw frame (DeallocG.v:132-133); the freed block is live at entry *)
+(* the keep from dealloc_post_raw's raw frame (DeallocG.v:133-134); the freed block is live at entry *)
 Lemma dealloc_post_raw_keep : forall inst so bp ly S W regs mem md p n tr (S' : astate) ly' W' regs' mem' md',
   dealloc_pre segs B U ARX rpre fpre atp inst so bp ly S W regs mem md p n tr ->
   dealloc_post_raw segs B ARX AOX inst ly S W regs mem md

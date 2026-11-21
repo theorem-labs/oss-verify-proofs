@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: unfolded the Section SE block for exit_run_m into a single lemma with a #[using] attribute and explicit intros, and narrowed the stack window bound in its premise from usp - 8388608 to usp - 6144513; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvExitM.v, line 51. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -47,23 +48,12 @@ Variable M0 : word -> option byte.
 Definition exit_preM (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : list (Z * Z)) (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
 let MV := mrestrict (ahid A model) M in
 dinvA LB LK cr A M model /\ usp - 4096 <= S /\ S <= usp /\ S mod 16 = 0
-/\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+/\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 /\ (forall i, 65536 <= i < 1269760 -> MV (Z_to_bv 64 i) = None)
 /\ exitMA tid MV.
-Section SE.
-Local Abbreviation SEC_T_exit_run_m := (ltac2:(TCodec.tc2 tcn__Jb0DrvExitM "S8'1'3'7%2211%411&D%611&B'Q7yR0%211'2y8%511%311p051';&=y5%2219&Fr:r9r8r7r6r5r3r1%9887654321&A&C%1297%3219'5&Nzr4%3221&O+X0%2241%8241'6&G(Q5+2(4%33N21%52I1&Q6%12Q:J%93Q:31+4%93Q417%;2Q01+V^Rf0%72Q@1%?3Q@31+:%?3Q:1=%A2Q71%<2QEQ6%D3QE21&E%11Q7'K&LvQ3(:&HvQ1r;+QRejL%H2R11r=&I%11:%8576431r<%;221&J%Q02R9QL&<%115%4231%D4CB61p0F1p0I1p0O1p0Q61p0QA1tQ0R=QK1p0R01pRBRL1pR:RM1pQLRN1pQ2R>1pR6RB1pNRD1p2S01pR2RN1pDS01pBS31")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 5%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 6%nat 0%nat).
-Variable S : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 7%nat 0%nat).
-Variable st : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 8%nat 0%nat).
-Variable tid : ltac:(sec_ty2 constr:(SEC_T_exit_run_m) 9%nat 0%nat).
-Lemma exit_run_m : ltac:(sec_stmt2 constr:(SEC_T_exit_run_m) 10%nat 0%nat).
-Proof using L C IL HIok ICok ILY Hsp DL Hex LB LK cr A M model R S st tid.
+#[using="L C IL HIok ICok ILY Hsp DL Hex"] Lemma exit_run_m : ltac2:(TCodec.tc2 tcn__Jb0DrvExitM "S8'1'3'7%2211%411&D%611&B'Q7yR0%211'2y8%511%311p051';&=y5%2219&Fr:r9r8r7r6r5r3r1%9887654321&A&C%1297%3219'5&Nzr4%3221&O+X0%2241%8241'6&G(Q5+2(4%33N21%52I1&Q6%12Q:J%93Q:31+4%93Q417%;2Q01+V^Rf0%72Q@1%?3Q@31+:%?3Q:1=%A2Q71%<2QEQ6%D3QE21&E%11Q7'K&LvQ3(:&HvQ1r;+QRejL%H2R11r=&I%11:%8576431r<%;221&J%Q02R9QL&<%115%4231%D4CB61p0F1p0I1p0O1p0Q61p0QA1tQ0R=QK1p0R01pRBRL1pR:RM1pQLRN1pQ2R>1pR6RB1pNRD1p2S01pR2RN1pDS01pBS31").
+Proof.
+intros LB LK cr A M model R S st tid.
 intros (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst G2 G4 G10 SOP.
 pose proof Hsp as Hsp'. destruct SOP as (SOlock & SOwpos & SOwbase & SOrpos & SOrend).
 set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | _ => 0 end).
@@ -159,6 +149,5 @@ apply (rz_exit_at_lit_lz ASEGS scfg R1 (Z_to_bv 64 0x11546c) M' rom model' ECALL
 - eapply eq_trans; [exact (XKS 10%nat ltac:(unfold AS0DRVP_dpXm.KS_dpXm; cbn [In]; repeat first [left; reflexivity | right]))|]. exact G10.
 - exact Hst.
 Qed.
-End SE.
 End ExitM.
 End FPX_1.

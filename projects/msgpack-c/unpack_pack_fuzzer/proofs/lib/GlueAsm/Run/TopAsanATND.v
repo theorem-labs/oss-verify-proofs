@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section hypotheses entry_launch_ok_va Sv48 and valid_launch in place of entry_stack_fits, which rz_absent_asan_top, rz_toolong_asan_top, rz_dir_asan_top and rz_usage_asan_top pass to the Run theorems; rz_dir_asan_top takes the contract table of the directory family's certificates for the start state with CONFIG_RSEQ too). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -23,6 +24,10 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.AsanU Require UnivAs
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2A Require T_Asan2A.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2T Require T_Asan2T.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.AsanNU Require T_AsanNU.
+(* The CONFIG_RSEQ copies first: their short names are shadowed by the in-place ones below, and are used only
+   through the full-path aliases after the imports. *)
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2DR Require T_Asan2D.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR Require Asan2D_1.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2D Require T_Asan2D.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueAsm.Run Require RunAsanATND.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.Run Require Asan2A_1 Asan2T_1 AsanNU_1 Asan2D_1.
@@ -38,6 +43,8 @@ Module ME := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS.MainEntry.
 Module R2 := RootAsan2.RootAsan2.
 Module RN := RootAsanN.RootAsanN.
 Module OUR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common.ShapeAlg.
+Module TDR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2DR.T_Asan2D.
+Module H1DR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Asan2D_1.
 
 Section TopAsanATND.
 Context {rc : runConstT}.
@@ -64,8 +71,9 @@ Variables (en : ExecEntry) (inp : ProcInput).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hsp : valid_sp (en_sp en).
-Hypothesis Hfit : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
+Hypothesis Hlau : entry_launch_ok_va Sv48 en inp.
 Hypothesis Hhw : valid_hwcap (in_hwcap inp).
+Hypothesis Hvl : valid_launch inp.
 Let p1 := AsanDrun.p1 inp.
 Let RAx : drun := AsanDrun.RA AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivAsan.UNIV AI_frame_top Cw ACCT_fds AsanImgx.IMGX_A_rs3 inp (en_sp en) (en_draw en) Hva.
 
@@ -86,7 +94,7 @@ Theorem rz_absent_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta :
 Proof.
   intros ms mo L RNG sta Hargc2 Hshort Hcase cA (HM & USP & AH & AC & HU & LZ & APR).
   exact (RunAsanATND.rz_absent_asan AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivAsan.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.IMGX_A_apart2 rc)
+           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.IMGX_A_apart2 rc)
            Hargc2 Hshort Hcase (Asan2A_1.Hyps RAx cA)).
 Qed.
 
@@ -97,19 +105,19 @@ Theorem rz_toolong_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta 
 Proof.
   intros ms mo L RNG sta Hargc2 Hlong cT (HM & USP & AH & AC & HU & LZ & APR).
   exact (RunAsanATND.rz_toolong_asan AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivAsan.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.IMGX_A_apart2 rc)
+           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.IMGX_A_apart2 rc)
            Hargc2 Hlong (Asan2T_1.Hyps RAx cT)).
 Qed.
 
 Theorem rz_dir_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta : astate),
   length (in_argv inp) = 2%nat -> path_is_dirref p1 = true ->
-  ctab_ok asegs RAx T_Asan2D.CONTRACTS ->
+  ctab_ok asegs RAx T_Asan2D.CONTRACTS -> ctab_ok asegs RAx TDR.CONTRACTS ->
   H0_at ms mo L RNG sta R2.PRIV -> OUR.realizes asegs (mkCfg ms mo) (K inp).
 Proof.
-  intros ms mo L RNG sta Hargc2 Hdir cD (HM & USP & AH & AC & HU & LZ & APR).
+  intros ms mo L RNG sta Hargc2 Hdir cD cDR (HM & USP & AH & AC & HU & LZ & APR).
   exact (RunAsanATND.rz_dir_asan AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivAsan.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.IMGX_A_apart2 rc)
-           Hargc2 Hdir (Asan2D_1.Hyps RAx cD Hdir)).
+           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.IMGX_A_apart2 rc)
+           Hargc2 Hdir (Asan2D_1.Hyps RAx cD Hdir) (H1DR.Hyps RAx cDR Hdir)).
 Qed.
 
 Theorem rz_usage_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta : astate),
@@ -119,7 +127,7 @@ Theorem rz_usage_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta : 
 Proof.
   intros ms mo L RNG sta HargcN cN (HM & USP & AH & AC & HU & LZ & APR).
   exact (RunAsanATND.rz_usage_asan AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivAsan.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.IMGX_A_apartN rc)
+           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.IMGX_A_apartN rc)
            HargcN (AsanNU_1.Hyps RAx cN)).
 Qed.
 End TopAsanATND.

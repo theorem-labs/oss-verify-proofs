@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's vDSO draw and reservation). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -48,7 +49,8 @@ Proof.
         cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia. }
     destruct Hin as (e & He & He1 & He2).
     apply (madvise_dontneed_ok_intro _ _ _ e He); rewrite ?Eua, ?Eul; [exact He1| exact He2| |].
-    + rewrite Eres. apply reserved_free_above. rewrite Eua. unfold SEGTOP_A. lia.
+    + apply (artm_res_free mo e _ _ Eres); [apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia
+        | apply in_vpos; [exact He | lia] | rewrite ?Eua; lia | rewrite ?Eua, ?Eul; lia].
     + apply region_free_noaccess_of_uncovered; [exact Hnp| rewrite Eul; exact Hlen| rewrite Eua, Eul; unfold len; lia|].
       intros a Ha. rewrite Eua, Eul in Ha.
       refine (proj2 (Hsl a _)). unfold shreg, K_LOW_SHADOW_lo, K_LOW_SHADOW_hi, K_HIGH_SHADOW_lo, K_HIGH_SHADOW_hi. unfold len in Ha. lia.

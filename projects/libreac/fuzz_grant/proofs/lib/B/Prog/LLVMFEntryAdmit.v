@@ -5,10 +5,11 @@
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryAdmit), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACjo.v. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryAdmitTail), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryAdmitDefs.v, lib/A/Prog/GrantEntryAdmit.v and lib/A/Prog/GrantEntryAdmitTail.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image B (fuzz_grant.asan-ubsan, bin sha256 fde52226dc48) walk of the admission tests of
    LLVMFuzzerTestOneInput, in the shape of lib/A/Prog/GrantEntryAdmitDefs.v, GrantEntryAdmit.v and
-   GrantEntryAdmitTail.v at a working branch 3d3b73e282f (the same three blobs, 33897b6de93 / ab603369992 /
-   2f7eef63e78, are on a working branch 5651bf66924),
+   GrantEntryAdmitTail.v at a working branch (the same three blobs, 33897b6de93 / ab603369992 /
+   2f7eef63e78, are on a working branch),
    which cover image A's 0x80d90 .. 0x80e58 and were written for fuzz_grant's entry walk. Every address, register,
    spill-slot offset and byte below is read from image B. The frame facts and the caller's chain come from the
    foundation, LLVMFEntrySeat.v's `ge_frame_addr_eq`, `ge_F_facts` and `ge_achain`. `hdr_ranges`, `fits_spec` and

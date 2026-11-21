@@ -1,6 +1,6 @@
 (* fuzz_preset, image A' (the #102 asan image, pinned 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): the
    journal-generic pieces of the walk of check_reject_clean (Wcrc102.v). A PORT of h-hpreset-7's S911Kit.v
-   (origin/cold/h-hpreset-7-walk-s9-got-rob 9a0674f0b5f2, lib/A/Prog/S911Kit.v), cut down to check_reject_clean:
+   (lib/A/Prog/S911Kit.v), cut down to check_reject_clean:
    (1) the body read from the image's segments (YP02.build_table over AB1v's tfibsegs at the generated entry and
        length of Crc102Syms.v, so a different body fails the build);
    (2) the image facts the walk takes, as one record c102_img over the listing class (generic over {L} {PA}); the

@@ -1,6 +1,6 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/AU/HPgParseX.v at f2c1e970ff7d (image B's
-   segEPI_ok / segEXIT_ok and their helpers, themselves made from proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v at
-   afaa3cb55c1 fv_bytes .. fvw_beq_tk), restated for image A: image A's table pa_tbl and pcs, the names hpx_*, image
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/AU/HPgParseX.v (image B's
+   segEPI_ok / segEXIT_ok and their helpers, themselves made from proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v
+    fv_bytes .. fvw_beq_tk), restated for image A: image A's table pa_tbl and pcs, the names hpx_*, image
    A's EXIT (no alignment test; the key count in the frame cell spa + 40 and the refusal in s9, so res + 4 takes the
    frame cell and res + 8 takes s9), and the theorem names hp_segEPI_A / hp_segEXIT_A. *)
 (* reac_headamp_prop_parse_result 0x845b4 of reac-pw/fuzz_headamp's ASan image A (fuzz_headamp.asan, pinned sha256

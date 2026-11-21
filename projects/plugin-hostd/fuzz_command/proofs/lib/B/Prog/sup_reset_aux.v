@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-10: the parts of sup_reset's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan) that need no callee statement: the walk's entry in B's listing, the listing's 22 slots,
    the symbolic state and seed of the entry, the call targets, the model's step, and the verb literal
-   "supervisor_reset" with the premise rec_shape_of's statement (lib/B/Prog/rec_shape_of_c.v:92-95, a Theorem Labs lane
-   fc8bcbd8b42) asks of it. In the form of lib/B/Prog/sup_quarantine_clear_aux.v (a working branch
-   7eb26a3fc64, whose B code is this one's instruction for instruction, with FN 11 for 10 and the verb 0x21e40 for
-   0x21e00, both 16 bytes), lib/B/Prog/sup_lv2_worker_set_aux.v (a working branch 5c04ebe0308:
-   slw_projz and the existsb membership) and lib/B/Prog/sup_pin_accept_aux.v (a working branch
-   7d0b076eba7: the call targets), after the A walk lib/A/Prog/sup_reset.v (a working branch 3cc8391594b:
+   "supervisor_reset" with the premise rec_shape_of's statement (lib/B/Prog/rec_shape_of_c.v:92-95, a Theorem Labs lane)
+   asks of it. In the form of lib/B/Prog/sup_quarantine_clear_aux.v (a working branch,
+   whose B code is this one's instruction for instruction, with FN 11 for 10 and the verb 0x21e40 for
+   0x21e00, both 16 bytes), lib/B/Prog/sup_lv2_worker_set_aux.v (a working branch:
+   slw_projz and the existsb membership) and lib/B/Prog/sup_pin_accept_aux.v (a working branch:
+   the call targets), after the A walk lib/A/Prog/sup_reset.v (a working branch:
    srs_seed_entry, srs_verb_argA), re-derived on B's code, which differs from A's (below). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* sup_reset on B (recorder.c:403-409; entry BASE + AF_sup_reset = 0x8bd58, 22 instructions, 88 bytes; measured with
    capstone 5.0.7 on the .symtab entry of fuzz_command.asan-ubsan, sha256 658cefbe806b535ba1fbe5a37c8efe02099fc39c...;

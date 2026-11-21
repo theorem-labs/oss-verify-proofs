@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1.v (a working branch 84ee52cd012, file sha256 73a0b6d4f232) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 25 image addresses moved by code-verified function pairs (50 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1.v (a working branch, file sha256 73a0b6d4f232) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 25 image addresses moved by code-verified function pairs (50 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): inst_v's word at TFIB_INST + 0x328 is the value 0x100000, not an address (fs: AF0m.Tfib_const_sym z8 (ANum 0xa4c00) 0x100000, 0xa4c00 = TFIB_INST 0xa48d8 + 0x328; DGif0.dview_n's dn_inst states 0x100000); the relocation tool had moved it as an address to 0x101cc0. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): the static owned range's length is 0x5ca590 - 0xa7790, as fs's AF0m.Tfib_owned_static entry (0xa7790, 0x5ca590 - 0xa7790); the relocation had moved the start but left cgif's 0xa5ad0 as the subtrahend. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): fs C5 - the instance's trace premise is tr_admit (as_universe B) S tr instead of In tr (as_universe B) (as AFex.v / AFfl.v): post_n_cgif, lpost_d_cgif, post_c_cgif, di_depot_cgif and diface_cgif's U; post_c_cgif and enq_bridge_cgif pass it to AFex / AFfl's sd_wf / free_fin_ARm / free_mid_ARm / WS', whose HU has that type. *)
-(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): fs's AFf0.batch_geom / AFex.batch_geom bound rg_mapped_user (reg S kBatchClass) by kFreeArrayOffset (AFex.v:232; EV_MAX 11776) where cgif's YFf0 / YFex state 2 ^ 31, so batch_range_v and ARm_gap unfold it in MU (`unfold kFreeArrayOffset in MU`, as fs's twin AFfu.v:378 does). L edit of the DGif1db class (route-1 pieces R1-A-DG). *)
-(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): ARm_gap's zero-shadow case walks fs's Tfib_zero_shadow, which has 12 ranges (AF0m.v:1146) where cgif's has 5, by `repeat destruct Hr as [<-|Hr]; try contradiction`, as fs's twins AFf0.v:470 / AFjy.v:1597 do, in place of cgif's five-way pattern. *)
+(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): fs's AFf0.batch_geom / AFex.batch_geom bound rg_mapped_user (reg S kBatchClass) by kFreeArrayOffset (AFex.v:233; EV_MAX 11776) where cgif's YFf0 / YFex state 2 ^ 31, so batch_range_v and ARm_gap unfold it in MU (`unfold kFreeArrayOffset in MU`, as fs's twin AFfu.v:379 does). L edit of the DGif1db class (route-1 pieces R1-A-DG). *)
+(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): ARm_gap's zero-shadow case walks fs's Tfib_zero_shadow, which has 12 ranges (AF0m.v:1146) where cgif's has 5, by `repeat destruct Hr as [<-|Hr]; try contradiction`, as fs's twins AFf0.v:471 / AFjy.v:1597 do, in place of cgif's five-way pattern. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file instance of the generic Deallocate interface DGif0.DIface: ARX = ARXr = ARX_cgif, AOX = aowned,
    rpre = rpre_dealloc_cgif, fpre = fpre_cgif (True), ft = free, lpost = qtight, dpost = CLdepot.dpost_x tfibsegs B,
    dbody = AFeu.drain_body, QB = qloose and DRq = DRq_cgif (YG03.RIx).  The class-24 batch bound L24 is a variable;
@@ -179,7 +180,7 @@ Local Notation T := (ly_T ly).
 Local Notation q := (st_qthread S).
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* Facts of ARm alone (AFfu.v:139-158, 263, 294).                                                                   *)
+(* Facts of ARm alone (AFfu.v:140-159, 263, 294).                                                                   *)
 Lemma cell_state_v : ARm B ly S rd0 -> forall c e (w : nat) e', In c (acells B ly S) -> c = ACell e w (AV e') ->
 val_mem tfibsegs m0 (aeval B ly e) w (aeval B ly e').
 Proof.
@@ -204,14 +205,14 @@ Proof. intros M. pose proof (lo_top ly (am_layout B ly S rd0 M)) as (T1 & T2 & _
 Lemma HB17 : 0 <= 17 < 256 /\ Z.land 17 127 = 17.
 Proof. split; [lia | reflexivity]. Qed.
 
-(* dn_unw (AFfu.v:263) *)
+(* dn_unw (AFfu.v:264) *)
 Lemma unw_v : ARm B ly S rd0 -> val_mem tfibsegs m0 (T + t_unwinding) 1 0.
 Proof.
 intros M. replace (T + t_unwinding) with (aeval B ly (AT t_unwinding)) by reflexivity.
 eapply (cell_stateZ_v M); [|reflexivity]. unfold acells. rewrite !in_app_iff. do 8 right. left. reflexivity.
 Qed.
 
-(* dn_ial (AFfu.v:294, ial_vals, at st_internal_inited S = true) *)
+(* dn_ial (AFfu.v:295, ial_vals, at st_internal_inited S = true) *)
 Lemma ial_vals_v : ARm B ly S rd0 ->
 val_mem tfibsegs m0 TFIB_IAL_FLAG 1 (if st_internal_inited S then 1 else 0) /\ val_mem tfibsegs m0 (TFIB_IAL_FLAG + 1) 1 0 /\
 (if st_internal_inited S then val_mem tfibsegs m0 TFIB_IAL_W 8 4096 /\ val_mem tfibsegs m0 (TFIB_IAL_W + 8) 8 (TFIB_IAL_W + 16)
@@ -256,7 +257,7 @@ intros M. split.
 - exact (tfib_const_lookup B TS ly S (w_H W) mem (TFIB_INST + 0x328) 8 0x100000 M ltac:(vm_compute; reflexivity)).
 Qed.
 
-(* dv_junk: the thread's stats words are thread junk (AFfu.v:157-167). *)
+(* dv_junk: the thread's stats words are thread junk (AFfu.v:158-168). *)
 Lemma junk_pres_v : ARm B ly S rd0 -> img_cover ly -> forall a, T + t_stats + 24 <= a < T + t_stats + 40 -> apresent (w_H W) mem a.
 Proof.
 intros M IMG a Ha.
@@ -269,7 +270,7 @@ left. unfold ajunk. right. right. do 5 (apply in_or_app; right). apply in_or_app
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The quarantine (AFfu.v:334-351, YFg1.v:256): Wf's byte sums and qmeter's qtight part.                           *)
+(* The quarantine (AFfu.v:335-352, YFg1.v:256): Wf's byte sums and qmeter's qtight part.                           *)
 Lemma items_n_pos_v : ARm B ly S rd0 -> forall b x, In b (all_batches S) -> In x (b_items b) -> 1 <= ck_n x.
 Proof.
 intros M b x Hb Hx. pose proof (am_wf B ly S rd0 M) as WF.
@@ -303,7 +304,7 @@ pose proof (sum_bytes_ge_v M (qc_list q) ltac:(intros y Hy; unfold all_batches; 
 pose proof (proj1 (qmeter_tight _ HQ)) as QT. lia.
 Qed.
 
-(* The geometry of a batch (AFf0.v:124 batch_geom, YG0s.v:196 region_in_prim; as AFfu.v:369 / :686-692). *)
+(* The geometry of a batch (AFf0.v:125 batch_geom, YG0s.v:196 region_in_prim; as AFfu.v:370 / :687-693). *)
 Lemma batch_range_v : ARm B ly S rd0 -> forall b, In b (all_batches S) ->
 ly_space ly <= ly_space ly + b_self b /\ ly_space ly + b_self b + kBatchBytes <= ly_space ly + kSpaceSize /\
 (ly_space ly + b_self b) mod 8192 = 0 /\ kHighMemBeg <= ly_space ly + b_self b /\ ly_space ly + b_self b + kBatchBytes <= ASAN_CEIL.
@@ -330,7 +331,7 @@ pose proof (batch_range_v M b0 Hb0) as (_ & _ & _ & H4 & H5). ceil. unfold kHigh
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The block [p] of size [n] and its chunk [k] (YFg1.v:57-200, 266, 273; AFfu.v:377, 384, 675-683).               *)
+(* The block [p] of size [n] and its chunk [k] (YFg1.v:57-200, 266, 273; AFfu.v:378, 384, 675-683).               *)
 Variables (p : sptr) (n : Z) (k : chunk).
 Local Notation pa := (sptr_addr B ly p).
 Local Notation nn := (req_size n).
@@ -470,7 +471,7 @@ unfold zdisjoint in D7, D2, D6, D4, D5, DD. cbn [fst snd] in D7, D2, D6, D4, D5,
 unfold DGgiC.PSTATIC, DGgi.PSTATIC. cbv zeta. intros a Ha.
 clear - Ha D7 D2 D6 D4 D5 DD EP ER G5. unfold DGgiC.N8v, DGgi.N8v in *. dsplits; lia.
 Qed.
-(* dv_pres (AFfu.v:680-681) *)
+(* dv_pres (AFfu.v:681-682) *)
 Lemma pres_v : KV -> forall a, pa - 16 <= a < pa + 8 -> apresent (w_H W) mem a.
 Proof.
 intros HK a Ha. pose proof (p_zone_v HK) as PZ. pose proof (Enn_v HK) as EN. pose proof HK as (M & _ & Hk & _).
@@ -478,7 +479,7 @@ pose proof (AFfl.ext_rounded B ly S rd0 M k Hk) as (ER & NN1 & NN2 & NN3). rewri
 apply AFfu.vis_apresent_off; [exact (zone3_off_img _ _ a PZ ltac:(unfold DGgiC.N8v, DGgi.N8v; lia))|].
 destruct (Z_lt_le_dec a pa); [apply (meta_vis_v HK); lia | apply (user_vis_v HK); lia].
 Qed.
-(* The block's shadow is in the shadow region (AFfu.v:384 p_facts). *)
+(* The block's shadow is in the shadow region (AFfu.v:385 p_facts). *)
 Lemma sh_range_v : KV -> SHADOW_OFF + 514 <= DGgi.SPv pa /\ DGgi.SPv pa + DGgi.CNT8v nn <= kHighMemBeg.
 Proof.
 intros HK. pose proof HK as (M & _ & Hk & _). pose proof (Enn_v HK) as EN. pose proof (Epa_v HK) as EP.
@@ -491,7 +492,7 @@ pose proof (AFfl.hs_bounds (pa + (nn + 7) / 8 * 8 - 8) ltac:(lia) ltac:(ceil; un
 unfold shadow_addr in S2. replace (pa + (nn + 7) / 8 * 8 - 8) with (pa + ((nn + 7) / 8 - 1) * 8) in S2 by lia. rewrite Z.div_add in S2 by lia.
 split; lia.
 Qed.
-(* dv_shpres (AFfu.v:682-683) *)
+(* dv_shpres (AFfu.v:683-684) *)
 Lemma shpres_v : KV -> forall a, dshadow pa nn a -> apresent (w_H W) mem a.
 Proof.
 intros HK a Ha. unfold dshadow in Ha. change (DGgi.SPv pa <= a < DGgi.SPv pa + DGgi.CNT8v nn) in Ha. pose proof (sh_range_v HK) as [S1 S2].
@@ -500,14 +501,14 @@ apply AFfu.vis_apresent; [unfold SHADOW_OFF, kHighMemBeg, TFIB_IMG_END in *; lia
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The last batch of the thread's quarantine cache (AFfu.v:210-246, 351, 369, 686-700).                            *)
+(* The last batch of the thread's quarantine cache (AFfu.v:211-247, 351, 369, 686-700).                            *)
 Variables (lastb : batch) (initr : list batch).
 Definition BV : Prop := ARm B ly S rd0 /\ rev (qc_list q) = lastb :: initr.
 Lemma qlist0_v : BV -> qc_list q = rev initr ++ [lastb].
 Proof. intros (_ & Hrev). rewrite <- (rev_involutive (qc_list q)), Hrev. reflexivity. Qed.
 Lemma lastb_in_v : BV -> In lastb (all_batches S).
 Proof. intros HB. unfold all_batches. rewrite (qlist0_v HB), !in_app_iff. left. right. left. reflexivity. Qed.
-(* db_qc (AFfu.v:216) *)
+(* db_qc (AFfu.v:217) *)
 Lemma qc_vals_v : BV -> val_mem tfibsegs m0 (T + t_qc) 8 (DGgi.QSv q) /\ val_mem tfibsegs m0 (T + t_qc + 8) 8 (DGgi.QFv ly q) /\
 val_mem tfibsegs m0 (T + t_qc + 16) 8 (DGgi.Bv ly lastb) /\ val_mem tfibsegs m0 (T + t_qc + 24) 8 (DGgi.QBv q).
 Proof.
@@ -524,7 +525,7 @@ replace (DGgi.Bv ly lastb) with (aeval B ly (match rev (qc_list q) with [] => AN
 eapply (cell_state_v M); [apply IN; do 2 right; left; reflexivity | reflexivity].
 - replace (T + t_qc + 24) with (aeval B ly (aoff (AT t_qc) 24)) by (cbn; lia). eapply (cell_stateZ_v M); [apply IN; do 3 right; left; reflexivity | reflexivity].
 Qed.
-(* db_b (AFfu.v:231) *)
+(* db_b (AFfu.v:232) *)
 Lemma batch_vals_v : BV -> val_mem tfibsegs m0 (DGgi.Bv ly lastb + 8) 8 (DGgi.BBv lastb) /\ val_mem tfibsegs m0 (DGgi.Bv ly lastb + 16) 8 (DGgi.BCv lastb).
 Proof.
 intros HB. pose proof HB as (M & _). pose proof (qlist0_v HB) as QL.
@@ -535,7 +536,7 @@ cbn [batch_cells app] in IN. split.
 - replace (DGgi.Bv ly lastb + 8) with (aeval B ly (aoff (batch_exp lastb) 8)) by (unfold DGgiC.Bv, DGgi.Bv; cbv zeta; cbn; lia). eapply (cell_stateZ_v M); [apply IN; right; left; reflexivity | reflexivity].
 - replace (DGgi.Bv ly lastb + 16) with (aeval B ly (aoff (batch_exp lastb) 16)) by (unfold DGgiC.Bv, DGgi.Bv; cbv zeta; cbn; lia). eapply (cell_stateZ_v M); [apply IN; do 2 right; left; reflexivity | reflexivity].
 Qed.
-(* db_pres, the byte count and item count words (AFfu.v:695-700) *)
+(* db_pres, the byte count and item count words (AFfu.v:696-701) *)
 Lemma bcell_pres_v : BV -> forall a, DGgi.Bv ly lastb + 8 <= a < DGgi.Bv ly lastb + 24 -> apresent (w_H W) mem a.
 Proof.
 intros HB a Ha. pose proof HB as (M & _). pose proof (lastb_in_v HB) as LB.
@@ -545,7 +546,7 @@ destruct (Z_lt_le_dec a (DGgi.Bv ly lastb + 16)).
 + replace a with (DGgi.Bv ly lastb + 8 + (a - (DGgi.Bv ly lastb + 8))) by lia. eapply AFfu.val_mem_vis; [exact V5 | lia].
 + replace a with (DGgi.Bv ly lastb + 16 + (a - (DGgi.Bv ly lastb + 16))) by lia. eapply AFfu.val_mem_vis; [exact V6 | lia].
 Qed.
-(* db_pres, the slot word: batch_junk of a last batch with room (AFfu.v:240 slot_vis).  The room is needed: for a
+(* db_pres, the slot word: batch_junk of a last batch with room (AFfu.v:241 slot_vis).  The room is needed: for a
    full batch the slot word is the first word after the batch. *)
 Lemma slot_pres_v : BV -> DGgi.BCv lastb < kBatchSlots -> forall a, DGgi.SLOTv ly lastb <= a < DGgi.SLOTv ly lastb + 8 -> apresent (w_H W) mem a.
 Proof.
@@ -558,7 +559,7 @@ replace a with (aeval B ly (aoff (batch_exp lastb) (24 + 8 * Z.of_nat (length (b
 apply (vis_range_v M _ (kBatchBytes - 24 - 8 * Z.of_nat (length (b_items lastb)))); [|unfold kBatchBytes; lia].
 left. unfold ajunk. right. right. rewrite !in_app_iff. do 4 right. left. unfold quar_junk. apply in_flat_map. exists lastb. split; [exact LB | left; reflexivity].
 Qed.
-(* db_range (AFfu.v:686-692) *)
+(* db_range (AFfu.v:687-693) *)
 Lemma brange_v : BV -> ly_space ly <= DGgi.Bv ly lastb /\ DGgi.Bv ly lastb + kBatchBytes <= ly_space ly + kSpaceSize /\
 0 <= DGgi.QFv ly q < 2 ^ 64 /\ DGgi.Bv ly lastb mod 8192 = 0.
 Proof.
@@ -566,7 +567,7 @@ intros HB. pose proof HB as (M & _). pose proof (lastb_in_v HB) as LB.
 pose proof (batch_range_v M lastb LB) as (H1 & H2 & H3 & _). pose proof (qf_range_v M) as QF.
 unfold DGgiC.Bv, DGgi.Bv. cbv zeta. dsplits; first [assumption | lia].
 Qed.
-(* db_bounds: the byte sums of Wf and qtight (AFfu.v:351 QB_facts, with qtight in place of the arm's room). *)
+(* db_bounds: the byte sums of Wf and qtight (AFfu.v:352 QB_facts, with qtight in place of the arm's room). *)
 Lemma bb_v : BV -> qmeter S -> 0 <= DGgi.BBv lastb /\ DGgi.BBv lastb <= kQuarantineCacheMax /\ 8192 * DGgi.QSv q <= kQuarantineCacheMax.
 Proof.
 intros HB HQ. pose proof HB as (M & _). pose proof (qlist0_v HB) as QL. pose proof (lastb_in_v HB) as LB.
@@ -586,7 +587,7 @@ intros HB. pose proof HB as (M & _). pose proof (lastb_in_v HB) as LB. pose proo
 pose proof (proj1 (Forall_forall _ _) (wq_batches _ (wf_quarantine _ _ _ _ _ WF)) lastb LB) as [_ H2].
 unfold DGgiC.BCv, DGgi.BCv. apply Nat2Z.inj_le in H2. rewrite Z2Nat.id in H2 by (unfold kBatchSlots; lia). exact H2.
 Qed.
-(* db_disj: batches and chunks are disjoint (AFfl.v:223 batch_vs_chunk; AFfu.v:693-694). *)
+(* db_disj: batches and chunks are disjoint (AFfl.v:224 batch_vs_chunk; AFfu.v:694-695). *)
 Lemma pbdisj_v : KV -> rev (qc_list q) = lastb :: initr -> DGgi.PBDISJ ly pa nn lastb.
 Proof.
 intros HK Hrev. pose proof HK as (M & _ & Hk & _). pose proof (Enn_v HK) as EN. pose proof (Epa_v HK) as EP.
@@ -694,7 +695,7 @@ Qed.
 Section h.
 Variable B : asyms.
 
-(* AFex.batch_geom (AFex.v:228) over ARm alone. *)
+(* AFex.batch_geom (AFex.v:229) over ARm alone. *)
 Lemma dgo_bgeom : forall ly S rd b2, ARm B ly S rd -> In b2 (all_batches S) ->
 exists x, ly_space ly + b_self b2 = region_base ly kBatchClass + x /\ 0 <= x /\ x mod kBatchBytes = 0 /\
 x + kBatchBytes <= rg_alloc_user (reg S kBatchClass) /\ rg_alloc_user (reg S kBatchClass) <= rg_mapped_user (reg S kBatchClass) <= 2 ^ 32 - 2 ^ 29 /\
@@ -713,7 +714,7 @@ assert (XB : x + 8192 <= rg_alloc_user (reg S kBatchClass)).
 exists x. dgo_splits; try assumption; try lia. unfold region_base. subst x. lia.
 Qed.
 
-(* AFex.batches_nodup (AFex.v:244) over ARm alone. *)
+(* AFex.batches_nodup (AFex.v:245) over ARm alone. *)
 Lemma dgo_bnodup : forall ly S rd, ARm B ly S rd -> List.NoDup (map b_self (all_batches S)).
 Proof.
 intros ly S rd M. pose proof (am_wf _ _ _ _ M) as WF.
@@ -726,7 +727,7 @@ inversion ND as [|y l N1 N2]; subst. constructor; [|exact (IH N2)].
 intros Hin. apply N1. apply in_map_iff in Hin as (x' & E & Hx'). apply in_map_iff. exists x'. split; [lia | exact Hx'].
 Qed.
 
-(* AFex.batch_vs_chunk (AFex.v:261) over ARm alone. *)
+(* AFex.batch_vs_chunk (AFex.v:262) over ARm alone. *)
 Lemma dgo_bvc : forall ly S rd b2 x, ARm B ly S rd -> In b2 (all_batches S) -> In x (st_chunks S) ->
 zdisjoint (ly_space ly + b_self b2, kBatchBytes) (ck_base B ly x, ck_extent x).
 Proof.
@@ -757,7 +758,7 @@ ltac:(unfold static_extents, owned_extents; cbn; tauto)) as DJ.
 unfold zdisjoint, kPage, kBatchBytes in *. cbn [fst snd] in DJ. unfold region_base in *. lia.
 Qed.
 
-(* AFex.ext_rounded (AFex.v:155) over ARm alone. *)
+(* AFex.ext_rounded (AFex.v:156) over ARm alone. *)
 Lemma dgo_ext_round : forall ly S rd k, ARm B ly S rd -> In k (st_chunks S) ->
 ck_rz k + (req_size (ck_req k) + 7) / 8 * 8 <= ck_extent k /\ 1 <= req_size (ck_req k) /\ 0 <= (req_size (ck_req k) + 7) / 8 /\
 req_size (ck_req k) <= (req_size (ck_req k) + 7) / 8 * 8 < req_size (ck_req k) + 8.
@@ -776,7 +777,7 @@ pose proof (rz_size_bounds (ck_req k)). lia. }
 pose proof (Z.div_pos (req_size (ck_req k) + 7) 8). lia.
 Qed.
 
-(* A byte of a chunk's extent outside its user range is owned (AFfl.own_ext_quar, AFfl.v:1004, for any state of
+(* A byte of a chunk's extent outside its user range is owned (AFfl.own_ext_quar, AFfl.v:1005, for any state of
    the chunk). *)
 Lemma dgo_own_ext_nonuser : forall ly S rd x a, ARm B ly S rd -> In x (st_chunks S) ->
 ck_base B ly x <= a < ck_base B ly x + ck_extent x ->
@@ -1691,7 +1692,7 @@ apply Exists_exists. exists (0xa7790, 0x5ca590 - 0xa7790). split; [unfold Tfib_o
 dgn; unfold DGgi.IZONE, TFIB_IAL_LO, TFIB_IAL_HI, TFIB_IAL_FLAG in HI. unfold in_zr. cbn [fst snd]. lia.
 Qed.
 
-(* (di_owned_x) The quarantined state owns no more than the entry state and the block (AFfl.owned_S', AFfl.v:988). *)
+(* (di_owned_x) The quarantined state owns no more than the entry state and the block (AFfl.owned_S', AFfl.v:989). *)
 Lemma owned_x_cgif : forall inst ly S W mem md p n k z tr a,
 ARX_cgif B inst ly S W mem md -> rpre_dealloc_cgif S n -> In (p, n) (blocks S) -> find_user (st_chunks S) p = Some k ->
 aowned B ly (qx S k z tr) a -> aowned B ly S a \/ (sptr_addr B ly p <= a < sptr_addr B ly p + req_size n).
@@ -1876,7 +1877,7 @@ Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* (enqueue bridge) a Theorem Labs lane, from its DGif1E.v (helpers shared with the post part). *)
-(* The batch bound.  CLenqcgif.EPc's last conjunct (CLenqcgif.v:396) asks
+(* The batch bound.  CLenqcgif.EPc's last conjunct (CLenqcgif.v:397) asks
    Z.of_nat (length (all_batches (qx S k z tr))) + 1 <= L24, and no premise of CLenqcgif.enq_bridge mentions L24, so
    enq_bridge L24 is false for a small L24 (L24 = 0: the left side is at least 1).  The released bound is
    YG0m.batches_len_fuel (YG0m.v:92): Wf + qloose give Z.of_nat (length (all_batches s)) <= 16384, so the bridge holds
@@ -2224,7 +2225,7 @@ Qed.
 Lemma dpost_aok_cgif : forall inst ly S W tr z m, CLdepot.dpost_x tfibsegs B inst ly S W tr z m -> aok S (KDepot tr) z.
 Proof. intros inst ly S W tr z m H. exact (proj1 H). Qed.
 
-(* (quarantine view) DMiface.qview, field by field, from qview_cgif_narrow (c5 3c93da64d30 narrowed qv_hpres to the
+(* (quarantine view) DMiface.qview, field by field, from qview_cgif_narrow (c5 narrowed qv_hpres to the
    thread header, a Theorem Labs lane's text). *)
 Lemma qview_cgif : di_qview_t B (ARX_cgif B) L24 qloose.
 Proof.
@@ -2314,7 +2315,7 @@ constructor.
 - exact di_depot_cgif.
 - exact dpost_aok_cgif.
 - (* di_enqueue: a Theorem Labs lane's CLenqcgif.di_enqueue_ok with the walk-side bridge enq_bridge_cgif.  CLenq's call post
-     still carries the raw frame conjunct that c5 30300848492 dropped from DMspec.acall_post_x, so it is weakened here. *)
+     still carries the raw frame conjunct that c5 dropped from DMspec.acall_post_x, so it is weakened here. *)
   intros until mat. intros.
   eapply amreal_mono; [| eapply (CLenqcgif.di_enqueue_ok B TS L24 (enq_bridge_cgif L24 HL24)); eassumption].
   intros r W' c' (regs' & mem' & md' & nb & Ec & (P1 & P2 & P3 & P4 & P5 & P6 & _ & P8) & R).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nret_MSsvc_eff: returning from a system call clears the LR/SC reservation). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -72,7 +73,7 @@ Definition eff_mem (m : word -> option byte) (eff : SyscallEffect) : word -> opt
   apply_writes (apply_copies m (apply_zeros (apply_unmaps m (eff_unmaps eff)) (eff_zeros eff)) (eff_copies eff)) (eff_writes eff).
 
 Lemma nret_MSsvc_eff : forall R F pc x8 fc rv m ro eff,
-  nret (MSsvc R F pc x8 fc rv m ro) eff = MS (bvmap_set 10 (eff_ret eff) R) F (pc + Z_to_bv 64 4) fc rv (eff_mem m eff) ro.
+  nret (MSsvc R F pc x8 fc rv m ro) eff = MS (bvmap_set 10 (eff_ret eff) R) F (pc + Z_to_bv 64 4) fc None (eff_mem m eff) ro.
 Proof. intros. destruct eff. reflexivity. Qed.
 
 (* [comment removed for export] *)

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (port-grant's pg-rt AF0r.v) to fuzz_identity.asan: the shared code table only, for stack_malloc classes 0, 3 and 4 and their helpers, at fuzz_identity.asan's addresses. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/Rt/StackMallocTbl.v (donor image sha256 c954b804786c), with its module paths changed and its addresses moved to reac-pw/fuzz_pin's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/StackMallocTbl.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/StackMallocTbl.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/StackMallocTbl.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/StackMallocTbl.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

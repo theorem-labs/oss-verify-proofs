@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: AMKN, APKN, imported from MainEntry). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr InitMem.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import ExecF.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree AsanCtrl AsanEmbed AsanHandoff.
-From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import MainExport MainFactsAsan.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import MainExport MainFactsAsan MainEntry.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import AsanHexScan.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AsanW Require Import AImg ABase ABytes ACanary ALayout ARep AHeapP AQConst ARepQ ARepInit_kit ARepInit_A.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import RunDraw.
@@ -28,8 +29,8 @@ Open Scope Z_scope.
 Section CANSEC1. Context {rc : runConstT}.
 Section B.
 Variables (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem).
-Hypothesis HM : Forall (mfact_ok asegs V m) asan_mem_facts.
-Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
+Hypothesis HM : Forall (mfact_ok asegs V m) AMKN.
+Hypothesis HP : Forall (pfact_ok V) APKN.
 Let L := mkALayout (LV V) w U.
 #[using="V HM"] Lemma arelro_init : arelro m.
 Proof. intros i Hi. unfold ARELRO_LO, ARELRO_HI in Hi. mimg V m HM 0x99000 0x9b000 IMG. apply IMG. Local Ltac2 Set LiaHints.tbl := fun () => "0010>17541226634.11000004S2Hi".

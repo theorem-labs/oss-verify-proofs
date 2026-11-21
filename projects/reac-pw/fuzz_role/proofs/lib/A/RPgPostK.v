@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Prog/RoleBuild/Post.v at f3cc5e1ef75 (its image-
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Prog/RoleBuild/Post.v (its image-
    independent lemmas: the corruption step once its test is decided, the record the piece ends with, the block's
    image under the piece's writes) and lib/Prog/RoleBuild/Facts.v lines 25-92 at the same commit (overwrite_adj),
    restated over lib/Pod's Model / Layout for the ASan walk; the plain image's machine-state predicates are left out. *)

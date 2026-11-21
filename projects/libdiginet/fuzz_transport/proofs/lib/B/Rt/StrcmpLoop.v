@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build
    (image A) by an address map recorded by the porting lane; module paths, GrantSyms ->
    TfibSyms. The proof script is a Theorem Labs lane's, unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/Rt/StrcmpLoop.v, with its module paths and addresses changed; 1 of its 235 lines of code is new or changed and 4 lines of the source are left out. *)
-(* Relocated from libreac/fuzz_identity's released proofs/lib/B/Rt/StrcmpLoop.v (c3777b3715d0) to libdiginet/fuzz_transport's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from libreac/fuzz_identity's released proofs/lib/B/Rt/StrcmpLoop.v to libdiginet/fuzz_transport's
    image B, fuzz_transport.asan-ubsan 41113a03c82f (unstripped twin e217cb0a84f1); the donor is proved against
    fuzz_identity.asan-ubsan baf1a4d065e0 (unstripped twin 43b44d50be8a).
    The walked functions (the trampoline, ___interceptor_strcmp, __sanitizer_weak_hook_strcmp,

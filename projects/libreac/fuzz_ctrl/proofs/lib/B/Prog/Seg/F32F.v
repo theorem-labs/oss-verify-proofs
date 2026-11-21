@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 1535 of its 1667 lines of code are new or changed and 879 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F32.v, with its module paths and module names changed; 259 of its 503 lines of code are new or changed and 1423 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint (ExecF.evtF) twins of the segment-F32 machine runs of lib/B/Prog/Seg/F32.v (fuzz_ctrl
    LLVMFuzzerTestOneInput, asan-ubsan image B). Bridge input for the cgif-form walk only.
    rule 24: no function proved. *)
@@ -11,10 +12,10 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F32.v f32e_evt (:326), f32n_evt (:364), f32m1_evt (:382), f32m2_evt (:419),
-     f32c_evt (:506) at a working branch 3803efccea0
+     f32c_evt (:506) at a working branch
      (blob 8aab0c37ec89d36b19fc634c9d3d4d1fba56b8fa);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f32e_evt_of_F, f32n_evt_of_F, f32m1_evt_of_F, f32m2_evt_of_F (evtF_evt + rng_all) re-derive the
      source statements verbatim. f32c_evt calls reac_box_catalogue (jal at 0x82bc8), so it is split:
      f32c_evt_pre_F re-runs F32.v:558-646 (0x82b5c up to the callee entry, ra = 0x82bcc) and f32c_evt_post_F

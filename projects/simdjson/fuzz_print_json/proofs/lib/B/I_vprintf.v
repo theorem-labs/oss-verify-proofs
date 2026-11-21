@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stdio call proof discharges the new channel-reader premise of the materialization-stability lemma. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -191,7 +192,7 @@ Proof using AF RIP AF_SHW AF_PF.
              (fun x ms' => Qfin x ms' /\ snd x = emit0_next so) (fun _ => t_emit [] T)
              (entry_st ra (Z_to_bv 64 usp) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 FMT_emit) (Z_to_bv 64 ap) a2 a3 a4 a5 a6 a7
                 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_vprintf m) c
-             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| exact (tok_emit so SO)| exact Hc| exact IMPL2|].
+             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| intros mo (_ & _ & _ & HRD); exact HRD| exact (tok_emit so SO)| exact Hc| exact IMPL2|].
     - intros mo fd (HAR & HF & _) Hin. cbn in Hin. destruct Hin as [<-|[]]. rewrite HF. exact HFD.
     - intros x ms' c' (HQ & HX) Hc'.
       assert (R : realizes bsegs c' T).

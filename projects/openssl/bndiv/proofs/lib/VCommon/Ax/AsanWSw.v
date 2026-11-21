@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adv_latch: advance_past_svc now clears the reservation, and SWF_setx_none is added for the None successor); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -103,6 +104,25 @@ Proof.
   apply rg_setx_other. intros ->. exact (Hr Hin).
 Qed.
 
+
+(* NEW at this revision, beside SWF_setx, which stays true and is untouched.
+   adv_latch below now hands setx the literal `None` in the reservation slot because
+   advance_past_svc sets `ms_resv := None` (LPS@75d69e00 Run.v:221-228, the line
+   `ms_resv := None; ms_fcsr := ms_fcsr ms;` at :225), so SWF_setx's `r = ms_resv S`
+   is no longer dischargeable by reflexivity there.  Nothing is weakened: the SWF
+   record's reservation field is ALREADY the disjunction `ms_resv ms = ms_resv ms0 \/
+   ms_resv ms = None` (:89), so the `None` successor is exactly the right-hand
+   disjunct the record was written to carry.  Ported from openssl/bignum, where the
+   kernel confirmed it (AsanWStdio.vo built). *)
+Lemma SWF_setx_none : forall ms0 S lo hi rd v p m,
+  SWF ms0 S lo hi -> (rd = 0 \/ In rd CLOB) -> m = ms_mem S -> SWF ms0 (setx S rd v p None m) lo hi.
+Proof.
+  intros ms0 S lo hi rd v p m [H1 H2 H3 H4 H5 H6 H7 H8] Hrd ->. constructor;
+    [reflexivity | exact H2 | exact H3 | exact H4 | right; reflexivity | | exact H7 | exact H8].
+  intros r Hr. rewrite <- (H6 r Hr).
+  destruct Hrd as [->|Hin]; [apply rg_setx_x0|].
+  apply rg_setx_other. intros ->. exact (Hr Hin).
+Qed.
 Lemma SWF_store : forall ms0 S lo hi p (a : word) (bs : list byte) r m,
   SWF ms0 S lo hi ->
   r = inval a (ms_resv S) -> m = write_to_mem (ms_mem S) a bs ->
@@ -118,8 +138,16 @@ Proof.
   - intros x Hx. rewrite mem_setx. apply w2m_keeps_some. exact (H8 x Hx).
 Qed.
 
+(* WAS, and the kernel measured it false in the twin trees:
+     Lemma adv_latch : forall S v,
+       advance_past_svc (set_gpr0 (latch S) v)
+       = setx S 10 v (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (ms_mem S).
+   advance_past_svc sets `ms_resv := None` (LPS@75d69e00 Run.v:225) and setx's fifth
+   argument is the reservation (VCommon/BootWitness/BootStep.v:28-29).  set_gpr0 and
+   latch touch neither ms_pc_val nor ms_resv, so the reservation is the only field
+   that moved.  Ported from openssl/bignum. *)
 Lemma adv_latch : forall S v,
-  advance_past_svc (set_gpr0 (latch S) v) = setx S 10 v (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (ms_mem S).
+  advance_past_svc (set_gpr0 (latch S) v) = setx S 10 v (ms_pc_val S + Z_to_bv 64 4) None (ms_mem S).
 Proof. reflexivity. Qed.
 
 Lemma gpr_latch0 : forall S, ms_gpr (latch S) 0 = rg S 10. Proof. reflexivity. Qed.

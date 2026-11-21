@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (PropExec qualified as K5.AS.PropExec where a twin module shadows it). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -12,7 +13,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From OSSVerify.leptonica.graymorph_fuzzer.images Require Import Asan.
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.K5.AS Require Import PropExec StoreOk Hoare AgentLib.
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.K5.AS Require Import PropExec.  (* [comment removed for export] *)
-Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
+Local Instance asanreflect_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.K5.AS Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.K5.AS14 Require Import AsanTablesA.
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.K5.AS Require Import AsanPopFree AsanPlanSoundSums.

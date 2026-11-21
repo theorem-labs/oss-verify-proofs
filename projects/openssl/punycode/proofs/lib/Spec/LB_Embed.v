@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the guard page is shown free of the reservations through the break mapping and kl_vdso, as the vDSO pair is no longer below the break). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -133,7 +134,10 @@ Proof.
   assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; unfold PGSZ in *; lia).
   assert (Un : bv_unsigned nw = PGSZ) by (subst nw; apply unsigned_lit; unfold PGSZ; lia).
   assert (Hrf : region_free (vm_reserved h) aw nw = true).
-  { apply region_free_above. intros e He. rewrite Ua, Ha, Ecur. apply (kl_resv_top _ _ _ HK). exact He. }
+  { (* the guard page lies inside the break mapping [e0], which misses every
+      reserved entry ([kl_vdso]; the vDSO pair is no longer below the break) *)
+    apply (region_free_inside _ aw nw e0 (fun r Hr => kl_vdso _ _ _ HK r Hr e0 He0));
+      rewrite ?Ua, ?Un; unfold elo, ehi in *; unfold PGSZ in *; lia. }
   assert (Hmc : map_contains (vm_maps h) aw nw = true).
   { unfold map_contains. apply existsb_exists. exists e0. split; [exact He0|]. rewrite Ua, Un. unfold elo, ehi in *.
     rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by (unfold PGSZ in *; lia). reflexivity. }

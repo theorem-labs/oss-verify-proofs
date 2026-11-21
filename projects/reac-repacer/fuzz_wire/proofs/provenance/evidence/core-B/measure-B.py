@@ -107,7 +107,7 @@ def const_shadow_max(yf0m):
 
 
 # Values read from the start-up tables (lib/B/YF0m.v is generated from the image by the start-up layer). GRANTLIB =
-# fuzz_grant's released lib (recipes 4f87de75d67); CORE = this unit's tree; YE22 = the relocated YE22.v (stage-out).
+# fuzz_grant's released lib (recipes); CORE = this unit's tree; YE22 = the relocated YE22.v (stage-out).
 if os.environ.get('GRANTLIB') and os.environ.get('CORE'):
     gl, cl = os.environ['GRANTLIB'], os.environ['CORE'] + '/lib'
     ye22 = os.environ.get('YE22', cl + '/B/YE22.v')

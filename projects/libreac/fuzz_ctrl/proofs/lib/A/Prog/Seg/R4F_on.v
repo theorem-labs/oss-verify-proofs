@@ -6,19 +6,20 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its addresses and numbers changed; 554 of its 653 lines of code are new or changed and 297 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P4.v; 138 of its 266 lines of code are new or changed and 525 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P4F_on.v, with its module names, addresses and numbers changed; 87 of its 127 lines of code are new or changed and 226 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/R4F_on.v -- route (C) twin of Seg/R4F.v's r4_evt_F (Seg/R4F.v is not in this delivery) (a Theorem Labs lane 09:20Z; wave lead a Theorem Labs lane).  Written by
    a Theorem Labs lane for the glue of seg_R4 (lib/A/ACtlG/R4.v), with a Theorem Labs lane's standing consent and
    a Theorem Labs lane's go (12:55Z / 13:0xZ).  Seg/R4F.v (not in this delivery) is not edited by this file; its last version (the BASE blob below) differs from a working branch's blob 3325917d8e2 only in the module qualification of MState in r4_evt_F's proof; this file
    is a NEW file beside it.  rule 24: no function proved (kind: segment run lemma, footprint form).
 
-   BASE: the text of r4_evt_F in a Theorem Labs lane's fold a working branch 4bae33fdf54 (Seg/R4F.v (not in this delivery) blob
+   BASE: the text of r4_evt_F in a Theorem Labs lane's fold a working branch (Seg/R4F.v (not in this delivery) blob
    061393e6fc5: every MState.unsigned_lit in the full path of its copy, A.Tk.UL.MState), with ONE change each way, as
    the callee's own twin (asan_memset_cF_on.v) makes it:
      - the universal premise `shadow_rw m` becomes `shadow_rw_on (r4_evt_shadow_R D) m`;
      - the post's `shadow_rw m'` becomes `forall P, shadow_rw_on P m -> shadow_rw_on P m'`;
    and the callee contract asan_memset_contract_F becomes asan_memset_contract_F_on (a Theorem Labs lane, asan_memset_cF_on.v
    6137e3c5f10; proof asan_memsetF_on.v 34752af7b24 asan_memset_holds_F_on; both by path from
-   a working branch 83ab88c3325).  Every other binder, premise and post conjunct is r4_evt_F's.
+   a working branch).  Every other binder, premise and post conjunct is r4_evt_F's.
 
    THE REGION.  The segment's own accesses (li a2,72 ; ld a0,48(s1) ; li a1,0 ; jal) touch no shadow byte.  The callee
    reads (and never stores) the shadow words of its destination, asan_memset_shadow_R a0 a2 = sh_word_on D 72 at this

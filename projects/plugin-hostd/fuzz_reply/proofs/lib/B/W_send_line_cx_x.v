@@ -7,10 +7,10 @@
    send_line*.v (another image) and does not cover lib/B; git grep over origin/cold/* finds two donors and no lib/B
    W_send_line* or pb_send_line (checker line `R24BSendLine: CONFIRM`).  Ported here, STRUCTURE only (no theorem
    crosses either framework):
-   - image A, new framework: a working branch 9367674296a lib/A/W_send_line_cx.v / _entry.v / _loop.v /
+   - image A, new framework: a working branch lib/A/W_send_line_cx.v / _entry.v / _loop.v /
      _datab_cx.v / _grow_cx.v / W_send_line.v (pb_send_line_g, sl_grow_stmt its one premise) and the copy half
-     a working branch 99ad96efcc6 lib/A/W_send_line_datab.v (sl_copy);
-   - image B, old framework: a working branch 37280b674f71 lib/B/Prog/send_line_*.v (send_line_b.v:2283
+     a working branch lib/A/W_send_line_datab.v (sl_copy);
+   - image B, old framework: a working branch lib/B/Prog/send_line_*.v (send_line_b.v:2283
      send_line_holds; its cuts, its trap handling and its data arm send_line_seg.v asl_grow_call / asl_copy_call).
    send_line (line, len) at 0x82854 (relay.c:66-86, fuzz_send inlined from fuzz_reply.c:278-313), 168 instructions,
    frame 144 (13 saved registers at 40(sp) .. 136(sp); the auipc values of g_client_broken, g_send_max, g_capout,
@@ -37,21 +37,22 @@
    made from W_send_line_cx.v: its definitions and lemmas restated over a generic allocator relation ARx, in room form
    (RP, rp_RM, cnt_ok_pk, kr), with the caller-context realloc rule (HCTX_slr at + 0x1a0), HP0, BLKM, and bridges to the
    AR statements at RP_AR (the B twin of a Theorem Labs lane's lib/A/W_send_line_cx_x.v) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the ARx-GENERIC twin of lib/B/W_send_line_cx.v, the interface of the image-B send_line
-   walk (row G-BSL-b), from its text at 6df41a6c5267 (sha256 ec7655862ed0; internal record), transformed as image A's
-   lib/A/W_send_line_cx.v was into lib/A/W_send_line_cx_x.v at a0c781b35e6 (sha256
-   6da6bc004c4f; internal record, the room form of W7's 3008a0933e8 skeleton), over the B kit at the same base (lib/B/W_contract_x.v
+   walk (row G-BSL-b), from its text (sha256 ec7655862ed0; internal record), transformed as image A's
+   lib/A/W_send_line_cx.v was into lib/A/W_send_line_cx_x.v (sha256
+   6da6bc004c4f; internal record, the room form of W7's skeleton), over the B kit at the same base (lib/B/W_contract_x.v
    Section s7, W_journal_x.v, W_sites_x.v, W_kit_x.v). W_send_line_cx.v is NOT edited: this file sits beside it, and
    every walk that cites it builds unchanged.  proves no function (kind: statement text; plus the epilogue segment
    lemma sl_epi_x and the AR bridges).
    - Each AR-stated definition or lemma NAME of W_send_line_cx.v has its twin NAME_x, in its Section nesting, over a
      Section relation `ARx` (its third argument the ghost list Hp), the laws `LAWS : AR_laws_x SEGS B ARx hl`
-     (YCbqG.v:177) and the placement parameter PST of the journal W_journal_x.ajournal_gx_x. PST and ARx follow B among
+     (YCbqG.v:178) and the placement parameter PST of the journal W_journal_x.ajournal_gx_x. PST and ARx follow B among
      the Section variables, so a twin's arguments are the original's with PST ARx after B.  The twins are split over
      three files as image A's are: here sl_epi_x, SLI_x, sl_loop_at_x, sl_loop_stmt_x, sl_entry_stmt_x;
      W_send_line_datab_cx_x.v SLM_x, sl_copy_stmt_x; W_send_line_grow_cx_x.v SLN_x, sl_grow_stmt_x.  B's text forces
      one placement: sl_loop_at_x is here, not in the datab file as on A, because B's sl_loop_stmt is
-     `forall n, sl_loop_at n` (W_send_line_cx.v:306) where A's states the loop directly.
+     `forall n, sl_loop_at n` (W_send_line_cx.v:307) where A's states the loop directly.
    - The entry's ghost list Hp follows S (SLI_x, sl_loop_at_x, sl_epi_x); the loop head's own ghost list HpL is an
      existential right after SL in SLI_x; sl_epi_x's journal ends at HpX (after SX), which its continuation keeps.
    - The Section hypotheses are their twins: AERRNO W_sites_x.aerrno_realizes_x, AMEMCPY W_sites_x.aintrin_realizes_x,
@@ -70,7 +71,7 @@
      PST := []: for SLI the two one-directional forms SLI_x_AR0 (generic -> AR, any Hp) and SLI_x_of_AR0 (AR -> generic,
      any Hp, HpL := []), and for each statement *_x_AR0 (generic at ARi0 -> AR) and *_x_of_AR0 (AR -> generic at ARi0).
    No statement difference is forced by ARx: no premise or conclusion is added or dropped, only Hp threaded.
-   THE ROOM FORM (image A's a0c781b35e6 / 0828d5d79f5, a Theorem Labs lane's row A-SL_x): the Section gains `Variable RP :
+   THE ROOM FORM (image A, a Theorem Labs lane's row A-SL_x): the Section gains `Variable RP :
    roomp` after MT, as W_contract_x.v Section s7, whose sl_spec_x and sl_post_x take it; AREALLOC is
    W_journal_x.arealloc_cf_rule_c_x at RP and CTX_R; HP0 (a Theorem Labs lane's HP0 ruling) and BLKM (a live block's request
    below 2 ^ 30) join LAWS.  SLI_x carries C3's peak (W_send_line_cx.v SLI, unchanged) and, after frames, three room
@@ -130,26 +131,26 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* a live block's request is below 2 ^ 30 (image A's BLKM text, W_LLVMFuzzerTestOneInput_exit_x.v:270; the top states it
+(* a live block's request is below 2 ^ 30 (image A's BLKM text, W_LLVMFuzzerTestOneInput_exit_x.v:271; the top states it
    at ARX from the cf instance's AR_blocks_law_cf): the copy half's memcpy at 0x82a34 needs n < 2 ^ 32 *)
 Hypothesis BLKM : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 30.
-(* W_send_line_cx.v:98-106, AR-free *)
+(* W_send_line_cx.v:99-107, AR-free *)
 Hypothesis HG : gx_ok SEGS B (G_SL B RG).
 Hypothesis HGR : forall a, inG (G_SL B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_SL B RG).
 Hypothesis HGO : gx_ok SEGS B [(rg_client RG, 4); (rg_send_dead RG, 1); (rg_send_max RG, 8)].
 Hypothesis MTL : ameter_laws MT.
 Hypothesis TL : PALib B.
-(* W_send_line_cx.v:108-110, the runtime and allocator sites over ARx (the allocator's at RP) *)
+(* W_send_line_cx.v:109-111, the runtime and allocator sites over ARx (the allocator's at RP) *)
 Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, YCk0.v:34, holds [0x829f4]; YCk0.v:169 is send_line's edge to it); send_line hands the rule a cut
-   chain (ch = []), so the trace is the return address alone (image A's a0c781b35e6..0828d5d79f5 form). *)
+   chain (ch = []), so the trace is the return address alone (image A.. form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x1a0] CTX_R.   (* realloc returns to 0x829f4 *)
-(* W_send_line_cx.v:113-140, AR-free *)
+(* W_send_line_cx.v:114-141, AR-free *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
@@ -172,12 +173,12 @@ Hypothesis HRGD : zpairwise_disjoint
  (rg_send_max RG, rg_send_max RG + 8); (rg_nout RG, rg_nout RG + 8);
  (rg_capout RG, rg_capout RG + 8); (rg_out RG, rg_out RG + 8);
  (as_errno B, as_errno B + 4)].
-(* W_send_line_cx.v:141-142, the run chain over the generic journal (W_journal_x.v Section g) *)
+(* W_send_line_cx.v:142-143, the run chain over the generic journal (W_journal_x.v Section g) *)
 Let RUN := paj_run_x_x B PST ARx LAWS (G_SL B RG) HG 0 [].
 Let RET := paj_ret_at (PL := PL_fr) (PI := PI).
 
 
-(* W_send_line_cx.v:270 SLI: the loop head L (0x828f8), the entry's ghost list Hp after S, the head's HpL after SL;
+(* W_send_line_cx.v:271 SLI: the loop head L (0x828f8), the entry's ghost list Hp after S, the head's HpL after SL;
    kr is the room the caller keeps after the call (sl_post_x's kr) *)
 Definition SLI_x (regsE : bvmap 5 word) ly S (Hp : list Z) W mem md (c : ctl) (O : list byte) (mx no cap out line : Z)
 (Bl : list byte) (WL : world SEGS) (regsL : bvmap 5 word) (memL : word -> option byte) (mdL : Model) (sent eiL : Z)
@@ -212,16 +213,16 @@ frames SL = frames S /\
 (ct_dd c = 0 -> rp_RM RP SL (Z.to_nat (sl_cost_run MT_rk (Z.to_nat (len - sent)) mx (no + sent) capL (len - sent)) + kr)) /\
 (ct_dd c = 1 -> rp_RM RP SL kr) /\
 cnt_ok_pk RP sl_pk (ablocks B ly S).
-(* W_send_line_cx.v:299 sl_loop_at *)
+(* W_send_line_cx.v:300 sl_loop_at *)
 Definition sl_loop_at_x (n : nat) : Prop :=
 forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_x regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr ->
 2 * (Z.of_nat (length Bl) - sent) + eiL <= Z.of_nat n ->
 SRr SEGS WL (mkCfg (mkst regsL (Z_to_bv 64 (BASE + A_sl_loop)) memL (seg_rom SEGS)) mdL)
 (sl_post_x B PST ARx MT RP RG regsE ly S Hp W mem md c O mx no cap out Bl kr).
-(* W_send_line_cx.v:306 sl_loop_stmt *)
+(* W_send_line_cx.v:307 sl_loop_stmt *)
 Definition sl_loop_stmt_x : Prop := forall (n : nat), sl_loop_at_x n.
-(* W_send_line_cx.v:388 sl_entry_stmt: the entry over the loop gives W_contract_x.v's sl_spec_x *)
+(* W_send_line_cx.v:389 sl_entry_stmt: the entry over the loop gives W_contract_x.v's sl_spec_x *)
 Definition sl_entry_stmt_x : Prop := sl_loop_stmt_x -> sl_spec_x B PST ARx MT RP MMAX RG A_send_lineP.
 (* ---- route R (RULE-SHAPES.md (sha256 2e856ce788dd; internal record) sec 0): this Section's texts at a world relation R.  Each <name>_xR below is <name>_x
    with the journal ajournal_gx_x -> ajournal_gx_xR .. R, SRr SEGS -> SRrG SEGS R, sl_post_x / sl_spec_x -> their R
@@ -239,7 +240,7 @@ Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md
 Hypothesis HA_call : forall lyc Sc regsT ch p n, mo_ok MT Sc (mo_malloc MT n + mo_free MT) -> HA lyc Sc regsT ch p n.
 Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CTX_R R (SIGMA WS_realloc).
 Let RUNR := paj_run_x_xR B PST ARx LAWS R (G_SL B RG) HG 0 [].
-(* W_send_line_cx_x.v:178 sl_epi_x at R *)
+(* W_send_line_cx_x.v:179 sl_epi_x at R *)
 Lemma sl_epi_xR : forall W ly S Hp mem md sp0 FP lyX SX HpX WX regsX memX mdX k regsE (Q : world SEGS -> config -> Prop),
 ajournal_gx_xR SEGS B PST ARx R (G_SL B RG) 0 [] SL_STK sp0 FP ly S Hp W mem md [] lyX SX HpX WX memX mdX k ->
 spZ regsE = sp0 -> spZ regsX = sp0 - SL_FRAME ->
@@ -303,7 +304,7 @@ rewrite RA, HraE. apply HQ.
   destruct Hin as [<- | []]. cbn [YP09.r_wlo YP09.r_whi] in Hr. lia.
 - apply (ajournal_gx_materialize_xR SEGS B PST ARx LAWS pa_segs_low). exact HJ.
 Qed.
-(* W_send_line_cx_x.v:179 SLI_x at R *)
+(* W_send_line_cx_x.v:180 SLI_x at R *)
 Definition SLI_xR (regsE : bvmap 5 word) ly S (Hp : list Z) W mem md (c : ctl) (O : list byte) (mx no cap out line : Z)
 (Bl : list byte) (WL : world SEGS) (regsL : bvmap 5 word) (memL : word -> option byte) (mdL : Model) (sent eiL : Z)
 (kr : nat) : Prop :=
@@ -337,16 +338,16 @@ frames SL = frames S /\
 (ct_dd c = 0 -> rp_RM RP SL (Z.to_nat (sl_cost_run MT_rk (Z.to_nat (len - sent)) mx (no + sent) capL (len - sent)) + kr)) /\
 (ct_dd c = 1 -> rp_RM RP SL kr) /\
 cnt_ok_pk RP sl_pk (ablocks B ly S).
-(* W_send_line_cx_x.v:213 sl_loop_at_x at R *)
+(* W_send_line_cx_x.v:214 sl_loop_at_x at R *)
 Definition sl_loop_at_xR (n : nat) : Prop :=
 forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_xR regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr ->
 2 * (Z.of_nat (length Bl) - sent) + eiL <= Z.of_nat n ->
 SRrG SEGS R WL (mkCfg (mkst regsL (Z_to_bv 64 (BASE + A_sl_loop)) memL (seg_rom SEGS)) mdL)
 (sl_post_xR B PST ARx R MT RP RG regsE ly S Hp W mem md c O mx no cap out Bl kr).
-(* W_send_line_cx_x.v:220 sl_loop_stmt_x at R *)
+(* W_send_line_cx_x.v:221 sl_loop_stmt_x at R *)
 Definition sl_loop_stmt_xR : Prop := forall (n : nat), sl_loop_at_xR n.
-(* W_send_line_cx_x.v:222 sl_entry_stmt_x at R *)
+(* W_send_line_cx_x.v:223 sl_entry_stmt_x at R *)
 Definition sl_entry_stmt_xR : Prop := sl_loop_stmt_xR -> sl_spec_xR B PST ARx R MT RP MMAX RG A_send_lineP.
 End wR.
 (* the strict texts below are the R section's at R := wle (route R's rule: one walk text): each R premise at wle is the
@@ -354,7 +355,7 @@ End wR.
    the three laws hold for wle *)
 #[local] Ltac wle_inst := first [ eassumption | intros ? ? H; exact H | intros ?; apply wle_refl
   | intros ? ? ? H1 H2; eapply wle_trans; [exact H1 | exact H2] ].
-(* W_send_line_cx.v:193 sl_epi: the epilogue writes nothing; the caller's continuation gets the same restricted memory
+(* W_send_line_cx.v:194 sl_epi: the epilogue writes nothing; the caller's continuation gets the same restricted memory
    and the same journal (at the epilogue's ghost list HpX). *)
 Lemma sl_epi_x : forall W ly S Hp mem md sp0 FP lyX SX HpX WX regsX memX mdX k regsE (Q : world SEGS -> config -> Prop),
 ajournal_gx_x SEGS B PST ARx (G_SL B RG) 0 [] SL_STK sp0 FP ly S Hp W mem md [] lyX SX HpX WX memX mdX k ->

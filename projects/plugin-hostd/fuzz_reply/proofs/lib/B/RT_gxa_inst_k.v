@@ -1,6 +1,6 @@
-(* Image B twin of lib/A/RT_gxa_inst_k.v at 2c1f180a413 (sha256 b0d186e6fa4a; internal record): module paths lib.A -> lib.B; 2 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* The keep-FP twin's closed musl printf theorems (lib/CJ/RL/GXAK, provenance/keepfx/README.md) INSTANTIATED on the
+(* Image B twin of lib/A/RT_gxa_inst_k.v (sha256 b0d186e6fa4a; internal record): module paths lib.A -> lib.B; 2 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* The keep-FP twin's closed musl printf theorems (lib/CJ/RL/GXAK, provenance/keepfx/README.md) INSTANTIATED on the
    pinned fuzz_reply.asan-ubsan: RT_gxa_inst.v's two definitions pointed at the twin.
-   Copy of lib/A/RT_gxa_inst.v:41-64 and :92-114 at d49bd1db505 (sha256 2adc6e6dd04b; internal record), retargeted to GXAK.
+   Copy of lib/A/RT_gxa_inst.v:41-64 and :92-114 (sha256 2adc6e6dd04b; internal record), retargeted to GXAK.
 
    The image facts are RT_IImgA_ok.v's (vm_compute checks at RT_IImgA.v's instances) and RT_gxa_inst.v's six
    A_img_vsn globals, given EXPLICITLY in declaration order, as RT_gxa_inst.v does (a `first [...]` search over them

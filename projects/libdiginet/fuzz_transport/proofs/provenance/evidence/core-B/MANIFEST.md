@@ -7,21 +7,21 @@ METHOD.md or GATES.md: run.sh's header gives the route and its inputs, and each 
 the comment of its input row (overrides-B.tsv, placement-B.tsv, files-B-core.txt) or in the header of the script that
 writes its patch. MANIFEST (beside this file) names every file of the slice with its sha256.
 
-The relocation recorded here is run r17, the run of record: port_core 83f5203d2a2f with --src-rev 88154566652a, on a
-lib that holds the image-A core (row TCA) at 7cc72d296fab, which carries the allocator-model tags (0ece7baefb1) and
-EV_LIB 2048 (788c910512e), and the image-B start-up layer cut for the new pin (row T4r); this tree applied it. It
-replaces run r11, which tree 5ce997ee04cb applied as INTERIM, pre-cut and UNBUILT (the image-B start-up layer on its
+The relocation recorded here is run r17, the run of record: port_core 83f5203d2a2f with, on a
+lib that holds the image-A core (row TCA), which carries the allocator-model tags and
+EV_LIB 2048, and the image-B start-up layer cut for the new pin (row T4r); this tree applied it. It
+replaces run r11, which tree applied as INTERIM, pre-cut and UNBUILT (the image-B start-up layer on its
 branch was still the old pin's). r17 differs from r11 by the 91 function-table cell pairs B-tfib-wrong.patch deletes,
 the comment B-sec-cells.patch writes above `tfib_img_lo` / `tfib_img_hi`, the B/YFet.v proof text of
 B-yfet-cost.patch, the 14 allocator-model labels written as the tags 1..14 in the seven image-B twins of
 B-model-tags.patch, the read window's zero-shadow piece start in B/YD25.v (overrides-B.tsv: 0xa8fa0, the new start-up
 list's own entry), the stdout buffers' consumer bound in B/YD1o.v (overrides-B.tsv: 0x5f2e80, the piece start rounded
 up to 64 bytes), EV_LIB 2048 in B/YCfn.v and B/YCfl.v (overrides-B.tsv) and the untimed shok arm of B/YCeg.v
-(B-untime.patch, README.md). Run r16 (applied in dd5df37d7398) was run r17 without B-untime.patch; r17's stage-out
+(B-untime.patch, README.md). Run r16 (applied) was run r17 without B-untime.patch; r17's stage-out
 differs from r16's in B/YCeg.v line 307 only. Run r13 was run r14 without the B/YD1o.v
-bound; its applied tree 4d8cde586afb failed the whole-unit build there and at TransportDriverB.v's Require
-(README.md). Run r14 (applied in 2d48500794db) was run r15 with 79 deleted pairs and without B-sec-cells.patch. Run
-r15 (applied in a9ace4689126) was run r16 on the image-A core at 77e71b70bc6, without B-model-tags.patch and the two
+bound; its applied tree failed the whole-unit build there and at TransportDriverB.v's Require
+(README.md). Run r14 (applied) was run r15 with 79 deleted pairs and without B-sec-cells.patch. Run
+r15 (applied) was run r16 on the image-A core, without B-model-tags.patch and the two
 EV_LIB rows; r16's stage-out differs from r15's in those nine files only (B/YFeu, YFft, YFfy, YFfz, YFg2, YFi3,
 YFk0, YCfn, YCfl: 21 lines). port_core 83f5203d2a2f reports each of the 19 tags B-model-tags.patch writes as a FAIL
 row `label-moved` (its rule: an opaque label keeps the donor's value), and 9 of them also as `value-role-conflict`
@@ -79,12 +79,12 @@ byte-equal to the files it was first run to, and SECHI-B.out equal but for the t
 
 Inputs of run.sh that are not in this directory: the port_core release (the port_core release registry,
 tools/pg-reloc/83f5203d2a2f/ and tools/pg-reloc/d9e0589898fd/), the donor's released lib/B (libreac/fuzz_decode at
-recipes 88154566652a, normalised by mkdon.sh), the unit's lib before the run (LIB), and the images, each checked by
+recipes, normalised by mkdon.sh), the unit's lib before the run (LIB), and the images, each checked by
 run.sh: libreac fuzz_decode.asan-ubsan (pin 5d05689fd5b1, twin 6744989bb2e6), fuzz_decode.asan (5973b76807d8),
 fuzz_transport.asan-ubsan (pin 41113a03c82f, twin e217cb0a84f1) and fuzz_transport.asan (e89be137db17). noodr-B.py also
 reads the donor's four edit diffs and measure_ad1g.py (sha256 247f39888c46), and cuttags-B.sh model_tags.py
-e1cb9c4fb27f and the lib at the image-A core's 77e71b70bc6 with the start-up layer, and cutuntime-B.sh the untime
-release (publish/t14-untime 1e5c0ac35654: tools/publish and tools/oft), which are not here either.
+e1cb9c4fb27f and the lib at the image-A core's with the start-up layer, and cutuntime-B.sh the untime
+release (tools/publish and tools/oft), which are not here either.
 
 ## Checks and measurements
 
@@ -127,5 +127,5 @@ release (publish/t14-untime 1e5c0ac35654: tools/publish and tools/oft), which ar
 | `cmpkit/settle5-B.py`, `cmpkit/settle5-B.out` | the settlement of every target the kit refuses (the script runs beside the kit's strictcmp3.py), and its output |
 | `cmpkit/luitrace-B.py`, `cmpkit/luitrace-B.T.out`, `cmpkit/luitrace-B.D.out` | the hand dataflow of the lui-built values, and its output on the target twin and on the donor twin |
 
-The kit itself (the tool registry at 98e50c029045, tools/cmpkit/86da41d3ef68/) and its own `cmp` rows (cmpkit5.out) are
+The kit itself (the tool registry, tools/cmpkit/86da41d3ef68/) and its own `cmp` rows (cmpkit5.out) are
 not in this directory.

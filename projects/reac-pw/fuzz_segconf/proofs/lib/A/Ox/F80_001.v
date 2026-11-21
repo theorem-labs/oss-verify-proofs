@@ -1,6 +1,7 @@
-(* Ported by RtStr from cold/c-asan-rt-fmio-n affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Ox/F80_001.v, unchanged. *)
+(* Ported by RtStr from proofs/omx-clap-core/fuzz_manifest/lib/A/Ox/F80_001.v, unchanged. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import PArray Uint63.
 Fixpoint flush_loop (n : nat) (acc : int) : int :=

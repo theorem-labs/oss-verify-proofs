@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at a529a88a6181 (pa_int7's chain: the entry state, the run, the kept-byte and kept-register steps, the call through the runtime's intrinsic law, and the fresh entry state after it) and proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018 (ck_leaf, the `ret` leaf into the caller's post); the composition is pod_write_ent's own -- four runs, two runtime calls and the leaf -- and the byte lemmas of the two put32s are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweRun.v at d75b4b9c2458; module paths changed to reac-pw/fuzz_headamp; comments' addresses and image hashes moved to fuzz_headamp's image B; no term changed. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (pa_int7's chain: the entry state, the run, the kept-byte and kept-register steps, the call through the runtime's intrinsic law, and the fresh entry state after it) and proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v (ck_leaf, the `ret` leaf into the caller's post); the composition is pod_write_ent's own -- four runs, two runtime calls and the leaf -- and the byte lemmas of the two put32s are new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweRun.v; module paths changed to reac-pw/fuzz_headamp; comments' addresses and image hashes moved to fuzz_headamp's image B; no term changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves function pod_write_ent
 
    The composition of pod_write_ent's walk on reac-pw/fuzz_headamp's image B (fuzz_headamp.asan-ubsan, pinned sha256

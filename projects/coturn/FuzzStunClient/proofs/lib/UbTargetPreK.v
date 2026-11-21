@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, target_vm_k's ledger is the launch's init_reserved over the kernel build (Amb), and refused munmaps of read buffers allow up to 20 maps and 3 * nbk k live bytes. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import MallocDefs
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import EnframeDefs UbWorld.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import ShapeAlg.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import Spec TargetSpec TargetKDefs UbTargetPre UbWorldK.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import Amb.   (* LPS 08b1429: a_kernel in target_vm_k *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import WalkFastM.
@@ -56,17 +58,19 @@ Record target_pre_k (k sp0 B area brkv mas tid : Z) (content : list byte)
 }.
 
 (* [comment removed for export] *)
-Record target_vm_k (k sp0 B area : Z) (VM : VmMaps) : Prop := TARGET_VM_K {
-  tvk_res   : vm_reserved VM = segments_reserved RSEGS;
+(* LPS 08b1429: as RefTargetPre.target_vm, the launch's ledger is [init_reserved]. *)
+Record target_vm_k {AMB : Amb} (k sp0 B area : Z) (VM : VmMaps) : Prop := TARGET_VM_K {
+  tvk_res   : vm_reserved VM = init_reserved (segments_reserved RSEGS) (vm_mmap_base VM) (vm_init_sp VM) a_kernel;
   tvk_limit : 2 ^ 31 <= vm_limit VM;
   tvk_has   : In (Z_to_bv 64 B, Z_to_bv 64 (nbk k)) (vm_maps VM);
   tvk_area  : exists lo sz, In (lo, sz) (vm_maps VM)
                 /\ bv_unsigned lo <= area /\ area + 4096 <= bv_unsigned lo + bv_unsigned sz;
-  tvk_len   : (length (vm_maps VM) <= 9)%nat;
+  (* 08b1429: refused munmaps of the read buffers may leave up to k old buffers mapped *)
+  tvk_len   : (length (vm_maps VM) <= 20)%nat;
   tvk_small : Forall (fun p => 0 < bv_unsigned (snd p) <= 2 ^ 30
                                /\ bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64) (vm_maps VM);
   tvk_seps  : seps (vm_maps VM);
-  tvk_live  : live_bytes (vm_maps VM) <= nbk k + 2 ^ 20;
+  tvk_live  : live_bytes (vm_maps VM) <= 3 * nbk k + 2 ^ 20;
   (* [comment removed for export] *)
   tvk_sp    : vm_init_sp VM = Z_to_bv 64 sp0;
   tvk_B_top : B + nbk k <= alloc_top VM;

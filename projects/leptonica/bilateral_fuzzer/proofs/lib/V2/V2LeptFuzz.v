@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO and vvar pages). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -333,7 +334,9 @@ Qed.
 Lemma fz_deser : forall (fr : bvmap 5 word) cs C (A : AS) (m : word -> option byte) (md : Model) (regs : bvmap 5 word)
     (s dp size : Z) (pl : list byte) (ret : word) (S : TSet) (kR bR : Z),
   Cok C -> c_top C = s -> c_vm C = m_vmmaps md -> c_m0 C = m -> c_A0 C = A ->
-  frm_zero cs -> ainv A m (m_vmmaps md) -> md_pure md -> al_env (c_sp0 C) (c_argv C) (c_envp C) m ->
+  frm_zero cs -> ainv A m (m_vmmaps md) -> md_pure md ->
+  incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
+  al_env (c_sp0 C) (c_argv C) (c_envp C) m ->
   getr regs 2 = Z_to_bv 64 s -> (s mod 16 = 0)%Z -> (4096 + 64 <= s <= 2 ^ 47)%Z ->
   getr regs 1 = ret -> ret_ok ret -> getr regs 4 = Z_to_bv 64 0x56270 ->
   getr regs 10 = Z_to_bv 64 dp -> getr regs 11 = Z_to_bv 64 size -> size = Z.of_nat (length pl) -> (3 <= size < 2 ^ 26)%Z ->
@@ -357,7 +360,7 @@ Lemma fz_deser : forall (fr : bvmap 5 word) cs C (A : AS) (m : word -> option by
      realizes SEGS (mkCfg (@mkst (mkFP fr1 cs1) r1 (Z_to_bv 64 (PC_FUZZ + 60)) m1 al_rom) (with_vmmaps vm1 md)) S) ->
   realizes SEGS (mkCfg (@mkst (mkFP fr cs) regs (Z_to_bv 64 PC_FUZZ) m al_rom) md) S.
 Proof.
-  intros fr cs C A m md regs s dp size pl ret S kR bR CK Etop Evm Em0 EA0 Hz Hinv Hpure Henv H2 Hs16 Hs H1 Hret H4 H10 H11 Hsz Hsz26
+  intros fr cs C A m md regs s dp size pl ret S kR bR CK Etop Evm Em0 EA0 Hz Hinv Hpure Hvd Henv H2 Hs16 Hs H1 Hret H4 H10 H11 Hsz Hsz26
     Hdp Hdp16 Ldp Hpl Hwin Hsev Hpmm Hhdl Hgot Hrm Hrk Hrb KF KN.
   unfold PC_FUZZ. pose proof CK as [T1 T2 T3 T4 T5]. cbn [snd ll_img LLU16] in T5.
   pose proof LSTK_val as LV. pose proof (alloc_top_lt (c_vm C)) as ATL. unfold two_pow_64 in ATL.
@@ -393,7 +396,8 @@ Proof.
       all: destruct (Z_lt_ge_dec (u a) (A_LEPT_HANDLER + 8)) as [Ld|Gd];
         [right; unfold A_LEPT_HANDLER in Gc, Ld; lia | exfalso; apply NE; rewrite O2 by lia; apply O1; lia].
     - intros a Hx. rewrite Em0 in Hx. exact (proj1 RI2 a (proj1 RI1 a Hx)).
-    - rewrite p16_segs. cbn [ll_hcell ll_devnull LLU16]. rewrite w2l_Z8 by lia. exact RD2. }
+    - rewrite p16_segs. cbn [ll_hcell ll_devnull LLU16]. rewrite w2l_Z8 by lia. exact RD2.
+    - exact Hvd. }
   destruct (blk_range C A m2 md (Z_to_bv 64 dp) size CK HW2 Ldp ltac:(lia)) as [Gdp Tdp]. rewrite u_Z2bv in Gdp, Tdp by lia.
   assert (PLD : payload C dp pl).
   { unfold payload. rewrite EA0, Em0, <- Hsz. split; [exact Ldp|]. split; [intros i Hi; apply Hpl; lia|]. split; lia. }
@@ -714,7 +718,7 @@ Qed.
 Theorem lept_fuzz_call : @fuzz_call_contract AL CL ASR.
 Proof.
   unfold fuzz_call_contract.
-  intros fx A m md regs dptr size pl ret sp0 argv envp S Hz Hinv Hpure Henv Ha0 Ha1 Hsz Hsz26 Hlive Hpl Hempty Hal16 Hra Hret H3 H4 Hsp16 Htop Hsp0 Hsp0hi Hisw Hwin Hsev Hpmm Hhdl Hgot kR bR Hrm Hrk Hrb K.
+  intros fx A m md regs dptr size pl ret sp0 argv envp S Hz Hinv Hpure Hvd Henv Ha0 Ha1 Hsz Hsz26 Hlive Hpl Hempty Hal16 Hra Hret H3 H4 Hsp16 Htop Hsp0 Hsp0hi Hisw Hwin Hsev Hpmm Hhdl Hgot kR bR Hrm Hrk Hrb K.
   destruct fx as [fr cs]. cbn [fp_csr] in Hz.
   pose proof fuzz_calls_nonneg as FZc.
   pose proof (fuzz_margin_bound size ltac:(lia)) as FZm.
@@ -755,7 +759,7 @@ Proof.
     - intros a _ _ _ _ NW. apply OUT. lia.
     - intros q k i L Hi. apply OUT. destruct (BLK q k i L Hi) as [_ X]. lia.
     - intros a Hx. right; right. exact (proj1 RI a Hx).
-    - reflexivity. - reflexivity. - reflexivity. - reflexivity.
+    - reflexivity. - reflexivity. - reflexivity. - reflexivity. - reflexivity.
     - apply (aroom_mono _ _ _ _ _ _ Hrm); lia. }
   assert (Ldp : live A (Z_to_bv 64 dp) = Some size) by (apply Hlive; lia).
   assert (KF : forall (fx' : FPState) A' mf vm' rr kf bf, frm_zero (@fp_csr fx') -> W C A' mf (with_vmmaps vm' md) -> (forall q, live A' q = live A q) ->
@@ -773,6 +777,7 @@ Proof.
     - destruct (w_vm _ _ _ _ HWf) as (VV1 & VV2 & VV3 & VV4). rewrite with_vmmaps_vmmaps in VV2. exact VV2.
     - destruct (w_vm _ _ _ _ HWf) as (VV1 & VV2 & VV3 & VV4). rewrite with_vmmaps_vmmaps in VV3. exact VV3.
     - destruct (w_vm _ _ _ _ HWf) as (VV1 & VV2 & VV3 & VV4). rewrite with_vmmaps_vmmaps in VV4. exact VV4.
+    - pose proof (w_mb _ _ _ _ HWf) as VM. rewrite with_vmmaps_vmmaps in VM. exact VM.
     - apply (aroom_mono _ _ _ _ _ _ HRf); lia. }
   pose proof RK_pbl_val as RKv.
   assert (RKs : (RK_deser + 2 * RK_pixcopy + RK_pbl + RK_bbe <= FUZZ_CALLS)%Z)
@@ -780,7 +785,7 @@ Proof.
   assert (RK0 : (0 <= RK_deser /\ 0 <= RK_pixcopy /\ 0 <= RK_pbl /\ 0 <= RK_bbe)%Z)
     by (rewrite RKv; unfold RK_deser, RK_pixcopy, RK_pix, RK_cmapcopy, RK_bbe; lia).
   assert (RBm : (0 <= RB_deserT <= fuzz_margin size)%Z) by (rewrite RB_deserT_val; unfold fuzz_margin; lia).
-  apply (fz_deser fr cs C A m md regs s dp size pl ret S kR bR CK Etop eq_refl eq_refl eq_refl Hz Hinv Hpure Henv H2 Hsp16 Hsr Hra Hret H4
+  apply (fz_deser fr cs C A m md regs s dp size pl ret S kR bR CK Etop eq_refl eq_refl eq_refl Hz Hinv Hpure Hvd Henv H2 Hsp16 Hsr Hra Hret H4
            Ha0 Ha1 Hsz ltac:(lia) ltac:(lia) Hal16 Ldp Hpl Hwin Hsev Hpmm Hhdl Hgot Hrm ltac:(lia) ltac:(lia)).
   - intros fx' A' mf vm' rr kf bf Hzf HWf LQf R0 CS Hrf Hkf Hbf.
     apply (KF fx' A' mf vm' rr kf bf Hzf HWf LQf R0 CS Hrf); lia.

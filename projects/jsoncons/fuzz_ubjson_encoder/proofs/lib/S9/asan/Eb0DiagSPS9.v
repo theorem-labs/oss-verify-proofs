@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the string read-ahead slack of 9; addresses and numbers. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BigLinkZA.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
@@ -161,7 +162,7 @@ Lemma sC1_conc fx R M (V : nat -> Z) :
   0 <= (V 2%nat) < 2 ^ 64 -> 0 <= (V 33%nat) < 2 ^ 64 -> 0 <= (V 34%nat) < 2 ^ 64 ->
   getr R (reg 1) = Z_to_bv 64 1211408 -> getr R (reg 2) = Z_to_bv 64 (V 2%nat) -> getr R (reg 10) = Z_to_bv 64 (V 33%nat) -> getr R (reg 11) = Z_to_bv 64 2147483647 ->
   140735332552704 <= (V 2%nat) <= 140737488355328 -> aligned (V 2%nat) 16 -> L5.writable RSEGS M ((V 2%nat) - 4320) 4320 -> L5.defined M ((V 2%nat) - 4320) 4320 ->
-  L5.img_clear M 65536 1306624 -> 140735332552704 <= (V 33%nat) <= 140737488355311 -> 0 <= (V 34%nat) <= 131071 -> (((V 2%nat) - 4320) + 4320 <= (V 33%nat) \/ (V 33%nat) + ((V 34%nat) + 1) <= ((V 2%nat) - 4320)) ->
+  L5.img_clear M 65536 1306624 -> 140735332552704 <= (V 33%nat) <= 140737488355318 -> 0 <= (V 34%nat) <= 131071 -> (((V 2%nat) - 4320) + 4320 <= (V 33%nat) \/ (V 33%nat) + ((V 34%nat) + 1) <= ((V 2%nat) - 4320)) ->
   L5.u8_at RSEGS M 1338840 1 -> L5.u64_at RSEGS M 1308800 1247060 -> L5.u64_at RSEGS M 1308432 1243956 ->
   exists fx' R' M', mem_grows M M'
     /\ (forall a : word, ~ (((V 2%nat) - 4320) <= bv_unsigned a < ((V 2%nat) - 4320) + 4320) -> M' a = M a)
@@ -276,7 +277,7 @@ Lemma sC3_conc fx R M (V : nat -> Z) :
   0 <= (V 2%nat) < 2 ^ 64 -> 0 <= (V 20%nat) < 2 ^ 64 -> 0 <= (V 21%nat) < 2 ^ 64 -> 0 <= (V 33%nat) < 2 ^ 64 -> 0 <= (V 34%nat) < 2 ^ 64 -> 0 <= (V 120%nat) < 2 ^ 64 -> 0 <= (V 121%nat) < 2 ^ 64 ->
   getr R (reg 2) = Z_to_bv 64 (V 2%nat) -> getr R (reg 10) = Z_to_bv 64 ((V 33%nat) + (V 34%nat)) -> getr R (reg 20) = Z_to_bv 64 (V 120%nat) -> getr R (reg 21) = Z_to_bv 64 (V 121%nat) ->
   140735332552704 <= (V 2%nat) <= 140737488355328 -> aligned (V 2%nat) 16 -> L5.writable RSEGS M ((V 2%nat) - 16) 16 -> L5.defined M ((V 2%nat) - 16) 16 ->
-  L5.img_clear M 65536 1306624 -> 140735332552704 <= (V 33%nat) <= 140737488355311 -> 0 <= (V 34%nat) <= 131071 -> (((V 2%nat) - 16) + 16 <= (V 33%nat) \/ (V 33%nat) + ((V 34%nat) + 1) <= ((V 2%nat) - 16)) ->
+  L5.img_clear M 65536 1306624 -> 140735332552704 <= (V 33%nat) <= 140737488355318 -> 0 <= (V 34%nat) <= 131071 -> (((V 2%nat) - 16) + 16 <= (V 33%nat) \/ (V 33%nat) + ((V 34%nat) + 1) <= ((V 2%nat) - 16)) ->
   L5.u64_at RSEGS M ((V 2%nat) + 2120) 1247096 -> L5.u64_at RSEGS M ((V 2%nat) + 2112) 2147483647 -> L5.u64_at RSEGS M ((V 2%nat) + 2104) (V 33%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 2096) (V 33%nat) ->
   L5.u64_at RSEGS M ((V 2%nat) + 2088) 2147483647 -> L5.u64_at RSEGS M ((V 2%nat) + 2080) (V 20%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 2072) (V 21%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 2152) 411872 ->
   L5.u64_at RSEGS M ((V 2%nat) + 2144) ((V 2%nat) + 4304) -> L5.u64_at RSEGS M ((V 2%nat) + 2136) 1 ->
@@ -356,7 +357,7 @@ Lemma sC4_conc fx R M (V : nat -> Z) :
   0 <= (V 2%nat) < 2 ^ 64 -> 0 <= (V 8%nat) < 2 ^ 64 -> 0 <= (V 9%nat) < 2 ^ 64 -> 0 <= (V 18%nat) < 2 ^ 64 -> 0 <= (V 19%nat) < 2 ^ 64 -> 0 <= (V 20%nat) < 2 ^ 64 -> 0 <= (V 21%nat) < 2 ^ 64 -> 0 <= (V 22%nat) < 2 ^ 64 -> 0 <= (V 33%nat) < 2 ^ 64 -> 0 <= (V 34%nat) < 2 ^ 64 -> 0 <= (V 108%nat) < 2 ^ 64 -> 0 <= (V 109%nat) < 2 ^ 64 -> 0 <= (V 118%nat) < 2 ^ 64 -> 0 <= (V 119%nat) < 2 ^ 64 -> 0 <= (V 120%nat) < 2 ^ 64 -> 0 <= (V 121%nat) < 2 ^ 64 -> 0 <= (V 122%nat) < 2 ^ 64 ->
   getr R (reg 2) = Z_to_bv 64 (V 2%nat) -> getr R (reg 8) = Z_to_bv 64 (V 108%nat) -> getr R (reg 9) = Z_to_bv 64 (V 109%nat) -> getr R (reg 18) = Z_to_bv 64 (V 118%nat) -> getr R (reg 19) = Z_to_bv 64 (V 119%nat) -> getr R (reg 20) = Z_to_bv 64 (V 120%nat) -> getr R (reg 21) = Z_to_bv 64 (V 121%nat) -> getr R (reg 22) = Z_to_bv 64 (V 122%nat) ->
   140735332552704 <= (V 2%nat) <= 140737488355328 -> aligned (V 2%nat) 16 -> L5.writable RSEGS M ((V 2%nat) - 16) 16 -> L5.defined M ((V 2%nat) - 16) 16 ->
-  L5.img_clear M 65536 1306624 -> 140735332552704 <= (V 33%nat) <= 140737488355311 -> 0 <= (V 34%nat) <= 131071 -> (((V 2%nat) - 16) + 16 <= (V 33%nat) \/ (V 33%nat) + ((V 34%nat) + 1) <= ((V 2%nat) - 16)) ->
+  L5.img_clear M 65536 1306624 -> 140735332552704 <= (V 33%nat) <= 140737488355318 -> 0 <= (V 34%nat) <= 131071 -> (((V 2%nat) - 16) + 16 <= (V 33%nat) \/ (V 33%nat) + ((V 34%nat) + 1) <= ((V 2%nat) - 16)) ->
   L5.u64_at RSEGS M ((V 2%nat) + 2136) 1211408 -> L5.u64_at RSEGS M ((V 2%nat) + 2128) (V 8%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 2120) (V 9%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 2112) (V 18%nat) ->
   L5.u64_at RSEGS M ((V 2%nat) + 2104) (V 19%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 2096) (V 20%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 2088) (V 21%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 2080) (V 22%nat) ->
   exists fx' R' M', mem_grows M M'

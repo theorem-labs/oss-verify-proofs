@@ -25,7 +25,7 @@ its SHA256SUMS (6 OK). Only port_addr_check.py differs from 3d2eee813cce; the 5 
 
 ## The inputs are the inputs of record
 
-- Trees: `git archive` extracts of c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib (`$DONOR`) and
+- Trees: `git archive` extracts:proofs/cgif/cgif_file_fuzzer/lib (`$DONOR`) and
   repository tree (git tree 1c3596a429a4; internal record):proofs/plugin-hostd/fuzz_command/lib (`$OURS`), the two refs the runs of record read through `--git`.
   The tool reads the same .v files from them: src files read 728 / 2467, after `--include` 724 / 1449; dst files read
   1316 / 1278, after `--dst-include` 391 / 390 (RA / RB), as recorded. No .v file of either extract holds a CR byte, so

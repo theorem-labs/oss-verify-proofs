@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfSegs3.v (hub dc970db26dad, blob f049bb307485) rw_ret_A, restated over Deallocate's PRIMED raw post (YGcfReallocComposeRh.free_dpost_cf_rh) with the overlay normal form kept (the memnorm proof of RGcfSegs3.v blob a19665e011c3). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfSegs3.v (blob f049bb307485) rw_ret_A, restated over Deallocate's PRIMED raw post (YGcfReallocComposeRh.free_dpost_cf_rh) with the overlay normal form kept (the memnorm proof of RGcfSegs3.v blob a19665e011c3). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset.asan image A: rw_ret_keep_rh_A is the primed S3 WITH the keep, the premise of
    YGcfInstReallocKKeep.wrap_realloc_walk_keep_cf_rh_of (field rwkh_ret of wrap_realloc_walk_keep_cf_rh) at
    segs := tfibsegs, ci := CfImg_A, atpD := 1, ARX := RGcfLaws.ARXqA B, K3 := RGcfSegs2a.K3A B: RGcfRetRhA.rw_ret_rh_A's

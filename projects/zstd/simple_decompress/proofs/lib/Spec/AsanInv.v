@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's subtracted range on separated entries; AMI's bound on the reserved ledger's entries, false with the vDSO pair, replaced by the fact that the mappings miss the reserved ledger, kept by AMI_grant and AMI_munmap; adds ami_region_free_within, ami_maps_resv_cons). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -173,7 +174,8 @@ Definition noacc_clear (na : list (word * word)) : Prop :=
 Definition AMI (RESV : list (Z * Z)) (ATOP : Z) (ch : list (Z * Z)) (st : astate) (mo : Model) : Prop :=
   m_vm_materialized mo = []
   /\ vm_limit (m_vmmaps mo) = LIMIT
-  /\ Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (vm_reserved (m_vmmaps mo))
+  (* LPS 727298f3: the mappings miss the reserved ledger (it holds the vDSO pair above the stack, so no bound on its entries) *)
+  /\ (forall e, In e (vm_maps (m_vmmaps mo)) -> region_free (vm_reserved (m_vmmaps mo)) (fst e) (snd e) = true)
   /\ zlen (vm_reserved (m_vmmaps mo)) <= LEN0 /\ live_bytes (vm_reserved (m_vmmaps mo)) <= RTOT0
   /\ Forall (entry_ok ATOP) (vm_maps (m_vmmaps mo))
   /\ ivs_wf (vm_noaccess (m_vmmaps mo))
@@ -363,6 +365,35 @@ Lemma seps_cons_inv : forall p l, seps (p :: l) -> Forall (wsep p) l /\ seps l.
 Proof. intros p l H. inversion H; auto. Qed.
 Lemma seps_app_inv_l : forall l1 l2, seps (l1 ++ l2) -> seps l2.
 Proof. induction l1; intros l2 H; [exact H|]. cbn in H. apply seps_cons_inv in H as [_ H]. auto. Qed.
+Lemma seps_In_wsep : forall l p q, seps l -> In p l -> In q l -> p = q \/ wsep p q.
+Proof.
+  induction l as [|e l IH]; intros p q H Hp Hq; [destruct Hp|].
+  apply seps_cons_inv in H as [Hf Hl]. rewrite Forall_forall in Hf.
+  destruct Hp as [<-|Hp], Hq as [<-|Hq].
+  - left; reflexivity.
+  - right. exact (Hf q Hq).
+  - right. apply wsep_sym. exact (Hf p Hp).
+  - apply IH; assumption.
+Qed.
+
+(* LPS 727298f3: munmap subtracts its range from [vm_maps]; on separated entries of
+   positive size the range of one entry is that entry alone (zstd_frame_info's AsanInv.v). *)
+Lemma seps_maps_subtract_exact : forall ATOP l (a n : word),
+  seps l -> Forall (entry_ok ATOP) l -> In (a, n) l ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  intros ATOP l a n Hs Hok Hin. rewrite Forall_forall in Hok.
+  apply maps_subtract_exact.
+  - exact (proj1 (Hok _ Hin)).
+  - intros b s H. exact (proj1 (Hok _ H)).
+  - intros b s H ->. destruct (seps_In_wsep _ _ _ Hs H Hin) as [E|D].
+    + apply (f_equal snd) in E. exact E.
+    + exfalso. pose proof (proj1 (Hok _ H)) as W. pose proof (proj1 (Hok _ Hin)) as W2.
+      unfold wsep in D. cbn [fst snd] in D, W, W2. lia.
+  - intros b s H Hne. destruct (seps_In_wsep _ _ _ Hs H Hin) as [E|D].
+    + exfalso. apply (f_equal fst) in E. exact (Hne E).
+    + unfold wsep in D. cbn [fst snd] in D. exact D.
+Qed.
 (* [comment removed for export] *)
 Lemma region_free_wsep : forall l (a n : word),
   region_free l a n = true -> Forall (wsep (a, n)) l.
@@ -480,6 +511,25 @@ Proof. intros l lo hi Hwf [H1 H2]. split; apply region_free_maps_subtract; assum
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* LPS 727298f3: a range inside a mapping misses what the mapping misses *)
+Lemma ami_region_free_within : forall R (a n a' n' : word), region_free R a n = true ->
+  bv_unsigned a <= bv_unsigned a' -> bv_unsigned a' + bv_unsigned n' <= bv_unsigned a + bv_unsigned n ->
+  region_free R a' n' = true.
+Proof.
+  induction R as [|[b s] R IH]; intros a n a' n' H H1 H2; [reflexivity|].
+  cbn [region_free] in H |- *. apply andb_prop in H as [H0 H]. rewrite (IH a n a' n' H H1 H2), andb_true_r.
+  unfold iv_overlap in *. apply negb_true_iff in H0. apply negb_true_iff.
+  apply andb_false_iff in H0. apply andb_false_iff.
+  destruct H0 as [H0|H0]; apply Z.ltb_ge in H0; [left|right]; apply Z.ltb_ge; lia.
+Qed.
+
+(* LPS 727298f3: a new mapping that misses the reserved ledger keeps the mappings clear of it *)
+Lemma ami_maps_resv_cons : forall R maps (a n : word),
+  (forall e, In e maps -> region_free R (fst e) (snd e) = true) ->
+  region_free R a n = true ->
+  forall e, In e ((a, n) :: maps) -> region_free R (fst e) (snd e) = true.
+Proof. intros R maps a n Hm Hr e [<-|He]; [exact Hr| exact (Hm e He)]. Qed.
+
 Section AMIT.
 Variable RESV : list (Z * Z).
 Variable ATOP : Z.
@@ -556,6 +606,9 @@ Proof.
   pose proof MT as [[T1 T2] T3]. unfold ACEIL, ATOP_MAX in T1, T2.
   unfold AMI, grant_model. cbn -[Z.add Z.mul Z.pow Z_to_bv bv_unsigned sum_count Pm live_bytes zlen].
   repeat match goal with |- _ /\ _ => split end; try assumption.
+  - (* LPS 727298f3: the new mapping misses the reserved ledger *)
+    intros e He. rewrite region_free_app in Hrf. apply andb_true_iff in Hrf as [Hrf _].
+    exact (ami_maps_resv_cons _ _ _ _ M3 Hrf e He).
   - constructor; [|exact M6]. unfold entry_ok. cbn [fst snd]. rewrite !unsigned_lit by lia. repeat split; lia.
   - constructor; [|exact M9]. rewrite region_free_app in Hrf. apply andb_true_iff in Hrf as [_ Hrf].
     apply (region_free_wsep (vm_maps (m_vmmaps mo)) (Z_to_bv 64 z) (Z_to_bv 64 nZ)). exact Hrf.
@@ -674,6 +727,8 @@ Proof.
   all: try exact (proj1 MT).
   all: try (unfold alloc_top in *; cbn [vm_init_sp] in *; lia).
   - reflexivity.
+  - (* LPS 727298f3: the mappings left are among the old ones *)
+    unfold map_remove. intros e He. apply M3. apply (incl_filter _ _ _ He).
   - unfold map_remove. rewrite Forall_forall in *. intros e He. apply M6. apply (incl_filter _ _ _ He).
   - apply maps_subtract_wf; [exact Wn| lia].
   - apply maps_subtract_wf; [exact Wl| lia].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (BOTH5 sets the new n_resx and p_resx fields, room for the launch's vDSO/vvar pair in the reserved ledger (2 intervals, 20 pages), and its image facts check them). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -21,7 +22,7 @@ Open Scope Z_scope.
 
 (* [comment removed for export] *)
 Definition BOTH5 : atable :=
-  {| img_lo := 0x10000; img_hi := 0x603000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x603000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x317c8; rw_lo := 0xa5000; rw_len := 0x55e000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x65228; x_imemcpy := 0x651ac; x_memset := 0x9ecd0; x_memcpy := 0x9e8cc; x_memiszero := 0x65758;
      x_istrncpy := 0x65654; x_sealed := 0x1187a; x_popfree := 0x37dc0;
@@ -149,4 +150,5 @@ Proof.
   - rewrite both_res_sizes. reflexivity.
   - cbn [rw_lo rw_len BOTH5]. split; [lia|]. intros m x Hx. apply both_rw_window. lia.
   - exact both_shadow_ok.
+  - cbn [n_resx p_resx BOTH5]. split; lia.
 Qed.

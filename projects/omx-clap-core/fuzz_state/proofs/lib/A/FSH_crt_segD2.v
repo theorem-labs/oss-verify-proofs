@@ -3,25 +3,25 @@
    crt_tail is PROVED from crt_INV_T in lib/A/FSH_crt_segD.v).
 
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v:549-611 (the stage cuts St19..St24,
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v:549-611 (the stage cuts St19..St24,
    the same six calls at the same pcs), check_round_trip_sd19.v / sd20.v (the two pj_free steps),
    check_round_trip_sd21.v / sd22.v (the two fuzz_free steps), check_round_trip_sd23.v / sd24.v (the two free thunks),
    and check_round_trip_sdglue.v:612 crt_keep_blk / :659 crt_spared_blk (what a freeing call keeps)). The checker's
    CONFIRM on that hit is quoted in the lane head (internal path); the
    function-level rule-24 line it names is the one carried by lib/A/FSH_crt_base.v.
-   The port RESTATES those stages in S0's form: d25a984c903 states a stage as `crt_tail ... -> SR ... (POST ...)` over
+   The port RESTATES those stages in S0's form: states a stage as `crt_tail ... -> SR ... (POST ...)` over
    its own heap record (AsanAllocAPI, a_call_pre / a_call_post, ledgers Lam), S0 states the walk as
    `crt_from ss_next INV_next -> crt_from ss_cur INV_cur` over ajournal / ARU / U (FSH_crt_base.v). No bridge between
    the two forms is built: each stage's CONTENT (which block each call frees, which bytes it keeps, why the fake
    frame and the real stack survive it) is re-derived here against S0's contracts.
 
    The six calls, MEASURED (capstone over fuzz_state.asan, sha256 64b53ff86172...):
-     0x822b0  jal pj_free     (a0 = s2  = F + 0x140, &back)   returns 0x822b4   d25a984c903 St19
-     0x822b8  jal pj_free     (a0 = s10 = F + 0x20,  &doc)    returns 0x822bc   d25a984c903 St20
-     0x82338  jal fuzz_free   (a0 = s9  = back)               returns 0x8233c   d25a984c903 St21
-     0x82340  jal fuzz_free   (a0 = [s1 + 0x30] = text)       returns 0x82344   d25a984c903 St22
-     0x82348  jal __wrap_free (a0 = [s1 + 0x38] = want)       returns 0x8234c   d25a984c903 St23
-     0x82350  jal __wrap_free (a0 = s8  = same)               returns 0x82354   d25a984c903 St24
+     0x822b0  jal pj_free     (a0 = s2  = F + 0x140, &back)   returns 0x822b4 St19
+     0x822b8  jal pj_free     (a0 = s10 = F + 0x20,  &doc)    returns 0x822bc St20
+     0x82338  jal fuzz_free   (a0 = s9  = back)               returns 0x8233c St21
+     0x82340  jal fuzz_free   (a0 = [s1 + 0x30] = text)       returns 0x82344 St22
+     0x82348  jal __wrap_free (a0 = [s1 + 0x38] = want)       returns 0x8234c St23
+     0x82350  jal __wrap_free (a0 = s8  = same)               returns 0x82354 St24
    The boundary states crt_ss34 .. crt_ssT, the two pj_free runs (crt_seg34_run / crt_seg35_run) and segment 36's run
    (crt_seg36_run, the 31 shadow stores) are already in lib/A/FSH_crt_segD.v; this file adds segments 37, 38 and 39's
    runs and the CALL-SITE PRECONDITION of each of the six calls.

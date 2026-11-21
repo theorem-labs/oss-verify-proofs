@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of image B's ARM_remove (lib/B/W_LLVMFuzzerTestOneInput_remove.v
    lf_arm_remove), arm 4 (op_remove) of the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    LLVMFuzzerTestOneInput (0x84408), from the arm's entry 0x84824 to the latch 0x84804: relay_reads, relay_remove,
    check_no_loss_read when relay_reads returned nonzero, check_no_loss, check_shape_ends, check_shape_done,
    source_reset (a Theorem Labs lane's placement 2026-10-30 00:45Z: B's top plugs only _x arms).
-   - The AR proof is a Theorem Labs lane's: a working branch cc0cf617713 (lf_arm_remove Qed on the B cut
-     e879350a388, fresh rc=0, Print Assumptions 13 Prim* + funext).  The AR file is NOT edited here; this file Requires
+   - The AR proof is a Theorem Labs lane's: a working branch (lf_arm_remove Qed on the B cut,
+     fresh rc=0, Print Assumptions 13 Prim* + funext).  The AR file is NOT edited here; this file Requires
      it and cites every AR-free definition and lemma of it; each lemma of it that reads AR, AR_laws, an AR journal,
      afn_pre, lf_base, an INV_* or RCUT, errno_law, ashp or gx_prog is restated here over ARx as NAME_x, with its proof
-     converted the way lib/A/W_LLVMFuzzerTestOneInput_remove_x.v converts image A's (WriteX, a75c3027b55 / a3056822753).
+     converted the way lib/A/W_LLVMFuzzerTestOneInput_remove_x.v converts image A's (WriteX).
    - THE AR0 LAYER (as image A's): HP0 forces the ghost list of every ARx state to [], so the converted lemmas are
      stated over AR0 := ARx at [] and the journals AJ0 / AJI0 := W_journal_x's ajournal_gx_x / YCbqG's ajournal_x at []
      (Local Notations); the AR journal / law lemmas they cite become one-line wrappers of the kit's _x lemmas with the
      AR argument layout.  Each callee spec is the kit's _x form taken at Hp := []; its post's Hp' is [] by HP0.
-   - The Section header is B cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:199-244), so
+   - The Section header is B cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:200-245), so
      lf_arm_remove_x's statement is cut_x's ARM_remove hypothesis (cut_x.v:409) at that Section's variables (checked
      at the end).
    - Section hypotheses: the AR file's, over ARx where they name AR (callee specs in their kit _x forms, errno_law_x,
@@ -75,7 +76,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
 
 (* the arm's count peak (the room round, a Theorem Labs lane's ROOM-TEXTS (c)): a Theorem Labs lane's pk_rm (image A's
-   lib/A/ReplyLScnt.v, commit ba8e99b5bd2) word for word: relay_remove's premise peak (its trace's peak + 4), plus
+   lib/A/ReplyLScnt.v) word for word: relay_remove's premise peak (its trace's peak + 4), plus
    check_no_loss's own peak over the lines the drain appended when the entry is open (its premise's + 2 is inside the
    4); check_shape_ends and source_reset have premise peak 0.  check_no_loss's trace is image A's
    lib/A/ReplyTrPeakCnl.v:120-125 cnl_nm / cnl_tr / cnl_pk, restated here (pure model text, no image literal) *)
@@ -89,7 +90,7 @@ Definition rm_pk (m : lmod) (h : hsrc) (j0 : nat) (P : Z -> bool) : nat :=
    (if (re_eof (rm_ent m j0) =? 0)%Z
     then rm_cnl_pk (hs_held h) (map (map (Z_to_bv 8)) (dr_lines h)) P else 0) + 4)%nat.
 (* the open entry's and the slot's facts the count rules RM_CNT_* read (a Theorem Labs lane's bundle; image A's
-   lib/A/W_LLVMFuzzerTestOneInput_remove_x.v:94-101 at 250502f7048), in W_rep.v's order: aentry_ok's skip, fd sign,
+   lib/A/W_LLVMFuzzerTestOneInput_remove_x.v:94-101), in W_rep.v's order: aentry_ok's skip, fd sign,
    capacity, partial-line and key-array clauses and the pending list's non-empty records (alist_at at lines = false);
    the walk reads them off amodel_at at the arm's start.  The fd sign matters: rr_tr is [] at a negative fd *)
 Definition rm3_pre (e : rentry) (h : hsrc) : Prop :=
@@ -100,7 +101,7 @@ Definition rm3_pre (e : rentry) (h : hsrc) : Prop :=
   ((re_hp e = 0 /\ re_keys e = []) \/ (re_hp e <> 0 /\ 8 <= re_kh e)) /\
   Forall (fun r => (1 <= length (snd r))%nat) (hl_recs (hs_pending h)).
 
-(* ---- B cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- B cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -129,7 +130,7 @@ Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
 Variable MMAX : Z.                                  (* W6's request bound, rr_spec's parameter *)
 Hypothesis TL : PALib B.                            (* the allocator instance (W_kit.v) *)
 Hypothesis ML : ameter_laws MT.                     (* the allocator instance's meter *)
-(* relay_reads: cut_x's RRDS_x (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:580), verbatim at its closed names *)
+(* relay_reads: cut_x's RRDS_x (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:581), verbatim at its closed names *)
 Hypothesis RRDS : forall W ly S Hp (regs : bvmap 5 word) mem md ch T es HA h,
   afn_pre_x segs B ARx RRDS_STK ly S Hp W regs mem md ch ->
   getr regs 10 = w64 HA -> 0 < HA -> HA mod 8 = 0 -> azs B HA 4 ->
@@ -192,11 +193,11 @@ Hypothesis RI_rm_rr_pair : forall cx t m si h j0,
   RINV cx t m -> rm_at cx m si h j0 -> re_eof (rm_ent m j0) = 0 ->
   re_skip (rm_ent m j0) = hs_overlong h /\ (re_skip (rm_ent m j0) = 0 -> bzs (re_U (rm_ent m j0)) = bzs (hs_W h)).
 (* the removed slot's expected list is empty at the arm's start (drain_x's RI_src's first conjunct, at rm_at; the
-   plain proof's pair_ok, Prog/SlotInv.v:253-263; image A's remove_x.v:159-160 at 250502f7048) *)
+   plain proof's pair_ok, Prog/SlotInv.v:253-263; image A's remove_x.v:159-160) *)
 Hypothesis RI_rm_src : forall cx t m si h j0,
   RINV cx t m -> rm_at cx m si h j0 -> hl_recs (hs_expected h) = [].
 (* LS: the sizes and the budget relay_remove takes, read off the cut's LS at the arm's start: a Theorem Labs lane's
-   TX_LS_rm_rr_pre (image A's lib/A/ReplyLS3Peak.v:152, commit 1318828167d) in this Section's names (MMAX for the
+   TX_LS_rm_rr_pre (image A's lib/A/ReplyLS3Peak.v:152) in this Section's names (MMAX for the
    instance's fr_MMAX; its ent_capout_ok0 (c_W cx) (c_mem cx), image A's lib/A/ReplyLS3eCap.v:134, stated by its body:
    that file Requires the AR arms); conjuncts 3 and 6 in rr_spec_x's peak form *)
 Hypothesis LS_rm_rr_pre : forall cx t m ly S si h j0,
@@ -216,7 +217,7 @@ Hypothesis LS_rm_rr_pre : forall cx t m ly S si h j0,
 (* check_no_loss's functional premises over the source h1 that relay_remove left in slot si, and over the stream O2
    (Prog/SlotInv.v pair_ok :253, Prog/SlotPass4.v rr_held1 :1922, BND1 / BND2 :3422-3424, rr_cnl_pre :1990,
    output_at :243; the same facts as _drain.v LS_cnl_pre :671-677).  RESTATED (a Theorem Labs lane's lib/B/ReplyRINVB_rm_a12.v
-   RI_rm_cnl_pre_K14_holds at commit b85392ed89c, image A's restatement 3f40808c334): the text without the key-length
+   RI_rm_cnl_pre_K14_holds, image A's restatement): the text without the key-length
    premise is FALSE at fr_RINV (that file's RI_rm_cnl_pre_top_false); the premise is rm_mfacts' second conjunct *)
 Hypothesis RI_rm_cnl_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
@@ -226,8 +227,8 @@ Hypothesis RI_rm_cnl_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   AREC * capb (hs_held h1) (hs_expected h1) < 2 ^ 32 /\ Z.of_nat (length O2) < 2 ^ 32 /\
   (lm_gn m = 0 -> exists rest, O2 = bstream (hs_expected h1) ++ rest).
 (* check_no_loss's allocator facts after relay_remove's charge: a Theorem Labs lane's TX_LS_rm_cnl_pre (image A's
-   lib/A/ReplyLS3cTopxPost.v:178, commit d0d75bf92db) in this Section's names: the start model's block sizes
-   (rm_mfacts) and the composed frame to the call's state (rm_fr).  KF-COUNT F9 (A aacecd50fed): LS_rm_cnl_pre,
+   lib/A/ReplyLS3cTopxPost.v:178) in this Section's names: the start model's block sizes
+   (rm_mfacts) and the composed frame to the call's state (rm_fr).  KF-COUNT F9 (A): LS_rm_cnl_pre,
    LS_rm_cshe_pre and LS_rm_sr_pre take, after rm_rr_ok, the arm's t bound (lregs_rmc) and the removed entry's
    partial-line bound (rm_Q's rm3_pre); LS_rm_step takes the partial-line bound after LSx *)
 Hypothesis LS_rm_cnl_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev LB c2 O2 cap2 (ly : alayout) out2,
@@ -241,7 +242,7 @@ Hypothesis LS_rm_cnl_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev LB
   cnl_room MMAX (blocks_bytes S) (texts (hs_held h1)) (hl_cap (hs_held h1)) (hl_recs (hs_expected h1)) /\
   mo_ok MT S ((rm_cnl_cost MT) (hs_expected h1) (hs_held h1)).
 (* when g_gone = 0, check_shape_ends' plain pre (Prog/SlotPass4.v rr_A1_le :2003, cn_ends :2236).  RESTATED
-   (ReplyRINVB_rm_a12.v RI_rm_cshe_pre_nz_holds at b85392ed89c; the text without the NUL premise is FALSE at fr_RINV,
+   (ReplyRINVB_rm_a12.v RI_rm_cshe_pre_nz_holds; the text without the NUL premise is FALSE at fr_RINV,
    RI_rm_cshe_pre_top_false): the held texts after check_no_loss have no NUL byte (alist_at at lines = true) *)
 Hypothesis RI_rm_cshe_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H',
   RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> rm_cnl_ok h1 E' H' ->
@@ -258,7 +259,7 @@ Hypothesis LS_rm_cshe_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev L
   mo_le MT S0 S ((rm_rr_cost MT) m h + (rm_cnl_cost MT) (hs_expected h1) (hs_held h1)) ->
   mo_ok MT S ((rm_cshe_cost MT) H').
 (* at = A1 + cc is g_nout = |O2|, check_shape_done's premise (Prog/SlotPass4.v cs_at :2350-2363).  RESTATED
-   (ReplyRINVB_rm_a12.v RI_rm_csd_gn_holds at b85392ed89c; the text without the g_gone bound is FALSE at fr_RINV,
+   (ReplyRINVB_rm_a12.v RI_rm_csd_gn_holds; the text without the g_gone bound is FALSE at fr_RINV,
    RI_rm_csd_top_false): g_gone is 0 or 1 (amodel_at's agone_at) *)
 Hypothesis RI_rm_csd : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H' H'' ds cc,
   RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> rm_cnl_ok h1 E' H' ->
@@ -281,8 +282,8 @@ Hypothesis RI_rm_step : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' 
   rm_cshe_ok m (set_exp_held h1 E' H') O2 (rm_A1 m h1) H'' ds cc ->
   RINV cx (t + 1) (rm_mk cx m si None j0 (rm_cev c2 ev5) O2 cap2 out2).
 (* the allocator state after op 4: the four charges (Prog/SlotPass4.v r_fin WT4 :3104, the shape of _drain.v
-   LS_drain_step).  The last four premises are what LS v3's rule takes (lib/A/ReplyLS3Arms.v fr_LS3_rm_step_p at
-   e7b7e567191; B's twin ReplyLS3B is a Theorem Labs lane's): the composed frame from the arm's start and the start model's facts
+   LS_drain_step).  The last four premises are what LS v3's rule takes (lib/A/ReplyLS3Arms.v fr_LS3_rm_step_p;
+   B's twin ReplyLS3B is a Theorem Labs lane's): the composed frame from the arm's start and the start model's facts
    (P1) (P3) (P4); rm_Q carries them (rm_fr, rm_mfacts). *)
 Hypothesis LS_rm_step : forall cx t m ly0 S0 (ly : alayout) (S : astate)
     si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc ev5,
@@ -303,7 +304,7 @@ Hypothesis LS_rm_step : forall cx t m ly0 S0 (ly : alayout) (S : astate)
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (rm_mk cx m si None j0 (rm_cev c2 ev5) O2 cap2 out2) ly S.
 (* the room round's count row (a Theorem Labs lane's ROOM-TEXTS (c); a Theorem Labs lane's fr_LS3cp_cnt_rm, image A's
-   lib/A/ReplyLScnt.v at commit ba8e99b5bd2): at the arm's start, the live counts plus the arm's peak rm_pk stay under
+   lib/A/ReplyLScnt.v): at the arm's start, the live counts plus the arm's peak rm_pk stay under
    RP's bounds.  The guards are the walk's facts there (the model's sizes come from amodel_at) *)
 Hypothesis LS_cnt : forall cx t m ly S (W : world segs) mem si h j0,
   LSx cx t m ly S -> RINV cx t m -> rm_at cx m si h j0 -> amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->
@@ -2122,10 +2123,10 @@ Ltac cn_cs := unfold acallee_saved;
   match goal with |- context [bv_unsigned ?r] => let v := eval vm_compute in (bv_unsigned r) in
     change (bv_unsigned r) with v end; lia.
 Ltac cn_in := cbn [In]; repeat (first [left; reflexivity | right]).
-(* ---- check_no_loss's last premise (kit cnl_spec, lib/B/W_contract.v:2041): the caller's stack readable from
+(* ---- check_no_loss's last premise (kit cnl_spec, lib/B/W_contract.v:2042): the caller's stack readable from
    sp = F up to ly_top.  [F, sp0) is the arm's own window (the journal's presence below the entry sp); [sp0, ly_top)
    is the driver's stack above the entry sp, which the journal keeps at its entry view (rmk_aview_above): readable
-   there by STKR, the last conjunct of _cut.v's fr_lib_pre_cf (cut 61da015af91), which lf_base carries. ---- *)
+   there by STKR, the last conjunct of _cut.v's fr_lib_pre_cf (cut), which lf_base carries. ---- *)
 Lemma rm_stkr_x : forall cx, lf_base0 cx ->
   forall a, spZ (c_regs cx) <= a < ly_top (c_ly cx) -> aview segs (w_H (c_W cx)) (c_mem cx) a <> None.
 Proof.
@@ -2647,7 +2648,7 @@ Qed.
 
 
 (* ======== (6) check_shape_ends(s, "", &at): its helpers (prefix cs_) and the piece.  The structure is lib/A's rm_cshe_x
-   (a working branch 008b4688edd); every frame, register, shadow and image fact is B's ======== *)
+   (a working branch); every frame, register, shadow and image fact is B's ======== *)
 (* two live blocks from the two halves of a permutation of ablocks are apart (AR_sep_law) *)
 Lemma cs_disj_x : forall ly S (W : world segs) mem md L1 L2,
   AR0 ly S W mem md -> Permutation (ablocks B ly S) (L1 ++ L2) ->
@@ -3214,7 +3215,7 @@ Proof.
 Qed.
 
 (* ======== (7) check_shape_done(at): its helpers (prefix cd_) and the piece.  The structure is lib/A's rm_csd_x
-   (a working branch 008b4688edd); the frame, flag word and register facts are B's ======== *)
+   (a working branch); the frame, flag word and register facts are B's ======== *)
 (* a block live before and after the call keeps its bytes (K4's block clause; the call's footprint is empty) *)
 Lemma cd_blk_kept_x : forall cx fpos ly3 S3 (W : world segs) mem md k ly' S' (W' : world segs) mem' md' k1,
   lf_base0 cx ->
@@ -5927,7 +5928,7 @@ Proof.
 Qed.
 
 (* ======== (7) check_shape_done(at): its helpers (prefix cd_) and the piece.  The structure is lib/A's rm_csd_x
-   (a working branch 008b4688edd); the frame, flag word and register facts are B's ======== *)
+   (a working branch); the frame, flag word and register facts are B's ======== *)
 (* a block live before and after the call keeps its bytes (K4's block clause; the call's footprint is empty) *)
 Lemma cd_blk_kept_xR : forall cx fpos ly3 S3 (W : world segs) mem md k ly' S' (W' : world segs) mem' md' k1,
   lf_base0 cx ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -21,6 +22,7 @@ Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 
 Section FactNodes.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
   Variable SEGS : list Segment.
   Variable A : atable.
   Variable nx0 : N.
@@ -38,8 +40,8 @@ Section FactNodes.
     know_ok SEGS E (Mr A argH E cs model FULL) facts ->
     (forall E' R' FULL' model',
         env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> CSOK E' (add_kn cs facts) R' FULL' model' -> m_fs model' = m_fs model ->
-        srealizes SEGS (cfg_of SEGS R' (pc (add_kn cs facts)) FULL' model') T) ->
-    srealizes SEGS (cfg_of SEGS R (pc cs) FULL model) T.
+        srealizesM SEGS sfl (cfg_of SEGS R' (pc (add_kn cs facts)) FULL' model') T) ->
+    srealizesM SEGS sfl (cfg_of SEGS R (pc cs) FULL model) T.
   Proof.
     intros cs facts E R FULL model T HC HF Hk.
     specialize (Hk E R FULL model (conj (env_agree_refl nx0 E) (env_agree_refl (nxt cs) E))).
@@ -73,7 +75,7 @@ Section FactNodes.
     exists rho. split; [exact Hr|]. split; [|lia]. rewrite He. apply Z.mod_small. lia.
   Qed.
 
-  #[using="Type"] Theorem xn_sound_reldiff : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => node_reldiff cs args).
+  #[using="Type"] Theorem xn_sound_reldiff : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => node_reldiff cs args).
   Proof.
     intros args cs cs' E R FULL model T HC _ Hn Hk. unfold node_reldiff in Hn.
     destruct args as [|X [|Y [|[s| | | | | | |] [|]]]]; try discriminate.
@@ -154,7 +156,7 @@ Section FactNodes.
     apply ZB. lia.
   Qed.
 
-  #[using="Type"] Theorem xn_sound_zerocover : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => node_zerocover cs args).
+  #[using="Type"] Theorem xn_sound_zerocover : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => node_zerocover cs args).
   Proof.
     intros args cs cs' E R FULL model T HC _ Hn Hk. unfold node_zerocover in Hn.
     destruct args as [|B [|N [|]]]; try discriminate.
@@ -186,7 +188,7 @@ Section FactNodes.
   #[using="Type"] Lemma eqm_both_small : forall a b, eqm a b -> 0 <= a < 2 ^ 64 -> 0 <= b < 2 ^ 64 -> a = b.
   Proof. intros a b [q Hq] Ha Hb. assert (q = 0) by nia. subst q. lia. Qed.
 
-  #[using="Type"] Theorem xn_sound_srlbound1 : forall e, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => node_srlbound1 cs e).
+  #[using="Type"] Theorem xn_sound_srlbound1 : forall e, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => node_srlbound1 cs e).
   Proof.
     intros e cs cs' E R FULL model T HC _ Hn Hk. unfold node_srlbound1 in Hn. cbv zeta in Hn.
     destruct (take_srl (snd (lin_of e))) as [[[[co r] s] rest]|] eqn:Ht; [|discriminate Hn].
@@ -265,7 +267,7 @@ Section FactNodes.
       constructor; [|constructor]. apply kr_ok. rewrite Ue'. lia.
   Qed.
   (* [comment removed for export] *)
-  #[using="Type"] Theorem xn_sound_srlbound : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => node_srlbound cs args).
+  #[using="Type"] Theorem xn_sound_srlbound : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => node_srlbound cs args).
   Proof.
     intros args cs cs' E R FULL model T HC Hpre Hn Hk.
     assert (Hd : (exists e, node_srlbound1 cs e = Some cs') \/ cs' = cs).

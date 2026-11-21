@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_build_w.v at b8f2ecf2c3ff0406d93584348ebba6e5957c14ce to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_build_w.v to fuzz_transport's images *)
 (* Walk of diginet_frame_build in fuzz_transport.plain against diginet_frame_build_contract_w.
    Mode 0 or 1: the walk is diginet_frame_build_holds, with diginet_body_check_contract from
    diginet_body_check_contract_w; build_code_w and build_out_w are then build_code and build_out.

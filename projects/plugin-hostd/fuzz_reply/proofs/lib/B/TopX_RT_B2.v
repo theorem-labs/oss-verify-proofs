@@ -3,28 +3,29 @@
 (* Modified by Theorem Labs, 2026-10: image B's (fuzz_reply.asan-ubsan) strlen contract at the B top's instance,
    PROVED with no premise:
      topx_ASTRLEN_B : astrlen_realizes_x TfibB ARX_rt (SIGMA WS_strlen)
-   the hypothesis ASTRLEN of lib/B/W_check_shape_event.v:80 (Section c: astrlen_realizes_x B ARx (SIGMA WS_strlen))
-   at B := TfibB and ARx := the B top's ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:154-155 at commit e43cf0c7bef),
+   the hypothesis ASTRLEN of lib/B/W_check_shape_event.v:81 (Section c: astrlen_realizes_x B ARx (SIGMA WS_strlen))
+   at B := TfibB and ARx := the B top's ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:154-155),
    which lib/B/TopX_RT_lock.v restates VERBATIM as ARX_rt, with its five runtime laws rt_laws_ARX.
    It is the generic runtime twin lib/B/RT_strlen_x.rt_strlen_x applied at ARX_rt.  Its two image premises are closed
-   at TfibB: FrShadowSyms TfibB (RT_kit.v:239: the shadow-offset cell's GOT slot 0x9df50 and the cell 0xa6638) by
+   at TfibB: FrShadowSyms TfibB (RT_kit.v:240: the shadow-offset cell's GOT slot 0x9df50 and the cell 0xa6638) by
    the fields as_got_shadow / as_shadow_cell of TfibB itself (lib/B/YD2l.v:21,23; lib/B has no W_palib_fr, and the
    B top keeps PALib TfibB as its Hypothesis TL, top_x.v:203, so RT_kit.fr_shadow_of_palib is not used), and
    TfibSyms TfibB by YD2l.TfibB_syms. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/TopX_RT_B2.v, with its module paths changed; 57 of its 84 lines of code are new or changed and 10 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B's (fuzz_reply.asan-ubsan) strlen and strnlen contracts at the B top's instance,
    PROVED with no premise:
      topx_ASTRLEN_B  : astrlen_realizes_x TfibB ARX_rt (SIGMA WS_strlen)
      topx_ASTRNLEN_B : RTx.astrnlen_whole_realizes_x segs TfibB ARX_rt (SIGMA WS_strnlen)
-   with ARx := the B top's ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:167-168 on window c052f9c9a32; :154-155 at
-   commit e43cf0c7bef), which lib/B/TopX_RT_lock.v restates VERBATIM as ARX_rt, with its five runtime laws rt_laws_ARX.
-   - topx_ASTRLEN_B is the hypothesis ASTRLEN of lib/B/W_check_shape_event.v:82 (Section c: astrlen_realizes_x B ARx
+   with ARx := the B top's ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:167-168 on window; :154-155),
+   which lib/B/TopX_RT_lock.v restates VERBATIM as ARX_rt, with its five runtime laws rt_laws_ARX.
+   - topx_ASTRLEN_B is the hypothesis ASTRLEN of lib/B/W_check_shape_event.v:83 (Section c: astrlen_realizes_x B ARx
      (SIGMA WS_strlen)) at B := TfibB.  It is the generic runtime twin lib/B/RT_strlen_x.rt_strlen_x applied at
-     ARX_rt.  Its two image premises are closed at TfibB: FrShadowSyms TfibB (RT_kit.v:239: the shadow-offset cell's
+     ARX_rt.  Its two image premises are closed at TfibB: FrShadowSyms TfibB (RT_kit.v:240: the shadow-offset cell's
      GOT slot 0x9df50 and the cell 0xa6638) by the fields as_got_shadow / as_shadow_cell of TfibB itself
      (lib/B/YD2l.v:21,23; lib/B has no W_palib_fr, and the B top keeps PALib TfibB as its Hypothesis TL, top_x.v:203,
      so RT_kit.fr_shadow_of_palib is not used), and TfibSyms TfibB by YD2l.TfibB_syms.
-   - topx_ASTRNLEN_B is the hypothesis ASTRNLEN_x of top_x.v:811 on window c052f9c9a32 (RTx.v:154's
+   - topx_ASTRNLEN_B is the hypothesis ASTRNLEN_x of top_x.v:811 on window (RTx.v:155's
      astrnlen_whole_realizes_x), the image-B
      twin of lib/A/TopX_RT2.v topx_ASTRNLEN_x.  It is lib/B/RT_strnlen_fit_x.v rt_strnlen_whole_fit_x (the walk
      lib/B/Rt/Strnlen.v strnlen_icpt_realizes_x through RTxIcpt.icpt_laws_of_rt) at ARX_rt, with its three premises
@@ -68,11 +69,11 @@ Section topx_rt2. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 
-(* RT_kit.v:239 FrShadowSyms at TfibB: YD2l.v:21 as_shadow_cell := 0xa6638, YD2l.v:23 as_got_shadow := 0x9df50 *)
+(* RT_kit.v:240 FrShadowSyms at TfibB: YD2l.v:21 as_shadow_cell := 0xa6638, YD2l.v:23 as_got_shadow := 0x9df50 *)
 Lemma fr_shadow_TfibB : K.FrShadowSyms TfibB.
 Proof. split; reflexivity. Qed.
 
-(* ASTRLEN (W_check_shape_event.v:82) at the B top's ARX (top_x.v:154-155 = TopX_RT_lock.ARX_rt) *)
+(* ASTRLEN (W_check_shape_event.v:83) at the B top's ARX (top_x.v:154-155 = TopX_RT_lock.ARX_rt) *)
 Lemma topx_ASTRLEN_B : astrlen_realizes_x TfibB TRL.ARX_rt (SIGMA WS_strlen).
 Proof. exact (SX.rt_strlen_x TfibB TRL.ARX_rt TRL.rt_laws_ARX fr_shadow_TfibB TfibB_syms). Qed.
 

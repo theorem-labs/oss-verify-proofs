@@ -6,9 +6,9 @@
 (* Modified by Theorem Labs, 2026-10: lib/B/W_drain_lineb.v, half B of the LINEA stage of the image-B
    (fuzz_reply.asan-ubsan) walk of fuzz_reply's drain.  Proves no function (kind: segment lemma):
    dr_lineb : dr_lineb_stmt B MT MMAX RG (lib/B/W_drain_lineb_cx.v), DLS 0x839f4 -> DLN (S q) 0x839d4 or DGS 0x83aa4.
-   PORTED from lib/A/W_drain_lineb.v (a working branch e6b5f95b285, the same proof over image A), with image
-   B's own code (objdump of fuzz_reply.asan-ubsan) and lib/B's interface (a working branch
-   4c7c7ff2c10):
+   PORTED from lib/A/W_drain_lineb.v (a working branch, the same proof over image A), with image
+   B's own code (objdump of fuzz_reply.asan-ubsan) and lib/B's interface (a working branch):
+   
      0x839f4 .. 0x839fc  strrchr(line, ' ')            -> s3 (A: s9)
      0x83a04 .. 0x83a14  strncmp(line, .str.6, 13)      .str.6 = "param_gesture", A_OBJ 18 (A: 21)
      0x83a18             bnez a0 -> DLN
@@ -21,9 +21,10 @@
      0x83a68 .. 0x83a78  strcmp(last + 1, .str.7 "begin") -> s9 (A: s3), A_OBJ 20 (A: 23); reloads again
      0x83a8c             beqz a0 -> DGS
      0x83a90 .. 0x83a9c  strcmp(last + 1, .str.8 "end"), A_OBJ 21 (A: 24); bnez a0 -> DLN; else DGS at 0x83aa4.
-   STRUCTURE also cross-checked against a working branch 1c09e330abe
+   STRUCTURE also cross-checked against a working branch
    lib/B/Prog/drain_p_seen_strrchr.v / drain_p_seen_strncmp.v / drain_p_seen_gtest.v / drain_p_seen_gbeg.v (the old
    h-lane framework's walk of the same bytes); nothing is copied from them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

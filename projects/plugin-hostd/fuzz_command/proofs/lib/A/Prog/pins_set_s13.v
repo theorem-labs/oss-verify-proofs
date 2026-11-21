@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the middle segments of pins_set's ASan walk (from the return of the j-th
    xstrdup to the call of the next one), after cgif_file_fuzzer's cgif_close walk, proofs/cgif/cgif_file_fuzzer/lib/A/ACh*.v
-   at c8557374ad2e (a straight symbolic run, a branch on an argument, and the step through a call
+   (a straight symbolic run, a branch on an argument, and the step through a call
    with cl_callS) over fuzz_command's recorder. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* `ps_seg_x`: for j = 1 .. 3, the walk from the return of the j-th xstrdup (pc ps_ret j, the copy p in a0) to the
    call of the (j + 1)-th. The run checks the shadow byte of the slot's nargs word c + 4 (marked usable), loads nargs

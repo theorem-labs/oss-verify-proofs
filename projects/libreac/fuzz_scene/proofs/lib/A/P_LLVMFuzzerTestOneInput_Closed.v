@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: THE CLOSING of the ASan walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput.
    rule 24: no function proved (kind: merge).  This file proves no segment and no callee. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* This file proves  scene_llvmf_closed : scene_llvmf_stmt B A_LLVMF RA_LLVMF EV_LIB LIVE_LIB LLVMF_STK A_EMPTY
 
-   under ONLY lib/A/P_LLVMFuzzerTestOneInput.v's Section h (statement of record a working branch
-   f6ab6e97937; copied below in its text).  Four Section h hypotheses are used by no segment proof and drop out
+   under ONLY lib/A/P_LLVMFuzzerTestOneInput.v's Section h (statement of record a working branch;
+   copied below in its text).  Four Section h hypotheses are used by no segment proof and drop out
    when the section closes: HRA_LLVMF, HRO_PL, HB_C_PL and FFL.  The proof applies
    P_LLVMFuzzerTestOneInput_Plug.scene_llvmf_plug (S1 .. S6 plugged into the composition, open on HS0 alone; this
-   branch) and discharges HS0 with P_LLVMFuzzerTestOneInput_S0.scene_seg_S0 (a working branch
-   67f0c71b18d), at the statement's own sink head P_LLVMFuzzerTestOneInput.scene_sink_head, passed by name
+   branch) and discharges HS0 with P_LLVMFuzzerTestOneInput_S0.scene_seg_S0 (a working branch),
+   at the statement's own sink head P_LLVMFuzzerTestOneInput.scene_sink_head, passed by name
    (gate 6h).
 
    S0's premises (P_LLVMFuzzerTestOneInput_S0.v Section e; FFL, :186, is declared there but unused by the proof, so
@@ -25,9 +26,9 @@
    FILE ORDER as P_LLVMFuzzerTestOneInput_Plug.v: every Require first; no short name of YI16 / lib_shape / LIBK /
    LL is written after them.
 
-   BUILD RECIPE: the Plug's (P_LLVMFuzzerTestOneInput_Plug.v header), with the statement files at f6ab6e97937
-   (`git checkout f6ab6e97937 -- proofs/libreac/fuzz_scene` after the 7687b78416d3 overlay) and
-   lib/A/P_LLVMFuzzerTestOneInput_S0.v from 67f0c71b18d by path.  S0 alone compiles in about 2.3 h. *)
+   BUILD RECIPE: the Plug's (P_LLVMFuzzerTestOneInput_Plug.v header), with the statement files
+   (`git checkout -- proofs/libreac/fuzz_scene` after the overlay) and
+   lib/A/P_LLVMFuzzerTestOneInput_S0.v by path.  S0 alone compiles in about 2.3 h. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -64,7 +65,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* the statement's own sink head (P_LLVMFuzzerTestOneInput.v:150-151), by its full name *)
+(* the statement's own sink head (P_LLVMFuzzerTestOneInput.v:151-152), by its full name *)
 #[local] Notation SKS := OSSVerify.Proofs.libreac.fuzz_scene.lib.A.P_LLVMFuzzerTestOneInput.scene_sink_head.
 
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -76,7 +77,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation RLO := (@pa_relro_lo _ scene_listing PI_scene).
 #[local] Notation RHI := (@pa_relro_hi _ scene_listing PI_scene).
 
-(* ---- lib/A/P_LLVMFuzzerTestOneInput.v's Section h (:166-301 at f6ab6e97937), in its own text and order; BSS,
+(* ---- lib/A/P_LLVMFuzzerTestOneInput.v's Section h (:166-301), in its own text and order; BSS,
    SSB and SSM take the sink head by name, as the statement writes them. ---- *)
 Section h.
 Variable B : asyms.
@@ -121,7 +122,7 @@ Hypothesis TCHECKX : tcheck_step_specX SKS B.
 Hypothesis HTRACE : rt_trace_in_stmt SEGS RA_LLVMF (pc_malloc_ra0 (as_code B)) (pc_free_ra0 (as_code B))
 RT_malloc1_ra RT_malloc2_ra RT_malloc3_ra RT_free1_ra RT_free2_ra RT_free3_ra (as_universe B).
 
-(* ---- the composition's instance (P_LLVMFuzzerTestOneInput_Top.v:79-87, :161-162) ---- *)
+(* ---- the composition's instance (P_LLVMFuzzerTestOneInput_Top.v:80-88, :162-163) ---- *)
 #[local] Notation WKA := (P_LLVMFuzzerTestOneInput_Top.scene_walk_asan A_LLVMF RA_LLVMF EV_LIB LIVE_LIB LLVMF_STK A_EMPTY).
 #[local] Notation SSEGS := P_LLVMFuzzerTestOneInput_Top.scene_segs.
 #[local] Notation SMT := P_LLVMFuzzerTestOneInput_Top.scene_mt.

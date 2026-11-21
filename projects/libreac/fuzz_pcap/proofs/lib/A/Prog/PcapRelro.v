@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: libreac/fuzz_pcap (libreac v1.9.0, ASan build): the read-only window RLO / RHI that
-   pcap's ASan statements pass (obligation row 5; the donor passes 0x9da38 / 0x9eca8, cgif_file_fuzzer lib/A/AD2o.v:45-47,
+   pcap's ASan statements pass (obligation row 5; the donor passes 0x9da38 / 0x9eca8, cgif_file_fuzzer lib/A/AD2o.v:46-48,
    AB1w.v:11-14, ACeg.v:42-44 in_ro_tfa).
    The donor's rule, measured on both donor images (cgif_file_fuzzer.asan sha256 7093581aab040cfd: .data.rel.ro
    0x9da38.., .got ..0x9eca8; .asan-ubsan 1c29845fe6058de6: 0x9dca8 .. 0x9ef18): RLO = the start of .data.rel.ro (the
@@ -15,6 +15,7 @@
    build loads, that the window lies inside one loaded segment. This file is IMAGE-FREE (PCAP_RLO / PCAP_RHI and the
    decidable relro_in_seg only), so a lib/B file may Require it for the constants without loading an image
    (a Theorem Labs lane's closure audit; a Theorem Labs lane's twin-test). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.libreac.fuzz_pcap Require Symbols.
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.

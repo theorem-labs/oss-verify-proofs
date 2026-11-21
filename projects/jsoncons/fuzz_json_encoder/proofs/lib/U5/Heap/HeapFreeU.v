@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-interval ledger): changed HIU_free. *)
 (* free of the ubsan heap: credit unchanged; the global conjuncts survive because free only shrinks the mappings. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -68,7 +69,7 @@ Proof.
   unfold raw_free in IMPL. apply implM_mget_inv in IMPL. cbv beta in IMPL. apply implM_bind_inv in IMPL.
   assert (LIVEp : In (fst p) (ld_live L)).
   { apply (Permutation_in _ (Permutation_sym PL)). change (fst p) with (blk_slot (p, A, n)). apply in_map. exact Hbb. }
-  eapply (embed_free rsegs SCFG RESV IMG_HI (cfree (ps_m s) (Some (fst p))) L (fun (_ : mled) (_ : mstate) => True)
+  eapply (embed_free rsegs SCFG HALLOC RESV IMG_HI (cfree (ps_m s) (Some (fst p))) L (fun (_ : mled) (_ : mstate) => True)
             EVF 0 (fun cs' : mstate => pot cs' <= pot (ps_m s)) s _ _ model model (m_vmmaps model) K
             (cfree_contract_proof (ps_m s) L (fst p) CR LIVEp) (mb_free (MBND RUNp) (ps_m s) L (fst p) CR LIVEp)
             IMPL HKL (eq_sym (with_vmmaps_eta model)) Hh Hl Hm (vm_shrunk_refl (m_vmmaps model))).

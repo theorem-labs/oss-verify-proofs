@@ -2,7 +2,7 @@
    reac_segconf_parse_file's walk (0x87e38, 1328 instructions; reac_segconf.c:264, 267, 271, the bad-model refusal
    and the scope ends of the model branch), S_B11c_holds : S_B11c B (lib/B/Prog/pf_pieces.v), Qed. The B11c segment lane
    of the image-B G3 walk owner, 2026-10-30. proves no function (kind: segment of reac_segconf_parse_file's walk).
-   ADAPTED from the image-A G3 walk owner's image-A lane of segment A11b (commit 95f85b0d718c, its
+   ADAPTED from the image-A G3 walk owner's image-A lane of segment A11b (its
    statements pf_a11b_d.v / facts pf_a11b_f.v; B11c is A11b's second half, A's KEXIT 0x886c8 .. TAIL), with the
    piece form of A10b's join (a working branch's pf_a10b_j.v), A5's transport (a working branch's
    pf_a5_k.v), A7's refuse site rule (a working branch's pf_a7_s.v) and image B's parse walk's call rule

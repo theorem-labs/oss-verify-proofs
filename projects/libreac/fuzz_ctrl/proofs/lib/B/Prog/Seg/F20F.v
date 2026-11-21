@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths, addresses and numbers changed; 555 of its 598 lines of code are new or changed and 353 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F20.v, with its module paths and module names changed; 135 of its 190 lines of code are new or changed and 543 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source run: lib/B/Prog/Seg/F20.v lu_evt (:64) and seg_F20's own inline stretch 0x82668 -> 0x82728
-     (:538-616) at a working branch 3803efccea0 (blob 9f1728fca2579f33a183d2fb3bd071b4db7471d9);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     (:538-616) at a working branch (blob 9f1728fca2579f33a183d2fb3bd071b4db7471d9);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: lu_evt is the UL bridge that carries the reac_ctrl_checksum_verify contract into seg_F20's UL run;
      an _F stretch never runs a callee, so the bridge has no footprint twin.  The stretch is split at the call
      instead: seg_F20_pre_F re-runs F20.v:549-590 / 600-607 (0x82668 -> the callee entry 0x83b94,

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v (commit 3295f3a9fd5, CfInstMiss lane M field round 3 (cf-miss 3295f3a9fd5); file sha256 1c327db94e02) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstMiss.v at commit f7d0d764e77, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v (CfInstMiss lane M field round 3 (cf-miss); file sha256 1c327db94e02) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstMiss.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
-   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/AGif1m.v, AGif1mE.v and MnRefillcgif.v at c5 30a1993588f: the miss
+   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/AGif1m.v, AGif1mE.v and MnRefillcgif.v at c5: the miss
    interface, its errno add-on and the memnorm-kept refill field at the call-site relation YGcfInstBase.ARXq_cf, over
    the refill window YGcfInstRefill.REP_STACK: MnRefillW.AIfaceMw / AIfaceMEw / amm_refill_w_t (AGif0n.AIfaceM /
    ErrnoG.AIfaceME / MnRefill.amm_refill_t with their RSTACK = 1024 replaced by the window; the cf refill's class-full
@@ -13,7 +14,7 @@
    Fixed arguments (YGcfInstBase.v section 4): U := U_cf B, mt := malloc_cf, ARX := ARXq_cf B IOK Hp at every ghost set
    Hp, AOX := AOX_cf B, rpre := rpre_cf B, nmax := cf_malloc_max, lmax := LIVE_MAX, lpost := qtight,
    dpost := YGcfInstHit.dpost_cf B, mtag / stag := CfImg's cf_pc_malloc_max / cf_pc_spin_shadow (malloc_cf's mcheck tag
-   and shadow-remap spin, YG00cf.v:237 / :249), rtree := YGcfInstRefill.refill_tree_cf.
+   and shadow-remap spin, YG00cf.v:238 / :250), rtree := YGcfInstRefill.refill_tree_cf.
 
    Field by field, against cgif's proof:
    - if_mview (mview_cf): ARmcf's layout / tsd / const cells / cache count cell / unwinding cell (AGif1m.mview_cgif's
@@ -220,9 +221,9 @@ Proof. intros c s. unfold refill_if_empty_cf. repeat rq_step. Qed.
 #[local] Hint Resolve rq_refill_cf : rqdb.
 
 (* The refill tree's post on every returning path.  The depot clause: no step of the refill tree puts into the depot
-   (refill_tree_cf, YGcfInstRefill.v:62, and its steps YG00cf.v:38-218 and cgif's YG00 steps for the batch class have
-   no depot_put / set_depot; the only depot_put of the cf model is malloc_cf's join tail, YG00cf.v:245, after the
-   refill, and free_cf's, YG00cf.v:338); this walk checks it on every path. *)
+   (refill_tree_cf, YGcfInstRefill.v:63, and its steps YG00cf.v:39-219 and cgif's YG00 steps for the batch class have
+   no depot_put / set_depot; the only depot_put of the cf model is malloc_cf's join tail, YG00cf.v:246, after the
+   refill, and free_cf's, YG00cf.v:339); this walk checks it on every path. *)
 Lemma refill_tree_cf_post : forall c s, cfx_ipost (refill_tree_cf c s) (fun r =>
 st_chunks (snd r) = st_chunks s /\ st_qthread (snd r) = st_qthread s /\ st_qglobal (snd r) = st_qglobal s /\
 st_cache_inited (snd r) = true /\ st_depot (snd r) = st_depot s).
@@ -268,7 +269,7 @@ Hypothesis IOK_inst : IOK_ok B IOK.
 (* image: the instance object's constant cells wherever the constant cells hold (CfInstSec's INST_CELLS text, carried
    as YGcfInstHit.INST_CELLS_t; cgif: tfib_const_lookup / tfib_const_lookup_sym over Tfib_const) *)
 Hypothesis INST_CELLS : INST_CELLS_t B.
-(* YGcfInstHit's bridge premises (YGcfInstHit.v:137-152, same texts): the shadow offset, the depot's write zone and
+(* YGcfInstHit's bridge premises (YGcfInstHit.v:138-153, same texts): the shadow offset, the depot's write zone and
    footprint, and the constant cells apart from the thread cells the hit walk writes *)
 Hypothesis HSHB : ag_shadow = SHADOW_OFF.
 Hypothesis HDZO : forall ly' a, ag_dzone ly' a ->
@@ -293,7 +294,7 @@ Hypothesis HDEP : forall Hp, CLdepot.depot_field im_segs ag_depot_put im_tp B (A
   (fun ly a => ag_dzone ly a \/ ag_czone ly a).
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The out-of-memory law (the cf twin of YFi5.v:371 AR_oom): ARcf survives Allocate's out-of-memory tail, which may  *)
+(* The out-of-memory law (the cf twin of YFi5.v:372 AR_oom): ARcf survives Allocate's out-of-memory tail, which may  *)
 (* change the OOM byte (owned, junk in ARmcf) besides the frame law's memory (YG0dcf.AR_frame_law_cf with the owned *)
 (* clause relaxed at im_oom).  PROVED below (AR_oom_law_cf_ok) from ARcf and two UNIT IMAGE facts of the byte.      *)
 Definition AR_oom_law_cf : Prop :=
@@ -310,7 +311,7 @@ ARcf im_segs B ly S Hp W mem' md'.
    range at a layout the image's symbol cells may sit at (YGcfInstBase.ly_img_ok: layout_ok, the TSD slot, the owned
    static inside the image window; cgif: YFi5.abs_cells_okJ, by computation over Tfib_const_abs / Tfib_const_shadow).
    The ly_img_ok premise is required: without it the row is false (a Theorem Labs lane's ReplyImg_oomconst.oom_const_t_refuted_A,
-   a working branch 0e400063292: at ly_T = the OOM byte a symbol cell of the thread object is it). *)
+   a working branch: at ly_T = the OOM byte a symbol cell of the thread object is it). *)
 Definition oom_areas_t : Prop :=
 ~ (as_inst B <= as_oom_byte B < as_inst B + 3632) /\
 ~ (as_depot B <= as_oom_byte B < as_depot B + (4 * 2 ^ 20 + 32)) /\
@@ -401,7 +402,7 @@ Proof. intros a Ha E. rewrite E in Ha. exact (proj1 (proj2 (proj2 (proj2 oom_own
 Lemma no_iflag_cf : forall a, as_ialloc_flag B <= a < as_ialloc_flag B + 2 -> not_oom_cf a.
 Proof. intros a Ha E. rewrite E in Ha. exact (proj2 (proj2 (proj2 (proj2 oom_owned_img))) Ha). Qed.
 
-(* copy of YG0tcf.v:141-172 (rinfo_in_cf / meta_in_cf / batch_in_cf) at not_oom_cf *)
+(* copy of YG0tcf.v:142-173 (rinfo_in_cf / meta_in_cf / batch_in_cf) at not_oom_cf *)
 Lemma rinfo_no_cf : forall a, ly_space ly + kRegionInfoOff <= a < ly_space ly + kRegionInfoOff + 4096 -> not_oom_cf a.
 Proof.
 intros a Ha. pose proof (lo_space_in _ (amc_layout _ _ _ _ _ M)) as [S1 S2]. unfold kRegionInfoOff, kSpaceSize in *.
@@ -436,7 +437,7 @@ assert (BX : ly_space ly + b_self b = region_base ly kBatchClass + x) by (unfold
 apply no_prim_cf. lia.
 Qed.
 
-(* copy of YG0tcf.v:174-326 (the cell families) at not_oom_cf *)
+(* copy of YG0tcf.v:175-327 (the cell families) at not_oom_cf *)
 Lemma region_cells_no_cf : forall c, 1 <= c <= 31 -> Forall (CBO ly) (region_cells S c).
 Proof.
 intros c Hc. apply (YG0tcf.Forall_cbi_of_range B not_oom_cf ly _ (ly_space ly + kRegionInfoOff) 4096); [exact rinfo_no_cf|].
@@ -612,7 +613,7 @@ unfold ashadow in H. destruct (find_chunk_at B ly (st_chunks S) g) as [k|] eqn:F
 Qed.
 End z.
 
-(* The law. AR_frame_law_ok_cf's proof (YG0qcf.v:669) with its owned-agreement AG at the bytes other than the OOM byte:
+(* The law. AR_frame_law_ok_cf's proof (YG0qcf.v:670) with its owned-agreement AG at the bytes other than the OOM byte:
    every byte the cells, the free arrays, the flags, the depot, the shadow and the internal allocator's zero ranges
    read is not the OOM byte (the _no_cf family above). *)
 Lemma AR_oom_law_cf_ok : AR_oom_law_cf.

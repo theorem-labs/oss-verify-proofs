@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvfi0.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 6 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvfi0.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 6 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
@@ -11,6 +11,7 @@
 (* Modified by Theorem Labs, 2026-10: the walk's window-free helpers (vfi_rodata, vfi_rodata_chk, vfi_facts, ro_far,
    CS_REGS, regs_kept, st_ok_first, ro_far_sound, vfi_ro_low, vfi_ro_region_low, sv_atom, vfi_preserved) moved here
    unchanged from FMsnprintfGvfi.v, which Require Exports this file; this file reaches no stack band. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

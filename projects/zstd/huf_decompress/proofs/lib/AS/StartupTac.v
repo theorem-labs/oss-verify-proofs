@@ -1,4 +1,6 @@
-(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (bwd_msteps); region_side restated for the revision's model; imports). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -11,8 +13,6 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Export
   PropExec CatExec CatSim SeqExec StepTac Hoare WalkTac StoreOk StreamSim MmapSim
   MemSplit StartupAux ZStores.
-From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
-Ltac2 kr_t_StartupTac () := "I47Corelib4Init9Datatypes4list00I59OSSVerify5KrLib2AS6CatSim6msteps00C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS6CatSim<msteps_transC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS:StartupTac3bwdC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem<MemImageType7Segment00I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=machine_state00".
 (* [comment removed for export] *)
 Unset Lia Cache.
 Import ListNotations.
@@ -46,7 +46,9 @@ Ltac zlit :=
 
 (* [comment removed for export] *)
 Ltac region_side :=
-  unfold win_lo; rewrite ?stack_max_size_val, ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
+  unfold win_lo, wok_lo; rewrite ?stack_max_size_val;
+  unfold stack_window_reach;
+  rewrite ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
 
 (* [comment removed for export] *)
@@ -198,8 +200,7 @@ Definition bwd (segs : list Segment) (G : machine_state -> Prop) : Prop :=
   forall st st', msteps segs st st' -> G st' -> G st.
 
 Lemma bwd_msteps : forall segs tgt, bwd segs (fun st => msteps segs st tgt).
-Proof.
-ltac2:(KReplay.run1 (kr_t_StartupTac ()) [] "h02sth12H1h22H2h34segsh43st'h53tgtp;1p;3p;6p;2g0000j13Tg000Pj30Tg001Gj62Tg002Bj21Tg0038#3g0047R0f3R1f1R2f0R330f4R4?021f5P1f2R1P4P2P3E2W2W1X40X00A0132X00,12eW5W3o"). Qed.
+Proof. intros segs tgt st st' H1 H2. eapply msteps_trans; eassumption. Qed.
 
 (* [comment removed for export] *)
 Ltac gsteps HG := eapply HG.

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/Prog/diginet_personality_from_name.v at d8e4e696562a3ec070d61f99e264ce9d80f5a5bd to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/Prog/diginet_personality_from_name.v to fuzz_transport's images *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/Prog/diginet_personality_from_name.v, with its module paths and module names changed; 921 of its 949 lines of code are new or changed and 111 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* diginet_personality_from_name_cgW: Theorem transport_diginet_personality_from_name_cg_holds : the statement
    transport_diginet_personality_from_name_cg_holds_stmt of lib/A/Prog/diginet_personality_from_name_cg.v, the machine
    walk of diginet_personality_from_name (src/diginet_codec.c:17-25) on fuzz_transport.asan at 0x8c484 =
@@ -32,12 +33,12 @@
 
    Copied and adapted (provenance): pfw_cs_k, pfw_cs_k_le, pfw_cs_k_spec, pfw_strcmpZ, pfw_strcmp_res_cases,
    pfw_strcmpZ_0, pfw_strcmpZ_unsigned, pfw_cstr_at, pfw_cstr_of_garr8, pfw_cstr_kept, pfw_cstr_rd and the body of
-   pfw_strcmp_cstr_at are cw_cs_k .. cw_strcmp_cstr_at of origin/cold/h-dgn-c1-ai 879253f2304d
+   pfw_strcmp_cstr_at are cw_cs_k .. cw_strcmp_cstr_at of
    proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgWalkStr.v:45-354 (themselves from libreac/fuzz_identity
    reac_box_catalogue_defect.v aj_strcmp_at), over this unit's names (decode_rd_ok for codec's crd_ok);
    pfw_res is pfn_res of the same branch's proofs/libdiginet/fuzz_codec/lib/A/Prog/diginet_personality_from_name_A.v;
    pfw_split / pfw_cstring_app are pfn_split / pfn_cstring of lib/Prog/diginet_personality_from_name.v;
-   pfw_stk_present is cref_stk_present of decode's check_refusal_cg_walk.v (7b6185922a1). *)
+   pfw_stk_present is cref_stk_present of decode's check_refusal_cg_walk.v. *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

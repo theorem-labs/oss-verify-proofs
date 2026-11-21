@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack image is pimg under the run_ok premise, the argv pointers come from the launch's layout, and the stack region's lower bound is 4 MiB below the entry sp instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -54,6 +55,7 @@ Section B3.
   Hypothesis CEIL : ceil_ok sp0.
   Hypothesis VARGV : valid_argv argv.
   Hypothesis VENVP : valid_envp envp.
+  Hypothesis ROK : run_ok sp0 argv envp.
   Hypothesis EARGV : argv = [arg0; arg1].
   Hypothesis HT : 0 < TID < 4194304.
   Hypothesis MALLOC : rmalloc_stmt.
@@ -67,7 +69,7 @@ Section B3.
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid run_hw run_draw).
+  Notation IMGB := (pimg sp0 argv envp uid).
   Notation RDHEAD' := (RDHEAD sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
   Notation RDBRK' := (RDBRK sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
   Notation POSTBODY' := (POSTBODY sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
@@ -103,21 +105,21 @@ Section B3.
           bvmap_empty (Z_to_bv 64 RP1) fc None mm (seg_rom usegs)).
   Proof.
     intros until mm. intros FR BA HP0 EX ERR SG FRM.
-    pose proof (sp_facts sp0 VSP CEIL) as SF. unfold LO in SF. try (pose proof alloc_ceiling_range as CEIL_RANGE). pose proof (IMGB_bound sp0 argv envp uid VSP VARGV VENVP) as IL. try (pose proof alloc_ceiling_range as CEIL_RANGE).
+    pose proof (sp_facts sp0 VSP CEIL) as SF. unfold LO in SF. try (pose proof alloc_ceiling_range as CEIL_RANGE). pose proof (IMGB_bound sp0 argv envp uid VSP VARGV VENVP ROK) as IL. try (pose proof alloc_ceiling_range as CEIL_RANGE).
     pose proof BA as (ST & MI & ES & AUX & SSP & LXS & IMG). unfold LO in ST. unfold RMallocRep.RERRNO in ERR. unfold MFRAME in FR.
     pose proof VARGV as (_ & _ & ARGLEN & NONUL & _).
     unfold RMAIN_RET, RMAIN, RP1.
 
-    destruct (argv_cstring sp0 argv envp uid mm IMG 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-      as (P1v & slack1 & HP1 & P1LO & P1HI & STR1 & SLK1). unfold str_base, struct_size, argc, envc in P1LO.
-    destruct (stack_pieces sp0 argv envp uid mm IMG) as (_ & ARGVP & _).
+    destruct (argv_cstring sp0 argv envp uid mm IMG ROK 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
+      as (P1v & slack1 & HP1 & P1LO & P1HI & STR1 & SLK1). pose proof (str_base_lo sp0 argv envp ROK) as SBL1. unfold argc, envc in SBL1.
+    destruct (stack_pieces sp0 argv envp uid mm IMG ROK) as (_ & ARGVP & _).
     assert (A1NN : ~ In (Z_to_bv 8 0) arg1) by (rewrite EARGV in NONUL; inversion NONUL as [|? ? ? X]; inversion X; assumption).
     assert (A1LEN : Z.of_nat (length arg1) <= 131071) by (rewrite EARGV in ARGLEN; inversion ARGLEN as [|? ? ? X]; inversion X; assumption).
     assert (STR1' : bytes_at usegs mm P1v (arg1 ++ [Z_to_bv 8 0])).
     { change (arg1 ++ Z_to_bv 8 0 :: slack1) with (arg1 ++ ([Z_to_bv 8 0] ++ slack1)) in STR1. rewrite app_assoc in STR1. apply bytes_at_app in STR1. destruct STR1 as [S1 _]. exact S1. }
     pose proof SSP as [G1 G2]. unfold got_ssp, ssp_guard in G1, G2. cbv delta [MallocRep.wz] in G1, G2.
     unfold read_all. unfold implM. iprefix.
-    pose proof (rd_u64s_g usegs mm (usp0 + 8) (argv_ptrs sp0 argv envp ++ [Z_to_bv 64 0]) 1 (Z_to_bv 64 P1v) (Z_to_bv 64 (usp0 + 16))
+    pose proof (rd_u64s_g usegs mm (usp0 + 8) (argv_ptrs run_top argv envp run_execfn ++ [Z_to_bv 64 0]) 1 (Z_to_bv 64 P1v) (Z_to_bv 64 (usp0 + 16))
                   ARGVP ltac:(rewrite nth_error_app1 by (rewrite argv_ptrs_length, EARGV; cbn; lia); exact HP1) ltac:(unfold wa; f_equal; lia)) as RD.
     zstep. clear RD. zstep. zstep. zstep.
     remember READ_FUEL as rf eqn:Erf. clear Erf.
@@ -126,7 +128,7 @@ Section B3.
     replace (map (Z_to_bv 8) (map bv_unsigned arg1)) with arg1 by (symmetry; apply zbytes_map_unsigned').
     eapply implM_bind.
     { eapply implM_of_enode.
-      eapply Drv_sys.open_spec with (lo := usp0 - 8388608) (errv := Z_to_bv 64 0) (canary := rr_guard);
+      eapply Drv_sys.open_spec with (lo := usp0 - 4194304) (errv := Z_to_bv 64 0) (canary := rr_guard);
         [ rewrite (unsigned_lit (usp0 + -128)) by lia; exact ST
         | rewrite (unsigned_lit P1v) by lia; exact STR1'
         | unfold RATP; rewrite (unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); exact ERR
@@ -172,7 +174,7 @@ Section B3.
       lazymatch goal with |- impl _ _ (?tm _) _ ?msx => apply (implM_unfold__ usegs tm (ps_init (reservedZ usegs)) POSTB msx) end.
       eapply implM_bind.
       { unfold rmalloc_stmt in MALLOC.
-        eapply MALLOC with (lo := usp0 - 8388608) (B := usp0); try reflexivity; unfold RATP; rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia;
+        eapply MALLOC with (lo := usp0 - 4194304) (B := usp0); try reflexivity; unfold RATP; rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia;
           unfold RMallocRep.RATP; cbn [Z.add];
           first [ exact HP1' | exact AUX | exact ST | exact ERR1 | exact MI | unfold RMALLOC_STACK; lia | lia ]. }
       cbv beta. intros r s1 ms1 PO.
@@ -216,7 +218,7 @@ Section B3.
         replace (0 =? 65536) with false by reflexivity. apply implM_retb. cbv beta iota.
         eapply implM_mono.
         - change 0 with (zlength (rd_content (mkRd buf 65536 []))).
-          eapply (rd_read sp0 argv envp uid arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP EARGV HT FPR FWX SWF fd P1v (mkRd buf 65536 []) s1)
+          eapply (rd_read sp0 argv envp uid arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP ROK EARGV HT FPR FWX SWF fd P1v (mkRd buf 65536 []) s1)
             with (A := A) (DATA := []) (junk := junk) (errv := errv2);
             cbn [rd_content rd_cap rd_buf zlength length Z.of_nat]; first [lia | exact HP1 | reflexivity | exact SG2 | exact FR2 | exact BA2 | exact EX2 | exact ERR2 | exact FRM | idtac].
           split; [exact HEAP2|]. split; [exact HEXP|]. cbn [length Z.of_nat Z.sub].
@@ -224,7 +226,7 @@ Section B3.
           + apply rw_cells_CB0. lia.
           + unfold MAX_INPUT. split; [split; [lia| exists 16; split; [lia| reflexivity]]|]. split; [lia| exact BR].
         - intros [st'|[|b c]] s3 ms3 PO; cbn [POSTBODY POSTLOOP] in PO |- *.
-          + apply (rd_loop sp0 argv envp uid arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP EARGV HT MALLOC FREE FPR FWX SWF FWR rf fd P1v); [lia| exact HP1| exact PO].
+          + apply (rd_loop sp0 argv envp uid arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP ROK EARGV HT MALLOC FREE FPR FWX SWF FWR rf fd P1v); [lia| exact HP1| exact PO].
           + apply evt_done. exact PO.
           + apply evt_done. exact PO. }
       cbv beta. intros res s2 ms2 PO.
@@ -241,7 +243,7 @@ Section B3.
       lazymatch goal with |- impl _ _ (?tm _) _ ?msx => apply (implM_unfold__ usegs tm s2 POSTB msx) end.
       eapply implM_bind.
       { eapply implM_of_enode.
-        eapply Drv_sys.close_spec with (lo := usp0 - 8388608) (errv := errv3); try reflexivity; unfold RATP; rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia;
+        eapply Drv_sys.close_spec with (lo := usp0 - 4194304) (errv := errv3); try reflexivity; unfold RATP; rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia;
           unfold RMallocRep.RATP; cbn [Z.add];
           first [ exact ST | exact ERR3 | exact MI | lia ]. }
       cbv beta. intros r3 s3 ms3 [PO ->].

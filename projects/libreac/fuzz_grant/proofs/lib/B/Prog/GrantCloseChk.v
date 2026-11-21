@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from part of proofs/libreac/fuzz_grant/lib/A/Prog/GrantClose.v (itself made from part of proofs/cgif/cgif_file_fuzzer/lib/A/ACfi.v) for libreac/fuzz_disco: is_shc, is_shv, zfind, vscan, glob_chk, in_zr_b and their lemmas, and the shadow of the image and of its registered globals, stated at TfibB (lib/A/AD2l.v) and at disco_segs, the segment list of PB_disco; glob_chk accepts a global with no full granule; the byte check of the read-only ranges (byte_free_b, ro_range_b, ro_unowned_of_b) and its registered-globals part (disco_globs_unowned, disco_glob_readable) are added; module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Prog/DiscoRoClose.v, with its module paths and module names changed; 148 of its 233 lines of code are new or changed and 123 lines of the source are left out. *)
-(* Image B (fuzz_grant.asan-ubsan) port of lib/A/Prog/GrantCloseChk.v at a working branch af735a950e2 (arodata_garr8 :191,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B (fuzz_grant.asan-ubsan) port of lib/A/Prog/GrantCloseChk.v at a working branch (arodata_garr8 :191,
    arodata_aview :158, arodata_byte :175, garr8_val_mem :210 and the checks they read): the same text, with its Requires
    pointed at the core (GrantBase -> lib/B/PaBase.v) and at image B's GrantRo.v. At the end, two lemmas this port
    adds (arodata_byte_rom, arodata_garr8_rom): the same step with the check split in two, the image's own bytes checked

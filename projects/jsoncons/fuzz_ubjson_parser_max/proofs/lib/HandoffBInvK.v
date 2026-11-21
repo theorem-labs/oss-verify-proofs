@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: writes out the encoded statements of hl_minv_mono, hb_lit_entry, hb_bridge_static, hb_binv_main and others as plain Rocq, takes RESV0 from vm_reserved, adds n_resx A to GAP, and reworks hb_bridge_static's proof via co_res and co_mres; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/HandoffBInvK.v, 38 lines within its lines 18-247. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -12,16 +13,16 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AxSymExec3K.AX2K AxSymExec3SoundK.AX2SK AsanPlanK.APK AsanPlanSoundK.APSK.
 Open Scope Z_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__HandoffBInvK () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ArtBridge."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ArtRuns."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlacement."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanK.APK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSoundK.APSK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3K.AX2K."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.BackingAlgebra."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HandoffBInvK.BInvMain."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "0A'"; "0B"; "0BL"; "0BUDGET"; "1app"; "1bool"; "1false"; "1list"; "1nil"; "1pair"; "1prod"; "1true"; "2and"; "2eq"; "2ex"]; ["3Z"; "0E"; "0FULL"; "0KMAX"; "0LENMAX"; "0LL"; "4segments_reserved"; "5Model"; "5m_vmmaps"; "5sp_window_hi"; "5sp_window_lo"; "5vm_limit"; "5vm_maps"; "5vm_noaccess"; "6BInv"; "6bridge_static"]; ["6in_shadow_rw"; "7aev"; "8A_bytes"; "8MInv"; "8eager_used"; "8page_allowedb"; "9gw_sizes"; ":a_maps"; ":am_base"; ":am_len"; ":amap"; ":e_sp0"; ":img_hi"; ";amap_den"; ";in_ivs"; ";sum_sizes"]; [";uE"; "<ELit"; "<expr"; "=covered"; ">A0_of"; ">BASE_of"; ">RES_of"; "0SEGS"; "?In"; "@add"; "@le"; "@lt"; "@pow"; "@sub"; "0b"; "0cs"]; ["0hi"; "0l"; "0lo"; "0m"; "0model"; "0p"; "0s"; "Abv"; "Abv_unsigned"; "0x"]]).
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Lemma hl_minv_mono : ltac2:(TCodec.tc2 tcn__HandoffBInvK "Q='8';'@%2211%411'G'Q3r3r1%3221'R7yR0%211'>'6&Q5r5%2219(<%63521r2%6251%93814p041pT<<1&QJ&QI&Q4%11E&Q2r4%211%6241&K&H%11L%311%<251%Q02F8p021p0@1p0Q01pT8Q51p4Q71p2Q81").
+Lemma hl_minv_mono : forall A A' m, MInv A m ->
+(forall p, page_allowedb A p = true -> page_allowedb A' p = true) ->
+eager_used m + A_bytes A' <= vm_limit (m_vmmaps m) -> MInv A' m.
 Proof.
 intros A A' m [N1 N2 N3 N4 N5] Hsub Hb. constructor; try assumption. intros p Hp. apply Hsub. exact (N3 p Hp).
 Qed.
-Lemma hl_A_bytes_app : ltac2:(TCodec.tc2 tcn__HandoffBInvK "C'8';'@%2211%411'>&Q2&5r2r1%33721%511&QI%715%815%3221%;3>51p6=1p2>1").
+Lemma hl_A_bytes_app : forall A B, A_bytes (A ++ B) = A_bytes A + A_bytes B.
 Proof. induction A as [|iv A IH]; intros B; cbn [A_bytes app]; [lia | rewrite IH; lia]. Qed.
-Lemma hl_sum_gw : ltac2:(TCodec.tc2 tcn__HandoffBInvK "@'8';'R7yR0%211%4211%611'>'@&Q?r1%211&Q6%113%73631pT491").
+Lemma hl_sum_gw : forall l, sum_sizes l = AsanPlacement.gw_sizes l.
 Proof. induction l as [|q l IH]; [reflexivity|]. cbn [sum_sizes AsanPlacement.gw_sizes]. rewrite IH. reflexivity. Qed.
 Definition M_LOW : amap := {| am_base := ELit 0x7fff7000; am_len := ELit 0x10000000; am_kind := KRWLAZY |}.
 Definition M_GAP : amap := {| am_base := ELit 0x8fff7000; am_len := ELit 0x20000000000; am_kind := KNONELAZY |}.
@@ -60,7 +61,7 @@ Variable EXTRA : list (Z * Z).
 Hypothesis EXTRA_wf : A_wf EXTRA.
 Hypothesis BUD_le : a_eager cs + a_abytes cs + A_bytes EXTRA + BUDGET <= LIMIT.
 Hypothesis GAP : AsanCeil.bottomup_floor + LENMAX + (a_totsz cs + BUDGET)
-+ (Z.of_nat (length (segments_reserved SEGS) + length (a_maps cs)) + KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
++ (Z.of_nat (length (segments_reserved SEGS) + n_resx A + length (a_maps cs)) + KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
 #[local] Notation CSOK := (cs_ok SEGS A LIMIT SINV argH FS0).
 Definition resZ (E : env) (m : amap) : Z * Z := (uE E (am_base m), uE E (am_len m)).
 Definition RES_of (E : env) : list (Z * Z) := map (resZ E) RESm.
@@ -70,26 +71,30 @@ Section Run.
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
 Hypothesis HC : CSOK E cs R FULL model.
 #[local] Notation MAPS0 := (vm_maps (m_vmmaps model)).
-#[local] Notation RESV0 := (segments_reserved SEGS).
+#[local] Notation RESV0 := (vm_reserved (m_vmmaps model)).
 #[local] Notation NOACC0 := (vm_noaccess (m_vmmaps model)).
 #[local] Notation CEIL0 := (uE E e_sp0 - 8388608).
 Let Hmaps := hb_maps SEGS A LIMIT SINV argH FS0 E cs R FULL model HC NOFOG.
-Lemma hb_in_maps : ltac2:(TCodec.tc2 tcn__HandoffBInvK "H'Q:&QHr1&Q7vQO%211%53641';'R7yR0%211%4211&Q=vAr2%3221&L&HvR4%211%411%D3:61p0@1pT8G1").
+Lemma hb_in_maps : forall m, In m (a_maps cs) -> In (amap_den E m) MAPS0.
 Proof. intros m Hm. rewrite Hmaps. apply in_map. exact Hm. Qed.
-Lemma hb_sp0_window : ltac2:(TCodec.tc2 tcn__HandoffBInvK ";'=&QJ&J&Q@vA&Q;%3221%6251&I%8231%:231").
+Lemma hb_sp0_window : sp_window_lo <= uE E e_sp0 <= sp_window_hi.
 Proof. exact (proj1 (proj2 (co_isp _ _ _ _ _ _ _ _ _ _ _ HC))). Qed.
-Lemma hb_lit_covered : ltac2:(TCodec.tc2 tcn__HandoffBInvK "QL'Q:'@&QHr4&Q7vQO%211%53741'>'QB&Q8r5%211(QA%11;%73631&Q9r6%211%;3:15&QJz%2215&QK&QIr8r7%3221&QL+2+R0%3221%9251'=r9%?219%<22;%>2;1%5231'6&QC&L&HvR4%211%411%621E(<%Q83921p0;1p0B1p0M1p0N1p0Q21p0Q71p0Q@1pTDQG1pQ<QH1p8QI1pT8QK1").
+Lemma hb_lit_covered : forall m BL LL x, In m (a_maps cs) -> am_base m = ELit BL -> am_len m = ELit LL -> 0 <= BL -> 0 <= LL -> BL + LL < 2 ^ 64 ->
+BL <= x < BL + LL -> BackingAlgebra.covered MAPS0 x = true.
 Proof.
 intros m BL LL x Hm Hb Hl H0 H1 H2 Hx. rewrite hl_covered_in_ivs. unfold in_ivs. apply existsb_exists.
 exists (amap_den E m). split; [exact (hb_in_maps m Hm)|]. unfold amap_den. cbn [fst snd]. rewrite Hb, Hl. cbn [edenot].
 rewrite !u64_lit by lia. apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
 Qed.
-Lemma hb_lit_entry : ltac2:(TCodec.tc2 tcn__HandoffBInvK "RA'Q:'@&QHr5&Q7vQO%211%53741'>'QB&Q8r6%211(QA%11;%73631&Q9r7%211%;3:15&QJz%2215&QK&QIr9r8%3221&QL+2+R0%3221%9251r:%>218r;%<213%A2;1'?'R7yR0%211'=';%1233(:r2r1%347721&L&HvR4%211%411%QD3:61&R8%12@:r<%Q6221%42C<%Q4241%Q92J1%D241%E291qT>G1%K2H1qSNI1%M2J1p0O1p0Q31p0Q61p0QA1p0QB1p0QF1p0QK1p0R41pT2R;1pT6R<1pQ<R=1p8R>1pT8R@1").
+Lemma hb_lit_entry : forall m BL LL lo hi, In m (a_maps cs) -> am_base m = ELit BL -> am_len m = ELit LL -> 0 <= BL -> 0 <= LL -> BL + LL < 2 ^ 64 ->
+BL <= lo -> hi <= BL + LL ->
+exists b s, In (b, s) MAPS0 /\ bv_unsigned b <= lo /\ hi <= bv_unsigned b + bv_unsigned s.
 Proof.
 intros m BL LL lo hi Hm Hb Hl H0 H1 H2 Hlo Hhi. exists (edenot E (am_base m)), (edenot E (am_len m)).
 split; [exact (hb_in_maps m Hm)|]. rewrite Hb, Hl. cbn [edenot]. rewrite !u64_lit by lia. lia.
 Qed.
-Lemma hb_shrw_facts : ltac2:(TCodec.tc2 tcn__HandoffBInvK "I'@&Q0r1%211'=&QJ&Q<v0%211r2%5221'>'6&Q>&M&HvR4%211%411%62:1(7%:3921%B2<1p0D1pTDH1").
+Lemma hb_shrw_facts : forall x, in_shadow_rw x ->
+img_hi A <= x /\ in_ivs x NOACC0 = false.
 Proof.
 intros x Hx. unfold in_shadow_rw, LSH_LO, LSH_HI, HSH_LO, HSH_HI in Hx. unfold SHB_LO in HULL_below. split; [lia|].
 assert (Hw : 0 <= x < 2 ^ 64) by lia.
@@ -101,7 +106,7 @@ destruct Hx as [Hx|Hx].
 + cbn [M_HIGH am_base am_len edenot]. rewrite !u64_lit by lia. lia.
 + rewrite u64_lit in Hn by lia. exact Hn.
 Qed.
-Theorem hb_bridge_static : ltac2:(TCodec.tc2 tcn__HandoffBInvK "H'OvQG&L&HvR4%211%411&F%117&M%115&QFvA%211&QM&Q@&Q;%2251+XPPP0%5221v4vDvC%G9FA?=:4321").
+Theorem hb_bridge_static : bridge_static SEGS MAPS0 RESV0 NOACC0 (RES_of E) CEIL0 BUDGET LENMAX KMAX.
 Proof.
 pose proof hb_sp0_window as [SPlo SPhi]. unfold sp_window_lo, sp_window_hi in *.
 pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (HU0 & HU1 & HU2 & HU3).
@@ -109,7 +114,11 @@ unfold SHB_LO in HULL_below.
 constructor.
 - exact (proj1 (co_wf _ _ _ _ _ _ _ _ _ _ _ HC)).
 - intros q Hq. exact (proj1 (hl_maps_pos SEGS A LIMIT SINV argH FS0 E cs R FULL model q HC Hq)).
-- exact RESV_pos.
+-
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & HG & _ & _).
+intros b s Hbs. rewrite Hres in Hbs. apply in_app_iff in Hbs as [Hbs|Hbs].
++ exact (RESV_pos b s Hbs).
++ exact (proj1 (proj1 (Forall_forall _ _) HG _ Hbs)).
 - apply hl_seps_nodup; [exact (co_seps _ _ _ _ _ _ _ _ _ _ _ HC)|].
 intros q Hq. exact (proj1 (hl_maps_pos SEGS A LIMIT SINV argH FS0 E cs R FULL model q HC Hq)).
 - exact (hl_seps_apart _ (co_seps _ _ _ _ _ _ _ _ _ _ _ HC)).
@@ -128,9 +137,10 @@ split; [exact Hin|]. pose proof (u64_range (edenot E (am_base m))). pose proof (
 -
 intros Rz b s HR Hbs. unfold RES_of in HR. apply in_map_iff in HR as (m & <- & Hm).
 pose proof (hb_in_maps m (RESm_in m Hm)) as Hin.
-pose proof (proj1 (Forall_forall _ _) (co_bounds _ _ _ _ _ _ _ _ _ _ _ HC) _ Hin) as (_ & _ & _ & P4 & _).
-pose proof (proj1 (Forall_forall _ _) RES_hull _ Hbs) as [Q1 Q2].
-unfold amap_den in P4. cbn [fst snd] in P4, Q1, Q2. unfold resZ. cbn [fst snd]. unfold uE. lia.
+pose proof (proj1 (Forall_forall _ _) (co_mres _ _ _ _ _ _ _ _ _ _ _ HC) _ Hin) as HD.
+pose proof (proj1 (Forall_forall _ _) HD (b, s) Hbs) as D.
+unfold iv_disjoint, amap_den in D. cbn [fst snd] in D.
+unfold resZ. cbn [fst snd]. unfold uE. lia.
 -
 intros x Hx. unfold SHLO, SHHI in Hx.
 destruct (Z_lt_dec x 0x8fff7000); [|destruct (Z_lt_dec x 0x2008fff7000)].
@@ -142,21 +152,29 @@ intros lo hi Hlh [Hx|Hx]; unfold LSH_LO, LSH_HI, HSH_LO, HSH_HI in Hx.
 + apply (hb_lit_entry M_LOW _ _ lo hi IN_LOW eq_refl eq_refl); lia.
 + apply (hb_lit_entry M_HIGH _ _ lo hi IN_HIGH eq_refl eq_refl); lia.
 -
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & HG & _ & _).
 intros x b s Hx Hbs Hin. destruct (hb_shrw_facts x Hx) as [Hh _].
-pose proof (proj1 (Forall_forall _ _) RES_hull _ Hbs) as [Q1 Q2]. cbn [fst snd] in Q1, Q2. lia.
+unfold in_shadow_rw, LSH_LO, LSH_HI, HSH_LO, HSH_HI in Hx.
+rewrite Hres in Hbs. apply in_app_iff in Hbs as [Hbs|Hbs].
++ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hbs) as [Q1 Q2]. cbn [fst snd] in Q1, Q2. lia.
++ pose proof (proj1 (Forall_forall _ _) HG _ Hbs) as (_ & _ & _ & _ & Hk & _).
+cbn [fst] in Hk. unfold KHI in Hk. lia.
 -
 intros x Hx. rewrite hl_covered_in_ivs. exact (proj2 (hb_shrw_facts x Hx)).
 -
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & _ & Hlx & _).
+assert (HL : (length RESV0 <= length (segments_reserved SEGS) + n_resx A)%nat)
+by (rewrite Hres, length_app; lia).
 rewrite <- hl_sum_gw. rewrite length_app.
-pose proof (co_totsz _ _ _ _ _ _ _ _ _ _ _ HC) as Ht. rewrite (co_res _ _ _ _ _ _ _ _ _ _ _ HC) in Ht.
+pose proof (co_totsz _ _ _ _ _ _ _ _ _ _ _ HC) as Ht.
 rewrite Hmaps at 2. rewrite length_map.
 assert (0 <= LENMAX + 4095) by lia.
 assert (0 <= Z.of_nat (length RESV0) + Z.of_nat (length (a_maps cs)) + KMAX) by lia.
-rewrite Nat2Z.inj_add in GAP. nia.
+rewrite !Nat2Z.inj_add in GAP. nia.
 - unfold SHHI, stack_max_size. lia.
 - exact BUD.
 Qed.
-Theorem hb_binv_main : ltac2:(TCodec.tc2 tcn__HandoffBInvK "K'NvQG&L&HvR4%211%411&F%117&M%115&QM&Q@vA&Q;%3221+XPPP0%6221&QEv4(9'Q1%211&QD%11;vB%J;IDB@987421F").
+Theorem hb_binv_main : BInv SEGS MAPS0 RESV0 NOACC0 CEIL0 BASE_of BUDGET [] (A0_of E) FULL model.
 Proof.
 clear GAP RESm_in RESm_pos IN_GAP.
 pose proof hb_sp0_window as [SPlo SPhi]. unfold sp_window_lo, sp_window_hi in *.
@@ -171,7 +189,8 @@ constructor.
 - apply (hl_minv_mono (allowA A E cs)); [exact (co_minv _ _ _ _ _ _ _ _ _ _ _ HC) | exact Hsub |]. unfold BASE_of in *. lia.
 - exact (co_wf _ _ _ _ _ _ _ _ _ _ _ HC).
 - reflexivity.
-- exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC).
+-
+reflexivity.
 - exact (hl_alloc_top SEGS A LIMIT SINV argH FS0 E cs R FULL model HC).
 - unfold BASE_of. lia.
 - intros x Hx. exact Hx.

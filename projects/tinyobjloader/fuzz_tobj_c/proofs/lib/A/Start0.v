@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start state per CONFIG_RSEQ: the start-up chain's states and its checks taken at this run's value of it; the launch's Jinit and the environment's words over the new stack layout; the frame's new system-call premise sys_rob, LPS 75d69e00, closed at the set_tid_address call by RomBase.rob_auto). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -11,7 +12,7 @@ From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Kernel.Fork.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import
   SymState SymStep SymSoundA SymSoundB SymSoundV SymSoundI SymSoundL SymSoundM SymSoundR
   SymComplete SymFrame SymEntail SymCFG SymCall Glue3.
@@ -27,8 +28,8 @@ S1S0S23S51A1Vtr;S29S51A1A3S0S52Vmd;Vm0;A3A2").
 Definition K1 (m0 : Model) (tr : list event) (md : Model) : Prop := ltac2:(tb__ "0|3|
 S1S0S23S51A1Vtr;S29S51A1A3S2S1eQ40M0A1M1G1S1S1S2dZ0S1dG0R1A2M2A2S2dG2S6dA2A2S0S52Vmd;S53R1Vm0;A2A3A2Ltid;A2A2").
 
-Definition Posts_start : list leaf := ltac2:(tb__ "0|0|
-S24S68S6aS48S69A2S29S68A1A3").
+Definition Posts_start (rq : bool) : list leaf := ltac2:(tb__ "0|0|
+S24S68S6aS48Vrq;A1S69A2S29S68A1A3").
 
 Section Start.
 Variable sp brk mb : word.
@@ -38,9 +39,13 @@ Variable inp : ProcInput.
 Hypothesis Hent : ltac2:(tb__ "0|0|
 S6fS5fS6cVsp;Vbrk;Vmb;Vdraw;A4Vinp;A3").
 Hypothesis Hinp : valid_input_either inp.
+(* LPS 727298f3: the start-up chain's states depend on the run's CONFIG_RSEQ (StartStates.v makes
+   each of them per value of [rq]); this run's value is the launch's kernel build's. *)
+Let rq : bool := kb_rseq (in_kernel inp).
+Ltac rcases := unfold rq; destruct (kb_rseq (in_kernel inp)).
 Variable rhoI : valuation.
 Hypothesis HJ : ltac2:(tb__ "0|0|
-S70S1cS60S61Vsp;Vdraw;Vinp;VrhoI;A7").
+S70S1cS60S61Vsp;Vmb;Vdraw;Vinp;VrhoI;A8").
 
 Let argv := in_argv inp.
 Let envp := in_envp inp.
@@ -73,21 +78,21 @@ Lemma valid_envp_envp : valid_envp envp.
 Proof using Hinp. exact (proj1 (proj2 Hinp)). Qed.
 
 Lemma G_rl1 : ltac2:(tb__ "0|0|
-S6S20R1A1S0S23S1eQ8A1A1S15R2P1A2S6eVsp;Vargv;Venvp;A3A3F_;Frho;").
-Proof using HJ. intros rho (_ & Hl & _). rewrite <- Hl. apply (ji_env _ _ _ _ _ _ _ HJ). Qed.
+S6S20R1A1S0S23S1eQ8A1A1S15R2P1A2S6eVinp;Vsp;Vdraw;A3A3F_;Frho;").
+Proof using HJ. intros rho (_ & Hl & _). rewrite <- Hl. apply (ji_env _ _ _ _ _ _ _ _ HJ). Qed.
 Lemma G_rl2 : ltac2:(tb__ "0|2|
 S6S20R1A1S0S23S1eQ8M0A1M1A1S15R2P2A2S25G1Vargv0;S24G1S1fG0Z0A2S29G1A1A3A3A3F_;Frho;").
-Proof using HJ argv. intros rho (_ & Hl & _). rewrite <- Hl. apply (ji_str0 _ _ _ _ _ _ _ HJ). Qed.
+Proof using HJ argv. intros rho (_ & Hl & _). rewrite <- Hl. apply (ji_str0 _ _ _ _ _ _ _ _ HJ). Qed.
 Lemma G_rw3 : ltac2:(tb__ "0|0|
 S6S20R1A1S0S1aS1dQ40ScR2P3A2A2VENVC;A3F_;Frho;").
 Proof using HJ Hinp envp.
-  intros rho (Hw & _ & _). rewrite <- Hw by (cbv; reflexivity). rewrite (ji_envc _ _ _ _ _ _ _ HJ).
+  intros rho (Hw & _ & _). rewrite <- Hw by (cbv; reflexivity). rewrite (ji_envc _ _ _ _ _ _ _ _ HJ).
   pose proof (proj1 valid_envp_envp). apply Z_to_bv_small. rewrite mod64. subst ENVC envp. lia.
 Qed.
 Lemma G_rw5 : ltac2:(tb__ "0|0|
 S6S20R1A1S0S1aS1dQ40ScR2P5A2A2S31S2aS1eQ8A1Vargv0;A2A1A3F_;Frho;").
 Proof using ENVC HJ Hinp argv.
-  intros rho (Hw & _ & _). rewrite <- Hw by (cbv; reflexivity). rewrite (ji_len0 _ _ _ _ _ _ _ HJ).
+  intros rho (Hw & _ & _). rewrite <- Hw by (cbv; reflexivity). rewrite (ji_len0 _ _ _ _ _ _ _ _ HJ).
   pose proof valid_argv_argv as (H1 & _ & H3 & _).
   apply Z_to_bv_small. rewrite mod64. subst argv0 argv.
   destruct (in_argv inp) as [|a r]; [cbn; lia|]. cbn. inversion H3. lia.
@@ -131,7 +136,9 @@ Lemma env_load : ltac2:(tb__ "0|5|
 S6S20R1A1S1aS0S1aS1dQ40M0ScR3P14M1A2A2R1A3S1S2bZ0M2R2A2S2bR2S30Z8M3VENVC;A2M4A2A2S0S1aS2eR3G3A2G2A3S3S0S1aS1dG0S7R6SeP1SbG1A1G3A3A2A2G2A3S0S1aR4G4A3A2F_;F_;F_;Fo;F_;Frho;").
 Proof using HJ Hent Hinp argv envp.
   intros rho Hg o Ho Hr Hm. cbn [eval]. rewrite (G_rl1 rho Hg), Ho.
-  apply (env_word sp argv envp valid_sp_sp valid_argv_argv valid_envp_envp o Hr Hm).
+  pose proof Hent as (_ & _ & _ & _ & Hlau).
+  pose proof (LEN_fit pcA phA sp brk mb draw inp Hlau) as HFIT.
+  apply (env_word inp sp draw valid_sp_sp Hinp HFIT o Hr Hm).
 Qed.
 
 Lemma pn_load : ltac2:(tb__ "0|5|
@@ -158,11 +165,11 @@ Proof using HJ Hinp envp.
 Qed.
 
 Lemma E_env0_facts : ltac2:(tb__ "0|0|
-S0S23S5A1SaS3cA1S24S5S10S59SeP1SbP14A1Z8A3S9Z0A1A3S25S5S38SaS3aA1A3A3A3").
-Proof using . reflexivity. Qed.
+S0S23S5A1SaS3cVrq;A1A1S24S5S10S59SeP1SbP14A1Z8A3S9Z0A1A3S25S5S38SaS3aVrq;A1A1A3A3A3").
+Proof using inp. rcases; reflexivity. Qed.
 Lemma E_env1_facts : ltac2:(tb__ "0|0|
-S0S23S5A1SaS3dA1S24S5S14S10S59SeP1SbP14A1Z8A3S9Z0A1A3A1S25S5S38SaS3aA1A3A3A3").
-Proof using . reflexivity. Qed.
+S0S23S5A1SaS3dVrq;A1A1S24S5S14S10S59SeP1SbP14A1Z8A3S9Z0A1A3A1S25S5S38SaS3aVrq;A1A1A3A3A3").
+Proof using inp. rcases; reflexivity. Qed.
 
 Lemma bne_holds : ltac2:(tb__ "0|1|
 S6SdS3S8R2S10S59R1S9Z0M0A1A3A2S4S0S1aS1dQ40S7R2R1A2A2G0A3A1A2Fa;Frho;").
@@ -172,7 +179,7 @@ Proof using .
 Qed.
 
 Lemma X_env0 : ltac2:(tb__ "0|0|
-S6S20R1A1S33S5S8R2A1SaS3cA1A3S33S5S8S54R3S41A2A1S38A3F_;F_;Frho;").
+S6S20R1A1S33S5S8R2A1SaS3cVrq;A1A1A3S33S5S8S54R3S41A2A1S38A3F_;F_;Frho;").
 Proof using ENVC HJ Hent Hinp argv.
   intros rho Hg HF. rewrite E_env0_facts in HF.
   destruct (env_leaf_facts rho _ _ Hg HF) as (H0 & Hr & Hm & Hb).
@@ -205,10 +212,10 @@ Lemma U_lit' : ltac2:(tb__ "0|0|
 S6S1aS1S2bZ0R1A2S2dR1S2fZ2Z40A2A2A2S0S1aS1dQ40S7R3S9R2A1A2A2R2A3F_;Fz;Frho;").
 Proof using . intros rho z Hz. cbn [eval]. apply Z_to_bv_small. rewrite mod64. exact Hz. Qed.
 
-Lemma S0_facts_v1v2 : ltac2:(tb__ "0|1|
-S6S23S5A1S33S5S8R2A1S25S5SaS3aA1R1A3A3S1S2bS1dQ40M0ScR3P1A2A2S2fZ2Z2fA2A2S2bS1dG0ScR3P2A2A2Z400A2A2F_;Ffs;Frho;").
-Proof using ENVC.
-  intros rho fs HF. cbn [ss_facts S0_A_lit app] in HF.
+Lemma S0_facts_v1v2 : ltac2:(tb__ "0|0|
+S6S23S5A1S33S5S8R2A1S25S5SaS3aVrq;A1A1R1A3A3S1S2bS1dQ40ScR3P1A2A2S2fZ2Z2fA2A2S2bS1dQ40ScR3P2A2A2Z400A2A2F_;Ffs;Frho;").
+Proof using ENVC inp.
+  intros rho fs HF. rewrite (S0_facts_r rq) in HF. cbn [ss_facts S0_A_lit_0 app] in HF.
   apply Forall_cons_iff in HF as [_ HF]. apply Forall_cons_iff in HF as [_ HF].
   apply Forall_cons_iff in HF as [Hv1 HF]. apply Forall_cons_iff in HF as [_ HF]. apply Forall_cons_iff in HF as [Hv2 _].
   cbn [holds eval] in Hv1, Hv2. rewrite !Z_to_bv_unsigned in Hv1, Hv2.
@@ -217,10 +224,10 @@ Proof using ENVC.
 Qed.
 
 Lemma X_env1 : ltac2:(tb__ "0|0|
-S23S51A1S52OF_;F_;S6S4dS20R2A1S34S1cR4S3dR3R2A5S34S1cR5S47R4R3A5F_;F_;Fw;Frho;FK;").
+S23S51A1S52OF_;F_;S6S4dS20R2A1S34S1cR4S3dVrq;A1R3R2A5S34S1cR5S47Vrq;A1R4R3A5F_;F_;Fw;Frho;FK;").
 Proof using ENVC HJ Hent Hinp argv.
   intros K rho w Hg Hsp.
-  pose proof (SP_facts segsA K E_env1 rho w Hsp) as HF. rewrite E_env1_facts in HF.
+  pose proof (SP_facts segsA K (E_env1 rq) rho w Hsp) as HF. rewrite E_env1_facts in HF.
   pose proof HF as HF0.
   destruct (env_leaf_facts rho _ _ Hg HF) as (H0 & Hr & Hm & Hb).
   change (~ holds rho (SPBranch BC_NE (SLBytes 1 (SVar 20) 8) (SLit 0))) in H0. rewrite bne_holds in H0.
@@ -245,16 +252,16 @@ Proof using ENVC HJ Hent Hinp argv.
       [lia | | apply U_lit'; lia | lia].
     erewrite (U_add2 rho _ _ (bv_unsigned (rw rho 1) + 8 * bv_unsigned (rw rho 2)) (8 * ENVC)); [reflexivity | | exact A3 | lia].
     apply (U_add2 rho _ _ (bv_unsigned (rw rho 1)) (8 * bv_unsigned (rw rho 2))); [reflexivity | exact A2 | lia]. }
-  eapply (SP_restate segsA K rho E_env1 S_aux w); [reflexivity | apply diff_env1 | | constructor | exact Hsp].
+  eapply (SP_restate segsA K rho (E_env1 rq) (S_aux rq) w); [rcases; reflexivity | apply (diff_env1 rq) | | constructor | exact Hsp].
   repeat constructor; exact D.
 Qed.
 
 Lemma E_pn_slash_facts : ltac2:(tb__ "0|0|
-S0S23S5A1SaS3fA1S24S5S10S5aS11S28Q8SeP2SbP15A1Z1A3A3S9Z2fA1A3S25S5S37SaS3aA1A3A3A3").
-Proof using . reflexivity. Qed.
-Lemma E_pn_other_facts : ltac2:(tb__ "0|1|
-S0S23S5A1SaS3eA1S24S5S10S59S11S28Q8SeP2SbP15A1Z1A3A3M0S9Z0A1A3S24S5S14S10S5aG0S9Z2fA1A3A1S25S5S37SaS3aA1A3A3A3A3").
-Proof using . reflexivity. Qed.
+S0S23S5A1SaS3fVrq;A1A1S24S5S10S5aS11S28Q8SeP2SbP15A1Z1A3A3S9Z2fA1A3S25S5S37SaS3aVrq;A1A1A3A3A3").
+Proof using inp. rcases; reflexivity. Qed.
+Lemma E_pn_other_facts : ltac2:(tb__ "0|0|
+S0S23S5A1SaS3eVrq;A1A1S24S5S10S59S11S28Q8SeP2SbP15A1Z1A3A3S9Z0A1A3S24S5S14S10S5aS11S28Q8SeP2SbP15A1Z1A3A3S9Z2fA1A3A1S25S5S37SaS3aVrq;A1A1A3A3A3A3").
+Proof using inp. rcases; reflexivity. Qed.
 
 Lemma X_pn : ltac2:(tb__ "0|3|
 S6S57S20R2A1S4S0S1aS1dQ40S7R3S11S28Q8SeP2SbP15M0A1M1Z1M2A3A3A2A2Z0A3A1S33S5S8R4A1S37A3S0SdS55R4G0A2SfS58G1S9G2A1A3A3S1bS71R1P14A2S0SdS55R7R2A2SbR2A1A3F_;Fi;S33S5S8S54R7R6A2A1S37A3F_;F_;F_;F_;F_;Fs;Frho;").
@@ -275,7 +282,7 @@ Proof using ENVC HJ Hinp argv0.
 Qed.
 
 Lemma X_pn_slash : ltac2:(tb__ "0|0|
-S6S20R1A1S33S5S8R2A1SaS3fA1A3S33S5S8S54R3S43A2A1S37A3F_;F_;Frho;").
+S6S20R1A1S33S5S8R2A1SaS3fVrq;A1A1A3S33S5S8S54R3S43A2A1S37A3F_;F_;Frho;").
 Proof using ENVC HJ Hinp argv0.
   intros rho Hg HF. rewrite E_pn_slash_facts in HF.
   apply Forall_cons_iff in HF as [H0 HF]. apply Forall_app in HF as [HF _].
@@ -287,7 +294,7 @@ Proof using ENVC HJ Hinp argv0.
 Qed.
 
 Lemma X_pn_other : ltac2:(tb__ "0|0|
-S6S20R1A1S33S5S8R2A1SaS3eA1A3S33S5S8S54R3S42A2A1S37A3F_;F_;Frho;").
+S6S20R1A1S33S5S8R2A1SaS3eVrq;A1A1A3S33S5S8S54R3S42A2A1S37A3F_;F_;Frho;").
 Proof using ENVC HJ Hinp argv0.
   intros rho Hg HF. rewrite E_pn_other_facts in HF.
   apply Forall_cons_iff in HF as [H0 HF]. apply Forall_cons_iff in HF as [_ HF]. apply Forall_app in HF as [HF _].
@@ -298,7 +305,7 @@ Proof using ENVC HJ Hinp argv0.
 Qed.
 
 Definition Q_ecall (K : list event -> Model -> Prop) : assn := ltac2:(tb__ "0|0|
-S4dS2S6S6S1S20R1A1S34S1cVK;S39R1R2A5A2Lrho;A2Lw;").
+S4dS2S6S6S1S20R1A1S34S1cVK;S39Vrq;A1R1R2A5A2Lrho;A2Lw;").
 
 Lemma wsub_id_env0 : ltac2:(tb__ "0|0|
 S0S26S56S41S3bA2S27A3"). Proof using . reflexivity. Qed.
@@ -307,35 +314,35 @@ S0S26S56S43S3bA2S27A3"). Proof using . reflexivity. Qed.
 Lemma wsub_id_pn_other : ltac2:(tb__ "0|0|
 S0S26S56S42S3bA2S27A3"). Proof using . reflexivity. Qed.
 Lemma F_env_below : ltac2:(tb__ "0|0|
-S0S26S65S5S13S16S44A1A1S38A3S27A3"). Proof using . reflexivity. Qed.
+S0S26S65S5S13S16S44Vrq;A1A1A1S38A3S27A3"). Proof using inp. rcases; reflexivity. Qed.
 Lemma F_pn_below : ltac2:(tb__ "0|0|
-S0S26S65S5S13S16S45A1A1S37A3S27A3"). Proof using . reflexivity. Qed.
+S0S26S65S5S13S16S45Vrq;A1A1A1S37A3S27A3"). Proof using inp. rcases; reflexivity. Qed.
 Lemma cuts_start_strict : ltac2:(tb__ "0|0|
-S0S26S66S19S18S49A3S28A3"). Proof using . reflexivity. Qed.
+S0S26S66S19S18S49Vrq;A1A3S28A3"). Proof using inp. rcases; reflexivity. Qed.
 
 Lemma phase1 : ltac2:(tb__ "0|0|
-S4dOF_;S23S51A1S52OF_;F_;S35S1cR2R1A3S4fS1cR3S34S1cR2S5dVrhoI;A4S22R2A1A4F_;FK;Fok;").
+S4dOF_;S23S51A1S52OF_;F_;S35S1cR2R1A3S4fS1cR3S34S1cR2S5dVrq;A1VrhoI;A4S22R2A1A4F_;FK;Fok;").
 Proof using ENVC HJ Hent Hinp argv0.
-  intros ok K Hok. rewrite S0_A_lit_eq.
-  apply (cfg_sound segsA FUEL_START cutpcs_start GSTART cuts_start exits_start G ok K (Q_ecall K) Hok).
+  intros ok K Hok. rewrite (S0_A_lit_eq rq).
+  apply (cfg_sound segsA FUEL_START cutpcs_start GSTART (cuts_start rq) (exits_start rq) G ok K (Q_ecall K) Hok).
   - rewrite cuts_start_strict. intros; discriminate.
   - apply G_stable.
-  - apply check_start_A.
+  - apply (check_start_A rq).
   - intros E rho HinE Hg.
     destruct HinE as [<-|[<-|[<-|[<-|[<-|[]]]]]].
     +
-      eapply (exit_reenter_G segsA ok K G GSTART cuts_start (Q_ecall K) E_env0 C_env0 F_env s_env0);
-        [ right; left; symmetry; apply C_env_eq | apply ent_env0 | apply wsub_id_env0 | apply G_stable
+      eapply (exit_reenter_G segsA ok K G GSTART (cuts_start rq) (Q_ecall K) (E_env0 rq) (C_env0 rq) F_env s_env0);
+        [ right; left; first [apply (C_env_eq rq) | symmetry; apply (C_env_eq rq)] | apply (ent_env0 rq) | apply wsub_id_env0 | apply G_stable
         | apply F_env_below | apply X_env0 | exact Hg].
     +
       eapply triple_conseq; [ | intros w Hw; exact Hw | apply triple_refl].
-      intros w Hsp. left. exists S_aux, rho. split; [right; right; left; reflexivity|]. split; [exact Hg|].
+      intros w Hsp. left. exists (S_aux rq), rho. split; [right; right; left; reflexivity|]. split; [exact Hg|].
       apply X_env1; assumption.
-    + eapply (exit_reenter_G segsA ok K G GSTART cuts_start (Q_ecall K) E_pn_slash C_pn0 F_pn s_pn_slash);
-        [ right; right; right; left; symmetry; apply C_pn_eq | apply ent_pn_slash | apply wsub_id_pn_slash | apply G_stable
+    + eapply (exit_reenter_G segsA ok K G GSTART (cuts_start rq) (Q_ecall K) (E_pn_slash rq) (C_pn0 rq) F_pn s_pn_slash);
+        [ right; right; right; left; first [apply (C_pn_eq rq) | symmetry; apply (C_pn_eq rq)] | apply (ent_pn_slash rq) | apply wsub_id_pn_slash | apply G_stable
         | apply F_pn_below | apply X_pn_slash | exact Hg].
-    + eapply (exit_reenter_G segsA ok K G GSTART cuts_start (Q_ecall K) E_pn_other C_pn0 F_pn s_pn_other);
-        [ right; right; right; left; symmetry; apply C_pn_eq | apply ent_pn_other | apply wsub_id_pn_other | apply G_stable
+    + eapply (exit_reenter_G segsA ok K G GSTART (cuts_start rq) (Q_ecall K) (E_pn_other rq) (C_pn0 rq) F_pn s_pn_other);
+        [ right; right; right; left; first [apply (C_pn_eq rq) | symmetry; apply (C_pn_eq rq)] | apply (ent_pn_other rq) | apply wsub_id_pn_other | apply G_stable
         | apply F_pn_below | apply X_pn_other | exact Hg].
     +
       eapply triple_conseq; [ | intros w Hw; exact Hw | apply triple_refl].
@@ -344,53 +351,58 @@ Proof using ENVC HJ Hent Hinp argv0.
   - apply G_rhoI.
 Qed.
 
-Lemma E_ecall_a7 : ltac2:(tb__ "0|1|
-S6S0S1eQ40M0A1S7R1S17S39Z11A2A2S1fG0Z60A2A3Frho;").
-Proof using . reflexivity. Qed.
+Lemma E_ecall_a7 : ltac2:(tb__ "0|0|
+S6S0S1eQ40A1S7R1S17S39Vrq;A1Z11A2A2S1fQ40Z60A2A3Frho;").
+Proof using inp. rcases; reflexivity. Qed.
 Lemma F_tid_below : ltac2:(tb__ "0|0|
 S0S26S65S5S13P19A1S46A3S27A3"). Proof using . reflexivity. Qed.
 Lemma PID_MAX_val : PID_MAX_ENVELOPE = 4194304. Proof using . reflexivity. Qed.
 
-Lemma phase2 : ltac2:(tb__ "0|1|
-S4dOF_;S6S67S1cR2S62Vm0;A1M0A3S35S1cR3G0A3S20R3A1S50S1cR5S34S1cG0S39R4A4S4dS2S6S6S1S12P18R6R1A3S34S1cS63Vm0;A1S40R1R2A5A2Lrho';A2Lw;A4F_;F_;F_;Frho;Fok;").
-Proof using ENVC brk lim mb sp.
+Lemma phase2 : ltac2:(tb__ "0|0|
+S4dOF_;S6S67S1cR2S62Vm0;A1A3S35S1cR3S62Vm0;A1A3S20R3A1S50S1cR5S34S1cS62Vm0;A1S39Vrq;A1R4A4S4dS2S6S6S1S12P18R6R1A3S34S1cS63Vm0;A1S40Vrq;A1R1R2A5A2Lrho';A2Lw;A4F_;F_;F_;Frho;Fok;").
+Proof using ENVC brk lim mb sp inp.
   intros ok rho Hokp Hokf Hg.
-  apply triple1_ecall_det; [exact Hokf | apply ecall_at_A |].
+  apply triple1_ecall_det; [exact Hokf | apply (ecall_at_A rq) |].
   intros tr ms md Hsp [Htr Hmd]. subst tr md.
   pose proof (smatch_pending_pending _ _ _ _ _ _ Hsp) as Hp. rewrite E_ecall_a7 in Hp.
   pose proof (smatch_pending_halted _ _ _ _ _ _ Hsp) as Hidle.
   assert (H96 : bv_unsigned (Z_to_bv 64 96) = 96) by reflexivity.
   split.
-  - eapply Hokp; [split; reflexivity | exact Hp |]. apply set_tid_fresh_only_ok; [exact Hidle | exact H96 | apply m0_tid].
+  - eapply Hokp; try (split; reflexivity); try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply set_tid_fresh_only_ok; [exact Hidle | exact H96 | apply m0_tid].
   - intros w' Hw.
     destruct (wstep_set_tid_fresh_inv Hp Hidle H96 m0_tid Hw) as (tid & Htid & ->).
     exists (rho_set_rw rho 24 tid). split; [apply agree_below_set_rw; lia|].
     split.
-    + rewrite S_tid_eq. apply smatch_add_facts; [ | | apply F_tid_below].
-      * apply (smatch_after_ret segsA rho E_ecall [] ms m0); [exact Hsp | apply with_tid_idle; apply m0_idle].
+    + rewrite (S_tid_eq rq). apply smatch_add_facts; [ | | apply F_tid_below].
+      * (* LPS 727298f3: the next variable of the per-CONFIG_RSEQ state is 24 for both values of [rq]. *)
+        assert (NX : ss_next (E_ecall rq) = 24%positive) by (rcases; reflexivity).
+        pose proof (smatch_after_ret segsA rho (E_ecall rq) [] ms m0) as SA. rewrite NX in SA. cbn [Pos.succ] in SA.
+        apply SA; [exact Hsp | apply with_tid_idle; apply m0_idle].
       * unfold F_tid. rewrite PID_MAX_val in Htid.
         repeat apply Forall_cons; try apply Forall_nil; cbn [holds eval rw rho_set_rw]; rewrite Pos.eqb_refl;
           rewrite Z_to_bv_unsigned; [change (bv_wrap 64 1) with 1 | change (bv_wrap 64 4194304) with 4194304]; lia.
     + split; [reflexivity|]. exists tid. split; [exact Htid | reflexivity].
 Qed.
 
-Theorem start0_sum_A : ltac2:(tb__ "0|2|
-S4dOF_;S35S1cR1S62Vm0;A1M0A3S67S1cR2G0A3S35S1cR3S63Vm0;A1M1A3S4fS1cR4S34S1cG0S5dVrhoI;A4S36S1cG1P14VrhoI;S64A5A4F_;F_;F_;Fok;").
+Theorem start0_sum_A : ltac2:(tb__ "0|0|
+S4dOF_;S35S1cR1S62Vm0;A1A3S67S1cR2S62Vm0;A1A3S35S1cR3S63Vm0;A1A3S4fS1cR4S34S1cS62Vm0;A1S5dVrq;A1VrhoI;A4S36S1cS63Vm0;A1P14VrhoI;S64Vrq;A1A5A4F_;F_;F_;Fok;").
 Proof using ENVC HJ Hent Hinp argv0 lim.
   intros ok Hok0 Hokp Hok1.
   eapply triple_seq; [apply phase1; exact Hok0|].
   unfold Q_ecall. apply triple_ex; intros rho. apply triple_pure; intros Hg.
   eapply triple_seq; [apply triple1_triple; apply phase2; assumption|].
   apply triple_ex; intros rho'. apply triple_pure; intros Hag.
+  (* [S_tid rq] is [if rq then S_tid_1 else S_tid_0] (StartStates.v), stuck on the launch's
+     [kb_rseq], so its lenient flag and next variable are read per value of [rq]. *)
   eapply triple_conseq; [intros w Hw; exact Hw | | apply triple1_triple; eapply sym_run_sound;
-    [apply run_tid_A | exact Hok1 | intros Hl; discriminate]].
+    [apply (run_tid_A rq) | exact Hok1 | intros Hl; exfalso; revert Hl; rcases; intros Hl; discriminate Hl]].
   intros w Hw. eapply LQ_weaken; [ | | intros L HL; exact HL | exact Hw].
-  - cbv. discriminate.
+  - rcases; cbv; discriminate.
   - eapply agree_below_trans; [exact Hg|]. eapply agree_below_le; [|exact Hag]. cbv. discriminate.
 Qed.
 
 Definition QE_ecall (K : list event -> Model -> Prop) : world -> Prop := ltac2:(tb__ "0|0|
-S4dS2S6S6S1S20R1A1S34S1cVK;S39R1R2A5A2Lrho;A2Lw;").
+S4dS2S6S6S1S20R1A1S34S1cVK;S39Vrq;A1R1R2A5A2Lrho;A2Lw;").
 
 Lemma var_bound_env : ltac2:(tb__ "0|2|
 S6S23S5A1S5S20R3A1S33S5S8R4A1S24S5R2S25S5S38R3A3A3A3S1S0S1aS1dQ40M0S7R5S4aA2A2S2cS1dG0ScR5P14A2A2Z8A2M1A3S2bG1Z808A2A2F_;F_;Ff0;Ffs;Frho;").
@@ -412,17 +424,17 @@ Proof using ENVC.
 Qed.
 
 Lemma ephase1 : ltac2:(tb__ "0|0|
-S23S51A1S52OF_;F_;S4eS1cS34S1cR1S5dVrhoI;A4S21R1A1A3FK;").
+S23S51A1S52OF_;F_;S4eS1cS34S1cR1S5dVrq;A1VrhoI;A4S21R1A1A3FK;").
 Proof using ENVC HJ Hent Hinp argv0 m0.
-  intros K. rewrite S0_A_lit_eq.
-  change S0_A_lit with (vn_state (mkVN S0_A_lit 200 (SLit 0))).
-  apply (cfg_complete_autoI segsA FUEL_START cutpcs_start GSTART vcuts_start vexits_start G K (QE_ecall K)).
+  intros K. rewrite (S0_A_lit_eq rq).
+  change (S0_A_lit rq) with (vn_state (mkVN (S0_A_lit rq) 200 (SLit 0))).
+  apply (cfg_complete_autoI segsA FUEL_START cutpcs_start GSTART (vcuts_start rq) (vexits_start rq) G K (QE_ecall K)).
   - apply G_stable.
-  - apply echeck_start_A.
+  - apply (echeck_start_A rq).
   - intros E rho HinE Hg.
     destruct HinE as [<-|[<-|[<-|[<-|[<-|[]]]]]].
-    + eapply (eexit_reenter_I segsA K G GSTART vcuts_start (QE_ecall K) (mkVN E_env0 150 var_envx) (mkVN C_env 100 var_env) F_env C_env0 s_env0);
-        [ right; left; reflexivity | apply C_env_eq | apply ent_env0 | apply wsub_id_env0 | apply G_stable
+    + eapply (eexit_reenter_I segsA K G GSTART (vcuts_start rq) (QE_ecall K) (mkVN (E_env0 rq) 150 var_envx) (mkVN (C_env rq) 100 var_env) F_env (C_env0 rq) s_env0);
+        [ right; left; reflexivity | first [apply (C_env_eq rq) | symmetry; apply (C_env_eq rq)] | apply (ent_env0 rq) | apply wsub_id_env0 | apply G_stable
         | apply F_env_below | | cbn; lia | cbn; lia | exact Hg].
       intros r Hgr HF. split; [apply X_env0; assumption|].
       cbn [vn_var vn_state] in *. rewrite E_env0_facts in HF.
@@ -432,21 +444,21 @@ Proof using ENVC HJ Hent Hinp argv0 m0.
       rewrite (add_lit_small r (SVar 20) 8 (bv_unsigned (rw r 20))); [lia|reflexivity|lia|rewrite pow64; lia].
     +
       intros w Hsp. exists w. split; [apply wsteps_refl|]. left.
-      exists (to_enodeI G (mkVN S_aux 90 (SLit 4096))), rho.
+      exists (to_enodeI G (mkVN (S_aux rq) 90 (SLit 4096))), rho.
       split; [apply in_map; right; right; left; reflexivity|].
       cbn [to_enodeI en_state en_ghost en_meas fst snd vn_state]. split; [exact Hg|]. split; [apply X_env1; assumption|].
       unfold vmeasI. cbn [vn_var vn_rank].
-      pose proof (SP_facts segsA K E_env1 rho w Hsp) as HF. rewrite E_env1_facts in HF.
+      pose proof (SP_facts segsA K (E_env1 rq) rho w Hsp) as HF. rewrite E_env1_facts in HF.
       destruct (var_bound_env rho _ _ Hg HF) as [-> Hb].
       rewrite (U_lit' rho 4096) by (rewrite pow64; lia). pose proof (urange (rw rho 20)). rewrite pow64. lia.
-    + eapply (eexit_reenter_I segsA K G GSTART vcuts_start (QE_ecall K) (mkVN E_pn_slash 150 var_pnx) (mkVN C_pn 80 var_pn) F_pn C_pn0 s_pn_slash);
-        [ right; right; right; left; reflexivity | apply C_pn_eq | apply ent_pn_slash | apply wsub_id_pn_slash | apply G_stable
+    + eapply (eexit_reenter_I segsA K G GSTART (vcuts_start rq) (QE_ecall K) (mkVN (E_pn_slash rq) 150 var_pnx) (mkVN (C_pn rq) 80 var_pn) F_pn (C_pn0 rq) s_pn_slash);
+        [ right; right; right; left; reflexivity | first [apply (C_pn_eq rq) | symmetry; apply (C_pn_eq rq)] | apply (ent_pn_slash rq) | apply wsub_id_pn_slash | apply G_stable
         | apply F_pn_below | | cbn; lia | cbn; lia | exact Hg].
       intros r Hgr HF. split; [apply X_pn_slash; assumption|].
       cbn [vn_var vn_state] in *. rewrite E_pn_slash_facts in HF.
       apply Forall_cons_iff in HF as [_ HF]. apply Forall_app in HF as [HF _]. apply (pn_var_ok r s_pn_slash HF); reflexivity.
-    + eapply (eexit_reenter_I segsA K G GSTART vcuts_start (QE_ecall K) (mkVN E_pn_other 150 var_pnx) (mkVN C_pn 80 var_pn) F_pn C_pn0 s_pn_other);
-        [ right; right; right; left; reflexivity | apply C_pn_eq | apply ent_pn_other | apply wsub_id_pn_other | apply G_stable
+    + eapply (eexit_reenter_I segsA K G GSTART (vcuts_start rq) (QE_ecall K) (mkVN (E_pn_other rq) 150 var_pnx) (mkVN (C_pn rq) 80 var_pn) F_pn (C_pn0 rq) s_pn_other);
+        [ right; right; right; left; reflexivity | first [apply (C_pn_eq rq) | symmetry; apply (C_pn_eq rq)] | apply (ent_pn_other rq) | apply wsub_id_pn_other | apply G_stable
         | apply F_pn_below | | cbn; lia | cbn; lia | exact Hg].
       intros r Hgr HF. split; [apply X_pn_other; assumption|].
       cbn [vn_var vn_state] in *. rewrite E_pn_other_facts in HF.
@@ -458,10 +470,10 @@ Proof using ENVC HJ Hent Hinp argv0 m0.
 Qed.
 
 Lemma ephase2 : ltac2:(tb__ "0|0|
-S6S20R1A1S4eS1cS34S1cS62Vm0;A1S39R2A4S4dS2S6S6S1S12P18R4R1A3S34S1cS63Vm0;A1S40R1R2A5A2Lrho';A2Lw;A3F_;Frho;").
-Proof using ENVC brk lim mb sp.
+S6S20R1A1S4eS1cS34S1cS62Vm0;A1S39Vrq;A1R2A4S4dS2S6S6S1S12P18R4R1A3S34S1cS63Vm0;A1S40Vrq;A1R1R2A5A2Lrho';A2Lw;A3F_;Frho;").
+Proof using ENVC brk lim mb sp inp.
   intros rho Hg.
-  apply etriple_ecall_det; [apply ecall_at_A |].
+  apply etriple_ecall_det; [apply (ecall_at_A rq) |].
   intros tr ms md Hsp [Htr Hmd]. subst tr md.
   pose proof (smatch_pending_pending _ _ _ _ _ _ Hsp) as Hp. rewrite E_ecall_a7 in Hp.
   pose proof (smatch_pending_halted _ _ _ _ _ _ Hsp) as Hidle.
@@ -470,8 +482,11 @@ Proof using ENVC brk lim mb sp.
   - apply (@wstep_set_tid_fresh_intro segsA [] _ _ _ _ Hp Hidle H96 m0_tid). apply tid_one_ok.
   - exists (rho_set_rw rho 24 (Z_to_bv 64 1)). split; [apply agree_below_set_rw; lia|].
     split.
-    + rewrite S_tid_eq. apply smatch_add_facts; [ | | apply F_tid_below].
-      * apply (smatch_after_ret segsA rho E_ecall [] ms m0); [exact Hsp | apply with_tid_idle; apply m0_idle].
+    + rewrite (S_tid_eq rq). apply smatch_add_facts; [ | | apply F_tid_below].
+      * (* LPS 727298f3: the next variable of the per-CONFIG_RSEQ state is 24 for both values of [rq]. *)
+        assert (NX : ss_next (E_ecall rq) = 24%positive) by (rcases; reflexivity).
+        pose proof (smatch_after_ret segsA rho (E_ecall rq) [] ms m0) as SA. rewrite NX in SA. cbn [Pos.succ] in SA.
+        apply SA; [exact Hsp | apply with_tid_idle; apply m0_idle].
       * unfold F_tid.
         repeat apply Forall_cons; try apply Forall_nil; cbn [holds eval rw rho_set_rw]; rewrite Pos.eqb_refl;
           rewrite !Z_to_bv_unsigned; cbv; [discriminate|reflexivity].
@@ -479,19 +494,22 @@ Proof using ENVC brk lim mb sp.
 Qed.
 
 Theorem start0_sum_ex_A : ltac2:(tb__ "0|0|
-S4eS1cS34S1cS62Vm0;A1S5dVrhoI;A4S36S1cS63Vm0;A1P14VrhoI;S64A5A3").
+S4eS1cS34S1cS62Vm0;A1S5dVrq;A1VrhoI;A4S36S1cS63Vm0;A1P14VrhoI;S64Vrq;A1A5A3").
 Proof using ENVC HJ Hent Hinp argv0 lim.
   eapply etriple_seq; [apply ephase1|].
   unfold QE_ecall. apply etriple_ex; intros rho. intros w [Hg Hsp]. revert w Hsp.
-  change (etriple segsA (SP segsA (K0 m0) E_ecall rho) (LQ segsA (K1 m0) 20 rhoI Posts_start)).
+  change (etriple segsA (SP segsA (K0 m0) (E_ecall rq) rho) (LQ segsA (K1 m0) 20 rhoI (Posts_start rq))).
   eapply etriple_seq; [apply ephase2; exact Hg|].
   apply etriple_ex; intros rho'. intros w [Hag Hsp].
-  destruct (sym_run_complete segsA FUEL_START [PC_CTOR] S_tid [mkLeaf S_ctor RsCut] (K1 m0) rho' w eq_refl run_tid_A Hsp)
+  (* The tid state is not lenient and its next variable is at least 24, per value of [rq]. *)
+  assert (HLn : ss_lenient (S_tid rq) = false) by (rcases; reflexivity).
+  assert (NT : (24 <= ss_next (S_tid rq))%positive) by (rcases; cbv; discriminate).
+  destruct (sym_run_complete segsA FUEL_START [PC_CTOR] (S_tid rq) [mkLeaf (S_ctor rq) RsCut] (K1 m0) rho' w HLn (run_tid_A rq) Hsp)
     as (L & rho'' & w' & HinL & Hsteps & Hag' & Hsp').
   exists w'. split; [exact Hsteps|].
   destruct HinL as [<-|[]].
-  exists (mkLeaf S_ctor RsCut), rho''. split; [left; reflexivity|]. split.
-  - eapply agree_below_trans; [exact Hg|]. eapply agree_below_le; [| eapply agree_below_trans; [exact Hag| eapply agree_below_le; [|exact Hag']]]; cbv; discriminate.
+  exists (mkLeaf (S_ctor rq) RsCut), rho''. split; [left; reflexivity|]. split.
+  - eapply agree_below_trans; [exact Hg|]. eapply agree_below_le; [| eapply agree_below_trans; [exact Hag| eapply agree_below_le; [|exact Hag']]]; first [exact NT | cbv; discriminate].
   - exact Hsp'.
 Qed.
 

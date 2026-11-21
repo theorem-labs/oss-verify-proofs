@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the frame tactic tries the frame lemmas of the new clock_getres, pwritev2 and set_robust_list arms. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -29,6 +30,7 @@ Proof.
     | eapply check_accept4_frame; eassumption
     | eapply check_bind_frame; eassumption
     | eapply check_clock_gettime_frame; eassumption
+    | eapply check_clock_getres_frame; eassumption
     | eapply check_clone3_frame; eassumption
     | eapply check_clone_frame; eassumption
     | eapply check_close_frame; eassumption
@@ -73,6 +75,7 @@ Proof.
     | eapply check_prlimit64_frame; eassumption
     | eapply check_pselect6_frame; eassumption
     | eapply check_pwrite64_frame; eassumption
+    | eapply check_pwritev2_frame; eassumption
     | eapply check_read_frame; eassumption
     | eapply check_readlinkat_frame; eassumption
     | eapply check_readv_frame; eassumption
@@ -86,6 +89,7 @@ Proof.
     | eapply check_sendmsg_frame; eassumption
     | eapply check_sendto_frame; eassumption
     | eapply check_set_tid_address_frame; eassumption
+    | eapply check_set_robust_list_frame; eassumption
     | eapply check_setgroups_frame; eassumption
     | eapply check_setid_frame; eassumption
     | eapply check_setresid_frame; eassumption

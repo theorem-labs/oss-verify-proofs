@@ -54,7 +54,7 @@
    leaf statement asks, it takes besides the journal's facts: tw_at at csw_view of the call memory (the same world
    Bw), diginet_session_deadline_m Bw (g_now Bw) = Some d (from the model premise), asan_cells (transport_cells rows
    1-2), and g_s's payload [0x5df640, 0x5df640 + 18264) addressable: trans_cis_cells B, the record's zero shadow of
-   those 2283 whole granules (the Tfib_zero_shadow row (0x5df640, 0x5e3d98 - 0x5df640), lib/B/YF0m.v:3112), read at
+   those 2283 whole granules (the Tfib_zero_shadow row (0x5df640, 0x5e3d98 - 0x5df640), lib/B/YF0m.v:3113), read at
    the call state through DgnTransportBCg.v decode_zshadow_rd. No runtime entry is called.
    Stack: 32 bytes of its own and the ESTACK window of the leaf call below sp - 32: CIS_STK.
 

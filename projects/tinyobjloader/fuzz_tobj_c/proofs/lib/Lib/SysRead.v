@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the syscall-frame obligation's new cases closed by RomBase's tactics). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -10,7 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uaccess Uapi Syscall.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import
   SymState SymStep SymSoundA SymSoundB SymSoundV SymSoundI SymSoundL SymSoundM SymSoundW
   SymSoundF SymSoundR SymComplete SymCall SymEntail SymExit SymFrame SymBytes Glue3.
@@ -330,7 +331,7 @@ Proof using H10 H17 Hbuf Hcnt Hdw Hi Hlen Hnob Hnohi Hnolo Hnorl Hnth Hoff Hw Ho
   intros tr ms md Hsp Hk. destruct (HJfd tr md Hk) as [Hfd Hfs].
   destruct (read_file_core tr ms md Hsp Hfd Hfs) as (x8 & wdst & Hp & H63 & Hh & Hfd' & Ewd & Hc2 & Hc3 & Hbs & Hsm').
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@read_file_only_ok segs ms md x8 p (Z_to_bv 64 off) data wdst Hh H63 Hfd' Hfs Ewd Hc2 Hc3).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@read_file_only_ok segs ms md x8 p (Z_to_bv 64 off) data wdst Hh H63 Hfd' Hfs Ewd Hc2 Hc3).
   - intros w' Hst.
     pose proof (@wstep_read_file_inv segs tr ms md x8 p (Z_to_bv 64 off) data wdst w' Hp Hh H63 Hfd' Hfs Ewd Hc2 Hc3 Hst) as ->.
     cbn zeta. rewrite Hbs. split; [exact Hsm'|].
@@ -437,7 +438,7 @@ Proof using H10 H17 Hbuf Hcells Hcnt Hhi Hi Hlo Hnth Hoff Hov.
   intros tr ms md Hsp Hk. destruct (HJfd tr md Hk) as [Hfd Hfs].
   destruct (read_buf_core tr ms md Hsp Hfd Hfs) as (x8 & wdst & Hp & H63 & Hh & Hfd' & Ewd & Hc2 & Hc3 & Hbs & G1 & G0).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@read_file_only_ok segs ms md x8 p (Z_to_bv 64 off) data wdst Hh H63 Hfd' Hfs Ewd Hc2 Hc3).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@read_file_only_ok segs ms md x8 p (Z_to_bv 64 off) data wdst Hh H63 Hfd' Hfs Ewd Hc2 Hc3).
   - intros w' Hst.
     pose proof (@wstep_read_file_inv segs tr ms md x8 p (Z_to_bv 64 off) data wdst w' Hp Hh H63 Hfd' Hfs Ewd Hc2 Hc3 Hst) as ->.
     cbn zeta. rewrite Hbs, G0. split; [|apply HK; exact Hk].
@@ -476,7 +477,7 @@ Proof using H10 H17 Hbuf Hcells Hcells0 Hcnt Hhi Hi Hlo Hnth Hoff Hwoff Hov.
   intros tr ms md Hsp Hk. destruct (HJfd tr md Hk) as [Hfd Hfs].
   destruct (read_buf_core tr ms md Hsp Hfd Hfs) as (x8 & wdst & Hp & H63 & Hh & Hfd' & Ewd & Hc2 & Hc3 & Hbs & G1 & G0).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@read_file_only_ok segs ms md x8 p (Z_to_bv 64 off) data wdst Hh H63 Hfd' Hfs Ewd Hc2 Hc3).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@read_file_only_ok segs ms md x8 p (Z_to_bv 64 off) data wdst Hh H63 Hfd' Hfs Ewd Hc2 Hc3).
   - intros w' Hst.
     pose proof (@wstep_read_file_inv segs tr ms md x8 p (Z_to_bv 64 off) data wdst w' Hp Hh H63 Hfd' Hfs Ewd Hc2 Hc3 Hst) as ->.
     cbn zeta. rewrite Hbs, G0. split; [|apply HK; exact Hk].
@@ -536,7 +537,7 @@ Proof using H10 H17 Hi Hov.
   intros tr ms md Hsp Hk.
   destruct (read_dir_core tr ms md Hsp (HJfd tr md Hk)) as (x8 & Hp & H63 & Hh & Hfd' & Hc3 & Hsm').
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@read_dir_only_ok segs ms md x8 Hh H63 Hfd' Hc3).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@read_dir_only_ok segs ms md x8 Hh H63 Hfd' Hc3).
   - intros w' Hst.
     pose proof (@wstep_read_dir_inv segs tr ms md x8 w' Hp Hh H63 Hfd' Hc3 Hst) as ->.
     split; [exact Hsm' | apply HK; exact Hk].
@@ -588,7 +589,7 @@ Proof using H10 H17 Hi.
   intros tr ms md Hsp Hk. destruct (HJfd tr md Hk) as [e Hfd].
   destruct (close_core tr ms md e Hsp Hfd) as (x8 & Hp & H57 & Hh & Hfd' & Hcm & Hsm').
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@close_only_ok segs ms md x8 e Hh H57 Hfd').
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@close_only_ok segs ms md x8 e Hh H57 Hfd').
   - intros w' Hst.
     pose proof (@wstep_close_inv segs tr ms md x8 e w' Hp Hh H57 Hfd' Hst) as ->. rewrite Hcm.
     split; [exact Hsm' | apply HK; exact Hk].

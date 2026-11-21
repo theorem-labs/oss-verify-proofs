@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PresetD1rAlPf.v, with its module paths changed; 22 of its 65 lines of code are new or changed and 9 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset (asan image A), the PROOFS of the three link statements of
    lib/A/PresetD1rAl.v at the program interface's frame names (lib/A/PresetCfnA.v section 5): ablocks_cf,
    afn_pre_cf and ajournal_cf are ABBREVIATIONS of a Theorem Labs lane's lib/Reusable/YCbqG.v forms (the journal of record,
@@ -34,7 +35,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 
 (* The seven ledger cells of the journal's PST are PresetCfnA.v's ledger_img (both name the generated PrhImg of image A',
-   whose fields are computed here). #102: the kit's prh_pst (PRH_Base.v:448-451, f97c8b2f046b) gains g_most and
+   whose fields are computed here). #102: the kit's prh_pst (PRH_Base.v:448-451) gains g_most and
    g_own_ran_out, and the interface's ledger_img gains the same two cells. *)
 Lemma prh_pst_ledger_img_A : forall a, Exists (in_zr a) (@PRH_Base.prh_pst PCA.preset_prh_img) -> PCA.ledger_img a.
 Proof.

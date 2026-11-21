@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (unmap_or_die_cfgS decoded from its encoded form to plain text with new premises, the A_GOT_SEALED2 and A_DYING cells and the die-path stack bound lo <= SP - 320; a new proof branch for the injected -ENOMEM of munmap, which spins at A_SPIN_MUNMAPDIE; the success branch run through aevtS_bind, since the restated aevtS_munmap takes Q itself there; import of ASpin and ASpinS). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ALazy AEvtS AEv
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import AModel.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import ASys ASysS. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import AW_Unwind AW_MmapFixed AW_Munmap AKinv AJ AKinvS.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import ATac.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import ASpin ASpinS.   (* the refused branch's spin (08b1429) *)
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import DietDestruct.   (* [comment removed for export] *)
 Import ListNotations.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import LiaKitAH. (* [comment removed for export] *)
@@ -85,11 +87,31 @@ Section UnmapOrDieS.
       (F : bvmap 5 word) (fc : bv 32) (lo : Z) (m0 : mem) : config -> Prop := ltac2:(CDefT.buildp (gd_tbl_AW_MunmapCfg ()) "Lc,$23.(24.$25.Lms',$25.(24.$26.Lmo',$26.(24.(0.&40.)Lt0,(0.&40.)(24.(0.&40.)Lt1,(0.&40.)(24.(0.&40.)Lt2,(0.&40.)(24.(0.&40.)La0,(0.&40.)(24.(0.&40.)La1,(0.&40.)(24.(0.&40.)La2,(0.&40.)(24.(0.&40.)La3,(0.&40.)(24.(0.&40.)La4,(0.&40.)(24.(0.&40.)La5,(0.&40.)(24.(0.&40.)La6,(0.&40.)(24.(0.&40.)La7,(0.&40.)(24.(0.&40.)Lt3,(0.&40.)(24.(0.&40.)Lt4,(0.&40.)(24.(0.&40.)Lt5,(0.&40.)(24.(0.&40.)Lt6,(0.&40.)(24.P,(0.&40.)(8.(0.&8.))Lmm,P,(0.&40.)(8.(0.&8.))(=.(7.$23.R13.(27.R12.R11.))(=.(7.$25.R12.(28.(29.O14.(15.&40.O13.)O12.O11.R10.R?.R>.O10.O?.R=.R<.R;.R:.R9.R8.R7.R6.O>.O=.O<.O;.O:.O9.O8.O7.O6.O5.R5.R4.R3.R2.)O4.(2:.O14.)O3.(;.(0.&40.))R1.(2;.$:.)))(=.(1<.(11.(12.$<.$<.)(13.$<.$<.O2.O13.)(11.(12.$<.$<.)(13.$<.$<.Vaddr,(5.Vaddr,VnZ,))(16.(12.$<.$<.))))O1.R1.)(=.(?.Vaddr,VnZ,O1.R1.)(=.(2<.$:.R1.)(=.(2=.$:.R1.O2.O13.)(=.Px,(0.&40.)P,(=.(4.Vaddr,(3.&40.R1.))(2.(3.&40.R1.)(5.Vaddr,VnZ,)))(7.(8.(0.&8.))A1.R3.R2.(;.(0.&8.)))(=.A1.VKd,R11.(2>.R1.R11.)))))))))))))))))))))))))))")
 (* [comment removed for export] *).
 
-  #[using="AL IMG ALWF CSOK KL CSOK' KdL HAS T_unmap"] Lemma unmap_or_die_cfgS : ltac2:(CDefT.buildp (gd_tbl_AW_MunmapCfg ()) "PQ,P,$23.SpPra,(0.&40.)Pgp,(0.&40.)Ptp,(0.&40.)Pt0,(0.&40.)Pt1,(0.&40.)Pt2,(0.&40.)Ps0,(0.&40.)Ps1,(0.&40.)Ps2,(0.&40.)Ps3,(0.&40.)Ps4,(0.&40.)Ps5,(0.&40.)Ps6,(0.&40.)Ps7,(0.&40.)Ps8,(0.&40.)Ps9,(0.&40.)Ps10,(0.&40.)Ps11,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)PSP,$<.Praw,$<.PF,(2?.&5.(0.&40.))Pfc,(0.&20.)Pm,P,(0.&40.)(8.(0.&8.))Pmo,$26.Plo,$<.P,(4.+65?000.Vaddr,)P,(7.$<.(30.Vaddr,+1000.)=)P,(2.=Vsize,)P,(4.(5.Vaddr,VnZ,)(31.VhAR,))P,(=.(4.=R:.)(2.R:.+2.))P,(32.$:.R8.$33.(11.$1:.(34.(15.&40.$35.))(16.$1:.)))P,(32.$:.R9.$36.(11.$1:.(34.(15.&40.=))(16.$1:.)))P,(2=.$:.R:.R8.R>.)P,(4.(31.VhAR,)R9.)P,(4.R:.(37.R10.+30.))P,(4.R11.(>.+2.+3?.))P,(38.VCS,R<.(37.R12.R<.))P,(38.VCS',R=.(37.R13.R=.))P,(2<.$:.R10.)P,A1.VK,R10.P,(2>.R12.R11.)P,Pc',$23.P,(39.R33.R18.R32.R31.R2=.R2<.R2;.R2:.R29.R28.R27.R26.R25.R24.R23.R22.R16.R15.R12.R14.R1.)(3:.$:.R35.R2.)(3:.$:.R34.(27.(28.(29.R33.(15.&40.R18.)R32.R31.R30.R2?.R2>.R2=.R2<.(15.&40.Vaddr,)(15.&40.Vsize,)(15.&40.R17.)R1=.R1<.R1;.R1:.R19.R2;.R2:.R29.R28.R27.R26.R25.R24.R23.R22.R21.R20.R1?.R1>.)R16.(15.&40.$3;.)R15.(;.(0.&40.))R14.(2;.$:.))R13.))")
-(* [comment removed for export] *).
+  (* 08b1429: munmap may answer an injected refusal; its branch walks to the spin of
+     ReportMunmapFailureAndDie, which reads A_GOT_SEALED2 and A_DYING, and needs the die
+     path's stack (lo <= SP - 320).  Plain text: the serialised statement lacked both. *)
+  #[using="AL IMG ALWF CSOK KL CSOK' KdL HAS T_unmap"] Lemma unmap_or_die_cfgS :
+    forall (Q : config -> Prop)
+      (ra gp tp t0 t1 t2 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 a3 a4 a5 a6 a7 : word)
+      (SP raw : Z) (F : bvmap 5 word) (fc : bv 32) (m : mem) (mo : Model) (lo : Z),
+    6680576 <= addr -> addr mod 4096 = 0 -> 0 < size -> addr + nZ <= ACEIL ->
+    (0 <= raw /\ raw < 2) ->
+    ro_cells asegs m A_GOT_CFLAGS [C8 (Z_to_bv 64 A_CFLAGS)] ->
+    ro_cells asegs m A_MMAP_LIMIT [C8 (Z_to_bv 64 0)] ->
+    ro_cells asegs m A_GOT_SEALED2 [C8 (Z_to_bv 64 1)] ->
+    ro_cells asegs m A_DYING [C4 (Z_to_bv 64 0)] ->
+    stk asegs m lo SP ->
+    ACEIL <= lo -> lo <= SP - 320 -> SP <= 2^63 ->
+    crange CS lo (SP - lo) -> crange CS' lo (SP - lo) ->
+    mem_inv asegs m -> K mo -> J m mo ->
+    (forall c', uod_post ra SP gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc lo m c' -> aevtS asegs Q c') ->
+    aevtS asegs Q
+      (mkCfg (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.MState.MS (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Frame.mkR ra (Z_to_bv 64 SP) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 addr) (Z_to_bv 64 size) (Z_to_bv 64 raw)
+                    a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                 F (Z_to_bv 64 A_UNMAP_OR_DIE) fc None m (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom asegs)) mo).
   Proof.
     intros Q ra gp tp t0 t1 t2 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 a3 a4 a5 a6 a7 SP raw F fc m mo lo
-      A0 AAL SZ CE RW GOTF LIM ST LOIMG SPL SPH SCS SCS' MI HK HJ HS.
+      A0 AAL SZ CE RW GOTF LIM SEAL DY ST LOIMG SPL SPH SCS SCS' MI HK HJ HS.
     pose proof ALWF as ALWF'; unfold al_wf in ALWF'. pose proof IMG as IMG'; unfold asan_img_ok in IMG'.
     assert (NZ : size <= nZ < size + 4096 /\ nZ mod 4096 = 0).
     { unfold nZ, page_round_up_Z, page_size. pose proof (Z.div_mod (size + 4096 - 1) 4096 ltac:(lia)). pose proof (Z.mod_pos_bound (size + 4096 - 1) 4096 ltac:(lia)).
@@ -102,7 +124,9 @@ Section UnmapOrDieS.
     (* [comment removed for export] *)
     pose proof (rw_cells_bound _ _ _ _ FR) as FRB. cbn [cells_size csize Nat.add] in FRB.
     assert (Ha : 0 <= addr < 2^64) by lia. assert (Hn : 0 <= nZ < 2^64) by lia. assert (Han : addr + nZ <= 2^64) by lia.
-    eapply (aevtS_munmap asegs Q) with (addr := addr) (nZ := nZ).
+    (* the restated aevtS_munmap asks for Q itself on success: run it at aevtS asegs Q and flatten *)
+    eapply (aevtS_bind asegs (aevtS asegs Q) Q); [| intros c' Hc'; exact Hc'].
+    eapply (aevtS_munmap asegs (aevtS asegs Q)) with (addr := addr) (nZ := nZ).
     { exact (ki_halted KL mo1 HK1). }
     { unfold munmap_args, areg, MSsvc. cbn [ms_regs]. simp_regs.
       pose proof aceil_bounds as AC.
@@ -110,6 +134,20 @@ Section UnmapOrDieS.
       - rewrite unsigned_lit by lia. reflexivity.
       - intros E. apply (f_equal bv_unsigned) in E. rewrite !unsigned_lit in E by lia. lia. }
     { exact (HAS mo1 HK1). }
+    { (* 08b1429: the injected refusal (memory and model unchanged): UnmapOrDie's die
+         path spins at A_SPIN_MUNMAPDIE *)
+      intros e HIn. cbn in HIn. destruct HIn as [<-|[]].
+      rewrite nret_MSsvc, mkR_set_a0, apply_mem_none.
+      replace (errno_ret ENOMEM) with (Z_to_bv 64 (2^64 - 12)) by (apply bv_eq; vm_compute; reflexivity).
+      change (Z_to_bv 64 A_MUNMAP_ECALL + Z_to_bv 64 4)%bv with (Z_to_bv 64 0x7b26c).
+      assert (SEALm : ro_cells asegs mm A_GOT_SEALED2 [C8 (Z_to_bv 64 1)]).
+      { eapply ro_cells_transport; [exact SEAL| exact MU| cbn [disjoint_from cells_size csize]; unfold A_GOT_SEALED2; split; [lia| exact I]]. }
+      assert (DYm : ro_cells asegs mm A_DYING [C4 (Z_to_bv 64 0)]).
+      { eapply ro_cells_transport; [exact DY| exact MU| cbn [disjoint_from cells_size csize]; unfold A_DYING; split; [lia| exact I]]. }
+      eapply (evtA_spinJ_K asegs AL CS K _ _ mo1 KL HK1).
+      { eapply (munmap_post_die AL IMG ALWF CS CSOK) with (m0 := m) (lo := lo); try eassumption; try lia. }
+      cbn beta. (intros ms5 mo5 dd_H; ddestruct dd_H as (r' & F' & mm' & ->); intros HK5 _).
+      apply spinningJ_at; [unfold A_SPIN_MUNMAPDIE, spin_pcs; cbn; right; right; right; right; left; reflexivity | exact (ki_halted KL mo5 HK5)]. }
     (* [comment removed for export] *)
     rewrite nret_MSsvc, mkR_set_a0, apply_mem_unmaps.
     change (Z_to_bv 64 A_MUNMAP_ECALL + Z_to_bv 64 4)%bv with (Z_to_bv 64 0x7b26c).

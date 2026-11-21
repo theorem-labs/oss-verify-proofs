@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 3124 of its 3235 lines of code are new or changed and 900 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F4.v, with its addresses changed; 1141 of its 1278 lines of code are new or changed and 3098 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment P12 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, libreac v1.9.0 image A): 0x81c84-0x81d3c, 47 instructions
    (v1.8 0x81bf8-0x81ca4, 44), the end of the init region and the entry of the frame loop.  rule 24: no function
    proved (a slot segment).  S_P12 is CHANGED (v190-segment-table.md section 5a); the v1.9 walk:
@@ -39,8 +40,8 @@
    re-fits P7; P11 calls a callee): p12_run = P7's p7_run, p12_rg_inj = p7_rg_inj, p12_ro_keep = p7_ro_keep (with
    p12_tops / p12_rsegs_below_gt / p12_find_below / p12_ro_addr_hi = its helpers), p12_ba_sub = p7_ba_sub,
    p12_fra_A = fra_A, p12_fr_place = fr_place. Fold them back into P7's names once P7 builds on v1.9.
-   v1.9 re-fit BUILT on v1.9 facts: rc=0 on a build machine workspace (internal path) (a copy of (internal path) at a working branch e3c0b7a9d6,
-   FACTS ed6b6b7b0ab) with the cut base a working branch cf5ad0d7203, 2026-10-28. *)
+   v1.9 re-fit BUILT on v1.9 facts: rc=0 on a build machine workspace (internal path) (a copy of (internal path) at a working branch,
+   FACTS) with the cut base a working branch, 2026-10-28. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -882,7 +883,7 @@ Proof.
   intros Hexit1 Hexit0 g c HInv.
   pose proof (proj1 FF) as SEGS.
   (* The last binder HAD2880 is `addressable m (fr + 2880) 35`, appended last to Inv_A81b80 .. Inv_A81c84 by the
-     cut bundle's round 4 (a working branch 73604325d3c): P3 makes it, P4 .. P11 carry it, and FSb's
+     cut bundle's round 4 (a working branch): P3 makes it, P4 .. P11 carry it, and FSb's
      position 4 at this file's exit needs it. *)
   destruct HInv as (regs & mem & md & fr & Ec & HFRA & HENT &
     Hn & HOUR & Ha0 & HSTR & HAD2 & HXC & HCUR & HPRO & Hsp144 & HAD2691 & HSP192 & HADF & HADI & HID & HFG &

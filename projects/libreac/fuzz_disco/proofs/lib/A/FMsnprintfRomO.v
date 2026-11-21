@@ -7,7 +7,7 @@
      in_roP's first disjunct). A's walk states DiscoBase.arodata_okP, which has the same body;
    - fm_cr_consts_of_arodata: consts_view over fm_cr from AR and arodata_okP. *)
 (* fmi_cell_rd .. fm_cr_consts_view_AR are copied from lib/B/FMsnprintfCrRom.v (the asan-ubsan image's copy of
-   proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v (a working branch 3e35620c52e), as it is at a working branch e4882dd65f7) for fuzz_disco's asan
+   proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v (a working branch), as it is at a working branch) for fuzz_disco's asan
    image. Module paths move to lib/A (YB1v YB13 YF0m YE3h -> AB1v AB13 AF0m AE3h; lib/B FMH_Base FMsnprintfCr ->
    lib/A) and the image bytes to images/Asan (AsanUbsan_seg_bytes_000 -> Asan_seg_bytes_000). One image numeral
    moves: the end of the read-only segments 0xa0000 becomes the asan image's 0x9f000 (lib/A/AE3h.v:1353

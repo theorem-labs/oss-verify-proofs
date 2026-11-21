@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS6.v (hub 9f4806388ad, blob 6be54b38eb80) rt_seg_npost, restated as YGcfReallocCompose.wrap_realloc_null_walk_cf's field rwn_post at image A (entry facts rnentry_cf, errno / oom byte from TfibSyms, errno kept on a block, memnorm kept). *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS6.v (blob 6be54b38eb80) rt_seg_npost, restated as YGcfReallocCompose.wrap_realloc_null_walk_cf's field rwn_post at image A (entry facts rnentry_cf, errno / oom byte from TfibSyms, errno kept on a block, memnorm kept). *)
 (* Modified by Theorem Labs, 2026-10-31: field round 3 part 3c (the record's segments no longer keep the overlay normal
    form): rwn_post_A's memnorm conjunct and its proofs (both arms) removed. *)
 (* Modified by Theorem Labs, 2026-10-31: rwn_post_A takes the form of the realloc null keep record's field rwnk_post
    (YGcfReallocComposeKeep.wrap_realloc_null_walk_keep_cf): the memnorm keep right after RGtop.rwin, proved on PNull by
    RGcfSegs2a.memnorm_se (m6b changes only a stack window above the image and errno, which lies in the image's
    writable window) and on a block by RGcfSegs2a.memnorm_pw (m6a leaves memory unchanged). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset.asan image A, row A5 of the internal file FREE-PIECES-102.md: the segment S6, Allocate's return into
    asan_realloc on realloc(NULL, n) -> realloc's return with a0 = the result (errno := ENOMEM on PNull):
    YGcfReallocComposeKeep.wrap_realloc_null_walk_keep_cf's field rwnk_post at segs := tfibsegs, ci := CfImg_A,

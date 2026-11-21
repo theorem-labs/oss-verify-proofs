@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed c1f_interp_eff_accesses_restrict_conv, c1f_step_accesses_restrict_conv); internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_crt1_fevt: the footprint-run-to-SRr toolkit of image B's LLVMFuzzerTestOneInput walk
    segments, in the form of the check_round_trip walk of the same unit (the porter's FORM ruling,
-   2026-10-29 01:54Z, a working branch 02bbf1e30df lib/B/Prog/crtB_walk.v:6-9: the
+   2026-10-29 01:54Z, a working branch lib/B/Prog/crtB_walk.v:6-9: the
    function's own code runs as decode's footprint runs (lib/Lib/ExecF.v), each carried into cgif's SRr; the journal
    is re-established across each run by lib/Reusable/YCbq.v:636 ajournal_exec; each call is cut by its callee
    contract).  Nothing here is new: it is taken by path from that branch, whose files are not on this branch:
@@ -52,7 +53,7 @@ Proof.
   induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
     intros m c mf' rs Hi Hrs; cbn [interp_eff_accesses] in Hi |- *; try discriminate.
   - injection Hi as <- <- <-. reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|] eqn:Hrd; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|] eqn:Hrd; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m)
       as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
     cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
@@ -110,7 +111,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (c1f_decode_exec_accesses_restrict_conv ms w ms' rs Hs Hrs). }
   exfalso. unfold fetch_failure in Hs.
-  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
     || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
        | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)

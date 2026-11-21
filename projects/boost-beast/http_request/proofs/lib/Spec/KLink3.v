@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -163,10 +164,11 @@ Lemma OWN_nodup : forall X G s mo, OWN X G s mo -> List.NoDup (map fst X).
 Proof. intros X G s mo (_ & H & _). exact H. Qed.
 
 (* [comment removed for export] *)
-Lemma OWN_vm : forall X G s mo mo', OWN X G s mo -> mminv mo' -> m_halted mo' = None -> m_vmmaps mo' = m_vmmaps mo ->
+Lemma OWN_vm : forall X G s mo mo', OWN X G s mo -> mminv mo' -> m_halted mo' = None ->
+  m_kernel mo' = m_kernel mo -> m_vmmaps mo' = m_vmmaps mo ->
   G s mo' -> OWN X G s mo'.
 Proof.
-  intros X G s mo mo' ((L & Hc & HK & Hi & HB) & Hnd & HG) MI HH E HG'. split; [|split; [exact Hnd| exact HG']].
+  intros X G s mo mo' ((L & Hc & HK & Hi & HB) & Hnd & HG) MI HH EK E HG'. split; [|split; [exact Hnd| exact HG']].
   exists L. split; [exact Hc|]. split; [eapply KLB_vm_eq; eauto|]. split; [exact Hi|]. unfold BUD in *. rewrite E. exact HB.
 Qed.
 

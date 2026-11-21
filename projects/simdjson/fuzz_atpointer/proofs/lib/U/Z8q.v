@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's stack window and the run_ok premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -299,6 +300,11 @@ Proof.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl rsegs m) as WM.
   pose proof (bytes_at_bound _ _ _ _ SRC) as BP. rewrite length_app in BP. cbn [length] in BP.
+  (* LPS 08b1429: [at_node (NOpen _)] asks the path to end below [TASK_SIZE] ([read_cstr_aux]'s [access_okb]). *)
+  assert (PATHLO : (bv_unsigned a0 + Z.of_nat (length path) < TASK_SIZE)%Z).
+  { pose proof (bytes_at_below rsegs m (bv_unsigned a0) _ MI SRC
+                  ltac:(intro E; apply app_eq_nil in E; destruct E as [_ E]; discriminate E)) as BL.
+    rewrite length_app in BL. cbn [length] in BL. unfold UTOP in BL. unfold TASK_SIZE. lia. }
   apply impl_enode.
   carve_frame 96%nat ST.
   zidle_begin sp 96%Z MUz WMz.

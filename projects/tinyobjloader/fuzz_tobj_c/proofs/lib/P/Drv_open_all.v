@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch model's channel reader as a section hypothesis, LPS 08b1429, passed to copen_safe and copen_exists; the initial valuation's invariant taking the mmap base in the three statements; the main state and malloc's entry state per CONFIG_RSEQ, taken at the run's flag, and JM over the new entry-stack layout, written as plain text; the cannot-open path's loop checks for both values of the flag). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -22,21 +23,22 @@ Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
 
-Lemma check_range_sound : ltac2:(tb__ "0|0|
-S9S9S9S9SeScS27R4R3R2A3SdA3S10S21R4R2A2S22R2S20R4R3A2A2A2SeScS26R6R3A2SdA3F_;F_;Fk;Flen;Fa;Fq;").
+(* The cannot-open path's loop checks hold for both values of the CONFIG_RSEQ flag [b]. *)
+Lemma check_range_sound : forall (b : bool) (q a len k : nat),
+  check_range b q a len = true -> (a <= k < a + len)%nat -> check_nr b q k = true.
 Proof.
-  intros q a len k H Hk. unfold check_range in H.
+  intros b q a len k H Hk. unfold check_range in H.
   exact (proj1 (forallb_forall _ _) H k ltac:(apply in_seq; lia)).
 Qed.
 
 Lemma checks_all : checks_S.
 Proof.
-  intros q k Hq Hk.
+  intros b q k Hq Hk.
   destruct q as [|[|[|[|q]]]]; [ | | | | lia].
-  - exact (check_range_sound 0 0 64 k check_range_0 ltac:(lia)).
-  - exact (check_range_sound 1 0 64 k check_range_1 ltac:(lia)).
-  - exact (check_range_sound 2 0 64 k check_range_2 ltac:(lia)).
-  - exact (check_range_sound 3 0 64 k check_range_3 ltac:(lia)).
+  - exact (check_range_sound b 0 0 64 k (check_range_0 b) ltac:(lia)).
+  - exact (check_range_sound b 1 0 64 k (check_range_1 b) ltac:(lia)).
+  - exact (check_range_sound b 2 0 64 k (check_range_2 b) ltac:(lia)).
+  - exact (check_range_sound b 3 0 64 k (check_range_3 b) ltac:(lia)).
 Qed.
 
 Section All.
@@ -53,6 +55,7 @@ Hypothesis Hargc : length argv = 2%nat.
 Variable md0 : Model.
 Hypothesis Hfds0 : m_fds md0 = std_fds.
 Hypothesis Hfs : m_fs md0 = fs.
+Hypothesis Hrdr0 : m_channel_reader md0 = true.
 Variable ok : world -> Prop.
 Hypothesis HokK : ltac2:(tb__ "0|0|
 SaS1A1S2OF_;F_;S1aS1cVinp;A1R1A2S4S0Vok;R2A3F_;FK;").
@@ -60,24 +63,31 @@ Hypothesis HokP : ltac2:(tb__ "0|0|
 SaS1A1S2OF_;F_;S1aS1cVinp;A1R1A2S24S0Vok;R2A3F_;FK;").
 Hypothesis Hokh : ok_halted ok (Spec inp).
 
-Theorem open_safe : ltac2:(tb__ "0|2|
-S1dVargv1;Vfs;A2S5S7Vsp;Vdraw;Vinp;R1A4S13S0Vok;S3S0S6SbS1A1M0S8Vmd0;Vargv1;A2A2S1bR2A4S12SfL_;M1A4F_;Frho;F_;S5S15S0S16S17Vsp;Vdraw;Vinp;R1A7S13S0Vok;S3S0S6G0Vmd0;A2S19R2A4G1A4F_;Frho;F_;").
-Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
+Theorem open_safe :
+  (open_may_succeed argv1 fs -> forall rho : valuation, JM sp mb draw inp rho ->
+     triple segs ok (SP segs (Kx [] (md_open md0 argv1)) (S_M (kb_rseq (in_kernel inp))) rho) (fun _ => False)) ->
+  forall rho : valuation, Jinit segs pcP phP sp mb draw inp rho ->
+    triple segs ok (SP segs (Kx [] md0) (S_main (kb_rseq (in_kernel inp))) rho) (fun _ => False).
+Proof using Hargc Hent Hfds0 Hfs Hrdr0 Hinp HokK HokP Hokh.
   intros Hok rho HJ.
   exact (open_reach_safe sp brk mb draw inp Hent Hinp Hargc md0 Hfds0 Hfs ok HokK HokP
-           (copen_safe sp brk mb draw inp Hent Hinp Hargc md0 Hfds0 Hfs ok HokK HokP Hokh checks_all) Hok rho HJ).
+           (copen_safe sp brk mb draw inp Hent Hinp Hargc md0 Hfds0 Hfs Hrdr0 ok HokK HokP Hokh checks_all) Hok rho HJ).
 Qed.
 
-Theorem cannot_open_exists : ltac2:(tb__ "0|0|
-S5S15S0S16S17Vsp;Vdraw;Vinp;R1A7S11S0S3S0S6SbS1A1Vmd0;A2S19R2A4S12SeSaS1A1S14R1A1S1eVfs;S1fVargv1;A1A2A3Lw;A3F_;Frho;").
-Proof using Hargc Hent Hfds0 Hfs Hinp.
+Theorem cannot_open_exists : forall rho : valuation, Jinit segs pcP phP sp mb draw inp rho ->
+  etriple segs (SP segs (Kx [] md0) (S_main (kb_rseq (in_kernel inp))) rho)
+    (fun w => w_tr w = die fs (msg_cannot_open argv1)).
+Proof using Hargc Hent Hfds0 Hfs Hrdr0 Hinp.
   intros rho HJ.
   exact (copen_reach_exists sp brk mb draw inp Hent Hinp Hargc md0 _
-           (copen_exists sp brk mb draw inp Hent Hinp Hargc md0 Hfds0 Hfs checks_all) rho HJ).
+           (copen_exists sp brk mb draw inp Hent Hinp Hargc md0 Hfds0 Hfs Hrdr0 checks_all) rho HJ).
 Qed.
 
-Theorem open_exists : ltac2:(tb__ "0|1|
-S1dVargv1;Vfs;A2S12OF_;S5S7Vsp;Vdraw;Vinp;R1A4S11S0S3S0S6SbS1A1M0S8Vmd0;Vargv1;A2A2S1bR2A4R3A3F_;Frho;S5S15S0S16S17Vsp;Vdraw;Vinp;R1A7S11S0S3S0S6G0Vmd0;A2S19R2A4R4A3F_;Frho;F_;FQ;F_;").
+Theorem open_exists : open_may_succeed argv1 fs -> forall Q : world -> Prop,
+  (forall rho : valuation, JM sp mb draw inp rho ->
+     etriple segs (SP segs (Kx [] (md_open md0 argv1)) (S_M (kb_rseq (in_kernel inp))) rho) Q) ->
+  forall rho : valuation, Jinit segs pcP phP sp mb draw inp rho ->
+    etriple segs (SP segs (Kx [] md0) (S_main (kb_rseq (in_kernel inp))) rho) Q.
 Proof using Hargc Hent Hfds0 Hfs Hinp. exact (open_reach_exists sp brk mb draw inp Hent Hinp Hargc md0 Hfds0 Hfs). Qed.
 
 End All.

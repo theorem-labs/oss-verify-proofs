@@ -12,7 +12,9 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Export AllocSlots AllocRoo
 Import ListNotations.
 Local Open Scope Z_scope.
 
-Lemma lib_msteps_frame : forall segs ms final, Exec.msteps segs ms final -> YK0i.msteps segs ms final.
+(* [YK15.rz_msteps] below takes the [A.Reusable] walk's [msteps]; a bare [YK0i] resolves to
+   another loaded copy of YK0i at 727298f3. *)
+Lemma lib_msteps_frame : forall segs ms final, Exec.msteps segs ms final -> A.Reusable.YK0i.msteps segs ms final.
 Proof.
   intros segs ms final H. induction H as [ms|ms mid final [HS HV] HT IH].
   - constructor.

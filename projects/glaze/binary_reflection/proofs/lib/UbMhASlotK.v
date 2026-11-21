@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: forward vDSO reservation inclusion at slot entry and metadata allocation. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -33,6 +34,7 @@ Section ASF.
   Hypothesis Hh : m_halted mdl = None.
   Hypothesis Hlz : m_vm_lazy mdl = [].
   Hypothesis Hmat : m_vm_materialized mdl = [].
+  Hypothesis HVDSO : incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
   Hypothesis Hsc : 0 <= sc < 48.
   Hypothesis Hd : dle (dbound (16 * size_class sc)) d.
   Hypothesis Hlimbo : zlen (s_limbo st) + Z.of_nat d + 1 <= 8.
@@ -254,7 +256,7 @@ Section ASF.
     - destruct (aHead0 (M1 st M regs sp) sc hd Hsc HDR Ract r1 rom E23 HZ) as (r2 & RUN & F21 & F12 & K2).
       eapply kat_msteps; [exact Hh | exact Hlz | exact RUN |].
       assert (P1 : PT st (M1 st M regs sp) mdl r2).
-      { apply (pt_first st L M mdl regs sp sc d HWF HREP HLG Hh Hlz Hmat Hsp DEF); try (kept_rw K2; assumption).
+      { apply (pt_first st L M mdl regs sp sc d HWF HREP HLG Hh Hlz Hmat HVDSO Hsp DEF); try (kept_rw K2; assumption).
         eapply keeps_big; [exact K1 | exact K2 | reflexivity]. }
       apply (LG st (M1 st M regs sp) mdl r2 P1 NJ eq_refl).
       + subst hd. destruct (s_alist st sc) as [|h t] eqn:El; [reflexivity|]. exfalso. cbn in HZ.
@@ -263,7 +265,7 @@ Section ASF.
     - destruct (aHead1 (M1 st M regs sp) sc hd Hsc HDR Ract r1 rom E23 HNZ) as (r2 & RUN & F21 & F12 & K2).
       eapply kat_msteps; [exact Hh | exact Hlz | exact RUN |].
       assert (P1 : PT st (M1 st M regs sp) mdl r2).
-      { apply (pt_first st L M mdl regs sp sc d HWF HREP HLG Hh Hlz Hmat Hsp DEF); try (kept_rw K2; assumption).
+      { apply (pt_first st L M mdl regs sp sc d HWF HREP HLG Hh Hlz Hmat HVDSO Hsp DEF); try (kept_rw K2; assumption).
         eapply keeps_big; [exact K1 | exact K2 | reflexivity]. }
       apply (L_A2 st (M1 st M regs sp) mdl r2 hd P1 NJ eq_refl eq_refl HNZ F12). kept_rw K2. exact E18.
   Qed.
@@ -294,7 +296,7 @@ Section ASF.
     - destruct (aHead0 (M1 st M regs sp) sc hd Hsc HDR Ract r1 rom E23 HZ) as (r2 & RUN & F21 & F12 & K2).
       eapply kat_msteps; [exact Hh | exact Hlz | exact RUN |].
       assert (P1 : PT st (M1 st M regs sp) mdl r2).
-      { apply (pt_first st L M mdl regs sp sc d HWF HREP HLG Hh Hlz Hmat Hsp DEF); try (kept_rw K2; assumption).
+      { apply (pt_first st L M mdl regs sp sc d HWF HREP HLG Hh Hlz Hmat HVDSO Hsp DEF); try (kept_rw K2; assumption).
         eapply keeps_big; [exact K1 | exact K2 | reflexivity]. }
       apply (LGa st (M1 st M regs sp) mdl r2 P1 NJ eq_refl).
       + subst hd. destruct (s_alist st sc) as [|h t] eqn:El; [reflexivity|]. exfalso. cbn in HZ.
@@ -304,7 +306,7 @@ Section ASF.
     - destruct (aHead1 (M1 st M regs sp) sc hd Hsc HDR Ract r1 rom E23 HNZ) as (r2 & RUN & F21 & F12 & K2).
       eapply kat_msteps; [exact Hh | exact Hlz | exact RUN |].
       assert (P1 : PT st (M1 st M regs sp) mdl r2).
-      { apply (pt_first st L M mdl regs sp sc d HWF HREP HLG Hh Hlz Hmat Hsp DEF); try (kept_rw K2; assumption).
+      { apply (pt_first st L M mdl regs sp sc d HWF HREP HLG Hh Hlz Hmat HVDSO Hsp DEF); try (kept_rw K2; assumption).
         eapply keeps_big; [exact K1 | exact K2 | reflexivity]. }
       assert (A18 : getr r2 18 = Z_to_bv 64 req) by (kept_rw K2; exact E18).
       assert (Ehd : head_of (s_alist st sc) = hd) by reflexivity.
@@ -520,7 +522,7 @@ Section ASG.
     kat RSEGS (mkCfg (mkst r (0x67490%bv : word) Mc rom) mdl1) (kfx F bo).
   Proof.
     intros s1 Mc mdl1 r P NJ1 EL Hnil Q18 SIDE.
-    pose proof P as [W1 RP1 LG1 Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 Herr1 BL1 LM1 MU1 FR1 DF1 SK1 Q2 Q8 Q20 Q21 Q22 Q23 KB].
+    pose proof P as [W1 RP1 LG1 Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 Herr1 BL1 LM1 MU1 FR1 DF1 SK1 Q2 Q8 Q20 Q21 Q22 Q23 KB Hrdr1 HVDSO1].
     pose proof scl_rng as SCL. pose proof stk272 as S272.
     (* [comment removed for export] *)
     destruct (aMeta Mc sc Hsc (sz_img_of_REP s1 Mc RP1) r rom Q8) as (r1 & RUN1 & E19 & E25 & E24 & E1 & K1).
@@ -528,7 +530,7 @@ Section ASG.
     destruct (budget L mdl d HBUD s1 mdl1 W1 NJ1 ltac:(rewrite EL; unfold zlen in *; lia) Hlim1) as (HCA & HCR & HRS).
     assert (E2 : getr r1 2 = Z_to_bv 64 (sp - 144)) by (kept_rw K1; exact Q2).
     apply (kat_of_kfx F bo). replace (0x66c68%bv : word) with (Z_to_bv 64 AM_ENTRY) by (apply bv_eq; reflexivity).
-    apply (HAM F bo bo s1 L [] Mc mdl1 r1 rom (sp - 144) HL (fun E => E) W1 RP1 (proj1 (LEDGERX_nil s1 _) LG1) xok_nil Hh1 Hlz1 Hmat1 HCA).
+    apply (HAM F bo bo s1 L [] Mc mdl1 r1 rom (sp - 144) HL (fun E => E) W1 RP1 (proj1 (LEDGERX_nil s1 _) LG1) xok_nil Hh1 Hlz1 Hmat1 HVDSO1 HCA).
     { cbn [length Z.of_nat]. lia. }
     { rewrite XSUM_nil. lia. }
     { exact E2. }
@@ -539,7 +541,7 @@ Section ASG.
     { intros y Hy. apply DF1. unfold AMSTK in Hy. lia. }
     2: { (* [comment removed for export] *)
       intros c' PF.
-      destruct PF as (s2 & M2 & mdl2 & r2 & -> & W2 & RP2 & LG2 & Hh2 & Hlz2 & Hmat2 & Hfs2 & Hfds2 & Hvl2 &
+      destruct PF as (s2 & M2 & mdl2 & r2 & -> & W2 & RP2 & LG2 & Hh2 & Hlz2 & Hmat2 & Hfs2 & Hfds2 & Hrdr2 & HVDSO2 & Hvl2 &
                       Elim & Efl & Ear & Emeta & Eerr & KEEP & REG & F10 & F2 & K2 & M2W & DEF2).
       destruct KEEP as (Egrp & Eslot & Ealist & Eai & Ekind & Ecan & Eact & Eus & Ebn & Euq & Esq & Ectr & Esec & Emg & Elm2 & MU2).
       rewrite E1. replace (Z_to_bv 64 423080) with (0x674a8%bv : word) by (apply bv_eq; reflexivity).
@@ -576,13 +578,15 @@ Section ASG.
         + rewrite F2. exact E2.
         + kept_rw K2. kept_rw K1. exact Q20.
         + eapply keeps_big; [eapply keeps_big; [exact KB | exact K1 | reflexivity] | exact K2 | reflexivity].
+        + (* f_rdr: [m_channel_reader] across the meta call, then across the slot prefix. *)
+          rewrite Hrdr2. exact Hrdr1.
       - intros x k o Hx Hk E. rewrite Eslot in E. unfold is_group in Hx. rewrite Egrp in Hx.
         apply (NJ1 x k o Hx); [|exact E]. unfold g_lastidx, g_W in *. rewrite (Emg x Hx) in Hk. exact Hk.
       - rewrite Elim. exact EL.
       - exact F10. }
     (* [comment removed for export] *)
     intros c' POST. apply (kfx_of_kat F HL bo).
-    destruct POST as (s2 & M2 & mdl2 & r2 & m & -> & W2 & RP2 & LG2 & Hh2 & Hlz2 & Hmat2 & Hfs2 & Hfds2 & Hvl2 &
+    destruct POST as (s2 & M2 & mdl2 & r2 & m & -> & W2 & RP2 & LG2 & Hh2 & Hlz2 & Hmat2 & Hfs2 & Hfds2 & Hrdr2 & HVDSO2 & Hvl2 &
                       Elim & Um & Zm & NLm2 & Efl & Eerr & KEEP & REG & F10 & F2 & K2 & M2W & DEF2).
     destruct KEEP as (Egrp & Eslot & Ealist & Eai & Ekind & Ecan & Eact & Eus & Ebn & Euq & Esq & Ectr & Esec & Emg & Elm2 & MU2).
     destruct REG as (RS2 & RL2 & RX2).
@@ -711,7 +715,7 @@ Section ASK.
   (* [comment removed for export] *)
   Lemma as_step : forall d, (forall d', (d' < d)%nat -> AS_SPEC3 d') -> AS_SPEC3 d.
   Proof.
-    intros d IHd F bi bo st L M mdl regs rom sp sc req HL SIDE HWF HREP HLG NJ Hh Hlz Hmat Hsc Hd Hlimbo Hreq HBUD R10 R11 R2 Rra R4 Hsplo Hsphi DEF HQ HQF.
+    intros d IHd F bi bo st L M mdl regs rom sp sc req HL SIDE HWF HREP HLG NJ Hh Hlz Hmat HVDSO Hsc Hd Hlimbo Hreq HBUD R10 R11 R2 Rra R4 Hsplo Hsphi DEF HQ HQF.
     assert (Hsp : CEIL + ASSTK d <= sp /\ sp < 2 ^ 64) by (split; assumption).
     apply (kfx_of_kat F HL bo). unfold AS_ENTRY. replace (Z_to_bv 64 0x672b0) with (0x672b0%bv : word) by (apply bv_eq; reflexivity).
     assert (LGx : forall s1 Mc mdl1 r,

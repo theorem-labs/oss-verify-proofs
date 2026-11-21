@@ -3,9 +3,10 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 575 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/SegCF/Tac_slot.v, with its module paths and module names changed; 229 of its 265 lines of code are new or changed and 539 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (agreement) slot of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (UBSan build): lib/U/Prog/SegSlot.v
-   copied over U/Prog/SlotInvCF.v, as reac-pw/fuzz_pin's U/Prog/SegCF/PinSlotCF.v copies its U/Prog/PinSlot.v
-   (commit a2a7540da98): the same text with SlotInvCF imported after SlotFR / SlotInv, the
+   copied over U/Prog/SlotInvCF.v, as reac-pw/fuzz_pin's U/Prog/SegCF/PinSlotCF.v copies its U/Prog/PinSlot.v:
+   the same text with SlotInvCF imported after SlotFR / SlotInv, the
    segment statements from SegCF/StmtsCF.v, Seg -> SegCF for Tac_slot, frame_facts_ubsan ->
    SlotInvCF.frame_facts_cf; slot_lib proves lib_contract_cg (crealizes B, by SR_realizes_ms) for lib_contract_g;
    frame_facts_concrete and Section Link (ubsan_halts) are dropped (the agreement top, AgreeSeg.v, takes the

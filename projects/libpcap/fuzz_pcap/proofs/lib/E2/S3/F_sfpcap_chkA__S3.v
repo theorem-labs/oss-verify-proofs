@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies the stack-floor bounds of the context bundle, of LO and of the frame lemma's lo1 read usp0 R - 6144512, the floor 6144512 bytes below the entry sp (rc_lo at this revision), where they read usp0 R - 8388608; the steps that unfold rc_lo do so in every hypothesis. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -73,7 +74,7 @@ Section Chk.
 
   (* [comment removed for export] *)
   Definition chk_ctx (sp tp : word) (R : rctx) (s : PState H hptr) (CL FB : list cblock) (lo MG FA EB ERR : Z) (f : hptr) (magic : list Z) (m : mem) : Prop :=
-    GIo K R s CL FB m /\ (usp0 R - 8388608 <= lo)%Z /\ (lo + 81920 <= bv_unsigned sp)%Z /\ (bv_unsigned sp <= rc_spmain R)%Z
+    GIo K R s CL FB m /\ (usp0 R - 6144512 <= lo)%Z /\ (lo + 81920 <= bv_unsigned sp)%Z /\ (bv_unsigned sp <= rc_spmain R)%Z
     /\ tp = rc_tp R /\ (bv_unsigned sp mod 16 = 0)%Z
     /\ In (f, FA, FILE_BLOCK) FB /\ sites = sites_at (bv_unsigned sp + D_CHECK_HEADER)
     /\ length magic = 4%nat /\ Forall (fun z => 0 <= z < 256)%Z magic
@@ -118,7 +119,7 @@ Section Chk.
       assert (MG' : rw_cells ssegs mm MG [CB 4 (map b8 [k0; k1; k2; k3])])
         by (eapply rw_cells_recell; [eapply agrees_rw_cells; [exact AGW | exact MG3 | intros a Ha; cbn [outside cells_size csize Nat.add] in *; lia] | cbn; repeat split; exact Logic.I | reflexivity]);
       assert (G' : GIo K R ps3 CL FB mm)
-        by (eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU3 | exact WM3 |]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil])
+        by (eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU3 | exact WM3 |]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil])
     end.
     apply evt_done. unfold check_header_post.
     lazymatch goal with |- context [MS _ _ _ _ _ ?mm _] => exists (Z_to_bv 64 0), mm, (Z_to_bv 64 1) end.
@@ -401,7 +402,7 @@ Section Chk.
       name_sp sp (-112)%Z.
       apply evt_done. eapply (implM_bind ssegs).
       { eapply (FREE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ []); [| reflexivity].
-        split; [exact G7|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo; lia|]. split; [unfold FREE_STACK; rewrite Hsp; lia|].
+        split; [exact G7|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo in *; lia|]. split; [unfold FREE_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [] ps7 ms7 PO. cbv beta in PO. destruct PO as (av7 & m7 & E & OF7 & MI7 & ST7 & AGf & Gf).
       unfold hpost_regs in E. destruct_exs E. subst ms7. rewrite Hsp in *. unname_sp.
@@ -459,7 +460,7 @@ Section Chk.
       name_sp sp (-112)%Z.
       apply evt_done. eapply (implM_bind ssegs).
       { eapply MALLOC; [| reflexivity | lia].
-        split; [exact G5'|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
+        split; [exact G5'|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo in *; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [bq|] ps6 ms6 PO; cbv beta iota in PO.
       - destruct PO as (av & m6 & E & OFm & MI6 & ST6 & AG6 & (B & bjunk & -> & G6 & BUF)).
@@ -545,7 +546,7 @@ Section Chk.
       name_sp sp (-112)%Z.
       apply evt_done. eapply (implM_bind ssegs).
       { eapply MALLOC; [| reflexivity | lia].
-        split; [exact G5'|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
+        split; [exact G5'|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo in *; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [bq|] ps6 ms6 PO; cbv beta iota in PO.
       - destruct PO as (av & m6 & E & OFm & MI6 & ST6 & AG6 & (B & bjunk & -> & G6 & BUF)).
@@ -801,7 +802,7 @@ Section AIA.
   Variables (p : pcapT) (s : pcap_ng_sf) (i : option hptr) (c : cursor) (bs ej pad cpad : list byte).
   Hypothesis G : GIo K R st (C1 ++ IBLK i I s ++ C2) FB m.
   Hypothesis ST : stk ssegs m lo (bv_unsigned sp).
-  Hypothesis LO : usp0 R - 8388608 <= lo.
+  Hypothesis LO : usp0 R - 6144512 <= lo.
   Hypothesis BU : lo + (65536 + 112) <= bv_unsigned sp.
   Hypothesis SPM : bv_unsigned sp <= rc_spmain R.
   Hypothesis MI : mem_inv ssegs m.
@@ -890,7 +891,7 @@ Section AIA.
   (* [comment removed for export] *)
   Definition airest_f_frame__stmt : Prop := forall (m3 m4 : mem) (st' : PS) (c' : cursor) (p' : pcapT) (lo1 hi1 k : Z),
     AIREST_F m3 st' c' p' -> munch [(lo1, hi1); (EB, EB + k)]%Z m3 m4 -> wmono ssegs m3 m4 ->
-    (usp0 R - 8388608 <= lo1)%Z -> (hi1 <= bv_unsigned sp + -112)%Z -> (0 <= k <= 256)%Z ->
+    (usp0 R - 6144512 <= lo1)%Z -> (hi1 <= bv_unsigned sp + -112)%Z -> (0 <= k <= 256)%Z ->
     AIREST_F m4 st' c' p'.
   Section Sz2.
   Variables m3 m4 st' c' p' lo1 hi1 k : ltac2:(SecDiet.SzSec.tyM 'airest_f_frame__stmt "vvvvvvvv" @m3).
@@ -902,7 +903,7 @@ Section AIA.
     exists s', i', I', pad', bs'. split; [exact OFr|]. split; [exact E1|].
     split.
     { eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU | exact WM |].
-      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia|]. apply Forall_cons; [| apply Forall_nil].
+      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia|]. apply Forall_cons; [| apply Forall_nil].
       destruct EBiv as [X|X]; [left; cbn [fst snd] in *; lia| right]. unfold iv_in_block in *. apply Exists_app. right.
       apply Exists_exists in X as (b & Hb & Hr). apply Exists_exists. exists b. split; [exact Hb|]. cbn [fst snd] in *. lia. }
     split; [transport NG3 m4 AGS ltac:(prs); exact NG3|].
@@ -958,7 +959,7 @@ Section AIA.
     name_sp sp (-112)%Z.
     eapply evt_cut.
     { eapply (SNPRINTF _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ R st3 (IBLK i' I' s' ++ C1 ++ C2) FB lo EB 256%Z FMTA fs args ej);
-        [ split; [exact G3|]; split; [rewrite Hsp; exact ST3|]; split; [unfold rc_lo; lia|]; split; [unfold STDIO_STACK; rewrite Hsp; lia|];
+        [ split; [exact G3|]; split; [rewrite Hsp; exact ST3|]; split; [unfold rc_lo in *; lia|]; split; [unfold STDIO_STACK; rewrite Hsp; lia|];
           split; [rewrite Hsp; lia|]; split; [exact MI3|]; split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]
         | reflexivity | reflexivity | reflexivity | lia | exact FAT | exact FOK | exact ALEN | rewrite Hsp; apply FW | exact HEB3
         | destruct CRE as [Hb|Hs]; [left; intros a Ha; apply in_block_app; right; exact (Hb a Ha) | right; rewrite Hsp; lia] ]. }
@@ -1118,7 +1119,7 @@ Section AIA.
   Variables (p : pcapT) (s : pcap_ng_sf) (i : option hptr) (c : cursor) (bs ej pad cpad : list byte).
   Hypothesis G : GIo K R st (C1 ++ IBLK i I s ++ C2) FB m.
   Hypothesis ST : stk usegs m lo (bv_unsigned sp).
-  Hypothesis LO : usp0 R - 8388608 <= lo.
+  Hypothesis LO : usp0 R - 6144512 <= lo.
   Hypothesis BU : lo + (65536 + 112) <= bv_unsigned sp.
   Hypothesis SPM : bv_unsigned sp <= rc_spmain R.
   Hypothesis MI : mem_inv usegs m.
@@ -1207,7 +1208,7 @@ Section AIA.
   (* [comment removed for export] *)
   Definition airest_f_frame__stmt : Prop := forall (m3 m4 : mem) (st' : PS) (c' : cursor) (p' : pcapT) (lo1 hi1 k : Z),
     AIREST_F m3 st' c' p' -> munch [(lo1, hi1); (EB, EB + k)]%Z m3 m4 -> wmono usegs m3 m4 ->
-    (usp0 R - 8388608 <= lo1)%Z -> (hi1 <= bv_unsigned sp + -112)%Z -> (0 <= k <= 256)%Z ->
+    (usp0 R - 6144512 <= lo1)%Z -> (hi1 <= bv_unsigned sp + -112)%Z -> (0 <= k <= 256)%Z ->
     AIREST_F m4 st' c' p'.
   Section Sz2.
   Variables m3 m4 st' c' p' lo1 hi1 k : ltac2:(SecDiet.SzSec.tyM 'airest_f_frame__stmt "vvvvvvvv" @m3).
@@ -1219,7 +1220,7 @@ Section AIA.
     exists s', i', I', pad', bs'. split; [exact OFr|]. split; [exact E1|].
     split.
     { eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU | exact WM |].
-      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia|]. apply Forall_cons; [| apply Forall_nil].
+      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia|]. apply Forall_cons; [| apply Forall_nil].
       destruct EBiv as [X|X]; [left; cbn [fst snd] in *; lia| right]. unfold iv_in_block in *. apply Exists_app. right.
       apply Exists_exists in X as (b & Hb & Hr). apply Exists_exists. exists b. split; [exact Hb|]. cbn [fst snd] in *. lia. }
     split; [transport NG3 m4 AGS ltac:(prs); exact NG3|].
@@ -1275,7 +1276,7 @@ Section AIA.
     name_sp sp (-112)%Z.
     eapply evt_cut.
     { eapply (SNPRINTF _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ R st3 (IBLK i' I' s' ++ C1 ++ C2) FB lo EB 256%Z FMTA fs args ej);
-        [ split; [exact G3|]; split; [rewrite Hsp; exact ST3|]; split; [unfold rc_lo; lia|]; split; [unfold STDIO_STACK; rewrite Hsp; lia|];
+        [ split; [exact G3|]; split; [rewrite Hsp; exact ST3|]; split; [unfold rc_lo in *; lia|]; split; [unfold STDIO_STACK; rewrite Hsp; lia|];
           split; [rewrite Hsp; lia|]; split; [exact MI3|]; split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]
         | reflexivity | reflexivity | reflexivity | lia | exact FAT | exact FOK | exact ALEN | rewrite Hsp; apply FW | exact HEB3
         | destruct CRE as [Hb|Hs]; [left; intros a Ha; apply in_block_app; right; exact (Hb a Ha) | right; rewrite Hsp; lia] ]. }
@@ -1442,7 +1443,7 @@ Section AIB.
   Variables (p : pcapT) (s : pcap_ng_sf) (i : option hptr) (c : cursor) (bs ej pad cpad : list byte).
   Hypothesis G : GIo K R st (C1 ++ IBLK i I s ++ C2) FB m.
   Hypothesis ST : stk ssegs m lo (bv_unsigned sp).
-  Hypothesis LO : usp0 R - 8388608 <= lo.
+  Hypothesis LO : usp0 R - 6144512 <= lo.
   Hypothesis BU : lo + (65536 + 112) <= bv_unsigned sp.
   Hypothesis SPM : bv_unsigned sp <= rc_spmain R.
   Hypothesis MI : mem_inv ssegs m.
@@ -1776,7 +1777,7 @@ Section AIB.
   Variables (p : pcapT) (s : pcap_ng_sf) (i : option hptr) (c : cursor) (bs ej pad cpad : list byte).
   Hypothesis G : GIo K R st (C1 ++ IBLK i I s ++ C2) FB m.
   Hypothesis ST : stk usegs m lo (bv_unsigned sp).
-  Hypothesis LO : usp0 R - 8388608 <= lo.
+  Hypothesis LO : usp0 R - 6144512 <= lo.
   Hypothesis BU : lo + (65536 + 112) <= bv_unsigned sp.
   Hypothesis SPM : bv_unsigned sp <= rc_spmain R.
   Hypothesis MI : mem_inv usegs m.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv facts are carried word by word at the revision's auxv layout, with the walk fact over the whole vector, each throw path is checked at both CONFIG_RSEQ values, and the stack floors handed to callees are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -34,10 +35,10 @@ Definition kd_es1 (RA : Z) : expr := if RA =? 0xb2d1c then EVar 51 else EVar 49.
 Definition kd_ok (RA : Z) : Prop := RA = 0xb2d1c \/ RA = 0xb3014 \/ RA = 0xb31d0.
 Definition FUZZ_SP0GAP_X : Z := 0x1000.
 
-Lemma kd_run : forall RA uw, kd_ok RA ->
-  exit_okA (kd_fsz RA) (kd_xr RA) (kd_xk RA) (xautoXA (kd_fsz RA) (kd_IT RA) XS_END_A XSA_FUEL XSA_K (xs_ss0A (kd_fsz RA) (kd_hcs RA) RA uw)) = true.
+Lemma kd_run : forall RA uw b, kd_ok RA ->
+  exit_okA (kd_fsz RA) (kd_xr RA) (kd_xk RA) (xautoXA (kd_fsz RA) (kd_IT RA) XS_END_A XSA_FUEL XSA_K (xs_ss0A (kd_fsz RA) (kd_hcs RA) RA uw b)) = true.
 Proof.
-  intros RA uw [-> |[-> | ->]]; [exact (xr_bcast_ok uw)| exact (xr_bbegin_ok uw)| exact (xr_bend_ok uw)].
+  intros RA uw b [-> |[-> | ->]]; [exact (xr_bcast_ok uw b)| exact (xr_bbegin_ok uw b)| exact (xr_bend_ok uw b)].
 Qed.
 
 Lemma kd_static : forall RA, kd_ok RA ->
@@ -177,7 +178,7 @@ Section SiteCoreB.
     RGS usp s1 -> XP m usp -> hcells_okA m usp 0 (kd_hcs RA) ws -> rw_cells asegs m usp fr -> Z.of_nat (cells_size fr) = kd_fsz RA ->
     lposA (rt_live RT Σ) -> Z.of_nat (length (rt_live RT Σ)) + 1 <= LIVE_MAX -> mcost EXC_SIZE <= rt_credit RT Σ ->
     ART RT Σ m -> mem_inv asegs m -> stk asegs m lo usp ->
-    0x7fff7f800000 <= lo -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 0x15000 <= usp -> usp + kd_fsz RA + 0xb0 <= rt_sp0 RT Σ -> rt_sp0 RT Σ <= usp + 0x3c000 ->
+    0x7fff7f800000 <= lo -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 0x15000 <= usp -> usp + kd_fsz RA + 0xb0 <= rt_sp0 RT Σ -> rt_sp0 RT Σ <= usp + 0x3c000 ->
     usp mod 16 = 0 ->
     rw_cells asegs m EL_EHG_XA [C8 (Z_to_bv 64 0); C4 (Z_to_bv 64 0)] ->
     bytes_at asegs m EL_UNW_XA (map (fun b => Z_to_bv 8 b) (uw_bytesA uw)) /\ wr_at asegs m EL_UNW_XA 8 ->
@@ -294,14 +295,32 @@ Section SiteCoreB.
     { destruct CAN as (g & G2). exists g. apply (cells_at_agree asegs m m4 _ _ G2). intros x Hx. cbn [cells_size csize Nat.add] in Hx. apply AGS. apply xstatics_client.
       right; right; right; right; left. exact Hx. }
     assert (AUX4 : El_xs_adaptA.el_auxvA spx m4).
-    { destruct AUX as (av & x16 & x6 & x11 & x12 & x23 & rnd & AC & AB & AV1 & AV2 & AV3 & REST). exists av, x16, x6, x11, x12, x23, rnd.
-      split; [| split; [| exact (conj AV1 (conj AV2 (conj AV3 REST)))]].
+    { destruct AUX as (av & x16 & x6 & x11 & x12 & x23 & rnd & AC
+                       & A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14 & A15 & A16 & A17 & A18
+                       & AV1 & AV2 & AV3 & R16 & R6 & R11 & R12 & R23 & RR & HW).
+      exists av, x16, x6, x11, x12, x23, rnd.
+      assert (AW : forall a v, av <= a -> a + 8 <= av + 400 -> El_xs_adaptA.el_auxv_word m a v -> El_xs_adaptA.el_auxv_word m4 a v).
+      { intros a v Ha Hb Hv. apply (bytes_at_agree asegs m m4 _ _ Hv). intros x Hx.
+        replace (Z.of_nat (length (word_to_le_bytes 8 (Z_to_bv 64 v)))) with 8 in Hx by reflexivity.
+        apply AG4. left. clear - Hx Ha Hb AV1 AV2 SPX FSZ. ul. }
+      split.
       - apply (ro_cells_agree asegs m m4 _ _ AC). intros x Hx. cbn [cells_size csize Nat.add] in Hx. apply AGS. apply xstatics_client. right; right; right; right; right. exact Hx.
-      - apply (bytes_at_agree asegs m m4 _ _ AB). intros x Hx. replace (Z.of_nat (length (u64sA (el_auxv_words x16 x6 x11 x12 x23 rnd)))) with 160 in Hx by reflexivity. apply AG4. left.
-        clear - Hx AV1 AV2 SPX FSZ. ul. }
+      - split; [apply AW; [lia| lia| exact A1]|]. split; [apply AW; [lia| lia| exact A2]|].
+        split; [apply AW; [lia| lia| exact A3]|]. split; [apply AW; [lia| lia| exact A4]|].
+        split; [apply AW; [lia| lia| exact A5]|]. split; [apply AW; [lia| lia| exact A6]|].
+        split; [apply AW; [lia| lia| exact A7]|]. split; [apply AW; [lia| lia| exact A8]|].
+        split; [apply AW; [lia| lia| exact A9]|]. split; [apply AW; [lia| lia| exact A10]|].
+        split; [apply AW; [lia| lia| exact A11]|]. split; [apply AW; [lia| lia| exact A12]|].
+        split; [apply AW; [lia| lia| exact A13]|]. split; [apply AW; [lia| lia| exact A14]|].
+        split; [apply AW; [lia| lia| exact A15]|]. split; [apply AW; [lia| lia| exact A16]|].
+        split; [apply AW; [lia| lia| exact A17]|]. split; [apply AW; [lia| lia| exact A18]|].
+        assert (AGW : agree_on (fun x => spx <= x < USTACK_TOP) m m4).
+        { intros x Hx. apply AG4. left. cbv beta in Hx. clear - Hx SPX FSZ. ul. }
+        exact (conj AV1 (conj AV2 (conj AV3 (conj R16 (conj R6 (conj R11 (conj R12 (conj R23 (conj RR
+                 (OSSVerify.Proofs.simdjson.fuzz_element.lib.A.D_auxv.el_auxv_walk_agree spx av m m4 AV1 HW AGW)))))))))). }
     change 0x6a7e68 with TPV_XA. change XS_TINFO with EL_TINFO_XA. change XS_DTOR with EL_DTOR_XA. change XS_CXA_THROW with EL_CXA_THROW_XA.
     apply (xs_throwA RT WIN (rt_credit RT Σ1) PMc FDO MST (TLS _) (XROE _) fsz (kd_hcs RA) RA (kd_xr RA) (kd_xk RA) (kd_IT RA) (kd_es0 RA) (kd_es1 RA)
-             FSZR HCO HCN RAR XROK XK0 XK1 XK2 (itab_sound_kd RA) (fun uw' => kd_run RA uw' KA)
+             FSZR HCO HCN RAR XROK XK0 XK1 XK2 (itab_sound_kd RA) (fun uw' bw => kd_run RA uw' bw KA)
              Σ1 (Z_to_bv 64 usp) gp w0 w1 w2 s1 d3 d4 d5 d6 d7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 w3 w4 w5 w6 F4 fc m4 p lo spx code uw ws
              HB4 INP (conj P0 (conj P16 (conj PHI PSEG))) ltac:(rewrite EU; exact ST4') LLO ltac:(rewrite SP01; exact WLO) ltac:(rewrite EU; clear - UB1 LOR FSZ; ul)
              ltac:(rewrite EU, SP01; clear - SP1 SP2 FSZ; ul) ltac:(rewrite EU, SP01; clear - SP1 SP2 FSZ; ul) ltac:(rewrite SP01; clear - SP0R; lia)
@@ -368,7 +387,7 @@ Section SitesB.
     RGS usp s1 -> XP m usp -> hcells_okA m usp 0 (kd_hcs RA) ws -> rw_cells asegs m usp fr -> Z.of_nat (cells_size fr) = kd_fsz RA ->
     lposA (rt_live RT Σ) -> Z.of_nat (length (rt_live RT Σ)) + 1 <= LIVE_MAX -> mcost EXC_SIZE <= rt_credit RT Σ ->
     ART RT Σ m -> mem_inv asegs m -> stk asegs m lo usp ->
-    0x7fff7f800000 <= lo -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 0x15000 <= usp -> usp + kd_fsz RA + 0xb0 <= rt_sp0 RT Σ -> rt_sp0 RT Σ <= usp + 0x3c000 ->
+    0x7fff7f800000 <= lo -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 0x15000 <= usp -> usp + kd_fsz RA + 0xb0 <= rt_sp0 RT Σ -> rt_sp0 RT Σ <= usp + 0x3c000 ->
     usp mod 16 = 0 ->
     rw_cells asegs m EL_EHG_XA [C8 (Z_to_bv 64 0); C4 (Z_to_bv 64 0)] ->
     bytes_at asegs m EL_UNW_XA (map (fun b => Z_to_bv 8 b) (uw_bytesA uw)) /\ wr_at asegs m EL_UNW_XA 8 ->

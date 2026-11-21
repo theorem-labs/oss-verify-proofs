@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: madv_gate_sec reads the launch's reservations off the shadow map (lok_resv_free), and FRONTR_unmap is given the unmapped entry (MH2). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -2990,8 +2991,11 @@ Proof.
   assert (Un : bv_unsigned (Z_to_bv 64 (e' - b') : word) = e' - b') by (apply unsigned_lit; lia).
   split; [unfold AIMG_HI; lia|]. split; [lia|]. split; [| split; [| split]].
   - (* [comment removed for export] *)
-    apply region_free_intro. intros b k Hin. pose proof (reserved_below mo b k HO Hin) as RB. unfold AIMG_HI in RB.
-    unfold iv_overlap. rewrite Ub, Un. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+    apply (lok_resv_free _ mo _ _ HO).
+    + apply region_free_intro. intros b k Hin. pose proof (segs_reserved_below b k Hin) as RB. unfold AIMG_HI in RB.
+      unfold iv_overlap. rewrite Ub, Un. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+    + unfold map_contains. apply existsb_exists. exists (wz elo, wz esz). split; [exact EIN|]. cbn [fst snd]. unfold wz.
+      rewrite Ub, Un, !unsigned_lit by lia. apply andb_true_iff. split; apply Z.leb_le; lia.
   - unfold map_contains. apply existsb_exists. exists (wz elo, wz esz). split; [exact EIN|]. cbn [fst snd]. unfold wz.
     rewrite Ub, Un, !unsigned_lit by lia. apply andb_true_iff. split; apply Z.leb_le; lia.
   - apply region_free_of_pointwise; [exact NP| | rewrite Un; lia| rewrite Ub, Un; lia].
@@ -3207,8 +3211,10 @@ Section LD.
     pose proof (rtrep_artcells stD m5 HRD5) as AC. pose proof (artcells_icpt m5 AC) as IC5. pose proof (artcells_poison m5 AC) as PC5. clear AC.
     apply evt_done. unfold A_UNMAP_OR_DIE, S. cbv beta delta [wz]. fold S.
     (* [comment removed for export] *)
+    assert (MH2 : map_has (vm_maps (m_vmmaps mo2)) (Z_to_bv 64 mb) (Z_to_bv 64 (smapsize n)) = true)
+      by exact (sec_map_has st mo2 mb n HM2 (mbn_in_sec' st mb n b d WF HP QC Hd EL) ltac:(lia) ltac:(lia) ltac:(lia)).
     eapply (unmap_or_die_spec ra sp gp tp _ _ _ s0e s1e _ _ _ _ _ s2e s3 s4 s5 s6 s7 s8 s9 s10 s11 _ _ _ _ F fc m5 mo2 G R mb S lo IC5 PC5 MI5 ST5);
-      [lia| idtac; unfold CEIL in B2; lia| exact (sec_map_has st mo2 mb n HM2 (mbn_in_sec' st mb n b d WF HP QC Hd EL) ltac:(lia) ltac:(lia) ltac:(lia))| exact PL2|].
+      [lia| idtac; unfold CEIL in B2; lia| exact MH2| exact PL2|].
     intros w5 w10 w11 w12 w13 w14 w15 w16 w17 m6 MI6 MU56 ST6.
     (nelimp HBINV 3%nat; intros _ R0 _). cbn [g_res] in R0.
     eapply (lscps_res_le _ _ _ _ G (R + S) R); [lia|].
@@ -3239,7 +3245,7 @@ Section LD.
       - exact WFD'.
       - unfold S. apply (RTMODEL_dereg' st mb n b d WF HP QC Hd EL mo2 HOK2 HM2).
       - apply (GWIN_dereg' st mb b d WF QC). eapply (GWIN_unmap st m5 m6 mo2 _ mb S lo (bv_unsigned sp) WF HOK2 GW5); [lia| lia| exact B2| unfold CEIL; lia| exact MU56].
-      - apply FRONTR_unmap. exact HFR2.
+      - apply FRONTR_unmap; [exact HOK2| exact MH2| exact HFR2].
       - apply (SWIN_dereg' st mb n b d WF HP QC Hd EL). exact HSW. }
     split; [exact ST6|].
     split.
@@ -3651,8 +3657,10 @@ Section LDP.
     pose proof (rtrep_artcells stD m5 HRD5) as AC. pose proof (artcells_icpt m5 AC) as IC5. pose proof (artcells_poison m5 AC) as PC5. clear AC.
     apply evt_done. unfold A_UNMAP_OR_DIE, S. cbv beta delta [wz]. fold S.
     (* [comment removed for export] *)
+    assert (MH2 : map_has (vm_maps (m_vmmaps mo2)) (Z_to_bv 64 mb) (Z_to_bv 64 (smapsize n)) = true)
+      by exact (sec_map_has st mo2 mb n HM2 (mbn_in_sec' st mb n WF HP PEND) ltac:(lia) ltac:(lia) ltac:(lia)).
     eapply (unmap_or_die_spec ra sp gp tp _ _ _ s0e s1e _ _ _ _ _ s2e s3 s4 s5 s6 s7 s8 s9 s10 s11 _ _ _ _ F fc m5 mo2 G R mb S lo IC5 PC5 MI5 ST5);
-      [lia| idtac; unfold CEIL in B2; (lia_on B1 B2 B3 S1 S2 HBK)| exact (sec_map_has st mo2 mb n HM2 (mbn_in_sec' st mb n WF HP PEND) ltac:(lia) ltac:(lia) ltac:(lia))| exact PL2|].
+      [lia| idtac; unfold CEIL in B2; (lia_on B1 B2 B3 S1 S2 HBK)| exact MH2| exact PL2|].
     intros w5 w10 w11 w12 w13 w14 w15 w16 w17 m6 MI6 MU56 ST6.
     (nelimp HBINV 3%nat; intros _ R0 _). cbn [g_res] in R0.
     eapply (lscps_res_le _ _ _ _ G (R + S) R); [lia|].
@@ -3683,7 +3691,7 @@ Section LDP.
       - exact WFD'.
       - unfold S. apply (RTMODEL_dereg' st mb n WF HP PEND mo2 HOK2 HM2).
       - apply (GWIN_dereg' st mb n WF HP PEND). eapply (GWIN_unmap st m5 m6 mo2 _ mb S lo (bv_unsigned sp) WF HOK2 GW5); [lia| lia| exact B2| unfold CEIL; lia| exact MU56].
-      - apply FRONTR_unmap. exact HFR2.
+      - apply FRONTR_unmap; [exact HOK2| exact MH2| exact HFR2].
       - apply (SWIN_dereg' st mb n WF HP PEND). exact HSW. }
     split; [exact ST6|].
     split.

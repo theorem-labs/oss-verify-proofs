@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/leptonica/colorfill_fuzzer/lib/K5/Lib/StepFast.v, with its module paths changed; 5 of its 2198 lines of code are new or changed and 4 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/Bz/Lib/StepFast.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Bz/Lib/StepFast.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/Bz/Lib/StepFast.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/Bz/Lib/StepFast.v keeps its donor's comment text) is kept as lib/A/Bz/Lib/StepFast.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/Bz/Lib/StepFast.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Bz/Lib/StepFast.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/Bz/Lib/StepFast.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/Bz/Lib/StepFast.v keeps its donor's comment text) is kept as lib/A/Bz/Lib/StepFast.v writes it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar answer of a failed load); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 
@@ -45,7 +46,7 @@ Lemma sf_install_load : forall segs (ro m : word -> option byte) (a : word) (n :
     (K : word -> machine_result (core * (word -> option byte))) (r : machine_result machine_state),
   sf_load_goal segs m a n f = Some v ->
   lift_result ro (K v) = r ->
-  lift_result ro (match ov_read_bytes segs m a n with Some bs => K (f bs) | None => MachineFault end) = r.
+  lift_result ro (match ov_read_bytes segs m a n with Some bs => K (f bs) | None => if range_meets_vvar segs a n then MachineUnmodeled else MachineFault end) = r.
 Proof.
   intros segs ro m a n f v K r H1 H2. unfold sf_load_goal in H1. destruct (ov_read_bytes segs m a n); [|discriminate].
   injection H1 as <-. exact H2.

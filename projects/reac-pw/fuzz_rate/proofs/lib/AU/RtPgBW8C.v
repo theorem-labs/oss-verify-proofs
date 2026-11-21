@@ -1,27 +1,28 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 269 of its 297 lines of code are new or changed and 298 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v at 3e85ad4cf5dd (w5i_head), with the post
-   of proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Close.v at a1de917d2c21; rate's run C1 of the walk piece W8 (0x81f90 ->
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v (w5i_head), with the post
+   of proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Close.v; rate's run C1 of the walk piece W8 (0x81f90 ->
    __asan_memcpy 0x51860) replaces role's Int-7 pod: the start state, the record copy's arguments and the n_ent
    update are new, the post is RtPgSteps.rts_post, the engine helpers are RtPgW8Kit's rw8_ ones. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v at 3e85ad4cf5dd for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v for reac-pw/fuzz_rate's
    image A: the two token runs w5i_head / w5i_tail become the runs B and C0 of the walk piece W8 (lib/A/RtPgW8Kit.v);
    the pcs, registers, start regions, atoms and facts are rate's; the post is RtPgSteps.rts_post (the statements
    rw8_runB_stmt and rw8_runC0_stmt) instead of a local one; the pad count of pod_pad is new. *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8C.v (run C1) and
-   proofs/reac-pw/fuzz_rate/lib/A/RtPgW8B.v (run C0) at 8f1d7a0a9084 for the same unit's image B
+   proofs/reac-pw/fuzz_rate/lib/A/RtPgW8B.v (run C0) for the same unit's image B
    (fuzz_rate.asan-ubsan): both runs start at 0x8210c after the call of pod_write_ent; run C1's code has image B's
    three UBSan trap branches and two n_ent checks, its start state names pp, n_ent and the trap bound by extra atoms
    (no register holds pp); run C0 is three instructions on the plain engine; the post is RtPgStepsB.rtsb_post and
    the helpers are RtPgBW8Kit's rbw8_ ones; image A's run B and its pad lemmas are dropped. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; addresses from the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): the runs C1 and C0 of the walk piece

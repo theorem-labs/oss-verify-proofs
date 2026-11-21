@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's new descriptor kinds). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -139,7 +140,7 @@ Proof.
     destruct path; [destruct H as [_ ->]; left; reflexivity|].
     match type of H with (if ?c then _ else _) => destruct c; [apply (OR _ H)|] end.
     destruct (fs_lookup _ _); [apply (OR _ H)| destruct H as [_ ->]; left; reflexivity].
-  - destruct H as [_ H]. destruct (fd_lookup _ _) as [[ch|p off|p1 off1|p2 off2|p3 off3| |sk|pid pw|dnr dnw| ]|]; try contradiction;
+  - destruct H as [_ H]. destruct (fd_lookup _ _) as [[ch|p off|p1 off1|p2 off2|p3 off3| |sk|pid pw|dnr dnw| |sid sd sst|ectx|fam|aid af]|]; try contradiction;
       try (destruct H as [_ ->]; left; reflexivity).
     destruct (fs_lookup _ _); [|contradiction]. destruct H as [_ ->]. right; left; eexists; reflexivity.
   - destruct H as (_ & _ & H). destruct (fd_lookup _ _); destruct H as [_ ->]; [right; left; eexists; reflexivity| left; reflexivity].

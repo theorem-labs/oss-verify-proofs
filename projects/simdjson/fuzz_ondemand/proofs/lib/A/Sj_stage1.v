@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -74,7 +75,7 @@ Definition stage1_cps : Prop :=
   forall (Σ : rts RT) PMc (E : s1env) (t0 t1 t2 a4 a5 a6 a7 t3 t4 t5 t6 nsi nxt bufo leno : word) (ws0 : list word),
   fdfs_only PMc -> mat_stable PMc ->
   env_ok E -> a1_live Σ E ->
-  rt_sp0 RT Σ - STACK_WIN <= e_lo E -> e_lo E + 432 + RT_STACK <= bv_unsigned (e_sp E) ->
+  rt_sp0 RT Σ - STACK_SPAN <= e_lo E -> e_lo E + 432 + RT_STACK <= bv_unsigned (e_sp E) ->
   bv_unsigned (e_sp E) + 16 <= USTACK_TOP -> bv_unsigned (e_sp E) mod 16 = 0 ->
   ART RT Σ (e_m0 E) -> mem_inv asegs (e_m0 E) -> stk asegs (e_m0 E) (e_lo E) (bv_unsigned (e_sp E)) ->
   rw_cells asegs (e_m0 E) (e_THIS E) (parser_cells E nsi nxt bufo leno) ->

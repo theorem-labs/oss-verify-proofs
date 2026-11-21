@@ -1,9 +1,10 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed pcap_drv_head, drv_mainX_stmt). *)
 (* Theorem Labs, 2026-10: new file for libreac/fuzz_pcap's ASan driver: the H_DRIVER obligation of the closing side
    (the porter's OBLIGATIONS.md (sha256 781e8f81f164; internal record) row 13; lib/A/PcapClose.v drv_mainA on a working branch), in the
-   form the donor states it: proofs/cgif/cgif_file_fuzzer/lib/A/AD1q.v:40-78 (origin/ossv/recipes c8557374ad2e),
+   form the donor states it: proofs/cgif/cgif_file_fuzzer/lib/A/AD1q.v:40-78 (theorem-labs/oss-verify-proofs@6b32741d849a),
    drv_mainX_stmt and DRV_MAINX = AD1p.v:84 tfib_drv_main applied to the parts AD1q.v:41-63. The parts stay Section
    hypotheses, each with its owner, so H_DRIVER splits into them (OBLIGATIONS.md (sha256 781e8f81f164; internal record) 'Still folded into H_DRIVER'):
      HB      PcapSyms B                        core (lib/A/AD2l.v PcapB_syms at B := PcapB)
@@ -11,12 +12,12 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      AICPY, ARDCHK                             runtime a Theorem Labs lane (lib/A/AD2m.v tfib_AICPY / tfib_ARDCHK)
      LIBX    pcap's program contract           row 11 (lib/A/Prog/PcapEntryA.v tfib_lib_contract_x_all_A)
      xst/XFR/PF1/PFN, est/ESTI/ESTF/FWS/RFS/FPO/FPR/FPU/EXS   the driver's stdio sites (lib/A/AD1j.v, AD1l.v,
-             AD1o.v over the generated lib/A/AD1k.v xst / est; donor AD2o.v:48-60)
+             AD1o.v over the generated lib/A/AD1k.v xst / est; donor AD2o.v:49-61)
    What is fuzz_pcap's here: the program contract is PcapEntry's (SK EXPLICIT: PcapSinkHeads.asan_sink_head, the
    ASan image's ofl_head 0x5f4f88; the source record pcap_KS; the harness globals G_HARNESS; PCAP_RLO / PCAP_RHI),
-   MT = ameter_triv and XM_LIB = XN_LIB = fun _ => 0 (the donor's binding AD2o.v:45, PcapClose.v:124), the output
+   MT = ameter_triv and XM_LIB = XN_LIB = fun _ => 0 (the donor's binding AD2o.v:46, PcapClose.v:124), the output
    shape AgreePcap.ag_out_shape (= PcapAsanTop.pcap_shape), and the start-up tables HS_tfib (A/AB01.v) / TFIB
-   (A/AB12.v), a Theorem Labs lane's GENERATED start-up data (gated PASS A+B at c061542723f / 731386609e0, values not
+   (A/AB12.v), a Theorem Labs lane's GENERATED start-up data (gated PASS A+B, values not
    claimed here). The donor's tfib_srealizesX (AD1q.v:79-98, start-up + driver + spec link) is the closing side's
    (PcapClose.v:197 pcap_srealizesX_rc); the donor's ff_unl / ff_libk lemmas (AD1q.v:25-36) are cgif's program
    shape (YI0a.v ff_lib_shape) and are not ported. rule 24: no function proved anew. *)
@@ -28,7 +29,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.libreac.fuzz_pcap.images Require Import Asan.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require AgreePcap.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YK11 YK15 YK18 YK0c YK0e YK09 YA0c YA0e YA01 YA02.
-From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require Import AB12 AB1h AB01.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require Import AB12 AB1h AB01r.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YG0f YG00 YG01 YG0n YG0d YK04 YA0i YA0n YCbq YI16 YC5d YCbp.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YO05 YO09 YO06 YO01 YM05.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require PcapSinkHeads.
@@ -70,18 +71,28 @@ Hypothesis FPR : fprintf_s_site_tfa B est (symaddr (Symbols.Asan.Sec.s_rodata + 
 Hypothesis FPU : fprintf_s_site_tfa B est (symaddr (Symbols.Asan.Sec.s_rodata + 0x553c)%Z) (strB "usage: "%string) (strB " INPUT"%string ++ nlB).
 Hypothesis EXS : exit_site_tfa B est xst.
 (* donor AD1q.v:64-76 drv_mainX_stmt; = PcapClose.v:136-148 drv_mainA at HS_TBL := HS_tfib, TFIB_TBL := TFIB. *)
+(* LPS 727298f3, as libreac/fuzz_boxreg's lib/A/AD1q.v: the driver's main is stated over the hand-off state of the
+   run's own CONFIG_RSEQ flag, with the stack invariant abstract and the launch's fifth [valid_entry] conjunct
+   [entry_launch_ok_va] given, which the start-up's invariant reads. *)
 Definition drv_mainX_stmt : Prop :=
-forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
-(FULL : word -> option byte) (model : Model),
+forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
+(FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
 valid_sp sp -> valid_brk TSEGS brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
-HS_tfib h = Some ch ->
-cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp) SINV
+(YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+  (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+  (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp)
+  (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+  (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) n) ->
+(forall a, YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+  (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+  (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (Z.of_N Asan.M.init_pc)) sp rdraw a) ->
 srealizes TSEGS (cfg_of TSEGS R (pc ch) FULL model) (CLOSEDX inp).
 (* donor AD1q.v:77-78 DRV_MAINX. *)
 Lemma DRV_MAINX : drv_mainX_stmt.

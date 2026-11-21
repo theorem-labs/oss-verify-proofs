@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B twin of lib/A/FMgxaSeamShadowX.v (sha256 d09a7a25daa7; internal record) for fuzz_reply.asan-ubsan: module paths lib.A -> lib.B, AB1v / AF0m / AF0x -> YB1v / YF0m / YF0x; image numerals per SNPSRRB-numerals.tsv (sha256 b8c04c0261ed; internal record) *)
 (* Theorem Labs, 2026-10: the ARx form of FMgxaSeamShadow.v's AR lemmas (a Theorem Labs lane's GXA seam, step 2: the musl prefix),
    over the engine's allocator relation ARx and its laws YCbqG.AR_laws_x (top_x's ARX_laws gives them at reply's cf
    instance; FMgxaSeamARX.v restates that instance). FMgxaSeamShadow.v is not edited: its AR-free lemmas
    (musl_prefix_of_ra, zsh_rodata_of_tfib, ...) are used from it.
 
-   The conversion is fuzz_preset's (PSnpSeamShadow.v at a working branch dad42dbecbc4, :58-59 and
-   :161-181) of a Theorem Labs lane's FMgxaSeamShadow.v (3242941dc964, :150-189):
+   The conversion is fuzz_preset's (PSnpSeamShadow.v at a working branch, :58-59 and
+   :161-181) of a Theorem Labs lane's FMgxaSeamShadow.v (150-189):
    - Section hypotheses: `Hypothesis LAWS : AR_laws tfibsegs B` (fm, implicit in AR) -> ARx, hl and
      `LAWS : YCbqG.AR_laws_x tfibsegs B ARx hl` (preset: the one field `alx_zshadow`, :58-59);
    - prefix_ra_of_AR (fm :150-161) -> prefix_ra_of_ARx (preset :161-171): AR's am_zshadow (through zshadow_ok and

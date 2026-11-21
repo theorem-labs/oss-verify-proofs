@@ -1,12 +1,12 @@
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d7f488d30): read_members at the B' instance with
    the strcmp row CLOSED, so it has no premise. read_members_holds_Bp_c (lib/B/Prog/read_members_Bp2.v) applied to
-   a Theorem Labs lane's B' strcmp row PSstrRo.ps_strcmp_xrom_B (lib/AU/PSstrRo.v:67, blob 45e63604063e:
+   a Theorem Labs lane's B' strcmp row PSstrRo.ps_strcmp_xrom_B (lib/AU/PSstrRo.v:68, blob 45e63604063e:
    astrcmp_realizes_xrom at YB1v.tfibsegs, ARcf, any rlo / rhi, pc CfImgB's cf_pc_strcmp), at B := YD2l.TfibB with
-   TS := YD2l.TfibB_syms (lib/Reusable/YD2l.v:71), rlo / rhi := PI_prog_B's relro bounds.
+   TS := YD2l.TfibB_syms (lib/Reusable/YD2l.v:72), rlo / rhi := PI_prog_B's relro bounds.
    THE TWO FACTS that carry the row to read_members_holds_Bp_c's premise ASC:
-     the pc     CfImgB's cf_pc_strcmp (lib/AU/CfImgB.v:46) and PI_prog_B's pa_sigma AS___wrap_strcmp (lib/B/PAImg_prog.v:82)
+     the pc     CfImgB's cf_pc_strcmp (lib/AU/CfImgB.v:46) and PI_prog_B's pa_sigma AS___wrap_strcmp (lib/B/PAImg_prog.v:83)
                 are the same entry (__wrap_strcmp = __interceptor_trampoline_strcmp): rmB3_pc, by vm_compute;
-     the segs   YB1v.tfibsegs (lib/Reusable/YB1v.v:14) and PI_prog_B's pa_segs = lib/B/Img0.v rsegs are both
+     the segs   YB1v.tfibsegs (lib/Reusable/YB1v.v:15) and PI_prog_B's pa_segs = lib/B/Img0.v rsegs are both
                 AsanUbsan.M.loaded_segments: by conversion (delta), at the final `exact`.
    The row's implicit arguments are {fx rc cp} (About below): no CfImg instance is asked.
    REMAINING PREMISES: none. (The former gap premise RM_G3 is gone: read_members takes both its halves from the laws at

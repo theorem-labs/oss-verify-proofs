@@ -1,6 +1,6 @@
 (* lib/A/ACtlG/Jrel.v -- GLUE for stage seg_Jrel of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    W5 tail).  Written by a Theorem Labs lane; single writer.  rule 24: no function proved (stage glue of a walk;
-   the released-proof position of LLVMFuzzerTestOneInput was settled for this unit: At ossv/recipes c5e779efe8c (2026-10-31), no released proof of it outside this unit).
+   the released-proof position of LLVMFuzzerTestOneInput was settled for this unit: At (2026-10-31), no released proof of it outside this unit).
 
    WHAT IT PROVES
      glue_seg_Jrel : forall POST, CF POST C_A82b9c -> CF POST C_Jrel

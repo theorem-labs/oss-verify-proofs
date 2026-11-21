@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the system-call robustness premise (sys_rob). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import Scfg RelSpec SimInv ExitSim CatSim FileSim ShapeAlg.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
+From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Common.Cfg Require RomBase.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
 Local Ltac2 zQ s := CDef.cdeft "37Corelib4Init5Logic02eq37Corelib7Numbers7BinNumsh84Npos35stdpp9bitvectorbdefinitionsj82bv03and3h5LinuxProcessSemanticsfLinuxProcessSem5Statelf5eventlf5Model37Corelib4Init9Datatypespd4listpd6option02ex3h5LinuxProcessSemanticsfLinuxProcessSem3Runs97step_topd4Nonepd4Somepd3nil02ors95mkCfgs99sys_inputlfdSyscallEffects95SNextlf8m_halted69OSSVerify6Proofsaboost_jsonafuzz_parse3lib4Scfg~~~~~~hke8the_scfgpd3apppd4cons03nots96SErrors9h4spurious_refusal_cfg3h5LinuxProcessSemanticsfLinuxProcessSem5Specshs4csyscall_speclf4m_fslf8m_killedlfhamaterialize_model_accesseslfh7syscall_effect_accesses3h5LinuxProcessSemanticsfLinuxProcessSem5Monadikd2Okikd9Unmodeled3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsioedmachine_stateioeems_svc_pendings9h0advance_past_svcs9capply_effects99sstep_cfglf6ExitEvlf6KillEvpd4prodlf9m_vm_lazyikd7outcome03iff69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8ShapeAlg~~~~~~jkc7node_okpd4boolpd5falses9h3injected_family_offpd4unitpd3natioe8set_gpr0lf7MemCopylf9mkEffectUlfcwith_copyinsjkc8realizesjkc4TSets96configjkc5t_alth81Zpd3sum37Corelib4Init6Specifki63sig5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Fs4Openkk2dopenat_errnos36Stdlib5Lists4Listko72In79OSSVerify6Proofsaboost_jsonafuzz_parse3lib5Nodes8WithSegs~~~~~~kq06open_Ilf8alloc_fdlf5m_fdslf9errno_retlf7FdEntrylf9fd_lookupkq07open_nx69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7RelSpec~~~~~~lib8open_outjkc6t_alt23h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypelnb7Segment" s.   (* [comment removed for export] *)
 
@@ -165,31 +167,50 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma rz_ret_only_silent : ltac2:(zQ "hd3!j1!l5!hgd!ji9!h4!rc!hib!vf!r5!jjc!hh7!p5!hk3!jv6!hg6!jrf!jk7!inb!is5!it6!js5!iu8!hhf!hv2!jt1!od!jj0!jtb!kg2&@3$4@1$5@1$1@1$0#k0@1$c^5@1$7@1$1@1$0#k0&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~1>2ms$h2>5model$b>2x8@1$1@1$0#k0>1r@1$1@1$0#k0>2m'$b>1T$hc>0~0>0@3$4@1$5@1$1@1$0#k0@1$h3^7@2$e@1$1@1$0#k0^5>0>1o@1$9$6@2$h0@3$h7@3$h6?4segs^9^7^8^1@3$4@1$9$6^1@4$h1$6@6$hb^6@1$2@2$3@1$1@1$0#k0@1$8@1$1@1$0#8~2~2@1$2$h8@1$2@2$3@1$1@1$0#k0$f^5@1$2$h9>0~0>0@3$4@1$8~1@1$ha^6~2>0@4$d?4segs?2SC@2$a@1$h5@2$h4^b^8^7^6@4$d?4segs?2SC@2$a^c^b^7").
+Lemma rz_ret_only_silent : forall (ms : machine_state) (model : Model) (x8 r : word) (m' : Model) (T : TSet),
+  m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffectU r [] [] [] [] []) m' []) ->
+  m_halted m' = None -> m_vm_lazy m' = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  realizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T -> realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hlazy Hc.
-  eapply rz_silent1; [eapply node_ret_only; eassumption | exact Hc].
+  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hlazy Hrob Hc.
+  eapply rz_silent1; [eapply node_ret_only; eassumption | exact Hrob | exact Hc].
 Qed.
 
-Lemma rz_ret_only_copyins_silent : ltac2:(zQ "he2!j1!l5!hgd!ji9!h4!r5!rc!hib!vf!jrf!jjc!hh7!p5!hk3!jv6!hg6!jk7!inb!is5!it6!js5!iu8!hhf!hv2!jt1!od!jj0!jtb!ju7!kg2&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>2ms$h2>5model$c>2x8@1$1@1$0#k0>5reads@1$5@2$3@1$1@1$0#k0$9>1r@1$1@1$0#k0>2m'$c>1T$hd>0@3$4@1$6@1$1@1$0#k0@1$d^6@1$8@1$1@1$0#k0>0@3$4@1$6@1$1@1$0#k0@1$h3^8@2$f@1$1@1$0#k0^6>0>1o@1$a$7@2$h0@3$h7@3$h6?4segs^a^8^9^1@3$4@1$a$7^1@4$h1$7@2$hc^7@6$hb^6@1$2@2$3@1$1@1$0#k0@1$5@1$1@1$0#8~1~1@1$2$h8@1$2@2$3@1$1@1$0#k0$9^5@1$2$h9>0@3$4@1$6@1$1@1$0#k0@1$d^5@1$8@1$1@1$0#k0>0@3$4@1$5~0@1$ha^6~1>0@4$e?4segs?2SC@2$b@1$h5@2$h4^c^8^7^6@4$e?4segs?2SC@2$b^d^c^7").
+Lemma rz_ret_only_copyins_silent : forall (ms : machine_state) (model : Model) (x8 : word)
+    (reads : list (word * nat)) (r : word) (m' : Model) (T : TSet),
+  m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o
+             <-> o = Ok (with_copyins reads (mkEffectU r [] [] [] [] [])) m' []) ->
+  m_halted m' = None -> m_vm_lazy m' = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  realizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T -> realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 reads r m' T Hh Hsvc Hchk Hh' Hlazy Hc.
-  eapply rz_silent1; [eapply node_ret_only_copyins; eassumption | exact Hc].
+  intros ms model x8 reads r m' T Hh Hsvc Hchk Hh' Hlazy Hrob Hc.
+  eapply rz_silent1; [eapply node_ret_only_copyins; eassumption | exact Hrob | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
-Lemma rz_det : ltac2:(zQ "ha2!j1!l5!h4!hib!rc!vf!hgd!ji9!jjc!hh7!p5!hk3!jv6!hg6!r5!jk7!inb!is5!it6!iu8!ivc!hhf!hv2!od!jj0!kg2&@3$2@1$4@1$1@1$0#k0@1$b^5@1$5@1$1@1$0#k0&@2$7@1$1@1$0#k0@1$1@1$0#k0>2ms$h1>5model$a>2x8@1$1@1$0#k0>4eff0$3>2m0$a>1T$h9>0~0>0@3$2@1$4@1$1@1$0#k0@1$h2^7@2$d@1$1@1$0#k0^5>0>1o@1$8$3@2$f@3$h6@3$h5?4segs^9^7^8^1@3$2@1$8$3^1@4$h0$3^6^5@1$6$h7>0~0>0@3$2@1$e~1@1$h8^6@1$6~1>0@4$c?4segs?2SC@2$9@1$h3@2$h4^b^8^7^6@4$c?4segs?2SC@2$9^c^b^7").
+Lemma rz_det : forall (ms : machine_state) (model : Model) (x8 : word) (eff0 : SyscallEffect) (m0 : Model) (T : TSet),
+  m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 []) ->
+  m_halted m0 = None -> m_vm_lazy m0 = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  realizes segs (mkCfg (advance_past_svc (apply_effect ms eff0)) m0) T -> realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 eff0 m0 T Hh Hsvc Hchk Hh0 Hlazy0 Hc.
-  eapply rz_silent1; [eapply node_det; eassumption | exact Hc].
+  intros ms model x8 eff0 m0 T Hh Hsvc Hchk Hh0 Hlazy0 Hrob Hc.
+  eapply rz_silent1; [eapply node_det; eassumption | exact Hrob | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
-Lemma rz_cases : ltac2:(zQ "70!kga!jv6!hgd!od!kg2!jo7!kh3>1c$0>1IT>2nx>0^1$0>1T>0^2$4>2i0^3>0@6$5?4segs?2SC^5^4\0^4@1$2$3^3>0>1i^5@4$1?4segs?2SC@1^5^1@1^4^1@4$1?4segs?2SC^7@2$6^6^4").
+Lemma rz_cases : forall (c : config) (I : Type) (nx : I -> config) (T : I -> TSet),
+  I -> node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c ->
+  (forall i, realizes segs (nx i) (T i)) -> realizes segs c (t_alt T).
 Proof.
-  intros c I nx T i0 Hnode Hc.
+  intros c I nx T i0 Hnode Hrob Hc.
   apply (rz_conseq segs c (t_alt (fun i => t_emit [] (T i)))).
-  - apply (rz_node segs c I (fun _ => []) nx T i0 Hnode Hc).
+  - apply (rz_node segs c I (fun _ => []) nx T i0 Hnode Hrob Hc).
   - intros tr. split.
     + intros [i Hi]. exists i.
       exact (proj1 (t_emit_nil_eq (T i) (realizes_nonempty segs _ _ (Hc i)) tr) Hi).
@@ -234,12 +255,23 @@ Proof.
     exists i. rewrite Enx. split; reflexivity.
 Qed.
 
-Lemma rz_open : ltac2:(zQ "i73!j1!l5!h4!ji9!rc!kv6!vf!r5!hh7!kub!jv6!hgd!khc!js5!iu8!hhf!lga!p5!hk3!jj0!kg2!hg6!jp2!jp9!jrf!jk7!jjc!is5!it6!jq1!hv2!hib!kve!lh4!kn6!lm5!ho5!ln1!kpa&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$7~0&@1$b~0>2ms$hb>5model$h1>2x8@1$1@1$0#k0>5reads@1$7@2$3@1$1@1$0#k0$h8>2mk>0@1$1@1$0#k0$h1>1A$h4>1B$h4>0@3$2@1$4@1$1@1$0#k0@1$h2^6@1$6@1$1@1$0#k0>0@3$2~1@1$h3^7~2>0@3$2@1$4@1$1@1$0#k0@1$hc^9@2$h5@1$1@1$0#k0^7>0@3$2$h6@2$hd@1$i4?2SC@3$f?4segs^a^8$h7>0>1o@1$ha$hf@2$h9@3$he@3$f?4segs^c^a^b^1@4$i3^9^b^8^1>0>2fd@1$1@1$0#k0@3$2@1$4@1$1@1$0#k0@1$h2@1^9^1@1$6@1$1@1$0#k0>0>2fd@1$1@1$0#k0@3$2~1@1$h3@1^a^1~2>0@3$2@1$4$h0@2$i1@1$5^d@1$9@1$5^d@1$6$h0>0>1e$c>0@3$i6$c^1$i2@4$a?4segs?2SC@2$8@1$e@2$d^h1@1$i0^2^h0^c>0@4$a?4segs?2SC@2$8@1$e@2$d^h0@1$9@1$5^f@1^c@1$9@1$5^f^a@4$a?4segs?2SC@2$8^h1^h0@2$i5^c^b").
+Lemma rz_open : forall (ms : machine_state) (model : Model) (x8 : word) (reads : list (word * nat))
+    (mk : word -> Model) (A B : TSet),
+  m_halted model = None -> m_vm_lazy model = [] -> ms_svc_pending ms = Some x8 ->
+  injected_family_off the_scfg (sys_input segs ms x8) = false ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> open_out reads model mk o) ->
+  (forall fd, m_halted (mk fd) = None) -> (forall fd, m_vm_lazy (mk fd) = []) ->
+  fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  (forall e, In e openat_errnos -> realizes segs (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model) A) ->
+  realizes segs (mkCfg (advance_past_svc (set_gpr0 ms (alloc_fd (m_fds model)))) (mk (alloc_fd (m_fds model)))) B ->
+  realizes segs (mkCfg ms model) (t_alt2 A B).
 Proof.
-  intros ms model x8 reads mk A B Hh Hlazy Hsvc Hon Hchk Hmk Hmklazy Hfree HA HB.
+  intros ms model x8 reads mk A B Hh Hlazy Hsvc Hon Hchk Hmk Hmklazy Hfree Hrob HA HB.
   apply (rz_alt2 segs (mkCfg ms model) {e : Z | In e openat_errnos} unit
            (open_nx ms model mk) A B (exist _ ENOMEM ENOMEM_in_openat_errnos) tt).
   - eapply node_open; eassumption.
+  - exact Hrob.
   - intros [e He]. cbn [open_nx]. apply HA. exact He.
   - intros []. cbn [open_nx]. exact HB.
 Qed.

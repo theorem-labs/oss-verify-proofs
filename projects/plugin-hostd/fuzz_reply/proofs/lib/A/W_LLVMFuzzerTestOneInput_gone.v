@@ -18,6 +18,7 @@
    Every phase is a Qed lemma of its file; GP0 .. GP6 below are those lemmas applied to this Section's
    variables.  The Section hypotheses are the callee contracts and the model obligations named in the base;
    none is a phase. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -85,10 +86,10 @@ Hypothesis TL : PALib B.
 Hypothesis HZS : GN_HZS B.
 (* the slots check_no_loss_read is called on have no pending record *)
 Hypothesis RIR : GN_RI_read RINV.
-(* snprintf, the pf chain's interceptor contract: W_sites.v:305, verbatim (a callee contract) *)
+(* snprintf, the pf chain's interceptor contract: W_sites.v:306, verbatim (a callee contract) *)
 Hypothesis SNP : asnprintf_realizes B (SIGMA WS_snprintf) FR_GOT_GUARD FR_GUARD.
 (* the GOT word of __stack_chk_guard, readable at every AR state: W6's HGOTG, verbatim
-   (commit 6a1bcf9f403, lib/A/W_relay_instance_gone_cx.v:202); TRUE at the pin from AF0m's const
+   (lib/A/W_relay_instance_gone_cx.v:203); TRUE at the pin from AF0m's const
    cell `z8 (ANum 0x9e658) 0x5f94b0` through am_const *)
 Hypothesis HGOTG : forall ly S W mem md, AR segs B ly S W mem md ->
   rdword (aview segs (w_H W) mem) FR_GOT_GUARD = Some FR_GUARD.
@@ -102,7 +103,7 @@ Hypothesis GN_LITS : forall ly S (W : world segs) mem md, AR segs B ly S W mem m
 (* ---- relay_instance_gone (phase 3) ---- *)
 Variable MMAX : Z.                                   (* W6's / W7's request bound *)
 (* W6's contract and its placement premise, verbatim (W_contract.v Section s6 rig_spec at CTX_AFREE := K0's table
-   ACk0.CTX_AFREE, W6 fc80eaecde5; rg_place); callee contracts *)
+   ACk0.CTX_AFREE, W6; rg_place); callee contracts *)
 Hypothesis RIG : rig_spec B MT MMAX fr_RG ACk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 Hypothesis RGP : rg_place B fr_RG.
 (* the base's model obligations phase 3 takes *)
@@ -126,9 +127,9 @@ Proof.
     repeat (first [ apply Exists_cons_hd; unfold in_zr; cbn [fst snd]; lia | apply Exists_cons_tl ]).
 Qed.
 (* ---- the table-order loop (phase 5): W3's check_no_loss / check_shape_ends ---- *)
-(* callee contracts, W_contract.v's own texts on the W8 lane head a3c72093c22: cnl_spec (:1968) and cshe_spec
-   (:1812), G-generic as W_LLVMFuzzerTestOneInput_remove.v:408 takes check_no_loss (W3 proves both at any G with
-   gx_ok: pb_check_no_loss W_check_no_loss.v:6097, pb_check_shape_ends W_cshe_top.v:614).  Phase 5 takes each at
+(* callee contracts, W_contract.v's own texts on the W8 lane head: cnl_spec (:1968) and cshe_spec
+   (:1812), G-generic as W_LLVMFuzzerTestOneInput_remove.v:409 takes check_no_loss (W3 proves both at any G with
+   gx_ok: pb_check_no_loss W_check_no_loss.v:6098, pb_check_shape_ends W_cshe_top.v:614).  Phase 5 takes each at
    the call's own G, gn_Gs j. *)
 Hypothesis CNL : forall G, gx_ok segs B G -> gx_rt B G -> cnl_spec B MT G MMAX (BASE + AF_fr_check_no_loss).
 Hypothesis CSHE : forall G, gx_ok segs B G -> gx_rt B G -> cshe_spec B MT G (BASE + AF_fr_check_shape_ends).
@@ -138,8 +139,8 @@ Hypothesis RIstep : GN_RI_step B MT LS RINV MMAX.
 Hypothesis RIend : GN_RI_end B MT LS RINV.
 (* the allocator instance's meter laws (Reusable/YC5d.v:26) *)
 Hypothesis ML : ameter_laws MT.
-(* check_no_loss_read (phase 4) and check_shape_done (phase 6): W_contract.v's cnlr_spec (:454) and csd_spec (:130)
-   on a3c72093c22, verbatim (the texts _remove.v:405 / :403 take) *)
+(* check_no_loss_read (phase 4) and check_shape_done (phase 6): W_contract.v's cnlr_spec (:454) and csd_spec (:130),
+   verbatim (the texts _remove.v:405 / :403 take) *)
 Hypothesis CNLR : cnlr_spec B (BASE + AF_fr_check_no_loss_read).
 Hypothesis CSD : csd_spec B (BASE + AF_fr_check_shape_done).
 

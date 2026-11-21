@@ -1,4 +1,4 @@
-(* lib/A/Prog/TwSetup_c.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8), stated over the
+(* lib/A/Prog/TwSetup_c.v (a Theorem Labs lane's port, unchanged from a working branch), stated over the
    local-shadow TW_ASAN and twoway contract (FMss_TwAsan.v, FMss_twoway_strstr_c.v); only the imports differ. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainN.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 1377526521b4) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the dequeue loop's premise DMdeq.deq_pre (DMdeq.v:675-702) at the
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainN.v (Quarantine::Drain walk set; file sha256 1377526521b4) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the dequeue loop's premise DMdeq.deq_pre (DMdeq.v:676-703) at the
    loop head 0x33a8c on the NO-MERGE arm, where Recycle's test sends the drain straight to the loop
    (YFgj.at_L0, YFgj.v:307-325, the third case of DMsegD.postDm): the extracted list is empty and the kept list
    is the transferred quarantine (the global cache's batches followed by the thread cache's).

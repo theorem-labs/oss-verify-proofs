@@ -1,5 +1,5 @@
 # The 44 comment numerals the re-pin tool left (own-comments-left.tsv), each read from the new pinned binaries,
-# Line numbers: of the tree after the merge of the re-pin base f6acfcb0c1b8 (it removed the Modified-by first lines of many files).
+# Line numbers: of the tree after the merge of the re-pin base (it removed the Modified-by first lines of many files).
 # then the further stale comment immediates found in the same check. Binaries: plain bb20ce415827 / ubsan af7b86991906 (stripped pins),
 # unstripped twins c2d42d895415 / c53d4b20cfc1; disassembly GNU objdump 2.42 (riscv64-alpine-linux-musl-objdump -d, -t -h) of the twins;
 # segments by pyelftools from the stripped pins; demo-image words decoded with capstone 5.0.7 from their seg_bytes.
@@ -135,7 +135,7 @@ lib/TModel/TOps.v	217	0x13e90 reads the address byte 2(s5)	changed	0x13e88 reads
 lib/U/Prog/T/io_send_c.v	2	plain 0x14824-0x1482c, 0x148e4;	changed	plain 0x1482c-0x14834, 0x148ec;	plain io_send moved 0x144e4 -> 0x144ec; new plain 0x1482c slli s5,s5,0x3f .. 0x14834 andi a0,a0,-5, 0x148ec andi a0,s5,1 (as Prog/T/io_send_c.v:2); the re-pin tool read these plain pcs with ubsan symbols
 lib/U/Prog/T/check_latest_frame.v	149	lw a1,-852(a1)	changed	lw a1,-840(a1)	new ubsan 0x156a0: cb85a583 lw a1,-840(a1) (auipc a1,0x1e at 0x1569c): 0x3369c - 840 = 0x33354 M+0x54
 lib/U/Prog/T/check_refusal_submit.v	297	lw a0,1852(a0)	changed	lw a0,1864(a0)	new ubsan 0x1690c: 74852503 lw a0,1864(a0) (auipc a0,0x21 at 0x16908): 0x37908 + 1864 = 0x38050 g_s+0x46e0 (S_queued)
-# The 55 comment numerals the re-pin tool of record left in the files merged after the dry run (own-comments-left.tsv of f6acfcb0c1b8,
+# The 55 comment numerals the re-pin tool of record left in the files merged after the dry run (own-comments-left.tsv,
 # the rows not in the dry run's 44), each read from the new pins as above; then the stale immediates found in the same check (lines
 # of moved functions whose comment quotes the old instruction: the instruction at the new pc read from the new disassembly).
 lib/Prog/T/WMemIdx.v	43	0x42000	stays		stays: made-up demo image (DemoImg seg_bytes), 0x1000 auipc a5,0x41 -> 0x42000

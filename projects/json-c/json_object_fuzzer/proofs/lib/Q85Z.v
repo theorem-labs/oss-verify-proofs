@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the scaffold section and wrap_mem over the launch's input, mmap base and entry point, with valid_launch and entry_launch_ok_va; the stack window from the model's stack_window_lo and stack_window_depth in place of the 8 MiB bound (store_ok_wrap_window_valid); the walk over run_segments segs inp sp mbase: find_segment, rdn and the machine step carried from the binary's segments to segs ++ the vDSO pair; vdso_segments_miss over vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 
 From Stdlib Require NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -19,53 +20,59 @@ Open Scope bv_scope.
 Section Scaffold.
 
 Variable segs : list Segment.
+Variable v : VaSize.
+Variable inp : ProcInput.
+Variable mbase : word.
 
 Variable ph : PhdrInfo.
+Variable entry : word.
 
-Variable sp : word.
-Variable av ev : list (list byte).
-Variable uid : word.
-Variable hw : word.
+Variable sp brk : word.
+Variable draw : EntryDraw.
 
-Variable rnd : EntryDraw.
-
-Hypothesis Hva : valid_argv av.
-Hypothesis Hve : valid_envp ev.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp brk mbase draw) inp.
 Hypothesis Hsp_lo : (sp_window_lo <= bv_unsigned sp)%Z.
 Hypothesis Hsp_hi : (bv_unsigned sp <= sp_window_hi)%Z.
 
 Lemma sp_hi_num : (bv_unsigned sp <= 0x800000000000)%Z.
 Proof. exact Hsp_hi. Qed.
 
-Definition argcN : word := len_word av.
+Definition argcN : word := len_word (in_argv inp).
 
-Lemma u_argcN : bv_unsigned argcN = Z.of_nat (length av).
+Lemma u_argcN : bv_unsigned argcN = Z.of_nat (length (in_argv inp)).
 Proof.
-pose proof (valid_argv_len av Hva).
+pose proof (valid_argv_len (in_argv inp) Hva).
 unfold argcN, len_word. apply u_Z2bv; lia.
 Qed.
 
 Lemma bsb_nw :
-(bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z.
+(bv_unsigned sp
++ Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw)) < 2^64)%Z.
 Proof.
-pose proof (bsb_bound ph sp av ev uid hw rnd Hva Hve). pose proof sp_hi_num. lia.
+pose proof (bsb_bound v inp mbase ph entry sp brk draw Hvl Hlau).
+pose proof sp_hi_num. lia.
 Qed.
 
 Definition envp_ptr : word :=
-Z_to_bv 64 (bv_unsigned sp + 8 + 8 * Z.of_nat (length av) + 8).
+Z_to_bv 64 (bv_unsigned sp + 8 + 8 * Z.of_nat (length (in_argv inp)) + 8).
 
-Definition wmem : word -> option byte := wrap_mem ph sp av ev uid hw rnd.
+Definition wmem : word -> option byte := wrap_mem inp mbase ph entry sp draw.
 
 End Scaffold.
 End Mq0.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qek8 Qxe5.
+From LinuxProcessSemantics.LinuxProcessSem Require Vdso.
+From LinuxProcessSemantics.Riscv Require DecodeC.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq1.
 
 Import Stdlib.ZArith.ZArith Stdlib.Lists.List Stdlib.micromega.Lia.
-Import LinuxProcessSemantics.LinuxProcessSem.BvBase LinuxProcessSemantics.LinuxProcessSem.MemImageType LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics LinuxProcessSemantics.LinuxProcessSem.StackLayout LinuxProcessSemantics.LinuxProcessSem.State LinuxProcessSemantics.LinuxProcessSem.Run.
-
+Import LinuxProcessSemantics.LinuxProcessSem.BvBase LinuxProcessSemantics.LinuxProcessSem.MemImageType LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics LinuxProcessSemantics.LinuxProcessSem.StackLayout LinuxProcessSemantics.LinuxProcessSem.State LinuxProcessSemantics.LinuxProcessSem.Vdso LinuxProcessSemantics.LinuxProcessSem.Run.
+Import LinuxProcessSemantics.Riscv.DecodeC.
 Import QWTC QgpE QJ4Q.Mq0 Qek8.Mq0 Qek8 Qxe5.
 Import ListNotations.
 Local Open Scope Z_scope.
@@ -160,29 +167,174 @@ apply IH.
 rewrite Nat2Z.inj_succ. lia.
 Qed.
 
-Lemma wrap_mem_window_defined : forall ph sp argv envp (x : word) uid hw rnd,
-bv_unsigned sp - stack_max_size <= bv_unsigned x ->
-bv_unsigned x < bv_unsigned sp ->
-wrap_mem ph sp argv envp uid hw rnd x <> None.
+Lemma wrap_mem_window_defined :
+  forall inp mbase ph entry sp (x : word) draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned x ->
+  bv_unsigned x < bv_unsigned sp ->
+  wrap_mem inp mbase ph entry sp draw x <> None.
 Proof.
-intros ph sp argv envp x uid hw rnd Hlo Hhi. unfold wrap_mem.
-destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|];
-[discriminate|].
-rewrite (proj2 (Z.leb_le _ _) Hlo), (proj2 (Z.ltb_lt _ _) Hhi).
-cbn. discriminate.
+  intros inp mbase ph entry sp x draw Hlo Hhi. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|]; [discriminate|].
+  rewrite (proj2 (Z.leb_le _ _) Hlo), (proj2 (Z.ltb_lt _ _) Hhi).
+  cbn. discriminate.
 Qed.
 
-Lemma store_ok_wrap_window : forall segs ph sp argv envp a n uid hw rnd,
-bv_unsigned sp - stack_max_size <= bv_unsigned a ->
-bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
-store_ok segs (wrap_mem ph sp argv envp uid hw rnd) a n = true.
+Lemma store_ok_wrap_window :
+  forall segs inp mbase ph entry sp a n draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+  store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
 Proof.
-intros segs ph sp argv envp a n uid hw rnd Hlo Hhi.
-assert (Hsp : bv_unsigned sp < 2 ^ 64) by apply bv_unsigned_in_range.
-apply store_ok_of_all; [lia|].
-intros x Hx. unfold wview.
-destruct (wrap_mem ph sp argv envp uid hw rnd x) as [b|] eqn:Hw; [discriminate|].
-exfalso. revert Hw. apply wrap_mem_window_defined; lia.
+  intros segs inp mbase ph entry sp a n draw Hlo Hhi.
+  assert (Hsp : bv_unsigned sp < 2 ^ 64) by apply bv_unsigned_in_range.
+  apply store_ok_of_all; [lia|].
+  intros x Hx. unfold wview.
+  destruct (wrap_mem inp mbase ph entry sp draw x) as [b|] eqn:Hw;
+    [discriminate|].
+  exfalso. revert Hw. apply wrap_mem_window_defined; lia.
+Qed.
+
+Definition stack_window_reach : Z := 2244095.
+
+Definition stack_window_depth : Z := stack_max_size - stack_window_reach.
+
+Lemma stack_window_depth_val : stack_window_depth = 6144513.
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma page_round_up_Z_aligned : forall n,
+(n mod page_size = 0)%Z -> page_round_up_Z n = n.
+Proof.
+intros n Hn. unfold page_round_up_Z, page_size in *.
+apply Z.mod_divide in Hn; [|lia]. destruct Hn as [k Hk]. subst n.
+replace (k * 4096 + 4096 - 1)%Z with (k * 4096 + 4095)%Z by lia.
+rewrite Z.div_add_l by lia.
+replace (4095 / 4096)%Z with 0%Z by reflexivity. lia.
+Qed.
+
+Lemma mmap_gap_sv48 : forall kb,
+mmap_gap Sv48 kb
+= (let g := (stack_max_size + (stack_guard_gap_bytes kb
++ if kb_aslr kb then stack_rnd_max else 0))%Z in
+if (g <? mmap_min_gap)%Z then mmap_min_gap else g).
+Proof.
+intros kb. pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+unfold mmap_gap. cbv zeta.
+rewrite Z.mod_small
+by (unfold two_pow_64, stack_max_size, stack_rnd_max;
+destruct (kb_aslr kb); lia).
+assert (Hmax : mmap_max_gap Sv48 = 117281240296105%Z)
+by (vm_compute; reflexivity).
+rewrite !Hmax.
+unfold mmap_min_gap in *. rewrite !Z.gtb_ltb.
+destruct (kb_aslr kb); cbv beta iota delta [andb];
+[ destruct (stack_max_size
+<? stack_max_size + (stack_guard_gap_bytes kb + stack_rnd_max))%Z
+eqn:Ein
+| destruct (stack_max_size
+<? stack_max_size + (stack_guard_gap_bytes kb + 0))%Z
+eqn:Ein ];
+try apply Z.ltb_lt in Ein; try apply Z.ltb_ge in Ein;
+cbv beta iota delta [andb];
+repeat (match goal with
+| |- context [(?x <? ?y)%Z] =>
+let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+[ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+end;
+cbv beta iota delta [andb]);
+unfold stack_max_size, stack_rnd_max in *; lia.
+Qed.
+
+Lemma mmap_gap_sv48_mod : forall kb,
+(mmap_gap Sv48 kb mod page_size = 0)%Z.
+Proof.
+intros kb.
+assert (H4096 : forall x : Z, ((4096 * x) mod 4096 = 0)%Z)
+by (intro x; rewrite Z.mul_comm; apply Z_mod_mult).
+rewrite mmap_gap_sv48. cbv zeta.
+unfold stack_guard_gap_bytes, mmap_min_gap, stack_max_size,
+stack_rnd_max, page_size.
+destruct (_ <? _)%Z;
+[ replace (128 * 1024 * 1024)%Z with (4096 * 32768)%Z by reflexivity;
+apply H4096 |].
+destruct (kb_aslr kb);
+[ replace (8 * 1024 * 1024
++ (4096 * stack_guard_gap_pages kb + 1073737728))%Z
+with (4096 * (264191 + stack_guard_gap_pages kb))%Z by lia
+| replace (8 * 1024 * 1024 + (4096 * stack_guard_gap_pages kb + 0))%Z
+with (4096 * (2048 + stack_guard_gap_pages kb))%Z by lia ];
+apply H4096.
+Qed.
+
+Lemma stack_window_lo_ge_sp : forall inp (sp brk0 mbase : word) draw,
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+(bv_unsigned sp - stack_max_size
+<= stack_window_lo (in_kernel inp) mbase draw)%Z.
+Proof.
+intros inp sp brk0 mbase draw (_ & Hsp & _).
+pose proof (launch_sp_le_top inp (ed_top draw) sp Hsp).
+unfold stack_window_lo.
+apply Z.le_trans with (bv_unsigned (ed_top draw) - stack_max_size)%Z;
+[lia | apply Z.le_max_l].
+Qed.
+
+Lemma launch_base_gap_le : forall kb mbase,
+valid_launch_base Sv48 kb mbase ->
+(bv_unsigned mbase + stack_guard_gap_bytes kb
+<= va_stack_top Sv48
+- (if kb_aslr kb then 0x407ff000 else 8 * 1024 * 1024))%Z.
+Proof.
+intros kb mbase (r & Hr & _ & _ & Heq).
+pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+rewrite Heq. unfold mmap_base_of.
+assert (Hdiv : (page_size
+| va_stack_top Sv48 - mmap_gap Sv48 kb - page_size * r)%Z).
+{ apply Z.divide_sub_r; [apply Z.divide_sub_r|].
+- exists 34359738368%Z. vm_compute. reflexivity.
+- apply Z.mod_divide; [unfold page_size; lia|]. apply mmap_gap_sv48_mod.
+- exists r. unfold page_size. lia. }
+rewrite page_round_up_Z_aligned
+by (apply Z.mod_divide; [unfold page_size; lia | exact Hdiv]).
+rewrite mmap_gap_sv48. cbv zeta.
+unfold mmap_min_gap, va_stack_top, sp_window_hi, stack_max_size,
+stack_rnd_max, page_size in *.
+destruct (kb_aslr kb); cbv beta iota;
+repeat (match goal with
+| |- context [(?x <? ?y)%Z] =>
+let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+[ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+end;
+cbv beta iota);
+lia.
+Qed.
+
+Lemma stack_window_lo_valid : forall inp (sp brk0 mbase : word) draw,
+valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+stack_window_lo (in_kernel inp) mbase draw
+<= bv_unsigned sp + stack_window_reach - stack_max_size.
+Proof.
+intros inp sp brk0 mbase draw Hlaunch (Htop & Hsp & Hbase).
+pose proof (launch_top_minus_sp inp (ed_top draw) sp Hlaunch Hsp) as Hd.
+pose proof (launch_base_gap_le (in_kernel inp) mbase Hbase) as Hg.
+destruct Htop as (_ & Hhi & Hlo).
+unfold stack_window_lo, stack_window_reach, stack_max_size,
+va_stack_top, sp_window_hi, stack_rnd_max, page_size in *.
+destruct (kb_aslr (in_kernel inp)); cbv beta iota in Hg, Hlo;
+apply Z.max_lub; lia.
+Qed.
+
+Lemma store_ok_wrap_window_valid :
+forall segs inp mbase ph entry (sp brk0 : word) a n draw,
+valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+bv_unsigned sp + stack_window_reach - stack_max_size <= bv_unsigned a ->
+bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
+Proof.
+intros segs inp mbase ph entry sp brk0 a n draw Hvl Hlau Hlo Hhi.
+apply store_ok_wrap_window; [|exact Hhi].
+pose proof (stack_window_lo_valid inp sp brk0 mbase draw Hvl Hlau). lia.
 Qed.
 
 Lemma store_ok_zeros_hit : forall segs m zs a n,
@@ -354,7 +506,10 @@ repeat first
 
 Ltac store_ok_base :=
 first
-[ apply store_ok_wrap_window; unfold stack_max_size; u_norm; lia
+[ eapply store_ok_wrap_window_valid;
+[ eassumption | eassumption
+| unfold stack_window_reach, stack_max_size; u_norm; lia
+| u_norm; lia ]
 | eapply store_ok_zeros_hit;
 [ discriminate | u_norm; lia | intros; u_norm; lia ]
 | apply store_ok_zmem; u_norm; lia ].
@@ -383,6 +538,355 @@ repeat first
 | eapply mem_grows_trans; [ | apply write_to_mem_grows ]
 | eapply mem_grows_trans; [ | apply apply_zeros_grows ]
 | eapply mem_grows_trans; [ | apply apply_writes_grows ] ].
+
+(* ========================================================================= *)
+(* Supplier walks over [Run.run_segments segs inp sp mbase] = segs ++ tail.    *)
+(* [find_segment] returns the FIRST covering segment, so a range the binary's  *)
+(* own segments cover reads the same over segs ++ tail; a range that misses    *)
+(* every tail segment reads the same too (success AND failure).                *)
+(* ========================================================================= *)
+
+Lemma find_segment_app : forall segs tail addr n,
+find_segment (segs ++ tail) addr n
+= match find_segment segs addr n with
+| Some s => Some s
+| None => find_segment tail addr n
+end.
+Proof.
+induction segs as [|seg rest IH]; intros tail addr n; [reflexivity|].
+cbn [find_segment app].
+destruct (Z.leb (Z.of_N (seg_base seg)) addr
+&& Z.leb (addr + n) (Z.of_N (seg_base seg) + Z.of_N (seg_size seg)))%bool;
+[reflexivity | apply IH].
+Qed.
+
+Lemma find_segment_app_prefix : forall segs tail addr n,
+find_segment segs addr n <> None ->
+find_segment (segs ++ tail) addr n = find_segment segs addr n.
+Proof.
+intros segs tail addr n Hhit. rewrite find_segment_app.
+destruct (find_segment segs addr n); [reflexivity | congruence].
+Qed.
+
+Lemma find_segment_run_segments : forall segs inp (sp mbase : word) addr n,
+find_segment segs addr n <> None ->
+find_segment (run_segments segs inp sp mbase) addr n = find_segment segs addr n.
+Proof.
+intros segs inp sp mbase addr n Hhit.
+unfold run_segments. apply find_segment_app_prefix. exact Hhit.
+Qed.
+
+(* A range that misses every tail segment finds over segs ++ tail exactly what it finds over segs. *)
+Lemma find_segment_app_miss : forall segs tail addr n,
+find_segment tail addr n = None ->
+find_segment (segs ++ tail) addr n = find_segment segs addr n.
+Proof.
+intros segs tail addr n Hmiss. rewrite find_segment_app.
+destruct (find_segment segs addr n); [reflexivity | exact Hmiss].
+Qed.
+
+(* Disjointness from each tail segment is a miss. *)
+Lemma find_segment_disjoint : forall tail addr n,
+1 <= n ->
+Forall (fun s => addr + n <= Z.of_N (seg_base s)
+\/ Z.of_N (seg_base s) + Z.of_N (seg_size s) <= addr) tail ->
+find_segment tail addr n = None.
+Proof.
+intros tail addr n Hn Hall.
+induction Hall as [|s rest Hs _ IH]; [reflexivity|].
+cbn [find_segment].
+destruct Hs as [Hs|Hs].
+- rewrite (proj2 (Z.leb_gt (Z.of_N (seg_base s)) addr)) by lia. exact IH.
+- rewrite (proj2 (Z.leb_gt (addr + n) (Z.of_N (seg_base s) + Z.of_N (seg_size s)))) by lia.
+destruct (Z.leb (Z.of_N (seg_base s)) addr); exact IH.
+Qed.
+
+Lemma memory_read_app_some : forall segs tail addr n bs,
+memory_read segs addr n = Some bs ->
+memory_read (segs ++ tail) addr n = Some bs.
+Proof.
+intros segs tail addr n bs H. unfold memory_read in *. rewrite find_segment_app. revert H.
+destruct (find_segment segs (bv_unsigned addr) (Z.of_N n)); intros H; [exact H | discriminate H].
+Qed.
+
+Lemma memory_read_app_miss : forall segs tail addr n,
+find_segment tail (bv_unsigned addr) (Z.of_N n) = None ->
+memory_read (segs ++ tail) addr n = memory_read segs addr n.
+Proof.
+intros segs tail addr n Hmiss. unfold memory_read.
+rewrite (find_segment_app_miss segs tail _ _ Hmiss). reflexivity.
+Qed.
+
+Lemma seg_rom_app_some : forall segs tail a b,
+seg_rom segs a = Some b -> seg_rom (segs ++ tail) a = Some b.
+Proof.
+intros segs tail a b H. unfold seg_rom in *. revert H.
+destruct (memory_read segs a 1) as [bs|] eqn:E; intros H; [|discriminate H].
+rewrite (memory_read_app_some segs tail a 1 bs E). exact H.
+Qed.
+
+Lemma seg_rom_app_miss : forall segs tail a,
+find_segment tail (bv_unsigned a) 1 = None ->
+seg_rom (segs ++ tail) a = seg_rom segs a.
+Proof.
+intros segs tail a Hmiss. unfold seg_rom.
+rewrite (memory_read_app_miss segs tail a 1 Hmiss). reflexivity.
+Qed.
+
+(* The vDSO pair lies in [top - vdso_len kb, top) with top the page-rounded
+min of mbase and the stack window floor (the range [State.init_reserved]
+reserves); a range outside it misses both tail segments. *)
+Local Transparent vdso_segments.
+Lemma vdso_segments_miss : forall kb (sp mbase : word) addr n,
+1 <= n ->
+(addr + n <= page_round_down_Z (Z.min (bv_unsigned mbase)
+(page_round_down_Z (bv_unsigned sp - stack_max_size))) - vdso_len kb
+\/ page_round_down_Z (Z.min (bv_unsigned mbase)
+(page_round_down_Z (bv_unsigned sp - stack_max_size))) <= addr) ->
+find_segment (vdso_segments kb sp mbase) addr n = None.
+Proof.
+intros kb sp mbase addr n Hn Hd. unfold vdso_segments. cbv zeta.
+match goal with |- context [if ?c then _ else _] => destruct c eqn:Eb end; [reflexivity|].
+apply Z.ltb_ge in Eb.
+pose proof (N2Z.is_nonneg (LinuxProcessSemantics.LinuxProcessSem.Vdso.vi_pages (vdso_image_of kb))) as Hp.
+(* LPS b84e73ef: the text segment's base is the model's own [vdso_text_base kb sp mbase], a word; it lies
+   [vdso_text_pages] pages below the pair's top ([vdso_pair_top sp mbase]), which is at most [mbase] *)
+pose proof (bv_unsigned_in_range 64 mbase) as HM. change (bv_modulus 64) with (2 ^ 64)%Z in HM.
+pose proof (page_round_down_Z_le (Z.min (bv_unsigned mbase)
+(page_round_down_Z (bv_unsigned sp - stack_max_size)))) as HR.
+pose proof (Z.le_min_l (bv_unsigned mbase)
+(page_round_down_Z (bv_unsigned sp - stack_max_size))) as HL.
+unfold vdso_text_base, vdso_pair_top in *.
+unfold vdso_len, vdso_text_pages, vdso_vvar_pages, page_size in *.
+rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; lia).
+apply find_segment_disjoint; [exact Hn|].
+apply Forall_cons; [|apply Forall_cons; [|apply Forall_nil]];
+cbn [seg_base seg_size]; rewrite !Z2N.id by lia; lia.
+Qed.
+
+Section TailReads.
+Local Open Scope bv_scope.
+
+(* Every byte of [a, a+n) that the overlay [mem] does not supply misses the tail. *)
+Fixpoint tail_miss (tail : list Segment) (mem : word -> option byte) (a : word) (n : nat) : Prop :=
+match n with
+| O => True
+| S n' => (mem a = None -> find_segment tail (bv_unsigned a) 1 = None)
+/\ tail_miss tail mem (a+1) n'
+end.
+
+(* A read that SUCCEEDS over segs reads the same bytes over segs ++ tail (no side condition). *)
+Lemma rdn_app_some : forall segs tail mem n a bs,
+rdn segs mem a n = Some bs -> rdn (segs ++ tail) mem a n = Some bs.
+Proof.
+intros segs tail mem n. induction n as [|n IH]; intros a bs H; [exact H|].
+cbn [rdn] in H |- *. revert H.
+destruct (mem a) as [b|].
+- destruct (rdn segs mem (a+1) n) as [rest|] eqn:E; intros H; [|simpl in H; discriminate H].
+rewrite (IH (a+1) rest E). exact H.
+- destruct (seg_rom segs a) as [b|] eqn:Er; [|intros H; simpl in H; discriminate H].
+rewrite (seg_rom_app_some segs tail a b Er).
+destruct (rdn segs mem (a+1) n) as [rest|] eqn:E; intros H; [|simpl in H; discriminate H].
+rewrite (IH (a+1) rest E). exact H.
+Qed.
+
+(* A read whose overlay-missing bytes all miss the tail reads the same over both
+lists, success and failure alike. *)
+Lemma rdn_app_miss : forall segs tail mem n a,
+tail_miss tail mem a n -> rdn (segs ++ tail) mem a n = rdn segs mem a n.
+Proof.
+intros segs tail mem n. induction n as [|n IH]; intros a Hm; [reflexivity|].
+destruct Hm as [Ha Hrest]. cbn [rdn].
+rewrite (IH (a+1) Hrest).
+destruct (mem a) as [b|] eqn:Em; [reflexivity|].
+rewrite (seg_rom_app_miss segs tail a ltac:(first [exact (Ha Em) | exact (Ha eq_refl)])). reflexivity.
+Qed.
+
+Lemma rdn_run_segments_some : forall segs inp (sp mbase : word) mem n a bs,
+rdn segs mem a n = Some bs -> rdn (run_segments segs inp sp mbase) mem a n = Some bs.
+Proof. intros. unfold run_segments. apply rdn_app_some. assumption. Qed.
+
+End TailReads.
+
+(* ------------------------------------------------------------------------- *)
+(* A machine step that succeeds over segs succeeds the same way over segs ++  *)
+(* tail, when the tail segments are neither executable nor writable (the vDSO  *)
+(* pair is "r--"): fetches and the writable view are EQUAL over both lists,    *)
+(* and a load that reads over segs reads the same bytes over segs ++ tail.     *)
+(* ------------------------------------------------------------------------- *)
+
+Definition tail_inert (tail : list Segment) : Prop :=
+Forall (fun s => seg_executable s = false /\ seg_writable s = false) tail.
+
+Lemma find_segment_in : forall l addr n s, find_segment l addr n = Some s -> In s l.
+Proof.
+induction l as [|s0 rest IH]; intros addr n s H; [discriminate H|].
+cbn [find_segment] in H.
+destruct (Z.leb (Z.of_N (seg_base s0)) addr
+&& Z.leb (addr + n) (Z.of_N (seg_base s0) + Z.of_N (seg_size s0)))%bool.
+- injection H as <-. left. reflexivity.
+- right. exact (IH addr n s H).
+Qed.
+
+Section StepTransfer.
+Variables (segs tail : list Segment).
+Hypothesis Hin : tail_inert tail.
+
+Lemma tail_hit_inert : forall addr n s, find_segment tail addr n = Some s ->
+seg_executable s = false /\ seg_writable s = false.
+Proof.
+intros addr n s H. unfold tail_inert in Hin. rewrite Forall_forall in Hin.
+exact (Hin s (find_segment_in tail addr n s H)).
+Qed.
+
+Lemma code_read_app : forall a n, code_read (segs ++ tail) a n = code_read segs a n.
+Proof.
+intros a n. unfold code_read. rewrite find_segment_app.
+destruct (find_segment segs (bv_unsigned a) (Z.of_N n)); [reflexivity|].
+destruct (find_segment tail (bv_unsigned a) (Z.of_N n)) as [s|] eqn:E; [|reflexivity].
+destruct (tail_hit_inert _ _ _ E) as [Hx _]. rewrite Hx. reflexivity.
+Qed.
+
+Lemma code_read_ov_app : forall m a n, code_read_ov (segs ++ tail) m a n = code_read_ov segs m a n.
+Proof.
+intros m a n. unfold code_read_ov. rewrite find_segment_app.
+destruct (find_segment segs (bv_unsigned a) (Z.of_N n)); [reflexivity|].
+destruct (find_segment tail (bv_unsigned a) (Z.of_N n)) as [s|] eqn:E; [|reflexivity].
+destruct (tail_hit_inert _ _ _ E) as [Hx _]. rewrite Hx. reflexivity.
+Qed.
+
+Lemma fetch_word_app : forall a, fetch_word (segs ++ tail) a = fetch_word segs a.
+Proof. intros a. unfold fetch_word. rewrite code_read_app. reflexivity. Qed.
+
+Lemma fetch_word_ov_app : forall m a, fetch_word_ov (segs ++ tail) m a = fetch_word_ov segs m a.
+Proof. intros m a. unfold fetch_word_ov. rewrite code_read_ov_app. reflexivity. Qed.
+
+Lemma fetch_half_app : forall a, fetch_half (segs ++ tail) a = fetch_half segs a.
+Proof. intros a. unfold fetch_half. rewrite code_read_app. reflexivity. Qed.
+
+Lemma fetch_half_any_app : forall m a, fetch_half_any (segs ++ tail) m a = fetch_half_any segs m a.
+Proof.
+intros m a. unfold fetch_half_any, fetch_half_ov.
+rewrite fetch_half_app, code_read_ov_app. reflexivity.
+Qed.
+
+Lemma fetch_tail_any_app : forall m a, fetch_tail_any (segs ++ tail) m a = fetch_tail_any segs m a.
+Proof. intros m a. unfold fetch_tail_any. rewrite !fetch_half_any_app. reflexivity. Qed.
+
+Lemma wview_app : forall m a, wview (segs ++ tail) m a = wview segs m a.
+Proof.
+intros m a. unfold wview. destruct (m a); [reflexivity|].
+rewrite find_segment_app.
+destruct (find_segment segs (bv_unsigned a) 1); [reflexivity|].
+destruct (find_segment tail (bv_unsigned a) 1) as [s|] eqn:E; [|reflexivity].
+destruct (tail_hit_inert _ _ _ E) as [_ Hw]. rewrite Hw. reflexivity.
+Qed.
+
+Lemma store_ok_app : forall n m a, store_ok (segs ++ tail) m a n = store_ok segs m a n.
+Proof.
+induction n as [|n IH]; intros m a; [reflexivity|].
+cbn [store_ok]. rewrite wview_app.
+destruct (wview segs m a); [apply IH | reflexivity].
+Qed.
+
+Lemma ov_read_bytes_app_some : forall n m a bs,
+ov_read_bytes segs m a n = Some bs -> ov_read_bytes (segs ++ tail) m a n = Some bs.
+Proof.
+induction n as [|n IH]; intros m a bs H; [exact H|].
+cbn [ov_read_bytes] in H |- *.
+assert (Hb : forall b, (match m a with
+| Some b => Some b
+| None => match memory_read segs a 1 with Some (b :: _) => Some b | _ => None end
+end) = Some b ->
+(match m a with
+| Some b => Some b
+| None => match memory_read (segs ++ tail) a 1 with Some (b :: _) => Some b | _ => None end
+end) = Some b).
+{ intros b0 E. destruct (m a) as [b1|]; [exact E|].
+destruct (memory_read segs a 1) as [l|] eqn:Er; [|discriminate E].
+rewrite (memory_read_app_some segs tail a 1 l Er). exact E. }
+destruct (match m a with
+| Some b => Some b
+| None => match memory_read segs a 1 with Some (b :: _) => Some b | _ => None end
+end) as [b|] eqn:E0; [|discriminate H].
+rewrite (Hb b eq_refl).
+match type of H with context [ov_read_bytes segs m ?a1 n] =>
+destruct (ov_read_bytes segs m a1 n) as [rest|] eqn:E; [|discriminate H];
+rewrite (IH m a1 rest E) end.
+exact H.
+Qed.
+
+Lemma interp_eff_accesses_app_ok : forall t m r,
+interp_eff_accesses segs t m = MachineOk r ->
+interp_eff_accesses (segs ++ tail) t m = MachineOk r.
+Proof.
+induction t as [c|x|x|x|x|x|n a k IHk|n a v k IHk]; intros m r Hr;
+cbn [interp_eff_accesses] in Hr |- *; try discriminate Hr; try exact Hr.
+- (* ELoad *)
+destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|] eqn:E.
++ rewrite (ov_read_bytes_app_some _ _ _ _ E).
+destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep| |] eqn:Ei;
+try discriminate Hr.
+rewrite (IHk _ _ _ Ei). exact Hr.
++ destruct (range_meets_vvar segs a (width_bytes n)); discriminate Hr.
+- (* EStore *)
+rewrite store_ok_app.
+destruct (store_ok segs m a (width_bytes n)); [|discriminate Hr].
+destruct (interp_eff_accesses segs k
+(write_to_mem m a (Z_to_le_bytes (width_bytes n) (bv_unsigned v)))) as [rep| |] eqn:Ei;
+try discriminate Hr.
+rewrite (IHk _ _ Ei). exact Hr.
+Qed.
+
+Lemma decode_exec_accesses_app_ok : forall st w r,
+decode_exec_accesses segs st w = MachineOk r ->
+decode_exec_accesses (segs ++ tail) st w = MachineOk r.
+Proof.
+intros st w r. unfold decode_exec_accesses.
+destruct (is_ecall w); [intro H; exact H|].
+destruct (decode_any w) as [[i isz]|]; [|intro H; exact H].
+match goal with |- context [interp_eff_accesses segs ?tt ?mm] =>
+destruct (interp_eff_accesses segs tt mm) as [rep| |] eqn:Ei end;
+intros H; try discriminate H.
+rewrite (interp_eff_accesses_app_ok _ _ _ Ei). exact H.
+Qed.
+
+Lemma fetch_failure_not_ok : forall m a st, fetch_failure segs m a <> MachineOk st.
+Proof.
+intros m a st. unfold fetch_failure. cbv zeta.
+repeat match goal with |- context [if ?b then _ else _] => destruct b end; discriminate.
+Qed.
+
+Lemma step_accesses_app_ok : forall st r,
+step_accesses segs st = MachineOk r -> step_accesses (segs ++ tail) st = MachineOk r.
+Proof.
+intros st r. unfold step_accesses.
+rewrite fetch_word_app, fetch_word_ov_app, fetch_tail_any_app.
+destruct (fetch_word segs (ms_pc st)); [apply decode_exec_accesses_app_ok|].
+destruct (fetch_word_ov segs (ms_mem st) (ms_pc st)); [apply decode_exec_accesses_app_ok|].
+destruct (fetch_tail_any segs (ms_mem st) (ms_pc st)); [apply decode_exec_accesses_app_ok|].
+destruct (fetch_failure segs (ms_mem st) (ms_pc st)) as [x| |] eqn:Ef; intros H;
+[exfalso; exact (fetch_failure_not_ok _ _ _ Ef) | discriminate H | discriminate H].
+Qed.
+
+Lemma step_app_ok : forall st st',
+RiscvSemantics.step segs st = MachineOk st' -> RiscvSemantics.step (segs ++ tail) st = MachineOk st'.
+Proof.
+intros st st'. unfold RiscvSemantics.step, drop_access_report.
+destruct (step_accesses segs st) as [rep| |] eqn:E; intros H; try discriminate H.
+rewrite (step_accesses_app_ok _ _ E). exact H.
+Qed.
+
+Lemma mi_account_step_app_ok : forall ms model p,
+mi_account_step segs ms model = MachineOk p ->
+mi_account_step (segs ++ tail) ms model = MachineOk p.
+Proof.
+intros ms model p. unfold mi_account_step.
+destruct (RiscvSemantics.step_accesses segs ms) as [rep| |] eqn:E; intros H; try discriminate H.
+rewrite (step_accesses_app_ok _ _ E). exact H.
+Qed.
+
+End StepTransfer.
 End Mq1.
 From LinuxProcessSemantics.Riscv Require Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q3bI Qo8J.

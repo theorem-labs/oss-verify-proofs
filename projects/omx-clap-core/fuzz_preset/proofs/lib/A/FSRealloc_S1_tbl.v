@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_tbl.v (hub ddc081c1a03, blob f434810b61d6) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), every image numeral moved by symbol + offset; it compiles on image A; record, the internal file A5.md. *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_tbl.v (blob f434810b61d6) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), every image numeral moved by symbol + offset; it compiles on image A; record, the internal file A5.md. *)
 (* fuzz_state image A, realloc segment S1 (RtS1, 2026-10-29).
    The decode table of the realloc prefix's code, port of cgif_rgb_fuzzer lib/YF77.v (tfxtbl_rr) at fs.asan's addresses
    (capstone over fs.asan sha256 64b53ff86172bb07..., RV64, no compressed instructions):

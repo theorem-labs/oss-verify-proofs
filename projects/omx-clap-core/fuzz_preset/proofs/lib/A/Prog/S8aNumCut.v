@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 asan 1be0f53d, twin bff8519b), ex_value piece 5 (ev_number,
    fuzz_preset.c fa3e896698eb :243-264 (#102 source) inlined): the piece's INTERNAL cut points, over WalkS8a's interface S8aIface.v
    (ev_act, ev_mid, ev_regs, ev_at_kind, ev_to_exit, ev_number_spec), and the strtod call's premises in the words of
@@ -75,11 +76,11 @@ Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte
 Variable SK : YI16.sink_head.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
-(* ---- the strtod call's caller facts that neither AR_laws_x (YCbqG.v:149-166) nor ev_pre gives; the row's
-   strtod_site_x (YStrtodRowX.v:347-352) asks them. Each is a Section hypothesis of ev_number (S8aNumber.v). ---- *)
+(* ---- the strtod call's caller facts that neither AR_laws_x (YCbqG.v:150-167) nor ev_pre gives; the row's
+   strtod_site_x (YStrtodRowX.v:348-353) asks them. Each is a Section hypothesis of ev_number (S8aNumber.v). ---- *)
 (* (the MARKED entry law ev_memnorm_law is deleted: memnorm is ev_mid's last conjunct, a state fact; see the header) *)
 (* strtod_site_x's text clause: a live block lies off the image band [si_img_lo, si_globals_top). AR_laws_x has no
-   such law (alx_client_img keeps a block out of ly_img and in_img only; at AR it is YC1fP.v:334 blk_off_imgPI, from
+   such law (alx_client_img keeps a block out of ly_img and in_img only; at AR it is YC1fP.v:335 blk_off_imgPI, from
    ALedger's pa_img_cover). *)
 Definition ev_blk_offimg (I : YStrtodRowX.strtod_img) : Prop :=
   forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) ->
@@ -245,7 +246,7 @@ Definition ev_A_stmt : Prop := ev_img_ok -> forall a, KT a -> KL a -> KN a.
 Definition ev_B_stmt : Prop := forall a, KS a -> KL a.
 (* the errno-in-image fact (the middle conjunct of api_env, YCbq.v:810; the instance gets it from PALib pal_env):
    needed to rebuild the journal after strtod, which may change errno. Discharged at the concrete instance.
-   strtod: the ROW's call-site text (YStrtodRowX.v:354 astrtod_realizes_x) at strtod's entry, for an image I of the
+   strtod: the ROW's call-site text (YStrtodRowX.v:355 astrtod_realizes_x) at strtod's entry, for an image I of the
    row's constants (at image A: lib/A/Prog/strtod_row.v strtod_img_A, the text strtod_row_A), with the caller facts
    ev_strtod_site I that the walk cannot derive. *)
 Definition ev_C_stmt : Prop :=

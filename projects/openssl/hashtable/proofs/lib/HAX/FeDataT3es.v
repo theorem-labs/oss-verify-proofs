@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window is the launch's). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Uint63 PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
@@ -19,9 +20,17 @@ Definition START : CAP.acs := nt3es_tfe.
 Definition END : CAP.acs := nt3esfee.
 (* [comment removed for export] *)
 Definition TT0 : ttab_e := [(2%uint63, CAP.eaddz CAP.e_spw (-8388608)); (4%uint63, AX2.ELit 0)].
+(* LPS c0dd863a: the stack region's writable part is the window that START's own KWr fact on the entry's
+   stack pointer gives (8 MiB less the launch block's bound, in whole pages: AsanInit.stack_window_ok); its
+   offset from the pointer, read here *)
+Definition STK_K : Z :=
+  match List.find (fun K => match K with AX2.KWr (AX2.SA b _) (AX2.ELit _) => AX2.expr_eqb b CAP.e_spw | _ => false end) (CAP.kn START) with
+  | Some (AX2.KWr (AX2.SA _ k) _) => k
+  | _ => 0
+  end.
 Definition shapes : list rshape :=
   [(0%uint63, 0x10000%uint63, 0xbc8000%uint63, 0%uint63, None);
-   (2%uint63, 0%uint63, 8388608%uint63, 4%uint63, Some PKUnk);
+   (2%uint63, of_Z (8388608 + STK_K), 8388608%uint63, 4%uint63, Some PKUnk);
    (4%uint63, 0x7fffa000%uint63, 0x80171000%uint63, 12%uint63, Some PKUnk)].
 Definition regtags : ttab_e := gen_tt TT0 100%uint63 (map (fun e => AX2.KWord (AX2.SA (AX2.ELit 0) 0) 8 e) (AX2.s_regs (CAP.a_ss START))).
 Definition TT : ttab_e := gen_tt regtags 200%uint63 (CAP.kn START).

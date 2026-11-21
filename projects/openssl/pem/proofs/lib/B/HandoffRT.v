@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up facts stated over the launch's ProcInput; the launch premises). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -24,23 +25,24 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 #[local] Existing Instance B_Gsh.B_BLOBS.
 
-Lemma SINV0_blob : forall (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) E0 M0,
-  SINV0 ph sp rdraw brk0 argv envp uid hw E0 M0 ->
+Lemma SINV0_blob : forall (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput) E0 M0,
+  SINV0 ph apc sp rdraw brk0 mbase inp E0 M0 ->
   forall j lo hi, nth_error B_Gsh.B_HULLS j = Some (lo, hi) ->
   eb E0 (K_GSH0 + j)%nat = map (Z_to_bv 8) (AsanGshModel.GSM.gsh_list (AsanRegModel.RGM.c_lay B_RegConsts.B_RGC) B_Gsh.B_GTAB lo hi).
 Proof.
-  intros ph sp rdraw brk0 argv envp uid hw E0 M0 [_ [_ HB]] j lo hi Hn. rewrite HB. unfold AsanInit.E0. cbn [eb].
+  intros ph apc sp rdraw brk0 mbase inp E0 M0 [_ [_ HB]] j lo hi Hn. rewrite HB. unfold AsanInit.E0. cbn [eb].
   destruct (Nat.eqb_spec (K_GSH0 + j) K_RND) as [X|_]; [exfalso; unfold K_GSH0, K_RND in X; lia|].
   exact (B_Gsh.B_BLOBS_hull j lo hi Hn).
 Qed.
 
 Section StartRT.
 Variables (A : atable) (LIMIT : Z) (fs : Fs).
-Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word).
+Variables (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput).
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hlaunch : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 Hypothesis SEGS_in_hull : forall a : word, APS.in_hull A (bv_unsigned a) = false -> find_segment bsegs (bv_unsigned a) 1 = None.
 Hypothesis HULL_ok : APS.hull_ok A.
 Hypothesis Hsegtop : img_hi A = SEGTOP_A.
@@ -48,8 +50,9 @@ Hypothesis Hseglo : img_lo A = SEGLO.
 Hypothesis Hshoff : shadow_off A = SHB.
 Hypothesis Hlim : LIMIT = VMLIMIT.
 
-#[local] Notation SINV := (SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 ph sp rdraw argv envp uid hw).
+#[local] Notation SINV := (SINV0 ph apc sp rdraw brk0 mbase inp).
+#[local] Notation argH := (argH0 sp rdraw inp).
+#[local] Notation argv := (in_argv inp).
 #[local] Notation usp := (bv_unsigned sp).
 
 Variables (E : env) (ch : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
@@ -63,15 +66,17 @@ Hypothesis HLIB : LIB (mH FULL model (rtA_allow Σ0)).
 
 Theorem hs_start_rt : START RTA OUT_repA ERR_repA (XENVA false) LIB CENSUS argv fs (canon_cfg bsegs R a_main FULL model).
 Proof.
-  pose proof (hsa_argH_high ph sp rdraw argv envp uid hw Hsp Hva) as AH.
+  assert (AH : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ bv_unsigned sp <= bv_unsigned a)
+    (* [segs] is [argH0_high]'s first explicit argument and unifies from nothing here;
+       pass it, as [hsa_argH_high] in B/HandoffA.v does. *)
+    by (intros E1 a H; eapply (argH0_high bsegs); eassumption).
   destruct (rt_init_glue A LIMIT SINV argH usp fs SEGS_in_hull HULL_ok AH Hsegtop Hshoff Hlim E ch R FULL model HC HTR (hsa_isp sp Hsp)
-              (SINV0_pgsp ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit)
-              (SINV0_blob ph sp rdraw brk0 argv envp uid hw))
+              ltac:(intros E1 M1 HS1; eapply SINV0_pgsp; eassumption)
+              (SINV0_blob ph apc sp rdraw brk0 mbase inp))
     as (Hallow & Hawf & Hminv & Hartm & Hsp0 & Hart & Hsig).
-  pose proof (hsa_sp0 A LIMIT fs ph sp rdraw brk0 argv envp uid hw E ch R FULL model HC) as Husp.
+  assert (Husp : bv_unsigned (vm_init_sp (m_vmmaps model)) = bv_unsigned sp) by (eapply hsa_sp0; eassumption).
   rewrite Husp in Hsp0, Hsig.
-  exact (hs_start A LIMIT fs ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit SEGS_in_hull HULL_ok Hsegtop Hseglo E ch R FULL model HC HT
-           RTA LIB Σ0 CENSUS Hallow Hawf Hminv Hartm Hsp0 Hart Hsig HLIB).
+  eapply hs_start; eassumption.
 Qed.
 
 (* [comment removed for export] *)

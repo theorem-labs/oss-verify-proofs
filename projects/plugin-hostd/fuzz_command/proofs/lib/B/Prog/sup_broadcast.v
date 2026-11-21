@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of sup_broadcast on the ASan+UBSan build of plugin-hostd/fuzz_command
    (fuzz_command.asan-ubsan, 0x8b4f0, 19 instructions), proving tsup_broadcast_spec of sup_broadcast_c.v (the B
-   statement at pass 5): the B twin of a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast.v at a5a5ff08765). B keeps record()
+   statement at pass 5): the B twin of a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast.v). B keeps record()
    as a function, so the walk is three straight-line runs and three calls:
      sup_broadcast_s4.v  0x8b4f0 .. `jal record`, record (cl_callS_pg), the return 0x8b50c;
      sup_broadcast_s5.v  0x8b50c .. `jal arg_line`, arg_line (cl_callS_pg), the return 0x8b518;
@@ -16,6 +16,7 @@
    SIGP, IMG (cmd_img_facts: cif_prog_img, cif_prog_not_ro, cif_relro_img, cif_ro_unowned, CmdRecRo's
    cmd_ro_in_img, cmd_ro_obj_bytes, cmd_ro_ok_of_aro, CmdRecImg's cmd_prog_unowned); TRECORD, TARG_LINE, TANSWER and
    VOBJS are the statement's own. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -41,15 +42,11 @@ Qed.
 Section Cone.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variables brk0 mbase : word.
+  Variable brk0 : word.
   Variable lim : Z.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InStreams.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
+  Variables uid hw : word.
+  Variable L : LaunchX.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk HASEGS brk0.
   Hypothesis Hlim : (AsanInit.LIMIT <= lim)%Z.
@@ -57,9 +54,11 @@ Section Cone.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
+  Hypothesis HLX : launchL HAT sp rdraw brk0 argv envp uid hw L.
+  Let fs := lx_fs L.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation FXHOLE := (fx_hole SV argH ISP fs).
   (* [comment removed for export] *)
@@ -80,7 +79,7 @@ Section Cone.
   Hypothesis H_S6_B1 : FXHOLE c2b1_hs10 s6endb1.   Hypothesis H_FE_B1 : FXHOLE c3b1_hs20 feendb1.   Hypothesis H_FEO_B1 : FXHOLE c4b1_hs21 feendob1.
   Hypothesis H_FED_B1 : FXHOLE c5b1_hs23 feenddb1.   Hypothesis H_FEH_B1 : FXHOLE c6b1_hs24 feendhb1.
 
-  #[local] Notation INIT := (init_config HASEGS AsanUbsan.M.init_pc HAPH sp brk0 mbase rdraw lim (inp argv envp fs stdin uid gid hw groups net nofile sigmask)).   (* [comment removed for export] *)
+  #[local] Notation INIT := (INITL HASEGS HAPH sp rdraw brk0 lim argv envp uid hw L).   (* [comment removed for export] *)
 
   Lemma cone_usage : length argv <> 2%nat -> crz HASEGS INIT (t_die (msg_usage (hd [] argv)) fs).
   Proof.
@@ -129,11 +128,11 @@ Section Cone.
       destruct (length data <? HDR_MIN)%nat eqn:ES.
       + apply Nat.ltb_lt in ES. unfold HDR_MIN in ES.
         rewrite <- T_cannot_die, <- T_short_die. change (t_alt2 (T_cannot path fs) (T_lit short_lit fs)) with (T_hdr short_lit path fs).
-        rewrite <- Hp. eapply (hdr_short_leaf sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid Hargc data);
+        rewrite <- Hp. eapply (hdr_short_leaf sp rdraw brk0 lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX Hargc data);
           try diet_eassumption; try (rewrite Hp; assumption); [rewrite Hp; lia | unfold flen; lia].
       + cbn [orb] in Hv. apply Nat.ltb_lt in Hv. apply Nat.ltb_ge in ES. unfold HDR_MIN in ES, Hv.
         rewrite <- T_cannot_die, <- T_overrun_die. change (t_alt2 (T_cannot path fs) (T_lit overrun_lit fs)) with (T_hdr overrun_lit path fs).
-        rewrite <- Hp. eapply (hdr_overrun_leaf sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid Hargc data);
+        rewrite <- Hp. eapply (hdr_overrun_leaf sp rdraw brk0 lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX Hargc data);
           try diet_eassumption; try (rewrite Hp; assumption); [rewrite Hp; lia | unfold flen; lia |].
         unfold ION.room, ION.flenZ, ION.cfglen, ION.hbyte. unfold config_len, cfg_word, byte_at in Hv.
         pose proof (Z.mod_pos_bound (bv_unsigned (nth 0 data (Z_to_bv 8 0)) + 256 * bv_unsigned (nth 1 data (Z_to_bv 8 0))) 32768 ltac:(lia)). lia.

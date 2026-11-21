@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/varnish/esi_parse_fuzzer/lib/Yd/DA_Tac.v, with its module paths and module names changed; 635 of its 698 lines of code are new or changed and 187 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Requiring this file REDEFINES the kit's solve_load, solve_store and mem_after_store_opt (as Lib/Tac.v redefines
    Lib/Step.v's): each first tries the world hook and otherwise runs the kit's own tactic, so a walk that imports a
    build's Prog/T/WMem.v steps world loads and stores with the kit's [step] (and StepFast's sf_step_core, which calls
@@ -97,7 +98,7 @@ Lemma wm_write_munch : forall m a v, 0 <= a -> a + Z.of_nat (length v) <= 2 ^ 64
   munch [(a, a + Z.of_nat (length v))] m (write_to_mem m (wa a) v).
 Proof. intros m a v Ha Hl x Hx. cbn [outside] in Hx. apply wm_write_outside; [exact Ha | exact Hl | tauto]. Qed.
 
-(* ---- (c) pieces for the libc contracts (Prog/memcpy_c.v:33-42, Prog/memset_c.v:19-25) ---- *)
+(* ---- (c) pieces for the libc contracts (Prog/memcpy_c.v:34-43, Prog/memset_c.v:20-26) ---- *)
 
 (* A memcpy source inside the world. *)
 Lemma wm_bytes_sub : forall A m B k n, wmem_at segs A m B -> 0 <= k -> k + Z.of_nat n <= W_LEN ->
@@ -683,7 +684,7 @@ Ltac wk_solve_store_world :=
       end
   end.
 
-(* after a world store: the world hypothesis becomes upd B k bs about the new memory; store_done (Lib/Tac.v:358-401)
+(* after a world store: the world hypothesis becomes upd B k bs about the new memory; store_done (Lib/Tac.v:359-402)
    then updates mem_inv, carries the other hypotheses and the footprint across the store and names the memory.
    RKw (k inside the world) is in the context while store_done runs, so its lia side goals see the offset's range
    even when the walk states the index bound by name. *)
@@ -725,7 +726,7 @@ Ltac wk_world_after_store :=
       end
   end.
 
-(* Lib/Step.v:493-523 (solve_store), verbatim. *)
+(* Lib/Step.v:494-524 (solve_store), verbatim. *)
 Ltac wk_solve_store_kit :=
   match goal with
   | |- context [store_ok ?segs ?m ?a ?n] =>
@@ -757,7 +758,7 @@ Ltac wk_solve_store_kit :=
     end
   end.
 
-(* Lib/Tac.v:149-156 (mem_after_store_opt after its fix_lit_store), verbatim. *)
+(* Lib/Tac.v:150-157 (mem_after_store_opt after its fix_lit_store), verbatim. *)
 Ltac wk_mem_after_store_opt_kit :=
   lazymatch goal with
   | |- evt ?segs _ (MS _ _ _ _ _ (write_to_mem ?m (wa (?A + Z.of_nat _)) _) _) =>
@@ -870,7 +871,7 @@ Ltac wk_world_after_call segs m m' :=
   | H : rw_cells segs m ?A [CB (Z.to_nat W_LEN) _], MU : munch ?W m m' |- _ => wk_spans_hit_world A W
   end.
 
-(* Lib/Tac.v:228-248 (post_call) with the world step before transport_after_call. *)
+(* Lib/Tac.v:229-249 (post_call) with the world step before transport_after_call. *)
 Ltac wk_post_call segs m :=
   let ms' := fresh "ms'" in let PO := fresh "POST" in
   intros ms' PO;

@@ -14,6 +14,7 @@ From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusabl
   YH00 YH02 YI14 YI5b YI5c YL01 YL0g YL0i YL0s YL0j.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib Require Import
   ZImage TraceHalting ZTraceSpec.
+From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require RomStable.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
@@ -35,16 +36,20 @@ Proof.
   intros HC. unfold Statements.plain_halts, halts_within_budget.
   intros [sp brk0 mbase rnd] inp Hentry Hinput Hbudget.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
+  destruct Hentry as [Hsp [Hbrk [Hmb [Hfits Hlau]]]].
   set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp)).
   destruct (HC rc) as [API [AX LX]].
-  change (must_exit_in_at_cfg forced_only_cfg zsegs zallowed
-    (init_config zsegs Plain.M.init_pc Plain.M.phdrs
+  (* LPS 727298f3 (08b1429): the run reads [run_segments zsegs ..]; the walk over the binary's own
+     segments is lifted there by [RomStable.run_init] (the image carries no vDSO text). *)
+  change (must_exit_in_at_cfg forced_only_cfg (run_segments zsegs inp sp mbase) zallowed
+    (init_config (run_segments zsegs inp sp mbase) Plain.M.init_pc Plain.M.phdrs
       sp brk0 mbase rnd Budgets.Standard.lim_source inp)).
   eapply realizes_must_exit_forced_closed with (T:=SPECX (LS:=checksum_shape) inp).
-  - apply (src0_realizes_specX (rc:=rc) (LS:=checksum_shape) API AX LX
+  - apply (RomStable.run_init zsegs inp sp mbase Plain.M.init_pc Plain.M.phdrs brk0 rnd
+      Budgets.Standard.lim_source); [RomStable.vdso_none|].
+    apply (src0_realizes_specX (rc:=rc) (LS:=checksum_shape) API AX LX
       driver_obligationsX_proved (fun data => checksum_room_calls (payload_len data) (calls data) DRB) sp brk0 mbase rnd
-      Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hinput).
+      Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hlau Hinput).
     + apply SRC_LIM_MIN_le_source.
     + unfold rc. apply ceil_of_top_run.
   - unfold permitted_halt. cbn [init_config cfg_model init_model]. exact I.

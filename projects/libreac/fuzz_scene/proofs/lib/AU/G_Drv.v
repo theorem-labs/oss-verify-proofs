@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YD1q.v (with the statements of
    YB1n.v:44-59 HS_ok / tfib_startup_T1, YB1n.v:73-81 HS_ok_open and YD1p.v:77-88 tfib_drv_main) for
    fuzz_scene's asan-ubsan image, module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed g_HS_ok, g_startup_stmt, g_hs_open, g_drv_mainX_stmt, g_srealizes); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_scene's driver glue for the asan-ubsan image, in the form of cgif_file_fuzzer lib/YD1q.v (the asan-ubsan twin
    of A/AD1q.v); lib/A/G_Drv.v is the asan twin of this file. Nothing here walks a
    program function: the start-up, the hand-off and the driver walk are Section hypotheses, and so is every leaf
@@ -17,7 +18,7 @@
      It is the Section Variable scene_tfib_lib_contract_x (rc, fx, the six entry constants, then B MT XM_LIB XN_LIB RLO
      RHI), whose instance is a Theorem Labs lane's scene contract; the driver walk takes it at fx0 (YD1p.v:48 LIBC) and the
      hand-over takes it at every fx (YD1q.v:46 LIBX, YCfn.v:69-70's _all form).
-   - B's tables: the donor's YF0m.v:291 TfibSyms is measured unsatisfiable when relocated by rename (a Theorem Labs lane, 22:25Z);
+   - B's tables: the donor's YF0m.v:292 TfibSyms is measured unsatisfiable when relocated by rename (a Theorem Labs lane, 22:25Z);
      it is the Section Variable TS, whose instance is scene's TfibSyms from the collector (a Theorem Labs lane's YF0m).
    - The driver's site types (the stdout / stderr / exit sites, the read check, the read-only test) are Section
      Variables too. Their instances are the restaged core's Definitions at scene's addresses (see the Variables
@@ -35,7 +36,7 @@ From OSSVerify.libreac.fuzz_scene.images Require Import AsanUbsan.
    relocated modules (scene's released tree also has lib/U/Reusable twins of some of them). Layout (a Theorem Labs lane, version A):
    lib/AU holds the asan-ubsan twins of the A files and the donor files whose closure reaches a module that differs
    between images (YCbq). Every other module comes from lib/Reusable, YCe5 and YK09 among them: the placement table
-   of record (port/6o/placement.tsv at 5977155c3d7) marks both SHARED. *)
+   of record marks both SHARED. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib Require SceneAsanBase.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require SceneAsanTop.
 (* Gate 6h: no sink-head instance is in scope (lib/Reusable/SinkGuard.v removes the released src0 instances). *)
@@ -57,7 +58,8 @@ Open Scope Z_scope.
 Section b. Context {rc : YM05.RunCeil}.
 Section d.
 Variable TF : atable.
-Variable HS : nat -> option acs.
+(* LPS 727298f3: the hand-off states are per CONFIG_RSEQ flag (AU/YB01r.v HS_tfib_r), so HS takes the flag. *)
+Variable HS : Z -> nat -> option acs.
 Variables FMT_OPEN FMT_RDERR FMT_USAGE : Z.
 Variables A_LLVMF RA_LLVMF EV_LIB LIVE_LIB LLVMF_STK A_EMPTY : Z.
 Variable scene_tfib_lib_contract_x : YM05.RunCeil -> YK11.FPState -> Z -> Z -> Z -> Z -> Z -> Z ->
@@ -77,58 +79,80 @@ Variables est_img est_frame : ((word -> bool) -> (word -> option byte) -> Prop) 
 Variables fwrite_site refused_site : asyms -> ((word -> bool) -> (word -> option byte) -> Prop) -> Prop.
 Variable fprintf_s_site : asyms -> ((word -> bool) -> (word -> option byte) -> Prop) -> Z -> list byte -> list byte -> Prop.
 Variable exit_site : asyms -> ((word -> bool) -> (word -> option byte) -> Prop) -> (nat -> (word -> bool) -> (word -> option byte) -> Prop) -> Prop.
-(* YB1n.v:44-50 HS_ok, over TF and HS. *)
-Definition g_HS_ok (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word)
-  (fs : Fs.Fs) (c : config) : Prop :=
+(* YB1n.v HS_ok, over TF and HS: the launch input is YA02's, with the kernel record [kb], the exec file name
+   and the SIGPIPE disposition [sdef] free, and the hand-off state the one of the run's own CONFIG_RSEQ flag. *)
+Definition g_HS_ok (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word)
+  (argv envp : list (list byte)) (fs0 : Fs.Fs) (stdin : InputStream) (uid gid hw : word)
+  (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs)
+  (kb : KernelBuild) (execfn : list byte) (sdef : bool) (fsq : Fs.Fs) (c : config) : Prop :=
   exists ch E R FULL model,
-  HS h = Some ch
+  HS (rseq_z (kb_rseq kb)) h = Some ch
   /\ c = cfg_of TSEGS R (pc ch) FULL model
   /\ cs_ok TSEGS TF YA02.LIMIT (YA02.TOP sp)
-       (YA02.SINV0 TPH sp rdraw brk0 argv envp uid hw) (YA02.argH0 TPH sp rdraw argv envp uid hw) fs E ch R FULL model.
-(* YB1n.v:51-59 tfib_startup_T1's statement. *)
+       (YA02.SINV0 TPH sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef
+          AsanUbsan.M.init_pc)
+       (YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) fsq E ch R FULL model.
+(* YB1n.v tfib_startup_T1's statement. *)
 Definition g_startup_stmt : Prop :=
   forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs)
     (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue) (nofile sigmask : word)
-    (urnd : InputStream) (tmp : Fs.Fs),
-  valid_sp sp -> valid_brk TSEGS brk0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  valid_id uid -> valid_hwcap hw ->
+    (urnd : InputStream) (tmp : Fs.Fs) (kb : KernelBuild) (execfn : list byte) (sdef : bool),
+  valid_sp sp -> valid_brk TSEGS brk0 -> valid_mmap_base mbase -> valid_argv argv -> valid_envp envp ->
+  entry_stack_fits sp argv envp -> valid_id uid -> valid_hwcap hw -> valid_nofile nofile ->
+  valid_sigmask (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
+  valid_launch (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+    (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
   forall T : TSet, T [] ->
-  (forall h c, g_HS_ok h sp rdraw brk0 argv envp uid hw (fs_seed_tmp fs tmp) c -> srealizes TSEGS c T) ->
+  (forall h c, g_HS_ok h sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef
+     (fs_seed_tmp fs tmp) c -> srealizes TSEGS c T) ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk0 mbase rdraw YA02.LIMIT
-    (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)) T.
-(* YB1n.v:73-86 HS_ok_open, proved as the donor proves it (YA0e.v:232 co_sinv), with NX0G (YA01.v:711). *)
+    (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef)) T.
+(* YB1n.v HS_ok_open, proved as the donor proves it (YA0e.v co_sinv), with NX0G (YA01.v). *)
 Lemma g_hs_open :
-  forall (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word)
-    (fs : Fs.Fs) (c : config),
-  g_HS_ok h sp rdraw brk0 argv envp uid hw fs c ->
+  forall h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c,
+  g_HS_ok h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c ->
   exists ch E R FULL model,
-  HS h = Some ch /\ c = cfg_of TSEGS R (pc ch) FULL model
+  HS (rseq_z (kb_rseq kb)) h = Some ch /\ c = cfg_of TSEGS R (pc ch) FULL model
   /\ cs_ok TSEGS TF YA02.LIMIT (YA02.TOP sp)
-       (YA02.SINV0 TPH sp rdraw brk0 argv envp uid hw) (YA02.argH0 TPH sp rdraw argv envp uid hw) fs E ch R FULL model
-  /\ (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk0 argv envp uid hw) n)
-  /\ (forall a, YA02.argH0 TPH sp rdraw argv envp uid hw E a = true -> FULL a = wrap_mem TPH sp argv envp uid hw rdraw a)
-  /\ eb E = eb (YA02.E0 TPH sp rdraw brk0 argv envp uid hw).
+       (YA02.SINV0 TPH sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef
+          AsanUbsan.M.init_pc)
+       (YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) fsq E ch R FULL model
+  /\ (forall n, (n < NX0G)%nat ->
+        ev E n = ev (YA02.E0 sp rdraw brk0 argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) n)
+  /\ (forall a, YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef E a = true ->
+        FULL a = wrap_mem (YA02.inp argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) mbase TPH
+          (Z_to_bv 64 (Z.of_N AsanUbsan.M.init_pc)) sp rdraw a)
+  /\ eb E = eb (YA02.E0 sp rdraw brk0 argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
 Proof.
-  intros h sp rdraw brk0 argv envp uid hw fs c (ch & E & R & FULL & model & Hh & Hc & HC).
+  intros h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c
+    (ch & E & R & FULL & model & Hh & Hc & HC).
   exists ch, E, R, FULL, model. split; [exact Hh|]. split; [exact Hc|]. split; [exact HC|].
   exact (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC).
 Qed.
-(* YD1q.v:60-72 drv_mainX_stmt (YD1p.v:77-88), at scene_shape. *)
+(* YD1q.v drv_mainX_stmt (YD1p.v), at scene_shape: the hand-off state of the run's own CONFIG_RSEQ flag, the
+   stack invariant abstract (as YD1g.v, YD2i.v) and the launch's fifth [valid_entry] conjunct given. *)
 Definition g_drv_mainX_stmt : Prop :=
-  forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env)
-    (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
+  forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env)
+    (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
   valid_sp sp -> valid_brk TSEGS brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
-  HS h = Some ch ->
-  cs_ok TSEGS TF YA02.LIMIT (YA02.TOP sp)
-    (YA02.SINV0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-  (forall n, (n < NX0G)%nat ->
-     ev E n = ev (YA02.E0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-  (forall a, YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-     FULL a = wrap_mem TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+  HS (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+  (forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+  cs_ok TSEGS TF YA02.LIMIT (YA02.TOP sp) SINV
+    (YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp)
+       (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp)
+       (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model ->
+  (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_image_fs inp)
+     (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp)
+     (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) n) ->
+  (forall a, YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp)
+     (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+     (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+   FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (Z.of_N AsanUbsan.M.init_pc)) sp rdraw a) ->
   srealizes TSEGS (cfg_of TSEGS R (pc ch) FULL model) (CLOSEDX (LS:=SceneAsanBase.scene_shape) inp).
-(* The driver walk: YD1p.v:29-88 tfib_drv_main's statement, every leaf it takes (YD1p.v:31-61) as a premise. *)
+(* The driver walk: YD1p.v tfib_drv_main's statement, every leaf it takes as a premise. *)
 Definition g_drv_walk_stmt : Prop :=
   forall (B : asyms), TS B ->
   amalloc_realizes tfibsegs B -> afree_realizes tfibsegs B ->
@@ -145,7 +169,7 @@ Definition g_drv_walk_stmt : Prop :=
   fprintf_s_site B est FMT_USAGE (strB "usage: "%string) (strB " INPUT"%string ++ nlB) ->
   exit_site B est xst ->
   g_drv_mainX_stmt.
-(* The leaves (YD1q.v:37-59). *)
+(* The leaves (YD1q.v). *)
 Variable B : asyms.
 Hypothesis HB : TS B.
 Hypothesis AMALLOC : amalloc_realizes tfibsegs B.
@@ -178,31 +202,45 @@ Proof.
   exact (DRV B HB AMALLOC AFREE AICPY ARDCHK MT XM_LIB XN_LIB RLO RHI MT_FREE RO_IN (LIBX YK11.fx0) xst XFR PF1 PFN
     est ESTI ESTF FWS RFS FPO FPR FPU EXS).
 Qed.
-(* YD1q.v:75-94 tfib_srealizesX. *)
+(* YD1q.v tfib_srealizesX_of_main: the input is taken apart into its fields; [Run.valid_input] fixes the abort
+   and terminal-SIGPIPE declarations, the address size and the channel reader, and says the kernel record is its
+   own [recorded_kernel], so the input is [YA02.inp] at that record, the exec file name and the SIGPIPE
+   disposition. *)
 Theorem g_srealizes : forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw YA02.LIMIT inp)
     (SPECX (LS:=SceneAsanBase.scene_shape) inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
-  pose proof Hinp as (Hva & Hve & Hvfs & _ & [Huid Hgid] & Hnof & Hsig & Hhw & Hab & Hmmu & _).
-  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp]. cbn in *. subst ab mmu.
-  change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp)
-    with (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) in *.
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
+  pose proof Hinp as (Hva & Hve & _ & _ & _ & [Huid _] & Hnof & Hsig & Hhw & Hab & Hmmu & _ & Hvl & Hcr & Hspt & Hkern).
+  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp kern execfn cr spd spt].
+  cbn [in_argv in_envp in_uid in_hwcap in_nofile in_abort_terminal in_va_size in_channel_reader in_sigpipe_terminal
+    in_kernel] in Hva, Hve, Hfit, Huid, Hhw, Hnof, Hab, Hmmu, Hcr, Hspt, Hkern.
+  subst ab mmu cr spt.
+  rewrite Hkern in Hinp, Hsig, Hvl, Hlau |- *.
+  change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp
+    (recorded_kernel kern) execfn true spd false)
+    with (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd) in *.
   apply (srz_conseq TSEGS _
-    (CLOSEDX (LS:=SceneAsanBase.scene_shape) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)));
+    (CLOSEDX (LS:=SceneAsanBase.scene_shape)
+      (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)));
     [| apply t_eq_sym; apply (specx_closedx_eq (LS:=SceneAsanBase.scene_shape))].
-  apply (STARTUP sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp
-    Hsp Hbrk Hva Hve Hfit Huid Hhw
-    (CLOSEDX (LS:=SceneAsanBase.scene_shape) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp))
+  apply (STARTUP sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+    Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hnof Hsig Hvl Hlau
+    (CLOSEDX (LS:=SceneAsanBase.scene_shape)
+      (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd))
     (CLOSEDX_has_nil (LS:=SceneAsanBase.scene_shape) _)).
   intros h c Hok.
-  destruct (g_hs_open h sp rdraw brk argv envp uid hw (fs_seed_tmp fs tmp) c Hok)
-    as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
-  exact (g_drv_mainX sp rdraw brk (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)
-    h ch E R FULL model Hsp Hbrk Hfit Hinp Hceil Hch HC HE HM).
+  destruct (g_hs_open h sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+    (fs_seed_tmp fs tmp) c Hok) as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
+  assert (SP0 : forall E' M, YA02.SINV0 TPH sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask
+    urnd tmp kern execfn spd AsanUbsan.M.init_pc E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608).
+  { intros E' M HSv. eapply YA02.SINV0_sp0; try eassumption. Unshelve. all: first [assumption | exact TSEGS | exact TF]. }
+  exact (g_drv_mainX sp rdraw brk mb (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)
+    h ch E R FULL model _ Hsp Hbrk Hfit Hinp Hlau Hceil Hch SP0 HC HE HM).
 Qed.
 End d.
 End b.

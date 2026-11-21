@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane's AFREE_CF, premises #7-#10 of lib/A/ReplyDeallocInst.v's ReplyDeallocParts): the four
    image premises of the generic cf layer's Deallocate post (YGcfInstFreePost section 0) DISCHARGED at plugin-hostd /
    fuzz_reply's asan image A: the image classes are reply A's (AGif2reply.AImg_reply, DGif0reply.DImg_reply) and the
@@ -10,12 +11,12 @@
 
    Every numeral is reply A's, checked against AF0m / DGgi / AF0x / ACeg (the image's own symbol tables):
    - TFIB_INST 0xa2a58 (instance object, 3632 bytes), TFIB_DEPOT 0x187f98, TFIB_STORE 0x177f88, TFIB_IAL_LO 0xa72c0,
-     TFIB_IAL_HI 0x1282f0, TFIB_IAL_FLAG 0x135b48 (AF0m.v:17-20);
+     TFIB_IAL_HI 0x1282f0, TFIB_IAL_FLAG 0x135b48 (AF0m.v:18-21);
    - the one owned static range that holds the depot, the store and the internal allocator's zone and flag is
-     Tfib_owned_static's 5th row (0xa5910, 0x5c8710 - 0xa5910) (AF0m.v:816); the depot's static data ends at
+     Tfib_owned_static's 5th row (0xa5910, 0x5c8710 - 0xa5910) (AF0m.v:817); the depot's static data ends at
      0x187f98 + d_map1 + 8 * 32768 = 0x5c7fa8 <= 0x5c8710;
-   - DGgi.DZONE's static part is [0x177f88, 0x5c8710) (DGgi.v:514); DGgi.IZONE is [IAL_LO, IAL_HI) + [IAL_FLAG, +4)
-     (DGgi.v:516);
+   - DGgi.DZONE's static part is [0x177f88, 0x5c8710) (DGgi.v:515); DGgi.IZONE is [IAL_LO, IAL_HI) + [IAL_FLAG, +4)
+     (DGgi.v:517);
    - the image window [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x5fb000) (AF0x.v:25,37), so TFIB_IMG_END / 8 = 0xbf600
      as at cgif; AB13.tfib_rom_all covers it.
    One closed lemma per premise; CfImg / CfParams stay generic (no premise reads them). *)

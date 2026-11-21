@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
@@ -16,7 +17,7 @@ Definition BPH := AsanUbsan.M.phdrs.
 
 (* [comment removed for export] *)
 Definition BOTH_H : atable :=
-  {| img_lo := 0x10000; img_hi := 0x684000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x684000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ee78; rw_lo := 0x119000; rw_len := 0x56b000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x86370; x_imemcpy := 0x862f4; x_memset := 0x111eb8; x_memcpy := 0x111ab4; x_memiszero := 0x868a0;
      x_istrncpy := 0x8679c; x_sealed := 0x11be5; x_popfree := 0x55528; x_smear := 0x87a9c;
@@ -25,7 +26,9 @@ Definition BOTH_H : atable :=
      stops_more := [0x5319c; 0x547c0; 0x75d08; 0x7c850; 0x7c864; 0x7c878; 0x823ec; 0x824bc; 0x90f80; 0x91e8c; 0x9201c; 0x9218c; 0x9bd80] |}.
 
 Definition BLIMIT : Z := target_alloc_limit.
-Definition bhinit : acs := init_acs_of BOTH_H.
+(* LPS 727298f3: the start state of a run whose kernel build's CONFIG_RSEQ is [r] (0/1),
+   [AsanPlanCore.init_acs_r]; the start-up certificate is checked at both values. *)
+Definition bhinit (r : Z) : acs := init_acs_r r BOTH_H.
 
 (* [comment removed for export] *)
 Definition res_code (r : cres) : Z := match r with COk _ => -1 | CErr c _ _ => c end.

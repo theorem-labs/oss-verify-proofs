@@ -1,6 +1,6 @@
 (* crtB_cuts: the cut points of the cgif-form walk of check_round_trip (image B), as Props, so that the walk is
    proved in five independent pieces that fit together without being re-stated.  Twin of lib/A/Prog/crtA_cuts.v
-   (a working branch ae1529ccb00): the same names and the same backward-chain form, image
+   (a working branch): the same names and the same backward-chain form, image
    B's registers, frame and offsets.
 
    The walk runs backwards, in cgif's own style (origin/ossv/recipes proofs/cgif/cgif_file_fuzzer/lib/A/ACey.v:270
@@ -253,7 +253,7 @@ Definition crtB_rules : Prop :=
 
 (* ---- the five pieces ---- *)
 (* PROLOGUE + ALLOCATOR CALLS (a Theorem Labs lane): CRT_ENTRY .. CRT_RET_CALLOC.  It concludes the frozen statement's own
-   contract dec_check_round_trip_cg (a working branch 7bdd511d726), and takes the
+   contract dec_check_round_trip_cg (a working branch), and takes the
    scoped read-only fact over the cuts' RO_RD that crtB_pre carries; the close discharges it at RO_RD := DEC_RO_RD
    by the statement's dec_ro_rd_scoped. *)
 Definition crtB_entry_stmt : Prop :=

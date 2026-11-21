@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value ENTRY segment (C0): the INVARIANT TRANSPORT the segment lemma
    exvB_entry (lib/B/Prog/ExvB_Entry.v, ExvEntry) cites to move EXV_PRE's facts from the entry state to the C1 cut
    (after frame_alloc_1, the frame stores and the ex_ws call). Pure transport: no symbolic run, no engine file.

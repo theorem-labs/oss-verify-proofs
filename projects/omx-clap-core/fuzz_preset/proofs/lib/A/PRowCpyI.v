@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A (ASan build, #102 A' pin 1be0f53d96cb, unstripped twin bff8519bbe3e; donor pin d83eb25d; A/AB1v.v Asan tfibsegs): the memcpy interceptor (__wrap_memcpy trampoline -> ___interceptor_memcpy) over the generic allocator relation ARx with the
    ghost head list hps, plus the memnorm keep - c-libc-stdio's restatement (route (a), the snprintf chain's kind) of
    preset's cgif-relocated walk lib/A/AE31.v (memcpy_icpt_realizes, form AR), for the row texts YGcallMxmn.aintrin_realizes_xm
@@ -20,8 +21,8 @@
    whose variables are theirs (their Local Notations named AE30.v's lemmas at these variables; here the names are
    this Section's own lemmas). Image numerals: only those of the copied text (MC_SCR, the pc literal of the
    theorem), each as AE31.v / AE30.v state them.
-   #102 A' (c-libc-stdio rows102): this file is origin/cold/c-libc-stdio-rows-cpy 532cf8bd849e's lib/A/PRowCpyI.v (blob 71e03459976d),
-   relocated to A' by the frozen alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9; old twin f0d2e8d4, new twin
+   #102 A' (c-libc-stdio rows102): this file is a commit's lib/A/PRowCpyI.v (blob 71e03459976d),
+   relocated to A' by the frozen alreloc c4338d099cfb8025 (old twin f0d2e8d4, new twin
    bff8519bbe3e): 33 numerals moved by symbol + offset (__asan_region_is_poisoned+0x174 -> 349212, 32 times;
    __wrap_memcpy -> 0x523e0); the 36 instruction words (icpt_ld8 operands 505731 / 538627) kept by --resolve and the bound 0x200000 kept. The code part comes from the tree's A' lib/A/AE30.v
    (blob 9c4b7c69956c) over the #102 image record A/AB1v.v 5c16133beeff, A/AF0l.v dfca6bb1a8d7, A/AF0m.v 97f423adf6eb, A/AE34.v 5cbf1e87dd38, A/AE2y.v 5c090820312f.

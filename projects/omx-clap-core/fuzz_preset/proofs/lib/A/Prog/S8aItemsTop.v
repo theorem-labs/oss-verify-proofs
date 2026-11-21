@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module names changed; 61 of its 100 lines of code are new or changed and 475 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102, pin 1be0f53d, unstripped twin bff8519b): PIECES 7 + 8 INSTANTIATED.
    The one file that Requires the piece-7 sub-lanes' segment files (S8aP7a: SEG 2 and p7a_mid_call, S8aP7b: SEG 3,
    S8aP7c: SEG 1) together with S8aItemsWalk.v (FRAME kit, SEG 4, the array path, the composition ev7_step_of, piece 8),
@@ -13,13 +14,13 @@
    - LAWS: AR_laws_x SEGS B ARx cf_head, the allocator invariant's laws at the harness head length; h-mani-a8 /
      c-omx-alloc; at ARx := ARcf discharged by YGcallcf.v's AR_laws_x_cf (from AR_laws_cf).
    - WS = ev_ws_loop_spec_FIX: the inlined whitespace loop with its raw-frame conjunct; WalkS8a; CLOSED: proved in
-     each file as `WS` by S8aWs.ev_ws_loop (ws-rawframe 91e4dffbfb7, Qed, its only hypothesis LAWS).
+     each file as `WS` by S8aWs.ev_ws_loop (ws-rawframe, Qed, its only hypothesis LAWS).
    - PSTI: alloc.c's statics (prh_pst) are image bytes; a Theorem Labs lane; true at prh_img_A, open as a text.
    - STR: the ex_string text tex_string_specX at every float state; S8b; open (the ex_string walk).
    - SCMP: the strcmp row at __wrap_strcmp, every float state, in its xrom form YGcallMxmn.astrcmp_realizes_xrom
      (arodata_okP premise, memnorm keep last); c-libc-stdio. HYPOTHESIS CHANGE (stronger: adds the memnorm keep;
      arodata_okP form; was YGcallMx.astrcmp_realizes_x). Supplier ps_strcmp_xrom_A @ c-libc-stdio-presetstr-ro
-     45e489ec67c7 (lib/A/PSstrRo.v:64). ONE arodata_okP HOME: the engine of record (s1b bb085d091bbe, YGcallMxmn blob
+     (lib/A/PSstrRo.v:65). ONE arodata_okP HOME: the engine of record (s1b, YGcallMxmn blob
      b47cf7942c3d) and the supplier both cite PresetRodata.arodata_okP (lib/Spec/PresetRodata.v 4eb7e95e7e93). LINKS:
      ps_strcmp_xrom_A type-checks at SCMP's text at ARx := ARcf SEGS B (a scratch lemma, Qed, over the OLD-PIN tree
      with the supplier's files by path; not re-run on #102 here). The walk feeds SCMP's arodata_okP premise from
@@ -53,7 +54,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK04
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG0v.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YI16 YG0p YK0o YCbqG.
-(* The caller-window call rule is YCbqGcallW.v's aj_call_xWF (the engine set of walkkit b77223726823; WalkS4's
+(* The caller-window call rule is YCbqGcallW.v's aj_call_xWF (the engine set of walkkit; WalkS4's
    PRW_CallerJ.v, landed in Reusable, over YCbqG's own fp_sub_x). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0d YP0c YC80 YPsym YC4aP YC1fP YC80x YC1fPx.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YImgTop YGcfNames YG0dcf YGcallMx FCiface.
@@ -92,7 +93,7 @@ Context {RL : PrhRoomLive}.
 (* the kit's allocator laws at ARx, at the harness head length cf_head (YCbqG.v journal 83da015952be; at ARx := ARcf
    this is YGcallcf.v's AR_laws_x_cf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe 91e4dffbfb7),
+(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe),
    whose only Section hypothesis is LAWS *)
 Lemma WS : ev_ws_loop_spec_FIX (fx := fx) (L := A_prog_listing) (PA := PA) B ARx SK.
 Proof. exact (S8aWs.ev_ws_loop B ARx SK LAWS). Qed.
@@ -107,7 +108,7 @@ Hypothesis STR : forall fxc : YK11.FPState,
   tex_string_specX (fx := fxc) (cp := cp) (L := A_prog_listing) (PA := PA) B ARx SK.
 (* STAND-IN, owner c-libc-stdio: the strcmp row at __wrap_strcmp, at every float state, in its xrom form (arodata_okP
    premise, memnorm keep). HYPOTHESIS CHANGE (stronger: adds the memnorm keep; arodata_okP form). Supplier
-   ps_strcmp_xrom_A @ c-libc-stdio-presetstr-ro 45e489ec67c7; it and the engine of record (s1b bb085d091bbe, YGcallMxmn
+   ps_strcmp_xrom_A @ c-libc-stdio-presetstr-ro; it and the engine of record (s1b, YGcallMxmn
    blob b47cf7942c3d) cite the one home PresetRodata.arodata_okP; it type-checks at this text at ARx := ARcf SEGS B. *)
 Hypothesis SCMP : forall fxc : YK11.FPState, YGcallMxmn.astrcmp_realizes_xrom (fx := fxc) SEGS B ARx
   (@pa_relro_lo _ A_prog_listing PA) (@pa_relro_hi _ A_prog_listing PA) (SIGMA AS___wrap_strcmp).

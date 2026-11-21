@@ -3,19 +3,20 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the first segment of check_reply's walk (fuzz_command.asan, 0x86d78), from the
    entry to the memchr call 0x86ef8 (cr_s1 : CR_MC_stmt -> CR_ENTRY_stmt, lib/A/Prog/check_reply_m.v), ported from
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close) at
-   c8557374ad2e, with the class-1 side-stack frame steps of A/ACa2.v (cgif_raw_addframe) and A/AChf.v (flushFrame):
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close),
+   with the class-1 side-stack frame steps of A/ACa2.v (cgif_raw_addframe) and A/AChf.v (flushFrame):
    the entry seed cr_entry (check_reply_k.v); a token run over the prologue to the call of __asan_stack_malloc_1; the
    call through aj_stack_malloc_atS; the state after it (the kept stack and GOT regions, the frame F as a0's atom 46,
    fresh atoms 58 = F's flag cell and 59 = F's shadow, the frame's header, tail and shadow, g_rec's GOT word and
    fields, the reply's NUL byte); a plain run over the frame set-up; the frame's shadow made read-only and a token run
    over the inline checks #1..#4 to 0x86ef8; there the registers and the regions' fields give cr_mid and cr_regs_at. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s1.v, with its module paths, module names and numbers changed; 673 of its 801 lines of code are new or changed and 399 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/reac_segconf_declared_s1.v (commit 6121a10279e4).
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/reac_segconf_declared_s1.v.
    Segment S1 of the image-B walk of reac_segconf_declared (fuzz_segconf.asan-ubsan, entry 0x89e7c; the interface is
    reac_segconf_declared_d.v): from the entry to the loop head KL (0x8a000) at pass 0, or to the join KX (0x8a0fc)
    when c->n <= 0. Written against image B's code, in the form of plugin-hostd/fuzz_command's
-   lib/B/Prog/check_reply_s1.v (origin/ossv/recipes 501c0d516c69: entry seed, prologue token run, the class-1 frame
+   lib/B/Prog/check_reply_s1.v (entry seed, prologue token run, the class-1 frame
    call through aj_stack_malloc_atS, the state after it, a plain run over the frame set-up, the frame's shadow made
    read-only, a token run) and of this unit's lib/B/Prog/check_segments_s1.v (the entry seed over the
    position-abstract listing, the fold of UBSan's alignment test, `blez` on c->n). Image B differs from image A by

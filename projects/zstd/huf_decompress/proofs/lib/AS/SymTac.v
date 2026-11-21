@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (14 recorded proofs replaced by written proofs (regs_ok_pins, alu64_add_0, aluw_add_0 and 11 more)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -39,7 +40,12 @@ Definition pins_ok (E : env) (regs : bvmap 5 word) (ps : list (reg * expr))
 Lemma regs_ok_pins : forall E ps sr regs,
   regs_ok E sr regs -> pins_ok E regs ps -> regs_ok E (sr_pins ps sr) regs.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "p'0h01Hh11pi001ph24regsh32srh42Hhh52Hth62e0h71li011lh82H0h93Heqh:2Hph;2Hrh<2psh=1Eh>2IHh?1ah@1ei021ehA3ps'hB1rhC4resti031bi041xp;1p;2p;3p;6p;7p;5p;4p-1R0g0000R1p4p710p8P0g000QR2p4p710p8P0P2p4p7210p8g000nj14Tg001Sj1NTg0028j1=Tg002Vj1<Tg0039R0j2MTg003YR3j1ATg0049j2ITg004ej30Tg005\j35Tg006Rj28Tg007Hj1BTg007hj37TP2j3;Tg008Hj3:Tg008ej31Tg009?j6LTg009[j2KTP1j39Tg00::j6>Tg00:Wj1GTg00;Kj3FTg00<Aj7ETg00=<j6?Tg00=Zj2DTg00>4j5HTg00>Vj4@Tg00?6j2CTg00?kj2JTf4R2f3R4g00@aR5f2R6f1R7C@f0R837p=21C461J78512p=3P6P5P7P8C@p=6g00AWg00BJ#4R9#N#=R:#<R;/M5R<#AR=P<%A5R>%49#4#4#4#4#=#<R9,I:R:A0278f5R??574f6R@1824RA;06[[]2]3X<=A0478%B<RB9527P7W:W;X2:X3>P0P;P5A0@78f7R0?574f8RC?0A6[[^2:^3>A0078A7<?2RD95C7f9REA7<@?RF/84;06[[^2:^3>[^7=P8A0E78f:RG?574f;RH?0A6[[^2:^3>A0G78P<P;P@P?P2D295H7P1P<P9P4A;;58R1f=RAA:;58RID3X1<P<P;PEPCP0D2RJ91=7f?RKP<P;PGPEPCD2/8@;0?RL[P8P<P;P0P@P?D2RM91=BP<P;PCP0P@D2RN91=BP=PBP3P<p-0P8g00Bog00CKRBn10110100020020000000X6=g00ChPJP8ELPB1KL8b8W0P8O1W0P9PCA;;57RLfBRBA:;57ROD3P9PGP1fDRPPID3X1<=9<7A7<46P<P;PKf>RQPAD251=A7<24P<P;f@RAPKPQD251=P=P=P3P<P=P8P?P8n10110100020020100101X6=PDP<P;fARDPAPKD2P8E>A1=2KP=P<P3P<P<P8P0P7n10110100020020100101X6=PFA6;BDRD=7<AP7E>A1<@DfCRD=6;B91<0P8A6;PD91<CP<fER0=6;PA1=EPR@P9PBPLfLRLPOD3P9PPP1fNROPID3X1<RA=9<HP<P;fIRHfHRFfGR3D2/80=0OPRK]5]4[X1<A1=CDP8P@P=P0P9PDA6;F3R@9;;5fMA:;5@D3P9P0P1fOR1PID3X1<=9<7P<P;fJPHPFD2fFRI'8=010]5]4X7=P9PBA6;3IR39;;5PLA:;53D3A9<AIPI%GH=F0FPPPOP0PPPHPFPDP7FEP8O4PKeW5W4PGP8E?b8W0PEP8E?b0W9P8O1b0P8O1b0W9P8P6P7O3W0W5W4XA=X1<P4P6P7P8O4n200210100000020041104101000000A1=8N18J?=0Q2[X7=PMO1P81D=NO1b0W:W;X2:X3>W>XC=X@5XB;P7P8O2n2001100000121103102X?<P8DHW<W=o"). Qed.
+  intros E ps. induction ps as [|[r e] rest IH]; intros sr regs Hr Hp;
+    [exact Hr|].
+  unfold pins_ok in Hp. inversion Hp as [|p ps' Hh Ht Heq]; subst.
+  cbn [fst snd] in Hh. cbn [sr_pins].
+  apply IH; [apply regs_ok_pin; [exact Hr | exact Hh] | exact Ht].
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -48,51 +54,60 @@ ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "p'0h01Hh11pi001ph24regsh32srh4
 (* [comment removed for export] *)
 Lemma alu64_add_0 : forall x : word, alu64 ALU_ADD x (Z_to_bv 64 0) = x.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01bh11xp;1p;2p;3p;6g000nj10Tg0028j19Tg002Vj12Tg00DDj21Tg00Djj28Tg008ej37Tg00E`j13Tg00FYj34Tg00GAj25Tg00=<j66Tg00BJ#0#0#0#0#0#0#9R0#2R1P1f0R2g00H9,10R0'8f19712X01%32g00HW?4201520E6W1o"). Qed.
+  intro x. rewrite alu_add. change (v_add x (Z_to_bv 64 0)) with (v_addi x 0).
+  apply v_addi_0.
+Qed.
 
 (* [comment removed for export] *)
 Lemma aluw_add_0 : forall x : word,
   sext 64 (alu32 ALU_ADD (low32 x) (low32 (Z_to_bv 64 0))) = v_lw x.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01bh11xp;1p;2p;3p;6g000nj10Tg0028j18Tg002Vj13Tg00DDj22Tg00ICj11Tg00Ikj37Tg00JSj36Tg00K>j1<Tg008ej35Tg00L3j1;Tg00Lkj19Tg00=<j64Tg00Mfj1:Tg00BJ#0#0#0#0#0R0#0#8R1#3R2%80R0#3R3g00H9R4,20R5g00HWR6f1R7#1f0R8379601%<7R7552X03P3%18R9A6018=527X03%;8A7695%99E41214#1%:4E4W1o"). Qed.
+  intro x. rewrite low32_lit.
+  change (Z_to_bv 32 0) with (@Z_to_bv 32 0).
+  rewrite alu32_add_0. apply b_lw_val.
+Qed.
 
 (* [comment removed for export] *)
 Lemma aluw_addi_lit : forall (a : word) (k : Z),
   sext 64 (alu32 ALU_ADD (low32 a) (low32 (Z_to_bv 64 k))) = v_addiw a k.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01zh12b1h22b2h31nh41Hh57__arithh64__ffh78__varmaph85__with91ah:1kp;1p;3p;2p;4p;7p;8p;6p;<g000nj17Tg0028j1ATg002Vj16Tg008ej39Tg00N_j20Tg00OIj3VTg00ICj1;Tg00DDj2:Tg00Ikj3>Tg00JSj3ETg00Omj2CTg00Pej22Tg00QLj21j1XTg00R2j24Tg00=Zj28Tg00ROj3WTg00STR0j2UTg00T0j1?Tg00TNR1j2TTg007Hj1LTg003Yj1KTg00Tjj1ITg00UHj1HTg00Ufj1GTg00VQj2=Tg00W4j4FTg00W_j7JTg00XCj2DTg00Xej2NTg00YQj3OTg00Z0j4PTg00Zbj4QTg00[Mj4RTg00\;j3BTg00]@j2STg00^?j2<Tg00^nj1@Tg00_mj3^Tg00`Rj3]Tg00a@j8\Tg00a]j1[Tg00=<j6ZTg00b]l<YTg00cBR2f1R3f0R439p=3P2f4R5f3R6f2R7P3P4EZp=5g00c`R8P2P0g00d>P1g00d\f5P5P6P7P3P4M<Yp=Mg00BJ#7#7#7#7#7R1#7R0#AR9#6%64R:%63R;g00e<%67?93410671063'3R<[10731074'3%66?973[R=%65?967\<AV734P4n2001000000120000000W2W1X38P=^2;^1:^38P4P9%A1R8g00HWR:%;7R;1:93R=#;R<3>R57E9R>1C73R?1085,28R@,191096RA/47,28RB,:9,09,34X021097RC/43,28RD,19%;61:97#;R65>:,08,28,19/34X02P2P2%X9R:P:P@PDP2\2/8:108;R:108<R@'4,181284/3BX02118CRE1086,44,18,28/3BX02109=R6,18118ARF/44,18,28/3BX021193RG1184,4F,18,28/3BX02118GRG,4ERE,28RF134BX02RH14CG,28PH1183RI14A4,28/3BX02PDPH182D14CI,28AW8C3D5PGP8P9P31U89%?1R1%?0R0'TRIP8P11821P9P01820EMg00eWRH#L%KH%I2%H2%G2RHg00fCg00fbRBPBg00gBRBP21=21g00gb1=20CFg00hIFJ1DHBP4P7g00hiRBg00iIRH'81N47=9BHdg00H9=O23CPb6b7b8PIP4b5CQCRD5PFAB8CGD5118E,281S8ED5P61<93D5P@%@=D5P:%@7D5A^8;<,08A]8;<D5G\1:9D,091<9DD5109>R>%[5D5109?,3>eO4b4X:2W9o"). Qed.
+  intros a k. apply bv_eq. unfold v_addiw.
+  rewrite sext32_unsigned, !Z_to_bv_unsigned. f_equal.
+  change (alu32 ALU_ADD (low32 a) (low32 (Z_to_bv 64 k)))
+    with (low32 a + low32 (Z_to_bv 64 k)).
+  rewrite bv_add_unsigned, !low32_unsigned, Z_to_bv_unsigned.
+  rewrite bv_swrap_wrap', bv_swrap_add_idemp_l.
+  rewrite (bv_wrap_bv_wrap 32 64 k) by lia.
+  rewrite bv_swrap_add_idemp_r. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma bdenot_var : forall E n, bdenot E (SBVar n) = E n.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01Eh11np;1p;2g000nj10Tg0028j13Tg002Vj12Tg00=Zj21Tg00AWg00iig00BJ#0#0#0#0#0#0#3#2f1f0O1'1W1W0o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma bdenot_lit : forall E, bdenot E SBLit = Z_to_bv 64 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01Ep;1p;2g000nj10Tg0028j14Tg002Vj12Tg00DDj21Tg00=Zj23Tg00AWg00BJ#0#0#0#0#0#0#4R0#2g00H9,10'3W0o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma edenot_lit : forall E z, edenot E (ELit z) = Z_to_bv 64 z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01Eh11zp;1p;2g000nj10Tg0028j14Tg002Vj12Tg00DDj21Tg00=Zj23Tg00AWg00cBg00BJ#0#0#0#0#0#0#4R0#2f0,10'3W1W0o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma edenot_var : forall E n, edenot E (EVar n) = E n.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01Eh11np;1p;2g000nj10Tg0028j13Tg002Vj12Tg00=Zj21Tg00AWg00iig00BJ#0#0#0#0#0#0#3#2f1f0O1'1W1W0o"). Qed.
+Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Lemma v_addi_Z : forall (x : word) (i : Z),
   v_addi x i = Z_to_bv 64 (bv_unsigned x + i).
-Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01ih11xp;1p;2g000nj10Tg0028j16Tg002Vj12Tg00N_j21Tg00R2j25Tg00DDj24Tg00=Zj23Tg00BJ#0#0#0#0#0#0#6R0#2R1g00cBf1,10f0'5,40,31W0W1o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma adenot_var : forall E n k,
   adenot E (SA (SBVar n) k) = Z_to_bv 64 (bv_unsigned (E n) + k).
-Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01Eh11kh21np;1p;2g000nj10Tg0028j16Tg002Vj12Tg00N_j21Tg00R2j25Tg00DDj24Tg00=Zj23Tg00AWg00iig00cBg00BJ#0#0#0#0#0#0#6R0#2f2f1O1,10f0'5,40'3W1W2W0o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma adenot_lit : forall E k, adenot E (SA SBLit k) = Z_to_bv 64 k.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP1"] "h01Eh11bh21kh31zp;1p;2p;3p;6g000nj10Tg0028j1?Tg002Vj18Tg00DDj21Tg00N_j2>Tg00R2j25Tg008ej32Tg00=Zj27Tg00=<j63Tg00jHj24Tg00k?j26Tg00l6j29Tg00lmj1:Tg00mcj2=Tg00nYj1<Tg00oNj2;Tg00AWg00cBR0g00BJ#0#0#0#0#0#0#?R1#8R2g00H9R3,11R4,>1R5f0R6'5,11f1R7,11R89226X12P0P31567,11=228X301116R1,72P5g010DE314461646E3g011A/96R6#:,=7%<6'4=221e1;76=221eW2W0o"). Qed.
+  intros E k. unfold adenot. cbn [a_base a_off bdenot].
+  rewrite v_addi_Z, u_Z_to_bv64_0; f_equal; lia.
+Qed.
 
 (* [comment removed for export] *)
 End WithFP1.
@@ -197,20 +212,27 @@ Context {fx : FPState}.
 Lemma msteps_to_exit : forall segs code ms ms',
   msteps segs ms ms' -> to_exit segs code ms' -> to_exit segs code ms.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP9"] "h02msh11Hh23ms'h32Heh43Hmsh52Hph62Hsh72IHh84codeh93ms1h:3ms2h;4segsp;1p;3p;2p;7g003Yj1>Tg000nj10Tg0028j17Tg002Vj14Tg0128j33Tg012oj31Tg013hj1;Tg014Jj16Tg015Pj15Tg008ej32Tg0162j18Tg017:j29Tg0186j2:Tg019>j7=Tg01:7j7<Tg01;0#>g00BJ#0#0#0#0#0#0#7#4R0g01;oR1f3R2f1R3f0R433f4R5f6R6f5R7;14f7R8f2R9716[X21X01A1754P4W1X01%;0%69%5032%81f8/921:1932f9R0?329f:R:?102f;R0?1:7[A10:5f<P0P8P6P5P2P3P4O1F=W3W7W4W6W5X:1X91X01P9P3P4F<W1X21W0W8W;o"). Qed.
+  intros segs code ms ms' H; induction H as [|ms ms1 ms2 Hp Hs Hms IH]; [auto|].
+  intro He. eapply te_step; eauto.
+Qed.
 
 Lemma msteps_to_wr : forall segs LH bs ms ms',
   msteps segs ms ms' ->
   StreamSim.to_wr segs LH bs ms' -> StreamSim.to_wr segs LH bs ms.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP9"] "h02msh11Hh23ms'h33Hmsh42Hph52Hsh62Hwh72IHh82LHh92bsh:3ms1h;3ms2h<4segsp;1p;3p;4p;2p;8p;7g003Yj16Tg000nj11Tg0028j13Tg002Vj12Tg0128j35Tg01=6j40Tg013hj1<Tg014Jj1;Tg015Pj1:Tg008ej34Tg0162j17Tg017:j28Tg0186j29Tg01=oj8>Tg01:7j7=Tg01;0#6g01;oR0p-0[g00BJ#1#1#1R1#3#2#6f4R2f1R3f0R435f5R5f7R6f6R7P5P4C0f8P6P7f2R8C0[X20X00P7P5P2P4C0P4W1X00%11#1#1#3#2R1#<%;8%:134%70f9R1f3R9'8190834f:R:?598f;R;P:P1P9C0f<R1P;P:P5C0[P1P;P:P2C0f=P1P;P6P7P2P9P3P4O1G>W6W7W3W5W4X;0X:0X00P8P3P4F=W1X20X00W9W8W<o"). Qed.
+  intros segs LH bs ms ms' H; induction H as [|ms ms1 ms2 Hp Hs Hms IH];
+    [auto|].
+  intro Hw. eapply StreamSim.twr_step; eauto.
+Qed.
 
 (* [comment removed for export] *)
 Lemma msteps_lh_next : forall segs LH ms ms',
   msteps segs ms ms' ->
   StreamSim.lh_next segs LH ms' -> StreamSim.lh_next segs LH ms.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP9"] "p'0h03ms'h12H0h21Hh32HLh42Hmh52LHh61mh72msh84segsi001xp;1p;3p;2p;6p;4g003Yj16Tg0128j30Tg01>hj32Tg00e<R0j21Tg01?aj65Tg01@\j44Tg01A7j43Tg01;0#6g01;oR1p-0[f3R2f1R3f0R430f4R5?223g01AQP1f6R6?024f5R7P4O1'1X01A2675P4f8R8?074f7P4O1'1P0f9R0?063P8P3O1f:R6?208P4f;R9?082P9P5O1P1f>f<R5;04f=R8P4O1'1X01P7A0897P5P7O1P8P9P6P7P0P3E5P4C4C3W3W4P3P4O2n2001000000120000000W1X61P3P4O2n2001000000120100000W1W2X01X71W5W8o"). Qed.
+  intros segs LH ms ms' H (m & Hm & HL). exists m. split; [|exact HL].
+  eapply msteps_trans; eauto.
+Qed.
 
 (* [comment removed for export] *)
 End WithFP9.

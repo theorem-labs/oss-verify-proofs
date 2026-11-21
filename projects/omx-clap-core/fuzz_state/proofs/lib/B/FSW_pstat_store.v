@@ -12,7 +12,7 @@
    says an in-image byte is owned exactly when it is in as_owned_static B, and fs_img_facts' first conjunct
    (FSH_Gen.v fs_img_facts_at, projection fs_pstat_not_owned; lib/B/FSH_Rt.v instantiates it at B's FS_PSTAT_FP) says
    no static byte is. This file proves only the AR side of a store; the journal side is the core's awr_byte static arm.
-   ported from: lib/A/FSW_pstat_store.v (a working branch a402e796fc1 = another working branch's bc4cbdce0f5 +
+   ported from: lib/A/FSW_pstat_store.v (a working branch = another working branch's +
    the SINK GUARD), proofs unchanged; changed only the image (Asan -> AsanUbsan, lib/A/AB1v -> lib/B/YB1v) and the
    build files (lib/A/FSH_Base, FSH_Rt, FSPstat -> lib/B's). No rename. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

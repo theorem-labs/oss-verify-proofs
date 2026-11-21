@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (lept_fuzz_call's vDSO premise and kept mmap base; the stack image over the launch input ProcInput, with aux_env_intro's launch facts; the m_channel_reader premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require ZArith.
@@ -403,7 +404,7 @@ Proof. rewrite RK_colorfill_val. pose proof RB_colorfill_le. unfold FUZZ_CALLS, 
 Theorem lept_fuzz_call : @fuzz_call_contract AL CL ASR.
 Proof.
   unfold fuzz_call_contract.
-  intros fx A m md regs dptr size pl ret sp0 argv envp S Hinv Hpure Henv Ha0 Ha1 Hsz Hsz26 Hlive Hz0 Hpl Hempty Hal16 Hra Hret Hgp Htp Hsp16 Htop Hsp0 Hsp0hi Hisw Hwin Hsev Hpmm Hhdl Hgot kR bR Hrm Hrk Hrb K.
+  intros fx A m md regs dptr size pl ret sp0 argv envp S Hinv Hpure Hvd Henv Ha0 Ha1 Hsz Hsz26 Hlive Hz0 Hpl Hempty Hal16 Hra Hret Hgp Htp Hsp16 Htop Hsp0 Hsp0hi Hisw Hwin Hsev Hpmm Hhdl Hgot kR bR Hrm Hrk Hrb K.
   pose proof fuzz_calls_nonneg as FZc. pose proof fuzz_covers as [FZk FZb].
   pose proof (fuzz_margin_bound size ltac:(lia)) as FZm. pose proof (FZb size ltac:(lia)) as FZb'.
   assert (RKd : (0 <= RK_deser)%Z /\ (0 <= RB_deser)%Z /\ (0 <= RK_cf)%Z /\ (0 <= RB_cf)%Z /\ RK_colorfill = (RK_deser + RK_cf)%Z /\ RB_colorfill = (RB_deser + RB_cf)%Z)
@@ -449,7 +450,7 @@ Proof.
     - intros a _ _ _ _ NW. apply OUT3. lia.
     - intros q k i L Hi. apply OUT3. destruct (BLK q k i L Hi) as [_ X]. lia.
     - intros a Hx. right; right. exact (GR3 a Hx).
-    - reflexivity. - reflexivity. - reflexivity. - reflexivity.
+    - reflexivity. - reflexivity. - reflexivity. - reflexivity. - reflexivity.
     - apply (aroom_mono A (m_vmmaps md) kR bR); [exact Hrm | lia | lia]. }
   (* [comment removed for export] *)
   assert (SOKh : store_ok SEGS m (Z_to_bv 64 0x21818) 8 = true) by exact Hhdl.
@@ -467,7 +468,8 @@ Proof.
       all: destruct (Z_lt_ge_dec (u a) 0x21818); [exfalso; apply NE; apply OUT1; lia|].
       all: destruct (Z_lt_ge_dec (u a) (0x21818 + 8)); [right; unfold hcell; cbn; lia | exfalso; apply NE; apply OUT1; lia].
     - exact GR1.
-    - rewrite pu8_segs. subst m1. cbn [ll_hcell ll_devnull LLU8]. apply rdn_wbytes_hit8. rewrite u_Z2bv by lia. lia. }
+    - rewrite pu8_segs. subst m1. cbn [ll_hcell ll_devnull LLU8]. apply rdn_wbytes_hit8. rewrite u_Z2bv by lia. lia.
+    - exact Hvd. }
   assert (Ldp : live A (Z_to_bv 64 dp) = Some size) by (apply Hlive; lia).
   destruct (blk_range C A m1 md (Z_to_bv 64 dp) size CK HW1 Ldp ltac:(lia)) as [Gdp Tdp]. rewrite u_Z2bv in Gdp, Tdp by lia. rewrite Evm in Tdp.
   assert (PLD : payload C dp pl).
@@ -495,6 +497,7 @@ Proof.
     - destruct (w_vm _ _ _ _ HWf) as (V1 & V2 & V3 & V4). rewrite with_vmmaps_vmmaps in V2. exact V2.
     - destruct (w_vm _ _ _ _ HWf) as (V1 & V2 & V3 & V4). rewrite with_vmmaps_vmmaps in V3. exact V3.
     - destruct (w_vm _ _ _ _ HWf) as (V1 & V2 & V3 & V4). rewrite with_vmmaps_vmmaps in V4. exact V4.
+    - pose proof (w_mb _ _ _ _ HWf) as X. rewrite with_vmmaps_vmmaps in X. exact X.
     - exact HRf. }
   (* [comment removed for export] *)
   assert (TAIL : forall A' M vm' rr, W C A' M (with_vmmaps vm' md) -> live A' (Z_to_bv 64 0) = None ->
@@ -919,21 +922,23 @@ Proof.
     assert (Hal : (bv_unsigned sp0 mod 16 = 0)%Z) by exact (proj2 (proj2 Hvsp)).
     assert (LIBC : forall (a : Z) n, (0x31aa0 <= a)%Z -> (a + Z.of_nat n <= 0x51e68)%Z -> (a + Z.of_nat n <= 0x31acc \/ 0x31ad0 <= a)%Z ->
               (a + Z.of_nat n <= 0x51bb0 \/ 0x51dd0 <= a)%Z ->
-              rdn RSEGS M (Z_to_bv 64 a) n = rdn RSEGS (D_main sp0 [a0s; path] envv a_hwcap a_draw tid) (Z_to_bv 64 a) n).
+              rdn RSEGS M (Z_to_bv 64 a) n = rdn RSEGS (D_main sp0 (inpA [a0s; path] envv) a_draw tid) (Z_to_bv 64 a) n).
     { intros a n H1 H2 H3 H4. apply rdn_agree. intros j Hj. rewrite u_small by lia.
       rewrite HEl by (rewrite u_small by lia; lia).
       apply (main_entry_mem_data sp0 [a0s; path] envv tid regs0 mem0 ME). rewrite u_small, stack_max_size_val by lia. lia. }
     unfold mallocng_env. cbn [ml_segs A_NEED_LOCKS A_PAGE_SIZE A_LIBC A_GOT_SSP IMG_LO RW_LO LU8].
     split; [| split; [| split; [| split]]].
-    + assert (NL : D_main sp0 [a0s; path] envv a_hwcap a_draw tid (Z_to_bv 64 0x51dfb) = None).
-      { apply (D_main_none sp0 [a0s; path] envv a_hwcap a_draw tid 0x51dfb%Z Hva Hlo Hhi). vm_compute. reflexivity. }
+    + assert (NL : D_main sp0 (inpA [a0s; path] envv) a_draw tid (Z_to_bv 64 0x51dfb) = None).
+      { apply (D_main_none sp0 (inpA [a0s; path] envv) a_draw tid 0x51dfb%Z Hva Hlo Hhi). vm_compute. reflexivity. }
       rewrite (LIBC 0x51dfb%Z 1%nat) by (cbn; lia). rewrite <- need_locks_img. apply rdn_agree.
       intros j Hj. destruct j as [|j]; [| exfalso; lia].
       replace (bv_unsigned (Z_to_bv 64 0x51dfb) + Z.of_nat 0)%Z with 0x51dfb%Z by (rewrite u_small by lia; reflexivity).
       rewrite NL. reflexivity.
     + rewrite (LIBC 0x51e28%Z 8%nat) by (cbn; lia). rewrite (D_main_pagesize sp0 [a0s; path] envv tid Hva). reflexivity.
     + intros a Ha. apply HEr. left. rewrite u_small by lia. lia.
-    + apply (aux_env_intro RPH sp0 [a0s; path] envv a_uid a_hwcap a_draw M Hva Hve Hlo Hhi Hal).
+    + destruct (me_lau _ _ _ _ _ _ ME) as [brk Hlau].
+      apply (aux_env_intro (inpA [a0s; path] envv) a_mbase RPH (Z_to_bv 64 (Z.of_N Ubsan.M.init_pc)) sp0 brk a_draw M
+               Hva Hve (me_vl _ _ _ _ _ _ ME) Hlau Hlo Hhi Hal).
       * intros a Ha. rewrite HEa by exact Ha.
         rewrite (main_entry_mem_above sp0 [a0s; path] envv tid regs0 mem0 ME a Ha). apply wrap_above_sp. exact Ha.
       * cbn [ml_segs A_LIBC LU8]. change (bv_unsigned (Z_to_bv 64 0x51df8) + 8)%Z with 0x51e00%Z.
@@ -991,6 +996,8 @@ Theorem u8_realizes :
     valid_sp sp -> valid_brk Ubsan.M.loaded_segments brk -> (2 ^ 34 <= lim)%Z ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    in_channel_reader inp = true -> valid_launch inp ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase draw) inp ->
     realizes Ubsan.M.loaded_segments
       (init_config Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase draw lim inp)
       (spec (in_argv inp) (in_fs inp)).

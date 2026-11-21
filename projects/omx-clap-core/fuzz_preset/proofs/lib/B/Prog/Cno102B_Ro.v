@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1165 of its 1242 lines of code are new or changed and 437 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_E2.v, with its module paths and module names changed; 927 of its 1066 lines of code are new or changed and 1103 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved
    rule 24: proves no function (kind: segment lemma)
    fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30): the SHARED STEP KIT of the re-walk of
@@ -10,8 +11,8 @@
    Cno102B_R7.v) and the CB0-CB3 / CB8-CB9 / top hands cite it. THE PORT of image A''s lib/A/Prog/Cno102A_Ro.v
    (cn_ -> cnb_, ci_ -> bi_, cni_ -> cnbi_, CN_ -> CNB_, the ro_ helpers under their names) to B''s offsets,
    registers, slots and to the #102 texts.
-   INPUTS: THE KIT CUT a working branch 7cdbb61b5fa0, merged forward into the row at
-   a working branch 75415fdb6e76: the contract lib/B/Prog/Cno102B_Base.v 20c89a1d4da2 (cnb_pre
+   INPUTS: THE KIT CUT a working branch, merged forward into the row at
+   a working branch: the contract lib/B/Prog/Cno102B_Base.v 20c89a1d4da2 (cnb_pre
    CTX0 D with no DW and the entry wild_room, cnb_J D wk the budgeted journal, cnb_base .. k wk, cnb_mid, cnb_fo,
    cnb_slots, cnb_rcslot, cnb_core, cnb_img B, cnb_prog, cnb_S1_bounds / cnb_land_m32 cited, not restated); the cut's
    the kit texts: lib/A/PRH_FnAlloc.v 4d8aeba047e5 (tfuzz_alloc_ran_out_specX: the ledger `.. ran most own` with the same
@@ -25,7 +26,7 @@
    ajournal_x_materialize, the 25-field AR_laws_x read by its alx_* fields), YCbqGwild.v 0c63874858e4
    (ajournal_xw_rebase / ajournal_xw_unbase0, ajournal_xw_room, wild_room_le, wbudget_app), YCbqGcallW.v fb6aa11676a2
    (aj_call_xW); lib/A/Prog/PRW_StepKit.v 0df3991c13f4 (pa_slot_lt_ceil_b).
-   Re-fit history: 9bfc2ee2ce11 (caa965672d2 texts); 881db0c5c1ad (Batch 2: own after ran, carried by the ledger);
+   Re-fit history: (texts); (Batch 2: own after ran, carried by the ledger);
    a third fit (this file's blob 812ff405cc0e; the #102 kit: frm_zero at the callee's fpre; the progress lemmas); this one (the cut preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record): no
    DW, cnb_base's spent wild budget wk kept across the fixed callee fuzz_alloc_ran_out by rebase / aj_call_xW /
    unbase, the journal and the laws read by name, the budget lemmas, the tree's free order cnb_fo carried across a

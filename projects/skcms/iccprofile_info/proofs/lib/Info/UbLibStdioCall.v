@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, stdio_call_sound takes the channel-reader premise (m_channel_reader) of the stdio write. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -278,6 +279,11 @@ Theorem stdio_call_sound :
   rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
   rdn RSEGS M s (length extra) = Some extra ->
   fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+  (* LPS #38 (in 727298f3): [ReadWrite.write_spec]'s channel arm reads [m_channel_reader],
+     so [UbStdioWrite.ref_stdio_write] asks for it.  Placed immediately after the
+     [fd_lookup] premise and before [m_halted], the order [ref_stdio_write] itself uses
+     (UbStdioWrite.v:1178-1180). *)
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   K [] ->
   (forall R' M',
@@ -304,7 +310,7 @@ Proof.
   match type of Hc with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
   lazymatch type of Hc with Some ?x = Some _ => assert (Eres : res = x) by congruence end. clear Hc. subst res.
   cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn].
-  intros Hwbwp Hlenp Hlene Hmax H30 Dw Ds Hsl Hwp47 Rpend Rextra Hfdlk Hh Hlz HKnil HCONT.
+  intros Hwbwp Hlenp Hlene Hmax H30 Dw Ds Hsl Hwp47 Rpend Rextra Hfdlk Hcr Hh Hlz HKnil HCONT.
   set (wb := bv_unsigned (edenot E wbe)) in *. set (wp := bv_unsigned (edenot E wpe)) in *.
   set (s := edenot E (nth 11 sr (ELit 0))) in *. set (l := edenot E (nth 12 sr (ELit 0))) in *.
   set (su := bv_unsigned (edenot E (nth 2 sr (ELit 0)))) in *.
@@ -389,6 +395,7 @@ Proof.
     rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. unfold two64 in Hcgv. rewrite Hcgv. reflexivity.
   - apply orb_prop in Hfd12 as [H|H]; apply Z.eqb_eq in H; subst fd; lia.
   - exact Hfdlk.
+  - exact Hcr.
   - exact Hh.
   - exact Hlz.
   - lia.

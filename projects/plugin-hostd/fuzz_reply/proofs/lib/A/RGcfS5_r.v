@@ -1,6 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: relocated from fuzz_preset (commit d0fcb396eeeb); module paths changed and every image numeral moved by symbol + offset to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125). *)
+(* Modified by Theorem Labs, 2026-10: relocated from fuzz_preset; module paths changed and every image numeral moved by symbol + offset to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply.asan image A, realloc(NULL, n)'s prefix (segment S5, RGtop's seg_npre): the symbolic states of the walk
    from __wrap_realloc 0x53df0 to Allocator::Allocate's entry 0x31bd8 through asan_realloc's NULL-input arm
    (`beqz a0` 0x32570 taken, `jal Allocate` 0x325d4), seeded with a0 = 0 (A/RGcfS5_u.v SS0). The run helpers and the

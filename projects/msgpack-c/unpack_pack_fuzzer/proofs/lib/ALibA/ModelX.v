@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (m_channel_reader_MX, m_kernel_MX and m_channel_reader_strip for the model's new channel-reader and kernel-build fields). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALibA Require Import AcctCore.
@@ -33,8 +34,10 @@ Lemma m_vmmaps_MX : forall m mat, m_vmmaps (MX m mat) = m_vmmaps m.
 Proof. reflexivity. Qed.
 Lemma m_fds_MX : forall m mat, m_fds (MX m mat) = m_fds m. Proof. reflexivity. Qed.
 Lemma m_fs_MX : forall m mat, m_fs (MX m mat) = m_fs m. Proof. reflexivity. Qed.
+Lemma m_channel_reader_MX : forall m mat, m_channel_reader (MX m mat) = m_channel_reader m. Proof. reflexivity. Qed.
 Lemma m_tid_MX : forall m mat, m_tid (MX m mat) = m_tid m. Proof. reflexivity. Qed.
 Lemma m_halted_MX : forall m mat, m_halted (MX m mat) = m_halted m. Proof. reflexivity. Qed.
+Lemma m_kernel_MX : forall m mat, m_kernel (MX m mat) = m_kernel m. Proof. reflexivity. Qed.
 Lemma m_stdin_MX : forall m mat, m_stdin (MX m mat) = m_stdin m. Proof. reflexivity. Qed.
 Lemma nonlazy_bytes_MX : forall m mat, nonlazy_bytes (MX m mat) = nonlazy_bytes m. Proof. reflexivity. Qed.
 Lemma strip_MX : forall m mat, strip (MX m mat) = strip m. Proof. reflexivity. Qed.
@@ -60,4 +63,5 @@ Lemma m_fds_strip : forall m, m_fds (strip m) = m_fds m. Proof. reflexivity. Qed
 Lemma m_fs_strip : forall m, m_fs (strip m) = m_fs m. Proof. reflexivity. Qed.
 Lemma m_tid_strip : forall m, m_tid (strip m) = Some (Z_to_bv 64 1). Proof. reflexivity. Qed.
 Lemma m_halted_strip : forall m, m_halted (strip m) = m_halted m. Proof. reflexivity. Qed.
+Lemma m_channel_reader_strip : forall m, m_channel_reader (strip m) = m_channel_reader m. Proof. reflexivity. Qed.
 

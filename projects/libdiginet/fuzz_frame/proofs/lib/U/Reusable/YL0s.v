@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0s.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0s.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0s.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (md_inv_vm over fdchan's three conjuncts); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -150,8 +151,10 @@ Lemma run_env_post : forall E data buf k regs g, (48 <= k)%nat -> run_env E data
 Proof. intros E data buf k regs g Hk H. eapply run_env_agree; [exact Hk | apply post_env_agree | exact H]. Qed.
 Definition md_inv (fs : Fs) (md : Model) : Prop :=
 fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = fs.
+(* fdchan is THREE conjuncts at LPS cd320f53 (Common/CatSim.v:1521); the two-deep pattern left
+   m_channel_reader folded inside one hypothesis, so assumption had nothing to close it with. *)
 Lemma md_inv_vm : forall fs md vm, md_inv fs md -> md_inv fs (with_vmmaps vm md).
-Proof. intros fs md vm ([H1 H1'] & [H2 H2'] & H3). unfold md_inv, fdchan. autorewrite with model. repeat split; assumption. Qed.
+Proof. intros fs md vm ([H1 [H1' H1'']] & [H2 [H2' H2'']] & H3). unfold md_inv, fdchan. autorewrite with model. repeat split; assumption. Qed.
 Lemma md_inv_ex : forall fs md md', md_inv fs md -> (exists vm, md' = with_vmmaps vm md) -> md_inv fs md'.
 Proof. intros fs md md' H [vm ->]. apply md_inv_vm. exact H. Qed.
 Lemma md_inv_ch1 : forall fs md, md_inv fs md -> fdchan (Z_to_bv 64 1) ch_stdout md.

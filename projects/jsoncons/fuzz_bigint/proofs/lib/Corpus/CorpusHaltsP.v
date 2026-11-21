@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-11: made from the shape of projects/jsoncons/fuzz_ubjson_parser_max/proofs/lib/UbjsonPmHaltsS.v at c395a1e0dfa (its src_top, top_plain_closed and ubjson_pm_halts_plain), with that file's closing instance of src0_realizes_spec_heap replaced by the one of projects/jsoncons/fuzz_bigint/proofs/lib/BigintTopA.v:58-61 at the same commit, and the theorem renamed bigint_pm_halts_plain. *)
+(* Modified by Theorem Labs, 2026-11: made from the shape of projects/jsoncons/fuzz_ubjson_parser_max/proofs/lib/UbjsonPmHaltsS.v at theorem-labs/oss-verify-proofs@c5665593c2d8 (its src_top, top_plain_closed and ubjson_pm_halts_plain), with that file's closing instance of src0_realizes_spec_heap replaced by the one of projects/jsoncons/fuzz_bigint/proofs/lib/BigintTopA.v:58-61 at the same commit, and the theorem renamed bigint_pm_halts_plain. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the plain top takes the launch facts and the channel reader, and the cited source commit is named by its public id. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -26,8 +27,8 @@ Qed.
 
 Lemma top_plain_closed : top_plain cfg0 source_alloc_limit.
 Proof.
-  intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds _ _.
-  exact (src_top sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds).
+  intros sp brk mbase rdraw inp Hsp Hbrk Hmb _ Hvl Hlau Hrd Hargv Henvp Hfs Hcreds _ _.
+  exact (src_top sp brk mbase rdraw inp Hsp Hbrk Hmb Hvl Hlau Hargv Henvp Hfs Hcreds Hrd).
 Qed.
 
 Theorem bigint_pm_halts_plain :

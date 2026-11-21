@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: jsoncons/fuzz_bigint/plain_halts
+fingerprint: 2ca10bab587b8ff0026e3fd8ec3fc5fbe6270174a485a5d0c7eae361be6d9db9

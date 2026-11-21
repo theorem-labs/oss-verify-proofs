@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (region_side also unfolds MemSplit's wok_lo and stack_window_reach, the stack window's floor sp - 6,144,513). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -45,12 +46,17 @@ Ltac zlit :=
              end
          end.
 
-(* [comment removed for export] *)
+(** Side conditions of the [cmem] region lemmas and of [rdn_wbytes_out].
+    [wok_lo] is the window's image-independent floor
+    ([MemSplit.wok_lo]: [stack_max_size - stack_window_reach] below
+    [sp0]). *)
 Ltac region_side :=
-  unfold win_lo; rewrite ?stack_max_size_val, ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
+  unfold win_lo, wok_lo; rewrite ?stack_max_size_val;
+  unfold stack_window_reach;
+  rewrite ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
 
-(* [comment removed for export] *)
+(** Normalize the address of a load/store obligation. *)
 Ltac addr_norm :=
   gres; pin; imm_norm; rewrite ?v_addi_0; unfold v_addi, v_add; unorm; zlit.
 

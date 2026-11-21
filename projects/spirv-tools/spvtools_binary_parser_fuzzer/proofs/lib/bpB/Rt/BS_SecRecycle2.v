@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant's entries_nonzero conjunct). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BW_0Gc.
@@ -27,6 +28,57 @@ Section HCW.
 Local Unset Keyed Unification.
 
 Definition rs_L (L : list (word * word)) (a msz : Z) : list (word * word) := maps_subtract L a (a + msz).
+
+(* The model's munmap cuts [vm_maps] with [maps_subtract] over the unmapped range; on a ledger whose entries
+   all have positive size, whose entry based at [a] has size [n], and whose other entries miss [a, a+n), that
+   cut is the removal of the one entry.  Statement and proof: the model's own [iv_subtract_outside] and
+   [maps_subtract_exact] (theories/Common/MmapSim.v at LPS 727298f3), vendored because that directory is not
+   in this tree's dune theories. *)
+Lemma rs_iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma rs_maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - unfold bv_eqb in E. apply Z.eqb_eq in E. apply bv_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; unfold bv_eqb in E; rewrite Z.eqb_refl in E; discriminate).
+    rewrite (rs_iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
 
 Definition ps0_model (mo : Model) (a msz : Z) (mo' : Model) : Prop :=
   let h := m_vmmaps mo in let h' := m_vmmaps mo' in
@@ -134,6 +186,7 @@ Section SecRecycle2.
 
   Hypothesis NW : entries_nowrap (vm_maps (m_vmmaps mo)). Hypothesis NWA : entries_nowrap (vm_noaccess (m_vmmaps mo)).
   Hypothesis NOV : nooverlap (vm_maps (m_vmmaps mo)).
+  Hypothesis NZM : entries_nonzero (vm_maps (m_vmmaps mo)).
   Hypothesis NWL : entries_nowrap L.
 
   Hypothesis ZRSH : forall x : word, (sh AHI_LO <= bv_unsigned x < sh aceil \/ sh AIMG_TOP <= bv_unsigned x < sh ALOWSH_LO) -> in_rangesb x Zr = true.
@@ -377,6 +430,20 @@ Section SecRecycle2.
       unfold wz. rewrite !unsigned_lit by tlia.
       split. { eapply nonvm_same_trans; [exact NV4|]. eapply nonvm_same_trans; [apply nonvm_same_mat; exact SBM5|]. rewrite <- munmap_model_eqL. apply nonvm_same_munmap. }
       repeat match goal with |- _ /\ _ => split end; try reflexivity.
+      { assert (EX : maps_subtract (vm_maps (m_vmmaps mo)) (bv_unsigned (Z_to_bv 64 a)) (bv_unsigned (Z_to_bv 64 a) + bv_unsigned (Z_to_bv 64 msz))
+                     = map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 a)).
+        { pose proof (map_has_In _ _ _ HAS) as HIN. unfold wz in HIN.
+          apply rs_maps_subtract_exact.
+          - rewrite unsigned_lit by tlia. tlia.
+          - intros b s Hin. exact (NZM b s Hin).
+          - intros b s Hin Eb. subst b. pose proof (NZM _ _ Hin) as Hs.
+            destruct (nooverlap_In_disj _ _ _ NOV Hin HIN) as [E | [D | D]]; [injection E as E; exact E | |];
+              unfold BazyLedger.lo, BazyLedger.hi in D; cbn [fst snd] in D; rewrite ?unsigned_lit in D by tlia; tlia.
+          - intros b s Hin Hne.
+            destruct (nooverlap_In_disj _ _ _ NOV Hin HIN) as [E | [D | D]]; [injection E as E _; contradiction | |];
+              unfold BazyLedger.lo, BazyLedger.hi in D; cbn [fst snd] in D; rewrite ?unsigned_lit in D |- * by tlia; tlia. }
+        rewrite !unsigned_lit in EX by tlia.
+        first [exact EX | (rewrite EX; reflexivity) | (rewrite <- EX; reflexivity)]. }
       rewrite <- munmap_model_eqL. pose proof (same_but_materialized_eager _ _ SBM5) as E5. unfold wz in EAG7, REM. rewrite REM in EAG7. clear - EAG7 E5 EAG4; try acb. tlia. }
     split; [exact MUA|]. split; [exact WMO8|]. split; [exact MI8|].
     repeat match goal with |- _ /\ _ => split end; try assumption.

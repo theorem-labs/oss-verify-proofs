@@ -7,9 +7,10 @@
    sup_lv2_worker_set: names sps -> slw, FN 12 -> 15, the entry, the statement's constants and the argument binders
    format/place -> uri/worker renamed, the segment interface taken from sup_lv2_worker_set_s1.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_lv2_worker_set_s0.v, with its module paths and module names changed; 980 of its 1060 lines of code are new or changed and 1365 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_words_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan), part 2:
    the seeds, the helpers, the tail 0x88fe8 .. ret (cwa_tail) and the literal-placement middle 0x88f64 .. 0x88fe8
-   (cwa_mid_dash). The B twin of lib/A/Prog/check_words_add_s2.v (a working branch 1aea12cabb8).
+   (cwa_mid_dash). The B twin of lib/A/Prog/check_words_add_s2.v (a working branch).
 
    Entry BASE + AF_check_words_add = 0x88eac, 141 instructions, no loop, 7 inline checks, 11 UBSan trap sites
    (each a branch to the `unimp` at 0x89094), 4 calls of the strcmp wrapper and 1 of the strncmp wrapper, one

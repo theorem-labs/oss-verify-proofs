@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image range set to libreac/fuzz_boxreg's own (Reusable/YImgTop.v IMG_LO, IMG_TOP). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YCbq.v, with its module paths and module names changed; 442 of its 552 lines of code are new or changed and 2852 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_malloc_free.v, with its numbers changed; 561 of its 618 lines of code are new or changed and 495 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, group ALLOC (fuzz/alloc.c), a Theorem Labs lane: the ASan walk of fuzz_realloc over fs.asan
    (A 0x829e8, alloc.c:75-94), proving lib/A/FSH_Fn_alloc.v's fuzz_realloc_spec.
 
    port-from:
-   - control flow: fs's released PLAIN contract lib/Prog/fuzz_realloc_c.v:29-66 @ c8557374ad2e (rule-24 lookup by
+   - control flow: fs's released PLAIN contract lib/Prog/fuzz_realloc_c.v:29-66 (rule-24 lookup by
      a Theorem Labs lane, proof-index v5): the same C source and the same three outcomes, NULL answer (failing()) with no
      allocation, p = 0 as fuzz_malloc, and the real case keeping min (k, n) old bytes with the old block swapped for
      the new one in the block list (its `exists b1 b2 c1 c2` split).
@@ -30,7 +31,7 @@
 
    NAMED SECTION HYPOTHESES (each listed with its owner in the lane report; Print Assumptions shows them):
    - FS_AREALLOC_AU: FSupoisonRealloc.FS_AREALLOC_AU (as_universe B), the any-U realloc contract at 0x53078 / trace
-     ipc FS_AREALLOC_IPC_A, in its C5 form (a working branch fda61055856: trace premise
+     ipc FS_AREALLOC_IPC_A, in its C5 form (a working branch: trace premise
      `In .. \/ st_nev S + 2 < EV_MAX`, closed here from the call site's room premise). Owner: a Theorem Labs lane (plain
      form arealloc_realizes_all) via a Theorem Labs lane (the U form). An ARGUMENT of fsw_aj_reallocU.
    - fuzz_malloc_spec (FSH_Fn_alloc, CTX-free since the stage-1 fold) is an ARGUMENT of fsr_p0, for the p = 0 tail call
@@ -487,7 +488,7 @@ End k.
 (* only: the NULL answer is dead, arealloc_granted). From a within-walk journal over `unpoison U mem` and ARU of the  *)
 (* machine memory, consume `jal __wrap_realloc`: the composed journal (k + 3), ARU at the result with the same U, the *)
 (* block swap, the kept bytes, and the caller's kept frame. Shape of a Theorem Labs lane's fsw_aj_mallocU                 *)
-(* (lib/A/FSW_malloc_free.v, a working branch 89a91617162).                                                  *)
+(* (lib/A/FSW_malloc_free.v, a working branch).                                                  *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
 Section r. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
@@ -552,7 +553,7 @@ assert (HPRE : FSupoisonU.acall_preU tfibsegs B lyc Sc U W regsT memT mdc ch)
   by (split; [exact HPRE0 | split; [exact HARU_OK | exact HARU_PO]]).
 pose proof (am_wf _ _ _ _ (proj1 HAR)) as HWF.
 pose proof (model_laws_ok (as_universe B) (am_universe _ _ _ _ (proj1 HAR))) as ML.
-(* the trace premise in C5 form (FSupoisonRealloc @ fda61055856): two events remain, the room premise itself *)
+(* the trace premise in C5 form (FSupoisonRealloc): two events remain, the room premise itself *)
 assert (Htr' : In (call_trace lyc FS_AREALLOC_IPC_A regsT ch) (as_universe B) \/ st_nev Sc + 2 < EV_MAX)
   by (right; exact Hev).
 pose proof (AREALLOC lyc Sc U W regsT memT mdc q n_old n ch HPRE (or_introl Hev) Hqin

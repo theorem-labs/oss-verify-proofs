@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AB1h.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to reac-pw/fuzz_qdisc's ASan build. *)
-(* Ported to libreac/fuzz_knock by h-rw-kno-5 from proofs/cgif/cgif_file_fuzzer/lib/A/AB1h.v at c8557374ad2: module paths renamed; image values re-derived from fuzz_knock.asan (sha256 61768cf4..), as listed in the commit message. *)
+(* Ported to libreac/fuzz_knock by h-rw-kno-5 from proofs/cgif/cgif_file_fuzzer/lib/A/AB1h.v at theorem-labs/oss-verify-proofs@6b32741d849a: module paths renamed; image values re-derived from fuzz_knock.asan (sha256 61768cf4..), as listed in the commit message. *)
 (* Modified by Theorem Labs, 2026-10: the image top in tfib_rw_window and the image span in tfib_res_sizes are cited from lib/Reusable/YImgTop.v instead of written as the numbers 0x5f3000 and 0x5e3000, and the proofs unfold those citations. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AB1h.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_qdisc's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AB1h.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

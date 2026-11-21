@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window is the launch's 1500 pages below the stack pointer, not 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -33,8 +34,8 @@ Definition hdr_paylen (content : list byte) : Z := Z.of_nat (length content) - 6
 
 (* [comment removed for export] *)
 Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop :=
-  forall d m, 0 <= d -> d + Z.of_nat m <= 8388608 ->
-    store_ok RSEGS M (Z_to_bv 64 (sp0 - 8388608 + d)) m = true.
+  forall d m, 0 <= d -> d + Z.of_nat m <= 6144000 ->
+    store_ok RSEGS M (Z_to_bv 64 (sp0 - 6144000 + d)) m = true.
 
 (* [comment removed for export] *)
 Record tgt_entry (sp0 buf can : Z) (content : list byte)

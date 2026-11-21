@@ -112,7 +112,7 @@ Definition pj_cbytesR (m : word -> option byte) (a : Z) (s : list Z) : Prop :=
 
 Definition pj_cstrR (m : word -> option byte) (lblk : Z -> Z -> Prop) (a k : Z) (s : list Z) : Prop :=
   (* the reader's strings are shorter than 2 ^ 32 - 1 (the kit owner's ruling): the engine's strlen / strcmp rules take
-     `k + 1 < 2 ^ 32` (YGcfStr.v:128, :153), and pj_parse supplies it from maxrun tl < 2 ^ 30 (PRH_FnPj.v:267) *)
+     `k + 1 < 2 ^ 32` (YGcfStr.v:129, :154), and pj_parse supplies it from maxrun tl < 2 ^ 30 (PRH_FnPj.v:267) *)
   lblk a k /\ Z.of_nat (length s) + 1 <= k /\ Z.of_nat (length s) + 1 < 2 ^ 32 /\ pj_cbytesR m a s.
 
 Definition pj_holdsR (b : Z * Z) (x : Z) : Prop := fst b <= x < fst b + snd b.

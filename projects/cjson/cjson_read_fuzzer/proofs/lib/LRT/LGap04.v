@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: new theorems linux_place_of_gap, linux_place_of_sum_from and linux_place_of_sum give an anonymous mmap a Linux placement (linux_place) from a free gap or enough room above task_unmapped_base; imports Placement. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require Import Cfg.
 Import ListNotations.
 Open Scope Z_scope.
@@ -234,6 +236,63 @@ Proof.
   - specialize (Hres (b, s) Hin). unfold elo, esz in Hres. cbn [fst snd] in Hres.
     apply andb_false_iff. left. apply Z.ltb_ge. lia.
   - specialize (A4 (b, s) Hin). unfold zover, elo, esz in A4. cbn [fst snd] in A4. exact A4.
+Qed.
+
+(* LPS 727298f3: an anonymous mmap places where Linux does ([Mmap.linux_place]), so a free
+   gap gives the call an answer only inside one of Linux's two windows.  A gap in the
+   bottom-up window [[task_unmapped_base, alloc_top)] is enough
+   ([Placement.linux_place_exists]), whatever the run's [vm_mmap_base]. *)
+Theorem linux_place_of_gap : forall h thp hint nZ g,
+  0 < nZ -> nZ mod page_size = 0 ->
+  task_unmapped_base <= g -> g mod page_size = 0 -> g + nZ <= alloc_top h ->
+  region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true ->
+  exists a, linux_place h thp hint nZ a.
+Proof.
+  intros h thp hint nZ g Hn Hna Hlo Hal Hhi Hfree.
+  apply Placement.linux_place_exists; [exact Hn | exact Hna |].
+  exists g. right. unfold gap_fits. repeat split; assumption.
+Qed.
+
+Theorem linux_place_of_sum_from : forall h thp hint nZ a0,
+  0 < nZ -> nZ mod page_size = 0 -> task_unmapped_base <= a0 -> a0 mod 4096 = 0 ->
+  (forall e, In e (vm_reserved h) -> elo e + esz e <= a0) ->
+  a0 + zsumf (jcost nZ) (vm_maps h) + nZ <= alloc_top h ->
+  exists a, linux_place h thp hint nZ a.
+Proof.
+  intros h thp hint nZ a0 Hn Hna Ha0 Hal0 Hres Hroom. pose proof (alloc_top_lt h) as Hc64.
+  assert (Ht : 0 <= task_unmapped_base) by (unfold task_unmapped_base; lia).
+  destruct (sweep nZ ltac:(lia) (vm_maps h) a0 Hal0) as (a' & A1 & A2 & A3 & A4).
+  assert (Hcost : 0 <= zsumf (jcost nZ) (vm_maps h)).
+  { apply zsumf_nonneg. intros e _. unfold jcost, esz. pose proof (bv_unsigned_in_range 64 (snd e)). lia. }
+  assert (HaW : bv_unsigned (Z_to_bv 64 a') = a')
+    by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+  assert (HnW : bv_unsigned (Z_to_bv 64 nZ) = nZ)
+    by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+  apply (linux_place_of_gap h thp hint nZ a' Hn Hna ltac:(lia)); [change page_size with 4096; exact A2 | lia |].
+  apply region_free_intro. intros b s Hin. unfold iv_overlap. rewrite HaW, HnW. apply in_app_or in Hin as [Hin|Hin].
+  - specialize (Hres (b, s) Hin). unfold elo, esz in Hres. cbn [fst snd] in Hres.
+    apply andb_false_iff. left. apply Z.ltb_ge. lia.
+  - specialize (A4 (b, s) Hin). unfold zover, elo, esz in A4. cbn [fst snd] in A4. exact A4.
+Qed.
+
+Theorem linux_place_of_sum : forall h thp hint nZ,
+  0 < nZ -> nZ mod page_size = 0 ->
+  task_unmapped_base + zsumf (jcost nZ) (vm_reserved h ++ vm_maps h) + nZ <= alloc_top h ->
+  exists a, linux_place h thp hint nZ a.
+Proof.
+  intros h thp hint nZ Hn Hna Hroom. pose proof (alloc_top_lt h) as Hc64.
+  assert (Ht : 0 <= task_unmapped_base) by (unfold task_unmapped_base; lia).
+  assert (Htub : task_unmapped_base mod 4096 = 0) by reflexivity.
+  destruct (sweep nZ ltac:(lia) (vm_reserved h ++ vm_maps h) task_unmapped_base Htub) as (a' & A1 & A2 & A3 & A4).
+  assert (Hcost : 0 <= zsumf (jcost nZ) (vm_reserved h ++ vm_maps h)).
+  { apply zsumf_nonneg. intros e _. unfold jcost, esz. pose proof (bv_unsigned_in_range 64 (snd e)). lia. }
+  assert (HaW : bv_unsigned (Z_to_bv 64 a') = a')
+    by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+  assert (HnW : bv_unsigned (Z_to_bv 64 nZ) = nZ)
+    by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+  apply (linux_place_of_gap h thp hint nZ a' Hn Hna A1); [change page_size with 4096; exact A2 | lia |].
+  apply region_free_intro. intros b s Hin. specialize (A4 (b, s) Hin). unfold zover, elo, esz in A4. cbn [fst snd] in A4.
+  unfold iv_overlap. rewrite HaW, HnW. exact A4.
 Qed.
 
 Lemma zsumf_jcost : forall nZ l, zsumf (jcost nZ) l = zsumf esz l + Z.of_nat (length l) * (nZ + 4095).

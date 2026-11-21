@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 2950 of its 3006 lines of code are new or changed and 395 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S5b, lane PV-arms-LC (image A', asan 1be0f53d96cb, the #102 pins): the LITERAL and CONTAINER arms of
    parse_value's dispatch, as two SEGMENT lemmas from VproC's dispatch state (lib/A/VrdPro.v vrd_disp_a) to
    the epilogue state (lib/A/VrdNum.v vrd_epi_a, row 225), which lib/A/VrdEpiA.v vrd_epi_step and
@@ -9,17 +10,17 @@
 
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma). Neither arm is a function:
    each takes the state the dispatch hands it and its callee's PUBLISHED text, and stops at the shared
-   epilogue's boundary. a working branch 45cffb16b86 (lib/A/Prog/PvLit.v, PvItems.v) is an old-vocabulary reading
+   epilogue's boundary. a working branch (lib/A/Prog/PvLit.v, PvItems.v) is an old-vocabulary reading
    aid over the ORIGINAL images: nothing of it is Required, cited or copied here.
 
-   SET: the kit's cut 7cdbb61b5fa0 (a working branch) with a Theorem Labs lane's green value side on it,
-   a working branch e942c5680fa7 (VrdPro.v 257b4f5473ca, VrdNum.v 636d54d20156, VrdArm.v 8866f9b206f2; the
+   SET: the kit's cut (a working branch) with a Theorem Labs lane's green value side on it,
+   a working branch (VrdPro.v 257b4f5473ca, VrdNum.v 636d54d20156, VrdArm.v 8866f9b206f2; the
    interface first relayed at preset-tree-at-2026-10-30T06-44-04Z.tsv (sha256 4bb5178564c2; internal record), unchanged in every statement read here). The kit texts this file reads
    are the cut's: PRH_FnParse.v f0d92dcec7e9 (tparse_items_specX, tparse_value_specX), PRH_FnReader.v f1ae32e3b2cd
    (tliteral_specX), PRH_Base.v ef7c8ca98529, PRH_PjOrder.v e5917626b82b, and the engine's wild-budget layer
    lib/Reusable/YCbqGwild.v 0c63874858e4.
    History: first proved on image A in VrdArmLC.v (sha256 007e20a81b45; internal record), re-pointed to image A' and the
-   post-implication texts (a working branch 0cac6dd1e116), and re-fit here to the cut interface:
+   post-implication texts (a working branch), and re-fit here to the cut interface:
    - THE CURSOR SET CW replaces the run-word list DW in every statement (vrd_disp_a, vrd_epi_a, the callee texts).
      vrd_disp_body appends three conjuncts, each named here by its type: prh_cw_entry B CW at the entry (HCW), the
      wild room against CW at the entry depot (HWR0), and the text below the ceiling (HTC). The container hands the
@@ -96,13 +97,13 @@
      `jal literal`) and FALL THROUGH to ROW 224.
 
    THE KEYWORD ADDRESS, BY NAME (a Theorem Labs lane's ruling; this lane owns the tie). Each pair's second slot is a
-   PAddHi over the read-only atom, and YP0b.v:54-55 makes PAddHi rd rs j a off match `OpImm ALU_ADD` exactly
+   PAddHi over the read-only atom, and YP0b.v:55-56 makes PAddHi rd rs j a off match `OpImm ALU_ADD` exactly
    when `val (A_HI j) + imm = val a + off`, so the address the hardware builds is `pa_val a + off` of THAT
    SLOT. vrd_kw_addr reads it out of A_prog_listing. No numeral of the address is written anywhere.
 
    THE KEYWORD'S BYTES. The kit's tliteral_specX (lib/A/PRH_FnReader.v:310-339 at the cut, blob f1ae32e3b2cd) takes cstr_ok and the
    garr8 READ premise with the keyword's NUL and the slack that fills its last granule, which is what
-   a Theorem Labs lane's PROVED leaf carries (lib/Prog/literal_xs.v:62-67 at a working branch 4e25a816d2c).
+   a Theorem Labs lane's PROVED leaf carries (lib/Prog/literal_xs.v:63-68 at a working branch).
    It no longer takes kept_at, so this lane carries no stand-in for it. That ruling (a Theorem Labs lane 03:35Z) came
    from this lane's measurement: on f0d2e8d4 the asan_globals records at 0xa6c00, 0xa6c40 and 0xa6c80 register
    .str.6 "true", .str.7 "false" and .str.8 "null" with sizes 5, 6 and 5 and size_with_redzone 32, so each
@@ -112,9 +113,9 @@
    THE LITERAL CALLEE: the literal arm cites tliteral_specX as its callee contract and imports no proof of it.
    History: a Theorem Labs lane proved literal_holds : tliteral_specX (cp := CfParams_preset) (PI := prh_img_A)
    (PA := PI_prog_A) B ARx SK against the kit's text at PRH_FnReader.v blob 48aa30286d84 (a working branch
-   3eba7d20dba lib/A/Prog/literal_bridge.v); the cut's text is blob f1ae32e3b2cd.
+   lib/A/Prog/literal_bridge.v); the cut's text is blob f1ae32e3b2cd.
 
-   NUMERALS. 176 (LENGTH: the dispatch's stack drop below parse_value's entry sp, 160 or 176, VrdPro.v:1089-1091 at the interface);
+   NUMERALS. 176 (LENGTH: the dispatch's stack drop below parse_value's entry sp, 160 or 176, VrdPro.v:1090-1092 at the interface);
    119 / 120 / 131 / 152 / 153 / 213 / 215 / 216 / 218 / 219 / 221 / 224 are ROWS (DERIVED: listing slot
    indices); 116 / 102 / 110 / 123 / 91 are WORDs (the grammar's keyword and opener bytes, PjGrammar); 0 / 1 / 2
    are the node's type tags (WORD); 33 and 224 / 512 in the result are the kit's own bounds, cited not written. *)
@@ -201,7 +202,7 @@ Definition vrd_kw_row (b : Z) : nat :=
   if b =? 116 then 219%nat else if b =? 102 then 120%nat else 153%nat.
 (* its listing slot: row r is slot A_prog_slot AS_parse_value + (r - 2) *)
 Definition vrd_kw_slot (b : Z) : nat := (A_prog_slot AS_parse_value + (vrd_kw_row b - 2))%nat.
-(* the address that slot builds: PAddHi's own `pa_val a + off` (YP0b.v:54-55) *)
+(* the address that slot builds: PAddHi's own `pa_val a + off` (YP0b.v:55-56) *)
 Definition vrd_kw_addr (b : Z) : Z :=
   match nth_error A_prog_listing (vrd_kw_slot b) with
   | Some (PAddHi _ _ _ a off) => A_prog_val a + off
@@ -426,7 +427,7 @@ Context {HL : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx HL.
 
 (* ---- the window shift: what the dispatch states at parse_value's ENTRY sp, the callee's text asks at the
-   CALL's sp. Both arms call at the dispatch's own sp (VrdPro.v:162, sp = spZ regs0 - 160 - (spZ regs0 - 160)
+   CALL's sp. Both arms call at the dispatch's own sp (VrdPro.v:163, sp = spZ regs0 - 160 - (spZ regs0 - 160)
    mod 32), so the caller window widens by exactly the drop and the two windows have the same TOP. The lower
    part of the widened window is parse_value's own frame, which the journal keeps present; that is the one
    premise these lemmas take. ---- *)
@@ -796,8 +797,8 @@ Proof.
   intros ly0 S0 Hp0 W0 regs0 mem0 md0 ch e q v text len p tb Lam peak cnt fail ran most own W c o b yy
     HPI HFP HD HHB Hsk Hb HCTX HSTK HSTKi Hs0str Hs0items HP0.
   destruct (vdispa B ARx SK HD) as (arm & pos & p' & k & ly & S & Hp & regs & mem & md & Hc & HB).
-  (* vrd_disp_body's conjuncts BY SHAPE, never by position (VrdPro.v grew twice: fe6f39ebc742 replaced one conjunct by four, the
-     cut interface (f5eb8e2e6bbf, green at e942c5680fa7) appended three;
+  (* vrd_disp_body's conjuncts BY SHAPE, never by position (VrdPro.v grew twice: replaced one conjunct by four, the
+     cut interface (green) appended three;
      a positional pattern over a body that grew binds its names to the wrong conjuncts and swallows the new ones):
      decompose [and], then each conjunct this walk reads is named by its type. The two string-arm counts stay
      unnamed: neither arm reads them. *)
@@ -852,7 +853,7 @@ Proof.
   lazymatch goal with X : Z.of_nat (length (frames S)) + _ <= fs_frames 0 |- _ => rename X into Hfrb end.
   lazymatch goal with X : context [PresetRodata.arodata_okP] |- _ => rename X into Hrod end.
   lazymatch goal with X : frm_zero _ |- _ => rename X into Hfrm end.
-  (* the three conjuncts the cut's dispatch text appends (VrdPro.v at a Theorem Labs lane's cut interface f5eb8e2e6bbf):
+  (* the three conjuncts the cut's dispatch text appends (VrdPro.v at a Theorem Labs lane's cut interface):
      the free-trace words of the cursor named in CW, the wild room CW leaves at the entry depot, and the text below
      the ceiling. Named by type like the rest. *)
   lazymatch goal with X : context [prh_cw_entry] |- _ => rename X into HCW end.
@@ -1900,8 +1901,8 @@ Proof.
     W c b ty yy cw slack
     HPI HFP HD Hsk Hbty Hkw Hw63 Hnul Hslack Hwstk HSTK HSTKi HP0.
   destruct (vdispa B ARx SK HD) as (arm & pos & p' & k & ly & S & Hp & regs & mem & md & Hc & HB).
-  (* vrd_disp_body's conjuncts BY SHAPE, never by position (VrdPro.v grew twice: fe6f39ebc742 replaced one conjunct by four, the
-     cut interface (f5eb8e2e6bbf, green at e942c5680fa7) appended three;
+  (* vrd_disp_body's conjuncts BY SHAPE, never by position (VrdPro.v grew twice: replaced one conjunct by four, the
+     cut interface (green) appended three;
      a positional pattern over a body that grew binds its names to the wrong conjuncts and swallows the new ones):
      decompose [and], then each conjunct this walk reads is named by its type. The two string-arm counts stay
      unnamed: neither arm reads them. *)
@@ -1956,7 +1957,7 @@ Proof.
   lazymatch goal with X : Z.of_nat (length (frames S)) + _ <= fs_frames 0 |- _ => rename X into Hfrb end.
   lazymatch goal with X : context [PresetRodata.arodata_okP] |- _ => rename X into Hrod end.
   lazymatch goal with X : frm_zero _ |- _ => rename X into Hfrm end.
-  (* the three conjuncts the cut's dispatch text appends (VrdPro.v at a Theorem Labs lane's cut interface f5eb8e2e6bbf):
+  (* the three conjuncts the cut's dispatch text appends (VrdPro.v at a Theorem Labs lane's cut interface):
      the free-trace words of the cursor named in CW, the wild room CW leaves at the entry depot, and the text below
      the ceiling. Named by type like the rest. *)
   lazymatch goal with X : context [prh_cw_entry] |- _ => rename X into HCW end.

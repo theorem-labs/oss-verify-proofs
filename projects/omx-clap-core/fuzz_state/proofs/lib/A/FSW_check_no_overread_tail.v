@@ -1,5 +1,5 @@
 (* check_no_overread 0x811c8 (fs.asan), the TAIL CALL STEPS a Theorem Labs lane owns, two of the call-step statements of
-   lib/A/FSW_check_no_overread.v's Section I (the CTX-free interface, a working branch fb4231f5e1e):
+   lib/A/FSW_check_no_overread.v's Section I (the CTX-free interface, a working branch):
      cno_call_bcmp  : cno_call_bcmp_T  (bcmp 0x813f8 / 0x81414, ra 0x813fc / 0x81418)
      cno_call_afree : cno_call_afree_T (__wrap_free 0x81438 / 0x81440 / 0x81448, ra 0x8143c / 0x81444 / 0x8144c)
    plus the helpers the tail lanes share (a Theorem Labs lane's lib/A/FSW_check_no_overread_ffree.v proves cno_call_ffree over
@@ -7,7 +7,7 @@
    its own: every statement is a Theorem Labs lane's Prop, taken by name. The segments that chain the steps and the symbolic
    resume state (cno_after) are a Theorem Labs lane's; the epilogue and the `ret` are a Theorem Labs lane's
    (lib/A/FSW_check_no_overread_ret.v). The callees stay Section hypotheses; no call-trace row is taken (the CTX drop,
-   a working branch faa7e2570e5, removed them; the allocator's C5 disjunct is closed inside
+   a working branch, removed them; the allocator's C5 disjunct is closed inside
    fsw_aj_freeU from the event budget st_nev S < EV_MAX).
    MEASURED (capstone on the pinned fs.asan, 2026-10-29 04:0xZ), the three sites this file walks:
      0x813f8  jal -0x3ed90 -> 0x42668 = PC_bcmp        ra 0x813fc   (0x813fc  bnez a0, 0x81548)
@@ -21,7 +21,7 @@
    reach 0x81548. The other branches into 0x81548 (0x81320, 0x813c8, 0x813d4, 0x813e4, 0x81404, 0x81544) and the
    store-report block 0x8155c lie outside this file's ranges (a Theorem Labs lane).
    LOOKUP (rule 24): FSW_check_no_overread.v's header, plus a Theorem Labs lane's CONFIRM of 2026-10-29 03:4xZ -
-   `proof-index check_no_overread` on the index built 2026-10-29T01:50:18Z (main f4cc67298b7) printed, unpiped
+   `proof-index check_no_overread` on the index built 2026-10-29T01:50:18Z (main) printed, unpiped
    and rc = 0, 20 named / 50 by address / 36 related / 9 lemma(s), 71 hit lines, none under lib/A or lib/B; and
    (an internal command) lists statement and
    base files only. No ASan walk of this function exists on any searched ref. *)

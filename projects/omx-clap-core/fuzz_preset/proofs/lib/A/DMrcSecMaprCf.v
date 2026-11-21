@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecMaprCf.v (commit 67deba317dfb, blob ad83b7f56e99) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecMaprCf.v (blob ad83b7f56e99) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -60,10 +61,16 @@ assert (Rb : 0 <= b /\ b + n < 2 ^ 63) by (unfold kLowShadowBeg, kLowShadowEnd, 
 assert (Ub : bv_unsigned (Z_to_bv 64 b) = b) by (apply u64; lia).
 assert (Un : bv_unsigned (Z_to_bv 64 n) = n) by (apply u64; lia).
 assert (HR : region_free (vm_reserved (m_vmmaps md)) (Z_to_bv 64 b) (Z_to_bv 64 n) = true).
-{ rewrite (alc_reserved _ _ _ _ L). apply (YG0h.region_free_reserved segs); [| | lia | lia].
-  - intros sg Hsg. pose proof (alc_img _ _ _ _ L sg Hsg) as [I1 I2]. pose proof (lo_img _ LO) as (J0 & J1 & J2 & J3).
-    unfold kImgLo, kImgEnd in *. lia.
-  - unfold kImgEnd, kLowShadowBeg, kHighShadowBeg in *. lia. }
+{ destruct (alc_reserved _ _ _ _ L) as (rx & Hrx & _ & HB & _). rewrite Hrx, YG0h.region_free_app.
+  apply andb_true_intro. split.
+  - apply (YG0h.region_free_reserved segs); [| | lia | lia].
+    + intros sg Hsg. pose proof (alc_img _ _ _ _ L sg Hsg) as [I1 I2]. pose proof (lo_img _ LO) as (J0 & J1 & J2 & J3).
+      unfold kImgLo, kImgEnd in *. lia.
+    + unfold kImgEnd, kLowShadowBeg, kHighShadowBeg in *. lia.
+  - (* the reservation tail starts in high memory, above both shadows (YG0n.res_tail_ok) *)
+    apply YA06.region_free_forall. intros q Hq. right. rewrite Ub, Un.
+    destruct (proj1 (Forall_forall _ _) HB q Hq) as [Q1 _].
+    unfold kHighMemBeg, kLowShadowBeg, kLowShadowEnd, kHighShadowBeg, kHighShadowEnd in *. lia. }
 destruct Hin as [[I1 I2]|[I1 I2]].
 - apply (YA06.madvise_gate_intro _ (wiv (kLowShadowBeg, kLowShadowEnd - kLowShadowBeg))).
   + apply (alc_band _ _ _ _ L). left. reflexivity.

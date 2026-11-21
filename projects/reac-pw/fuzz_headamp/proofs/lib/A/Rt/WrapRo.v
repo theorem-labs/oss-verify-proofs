@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRo.v at origin/ossv/recipes 09c6822d886 (last changed in cffeac4df63); module paths changed to reac-pw/fuzz_headamp, arodata_okP taken from lib/A/HPgBase.v (the same text as fuzz_identity's lib/A/Prog/IdentBase.v:20-22) in place of IdentBase, and a Print Assumptions line added after each lemma. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRo.v (last changed); module paths changed to reac-pw/fuzz_headamp, arodata_okP taken from lib/A/HPgBase.v (the same text as fuzz_identity's lib/A/Prog/IdentBase.v:20-22) in place of IdentBase, and a Print Assumptions line added after each lemma. *)
 (* libreac/fuzz_identity, build asan: the read-only premise of the runtime wrappers (lib/A/Rt/StrlenDef.v,
    lib/A/Rt/MemchrDef.v), in the form a program walk can carry across a call.
    A wrapper may read bytes of the image's read-only segments in two ways:
@@ -10,7 +10,7 @@
    aro_unowned is the in-segment half of arodata_okP (lib/A/Prog/IdentBase.v:20), the fact the program walks
    carry; aro_unowned_of_arodata turns one into the other. Unlike YG0d's rom_view, it says nothing about owned
    image bytes, so it survives a call whose post keeps only the bytes that are unowned before and after
-   (__asan_stack_malloc_*, YG0d.v:298-299): aro_unowned_keep. *)
+   (__asan_stack_malloc_*, YG0d.v:299-300): aro_unowned_keep. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap_reserve_not_refusable and mmap_grant_not_refusable take the hint and Linux's placement of the request (linux_place_is) in place of a free page-aligned range below alloc_top, proved by linux_place_is_available; imports Checks.Placement in place of ALib.MmapComplete). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
-From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib Require Import MmapComplete.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import EdDefs.
 Unset Nia Cache. Unset Nra Cache.
 
@@ -20,27 +21,24 @@ Proof. intros h H. unfold alloc_top, alloc_top_min, stack_max_size, sp_window_lo
 Lemma alloc_top_lt_2_64 : forall h, alloc_top h < 2 ^ 64.
 Proof. intros h. pose proof (alloc_top_lt h). unfold two_pow_64 in *. lia. Qed.
 
-Corollary mmap_reserve_not_refusable : forall m nZ (a : word),
-  0 <= nZ ->
-  bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a ->
-  bv_unsigned a + nZ <= alloc_top (m_vmmaps m) ->
-  region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true ->
-  mmap_reserve_refusable m nZ = false.
+(** At 08b1429 a grant exists exactly when Linux places the request
+    ([EdDefs.vm_place_available]); the checker's [linux_place_is] at the
+    returned address is that evidence. *)
+Corollary mmap_reserve_not_refusable : forall hint m nZ (a : word),
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ a = true ->
+  mmap_reserve_refusable hint m nZ = false.
 Proof.
-  intros m nZ a HnZ Hal Hpos Hce Hfree. unfold mmap_reserve_refusable.
-  rewrite (vm_gap_available_complete (m_vmmaps m) nZ a HnZ Hal Hpos Hce Hfree). reflexivity.
+  intros hint m nZ a Hpl. unfold mmap_reserve_refusable.
+  rewrite (linux_place_is_available _ _ _ _ _ Hpl). reflexivity.
 Qed.
 
-Corollary mmap_grant_not_refusable : forall flags m nZ (a : word),
-  0 <= nZ ->
-  bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a ->
-  bv_unsigned a + nZ <= alloc_top (m_vmmaps m) ->
-  region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true ->
+Corollary mmap_grant_not_refusable : forall flags hint m nZ (a : word),
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ a = true ->
   mmap_noreserve_backed_ok flags m nZ = true ->
-  mmap_grant_refusable flags m nZ = false.
+  mmap_grant_refusable flags hint m nZ = false.
 Proof.
-  intros flags m nZ a HnZ Hal Hpos Hce Hfree Hbud. unfold mmap_grant_refusable.
-  rewrite (vm_gap_available_complete (m_vmmaps m) nZ a HnZ Hal Hpos Hce Hfree), Hbud. reflexivity.
+  intros flags hint m nZ a Hpl Hbud. unfold mmap_grant_refusable.
+  rewrite (linux_place_is_available _ _ _ _ _ Hpl), Hbud. reflexivity.
 Qed.
 
 Lemma mmap_fixed_fresh_not_refusable : forall flags m nZ,

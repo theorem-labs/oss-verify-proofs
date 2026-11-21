@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/FMstrlen.v at 6ebe35ba632; the strlen
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/FMstrlen.v; the strlen
    wrapper's composition (entry phase, musl call, range check, epilogue) becomes the front half of the strcspn
    wrapper's walk: the entry phase up to musl __strchrnul's loops, the loops, and the phase from their exit to
    the range check of the set at 0x42d38. *)

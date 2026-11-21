@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE01.v, with its module paths changed; asink_img_laws states ail_env_static over the sink's own static cells (ak_owned) and has the law ail_owned_core (ak_owned holds the four cells astdio_env reads); the kept lemmas frame through aenv_of_core; asink_strs_kept keeps the file strings; and afopen_spec and aunlink_spec take asink_strs, which astdio_env no longer states. *)
-(* Modified by Theorem Labs, 2026-10: taken BY PATH from libreac/fuzz_grant's lib/Reusable/YE01.v at a working branch 4d244de18f0 (a Theorem Labs lane's release text of the shared sink form; also in a working branch c8e8b0fa5ec), module paths fuzz_grant -> fuzz_pcap only (the porter): an internal statement change of fuzz_pcap's shared core. *)
+(* Modified by Theorem Labs, 2026-10: taken BY PATH from libreac/fuzz_grant's lib/Reusable/YE01.v at a working branch (a Theorem Labs lane's release text of the shared sink form; also in a working branch), module paths fuzz_grant -> fuzz_pcap only (the porter): an internal statement change of fuzz_pcap's shared core. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the solve_le and use_side tactics close their div/mod goals with Z.div_mod_to_equations and lia instead of LiaTuning's dmlia). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -115,10 +116,10 @@ Ltac solve_le K :=
   rewrite ?Z.shiftl_mul_pow2, ?Z.shiftr_div_pow2, ?bv_swrap32_eq, ?bv_wrap32_eq by lia;
   lazymatch K with
   | 0%Z => idtac
-  | _ => first [ rewrite (lor_add _ _ K); [ | lia | OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib.LiaTuning.dmlia | OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib.LiaTuning.dmlia ]
-               | rewrite (lor_add' _ _ K); [ | lia | OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib.LiaTuning.dmlia | OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib.LiaTuning.dmlia ] ]
+  | _ => first [ rewrite (lor_add _ _ K); [ | lia | Z.div_mod_to_equations; lia | Z.div_mod_to_equations; lia ]
+               | rewrite (lor_add' _ _ K); [ | lia | Z.div_mod_to_equations; lia | Z.div_mod_to_equations; lia ] ]
   end;
-  OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib.LiaTuning.dmlia.
+  Z.div_mod_to_equations; lia.
 
 Ltac by_byte := symmetry; apply le1_zxb.
 
@@ -207,7 +208,7 @@ Ltac inv_tac :=
 
 Ltac use_side :=
   first [ inv_tac | idtac ]; try assumption; try (f_equal; lia); try lia;
-  try (rewrite ?unsigned_lit by lia; OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib.LiaTuning.dmlia);
+  try (rewrite ?unsigned_lit by lia; Z.div_mod_to_equations; lia);
   try (rewrite ?Z.add_0_r, ?Z.sub_0_r; symmetry; apply Z_to_bv_bv_unsigned).
 
 Tactic Notation "use" uconstr(L) := eapply L; use_side.

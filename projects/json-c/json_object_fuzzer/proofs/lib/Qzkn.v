@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the freelocale, duplocale and newlocale proofs name it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -113,7 +114,7 @@ Qed.
 
 Theorem freelocale_A_ok : freelocale_A_stmt HIx.
 Proof.
-unfold freelocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP HIN ST LO LOS SPA HT ERR TP RA K.
+unfold freelocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP HIN ST LO HBT LOS SPA HT ERR TP RA K.
 a4l. word_range sp SPR. pose proof (hiA_top_le A4L HIx) as HTL.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (heap_pres_refl A4H (LB ++ lb_remove d LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m) as HPR.
@@ -181,7 +182,7 @@ Qed.
 
 Theorem duplocale_A_ok : duplocale_A_stmt HIx.
 Proof.
-unfold duplocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP ST LO LOS SPA HT ERR TP RA LML BM K.
+unfold duplocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP RA LML BM K.
 a4l. word_range sp SPR. pose proof (hiA_top_le A4L HIx) as HTL.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (heap_pres_refl A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m) as HPR.
@@ -268,7 +269,7 @@ eapply (K _ _ r jk).
 
 Theorem newlocale_A_ok : newlocale_A_stmt HIx.
 Proof.
-unfold newlocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP HIN BLK LCK ST LO LOS SPA HT ERR TP RA K.
+unfold newlocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP HIN BLK LCK ST LO HBT LOS SPA HT ERR TP RA K.
 a4l. word_range sp SPR. pose proof (hiA_top_le A4L HIx) as HTL.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (wmono_refl asegs m) as WM.
@@ -924,7 +925,7 @@ Qed.
 
 Theorem freelocale_A_ok : freelocale_A_stmt HIx.
 Proof.
-unfold freelocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP HIN ST LO LOS SPA HT ERR TP RA K.
+unfold freelocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP HIN ST LO HBT LOS SPA HT ERR TP RA K.
 a4l. word_range sp SPR. pose proof (hiA_top_le A4L HIx) as HTL.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (heap_pres_refl A4H (LB ++ lb_remove d LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m) as HPR.
@@ -992,7 +993,7 @@ Qed.
 
 Theorem duplocale_A_ok : duplocale_A_stmt HIx.
 Proof.
-unfold duplocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP ST LO LOS SPA HT ERR TP RA LML BM K.
+unfold duplocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP RA LML BM K.
 a4l. word_range sp SPR. pose proof (hiA_top_le A4L HIx) as HTL.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (heap_pres_refl A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m) as HPR.
@@ -1079,7 +1080,7 @@ eapply (K _ _ r jk).
 
 Theorem newlocale_A_ok : newlocale_A_stmt HIx.
 Proof.
-unfold newlocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP HIN BLK LCK ST LO LOS SPA HT ERR TP RA K.
+unfold newlocale_A_stmt, A_FREELOCALE, A_DUPLOCALE, A_NEWLOCALE. intros until errv. intros HP HIN BLK LCK ST LO HBT LOS SPA HT ERR TP RA K.
 a4l. word_range sp SPR. pose proof (hiA_top_le A4L HIx) as HTL.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (wmono_refl asegs m) as WM.

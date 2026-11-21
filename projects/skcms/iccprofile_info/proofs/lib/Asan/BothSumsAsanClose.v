@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the entry lemmas hold at either CONFIG_RSEQ layout, and the section's statements use the launch layout's table (INFO_BOTH_at rz). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -28,24 +29,26 @@ Proof.
   repeat (destruct H as [<-|H]; [cbn; tauto|]). destruct H.
 Qed.
 
-Lemma asan_istrncpy_spec : APSX.istrncpy_spec ASEGS (AP.x_istrncpy INFO_BOTH) (AP.x_sealed INFO_BOTH).
+Lemma asan_istrncpy_spec {r : Z} : APSX.istrncpy_spec ASEGS (AP.x_istrncpy (INFO_BOTH_at r)) (AP.x_sealed (INFO_BOTH_at r)).
 Proof.
   intros mem0 dst regs ret Hnone Hst Hnw Hdisj Hret R1 R10 R11 R12.
   destruct (asan_istrncpy_sealed mem0 dst (seg_rom ASEGS) regs ret Hnone Hst Hnw Hdisj Hret R1 R10 R11 R12)
     as (regs' & Hms & Hag).
   exists regs'. split; [|split].
   - replace APSX.SEALED_BYTES with strncpy_sealed_bytes by reflexivity.
-    replace (Z_to_bv 64 (AP.x_istrncpy INFO_BOTH)) with asan_istrncpy_entry by (apply bv_eq; reflexivity). exact Hms.
+    replace (Z_to_bv 64 (AP.x_istrncpy (INFO_BOTH_at r))) with asan_istrncpy_entry by (apply bv_eq; reflexivity). exact Hms.
   - eapply kept_ok_of_regs_agree; [apply istrncpy_clob_sub | exact Hag].
   - rewrite <- R10. apply Hag. unfold istrncpy_clob. cbn. intros [H|[H|[H|[H|[H|[]]]]]]; discriminate.
 Qed.
 
-Lemma asan_popfree_spec' : popfree_spec ASEGS (AP.x_popfree INFO_BOTH).
+Lemma asan_popfree_spec' {r : Z} : popfree_spec ASEGS (AP.x_popfree (INFO_BOTH_at r)).
 Proof. exact asan_popfree_spec. Qed.
 
 (* [comment removed for export] *)
 
 Section AsanNodes.
+(* LPS 727298f3: the image's table at either CONFIG_RSEQ layout [r]. *)
+Context {rz : Z}.
 Variable nx0 : nat.
 Variable LIMIT : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
@@ -57,7 +60,7 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis NX0_sp : APS.nx0_sp_ok nx0.   (* [comment removed for export] *)
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt ASEGS INFO_BOTH nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt ASEGS (INFO_BOTH_at rz) nx0 LIMIT SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;

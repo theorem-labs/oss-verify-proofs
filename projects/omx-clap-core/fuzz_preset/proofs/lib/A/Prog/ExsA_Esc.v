@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb), ex_string's ESCAPE cut (ExsA_Stmt.v
    CUT_ESC):
      A 0x84138 p + 1's shadow (report 0x844d8 via the slow block 0x843a8); lbu a1,0(s5) (the escape byte e);
@@ -14,7 +15,7 @@
    One engine run per segment from a fresh state: p + 1's byte in a read-only region at s5 (atom 45), the output byte
    o (atom 19) writable, s9 .. s11 and a3 .. a6 pinned to their literals (ESB, ESK), the shadow entries of p + 1 and o
    from the live blocks' shadow (ExsA_Lib.v es_cut_mem). The report calls are not reachable inside the runs.
-   PORTED from lib/B/Prog/ExsB_Esc.v (a Theorem Labs lane's B' walk, on 66eac2b9522a): the same runs, the same branch tree (A's
+   PORTED from lib/B/Prog/ExsB_Esc.v (a Theorem Labs lane's B' walk): the same runs, the same branch tree (A's
    dispatch tests the same bounds in the same order), the same leaf proofs.
    CHANGED for A': the pcs (ESC 0x104, HEX1 0x138, CONT 0x344, FAIL 0x3f8; B' 0x114 / 0x14c / 0x3b8 / 0x470); no UBSan
    edge (B' tested beq s4,-1 at the entry and s2 + 1 < 2 before each store); o / p / p + 1 / the shadow base are

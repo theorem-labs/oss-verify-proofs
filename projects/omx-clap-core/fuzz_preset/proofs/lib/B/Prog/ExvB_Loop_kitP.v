@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Does not rest on tex_word_specX; memnorm only as EXB's keep (exv_rm) and KIT_EXB_CALL's keep premise (old-pin kit
-   4f18c75d4900 rebind, 2026-10-29), not an EXV_HYP field (EXV_HYP has neither since b29a52d6b76b / 379ec9e4a7d5). *)
+   rebind, 2026-10-29), not an EXV_HYP field (EXV_HYP has neither). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value: the PROOF of the shared call kit's KIT_EXB_CALL
    (lib/B/Prog/ExvB_Loop_kit.v, ExvLoop's statement): EXB re-established at the state after a program call made from a
    cut with sp = s1 in YCbqGcallW.v's window form, and the bytes [exv_s1 E, exv_sp E) unchanged. exv_kit_call; shared
@@ -54,7 +55,7 @@ Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(tr
 
 Local Ltac kp_in := unfold exv_bregs; cbn [In]; repeat (first [left; reflexivity | right]).
 
-(* ex_value's stack need at every nesting (ExvEntry's exve_stk_lo, cold/h-rw-pre-7-b-ex_value-entry 1bf53728a5a,
+(* ex_value's stack need at every nesting (ExvEntry's exve_stk_lo,
    restated: that file is not on this base) *)
 Lemma kp_stk_lo : forall n : nat, 16688 <= STK_ex_value n.
 Proof.

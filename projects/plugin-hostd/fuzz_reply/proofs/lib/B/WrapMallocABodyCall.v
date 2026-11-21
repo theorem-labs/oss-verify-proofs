@@ -1,6 +1,7 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodyCall.v, sha256 77f6dc09ffe3; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols; module YImgTop -> YImgTopP (reply-own Definitions of the same bounds), Require line and 31 qualifiers. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodyCall.v, sha256 77f6dc09ffe3; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols; module YImgTop -> YImgTopP (reply-own Definitions of the same bounds), Require line and 31 qualifiers. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the malloc interceptor BODY's call segment (omx-clap-core/fuzz_preset image A, asan, pin
    1be0f53d96cb): ___interceptor_malloc's entry (pc_malloc Tfib_code, A 0x53910) -> Allocate's entry. It is
    lib/A/WrapMallocAConsts.v's seg_call (the wrapper's, from __wrap_malloc 0x53738, whose one instruction `j 0x53910` changes

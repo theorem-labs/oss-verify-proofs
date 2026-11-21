@@ -6,11 +6,11 @@
    Source: ctrl_lay_block-spec.md (a working note, not in this delivery), coq block, with the Definitions as
    a Theorem Labs lane type-checked them (its stand-in, not in this delivery, 23:43Z). Segments and the read-only
    premise follow Theorem Labs lanes (23:37Z): SEGS := AB1v.tfibsegs, arodata_okS. The PA values come from
-   the concrete image instance PI_ctrl (CtrlImg.v:82), not an abstract Context {PI}, so CtrlCallerJ's shapes
+   the concrete image instance PI_ctrl (CtrlImg.v:83), not an abstract Context {PI}, so CtrlCallerJ's shapes
    (stated over world (pa_segs PI)) apply by conversion (a Theorem Labs lane 23:49Z).
 
    The walk (route (a), a Theorem Labs lane 22:20Z): a mechanical _F re-run of ctrl's proved run lib/A/Prog/ctrl_lay_block.v
-   (a working branch d69f7c708f6) in eight silent stretches (a working branch), cut only at
+   (a working branch) in eight silent stretches (a working branch), cut only at
    its three fake-stack events (__asan_stack_malloc_1 0x85668, reac_box_model_block 0x85824, the class-1 flag
    release 0x858ec), plus cgif glue. The theorem pb_ctrl_lay_block and its hypotheses go in the glue.
 
@@ -79,9 +79,9 @@ Definition tfr_hull (lyc : alayout) (Sc : astate) (q n : Z) : Prop :=
     (q + n - 1) / 64 * 64 + 64 <= frame_addr lyc cid pos + fs_frame_bytes cid.          (* [C] NEW, see 6.4 *)
 
 (* A / B twin decision (two Theorem Labs lanes, 23:37Z): the spec is stated over the walk's segments
-   `tfibsegs` (lib/A/AB1v.v:12), not `pa_segs PI`; the bridge `tfibsegs_rsegs : AB1v.tfibsegs = rsegs` is
-   ProgBridge.v:75. The RO premise is `arodata_okS` (Reusable/YE01.v:192, used as in A/ACfn.v:43); the PA layer's
-   `arodata_okP` (CtrlBase.v:29) is reached by a Theorem Labs lane's `arodata_okP_of_S` (donor cgif A/ACfj.v:119), one
+   `tfibsegs` (lib/A/AB1v.v:13), not `pa_segs PI`; the bridge `tfibsegs_rsegs : AB1v.tfibsegs = rsegs` is
+   ProgBridge.v:75. The RO premise is `arodata_okS` (Reusable/YE01.v:193, used as in A/ACfn.v:43); the PA layer's
+   `arodata_okP` (CtrlBase.v:30) is reached by a Theorem Labs lane's `arodata_okP_of_S` (donor cgif A/ACfj.v:119), one
    rewrite at the start of the proof. *)
 #[local] Notation SEGS := AB1v.tfibsegs.
 

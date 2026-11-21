@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nstep_dec_read covers four new descriptor kinds; nstep_dec_mmap and nstep_dec_mmap_none pass place_declined_b for a null hint and read the grant through linux_place_is (linux_place_is_admissible), unfolding check_mmap_fixed_overflow; iv_subtract_outside, maps_subtract_exact and check_munmap_exact_grant added for munmap's subtracting next state; nstep_dec_munmap takes the range as one exact mapping (map_has, maps_subtract equal to map_remove) and rules out a refusal by nstep_munmap_nonrefusal; nstep_dec_mprotect passes the vDSO pair's reserved check). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
@@ -356,7 +357,7 @@ mo' = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word b
 end.
 Proof.
 intros fd buf count mo rsp mo' evs Hc [-> H]. split; [reflexivity|].
-destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid pw|dnr dnw| ]|] eqn:Hlk; try contradiction.
+destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid pw|dnr dnw| |sid sd sst|ectx|fam|aid af]|] eqn:Hlk; try contradiction.
 - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction]. destruct H as [-> ->].
 set (bs := file_read data off (Z_to_bv 64 count)).
 pose proof (length_file_read_le_count data off count Hc) as Hl. fold bs in Hl.
@@ -622,13 +623,14 @@ Proof.
 intros atop len avoid mo rsp mo' evs h Hlen Hlen2 Hcov Htop H.
 pose proof (mmap_len_bound len Hlen) as Hb.
 pose proof (nstep_mm_vm_only (NMmap 0 len _ _) mo rsp mo' evs I H) as [Hv ->]. split; [reflexivity|]. split; [exact Hv|].
-apply nstep_mmap_iff in H as (_ & H & _). destruct rsp as [r ws zs us cs ci]. unfold check_mmap in H.
+apply nstep_mmap_iff in H as (_ & H & _). destruct rsp as [r ws zs us cs ci]. unfold check_mmap, check_mmap_fixed_overflow in H.
 change (mmap_off_aligned_b (Z_to_bv 64 0)) with true in H.
 change (mmap_anon_b (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS))) with true in H. cbn [negb] in H.
 Local Ltac2 Set LiaHints.tbl := fun () => "0060>15920239553.122017692704.19 4361840775.18 65121082836.1565121082836.197945726542.18 00000100700@00O00^00mSS4HlenS4Htop2E3S4Hlen5Hlen22HbS4Hlen5Hlen22HbS4Hlen5Hlen22Hb".
 rewrite w_is0_lit in H by lia. replace (len =? 0)%Z with false in H by (symmetry; apply Z.eqb_neq; lia).
 change (mmap_modeled_b (Z_to_bv 64 (PROT_READ + PROT_WRITE)) (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS)) (Z_to_bv 64 0)) with true in H.
-cbv iota beta in H. destruct ws; [|discriminate]. destruct us; [|destruct zs; discriminate].
+  cbv iota beta in H. rewrite place_declined_b_null in H. cbv iota in H.
+  destruct ws; [|discriminate]. destruct us; [|destruct zs; discriminate].
 destruct cs; [|destruct zs; discriminate]. destruct ci; [|destruct zs; discriminate].
 fold h in H. rewrite unsigned_lit in H by lia. fold (mmap_len len) in H.
 case_errno_in_eqn H Herr.
@@ -639,11 +641,16 @@ exists (MmErr ENOMEM). split; [|auto]. unfold dec_mmap. rewrite errno_of_errno_r
 match type of H with (if ?c then _ else _) = _ => destruct c eqn:E; [|discriminate] end.
 unfold with_mmap_backing in H. rewrite mmap_flags_plain in H.
 inversion H; subst; clear H.
-apply andb_prop in E as [E E6]. apply andb_prop in E as [E E5]. apply andb_prop in E as [E E4].
-apply andb_prop in E as [E E3]. apply andb_prop in E as [E1 E2].
+    (* LPS 727298f3: the grant test is [linux_place_is]; its admissible consequences are the
+       four conditions the older checker listed. *)
+    apply andb_prop in E as [E E6]. apply andb_prop in E as [EP E5].
+    assert (HnA : (mmap_len len mod page_size = 0)%Z) by (unfold mmap_len, page_round_up_Z; apply Z_mod_mult).
+    assert (HnP : (0 < mmap_len len)%Z) by (destruct Hb as [Hb1 _]; exact (Z.lt_le_trans _ _ _ Hlen Hb1)).
+    destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_admissible _ _ _ _ _ HnP HnA EP) as (E1 & E2 & E3 & E4).
 apply listNN_eqb_eq in E6. subst zs.
 assert (Hok : mmap_addr_ok atop len avoid (bv_unsigned r) = true).
-{ unfold mmap_addr_ok. rewrite E1, E2. apply Z.leb_le in E3. rewrite (proj2 (Z.leb_le _ atop)) by lia. cbn [andb].
+    { unfold mmap_addr_ok. rewrite (proj2 (Z.eqb_eq _ _) E1), (proj2 (Z.ltb_lt _ _) E2).
+      rewrite (proj2 (Z.leb_le _ atop)) by lia. cbn [andb].
 rewrite <- (unsigned_lit (mmap_len len)) by lia. apply (avoids_of_region_free (vm_reserved h ++ vm_maps h)); [exact E4| exact Hcov]. }
 exists (MmOk (bv_unsigned r)). split.
 + unfold dec_mmap. rewrite !bv_eqb_refl, Hok. reflexivity.
@@ -669,14 +676,15 @@ Proof.
 intros atop len avoid mo rsp mo' evs h Hlen Hlen2 Hcov Htop H.
 pose proof (mmap_len_bound len Hlen) as Hb.
 pose proof (nstep_mm_vm_only (NMmap 0 len _ _) mo rsp mo' evs I H) as [Hv ->]. split; [reflexivity|]. split; [exact Hv|].
-apply nstep_mmap_iff in H as (_ & H & _). destruct rsp as [r ws zs us cs ci]. unfold check_mmap in H.
+apply nstep_mmap_iff in H as (_ & H & _). destruct rsp as [r ws zs us cs ci]. unfold check_mmap, check_mmap_fixed_overflow in H.
 change (mmap_off_aligned_b (Z_to_bv 64 0)) with true in H.
 change (mmap_anon_b (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS))) with true in H. cbn [negb] in H.
 Local Ltac2 Set LiaHints.tbl := fun () => "0060>15920239553.122017692704.19 4361840775.17 65121082836.1565121082836.197945726542.17 00000100700@00O00^00mSS4HlenS4Htop2E3S4Hlen5Hlen22HbS4Hlen5Hlen22HbS4Hlen5Hlen22Hb".
 rewrite w_is0_lit in H by lia. replace (len =? 0)%Z with false in H by (symmetry; apply Z.eqb_neq; lia).
 change (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS)) (Z_to_bv 64 0)) with false in H.
 change (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS)) (Z_to_bv 64 0)) with true in H.
-cbv iota beta in H. destruct ws; [|discriminate]. destruct zs; [|destruct us; discriminate].
+  cbv iota beta in H. rewrite place_declined_b_null in H. cbv iota in H.
+  destruct ws; [|discriminate]. destruct zs; [|destruct us; discriminate].
 destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
 fold h in H. rewrite unsigned_lit in H by lia. fold (mmap_len len) in H.
 case_errno_in_eqn H Herr.
@@ -687,11 +695,14 @@ exists (MmErr ENOMEM). split; [|auto]. unfold dec_mmap_none. rewrite errno_of_er
 match type of H with (if ?c then _ else _) = _ => destruct c eqn:E; [|discriminate] end.
 unfold with_mmap_backing in H. rewrite mmap_flags_plain in H.
 inversion H; subst; clear H.
-apply andb_prop in E as [E E5]. apply andb_prop in E as [E E4].
-apply andb_prop in E as [E E3]. apply andb_prop in E as [E1 E2].
+    apply andb_prop in E as [EP E5].
+    assert (HnA : (mmap_len len mod page_size = 0)%Z) by (unfold mmap_len, page_round_up_Z; apply Z_mod_mult).
+    assert (HnP : (0 < mmap_len len)%Z) by (destruct Hb as [Hb1 _]; exact (Z.lt_le_trans _ _ _ Hlen Hb1)).
+    destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_admissible _ _ _ _ _ HnP HnA EP) as (E1 & E2 & E3 & E4).
 apply listNN_eqb_eq in E5. subst us.
 assert (Hok : mmap_addr_ok atop len avoid (bv_unsigned r) = true).
-{ unfold mmap_addr_ok. rewrite E1, E2. apply Z.leb_le in E3. rewrite (proj2 (Z.leb_le _ atop)) by lia. cbn [andb].
+    { unfold mmap_addr_ok. rewrite (proj2 (Z.eqb_eq _ _) E1), (proj2 (Z.ltb_lt _ _) E2).
+      rewrite (proj2 (Z.leb_le _ atop)) by lia. cbn [andb].
 rewrite <- (unsigned_lit (mmap_len len)) by lia. apply (avoids_of_region_free (vm_reserved h ++ vm_maps h)); [exact E4| exact Hcov]. }
 exists (MmOk (bv_unsigned r)). split.
 + unfold dec_mmap_none. rewrite !bv_eqb_refl, Hok. reflexivity.
@@ -699,10 +710,75 @@ exists (MmOk (bv_unsigned r)). split.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 Lemma m_vmmaps_with_mmap_destroyed : forall a n h m, m_vmmaps (with_mmap_destroyed a n h m) = h.
 Proof. reflexivity. Qed.
+(* LPS 727298f3: munmap's next state is [mmap_fixed_destroyed_next], which subtracts the
+   range from [vm_maps]; on a ledger where the range is exactly one entry and meets no
+   other, that is [map_remove]. *)
+Lemma iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+Lemma maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a
+      \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
+(* The exact arm's granted answer: the witness that a refusal of the same request is spurious. *)
+Lemma check_munmap_exact_grant : forall (a len : word) mo nZ,
+  page_round_up_Z (bv_unsigned len) = nZ ->
+  (negb (bv_unsigned a mod page_size =? 0) || w_is0 len)%Z = false ->
+  (TASK_SIZE <? bv_unsigned a + nZ)%Z = false ->
+  map_has (vm_maps (m_vmmaps mo)) a (Z_to_bv 64 nZ) = true ->
+  check_munmap a len (mkEffectU (Z_to_bv 64 0) [] [] [(a, Z_to_bv 64 nZ)] [] []) mo
+  = CheckOk (with_mmap_destroyed a (Z_to_bv 64 nZ) (mmap_fixed_destroyed_next (m_vmmaps mo) a (Z_to_bv 64 nZ)) mo) [].
+Proof.
+  intros a len mo nZ HnZ G1 G2 G3. unfold check_munmap. rewrite G1. cbv iota zeta.
+  rewrite HnZ, G2, G3. cbv iota.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by (vm_compute; reflexivity).
+  replace (w_is0 (Z_to_bv 64 0)) with true by (vm_compute; reflexivity).
+  rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
+Qed.
 Lemma nstep_dec_munmap : forall addr len mo rsp mo' evs,
 let h := m_vmmaps mo in
 let a := Z_to_bv 64 addr in let n := Z_to_bv 64 (mmap_len len) in
 (0 <= addr < 2^64)%Z -> (0 < len)%Z -> (mmap_len len < 2^64)%Z ->
+  map_has (vm_maps h) a n = true ->
+  maps_subtract (vm_maps h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove (vm_maps h) a ->
 nstep (NMunmap addr len) mo rsp mo' evs ->
 evs = [] /\ vm_only mo mo' /\
 exists x, dec_munmap addr len rsp = Some x /\
@@ -715,26 +791,33 @@ match x with
 (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)
 end.
 Proof.
-intros addr len mo rsp mo' evs h a n Ha Hlen Hlen2 H.
+  intros addr len mo rsp mo' evs h a n Ha Hlen Hlen2 Hhas0 Hex H.
 pose proof (mmap_len_bound len Hlen) as Hb.
 pose proof (nstep_mm_vm_only (NMunmap addr len) mo rsp mo' evs I H) as [Hv ->]. split; [reflexivity|]. split; [exact Hv|].
-apply nstep_munmap_iff in H. destruct rsp as [r ws zs us cs ci]. unfold check_munmap in H.
+  pose proof H as Hst0.
+  apply nstep_munmap_iff in H as [H _]. destruct rsp as [r ws zs us cs ci]. unfold check_munmap in H.
 fold a h in H. Local Ltac2 Set LiaHints.tbl := fun () => "0020>59504279937.1765121082836.1900000100@SS4Hlen5Hlen22Hb".
 rewrite (unsigned_lit len) in H by lia. fold (mmap_len len) in H. fold n in H.
-destruct (negb (bv_unsigned a mod page_size =? 0)%Z || w_is0 (Z_to_bv 64 len)).
+  destruct (negb (bv_unsigned a mod page_size =? 0)%Z || w_is0 (Z_to_bv 64 len)) eqn:G1.
 { apply check_ret_only_ok_iff in H as (-> & -> & _). exists (RgErr EINVAL). split; [|auto].
 unfold dec_munmap. rewrite errno_of_errno_ret by (unfold EINVAL; lia). reflexivity. }
-cbv zeta in H. destruct (TASK_SIZE <? _)%Z.
+  cbv zeta in H. destruct (TASK_SIZE <? _)%Z eqn:G2.   (* [comment removed for export] *)
 { apply check_ret_only_ok_iff in H as (-> & -> & _). exists (RgErr EINVAL). split; [|auto].
 unfold dec_munmap. rewrite errno_of_errno_ret by (unfold EINVAL; lia). reflexivity. }
-destruct (map_has (vm_maps h) a n) eqn:Hhas.
-- destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
+  assert (HnZ : page_round_up_Z (bv_unsigned (Z_to_bv 64 len)) = mmap_len len).
+  { rewrite (unsigned_lit len); [reflexivity|].
+    split; [exact (Z.lt_le_incl _ _ Hlen) | exact (Z.le_lt_trans _ _ _ (proj1 Hb) Hlen2)]. }
+  pose proof (nstep_munmap_nonrefusal _ _ _ _ _ _ _ _ _ Hst0
+                (check_munmap_exact_grant a (Z_to_bv 64 len) mo (mmap_len len) HnZ G1 G2 Hhas0)
+                ltac:(vm_compute; reflexivity)) as Hnr.
+  cbn [eff_ret] in Hnr.
+  rewrite Hhas0 in H. cbv iota in H.
+  destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
+  cbv iota in H. rewrite Hnr in H. cbv iota in H.
 destruct (w_is0 r && listNN_eqb us [(a, n)]) eqn:E; [|discriminate]. inversion H; subst; clear H.
 apply andb_prop in E as [E1 E2]. apply listNN_eqb_eq in E2. subst us. unfold w_is0 in E1. apply bv_eqb_eq in E1. subst r.
-exists (RgDone true). split; [|split; [reflexivity| rewrite m_vmmaps_with_mmap_destroyed; reflexivity]].
+  exists (RgDone true). split; [|split; [exact Hhas0| rewrite m_vmmaps_with_mmap_destroyed; unfold mmap_fixed_destroyed_next; rewrite Hex; reflexivity]].
 unfold dec_munmap. subst a n. rewrite !bv_eqb_refl. reflexivity.
-- destruct (munmap_free_ok h a (mmap_len len)) eqn:Hrf; [|discriminate].
-apply check_ret_only_ok_iff in H as (-> & -> & _). exists (RgDone false). split; [reflexivity| auto].
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 Lemma nstep_dec_mprotect : forall addr len mo rsp mo' evs,
 let h := m_vmmaps mo in
@@ -767,7 +850,8 @@ rewrite w_is0_lit in H by lia. replace (len =? 0)%Z with false in H by (symmetry
 destruct (two_pow_64 <=? _)%Z.
 { apply check_ret_only_ok_iff in H as (-> & -> & _). exists (RgErr ENOMEM). split; [|auto].
 unfold dec_mprotect. rewrite errno_of_errno_ret by (unfold ENOMEM; lia). reflexivity. }
-cbv zeta in H.
+  cbv zeta in H. match type of H with context [negb (region_free (vdso_reserved ?k ?t) ?x ?y)] =>
+    destruct (negb (region_free (vdso_reserved k t) x y)); [discriminate H|] end.
 destruct (map_contains (vm_noaccess h) a n && map_contains (vm_maps h) a n) eqn:Hc.
 - destruct ws; [|discriminate]. destruct us; [|destruct zs; discriminate].
 destruct cs; [|destruct zs; discriminate]. destruct ci; [|destruct zs; discriminate].

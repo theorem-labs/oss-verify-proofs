@@ -21,7 +21,7 @@ role words alone do not settle whether the numeral is the image's.
 usage: roles.py [rc-PREFIX ...] > roles.out      (default: every prefix in ROOT)"""
 import collections, os, re, subprocess, sys
 
-# Edited for plugin-hostd/fuzz_command (tree a3c671fb9bb, the series head the value gate read). The only other
+# Edited for plugin-hostd/fuzz_command (tree, the series head the value gate read). The only other
 # change against roles.py 3bae7181ab01: the git directory comes from $ROLES_GIT (default: the current repository).
 U = 'proofs/plugin-hostd/fuzz_command/lib/'
 ROOT = {'rc-A': (U + 'A/', 'a3c671fb9bb'), 'mv-A': (U + 'A/', 'a3c671fb9bb'),

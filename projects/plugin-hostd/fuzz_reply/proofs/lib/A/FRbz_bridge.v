@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YEvtSRr.v, with its module paths changed; 14 of its 48 lines of code are new or changed and 88 lines of the source are left out. *)
-(* Ported from: a working branch 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSbz_bridge.v.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSbz_bridge.v.
    Changes (R1Str, 2026-10-29): module path fuzz_state -> fuzz_reply; no address numerals; renamed from FSbz_bridge.v. *)
-(* Port-from: origin/cold/port-fm-rtscan cedf3d02589 proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v (port-fm's RtScan).
+(* Port-from: proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v (port-fm's RtScan).
    Changes for fuzz_state (a Theorem Labs lane, 2026-10-28): module path fuzz_manifest -> fuzz_state; imports FRbz_str for FMbz_str. *)
 (* The generic half of the bridge between a body walk written over the machine state alone
    (lib/A/Bz: `evt asegs Q ms`, that is "some step chain from ms reaches a state in Q") and the
@@ -11,7 +12,7 @@
 
    Three facts make it one short file:
    - the two trees name the same image: `asegs = tfibsegs` by reflexivity (FMbz_str.v:26);
-   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:16) is
+   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:17) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the donor's `msteps` (lib/Reusable/YK0i.v:284-290) asks;
    - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:150),

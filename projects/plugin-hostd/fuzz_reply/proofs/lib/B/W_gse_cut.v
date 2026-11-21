@@ -8,6 +8,7 @@
    Route (b), step 3 (CONVERSION.md sha256 1015972e02a9; internal record): each statement has its generic twin over an allocator relation ARx
    (gse_pre_x, gse_inv_x, gse_loop_at_x, gse_tail_at_x, Section cx), which the pieces prove; Section br0 bridges the
    two at ARx := W_journal_x.ARi0, PST := [] in both directions. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* gestures_end (s) at 0x82618 on fuzz_reply.asan-ubsan:
      0x82618-0x82640  prologue (frame 80: ra, s0..s8 at sp+72 .. sp+0).
      0x82644-0x8264c  TRAPS: `beqz a0` (s null) and `andi a1,a0,7; bnez a1` (s misaligned) -> unimp; refuted by
@@ -221,7 +222,7 @@ End c.
    ghost list Hp after S and Hpc after Sc; the post gse_post_x).  Each text is the AR one's otherwise.  The pieces
    prove them over ARx (pb_gse_loop_x, pb_gse_tail_x) and pb_gestures_end_x composes them; Section br0 below turns
    each into its AR form at ARi0 and back.
-   The room round (commit 67327a6003d, lib/A/W_contract_x.v), threaded as gse_spec_x threads it: the Section takes RP
+   The room round (lib/A/W_contract_x.v), threaded as gse_spec_x threads it: the Section takes RP
    after MT; gse_pre_x gains the parameter kr and, after its mo_ok, gse_spec_x's two premises (the room invariant RM at
    the entry S with the whole run's allocator-call count, the entry's live counts under gse_spec_x's peak); gse_inv_x
    gains kr and, after its mo_ok, RM at the cut's state Sc with the count of the calls left; the cut statements bind
@@ -375,7 +376,7 @@ Lemma gse_loop_at_x_wle : gse_loop_at_x = gse_loop_at_xR (@wle SEGS). Proof. ref
 Lemma gse_tail_at_x_wle : gse_tail_at_x = gse_tail_at_xR (@wle SEGS). Proof. reflexivity. Qed.
 End cx.
 
-(* ---- THE ROOM ROUND's counts and calls (commit 67327a6003d: a call's count premise from its caller's).  At every
+(* ---- THE ROOM ROUND's counts and calls (a call's count premise from its caller's).  At every
    state of the key run the live blocks are the entry's less the keys freed so far, with the output block (at most one)
    in place of the entry's: a live P-count there is at most the entry's plus one.  So a call's count premise of peak pk
    follows from the entry premise of peak pk0 whenever pk P + 1 <= pk0 P.  The peaks are arguments, read off the

@@ -766,7 +766,7 @@ Proof. intros H K c HF Hc. unfold a_class_bytes. rewrite (a_class_count_above H 
    they take any Bc: class_slot_entry_count gives that form for Bc = class_Bc N SP from the count bound, and a unit
    whose live bound is in bytes gives its own Bc. The room row (the contracts' second per-class premise) is a
    hypothesis; class_room_of_rows discharges it with one vm_compute over the rows of W6/QSlot.v qslot_table. These are
-   a Theorem Labs lane's fm_ lemmas (a working branch 38bbb9a757, fuzz_manifest's lib/A/Prog/slot_class_live.v) for any N, SP, Bc.
+   a Theorem Labs lane's fm_ lemmas (a working branch, fuzz_manifest's lib/A/Prog/slot_class_live.v) for any N, SP, Bc.
 
    For N c = 1 and SP c = size_of_class c (at most one live block per class at entry, one slot block at a time):
      Definition U_Bc : Z -> Z := class_Bc (fun _ => 1) size_of_class.

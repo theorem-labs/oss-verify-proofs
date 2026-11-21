@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -232,7 +233,7 @@ Lemma swapout_cps :
   ((cap = 0 /\ A = 0) \/ (1 <= cap /\ A mod 16 = 0 /\ 0 < A /\ rw_cells bsegs m A (velts els))) -> cap = zlength els ->
   cap + 1 <= cap' -> 16 * cap' <= 0x20001000 -> 0 < NEW -> NEW + 16 * cap' < USTACK_TOP ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 96 + RT_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 96 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VB_SWAPOUT m)))
@@ -318,7 +319,7 @@ Proof using AF RTF ANN.
         exact (MID Σ1 m2 c2 r u0 u1 u2 b1 b2 b3 b4 b5 b6 b7 u3 u4 u5 u6 F2 fc2 FRM2 LV1 FRS1 SP1 CR1 ART2 MI2 WM2 ST2 PRES2 Hc2'). }
 
   intros Σ1 m2 c2 r u0 u1 u2 b1 b2 b3 b4 b5 b6 b7 u3 u4 u5 u6 F2 fc2 FRM2 LV1 FRS1 SP1 CR1 ART2 MI2 WM2 ST2 PRES2 Hc2.
-  assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+  assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
   assert (INN1 : In (NEW, 16 * cap') (rt_live RT Σ1)) by (rewrite LV1; exact INN).
   pose proof (af_live_range RT AF Σ1 m2 NEW (16 * cap') ART2 INN1) as (_ & N1 & _).
   pose proof (af_frames_range RT AF Σ m f kf ART0 INF) as (_ & _ & _ & FLV). specialize (FLV NEW (16 * cap') INN).

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a system-call return now clears the LR/SC reservation, and the read proof carries the fd predicate's channel-reader flag. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -18,7 +19,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc_w : forall R F pc x8 fc rv m ro r ws,
-  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r ws []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv
+  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r ws []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None
     (apply_writes (apply_zeros (apply_unmaps m []) []) ws) ro.
 Proof. reflexivity. Qed.
 
@@ -110,8 +111,8 @@ Proof using AF AF_ICPT RIP.
            fd g_read_stage count p off data); [lia| lia| ul| exact (ASTA_PM_mat_stable RT AF Σ _ fs0)| | | exact Hc1'|].
   - intros ms <-. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [exact WR1| reflexivity].
-  - intros mo (HAR & HF & HF2). rewrite HF, HF2. split; [exact HLK|]. split; [exact HFS|].
-    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| exact HF2]].
+  - intros mo (HAR & HF & HF2 & HRD). rewrite HF, HF2. split; [exact HLK|]. split; [exact HFS|].
+    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| split; [exact HF2| exact HRD]]].
   - intros c2 Hc2.
     set (r := Z.of_nat (length bs)) in *.
     assert (Hr : 0 <= r <= count).

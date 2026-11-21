@@ -74,7 +74,7 @@ Proof. unfold Prog.LLVMFuzzerTestOneInput_c.slot_syms. repeat (split; [reflexivi
 Lemma ph_globals : Prog.LLVMFuzzerTestOneInput_c.slot_globals src0_msyms.
 Proof. intros a Ha. exact (FrameProof.frame_G_facts a (Prog.Statement.slot_G_frame a Ha)). Qed.
 
-(* #102: the numerals below are FrameAPI.frame_facts_plain's (rw102-ent bfd74483ce6c), each checked against the
+(* #102: the numerals below are FrameAPI.frame_facts_plain's (rw102-ent), each checked against the
    relocated src0_msyms / src0_sink by reflexivity; the frame's globals are LedgerCells.GL_runs, by name. *)
 Lemma ph_sinks : @Prog.LLVMFuzzerTestOneInput_c.slot_sinks src0_msyms src0_sink_head src0_sink.
 Proof.

@@ -15,10 +15,11 @@
      HZS             - g_s's 384 bytes are in the instance's zero-shadow ranges (azs), which is what the arms'
                        ASan checks of g_s[i] read;
      ALOCK / AUNLOCK - W_sites.v's pthread_mutex_lock / _unlock site contracts, the default arm's two calls, as
-                       _drain.v states them (proved by R5: a working branch b1c048a98a5, RT_pthread_mutex_lock.v
+                       _drain.v states them (proved by R5: a working branch, RT_pthread_mutex_lock.v
                        rt_pthread_mutex_lock and RT_pthread_mutex_unlock.v rt_pthread_mutex_unlock);
      RI_* / LS_*     - the model step of each arm: the loop's relational invariant and the allocator-state
                        invariant after it.  These are the open model obligations of this file. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -437,7 +438,7 @@ Hypothesis TL : PALib B.
    static-TLS cell; proved for G_fr_c's instance as W_LLVMFuzzerTestOneInput_G.v c_HERRHI) *)
 Hypothesis HERRHI : rg_out fr_RG + 8 <= as_errno B.
 (* the default arm's two libc calls: W_sites.v's site contracts, stated as _drain.v states them; proved by R5
-   (a working branch b1c048a98a5: RT_pthread_mutex_lock.v rt_pthread_mutex_lock, RT_pthread_mutex_unlock.v
+   (a working branch: RT_pthread_mutex_lock.v rt_pthread_mutex_lock, RT_pthread_mutex_unlock.v
    rt_pthread_mutex_unlock) *)
 Hypothesis ALOCK : alock_realizes B (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes B (SIGMA WS_pthread_mutex_unlock).

@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YCbo.v, with its module paths and module names changed; 248 of its 306 lines of code are new or changed and 2409 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs ASan, check_round_trip (fs.asan 0x81a9c), lane D2, SEGMENT 39: the second `__wrap_free` thunk.
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd24.v, stage St24 - the same __wrap_free
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd24.v, stage St24 - the same __wrap_free
    thunk at 0x82350, freeing the raw interceptor block `same`).
 
    The code (MEASURED, crt_tbl): 0x8234c `mv a0, s8` (s8 = atom 24 = same, the second __wrap_malloc block,

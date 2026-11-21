@@ -11,6 +11,7 @@ Require OSSVerify.Proofs.openssl.echconfiglist_parser.lib.BaseUbsan.
 Require OSSVerify.Proofs.openssl.echconfiglist_parser.lib.BaseAsan.
 Require OSSVerify.Proofs.openssl.echconfiglist_parser.lib.EchTop.
 Require OSSVerify.Proofs.openssl.echconfiglist_parser.lib.EchTopAsan.
+Require OSSVerify.Proofs.openssl.echconfiglist_parser.lib.SpinAlg.
 Require OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.BaseAsan.
 Require OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.EchTopAsan.
 Import ListNotations.
@@ -19,7 +20,8 @@ Definition accept_segment : Segment := {|
   seg_base := 65536%N;
   seg_size := 132%N;
   seg_perms := "r-x"%string;
-  seg_bytes := ["7f454c460201010000000000000000000200f30001000000780001000000000040000000000000000000000000000000040000004000380001004000000000000100000005000000000000000000000000000100000000000000010000000000840000000000000084000000000000000010000000000000130500009308e00573000000"%pstring]
+  seg_bytes := ["7f454c460201010000000000000000000200f30001000000780001000000000040000000000000000000000000000000040000004000380001004000000000000100000005000000000000000000000000000100000000000000010000000000840000000000000084000000000000000010000000000000130500009308e00573000000"%pstring];
+  seg_kind := SegLoader
 |}.
 Definition accept_segments : list Segment := [accept_segment].
 Definition accept_phdrs : PhdrInfo := mkPhdrInfo 65600%N 56%N 1%N.
@@ -28,14 +30,14 @@ Definition accept_image : Image := mkImage accept_segments 65656%N accept_phdrs.
 Lemma accept_image_wf : image_wf accept_image.
 Proof. check_image_wf. Qed.
 
-Lemma accept_exits_c : forall sp rnd argv envp uid hw,
-  exits_c accept_segments verdict_accept 8
-    (init_machine_state accept_segments 65656%N accept_phdrs sp rnd argv envp uid hw)
+Lemma accept_exits_c : forall sp mbase draw inp,
+  exits_c (run_segments accept_segments inp sp mbase) verdict_accept 8
+    (init_machine_state (run_segments accept_segments inp sp mbase) 65656%N accept_phdrs sp mbase draw inp)
   = true.
 Proof.
-  intros. rewrite (with_mem_eta (init_machine_state _ _ _ _ _ _ _ _ _)).
-  generalize (ms_mem (init_machine_state accept_segments 65656%N accept_phdrs sp rnd argv envp uid hw)).
-  intros mem. vm_compute. reflexivity.
+  intros. rewrite (with_mem_eta (init_machine_state _ _ _ _ _ _ _)).
+  generalize (ms_mem (init_machine_state (run_segments accept_segments inp sp mbase) 65656%N accept_phdrs sp mbase draw inp)).
+  intros mem. unfold run_segments. vm_compute. reflexivity.
 Qed.
 
 Lemma accept_must_exit : forall inp en,
@@ -93,14 +95,24 @@ Lemma asan_base :
 Proof.
   intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
+  (* 08b1429 / #38: the reader and launch clauses of [Run.valid_input], which
+     [BaseAsan.as_realizes_spec_closed] takes *)
+  pose proof (valid_input_channel_reader _ Hvalid) as Hrdr.
+  pose proof (valid_input_launch _ Hvalid) as Hlaunch.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-  destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-  destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _).
+  destruct Hens as [Hrsp [Hrbrk [Hrmb [Hrfit Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [Hafit Halau]]]].
+  destruct Hvalid as (Hargv & Henvp & Hfs & _ & _ & Hcreds & _ & _ & Hhw & _).
+  (* The plain binary's theorem states its walk against the run's segment list from the run's own
+     start, and so does the ASan one ([BaseAsan.as_realizes_spec_closed], through
+     [AsHole/EAsChainRun.as_chain_run]); this theorem asks for the target's walk in the [srealizes]
+     form, which [SpinAlg.srealizes_of_realizes] gives. *)
   exact (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.ShapeEFS.shape_strong_equiv_ef_s _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ inp
            (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.RefTop.ref_realizes_spec
-              OSSVerify.Proofs.openssl.echconfiglist_parser.lib.EchTop.FZ_p rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrfit Hargv Henvp Hfs)
-           (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.BaseAsan.as_realizes_spec_closed
-              OSSVerify.Proofs.openssl.echconfiglist_parser.lib.EchTopAsan.FZ_a asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds Hhw)).
+              OSSVerify.Proofs.openssl.echconfiglist_parser.lib.EchTop.FZ_p rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrfit Hargv Henvp Hfs Hrmb
+              Hrdr Hlaunch Hrlau)
+           (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.SpinAlg.srealizes_of_realizes _ _ _
+              (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.BaseAsan.as_realizes_spec_closed
+                 OSSVerify.Proofs.openssl.echconfiglist_parser.lib.EchTopAsan.FZ_a asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds Hhw Hrdr Hlaunch Halau))).
 Qed.
 
 Lemma ubsan_base :
@@ -120,14 +132,18 @@ Lemma asan_ubsan_base :
 Proof.
   intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
+  pose proof (valid_input_channel_reader _ Hvalid) as Hrdr.
+  pose proof (valid_input_launch _ Hvalid) as Hlaunch.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-  destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-  destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _).
+  destruct Hens as [Hrsp [Hrbrk [Hrmb [Hrfit Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [Hafit Halau]]]].
+  destruct Hvalid as (Hargv & Henvp & Hfs & _ & _ & Hcreds & _ & _ & Hhw & _).
   exact (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.ShapeEFS.shape_strong_equiv_ef_s _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ inp
            (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.RefTop.ref_realizes_spec
-              OSSVerify.Proofs.openssl.echconfiglist_parser.lib.EchTop.FZ_p rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrfit Hargv Henvp Hfs)
-           (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.BaseAsan.as_realizes_spec_closed
-              OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.EchTopAsan.FZ_a asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds Hhw)).
+              OSSVerify.Proofs.openssl.echconfiglist_parser.lib.EchTop.FZ_p rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrfit Hargv Henvp Hfs Hrmb
+              Hrdr Hlaunch Hrlau)
+           (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.SpinAlg.srealizes_of_realizes _ _ _
+              (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.BaseAsan.as_realizes_spec_closed
+                 OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.EchTopAsan.FZ_a asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds Hhw Hrdr Hlaunch Halau))).
 Qed.
 
 Theorem asan_bound_0 : OSSVerify.openssl.echconfiglist_parser.Statements.asan_disagrees_at_most 0.

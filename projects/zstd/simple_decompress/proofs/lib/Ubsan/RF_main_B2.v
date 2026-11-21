@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the entry stack image with the launch values and the zero-mapped stack depth below sp). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
@@ -22,7 +23,7 @@ Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 Ltac ua := idtac.
 Ltac rpc := apply ret_pc_even; [lia| reflexivity].
 
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {lx : launchT}.
 Lemma rw_cells_CB0 : forall m A, 0 <= A <= 2^64 -> rw_cells usegs m A [CB 0%nat []].
 Proof.
   intros m A H. split; [split|].
@@ -64,7 +65,7 @@ Section B2.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid hw draw).
+  Notation IMGB := (build_stack_bytes L_LA pph (Z_to_bv 64 (Z.of_N u_init_pc)) sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw draw TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm J8 S7 S6 S5 S4).
@@ -82,7 +83,7 @@ Section B2.
   (* [comment removed for export] *)
   Lemma rd_read_core : forall (fd P1v : Z) (st1 : rd_st) (s : PState) x1 t0 t1 t2 a1 a3 a4 a5 a6 a7 (x23 : word) t3 t4 t5 t6
       (F : bvmap 5 word) (fc : bv 32) (mm : mem) (A CNT : Z) (DATA junk sj : list byte) (errv : word),
-    3 <= fd < 2^32 -> nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) ->
+    3 <= fd < 2^32 -> nth_error (argv_ptrs L_TOP argv envp L_EXECFN) 1 = Some (Z_to_bv 64 P1v) ->
     rd_content st1 = map bv_unsigned DATA -> BUF mm s (rd_buf st1) A (rd_cap st1) DATA junk -> STAGE mm sj ->
     Z.of_nat (length DATA) < rd_cap st1 ->
     CNT = (if 65536 <? rd_cap st1 - Z.of_nat (length DATA) then 65536 else rd_cap st1 - Z.of_nat (length DATA)) ->
@@ -114,7 +115,7 @@ Section B2.
     { set (w1 := Z_to_bv 64 UREAD_STAGE). unfold UREAD_STAGE in w1.
       replace UREAD_STAGE with (bv_unsigned w1) by (subst w1; unfold UREAD_STAGE; rewrite unsigned_lit; lia).
       eapply implM_of_enode.
-      eapply read_spec with (lo := usp0 - 8388608) (junk := firstn (Z.to_nat CNT) sj) (errv := errv); subst w1; unfold RATP;
+      eapply read_spec with (lo := usp0 - 6144513) (junk := firstn (Z.to_nat CNT) sj) (errv := errv); subst w1; unfold RATP;
         rewrite ?(unsigned_lit 295416) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia; rewrite ?(unsigned_lit 229609) by lia; try reflexivity;
         first [exact ST | exact SJ1 | exact ERR | exact MI | lia]. }
     cbv beta. intros a s' ms' [PO ->].
@@ -129,7 +130,7 @@ Section B2.
     assert (P2 : RHEAP s [(rd_buf st1, A, rd_cap st1)] m2).
     { eapply (RHEAP_munchW sp0 argv envp VSP); [exact WOKW| exact MUc| exact WMc| | exact P0].
       intros iv [<-|[<-|[<-|[]]]]; cbn [fst snd]; intros Hiv Hiv2; exfalso; lia. }
-    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 argv envp uid hw draw TID VSP VARGV VENVP); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; first [exact ST2' | replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST2']]).
+    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 argv envp uid hw draw TID VSP VARGV VENVP); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; first [exact ST2' | replace (usp0 - 6144513) with (usp0 + -6144513) by lia; exact ST2']]).
     (* [comment removed for export] *)
     remember (firstn (PSTAGE_LEN - Z.to_nat CNT) (skipn (Z.to_nat CNT) sj)) as JR eqn:EJR. clear EJR.
     clear MUc WMc BA WOKW.
@@ -138,8 +139,10 @@ Section B2.
       destruct RES as (SJ1' & ERR2 & He).
       pose proof BA2 as (ST3 & MI3 & RS3 & AUX3 & IMG3 & SE3 & SOF3 & TR3). pose proof RS3 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & G28 & GD0 & _).
       pose proof VARGV as (_ & _ & ARGLEN & NONUL & _).
-      destruct (argv_cstring sp0 argv envp uid hw draw m2 IMG3 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-        as (p1 & slack1 & HP1' & P1LO & P1HI & STR1 & SLK1). unfold str_base, struct_size, argc, envc in P1LO.
+      destruct (argv_cstring sp0 argv envp uid hw draw m2 IMG3 (dvalid_padok _ _ _ VSP) 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
+        as (p1 & slack1 & HP1' & P1LO & P1HI & STR1 & SLK1).
+      pose proof (layout_bounds L_LA sp0 L_TOP argv envp L_EXECFN (dvalid_padok _ _ _ VSP)) as (LBS & _).
+      pose proof (Nat2Z.is_nonneg (block_head_size (la_rseq L_LA) argv envp)). unfold hsz in LBS.
       pose proof (IMGB_len sp0 argv envp uid hw draw VSP VARGV VENVP) as IL.
       rewrite HP1 in HP1'. assert (EP : Z_to_bv 64 P1v = Z_to_bv 64 p1) by congruence. rewrite EP. clear HP1' EP.
       assert (A1NN : ~ In (Z_to_bv 8 0) arg1) by (rewrite EARGV in NONUL; inversion NONUL as [|? ? ? X]; inversion X; assumption).
@@ -187,7 +190,7 @@ Section B2.
         assert (P3 : RHEAP s [(rd_buf st1, A, rd_cap st1)] m3).
         { eapply (RHEAP_munchW sp0 argv envp VSP); [exact WOKD| exact MUd| exact WMd| | exact P2].
           intros iv [<-|[]]. cbn [fst snd]. intros _ _. exists (rd_buf st1, A, rd_cap st1). split; [left; reflexivity|]. cbn [fst snd blk_addr blk_size]. lia. }
-        assert (BA3 : BASE' m3) by (eapply (BASE_munch sp0 argv envp uid hw draw TID VSP VARGV VENVP); [exact BA2| exact WOKD| exact MUd| exact WMd| exact MI4| unfold LO; first [exact ST3 | replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST3]]).
+        assert (BA3 : BASE' m3) by (eapply (BASE_munch sp0 argv envp uid hw draw TID VSP VARGV VENVP); [exact BA2| exact WOKD| exact MUd| exact WMd| exact MI4| unfold LO; first [exact ST3 | replace (usp0 - 6144513) with (usp0 + -6144513) by lia; exact ST3]]).
         clear MUd WMd WOKD.
         zstep. zstep.
         apply evt_done.
@@ -232,7 +235,7 @@ Section B2.
   (* [comment removed for export] *)
   Lemma rd_read : forall (fd P1v : Z) (st1 : rd_st) (s : PState) x1 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 (x23 : word) t3 t4 t5 t6
       (F : bvmap 5 word) (fc : bv 32) (mm : mem) (A : Z) (DATA junk sj : list byte) (errv : word),
-    3 <= fd < 2^32 -> nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) ->
+    3 <= fd < 2^32 -> nth_error (argv_ptrs L_TOP argv envp L_EXECFN) 1 = Some (Z_to_bv 64 P1v) ->
     rd_content st1 = map bv_unsigned DATA -> BUF mm s (rd_buf st1) A (rd_cap st1) DATA junk -> STAGE mm sj ->
     Z.of_nat (length DATA) < rd_cap st1 ->
     FRAME' mm -> BASE' mm -> rw_cells usegs mm RERRNO [C4 errv] -> frm0 fc ->

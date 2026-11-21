@@ -1,6 +1,6 @@
 (* indent 0x86368 (preset_file.c:514-523) on fs.asan-ubsan (image B, sha256 5ac5ce0954f8...): Theorem indent_proof :
    @indent_spec fx rc SK B tfibsegs (S0's statement lib/B/FSH_Fn_writer.v indent_spec, no CTX, with the head-in-U
-   premise: a working branch adfa7850046 over a working branch bddf781b317), the callee put 0x8449c through put_spec
+   premise: a working branch over a working branch), the callee put 0x8449c through put_spec
    (same file) as a Section hypothesis. SK stays the Section's Context and is passed with `@` (a build-B instantiation
    passes FSH_Base.fsB_sink_head). 28 words, disassembled from B itself (capstone over the pinned fuzz_state.asan-ubsan):
      0x86368 addi sp, sp, -32; sd ra, 24(sp); sd s0, 16(sp); sd s1, 8(sp); sd s2, 0(sp)
@@ -33,14 +33,14 @@
    form (C1 ++ new :: C2), composed by bswap_trans through mid_unique.
    Route: indent_arm0 (pretty = 0), ind_arm1 (entry and the newline put), ind_r80 (blez s0), ind_loop (the two-space
    puts, by induction), ind_call (one put through PUT), ind_ret (the return), over the invariant iRI between puts.
-   Template: the image-A proof lib/A/FSW_indent.v (a working branch a6f109640fd), every address replaced by
+   Template: the image-A proof lib/A/FSW_indent.v (a working branch), every address replaced by
    B's own (lib/B/FSH_Base.v, lib/B/FSPstat.v, lib/B/YB1w.v, the disassembly above).
    Rule 24 (record (internal path): proof-index indent, 14 named / 15
    by address / 4 related / 28 lemma(s), an earlier delivery 6 named; git grep by name and by B entry 0x86368 over main, ossv/recipes,
    ossv/candidates, release/pau-projects-recipes and the named cold refs, 2026-10-29T04:18:29Z; CONFIRM by a Theorem Labs lane
-   2026-10-29T04:39:15Z): no proof of indent against S0's lib/B spec on any searched ref; 211ff3e9df0
-   lib/B/Prog/indent*.v and a working branch 0603c9ef lib/B/Prog/indent.v are templates only; written over S0 and
-   the lib/B walk kit FSW_K / FSW_K3 / FSW_ret / FSW_rd (U form; a working branch 65632947036). *)
+   2026-10-29T04:39:15Z): no proof of indent against S0's lib/B spec on any searched ref;
+   lib/B/Prog/indent*.v and a working branch lib/B/Prog/indent.v are templates only; written over S0 and
+   the lib/B walk kit FSW_K / FSW_K3 / FSW_ret / FSW_rd (U form; a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

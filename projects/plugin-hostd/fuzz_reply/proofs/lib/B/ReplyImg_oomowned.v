@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-oomowned-B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the symbol table of reply's image B, fuzz_reply.asan-ubsan,
    pin 10ffb5f9202a).
 
    oom_owned_img : oom_areas_t, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:291-296 (Definition) / :300
-   (Hypothesis) @ 692f71ce28c.  The layer states oom_areas_t over its Section's Variable B, under the hypothesis
-   TS : im_syms B (YGcfInstMiss.v:240 @ 692f71ce28c).  Reply does not carry YGcfInstMiss.v, so the Lemma states the body
-   of oom_areas_t VERBATIM at a B with image B's symbol facts (im_syms of AImg_reply, B/AGif2reply.v:24, which is
+   (Hypothesis).  The layer states oom_areas_t over its Section's Variable B, under the hypothesis
+   TS : im_syms B (YGcfInstMiss.v:241).  Reply does not carry YGcfInstMiss.v, so the Lemma states the body
+   of oom_areas_t VERBATIM at a B with image B's symbol facts (im_syms of AImg_reply, B/AGif2reply.v:25, which is
    YF0m.TfibSyms).
-   At image B (B/YF0m.v:16-19) the OOM byte is TFIB_OOM = 0x1288a0: above the instance object [0xa2fd8, 0xa3e08) and the
+   At image B (B/YF0m.v:17-20) the OOM byte is TFIB_OOM = 0x1288a0: above the instance object [0xa2fd8, 0xa3e08) and the
    internal allocator [0xa7840, 0x128870), below the flag [0x1360c8, 0x1360ca), the store [0x178508, 0x178528) and the
    depot [0x188518, 0x588538).  cgif's discharge of the same five facts: YFi5.Z_inst / Z_depot / Z_store / Z_ial /
    Z_flag. *)
@@ -29,7 +30,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import ImgBas
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import AGif2reply.
 Open Scope Z_scope.
 
-(* oom_owned_img at image B: the body of oom_areas_t (YGcfInstMiss.v:292-296 @ 692f71ce28c), verbatim. *)
+(* oom_owned_img at image B: the body of oom_areas_t (YGcfInstMiss.v:293-297), verbatim. *)
 Lemma oom_owned_img_B : forall B, @im_syms AImg_reply B ->
   ~ (as_inst B <= as_oom_byte B < as_inst B + 3632) /\
   ~ (as_depot B <= as_oom_byte B < as_depot B + (4 * 2 ^ 20 + 32)) /\

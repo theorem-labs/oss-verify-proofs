@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader conjunct of the stdout state). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -604,7 +605,8 @@ Lemma exit_cps :
     m_halted MD = None -> m_vm_lazy MD = [] ->
     0 <= v < 256 ->
     ( (stdout_untouched m /\ pending = [])
-      \/ (stdout_used m pending /\ fd_lookup (m_fds MD) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ) ->
+      \/ (stdout_used m pending /\ fd_lookup (m_fds MD) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+          /\ m_channel_reader MD = true) ) ->
     realizes s0segs
       (mkCfg (MS (mkR ra (Z_to_bv 64 (sp0 - 48)) gp (Z_to_bv 64 0x441e0) t0 t1 t2 s0 s1 (Z_to_bv 64 v) a1 a2 a3 a4 a5 a6 a7
                       s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
@@ -638,7 +640,7 @@ Proof.
       split; [img_rdn1 HP|]. split; [apply rdn_of_rw_C4; exact A1|]. split; [apply rdn_of_rw_C8; exact A2|].
       split; [img_rdn1 HP|]. split; [apply rdn_of_rw_C8; exact A3|]. split; [apply rdn_of_rw_C8; exact A4|].
       destruct CB as [[_ CBB] _]. cbn [cells_bytes cbytes app] in CBB. exact (rdn_of_bytes_at m 0x440e4 _ CBB).
-  - destruct SO as [[SU ->] | [(WM & B & L) FD]].
+  - destruct SO as [[SU ->] | [(WM & B & L) [FD RD]]].
     + left. split; [reflexivity|]. exists (Z_to_bv 64 0), (Z_to_bv 64 0).
       repeat split; (eapply rdn_pristine_eq; [ intros ? ?; apply SU; unfold SO_FILE; lia | solve_img | vm_compute; reflexivity | lia | lia ]).
     + destruct pending as [|p0 pending'].
@@ -646,7 +648,7 @@ Proof.
         destruct WM; cbn [pf_file pf_buf pf_swrite PF0_S0 length Z.of_nat Z.add] in *.
         repeat split; unfold cellZ, SO_BUF in *; try assumption.
       * right. exists SO_BUF, (SO_BUF + Z.of_nat (length (p0 :: pending'))), (Z_to_bv 64 SO_BUF), (Z_to_bv 64 1024), (Z_to_bv 64 0), gw.
-        split; [|exact FD].
+        split; [|split; [exact FD | exact RD]].
         destruct WM; cbn [pf_file pf_buf pf_swrite PF0_S0] in *; unfold cellZ, SO_BUF, BUF_SIZE in *.
         constructor; try assumption.
         -- cbn [length] in *. lia.
@@ -750,6 +752,7 @@ Section Printf.
       stk s0segs m lo spv -> lo <= spv - 1200 -> 0x7fff7f000000 <= lo ->
       mem_inv s0segs m -> statics1 sp0 tid m -> stdout_untouched m ->
       fd_lookup (m_fds MD) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+      m_channel_reader MD = true ->
       m_halted MD = None -> m_vm_lazy MD = [] ->
       K [] ->
       (forall (t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) (m' : word -> option byte),
@@ -763,7 +766,7 @@ Section Printf.
                                   F0 (Z_to_bv 64 0x139d8) FC0 None m (seg_rom s0segs)) MD)
                (t_emit (W 1 ZL) K).
   Proof.
-    intros until K. intros spv SP16 SP0 SPV ST LO LOLO MI STAT SU FD Hh Hl K0 HK.
+    intros until K. intros spv SP16 SP0 SPV ST LO LOLO MI STAT SU FD RD Hh Hl K0 HK.
     pose proof (s1_img _ _ _ STAT) as HP. destruct (s1_can _ _ _ STAT) as [gw Hgw].
     rewrite MS_mkst.
     eapply (PF0 _ m MD sp (bv_unsigned gw) K); try reflexivity; cbn [pf_ret pf_file pf_buf pf_canary pf_ro_hi pf_segs PF0_S0].
@@ -778,6 +781,7 @@ Section Printf.
     - unfold cellZ. apply rdn_of_rw_C8. rewrite Z_to_bv_bv_unsigned. exact Hgw.
     - apply u64_range.
     - exact FD.
+    - exact RD.
     - exact Hh.
     - exact Hl.
     - exact K0.

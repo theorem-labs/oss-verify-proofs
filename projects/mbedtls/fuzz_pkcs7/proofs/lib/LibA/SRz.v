@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the spin node constructor tsj_node gains the sys_rob premise; to_spinJ_ind2 and spinningJ_node written out in plain text from their encodings with that premise; the node proofs carry node_ok's new sys_rob conjunct via sys_rob_eqv and sys_rob_instr). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -35,21 +36,37 @@ Inductive to_spinJ : machine_state -> Model -> Prop :=
     mi_account_step segs ms mo = MachineOk (ms', mo') ->
     to_spinJ ms' mo' -> to_spinJ ms mo
 (* [comment removed for export] *)
+(* LPS revision (run_segments): a syscall spin node also carries [RomBase.sys_rob], because
+   [srzJ0_to_spinJ] builds a [Shape.node_ok] from it and node_ok carries that conjunct. *)
 | tsj_node : forall ms mo,
     (exists e st, sstep segs (mkCfg ms mo) e st) ->
     (forall e st, sstep segs (mkCfg ms mo) e st ->
         e = [] /\ exists ms' mo', st = SNext (mkCfg ms' mo') /\ m_halted mo' = None /\ to_spinJ ms' mo') ->
+    RomBase.sys_rob segs (mkCfg ms mo) ->
     to_spinJ ms mo.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma to_spinJ_ind2 : ltac2:(CDefT.buildp (gd_tbl_SRz ()) "PP,P,$0.P,$1.SpP,Pms,$0.Pmo,$1.P,(2.(3.(4.&40.))(5.R2.)(6.(4.&40.)))P,(2.$7.(8.Vsegs,R3.)$9.)A2.R5.R4.R3.P,Pms,$0.Pmo,$1.Pms',$0.Pmo',$1.P,(2.(3.(4.&40.))(5.R4.)(6.(4.&40.)))P,(2.(:.(;.$0.$1.))(<.Vsegs,R5.R4.)(=.(;.$0.$1.)(>.$0.$1.R3.R2.)))P,(?.R4.R3.)P,A2.R9.R5.R4.A2.R:.R8.R7.P,Pms,$0.Pmo,$1.P,(10.(11.$12.)Le,(11.$12.)(10.$13.Lst,$13.(14.Vsegs,(15.R4.R3.)R2.R1.)))P,Pe,(11.$12.)Pst,$13.P,(14.Vsegs,(15.R5.R4.)R2.R1.)(16.(2.(11.$12.)R3.(17.$12.))(10.$0.Lms',$0.(10.$1.Lmo',$1.(16.(2.$13.R4.(18.(15.R2.R1.)))(16.(2.(3.(4.&40.))(19.R1.)(6.(4.&40.)))(16.(?.R2.R1.)A2.R;.R2.R1.))))))A2.R7.R4.R3.Pms,$0.Pmo,$1.P,(?.R2.R1.)A2.R7.R3.R2.")
-(* [comment removed for export] *).
+(* Was an encoded statement (CDefT.buildp); written out from its decode (cdeft_print.py), not
+   re-encoded.  The one change: the node case also receives the constructor's new premise
+   [RomBase.sys_rob segs (mkCfg ms mo)]. *)
+#[using="Type"] Lemma to_spinJ_ind2 : forall P : machine_state -> Model -> Prop,
+  (forall ms mo, ms_svc_pending ms = None -> is_self_jump segs ms = true -> P ms mo) ->
+  (forall ms mo ms' mo', ms_svc_pending ms = None ->
+     mi_account_step segs ms mo = MachineOk (ms', mo') ->
+     to_spinJ ms' mo' -> P ms' mo' -> P ms mo) ->
+  (forall ms mo, (exists e st, sstep segs (mkCfg ms mo) e st) ->
+     (forall e st, sstep segs (mkCfg ms mo) e st ->
+        e = [] /\ exists ms' mo', st = SNext (mkCfg ms' mo') /\ m_halted mo' = None
+                                  /\ to_spinJ ms' mo' /\ P ms' mo') ->
+     RomBase.sys_rob segs (mkCfg ms mo) ->
+     P ms mo) ->
+  forall ms mo, to_spinJ ms mo -> P ms mo.
 Proof.
   intros P Hhere Hstep Hnode. fix IH 3. intros ms mo H.
-  destruct H as [ms mo Hs Hj | ms mo ms' mo' Hs Ha H | ms mo Hp Hall].
+  destruct H as [ms mo Hs Hj | ms mo ms' mo' Hs Ha H | ms mo Hp Hall Hrob].
   - apply Hhere; assumption.
   - eapply Hstep; [exact Hs | exact Ha | exact H | exact (IH ms' mo' H)].
-  - apply Hnode; [exact Hp|]. intros e st Hss.
+  - apply Hnode; [exact Hp| |exact Hrob]. intros e st Hss.
     destruct (Hall e st Hss) as (He & ms' & mo' & Hst & Hh & Hsub).
     split; [exact He|]. exists ms', mo'. split; [exact Hst|]. split; [exact Hh|]. split; [exact Hsub | exact (IH ms' mo' Hsub)].
 Qed.
@@ -86,9 +103,9 @@ Proof.
     destruct K as [Kb <-].
     eapply tsj_step; [| exact E | apply IH; exact Kb].
     destruct Heqv as (_ & _ & _ & Hsvc & _). congruence.
-  - intros ms mo (e0 & st0 & Hs0) Hall ms1 Heqv.
+  - intros ms mo (e0 & st0 & Hs0) Hall Hrob ms1 Heqv.
     assert (CE : cfg_eqv (mkCfg ms mo) (mkCfg ms1 mo)) by (split; [exact Heqv | reflexivity]).
-    apply tsj_node.
+    apply tsj_node; [ | | exact (sys_rob_eqv segs _ _ CE Hrob)].
     + destruct (sstep_cfg_eqv segs _ _ e0 st0 CE Hs0) as (X' & HsX & _). exists e0, X'. exact HsX.
     + intros e st1 Hs1.
       destruct (sstep_cfg_eqv segs _ _ e st1 (cfg_eqv_sym _ _ CE) Hs1) as (X & HsX & HX).
@@ -124,7 +141,7 @@ Proof. intros c T [H] c' E. constructor. intros c'' E'. apply H. eapply cfg_eqv_
 #[using="Type"] Lemma srzJ_node : ltac2:(CDefT.buildp (gd_tbl_SRz ()) "Pc,$1;.PI,StPevs,P,R1.(11.$12.)Pnx,P,R2.$1;.PT,P,R3.$1<.Pi0,R4.P,(1=.Vsegs,R6.R5.R4.R3.)P,Pi,R6.(1>.A1.R5.R1.A1.R4.R1.)(1>.R8.(1?.R7.Li,R7.(20.A1.R7.R1.A1.R5.R1.)))")
 (* [comment removed for export] *).
 Proof.
-  intros c I evs nx T i0 [Hcomp Hsound] Hcont. constructor. intros c' Heqv.
+  intros c I evs nx T i0 [Hcomp [Hsound Hrob]] Hcont. constructor. intros c' Heqv.
   set (I' := { p : I * config | sstep segs c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
   assert (Hfib : forall i, exists X', sstep segs c' (evs i) (SNext X') /\ cfg_eqv (nx i) X').
   { intros i. destruct (sstep_cfg_eqv segs c c' (evs i) (SNext (nx i)) Heqv (Hcomp i)) as (X' & Hs & HX).
@@ -133,13 +150,14 @@ Proof.
   apply (srz_conseq segs c' (ShapeAlg.t_alt (fun p : I' => ShapeAlg.t_emit (evs (fst (proj1_sig p))) (T (fst (proj1_sig p)))))).
   + apply (srz_node segs c' I' (fun p => evs (fst (proj1_sig p))) (fun p => snd (proj1_sig p))
              (fun p => T (fst (proj1_sig p))) (exist _ (i0, X0) (conj HX0s HX0e))).
-    * split.
+    * split; [|split].
       -- intros [[i X] [Hs HX]]. cbn. exact Hs.
       -- intros e st Hs.
          destruct (sstep_cfg_eqv segs c' c e st (cfg_eqv_sym _ _ Heqv) Hs) as (X & HsX & HX).
          destruct (Hsound e X HsX) as (i & -> & ->).
          destruct st as [c''|]; cbn in HX; [|contradiction].
          exists (exist _ (i, c'') (conj Hs (cfg_eqv_sym _ _ HX))). cbn. split; reflexivity.
+      -- exact (sys_rob_eqv segs c c' Heqv Hrob).
     * intros [[i X] [Hs HX]]. cbn. destruct (Hcont i) as [Hi]. apply Hi. exact HX.
   + intros tr. split.
     * intros [[[i X] [Hs HX]] Htr]. cbn in Htr. exists i. exact Htr.
@@ -193,12 +211,13 @@ Qed.
 #[using="Type"] Lemma node_acc_step : ltac2:(CDefT.buildp (gd_tbl_SRz ()) "Pms,$0.Pmo,$1.Pms',$0.Pmo',$1.P,(2.(3.(4.&40.))(19.R3.)(6.(4.&40.)))P,(2.(3.(4.&40.))(5.R5.)(6.(4.&40.)))P,(2.(:.(;.$0.$1.))(<.Vsegs,R6.R5.)(=.(;.$0.$1.)(>.$0.$1.R4.R3.)))(1=.Vsegs,(15.R7.R6.)$21.L,$21.(17.$12.)L,$21.(15.R6.R5.))")
 (* [comment removed for export] *).
 Proof.
-  intros ms mo ms' mo' Hh Hsvc Hacc. split.
+  intros ms mo ms' mo' Hh Hsvc Hacc. split; [|split].
   - intros _. apply sstep_instr; assumption.
   - intros e st Hss. exists tt.
     inversion Hss; subst; try congruence.
     match goal with H : mi_account_step segs ms mo = MachineOk _ |- _ => rewrite Hacc in H; inversion H; subst end.
     split; reflexivity.
+  - apply RomBase.sys_rob_instr. exact Hsvc.
 Qed.
 
 (* [comment removed for export] *)
@@ -222,7 +241,7 @@ Proof. intros c T [H]. constructor. intros c' E. apply srealizes_srealizes0. app
   node_ok segs c I evs nx -> (forall i, srealizesJ0 (nx i) (T i)) ->
   srealizesJ0 c (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros c I evs nx T i0 [Hcomp Hsound] Hcont. constructor. intros c' Heqv.
+  intros c I evs nx T i0 [Hcomp [Hsound Hrob]] Hcont. constructor. intros c' Heqv.
   set (I' := { p : I * config | sstep segs c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
   assert (Hfib : forall i, exists X', sstep segs c' (evs i) (SNext X') /\ cfg_eqv (nx i) X').
   { intros i. destruct (sstep_cfg_eqv segs c c' (evs i) (SNext (nx i)) Heqv (Hcomp i)) as (X' & Hs & HX).
@@ -231,13 +250,14 @@ Proof.
   apply (srz0_conseq segs c' (ShapeAlg.t_alt (fun p : I' => ShapeAlg.t_emit (evs (fst (proj1_sig p))) (T (fst (proj1_sig p)))))).
   + apply (srz0_node segs c' I' (fun p => evs (fst (proj1_sig p))) (fun p => snd (proj1_sig p))
              (fun p => T (fst (proj1_sig p))) (exist _ (i0, X0) (conj HX0s HX0e))).
-    * split.
+    * split; [|split].
       -- intros [[i X] [Hs HX]]. cbn. exact Hs.
       -- intros e st Hs.
          destruct (sstep_cfg_eqv segs c' c e st (cfg_eqv_sym _ _ Heqv) Hs) as (X & HsX & HX).
          destruct (Hsound e X HsX) as (i & -> & ->).
          destruct st as [c''|]; cbn in HX; [|contradiction].
          exists (exist _ (i, c'') (conj Hs (cfg_eqv_sym _ _ HX))). cbn. split; reflexivity.
+      -- exact (sys_rob_eqv segs c c' Heqv Hrob).
     * intros [[i X] [Hs HX]]. cbn. destruct (Hcont i) as [Hi]. apply Hi. exact HX.
   + intros tr. split.
     * intros [[[i X] [Hs HX]] Htr]. cbn in Htr. exists i. exact Htr.
@@ -282,16 +302,17 @@ Proof.
   - intros ms mo ms' mo' Hs Ha _ IH Hh.
     eapply srzJ0_silent1; [apply (node_acc_step ms mo ms' mo' Hh Hs Ha)|].
     apply IH. pose proof (mi_account_step_halted segs ms mo ms' mo' Ha) as E. congruence.
-  - intros ms mo (e0 & st0 & Hs0) Hall Hh.
+  - intros ms mo (e0 & st0 & Hs0) Hall Hrob Hh.
     set (I := { c' : config | sstep segs (mkCfg ms mo) [] (SNext c') }).
     destruct (Hall e0 st0 Hs0) as (E0 & ms0 & mo0 & Est0 & _). subst e0 st0.
     pose (i0 := exist (fun c' => sstep segs (mkCfg ms mo) [] (SNext c')) (mkCfg ms0 mo0) Hs0 : I).
     apply (srzJ0_conseq (mkCfg ms mo) (t_alt (fun _ : I => t_emit [] t_nil))).
     + apply (srzJ0_node (mkCfg ms mo) I (fun _ => []) (fun i => proj1_sig i) (fun _ => t_nil) i0).
-      * split.
+      * split; [|split].
         -- intros [c' Hc']. exact Hc'.
         -- intros e st Hss. destruct (Hall e st Hss) as (-> & ms' & mo' & -> & _).
            exists (exist _ (mkCfg ms' mo') Hss). split; reflexivity.
+        -- exact Hrob.
       * intros [c' Hc']. cbn [proj1_sig]. destruct (Hall [] (SNext c') Hc') as (_ & ms' & mo' & E & Hh' & _ & IH).
         inversion E; subst. apply IH. exact Hh'.
     + intros tr. split.
@@ -303,10 +324,16 @@ Qed.
 Proof. intros [ms mo] [H1 H2]. cbn in H1, H2. apply srzJ0_to_spinJ; assumption. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma spinningJ_node : ltac2:(CDefT.buildp (gd_tbl_SRz ()) "Pc,$1;.P,(2.(3.(4.&40.))(19.(22.R1.))(6.(4.&40.)))P,(10.(11.$12.)Le,(11.$12.)(10.$13.Lst,$13.(14.Vsegs,R4.R2.R1.)))P,Pe,(11.$12.)Pst,$13.P,(14.Vsegs,R5.R2.R1.)(16.(2.(11.$12.)R3.(17.$12.))(10.$1;.Lc',$1;.(16.(2.$13.R3.(18.R1.))(1:.R1.))))(1:.R4.)")
-(* [comment removed for export] *).
+(* Was an encoded statement (CDefT.buildp); written out from its decode (cdeft_print.py), not
+   re-encoded, with one premise added: [RomBase.sys_rob segs c], for [tsj_node]. *)
+#[using="Type"] Lemma spinningJ_node : forall c : config,
+  m_halted (cfg_model c) = None ->
+  (exists e st, sstep segs c e st) ->
+  (forall e st, sstep segs c e st -> e = [] /\ exists c', st = SNext c' /\ spinningJ c') ->
+  RomBase.sys_rob segs c ->
+  spinningJ c.
 Proof.
-  intros [ms mo] Hh Hp Hall. cbn in Hh. split; [| exact Hh]. cbn. apply tsj_node; [exact Hp|].
+  intros [ms mo] Hh Hp Hall Hrob. cbn in Hh. split; [| exact Hh]. cbn. apply tsj_node; [exact Hp| |exact Hrob].
   intros e st Hs. destruct (Hall e st Hs) as (He & [ms' mo'] & -> & [H1 H2]). cbn in H1, H2.
   split; [exact He|]. exists ms', mo'. split; [reflexivity|]. split; assumption.
 Qed.
@@ -392,7 +419,7 @@ Qed.
   (forall i, srealizesJ (nx i) (T i) \/ (srealizesJ0 (nx i) (T i) /\ fo_excusedJ c (evs i) (nx i))) ->
   srealizesJ c (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros c I evs nx T i0 [Hcomp Hsound] Hcont. constructor. intros c' Heqv.
+  intros c I evs nx T i0 [Hcomp [Hsound Hrob]] Hcont. constructor. intros c' Heqv.
   set (I' := { p : I * config | sstep segs c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
   assert (Hfib : forall i, exists X', sstep segs c' (evs i) (SNext X') /\ cfg_eqv (nx i) X').
   { intros i. destruct (sstep_cfg_eqv segs c c' (evs i) (SNext (nx i)) Heqv (Hcomp i)) as (X' & Hs & HX).
@@ -401,13 +428,14 @@ Proof.
   apply (srz_conseq segs c' (ShapeAlg.t_alt (fun p : I' => ShapeAlg.t_emit (evs (fst (proj1_sig p))) (T (fst (proj1_sig p)))))).
   + apply (srz_node_sp segs c' I' (fun p => evs (fst (proj1_sig p))) (fun p => snd (proj1_sig p))
              (fun p => T (fst (proj1_sig p))) (exist _ (i0, X0) (conj HX0s HX0e))).
-    * split.
+    * split; [|split].
       -- intros [[i X] [Hs HX]]. cbn. exact Hs.
       -- intros e st Hs.
          destruct (sstep_cfg_eqv segs c' c e st (cfg_eqv_sym _ _ Heqv) Hs) as (X & HsX & HX).
          destruct (Hsound e X HsX) as (i & -> & ->).
          destruct st as [c''|]; cbn in HX; [|contradiction].
          exists (exist _ (i, c'') (conj Hs (cfg_eqv_sym _ _ HX))). cbn. split; reflexivity.
+      -- exact (sys_rob_eqv segs c c' Heqv Hrob).
     * intros [[i X] [Hs HX]]. cbn. destruct (Hcont i) as [[Hi] | [[Hi] Hex]].
       -- left. apply Hi. exact HX.
       -- right. split; [apply Hi; exact HX |]. apply Hex; [exact Heqv | exact HX].

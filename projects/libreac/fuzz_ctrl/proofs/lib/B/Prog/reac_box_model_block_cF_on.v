@@ -12,7 +12,7 @@
    Every other binder, premise (the footprint ones included) and post conjunct is the accepted text.
 
    reac_box_model_block_shadow_R and reac_box_model_block_post_on are a Theorem Labs lane's, cited BY NAME from
-   lib/B/Prog/reac_box_model_block_c_on.v 1b2bf09eaa2 (the blob this tree had at release c5e779efe8c) (a working branch a87f2d57299), which Requires the
+   lib/B/Prog/reac_box_model_block_c_on.v 1b2bf09eaa2 (the blob this tree had at release) (a working branch), which Requires the
    reac_box_model_block_c.v (unchanged apart from comment text).
 
    THERE IS NO PROOF of this form (statement only).  It is STRONGER than reac_box_model_block_contract_F, so NO proof may

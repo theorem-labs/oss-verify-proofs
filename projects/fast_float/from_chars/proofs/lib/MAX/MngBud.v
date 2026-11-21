@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's placement rule). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -215,7 +216,7 @@ Let Hrg := maps_inrange HTOP FORB L x md HL.
 #[using="HTOP FORB L x HL Hlz Hrg"] Lemma place_bound : forall nZ c, 0 < nZ -> 0 <= c <= 2 ^ 18 ->
   Um md + nZ + 4096 <= 2 ^ 30 \/
   (nZ <= Wt (vm_maps (m_vmmaps md)) (cutall (vm_noaccess (m_vmmaps md)) (fun _ => 1)) + c /\ Um md + 4096 <= 2 ^ 30) ->
-  page_size + ledger_size (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))
+  0x2aaaaab000 + ledger_size (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))
    + Z.of_nat (length (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))) * (nZ + page_size) + nZ
    <= alloc_top (m_vmmaps md).
 Proof. LiaFast.lf_pins (fun (HTOP FORB L x HL Hlz Hrg : LiaFast.U) => LiaFast.u0).
@@ -246,10 +247,10 @@ Proof. LiaFast.lf_pins (fun (HTOP FORB L x HL Hlz Hrg : LiaFast.U) => LiaFast.u0
   set (P := k * v) in *. set (P' := k * nZ) in *. unfold PGSZ in *. lia.
 Qed.
 
-#[using="HTOP FORB L x HL Hlz Hrg"] Theorem place_rw : forall nZ, 0 < nZ -> Um md + nZ + 4096 <= 2 ^ 30 -> exists a, place_ok md nZ a.
+#[using="HTOP FORB L x HL Hlz Hrg"] Theorem place_rw : forall nZ, 0 < nZ -> Um md + nZ + 4096 <= 2 ^ 30 -> exists a, place_room md nZ a.
 Proof. LiaFast.lf_pins (fun (HTOP FORB L x HL Hlz Hrg : LiaFast.U) => LiaFast.u0). intros nZ H1 H2. apply place_ok_exists; [exact H1|]. exact (place_bound nZ 0 H1 ltac:(lia) (or_introl H2)). Qed.
 
-#[using="HTOP FORB L x HL Hlz Hrg"] Theorem rw_guard : forall nZ, 0 < nZ -> Um md + nZ + 4096 <= 2 ^ 30 -> exists a, fresh_rw_guard (w64 34) md nZ a.
+#[using="HTOP FORB L x HL Hlz Hrg"] Theorem rw_guard : forall nZ, 0 < nZ -> Um md + nZ + 4096 <= 2 ^ 30 -> exists a, fresh_rw_room (w64 34) md nZ a.
 Proof. LiaFast.lf_pins (fun (HTOP FORB L x HL Hlz Hrg : LiaFast.U) => LiaFast.u0).
   intros nZ H1 H2. apply fresh_rw_guard_exists; [exact H1| |exact (place_bound nZ 0 H1 ltac:(lia) (or_introl H2))].
   unfold mmap_noreserve_backed_ok. rewrite (mns_b (w64 34) ltac:(left; reflexivity)). apply Z.leb_le.
@@ -257,7 +258,7 @@ Proof. LiaFast.lf_pins (fun (HTOP FORB L x HL Hlz Hrg : LiaFast.U) => LiaFast.u0
 Qed.
 
 #[using="HTOP FORB L HL Hlz Hrg"] Theorem place_na : forall s len, kf_of s = x -> req_ok s (KMmapNone len) -> Um md + 4096 <= 2 ^ 30 ->
-  exists a, place_ok md (page_round len) a.
+  exists a, place_room md (page_round len) a.
 Proof. LiaFast.lf_pins (fun (HTOP FORB L HL Hlz Hrg : LiaFast.U) => LiaFast.u0).
   intros s len Hx Hrq HU. destruct Hrq as (Hlen & Hav & Hsh & F6 & F1 & F2 & _).
   change (resv_total s) with (rtot (kf_regions (kf_of s))) in F6, F1. change (resv_count s) with (rcnt (kf_regions (kf_of s))) in F1, F2.
@@ -317,7 +318,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 #[using="Type"] Lemma ob_rw_B : forall L x md B len, LINK HTOP FORB L x md -> BI UB0 x md B -> CH (KMmapRW len) <= B -> 1 <= len < 2 ^ 63 ->
-  exists a, fresh_rw_guard (w64 34) md (page_round len) a.
+  exists a, fresh_rw_room (w64 34) md (page_round len) a.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros L x md B len HL (HB1 & HB2 & HB3) Hc Hl. destruct (page_round_props len ltac:(lia)) as (P1 & P2 & P3).
   cbn [CH] in Hc. replace (Z.max 0 (page_round len)) with (page_round len) in Hc by lia.
@@ -337,7 +338,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 #[using="Type"] Lemma ob_na_B : forall L x md B s len, LINK HTOP FORB L x md -> BI UB0 x md B -> CH (KMmapNone len) <= B ->
-  kf_of s = x -> req_ok s (KMmapNone len) -> exists a, place_ok md (page_round len) a.
+  kf_of s = x -> req_ok s (KMmapNone len) -> exists a, place_room md (page_round len) a.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros L x md B s len HL (HB1 & HB2 & HB3) Hc Hx Hrq. cbn [CH] in Hc.
   apply (place_na HTOP FORB L x md HL s len Hx Hrq). unfold PGSZ in *. lia.

@@ -2,13 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of record (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan,
-   entry 0x8a728, 62 instructions): trecord_spec of a Theorem Labs lane's lib/B/Prog/record_c.v (a working branch f490061c104),
+   entry 0x8a728, 62 instructions): trecord_spec of a Theorem Labs lane's lib/B/Prog/record_c.v (a working branch),
    proved over its callee contract rec_calls_free_c taken at every FP state, as the statement states it; the post is
    apost_base (record reaches no printf wrapper), at the entry's FP state throughout.
 
    A inlines record() into every recording function, so there is no A walk of it: this walk is made from B's code
-   (lib/B/Prog/record_aux.v:12-41, measured with capstone), with A's inlined record() of
-   lib/A/Prog/sup_pin_accept_s4.v (a working branch 3cc8391594b: the entry segment, the two arms, the call of
+   (lib/B/Prog/record_aux.v:13-42, measured with capstone), with A's inlined record() of
+   lib/A/Prog/sup_pin_accept_s4.v (a working branch: the entry segment, the two arms, the call of
    rec_calls_free on the spill arm, the meet) as the template. The segments:
      entry  0x8a728 .. 0x8a75c  the frame, the shadow base, g_rec, ncalls; record()'s `bne ncalls, 16` splits:
      table  0x8a778 .. 0x8a7a8  ncalls := ncalls + 1, s1 := g_rec + 16 + 56 ncalls, to the meet (record_s1.v);
@@ -19,20 +19,20 @@
 
    Report / trap edges (each refuted at its branch, never stepped over):
      0x8a77c `blt a0,a2` -> unimp 0x8a7fc (UBSan: g_rec.ncalls++ overflows): refuted by paj_run (CmdPaLib.v; its branch
-       step is decide_cond2_sound under facts_ok) at record.v:309, from the fact 0 <= ncalls <= 16 (record_aux.v:113,
-       seeded by rcb_seedA, record_s0.v:99) and the branch fact ncalls <> 16, from rec_repA (record_c.v:97) by
-       rcb_rep_ncalls (record_aux.v:351).
-     0x8a788 `bgeu a2,a3` -> unimp (UBSan: index bound of g_rec.calls[ncalls]): refuted by paj_run at record.v:309,
+       step is decide_cond2_sound under facts_ok) at record.v:310, from the fact 0 <= ncalls <= 16 (record_aux.v:114,
+       seeded by rcb_seedA, record_s0.v:100) and the branch fact ncalls <> 16, from rec_repA (record_c.v:97) by
+       rcb_rep_ncalls (record_aux.v:352).
+     0x8a788 `bgeu a2,a3` -> unimp (UBSan: index bound of g_rec.calls[ncalls]): refuted by paj_run at record.v:310,
        from the same two facts.
      0x8a7a0 `bltu a2,a0` -> unimp (UBSan: pointer overflow of g_rec.calls + ncalls): refuted by rcb_ub_7a0 at
-       record.v:100 (applied at record.v:313), from VOBJS (record_c.v:85, atom A_OBJ 44 = g_rec) and rec_repA
+       record.v:101 (applied at record.v:314), from VOBJS (record_c.v:85, atom A_OBJ 44 = g_rec) and rec_repA
        (record_c.v:97, ncalls <= 16).
-     0x8a7b0 `bnez a0` -> unimp (UBSan: alignment of c for c->fn): refuted by paj_run at record_s1.v:155, from the fact
-       c mod 8 = 0 (record_aux.v:136, seeded by rcb_meet_seed, record_s0.v:188) that rcb_rec_slot_ok (record_aux.v:152)
+     0x8a7b0 `bnez a0` -> unimp (UBSan: alignment of c for c->fn): refuted by paj_run at record_s1.v:156, from the fact
+       c mod 8 = 0 (record_aux.v:137, seeded by rcb_meet_seed, record_s0.v:189) that rcb_rec_slot_ok (record_aux.v:153)
        gives from rec_repA (record_c.v:97).
      0x8a7c0 `bnez a1` (guarding 0x8a804 `blt` and 0x8a80c `jal __asan_report_store4`) and 0x8a7d8 `bnez a1` (guarding
-       0x8a818 `blt` and 0x8a81c `jal __asan_report_store4`): refuted by paj_run's shadow-check step at record_s1.v:155,
-       from sh_ok rcb_shok (record_s0.v:80: the slot's 56 bytes have zero shadow, CmdRecCells.v cmd_cf_grec /
+       0x8a818 `blt` and 0x8a81c `jal __asan_report_store4`): refuted by paj_run's shadow-check step at record_s1.v:156,
+       from sh_ok rcb_shok (record_s0.v:81: the slot's 56 bytes have zero shadow, CmdRecCells.v cmd_cf_grec /
        CmdRecBase.v cmd_addressable_chk), from HB (CmdBSyms B) and afn_pre's AR (record_c.v:88).
 
    Section hypotheses beyond the statement's (TREC_CALLS_FREE, VOBJS): HB (CmdBSyms B, a Theorem Labs lane's lib/B/YF0m.v), MTL
@@ -40,6 +40,7 @@
    the writability of g_rec and record.spill, CmdRecCells.v PROG_WRITABLE's premise) and cmd_img_facts_tfib (a Theorem Labs lane's
    CmdRecImg.v statement at this walk's abstract segments); lib/B/Prog/RecordClosed.v discharges cmd_sig_prog_PB,
    PRW, cmd_img_facts_tfib and VOBJS at the pinned image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.B.Prog Require Import record_aux record_s0 record_s1.
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.

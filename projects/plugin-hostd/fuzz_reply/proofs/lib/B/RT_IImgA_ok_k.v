@@ -1,4 +1,4 @@
-(* Image B twin of lib/A/RT_IImgA_ok_k.v at 18e7a8d9d50 (sha256 a25ae90bda9b; internal record): module paths lib.A -> lib.B; no image numeral moved: GXA symbol keys and code sizes kept, checked by `inst` at B's A_img (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* The keep-FP twin's pop_arg call contracts (lib/CJ/RL/GK/G_pop_arg.v pop_arg_contract and
+(* Image B twin of lib/A/RT_IImgA_ok_k.v (sha256 a25ae90bda9b; internal record): module paths lib.A -> lib.B; no image numeral moved: GXA symbol keys and code sizes kept, checked by `inst` at B's A_img (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* The keep-FP twin's pop_arg call contracts (lib/CJ/RL/GK/G_pop_arg.v pop_arg_contract and
    lib/CJ/RL/GXK/G_pop_arg_x.v pop_arg_x_contract, see provenance/keepfx/README.md), DISCHARGED at RT_IImgA.v's
    instance A_img on the pinned fuzz_reply.asan-ubsan.  A copy of lib/A/RT_IImgA_ok.v:99-127 pointed at the twin: the
    image facts are the same vm_compute checks (IInst.v's `inst`), restated at the twin's constants, and the contracts

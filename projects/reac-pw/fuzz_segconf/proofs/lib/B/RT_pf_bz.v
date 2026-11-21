@@ -6,7 +6,7 @@
    to the interceptor chain.
 
    This file proves no new function. `pcom_call` is the shared ASan runtime's printf_common walk (lib/A/Bz/A/I_pcxlist.v
-   pcom_genx_spec, relocated onto fuzz_manifest from fuzz_state 840c4afa7e2) with its section hypothesis rip_stmt
+   pcom_genx_spec, relocated onto fuzz_manifest from fuzz_state) with its section hypothesis rip_stmt
    discharged by R_isPoisoned.v rip_proof; what it adds is the stack bookkeeping that lets a caller with a deeper floor
    lo call it: pcom_genx_spec is used at the floor sp - PCOM_DEPTH (its own window), and the part of the caller's stack
    below that floor is carried across the call untouched (stk_split / stk_merge).

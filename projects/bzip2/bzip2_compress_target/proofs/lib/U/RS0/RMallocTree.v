@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv layout for both values of the CONFIG_RSEQ flag). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -312,20 +313,34 @@ Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* LPS 08b1429: the auxv as [StackLayout.auxv_entries] writes it (24 fixed-key pairs, AT_RANDOM 25,
+   AT_EXECFN 31, the two AT_RSEQ_* pairs only under CONFIG_RSEQ, then AT_NULL); musl's
+   [__init_malloc] reads every key up to AT_NULL, so both layouts are carried. *)
 Definition auxv_keys (m : mem) (av rnd : Z) : Prop :=
-  bytes_at rsegs m av (le8 (wz 3)) /\ bytes_at rsegs m (av + 16) (le8 (wz 4))
-  /\ bytes_at rsegs m (av + 32) (le8 (wz 5)) /\ bytes_at rsegs m (av + 48) (le8 (wz 16))
-  /\ bytes_at rsegs m (av + 64) (le8 (wz 6))
-  /\ bytes_at rsegs m (av + 80) (le8 (wz 11)) /\ bytes_at rsegs m (av + 96) (le8 (wz 12))
-  /\ bytes_at rsegs m (av + 112) (le8 (wz 23)) /\ bytes_at rsegs m (av + 128) (le8 (wz 25))
-  /\ bytes_at rsegs m (av + 136) (le8 (wz rnd)) /\ bytes_at rsegs m (av + 144) (le8 (wz 0)).
+  bytes_at rsegs m av (le8 (wz 33)) /\ bytes_at rsegs m (av + 16) (le8 (wz 40)) /\ bytes_at rsegs m (av + 32) (le8 (wz 41))
+  /\ bytes_at rsegs m (av + 48) (le8 (wz 42)) /\ bytes_at rsegs m (av + 64) (le8 (wz 43)) /\ bytes_at rsegs m (av + 80) (le8 (wz 44))
+  /\ bytes_at rsegs m (av + 96) (le8 (wz 45)) /\ bytes_at rsegs m (av + 112) (le8 (wz 46)) /\ bytes_at rsegs m (av + 128) (le8 (wz 47))
+  /\ bytes_at rsegs m (av + 144) (le8 (wz 51)) /\ bytes_at rsegs m (av + 160) (le8 (wz 16)) /\ bytes_at rsegs m (av + 176) (le8 (wz 6))
+  /\ bytes_at rsegs m (av + 192) (le8 (wz 17)) /\ bytes_at rsegs m (av + 208) (le8 (wz 3)) /\ bytes_at rsegs m (av + 224) (le8 (wz 4))
+  /\ bytes_at rsegs m (av + 240) (le8 (wz 5)) /\ bytes_at rsegs m (av + 256) (le8 (wz 7)) /\ bytes_at rsegs m (av + 272) (le8 (wz 8))
+  /\ bytes_at rsegs m (av + 288) (le8 (wz 9)) /\ bytes_at rsegs m (av + 304) (le8 (wz 11)) /\ bytes_at rsegs m (av + 320) (le8 (wz 12))
+  /\ bytes_at rsegs m (av + 336) (le8 (wz 13)) /\ bytes_at rsegs m (av + 352) (le8 (wz 14)) /\ bytes_at rsegs m (av + 368) (le8 (wz 23))
+  /\ bytes_at rsegs m (av + 384) (le8 (wz 25)) /\ bytes_at rsegs m (av + 392) (le8 (wz rnd))
+  /\ bytes_at rsegs m (av + 400) (le8 (wz 31))
+  /\ ((bytes_at rsegs m (av + 416) (le8 (wz 27)) /\ bytes_at rsegs m (av + 432) (le8 (wz 28))
+       /\ bytes_at rsegs m (av + 448) (le8 (wz 0)))
+      \/ bytes_at rsegs m (av + 416) (le8 (wz 0))).
 
 Lemma auxv_keys_map : forall m m' av rnd,
-  (forall A w, av <= A -> A + 8 <= av + 160 -> bytes_at rsegs m A (le8 w) -> bytes_at rsegs m' A (le8 w)) ->
+  (forall A w, av <= A -> A + 8 <= av + 464 -> bytes_at rsegs m A (le8 w) -> bytes_at rsegs m' A (le8 w)) ->
   auxv_keys m av rnd -> auxv_keys m' av rnd.
 Proof.
-  (intros m m' av rnd HT; cps_intros (A0 & A2 & A4 & A6 & A8 & A10 & A12 & A14 & A16 & A17 & A18)).
-  repeat split; (eapply HT; [| |eassumption]; lia).
+  intros m m' av rnd HT H. unfold auxv_keys in *.
+  repeat match goal with H : bytes_at _ _ _ _ /\ _ |- _ => destruct H end.
+  repeat match goal with |- _ /\ _ => split end;
+    try (eapply HT; [| |eassumption]; lia).
+  match goal with H : _ \/ _ |- _ => destruct H as [(T1 & T2 & T3) | T1] end;
+    [left; repeat split | right]; (eapply HT; [| |eassumption]; lia).
 Qed.
 
 (* [comment removed for export] *)
@@ -341,7 +356,7 @@ Definition rauxv_ok (m : mem) (B : Z) : Prop :=
     rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
     /\ auxv_keys m av rnd
     /\ bytes_at rsegs m (rnd + 8) (le8 (wz run_secret))
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ alloc_ceiling <= B /\ B <= av /\ av + 464 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
     /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x6 < 2^64
     /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
 

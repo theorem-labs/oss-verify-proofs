@@ -1,5 +1,5 @@
 (* SNP-ROUTE SCRATCH (a working branch, 2026-10-30, PfChainRevive): THIS COPY COMPILES (rc=0). Four
-   changes against a working branch 9067b7156f9, all in the back half or at its seam, none to a statement:
+   changes against a working branch, all in the back half or at its seam, none to a statement:
    (1) premise 23 (`65536 <= A`, from HA0) gets its original lia bullet back in place of the `fail`;
    (2) GXA's post facts MI2 ST2 WM2 DST2 are crossed from A_img_vsn to A_img by rewriting (PK.segs_vsn, then
        <- PK.segs_img) right after the destruct: without it line 244's `exact (GC.mem_inv_cj_bz m2 MI2)` makes Coq
@@ -32,13 +32,13 @@
 
 (* ___interceptor_vsnprintf at fuzz_reply.asan: RT_pf_stmt.v vsnprintf_icpt_stmt, assembled from pieces that are
    already proved - no function is walked here:
-   - R4Printf's RELOCATED Bz walks (a working branch 5247aa4d0b9, lib/A/Bz/K/I_vsnprintfw.v): vsnprintf_walkAc
+   - R4Printf's RELOCATED Bz walks (a working branch, lib/A/Bz/K/I_vsnprintfw.v): vsnprintf_walkAc
      (the trampoline 0x421d4, the frame, TryAsanInitFromRtl, printf_common, to the REAL(vsnprintf) call) and
      vsnprintf_walkCm (the output's write check after it, and the return);
    - RT_pf_bz.v pcom_call, printf_common from R4's relocated pcom_genx_spec;
    - GXA's vsnprintf_x at the second instance A_img_vsn, as the REAL(vsnprintf) call (the Section hypothesis VSNX);
    - the Bz <-> CJ vocabulary bridge RT_gxa_calls.v (R4Printf; a Theorem Labs lane relocated exactly these lemmas as
-     FMgxa_bzcj.v, a working branch 534b701a600, whose own header names this file as their source), with
+     FMgxa_bzcj.v, a working branch, whose own header names this file as their source), with
      the CJ -> Bz direction of msteps added below because neither copy had it.
 
    PERFORMANCE, measured here the hard way (one compile ran 40 min and was killed): `lia` with a DISJUNCTIVE

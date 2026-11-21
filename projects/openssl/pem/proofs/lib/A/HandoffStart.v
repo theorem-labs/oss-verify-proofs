@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -58,9 +59,23 @@ Hypothesis Hart : ART RT Σ m.
 Hypothesis Hinv : mem_inv asegs m.
 Hypothesis Hclx : CLX OUT_rep ERR_rep XENV LIB stdout_init m.
 Hypothesis Hargv : argv_rep argvb m ap.
-Hypothesis Hstk : stk asegs m (rt_sp0 RT Σ - STACK_WIN) usp.
+(* OLD: Hypothesis Hstk : stk asegs m (rt_sp0 RT Σ - STACK_WIN) usp.
+   NEW: the hypothesis follows START, because its only PROVIDER can no longer deliver the
+   wide range.  [hi_stk] (A/HandoffImage.v:288) derives [stk] byte by byte from
+   [kwr_cover_sound] -> [hi_wr_byte] -> [hk_kentry], i.e. every address is justified by a
+   [KWr] row and by nothing else, and the plan claims writes only over
+   [KWr (SA e_sp0 (-6144513)) (ELit 6144513)].  Below that nothing in the model supplies
+   [wview <> None]: [MemSplit.wfJ] guarantees J only on [wok_lo sp0, sp0), and [wview]'s
+   fallback is over [mi_loaded_segments], which the kernel-created stack is not in.
+   A SECTION HYPOTHESIS IS A DEMAND ON EVERY CALLER, so leaving this one wide while START
+   narrowed would have moved the false claim one layer up rather than removing it. *)
+Hypothesis Hstk : stk asegs m (rt_sp0 RT Σ - STACK_WOK) usp.
 Hypothesis Hsig : sigma0_ok RT CG Σ usp.
-Hypothesis Husp : usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp.
+(* OLD: Hypothesis Husp : ... /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp.
+   NEW: the headroom follows START's conjunct, which this section must now DISCHARGE in
+   its new form; a hypothesis left at the mapping floor could not supply the narrowed
+   one, since STACK_WOK < STACK_WIN makes the new bound the stronger of the two. *)
+Hypothesis Husp : usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp.
 
 Theorem start_of_handoff : START RT OUT_rep ERR_rep XENV LIB CG argvb fs (canon_cfg asegs R a_main FULL model).
 Proof.
@@ -77,7 +92,7 @@ Proof.
   - (* [comment removed for export] *) unfold macct. split; [exact Hawf|]. split; [exact Hminv|].
     split; [exact (hk_halted asegs A LIMIT SINV argH ISP fs E ch R FULL model HC)|].
     split; [rewrite <- Hsegtop; exact (hk_lazy_apart asegs A LIMIT SINV argH ISP fs E ch R FULL model HC Hseglo)|].
-    unfold SEGTOP_A. lia.
+    split; [unfold SEGTOP_A; lia| exact (APS.co_rdr _ _ _ _ _ _ _ _ _ _ _ _ HC)].
   - (* [comment removed for export] *)
     unfold canon_cfg, canon_regs, entry_st, restrict, mkst, MS, mH. cbn [cfg_ms cfg_model].
     rewrite R1, R2, R4, R10, R11. reflexivity.

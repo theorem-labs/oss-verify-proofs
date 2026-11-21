@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and addresses changed; 145 of its 210 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/A/P_check_step_S0.v, with its module names changed; 688 of its 741 lines of code are new or changed and 157 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment lemma cs_S3 of check_step's asan walk (a Theorem Labs lane, 2026-10-29), proved against the cut statement of
    P_check_step_cut.v. Rule 24 is met: this file proves one segment of the walk, not the function; its callees are
    the Section hypotheses AMEMCPY, PARSE, CKV.
 
    Segment S3 of the ASan walk of check_step in fuzz_scene.asan (sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026): 0x834d0 .. 0x83570.
-   C5: unpoison frame, __asan_memcpy x2 through aj_intrin_at (YCbq.v:1955) (16 + 34 B), unpoison p, reac_ctrl_parse on the journal (PARSE), the four field checks, reac_ctrl_checksum_verify through cl_callS (A/Prog/YC85.v:383, CKV). Donor: newgif's memcpy and RAWNEWX call (cgif A/ACk1.v:364, A/ACjw.v:318-350).
+   C5: unpoison frame, __asan_memcpy x2 through aj_intrin_at (YCbq.v:1955) (16 + 34 B), unpoison p, reac_ctrl_parse on the journal (PARSE), the four field checks, reac_ctrl_checksum_verify through cl_callS (A/Prog/YC85.v:384, CKV). Donor: newgif's memcpy and RAWNEWX call (cgif A/ACk1.v:364, A/ACjw.v:318-350).
    Pre: the cut state at its first pc; post: cs_st4 at the next cut pc
    (P_check_step_cut.v).
    The walk: run 1 (0x834d0, frame shadow 4..10 := 00 x6, 02) to the first __asan_memcpy (F + 32 <- __const.check_step.frame,
@@ -71,9 +72,9 @@ Hypothesis ASF : astack_free_law SEGS B.
 Hypothesis FFL : frame_flag_lawP SEGS B.
 (* A Theorem Labs lane. *)
 Hypothesis AMEMCPY : aintrin_realizes SEGS B OCpy (SIGMA SS___asan_memcpy).
-(* reac_ctrl_parse: a Theorem Labs lane (63ad3e6dcfa). *)
+(* reac_ctrl_parse: a Theorem Labs lane. *)
 Hypothesis PARSE : tctrl_parse_spec (SK := SK) B.
-(* reac_ctrl_checksum_verify (a Theorem Labs lane 61afd7acb1d). *)
+(* reac_ctrl_checksum_verify (a Theorem Labs lane). *)
 Hypothesis CKV : tctrl_checksum_verify_spec (SK := SK) B.
 (* scene's start-up shadow of check_step's two globals as named facts of B (an internal review, CHECKSTEP-REVIEW item R2): full
    granules in as_zero_shadow, the partial granules and the f9 redzones as constant cells; the walk derives

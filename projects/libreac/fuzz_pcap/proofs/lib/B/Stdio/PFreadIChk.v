@@ -2,7 +2,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): asan-ubsan twin of lib/A/Stdio/PFreadIChk.v
-   (a working branch d340d6cc759, a Theorem Labs lane), ported from that file: the same check walk, Requires
+   (a working branch, a Theorem Labs lane), ported from that file: the same check walk, Requires
    lib.A.A<n> -> lib.Reusable.Y<n> (AB1v AE34 AF0l AF0m AF0x AB1w AE20 AE2y) and A<n>. -> Y<n>. qualified names,
    lib.A.Stdio.PFreadITbl -> lib.B.Stdio.PFreadITbl. FOUR pcs relocated, each RE-DERIVED on the asan-ubsan image by
    symbol + offset (pyelftools + capstone on the unstripped twin c969d83cdd59 of pin 9e66f771f22a):
@@ -31,8 +31,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    THE ACCESS_MEMORY_RANGE CHECK of ___interceptor_fread 0x43550, from the check's entry 0x435b8 to the
    join 0x43610: the overflow test, the fast shadow test for k <= 64 (nine granule cases), and the two
    slow paths for k > 64 through __asan_region_is_poisoned 0x54450 (low memory and high memory).
-   PORTED (in the A file) from proofs/cgif/cgif_file_fuzzer/lib/A/AE2b.v `fwr_check_srr` (origin/ossv/recipes
-   c8557374ad2e).
+   PORTED (in the A file) from proofs/cgif/cgif_file_fuzzer/lib/A/AE2b.v `fwr_check_srr`.
+   
 
    THE REPORT PATH IS NOT WALKED, and nothing below reaches it. ReportGenericError's argument block
    (0x437a0-0x437a8) sits after `beqz a0,0x437bc` at 0x436fc (taken when __asan_region_is_poisoned returns 0) and
@@ -51,7 +51,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    `icpt_rodata` and the arithmetic helpers are reused unchanged: none of them names a code table.
 
    CROSS-CHECK (owner's order; template only, nothing imported, Required or copied): fread_chk
-   (I_freadw.v:161 (sha256 25add494ffa2; internal record), a working branch f2159272960) enters at the same 0x435b8, takes
+   (I_freadw.v:161 (sha256 25add494ffa2; internal record), a working branch) enters at the same 0x435b8, takes
    the same `bltu a1,s1` (0x435c4) not-taken, splits at the same `bgeu a2,a1` (0x435d0) into the k > 64 path
    (0x436b0 -> 0x436ec -> region_is_poisoned, `beqz a0` 0x436fc taken) and the k <= 64 shadow test (0x435d4 ..
    `bnez a4` 0x4360c), and joins at the same 0x43610. Differences: (1) for k <= 64 with a non-zero granule, the
@@ -61,6 +61,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    walk runs it symbolically in tbl_fr with mem_is_zero summarised (YE2y.icpt_memisz, return 0x545c4);
    (3) the template's loop 0x436d4 is an induction (fread_loop, I_freadw.v:102 (sha256 25add494ffa2; internal record)), here it is unrolled over the
    nine granule counts t = g1 - g0 in 0 .. 8. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the certificates are stated once per CONFIG_RSEQ layout, one forest per layout checked at that layout's table, and the start-up's holes and blob-freedom lemmas moved to StartupCertAsan. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit FinInput Classifier.
@@ -10,31 +11,20 @@ From OSSVerify.skcms.iccprofile_info.images Require Import Asan.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.AsLib Require AsFuzzContract.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.AsLib Require AsLibFuzz.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import
-  PropExec AxSymExec3 AsanPlanCore AsanPlan AsanPlanFO AsanPlanImages AsanInit AsanInitHW AsanMainLib AsanMainDefs AsanMainTree
+  PropExec AxSymExec3 AsanPlanCore AsanPlan AsanPlanFO AsanPlanImages AsanInit AsanMainLib AsanMainDefs AsanMainTree
   AsanMainCertLib AsanMainItab StartHooks StartupPlanAsan StartupHSAsan StartupCertAsan.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import InfoAsanTop.
 Unset Lia Cache. Unset Nia Cache.  (* [comment removed for export] *)
 Import ListNotations.
 Import AX2. Import APC. Import AP.
 
-(* [comment removed for export] *)
-Lemma startup_all_holes : all_holes startup_shape = true.
-Proof. vm_compute. reflexivity. Qed.
-
-(* [comment removed for export] *)
-Lemma HS0_noblob : match HS0 with Some ch => acs_noblob ch | None => true end = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma HSA_noblob : forall h ch, HS_asan h = Some ch -> acs_noblob ch = true.
-Proof.
-  intros [|h] ch H; [|discriminate H].
-  change (HS0 = Some ch) in H. pose proof HS0_noblob as P. rewrite H in P. exact P.
-Qed.
-
 Section Final.
   (* [comment removed for export] *)
-  Variable TREE : nat -> nat -> mtree.
-  Hypothesis TREES : forall h ch i, HS_asan h = Some ch -> (i < 6)%nat ->
-    mtree_ok KCm BFUELm FUELm ITmD 0 0 (HSA HS_asan h) (root_class i) (TREE h i) = true.
+  (* LPS 727298f3: one forest per CONFIG_RSEQ layout [rsb], each checked at that layout's table;
+     the start-up's certificate, shape, holes and blob-freedom are [StartupCertAsan]'s, per layout. *)
+  Variable TREE : bool -> nat -> nat -> mtree.
+  Hypothesis TREES : forall rsb h ch i, HS_asan rsb h = Some ch -> (i < 6)%nat ->
+    mtree_ok (rseq_z rsb) KCm BFUELm FUELm ITmD 0 0 (HSA (HS_asan rsb) h) (root_class i) (TREE rsb h i) = true.
 
   Definition info_asan_certs : asan_certs :=
     ASAN_CERTS IT0 IT0_ok HS_asan startup_plan startup_shape KC0 BFUEL FUEL startup_cert startup_all_holes HSA_noblob

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-hdzx-B of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image row; a closed computation at reply's image B, fuzz_reply.asan-ubsan).
 
-   HDZX is the cf layer's Hypothesis of YGcfInstHit.v:154-155 (commit ee95275bccb, Section b):
+   HDZX is the cf layer's Hypothesis of YGcfInstHit.v:155-156 (Section b):
      forall ly' a, layout_ok ly' -> im_img_cover ly' -> ag_dzone ly' a ->
        ~ (as_inst B <= a < as_inst B + 3632) /\ ~ (as_ialloc_lo B <= a < as_ialloc_hi B) /\
        ~ (as_ialloc_flag B <= a < as_ialloc_flag B + 2).
@@ -14,7 +15,7 @@
    AGImg_reply (whose ag_dzone is AGis.DZONE), for a B with the image's symbol facts. A consumer closes the layer's
    HDZX with `exact (hdzx_B B TS)` once the layer is on reply. Same stem as the A twin, hdzx_A (a Theorem Labs lane).
 
-   The proof is cgif's HDZX_cgif (YGcfInstHitcgif.v:78 @ ee95275bccb) at this image, with image B's OWN numerals,
+   The proof is cgif's HDZX_cgif (YGcfInstHitcgif.v:78) at this image, with image B's OWN numerals,
    read from B/YF0m.v and B/AGis.v, none carried over from cgif:
      instance object   TFIB_INST     0xa2fd8,   [0xa2fd8, 0xa2fd8 + 3632)
      internal allocator TFIB_IAL_LO/HI [0xa7840, 0x128870)
@@ -42,7 +43,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ImgBaseAG AGis AGif0
 Open Scope Z_scope.
 
 (* Two distinct static extents of a layout are disjoint: layout_ok's lo_disj, read at two positions. cgif's
-   pairwise_nth_c / static_disj_c (YGcfInstHitcgif.v:41-53 @ ee95275bccb) are local to that file, so they are
+   pairwise_nth_c / static_disj_c (YGcfInstHitcgif.v:41-53) are local to that file, so they are
    repeated here, not imported. *)
 Lemma pairwise_nth_r {X : Type} (R : X -> X -> Prop) : forall l i j x y, pairwise R l ->
   nth_error l i = Some x -> nth_error l j = Some y -> (i < j)%nat -> R x y.
@@ -61,7 +62,7 @@ Lemma static_disj_r : forall ly, layout_ok ly -> forall i j x y, nth_error (stat
   nth_error (static_extents ly) j = Some y -> (i < j)%nat -> zdisjoint x y.
 Proof. intros ly LO i j x y Hi Hj Lt. exact (pairwise_nth_r zdisjoint _ i j x y (lo_disj _ LO) Hi Hj Lt). Qed.
 
-(* HDZX at image B (YGcfInstHit.v:154-155 @ ee95275bccb). *)
+(* HDZX at image B (YGcfInstHit.v:154-155). *)
 Lemma hdzx_B : forall B, @im_syms AImg_reply B ->
   forall ly' a, layout_ok ly' -> @im_img_cover AImg_reply ly' ->
   @ImgBaseAG.ag_dzone AImg_reply AGif0reply.AGImg_reply ly' a ->

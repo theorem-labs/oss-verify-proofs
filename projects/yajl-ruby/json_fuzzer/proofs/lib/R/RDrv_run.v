@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launchT context; RBASE's entry block as RIMG_ok, moved by RIMG_ok_agree; the stack window from usp0 - 6,144,513 in place of the 8 MiB below sp). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -81,6 +82,7 @@ Fixpoint emits (n : nat) (so : stdout_st) : list Z * stdout_st :=
 
 Section RUN.
   Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (PAD : list byte) (S4 S5 S6 S7 X7 S8 S9 S10 S11 : word).   (* [comment removed for export] *)
   Hypothesis VSP : valid_sp sp0.
@@ -99,7 +101,6 @@ Section RUN.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
@@ -114,7 +115,7 @@ Section RUN.
 
   (* [comment removed for export] *)
   Definition RBASE (mm : mem) : Prop :=
-    stk rsegs mm LO' (usp0 + -208) /\ mem_inv rsegs mm /\ RSTAT TID mm /\ rauxv_ok mm usp0 /\ bytes_at rsegs mm usp0 IMGB
+    stk rsegs mm LO' (usp0 + -208) /\ mem_inv rsegs mm /\ RSTAT TID mm /\ rauxv_ok mm usp0 /\ RIMG_ok sp0 argv envp uid hw rnd mm
     /\ stderr_wfile0 mm /\ YST mm.
 
   Lemma RBASE_heap_pres : forall LB m m' SP, RBASE m -> rheap_pres LB SP m m' -> SP <= usp0 + -208 ->
@@ -123,7 +124,7 @@ Section RUN.
     intros LB m m' SP (ST & MI & RS & AUX & IMG & SE & YS) HP HSP MI' ST' AUX'. pose proof (sp_facts sp0 VSP RCSP) as SF. unfold LO in SF.
     assert (HP' : rheap_pres LB (usp0 + -208) m m') by (eapply rheap_pres_weaken; [exact HP | lia | auto]).
     split; [exact ST'|]. split; [exact MI'|]. split; [eapply RSTAT_heap_pres; [exact HP'| exact RS]|]. split; [exact AUX'|].
-    split; [eapply rheap_pres_bytes_at; [exact HP'| exact IMG| left; lia]|].
+    split; [eapply RIMG_ok_agree; [eapply rheap_pres_agree; exact HP'| intros a Ha; left; lia| exact IMG]|].
     split; [eapply stderr_wfile0_heap_pres; [exact HP'| exact SE]|].
     eapply (YST_agree _ _ _ (rheap_pres_agree _ _ _ _ HP')); [| exact YS]. intros a Ha. right; left.
     unfold ytr_addr, ralloc_static, RLIBC, RCTX, RERRNO, RSSP_GUARD, RGOT_SSP in *. lia.
@@ -141,7 +142,7 @@ Section RUN.
     split. { eapply (RSTAT_reflag TID _ _ _ AG); [| exact FL| exact RS]. intros a Ha NE. apply STA; [| | exact NE];
              unfold rstat_addr, ralloc_static, RLIBC, RCTX, RERRNO, RSSP_GUARD, RGOT_SSP in *; lia. }
     split; [exact AUX'|].
-    split. { eapply bytes_at_agree; [exact AG| exact IMG|]. intros a Ha. apply HP; [left; lia| lia]. }
+    split. { eapply RIMG_ok_agree; [exact AG| | exact IMG]. intros a Ha. apply HP; [left; lia| lia]. }
     split. { eapply (stderr_wfile0_agree _ _ _ AG); [| exact SE]. intros a Ha. apply STA;
              unfold stderr_addr, ralloc_static, RLIBC, RCTX, RERRNO, RSSP_GUARD, RGOT_SSP in *; lia. }
     eapply (YST_agree _ _ _ AG); [| exact YS]. intros a Ha. apply STA;
@@ -175,7 +176,7 @@ Section RUN.
     { eapply rauxv_ok_frame; [exact AUX| exact MU| exact WM|].
       eapply Forall_impl; [| exact HW]. intros [lo1 hi1] H. unfold RWOK, RERRNO, RAUXV_CELL, RLIBC, LO, alloc_ceiling in *. cbn [fst snd] in *. lia. }
     split.
-    { eapply bytes_at_agree; [eapply agree_on_of_munch; [exact MU| exact WM]| exact IMG|]. intros a Ha. cbn. apply RWOK_outside; [exact HW| left; lia]. }
+    { eapply RIMG_ok_agree; [eapply agree_on_of_munch; [exact MU| exact WM]| | exact IMG]. intros a Ha. cbn. apply RWOK_outside; [exact HW| left; lia]. }
     split.
     { eapply stderr_wfile0_munch; [exact MU| exact WM| | exact SE]. intros a Ha. apply RWOK_outside; [exact HW| unfold stderr_addr, RERRNO, stdout_addr in *; lia]. }
     eapply (YST_agree _ _ _ (agree_on_of_munch _ _ _ MU WM)); [| exact YS]. intros a Ha. cbn. apply RWOK_outside; [exact HW| unfold ytr_addr, RERRNO, stdout_addr in *; lia].
@@ -248,7 +249,7 @@ Section RUN.
       (* [comment removed for export] *)
       pose proof (RSTAT_flag TID _ RS) as FLG.
       assert (PAYK : held (bytes_at rsegs mm T PAY)) by exact PAYB. clear PAYB.
-      assert (IMGK : held (bytes_at rsegs mm usp0 IMGB)) by exact IMG. clear IMG.
+      assert (IMGK : held (RIMG_ok sp0 argv envp uid hw rnd mm)) by exact IMG. clear IMG.
       pose proof (munch_refl [(0x34c44, 0x34c44 + 1)] mm) as MU. pose proof (wmono_refl rsegs mm) as WM.
       rz_seg Hh Hl. zstep. zst2r. zstep. zstep. zstep.
       lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mx _) => set (m1 := mx) in * end.
@@ -271,7 +272,7 @@ Section RUN.
       { eapply bytes_at_agree; [exact AG1 | exact PAYK |]. intros a Ha. apply OUT1. destruct (PAYOFF a Ha) as [_ OFF]. lia. }
       apply evt_done.
       (* [comment removed for export] *)
-      eapply (YF (LK ++ REST0) T PAY (usp0 - 8388608) usp0 errv) ; try reflexivity.
+      eapply (YF (LK ++ REST0) T PAY (usp0 - 6144513) usp0 errv) ; try reflexivity.
       all: unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; rewrite ?(unsigned_lit (usp0 + -208)) by lia.
       - apply ShapeAlg.t_emit_has_nil.
       - exact HK1.
@@ -338,7 +339,7 @@ Section RUN.
         (* [comment removed for export] *)
         destruct (emits_S n so) as [E1 E2]. rewrite E1, E2, Wz_app.
         eapply rz_conseq_cfg; [| apply t_eq_sym; apply t_eq_emit_app].
-        eapply (rz_emit_printf) with (lo := usp0 - 8388608) (canary := rc_guard) (rc := 0) (st := set_so_ps so s2);
+        eapply (rz_emit_printf) with (lo := usp0 - 6144513) (canary := rc_guard) (rc := 0) (st := set_so_ps so s2);
           rewrite ?ps_get_set; rewrite ?(unsigned_lit (usp0 + -208)) by lia.
         + apply ShapeAlg.t_emit_has_nil.
         + exact Hmi2.
@@ -358,7 +359,7 @@ Section RUN.
           rewrite ?ps_set_set, ?ps_get_set in SOF3.
           replace (ret_pc (Z_to_bv 64 0x13880)) with (Z_to_bv 64 0x13880) by (symmetry; rpc).
           rewrite ?(unsigned_lit (usp0 + -208)) in MUc by lia.
-          assert (WOKW : Forall RWOK [(usp0 - 8388608, usp0 + -208); (0x24af0, 0x24af0 + 232); (0x55418, 0x55418 + 1024)]).
+          assert (WOKW : Forall RWOK [(usp0 - 6144513, usp0 + -208); (0x24af0, 0x24af0 + 232); (0x55418, 0x55418 + 1024)]).
           { unfold RWOK, LO. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd]; lia. }
           assert (RB3 : RBASE m4) by (eapply RBASE_munch; [exact RB2 | exact WOKW | exact MUc | exact WMc | exact MI4 | unfold LO; exact ST4]).
           pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG4.

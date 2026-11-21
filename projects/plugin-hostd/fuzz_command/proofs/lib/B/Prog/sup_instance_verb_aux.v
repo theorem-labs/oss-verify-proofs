@@ -8,13 +8,14 @@
    and their word tails, the snprintf entry in a walk's journal form, the arithmetic of the realignment
    `andi sp,sp,-32` (0x8b930), the two UBSan trap branches (0x8ba50, 0x8ba60), the symbolic entry state with its
    seed, and the recorder-representation lemmas a frame write keeps.
-   TAKEN FROM: lib/A/Prog/arg_i_s0.v and arg_i_s1.v of a working branch 12dc52bfe84 (aj_snprintf_atS,
+   TAKEN FROM: lib/A/Prog/arg_i_s0.v and arg_i_s1.v of a working branch (aj_snprintf_atS,
    ai_fmt_*, ai_dec_*, sp1_facts, land_m32, denot_and_m32, ai_entry); lib/A/Prog/answer_code.v of
-   a working branch 2ba4488ce71 (preg, norm_ssp, nwin_tac, region_kept_hi, region_kept_hi2,
+   a working branch (preg, norm_ssp, nwin_tac, region_kept_hi, region_kept_hi2,
    aview_frame_pt, aval_mem_kept .. rec_repA_kept, ablocks_nodup, FFL, SMP); lib/A/Prog/sup_instance_verb_s6.v and
-   _s8.v of a working branch 2beecf4cd76 (siv_spn_le, siv_cspn_le, siv_verb_first_word,
+   _s8.v of a working branch (siv_spn_le, siv_cspn_le, siv_verb_first_word,
    siv_slice_bytes, the siv_set facts); at B's addresses (fuzz_command.asan-ubsan .symtab, lib/B/Prog/CmdRo.v and
-   lib/B/YF0m.v of a working branch 917ca7ac6b1). *)
+   lib/B/YF0m.v of a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

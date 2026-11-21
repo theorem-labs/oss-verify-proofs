@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v, with its module names, addresses and numbers changed; 628 of its 880 lines of code are new or changed and 1457 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F23.v, with its module names changed; 174 of its 307 lines of code are new or changed and 747 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source run: lib/B/Prog/Seg/F23.v f23_evt (:297) (from a working branch 3803efccea0)
+   source run: lib/B/Prog/Seg/F23.v f23_evt (:297) (from a working branch)
      (blob 239425eb4a73e99e2011d0236d92c3f1d9ed2fc1);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f23_evt calls __asan_memcpy (jal at 0x82870, return pc 0x82874), so it is split: f23_pre_F re-runs
      F23.v:350-440 (0x82844 -> the callee entry 0x52164, ra = 0x82874), carrying to the callee entry exactly the
      facts about the post-store memory that f23_evt feeds to the contract, and f23_post_F re-runs F23.v:468-509

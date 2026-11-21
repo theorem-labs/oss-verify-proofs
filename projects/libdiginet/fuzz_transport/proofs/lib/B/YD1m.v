@@ -4,8 +4,9 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1m.v (donor image sha256 1c29845fe605), with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: tfib_lib_site_x proves the call site at the float-state invariant P from the slot tfib_lib_contract_xP (lib/A/YCfn.v), whose call returns at some float state fx' with P fx'. *)
 (* Modified by Theorem Labs, 2026-10: YC5d and YCbq are Required from lib/Reusable: the lib/B copies were the Reusable files' text under lib.B (so lib/B had a second ameter_ops type beside the statement's), and they are deleted. *)
-(* Modified by Theorem Labs, 2026-10: LIBC is the slot at the harness's globals G := G_HARNESS_B (lib/B/TransportGB.v), libreac/fuzz_pcap's G form (Reusable/YD1m.v:37 at origin/ossv/recipes 198234fa4d3, G_HARNESS_U there). *)
-(* Relocated from proofs/libreac/fuzz_decode/lib/YD1m.v at 88154566652a by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-10: LIBC is the slot at the harness's globals G := G_HARNESS_B (lib/B/TransportGB.v), libreac/fuzz_pcap's G form (Reusable/YD1m.v:37, G_HARNESS_U there). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_decode/lib/YD1m.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

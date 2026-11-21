@@ -7,8 +7,9 @@
    S_JXF that starts from it, and ex_consts_chkF: every exit cell of AE23.v's ex_consts (the atexit table at
    0x5f94c0..0x5f95f0 with oft_exit_guard in a[1], oft_in_callback 0x5d8714, the stdio FILEs, the sink head) is still an
    image cell of IMG_XLF, i.e. none of them is a G_fr_c byte.  Form of omx-clap-core/fuzz_state's IMG_XL over its clipped
-   IMG_L (a working branch 5cd1d583227).  The count, read by vm_compute on a build machine: IMG_XLF 42
+   IMG_L (a working branch).  The count, read by vm_compute on a build machine: IMG_XLF 42
    regions (IMG_XL 60). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

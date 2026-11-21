@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfFrees.v, sha256 052b2b0036355c0c1c77fe921a96a55b976ade1b3c71d7bb130d4c086d65579b.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the FREE-HISTORY COUPLING.
    P8's top theorem (lib/Spec/PresetP8.v preset_room, no_null_preset) takes
      PresetRoom.fifo_ok (map PresetRoom.acct_size (H0 ++ hfrees (firstn i (hruns sm x os)))) (rs_quar s).

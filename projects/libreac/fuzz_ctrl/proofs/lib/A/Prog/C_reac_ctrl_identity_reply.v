@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of ctrl_finish on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/YC20.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlFinish.v, with its module paths and module names changed; 5922 of its 5983 lines of code are new or changed and 873 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_identity_reply (0x83f8c) of fuzz_ctrl's ASan build (image A, libreac v1.9.0).
    Writes the caller's three cells (pa 2 bytes, pp 8, pn 8, objects of the caller's frame), its own
    machine-stack frame, its own class-1 fake frame and that frame's shadow and flag: cgif's caller-journal form
@@ -32,9 +33,9 @@
    NAMES: the ctrl PA layer (PaTable, PaSym, PaShadow, PaRun, PaStep, PaJournal, CtrlPa, CtrlPaLib, CtrlBase,
    CtrlFrame, YC85) and the caller-journal shapes tcj_kept / twr_ok / tsrc_ok (CtrlCallerJ.v, grant's
    lib/A/Prog/CtrlFinish.v:111-143 ported) are on this branch since the merge of a working branch
-   c0a0ca3d4b2 (now at its frozen head 5c587a76cbc). reac_ctrl_parse's contract comes from a Theorem Labs lane's own file
-   lib/A/Prog/C_reac_ctrl_parse.v (merged from a working branch 55301a93133, statement unchanged
-   since 93f7070a5f5); its four names are used QUALIFIED (C_reac_ctrl_parse.treac_ctrl_parse_spec /
+   (now at its frozen head). reac_ctrl_parse's contract comes from a Theorem Labs lane's own file
+   lib/A/Prog/C_reac_ctrl_parse.v (merged from a working branch, statement unchanged);
+   its four names are used QUALIFIED (C_reac_ctrl_parse.treac_ctrl_parse_spec /
    .treac_ctrl_parse_post / .REAC_CTRL_PARSE_STK / .A_reac_ctrl_parseP). The six modules that exist in both the
    core and ctrl's lib/A/Reusable (YI04 YI16 YK11 YK1b YM05 YO09) are Required by the core prefix and used as
    lib.Reusable.X.n (porter's rule, 04:24Z / 04:33Z).
@@ -42,7 +43,7 @@
    SEGMENTS AND RO (A / B twin decision of Theorem Labs lanes, 23:37Z): every statement here is over the
    walk's segments `AB1v.tfibsegs`, not `pa_segs PI`; the bridge lemma `tfibsegs_rsegs` of lib/A/ProgBridge.v
    carries them to the footprint runs' `Img0.rsegs`. The read-only premise is a Theorem Labs lane's `arodata_okS`
-   (Reusable/YE01.v:192, as lib/A/ACfn.v:43 states it: segs, B, RLO, RHI, reader); the PA layer's
+   (Reusable/YE01.v:193, as lib/A/ACfn.v:43 states it: segs, B, RLO, RHI, reader); the PA layer's
    `arodata_okP` is reached from it by the single lemma `arodata_okP_of_S` (a Theorem Labs lane), so nothing is stated
    for it here. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
@@ -63,13 +64,13 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import
 YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
 (* the ctrl PA layer: the position-abstract listing engine and its ctrl instance (merged from
-   a working branch c0a0ca3d4b2). *)
+   a working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import
 PaTable PaSym PaShadow PaRun PaStep PaJournal CtrlSyms CtrlList CtrlAddr CtrlPa CtrlPaLib CtrlBase CtrlFrame YC85.
 (* the caller-journal shapes tcj_kept / twr_ok / tsrc_ok (grant's lib/A/Prog/CtrlFinish.v:111-143, ported by a Theorem Labs lane). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import CtrlCallerJ.
 (* ctrl's image-A walk kit (the ported generic parts of cgif's AC8a / ACbf / ACj1 / ACja / ACjr), green since
-   the merge of a Theorem Labs lane's 411ba2461e4: prreg / pmkst / paj_run_to_tok come from CtrlPaLib, the
+   the merge of a Theorem Labs lane: prreg / pmkst / paj_run_to_tok come from CtrlPaLib, the
    realignment lemmas land_m32 / denot_and_m32 / sp1_facts from CtrlACja. Imported in cgif's own order
    (ACbf, CtrlACjr, ACj1, CtrlACja), so CtrlACja's `evalE ::=` is the one in scope. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import
@@ -96,7 +97,7 @@ Open Scope Z_scope.
 Section b. Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil}.
 Context {SK : lib.Reusable.YI16.sink_head}.
 Section d.
-(* The PA layer is instantiated with the CONCRETE instance CtrlImg.PI_ctrl (lib/A/Prog/CtrlImg.v:82, whose
+(* The PA layer is instantiated with the CONCRETE instance CtrlImg.PI_ctrl (lib/A/Prog/CtrlImg.v:83, whose
    pa_segs is tfibsegs), not with an abstract `Context {PI : PAImg ctrl_listing}` (a Theorem Labs lane 23:49Z, found by
    a Theorem Labs lane): CtrlCallerJ's tcj_kept / twr_ok / tsrc_ok, stated over `world (pa_segs PI)`, then apply to this
    file's statements over tfibsegs because pa_segs PI_ctrl reduces to tfibsegs. *)
@@ -106,14 +107,14 @@ Section d.
 #[local] Notation BASE := (@pa_val _ ctrl_listing CtrlImg.PI_ctrl A_TEXT).
 (* RLO / RHI are Section variables below (a Theorem Labs lane 23:37Z / R3 of section 1.0 of the parse lane's note (a working note, not in this delivery)), not the PAImg fields. *)
 Definition A_reac_ctrl_identity_replyP : Z := BASE + AF_reac_ctrl_identity_reply.
-(* a Theorem Labs lane's parse spec is lib/A/Prog/C_reac_ctrl_parse.v (merged 98691a4da7b); the three names this file
+(* a Theorem Labs lane's parse spec is lib/A/Prog/C_reac_ctrl_parse.v (merged); the three names this file
    spends are qualified to it:
      C_reac_ctrl_parse.A_reac_ctrl_parseP    : Z                        (* := BASE + AF_reac_ctrl_parse *)
      C_reac_ctrl_parse.REAC_CTRL_PARSE_STK   : Z                        (* := 8800 *)
      C_reac_ctrl_parse.treac_ctrl_parse_spec : asyms -> Z -> Z -> Prop  (* over B RLO RHI, {SK} implicit *) *)
 (* Its own frame is 128 bytes, realigned to 32 (rA >= sp - 144, 0x83fcc); every call runs at sp = rA:
    __asan_stack_malloc_1 needs ESTACK below it (0x84008), reac_ctrl_parse needs REAC_CTRL_PARSE_STK below it
-   (0x840f4; a Theorem Labs lane's announced change of 2026-10-29 07:18Z, C_reac_ctrl_parse.v:46: `REAC_CTRL_PARSE_STK := 8800`,
+   (0x840f4; a Theorem Labs lane's announced change of 2026-10-29 07:18Z, C_reac_ctrl_parse.v:47: `REAC_CTRL_PARSE_STK := 8800`,
    the window of the proved image-A reac_ctrl_parse run (REAC_CTRL_PARSE_K), with bcmp inside a lifted stretch; it
    was 160 + 2 * ESTACK = 8352 under the cgif-form reading, so a caller now supplies 448 more bytes). The real-stack
    fallback frame (0x84020 .. 0x84038) is never taken (UAR cell 1, the class has room), so it costs nothing. *)
@@ -134,8 +135,8 @@ Section e.
 Variable B : asyms.
 (* the read-only window of the image, as a Theorem Labs lane's ctl_base states it (lib/A/ACfn.v:32, :43). *)
 Variables RLO RHI : Z.
-(* cgif lib/YC20.v:56 relro_img (c8557374ad2); accepted by a Theorem Labs lane 00:14Z; the composer discharges it with
-   pa_relro_img PI_ctrl, CtrlPa.v:79-81 *)
+(* cgif lib/YC20.v:56 relro_img; accepted by a Theorem Labs lane 00:14Z; the composer discharges it with
+   pa_relro_img PI_ctrl, CtrlPa.v:80-82 *)
 Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> in_img SEGS a.
 Definition treply_out (pa pp pn a : Z) : Prop :=
 pa <= a < pa + 2 \/ pp <= a < pp + 8 \/ pn <= a < pn + 8.

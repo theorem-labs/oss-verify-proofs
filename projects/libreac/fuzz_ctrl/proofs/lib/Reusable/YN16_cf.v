@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN16.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed lits, midrep_fm). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,7 +34,6 @@ Ltac inlist := cbn; repeat (first [left; reflexivity | right]).
 Ltac lits := unfold LOCK, CTX, LIBC, ERRNO, TP, GOT, GUARD, SCT, SCNT, MCNT, ASF, src0_D_malloc_lock, src0_D_malloc_context, src0_D_libc, src0_tp,
 src0_D_got_stack_chk_guard, src0_D_stack_chk_guard, src0_D_size_classes, src0_D_small_cnt_tab, src0_D_med_cnt_tab in *.
 Section w. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Lemma pure_queue : forall h q s, pure (queue h q s).
 Proof.
 intros h q s. unfold queue, bind. apply pure_ibind; [apply pure_get_links|]. intros [l s1].
@@ -604,7 +604,7 @@ destruct (Wlow _ Wx) as [Hlo|[Hi|(q & Hq & Hqx & _)]]; [unfold CTX_SIZE in *; li
 -- destruct (key_range3 (hd m ms) (CTX + off + Z.of_nat k) (Kh0 Hne) ltac:(lia)) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia.
 -- destruct (key_range3 (last ms m) (CTX + off + Z.of_nat k) (Khp Hne) ltac:(lia)) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia.
 * destruct (key_range3 q (CTX + off + Z.of_nat k) Hq Hqx) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia. }
-pose proof (YN2i.ledger_same B L1 s3 md1 (mid_ledger _ _ _ _ _ HM) (mid_ledgerx _ _ _ _ _ HM) s' md1 Srg Sbrk eq_refl eq_refl eq_refl) as [LG2 LX2].
+pose proof (YN2i.ledger_same B L1 s3 md1 (mid_ledger _ _ _ _ _ HM) (mid_ledgerx _ _ _ _ _ HM) s' md1 Srg Sbrk eq_refl eq_refl eq_refl eq_refl) as [LG2 LX2].
 split.
 - exact SO.
 - exact MR'.

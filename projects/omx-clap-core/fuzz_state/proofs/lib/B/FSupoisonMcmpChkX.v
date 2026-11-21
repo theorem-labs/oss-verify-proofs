@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B (fs.asan-ubsan, POISON-U lane): the ARU form of cgif_file_fuzzer's lib/A/AE6z.v
    (mcmpx_check_srr), for ANY set U of user-poisoned heads (FSupoison.ARU). Shared: the bcmp walk
    (FSupoisonBcmp.v) and the memcmp walk (FSupoisonMemcmpW.v) both Require this file; neither copies it.
    ARU (any-user-poison) form, published as the shared one; two Theorem Labs lanes hold the U = [] form at their own
    addresses. Its U = [] corollary, mcmpx_check_srr_nil (end of file), is the donor's statement over plain AR.
-   PORT (image B): text of lib/A/FSupoisonMcmpChkX.v at a working branch cd7610bc4ed (a Theorem Labs lane); imports switched to the lib/B
+   PORT (image B): text of lib/A/FSupoisonMcmpChkX.v at a working branch (a Theorem Labs lane); imports switched to the lib/B
    twins (YB1v YE34 YF0l YF0m YF0x YB1w YE20 YE2y; YE2s YE2z YE3b YE6z YE70 = this branch's relocations of
    lib/A/AE2s / AE2z / AE3b / AE6z / AE70 to fs.asan-ubsan), FSupoisonIntrinR -> lib/B/FSupoisonAsanR (the same region
-   lemmas over image B, McpyB f32c92531db), the image-generic lib/A modules (FSupoison, FSupoisonU) kept; RC_MZRET 0x54d58 -> 0x54dc8.
+   lemmas over image B, McpyB), the image-generic lib/A modules (FSupoison, FSupoisonU) kept; RC_MZRET 0x54d58 -> 0x54dc8.
    The text below is the image-A file's, with its addresses replaced by image B's.
 
    The code: MemcmpInterceptorCommon (fs.asan-ubsan 0x43494, `jal`-ed by ___interceptor_memcmp 0x43d28 at 0x43d80 and

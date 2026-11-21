@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (syscall 215 among the non-allocating calls, and the three vDSO call steps). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Classical.
@@ -16,7 +17,7 @@ Open Scope bv_scope.
 Definition CFG : SpuriousCfg := mkSpuriousCfg false true true true true true.
 
 Definition alloc_sysno_b (n : Z) : bool :=
-  (n =? 214)%Z || (n =? 216)%Z || (n =? 222)%Z || (n =? 226)%Z.
+  (n =? 214)%Z || (n =? 215)%Z || (n =? 216)%Z || (n =? 222)%Z || (n =? 226)%Z.
 
 Lemma injected_family_off_CFG : forall i,
   injected_family_off CFG i = alloc_sysno_b (bv_unsigned (in_sysno i)).
@@ -78,6 +79,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
   - eapply sstep_cfg_syscall; try eassumption.
     apply spurious_refusal_family_on. apply Hna. assumption.
   - eapply sstep_cfg_syscall_materialization_fault; try eassumption.

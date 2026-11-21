@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: GENERATED from lib/A/PresetD1preA.v (lane CwPreA, a working branch a9e03801db9b) by port/a2b.py (sha256 e4f47803449f38c2) with its measured literal map (a table literal in code is written as its image-B cell name from lib/Reusable/YImgCellsB.v) and --map 0x10000=0x10000 0x20e00=0x20e00 0x20f40=0x20f40 (image B's first zero-shadow range is also (YImgTop.IMG_LO, 0x20f40 - YImgTop.IMG_LO), lib/Reusable/YF0m.v Tfib_zero_shadow). No hand edit. PENDING YF0m (over ARcf); the B core closure is relocB 2e00af38a8f4. *)
+(* Theorem Labs, 2026-10: GENERATED from lib/A/PresetD1preA.v (lane CwPreA, a working branch) by port/a2b.py (sha256 e4f47803449f38c2) with its measured literal map (a table literal in code is written as its image-B cell name from lib/Reusable/YImgCellsB.v) and --map 0x10000=0x10000 0x20e00=0x20e00 0x20f40=0x20f40 (image B's first zero-shadow range is also (YImgTop.IMG_LO, 0x20f40 - YImgTop.IMG_LO), lib/Reusable/YF0m.v Tfib_zero_shadow). No hand edit. PENDING YF0m (over ARcf); the B core closure is relocB. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset (asan-ubsan image), the driver's pre-loop leaves and
    interceptor sites of the closed ASan-side walk, restated over the second allocator instance ARcf
    (lib/Reusable/YG0ncf.v), which holds from the allocator's initial state on (the switch from cgif's AR is at
@@ -25,7 +25,7 @@
    (3) the malloc site is over malloc_cf (YG00cf.v) and its continuation covers EVERY outcome of the call, the
        class-full PNull arm included (a8's malloc_leaf_cf, YG0dcf.v): cgif's no-NULL fact came from its event
        regime, which the cf instance does not have. The continuation receives `gflag tr = true`, so a caller
-       that needs a block refutes PNull with a8's malloc_cf_success_of_room (YGcfPath.v:544) from its own room
+       that needs a block refutes PNull with a8's malloc_cf_success_of_room (YGcfPath.v:545) from its own room
        fact, and a caller on the driver's OOM arm walks it. This CARRIES a8's ml_malloc_ns_cf NULL arm
        (a Theorem Labs lane the internal file real-edits.md item 1) to the caller; nothing here discharges it;
   (4) the pre of the malloc site is lane CwSites' drv_pre_cf (lib/AU/PresetD1sitesB.v: ARcf .. [], qtight and the
@@ -52,6 +52,7 @@
    the same keep, and so does its realizer aread_check_stmt_cf's post (in place, the form of the keep realizers):
    OPEN for that realizer's row owner; until then the driver's ARDCHK premise carries it.
    Rule 24: no function is proved here (composition / driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -80,11 +81,12 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 (* No N_LLVMF and no headroom number (resume ROOM change, owner ruling 2026-10-29): a driver state carries the
    interface's non-primary room NP S (CwSites' drv_pre_cf / tail_at_pinv_B, lib/AU/PresetD1sitesB.v; NP is the
    interface's Section Variable iface_room_np, lib/AU/PresetCfnB.v). The malloc site takes its one-call ROOM_cf S from
-   the interface's law PCB.iface_room_np_tail NP (PresetCfnB.v:460), a premise of its result. *)
+   the interface's law PCB.iface_room_np_tail NP (PresetCfnB.v:461), a premise of its result. *)
 Variable B : asyms.
 Variable NP : astate -> Prop.
 Variable est : (word -> bool) -> (word -> option byte) -> Prop.
-#[local] Notation ELV sp a0 p inp xw xd := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation ELV sp rnd a0 p inp xw xd :=
+(YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 
 (* ---------------------------------------------------------------------- *)
 (* 1. The malloc site (MSITE). Donor: YD1v.v:230-243. *)
@@ -192,6 +194,9 @@ Z.of_nat (length msg) = len -> 1 <= len <= 64 -> YImgCellsB.B_RODATA_0X298 <= p 
 (forall i, (i < length msg)%nat -> seg_rom tfibsegs (Z_to_bv 64 (p + Z.of_nat i)) = Some (nth i msg NUL)) ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
 fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+(* Beside the descriptor, as in the core's AD1x.fwrite_site_tfa: [fdchan] at LPS 727298f3 asks for the
+   model's channel reader too.  The driver reads it from the hand-off ([cs_ok]'s [co_rdr]). *)
+m_channel_reader md = true ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post_cf ly S W regs mem md 1 T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fwrite regs mem md) (wr ch_stderr msg T).
@@ -206,7 +211,7 @@ spZ regs + 128 <= s -> s + Z.of_nat (length str) + 1 < kHighMemEnd ->
 YP03.bytes_at (mrestrict (w_H W) mem) s (str ++ [NUL]) ->
 (forall a, s + Z.of_nat (length str) < a < s + Z.of_nat (length str) - (s + Z.of_nat (length str)) mod 8 + 8 -> mrestrict (w_H W) mem (Z_to_bv 64 a) <> None) ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_channel_reader md = true ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post_cf ly S W regs mem md (Z.of_nat (length lit1 + length str + length lit2)) T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fprintf regs mem md) (wr ch_stderr (lit1 ++ str ++ lit2) T).
@@ -217,7 +222,7 @@ forall (ly : alayout) (S : astate) (W : world tfibsegs) (regs : bvmap 5 word) (m
 icpt_pre_cf ly S W regs mem md ->
 getr regs 10%bv = w64 F_STDERR_LO -> getr regs 11%bv = w64 YImgCellsB.B_RODATA_0X9480 -> getr regs 12%bv = w64 67108864 ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_channel_reader md = true ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post_cf ly S W regs mem md (Z.of_nat (length msg_refused)) T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fprintf regs mem md) (wr ch_stderr msg_refused T).
@@ -236,7 +241,7 @@ YP03.bytes_at (mrestrict (w_H W) mem) zp (p ++ [NUL]) ->
 mem_ok tfibsegs E' (mrestrict (w_H W) mem) IMG_REGIONS ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly S [] W mem md -> top_ok usp ly ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_fs md = fs ->
+fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_channel_reader md = true -> m_fs md = fs ->
 srealizes tfibsegs (mkCfg (mkst regs (w64 YImgCellsB.B_WRAP_FPRINTF_PC) mem (seg_rom tfibsegs)) md) (diag (msg_read_error p) fs).
 
 Definition refused_leaf_tfa_cf : Prop :=
@@ -248,59 +253,71 @@ getr regs 1%bv = w64 YImgCellsB.B_MAIN_PC_OFF_264 -> spZ regs = usp - 128 -> get
 mem_ok tfibsegs E' (mrestrict (w_H W) mem) IMG_REGIONS ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly S [] W mem md -> top_ok usp ly ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_fs md = fs ->
+fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_channel_reader md = true -> m_fs md = fs ->
 srealizes tfibsegs (mkCfg (mkst regs (w64 YImgCellsB.B_WRAP_FPRINTF_PC) mem (seg_rom tfibsegs)) md) (diag msg_refused fs).
 
 Definition cannot_open_tfa_cf : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
-(W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (ly : alayout) (a0 p : list byte) (e : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> entry_stack_fits sp [a0; p] (in_envp inp) ->
-regs_ok (ELV sp a0 p inp xw xd) (ss_regs ss_open) regs ->
-mem_ok tfibsegs (ELV sp a0 p inp xw xd) (mrestrict (w_H W) mem) (ss_mem ss_open) ->
-facts_ok (ELV sp a0 p inp xw xd) (ss_facts ss_open) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+(W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (ly : alayout)
+(a0 p : list byte) (rnd : EntryDraw) (e : Z),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
+regs_ok (ELV sp rnd a0 p inp xw xd) (ss_regs ss_open) regs ->
+mem_ok tfibsegs (ELV sp rnd a0 p inp xw xd) (mrestrict (w_H W) mem) (ss_mem ss_open) ->
+facts_ok (ELV sp rnd a0 p inp xw xd) (ss_facts ss_open) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly init_state [] W mem md ->
 top_ok (bv_unsigned sp) ly -> m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+(* beside the descriptor fact, as in the core's AD1v.cannot_open_tfa: the model's channel reader *)
+m_channel_reader md = true ->
 0 < e < 4096 ->
 srealizes tfibsegs
 (mkCfg (mkst (regupd regs 10%bv (errno_ret e)) (v_addi (Z_to_bv 64 (ss_pc ss_open)) 4) mem (seg_rom tfibsegs)) md)
 (diag (msg_cannot_open p) (in_fs inp)).
 
-(* The donor states tfib_usage inline (YD27.v:568-576); the predicate is named here so the driver lane cites it. *)
+(* The donor states tfib_usage inline (YD27.v:628-640); the predicate is named here so the driver lane cites it. *)
 Definition usage_tfa_cf : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+forall (sp brk mbase : word) (inp : ProcInput) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte)
 (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout),
-valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (length (in_argv inp) <> 2)%nat ->
-YP0l.st_ok tfibsegs (YP08.E0 sp (in_argv inp) (in_envp inp) xw xd) (ss_main false) (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa false sp (in_argv inp) (in_envp inp)) ->
+YP0l.st_ok tfibsegs (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) (in_execfn inp) xw xd) (ss_main false) (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa false sp (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp)) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly init_state [] W (ms_mem ms) md -> top_ok (bv_unsigned sp) ly ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true ->
 srealizes tfibsegs (mkCfg ms md) (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 
 (* ---------------------------------------------------------------------- *)
 (* 5. The short / overrun leaves (SHORT, OVERRUN). Donor: YD1w.v:52-65, tail_at -> CwSites' tail_at_pinv_B. *)
 Definition short_leaf_tfa_cf : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
-(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z)
+(rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp -> valid_fs (in_fs inp) ->
 fs_lookup (in_fs inp) p = Some data -> dlen data <= 5 ->
-tail_at_pinv_B B NP S_SHORT (havoc (ELV sp a0 p inp xw xd) K_M1 ws) sp inp a0 p data W ms md ly S pb cap ->
+tail_at_pinv_B B NP S_SHORT (havoc (ELV sp rnd a0 p inp xw xd) K_M1 ws) sp inp a0 p data W ms md ly S pb cap ->
 srealizes tfibsegs (mkCfg ms md) (diag msg_short (in_fs inp)).
 
 Definition overrun_leaf_tfa_cf : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
-(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z)
+(rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp -> valid_fs (in_fs inp) ->
 fs_lookup (in_fs inp) p = Some data -> 6 <= dlen data < 6 + config_len data ->
-tail_at_pinv_B B NP S_OVR (edset (havoc (ELV sp a0 p inp xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S pb cap ->
+tail_at_pinv_B B NP S_OVR (edset (havoc (ELV sp rnd a0 p inp xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S pb cap ->
 srealizes tfibsegs (mkCfg ms md) (diag msg_overrun (in_fs inp)).
 End S.
 
 (* ---------------------------------------------------------------------- *)
 (* 6. The results (closed). Each is proved in PresetD1preBPf.v as <name>_holds. *)
 
-(* YD1n.v:24 tfib_malloc_site (cgif's model law ml_malloc_ns is a8's malloc_ok_cf, YG07cf.v:390, cited by the proof).
+(* YD1n.v:24 tfib_malloc_site (cgif's model law ml_malloc_ns is a8's malloc_ok_cf, YG07cf.v:391, cited by the proof).
    The two links (PresetD1sitesB.v section 1) turn drv_pre_cf's hull and read-only conjuncts into acall_pre_cf's. *)
 Definition tfib_malloc_site_cf_B : Prop :=
 forall (fx : YK11.FPState) (rc : YM05.RunCeil) (ci : CfImg) (cp : CfParams) (B : asyms) (NP : astate -> Prop),

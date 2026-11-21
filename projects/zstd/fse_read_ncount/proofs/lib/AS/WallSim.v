@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the to_wall write step requires access_okb on the written buffer; adds fdchan_with_vdso). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
@@ -17,26 +18,28 @@ Variable segs : list Segment.
 Variable fd ch : word.
 Inductive to_wall : machine_state -> list byte -> (machine_state -> Prop) -> Prop :=
 | twl_write : forall ms x8 rest k,
-ms_svc_pending ms = Some x8 ->
-bv_unsigned x8 = 64%Z ->
-ms_gpr ms 0 = fd ->
-ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
-(1 <= length rest)%nat ->
-(forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
-to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
-(skipn n rest) k) ->
-to_wall ms rest k
+    ms_svc_pending ms = Some x8 ->
+    bv_unsigned x8 = 64%Z ->
+    ms_gpr ms 0 = fd ->
+    ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* [comment removed for export] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
+    (1 <= length rest)%nat ->
+    (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
+       to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
+         (skipn n rest) k) ->
+    to_wall ms rest k
 with to_wall_tail : machine_state -> list byte -> (machine_state -> Prop) -> Prop :=
 | twt_done : forall ms k, k ms -> to_wall_tail ms [] k
 | twt_more : forall ms rest k,
-(1 <= length rest)%nat ->
-to_wall ms rest k ->
-to_wall_tail ms rest k
+    (1 <= length rest)%nat ->
+    to_wall ms rest k ->
+    to_wall_tail ms rest k
 | twt_step : forall ms ms' rest k,
-ms_svc_pending ms = None ->
-RiscvSemantics.step segs ms = MachineOk ms' ->
-to_wall_tail ms' rest k ->
-to_wall_tail ms rest k.
+    ms_svc_pending ms = None ->
+    RiscvSemantics.step segs ms = MachineOk ms' ->
+    to_wall_tail ms' rest k ->
+    to_wall_tail ms rest k.
 Scheme to_wall_min := Minimality for to_wall Sort Prop
 with to_wall_tail_min := Minimality for to_wall_tail Sort Prop.
 Combined Scheme to_wall_mutind from to_wall_min, to_wall_tail_min.
@@ -63,4 +66,7 @@ Qed.
 End WithSegsCh.
 Abbreviation wexit1 segs ms bufs code :=
 (to_wallexit segs (Z_to_bv 64 1) bufs code ms).
+Lemma fdchan_with_vdso : forall v m fd ch, fdchan fd ch m -> fdchan fd ch (with_vdso v m).
+Proof. intros v m fd ch H; exact H. Qed.
+
 End WithFP1.

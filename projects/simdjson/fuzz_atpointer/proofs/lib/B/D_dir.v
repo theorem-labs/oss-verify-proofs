@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -59,7 +60,7 @@ Proof using AF AF_DRV MAL RDIR FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
   pose proof HSIG as (LV & FRS & CR & USP0' & SPW).
   destruct (path_b_facts argvb VARGV HL) as (NZ & NSL & NDD & LEN).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WIN + STACK_GAP) in *.
   set (F1 := fd_insert fds0 (Z_to_bv 64 3) FdDir) in *.
   rewrite nth1_argv_Z.
   replace (evw 2 (msg_read_error (map bv_unsigned (nth 1 argvb []))))

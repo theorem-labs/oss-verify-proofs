@@ -3,7 +3,11 @@ project: trafficserver
 harness: fuzz_proxy_protocol
 rocq: OSSVerify.trafficserver.fuzz_proxy_protocol
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Views the input (size_data from 8 to 1024 bytes) in place as a swoc::TextView and passes it with
+  a new ProxyProtocol to proxy_protocol_parse, which parses a PROXY protocol v1 or v2 header when the
+  input begins with that version's preface and has at least 15 (v1) or 16 (v2) bytes; it drops the returned
+  length and the parsed fields. Before the call it installs a new Diags object with DiagsPtr::set, and
+  it deletes that object after. It returns -1 for an input with size_data below 8 or above 1024.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +16,7 @@ source:
     repository: https://github.com/apache/trafficserver
     commit: 97d2831fbd38c8f43b39e3ed996d9bd6e3173384
     path: tests/fuzzing/fuzz_proxy_protocol.cc
-  modified: false
+  modified: true
   licence: NOASSERTION
 library:
   repository: https://github.com/apache/trafficserver
@@ -24,11 +28,14 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/fuzz_proxy_protocol.cc is trafficserver 97d2831f''s tests/fuzzing/fuzz_proxy_protocol.cc
+  with one Theorem Labs change: its length check returns -1, not 1, for an input outside its limits (libFuzzer
+  rejects the input; the driver exits 0, not 78).'
 builds:
   plain:
     file: fuzz_proxy_protocol.plain
     bytes: 1114016
-    sha256: 1d4243d0b872bf81753af89259b3842a0fc66f4890139a56e178dd17a52e54fe
+    sha256: 6d102f6c88957c5c4118a2b758fe0d8f4f8e28ee67e27287dfa62348b3283a37
     segments:
     - 1
     - 1
@@ -62,7 +69,7 @@ builds:
   ubsan:
     file: fuzz_proxy_protocol.ubsan
     bytes: 1128056
-    sha256: c9391fc523c2c736d91203663587e955da6877cbd2504d59440ec176b36de125
+    sha256: 087c3df1ed2fba7413f07542350292ee6fbb8362bf936daf6a69612b5fe74a53
     segments:
     - 1
     - 1
@@ -96,7 +103,7 @@ builds:
   asan:
     file: fuzz_proxy_protocol.asan
     bytes: 1883416
-    sha256: 7d9f0610c134a2f8f1e677ad1f0ec69947787c15455e39c7c6241713f8e045f4
+    sha256: ec9d19f7c8c26706617e9cd4aca8293ebccd417169620eef9914947625480a18
     segments:
     - 1
     - 1
@@ -133,7 +140,7 @@ builds:
   asan-ubsan:
     file: fuzz_proxy_protocol.asan-ubsan
     bytes: 1899896
-    sha256: b9d407d19901e4e586043d3273dbbe319e2ca1ceba14c80732968feec9cef906
+    sha256: a053f5a9276cddfc23a30332f46f96d0312ca0d1007d8d1a6704801ca20057c9
     segments:
     - 1
     - 1
@@ -179,6 +186,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -188,6 +196,7 @@ statements:
     budgets: standard
     abort: signal
     status: open
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -197,6 +206,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -207,6 +217,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -217,6 +228,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -227,6 +239,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -237,3 +250,4 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2

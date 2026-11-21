@@ -1087,7 +1087,7 @@ Variable B : asyms.
 Variables RLO RHI : Z.
 Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> in_img SEGS a.
 Hypothesis LAWS : AR_laws tfibsegs B.
-(* reac_ctrl_parse (a working branch 55301a93133), its own spec type. *)
+(* reac_ctrl_parse (a working branch), its own spec type. *)
 Hypothesis TPARSE : treac_ctrl_parse_spec (SK := SK) B RLO RHI.
 (* The ctrl runtime facts at a cut (a Theorem Labs lane 05:04Z), route (C) (L3-recipe.md (a working note, not in this delivery), a Theorem Labs lane 13:12Z): (i) RT_used_C:
    a Theorem Labs lane's PROVED ProgWorldRtC.RT_used_of_AR_C, cited by name; its premises beyond LAWS are TSYMS only (no

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_qdisc image B by gen_ad2.py 195f6e6ef088 (port-reply start-up set startup-set-2026-10-29) from this image's 50 collected hand-off states (lib/AU/YB01.v), its atable (lib/AU/YB12.v) and Tfib_owned_static (lib/AU/YF0m.v), templates cgif_file_fuzzer YD2i.v / YD2j.v at c8557374ad2e; Requires placed in lib.Reusable / lib.AU by fuzz_knock's lib/AU at origin/ossv/recipes 88154566652 (h-small-q1) *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_qdisc image B by gen_ad2.py 195f6e6ef088 (port-reply start-up set startup-set-2026-10-29) from this image's 50 collected hand-off states (lib/AU/YB01.v), its atable (lib/AU/YB12.v) and Tfib_owned_static (lib/AU/YF0m.v), templates cgif_file_fuzzer YD2i.v / YD2j.v at theorem-labs/oss-verify-proofs@6b32741d849a; Requires placed in lib.Reusable / lib.AU by fuzz_knock's lib/AU (h-small-q1) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_qdisc.asan-ubsan (reac-pw/fuzz_qdisc asan-ubsan) sha256 eb657d77bd4b27038d93f75626dcc6b37a48be09c889fda664b4f451c6602062; unstripped twin sha256 a8f38ed20eaa71da2be09efbc294ab6854786e94e1564acbf2a11cdbdf8585f1 *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

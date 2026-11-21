@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (KD_init written out in plain text from its encoded (CDefT) form, with the reserved ledger now also holding the vDSO pair, and its proof bounding those entries). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -231,13 +232,30 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma KD_init mo : ltac2:(CDefT.buildp (gd_tbl_P_heap_rz ()) "P,(1.(2.(:.(3.&40.)(3.&40.)))(3<.(12.O1.))(5.(:.(3.&40.)(3.&40.))))P,(1.(2.(:.(3.&40.)(3.&40.)))(3=.(12.O1.))(3>.$3?.))P,(1.(2.(3.&40.))(4.O1.)(5.(3.&40.)))P,(6.(10.+2.+1?.)(13.(12.O1.)))(40.#>.O1.)")
-(* [comment removed for export] *).
+(* plain text (was serialised); at 08b1429 the launch ledger also holds the
+   vDSO/vvar pair ([State.init_reserved]): at most two more entries, each a
+   few pages ([State.vdso_len_bounds]) *)
+#[using="Type"] Lemma KD_init mo :
+  vm_maps (m_vmmaps mo) = [] ->
+  vm_reserved (m_vmmaps mo) = segments_reserved psegs ++ vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)) ->
+  m_vm_materialized mo = [] ->
+  2 ^ 31 <= vm_limit (m_vmmaps mo) ->
+  KD 14 mo.
 Proof.
   intros M R MT LIM. unfold KD, kmaps, vm_live_bytes. rewrite M, R, app_nil_r.
+  pose proof (vdso_len_bounds (m_kernel mo)) as VB. unfold vdso_len in VB.
+  assert (VL : (length (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) <= 2)%nat)
+    by (unfold vdso_reserved; cbv zeta; destruct (_ <? _)%Z; cbn; lia).
+  assert (VS : Forall (fun p => bv_unsigned (snd p) <= 2 ^ 35) (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)))).
+  { unfold vdso_reserved. cbv zeta. destruct (_ <? _)%Z; [constructor|].
+    unfold vdso_vvar_pages, page_size in *.
+    repeat constructor; cbn [snd]; rewrite unsigned_lit by lia; lia. }
   split; [exact MT|]. split; [| split; [| change (live_bytes []) with 0; lia]].
-  - match goal with |- Z.of_nat ?l + _ <= _ => let v := eval vm_compute in l in change l with v end. lia.
-  - match goal with |- Forall _ ?l => let v := eval vm_compute in l in change l with v end.
+  - rewrite length_app.
+    assert (LS : (length (segments_reserved psegs) <= 900)%nat) by (apply Nat.leb_le; vm_compute; reflexivity).
+    lia.
+  - apply Forall_app. split; [|exact VS].
+    match goal with |- Forall _ ?l => let v := eval vm_compute in l in change l with v end.
     repeat (constructor; [match goal with |- bv_unsigned ?x <= _ => let v := eval vm_compute in (bv_unsigned x) in change (bv_unsigned x) with v end; lia|]). constructor.
 Qed.
 

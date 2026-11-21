@@ -1,12 +1,13 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodyM1.v, sha256 9877c8d1eb6c; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodyM1.v, sha256 9877c8d1eb6c; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the malloc interceptor BODY's call field (omx-clap-core/fuzz_preset image A, asan, pin
    1be0f53d96cb): ___interceptor_malloc's entry (pc_malloc, A 0x53910) -> Allocate's entry, with Allocate's pre at
    ARX := ARXh_A B and K := K_w 14208. It is lib/A/WrapMallocAM1.v's wm_call_FIX_A (the wrapper's) on the body walk
    (WrapMallocABodyCall.seg_call), with the window 14208 (MALLOC_IN_STK_L) for 14208 and the body text's entry
    (bentry_w 14208 2144: acall_pre_cf_w with `ly_bot ly + 2144 < spZ regs`, MALLOC_BODY_FRAME_CF): Allocate's
-   `ly_bot ly < spZ regsA` (AllocG.v:75) with spZ regsA = spZ regs - 2144 follows from it by lia, so no premise is
+   `ly_bot ly < spZ regsA` (AllocG.v:76) with spZ regsA = spZ regs - 2144 follows from it by lia, so no premise is
    added; xs_placed_cf comes from ARcf (YG0ncf.xs_placed_of_ARcf). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YImgTop.

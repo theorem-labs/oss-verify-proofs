@@ -1,5 +1,5 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfFm.v (cold/port-fm-rtprintf-param 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfFm.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfFm.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfFm.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfFm.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfFm.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* fm.asan's snprintf over the shared contract (FMsnprintfShared.v sh_asnprintf_realizesU), composed from the four walks:
    __wrap_snprintf / __interceptor_snprintf (FMsnprintfSnp.v snp_ok) -> __interceptor_vsnprintf (FMsnprintfSvsni.v
    svsni_ok) -> musl vsnprintf (FMsnprintfSvsn.v svsn_ok) -> __interceptor_vfprintf (FMsnprintfSvfi.v svfi_ok) ->
@@ -7,7 +7,7 @@
    printf_common and the FILE memset as hypotheses. Generic in the format family FF and in the windows: the seam's Kv,
    printf_common's Kp, and the top's K >= fm_glue_img + Kv; the stack-protector cells are fm's (musl vsnprintf reads
    its GOT slot by a PC-relative load). New file. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMsnprintfFm.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMsnprintfFm.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMsnprintfFm.v keeps its donor's comment text) is kept as lib/A/FMsnprintfFm.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMsnprintfFm.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMsnprintfFm.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMsnprintfFm.v keeps its donor's comment text) is kept as lib/A/FMsnprintfFm.v writes it. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -31,7 +31,7 @@ Definition fm_glue_img : Z := 0xa30.
 Lemma fm_glue_img_parts : fm_glue_img = 0x60 + 0x870 + 0x130 + 0x30.
 Proof. reflexivity. Qed.
 (* GXA's released musl vfprintf window: VF_DEPTH = VFA_DEPTH 368 + PC_DEPTH 5184 (fuzz_reply
-   lib/CJ/RL/GXA/G_printf_core_common.v:141, G_vfprintf_snf.v:54, origin/ossv/recipes 568db058c1d) *)
+   lib/CJ/RL/GXA/G_printf_core_common.v:142, G_vfprintf_snf.v:54) *)
 Definition GXA_VF_DEPTH : Z := 5552.
 (* on the GXA route the top's window is at least 8160 (= 2256 to musl vsnprintf + VSN_DEPTH 5904); 2 * ESTACK fits *)
 Lemma fm_K_min_gxa : fm_glue_img + GXA_VF_DEPTH = 8160.

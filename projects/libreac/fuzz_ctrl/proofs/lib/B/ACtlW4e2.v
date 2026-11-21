@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2748 of its 2845 lines of code are new or changed and 931 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW4e2.v -- piece W4e2 (S_F24 .. S_F29, cut-table-B.tsv rows 68-73: B82878_at j .. B82aa4_at j) of
    fuzz_ctrl image B's (asan-ubsan) walk of LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.
    One writer: a Theorem Labs lane's glue lane.  rule 24: no function proved (stage glue of a walk; drafting).
 
    WHAT THIS FILE PROVES (when it builds): one stage lemma per cut of the piece, "the successor cuts hold -> this
-   cut holds" (the donor's rt_B / rt_C shape, A/ACf1.v:499, A/ACf2.v:402 at c8557374ad2e), POINTWISE in the frame
+   cut holds" (the donor's rt_B / rt_C shape, A/ACf1.v:499, A/ACf2.v:402 at theorem-labs/oss-verify-proofs@6b32741d849a), POINTWISE in the frame
    turn j with ACtlCut.ix_cut (as lib/B/ACtlW4e1.v; frame-loop induction in W4g / the top).  Each stage lemma carries
-   the NAME of its stage hypothesis in lib/B/ACtl.v (seg_F24 .. seg_F29, ACtl.v:577-595 at 576147dfd46); the top
-   cites ACtlW4e2.seg_F24 .. directly after instantiating SK and FP (ACtl.v:171-177).
+   the NAME of its stage hypothesis in lib/B/ACtl.v (seg_F24 .. seg_F29, ACtl.v:577-595); the top
+   cites ACtlW4e2.seg_F24 .. directly after instantiating SK and FP (ACtl.v:172-178).
      B82878_at j (0x82878) --S_F24--> B82888_at j (reac_ports_parse @0x82884)
      B82888_at j (0x82888) --S_F25--> B828a4_at j (reac_ports_unknown @0x828a0, c = fr + 160)
      B828a4_at j (0x828a4) --S_F26--> B828b4_at j (reac_ports_unknown @0x828b0, c = 0)
@@ -33,7 +34,7 @@
    (owner ruling a Theorem Labs lane 05:31Z: a stage file does not prove them itself): Hwx (no segment wraps), segs_low (the
    image lies below kLowMemEnd) and LAWS (the core's AR_laws, lib/B/ACtl.v's LAWS).  ctl_block_apart_fs (lib/B/
    ProgWorld.v's ctl_block_apart_fs_stmt B) is no longer a hypothesis: it is CITED, a Theorem Labs lane's proved
-   B.ProgWorldBlkApart.ctl_block_apart_fs (94a9bc51607; on a working branch from b12b5ddf699; rule a Theorem Labs lane 13:12Z), used only
+   B.ProgWorldBlkApart.ctl_block_apart_fs (on a working branch; rule a Theorem Labs lane 13:12Z), used only
    where a stage stores into the owned frame or its shadow while a body conjunct reads the live block (seg_F24,
    seg_F25, seg_F29, through w4e2_block_frame_apart).  tfibsegs_rsegs is cited (ProgBridge.tfibsegs_rsegs, the
    frozen bridge's lemma), and the visibility transports V1 / V3 / V4 / V5 of plan 2.4 are PROVED here from the
@@ -45,7 +46,7 @@
      premise; plan F.2 row 34);
    - reac_ports_unknown (entry 0x88628): B.Prog.reac_ports_unknownF.reac_ports_unknown_F_holds_on
      (reac_ports_unknownF.v:370) : reac_ports_unknown_contract_F_on (reac_ports_unknown_c.v:154; route (C): no
-     shadow_rw premise; plan F.2 rows 35-36 (a working note, not in this delivery); files by path from a working branch 076e983605e).
+     shadow_rw premise; plan F.2 rows 35-36 (a working note, not in this delivery); files by path from a working branch).
    ITEM 23 (the final ProgWorld form) asks for NO conversion in this piece, and none is stated: S_F24 .. S_F29
    make no runtime call, no world-form call and no allocator call (line 16 above), and the two program callees are
    FOOTPRINT contracts lifted whole, whose posts already give the bytes of the ranges they write in lib/Lib's
@@ -55,11 +56,11 @@
    `rw_cells` words below are the cited `_F` lemmas' own texts, inside the plan comments.
    `_F` RUNS (a Theorem Labs lane's bF-statements/<File>F.md; names per bF-brief.md:36-43 (a working note, not in this delivery) and bseg-runs.tsv rows 117-124 (a working note, not in this delivery)),
    Required QUALIFIED and used directly (glue closure rule, porter 23:38Z): no `_F` text is copied here.
-   Every image-B `_F` module is proved on ONE branch, a working branch 12a7ea50807
+   Every image-B `_F` module is proved on ONE branch, a working branch
    (lib/B/Prog/Seg/<File>F.v); the ones cited below are in this tree.
    CITED (proved; none of them mentions AC.GT):
    - B.Prog.Seg.F24F.f24_pre_F       (F24F.md:10-23; 0x82878 -> 0x883d0 = PPC.REAC_PORTS_PARSE, ra = 0x82888)
-   - B.Prog.Seg.F25F.f25_pre_F_on    (F25F.v:65, route (C): no shadow_rw premise; 0x82888 -> 0x88628 =
+   - B.Prog.Seg.F25F.f25_pre_F_on    (F25F.v:66, route (C): no shadow_rw premise; 0x82888 -> 0x88628 =
                                       PUC.REAC_PORTS_UNKNOWN, ra = 0x828a4)
    - B.Prog.Seg.F26F.seg_F26_pre_F   (F26F.md:13-22; 0x828a4 -> 0x88628, ra = 0x828b4)
    - B.Prog.Seg.F27F.seg_F27_F       (F27F.md:10-30; the r = 0 arm, 0x828b4 -> 0x8292c)
@@ -71,14 +72,14 @@
    NOT USED: f24_post_F, f25_post_F and seg_F26_post_F (zero-step stretches at the cuts 0x82888 / 0x828a4 /
    0x828b4: the continuation reads the cut body over VISIBLE addresses from the callee post), and f29_evt_F
    (its premise mem_inv cannot be carried).
-   CLOSURE (rule (3)-(4)): as lib/B/ACtlW4e1.v's header; the Seg sources at UB 3803efccea0 are F24.v 459ef6164a8,
+   CLOSURE (rule (3)-(4)): as lib/B/ACtlW4e1.v's header; the Seg sources at UB are F24.v 459ef6164a8,
    F25.v 1da81b404de, F26.v dafb3d337f8, F27.v a0b51aa2c6b, F28.v f6be1c0fd18, F29.v d3a8027a519.
-   lib/B/MemNormF.v (blob 99f8b314301, taken by path from dba073859bd; F29F.v Requires it for f29_evt_ro_F) is on
+   lib/B/MemNormF.v (blob 99f8b314301, taken by path; F29F.v Requires it for f29_evt_ro_F) is on
    this branch from this commit; it Requires only lib/B/Reusable/YK11, lib/Lib (PropExec MState Mem Exec Frame
    ExecF) and lib/B (Img0, MemNorm a10a476ffd9).
 
-   PROVENANCE: cut table rows 68-73 (lines 69-74) (a working note, not in this delivery); cut records lib/B/ACtlCutP.v (6d691a975b6); plan 2.3 rows 68-73, F.2 rows 34-36, 6.2, F.4.1 rows 53-64 (a working note, not in this delivery);
-   ctrl's runs at a working branch 3803efccea0
+   PROVENANCE: cut table rows 68-73 (lines 69-74) (a working note, not in this delivery); cut records lib/B/ACtlCutP.v; plan 2.3 rows 68-73, F.2 rows 34-36, 6.2, F.4.1 rows 53-64 (a working note, not in this delivery);
+   ctrl's runs at a working branch
    (Seg/F24.v-F29.v; Seg/F24.v is not in this delivery); objdump fuzz_ctrl.objdump.txt L85355-L85499 (a working note, not in this delivery). *)
 
 From Coq Require Import ZArith List Permutation Lia Bool.
@@ -115,7 +116,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YG0v.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.ProgWorld.
 (* route (C): ctl_from's runtime premise ctl_rt_C and its region form shadow_rw_on (a working branch) *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.ACtlRtC B.ShadowRwOn.
-(* ctl_block_apart_fs, PROVED (a Theorem Labs lane 94a9bc51607): a live heap block is apart from the fake-stack region *)
+(* ctl_block_apart_fs, PROVED (a Theorem Labs lane): a live heap block is apart from the fake-stack region *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.ProgWorldBlkApart.
 (* frame_facts: a live fake frame lies inside the fake-stack region (seg_F29's block / frame apartness) *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YG0s.
@@ -535,7 +536,7 @@ Qed.
 Local Notation aview_vis_mrd := B.ProgWorld.aview_vis_mrd (only parsing).
 
 (* ---------------------------------------------------------------------------------------------------------
-   THE PORTED KIT.  Lines 458-1860 of lib/B/ACtlW4e1.v at a working branch b3cc6232851 (its proved
+   THE PORTED KIT.  Lines 458-1860 of lib/B/ACtlW4e1.v at a working branch (its proved
    helpers, themselves ported from W3a and W4f as the two notes below say), renamed w4_ -> w4e2w_, w4k_ -> w4e2k_,
    w4m_ -> w4e2m_.  Changes: the Section hypothesis tfibsegs_rsegs read as ProgBridge.tfibsegs_rsegs; w4e2w_vis_high
    by YA0o.seg_rom_hidden instead of YF0x.seg_rom_none_high (YF0x is not in this closure); aview_vis_mrd is
@@ -685,7 +686,7 @@ Proof.
 Qed.
 
 (* H7. FRAC reads registers 2, 3, 4, 8, 9, 19 and 26 and memory only: equal values there carry it across a run
-   that changes other registers.  (The fake-frame trailer word, FRAC's last conjunct since a218ac85be5, is a
+   that changes other registers.  (The fake-frame trailer word, FRAC's last conjunct, is a
    memory conjunct and moves with the rest.) *)
 Lemma w4e2w_FRAC_cong : forall cx fr sel (r r' : bvmap 5 word) (m : word -> option byte),
   lib.Reusable.YK11.getr r' 2 = lib.Reusable.YK11.getr r 2 ->
@@ -766,7 +767,7 @@ Qed.
 
 (* ---------------------------------------------------------------------------------------------------------
    BODY-TRANSPORT TOOLKIT (the w4e2k_ lemmas).  Ported from a Theorem Labs lane's PROVED local helpers (lib/B/ACtlW3a.v,
-   lines 273-879 (at head lib/B/ACtlW3a.v:273-879; from a working branch 6365e5d6107); renamed w3a_ -> w4e2k_, `Proof using ..` relaxed to
+   lines 273-879 (at head lib/B/ACtlW3a.v:274-880; from a working branch); renamed w3a_ -> w4e2k_, `Proof using ..` relaxed to
    `Proof.` because aview_vis_mrd is a proved lemma here, and W3a's turn-0 / PRO-only lemmas left out).  Raw
    memory readers, the journal and ctl_rt_C after a silent run, the own6 cut context from the journal (w4e2k_cut6),
    and the transports of the carried bundles.  Each is proved from the core (YCbq, YG0d's AR laws, the journal),
@@ -1274,7 +1275,7 @@ Qed.
 
 (* ---------------------------------------------------------------------------------------------------------
    CALL-TRANSPORT TOOLKIT (the w4e2m_ lemmas).  Ported from a Theorem Labs lane's PROVED local helpers (lib/B/ACtlW4f.v,
-   lines 324-518 and 889-1352 (at head lib/B/ACtlW4f.v:324-518 and :889-1352; from a working branch c8fda648d4e); renamed w4f_ -> w4e2m_
+   lines 324-518 and 889-1352 (at head lib/B/ACtlW4f.v:325-519 and :890-1353; from a working branch); renamed w4f_ -> w4e2m_
    aview_vis_mrd, a Section hypothesis there on that working branch (in this tree's ACtlW4f.v a Local Notation for the proved B.ProgWorld.aview_vis_mrd), is ProgWorld's proved lemma here (the Local Notation at :530)).  Run seating
    (w4e2m_enter / w4e2m_run / w4e2m_exit), the register transports of the cut bundles (w4e2m_ ... _tr), and the
    transports of FRAC / HB / FTK / FTURN / IFS / LK across a call whose post keeps the raw bytes (MKEPT) of the
@@ -2944,7 +2945,7 @@ Qed.
    B8292c_at j (0x8292c) --S_F28--> B82aa4_at j.
    The port-slot loop (head 0x8292c, latch 0x829b8 `bnez a7`, 12 turns over the codes at phi + 26 + i) and the tail
    0x829cc-0x82aa0 that checks the counts against the port words through s5 = fr + 128 and the first byte at
-   [A + 136] = fr + 160 (UB Seg/F28.v:9-44).  No call, no store.
+   [A + 136] = fr + 160 (UB Seg/F28.v:10-45).  No call, no store.
    SINK BRANCHES (objdump L85400-L85493):
    - UBSan traps (plan F.4.1 rows 54-64): 0x82930 `beq t0,t3,82fa0` (T56: t0 = 2^64 - 14 - phi - i >= 25 from
      phi + 50 <= 2^64), 0x8295c / 0x82974 / 0x8298c `bne t1,_,82fa0` (T57-T59: each counter starts at 0 at the

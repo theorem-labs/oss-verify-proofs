@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepGluecf.v (commit f01d79f3fb5, cf refill round 3; file sha256 4f2fa4d6843b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepGluecf.v (cf refill round 3; file sha256 4f2fa4d6843b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: anon_grant_facts_cf, rep_grant_apart, rep_grant_below_ceil and rep_grant_above_stack, their proofs and the header comment use grant_ok_na_pin_b; anon_grant_facts_cf unpacks the ledger's reserved list, now the image's segments plus a tail. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, the class-full report walk, slice F4 / RepF4Append's glue): placement and
    apartness facts of the error-message buffer's map, for the Realloc walk (RepF4Append.ReallocWalk, RepReallocf.v).
    rule 24: proves no function (kind: invariant lemmas, no machine code runs in this file; the lane's reuse search is
    `proof-index UnmapOrDie internal_memset internal_memcpy internal_strlen GetNamedMappingFd IncreaseTotalMmap`,
    2026-10-30T02:55Z, 0 released lemmas; the non-cf original YG0j.anon_grant_facts is in this tree).
    - anon_grant_facts_cf: the cf twin of YG0j.v:292 anon_grant_facts.  The proof body is YG0j's, with WfP_cf for WfP
-     (YG0scf.v:152 wf_no_prim_hole_cf for YG02.wf_noholes, YG08cf.v:150 sec_extents_sizes64P_cf for
+     (YG0scf.v:153 wf_no_prim_hole_cf for YG02.wf_noholes, YG08cf.v:151 sec_extents_sizes64P_cf for
      YG08.sec_extents_sizes64P) and ALedger_cf for ALedger: the two fields that differ (alc_cover, alc_eager_x) are not
      read, the others sit at the same positions.
    - rep_grant_apart: a fresh grant of a page-multiple size is off the image (below TFIB_IMG_LO or at or above
-     TFIB_IMG_END: grant_ok_na_pin and in_app allow [0x1000, 0x10000)), below the stack window and apart from the
+     TFIB_IMG_END: grant_ok_na_pin_b and in_app allow [0x1000, 0x10000)), below the stack window and apart from the
      errbuf vector object C_ERRBUF_VEC (three words).
    - rep_buf_apart: the same for the current errbuf buffer [errb_data_cf, errb_data_cf + errb_cap_cf), with its
      page alignment and its map in the model. *)
@@ -40,13 +41,13 @@ Variable B : asyms.
 (* 1. YG0j.v:292's anon_grant_facts at the cf invariant and ledger. *)
 Lemma anon_grant_facts_cf : forall U pp cc bb (ly : alayout) (S : astate) (md : Model) (a n : word),
 layout_ok ly -> WfP_cf U pp cc bb S -> sec_placed ly S -> ALedger_cf tfibsegs ly S md ->
-grant_ok_na_pin md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
+grant_ok_na_pin_b md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
 page_aligned (bv_unsigned a) /\ in_app (bv_unsigned a) (bv_unsigned n) /\ bv_unsigned a + bv_unsigned n <= ASAN_CEIL /\
 Forall (zdisjoint (bv_unsigned a, bv_unsigned n)) (static_extents ly ++ sec_extents ly S ++ perm_maps ly ++ band_maps).
 Proof.
 intros U pp cc bb ly S md a n LO W PL L G Hn Hnal.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
+unfold grant_ok_na_pin_b in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. unfold page_size in G1.
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw). rewrite Hn64 in G4.
 set (lo := bv_unsigned a) in *. set (len := bv_unsigned n) in *.
@@ -92,7 +93,7 @@ destruct (Z_lt_le_dec lo (fst (ly_img ly) + snd (ly_img ly))) as [X1|X1]; [|righ
 destruct (Z_lt_le_dec (fst (ly_img ly)) (lo + len)) as [X2|X2]; [|left; lia]. exfalso.
 set (x := Z.max lo (fst (ly_img ly))).
 destruct (L14 x ltac:(unfold in_zr; subst x; lia)) as (e & He & E1).
-pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; rewrite L3, <- surjective_pairing; exact He)) as D.
+pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(destruct L3 as (rx & L3e & _); apply in_app_iff; left; rewrite L3e, <- surjective_pairing; apply in_app_iff; left; exact He)) as D.
 subst lo len x. lia. }
 assert (PERM : Forall (zdisjoint (lo, len)) (perm_maps ly)).
 { apply Forall_forall. intros z Hz. pose proof (perm_facts ly 1 LO ltac:(lia) z Hz) as (Z1 & Z2 & Z3 & _). apply RFm; [lia | lia | lia | exact (L10 z Hz)]. }
@@ -135,7 +136,7 @@ Qed.
 Lemma rep_grant_apart : forall (lk : option Z) (Hp : list Z) (ly : alayout) (S : astate) (W : world tfibsegs)
   (mem : word -> option byte) (md : Model) (ncap sp K : Z),
 errb_call_pre B lk Hp ly S W mem md -> 0 < ncap -> ncap mod 4096 = 0 -> ly_stk_lo ly <= sp - K -> sp < 2 ^ 64 ->
-forall a', grant_ok_na_pin md (w64 a') ncap = true ->
+forall a', grant_ok_na_pin_b md (w64 a') ncap = true ->
 (a' + ncap <= TFIB_IMG_LO \/ TFIB_IMG_END <= a') /\ (a' + ncap <= sp - K \/ sp <= a') /\
 (a' + ncap <= C_ERRBUF_VEC \/ C_ERRBUF_VEC + 24 <= a').
 Proof.
@@ -143,11 +144,11 @@ intros lk Hp ly S W mem md ncap sp K PRE Hn Hal HSTK Hsp a' G.
 destruct PRE as (_ & _ & LO & IC & _ & _ & (_ & AR & _) & _).
 destruct AR as (M & L & _).
 pose proof (amc_wf _ _ _ _ _ M) as WF. pose proof (amc_placed _ _ _ _ _ M) as PL.
-pose proof G as G0. unfold grant_ok_na_pin in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
+pose proof G as G0. unfold grant_ok_na_pin_b in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
 assert (ATL : alloc_top (m_vmmaps md) < 2 ^ 64) by (unfold alloc_top, stack_max_size; pose proof (u64_range (vm_init_sp (m_vmmaps md))); lia).
 pose proof (u64_range (w64 a')) as Ra.
 assert (Hn64 : bv_unsigned (w64 ncap) = ncap) by (unfold w64; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
-assert (G' : grant_ok_na_pin md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
+assert (G' : grant_ok_na_pin_b md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
 destruct (anon_grant_facts_cf _ 0 0 0 ly S md (w64 a') (w64 ncap) LO WF PL L G' ltac:(lia) ltac:(rewrite Hn64; exact Hal))
   as (_ & FA2 & FA3 & FA4).
 rewrite Hn64 in FA2, FA3, FA4.
@@ -217,18 +218,18 @@ Qed.
 Lemma rep_grant_below_ceil : forall (lk : option Z) (Hp : list Z) (ly : alayout) (S : astate)
   (W : world tfibsegs) (mem : word -> option byte) (md : Model) (ncap : Z),
 errb_call_pre B lk Hp ly S W mem md -> 0 < ncap -> ncap mod 4096 = 0 ->
-forall a', 0 <= a' < 2 ^ 64 -> grant_ok_na_pin md (w64 a') ncap = true ->
+forall a', 0 <= a' < 2 ^ 64 -> grant_ok_na_pin_b md (w64 a') ncap = true ->
   a' + ncap <= ASAN_CEIL /\ ASAN_CEIL <= ly_stk_lo ly.
 Proof.
 intros lk Hp ly S W mem md ncap PRE Hn Hal a' Ha G.
 destruct PRE as (_ & _ & LO & _ & _ & _ & (_ & AR & _) & _).
 destruct AR as (M & L & _).
 pose proof (amc_wf _ _ _ _ _ M) as WF. pose proof (amc_placed _ _ _ _ _ M) as PL.
-pose proof G as G0. unfold grant_ok_na_pin in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
+pose proof G as G0. unfold grant_ok_na_pin_b in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
 assert (ATL : alloc_top (m_vmmaps md) < 2 ^ 64) by (unfold alloc_top, stack_max_size; pose proof (u64_range (vm_init_sp (m_vmmaps md))); lia).
 pose proof (u64_range (w64 a')) as Ra.
 assert (Hn64 : bv_unsigned (w64 ncap) = ncap) by (unfold w64; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
-assert (G' : grant_ok_na_pin md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
+assert (G' : grant_ok_na_pin_b md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
 destruct (anon_grant_facts_cf _ 0 0 0 ly S md (w64 a') (w64 ncap) LO WF PL L G' ltac:(lia) ltac:(rewrite Hn64; exact Hal))
   as (_ & _ & FA3 & _).
 assert (Ea : bv_unsigned (w64 a') = a') by (unfold w64; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
@@ -238,18 +239,18 @@ Qed.
 Lemma rep_grant_above_stack : forall (lk : option Z) (Hp : list Z) (ly : alayout) (S : astate)
   (W : world tfibsegs) (mem : word -> option byte) (md : Model) (ncap : Z),
 errb_call_pre B lk Hp ly S W mem md -> 0 < ncap -> ncap mod 4096 = 0 ->
-forall a', grant_ok_na_pin md (w64 a') ncap = true ->
+forall a', grant_ok_na_pin_b md (w64 a') ncap = true ->
   a' + ncap <= ly_stk_lo ly \/ ly_stk_hi ly <= a'.
 Proof.
 intros lk Hp ly S W mem md ncap PRE Hn Hal a' G.
 destruct PRE as (_ & _ & LO & _ & _ & _ & (_ & AR & _) & _).
 destruct AR as (M & L & _).
 pose proof (amc_wf _ _ _ _ _ M) as WF. pose proof (amc_placed _ _ _ _ _ M) as PL.
-pose proof G as G0. unfold grant_ok_na_pin in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
+pose proof G as G0. unfold grant_ok_na_pin_b in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
 assert (ATL : alloc_top (m_vmmaps md) < 2 ^ 64) by (unfold alloc_top, stack_max_size; pose proof (u64_range (vm_init_sp (m_vmmaps md))); lia).
 pose proof (u64_range (w64 a')) as Ra.
 assert (Hn64 : bv_unsigned (w64 ncap) = ncap) by (unfold w64; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
-assert (G' : grant_ok_na_pin md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
+assert (G' : grant_ok_na_pin_b md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
 destruct (anon_grant_facts_cf _ 0 0 0 ly S md (w64 a') (w64 ncap) LO WF PL L G' ltac:(lia) ltac:(rewrite Hn64; exact Hal))
   as (_ & _ & FA3 & _).
 rewrite Hn64 in FA3.

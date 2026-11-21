@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap answers, the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -68,8 +69,9 @@ Context {ML : MallocLayout} {MLok : MallocLayoutOk ML} {HT : HeapTop}.
 
 Local Notation u := bv_unsigned (only parsing).
 
-Lemma vm_munmap_live_le : forall a len h, In (a, len) (vm_maps h) -> vm_live_bytes (vm_munmap a len h) + u len <= vm_live_bytes h.
-Proof. intros a len h Hin. unfold vm_live_bytes. rewrite vm_munmap_maps. apply live_bytes_remove_entry. exact Hin. Qed.
+Lemma vm_munmap_live_le : forall a len h, munmap_exact (vm_maps h) a len -> In (a, len) (vm_maps h) ->
+  vm_live_bytes (vm_munmap a len h) + u len <= vm_live_bytes h.
+Proof. intros a len h Hx Hin. unfold vm_live_bytes. rewrite (vm_munmap_maps_exact _ _ _ Hx). apply live_bytes_remove_entry. exact Hin. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -153,6 +155,8 @@ Section BigFail.
     (* [comment removed for export] *)
     apply tsall_assoc.
     set (m' := unfill (Z_to_bv 64 p) (Z_to_bv 64 L) (ms_mem s1)). set (h' := vm_munmap (Z_to_bv 64 p) (Z_to_bv 64 L) (ms_vm s1)).
+    assert (EX1 : munmap_exact (vm_maps (ms_vm s1)) (Z_to_bv 64 p) (Z_to_bv 64 L))
+      by exact (munmap_exact_pw _ _ _ (vm_pw A1 _ (ii_vm HII1)) (fun b sz Hb => proj1 (vm_maps_wf A1 _ (ii_vm HII1) b sz Hb)) Hin1).
     eapply (tw_det W _ s1 _ P (Z_to_bv 64 0) (upd s1 m' h')).
     { intros K' P' HK'. eapply ts_sys_munmap; [rewrite HuP; exact Hpal | rewrite HuL; clear - Hn; unfold MMAP_THRESHOLD in Hn; lia | | |].
       - rewrite HuP, HuL, <- EL. rewrite (vm_top A1 _ (ii_vm HII1)). clear - HR'; lia.
@@ -169,7 +173,7 @@ Section BigFail.
         destruct (Z.lt_ge_cases (u a) (p + L)) as [H2|H2]; [right; clear - H1 H2; lia | left; apply M'out; clear - H2; lia].
       - clear - HR'; lia. - clear - HR'; lia. - clear - HR'; lia.
       - intros x Hd Hx. exact (Hnodom1 x Hx Hd).
-      - intros a Hm Hout Hc. unfold h'. rewrite vm_munmap_maps. pose proof (ii_vm HII1) as HV1.
+      - intros a Hm Hout Hc. unfold h'. rewrite (vm_munmap_maps_exact _ _ _ EX1). pose proof (ii_vm HII1) as HV1.
         apply (mcov_remove (vm_maps (ms_vm s1)) (Z_to_bv 64 p) (Z_to_bv 64 L) (u a) 1 (vm_pw A1 _ HV1) Hin1 ltac:(rewrite uZ by (clear - HL0 HR' LS; lia); exact HL0)
                  (fun b sz Hb => proj1 (vm_maps_wf A1 _ HV1 b sz Hb)) Hc ltac:(clear; lia)).
         + right; right. exists (u a). split; [clear; lia|]. rewrite HuP, uZ by (clear - HL0 HR' LS; lia). exact Hout.
@@ -210,11 +214,11 @@ Section BigFail.
     - exact (eo_lock _ _ _ _ HE2).
     - (* [comment removed for export] *) constructor; cbn [ms_vm upd].
       + apply (vm_fixed_of A A2 _ _ (ii_vm HII0) HV2). unfold h'. rewrite vm_munmap_limit, (fr_limit _ _ _ _ HFR1), F6vm. reflexivity.
-      + intros b sz Hb. unfold h'. rewrite vm_munmap_maps. apply (proj2 (in_map_remove _ _ _)). split; [apply (amv_maps _ _ _ _ HAM); rewrite Hmaps6; right; exact Hb|].
+      + intros b sz Hb. unfold h'. rewrite (vm_munmap_maps_exact _ _ _ EX1). apply (proj2 (in_map_remove _ _ _)). split; [apply (amv_maps _ _ _ _ HAM); rewrite Hmaps6; right; exact Hb|].
         cbn [fst]. intros E. pose proof (proj1 (vm_maps_wf A _ (ii_vm HII0) b sz Hb)) as Hsz. destruct (Gdisj b sz Hb) as [X|X]; rewrite E, HuP in X; clear - X Hsz HL0; lia.
       + intros b sz Hb Hf. unfold h'. rewrite vm_munmap_noaccess. apply maps_subtract_free; [exact (vm_na_nw A1 _ (ii_vm HII1))|].
         apply (amv_acc _ _ _ _ HAM); [rewrite Hmaps6; right; exact Hb | rewrite Hna6; exact Hf].
-      + intros Hpre. pose proof (vm_munmap_live_le (Z_to_bv 64 p) (Z_to_bv 64 L) (ms_vm s1) Hin1) as LE. fold h' in LE. rewrite uZ in LE by (clear - HL0 HR' LS; lia).
+      + intros Hpre. pose proof (vm_munmap_live_le (Z_to_bv 64 p) (Z_to_bv 64 L) (ms_vm s1) EX1 Hin1) as LE. fold h' in LE. rewrite uZ in LE by (clear - HL0 HR' LS; lia).
         assert (HL6 : vm_live_bytes (ms_vm s6) = vm_live_bytes (ms_vm s) + L) by (rewrite F6vm, vm_mmap_live_bytes, uZ by (clear - HL0 HR' LS; lia); reflexivity).
         assert (Hsp6 : spare A6 = spare A) by (unfold spare, A6, xadd, set_xmaps; cbn [a_ctx a_freelist]; rewrite (C5 KAmc I ltac:(cbn; tauto)), Fl5; reflexivity).
         assert (Har0 : a_areas A6 = []).
@@ -356,7 +360,7 @@ Section BigTop.
     eapply tw_sys_mmap04; [rewrite HuL; clear - Hn0; lia | rewrite HuL; clear - Hn0; lia | |].
     - (* [comment removed for export] *)
       (* [comment removed for export] *)
-      intros Hnone. assert (HWf : W <> WOk \/ forall a0, mmap_grant_ok MMrw (ms_vm s) a0 (mm_len (Z_to_bv 64 (n + 20))) = false) by (right; exact Hnone).
+      intros Hnone. assert (HWf : W <> WOk \/ forall a0, mmap_grant_ok MMrw (ms_thp s) (ms_vm s) a0 (mm_len (Z_to_bv 64 (n + 20))) = false) by (right; exact Hnone).
       eapply tw_set_errno; [exact HWIN|]. cbv beta.
       unfold MAP_FAILED at 1. rewrite wm1_eq, c_eq_Z by (clear; lia). rewrite Z.eqb_refl. cbv iota.
       apply tw_bind_ret.
@@ -382,7 +386,7 @@ Section BigTop.
         * intros x mt aib sl Hx Hr. exists mt, aib. auto.
       + intros _ H0. exfalso. apply H0. reflexivity.
       + intros HWk _. right; left. split; [clear - Hn; lia|]. destruct HWf as [HWf | Hall]; [exfalso; exact (HWf HWk)|].
-        intros a. specialize (Hall a). rewrite HmmL in Hall. exact Hall.
+        exists (ms_thp s). intros a. specialize (Hall a). rewrite HmmL in Hall. exact Hall.
       + (* [comment removed for export] *) unfold malloc_growS, se. cbn [ms_vm upd]. rewrite (malloc_db_big n (proj1 Hn)).
         split; [apply (sgrow_weaken 0 0 0); [apply sgrow_refl | clear; lia | clear - Hn0; lia | clear; lia| clear; lia]|].
         rewrite (malloc_dp_big n (proj1 Hn)). apply (pgrow_weaken 0); [apply pgrow_refl | clear - Hn0; lia].
@@ -392,7 +396,7 @@ Section BigTop.
         split; [clear - Hn0; lia|]. right. exists L.
         split; [clear - B1 B2 Hn0; unfold page_size in *; lia|]. split; [exact B3|].
         split; [clear - B1 B2 Hn0; unfold page_size in *; lia|].
-        intros a. specialize (Hnone a). rewrite HmmL in Hnone. exact Hnone.
+        exists (ms_thp s). intros a. specialize (Hnone a). rewrite HmmL in Hnone. exact Hnone.
     - (* [comment removed for export] *)
       intros HWs a Hg. cbn [mmap_grant_ok] in Hg. rewrite HmmL in Hg.
       pose proof (VMok_core A _ (ii_vm HII)) as HVc.
@@ -422,10 +426,11 @@ Section BigTop.
       apply tsall_assoc.
       eapply (tw_lift W (ag_seq (Z_to_bv 64 sqv)) s3
                 (fun sq' s4 => exists (sqn : Z) (reset : bool), sq' = Z_to_bv 64 sqn /\ 1 <= sqn <= 256 /\
-                   RepW A3 (ms_mem s3) (reset_writes reset) (ms_mem s4) /\ WIN s4 /\ ms_vm s4 = ms_vm s3 /\ ms_lo s4 = ms_lo s3 /\ ms_hi s4 = ms_hi s3)).
+                   RepW A3 (ms_mem s3) (reset_writes reset) (ms_mem s4) /\ WIN s4 /\ ms_vm s4 = ms_vm s3 /\ ms_lo s4 = ms_lo s3 /\ ms_hi s4 = ms_hi s3 /\
+                   ms_thp s4 = ms_thp s3)).
       { intros K' P' HK'. apply (ag_seq_ok A3 s3 (ms_mem s3) [] sqv K' P' RW30 HWIN3 ltac:(clear - Hsqv; lia)).
-        intros s4 sq' reset Hsq RW4 HWIN4 Hvm4 Hlo4 Hhi4. apply HK'. exists sq', reset. rewrite app_nil_r in RW4. auto 10. }
-      intros sq' s4 (sqn & reset & -> & Hsqn & RW4 & HWIN4 & Hvm4 & Hlo4 & Hhi4).
+        intros s4 sq' reset Hsq RW4 HWIN4 Hvm4 Hlo4 Hhi4 Hthp4. apply HK'. exists sq', reset. rewrite app_nil_r in RW4. auto 12. }
+      intros sq' s4 (sqn & reset & -> & Hsqn & RW4 & HWIN4 & Hvm4 & Hlo4 & Hhi4 & Hthp4).
       apply tsall_assoc.
       eapply (tw_lift W (m_sb (Z_to_bv 64 (caddr KSeq)) (Z_to_bv 64 sqn)) s4
                 (fun _ s5 => exists m5, s5 = upd s3 m5 (ms_vm s3) /\
@@ -433,7 +438,7 @@ Section BigTop.
       { intros K' P' HK'. eapply (ts_sb_ctxW A3 s4 (ms_mem s3) (reset_writes reset) KSeq); [exact RW4 | exact HWIN4 | exact I | reflexivity |].
         intros m5 RW5. rewrite uZ in RW5 by (clear - Hsqn; lia).
         destruct (heur_commit sp0 argv envp cb [] A3 s3 _ m5 HII3 RW5 (seq_writes_slots sqn reset)) as (HII5 & NF5 & HR5).
-        rewrite (upd_eq s3 s4 m5 (ms_vm s4) Hlo4 Hhi4), Hvm4. apply HK'. exists m5. split; [reflexivity|]. split; [exact HII5 | exact NF5]. }
+        rewrite (upd_eq s3 s4 m5 (ms_vm s4) Hlo4 Hhi4 Hthp4), Hvm4. apply HK'. exists m5. split; [reflexivity|]. split; [exact HII5 | exact NF5]. }
       intros x5 s5 (m5 & Es5 & HII5 & NF5). clear x5.
       set (cw := c_w A3 (FCT (caddr KSeq) 1 sqn :: reset_writes reset)) in *.
       pose proof (c_w_heur A3 (FCT (caddr KSeq) 1 sqn :: reset_writes reset)) as Hcw. fold cw in Hcw.

@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Reusable/YCbq.v, with its numbers changed; 205 of its 373 lines of code are new or changed and 3177 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaRt.v, with its module paths and module names changed; 287 of its 335 lines of code are new or changed and 325 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A: the snprintf step and the "%s" format fact that segment A8b of
    reac_segconf_parse_file's walk (lib/A/Prog/pf_pieces.v's S_A8b, 0x8890c .. 0x889f8) needs. Statement and proof
    text by the G3 walk owner, for segment A8b's proof, 2026-10-30.
 
    proves no function (kind: model lemma): pure helper lemmas for segment A8b's proof; no function of the binary is
-   walked here. The rule-24 record is the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md.
+   walked here. The rule-24 record is the unit's internal record, path records/segp/g3-lookup.md.
 
    Segment A8b has three snprintf calls, each with the format "%s" (SegModel.F_s, image A literal 0x21340) and one
    string argument in a3: snprintf(&c->seg[n], 16, "%s", np) at 0x88958, snprintf(cur_name, 16, "%s", np) and
@@ -21,7 +22,7 @@
    SegABase's sa_str / sa_addr facts.
 
    - pfa8b_snp_pre, pfa8b_snp_post, pfa8b_aj_snprintf_FF: the refuse walk's r_snp_pre, r_snp_post and
-     r_aj_snprintf_atSF (lib/A/Prog/refuse_pft.v at commit ad1467fffc74), copied with their proofs: the snprintf step
+     r_aj_snprintf_atSF (lib/A/Prog/refuse_pft.v), copied with their proofs: the snprintf step
      through a program walk's journal (YCbq.ajournal) for any family FF, window K, image span and read-only list.
      pfa8b_aj_snprintf_FF changes one premise: the destination lies below img_lo or at/above img_hi (refuse_pft:
      at/above img_hi), with img_lo <= gotw and img_lo <= guard added.

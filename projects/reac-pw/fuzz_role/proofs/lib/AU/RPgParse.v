@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParse.v at d428443238a; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParse.v; for image B
    (fuzz_role.asan-ubsan): the segment lemmas and the vocabulary are lib/AU's; the top is rl_parse_B at role_B_dcs; the
    Section hypotheses are image B's .got cell, shadow-offset cell and strcmp wrapper. *)
 (* reac_role_prop_parse 0x83130 of reac-pw/fuzz_role's ASan image B (fuzz_role.asan-ubsan, pinned sha256

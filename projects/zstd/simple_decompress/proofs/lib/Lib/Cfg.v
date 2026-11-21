@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap in the alloc-mark family and the refusal lemmas of its exact arm). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi Syscall Dispatch SyscallTable.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect Mremap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -142,22 +144,29 @@ Qed.
 Lemma acfg_family_off_222 : forall i, bv_unsigned (in_sysno i) = 222%Z -> injected_family_off ACFG i = true.
 Proof.
   intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
-  unfold alloc_mark_sysnos. simpl. do 2 right. now left.
+  unfold alloc_mark_sysnos. simpl. do 3 right. now left.
 Qed.
 Lemma acfg_family_off_226 : forall i, bv_unsigned (in_sysno i) = 226%Z -> injected_family_off ACFG i = true.
 Proof.
   intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
-  unfold alloc_mark_sysnos. simpl. do 3 right. now left.
+  unfold alloc_mark_sysnos. simpl. do 4 right. now left.
 Qed.
 Lemma acfg_family_off_216 : forall i, bv_unsigned (in_sysno i) = 216%Z -> injected_family_off ACFG i = true.
 Proof.
   intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
-  unfold alloc_mark_sysnos. simpl. right. now left.
+  unfold alloc_mark_sysnos. simpl. do 2 right. now left.
 Qed.
 Lemma acfg_family_off_214 : forall i, bv_unsigned (in_sysno i) = 214%Z -> injected_family_off ACFG i = true.
 Proof.
   intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
   unfold alloc_mark_sysnos. simpl. now left.
+Qed.
+(* LPS 727298f3: munmap (215) is in [alloc_mark_sysnos] ([214;215;216;222;226]), so its
+   injected family is off under ACFG as for the four above (zstd_frame_info's Lib/Cfg.v). *)
+Lemma acfg_family_off_215 : forall i, bv_unsigned (in_sysno i) = 215%Z -> injected_family_off ACFG i = true.
+Proof.
+  intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
+  unfold alloc_mark_sysnos. simpl. right. now left.
 Qed.
 
 Lemma refusal_b_222 : forall i m r, bv_unsigned (in_sysno i) = 222%Z ->
@@ -180,6 +189,12 @@ Proof.
 Qed.
 Lemma refusal_b_214 : forall i m r, bv_unsigned (in_sysno i) = 214%Z ->
   refusal_b i m r = brk_refusal_b m (in_arg i 0) r.
+Proof.
+  intros i m r; cbv beta zeta delta [refusal_b].
+  generalize (bv_unsigned (in_sysno i)); intros ? ->; exact eq_refl.
+Qed.
+Lemma refusal_b_215 : forall i m r, bv_unsigned (in_sysno i) = 215%Z ->
+  refusal_b i m r = ret_in_errnos munmap_errnos r.
 Proof.
   intros i m r; cbv beta zeta delta [refusal_b].
   generalize (bv_unsigned (in_sysno i)); intros ? ->; exact eq_refl.
@@ -231,6 +246,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
 Qed.
 
 Lemma transparent_family_on : forall ms model x8,
@@ -430,6 +448,18 @@ Proof.
   intros * Ho Hr Hs Hf.
   unfold spurious_refusal_cfg. refine (conj Ho (conj Hr _)).
   do 3 eexists. split; eassumption.
+Qed.
+
+Lemma nonspurious_not_refusal_of_grant : forall cfg i m eff eff' m' evs',
+  injected_family_off cfg i = true ->
+  ~ spurious_refusal_cfg cfg i m eff ->
+  syscall_spec i m (Ok eff' m' evs') ->
+  refusal_b i m (eff_ret eff') = false ->
+  refusal_b i m (eff_ret eff) = false.
+Proof.
+  intros cfg i m eff eff' m' evs' Hoff Hns Hs' Hnr.
+  destruct (refusal_b i m (eff_ret eff)) eqn:R; [|reflexivity]. exfalso.
+  exact (Hns (refusal_spurious_of_grant cfg i m eff eff' m' evs' Hoff R Hs' Hnr)).
 Qed.
 
 End Transparent.
@@ -925,6 +955,82 @@ Proof.
     intros Hn. apply m_killed_of_m_halted_none in Hn. congruence.
   - right; right; right. destruct Hun as [Hs Hrest].
     split; [exact (proj2 (syscall_spec_acfg_unmodeled _ _) Hs)|exact Hrest].
+Qed.
+
+Lemma cfg_mat_nil : forall m, materialize_model_accesses m [] = Some m.
+Proof. intros m. destruct m as [fd [maps lazy mat] io fs proc lim tm]; reflexivity. Qed.
+
+Lemma node_chk_grant_cfg : forall ms model x8 (I : Type)
+    (effs : I -> SyscallEffect) (ms' : I -> Model) (evs : I -> list event) (i0 : I),
+  m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  injected_family_off ACFG (sys_input segs ms x8) = true ->
+  (forall i, check_syscall (sys_input segs ms x8) (effs i) model = CheckOk (ms' i) (evs i)) ->
+  (forall i, refusal_b (sys_input segs ms x8) model (eff_ret (effs i)) = false) ->
+  (forall eff m' ev, check_syscall (sys_input segs ms x8) eff model = CheckOk m' ev ->
+     refusal_b (sys_input segs ms x8) model (eff_ret eff) = false ->
+     exists i, eff = effs i /\ m' = ms' i /\ ev = evs i) ->
+  (forall eff m' ev, check_syscall (sys_input segs ms x8) eff model = CheckOk m' ev ->
+     refusal_b (sys_input segs ms x8) model (eff_ret eff) = true -> m_halted m' = None) ->
+  (forall eff, check_syscall (sys_input segs ms x8) eff model <> CheckUnmodeled) ->
+  (forall i, m_halted (ms' i) = None) ->
+  (forall i, syscall_effect_accesses (effs i) = []) ->
+  (forall i, sstep_cfg segs ACFG (mkCfg ms model) (evs i)
+               (SNext (mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i))))
+  /\ (forall e st, sstep_cfg segs ACFG (mkCfg ms model) e st ->
+        exists i, e = evs i /\ st = SNext (mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i))).
+Proof.
+  intros ms model x8 I effs ms' evs i0 live pend fam_off checked grants
+    grants_listed refusals_live never_unmodeled outcomes_live no_access.
+  split.
+  - intros i.
+    pose proof (check_syscall_sound_ok _ _ _ _ _ (checked i)) as spec_i.
+    pose proof (spurious_refusal_not_refusal ACFG _ model (effs i) (grants i)) as fine_i.
+    pose proof (cfg_mat_nil (ms' i)) as settles_i.
+    rewrite <- (no_access i) in settles_i.
+    exact (sstep_cfg_syscall segs ACFG ms model x8 (effs i) (ms' i) (ms' i) (evs i)
+             live pend spec_i fine_i (outcomes_live i) settles_i).
+  - intros e st step.
+    remember (mkCfg ms model) as here eqn:here_is.
+    revert here_is.
+    destruct step as
+      [ ms0 m0 ms1 m1 was_live idle acct
+      | ms0 m0 was_live idle acct
+      | ms0 m0 was_live idle acct
+      | ms0 m0 fn n eff m1 m2 out was_live idle acct
+      | ms0 m0 fn n eff m1 out was_live idle acct
+      | ms0 m0 fn was_live idle acct
+      | ms0 m0 n8 eff m1 m2 out was_live pend0 spec fine alive mat
+      | ms0 m0 n8 eff m1 out was_live pend0 spec fine alive mat
+      | ms0 m0 n8 eff m1 out code was_live pend0 spec stopped unkilled
+      | ms0 m0 n8 eff m1 out sig was_live pend0 spec killed
+      | ms0 m0 n8 was_live pend0 spec ];
+      intros [= -> ->].
+    1-6: congruence.
+    all: assert (same_no : n8 = x8) by congruence; subst n8.
+    5: exfalso; apply (never_unmodeled (effs i0));
+       apply check_syscall_complete_unmodeled; exact spec.
+    3-4: exfalso;
+         assert (running : m_halted m1 = None)
+           by (generalize (refusals_live eff m1 out (check_syscall_complete_ok _ _ _ _ _ spec))
+                          (grants_listed eff m1 out (check_syscall_complete_ok _ _ _ _ _ spec));
+               case (refusal_b (sys_input segs ms x8) model (eff_ret eff));
+               [ intros when_refused _; exact (when_refused eq_refl)
+               | intros _ when_granted;
+                 destruct (when_granted eq_refl) as (i & _ & -> & _);
+                 exact (outcomes_live i) ]);
+         pose proof (m_killed_of_m_halted_none m1 running) as calm;
+         congruence.
+    1-2: assert (granted : refusal_b (sys_input segs ms x8) model (eff_ret eff) = false)
+           by (apply not_true_is_false; intro refused; apply fine;
+               exact (refusal_spurious_of_grant ACFG _ model eff (effs i0) (ms' i0) (evs i0)
+                        fam_off refused (check_syscall_sound_ok _ _ _ _ _ (checked i0))
+                        (grants i0)));
+         destruct (grants_listed eff m1 out (check_syscall_complete_ok _ _ _ _ _ spec) granted)
+           as (i & -> & -> & ->);
+         pose proof (cfg_mat_nil (ms' i)) as settles;
+         rewrite <- (no_access i) in settles.
+    + exists i. split; [reflexivity | congruence].
+    + congruence.
 Qed.
 
 End AcfgSyscallStepping.

@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's list_drop,
    a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record),
-   MEASURE-W1.md (sha256 bc8377b9603f; internal record)), after lib/A/W_list_drop.v and lib/A/W_list_drop_top.v (commit f83b4c2732c), in the
+   MEASURE-W1.md (sha256 bc8377b9603f; internal record)), after lib/A/W_list_drop.v and lib/A/W_list_drop_top.v, in the
    form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (free sites) and lib/A/ACbk.v (entry and
    return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* list_drop(l, i) at 0x85b50 (image B; 0x85814 in A; frame 64, ra and s0..s5 at 56..8) frees the text of record i
    (the allocator's free, through the GUIDE's allocator parameter: the Section hypothesis AFREE, W_journal_x.v
    afree_cf_rule_c_x at the caller-context table CTX), moves the records after it down by one with the __asan_memmove
    intrinsic (AMOVE, W_sites_x.v amemmove_realizes_x), and stores n - 1.  The walk is ARx-generic (route (b), step 3;
-   the template is lib/A/W_list_drop.v + lib/A/W_list_drop_top.v at commit be8158006bd): any
+   the template is lib/A/W_list_drop.v + lib/A/W_list_drop_top.v): any
    allocator relation ARx with its laws LAWS and HP0, the placement parameter PST, the journal
    W_journal_x.ajournal_gx_x; Sections dARc / eARc / dAR / eAR below re-derive from it the caller-context AR forms
    pb_list_drop_c / pb_list_drop_at_c / pb_list_drop_ro_c (a Theorem Labs lane's statements) and the AR walks pb_list_drop,
@@ -97,7 +98,7 @@ unfold HarnessRep.text_rec, OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Lib.Mem
 rewrite length_app, !length_N_to_le_bytes. cbn [length]. lia.
 Qed.
 (* `writable_at` (YP09.v:136) is "the byte is present, or the address falls in a writable segment", so it
-   survives a step that keeps presence and hides no more (W_frame.v:76 writable_kept, across two worlds). *)
+   survives a step that keeps presence and hides no more (W_frame.v:77 writable_kept, across two worlds). *)
 Lemma writable_kept_w : forall (W W' : world SEGS) (m m' : word -> option byte) a,
 (apresent (w_H W) m a -> apresent (w_H W') m' a) -> wle W W' ->
 writable_at SEGS (mrestrict (w_H W) m) a -> writable_at SEGS (mrestrict (w_H W') m' ) a.
@@ -340,7 +341,7 @@ Qed.
 End c.
 
 (* ------------------------------------------------------------------ the list's records and cells
-   (lib/A/W_list_drop_top.v's four image-independent helpers, commit f83b4c2732c) *)
+   (lib/A/W_list_drop_top.v's four image-independent helpers) *)
 (* record i's text pointer, an 8-byte cell of the vector (lib/A/W_list_find.v alist_rec_fields, its first half) *)
 Lemma ld_rec_ptr : forall B ly S W mem LA l lines j,
 alist_at B ly S W mem LA l lines -> (j < length (HarnessRep.hl_recs l))%nat ->
@@ -1606,7 +1607,7 @@ Qed.
 
 Theorem pb_list_drop_xR : ldrop_spec_xR B PST ARx R MT RP G A_list_dropP.
 Proof.
-(* kit cand8 5860616f712 (W1Verify f83b4c2732c) drops ldrop_spec's `LA + 16 <= kLowMemEnd`, so one intro name goes;
+(* kit cand8 (W1Verify) drops ldrop_spec's `LA + 16 <= kLowMemEnd`, so one intro name goes;
    the bound the walk needs comes from ld_LA_range (HLG) below, as it already did. *)
 intros W ly S Hp regs mem md ch LA l lines i HPRE H10 H11 HL Hi HLA8 HLA4 Hmv32 HZS HLGx HVoff Hmo kr HRM HCNT Hrom.
 destruct l as [v cap recs junk].
@@ -2032,7 +2033,7 @@ Proof. first [ eapply pb_list_drop_ro_xR with (R := @wle SEGS) (RO := fun _ => T
 End e.
 
 (* ---- THE AR STATEMENTS, re-derived (route (b), step 3).  First the caller-context forms over AR, a Theorem Labs lane's
-   pb_list_drop_c / pb_list_drop_at_c / pb_list_drop_ro_c (commit dc072059c86, lib/B/W_list_drop.v, sha256 6a0904505010; internal record):
+   pb_list_drop_c / pb_list_drop_at_c / pb_list_drop_ro_c (lib/B/W_list_drop.v, sha256 6a0904505010; internal record):
    their Theorem lines and Section hypotheses are k1's, byte-identical (LAWS : AR_laws stays; a Theorem Labs lane's ruling
    03:30Z: the plain names keep their B-old statements, LX0 is only on the _x names); each is a corollary of pb_list_drop_x / pb_list_drop_ro_x at ARx := ARi0
    (cgif's AR with the head set empty), PST := [], CTX := CTX_F.  Then the AR statements of the old walk,

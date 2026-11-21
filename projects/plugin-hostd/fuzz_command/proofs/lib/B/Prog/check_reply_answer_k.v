@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of check_reply_answer's ASan walk (plugin-hostd/fuzz_command), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v (the walk's kit: regions, facts, register files, seed lemma cl_seed) over fuzz_command's listing (lib/A/Prog/CmdList.v). *)
-(* Modified by Theorem Labs, 2026-10: ported from lib/A/Prog/check_reply_answer_k.v (a working branch 7308930bf5f) for fuzz_command.asan-ubsan: module paths, the image's addresses (g_rec's GOT word 0xa6bc8, the shadow base's GOT word 0xa5f50 and cell 0xb0c38, g_rec 0x5e32c0, the literals 0x210e0 and 0x21140). *)
+(* Modified by Theorem Labs, 2026-10: ported from lib/A/Prog/check_reply_answer_k.v (a working branch) for fuzz_command.asan-ubsan: module paths, the image's addresses (g_rec's GOT word 0xa6bc8, the shadow base's GOT word 0xa5f50 and cell 0xb0c38, g_rec 0x5e32c0, the literals 0x210e0 and 0x21140). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The pieces of the walk that are not the run itself: the call rule of a runtime string entry in the journal form
    the walk uses (acall_rule, the conclusion of PaArt.v's aj_art_at with the entry's premise and post as parameters,
    for an entry stated in a Theorem Labs lane's form, lib/B/Rt/RtDefs.v ecall_pre_stk / art_post), the facts the walk takes from

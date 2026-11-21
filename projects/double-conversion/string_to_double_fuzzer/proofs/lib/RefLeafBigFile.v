@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -92,6 +93,7 @@ Section OomTail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 727298f3: the stderr write's channel reader *)
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -241,6 +243,7 @@ Section BigLeaves.
   Variables (path : list byte) (stdin0 : AmbIn) (fs0 : Fs).
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis W : world0 (bv_unsigned sp0) area (bv_unsigned gm) brkv mas (bv_unsigned tid) sec M0.
+  Hypothesis Hcr : ia_channel_reader stdin0 = true.   (* LPS 727298f3: the launch's channel reader *)
 
   Lemma leaf_facts : forall R M, oom_leaf sp0 M0 R M ->
     getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) /\ getr R 3 = Z_to_bv 64 0x10800 /\ getr R 4 = Z_to_bv 64 0xc4918
@@ -268,7 +271,7 @@ Section BigLeaves.
     intros R M off V HL.
     destruct (leaf_facts R M HL) as (Rsp & Rgp & Rtp & STK & IMG & Ctid & Htid & Cself & (c & Hc & Ccan) & Cpg).
     change fs0 with (m_fs (modelG path stdin0 fs0 tid off V)).
-    apply (ref_oom_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl (bv_unsigned tid) R M
+    apply (ref_oom_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl Hcr (bv_unsigned tid) R M
              Rsp Rgp Rtp STK IMG Ctid Htid Cself c Hc Ccan Cpg 0x327dc).
     left. reflexivity.
   Qed.
@@ -281,7 +284,7 @@ Section BigLeaves.
     intros R M off V HL.
     destruct (leaf_facts R M HL) as (Rsp & Rgp & Rtp & STK & IMG & Ctid & Htid & Cself & (c & Hc & Ccan) & Cpg).
     change fs0 with (m_fs (modelG path stdin0 fs0 tid off V)).
-    apply (ref_refused_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl (bv_unsigned tid) R M
+    apply (ref_refused_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl Hcr (bv_unsigned tid) R M
              Rsp Rgp Rtp STK IMG Ctid Htid Cself c Hc Ccan Cpg).
   Qed.
 End BigLeaves.
@@ -641,15 +644,16 @@ Lemma ref_big_file : forall (sp0 p1 mb gm can sec : word) (R : bvmap 5 word) (M 
   world0 (bv_unsigned sp0) area (bv_unsigned gm) brkv mas (bv_unsigned tid) (bv_unsigned sec) M ->
   main_frame (bv_unsigned sp0) M ->
   vm_pre VM sp0 mb gm ->
-  vm_reserved VM = segments_reserved RSEGS /\ (2 ^ 31 <= vm_limit VM)%Z
+  (exists VX, vm_reserved VM = segments_reserved RSEGS ++ VX /\ (length VX <= 2)%nat /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) VX) /\ (2 ^ 31 <= vm_limit VM)%Z
   /\ (length (vm_maps VM) <= 4)%nat /\ In (gm, Z_to_bv 64 69632) (vm_maps VM)
   /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 69632)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) (vm_maps VM)
   /\ seps (vm_maps VM) ->
+  ia_channel_reader stdin0 = true ->
   realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x325c8) M (seg_rom RSEGS))
                           (model_pre path VM stdin0 fs0 tid))
              (t_alt2 (t_die msg_oom fs0) (t_body content fs0)).
 Proof.
-  intros sp0 p1 mb gm can sec R M area brkv mas VM path content stdin0 fs0 tid Hfile HL Harea RP W MF VP VS.
+  intros sp0 p1 mb gm can sec R M area brkv mas VM path content stdin0 fs0 tid Hfile HL Harea RP W MF VP VS Hcr.
   set (L := Z.of_nat (length content)) in *.
   assert (Hvsp : valid_sp sp0).
   { pose proof (rp_sp0 _ _ _ _ _ _ _ _ RP) as Hs. unfold valid_sp, sp_window_lo, sp_window_hi. lia. }
@@ -663,16 +667,16 @@ Proof.
   apply (read_big sp0 p1 mb gm can sec path content stdin0 fs0 tid Hfile R M VM
            (t_body content fs0) (t_die msg_oom fs0) (t_die msg_refused fs0) RP VP Hpage0 HL).
   - (* [comment removed for export] *)
-    apply (big_oom_branch sp0 gm area brkv mas (bv_unsigned sec) tid M path stdin0 fs0 Hvsp W).
+    apply (big_oom_branch sp0 gm area brkv mas (bv_unsigned sec) tid M path stdin0 fs0 Hvsp W Hcr).
   - (* [comment removed for export] *)
-    apply (big_refused_leaf sp0 gm area brkv mas (bv_unsigned sec) tid M path stdin0 fs0 Hvsp W).
+    apply (big_refused_leaf sp0 gm area brkv mas (bv_unsigned sec) tid M path stdin0 fs0 Hvsp W Hcr).
   - (* [comment removed for export] *)
     intros k Hk Hrange. unfold post_cont. intros R' M' V' B e RQ.
     apply (header_phase_k k sp0 p1 mb gm B e can sec tid area brkv mas content M R' M' V' stdin0 fs0 Hk Hvsp RQ W MF).
     + unfold capk. subst L. exact Hrange.
     + intros R'' M'' TPK TVK.
       pose proof (target_phase_k k Hk (bv_unsigned sp0) (bv_unsigned B) area brkv mas (bv_unsigned tid) (bv_unsigned sec) content
-                    R'' M'' V' (model_post V' stdin0 fs0 tid) TPK TVK (SPSA.std_model_mk _ _ _ _ _)) as X.
+                    R'' M'' V' (model_post V' stdin0 fs0 tid) TPK TVK (SPSA.std_model_mk _ _ _ _ _ Hcr)) as X.
       exact X.
 Qed.
 End BigFile.

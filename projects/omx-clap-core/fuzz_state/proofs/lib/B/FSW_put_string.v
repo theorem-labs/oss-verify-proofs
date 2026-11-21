@@ -5,16 +5,17 @@
    sources, every pc walked and every report site). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value.v, with its module names and numbers changed; 1163 of its 1272 lines of code are new or changed and 1247 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/FSW_put_string.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
    Every address, cut, branch, offset and register of put_string's own code is RE-MEASURED on image B
    (A_put_string 0x85fc8, 928 bytes; the neutral excerpt put_string.fuzz_state.asan-ubsan.s), never copied.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* put_string (A_put_string 0x85fc8, 928 bytes, preset_file.c:478-512), fs.asan-ubsan (image B): the walk's stretch and
-   helper layer for lib/B/FSH_Fn_writer.v's put_string_spec (the CTX-drop text, by path from a working branch
-   dda8331bd25). The closing theorem is lib/B/ZZpsfinal.v ps_put_string_spec over the four segments of ZZpsclose.ps_close.
+   helper layer for lib/B/FSH_Fn_writer.v's put_string_spec (the CTX-drop text, by path from a working branch).
+   The closing theorem is lib/B/ZZpsfinal.v ps_put_string_spec over the four segments of ZZpsclose.ps_close.
 
    WHAT IS HERE. The walk's pure facts; the NAMED escape lemmas (under the spec's `plain_bytes bs` premise both escape
    arms are untaken, so the two-char arm, the four-hex arm and the snprintf call at PS_FMT_CALL 0x86214 are never
@@ -44,10 +45,10 @@
    - THE LOOP (image B registers): at PS_HEAD 0x86148 s9 = x25 = the byte c, s2 = x18 = the run start r (= s),
      s4 = x20 = q + 1, s8 = x24 = q, s5 = x21 = the frame + 32, s6 = x22 = the frame's shadow, s7 = x23 = the shadow
      base, s3 = x19 = o. Image A holds c in s2 = x18, r in s10 = x26 and 34 in s9 = x25.
-   Rule 24 (a Theorem Labs lane's brief, proof-index v5 built 2026-10-29T07:26:27Z from main@c4c03c57ba1; cold scan of 593
+   Rule 24 (a Theorem Labs lane's brief, proof-index v5 built 2026-10-29T07:26:27Z from main; cold scan of 593
    lib/B trees, CONTROL `git grep -w A_put_string` passing; checker a Theorem Labs lane CONFIRM 08:4xZ): put_string has RELEASED
    proofs for fs's PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog: templates only) and the A walk on
-   a working branch ca67007c8c2 (this file's template); no lib/B FSW_put_string*.v or ZZps*.v exists on
+   a working branch (this file's template); no lib/B FSW_put_string*.v or ZZps*.v exists on
    any working-branch ref. The old-line B walk lib/B/Prog/put_string*.v was not used. *)
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -78,10 +79,10 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 (* ---- put_string's decoded code: the 232 words [tfib_A_put_string, tfib_E_put_string) of fs.asan-ubsan, in the
-   donor's form (lib/A/FSW_writer_tbl.v at a working branch ca67007c8c2: build_table over the image's own
+   donor's form (lib/A/FSW_writer_tbl.v at a working branch: build_table over the image's own
    bytes, table_ok by build_table_ok0). Image A's walk read put_string's words from FSW_writer_tbl.fsw_wr_tbl; this
-   walk keeps its own table (the B-core fold owner a Theorem Labs lane's rule for the fold at a working branch
-   a9edd281227). ---- *)
+   walk keeps its own table (the B-core fold owner a Theorem Labs lane's rule for the fold at a working branch).
+   ---- *)
 Definition FSW_PS_N : nat := 232%nat.          (* (tfib_E_put_string - tfib_A_put_string) / 4 = 928 / 4 *)
 Lemma fsw_ps_extent : tfib_A_put_string + 4 * Z.of_nat FSW_PS_N = tfib_E_put_string.
 Proof. unfold FSW_PS_N. cbv. reflexivity. Qed.
@@ -372,7 +373,7 @@ Lemma psl_on33 : forall lo hi, psl_rng lo hi ->
 Proof. intros lo hi [(-> & ->) | [(-> & ->) | (-> & ->)]]; vm_compute; reflexivity. Qed.
 
 (* ---- the rest of a Theorem Labs lane's scan-loop helpers, ported here (its scratch is parked at
-   a working branch 88c60453b45; that branch does not build as-is on this base) ---- *)
+   a working branch; that branch does not build as-is on this base) ---- *)
 
 (* ---- the shift's closed data: the register file and the state the rebase lands on ---- *)
 Definition psl_regsF : list sv := Eval vm_compute in (regs_rebase psl_rb (ss_regs (psl_ssD 35 91 1 255))).
@@ -469,7 +470,7 @@ Let HCELL : as_shadow_cell B = tfib_D_asan_shadow_memory_dynamic_address := proj
 
 (* ---- the kit steps this walk uses are all PROVED and imported by path, none is a hypothesis:
    FSW_frame.fsw_stack_malloc_atU and FSW_frame3.fsw_flag_storeU / fsw_after_callU_s0_ot (a Theorem Labs lane,
-   a working branch 2fe0e09c2c7, taken by path; the after-call takes the four-arm FP relation, so
+   a working branch, taken by path; the after-call takes the four-arm FP relation, so
    ps_put_call states that form, not FSW_K3's five-arm fsw_fp_sub), FSW_ret.fsw_retU / fsw_fpreU_atFP
    (a Theorem Labs lane). ---- *)
 
@@ -1131,7 +1132,7 @@ Lemma ps_put_call :
   getr regsc 3 = w64 (as_gp B) -> getr regsc 4 = w64 (as_tp B) ->
   achain lyc (aview tfibsegs (w_H W) (unpoison U memc)) (spZ regsc) (s0Z regsc) ch1 ->
   (* put's own premises, at the call *)
-  (* NO CTX row and no CTX binder: the writer specs dropped both (S0 794d06a106b, owner-approved on a Theorem Labs lane's proof
+  (* NO CTX row and no CTX binder: the writer specs dropped both (S0, owner-approved on a Theorem Labs lane's proof
      that the row is unsatisfiable in a reachable state; the binder by owner ruling 05:05Z). *)
   fs_heads B lyc Sc U ->
   Z.of_nat (length (frames Sc)) <= FRL_CRT_CALLEE + 1 ->

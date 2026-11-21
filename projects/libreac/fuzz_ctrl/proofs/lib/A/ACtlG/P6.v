@@ -31,7 +31,7 @@
 
    SECTION HYPOTHESES (exact text below); ACtl.v discharges seg_P6 with
      glue_seg_P6 B MT XM_LIB RLO RHI REAC_CTRL_IDENTITY_REPLY_K REAC_CTRL_PARSE_BC RELRO_IMG LAWS TFIB_SYMS TREPLY
-   - RELRO_IMG, LAWS, TFIB_SYMS: ACtl.v (at head lib/A/ACtl.v:226, :244 and :259; from a working branch 1899bed1aee).  TFIB_SYMS is ACtl.v's text
+   - RELRO_IMG, LAWS, TFIB_SYMS: ACtl.v (at head lib/A/ACtl.v:226, :244 and :259; from a working branch).  TFIB_SYMS is ACtl.v's text
      character for character; RELRO_IMG and LAWS name the same constants as ACtl.v's (checked by About), spelled
      lib.Reusable.YG0d.<X> (the full path) where ACtl.v writes Reusable.YG0d.<X>.
    - REPLY_SPEC: ACtl.v:316's TREPLY, a Theorem Labs lane's A.Prog.C_reac_ctrl_identity_reply.treac_ctrl_identity_reply_spec
@@ -59,7 +59,7 @@
    none; the callee is crossed by REPLY_SPEC).  Seg/P6.v enters the closure only through Seg/P6Fs.v / Seg/P6F.v's
    Requires; no lemma of it is used here.
 
-   BUILD STATE: see the commit message (a working branch 1899bed1aee). *)
+   BUILD STATE: see the commit message (a working branch). *)
 
 From Coq Require Import ZArith List Lia Permutation Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

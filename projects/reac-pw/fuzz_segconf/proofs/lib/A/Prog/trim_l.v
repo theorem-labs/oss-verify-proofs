@@ -5,6 +5,7 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 361 of its 399 lines of code are new or changed and 216 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim's image-A walk, the entry (0x890a8 .. 0x890dc) and the leading-blank loop (0x890e0 .. 0x8911c):
    tr_lead_ok : TR_AFTER_stmt -> TR_LEAD_stmt and tr_entry_ok : TR_LEAD_stmt -> the walk from trim's entry
    (lib/A/Prog/trim_k.v). The entry: the 32-byte frame and its four slots, s1 = s0 = p, s2 = the shadow base (the GOT
@@ -12,7 +13,7 @@
    a1 = the blank mask. One iteration of the loop at s0 = s1 = p + i: check 1 (0x890e0-0x89114, load1 at s1: the
    obligation that p + i is addressable, from trim_pre's sa_addr), the byte c = s[i], `bltu 0x20, c` and bit c of the
    mask: c not blank leaves for AFTER (then i = trim_lead s), c blank steps s0 and s1 (then i < trim_lead s). The plain
-   proof of the same loop: the plain-build walk owner's lib/Prog/trim.v LOOP1 at db8c4beebf62. *)
+   proof of the same loop: the plain-build walk owner's lib/Prog/trim.v LOOP1. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

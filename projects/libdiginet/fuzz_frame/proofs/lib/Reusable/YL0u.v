@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0u.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YL0u.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YL0u.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (md_ok_vm over fdchan's three conjuncts); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -32,8 +33,11 @@ apply HE. exact Hn.
 Qed.
 Definition md_ok (inp : ProcInput) (md : Model) : Prop :=
 fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = in_fs inp.
+(* fdchan is THREE conjuncts at LPS cd320f53 (Common/CatSim.v:1521): the fd lookup, [w_is0 ch = false]
+   and [m_channel_reader model = true]. The two-deep pattern left the third folded into one
+   hypothesis, so [assumption] had nothing to close the channel-reader goal with. *)
 Lemma md_ok_vm : forall inp md vm, md_ok inp md -> md_ok inp (with_vmmaps vm md).
-Proof. intros inp md vm ([H1 H1'] & [H2 H2'] & H3). unfold md_ok, fdchan. autorewrite with model. repeat split; assumption. Qed.
+Proof. intros inp md vm ([H1 [H1' H1'']] & [H2 [H2' H2'']] & H3). unfold md_ok, fdchan. autorewrite with model. repeat split; assumption. Qed.
 Lemma md_ok_ex : forall inp md md', md_ok inp md -> (exists vm, md' = with_vmmaps vm md) -> md_ok inp md'.
 Proof. intros inp md md' H [vm ->]. apply md_ok_vm. exact H. Qed.
 End c.

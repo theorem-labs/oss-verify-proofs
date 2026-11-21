@@ -2,7 +2,7 @@
    H_LEAF_GLUE, H_LEAF_GLUE_FX), each at its exact type, image B. The two aview facts are LeafCgFacts.v's
    aview_ext_stmt_YG0n / aview_some_stmt_YG0n (any segs); the two glue rows are LeafCgGlue.v's leaf_cg_of_evtF /
    leaf_cg_of_evtF_fx read at check_round_trip_cg.v's dec_leaf_wr_at instance, with the eight kit facts of
-   LeafCgFacts.v (a working branch 585df3525ed) as their Section hypotheses. *)
+   LeafCgFacts.v (a working branch) as their Section hypotheses. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YK11 YK0s YM05 YK04 YA0n YG0f YG00 YG0d YG0n.

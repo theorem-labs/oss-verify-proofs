@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_contract_x.v; 60 of its 201 lines of code are new or changed and 1871 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Contract texts of lib/B/W_contract_x.v at a world relation R, for relay_remove (rr_post_x :907, rr_spec_x :926) and
    relay_instance_gone (rig_post_x :952, rig_spec_x :979): image B's twin of lib/A/W_contract_xR_relay.v, in the same
    form: R is a Section variable right after ARx, with its laws R_refl, R_trans, WLE_R (the definitions use none of
@@ -9,7 +10,7 @@
    Against the strict texts only these change: the name, `ajournal_gx_x SEGS B PST ARx` -> `ajournal_gx_xR SEGS B PST
    ARx R`, `SRr SEGS` -> `SRrG SEGS R`, the post name X_post_x -> X_post_xR.  The comments inside the strict texts are
    left out; image B's caller-context premises (rr_spec_x's `In [pc + 356] CTX_AFREE`, rig_spec_x's `pc + 792`) are
-   B's strict ones, unchanged.  Section s6R's variables are Section s6's (W_contract_x.v:886-900) with R after ARx.
+   B's strict ones, unchanged.  Section s6R's variables are Section s6's (W_contract_x.v:887-901) with R after ARx.
    Instances: at R := wle each R text IS its strict text (X_x_wle, by conversion); the R text at wle gives the strict
    one (X_x_of_xR); a strict text gives the R text at every R that contains wle (X_xR_of_x, from WLE_R).
    Owner: a Theorem Labs lane (a7's ruling, 2026-10-31).  The walks are not here.
@@ -74,7 +75,7 @@ Variable RP : roomp.
 Variable MMAX : Z.
 Variable RG : rep_globals.
 Variable CTX_AFREE : list (list Z).
-(* W_contract_x.v:907 rr_post_x at R *)
+(* W_contract_x.v:908 rr_post_x at R *)
 Definition rr_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
     (G0 FD : Z) (es : list rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx cap out : Z)
     (kr : nat) : world SEGS -> config -> Prop :=
@@ -93,7 +94,7 @@ fun W' c' => exists ly' S' Hp' regs' mem' md' k,
    Permutation (ablocks B ly' S') (ablocks B ly S)) /\
   (forall i, (i < length es)%nat -> 0 <= FD -> re_fd (nth i es relay_remove_b_c.no_entry) = FD ->
    rr_found B RG ly S W mem ly' S' W' mem' G0 es i j h c O mx cap out).
-(* W_contract_x.v:926 rr_spec_x at R *)
+(* W_contract_x.v:927 rr_spec_x at R *)
 Definition rr_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch (G0 FD : Z) (es : list rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx cap out : Z),
 let tr := rr_tr c mx (Z.of_nat (length O)) cap FD es h in
@@ -112,7 +113,7 @@ rp_RM RP S (Z.to_nat (tr_cost MT_rk tr) + kr) ->
 cnt_ok_pk RP (rr_pk tr) (ablocks B ly S) ->
 In [pc + 356] CTX_AFREE ->
 SRrG SEGS R W (cfg_at SEGS pc regs mem md) (rr_post_xR regs ly S Hp W mem md G0 FD es j h c O mx cap out kr).
-(* W_contract_x.v:952 rig_post_x at R *)
+(* W_contract_x.v:953 rig_post_x at R *)
 Definition rig_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
     (G0 ID : Z) (es : list rentry) (hs : list (hsrc * nat)) (c : ctl) (O : list byte) (mx cap out : Z)
     (kr : nat) : world SEGS -> config -> Prop :=
@@ -139,7 +140,7 @@ fun W' c' => exists ly' S' Hp' regs' mem' md' k (qs : list (rentry * hsrc)) (c2 
     ((G0, ATABLE) :: concat (map aentry_blks (map fst qs)) ++
      concat (map (fun p => if re_eof (fst (fst p)) =? 0 then asrc_blks (snd (snd p)) else []) (combine (combine es hs) qs)) ++
      aout_blks cap2 out2 ++ rest).
-(* W_contract_x.v:979 rig_spec_x at R *)
+(* W_contract_x.v:980 rig_spec_x at R *)
 Definition rig_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch (G0 ID : Z) (es : list rentry) (hs : list (hsrc * nat)) (c : ctl) (O : list byte) (mx cap out : Z),
 let tr := rig_tr c mx (Z.of_nat (length O)) cap ID es hs in

@@ -3,10 +3,11 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 574 lines of code are new or changed and 410 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 215 of its 252 lines of code are new or changed and 537 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot of reac-pw/fuzz_rate LLVMFuzzerTestOneInput (UBSan build) from its segment lemmas, and ubsan_halts from
    the frame. reac-pw/fuzz_role's U/Prog/RoleSlot.v (the plain
    lib/Prog/RoleSlot.v, itself reac-pw/fuzz_pin's Prog/PinSlot.v and libreac/fuzz_ctrl's released Prog/Seg/Slot.v
-   Sections Bridge and Bundle and Prog/Seg/SlotLink.v Section Link adapted, origin/ossv/recipes 25e3d17bdb50) with
+   Sections Bridge and Bundle and Prog/Seg/SlotLink.v Section Link adapted) with
    rate's UBSan code and modules:
    - the n >= 2^26 run (early_evt): 0x12fe0 `addi sp,sp,-0x250`, the thirteen saves ra, s0 .. s11 (0x12fe4 ..
      0x13014), 0x13018 `srli a2,a1,26`, 0x1301c `beqz a2` not taken, 0x13020 `j 0x14678`: `mv a0,zero`, the

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the MP_rdr hypothesis, the run predicate's far-end channel reader, passed to aread_dir_sound_of_leaf in both sections). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -68,11 +69,13 @@ Hypothesis OPS_cov1_heap : forall id args z, op_cov1 OPS id args z -> id = HEAP_
 Hypothesis AERRNO_aci : forall LB SP, aclient_range (aci AI) LB SP AERRNO 4.
 Hypothesis ACI_stage : exists iv0, In iv0 (aci AI) /\ fst iv0 <= STAGE /\ STAGE + 65536 <= snd iv0.
 Hypothesis ACI_errno : exists iv0, In iv0 (aci AI) /\ fst iv0 <= ERRNO /\ ERRNO + 4 <= snd iv0.
+(* LPS 08b1429: NodesA.fd_inv now carries the far-end reader; ReadDirSound takes it as MP_rdr. *)
+Hypothesis MP_rdr : forall mo, MP mo -> m_channel_reader mo = true.
 
 Theorem aread_dir_sound : forall pc, to_Z pc = READ_SYM -> contract_sound asegs OPS MP PB (aread_dir_c CFG_ASAN pc).
 Proof.
   apply (aread_dir_sound_of_leaf AI ACCT UNIV Cw OPS AI_fake OPS_holds1 OPS_holds_zsh OPS_holds_fd3dir OTHER MP PB NMAXt
-           ACCT_rng ACCT_rng_aimg ACCT_rng_aimg_sh ACCT_silent).
+           ACCT_rng ACCT_rng_aimg ACCT_rng_aimg_sh ACCT_silent MP_rdr).
   exact (aread_dir_leaf_ok AI IMGX IMGX_aci ACCT UNIV Cw OPS AI_fake OPS_holds1 OPS_fp1 OPS_cov1 OPS_frame_other OPS_fp_other OTHER OPS_mo_other
            OPS_cov0_img MP PB AERRNO_aci ACI_errno ACI_stage file OPS_holds_rstage OPS_holds_rstage' OPS_fp_nostage).
 Qed.
@@ -145,11 +148,13 @@ Hypothesis OPS_cov1_heap : forall id args z, op_cov1 OPS id args z -> id = HEAP_
 Hypothesis AERRNO_aci : forall LB SP, aclient_range (aci AI) LB SP AERRNO 4.
 Hypothesis ACI_stage : exists iv0, In iv0 (aci AI) /\ fst iv0 <= STAGE /\ STAGE + 65536 <= snd iv0.
 Hypothesis ACI_errno : exists iv0, In iv0 (aci AI) /\ fst iv0 <= ERRNO /\ ERRNO + 4 <= snd iv0.
+(* LPS 08b1429: NodesA.fd_inv now carries the far-end reader; ReadDirSound takes it as MP_rdr. *)
+Hypothesis MP_rdr : forall mo, MP mo -> m_channel_reader mo = true.
 
 Theorem aread_dir_sound : forall pc, to_Z pc = READ_SYM -> contract_sound bsegs OPS MP PB (aread_dir_c CFG_ASAN pc).
 Proof.
   apply (aread_dir_sound_of_leaf AI ACCT UNIV Cw OPS AI_fake OPS_holds1 OPS_holds_zsh OPS_holds_fd3dir OTHER MP PB NMAXt
-           ACCT_rng ACCT_rng_aimg ACCT_rng_aimg_sh ACCT_silent).
+           ACCT_rng ACCT_rng_aimg ACCT_rng_aimg_sh ACCT_silent MP_rdr).
   exact (aread_dir_leaf_ok AI IMGX IMGX_aci ACCT UNIV Cw OPS AI_fake OPS_holds1 OPS_fp1 OPS_cov1 OPS_frame_other OPS_fp_other OTHER OPS_mo_other
            OPS_cov0_img MP PB AERRNO_aci ACI_errno ACI_stage file OPS_holds_rstage OPS_holds_rstage' OPS_fp_nostage).
 Qed.

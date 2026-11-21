@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 271 of its 294 lines of code are new or changed and 495 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A, 0x85ebc), the segment S_MF_HDRB (HFIND 0x86abc -> TAIL 0x86cf8;
    MF-CUTS-A.md section 4): the PREMISES OF ITS FOUR CALLEES, from the walk's mid-segment invariant. The HDRB segment lane
    of the G2 walk owner's G2. Statement and proof are about the reader `aview SEGS (w_H Wc) memc` and the journal only: no
@@ -15,8 +16,8 @@
      0x86c44 `jal checked_memcpy(g, name, |name|)` the same for the destination g, hb3_name_src for the source
    (g = &c->seg[j] = seg_spec.mseg_addr c j, j = c->n < 32; the runtime contract of both is the kit's
    aintrin_realizes, lib/Reusable/YG0d.v:326).
-   Where each premise comes from (the plain / image-B owner's plain proof of the same segment, lib/Prog/mf_line_hdrb.v at
-   commit bdb945544a62, hb_env_parts / hb_blk_upd / hb_rw_cells, read for the logic):
+   Where each premise comes from (the plain / image-B owner's plain proof of the same segment, lib/Prog/mf_line_hdrb.v,
+   hb_env_parts / hb_blk_upd / hb_rw_cells, read for the logic):
    - the block c: m_file_pre's c <> 0, c mod 16 = 0 and sa_heap at the entry state, moved to the current state by
      mf_core's Permutation of the live blocks (hb3_heap_now); sa_mconf, sa_addr and sa_tail at the current reader
      from mf_core.
@@ -31,7 +32,7 @@
    - the memcpy source is apart from g: m_file_pre's sa_disj of the text's read span (seg_spec.cstr_span) and the
      block; apart from the call's ESTACK window: the text is a heap block (below alloc_ceiling, al_blocks at the entry
      AR) and the window lies above ly_stk_lo + STK_m_file - 288 - 31 - ESTACK (afn_pre's astk_ok).
-   m_file_s_hdrb_1.v (hb_fp_seg) is not on this file's base 7416ec691901, so hb3_fp_seg proves that fact here. *)
+   m_file_s_hdrb_1.v (hb_fp_seg) is not on this file's base, so hb3_fp_seg proves that fact here. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

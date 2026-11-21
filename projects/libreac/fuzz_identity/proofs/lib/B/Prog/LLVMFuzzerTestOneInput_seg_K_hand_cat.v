@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/A/AC8w.v:289-290, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* seg_K piece `cat` of LLVMFuzzerTestOneInput's ASan+UBSan walk (image B): +0x1ad8 .. +0x1ae8 of the entry
    (fuzz_identity.asan-ubsan 0x8224c .. 0x8225c), the n_r = 0 path. 0x8224c stores a zero byte at s7 + 90 (s7 =
    shadow_addr SF: the shadow cell of `count` at SF+720, its scope unpoison); 0x82250 stores the zero word at s2
@@ -99,7 +100,7 @@ Variable ameta_inv : list Segment -> asink_syms_T -> alayout -> (word -> option 
 Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 Variable G : list (Z * Z).
 Hypothesis HPRE : KPRE B RLO RHI LLVMF_STK arodata_okS G.
-(* The contract's HEV (lib/B/Prog/LLVMFuzzerTestOneInput.v:114): reac_box_catalogue's event bound at the call. *)
+(* The contract's HEV (lib/B/Prog/LLVMFuzzerTestOneInput.v:115): reac_box_catalogue's event bound at the call. *)
 Hypothesis HEV : EV_LLVMF <= EV_LIB.
 Let LAWS := k_laws B RLO RHI LLVMF_STK arodata_okS G HPRE.
 Let RUN := paj_run B LAWS.  Let RUNTO := paj_run_to B LAWS.  Let BR := paj_branch (PI := PI).

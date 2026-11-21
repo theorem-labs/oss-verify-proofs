@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (kd_place's address also at or above the model's task_unmapped_base, the floor of Linux's bottom-up window, which the request's non-refusability needs; kd_reserved states the reserved ledger as the image's entries followed by the vDSO/vvar pair). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Numbers.BinNums"; "Z"; "positive"; "@Stdlib.ZArith.BinInt.Z"; "add"; "le"; "lt"; "mul"; "modulo"; "div"; "sub"; "pow"; "eqb"; "to_nat"; "of_nat"; "@Corelib.Init.Logic"; "and"; "eq"; "or"; "ex"; "not"; "iff"; "@Stdlib.Lists.List"; "In"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "m_vmmaps"; "Model"; "alloc_top"; "m_vm_lazy"; "vm_maps"; "event"; "vm_init_sp"; "vm_noaccess"; "VmMaps"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.Model"; "dFB"; "DG"; "dNB"; "dN"; "dF"; "dFP"; "mkDG"; "list_upd"; "@Corelib.Init.Datatypes"; "list"; "pair"; "app"; "bool"; "prod"; "cons"; "fst"; "snd"; "option"; "false"; "nil"; "length"; "@stdpp.bitvector.definitions"; "bv"; "Z_to_bv"; "bv_unsigned"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "rm"; "valuation"; "rl"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.Geometry"; "PG"; "IMG_HI"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.SegD_wf"; "STORE"; "cellZ"; "FBSZ"; "NBSZ"; "DFP"; "MAP1"; "depot_mem"; "DFPw"; "NFBLK"; "fblk"; "in_blk"; "dblocks"; "depot_vm"; "DEPOT"; "FBPAGES"; "MAP1N"; "dep_cost"; "dfp_static"; "wentry"; "G0"; "NIDS"; "NODESMU"; "TABSZ"; "dep_pages"; "droom"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.SegD_wf.WithSegs"; "depot_inv"; "dpost"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.RtCells"; "view"; "present"; "bview"; "cell_ok"; "filled"; "mkACell"; "@Corelib.Lists.ListDef"; "nth"; "map"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.BackingAlgebra"; "covered"; "@Corelib.Init.Peano"; "lt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "mat_equiv"].
@@ -318,14 +319,20 @@ Record KD_laws (K : DG -> jpredA) (n : positive) : Prop := mkKDL {
 
   kd_room : forall G rho tp tr md, K G rho tp tr md -> depot_inv G rho md tp -> headroom md tp >= droom G /\ dN G <= DNMAX;
 
-  kd_reserved : forall G rho tp tr md, K G rho tp tr md -> vm_reserved (m_vmmaps md) = segments_reserved segs;
+  (* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+  kd_reserved : forall G rho tp tr md, K G rho tp tr md ->
+    exists V, vm_reserved (m_vmmaps md) = segments_reserved segs ++ V /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V;
 
   kd_noacc : forall G rho tp tr md a n x, K G rho tp tr md -> In (a, n) (vm_noaccess (m_vmmaps md)) ->
       bv_unsigned a <= x < bv_unsigned a + bv_unsigned n ->
       exists b m, In (b, m) (vm_maps (m_vmmaps md)) /\ bv_unsigned b <= x < bv_unsigned b + bv_unsigned m;
 
+  (* LPS 727298f3: the address is also at or above the model's [task_unmapped_base], the floor of
+     Linux's bottom-up window, which the request's non-refusability needs
+     (MallocA/MmapSymG.v [not_refusable_of_place]). *)
   kd_place : forall G rho tp tr md L, K G rho tp tr md -> depot_inv G rho md tp -> (L = NBSZ \/ L = FBSZ) ->
       exists a : word, mmap_place_ok_none (Z_to_bv 64 0) md (Z_to_bv 64 L) a
+                       /\ LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= bv_unsigned a
 }.
 
 Definition JD (K : DG -> jpredA) (G : DG) : jpredA := ltac2:(tb__ "0|0|

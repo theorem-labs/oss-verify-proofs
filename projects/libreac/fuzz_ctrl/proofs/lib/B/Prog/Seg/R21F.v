@@ -4,14 +4,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1421 of its 1489 lines of code are new or changed and 943 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R21.v; 223 of its 396 lines of code are new or changed and 1316 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/R21.v r21_a5c_next, r21_a5c_last, r21_latch_next, r21_latch_last, r21_p1_evt_n,
-     r21_p1_evt, r21_tail_evt at a working branch 3803efccea0
+     r21_p1_evt, r21_tail_evt at a working branch
      (blob 54812916d1e4a55c3dac312e07f10606976d0d30);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: r21_a5c_next_of_F, r21_a5c_last_of_F, r21_latch_next_of_F, r21_latch_last_of_F (evtF_evt + rng_all)
      re-derive the source statements R21.v:284-305, :307-326, :221-251, :253-280 verbatim; the split stretches
      r21_p1_pre_F re-runs R21.v:505-512 (the stretch of r21_p1_evt_n :475-554 and of r21_p1_evt :557-610 up to the

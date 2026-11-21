@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a stack-floor fact handed to the allocator-ceiling premise of art_client_write is passed through lia, since the floor is now measured by STACK_SPAN. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -109,7 +110,7 @@ Proof using AF RTF SM1 SPLIT.
   assert (ARTW : forall (Σx : rts RT) mA mB W, ART RT Σx mA -> munch W mA mB -> wmono bsegs mA mB -> rt_sp0 RT Σx = rt_sp0 RT Σ -> In (f, 1%nat) (rt_frames RT Σx) ->
             In (f0, kf0) (rt_frames RT Σx) ->
             (forall x, (lo <= x < USTACK_TOP) \/ (f <= x < f + 120) \/ (shad f <= x < shad f + 16) \/ (RV <= x < RV + 24) \/ outside W x) -> ART RT Σx mB).
-  { intros Σx mA mB W HA MU WM SPx INFx INF0x HW. apply (art_client_write RT AF Σx mA mB lo HA ltac:(rewrite SPx; exact LOW)); [| exact WM].
+  { intros Σx mA mB W HA MU WM SPx INFx INF0x HW. apply (art_client_write RT AF Σx mA mB lo HA ltac:(rewrite SPx; lia)); [| exact WM].
     intros a Ha. destruct (HW (bv_unsigned a)) as [X|[X|[X|[X|O]]]]; [exfalso; apply Ha| exfalso; apply Ha| exfalso; apply Ha| exfalso; apply Ha| apply MU; exact O].
     - left. exact X.
     - right; right; right; left. exists f, 1%nat. change (fs_size 1) with 128. split; [exact INFx| lia].

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/CheckGlue_cg.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; against this unit's lib/U/Prog/EgressGlue.v instead of fuzz_uci's
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/CheckGlue_cg.v;
+   against this unit's lib/U/Prog/EgressGlue.v instead of fuzz_uci's
    CheckGlue.v: the lemma names follow EgressGlue's (eg_run_fp_cf, eg_runA_cf, eg_runQ_cf, eg_runN_cf for
    crt_run_fp_cf, crt_runA_cf, crt_runQ_cf, crt_runN_cf) and eg_wx replaces crt_wx; module path of fuzz_egress. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (SRcf) twins of lib/U/Prog/EgressGlue.v's four run lemmas (eg_run_fp, eg_runA, eg_runQ, eg_runN),
    as libreac/fuzz_decode's released lib/U/Prog/crt_glue_cg.v has them; the proofs are EgressGlue's with
    evt_SR_canon / kb_run replaced by evt_SRcf_canon / kb_run_cf. The rest of EgressGlue.v (the list, block, segment

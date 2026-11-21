@@ -4,7 +4,7 @@
    two Require lines: root MemNorm -> lib.A.MemNorm (its 113 definitions and lemmas have the same names and statements)
    and root Reusable YK1j / YP09 -> lib.A.Reusable YK1j / YP09 (A.MemNorm's own). rule 24: no function proved;
    a kit twin. Writer a Theorem Labs lane (route (C) L1, 2026-10-29). *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -233,7 +233,7 @@ Proof.
     split; [reflexivity|]. split; [exact HR|]. split; [intros x _; reflexivity|]. split; [reflexivity|].
     constructor.
   - revert H. destruct (ov_read_bytes segs m0 a (width_bytes n)) as [bs|] eqn:Eo; intros H;
-      cbn beta iota in H; [|discriminate H].
+      cbn beta iota in H; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     rewrite (ov_read_rel_P m m0 a _ bs HR Eo). cbn beta iota.
     revert H.
     lazymatch goal with

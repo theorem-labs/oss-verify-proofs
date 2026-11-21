@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the run's entry stack; the VCommon proof library over the revised model). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -20,10 +20,6 @@ Local Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition src_in (A : list region) (v : xv) (n : Z) : bool :=
   match xaddr v with
@@ -91,10 +87,6 @@ Proof.
 Qed.
 
 End Src.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition is_BT (x : xb) : bool := match x with BT => true | _ => false end.
 
@@ -245,7 +237,6 @@ Proof.
     - apply Z.eqb_eq in Ez. replace (Z.to_nat n) with O by lia. exists []. reflexivity.
     - exact (src_in_rdn segs ρ (a_mem A) (ms_mem ms) _ src nhi Hmem Hvs ltac:(lia) Hsrc n ltac:(lia)). }
   destruct Hrdx as [bs Hrd0].
-  (* [comment removed for export] *)
   assert (Hdstok : store_ok segs (ms_mem ms) dst (Z.to_nat nhi) = true
                    /\ (hs_old ρ (a_mem A) (ms_mem ms) -> forall z, in_ss z -> ~ (bv_unsigned dst <= z < bv_unsigned dst + nhi))).
   { destruct (nhi =? 0) eqn:Ez.
@@ -327,11 +318,6 @@ Qed.
 
 End MemcpyBigSound.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition cell_zero_rng (c : cell) (lo hi : Z) : bool :=
   if (hi <? 0) ||| (7 <? lo) then true   (* [comment removed for export] *)
   else forallb (fun i => if (lo <=? Z.of_nat i) && (Z.of_nat i <=? hi) then xb_is0 (cbyte c i) else true) (seq 0 8).
@@ -422,15 +408,24 @@ Definition sum_rip_big_g (ckR : (list Segment -> Z -> Z -> Z -> Z -> Z -> Z -> b
   let s := a_facts A in
   match rip_params T b, xaddr (aget (a_regs A) 10%uint63), xrange s (aget (a_regs A) 11%uint63), aget (a_regs A) 1%uint63,
         aget (a_regs A) 2%uint63, find_entry (a_mem A) with
-  | Some (mz, gK, gMB, gME, gHE, aK, aMB, aME, aHE), Some (tb, ob), Some (nlo, nhi), XL r, XS ts o, Some ph =>
+(* `XL r, ..., Some (r, ph)`: the fifth and last of the rseq double bindings, same
+   shape as AxSumRip2's, and the parser names it -- ":410 chars 4-112, r is bound
+   several times in pattern".  As in AxSumRip2, and
+   NOT as in sum_strlen/sum_rip_g/sum_memchr, NO restructure is needed: regs 10 and
+   11 go through xaddr and xrange, no scrutinee takes the flag, and the branch body
+   never mentions it, so renaming the return address to `ra` is the whole change and
+   the six scrutinees stay.  This file names AUX_OFF nowhere, so no sign assert and
+   no import widening belongs here -- checked before writing, which is the step that
+   bit AxSumRip2. *)
+  | Some (mz, gK, gMB, gME, gHE, aK, aMB, aME, aHE), Some (tb, ob), Some (nlo, nhi), XL ra, XS ts o, Some (r, ph) =>
       if (1 <=? nlo) &&& (nhi <=? 67108864) &&& teqb ts sp_terms &&& (- 8388608 + 72 <=? wS o) &&& (wS o <=? 0)
-         &&& pc_ok r &&& atop_is_sp (a_model A) &&& (a_budget A + 4096 * rpg nhi <=? LIM)
+         &&& pc_ok ra &&& atop_is_sp (a_model A) &&& (a_budget A + 4096 * rpg nhi <=? LIM)
          &&& in_app_mem s (wS ob, tb) nhi
          &&& ckR segs b mz gK gMB gME gHE &&& globals_ok segs (a_mem A) gK gMB gME gHE aK aMB aME aHE
          &&& sh_zero_big s (a_mem A) tb (wS ob) nhi then
         match a_store segs (a_mem A) (XS sp_terms (wofZ (wS o - 72))) (repeat BT 72) with
         | Some mem' =>
-            Some [AS r (rip_regs (a_regs A)) (resv_drop (a_resv A)) mem' s (a_model A) (a_budget A + 4096 * rpg nhi) (a_steps A + 1)]
+            Some [AS ra (rip_regs (a_regs A)) (resv_drop (a_resv A)) mem' s (a_model A) (a_budget A + 4096 * rpg nhi) (a_steps A + 1)]
         | None => None
         end
       else None
@@ -458,6 +453,8 @@ Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* The closed Boolean no_lazy_img now takes; see AxSumAmc.v for the discharge. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
 Notation Snd := (Sound segs cfg LIM (MR segs fs0) KT).
 
@@ -467,16 +464,16 @@ Proof.
   destruct (rip_params T (wZ (a_pc A))) as [[[[[[[[[mz gK] gMB] gME] gHE] aK] aMB] aME] aHE]|] eqn:Ep; [|discriminate].
   destruct (xaddr (aget (a_regs A) 10%uint63)) as [[tb ob]|] eqn:Eb10; [|discriminate].
   destruct (xrange (a_facts A) (aget (a_regs A) 11%uint63)) as [[nlo nhi]|] eqn:E11; [|discriminate].
-  destruct (aget (a_regs A) 1%uint63) as [r| | | | |] eqn:E1; try discriminate.
+  destruct (aget (a_regs A) 1%uint63) as [ra| | | | |] eqn:E1; try discriminate.
   destruct (aget (a_regs A) 2%uint63) as [| ts o | | | |] eqn:E2; try discriminate.
-  destruct (find_entry (a_mem A)) as [ph|] eqn:Efe; [|discriminate].
+  destruct (find_entry (a_mem A)) as [[r ph]|] eqn:Efe; [|discriminate].
   cbv zeta in Hs.
   destruct (1 <=? nlo) eqn:En1; [|discriminate]. apply Z.leb_le in En1.
   destruct (nhi <=? 67108864) eqn:En2; [|discriminate]. apply Z.leb_le in En2.
   destruct (teqb ts sp_terms) eqn:Ets; [|discriminate]. apply teqb_eq in Ets. subst ts.
   destruct (- 8388608 + 72 <=? wS o) eqn:Eo1; [|discriminate]. apply Z.leb_le in Eo1.
   destruct (wS o <=? 0) eqn:Eo2; [|discriminate]. apply Z.leb_le in Eo2.
-  destruct (pc_ok r) eqn:Epc; [|discriminate].
+  destruct (pc_ok ra) eqn:Epc; [|discriminate].
   destruct (atop_is_sp (a_model A)) eqn:Eat; [|discriminate].
   destruct (a_budget A + 4096 * rpg nhi <=? LIM) eqn:Hbud; [|discriminate]. apply Z.leb_le in Hbud.
   destruct (in_app_mem (a_facts A) (wS ob, tb) nhi) eqn:Ern;
@@ -503,7 +500,6 @@ Proof.
   set (beg := rg ms 10%bv).
   pose proof (xrange_sound ρ _ _ (rg ms 11%bv) Hsat (Hregs 11%bv) _ E11) as Hcr. cbn [fst snd] in Hcr.
   set (n := bv_unsigned (rg ms 11%bv)) in *.
-  (* [comment removed for export] *)
   assert (Hbv : bv_unsigned beg = smod ρ tb ob).
   { apply (xaddr_val ρ (aget (a_regs A) 10%uint63) beg tb ob); [|exact Eb10]. exact (Hregs 10%bv). }
   set (F := leval ρ (wS ob, tb)) in *.
@@ -514,12 +510,23 @@ Proof.
   { rewrite Hbv. unfold smod. rewrite <- (wS_mod ob). rewrite Zplus_mod_idemp_r. rewrite <- HFe.
     apply Z.mod_small. unfold two64. lia. }
   assert (H11 : rg ms 11%bv = Z_to_bv 64 n) by (apply word_lit_w; reflexivity).
-  assert (Hra : bv_unsigned (rg ms 1%bv) = wZ r) by (specialize (Hregs 1%bv); change (ri 1%bv) with 1%uint63 in Hregs; rewrite E1 in Hregs; exact Hregs).
-  destruct (pc_ok_spec r Epc) as [Hr4 Hr26].
-  (* [comment removed for export] *)
-  destruct (eb_of_R segs ρ (a_mem A) (ms_mem ms) ph Hmem Efe) as [nR Heb].
-  pose proof (eb_rel_facts ph ρ _ _ _ Heb) as HFE.
-  pose proof (eb_layout ρ HFE) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & Hq1 & Hs2). unfold sp_window_lo, sp_window_hi in *.
+  assert (Hra : bv_unsigned (rg ms 1%bv) = wZ ra) by (specialize (Hregs 1%bv); change (ri 1%bv) with 1%uint63 in Hregs; rewrite E1 in Hregs; exact Hregs).
+  destruct (pc_ok_spec ra Epc) as [Hr4 Hr26].
+
+  destruct (eb_of_R segs ρ (a_mem A) (ms_mem ms) r ph Hmem Efe) as [nR Heb].
+  pose proof (eb_rel_facts r ph ρ _ _ _ Heb) as HFE.
+  pose proof (eb_layout r ρ HFE) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & Hq1 & Hs2). unfold sp_window_lo, sp_window_hi in *.
+  (* HSP's closer needs sp_val bounded, and Hs2 is the only bound, carrying AUX_OFF r
+     and ρ v_g with the sign of neither -- "Cannot find witness" at :520 chars 132-135
+     (bignum reports :522, this file's one pre-existing
+     inter-tree line offset).  Names are QUALIFIED rather than imported: last round I
+     declined to widen this file's closure because it named AUX_OFF nowhere, and
+     qualification keeps that true while AxSumStr on the import line already LOADS
+     both modules -- the idiom AxSumChr uses for AsanWEbLoad.cl_len. *)
+  assert (HA0 : 0 <= AsanWEbLoad.AUX_OFF r) by (unfold AsanWEbLoad.AUX_OFF; lia).
+  assert (Hg0 : 0 <= ρ v_g).
+  { pose proof (AsanWEb.facts_g r ph ρ HFE). pose proof (AsanWEb.facts_par r ph ρ HFE).
+    pose proof (Z.mod_pos_bound (ρ v_argc + ρ v_envc + 1) 2 ltac:(lia)). lia. }
   assert (HSP : bv_unsigned (rg ms 2%bv) = sp_val ρ + wS o).
   { change 2%uint63 with (ri 2%bv) in E2. rewrite (reg_form ρ _ ms 2%bv _ _ Hregs E2). unfold smod.
     change (teval ρ sp_terms) with (sp_val ρ). rewrite <- (wS_mod o). rewrite Zplus_mod_idemp_r. apply Z.mod_small. unfold two64. lia. }
@@ -551,7 +558,7 @@ Proof.
     { intros a v Hin Hcl. destruct (Hgl a Hin). apply (cell_lit_sound segs ρ (a_mem A) (ms_mem ms) a v (conj Hok HRR)); [unfold ls_beg in *; lia | exact Hcl]. }
     unfold globals. repeat split; apply Hc; first [assumption | cbn; tauto].
   - assert (Hn : forall a, In a [gK; aK; gMB; aMB; gME; aME; gHE; aHE] -> no_lazy model a (a + 8))
-      by (intros a Hin; exact (no_lazy_img segs Hlow model a 8 (mr_res segs fs0 ρ _ _ Hmod) (mr_lazy_res segs fs0 ρ _ _ Hmod) (Hins a Hin))).
+      by (intros a Hin; exact (no_lazy_img segs Hlow Hnk model a 8 (mr_res segs fs0 ρ _ _ Hmod) (mr_lazy_res segs fs0 ρ _ _ Hmod) (Hins a Hin))).
     unfold globals_nl. repeat split; apply Hn; cbn; tauto.
   - intros q Hq. rewrite Hbeg, HFe in Hq.
     exact (sh_zero_big_sound segs ρ (a_facts A) (a_mem A) (ms_mem ms) tb (wS ob) nhi n Hmem Hsh ltac:(lia) ltac:(lia) ltac:(lia) q Hq).
@@ -561,7 +568,7 @@ Proof.
   - apply (no_lazy_above segs fs0 ρ (a_model A) model _ _ Hmod). rewrite Hatop. lia.
   - right. unfold hs_hi in Hd8. lia.
   - intros a Hin. left. destruct (Hgl a Hin). unfold ls_beg in *. lia.
-  - rewrite Hra. rewrite (Z.div_mod (wZ r) 4) by lia. rewrite Hr4, Z.add_0_r. replace (4 * (wZ r / 4)) with ((wZ r / 4 * 2) * 2) by ring.
+  - rewrite Hra. rewrite (Z.div_mod (wZ ra) 4) by lia. rewrite Hr4, Z.add_0_r. replace (4 * (wZ ra / 4)) with ((wZ ra / 4 * 2) * 2) by ring.
     apply Z.mod_mul. lia.
   - (* [comment removed for export] *)
     intros ms' model' HRP Hpc' H10' Hmat.

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACim.v:270-271, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/LLVMFuzzerTestOneInput_seg_D3r.v, with its module names changed; 300 of its 388 lines of code are new or changed and 651 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The packaging piece of seg_D3 (the REAC-version case of LLVMFuzzerTestOneInput's build-B walk, +0x888 ..
    +0xe24): d3tl_core (:238), the step from the case's end state to the
    boundary inv_tail (LLVMFuzzerTestOneInput_inv.v). Nothing of the listing is walked here: the case's run is
@@ -20,7 +21,7 @@
    least alloc_ceiling + LLVMF_STK, and mf is at most 336 below sp0), and the payload copy and the input block
    are heap blocks, hence disjoint from the frame (sep_block_frame) and below the shadow band (in_app).
 
-   The premise `STK_LLVMF <= LLVMF_STK` is the contract's own hypothesis (LLVMFuzzerTestOneInput.v:113); it is
+   The premise `STK_LLVMF <= LLVMF_STK` is the contract's own hypothesis (LLVMFuzzerTestOneInput.v:114); it is
    what puts the machine frame above alloc_ceiling. d3tl_core (:238) takes it as its first premise, and LLVMFuzzerTestOneInput_seg_D3.v:1886
    gives it that file's HSTK (:810). LLVMFuzzerTestOneInput_seg_D3_hand_stmt.v:142-144 records d3_tl_stmt as removed; no ancestor commit defines it in this unit.
 
@@ -235,7 +236,7 @@ Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 
 (* The case's end state, packaged into inv_tail by d3tl_core (:238), with two premises (:238, :251) that
    LLVMFuzzerTestOneInput_seg_D3.v:1886-1897 supplies. (1) `STK_LLVMF <= LLVMF_STK` first: it is the contract's own
-   hypothesis (LLVMFuzzerTestOneInput.v:113), and without it nothing puts the machine frame above
+   hypothesis (LLVMFuzzerTestOneInput.v:114), and without it nothing puts the machine frame above
    alloc_ceiling, so the two uninstrumented machine-frame slots the case writes (mf+24, mf+208) could be
    bytes of the payload copy or of the input block, which inv_tail states unchanged. (2) the registers: the case
    does change s2 .. s5, so `aregs_preserved regs2 regsE`, the premise LLVMFuzzerTestOneInput_seg_D3_hand_stmt.v:142-144

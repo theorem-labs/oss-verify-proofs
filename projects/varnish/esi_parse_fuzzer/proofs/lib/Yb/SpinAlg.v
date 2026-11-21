@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: munmap (215) is in the allocation family and needs no in_mem, and node_ok's third conjunct (srz_silent_all). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -738,6 +739,20 @@ Proof.
   intros ms model x8 Hh Hsvc Hx8.
   apply srealizes_of_realizes. apply (rz_exit segs ms model x8); assumption.
 Qed.
+Lemma srz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok segs c I (fun _ => []) nx ->
+  (forall i, srealizes (nx i) T) ->
+  srealizes c T.
+Proof.
+  intros c I nx T i0 Hnode HT.
+  assert (HT0 : T []) by (eapply srealizes_nonempty; apply (HT i0)).
+  apply (srz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (srz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
 
 (* [comment removed for export] *)
 Lemma node_munmap : forall ms model x8,
@@ -751,22 +766,43 @@ Lemma node_munmap : forall ms model x8,
                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
                                   model)).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno Hargs. split.
+  intros ms model x8 Hh Hlazy Hsvc Hno Hargs. split; [|split].
   - intros []. apply (sstep_cfg_syscall segs _ ms model x8 (munmap_eff ms)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
     + exact Hh.
     + exact Hsvc.
     + apply munmap_ok; assumption.
-    + apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.acfg_nonspurious_b.
-      rewrite in_sysno_sys_input, Hno. reflexivity.
+    + (* 08b1429: 215 is alloc family; the unmap returns 0, which is no refusal *)
+      apply spurious_refusal_not_refusal.
+      rewrite (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.refusal_b_215 _ _ _ ltac:(rewrite in_sysno_sys_input; exact Hno)).
+      vm_compute. reflexivity.
     + rewrite munmap_model_halted; exact Hh.
     + apply materialize_model_accesses_no_lazy.
       exact (munmap_model_no_lazy _ _ _ Hlazy).
-  - intros e st Hss.
-    destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs (sstep_cfg_sub segs _ _ _ _ Hss))
-      as [-> ->].
-    exists tt. split; reflexivity.
+  - (* 08b1429: the plain spec also admits ENOMEM; under ACFG that outcome is a spurious refusal,
+       since the unmap exists and is no refusal, so the filtered step is the unmap alone *)
+    intros e st Hss.
+    assert (Hi : bv_unsigned (in_sysno (sys_input segs ms x8)) = 215%Z) by (rewrite in_sysno_sys_input; exact Hno).
+    destruct (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.sstep_cfg_sys_inv_acfg segs ms model x8 e st Hsvc Hss)
+      as [(eff & m' & evs0 & Hs & Hh' & Hm) | [(eff & m' & evs0 & code & Hs & Hc & _) | [(eff & m' & evs0 & sig & Hs & Hk & _) | (Hs & _)]]].
+    + destruct (munmap_ok_inv segs ms x8 model eff m' evs0 Hno Hargs (proj1 Hs)) as (-> & [(er & Her & -> & ->) | (-> & ->)]).
+      * exfalso. apply (proj2 Hs Hh'). split; [|split].
+        -- apply (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.acfg_family_off_no _ 215%Z Hi). apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.alloc_no_b_In. reflexivity.
+        -- rewrite (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.refusal_b_215 _ _ _ Hi). apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.ret_in_errnos_errno. exact Her.
+        -- exists (munmap_eff ms), (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model), [].
+           split; [apply munmap_ok; assumption|].
+           rewrite (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.refusal_b_215 _ _ _ Hi). vm_compute. reflexivity.
+      * rewrite (materialize_model_accesses_no_lazy _ _ (munmap_model_no_lazy _ _ _ Hlazy)) in Hm.
+        destruct Hm as [-> ->]. exists tt. split; reflexivity.
+    + exfalso. destruct (munmap_ok_inv segs ms x8 model eff m' evs0 Hno Hargs (proj1 Hs)) as (_ & [(? & ? & _ & ->) | (_ & ->)]);
+        [rewrite Hh in Hc | rewrite munmap_model_halted, Hh in Hc]; discriminate.
+    + exfalso. destruct (munmap_ok_inv segs ms x8 model eff m' evs0 Hno Hargs (proj1 Hs)) as (_ & [(? & ? & _ & ->) | (_ & ->)]);
+        [rewrite (m_killed_of_m_halted_none _ Hh) in Hk
+        | rewrite m_killed_of_m_halted_none in Hk; [| rewrite munmap_model_halted; exact Hh]]; discriminate.
+    + exfalso. exact (munmap_no_unmodeled segs ms x8 model Hno Hargs (proj1 Hs)).
+  - (* LPS 727298f3: munmap (215) does not read [in_mem] *)
+    eapply RomBase.sys_rob_memfree; [exact Hsvc|]. rewrite Hno. exact RomBase.memfree_215.
 Qed.
 
 (* [comment removed for export] *)

@@ -3,9 +3,10 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 575 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/SegCF/Tac_slot.v, with its module paths and module names changed; 201 of its 236 lines of code are new or changed and 540 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (agreement) slot of reac-pw/fuzz_role LLVMFuzzerTestOneInput (UBSan build): lib/U/Prog/RoleSlot.v
    copied over U/Prog/SlotInvCF.v. Model: reac-pw/fuzz_pin's U/Prog/SegCF/PinSlotCF.v, as libreac/fuzz_ctrl's released
-   U/Prog/SegCF/Slot.v copies its U/Prog/Seg/Slot.v (origin/ossv/recipes 25e3d17bdb50): the same text with SlotFR,
+   U/Prog/SegCF/Slot.v copies its U/Prog/Seg/Slot.v: the same text with SlotFR,
    SlotInv -> SlotInvCF, Seg -> SegCF, the segment statements from SegCF/StmtsCF.v, frame_facts_ubsan ->
    SlotInvCF.frame_facts_cf; slot_lib proves lib_contract_cg (crealizes B, by SR_realizes_ms) for lib_contract_g;
    Section Link (ubsan_halts) is dropped.

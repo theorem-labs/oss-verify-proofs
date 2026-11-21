@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the recorded stack window is the 6144513 bytes below sp, was 8388608, and the start-up plan takes its join state as a parameter (startup_plan_of). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -538,7 +539,7 @@ Definition startup_js1 : acs :=
                (EAlu ALU_ADD (EMd M_MUL (ELit 8) (EVar 1)) (EAlu ALU_ADD (EMd M_MUL (ELit 8) (EVar 2)) (EAlu ALU_ADD (EVar 3) (EAlu ALU_ADD (EMd M_MUL (ELit 16) (EVar 6)) (EVar 7))))))
             (ELit 185))
          140735340871865 140737488355312;
-       KWr {| a_base := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6)); a_off := -8388608 |} (ELit 8388608);
+       KWr {| a_base := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6)); a_off := -6144513 |} (ELit 6144513);
        KZero {| a_base := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6)); a_off := -192 |} (ELit 8);
        KZero {| a_base := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6)); a_off := -96 |} (ELit 8);
        KZero {| a_base := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6)); a_off := -80 |} (ELit 8);
@@ -688,7 +689,7 @@ Definition startup_js1 : acs :=
   a_tidset := true
 |}.
 
-Definition startup_plan : plan :=
+Definition startup_plan_of (js1 : acs) : plan :=
   PRun [] (* [comment removed for export] *)
   (PX XIMemset [] (* [comment removed for export] *)
   (PRun [] (* [comment removed for export] *)
@@ -860,7 +861,7 @@ Definition startup_plan : plan :=
   (PX XIMemcpy [] (* [comment removed for export] *)
   (PRun [] (* [comment removed for export] *)
   (PSys YMunmap (* [comment removed for export] *)
-  (PVia 1 startup_js1 385 (* [comment removed for export] *)
+  (PVia 1 js1 385 (* [comment removed for export] *)
   (PSplit (EVar 6) 10 (* [comment removed for export] *)
   (startup_plan_arm6)
   (PSplit (EVar 6) 1802 (* [comment removed for export] *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: adds a channel-reader hypothesis Hrdr (m_channel_reader model = true) threaded through loop1, loop2 and ref_stdio_write's writev steps, and decodes encoded statements and Section SE lemmas (RI_but, LM_*, ref_stdio_write) into plain lemmas, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0StdioWrite.v, 43 lines within its lines 46-602. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -34,7 +35,7 @@ end.
 Local Ltac rdn_solve ::= rdn_solve_fast.
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
-#[using="Type"] Lemma rz_emit_nil : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "B'H&QE'QG&QHvS3r2r1%544321r3&QF(7'N%211%4218%<4;:61p081pQ<?1pTBA1").
+#[using="Type"] Lemma rz_emit_nil : forall c K, srealizes RSEGS scfg c K -> srealizes RSEGS scfg c (t_emit [] K).
 Proof.
 intros c K H. eapply srz_conseq; [exact H|].
 apply t_eq_sym. apply t_emit_nil_eq. exact (srealizes_nonempty _ _ _ _ H).
@@ -49,7 +50,9 @@ Qed.
 Proof.
 intros A k l1 l2 Hk. rewrite skipn_app. rewrite (proj1 (skipn_all_iff k l1) Hk). reflexivity.
 Qed.
-#[using="Type"] Lemma u_at_le : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "Q5'S6yR0%211'D&QJzr1%3221&QI&S7r3%22:1r2%5221&QM+2+R0%3221%>251'>'=&Q5r4%221=%?2G1%@2H3%B21@%73H31'<%93J5H%:3K4=%3221%=251p0?1p0K1pTNQ01pT2Q21").
+#[using="Type"] Lemma u_at_le : forall (b : word) (k : Z), (0 <= k)%Z -> (bv_unsigned b + k <= 2 ^ 64)%Z ->
+bv_unsigned (at_ b k) = (bv_unsigned b + k)%Z
+\/ (bv_unsigned (at_ b k) = 0 /\ bv_unsigned b + k = 2 ^ 64)%Z.
 Proof.
 intros b k Hk Hle. unfold at_. pose proof (u64_range b).
 destruct (Z.eq_dec (bv_unsigned b + k) (2 ^ 64)) as [E|NE].
@@ -68,6 +71,7 @@ Hypothesis Flo : (0xb6000 <= f)%Z.
 Hypothesis Fhi : (f + 232 <= 0xe8f20)%Z.
 Hypothesis FD : (0 < fd < 2147483648)%Z.
 Hypothesis Hfd : fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+Hypothesis Hrdr : m_channel_reader model = true.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hret : ret_ok ret.
@@ -102,28 +106,31 @@ getr regs 2 = Z_to_bv 64 (su - 112) /\ getr regs 8 = l /\ getr regs 9 = Z_to_bv 
 /\ getr regs 21 = Z_to_bv 64 0xe8f20 /\ getr regs 3 = g3 /\ getr regs 4 = g4
 /\ getr regs 23 = g23 /\ getr regs 24 = g24 /\ getr regs 25 = g25
 /\ getr regs 26 = g26 /\ getr regs 27 = g27.
-Section SE.
-Local Abbreviation SEC_T_RI_but := (ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "A&Q3y5'S6yR0%211%5241&Q;r2%211&Q?r3%2214%612p021p061pUD:1pUB;1")) (only parsing).
-Variable regs : ltac:(sec_ty2 constr:(SEC_T_RI_but) 0%nat 0%nat).
-Variable regs' : ltac:(sec_ty2 constr:(SEC_T_RI_but) 1%nat 0%nat).
-Lemma RI_but : ltac:(sec_stmt2 constr:(SEC_T_RI_but) 2%nat 0%nat).
-Proof using Type regs regs'.
+#[using="Type"] Lemma RI_but : forall regs regs', RI regs -> sw_regs_but regs regs' -> RI regs'.
+Proof.
+intros regs regs'.
 intros (R2 & R8 & R9 & R21 & R3 & R4 & R23 & R24 & R25 & R26 & R27)
 (P2 & P8 & P9 & P21 & P3 & P4 & P23 & P24 & P25 & P26 & P27).
 unfold RI. rewrite P2, P8, P9, P21, P3, P4, P23, P24, P25, P26, P27. repeat split; assumption.
 Qed.
-End SE.
-#[using="Type"] Lemma LM_refl : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "3&Q:vRC%211").
+#[using="Type"] Lemma LM_refl : LM mem1.
 Proof. split; [intros; reflexivity | apply mem_grows_refl]. Qed.
-#[using="Type"] Lemma LM_rdn : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "R1'S6yR0%211'8y8%511%311p051'6'5%115&Q:r4%211'=%<15&QB&QHvRCr3%443281(1r2%22=1%:3941&QJ&QI&S7r5%22L1&QL%11C%6231&QM+2+R0%3221%<251'>r6%=2Q71%;1=%@221&QNvS8+S8%3221%F251+R8%6251%I21:%=241r8r7%Q64Q521?%Q22Q=K%Q:3Q921p061p0E1p0Q31p0Q?1pT8QC1pU<QF1pT0QM1pU2QI1").
+#[using="Type"] Lemma LM_rdn : forall m (a : word) n bs,
+LM m -> rdn RSEGS mem1 a n = Some bs ->
+(bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
+(bv_unsigned a + Z.of_nat n <= su - 104 \/ su - 72 <= bv_unsigned a)%Z ->
+rdn RSEGS m a n = Some bs.
 Proof.
 intros m a n bs [E G] H Hnw D.
 rewrite (rdn_ext RSEGS n m mem1 a Hnw); [exact H|].
 intros x Hx. apply E. lia.
 Qed.
-#[using="Type"] Lemma LM_store_ok : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "N'S6yR0%211'8y8%511%311p051'6&Q:r3%211'='3&F&QHvRCr2%443281(:%83721r5r4%94821=%<3;15p051p0?1pU<C1pT0J1pU2F1").
+#[using="Type"] Lemma LM_store_ok : forall m (a : word) n,
+LM m -> store_ok RSEGS mem1 a n = true -> store_ok RSEGS m a n = true.
 Proof. intros m a n [E G] H. eapply store_ok_mono; [exact G | exact H]. Qed.
-#[using="SUlo SUhi"] Lemma LM_wbytes8 : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "Q9'S6yR0%211'8y8%511%311p051'D&Q:r3%211&QJ&QNvS8+S8%3221%5217&QIr4+8%3221+R8%:291%<231&Q4r6&S5r5%22L1&Gu8%221=%83741%I11p0;1p0C1p0J1pVDQ41pT0O1pU2Q11").
+#[using="SUlo SUhi"] Lemma LM_wbytes8 : forall m (a : Z) (v : word),
+LM m -> (su - 104 <= a)%Z -> (a + 8 <= su - 72)%Z ->
+LM (wbytes m (Z_to_bv 64 a) (word_to_le_bytes 8 v)).
 Proof.
 intros m a v [E G] Hlo Hhi. split.
 - intros x Hx. rewrite wbytes_outside.
@@ -132,12 +139,9 @@ intros m a v [E G] Hlo Hhi. split.
 + rewrite length_N_to_le_bytes. u_norm. cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
 - eapply mem_grows_trans; [exact G | apply wbytes_grows].
 Qed.
-Section SE.
-Local Abbreviation SEC_T_finish := (ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "Q8&Q3y5'S6yR0%211%5241'8y8%611%311p061&Q;r2%211&Q:%113'QG&QHvS3(I&QAvR=r4(S4+ckY0(;%33G21/01Gr3&QC%11=%;5:9431vRD%>221vE%C4BA21p0E1p0H1pU2L1pUBQ21")) (only parsing).
-Variable regs : ltac:(sec_ty2 constr:(SEC_T_finish) 0%nat 0%nat).
-Variable m : ltac:(sec_ty2 constr:(SEC_T_finish) 1%nat 0%nat).
-Lemma finish : ltac:(sec_stmt2 constr:(SEC_T_finish) 2%nat 0%nat).
-Proof using bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi Hh Hlazy Hret M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz HK regs m.
+#[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi Hh Hlazy Hret M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz HK"] Lemma finish : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "Q8&Q3y5'S6yR0%211%5241'8y8%611%311p061&Q;r2%211&Q:%113'QG&QHvS3(I&QAvR=r4(S4+ckY0(;%33G21/01Gr3&QC%11=%;5:9431vRD%>221vE%C4BA21p0E1p0H1pU2L1pUBQ21").
+Proof.
+intros regs m.
 intros RIr LMm.
 destruct RIr as (R2 & R8 & R9 & R21 & R3 & R4 & R23 & R24 & R25 & R26 & R27).
 destruct (sw_done regs m (seg_rom RSEGS) su f l bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22)
@@ -154,12 +158,11 @@ apply HK; try assumption.
 - rewrite Q3; exact R3.
 - rewrite Q4; exact R4.
 Qed.
-End SE.
 #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi Hh Hlazy Hret M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz HK"] Lemma finish_nil : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "Q=&Q3y5'S6yR0%211%5241'8y8%611%311p061&Q;r2%211&Q:%113'QG&QHvS3(I&QAvR=r4(S4+ckY0(;%33G21/01Gr3&QC%11=%;5:9431vRD%>221&QF(7'N%211vE%5221%H4GF71p0J1p0M1pU2Q11pUBQ71").
 Proof. intros. apply rz_emit_nil. apply finish; assumption. Qed.
 #[using="Type"] Lemma pc_9e98c : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "@'='S6yR0%211&QD(S4+ck\L(;%33621/016+4%7221+ck]0%83;16/01;%?3<41").
 Proof. apply bv_eq; vm_compute; reflexivity. Qed.
-#[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop1 : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "U?'6&Q3y5'S6yR0%211%5241'8y8%611%311p061'5%114'@&4r1%2281r6%5221&Q;%113&Q:%115'=&Q@r8(S4+:(;%33L21%6251&S5&QL%11@%32O1%<3O51r9+F%<3Q51:%?231r5%K2Q11%:11%<2Q81%E3Q851r:+B%E3Q>1C%H231+1%C2Q?1%L3Q?31r;+C%L3QE1J%O231&QNvS8+RH%3221%M2QI1%Q63QI61'<u1%QC21C&A%QD2QJQ9%22F1%6241%QO1QI&QB&QHr<u8%4432>1(1&G%124Q0%32R21%QH3:51r=+R@%J2I1%QD2R@1%>4=41;%R72R=Q8%QF11%QH2RD1%<2?1%>2R=1%R33E61vRC%R>2RDQ8%G4F2E1%C2RBQ:%R83J21'>&QJ&QI&S7%12S1D%RG2RMM%R611%5231+S@%QA2Q@1%9231%:2QB7%<221r>%;2S;1%S12S7O%R@11%?231&QM+2+Q?%3221%E251%S92S?:%RH11+N%8271%J231'QGvS3(I&QAvR=rC+ck]<%S93T01S7/01T0rB&QC%11R0%9587431vRD%<221&QF&B'N(MvR<%SA2T=1%311&CrAr?%33T=21%:4T>951vE%=221%M4RBL?1p0O1p0Q51p0Q@1p0QN1p0R41p0R@1p0RL1p0S41p0S?1p0SG1p0T11p0T?1p0TB1p0TE1pT8TL1pT2U51pTNU;1pU2U11pUBU71pU<U>1").
+#[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop1 : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "U?'6&Q3y5'S6yR0%211%5241'8y8%611%311p061'5%114'@&4r1%2281r6%5221&Q;%113&Q:%115'=&Q@r8(S4+:(;%33L21%6251&S5&QL%11@%32O1%<3O51r9+F%<3Q51:%?231r5%K2Q11%:11%<2Q81%E3Q851r:+B%E3Q>1C%H231+1%C2Q?1%L3Q?31r;+C%L3QE1J%O231&QNvS8+RH%3221%M2QI1%Q63QI61'<u1%QC21C&A%QD2QJQ9%22F1%6241%QO1QI&QB&QHr<u8%4432>1(1&G%124Q0%32R21%QH3:51r=+R@%J2I1%QD2R@1%>4=41;%R72R=Q8%QF11%QH2RD1%<2?1%>2R=1%R33E61vRC%R>2RDQ8%G4F2E1%C2RBQ:%R83J21'>&QJ&QI&S7%12S1D%RG2RMM%R611%5231+S@%QA2Q@1%9231%:2QB7%<221r>%;2S;1%S12S7O%R@11%?231&QM+2+Q?%3221%E251%S92S?:%RH11+N%8271%J231'QGvS3(I&QAvR=rC+ck]<%S93T01S7/01T0rB&QC%11R0%9587431vRD%<221&QF&B'N(MvR<%SA2T=1%311&CrAr?%33T=21%:4T>951vE%=221%M4RBL?1p0O1p0Q51p0Q@1p0QN1p0R41p0R@1p0RL1p0S41p0S?1p0SG1p0T11p0T?1p0TB1p0TE1pT8TL1pT2U51pTNU;1pU2U11pUBU71pU<U>1").
 Proof.
 induction n as [|n IH]; intros regs m k b bs LEN RIr LMm Ha0 Hs6 Hs2 Hs3 Kb Mb Mn Bbs DISJ NW M30.
 { exfalso. lia. }
@@ -181,7 +184,7 @@ assert (RI1 : RI regs1) by (eapply RI_but; [exact RIr' | exact QB]).
 eapply (rz_writev1_wallX RSEGS scfg regs1 (0x9ed9c : word) m' model (ltac:(oW' 0x9ed9c%Z)) fd
 (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b + Z.of_nat k))
 (Z_to_bv 64 (Z.of_nat (length bs) - Z.of_nat k)) (skipn k bs) K);
-[ exact (ltac:(oF' 0x9ed9c%Z)) | exact (ltac:(oE' 0x9ed9c%Z)) | exact Hh | exact Hlazy | exact Hfd | exact FD
+[ exact (ltac:(oF' 0x9ed9c%Z)) | exact (ltac:(oE' 0x9ed9c%Z)) | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
 | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | exact HKnil | ].
 - subst m'. rdn_solve.
 - subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -236,7 +239,7 @@ replace (Z.of_nat (length bs - k)) with (Z.of_nat (length bs) - Z.of_nat k)%Z by
 * unfold at_. rewrite length_skipn. u_norm. lia.
 * rewrite length_skipn. lia.
 Qed.
-#[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop2 : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "VG'6&Q3y5'S6yR0%211%5241'8y8%611%311p061'5%114'@&?&4r3%2291r1%42;1%6231r8%9221&Q;%113&Q:%115'=&Q@r:(S4+:(;%33Q021%6251&S5&QL%11@%32Q31%<3Q351r;+F%<3Q91:%?231&QIr7%O2Q61%;11r5%Q22Q91%>11%7241%A2QA1%J3QA:1r<+B%J3QG1H%M231+2%H2QH1%Q13QH31r=+C%Q13QN1O%Q4231&QNvS8+S8%3221%Q22R21%Q;3R261'<u1%QL21C&A%QL2R3Q>%QM2R4QG%QO221%42H1%8261%R:1R4&QB&QHr>u8%4432@1(1&G%124Q2%32R=1%QO3:51r?+S0%L2K1%QK2RK1%>4=41;%RA2RHQ:%QM11%QO2RO1%<2?1%>2RH1%R:3E61r@+RH%Q72Q61%R62S61%I4H41F%R@3K1BrA+R@%Q=2Q<1%R<2S<1%O4N41L%RF3Q11=vRC%S42S;H%Q34Q22>1%O2S9J%RK3Q621%S82S?Q4%Q74Q66M1%Q32S=Q6%RO3Q:21'>&QJ&S7rB%22SL1%SA2SHD%RM11%RF231+S@%R32R21%9231%:2R47%<221rC%<2T61%SK2T2<%S711%S0231&QM+Q?%22RE1%D241rE%T32T:1%S?11%T52T<<%SA11%S:231+N%;2RN1%M231'QGvS3(I&QAvR=rJ+ck]<%T33TN1T1/01TNrI&QC%11RC%9587431vRD%<221&QF&B'N(MvR<%T;2U;1%311&CrH&2rFrD%33U=21%63U>51%=4U?<81vE%@221%Q04S8OB1p0Q21p0Q<1p0QF1p0Q>1p0QH1p0R61p0R;1p0RA1p0RH1p0RO1p0S;1p0SG1p0T11p0T<1p0TD1p0U31p0UA1p0UD1p0UG1pT<V21pT6V;1pT:V41pT4V=1pTNVC1pU2V91pUBV?1pU<VF1").
+#[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop2 : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "VG'6&Q3y5'S6yR0%211%5241'8y8%611%311p061'5%114'@&?&4r3%2291r1%42;1%6231r8%9221&Q;%113&Q:%115'=&Q@r:(S4+:(;%33Q021%6251&S5&QL%11@%32Q31%<3Q351r;+F%<3Q91:%?231&QIr7%O2Q61%;11r5%Q22Q91%>11%7241%A2QA1%J3QA:1r<+B%J3QG1H%M231+2%H2QH1%Q13QH31r=+C%Q13QN1O%Q4231&QNvS8+S8%3221%Q22R21%Q;3R261'<u1%QL21C&A%QL2R3Q>%QM2R4QG%QO221%42H1%8261%R:1R4&QB&QHr>u8%4432@1(1&G%124Q2%32R=1%QO3:51r?+S0%L2K1%QK2RK1%>4=41;%RA2RHQ:%QM11%QO2RO1%<2?1%>2RH1%R:3E61r@+RH%Q72Q61%R62S61%I4H41F%R@3K1BrA+R@%Q=2Q<1%R<2S<1%O4N41L%RF3Q11=vRC%S42S;H%Q34Q22>1%O2S9J%RK3Q621%S82S?Q4%Q74Q66M1%Q32S=Q6%RO3Q:21'>&QJ&S7rB%22SL1%SA2SHD%RM11%RF231+S@%R32R21%9231%:2R47%<221rC%<2T61%SK2T2<%S711%S0231&QM+Q?%22RE1%D241rE%T32T:1%S?11%T52T<<%SA11%S:231+N%;2RN1%M231'QGvS3(I&QAvR=rJ+ck]<%T33TN1T1/01TNrI&QC%11RC%9587431vRD%<221&QF&B'N(MvR<%T;2U;1%311&CrH&2rFrD%33U=21%63U>51%=4U?<81vE%@221%Q04S8OB1p0Q21p0Q<1p0QF1p0Q>1p0QH1p0R61p0R;1p0RA1p0RH1p0RO1p0S;1p0SG1p0T11p0T<1p0TD1p0U31p0UA1p0UD1p0UG1pT<V21pT6V;1pT:V41pT4V=1pTNVC1pU2V91pUBV?1pU<VF1").
 Proof.
 induction n as [|n IH]; intros regs m k b0 bs0 b1 bs1 LEN RIr LMm Ha0 Hs6 Hs2 Hs3 Kb
 Mb0 Mn0 Mb1 Mn1 Bbs0 Bbs1 DISJ0 NW0 DISJ1 NW1 M30.
@@ -263,7 +266,7 @@ eapply (rz_writev2_wallX RSEGS scfg regs1 (0x9ed9c : word) m' model (ltac:(oW' 0
 (Z_to_bv 64 (su - 104)) (Z_to_bv 64 (bv_unsigned b0 + Z.of_nat k))
 (Z_to_bv 64 (Z.of_nat (length bs0) - Z.of_nat k))
 b1 (Z_to_bv 64 (Z.of_nat (length bs1))) (skipn k bs0) bs1 K);
-[ exact (ltac:(oF' 0x9ed9c%Z)) | exact (ltac:(oE' 0x9ed9c%Z)) | exact Hh | exact Hlazy | exact Hfd | exact FD
+[ exact (ltac:(oF' 0x9ed9c%Z)) | exact (ltac:(oE' 0x9ed9c%Z)) | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
 | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | | | | exact HKnil | ].
 + subst m'. rdn_solve.
 + subst m'. u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. rdn_solve.
@@ -351,7 +354,7 @@ eapply (rz_writev1_wallX RSEGS scfg regs1 (0x9ed9c : word) m' model (ltac:(oW' 0
 (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b1 + Z.of_nat (k - length bs0)))
 (Z_to_bv 64 (Z.of_nat (length bs1) - Z.of_nat (k - length bs0)))
 (skipn (k - length bs0) bs1) K);
-[ exact (ltac:(oF' 0x9ed9c%Z)) | exact (ltac:(oE' 0x9ed9c%Z)) | exact Hh | exact Hlazy | exact Hfd | exact FD
+[ exact (ltac:(oF' 0x9ed9c%Z)) | exact (ltac:(oE' 0x9ed9c%Z)) | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
 | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | exact HKnil | ].
 + subst m'. rdn_solve.
 + subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -431,26 +434,46 @@ apply mem_grows_refl.
 Qed.
 #[using="Type"] Lemma pc_9e904 : ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "@'='S6yR0%211&QD(S4+ckXD(;%33621/016+4%7221+ckXH%83;16/01;%?3<41").
 Proof. apply bv_eq; vm_compute; reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_ref_stdio_write := (ltac2:(TCodec.tc2 tcn__Ju0StdioWrite "[M&Q3y5'S6yR0%211%5241'8y8%611%311p061'L'D'5%116&QE'=&Q@rA(S4+2(;%33E21%6251&S5r>%22G1%;3G41rB+:%;3M19%>231%@3L16rC+;%@3Q21>%C231r;%F3Q221rD+<%F3Q81D%I231%K3Q716rE+1%K3Q=1I%N231r8%Q13Q=21&QJ&QI+TPPPPP0+S@%3221%521F+TPPPPPPPP0%72B1'3&F&QHrG&QN%12C:%Q82QM1uS@%746521(:%QD3:21+fhP0%D21JrF+W8%F221+mSi0%I221'Q8rJr@%372B8Q3Q8QM1&Q7rK%2214'<&QKz%221?+RPPPPP0%42A1%6231'K%RE11&O&Q0rL%211%R82RMQ3%5221(1(J%114%32;1%RF3;51%S11S3&Q1rM%211(0%11S8%RM3631'9%12S;S;%S311&Q2rN%211(7%116%S63631%R52Q2I%R62JQ7%Q6221&QM+Q?%22S81%R;2O1%R02E<&QL&4%12SIRE%311%SC3SG51&S7%12T2QD%SF3SJ14%72SOR:%911%92T1R2%;11%RH231+N%C2SI1%RL231'>rQ0rQ3%RD21RM%S1231rQ1%S3241%7231rO%D2TE1%E2TFQ7%S7221rQ4%RN21S7%S;231%S<236%@221%L2TM@%S>219%S@21Q6%TM1TE&QBrQ8%T>2U3;%Q72TORF%44S<321%R72TKRH%TJ3721rQ9rQ2%94SA216%TN3;15&Q6%11QN'N%QN11%RE11r2%U421TGrQ6%U73UC21r3%U821U3rQ=%U32UH1%U<3UH31r4%U=21T@%U?3UK1Q4r5+8%U?3V11U=%UB231rQB%UD213%UF3V231r6+9%UF3V81UD%UI231rQC%UK213%UM3V931r7+B%UM3V?1UK%V0231rQD%V2213%V43V@31+C%V33VE1V1%V62U71rQE%V8213%V:3VF31r9+D%V:3VL1V8%V=231rQF%V?213%VA3VM31r:+E%VA3W31V?%VD231rQG%VF213%VH3W431+F%VG3W91VE%VJ2V61rQH%VL213%VN3W:31r<+G%VN3W@1VL%W1231rQI%W3213%W53WA31r=+H%W53WG1W3%W8231rQJ%W:213%W<3WH31+I%W;3WM1W9%W>2W61rQK%W@213%WB3WN31r?+J%WB3X41W@%WE231rQL%WG213%WI3X531+K%WH3X:1WF%WK2UN1rQM%WM213%WO3X;31+3%WN3X@1WL%X12X01rQN%X3213%X53XA31+4%X43XF1X2%X72WL1rQO%X9213%X;3XG31'Q9%164@FQNR5X1'QGvS3(I&QAvR=&QC%11W8%453WNRCX41%621=rQA%:4W<921p0<1p0?1p0F1p0M1p0Q41p0Q<1p0QC1p0QK1p0R31p0R:1p0RB1p0RJ1p0S11p0S91p0SA1p0SI1p0SM1p0T31pU6YA1pUDYG1rQ>+ckT<%Y<3YL1Y:/01YL%Q05O41T7MrQ<%Q3221&QF&B(MrQ7%Y@2Z51%311&2%13Z3UKUD%74Z4TK31%921VK%Q@4XBQ?;1p0C1p0TM1p0U11p0U41p0U91p0UB1p0UF1p0V01p0V91p0VB1p0VF1p0VM1p0W21p0W61p0W@1p0WH1p0X61p0X>1p0XB1p0XG1p0XM1p0Y01p0Y<1p0Y?1p0YF1p0YM1p0Z31p0Z:1p0Z@1pQ<ZM1pTFZO1pU>[01pUF[;1pTD[<1pT@[=1pT>[>1pU0[?1pUH[@1pTJ[91pVH[:1pVF[;1pTH[<1pVB[=1pU:[?1pU4[A1pUB[G1")) (only parsing).
-Variable regs : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 0%nat 0%nat).
-Variable mem : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 1%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 2%nat 0%nat).
-Variable su : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 3%nat 0%nat).
-Variable f : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 4%nat 0%nat).
-Variable wb : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 5%nat 0%nat).
-Variable wp : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 6%nat 0%nat).
-Variable fd : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 7%nat 0%nat).
-Variable s : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 8%nat 0%nat).
-Variable l : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 9%nat 0%nat).
-Variable bufp : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 10%nat 0%nat).
-Variable bufsz : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 11%nat 0%nat).
-Variable can : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 12%nat 0%nat).
-Variable ret : ltac:(sec_ty2 constr:(SEC_T_ref_stdio_write) 13%nat 0%nat).
-Theorem ref_stdio_write : ltac:(sec_stmt2 constr:(SEC_T_ref_stdio_write) 14%nat 0%nat).
-Proof using Type regs mem model su f wb wp fd s l bufp bufsz can ret.
+#[using="Type"] Theorem ref_stdio_write :
+forall regs mem model (su f wb wp fd : Z) (s l bufp bufsz can ret : word)
+(pending extra : list byte) (K : TSet),
+getr regs 2 = Z_to_bv 64 su -> getr regs 10 = Z_to_bv 64 f ->
+getr regs 11 = s -> getr regs 12 = l -> getr regs 1 = ret ->
+(4294967296 + 112 <= su)%Z -> (su <= 0x800000000000)%Z ->
+store_ok RSEGS mem (Z_to_bv 64 (su - 112)) 112%nat = true ->
+(0xb6000 <= f)%Z -> (f + 232 <= 0xe8f20)%Z ->
+sw_file mem f wb wp fd bufp bufsz ->
+ssp_cells mem can ->
+(0 < fd < 2147483648)%Z ->
+fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+m_channel_reader model = true ->
+m_halted model = None -> m_vm_lazy model = [] ->
+(0 <= wb <= wp)%Z -> (wp <= 2 ^ 47)%Z ->
+(wp - wb = Z.of_nat (length pending))%Z ->
+(bv_unsigned l = Z.of_nat (length extra))%Z ->
+(Z.of_nat (length pending) + Z.of_nat (length extra) <= 2 ^ 30)%Z ->
+(wp <= su - 112 \/ su <= wb)%Z ->
+(bv_unsigned s + bv_unsigned l <= su - 112 \/ su <= bv_unsigned s)%Z ->
+(bv_unsigned s + bv_unsigned l <= 2 ^ 47)%Z ->
+rdn RSEGS mem (Z_to_bv 64 wb) (length pending) = Some pending ->
+rdn RSEGS mem s (length extra) = Some extra ->
+ret_ok ret ->
+K [] ->
+(forall regs' mem',
+getr regs' 10 = l -> getr regs' 2 = Z_to_bv 64 su -> getr regs' 1 = ret ->
+getr regs' 8 = getr regs 8 -> getr regs' 9 = getr regs 9 ->
+getr regs' 18 = getr regs 18 -> getr regs' 19 = getr regs 19 -> getr regs' 20 = getr regs 20 ->
+getr regs' 21 = getr regs 21 -> getr regs' 22 = getr regs 22 -> getr regs' 23 = getr regs 23 ->
+getr regs' 24 = getr regs 24 -> getr regs' 25 = getr regs 25 -> getr regs' 26 = getr regs 26 ->
+getr regs' 27 = getr regs 27 -> getr regs' 3 = getr regs 3 -> getr regs' 4 = getr regs 4 ->
+sw_post mem su f bufp bufsz mem' ->
+srealizes RSEGS scfg (mkCfg (mkst regs' ret mem' (seg_rom RSEGS)) model) K) ->
+srealizes RSEGS scfg (mkCfg (mkst regs (0x9ec8c : word) mem (seg_rom RSEGS)) model)
+(t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
+Proof.
+intros regs mem model su f wb wp fd s l bufp bufsz can ret.
 intros pending extra K
-Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hh Hlazy WBP WPhi
+Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hrdr Hh Hlazy WBP WPhi
 LENP LENE M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
 pose proof (u64_range s) as Hs. pose proof (u64_range l) as Hl.
 pose proof SWF as SWF'. pose proof SSP as SSP'.
@@ -502,11 +525,11 @@ SUlo SUhi Flo Fhi Hh Hlazy Hret M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbs
 pose proof (loop1 scfg su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 model K
-SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
+SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
 pose proof (loop2 scfg su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 model K
-SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
+SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
 pose proof (LM_refl su mem1) as LM1.
 destruct (Z.eq_dec wb wp) as [EQ|NEQ].
 -
@@ -526,7 +549,7 @@ destruct extra as [|x0 extra'].
 +
 cbn [length] in HlZ. change (Z.of_nat 0) with 0%Z in HlZ. cbn [map].
 eapply (rz_writev1_zeroX RSEGS scfg regs1 (0x9ed14 : word) mem1 model (ltac:(oW' 0x9ed14%Z)) fd (Z_to_bv 64 (su - 88)) s (t_emit [] K));
-[ exact (ltac:(oF' 0x9ed14%Z)) | exact (ltac:(oE' 0x9ed14%Z)) | exact Hh | exact Hlazy | exact Hfd | exact FD
+[ exact (ltac:(oF' 0x9ed14%Z)) | exact (ltac:(oE' 0x9ed14%Z)) | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
 | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | unfold TASK_SIZE; u_norm; lia | unfold TASK_SIZE; u_norm; lia | ].
 { u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rewrite <- HlZ. exact M80. }
 rewrite pc_9e904.
@@ -541,7 +564,7 @@ eapply RI_but; [exact RI1|]. revert PB. unfold sw_regs_but. gres. intros PB. exa
 +
 eapply (rz_writev1_wallX RSEGS scfg regs1 (0x9ed14 : word) mem1 model (ltac:(oW' 0x9ed14%Z)) fd
 (Z_to_bv 64 (su - 88)) s l (x0 :: extra') K);
-[ exact (ltac:(oF' 0x9ed14%Z)) | exact (ltac:(oE' 0x9ed14%Z)) | exact Hh | exact Hlazy | exact Hfd | exact FD
+[ exact (ltac:(oF' 0x9ed14%Z)) | exact (ltac:(oE' 0x9ed14%Z)) | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
 | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | | | | | | exact HKnil | ].
 * u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. exact M80.
 * unfold word_to_nat. rewrite LENE, Nat2Z.id. exact Be.
@@ -589,7 +612,7 @@ assert (RI1 : RI su f l (getr regs 3) (getr regs 4) (getr regs 23) (getr regs 24
 { unfold RI. repeat split; assumption. }
 eapply (rz_writev2_wallX RSEGS scfg regs1 (0x9ed14 : word) mem1 model (ltac:(oW' 0x9ed14%Z)) fd
 (Z_to_bv 64 (su - 104)) (Z_to_bv 64 wb) (Z_to_bv 64 (wp - wb)) s l pending extra K);
-[ exact (ltac:(oF' 0x9ed14%Z)) | exact (ltac:(oE' 0x9ed14%Z)) | exact Hh | exact Hlazy | exact Hfd | exact FD
+[ exact (ltac:(oF' 0x9ed14%Z)) | exact (ltac:(oE' 0x9ed14%Z)) | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
 | exact R17 | exact R10 | exact R11 | exact R12 | exact M104 | | | | | | | | | | | exact HKnil | ].
 + u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. exact M96.
 + u_norm. replace (su - 104 + 16)%Z with (su - 88)%Z by lia. exact M88.
@@ -637,6 +660,5 @@ apply (L2 (length pending + length extra)%nat regs2 mem1 k (Z_to_bv 64 wb) pendi
 -- u_norm. lia.
 -- u_norm. lia.
 Qed.
-End SE.
 End FPX_2.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

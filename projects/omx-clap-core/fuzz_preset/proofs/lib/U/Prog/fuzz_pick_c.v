@@ -6,7 +6,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.U.Prog Require Import Reader
 Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin agents/pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.ubsan
-   (sha256 27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts 8f3e7e1a07f1):
+   (sha256 27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts):
      fuzz_pick FUNC LOCAL 0x152d0 size 100 (25 instructions, 0x152d0..0x15330).
    A LEAF: no stack frame (sp is never written), no store, no call. Its one memory access is the load `lbu t0, 0(a6)` at
    0x15300. Its only reference in .text is the `jal fuzz_pick` at 0x13e50 in check_reject_clean_starved (the compact starved
@@ -20,8 +20,8 @@ Open Scope Z_scope.
    So a0 is djb2 (5381, 33 * h + c mod 2 ^ 64) over the bytes, mod n, and 0 when n = 0: check_reject_clean_starved_c.pick.
    Under the premises (0 < d, d + n < 2 ^ 62) a5 = d + i is never below a0 = d and never 0, and a0 <> 0, so the trap
    0x15330 is not reached.  Written: a0, a1 (counted down to 0), a3, a4, a5, a6, a7, t0; kept: every other register, the
-   memory, F and fc.  The premises are those of the tfuzz_pick_specX (lib/A/PRH_FnCheck.v at
-   commit 593b31473a09) in the U form: the bytes are a byte list x at d (Mem.bytes_at, the
+   memory, F and fc.  The premises are those of the tfuzz_pick_specX (lib/A/PRH_FnCheck.v)
+   in the U form: the bytes are a byte list x at d (Mem.bytes_at, the
    form of check_reject_clean_starved_c's tb) and the hash runs over zb x. *)
 Definition FUZZ_PICK : Z := 0x152d0.
 

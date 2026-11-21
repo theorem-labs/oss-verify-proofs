@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10 [image A's note, kept from grant A's header; its numbers are fuzz_grant.asan's]: the shadow-fill entries __asan_set_shadow_00 (0x546bc), __asan_set_shadow_f5 (0x547c4) and __asan_set_shadow_f8 (0x547dc) of libreac/fuzz_grant, over the asan-state definitions and the musl memset walk of the cgif_file_fuzzer proof as libreac/fuzz_grant holds them; one image instead of the two-image selector; addresses; module names; tfxsegs and TfxSyms become tfibsegs and GrantSyms. The f8 entry has the stub shape of f5 (same GOT slot 0x9c890, value 0xf8), as in cgif_rgb_fuzzer lib/YF8u.v tfx_set_shadow_f8. *)
-(* Modified by Theorem Labs, 2026-10: relocated to image B (fuzz_grant.asan-ubsan fde52226dc48) from lib/A/Rt/SetShadow.v, whose presence clause is a working branch 29b0734a150's: the entries __asan_set_shadow_00 / _f5 / _f8 are 0x54a48 / 0x54b50 / 0x54b68, the GOT chain read from image B is 0x9d6f0 -> 0x9f538 (__interception::real_memset) -> 0x96c94 (memset, YB1w's tfib_A_musl_memset), the A twins are the B core's lib/B/Y* twins and the per-image core modules lib.B's; the three theorems are renamed grantB_set_shadow_00 / _f5 / _f8. Every other line is image A's text. *)
+(* Modified by Theorem Labs, 2026-10: relocated to image B (fuzz_grant.asan-ubsan fde52226dc48) from lib/A/Rt/SetShadow.v, whose presence clause is a working branch: the entries __asan_set_shadow_00 / _f5 / _f8 are 0x54a48 / 0x54b50 / 0x54b68, the GOT chain read from image B is 0x9d6f0 -> 0x9f538 (__interception::real_memset) -> 0x96c94 (memset, YB1w's tfib_A_musl_memset), the A twins are the B core's lib/B/Y* twins and the per-image core modules lib.B's; the three theorems are renamed grantB_set_shadow_00 / _f5 / _f8. Every other line is image A's text. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/B/Rt/SetShadow.v, with its module paths and addresses changed; 6 of its 189 lines of code are new or changed and 6 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* RtSetShadowB: the walks of the shadow-fill entries __asan_set_shadow_00 (0x552ac), __asan_set_shadow_f5 (0x553b4) and
    __asan_set_shadow_f8 (0x553cc) of fuzz_transport.asan-ubsan (41113a03c82f) against
    TransportRtCg.aset_shadow_realizes (lib/A/Prog/TransportRtCg.v, image-free), relocated from the released proof
-   libreac/fuzz_grant proofs/lib/B/Rt/SetShadow.v (commit c3777b3715d0; image B of that unit, entries 0x54a48 / 0x54b50 /
+   libreac/fuzz_grant proofs/lib/B/Rt/SetShadow.v (image B of that unit, entries 0x54a48 / 0x54b50 /
    0x54b68). Each entry is a 24-byte stub (6 words) of this image, EQUAL-mod-pcrel to the donor's (2 pc-relative words
    each: the auipc / ld pair of one GOT read):
      _00 at 0x552ac: mv a2,a1; auipc a1,0x4f; ld a1,-0x5a0(a1); ld t1,0(a1); li a1,0; jr t1

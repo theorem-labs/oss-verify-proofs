@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: the walk context of proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v (c8557374ad2e) for
+(* Modified by Theorem Labs, 2026-10: the walk context of proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v (theorem-labs/oss-verify-proofs@6b32741d849a) for
    libreac/fuzz_scene's walk of LLVMFuzzerTestOneInput, module paths changed. STATEMENTS ONLY (rule 24): no function is
    proved here, and the donor's two short lemmas are stated as Props for the walk to prove. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   This is the asan-ubsan tree's copy: the text of lib/A/P_LLVMFuzzerTestOneInput_ctx.v, except that YCbq and YE01
    (modules outside the trunk's lib/Reusable whose closure reaches YCbq, which differs between the two images) are

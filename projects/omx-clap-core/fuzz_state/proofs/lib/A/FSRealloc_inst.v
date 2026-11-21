@@ -1,10 +1,10 @@
 (* fuzz_state image A: the instance of a Theorem Labs lane's realloc composition (lib/Reusable/RGtop.v, relocated byte-identically
-   from proofs/cgif/cgif_file_fuzzer/lib/RGtop.v @ 2bd8ae006ef, a Theorem Labs lane's c5), the invariants K1 / K2 / K3 the segment
+   from proofs/cgif/cgif_file_fuzzer/lib/RGtop.v, a Theorem Labs lane's c5), the invariants K1 / K2 / K3 the segment
    walks prove against, and the two non-segment obligations that are not walks: [rmodel_ok] (image-free, proved in
    lib/A/FSRealloc_rmodel.v, Required and exported here) and the copy contract [amemcpy_realizes] for musl memcpy.
 
    Rule 24 (released-proof lookup): a Theorem Labs lane (internal path; ossv proof
-   index v5, 2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df) answered CONFIRM for the realloc chain: no released
+   index v5, 2026-10-28T21:58:24Z, ossv/recipes) answered CONFIRM for the realloc chain: no released
    ASan-image proof of any fuzz_state function.  The donor is cgif_rgb's released lib/YF78.v:553 (with YF6s-YF6u,
    YF67, YF63, YF68, YF6o, YF6p); the owner ruling (a Theorem Labs lane, 2026-10-28 23:20-23:23Z) is that fuzz_state
    walks a Theorem Labs lane's shared thin segments directly on its own images, one text.  This file is that text's instance.
@@ -172,7 +172,7 @@ Definition fs_rframe (regs : bvmap 5 word) (W : world tfibsegs) (mem : word -> o
   val_mem tfibsegs (mrestrict (w_H W) mem) (spZ regs - 64) 8 (bv_unsigned (getr regs 22)).
 
 (* The interceptor's stack object [so] = entry sp - FS_SO and its trace buffer so + 16 hold the trace [tr], in the
-   form alloc_pre / dealloc_pre ask (AllocG.v:79-85, DeallocG.v:87-92): 0x53568 `sd a0, 0(s5)` (trace pointer),
+   form alloc_pre / dealloc_pre ask (AllocG.v:80-86, DeallocG.v:88-93): 0x53568 `sd a0, 0(s5)` (trace pointer),
    0x5356c `sd zero, 8(s5)` and the unwinder's size word, the frames written by UnwindImpl (0x53608). *)
 Definition fs_trobj (regs : bvmap 5 word) (tr : list Z) (W : world tfibsegs) (mem : word -> option byte) : Prop :=
   (1 <= length tr <= 30)%nat /\
@@ -188,7 +188,7 @@ Definition K1_fs : K1_t tfibsegs :=
   (* the `jal` at 0x32990 sets ra = 0x32994: the pc where S2a / S4 start *)
   (* S1 = realloc_s1 S (fs_free_null) keeps the sections: layout_le over S1's sections weakens to S's (from a Theorem Labs lane).
      The old block's liveness at Allocate's entry, `In (p, n_old) (blocks S1)`, is c5's seg_mid_a / seg_nret premise
-     (RGtop.v:269 / :330), so K1 does not carry it. *)
+     (RGtop.v:270 / :331), so K1 does not carry it. *)
   (length (st_secs S) <= length (st_secs S1))%nat /\
   raZ regsA = FS_RA_ALLOC /\
   (* sp moved only by the four frame allocations (0x53474, 0x5349c, 0x3287c, 0x32928) *)
@@ -223,7 +223,7 @@ Definition K2_fs : K2_t tfibsegs :=
   (* q is a real block: S3's `beqz a0` at asan_realloc 0x32918 must fall through (sptr_addr PNull = 0, YG0f.v:120);
      S2a gets it from seg_mid_a's premise `q <> PNull`, S2b carries it to K3_fs (a Theorem Labs lane, from a Theorem Labs lane) *)
   q <> PNull /\
-  (* gp / tp unchanged since entry (Allocate's aregs_preserved): Deallocate's pre-state (DeallocG.v:83) needs them;
+  (* gp / tp unchanged since entry (Allocate's aregs_preserved): Deallocate's pre-state (DeallocG.v:84) needs them;
      donor YF78.v:252 mid_regs carries [3; 4; 23..27] (from a Theorem Labs lane) *)
   getr regsM 3 = w64 (as_gp B) /\ getr regsM 4 = w64 (as_tp B) /\
   (* q's block is live after the inner malloc (seg_mid_a's premise): with ARU's AR_blocks_law it puts the copy's
@@ -355,7 +355,7 @@ split.
       rewrite (M2in (Z_to_bv 64 (d + i))); rewrite unsigned_lit_small by lia; [|lia].
       replace (Z.to_nat (d + i - d)) with (Z.to_nat i) by lia. reflexivity. }
   replace (x + i) with (x + Z.of_nat (Z.to_nat i)) by lia. rewrite (BS (Z.to_nat i) ltac:(lia)). reflexivity. }
-(* the frame on the raw memory (c5's amemcpy_realizes, ReallocG.v:250): M2out *)
+(* the frame on the raw memory (c5's amemcpy_realizes, ReallocG.v:251): M2out *)
 split; [exact M2out|].
 intros a (Hh & b & Hb). split; [exact Hh|].
 destruct (Z_lt_le_dec (bv_unsigned (Z_to_bv 64 a)) d) as [L1|L1];

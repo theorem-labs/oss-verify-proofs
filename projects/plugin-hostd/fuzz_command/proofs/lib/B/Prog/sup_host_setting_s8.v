@@ -4,13 +4,13 @@
 (* Modified by Theorem Labs, 2026-10: the snprintf call of sup_instance_verb's ASan+UBSan walk (plugin-hostd/
    fuzz_command, image fuzz_command.asan-ubsan, the inlined arg_i: `snprintf(b, 16, "%d", ledger)` at 0x8ba24, b the
    bytes 32 .. 47 of the live class-0 side-stack frame F, format "%d" at 0x21f40) in a walk's journal form, over the
-   snprintf contract as a Theorem Labs lane's FR_cmd mirror states it (a working branch 0934cb146c3: lib/B/Rt/RtFormat.v
+   snprintf contract as a Theorem Labs lane's FR_cmd mirror states it (a working branch: lib/B/Rt/RtFormat.v
    asnprintf_realizes = RtPFCmd.asnprintf_sh = cmd_asnprintf_realizes at FR_cmd, window CMD_SNP_K = 2 * ESTACK, the
    read-only list CMD_SNP_CR, rt_rom_view for the unowned read-only bytes, the destination's slack word
    amem_range d (sn_len (n - 1) T + 8), FP-existential post).
    The journal bookkeeping around the call (ecall_pre_at, awr_byte, ajournal_after_write) is the one of the pass-3 rule
    sivb_snprintf_atS (lib/B/Prog/sup_instance_verb_aux.v, from lib/A/Prog/arg_i_s0.v aj_snprintf_atS,
-   a working branch 12dc52bfe84); the contract's premises are discharged here from the journal, the frame, the
+   a working branch); the contract's premises are discharged here from the journal, the frame, the
    per-binary record facts of lib/B/Prog/CmdRec*.v (by exact, at AR_laws_ok / HB / cmd_img_facts_tfib B HB) and
    arodata_okP at the call:
    - rt_rom_view: CmdRecImg.cmd_consts_view_snp from arodata_okP;
@@ -25,6 +25,7 @@
    The text is PF.pf_dec ledger (at most 11 bytes), so the 16-byte buffer takes it whole: the shared post's
    sn_bytes (16 - 1) T is dec ledger and its terminator. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_instance_verb_snp.v, with its module names changed; 546 of its 633 lines of code are new or changed and 193 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* A segment lemma of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan), on the
    points and statements of sup_host_setting_s0.v:
    - hs_seg_al: from AL (0x8b658, back from arg_line) the unpoison of b = F + 32 (`sb zero,4(s9); sb zero,5(s9)`: the

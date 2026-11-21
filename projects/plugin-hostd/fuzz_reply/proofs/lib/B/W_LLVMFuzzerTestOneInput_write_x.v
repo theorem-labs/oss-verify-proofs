@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of image B's ARM_write (lib/B/W_LLVMFuzzerTestOneInput_write.v
    lf_arm_write), the jump table's arm 1 of the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    LLVMFuzzerTestOneInput, from the arm's entry 0x84724 to the latch 0x84804 (a Theorem Labs lane's route (b), step 7).  The AR
@@ -10,7 +11,7 @@
    AR_laws, ajournal_gx, lf_base, lcut or an INV_* is restated here over ARx as NAME_x, with its proof converted (al_X
    -> alx_X, the journal lemmas -> W_journal_x's _x, the run tactics -> paj_run_tok_x / paj_run_to_tok_x, Hp after
    S, Hp3 after S3, Hp' after S').  The template is image A's lib/A/W_LLVMFuzzerTestOneInput_write_x.v.
-   - The Section header is B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:201-220, 243-244), so
+   - The Section header is B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:202-221, 243-244), so
      lf_arm_write_x's statement is cut_x's ARM_write hypothesis (cut_x.v:406) at that Section's variables (checked
      at the end, lf_arm_write_x_check).
    - list_push is taken as its _x callee spec, lp_spec_g_x B PST ARx MT WR_MMAX (BASE + AF_fr_list_push) (the kit's
@@ -20,7 +21,7 @@
      and are gone with it.
    - The other Section hypotheses are the AR file's, verbatim (ERR is cut_x's errno_law_x; LS is cut_x's LSx), and
      two that the generic relation and the placement PST force (pro_x's / add_x's texts): BLKN (a live block's size
-     is >= 0, the last conjunct of AR's al_blocks that AR_laws_x does not carry; OWED, W_kit_x.v:46's text) and HPST
+     is >= 0, the last conjunct of AR's al_blocks that AR_laws_x does not carry; OWED, W_kit_x.v:47's text) and HPST
      (the image is off PST: the generic journal's image clause keeps only bytes outside PST, for the ROM view across
      list_push and for the model's globals).  At the cf instance PST = [], so HPST holds by `inversion`.
    - The read-only view across list_push stays the AR walk's own argument (wr_rom_call_x): an owned read-only byte by
@@ -79,7 +80,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:201-220, 243-244), verbatim ---- *)
+(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:202-221, 243-244), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -102,11 +103,11 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
 
-(* ---- the AR file's Section hypotheses (W_LLVMFuzzerTestOneInput_write.v:168-184, :194), verbatim; over ARx where
+(* ---- the AR file's Section hypotheses (W_LLVMFuzzerTestOneInput_write.v:169-185, :195), verbatim; over ARx where
    they name AR ---- *)
 (* the allocator instance: errno's place (pal_env) *)
 Hypothesis TL : PALib B.
-(* list_push's contract at its own G, over ARx: the kit's lp_spec_g_x (W_contract_x.v:397); it replaces the AR walk's
+(* list_push's contract at its own G, over ARx: the kit's lp_spec_g_x (W_contract_x.v:398); it replaces the AR walk's
    pb_list_push_g B LAWS TL MT MLAW WR_MMAX wr_HMMAX ARE AMA AMEMCPY *)
 Hypothesis LP : lp_spec_g_x (PI := PB_fr) B PST ARx MT RP WR_MMAX (BASE + AF_fr_list_push).
 Hypothesis GWR : glob_wr_law G_fr.
@@ -121,13 +122,13 @@ Hypothesis TS : YF0m.TfibSyms B.
 Hypothesis HGW : forall a, inG wr_G a -> inG G_fr a.
 (* ---- forced by the generic relation and the placement PST ---- *)
 (* OWED: kit _x twin of al_blocks' last conjunct (AR's 0 <= n < MALLOC_MAX; ARx_blocks_law has no size conjunct).
-   The text is W_kit_x.v:46's BLKN (pro_x's / add_x's). *)
+   The text is W_kit_x.v:47's BLKN (pro_x's / add_x's). *)
 Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
 (* the image is off PST (pro_x's / add_x's HPST): the generic journal's image clause and rom_pinned's complement in
    wr_rom_call_x; trivial at PST = [] *)
 Hypothesis HPST : forall a, in_img segs a -> ~ Exists (in_zr a) PST.
 
-(* ---- the arm's open model obligations (W_LLVMFuzzerTestOneInput_write.v:257-292), verbatim (LS is cut_x's LSx) ---- *)
+(* ---- the arm's open model obligations (W_LLVMFuzzerTestOneInput_write.v:258-293), verbatim (LS is cut_x's LSx) ---- *)
 Hypothesis RI_write_skip : forall cx t m,
   RINV cx t m -> 0 <= lm_k m < c_n cx -> in_byte cx (lm_k m) mod 10 = 1 ->
   (pick (lm_hs m) (wr_kb cx m) = None \/ wr_n cx m = 0) ->
@@ -146,8 +147,8 @@ Hypothesis LS_write_room : forall cx t m si h ly S,
   (lp_grow (hs_pending h) = true -> lp_vbytes (hs_pending h) < WR_MMAX) /\
   blocks_bytes S + (if lp_grow (hs_pending h) then lp_vbytes (hs_pending h) else 0) + (wr_n cx m + 1) <= LIVE_MAX /\
   mo_ok MT S (lp_cost MT (hs_pending h) (wr_n cx m)).
-(* the push rule at W8Add's PROPOSED text (lib/A/ReplyLS.v atop_LS_write_push_prop, a working branch
-   f57b3e2d0ca), in this Section's form (B, MT), as on image A: list_push's post facts about the pushed list l' (B's kit
+(* the push rule at W8Add's PROPOSED text (lib/A/ReplyLS.v atop_LS_write_push_prop, a working branch),
+   in this Section's form (B, MT), as on image A: list_push's post facts about the pushed list l' (B's kit
    lp_post: the record, the capacity, the address kept when it does not grow, the blocks' change) in place of the
    published `mo_le MT S S' cost` alone, which left l' and S' free *)
 Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
@@ -3450,7 +3451,7 @@ End wrxR.
 End wrx.
 
 (* ------------------------------------------------------------------ THE CHECK, in cut_x's scope: at cut_x's Section w
-   variables, lf_arm_write_x's type is cut_x's ARM_write hypothesis (W_LLVMFuzzerTestOneInput_cut_x.v:626, restated and
+   variables, lf_arm_write_x's type is cut_x's ARM_write hypothesis (W_LLVMFuzzerTestOneInput_cut_x.v:627, restated and
    closed by `exact`). *)
 Section check.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
@@ -3505,8 +3506,8 @@ Hypothesis LS_write_room : forall cx t m si h ly S,
   (lp_grow (hs_pending h) = true -> lp_vbytes (hs_pending h) < WR_MMAX) /\
   blocks_bytes S + (if lp_grow (hs_pending h) then lp_vbytes (hs_pending h) else 0) + (wr_n cx m + 1) <= LIVE_MAX /\
   mo_ok MT S (lp_cost MT (hs_pending h) (wr_n cx m)).
-(* the push rule at W8Add's PROPOSED text (lib/A/ReplyLS.v atop_LS_write_push_prop, a working branch
-   f57b3e2d0ca), in this Section's form (B, MT), as on image A: list_push's post facts about the pushed list l' (B's kit
+(* the push rule at W8Add's PROPOSED text (lib/A/ReplyLS.v atop_LS_write_push_prop, a working branch),
+   in this Section's form (B, MT), as on image A: list_push's post facts about the pushed list l' (B's kit
    lp_post: the record, the capacity, the address kept when it does not grow, the blocks' change) in place of the
    published `mo_le MT S S' cost` alone, which left l' and S' free *)
 Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',

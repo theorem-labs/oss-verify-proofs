@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value (B 0x8352c): the ENTRY segment C0 of its walk, i.e. ExvB_Top.v's Section hypothesis `seg_entry`
      forall n, (forall fx, CUT_C1 B ARx SK n) -> forall fx, CUT_C0 B ARx SK n
@@ -694,7 +695,7 @@ eapply SRr_bind.
       (exv_sp E + e_d E - exv_s1 E) (e_x E) (e_Lam E) (e_peak E) (e_cnt E) (e_fail E) (e_ran E) (e_most E) (e_own E)).
     + split; [exact HFNc | split; [exact HROD3 | split]].
       * rewrite HspT3. unfold exv_s1, exv_sp in *. lia.
-      * (* fpre's return-address bound: ra = the C1 cut, a listing literal; and (kit f97c8b2f046b, FRM0-ENTRY)
+      * (* fpre's return-address bound: ra = the C1 cut, a listing literal; and (kit, FRM0-ENTRY)
            the rounding mode 0 at the call: ex_value's entry one, no float instruction ran (EXV_PRE) *)
         split.
         -- unfold raZ. rewrite P2ra.

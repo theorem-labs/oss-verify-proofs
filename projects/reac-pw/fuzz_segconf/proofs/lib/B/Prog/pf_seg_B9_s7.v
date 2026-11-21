@@ -24,13 +24,14 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 665 of its 733 lines of code are new or changed and 4985 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B10b_c.v, with its module names changed; 471 of its 561 lines of code are new or changed and 643 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): stretches SB9_7,
    SB9_8 and SB9_9 of segment B9 of reac_segconf_parse_file's walk (lib/B/Prog/pf_seg_B9_d.v): the strcasecmp chain
    J6 0x88588 -> ROLE 0x88630 or J7, J7 0x8859c -> MODEL 0x886d4 or J8, J8 0x885b0 -> IGN 0x887e0 or J9.
    A B9 sub-lane of the image-B G3 walk owner, 2026-10-30.
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk: stretches SB9_7, SB9_8, SB9_9 of segment
    B9).
-    ADAPTED from commit 217af09c8626 lib/A/Prog/pf_a9_s2.v (A9's plain runs to an art call and
+    ADAPTED from lib/A/Prog/pf_a9_s2.v (A9's plain runs to an art call and
    the a9_core transport b2_core_move / b2_vis / b2_keep_inbuf, here over B9's b9_core) and lib/A/Prog/pf_a9_d.v
    (A9's strcasecmp dispatch 0x88150 .. 0x8818c), re-derived on image B's code with the image-B forms of
    lib/B/Prog/pf_seg_B9_s1.v (the B9 segment lane: the art call at s1) and lib/B/Prog/pf_seg_B5_r2.v (the B5 segment lane: a

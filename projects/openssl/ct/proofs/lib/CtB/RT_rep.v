@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair in the reserved ledger). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -227,10 +228,113 @@ Definition artm_sys (Σ : rtsA) (mo : Model) : Prop :=
   (* [comment removed for export] *)
   /\ NodesA_madv.noaccess_pos mo.
 
-(* [comment removed for export] *)
+(* LPS@75d69e00: the reserved ledger is NO LONGER the image's reservations alone.
+   [State.init_model] seeds [vm_reserved] with
+   [init_reserved (segments_reserved segs) mbase sp kb = segments_reserved segs ++ vdso_reserved kb top]
+   (VCommon/Ax/AxEntryS.v:614-621), because [segments_reserved] gained
+   [filter (fun s => negb (seg_kernel_map s))] (LPS@75d69e00 Run.v:253-254) and
+   [init_reserved] puts the vDSO/vvar pair back.  So
+     vm_reserved (m_vmmaps mo) = segments_reserved ctbsegs
+   is FALSE at the revision whenever that tail is non-empty, and ARTM_A must not pin it.
+   The clause below is [mr_res]'s own append form (VCommon/Ax/AxModelRel.v:48-51) cut down
+   to what this cone's consumers use, plus the one fact the tail forces:
+     - the prefix equation        -- RT_sys_grant's membership step and every node's
+                                     pass-through of the clause;
+     - [length rx <= 2]           -- RT_sys_grant's [length_app] sum;
+     - [live_bytes rx <= 0x14000] -- RT_sys_grant's [live_bytes_app'] sum;
+     - every tracked mapping apart from the tail -- what RT_sys_fixed and RT_sys_madvise
+       need, because NO NUMERIC BOUND separates their ranges from the pair: layout_ok's
+       [grant_ok (l_PRB L) 0x2000011000] bounds the region only by [l_ACEIL], which is
+       [alloc_top], and the pair sits just below [alloc_top] too.  What separates them is
+       that each such range lies inside a mapping the runtime already tracks, and reserved
+       entries are disjoint from tracked mappings -- [mr_res]'s sibling [mr_disj]
+       (AxModelRel.v:62), which is where BridgeA gets it.
+   mr_res's fourth fact [Forall (fun q => 0x154500000000 <= bas q) rx] is deliberately NOT
+   carried: no consumer in this cone uses a floor.
+   ARTM_A is tree-local: projects/openssl/ct/Statements.v names it nowhere (the same scan
+   of that file finds 2 Theorems and 13 Definitions, so it is not a false zero).
+   Ported per hunk from simdjson/fuzz_atpointer A/RT_rep.v:202-313 -- the only tree in the
+   repo that had already made this call -- with ct's own rx facts; bignum's BgA/RT_rep.v:204
+   and bndiv's A/RT_rep.v:225 still pin the equality and are NOT donors. *)
 Definition ARTM_A (Σ : rtsA) (mo : Model) : Prop :=
-  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ) /\ vm_reserved (m_vmmaps mo) = segments_reserved ctbsegs
+  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ)
+  /\ (exists rx, vm_reserved (m_vmmaps mo) = segments_reserved ctbsegs ++ rx
+                 /\ (length rx <= 2)%nat
+                 /\ live_bytes rx <= 0x14000
+                 /\ Forall (fun e => Forall (iv_apart e) rx) (vm_maps (m_vmmaps mo)))
   /\ vm_limit (m_vmmaps mo) = VMLIMIT /\ eager_used mo <= E0_MAX + rt_eager Σ /\ artm_sys Σ mo.
+
+(* The three ways this cone uses ARTM_A's reserved clause, packaged so every consumer is a
+   single application and the LPS@75d69e00 argument is written down once.
+
+   [artm_res_free_in_maps]: a range INSIDE a tracked mapping is free of the whole ledger.
+   Every range the mmap_fixed and madvise nodes name is of that shape, and the clause's
+   fourth component is what carves the vDSO tail out of it.
+
+   [artm_res_cons]: the clause survives a step that only GROWS [vm_maps] by a range already
+   known free of the ledger -- which is exactly what a grant proves of itself.
+
+   [artm_res_incl]: it survives a step whose new [vm_maps] is a sublist of the old one --
+   which is what ct's munmap node leaves ([NodesA_mm.mdl_munmap_vmmaps]: a [List.filter]
+   of a [map_remove], both plain [List.filter]s). *)
+Lemma artm_res_free_in_maps : forall (mo : Model) (lo n : word) (e : word * word),
+  (exists rx, vm_reserved (m_vmmaps mo) = segments_reserved ctbsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) (vm_maps (m_vmmaps mo))) ->
+  In e (vm_maps (m_vmmaps mo)) ->
+  bv_unsigned (fst e) <= bv_unsigned lo ->
+  bv_unsigned lo + bv_unsigned n <= bv_unsigned (fst e) + bv_unsigned (snd e) ->
+  region_free (segments_reserved ctbsegs) lo n = true ->
+  region_free (vm_reserved (m_vmmaps mo)) lo n = true.
+Proof.
+  intros mo lo n e (rx & Hres & _ & _ & Hme) He H1 H2 Himg.
+  rewrite Hres. apply region_free_intro. intros a sz Hin.
+  apply in_app_or in Hin as [Hin|Hin].
+  - exact (region_free_In _ _ _ a sz Himg Hin).
+  - pose proof (proj1 (Forall_forall _ _) (proj1 (Forall_forall _ _) Hme e He) (a, sz) Hin) as D.
+    unfold iv_apart in D. cbn [fst snd] in D.
+    unfold iv_overlap. apply andb_false_iff.
+    destruct D as [D|D]; [right | left]; apply Z.ltb_ge; lia.
+Qed.
+
+Lemma artm_res_cons : forall (R M : list (word * word)) (p : word * word),
+  (exists rx, R = segments_reserved ctbsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) M) ->
+  region_free (R ++ M) (fst p) (snd p) = true ->
+  exists rx, R = segments_reserved ctbsegs ++ rx
+             /\ (length rx <= 2)%nat
+             /\ live_bytes rx <= 0x14000
+             /\ Forall (fun q => Forall (iv_apart q) rx) (p :: M).
+Proof.
+  intros R M p (rx & Hres & Hcnt & Hbyt & Hme) Hfp.
+  exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hbyt|].
+  constructor; [|exact Hme].
+  apply Forall_forall. intros [b sz] Hq.
+  assert (Hin : In (b, sz) (R ++ M))
+    by (apply in_or_app; left; rewrite Hres; apply in_or_app; right; exact Hq).
+  pose proof (region_free_In _ _ _ b sz Hfp Hin) as X.
+  unfold iv_overlap in X. unfold iv_apart. cbn [fst snd].
+  apply andb_false_iff in X as [X|X]; apply Z.ltb_ge in X; [right | left]; lia.
+Qed.
+
+Lemma artm_res_incl : forall (R M M' : list (word * word)),
+  (exists rx, R = segments_reserved ctbsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) M) ->
+  (forall q, In q M' -> In q M) ->
+  exists rx, R = segments_reserved ctbsegs ++ rx
+             /\ (length rx <= 2)%nat
+             /\ live_bytes rx <= 0x14000
+             /\ Forall (fun q => Forall (iv_apart q) rx) M'.
+Proof.
+  intros R M M' (rx & Hres & Hcnt & Hbyt & Hme) Hsub.
+  exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hbyt|].
+  apply Forall_forall. intros q Hq. exact (proj1 (Forall_forall _ _) Hme q (Hsub q Hq)).
+Qed.
 
 Definition RTA : rt_sig := mkRTS rtsA ART_A ARTM_A rtA_live rtA_frames rtA_allow rtA_sp0 rtA_credit.
 

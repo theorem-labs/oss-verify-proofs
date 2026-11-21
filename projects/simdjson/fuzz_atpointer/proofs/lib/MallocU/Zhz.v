@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up auxv values as the list the model's launch writes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -294,19 +295,26 @@ Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
   - intros b Hb. destruct c as [c|]; [|discriminate]. inversion Hb; subst. reflexivity.
 Qed.
 
+(* The auxv the process was launched with, as the malloc layer needs it.
+   [r] is the kernel's [kb_rseq]: before 2026-11-06 this named [auxv_list]
+   (the 29-pair CONFIG_RSEQ table) outright, which asserted the flag, and
+   [Run.valid_input_either] (75d69e00 Run.v:4575-4577) leaves it free.  The
+   address bound is now the literal 464 = 8 * 58, the bound for the LONGER
+   table, so it is no weaker than the pinned form was and no consumer has to
+   know which arm it holds. *)
 Definition rauxv_ok (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+  exists av (vs : list Z) rnd (r : bool),
     rw_cells usegs m RAUXV_CELL [C8 (wz av)]
-    /\ bytes_at usegs m av (u64s (auxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+    /\ bytes_at usegs m av (u64s (auxv_tab r vs rnd))
     /\ bytes_at usegs m (rnd + 8) (le8 rr_secret)
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ alloc_ceiling <= B /\ B <= av /\ av + 464 <= 2^64
+    /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ 0 <= rnd < 2^64.
 
 Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> alloc_ceiling <= B' <= B -> rauxv_ok m B'.
 Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  intros m B B' (av & vs & rnd & r & H) HB.
+  exists av, vs, rnd, r. repeat (split; [tauto|]). lia.
 Qed.
 
 Lemma rauxv_ok_frame : forall m m' B W,
@@ -314,8 +322,8 @@ Lemma rauxv_ok_frame : forall m m' B W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
   rauxv_ok m' B.
 Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
-  intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (av & vs & rnd & r & C & A1 & A2 & H) MU WM FW.
+  exists av, vs, rnd, r. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.

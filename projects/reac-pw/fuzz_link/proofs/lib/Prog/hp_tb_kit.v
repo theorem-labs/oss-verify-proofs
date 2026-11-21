@@ -3,8 +3,9 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/check_no_overread.v, with its module paths, module names, addresses and numbers changed; 599 of its 725 lines of code are new or changed and 726 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/Prog/check_restamp.v; 174 of its 229 lines of code are new or changed and 670 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_link, PLAIN build: kit lemmas of the text_buf walk (lane hp, clone a Theorem Labs lane).
-   Adapted from libreac/fuzz_pcap lib/Prog/KindB.v (origin/ossv/recipes 4b6f0df50aa): the generic
+   Adapted from libreac/fuzz_pcap lib/Prog/KindB.v: the generic
    memory, register and allocator-law facts the released SR walks use. Names carry the prefix `tb_`.
    The image bounds tb_rsegs_top / tb_rsegs_res_top are checked by computation on link's plain
    image (Img0.rsegs; its last LOAD segment ends at 0x960e0). *)

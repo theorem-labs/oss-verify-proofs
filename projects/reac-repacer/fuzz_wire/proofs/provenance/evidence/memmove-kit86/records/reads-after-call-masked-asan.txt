@@ -1,4 +1,4 @@
-# The caller contexts the first-event reads_after_call masked, now examined (check of 7047c7c1a9d, finding 3).
+# The caller contexts the first-event reads_after_call masked, now examined (check, finding 3).
 # Roots: every RET use in records/settle-asan-luitrace.txt and settle-asan-cstr-consumers.txt; from each, every caller
 # is walked (tail callers, and callers that hand the value back under either version, followed 4 levels), on X and on Y.
 # A row lists a context where the first-event version returned RET-LIVE and the every-event version returns a real read.

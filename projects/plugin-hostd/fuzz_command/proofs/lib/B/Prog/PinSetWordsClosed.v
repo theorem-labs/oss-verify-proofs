@@ -9,10 +9,11 @@
    cmd_frame_flag_law (LAWS is the core's AR_laws_ok, inside verbs_receive_top.v). What remains is the statement's own
    hypotheses (the callees' contracts and the runtime entries), HB, MTL and MTFL. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/VerbsReceiveClosed.v, with its module paths and module names changed; 16 of its 45 lines of code are new or changed and 89 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for pin_set_words' ASan+UBSan walk
    (lib/B/Prog/pin_set_words.v, tpin_set_words_proof): the per-binary record hypotheses it names discharged at the
    pinned B image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head
-   YE2k.tfib_sink_head), as A's ReplyClosed.v (a working branch d9dcf6ff848) does: TL is cmd_palib, SIGP is
+   YE2k.tfib_sink_head), as A's ReplyClosed.v (a working branch) does: TL is cmd_palib, SIGP is
    cmd_sig_prog_PB, IMG is cmd_img_facts_tfib (the walk takes LAWS as the core's AR_laws_ok itself and names no PRW).
    What remains is the statement's own hypotheses (pins_set's and lv2_refusals_forget's contracts and the strlen and
    strncmp wrappers' contracts, at every FP state), HB and MTL. *)

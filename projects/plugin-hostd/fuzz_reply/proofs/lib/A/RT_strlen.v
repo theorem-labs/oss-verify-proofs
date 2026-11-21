@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract astrlen_realizes (lib/A/W_contract.v) proved for
    fuzz_reply.asan's strlen interceptor, entered at the trampoline __wrap_strlen 0x4218c. *)
-(* Ported from: a working branch 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v:207-243,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v:207-243,
    752-830 (bz_strlen, fs_strlen_core).  Changes (R1Str, 2026-10-29): fuzz_reply.asan's addresses (trampoline
    0x4218c `j 0x42230`, ___interceptor_strlen 0x42230); the premises are W_contract.v's astrlen_realizes, not fs's
    cstr_ok: the string is the first_byte fact over aview (str and slack are the bytes the donor's reader sees,

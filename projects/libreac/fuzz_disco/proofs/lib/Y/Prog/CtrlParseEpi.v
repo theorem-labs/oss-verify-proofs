@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_grant. *)
 (* Modified by Theorem Labs, 2026-10: relocated to libreac/fuzz_disco (the same code at other addresses; the post side carries pz_kept, not acall_kept, and the caller's two objects name no frame). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4, cut J at +0x420 = 0x878c4): the run from cut J to `ret` relocated from fuzz_grant image B's walk of the same code (a working branch edc3e948664, lib/B/Prog/CtrlParseEpi.v; Y pc = grant B pc + 0x4d30), stated over the fuzz_disco Y cut spec and post (lib/Y/Prog/CtrlParseCut.v, CtrlParse.v) as lib/A/Prog/CtrlParseEpi.v (a working branch 87ef1f22058) states it; module paths changed to the Y walk layer. *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4, cut J at +0x420 = 0x878c4): the run from cut J to `ret` relocated from fuzz_grant image B's walk of the same code (a working branch, lib/B/Prog/CtrlParseEpi.v; Y pc = grant B pc + 0x4d30), stated over the fuzz_disco Y cut spec and post (lib/Y/Prog/CtrlParseCut.v, CtrlParse.v) as lib/A/Prog/CtrlParseEpi.v (a working branch) states it; module paths changed to the Y walk layer. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, the walk from cut J (every path's join) to the return: the frame's shadow is
    poisoned, its flag cleared (the frame is released) and the saved registers reloaded. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.

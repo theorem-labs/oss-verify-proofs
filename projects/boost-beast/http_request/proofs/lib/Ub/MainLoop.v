@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -71,7 +72,11 @@ Section Loop.
   Let SPlo : 0x7fff80000000 <= bv_unsigned sp0 := proj1 Hvsp.
   Let SPhi : bv_unsigned sp0 <= 0x800000000000 := proj1 (proj2 Hvsp).
   Let spm : Z := bv_unsigned sp0 - 128.
-  Let lo : Z := bv_unsigned sp0 - 8388608.
+  (* The launch maps only [wok_lo sp0, sp0) below sp0 ([Ub.RefStartup.main_entry_win_mapped],
+     [MemSplit.v:122-123]: [wok_lo sp0 = sp0 + stack_window_reach - stack_max_size =
+     sp0 - 6144513]); [lo] is the page-aligned floor at or above it.  Ub/MainTop.v's [lo] is
+     the same term. *)
+  Let lo : Z := bv_unsigned sp0 - 6144512.
 
   (* [comment removed for export] *)
   Let KRELh : forall s mo, hs_KREL HS s mo -> m_halted mo = None /\ m_vm_lazy mo = [].
@@ -566,7 +571,7 @@ Section Loop.
     intros regs mem model s p A len cap K [RC [Hlen Hld] Hcap HPOW HBR HRH HKR HWR HDATA ST Hra Hfs Hfd3 Hfd1 Hfd2] KMORE KEOF.
     pose proof Htid as HtidPin.   (* [comment removed for export] *)
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. hcb.
-    assert (Elo : lo = bv_unsigned sp0 - 8388608) by reflexivity. assert (Espm : spm = bv_unsigned sp0 - 128) by reflexivity.
+    assert (Elo : lo = bv_unsigned sp0 - 6144512) by reflexivity. assert (Espm : spm = bv_unsigned sp0 - 128) by reflexivity.
     set (cnt := Z.min (cap - len) 65536) in RC.
     destruct RC as (R1 & R2 & R4 & R8 & R9 & R10 & R11 & R12 & R17 & R18 & R19 & R20 & R21 & R22).
     pose proof HBR as (B1 & B2 & B3 & B4 & B5). clear B2.
@@ -771,7 +776,7 @@ Section Loop.
     assert (HRH2 : hs_RHEAP HS s [(p, A, cap)] mem2).
     { eapply heap_frame; [| exact FM2 | apply regL_w_hi]. eapply heap_frame; [exact HRH | exact FM1 | apply regL_w_hi]. }
     destruct (hx_statics HS HX _ _ _ HRH2) as (_ & _ & [can Hcan]).
-    rewrite <- Hfs. apply (ref_refused_tail sp0 [] model Hvsp Hh Hlazy Hfd2 tid can regs2 mem2 Q2 Q4).
+    rewrite <- Hfs. apply (ref_refused_tail sp0 [] model Hvsp Hh Hlazy Hfd2 (hx_krel_rdr HS HX _ _ HKR) tid can regs2 mem2 Q2 Q4).
     - eapply stk_stk_ok; [exact (st_stk mem2 ST2) | unfold RefReadErr_defs.RE_STK; rewrite u_small by lia; lia | rewrite u_small by lia; lia | unfold RefReadErr_defs.RE_STK; lia | lia].
     - apply mem_inv_ro_none. exact (st_inv mem2 ST2).
     - exact (st_cells mem2 ST2).
@@ -795,7 +800,7 @@ Section Loop.
       pose proof (Z.pow_le_mono_r 2 10 k ltac:(lia) Hge). change (2 ^ 10) with 1024 in H. lia. }
     assert (Hcap2 : 2 * cap <= 67108864).
     { pose proof (Z.pow_le_mono_r 2 (k + 1) 10 ltac:(lia) ltac:(lia)). rewrite Z.pow_succ_r in H by lia. change (2 ^ 10) with 1024 in H. lia. }
-    assert (Elo : lo = bv_unsigned sp0 - 8388608) by reflexivity. assert (Espm : spm = bv_unsigned sp0 - 128) by reflexivity.
+    assert (Elo : lo = bv_unsigned sp0 - 6144512) by reflexivity. assert (Espm : spm = bv_unsigned sp0 - 128) by reflexivity.
     destruct (KRELh s model HKR) as [Hh Hlazy].
     pose proof HBR as (B1 & B2 & B3 & B4 & B5). clear B2.
     rewrite Hcapeq in HDATA, Hfd3.

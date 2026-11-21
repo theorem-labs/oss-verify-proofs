@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: memnorm twins of the core segments, written against core blob <sha> of each file, image B'
-   (#102 asan-ubsan pin d663f82d, twin c90d4fa5; the core at commit 7edddd96814e):
+   (#102 asan-ubsan pin d663f82d, twin c90d4fa5; the core):
    lib/Reusable/YD26.v 48c354d2e319 (m1c_run :93, rd0_run :127), lib/Reusable/YD25.v 9e60b8120ee2 (rd_to_RW :244,
    cp_run :676), lib/Reusable/YD23.v 97c0e322294f (mg_run :174), lib/Reusable/YD2g.v 0286d3258d4e (short_run :50,
    h1_run :59, ovr_run :68, p_run :77), lib/Reusable/YD2c.v b485f48b5d88 (pb_run :68, bq_run :77), lib/Reusable/YD2d.v
@@ -226,13 +227,15 @@ srr_run_with_inv tfibtbl_lp_ok PLAW HS HPM. mn_ret HS HPM HF HFr.
 Qed.
 
 Section f.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* the entry draw rnd is a Section variable after p, as in the core's YD25.v / YD26.v Section f (YP08.E0 takes the
+   draw's top, the run's kb_rseq flag and the execfn at 727298f3) *)
+Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 
 (* YD26.v:93 m1c_run *)
 Lemma m1c_run_mn : forall (W : world tfibsegs) ms md,
 st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms) -> P (ms_mem ms) ->
-SRr tfibsegs W (mkCfg ms md) (fun W' c' => at_m1c sp inp xw xd a0 p W ms md W' c' /\
+SRr tfibsegs W (mkCfg ms md) (fun W' c' => at_m1c sp inp xw xd a0 p rnd W ms md W' c' /\
   exists ms' md', c' = mkCfg ms' md' /\ P (ms_mem ms')).
 Proof.
 intros W ms md HS HPM. pose proof HWXi as HWX.
@@ -241,7 +244,7 @@ Qed.
 
 (* YD25.v:244 rd_to_RW *)
 Lemma rd_to_RW_mn : forall E (W : world tfibsegs) ms md len cap,
-YD25.eagree sp inp xw xd a0 p E -> st_ok tfibsegs E S_RD (restrict (w_H W) ms) ->
+YD25.eagree sp inp xw xd a0 p rnd E -> st_ok tfibsegs E S_RD (restrict (w_H W) ms) ->
 bv_unsigned (ew E A_LEN) = len -> bv_unsigned (ew E A_CAP) = cap -> 0 <= len < cap -> cap <= 2 ^ 26 ->
 P (ms_mem ms) ->
 SRr tfibsegs W (mkCfg ms md) (fun W' c' => at_RW E W (Z.min (cap - len) 65536) (ms_mem ms) md W' c' /\

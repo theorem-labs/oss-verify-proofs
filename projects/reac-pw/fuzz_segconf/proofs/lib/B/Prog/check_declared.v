@@ -9,7 +9,8 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 910 of its 1166 lines of code are new or changed and 1235 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/check_declared.v (commit 68125773e710): the program walk of
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/check_declared.v: the program walk of
    check_declared on reac-pw/fuzz_segconf image B (fuzz_segconf.asan-ubsan, BASE + AF_check_declared = 0x87664,
    114 instructions), against check_declared_contract (lib/B/Prog/check_declared_c.v); the strcmp wrapper's contract
    (lib/B/Rt/RtString.v astrcmp_realizes) is a Section hypothesis. Step plan: the unit record's Bwalks-G45-plans/plan-check_declared.md.

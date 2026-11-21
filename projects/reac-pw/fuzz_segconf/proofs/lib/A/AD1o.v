@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1o.v, with its module paths changed, names TfibSyms -> CmdBSyms, its addresses moved to plugin-hostd/fuzz_command's ASan build, and the .bss zero-shadow range taken from A/AF0m.v's fuzz_command list (the run [0x5e3c80, 0x606000) above the program globals, which holds the stdout buffer). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AD1o.v (donor image sha256 c0661b96b5bd), with its module paths changed, names CmdBSyms -> SegBSyms and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -99,8 +100,9 @@ replace s with (shadow_of_addr SHADOW_OFF 0x5de720 + (s - shadow_of_addr SHADOW_
 rewrite (HZ (s - shadow_of_addr SHADOW_OFF 0x5de720)); [discriminate|].
 unfold shadow_of_addr, SHADOW_OFF in *. change (6154016 / 8) with 769252. change ((6295552 - 6154016) / 8) with 17692. lia.
 Qed.
-Lemma fdchan_stdout : forall md, (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> fdchan (Z_to_bv 64 1) ch_stdout md.
-Proof. intros md Hf. unfold fdchan. rewrite (Hf (Z_to_bv 64 1)). split; [vm_compute; reflexivity | reflexivity]. Qed.
+Lemma fdchan_stdout : forall md, (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) ->
+m_channel_reader md = true -> fdchan (Z_to_bv 64 1) ch_stdout md.
+Proof. intros md Hf Hr. unfold fdchan. rewrite (Hf (Z_to_bv 64 1)). split; [vm_compute; reflexivity | split; [reflexivity | exact Hr]]. Qed.
 Lemma printf_pre_facts : forall ly S W regs mem md, printf_pre B ly S W regs mem md ->
 ecall_pre tfibsegs B ly S W regs mem md /\
 sp_window_lo - 2400 <= spZ regs /\ spZ regs + 32 <= 2 ^ 47 /\ ly_stk_lo ly + VPI_STK <= spZ regs /\ spZ regs mod 16 = 0 /\ YK0s.ret_ok (getr regs 1) /\
@@ -184,11 +186,12 @@ xst k' (w_H W) mem2 ->
 AI tfibsegs (w_H W) (w_A W) md2 ->
 srealizes tfibsegs (cfg_at tfibsegs (raZ regs1) regs2 mem2 md2) T) ->
 srealizes tfibsegs (cfg_at tfibsegs A_vfprintf regs1 mem1 md1) TT),
-printf_pre B ly S W regs mem md -> (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> AI tfibsegs (w_H W) (w_A W) md ->
+printf_pre B ly S W regs mem md -> (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) ->
+m_channel_reader md = true -> AI tfibsegs (w_H W) (w_A W) md ->
 printf_post B xst ly S W regs mem md k' T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_vprintf regs mem md) TT.
 Proof.
-intros ly S W regs mem md T k' TT REAL HPRE Hfds HAI HPOST.
+intros ly S W regs mem md T k' TT REAL HPRE Hfds Hcr HAI HPOST.
 pose proof (printf_pre_facts ly S W regs mem md HPRE) as (HEPRE & Hsp44 & Hsphi & Hstk & Hal & Hret & Hra & Hpres & HRO & G10 & G11 & Harg).
 pose proof (proj1 HEPRE) as HAR. pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). unfold sp_window_lo in Hsp44.
 assert (HPF : PF_STK = 9216) by reflexivity. assert (HVP : VPI_STK = 9200) by reflexivity. assert (HVF : VF_STK = 9104) by reflexivity.
@@ -215,7 +218,7 @@ intros x Hx. apply MEQ1. unfold IMG_RO_LO, IMG_RO_HI, VP_WIN in *. lia.
 - exact (proj2 (bss_shadow_facts ly S W mem1 md1 STDOUT_BUFA STDOUT_BSZ HAR1 ltac:(lia) ltac:(lia) ltac:(lia))).
 - exact (proj1 (rodata_shadow_facts B HB LAWS ly S W mem1 md1 FMT_d 4 HAR1 ltac:(unfold FMT_d; lia) ltac:(unfold FMT_d; lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts B HB LAWS ly S W mem1 md1 FMT_d 4 HAR1 ltac:(unfold FMT_d; lia) ltac:(unfold FMT_d; lia) ltac:(lia))).
-- eapply fdchan_sbm; [exact (fdchan_stdout md Hfds) | exact MF1].
+- eapply fdchan_sbm; [exact (fdchan_stdout md Hfds Hcr) | exact MF1].
 - exact HAI1.
 - exact AV1.
 -
@@ -244,11 +247,11 @@ apply (same_but_materialized_frame md2 _ Hsbm3).
 Qed.
 Theorem tfib_printf_first : printf_first_tfa B xst.
 Proof.
-intros ly S W regs mem md T HPRE Hnev Himg Hfds HAI HPOST.
+intros ly S W regs mem md T HPRE Hnev Himg Hfds Hcr HAI HPOST.
 assert (HFO : F_STDOUT = 0xa7128) by reflexivity. assert (HFS : FILE_SZ = 232) by reflexivity.
 assert (HBA : STDOUT_BUFA = 0x5ff748) by reflexivity. assert (HBS : STDOUT_BSZ = 1024) by reflexivity. assert (HVW : VP_WIN = 2432) by reflexivity.
 assert (LN : line0 = map (Z_to_bv 8) [48; 10]) by (vm_compute; reflexivity). rewrite LN.
-refine (printf_site ly S W regs mem md T 1%nat _ _ HPRE Hfds HAI HPOST).
+refine (printf_site ly S W regs mem md T 1%nat _ _ HPRE Hfds Hcr HAI HPOST).
 intros regs1 mem1 md1 HPRE1 R1sp Q10 Q11 Q12 Hband Harg Hown Hgot Hro Hra_b Hhull_b Hra_f Hhull_f Hch HAI1 AV1 HK.
 pose proof (printf_pre_facts ly S W regs mem md HPRE) as (_ & Hsp44 & Hsphi & Hstk & Hal & _).
 destruct (canary_readable (w_H W) mem1) as (cval & Hcan & Hcv).
@@ -280,10 +283,10 @@ replace (STDOUT_BUFA + 2 * (Z.of_nat 1 - 1)) with STDOUT_BUFA by lia. exact HMID
 Qed.
 Theorem tfib_printf_next : printf_next_tfa B xst.
 Proof.
-intros ly S W regs mem md T k HPRE Hnev (Hk1 & Hkb & HMID & HPEND) Hk Hfds HAI HPOST.
+intros ly S W regs mem md T k HPRE Hnev (Hk1 & Hkb & HMID & HPEND) Hk Hfds Hcr HAI HPOST.
 assert (HFO : F_STDOUT = 0xa7128) by reflexivity. assert (HFS : FILE_SZ = 232) by reflexivity.
 assert (HBA : STDOUT_BUFA = 0x5ff748) by reflexivity. assert (HBS : STDOUT_BSZ = 1024) by reflexivity. assert (HVW : VP_WIN = 2432) by reflexivity.
-refine (printf_site ly S W regs mem md T (Datatypes.S k) T _ HPRE Hfds HAI HPOST).
+refine (printf_site ly S W regs mem md T (Datatypes.S k) T _ HPRE Hfds Hcr HAI HPOST).
 intros regs1 mem1 md1 HPRE1 R1sp Q10 Q11 Q12 Hband Harg Hown Hgot Hro Hra_b Hhull_b Hra_f Hhull_f Hch HAI1 AV1 HK.
 pose proof (printf_pre_facts ly S W regs mem md HPRE) as (_ & Hsp44 & Hsphi & Hstk & Hal & _).
 destruct (canary_readable (w_H W) mem1) as (cval & Hcan & Hcv).

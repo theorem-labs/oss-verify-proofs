@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free, the channel-reader fact, the reserved-interval ledger, the nine-byte string read-ahead): changed HSA_pc, Hsp, Huid and 19 more; added B, Hapc, Hbrk and 24 more. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -84,31 +85,59 @@ Definition drv_main_stmt (scfg : SpuriousCfg) (L : asan_layout) (C : asan_static
     asan_iface_ok L ar C scfg HI -> afree_null_spec L ar scfg HI -> aicpt_ok L ar IL scfg HI -> lib_iface_okD Lay ar scfg HI (LSt ar) -> drv_layoutA L ar IL sp ->
     SX2S.regs_ok (env_mainA sp p0 p1 can tid R) sr_mainA R ->
     SX2S.know_ok ASEGS (env_mainA sp p0 p1 can tid R) (mrestrict (ahid A0 model) M0) kn_mainA ->
-    auxv_atA sp p0 M0 ->
+    (* DROPPED, old beside new: [auxv_atA sp p0 M0 ->] (Main's ruling, option D; Pm8DrvEntry). *)
     dinv ar HI sp M0 [] [] cr0 A0 M0 model ->
     defined M0 (bv_unsigned sp) (ar_stack_top ar - bv_unsigned sp) ->
     m_fds model = APSK.fds_std -> m_fs model = fs ->
     rdn ASEGS (mrestrict (ahid A0 model) M0) p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
-    bv_unsigned sp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47 ->
+    (* SLACK 16 -> 9, old beside new (here and two lines down): was [+ 1 + 16]; Main's ruling (a),
+       Pm8DrvEntryK.ent_str_hi; matches Pm8DrvMain.drv_main_on. *)
+    bv_unsigned sp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47 ->
     cr0 = (8192, 2 ^ 34) ->
 
-    defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16) ->
+    defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8) ->
     shadow_allowed A0 (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xaece4) M0 (seg_rom ASEGS)) model) (spec [a0s; path] fs).
 
+(* STATEMENT CHANGED, old beside new:
+     OLD  forall sp brk0 rdraw argv envp uid hw fs, valid_sp sp -> valid_argv argv -> valid_envp envp ->
+            entry_stack_fits sp argv envp -> valid_fs fs -> forall h, (h < 2)%nat -> forall E R FULL model,
+            cs_ok .. (SINV0 APH0 sp rdraw brk0 argv envp uid hw) (argH0 APH0 sp rdraw argv envp uid hw) fs E (HSA h) R FULL model -> ..
+     NEW  the launch's whole input in HandoffBridgeK's Section Image order with the same
+          hypotheses, SINV0/argH0 at their 22/18 places, and the hand-off state of the run's
+          own CONFIG_RSEQ flag, [HSA (kb_rseq (in_kernel (AsanInitK.inp ..))) h]. *)
 Definition usage_stmt (scfg : SpuriousCfg) : Prop :=
-  forall sp brk0 rdraw argv envp uid hw fs, valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp -> valid_fs fs ->
+  forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte))
+         (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue)
+         (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs)
+         (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs),
+  valid_sp sp -> valid_brk ASEGS0 brk0 -> valid_mmap_base mbase -> valid_argv argv -> valid_envp envp ->
+  entry_stack_fits sp argv envp -> valid_id uid -> valid_hwcap hw -> Z.of_N apc = APK.a_entry ASAN0 ->
+  valid_launch (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf) ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf) ->
+  valid_fs fs ->
   forall h, (h < 2)%nat -> forall E R FULL model,
-    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 argv envp uid hw) (argH0 APH0 sp rdraw argv envp uid hw) fs E (HSA h) R FULL model ->
+    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT
+      (SINV0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc)
+      (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf) fs E
+      (HSA (kb_rseq (in_kernel (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf))) h) R FULL model ->
     length argv <> 2%nat ->
-    srealizes ASEGS0 scfg (APSK.cfg_of ASEGS0 R (APCK.pc (HSA h)) FULL model) (spec argv fs).
+    srealizes ASEGS0 scfg
+      (APSK.cfg_of ASEGS0 R (APCK.pc (HSA (kb_rseq (in_kernel (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf))) h)) FULL model)
+      (spec argv fs).
 
-Lemma role_ks_0 : role HS_0 I_KSPACE = M_KSPACE /\ role HS_0 I_PARR = M_PTRARR.   Proof. vm_compute. split; reflexivity. Qed.
-Lemma role_ks_1 : role HS_1 I_KSPACE = M_KSPACE /\ role HS_1 I_PARR = M_PTRARR.   Proof. vm_compute. split; reflexivity. Qed.
-Lemma as0_RES_art : forall h, (h < 2)%nat -> forall E, as0_RES E = art_RES (as0_rn E (HSA h)).
+(* STATEMENT CHANGED, old beside new: indexed by the flag, as Pm8HandoffInstK's [HSA b h].
+     OLD  role_ks_0 : role HS_0 I_KSPACE = .. ; as0_RES_art : forall h, (h < 2)%nat -> ..
+     NEW  forall b, .. (HS_0 b) ..           ; forall b h, (h < 2)%nat -> .. (HSA b h) .. *)
+Lemma role_ks_0 : forall b, role (HS_0 b) I_KSPACE = M_KSPACE /\ role (HS_0 b) I_PARR = M_PTRARR.
+Proof. intros [|]; vm_compute; split; reflexivity. Qed.
+Lemma role_ks_1 : forall b, role (HS_1 b) I_KSPACE = M_KSPACE /\ role (HS_1 b) I_PARR = M_PTRARR.
+Proof. intros [|]; vm_compute; split; reflexivity. Qed.
+Lemma as0_RES_art : forall b h, (h < 2)%nat -> forall E, as0_RES E = art_RES (as0_rn E (HSA b h)).
 Proof.
-  intros h Hh E. unfold as0_RES, HandoffBInvK.RES_of, RESm0, art_RES. cbn [map as0_rn rn_kbase rn_parr]. unfold HandoffBInvK.resZ, rbase.
-  assert (R : role (HSA h) I_KSPACE = M_KSPACE /\ role (HSA h) I_PARR = M_PTRARR) by (destruct h as [|[|h]]; [exact role_ks_0 | exact role_ks_1 | lia]).
+  intros b h Hh E. unfold as0_RES, HandoffBInvK.RES_of, RESm0, art_RES. cbn [map as0_rn rn_kbase rn_parr]. unfold HandoffBInvK.resZ, rbase.
+  assert (R : role (HSA b h) I_KSPACE = M_KSPACE /\ role (HSA b h) I_PARR = M_PTRARR)
+    by (destruct h as [|[|h]]; [exact (role_ks_0 b) | exact (role_ks_1 b) | lia]).
   destruct R as (-> & ->). cbn [APK.am_base APK.am_len M_KSPACE M_PTRARR]. rewrite !Pm8ArtHandoffK.uE_lit by lia. reflexivity.
 Qed.
 
@@ -139,53 +168,88 @@ Section MainPhase.
   Hypothesis DRV_MAIN : drv_main_stmt scfg L C IL Lay LSt.
   Hypothesis USAGE : usage_stmt scfg.
 
-  Variable sp brk0 mbase : word. Variable rdraw : EntryDraw. Variables argv envp : list (list byte). Variable fs : Fs.Fs.
-  Variable stdin : InputStream. Variables uid gid hw : word. Variable groups : list word. Variable net : NetQueue.
-  Variables nofile sigmask : word. Variable abrt : bool.
-
-  Variable ifs : Fs.Fs. Variable urnd : InputStream. Variable tmp0 : Fs.Fs.
-  Hypothesis Hsp : valid_sp sp. Hypothesis Hbrk : valid_brk ASEGS0 brk0.
-  Hypothesis Hva : valid_argv argv. Hypothesis Hve : valid_envp envp. Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid. Hypothesis Hhw : valid_hwcap hw. Hypothesis Hvfs : valid_fs fs.
+  (* THE SECTION'S PARAMETERS, old beside new.
+       OLD  sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ifs urnd tmp0,
+            Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs Hseed; SINV0/argH0 at eight/seven places.
+       NEW  the launch's whole input in [HandoffBridgeK]'s Section Image order ([ifs] the input's
+            filesystem, [fs] the plan's FS0) with [Pm8StartupFinalK]'s hypotheses, plus Hvfs.
+     Every Section lemma of another file is reached by [eapply ..; eassumption]. *)
+  Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).
+  Variables (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue).
+  Variables (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs).
+  Variables (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs).
+  Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hbrk : valid_brk ASEGS0 brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hva : valid_argv argv.
+  Hypothesis Hve : valid_envp envp.
+  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Huid : valid_id uid.
+  Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Hapc : Z.of_N apc = APK.a_entry ASAN0.
+  #[local] Notation INP := (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  Hypothesis Hvfs : valid_fs fs.
   Hypothesis Hseed : fs_seed_tmp ifs tmp0 = fs.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation B := (kb_rseq (in_kernel INP)).
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
   #[local] Notation CSOK := (APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
   #[local] Notation usp := (bv_unsigned sp).
 
   Lemma mp_bud : 0 <= BUDGET /\ 0 <= Pm8ArtInv.KMAX /\ 0 <= Pm8ArtInv.LENMAX < 2 ^ 62.
   Proof. unfold Pm8ArtInv.KMAX, Pm8ArtInv.LENMAX. lia. Qed.
-  Lemma mp_gap : AsanCeil.bottomup_floor + Pm8ArtInv.LENMAX + (17729665318912 + BUDGET) + (21 + Pm8ArtInv.KMAX) * (Pm8ArtInv.LENMAX + 4095) <= AsanCeil.alloc_ceiling.
-  Proof. unfold Pm8ArtInv.KMAX, Pm8ArtInv.LENMAX, AsanCeil.bottomup_floor, AsanCeil.alloc_ceiling. lia. Qed.
-  Lemma mp_gap_h : forall h, (h < 2)%nat ->
-    AsanCeil.bottomup_floor + Pm8ArtInv.LENMAX + (APK.a_totsz (HSA h) + BUDGET)
-    + (Z.of_nat (length (segments_reserved ASEGS0) + length (APK.a_maps (HSA h))) + Pm8ArtInv.KMAX) * (Pm8ArtInv.LENMAX + 4095) <= AsanCeil.alloc_ceiling.
+  (* the [a_totsz] term is DERIVED, not the measured literal: see Pm8HandoffInstK's
+     [HSA_numbers].  [resx0 : APCK.resx_bytes ASAN0 = 81920] is by [reflexivity]. *)
+  Lemma mp_gap : AsanCeil.bottomup_floor + Pm8ArtInv.LENMAX + (17729665318912 + APCK.resx_bytes ASAN0 + BUDGET) + (23 + Pm8ArtInv.KMAX) * (Pm8ArtInv.LENMAX + 4095) <= AsanCeil.alloc_ceiling.
+  Proof. rewrite resx0. unfold Pm8ArtInv.KMAX, Pm8ArtInv.LENMAX, AsanCeil.bottomup_floor, AsanCeil.alloc_ceiling. lia. Qed.
+  Lemma mp_gap_h : forall b h, (h < 2)%nat ->
+    AsanCeil.bottomup_floor + Pm8ArtInv.LENMAX + (APK.a_totsz (HSA b h) + BUDGET)
+    + (Z.of_nat (length (segments_reserved ASEGS0) + APK.n_resx ASAN0 + length (APK.a_maps (HSA b h))) + Pm8ArtInv.KMAX) * (Pm8ArtInv.LENMAX + 4095) <= AsanCeil.alloc_ceiling.
   Proof.
-    intros h Hh. destruct (HSA_numbers h Hh) as (N1 & N2 & N3 & N4). rewrite N4, asan0_res_eq. cbn [length Nat.add]. change (Z.of_nat 21) with 21.
+    intros b h Hh. destruct (HSA_numbers b h Hh) as (N1 & N2 & N3 & N4). rewrite resx0 in N1. rewrite N4, asan0_res_eq. cbn [length Nat.add APK.n_resx ASAN0]. change (Z.of_nat 23) with 23.
     unfold Pm8ArtInv.KMAX, Pm8ArtInv.LENMAX, AsanCeil.bottomup_floor, AsanCeil.alloc_ceiling. lia.
   Qed.
 
-  Lemma HSA_pc : forall h, (h < 2)%nat -> APK.pc (HSA h) = 0xaece4.
-  Proof. intros [|[|h]] H; [reflexivity | reflexivity | lia]. Qed.
+  (* [clear - H] before [lia]: the Section holds [apc : N] and [Hapc : Z.of_N apc = ..], and
+     [lia]'s N-to-Z step takes [apc] into the proof term even where the certificate never
+     reads it, so without the [clear] the closed lemma takes [apc] as a first argument and a
+     caller's [HSA_pc B h Hh2] puts [B] on [apc] (as fuzz_json_encoder's Pm4MainPhaseA).
+     The statement names no Section variable; [using] keeps it so. *)
+  #[using="Type"] Lemma HSA_pc : forall b h, (h < 2)%nat -> APK.pc (HSA b h) = 0xaece4.
+  Proof. intros [|] [|[|h]] H; first [clear - H; lia | reflexivity]. Qed.
 
-  Theorem as0_main_phase : APSK.holes_stmt ASEGS0 scfg ASAN0 AsanInitK.LIMIT HS_as0 SINV argH (HOLES (fun fs' => spec argv fs')) fs.
+  (* STATEMENT CHANGED, old beside new: the hand-off table is the run's flag's.
+       OLD  holes_stmt .. HS_as0 SINV argH (HOLES ..) fs
+       NEW  holes_stmt .. (HS_as0 B) SINV argH (HOLES ..) fs   -- Pm8StartupFinalK's [HS_sound].
+     Proof: as before, except that every other file's Section lemma is reached by
+     [eapply ..; eassumption], the per-state facts are posed first so [eassumption] finds
+     them, and argv[k]'s pointer is CatExec's [cat_argv_ptr (ed_top rdraw) ..] throughout
+     (the old [PE]/[UP0] closed forms are false at the revision and are gone). *)
+  Theorem as0_main_phase : APSK.holes_stmt ASEGS0 scfg ASAN0 AsanInitK.LIMIT (HS_as0 B) SINV argH (HOLES (fun fs' => spec argv fs')) fs.
   Proof.
     intros h ch Hh E R FULL model HC.
-    assert (Hh2 : (h < 2)%nat) by (destruct h as [|[|h]]; [lia | lia | discriminate Hh]).
-    rewrite (HSA_some h Hh2) in Hh. injection Hh as <-.
-    assert (EFS : m_fs model = fs).
-    { exact (proj2 (ent_model sp brk0 rdraw argv envp uid hw fs (HSA h) (drv_chk_HSA h Hh2) E R FULL model HC)). }
+    assert (Hh2 : (h < 2)%nat).
+    { destruct (Nat.lt_ge_cases h 2) as [Hlt|Hge]; [exact Hlt|]. rewrite (HSA_none B h Hge) in Hh. discriminate Hh. }
+    rewrite (HSA_some B h Hh2) in Hh. injection Hh as <-.
+    pose proof (as0_chk_HSA B h Hh2) as C0. pose proof (drv_chk_HSA B h Hh2) as CD.
+    pose proof (stk_chk_HSA B h Hh2) as CS. pose proof (lib_chk_HSA B h Hh2) as CL.
+    pose proof mp_bud as MB. pose proof mp_gap as MG. pose proof (mp_gap_h B h Hh2) as MGH.
+    assert (EFS : m_fs model = fs) by (eapply ent_model; eassumption).
     unfold HOLES. rewrite EFS.
-    destruct (Nat.eq_dec (length argv) 2) as [Hargc|Hargc]; [|exact (USAGE sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit Hvfs h Hh2 E R FULL model HC Hargc)].
+    destruct (Nat.eq_dec (length argv) 2) as [Hargc|Hargc]; [|eapply USAGE; eassumption].
     destruct argv as [|a0s [|path [|x l]]] eqn:Hargv; try discriminate Hargc. clear Hargc.
 
-    set (cs := HSA h). set (rn := as0_rn E cs). set (ar := as0_ar E cs).
-    set (MAPS0 := vm_maps (m_vmmaps model)). set (RESV0 := segments_reserved ASEGS0). set (NOACC0 := vm_noaccess (m_vmmaps model)).
-    pose proof (as0_art_handoff_h sp brk0 rdraw [a0s; path] envp uid hw fs Hsp Hva Hve Hfit BUDGET BUD_ge BUD_hi h Hh2 E R FULL model HC) as HT.
-    pose proof (as0_handoff_static sp brk0 rdraw [a0s; path] envp uid hw fs BUDGET Pm8ArtInv.LENMAX Pm8ArtInv.KMAX mp_bud mp_gap h Hh2 E R FULL model HC) as BS.
-    rewrite (as0_RES_art h Hh2 E) in BS. fold cs rn in BS.
-    pose proof (sp0_val sp brk0 rdraw [a0s; path] envp uid hw fs Hsp Hva Hve Hfit BUDGET Pm8ArtInv.LENMAX Pm8ArtInv.KMAX (HSA h) (drv_chk_HSA h Hh2) (mp_gap_h h Hh2)
-                  E R FULL model HC) as SPV.
+    set (cs := HSA B h). set (rn := as0_rn E cs). set (ar := as0_ar E cs).
+    set (MAPS0 := vm_maps (m_vmmaps model)). set (RESV0 := vm_reserved (m_vmmaps model)). set (NOACC0 := vm_noaccess (m_vmmaps model)).
+    assert (HT : art_handoff_target art_fsg MAPS0 RESV0 NOACC0 (as0_BASEx cs E) BUDGET art_fsinv rn art_fsg0 K0D 8192 (2 ^ 34)
+                   (as0_A0x cs E) FULL (vml_of model))
+      by (eapply as0_art_handoff_h; eassumption).
+    assert (BS : bridge_static ASEGS0 MAPS0 RESV0 NOACC0 (as0_RES E) (APSK.uE E APK.e_sp0 - 8388608) BUDGET Pm8ArtInv.LENMAX Pm8ArtInv.KMAX)
+      by (eapply as0_handoff_static; eassumption).
+    rewrite (as0_RES_art B h Hh2 E) in BS. fold cs rn in BS.
+    assert (SPV : APSK.uE E APK.e_sp0 = usp) by (eapply sp0_val; eassumption).
     pose proof HT as (REP & _ & _ & _ & CLI & _). destruct REP as (ROK & _).
     assert (HIok : asan_iface_ok L ar C scfg (HIA BUDGET MAPS0 RESV0 NOACC0 (as0_BASEx cs E) rn)).
     { apply (INST_OK MAPS0 RESV0 NOACC0 (as0_BASEx cs E) rn); [exact BS | exact ROK | reflexivity | reflexivity | reflexivity | reflexivity]. }
@@ -204,54 +268,52 @@ Section MainPhase.
     pose proof (as0_EXTRA_wf cs E) as XWF.
     assert (XBL : 16515072 + 2461464064 + A_bytes (as0_EXTRA cs E) + BUDGET <= AsanInitK.LIMIT).
     { unfold as0_EXTRA. cbn [A_bytes fst snd]. unfold AsanInitK.LIMIT, target_alloc_limit. lia. }
-    destruct (as0_main_entry sp brk0 rdraw a0s path envp uid hw fs Hsp Hva Hve Hfit BUDGET Pm8ArtInv.LENMAX Pm8ArtInv.KMAX mp_bud (as0_EXTRA cs E) XWF XBL mp_gap
-                h Hh2 E R FULL model HC) as (can & tid & HR & HK & LZ & FDS & _ & STR).
-    destruct (as0_main_auxv sp brk0 rdraw a0s path envp uid hw fs Hsp Hva Hve Hfit BUDGET Pm8ArtInv.LENMAX Pm8ArtInv.KMAX mp_bud (as0_EXTRA cs E) XBL mp_gap
-                h Hh2 E R FULL model HC) as (uidz & rnd & hwz & AUXW & AUXU & AUXH & AUXR1 & AUXR2).
+    edestruct as0_main_entry as (can & tid & HR & HK & LZ & FDS & _ & STR); [eassumption .. |].
+    (* DROPPED, old beside new: [destruct (as0_main_auxv ..) as (uidz & rnd & hwz & AUXW & ..)] --
+       the ten-pair auxv fact is false at LPS 75d69e00 and no consumer reads it (option D). *)
     destruct LZ as (_ & _ & _ & MI & HALT).
+    (* [CLI] is stated over the [set] variables [rn]/[cs], which [cbn] cannot unfold: without
+       this the [cbn] below leaves [S1..S5] at [ar_stack_top (rn_ar rn)] while [SDEF]'s goals
+       are computed down to [uE E (topE ..)], so [rewrite S5] matches no subterm.  Main's
+       [pose proof (as0_art_handoff_h ..)] gave these facts in the unfolded form. *)
+    unfold rn, cs in CLI.
     destruct CLI as (_ & _ & _ & _ & S1 & S2 & S3 & S4 & S5 & _).
     cbn [as0_rn rn_ar as0_ar ar_stack_top ar_stack_bottom ar_sptop] in S1, S2, S3, S4, S5.
     assert (SDEF : defined FULL usp (ar_stack_top ar - usp)).
-    { apply (as0_main_stack_defined sp brk0 rdraw a0s path envp uid hw fs Hsp Hva Hve Hfit BUDGET Pm8ArtInv.LENMAX Pm8ArtInv.KMAX mp_bud (as0_EXTRA cs E) XBL mp_gap
-               h Hh2 E R FULL model HC); unfold ar, cs; cbn [as0_ar ar_stack_top]; rewrite SPV in *.
+    { eapply as0_main_stack_defined; [eassumption .. | |]; unfold ar, cs; cbn [as0_ar ar_stack_top]; rewrite SPV in *.
       - rewrite S5. rewrite <- Z.add_mod_idemp_l by lia. rewrite S3. reflexivity.
       - lia. }
     assert (DI : dinv ar HI sp FULL [] [] (8192, 2 ^ 34) (as0_A0x cs E) FULL model).
-    { apply DINV; [exact RI | exact MI | exact HALT | reflexivity | | |].
-      intros x Hx. apply (as0_stksh_main sp brk0 rdraw [a0s; path] envp uid hw fs Hsp Hva Hve Hfit h Hh2 E R FULL model HC).     unfold STKTOP, ar, cs in Hx. cbn [as0_ar ar_sptop ar_stack_top] in Hx. rewrite SPV in Hx. exact Hx.
-      intros x Hx. apply (as0_stksh_main_hi sp brk0 rdraw [a0s; path] envp uid hw fs Hsp Hva Hve Hfit h Hh2 E R FULL model HC). unfold ahl_ceil, ar, cs in Hx. cbn [as0_ar ar_sptop] in Hx. rewrite SPV in Hx. exact Hx.
-      intros b []. }
-    destruct (STR 1%nat ltac:(lia)) as (STR1 & PV1 & PH1). cbn [nth] in STR1, PH1. unfold total_arg_bytes_nat in PV1. cbn [firstn fold_right] in PV1.
-    assert (HB : 0 <= Z.of_nat (length envp) <= 256 /\ 0 <= Z.of_nat (length a0s) <= 131071).
-    { pose proof Hve as [Hle _]. pose proof Hva as (_ & _ & Hfa & _). inversion Hfa as [|x l Hx _]; subst. lia. }
-    assert (SR : 0x7fff80000000 <= usp <= 2 ^ 47) by (destruct Hsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
-    assert (PE : Z_to_bv 64 (usp + 8 * Z.of_nat (length envp) + Z.of_nat (length a0s) + 201) = cat_argv_ptr sp [a0s; path] envp 1).
-    { apply bv_eq. rewrite PV1, Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64). rewrite Z.mod_small by lia. lia. }
-    unfold APSK.cfg_of, cs. rewrite (HSA_pc h Hh2). fold cs.
-    destruct (STR 0%nat ltac:(lia)) as (_ & PV0 & PH0). cbn [nth] in PH0. unfold total_arg_bytes_nat in PV0. cbn [firstn fold_right] in PV0.
-    assert (SA16 : usp mod 16 = 0) by (destruct Hsp as (_ & _ & H3); exact H3).
-    assert (UP0 : bv_unsigned (Z_to_bv 64 (usp + 8 * Z.of_nat (length envp) + 200)) = usp + 8 * Z.of_nat (length envp) + 200) by (rewrite Z_to_bv_unsigned; unfold bv_wrap; change (bv_modulus 64) with (2 ^ 64); apply Z.mod_small; lia).
-    refine (DRV_MAIN Halloc Hfs DRV_CONSTS sp a0s path envp fs Hsp Hva Hve Hvfs ar HI _ _ can tid (as0_A0x cs E) (8192, 2 ^ 34) R FULL model HIok FNok ICok LIok DL HR HK _ DI SDEF FDS EFS _ _ eq_refl _ _).
-    - exists uidz, rnd, hwz. rewrite UP0.
-      split; [intros j Hj; replace (usp + 8 * Z.of_nat (length envp) + 200 - 160 + 8 * Z.of_nat j) with (usp + 8 * Z.of_nat (length envp) + 40 + 8 * Z.of_nat j) by ring; exact (AUXW j Hj)|].
-      repeat split; try lia.
-      pose proof (Z.div_mod usp 16 ltac:(lia)) as DM. rewrite SA16 in DM.
-      replace (usp + 8 * Z.of_nat (length envp) + 200) with ((2 * (usp / 16) + Z.of_nat (length envp) + 25) * 8) by lia. apply Z.mod_mul. lia.
-    - rewrite PE. exact STR1.
-    - rewrite PE, PV1. rewrite PV1 in PH1. lia.
-    - rewrite PE. intros i Hi.
-      exact (as0_main_str_defined sp brk0 rdraw a0s path envp uid hw fs Hsp Hva Hve Hfit BUDGET Pm8ArtInv.LENMAX Pm8ArtInv.KMAX mp_bud (as0_EXTRA cs E) XBL mp_gap h Hh2 E R FULL model HC 1%nat ltac:(lia) i Hi).
+    { apply DINV; [exact RI | exact MI | exact HALT | reflexivity | | | | exact (APSK.co_rdr _ _ _ _ _ _ _ _ _ _ _ HC)].
+      - intros x Hx. eapply as0_stksh_main; [eassumption .. |].
+        unfold STKTOP, ar, cs in Hx. cbn [as0_ar ar_sptop ar_stack_top] in Hx. rewrite SPV in Hx. exact Hx.
+      - intros x Hx. eapply as0_stksh_main_hi; [eassumption .. |].
+        unfold ahl_ceil, ar, cs in Hx. cbn [as0_ar ar_sptop] in Hx. rewrite SPV in Hx. exact Hx.
+      - intros b []. }
+    destruct (STR 1%nat ltac:(lia)) as (STR1 & PV1 & PH1). cbn [nth] in STR1, PH1.
+    (* [_], not [B]: [destruct argv .. eqn:Hargv] above put [[a0s; path]] for [argv] in the goal,
+       while [B] still names the Section variable [argv], so a closed [HSA_pc B ..] matches nothing *)
+    unfold APSK.cfg_of, cs. rewrite (HSA_pc _ h Hh2). fold cs.
+    refine (DRV_MAIN Halloc Hfs DRV_CONSTS sp a0s path envp fs Hsp Hva Hve Hvfs ar HI _ _ can tid (as0_A0x cs E) (8192, 2 ^ 34) R FULL model HIok FNok ICok LIok DL HR HK DI SDEF FDS EFS _ _ eq_refl _ _).
+    - exact STR1.
+    - (* argv[1] sits above sp: its offset from sp is [cat_string_off + |argv[0]| + 1 >= 0] *)
+      split; [rewrite PV1; lia | exact PH1].
+    - intros i Hi. eapply as0_main_str_defined; [eassumption .. | |]; first [exact Hi | lia].
     - pose proof HT as (_ & _ & _ & _ & CLI' & _). destruct CLI' as (_ & _ & SAH & _). exact SAH.
   Qed.
 
+  (* STATEMENT CHANGED, old beside new (consumers PmCasanFinal.v:76 / PmCbothFinal.v:76, which
+     call this positionally and must move to the new Section list):
+       OLD  srealizes ASEGS0 scfg (init_config ASEGS0 Asan.M.init_pc APH0 sp brk0 mbase rdraw LIM
+                                    (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0))
+                      (spec argv fs)
+       NEW  srealizes ASEGS0 scfg (init_config ASEGS0 apc APH0 sp brk0 mbase rdraw LIM INP) (spec argv fs),
+            over [apc]/[Hapc] and the input's kernel build and exec name -- Pm8StartupFinalK's
+            [as0_startup_closed] at the revision. *)
   Theorem as0_realizes_spec_run :
-    srealizes ASEGS0 scfg (init_config ASEGS0 Asan.M.init_pc APH0 sp brk0 mbase rdraw AsanInitK.LIMIT
-                                 (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0))
-              (spec argv fs).
+    srealizes ASEGS0 scfg (init_config ASEGS0 apc APH0 sp brk0 mbase rdraw AsanInitK.LIMIT INP) (spec argv fs).
   Proof.
-    apply (as0_startup_closed scfg Halloc sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ifs urnd tmp0
-             Hsp Hbrk Hva Hve Hfit Huid Hhw Hseed (fun fs' => spec argv fs')).
-    - intros fs'. apply spec_has_nil.
-    - exact as0_main_phase.
+    eapply as0_startup_closed with (T := fun fs' => spec argv fs');
+      first [ eassumption | exact as0_main_phase | (intros fs'; apply spec_has_nil) ].
   Qed.
 End MainPhase.

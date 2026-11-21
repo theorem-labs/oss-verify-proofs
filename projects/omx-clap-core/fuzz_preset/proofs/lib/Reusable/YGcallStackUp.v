@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 (* Theorem Labs, 2026-10-29 (c-omx-alloc, engine owner): THE LIVE REAL STACK FROM sp UP TO ly_top IS PRESENT, as a
    function-precondition conjunct carried by the journal (h-rw-pre-7's request: B' `same` keeps its argument in s0
    across a recursive call, and the frame-pointer walk YG00.fpchain reads words at fp - 8 / fp - 16 up to ly_top).
@@ -44,6 +45,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import
 YK11 YI16 YA0n YG00 YG0f YG0n YG0d YM05 YCbq YCbqG.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK14.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YK0h.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
@@ -128,55 +130,57 @@ intros STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k sp1 STK1 HJ.
 exact (astack_up_at_xw STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k [] sp1 STK1 HJ).
 Qed.
 (* SATISFIABILITY WITNESS at the real initial state: astack_up_x holds at LPS's initial machine state, at its own sp
-   register, under the run's layout facts and a world that hides no byte of [usp, ly_top). *)
-Lemma astack_up_init : forall pc ph (sp : word) draw argv envp uid hw (W : world segs) ly,
-  bv_unsigned sp <= sp_window_hi -> ly_top ly mod 4096 = 0 -> ly_top ly <= bv_unsigned sp + 3920 ->
+   register, under the launch fact and a world that hides no byte of [usp, ly_top).
+   LPS 727298f3: the entry image is the kernel's block and runs from sp to [ed_top] (YK11.length_entry_stack_image_launch),
+   so the witness asks ly_top <= ed_top instead of rounding the old, shorter block up to a page. *)
+Lemma astack_up_init : forall pc ph (sp mbase brk : word) draw inp (W : world segs) ly,
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase draw) inp ->
+  ly_top ly <= bv_unsigned (ed_top draw) ->
   (forall a, bv_unsigned sp <= a < ly_top ly -> w_H W (Z_to_bv 64 a) = false) ->
-  spZ (ms_regs (init_machine_state segs pc ph sp draw argv envp uid hw)) = bv_unsigned sp /\
-  astack_up_x ly W (spZ (ms_regs (init_machine_state segs pc ph sp draw argv envp uid hw)))
-    (ms_mem (init_machine_state segs pc ph sp draw argv envp uid hw)).
+  spZ (ms_regs (init_machine_state segs pc ph sp mbase draw inp)) = bv_unsigned sp /\
+  astack_up_x ly W (spZ (ms_regs (init_machine_state segs pc ph sp mbase draw inp)))
+    (ms_mem (init_machine_state segs pc ph sp mbase draw inp)).
 Proof.
-intros pc ph sp draw argv envp uid hw W ly Hsp Hal Htop Hhid.
-assert (Esp : spZ (ms_regs (init_machine_state segs pc ph sp draw argv envp uid hw)) = bv_unsigned sp).
+intros pc ph sp mbase brk draw inp W ly Hlau Htop Hhid.
+assert (Esp : spZ (ms_regs (init_machine_state segs pc ph sp mbase draw inp)) = bv_unsigned sp).
 { rewrite init_mkst. cbn [ms_regs mkst]. unfold spZ. rewrite getr_same by reg_neq_tac. reflexivity. }
 split; [exact Esp|]. rewrite Esp. intros a Ha. split; [exact (Hhid a Ha)|].
 pose proof (u64_range sp) as Rsp.
-pose proof (entry_stack_image_top ph sp argv envp uid hw draw) as Himg.
-assert (Hlen : ly_top ly <= bv_unsigned sp + Z.of_nat (length (entry_stack_image ph sp argv envp uid hw draw))).
-{ rewrite Himg. unfold entry_page_top, entry_block_top, page_round_up_Z, page_size.
-  set (x := bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw draw)) + 4096 - 1).
-  assert (Hx : bv_unsigned sp + 4095 <= x) by (unfold x; lia).
-  pose proof (Z.div_mod x 4096 ltac:(lia)) as D. pose proof (Z.mod_pos_bound x 4096 ltac:(lia)) as P.
-  pose proof (Z.div_mod (ly_top ly) 4096 ltac:(lia)) as DT. rewrite Hal, Z.add_0_r in DT. lia. }
+pose proof (length_entry_stack_image_launch Sv48 inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp brk draw Hlau) as Hlen.
+pose proof (entry_page_top_within_window Sv48 inp mbase sp brk draw Hlau) as Hwin.
+unfold entry_page_top in Hwin. cbn [va_stack_top] in Hwin.
 assert (Hu : bv_unsigned (Z_to_bv 64 a) = a).
-{ rewrite Z_to_bv_unsigned, bv_wrap_small; [reflexivity|]. unfold bv_modulus; cbn. unfold sp_window_hi in Hsp. lia. }
-unfold init_machine_state. cbn [ms_mem]. cbv beta zeta. unfold stack_to_mem. cbv beta zeta. rewrite Hu.
+{ rewrite Z_to_bv_unsigned, bv_wrap_small; [reflexivity|]. unfold bv_modulus; cbn. unfold sp_window_hi in Hwin. lia. }
+rewrite init_mkst. cbn [ms_mem mkst]. unfold wrap_mem, stack_to_mem. cbv beta zeta. rewrite Hu.
 destruct (Z.leb_spec (bv_unsigned sp) a) as [L1|L1]; [|lia].
 destruct (Z.ltb_spec (a - bv_unsigned sp)
-  (Z.of_nat (length (entry_stack_image ph sp argv envp uid hw draw)))) as [L2|L2]; [|lia].
-destruct (nth_error (entry_stack_image ph sp argv envp uid hw draw) (Z.to_nat (a - bv_unsigned sp))) as [b|] eqn:E.
+  (Z.of_nat (length (entry_stack_image inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw)))) as [L2|L2]; [|lia].
+destruct (nth_error (entry_stack_image inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw) (Z.to_nat (a - bv_unsigned sp)))
+  as [b|] eqn:E.
 - exists b. reflexivity.
 - exfalso. apply nth_error_None in E. apply Nat2Z.inj_le in E. rewrite Z2Nat.id in E by lia. lia.
 Qed.
 End u.
 
 (* NEGATIVE CONTROL: the zone-presence law `ly_stk_lo ly <= a < ly_stk_hi ly -> apresent ..` is FALSE. *)
-(* LPS's initial memory (Run.init_machine_state): a byte below the zero window [sp - stack_max_size, sp) or at or above
+(* LPS's initial memory (Run.init_machine_state): a byte below the zero window [stack_window_lo, sp) or at or above
    the top of the entry image is absent. *)
-Lemma lps_init_mem_none : forall segs pc ph (sp : word) draw argv envp uid hw (addr : word),
-  (bv_unsigned addr < bv_unsigned sp - stack_max_size \/
-   bv_unsigned sp + Z.of_nat (length (entry_stack_image ph sp argv envp uid hw draw)) <= bv_unsigned addr) ->
-  ms_mem (init_machine_state segs pc ph sp draw argv envp uid hw) addr = None.
+Lemma lps_init_mem_none : forall segs pc ph (sp mbase : word) draw inp (addr : word),
+  (bv_unsigned addr < Z.min (stack_window_lo (in_kernel inp) mbase draw) (bv_unsigned sp) \/
+   bv_unsigned sp + Z.of_nat (length (entry_stack_image inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw))
+     <= bv_unsigned addr) ->
+  ms_mem (init_machine_state segs pc ph sp mbase draw inp) addr = None.
 Proof.
-intros segs pc ph sp draw argv envp uid hw addr H.
-unfold init_machine_state. cbn [ms_mem]. cbv beta zeta. unfold stack_to_mem.
-pose proof stack_max_size_val as SM.
+intros segs pc ph sp mbase draw inp addr H.
+rewrite init_mkst. cbn [ms_mem mkst]. unfold wrap_mem, stack_to_mem. cbv beta zeta.
+pose proof (Z.le_min_l (stack_window_lo (in_kernel inp) mbase draw) (bv_unsigned sp)) as M1.
+pose proof (Z.le_min_r (stack_window_lo (in_kernel inp) mbase draw) (bv_unsigned sp)) as M2.
 destruct (Z.leb_spec (bv_unsigned sp) (bv_unsigned addr)) as [L1|L1].
 - destruct (Z.ltb_spec (bv_unsigned addr - bv_unsigned sp)
-    (Z.of_nat (length (entry_stack_image ph sp argv envp uid hw draw)))) as [L2|L2]; [lia|].
-  destruct (Z.leb_spec (bv_unsigned sp - stack_max_size) (bv_unsigned addr));
+    (Z.of_nat (length (entry_stack_image inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw)))) as [L2|L2]; [lia|].
+  destruct (Z.leb_spec (stack_window_lo (in_kernel inp) mbase draw) (bv_unsigned addr));
   destruct (Z.ltb_spec (bv_unsigned addr) (bv_unsigned sp)); cbn; try reflexivity; lia.
-- destruct (Z.leb_spec (bv_unsigned sp - stack_max_size) (bv_unsigned addr));
+- destruct (Z.leb_spec (stack_window_lo (in_kernel inp) mbase draw) (bv_unsigned addr));
   destruct (Z.ltb_spec (bv_unsigned addr) (bv_unsigned sp)); cbn; try reflexivity; lia.
 Qed.
 Section n. Context {rc : YM05.RunCeil}.
@@ -198,42 +202,51 @@ unfold kHighMemEnd, sp_window_lo, sp_window_hi in *. lia.
 Qed.
 (* THE NEGATIVE CONTROL: at the start draw usp = sp_window_lo + 16, at the run's zone, zone presence fails at LPS's
    initial memory, for every hidden set H *)
-Lemma stack_zone_presence_false : forall segs pc ph (sp : word) draw argv envp uid hw ly (H : word -> bool),
+Lemma stack_zone_presence_false : forall segs pc ph (sp mbase brk : word) draw inp ly (H : word -> bool),
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase draw) inp ->
   bv_unsigned sp = sp_window_lo + 16 ->
   ly_stk_lo ly = ASAN_CEIL -> ly_stk_hi ly = kHighMemEnd -> ceil_of_top (bv_unsigned sp - stack_max_size) ->
   ~ (forall a, ly_stk_lo ly <= a < ly_stk_hi ly ->
-       apresent H (ms_mem (init_machine_state segs pc ph sp draw argv envp uid hw)) a).
+       apresent H (ms_mem (init_machine_state segs pc ph sp mbase draw inp)) a).
 Proof.
-intros segs pc ph sp draw argv envp uid hw ly H Esp Elo Ehi CT Hall.
+intros segs pc ph sp mbase brk draw inp ly H Hlau Esp Elo Ehi CT Hall.
 pose proof stack_max_size_val as SM.
+pose proof (YK0h.launch_sp_le_ed_top Sv48 inp mbase sp brk draw Hlau) as Htop.
+pose proof (Z.le_max_l (bv_unsigned (ed_top draw) - stack_max_size)
+  (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
 assert (R : ly_stk_lo ly <= bv_unsigned sp - stack_max_size - 1 < ly_stk_hi ly).
 { apply (stk_zone_low_gap (bv_unsigned sp) ly Elo Ehi CT).
   - rewrite Esp. unfold sp_window_lo, sp_window_hi. lia.
   - rewrite Esp. intros E. vm_compute in E. discriminate E. }
 destruct (Hall _ R) as [_ [b Hb]].
 rewrite lps_init_mem_none in Hb; [discriminate Hb|].
-left. rewrite Z_to_bv_unsigned, bv_wrap_small; [lia|].
-unfold bv_modulus; cbn. unfold sp_window_lo in *. lia.
+left. rewrite Z_to_bv_unsigned, bv_wrap_small; [|unfold bv_modulus; cbn; unfold sp_window_lo in *; lia].
+unfold stack_window_lo. lia.
 Qed.
 (* both ends of the zone: the byte below usp - 8 MiB and the byte 2^47 - 1 (above an entry image of <= 2^30 bytes) *)
-Lemma F25_counterexample_init : forall segs pc ph (sp : word) draw argv envp uid hw ly,
+Lemma F25_counterexample_init : forall segs pc ph (sp mbase brk : word) draw inp ly,
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase draw) inp ->
   bv_unsigned sp = sp_window_lo + 16 ->
   ly_stk_lo ly = ASAN_CEIL -> ly_stk_hi ly = kHighMemEnd -> ceil_of_top (bv_unsigned sp - stack_max_size) ->
-  Z.of_nat (length (entry_stack_image ph sp argv envp uid hw draw)) <= 2 ^ 30 ->
+  Z.of_nat (length (entry_stack_image inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw)) <= 2 ^ 30 ->
   (ly_stk_lo ly <= bv_unsigned sp - stack_max_size - 1 < ly_stk_hi ly /\
-   ms_mem (init_machine_state segs pc ph sp draw argv envp uid hw) (Z_to_bv 64 (bv_unsigned sp - stack_max_size - 1)) = None) /\
+   ms_mem (init_machine_state segs pc ph sp mbase draw inp) (Z_to_bv 64 (bv_unsigned sp - stack_max_size - 1)) = None) /\
   (ly_stk_lo ly <= kHighMemEnd - 1 < ly_stk_hi ly /\
-   ms_mem (init_machine_state segs pc ph sp draw argv envp uid hw) (Z_to_bv 64 (kHighMemEnd - 1)) = None).
+   ms_mem (init_machine_state segs pc ph sp mbase draw inp) (Z_to_bv 64 (kHighMemEnd - 1)) = None).
 Proof.
-intros segs pc ph sp draw argv envp uid hw ly Esp Elo Ehi CT Hlen.
+intros segs pc ph sp mbase brk draw inp ly Hlau Esp Elo Ehi CT Hlen.
 pose proof stack_max_size_val as SM.
+pose proof (YK0h.launch_sp_le_ed_top Sv48 inp mbase sp brk draw Hlau) as Htop.
+pose proof (Z.le_max_l (bv_unsigned (ed_top draw) - stack_max_size)
+  (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
 split.
 - split.
   + apply (stk_zone_low_gap (bv_unsigned sp) ly Elo Ehi CT).
     * rewrite Esp. unfold sp_window_lo, sp_window_hi. lia.
     * rewrite Esp. intros E. vm_compute in E. discriminate E.
-  + apply lps_init_mem_none. left. rewrite Z_to_bv_unsigned, bv_wrap_small; [lia|].
-    unfold bv_modulus; cbn. unfold sp_window_lo in *. lia.
+  + apply lps_init_mem_none. left. rewrite Z_to_bv_unsigned, bv_wrap_small;
+      [|unfold bv_modulus; cbn; unfold sp_window_lo in *; lia].
+    unfold stack_window_lo. lia.
 - split.
   + rewrite Elo, Ehi. unfold ASAN_CEIL. pose proof (@alloc_ceiling_val rc) as [[_ CM] _]. unfold kHighMemEnd. lia.
   + apply lps_init_mem_none. right. rewrite Z_to_bv_unsigned, bv_wrap_small.

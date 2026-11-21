@@ -1,27 +1,28 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths changed; 142 of its 194 lines of code are new or changed and 691 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: moved from image B (fuzz_preset.asan-ubsan f8f98a95), commit 3244f5c71f6, to the #102 pin B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5): 2 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, commit d99acc3edd9, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-B-why.tsv). *)
-(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan-ubsan (image B, f8f98a95) from commit 3e35620c52e proofs/omx-clap-core/fuzz_manifest/lib/A/RT_mem_bz.v: module paths (lib/A/RT_mem_bz.v -> lib/AU/PSnpL3/RT_mem_bz.v; lib/A/{Spec,Strw,Ox} -> preset's own lib/... (byte-identical modulo module paths, reused)) and the address numerals by alreloc (sha256 c4338d099cfb8025, commit d99acc3edd97, --build asan-ubsan --from-build asan), each by symbol + offset in both images (per-numeral report: the relocation record, B-run). *)
+(* Modified by Theorem Labs, 2026-10: moved from image B (fuzz_preset.asan-ubsan f8f98a95), to the #102 pin B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5): 2 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-B-why.tsv). *)
+(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan-ubsan (image B, f8f98a95) from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_mem_bz.v: module paths (lib/A/RT_mem_bz.v -> lib/AU/PSnpL3/RT_mem_bz.v; lib/A/{Spec,Strw,Ox} -> preset's own lib/... (byte-identical modulo module paths, reused)) and the address numerals by alreloc (sha256 c4338d099cfb8025, --build asan-ubsan --from-build asan), each by symbol + offset in both images (per-numeral report: the relocation record, B-run). *)
 (* GXA's memcpy and memset call contracts need the musl bodies' walks in the Bz tree's words: I_amemcpy.v's
    memcpy_stmt (musl memcpy, 0x9bb04) and F_memset.v's memset_callZ_stmt (musl memset, 0x9bf08).  The bodies are proved
    in lib/Lib's words by the libc walks lib/A/Prog/memcpy.v (memcpy_holds), memcpy_same.v (memcpy_same_holds) and
    memset.v (memset_holds, from lib/A/R_memset.v memset_spec); this file moves them across, exactly as the donor does.
 
-   This file proves no new function.  Every lemma is copied unchanged from commit 445e498a469
-   proofs/omx-clap-core/fuzz_manifest/lib (itself ported unchanged from commit affce6489c8):
+   This file proves no new function.  Every lemma is copied unchanged
+   proofs/omx-clap-core/fuzz_manifest/lib (itself ported unchanged):
      lib/A/BzBridge.v:41-64       seg_tops_below, rsegs_below_task, find_segment_below, seg_addr_below
      lib/A/BzCallBridge.v:18-148  msteps_bz .. rw_cells_CB0_ours, memset_callZ_of_contract (:110)
      lib/A/Prog/asan_memcpy.v:36-108  msteps_to_bz, evt_to_bz, bytes_at_same, mc_post, mc_proof (:88)
    (BzCallBridge.v's ro_c8/c1/c4_to_bz, bytes_at_cat8 and m2s_cells_normalize are left out: none of the lemmas below
    uses them, and m2s_cells_normalize rests on AsanRT.v's asan_cells.)  The file layout, the selection and
-   ms_callZ_proof follow the fuzz_reply port's twin, commit 86b50358d34
+   ms_callZ_proof follow the fuzz_reply port's twin,
    proofs/plugin-hostd/fuzz_reply/lib/A/RT_mem_bz.v.
    The donor files themselves are not copied: BzBridge.v, BzCallBridge.v and asan_memcpy.v import AsanRT.v (the
    asan_cells record of the donor's own call forms; asan_memcpy.v also AsanRTFacts.v) and MemNorm.v, which none of the
    lemmas below uses.
    No address numeral occurs here. *)
-(* Modified by Theorem Labs, 2026-10: the lemmas of commit 445e498a469 proofs/omx-clap-core/fuzz_manifest/lib/A/{BzBridge.v:41-64, BzCallBridge.v:18-148, Prog/asan_memcpy.v:36-108} copied unchanged into one file without their AsanRT.v / AsanRTFacts.v / MemNorm.v imports, in the layout of commit 86b50358d34 proofs/plugin-hostd/fuzz_reply/lib/A/RT_mem_bz.v (module path fuzz_reply -> fuzz_manifest). *)
+(* Modified by Theorem Labs, 2026-10: the lemmas proofs/omx-clap-core/fuzz_manifest/lib/A/{BzBridge.v:41-64, BzCallBridge.v:18-148, Prog/asan_memcpy.v:36-108} copied unchanged into one file without their AsanRT.v / AsanRTFacts.v / MemNorm.v imports, in the layout of proofs/plugin-hostd/fuzz_reply/lib/A/RT_mem_bz.v (module path fuzz_reply -> fuzz_manifest). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step.

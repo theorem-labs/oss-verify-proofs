@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed interp_grows, step_grows. *)
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -16,7 +17,7 @@ Lemma interp_grows segs : forall t m rep, interp_eff_accesses segs t m = Machine
 Proof.
   induction t; intros m rep Hi; cbn in Hi; try discriminate.
   - injection Hi; intros <-. cbn. apply mem_grows_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|lazymatch type of Hi with context [if ?b then _ else _] => destruct b end; discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep'| |] eqn:E; try discriminate.
     injection Hi; intros <-. cbn. eapply (H _ m rep'). exact E.
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -45,7 +46,13 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { destruct (decode_exec_accesses segs ms w) as [rep| |] eqn:E; try discriminate. injection H; intros <-. eapply decode_exec_grows; eassumption. }
   destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) as [st'| |] eqn:E; try discriminate.
-  exfalso. unfold fetch_failure in E. destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+  exfalso. unfold fetch_failure in E.
+  (* #38 gave fetch_failure a LEADING vdso_text_at arm.  The two destructs below cannot absorb
+     it: neither [negb _] nor [_ || _] unifies with [vdso_text_at _ _], so the first
+     [discriminate] would meet a goal that is still an if-match.  Donor, THIS TREE, same class,
+     already repaired: Mh_0036.v:3905-3910. *)
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
+  destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
 Qed.
 
 Lemma msteps_grows segs ms ms' : msteps segs ms ms' -> mem_grows (ms_mem ms) (ms_mem ms').

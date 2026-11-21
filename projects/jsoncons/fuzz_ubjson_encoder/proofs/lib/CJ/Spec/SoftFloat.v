@@ -1,77 +1,68 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs replaced by tactic proofs. *)
 From Stdlib Require Import ZArith Bool List Lia.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require KReplay.
-Ltac2 kr_t_SoftFloat () := "K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1Z02K47Corelib4Init9Datatypes4list01I47Corelib4Init9Datatypes4list00K46Stdlib9micromega6VarMap1t01I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega=RingMicromega7Formula01K46Stdlib9micromega5Tauto8GFormula04C46Stdlib9micromega5Tauto8BFormulaK47Corelib4Init5Logic2eq01C46Stdlib9micromega:ZMicromega=ZTautoCheckerI47Corelib4Init5Logic2eq00C46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundC56Stdlib6ZArith6BinInt1Z2leC56Stdlib6ZArith6BinInt1Z9land_onesc99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat6wrap64C13~~~C56Stdlib6ZArith6BinInt1Z3powC56Stdlib6ZArith6BinInt1Z6moduloI47Corelib7Numbers7BinNums1Z00K47Corelib7Numbers7BinNums8positive03I46Stdlib9micromega:ZMicromega;ZArithProof00C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib7Numbers7BinNums1Z01K46Stdlib9micromega=RingMicromega3Op203K47Corelib4Init9Datatypes4unit01I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01C56Stdlib6ZArith6BinInt1Z2ltI47Corelib4Init5Logic3and00C56Stdlib6ZArith6BinInt1Z>pow_pos_nonnegC56Stdlib6ZArith6BinInt1Z:pow_nonnegK47Corelib7Numbers7BinNums1N02K46Stdlib9micromega7EnvRing5PExpr07C56Stdlib6ZArith6BinInt1Z=mod_pos_boundc99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat:wrap64_modC13~~~C47Corelib4Init5Logic8eq_ind_rI47Corelib4Init5Logic4True00K46Stdlib9micromega=RingMicromega3Op205c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat9f128_of_dC13~~~K47Corelib7Numbers7BinNums8positive01c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat9f128_to_dC13~~~K47Corelib7Numbers7BinNums1Z03c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat7f128_leC13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat7f128_geC13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat;f128_to_u32C13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat=fixunstfsi_a0C13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat;f128_of_u32C13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat;f128_of_i32C13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat8f128_mulC13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat8f128_addC13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat8f128_subC13~~~c99OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib2CJ4Spec9SoftFloat8f128_divC13~~~".
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-Definition ONES64 : Z := 0xffffffffffffffff.                (* [comment removed for export] *)
-Definition M32    : Z := 0xffffffff.                        (* [comment removed for export] *)
-Definition M128   : Z := 0x100000000000000000000000000000000. (* [comment removed for export] *)
-Definition SIGN64 : Z := 0x8000000000000000.                (* [comment removed for export] *)
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
+Definition ONES64 : Z := 0xffffffffffffffff.
+Definition M32    : Z := 0xffffffff.
+Definition M128   : Z := 0x100000000000000000000000000000000.
+Definition SIGN64 : Z := 0x8000000000000000.
 
-(* [comment removed for export] *)
 Definition wrap64 (x : Z) : Z := Z.land x ONES64.
 Lemma wrap64_mod : forall x, wrap64 x = x mod 2^64.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "h07__arithh14__ffh28__varmaph35__with41xp;1p;2p;4p;7p;3g0000j10Tg000Uj11Tg0013j15Tg001Sj14Tg0023j1DTg002Qj1<Tg002oj1;Tg003Zj22Tg004=j46Tg004hj77Tg005Lj28Tg005nj29Tg006Hj2:Tg0074j33Tg007Nj3CTg007mj4BTg008_j2=Tg009;j3>Tg009^j1?Tg00;1j2@Tg00;Nj2ATg00;nR0f0R1g00<L#0R2#0#0#0#0#0#1R3g00=1R4#5%44%D0%<0%;0R4g00=]g00><R5P5g00>\R5P0g00?<R6,20g00?Z1203C6g00@AF71845P1f2R5g00@aR4g00AAR7'91:15=347df19C06CBb1b2b31=63P1b03>%?1%12/@3,A1530eW4o"). Qed.
+Proof. intro x. unfold wrap64. change ONES64 with (Z.ones 64). apply Z.land_ones. lia. Qed.
 Lemma wrap64_range : forall x, 0 <= wrap64 x < 2^64.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "h02Hah17__arithh24__ffh36__sat0h46__sat1h58__varmaph65__with71xh81zp;1p;2p;3p;4p;7p;6g0000j10Tg000Uj13Tg00;1j2<Tg00;Nj25Tg008_j21Tg00Aaj22Tg00B=j2=Tg00BXj2;Tg00C@j3:Tg0013j16Tg001Sj17Tg0023j18Tg002Qj19Tg002oj1LTg003Zj24Tg00Cdj1KTg00DBj3JTg004=j4ITg004hj7>Tg005Lj2?Tg005nj2@Tg006Hj2ATg0074j3BTg007Nj3CTg007mj4DTg00Dej3ETg009^j1FTg00ELj1GTg00Fcj6HTg00;nR0P0f0R1g00<L#0R2#3R3%02#0#0#0#0R2#3R4'<R5'5g00?<R6/111215'=X801;34126311641265R7[[1163R8g00GAR9f1R:9:34UW01165\9^08g00=1R8#6%78%80%90%L0R8g00=]g00><R9P9g00>\R9P01406g00G]1403%K25J0CIg00@AF>1?89P1f2R9g00@aR8g00AAR2'@1A19=B82dAC06:CDb2b5b6P7P1b1b3b49E15%F1%G1EHW7o"). Qed.
+Proof. intro x. rewrite wrap64_mod. apply Z.mod_pos_bound. lia. Qed.
 
-Definition b2z (b : bool) : Z := if b then 1 else 0.       (* [comment removed for export] *)
-Definition lo64 (x : Z) : Z := wrap64 x.                    (* [comment removed for export] *)
-Definition hi64 (x : Z) : Z := wrap64 (Z.shiftr x 64).      (* [comment removed for export] *)
-Definition mk128 (hi lo : Z) : Z := Z.lor (Z.shiftl hi 64) lo.  (* [comment removed for export] *)
-Definition add64 (x y : Z) : Z := wrap64 (x + y).           (* [comment removed for export] *)
-Definition sub64 (x y : Z) : Z := wrap64 (x - y).           (* [comment removed for export] *)
-Definition mul64 (x y : Z) : Z := wrap64 (x * y).           (* [comment removed for export] *)
-Definition mulhu (x y : Z) : Z := Z.shiftr (x * y) 64.      (* [comment removed for export] *)
-Definition shl64 (x n : Z) : Z := wrap64 (Z.shiftl x n).    (* [comment removed for export] *)
-Notation shr64 := Z.shiftr (only parsing).                  (* [comment removed for export] *)
-Definition not64 (x : Z) : Z := Z.lxor x ONES64.            (* [comment removed for export] *)
-Notation u64_of_s := wrap64 (only parsing).                 (* [comment removed for export] *)
-Definition ltu64 (x y : Z) : Z := b2z (x <? y).             (* [comment removed for export] *)
-Definition eqz64 (x : Z) : Z := b2z (x =? 0).               (* [comment removed for export] *)
-Definition nez64 (x : Z) : Z := b2z (negb (x =? 0)).        (* [comment removed for export] *)
-(* [comment removed for export] *)
+Definition b2z (b : bool) : Z := if b then 1 else 0.
+Definition lo64 (x : Z) : Z := wrap64 x.
+Definition hi64 (x : Z) : Z := wrap64 (Z.shiftr x 64).
+Definition mk128 (hi lo : Z) : Z := Z.lor (Z.shiftl hi 64) lo.
+Definition add64 (x y : Z) : Z := wrap64 (x + y).
+Definition sub64 (x y : Z) : Z := wrap64 (x - y).
+Definition mul64 (x y : Z) : Z := wrap64 (x * y).
+Definition mulhu (x y : Z) : Z := Z.shiftr (x * y) 64.
+Definition shl64 (x n : Z) : Z := wrap64 (Z.shiftl x n).
+Notation shr64 := Z.shiftr (only parsing).
+Definition not64 (x : Z) : Z := Z.lxor x ONES64.
+Notation u64_of_s := wrap64 (only parsing).
+Definition ltu64 (x y : Z) : Z := b2z (x <? y).
+Definition eqz64 (x : Z) : Z := b2z (x =? 0).
+Definition nez64 (x : Z) : Z := b2z (negb (x =? 0)).
+
 Definition is_neg64 (x : Z) : bool := negb (Z.shiftr x 63 =? 0).
-(* [comment removed for export] *)
+
 Definition lt_s64 (a b : Z) : bool := (Z.lxor a SIGN64) <? (Z.lxor b SIGN64).
-(* [comment removed for export] *)
+
 Definition sra63 (x : Z) : Z := if is_neg64 x then ONES64 else 0.
 Notation smask64 := sra63 (only parsing).
-(* [comment removed for export] *)
+
 Definition zext32 (x : Z) : Z := Z.land x M32.
 Definition sext32 (x : Z) : Z := sub64 (Z.lxor (Z.land x M32) 0x80000000) 0x80000000.
-(* [comment removed for export] *)
+
 Definition srliw (x k : Z) : Z := sext32 (Z.shiftr (Z.land x M32) k).
 
-(* [comment removed for export] *)
-Definition MASK48      : Z := 0x0000ffffffffffff.  (* [comment removed for export] *)
-Definition MASKLO      : Z := 0xffffffffffffffff.  (* [comment removed for export] *)
+Definition MASK48      : Z := 0x0000ffffffffffff.
+Definition MASKLO      : Z := 0xffffffffffffffff.
 Definition ABS_HI      : Z := 0x7fffffffffffffff.
 Definition INF_HI      : Z := 0x7fff000000000000.
-Definition QUIET_HI    : Z := 0x0000800000000000.  (* [comment removed for export] *)
-Definition QNAN_HI     : Z := 0x7fff800000000000.  (* [comment removed for export] *)
-Definition IMPLICIT_HI : Z := 0x0001000000000000.  (* [comment removed for export] *)
-Definition IMPL3_HI    : Z := 0x0008000000000000.  (* [comment removed for export] *)
-Definition SPEC_K      : Z := 0x8001000000000000.  (* [comment removed for export] *)
-Definition HALF60      : Z := 0x0800000000000000.  (* [comment removed for export] *)
-Definition DQUIET      : Z := 0x0008000000000000.  (* [comment removed for export] *)
-Definition C_HW        : Z := 0x7504f33300000000.  (* [comment removed for export] *)
-Definition X_ADJ       : Z := 0xffffffffffffc999.  (* [comment removed for export] *)
-Definition EXPK        : Z := 0xffffffffffff8001.  (* [comment removed for export] *)
+Definition QUIET_HI    : Z := 0x0000800000000000.
+Definition QNAN_HI     : Z := 0x7fff800000000000.
+Definition IMPLICIT_HI : Z := 0x0001000000000000.
+Definition IMPL3_HI    : Z := 0x0008000000000000.
+Definition SPEC_K      : Z := 0x8001000000000000.
+Definition HALF60      : Z := 0x0800000000000000.
+Definition DQUIET      : Z := 0x0008000000000000.
+Definition C_HW        : Z := 0x7504f33300000000.
+Definition X_ADJ       : Z := 0xffffffffffffc999.
+Definition EXPK        : Z := 0xffffffffffff8001.
 Definition EXPK2       : Z := 0xffffffffffff8002.
 
-(* [comment removed for export] *)
 Definition clz64_mirror (x : Z) : Z :=
   let x1 := Z.lor x  (shr64 x 1) in
   let x2 := Z.lor x1 (shr64 x1 2) in
@@ -86,7 +77,6 @@ Definition clz64_mirror (x : Z) : Z :=
   let c4 := shr64 (mul64 c3 0x0101010101010101) 56 in
   c4.
 
-(* [comment removed for export] *)
 Definition clz32_mirror (r : Z) : Z :=
   let x1 := Z.lor r  (srliw r 1) in
   let x2 := Z.lor x1 (srliw x1 2) in
@@ -100,13 +90,11 @@ Definition clz32_mirror (r : Z) : Z :=
   let c4 := srliw (mul64 c3 0x01010101) 24 in
   c4.
 
-(* [comment removed for export] *)
 Definition clz128_mirror (hi lo : Z) : Z :=
   let hz := b2z (hi =? 0) in
   let word := if hi =? 0 then lo else hi in
   Z.lor (clz64_mirror word) (Z.shiftl hz 6).
 
-(* [comment removed for export] *)
 Definition shl128_mirror (hi lo s : Z) : Z * Z :=
   let n := zext32 s in
   let d := sub64 n 64 in
@@ -116,23 +104,16 @@ Definition shl128_mirror (hi lo s : Z) : Z * Z :=
   let nlo := Z.land (sra63 d) (shl64 lo (Z.land s 63)) in
   (nhi, nlo).
 
-(* [comment removed for export] *)
 Definition norm_denormal (sigHi sigLo : Z) : Z * Z * Z :=
   let clz := clz128_mirror sigHi sigLo in
   let sh := sub64 clz 15 in
   let '(hi, lo) := shl128_mirror sigHi sigLo sh in
   (hi, lo, clz).
 
-(* [comment removed for export] *)
 Definition normalize_mirror (hi lo : Z) : Z * Z * Z :=
   let '(nhi, nlo, clz) := norm_denormal hi lo in
   (nhi, nlo, sub64 16 clz).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition f128_of_d (dbits : Z) : Z :=
   let aRep := lo64 dbits in
   let aExp := shr64 (shl64 aRep 1) 53 in
@@ -162,7 +143,6 @@ Definition f128_of_d (dbits : Z) : Z :=
     let hi := Z.lor (Z.lor (shl64 dstExp 48) sigHi) signHi in
     mk128 hi lo.
 
-(* [comment removed for export] *)
 Definition trunc_round (sig0 roundBits : Z) : Z :=
   if negb (roundBits <? HALF60 + 1) then add64 sig0 1
   else if negb (negb (roundBits =? HALF60)) then add64 (Z.land sig0 1) sig0
@@ -236,7 +216,6 @@ Definition f128_to_d (a : Z) : Z :=
   let bits := Z.lor (Z.lor (shl64 dstExp 52) signHi) dstSigFrac in
   bits.
 
-(* [comment removed for export] *)
 Definition f128_le (a b : Z) : Z :=
   let a_lo := lo64 a in
   let a_hi := hi64 a in
@@ -259,7 +238,6 @@ Definition f128_le (a b : Z) : Z :=
   if isLess then (-1)
   else nez64 (Z.lor (Z.lxor a_lo b_lo) (Z.lxor a_hi b_hi)).
 
-(* [comment removed for export] *)
 Definition f128_ge (a b : Z) : Z :=
   let a_lo := lo64 a in
   let a_hi := hi64 a in
@@ -282,8 +260,6 @@ Definition f128_ge (a b : Z) : Z :=
   if isLess then (-1)
   else nez64 (Z.lor (Z.lxor a_lo b_lo) (Z.lxor a_hi b_hi)).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition fixunstfsi_a2 (a_hi a_lo : Z) : Z :=
   if is_neg64 a_hi then 0
   else
@@ -300,17 +276,13 @@ Definition fixunstfsi_a2 (a_hi a_lo : Z) : Z :=
   if negb (is_neg64 sM64) then shr64 sigHi (Z.land s 63)
   else Z.lor (shr64 a_lo (Z.land sW 63)) (shl64 (shl64 sigHi 1) (Z.land (not64 s) 63)).
 
-(* [comment removed for export] *)
 Definition fixunstfsi_a0 (a : Z) : Z :=
   let a_lo := lo64 a in
   let a_hi := hi64 a in
   sext32 (fixunstfsi_a2 a_hi a_lo).
 
-(* [comment removed for export] *)
 Definition f128_to_u32 (a : Z) : Z := Z.land (fixunstfsi_a0 a) M32.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition f128_of_u32 (u : Z) : Z :=
   let a0 := sext32 u in
   if a0 =? 0 then mk128 0 a0
@@ -330,8 +302,6 @@ Definition f128_of_u32 (u : Z) : Z :=
   let hi := add64 hi1 (shl64 expW 48) in
   mk128 hi lo.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition f128_of_i32 (i : Z) : Z :=
   let a0 := sext32 i in
   if a0 =? 0 then mk128 0 a0
@@ -356,10 +326,6 @@ Definition f128_of_i32 (i : Z) : Z :=
   let hi := Z.lor hi2 signHi in
   mk128 hi lo.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition mul_round (signHi resHi resLo lo_hi lo_lo : Z) : Z :=
   let resHi1 := Z.lor resHi signHi in
   let roundUp := if lo_hi =? SIGN64 then negb (lo_lo =? 0) else is_neg64 lo_hi in
@@ -374,7 +340,6 @@ Definition mul_round (signHi resHi resLo lo_hi lo_lo : Z) : Z :=
   else
     mk128 resHi1 resLo.
 
-(* [comment removed for export] *)
 Definition mul_finish (signHi productExponent hi_hi hi_lo lo_hi lo_lo : Z) : Z :=
   if productExponent <=? 0 then
     let shift := sub64 1 (u64_of_s productExponent) in
@@ -384,7 +349,7 @@ Definition mul_finish (signHi productExponent hi_hi hi_lo lo_hi lo_lo : Z) : Z :
       let n32  := zext32 n in
       let nM64 := sub64 n32 64 in
       let notn := not64 n32 in
-      (* [comment removed for export] *)
+
       let '(slHi, slLo, hsHi, hsLo) :=
         if is_neg64 nM64
         then (Z.lor (shl64 lo_hi (Z.land n 63)) (shr64 (shr64 lo_lo 1) (Z.land notn 63)),
@@ -396,7 +361,7 @@ Definition mul_finish (signHi productExponent hi_hi hi_lo lo_hi lo_lo : Z) : Z :
       let shift32   := zext32 shift in
       let shiftM64  := sub64 shift32 64 in
       let notshift  := not64 shift32 in
-      (* [comment removed for export] *)
+
       let '(lsLo, lsHi, hrLo, hrHi) :=
         if is_neg64 shiftM64
         then (Z.lor (shr64 lo_lo (Z.land shift 63)) (shl64 (shl64 lo_hi 1) (Z.land notshift 63)),
@@ -414,7 +379,6 @@ Definition mul_finish (signHi productExponent hi_hi hi_lo lo_hi lo_lo : Z) : Z :
     let resHi := Z.lor (shl64 (u64_of_s productExponent) 48) (Z.land hi_hi MASK48) in
     mul_round signHi resHi resLo lo_hi lo_lo.
 
-(* [comment removed for export] *)
 Definition mul_core (signHi aExp bExp aSigHi aSigLo bSigHi bSigLo scale : Z) : Z :=
   let bLo15 := shl64 bSigLo 15 in
   let bHi15 := Z.lor (shr64 bSigLo 49) (shl64 bSigHi 15) in
@@ -427,7 +391,7 @@ Definition mul_core (signHi aExp bExp aSigHi aSigLo bSigHi bSigLo scale : Z) : Z
   let B3 := shr64 bLo15 32 in
   let B4 := zext32 bLo15 in
   let expSum := add64 aExp bExp in
-  (* [comment removed for export] *)
+
   let p13 := mul64 B3 A1 in
   let p23 := mul64 B3 A2 in
   let p24 := mul64 B4 A2 in
@@ -444,7 +408,7 @@ Definition mul_core (signHi aExp bExp aSigHi aSigLo bSigHi bSigLo scale : Z) : Z
   let p42 := mul64 B2 A4 in
   let p12 := mul64 B2 A1 in
   let p32 := mul64 B2 A3 in
-  (* [comment removed for export] *)
+
   let s2a := add64 p24 p33 in
   let sum1 := add64 p34 p43 in
   let c2a := ltu64 s2a p24 in
@@ -505,7 +469,7 @@ Definition mul_core (signHi aExp bExp aSigHi aSigLo bSigHi bSigLo scale : Z) : Z
   let hh7 := add64 hh6 cm4 in
   let cm5 := ltu64 hi_lo m4 in
   let hi_hi := add64 hh7 cm5 in
-  (* [comment removed for export] *)
+
   let scaleAdj := scale - 0x3fff in
   let productExponent := expSum + scaleAdj in
   if is_neg64 (shl64 hi_hi 15) then
@@ -520,13 +484,12 @@ Definition mul_core (signHi aExp bExp aSigHi aSigLo bSigHi bSigLo scale : Z) : Z
     if 0x7fff <=? productExponent then mk128 (Z.lor signHi INF_HI) 0
     else mul_finish signHi productExponent hi_hi1 hi_lo1 lo_hi1 lo_lo1.
 
-(* [comment removed for export] *)
 Definition f128_mul (a b : Z) : Z :=
   let a_lo := lo64 a in
   let a_hi := hi64 a in
   let b_lo := lo64 b in
   let b_hi := hi64 b in
-  (* [comment removed for export] *)
+
   let aExp := shr64 (shl64 a_hi 1) 49 in
   let bExp := shr64 (shl64 b_hi 1) 49 in
   let signHi := shl64 (shr64 (Z.lxor b_hi a_hi) 63) 63 in
@@ -539,7 +502,7 @@ Definition f128_mul (a b : Z) : Z :=
   if negb (orb (aExpM <? 0xffffffffffff8002) (bExpM <=? 0xffffffffffff8001))
   then mul_core signHi aExp bExp aSigHi aSigLo bSigHi bSigLo 0
   else
-  (* [comment removed for export] *)
+
   let aAbsHi := Z.land a_hi ABS_HI in
   let aIsNaN := if aAbsHi =? INF_HI then negb (a_lo =? 0) else negb (aAbsHi <? INF_HI) in
   if aIsNaN then mk128 (Z.lor a_hi QUIET_HI) a_lo
@@ -554,7 +517,7 @@ Definition f128_mul (a b : Z) : Z :=
   else if Z.lor a_lo aAbsHi =? 0 then mk128 signHi 0
   else if Z.lor b_lo bAbsHi =? 0 then mk128 signHi 0
   else
-  (* [comment removed for export] *)
+
   let '(aSigHi1, aSigLo1, scale1) :=
     if shr64 aAbsHi 48 =? 0 then
       let '(naHi, naLo, naClz) := norm_denormal aSigHi aSigLo in
@@ -567,10 +530,6 @@ Definition f128_mul (a b : Z) : Z :=
     else (bSigHi, bSigLo, scale1) in
   mul_core signHi aExp bExp aSigHi1 aSigLo1 bSigHi1 bSigLo1 scale2.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition align_mirror (aExp bExp bSigHi3 bSigLo3 : Z) : Z * Z :=
   if Z.eqb aExp bExp then (bSigHi3, bSigLo3)
   else
@@ -598,7 +557,6 @@ Definition align_mirror (aExp bExp bSigHi3 bSigLo3 : Z) : Z * Z :=
       let BHi := newHi in
       (BHi, BLo).
 
-(* [comment removed for export] *)
 Definition addsub_mirror (subtraction AHi ALo BHi BLo aExp : Z) : option (Z * Z * Z) :=
   if negb (Z.eqb subtraction 0) then
     if Z.eqb (Z.lor (Z.lxor ALo BLo) (Z.lxor AHi BHi)) 0 then None
@@ -625,7 +583,6 @@ Definition addsub_mirror (subtraction AHi ALo BHi BLo aExp : Z) : option (Z * Z 
       Some (SHi, SLo, aExp)
     else Some (SHi, SLo, aExp).
 
-(* [comment removed for export] *)
 Definition denorm_mirror (SHi SLo aExp : Z) : Z * Z :=
   let shift := sub64 1 aExp in
   let negsh := sext32 (sub64 0 shift) in
@@ -648,7 +605,6 @@ Definition denorm_mirror (SHi SLo aExp : Z) : Z * Z :=
   let SLo := Z.lor newLo sticky in
   (SHi, SLo).
 
-(* [comment removed for export] *)
 Definition round_mirror (SHi SLo aExp signHi : Z) : Z :=
   let rgs := Z.land SLo 7 in
   let resLo0 := Z.lor (shr64 SLo 3) (shl64 SHi 61) in
@@ -660,7 +616,6 @@ Definition round_mirror (SHi SLo aExp signHi : Z) : Z :=
   let resLo := sumLo in
   mk128 resHi resLo.
 
-(* [comment removed for export] *)
 Definition add_main (aLo aHi bLo bHi aAbsHi bAbsHi : Z) : Z :=
   let swap := if Z.eqb bAbsHi aAbsHi then Z.ltb aLo bLo else Z.ltb aAbsHi bAbsHi in
   let '(yLo, yHi, xLo, xHi) := if swap then (aLo, aHi, bLo, bHi) else (bLo, bHi, aLo, aHi) in
@@ -694,7 +649,6 @@ Definition add_main (aLo aHi bLo bHi aAbsHi bAbsHi : Z) : Z :=
         round_mirror SHi SLo aExp signHi
   end.
 
-(* [comment removed for export] *)
 Definition f128_add (a b : Z) : Z :=
   let aLo := lo64 a in
   let aHi := hi64 a in
@@ -728,23 +682,17 @@ Definition f128_add (a b : Z) : Z :=
       else mk128 aHi aLo
   else add_main aLo aHi bLo bHi aAbsHi bAbsHi.
 
-(* [comment removed for export] *)
 Definition f128_sub (a b : Z) : Z :=
   let bLo := lo64 b in
   let bHi := hi64 b in
   f128_add a (mk128 (Z.lxor bHi SIGN64) bLo).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition half_iter (x b : Z) : Z :=
   let corr := sub64 0 (mulhu x b) in
   let lo := mul64 corr x in
   let hi := mulhu corr x in
   Z.lor (shr64 lo 63) (shl64 hi 1).
 
-(* [comment removed for export] *)
 Definition div_round (signHi absHi absLo rHi rLo bHi bLo : Z) : Z :=
   let odd := Z.land absLo 1 in
   let r3Lo := add64 odd rLo in
@@ -776,9 +724,6 @@ Definition div_round (signHi absHi absLo rHi rLo bHi bLo : Z) : Z :=
   let resHi := Z.lor (add64 abs2Hi cc) signHi in
   mk128 resHi resLo.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition divc_setup (aExp bExp aSigHi aLo bSigHi bLo scale : Z) :=
   let expDiff := aExp - bExp in
   let blo := shl64 bLo 15 in
@@ -797,7 +742,6 @@ Definition divc_setup (aExp bExp aSigHi aLo bSigHi bLo scale : Z) :=
   let x0 := sub64 C_HW b_hw in
   (expM1, blo, b_hw, A1, A2, A3, A4, aSigHiI, bSigHiI, aHi2, aLoTop, a2Lo, x0).
 
-(* [comment removed for export] *)
 Definition divc_newton (x0 b_hw : Z) : Z :=
   let x1 := half_iter x0 b_hw in
   let x2 := half_iter x1 b_hw in
@@ -805,7 +749,6 @@ Definition divc_newton (x0 b_hw : Z) : Z :=
   let x4 := half_iter x3 b_hw in
   sub64 x4 1.
 
-(* [comment removed for export] *)
 Definition divc_full (xh b_hw blo : Z) : Z * Z :=
   let pHhi := mulhu b_hw xh in
   let pHlo := mul64 b_hw xh in
@@ -836,7 +779,6 @@ Definition divc_full (xh b_hw blo : Z) : Z * Z :=
   let x_hi := sub64 sHi2 1 in
   (x_hi, x_lo).
 
-(* [comment removed for export] *)
 Definition divc_wide (x_hi x_lo A1 A2 A3 A4 : Z) : Z * Z :=
   let X3 := shr64 x_lo 32 in
   let X4sh := shl64 x_lo 32 in
@@ -925,7 +867,6 @@ Definition divc_wide (x_hi x_lo A1 A2 A3 A4 : Z) : Z * Z :=
   let q_hi := add64 hh7 cm5 in
   (q_hi, q_lo).
 
-(* [comment removed for export] *)
 Definition divc_tail (signHi expM1 q_hi q_lo aLo aSigHiI bSigHiI bLo aHi2 aLoTop a2Lo : Z) : Z :=
   let topBits := shr64 q_hi 49 in
   let wE0 := expM1 + 1 in
@@ -973,7 +914,7 @@ Definition divc_tail (signHi expM1 q_hi q_lo aLo aSigHiI bSigHiI bLo aHi2 aLoTop
       (q1Hi, q1Lo, resHi, resLo, aDHi, aDLo, wE, ovf) in
   if ovf then mk128 (Z.lor signHi INF_HI) 0
   else if negb (Z.leb wE 0) then
-    (* [comment removed for export] *)
+
     let absLo := q1Lo in
     let fracHi := Z.land q1Hi MASK48 in
     let absHi := Z.lor (shl64 (wrap64 wE) 48) fracHi in
@@ -982,7 +923,7 @@ Definition divc_tail (signHi expM1 q_hi q_lo aLo aSigHiI bSigHiI bLo aHi2 aLoTop
     div_round signHi absHi absLo r2Hi r2Lo bSigHiI bLo
   else if Z.leb wE (-113) then mk128 signHi 0
   else
-    (* [comment removed for export] *)
+
     let shiftw := sext32 (sub64 1 (wrap64 wE)) in
     let shift32 := zext32 shiftw in
     let lsh := add64 (wrap64 wE) 112 in
@@ -1021,13 +962,12 @@ Definition div_core (signHi aExp bExp aSigHi aLo bSigHi bLo scale : Z) : Z :=
   let '(q_hi, q_lo) := divc_wide x_hi x_lo A1 A2 A3 A4 in
   divc_tail signHi expM1 q_hi q_lo aLo aSigHiI bSigHiI bLo aHi2 aLoTop a2Lo.
 
-(* [comment removed for export] *)
 Definition f128_div (a b : Z) : Z :=
   let a_lo := lo64 a in
   let a_hi := hi64 a in
   let b_lo := lo64 b in
   let b_hi := hi64 b in
-  (* [comment removed for export] *)
+
   let aExp := shr64 (shl64 a_hi 1) 49 in
   let bExp := shr64 (shl64 b_hi 1) 49 in
   let signHi := shl64 (shr64 (Z.lxor b_hi a_hi) 63) 63 in
@@ -1038,7 +978,7 @@ Definition f128_div (a b : Z) : Z :=
   if negb (orb (Z.ltb aExpM EXPK2) (Z.leb bExpM EXPK))
   then div_core signHi aExp bExp aSigHi a_lo bSigHi b_lo 0
   else
-    (* [comment removed for export] *)
+
     let aAbsHi := Z.land a_hi ABS_HI in
     let aIsNaN := if Z.eqb aAbsHi INF_HI then negb (Z.eqb a_lo 0) else negb (Z.ltb aAbsHi INF_HI) in
     if aIsNaN then mk128 (Z.lor a_hi QUIET_HI) a_lo
@@ -1055,7 +995,7 @@ Definition f128_div (a b : Z) : Z :=
       (if negb (Z.eqb (Z.lor b_lo bAbsHi) 0) then mk128 signHi 0 else mk128 QNAN_HI 0)
     else if Z.eqb (Z.lor b_lo bAbsHi) 0 then mk128 (Z.lor signHi INF_HI) 0
     else
-    (* [comment removed for export] *)
+
     let '(aSigHi1, aLo1, scale1) :=
       if Z.eqb (shr64 aAbsHi 48) 0 then
         let '(nhi, nlo, nclz) := norm_denormal aSigHi a_lo in (nhi, nlo, 16 - nclz)
@@ -1066,13 +1006,6 @@ Definition f128_div (a b : Z) : Z :=
       else (bSigHi, b_lo, scale1) in
     div_core signHi aExp bExp aSigHi1 aLo1 bSigHi1 bLo1 scale2.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition sf_dispatch (op a b : Z) : Z :=
   match op with
   | 0 => f128_of_d a
@@ -1089,172 +1022,123 @@ Definition sf_dispatch (op a b : Z) : Z :=
   | _ => f128_div a b
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Example ex_of_d_15 : f128_of_d 0x3ff8000000000000 = 0x3fff8000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg000Uj15Tg005nj29Tg00HDj18Tg0074j37Tg00IZj13Tf0R0#3#3p=2%00#0p=4%00#0#0#0p=6%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;nR0g00<L#2#2#2#2#2R1#2#2#0#4#6#:#1#1#1#1#1#1#5R2'9%01#4#1#1#1#5#8=702do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_of_d_minsub : f128_of_d 0x0000000000000001 = 0x3bcd0000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj11Tg0000j10Tg000Uj13Tg005nj27Tg00HDj16Tg0074j35Tf0R0#0#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;nR0g00<LR1#1#1#0#1#1#1#1#4#1#1#0#1#2#2#2#2#2#2#2#3R2'7%31#6=502do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_of_d_maxsub : f128_of_d 0x800fffffffffffff = 0xbc00ffffffffffffe000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j11Tg00IZj10Tg000Uj14Tg005nj29Tg00HDj17Tg0074j38Tf0R0#0#0#0#0p=6%10#1p=5%10#1#1#1#1#1#1#1p=2%00#0p=;%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%10#1#1#1p=:g00;nR0g00<L#1R1#6#5#2#0#;#3#3#3#1#:#2#2#2#2#2#2#2#4R2'9%51#2#6#3#3#3#4#7=802do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_of_d_snan : f128_of_d 0x7ff0000000000001 = 0x7fff0000000000001000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg00IZj13Tg000Uj15Tg005nj28Tg00HDj17Tg0074j36Tf0R0#3#3p=2%00#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0#0#0p=:%00#0#0#0#0#0#0#0p=9g00;nR0g00<L#2#2#2#2#2R1#2#2#0#4#1#1#1#3#:#9#1#1#1#5R2'8%01#4#1#1#1#3#5#7=602do"). Qed.
-(* [comment removed for export] *)
+Proof. vmc_refl. Qed.
+
 Example ex_to_d_15 : f128_to_d 0x3fff8000000000000000000000000000 = 0x3ff8000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg000Uj15Tg005nj2:Tg00J?j17Tg0074j36Tg00IZj13Tf0R0#3#3p=2%00#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0#0#0p=9%00#0#0#0#0#0#0#0p=8g00;nR0g00<L#2#2#2#2#2R1#0#4#1#1#1#5R2':%21#2#0#4#9#8#1#1#1#1#1#1#5#7=602do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_d_tie_even : f128_to_d 0x3fff0000000000000800000000000000 = 0x3ff0000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg000Uj15Tg005nj2:Tg0000j10Tg00J?j17Tg0074j36Tf0R0#3#3p=2%00#0#0#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0p=9%00#0#0#0#0#0#0#0p=8g00;nR0g00<L#3#2#2#2#2R1#4#1#1#1#5R2':%21#2#4#1#1#1#3#0#9#8#1#1#1#5#7=602do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_d_tie_odd : f128_to_d 0x3fff0000000000001800000000000000 = 0x3ff0000000000002.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg0000j10Tg000Uj15Tg005nj29Tg00J?j17Tg0074j36Tf0R0#3#3p=2%00#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0#0#0#0#0#0#0p=8g00;nR0g00<L#3#2#2#2#2R1#4#1#1#1#3#0#5R2'9%21#2#0#4#1#1#1#2#0#4#8#1#1#1#5#7=602do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_d_maxcarry : f128_to_d 0x43fefffffffffffff800000000000000 = 0x7ff0000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj15Tg005nj2;Tg00IZj11Tg0000j10Tg00J?j19Tg0074j3:Tf0R0#1#1p=<%10#1#1#1#1#1#1#1p=2%00#0#0#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%10#1#1#1p=8%00#0p=7%00#0#0#0#0#0#0#0p=6g00;nR0g00<LR1#<#2#4#3#3#3#5R2';%41#1#2#0#1#8#2#2#2#2#2#2#0#7#6#3#3#3#5#9=:02do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_d_nan : f128_to_d 0x7fff0000000000123000000000000000 = 0x7ff8000000000123.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj11Tg0000j10Tg000Uj16Tg005nj2:Tg00J?j18Tg0074j37Tf0R0#1#1p=2%00#0p=4%00#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%00#0#0#0p=9g00;nR0g00<L#1#2#2#2#2#2R1#4#5#3#3#1#4#1#0#4#2#6R2':%11#2#0#4#5#3#3#1#4#1#0#4#2#9#5#3#3#3#6#8=702do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_d_halfminsub_sticky : f128_to_d 0x3bcc0000000000000000000000000001 = 0x0000000000000001.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj13Tg005nj27Tg00IZj11Tg0000j10Tg00J?j15Tg0074j34Tf0R0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;nR0g00<LR1#3R2'7%11#1#0#1#1#1#1#6#1#1#0#2#2#2#2#2#2#2#1#3#5=402do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_d_sub_carry : f128_to_d 0x3c00ffffffffffffffffffffffffffff = 0x0010000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj14Tg005nj25Tg00IZj10Tg00J?j16Tg0074j37Tg0000j11Tf0R0#1#1#1#1p=:%10#1#1#1#1#1#1#1p=3%00#0p=9%10#1p=8%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;nR0g00<LR1#:#3#3#3#3#3#3#4R2'5%01#9#8#3#2#2#2#2#2#2#2#4#6=702do"). Qed.
-(* [comment removed for export] *)
+Proof. vmc_refl. Qed.
+
 Example ex_le_lt : f128_le 0x3fff0000000000000000000000000000 0x40000000000000000000000000000000 = -1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00KUj1<Tg005nj2;Tg00IZj13Tg000Uj14Tg00L3j26Tg0074j38Tg0000j10Tf0R0#3#3p=1%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0p=:%00#0#0#0p=9%00#0#0#0#0#0#0#0p=7g00;nR0g00<LR1#<R2';%31#1#1#1#1#1#1#5#2#2#2#4%:1#9#7#5#2#2#2#4'6=802do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_le_zero : f128_le 0x80000000000000000000000000000000 0 = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj28Tg0000j10Tg000Uj16Tg00L3j24Tg0074j35Tf0R0#0#0p=3%00#0#0#0p=2%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;nR0g00?<R1'8g00<L#0#3#2#7#1#1#1#1#1#1#1#6/41=501do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_le_nan : f128_le 0x7fff8000000000000000000000000000 0 = 1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj14Tg005nj2:Tg00IZj13Tg0000j10Tg00L3j27Tg0074j35Tf0R0#3#3p=1%00#0p=9%00#0#0#0p=8%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;nR0g00<LR1#4R2':%31#1#1#1#1#1#1#1#0#9#8#6#2#2#2#2#2#2#4g00?<'7=502do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_ge_nan : f128_ge 0 0x7fff0000000000000000000000000001 = -1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00KUj1;Tg005nj2:Tg0000j10Tg00IZj13Tg000Uj15Tg00MGj24Tg0074j38Tf0R0#3#3p=1%00#0p=9%00#0#0#0p=7%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;nR0g00<LR1#;R2':g00?<%11#1#1#1#1#1#1#0#9#7#6#2#2#2#2#2#2#3#5'4=802do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_ge_neg : f128_ge 0xc0000000000000000000000000000000 0xbfff0000000000000000000000000000 = -1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00KUj1<Tg005nj2;Tg00IZj13Tg000Uj14Tg0000j10Tg00MGj28Tg0074j39Tf0R0#0#0p=6%00#0#0#0p=:%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%30#3p=1g00;nR0g00<LR1#<R2';%31#6#:#7#5#2#2#2#4%01#1#1#1#1#1#1#1#5#2#2#2#4'8=902do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_ge_gt : f128_ge 0x40000000000000000000000000000000 0x3fff0000000000000000000000000000 = 1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj14Tg005nj2;Tg00IZj13Tg00MGj28Tg0074j37Tg0000j10Tf0R0#0#0p=9%00#0#0#0p=6%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%30#3p=1g00;nR0g00<LR1#4R2';%91#6#:#5#2#2#2#4%31#1#1#1#1#1#1#5#2#2#2#4'8=702do"). Qed.
-(* [comment removed for export] *)
+Proof. vmc_refl. Qed.
+
 Example ex_to_u32_trunc : f128_to_u32 0x4000ffffffffffffffffffffffffffff = 3.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj10Tg000Uj14Tg005nj25Tg00N[j17Tg0074j36Tg0000j13Tf0R0#3#3p=1%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;nR0g00<LR1#0#4R2'5%11#1#1#1#1#1#1#2#2#2#2#2#2#2#4#7=602do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_u32_neg : f128_to_u32 0xbfff0000000000000000000000000000 = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj27Tg0000j10Tg000Uj16Tg00N[j15Tg0074j34Tg00IZj13Tf0R0#3#3p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;nR0g00?<R1'7g00<L#0#2#2#2#2#2#2#2#1#1#1#1#1#1#1#6#5=401do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_u32_sat : f128_to_u32 0x401f0000000000000000000000000000 = 0xffffffff.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj12Tg000Uj14Tg005nj28Tg0000j10Tg00N[j15Tg0074j36Tf0R0#2#2p=9%20#2#2#2p=1%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3g00;nR0g00<LR1#2#9#1#1#1#1#1#1#1#4R2'8%01#7#2#1#3#3#3#3#3#3#3#4#5=602do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_u32_sat_a0 : fixunstfsi_a0 0x7fff0000000000000000000000000000 = 0xffffffffffffffff.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj11Tg000Uj14Tg005nj27Tg00P3j15Tg0074j36Tg0000j10Tf0R0#1#1p=9%10#1#1#1p=8%10#1#1#1#1#1#1#1p=3%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;nR0g00<L#9#8#3R1#1#3#3#3#3#3#3#4R2'7%21#2#2#2#2#2#2#4#5=602do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_to_u32_max : f128_to_u32 0x401efffffffe00000000000000000000 = 0xffffffff.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj11Tg000Uj16Tg005nj2:Tg0000j10Tg00N[j18Tg0074j37Tf0R0#1#1p=5%10#1#1#1p=4%10#1#1#1#1#1#1#1p=2%00#0#0#0#0#0#0#0p=9%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3g00;nR0g00<LR1#1#5#4#2#2#2#6R2':%01#9#4#0#1#5#4#2#2#2#0#3#3#3#3#3#6#8=702do"). Qed.
-(* [comment removed for export] *)
+Proof. vmc_refl. Qed.
+
 Example ex_of_u32_0 : f128_of_u32 0 = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj22Tg00QMj11Tg0074j30Tg00;nR0g00?<R1'2%11=001do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_of_u32_max : f128_of_u32 0xffffffff = 0x401efffffffe00000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg00IZj11Tg000Uj15Tg005nj29Tg00QMj18Tg0074j37Tf0R0#0#0#0#0#0#0#0#0p=:%10#1#1#1p=4%10#1p=6%10#1#1#1#1#1#1#1p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3g00;nR0g00<LR1#0#:#4#0#1#6#4#2#2#2#0#3#3#3#3#3#5R2'9%11#6#4#2#2#2#5#8=702do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_of_i32_m5 : f128_of_i32 (-5) = 0xc0014000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj12Tg0000j10Tg000Uj19Tg005nj28Tg00KUj17Tg00Rej16Tg0074j35Tf0R0#0#0#0#0p=3%00#0#0#0#0#0#0#0p=4%00#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;nR0g00<LR1#2#0#3#4#2#0#2#:#3#4#1#1#1#1#1#1#9R2'8%01#2#7#6=502do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_of_i32_m5_pattern : f128_of_i32 0xfffffffb = f128_of_i32 (-5).
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj11Tg0000j10Tg000Uj18Tg005nj2;Tg00Rej14Tg00KUj19Tg0074j3:Tf0R0#0#0#0#0p=7%00#0#0#0#0#0#0#0p=6%00#0p=<%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%10#1p=5%10#1#1#1p=2g00;nR0g00<LR1#1R2#0#7#6#1#0#1#<#7#6#3#3#3#3#3#3#8';%12#5#2#2#2#2#2#2#0#5#8#4%01#1#9#45:0do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_of_i32_min : f128_of_i32 (-2147483648) = 0xc01e0000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj12Tg0000j10Tg000Uj1:Tg005nj29Tg00KUj16Tg00Rej17Tg0074j34Tf0R0#0#0#0#0#0#0#0#0p=3%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0p=8%00#0#0#0p=5g00;nR0g00<LR1#2#0#3#2#2#2#2#0#1#1#1#1#1#1#1#:R2'9%01#8#5#3#1#6#7=402do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_of_i32_max : f128_of_i32 2147483647 = 0x401dfffffffc00000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg00IZj11Tg000Uj15Tg005nj28Tg00Rej17Tg0074j39Tf0R0#0#0#0#0#0#0#0#0p=;%10#1p=4%10#1#1#1p=6%10#1#1#1#1#1#1#1p=2%00#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3g00;nR0g00<LR1#0#;#1#4#0#1#4#6#2#2#2#:#3#3#3#3#3#5R2'8%41#6#2#2#2#5#7=902do"). Qed.
-(* [comment removed for export] *)
+Proof. vmc_refl. Qed.
+
 Example ex_mul_15_15 :
   f128_mul 0x3fff8000000000000000000000000000 0x3fff8000000000000000000000000000
   = 0x40002000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg0000j10Tg000Uj15Tg005nj2:Tg00T=j27Tg0074j38Tf0R0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=;%00#0#0#0p=4%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%30#3p=1%00#0p=9g00;nR0g00<LR1#;#3#0#4#6#2#2#2#5R2':%11#1#1#1#1#1#1#0#9#4#6#2#2#2#5R1/71=802do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_mul_denorm_one : f128_mul 0x1 0x3fff0000000000000000000000000000 = 0x1.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj14Tg005nj27Tg00IZj13Tg00T=j26Tg0074j35Tg0000j10Tf0R0#3#3p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;nR0g00<LR1#4R2'7%31#2#2#2#2#2#2#1#1#1#1#1#1#1#4,62=502do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_mul_inf_zero : f128_mul 0x7fff0000000000000000000000000000 0x0 = 0x7fff8000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg0000j10Tg000Uj14Tg005nj26Tg00T=j28Tg0074j39Tf0R0#3#3p=1%00#0p=5%00#0#0#0p=;%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=7g00;nR0g00<L#1#1#1#1#1#1#1R1#3#0#5#;#:#2#2#2#4R2'6%71#2#2#2#4g00?<'8=902do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_mul_round :
   f128_mul 0x3fff0000000000000000000000000001 0x3fff0000000000000000000000000001
   = 0x3fff0000000000000000000000000002.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg0000j10Tg000Uj14Tg005nj28Tg00T=j26Tg0074j37Tf0R0#3#3p=2%00#0p=9%00#0#0#0p=5%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;nR0g00<L#3#2#2#2#2#2#2#9#5#:#1#1#1#1#1#1R1#3#0#4R2'8%01#3#4R1/61=702do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_mul_overflow :
   f128_mul 0xfffeffffffffffffffffffffffffffff 0x40000000000000000000000000000000
   = 0xffff0000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj11Tg000Uj14Tg005nj27Tg0000j10Tg00T=j2<Tg0074j3;Tf0R0#1#1p=>%10#1#1#1p==%10#1#1#1#1#1#1#1p=8%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=5%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%10#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=2%00#0p=6%00#0#0#0p=9%00#0#0#0#0#0#0#0p=:g00;nR0g00<LR1#>#=#8R2#1#5#3#3#3#4R3'7%02#2#2#2#2#2#2#2#4%61#9#:#5#3#3#3#4'<=;03do"). Qed.
-(* [comment removed for export] *)
+Proof. vmc_refl. Qed.
+
 Example ex_add_1_1 :
   f128_add 0x3fff0000000000000000000000000000 0x3fff0000000000000000000000000000
   = 0x40000000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g000Uj15Tg005nj29Tg00IZj13Tg00URj27Tg0074j36Tg0000j10Tf0R0#0#0p=;%00#0#0#0p=:%00#0#0#0#0#0#0#0p=8%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=4%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%30#3p=1g00;nR0g00<LR1#;#:#8#4#2#2#2#5R2'9%31#1#1#1#1#1#1#4#2#2#2#5R1/71=602do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_add_tie_odd :
   f128_add 0x3fff0000000000000000000000000001 0x3f8e0000000000000000000000000000
   = 0x3fff0000000000000000000000000002.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg0000j10Tg000Uj14Tg005nj2:Tg00URj27Tg0074j38Tf0R0#3#3p=1%00#0p=5%00#0#0#0p=6%00#0#0#0#0#0#0#0p=;%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=9g00;nR0g00<L#1#1#1R1#3#1#1#1#5#6#;#2#2#2R2#3#0#4R3':%02#3#4%01#5#3#1#0#9#2#2#2#4'7=803do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_sub_inf_inf :
   f128_sub 0x7fff0000000000000000000000000000 0x7fff0000000000000000000000000000
   = 0x7fff8000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg0000j10Tg000Uj14Tg005nj26Tg00Vgj28Tg0074j39Tf0R0#3#3p=1%00#0p=5%00#0#0#0p=;%00#0#0#0#0#0#0#0p=:%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=7g00;nR0g00<L#1#1#1#1#1#1#1R1#3#0#5#;#:#2#2#2#4R2'6%71#2#2#2#4R1/81=902do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_add_snan :
   f128_add 0x7fff0000000000000000000000000001 0x3fff0000000000000000000000000000
   = 0x7fff8000000000000000000000000001.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj12Tg000Uj14Tg005nj2;Tg0000j10Tg00URj28Tg0074j39Tf0R0#2#2p=3%00#0p=6%00#0#0#0p=5%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=:g00;nR0g00<L#2#3#3#3#3#3#3R1#2R2#2#6#5#7#1#1#1#2#4R3';%02#6#5#7#1#1#1#2#4%:1#1#1#1#4'8=903do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_add_subnormal : f128_add 1 1 = 2.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j14Tg000Uj10Tg005nj22Tg00URj21Tg0074j33Tg00;nR0g00<LR1#4#0R2'2%01R1/11=302do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_add_zeros : f128_add 0x80000000000000000000000000000000 0 = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj28Tg0000j10Tg000Uj16Tg00URj24Tg0074j35Tf0R0#0#0p=3%00#0#0#0p=2%00#0#0#0#0#0#0#0p=7%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;nR0g00?<R1'8g00<L#0#3#2#7#1#1#1#1#1#1#1#6/41=501do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_sub_cancel :
   f128_sub 0x3fff0000000000000000000000000000 0x3f8e0000000000000000000000000000
   = 0x3ffeffffffffffffffffffffffffffff.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j10Tg000Uj15Tg005nj2;Tg00IZj11Tg00Vgj28Tg0074j39Tf0R0#1#1p=4%10#1#1#1p=7%10#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%00#0p=:g00;nR0g00<L#4#7R1#4#7R2#0#2#2#2#2#2#2#2#5R3';%12#6#3#3#3#5%01#:#1#4#0#6#3#3#3#5'8=903do"). Qed.
-(* [comment removed for export] *)
+Proof. vmc_refl. Qed.
+
 Example ex_div_1_3 :
   f128_div 0x3fff0000000000000000000000000000 0x40008000000000000000000000000000
   = 0x3ffd5555555555555555555555555555.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj11Tg000Uj15Tg005nj2=Tg00X<j2:Tg0074j3>Tg0000j10Tf0R0#1#1p=4%00#1p=;%00#1#0#1#0#1#0#1#0#1#0#1#0#1#0#1p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=<%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=3%00#0p=8%00#0#0#0p=7%00#0#0#0#0#0#0#0p=6%10#0p=9g00;nR0g00<LR1#1#4#4#4#4#4R2#;#2#2#2#2#2#2#2#5R3'=%42#<#3#3#3#5%81#7#6#9#8#7#6#3#3#3#5':=>03do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_div_u32_1e8 :
   f128_div 0x4019d6f3454000000000000000000000 0x40197d78400000000000000000000000
   = 0x3fff3c0ca4283de1b7eb69451304948f.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg000Uj1:Tg005nj2=Tg00X<j2?Tg0074j3>Tg0000j10Tf0R0#3#3#3#3p=4%00#0p=7%00#0#0#0p=8%30#3p=6%30#0p=2%00#3p=1%00#3#0#0p=5%00#0#0#0#0#0#0#0p=<%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=;%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=9g00;nR0g00<LR1#3#4#4#4#7#4#7#8#6#7#2#2#1#8#2#2#8#4#1#6#2#7#1#2#6#1#4#2#2#6#1#2#2#1#5#1#5#5#6#8#5#2#1#5#2#7#4#:R2'=%<1#1#2#1R1#6#1#1#2#4#7#6#5#1#1#5#8#;#9#9#:%11#4#1#1#6#2#7#5#8#<#;#9#9#:'?=>02do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_div_zero_zero : f128_div 0 0x80000000000000000000000000000000 = 0x7fff8000000000000000000000000000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g00IZj13Tg0000j10Tg000Uj14Tg005nj2;Tg00X<j28Tg0074j39Tf0R0#3#3p=1%00#0p=5%00#0#0#0p=7%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=:g00;nR0g00<LR1#3#1#1#1#1#1#1#1#0#5#7#6#2#2#2#4R2';g00?<%01#5#7#6#:#2#2#2#4'8=902do"). Qed.
-Example ex_div_minsub_almost2 :   (* [comment removed for export] *)
+Proof. vmc_refl. Qed.
+Example ex_div_minsub_almost2 :
   f128_div 0x00000000000000000000000000000001 0x3fffffffffffffffffffffffffffffff = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;2p;1p;3g005nj27Tg000Uj12Tg00IZj10Tg00X<j25Tg0074j34Tf0R0#0#0#0#0p=3%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=1g00;nR0g00?<R1'7g00<LR2#2%02#3#6#1#1#1#1#1#1#1#2'5=401do"). Qed.
+Proof. vmc_refl. Qed.
 Example ex_div_sub_sub :
   f128_div 0x0000ffffffffffffffffffffffffffff 0x00000000000000000000000000000001
   = 0x406efffffffffffffffffffffffffffe.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SoftFloat ()) [] "p;1p;2p;3g0000j11Tg00IZj10Tg000Uj14Tg005nj29Tg00X<j28Tg0074j37Tf0R0#0#0p=3%00#0#0#0p=5%00#0#0#0#0#0#0#0p=6%00#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0p=2g00;nR0g00<LR1#1#1#1#1#1#1#1#3#1#0#3#1#0#3#5#6#2#2#2#1#4R2'9%01#3#5#6#2#2#2#4%41'8=702do"). Qed.
+Proof. vmc_refl. Qed.

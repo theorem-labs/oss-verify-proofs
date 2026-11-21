@@ -1,11 +1,11 @@
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_scene/lib/A/P_check_step_cut.v (the entry facts, cut states
    and segment statements of check_step's walk) and the composer cs_chain of proofs/libreac/fuzz_scene/lib/A/P_check_step.v
-   lines 91-105, both at origin/ossv/recipes 501c0d516c69, for reac-pw/fuzz_rate's check_csv on image A: the contract is
+   lines 91-105, both, for reac-pw/fuzz_rate's check_csv on image A: the contract is
    a callee contract (RtPgCSpec.rt_check_csv_specX, post rt_cpost_o) that continues the caller's journal instead of
    opening one, so every cut carries the caller's journal with check_csv's class-2 frame pushed on the front of own;
    four segments instead of five; the entry facts are the contract's premises; the cuts carry the frame's shadow bytes,
    the realigned frame's cells and the bytes the post compares with the call's state. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvCut.v at b929052adf57; the same cut for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvCut.v; the same cut for
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; the entry, the three cut pcs, the own frame (192
    instead of 160) and the stack bound (RtPgImgB.T_csv_STK_B) are image B's; the realigned frame's cells are image B's
    five (F twice, n, the list length, buf); the registers every cut carries are image B's (s1 = R1, s8 = F + 32, no

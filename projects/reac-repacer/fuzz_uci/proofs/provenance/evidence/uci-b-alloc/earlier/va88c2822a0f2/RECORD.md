@@ -15,8 +15,8 @@ committed slice"); the file names below are those in `commit/`.
 
 ## The theorems
 
-Image B's malloc / free contracts are already CLOSED in the base `f47e2a8927b9` (the image-B core, relocated from
-fuzz_grant's released lib/B, recipes `4f87de75d67`):
+Image B's malloc / free contracts are already CLOSED in the base (the image-B core, relocated from
+fuzz_grant's released lib/B, recipes):
 - `lib/B/YF0w.v:45` `tfib_amalloc_realizes : forall fx rc B, UciSyms B -> (forall t, as_dhash B t = tfib_dhash t) ->
   amalloc_realizes tfibsegs B`;
 - `lib/B/YF0q.v:11` `afree_realizes_closed : forall fx rc B, UciSyms B -> (forall t, ...) -> afree_realizes tfibsegs B`.
@@ -29,7 +29,7 @@ The one new file `lib/B/UciBRtAlloc.v` applies them at the runtime record `UciB`
 
 No contract text is restated: the composition takes the landed predicates verbatim.
 
-**Build:** `cb build` (dune), FACTS `25e3d17bdb50`, targets `lib/B/UciBRtAlloc.vo` plus a scratch `Check` / `Print
+**Build:** `cb build` (dune), FACTS, targets `lib/B/UciBRtAlloc.vo` plus a scratch `Check` / `Print
 Assumptions` probe (not committed). Result: rc=0, 2 targets compiled, 0 failed, `4 PINNED, 0 MISMATCH, 0 MISSING,
 0 UNPINNED, 0 ABSENT`. A probe of `tfib_amalloc_realizes` / `afree_realizes_closed` on the bare base also gave rc=0.
 
@@ -43,7 +43,7 @@ All of these are on `toolchain/allowed-axioms.txt`.
 
 This is the method of the image-B donor survey (repacer/B-DONORS.md): its "Method" section (lines 5-18) and its
 fuzz_wire `__asan_memmove` section (lines 254-280). bytecmp is switched to 1480ca2faea0 the same way as in the
-UCI-B-MEMCPY record (commit 7af39d3f61c, `proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/RECORD.md`,
+UCI-B-MEMCPY record (`proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/RECORD.md`,
 "Donor byte compare"): only `drvcmp.py`'s bytecmp file changes, and every tool that loads drvcmp.py follows it.
 
 - **Roots:** the four entries the donor files name, by symbol in each unstripped twin. Each root pair is compared with
@@ -73,11 +73,11 @@ unified diff original → copy.
 
 | script | copy sha256 | original sha256 | source |
 |---|---|---|---|
-| `bytecmp-1480ca2faea0.py` | `0ac2ec8db277…` | `1480ca2faea0…` | tool registry commit 797e8971d27d, `tools/bytecmp/1480ca2faea0/bytecmp.py`; its lines 39-151 are insnflow a36c2b82eb44 (`tools/insnflow/a36c2b82eb44/insnflow.py`, same commit), which it carries instead of importing |
-| `repin_check-e5487165abb8.py` | `f268a01b33c5…` | `e5487165abb8…` | tool registry commit f69e6d74ebe, `tools/repin_check/e5487165abb8/repin_check.py` (supersedes 9cbc3553c09e) |
-| `drvcmp.py` | `1b13206c79dd…` | `27f7a0e92bb9…` | commit 7af39d3f61c, `…/evidence/uci-b-memcpy/drvcmp.py`: the image-B donor survey's drvcmp.py with bytecmp switched to 1480ca2faea0 |
+| `bytecmp-1480ca2faea0.py` | `0ac2ec8db277…` | `1480ca2faea0…` | tool registry, `tools/bytecmp/1480ca2faea0/bytecmp.py`; its lines 39-151 are insnflow a36c2b82eb44 (`tools/insnflow/a36c2b82eb44/insnflow.py`, same commit), which it carries instead of importing |
+| `repin_check-e5487165abb8.py` | `f268a01b33c5…` | `e5487165abb8…` | tool registry, `tools/repin_check/e5487165abb8/repin_check.py` (supersedes 9cbc3553c09e) |
+| `drvcmp.py` | `1b13206c79dd…` | `27f7a0e92bb9…` |, `…/evidence/uci-b-memcpy/drvcmp.py`: the image-B donor survey's drvcmp.py with bytecmp switched to 1480ca2faea0 |
 | `jtcheck.py` | `f95cc8e243d1…` | `2e2f9c2126b2…` | image-B donor survey scripts, with the one-line fail-closed patch |
-| `paircl.py` | `a88c2822a0f2…` | the same | tool registry commit b73d10eb732, `tools/paircl/a88c2822a0f2/paircl.py` (supersedes 16e1466be22d, the image-B donor survey's paircl.py) |
+| `paircl.py` | `a88c2822a0f2…` | the same | tool registry, `tools/paircl/a88c2822a0f2/paircl.py` (supersedes 16e1466be22d, the image-B donor survey's paircl.py) |
 | `closure.py` | `b50998fb3bd3…` | the same | image-B donor survey scripts (also the UCI-B-MEMCPY copy) |
 | `pairtable.py` | `f5760dd50c20…` | - | written for these records: runs paircl.py (with grant's unstripped twin), one TSV row per pair |
 | `cietable.py` | `c82414f4b6d7…` | - | written for these records: reads parseCIE's jump table |
@@ -104,7 +104,7 @@ These are the same 11 scripts, with the same sha256s, as the EGRESS-B-ALLOC and 
   target pair before any pairing or content compare (`paircl.py:68-72`; a `.got` cell by the symbol it holds).
 
 **Previous version of record, in `v9cbc3553c09e/tools/`** (its own `DIFFS.md`): `repin_check-9cbc3553c09e.py`
-(copy `15045c02875c…` of `9cbc3553c09e…`, tool registry commit 797e8971d27d), the drvcmp.py that loads it
+(copy `15045c02875c…` of `9cbc3553c09e…`, tool registry), the drvcmp.py that loads it
 (`a4c8056e896a…`), the unchanged `jtcheck.py` (`2e2f9c2126b2…`) and `paircl.py` (`16e1466be22d…`), and pairtable.py
 `1429e829dbe6…`. The other four measurement scripts are the same as above.
 
@@ -112,7 +112,7 @@ These are the same 11 scripts, with the same sha256s, as the EGRESS-B-ALLOC and 
 
 | script | copy sha256 | original sha256 | source |
 |---|---|---|---|
-| `bytecmp-7daa0e2a03d9.py` | `d8c4befbf695…` | `7daa0e2a03d9…` | tool registry commit 797e8971d27d, `tools/bytecmp/7daa0e2a03d9/bytecmp.py` |
+| `bytecmp-7daa0e2a03d9.py` | `d8c4befbf695…` | `7daa0e2a03d9…` | tool registry, `tools/bytecmp/7daa0e2a03d9/bytecmp.py` |
 | `drvcmp.py` | `4c3feca0363d…` | `fbbdb144ddfc…` | image-B donor survey scripts (it loads bytecmp 7daa0e2a03d9) |
 | `pairtable.py` | `c3f983a0289c…` | - | written for these records. The same code as `1429e829dbe6`; its docstring names bytecmp 7daa0e2a03d9 |
 
@@ -126,19 +126,19 @@ The raw outputs name each image by a token. `images.sha256` defines each token b
 
 | token | file | sha256 | pin / twin check |
 |---|---|---|---|
-| `UCI_B_PIN` | `fuzz_uci.asan-ubsan` | `a1b86e424adde6f65d345459822690a6c21e9e606446b91b4ad25e9f3ef6e7fc` | index/binaries.tsv:7521 and `proofs/reac-repacer/fuzz_uci/provenance/PROVENANCE.yaml:83` @ f47e2a8927b9 |
+| `UCI_B_PIN` | `fuzz_uci.asan-ubsan` | `a1b86e424adde6f65d345459822690a6c21e9e606446b91b4ad25e9f3ef6e7fc` | index/binaries.tsv:7521 and `proofs/reac-repacer/fuzz_uci/provenance/PROVENANCE.yaml:83` |
 | `UCI_B_TWIN` | `fuzz_uci.asan-ubsan`, unstripped | `8d07ffcf594874884207465cc34ff9f3b1062f21f6d9b3622e0771fa76490b16` | PT_LOAD equal to the pin: 25 bytes differ, all in the ELF header / `.note.gnu.build-id` |
-| `GRANT_B_PIN` | `fuzz_grant.asan-ubsan` | `fde52226dc48de254681156061de9263409c123ca0a0d6c5010ded4e17f602df` | index/binaries.tsv:5591 @ 4f87de75d67 (released) and @ f47e2a8927b9; `proofs/libreac/fuzz_grant/provenance/PROVENANCE.yaml:81` @ 4f87de75d67 |
+| `GRANT_B_PIN` | `fuzz_grant.asan-ubsan` | `fde52226dc48de254681156061de9263409c123ca0a0d6c5010ded4e17f602df` | index/binaries.tsv:5591 (released) and; `proofs/libreac/fuzz_grant/provenance/PROVENANCE.yaml:81` |
 | `GRANT_B_TWIN` | `fuzz_grant.asan-ubsan`, unstripped | `5a5ee7c02b4e2a1d1653dc0c256182c9b65c33dde3a7ddc98b9de2afffe7a417` | PT_LOAD equal to the pin (the same 25 header / build-id bytes) |
-| `IDENT_B_PIN` (control) | `fuzz_identity.asan-ubsan` | `baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66` | index/binaries.tsv:5595 @ f47e2a8927b9 |
+| `IDENT_B_PIN` (control) | `fuzz_identity.asan-ubsan` | `baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66` | index/binaries.tsv:5595 |
 | `IDENT_B_TWIN` (control) | `fuzz_identity.asan-ubsan`, unstripped | `43b44d50be8a5e68f626662181c9cc17c0e0fef138e55f3c8bab371987a9c064` | PT_LOAD equal to the pin |
 | `GRANT_B_{PIN,TWIN}_PLANTED_{DEEP,ROOT,CALL,RODATA}` | the planted copies | see "Controls" | written by `run.sh`; not committed |
 
 ## Roots (`roots-syms.out`, `roots.tsv`)
 
 Grant B's addresses are confirmed from grant's own symbol table. They are also the ones the released donor names:
-grant `lib/B/YF0l.v:11-12` @ 4f87de75d67 gives `pc_malloc := 0x530b0; pc_wrap_malloc := 0x52edc; pc_malloc_ra0 := 0x53178`
-and `pc_free := 0x52ee0; pc_wrap_free := 0x52ed8; pc_free_ra0 := 0x53018`. Uci's `lib/B/YF0l.v:12-13` @ f47e2a8927b9
+grant `lib/B/YF0l.v:11-12` gives `pc_malloc := 0x530b0; pc_wrap_malloc := 0x52edc; pc_malloc_ra0 := 0x53178`
+and `pc_free := 0x52ee0; pc_wrap_free := 0x52ed8; pc_free_ra0 := 0x53018`. Uci's `lib/B/YF0l.v:12-13`
 gives 0x5195c / 0x51788 / 0x51a24 and 0x5178c / 0x51784 / 0x518c4. The return-address offsets agree: malloc +0xc8,
 free +0x138.
 
@@ -289,7 +289,7 @@ too, and e5487165abb8 fixed it; the call and rodata rows above show the miss.)
   - A `.rodata` target is compared by content only, the NUL-cut string or else the first 8 bytes (`:71-76`).
   - `.got`, `.data` and `.data.rel.ro` targets are not compared at all (`:77-78`).
 
-  The rodata copy shows the miss. The fix is paircl a88c2822a0f2, registered at tool registry commit b73d10eb732
+  The rodata copy shows the miss. The fix is paircl a88c2822a0f2, registered at tool registry
   (`tools/paircl.py:39, 68-72`). It takes Y's unstripped twin and names every target pair first.
 
 **Limit of jtcheck, not changed:** jtcheck compares only lo12 pairs, so a re-pointed `jal` is outside what it checks.

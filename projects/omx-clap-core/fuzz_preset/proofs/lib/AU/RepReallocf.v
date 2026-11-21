@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocf.v (commit 3cae605a900a, file sha256 4deef36cef72) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 4 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 2 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocf.v (file sha256 4deef36cef72) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 4 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 2 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
 (* Copyright 2026 Theorem Labs *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, slice F4 of a Theorem Labs lane's class-full report walk, sub-slice Realloc):
    __sanitizer::InternalMmapVectorNoCtor<char, true>::Realloc (0x58610) of cgif_file_fuzzer's asan-ubsan image
    (pin 1c29845fe605) as the model's KMmapSec node: realloc_node, the amreal-IAsk contract RepF4Append consumes.
@@ -246,14 +247,14 @@ apply HM; clear HM.
 - intros a regs1 mem1 mat1. cbv zeta. intros Ha64 HG HP1 R1_10 FR1 ZR1 PR1 IO1.
 rewrite wvb_collapse in HG, IO1 |- *.
 assert (UA : bv_unsigned (w64 a) = a) by (unfold w64; apply unsigned_lit_small; lia).
-assert (HGmd : grant_ok_na_pin md (w64 a) ncap = true) by exact HG.
-destruct (RepMmapcf.grant_pin_parts md (w64 a) ncap HGmd) as (Gal & Gpos & Gtop & Grf). rewrite UA in Gal, Gpos, Gtop.
+assert (HGmd : grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) ncap = true) by exact HG.
+destruct (RepMmapcf.grant_pin_parts md (w64 a) ncap HGmd ltac:(lia) NCm) as (Gal & Gpos & Gtop & Grf). rewrite UA in Gal, Gpos, Gtop.
 pose proof (RepMmapcf.alloc_top_lt (m_vmmaps md)) as ATL.
 destruct (GAP (w64 a) HGmd) as (Ga1 & Ga2 & Ga3). rewrite UA in Ga1, Ga2, Ga3.
 assert (UAn : bv_unsigned (w64 ncap) = ncap) by (unfold w64; apply unsigned_lit_small; lia).
 assert (OLDAP : cap = 0 \/ d + cap <= a \/ a + ncap <= d).
 { destruct OLD as [Hc0|(_ & _ & _ & _ & OIn)]; [left; exact Hc0|].
-  right. destruct (grant_apart_map md a ncap d cap HGmd ltac:(lia) ltac:(lia) OIn ltac:(lia) ltac:(lia)); lia. }
+  right. destruct (grant_apart_map md a ncap d cap HGmd ltac:(lia) NCm ltac:(lia) ltac:(lia) OIn ltac:(lia) ltac:(lia)); lia. }
 assert (MWFN : MWF (with_vm_backing (m_vm_lazy md) mat1 md)) by (exact (MWF_same_but_materialized md _ MWF0 (with_vm_backing_same md mat1))).
 apply amreal_use_AI. intros HAI1. cbn [cfg_model] in HAI1.
 assert (HAIN : AI tfibsegs (w_H W) (w_A W) (with_vm_backing (m_vm_lazy md) mat1 md)).

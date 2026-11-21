@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fm.asan's __interceptor_vsnprintf 0x458a0 over the GXA-route contract
@@ -14,6 +14,7 @@
    s1 = s3 = size, s2 = str, a0 = res; run r_fEt), whose check WRITE_RANGE (str, size) is FMsnprintfGwrcT.v's
    vsn_wr_check_srrUT; there sn_len (n - 1) T = n. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Rt/FMsnprintfSvsni.v, with its module paths and module names changed; 739 of its 801 lines of code are new or changed and 869 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvsn.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 3 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file). *)
 (* musl vsnprintf 0x91f0c (fm.asan) over the shared contracts in their GXA-route form: FMsnprintfSx's
    sh_avsnprintf_realizesUa (and its interceptor twin) from __wrap_memset's aintrin_realizesU and the vfprintf

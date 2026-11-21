@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -40,10 +40,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v, with its module names changed; 1639 of its 1698 lines of code are new or changed and 467 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsU.v, with its module paths and module names changed; 1141 of its 1186 lines of code are new or changed and 1653 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Cno102A_R5.v; 792 of its 957 lines of code are new or changed and 1021 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c): the SECOND HALF of segment CA10 Free of the re-walk
    of check_no_overread (cno) against the kit's text tcheck_no_overread_specX: the three __wrap_free, CN_FRCUT (1084) ->
    CN_END (1108). Lane CnoA102f's sub-lane CnoA102fB (a Theorem Labs lane, #102 plan, the internal file PLAN-cno-caw-102.md 5.1 row CA10),
-   re-fitted to the kit cut 7cdbb61b5fa0 by lane CnoABatch2.
+   re-fitted to the kit cut by lane CnoABatch2.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    STATEMENT: cn_seg_frP of lib/A/Prog/Cno102A_F.v at cp := CfParamsPreset.CfParams_preset (Section variable CTX0
    only, no run-word list DW). A free of a live block can hide shadow again, so the stretch concludes SRr' SEGS RZ_cf
@@ -62,7 +63,7 @@
    ajournal_xw_unbase0R; YG01.v admits_fix; YGcallMxmnKeep.v aj_free_at_x_ct_m_rh_keep with the call's admits;
    YGcallcf.v QMm_cf_of_room / arodata_ok_cf_of_journal_P; YGcfSecsStep.v secs_free_step; YSRrG.v SRrG_step /
    SRr'_bind / SRr'_ret), proved as cn_seg_fr in a Section matching its Section cf.
-   THE CODE (DERIVED offsets inside cno, Listing_prog.v 7ed1529926bd at the cut 7cdbb61b5fa0, slots 472-477):
+   THE CODE (DERIVED offsets inside cno, Listing_prog.v 7ed1529926bd at the cut, slots 472-477):
      1084 mv a0, s10 (= r1) ; 1088 jal __wrap_free ; 1092 ld a0, 40(s1) (= r2) ; 1096 jal __wrap_free ;
      1100 mv a0, s6 (= r3) ; 1104 jal __wrap_free ; 1108 = CN_END.
    THE PROOF: the six slots by hand steps over `@YK11.mkst fxk` configurations (fb_s_addi / fb_s_ld / fb_h_call: lane
@@ -403,7 +404,7 @@ assert (H : existsb (Z.eqb (A_prog_base + CN_OFF + 1108)) (pi_ret_sites F_check_
   by (vm_compute; reflexivity).
 apply existsb_exists in H as (x & Hx & E). apply Z.eqb_eq in E. rewrite E. exact Hx.
 Qed.
-(* the slots (Listing_prog.v 7ed1529926bd at the cut 7cdbb61b5fa0, lines 487-492, slots 472-477) *)
+(* the slots (Listing_prog.v 7ed1529926bd at the cut, lines 487-492, slots 472-477) *)
 Lemma fb_sl1 : fb_slot (CN_OFF + 1084) (fb_f_addi 10%bv 26%bv 0) = true. Proof. vm_compute. reflexivity. Qed.
 Lemma fb_cl1 : plookup pl_tpi (CN_OFF + 1088) = Some (PCall AS___wrap_free 1%bv). Proof. vm_compute. reflexivity. Qed.
 Lemma fb_sl2 : fb_slot (CN_OFF + 1092) (fb_f_ld 10%bv 9%bv 40) = true. Proof. vm_compute. reflexivity. Qed.

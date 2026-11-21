@@ -9,11 +9,12 @@
    per-binary facts the walk names are CmdRecFacts lemmas: relro_img and cmd_ro_ok_of_aro (CmdRecRo.v),
    cmd_prog_unowned (CmdRecImg.v), all over IMG : cmd_img_facts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_exact.v, with its module paths and module names changed; 20 of its 39 lines of code are new or changed and 65 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim (reac_segconf.c:51-59, static) on the ASan image A of reac-pw/fuzz_segconf (fuzz_segconf.asan, 0x890a8,
    296 bytes, 74 instructions): the walk, trim_walk : trim_contract (lib/A/Prog/trim_c.v, the contract writer's G3 contracts)
    at image A, in plugin-hostd/fuzz_command's lib/A/Prog walk form (afn_pre at the entry, SRr of apost_base at the
    return, over `Context {PI : PAImg seg_listing}`). Written new by the G3 walk owner for trim's walk (no released or
-   image-A proof of trim exists: the unit's internal record, commit dfb49d6ad789,
+   image-A proof of trim exists: the unit's internal record,
    path records/segp/g3-lookup.md).
    The instantiation: the entry is the listing term BASE + AF_trim (BASE = pa_val A_TEXT, AF_trim = 0x4374, SegList.v:
    image A 0x890a8); STK_trim = 32 + ESTACK, RLO_A = 0xa14a0, RHI_A = 0xa3748 (SegInstA.v, the image-A owner's unit-wide

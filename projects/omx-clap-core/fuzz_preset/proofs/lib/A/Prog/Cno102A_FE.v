@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 619 of its 648 lines of code are new or changed and 323 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): the PROOF of
    CA11 End of the re-walk of check_no_overread (cno) against the kit's text tcheck_no_overread_specX: from CN_END
    (offset 1108, A' 0x81d58) to the `ret` at 1464 (0x81ebc). Lane CnoA102f's sub-lane CnoA102fE (a Theorem Labs lane, #102
    plan, the internal file PLAN-cno-caw-102.md section 5.1 row CA11); re-fitted to the kit's Batch 2, to the #102 kit and
-   then to the kit cut 7cdbb61b5fa0 by lane CnoABatch2.
+   then to the kit cut by lane CnoABatch2.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    STATEMENT: lib/A/Prog/Cno102A_F.v cn_seg_endP (re-fitted to the re-hiding move), over the contract
    lib/A/Prog/Cno102A_Base.v (same commit, blob
@@ -70,8 +71,8 @@
    binding of B, as FuzzFree.v's PAL); HW (PRH_Base.v:241 prh_head_wide, the ONE spelling: the ledger's head
    words are kept only if the head is a granule wide; owner a Theorem Labs lane, discharged at the preset instance by
    preset_head_wide, CfParamsPreset.v:103); IMG (the base's cn_img B). No other; no Admitted, no axiom, no stand-in.
-   INPUTS (by path; blobs at the kit cut 7cdbb61b5fa0 unless named): the base and the statement above; kit
-   lib/A/Prog/Cno102_FKit.v 16b038eac014 (4b59cadb07a1) and lib/A/Prog/S1Ledger.v 8cf15eeb6311
+   INPUTS (by path; blobs at the kit cut unless named): the base and the statement above; kit
+   lib/A/Prog/Cno102_FKit.v 16b038eac014 and lib/A/Prog/S1Ledger.v 8cf15eeb6311
    (prh_ledger_kept_aview, prh_ledger_hblock; `most own` their last binders); lib/A/PRH_Base.v (prh_ledger,
    prh_ledger_own, fpre, fpostFb at wle', prh_wk); PRH_FnCheck.v (tcheck_no_overread_specX); lib/Spec/
    PresetRoomPosKeep.v dc3f6bee1e0e (room_pos_stack_free); engine by path (YC1fPx, YC80x, YCbqG, YCbqGwild,

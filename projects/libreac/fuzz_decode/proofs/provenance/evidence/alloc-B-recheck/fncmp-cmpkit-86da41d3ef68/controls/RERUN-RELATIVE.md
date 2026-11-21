@@ -12,27 +12,27 @@ controls/ are from the first run (`run-controls.sh`, ../RECORD.md section 11) an
 run-controls.sh with these changes:
 
 - It checks the sha256 of each input before it runs.
-- The kit is the same: cmpkit 86da41d3ef68 (hub commit 98e50c029045; the sha256 of its SHA256SUMS is
-  86da41d3ef68abf071a843e599786e5eb0a6ed77c4a6b6eb645e7498bffbee60; 9 of 9 OK) and the old kit 4bbd3a74be89 (hub
-  commit 3c3e62ee278, 7 of 7 OK). The cross-check directory is the old kit plus the kit's
+- The kit is the same: cmpkit 86da41d3ef68 (the sha256 of its SHA256SUMS is
+  86da41d3ef68abf071a843e599786e5eb0a6ed77c4a6b6eb645e7498bffbee60; 9 of 9 OK) and the old kit 4bbd3a74be89 (
+  7 of 7 OK). The cross-check directory is the old kit plus the kit's
   `controls/xchk/jtcheck_strict2.py`.
 - negctl.py and suite.py are not members of the kit's SHA256SUMS. The script runs copies of them that sed makes, and it
   stops when the count of changed lines is not 3 / 21 or when a copy's sha256 is not the one in the table below. The
   copies are `negctl-rel.py` and `suite-rel.py` in this directory, byte for byte. sed changes only:
   - path constants: in negctl.py `S` (the directory of the env.sh that names its three images) and `E548` (the path of
-    repin_check e5487165abb8, the file of hub commit f69e6d74ebe, sha256
+    repin_check e5487165abb8, the file, sha256
     e5487165abb8dfb7a39518a418fc24a0e815cea74918943bafbf35667c70ed11); in suite.py `R`, `CU`, `DA`, `PO`, `PN` and
     `E548` (suite.py does not read `E548` when SUITE_OLD_KIT is set);
   - suite.py line 26: OUT and PLANTED_DIR stay relative, and KIT stays absolute;
   - lane names, which become `<agent>`: in the labels of plants A5, V1 and V2 (as in the first run's committed file),
     and in comments and docstrings, which do not change what runs.
 
-  | driver | the kit's original (hub commit 98e50c029045), sha256 | the copy that ran, sha256 | lines changed |
+  | driver | the kit's original, sha256 | the copy that ran, sha256 | lines changed |
   | --- | --- | --- | --- |
   | `controls/negctl.py` -> `negctl-rel.py` | `867ce661d8d5d9e9f94931149b1671bc2ea02d5a680e89d381a50848f7350266` | `287d2110aff0ad195b4470f98e53e40f85b88264be2e29a40a9fe939c40c3c8f` | 3 |
   | `controls/suite.py` -> `suite-rel.py` | `c29e2c6b7ffacda987d856edb4fc0c8f48c1f27f118ad9f5b4424b2536c8b32f` | `a7f357899752b6bfc2a2a27dc4d27c69361b33c7eee251ff4827485e22822a2a` | 21 |
 
-  `diff` of each original and its copy shows every changed line. The re-run first committed (commit 97e71a03582e) used
+  `diff` of each original and its copy shows every changed line. The re-run first committed used
   copies that kept the lane names in comments and suite.py's `E548` (sha256 e92cc680834a and c6a9827b9bb7); its
   negctl.out and planted.sha256 are byte-identical to this run's.
 - driver/env.sh gives negctl.py `FA=src5/fuzz_frame/fuzz_frame.asan`, `DA=src2/fuzz_decode/fuzz_decode.asan` and
@@ -72,12 +72,12 @@ norm.sed replaces each directory prefix of the first run's outputs by its relati
     s#[^ ]*/reports/preset-harness/unstripped/#src4/#g
     s#[^ ]*/agents/[^/]*-next3/libdiginet/unstripped/#src5/#g
 
-The first run's files are blobs 07e77167602e and 5734b993541b at commit c1db711343fc, in both copies of this
+The first run's files are blobs 07e77167602e and 5734b993541b, in both copies of this
 directory (P = proofs/libreac/fuzz_decode/provenance/evidence/alloc-B-recheck/fncmp-cmpkit-86da41d3ef68/controls or
 proofs/libreac/fuzz_decode/provenance/alloc-reloc/B/fncmp-cmpkit-86da41d3ef68/controls):
 
-    git show c1db711343fc:$P/negctl.out | sed -f norm.sed | diff - $P/negctl.out                       # 0 lines
-    git show c1db711343fc:$P/suite-planted.sha256 | sed -f norm.sed | diff - $P/suite-planted.sha256   # 0 lines
+    git show:$P/negctl.out | sed -f norm.sed | diff - $P/negctl.out                       # 0 lines
+    git show:$P/suite-planted.sha256 | sed -f norm.sed | diff - $P/suite-planted.sha256   # 0 lines
 
 | file | first run (blob, sha256) | re-run sha256 | lines | lines with other path text | diff after norm.sed |
 | --- | --- | --- | --- | --- | --- |

@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v, with its module paths and module names changed; 1464 of its 1519 lines of code are new or changed and 790 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F9.v -- GLUE for stage seg_F9 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:768).
    Written by a Theorem Labs lane; single writer.  rule 24: no function proved (kind:
    segment lemma of a walk).  Pattern: glue-pattern.md (a working note, not in this delivery).
@@ -47,7 +48,7 @@
        f9g_exit_body, and ctl_rt_C by a Theorem Labs lane's PROVED ProgWorldCtlRtC.ctl_rt_C_of_AR over the AR of the exit
        journal and the entry's arodata_okS carried by KitMem.kitmem_arodataS_journal.
 
-   ROUTE (C) (a working branch shell 1899bed1aee): the cut carries A.ACtlRtC.ctl_rt_C B ly3 S3
+   ROUTE (C) (a working branch shell): the cut carries A.ACtlRtC.ctl_rt_C B ly3 S3
    mem3 in place of ctl_rt mem3.  The stage's one shadow consumption, the writability of the owned class-6 frame's
    shadow [Sfr fr, Sfr fr + 392) for f9_evtA_F's wr_at premise (f9g_entry), reads ctl_rt_C's (F) region: the frame
    (6, c_fpos cx) is in frames S3 and frame_addr ly3 6 (c_fpos cx) = fr (kitmem_own6).  The exit's ctl_rt_C is
@@ -69,12 +70,12 @@
    of this stage go through TFIB_SYMS' ts_zsh:
    - the shadow byte of the kind-name string X = kind_name_addr (t_k g j).  For the nine strings whose first
      granule is full (0x21260 0x21280 0x212a0 0x212e0 0x21320 0x21340 0x21360 0x21380 0x213c0) the record AF0m
-     (a working branch e56483f863b, Tfib_zero_shadow :2955-2964) has a zero row, and this
+     (a working branch, Tfib_zero_shadow :2955-2964) has a zero row, and this
      file NAMES NO ROW BY POSITION (it finds one by a boolean search), so the proof runs on the record too.  For
      the five PARTIAL-granule strings 0x21220 (5 bytes) 0x21240 (7) 0x212c0 (6) 0x21300 (7) 0x213a0 (6) there is no
-     zero row on the record: their shadow is the record's Tfib_const_shadow rows (record AF0m.v:2187, :2191, :2203,
+     zero row on the record: their shadow is the record's Tfib_const_shadow rows (record AF0m.v:2188, :2192, :2204,
      :2210, :2224).  Those five rows are now PROVED here, by computation, as f9g_rec_kn_shadow: the interim base's
-     lib/A/AF0m.v IS the record file (blob 44930bfd861 (the blob this tree had at release c5e779efe8c) = e56483f863b's, checked by a Theorem Labs lane), so the step holds on
+     lib/A/AF0m.v IS the record file (blob 44930bfd861 (the blob this tree had at release) = a commit's, checked by a Theorem Labs lane), so the step holds on
      the record AND on the base, and no hypothesis is left for it.  They are used through the local
      f9g_kn_gshadow.  On the PLANNING core those five granules came instead from the row (0x20ec0, 0xa4380 -
      0x20ec0), which the measurement above calls a defect; that core is no longer the one this file builds on.
@@ -103,13 +104,13 @@
    does (ctrlgate 81a8c99627b2 DUP / REQ, a Theorem Labs lane 09:09Z; before, the partial `Reusable.YI00.garr8` /
    `Reusable.YP09.mbyte` / `Reusable.YK0s.ret_ok` bound the lib/A/Reusable copies by Locate; the bodies convert).
 
-   ROUTE (C) BUILD STATE: type-check rc=0 on a working branch shell 1899bed1aee (cb build, a build machine, log
+   ROUTE (C) BUILD STATE: type-check rc=0 on a working branch shell (cb build, a build machine, log
    (internal path), build 2026-10-29T13:05:56Z); build of record: a Theorem Labs lane's cbrec record
    over lib/A/ACtlG/L3W4bAudit.v (not in this delivery).  The paragraph below is the pre-route-(C) state.
-   BUILD STATE (honest): TYPE-CHECK ONLY (no value of a type-check build counts).  Type-check on
-   5da74c9c931, closure reaches no stand-in: rc=0 on a working branch (glue base a1debf82953 =
-   29ddfc3ea99 + batch 4 A / A2, KitMem 81524d6c608), built by cb build (VM
-   a build machine, BASE row 23b918fe0c2e) with NO port_core_refused substitution and no AD2l stand-in: log
+   BUILD STATE (honest): TYPE-CHECK ONLY (no value of a type-check build counts).  Type-check,
+   closure reaches no stand-in: rc=0 on a working branch (glue base =
+   + batch 4 A / A2, KitMem 81524d6c608), built by cb build (VM
+   a build machine, BASE row) with NO port_core_refused substitution and no AD2l stand-in: log
    build 2026-10-29T09:24:38Z (this file; the chain under it at
    build-20261029T092226Z.log and, with the Tk/AW/SmLeaf and SmLib lines, build-20261029T075755Z.log).  `Print
    Assumptions glue_seg_F9` (same log, the command is the file's last line) lists only Rocq's kernel primitives
@@ -728,9 +729,9 @@ Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> Reusable.YG0d.in_img segs a.
 Hypothesis TFIB_SYMS : A.AF0m.CtrlTSyms B.
 (* The RECORD AF0m's shadow rows of the five kind-name strings whose first granule is partial.  On the interim
-   base lib/A/AF0m.v IS the record file (blob 44930bfd861 (the blob this tree had at release c5e779efe8c) = e56483f863b's, checked by a Theorem Labs lane), so this is PROVED
+   base lib/A/AF0m.v IS the record file (blob 44930bfd861 (the blob this tree had at release) = a commit's, checked by a Theorem Labs lane), so this is PROVED
    here by computation instead of assumed: the five rows are Tfib_const_shadow's entries 19, 23, 35, 42 and 56
-   (record AF0m.v:2187, :2191, :2203, :2210, :2224), and Tfib_const ly is Tfib_const_sym ++ Tfib_const_abs ++
+   (record AF0m.v:2188, :2192, :2204, :2211, :2225), and Tfib_const ly is Tfib_const_sym ++ Tfib_const_abs ++
    Tfib_const_shadow for every ly.  shadow_addr 0x21220 = 0x7fffc244, 0x21240 = 0x7fffc248, 0x212c0 = 0x7fffc258,
    0x21300 = 0x7fffc260, 0x213a0 = 0x7fffc274. *)
 Lemma f9g_rec_kn_shadow : forall ly,
@@ -775,7 +776,7 @@ Local Notation f9E cx j phi fr :=
 
 (* LOCAL (one per stage, a Theorem Labs lane 08:2xZ): the shadow value of a granule whose row in the const table is
    `z1 (ANum (shadow_addr g)) k`, read through the world's VIEW.  The shared A.ProgWorldShadow.ctl_gshadow_of_AR
-   (a Theorem Labs lane's ctl_gshadow_of_AR_fixed (written on a working branch 1888d8b45bf), ProgWorldShadow.v (at head lib/A/ProgWorldShadow.v:151-177)) does not
+   (a Theorem Labs lane's ctl_gshadow_of_AR_fixed (written on a working branch), ProgWorldShadow.v (at head lib/A/ProgWorldShadow.v:151-177)) does not
    apply: it concludes `addressable` (an mrd byte), while the run's footprint premise needs the byte VISIBLE, i.e.
    the view value (ProgWorldCtlRt.aview_some_vis).  Same route: AR's am_const at as_const B ly = Tfib_const ly
    (TFIB_SYMS' ts_const), the byte k of the 1-byte row at offset 0.  No image bound: no addressable conclusion. *)

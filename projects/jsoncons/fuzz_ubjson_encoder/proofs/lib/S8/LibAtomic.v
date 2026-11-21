@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: fully qualified module paths; unused lemmas removed. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -31,7 +31,7 @@ Ltac atomic_pipeline Hfetch Hecall Hdecode :=
 
 Ltac norm_pc_r :=
   try lazymatch goal with
-      | |- CatSim.msteps _ (mkst_r _ ?p _ _ _) _ => wlit p
+      | |- S8.CatSim.msteps _ (mkst_r _ ?p _ _ _) _ => wlit p
       end.
 Section FPX_2. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
@@ -118,38 +118,6 @@ Proof.
   rewrite Hok. cbv beta iota.
   rewrite write_to_mem_wbytes, b_npc4.
   unfold regupd, word_to_le_bytes.
-  destruct (is_x0 rd); cbv beta iota; reflexivity.
-Qed.
-
-Lemma step_sc_fail : forall segs regs pc mem rom w wd aq rl rd rs1 rs2,
-  fetch_word segs pc = Some w -> is_ecall w = false ->
-  decode_any w = Some (Sc wd aq rl rd rs1 rs2, 4%Z) ->
-  (bv_unsigned (getr regs rs1) mod amo_bytes wd = 0)%Z ->
-  RiscvSemantics.step segs (mkst regs pc mem rom) =
-  MachineOk (mkst (if bv_eqb rd 0 then regs else regupd regs rd (Z_to_bv 64 1)) (v_addi pc 4) mem rom).
-Proof.
-  intros segs regs pc mem rom w wd aq rl rd rs1 rs2 Hfetch Hecall Hdecode Hal.
-  atomic_pipeline Hfetch Hecall Hdecode.
-  change (if is_x0 rs1 then Z_to_bv 64 0 else reg_get regs rs1) with (getr regs rs1).
-  unfold amo_bytes in Hal. rewrite Hal. change (negb (0 =? 0)%Z) with false. cbv beta iota.
-  rewrite b_npc4. unfold regupd.
-  destruct (is_x0 rd); cbv beta iota; reflexivity.
-Qed.
-
-Lemma step_sc_mismatch : forall segs regs pc mem rom w wd aq rl rd rs1 rs2 r,
-  fetch_word segs pc = Some w -> is_ecall w = false ->
-  decode_any w = Some (Sc wd aq rl rd rs1 rs2, 4%Z) ->
-  (bv_unsigned (getr regs rs1) mod amo_bytes wd = 0)%Z ->
-  (bv_unsigned r =? bv_unsigned (getr regs rs1))%Z = false ->
-  RiscvSemantics.step segs (mkst_r regs pc mem rom r) =
-  MachineOk (mkst (if bv_eqb rd 0 then regs else regupd regs rd (Z_to_bv 64 1)) (v_addi pc 4) mem rom).
-Proof.
-  intros segs regs pc mem rom w wd aq rl rd rs1 rs2 r Hfetch Hecall Hdecode Hal Hne.
-  atomic_pipeline Hfetch Hecall Hdecode.
-  change (if is_x0 rs1 then Z_to_bv 64 0 else reg_get regs rs1) with (getr regs rs1).
-  unfold amo_bytes in Hal. rewrite Hal. change (negb (0 =? 0)%Z) with false. cbv beta iota.
-  rewrite Hne. cbv beta iota.
-  rewrite b_npc4. unfold regupd.
   destruct (is_x0 rd); cbv beta iota; reflexivity.
 Qed.
 

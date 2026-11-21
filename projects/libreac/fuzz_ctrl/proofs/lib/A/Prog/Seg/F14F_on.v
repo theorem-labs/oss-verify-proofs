@@ -4,22 +4,23 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 748 of its 797 lines of code are new or changed and 962 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F14.v, with its module paths, addresses and numbers changed; 109 of its 227 lines of code are new or changed and 679 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F14F_on.v -- route (C) twins of Seg/F14F.v's wrapper-call runs (image A, fuzz_ctrl.asan, libreac
    v1.9.0).  rule 24: no function proved (footprint run lemmas of one segment).
    Writer: a Theorem Labs lane, on a Theorem Labs lane's go 2026-10-29 ~13:00Z under a Theorem Labs lane's standing consent (12:55Z):
    F14F is in no started / taken list, so its twin is a NEW file and Seg/F14F.v stays unchanged apart from comment text (blob
-   1034736020c, the same blob on a Theorem Labs lane's fold a working branch 4bae33fdf54 and on the route (C) walk's shell
-   (a working branch 1899bed1aee)).
+   1034736020c, the same blob on a Theorem Labs lane's fold a working branch and on the route (C) walk's shell
+   (a working branch)).
 
    WHAT CHANGES against Seg/F14F.v's f14_evt_dc_F / f14_evt_dc_ro_F (text otherwise the same):
    - the callee premise bcmp_wrap_contract_F becomes bcmp_wrap_contract_F_on (lib/A/Prog/bcmp_wrap_c_on.v, blob
-     ca2f37ea2b6 (the blob this tree had at release c5e779efe8c), a Theorem Labs lane; its proof bcmp_wrap_holds_F_on is in lib/A/Prog/bcmp_wrap_on.v 49fcbf2eeed (the blob this tree had at release c5e779efe8c),
-     both taken by path, with bcmp_wrap_c.v 64293314ee8 (the blob this tree had at release c5e779efe8c), from a working branch f4423e55886);
+     ca2f37ea2b6 (the blob this tree had at release), a Theorem Labs lane; its proof bcmp_wrap_holds_F_on is in lib/A/Prog/bcmp_wrap_on.v 49fcbf2eeed (the blob this tree had at release),
+     both taken by path, with bcmp_wrap_c.v 64293314ee8 (the blob this tree had at release), from a working branch);
    - the premise `shadow_rw m` becomes `shadow_rw_on (bcmp_wrap_shadow_R L R 72) m`: the segment's own instructions
      read no shadow byte (three 8-byte spill loads of [A+280], [A+184], [A+192]); the shadow it reads is the
      wrapper's, the aligned shadow words of the two 72-byte records, which is exactly the callee's region at
      N = 72 (the same region a Theorem Labs lane's plain-run twin Seg/F14.f14_evt_dc_on (not in this delivery) names, f14_evt_dc_shadow_R L R :=
-     bcmp_wrap_shadow_R L R 72; from a working branch 3a51c4afbc7);
+     bcmp_wrap_shadow_R L R 72; from a working branch);
    - the post's `shadow_rw m'` becomes the callee's transport `forall P, shadow_rw_on P m -> shadow_rw_on P m'`.
    The ro twin crosses MemNorm's normalization with ShadowRwOnT.shadow_rw_on_rel (forward) and
    ShadowRwOnT.shadow_rw_on_of_rel (backward), as Seg/F14.f14_evt_dc_ro_on does. *)

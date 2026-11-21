@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -38,6 +38,7 @@
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 837 of its 889 lines of code are new or changed and 401 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s17.v, with its module paths and module names changed; 200 of its 253 lines of code are new or changed and 836 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): what segment B11c
    of reac_segconf_parse_file's walk carries across its F_badmodel refuse call (jal 0x892f8 at 0x88bec, return
    0x88bf0): from the state at the call (pf_seg_B11c_r.v INV_KCALL) and refuse_contract's post (lib/B/Prog/
@@ -45,9 +46,9 @@
    rule PaFx.cl_callSF returns, the state at 0x88bf0 satisfies KOUT's invariant (pf_seg_B11c_o.v INV_KOUT) at
    the FP state refuse returned. The B11c segment lane of the image-B G3 walk owner, 2026-10-30. proves no function (kind: segment
    lemma, the call's frame transport).
-   ADAPTED from the image-A G3 walk owner's image-A transport lemmas lib/A/Prog/pf_a5_k.v (commit
-   385fd095481f: a5_move, a5_rg_pres, a5_set_fs2), lib/A/Prog/cross_check_r.v (commit
-   4375c82a2d01: refuse_W_in_block) and image B's parse walk lib/B/Prog/reac_segconf_parse.v (sa_addr_of_heap,
+   ADAPTED from the image-A G3 walk owner's image-A transport lemmas lib/A/Prog/pf_a5_k.v (
+   a5_move, a5_rg_pres, a5_set_fs2), lib/A/Prog/cross_check_r.v (
+   refuse_W_in_block) and image B's parse walk lib/B/Prog/reac_segconf_parse.v (sa_addr_of_heap,
    sa_lit_journal, in_roP_img), re-derived for B's frame.
    WHAT KEEPS EACH FACT (refuse's journal from the call: window [s1 - STK_refuse, s1), footprint refuse_W c cf,
    which lies in the block c, YCbq.ajournal's clauses):

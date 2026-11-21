@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AE2y.v, with its module paths and module names changed; 366 of its 406 lines of code are new or changed and 664 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b): the walk of
    padded (new fuzz_preset.c:509-521, git blob fa3e8966; B' 0x830a8, 148 bytes, 37 instructions; slot B_prog_slot
    AS_padded = 1655 of the whole-program listing). B' only: image A' inlines padded into check_no_overread.
@@ -77,7 +78,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* THE TEXT IS the tree's tpadded_specX (lib/A/PRH_FnCheck.v:1639-1697, its code as in blob de94d3f3a7f1), the conclusion of
-   pd_s1 VERBATIM (Padded102B_S1.v:261-262). Against the text this walk proved before (blob 9ecd8eb167c6) it has FOUR changes,
+   pd_s1 VERBATIM (Padded102B_S1.v:262-263). Against the text this walk proved before (blob 9ecd8eb167c6) it has FOUR changes,
    (1) and (4) already in the kit cut's text (blob c40cf3fdcd2a): (1) no run-word list DW (no DW parameter, none in
    prh_univ_closure: DW-SPLIT superseded); (2) the premise hull_budget (PRH_FnCheck.v:1648); and TWO new post conjuncts, (3)
    hull_used (:1658) and (4) the OUTCOME clause (:1660-1668, pd_outc below: at a consumer position whose next event is the copy's
@@ -161,7 +162,7 @@ Qed.
    Each pd_sN_stmt is the segment's whole obligation: from its cut, the function's post. A segment's owner proves
    `Lemma pd_sN : pd_sN_stmt.` and nothing else of this file changes. The seats are NOT shared: a segment builds its
    own st_ok_pi at its cut from pd_base (the frame region pd_frame over the atoms 32..36, the facts pd_facts, and -
-   on the NULL arm only - pd_own_region), by YC1fP.v's pa_entry_st_ok_full, as FuzzStrdupB.v:288 sd_entry does. *)
+   on the NULL arm only - pd_own_region), by YC1fP.v's pa_entry_st_ok_full, as FuzzStrdupB.v:289 sd_entry does. *)
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {RL : PrhRoomLive}.
 Context {SK : YI16.sink_head}.
 Context {PA : PAImg B_prog_listing}.
@@ -177,7 +178,7 @@ Variable B : asyms.
 #[local] Notation ARc := (fun ly S Hp W mem md => ARcf (cp := CP) SEGS B ly S Hp W mem md /\ xs_placed_cf ly S).
 #[local] Notation AJ := (ajournal_x (SK := SK) SEGS B PST ARc).
 (* ---- the two RUNTIME ROWS this walk crosses, as named Section hypotheses (the lead's rule, 15:2xZ, on
-   the S3 row owner's finding; FuzzStrdupB.v:272-277 is the form): the rows have their own owner, the walk cites them. They are
+   the S3 row owner's finding; FuzzStrdupB.v:273-278 is the form): the rows have their own owner, the walk cites them. They are
    the m-forms, so each carries its memnorm keep (YGcallMxmn.v:162 aintrin_realizes_xm) and S3 / S4 can thread
    pd_mn across the call. ---- *)
 Hypothesis AI_cpy : aintrin_realizes_xm SEGS B ARc OCpy (SIGMA AS___asan_memcpy).
@@ -205,8 +206,8 @@ Record pd_img : Prop := {
   (* THE TWO FACTS OF THE UNIT'S BINDING OF B the walk reads (narrowed 16:5xZ from the whole PALib B, owner ruling
      16:45Z): PALib's other fields (as_got_shadow / as_shadow_cell / as_got_uar) are read by no padded segment, and the
      B' TfibSyms (YF0m f82202ebccdf) gives none of them, while it gives both of these by computation (ts_code; ts_errno
-     and ts_universe_drv). pdi_malloc is S1's wrapper entry (YC1fP.v:337 pal_malloc's statement); pdi_env is api_env
-     (YCbq.v:809, YC1fP.v:335 pal_env's statement): errno's four bytes do not wrap (the row owner's gap on PDB-S5), they
+     and ts_universe_drv). pdi_malloc is S1's wrapper entry (YC1fP.v:338 pal_malloc's statement); pdi_env is api_env
+     (YCbq.v:809, YC1fP.v:336 pal_env's statement): errno's four bytes do not wrap (the row owner's gap on PDB-S5), they
      are image bytes, and the wrapper's return traces are in the universe (aj_malloc_x_m's HENV). *)
   pdi_malloc : SIGMA AS___wrap_malloc = pc_wrap_malloc (as_code B);
   pdi_env : api_env SEGS B;
@@ -260,7 +261,7 @@ Definition pd_base (D : pd_in) (ly : alayout) (S : astate) (Hp : list Z) (W : wo
      entry and S1 hands it on) - the row owner's second finding on PDB-S6 *)
   YK0s.ret_ok (getr (din_regs D) 1) /\
   pd_J D ly S Hp W mem md k /\ pd_saved D W mem /\ pd_regsat D regs b /\
-  (* the runtime registers every call rule asks of its call state (ecall_pre_x, FCiface.v:48; aj_intrin_at_xm's
+  (* the runtime registers every call rule asks of its call state (ecall_pre_x, FCiface.v:49; aj_intrin_at_xm's
      premises, YGcallMxmn.v:274): pd_regsat keeps x3 / x4 from the entry, and THESE tie the entry's to the image's
      - the row owner's finding on PDB-S4, which blocks PDB-S3 too. S1 pays them from afn_pre_x. *)
   getr (din_regs D) 3 = w64 (as_gp B) /\ getr (din_regs D) 4 = w64 (as_tp B) /\
@@ -388,7 +389,7 @@ Qed.
    [b + size, b + size + 16)), and what memcpy's own `d + n <= x \/ x + n <= d` (YGcallMxmn.v:280) needs. The
    range form and the pointwise form are both here: the range form is the copy rule's premise word for word, the
    pointwise form is what the two keeps consume. S1 pays both once, from src_rd, the ENTRY prhReader_home and the
-   freshness of the wrapper's block (FuzzStrdupB.v:480 sd_src_disj is the model). *)
+   freshness of the wrapper's block (FuzzStrdupB.v:481 sd_src_disj is the model). *)
 Definition pd_src_apart (D : pd_in) (b : Z) : Prop :=
   (* the range form is memcpy's own premise word for word (d := b, x := data, n := size; YGcallMxmn.v:280). It was
      `b + size + 16 <= data` on its right arm until 16:2xZ: that arm is not derivable at size = 0 (no home premise
@@ -458,7 +459,7 @@ Definition pd_seat_stmt : Prop := pd_img -> forall D off ly S Hp W regs mem md k
   sh_ok SEGS PD_Bx [] (pd_E D regs) (mrestrict (w_H W) mem) /\
   img_env VAL A_LIM (pd_E D regs) /\
   env_agree 32 (Ereg regs (map (getr (din_regs D)) [1%bv; 8%bv; 9%bv; 18%bv; 19%bv])) (pd_E D regs).
-(* the NULL arm's seat: the same, with the one-byte g_own_ran_out cell beside the frame (YC1fP.v:116
+(* the NULL arm's seat: the same, with the one-byte g_own_ran_out cell beside the frame (YC1fP.v:117
    st_ok_pi_add_region over pd_own_region; its base atom A_OBJ 13 is bounded inside the image by pd_facts, so it is
    disjoint from the frame, which astk_ok puts above alloc_ceiling) *)
 Definition pd_seat_null_stmt : Prop := pd_img -> forall D off ly S Hp W regs mem md k ow,
@@ -612,7 +613,7 @@ apply (st_ok_pi_add_region _ (pd_ss (pd_koff off)) _ pd_own_region HS).
   left. unfold IMG_TOP_B in Hown. lia.
 Qed.
 
-(* the listing's own tables, closed, for the engine's vm_compute (Cno102B_Base.v:116-120 PL_cno_B, the same terms as
+(* the listing's own tables, closed, for the engine's vm_compute (Cno102B_Base.v:117-121 PL_cno_B, the same terms as
    PAImg_prog.v 4392ab2c09ba :177-181; PAImg_prog.v is the instance and is not Required here) *)
 Definition B_prog_tpi_pd : ptree asym := ptree_of_list B_prog_listing.
 Definition B_prog_tw_pd : ctable := Eval vm_compute in (tw_of 0 B_prog_listing).

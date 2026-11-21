@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0j.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81a9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan (image
    tfibsegs, the pinned fuzz_state.asan sha256 64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0): the ASan
    walk of FSH_Fn_crt.v check_round_trip_spec, segment group C = segments 20-29, from the return of pj_set at 0x821a8
@@ -11,8 +12,8 @@
    "none for build A, by name or address: the released `check_round_trip` proofs are plain/ubsan only, 0x138ac/0x139ac,
    not the same bytes as A 0x81a9c. Written new for A, following the stage structure of released
    `lib/Prog/check_round_trip_*` and the donor pattern of cgif `AChf.v`/`ACic.v`." Evidence: proof index v5 built
-   2026-10-28T21:58:24Z (main@e966c513ee6, ossv/recipes@566eb6ffa5d, ossv/candidates@ee89628c997,
-   release/pau-projects-recipes@b6a0088adcb, every branch where the index read it); `proof-index check_round_trip`
+   2026-10-28T21:58:24Z (main, ossv/recipes, ossv/candidates,
+   release/pau-projects-recipes, every branch where the index read it); `proof-index check_round_trip`
    exit 0 with 31 named hits, all plain or ubsan builds, none ASan; `check_round_trip_holds` exit 1; no `lib/A` file on
    any released ref. The stage structure is the released plain lib/Prog/check_round_trip_stages_b.v (its document
    names crt_st / crt_doc and keys K_CONTEXT / V_PRESET / CRT_BYTES / CRT_STATE are cited, not copied); the segment
@@ -587,7 +588,7 @@ End q.
    "context" 0x20fa0 and "bytes" 0x20fc0 (pj_set keys at 0x821d4 / 0x821fc; "bytes" is also pj_get_str's key at
    0x82264), "state" 0x20f00 (pj_set key at 0x82214 and pj_get's key at 0x82258). At every state of the walk each is
    cstr_ok on the machine's memory (FSW_strkit.cstr_ok_kept_tbl from the image facts IMG, ARU and the read-only image
-   crt_rodata carries) and cstr_kept by its table arm (U taken, S0 4a924247f5f). IMG is a fact about B alone (RELOC /
+   crt_rodata carries) and cstr_kept by its table arm (U taken, S0). IMG is a fact about B alone (RELOC /
    TfibB discharge it in the final instance), the reader and writer files' own name. *)
 Section k. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable SK : YI16.sink_head.
@@ -620,8 +621,8 @@ End k.
    Every callee footprint of segment group C splits into: fs's statics (the static arm: FS_PSTAT_FP is crt's own FP and
    image bytes, FSH_crt_base.crt_pstat_img), objects of crt's class-3 frame (the own-frame arm), and for pj_set the old
    kids / keys blocks grow may free (the tmp-block arm: blocks the walk itself allocated, not crt's entry blocks - a
-   fact the boundary invariant carries, a premise here). pj_get / pj_get_str post FP = []. pj_write's post (S0
-   10ffef27396, FSH_Fn_writer.v pj_write_spec) has window top spZ regs and FP = FS_PSTAT_FP, so its after-call is the
+   fact the boundary invariant carries, a premise here). pj_get / pj_get_str post FP = []. pj_write's post (S0,
+   FSH_Fn_writer.v pj_write_spec) has window top spZ regs and FP = FS_PSTAT_FP, so its after-call is the
    ordinary crt_after_call with crtC_fpsub_static; it has no raised top and no wkeep at crt's call. *)
 Section f. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.

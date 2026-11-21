@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv bound is read from the auxv premise in its new shape (27 or 29 key-value pairs), with a comment. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
@@ -150,7 +151,9 @@ Section E.
       HO8 HO16 HO24 HO40 HO56 HDOC Hspd Hdb Hda HTB HSB HOC HIA HFM HGOT HAUX Hspb HSTK Hlo1 Hlo2 Hsp16 Hsp47 HMI HFRM -> ->.
     pose proof (scan_S1OUT d idx Hscan) as S1. pose proof (s1_n _ _ _ S1) as Sn.
     unfold PS2_STACK, OPNEW_NT_STACK, OPNEW_STACK, RMALLOC_STACK in Hlo2. atop_facts.
-    assert (HAUXB : B <= 2 ^ 64 - 160) by (destruct HAUX as (av & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hb & Hav & _); lia).
+    (* LPS 727298f3: the auxv the scan sees is 27 or 29 pairs, so at least 54 words lie above B. *)
+    assert (HAUXB : B <= 2 ^ 64 - 160) by (destruct HAUX as (av & vs & r & rnd & _ & _ & _ & _ & Hb & Hav & _);
+      first [ (unfold rauxv_list in Hav; rewrite length_map in Hav; destruct r; cbn in Hav; lia) | (destruct r; cbn in Hav; lia) ]).
     clear HAUX.
     pose proof (u_rng' sp) as Rsp.
     (* [comment removed for export] *)

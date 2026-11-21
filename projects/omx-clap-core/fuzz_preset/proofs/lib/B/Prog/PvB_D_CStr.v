@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's check_no_loss,
    a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)), after
-   lib/A/W_check_no_loss.v (sha256 8817affe2a55; internal record) and lib/B/W_check_bounded.v (at
-   7e062bb9b9c), with the image-B facts (frame, registers, trap sites) of the old-frame walk lib/B/Prog/check_no_loss.v
-   (a working branch 0fafbcda68f). *)
+   lib/A/W_check_no_loss.v (sha256 8817affe2a55; internal record) and lib/B/W_check_bounded.v,
+   with the image-B facts (frame, registers, trap sites) of the old-frame walk lib/B/Prog/check_no_loss.v
+   (a working branch). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_check_no_loss.v, with its module paths and module names changed; 1008 of its 1108 lines of code are new or changed and 4874 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image B' (asan-ubsan, #102), parse_value 0x8637c, segment D (the DISPATCH): the STRING
    CALL ARM. From parse_string's entry (`jal parse_string` at B 0x8655c, a0 = q, the type word 4 stored at v by
    0x86554) to the shared exit 0x8664c: the kit's parse_string text (lib/A/PRH_FnReader.v tparse_string_specX CTX0 CW, the batch kit
@@ -354,7 +355,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 (* ---- Section hypotheses ---- *)
 (* the kit rule: YCbqG's 16-field record at the harness head length (the instance's AR_laws_x_xs) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the callee text: the kit's parse_string (lib/A/PRH_FnReader.v tparse_string_specX CTX0 CW at the batch kit's tip 240b06ed4fd4:
+(* the callee text: the kit's parse_string (lib/A/PRH_FnReader.v tparse_string_specX CTX0 CW at the batch kit's tip:
    the cursor set CW, prh_cw_ok at the call state, wild_room .. CW 0 at the call state; post at wbudget CW 0) *)
 Hypothesis TPSTR : forall CTX0 CW, tparse_string_specX (fx := fx0) (PI := PIB) (PA := PA) B ARx SK CTX0 CW.
 (* MARKED instance fact, discharged at lib/A/CfParamsPreset.v (cf_head = 16, preset source/alloc.c:31): a harness
@@ -794,7 +795,7 @@ assert (HCURS : (exists ch, achain lyc (aview SEGS (w_H W') mem) (Y - 144) q ch)
       replace (q - 16 =? spZ (pe_regs en) - 16) with false
         by (symmetry; apply Z.eqb_neq; change (spZ (pe_regs en)) with sp0; lia).
       rewrite <- Hw. symmetry. apply KNQ; lia. }
-(* parse_string's live premise (the batch kit's tip 03fcabb582d0, PRH_FnReader.v :566-576): the request half as before (from
+(* parse_string's live premise (the batch kit's tip, PRH_FnReader.v :566-576): the request half as before (from
    rd_room's prh_maxreq), and the per-event live room over the callee's own events, which ARE the value's
    (PvB_D_Str.v pvs_trace + PRH_FnReader.prhPs_evs_model at cf_head = HEAD), so it is rd_room Sc's third conjunct *)
 assert (Egt3 : PresetReqAt.rd_hevs (pe_gt en) = prhPs_evs y []).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap cuts the request out of both ledgers: nstep_dec_munmap_remove and the maps_subtract lemmas). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -55,12 +56,86 @@ Lemma kfixlost_model_minv : forall a n m, minv m ->
                  (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
 Proof. intros a n m [Hl Hm]. unfold kfixlost_model. apply vm_forget_range_id; assumption. Qed.
 
+(* [Common/MmapSim.iv_subtract_outside] and [Common/MmapSim.maps_subtract_exact]
+   of the model, vendored: the tree's dune does not list the
+   [LinuxProcessSemantics.Common] theory, so the proof cannot require it. *)
+Lemma iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z
+      with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a
+      \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+                = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
+
+(* The cut the revision's [munmap_spec] makes is the removal of the whole
+   entry when the ledger is well formed: every size positive and the
+   entries pairwise disjoint, which is what [KInv.vmwf] says.  Stated on
+   the two conjuncts rather than on [vmwf] because [KInv] is above this
+   file. *)
+Lemma maps_subtract_remove_vmwf : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall e, In e l -> (0 < bv_unsigned (snd e))%Z) ->
+  (forall e1 e2, In e1 l -> In e2 l -> e1 = e2
+     \/ (bv_unsigned (fst e1) + bv_unsigned (snd e1) <= bv_unsigned (fst e2)
+          \/ bv_unsigned (fst e2) + bv_unsigned (snd e2) <= bv_unsigned (fst e1))%Z) ->
+  In (a, n) l ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  intros l a n Hn Hpos Hdisj Hin. apply maps_subtract_exact.
+  - exact Hn.
+  - intros b s H. exact (Hpos (b, s) H).
+  - intros b s H ->. destruct (Hdisj (a, s) (a, n) H Hin) as [E | D].
+    + injection E as E. exact E.
+    + exfalso. cbn [fst snd] in D. pose proof (Hpos (a, s) H) as Hs. cbn [snd] in Hs. lia.
+  - intros b s H Hne. destruct (Hdisj (b, s) (a, n) H Hin) as [E | D].
+    + exfalso. apply Hne. injection E as E _. exact E.
+    + cbn [fst snd] in D. exact D.
+Qed.
+
 Lemma kmunmap_model_minv : forall a n m, minv m ->
-  kmunmap_model a n m = with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) a)
-               (maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
-               (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
+  kmunmap_model a n m = with_vmmaps (mmap_fixed_destroyed_next (m_vmmaps m) a n) m.
 Proof. intros a n m [Hl Hm]. unfold kmunmap_model, with_mmap_destroyed. apply vm_forget_range_id; assumption. Qed.
 
 Lemma nstep_mm_facts : forall n mo rsp mo' evs,
@@ -209,7 +284,9 @@ Lemma kgrant_ok_na_facts : forall hint mo a n,
   /\ True.
 Proof.
   intros hint mo a n H. unfold kgrant_ok_na in H.
-  apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
+  (* the leading [Placement.linux_place_is] conjunct is not needed here *)
+  apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H H2].
+  apply andb_prop in H as [_ H1].
   apply Z.eqb_eq in H1. apply Z.ltb_lt in H2. apply Z.leb_le in H3. auto 10.
 Qed.
 
@@ -221,7 +298,8 @@ Lemma kgrant_ok_facts : forall hint mo a n,
   /\ True.
 Proof.
   intros hint mo a n H. unfold kgrant_ok in H.
-  apply andb_prop in H as [H H5]. apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
+  apply andb_prop in H as [H H5]. apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3].
+  apply andb_prop in H as [H H2]. apply andb_prop in H as [_ H1].
   apply Z.eqb_eq in H1. apply Z.ltb_lt in H2. apply Z.leb_le in H3. apply Z.leb_le in H5. auto 10.
 Qed.
 
@@ -306,7 +384,12 @@ Lemma nstep_dec_munmap : forall addr len mo rsp mo' evs,
   nstep (NMunmap addr len) mo rsp mo' evs ->
   evs = [] /\ vm_only mo mo' /\
   dec_munmap addr len rsp = Some (RgDone true) /\
-  m_vmmaps mo' = mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) a)
+  (* at the revision the arm CUTS the request out of both ledgers
+     ([Mmap.mmap_fixed_destroyed_next]); on a well-formed ledger that is
+     the removal of the whole entry, which is
+     [nstep_dec_munmap_remove] below *)
+  m_vmmaps mo' = mkVmMapsFull (vm_reserved h)
+                   (maps_subtract (vm_maps h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
                    (maps_subtract (vm_noaccess h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
                    (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
 Proof.
@@ -316,6 +399,30 @@ Proof.
   split; [apply vm_only_with_vmmaps'|]. split; [|reflexivity].
   unfold dec_munmap. cbn [eff_ret eff_writes eff_zeros eff_unmaps eff_copies eff_copyins].
   change (bv_unsigned (Z_to_bv 64 0) =? 0) with true. rewrite !bv_eqb_refl. reflexivity.
+Qed.
+
+Lemma nstep_dec_munmap_remove : forall addr len mo rsp mo' evs,
+  let h := m_vmmaps mo in
+  let a := Z_to_bv 64 addr in let n := Z_to_bv 64 (mmap_len len) in
+  minv mo ->
+  (0 < bv_unsigned n)%Z ->
+  (forall e, In e (vm_maps h) -> (0 < bv_unsigned (snd e))%Z) ->
+  (forall e1 e2, In e1 (vm_maps h) -> In e2 (vm_maps h) -> e1 = e2
+     \/ (bv_unsigned (fst e1) + bv_unsigned (snd e1) <= bv_unsigned (fst e2)
+          \/ bv_unsigned (fst e2) + bv_unsigned (snd e2) <= bv_unsigned (fst e1))%Z) ->
+  In (a, n) (vm_maps h) ->
+  nstep (NMunmap addr len) mo rsp mo' evs ->
+  evs = [] /\ vm_only mo mo' /\
+  dec_munmap addr len rsp = Some (RgDone true) /\
+  m_vmmaps mo' = mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) a)
+                   (maps_subtract (vm_noaccess h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
+                   (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
+Proof.
+  intros addr len mo rsp mo' evs h a n Hmi Hnpos Hpos Hdisj Hin Hst.
+  pose proof (maps_subtract_remove_vmwf (vm_maps h) a n Hnpos Hpos Hdisj Hin) as Hcut.
+  destruct (nstep_dec_munmap addr len mo rsp mo' evs Hmi Hst) as (He & Hvo & Hd & Evm).
+  subst h a n. split; [exact He|]. split; [exact Hvo|]. split; [exact Hd|].
+  rewrite Evm, Hcut. reflexivity.
 Qed.
 
 Lemma nstep_dec_mprotect : forall addr len mo rsp mo' evs,

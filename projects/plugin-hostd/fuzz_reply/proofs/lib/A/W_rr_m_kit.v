@@ -5,13 +5,14 @@
    a helper another hop also needs asks MatchCx to add it here rather than copy it.
    The hops cite the generic AR helpers where they are published: W_gestures_end.v Section ark (gse_callS,
    gse_keep_high, gse_keep_img, gse_nodup) and W_gesture_end.v (ge_garr8_kept, aout_facts, apk_trans).  One helper has
-   no AR original any more and stays copied here (Section gecopy): rrk_ajgx_ly_top, W_gesture_end.v ajgx_ly_top of
-   commit 475b8a2b569, verbatim but for the prefix (W_gesture_end.v now states it over the ARx journal). *)
+   no AR original any more and stays copied here (Section gecopy): rrk_ajgx_ly_top, W_gesture_end.v ajgx_ly_top,
+   verbatim but for the prefix (W_gesture_end.v now states it over the ARx journal). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (a Theorem Labs lane, lane RR_x): the helpers over ARx (Section c is
    W_relay_remove_cx.v's generic block): the journal ajournal_gx_x with the head sets, W_gestures_end.v's _x helpers
    (gse_keep_high_x, gse_keep_img_x: an image byte is kept when it is also off PST, PSTG), the laws' twins
    (frames_bounds_x, frm_img_x, sep_block_frame_x, ajournal_gx_rom_view_x with PSTR); rrk_ajgx_ly_top over
    ajournal_gx_x. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -82,12 +83,12 @@ destruct (H (Z_to_bv 64 a)) eqn:EH; intros Hw.
   + destruct (H2 (Z_to_bv 64 a)); [exact Hw|]. destruct (m2 (Z_to_bv 64 a)); [discriminate | exact Hw].
 Qed.
 
-(* ---- the one helper copied from W_gesture_end.v (commit 475b8a2b569), verbatim but for the rrk_ prefix ---- *)
+(* ---- the one helper copied from W_gesture_end.v, verbatim but for the rrk_ prefix ---- *)
 Section gecopy.
 Variable B : asyms.
 Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
-(* W_gesture_end.v ajgx_ly_top (room sha 475b8a2b569), over ajournal_gx_x: a journal keeps the top of the stack
+(* W_gesture_end.v ajgx_ly_top (room sha), over ajournal_gx_x: a journal keeps the top of the stack
    layout. *)
 Lemma rrk_ajgx_ly_top : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_x (SK := SK) SEGS B PST ARx G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->

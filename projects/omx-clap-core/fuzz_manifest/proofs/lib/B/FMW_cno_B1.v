@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_B1.v at a working branch 31d1eb57a40.
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_B1.v at a working branch.
    check_no_overread 0x80bd4, the first and second copies: from P1 0x80c3c (after malloc (un + 18) -> u1) to Q1 0x80c58
    (memcpy (u1, up, un) done or skipped), and from P2 0x80cbc (after malloc (tn + 18) -> t1) to Q2 0x80cd8 (memcpy
    (t1, tp, tn) done or skipped). Each segment: `beqz a0, 0x80e98` is dead (the fresh block is at or above 4096), the
@@ -45,8 +45,8 @@ Ltac cnoB1_sb_nil :=
 
 Section S. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-Hypothesis FB : FmB B.                                   (* B/FMW_seg.v:37: code addresses, GOT/cell values, statics not owned *)
-Hypothesis HB : TfibSyms B.                              (* ReusableB/YF0m.v:658 *)
+Hypothesis FB : FmB B.                                   (* B/FMW_seg.v:38: code addresses, GOT/cell values, statics not owned *)
+Hypothesis HB : TfibSyms B.                              (* ReusableB/YF0m.v:659 *)
 Hypothesis IMG : fm_img_facts tfibsegs B.                (* B/FMH_Fn.v:61 *)
 Hypothesis UNIV : fm_univ B.                             (* B/FMH_Fn.v:71: incl Tfib_universe (as_universe B) *)
 Hypothesis AMALLOC4 : amalloc04_rule tfibsegs B ameter_triv.   (* YC5d.v:57; ameter_triv YCbp.v:17, mo_ok = True *)

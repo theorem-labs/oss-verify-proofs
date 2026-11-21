@@ -1,7 +1,7 @@
 (* check_words_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan), part 1:
    the facts about this binary that the walk needs beyond `tcheck_words_add_spec`'s premises
    (lib/B/Prog/check_words_add_c.v), and what the walk reads off them. The B twin of
-   lib/A/Prog/check_words_add_s1.v (a working branch 1aea12cabb8), re-derived on B's image.
+   lib/A/Prog/check_words_add_s1.v (a working branch), re-derived on B's image.
 
    The statement quantifies over an arbitrary allocator record `B`, and its only premises about `B` are AR (inside
    afn_pre_na, lib/B/Prog/PaNoChain.v:33-38) and arodata_okP (lib/B/Prog/CmdBase.v:21-23). Neither ties `B`'s
@@ -10,7 +10,7 @@
    `as_got_shadow B`, not where those are). The six facts the walk uses about them are the fields of the record
    `CwaFacts` below, each as narrow as the walk uses it; the walk (lib/B/Prog/check_words_add_s2.v .. _s4.v) uses
    nothing else about `B`. check_words_add.v builds the record by exact from a Theorem Labs lane's shared record lemmas
-   (lib/B/Prog/CmdRecFacts.v, a working branch 6830f0bf032) under the walk hypotheses `HB : CmdBSyms B` and
+   (lib/B/Prog/CmdRecFacts.v, a working branch) under the walk hypotheses `HB : CmdBSyms B` and
    `IMG : cmd_img_facts SEGS B`; this file proves no fact about the record.
 
    `AR_laws SEGS B` is NOT among them: it is a theorem (lib/Reusable/YG0q.v:804, `AR_laws_ok`). The bytes a

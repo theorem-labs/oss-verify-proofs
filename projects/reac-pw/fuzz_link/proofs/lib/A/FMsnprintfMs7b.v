@@ -1,9 +1,10 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfMs7b.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfMs7b.table); zify flag override made Local. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfMs7b.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfMs7b.table); zify flag override made Local. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: ARU form (Poison's FMupoison.v): ecall_preU over any U for ecall_pre; imports FMsnprintfMs79 (the ARU copy of A/AE79.v) in place of A/AE79.v; the notations take U. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Rt Require Import SnUpoison.
 From Stdlib Require Import ZArith NArith List Lia Bool.

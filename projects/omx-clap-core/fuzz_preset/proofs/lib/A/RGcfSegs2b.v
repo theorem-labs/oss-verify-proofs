@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS2b.v (hub 9f4806388ad, blob 1fd765b7cc59) rt_seg_mid_b, restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_mid_b at image A (entry facts rentry_cf, Deallocate's pre realloc_dpre_cf, errno / memnorm kept). *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS2b.v (blob 1fd765b7cc59) rt_seg_mid_b, restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_mid_b at image A (entry facts rentry_cf, Deallocate's pre realloc_dpre_cf, errno / memnorm kept). *)
 (* Modified by Theorem Labs, 2026-10-31: field round 3 part 3c (the record's segments no longer keep the overlay normal
    form): rw_mid_b_A's memnorm conjunct and its proof removed. *)
 (* Modified by Theorem Labs, 2026-10-31: rw_mid_b_A takes the form of the realloc keep record's field rwk_mid_b
    (YGcfReallocComposeKeep.wrap_realloc_walk_keep_cf): the memnorm keep right after RGtop.rwin, proved by
    RGcfSegs2a.memnorm_pw (m2b leaves memory unchanged). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset.asan image A, row A5 of the internal file FREE-PIECES-102.md: the segment S2b, the copy routine's
    return into Reallocate -> Reallocate's `jal Deallocate`: YGcfReallocComposeKeep.wrap_realloc_walk_keep_cf's field
    rwk_mid_b at segs := tfibsegs, ci := CfImg_A, atpD := 1, ARX := RGcfLaws.ARXqA B, K2 := K2A B, K3 := K3A B

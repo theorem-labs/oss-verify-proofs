@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the segment's start knowledge takes the run's CONFIG_RSEQ flag, with the auxv region 464 bytes, was 160, and the launch's auxv claims (SegAuxv.aux_kn) in place of the old twenty words, and the walk is computed in the build for each value of the flag and checked against the post spec read off the walk at the flag false, in place of the recorded walk. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.jsoncons.fuzz_bigint.images Require Import AsanUbsan.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto SegPlanJoin SegPlanAutoX Bo0PlanKit XIcptAB0 XIcptAs0KitB0.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.seg Require Import SegAuxv.
 Import ListNotations. Import AX2. Import AX2B.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -18,7 +20,7 @@ Definition NX0 : nat := 56.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EAlu Instr.ALU_ADD (EVar 2) (ELit (800)); ELit 67584; ELit 6363400; EVar 5; EVar 6; EVar 7; EAlu Instr.ALU_ADD (EVar 2) (ELit (1184)); EVar 9; EAlu Instr.ALU_ADD (EVar 10) (ELit (-32)); EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := [KRange (EVar 2) 140735332552704 140737488354464;
+Definition kn0 (r : bool) : list kentry := [KRange (EVar 2) 140735332552704 140737488354464;
    KAlign (EVar 2) 16;
    KWr (SA (EVar 2) (-10560)) (ELit 11360);
    KUnk (SA (EVar 2) (-10560)) (ELit 11360);
@@ -31,14 +33,14 @@ Definition kn0 : list kentry := [KRange (EVar 2) 140735332552704 140737488354464
    KRange (EVar 32) 1099511627776 140737488355328;
    KAlign (EVar 32) 8;
    KDisj (SA (EVar 2) (-10560)) (ELit 15456) (SA (EVar 10) (-128)) (ELit 144);
-   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 32) 0) (ELit 160);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 32) 0) (ELit 464);
    KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 40) 0) (ELit 160);
    KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 41) 0) (ELit 64);
    KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 42) 0) (ELit 4096);
-   KDisj (SA (EVar 2) (-10560)) (ELit 11872) (SA (EVar 32) 0) (ELit 160);
-   KDisj (SA (EVar 32) 0) (ELit 160) (SA (EVar 40) 0) (ELit 160);
-   KDisj (SA (EVar 32) 0) (ELit 160) (SA (EVar 41) 0) (ELit 64);
-   KDisj (SA (EVar 32) 0) (ELit 160) (SA (EVar 42) 0) (ELit 4096);
+   KDisj (SA (EVar 2) (-10560)) (ELit 11872) (SA (EVar 32) 0) (ELit 464);
+   KDisj (SA (EVar 32) 0) (ELit 464) (SA (EVar 40) 0) (ELit 160);
+   KDisj (SA (EVar 32) 0) (ELit 464) (SA (EVar 41) 0) (ELit 64);
+   KDisj (SA (EVar 32) 0) (ELit 464) (SA (EVar 42) 0) (ELit 4096);
    KDisj (SA (EVar 2) (-10560)) (ELit 15456) (SA (EVar 40) 0) (ELit 160);
    KDisj (SA (EVar 40) 0) (ELit 160) (SA (EVar 41) 0) (ELit 64);
    KDisj (SA (EVar 40) 0) (ELit 160) (SA (EVar 42) 0) (ELit 4096);
@@ -87,27 +89,9 @@ Definition kn0 : list kentry := [KRange (EVar 2) 140735332552704 140737488354464
    KRange (EVar 42) 4096 140737479962624;
    KWord (SA (EVar 10) (-16)) 8 (ELit 0);
    KWord (SA (ELit 0) (6494536)) 8 (EVar 33);
-   KWord (SA (ELit 0) (6495136)) 8 (EVar 32);
-   KWord (SA (EVar 32) (0)) 8 (ELit 3);
-   KWord (SA (EVar 32) (8)) 8 (ELit 65600);
-   KWord (SA (EVar 32) (16)) 8 (ELit 4);
-   KWord (SA (EVar 32) (24)) 8 (ELit 56);
-   KWord (SA (EVar 32) (32)) 8 (ELit 5);
-   KWord (SA (EVar 32) (40)) 8 (ELit 11);
-   KWord (SA (EVar 32) (48)) 8 (ELit 16);
-   KWord (SA (EVar 32) (56)) 8 (EVar 39);
-   KWord (SA (EVar 32) (64)) 8 (ELit 6);
-   KWord (SA (EVar 32) (72)) 8 (ELit 4096);
-   KWord (SA (EVar 32) (80)) 8 (ELit 11);
-   KWord (SA (EVar 32) (88)) 8 (EVar 34);
-   KWord (SA (EVar 32) (96)) 8 (ELit 12);
-   KWord (SA (EVar 32) (104)) 8 (EVar 34);
-   KWord (SA (EVar 32) (112)) 8 (ELit 23);
-   KWord (SA (EVar 32) (120)) 8 (ELit 0);
-   KWord (SA (EVar 32) (128)) 8 (ELit 25);
-   KWord (SA (EVar 32) (136)) 8 (EVar 36);
-   KWord (SA (EVar 32) (144)) 8 (ELit 0);
-   KWord (SA (EVar 10) (-8)) 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit (1312)));
+   KWord (SA (ELit 0) (6495136)) 8 (EVar 32)]
+   ++ aux_kn r 11 ++
+  [KWord (SA (EVar 10) (-8)) 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit (1312)));
    KWord (SA (EVar 10) (-32)) 8 (ELit 4849336966747728640);
    KWord (SA (EVar 2) (1176)) 8 (ELit 600132);
    KWord (SA (EVar 2) (1168)) 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit (1296)));
@@ -128,7 +112,7 @@ Definition kn0 : list kentry := [KRange (EVar 2) 140735332552704 140737488354464
    KWord (SA (ELit 0) (6363188)) 1 (ELit 0);
    KWord (SA (ELit 0) (6363189)) 1 (ELit 1);
    KWord (SA (ELit 0) (6363190)) 1 (ELit 0)].
-Definition ss0 : sym_state := SS 605584 regs0 [] kn0 NX0.
+Definition ss0 (r : bool) : sym_state := SS 605584 regs0 [] (kn0 r) NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-10560), ELit 11360)].
 Definition F0L : list SR.region := [(EVar 2, (-10560), 11360)].
 Definition BF : nat := 200000.
@@ -144,14 +128,17 @@ Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.S
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
 (* [comment removed for export] *)
-Definition ex1 := Eval vm_compute in (AUTO 2000 ss0).
-Definition s1 : sym_state := snd (snd ex1).
-Eval vm_compute in (1000+1, length (fst ex1), fst (snd ex1), s_pc s1, s_next s1).
+(* the walk from each r's start knowledge, computed in the build *)
+Definition ex1_0 := Eval vm_compute in (AUTO 2000 (ss0 false)).
+Definition ex1_1 := Eval vm_compute in (AUTO 2000 (ss0 true)).
+Definition ex1 (r : bool) := if r then ex1_1 else ex1_0.
+Definition s1 (r : bool) : sym_state := snd (snd (ex1 r)).
+Eval vm_compute in (1000+1, length (fst ex1_0), fst (snd ex1_0), s_pc (s1 false), s_next (s1 false), length (fst ex1_1), fst (snd ex1_1), s_pc (s1 true), s_next (s1 true)).
 
-Definition plan : SGP.splan := SGAX.mkplan (fst ex1) (SGP.PEnd 0).
+Definition plan (r : bool) : SGP.splan := SGAX.mkplan (fst (ex1 r)) (SGP.PEnd 0).
 Definition in_foot (b : expr) (k : Z) (w : Z) : bool :=
   existsb (fun r : SR.region => let '(rb, rlo, rlen) := r in (expr_eqb rb b && Z.leb rlo k && Z.leb (k + w) (rlo + rlen))%bool) F0L.
-Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) kn0.
+Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) (kn0 false).
 Definition SPV : nat := 2%nat.   (* [comment removed for export] *)
 Definition live (spoff : Z) (b : expr) (k : Z) : bool := (negb (expr_eqb b (EVar SPV)) || Z.leb spoff k)%bool.
 (* [comment removed for export] *)
@@ -166,13 +153,14 @@ Definition cells_of (sF : sym_state) (spoff : Z) : list kentry :=
 Definition spoff_of (sF : sym_state) : Z := match nth 2 (s_regs sF) (ELit 0) with EAlu _ (EVar v) (ELit k) => if Nat.eqb v SPV then k else 0 | _ => 0 end.
 
 (* [comment removed for export] *)
-Definition regs_out0 : list expr := Eval vm_compute in (s_regs s1).
-Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of s1).
-Definition cells0 : list kentry := Eval vm_compute in (cells_of s1 exit_sp_off0).
-Definition nfresh0 : nat := Eval vm_compute in (s_next s1 - NX0)%nat.
-Definition exit_pc0 : Z := Eval vm_compute in (s_pc s1).
+Definition regs_out0 : list expr := Eval vm_compute in (s_regs (s1 false)).
+Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of (s1 false)).
+Definition cells0 : list kentry := Eval vm_compute in (cells_of (s1 false) exit_sp_off0).
+Definition nfresh0 : nat := Eval vm_compute in (s_next (s1 false) - NX0)%nat.
+Definition exit_pc0 : Z := Eval vm_compute in (s_pc (s1 false)).
+(* the post spec, read off r = false's walk; [cert] checks both walks against it *)
 Definition ps0 : SR.post_spec := SR.PS 600376 (map (fun i => (i, nth i regs_out0 (ELit 0))) (seq 1 31)) F0L cells0.
-Eval vm_compute in (3500+0, Z.eqb (s_pc s1) 600376, s_pc s1).
+Eval vm_compute in (3500+0, Z.eqb (s_pc (s1 false)) 600376, s_pc (s1 false)).
 
 (* [comment removed for export] *)
 Definition SXALL : list sym_state := [].
@@ -181,23 +169,23 @@ Definition mkps (st : sym_state) : SR.post_spec :=
 Definition PSS : list SR.post_spec := [ps0] ++ map mkps SXALL.
 Definition ps := ps0. Definition regs_out := regs_out0. Definition cells := cells0. Definition nfresh := nfresh0.
 
-Lemma cert : SGP.cert_ok RSEGS (itab_of RSEGS ITR) X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS plan 605584 regs0 kn0 = true.
-Proof. vm_compute. reflexivity. Qed.
+Lemma cert (r : bool) : SGP.cert_ok RSEGS (itab_of RSEGS ITR) X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS (plan r) 605584 regs0 (kn0 r) = true.
+Proof. destruct r; vm_compute; reflexivity. Qed.
 
 (* [comment removed for export] *)
 Section XH.
 Hypothesis HFILL : XIAS0.fill_spec.
 Hypothesis HCOPY : XIAS0.copy_spec.
 Hypothesis HTLS : XIAS0.tls_spec.
-Definition seg_sound_ax := as0_plan_sound ITR BF NX0 BR XSTEP F0 PSS plan 605584 regs0 kn0 cert (XIAS0.xstep_ok HFILL HCOPY HTLS NX0 BR F0).
+Definition seg_sound_ax (r : bool) := as0_plan_sound ITR BF NX0 BR XSTEP F0 PSS (plan r) 605584 regs0 (kn0 r) (cert r) (XIAS0.xstep_ok HFILL HCOPY HTLS NX0 BR F0).
 Check seg_sound_ax.
 End XH.
 Eval vm_compute in (3003, regs0).
-Eval vm_compute in (3004, kn0).
+Eval vm_compute in (3004, kn0 false, kn0 true).
 Eval vm_compute in (3100+0, regs_out0).
 Eval vm_compute in (3200+0, cells0).
 Eval vm_compute in (3300+0, nfresh0, exit_sp_off0).
-Eval vm_compute in (3400+0, s_know s1).
+Eval vm_compute in (3400+0, s_know (s1 false)).
 Eval vm_compute in (3600, length SXALL).
 Eval vm_compute in (3601, map (fun st => (s_pc st, spoff_of st, (s_next st - NX0)%nat)) SXALL).
 Eval vm_compute in (3602, map s_regs SXALL).

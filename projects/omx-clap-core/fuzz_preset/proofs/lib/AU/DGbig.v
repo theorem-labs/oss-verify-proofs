@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/DGbig.v (commit 3cae605a900a, file sha256 b4a31fac59fc) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 13 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 4 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/DGbig.v (file sha256 b4a31fac59fc) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 13 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 4 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, DeallocNmaxA): the BIG-BLOCK arm of the frame-generic Deallocate walk, over the
    interface DGbigIF.DIfaceBig: a block above the quarantine's max_size (kQuarantineMax < req_size n).
 
@@ -316,7 +317,7 @@ Variable dpost : Z -> alayout -> astate -> world tfibsegs -> list Z -> Z -> (wor
 Variable dbody : astate -> M unit.
 Variable DRq : astate -> list chunk -> list Z -> Prop.
 Hypothesis IFB : DIfaceBig B U ft ARX ARXr AOX rpre lpost fpre dpost dbody DRq.
-(* The image facts the copied errno scripts read (DGg2.v:602-605). *)
+(* The image facts the copied errno scripts read (DGg2.v:603-606). *)
 Hypothesis EAimg : ErrnoApart.errno_in_img.
 Hypothesis EAz3 : ErrnoApart.errno_apart_zone3_d.
 Hypothesis EAdz : ErrnoApart.errno_apart_dzone_d.

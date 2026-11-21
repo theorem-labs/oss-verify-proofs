@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: SEGMENT S3 of the ASan+UBSan walk of libreac/fuzz_scene's
    LLVMFuzzerTestOneInput: ONE turn of the whole_transfer loop, 0x82eac .. 0x82f6c, on the image
    fuzz_scene.asan-ubsan (sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   The statement proved here is `seg_S3_turn_stmt` of lib/AU/P_LLVMFuzzerTestOneInput_seg.v, at the geometry table
    `scene_geom_asan_ubsan` of that same file, with scene's own sink head passed explicitly (gate 6h).  Nothing of the
@@ -212,23 +213,23 @@ Variable WK : swalk.
 Hypothesis HWRLO : sw_rlo WK = pa_relro_lo.
 (* A Theorem Labs lane's ruling 04:04Z: segment-Section binding, discharged by the composition *)
 Hypothesis HWRHI : sw_rhi WK = pa_relro_hi.
-(* The walk's event budget, in the text a Theorem Labs lane's segment files state it (at 5560cdc9ff68
-   lib/A/P_LLVMFuzzerTestOneInput_S1.v:144, at 61818d377d80 S5_kit.v:187, at 916e1f35ef3f S6.v:108): the composition builds WK with
+(* The walk's event budget, in the text a Theorem Labs lane's segment files state it (at
+   lib/A/P_LLVMFuzzerTestOneInput_S1.v:144, at S5_kit.v:187, at S6.v:108): the composition builds WK with
    sw_ev = LLVMF_EV = 6.  check_step's premise `st_nev S + EV_CHECK_STEP <= EV_MAX` needs it: the journal bounds
    st_nev at the call by the entry's st_nev plus the turn's event count, and sc_base bounds the entry's by
    EV_MAX - sw_ev WK. *)
 Hypothesis HEV : 6 <= sw_ev WK.
 (* The static shadow and image-byte facts of reac_ctrl_build_scene_step.TAIL_TRAILER (0x20e20, 12 bytes), which
    build_scene_step's accepting call asks for.  HB_Z_TT / HB_C_TT: = entry statement Section h,
-   lib/AU/P_LLVMFuzzerTestOneInput.v at 327f73c7513 (announced 04:57Z), with that file's two literal Definitions
+   lib/AU/P_LLVMFuzzerTestOneInput.v (announced 04:57Z), with that file's two literal Definitions
    A_TAIL_TRAILER = 0x20e20 and TAIL_TRAILER_N = 12 written in place and TT_SHCELLS unfolded -- the same rows up to
-   delta, nothing evaluated or narrowed -- in a Theorem Labs lane's S2 text (at 729b9b9d254,
+   delta, nothing evaluated or narrowed -- in a Theorem Labs lane's S2 text (at
    lib/AU/P_LLVMFuzzerTestOneInput_S2.v:232-235).  The statement file is not Required here. *)
 Hypothesis HB_Z_TT : in_zs B (0x20e20 - 0x20) (0x20 + (12 - 12 mod 8)).
 Hypothesis HB_C_TT : forall ly, Forall (fun c => In c (as_const B ly))
   (z1 (ANum (shadow_addr (0x20e20 + 8))) (12 mod 8)
    :: map (fun k => z1 (ANum (shadow_addr (0x20e20 + 8) + 1 + Z.of_nat k)) 0xf9) (seq 0 2)).
-(* = entry statement Section h, lib/AU/P_LLVMFuzzerTestOneInput.v:212-213 at 327f73c7513 (announced 04:57Z) *)
+(* = entry statement Section h, lib/AU/P_LLVMFuzzerTestOneInput.v:213-214 (announced 04:57Z) *)
 Hypothesis HRO_TT : forall i, 0 <= i < 12 ->
   ~ Exists (in_zr (0x20e20 + i)) (as_owned_static B) /\ ~ (as_errno B <= 0x20e20 + i < as_errno B + 4).
 Context {RO : ro_below_ofl (SK := scene_sink_head) SEGS RLO RHI}.
@@ -394,7 +395,7 @@ Qed.
 
 (* ---- The blk.i side of reac_ctrl_build_scene_step's precondition (lib/AU/P_reac_ctrl_build_scene_step.v:367-372),
    at the state the five unpoison stores leave: the frame object, the 34 bytes' presence, their
-   range_addressable and their shadow hull.  check_step's `afobj` (lib/AU/Prog/SceneBase.v:52) is the same three
+   range_addressable and their shadow hull.  check_step's `afobj` (lib/AU/Prog/SceneBase.v:53) is the same three
    facts. ---- *)
 Lemma s3_bss_blki_pre : forall (cx : rtcx SEGS) ly3 S3 (W3 : world SEGS) regs3 mem3 md3 bs body again b k
 (mem' : word -> option byte),
@@ -440,7 +441,7 @@ exact (shadow_hull_vis_of_frame _ _ LAWS ly3 S3 W3 mem' md3 8 (c_fpos cx)
 (frame_addr ly3 8 (c_fpos cx) + 32) 34 HAR' Hin ltac:(lia) ltac:(rewrite Hfb; lia) ltac:(lia)).
 Qed.
 
-(* check_step's own frame-object premise (`afobj`, lib/AU/Prog/SceneBase.v:52) is the same three facts. *)
+(* check_step's own frame-object premise (`afobj`, lib/AU/Prog/SceneBase.v:53) is the same three facts. *)
 Lemma s3_afobj_blki : forall (cx : rtcx SEGS) ly3 S3 (W3 : world SEGS) regs3 mem3 md3 bs body again b k
 (mem' : word -> option byte),
 sc_base SEGS B ameter_triv WK cx ->
@@ -966,7 +967,7 @@ Qed.
    (sha256 63d50626ac54; internal record) lines 92-189. ---- *)
 (* ---- THE PREMISE BUNDLE OF __asan_memcpy AT 0x82f44.  The call copies n = scene_len k bytes from
    x = blk.i + scT_src k (blk.i = F + 32; scT_src k = 9 at k = 0, else 7) to d = again + scT_off k.
-   The conclusion is, in aj_intrin_atS's order (lib/AU/Prog/YC85.v:243-253, = aj_intrin_at lib/AU/YCbq.v:1954-1964
+   The conclusion is, in aj_intrin_atS's order (lib/AU/Prog/YC85.v:244-254, = aj_intrin_at lib/AU/YCbq.v:1954-1964
    = aintrin_realizes lib/Reusable/YG0d.v:321-326 at op = OCpy), every premise about the addresses and the memory:
    the size and destination range, the destination's per-byte write permission and its stack exclusion, its
    amem_range / range_addressable / shadow hull, and the whole OCpy source clause.
@@ -1184,7 +1185,7 @@ exact (shadow_hull_vis_of_frame _ _ LAWS ly3 S3 W3 mem' md' 8 (c_fpos cx)
 Qed.
 
 (* ---- One concrete step: the branch at 0x82ed4.  These five lemmas are copied from a Theorem Labs lane's
-   lib/A/P_LLVMFuzzerTestOneInput_S4.v at 1e7a7d0d863 (s4_fetch, s4_reg, s4_pc4,
+   lib/A/P_LLVMFuzzerTestOneInput_S4.v (s4_fetch, s4_reg, s4_pc4,
    s4_branch, s4_branch_off), with the prefix changed; they hold no image fact. ---- *)
 Lemma s3r_fetch : forall k w, plookup TPI k = Some (PW w) ->
 fetch_word SEGS (Z_to_bv 64 (BASE + k)) = Some (Z_to_bv 32 w).
@@ -1680,7 +1681,7 @@ Qed.
    in its order, without the three argument registers: afn_pre (through afn_pre_at, lib/AU/YCbq.v:1806, from the
    journal of the entry; its chain is the entry's chain pushed with LLVMFuzzerTestOneInput's own record
    (sp0, ra0, s0_0) read from the saved slots, or the empty chain when sp0 lies within 16 of the stack top), the
-   two stack facts, the frame count, arodata_okP (arodata_ok_journalP, lib/AU/Prog/SceneBase.v:36, from the
+   two stack facts, the frame count, arodata_okP (arodata_ok_journalP, lib/AU/Prog/SceneBase.v:37, from the
    entry's arodata_okS through HWRLO / HWRHI), k's range, blk.i's afobj, body's block, b's length, body's and
    blk.i's bytes, and the two budgets.
    Hypotheses beyond sc_base and the cut, all facts the lane holds INSIDE the turn at the call:
@@ -1849,7 +1850,7 @@ Qed.
    RE-ASSEMBLY OF THE LOOP CUT AFTER ONE TURN (by a Theorem Labs lane with a helper).
    ================================================================================================================= *)
 
-(* one byte read through aview is a one-byte val_mem: copied from lib/AU/Prog/YC88.v:71-84 (le_byte_1_0,
+(* one byte read through aview is a one-byte val_mem: copied from lib/AU/Prog/YC88.v:72-85 (le_byte_1_0,
    val_mem1_of_aview), at SEGS. *)
 Lemma s3n_le_byte_1_0 : forall v, 0 <= v < 256 -> YO0f.le_byte v 1 0 = v.
 Proof.
@@ -2183,8 +2184,8 @@ split; [rewrite Hs6, Hs8, Hgot; reflexivity | rewrite Hs8, Hgot; reflexivity].
 Qed.
 
 (* ---- The trailer facts at the cut, for s3_run_build's four TAIL_TRAILER premises.  s2u_div8_add, s2u_ra_part,
-   s2u_const1, s2u_zs_byte, s2u_in_ro and s2u_tt are a Theorem Labs lane's text for the S2 lane, copied verbatim from
-   729b9b9d254, lib/AU/P_LLVMFuzzerTestOneInput_S2.v:65-87 and :239-307 (that lane is
+   s2u_const1, s2u_zs_byte, s2u_in_ro and s2u_tt are a Theorem Labs lane's text for the S2 lane, copied verbatim,
+   lib/AU/P_LLVMFuzzerTestOneInput_S2.v:66-88 and :240-308 (that lane is
    proved: seg_S2_stmt).  s3_tt_at_cut, below them, is this lane's: it takes the AR and arodata_okP of the cut's
    state from the journal and adds the trailer / blk.i disjointness from frm_off_imgP. ---- *)
 Lemma s2u_div8_add : forall x c, x mod 8 = 0 -> (x + 8 * c) / 8 = x / 8 + c.

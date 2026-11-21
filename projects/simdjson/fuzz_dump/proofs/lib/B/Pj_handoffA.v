@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the library hand-off check is evaluated on the hand-off states the start-up certificate computes for each CONFIG_RSEQ value instead of the recorded ones. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.Lib Require Import MState Mem Frame Cells Step Arr Exec ImageA RzCPS.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS Require Import PropExec ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound
-  StartupHSBoth.
+  BothStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.A Require Import Shadow.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.A Require Import HandoffKit.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.B Require Import Layout RT_iface D_defs HandoffImage HandoffCLX RT_state RT_rep Atp_activewA Atp_handoffA.
@@ -47,20 +48,8 @@ Qed.
 
 End Lib.
 
-Lemma hs_libj_0 : hs_libj_ok HS_both_0 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_libj_1000 : hs_libj_ok HS_both_1000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_libj_2000 : hs_libj_ok HS_both_2000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_libj_3000 : hs_libj_ok HS_both_3000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-
-Lemma HS_libj_ok : forall h ch, HS_both h = Some ch -> hs_libj_ok ch = true.
-Proof.
-  intros h ch. unfold HS_both.
-  apply (hs_if_some_lib (fun c => hs_libj_ok c = true)); [exact hs_libj_3000|].
-  apply (hs_if_some_lib (fun c => hs_libj_ok c = true)); [exact hs_libj_2000|].
-  apply (hs_if_some_lib (fun c => hs_libj_ok c = true)); [exact hs_libj_1000|].
-  apply (hs_if_some_lib (fun c => hs_libj_ok c = true)); [exact hs_libj_0| discriminate].
-Qed.
+(* The hand-off states [AS/BothStartupCert.v] computes, one table per CONFIG_RSEQ value:
+   [hs_libj_ok] is evaluated on each, per closed flag ([destruct b] leaves each branch
+   closed for [vm_compute]; both branches are discharged). *)
+Lemma HS_libj_ok : forall (b : bool) h ch, HS_both (rseq_z b) h = Some ch -> hs_libj_ok ch = true.
+Proof. intros b. apply (HS_both_forall hs_libj_ok b). destruct b; vm_compute; reflexivity. Qed.

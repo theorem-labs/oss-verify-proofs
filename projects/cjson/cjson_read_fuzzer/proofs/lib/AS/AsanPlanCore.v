@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv block's size (AUXSZ), the AT_RANDOM and string expressions after it and the auxv pair indices are symbolic in the run's rseq flag rz, with rseq_z, rseq_z_range, AUXSZ and AUXSZ_of as in LPS 727298f3's theories/Common/AsanPlanCore.v, taken by way of projects/simdjson/fuzz_dump/proofs/lib/AS/AsanPlanCore.v; a plan variable V_G holds the alignment gap before AT_RANDOM; atable records the launch's extra reservations (n_resx, p_resx), which the initial plan state charges and gap_ok counts under GAP_CEIL; the fixed-mmap ceiling is resx_clear; and the initial stack knowledge has the launch's ranges and writable window, e_atr8's range ending at the rseq flag's own top; the writable window below sp is named by the model's stack_window_depth. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -4637,6 +4638,8 @@ Import AX2. Import AX2B.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+
+(* [comment removed for export] *)
 Definition CEIL : Z := 0x7fff7f800000.
 (* [comment removed for export] *)
 Definition TOPMAX : Z := 0x7fffff800000.
@@ -4645,6 +4648,8 @@ Definition KHI : Z := 0x10007fff8000.
 Definition MID_LO : Z := 0x7fff7000.
 (* [comment removed for export] *)
 Definition FLOOR : Z := KHI.
+(* [comment removed for export] *)
+Definition GAP_CEIL : Z := 0x7fff7f800000.
 (* [comment removed for export] *)
 Definition MBASE_MIN : Z := 0x154555557000.
 (* [comment removed for export] *)
@@ -4668,7 +4673,27 @@ Definition V_L1 : nat := 7.     (* [comment removed for export] *)
 Definition V_UID : nat := 8.    (* [comment removed for export] *)
 Definition V_HW : nat := 9.     (* [comment removed for export] *)
 Definition V_SP : nat := 10.    (* [comment removed for export] *)
-Definition NX0 : nat := 11.     (* [comment removed for export] *)
+Definition V_G : nat := 11.     (* the 8-byte alignment gap before AT_RANDOM (0 or 1 word), LPS 08b1429 *)
+(* The group id AT_GID and AT_EGID both carry at LPS 727298f3 (StackLayout.auxv_entries pairs 21
+   and 22).  musl's __init_libc compares them (the ASan build's 0x8d920..0x8d928: ld aux[13],
+   ld aux[14], bne), so the start state names the value.  Appended at the old NX0, so no
+   existing index changes meaning. *)
+Definition V_GID : nat := 12.
+Definition NX0 : nat := 13.     (* [comment removed for export] *)
+
+(* The auxv block's byte size, parametric in the kernel's rseq flag. Ported from
+   rocq-linux-process-semantics@75d69e00:theories/Common/AsanPlanCore.v:3188-3195 by way of
+   projects/simdjson/fuzz_dump/proofs/lib/AS/AsanPlanCore.v:36-53; StackLayout is Required but not Imported
+   here, so auxv_size is named qualified. Run.valid_input's last conjunct, in_kernel inp = recorded_kernel
+   (in_kernel inp), fixes eight fields at default_kernel's values and leaves kb_thp, kb_aslr, kb_guard,
+   kb_rnd_bits and kb_rseq free, so the published statement covers the 27-pair block (432 bytes) and the
+   29-pair one (464 bytes), and the model's hypothesis-free AUXSZ_of relates the two. *)
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
+Definition AUXSZ (r : Z) : Z := 432 + 32 * r.
+Lemma AUXSZ_of : forall b, AUXSZ (rseq_z b) = Z.of_nat (StackLayout.auxv_size b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition e_sp0 : expr := mkAlu ALU_ADD (mkMd M_MUL (ELit 32768) (EVar V_S1)) (mkAlu ALU_ADD (mkMd M_MUL (ELit 16) (EVar V_S2)) (mkMd M_MUL (ELit 4096) (EVar V_SP))).
@@ -4681,6 +4706,9 @@ Definition PID_MAX : Z := 4194304.
 Record atable : Type := AT {
   img_lo : Z; img_hi : Z;          (* [comment removed for export] *)
   n_res : nat;                     (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  n_resx : nat;                    (* [comment removed for export] *)
+  p_resx : nat;                    (* [comment removed for export] *)
   shadow_off : Z;                  (* [comment removed for export] *)
   a_entry : Z;                     (* [comment removed for export] *)
   rw_lo : Z; rw_len : Z;           (* [comment removed for export] *)
@@ -4696,12 +4724,26 @@ Record atable : Type := AT {
   stops_more : list Z              (* [comment removed for export] *)
 }.
 
+(* [comment removed for export] *)
+Definition resx_bytes (A : atable) : Z := Z.of_nat (p_resx A) * 4096.
+
 Section WithSegs.
 Variable segs : list Segment.
 Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.     (* [comment removed for export] *)
 Variable LIMIT : Z.     (* [comment removed for export] *)
+(* The run's rseq flag as 0/1.  A Section variable rather than a parameter on each definition:
+   only the auxv-relative expressions and the two plan nodes that read them (node_pnscan,
+   node_layout) need it.  Discharged at rseq_z of the run's own kb_rseq where the certificate
+   is discharged, on closed goals.  Shape ported from
+   projects/simdjson/fuzz_dump/proofs/lib/AS/AsanPlanCore.v:94-103 on an internal branch. *)
+Variable rz : Z.
+Hypothesis rz_range : 0 <= rz <= 1.
+
+(* [comment removed for export] *)
+Definition ceil_ok : Prop :=
+  CEIL mod 4096 = 0 /\ 0x7fff7f800000 <= CEIL <= 0x7fffff800000.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -6387,8 +6429,9 @@ Proof. intros. bcfe. unfold kn_grant_filterB, kn_grant_filter. autorewrite with 
 
 (* [comment removed for export] *)
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-  let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
-  Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
+  (* [comment removed for export] *)
+  let cnt := Z.of_nat (n_res A + n_resx A + length (a_maps cs))%nat in
+  Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) GAP_CEIL.
 
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
   Z.leb (a_eager cs + a_abytes cs + extra) LIMIT.
@@ -6517,10 +6560,15 @@ Definition mmap_fixed_grant (cs : acs) (ms0 : list amap) (b : expr) (off : Z) (n
   let cs1 := add_entry (with_maps0 cs ms0) (s_regs (a_ss cs)) k' (nxt cs) m nhi eager (a_ylo cs) in
   if visible then vis_add cs1 a ne (kmem ++ kn cs1) else Some cs1.
 
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Definition resx_clear (cs : acs) : Z := Z.min KHI (a_ylo cs).
+
 Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
   let k := kn cs in
   let a := reg cs 10 in
-  match fixed_args cs CEIL with
+  match fixed_args cs (resx_clear cs) with
   | Some (b, off, ne, nlo, nhi) =>
       if (no_fog (a_maps cs)
           && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
@@ -6530,7 +6578,7 @@ Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : op
       else None
   | None =>
       (* [comment removed for export] *)
-      match fixed_args cs CEIL with
+      match fixed_args cs (resx_clear cs) with
       | Some (b, off, ne, nlo, nhi) =>
           match find_hole k (a_maps cs) a ne with
           | Some h =>
@@ -6788,7 +6836,7 @@ Proof. intros. unfold mmap_fixed_grantB, mmap_fixed_grant. rewrite kn_grant_filt
 Definition mmap_fixed_freeB (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
   let k := kn cs in
   let a := reg cs 10 in
-  match fixed_args cs CEIL with
+  match fixed_args cs (resx_clear cs) with
   | Some (b, off, ne, nlo, nhi) =>
       if (no_fog (a_maps cs)
           && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
@@ -6798,7 +6846,7 @@ Definition mmap_fixed_freeB (cs : acs) (kind : mkind) (eager visible : bool) : o
       else None
   | None =>
       (* [comment removed for export] *)
-      match fixed_args cs CEIL with
+      match fixed_args cs (resx_clear cs) with
       | Some (b, off, ne, nlo, nhi) =>
           match find_hole k (a_maps cs) a ne with
           | Some h =>
@@ -7619,12 +7667,13 @@ Definition kn_readable_x (k : list kentry) (rb : expr) (rk : Z) (ne : expr) : bo
 (* [comment removed for export] *)
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition e_str0 : expr := eaddz e_auxv 160.
+Definition e_atrandom : expr := eadd (eaddz e_auxv (AUXSZ rz)) (escale 8 (EVar V_G)).
+Definition e_str0 : expr := eadd (eaddz e_atrandom 16) (EVar V_W).
 Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
+
 (* [comment removed for export] *)
 Definition e_atr8 : expr :=   (* [comment removed for export] *)
-  eadd (eadd (escale 4096 (EVar V_S1)) (eadd (escale 2 (EVar V_S2)) (escale 512 (EVar V_SP)))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
+  eadd (eadd (escale 4096 (EVar V_S1)) (eadd (escale 2 (EVar V_S2)) (escale 512 (EVar V_SP)))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_G))).
 
 (* [comment removed for export] *)
 Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
@@ -8198,34 +8247,63 @@ Definition K_RND : nat := 25.
 
 (* [comment removed for export] *)
 Definition e_auxb : expr * Z := split_lit e_auxv.
-Definition e_atrb : expr * Z := split_lit e_atrandom.
+(* Outside Section WithSegs, so the section's rz is discharged and this takes it explicitly. *)
+Definition e_atrb (rz : Z) : expr * Z := split_lit (e_atrandom rz).
 Definition auxw (i : Z) (ty : Z) (v : expr) : list kentry :=
   [KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty); KWord (SA (fst e_auxb) (snd e_auxb + 16 * i + 8)) 8 v].
 
 (* [comment removed for export] *)
-Definition init_kn_with (atr : kentry) (A : atable) : list kentry :=
+Definition init_kn_with (rz : Z) (atr : kentry) (A : atable) : list kentry :=
   [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 255; KRange (EVar V_SP) 0 7;   (* [comment removed for export] *)
-   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7;   (* [comment removed for export] *)
+   (* e_atr8 = usp/8 + argc + envc + G, and the block above sp is at least its head (8 argc +
+      8 envc + 472 + 32 rz + 8 G bytes) and 10 more below 2^47, so e_atr8 is at most
+      2^44 - 61 - 4 rz (0xFFFFFFFFFC3 at 27 auxv pairs, 4 lower at 29).  The split chain of the
+      AT_RANDOM copy (segment Q) is made from this top, so it is stated at the run's own rz. *)
+   KRange (eaddz (e_atrandom rz) 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 (0xFFFFFFFFFC3 - 4 * rz);   (* [comment removed for export] *)
    KRange e_sp0 0x7fff80000000 0x7fffffffff40; KRange e_pd 0x7fff80000000 0x7ffffffff000;                 (* [comment removed for export] *)
    KRange (eadd (escale 4096 (EVar V_S1)) (eadd (escale 2 (EVar V_S2)) (escale 512 (EVar V_SP)))) 0xFFFF0000000 0xFFFFFFFFFE8;
    KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
-   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0 0x3FFFFF;
-   KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
-   KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
-   KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
+   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0 0x3FFFFF; KRange (EVar V_G) 0 1;
+   KRange (EVar V_W) 0 4110; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+   KWr (SA e_sp0 (- OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.MemSplit.StoreOk.stack_window_depth)) (ELit OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.MemSplit.StoreOk.stack_window_depth);
+   KZero (SA e_sp0 (- OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.MemSplit.StoreOk.stack_window_depth)) (ELit OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.MemSplit.StoreOk.stack_window_depth);
+   KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 (e_str0 rz); kw_argv1 (e_argv1w rz)]
   (* [comment removed for export] *)
-  ++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 3 16 (EVar V_HW) ++ auxw 4 6 (ELit 4096)
-  ++ auxw 5 11 (EVar V_UID) ++ auxw 6 12 (EVar V_UID) ++ auxw 7 23 (ELit 0) ++ auxw 8 25 e_atrandom ++ auxw 9 0 (ELit 0)
+  (* Pair indices in StackLayout.auxv_entries' order at 75d69e00.  AT_NULL is the LAST pair and
+     the count is rseq-dependent -- auxv_count = if kb_rseq then 29 else 27 -- so its index is
+     26 + 2*rz, never the literal 28.  The ten named pairs below all sit at or under index 24,
+     i.e. inside the 27-pair block, so only AT_NULL moves with the flag. *)
+  ++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 10 16 (EVar V_HW) ++ auxw 11 6 (ELit 4096)
+  ++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 (e_atrandom rz) ++ auxw (26 + 2 * rz) 0 (ELit 0)
   ++ [atr;
-      KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
+      KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))]
+  (* LPS 727298f3: musl's __init_libc loop (the ASan build's 0x8d84c..0x8d884) reads EVERY
+     pair's type word up to AT_NULL and stores the value of each type below AUX_CNT (38), so
+     the start state also claims the values the launch fixes (AT_CLKTCK, AT_BASE, AT_FLAGS,
+     AT_ENTRY), AT_GID/AT_EGID as V_GID, the whole block readable, the type words of the
+     pairs whose value stays unknown (ARCH_DLINFO's ten, AT_EXECFN), and the CONFIG_RSEQ pair
+     when rz = 1.  Appended after the facts above so that every index a recorded plan's
+     PForget names keeps its fact; the rz-dependent pair is last so the others sit at one
+     index at both values of the flag.  Shape of
+     projects/bzip2/bzip2_compress_target/proofs/lib/K/AS/AsanPlanCore.v's init_kn_with. *)
+  ++ auxw 12 17 (ELit 100) ++ auxw 16 7 (ELit 0) ++ auxw 17 8 (ELit 0) ++ auxw 18 9 (ELit (a_entry A))
+  ++ auxw 21 13 (EVar V_GID) ++ auxw 22 14 (EVar V_GID)
+  ++ [KUnk (SA (fst e_auxb) (snd e_auxb)) (ELit (AUXSZ rz));
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 0)) 8 (ELit 33); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 1)) 8 (ELit 40);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 2)) 8 (ELit 41); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 3)) 8 (ELit 42);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 4)) 8 (ELit 43); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 5)) 8 (ELit 44);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 6)) 8 (ELit 45); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 7)) 8 (ELit 46);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 8)) 8 (ELit 47); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 9)) 8 (ELit 51);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 25)) 8 (ELit 31)]
+  ++ (if Z.eqb rz 1 then auxw 26 27 (ELit 28) ++ auxw 27 28 (ELit 32) else []).
 
 (* [comment removed for export] *)
-Definition atr_entry : kentry := KBlob (SA (fst e_atrb) (snd e_atrb)) (ELit 16) K_RND.
-Definition atr_entry_zero : kentry := KZero (SA (fst e_atrb) (snd e_atrb)) (ELit 16).
+Definition atr_entry (rz : Z) : kentry := KBlob (SA (fst (e_atrb rz)) (snd (e_atrb rz))) (ELit 16) K_RND.
+Definition atr_entry_zero (rz : Z) : kentry := KZero (SA (fst (e_atrb rz)) (snd (e_atrb rz))) (ELit 16).
 (* [comment removed for export] *)
-Definition init_kn (A : atable) : list kentry := init_kn_with atr_entry A.
+Definition init_kn (rz : Z) (A : atable) : list kentry := init_kn_with rz (atr_entry rz) A.
 (* [comment removed for export] *)
-Definition init_kn_zero (A : atable) : list kentry := init_kn_with atr_entry_zero A.
+Definition init_kn_zero (rz : Z) (A : atable) : list kentry := init_kn_with rz (atr_entry_zero rz) A.
 
 Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
 (* [comment removed for export] *)
@@ -8233,11 +8311,14 @@ Definition e_stkwlen : expr := esub (ELit STK_WTOP) e_pd.
 Definition init_vis (A : atable) : list (expr * expr) :=
   [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (eaddz e_pd STK_OFF, e_stkwlen)].
 
+(* [comment removed for export] *)
 Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
-  ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis A) []
+  ACS (mk_ss (a_entry A) init_regs kn0 NX0) []
+      (img_hi A - img_lo A + resx_bytes A) (MBASE_MIN - resx_bytes A) 0
+      (init_vis A) []
       (vis_cost (img_hi A - img_lo A) + vis_cost STK_WMAX) (escale 4096 (EVar V_BRK)) FdStd false.
-Definition init_acs_of (A : atable) : acs := init_acs_of_with (init_kn A) A.        (* [comment removed for export] *)
-Definition init_acs_of_zero (A : atable) : acs := init_acs_of_with (init_kn_zero A) A.  (* [comment removed for export] *)
+Definition init_acs_of (rz : Z) (A : atable) : acs := init_acs_of_with (init_kn rz A) A.        (* [comment removed for export] *)
+Definition init_acs_of_zero (rz : Z) (A : atable) : acs := init_acs_of_with (init_kn_zero rz A) A.  (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -8248,7 +8329,7 @@ Definition init_acs_of_zero (A : atable) : acs := init_acs_of_with (init_kn_zero
 (* [comment removed for export] *)
 Definition ASAN : atable :=
   (* [comment removed for export] *)
-  {| img_lo := 0x10000; img_hi := 0x5ff000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x5ff000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x30cb0; rw_lo := 0xa1000; rw_len := 0x55e000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x65814; x_imemcpy := 0x65798; x_memset := 0x9b5f4; x_memcpy := 0x9b1f0; x_memiszero := 0x65d60;
      x_istrncpy := 0x65c40; x_sealed := 0x11854; x_popfree := 0x372a8;
@@ -8259,11 +8340,11 @@ Definition ASAN : atable :=
 (* [comment removed for export] *)
 Definition ASAN_TEXT_LO : Z := 0x30cb0.
 Definition ASAN_TEXT_N : nat := 114486.
-Definition asan_init : acs := init_acs_of ASAN.
+Definition asan_init (rz : Z) : acs := init_acs_of rz ASAN.
 
 (* [comment removed for export] *)
 Definition BOTH : atable :=
-  {| img_lo := 0x10000; img_hi := 0x5ff000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x5ff000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x30cdc; rw_lo := 0xa1000; rw_len := 0x55e000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x65840; x_imemcpy := 0x657c4; x_memset := 0x9ad74; x_memcpy := 0x9a970; x_memiszero := 0x65d8c;
      x_istrncpy := 0x65c6c; x_sealed := 0x11874; x_popfree := 0x372d4;
@@ -8272,6 +8353,6 @@ Definition BOTH : atable :=
      stops_more := [0x34f48; 0x3656c; 0x55b4c; 0x5bf04; 0x5bf18; 0x5bf2c; 0x618bc; 0x6198c; 0x6eed4; 0x6fde0; 0x6ff70; 0x79cc8; 0x700e0] |}.
 Definition BOTH_TEXT_LO : Z := 0x30cdc.
 Definition BOTH_TEXT_N : nat := 113931.
-Definition both_init : acs := init_acs_of BOTH.
+Definition both_init (rz : Z) : acs := init_acs_of rz BOTH.
 
 End APC.

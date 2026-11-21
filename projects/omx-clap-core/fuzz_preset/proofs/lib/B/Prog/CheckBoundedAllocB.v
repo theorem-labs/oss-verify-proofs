@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YC1fP.v, with its module paths and module names changed; 167 of its 196 lines of code are new or changed and 484 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43): the walk of
    fuzz_preset.c's check_bounded_alloc (#102 source :561-567, body unchanged; entry pa_sigma AS_check_bounded_alloc of
    the whole-program listing lib/B/Listing_prog.v) against the text tcheck_bounded_alloc_specX (lib/A/PRH_FnCheck.v:523-532,
-   blob 9ecd8eb167c6, the #102 kit of record f97c8b2f046b: the ledger with `most own`, the five-conjunct fpre
+   blob 9ecd8eb167c6, the #102 kit of record: the ledger with `most own`, the five-conjunct fpre
    (raZ ceiling, frm_zero), the m-form post fpostm), proved VERBATIM. Generic in the allocator relation ARx (its laws
    LAWS : AR_laws_x .. ARx HL, the ONE premise), in CfParams / PrhRoomLive; at the program listing PL_prog_B / PI_prog_B
    and the generated image record prh_img_B. The B' instance is CheckBoundedAllocBInst.v check_bounded_alloc_holds_B_inst:
    B := YD2l.TfibB, h-mani-a8's allocator ARcf at CfParams_preset, LAWS discharged by PALibB.exvi_eh_laws (5baa19c890f7).
-   RELOCATED from the old-pin walk (image B, pin f8f98a95, twin 3b5e1a09; donor origin/cold/h-rw-pre-5-b-cba
-   ba1c537ab3d, blob a6849836adbf) by lane CbaBp of h-rw-pre-5: relocation only (48 bytes in both images;
+   RELOCATED from the old-pin walk (image B, pin f8f98a95, twin 3b5e1a09; donor,
+   blob a6849836adbf) by lane CbaBp of h-rw-pre-5: relocation only (48 bytes in both images;
    the instruction words are equal on both images, every pc-relative target the same symbol + offset); alreloc c4338d099cfb8025
    moved no numeral (the file holds no address literal).
    The code (12 words, neutral listing): the 16-byte frame and the ra spill; a1 := (size << 8) + (5 << 12);
@@ -23,13 +24,13 @@
    segment lies (YAkMemnorm.memnorm_frame_off_segs with pa_segs_low). fpre's frm_zero (FRM0-ENTRY) and its raZ
    ceiling have no consumer here: the function calls nothing on the walked path.
    A' TWIN, the same text with the same one premise LAWS and the same proof skeleton: check_bounded_alloc_holds_A,
-   lib/A/Prog/CheckBoundedAllocA.v blob 146cd9e79c09 (origin/cold/h-hreply-k1-p102-N10-CBAA 6dcbd0bcbca, in int102);
+   lib/A/Prog/CheckBoundedAllocA.v blob 146cd9e79c09 (in int102);
    this file differs from it only in the image names (B_prog_* / PI_prog_B / prh_img_B) and this header.
    REUSED (rule 24): the runner paj_run_x (YC1fPx), paj_branch / paj_ret_at / pa_entry_st_ok_full (YC1fP),
    ajournal_x_init / ajournal_x_materialize (YCbqG), prh_ledger_kept_aview (S1Ledger, c-omx-alloc),
-   memnorm_frame_off_segs (YAkMemnorm). cba_aview_frame below is c-omx-alloc's OwnB.v ob_aview_frame (8b6f0ad380f),
+   memnorm_frame_off_segs (YAkMemnorm). cba_aview_frame below is c-omx-alloc's OwnB.v ob_aview_frame,
    restated (OwnB.v is not importable without its poison kit). The old image-A stand-in twin
-   cold/h-hpreset-7-walk-S9S11 e97cd4228957 lib/A/Prog/Wcheck_bounded_alloc.v:54 binds image A's old addresses.
+   lib/A/Prog/Wcheck_bounded_alloc.v:54 binds image A's old addresses.
    NUMERALS: 16 (the frame; the block alignment of YCbqG's ARx_blocks_law) LENGTH; 4096 (that law's lower bound,
    YCbqG.v ARx_blocks_law) DERIVED; 8 (the shift) and 20480 (= 5 << 12, the bound's constant as `lui a2, 5` loads it;
    PJ_ALLOC_BOUND's 32 * 8 * 64 + 4096) WORD; 63 (the shift mask) WORD; 2 ^ 4, 2 ^ 8, 2 ^ 40, 2 ^ 44, 2 ^ 46, 2 ^ 47,
@@ -58,7 +59,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import PRH_Base PR
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import S1Ledger.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Prog Require Ledger.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YI5b.
-(* the PLAIN build's sink head must never fill SK here (YC1fP.v:23-33 does the same; repeated so this file is safe
+(* the PLAIN build's sink head must never fill SK here (YC1fP.v:24-34 does the same; repeated so this file is safe
    on its own): every SK below is passed explicitly *)
 #[global] Remove Hints YI5b.src0_sink_head : typeclass_instances.
 Import ListNotations.
@@ -102,7 +103,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {cp : CfParams} {RL :
 Definition CBA_EI (regs : bvmap 5 word) : env :=
   Eimg (L := B_prog_listing) (PI := PI_prog_B) (Ereg regs (map (Z_to_bv 64) [SHADOW_OFF])).
 
-(* c-omx-alloc OwnB.v ob_aview_frame (8b6f0ad380f): a run's frame keeps the reader's view off its write windows *)
+(* c-omx-alloc OwnB.v ob_aview_frame: a run's frame keeps the reader's view off its write windows *)
 Lemma cba_aview_frame : forall E rs (H : word -> bool) (m m' : word -> option byte) a,
   frame_of E rs (mrestrict H m) (mrestrict H m') -> 0 <= a < 2 ^ 64 -> ~ in_wrange E rs a ->
   aview SEGS H m' a = aview SEGS H m a.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (target and main statements over the run's segment list RSEGS ++ rt_tail; heap_extra's reach is over that list (hx_reach), with hx_free_bin for the free over the binary's own segments; model0 copies in the launch's vDSO draw; main_entry is a record over the run's input, with launch premises; heap_extra gains m_kernel and channel-reader facts). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,11 +11,13 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From LinuxProcessSemantics.LinuxProcessSem Require Vdso.
 From OSSVerify.openssl.echconfiglist_parser.images Require Import Ubsan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Amb PropExec CatExec CatSim SeqExec StoreOk ShapeAlg Nodes AgentLib Frame StreamSim FileSim SymRun Hoare Spec SReach UbLibDiagKn RefLayout UbStartupDefs UbStartupFacts UbStartup UbStdioDefs UbExitBase HeapCeil.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame MState.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub Require Import USegs RMalloc_iface_stmt HeapSR_iface ECH_Img ECH_Xpres.   (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Spec Require Import Prog.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RunTail.
 (* [comment removed for export] *)
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Import ListNotations.
@@ -88,6 +91,10 @@ Definition TR_STACK : Z := 65536.
 
 Section TargetRun.
   Context {HCEIL : HeapCeil}.   (* [comment removed for export] *)
+  (* the run's tail ([RunTail.RunTail]): the target calls time(), which reads and enters the
+     vDSO, so the target's walk and its continuation are over the run's segment list *)
+  Context {RT : RunTail}.
+  Local Notation VS := (RSEGS ++ rt_tail) (only parsing).
   Variable HS : hsr.
 
   (* [comment removed for export] *)
@@ -203,8 +210,8 @@ Section TargetRun.
       TRpre sp A cap data s LB model regs mem ->
       K [] ->
       (forall regs' mem' model', TRpost sp A cap data LB model regs mem regs' mem' model' ->
-         realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0xe247c) mem' (seg_rom RSEGS)) model') K) ->
-      realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xe25f0) mem (seg_rom RSEGS)) model)
+         realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0xe247c) mem' (seg_rom VS)) model') K) ->
+      realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xe25f0) mem (seg_rom VS)) model)
                (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
 End TargetRun.
 
@@ -213,9 +220,25 @@ End TargetRun.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* The heap instance with its reach replaced by the reach over the binary's own segments: the one
+   walk that stays on [RSEGS] after the target ([MainTop.exit_tail]) frees through it. *)
+Definition hsr_bin (HS : hsr) : hsr :=
+  {| hs_SR := sreach RSEGS; hs_KREL := hs_KREL HS; hs_MPRES := hs_MPRES HS; hs_RHEAP := hs_RHEAP HS;
+     hs_rauxv_ok := hs_rauxv_ok HS; hs_lb_remove := hs_lb_remove HS; hs_alloc_ok := hs_alloc_ok HS;
+     hs_LIVE_MAX := hs_LIVE_MAX HS; hs_LIVE_CNT_MAX := hs_LIVE_CNT_MAX HS;
+     hs_LIVE_BIG_MAX := hs_LIVE_BIG_MAX HS; hs_canary := hs_canary HS |}.
+
+Section HX.
+  Context {HCEIL : HeapCeil}.
+  (* at 727298f3 the harness's heap calls are walks over the run's list [VS]: the heap's reach is
+     a reach over [VS] from the state with [VS]'s backing ([hx_reach]) *)
+  Context {RT : RunTail}.
+  Local Notation VS := (RSEGS ++ rt_tail) (only parsing).
+
 Record heap_extra (HS : hsr) : Prop := HEX {
-  (* [comment removed for export] *)
-  hx_sr    : forall Q c, hs_SR HS Q c -> sreach RSEGS Q c;
+  hx_reach : forall Q c, hs_SR HS Q c -> ms_rom (cfg_ms c) = seg_rom RSEGS ->
+      sreach VS (fun c' => exists c0, c' = RomBase.cwrom c0 (seg_rom VS) /\ Q c0) (RomBase.cwrom c (seg_rom VS));
+  hx_free_bin : free_sr_stmt (hsr_bin HS);
   (* [comment removed for export] *)
   hx_mpres : forall mo mo', hs_MPRES HS mo mo' -> m_fs mo' = m_fs mo /\ m_fds mo' = m_fds mo;
   (* [comment removed for export] *)
@@ -224,29 +247,41 @@ Record heap_extra (HS : hsr) : Prop := HEX {
   (* [comment removed for export] *)
   hx_krel_vm : forall s mo mo', hs_KREL HS s mo ->
       m_halted mo' = m_halted mo -> m_vm_lazy mo' = m_vm_lazy mo ->
-      m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo -> hs_KREL HS s mo';
+      m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo ->
+      (* the kernel relation's vDSO fields read [m_kernel]; no step changes it *)
+      m_kernel mo' = m_kernel mo ->
+      m_channel_reader mo' = m_channel_reader mo -> hs_KREL HS s mo';
   (* [comment removed for export] *)
   hx_statics : forall s LB m, hs_RHEAP HS s LB m ->
       rdn RSEGS m (Z_to_bv 64 0x35632b) 1 = Some [Z_to_bv 8 0]
       /\ rdn RSEGS m (Z_to_bv 64 0x321b98) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x3560d8))
-      /\ exists can, canary_ok m can }.
+      /\ exists can, canary_ok m can;
+  (* A write to a channel without a reader is SIGPIPE at LPS 727298f3; the kernel relation
+     carries the launch's reader, which no step writes *)
+  hx_krel_rdr : forall s mo, hs_KREL HS s mo -> m_channel_reader mo = true }.
 
 (* [comment removed for export] *)
 Lemma big1_le1 : forall n, 0 <= big1 n <= 1.
 Proof. intros n. unfold big1. destruct (BIGB <? n); lia. Qed.
 
 Lemma hx_krel_fds : forall HS, heap_extra HS -> forall s mo f, hs_KREL HS s mo -> hs_KREL HS s (with_fds f mo).
-Proof. intros HS HX s mo f K. eapply (hx_krel_vm HS HX); [exact K | | | |]; destruct mo; reflexivity. Qed.
+Proof. intros HS HX s mo f K. eapply (hx_krel_vm HS HX); [exact K | | | | | |]; destruct mo; reflexivity. Qed.
+End HX.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition model0 (tid brk mbase sp0 : word) (lim : Z) (inp : ProcInput) : Model :=
-  with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 lim inp).
+(* The model [UbStartup]'s start-up hands to [main]: the launch's vDSO draw is copied in by
+   [with_vdso], as [Run.init_config] does, so the draw [rnd] is an argument. *)
+Definition model0 (tid brk mbase sp0 : word) (rnd : EntryDraw) (lim : Z) (inp : ProcInput) : Model :=
+  with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                  (init_model (segments_reserved RSEGS) brk mbase sp0 lim inp)).
 
 Section MainStmt.
   Context {HCEIL : HeapCeil}.
+  Context {RT : RunTail}.
+  Local Notation VS := (RSEGS ++ rt_tail) (only parsing).
   Definition main_realizes_stmt (HS : hsr) : Prop :=
     forall (sp0 tid brk mbase : word) (rnd : EntryDraw) (lim : Z) (inp : ProcInput) (regs : bvmap 5 word)
            (mem : word -> option byte) (ps0 : PState) (B : Z),
@@ -254,10 +289,22 @@ Section MainStmt.
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
       0 < bv_unsigned tid < 2 ^ 22 ->
       hceil + 8388608 <= bv_unsigned sp0 ->                      (* [comment removed for export] *)
-      @main_entry (amb_of inp) sp0 (in_argv inp) (in_envp inp) rnd tid regs mem ->
-      hs_RHEAP HS ps0 [] mem -> hs_KREL HS ps0 (model0 tid brk mbase sp0 lim inp) ->
+      (* At 727298f3 [main_entry] is a RECORD over the run's whole input ([UbStartup.v]),
+         taking [inp mbase entry sp0 rnd tid regs mem].  [entry] is NOT a new binder: it is
+         this image's literal, exactly as the PRODUCER of this hypothesis spells it
+         ([UbStartup.v]: main_entry inp mbase (0xe2194 : word) sp rnd tid regs
+         mem), so the two sides stay syntactically identical.  [inp], [mbase], [sp0], [rnd],
+         [tid], [regs], [mem] are all already in this statement's binder list. *)
+      main_entry inp mbase (0xe2194 : word) sp0 rnd tid regs mem ->
+      (* The launch facts the stack-image layer states its reads under ([RefLayout.v],
+         [ArgvEnv.v]); [main_entry] carries no launch field, so they are premises here,
+         over the same input and entry the start-up takes them over ([UbStartup.v]).
+         The caller has both from the launch: [Run.valid_input_launch] and the last conjunct
+         of [Run.valid_entry] ([Run.valid_entry_sv48]). *)
+      valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) inp ->
+      hs_RHEAP HS ps0 [] mem -> hs_KREL HS ps0 (model0 tid brk mbase sp0 rnd lim inp) ->
       hs_rauxv_ok HS mem B -> bv_unsigned sp0 <= B < 2 ^ 64 ->
       target_run_stmt HS ->
-      realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xe22e8) mem (seg_rom RSEGS)) (model0 tid brk mbase sp0 lim inp))
+      realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xe22e8) mem (seg_rom VS)) (model0 tid brk mbase sp0 rnd lim inp))
                (spec (in_argv inp) (in_fs inp)).
 End MainStmt.

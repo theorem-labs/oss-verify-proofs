@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE37.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: exit-path data regenerated for fuzz_state's 34 instrumented globals from (internal path) (x2_windows.py on fuzz_state.asan sha256 64b53ff86172bb07): the asan_globals descriptor words in x2_rodata, their 35 shadow windows x2_shw (equal to AE23's XW2), the parts of those windows that AF0m's Tfib_const_shadow states x2_shw_const, and the remaining whole-granule body bytes x2_zbytes, which AF0m's Tfib_zero_shadow states; shw_ok is proved by computation over them, in the shape of proofs/omx-clap-core/fuzz_manifest/lib/A/AE37.v (a working branch e5e6a6bc457), instead of the donor's 4-case analysis. *)
+(* Modified by Theorem Labs, 2026-10: exit-path data regenerated for fuzz_state's 34 instrumented globals from (internal path) (x2_windows.py on fuzz_state.asan sha256 64b53ff86172bb07): the asan_globals descriptor words in x2_rodata, their 35 shadow windows x2_shw (equal to AE23's XW2), the parts of those windows that AF0m's Tfib_const_shadow states x2_shw_const, and the remaining whole-granule body bytes x2_zbytes, which AF0m's Tfib_zero_shadow states; shw_ok is proved by computation over them, in the shape of proofs/omx-clap-core/fuzz_manifest/lib/A/AE37.v (a working branch), instead of the donor's 4-case analysis. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

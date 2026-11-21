@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMctype.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMctype.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's runtime contract for musl isalnum (0x88638) in the donor's form, aisalnum_realizes (FMH_Rt.v:169),
    from the register-only walk A/Prog/isalnum.v isalnum_holds through the generic lift FMrt_lift.v.
    musl tolower has no statement in FMH_Rt.v (fm reaches it only on the strncasecmp interceptor's

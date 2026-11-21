@@ -19,7 +19,7 @@
    (lib/B/W_drain_cx_x.v's forms: the entry's ghost list Hp and budget kr after cx, LCORE -> LCORE_x with the cut's
    Hp1); Section c is unchanged. *)
 (* Modified by Theorem Labs, 2026-10: the image-B (asan-ubsan) twin of lib/A/W_drain_lineb_cx.v
-   (a working branch e6b5f95b285): the cut that splits drain's LINEA segment at the return of send_line.
+   (a working branch): the cut that splits drain's LINEA segment at the return of send_line.
    Nothing is proved here.
 
    LINEA (lib/B/W_drain_cx.v dr_linea_stmt) runs DLL (0x8399c) to DLN (S q) at 0x839d4 or DGS at 0x83aa4.
@@ -43,6 +43,7 @@
    same model continuation dsfut.  DGS adds only s3 = the last space, s10 = last + 1, s9 = bg, the kind kd,
    the key length jj and `gesture (dline s1 p q) = Some (kd, firstn jj (dline s1 p q))`, all of which half B
    establishes.  Every fact half B needs is a conjunct here: nothing is implicit. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

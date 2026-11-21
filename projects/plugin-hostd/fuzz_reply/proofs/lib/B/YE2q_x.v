@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE2q.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to plugin-hostd/fuzz_reply's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: ARx port of lib/B/YE2q.v (that file is unchanged) over YE2y.icpt_laws_x, the image-B twin of lib/A/AE2q_x.v (sha256 b56ca47858f9; internal record, last changed at f04fec3ff6f3): that file's conversion of lib/A/AE2q.v applied to lib/B/YE2q.v (AR_laws -> ARx with WL : icpt_laws_x, the ghost set Hpx after S, ecall_pre -> ecall_pre_ix, AR -> ARx, the cited chain modules -> their _x files); proof steps unchanged except the law names. *)
+(* Modified by Theorem Labs, 2026-10: ARx port of lib/B/YE2q.v (that file is unchanged) over YE2y.icpt_laws_x, the image-B twin of lib/A/AE2q_x.v (sha256 b56ca47858f9; internal record, last changed): that file's conversion of lib/A/AE2q.v applied to lib/B/YE2q.v (AR_laws -> ARx with WL : icpt_laws_x, the ghost set Hpx after S, ecall_pre -> ecall_pre_ix, AR -> ARx, the cited chain modules -> their _x files); proof steps unchanged except the law names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

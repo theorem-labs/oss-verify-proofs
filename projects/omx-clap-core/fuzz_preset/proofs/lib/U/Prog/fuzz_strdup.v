@@ -97,7 +97,15 @@ Proof using HSEG.
   pose proof sd_segs_low as HL. rewrite <- HSEG in HL. rewrite forallb_forall in HL.
   specialize (HL seg Hin). apply Z.leb_le in HL.
   split; [intros E; rewrite E in Hin; destruct Hin|].
-  exists (segment_reservation seg). split; [unfold segments_reserved; apply in_map; exact Hin|].
+  assert (HK : forallb (fun s => negb (seg_kernel_map s)) (ms_segs B) = true)
+    by (rewrite HSEG; reflexivity).
+  rewrite forallb_forall in HK.
+  exists (segment_reservation seg). split;
+    [unfold segments_reserved; apply in_map;
+     apply (proj1 (stdpp.base.list_elem_of_In _ _));
+     apply (proj2 (stdpp.list_basics.list.list_elem_of_filter _ _ _));
+     split; [rewrite (HK seg Hin); exact I |
+             apply (proj2 (stdpp.base.list_elem_of_In _ _)); exact Hin]|].
   unfold segment_reservation, page_round_down_Z, page_round_up_Z, page_size. cbv zeta. cbn [fst snd].
   assert (E1 : 0 <= Z.of_N (seg_base seg) / 4096 * 4096 <= Z.of_N (seg_base seg)) by (Z.div_mod_to_equations; lia).
   assert (E2 : Z.of_N (seg_base seg) + Z.of_N (seg_size seg) <=

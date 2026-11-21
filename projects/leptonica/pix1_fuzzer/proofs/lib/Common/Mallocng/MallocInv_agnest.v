@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ts_zl takes mstate apart with its transparent-huge-page flag ms_thp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -631,7 +632,7 @@ Section NestRest.
     tsafe ((x <- zl (Z_to_bv 64 nsize) k (Z_to_bv 64 (p0 + 12 + t * nsize)) ;; K x) s) P.
   Proof using HW1 Hcnt1 Hfitj Hidx Hj Hmt Hrl Hsc Hslot Hstride MLok. pu_keep (HW1, Hcnt1, Hfitj, Hidx, Hj, Hmt, Hrl, Hsc, Hslot, Hstride, MLok).
     induction k as [|k IH]; intros t s ws K P m0 RW HWIN Ht Hk HK.
-    - cbn [zl]. apply ts_bind_ret. specialize (HK (ms_mem s)). cbn [zws app] in HK. destruct s as [mm vv lo hi]. cbn [upd ms_mem ms_vm] in HK. apply HK. exact RW.
+    - cbn [zl]. apply ts_bind_ret. specialize (HK (ms_mem s)). cbn [zws app] in HK. destruct s as [mm vv lo hi tp]. cbn [upd ms_mem ms_vm ms_thp] in HK. apply HK. exact RW.
     - cbn [zl]. reassoc. pose proof ne_eq as NE. pose proof szj_rng. pose proof szc_rng.
       assert (Ht1 : 0 <= t * nsize /\ t * nsize <= cnt1 * nsize) by (unfold nsize; split; [apply Z.mul_nonneg_nonneg; lia | apply Z.mul_le_mono_nonneg_r; lia]).
       unfold m_sb. eapply (ts_st_domW nA3 WF_nA3 s m0 ws 1 (p0 + 12 + t * nsize)); [exact RW | exact HWIN | lia | |].

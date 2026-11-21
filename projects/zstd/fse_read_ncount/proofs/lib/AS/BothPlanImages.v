@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (img_facts proves the record's new if_resx field (the vDSO pair's 2 intervals and 20 pages, n_resx and p_resx)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.zstd.fse_read_ncount.images Require Import AsanUbsan.
@@ -102,4 +103,6 @@ constructor.
 - rewrite both_res_sizes. reflexivity.
 - cbn [rw_lo rw_len BOTH]. split; [lia|]. intros m x Hx. apply both_rw_window. lia.
 - exact both_shadow_ok.
+- (* the launch's extra reservations: the vDSO pair, two intervals, at most twenty pages *)
+  cbn [n_resx p_resx BOTH]. lia.
 Qed.

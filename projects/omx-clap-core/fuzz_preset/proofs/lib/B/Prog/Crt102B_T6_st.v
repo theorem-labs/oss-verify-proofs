@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 571 of its 623 lines of code are new or changed and 462 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan d663f82d7f488d30,
    unstripped twin c90d4fa54d43160b), FREE-PIECES-102 Part 7a row T6 (CRT-B-L3): the SYMBOLIC STATE of the member loop
    (B' entry + 0x5b4 .. + 0x6f4), split off Crt102B_T6.v so the walk
@@ -19,10 +20,10 @@
    ct6_entry reads the journal at that WS (Crt102KitB.cb4_ff takes any WS). No statement of this file changed.
 
    INPUTS OF RECORD (taken by path):
-   - base commit cbe6d10993c2 (candidate base) (Crt102Glue.v with the frozen crt_at_L3_B /
+   - base (candidate base) (Crt102Glue.v with the frozen crt_at_L3_B /
      crt_at_C_B / CRT_B_SEG_T6, Crt102Img.v, Crt102Model.v; lib/B/Prog/Crt102KitB.v: cb4_sp, cb4_ff, cb4_doc_home,
      cb4_ar0, cb4_fb).
-   - listing lib/B/Listing_prog.v 8bcc2c9e7809 (listing commit d42e123915ae).
+   - listing lib/B/Listing_prog.v 8bcc2c9e7809 (listing).
 
    NUMERALS. DERIVED: the inner pcs 0x650 / 0x6d4 (4 * the slot inside the function, the listing), the atom indices of
    the symbolic state (the engine's numbering: 32 + register, 64 + extra). LENGTH: the spill offsets off s1 (the glue's

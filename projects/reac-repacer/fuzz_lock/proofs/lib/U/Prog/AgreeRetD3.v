@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs: the twin of lib/Reusable/YL0z.v for a return value of the fuzz target of 0 or -1, walking AgreeRetD1.v leaf_shapeX_q for any shape *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/AgreeRetD2.v, with its module paths and module names changed; 74 of its 240 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs: the twin of lib/U/Reusable/YL0z_cfw.v (no licence line) for a return value of the fuzz target of 0 or -1, walking U/Prog/AgreeRetD2.v leaf_shapeX_q for any shape *)
-(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/U/Reusable/YL0z_cfw.v at 901d1549395.
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput in the walk's environment, with a0 and path no longer section variables); internal commit ids in comments replaced by public commits or removed. *)
+(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/U/Reusable/YL0z_cfw.v.
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.U.Prog.AgreeRetD3. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -48,8 +49,9 @@ Hypothesis LIMLAW : forall L A mem md, aa_MR API L A mem md -> SRC_LIM_MIN <= vm
 Hypothesis HR01 : forall pl, rt pl = 0 \/ rt pl = -1.
 Hypothesis ARMS : arms_m1_cf.
 Hypothesis FRM : frm_zero fp_csr.
-Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+(* As Reusable/YL0z.v: [a0] and [path] are no longer variables at 727298f3. *)
+Variables (sp tid : word) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G.
 Hypothesis Hvfs : valid_fs (in_fs inp).
 Hypothesis Hsp47 : bv_unsigned sp <= 2 ^ 47.
 Lemma run_from_QX_q_cf : forall cap0 L' A' b0 E ms md (K : dleaf * astate -> TSet),
@@ -212,7 +214,7 @@ exact (src0_overrun_tail_cf API AX FCF TBL inp data cap0 L' A' b0 Hub Hcap0 HW H
 Qed.
 Theorem src0_postX_q_cf : forall K : dleaf * astate -> TSet,
 (forall r, t_eq (K r) (leaf_shapeX_q rt data (in_fs inp) r)) ->
-POST_cf API sp tid a0 path inp data rnd (run_RI RI (payload data)) K.
+POST_cf API sp tid inp data rnd (run_RI RI (payload data)) K.
 Proof using AX GIL GI0 LIBXc FCF TBL RIres MRC LIMLAW HR01 ARMS FRM HSA0 Hvfs Hsp47.
 intros K HK. unfold POST_cf. cbv zeta beta.
 intros cap' bufp' A' Lc' J' g' len0 w ms' md' HLc Hcap Hlen0 Hub HW HB Hid HDI HRES HS Hw HL0 HMR Hmd0 HD HJ HG HL.
@@ -231,7 +233,7 @@ apply u64_of_Z. lia.
 - rewrite ew_ewset_other by lia. unfold E_lp. rewrite ew_ewset_other, ew_ewset_same by lia.
 apply u64_of_Z. unfold dlen in HLc. lia. }
 assert (HAN : hdr_anch E).
-{ intros G HGa. subst E. apply (anch_lp sp tid a0 path inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
+{ intros G HGa. subst E. apply (anch_lp sp tid inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
 apply (ext29_ewset data); [lia | apply ext29_refl]. }
 cdrv_run_with src0tbl_ok HS HF.
 lazymatch type of HS with st_ok _ _ _ ?msx => change (st_ok src0segs E ss_h0 msx) in HS end.

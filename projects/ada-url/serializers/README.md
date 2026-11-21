@@ -7,7 +7,7 @@ Checks 5 properties (listed below); the first, a round trip: IPv4: if try_parse_
 
 ## How this program differs from what OSS-Fuzz runs
 - Linked against ada at commit e6754478.
-- In every build, getenv() returns NULL and mkstemp() uses a fixed name, so the program depends only on its input.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
 
 ## What the harness checks

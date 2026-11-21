@@ -4,8 +4,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/A/I_strncmp.v, with its module paths, addresses and numbers changed; 85 of its 267 lines of code are new or changed and 8 lines of the source are left out. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/A/I_strncmp.v at origin/ossv/recipes f26f9fbd8777; module paths changed; 7 address numerals relocated from fuzz_boxreg.asan to fuzz_pin.asan (provenance/reloc-WStrncmp/ledger-bz.tsv); the two try_init_spec calls unfold YImgTop.IMG_TOP before lia (pin's lib/Reusable/YImgTop.v states it as a Definition, boxreg's as a Notation). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/A/I_strncmp.v; module paths changed; 7 address numerals relocated from fuzz_boxreg.asan to fuzz_pin.asan (provenance/reloc-WStrncmp/ledger-bz.tsv); the two try_init_spec calls unfold YImgTop.IMG_TOP before lia (pin's lib/Reusable/YImgTop.v states it as a Definition, boxreg's as a Notation). *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Bz/A/I_strncmp.v of this library, for reac-pw/fuzz_pin's asan-ubsan image (fuzz_pin.asan-ubsan d6f83d301522) instead of its asan image (fuzz_pin.asan 3e4859aed23f): module paths lib.A -> lib.AU; no numeral changed (every address numeral checked on the asan-ubsan image). The comment lines above describe how lib/A/Bz/A/I_strncmp.v was made and quote the asan image's values; the code and comments below carry the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.AU.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob along ms_eqv and the three vDSO step arms). *)
 (* [comment removed for export] *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require PropExec ShapeAlg.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require MState Frame.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require CpsOpen.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common Require CfgStep.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common.Cfg Require RomBase.
 Module GlueEqv.
 (* [comment removed for export] *)
 
@@ -191,7 +193,7 @@ Proof.
   induction H as [c c' Hc | c c' | c c' | c c' | c c' | c c' | n a k k' Hk IH | n a v k k' Hk IH]; intros m;
     cbn [interp_eff_accesses]; try exact I.
   - cbn. cps_destruct Hc as (H1 & H2 & H3 & H4 & H5). repeat split; assumption.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (IH (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [ra| |]; destruct (interp_eff_accesses segs (k' _) m) as [rb| |];
       cbn in IH |- *; try exact IH; try contradiction.
@@ -242,7 +244,7 @@ Proof.
   destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure. destruct (vdso_text_at _ _); [exact I|]. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
 Qed.
 
 (* [comment removed for export] *)
@@ -278,6 +280,22 @@ Proof.
   unfold sys_input. rewrite Ha. reflexivity.
 Qed.
 
+(* LPS 08b1429: [RomBase.sys_rob] moves along [ms_eqv] (same backing, same pending call, the same
+   [sys_input] before and after a change of backing). *)
+Lemma sys_rob_eqv : forall ms ms' m, ms_eqv ms ms' ->
+  RomBase.sys_rob segs (mkCfg ms m) -> RomBase.sys_rob segs (mkCfg ms' m).
+Proof.
+  intros ms ms' m Heqv Hr r x8 Hrx Hs o. cbn [cfg_ms cfg_model] in *.
+  assert (Hw : ms_eqv (RomBase.wrom ms r) (RomBase.wrom ms' r)).
+  { destruct ms as [R F pc svc rv fc mm ro], ms' as [R' F' pc' svc' rv' fc' mm' ro'].
+    cps_destruct Heqv as (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro); simpl in *; subst.
+    unfold RomBase.wrom; simpl. repeat split; simpl; first [assumption | reflexivity]. }
+  rewrite <- (sys_input_eqv _ _ x8 Hw), <- (sys_input_eqv _ _ x8 Heqv).
+  apply Hr; cbn [cfg_ms].
+  - destruct Heqv as (_ & _ & _ & _ & _ & _ & _ & Hro). rewrite Hro. exact Hrx.
+  - destruct Heqv as (_ & _ & _ & Hsvc & _). rewrite Hsvc. exact Hs.
+Qed.
+
 Lemma apply_effect_eqv : forall ms ms' eff, ms_eqv ms ms' ->
   ms_eqv (apply_effect ms eff) (apply_effect ms' eff).
 Proof.
@@ -290,6 +308,86 @@ Lemma advance_past_svc_eqv : forall ms ms', ms_eqv ms ms' ->
 Proof.
   (intros [R F pc svc rv fc m ro] [R' F' pc' svc' rv' fc' m' ro']; cps_intros (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro)); simpl in *; subst.
   unfold advance_past_svc, ms_pc; simpl. repeat split; auto.
+Qed.
+
+(* The revision's three vDSO step arms ([Run.sstep_cfg_vdso_call] and its
+   two error siblings) read the return address, sp, the caller-saved
+   registers, the frame below sp and the call's input, all of which
+   [ms_eqv] fixes, so a vDSO call carries the relation as a syscall does. *)
+Lemma ms_pc_eqv : forall ms ms', ms_eqv ms ms' -> ms_pc ms = ms_pc ms'.
+Proof. intros ms ms' (_ & _ & Hp & _). unfold ms_pc. rewrite Hp. reflexivity. Qed.
+
+Lemma ms_sp_eqv : forall ms ms', ms_eqv ms ms' -> ms_sp ms = ms_sp ms'.
+Proof. intros ms ms' (HR & _). unfold ms_sp. apply HR. first [reflexivity | vm_compute; reflexivity]. Qed.
+
+Lemma vdso_read_regs_eqv : forall ms ms', ms_eqv ms ms' -> vdso_read_regs ms = vdso_read_regs ms'.
+Proof. intros ms ms' H. unfold vdso_read_regs. apply map_ext. intros r. apply ms_reg_eqv, H. Qed.
+
+Lemma ms_read_byte_eqv : forall ms ms', ms_eqv ms ms' -> ms_read_byte ms = ms_read_byte ms'.
+Proof.
+  intros ms ms' (_ & _ & _ & _ & _ & _ & Hm & Hrom).
+  unfold ms_read_byte. rewrite Hm, Hrom. reflexivity.
+Qed.
+
+Lemma ms_mem_eqv : forall ms ms', ms_eqv ms ms' -> ms_mem ms = ms_mem ms'.
+Proof. intros ms ms' (_ & _ & _ & _ & _ & _ & Hm & _). exact Hm. Qed.
+
+Lemma set_reg_eqv : forall ms ms' r v, ms_eqv ms ms' -> ms_eqv (set_reg ms r v) (set_reg ms' r v).
+Proof.
+  intros [R F pc svc rv fc m ro] [R' F' pc' svc' rv' fc' m' ro'] r v H.
+  pose proof H as H0. destruct H as (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro);
+    cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom] in *; subst.
+  unfold set_reg. destruct (bv_eqb r 0); [exact H0|].
+  unfold ms_eqv; cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom].
+  repeat split; first [apply regs_eqv0_set; exact HR | exact HF | reflexivity].
+Qed.
+
+Lemma vdso_write_regs_mem : forall rs vs ms, ms_mem (vdso_write_regs ms rs vs) = ms_mem ms.
+Proof.
+  induction rs as [|r rs IH]; intros [|v vs] ms; cbn [vdso_write_regs]; try reflexivity.
+  rewrite IH. unfold set_reg. destruct (bv_eqb (Z_to_bv 5 r) 0); reflexivity.
+Qed.
+
+Lemma vdso_write_regs_eqv : forall rs vs ms ms', ms_eqv ms ms' ->
+  ms_eqv (vdso_write_regs ms rs vs) (vdso_write_regs ms' rs vs).
+Proof.
+  induction rs as [|r rs IH]; intros [|v vs] ms ms' H; cbn [vdso_write_regs]; try exact H.
+  apply IH, set_reg_eqv, H.
+Qed.
+
+Lemma vdso_with_mem_eqv : forall ms ms' m, ms_eqv ms ms' -> ms_eqv (vdso_with_mem ms m) (vdso_with_mem ms' m).
+Proof.
+  intros ms ms' m (HR & HF & Hp & Hs & Hrv & Hfc & Hm & Hrom).
+  unfold ms_eqv, vdso_with_mem; cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom].
+  repeat split; assumption.
+Qed.
+
+Lemma vdso_set_pc_eqv : forall ms ms' pc, ms_eqv ms ms' -> ms_eqv (vdso_set_pc ms pc) (vdso_set_pc ms' pc).
+Proof.
+  intros ms ms' pc (HR & HF & Hp & Hs & Hrv & Hfc & Hm & Hrom).
+  unfold ms_eqv, vdso_set_pc; cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom].
+  repeat split; first [assumption | reflexivity].
+Qed.
+
+Lemma vdso_post_eqv : forall ms ms' model f eff, ms_eqv ms ms' ->
+  ms_eqv (vdso_post segs ms model f eff) (vdso_post segs ms' model f eff).
+Proof.
+  intros ms ms' model f eff H. unfold vdso_post. cbv zeta.
+  rewrite (ms_reg_eqv _ _ 1 H), (ms_sp_eqv _ _ H), (vdso_read_regs_eqv _ _ H), (ms_read_byte_eqv _ _ H).
+  apply vdso_set_pc_eqv. apply apply_effect_eqv.
+  rewrite !vdso_write_regs_mem, (ms_mem_eqv _ _ H).
+  apply vdso_with_mem_eqv. apply vdso_write_regs_eqv. exact H.
+Qed.
+
+Lemma vdso_call_unmodeled_eqv : forall ms ms' model fn, ms_eqv ms ms' ->
+  vdso_call_unmodeled segs ms model fn -> vdso_call_unmodeled segs ms' model fn.
+Proof.
+  intros ms ms' model fn H Hu.
+  destruct Hu as [Hu | [(n & Hn & Hsp) | (n & eff & model' & evs & Hn & Hsp & Hd)]].
+  - left; exact Hu.
+  - right; left. exists n. split; [exact Hn|]. rewrite <- (sys_input_eqv ms ms' _ H). exact Hsp.
+  - right; right. exists n, eff, model', evs. split; [exact Hn|].
+    split; [rewrite <- (sys_input_eqv ms ms' _ H); exact Hsp | exact Hd].
 Qed.
 
 Definition cfg_eqv (c c' : config) : Prop :=
@@ -315,7 +413,10 @@ Proof.
   pose proof (mi_account_step_eqv ms ms' mo Heqv) as Hres.
   cps_pose Heqv as (_ & _ & _ & Hsvc & _ & _ & _ & _).
   remember (mkCfg ms mo) as c0 eqn:Ec.
-  destruct Hst as [ms0 m0 ms1 m1 Hh Hp Hacc | ms0 m0 Hh Hp Hacc | ms0 m0 Hh Hp Hacc
+  destruct Hst as [ms0 m0 ms1 m1 Hh Hp Hacc | ms0 m0 Hh Hp Hacc | ms0 m0 Hh Hp Hacc Hnv
+                  | ms0 m0 fn n eff m1 m2 evs0 Hh Hp Hacc Hfn Hno Hspec Hef Hh' Hmat
+                  | ms0 m0 fn n eff m1 evs0 Hh Hp Hacc Hfn Hno Hspec Hef Hh' Hmat
+                  | ms0 m0 fn Hh Hp Hacc Hfn Hun
                   | ms0 m0 x8 eff m1 m2 evs0 Hh Hp Hspec Hns Hh' Hmat
                   | ms0 m0 x8 eff m1 evs0 Hh Hp Hspec Hns Hh' Hmat
                   | ms0 m0 x8 eff m1 evs0 code Hh Hp Hspec Hh' Hk
@@ -329,7 +430,26 @@ Proof.
   - rewrite Hacc in Hres. destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
     exists SError. split; [apply sstep_cfg_instr_fault; auto; congruence| exact I].
   - rewrite Hacc in Hres. destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
-    exists SError. split; [apply sstep_cfg_instr_unmodeled; auto; congruence| exact I].
+    exists SError. split; [|exact I].
+    apply (sstep_cfg_instr_unmodeled segs CfgStep.kit_cfg ms' mo);
+      [assumption | congruence | exact E | rewrite <- (ms_pc_eqv _ _ Heqv); exact Hnv].
+  - (* the vDSO call *)
+    rewrite Hacc in Hres. destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
+    exists (SNext (mkCfg (vdso_post segs ms' mo (vdso_frame segs) eff) (with_vdso_bump m2))). split.
+    + apply (sstep_cfg_vdso_call segs CfgStep.kit_cfg ms' mo fn n eff m1 m2 evs0);
+        [assumption | congruence | exact E | rewrite <- (ms_pc_eqv _ _ Heqv); exact Hfn | exact Hno
+        | rewrite <- (sys_input_eqv ms ms' _ Heqv); exact Hspec | exact Hef | exact Hh' | exact Hmat].
+    + split; [apply vdso_post_eqv; exact Heqv | reflexivity].
+  - rewrite Hacc in Hres. destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
+    exists SError. split; [|exact I].
+    apply (sstep_cfg_vdso_materialization_fault segs CfgStep.kit_cfg ms' mo fn n eff m1 evs0);
+      [assumption | congruence | exact E | rewrite <- (ms_pc_eqv _ _ Heqv); exact Hfn | exact Hno
+      | rewrite <- (sys_input_eqv ms ms' _ Heqv); exact Hspec | exact Hef | exact Hh' | exact Hmat].
+  - rewrite Hacc in Hres. destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
+    exists SError. split; [|exact I].
+    apply (sstep_cfg_vdso_unmodeled segs CfgStep.kit_cfg ms' mo fn);
+      [assumption | congruence | exact E | rewrite <- (ms_pc_eqv _ _ Heqv); exact Hfn
+      | exact (vdso_call_unmodeled_eqv ms ms' mo fn Heqv Hun)].
   - (* [comment removed for export] *)
     exists (SNext (mkCfg (advance_past_svc (apply_effect ms' eff)) m2)). split.
     + apply (sstep_cfg_syscall segs CfgStep.kit_cfg ms' mo x8 eff m1 m2 evs0);
@@ -386,7 +506,7 @@ Qed.
 
 Theorem realizes_eqv : forall c T, realizes segs c T -> forall c', cfg_eqv c c' -> realizes segs c' T.
 Proof.
-  intros c T H. induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
+  intros c T H. induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
   - pose proof (node_ok_eqv c c' I evs nx Heqv Hnode) as Hnode'. cbv beta zeta in Hnode'.
     (* [comment removed for export] *)
     cps_destruct (sstep_cfg_eqv c c' (evs i0) (SNext (nx i0)) Heqv (proj1 Hnode i0)) as (X0 & Hst0 & HX0).
@@ -396,6 +516,8 @@ Proof.
     eapply rz_conseq.
     + apply (rz_node segs c' I' (fun p => evs (fst (proj1_sig p))) (fun p => snd (proj1_sig p))
                      (fun p => T (fst (proj1_sig p))) i0' Hnode').
+      { destruct c as [ms0 m0], c' as [ms1 m1]. destruct Heqv as [Hme Hmo]. cbn [cfg_ms cfg_model] in *.
+        subst m1. exact (sys_rob_eqv ms0 ms1 m0 Hme Hrob). }
       intros [[i c2] [Hs Hc2]]. cbn. apply (IH i). exact Hc2.
     + (* [comment removed for export] *)
       intros tr. unfold t_alt. split.

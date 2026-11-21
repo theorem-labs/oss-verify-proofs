@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reserved-range ledger; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0PlanImagesK.v, line 157. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -147,4 +147,6 @@ Proof.
   - rewrite asan0_res_sizes. reflexivity.
   - cbn [rw_lo rw_len ASAN0]. split; [lia|]. intros m x Hx. apply asan0_rw_window. lia.
   - exact asan0_shadow_ok.
+
+  - cbn [n_resx p_resx ASAN0]. split; lia.
 Qed.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, c-libc-stdio's keep kit for the snprintf chain (the memnorm keep
    `YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem'` that the engine's YGcallSnp.asnprintf_realizes_xrom
    ends in; c-omx-alloc 17:03Z ruling (b), parent c-libc-stdio 17:1xZ). memnorm (YAkMemnorm.v:41) is a property of the
@@ -12,7 +13,7 @@
      lie in the window);
    - memnorm_munrestrict_sub: a leaf's run from a sub-store m0 of mrestrict H mem (L3: cjstore / cjnormv; L1:
      CL.clean) whose end store m' is m0 off its footprint, the post memory being munrestrict H mem m'.
-   The proof of memnorm_of_subframe is c-libc-stdio rows-cpy 532cf8bd849e PRowKit.prk_memnorm_keep's argument with a
+   The proof of memnorm_of_subframe is c-libc-stdio rows-cpy PRowKit.prk_memnorm_keep's argument with a
    sub-frame and a footprint predicate.  Closure: YAkMemnorm, YK04, YP09, YG0n (PRowKit.v's header).
    rule 24: proves no function (kind: segment lemma). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

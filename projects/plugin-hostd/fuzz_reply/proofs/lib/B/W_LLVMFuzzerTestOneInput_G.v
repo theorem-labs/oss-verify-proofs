@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The global set G_fr of fuzz_reply.asan-ubsan's LLVMFuzzerTestOneInput, concretely, and every G_fr / errno /
    image fact that the image-B W8 segment files (W_LLVMFuzzerTestOneInput_*.v) take as a Section hypothesis, proved
    for it.  At integration these lemmas discharge the hypotheses.  The image-B twin of
@@ -22,12 +23,12 @@
    Premises, each a start-up / instance fact discharged at the milestone, and the MEASUREMENT this witness rests
    on (a change of either lib/B/YF0m.v row invalidates it):
      HEV  : as_errno B = 0x5d994c - YF0m's `ts_errno : as_errno B = TFIB_ERRNO` with `TFIB_ERRNO : Z := 0x5d994c`
-            (lib/B/YF0m.v:21 and :874; = TFIB_TP 0x5d99f0 - 164);
+            (lib/B/YF0m.v:22 and :875; = TFIB_TP 0x5d99f0 - 164);
      HOWN : the bytes of G_fr_c are not in as_owned_static B - YF0m's `ts_owned : as_owned_static B =
-            Tfib_owned_static` (YF0m.v:821 and :883), by vm_compute at the milestone.
+            Tfib_owned_static` (YF0m.v:822 and :884), by vm_compute at the milestone.
             MEASURED on this tree's lib/B/YF0m.v: 0 of G_fr_c's 513 bytes lie in its 61 Tfib_owned_static ranges;
             every byte of each object's ASan redzone (padded size minus plain size) DOES lie in them; and
-            Tfib_zero_shadow (YF0m.v:819, `ts_zsh` :874) has the range (0x5d8e60, 0x5d8fe0 - 0x5d8e60) = g_s's
+            Tfib_zero_shadow (YF0m.v:820, `ts_zsh` :874) has the range (0x5d8e60, 0x5d8fe0 - 0x5d8e60) = g_s's
             384 bytes, which makes `azs B (rg_s fr_RG) (4 * ASRC)` (HZS / AZS_s) true.
             Also measured here: 19 of the 61 owned ranges (408 bytes in all) meet a read-only LOAD of image B, and
             every one of those 408 bytes is an AV (ANum v) cell of YF0m's Tfib_const_abs at an ANum address holding
@@ -578,7 +579,7 @@ End rp.
    RINV := ReplyRINVB.fr_RINV and LS := ReplyLSB.fr_LS B CALL_ROOM_B, text for text: a Theorem Labs lane's ruling that the
    head premises' instance facts are plugged here; the B cf top (which instantiates top_x's LSx / RINV) cites them.
    They are a Theorem Labs lane's RI_head_nout_b / LS_head_nout_b / RI_head_skip_b / LS_head_skip_b
-   (a working branch fdb3ee1c6ffa) and hold at every CALL_ROOM_B. *)
+   (a working branch) and hold at every CALL_ROOM_B. *)
 Section hm.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.

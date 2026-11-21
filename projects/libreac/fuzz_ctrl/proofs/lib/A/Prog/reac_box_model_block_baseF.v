@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 776 of its 791 lines of code are new or changed and 233 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_base.v at a working branch d69f7c708f6 (proved v1.9 run
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_base.v at a working branch (proved v1.9 run
    of record) over lib/Lib/StepF, from its proof scripts; the script edits include `hide_sec.` and footprint steps, the entry run is split at the jal (entry_pre_F / entry_post_F), and RFSf_F, fk_rng_F, bmb_at_call_refl and bmb_at_ret_of are new.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: GOT_CELL_K 0x9fad0 (file offset 0x8dad0, 8 bytes
    78 88 0a 00 00 00 00 00 = 0xa8878 = CELL_K) and GOT_UAR 0x9fb28 (file offset 0x8db28, 8 bytes
    80 88 0a 00 00 00 00 00 = 0xa8880 = UAR); the prologue reads both through auipc + ld at 0x85b94 .. 0x85ba0.

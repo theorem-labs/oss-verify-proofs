@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs: emitted for reac-pw/fuzz_pin image A by atable.py 6a35bb77e745 (the start-up tool set at tools commit 96d2c32e287) from fuzz_pin.asan and its unstripped twin; TFIB_TEXT_N covers this image's own whole .text (0x3031c, 104938 words); stops_more is the image's 13 self-loops. *)
+(* Modified by Theorem Labs: emitted for reac-pw/fuzz_pin image A by atable.py 6a35bb77e745 (the start-up tool set at tools) from fuzz_pin.asan and its unstripped twin; TFIB_TEXT_N covers this image's own whole .text (0x3031c, 104938 words); stops_more is the image's 13 self-loops. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_pin.asan (reac-pw/fuzz_pin asan) sha256 3e4859aed23f78a6eb028120d664abda29bcb8a3bfdea5d6ee5b32b646de9d16; unstripped twin sha256 435309a6b12c4d3e09a8484ec253b5fab600e4f00c28694ac28db2fc7a4475ab *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

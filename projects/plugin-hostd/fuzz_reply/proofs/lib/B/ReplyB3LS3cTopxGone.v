@@ -11,7 +11,7 @@
      gn_pair_ok source is at slot k (fr_RINV's distinct fds, RI_fds_holds), so after relay_instance_gone slot k holds
      rig_post's source for entry j, which rig_rel's dr_rel leaves drained (pending list empty, offset 0).
    - RI_gone_read_sat: one state meets all of RI_gone_read's premises (and RI_gone_pairs's).
-   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts (bb9dae5d905, a1a3591c77c),
+   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts,
      which were false at the instance; machine-checked counter-instances, not proofs of the rows.
    Part 2 (over W_LLVMFuzzerTestOneInput_gone_base.v's own model): RI_gone_pairs_plug / RI_gone_read_plug restate
    part 1 at gone_base's GN_RI_pairs / GN_RI_read; then the step and end rows.
@@ -19,22 +19,23 @@
      check_no_loss and check_shape_ends left of what relay_instance_gone left there; when gone = 0, `at` is the
      entry's position in the stream relay_instance_gone sent (rg_acc_pos), which is the entries' drained lines and
      then their ended keys' end lines (rg_rel_dec, rg_strm).
-   - RI_gone_step_holds(_c): GN_RI_step of a working branch a39b599f92e (copied verbatim as
+   - RI_gone_step_holds(_c): GN_RI_step of a working branch (copied verbatim as
      GN_RI_step_d) at MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B / fr_LS3c B.  The LS-side
-     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v at b25d82fcf04); mo_ok is True at
+     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v); mo_ok is True at
      ameter_triv; the rest is RINV-side (rg_step_rinv_side).
-   - RI_gone_end_holds_q5(_c): GN_RI_end of a39b599f92e (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
-     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and a39b599f92e's gn_cnl_ok
+   - RI_gone_end_holds_q5(_c): GN_RI_end (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
+     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and's gn_cnl_ok
      does not carry `hl_cap (hs_held h) <= hl_cap H'` from which ReplyLS3cTopxGoneH.v's gxh_req5 derives it.
-   - GN_RI_step_r3 (Section rg3): the record of round 3 (aa34c06e82c): without re_U NUL-free the step row is false.
+   - GN_RI_step_r3 (Section rg3): the record of round 3: without re_U NUL-free the step row is false.
    Local helpers rg_lines_nz / rg_upds_in / rg_W_read_lines_nz state what a Theorem Labs lane's ReplyRINV_a12.v
    (lines_nul_free / upds_nul_free) states; they stay local. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV_gone.v, with its module paths and module names changed; 1094 of its 1264 lines of code are new or changed and 2753 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (kind: segment lemma): the gone arm's LS / meter conjuncts of GN_RI_step and GN_RI_end at the v3
    LS layer of image B (LS := fr_LS3 B CALL_ROOM_B / fr_LS3c B CALL_ROOM_B, RINV := fr_RINV, MT := ameter_triv,
    MMAX := fr_MMAX) *)
 (* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3cTopxGone.v (sha256
-   bd8dd3f0fe7d; internal record) at 1318828167d3, row G-BLS3-port (the gone half):
+   bd8dd3f0fe7d; internal record), row G-BLS3-port (the gone half):
    A's definitions, names and proofs over lib/B's records.  Every lemma keeps A's name and A's statement but for the
    swaps below.
    A -> B SWAPS (as lib/B/ReplyB3LS3.v, ReplyB3LS3Arms.v and ReplyB3LS3c.v made them):
@@ -46,9 +47,9 @@
      ReplyB3LSCntL; ReplyLS3c -> ReplyB3LS3c; lib/A W_LLVMFuzzerTestOneInput_drain -> lib/B
      W_LLVMFuzzerTestOneInput_drain_defs; _event -> _arm_event; ReplyLS3cTopxDefs -> ReplyB3LS3cTopxDefs (which
      re-exports lib/B/W_LLVMFuzzerTestOneInput_gone_base.v: every gn_* name below is B's gone_base's, A's text);
-   - A's Section gnrs (A :76-123) COPIES GN_RI_step / GN_RI_end from a working branch a1a3591c77c, and
+   - A's Section gnrs (A :76-123) COPIES GN_RI_step / GN_RI_end from a working branch, and
      no lemma of A's file names them.  This file does not copy them: the texts are B's gone_base GN_RI_step (:559-596)
-     and GN_RI_end (:597-617) at a2ff0ba990a4, applied as `GN_RI_step B MT LS RINV MMAX` and `GN_RI_end B MT LS RINV`.
+     and GN_RI_end (:597-617), applied as `GN_RI_step B MT LS RINV MMAX` and `GN_RI_end B MT LS RINV`.
      B's texts have A's copied premises plus `gn_op cx t m` and the relay entries' NUL-free / key-length Forall after
      `RINV cx t m` (GN_RI_end also `lm_gn m = 0 \/ lm_gn m = 1`) and REQ1-REQ4, and B writes `AREC * capb ..` where
      A's copy writes capb's body (lib/B/W_contract.v :1961).  Each lemma below keeps A's premises, so it reads none of
@@ -63,14 +64,14 @@
      1072693248, A's value), the MMAX the B top states its LS rules at; A's `WR_MMAX = 1072693248` (A :1355) ->
      `MMAX = 1072693248` by fr_MMAX_val.  gx_WR_MMAX_pin keeps A's statement over lib/B/_write.v's WR_MMAX (the
      write arm's request bound, 2 ^ 30 - 2 ^ 20).
-   REQ1-REQ5 (A's gone_base edits after d3a30b1562c6; B's gone_base has them from a2ff0ba990a4, REQ5 and C1 as
+   REQ1-REQ5 (A's gone_base edits after; B's gone_base has them, REQ5 and C1 as
    gn_cnl_ok's last two conjuncts, which gx_touch_cost's destruct skips): A's file states S1 and E1 at the gnrs texts
    and carries what they read beyond those texts as the named hypotheses gx_xstep / gx_xend (below), so no lemma here
    reads a REQ text and none needs a `_q` premise.
    A's header follows. *)
 (* The gone arm's LS / meter conjuncts of GN_RI_step and GN_RI_end at LS := fr_LS3 B / fr_LS3c B, RINV := fr_RINV,
    MT := ameter_triv, MMAX := WR_MMAX, against the OFFICIAL restated texts of
-   a working branch a1a3591c77c lib/A/W_LLVMFuzzerTestOneInput_gone_base.v (copied below):
+   a working branch lib/A/W_LLVMFuzzerTestOneInput_gone_base.v (copied below):
    (S1) GN_RI_step's cnl_room on blocks_bytes Sx, (S2) its mo_ok MT Sx (cnl_cost ..), (S3) its inner
    mo_ok MT Sy (hl_n .. * mo_free MT), (E1) GN_RI_end's LS cx (t + 1) mc lyx Sx.
    proves no function (kind: invariant lemma).
@@ -80,7 +81,7 @@
    relay entries' and drained sources' representation clauses at relay_instance_gone's call) that neither fr_LS3
    nor fr_RINV nor the official premises give, and S1 reads the held lists' count clause at the loop's state.
    E1 also needs the held vectors not to shrink over the operation: check_no_loss's post bounds the new held
-   capacity from above only (W_contract.v:2028), and the held list's potential measure can rise by 64 at a call
+   capacity from above only (W_contract.v:2029), and the held list's potential measure can rise by 64 at a call
    whose capacity drops (cap 8, 4 texts -> cap 4: 128 -> 192), four calls per operation, against MB_K = 65 per
    input byte (one or two bytes).  Each is carried as ONE named extra hypothesis (gx_xstep for S1, gx_xend for
    E1); see their definitions for the clauses and where the gone arm holds each.
@@ -157,13 +158,13 @@ Proof. reflexivity. Qed.
 
 (* ================================================================== the named extra hypotheses *)
 (* What S1 and E1 read of the operation that the official premises do not give.  Where the gone arm holds each
-   (integ bb9dae5d905; lib/B/W_LLVMFuzzerTestOneInput_gone_base.v / W_contract.v / W_rep.v line numbers):
+   (integ; lib/B/W_LLVMFuzzerTestOneInput_gone_base.v / W_contract.v / W_rep.v line numbers):
    - lm_O m = [] : gn_op cx t m (gone_base.v:355-356), carried by gdone (:666-669) in every p5st (gone_p5.v:1145);
    - 0 <= lm_cap m : aout_at's capacity clause (W_rep.v:189-190) at relay_instance_gone's call (rig_spec :1444);
    - for every open pair (e, (h, j)) of gn_pairs: aentry_ok e's clauses (W_rep.v:126-141, from rig_spec's
-     arelay_at :1443) as dr3_epre e and ls3_kh e (ReplyLSDrain3.v:80, ReplyLS3Arms.v:306), and asrc_at h's
+     arelay_at :1443) as dr3_epre e and ls3_kh e (ReplyLSDrain3.v:81, ReplyLS3Arms.v:307), and asrc_at h's
      pending clauses (W_rep.v:93, :106-107, from rig_spec's dr_src_ok :1446 / :1239) as dr3_hpre h
-     (ReplyLSDrain3.v:87). *)
+     (ReplyLSDrain3.v:88). *)
 Definition gx_xpre (m : lmod) (hs : list (hsrc * nat)) : Prop :=
   lm_O m = [] /\ 0 <= lm_cap m /\
   Forall (fun p => re_eof (fst p) = 0 -> dr3_epre (fst p) /\ ls3_kh (fst p) /\ dr3_hpre (fst (snd p)))
@@ -561,7 +562,7 @@ Lemma gx_exp_mid : forall c0 c1 nl, 0 <= c0 -> 0 <= c1 -> 0 <= nl -> c1 <= Z.max
 Proof. intros. unfold gx_f, dr3_vec, AREC. destruct (Z.eqb_spec c1 0), (Z.eqb_spec c0 0); lia. Qed.
 
 (* ================================================================== one entry of relay_instance_gone *)
-(* dr_rel's clauses the accounting reads (W_contract.v at bb9dae5d905 :1215-1234) *)
+(* dr_rel's clauses the accounting reads (W_contract.v :1215-1234) *)
 Lemma gx_dr_rel : forall c mx no cap e h e1 h1 LB, dr_rel c mx no cap e h e1 h1 LB ->
   re_fd e1 = re_fd e /\ re_cap e1 = drain_b_c.ds_cap (dr_fin c mx no cap e h) /\
   bzs (re_U e1) = drain_b_c.ds_u (dr_fin c mx no cap e h) /\

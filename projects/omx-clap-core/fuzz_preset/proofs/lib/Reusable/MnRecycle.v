@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (p102 row N9-MNARM; task MEMNORM): statements.
    rule 24: no function proved (kind: statements - the memnorm-keeping twins of QuarantineCallback::Recycle
    (0x3359c) and SizeClassAllocator64LocalCache::Deallocate (0x339a0) inside the drain's DoRecycle; cgif proofs
    DGif1dr.dgif1_rchunk_cgif (YFfs / YFg7 primary arm, YFg9 / YFg8 secondary arm) and dgif1_cdealloc_cgif (YFg0),
    through DGif1dI).
-   WHY INSIDE THE WALK.  At cgif the owned set [aowned] meets the read-only segment [0x10000, 0x30000) (YF0m.v:279-286
+   WHY INSIDE THE WALK.  At cgif the owned set [aowned] meets the read-only segment [0x10000, 0x30000) (YF0m.v:280-287
    Tfib_owned_static: (0x102e8, 8) .. (0x20e62, 0x1e), (0x1cccb, 21) .. (0x2146c, 2)), so the callee post's raw frame
    DIfaceR.acall_raw_x (outside the owned sets, the scratch and E: mem' = mem) admits a ROM byte copied into the overlay
    at an owned address and does not give the keep.  The keep is proved inside the callee walk, per runner phase, from
    the phase's own write window (proof route: st_ok + frame_of as preset's YGcallMxmn.v:677
-   memnorm_frame_of; the mmap / munmap nodes by MemnormGk.klaw_commit3 / klaw_munmap and MemnormG.amreal_m_node, in    lib/Reusable/MemnormGk.v / MemnormG.v at ossv/recipes 87c4b944683b; this tree no longer has those files).
+   memnorm_frame_of; the mmap / munmap nodes by MemnormGk.klaw_commit3 / klaw_munmap and MemnormG.amreal_m_node, in    lib/Reusable/MemnormGk.v / MemnormG.v; this tree no longer has those files).
    STATEMENT SHAPE: ErrnoG's raw add-on with `MemnormT.memnorm_keep im_segs mem mem'` next to
    `errno_kept B mem mem'` in the SAME post (amreal has no rule that joins two contracts). Additive: ErrnoG, DIfaceR and
    every existing statement are unchanged.
-   - [de_rchunk_m_t] / [de_cdealloc_m_t]: ErrnoG.de_rchunk_t / de_cdealloc_t (ErrnoG.v:274-286 / :298-309) with the
+   - [de_rchunk_m_t] / [de_cdealloc_m_t]: ErrnoG.de_rchunk_t / de_cdealloc_t (ErrnoG.v:275-287 / :299-310) with the
      keep right after errno_kept;
    - [de_rchunk_em_e] / [de_cdealloc_em_e]: they give the ErrnoG forms (drop the keep; Qed);
    - [DIfaceREm]: ErrnoG.DIfaceRE's four fields at the keep forms, and [DIfaceREm_RE] (Qed). *)

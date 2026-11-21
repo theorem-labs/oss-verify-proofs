@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the stack window is 6144513 bytes, was 8388608, and the library call keeps the channel reader (model_rt_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -202,7 +203,7 @@ Section LibSite.
     pose proof (dinv_stack_defined scfg L ar C HI HIok sp0 Hsp M0 M0_def _ _ _ _ _ _ DI) as Hdef.
     pose proof Hsp as Hsp'. pose proof Hal as Hal'. destruct (dlla_stack Lay L DLL) as ((ST1 & ST2) & ST3).
     set (sp := bv_unsigned sp0 + so) in *.
-    assert (WDEF : forall a, bv_unsigned sp0 - 8388608 <= a < bv_unsigned sp0 -> M (Z_to_bv 64 a) <> None)
+    assert (WDEF : forall a, bv_unsigned sp0 - 6144513 <= a < bv_unsigned sp0 -> M (Z_to_bv 64 a) <> None)
       by (exact (window_defined sp0 Hsp vals ebs (ahid A model) M kn HK Hiw P0)).
     destruct (aio_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (_ & _ & _ & _ & _ & _ & _ & _ & (B4096 & TOPEQ & _ & _) & TOP47 & _).
     pose proof (LIok fx g LB [] LK cr A sp ptr ra payload R M model K) as MS.
@@ -259,7 +260,7 @@ Section LibSite.
              unfold aclient. right. left. rewrite (dla_sptop L ar IL sp0 DL). unfold sp in *. lia.
           -- replace a with (sp - lla_stack Lay + (a - (sp - lla_stack Lay))) by ring. apply Qscr. lia.
       + (* [comment removed for export] *)
-        apply DINV; [exact HH' | exact HMI' | exact Hh' | | |].
+        apply DINV; [exact HH' | exact HMI' | exact Hh' | | | | rewrite (model_rt_rdr _ _ HRT); exact (di_rdr _ _ _ _ _ _ _ _ _ _ DI)].
         * intros a Ha. rewrite (ABOVE a Ha). exact (di_above _ _ _ _ _ _ _ _ _ _ DI a Ha).
         * intros x Hx. destruct (stksh_rng scfg L ar C IL HI HIok sp0 Hsp DL _ _ _ _ _ _ _ x HH Hx) as (XR & XC).
           unfold STKTOP, in_shadow_of, S, SB in Hx. rewrite (dla_sptop L ar IL sp0 DL) in Hx.

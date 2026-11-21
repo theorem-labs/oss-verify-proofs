@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFex.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan+UBSan build (fuzz_state.asan-ubsan). *)
-(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 (5e580eb5ab5) bounds a class region's mapped user part by kFreeArrayOffset (YG0s cfacts, YG07 prim_chunk_off), not 2 ^ 31; batch_geom and ext_zone state kFreeArrayOffset, and the proofs unfold it where lia needs its value. *)
+(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 bounds a class region's mapped user part by kFreeArrayOffset (YG0s cfacts, YG07 prim_chunk_off), not 2 ^ 31; batch_geom and ext_zone state kFreeArrayOffset, and the proofs unfold it where lia needs its value. *)
 (* Modified by Theorem Labs, 2026-10: HU is tr_admit (as_universe B) S tr instead of In tr (as_universe B); sd_wf proves the new depot invariant with depot_inv_put. *)
 (* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow no longer assumes the donor's five ranges. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

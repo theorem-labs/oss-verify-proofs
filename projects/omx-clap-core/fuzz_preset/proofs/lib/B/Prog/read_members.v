@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry of descriptors_panel_get's walk (plugin-hostd/fuzz_command.asan) and the two arms of the inlined record(), from 0x8d10c to the join at 0x8d180, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v (a segment proved from the next one's statement) with the shared seed pieces of lib/A/Prog/RecBTemplate.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/descriptors_panel_get_s7.v, with its module paths and module names changed; 2926 of its 3000 lines of code are new or changed and 823 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102: pin sha256 d663f82d7f488d30, unstripped twin
    c90d4fa54d43160b): the program walk of fuzz_preset.c's read_members (out of line on the #102 pins: B' 0x82554, 724
    bytes, 181 words; slot 930 of a Theorem Labs lane's whole-program listing lib/B/Listing_prog.v, v3 blob c97cc46b3e13, YPsym.v
    b6f5a85d234d) against the text tread_members_specX (lib/A/PRH_FnCheck.v blob 4cb899514e6c :805, every fuzz_preset/lib
-   path of decff67d721f taken on base ed6e9a1a2e98).
+   path taken on base).
    rule 24: proves function read_members (lookup: proof-index read_members, 2026-10-29T11:5xZ, exit 1: no released
    FUNCTION proof; checker R24ReadMembers CONFIRM). Verdict: none: written new.
    PARAMETRIC IN THE IMAGE INSTANCE: the walk is over {PA : PAImg B_prog_listing} with the listing's own tables
@@ -25,8 +26,8 @@
    - NO GAP PREMISE: the former RM_G3 is LAWS' own fields at hl = cf_head - field 14 (alx_hshadow, YCbqG.v) for the
      shadow of the nodes below the root, field 22 (alx_hhead, used through YCbqG's hhead_not_addressable_x) for the
      hidden head of the root's block.
-   ENGINE: YCbqG 9c40f328a6d4 (the P'' base's, with field 22); a Theorem Labs lane s1b's memory-invariant runners by path
-   from 459129c18903: lib/Reusable/YC80x.v 14f84f225e8f, YC1fPx.v 7814b594066f, YSRrMemnorm.v 5ffa8525936b. *)
+   ENGINE: YCbqG 9c40f328a6d4 (the P'' base's, with field 22); a Theorem Labs lane s1b's memory-invariant runners by path:
+   lib/Reusable/YC80x.v 14f84f225e8f, YC1fPx.v 7814b594066f, YSRrMemnorm.v 5ffa8525936b. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -52,7 +53,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import S1Ledg
 From Stdlib Require Import FunctionalExtensionality.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require Import PjTree.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YI5b.
-(* the PLAIN build's sink head must never fill SK here (YC1fP.v:23-33 does the same): every SK below is explicit *)
+(* the PLAIN build's sink head must never fill SK here (YC1fP.v:24-34 does the same): every SK below is explicit *)
 #[global] Remove Hints YI5b.src0_sink_head : typeclass_instances.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -336,7 +337,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
    field 14 (alx_hshadow) is a harness block's user-bytes shadow, field 22 (alx_hhead) its head poison *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx (@cf_head CP).
 Hypothesis TL : PALibCore (L := B_prog_listing) (PI := PA) B.
-(* the callee texts, the texts of record (kit decff67d721f, PRH_FnPj.v) *)
+(* the callee texts, the texts of record (kit, PRH_FnPj.v) *)
 Hypothesis PJ_GET : tpj_get_specX (cp := CP) (PI := prh_img_B) (PA := PA) B ARx SK.
 Hypothesis PJ_GET_STR : tpj_get_str_specX (cp := CP) (PI := prh_img_B) (PA := PA) B ARx SK.
 (* RM_IMG IS A FACT ABOUT THE ASYMS RECORD B (its as_owned_static, as_errno, as_const, as_zero_shadow) at this image,

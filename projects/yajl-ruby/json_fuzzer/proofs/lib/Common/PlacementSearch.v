@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the comments naming Mmap.linux_place as Linux's placement and this search as a witness Linux's fallback window accepts). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -219,9 +220,36 @@ Proof.
     rewrite (H g HgAl Hglo Hghi) in Hfree. discriminate.
 Qed.
 
-(* [comment removed for export] *)
+(* =========================================================================
+   THE PLACEMENT WITNESS — one concrete address, for proofs that want one
 
-(* [comment removed for export] *)
+   [Mmap.mmap_spec] places a mapping with [Mmap.linux_place], which is a
+   Prop and has at most one solution
+   ([Checks.Placement.linux_place_unique]); a proof that wants to compute
+   an address needs an executable search.  This file gives one: an
+   executable search, a soundness lemma against admissibility conditions,
+   and a completeness lemma saying the search finds an address whenever
+   one exists.
+
+   IT IS KERNEL-*LIKE*, NOT KERNEL-PINNED, and the difference is the whole
+   reason it lives here rather than in the spec.  Linux's answer is a
+   function of the ledger, the run's [mm->mmap_base] and the kernel build,
+   and [Mmap.linux_place] is that function (its executable twin is
+   [Checks.Placement.linux_place_b]).  The search here is a different
+   function: every address it returns is admissible, which is all a
+   witness has to be, but it need not be Linux's address.
+
+   Determinism IS claimed here, and may be: [find] returns the first
+   fitting candidate in the candidate list's order, so [place] is a
+   function of its arguments.  That claim is about this function, not
+   about any kernel.
+   ========================================================================= *)
+
+(** The candidate list for a search from a floor, rather than from a
+    grant's end.  Same shape as [fit_candidates] — the floor itself, plus
+    the page-rounded end of every ledger entry — and
+    [higher_fit_b_as_place] below records that it IS the same list, so the
+    completeness argument transfers instead of being redone. *)
 Definition search_candidates (maps : list (word * word)) (loZ : Z)
     : list Z :=
   loZ :: map (fun p => page_round_up_Z (bv_unsigned (fst p)
@@ -350,9 +378,14 @@ Proof.
   - exact (alloc_top_lt h).
 Qed.
 
-(* [comment removed for export] *)
+(* ---- the bridge to Linux's rule ---- *)
 
-(* [comment removed for export] *)
+(** The same search over the window Linux FALLS BACK to
+    ([[TASK_UNMAPPED_BASE, alloc_top h)], mm/mmap.c,
+    [generic_get_unmapped_area_topdown], Linux v6.18.46 commit
+    1f99e9ab748f).  Its floor is the only difference from
+    [place_in_model], and the floor is what makes the answer a witness
+    Linux's rule accepts. *)
 
 Definition witness_ledger : list (word * word) :=
   [(Z_to_bv 64 4096, Z_to_bv 64 8192)].

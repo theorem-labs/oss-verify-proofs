@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reserved ledger also holds the vDSO/vvar pair, so KL reads the allocator's own reservations as a prefix of vm_reserved, kl_resv_top reads a reserved entry as below the brk start or one of the pair, and the new kl_vdso_in, kl_vdso_above and kl_vdso_disj carry the pair for mprotect's vDSO gate, with vdso_gate_apart, vdso_top_eq, kl_vdso_disj_cons, kl_vdso_disj_sub and kl_vdso_move; KL_model_frame and KL_vm_eq take the kernel build, KL_vm_eq the placement base too). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -270,9 +271,18 @@ kl_halt : m_halted mo = None;
 kl_lazy : m_vm_lazy mo = [];
 kl_ceil : alloc_top (m_vmmaps mo) = alloc_ceiling;
 kl_wf : vmwf (vm_maps (m_vmmaps mo));
-kl_resv : ld_resv L = map wwZ (vm_reserved (m_vmmaps mo));
+(* The allocator's ledger names the image's own reservations; [State.init_model]
+   appends the launch's vDSO/vvar pair after them ([State.init_reserved]), so the
+   ledger is a PREFIX of [vm_reserved].  What the tail is, [kl_vdso_in] says; where
+   it sits, [kl_resv_top]'s second disjunct says. *)
+kl_resv : exists lo hi, vm_reserved (m_vmmaps mo) = lo ++ hi /\ ld_resv L = map wwZ lo;
 kl_resv_wf : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= 2^64;
-kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+(* A reserved entry is either one of the image's own, which ends below the brk
+   start, or one of the launch's vDSO/vvar pair, which [kl_vdso_above] puts far
+   above the brk guard. *)
+kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) ->
+ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+\/ In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)));
 kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
 /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
 /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))
@@ -310,7 +320,98 @@ kl_phase : match ld_brk L with
 /\ (forall b l k, In (b, l, k) (ld_metas L) -> b + mmap_len l <= cur \/ cur + 2 * PGSZ <= b)
 | BPLive => exists b l, ld_brkreg L = Some (b, l) /\ bv_unsigned (vm_brk (m_vmmaps mo)) = b + l /\ pbrk = b + l
 | BPDead => True
-end }.
+end;
+(* The vDSO/vvar pair, which [State.init_model] reserves and which mprotect's answer
+   refuses to touch ([State.vdso_reserved] above the containment test).  Three fields
+   carry it, all facts the launch gives and no step disturbs:
+     [kl_vdso_in]    the pair IS in the reserved ledger -- true at the launch, and no
+                     step writes [vm_reserved], [m_kernel], [vm_mmap_base] or
+                     [vm_init_sp];
+     [kl_vdso_above] the pair sits above the brk guard, because the launch's
+                     placement base is above [State.mmap_base_min] while the brk
+                     window stays near the image;
+     [kl_vdso_disj]  no tracked mapping meets any reserved entry -- true at the
+                     launch ([vm_maps] is empty) and kept because every grant tests
+                     [region_free] over [vm_reserved ++ vm_maps].
+   Together they put a range inside a tracked mapping apart from the pair. *)
+kl_vdso_in : incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)))
+(vm_reserved (m_vmmaps mo));
+kl_vdso_above : forall e, In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ->
+bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e;
+kl_vdso_disj : forall r, In r (vm_reserved (m_vmmaps mo)) ->
+forall e, In e (vm_maps (m_vmmaps mo)) -> edisj e r }.
+
+(* --------------------------------------------------------------------
+   Reading and moving the vDSO facts.
+   -------------------------------------------------------------------- *)
+
+(* mprotect's vDSO gate: a range apart from every reserved entry misses the pair,
+   which [kl_vdso_in] puts among them. *)
+#[using="Type"] Lemma vdso_gate_apart : forall mo addr n,
+incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (vm_reserved (m_vmmaps mo)) ->
+(forall e, In e (vm_reserved (m_vmmaps mo)) ->
+bv_unsigned addr + bv_unsigned n <= elo e \/ ehi e <= bv_unsigned addr) ->
+region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) addr n = true.
+Proof.
+intros mo addr n Hinc Hap. apply region_free_intro. intros e Hin. exact (Hap e (Hinc e Hin)).
+Qed.
+
+(* [State.vdso_top] reads [vm_mmap_base] and [alloc_top], and [alloc_top] reads
+   [vm_init_sp]: a step that leaves both alone leaves the pair where it is. *)
+#[using="Type"] Lemma vdso_top_eq : forall h h',
+vm_mmap_base h' = vm_mmap_base h -> vm_init_sp h' = vm_init_sp h ->
+vdso_top h' = vdso_top h.
+Proof. intros h h' E1 E2. unfold vdso_top, mmap_top, alloc_top. rewrite E1, E2. reflexivity. Qed.
+
+(* A grant adds one mapping, which the grant's own [region_free] over
+   [vm_reserved ++ vm_maps] has already put apart from every reserved entry. *)
+#[using="Type"] Lemma kl_vdso_disj_cons : forall (R M : list (word * word)) aw nw,
+region_free (R ++ M) aw nw = true ->
+(forall r, In r R -> forall e, In e M -> edisj e r) ->
+forall r, In r R -> forall e, In e ((aw, nw) :: M) -> edisj e r.
+Proof.
+intros R M aw nw Hrf H r Hr e [<-|He]; [|exact (H r Hr e He)].
+pose proof (region_free_disj _ _ _ _ Hrf (in_or_app _ _ _ (or_introl Hr))) as D.
+unfold edisj. rewrite elo_pair, ehi_pair. exact D.
+Qed.
+
+(* A step that keeps every mapping or drops some keeps the tracked mappings apart
+   from the reserved entries. *)
+#[using="Type"] Lemma kl_vdso_disj_sub : forall (R M M' : list (word * word)),
+(forall e, In e M' -> In e M) ->
+(forall r, In r R -> forall e, In e M -> edisj e r) ->
+forall r, In r R -> forall e, In e M' -> edisj e r.
+Proof. intros R M M' Hs H r Hr e He. exact (H r Hr e (Hs e He)). Qed.
+
+(* The ledger fact and the three vDSO facts of [KL] move across a step together: each
+   reads [m_kernel], [vm_reserved], [vm_start_brk] and -- through [State.vdso_top] --
+   [vm_mmap_base] and [vm_init_sp], and no step of this tree writes any of them.
+   [rsv] is the ledger's reservation list, which a step does not change either. *)
+#[using="Type"] Lemma kl_vdso_move : forall mo mo' (rsv : list (Z * Z)),
+m_kernel mo' = m_kernel mo ->
+vm_reserved (m_vmmaps mo') = vm_reserved (m_vmmaps mo) ->
+vm_mmap_base (m_vmmaps mo') = vm_mmap_base (m_vmmaps mo) ->
+vm_init_sp (m_vmmaps mo') = vm_init_sp (m_vmmaps mo) ->
+vm_start_brk (m_vmmaps mo') = vm_start_brk (m_vmmaps mo) ->
+(exists lo hi, vm_reserved (m_vmmaps mo) = lo ++ hi /\ rsv = map wwZ lo) ->
+(forall e, In e (vm_reserved (m_vmmaps mo)) ->
+ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+\/ In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)))) ->
+incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (vm_reserved (m_vmmaps mo)) ->
+(forall e, In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ->
+bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e) ->
+(exists lo hi, vm_reserved (m_vmmaps mo') = lo ++ hi /\ rsv = map wwZ lo)
+/\ (forall e, In e (vm_reserved (m_vmmaps mo')) ->
+ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo'))
+\/ In e (vdso_reserved (m_kernel mo') (vdso_top (m_vmmaps mo'))))
+/\ incl (vdso_reserved (m_kernel mo') (vdso_top (m_vmmaps mo'))) (vm_reserved (m_vmmaps mo'))
+/\ (forall e, In e (vdso_reserved (m_kernel mo') (vdso_top (m_vmmaps mo'))) ->
+bv_unsigned (vm_start_brk (m_vmmaps mo')) + 4 * PGSZ <= elo e).
+Proof.
+intros mo mo' rsv Ek Er Eb Es Esb H0 H1 H2 H3.
+rewrite Ek, Er, Esb, (vdso_top_eq _ _ Eb Es).
+split; [exact H0|]. split; [exact H1|]. split; [exact H2| exact H3].
+Qed.
 
 Definition vm_only (mo mo' : Model) : Prop :=
 m_fd mo' = m_fd mo /\ m_io mo' = m_io mo /\ m_fsys mo' = m_fsys mo /\
@@ -367,14 +468,17 @@ destruct (mod0_linp x H) as [q E]; change (hidden (x mod page_size = 0)) in H
 end.
 Ltac unhide := unfold hidden in *.
 
-Ltac kl_open HK := destruct HK as [Khalt Klazy Kceil Kwf Kresv Krwf Krt Kstart Kgr Kgrr Kme Kdis Kna Kreg Kph].
+Ltac kl_open HK := destruct HK as [Khalt Klazy Kceil Kwf Kresv Krwf Krt Kstart Kgr Kgrr Kme Kdis Kna Kreg Kph Kvdi Kvda Kvdd].
 Section RC__3. Context {RC__ : Q6q3.RunConsts}.
 
 #[using="Type"] Lemma KL_model_frame : forall L pbrk mo mo',
-KL L pbrk mo -> m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> m_halted mo' = None ->
+KL L pbrk mo -> m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo ->
+(* the kernel build, which KL's vDSO fields read *)
+m_kernel mo' = m_kernel mo ->
+m_halted mo' = None ->
 KL L pbrk mo'.
 Proof.
-intros L pbrk mo mo' K E1 E2 Hh. kl_open K; constructor; rewrite ?E1, ?E2; auto.
+intros L pbrk mo mo' K E1 E2 Ek Hh. kl_open K; constructor; rewrite ?E1, ?E2, ?Ek; auto.
 Qed.
 
 #[using="Type"] Lemma KL_vm_eq : forall L pbrk mo mo',
@@ -385,9 +489,18 @@ vm_noaccess (m_vmmaps mo') = vm_noaccess (m_vmmaps mo) ->
 vm_start_brk (m_vmmaps mo') = vm_start_brk (m_vmmaps mo) ->
 vm_brk (m_vmmaps mo') = vm_brk (m_vmmaps mo) ->
 vm_init_sp (m_vmmaps mo') = vm_init_sp (m_vmmaps mo) ->
+(* the vDSO fields read the placement base and the kernel build as well *)
+vm_mmap_base (m_vmmaps mo') = vm_mmap_base (m_vmmaps mo) ->
+m_kernel mo' = m_kernel mo ->
 KL L pbrk mo'.
 Proof.
-intros L pbrk mo mo' K Hh Hl H1 H2 H3 H4 H5 H6. kl_open K; constructor; unfold alloc_top in *; rewrite ?H1, ?H2, ?H3, ?H4, ?H5, ?H6; auto.
+intros L pbrk mo mo' K Hh Hl H1 H2 H3 H4 H5 H6 H7 H8.
+destruct (kl_vdso_move mo mo' (ld_resv L) H8 H1 H7 H6 H4 (kl_resv _ _ _ K)
+(kl_resv_top _ _ _ K) (kl_vdso_in _ _ _ K) (kl_vdso_above _ _ _ K)) as (Hresv & Hrtop & Hvdi & Hvda).
+assert (Hvdd : forall r, In r (vm_reserved (m_vmmaps mo')) -> forall e, In e (vm_maps (m_vmmaps mo')) -> edisj e r)
+by (rewrite H1, H2; exact (kl_vdso_disj _ _ _ K)).
+kl_open K; constructor; try exact Hresv; try exact Hrtop; try exact Hvdi; try exact Hvda; try exact Hvdd;
+unfold alloc_top in *; rewrite ?H1, ?H2, ?H3, ?H4, ?H5, ?H6; auto.
 Qed.
 
 Definition phase_inv (ph : brk_phase) (L : mled) (pbrk : Z) (mo : Model) : Prop :=
@@ -407,13 +520,13 @@ end.
 
 #[using="Type"] Lemma KL_rephase : forall L ph pbrk pbrk' mo,
 KL L pbrk mo -> phase_inv ph L pbrk' mo -> KL (set_brkph ph L) pbrk' mo.
-Proof. intros L ph pbrk pbrk' mo K Hph. kl_open K; constructor; cbn; auto. Qed.
+Proof. intros L ph pbrk pbrk' mo K Hph. kl_open K; constructor; try exact Kresv; try exact Krt; try exact Kvdi; try exact Kvda; try exact Kvdd; cbn; auto. Qed.
 
 #[using="Type"] Lemma KL_dead : forall L pbrk pbrk' mo, KL L pbrk mo -> KL (set_brkph BPDead L) pbrk' mo.
 Proof. intros. eapply KL_rephase; [eassumption| exact I]. Qed.
 
 #[using="Type"] Lemma KL_set_live : forall L v pbrk mo, KL L pbrk mo -> KL (set_live v L) pbrk mo.
-Proof. intros L v pbrk mo K. kl_open K; constructor; cbn; auto. Qed.
+Proof. intros L v pbrk mo K. kl_open K; constructor; try exact Kresv; try exact Krt; try exact Kvdi; try exact Kvda; try exact Kvdd; cbn; auto. Qed.
 
 #[using="Type"] Lemma KL_pbrk_irrel : forall L pbrk pbrk' mo,
 KL L pbrk mo -> match ld_brk L with BPUntried | BPDead => True | _ => pbrk' = pbrk end -> KL L pbrk' mo.
@@ -463,8 +576,10 @@ unfold ranges_free. apply forallb_forall. intros [b0 m0] Hin. cbn [fst snd]. unf
 enough (a + n <= b0 \/ b0 + m0 <= a) as D.
 { destruct D as [D|D]; [rewrite (proj2 (Z.leb_le _ _) D); reflexivity| rewrite (proj2 (Z.leb_le _ _) D); apply orb_true_r]. }
 apply In_lranges in Hin as [H|[(b1 & l1 & H & E)|[(b1 & l1 & k & H & E)|(b1 & l1 & H & E)]]].
-- rewrite (kl_resv _ _ _ HK) in H. apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
-pose proof (region_free_In _ _ _ _ _ Hrf (in_or_app _ _ _ (or_introl H))) as D.
+- destruct (kl_resv _ _ _ HK) as (rlo & rhi & Hrsp & Hld). rewrite Hld in H.
+apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
+assert (H' : In (e, sz) (vm_reserved h)) by (change h with (m_vmmaps mo); rewrite Hrsp; apply in_or_app; left; exact H).
+pose proof (region_free_In _ _ _ _ _ Hrf (in_or_app _ _ _ (or_introl H'))) as D.
 unfold iv_overlap in D. rewrite Ua, Un in D.
 destruct (Z.ltb_spec a (bv_unsigned e + bv_unsigned sz)); destruct (Z.ltb_spec (bv_unsigned e) (a + n)); cbn in D; try discriminate; lia.
 - injection E as -> ->. pose proof (went_In_bounds _ _ _ b1 l1 HK (or_introl H)) as (B1 & B2 & B3 & B4 & B5 & B6).

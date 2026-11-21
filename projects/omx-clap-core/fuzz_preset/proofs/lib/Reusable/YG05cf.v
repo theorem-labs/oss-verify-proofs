@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the fake-stack laws.
    cgif's YG05.v (stack_malloc_progress :70, Wf_push_frame :86, stack_malloc_ok :99, stack_free_ok :127)
    restated over Wf_cf (YG01cf.v). The state-only lemmas of YG05.v (fs_probe_some, fs_probe_none,
@@ -26,7 +27,7 @@ Ltac splits := repeat lazymatch goal with |- _ /\ _ => split end.
 Section STACKCF.
 Context {cp : CfParams}.
 
-(* cgif's stack_malloc_post / stack_free_post (YG01.v:462-474) with Wf_cf for Wf. *)
+(* cgif's stack_malloc_post / stack_free_post (YG01.v:463-475) with Wf_cf for Wf. *)
 Definition stack_malloc_post_cf (U : Univ) (s : astate) (cid : Z) (ns : bool) (r : sptr * astate) : Prop :=
 let (p, s') := r in
 Wf_cf U s' /\ (exists f, s' = set_fs f s) /\

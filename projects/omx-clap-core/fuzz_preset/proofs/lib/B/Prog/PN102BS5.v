@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994): SEGMENT S5 of the walk of parse_noting (the B' twin of row
    N10-PNA; cut table lib/B/Prog/PN102BCuts.v): from pn_cut_S5 (+0x48, the reading ran out) to pn_cut_S6 (+0x58).
@@ -7,7 +8,7 @@
    +0x4c mv a1,s0; +0x50 mv a2,s1; +0x54 jal check_reject_clean.
    rule 24: proves function parse_noting (fuzz_preset, image B') (preparation; proof-index 03:20Z: 0 named / 0 by
    address / 0 released; the rule-24 parse_noting check CONFIRM 03:25Z; PORT of a Theorem Labs lane's image-A' file of the same role,
-   a working branch 41f83d5b57f8, at PI_prog_B / prh_img_B). This file: segment S5 of that walk.
+   a working branch, at PI_prog_B / prh_img_B). This file: segment S5 of that walk.
    FORM: three concrete steps (PN102BHelp.v pn_step_addi), the jal (pn_step_call), the batch kit's text tcheck_reject_clean_specX
    at the cut's float state applied by PN102BHelp.v pn_call (o = -48 from the entry sp, footprint [], ch = [] since
    s0 = doc is below the ceiling; the caller's journal at the budget pn_cw X and at the cut's world relation
@@ -23,7 +24,7 @@
    (YG0scf.v frame_facts_cf), so the 64-byte-aligned shadow hull of [doc, doc + 56) lies in that frame's shadow; the
    journal from the entry keeps those bytes (its frames clause, the shadow is off the footprint), so the entry's
    range_addressable and shadow_hull_vis (pp_out's wdest_ok) hold at the current state.
-   SHAPES TAKEN: pn5_fd is lib/A/Prog/Ent102L3ASteps.v l3_fd (a working branch b1bc025047ea) at PL_prog_B;
+   SHAPES TAKEN: pn5_fd is lib/A/Prog/Ent102L3ASteps.v l3_fd (a working branch) at PL_prog_B;
    pn5_lsum_perm is lib/A/Prog/S1Ledger.v prh_lsum_perm; the call is shaped as Ent102L2A.v l2_pno (same branch).
    NUMERALS: 4 (an instruction), 8 (a word, a shadow granule), 48 (the frame), 56 (struct pj), 64 (the shadow hull
    and frame alignment), 4096 (a page), 2 ^ 31 (int range), 2 ^ 40 (the engine's code span), the instruction offsets

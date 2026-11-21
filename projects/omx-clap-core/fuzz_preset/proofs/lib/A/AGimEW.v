@@ -8,11 +8,12 @@
    twins' lemmas, and the imports of the W twins.  AGimE.v is unchanged.  rule 24: no function proved (kind:
    re-statement of a proved miss walk over a wider refill window). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGimEW.v (a working branch 93127c74947, file sha256 d476eaa975ad) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at 101e2afaa357) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch b85bfdee67c4), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 6 numerals changed. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's P'' delta to proofs/cgif/cgif_file_fuzzer/lib/AGimEW.v (93127c74947 -> a working branch a9d93b8c304 = cf layer ae2fa80b0325 + lanes H / M, file sha256 a884d8a661f0) applied at A' by a 3-way merge: base = the 93127c74947 text relocated cgif -> A', theirs = the a9d93b8c304 text relocated the same way, ours = this file; 3 lines changed, no numeral in the delta. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane M's field-round-3 delta to proofs/cgif/cgif_file_fuzzer/lib/AGimEW.v (a working branch 62c4c0fcc77 -> 3295f3a9fd5, "lane M: field round 3 (refill callers carry memnorm / arodata_ok_cf / cf_hull_ok; Printf cells)", file sha256 e11b458ada72) applied at A' by the 3-way merge of record (the internal file p2merge.sh: base = the 62c4c0fcc77 text relocated cgif -> A', theirs = the 3295f3a9fd5 text relocated the same way, ours = this file); 0 conflicts, no numeral in the delta. *)
-(* Modified by Theorem Labs, 2026-10-31: the cf layer's field-round-3 part-3c delta to proofs/cgif/cgif_file_fuzzer/lib/AGimEW.v (a working branch 3295f3a9fd5 -> a working branch 3cae605a900a, file sha256 693df6d70f22: the memnorm premise is gone from the refill callers) applied at A' by the 3-way merge of record (the internal file p2merge.sh: base = the 3295f3a9fd5 text relocated cgif -> A', theirs = the 3cae605a900a text relocated the same way, ours = this file); 0 conflicts, 3 lines changed, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGimEW.v (a working branch, file sha256 d476eaa975ad) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 6 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's P'' delta to proofs/cgif/cgif_file_fuzzer/lib/AGimEW.v (-> a working branch = cf layer + lanes H / M, file sha256 a884d8a661f0) applied at A' by a 3-way merge: base = the text relocated cgif -> A', theirs = the text relocated the same way, ours = this file; 3 lines changed, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane M's field-round-3 delta to proofs/cgif/cgif_file_fuzzer/lib/AGimEW.v (a working branch ->, "lane M: field round 3 (refill callers carry memnorm / arodata_ok_cf / cf_hull_ok; Printf cells)", file sha256 e11b458ada72) applied at A' by the 3-way merge of record (the internal file p2merge.sh: base = the text relocated cgif -> A', theirs = the text relocated the same way, ours = this file); 0 conflicts, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10-31: the cf layer's field-round-3 part-3c delta to proofs/cgif/cgif_file_fuzzer/lib/AGimEW.v (a working branch -> a working branch, file sha256 693df6d70f22: the memnorm premise is gone from the refill callers) applied at A' by the 3-way merge of record (the internal file p2merge.sh: base = the text relocated cgif -> A', theirs = the text relocated the same way, ours = this file); 0 conflicts, 3 lines changed, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The errno-kept twin of the g-path MISS arm AGimW.alloc_missg (can_fill = 1): [alloc_missg_e] concludes
    ErrnoG.alloc_leaf_e (AllocG.alloc_leaf plus errno's 4 bytes unchanged on the grant branch) in place of alloc_leaf.
 
@@ -65,7 +66,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Set Warnings "-notation-for-abbreviation".
-(* copy of AGim.v:40 *)
+(* copy of AGim.v:41 *)
 Local Ltac bvne := first [cbn; lia | vm_compute; congruence | intros X; vm_compute in X; discriminate X].
 Open Scope Z_scope.
 Set Printing Depth 50. Set Printing Width 180.
@@ -294,7 +295,7 @@ End gj.
 
 Lemma JOIN_e : amreal tfibsegs (malloc_join_t stag n tr cl S') W' (cfg_at tfibsegs 0x36f08 regsR memR mdR) PL_e.
 Proof.
-(* copy of AGim.v:691-694, + errno *)
+(* copy of AGim.v:692-695, + errno *)
 destruct (@AGiz.vw_junk_values _ _ B W' ly' inst memR n cl cnt' v' kz TS HV' Hkz1 Nrange Hcl_class)
   as (j0 & j1 & j2 & j3 & j4 & jb & Hj0 & Hj1 & Hj2 & Hj3 & Hj4 & Hjb & Hjb_def).
 eapply amreal_mono; [| eapply TAILJ; eassumption].
@@ -310,7 +311,7 @@ Hypothesis HA0 : getr regsR 10 = w64 0.
 Local Abbreviation HE1 := (@AGimW.HE1 ly regs0 n tr Htrlen Em HEm regsR).
 Lemma OOMJ_e : amreal tfibsegs (malloc_join_t stag n tr cl S') W' (cfg_at tfibsegs 0x36f08 regsR memR mdR) PL_e.
 Proof.
-(* copy of AGim.v:709-718, + errno *)
+(* copy of AGim.v:710-719, + errno *)
 assert (HWN : forall a, AGiv.WINN regs0 a -> (bv_unsigned (getr regs0 2) - AFSTACK <= a < bv_unsigned (getr regs0 2)) \/
   (TFIB_OOM <= a < TFIB_OOM + 1) \/ (TFIB_ERRNO <= a < TFIB_ERRNO + 4))
 by (intros a X; unfold AGiv.WINN in X; cbv zeta in X; lia).
@@ -331,7 +332,7 @@ End f.
 Lemma missg_core_e : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0)
 (alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regsU mem0 md0 n tr).
 Proof.
-(* copy of AGim.v:728-763, + errno *)
+(* copy of AGim.v:729-764, + errno *)
 assert (CORE : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0) PL_e).
 {
 rewrite (Fshape_miss n tr S Hn0 FP Hmiss). fold cl.
@@ -380,7 +381,7 @@ YG0dcf.arodata_ok_cf tfibsegs B mem ->
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x325b8 regs mem md)
 (alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGim.v:775-819, + errno *)
+(* copy of AGim.v:776-820, + errno *)
 intros inst so bp ly S W regs mem md n tr PRE HRO Nrange0 Hmiss.
 destruct PRE as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres0 & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
 Hso1 & Hso2 & Hso3 & Hbp1 & Hbp2 & Hbp3 & Htrlen & PSO & PLEN & PBUF & Htr & Hn0 & Hlive).

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (LIBMID_xagree_any's vdso_func cell holds hvdso, the vDSO's clock_gettime entry, not 0, once resolved). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -67,7 +68,7 @@ Section W.
     (forall a, rin_ivs X a -> ~ (0x571000 <= a < 0x5ea000)) ->
     (forall a, rin_ivs X a -> ~ in_block LIB a) -> (forall a, rin_ivs X a -> ~ in_block_sh LIB a) ->
     (forall a, rin_ivs X a -> ~ in_block_sh (mid_errblocks M) a) ->
-    MEMFLAG m' f' -> rw_cells asegs m' A_vdso_func [C8 (wz (if v' then 0 else P_cgt_init))] ->
+    MEMFLAG m' f' -> rw_cells asegs m' A_vdso_func [C8 (wz (if v' then hvdso else P_cgt_init))] ->
     (forall a, rin_ivs X a -> ~ in_block (mid_errblocks M) a) ->          (* [comment removed for export] *)
     LIBMID LIB m' (mkMID f' (mid_ctx M) (mid_err M) (mid_E M) v').
   Proof.

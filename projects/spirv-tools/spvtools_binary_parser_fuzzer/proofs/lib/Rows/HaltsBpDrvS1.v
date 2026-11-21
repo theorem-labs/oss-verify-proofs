@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised entry stack block, with the strings at its top, and the launch facts; the run's mmap base; the model's channel reader as a premise of the writes; the walk over the image's own segments lifted to the run's segment list (run_segments, with the vDSO pair)). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -45,10 +46,12 @@ Proof.
   intros sp brk mbase rnd inp Hen Hvalid.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-  destruct Hen as (Hsp & Hbrk & _ & Hfit).
+  destruct Hen as (Hsp & Hbrk & _ & Hfit & Hlau).
+  assert (Hvl : valid_launch inp) by (clear - Hvalid; red in Hvalid; tauto).
+  assert (Hrd : in_channel_reader inp = true) by (clear - Hvalid; red in Hvalid; tauto).
   destruct Hvalid as (Hva & Hve & _).
   exists (spec (in_argv inp) (in_fs inp)). split; [| split].
-  - exact (s1_main_inst sp brk mbase rnd inp LIB1 Hsp Hbrk Hva Hve Hfit).
+  - exact (s1_main_run sp brk mbase rnd inp LIB1 Hsp Hbrk Hva Hve Hfit Hvl Hlau Hrd).
   - apply spec_nokill.
   - apply spec_exits_02.
 Qed.

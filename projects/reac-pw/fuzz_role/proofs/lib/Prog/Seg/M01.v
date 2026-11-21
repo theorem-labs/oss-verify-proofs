@@ -2,17 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths changed; 532 of its 580 lines of code are new or changed and 97 lines of the source are left out. *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v at fuzz_wire's
    module paths; lf_guard_img reads this image's __stack_chk_guard GOT slot 0x1cef0; lf_fr_call_x is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 455 of its 574 lines of code are new or changed and 461 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 214 of its 251 lines of code are new or changed and 537 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/RoleSlot.v, with its module paths, addresses and numbers changed; 162 of its 208 lines of code are new or changed and 205 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/Prog/Seg/E01.v, with its module names changed; 201 of its 242 lines of code are new or changed and 167 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment M01 of reac-pw/fuzz_role LLVMFuzzerTestOneInput (plain): [0x12f14, 0x13f4c), K12f14 -> K13f4c
    (Prog/LLVMFuzzerTestOneInput_c.v's S_M01).
    The body is role_build_contract's evt (the inlined pod builder of pod.h:382-449), taken as a Section hypothesis
    and run on the normalized memory with Tac_slot.sl_run, as libreac/fuzz_ctrl's released Prog/Seg/F02.v
-   (origin/ossv/recipes 25e3d17bdb50) runs f02_evt and as reac-pw/fuzz_pin's Prog/Seg/M01.v runs pin_mid_contract.
+   runs f02_evt and as reac-pw/fuzz_pin's Prog/Seg/M01.v runs pin_mid_contract.
    Its premises come from FR at K12f14: the input tail g_rest at g_src (the input block's bytes, unchanged since
    ENTRY by FR's entry-block clause and GV's blk_data; for the empty input the cursor is `empty`, which lies in an
    image segment and so apart from the pp block), the live block (pp, 19744) writable (Tac_b1.b1_hb) and outside

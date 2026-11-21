@@ -1,7 +1,7 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMpfArmPdSeam.v (a working branch 3242941dc96); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables-3242941dc96/reply-B/FMpfArmPdSeam.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMpfArmPdSeam.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMpfArmPdSeam.table). *)
 (* R-1 W9 (RtPrintf): the conversion %d (Pd) at the seam, on W0's per-piece arms (FMgxaSeamPf.v :98-111). The renderer
-   equations pt_pf_digits_d / pt_pf_dec_d are fuzz_disco's pt_pf_digits / pt_pf_dec (origin/cold/h-rw-dis-5-r1
-   5a2af4f2707 lib/A/FMgxaSeamPf.v Section CoveredD's preamble), copied; the three arms restate CoveredD's Pd case in
+   equations pt_pf_digits_d / pt_pf_dec_d are fuzz_disco's pt_pf_digits / pt_pf_dec (
+    lib/A/FMgxaSeamPf.v Section CoveredD's preamble), copied; the three arms restate CoveredD's Pd case in
    W0's form (one step of the renderer, FMpfStep.v pf_step). New file; nothing else is edited. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.CJ.RL.GX Require Import Printf_model.

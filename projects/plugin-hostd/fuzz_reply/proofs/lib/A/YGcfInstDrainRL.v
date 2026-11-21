@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* CARRIED from commit 7fb5e1d920f1a960ba591aa28cade9497d873d3c,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainRL.v, sha256 453c99b06ab44767c00f08e915fd22554341dfea7f23e001cab979959c1e9478 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -17,12 +18,12 @@
    ARcfR is YG0ncf.ARcf with YG03cf.WfR_cf for Wf_cf (YGcfInstDrainR.v).  None of the ARcf library's owned-set, chunk,
    frame and shadow facts reads wfc_compl0, the one clause WfR_cf lacks, so each is restated here over ARcfR with the
    same script, by these substitutions and nothing else: ARmcf -> ARmcfR, amc_X -> amr_X (amc_wf -> amr_wfr),
-   wfc_X -> wfr_X, WfP_cf -> WfR_cf, ARcf -> ARcfR, YG01cf.mapped_bound_cf -> YG03cf.mapped_bound_r_cf.  Sources, at
-   commit 89e87f66e02 (taken by path from commit a0fed4266a1b):
+   wfc_X -> wfr_X, WfP_cf -> WfR_cf, ARcf -> ARcfR, YG01cf.mapped_bound_cf -> YG03cf.mapped_bound_r_cf.  Sources,
+    (taken by path):
    - the fourteen laws' statements, YG0dcf.v:324-414 (Definitions AR_*_law_cf over ARcfR);
-   - YG0scf.v:30-626 (helpers and the twelve non-shadow laws' proofs);
-   - YG0qcf.v:30-716 (the owned-set lemmas and AR_frame_law_ok_cf);
-   - YG0tcf.v:40-487 (fp_zones and the *_in_cf family, the zero-shadow and shadow-address zone facts).
+   - YG0scf.v:31-627 (helpers and the twelve non-shadow laws' proofs);
+   - YG0qcf.v:31-717 (the owned-set lemmas and AR_frame_law_ok_cf);
+   - YG0tcf.v:41-488 (fp_zones and the *_in_cf family, the zero-shadow and shadow-address zone facts).
    Inside Module RL every name is the source's, so RL.X is the ARcfR twin of X.  Image-free and event-free (no event-count
    term, no event regime, no event-keyed budget appears). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -127,7 +128,7 @@ forall ly S Hp W mem md a, ARcfR segs B ly S Hp W mem md ->
 (exists cid pos, In (cid, pos) (frames S) /\ a = flag_addr ly cid pos)) ->
 ~ in_zr a (ly_img ly) /\ ~ in_img segs a.
 
-(* The law AR_laws_cf lacked, VERBATIM from h-rw-man-5's YGcfHp.v:63-76 (29c8b46b1cef):
+(* The law AR_laws_cf lacked, VERBATIM from h-rw-man-5's YGcfHp.v:64-77:
    cgif's AR_frame_law (YG0d.v:445) with two changes: the owned bytes that may change are
    the hidden-head shadow bytes of Hp and Hp', and each such byte that shadow_ok_cf governs
    takes the value shadow_ok_cf at Hp' demands; the result is ARcfR at Hp', given that every
@@ -148,7 +149,7 @@ End J.
 End G.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* YG0scf.v:30-626 over ARcfR.                                                                                        *)
+(* YG0scf.v:31-627 over ARcfR.                                                                                        *)
 Section j. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Ltac splits := repeat lazymatch goal with |- _ /\ _ => split end.
 
@@ -790,14 +791,14 @@ End m.
 End j.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* YG0qcf.v:30-716 over ARcfR.                                                                                        *)
+(* YG0qcf.v:31-717 over ARcfR.                                                                                        *)
 Section j. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Ltac splits := repeat lazymatch goal with |- _ /\ _ => split end.
 Ltac show := match goal with |- ?g => idtac g end.
 Section s.
 Variable segs : list Segment.
 Variable B : asyms.
-(* ALedger_same_cf: the layer's YG0qcf.ALedger_same_cf (YG0qcf.v:37), not a copy (the copy broke on the ledger's
+(* ALedger_same_cf: the layer's YG0qcf.ALedger_same_cf (YG0qcf.v:38), not a copy (the copy broke on the ledger's
    new fields; ReallocPrimary / Main 2026-10-30). *)
 Lemma nc_img_cf : forall ly S Hp rd a, ARmcfR B ly S Hp rd -> in_zr a (ly_img ly) -> ~ aclient_byte B ly S a.
 Proof. intros ly S Hp rd a M Ha C. exact (client_byte_not_img_cf B ly S Hp rd a M C Ha). Qed.
@@ -1490,7 +1491,7 @@ End s.
 End j.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
-(* YG0tcf.v:40-487 over ARcfR: the cells' footprint (fp_zones and the *_in_cf / *_nf_cf family), the zero-shadow
+(* YG0tcf.v:41-488 over ARcfR: the cells' footprint (fp_zones and the *_in_cf / *_nf_cf family), the zero-shadow
    range facts and the shadow-address zone facts.  YG0tcf's three LAWS (astack_free / astack_malloc / head frame,
    :478 on) are NOT ported: they rest on WfP_cf-level model lemmas (YG05cf.stack_free_ok_cf) that a cut, which has
    only WfR_cf, does not carry, and the drain's walks do not use them. *)

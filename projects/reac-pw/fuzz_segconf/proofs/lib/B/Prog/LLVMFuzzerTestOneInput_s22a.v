@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PutStringB_Base.v, with its module paths and module names changed; 702 of its 770 lines of code are new or changed and 1945 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): piece 1 of segment
    S14 of the walk of the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0), S14 piece a: the
    statement s22_p1_stmt of LLVMFuzzerTestOneInput_s22k.v, from the head of the inlined m_declared loop at turn i
@@ -12,12 +13,12 @@
 
    THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/chain_words_s1.v (a plain run through stores to the frame's
    shadow, the region fshadow_region, its write permission by awr_byte's in_frames disjunct) and its harness walk's
-   LLVMFuzzerTestOneInput_s45.v (a string wrapper taken by PaArt.aj_art_at), at origin/ossv/recipes 3abc3740de97;
+   LLVMFuzzerTestOneInput_s45.v (a string wrapper taken by PaArt.aj_art_at);
    the seed of image A's twin piece (the LLVMFuzzerTestOneInput_s22a.v of image A's S14 walk (piece a), in progress,
    sha256 186ccb366a88: the alias of m + (i << 8), the shadow byte of the ignore word as a region of literal 0),
-   renamed to image B's registers and slots; the keep facts of image B's S21 / ret kit (image B's S21 / ret commit
-   315447ae529c, LLVMFuzzerTestOneInput_s25k.v s25_img_kept / s25_lit_kept) and S01 / S02 kit (image B's S01 / S02
-   commit c9accd8a8a50, LLVMFuzzerTestOneInput_s12k.v lk_hblk / lk_word_kept / lk_pres_reg).
+   renamed to image B's registers and slots; the keep facts of image B's S21 / ret kit (image B's S21 / ret,
+   LLVMFuzzerTestOneInput_s25k.v s25_img_kept / s25_lit_kept) and S01 / S02 kit (image B's S01 / S02,
+   LLVMFuzzerTestOneInput_s12k.v lk_hblk / lk_word_kept / lk_pres_reg).
 
    The code (dis/LLVMFuzzerTestOneInput.fuzz_segconf.asan-ubsan.s:853-890, SegList.v:902-939):
    - 0x85b0c .. 0x85b1c: a0 := 184(s1) = SH(FR); sb zero,4(a0); sb zero,5(a0); sb 4,6(a0): v's three shadow bytes

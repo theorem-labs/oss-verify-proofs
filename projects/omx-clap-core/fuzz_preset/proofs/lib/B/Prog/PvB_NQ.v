@@ -12,7 +12,7 @@
      scanned span x[0, m), the allocation outcome, then the whole-and-finite test). pnq_bits_range: strtod's bits are
      a 64-bit word (a port of the plain layer's f128_to_d range proof, re-proved here, not cited).
    - PACKAGING: the four outcomes of pn_out ((a) refused, (b) fuzz_malloc NULL, (c) allocated but not whole or not
-     finite, (d) read) against pv_Qm, the batch kit's post (PvB_Defs.v at the batch kit's tip 240b06ed4fd4): the ledger move
+     finite, (d) read) against pv_Qm, the batch kit's post (PvB_Defs.v at the batch kit's tip): the ledger move
      rd_ledger_move with g_most, the grant-all trace gt = [EAlloc (S m)] (pnq_gt_go) and the refused peak (pnq_move_*,
      pnq_oks_*, pnq_rpeak1: the statements of PvB_D_Str.v's pvs_move_* / pvs_oks_* / pvs_rpeak1, kept here so segment N
      does not depend on segment D's file), the room invariant room_live_cf (pv_reader0's rd_room for (a), the cut's own
@@ -28,7 +28,7 @@
      pvf_ncap_leaf, for (d)). The node's bytes are writable after the arm because they lie off the image (LAWS: the
      allocator's client-image law for a block or a fake frame, the stack above the image), as PvB_D_Lit.v does for
      the literal arms.
-   Section hypotheses: hl (the harness-block head length AR_laws_x is stated at, YCbqG.v:36-39) and LAWS (the kit's
+   Section hypotheses: hl (the harness-block head length AR_laws_x is stated at, YCbqG.v:37-40) and LAWS (the kit's
    AR_laws_x at hl; PvB_D_Lit.v / PvB_A.v take it). The refusal case of arm (b) closes by the batch kit's re-keyed prh_oks
    (g_ran_out set only when the refused request is at most g_most) and the refused peak prh_refused_peak: no run
    condition is carried (the interim premises over PvB_NOks.v's pn_oks_ran / pn_oks_peak are gone).

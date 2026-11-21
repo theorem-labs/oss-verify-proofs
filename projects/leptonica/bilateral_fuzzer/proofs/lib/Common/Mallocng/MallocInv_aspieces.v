@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (recorded (KReplay) proofs re-proved by tactics). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -6,8 +7,6 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common Require Import
   PropExec CatExec Hoare StoreOk MmapSim AllocSim ShapeAlg ShapeNodes VmLedger.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Mallocng Require Import MallocLayout MallocTree MallocOps.
-From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib Require KReplay.
-Ltac2 kr_t_MallocInv_aspieces () := "C69OSSVerify5KrLib6Common8Mallocng:MallocTree5mbindC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree6mcrashC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree1MC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes4prod00C69OSSVerify5KrLib6Common8Mallocng9MallocOps=m_canary_loadC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng<MallocLayout6A_LOCKC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive01K47Corelib7Numbers7BinNums1Z02C59OSSVerify5KrLib6Common8PropExec6v_slliC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec5v_addC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common5Hoare3at_C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree4m_ldC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes6option00c69OSSVerify5KrLib6Common8MallocngBMallocInv_aspieces;as_tryavailC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common8MallocngBMallocInv_aspieces7as_takeC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng<MallocLayout>A_SIZE_CLASSESC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree5m_lhuC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z03C69OSSVerify5KrLib6Common8Mallocng9MallocOps<m_alloc_metaC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9MallocOps3is0C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree4mretC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng<MallocLayout;A_PAGE_SIZEC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common8MallocngBMallocInv_aspieces6as_cntC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec6v_srliC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9MallocOps4wlitC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec4c_eqC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec6v_addiC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec6v_sltuC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec6v_subwC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec5v_mulC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec5c_ltuC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes4negbC69OSSVerify5KrLib6Common8Mallocng9MallocOps<m_alloc_slotC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common8MallocngBMallocInv_aspieces9as_nestedC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common8MallocngBMallocInv_aspieces7as_mmapC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9MallocOps>m_canary_checkC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic2eq01I47Corelib4Init9Datatypes3nat00K47Corelib7Numbers7BinNums8positive03I47Corelib4Init9Datatypes4bool00C69OSSVerify5KrLib6Common8Mallocng9MallocOps3wm1C1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4unit00".
 Import ListNotations.
 Local Open Scope Z_scope.
 Local Open Scope malloc_scope.
@@ -269,11 +268,9 @@ Lemma m_alloc_slot_unfold : forall fuel (sp sc req : word),
      end) ;;
    m_canary_check gp cg ;;
    mret res).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocInv_aspieces ()) ["WithLayout"] "p'0h02a4h12cci002cch23cnth34cnt1h44fuelh54halfh61mi011mh72m0h82pgh92pmh:3reqh;3resh<2s7h=2sch>4sizeh?2sph@3szchA2tai022tahB5usagei032cgi042gpi054maski061pp;1p;2p;3p;9p;:p;4p-1R0g0000R1p4p7210R2p8P0p10015p4p710p8P2g002;R2p4p710p8g003<j10Tg003aj1VTg004?j1BTP2j1>Tg004bR2j2UTg005Bj1OTg006Nj1GTg007Vj13Tg008;j12Tg008Yj25Tg009Tj2:Tg00:Nj24Tg00;Cj26Tg00<GR0j1TTg00<ij2STg00><j2QTg00?Kj1NTg00@[j2KTg00A`j1HTg00B>j2FTg00CIj1ETg00DKj27Tg00EOj1ATg00F\j3CTg00Gjj2DTg00Hej18Tg00Ihj2@Tg00Jaj29Tg00K\j2?Tg00LWj2ITg00MRj2JTg00NLj2=Tg00OFj1LTg00Odj2MTg00Pol9<Tg00R@l:PTP1j41Tg00SOj3;Tg00T\j2RTg00U6g00UUR1#0R3#0R4#0#0R5#0#0R6#V#BR7%>7R81U77R9P7p,2MLR:#OP2P7P7P8f0R;%G:f4R<%31R=#2'5':P7%33#3#0#0#0#2,4;P7P7P7P7P716:;%T9R>P7f1R?/S;P0P9P8P;P2P7P7P8P;1Q?;n2001106000120101105P7P7%N:f8%21R1'5':,K:P7P7f:%H6'4,F:g00V:R6P8%E;g00VZ,77P7P7f5R2%3=#0#3#3#0#0#0#2'4,6:P7P7%A:,6:f3R=%24'5P7P7P7f=f2R4;C;1D41P7P6P7%81,@?%23#8%25R5,94,?;'IP?n0100000020000P71J=;P7P6P819;5,=4#LfC,M:fBfAR4P<f7R5P?P;f<R8f;R6M9<P4f@P5f6P2P<P?P;P8P6M:Pn0100000020000b0b3b5X27C1b>X87C1XB7C1n0100000020001X67C1X@7C1n10110200021010601XA>C1X77C1g00W\R>P7A;:<=177?V>C1X;7C1b9b<n2001100000121104103X19C1'RX:7X=7W?W4o"). Qed.
+Proof. intros. reflexivity. Qed.
 
 Lemma m_alloc_slot_O : forall (sp sc req : word), m_alloc_slot O sp sc req = mcrash.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocInv_aspieces ()) ["WithLayout"] "h03reqh12sch22spp;1p;2g003<j10Tg003aj15Tg004?j12Tg002;j11Tg0015j14Tg00T\j23Tg00UU#0#0#0#0#0#0#5#2R0%10%40'3X00X10W2o"). Qed.
+Proof. intros. reflexivity. Qed.
 
 End WithLayout.

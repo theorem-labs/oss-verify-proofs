@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE01.v, with its module paths changed; asink_img_laws states ail_env_static over the sink's own static cells (ak_owned) and has the law ail_owned_core (ak_owned holds the four cells astdio_env reads); the kept lemmas frame through aenv_of_core; asink_strs_kept keeps the file strings; and afopen_spec and aunlink_spec take asink_strs, which astdio_env no longer states. *)
-(* Modified by Theorem Labs, 2026-10: taken by path for libreac/fuzz_ctrl from proofs/libreac/fuzz_grant/lib/Reusable/YE01.v (a working branch 2d4a68692f3, a Theorem Labs lane's shared sink form 4d244de18f0), module paths only; the file states no address. *)
+(* Modified by Theorem Labs, 2026-10: taken by path for libreac/fuzz_ctrl from proofs/libreac/fuzz_grant/lib/Reusable/YE01.v (a working branch, a Theorem Labs lane's shared sink form), module paths only; the file states no address. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE01.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.

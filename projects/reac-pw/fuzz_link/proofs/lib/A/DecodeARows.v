@@ -2,7 +2,7 @@
    lib/A/DecodeClose.v, the facts about the ASan runtime around calloc.  Each lemma below has the type of the
    DecodeClose.v hypothesis it names, at the composition's free symbol record B; a row that reads the image's
    start-up cells takes [PcapSyms B] (lib/A/AF0m.v) as the one named premise HA_TFIBSYMS.  The image-B twin is
-   lib/B/DecodeBRows.v (dec_b_*, a working branch 0c5218b14d0).
+   lib/B/DecodeBRows.v (dec_b_*, a working branch).
 
      dec_a_rt_unw    : H_CALLOC_RT_UNW    bridge from lib/A/AFl4.v tfib_unwind_ok
      dec_a_img_cover : H_CALLOC_IMG_COVER acall_pre -> AR -> ALedger -> lib/A/AF0x.v img_cover_of_ledger
@@ -34,7 +34,7 @@ Open Scope Z_scope.
 
 Local Abbreviation segs := tfibsegs.
 
-(* The two image-cover predicates agree (YImgTop.v:26-29 against AF0x.v:29-31, :43-45). *)
+(* The two image-cover predicates agree (YImgTop.v:27-30 against AF0x.v:29-31, :43-45). *)
 Lemma dec_img_cover_iff : forall ly, dec_img_cover ly <-> img_cover ly.
 Proof.
 intros ly. unfold dec_img_cover, img_cover. change TFIB_IMG_LO with YImgTop.IMG_LO. change TFIB_IMG_END with YImgTop.IMG_TOP. tauto.

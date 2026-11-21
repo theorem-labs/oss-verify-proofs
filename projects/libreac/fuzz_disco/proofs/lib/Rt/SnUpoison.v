@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v (a working branch 1f4dfce6d2f), with its module paths changed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v (a working branch), with its module paths changed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,7 +12,7 @@ Local Open Scope Z_scope.
 (* User-poisoned granules inside live chunks (fuzz/alloc.c poisons a 16-byte head in each block it gets from
    malloc). The donor's AR fixes every chunk granule's shadow byte to the allocator's value; ARU is AR of the memory
    read with the user-poisoned shadow bytes as 0, plus where those ranges are and that their shadow bytes read 0xf7.
-   ARU with no range is AR (ARU_nil). Design: lane-files/f497c5c09ea6/POISON.md (a working branch c2ebbe1a6180). *)
+   ARU with no range is AR (ARU_nil). Design: lane-files/f497c5c09ea6/POISON.md (a working branch). *)
 Section u. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable segs : list Segment.
 Variable B : asyms.

@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: new file for libreac/fuzz_pcap, in the shape of libreac/fuzz_disco's lib/Reusable/YImgTop.v (a0d2491b460):
+(* Modified by Theorem Labs, 2026-10: new file for libreac/fuzz_pcap, in the shape of libreac/fuzz_disco's lib/Reusable/YImgTop.v (theorem-labs/oss-verify-proofs@8c835db8a5a9):
    the two bounds of fuzz_pcap's ASan images, measured from their program headers. The lowest PT_LOAD of both the
    asan and the asan-ubsan build starts at 0x10000; the last PT_LOAD ends at 0x5f6170 (asan) and 0x5f6070
    (asan-ubsan), so one page above both is 0x5f7000. lib/A/PcapImgEndCheck.v checks the pair against the image the
@@ -9,6 +9,7 @@
    and the page above its .bss), so a relink that grows the image past a page moves them; each body is still the
    numeral (0x10000, 0x5f7000). lib/A/PcapImgEndCheck.v and lib/B/PcapImgEndCheck.v check them against both images,
    so the build fails if the asan and asan-ubsan images ever end in different pages. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require ImgPages.
 Local Open Scope Z_scope.

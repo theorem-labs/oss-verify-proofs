@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs (for the cf layer at plugin-hostd/fuzz_reply; row img-errbqapart-A).
    rule 24: no function proved (kind: image row; a closed computation over reply image A's symbol table and image
    constants, fuzz_reply.asan, pin 42c58610e125).
 
    ERRB_QAPART at image A.  The cf layer's Definition ERRB_QAPART
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:77-78 @ 8b12df2b772) is stated over the image class and the image
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:77-78) is stated over the image class and the image
    constants under [Context {ci : CfImg} {IM : AImg}].  The reply tree does not carry that layer file, so the Lemma below
    states ERRB_QAPART's body VERBATIM at reply's instances IM := AImg_reply
-   (proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:23 @ d2bd679271c, im_syms := lib/A/AF0m.v's TfibSyms) and
-   ci := CfImg_A (proofs/plugin-hostd/fuzz_reply/lib/A/CfImgA.v:9 @ d2bd679271c).
-   cf_errbuf_obj is the CfImg field (proofs/plugin-hostd/fuzz_reply/lib/Reusable/YGcfNames.v:52 @ d2bd679271c); at
+   (proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:24, im_syms := lib/A/AF0m.v's TfibSyms) and
+   ci := CfImg_A (proofs/plugin-hostd/fuzz_reply/lib/A/CfImgA.v:9).
+   cf_errbuf_obj is the CfImg field (proofs/plugin-hostd/fuzz_reply/lib/Reusable/YGcfNames.v:52); at
    CfImg_A it is 0xa5928 (lib/A/CfImgA.v:34, same commit), the symtab value of _ZN6__asanL20error_message_bufferE in the
    unstripped ELF (sha256 d751b179ea49), whose 56 bytes are error_message_buffer 0xa5928 (8), error_report_callback
    0xa5930 (8), error_message_buf_mutex 0xa5938 (16), error_message_buffer_placeholder 0xa5948 (24).
    The object [0xa5928, 0xa5960) lies above the instance object [TFIB_INST, TFIB_INST + 3632) = [0xa2a58, 0xa3888)
-   (proofs/plugin-hostd/fuzz_reply/lib/A/AF0m.v:17 @ d2bd679271c). *)
+   (proofs/plugin-hostd/fuzz_reply/lib/A/AF0m.v:18). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -34,7 +35,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YGcfNa
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import CfImgA.
 Open Scope Z_scope.
 
-(* ERRB_QAPART at image A: proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:77-78 @ 8b12df2b772. *)
+(* ERRB_QAPART at image A: proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:77-78. *)
 Lemma ERRB_QAPART_A : forall B, @im_syms AImg_reply B ->
   forall a, @cf_errbuf_obj CfImg_A <= a < @cf_errbuf_obj CfImg_A + 56 -> ~ (as_inst B <= a < as_inst B + 3632).
 Proof.

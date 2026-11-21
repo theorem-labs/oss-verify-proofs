@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-366;
    projects/cgif/cgif_file_fuzzer/proofs/lib/YCbo.v:2091-2096, for libreac/fuzz_identity's ASan build (lib/A). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The token loop of segment K (fuzz_identity.asan 0x81f00 .. 0x81fa0, listing offsets 0x17f4 .. 0x1894):
    k_token_loop_stmt of lib/A/Prog/LLVMFuzzerTestOneInput_Kcut.v.
 
@@ -309,7 +310,7 @@ Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 
 (* ---- what the loop takes ----------------------------------------------------------------------------------- *)
 Hypothesis LAWS : AR_laws SEGS B.
-(* cgif ACfh.v:162-164, as LLVMFuzzerTestOneInput.v states it *)
+(* cgif ACfh.v:163-165, as LLVMFuzzerTestOneInput.v states it *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
   ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
   m_fds md' = m_fds md /\ m_fs md' = m_fs md.

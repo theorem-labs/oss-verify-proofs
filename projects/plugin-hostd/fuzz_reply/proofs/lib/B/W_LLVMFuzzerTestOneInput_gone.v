@@ -2,10 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B
    (fuzz_reply.asan-ubsan 0x849a0-0x849d0, 0x84a9c-0x84cb4, 0x84da4-0x84dac, 0x84e30-0x84e38; fuzz_reply.c:633-655 and
-   :718-720), over the cut invariants of lib/B/W_LLVMFuzzerTestOneInput_cut.v (a working branch
-   61da015af91, with a working branch 990666444ab).
+   :718-720), over the cut invariants of lib/B/W_LLVMFuzzerTestOneInput_cut.v (a working branch,
+   with a working branch).
    THIS FILE IS THE ARM'S COMPOSITION: lf_arm_gone (= _cut.v's ARM_gone, :762) from the seven phase lemmas, by SRr_bind,
-   in the shape of image A's lib/A/W_LLVMFuzzerTestOneInput_gone.v:154 (a working branch e8dddfa51f7).
+   in the shape of image A's lib/A/W_LLVMFuzzerTestOneInput_gone.v:155 (a working branch).
    The arm's cut points, model and obligation texts are in lib/B/W_LLVMFuzzerTestOneInput_gone_base.v; the phases are
    proved in lib/B/W_LLVMFuzzerTestOneInput_gone_p<n>.v:
      p0  INV_A 5  -> GJN    0x849a0 -> 0x84aa8   the id byte (or not), the cursor slots
@@ -21,6 +21,7 @@
    ameter_laws) and the base's instance facts and model obligations (its GN_ texts); none is a phase.  The instance
    facts decided at the real instance (G_fr := G_fr_c B, YF0m.TfibSyms B, errno at 0x5d994c) are the gi_* lemmas of
    lib/B/W_LLVMFuzzerTestOneInput_gone_inst.v, each of exactly one hypothesis's type. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -84,7 +85,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* the cut's two laws (_cut.v:316, :318), discharged at integration *)
 Hypothesis GWR : glob_wr_law G_fr.
 Hypothesis ERRL : errno_law B.
-(* relay_reads (0x864e8), phase 2: the cut's RRDS (_cut.v:707 at 61da015af91), text verbatim (a Theorem Labs lane's) *)
+(* relay_reads (0x864e8), phase 2: the cut's RRDS (_cut.v:707), text verbatim (a Theorem Labs lane's) *)
 Hypothesis RRDS : forall W ly S (regs : bvmap 5 word) mem md ch T es HA h,
   afn_pre segs B RRDS_STK ly S W regs mem md ch ->
   getr regs 10 = w64 HA -> 0 < HA -> HA mod 8 = 0 -> azs B HA 4 ->
@@ -100,14 +101,14 @@ Hypothesis RRDS : forall W ly S (regs : bvmap 5 word) mem md ch T es HA h,
 (* ---- the allocator instance (W_kit.v PALib; Reusable/YC5d.v ameter_laws) ---- *)
 Hypothesis TL : PALib B.
 Hypothesis ML : ameter_laws MT.
-(* ---- snprintf (phase 1): W_sites.v:308 asnprintf_realizes at B's stack-protector cells, and p1's instance facts ---- *)
+(* ---- snprintf (phase 1): W_sites.v:309 asnprintf_realizes at B's stack-protector cells, and p1's instance facts ---- *)
 Hypothesis SNP : asnprintf_realizes B (SIGMA WS_snprintf) FR_GOT_GUARD FR_GUARD.
 Hypothesis HGOTG : forall ly S W mem md, AR segs B ly S W mem md ->
   rdword (aview segs (w_H W) mem) FR_GOT_GUARD = Some FR_GUARD.
 Hypothesis GN_LIT_GES : ashp (PI := PB_fr) B (VAL A_lit_gesture) 14.
 Hypothesis GN_LIT_FMT : ashp (PI := PB_fr) B (VAL (A_OBJ 17)) 7.
 (* ---- relay_instance_gone (phase 3): W_contract.v rig_spec at image B's K0 table YCk0.CTX_AFREE / rg_place,
-   verbatim (the CTX_AFREE adaptation is image A's, 95cae0d4740) ---- *)
+   verbatim (the CTX_AFREE adaptation is image A) ---- *)
 Variable MMAX : Z.
 Hypothesis RIG : rig_spec (PI := PB_fr) B MT MMAX fr_RG YCk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 Hypothesis RGP : rg_place (PI := PB_fr) B fr_RG.

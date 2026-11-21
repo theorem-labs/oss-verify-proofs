@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMcdR.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, CacheDealloc walk (H3 DMcd* + FG*N, a Theorem Labs lane's DMcdGWb / DMcdGW); file sha256 0e41a3a4f172) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 3 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMcdR.v (CacheDealloc walk (H3 DMcd* + FG*N, a Theorem Labs lane's DMcdGWb / DMcdGW); file sha256 0e41a3a4f172) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 3 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1 slice H3 of ReallocPrimary's Theorem Labs lane walk lanes; brief
-   a Theorem Labs lane's B-WALK-LANES.md (sha256 68c13c734927; internal record), interface DMwalkIF.v at 3e29c198d40, frozen): the READ FIELDS of
+   a Theorem Labs lane's B-WALK-LANES.md (sha256 68c13c734927; internal record), interface DMwalkIF.v, frozen): the READ FIELDS of
    the CacheDealloc walk (SizeClassAllocator64LocalCache::Deallocate, 0x34234) over an OPAQUE cut relation [ARXr].
    rule 24: no function proved here (kind: field statements; the lane's reuse search is LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record),
    `proof-index MergeBatches Recycle QuarantineCallback_Recycle Drain` 2026-10-29T23:07:48Z exit 0, B1LookupCheck
@@ -24,7 +25,7 @@
                    byte budget for the grant, the new map's shadow present                                      [F7-F10]
    - rd_growT      ARXr re-established after the grant (world / vm / eager_used change), with its frame        [F11]
    - rd_step       ARXr re-established after the no-growth step, from the walk's own frame + written values     [F12]
-   [F3] / [F4] are cd_model's conjuncts (DMwalkIF.v:449-460). *)
+   [F3] / [F4] are cd_model's conjuncts (DMwalkIF.v:450-461). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -100,21 +101,21 @@ val_mem tfibsegs (m_of W mem) (RG + 56) 8 0.
 
 (* [F2] the image's constant cells at every cut, as the AM relation's am_const (AF0x.v:163).  The no-growth walk's
    six constant words (space base, region-info base, the mask, ...; YFfi.const_vals) are cells of this list
-   (DMcdF.const_vals), and EnsureFreeArraySpace's seed reads about 25 of them (FGkN.v:203-253) through
+   (DMcdF.const_vals), and EnsureFreeArraySpace's seed reads about 25 of them (FGkN.v:204-254) through
    FGtN.efa_pre_lk.  Stated for the head's symbol record B (cd_pre_cx's), so [cd_reads] takes B; at cf it is the
-   projection amr_const of ARmcfR (YGcfInstDrainR.v:61; a Theorem Labs lane 04:21Z). *)
+   projection amr_const of ARmcfR (YGcfInstDrainR.v:62; a Theorem Labs lane 04:21Z). *)
 Definition rd_img : Prop :=
 forall inst ly X W mem md, ARXr inst ly X W mem md ->
 Forall (cell_holds B ly (aview tfibsegs (w_H W) mem)) (as_const B ly).
 
 (* the walk's allocator object is the symbols' (cd_pre_cx states it; MnRecycle.cd_pre_x, cdealloc_m_t's premise, does
-   not, a Theorem Labs lane 06:32Z): at cf ARXr_cf's first conjunct IOK inst (YGcfInstDrainR.v:280-281) with IOK_ok
-   (YGcfInstBase.v:173). *)
+   not, a Theorem Labs lane 06:32Z): at cf ARXr_cf's first conjunct IOK inst (YGcfInstDrainR.v:281-282) with IOK_ok
+   (YGcfInstBase.v:174). *)
 Definition rd_inst : Prop :=
 forall inst ly X W mem md, ARXr inst ly X W mem md -> inst = as_inst B.
 
 (* the growth arm's byte budget at the BATCH class's call (cdealloc_m_t's premise DMiface.cd_pre_x does not state
-   it; cd_pre_cx does, DMwalkIF.v:452-453): a Theorem Labs lane 07:33Z, a field; at cf from room_rec_cf via room_wA_parts_cf. *)
+   it; cd_pre_cx does, DMwalkIF.v:453-454): a Theorem Labs lane 07:33Z, a field; at cf from room_rec_cf via room_wA_parts_cf. *)
 Definition rd_budget_x : Prop :=
 forall inst ly X z W regs mem md, cd_pre_x B ARXr inst ly X z W regs mem md ->
 (* the pending items' byte bound is only in DRq_cf at cf (CfF2bRChunk, a Theorem Labs lane 08:29Z) *)
@@ -122,7 +123,7 @@ forall its zs, DRq X its zs ->
 rg_mapped_fa (reg X kBatchClass) < 4 * (fa_len (rg_free (reg X kBatchClass)) + max_cached kBatchClass / 2) ->
 eager_used md + A_bytes (w_A W) + 2 * kUserMapSize + 32768 <= vm_limit (m_vmmaps md).
 
-(* (frame) the windows the walk writes, other than its stack scratch, are owned (at cgif YFez.D_owned, YFez.v:813). *)
+(* (frame) the windows the walk writes, other than its stack scratch, are owned (at cgif YFez.D_owned, YFez.v:814). *)
 Definition rd_own : Prop :=
 forall inst ly X W mem md c off, ARXr inst ly X W mem md -> cd_model RMAXD X c off ->
 let cnt := Z.of_nat (length (pc_chunks (cache X c))) in
@@ -151,7 +152,7 @@ forall inst ly X W mem md c, ARXr inst ly X W mem md -> 1 <= c <= 30 ->
 let mf := rg_mapped_fa (reg X c) in
 let fadr := AFk5.FAv ly c + mf in
 mf + kFreeArrayMapSize <= kFreeArrayMax ->
-(* the grant's byte budget is the CALL's fact (cd_pre_cx's last conjunct, DMwalkIF.v:452-453; at cf a Theorem Labs lane's
+(* the grant's byte budget is the CALL's fact (cd_pre_cx's last conjunct, DMwalkIF.v:453-454; at cf a Theorem Labs lane's
    room_rec_cf), not derivable from ARXr alone (CfF2b, a Theorem Labs lane 07:22Z): a premise here *)
 eager_used md + A_bytes (w_A W) + 2 * kUserMapSize + 32768 <= vm_limit (m_vmmaps md) ->
 region_free (vm_reserved (m_vmmaps md)) (w64 fadr) (w64 kUserMapSize) = true /\

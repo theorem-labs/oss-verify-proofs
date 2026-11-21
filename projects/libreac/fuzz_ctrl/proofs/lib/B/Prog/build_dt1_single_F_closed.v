@@ -21,7 +21,7 @@ Qed.
 (* Route (C) (a Theorem Labs lane's brief dt1-on-B): the _on twin of the corollary above. With no hypothesis left: the
    footprint _on statement of build_dt1_single at the _on contracts its two callees' owners prove for this image --
    dt1_head_F_holds_on (lib/B/Prog/dt1_head_F.v, premise-free) and asan_memcpy_holds_F_on
-   (lib/B/Prog/asan_memcpyF_on.v, a Theorem Labs lane at a working branch ec8fc6d9297), both closed. *)
+   (lib/B/Prog/asan_memcpyF_on.v, a Theorem Labs lane at a working branch), both closed. *)
 Require OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.asan_memcpyF_on.
 
 Corollary build_dt1_single_F_holds_on_closed :

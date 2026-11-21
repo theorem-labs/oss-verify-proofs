@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (cs_ok_intro takes the channel-reader premise and the vDSO reservation inclusion). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -180,6 +181,8 @@ Lemma cs_ok_intro :
     UINV E -> FXOK fx ->
     wins_den E (a_ghost cs) = PERMc -> sptop_den E (a_brk cs) = SPTOPc ->
     floor_sem E (acs_floor (a_maps cs)) (a_brk cs) (a_ylo cs) ->          (* [comment removed for export] *)
+    m_channel_reader model = true ->                                     (* [comment removed for export] *)
+    incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)) ->
     GPS.cs_ok SEGS PERMc SPTOPc FS0 FDS0 AINV FXOK UINV E cs fx R M model.
 Proof. intros. constructor; assumption. Qed.
 

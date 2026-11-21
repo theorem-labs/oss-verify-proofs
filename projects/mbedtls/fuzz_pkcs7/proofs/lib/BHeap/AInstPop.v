@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one proof destructures the invariant's new last conjunct). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -175,7 +176,7 @@ Section InstPop.
 (* [comment removed for export] *).
   Proof.
     intros v mo U K HHv U0 U1 F0 RF.
-    dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & TBL & _ & _ & _ & VW & AT).
+    dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & TBL & _ & _ & _ & VW & AT & MK).
     dpose VW as (_ & _ & HWF & _). pose proof (proj1 (Forall_forall _ _) HWF H HHv) as (W0 & W1 & W2 & W3 & W4 & W5).
     aceilb. 
     rewrite region_free_app in RF. apply andb_prop in RF. destruct RF as [_ RF].

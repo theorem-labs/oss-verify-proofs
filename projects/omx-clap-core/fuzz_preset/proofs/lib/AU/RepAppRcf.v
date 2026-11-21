@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepAppRcf.v (commit 4d286b2e618d, file sha256 b53dffe4e8cc) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 2 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepAppRcf.v (file sha256 b53dffe4e8cc) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 2 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
 (* Copyright 2026 Theorem Labs *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppRcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 3f969b478d6c) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 4 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppRcf.v (cf refill round 3; file sha256 3f969b478d6c) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 4 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, slice F4 of a Theorem Labs lane's class-full report walk, for AppendWalk):
    the call of __sanitizer::InternalMmapVectorNoCtor<char, true>::Realloc (0x5981c) from
    __asan::AppendToErrorMessageBuffer (0x55df8, the jal at 0x56548 and at 0x5657c) as an st_ok-to-st_ok stretch.
@@ -82,7 +83,7 @@ sr_get (ss_regs ss) 1%bv = SLit retpc -> 0 < nb ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
    ~ (sp - REALLOC_STK <= x < sp) /\ ~ (v <= x < v + 16) /\ ~ (d <= x < d + cap)) ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
-   forall a : word, grant_ok_na_pin md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
+   forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
 realloc_post W (ms_regs ms) (ms_mem ms) md v nb d cap sz W' c' ->
 exists (regs' : bvmap 5 word) (mem' : word -> option byte) (mdx : Model),
   c' = mkCfg (mkst regs' (Z_to_bv 64 retpc) mem' (seg_rom tfibsegs)) mdx /\
@@ -127,7 +128,7 @@ realloc_pre W (ms_regs ms) (ms_mem ms) md v nb d cap sz ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
    ~ (sp - REALLOC_STK <= x < sp) /\ ~ (v <= x < v + 16) /\ ~ (d <= x < d + cap)) ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
-   forall a : word, grant_ok_na_pin md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
+   forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
 (forall (W' : world tfibsegs) (regs' : bvmap 5 word) (mem' : word -> option byte) (mdx : Model),
    realloc_post W (ms_regs ms) (ms_mem ms) md v nb d cap sz W' (mkCfg (mkst regs' (Z_to_bv 64 retpc) mem' (seg_rom tfibsegs)) mdx) ->
    st_ok tfibsegs (havoc E k (map (getr regs') CLOB)) (ss_after_call ss rs k retpc)
@@ -163,7 +164,7 @@ realloc_pre W (ms_regs ms) (ms_mem ms) md v nb d cap sz ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
    ~ (sp - REALLOC_STK <= x < sp) /\ ~ (v <= x < v + 16) /\ ~ (d <= x < d + cap)) ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
-   forall a : word, grant_ok_na_pin md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
+   forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
 (forall (W' : world tfibsegs) (regs' : bvmap 5 word) (mem' : word -> option byte) (mdx : Model),
    realloc_post W (ms_regs ms) (ms_mem ms) md v nb d cap sz W' (mkCfg (mkst regs' (Z_to_bv 64 retpc) mem' (seg_rom tfibsegs)) mdx) ->
    st_ok tfibsegs (havoc E k (map (getr regs') CLOB)) (ss_after_call ss rs k retpc)

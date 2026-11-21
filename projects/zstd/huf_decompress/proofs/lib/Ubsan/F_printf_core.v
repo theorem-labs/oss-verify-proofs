@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (34 recorded proofs replaced by written proofs (L_EXIT, L_END, L_EXIT1 and 31 more)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -241,104 +242,236 @@ Section PrintfCore.
 
   (* [comment removed for export] *)
   Lemma L_EXIT : S_EXIT.
-Proof using LO.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Rp,2StR0p4p300R1p10000p4p710p8P1g000aR2p4p710p8P1p1001ep4p710p8P1p1002np4p710p8P1p1003kp4p741110p8P1p1004ip4p710p8p1005mp4p7210R1p1006YR3p4p710p8P1P3p4p7210p8P1p10076p4p710p8P2lR0TP0p,2Fpp,1Bp,2BSp,4SINKp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOMR0o"). Qed.
+  Proof using LO.
+    first [ apply F_printf_core_exit.L_EXIT; first [eassumption]
+          | intros; eapply F_printf_core_exit.L_EXIT; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_END : S_END.
-Proof using GLO HAP LO SEP_F VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Wp,2StR0p4p300g007TR1p4p710p8P1lW0TP0p,2Fpp,1Bp,2BSp,4SINKp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,5SEP_Fp,3HAPp,4VAHIg008VMW0o"). Qed.
+  Proof using GLO HAP LO SEP_F VAHI.
+    first [ apply F_printf_core_end.L_END; first [eassumption | eexact L_EXIT]
+          | intros; eapply F_printf_core_end.L_END; first [eassumption | eexact L_EXIT] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_EXIT1 : S_EXIT1.
-Proof using LO.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Pg009UlP0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOMP0o"). Qed.
+  Proof using LO.
+    first [ apply F_printf_core_exit1.L_EXIT1; first [eassumption]
+          | intros; eapply F_printf_core_exit1.L_EXIT1; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_SCAN : S_SCAN.
-Proof using A0 HA HF.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Rg00:[lR0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFp,2HAp,2A0MR0o"). Qed.
+  Proof using A0 HA HF.
+    first [ apply F_printf_core_scan.L_SCAN; first [eassumption]
+          | intros; eapply F_printf_core_scan.L_SCAN; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_FLAGS : S_FLAGS.
-Proof using HF.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Pg00;_lP0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFMP0o"). Qed.
+  Proof using HF.
+    first [ apply F_printf_core_flags.L_FLAGS; first [eassumption]
+          | intros; eapply F_printf_core_flags.L_FLAGS; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_WLOOP : S_WLOOP.
-Proof using HF.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Pg00<elP0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFMP0o"). Qed.
+  Proof using HF.
+    first [ apply F_printf_core_width.L_WLOOP; first [eassumption]
+          | intros; eapply F_printf_core_width.L_WLOOP; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_WIDTH : S_WLOOP -> S_WIDTH.
-Proof using HF.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "h01Hp;Op;Qg00=klO1Tg00?2lQ0Tp,2FpR0p,1BR1p,2BSR2p,2raR3p,1qR4p,2gpR5p,2tpR6p,3s0eR7p,3s1eR8p,3s2eR9p,3s3eR:p,3s4eR;p,3s5eR<p,3s6eR=p,3s7eR>p,3s8eR?p,3s9eR@p,4s10eRAp,4s11eRBp,1FRCp,3fc0RDp,2m0REp,2loRFp,6canaryRGp,1ARHp,3fmtRIp,2APRJp,2VARKp,5slotsRLp,3nlaRMp,3nltRNMO1P0P1P2P3P4P5P6P7P8P9P:P;P<P=P>P?P@PAPBPCPDPEPFPGPHPIPJPKPLPMPNp,2HFf0MQ0W0o"). Qed.
+  Proof using HF.
+    first [ intro; apply F_printf_core_width.L_WIDTH; first [eassumption]
+          | intros; eapply F_printf_core_width.L_WIDTH; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_PLOOP : S_PLOOP.
-Proof using HF.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Pg00@8lP0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFMP0o"). Qed.
+  Proof using HF.
+    first [ apply F_printf_core_prec.L_PLOOP; first [eassumption]
+          | intros; eapply F_printf_core_prec.L_PLOOP; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_PREC : S_PLOOP -> S_PREC.
-Proof using HF.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "h01Hp;Op;Qg00A=lO1Tg00BDlQ0Tp,2FpR0p,1BR1p,2BSR2p,2raR3p,1qR4p,2gpR5p,2tpR6p,3s0eR7p,3s1eR8p,3s2eR9p,3s3eR:p,3s4eR;p,3s5eR<p,3s6eR=p,3s7eR>p,3s8eR?p,3s9eR@p,4s10eRAp,4s11eRBp,1FRCp,3fc0RDp,2m0REp,2loRFp,6canaryRGp,1ARHp,3fmtRIp,2APRJp,2VARKp,5slotsRLp,3nlaRMp,3nltRNMO1P0P1P2P3P4P5P6P7P8P9P:P;P<P=P>P?P@PAPBPCPDPEPFPGPHPIPJPKPLPMPNp,2HFf0MQ0W0o"). Qed.
+  Proof using HF.
+    first [ intro; apply F_printf_core_prec.L_PREC; first [eassumption]
+          | intros; eapply F_printf_core_prec.L_PREC; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_STATE : S_STATE.
-Proof using HF.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Pg00CHlP0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFMP0o"). Qed.
+  Proof using HF.
+    first [ apply F_printf_core_state.L_STATE; first [eassumption]
+          | intros; eapply F_printf_core_state.L_STATE; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_DIR : S_DIR.
-Proof using HF.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;1p;Tg00DNj12Tg00ENj11Tg00FMlT0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFg00GOg00HO#2g00IO#1g00JOMT0o"). Qed.
+  Proof using HF.
+    first [ apply F_printf_core_dir.L_DIR; first [eassumption | eexact L_FLAGS | eexact (L_WIDTH L_WLOOP) | eexact (L_PREC L_PLOOP) | eexact L_STATE]
+          | intros; eapply F_printf_core_dir.L_DIR; first [eassumption | eexact L_FLAGS | eexact (L_WIDTH L_WLOOP) | eexact (L_PREC L_PLOOP) | eexact L_STATE] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_T6 : S_T6.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;bp,2StR0p4p300g00KOR1p4p710p8P1lb0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,3SFLp,3TOKp,4HOUTp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2TQp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0Mb0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ.
+    first [ apply F_printf_core_t6.L_T6; first [eassumption]
+          | intros; eapply F_printf_core_t6.L_T6; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_T5 : S_T5.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;cp,2StR0p4p300g00LOR1p4p710p8P1lc0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFLp,3TOKp,4HOUTp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2TQp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,4VAHIp,3BS0g00MOMc0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_t5.L_T5; first [eassumption | eexact L_T6]
+          | intros; eapply F_printf_core_t5.L_T5; first [eassumption | eexact L_T6] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_T4 : S_T4.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;cp,2StR0p4p300g00NLR1p4p710p8P1lc0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,3SFLp,3TOKp,4HOUTp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2TQp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0g00OLMc0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_t4.L_T4; first [eassumption | eexact L_T5]
+          | intros; eapply F_printf_core_t4.L_T4; first [eassumption | eexact L_T5] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_T3 : S_T3.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;cp,2StR0p4p300g00PIR1p4p710p8P1lc0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,3SFLp,3TOKp,4HOUTp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2TQp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0g00QIMc0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_t3.L_T3; first [eassumption | eexact L_T4]
+          | intros; eapply F_printf_core_t3.L_T3; first [eassumption | eexact L_T4] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_T2 : S_T2.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;bp,2StR0p4p300g00RFR1p4p710p8P1lb0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFLp,3TOKp,4HOUTp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2TQp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0g00SFMb0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_t2.L_T2; first [eassumption | eexact L_T3]
+          | intros; eapply F_printf_core_t2.L_T2; first [eassumption | eexact L_T3] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_T1 : S_T1.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;cp,2StR0p4p300g00TCR1p4p710p8P1lc0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,3SFLp,3TOKp,4HOUTp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2TQp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0g00UCMc0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_t1.L_T1; first [eassumption | eexact L_T2]
+          | intros; eapply F_printf_core_t1.L_T1; first [eassumption | eexact L_T2] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_TAIL : S_TAIL.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;ap,2StR0p4p300g00V@R1p4p710p8P1la0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,4VAHIp,3BS0g00WDg00UCMa0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_tail.L_TAIL; first [eassumption | eexact L_T1 | eexact L_T2]
+          | intros; eapply F_printf_core_tail.L_TAIL; first [eassumption | eexact L_T1 | eexact L_T2] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_INTC2 : S_INTC2.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;[p,2StR0p4p300g00XAR1p4p710p8P1l[0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,5SEP_Fp,5SEP_Bp,3HAPg00YGM[0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_intc2.L_INTC2; first [eassumption | eexact L_TAIL]
+          | intros; eapply F_printf_core_intc2.L_INTC2; first [eassumption | eexact L_TAIL] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_INTC : S_INTC.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Up,2StR0p4p300g00ZFR1p4p710p8P1lU0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltg00[JMU0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_intc.L_INTC; first [eassumption | eexact L_INTC2]
+          | intros; eapply F_printf_core_intc.L_INTC; first [eassumption | eexact L_INTC2] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_DLOOP : S_DLOOP.
-Proof using GLO LO QHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Og00\JlO0Tp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIMO0o"). Qed.
+  Proof using GLO LO QHI.
+    first [ apply F_printf_core_dloop.L_DLOOP; first [eassumption]
+          | intros; eapply F_printf_core_dloop.L_DLOOP; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_FMTU2 : S_FMTU2.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;_p,2StR0p4p300g00]PR1p4p710p8P1l_0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0g00^VM_0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_fmtu2.L_FMTU2; first [eassumption | eexact L_INTC]
+          | intros; eapply F_printf_core_fmtu2.L_FMTU2; first [eassumption | eexact L_INTC] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_FMTU : S_FMTU.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;_p,2StR0p4p300g00_UR1p4p710p8P1l_0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0g00`Yg00aYM_0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_fmtu.L_FMTU; first [eassumption | eexact L_FMTU2 | eexact L_DLOOP]
+          | intros; eapply F_printf_core_fmtu.L_FMTU; first [eassumption | eexact L_FMTU2 | eexact L_DLOOP] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_CV_D : S_CV_D.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;_p,2StR0p4p300g00bYR1p4p710p8P1l_0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0g00c\M_0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_cvd.L_CV_D; first [eassumption | eexact L_FMTU]
+          | intros; eapply F_printf_core_cvd.L_CV_D; first [eassumption | eexact L_FMTU] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_CV_U : S_CV_U.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;^p,2StR0p4p300g00d[R1p4p710p8P1l^0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAg00c\M^0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_cvu.L_CV_U; first [eassumption | eexact L_FMTU]
+          | intros; eapply F_printf_core_cvu.L_CV_U; first [eassumption | eexact L_FMTU] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_XLOOP : S_XLOOP.
-Proof using GLO LO QHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Og00e^lO0Tp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIMO0o"). Qed.
+  Proof using GLO LO QHI.
+    first [ apply F_printf_core_xloop.L_XLOOP; first [eassumption]
+          | intros; eapply F_printf_core_xloop.L_XLOOP; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_CV_X : S_CV_X.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;`p,2StR0p4p300g00fdR1p4p710p8P1l`0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,3BS0g00^Vg00ggM`0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_cvx.L_CV_X; first [eassumption | eexact L_INTC | eexact L_XLOOP]
+          | intros; eapply F_printf_core_cvx.L_CV_X; first [eassumption | eexact L_INTC | eexact L_XLOOP] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_CV_S : S_CV_S.
-Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;`p,2StR0p4p300g00hgR1p4p710p8P1l`0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,4VAHIp,3BS0g00YGM`0o"). Qed.
+  Proof using BS0 GLO HA HAP HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_cvs.L_CV_S; first [eassumption | eexact L_TAIL]
+          | intros; eapply F_printf_core_cvs.L_CV_S; first [eassumption | eexact L_TAIL] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_CV_FP : S_CV_FP.
-Proof using GLO HA HAP HVA LO QHI SEP_B SEP_F TOK TQ.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;^p,2StR0p4p300g00ijR1p4p710p8P1l^0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3TOKp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2TQp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAM^0o"). Qed.
+  Proof using GLO HA HAP HVA LO QHI SEP_B SEP_F TOK TQ.
+    first [ apply F_printf_core_cvfp.L_CV_FP; first [eassumption]
+          | intros; eapply F_printf_core_cvfp.L_CV_FP; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_CONV : S_CONV.
-Proof using BS0 GLO HA HAP HF HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;fp,2StR0p4p300g00joR1p4p710p8P1lf0TP0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFRp,3SFLp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFp,2LOp,3GLOp,3QHIp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,4VAHIp,3BS0g00l3g00m2g00n1g00o0g00ooMf0o"). Qed.
+  Proof using BS0 GLO HA HAP HF HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ apply F_printf_core_conv.L_CONV; first [eassumption | eexact L_CV_D | eexact L_CV_U | eexact L_CV_X | eexact L_CV_S | eexact L_CV_FP]
+          | intros; eapply F_printf_core_conv.L_CONV; first [eassumption | eexact L_CV_D | eexact L_CV_U | eexact L_CV_X | eexact L_CV_S | eexact L_CV_FP] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_HEAD : forall fuel, S_HEAD fuel.
-Proof using A0 BS0 GLO HA HAP HF HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "h04fuelp;ip,2StR0p4p300g010oR1p4p710p8P1li0Tg0123P0p,2Fpp,1Bp,2BSp,4SINKp,5TOPOKp,3OUTp,5OUTFPp,3SFLp,3TOKp,4HOUTp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFp,2LOp,3GLOp,3QHIp,2TQp,2HAp,5SEP_Fp,5SEP_Bp,3HAPp,3HVAp,2A0p,4VAHIp,3BS0g012Rg013Qg014Og015Nf0Mi0W0o"). Qed.
+  Proof using A0 BS0 GLO HA HAP HF HOUT HVA LO QHI SEP_B SEP_F SFL SFR TOK TQ VAHI.
+    first [ intro; apply F_printf_core_head.L_HEAD; first [eassumption | eexact L_SCAN | eexact L_DIR | eexact L_CONV | eexact L_END]
+          | intros; eapply F_printf_core_head.L_HEAD; first [eassumption | eexact L_SCAN | eexact L_DIR | eexact L_CONV | eexact L_END] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_P1 : S_P1.
-Proof using A0 HA HF LO.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Sg016LlS0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2HFg012Rg013Qg017LMS0o"). Qed.
+  Proof using A0 HA HF LO.
+    first [ apply F_printf_core_p1.L_P1; first [eassumption | eexact L_SCAN | eexact L_DIR | eexact L_EXIT1]
+          | intros; eapply F_printf_core_p1.L_P1; first [eassumption | eexact L_SCAN | eexact L_DIR | eexact L_EXIT1] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
   Lemma L_PRO : S_PRO.
-Proof using BS0 GLO HA HAP HVA LO QHI SEP_F.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) ["PrintfCore"] "p;Wg018LlW0Tp,2Fpp,1Bp,2BSp,2rap,1qp,2gpp,2tpp,3s0ep,3s1ep,3s2ep,3s3ep,3s4ep,3s5ep,3s6ep,3s7ep,3s8ep,3s9ep,4s10ep,4s11ep,1Fp,3fc0p,2m0p,2lop,6canaryp,1Ap,3fmtp,2APp,2VAp,5slotsp,3nlap,3nltp,2LOp,3GLOp,3QHIp,2HAp,5SEP_Fp,3HAPp,3HVAp,3BS0MW0o"). Qed.
+  Proof using BS0 GLO HA HAP HVA LO QHI SEP_F.
+    first [ apply F_printf_core_pro.L_PRO; first [eassumption]
+          | intros; eapply F_printf_core_pro.L_PRO; first [eassumption] ].
+    (* [comment removed for export] *)
+    Unshelve. all: first [exact ra | exact q | exact F | exact fc0 | exact m0 | exact fmt | exact slots].
+  Qed.
 
   Let HS_PRO := L_PRO.
   Let HS_HEAD := L_HEAD.
@@ -380,7 +513,23 @@ Theorem printf_core_proof : forall (St : Type) (Fp B BS : Z) (SINK : (word -> op
   sink_frame_stmt Fp B BS SINK -> sink_flags_stmt Fp SINK -> topok_stmt TOPOK -> out_stmt Fp B BS SINK TOPOK OUT ->
   printf_core_stmt Fp B BS SINK TOPOK OUT OUTFP.
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_printf_core ()) [] "p'0h02m'h13apvh23fc'h32Fth42t6h52t5h62t4h72t3h82a7h92a6h:2a5h;2a4h<2a3h=2a2h>1kh?2a1h@2t2hA2t1hB2t0hC1HhD1ChE2HahF4__p1hG4__p2hH7__sat13hI7__sat15hJ4__x1hK4__x2hL4__x3hM1bhN3ms'hO7__arithhP4__ffhQ7__sat12hR7__sat14hS8__varmaphT5__withU4__x4hV2a0hW4cstrhX5cstr0hY3AOKhZ3APCh[4APC'h\1Bh]2BSh^3BS0h_2BYh`1Fha3FOKhb3FPChc3FRMhd4FRM'he2Fphf3GLOhg2HAhh3HAPhi2HFhj4HOUThk2HShl3HS'hm3HVAhn3Ha0ho2Hihp2Hrhq2LOhr2MIhs3MI'ht2MUhu3OUThv5OUTFPhw1Phx3Ra1hy3Ra2hz4SEPBh{4SEPFh|3SFLh}3SFRh~4SINKi004SPHIi013SSPi024SSP'i032STi043ST'i052Sti063TOKi075TOPOKi082TQi092VAi0:3VAAi0;4VAHIi0<2WMi0=1ai0>4argsi0?2b1i0@2b2i0A2b3i0B2b4i0C2b5i0D2b6i0E2b7i0F1ci0G6canaryi0H2fci0I3fmti0J2gpi0K1ii0L2loi0M1mi0N1ri0O2rai0P2s'i0Q2s0i0R2s1i0S3s10i0T3s11i0U2s2i0V2s3i0W2s4i0X2s5i0Y2s6i0Z2s7i0[2s8i0\2s9i0]5slotsi0^2spi0_2sti0`3st'i0a2tpi0b3x28i0c3x29i0d3x30i0e3x31i0f2x5i0g2x6i0h2x7i0i1xp%0p%1p&0p&1p;1p;2p;5p;3p;7p;4p;9p;Jp;Op;}p;6p;Mp;:p;8p200S00g0000R0p4p710p8Q00g02WaR1p4p710p8Q00g001eR2p4p710p8g019Nj1ETg01:3j1wTg01:Qj1tTg01[Mk115Tg01;4j1xTP0k20ETP2k50lTg02Xak30jTg02Yjk10fTg02Znk70aTg01IZj1VTg005mk20STg02\0j22Tg01=Ok111Tg0281k40}Tg01I>j2qTg01H]k30FTg01A]j23Tg01YGj3LTg01@Ej1gTg01@ck203Tg01A@j2_Tg01BCj1WTg01C8k100Tg01>Jk30eTg01CXk10cTg01D8k30`Tg01DVm90\Tg01EWj2sTg01F7k70UTg01G<j2rTg01G\k30TTg01gKk20;Tg01J\j2?Tg01J?k20QTg01?Fj2QTg02\Zj1DTg02]Jk20LTg01[2S01j26Tg01d[j2yTg026:j5fTg02^BmJ0JmM0{Tg01NTlO4Tg01OFk10HTg01Ohk10qTg01Paj75Tg02_Lk20pTg02`?k10oTg02`hk30nTP1m}0mTg004ilJnmM0VTg02aCk107Tg02bFk606Tg021Wk10DTg01jGk105Tg01RXk20CTg01S@k30BTg02bbk20kTg01XAk202Tg01`Mj1vTg01e5j2lTg02=Rj3pTg01e^k20ATg01^1j3KTg01Sdk201Tg01fJk10iTg01TBk10hTg01T`k10gTg01UKj2eTg02:Oj3}Tg01fhk30dTg01VQk20>Tg01W4k40=Tg01W_k20_Tg01X[k20^Tg01Yak30]Tg01Z@k40[Tg02cCk20ZTg02clk30YTg02dUk30XTg01Unk30WTg02e8S02j20Tg02Rmk10RTg02eRj2dTg02f<j1=Tg02g2j2kTg0076k608Tg02h5m:0zTg02hok80xTg028fj4ZTg027?j4zTg01<[k20wTg025Ek70vTg02>;k40uTg02;2k70NTg02>Yk60tTg02;Vk70yTg02?=k70sTg02<:k80rTg01]Qj4oTg02<^k30:Tg01^Qj3uTg02j9k40ITg02jTk40OTf0R1#E#Ep=C%E1#gp=`g02AKR2f1R0'?/61p>0Gg02?aR3f3R4f2R5g02@VR6?K01CZp=j1?21p=PP3P5P0P1Czp=h%V1#Vp=a20w31p=M1_50/?1p=F%E1#Vp=S%V1#Ep=Of4R7P3g02B^R8P4P5P0P1K0vp=^1q21p=XP8P5P0P1H0up=[P5g02C<R9g02C[R:P:g02D;R;P8P0g02D[P1H0=g02EBR<K0Np=T20>81p=cP0P9P:P:P;P1J0tp=~P5P9P:P:P;P0P1K0yp={P5P9P:P:P;P0P1K0sp>0?P0P9P:P:P;P1P<K0Np>0bP4P9P:P:P;P5P0P1L0rp=bf6R9f5R<%=7P4P5P0P1F5p=;P8P8P41_50Co=K71p=1f7R=P8P8P9P<CoP8P8P41_50Co=K713Kp=9%W0=K61p>0<1Q9<P3P7P4P5CZ1?20g02NjR>,?1'6'6'6,6=p=A1k<7P3P4P5P0Cz/61'6p=<B0:3741601,65'6p=7g02IBS03?L<7Au450/61'6p=81d019L45p=:P3P7P4P5CZ1?201?1>'6'6p=@P3P9P<P7Cz1Q50/61,64'6,6=p=>P8P8P7P4Co=K<5?u01p=GB0:301p=IP3P9P<P7Cz1Q50/61,64'6p=NQ03?L=91601,65,64,67,6<'6p=U1k50/61,64,67p=]Q03?L741601,65'6p=R1?201?1>'6p=BP3P4P5P0CZ/61,67,6<p>141601,65,64,67p>0PP3P4P5P0CZ/61p=J1?1>,60p>131Q<7P3P4P5P0CZ/61'6,69p>121Q9<P3P7P4%W5=K60CZ/61'6,6=p=H1k50/61p>10%D0/61,65p=|Q03P9P<P7P4P5P0P1F57L=p>0MP8P8P<P7Co=K94?u50/61p=iQ03?L50/61p=\Au<74B0:350/61'6p>0~%D0/61p>0@P3P<P7%W4=K65CZ1?201?1>'6'6p>09P3P7P4%W5=K60CZ/61p>041Q50/61p>0KQ03?L01p>0|P9P<P7P4P5P0P1H0IH0Ip=mP9P<P7P4P5P0P1H0OH0Op=YQ00g02G^R>#ER?#ER@#ERA#CRB#ERC#wRD#tRE%wA#t$15[RFp-0RG\7[PG\8%x8S0420E9:[f;RH00E8\8\8\8\8\8P=P9P<P7P4I0lf8RI@0j=7&0f7f:RJf9RKPIP=P9P<P7K0a%V?RL#wRM00SERN%wB#tRBf]S05Q04%xEg02HC#xfaS06PIP=O2P3PKfPS07,2D&11<H0}%EC#`,q1-0G1Z0F8>0F89fSS08fgS09,3D5LEf<ROfRRP,2D%gARA0039,_=,3D#W&006S0:Cjf=R6@0eI9%PIfkS0;fjS0<fiS0=f?RQP6f_S0>,2DfUS0?,2D&0cK>0`EIP=N90\1s88RR/s8/s8/s8fmS0@flS0AQ0;Q0<Q0=fhRSffS0BK0U1r8O@0TOI40FfARTQ06,2DRU7hQf@RVfbRW,2DRXg02jn+0;'?g02l0/?TfdS0C,2DRY%g?R?%VL#a#gRZ+0QR['qQ0@feS0D,2DO1fFS0EfCS0F'QfGS0G#MfIS0H#DS0If`R\,2DfES0J-0L8g02m13FftR]#PS0K%S>#S#C#O#O#S#O#C#`R^fwR_'?%V>R`#V#S#C#`Ra,__Rb%E>#a#S#a#S#O#C#O#C#`Rc'?'6AFUA_Q0E,?b'6'y%E>#a#S#a#S#O#C#a#C#`/?_fvRb,__RUfJS0L'?'6AFXA_Q0G,?U'6'yQ0@,2DRUfcS0M,2D'?Q0H9FYAQ0LfHS0N-0LE-03A%gCRC-0Q?RY3FPEf|S0O,3Df~RXPXfxRdP_fMS0PQ0HDfQ07PXf}S0QQ0Of{S0RfzS0SfrS0TfqS0UfpS0VfoS0WQ0;Q0<Q06P\Q0>f^S0XQ05f\S0Yf[S0ZfZRefYRffXS0[Q08Q09,2DRgfOS0\fNS0]fQS0^NJ0JQ0TQ0UQ0VQ0WfnS0_Q0@Q0AQ0;Q0<P1PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPePfQ0[fWS0`fVRhQ0?fTS0aMO4Q08%C>#O#C#S#S#C#a#O#`,3DRiPP&0HERjQ0^&0q3RkF5D^XVEQ09-0pDRl&0oD,qg-0GgRgPlPgp+01@RgPXQ0QQ0OQ0RQ0SfyS0bPdP_PbfuRlP]fsS0cQ0T,2DQ0UQ0VQ0AQ0;PWQ06P\Q0>Q0XQ05Q0YQ0ZPePfQ0aQ08PPQ07Q0\Q0=,2DRmQ0]12DSQ0PfKS0dQ09Q0BQ0GPQf>RnP6POPKPIP9P<P7P4%Pm1qmY<0n0P5P=Q0WQ0_Q0@Q0DQ0CQ0MQ0[Q0`PhQ0?Q0^fLS0eQ0LQ0HPVPJQ0NfDS0fPHQ0JQ0FfBS0gPTN}0m%XXAFgaYp+01BRmPmQ0RQ0SQ07Q0eDfQ08Pmp+01ARoPgPXQ0QPl12D]RpQ0cQ0TQ0_Q0@Q0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPhQ0aPPQ0^Q0<,2DRqMJnPl13DpQ0cQ0TQ0UQ0VQ0WQ0_Q0@13DoQ0;,2DRp,3DRr13DqQ0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPePfQ0[Q0`MO4PhPiQ0?PjQ0aPkF5D^[[PEQ0c,2D,3D%XoRqAFmaYRsp+01DRtPtQ0QQ0OPPQ0]DfRuQ0?Ptp+01CRvPmPoPgP_12DbPlP]Q0VQ0WQ0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0[PhQ0aQ08Q0A,2DRwMJnRxP_P5PlP]Q0cQ0TQ0UQ0VQ0W13DvS0h13DURy13DwRzQ0;Q0<Q0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPePfMO4Q0[PiQ0`PjPhPkF5D^[[XMEP1Q0cQ0c$07J06%XgAFoaYPvPvQ0OQ0RQ0^Q0PDfQ0aPvPmPoPgPXPb12DlR{P]Q0cQ0WQ0_Q0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0`Q0?Q08PPPpMJnPbPlP]Q0cQ0TQ0UQ0VQ0WQ0_13DmPzPrQ0<Q0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPePfQ0[MO4Q0`PiPhPjQ0?PkF5D^[[PEPr%XmRpAFvaYR|p+01ER}P}PXQ0QQ08Q0\DfS0iPhP}PtPvPmPoPd12D_PbPlQ0UQ0VQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XPfQ0`Q0?Q0aPUMJnRUPdP_PbPlP]Q0cQ0TQ0UQ0V13DtR~P5PyQ0AQ0;Q0<Q0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPeMO4PfPiQ0[PjQ0`PkF5D^[[XMEP1Q0;Q0;$07RyJ06PtPuQ0?PxP_PbPlP]Q0cQ0TQ0UQ0VQ0WQ0hQ0@PzQ0;Q0<Q0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPePfMO4Q0[PiQ0`PjPhPkF5D^\s\qPEPr%XvS0jAFtaYp+01FS0kQ0kPgPXQ0aQ07DfQ0`Q0kP}PtPvPmQ0b12DdP_PbQ0TQ0UPSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>PeQ0[PhQ0?Q0_,2DMJnQ0bPdP_PbPlP]Q0cQ0TQ0U13D}Q0WP5Q0@Q0AQ0;Q0<Q0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZMO4PePiPfPjQ0[PkF5D^[[XMEP1Q0;PyJ06P}Q0iPhPUPdP_PbPlP]Q0cQ0TQ0UQ0VP~Q0_Q0@Q0AQ0;Q0<Q0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPeMO4PfPiQ0[PjQ0`PkF5D^\|\pPtP3P8PuQ0?PxPtPvPmPoPgP_PbPlP]Q0VQ0WQ0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0[PwQ0aQ08PhNJ0JP_PbPlP]Q0cQ0TQ0UQ0VQ0WQ0hQ0@Q0AQ0;Q0<Q0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0>Q0XQ05Q0YQ0ZPePfMO4Q0[PiQ0`PjPhPkF5P11r8PRi$0DS0i&05i#PS0lQ07,rERi$0DS0m&05i#PS0n20C?ZS0o%X?Ri%PZ%X[[Rw[S0p%P?Rxg02JIRuB0B?Z0UWES0q%P[\u^ExS0r20C?CS0s%PC%XY[R[\iS0tB0B?C0VuXExS0u%PY\u^ExS0vP0g02n720k2?+02PieRiO1S0wP[P7PiO1S0xPwg02JeRig02M8Rx#vRu#vRC#vRZ#v,l81l8ZRZ1l8C1l8u1l8x5p85p8Rx5p85p8g02MWRu+0A&00iRC3K%xiS0y20184R3&0i8Rp7[720187?[7p?[5p7[0&0h8S0z&0g8R~1e8@RU%V@,e8R@5T~&0H:R:P~%c^1e8>Ry5T~1~~9Rr5{~%cARq9}8@=T~y1~~=5{~60?~P:P~%E>#a#O#O#C#C#C#C#C#`R>#c1e8`R@5T~P:P~%ELRL#C#O#C#C#`Rs#c:0d8U9T~@P:P820>82R@g02KQPyH0=-0b~CbCbCbCb20_~;R;P1P5g02L8RUg02LXRz+0220^15=LUzdB0]820H0[R2bPbSbTXJ8XK8XL8XU8XFGXGG1?541?^0/6<AF7A0/69'y1?>420;<s,?7%X7[[[[^J8^K8^L8^U8^FG^GGP1p+01LRs/_aR>/?e1?>cP{12DgQ05PsPTQ0FQ0dQ0eO:bObIbHbQbHbRbIbXbWQ0jeQ0iQ0lQ0mQ0nQ0oQ0pQ0qQ0rQ0sQ0tQ0uQ0vQ0wP[Q0xPw20Z8A>0Y8Z=p8x00Au=KiCQ0yA[p4320185?[4p7[4?[0pQ0zP~%C`,e8R`9T~@P:P~1e8LR@B0X8q`5}8%c?>0W8DR?5T~P:P~1~~<%ca9}8yRy%cc5T~5{~AT~y@9{~r60?~P:AT~y?CbCbCbP;P2bPbSbTXJ8XK8XL8XFGXGG%P5203A4=F5Y1_5aR2/?c,6<1?24,69'yAF4aY[[[^J8^K8^L8^FG^GGP1AF{As1?^sQ0[,rE$05PePsP=PQQ0FO8bObIbHbQbHbRbIbXbWP|eO2Q03p+01GS0zQ0kP}PtPvQ0SQ0b,2DPdP_Q0cQ0TQ0=PSQ09Q0BQ0DQ0CQ0MPWQ06P\Q0ZPfQ0`PhQ0W,2DP5P0P1NM0VS0yQ02PEQ0Fp+01NR|p+01MS0x,2DR^,3DPsp+01KR{PTPVPQQ0zQ0kQ0J,3DPnP6POPHPJPKPIQ0OQ0RQ0SQ0bPdP_PbPlP]Q0cP=P9P<P7MO4P4P|P5PjP1PkF;PRQ0<P^PR12DvRGPGPAPRp+01YRYPYPaPRp+01XS0wQ0wp+01WR2&00RRcD1D1G9Q0AP1Q0AP1%M1R;%D5RyQ0_P4P1Q0<P^p+01VS0vP1Q0fO2P1Q0=P1PGQ0:-0<0RGQ0JQ0JGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBEQ0fp+01OR^P|Q0xPsPTPVPQp+01HS0uQ0zQ0E,3DPnP6POPHPJPKPIQ0QQ0OQ0RQ0SQ0bPdP_PbPlP]P=P9P<P7MO4P4P^P5PjP1PkF;PRQ0;12D|R?PR12DtR~P~PAPRp+01ZR:P:PaPRPYPYQ0wPcD1D1G9Q0@P1Q0@P1P;Py%tMRr12M1%gL5L8$0RRLPE1d<0RMQ0UP0C:[]>P1Q0;P?P2P1Q0JO2P1Q0<P1P~PGQ0EQ0ED@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0Jp+01PS0t12D^R~,3DP|Q0xPTPVPQp+01IS0sQ0uQ0G,3DPnP6POPHPJPKPIPXQ0QQ0OQ0RQ0SQ0bPdP_PbPlP=P9P<P7MO4P4Q0tP5PjP1PkF;PRQ0AP~PR12D}R@P@PAPRp+01[R`P`PaPRP:P:PYPcD1D1G9Q0_P1Q0_P1P;PyQ0VP4P1Q0AP~Q0wP1Q0EO2P1Q0;P1P@PGQ0GQ0GGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EQ02PEQ0Ep+01QR@Q0t,2DRq,3DP^P|Q0gPVPQp+01JS0rQ0sQ0N,3DPnP6POPHPJPKPIPgPXQ0QQ0OQ0RQ0SQ0bPdP_PbP=P9P<P7MO4P4P@P5PjP1PkF;PRQ0@PqPRQ0k,2DRpPpPAPRp+01\R3P3PaPRP`P`P:PcD1D1G9Q0WP1Q0WP1P;PyQ0UP4P1Q0@PqPYP1Q0GO2P1Q0AP1PpPGQ0NQ0NGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAEQ0Np+01SRpp+01RS0qP@Q0tPTPVPQPsP{Q0L,3DRCPnP6POPHPJPKPIPmPoPgPXQ0QQ0OQ0RQ0SQ0bPdP=P9P<P7MO4P4%=pRiP5PjP1PkF5PRQ0WQ0q,2DRuPRQ0u,2DRxPxPAPRp+01^RZPZPaPRp+01]RwPwP3PcD1D1D1Q0UP1EGR[Q0U/I1R>P;PyPEPMPlP0C:\L^>rP1Q0WPuP`P1Q0HO2P1Q0_P1PxPGQ0LQ0LD@FNRxGUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0NPp13DuP@Q0tQ0fPVPQPsP{PCPnP6POPHPJPKPIPmPoPgPXQ0QQ0OQ0RQ0SQ0bPdP=P9P<P7MO4P4PiP5PjP1PkF5P[P>P;PyQ0cP4PxD]DRX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EQ02PEQ0Hp+01TRx12DpR>,3DQ0qP@Q0JPTPQQ0xPsQ0d,3DPnP6POPHPJPKPIPvPmPoPgPXQ0QQ0OQ0RQ0SQ0bP=P9P<P7MO4P4PxP5PjP1PkF;PRQ0VP>PRQ0s,2DR[P[PAPRp+01_RiPiPaPRPZPZPwPcD1D1G9Q0TP1Q0TP1P;PyP]P4P1Q0VP>P3P1Q0LO2P1Q0WP1P[PGQ0dQ0dGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@EQ0eP2Q0vp+01US0pPxPTPVPQQ0tP^Q0],3DS0oPnP6POPHPJPKPIQ0kP}PtPvPmPoPgPXQ0QQ0OP=P9P<P7MO4P4%=2S0nP5PjP1PkF5PRQ0cQ0v,2DR[PR12DsR>P>PAPRp+01bS0mQ0mPaPRp+01aS0lQ0lp+01`RCPcD1D1D1PlP1EGS0i1Il1RzP;PyPEPMQ0bP0C:\L^>rP1Q0cP[PiP1Q0PO2P1Q0TP1P>PGQ0]Q0]D@FNR>GUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0dQ0vQ0p,2DS0j,3DPxPpQ0GQ0FPQP^P|Q0P,3DPnP6POPHPJPKPIP}PtPvPmPoPgPXQ0QQ0OQ0RP=P9P<P7MO4P4Q0vP5PjP1PkF;PRQ0TQ0jPR12D{RUPUPAPRQ0lQ0lPaPRPCPCPiPcD1D1G9P]P1P]P1P;PyPbP4P1Q0TQ0jPZP1Q0eO2P1Q0UP1PUPGQ0PQ0PGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EQ02PEQ0eP213D[Q0pPxQ0NQ0fPVQ0tP^Q0oPnP6POPHPJPKPIQ0kP}PtPvPmPoPgPXQ0QQ0OP=P9P<P7MO4P4Q0nP5PjP1PkF5Q0iPzP;PyP_P4P>D]DRX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?EQ07P`P:PYQ0wPTPVPQPxPp13DPPnP6POPHPJPKPIQ0rQ0sQ0uQ0zQ0kP}PtPvPmPoP=P9P<P7MO4P4P`P5PjP1PkF;PRP_12D:S0iPRPqPqPAPRp+01fR>P>PaPRp+01eRzPzp+01dR[PcD1D1G9Q0bP1Q0bP1P;PyPEPMQ0QP0C:\L^>rP1P_Q0ip+01cRUP1Q0^O2P1PbP1PqPGPPPPD@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0]PYQ0w,2DS0n,3DP2Q0vQ0LQ0EQ0gQ0qP@Q07,3DPnP6POPHPJPKPIQ0uQ0zQ0kP}PtPvPmPoPgPXP=P9P<P7MO4P4PYP5PjP1PkF;PRPlQ0nPRP?P?PAPRP[P[PaPRPUPUQ0mPcD1D1G9P_P1P_P1P;PyQ0bP4P1PlQ0nQ0lP1Q0\O2P1P]P1P?PGQ07Q07GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EQ02PEQ0\P:12DYR?,3DQ0wP2Q0dQ0GQ0FPpQ0qQ0^,3DPQP6POPHPJPKPIQ0sQ0uQ0zQ0kP}PtPvPmPoPgP=P9P<P7MO4P4P:P5PjP1PkF;PRPbP?PRP~P~PAPRPzPzPaPRP[P[PUPcD1D1G9PdP1PdP1P;PyQ0SP4P1PbP?Q0mP1Q07O2P1PlP1P~PGQ0^Q0^GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=EQ0aPiPZPwP3PTPVPQQ0wP213DhS0oPnP6POPHPJPKPIP|Q0xPsP{Q0rQ0sQ0uQ0zQ0kP}P=P9P<P7MO4P4%=iS0{P5PjP1PkF5PRQ0R12DZS0|PR12DxS0}Q0}PAPRp+01jR~P~PaPRp+01iS0~Q0~p+01hR?PcD1D1D1Q0QP1EGS10Q0Q/I1S11P;PyPEPMPmP0C:\L^>rP1Q0RQ0|p+01gRqP1Q0?O2P1Q0SP1Q0}PGPhPhD@FNS0}GUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0^P312D`S12,3DP:PYQ0PQ0HQ0JQ0pPxQ08,3DPTP6POPHPJPKPIP{Q0rQ0sQ0uQ0zQ0kP}PtPvPmP=P9P<P7MO4P4P3P5PjP1PkF;PRPdQ12PR12D@S13Q13PAPRPqPqPaPRP>P>PzPcD1D1G9Q0SP1Q0SP1P;PyQ0OP4P1PdQ12P[P1PPO2P1P_P1Q13PGQ08Q08GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EQ02PEPPPw12D3S13,3DP`P:Q0]Q0LQ0EQ0vQ0pQ0a,3DQ0gPnPOPHPJPKPIPsP{Q0rQ0sQ0uQ0zQ0kP}PtPvP=P9P<P7MO4P4PwP5PjP1PkF;PRQ0bQ13PRPuPuPAPRP?P?PaPRPqPqP>PcD1D1G9Q0RP1Q0RP1P;PyQ0QP4P1Q0bQ13PzP1Q08O2P1PdP1PuPGQ0aQ0aGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<EQ0[PUQ0mQ0lPCPTPVPQP3P`13DeS14PnP6POPHPJPKPIQ0qP@Q0tP^P|Q0xPsP{Q0rQ0sP=P9P<P7MO4P4%=US15P5PjP1PkF5PRPgQ0m,2DS16PRQ0nQ0nPAPRp+01nS17Q17PaPRp+01mS18Q18p+01lRuPcD1D1D1PmP1EGS191Im1S1:P;PyPEPMQ0kP0C:\L^>rP1PgQ16p+01kS1;P1PfO2P1PXP1Q0nPGPePeD@FNS0nGUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0aPiQ0|,3DPwP3Q07Q0eQ0NQ0wP2Q0oQ0fPVPOPHPJPKPIP|Q0xPsP{Q0rQ0sQ0uQ0zQ0kP}P=P9P<P7MO4P4Q0{P5PjP1PkF5Q10Q11P;PyPgP4Q0}D]DRX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EQ02PEQ0?PC12DiS0},3DPZPwQ0^Q0PQ0HPYQ0wQ0`,3DQ0JPTP6PHPJPKPIP^P|Q0xPsP{Q0rQ0sQ0uQ0zQ0kP=P9P<P7MO4P4PCP5PjP1PkF;PRQ0OQ0}PRQ0jQ0jPAPRQ1;Q1;PaPRP~P~Q0~PcD1D1G9PXP1PXP1P;PyPoP4P1Q0OQ0}P?P1PhO2P1Q0RP1Q0jPGQ0`Q0`GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;EQ0YPqP>PzP[PTPVPQPCPiQ0X,3DPnP6POPHPJPKPIQ0vQ0pPxPpQ0qP@Q0tP^P|Q0xP=P9P<P7MO4P4PqP5PjP1PkF;PRPt12D>S0jPRQ13Q13PAPRp+022S0}Q0}PaPRp+021S11Q11p+020S10PcD1D1G9Q0kP1Q0kP1P;PyPEPMQ0rP0C:\L^>rP1PtQ0jp+01oS0{P1Q05O2P1PvP1Q13PGQ0XQ0XD@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0`Q0mQ0l,2DS13,3DPCPiQ08Q0\Q0dP`P:13DfQ0GQ0FPQPHPJPKPIP@Q0tP^P|Q0xPsP{Q0rQ0sQ0uP=P9P<P7MO4P4Q0mP5PjP1PkF;PRPXQ13PR12D2S0oQ0oPAPRQ18Q18PaPRPuPuQ1;PcD1D1G9PoP1PoP1P;PyPvP4P1PXQ13P~P1Q0[O2P1Q0QP1Q0oPGPfPfGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EQ02PEQ0[PUQ16,3DQ0lPCQ0aQ07Q0eP3P`Q14Q0NQ0fPVPOPJPKPIQ0qP@Q0tP^P|Q0xPsP{Q0rQ0sP=P9P<P7MO4P4Q15P5PjP1PkF5Q19Q1:P;PyPtP4Q0nD]DRX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:EP\Q1;P~Q0~P?PTPVPQP[PU13DWS0nPnP6POPHPJPKPIP:PYQ0wP2Q0vQ0pPxPpQ0qP@P=P9P<P7MO4P4Q1;#=S1:P5PjP1PkF5PRQ0u12D~S19PR12DCS15Q15PAPRp+026S14Q14PaPRp+025S16Q16p+024S0oPcD1D1D1Q0rP1EGS1<Q0r/I1S1=P;PyPEPMP|P0C:\L^>rP1Q0uQ19p+023S1>P1Q06O2P1Q0zP1Q15PGPWPWD@FNS15GUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1PePz12D[S1?,3DPUQ0mPhPPQ0]PZPwQ0Y,3DQ0LQ0EQ0gPnPJPKPIPxPpQ0qP@Q0tP^P|Q0xPsP{P=P9P<P7MO4P4PzP5PjP1PkF;PRPmQ1?PRQ0iQ0iPAPRQ10Q10PaPRQ0{Q0{Q17PcD1D1G9PtP1PtP1P;PyQ0kP4P1PmQ1?Q18P1Q0ZO2P1PoP1Q0iPGQ0YQ0YGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EQ02PEQ0ZP>12DzS0i,3DP[PUQ0`Q08Q0\PiPZQ05,3DQ0dQ0GQ0FPQPHPKPIQ0pPxPpQ0qP@Q0tP^P|Q0xPsP=P9P<P7MO4P4P>P5PjP1PkF;PRPvQ0iPRQ12Q12PAPRQ11Q11PaPRQ10Q10Q0{PcD1D1G9P}P1P}P1P;PyQ0zP4P1PvQ0iQ17P1Q0YO2P1PmP1Q12PGQ05Q05GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9EQ0CQ0{Q17Q18PuPTPVPQP?PqQ0B,3DS12PnP6POPHPJPKPIPZPwP3P`P:PYQ0wP2Q0vQ0pP=P9P<P7MO4P4Q0{#=S0iP5PjP1PkF5PRPsQ17,2DS1@PRQ1?Q1?PAPRp+02:S1AQ1APaPRp+029S1BQ1Bp+028S1CPcD1D1D1P|P1EGS1D1I|1S1EP;PyPEPMQ0qP0C:\L^>rP1PsQ1@p+027S1FP1Q0DO2P1P{P1Q1?PGQ0BQ0BD@FNS1?GUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q05P?12DqS1G,3DP>PzPfQ0?Q0^Q0lPCQ0>,3DQ0PQ0HQ0JPTP6PKPIP2Q0vQ0pPxPpQ0qP@Q0tP^P|P=P9P<P7MO4P4P?P5PjP1PkF;PRP}Q1GPR12DwS1HQ1HPAPRQ1>Q1>PaPRQ0}Q0}Q11PcD1D1G9Q0zP1Q0zP1P;PyQ0sP4P1P}Q1GQ10P1Q0XO2P1PtP1Q1HPGQ0>Q0>GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EQ02PEQ0XQ0~12D?S1H,3DPqP>PePhPPQ0mQ0l13D\Q0]Q0LQ0EQ0gPnPJPIQ0wP2Q0vQ0pPxPpQ0qP@Q0tP^P=P9P<P7MO4P4Q0~P5PjP1PkF;PRQ0kQ1HPRQ0|Q0|PAPRQ0oQ0oPaPRQ1>Q1>Q0}PcD1D1G9Q0uP1Q0uP1P;PyQ0rP4P1Q0kQ1HQ11P1Q0>O2P1P}P1Q0|PGP\P\GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8EPSQ1>Q0}Q11Q10PTPVPQPuQ1;Q0<,3DPnP6POPHPJPKPIQ0mQ0lPCPiPZPwP3P`P:PYP=P9P<P7MO4P4Q1>P5PjP1PkF;PRQ0tQ0},2DS0|PRQ1HQ1HPAPRp+02>S1IQ1IPaPRp+02=S1JQ1Jp+02<S1KPcD1D1G9Q0qP1Q0qP1P;PyPEPMQ0vP0C:\L^>rP1Q0tQ0|p+02;S1LP1Q0=O2P1P^P1Q1HPGQ0<Q0<D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1P\Q1;Q19,3DQ0~P?Q0YQ0[Q0aP[PUQ0nQ07Q0eQ0NQ0fPVPOPIP:PYQ0wP2Q0vQ0pPxPpQ0qP@P=P9P<P7MO4P4Q1:P5PjP1PkF5Q1<Q1=P;PyPsP4Q15D]DRX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EQ02PEQ06PuQ1;,2DS15,3DP~Q0~Q05PfQ0?PzP[Q0M,3DQ0^Q0PQ0HQ0JPTP6PKP`P:PYQ0wP2Q0vQ0pPxPpQ0qP=P9P<P7MO4P4PuP5PjP1PkF;PRQ0sQ15PRQ13Q13PAPRQ1FQ1FPaPRQ14Q14Q16PcD1D1G9P{P1P{P1P;PyQ0xP4P1Q0sQ15Q0oP1PWO2P1Q0uP1Q13PGQ0MQ0MGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7EQ0AQ1FQ14Q16Q0oPTPVPQQ10Q0{Q0_,3DS13PnP6POPHPJPKPIP>PzP[PUQ0mQ0lPCPiPZPwP=P9P<P7MO4P4Q1F#=S15P5PjP1PkF5PRPxQ14,2DS1=PR12DuS1<Q1<PAPRp+02BS1:Q1:PaPRp+02AS0nQ0np+02@S1HPcD1D1D1Q0vP1EGS1MQ0v/I1S1NP;PyPEPMP:P0C:\L^>rP1PxQ1=p+02?S1OP1Q0@O2P1PpP1Q1<PGQ0_Q0_D@FNS1<GUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0MQ17Q18,2DS1P,3DPuQ1;Q0>Q0ZQ0`PqP>Q0D,3DQ08Q0\Q0dQ0GQ0FPQPHPwP3P`P:PYQ0wP2Q0vQ0pPxP=P9P<P7MO4P4Q17P5PjP1PkF;PRP{Q1PPR12DUS1QQ1QPAPRQ1BQ1BPaPRQ1CQ1CQ1FPcD1D1G9Q0xP1Q0xP1P;PyP^P4P1P{Q1PQ14P1Q0CO2P1Q0rP1Q1QPGQ0DQ0DGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EQ02PEQ0CQ0{Q1@,3DQ18PuP\Q0YQ0[P?PqQ12Q0aQ07Q0eQ0NQ0fPVPOPZPwP3P`P:PYQ0wP2Q0vQ0pPIP9P<P7MO4P4Q0iP5PjP1PkF5Q1DQ1EP;PyQ0tP4Q1?D]DRX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6EQ0VQ1LQ1AQ1BQ1CPTPVPQQ0oQ1>Q0T,3DS1?PnP6POPHPJPKPIP~Q0~P?PqP>PzP[PUQ0mQ0lP=P9P<P7MO4P4Q1L#=S1EP5PjP1PkF5PRQ0wQ1A,2DS1DPRQ10,2DS0iQ0iPAPRp+02FS12Q12PaPRp+02ES1@Q1@p+02DS1QPcD1D1D1P:P1EGS1R1I:1S1SP;PyPEPMPZP0C:\L^>rP1Q0wQ1Dp+02CS1TP1Q0UO2P1P2P1Q0iPGQ0TQ0TD@FNS1UGUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0BQ11Q0i,3DQ0{Q17PWQ0XPeP~Q0~13DSPhPPQ0]Q0LQ0EQ0gPnPCPiPZPwP3P`P:PYQ0wP2PJP9P<P7MO4P4Q11P5PjP1PkF;PRP|Q0iPRQ0jQ0jPAPRQ1KQ1KPaPRQ1LQ1LQ1APcD1D1G9Q0tP1Q0tP1P;PyQ0qP4P1P|Q0iQ1BP1Q09O2P1Q0xP1Q0jPGPSPSGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EQ02PEQ09Q0}Q11,2DS0j,3DQ10Q0{Q0MQ0>Q0ZQ1;P~Q0=,3DQ0`Q08Q0\Q0dQ0GQ0FPQQ0lPCPiPZPwP3P`P:PYQ0wPHP=P<P7MO4P4Q0}P5PjP1PkF;PRP^Q0jPRQ1GQ1GPAPRQ1JQ1JPaPRQ1KQ1KQ1LPcD1D1G9P@P1P@P1P;PyPpP4P1P^Q0jQ1AP1PSO2P1P|P1Q1GPGQ0=Q0=GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5EP]Q1OQ1IQ1JQ1KPTPVPQQ1CQ1F13DbPnP6POPHPJPKPIQ17Q18PuQ1;P~Q0~P?PqP>PzP=P9P<P7MO4P4Q1OP5PjP1PkF;PRP3Q1I,2DS1GPRQ0o,2DS0jQ0jPAPRp+02JS0iQ0iPaPRp+02IS1VQ1Vp+02HS1WPcD1D1G9PZP1PZP1P;PyPEPMQ0mP0C:\L^>rP1P3Q1Gp+02GS1GP1PlO2P1P`P1Q0jPGPbPbD@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0=Q0oQ1>,2DS1X,3DQ0}Q11Q0DQ06Q05Q18PuQ0;,3DPfQ0?Q0^Q0PQ0HQ0JPTPUQ0mQ0lPCPiPZPwP3P`P:P6PKP<P7MO4P4Q0oP5PjP1PkF;PRP@Q1XPRQ0~,2DS1YQ1YPAPRQ1OQ1OPaPRQ1IQ1IQ1JPcD1D1G9PpP1PpP1P;PyQ0pP4P1P@Q1XQ1KP1Q0<O2P1Q0tP1Q1YPGQ0;Q0;GAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EQ02PEQ0<Q16Q0j,3DQ1>Q0}Q0BPWQ0XQ17Q18Q0A,3DPePhPPQ0]Q0LQ0EQ0gP[PUQ0mQ0lPCPiPZPwP3P`PnPJP9P7MO4P4Q16P5PjP1PkF;PRQ0qQ0jPRQ19Q19PAPRQ1HQ1HPaPRQ1OQ1OQ1IPcD1D1G9PxP1PxP1P;PyQ0vP4P1Q0qQ0jQ1JP1Q0;O2P1P@P1Q19PGQ0AQ0AGAE<D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4EPdQ1TQ1:Q0nQ1HPTPVPQQ1KQ1LQ0S,3DS19PnP6POPHPJPKPIQ0}Q11Q10Q0{Q17Q18PuQ1;P~Q0~P=P9P<P7MO4P4Q1T#=S0jP5PjP1PkF5PRPCQ1:,2DS1YPRQ1C,2DS1ZQ1ZPAPRp+02NS1[Q1[PaPRp+02MS1\Q1\p+02LS1]PcD1D1D1Q0mP1EGS1^Q0m/I1S1_P;PyPEPMP>P0C:\L^>rQ1Y9h1CS1`p+02KS1aP1Q0bO2S1b1Q1iS1cP1Q1ZPGQ0SQ0S'BS1dJ14I0PDRX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0AQ1FQ1=,3DQ16Q0oPSQ0CP\Q10Q0{Q13Q0YQ0[Q0aQ07Q0eQ0NQ0fP>PzP[PUQ0mQ0lPCPiPZPwPVPOPIP7MO4P4Q15P5PjP1PkF5Q1MQ1NP;PyQ0wP4Q1<D]DRX0F,0FX1E,0EX2B,0BX3N,0NQ02PNQ0@Q1CQ1F,2DS1<,3DQ14Q16Q0=Q0DQ06Q11Q10Q0W,3DQ05PfQ0?Q0^Q0PQ0HQ0JPqP>PzP[PUQ0mQ0lPCPiPZPTP6PKP<MO4P4Q1CP5PjP1PkF;PRQ0pQ1<PRQ1PQ1PPAPRQ1TQ1TPaPRQ1:Q1:Q0nPcD1D1G9P2P1P2P1P;PyPYP4P1Q0pQ1<Q1HP1Q0_O2P1PxP1Q1PPGQ0WQ0WGAE<D7E8X0F,0FX1E,0EX2B,0BX3NQ0OQ1GQ12Q1@Q1QPTPVPQQ1HQ1O13DXS1PPnP6POPHPJPKPIQ14Q16Q0oQ1>Q0}Q11Q10Q0{Q17Q18P=P9P<P7MO4P4Q1G#=S1<P5PjP1PkF5PRP[Q12,2DS1NPRQ1K,2DS1MQ1MPAPRp+02RS15Q15PaPRp+02QS13Q13p+02PS1ePcD1D1G9S1fP>P1P>P1P;PyPEPMP~P0C:\L^>rP1P[Q1Np+02OS1gP1Q0QO2P1PUP1Q1MPG1BXXS1hCJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0WQ1AQ1B,2DS1i,3DQ1CQ1FQ0;Q09Q0MQ1>Q0}Q0U,3DQ0>Q0ZQ0`Q08Q0\Q0dQ0GQ0~P?PqP>PzP[PUQ0mQ0lPCQ0FPQPHP=MO4P4Q1AP5PjP1PkF;PRP2Q1iPRQ0{,2DS1jQ1jPAPRQ1@Q1@PaPRQ1QQ1QQ1TPcD1D1G9PYP1PYP1P;PyP`P4P1P2Q1iQ1:P1Q0VO2P1Q0vP1Q1jPGQ0UQ0UGAE<D7E8X0F,0FX1E,0EX2B,0BQ02PBQ0VQ1LQ1D,3DQ1BQ1CQ0APSQ0CQ0oQ1>Q1?P\Q0YQ0[Q0aQ07Q0eQ0NP~Q0~P?PqP>PzP[PUQ0mQ0lQ0fPVPOPIMO4P7Q1EP5PjP1PkF5Q1RQ1SP;PyP3P7Q1UD]DRX0F,0FX1E,0EX2BPoQ1aQ0iQ1VQ1WPTPVPQQ1QQ1TQ0hPnP6POPHPJPKPIQ1AQ1BQ1CQ1FQ14Q16Q0oQ1>Q0}Q11P=P9P<P7MO4P4Q1aP5PjP1PkF;PRP?Q0i,2DS0hPRQ1H,2DS1UQ1UPAPRp+02VS1SQ1SPaPRp+02US1RQ1Rp+02TS1EPcD1D1G9P~P1P~P1P;PyPEPMQ17P0C:\L^>rP1P?Q0hp+02SS1?P1PmO2P1PqP1Q1UPG1BvvS1DCJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0TQ1JQ1M,3DQ1LQ1AQ0_Q0<Q0BQ14Q1613D]PWQ0XPePhPPQ0]Q0LPuQ1;P~Q0~P?PqP>PzP[PUQ0EQ0gPnPJMO4P9Q1JP5PjP1PkF;PRP:Q1MPRQ0|Q0|PAPRQ1WQ1WPaPRQ1GQ1GQ12PcD1D1G9P3P1P3P1P;PyPZP9P1P:Q1MQ1@P1Q0cO2P1PYP1Q0|PGQ0K013]K12E<D7E8X0F,0FX1E,0EQ02PEQ0cQ1IQ1J,2DS0K,3DQ1KQ1LQ0WQ0;Q09Q1FQ1413DlQ0MQ0>Q0ZQ0`Q08Q0\Q0dQ18PuQ1;P~Q0~P?PqP>PzP[Q0GQ0FPQPHMO4P=Q1IP4PjP1PkF;PRP`Q0KPRQ1XQ1XPAPRQ1VQ1VPaPRQ1WQ1WQ1GPcD1D1G9PwP1PwP1P;%D4PiP=P1P`Q0KQ12P1P]O2P1P:P1Q1XPGPlPlGAE<D7E8X0F,0FX1EP}Q1gQ1[Q1\Q1]PTPVPQQ1WQ1GQ0z,3DPnP6POPHPJPKPIQ1IQ1JQ1KQ1LQ1AQ1BQ1CQ1FQ14Q16P=P9P<P7MO4P4Q1gP5PjP1PkF;PRPuQ1[,2DS1XPRQ1Q,2DS0|Q0|PAPRp+02ZS1jQ1jPaPRp+02YS1kQ1kp+02XS1lPcD1D1G9Q17P1Q17P1P;PyPEPMQ0}P0C:\L^>rP1PuQ1Xp+02WS1mP1Q0kO2P1Q1;P1Q0|PGQ0zQ0z'BS1nCJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1PlQ1HQ1O,2DS1o,3DQ1IQ1JQ0UQ0@Q0=Q1BQ1C13D_Q0DQ06Q05PfQ0?Q0^Q0PQ0{Q17Q18PuQ1;P~Q0~P?PqP>Q0HQ0JPTP6MO4PKQ1HP<PjP1PkF;PRPwQ1oPRQ16,2DS1pQ1pPAPRQ1aQ1aPaPRQ0iQ0iQ1VPcD1D1G9PiP1PiP1P;%D<Q0lPKP1PwQ1oQ1WP1PbO2P1P3P1Q1pPGP_P_GAE<D7E8X0F,0FQ02PFPbQ0nQ1U,3DQ1OQ1IQ0TQ0_Q0<Q1AQ1B13DdQ0BPWQ0XPePhPPQ0]Q10Q0{Q17Q18PuQ1;P~Q0~P?PqQ0LQ0EQ0gPnMO4PJQ0nP9PjP1PkF;PRPZQ1UPRQ1=Q1=PAPRQ1]Q1]PaPRQ1aQ1aQ0iPcD1D1G9PCP1PCP1P;%D9Q0mPJP1PZQ1UQ1VP1P_O2P1PwP1Q1=P5Q0:1BddGHE<D7E8X0FQ0sQ1?Q15Q13Q1ePTPVPQQ1]Q1a13D{PnP6POPHPJPKPIQ1:Q0nQ1HQ1OQ1IQ1JQ1KQ1LQ1AQ1BP=P9P<P7MO4P4Q1?P5PjP1PkF;PRQ10Q15,2DS1=PRQ1W,2DS0gQ0gPAPRp+02^S0EQ0EPaPRp+02]S0LQ0Lp+02\RPPcD1D1G9Q0}P1Q0}P1P;PyPEPMQ14P0C:\L^>rP1Q10Q1=p+02[RhP1Q0rO2P1Q0{P1Q0gPG1B{{S0]CJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1PdQ1TQ1Y,3DQ0nQ1HP]Q0VQ0AQ1KQ1LQ19PSQ0CP\Q0YQ0[Q0aQ07Q0}Q11Q10Q0{Q17Q18PuQ1;P~Q0~Q0eQ0NQ0fPVMO4POQ0jPIPjP1PkF5Q1^Q1_Q1`Q1bQ1cP1Q1Z%W7Q0:CjQ1dI0P:10[O9|;IDRQ01Q0bQ1QQ1T,2DS1d,3DQ1:Q0nPlQ0UQ0@Q1JQ1KQ0R,3DQ0=Q0DQ06Q05PfQ0?Q0^Q1>Q0}Q11Q10Q0{Q17Q18PuQ1;P~Q0PQ0HQ0JPTMO4P6Q1Q#=PKPjP0PkL0MPRQ0lQ1dPRQ1iQ1iPAPRQ1gQ1gPaPRQ1[Q1[Q1\PcD1D1D1PUP0PUP0%M0%DKPzP6P0Q0lQ1dQ1]P0Q0SO2P0PCP0Q1iP<Q0:Q0RQ0R'BGHE<D7FiQ0xQ1mQ1SQ1RQ1EPTPVPQQ1eQ1g13D^PnP6POPHPJPKPIQ12Q1@Q1QQ1TQ1:Q0nQ1HQ1OQ1IQ1JP=P9P<P7MO4P4Q1mP5PjP1PkF;PRQ0oQ1S,2DS1JPRQ1],2DS1iQ1iPAPRp+02bS1dQ1dPaPRp+02aS1ZQ1Zp+02`S1cPcD1D1G9Q14P1Q14P1P;PyPEPMQ1AP0C:\L^>rP1Q0oQ1Jp+02_S1bP1P|O2P1Q1>P1Q1iPG1B^^S1`CJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0RQ12Q1@,2DS1_,3DQ1QQ1TP_Q0cQ0WQ1OQ1IQ0Q,3DQ0;Q09Q0MQ0>Q0ZQ0`Q08Q16Q0oQ1>Q0}Q11Q10Q0{Q17Q18PuQ0\Q0dQ0GQ0FMO4PQQ12#=PHPjP4PkL0MQ03Q1GQ1N,3DQ1@Q1QPdP]Q0VQ1HQ1OQ1PQ0APSQ0CP\Q0YQ0[Q0aQ14Q16Q0oQ1>Q0}Q11Q10Q0{Q17Q18Q07Q0eQ0NQ0fMO4PVQ1<POPjP7PkF5Q03PRPzQ1G,2DS1<PRQ0KQ0KPAPRQ1?Q1?PaPRQ15Q15Q13PcD1D1D1PqP<EGS1PPqP<%M<%D6Q0~PTP<PzQ1<Q1eP<PXO2P<P[P<Q0KPKQ0:1BggGHE<D7S0K'6Q0FPhQ1jQ1kQ1lPTPVPQQ1EQ1?13DpS1<PnP6POPHPJPKPIQ0iQ1VQ1WQ1GQ12Q1@Q1QQ1TQ1:Q0nP=P9P<P7MO4P4%=hS0GP5PjP1PkF5S1^PRQ1CQ1j,2DS0jPRQ1e,2DS19Q19PAPRp+02fS1YQ1YPaPRp+02eS02Q02p+02dS1pPcD1D1D1Q1AP1Q1AP1P;PyPEPMQ1IP0C:\L^>rP1Q1CQ0jp+02cS1AP1Q0qO2P1Q1FP1Q19PG1BppS1qCJG>D7FiS1r3\X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0E[WNQ1fP>P7P>P7%M7P?PVP7P[Q1NQ1gP7Q0QO2P7PUP7Q1MPIQ0:Q1hGHE<7|OJ0~Q01Q1PQ0KPhQ0j,3DQ1kQ1lQ0xQ0sP}Q1EQ1?Q1<PoQ0OPdP]Q0VQ0APSQ0iQ1VQ1WQ1GQ12Q1@Q1QQ1TQ1:Q0nQ0CP\Q0YQ0[MO4Q0aQ0GQ07PjQ0NPkF5Q1^Q1r3\X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1PRPqQ1V,2DS1rPRQ1oQ1oPAPRQ1RQ1RPaPRQ1EQ1EQ1?PcD1D1D1Q0~P=EGP~PI%MI%DVPuQ0fPIP?Q0hQ1?PIPmO2PIPqPIQ1UPOQ0:Q1DGHE<D7Q01Q1;/IK%MKQ18Q0JPKQ0~Q1a,2DQ1EPKPvO2PKP?PKQ0n,2DP6Q0:1BttGHE<7|TQ1bQ0E,2DS0n,3DQ0LPPP@Q0xQ0sQ1lQ1m13D2S1DP}PoQ0OPdP]Q0VQ0AQ1[Q1\Q1]Q1aQ0iQ1VQ1WQ1GQ12Q1@PSQ0CP\Q0YMO4Q0[Q1b#=S1UQ0aPjQ0ePkF5Q1bQ0EQ0LPPPTPVPQQ1lQ1mQ1DPnP6POPHPJPKPIQ1[Q1\Q1]Q1aQ0iQ1VQ1WQ1GQ12Q1@P=P9P<P7MO4P4Q1UP5PjP1PkF5PRQ1KQ0nPRQ1E,2DS1UQ1UPAPRp+02jS1@Q1@PaPRp+02iS1DQ1Dp+02hS0hPcD1D1G9Q1IP1Q1IP1P;PyPEPMQ1:P0C:\L^>rP1Q1KQ0np+02gS0nP1Q0vO2P1Q1LP1Q1UPG1B22S1ICJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q18/IH%MOQ0fQ10Q0NPOPuQ1XQ1mPOQ0kO2POQ1;POQ0|PVQ0:Q1nGHE<3|Q01%M6Q0JQ11Q0HP6Q18Q1g,2DQ1lP6Q0zO2P6PuP6Q1_PTQ0:Q0uQ0u'BGHE<+0@Q1AQ1d,2DS1_,3DQ1ZQ1cQ0pP@Q0xPPPh13D`S1nQ0sP}PoQ0OPdP]Q0VQ15Q13Q1eQ1gQ1[Q1\Q1]Q1aQ0iQ1VQ0APSQ0CP\MO4Q0YQ1A#=S0|Q0[PjQ07PkF5Q1AQ1dQ1ZQ1cPTPVPQPPPhQ1nPnP6POPHPJPKPIQ15Q13Q1eQ1gQ1[Q1\Q1]Q1aQ0iQ1VP=P9P<P7MO4P4Q0|P5PjP1PkF5PRQ1HQ1_PRQ1l,2DS0|Q0|PAPRp+02nS1nQ1nPaPRp+02mS1XQ1Xp+02lS1oPcD1D1G9Q1:P1Q1:P1P;PyPEPMQ12P0C:\L^>rP1Q1HQ1_p+02kS1^P1P:O2P1Q1OP1Q0|PG1B``S0GCJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1%MQQ0NQ0oQ0ePVQ10Q1=PhPVQ0rO2PVQ0{PVQ0gQ0fQ0:Q0]GHE<+0@Q01Q0IQ16Q0PPTQ11Q1?,2DPPPTP{O2PTQ10PTQ1rQ0JQ0:1BssGHE<Q0nQ1Y,2DS1r,3DQ02Q1pPYQ0pP@Q1cQ1b13DiS0IQ0xQ0sP}PoQ0OPdP]Q1SQ1RQ1EQ1?Q15Q13Q1eQ1gQ1[Q1\Q0VQ0APSQ0CMO4P\Q0n#=S0]Q0YPjQ0aPkF5Q0nQ1YQ02Q1pPTPVPQQ1cQ1bQ0IPnP6POPHPJPKPIQ1SQ1RQ1EQ1?Q15Q13Q1eQ1gQ1[Q1\P=P9P<P7MO4P4Q0]P5PjP1PkF5PRQ1QQ1rPR12DPS0]Q0]PAPRp+032S0IQ0IPaPRp+031S0gQ0gp+030S1=PcD1D1G9Q12P1Q12P1P;PyPEPMQ0iP0C:\L^>rP1Q1QQ1rp+02oS1QP1PZO2P1Q1TP1Q0]PG1BiiS1TCJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0d#DQ1CQ07Q0fQ0oQ1JQ1bQ0fP|O2Q0fQ1>Q0fQ1iQ0NQ0:Q1`GHE<Q01Q1BQ0^'kQ0JQ16Q1m,2DQ1cQ0JP^O2Q0JQ0oQ0JQ1\,2DQ0HQ0:Q0tQ0tJ09FNQ1^Q1@,2DS1`,3DQ1DQ0hPwPYQ0pQ1pQ1A13DUS1iP@Q0xQ0sP}PoQ0OPdQ1jQ1kQ1lQ1mQ1SQ1RQ1EQ1?Q15Q13P]Q0VQ0APSMO4Q0CQ1^#=S1JP\PjQ0[PkF5Q1^Q1@Q1DQ0hPTPVPQQ1pQ1AQ1iPnP6POPHPJPKPIQ1jQ1kQ1lQ1mQ1SQ1RQ1EQ1?Q15Q13P=P9P<P7MO4P4Q1JP5PjP1PkF5PRQ1WQ1`PRQ1c,2DS1JQ1JPAPRp+036S1iQ1iPaPRp+035S12Q12p+034S1<PcD1D1G9Q0iP1Q0iP1P;PyPEPMQ1[P0C:\L^>rP1Q1WQ1`p+033S0KP1Q0mO2P1Q1GP1Q1JPG1BUUS1JCJG>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q1LQ08'kQ0NQ1CQ0jQ1AQ0NQ0qO2Q0NQ1FQ0NQ19Q0eQ0:Q1qI04FNQ01Q0HQ1B12Dh3hQ1pQ0HPpO2Q0HQ1CQ0HQ13,2DQ0PQ0:1BxxGHQ1QQ1n,2DS1C,3DQ1XQ1oQ0lPwPYQ0hQ0n13DqS1BQ0pP@Q0xQ0sP}PoQ0OQ0EQ0LPPPhQ1jQ1kQ1lQ1mQ1SQ1RPdP]Q0VQ0AMO4PSQ1Q#=S1qQ0CPjQ0YPkF5S19Q1QQ1nQ1XQ1oPTPVPQQ0hQ0nQ1BPnP6POPHPJPKPIQ0EQ0LPPPhQ1jQ1kQ1lQ1mQ1SQ1RP=P9P<P7MO4P4Q1qP5PjP1PkF5PRQ1]Q1CPRQ1p,2DS0NQ0NPAPRp+03:S1FQ1FPaPRp+039S0jQ0jp+038S1GPcD1D1D1Q1[P1EGS1PQ1[/I1S1hP;PyQ15/d0S1M9LEM\L^>rP1Q1]Q1Cp+037S1NP1P>O2P1Q1aP1Q0NPGPqPqD@FNS0NGUX0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0dQ1LQ0L,2DS1f3hQ0nQ0eQ0vO2Q0eQ1LQ0eQ1UQ07Q0:Q1IGHQ01Q0hQ0PP2O2Q0PQ1KQ0PQ1R,2DQ0^Q0:Q0wQ0wJ0940KQ0KQ0I,2DS1K,3DQ0gQ1=PzQ0lPwQ1oQ1^Q1;,3DS1IPYQ0pP@Q0xQ0sP}PoQ1dQ1ZQ1cQ1bQ0EQ0LPPPhQ1jQ1kQ0OPdP]Q0VMO4Q0AQ0K#=S1UPSPjP\PkF5S0eQ0KQ0IQ0gQ1=PTPVPQQ1oQ1^Q1IPnP6POPHPJPKPIQ1dQ1ZQ1cQ1bQ0EQ0LPPPhQ1jQ1kP=P9P<P7MO4P4Q1UP5PjP1PkF5PRQ1eQ1KPRQ0h,2DS1LQ1LPAPRp+03>S0dQ0dPaPRp+03=S0FQ0Fp+03<S1sPcD1D1D1Q15P1Q15P1P;PyPEPMQ1SP0C:\L^>rP1Q1eQ1Kp+03;R\P1P~O2P1Q1gP1Q1LPGQ1;Q1;D@G>D7FiS1L3\X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q1@Q0\PYO2Q07Q1OQ07Q0|Q0aQ0:Q0GI0440KQ01Q0^Q1H'QQ0^Q1k,2DQ0?Q0:P3P3J09Q1NQ1i,2DS1H,3DQ12Q1<Q0~PzQ0lQ1=Q1QQ0{,3DS1OPwPYQ0pP@Q0xQ0sP}Q1YQ02Q1pQ1AQ1dQ1ZQ1cQ1bQ0EQ0LPoQ0OPdP]MO4Q0VQ1N#=S07Q0APjQ0CPkF5S0GQ1NQ1iQ12Q1<PTPVPQQ1=Q1QQ1OPnP6POPHPJPKPIQ1YQ02Q1pQ1AQ1dQ1ZQ1cQ1bQ0EQ0LP=P9P<P7MO4P4Q07P5PjP1PkF5PRQ1EQ1HPRQ1o,2DS0|Q0|PAPRp+03BS0\Q0\PaPRp+03AS1tQ1tp+03@S1uPcD1D1D1Q1SP1Q1SP1P;PyPEPMQ1jP0C:\L^>rP1Q1EQ1Hp+03?S1HP1Q17O2P1Q1?P1Q0|PGQ0{Q0{D@G>D7FiS1v3\X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q08Q1:'QQ0aQ0]Q0[Q0:Q1TI04Q01Q0?Q1f%WfQ0:Cj1BCCP\Q1F,2DS1f,3DQ0jQ1GQ18Q0~PzQ1<Q0KQ1>,3DS0?Q0lPwPYQ0pP@Q0xQ0sQ1@Q1DQ0hQ0nQ1YQ02Q1pQ1AQ1dQ1ZP}PoQ0OPdMO4P]%=\S01Q0VPjPSPkF5S1TP\Q1FQ0jQ1GPTPVPQQ1<Q0KQ0?PnP6POPHPJPKPIQ1@Q1DQ0hQ0nQ1YQ02Q1pQ1AQ1dQ1ZP=P9P<P7MO4P4Q01P5PjP1PkF5PRQ1lQ1fPRQ1=,2DS0]Q0]PAPRp+03FS0aQ0aPaPRp+03ES1:Q1:p+03DS08PcD1D1D1Q1jP1Q1jP1P;PyPEPMQ0EP0C:\L^>rP1Q1lQ1fp+03CS1fP1Q0}O2P1Q1mP1Q0]PGQ1>Q1>D@G>D7FiS1w3\X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBE,0EP1Q0`Q1b,2DQ0Z#WQ0:CjQ1JPEQ0dQ0F,2DS1x,3DQ1sP\Q10PuP?Q1NQ1iQ14,3DS1yP[PCP3Q0wPxQ0tPsQ1XQ1oQ1^Q1@Q1DQ0hQ0nQ1YQ02Q1pQ0uPtPgQ0RMO4P_Q0d#=S1zQ0cPjQ0;PkF5Q0dQ0FQ1sP\PTPVPQQ1NQ1iQ1yPnP6POPHPJPKPIQ1XQ1oQ1^Q1@Q1DQ0hQ0nQ1YQ02Q1pP=P9P<P7MO4P4Q1zP5PjP1PkF5PRPhQ1xPRQ0K,2DS1zQ1zPAPRp+03IS1yQ1yPaPRp+03HS1yQ1yp+03GS1{PcD1D1G9Q0LP1Q0LP1P;PyPEPMQ1ZP0C:\L^>rP1PhQ1xQ0aP1Q16O2P1Q1jP1Q1zPGQ14Q14D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAE,0EXBEPZPEQ0FQ1s,2DS14,3DP\Q1FQ0{Q1;PqQ1iQ12Q16,3DS1xPUPiP`P2PpP^P{Q1oQ1^Q1@Q1DQ0hQ0nQ1YQ02Q1pQ1AQ0zPvPXQ0SMO4PbQ0F#=S1|Q0TPjQ0<PkF5Q0FQ1sP\Q1FQ0{PVPQQ1iQ12Q1xPnP6POPHPJPKPIQ1oQ1^Q1@Q1DQ0hQ0nQ1YQ02Q1pQ1AP=P9P<P7MO4P4Q1|P5PjP1PkF5PRQ1jQ14PRQ1KQ1KPAPRQ1yQ1yPaPRQ1{Q1{Q0aPcD1D1G9PPP1PPP1P;PyPEPMQ1cP0C:\L^>rP1Q1jQ14Q1:P1Q0oO2P1Q1kP1Q1KPGQ16Q16D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@E,0EXAEP:PEQ1s12D\RV,3DQ1FQ0jQ17P~P>Q12Q1<Q0o,3DS16Q0mPZP:Q0vQ0qP|Q0rQ1^Q1@Q1DQ0hQ0nQ1YQ02Q1pQ1AQ1dQ0kPmQ0QQ0bMO4PlQ1s#=S1KQ0UPjQ0=PkF5Q1sP\Q1FQ0jQ17P~PQQ12Q1<Q16PnP6POPHPJPKPIQ1^Q1@Q1DQ0hQ0nQ1YQ02Q1pQ1AQ1dP=P9P<P7MO4P4Q1KP5PjP1PkF5PRQ1kPVPRQ0g,2DRQPQPAPRQ1{Q1{PaPRQ0aQ0aQ1:PcD1D1G9PhP1PhP1P;PyPEPMQ1bP0C:\L^>rP1Q1kPVQ08P1Q1>O2P1Q1lP1PQPGQ0oQ0oD@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?E,0EX@EQ0vPEQ1TP\Q1FQ0jQ1GQ18Q0~PzQ1<Q0KQ0?PnP6POPHPJPKPIQ1@Q1DQ0hQ0nQ1YQ02Q1pQ1AQ1dQ1ZP=P9P<P7MO4P4Q01P5PjP1PkF5Q1w3\X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=E,0EX?EQ0qPEQ1FQ0j,2DRn,3DQ1GQ1NPuP?P[Q0KQ0IQ0},3DS1wPCP3Q0wPxQ0tPsQ0uQ1DQ0hQ0nQ1YQ02Q1pQ1AQ1dQ1ZQ1cPtPgQ0RP_MO4Q0cQ1F#=RVQ0WPjQ09PkF5Q1FQ0jQ1GQ1NPuP?P[Q0KQ0IQ1wPCP6POPHPJPKPIQ1DQ0hQ0nQ1YQ02Q1pQ1AQ1dQ1ZQ1cP=P9P<P7MO4P4PVP5PjP1PkF5PRQ1mPnPRQ1Q,2DRVPVPAPRQ1:Q1:PaPRQ08Q08Q1fPcD1D1G9Q1kP1Q1kP1P;PyPEPMQ0LP0C:\L^>rP1Q1mPnQ0\P1Q11O2P1Q1SP1PVPGQ0}Q0}D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<E,0EX=EP|PEQ0jQ1G,2DRn,3DQ1NQ1iQ1;PqPUQ0IQ0gQ11,3DS0}PiP`P2PpP^P{Q0zQ0hQ0nQ1YQ02Q1pQ1AQ1dQ1ZQ1cQ1bPvPXQ0SPbMO4Q0TQ0j#=S1:Q0_PjQ0BPkF5Q0jQ1GQ1NQ1iQ1;PqPUQ0IQ0gQ0}PiP`POPHPJPKPIQ0hQ0nQ1YQ02Q1pQ1AQ1dQ1ZQ1cQ1bP=P9P<P7MO4P4Q1:P5PjP1PkF5PRQ1SPnPRQ1CQ1CPAPRQ08Q08PaPRQ1fQ1fQ0\PcD1D1G9Q1lP1Q1lP1P;PyPEPMPPP0C:\L^>rP1Q1SPnQ1tP1Q10O2P1Q1RP1Q1CPGQ11Q11D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;E,0EX<EQ0rPEQ1GQ1N,2DRn,3DQ1iQ12P~P>Q0mQ0gQ1=Q10,3DS11PZP:Q0vQ0qP|Q0rQ0kQ0nQ1YQ02Q1pQ1AQ1dQ1ZQ1cQ1bQ0EPmQ0QQ0bPlMO4Q0UQ1G#=ROQ0@PjQ0DPkF5Q1GQ1NQ1iQ12P~P>Q0mQ0gQ1=Q11PZP:Q0vPHPJPKPIQ0nQ1YQ02Q1pQ1AQ1dQ1ZQ1cQ1bQ0EP=P9P<P7MO4P4POP5PjP1PkF5PRQ1RPnPRQ1X,2DROPOPAPRQ1fQ1fPaPRQ0\Q0\Q1tPcD1D1G9Q1mP1Q1mP1P;PyPEPMPhP0C:\L^>rP1Q1RPnQ1uP1Q0{O2P1Q1EP1POPGQ10Q10D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:E,0EX;EQ0kPEQ0GQ1NQ1iQ12Q1<Q0~PzQ0lQ1=Q1QQ1OPwPYQ0pP@PJPKPIQ1YQ02Q1pQ1AQ1dQ1ZQ1cQ1bQ0EQ0LP=P9P<P7MO4P4Q07P5PjP1PkF5Q1v3\X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9E,0EX:EPmPEQ1iQ12,2DS1v,3DQ1<Q0KP?P[PCQ1QQ1nQ17,3DS0GP3Q0wPxQ0tPsQ0uPtQ02Q1pQ1AQ1dQ1ZQ1cQ1bQ0EQ0LPPPgQ0RP_Q0cMO4Q0WQ1i#=RnQ0;PjQ0MPkF5Q1iQ12Q1<Q0KP?P[PCQ1QQ1nQ0GP3Q0wPxQ0tPsPKPIQ02Q1pQ1AQ1dQ1ZQ1cQ1bQ0EQ0LPPP=P9P<P7MO4P4PnP5PjP1PkF5PRQ1?Q1vPRQ1^,2DRnPnPAPRQ1tQ1tPaPRQ1uQ1uQ1HPcD1D1G9Q1RP1Q1RP1P;PyPEPMQ1kP0C:\L^>rP1Q1?Q1vQ0dP1Q18O2P1Q15P1PnPGQ17Q17D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8E,0EX9EQ0QPEQ12Q1<,2DS17,3DQ0KQ0IPqPUPiQ1nQ1XQ18,3DS1vP`P2PpP^P{Q0zPvQ1pQ1AQ1dQ1ZQ1cQ1bQ0EQ0LPPPhPXQ0SPbQ0TMO4Q0_Q12#=S1tQ0<PjPWPkF5Q12Q1<Q0KQ0IPqPUPiQ1nQ1XQ1vP`P2PpP^P{Q0zPIQ1pQ1AQ1dQ1ZQ1cQ1bQ0EQ0LPPPhP=P9P<P7MO4P4Q1tP5PjP1PkF5PRQ15Q17PRQ1`Q1`PAPRQ1uQ1uPaPRQ1HQ1HQ0dPcD1D1G9Q1EP1Q1EP1P;PyPEPMQ1lP0C:\L^>rP1Q15Q17Q0FP1PuO2P1Q13P1Q1`PGQ18Q18D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7E,0EX8EQ0bPEQ1<Q1z,3DQ0IQ0gP>Q0mPZQ1XQ1o13DuS18P:Q0vQ0qP|Q0rQ0kPmQ1AQ1dQ1ZQ1cQ1bQ0EQ0LPPPhQ1jQ0QQ0bPlQ0UMO4Q0@Q1<#=S1`Q0=PjQ06PkF5Q1<Q0KQ0IQ0gP>Q0mPZQ1XQ1oQ18P:Q0vQ0qP|Q0rQ0kPmQ1AQ1dQ1ZQ1cQ1bQ0EQ0LPPPhQ1jP=P9P<P7MO4P4Q1`P5PjP1PkF5PRQ13Q1zPRQ1D,2DS1`Q1`PAPRQ1HQ1HPaPRQ0dQ0dQ0FPcD1D1G9Q1?P1Q1?P1P;PyPEPMQ1mP0C:\L^>rP1Q13Q1zQ1sP1Q1;O2P1Q1eP1Q1`PGPuPuD@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6E,0EX7EPlPEQ0eQ0KQ0IQ0gQ1=PzQ0lPwQ1oQ1^Q1IPYQ0pP@Q0xQ0sP}PoQ1dQ1ZQ1cQ1bQ0EQ0LPPPhQ1jQ1kQ0OP9P<P7MO4P4Q1UP5PjP1PkF5Q1L3\X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5E,0EX6EQ0UPEQ0I13DQQ1=Q1QP[PCP3Q1^Q1@13D~S1LQ0wPxQ0tPsQ0uPtPgQ1ZQ1cQ1bQ0EQ0LPPPhQ1jQ1kQ1lQ0RP_Q0cQ0WMO4Q0;Q0I#=RuQ09PjQ0>PkF5Q0IQ0gQ1=Q1QP[PCP3Q1^Q1@Q1LQ0wPxQ0tPsQ0uPtPgQ1ZQ1cQ1bQ0EQ0LPPPhQ1jQ1kQ1lQ0RP_P<P7MO4P4PuP5PjP1PkF5PRQ1gPQPRQ0n,2DRuPuPAPRQ0FQ0FPaPRQ1sQ1sP\PcD1D1G9Q13P1Q13P1P;PyPEPMQ1RP0C:\L^>rP1Q1gPQQ1FP1Q0~O2P1Q1[P1PuPGP~P~D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4E,0EX5EQ0@PEQ0gQ0],3DQ1QQ1nPUPiP`Q1@Q1DQ0~,3DR~P2PpP^P{Q0zPvPXQ1cQ1bQ0EQ0LPPPhQ1jQ1kQ1lQ1mQ0SPbQ0TQ0_MO4Q0<Q0g#=RuQ0BPjQ0XPkF5Q0gQ1=Q1QQ1nPUPiP`Q1@Q1DP~P2PpP^P{Q0zPvPXQ1cQ1bQ0EQ0LPPPhQ1jQ1kQ1lQ1mQ0SPbQ0TP7MO4P4PuP5PjP1PkF5PRQ1[Q0]PRQ1rQ1rPAPRQ1sQ1sPaPRP\P\Q1FPcD1D1G9Q1eP1Q1eP1P;PyPEPMQ1EP0C:\L^>rP1Q1[Q0]Q0jP1P?O2P1Q1\P1Q1rPGQ0~Q0~D@G>D7E8X0F,0FX1E,0EX2B,0BX3N,0NX4EQ0=PNQ1=13DVQ1nQ1XQ0mPZP:Q1DQ0h13D?RuQ0vQ0qP|Q0rQ0kPmQ0QQ1bQ0EQ0LPPPhQ1jQ1kQ1lQ1mQ1SQ0bPlQ0UQ0@MO4Q0=Q1=#=R~Q0DPjQ05PkF5Q1=Q1QQ1nQ1XQ0mPZP:Q1DQ0hPuQ0vQ0qP|Q0rQ0kPmQ0QQ1bQ0EQ0LPPPhQ1jQ1kQ1lQ1mQ1SQ0bPlQ0UQ0@MO4P4P~P5PjP1PkF5PRQ1\PVPRQ02,2DR~P~PAPRP\P\PaPRQ1FQ1FQ0jPcD1D1G9Q1gP1Q1gP1P;PyPEPMQ1?P0C:\L^>rP1Q1\PVQ1GP1PqO2P1Q1]P1P~PGP?P?D@G>D7E8X0F,0FX1E,0EX2B,0BX3NQ0DPBQ19Q1QQ1nQ1XQ1oQ0lPwPYQ0hQ0nQ1BQ0pP@Q0xQ0sP}PoQ0OQ0EQ0LPPPhQ1jQ1kQ1lQ1mQ1SQ1RPdP]Q0VQ0AMO4PSQ1qP5PjP1PkF5Q1PQ1hP;PyQ0</d0Q1M5LE\L^>rQ0NGUX0F,0FX1E,0EX2BQ06PEQ1n13DOQ1oQ1^PCP3Q0wQ0nQ1Y13D>RyPxQ0tPsQ0uPtPgQ0RQ0LPPPhQ1jQ1kQ1lQ1mQ1SQ1RQ1EP_Q0cQ0WQ0;MO4Q09Q1n#=RoQ0MPjQ0ZPkF5Q1nQ1XQ1oQ1^PCP3Q0wQ0nQ1YPyPxQ0tPsQ0uPtPgQ0RQ0LPPPhQ1jQ1kQ1lQ1mQ1SQ1RQ1EP_Q0cQ0WQ0;MO4Q09PoQ0MPjP1PkF5PRQ1aPOPRQ1A,2DRoPoPAPRQ0jQ0jPaPRQ1GQ1GQ1NPcD1D1G9Q1\P1Q1\P1P;Q0M#DPEQ0=/d0Q13P0C:\L^>rP1Q1aPOQ1iP1PzO2P1Q0iP1PoPGP>P>D@G>D7E8X0F,0FX1EQ05PFQ1XQ0|,3DQ1^Q1@PiP`P2Q1YQ0213DzR>PpP^P{Q0zPvPXQ0SPPPhQ1jQ1kQ1lQ1mQ1SQ1RQ1EQ1?PbQ0TQ0_Q0<MO4Q0BQ1X#=RGPWPjPePkF5Q1XQ1oQ1^Q1@PiP`P2Q1YQ02P>PpP^P{Q0zPvPXQ0SPPPhQ1jQ1kQ1lQ1mQ1SQ1RQ1EQ1?PbQ0TQ0_Q0<MO4RoQ0BPGPWPjP1PkF5PRQ0iQ0|PRQ1_Q1_PAPRQ1GQ1GPaPRQ1NQ1NQ1iPcD1D1G9ROQ1]P1Q1]P1P;%DWR;PE1dS0Q1eP0C:\L^>rR_P1Q0iQ0|Q12P1P[O2P1Q1VP1Q1_Q0XQ0:+0<Rg1BzzRzCJG>D7E8X0FPfPEQ1^Q1XP1Q1^Q1@PiP`P2Q1YQ02P>PpP^P{Q0zPvPXQ0SPPPhQ1jQ1kQ1lQ1mQ1SQ1RQ1EQ1?PbQ0TQ0_Q0<MO4Q0BPGPWPjPePkF5PoQ0BPGPWPjPePkF5POQ1]PeQ1]Pe%MeP;P_PeQ0iQ0|Q12PeP[O2PeQ1VPeQ1_PgPzCJG>D7E8XMEQ1oQ1^Q1@Q1DPZP:Q0vQ02Q1p13D[Q0qP|Q0rQ0kPmQ0QQ0bPhQ1jQ1kQ1lQ1mQ1SQ1RQ1EQ1?Q15PlQ0UQ0@Q0=MO4Q0DQ1oQ06PjPfPkF;Rk00|kPRQ1VPnPRQ1Z,2DRjPjPAPRQ1NQ1NPaPRQ1iQ1iQ12PcD1D1D1Q1aPfEGRcQ1a/IfRR%MfRaQ06#DRAPEQ09/d0Q1gP0C:\L^>rRrQ1V=hfnRLQ1<PfPUO2RUQ1W,QfRlPfPjQ05#WQ0:CjRj1B[[R['6Rf'6Rh'6Rm'6R|'6R:'6RZ'6Rz'6Rg'6Q03002kPcPgQ0^PRPzQ0PPaPZQ0HPAP:Q0JPrP|PTPLPmP6PUPhPKPlPfP<PjP[P0P1FmFmFmFmFm13DnQ1^$07J08FYFYFYFYFYFYFYFYFYWpW[P0P1O2n2001000010121000000WCY02P0P1O2n2001000010121000000WCWlP0P1O2n2001000010121000000WCY04P0P1O2n2001000010121000000WCWaP0P1O2n2001000010121000000WCWdP0P1O2n2001000010121000000WCWsP0P1O2n2001000010121000000WCY0<P0P1O2n2001000010121000000WCWtP0P1O2n2001000010121000000WCQ0OP1J08WCP0P1O2n2001000010121000000WCX0FP0P1O2n201100001012110i000WCX1EP0P1O2n201100001012110i000WCX2BP0P1O2n201100001012110i000WCX3NP0P1O2n201100001012110i000WCZ0eEP0P1O2n201100001012110i000WCZ0dEP0P1O2n201100001012110i000WCZ0cEP0P1O2n201100001012110i000WCZ0bEP0P1O2n201100001012110i000WCZ0EEP0P1O2n201100001012110i000WCZ0DEP0P1O2n201100001012110i000WCZ0CEP0P1O2n201100001012110i000WCZ0BEP0P1O2n201100001012110i000WCZ0AEP0P1O2n201100001012110i000WCZ0@EP0P1O2n201100001012110i000WCZ0?EP0P1O2n201100001012110i000WCZ0hEP0P1O2n201100001012110i000WCZ0gEP0P1O2n201100001012110i000WCZ0fEP0P1O2n201100001012110i000Q0uQ0zQ0kP}PtQ0RQ0SQ0bPdP]Q0cQ0<Q0=PSQ09Q0BQ0DQ0CQ0MPWQ06Q0YQ0V,2DQ0[Q0`PeP4P5P0NM0{R0eWwWNZ0`}Z0N8Q03Q0yP0[]N`0P}`0=8eN:0zbDbDbDbDbybxPSQ0fJ08Y0;WmWhWzW{W^WgWcWrY01Y08Y00WfWqY03WbWYWoY0:WZWnWiW_WkY0>Y0]Z0K8Z098Y0IZ0GEZ0L8Y0_Z0MFY0HW`X4EX5EX6EX7EZ0TEZ0SEZ0\EZ0[EZ0ZEZ0YEZ0XEZ0WEZ0VEZ0UEX8EX9EX:EX;EX<EX=EX?EXVEZ0REZ0QEX@EXAEXBEZ0aEZ0JEZ0^EZ0OEPHPJPKPIP=P9P<P7L0xeWjY06W|W}WvWuY07W~X]8X\8Xe8Y05o"). Qed.
+  intros St Fp B BS SINK TOPOK OUT OUTFP SFR SFL TOK HOUT.
+  intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m st lo canary fmt VA i slots args
+         HS BY HF Ha0 APC VAA Hi AOK FPC ST LO GLO SPHI TQ SSP MI FRM HA BS0 SEPF SEPB HAP HVA VAHI.
+  subst a0. pose proof (bv_unsigned_in_range 64 a1) as Ra1. pose proof (bv_unsigned_in_range 64 a2) as Ra2.
+  unfold bv_modulus in Ra1, Ra2. change (2 ^ Z.of_N 64)%Z with (2^64)%Z in Ra1, Ra2.
+  pose proof (L_CORE2 Fp B BS SINK TOPOK OUT OUTFP SFR SFL TOK HOUT ra (bv_unsigned sp) gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m lo canary
+                      (bv_unsigned a1) fmt (bv_unsigned a2) VA slots a3 a4 HF LO GLO SPHI TQ FRM HA SEPF SEPB HAP HVA (proj1 Ra1) VAHI BS0
+                      t0 t1 t2 a5 a6 a7 t3 t4 t5 t6 st i args HS ST MI BY VAA SSP APC Hi AOK FPC) as C.
+  cbv zeta in C. rewrite !Z_to_bv_bv_unsigned in C.
+  eapply implM_mono.
+  { apply C; unfold PC_DEPTH, GLOBALS_TOP, zlength in *; lia. }
+  cbv beta. intros r st' ms' P. unfold POST, W in P. unfold printf_core_post, SR.
+  destruct P as (x5 & x6 & x7 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & x28 & x29 & x30 & x31 & Ft & fc' & apv & m' & -> & MU & WM & MI' & FRM' & FOK & ST' & HS' & SSP' & APC' & Hr).
+  exists x5, x6, x7, b1, b2, b3, b4, b5, b6, b7, x28, x29, x30, x31, Ft, fc', apv, m'.
+  rewrite Z_to_bv_bv_unsigned.
+  repeat (split; [assumption || reflexivity|]). exact Hr.
+Qed.
 
 Theorem printf_core1_proof : printf_core1_stmt.
 Proof.

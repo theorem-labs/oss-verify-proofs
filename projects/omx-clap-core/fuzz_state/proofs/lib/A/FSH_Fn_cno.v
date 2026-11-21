@@ -1,6 +1,6 @@
 (* lib/A/FSH_Fn_cno.v - LANE CNO program part: ASan contracts for check_no_overread (0x811c8) and past_nul (0x82728)
    of fuzz_state.asan, in the donor per-function U-form (FSH_Fn_FORM.md section 1; a Theorem Labs lane FMH_Fn
-   check_no_overread_spec, a working branch a1902517c68). Functional facts = fuzz_state's RELEASED plain
+   check_no_overread_spec, a working branch). Functional facts = fuzz_state's RELEASED plain
    lib/Prog/check_no_overread_c.v (nor_ops :18-22) and lib/Prog/past_nul_c.v (pn_copy :16, restated locally so the
    slot-named AllocSlots.v dependency of those files is not imported). Statements only (rule 24: no function proved).
    *** FLAGS for a Theorem Labs lane (confirm before I prove):

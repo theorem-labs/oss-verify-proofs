@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Lib/FP.v; 609 of its 651 lines of code are new or changed and 349 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* crtA_conv: the convert loop of check_round_trip in image A (fuzz_decode.asan) as an Exec.v evt walk --- the
    shadow checks of its four loads and two stores, the loop invariant crt_inv and its transport lemmas, and the
    exact float conversion each iteration makes.  It feeds the footprint twin lib/A/Prog/crtA_loop.v and, through
    it, the cgif-form walk of lib/A/Prog/check_round_trip_cg.v.
 
    PORT of the record of the same function,
-   a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_convert.v:1-701.
+   a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_convert.v:1-701.
    Every lemma name, every proof and every comment is the record's.  Five things are not:
      - the ASan address predicates (ASAN_K, app_mem, shadow_addr, addressable, addr_one, ...) come from
        lib/A/AsanCells.v.  The record's lib/A/AsanRT.v is not on this branch; AsanCells.v is the verbatim split of

@@ -3,7 +3,7 @@
    Section R (lib/A/FSW_preset_base64_encode.v); every numeral and register here is B's.
 
    What it proves (names and binder order as image A's, lib/A/FSW_preset_base64_encode.v at
-   a working branch 0a3016aa4bf / a working branch 6e3b1de9c97).
+   a working branch / a working branch).
    - encR_loop_exit: from the loop's exit 0x849b8 with exactly the premises encR_loop's KEXIT hands over
      (len <= 3R + 2, 3R <= len, the invariant, encR_exit_regs ms R, the first R output quads) to encode_spec's
      post. The exit's `bgeu a3,s0,84b24` (0x849b8) splits: 3R >= len, i.e. len = 3R, goes straight to 0x84b24 with
@@ -36,13 +36,13 @@
    stop TS_running with no obligation and no __asan_report_* edge is taken.
 
    rule 24: proves function preset_base64_encode (part tail; reuse search: proof-index preset_base64_encode,
-   ported from a working branch 402eb5565fc + donor a working branch b96980d72d1)
-   Ported from: lib/A/FSW_preset_base64_encode.v at a working branch 402eb5565fc lines 61-86 (the state /
+   ported from a working branch + donor a working branch)
+   Ported from: lib/A/FSW_preset_base64_encode.v at a working branch lines 61-86 (the state /
    seat / shent form), 356-443 (enc_round_state: the st_ok of a walk state), 1571-2009 (encR_round_step: the segment
    runs, the seats, the keep chain and the output bytes, the pattern this file follows), 1032-1232 (encR_nul, whose
-   premise list the KNUL hypothesis is); lib/B/FSW_preset_base64_encode_loop.v (a working branch
-   4478ee7c74e) for encR_exit_regs and the shape encR_loop's KEXIT hands over. Old-B donor
-   a working branch b96980d72d1 lib/B/Prog/preset_base64_encode_blocks.v:792-809 (enc_tail_c0), :821-843
+   premise list the KNUL hypothesis is); lib/B/FSW_preset_base64_encode_loop.v (a working branch)
+   for encR_exit_regs and the shape encR_loop's KEXIT hands over. Old-B donor
+   a working branch lib/B/Prog/preset_base64_encode_blocks.v:792-809 (enc_tail_c0), :821-843
    (enc_tail_c1), :845-877 (enc_tail_a), :879-914 (enc_tail_b), :916-941 (enc_tail_b2), :943-970 (enc_tail_d1),
    :972-1007 (enc_tail_d2), :1009-1051 (enc_tail_e), :1093-1117 (enc_tail_list1 / list2), :1119-1247 (enc_tail: the
    step order and the split on len - 3R), :1287-1295 (the exit test 0x849b8). *)
@@ -1431,8 +1431,8 @@ eapply SRr_sym_branch with (c := BC_LTU) (a := SOff 60 0) (b := SOff 9 0);
          apply (encT_kept_use ms Rk); solve [unfold acallee_saved; lia | lia]) ].
 Qed.
 
-(* encR_tail (A's name and binder order, lib/A/FSW_preset_base64_encode.v at a working branch
-   6e3b1de9c97): the tail from 0x849bc, composed with encR_nul, so its post is encode_spec's *)
+(* encR_tail (A's name and binder order, lib/A/FSW_preset_base64_encode.v at a working branch):
+   the tail from 0x849bc, composed with encR_nul, so its post is encode_spec's *)
 Lemma encR_tail : forall ms md R,
   encR_inv (ms_mem ms) md ->
   encR_exit_regs ms R ->
@@ -1631,7 +1631,7 @@ eapply SRr_sym_branch with (c := BC_GEU) (a := SOff 13 0) (b := SOff 8 0);
 Qed.
 
 (* encR_loop_exit (A's name and binder order = encR_loop's KEXIT, lib/A/FSW_preset_base64_encode.v at
-   a working branch 0a3016aa4bf): the exit 0x849b8 composed with the tail and encR_nul *)
+   a working branch): the exit 0x849b8 composed with the tail and encR_nul *)
 Lemma encR_loop_exit : forall ms md R,
   len <= 3 * R + 2 -> 3 * R <= len ->
   encR_inv (ms_mem ms) md -> encR_exit_regs ms R ->

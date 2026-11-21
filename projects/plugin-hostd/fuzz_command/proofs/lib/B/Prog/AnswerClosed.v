@@ -4,15 +4,16 @@
 (* Modified by Theorem Labs, 2026-10: the closing of answer's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan; lib/B/Prog/answer.v, tanswer_spec_holds) at the pinned image: lib/B/Prog/CmdImg.v's
    instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head. The pattern of
-   a Theorem Labs lane's PASS4-REFIT.md section F (A's lib/A/Prog/SupRemoveAllRefitClosed.v:29-60 on a working branch e84227c9553,
-   a Theorem Labs lane's lib/A/Prog/RecBClosed.v:48-90, :163-191 on a working branch f349bdaedba), with a Theorem Labs lane's B
-   CmdRecFacts (a working branch fc8bcbd8b42, with 707acd856cb's closers): the walk's per-binary image facts are
+   a Theorem Labs lane's PASS4-REFIT.md section F (A's lib/A/Prog/SupRemoveAllRefitClosed.v:29-60 on a working branch,
+   a Theorem Labs lane's lib/A/Prog/RecBClosed.v:48-90, :163-191 on a working branch), with a Theorem Labs lane's B
+   CmdRecFacts (a working branch, with's closers): the walk's per-binary image facts are
    CmdRecImg.cmd_img_facts_tfib, its object bridge CmdRecRest.cmd_val_objs_PB, its call targets
    CmdRecRest.cmd_sig_prog_PB, the shadow base's record CmdRecRest.cmd_palib, PRW CmdRecRest.cmd_prw_tfib (the
    program's statics in tfibsegs' read-write window), TLF (PaLibF.PALibF) CmdRecRest.cmd_palibf (the record's
    use-after-return cell 0xb0c40 and its GOT word 0xa5fa8, and its code map) and the frame flag law
    CmdRecRest.cmd_frame_flag_law. What remains is the allocator record HB, the meter's laws MTL and frame laws MTFL,
    and the statement's callee and runtime contracts at every FP state. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

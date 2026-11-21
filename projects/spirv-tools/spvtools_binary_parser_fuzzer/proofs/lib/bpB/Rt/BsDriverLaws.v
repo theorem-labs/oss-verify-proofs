@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the driver laws' new last field: the model's channel reader is kept). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -33,7 +34,10 @@ Record asan_driver_laws (H : asr) : Prop := ADL {
 
   adl_sb : forall mo mo', same_but_materialized mo mo' -> as_MPRES H mo mo';
 
-  adl_live : ADRV_LIVE <= as_LIVE_MAX H /\ ADRV_CNT <= as_LIVE_CNT_MAX H }.
+  adl_live : ADRV_LIVE <= as_LIVE_MAX H /\ ADRV_CNT <= as_LIVE_CNT_MAX H;
+
+  (* the channel reader is part of m_proc, which the driver's model relation keeps *)
+  adl_rdr : forall mo mo', as_MPRES H mo mo' -> m_channel_reader mo' = m_channel_reader mo }.
 
 End HCW.
 

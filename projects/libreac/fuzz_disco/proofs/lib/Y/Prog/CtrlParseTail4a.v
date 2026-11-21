@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: relocated from the walk of the same function of libreac's fuzz_grant (the two are the same code at other addresses). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing): ported from a working branch edc3e948664 fuzz_grant/lib/B/Prog/CtrlParseTail4a.v (Y pc = grant B pc + 0x4d30), with fuzz_disco's plumbing from lib/A/Prog/CtrlParseTail4a.v (a working branch 917792b6f42), over lib/Y/Prog/CtrlParseCut.v. *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing): ported from a working branch fuzz_grant/lib/B/Prog/CtrlParseTail4a.v (Y pc = grant B pc + 0x4d30), with fuzz_disco's plumbing from lib/A/Prog/CtrlParseTail4a.v (a working branch), over lib/Y/Prog/CtrlParseCut.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, the walk from cut B (0x876a0) to cut J for the class-4 frames of the record fragment (seg <> 3): RECORD_FRAGMENT (11)
    (pz_P4a; a second attack on CtrlParseTail4.v). *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.

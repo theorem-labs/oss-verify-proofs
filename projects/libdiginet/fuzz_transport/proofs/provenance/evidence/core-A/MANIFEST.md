@@ -46,8 +46,8 @@ and sha256 (`internal record`).
 | `add-kit.sh`, `kit-rec.tsv` | the composition kit in the run's LIB: the script that writes the 17 kit files from the released libs by module path only (row TCA's preparation script, sha256 1cfe18d70bfd, with the hub path taken from HUB), and its table for the run of record |
 
 Inputs of run.sh that are not in this directory: the port_core 83f5203d2a2f release (port_core.py,
-sha256 83f5203d2a2f; internal record), fuzz_grant's released lib (origin/ossv/recipes 25e3d17bdb50, normalised) and its released
-lib/B YA09.v / YA0e.v (recipes 4f87de75d67), fuzz_grant.asan's symbol list (sha256 b46268790c46), the images fuzz_grant.asan
+sha256 83f5203d2a2f; internal record), fuzz_grant's released lib (normalised) and its released
+lib/B YA09.v / YA0e.v (recipes), fuzz_grant.asan's symbol list (sha256 b46268790c46), the images fuzz_grant.asan
 (c2c7559b29bd), fuzz_transport.asan (e89be137db17), its unstripped twin (86efc3a80314) and fuzz_transport.asan-ubsan
 (41113a03c82f), and the unit's lib (on the new pin, with T3r's cut layer records/startup-layer.tsv, the kit,
 Reusable/YImgTop.v sha256 e4d179ca9a5a). run.sh checks each pin.

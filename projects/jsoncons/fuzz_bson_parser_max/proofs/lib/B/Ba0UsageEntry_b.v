@@ -1,5 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the SIGPIPE disposition left free, the reserved-interval ledger, the rseq-dependent auxv, the 6 MiB zero-filled stack window, the nine-byte string read-ahead, the launch input's kernel build): changed GAP, WINDOW, WORD8 and 10 more; added HRZ, Hlau, Hvl and 16 more; removed tid_chk_0, tid_chk_1; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0UsageEntry.v, 59 lines within its lines 37-440. *)
+(* LPS 727298f3: a recorded stack window was measured UP from sp at the released model (f1006fe8 Run.v init_machine_state) and is measured DOWN from the stack VMA end at LPS 727298f3 (Run.v stack_window_lo), so a window of 8388608 bytes below sp claims up to 2101782 bytes the model answers None for. Shortened by gen_kwin_plain.py to stack_max_size - max (TOP - SP) = 6144513, keeping the window's TOP unchanged; every number read out of the model, see the tool's four control legs. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -11,7 +13,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.jsoncons.fuzz_bson_parser_max.images Require Import AsanUbsan.
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import AsanAcct.
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import PropExec ShapeAlg SpinAlg CatExec CatSim StoreOk AgentLib AxSymExec3K AxSymExec3SoundK AsanPlanCoreK AsanPlanK AsanPlanSoundK AsanInitK.
-  From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib.B Require Import Ba0DefsK_b Ba0PlanImagesK_b Ba0StartupK_b. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import HandoffBridgeK HandoffBInvK HandoffRolesK. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib.B Require Import Ba0HandoffK_b Ba0HSK_0_b Ba0HSK_1_b Ba0MainTableK_b Ba0HandoffInstK_b Ba0DrvEntryK_b Ba0UsageEntryK_b Ba0StartupFinalK_b.
+  From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib.B Require Import Ba0DefsK_b Ba0PlanImagesK_b Ba0StartupK_b. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import HandoffBridgeK HandoffBInvK HandoffRolesK. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib.B Require Import Ba0HandoffK_b Ba0CertK_202_b Ba0HandoffInstK_b Ba0DrvEntryK_b Ba0UsageEntryK_b Ba0StartupFinalK_b.
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import AsanAcctShape SymExec2 SymExec2Sound SymRun SymDrive SymDriveX HeapIface HeapIfaceA HeapIfaceABx HeapIfaceANull. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib.B Require Import IcptIfaceA_b. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import LibIface LibIfaceAB
   ArtRuns ArtBridge. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib.B Require Import BatInv_b BatFsInv_b Ba0ArtHandoffK_b Ba0ArtHandoffInstK_b Ba0StkShK_b. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import DrvKitA As0DrvKitA. From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib.B Require Import Ba0DrvEntry_b Ba0DrvEntryInst_b Ba0Drv_defs_b Ba0DrvLib_b Ba0DrvRead_b Ba0DrvStdio_b Ba0DrvA_b
   Ba0DrvE_b Ba0MainPhaseA_b Ba0DrvMain_b Ba0DiagArmRefuse_b.
@@ -36,7 +38,7 @@ Definition sr_mainU : list expr :=
 
 Definition kn_mainU : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) (6144513);
    KWord (SA (EVar 0) 8) 8 (EVar 1);
    KImg 0x10000 0x139000; KImg 0x672290 0x673c30;
    KImg 0x13bcc8 0x13bdb8; KImg 0x13bdb8 0x13bea0; KImg 0x13bea0 0x13c580;
@@ -51,7 +53,9 @@ Definition vals_mainU (sp p0 argcw can tid : word) (R : bvmap 5 word) : list wor
 
 Section FPX_1. Context {fx : PropExec.FPState}.
 Section PackU.
-  Variables (sp : word) (argc envc : Z).
+  (* [STR0] is a PARAMETER, as in [Ba0DrvEntry]'s Pack: at 727298f3 argv[0] is the launch's
+     string base [usp + cat_string_off ..], not [usp + 8*argc + 8*envc + 184] *)
+  Variables (sp : word) (argc envc STR0 : Z).
   Variable R : bvmap 5 word.
   Variable MV : word -> option byte.
   Variable ebs : nat -> list byte.
@@ -62,8 +66,8 @@ Section PackU.
     [(1, 0x1180b0); (2, usp - 48); (3, 0x10800); (4, 0x673d00); (8, usp + 8); (9, argc); (10, argc); (11, usp + 8);
      (12, usp + 16 + 8 * argc); (18, 0xa7b04); (19, usp + 16 + 8 * argc); (20, 0); (21, 0); (22, 0); (23, 0); (24, 0); (25, 0); (26, 0); (27, 0)] ->
     getr R (Z_to_bv 5 r) = Z_to_bv 64 v.
-  Hypothesis WORD8 : rdn ASEGS MV (Z_to_bv 64 (usp + 8)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (usp + 8 * argc + 8 * envc + 184))).
-  Hypothesis WINDOW : forall d (m : nat), 0 <= d -> d + Z.of_nat m <= 8388608 -> store_ok ASEGS MV (Z_to_bv 64 (usp - 8388608 + d)) m = true.
+  Hypothesis WORD8 : rdn ASEGS MV (Z_to_bv 64 (usp + 8)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 STR0)).
+  Hypothesis WINDOW : forall d (m : nat), 0 <= d -> d + Z.of_nat m <= stack_window_depth -> store_ok ASEGS MV (Z_to_bv 64 (usp - stack_window_depth + d)) m = true.
   Variable can : word.
   Hypothesis GUARD : rdn ASEGS MV (Z_to_bv 64 0x693d40) 8 = Some (word_to_le_bytes 8 can).
   Hypothesis IMG : forall lo hi i, In (lo, hi) [(0x10000, 0x139510); (0x13952c, 0x13c580); (0x66228a, 0x673c30); (0x693fc8, 0x693ff8)] -> lo <= i < hi -> MV (Z_to_bv 64 i) = None.
@@ -72,7 +76,7 @@ Section PackU.
   Hypothesis TIDW : rdn ASEGS MV (Z_to_bv 64 0x673c58) 4 = Some (word_to_le_bytes 4 tid).
   Hypothesis XCW : Forall (fun c : Z * nat * Z => rdn ASEGS MV (Z_to_bv 64 (fst (fst c))) (snd (fst c)) = Some (word_to_le_bytes (snd (fst c)) (Z_to_bv 64 (snd c)))) XC9_CELLS.
 
-  Let p0 : word := Z_to_bv 64 (usp + 8 * argc + 8 * envc + 184).
+  Let p0 : word := Z_to_bv 64 STR0.
   Let ES : env := Env (vals_ev (vals_mainU sp p0 (Z_to_bv 64 argc) can tid R)) ebs.
 
   #[using="Type"] Lemma ev_junkU : forall i, (i < 32)%nat -> ev ES (6 + i) = getr R (Z_to_bv 5 (Z.of_nat i)).
@@ -116,7 +120,9 @@ Section PackU.
     unfold kn_mainU, know_ok. repeat (apply Forall_cons); [ .. | apply Forall_nil]; cbn [kentry_ok].
     - split; [lia | exact S2].
     - cbn [edenot]. change (ev ES 0) with sp. lia.
-    - split; [apply FL; lia|]. intros d m Hd Hm. rewrite estart_spU. replace (usp + -8388608 + d) with (usp - 8388608 + d) by ring. apply WINDOW; assumption.
+    - split; [apply FL; lia|]. intros d m Hd Hm. rewrite estart_spU.
+      assert (SWD : stack_window_depth = 6144513) by (vm_compute; reflexivity). rewrite SWD in WINDOW.
+      replace (usp + -6144513 + d) with (usp - 6144513 + d) by ring. apply WINDOW; assumption.
     - split; [lia|]. split; [apply FL; lia|]. rewrite (adenot_flat ES (SA (EVar 0) 8) 8 ltac:(apply FL; lia)), estart_spU. exact WORD8.
     - split; [lia|]. split; [lia|]. intros i Hi. apply (IMG 0x10000 0x139510); [left; reflexivity | lia].
     - split; [lia|]. split; [lia|]. intros i Hi. apply (IMG 0x66228a 0x673c30); [right; right; left; reflexivity | lia].
@@ -146,10 +152,8 @@ End FPX_1.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Lemma tid_chk_0 : tid_chk HS_0 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma tid_chk_1 : tid_chk HS_1 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma tid_chk_HSA : forall h, (h < 2)%nat -> tid_chk (HSA h) = true.
-Proof. intros h Hh. destruct h as [|[|h]]; [exact tid_chk_0 | exact tid_chk_1 | lia]. Qed.
+Lemma tid_chk_HSA : forall r h, (h < 2)%nat -> tid_chk (HSA r h) = true.
+Proof. intros r [|[|h]] H; [| |lia]; unfold HSA; destruct (Z.eqb r 1); vm_compute; reflexivity. Qed.
 
 Section FPX_2. Context {fx : PropExec.FPState}.
 Section InstU.
@@ -158,12 +162,40 @@ Section InstU.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
   Variable fs : Fs.Fs.
+  (* [AsanInitK]'s [Section Init] is parameterised by the full
+     [State.mkProcInput_full] field list, so [SINV0]/[argH0] discharge all
+     fifteen of [AsanInitK.inp]'s arguments plus [mbase] and [apc].  Same block
+     as the already-migrated [HandoffBridgeK.v:619-629]. *)
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable abrt : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sdf : bool.
+  Variable apc : N.
+  (* the certificate's CONFIG_RSEQ flag, tied to the run's by [HRZ] below
+     (as in jsoncons/fuzz_bigint) *)
+  Variable r : Z.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Abbreviation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Abbreviation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  (* Ported premises the revision's [Ba0UsageEntryK_b]/[Ba0DrvEntryK_b] lemmas carry:
+     [Hlau] is [Run.valid_entry_va]'s fifth conjunct ([727298f3:Run.v:3750],
+     [valid_entry_sv48] at :3767) and [Hvl] a conjunct of
+     [Run.valid_input_either] (:4703); the unit's top binder already has both. *)
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+  Hypothesis Hvl : valid_launch (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+  Hypothesis HRZ : r = APK.rseq_z (kb_rseq (in_kernel (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf))).
+  Remark r01 : 0 <= r <= 1.
+  Proof. rewrite HRZ. apply APK.rseq_z_range. Qed.
+  #[local] Abbreviation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc).
+  #[local] Abbreviation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
   #[local] Abbreviation CSOK := (APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
 
   Variables BUDGET LENMAX KMAX : Z.
@@ -171,17 +203,18 @@ Section InstU.
   Variable EXTRA : list (Z * Z).
   Hypothesis EXTRA_wf : A_wf EXTRA.
   Hypothesis BUD_le : 16515072 + 2461330432 + A_bytes EXTRA + BUDGET <= AsanInitK.LIMIT.
-  Hypothesis GAP : AsanCeil.bottomup_floor + LENMAX + (17729665200128 + BUDGET) + (21 + KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
+  Hypothesis GAP : AsanCeil.bottomup_floor + LENMAX + (17729665282048 + BUDGET) + (23 + KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
 
   #[local] Abbreviation usp := (bv_unsigned sp).
   #[local] Abbreviation argc := (Z.of_nat (length argv)).
   #[local] Abbreviation envc := (Z.of_nat (length envp)).
   #[local] Abbreviation a0s := (nth 0 argv []).
+  #[local] Abbreviation STR0 := (usp + Z.of_nat (cat_string_off (kb_rseq (in_kernel (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf))) sp (ed_top rdraw) argv envp execfn)).
 
-  #[using="Hsp Hva Hve Hfit BUDGET LENMAX KMAX BUD EXTRA_wf BUD_le GAP"] Theorem as0_main_entryU : forall ebs h, (h < 2)%nat -> forall E R FULL model, CSOK E (HSA h) R FULL model ->
-    let A0 := as0_A0 EXTRA (HSA h) E in
+  Theorem as0_main_entryU : forall ebs h, (h < 2)%nat -> forall E R FULL model, CSOK E (HSA r h) R FULL model ->
+    let A0 := as0_A0 EXTRA (HSA r h) E in
     let MV := mrestrict (ahid A0 model) FULL in
-    let p0 := Z_to_bv 64 (usp + 8 * argc + 8 * envc + 184) in
+    let p0 := Z_to_bv 64 STR0 in
     exists can tid : word,
       let ES := Env (vals_ev (vals_mainU sp p0 (Z_to_bv 64 argc) can tid R)) ebs in
       SX2S.regs_ok ES sr_mainU R
@@ -189,58 +222,60 @@ Section InstU.
       /\ lzinv ASEGS (ahid A0 model) A0 model
       /\ m_fds model = APSK.fds_std /\ m_fs model = fs
       /\ rdn ASEGS MV p0 (length a0s + 1) = Some (a0s ++ [Z_to_bv 8 0])
-      /\ bv_unsigned p0 = usp + 8 * argc + 8 * envc + 184
-      /\ bv_unsigned p0 + Z.of_nat (length a0s) + 1 + 16 <= 2 ^ 47
-      /\ (forall i, 0 <= i < Z.of_nat (length a0s) + 1 + 16 -> FULL (Z_to_bv 64 (bv_unsigned p0 + i)) <> None).
-  Proof.
+      /\ bv_unsigned p0 = STR0
+      /\ bv_unsigned p0 + Z.of_nat (length a0s) + 1 + 9 <= 2 ^ 47
+      /\ (forall i, 0 <= i < Z.of_nat (length a0s) + 1 + 8 -> FULL (Z_to_bv 64 (bv_unsigned p0 + i)) <> None).
+  Proof using All.
     intros ebs h Hh E R FULL model HC A0 MV p0.
-    pose proof (as0_chk_HSA h Hh) as C0. pose proof (drv_chk_HSA h Hh) as CD. pose proof (stk_chk_HSA h Hh) as CS.
-    pose proof (as0_inst_bud BUDGET EXTRA BUD_le h Hh) as BL.
-    pose proof (as0_inst_gap BUDGET LENMAX KMAX BUD GAP h Hh) as GP.
+    pose proof (as0_chk_HSA r h Hh) as C0. pose proof (drv_chk_HSA r h r01 Hh) as CD. pose proof (stk_chk_HSA r h r01 Hh) as CS.
+    pose proof (as0_inst_bud BUDGET EXTRA BUD_le r h Hh) as BL.
+    pose proof (as0_inst_gap BUDGET LENMAX KMAX BUD GAP r h Hh) as GP.
     assert (G : exists can : word, rdn ASEGS MV (Z_to_bv 64 0x693d40) 8 = Some (word_to_le_bytes 8 can)).
-    { edestruct (ent_guard sp brk0 rdraw argv envp uid hw fs) as (can & G1 & G2); [ .. | exists can; exact G1]; eassumption. }
+    { edestruct (ent_guard sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc) as (can & G1 & G2); [ .. | exists can; exact G1]; eassumption. }
     destruct G as (can & G1). exists can.
     assert (T : exists tid : word, 1 <= bv_unsigned tid <= 4194303 /\ rdn ASEGS MV (Z_to_bv 64 0x673c58) 4 = Some (word_to_le_bytes 4 tid)).
-    { eapply (entg_tid sp brk0 rdraw argv envp uid hw fs); try eassumption. exact (tid_chk_HSA h Hh). }
+    { eapply (entg_tid sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); try eassumption. exact (tid_chk_HSA r h Hh). }
     destruct T as (tid & TR & T2). exists tid. cbv zeta.
     assert (SR : 0x7fff80000000 <= usp <= 2 ^ 47 /\ usp mod 16 = 0).
     { destruct Hsp as (H1 & H2 & H3). unfold sp_window_lo, sp_window_hi in H1, H2. lia. }
     assert (HB : 1 <= argc <= 1024 /\ 0 <= envc <= 256).
     { pose proof Hve as [Hle _]. pose proof Hva as (Hac & _). lia. }
-    assert (STR : rdn ASEGS MV (cat_argv_ptr sp argv envp 0) (length a0s + 1) = Some (a0s ++ [Z_to_bv 8 0])
-                  /\ bv_unsigned (cat_argv_ptr sp argv envp 0) = usp + 8 * argc + 8 * envc + 184).
-    { eapply (entg_str0 sp brk0 rdraw argv envp uid hw fs); try eassumption. }
+    assert (STR : rdn ASEGS MV (cat_argv_ptr (ed_top rdraw) argv envp execfn 0) (length a0s + 1) = Some (a0s ++ [Z_to_bv 8 0])
+                  /\ bv_unsigned (cat_argv_ptr (ed_top rdraw) argv envp execfn 0) = STR0).
+    { eapply (entg_str0 sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); try eassumption. }
     destruct STR as (STR1 & PV0).
-    assert (PE : p0 = cat_argv_ptr sp argv envp 0).
-    { unfold p0. apply bv_eq. rewrite PV0, Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64). rewrite Z.mod_small by lia. reflexivity. }
+    assert (PE : p0 = cat_argv_ptr (ed_top rdraw) argv envp execfn 0).
+    { unfold p0. rewrite <- PV0. apply Z_to_bv_bv_unsigned. }
     split; [|split; [|split; [|split; [|split; [|split; [|split; [|split]]]]]]].
-    - apply (main_regs_okU sp argc envc R ebs).
-      eapply (entg_regs sp brk0 rdraw argv envp uid hw fs); try eassumption.
-    - apply (main_know_okU sp argc envc R MV ebs SR HB).
-      + eapply (entg_stack_words sp brk0 rdraw argv envp uid hw fs); try eassumption.
-      + eapply (ent_window sp brk0 rdraw argv envp uid hw fs); eassumption.
+    (* [main_regs_okU] is [#[using="REGS"]] and neither REGS nor its statement names [envc]
+       (p0 is STR0 now), so the section does not discharge [envc] into it. *)
+    - apply (main_regs_okU sp argc STR0 R ebs).
+      eapply (entg_regs sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); try eassumption.
+    - apply (main_know_okU sp argc envc STR0 R MV ebs SR HB).
+      + eapply proj2. eapply (entg_stack_words sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); try eassumption.
+      + eapply (ent_window sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); eassumption.
       + exact G1.
-      + eapply (ent_img sp brk0 rdraw argv envp uid hw fs); eassumption.
+      + eapply (ent_img sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); eassumption.
       + exact TR.
       + exact T2.
-      + change XC9_CELLS with XC9K. eapply (ent_xcells sp brk0 rdraw argv envp uid hw fs); try eassumption; first [reflexivity | exact (xc_chk_HSA h Hh)].
-    - unfold lzinv. eapply (ent_lz sp brk0 rdraw argv envp uid hw fs); eassumption.
-    - eapply (ent_model sp brk0 rdraw argv envp uid hw fs); eassumption.
-    - eapply (ent_model sp brk0 rdraw argv envp uid hw fs); eassumption.
+      + change XC9_CELLS with XC9K. eapply (ent_xcells sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); try eassumption; first [reflexivity | exact (xc_chk_HSA r h r01 Hh)].
+    - unfold lzinv. eapply (ent_lz sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); eassumption.
+    - eapply (ent_model sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); eassumption.
+    - eapply (ent_model sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); eassumption.
     - rewrite PE. exact STR1.
     - rewrite PE. exact PV0.
-    - rewrite PE. eapply (entg_str0_hi sp brk0 rdraw argv envp uid hw fs); try eassumption.
-    - rewrite PE. eapply (entg_str0_defined sp brk0 rdraw argv envp uid hw fs); try eassumption.
+    - rewrite PE. eapply (entg_str0_hi sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); try eassumption.
+    - rewrite PE. eapply (entg_str0_defined sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); try eassumption.
   Qed.
 
-  #[using="Hsp Hva Hve Hfit BUDGET LENMAX KMAX BUD EXTRA BUD_le GAP"] Theorem as0_main_stack_definedU : forall h, (h < 2)%nat -> forall E R FULL model, CSOK E (HSA h) R FULL model ->
+  Theorem as0_main_stack_definedU : forall h, (h < 2)%nat -> forall E R FULL model, CSOK E (HSA r h) R FULL model ->
     forall top, top mod 4096 = 0 -> top <= usp + 4096 -> defined FULL usp (top - usp).
-  Proof.
+  Proof using All.
     intros h Hh E R FULL model HC top Hm Hle i Hi.
-    pose proof (as0_chk_HSA h Hh) as C0. pose proof (drv_chk_HSA h Hh) as CD. pose proof (stk_chk_HSA h Hh) as CS.
-    pose proof (as0_inst_bud BUDGET EXTRA BUD_le h Hh) as BL.
-    pose proof (as0_inst_gap BUDGET LENMAX KMAX BUD GAP h Hh) as GP.
-    eapply (entg_stack_defined_top sp brk0 rdraw argv envp uid hw fs); try eassumption.
+    pose proof (as0_chk_HSA r h Hh) as C0. pose proof (drv_chk_HSA r h r01 Hh) as CD. pose proof (stk_chk_HSA r h r01 Hh) as CS.
+    pose proof (as0_inst_bud BUDGET EXTRA BUD_le r h Hh) as BL.
+    pose proof (as0_inst_gap BUDGET LENMAX KMAX BUD GAP r h Hh) as GP.
+    eapply (entg_stack_defined_top sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc); try eassumption.
   Qed.
 End InstU.
 End FPX_2.
@@ -353,18 +388,22 @@ Section UsagePhase.
 
   #[using="L C IL BUDGET BUD_ge BUD_hi INST_OK FREE_NULL H4E ICPT_OK DLA_OK DRV_CONSTS DG_USAGE"] Theorem as0_usage : usage_stmt scfg.
   Proof.
-    unfold usage_stmt. intros sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit Hvfs h Hh2 E R FULL model HC Hargc.
+    unfold usage_stmt. intros sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc r Hsp Hva Hve Hfit Hvfs Hlau Hvl HRZ h Hh2 E R FULL model HC Hargc.
+    assert (r01 : 0 <= r <= 1) by (rewrite HRZ; apply APK.rseq_z_range).
+    (* [ent_model] and [sp0_val] take [HRZ] (after [r], resp. after [Hlau]):
+       [Ba0DrvEntryK_b.drv_chk_parts], which both use, proves its [OE] with a bare
+       [subst], and that rewrites with the Section's [HRZ]. *)
     assert (EFS : m_fs model = fs).
-    { exact (proj2 (ent_model sp brk0 rdraw argv envp uid hw fs (HSA h) (drv_chk_HSA h Hh2) E R FULL model HC)). }
+    { exact (proj2 (ent_model sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc r HRZ (HSA r h) (drv_chk_HSA r h r01 Hh2) E R FULL model HC)). }
     rewrite (spec_usageA argv fs Hargc).
     pose proof (mp_bud BUDGET BUD_ge) as MPB. pose proof (mp_gap BUDGET BUD_hi) as MPG.
     (* [comment removed for export] *)
-    set (cs := HSA h). set (rn := as0_rn E cs). set (ar := as0_ar E cs).
-    set (MAPS0 := vm_maps (m_vmmaps model)). set (RESV0 := segments_reserved ASEGS0). set (NOACC0 := vm_noaccess (m_vmmaps model)).
-    pose proof (as0_art_handoff_h sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit BUDGET BUD_ge BUD_hi h Hh2 E R FULL model HC) as HT.
-    pose proof (as0_handoff_static sp brk0 rdraw argv envp uid hw fs BUDGET BatInv_b.LENMAX BatInv_b.KMAX MPB MPG h Hh2 E R FULL model HC) as BS.
-    rewrite (as0_RES_art h Hh2 E) in BS. fold cs rn in BS.
-    pose proof (sp0_val sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit BUDGET BatInv_b.LENMAX BatInv_b.KMAX (HSA h) (drv_chk_HSA h Hh2) (mp_gap_h BUDGET BUD_hi h Hh2)
+    set (cs := HSA r h). set (rn := as0_rn E cs). set (ar := as0_ar E cs).
+    set (MAPS0 := vm_maps (m_vmmaps model)). set (RESV0 := vm_reserved (m_vmmaps model)). set (NOACC0 := vm_noaccess (m_vmmaps model)).
+    pose proof (as0_art_handoff_h sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau BUDGET BUD_ge BUD_hi r h Hh2 E R FULL model HC) as HT.
+    pose proof (as0_handoff_static sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc BUDGET BatInv_b.LENMAX BatInv_b.KMAX MPB MPG r h Hh2 E R FULL model HC) as BS.
+    rewrite (as0_RES_art r h Hh2 E) in BS. fold cs rn in BS.
+    pose proof (sp0_val sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc r Hsp Hva Hve Hfit Hlau HRZ BUDGET BatInv_b.LENMAX BatInv_b.KMAX (HSA r h) (drv_chk_HSA r h r01 Hh2) (mp_gap_h BUDGET BUD_hi r h Hh2)
                   E R FULL model HC) as SPV.
     pose proof HT as (REP & _ & _ & _ & CLI & _). destruct REP as (ROK & _).
     (* [comment removed for export] *)
@@ -387,24 +426,25 @@ Section UsagePhase.
     pose proof (as0_EXTRA_wf cs E) as XWF.
     assert (XBL : 16515072 + 2461330432 + A_bytes (as0_EXTRA cs E) + BUDGET <= AsanInitK.LIMIT).
     { unfold as0_EXTRA. cbn [A_bytes fst snd]. unfold AsanInitK.LIMIT, target_alloc_limit. lia. }
-    destruct (as0_main_entryU sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit BUDGET BatInv_b.LENMAX BatInv_b.KMAX MPB (as0_EXTRA cs E) XWF XBL MPG
+    destruct (as0_main_entryU sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc r Hsp Hva Hve Hfit Hlau Hvl HRZ BUDGET BatInv_b.LENMAX BatInv_b.KMAX MPB (as0_EXTRA cs E) XWF XBL MPG
                 (blobs_ev [[]; []; []; []; []]) h Hh2 E R FULL model HC) as (can & tid & HR & HK & LZ & FDS & _ & STR & PV & PH & PDEF).
     pose proof LZ as (HOFF & _ & _ & MI & HALT).
     destruct CLI as (_ & _ & SAH & _ & S1 & S2 & S3 & S4 & S5 & _).
     cbn [as0_rn rn_ar as0_ar ar_stack_top ar_stack_bottom ar_sptop] in S1, S2, S3, S4, S5.
     assert (SDEF : defined FULL (bv_unsigned sp) (ar_stack_top ar - bv_unsigned sp)).
-    { apply (as0_main_stack_definedU sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit BUDGET BatInv_b.LENMAX BatInv_b.KMAX MPB (as0_EXTRA cs E) XBL MPG
+    { apply (as0_main_stack_definedU sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc r Hsp Hva Hve Hfit Hlau Hvl HRZ BUDGET BatInv_b.LENMAX BatInv_b.KMAX MPB (as0_EXTRA cs E) XWF XBL MPG
                h Hh2 E R FULL model HC); unfold ar, cs; cbn [as0_ar ar_stack_top]; rewrite SPV in *.
       - rewrite S5. rewrite <- Z.add_mod_idemp_l by lia. rewrite S3. reflexivity.
       - lia. }
     assert (DI : dinv ar HI sp FULL [] [] (8192, 2 ^ 34) (as0_A0x cs E) FULL model).
-    { apply DINV; [exact RI | exact MI | exact HALT | reflexivity | |].
-      intros x Hx. apply (as0_stksh_main sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit h Hh2 E R FULL model HC). unfold STKTOP, ar, cs in Hx. cbn [as0_ar ar_sptop ar_stack_top] in Hx. rewrite SPV in Hx. exact Hx.
-      intros x Hx. apply (as0_stksh_main_hi sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit h Hh2 E R FULL model HC). unfold ahl_ceil, ar, cs in Hx. cbn [as0_ar ar_sptop] in Hx. rewrite SPV in Hx. exact Hx. }
+    { apply DINV; [exact RI | exact MI | exact HALT | reflexivity | | | exact (APSK.co_rdr _ _ _ _ _ _ _ _ _ _ _ HC)].
+      intros x Hx. apply (as0_stksh_main sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau r h Hh2 E R FULL model HC). unfold STKTOP, ar, cs in Hx. cbn [as0_ar ar_sptop ar_stack_top] in Hx. rewrite SPV in Hx. exact Hx.
+      intros x Hx. apply (as0_stksh_main_hi sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau r h Hh2 E R FULL model HC). unfold ahl_ceil, ar, cs in Hx. cbn [as0_ar ar_sptop] in Hx. rewrite SPV in Hx. exact Hx. }
     assert (SR : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
     assert (SA16 : bv_unsigned sp mod 16 = 0) by (destruct Hsp as (_ & _ & H3); exact H3).
     assert (HAC : 1 <= Z.of_nat (length argv) <= 1024) by (destruct Hva as (Hac & _); exact Hac).
-    set (p0 := Z_to_bv 64 (bv_unsigned sp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)) in *.
+    (* argv[0] at 727298f3: the launch's string base ([Ba0UsageEntryK.entg_str0]) *)
+    set (p0 := Z_to_bv 64 (bv_unsigned sp + Z.of_nat (cat_string_off (kb_rseq (in_kernel (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf))) sp (ed_top rdraw) argv envp execfn))) in *.
     set (a0s := nth 0 argv []) in *.
     assert (CTX : drv_ctxA scfg L C IL ar HI sp FULL) by (constructor; assumption).
     assert (PTH : drv_pathA sp FULL p0 a0s).
@@ -414,7 +454,7 @@ Section UsagePhase.
       - destruct Hva as (_ & _ & _ & Hnn & _). unfold a0s. destruct argv as [|a l]; [cbn in HAC; lia|]. inversion Hnn as [|x l' Hx _]; subst. exact Hx.
       - destruct Hva as (_ & _ & Hfa & _). unfold a0s. destruct argv as [|a l]; [cbn in HAC; lia|]. inversion Hfa as [|x l' Hx _]; subst. exact Hx.
       - intros i Hi. exact (PDEF i Hi). }
-    unfold APSK.cfg_of, cs. rewrite (HSA_pc h Hh2). fold cs.
+    unfold APSK.cfg_of, cs. rewrite (HSA_pc r h Hh2). fold cs.
     apply (@drv_usageA PropExec.fx0 scfg L ar C IL HI HIok sp SR DL fs p0 can FULL [] (8192, 2 ^ 34) (as0_A0x cs E)
              (t_die (msg_usage a0s) fs) R model (Z_to_bv 64 (Z.of_nat (length argv))) tid).
     - rewrite u_small by lia. intros Hc. apply Hargc. lia.

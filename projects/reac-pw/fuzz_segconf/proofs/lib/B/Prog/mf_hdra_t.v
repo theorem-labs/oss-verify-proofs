@@ -16,7 +16,7 @@
    Each refusal is m_header's refusal (the hd_hdr_refuse lemmas), and the passed checks make m_header m_file_m.v's mh_find of
    the name slice q2 r2 rest (hd_hdr_find).
    The list lemmas hd_slice_* / hd_line_* / hd_memchr_* are the image-A m_file-family lane's image-A lib/A/Prog/m_file_s_hdra_t.v
-   (commit 88d61b26fa90: hda_slice_slice, hda_slice_nth, hda_slice_length, hda_skipn_slice,
+   (hda_slice_slice, hda_slice_nth, hda_slice_length, hda_skipn_slice,
    hda_firstn_slice, hda_break_nl_spec, hda_mf_line_rest, hda_line_split, hda_line_le, hda_line_nth,
    hda_memchr_some, hda_memchr_idx, hda_memchr_none_idx, hda_memchr_of_first), statements and proofs, renamed hd_;
    that file Requires image A's m_file_m.v, so they are copied. The strip and m_header lemmas are new: image A

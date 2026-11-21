@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2b.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair and its reserved region; the reserved-region ledger). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -79,16 +80,34 @@ mreal_cf segs (mkCfg (mkst regs (Z_to_bv 64 (ms_malloc B)) mem (seg_rom segs)) m
 
 (* The ledger counts the policy's window count needs at a placement request of the walk (YN02_cf.knode_cf_mmap_rw,
    knode_cf_mmap_none): the image's reserved segments (at most 8 of at most 2^30 bytes) and one map per slot. *)
+(* 727298f3: [lg_reserved] appends the vvar/vDSO pair (at most two intervals of at most 20 pages in all,
+   State.v vdso_reserved / vdso_len_bounds), so the image's part is bounded as boxreg's YN0c_cf does
+   (src0_reserved_small: at most 4 intervals; src0_reserved_bytes: at most 2^19 bytes). *)
+Lemma vdso_reserved_len_b : forall kb top, (length (vdso_reserved kb top) <= 2)%nat.
+Proof. intros kb top. unfold vdso_reserved. cbv zeta. destruct (_ <? _)%Z; cbn [length]; lia. Qed.
+Lemma vdso_reserved_bytes_b : forall kb top, ivs_bytes (vdso_reserved kb top) <= 20 * page_size.
+Proof.
+intros kb top. pose proof (vdso_len_bounds kb) as HB.
+pose proof (vdso_text_pages_pos kb) as HP. pose proof (vdso_text_pages_le kb) as HL.
+assert (U64 : forall z, 0 <= z < 2 ^ 64 -> bv_unsigned (Z_to_bv 64 z) = z).
+{ intros z Hz. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64). apply Z.mod_small. exact Hz. }
+unfold vdso_reserved. cbv zeta.
+destruct (_ <? _)%Z; cbn [ivs_bytes snd]; [unfold page_size; lia|].
+rewrite !U64 by (unfold page_size, vdso_vvar_pages in *; lia).
+unfold vdso_len, page_size, vdso_vvar_pages in *. lia.
+Qed.
 Lemma node_ledger_of : forall L A md, ledger_ok B L A md -> ledger_x L A md ->
-  (length (segments_reserved (ms_segs B)) <= 8)%nat -> ivs_bytes (segments_reserved (ms_segs B)) <= 2 ^ 30 ->
+  (length (segments_reserved (ms_segs B)) <= 4)%nat -> ivs_bytes (segments_reserved (ms_segs B)) <= 2 ^ 19 ->
   Z.of_nat (length (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))) <= nslots A + KRES /\
   ivs_bytes (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) <= live_bytes A + 2 ^ 30 /\
   140735332483072 <= alloc_top (m_vmmaps md).
 Proof.
 intros L A md G LX RL RB. split; [|split].
-- rewrite length_app, (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). unfold KRES. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G), (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))).
-  pose proof (lx_lb _ _ _ LX). lia.
+- rewrite length_app, (lg_reserved _ _ _ _ G), length_app. pose proof (lg_count _ _ _ _ G eq_refl).
+  pose proof (vdso_reserved_len_b (m_kernel md) (vdso_top (m_vmmaps md))). unfold KRES. lia.
+- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G), ivs_bytes_app, (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))).
+  pose proof (vdso_reserved_bytes_b (m_kernel md) (vdso_top (m_vmmaps md))).
+  pose proof (lx_lb _ _ _ LX eq_refl). unfold page_size in *. lia.
 - pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)). pose proof (proj1 alloc_ceiling_value). lia.
 Qed.
 End o.

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256 d663f82d7f488d30...): the PAListing
    tables of a Theorem Labs lane's whole-program listing B_prog_listing (lib/B/Listing_prog.v blob 8bcc2c9e7809,
-   a working branch d42e123915ae), WITHOUT the image half: lib/B/PAImg_prog.v 4392ab2c09ba:177-181
+   a working branch), WITHOUT the image half: lib/B/PAImg_prog.v 4392ab2c09ba:177-181
    with the names prefixed E102B_ / PL_102_B (the twin of lib/A/Ent102PLA.v). The PAListing record reads only the
    listing, so it is the same record as PL_prog_B; the walk of LLVMFuzzerTestOneInput on B' is parametric over
    `{PA : PAImg B_prog_listing}` (parent's route (b)) and takes this record; the instance is PI_prog_B at the re-pin.

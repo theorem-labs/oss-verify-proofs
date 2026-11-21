@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts as kept (AMKN, APKN); the string block on the launch's stack layout (SBLK: the strings, the exec file name and the end marker up to the stack VMA's end; SBLK_length, SBLK_end, SBLK_at, arg_string, and arg_pack moved into StringBlock from the removed ArgPack section; SBLK_mod8 and span_ge removed); argv_ptrs_init removed, the argv cells now coming from amain_at; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef); ported by content from zstd_frame_info's file of the same role, with this binary's addresses and names; SBLK_at reads the head's length off the whole block's length (InitMem.build_stack_bytes_length_top), zstd_frame_info's form). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Strings.String.
@@ -17,7 +18,6 @@ From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require AsanHexScan.   (* [comm
 From OSSVerify.Proofs.zstd.huf_decompress.lib.BothW Require ARepInit_kit ARepInit_B.   (* [comment removed for export] *)
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Common Require Import RunDraw.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.BothW Require Import AHarness_bm.
-From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
 From Ltac2 Require Import Ltac2.
 Set Default Proof Mode "Classic".
 Ltac2 rds2_cert_ok (v : constr) : bool :=
@@ -140,7 +140,6 @@ Ltac2 bins1_run2 (subs : (constr * constr) list) (tab : string) (secs : string l
   let c := KReplay.decode_ph (Some ph) tab (KReplay.kr_secs secs) s in
   Std.exact_no_check (bins1_fix2 subs c);
   List.iter (fun (e, b) => Control.new_goal e; Control.enter (fun () => Std.exact_no_check (bins1_fix2 subs b))) (ph.(contents)).
-Ltac2 kr_t_AD_handoff0 () := "C46Stdlib5Lists4List8nil_consC47Corelib4Init5Logic6eq_indC47Corelib4Init5Logic8eq_ind_rC46Stdlib5Lists4List8map_consC46Stdlib5Lists4List:firstn_nilK59OSSVerify5KrLib2AS:MainExport5pfact01C1?~~~~~~~~~~~~~~~C56Stdlib5Arith8PeanoNat3Nat3eqbC56Stdlib6ZArith6BinInt1Z3eqbC47Corelib4Init9Datatypes4andbC47Corelib4Init9Datatypes9andb_propI47Corelib4Init5Logic3and00C56Stdlib6ZArith6BinInt1Z6eqb_eqI47Corelib4Init5Logic2eq00C56Stdlib5Arith8PeanoNat3Nat6eqb_eqK47Corelib4Init5Logic2eq01K59OSSVerify5KrLib2AS:MainExport5pfact02C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5pfact03C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5pfact04C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport8zexp_eqbC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport;zexp_eqb_eqC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0<ho_pfact_eqbC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic9False_indI47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01I59OSSVerify5KrLib2AS:MainExport5pfact00C1?~~~~~~~~~~~~~~~I47Corelib7Numbers7BinNums1Z00K47Corelib4Init9Datatypes4bool02K47Corelib4Init5Logic4True01I47Corelib4Init9Datatypes3nat00I59OSSVerify5KrLib2AS:MainExport4zexp00C1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic5False00I47Corelib4Init5Logic4True00I47Corelib4Init9Datatypes4list00C59OSSVerify5KrLib2AS:MainExport8pfact_okC1?~~~~~~~~~~~~~~~I47Corelib5Lists7ListDef6Forall00C46Stdlib5Lists4List7existsbC46Stdlib5Lists4List2InI47Corelib4Init5Logic2ex00C46Stdlib5Lists4List>existsb_existsc59OSSVerify5KrLib5BothW;AD_handoff0?ho_pfact_eqb_eqC1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List=Forall_forallC47Corelib4Init5Logic5proj1K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00C59OSSVerify5KrLib2AS:MainExport8mfact_okC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z3lebC59OSSVerify5KrLib3Lib5Cells:cells_sizeC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z6of_natC56Stdlib6ZArith6BinInt1Z3addC59OSSVerify5KrLib3Lib5Cells8cells_wfC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib5Cells;cells_bytesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem:rw_bytes_bC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z2leK47Corelib7Numbers7BinNums1Z02C56Stdlib6ZArith6BinInt1Z3powC59OSSVerify5KrLib3Lib5CellsBcells_bytes_lengthC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes6lengthC59OSSVerify5KrLib2AS:MainExport:mimg_coverC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z2ltC59OSSVerify5KrLib3Lib3Mem2waC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes6option02K59OSSVerify5KrLib3Lib5Cells4cell05C1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4list01K47Corelib4Init9Datatypes4list02C45stdpp9bitvector;definitions;bv_unsignedC45stdpp9bitvector;definitions7Z_to_bvC56Stdlib6ZArith4Znat5Nat2Z7inj_iffC47Corelib4Init5Logic7iff_symC46Stdlib9micromega;ZifyClasses5mkrelC46Stdlib9micromega;ZifyClasses7rew_iffC56Stdlib6ZArith4Znat5Nat2Z9is_nonnegK46Stdlib9micromega6VarMap1t02K46Stdlib9micromega6VarMap1t03I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega=RingMicromega7Formula01K47Corelib7Numbers7BinNums8positive01K46Stdlib9micromega7EnvRing5PExpr03K46Stdlib9micromega5Tauto8GFormula05K46Stdlib9micromega5Tauto8GFormula08C46Stdlib9micromega5Tauto8BFormulaC46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundC59OSSVerify5KrLib3Lib6MStateCZ_to_bv_bv_unsignedC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem?rw_cells_image0C1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes3appC46Stdlib5Lists4List9app_nil_rC47Corelib4Init3Nat3addC56Stdlib5Arith8PeanoNat3Nat3addC56Stdlib5Arith8PeanoNat3Nat7add_0_rC59OSSVerify5KrLib6Common:Stdio_pure?rw_cells_recastC1?~~~~~~~~~~~~~~~K46Stdlib9micromega5Tauto8GFormula04C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib4Init9Datatypes4unit01K47Corelib7Numbers7BinNums8positive03I59OSSVerify5KrLib2AS:MainExport5mfact00C1?~~~~~~~~~~~~~~~I59OSSVerify5KrLib3Lib5Cells4cell00C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW4BImg5bsegsC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z01I46Stdlib9micromega:ZMicromega;ZArithProof00K46Stdlib9micromega=RingMicromega3Op203K46Stdlib9micromega=RingMicromega3Op205K47Corelib4Init9Datatypes3nat01C59OSSVerify5KrLib5BothW:StdioFiles:file_cellsC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z4landI47Corelib4Init5Logic2or00C47Corelib5Lists7ListDef6repeatK47Corelib4Init5Logic3and01K46Stdlib9micromega6VarMap1t01K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega7EnvRing5PExpr07c59OSSVerify5KrLib5BothW;AD_handoff0:aimg_chunkC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic2or01K47Corelib4Init5Logic2ex01C59OSSVerify5KrLib3Lib4Step8rw_cellsC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes3nat02C59OSSVerify5KrLib2AS=MainFactsBoth>asan_mem_factsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec5Stdio9so_activeC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec5Stdio6so_bufC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec6Prelim7zlengthC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec5Stdio8so_firstC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec5Stdio9so_lbf_nlC1?~~~~~~~~~~~~~~~C47Corelib5Lists7ListDef6firstnC59OSSVerify5KrLib4Spec5Stdio8to_bytesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec5Stdio;stdout_initC1?~~~~~~~~~~~~~~~C47Corelib4Init5Peano2ltC4ELinuxProcessSemantics?LinuxProcessSem<MemImageType9seg_bytesC56Stdlib6NArith6BinNat1N3subK47Corelib4Init9Datatypes6option01C45stdpp9bitvector;definitionsDZ_to_bv_obligation_1K45stdpp9bitvector;definitions2bv01K46Stdlib9micromega5Tauto8GFormula03C56Stdlib6NArith6BinNat1N6of_natC56Stdlib6NArith6BinNat1N3addC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics?segment_byte_atC46Stdlib9micromega;ZifyClasses5mkappC56Stdlib6ZArith4Znat5Nat2Z8inj_succC56Stdlib6ZArith4Znat5Nat2Z6inj_ltC49OSSVerify5KrImgGTgt_huf_decompress_bothSTgt_huf_decompress_both_segment_003C1@~~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics5wviewC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics<find_segmentC4ELinuxProcessSemantics?LinuxProcessSem<MemImageType<seg_writableC4ELinuxProcessSemantics?LinuxProcessSem<MemImageType8seg_baseC56Stdlib6ZArith6BinInt1Z4of_NC47Corelib4Init5Logic3notC56Stdlib6ZArith6BinInt1Z9leb_spec0C56Stdlib6ZArith6BinInt1Z6to_natC56Stdlib6ZArith6BinInt1Z3subC56Stdlib6ZArith6BinInt1Z4to_NC56Stdlib6ZArith4Znat3N2Z7inj_iffC46Stdlib9micromega;ZifyClasses3injK47Corelib7Numbers7BinNums1Z03C56Stdlib6ZArith6BinInt1Z8max_specK46Stdlib9micromega7EnvRing3Pol01K46Stdlib9micromega=RingMicromega5Psatz02K46Stdlib9micromega=RingMicromega5Psatz04K46Stdlib9micromega:ZMicromega;ZArithProof02K46Stdlib9micromega7EnvRing5PExpr04C46Stdlib9micromega;ZifyClasses;rew_iff_revc59OSSVerify5KrLib5BothW;AD_handoff0@canary_seg_bytesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW4BImg@a_find_segment_1C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Mem;wa_unsignedC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes7reflect00C56Stdlib6ZArith6BinInt1Z3maxC46Stdlib9micromega;ZifyClasses6mkapp2K46Stdlib9micromega=RingMicromega5Psatz06K46Stdlib9micromega5Tauto8GFormula06K46Stdlib9micromega5Tauto8GFormula07I47Corelib7Numbers7BinNums1N00C56Stdlib6ZArith4Znat3N2Z;inj_sub_maxC46Stdlib9micromega8ZifyInst@of_nat_to_nat_eqC46Stdlib6ZArith4Znat7nat_N_ZC56Stdlib6ZArith4Znat3N2Z7inj_addC46Stdlib9micromega8ZifyInst7Inj_Z_ZK46Stdlib9micromega=RingMicromega3Op201I4ELinuxProcessSemantics?LinuxProcessSem<MemImageType7Segment00C49OSSVerify5KrImgGTgt_huf_decompress_bothSTgt_huf_decompress_both_segment_000C1@~~~~~~~~~~~~~~~~C49OSSVerify5KrImgGTgt_huf_decompress_bothSTgt_huf_decompress_both_segment_001C1@~~~~~~~~~~~~~~~~C49OSSVerify5KrImgGTgt_huf_decompress_bothSTgt_huf_decompress_both_segment_002C1@~~~~~~~~~~~~~~~~C46Stdlib9micromega8ZifyInst7Inj_N_ZK46Stdlib9micromega:ZMicromega;ZArithProof01K59OSSVerify5KrLib2AS:MainExport4zexp01C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp02C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact03C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport9mfact_eqbC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport:mfact_findC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport8is_cellwC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport;cellw_bytesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport5cellwC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib5Cells6cbytesC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics@word_to_le_bytesC59OSSVerify5KrLib3Lib5Cells5csizeC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib5Cells7cell_wfC1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib3Lib5Cells4cell01C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib5Cells8cells_atC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Mem5wr_atC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Mem8bytes_atC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0<canary_wr_atC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW:F_syscalls9ssp_guardC1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib3Lib5Cells4cell02C1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List=repeat_lengthC59OSSVerify5KrLib3Lib3Mem3mrdC1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List9nth_errorC56Stdlib6ZArith4Znat5Z2Nat2idC59OSSVerify5KrLib3Lib8PropExec7seg_romC1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List@nth_error_repeatC59OSSVerify5KrLib6Common:Stdio_pure<rw_cells_appC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic5proj2C46Stdlib5Lists4List:length_appC56Stdlib6ZArith4Znat5Nat2Z7inj_addK59OSSVerify5KrLib3Lib5Cells4cell04C1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic7f_equalC45stdpp9bitvector;definitions5bv_eqC35stdpp7tactics<f_equal_helpC47Corelib4Init9Datatypes8list_indC47Corelib5Lists7ListDef3mapC59OSSVerify5KrLib2AS:MainExport5zerosC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic8iff_reflK47Corelib4Init5Logic2or02C59OSSVerify5KrLib5BothW4BImg?ref_mrd_overlayC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport2zvC1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp03C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp04C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp05C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp06C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff07zlit_ofC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:mzero_covbC1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact01C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact02C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:zlit_of_zvC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z6leb_lec59OSSVerify5KrLib5BothW;AD_handoff0@zchunk_pointwiseC1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact04C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact05C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact06C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact07C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact08C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport5mfact09C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff07mknownbC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z3ltbC56Stdlib6ZArith6BinInt1Z6ltb_ltC46Stdlib4Bool4Bool8orb_propC46Stdlib9micromega;ZifyClasses8or_morphc59OSSVerify5KrLib5BothW;AD_handoff0?cellw_bytes_lenC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff09mrd_high0C1?~~~~~~~~~~~~~~~I47Corelib4Init5Peano2le00C46Stdlib5Lists4List>nth_error_NoneC47Corelib4Init9Datatypes3orbC56Stdlib6ZArith4Znat5Nat2Z6inj_leC46Stdlib5Lists4List6nth_okC46Stdlib5Lists4List7forallbC46Stdlib5Lists4List:length_seqC46Stdlib5Lists4List:length_mapC46Stdlib5Lists4List>forallb_forallC47Corelib5Lists7ListDef3seqC46Stdlib5Lists4List6in_seqC46Stdlib9micromega;ZifyClasses9and_morphc59OSSVerify5KrLib5BothW;AD_handoff0;mknown_someC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes:option_mapC56Stdlib5Arith8PeanoNat3Nat3ltbC56Stdlib5Arith8PeanoNat3Nat6ltb_ltC47Corelib4Init5Logic6eq_symC46Stdlib5Lists4List=nth_error_seqC46Stdlib5Lists4List=nth_error_mapI47Corelib4Init9Datatypes4prod00C59OSSVerify5KrLib5BothW=F_module_dtor6gdescsC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z3mulC56Stdlib6ZArith6BinInt1Z4succc59OSSVerify5KrLib5BothW;AD_handoff0;gdesc_cellsC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0;gdescs_imgbC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=F_module_dtor5gdescC1?~~~~~~~~~~~~~~~K46Stdlib9micromega=RingMicromega5Psatz07K46Stdlib9micromega=RingMicromega5Psatz05K46Stdlib9micromega7EnvRing5PExpr05K46Stdlib9micromega:ZMicromega;ZArithProof03c59OSSVerify5KrLib5BothW;AD_handoff0Aimg_chunk_of_noneC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4prod01c59OSSVerify5KrLib5BothW;AD_handoff0?gdescs_img_noneC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0;mzero_coverC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:wr_at_sub'C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0<run_rw_cellsC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z>pow_pos_nonnegC56Stdlib6ZArith6BinInt1Z:pow_nonnegc59OSSVerify5KrLib5BothW;AD_handoff0;known_chunkC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:fill_chunkC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:gdescs_imgC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=F_module_dtor8AGLOBALSC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=F_module_dtor?AGLOBALS_lengthC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW9AF_atexit:atx_stateAC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0Dbytes_eq_of_unsignedC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff08rw_C8_C4C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5AExit;stdin_cellsC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0@atx_stateA0_initC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0=ho_pfact_findC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS=MainFactsBoth?asan_pure_factsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec9AsanEmbed4shadC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4LibA6Shadow<shadow_bytesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW;AHarness_bm7hinv_bmC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff08sh_zero1C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff07sh_sub0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=ADriver_iface:rodata_sh0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW;AHarness_bm7AHBM_LOC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW;AHarness_bm7AHBM_HIC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4LibA6Shadow:unpoisonedC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW9Stdio_kit6hull64C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4LibA6Shadow7app_blkC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff08sh_zero4C1?~~~~~~~~~~~~~~~C47Corelib7Classes?RelationClassesBPreOrder_ReflexiveC47Corelib7Classes?RelationClasses;reflexivityC59OSSVerify5KrLib4LibA6ShadowBunpoisoned_of_zeroC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z6moduloK59OSSVerify5KrLib5BothW9Stdio_kit6region01C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW9Stdio_kit4r_loC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW9Stdio_kit4r_hiC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW9Stdio_kit5r_rloC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW9Stdio_kit5r_rhiC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW9Stdio_kit6rcleanC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z;le_preorderC59OSSVerify5KrLib5BothW9Stdio_kit8RBstdoutC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z3divC56Stdlib6ZArith6BinInt1Z7div_modC56Stdlib6ZArith6BinInt1Z=mod_pos_boundC56Stdlib6ZArith6BinInt1Z=mod_neg_boundC56Stdlib5omega8PreOmega1Z;div_0_r_extC56Stdlib5omega8PreOmega1Z;mod_0_r_extC59OSSVerify5KrLib4LibA6Shadow8shad_divC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec9AsanEmbed6ASHOFFC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=ADriver_iface4RSTGC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS;AsanHexScan6zscanZC1?~~~~~~~~~~~~~~~C49OSSVerify5KrImgGTgt_huf_decompress_bothUTgt_huf_decompress_both_seg_bytes_003C1@~~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=ADriver_iface6ASTAGEC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit4SEG3C1?~~~~~~~~~~~~~~~C56Stdlib6NArith6BinNat1N3lebC56Stdlib6NArith6BinNat1N2leC56Stdlib6NArith6BinNat1N6leb_leC56Stdlib6NArith6BinNat1N3powC56Stdlib6NArith6BinNat1N2ltC56Stdlib6ZArith4Znat3N2Z9is_nonnegC59OSSVerify5KrLib2AS;AsanHexScan<zscanZ_soundC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW:ARepInit_B?zscanN_completeC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith4Znat3N2Z6inj_ltc59OSSVerify5KrLib5BothW;AD_handoff0:astg_scanZC1?~~~~~~~~~~~~~~~C56Stdlib6NArith6BinNat1N3ltbC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics;hex_byte_atC56Stdlib6NArith6BinNat1N6ltb_ltC59OSSVerify5KrLib5BothW<ARepInit_kit<zscanN_soundC1?~~~~~~~~~~~~~~~C47Corelib7Strings:PrimString6lengthC67Corelib7Numbers6Cyclic5Int63<Uint63Axioms4to_ZC59OSSVerify5KrLib5BothW<ARepInit_kit@a_find_segment_3C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:astg_scanNC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit@seg3_chunk_bytesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit9seg3_baseC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith4Znat5Nat2Z3injC46Stdlib9micromega;ZifyClasses6eq_iffC59OSSVerify5KrLib5BothW<ARepInit_kit6zshapeC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit>img_zero_cellsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=ADriver_iface:ASTAGE_LENC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=ADriver_iface<ASTAGE_LEN_ZC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:astg_wr_atC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7SysStepArw_cells_bytes_atC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Mem3le8C1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z3b2zC59OSSVerify5KrLib2AS:MainExport5two64C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib8RunConst4ATOPC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common7RunDraw:atop_rangeC1?~~~~~~~~~~~~~~~C46Stdlib9micromega9SatDivModCZ_mod_nonneg_nonnegC59OSSVerify5KrLib5BothW9Stdio_kit7shcleanC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4LibA6Shadow4KENDC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes7nat_indC47Corelib5Lists7ListDef5skipnC4ELinuxProcessSemantics?LinuxProcessSem;StackLayout?flatten_stringsC59OSSVerify5KrLib3Lib7InitMem7pad_lenC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem3Run?total_arg_bytesC59OSSVerify5KrLib3Lib7InitMemFflatten_strings_lengthC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem>raw_len_nonnegC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem;struct_sizeC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff04SBLKC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem8str_baseC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0;SBLK_lengthC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib8PropExec8wrap_memC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem@init_stack_bytesC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem;StackLayoutAbuild_stack_bytesC59OSSVerify5KrLib3Lib7InitMem9raw_bytesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem9rnd_bytesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMemDbuild_stack_bytes_eqC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem4argcC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem9argv_ptrsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem9envp_ptrsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem:auxv_wordsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Arr4u64sC1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List9app_assocC59OSSVerify5KrLib3Lib3Mem<bytes_at_appC1?~~~~~~~~~~~~~~~C47Corelib4Init3Nat3mulC59OSSVerify5KrLib3Lib7InitMem8str_ptrsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem8env_baseC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem3RunAentry_stack_imageC59OSSVerify5KrLib3Lib7InitMem?str_ptrs_lengthC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Arr;u64s_lengthC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0>bytes_at_agreeC1?~~~~~~~~~~~~~~~C56Stdlib5Arith8PeanoNat3Nat3mulC56Stdlib6ZArith4Znat5Nat2Z7inj_mulC59OSSVerify5KrLib5BothW4BImg7b_phdrsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem<str_ptrs_nthC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z3oppK46Stdlib9micromega7EnvRing5PExpr06C47Corelib4Init3Nat3minC47Corelib4Init3Nat3subC56Stdlib6ZArith6BinInt1Z3minC56Stdlib6ZArith6BinInt1Z8min_specC46Stdlib5Lists4List<length_skipnC46Stdlib5Lists4List=length_firstnC59OSSVerify5KrLib3Lib7InitMem>bytes_at_sliceC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0@firstn_add_splitC1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List;skipn_skipnC46Stdlib5Lists4List:firstn_appC46Stdlib5Lists4List9skipn_appC59OSSVerify5KrLib3Lib3Mem<bytes_at_extC1?~~~~~~~~~~~~~~~C56Stdlib5Arith8PeanoNat3Nat3subC56Stdlib6ZArith4Znat5Nat2Z;inj_sub_maxC56Stdlib5Arith8PeanoNat3Nat3minC56Stdlib6ZArith4Znat5Nat2Z7inj_minc59OSSVerify5KrLib5BothW;AD_handoff09SBLK_mod8C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff07SBLK_atC1?~~~~~~~~~~~~~~~C45stdpp9bitvector;definitions7bv_wrapC45stdpp9bitvector;definitions:bv_modulusC45stdpp9bitvector;definitions=bv_wrap_smallC45stdpp9bitvector;definitions@Z_to_bv_unsignedC4ELinuxProcessSemantics?LinuxProcessSem5State<page_base_ofC59OSSVerify5KrLib2AS:MainExport8pagedownC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport6pageupC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport8allow_ofC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0@page_base_of_valC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes3fstC47Corelib4Init9Datatypes3sndC59OSSVerify5KrLib4LibA5ExecFArng_fp_ok_allowedC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS=MainFactsBoth8asan_visC1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List8flat_mapC46Stdlib5Lists4List;in_flat_mapC46Stdlib5Lists4List<nth_error_Inc59OSSVerify5KrLib5BothW;AD_handoff0<allow_in_appC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0;vis_rng_genC1?~~~~~~~~~~~~~~~C46Stdlib9micromega9SatDivModCZ_div_nonneg_nonnegc59OSSVerify5KrLib5BothW;AD_handoff07vis_rngC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:vis_rng_shC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4LibA5ExecF5fp_okC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4LibA5ExecF3rngC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec9AsanEmbed5shlenC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z6shiftrC56Stdlib6ZArith6BinInt1Z?shiftr_div_pow2C59OSSVerify5KrLib4LibA8AcctCore7page_okC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4LibA5ExecF9rng_fp_okC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem3Run@entry_stack_spanC6ELinuxProcessSemantics?LinuxProcessSem3Sys2Fs5Namei>path_has_slashC4ELinuxProcessSemantics?LinuxProcessSem2Fs8path_eqbC46Stdlib5Lists4List2tlC4ELinuxProcessSemantics?LinuxProcessSem;StackLayout9auxv_sizeC4ELinuxProcessSemantics?LinuxProcessSem2Fs4pathC6ELinuxProcessSemantics?LinuxProcessSem3Sys2Fs5Namei;dotdot_pathc59OSSVerify5KrLib5BothW;AD_handoff0:arg_stringC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:round_dn64C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0:round_up64C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff0Bstack_shclean_initC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW9Stdio_kit5inregC1?~~~~~~~~~~~~~~~I59OSSVerify5KrLib5BothW9Stdio_kit6region00C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW;AD_handoff07span_geC1?~~~~~~~~~~~~~~~".   (* [comment removed for export] *)
 Import ListNotations.
 Open Scope Z_scope.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
@@ -204,18 +203,19 @@ Notation z64 := (Z_to_bv 64 0).
 
 (* [comment removed for export] *)
 Section CANSEC3. Context {rc : runConstT}.
-Lemma stderr_wfile0_init : forall V m, Forall (mfact_ok bsegs V m) asan_mem_facts -> stderr_wfile0 m.
+Lemma stderr_wfile0_init : forall V m, Forall (mfact_ok bsegs V m) AMKN -> stderr_wfile0 m.
 Proof.
   intros V m HM. exists (Z_to_bv 64 5), z64, 0, 0, (repeat (Z_to_bv 8 0) 80).
-  split; [| split; [vm_compute; reflexivity| split; [left; reflexivity| lia]]].
+split; [| split; [vm_compute; reflexivity| split; [left; reflexivity| lia]]].
   aimg V m HM 0xb66f8 (file_cells (Z_to_bv 64 5) 0 0 0 F_STDIO_WRITE 0x60d998 0 2 z64 0xffffffff (repeat (Z_to_bv 8 0) 80)) H. exact H.
 Qed.
 
-Lemma stdout_file_init : forall V m, Forall (mfact_ok bsegs V m) asan_mem_facts -> stdout_file m stdout_init.
+Lemma stdout_file_init : forall V m, Forall (mfact_ok bsegs V m) AMKN -> stdout_file m stdout_init.
 Proof.
   intros V m HM. exists (Z_to_bv 64 5), z64, (repeat (Z_to_bv 8 0) 80), (repeat (Z_to_bv 8 0) 1024).
   cbn [so_active so_buf so_lbf_nl so_first stdout_init Prelim.zlength length Z.of_nat Z.add].
-  split. { aimg V m HM 0xb67e8 (file_cells (Z_to_bv 64 5) 0 0 0 F_STDOUT_WRITE 0x60d9a0 1024 1 z64 10 (repeat (Z_to_bv 8 0) 80)) H. exact H. }
+  split. {
+aimg V m HM 0xb67e8 (file_cells (Z_to_bv 64 5) 0 0 0 F_STDOUT_WRITE 0x60d9a0 1024 1 z64 10 (repeat (Z_to_bv 8 0) 80)) H. exact H. }
   split; [vm_compute; reflexivity|].
   split. { aimg V m HM 0x60d9a0 [CB 1024 (repeat (Z_to_bv 8 0) 1024)] H. exact H. }
   split; [reflexivity|]. split; [unfold zlength; cbn; lia| intros _; reflexivity].
@@ -239,7 +239,7 @@ Proof.
   replace (Z.to_N (0x60d2d0 + i - 0xb3000)) with (0x60d2d0 - 0xb3000 + N.of_nat (Z.to_nat i))%N by lia.
   rewrite canary_seg_bytes by lia. discriminate.
 Qed.
-Lemma ssp_guard_init : forall V m, Forall (mfact_ok bsegs V m) asan_mem_facts -> rw_cells bsegs m ssp_guard [C8 (Z_to_bv 64 (V 45%nat))].
+Lemma ssp_guard_init : forall V m, Forall (mfact_ok bsegs V m) AMKN -> rw_cells bsegs m ssp_guard [C8 (Z_to_bv 64 (V 45%nat))].
 Proof.
   intros V m HM. mf V m HM (MRo (ZLit 6345424) 8 (ZV 45)) H. unfold ssp_guard.
   pose proof (cellw_bytes 8 (V 45%nat) eq_refl) as (Cb & Cs & Cwf). change (cellw 8 (V 45%nat)) with (C8 (Z_to_bv 64 (V 45%nat))) in Cb, Cs, Cwf.
@@ -248,7 +248,7 @@ Proof.
   - cbn [cells_size]. rewrite Cs. apply canary_wr_at.
 Qed.
 
-Lemma errno_init : forall V m, Forall (mfact_ok bsegs V m) asan_mem_facts -> rw_cells bsegs m 0x5ed1ec [C4 z64].
+Lemma errno_init : forall V m, Forall (mfact_ok bsegs V m) AMKN -> rw_cells bsegs m 0x5ed1ec [C4 z64].
 Proof. intros V m HM. aimg V m HM 0x5ed1ec [C4 z64] H. exact H. Qed.
 (* [comment removed for export] *)
 Lemma run_rw_cells : forall m A n (b : byte),
@@ -450,8 +450,8 @@ Qed.
 
 Section HandoffFacts.
   Variables (V : nat -> Z) (m : word -> option byte).
-  Hypothesis HM : Forall (mfact_ok bsegs V m) asan_mem_facts.
-  Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
+  Hypothesis HM : Forall (mfact_ok bsegs V m) AMKN.
+  Hypothesis HP : Forall (pfact_ok V) APKN.
 
   (* [comment removed for export] *)
   Let WSH : wr_at bsegs m 0x7fffa000 0xbfe00.
@@ -483,6 +483,7 @@ Proof.
     apply (known_chunk V m _ 0x7fffc1c0 144 HM); [lia| lia| lia| vm_compute; reflexivity|].
     eapply wr_at_sub'; [exact WSH| lia| lia| lia].
   Qed.
+
   Lemma astat_shD : exists j, rw_cells bsegs m 0x8000ed3e [CB 72 j].
 Proof.
     apply (known_chunk V m _ 0x8000ed3e 72 HM); [lia| lia| lia| vm_compute; reflexivity|].
@@ -552,8 +553,8 @@ Proof.
 End HandoffFacts.
 Section HandoffFacts2.
   Variables (V : nat -> Z) (m : word -> option byte).
-  Hypothesis HM : Forall (mfact_ok bsegs V m) asan_mem_facts.
-  Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
+  Hypothesis HM : Forall (mfact_ok bsegs V m) AMKN.
+  Hypothesis HP : Forall (pfact_ok V) APKN.
   (* [comment removed for export] *)
   Notation usp := (32768 * V 0%nat + (16 * V 6%nat + 4096 * V 10%nat)).
   (* [comment removed for export] *)
@@ -667,15 +668,6 @@ Proof.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma argv_ptrs_init :
-       bytes_at bsegs m (usp + 8) (word_to_le_bytes 8 (Z_to_bv 64 (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (16 * V 6%nat + 4096 * V 10%nat))) + 184)))
-    /\ bytes_at bsegs m (usp + 16) (word_to_le_bytes 8 (Z_to_bv 64
-         (Z.b2z ((1 mod two64) <? (V 1%nat mod two64)) * (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (V 3%nat + (16 * V 6%nat + 4096 * V 10%nat)))) + 185)))).
-Proof.
-    clear HAT. split.
-    - mf V m HM (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))) H. exact H.
-    - mf V m HM (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 185)))) H. exact H.
-  Qed.
 
   (* [comment removed for export] *)
   Lemma stack_shclean_init : forall lo hi RLO RHI,
@@ -716,49 +708,57 @@ Proof.
   intros m m' a bs (A & B & H) AG. split; [exact A|]. split; [exact B|]. intros i Hi.
   unfold mrd. rewrite (AG (a + Z.of_nat i)) by lia. apply (H i Hi).
 Qed.
+(* LPS 727298f3: the string area is the stack block's tail, from the launch's string base
+   [str_base top argv envp execfn] (= [amain_at]'s [STR0_of]) to the stack VMA's end [top]: argv's and
+   envp's strings, the exec file name with its NUL, and the 8-byte end marker (InitMem.build_stack_bytes_eq). *)
 
 Section StringBlock.
-  Variables (sp : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (m : word -> option byte).   (* [comment removed for export] *)
+  Variables (inp : ProcInput) (mbase sp : word) (draw : EntryDraw) (m : word -> option byte).
   Notation usp := (bv_unsigned sp).
-  Notation m0 := (wrap_mem b_phdrs sp argv envp uid hw draw).
-  (* [comment removed for export] *)
-  Definition SBLK : list byte := flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) (Z.to_nat (pad_len argv envp)).
-  Notation SB := (str_base sp argv envp).
-  Lemma SBLK_length : Z.of_nat (length SBLK) = total_arg_bytes argv + total_arg_bytes envp + pad_len argv envp.
-Proof.
-    unfold SBLK. rewrite !length_app, repeat_length. pose proof (flatten_strings_length argv). pose proof (flatten_strings_length envp).
-    pose proof (raw_len_nonneg argv envp). lia.
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation execfn := (in_execfn inp).
+  Notation top := (ed_top draw).
+  Notation m0 := (wrap_mem inp mbase b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp draw).
+  Definition SBLK : list byte := flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8.
+  Notation SB := (str_base top argv envp execfn).
+  Lemma SBLK_length : Z.of_nat (length SBLK) = lstr argv envp execfn + 8.
+  Proof.
+    unfold SBLK. rewrite !length_app, repeat_length. cbn [length].
+    pose proof (flatten_strings_length argv). pose proof (flatten_strings_length envp). pose proof (lstr_eq argv envp execfn). lia.
   Qed.
 
-  Hypothesis SPLO : stack_max_size <= usp.
-  Hypothesis IMGHI : usp + Z.of_nat (length (entry_stack_image b_phdrs sp argv envp uid hw draw)) <= 2^64.
-  Hypothesis SP16 : usp mod 16 = 0.
-  Hypothesis VARGV : valid_argv argv.
+  Lemma SBLK_end : SB + Z.of_nat (length SBLK) = bv_unsigned top.
+  Proof. rewrite SBLK_length. unfold str_base. lia. Qed.
+  Hypothesis IMGHI : usp + Z.of_nat (length (entry_stack_image inp mbase b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp draw)) <= 2^64.
+  Hypothesis PADOK : usp + hsz (kb_rseq (in_kernel inp)) argv envp + lstr argv envp execfn + 8 <= bv_unsigned top.
+  Hypothesis TOP8 : bv_unsigned top mod 8 = 0.
   (* [comment removed for export] *)
   Hypothesis HID : forall z, SB <= z < SB + Z.of_nat (length SBLK) -> m (wa z) = m0 (wa z).
 
-  Lemma SBLK_mod8 : (SB + Z.of_nat (length SBLK)) mod 8 = 0 /\ SB mod 8 = 0.
-Proof.
-    clear SPLO IMGHI VARGV HID. rewrite SBLK_length. unfold str_base, struct_size, pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc.
-    pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4). unfold struct_size, Lib.InitMem.argc, Lib.InitMem.envc in R1.
-    split; (first [ (Z.div_mod_to_equations; lia) | (Z.to_euclidean_division_equations; nia) ]).
-  Qed.
 
   Lemma SBLK_at : bytes_at bsegs m SB SBLK.
-Proof.
+  Proof.
     eapply bytes_at_agree; [| exact HID].
-    pose proof (init_stack_bytes bsegs b_phdrs sp argv envp uid hw draw SPLO IMGHI) as B. rewrite build_stack_bytes_eq in B.
-    unfold raw_bytes in B. set (U := u64s _) in B. set (FA := flatten_strings argv) in B. set (FE := flatten_strings envp) in B.
-    set (PAD := repeat _ _) in B. set (RND := rnd_bytes draw) in B.
-    replace ((U ++ FA ++ FE) ++ PAD ++ RND) with (U ++ ((FA ++ FE ++ PAD) ++ RND)) in B by (rewrite <- !app_assoc; reflexivity).
-    apply bytes_at_app in B. destruct B as [_ B]. apply bytes_at_app in B. destruct B as [B _].
-    assert (LU : Z.of_nat (length U) = struct_size argv envp).
-    { subst U. rewrite u64s_length. cbn [length]. rewrite !length_app. cbn [length].
-      unfold argv_ptrs, envp_ptrs. rewrite !map_length, !str_ptrs_length.
-      match goal with |- context [length (auxv_words ?a ?b ?c ?d ?e ?f)] => change (length (auxv_words a b c d e f)) with 20%nat end.
-      unfold struct_size, Lib.InitMem.argc, Lib.InitMem.envc. lia. }
-    unfold SBLK. subst FA FE PAD. replace SB with (usp + Z.of_nat (length U)); [exact B|].
-    unfold str_base. lia.
+    assert (B : bytes_at bsegs m0 usp (entry_stack_image inp mbase b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp draw))
+      by (eapply init_stack_bytes; exact IMGHI).
+    rewrite entry_stack_image_launch_of in B. cbn [launch_of L_LA L_TOP L_EXECFN L_GID] in B.
+    (* the block runs from sp to the stack VMA's end (PADOK, InitMem.build_stack_bytes_length_top), so the
+       head before the string block is what the string block leaves of it *)
+    match type of B with
+    | bytes_at _ _ _ (build_stack_bytes ?la ?ph ?en ?sp' ?tp ?av ?ev ?ef ?u ?g ?h ?d) =>
+        pose proof (build_stack_bytes_length_top la ph en sp' tp av ev ef u g h d PADOK) as LT
+    end.
+    rewrite build_stack_bytes_eq in B, LT.
+    set (HW := u64s _) in B, LT. set (GP := repeat _ (gap_len _ _)) in B, LT. set (RB := rnd_bytes draw) in B, LT.
+    set (PD := repeat _ (block_pad_len _ _ _ _ _ _)) in B, LT.
+    replace (HW ++ GP ++ RB ++ PD ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8)
+      with ((HW ++ GP ++ RB ++ PD) ++ SBLK) in B by (unfold SBLK; rewrite <- !app_assoc; reflexivity).
+    replace (HW ++ GP ++ RB ++ PD ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8)
+      with ((HW ++ GP ++ RB ++ PD) ++ SBLK) in LT by (unfold SBLK; rewrite <- !app_assoc; reflexivity).
+    apply bytes_at_app in B. destruct B as [_ B].
+    replace SB with (usp + Z.of_nat (length (HW ++ GP ++ RB ++ PD))); [exact B|].
+    rewrite length_app, Nat2Z.inj_add, SBLK_length in LT. unfold str_base. lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -766,29 +766,69 @@ Proof.
     exists off, nth_error (str_ptrs SB argv) i = Some (SB + off) /\ 0 <= off /\
       let P := SB + off in
       let k := (- (P + Z.of_nat (length s) + 1)) mod 8 in
-      exists slack : list byte, zlength slack = k /\ P + Z.of_nat (length s) + 1 + k <= SB + Z.of_nat (length SBLK)
+      exists slack : list byte, zlength slack = k /\ P + Z.of_nat (length s) + 1 + k <= bv_unsigned top - 8
         /\ bytes_at bsegs m P (s ++ Z_to_bv 8 0 :: slack).
-Proof.
+  Proof.
     intros i s Hn. destruct (str_ptrs_nth argv SB i s Hn) as (off & Hp & Ho & Ht & Hf).
     exists off. split; [exact Hp|]. split; [exact Ho|]. cbv zeta.
-    pose proof SBLK_mod8 as [M1 M2]. pose proof SBLK_length as SL. pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4).
+    pose proof SBLK_length as SL. pose proof SBLK_end as SE.
+    pose proof (total_arg_bytes_nonneg envp). pose proof (lstr_eq argv envp execfn) as LE.
     set (k := (- (SB + off + Z.of_nat (length s) + 1)) mod 8).
-    assert (Hk : 0 <= k < 8) by (subst k; (first [ (Z.div_mod_to_equations; lia) | (Z.to_euclidean_division_equations; nia) ])).
-    assert (FIT : SB + off + Z.of_nat (length s) + 1 + k <= SB + Z.of_nat (length SBLK)).
-    { subst k. Z.div_mod_to_equations. nia. }
+assert (Hk : 0 <= k < 8) by (subst k; (first [ (Z.div_mod_to_equations; lia) | (Z.to_euclidean_division_equations; nia) ])).
+    assert (FIT : SB + off + Z.of_nat (length s) + 1 + k <= bv_unsigned top - 8).
+    { subst k. unfold str_base in *. Z.div_mod_to_equations. lia. }
     exists (firstn (Z.to_nat k) (skipn (Z.to_nat off + (length s + 1)) SBLK)).
-    assert (LS : (Z.to_nat off + (length s + 1) + Z.to_nat k <= length SBLK)%nat) by lia.
+    assert (LS : (Z.to_nat off + (length s + 1) + Z.to_nat k <= length SBLK)%nat) by (unfold str_base in *; lia).
     split. { unfold zlength. rewrite firstn_length, length_skipn. lia. }
     split; [exact FIT|].
-    pose proof (bytes_at_slice bsegs b_phdrs sp argv envp uid hw draw m SB SBLK (Z.to_nat off) (length s + 1 + Z.to_nat k) SBLK_at ltac:(lia)) as B.
+    pose proof (InitMem.bytes_at_slice bsegs m SB SBLK (Z.to_nat off) (length s + 1 + Z.to_nat k) SBLK_at ltac:(lia)) as B.
     rewrite Z2Nat.id in B by lia. rewrite firstn_add_split in B. rewrite skipn_skipn in B || rewrite <- skipn_add in B || idtac.
     eapply bytes_at_ext; [exact B|].
     replace (length s + 1 + Z.to_nat off)%nat with (Z.to_nat off + (length s + 1))%nat by lia.
     replace (firstn (length s + 1) (skipn (Z.to_nat off) SBLK)) with (s ++ [Z_to_bv 8 0]); [rewrite <- app_assoc; reflexivity|].
+    (* [comment removed for export] *)
     symmetry. unfold SBLK. rewrite skipn_app, firstn_app.
     pose proof (flatten_strings_length argv) as FL.
     rewrite Hf. rewrite length_skipn.
     replace (length s + 1 - (length (flatten_strings argv) - Z.to_nat off))%nat with 0%nat by lia. cbn [firstn]. apply app_nil_r.
+  Qed.
+  Definition round_dn64 (x : Z) : Z := x / 64 * 64.
+  Definition round_up64 (x : Z) : Z := (x + 63) / 64 * 64.
+  Variable V : nat -> Z.
+  Hypothesis HM : Forall (mfact_ok bsegs V m) AMKN.
+  Hypothesis HP : Forall (pfact_ok V) APKN.
+  Hypothesis TOPHI : bv_unsigned top <= 2^47.
+  Hypothesis SPW : ATOP + 8388608 <= usp.
+  Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
+  Lemma arg_pack : forall i s, nth_error argv i = Some s ->
+    exists off (slack : list byte) (r : region),
+      nth_error (str_ptrs SB argv) i = Some (SB + off) /\ 0 <= off
+      /\ bytes_at bsegs m (SB + off) (s ++ Z_to_bv 8 0 :: slack)
+      /\ (- (SB + off + Z.of_nat (length s) + 1)) mod 8 <= zlength slack
+      /\ usp + 24 <= SB + off
+      /\ shclean m (r_lo r) (r_hi r) (r_rlo r) (r_rhi r) /\ r_lo r < r_hi r
+      /\ inreg r (SB + off) (Z.of_nat (length s) + 1 + zlength slack)
+      /\ usp + -112 <= r_rlo r /\ ATOP <= r_rlo r /\ r_rhi r <= 2^47
+      /\ SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47.
+  Proof using All.
+    intros i s Hn.
+    destruct (arg_string i s Hn) as (off & Hp & Ho & slack & SL & FIT & BY).
+    cbv zeta in SL, FIT.
+    pose proof (hsz_eq (kb_rseq (in_kernel inp)) argv envp) as HS. unfold Lib.InitMem.argc, Lib.InitMem.envc in HS.
+    pose proof (Nat2Z.is_nonneg (length argv)). pose proof (Nat2Z.is_nonneg (length envp)).
+    pose proof (Nat2Z.is_nonneg (auxv_count (kb_rseq (in_kernel inp)))). pose proof (Nat2Z.is_nonneg (gap_len argv envp)).
+    assert (SB24 : usp + 24 <= SB) by (unfold str_base in *; lia).
+    atop_facts.
+    assert (LS : 0 <= zlength slack) by (unfold zlength; lia).
+    assert (HE : SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47 - 8) by lia.
+    assert (D1 : SB + off - 63 <= round_dn64 (SB + off) <= SB + off /\ round_dn64 (SB + off) mod 64 = 0) by (unfold round_dn64; (first [ (Z.div_mod_to_equations; lia) | (Z.to_euclidean_division_equations; nia) ])).
+    assert (U1 : SB + off + Z.of_nat (length s) + 1 + zlength slack <= round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) <= 2^47
+                 /\ round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) mod 64 = 0) by (unfold round_up64; (first [ (Z.div_mod_to_equations; lia) | (Z.to_euclidean_division_equations; nia) ])).
+    exists off, slack, (mkRegion (SB + off) (SB + off + Z.of_nat (length s) + 1 + zlength slack)
+                                 (round_dn64 (SB + off)) (round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack))).
+    cbn [r_lo r_hi r_rlo r_rhi]. unfold inreg. cbn [r_lo r_hi].
+    repeat match goal with |- _ /\ _ => split end; try exact Hp; try exact BY; try lia.
+    apply (stack_shclean_init V m HM HP HAT); unfold Shadow.KEND; lia.
   Qed.
 End StringBlock.
 (* [comment removed for export] *)
@@ -802,7 +842,7 @@ Section VisRng.
   Variables (lz : list (word * word)) (AL : word -> Prop) (V : nat -> Z).
   Hypothesis A0I : forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V asan_vis) p -> AL p.
   (* [comment removed for export] *)
-  Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
+  Hypothesis HP : Forall (pfact_ok V) APKN.
   Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
 
   (* [comment removed for export] *)
@@ -879,57 +919,4 @@ Proof. clear HP HAT. intros P310. atop_facts. eapply (vis_rng 4); [reflexivity| 
 Proof. clear A0I HP HAT. intros b Hb. apply rng_fp_ok; [lia| lia|]. intros z Hz. lia. Qed.
 End VisRng.
 (* [comment removed for export] *)
-Section ArgPack.
-  Variables (V : nat -> Z) (sp : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (m : word -> option byte).
-  Notation usp := (bv_unsigned sp).
-  Notation SB := (str_base sp argv envp).
-  Hypothesis HM : Forall (mfact_ok bsegs V m) asan_mem_facts.
-  Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
-  Hypothesis SPLO : stack_max_size <= usp.
-  Hypothesis IMGHI : usp + Z.of_nat (length (entry_stack_image b_phdrs sp argv envp uid hw draw)) <= 2^64.
-  Hypothesis SP16 : usp mod 16 = 0.
-  Hypothesis SPW : ATOP + 8388608 <= usp.
-  Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
-  Hypothesis FITS : usp + entry_stack_span argv envp <= 2^47.
-  Hypothesis VARGV : valid_argv argv.
-  Hypothesis HID : forall z, SB <= z < SB + Z.of_nat (length (SBLK argv envp)) -> m (wa z) = wrap_mem b_phdrs sp argv envp uid hw draw (wa z).
-
-  Definition round_dn64 (x : Z) : Z := x / 64 * 64.
-  Definition round_up64 (x : Z) : Z := (x + 63) / 64 * 64.
-
-  Lemma span_ge : SB + Z.of_nat (length (SBLK argv envp)) + 16 <= usp + entry_stack_span argv envp /\ usp + 192 <= SB.
-Proof.
-    clear HM HP SPLO IMGHI SP16 SPW FITS HID. rewrite SBLK_length. unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc, entry_stack_span, pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc.
-    pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4). unfold pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in R4.
-    destruct VARGV as (A1 & _). change (Z.of_nat auxv_size) with 160.
-    split; [| lia]. (first [ (Z.div_mod_to_equations; lia) | (Z.to_euclidean_division_equations; nia) ]).
-  Qed.
-
-  Lemma arg_pack : forall i s, nth_error argv i = Some s ->
-    exists off (slack : list byte) (r : region),
-      nth_error (str_ptrs SB argv) i = Some (SB + off) /\ 0 <= off
-      /\ bytes_at bsegs m (SB + off) (s ++ Z_to_bv 8 0 :: slack)
-      /\ (- (SB + off + Z.of_nat (length s) + 1)) mod 8 <= zlength slack
-      /\ usp + 24 <= SB + off
-      /\ shclean m (r_lo r) (r_hi r) (r_rlo r) (r_rhi r) /\ r_lo r < r_hi r
-      /\ inreg r (SB + off) (Z.of_nat (length s) + 1 + zlength slack)
-      /\ usp + -112 <= r_rlo r /\ ATOP <= r_rlo r /\ r_rhi r <= 2^47
-      /\ SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47.
-Proof.
-    intros i s Hn.
-    destruct (arg_string sp argv envp uid hw draw m SPLO IMGHI SP16 HID i s Hn) as (off & Hp & Ho & slack & SL & FIT & BY).
-    cbv zeta in SL, FIT.
-    pose proof span_ge as [SG1 SG2]. pose proof (SBLK_mod8 sp argv envp SP16) as [M1 M2]. atop_facts.
-    assert (LS : 0 <= zlength slack) by (unfold zlength; lia).
-    assert (HE : SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47 - 16) by lia.
-    assert (D1 : SB + off - 63 <= round_dn64 (SB + off) <= SB + off /\ round_dn64 (SB + off) mod 64 = 0) by (unfold round_dn64; (first [ (Z.div_mod_to_equations; lia) | (Z.to_euclidean_division_equations; nia) ])).
-    assert (U1 : SB + off + Z.of_nat (length s) + 1 + zlength slack <= round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) <= 2^47
-                 /\ round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) mod 64 = 0) by (unfold round_up64; (first [ (Z.div_mod_to_equations; lia) | (Z.to_euclidean_division_equations; nia) ])).
-    exists off, slack, (mkRegion (SB + off) (SB + off + Z.of_nat (length s) + 1 + zlength slack)
-                                 (round_dn64 (SB + off)) (round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack))).
-    cbn [r_lo r_hi r_rlo r_rhi]. unfold inreg. cbn [r_lo r_hi].
-    repeat match goal with |- _ /\ _ => split end; try exact Hp; try exact BY; try lia.
-    apply (stack_shclean_init V m HM HP HAT); unfold Shadow.KEND; lia.
-  Qed.
-End ArgPack.
 End CANSEC5.

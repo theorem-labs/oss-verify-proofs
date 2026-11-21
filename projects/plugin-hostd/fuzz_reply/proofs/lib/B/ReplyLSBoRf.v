@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Copyright 2026 Theorem Labs *)
 (* B's (5) LS_rf_room: relay_finish's room at LSx := fr_LS B CR /\ fr_OUT (lib/B/ReplyLSBo.v), the port of A's
    lib/A/ReplyLS3oRf.v.  proves no function (kind: invariant lemma).
 
-   THE TEXT LS_rf_room_T CANNOT BE PROVED, AND SHOULD BE CHANGED.  ReplyLSBArms.v:241 states it over
+   THE TEXT LS_rf_room_T CANNOT BE PROVED, AND SHOULD BE CHANGED.  ReplyLSBArms.v:242 states it over
    lx_rf_room_c3 (:185-192), whose threading after an entry is `bb + gse_cap r`: it ADDS the whole g_out capacity
    at every entry of the table instead of the change that entry makes to it.  After k entries the threaded bb is
    blocks_bytes S + sum of the k capacities, at least blocks_bytes S + k * lm_cap m, while the live bytes at that
@@ -299,7 +300,7 @@ Proof.
 Qed.
 
 (* ================================================================== relay_finish's room, in the text that holds *)
-(* ReplyLSBArms.v:185-192 lx_rf_room_c3 with the threading at the capacity's own change *)
+(* ReplyLSBArms.v:186-193 lx_rf_room_c3 with the threading at the capacity's own change *)
 Fixpoint lx_rf_room_p (MX bb : Z) (c : ctl) (O : list byte) (mx no cap : Z) (es : list rentry) : Prop :=
   match es with
   | [] => True
@@ -376,7 +377,7 @@ Proof.
 Qed.
 
 (* ================================================================== (5) at LSx := fr_LS B CR /\ fr_OUT OM *)
-(* the room relay_finish needs above LS_OVER, in B's own form (ReplyLSBArms.v:415, :556): twice the bytes one call
+(* the room relay_finish needs above LS_OVER, in B's own form (ReplyLSBArms.v:416, :557): twice the bytes one call
    can send, 4 * 65,535 * OPS_MAX *)
 Definition R_rf : Z := 134215680.
 Lemma R_rf_val : R_rf = 4 * WMAX * OPS_MAX.

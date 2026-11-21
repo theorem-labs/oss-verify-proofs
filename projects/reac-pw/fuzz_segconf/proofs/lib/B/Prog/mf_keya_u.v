@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,9 +37,10 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v; 167 of its 216 lines of code are new or changed and 404 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3), segment S_MF_KEYA: low.i marked usable and the cut
    KDISP (mf_keya_d.v kb_u : MF_KDISP_stmt n -> KB_U_stmt n), in the form of plugin-hostd/fuzz_command's lib/A/Prog
-   walks (origin/ossv/recipes 501c0d516c69):
+   walks:
      0x866ec  sb zero,8(s8); sb zero,9(s8); sb zero,10(s8); sb zero,11(s8)    low.i's shadow bytes 8 .. 11 := 0
      0x866fc  sub s5,a1,a0                                                    s5 = kl = ke - k
      0x86700  sub s10,a2,a3                                                   s10 = vl = ve - v
@@ -49,7 +50,7 @@
    (shw = true) and the frame cells read-only; s8 is pinned to the frame shadow's atom 36. The run writes only the
    frame's 16 shadow bytes (inside m_file_k.v's mf_win), so mf_tx_core / mf_tx_cells / mf_tx_np / mf_tx_loop /
    mf_tx_stack8 carry the cut facts, with low.i's shadow bytes at MF_LOW_ON. The template is image A's S_MF_KDONE
-   (the image-A m_file-family lane's lib/A/Prog/m_file_s_tail.v mf_kdone_at, commit fdafeb0f1e0f), the same
+   (the image-A m_file-family lane's lib/A/Prog/m_file_s_tail.v mf_kdone_at), the same
    stores with 0 in place of 0xf8. A walk lane of the image-B m_file-family owner's G2B. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

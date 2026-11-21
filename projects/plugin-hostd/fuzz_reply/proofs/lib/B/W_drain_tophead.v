@@ -14,6 +14,7 @@
    only s3, s7, a0-a6 and (at realloc) ra, so DI's dregs_top holds at the seam unchanged.
    dr_top_of composes the two halves: the tail's EINTR continuation at dclr sg is dr_top_stmt's at
    dclr (dgrow s1), because ds_eintr (dgrow s1) reduces to ds_eintr s1. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -896,7 +897,7 @@ psrr_branch_tok RUN BR HS SHOK DBspan.
   pose proof Hge as Hg2. rewrite <- Lcap, Hulen1 in Hg2. lia.
 Qed.
 
-(* ==== GROW (dt_grow): the helpers, ported from lib/A/W_drain_top.v on a working branch 752503c26ca
+(* ==== GROW (dt_grow): the helpers, ported from lib/A/W_drain_top.v on a working branch
    (lines 180-190, 241-246, 719-1077, 1096-1601); image-free unless marked [B]. ==== *)
 
 Lemma dt_entry_buf : forall (W : world SEGS) m SA e,
@@ -2597,7 +2598,7 @@ End b.
 End a.
 
 (* ---- THE GENERIC WALK (an internal work row, the ARx drain walk DR_x; the image-B twin of lib/A/W_drain_top.v's generic Section
-   c, a working branch d80aca9181b).  Section cxd states the head's cuts DT1_x / DSC_x and its stage
+   c, a working branch).  Section cxd states the head's cuts DT1_x / DSC_x and its stage
    statements over any allocator relation ARx in lib/B/W_drain_cx_x.v's forms (the entry's ghost list Hp and budget kr
    after cx, the cut's ghost list Hp1 an existential after S1, DMEM_x / dbud_x in place of DMEM / dbud, DBASE, DI, DT2
    and the post in their _x forms), and composes them as Section c composes the AR ones: dr_tophead_of_x,
@@ -2833,8 +2834,8 @@ End b.
 End a.
 
 (* ---- THE GENERIC HEAD (an internal work row): dt_nogrow_x : dt_nogrow_stmt_x and dt_grow_x : dt_grow_stmt_x (Section cxd's
-   statements), the image-B twins of lib/A/W_drain_top.v's generic dt_nogrow / dt_grow (a working branch
-   d80aca9181b), proved over any allocator relation ARx with its laws at the room parameter RP, under W_drain_cx_x.v
+   statements), the image-B twins of lib/A/W_drain_top.v's generic dt_nogrow / dt_grow (a working branch),
+   proved over any allocator relation ARx with its laws at the room parameter RP, under W_drain_cx_x.v
    Section c's hypotheses that Section c above has a twin of, plus HP0 (no hidden head in any ARx state, the ruling of
    drx-a7-texts.md (sha256 a00dd49ffabb; internal record)): the entry's ghost list Hp and every cut's Hp1 are [], so every cut of the walk is read at Hp = [].
    Realloc #1 (0x83410, return 0x83414 = AF_fr_drain + 0x19c) is the caller-context rule arealloc_cf_rule_c_x at

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/HaltsSpecX.v (via fuzz_grant's lib/A/HaltsSpecG.v, a working branch 0bed23e5b69) for fuzz_scene: the library shape is the one of scene's released agreement, AgreeShape.ag_shape ZTraceSpec.checksum_shape (= AgreeScene.ag_sil_shape; each call returns 0 and writes nothing, LIBK pl fs K = K (LL 0 fs [])), so cgif's lemmas for its file-writing shape are replaced by the one-line case; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/HaltsSpecX.v (via fuzz_grant's lib/A/HaltsSpecG.v, a working branch) for fuzz_scene: the library shape is the one of scene's released agreement, AgreeShape.ag_shape ZTraceSpec.checksum_shape (= AgreeScene.ag_sil_shape; each call returns 0 and writes nothing, LIBK pl fs K = K (LL 0 fs [])), so cgif's lemmas for its file-writing shape are replaced by the one-line case; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YK11 YK15 YO0i YO0f YM02 YM05 YO05 YO09 YO06.

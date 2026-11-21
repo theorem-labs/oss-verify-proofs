@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -30,6 +31,16 @@ Proof. intros i Hi. do 28 (destruct i as [|i]; [vm_refl|]). lia. Qed.
 
 Section Node.
 Variable nx0 : nat.   Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 ([rseq_z]), carried straight through to
+   AS/Z39.v's [node_x_sound_XSniff].  [x_stmt] reads it through
+   [node_x ASEGS ASAN_B nx0 RZ x args] (AS/Z33.v:2118, AS/Z2y.v:33,125).
+   Declared immediately after [LIMIT], the slot AS/Z33.v:115 puts it in, so the
+   discharged form is
+   [asan_node_x_sound_XSniff nx0 LIMIT RZ SINV argH FS0 ...] and the consumer
+   AS/Z3e.v:72 supplies its own [RZ] there.  A section [Variable] and not a
+   [Let]: nothing here derives the flag, and a literal would pin it when both
+   values are reachable.  Image A's twin is AS/Z3a.v. *)
+Variable RZ : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.   Variable FS0 : Fs.Fs.
 Hypothesis SEGS_wx : wx_segs_nowrap ASEGS.
@@ -38,6 +49,6 @@ Hypothesis HULL_ok : APS.hull_ok ASAN_B.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 
-Theorem asan_node_x_sound_XSniff : APS.x_stmt ASEGS ASAN_B nx0 LIMIT SINV argH FS0 XSniff.
+Theorem asan_node_x_sound_XSniff : APS.x_stmt ASEGS ASAN_B nx0 LIMIT RZ SINV argH FS0 XSniff.
 Proof. eapply node_x_sound_XSniff; eauto using asan_xs_range, asan_xs_code. Qed.
 End Node.

@@ -9,6 +9,7 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 289 of its 361 lines of code are new or changed and 1419 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_find on fuzz_segconf.asan (image A, 0x894ec, 42 instructions): the proof of
    reac_segconf_find_contract (lib/A/Prog/reac_segconf_find_c.v) from the contract of the strcmp wrapper
    (row 17 of provenance/evidence/interceptors/INTERFACE-A-interceptors.md: RtString.astrcmp_realizes, at the listing's call
@@ -17,8 +18,8 @@
    shadow token of the block), the epilogue 0x8956c-0x89580, the cut and the seeds. This file steps the loop's
    one call through PaArt's aj_art_at, closes the loop by induction on the entries left, and composes.
    Written new (the walk lane); the control flow is the plain / UBSan owner's plain walk lib/Prog/reac_segconf_find.v at
-   the plain / UBSan integration commit 440d61eaa8c8, the ASan shape is plugin-hostd/fuzz_command's lib/A/Prog/rec_calls_equal.v
-   at origin/ossv/recipes 501c0d516c69. *)
+   the plain / UBSan integration, the ASan shape is plugin-hostd/fuzz_command's lib/A/Prog/rec_calls_equal.v.
+   *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok carries RomBase.sys_rob as its third part, proved at the instruction, exit and channel-write nodes, the channel-write lemmas take vfs_write's access_ok range premise, and rz_silent_all; re-indented in places). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK16 YK0o YK0j YK0v YK02 YK03 YK1i.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomBase RomWrite.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -83,7 +85,10 @@ Variable segs : list Segment.
 Definition node_ok (c : config) (I : Type)
 (evs : I -> list event) (nx : I -> config) : Prop :=
 (forall i, sstep segs c (evs i) (SNext (nx i)))
-/\ (forall e st, sstep segs c e st -> exists i, e = evs i /\ st = SNext (nx i)).
+/\ (forall e st, sstep segs c e st -> exists i, e = evs i /\ st = SNext (nx i))
+(* LPS 727298f3: the node's system call reads no byte the run's backing adds
+   ([RomBase.sys_rob]; [RomStable] lifts a walk to the run's segment list) *)
+/\ sys_rob segs c.
 Inductive realizes : config -> TSet -> Prop :=
 | rz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
 (T : I -> TSet) (i0 : I),
@@ -122,7 +127,7 @@ intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H I
 intros tr c' Hstar.
 - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
 + exists i0. left. apply is_prefix_nil.
-+ destruct Hnode as [_ Hsound].
++ destruct Hnode as [_ [Hsound _]].
 destruct (Hsound e (SNext c2) Hss) as (i & -> & Heq2).
 inversion Heq2; subst c2.
 exists i. right. exists tr2. split; [reflexivity | eapply IH; exact Hstar2].
@@ -160,7 +165,7 @@ Proof.
 intros c T e c' H; revert e c';
 induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
 intros e c' Hss.
-- destruct Hnode as [_ Hsound].
+- destruct Hnode as [_ [Hsound _]].
 destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
 inversion Heq2; subst c'. exists (T i). apply Hcont.
 - exfalso. apply Hh. eapply sstep_halted_none; exact Hss.
@@ -176,9 +181,9 @@ intros c T H.
 induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
 - apply coexec_step.
 + destruct Hnode as [Hcomp _]. eapply sstep_halted_none. apply (Hcomp i0).
-+ intros e Hss. exfalso. destruct Hnode as [_ Hsound].
++ intros e Hss. exfalso. destruct Hnode as [_ [Hsound _]].
 destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate Hbad.
-+ intros e c' Hss. destruct Hnode as [_ Hsound].
++ intros e c' Hss. destruct Hnode as [_ [Hsound _]].
 destruct (Hsound e (SNext c') Hss) as (i & -> & Heq2).
 inversion Heq2; subst c'.
 eapply coexec_conseq; [exact (IH i) |].
@@ -212,6 +217,21 @@ intros []; exact Hc.
 - eapply t_eq_trans;
 [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
 | apply t_emit_nil_eq; eapply realizes_nonempty; exact Hc ].
+Qed.
+
+Lemma rz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok c I (fun _ => []) nx ->
+  (forall i, realizes (nx i) T) ->
+  realizes c T.
+Proof.
+  intros c I nx T i0 Hnode HT.
+  assert (HT0 : T []) by (eapply realizes_nonempty; apply (HT i0)).
+  apply (rz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (rz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
 Qed.
 Lemma rz_emit1 : forall c c' e T,
 node_ok c unit (fun _ => e) (fun _ => c') ->
@@ -255,13 +275,14 @@ ms_svc_pending ms = None ->
 RiscvSemantics.step segs ms = MachineOk ms' ->
 node_ok (mkCfg ms model) unit (fun _ => []) (fun _ => mkCfg ms' model).
 Proof.
-intros ms model ms' Hh Hlazy Hsvc Hstep. split.
+intros ms model ms' Hh Hlazy Hsvc Hstep. split; [| split].
 - intros []. apply (sstep_instr segs ms model ms' model);
 [assumption | assumption |].
 rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 - intros e st Hss.
 destruct (sstep_instr_inv segs ms model ms' e st Hlazy Hsvc Hstep Hss) as [-> ->].
 exists tt. split; reflexivity.
+- apply sys_rob_instr. exact Hsvc.
 Qed.
 Lemma rz_step : forall ms model ms' T,
 m_halted model = None ->
@@ -300,7 +321,7 @@ intros ms model x8 Hh Hsvc Hx8.
 set (code := bv_and (ms_gpr ms 0) (Z_to_bv 64 255)).
 unfold t_exit.
 eapply (rz_emit1 (mkCfg ms model) (mkCfg ms (with_halted code model))).
-- split.
+- split; [| split].
 + intros []. cbn.
 replace [ExitEv code (m_fs model)]
 with ([] ++ [ExitEv code (m_fs (with_halted code model))]) by reflexivity.
@@ -314,6 +335,7 @@ rewrite in_sysno_sys_input; exact Hx8
 + intros e st Hss.
 destruct (sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 Hss) as [-> ->].
 exists tt. split; reflexivity.
++ exact (sys_rob_exit segs ms model x8 Hsvc Hx8).
 - apply rz_halt. cbn. discriminate.
 Qed.
 
@@ -351,65 +373,68 @@ fold_right (t_write_ch ch) T bufs.
 
 
 Lemma node_write_ch : forall segs ms model fd ch x8 buf,
-m_halted model = None ->
-m_vm_lazy model = [] ->
-fdchan fd ch model -> fd32 fd = fd ->
-ms_svc_pending ms = Some x8 ->
-bv_unsigned x8 = 64%Z ->
-ms_gpr ms 0 = fd ->
-ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
-buf_modeled buf ->
-(1 <= length buf)%nat ->
-node_ok segs (mkCfg ms model) (wr_index buf)
-(fun i => map (WriteEv ch) (firstn (proj1_sig i) buf))
-(fun i => mkCfg (advance_past_svc
-(set_gpr0 ms (len_word (firstn (proj1_sig i) buf))))
-model).
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model -> fd32 fd = fd ->
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 64%Z ->
+  ms_gpr ms 0 = fd ->
+  ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
+  buf_modeled buf ->
+  (1 <= length buf)%nat ->
+  node_ok segs (mkCfg ms model) (wr_index buf)
+          (fun i => map (WriteEv ch) (firstn (proj1_sig i) buf))
+          (fun i => mkCfg (advance_past_svc
+                             (set_gpr0 ms (len_word (firstn (proj1_sig i) buf))))
+                          model).
 Proof.
-intros segs ms model fd ch x8 buf Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hbm Hnb. split.
-- intros [n [Hn1 Hn2]]. cbn [proj1_sig].
-rewrite <- (apply_effect_copyins_no_write ms (len_word (firstn n buf))
-[(ms_gpr ms 1, n)]).
-apply (sstep_syscall segs ms model x8
-(with_copyins [(ms_gpr ms 1, n)]
-(mkEffect (len_word (firstn n buf)) [] [])) model
-model (map (WriteEv ch) (firstn n buf))).
-+ exact Hh.
-+ exact Hsvc.
-+ eapply write_ch_ok_n; eassumption.
-+ exact Hh.
-+ apply materialize_model_accesses_no_lazy. exact Hlazy.
-- intros e st Hss.
-destruct (sstep_write_ch_inv segs fd ch H32 ms model x8 buf e st
-Hh Hlazy Hfdc Hsvc Hno Hg Hr Hbm Hnb Hss)
-as (n & Hn1 & Hn2 & -> & ->).
-exists (exist _ n (conj Hn1 Hn2)). split; reflexivity.
+  intros segs ms model fd ch x8 buf Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hok Hbm Hnb. split; [| split].
+  - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
+    rewrite <- (apply_effect_copyins_no_write ms (len_word (firstn n buf))
+                  [(ms_gpr ms 1, n)]).
+    apply (sstep_syscall segs ms model x8
+             (with_copyins [(ms_gpr ms 1, n)]
+                (mkEffect (len_word (firstn n buf)) [] [])) model
+             model (map (WriteEv ch) (firstn n buf))).
+    + exact Hh.
+    + exact Hsvc.
+    + eapply write_ch_ok_n; eassumption.
+    + exact Hh.
+    + apply materialize_model_accesses_no_lazy. exact Hlazy.
+  - intros e st Hss.
+    destruct (sstep_write_ch_inv segs fd ch H32 ms model x8 buf e st
+                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss)
+      as (n & Hn1 & Hn2 & -> & ->).
+    exists (exist _ n (conj Hn1 Hn2)). split; reflexivity.
+  - exact (write_ch_rob segs ms model x8 fd ch buf Hfdc H32 Hsvc Hno Hg Hr Hbm).
 Qed.
 Lemma rz_write_ch : forall segs ms model fd ch x8 buf T,
-m_halted model = None ->
-m_vm_lazy model = [] ->
-fdchan fd ch model -> fd32 fd = fd ->
-ms_svc_pending ms = Some x8 ->
-bv_unsigned x8 = 64%Z ->
-ms_gpr ms 0 = fd ->
-ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
-buf_modeled buf ->
-(1 <= length buf)%nat ->
-(forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
-realizes segs
-(mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
-realizes segs (mkCfg ms model) (t_write_ch ch buf T).
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model -> fd32 fd = fd ->
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 64%Z ->
+  ms_gpr ms 0 = fd ->
+  ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
+  buf_modeled buf ->
+  (1 <= length buf)%nat ->
+  (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
+     realizes segs
+       (mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
+  realizes segs (mkCfg ms model) (t_write_ch ch buf T).
 Proof.
-intros segs ms model fd ch x8 buf T Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hbm Hnb Hc.
-unfold t_write_ch.
-apply (rz_node segs (mkCfg ms model) (wr_index buf)
-(fun i => map (WriteEv ch) (firstn (proj1_sig i) buf))
-(fun i => mkCfg (advance_past_svc
-(set_gpr0 ms (len_word (firstn (proj1_sig i) buf))))
-model)
-(fun _ => T) (wr_full buf Hnb)).
-- eapply node_write_ch; eassumption.
-- intros [n [Hn1 Hn2]]. cbn [proj1_sig]. apply Hc; assumption.
+  intros segs ms model fd ch x8 buf T Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hok Hbm Hnb Hc.
+  unfold t_write_ch.
+  apply (rz_node segs (mkCfg ms model) (wr_index buf)
+           (fun i => map (WriteEv ch) (firstn (proj1_sig i) buf))
+           (fun i => mkCfg (advance_past_svc
+                              (set_gpr0 ms (len_word (firstn (proj1_sig i) buf))))
+                           model)
+           (fun _ => T) (wr_full buf Hnb)).
+  - eapply node_write_ch; eassumption.
+  - intros [n [Hn1 Hn2]]. cbn [proj1_sig]. apply Hc; assumption.
 Qed.
 
 

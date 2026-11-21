@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run_ok premise is threaded through the main proofs. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -48,17 +49,17 @@ Section Main.
   Hypothesis TRUN : rtarget_run_stmt.
 
   Lemma main_from_P1 : forall (sp0 : word) (argv envp : list (list byte)) (uid : word) (arg0 arg1 : list byte) (TID : Z) ms,
-    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> argv = [arg0; arg1] -> 0 < TID < 4194304 ->
+    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> run_ok sp0 argv envp -> argv = [arg0; arg1] -> 0 < TID < 4194304 ->
     P1 sp0 argv envp uid TID ms ->
     implM psegs (ra <- read_all io raw_malloc raw_free pstage (map bv_unsigned arg1) ;;
                  match ra with RdExit => mret 2 | RdDone buf content => main_rest buf content end)
           (ps_init (reservedZ psegs)) (fun code s' ms' => at_exit ps_so code s' ms') ms.
   Proof.
-    intros sp0 argv envp uid arg0 arg1 TID ms VSP CEIL VARGV VENVP EARGV HT HP1.
+    intros sp0 argv envp uid arg0 arg1 TID ms VSP CEIL VARGV VENVP ROK EARGV HT HP1.
     destruct HP1 as (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & mm & pad
                      & -> & FR & BA & HP & ERR & SOF & SE & FL & IFL & SG).
     eapply implM_bind.
-    { eapply (main_read_all sp0 argv envp uid arg0 arg1 TID pad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL VARGV VENVP EARGV HT MALLOC FREE FPR FWX SWF FWR);
+    { eapply (main_read_all sp0 argv envp uid arg0 arg1 TID pad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL VARGV VENVP ROK EARGV HT MALLOC FREE FPR FWX SWF FWR);
         [exact FR| exact BA| exact HP| | | exact SG| ].
       - split; [exact SOF|]. split; [exact SE|]. split; [exact FL| exists (Z_to_bv 8 0); exact IFL].
       - unfold RATP in ERR. cbv delta [MallocRep.wz] in ERR. unfold errno_addr in ERR. rewrite (unsigned_lit RMallocRep.RATP) in ERR by (unfold RMallocRep.RATP; lia).
@@ -73,15 +74,15 @@ Section Main.
 
   Theorem main_proof : rmain_stmt.
   Proof.
-    unfold rmain_stmt. intros sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS AM.
+    unfold rmain_stmt. intros sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS ROK AM.
     destruct (Z.eq_dec (Z.of_nat (length argv)) 2) as [E2|NE2].
     2:{ unfold main_model. replace (Z.of_nat (length (argv_Z argv)) =? 2) with false by (symmetry; apply Z.eqb_neq; unfold argv_Z; rewrite length_map; exact NE2). cbn [negb].
-        exact (main_usage_proof FPR FWX SWF sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS NE2 AM). }
+        exact (main_usage_proof FPR FWX SWF sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS ROK NE2 AM). }
     destruct argv as [|arg0 [|arg1 [|x l]]] eqn:EARGV; cbn in E2; try lia. rewrite <- EARGV in *.
     rewrite (main_model_eq argv arg0 arg1 EARGV).
-    destruct (main_to_P1_proof sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS ltac:(rewrite EARGV; reflexivity) AM) as (TID & HT & EV).
+    destruct (main_to_P1_proof sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS ROK ltac:(rewrite EARGV; reflexivity) AM) as (TID & HT & EV).
     eapply implM_evt; [exact EV|]. cbv beta. intros ms' HP1.
-    exact (main_from_P1 sp0 argv envp uid arg0 arg1 TID ms' VSP CEIL VARGV VENVP EARGV HT HP1).
+    exact (main_from_P1 sp0 argv envp uid arg0 arg1 TID ms' VSP CEIL VARGV VENVP ROK EARGV HT HP1).
   Qed.
 End Main.
 End WithCeiling0.

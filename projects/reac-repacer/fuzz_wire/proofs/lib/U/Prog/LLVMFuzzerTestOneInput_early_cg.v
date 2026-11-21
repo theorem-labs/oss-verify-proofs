@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: the cut-free (SRcf) twin of lib/U/Prog/LLVMFuzzerTestOneInput_early.v's
    llvm_early (the size = 0 / size >= 64 MiB return 0 of fuzz_wire.c:256-257), as libreac/fuzz_decode's released
-   lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v (25e3d17bdb5) and reac-repacer/fuzz_uci's (ddb6d58bbed): the same
+   lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v and reac-repacer/fuzz_uci: the same
    proof over the same instruction walk (llvm_early_evt), with llvm_run_norm_cf and SRcf_ret for llvm_run_norm and
    SR_ret. *)
 From Stdlib Require Import ZArith List Bool Lia.

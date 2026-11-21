@@ -6,7 +6,8 @@
    verified symbolic executor, the state at arg_line's entry (sbb_at_al: the slot's nargs field is 0 by RecBridge.v's
    rec_bridge_slot), the call through PaCallPg.v's cl_callS_pg with arg_line_c.v's contract at nargs 0, and the
    state at its return (0x8b518, sbb_ret_al: the recorder rebuilt by RecBridge.v's rec_bridge_add with the new
-   argument block). The call is the shape of a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s4.v at a5a5ff08765). *)
+   argument block). The call is the shape of a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s4.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

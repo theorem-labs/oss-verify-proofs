@@ -6,7 +6,7 @@
    SHARED PART of the input loop (segments S3 LOOP, S4 TAIL, S5 MID, S6 CHECKS and the loop closure): the four walk
    states ss_L / ss_T / ss_M / ss_C and their invariants, the functional model of the two callees over Z, the two
    callee contract types, and the handful of walk helpers a Theorem Labs lane's lib/A framework set does not carry.
-   Donor: proofs/cgif/cgif_file_fuzzer/lib/A at c8557374ad2e --- ACf7.v (the per-segment states and invariants,
+   Donor: proofs/cgif/cgif_file_fuzzer/lib/A --- ACf7.v (the per-segment states and invariants,
    e.g. :27-56), ACfc.v / ACfe.v (the segment lemmas that consume them), ACey.v:190-246 (rfc_post / trfc_specX,
    the journal-threaded callee contract), ACf9.v:246-296 and :339-348 and :389-396 and :489-505 (add_atom_win,
    ra_join_win, denot_havoc_win, ewpeel, vkeep, PB_at_now), ACf1.v:112-123 and :124-161 and :192-251 and :267-281
@@ -49,6 +49,7 @@
    THE ENV SLOTS THIS MODULE OWNS (so the other lanes avoid them): 300-343 for the loop's values, and the
    dead-register havoc windows 700 (ss_T) / 720 (ss_M) / 740 (ss_C) / 760 (ss_L).  Slots < 33 and 70 / 75 / 87 / 88
    are the context record's (A/APgRt.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -320,7 +321,7 @@ rewrite <- (Z.lxor_lor _ _ Hd). rewrite <- (Z.add_nocarry_lxor _ _ Hd). reflexiv
 Qed.
 
 (* ===================== 2. the struct layout ===================== *)
-(* LAY_Knock is a Theorem Labs lane's (lib/A/APgCSpec.v:18), from lib/Prog/reac_knock_struct.v:9-10: state, pad1, opened,
+(* LAY_Knock is a Theorem Labs lane's (lib/A/APgCSpec.v:19), from lib/Prog/reac_knock_struct.v:9-10: state, pad1, opened,
    due, heard, granted, pad2 at 0/4/8/16/24/32/36 of widths 4/4/8/8/8/4/4.  Only the harness-side constants are
    here: the struct's size and where S2 puts it inside the fake frame. *)
 Definition KNOCK_SIZE : Z := 40.

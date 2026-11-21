@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv lies at least 16 bytes above the stack top (ar_sptop ar + 16 <= av), and the auxv fact is the launch's vector (L5USA.auxv_okA) in place of the ten-pair auxv20A. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -146,7 +147,7 @@ Lemma e3_s7 :
     forall (RNDR : 0 <= rnd < 2 ^ 64),
     forall (CANR : 0 <= canary < 2 ^ 64),
     forall (HWR : 0 <= hw < 2 ^ 64),
-    forall (AVS : ar_sptop ar <= av),
+    forall (AVS : ar_sptop ar + 16 <= av),
     forall (HH : ri_inv HI ([(d1, 64); (d2, 64); (d3, 64); (d4, 64)] ++ LB1) (L5DSA.ff_e3 FF Sp F1a F3a F1b F3b F1c F1d) LKt cr A M (vml_of model)),
     forall (AM : amodel_ok A model),
     forall (HK : K []),
@@ -359,7 +360,7 @@ Lemma e3_s7 :
     forall (FRN : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M21 (Sp - 712 + 8 * Z.of_nat j) (nth j [F3a; nz w10; nz w9; L5DSA.RETIRE_MAGIC; F1b; S F1b; F1b + 32; Sp - 504; nz xo; F1b; Sp - 608; Sp - 512; L5DSA.DIV_RET_N] 0)),
     forall (FRZ : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M21 (Sp - 1064 + 8 * Z.of_nat j) (nth j [F1c; F3b + 48; nz w9; nz xo; F1b + 32; nz xo; SB; F3b + 96; F3b + 32; S F3b; Sp - 960; Sp - 608; L5DSA.RESIZE_RET_G] 0)),
     forall (FRA : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M21 (Sp - 1192 + 8 * Z.of_nat j) (nth j [F1d; nz (S (xo + 8)); nz (Z.of_nat lenX); SB; F1c; S F1c; nz (xo + 8); nz xo; 2 ^ 64 - 1; F1c; Sp - 1088; Sp - 960; L5DSA.RESERVE_RET] 0)),
-    forall (AUXV : forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M21 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)),
+    forall (AUXV : L5USA.auxv_okA M21 av uid rnd hw),
     forall (RD42 : rdn RSEGS M21 (Z_to_bv 64 msg) 42 = Some (firstn 41 L5AE3K.at_buf ++ [Z_to_bv 8 0])),
     forall (IC3 : L5.img_clear M21 892784 (892784 + 8)),
     forall (IC2 : L5.img_clear M21 892736 892768),

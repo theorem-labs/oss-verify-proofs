@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: the UBSan image's cut-free slot contract, as libreac/fuzz_decode's released
-   lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v (25e3d17bdb5) and reac-repacer/fuzz_uci's (ddb6d58bbed). Section L is the
+   lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v and reac-repacer/fuzz_uci. Section L is the
    cf twin of lib/U/Prog/LLVMFuzzerTestOneInput_link.v: malloc at the agree room from the kit's malloc_contract_cf and
    the allocator's limit law (malloc_ag_of_cf), free from free_contract_cf, check_copy from its cf walk
    (check_copy_cg.v), memcpy and the seven checks with their rp_* callees from their walks as they are (evt contracts,

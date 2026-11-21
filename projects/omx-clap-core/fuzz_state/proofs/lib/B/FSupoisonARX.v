@@ -1,5 +1,5 @@
-(* The image-B twin of section 3 of lib/A/FSupoisonARX.v (POISON-U lane, a working branch
-   d37bcb51c52): the image premises [inst_low] and [zones_free] discharged for fuzz_state's image B
+(* The image-B twin of section 3 of lib/A/FSupoisonARX.v (POISON-U lane, a working branch):
+   the image premises [inst_low] and [zones_free] discharged for fuzz_state's image B
    (fuzz_state.asan-ubsan, sha256 5ac5ce0954f8...).  The image-independent part of section 3 (inst_ok_window,
    inst_low_window, DZONE_shape, CZONE_shape, owned_ext_free, zones_free_shape) is lib/A/FSupoisonARX.v's own,
    imported, since it names no address of either image.  Only the five lemmas below read an image, and they are

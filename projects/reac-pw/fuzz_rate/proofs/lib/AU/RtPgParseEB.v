@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: kept_run and same_io_wvb of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at
-   5eaa5614305, awr_stk of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at fb6520a9cda, U_sext32_small of
-   proofs/reac-pw/fuzz_qdisc/lib/A/QPgLoop0.v at b0f706c04a1 and U_sx32_eqb of proofs/libreac/fuzz_knock/lib/A/APgStep.v
-   at 6ebe35ba632, renamed (kept_run_pe, same_io_wvb_pe, pe_awr, pe_U_sx32, pe_U_sx32_eqb); pe_awr also reads sp's value
+(* Modified by Theorem Labs, 2026-10: kept_run and same_io_wvb of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v,
+   awr_stk of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v, U_sext32_small of
+   proofs/reac-pw/fuzz_qdisc/lib/A/QPgLoop0.v and U_sx32_eqb of proofs/libreac/fuzz_knock/lib/A/APgStep.v,
+   renamed (kept_run_pe, same_io_wvb_pe, pe_awr, pe_U_sx32, pe_U_sx32_eqb); pe_awr also reads sp's value
    through the token atoms a run adds; everything else below is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseE.v at afaa3cb55c1d; module paths and
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseE.v; module paths and
    names changed to fuzz_rate's (RtPg* files, rt_fxk, Rate.parse_model, Rate.harness_parse, reac_rate_prop_parse), the
    .got cell 0x9be70 and the shadow-offset cell 0xa4c38 of fuzz_rate.asan in e1_entry, the comments' pcs and branch
    targets fuzz_rate.asan's. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseE.v at f7246d55e8c3 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseE.v for image B
    (fuzz_rate.asan-ubsan); the image is lib/AU/Img0.v's and the vocabulary lib/AU/RtPgParseBaseB.v's (B_PARSE,
    B_GOT_SH, B_SH_CELL, image B's cut pcs); the .got cell 0x9c170 and the shadow-offset cell 0xa4f38 in e1_entry; the
    destruct patterns of call_ok past rt_wcell take its premise 0 < Q; at L1 P + 8 is in a1 (reg 11); the comments'
    pcs, registers and branch targets are image B's, with the trap branch 0x84784. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_rate_prop_parse 0x8474c of reac-pw/fuzz_rate's ASan image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14): segments E1 and E2 of its walk, proving
    lib/AU/RtPgParseBaseB.v's segE1_stmt and segE2_stmt on the concrete image rsegs.

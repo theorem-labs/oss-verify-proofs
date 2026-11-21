@@ -1,0 +1,19 @@
+# An instance control (tests/README.md): the statement, its fields as a
+# harness.yaml writes them, the distribution's argv0 and input_file, the
+# instance record, and the projects that stand in for shapes.REQUIRED.
+statement: toy/ebreak/asan_agrees_in_asan
+fields:
+  kind: agreement
+  builds: [plain, asan]
+  reading: alloc-forced-only
+  budgets: asan
+distribution:
+  argv0: ebreak
+  input_file: input.bin
+instance:
+  file: input.bin
+  sha256: 6de82ef8f47e591b72563b2ae832abccbaabd99a790dea233913a1e740ae6c15
+  bytes: 7
+  path: reaches-harness
+project: toy
+required: []

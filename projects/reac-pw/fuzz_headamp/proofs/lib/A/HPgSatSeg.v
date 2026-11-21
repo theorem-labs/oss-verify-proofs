@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSatSeg.v at 0de5d668c87 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSatSeg.v for
    reac-pw/fuzz_headamp image A (fuzz_headamp.asan): module paths changed, the rl_ / role_ prefixes renamed to hd_ /
    headamp_, image A's segments read from lib/A/Img0.v; the 43 descriptors, the shadow spans, granule_shadow and the
    guard's bytes are lib/A/HPgSat.v's (no second copy); headamp's run quantities (four blocks, the cap, the null flag,

@@ -8,6 +8,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v, with its module paths, module names, addresses and numbers changed; 1012 of its 1163 lines of code are new or changed and 2535 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_check_no_overread.v; 491 of its 541 lines of code are new or changed and 1113 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan: the TOP of the CTX-free ASan walk of lib/B/FSH_Fn_cno.v
    check_no_overread_spec (the FROZEN B statement; this file proves it, it does not restate it). Owner of this file:
    a Theorem Labs lane.
@@ -37,8 +38,8 @@
    2026-10-29 05:4xZ (outputs (internal path), r24-cnoB-addr.txt): released plain /
    UBSan templates only, no released lib/A or lib/B walk; 0x8124c: 0 released hits. CONFIRM:
    (internal path).
-   Template (text only, B addresses MEASURED): lib/A/FSW_check_no_overread_top.v at a working branch
-   bfe2a7f05ba. Kit lemmas by path (lib/B FSW_K / FSW_rd / YCem; lib/A's image-generic FSupoison / FSupoisonU /
+   Template (text only, B addresses MEASURED): lib/A/FSW_check_no_overread_top.v at a working branch.
+   Kit lemmas by path (lib/B FSW_K / FSW_rd / YCem; lib/A's image-generic FSupoison / FSupoisonU /
    FSH_Gen; Reusable). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

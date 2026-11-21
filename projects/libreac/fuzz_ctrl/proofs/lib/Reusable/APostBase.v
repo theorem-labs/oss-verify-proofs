@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the generic parts of cgif_file_fuzzer lib/YC20.v (ossv/recipes c8557374ad2e),
+(* Modified by Theorem Labs, 2026-10: the generic parts of cgif_file_fuzzer lib/YC20.v (theorem-labs/oss-verify-proofs@6b32741d849a),
    copied verbatim for fuzz_ctrl's cgif-form function contracts: the read-only block YC20.v:43-71 (in_roP, arodata_okP,
    ro_below_ofl, ro_spares, arodata_ok_journalP), the fake-frame object predicate `afobj` YC20.v:86-89 and the post
    `apost_base` YC20.v:90-96, with their section context (YC20.v:72-75). These are ALL the generic definitions of
    YC20.v (measured: every other one names a cgif constant, cgif_st, or a cgif function). The rest of YC20.v is cgif's unit file (cgif_st / frame model, cgif stack constants, cgif function
    posts) and is not part of ctrl's core. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

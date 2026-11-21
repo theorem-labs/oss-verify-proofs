@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the contracts of the number entries that plugin-hostd/fuzz_command calls and cgif_file_fuzzer does not (atoi, strtol), in the form cgif_file_fuzzer's lib/YG0d.v states its interceptor contracts; the value each one returns and the cells it writes are the ones fuzz_command's own plain proof states for musl's strtol. *)
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtNumber.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 24 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the atoi contract and its comments left out (this image has no atoi interceptor); comments reworded for this image. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtNumber.v; module paths changed to reac-pw/fuzz_headamp; 24 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the atoi contract and its comments left out (this image has no atoi interceptor); comments reworded for this image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -56,11 +57,11 @@ PRE (3 * ESTACK) ly S W regs mem md ->
 getr regs 10 = w64 x -> getr regs 11 = w64 e -> getr regs 12 = w64 10 -> 0 < x -> 0 < e ->
 STR W mem x str -> x + astr_len str + 1 < 2 ^ 64 ->
 RD (3 * ESTACK) W regs mem x (astr_len str + 1) ->
-(* 8 bytes of band room past the string: the kit's chk_ok needs region_in_mem p 8 (lib/A/Bz/A/I_consts.v:20-21) *)
+(* 8 bytes of band room past the string: the kit's chk_ok needs region_in_mem p 8 (lib/A/Bz/A/I_consts.v:21-22) *)
 amem_range x (astr_len str + 8) ->
 atail_vis segs W mem (x + astr_len str) ->
 WR (3 * ESTACK) ly S W regs mem e 8 ->
-(* 8 bytes of band room past the endptr cell: the kit's chk_ok needs region_in_mem p 8 (lib/A/Bz/A/I_consts.v:20-21) *)
+(* 8 bytes of band room past the endptr cell: the kit's chk_ok needs region_in_mem p 8 (lib/A/Bz/A/I_consts.v:21-22) *)
 amem_range e 16 ->
 (e + 8 <= x \/ x + astr_len str + 1 <= e) ->
 (e + 8 <= as_errno B \/ as_errno B + 4 <= e) ->

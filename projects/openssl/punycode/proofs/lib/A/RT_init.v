@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new hs_resx_ok check of an image table's launch-extra reservation bounds, and the new lemma ri_artm_res, which ri_artm now uses, for the vDSO suffix of the reservation ledger). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -264,6 +265,10 @@ Proof.
   repeat constructor; cbn [fst snd]; lia.
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
+
+(* The launch-extra bounds an image table states ([n_resx], [p_resx]); checked at the hole. *)
+Definition hs_resx_ok (A : AsanPlanCore.APC.atable) : bool :=
+  (Nat.leb (AsanPlanCore.APC.n_resx A) 2 && Z.leb (AsanPlanCore.APC.resx_bytes A) 0x14000)%bool.
 
 Section Pure.
 Variables (A : atable) (LIMIT : Z)
@@ -566,9 +571,23 @@ Qed.
 Lemma seps_FOP : forall l, APS.seps l -> ForallOrdPairs iv_apart l.
 Proof. intros l H. induction H as [|p l Hf Hs IH]; constructor; [exact Hf | exact IH]. Qed.
 
-Lemma ri_artm : LIMIT = VMLIMIT -> ARTM_A (sigma0 A E ch model) model.
+(* LPS 08b1429: the ledger's vDSO suffix, from the plan's packed [co_res]. *)
+Lemma ri_artm_res : hs_resx_ok A = true -> artm_res model.
 Proof.
-  intros Hlim. unfold ARTM_A. split; [exact (Permutation_refl _)|]. split; [exact (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ HC)|].
+  intros Hrx. unfold hs_resx_ok in Hrx. apply andb_prop in Hrx as [Hrn Hrb].
+  apply Nat.leb_le in Hrn. apply Z.leb_le in Hrb.
+  destruct (APS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Er & _ & Hn & Hb).
+  pose proof (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hm.
+  exists rx. split; [exact Er|]. split; [lia|].
+  split; [rewrite live_bytes_sum_sizes; lia|].
+  apply Forall_forall. intros e He. apply List.filter_In in He as [He _].
+  pose proof (proj1 (Forall_forall _ _) Hm e He) as X. cbv beta in X. rewrite Er in X.
+  apply Forall_app in X as [_ X]. exact X.
+Qed.
+
+Lemma ri_artm : hs_resx_ok A = true -> LIMIT = VMLIMIT -> ARTM_A (sigma0 A E ch model) model.
+Proof.
+  intros Hrx Hlim. unfold ARTM_A. split; [exact (Permutation_refl _)|]. split; [exact (ri_artm_res Hrx)|].
   split; [rewrite (APS.co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC); exact Hlim|].
   split.
   { pose proof (APS.co_eager _ _ _ _ _ _ _ _ _ _ _ _ HC) as He. pose proof ri_test as (_ & _ & _ & Hea & _).

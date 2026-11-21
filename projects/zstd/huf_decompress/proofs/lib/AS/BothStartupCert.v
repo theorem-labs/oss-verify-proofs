@@ -1,14 +1,20 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
-(* [comment removed for export] *)
-From Stdlib Require Import ZArith List Bool.
-From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound BothPlanImages AsanInit AsanNodesWJoin BothStartup StartupPlanBoth StartupHSBoth StartupPlan2Both StartupHS2Both BothCertDefs.
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the certificate is proved at each CONFIG_RSEQ value, for the plan renumbered by the probe-read map (segB's AT_RANDOM split chain rebuilt from probe-read values), against the hand-off states, counters and shape computed in the build). *)
+(* The Both build's start-up certificate for plan A at AsanInit.LIMIT, per CONFIG_RSEQ value and joined;
+   its plan, start state, hand-off table and shape are computed in StartupRegenBoth.v (LPS 727298f3).
+   Written by gen_startup_regen.py. *)
+From Stdlib Require Import ZArith List Bool Lia.
+From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan BothPlanImages
+  AsanInit AsanNodesWJoin BothCertDefs StartupRegenBoth.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
 From Ltac2 Require Import Ltac2.
-From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
-Ltac2 kr_t_AsanStartupCert () := "K69OSSVerify5KrLib2AS8AsanPlan2AP4cres01C1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic2eq01C59OSSVerify5KrLib2AS>AsanNodesWJoin3XNSC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes6option02I47Corelib4Init5Logic2eq00C69OSSVerify5KrLib2AS8AsanPlan2AP5checkC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS>BothPlanImages5ASEGSC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS<BothCertDefs3IT0C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2AS8AsanPlan2AP4BOTHC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2AS8AsanPlan2AP3NX0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8AsanInit5LIMITC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS;BothStartup3XE0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS;BothStartup3XB0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS=StartupHSBoth8HS_asanAC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS<BothCertDefs3KC0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS<BothCertDefs5BFUELC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS<BothCertDefs4FUELC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2AS8AsanPlan2AP9both_initC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS?StartupPlanBoth<startup_planC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib2AS8AsanPlan2AP4cres00C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS<BothCertDefs=startup_shapeC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib2AS8AsanPlan2AP7loopctx00C1?~~~~~~~~~~~~~~~".
-
-Lemma startup_cert :
-  check ASEGS IT0 BOTH NX0 AsanInit.LIMIT (XNS ASEGS BOTH NX0 AsanInit.LIMIT) XE0 XB0 HS_asanA KC0 BFUEL FUEL None both_init startup_plan = COk startup_shape.
-Proof.
-KReplay.run1 (kr_t_AsanStartupCert ()) [] "p;1p;2p;4p;3p;?g0000j16Tg000jj25Tg001Dj40Tg002>j11Tg002`j32Tg003:l?3Tg0043R0g004og005gR1g006_R2g007VR3f1g008Lg009Cg00::g00;8g00<0g00<jf0g00=cg00>`M?3p=4g00?dR4g00@^#6R5'5P0P1P2P3C0g00A`#1'4=245do". Time Qed.
+Lemma startup_cert_0 :
+check ASEGS IT0 BOTH NX0 AsanInit.LIMIT 0 (XNS ASEGS BOTH NX0 AsanInit.LIMIT) XEr XBr (hsA 0) KC0 BFUEL FUEL None (both_init 0) (planA 0) = COk (shapeA 0).
+Proof. (vm_cert_refl constr:(COk (shapeA 0))). Time Qed.
+Lemma startup_cert_1 :
+check ASEGS IT0 BOTH NX0 AsanInit.LIMIT 1 (XNS ASEGS BOTH NX0 AsanInit.LIMIT) XEr XBr (hsA 1) KC0 BFUEL FUEL None (both_init 1) (planA 1) = COk (shapeA 1).
+Proof. (vm_cert_refl constr:(COk (shapeA 1))). Time Qed.
+Lemma startup_cert : forall r, 0 <= r <= 1 ->
+check ASEGS IT0 BOTH NX0 AsanInit.LIMIT r (XNS ASEGS BOTH NX0 AsanInit.LIMIT) XEr XBr (hsA r) KC0 BFUEL FUEL None (both_init r) (planA r) = COk (shapeA r).
+Proof. ltac1:(intros r Hr; assert (r = 0 \/ r = 1) as [-> | ->] by lia; [exact startup_cert_0 | exact startup_cert_1]). Qed.

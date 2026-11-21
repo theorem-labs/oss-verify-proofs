@@ -31,10 +31,10 @@ Local Open Scope Z_scope.
    lemma(s), 0 UNRELEASED hit(s) on live working heads; 0x1408c: 0 named, 0 by address, 0 released, 27 UNRELEASED hits
    (plugin-hostd/fuzz_reply SlotPass7, another binary); origin/release/*: 8 releases hold the OLD-pin check_round_trip
    files (18 each), every other release 0.
-   Port source: the SAME 11 files at 9d764437e6be (the old-twin walk, old CHECK_ROUND_TRIP 0x13e9c, CRT_K 14528);
+   Port source: the SAME 11 files (the old-twin walk, old CHECK_ROUND_TRIP 0x13e9c, CRT_K 14528);
    their cuts and proofs are re-addressed to the new twin by symbol (check_round_trip 0x1408c size 1024, CRT_K 14592)
    and only the instructions #102 changed are re-walked.
-   The walk follows RwCrt's plain walk (origin/cold/h-rw-pre-4-rw102-crt ff9ee3a51cc3, lib/Prog/check_round_trip.v)
+   The walk follows RwCrt's plain walk (lib/Prog/check_round_trip.v)
    stage for stage: it goes backwards from the epilogue (st9) to the entry (st0).  ro / oo are the entry bytes of
    g_ran_out / g_own_ran_out: no allocation is refused under the rooms premises, so the bytes keep their values
    (gi_flags, from the cstep frame and globals_free omx_G); round_trip_text (doc, 0, &copy) returns 1 when one of them

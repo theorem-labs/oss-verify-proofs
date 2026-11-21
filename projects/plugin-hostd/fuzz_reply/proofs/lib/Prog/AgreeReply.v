@@ -7,6 +7,7 @@ From OSSVerify.plugin_hostd.fuzz_reply Require Statements Images.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK15 YO06 YO09 YH02.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib Require Import AgreeShape ZTraceSpec SlotTopG.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib Require Import Uniform Agree.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import RomStableK.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib Require AgreeP3.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Statement SlotCaps3.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog.CF Require StatementKept SlotAllCf.
@@ -19,7 +20,7 @@ Open Scope Z_scope.
 
 (* fuzz_reply's ubsan_agrees, by agree_frame (as lib/AgreeFramePK.v ubsan_agrees_of_slots_p) over the runs of each
    build at its budget:
-   - plain, 16 GiB: T_reply and plain_runs_reply, copied from origin/cold/h-aag-10-reply a0d853acc6a
+   - plain, 16 GiB: T_reply and plain_runs_reply, copied from
      lib/AsanAgreesReply.v:26-45 (without its ASan imports): AgreeP3.plain_crealizes_of_cgp3 at the plain cut-free
      slot top Prog.CF.SlotAllCf.fuzz_reply_slot_cgp3_src0;
    - ubsan, 512 GiB: U.AgreeRcP3U.ubsan_crealizes_of_cgp3_rc at the ubsan cut-free slot top
@@ -72,7 +73,7 @@ Proof.
   intros T HP HS. unfold Statements.ubsan_agrees, agrees_in. intros en_p en_s inp Hp Hs Hi _.
   destruct (HP en_p inp Hp Hi) as [Rp Cp]. destruct (HS en_s inp Hs Hi) as [Rs Cs].
   exact (agree_frame Images.plain Budgets.Standard.lim_source en_p Images.ubsan Budgets.Standard.lim_target en_s inp
-    (T inp) (T inp) Rp Rs (t_eq_refl _) (budget_of_cf_run _ _ _ _ Cp) (budget_of_cf_run _ _ _ _ Cs)).
+    (T inp) (T inp) Rp Rs (t_eq_refl _) (budget_of_cf_run _ _ _ _ _ Rp Cp) (budget_of_cf_run _ _ _ _ _ Rs Cs)).
 Qed.
 
 Theorem ubsan_agrees_holds : Statements.ubsan_agrees.

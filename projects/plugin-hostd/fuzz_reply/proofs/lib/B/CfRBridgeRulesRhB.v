@@ -9,14 +9,14 @@
 (* Modified by Theorem Labs, 2026-10: cgif's frame-area call rule aj_stack_malloc_at (proofs/cgif/cgif_file_fuzzer/lib/
    YCbq.v:1749-1809, this tree's copy lib/Reusable/YCbq.v:1749) restated over YCbqG.v's journal ajournal_x (allocator
    invariant a parameter ARx, ghost head set Hp after S / Hpc after Sc, program statics PST), for the frame-area
-   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass d9a884240c6e, sha256
+   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass, sha256
    673aac5ee2f6ed86). Generic: no image
    class, no address, no allocator instance.
    Differences from the donor, each minimal:
    (a) cgif read the model's progress and post from model_laws (stack_malloc_progressP, ml_stack_malloc through
        am_wf); here they are ONE hypothesis in ARx form, SMX, which an instance discharges from its own model laws
        (the cf instance: YG05cf.v stack_malloc_progress_cf and stack_malloc_ok_cf with Wf_cf from ARcf);
-   (b) the call's own journal is call_effect_journal_x (YGcallx.v:251) at PST = [], lifted by ajournal_x_nil_pst, and
+   (b) the call's own journal is call_effect_journal_x (YGcallx.v:252) at PST = [], lifted by ajournal_x_nil_pst, and
        composed by ajournal_x_sub (YCbqG.v, footprint FP1 = []); Hp is threaded unchanged (FCiface: a frame-area call
        neither poisons nor unpoisons a head);
    (c) the frame's presence (FCiface's post) is also returned, which a caller writing its new frame needs;
@@ -27,27 +27,28 @@
    (ASFX = YG0dcf.v astack_free_law_cf; FFLX = the two conjuncts of cgif's frame_flag_lawP the rule reads, over ARx;
    SFX = YG05cf.v stack_free_ok_cf).
    THIRD RULE, aj_set_shadow_at_x: cgif's frame-area set_shadow call rule (cgif_rgb_fuzzer lib/YC05.v:206) over
-   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch (cold/h-hpreset-7-walk-H6
-   321efcb143d) unchanged but for its comment.
+   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch
+    unchanged but for its comment.
    Rule 24: no ajournal_x port of aj_stack_malloc_at or aj_flag_store existed on any branch read (WalkS8a confirmed,
    2026-10-28 ~23:40Z; h-hpreset-7 stopped c-omx-alloc's lane for both); cgif's released YCbq.v is the source ported.
    Numerals: 0, 10 (cgif's class range), 16 (stack alignment), 64 (the smallest frame), 4096 (= ESTACK, YG0d.v),
    2 ^ 40, 2 ^ 64: LENGTH / DERIVED. No ADDRESS. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSx.v, with its module names changed; 735 of its 901 lines of code are new or changed and 195 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Cno102_FKit.v, with its module paths and module names changed; 177 of its 223 lines of code are new or changed and 855 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* plugin-hostd/fuzz_reply.asan_ubsan, image B: the image-B twin of lib/A/CfRBridgeRulesRh.v, under lib/B so the B
    tree is self-contained (as lib/B/CfRBridgeRulesB.v): the A file's text (a Theorem Labs lane's re-fit,
-   a working branch 76a84b5b0b9f) with lib/B's YD2l and W_journal_x for lib/A's (A's CfParamsReply kept) and the
+   a working branch) with lib/B's YD2l and W_journal_x for lib/A's (A's CfParamsReply kept) and the
    line numbers of the lib/B files; the A file's header follows.
    The cf allocator rules of top_x at route R (a Theorem Labs lane R, N5 and the TOPK
    rules at R; new file). Rule 24: proves no function (kind: bridge lemmas between existing contract forms).
    1. The journal copies over the R journal. Each is a direct copy of a strict lemma over ajournal_x
-      (Reusable/YCbqG.v:242-265) to ajournal_xR (:202-225), the only change being the journal; the world relation R is
+      (Reusable/YCbqG.v:243-266) to ajournal_xR (:202-225), the only change being the journal; the world relation R is
       a Section variable, with no reflexivity or transitivity hypothesis, because no proof reads the world conjunct R W W':
-      - ajournal_x_impl_xR: W_journal_x.v:1895 ajournal_x_impl (only the first conjunct, the relation, changes);
-      - aj_k_le_xR: CfRBridgeRulesB.v:551 aj_k_le (only the event bound and 0 <= k read k);
+      - ajournal_x_impl_xR: W_journal_x.v:1896 ajournal_x_impl (only the first conjunct, the relation, changes);
+      - aj_k_le_xR: CfRBridgeRulesB.v:552 aj_k_le (only the event bound and 0 <= k read k);
       - aj_to_xs_xR / aj_of_xs_xR: CfRBridgeRulesB.v aj_to_xs / aj_of_xs (top_x's relation and YGcallcf's ARxs, by
-        ajournal_x_impl_xR), at CfF1's A rule fit (fu2-mp 9118a6a96818): top_x's ARX carries arodata_ok_cf on the
+        ajournal_x_impl_xR), at CfF1's A rule fit (fu2-mp): top_x's ARX carries arodata_ok_cf on the
         memory, and aj_of_xs takes it at the post memory before the journal.
    2. The generic lifts strict -> R of the two rules that cross no re-hide (malloc, strndup): at any world relation
       R that contains wle (WLE_R) and is transitive (R_trans), W_journal_x.v's strict rule gives its R twin,
@@ -55,7 +56,7 @@
       strict rule is applied at the journal that starts at the call state (aj_start_x_of_xR: YCbqG.ajournal_x_initR's
       body at wle, STK := ASTACK, sp0 := spZ regsT, o := 0, FP := []); its step lifts by SRr_SRrG WLE_R, its journal
       by ajournal_xR_mono WLE_R and goes under the caller's by ajournal_x_subR R_trans (aj_compose_x_xR). The R twin's
-      call-boundary premise RO is not used (part 3c at R, a Theorem Labs lane 955086633601: the R rules have no memnorm
+      call-boundary premise RO is not used (part 3c at R, a Theorem Labs lane: the R rules have no memnorm
       premise). The lifts read no image.
    3. The same lifts for a relation whose own laws are not at hand (top_x's ARX with arodata_ok_cf on the memory: its
       laws need an image keep fact, ReplyKeptAroA.arodata_kept_A, at tfibsegs only): amalloc_cf_rule_c_xR_lift_xs /
@@ -84,7 +85,7 @@ Section JR. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head
 Variable segs : list Segment.
 Variable R : world segs -> world segs -> Prop.
 
-(* W_journal_x.v:1895 ajournal_x_impl, over ajournal_xR. *)
+(* W_journal_x.v:1896 ajournal_x_impl, over ajournal_xR. *)
 Lemma ajournal_x_impl_xR : forall (B : asyms)
 (R1 R2 : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop)
 PST STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
@@ -94,7 +95,7 @@ ajournal_xR segs B PST R2 R STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' m
 Proof. intros B R1 R2 PST STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k HR HJ.
 destruct HJ as (H1 & Hr). split; [exact (HR H1) | exact Hr]. Qed.
 
-(* CfRBridgeRulesB.v:551 aj_k_le, over ajournal_xR. *)
+(* CfRBridgeRulesB.v:552 aj_k_le, over ajournal_xR. *)
 Lemma aj_k_le_xR : forall (B : asyms) PST
   (ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop)
   STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k k', k <= k' ->
@@ -107,7 +108,7 @@ split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [exact A4|]. 
 split; [exact A6|]. split; [lia|]. split; [lia|]. exact A9.
 Qed.
 
-(* CfRBridgeRulesB.v:202 / :210 aj_to_xs / aj_of_xs (its Section B: CfImg a Context, CfParams_reply local), over
+(* CfRBridgeRulesB.v:203 / :211 aj_to_xs / aj_of_xs (its Section B: CfImg a Context, CfParams_reply local), over
    ajournal_xR. *)
 Section B. Context {ci : CfImg}.
 #[local] Existing Instance CfParams_reply.

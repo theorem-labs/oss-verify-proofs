@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment A4 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): v1.9 [0x81220, 0x81544]
    (cut Inv_B81220), the last 137 of the 392 entry shadow bytes, the size test `srli a1,s2,26; beqz a1`
    and the our[]/cursor init. Two exits: the n >= 2^26 early exit `j 0x82f2c` (Inv_Jrel, plan FP.5 / slot_early)
@@ -695,7 +696,7 @@ Proof.
   split; [exact HShi3|].
   split; [exact Hhb|].
   split; [exact Hlive|].
-  (* the input facts (de2516edf5): for n > 0 the input block is a live entry block, so each of its bytes is
+  (* the input facts: for n > 0 the input block is a live entry block, so each of its bytes is
      app memory below stklo <= S - SLOT_STACK < A + 56 and off the frame (real arm: stklo <= fr; side arm: not in
      the FakeStack, which holds the frame); neither it nor its shadow byte is written (fra_in_keep_sh). *)
   apply (fra_in_keep_sh g mem mem' W Hinb Hinblk MU).

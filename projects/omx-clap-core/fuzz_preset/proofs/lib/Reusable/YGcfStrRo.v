@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStrRo, c-libc-stdio lane): the step from c-libc-stdio's ARcf strcmp / strlen rows
    (lib/Reusable/YGcfStr.v, the memnorm twins astrcmp_realizes_cfm / astrlen_realizes_cfm) to the call-site texts with
    the NARROW read-only premise. rule 24: no function is proved here; these are implications between statements,
@@ -15,8 +16,8 @@
    follows. `ro_clean_check` decides that condition for a table by computation; `rom_view_of_cells` is the
    implication. The per-image instances are lib/A/PSstrRo.v and lib/AU/PSstrRo.v.
 
-   THE TARGET TEXTS are c-omx-alloc's family 1b, lib/Reusable/YGcallMxmn.v (origin/cold/c-omx-alloc-mxmn
-   fb5888279f17, blob f08aa5a90052): `astrcmp_realizes_xrom` / `astrlen_realizes_xrom` = the consumers' texts
+   THE TARGET TEXTS are c-omx-alloc's family 1b, lib/Reusable/YGcallMxmn.v (
+   blob f08aa5a90052): `astrcmp_realizes_xrom` / `astrlen_realizes_xrom` = the consumers' texts
    (ExvB_StrcmpRo.v / ExwB_StrlenRo.v, `astrcmp_realizes_xro` / `astrlen_realizes_xro` there too) with the keep
    `MN.memnorm segs mem -> MN.memnorm segs mem'` (MN = YAkMemnorm) LAST, and `astrlen_realizes_xm` = YGcallMx.v's
    astrlen_realizes_x (WITH rom_view, for walks that hold rom_view but not arodata_okP) with the same keep LAST. The

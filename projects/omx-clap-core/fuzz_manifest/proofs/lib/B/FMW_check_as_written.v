@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_check_as_written.v (a working branch 31d1eb57a40). The
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_check_as_written.v (a working branch). The
    call of expected and its post are as A; B tests both conditions with one compare: 0x80f40 snez a0,a0; 0x80f44 seqz
    a1,s0; 0x80f48 beq a1,a0 -> 0x80f5c (handle_no_return; abort; unimp 0x80f64). With s0 = a0 = names in {0, 1}
    a1 <> a0, so the abort arm is dead. *)

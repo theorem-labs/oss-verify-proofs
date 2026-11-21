@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes; the launch's reservations with the vDSO pair; the place_declined_b premise on mmap; the model's m_kernel field; the model's placement rule). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Monad Specs.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require Import PropExec CatSim ShapeSet RealizesCfg AllocNodesCfg.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require RomWrite.
 From OSSVerify.Proofs.fast_float.from_chars.lib.ZC Require Import MallocModel MallocInv.
 From OSSVerify.Proofs.fast_float.from_chars.lib.MAX Require Import MngWk.
 Import ListNotations.
@@ -95,17 +97,20 @@ Qed.
 (* [comment removed for export] *)
 Definition eff_munmap (a n : Z) : SyscallEffect := mkEffectU (w64 0) [] [] [(w64 a, w64 n)] [] [].
 
-#[using="Type"] Lemma rz_munmap : forall L s r len regs pc m md K,
+#[using="Hoff"] Lemma rz_munmap : forall L s r len regs pc m md K,
   at_ecall segs L s (KMunmap r len) regs pc ->
   m_halted md = None -> m_vm_lazy md = [] ->
   ly_reg L r mod PGSZ = 0 -> 1 <= len -> 0 <= ly_reg L r -> ly_reg L r + page_round len <= 2 ^ 47 ->
   map_has (vm_maps (m_vmmaps md)) (w64 (ly_reg L r)) (w64 (page_round len)) = true ->
+  maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (w64 (ly_reg L r)))
+    (bv_unsigned (w64 (ly_reg L r)) + bv_unsigned (w64 (page_round len)))
+  = map_remove (vm_maps (m_vmmaps md)) (w64 (ly_reg L r)) ->
   realizes_cfg segs cfg (mkCfg (@mkst fx (regupd regs 10 (w64 0)) (bv_add pc (w64 4))
                                    (mem_after m (eff_munmap (ly_reg L r) (page_round len))) rom)
                                (munmap_next (w64 (ly_reg L r)) (w64 (page_round len)) md)) K ->
   realizes_cfg segs cfg (mkCfg (@mkst fx regs pc m rom) md) K.
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros L s r len regs pc m md K (Hec & no & args & Hreq & Hno & Hargs) Hh Hl Hal Hlen Ha0 Htop Hhas Hc.
+Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
+  intros L s r len regs pc m md K (Hec & no & args & Hreq & Hno & Hargs) Hh Hl Hal Hlen Ha0 Htop Hhas Hsub Hc.
   cbn [req_regs] in Hreq. injection Hreq as <- <-. cbn [args_match] in Hargs. destruct Hargs as (A0 & A1 & _).
   assert (PR : 0 <= page_round len) by (unfold page_round, PGSZ; apply Z.mul_nonneg_nonneg; [apply Z.div_pos|]; lia).
   assert (PL : len <= page_round len).
@@ -117,19 +122,25 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   set (ms := svc_set (@mkst fx regs pc m rom)).
   assert (G0 : ms_gpr ms 0 = w64 (ly_reg L r)) by (unfold ms; rewrite svc_gpr by lia; exact E0).
   assert (G1 : ms_gpr ms 1 = w64 len) by (unfold ms; rewrite svc_gpr by lia; exact E1).
-  apply (rzc_munmap_exact segs cfg ms md (getr regs 17) K Hh (svc_pending regs pc m rom) Hno).
-  - rewrite G0, u_w64 by lia. apply Z.eqb_eq. exact Hal.
-  - rewrite G1. apply w_is0_w64. lia.
-  - rewrite G0, G1, !u_w64 by lia. rewrite <- page_round_eq. apply Z.ltb_ge. unfold TASK_SIZE. lia.
-  - rewrite G0, G1, u_w64 by lia. rewrite <- page_round_eq. exact Hhas.
-  - rewrite G0, G1, u_w64 by lia. rewrite <- page_round_eq. unfold ms. rewrite svc_after. exact Hc.
+  (* the bullets by goal shape, not by position (rzc_munmap_exact's premises changed order at LPS 08b1429) *)
+  rewrite ?u_w64 in Hsub by lia.
+  apply (rzc_munmap_exact segs cfg Hoff ms md (getr regs 17) K Hh (svc_pending regs pc m rom) Hno).
+  all: try (rewrite ?G0, ?G1; rewrite ?u_w64 by lia; rewrite <- ?page_round_eq;
+       first [ apply Z.eqb_eq; exact Hal
+             | apply w_is0_w64; lia
+             | apply Z.ltb_ge; unfold TASK_SIZE; lia
+             | exact Hhas
+             | exact Hsub
+             | (unfold ms; rewrite svc_after; exact Hc) ]).
+  all: try (rewrite G0, G1, (u_w64 len) by lia; rewrite <- (page_round_eq len);
+            rewrite !u_w64 by lia; exact Hsub).
 Qed.
 
 (* [comment removed for export] *)
 #[using="Hoff"] Lemma rz_mmap_rw : forall L s len regs pc m md K,
   at_ecall segs L s (KMmapRW len) regs pc ->
   m_halted md = None -> m_vm_lazy md = [] -> 1 <= len < 2 ^ 63 ->
-  (exists a, fresh_rw_guard (w64 34) md (page_round len) a) ->
+  (exists a, fresh_rw_room (w64 34) md (page_round len) a) ->
   (forall a, fresh_rw_guard (w64 34) md (page_round len) a ->
      realizes_cfg segs cfg (mkCfg (@mkst fx (regupd regs 10 a) (bv_add pc (w64 4))
                                       (mem_after m (mkEffect a [] [(a, w64 (page_round len))])) rom)
@@ -138,12 +149,16 @@ Qed.
 Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
   intros L s len regs pc m md K (Hec & no & args & Hreq & Hno & Hargs) Hh Hl Hlen Hex Hc.
   cbn [req_regs] in Hreq. injection Hreq as <- <-. cbn [args_match] in Hargs. destruct Hargs as (A0 & A1 & A2 & A3 & A4 & A5 & _).
+  (* R3: [req_regs] puts the constant 0 in a0 for [KMmapRW], so the hint is NULL and
+     [place_declined_b] is [false] by computation ([place_declined_b_null]). *)
+  assert (E0 : getr regs (Z_to_bv 5 (10 + 0)) = w64 0) by (apply getr_w64; [exact A0 | lia]).
   assert (E1 : getr regs (Z_to_bv 5 (10 + (0 + 1))) = w64 len) by (apply getr_w64; [exact A1 | lia]).
   assert (E2 : getr regs (Z_to_bv 5 (10 + (0 + 1 + 1))) = w64 3) by (apply getr_w64; [exact A2 | lia]).
   assert (E3 : getr regs (Z_to_bv 5 (10 + (0 + 1 + 1 + 1))) = w64 34) by (apply getr_w64; [exact A3 | lia]).
   assert (E5 : getr regs (Z_to_bv 5 (10 + (0 + 1 + 1 + 1 + 1 + 1))) = w64 0) by (apply getr_w64; [exact A5 | lia]).
   apply rz_ecall; [exact Hh | exact Hl | exact Hec |].
   set (ms := svc_set (@mkst fx regs pc m rom)).
+  assert (G0 : ms_gpr ms 0 = w64 0) by (unfold ms; rewrite svc_gpr by lia; exact E0).
   assert (G1 : ms_gpr ms 1 = w64 len) by (unfold ms; rewrite svc_gpr by lia; exact E1).
   assert (G2 : ms_gpr ms 2 = w64 3) by (unfold ms; rewrite svc_gpr by lia; exact E2).
   assert (G3 : ms_gpr ms 3 = w64 34) by (unfold ms; rewrite svc_gpr by lia; exact E3).
@@ -153,6 +168,7 @@ Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
   - rewrite G3. reflexivity.
   - rewrite G1. apply w_is0_w64. lia.
   - rewrite G2, G3, G5. reflexivity.
+  - rewrite G0. exact (place_declined_b_null _ _ _).
   - rewrite G3, G1, u_w64 by lia. rewrite <- page_round_eq. exact Hex.
   - intros a Ha. rewrite G3, G1, u_w64 by lia. rewrite G3, G1, u_w64 in Ha by lia. rewrite <- page_round_eq in Ha |- *.
     unfold ms. rewrite svc_after. exact (Hc a Ha).
@@ -162,7 +178,7 @@ Qed.
 #[using="Hoff"] Lemma rz_mmap_na : forall L s len regs pc m md K,
   at_ecall segs L s (KMmapNone len) regs pc ->
   m_halted md = None -> m_vm_lazy md = [] -> 1 <= len < 2 ^ 63 ->
-  (exists a, place_ok md (page_round len) a) ->
+  (exists a, place_room md (page_round len) a) ->
   (forall a, place_ok md (page_round len) a ->
      realizes_cfg segs cfg (mkCfg (@mkst fx (regupd regs 10 a) (bv_add pc (w64 4))
                                       (mem_after m (mkEffectU a [] [] [(a, w64 (page_round len))] [] [])) rom)
@@ -171,12 +187,16 @@ Qed.
 Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
   intros L s len regs pc m md K (Hec & no & args & Hreq & Hno & Hargs) Hh Hl Hlen Hex Hc.
   cbn [req_regs] in Hreq. injection Hreq as <- <-. cbn [args_match] in Hargs. destruct Hargs as (A0 & A1 & A2 & A3 & A4 & A5 & _).
+  (* R3: [req_regs] puts the constant 0 in a0 for [KMmapNone], so the hint is NULL and
+     [place_declined_b] is [false] by computation ([place_declined_b_null]). *)
+  assert (E0 : getr regs (Z_to_bv 5 (10 + 0)) = w64 0) by (apply getr_w64; [exact A0 | lia]).
   assert (E1 : getr regs (Z_to_bv 5 (10 + (0 + 1))) = w64 len) by (apply getr_w64; [exact A1 | lia]).
   assert (E2 : getr regs (Z_to_bv 5 (10 + (0 + 1 + 1))) = w64 0) by (apply getr_w64; [exact A2 | lia]).
   assert (E3 : getr regs (Z_to_bv 5 (10 + (0 + 1 + 1 + 1))) = w64 34) by (apply getr_w64; [exact A3 | lia]).
   assert (E5 : getr regs (Z_to_bv 5 (10 + (0 + 1 + 1 + 1 + 1 + 1))) = w64 0) by (apply getr_w64; [exact A5 | lia]).
   apply rz_ecall; [exact Hh | exact Hl | exact Hec |].
   set (ms := svc_set (@mkst fx regs pc m rom)).
+  assert (G0 : ms_gpr ms 0 = w64 0) by (unfold ms; rewrite svc_gpr by lia; exact E0).
   assert (G1 : ms_gpr ms 1 = w64 len) by (unfold ms; rewrite svc_gpr by lia; exact E1).
   assert (G2 : ms_gpr ms 2 = w64 0) by (unfold ms; rewrite svc_gpr by lia; exact E2).
   assert (G3 : ms_gpr ms 3 = w64 34) by (unfold ms; rewrite svc_gpr by lia; exact E3).
@@ -187,6 +207,7 @@ Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
   - rewrite G1. apply w_is0_w64. lia.
   - rewrite G2, G3, G5. reflexivity.
   - rewrite G2, G3, G5. reflexivity.
+  - rewrite G0. exact (place_declined_b_null _ _ _).
   - rewrite G1, u_w64 by lia. rewrite <- page_round_eq. exact Hex.
   - intros a Ha. rewrite G3, G1, u_w64 by lia. rewrite G1, u_w64 in Ha by lia. rewrite <- page_round_eq in Ha |- *.
     unfold ms. rewrite svc_after. exact (Hc a Ha).
@@ -197,6 +218,8 @@ Qed.
   at_ecall segs L s (KMprotect p) regs pc ->
   m_halted md = None -> m_vm_lazy md = [] ->
   loc_addr L (LMem p) mod PGSZ = 0 -> 0 <= loc_addr L (LMem p) -> loc_addr L (LMem p) + PGSZ < 2 ^ 64 ->
+  (* LPS 08b1429: [mprotect_spec] answers unmodeled on the vDSO/vvar pair *)
+  region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (w64 (loc_addr L (LMem p))) (w64 PGSZ) = true ->
   map_contains (vm_noaccess (m_vmmaps md)) (w64 (loc_addr L (LMem p))) (w64 PGSZ)
     && map_contains (vm_maps (m_vmmaps md)) (w64 (loc_addr L (LMem p))) (w64 PGSZ) = true ->
   mprotect_budget_ok md (w64 (loc_addr L (LMem p))) (w64 PGSZ) = true ->
@@ -205,7 +228,7 @@ Qed.
                                (mprotect_model_next md (w64 (loc_addr L (LMem p))) (w64 PGSZ))) K ->
   realizes_cfg segs cfg (mkCfg (@mkst fx regs pc m rom) md) K.
 Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
-  intros L s p regs pc m md K (Hec & no & args & Hreq & Hno & Hargs) Hh Hl Hal Ha0 Hov Hcont Hbud Hc.
+  intros L s p regs pc m md K (Hec & no & args & Hreq & Hno & Hargs) Hh Hl Hal Ha0 Hov Hvd Hcont Hbud Hc.
   cbn [req_regs] in Hreq. injection Hreq as <- <-. cbn [args_match] in Hargs. destruct Hargs as (A0 & A1 & A2 & _).
   assert (E0 : getr regs (Z_to_bv 5 (10 + 0)) = w64 (loc_addr L (LMem p))) by (apply getr_w64; [exact A0 | unfold PGSZ in Hov; lia]).
   assert (E1 : getr regs (Z_to_bv 5 (10 + (0 + 1))) = w64 PGSZ) by (apply getr_w64; [exact A1 | unfold PGSZ; lia]).
@@ -220,7 +243,7 @@ Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
     assert (R1 : Z.eqb (bv_unsigned (w64 (loc_addr L (LMem p))) mod page_size) 0 = true) by (rewrite u_w64 by (unfold PGSZ in Hov; lia); apply Z.eqb_eq; exact Hal).
     assert (R2 : (two_pow_64 <=? bv_unsigned (w64 (loc_addr L (LMem p))) + page_round_up_Z (bv_unsigned (w64 PGSZ)))%Z = false).
     { rewrite u_w64 by (unfold PGSZ in Hov; lia). apply Z.leb_gt. unfold two_pow_64. change (page_round_up_Z (bv_unsigned (w64 PGSZ))) with 4096. unfold PGSZ in Hov. lia. }
-    exact (mprotect_spec_expose (w64 (loc_addr L (LMem p))) (w64 PGSZ) (w64 3) (sys_input segs ms (getr regs 17)) md o eq_refl R1 eq_refl R2 eq_refl Hcont).
+    exact (mprotect_spec_expose (w64 (loc_addr L (LMem p))) (w64 PGSZ) (w64 3) (sys_input segs ms (getr regs 17)) md o eq_refl R1 eq_refl R2 eq_refl Hvd Hcont).
   - exact Hbud.
   - unfold ms. rewrite svc_after. exact Hc.
 Qed.
@@ -316,7 +339,8 @@ Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
   assert (FG : fixed_gate md (w64 (brk_base L s)) (w64 PGSZ)).
   { unfold fixed_gate. rewrite UB. change (page_round_up_Z (bv_unsigned (w64 PGSZ))) with 4096. unfold PGSZ in *. unfold page_size. lia. }
   specialize (BR FG Hfree).
-  eapply (rzc_silent1 segs cfg); [eapply (node_mmap_fixed_na_contained segs cfg Hoff ms md (getr regs 17) (w64 (brk_base L s)) (w64 PGSZ) (w64 50) Hh (svc_pending regs pc m rom) Hno) |].
+  eapply (rzc_silent1 segs cfg); [eapply (node_mmap_fixed_na_contained segs cfg Hoff ms md (getr regs 17) (w64 (brk_base L s)) (w64 PGSZ) (w64 50) Hh (svc_pending regs pc m rom) Hno)
+    | exact (RomWrite.rob_memfree_no segs ms md (getr regs 17) 222 (svc_pending regs pc m rom) Hno RomBase.memfree_222) |].
   - rewrite UB. unfold PGSZ in Htop. lia.
   - exact BR.
   - unfold ms. rewrite svc_after. exact Hc.

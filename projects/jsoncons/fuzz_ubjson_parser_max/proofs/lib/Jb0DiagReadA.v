@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: writes PRE19_eq and SUF1_len as plain statements, turns the Section SE read_tail into a standalone theorem with explicit intros, and tightens the Hp bound from 16 to 9 with the matching Pr range; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagReadA.v, lines 55, 69-71, 96. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -49,7 +50,7 @@ Hypothesis Hal : S mod 16 = 0.
 Hypothesis HW : L5.writable RSEGS M (S - 5440) 5440.
 Hypothesis HD : L5.defined M (S - 5440) 5440.
 Hypothesis HIMG : L5.img_clear M 65536 1269760.
-Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
 Hypothesis Hn : n = 1.
 Hypothesis HSTR : cstr M p bs t8.
 Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
@@ -62,19 +63,15 @@ Hypothesis HMC : mc_icpt_globs M.
 Definition PRE19 : list byte := match rdn RSEGS (fun _ => None) (Z_to_bv 64 127189) 19 with Some l => l | None => [] end.
 Definition SUF1 : list byte := match rdn RSEGS (fun _ => None) (Z_to_bv 64 127210) 1 with Some l => l | None => [] end.
 Lemma suf1_img : ltac2:(TCodec.tc2 tcn__Jb0DiagReadA "H':'8'5'R2y8%211%411%611&Q7&Q:yR0%811(0%118q031&R1+SlW:%2271u1%;4:521(1&O%22@1%G3@41"). Proof. vm_compute. reflexivity. Qed.
-Lemma PRE19_eq : ltac2:(TCodec.tc2 tcn__Jb0DiagReadA "Q>':'5'R2y8%211%411&N&>'?&R1%117(3+S3+S<+S9+QJ+Q0+SB+S5+S1+S4+S?+S>(7%11@%>3A91%?3B41%@3C61%A3D<1%B3E<1%C3F91%D3G>1%E3H?1%F3I?1%G3JB1%H3K?1%I3LA1%J3MC1%K3NE1%L3OG1%M3Q0I1%N3Q1K1%O3Q2M1%Q03Q3O1%Q54Q4Q8Q21%Q=3Q8Q71").
+Lemma PRE19_eq : PRE19 = map (Z_to_bv 8) [99; 108; 105; 58; 32; 114; 101; 97; 100; 32; 101; 114; 114; 111; 114; 32; 111; 110; 32].
 Proof. apply list_bv_eq. vm_compute. reflexivity. Qed.
-Lemma SUF1_len : ltac2:(TCodec.tc2 tcn__Jb0DiagReadA ":':'6&4'R2y8%211&O%5221u1%93821"). Proof. reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_read_tail := (ltac2:(TCodec.tc2 tcn__Jb0DiagReadA "XH'Q4&Ay5'R2yR0%211%5241'8y8%611%311p061&Q0vGvBvQ;vR0vQIr2r1%877654321';'9'L&Q:&Q6r7r6&R1+QSkX@%22J1r5&Q8%119%9587431r3+QSdYL%92Q11%=53D1C5%@3?51':&Q5&Q@uA%211%A2Q;1%52L1+R2%D2Q<1%93Q<31u:%911%H2QB1%<2Q31+2%K2QC1%@3QC31u;%@11%O2QI1%C2Q:1&QB+b8%22Q@1%Q42QL1%I3QL51u<%I11%Q82R21%L2QC1%N3R11?u9%N11%Q=2R71%Q12QH1+QWRm8%Q@2R81%Q53R831uB%Q511%QD2R>1%Q82QO1%Q:3R=1KuC%Q:11%QI2RC1%Q=2R41%Q?3RB1GuF%Q?11%QN2RH1%QB2R91&Q=&4vQH%22RF1%QF11+D%6221%R72RO1%QL3RO91&Q2+^@%Q:2RH1%34R@REQ91+b0%Q=2RK1%64RCRH19+aH%Q@2RN1z%:4RGRL21+a@%QD2S21%=4RJRO14'5%11S;%S>11&Q7%RK2SC@&=u1%22K1%32Q81%64S4S951(1&2&N&O%33SHQ31%43SI31%62?1%RL3?81&Q1+QWSQ0%24S?SD1RA&M%13SKSFSJ&Q9%12SMSHpT<T7T2&<&Q>&R3%12T<SM%32RB1&Q?+a8%RG2T51%3251%T0251%:11%SE1T6%SN1T7%SB3T@21p041pT<TG1%C2SNT;'6&Q<(3u2u3u4u8uEuGuHuIuJuK(7%11>%=3?31%>3@51%?3A71%@3B91%A3C;1%B3D=1%C3ES<1%D3F@1%E3GB1%F3HD1%G3IF1%I3JU51%T?1U7%TN2UH1%TB2U01r9%TD213%TF3UI31p071pT0Q21r8+QSdZ8%U72UO1%U;5831U:U3+QRejL%U:2V21%U>5U4UE1UDU6%UA3U@41%TO1Q8%U>2V81%U22UI1%U@2V8UM%U53V821+5%R:4UGULT41+QWSP8%S<4UIUN1S3+QWSP0+VbTfH%S?4ULV121+QWRo0%SA4UNV31S8+QWRn@%SC4V0V51S:+QWRn8%SE4V2V71S<+QWRm@%SG4V4V91S>+QWRmH%SI4V6V;1S@%UE1QL%V42VN1%UH2V?1%UI2VE2%UK3VN21%V>261%V?291%V@2<1%VA2?1%VB2B1%VC2E1%VD2I1%VE2L1%VF2S11%VG2S41%VH2Q11%VI2UG1%VJ2Q81qQ<W61%VM2W71qQFW=1%VO2W>1qSNWE1%W12WF1p0QG1p0RK1p0RM1pQ>S>1pQHWE1pSHWL1%W72SB1%W82SE1%W92SH1%W:2SL1%W;2T?1%W<2TC1%W=2TH1%W>2TL1%W?2U11%W@2U?1%WA2UE1%WB2UK1%WC2V31%WD2V91%WE2VC1%WF2VK1%WG2W61qQ:X31%WJ2X41qQDX:1%WL2X;1qSLXB1%WN2XC1p0X01pQ8X:1pQBX@1pSJXG1")) (only parsing).
-Variable fx5 : ltac:(sec_ty2 constr:(SEC_T_read_tail) 0%nat 0%nat).
-Variable R5 : ltac:(sec_ty2 constr:(SEC_T_read_tail) 1%nat 0%nat).
-Variable M5 : ltac:(sec_ty2 constr:(SEC_T_read_tail) 2%nat 0%nat).
-Theorem read_tail : ltac:(sec_stmt2 constr:(SEC_T_read_tail) 3%nat 0%nat).
+Lemma SUF1_len : length SUF1 = 1%nat.  Proof. reflexivity. Qed.
+Theorem read_tail : ltac2:(TCodec.tc2 tcn__Jb0DiagReadA "XH'Q4&Ay5'R2yR0%211%5241'8y8%611%311p061&Q0vGvBvQ;vR0vQIr2r1%877654321';'9'L&Q:&Q6r7r6&R1+QSkX@%22J1r5&Q8%119%9587431r3+QSdYL%92Q11%=53D1C5%@3?51':&Q5&Q@uA%211%A2Q;1%52L1+R2%D2Q<1%93Q<31u:%911%H2QB1%<2Q31+2%K2QC1%@3QC31u;%@11%O2QI1%C2Q:1&QB+b8%22Q@1%Q42QL1%I3QL51u<%I11%Q82R21%L2QC1%N3R11?u9%N11%Q=2R71%Q12QH1+QWRm8%Q@2R81%Q53R831uB%Q511%QD2R>1%Q82QO1%Q:3R=1KuC%Q:11%QI2RC1%Q=2R41%Q?3RB1GuF%Q?11%QN2RH1%QB2R91&Q=&4vQH%22RF1%QF11+D%6221%R72RO1%QL3RO91&Q2+^@%Q:2RH1%34R@REQ91+b0%Q=2RK1%64RCRH19+aH%Q@2RN1z%:4RGRL21+a@%QD2S21%=4RJRO14'5%11S;%S>11&Q7%RK2SC@&=u1%22K1%32Q81%64S4S951(1&2&N&O%33SHQ31%43SI31%62?1%RL3?81&Q1+QWSQ0%24S?SD1RA&M%13SKSFSJ&Q9%12SMSHpT<T7T2&<&Q>&R3%12T<SM%32RB1&Q?+a8%RG2T51%3251%T0251%:11%SE1T6%SN1T7%SB3T@21p041pT<TG1%C2SNT;'6&Q<(3u2u3u4u8uEuGuHuIuJuK(7%11>%=3?31%>3@51%?3A71%@3B91%A3C;1%B3D=1%C3ES<1%D3F@1%E3GB1%F3HD1%G3IF1%I3JU51%T?1U7%TN2UH1%TB2U01r9%TD213%TF3UI31p071pT0Q21r8+QSdZ8%U72UO1%U;5831U:U3+QRejL%U:2V21%U>5U4UE1UDU6%UA3U@41%TO1Q8%U>2V81%U22UI1%U@2V8UM%U53V821+5%R:4UGULT41+QWSP8%S<4UIUN1S3+QWSP0+VbTfH%S?4ULV121+QWRo0%SA4UNV31S8+QWRn@%SC4V0V51S:+QWRn8%SE4V2V71S<+QWRm@%SG4V4V91S>+QWRmH%SI4V6V;1S@%UE1QL%V42VN1%UH2V?1%UI2VE2%UK3VN21%V>261%V?291%V@2<1%VA2?1%VB2B1%VC2E1%VD2I1%VE2L1%VF2S11%VG2S41%VH2Q11%VI2UG1%VJ2Q81qQ<W61%VM2W71qQFW=1%VO2W>1qSNWE1%W12WF1p0QG1p0RK1p0RM1pQ>S>1pQHWE1pSHWL1%W72SB1%W82SE1%W92SH1%W:2SL1%W;2T?1%W<2TC1%W=2TH1%W>2TL1%W?2U11%W@2U?1%WA2UE1%WB2UK1%WC2V31%WD2V91%WE2VC1%WF2VK1%WG2W61qQ:X31%WJ2X41qQDX:1%WL2X;1qSLXB1%WN2XC1p0X01pQ8X:1pQBX@1pSJXG1").
 Proof.
+intros fx5 R5 M5.
 intros INV.
 pose proof HC as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & FW).
-assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+assert (Pr : 140735332552704 <= p <= 140737488355318) by lia.
 assert (Nr : 0 <= n <= 131071) by lia.
 assert (DIV : 0 <= (p + n) / 8 <= 2 ^ 44) by (split; [apply Z.div_pos; lia | apply Z.div_le_upper_bound; lia]).
 assert (S8 : 0 <= S / 8 <= 2 ^ 44) by (split; [apply Z.div_pos; lia | apply Z.div_le_upper_bound; lia]).
@@ -207,7 +204,6 @@ split. { intros x Hx Hf. unfold filew in Hf. rewrite FRF by lia. rewrite AGX by 
 split; [eapply mem_grows_trans; [exact MG0E|]; eapply mem_grows_trans; [exact MGX | exact MGF]|].
 repeat split; first [sc | (eapply (DK.u64_ext M5); [intros x Hx; rewrite FRF by lia; apply AGX5s; lia | lia | lia | eassumption]) | dk_rk].
 Qed.
-End SE.
 Theorem read_run : ltac2:(TCodec.tc2 tcn__Jb0DiagReadA "XA';'Q4&Ay5'R2yR0%211%5241'8y8%611%311p061'9'L&Q:&Q6vQJvG&R1+\[YD%22@1vB&Q8%119%9587431r3r2+QSdYL%:2H1r1%?554217%B3A71':&Q5&Q@uA%211%C2Q31%52<1+R2%F2Q41%93Q431u:%911%J2Q:1%<2C1+2%M2Q;1%@3Q;31u;%@11%Q12QA1%C2J1&QBvQ;+b8%3221%Q72QE1%J3QE61u<%J11%Q;2QK1%M2Q41%O3QJ1@u9%O11%Q@2R01%Q22Q91+QWRm8%QC2R11%Q63R131uB%Q611%QG2R71%Q92Q@1%Q;3R61LuC%Q;11%QL2R<1%Q>2QE1%Q@3R;1GuF%Q@11%R12RA1%QC2QJ1&Q=&4vQH%22R?1%QG11+D%6221%R:2RH1%QM3RH91&Q2+^@%Q;2Q:1%34RCR4Q91+b0%Q>2Q=1%64RFR719+aH%QA2Q@1z%:4RJR;21+a@%QE2QD1%=4RMR>14'5%11S4%S711&Q7%RN2S<@&=u1%22K1%32Q81%64S7RH51(1&2&N&O%33SAQ31%43SB31%62?1%RM3?81&Q1+QWSQ0%24SBS31RB&M%13S=S5R<&Q9%12S?S7pT<T0SK&<&Q>&R3%12T5S<%32RB1&Q?+a8%RH2RG1%3251%T3251%:11%SH1SGr6%11SI%SD3T:31p051pT<TA1r5%E21SN'6&Q<(3u2u3u4u8uEuGuHuIuJuK(7%11>%=3?31%>3@51%?3A71%@3B91%A3C;1%B3D=1%C3ES>1%D3F@1%E3GB1%F3HD1%G3IF1%I3JTF1%TB1TJ%U32UC1%TE2Q41r9%TG213%TI3UD31p071pT0Q21r8+QSdZ8%U<2UJ1r7%UA59421U9+QRejL%U@2UN1%UD5U:U91U6U<%UG3UF41%U31Q9%UD2V41%U62U=1%UF2V4TB%U93V421+5%R=4UMU>T71+QWSP8%S?4UOU@1S6+QWSP0+VbTfH%SB4V2UC21+QWRo0%SD4V4UE1S;+QWRn@%SF4V6UG1S=+QWRn8%SH4V8UI1S?+QWRm@%SJ4V:UK1SA+QWRmH%SL4V<UM1SC%UI1QM%V:2VJ1%UL2V31%UM2V=2%UO3VJ21%VD261%VE291%VF2<1%VG2?1%VH2B1%VI2E1%VJ2I1%VK2L1%VL2S41%VM2S71%VN2Q11%VO2UK1%W02Q81qQ<W21%W?2W31qQFW91%WA2W:1qSNWA1%WC2WB1p0QH1p0RL1p0RO1pQ>SA1pQHWA1pSHWH1%W=2SE1%W>2SH1%W?2SK1%W@2SO1%WA2TB1%WB2TF1%WC2TK1%WD2TO1%WE2U41%WF2UB1%WG2UH1%WH2UN1%WI2V61%WJ2V<1%WK2VG1%WL2VO1%WM2W:1qQ:WO1%X<2X01qQDX61%X>2X71qSLX>1%X@2X?1").
 Proof.
 destruct (DRP.read_pre fx R M S p can bs t8 G1 G2 G10 G11 G12 HS Hal HW HD HIMG Hp ltac:(lia) HSTR HSH HSTK HFMT Hcan HC HSN) as (fx5 & R5 & M5 & MS5 & INV).

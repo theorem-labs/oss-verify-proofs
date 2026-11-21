@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: grant image B's walk contracts, written for libreac/fuzz_grant. Copied lines: tcj_kept and twr_ok (the caller-journal shapes) restate proofs/cgif/cgif_file_fuzzer/lib/YC20.v's tlzw_kept and its write-right form, by way of image A's lib/A/Prog/CtrlFinish.v; the header of Section F (the Context line for PI and the notations SEGS / VAL / SIGMA / BASE) has the shape of proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v's section header. Every other line is written for image B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The CONTRACT of every program function that the walks of image B (fuzz_grant.asan-ubsan, bin/ sha256
-   fde52226dc48, symbols 5a5ee7c02b4e; FACTS f0e6eb38667, PAU originals) must prove, stated over image B's walk
+   fde52226dc48, symbols 5a5ee7c02b4e; FACTS, PAU originals) must prove, stated over image B's walk
    layer (lib/B/Prog), as Definitions. No walk is proved here.
 
    For each function f (C name; `asan.module_ctor` is written asan_module_ctor):
@@ -350,7 +351,7 @@ Definition RT_BCMP : Prop := abcmp_realizes SEGS B (SIGMA GS___interceptor_tramp
    kFakeStackSize 0xb09000, FS_WIN 192). The class contract reads the fake stack's thread-local pointer; that
    dependency is RT_TP_FS, a named premise of every walk that takes RT_SM. *)
 Definition RT_SM (c : Z) : Prop := astack_malloc_realizes SEGS B c.
-(* __asan_stack_free_6 0x3d754 (lib/Reusable/StackFreeDef.v, a working branch c3bfa00452c) *)
+(* __asan_stack_free_6 0x3d754 (lib/Reusable/StackFreeDef.v, a working branch) *)
 Definition RT_SF6 : Prop := StackFreeDef.astack_free_realizes SEGS B (SIGMA GS___asan_stack_free_6) 6.
 (* __asan_set_shadow_00 / _f5 / _f8 (0x54a48 / 0x54b50 / 0x54b68) *)
 Definition RT_SS00 : Prop := SetShadowDef.aset_shadow_realizes SEGS B (SIGMA GS___asan_set_shadow_00) 0x00.
@@ -522,7 +523,7 @@ Definition walk_reac_headamp_tx_effective : Prop :=
    (store4; 0x85e74 is the last slot, which falls into reac_headamp_tx_set_resweep 0x85e78) are false from the
    block's OWN shadow entry (mkSHE 10 0 460, whose last granule is the partial one, shadow 4), as for
    reac_headamp_tx_set_resweep. The premise `bytes_ok W mem (tx + 456) 4` that this contract once carried was REMOVED
-   for that reason: the walk never used it (lib/B/Prog/HeadampTxArmScene.v:408-410 says why none is needed),
+   for that reason: the walk never used it (lib/B/Prog/HeadampTxArmScene.v:409-411 says why none is needed),
    so its callers owe nothing extra. *)
 Definition STK_reac_headamp_tx_arm_scene : Z := 16 + ESTACK.
 Definition tb_reac_headamp_tx_arm_scene_post (regs : bvmap 5 word) ly S (W : world SEGS) mem md (tx sb sw : Z)
@@ -551,7 +552,7 @@ Definition walk_reac_headamp_tx_arm_scene : Prop :=
    table becomes set_resweep_T T a1. It does not write 437 or 440. Trap 0x85ed4 (guards 0x85e80 tx = 0, 0x85e88
    tx mod 4) is not reached for a live block; the error-path branches 0x85ee8 and 0x85ef8 (store4, the latter the
    last slot, which falls into reac_headamp_tx_next 0x85efc) are false from the block's OWN shadow entry
-   (rsw_SH = [mkSHE 10 0 460], lib/B/Prog/HeadampTxSetResweep.v:78), as image A discharges its 456 store. The
+   (rsw_SH = [mkSHE 10 0 460], lib/B/Prog/HeadampTxSetResweep.v:79), as image A discharges its 456 store. The
    premise `bytes_ok W mem (tx + 456) 4` that this contract once carried was REMOVED for that reason: the walk never
    used it, so the caller LLVMFuzzerTestOneInput owes nothing extra at the call 0x81a4c. *)
 Definition STK_reac_headamp_tx_set_resweep : Z := 16 + ESTACK.
@@ -597,8 +598,8 @@ Definition walk_reac_headamp_tx_set_resweep : Prop :=
    0x8648c 0x864a8 0x8654c 0x86594 0x865a4 0x865d4 0x865e4 0x865f4 0x86604 0x86634; store4 0x86448 0x864b8 0x8650c
    0x86578 0x865b4 0x865c4 0x86624 0x8663c, the last one the last slot, which falls into __wrap_getenv 0x86640)
    are false from the block's shadow and byte_ok of chp, parp, valp. The premise `bytes_ok W memc (tx + 456) 4`:
-   the walk does not need it; its tx + 456 stores are covered by the block's own shadow entry (a Theorem Labs lane's build on
-   00912ab7565 without it, an internal build log); it is kept because it is true and the entry walk proves it at
+   the walk does not need it; its tx + 456 stores are covered by the block's own shadow entry (a Theorem Labs lane's build
+    without it, an internal build log); it is kept because it is true and the entry walk proves it at
    0x81bd8. reac_headamp_tx_arm_scene's and reac_headamp_tx_set_resweep's were dropped (unused there). *)
 Definition STK_reac_headamp_tx_next : Z := 96 + STK_reac_headamp_tx_effective.
 (* Where one of the three bytes the caller holds must lie: above page 0 and below 2^47, clear of the table, of
@@ -1125,7 +1126,7 @@ Definition tb_ctrl_lay_block_post (STK sp0 : Z) (FP : list (Z * Z)) (ly : alayou
     garr8 SEGS (mrestrict (w_H W2) mem2) (p + 18) (lay_z ch pm v) /\
     tcj_kept STK_ctrl_lay_block lyc Sc W memc W2 mem2 (spZ regs) (fun a => p + 18 <= a < p + 50).
 (* tb_ctrl_lay_block_spec AGAINST IMAGE A's tctrl_lay_block_spec (lib/A/Prog/CtrlLayBlockSpec.v:63-89 and the
-   walk's Section hypotheses lib/A/Prog/CtrlLayBlock.v:81-115, a working branch af735a950e2), premise by premise:
+   walk's Section hypotheses lib/A/Prog/CtrlLayBlock.v:81-115, a working branch), premise by premise:
    - SAME: ajournal, arodata_okP, ret_ok, 4096 <= ra, gp, tp, a0 = p, a2 = 0, a3 = g, sp 16-aligned, the stack bound,
      0 <= p, p + 50 <= 2 ^ 47 - 8, amem_range (p + 18) 32, twr_ok (p + 18) 32, g <> 0, tsrc_ok g 3, garr8 g [ch; pm; v],
      afobj g 3, and the disjointness of [p + 18, p + 50) and [g, g + 3).
@@ -1167,8 +1168,8 @@ Definition tb_ctrl_lay_block_spec : Prop :=
   spZ regs mod 16 = 0 -> sp0 - STK <= spZ regs - STK_ctrl_lay_block -> spZ regs <= sp0 ->
   (* The row's bytes it reads (+2 the block kind 2, the switch index; +8 the template pointer TM = 0x211c0,
      TMPL_HEADAMP; +16 the argument offset 18; +17 the argument length 3) and the template's 32 bytes T32z, in the
-     IMAGE-VIEW form, as image A's closed walk states them (lib/A/Prog/CtrlLayBlock.v:91-108 on a working branch
-     5470d0c9c50): each is `arodata_okP ... -> the bytes`, for ANY state, not a premise over this call's entry
+     IMAGE-VIEW form, as image A's closed walk states them (lib/A/Prog/CtrlLayBlock.v:91-108 on a working branch):
+     each is `arodata_okP ... -> the bytes`, for ANY state, not a premise over this call's entry
      memory `memc`. Reason (a Theorem Labs lane): the code reads the row at 0x83d5c / 0x83e1c / 0x83e98 / 0x83eb4 and copies
      the template at 0x83e7c, all AFTER the class-1 frame call at 0x83c70, and astack_malloc_realizes keeps an
      image byte only when it is not an owned static and not the errno cell (YG0d.v:298, acall_kept YCbq.v:828,
@@ -1322,8 +1323,8 @@ Definition tb_reac_ctrl_build_grant_sweep_post (STK sp0 : Z) (FP : list (Z * Z))
     aregs_preserved regs regs2 /\ frames S2 = frames Sc /\ ablocks B ly2 S2 = ablocks B lyc Sc /\
     (exists f, S2 = set_fs f Sc) /\
     getr regs2 10 = w64 res /\
-    (* the exempt set is guarded by bgs_ok, as image A's (lib/A/Prog/CtrlBuildGrantSweepSpec.v:65, a working branch
-       eacc832ec38a): on the refusal path nothing bounds s, so without the guard a caller's frame could lie inside it *)
+    (* the exempt set is guarded by bgs_ok, as image A's (lib/A/Prog/CtrlBuildGrantSweepSpec.v:65, a working branch):
+       on the refusal path nothing bounds s, so without the guard a caller's frame could lie inside it *)
     tcj_kept STK_reac_ctrl_build_grant_sweep lyc Sc W memc W2 mem2 (spZ regs)
       (fun a => bgs_ok s V mx base w /\ s <= a < s + 34 * bgs_rows w) /\
     (bgs_ok s V mx base w /\ res = bgs_rows w /\
@@ -1693,7 +1694,7 @@ Definition tb_check_groupa_spec : Prop :=
 (* Image B's constant the walk reads: __const.check_groupa.frame (object 9, a registered global of 50 bytes), the
    source of the copy at 0x821ec, which takes ALL FIFTY bytes (`li a2,50` at 0x821e4; image A's copy took 16). So
    this names all fifty: T0z, which is the first 16, then 34 zero bytes, measured on image B at 0x20fc0..0x20ff1.
-   The checked-copy step (YC85.v:249 aj_intrin_atS) asks for every one of the fifty through `src_ok`, which the
+   The checked-copy step (YC85.v:250 aj_intrin_atS) asks for every one of the fifty through `src_ok`, which the
    first 16 alone cannot give. RT_GLOBS marks the shadow through this entry of GRANT_GLOBS_B, and RT_IMGSH maps
    its shadow hull. parsegroupa_img_check checks all fifty bytes on image B by computation. *)
 Definition IMG_check_groupa : Prop :=
@@ -1702,8 +1703,8 @@ Definition IMG_check_groupa : Prop :=
   (forall (H : word -> bool) mem, arodata_okP SEGS pa_relro_lo pa_relro_hi B (aview SEGS H mem) ->
    garr8 SEGS (mrestrict H mem) (VAL (A_OBJ 9)) (T0z ++ repeat 0 34)).
 (* IMG_RO_BELOW and RT_TP_FS: the walk reads object 9 at the checked copy 0x821ec, after the class-2 frame call at
-   0x820f0, so it must carry arodata_okP across that call. IMG_RO_BELOW was added for lib/B/PaBase.v:38
-   arodata_ok_journalP, but the proved walk does not use it, nor RT_TP_FS: CheckGroupa.v:1378-1385 drops both, and
+   0x820f0, so it must carry arodata_okP across that call. IMG_RO_BELOW was added for lib/B/PaBase.v:39
+   arodata_ok_journalP, but the proved walk does not use it, nor RT_TP_FS: CheckGroupa.v:1379-1386 drops both, and
    carries arodata_okP with its own cg_rod_journal, whose journals have an empty footprint, so the read-only range
    needs no bound under the sink head. Both stay in the list: removing them would be an interface change. *)
 Definition hyps_check_groupa : Prop :=

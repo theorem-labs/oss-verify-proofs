@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the premise and conclusion parts that cgif_file_fuzzer's lib/YG0d.v states inside each interceptor contract (ecall_pre with a stack window, src_ok, dest_ok, amem_range, range_addressable, shadow_hull_vis, and the post of amemcmp_realizes), taken out as named definitions with the stack window as a parameter, for the string, number and format entries of plugin-hostd/fuzz_command that cgif_file_fuzzer does not call; module names. *)
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtDefs.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; fuzz_command's measured read-only range list RT_ROM_RANGES (53 ranges over fuzz_command.asan's string, number and format entries, used only by its lib/A/Prog/PaArt.v) and its comment are left out: no file of this unit uses it; no numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtDefs.v; module paths changed to reac-pw/fuzz_headamp; fuzz_command's measured read-only range list RT_ROM_RANGES (53 ranges over fuzz_command.asan's string, number and format entries, used only by its lib/A/Prog/PaArt.v) and its comment are left out: no file of this unit uses it; no numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,7 +21,7 @@ Variable segs : list Segment.
 Variable B : asyms.
 
 (* The scratch window of a runtime call: [stk] bytes below the stack pointer at entry. cgif_file_fuzzer writes the
-   window out at each contract, with ESTACK for most entries and 2 * ESTACK for bcmp and strnlen (YG0d.v:352-371,
+   window out at each contract, with ESTACK for most entries and 2 * ESTACK for bcmp and strnlen (YG0d.v:353-372,
    :401-419). The string entries of fuzz_command.asan hold up to 2032 + 160 bytes of frame of their own and call
    musl, so each statement below names its own window. *)
 Definition ascratch_stk (stk : Z) (regs : bvmap 5 word) (a : Z) : Prop := spZ regs - stk <= a < spZ regs.
@@ -32,7 +33,7 @@ ly_stk_lo ly + stk <= spZ regs /\
 (forall a, ascratch_stk stk regs a -> apresent (w_H W) mem a).
 
 (* A range the entry may read: cgif_file_fuzzer's src_ok + amem_range + range_addressable + shadow_hull_vis
-   (YG0d.v:313-314, 316, 341-343), with the scratch window as a parameter. *)
+   (YG0d.v:314-315, 316, 341-343), with the scratch window as a parameter. *)
 Definition aread_ok (stk : Z) (W : world segs) (regs : bvmap 5 word) (mem : word -> option byte) (x n : Z) : Prop :=
 0 <= x /\ x + n <= 2 ^ 63 /\ 0 <= n < 2 ^ 32 /\
 (forall a, x <= a < x + n -> aview segs (w_H W) mem a <> None /\ ~ ascratch_stk stk regs a) /\
@@ -40,7 +41,7 @@ amem_range x n /\
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF x n /\
 (0 < n -> shadow_hull_vis (aview segs (w_H W) mem) x n).
 
-(* A range the entry may write: cgif_file_fuzzer's dest_ok (YG0d.v:311-312) with the window as a parameter. *)
+(* A range the entry may write: cgif_file_fuzzer's dest_ok (YG0d.v:312-313) with the window as a parameter. *)
 Definition awrite_ok (stk : Z) (ly : alayout) (S : astate) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (d n : Z) : Prop :=
 0 <= d /\ d + n <= 2 ^ 63 /\ 0 <= n < 2 ^ 32 /\
@@ -51,7 +52,7 @@ range_addressable (aview segs (w_H W) mem) SHADOW_OFF d n /\
 (0 < n -> shadow_hull_vis (aview segs (w_H W) mem) d n).
 
 (* The bytes a word-at-a-time musl loop may touch after the terminator at [e]: the same premise cgif_file_fuzzer's
-   strnlen and memchr contracts carry (YG0d.v:392, :411). *)
+   strnlen and memchr contracts carry (YG0d.v:393, :412). *)
 Definition atail_vis (W : world segs) (mem : word -> option byte) (e : Z) : Prop :=
 forall a, e < a < e - e mod 8 + 8 -> aview segs (w_H W) mem a <> None.
 
@@ -86,7 +87,7 @@ Qed.
 
 (* The conclusion of an entry that returns to [ra], keeps the model state [S], writes only inside its scratch
    window and inside [E], and leaves [Q] true of the registers and the memory it returns. The parts are those of
-   cgif_file_fuzzer's amemcmp_realizes conclusion (YG0d.v:344-351). *)
+   cgif_file_fuzzer's amemcmp_realizes conclusion (YG0d.v:345-352). *)
 Definition art_post (stk : Z) (ly : alayout) (S : astate) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) (E : Z -> Prop)
 (Q : bvmap 5 word -> (word -> option byte) -> Prop) : world segs -> config -> Prop :=

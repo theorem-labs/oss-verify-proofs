@@ -1,6 +1,6 @@
 file	line	text
 lib/A/AE37.v	4	(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE37.v (origin/ossv/recipes
-lib/A/AE37.v	5	   c8557374ad2e, 246 lines), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to
+lib/A/AE37.v	5	   , 246 lines), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to
 lib/A/AE37.v	6	   libreac/fuzz_pcap's ASan build by tool-snap/port_core.py (de2176d86061; work (internal path), symbol gate
 lib/A/AE37.v	7	   39e67a7eb166 PASS).  This is the return realizer of the second atexit handler of the exit walk, X2_PC.
 lib/A/AE37.v	8	   STATEMENT PC (re-derived from the unstripped twin x/unstripped/fuzz_pcap/fuzz_pcap.asan .symtab, not from the

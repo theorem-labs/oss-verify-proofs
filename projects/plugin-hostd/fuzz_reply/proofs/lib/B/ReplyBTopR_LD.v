@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v (419c9d7c02f), lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v (8da615a239d) and lib/B/ReplyRINVB.v (f908a004fd1), restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
+(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v, lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v and lib/B/ReplyRINVB.v, restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyRINVB_exit.v; 95 of its 138 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: image B (plugin-hostd fuzz_reply, ASan-UBSan): the row LD_R of ReplyBTop's
    Section btop, list_drop at route R, at ReplyBTop's instance (MT := ReplyKfMeterB.MT_sec nsec_cf cf_kmax, ARx := top_x's
@@ -14,11 +14,12 @@
      ReplyDeallocInstB.afree_realizes_cf_rh_replyB_all, as in ReplyBTopR_SR.btr_SR_R;
    - HCTX_ld_free: the return address list_drop + 0x9c is a row of CTX_AFREE.
    btr_LDROP_R is W_list_drop.pb_list_drop_at_xR (list_drop's R walk at its entry BASE + AF_fr_list_drop, Section d
-   wR) at the same instance, with the same discharges; its ROMS premise (W_list_drop.v:599) is LDROP_R's third premise.
+   wR) at the same instance, with the same discharges; its ROMS premise (W_list_drop.v:600) is LDROP_R's third premise.
    The statements are ReplyBTop.v's Contexts LD_R and LDROP_R word
    for word (each fit Goal below closes by exact), so ReplyBTop closes them by `exact ReplyBTopR_LD.btr_LD_R` and
    `exact ReplyBTopR_LD.btr_LDROP_R`.
    rule 24: proves no function (kind: segment lemma) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

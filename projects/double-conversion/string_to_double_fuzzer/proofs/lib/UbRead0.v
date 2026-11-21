@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack window is the 6144513 bytes below sp0). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -82,7 +83,8 @@ Section R0.
     - lia.
     - lia.
     - subst L. lia.
-    - replace (bv_unsigned sp0 - 136)%Z with (bv_unsigned sp0 - 8388608 + (8388608 - 136))%Z by lia. apply Hst; lia.
+    (* twin of RefRead0.v:86; stack_writable is based at sp0 - 6144513 (UbReadBase.v:98-100) *)
+    - replace (bv_unsigned sp0 - 136)%Z with (bv_unsigned sp0 - 6144513 + 6144377)%Z by lia. apply Hst; lia.
     - replace (bv_unsigned gm + 32 + 0)%Z with (bv_unsigned gm + 32)%Z by lia. apply Hgr; lia.
     - intros HcL. exfalso. subst L. lia.
     - intros HLc R' M' (P2 & P9 & P23 & P19 & PK) PM. apply Hk.
@@ -140,7 +142,7 @@ Section R0.
     - lia.
     - lia.
     - subst L. lia.
-    - replace (bv_unsigned sp0 - 136)%Z with (bv_unsigned sp0 - 8388608 + (8388608 - 136))%Z by lia. apply Hst; lia.
+    - replace (bv_unsigned sp0 - 136)%Z with (bv_unsigned sp0 - 6144513 + 6144377)%Z by lia. apply Hst; lia.
     - replace (bv_unsigned gm + 32 + 0)%Z with (bv_unsigned gm + 32)%Z by lia. apply Hgr; lia.
     - intros HcL R' M' (P2 & P9 & P23 & P19 & PK) PM. pose proof PM as [[EQ GR] RD]. apply Hk.
       2:{ eapply stack_writable_grows; [exact GR | exact Hst]. }
@@ -171,7 +173,7 @@ Section R0.
           - split; [lia | exact (proj2 Hsp)].
           - lia.
           - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 0) with sp0.
-            replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia. apply Hst; lia.
+            replace (bv_unsigned sp0 + -6144513 + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia. apply Hst; lia.
           - lia.
           - split; [lia | exact (proj2 (proj2 Hb))].
           - unfold CEIL. lia.

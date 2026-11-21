@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Lib/FP.v; 609 of its 651 lines of code are new or changed and 349 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/Prog/crtA_conv.v, with its module paths changed; 862 of its 968 lines of code are new or changed and 545 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* crtB_loop: the convert-loop stage of the cgif-form walk of check_round_trip, image B (fuzz_decode.asan-ubsan,
    original pin): `crtB_loop : crtB_loop_stmt` of lib/B/Prog/crtB_cuts.v, the cut contract at CRT_LOOP_IN (+0x10c)
    from the one at CRT_LOOP_OUT (+0x26c), in the backward-chain form of the interface (template cgif
@@ -12,10 +13,10 @@
    (1) The footprint run of the two loops (CRT_LOOP_IN -> CRT_ILOOP .. CRT_LOOP_TAIL -> CRT_LOOP_OUT) as an
        ExecF.evtF run: crtB_loop_run.  Ported from the image-B donor records:
        - the five check lemmas bcl1_F .. bcl4_F, bcq8_F, crt_body_F, crt_inner_F, crt_outer_F and crt_sh1F from
-         a working branch b04a1406048:proofs/libreac/fuzz_decode/lib/B/Prog/crt_loopF.v:33-525 (the
+         a working branch:proofs/libreac/fuzz_decode/lib/B/Prog/crt_loopF.v:33-525 (the
          footprint twin of the donor's crt_convert.v), pcs re-based on lib/B/Prog/crtB_iface.v (CRT_AT off);
        - the memory-side lemmas (the loop invariant crt_inv and its transport lemmas, crt_nn .. crt_inv_Q) from
-         a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/B/Prog/crt_convert.v:141-397, with
+         a working branch:proofs/libreac/fuzz_decode/lib/B/Prog/crt_convert.v:141-397, with
          the invariant also keeping every present byte present (needed by the journal's mem_grows) and the frame's
          first four words as variables (each cut states its own frame words);
        - s24 / cv / conv_bytes / comb from lib/Prog/crt_convert.v:13-183 (the same text as the donor's
@@ -50,7 +51,7 @@ Module PCC := OSSVerify.Proofs.libreac.fuzz_decode.lib.Prog.crt_convert.
 (* Part 1: the footprint run of the convert loop                                                            *)
 (* ======================================================================================================== *)
 
-(* b04a1406048 crt_loopF.v:22-24. *)
+(* crt_loopF.v:22-24. *)
 Ltac takeF b := lazymatch goal with
   | |- ExecF.evtF _ _ _ (MS _ _ (if ?c then _ else _) _ _ _ _) => replace c with b; [cbv iota | symmetry; solve_c]
   end.
@@ -62,11 +63,11 @@ Ltac crt_pc := lazymatch goal with
   end.
 Ltac cstep := crt_pc; step.
 
-(* b04a1406048 crt_loopF.v:33-34. *)
+(* crt_loopF.v:33-34. *)
 Lemma align8_cover : forall a b c, a <= b -> b <= c -> a / 8 * 8 <= b /\ b + 1 <= c / 8 * 8 + 8.
 Proof. intros a b c H1 H2. split; Z.div_mod_to_equations; lia. Qed.
 
-(* b04a1406048 crt_loopF.v:39-50: the shadow byte of X + i lies in the 8-aligned cover of the shadow bytes of
+(* crt_loopF.v:39-50: the shadow byte of X + i lies in the 8-aligned cover of the shadow bytes of
    [X, X + n). *)
 Lemma crt_sh1F : forall RNG X n,
   ExecF.rng RNG (shadow_addr X / 8 * 8)
@@ -81,7 +82,7 @@ Proof.
   eapply ExecF.rng_sub; [exact H | lia | lia].
 Qed.
 
-(* ---- the five instrumented checks of the inner loop and the planar store (b04a1406048 crt_loopF.v:57-191) ---- *)
+(* ---- the five instrumented checks of the inner loop and the planar store (crt_loopF.v:57-191) ---- *)
 
 (* CRT_AT 0x170 -> 0x184: a2 := s9 + s1 (the pcm byte); its shadow byte (lb a1); slow path +0x218 (andi s3,a2,7;
    bge s3,a1 to the load1 report at +0x310: not taken, the byte is addressable; j +0x184). *)
@@ -235,7 +236,7 @@ Proof.
   step. apply CONT.
 Qed.
 
-(* ---- generic helpers (dc455613c81 crt_convert.v:150-165) ---- *)
+(* ---- generic helpers (crt_convert.v:150-165) ---- *)
 
 Lemma byte_sgn0 : forall k : byte, bv_signed k = 0 -> bv_unsigned k = 0.
 Proof.
@@ -261,10 +262,10 @@ Proof.
   apply IH. destruct (bv_eqb x a); [discriminate | exact H].
 Qed.
 
-(* The memory the loop may change: the two blocks and its own frame (dc455613c81 crt_iface.v:59). *)
+(* The memory the loop may change: the two blocks and its own frame (crt_iface.v:59). *)
 Definition crtB_W (sp P Q nch ns : Z) : list ivl := [(P, P + 4 * nch * ns); (Q, Q + 8 * nch); (sp, sp + 160)].
 
-(* The tactic tuning of dc455613c81 crt_convert.v:167-177: lia only, never a nia fallback; nonlinear goals are
+(* The tactic tuning of crt_convert.v:167-177: lia only, never a nia fallback; nonlinear goals are
    proved in small contexts. *)
 Local Ltac rng ::= lia.
 Local Ltac fct := try unfold wa; norm;
@@ -274,7 +275,7 @@ Local Ltac word_eq_tac ::= first [ exact eq_refl | (apply wa_of_var; first [assu
   | (norm; first [ reflexivity | f_equal; lia | lia ]) ].
 Local Ltac wfct := rewrite ?land3, ?land7; first [ fct | fact ].
 
-(* b04a1406048 crt_loopF.v:203-215: the stores and the frame loads go through computed addresses; StepF's acc_hint
+(* crt_loopF.v:203-215: the stores and the frame loads go through computed addresses; StepF's acc_hint
    hook takes the access to a range hypothesis and normalises the address first. *)
 Local Ltac acc_hint ::=
   lazymatch goal with
@@ -286,8 +287,8 @@ Local Ltac acc_hint ::=
       end
   end.
 
-(* The loop under a footprint: the premises of dc455613c81 crt_convert.v's Section Loops (the frame's first four
-   words f0 .. f24 as variables), the footprint RNG and its ranges (b04a1406048 crt_loopF.v:222-270). *)
+(* The loop under a footprint: the premises of crt_convert.v's Section Loops (the frame's first four
+   words f0 .. f24 as variables), the footprint RNG and its ranges (crt_loopF.v:222-270). *)
 Section LoopsF.
 Variables (wsp gp tp t0 t1 t2 a6 a7 s2 s5 t3 t4 t5 t6 : word).
 Variables (m0 : word -> option byte) (pb : Z -> byte).
@@ -338,19 +339,19 @@ Hypothesis RSHC : forall i, 0 <= i < 3 * nch * ns -> ExecF.rng RNG (shadow_addr 
 Hypothesis RFR : ExecF.rng RNG (sp + 32) 24.
 
 (* The frame at [sp, sp + 160): its own seven words (32(sp) = ~P, 40(sp) = nch, 48(sp) = P are the ones the loop
-   loads) and the caller's s11 .. s0, ra (dc455613c81 crt_convert.v:221-224, crtB_iface.v crt_fr). *)
+   loads) and the caller's s11 .. s0, ra (crt_convert.v:221-224, crtB_iface.v crt_fr). *)
 Local Notation FRAME :=
   [C8 f0; C8 f8; C8 f16; C8 f24; C8 w32; C8 (Z_to_bv 64 nch); C8 (Z_to_bv 64 P);
    C8 v11; C8 v10; C8 v9; C8 v8; C8 v7; C8 v6; C8 v5; C8 v4; C8 v3; C8 v2; C8 v1; C8 v0; C8 vra].
 
-(* The loop invariant (dc455613c81 crt_convert.v:226-230), with every present byte kept present. *)
+(* The loop invariant (crt_convert.v:226-230), with every present byte kept present. *)
 Definition crt_inv (m : word -> option byte) (kp kq : Z) : Prop :=
   munch (crtB_W sp P Q nch ns) m0 m /\ wmono rsegs m0 m /\ (forall x, m0 x <> None -> m x <> None) /\
   rw_cells rsegs m (bv_unsigned wsp) FRAME /\
   (forall j, 0 <= j < kp -> bytes_at rsegs m (P + 4 * j) (Z_to_le_bytes 4 (PCC.cv pb j))) /\
   (forall c, 0 <= c < kq -> bytes_at rsegs m (Q + 8 * c) (le8 (Z_to_bv 64 (P + 4 * (c * ns))))).
 
-(* ---- the memory-side lemmas (dc455613c81 crt_convert.v:232-397) ---- *)
+(* ---- the memory-side lemmas (crt_convert.v:232-397) ---- *)
 
 Lemma crt_nn : 0 < nch * ns /\ nch * ns <= 480.
 Proof. split; [apply Z.mul_pos_pos; lia | nia]. Qed.
@@ -528,7 +529,7 @@ Local Notation ST pc ra s0 s1 a0 a1 a2 a3 a4 a5 s3 s4 s6 s7 s9 s10 s11 Fh fx mm 
       Fh (Z_to_bv 64 pc) fx None mm (seg_rom rsegs)).
 
 (* One pass of the inner loop: CRT_ILOOP (the three pcm bytes, the conversion, the 4-byte store) to CRT_AT 0x210
-   (b04a1406048 crt_loopF.v:308-389). *)
+   (crt_loopF.v:308-389). *)
 Lemma crt_body_F : forall (G : machine_state -> Prop) c j (ra s0 s1 a0 a1 a2 a3 a4 a5 s3 s4 s6 s7 s9 s10 s11 : word)
     (Fh : bvmap 5 word) (fx : bv 32) (m : word -> option byte),
   0 <= c < nch -> 0 <= j < ns ->
@@ -608,7 +609,7 @@ Proof.
   unfold PCC.cv. apply PCC.conv_bytes; [exact H5 | exact (PCC.comb _ _ _ t3 Ht3)].
 Qed.
 
-(* The inner loop CRT_ILOOP .. CRT_AT 0x210, run to its exit at CRT_LOOP_TAIL (b04a1406048 crt_loopF.v:391-432). *)
+(* The inner loop CRT_ILOOP .. CRT_AT 0x210, run to its exit at CRT_LOOP_TAIL (crt_loopF.v:391-432). *)
 Lemma crt_inner_F : forall (G : machine_state -> Prop) c (ra s0 a3 a4 s4 s9 s11 : word),
   0 <= c < nch ->
   bv_unsigned ra = P + 4 * (c * ns) ->
@@ -653,7 +654,7 @@ Proof.
     replace (c * ns + (j + 1)) with (c * ns + j + 1) by ring. exact Hinv'.
 Qed.
 
-(* The outer loop CRT_LOOP_IN .. CRT_LOOP_TAIL, run to its exit at CRT_LOOP_OUT (b04a1406048 crt_loopF.v:434-525). *)
+(* The outer loop CRT_LOOP_IN .. CRT_LOOP_TAIL, run to its exit at CRT_LOOP_OUT (crt_loopF.v:434-525). *)
 Lemma crt_outer_F : forall (G : machine_state -> Prop) n c (ra s0 s1 a0 a1 a2 a3 a4 a5 s3 s4 s6 s7 s9 s10 s11 : word)
     (Fh : bvmap 5 word) (fx : bv 32) (m : word -> option byte),
   0 <= c -> c + Z.of_nat (S n) = nch ->
@@ -746,7 +747,7 @@ Proof.
 Qed.
 
 (* The two loops from CRT_LOOP_IN at channel 0 to CRT_LOOP_OUT, with the invariant's content at the exit
-   (crt_outer_F at c = 0 from the empty invariant, as dc455613c81 crt_convert.v:658-668 starts it). *)
+   (crt_outer_F at c = 0 from the empty invariant, as crt_convert.v:658-668 starts it). *)
 Lemma crtB_loop_run : forall (ra s0 s1 a0 a1 a2 a3 a4 a5 s3 s4 s6 s7 s9 s10 s11 : word) (Fh : bvmap 5 word)
     (fc : bv 32),
   bv_unsigned a3 = 0 -> bv_unsigned a4 = 0 -> bv_unsigned s0 = P -> bv_unsigned s11 = P ->

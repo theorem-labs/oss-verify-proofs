@@ -1,22 +1,23 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the class-geometry steps and
    the map atok lemmas of cgif's YG06.v restated over WfP_cf (YG01cf.v) and YG00cf.v's map_more_user_cf.
    cgif's YG06.v is NOT edited: its state-only helpers (upd_reg, upd_pc, atok_set_region, round_up_step,
    NoDup_filter, NoDup_del_hole, the cbnr / splits tactics) are imported and reused.
    What differs from cgif:
    - the holes: a class may carry the sentinel (EXH_HOLE, 0); exh_holes_* replace hole_ok_del, and
-     exh_holes_disjoint discharges areq_ok's hole conditions (YG01.v:19, :23-24) for it;
+     exh_holes_disjoint discharges areq_ok's hole conditions (YG01.v:20, :24-25) for it;
    - cls_ok_cf_map_user's bound is `rg_mapped_user r + kUserMapSize <= kFreeArrayOffset`, the test that
-     map_more_user_cf makes before it maps (YG00cf.v:135), taken as a HYPOTHESIS, never `kUserMapSize * EV_MAX`;
-   - map_more_user_cf's class-full arm is a refusal that returns false (YG00cf.v:145); its tail
+     map_more_user_cf makes before it maps (YG00cf.v:136), taken as a HYPOTHESIS, never `kUserMapSize * EV_MAX`;
+   - map_more_user_cf's class-full arm is a refusal that returns false (YG00cf.v:146); its tail
      `set_exh_cf c ;; ret false` is set_exh_ret_cf_ok, and map_more_user_cf_full_tok reduces the arm to
      `errb_report_cf c ;; set_exh_cf c ;; ret false` in the cf request layer (YGcfTok.v), the only layer in
      which errb_map_cf's KMmapSec is admissible. The errb_report_cf step itself is not proved here (it
      belongs to the errbuf owner), so map_more_user_cf_ok takes the premise
      `rg_mapped_user (reg s c) + kUserMapSize <= kFreeArrayOffset \/ exh_mem_cf s c = true`, under which
      errb_report_cf asks nothing. Every atok lemma here also has its atok_cf form (suffix _tok).
-   - no free-array room: WfP_cf has no wf_fa_room (YG01.v:342-343), so cgif's fa_room_populate
+   - no free-array room: WfP_cf has no wf_fa_room (YG01.v:343-344), so cgif's fa_room_populate
      (YG06.v:67-83) and fa_room_keep (:84-85) have no counterpart, and no lemma here carries an fa_room
      premise. The free array grows when it must: ensure_free_array_ok_cf is the growth step. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -215,7 +216,7 @@ exact (ensure_free_array_ok_cf U pp cc bb s c need sof ns W Hc H1 H2 H3).
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* The tail of the refusal arm (YG00cf.v:145): flag the class, return false.       *)
+(* The tail of the refusal arm (YG00cf.v:146): flag the class, return false.       *)
 Definition exh_post_cf (U : Univ) (pp cc bb : Z) (s : astate) (c : Z) (ns : bool) (res : bool * astate) : Prop :=
 let (ok, s') := res in
 ok = false /\ exists r', s' = upd_reg c r' s /\ WfP_cf U pp cc bb s' /\

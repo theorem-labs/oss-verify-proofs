@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths, module names and addresses changed; 1120 of its 1233 lines of code are new or changed and 901 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW3a.v at 00820c285b0 for reac-pw/fuzz_headamp image A: module paths changed, rs_ -> hs_, rm_ -> hm_, rl_ -> hd_, role -> headamp; every pc moved to headamp's twin; the input cursor is in s11 (role: R+0xc8) and pp in R+0xf0 (role: s11), so run 1 stores pp at R+0xf0 and run 2 reads it into its own atom 32 (role's atom 27 is s11 = the cursor here); role's real-frame cells R+0x90 / 0x98 / 0xb0 / 0xe8 / 0xf8 moved to R+0xb0 / 0xb8 / 0xd0 / 0x108 / 0x118; the memset step is HPgIntrin.hd_memset_at (role: its own copy); the header cut also carries the cap (s8), the null flag (R+0x40), pp (R+0xf0) and the frame for locals in s10. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW3a.v for reac-pw/fuzz_headamp image A: module paths changed, rs_ -> hs_, rm_ -> hm_, rl_ -> hd_, role -> headamp; every pc moved to headamp's twin; the input cursor is in s11 (role: R+0xc8) and pp in R+0xf0 (role: s11), so run 1 stores pp at R+0xf0 and run 2 reads it into its own atom 32 (role's atom 27 is s11 = the cursor here); role's real-frame cells R+0x90 / 0x98 / 0xb0 / 0xe8 / 0xf8 moved to R+0xb0 / 0xb8 / 0xd0 / 0x108 / 0x118; the memset step is HPgIntrin.hd_memset_at (role: its own copy); the header cut also carries the cap (s8), the null flag (R+0x40), pp (R+0xf0) and the frame for locals in s10. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgW3a.v, with its module paths changed; 546 of its 614 lines of code are new or changed and 1165 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01Hk.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01Hk.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs, code table and registers (cursor s2, shadow offset s4), the real frame's
    write window R+0x30 .. R+0x150, the six header slots and the registers of the leaf, class-4 frame bounds and the
    harness records of lib/AU/RtPgSegB.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): the kit of part HDR of

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/CJ/RL/GX/G_vsnprintf.v, with its module paths and numbers changed; 113 of its 305 lines of code are new or changed and 106 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/GXA/G_vsnprintf.v at 2d2ff01bb6f2; module paths changed (the same text as proofs/plugin-hostd/fuzz_reply/lib/CJ/RL/GXA/G_vsnprintf.v at 2d2ff01bb6f2, module paths aside). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/GXA/G_vsnprintf.v; module paths changed (the same text as proofs/plugin-hostd/fuzz_reply/lib/CJ/RL/GXA/G_vsnprintf.v, module paths aside). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

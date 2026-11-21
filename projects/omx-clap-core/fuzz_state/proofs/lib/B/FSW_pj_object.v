@@ -4,8 +4,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_string.v, with its module paths and addresses changed; 440 of its 567 lines of code are new or changed and 1474 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: a re-walk over IMAGE B of the image-A walk lib/A/FSW_pj_object.v
-   (a working branch bfa236c8a89), same lemma structure, on lib/B's walk kit (FSW_K / FSW_ret / FSW_rd) and B's
+   (a working branch), same lemma structure, on lib/B's walk kit (FSW_K / FSW_ret / FSW_rd) and B's
    own code; no lib/A image-content file is Required. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_object 0x83f1c (preset_file.c pf.c:433-437) on fs.asan-ubsan (sha256 5ac5ce0954f8...), 30 words: the ASan walk
    of the READER lane's pj_object_spec (lib/B/FSH_Fn_reader.v:748, Section c, statement unchanged).
    rule 24: no released proof of pj_object over this image exists. Reuse search (a Theorem Labs lane, outputs under

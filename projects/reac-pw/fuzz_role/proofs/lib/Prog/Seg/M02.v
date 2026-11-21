@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths changed; 532 of its 580 lines of code are new or changed and 97 lines of the source are left out. *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v at fuzz_wire's
    module paths; lf_guard_img reads this image's __stack_chk_guard GOT slot 0x1cef0; lf_fr_call_x is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 455 of its 574 lines of code are new or changed and 461 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 214 of its 251 lines of code are new or changed and 537 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/RoleSlot.v, with its module paths, addresses and numbers changed; 162 of its 208 lines of code are new or changed and 205 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/Prog/Seg/E01.v, with its module paths, module names and numbers changed; 167 of its 206 lines of code are new or changed and 169 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment M02 of reac-pw/fuzz_role LLVMFuzzerTestOneInput (plain): [0x13f4c, 0x14158], K13f4c -> K14158
    (Prog/LLVMFuzzerTestOneInput_c.v's S_M02).
    The body is role_check_contract's evt (the copy into the pod block, the property parse, expect_role inlined and
@@ -15,7 +16,7 @@
    contracts are stated over the CJ memory invariant, so the evt runs on MemNorm.normalize_cj of the cut's memory
    (which has MemNorm.task_mem by MemNorm.mem_inv_cj_normalize) rather than on MemNorm.normalize; m02_run_cj is
    Tac_slot.sl_run_fp with that normalization, as libreac/fuzz_boxreg's released Prog/LLVMFuzzerTestOneInput_fr.v
-   llvm_run_norm_cj (origin/ossv/recipes 25e3d17bdb50) does for its CJ callees. The run writes the FP registers and
+   llvm_run_norm_cj does for its CJ callees. The run writes the FP registers and
    accrues fflags, so it ends at its own FP state (F', fc') with rounding mode 0, which is the FP state of the cut
    it closes (SlotFR.CUTST takes the FP state of its configuration).
    The premises come from FR at K13f4c: the record's bytes in the pp block and the two frame cells (the cut's own

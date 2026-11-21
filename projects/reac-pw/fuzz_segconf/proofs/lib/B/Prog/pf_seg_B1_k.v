@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B1 of
    reac_segconf_parse_file's walk (lib/B/Prog/pf_seg_B1.v), the cut's objects carried from the entry to FTAKEN.
    The B1 segment lane of the image-B G3 walk owner, 2026-10-30; the form of the image-A G3 walk owner's image-A segment kit lib/A/Prog/pf_a2_g.v
-   (pa2_keep_obj / pa2_keep_lab / pa2_keep_rconf, commit c181e576cd21), re-derived for B1's step.
+   (pa2_keep_obj / pa2_keep_lab / pa2_keep_rconf), re-derived for B1's step.
    B1 runs the prologue (stores only to its own stack slots, above alloc_ceiling) and calls __asan_stack_malloc_5,
    whose kit post (YG0d.v astack_malloc_realizes, through PaCall.v aj_stack_malloc_atS) keeps, of the bytes below
    alloc_ceiling, exactly the live blocks, the image bytes the runtime does not own and the side-stack frames of the

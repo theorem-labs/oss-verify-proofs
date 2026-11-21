@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rta_mat_stable unfolds artm_res, the reservation-ledger part of ARTM_A). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1cx X1cy X1cp X1cj X1dd X1cg X1cm X1cs X1da.
@@ -23,7 +24,7 @@ Lemma rta_with_fds : forall Σ mo fds, ARTM_A Σ mo -> ARTM_A Σ (with_fds fds m
 Proof. intros Σ mo fds H. exact H. Qed.
 
 Lemma rta_mat_stable : forall Σ, mat_stable (ARTM_A Σ).
-Proof. intros Σ. unfold ARTM_A, artm_sys, lazy_in_maps_A, confined0, shadow_lazy, maps_zbound, X0m8.model_ivs_wf, X1d2.noaccess_pos. mat_stable_tac. Qed.
+Proof. intros Σ. unfold ARTM_A, artm_res, artm_sys, lazy_in_maps_A, confined0, shadow_lazy, maps_zbound, X0m8.model_ivs_wf, X1d2.noaccess_pos. mat_stable_tac. Qed.
 
 Lemma rta_sp0 : forall Σ m, ART_A Σ m -> sp_window_lo <= rtA_sp0 Σ <= sp_window_hi /\ rtA_sp0 Σ mod 16 = 0.
 Proof.
@@ -185,7 +186,7 @@ Lemma rta_with_fds : forall Σ mo fds, ARTM_A Σ mo -> ARTM_A Σ (with_fds fds m
 Proof. intros Σ mo fds H. exact H. Qed.
 
 Lemma rta_mat_stable : forall Σ, mat_stable (ARTM_A Σ).
-Proof. intros Σ. unfold ARTM_A, artm_sys, lazy_in_maps_A, confined0, shadow_lazy, maps_zbound, X0m8.model_ivs_wf, X1d2.noaccess_pos. mat_stable_tac. Qed.
+Proof. intros Σ. unfold ARTM_A, artm_res, artm_sys, lazy_in_maps_A, confined0, shadow_lazy, maps_zbound, X0m8.model_ivs_wf, X1d2.noaccess_pos. mat_stable_tac. Qed.
 
 Lemma rta_sp0 : forall Σ m, ART_A Σ m -> sp_window_lo <= rtA_sp0 Σ <= sp_window_hi /\ rtA_sp0 Σ mod 16 = 0.
 Proof.

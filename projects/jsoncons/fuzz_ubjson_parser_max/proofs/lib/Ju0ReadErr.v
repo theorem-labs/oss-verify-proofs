@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: replaces the literal 8388608 stack window with DRV_ZWIN in stack_writable, adds a ReaderOn context and channel-reader hypothesis Hrdr passed to re_segF, and writes six encoded lemma statements (valsRE_len, regs_okRE, know_okRE, etc.) as plain Rocq; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0ReadErr.v, 12 lines within its lines 44-167. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -29,14 +30,14 @@ Definition re_ivs : list (Z * Z) :=
 (0xe8f50,0xe8f58); (0xe8f68,0xe8f70); (0xe8f78,0xe8fa8);
 (0xe9478,0xea000)]%Z.
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= DRV_ZWIN)%Z ->
+store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - DRV_ZWIN + d)) m = true.
 Definition cell (M : word -> option byte) (a : Z) (n : nat) (v : Z) : Prop :=
 rdn RSEGS M (Z_to_bv 64 a) n = Some (word_to_le_bytes n (Z_to_bv 64 v)).
 Definition img_clear (M : word -> option byte) (lo hi : Z) : Prop :=
 forall i, (lo <= i < hi)%Z -> M (Z_to_bv 64 i) = None.
 Section ReadErr.
-Context {RE : RunEnv}.
+Context {RE : RunEnv}. Context {RO : ReaderOn}.
 Variable sp0 : word.
 Variable BL : list (list byte).
 Variable model : Model.
@@ -44,6 +45,7 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+Hypothesis Hrdr : m_channel_reader model = true.
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
 Let SPal : (bv_unsigned sp0 mod 16 = 0)%Z := proj2 (proj2 Hvsp).
@@ -54,7 +56,7 @@ unfold t_die.
 eapply (re_segBC scfg sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
 try eassumption; try lia.
 intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
-eapply (re_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+eapply (re_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
 Qed.
 Variables (pp : word) (tid : Z) (R : bvmap 5 word) (M : word -> option byte).
 Hypothesis Rsp : getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128).
@@ -73,16 +75,16 @@ Hypothesis Hpp1 : (bv_unsigned sp0 <= bv_unsigned pp)%Z.
 Definition valsRE : list word :=
 [sp0; pp; pp; pp; pp; Z_to_bv 64 tid] ++ junk_vals R ++ [Z_to_bv 64 0].
 Let E : env := ENV BL valsRE.
-Lemma valsRE_len : ltac2:(TCodec.tc2 tcn__Ju0ReadErr ":'<'7&5'QKyR0%211&G%5221uQ7%93821").
+Lemma valsRE_len : length valsRE = 39%nat.
 Proof. unfold valsRE. rewrite !length_app, junk_vals_length. reflexivity. Qed.
-Lemma evRE_junk : ltac2:(TCodec.tc2 tcn__Ju0ReadErr "K'7&?r1uQ0%3221'<'QKyR0%211&Q7vA&>u6r2%3221%6251&NvF&QJy5&Q?%118%4231%7261%C3@91p0E1pS6J1").
+Lemma evRE_junk : forall i, (i < 32)%nat -> ev E (6 + i) = getr R (Z_to_bv 5 (Z.of_nat i)).
 Proof.
 intros i Hi. unfold E, ENV. cbn [ev]. unfold valsRE.
 change (6 + i)%nat with (length [sp0; pp; pp; pp; pp; Z_to_bv 64 tid] + i)%nat.
 unfold vals_ev. rewrite app_nth2_plus, app_nth1 by (rewrite junk_vals_length; exact Hi).
 unfold junk_vals. rewrite (nth_map_seq (fun i => getr R (Z_to_bv 5 (Z.of_nat i)))) by exact Hi. reflexivity.
 Qed.
-Lemma spxRE_val : ltac2:(TCodec.tc2 tcn__Ju0ReadErr "D'@'<'QKyR0%211&Q6vA&Kr1%211%5241&QJ&Q=&QLvQI%22<1%4218%62>1%A3>81pS8C1").
+Lemma spxRE_val : forall k, edenot E (spx k) = Z_to_bv 64 (bv_unsigned sp0 + k).
 Proof. intros k. cbn [spx edenot]. rewrite alu_add. unfold v_add. change (ev E 0) with sp0.
 apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Zplus_mod_idemp_r. reflexivity. Qed.
 Ltac reg_caseRE :=
@@ -97,20 +99,20 @@ first [ reflexivity
 | rewrite Rsp, alu_add; change (ev E 0) with sp0; unfold v_add; apply bv_eq;
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod, Zplus_mod_idemp_r; f_equal; lia
 | idtac ].
-Lemma regs_okRE : ltac2:(TCodec.tc2 tcn__Ju0ReadErr "5&Q9vA&LvF%43321").
+Lemma regs_okRE : regs_ok E srRE0 R.
 Proof.
 pose proof SPlo. pose proof SPhi.
 apply regs_ok_by_index.
 intros i Hi.
 destruct i as [|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|i]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]; [ .. | lia]; reg_caseRE.
 Qed.
-Lemma img_clear_of : ltac2:(TCodec.tc2 tcn__Ju0ReadErr "A'@&Q<';%1233(:r2r1%347721&I%83621&HvEr3%33218p051pS4?1pS:@1").
+Lemma img_clear_of : forall lo hi, In (lo, hi) re_ivs -> img_clear M lo hi.
 Proof. intros lo hi Hin. exact (proj1 (Forall_forall _ _) Mimg (lo, hi) Hin). Qed.
 Ltac kimg := split; [lia|]; split; [lia|]; apply img_clear_of; cbn; tauto.
 Ltac kcell H := split; [lia|]; split; [apply flat_intro; cbn [edenot a_base a_off]; rewrite ?(u_small 0) by lia; lia|];
 rewrite adenot_lit0; cbn [edenot];
 first [exact H | rewrite H; reflexivity | idtac].
-Lemma know_okRE : ltac2:(TCodec.tc2 tcn__Ju0ReadErr "D&Q>&Q=&QLyR0vQG%3221+8%6221vQI%7261+TPPP0%:221%<251&Q8&Q;vAvE&J%544321p071").
+Lemma know_okRE : (bv_unsigned pp + 8 <= bv_unsigned sp0 + 4194304)%Z -> know_ok RSEGS E M knRE0.
 Proof.
 intros Hpp2. pose proof SPlo. pose proof SPhi. pose proof SPal.
 unfold know_ok, knRE0.
@@ -119,7 +121,7 @@ repeat (apply Forall_cons; [|try apply Forall_nil]); cbn [kentry_ok].
 - change (edenot E (EVar 0)) with sp0. lia.
 - split; [apply flat_intro; cbn; lia|].
 intros d m Hd Hm. unfold estart. cbn [a_base a_off]. change (edenot E (EVar 0)) with sp0.
-replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia.
+replace (bv_unsigned sp0 + - DRV_ZWIN + d)%Z with (bv_unsigned sp0 - DRV_ZWIN + d)%Z by lia.
 apply Mstack; lia.
 - change (edenot E (EVar 2)) with pp. lia.
 - split; [apply flat_intro; cbn [edenot a_base a_off]; rewrite ?(u_small 0) by lia; lia|].

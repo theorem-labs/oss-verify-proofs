@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_grant. *)
-(* Modified by Theorem Labs, 2026-10: the short walk (n < 50) of fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4), which fuzz_grant has no file for: its run steps are fuzz_grant image B's (a working branch edc3e948664; the same code, Y pc = image B pc + 0x4d30) in three pieces - lib/B/Prog/CtrlParse.v pb_ctrl_parse steps 1-4b (entry to cut A), lib/B/Prog/CtrlParseMid.v (cut A to the memset's return) and the len < 50 branch of lib/B/Prog/CtrlParseNone.v (to cut J) - stated on fuzz_disco's statement layer (lib/Y/Prog/CtrlParseLib.v pz_entry0, lib/Y/Prog/CtrlParseCut.v; disco A's walk a working branch a6498221fa6 lib/A/Prog/CtrlParseWalk.v pz_segA, a working branch f0661c67ffd lib/A/Prog/CtrlParseMid.v and a working branch eafd64be243 lib/A/Prog/CtrlParseNone.v), with no region, atom fact or shadow entry for the frame f, which fuzz_disco's contract describes only under 50 <= n. *)
+(* Modified by Theorem Labs, 2026-10: the short walk (n < 50) of fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4), which fuzz_grant has no file for: its run steps are fuzz_grant image B's (a working branch; the same code, Y pc = image B pc + 0x4d30) in three pieces - lib/B/Prog/CtrlParse.v pb_ctrl_parse steps 1-4b (entry to cut A), lib/B/Prog/CtrlParseMid.v (cut A to the memset's return) and the len < 50 branch of lib/B/Prog/CtrlParseNone.v (to cut J) - stated on fuzz_disco's statement layer (lib/Y/Prog/CtrlParseLib.v pz_entry0, lib/Y/Prog/CtrlParseCut.v; disco A's walk a working branch lib/A/Prog/CtrlParseWalk.v pz_segA, a working branch lib/A/Prog/CtrlParseMid.v and a working branch lib/A/Prog/CtrlParseNone.v), with no region, atom fact or shadow entry for the frame f, which fuzz_disco's contract describes only under 50 <= n. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x874a4 of fuzz_disco's asan-ubsan image, AF_both3_reac_ctrl_parse 0x64e8 of the listing),
    the whole short path n < 50 from the entry to cut J (0x878c4), the join before the epilogue:
    - the prologue, sp realigned to 32 bytes, the side-stack frame of class 1 (frame_alloc_1 =
@@ -473,7 +474,7 @@ rewrite U_lit in Hc by lia. apply Z.ltb_ge in Hc. lia.
 Qed.
 (* ---- The short walk (n < 50): from the entry to cut A0, then pzs_segAJ to cut J; cut J onwards is the
    hypothesis (CtrlParseEpi.v). The statement is disco A's `Hypothesis pz_segShort`
-   (a working branch 9052e8f424d lib/A/Prog/CtrlParseWalk.v:58-75) over the Y listing. ---- *)
+   (a working branch lib/A/Prog/CtrlParseWalk.v:58-75) over the Y listing. ---- *)
 Lemma pz_segShort : forall B G, pz_rt B G ->
   (forall c, pz_ok B c -> pz_cutJ_spec B c) ->
   forall (fq : YK11.FPState) STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k

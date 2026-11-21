@@ -4,17 +4,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 2439 of its 2555 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F2.v; 151 of its 248 lines of code are new or changed and 2458 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F2.v f2_head0 (:80), f2_head1 (:109), f2_st (:142), f2_pcall (:286),
-     f2_mcpy_evt (:346) at a working branch 3803efccea0
+     f2_mcpy_evt (:346) at a working branch
      (blob 880a1ab3fc2beb3fc8f90fef3ef0a781e7287594);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f2_head0_of_F, f2_head1_of_F, f2_st_of_F (evtF_evt + rng_all) re-derive the source statements;
-     f2_pcall_pre_F re-runs F2.v:339 (the four instructions at pcm, F2.v:284-285) and f2_mcpy_pre_F re-runs
-     F2.v:381 (the four instructions at 0x81f68, F2.v:345), each stopping AT the callee entry.
+     f2_pcall_pre_F re-runs F2.v:340 (the four instructions at pcm, F2.v:285-286) and f2_mcpy_pre_F re-runs
+     F2.v:382 (the four instructions at 0x81f68, F2.v:346), each stopping AT the callee entry.
    f2_st_noinv_F re-runs the same F2.v f2_st (:142) six steps with the mem_inv premise and the mem_inv post
      conjunct dropped on both sides; it has no _of_F (no source statement in that shape).
    F2.f2_parse_at (:174) has NO _F twin: it steps no instruction of the caller; it only applies the
@@ -39,9 +40,9 @@ Module PCF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.reac_ctrl_parse_c.
 Module MCCF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.asan_memcpy_c.
 
 (* A byte store of a register whose value is not a literal (the four `sb zero` of the record-shadow block): the
-   engine's cell_of_bytes knows le8 / le4 / le2 / a singleton / le1 (zxb b), not le1 of a register.  F2.v:52-62
+   engine's cell_of_bytes knows le8 / le4 / le2 / a singleton / le1 (zxb b), not le1 of a register.  F2.v:53-63
    overrides lib.Lib.Tac's fix_lit_store for the evt goal; here the same normalization goes into StepF's
-   mem_after_store_opt (pilot fix (2)), whose other branches are StepF.v:488-497 verbatim. *)
+   mem_after_store_opt (pilot fix (2)), whose other branches are StepF.v:489-498 verbatim. *)
 Local Ltac mem_after_store_opt ::=
   norm_lit_store_bytes;
   (match goal with

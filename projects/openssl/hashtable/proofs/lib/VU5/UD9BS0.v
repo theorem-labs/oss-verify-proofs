@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window facts are the launch's window in whole pages, HUWin.STK_W, not the old 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.Riscv Require Import Instr.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore CxPlan HUAtable.
+From OSSVerify.Proofs.openssl.hashtable.lib Require HUWin.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import CAP. Open Scope Z_scope.
 Definition D9B_ranges : list (Z * nat) := [(0xe1830, 3528%nat); (0xe71fc, 1284%nat); (0xe95e8, 1396%nat); (0xf0820, 2431%nat); (0xf861c, 2751%nat); (0x2b0bec, 7171%nat); (0x2b9bec, 1024%nat); (0x2bbbec, 4815%nat); (0xe66b8, 170%nat); (0xe6a4c, 23%nat); (0xeacf8, 13%nat); (0xeba20, 61%nat); (0xec194, 15%nat); (0xecda8, 36%nat); (0xf0768, 46%nat); (0xf66cc, 12%nat); (0x125724, 162%nat); (0x129ac8, 90%nat); (0x167de0, 12%nat); (0x222920, 33%nat); (0x228098, 61%nat); (0x228364, 29%nat); (0x228468, 54%nat); (0x228580, 25%nat); (0x2acf50, 13%nat); (0x2ad5a0, 13%nat); (0x2ad710, 66%nat); (0x2ad964, 9%nat); (0x2ad9a8, 26%nat)].
@@ -16,8 +18,9 @@ Definition D9B_kn : list kentry := [
   KRange (EVar V_P) 0 7;
   KRange e_sp0 0x7fff80000000 0x7fffffffff40;
   KRange (EVar V_BRK) (0x354000 / 4096) ((0x354000 + BRK_ASLR) / 4096);
-  KWr (SA e_spw (-8388608)) (ELit 8388608);
-  KUnk (SA e_sp0 (-8388608)) (ELit 8388400);
+  (* LPS c0dd863a: the stack window the launch gives, in whole pages (HUWin.STK_W) *)
+  KWr (SA e_spw (- HUWin.STK_W)) (ELit HUWin.STK_W);
+  KUnk (SA e_sp0 (- HUWin.STK_W)) (ELit (HUWin.STK_W - 208));
   KWr (SA (ELit 0) 0x2c1000) (ELit 0x93000);
   KRange (EVar 12) 1 ((TOPMAX - 0x9000) / 4096);
   KRange (EVar 13) 1 ((TOPMAX - 0x1000) / 4096);

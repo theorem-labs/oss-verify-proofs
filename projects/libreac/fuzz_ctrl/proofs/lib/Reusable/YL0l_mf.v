@@ -3,6 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0l.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/Reusable/YL0l.v; 80 of its 598 lines of code are new or changed and 365 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed the MR_win and blk_data_win abbreviations); the start model MD0 over the entry draw, as Run.init_config builds it (with_vdso). *)
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -28,36 +30,36 @@ Hypothesis AX : AllocExtra src0_msyms (aa_MR API).
 Hypothesis HAM : amf = true.
 Hypothesis Hmal : forall fx' : FPState, malloc_realizes (fx:=fx') (AM:=AM) src0_msyms (aa_MR API).
 Hypothesis Hfre : forall fx' : FPState, free_realizes (fx:=fx') (AM:=AM) src0_msyms (aa_MR API).
-Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+Variables (sp tid : word) (path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
 Hypothesis Hlk : fs_lookup (in_fs inp) path = Some data.
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G.
 Variable PRES : dleaf * astate -> Prop.
 Local Abbreviation L := (Z.of_nat (length data)).
-Local Abbreviation E_lp := (YL0l.E_lp sp tid a0 path inp data rnd).
-Local Abbreviation ew_lp := (YL0l.ew_lp sp tid a0 path inp data rnd).
+Local Abbreviation E_lp := (YL0l.E_lp sp tid inp data rnd).
+Local Abbreviation ew_lp := (YL0l.ew_lp sp tid inp data rnd).
 Local Abbreviation md_loop := (YL0l.md_loop path inp).
 Local Abbreviation md_post := (YL0l.md_post inp).
 Local Abbreviation md_loop_vm := (YL0l.md_loop_vm path inp).
 Local Abbreviation md_loop_read := (YL0l.md_loop_read path inp).
 Local Abbreviation md_loop_close := (YL0l.md_loop_close path inp).
-Local Abbreviation MR_win := (YL0l.MR_win API AX data).
-Local Abbreviation blk_data_win := (YL0l.blk_data_win API AX data).
+Local Abbreviation MR_win := (YL0l.MR_win API AX).
+Local Abbreviation blk_data_win := (YL0l.blk_data_win API AX).
 Local Abbreviation cap_range := (YL0l.cap_range data).
 Local Abbreviation bv_off_add := (YL0l.bv_off_add data).
 Local Abbreviation ext29_ewset := (YL0l.ext29_ewset data).
 Local Abbreviation ext29_havoc := (YL0l.ext29_havoc data).
 Local Abbreviation ext29_post := (YL0l.ext29_post data).
-Local Abbreviation Ec14 := (YL0l.Ec14 sp tid a0 path inp data rnd).
-Local Abbreviation Ec28 := (YL0l.Ec28 sp tid a0 path inp data rnd).
-Local Abbreviation U_want := (YL0l.U_want sp tid a0 path inp data rnd).
-Local Abbreviation U_dst := (YL0l.U_dst sp tid a0 path inp data rnd).
-Local Abbreviation U_len1 := (YL0l.U_len1 sp tid a0 path inp data rnd).
-Local Abbreviation U_big := (YL0l.U_big sp tid a0 path inp data rnd).
-Local Abbreviation U_dbl := (YL0l.U_dbl sp tid a0 path inp data rnd).
-Local Abbreviation agree_to_lp := (YL0l.agree_to_lp sp tid a0 path inp data rnd).
-Local Abbreviation lp_junk := (YL0l.lp_junk sp tid a0 path inp data rnd).
+Local Abbreviation Ec14 := (YL0l.Ec14 sp tid inp data rnd).
+Local Abbreviation Ec28 := (YL0l.Ec28 sp tid inp data rnd).
+Local Abbreviation U_want := (YL0l.U_want sp tid inp data rnd).
+Local Abbreviation U_dst := (YL0l.U_dst sp tid inp data rnd).
+Local Abbreviation U_len1 := (YL0l.U_len1 sp tid inp data rnd).
+Local Abbreviation U_big := (YL0l.U_big sp tid inp data rnd).
+Local Abbreviation U_dbl := (YL0l.U_dbl sp tid inp data rnd).
+Local Abbreviation agree_to_lp := (YL0l.agree_to_lp sp tid inp data rnd).
+Local Abbreviation lp_junk := (YL0l.lp_junk sp tid inp data rnd).
 Local Abbreviation TREE := (YL0l.TREE data).
-Ltac drv_anch ::= first [ assumption | eapply (YL0l.anch_lp sp tid a0 path inp data rnd HSA0); [ eassumption | vm_compute; reflexivity ] ].
+Ltac drv_anch ::= first [ assumption | eapply (YL0l.anch_lp sp tid inp data rnd HSA0); [ eassumption | vm_compute; reflexivity ] ].
 Definition POST_mf (K : dleaf * astate -> TSet) : Prop :=
 forall cap' bufp' A' Lc' J' g' len0 w ms' md',
 L < cap' -> 65536 <= cap' <= MAX_INPUT -> 0 <= len0 <= L ->
@@ -519,27 +521,30 @@ lazymatch type of HS' with st_ok _ _ _ ?msx =>
 apply (IHN fuel cap bufp (len + n) A Lc J' g msx _ K ltac:(lia) Hcap Hfuel ltac:(lia) ltac:(lia) Hub HW HB Hid HS' HMR Hmd1 HD HLt HK HPOST) end.
 Qed.
 Theorem src0_read_loop_mf : forall (brk mbase : word) (lim : Z) regs' g ms md Lc A bufp vm (K : dleaf * astate -> TSet),
-st_ok src0segs (E_m1 sp tid [a0; path] (in_envp inp) rnd regs' g) ss_m1_post ms ->
+st_ok src0segs (E_m1 sp tid inp rnd regs' g) ss_m1_post ms ->
 getr regs' 10%bv = Z_to_bv 64 (ptr_addr Lc bufp) ->
 aa_MR API Lc A (ms_mem ms) md -> WF A -> bounded A -> st_init_done A = true ->
 user_blocks A = [(bufp, CAP0)] ->
-md = with_vmmaps vm (MD_file path tid brk mbase sp lim inp) ->
+md = with_vmmaps vm (MD_file path tid brk mbase sp lim inp rnd) ->
+(* [fdchan]'s third conjunct at 727298f3 is the launch's channel reader; the caller (YL0j.v) gives it
+   from [Run.valid_input_channel_reader], as libreac/fuzz_knock's copy does. *)
+in_channel_reader inp = true ->
 leaves PRES (TREE READ_FUEL CAP0 bufp A) ->
 (forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
 POST_mf K ->
 realizes src0segs (mkCfg ms md) (tset_mf (TREE READ_FUEL CAP0 bufp A) K).
 Proof using AX HAM Hmal Hfre Hlk HSA0.
-intros brk mbase lim regs' g ms md Lc A bufp vm K HS Ha0 HMR HW HB Hid Hub Hmd HL HK HPOST.
+intros brk mbase lim regs' g ms md Lc A bufp vm K HS Ha0 HMR HW HB Hid Hub Hmd Hcr HL HK HPOST.
 destruct (mr_model _ _ (aa_laws API) _ _ _ _ HMR) as (Hh & Hlz & _).
 assert (Hin : In (bufp, CAP0) (user_blocks A)) by (rewrite Hub; left; reflexivity).
 pose proof (mr_blocks _ _ (aa_laws API) Lc A (ms_mem ms) md bufp CAP0 0 HMR Hin ltac:(unfold CAP0; lia)) as (_ & Hq1 & Hq2 & _).
 pose proof (mr_blocks_aligned _ _ (aa_laws API) Lc A (ms_mem ms) md bufp CAP0 HMR Hin) as Hqal.
 unfold CAP0 in Hq2. assert (Hac : alloc_ceiling < 2 ^ 47) by (pose proof YM05.alloc_ceiling_val; lia).
-set (E0 := E_m1 sp tid [a0; path] (in_envp inp) rnd regs' g) in HS.
+set (E0 := E_m1 sp tid inp rnd regs' g) in HS.
 assert (E14 : ew E0 14 = Z_to_bv 64 (ptr_addr Lc bufp)).
 { unfold E0, E_m1. change 14%nat with (K_M1 + 4)%nat. rewrite post_env_a0. exact Ha0. }
 assert (HSAE0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored E0 G).
-{ intros G HGa. apply (stack_anchored_ext (E_main sp [a0; path] (in_envp inp) tid rnd) E0 RD_facts G (HSA0 RD_facts eq_refl) HGa).
+{ intros G HGa. apply (stack_anchored_ext (E_main sp inp tid rnd) E0 RD_facts G (HSA0 RD_facts eq_refl) HGa).
 intros [n K0] Hn. cbn [fst].
 match type of Hn with In _ ?l => let v := eval vm_compute in l in change l with v in Hn end.
 assert (Hn10 : (n < 10)%nat).
@@ -593,7 +598,7 @@ apply (loop_rd_mf (S (Z.to_nat (2 ^ 28))) READ_FUEL CAP0 bufp 0 A Lc J g msx md 
 ltac:(unfold CAP0; lia) ltac:(lia) Hub HW HB Hid HS' HMR) end.
 + subst md. unfold YL0l.md_loop, MD_file, fdchan. autorewrite with model. rewrite MD0_fds, MD0_fs.
 rewrite fd_lookup_insert_eq, !fd_lookup_insert_neq by (intros H'; apply (f_equal bv_unsigned) in H'; discriminate).
-repeat split; first [apply fd_insert_std3 | reflexivity].
+repeat split; first [apply fd_insert_std3 | reflexivity | (rewrite ?MD0_channel_reader; exact Hcr)].
 + cbn. apply (blk_data_nil src0_msyms).
 + exact HL.
 + exact HK.

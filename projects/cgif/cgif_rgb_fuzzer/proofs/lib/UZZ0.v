@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (valid_entry's new fifth conjunct, the launch check, is the one passed on, and both walks are read against the run's segment list, the binary's segments and the vDSO pair, through RomStable.run_init and srealizesE_of_realizes). *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -7,6 +8,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import Plain.
 From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import Ubsan.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK11 YK15 YK18 YN09 YN05 YN0b YH04 UH04 YP07 YP01 YZ02 UZ02.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomStable.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 #[local] Existing Instance YK11.fx0.
@@ -27,10 +29,12 @@ Proof.
 intros ls lt Hls Hlt [sp brk mb rnd] [sp' brk' mb' rnd'] inp Hens Hent Hinp.
 pose proof (valid_input_va_size _ Hinp) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-destruct Hens as [Hsp [Hbrk [Hmb Hfit]]]. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+destruct Hens as [Hsp [Hbrk [Hmb [_ Hfit]]]]. destruct Hent as [Hsp' [Hbrk' [Hmb' [_ Hfit']]]].
 eapply (shape_strong_equiv_efs_budgets ls lt src2segs _ _ sp brk mb rnd ubs2segs _ _ sp' brk' mb' rnd' (SPEC inp) (SPEC inp) inp).
-- apply src2_realizes; assumption.
-- apply srealizes_of_realizes. apply ubs2_realizes; assumption.
+(* the walks are over each binary's own segments; [RomStable.run_init] reads them against the
+   run's list, the binary's segments and the vDSO pair, from the run's start *)
+- apply run_init; [reflexivity |]. apply src2_realizes; assumption.
+- apply srealizesE_of_realizes. apply run_init; [reflexivity |]. apply ubs2_realizes; assumption.
 - apply t_eq_refl.
 Qed.
 Theorem cgif_rgb_fuzzer_ubsan_equiv_shipped :

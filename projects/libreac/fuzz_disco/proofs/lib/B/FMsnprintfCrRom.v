@@ -2,7 +2,7 @@
    bytes: every owned static range below 0xa0000 lies in load segment 0 and each of its bytes is a byte of a Tfib_const_abs
    cell whose value is the image byte (fmi_roO_chk), so AR reads it as the image (fmi_rom_viewO); and fm_cr_consts_view_AR,
    fm_cr_consts_view with that premise discharged. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v (a working branch 3e35620c52e): the
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v (a working branch): the
    definitions fmi_cell_rd, fmi_rom0_byte, fmi_pin_g, fmi_roO_chk and the lemmas fmi_roO_ok, fmi_cell_rd_sound,
    fmi_const_abs, fmi_pin_g_sound, fmi_pin_sound, fmi_rom_viewO (FMInst.v :24-35, :51-53, :86-101, :108-123, :150-156,
    :174-208), in that file's text. *)
@@ -11,7 +11,7 @@
    FMsnprintfCr to lib/B) and the image bytes to images/AsanUbsan (Asan_seg_bytes_000 -> AsanUbsan_seg_bytes_000). The
    tool has no table for FMInst.v, so the numerals are classified by hand: the one image numeral that moves, fm's
    tfib_rom_low bound 0x99000 (ADDRESS, the end of the read-only segments), becomes disco Y's 0xa0000
-   (link-a/donor/rodata-R2.md:89-91 (a working branch 88d3d5cd59df); disco lib/Reusable/YE3h.v:1354 tfib_rom_low); 0x10000 and 0x30000 (ADDRESS, the bounds of
+   (link-a/donor/rodata-R2.md:89-91 (a working branch); disco lib/Reusable/YE3h.v:1354 tfib_rom_low); 0x10000 and 0x30000 (ADDRESS, the bounds of
    load segment 0) already hold in disco Y (lib/Reusable/YB13.v:130-131 tfib_rom0); 64 (WORD, the Z_to_bv width) and 0
    (LENGTH, the start of seq) are not image values. The corollary fm_cr_consts_view_AR is new. No proof step changes. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.

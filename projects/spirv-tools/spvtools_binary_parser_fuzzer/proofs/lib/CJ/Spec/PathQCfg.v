@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation top at the ceiling, which the revised mmap placement reads, carried as a premise). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -43,9 +44,13 @@ Hypothesis HGAP : forall n, 0 <= n <= NMAXr -> GAPOK n SMAX ETOT NR RBY.
 Theorem raw_malloc_all_succ X n s mo :
   QI X P s mo -> ROOMX X P n -> PHI P + R63X X + bigb n <= LBUDGET -> 0 <= n <= NMAXr ->
   LBUDGET <= vm_limit (m_vmmaps mo) -> RSV NR RBY (m_vmmaps mo) ->
+  (* the allocation top is the CJ ceiling; the caller has it from
+     [ImplBridge.mstd'] (its last conjunct).  [Path.NI] carries it, for the
+     revision's [Mmap.linux_place] grant address *)
+  alloc_top (m_vmmaps mo) = alloc_ceiling ->
   forall p s'' mo', tpath nstep_cfg (raw_malloc n s) mo [] (Ok (p, s'')) mo' -> p <> None.
 Proof.
-  intros HQI HRX HB Hn Hlim HRSV p s'' mo' Hp0.
+  intros HQI HRX HB Hn Hlim HRSV HTOP p s'' mo' Hp0.
   destruct (raw_malloc_tpath_elim_cfg n s mo p s'' mo' Hp0) as (cs' & p0 & s' & Hp & _ & ->).
   pose proof HQI as [(st & L & BL & LS & E & INV & SI & HAQ & HK & HLI & HP) HB0].
   assert (Hov : size_overflows n = false) by (unfold size_overflows; apply Z.leb_gt; lia).
@@ -54,7 +59,7 @@ Proof.
   - exact (cmalloc_pos (ps_m s) n Hov).
   - apply (qtree_of_QI X P n s st L BL LS); auto; lia.
   - destruct (cmalloc_tok n (ps_m s) (QI_init01 X P s mo HQI)) as (_ & N & _). exact N.
-  - constructor; [exact HK| exact HLI| exact Hlim| exact HRSV|].
+  - constructor; [exact HK| exact HLI| exact Hlim| exact HRSV| | exact HTOP].
     pose proof (count_bound x0 st L BL LS P INV SI HAQ eq_refl eq_refl). lia.
   - intros r s3 mo3 Hp3. destruct r as [cs3 q]. cbn [fst].
     pose proof (raw_malloc_LQ X P n ltac:(lia) s mo (conj HQI (conj HRX HB))) as W.

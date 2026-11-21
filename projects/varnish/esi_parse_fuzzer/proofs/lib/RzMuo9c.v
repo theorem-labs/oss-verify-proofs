@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vDSO call arm, node_ok's third conjunct, and the must-exit lemma lifted from the binary's own segments to the run's segment list from the run's start (RomStable.run_init0, given that the binary has no vDSO image). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence Must
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require Import ShapeAlg BWorld Spec.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomStable.
 Import ListNotations.
 
 (* [comment removed for export] *)
@@ -110,6 +112,14 @@ Proof.
         destruct (mi_account_step_model_frame _ _ _ _ _ H) as (_ & _ & _ & _ & _ & Hp & _);
         rewrite (m_halted_proc _ _ Hp); assumption
     end.
+  - (* 08b1429: a vDSO call is a system call made in the vDSO; the bump keeps the process state *)
+    left.
+    match goal with
+    | [ H : materialize_model_accesses _ _ = Some ?m2 |- m_halted (with_vdso_bump ?m2) = None ] =>
+        destruct (materialize_model_accesses_frame _ _ _ H) as (_ & _ & _ & _ & _ & Hp & _);
+        change (m_halted (with_vdso_bump m2)) with (m_halted m2);
+        rewrite (m_halted_proc _ _ Hp); assumption
+    end.
   - (* [comment removed for export] *)
     left.
     match goal with
@@ -133,7 +143,7 @@ Theorem realizes0_must_exit : forall c T,
 Proof.
   intros c T Hr.
   induction Hr as [c I evs nx T i0 Hnode Hnx IH | c Hh | c T T' Hr IH Heq]; intros Hg Hinv.
-  - destruct Hnode as [Hsnd Hcmp].
+  - destruct Hnode as [Hsnd [Hcmp _]].
     destruct Hinv as [Hnone | (code & Hh & Hin & Hk)].
     + apply must_exit_in_at_cfg_running.
       * exact Hnone.
@@ -209,15 +219,22 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* LPS 727298f3: the statement runs the binary against [run_segments], from the run's own start;
+   the walk over the binary's own segments lifts there ([RomStable.run_init0]). *)
 Theorem halts_of_realizes : forall segs pc ph (T : ProcInput -> TSet),
   (forall inp, tgood AnyExit.codes (T inp)) ->
   (forall sp brk mbase rdraw inp,
      valid_entry (mkImage segs pc ph) (mkEntry sp brk mbase rdraw) inp -> valid_input inp ->
      realizes segs (BW:=bw_pinned) (init_config segs pc ph sp brk mbase rdraw source_alloc_limit inp) (T inp)) ->
+  vdso_image segs = None ->
   halts_allowed_T_scfg ACFG AnyExit.codes (mkImage segs pc ph).
 Proof.
-  intros segs pc ph T HT HR [sp brk mbase rdraw] inp Hen Hinp.
+  intros segs pc ph T HT HR Hvi [sp brk mbase rdraw] inp Hen Hinp.
   cbn [must_exit_in_scfg].
-  apply (realizes_pinned_must_exit AnyExit.codes segs _ (T inp) (HR sp brk mbase rdraw inp Hen Hinp) (HT inp)).
-  unfold init_config. cbn [cfg_model]. apply m_halted_init_model.
+  pose proof (RomStable.run_init0 segs inp sp mbase pc ph brk rdraw source_alloc_limit (T inp) Hvi
+                (rz_unwrap segs (BW:=bw_pinned) _ _ (HR sp brk mbase rdraw inp Hen Hinp)
+                   (never_excused_pinned segs _))) as Hrun.
+  apply (realizes0_must_exit AnyExit.codes _ _ (T inp) Hrun (HT inp)).
+  assert (Hw : forall v m, m_halted (with_vdso v m) = m_halted m) by (intros; reflexivity).
+  left. unfold init_config. cbn [cfg_model]. rewrite Hw. apply m_halted_init_model.
 Qed.

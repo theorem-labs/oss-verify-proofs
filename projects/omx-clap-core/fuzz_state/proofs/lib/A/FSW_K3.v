@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 387 of its 476 lines of code are new or changed and 1284 lines of the source are left out. *)
-(* fs walk kit, the FP-keyed core's static arm (RELOC's YCbq, a working branch 4aa3d96b823 on, whose
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* fs walk kit, the FP-keyed core's static arm (RELOC's YCbq, a working branch on, whose
    ajournal_sub admits a third callee-footprint case `inFP FP a /\ in_img segs a`: a callee writing an image
    static that is also in the caller's FP, e.g. fuzz_alloc_live / fuzz_alloc_fail at FS_PSTAT_FP inside a
-   FS_PSTAT_FP caller). S0 carries that core since a working branch 400b2a240b3; the walk lanes import this
+   FS_PSTAT_FP caller). S0 carries that core since a working branch; the walk lanes import this
    file by name, so its lemmas stay here.
    fsw_ajournal_sub3: ajournal_sub at tfibsegs with the laws discharged, for any after-call lemma (FSW_frame.v's
    own-carrying after-call too). fsw_rt_atU3: fsw_rt_atU with the three-arm premise. fsw_ajournal_sub5: the composition
@@ -442,8 +443,8 @@ End e3.
    [sp0 - STK, sp0) (indent's frame [sp - 32, sp) ends at sp < ot; pj_write's pj_out, pj_parse's struct pj_in,
    parse_string's hex4 slot sit above the caller's frame). The chunks cs are read on a memory memk of world Wk whose
    frame bytes equal the memory's after the call (Hkeep, mbyte of the raw memory): the call's (W, memC) with Hkeep from
-   the callee's keep clause (FSH_Gen.wkeep), as FSW_indent's ind_after_callU (a working branch
-   fcc7188ba36) reads put's; or the return's (W', mem') with Hkeep by reflexivity. The chunks lie in [0, f) by
+   the callee's keep clause (FSH_Gen.wkeep), as FSW_indent's ind_after_callU (a working branch)
+   reads put's; or the return's (W', mem') with Hkeep by reflexivity. The chunks lie in [0, f) by
    regions_wf (fstk_ret's chunk_inside).
    fsw_after_callFPU_ot: the frame ends at the window top (spZ regsC = sp0 - f), the chunks read on the memory AFTER
    the call (the caller's saved s1 at sp - 24 is INSIDE the callee's window); fsw_after_callFPU_win at

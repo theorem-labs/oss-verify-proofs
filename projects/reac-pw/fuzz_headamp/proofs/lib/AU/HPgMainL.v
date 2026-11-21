@@ -5,8 +5,8 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc from
    proofs/libreac/fuzz_knock/lib/A/APgCSpec.v (the Section form of its lines 32-164) and
    proofs/libreac/fuzz_knock/lib/A/ACfn.v (lines 27-71, the harness contract tfib_lib_pre_x / _post_x /
-   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here) at origin/ossv/recipes
-   6ebe35ba632, with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
+   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here),
+   with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
    this file states the three ASan-level contracts only.
 
    THE QDISC CHANGES, and why each one is there.
@@ -46,6 +46,7 @@
    the sink `K`, the entry addresses and the harness constants are all Section variables or parameters. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_qdisc/lib/A/QPgCSpec.v, with its module paths and module names changed; 6 of its 69 lines of code are new or changed and 64 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgMainC.v, with its module paths and module names changed; 130 of its 153 lines of code are new or changed and 46 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff): THE BUILD SEGMENT M01 of

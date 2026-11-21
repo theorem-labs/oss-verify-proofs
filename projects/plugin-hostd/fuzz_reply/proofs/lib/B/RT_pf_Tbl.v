@@ -1,4 +1,4 @@
-(* Image B twin of lib/A/RT_pf_Tbl.v at d49bd1db505: module paths lib.A -> lib.B; 56 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The numerals of fuzz_reply.asan-ubsan's snprintf interceptor chain (RT_pf_stmt.v and its proofs), one name each.
+(* Image B twin of lib/A/RT_pf_Tbl.v: module paths lib.A -> lib.B; 56 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The numerals of fuzz_reply.asan-ubsan's snprintf interceptor chain (RT_pf_stmt.v and its proofs), one name each.
    Source: the pinned image's objdump and nm (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) and fuzz_reply.nm.txt (sha256 544ac719824e; internal record) of the asan-ubsan build,
    fuzz_reply.nm.txt (sha256 544ac719824e; internal record)).  Every one of these values is also checked by the relocated Bz walk that carries it
    (lib/B/Bz/K/I_snprintfw.v, I_vsnprintfw.v, I_vfprintfw.v, I_vfprintfw1.v, I_vprintfw.v): a wrong value here makes

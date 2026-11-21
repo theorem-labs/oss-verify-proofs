@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_msg_next_c.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_msg_next_c.v to fuzz_transport's images *)
 (* Contract of diginet_msg_next in fuzz_transport.plain.
    Source: src/diginet_msg.c:27-103 at 835f336c. The binary inlines channel_data_len; it
    tests (status & 0xe0) == 0xc0 (DgnLib.chan_n_land).

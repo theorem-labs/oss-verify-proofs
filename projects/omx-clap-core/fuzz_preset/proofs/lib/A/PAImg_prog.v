@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: PAListing and PAImg instances (YC4aP) of A_prog_listing (Listing_prog.v).  Image A (asan, sha256 1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44), target range [0x815e0, 0x88760) (LLVMFuzzerTestOneInput .. end of __wrap_getpid, measured from the symbol table of the unstripped twin), 7264 slots.  Generated from mklisting.py (sha256 f9c5f7b1) at d9b9f6ff0d8 by emit_yc4ap2.py (sha256 6461551b) with pin the internal file pins102.json (sha256 cde4501c); checked by checkprog.py (sha256 a7013998) and by the hub checker checklisting.py (sha256 f605204c) through check_official.py (sha256 7ae3f356): 0 slot failures, 0 failing pairs, 0 objects outside a PT_LOAD. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: PAListing and PAImg instances (YC4aP) of A_prog_listing (Listing_prog.v).  Image A (asan, sha256 1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44), target range [0x815e0, 0x88760) (LLVMFuzzerTestOneInput .. end of __wrap_getpid, measured from the symbol table of the unstripped twin), 7264 slots.  Generated from mklisting.py (sha256 f9c5f7b1) by emit_yc4ap2.py (sha256 6461551b) with pin the internal file pins102.json (sha256 cde4501c); checked by checkprog.py (sha256 a7013998) and by the hub checker checklisting.py (sha256 f605204c) through check_official.py (sha256 7ae3f356): 0 slot failures, 0 failing pairs, 0 objects outside a PT_LOAD. *)
 
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

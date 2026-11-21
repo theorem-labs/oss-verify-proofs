@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (oom_stdio_exit closes one more premise of the exit write, the channel reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -136,6 +137,7 @@ Ltac oom_stdio_exit HL P0 RES_EQ FD2 MFS :=
                    _ _ 0x1040c 19 HK eq_refl) by (cbn; lia);
         apply msg_oom_img
       | apply FD2
+      | first [reflexivity | assumption]
       | first [reflexivity | assumption]
       | first [reflexivity | assumption]
       | apply t_exit_has_nil

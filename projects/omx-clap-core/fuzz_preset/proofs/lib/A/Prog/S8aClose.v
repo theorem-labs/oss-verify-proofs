@@ -19,7 +19,7 @@
    - s8c_ZB, the ONE premise of the _zb lemmas: the per-byte zero-shadow law of the real stack, AR_laws_x's field
      alx_zshadow_byte (YCbqG.v 219748197d6b, :317). It gives the shadow of `in` on the caller's real stack; the
      journal cannot keep q's shadow (shadow_addr q ~ 0x1000_7fef_0000 < alloc_ceiling 0x7fff7f800000, so
-     ajournal_xb's clause at YCbqG.v:357 does not cover it), and alx_zshadow's range form misses the granule
+     ajournal_xb's clause at YCbqG.v:358 does not cover it), and alx_zshadow's range form misses the granule
      [q + 32, q + 40) unless ly_stk_lo ly mod 8 = 0.
      ev_items_end_holds / ev_items_close_holds (the last lemmas of this file) cite it as
      `alx_zshadow_byte SEGS B ARx LAWS`: they hold under LAWS only.
@@ -35,8 +35,8 @@
      depth bound), 152 / 248 (the extent of EV_SAVED), the engine's atom numbers 9 .. 34 (registers 0-31, extras
      from 32). WORD: 0, 1, -1 (18446744073709551615 = 2 ^ 64 - 1 as the register word), 93 / 125 (the closers),
      255 (a byte), 5 / 6 (the JArr / JObj tags).
-   - #102 (the port to image A', a working branch on the cut 7cdbb61b5fa0): ported from the old-pin proof of
-     a working branch 8f1571cb9e13 (image A d83eb25d, twin f0d2e8d4, ex_value 0x82f30) BY SYMBOL: every pc in
+   - #102 (the port to image A', a working branch on the cut): ported from the old-pin proof of
+     a working branch (image A d83eb25d, twin f0d2e8d4, ex_value 0x82f30) BY SYMBOL: every pc in
      a comment is A' ex_value 0x832a4 + the same offset (+0x374; checked against the A' listing of pin 1be0f53d, the
      stacknarrow neutral disassembly); the EV_* offsets and every stepped word are unchanged, so the runs need no edit.
      5 of the 51 words walked differ, all untaken report arms' `jal __asan_report_*`; the CHANGED frame string (+0xa8 /
@@ -44,7 +44,7 @@
      #102's two cells g_most / g_own_ran_out (PRH_Base.v prh_glob / prh_most / prh_own, ev_act's ea_most / ea_own), so
      s8c_foot_rng takes `most own` and s8c_mid_frame keeps the two cells across the frame as it keeps the other five.
    - Build: the targeted route, the internal file zfb-targets.e5b8f1f4ec31aa52.sh with TARGETS = this file's
-     and S8aOpen.v's .vo, PAU=pau-preset-102 (the 4 #102 pins; asan 1be0f53d), FACTS 8f3e7e1a07f1, at a pushed
+     and S8aOpen.v's .vo, PAU=pau-preset-102 (the 4 #102 pins; asan 1be0f53d), FACTS, at a pushed
      commit. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -621,7 +621,7 @@ Qed.
 
 (* ---- the shadow of in (q, on the caller's real stack): the per-byte zero-shadow law of the stack band
    (AR_laws_x's field alx_zshadow_byte: the ONE extra premise of the _zb lemmas, ZB). The journal cannot keep q's
-   shadow: shadow_addr q is below alloc_ceiling, outside ajournal_xb's clause (YCbqG.v:357). ---- *)
+   shadow: shadow_addr q is below alloc_ceiling, outside ajournal_xb's clause (YCbqG.v:358). ---- *)
 Definition s8c_ZB : Prop := forall ly S Hp W mem md a, ARx ly S Hp W mem md -> ly_stk_lo ly <= a < ly_stk_hi ly ->
   aview SEGS (w_H W) mem (SHADOW_OFF + a / 8) = Some 0.
 Lemma s8c_q_ra : s8c_ZB -> forall a ly S Hp W mem md k p dep dl, EVPRE a -> EVMID a ly S Hp W mem md k p dep dl ->

@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane, a Theorem Labs lane's dr_sa_align row): the kit's dr_spec now states SA mod 8 = 0 (W7's A text), so FINDING 1 is closed: dr_sa_align is deleted and dr_all_stmt takes the premise from dr_spec; dr_sa_align_slot moved to lib/B/W_drain_sa.v (W6 72eb36c9efa). The unused Section hypothesis LDSPEC is deleted (a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane, a Theorem Labs lane's dr_sa_align row): the kit's dr_spec now states SA mod 8 = 0 (W7's A text), so FINDING 1 is closed: dr_sa_align is deleted and dr_all_stmt takes the premise from dr_spec; dr_sa_align_slot moved to lib/B/W_drain_sa.v (W6). The unused Section hypothesis LDSPEC is deleted (a Theorem Labs lane). *)
 (* Modified by Theorem Labs, 2026-10: the SEGMENT INTERFACE of the ASan+UBSan walk (image B,
    fuzz_reply.asan-ubsan) of fuzz_reply's drain, 0x83278 .. 0x841fc (993 instructions, nm size 0xf84), the
-   lib/B twin of lib/A/W_drain_cx.v (a working branch 42f8ce51aaa).  B is NOT A relocated: UBSan is
+   lib/B twin of lib/A/W_drain_cx.v (a working branch).  B is NOT A relocated: UBSan is
    TRAP mode in this pin (no __ubsan_handle_* symbol), so the checks are inline branches to the `unimp` at
    0x84004, the frame is 352 bytes (A: 336), the register allocation differs, and the shadow base lives in a
    frame slot (A keeps it in s5).  Same contract shape, same decomposition, same statement names; a fresh
@@ -123,7 +123,7 @@
    branch against fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) and agreeing site for site and shape for shape with the published
    census (TRAPS-ALL.md (sha256 c90982171c9b; internal record) rows 60-108: NONNULL 14, ALIGN8 7, PTR_BLTU 6, NULL_XOR 6,
    ALIGN4 3, ADDW1 2, NULL_BEQ 2, PTR_SOVF 2, PTR_NOT 2, NONNULL_LIT 1, PTR_EQK_FT 1, PTR_CONST 1, PTR_EQK 1,
-   DECW 1).  The lemma named is lib/B/W_traps.v's (a working branch 6c73ae99620, 48 lemmas
+   DECW 1).  The lemma named is lib/B/W_traps.v's (a working branch, 48 lemmas
    Qed); "R1" .. "R5" are that file's seat recipe, and a site marked R is decided inside paj_run_tok once the
    cut's atom facts are seated (pointer atoms mkAF 4096 140737479966720 3, errno al2 2, one-time flags
    mkAF 1 1 0), which is what the dinband / `getr regs1 20 = w64 1` conjuncts below are for.  No shape of
@@ -186,16 +186,16 @@
    Section hypothesis: errno is tp - 164 (HERRNO) and the pin's thread pointer decides it.
    (* The table lists the UBSan trap sites only (49, objdump-exact). ASan shadow side-exits (65 in drain; 39 sites with a decider in the four stages then open) are in the census D1-TRAP-CENSUS.md (sha256 f32bad2bbf4c; internal record). *)
 
-   FINDING 1 (closed): B's prologue traps at 0x832b4-0x832b8 unless SA mod 8 = 0, and the kit's dr_spec on
-   67c07b3d6e6 did not state it (its table premises allow any address of the 896-byte block; the kit's own
+   FINDING 1 (closed): B's prologue traps at 0x832b4-0x832b8 unless SA mod 8 = 0, and the kit's dr_spec
+    did not state it (its table premises allow any address of the 896-byte block; the kit's own
    alignment report align-B.txt (sha256 e030624aa48b; internal record) found the same gap).  The kit's dr_spec now carries
-   `SA mod 8 = 0` (W7's A text, a working branch ccd62d4c6f6 lib/A/W_contract.v:868, twinned to B by
+   `SA mod 8 = 0` (W7's A text, a working branch lib/A/W_contract.v:869, twinned to B by
    mkbkit), so DBASE's `dxSA cx mod 8 = 0` comes from dr_spec's own premise.  The corollary a real caller uses
    to supply it (for a table block G of the allocator and any slot index i, (G + AENT * i) mod 8 = 0, from
-   AR_blocks_law's G mod 16 = 0) is dr_sa_align_slot in lib/B/W_drain_sa.v (W6 72eb36c9efa).
+   AR_blocks_law's G mod 16 = 0) is dr_sa_align_slot in lib/B/W_drain_sa.v (W6).
    FINDING 2 (closed): the five shapes of drain that a Theorem Labs lane's 32-lemma W_traps.v did not cover (ALIGN4,
    PTR_CONST, PTR_EQK, PTR_EQK_FT, PTR_NOT) are all in the published 48-lemma kit
-   (a working branch 6c73ae99620) as trap_align4, trap_ptr_wrap_k, trap_br_eq,
+   (a working branch) as trap_align4, trap_ptr_wrap_k, trap_br_eq,
    trap_seat (trap_br_eq ..) and trap_ptr_wrap_not, so drain needs no new trap lemma.
    FINDING 3 (none of the above): B's drain CALLS list_drop (0x83914), so the DROP stage calls it through the proved
    pb_list_drop_ro_c (lib/B/W_list_drop.v) at the pending list's 16-byte header cell (&h->pending) (NOT at G_DR: gx_rt excludes
@@ -204,27 +204,27 @@
    (B's list_drop frame is 64 bytes) is under DRAIN_STK - DRAIN_FRAME = SL_STK = 144 + ASTACK, so the stack
    budget of the generated DRAIN_STK covers the call.
 
-   KIT.  Written against the B kit head a working branch 416c8ab2a27 (generated from the integrated
-   lib/A) and the final trap kit a working branch 6c73ae99620.  On that kit head DRAIN_FRAME = 352
-   and DRAIN_STK = DRAIN_FRAME + SL_STK = 352 + (144 + ASTACK) (W_contract.v:941-942), which still dominates B's
+   KIT.  Written against the B kit head a working branch (generated from the integrated
+   lib/A) and the final trap kit a working branch.  On that kit head DRAIN_FRAME = 352
+   and DRAIN_STK = DRAIN_FRAME + SL_STK = 352 + (144 + ASTACK) (W_contract.v:942-943), which still dominates B's
    call graph of drain (its deepest callee is send_line, frame 144; list_drop's LDROP_STK = 64 + ASTACK is under
    it).  Every argument trap of the kit's contracts has its premise there EXCEPT dr_spec's SA (FINDING 1).
    aentry_okx below is that W_rep.v's aentry_ok with `re_used e <= APARTIAL` and `~ In 0 (re_U e)` relaxed to
    `re_used e <= re_cap e` (between the memcpy and the move-down the buffer does hold NULs), so it follows the
-   ruling-(A) text with no key_slack.  The kit's A_lit_gesture / A_lit_begin / A_lit_end (W_contract.v:1651-
+   ruling-(A) text with no key_slack.  The kit's A_lit_gesture / A_lit_begin / A_lit_end (W_contract.v:1652-
    1547) are A_OBJ 18 / 20 / 21, which is what HLIT5 / HLIT6 / HLIT7 below name.  The callee contracts' caller
    obligations at drain's call sites, and where this interface gives them:
-     sl_spec  `forall a, line <= a < line + |Bl| -> ~ inG G_SL a` (W_contract.v:931), owed by LINEA at the
+     sl_spec  `forall a, line <= a < line + |Bl| -> ~ inG G_SL a` (W_contract.v:932), owed by LINEA at the
               send_line call 0x839f0: the line lies in the relay's buffer (dinband / aentry_okx at DLL) and HRGD
               keeps G_SL's image cells apart from it;
-     lp_spec  `LA mod 8 = 0` (W_contract.v:394), owed by FEED at the list_push call 0x837a4 with
+     lp_spec  `LA mod 8 = 0` (W_contract.v:395), owed by FEED at the list_push call 0x837a4 with
               LA = dHA cx + 64 (DRB's 160(sp)): HGSB gives rg_s RG mod 8 = 0 and ASRC = 96, so it holds for
               every slot; lp_post's errno-view conjunct is what lets FEED re-establish DMEM's aout_at after the
               call (no statement here changes for it);
-     ldrop_spec `LA mod 8 = 0`, `azs B LA 16`, `LA` in G (W_contract.v:722), owed by DROP at 0x83914 with
+     ldrop_spec `LA mod 8 = 0`, `azs B LA 16`, `LA` in G (W_contract.v:723), owed by DROP at 0x83914 with
               LA = dHA cx + 16: HGSB, HGSZ and G_DR's (rg_s RG, 4 * ASRC) give them.
 
-   dlit_at (the three literals) is A's current form on a working branch 095dd035a61 verbatim, re-indexed
+   dlit_at (the three literals) is A's current form on a working branch verbatim, re-indexed
    for B: the bytes, in_rom, and `ashp B (VAL (A_OBJ i)) (|l|)` (lib/B/W_shadow_pin.v:80).  The older
    `azs B .. /\ shadow_hull_vis ..` pair it had is the form a Theorem Labs lane measured FALSE for ASan globals (their
    shadow cells are pinned, not zero), so it is gone from both images; ashp is the shared replacement and is
@@ -232,6 +232,7 @@
 
    STATEMENT GAPS of lib/A that this file keeps (they are properties of the model, not of the image): *_concl
    for dr_all / dr_outer, the ds_eintr guard on dr_top's EINTR continuation, and k < dnum s1 at DRB. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

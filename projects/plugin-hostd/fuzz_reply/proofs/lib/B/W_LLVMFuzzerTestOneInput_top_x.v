@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* The ARx-generic entry composition of fuzz_reply.asan-ubsan's LLVMFuzzerTestOneInput (image B) AT THE cf INSTANCE:
-   lib/B's twin of lib/A/W_LLVMFuzzerTestOneInput_top_x.v (a working branch 44de651f71b), the link the
+   lib/B's twin of lib/A/W_LLVMFuzzerTestOneInput_top_x.v (a working branch), the link the
    image-B cf driver consumes through lib/B/W_asm.v's DRIVER_CF_B.  fr_contract_top_x is B's cut_x
-   (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v, a working branch 9409d4da51f) fr_lib_contract_cf_x at
+   (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v, a working branch) fr_lib_contract_cf_x at
      B   := TfibB (lib/B/YD2l.v, the start-up instance, TfibB_syms : TfibSyms TfibB);
      ARx := ARX, the cf live state CONJOINED with an empty ghost poisoned-head set,
             fun ly S Hp W mem md => ARcf (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = []
@@ -19,12 +20,12 @@
    replaced by its ARx proof as the arms convert (a Theorem Labs lane's step 7).  PLUGGED: SEG_HEAD (LatchX,
    lib/B/W_LLVMFuzzerTestOneInput_head_x.v from image B's lf_seg_head_b; its instance facts c_HGnout / c_HERRNO /
    c_HZS from lib/B/W_LLVMFuzzerTestOneInput_G.v, its four model rules verbatim hypotheses below); SEG_LATCH (LatchX,
-   lib/B/W_LLVMFuzzerTestOneInput_latch_x.v 01ea050cd51 from a Theorem Labs lane's B lf_seg_latch); SEG_PRO (LatchX,
-   lib/B/W_LLVMFuzzerTestOneInput_pro_x.v 56789d2bc7a from a Theorem Labs lane's B lf_seg_pro); SEG_EXIT (a Theorem Labs lane's
-   lib/B/W_LLVMFuzzerTestOneInput_exit_x.v lf_seg_exit_x_all, 947f295128a); ARM_close / ARM_eintr / ARM_sendmax / ARM_default
-   (lib/B/W_LLVMFuzzerTestOneInput_small_x.v, commit 0fc78fa1870, the conversion of
+   lib/B/W_LLVMFuzzerTestOneInput_latch_x.v from a Theorem Labs lane's B lf_seg_latch); SEG_PRO (LatchX,
+   lib/B/W_LLVMFuzzerTestOneInput_pro_x.v from a Theorem Labs lane's B lf_seg_pro); SEG_EXIT (a Theorem Labs lane's
+   lib/B/W_LLVMFuzzerTestOneInput_exit_x.v lf_seg_exit_x_all); ARM_close / ARM_eintr / ARM_sendmax / ARM_default
+   (lib/B/W_LLVMFuzzerTestOneInput_small_x.v, the conversion of
    lib/B/W_LLVMFuzzerTestOneInput_small.v's lf_arm_close .. lf_arm_default); ARM_drain (HeadX's
-   lib/B/W_LLVMFuzzerTestOneInput_drain_x.v lf_arm_drain_x, a working branch 4097b0f7b25).  Their instance facts come from B _G.v,
+   lib/B/W_LLVMFuzzerTestOneInput_drain_x.v lf_arm_drain_x, a working branch).  Their instance facts come from B _G.v,
    lib/B/W_bx_inst.v / W_bx_inst_x.v (a12's witnesses) and the cf laws; every other premise is a hypothesis below in
    its segment file's text at the instance.
    fr_live_pre / fr_live_post / fr_surv / LIBROOM
@@ -66,7 +67,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_rep W_contr
 (* RelocB's sink-instance guard: no sink class is inferred below; the sink head is the Section's Context *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ReplyGuardB.
 (* the generic carries are the Reusable ones, as the B kit's generated W_kit_x / W_journal_x take them (a working branch
-   bkit-cand11 fb28b53a2b8; cut_x the same at a working branch a38906f5dd8); lib/B's re-pointed copies
+   bkit-cand11; cut_x the same at a working branch); lib/B's re-pointed copies
    are not Required *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_kit_x W_journal_x.
@@ -119,7 +120,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require
 W_LLVMFuzzerTestOneInput_add W_LLVMFuzzerTestOneInput_add_x W_LLVMFuzzerTestOneInput_write W_LLVMFuzzerTestOneInput_write_x
 W_list_push.
 (* ARM_remove / ARM_event: their conversions, the AR files' model functions (cited qualified) and .str.3's shadow facts
-   at ARX (lib/B/TopxImageB.v ashp_str3_1_fr_cf, taken by path from commit 5929e8e16314); Require only *)
+   at ARX (lib/B/TopxImageB.v ashp_str3_1_fr_cf, taken by path); Require only *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require
 W_LLVMFuzzerTestOneInput_remove W_LLVMFuzzerTestOneInput_remove_x W_LLVMFuzzerTestOneInput_arm_event
 W_LLVMFuzzerTestOneInput_event_x TopxImageB.
@@ -139,7 +140,7 @@ Local Unset Lia Cache. Local Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* no range of G meets [lo, lo + n) (lib/A/W_LLVMFuzzerTestOneInput_add.v:105 ad_apart, A's zz_HOWN) *)
+(* no range of G meets [lo, lo + n) (lib/A/W_LLVMFuzzerTestOneInput_add.v:106 ad_apart, A's zz_HOWN) *)
 Definition top_apart (lo n : Z) (G : list (Z * Z)) : bool :=
   forallb (fun r => (fst r + snd r <=? lo) || (lo + n <=? fst r)) G.
 Lemma top_apart_ok : forall lo n G, top_apart lo n G = true -> forall a, inG G a -> ~ (lo <= a < lo + n).
@@ -169,7 +170,7 @@ Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 
 (* ---- the instance ---- *)
-(* QMm W1 (B) (a Theorem Labs lane; the twin of a Theorem Labs lane's lib/A top_x at 787ba93d6df4, a Theorem Labs lane 23:17Z): ARX carries
+(* QMm W1 (B) (a Theorem Labs lane; the twin of a Theorem Labs lane's lib/A top_x, a Theorem Labs lane 23:17Z): ARX carries
    arodata_ok_cf, the value fact the allocator rules read at the call memory (QMm_cf; part 3c widens arodata_ok_cf
    to cover the refill report's five read-only reads too). It is a conjunct of the RELATION, so every walk hands it
    to the next call. ARX_laws still holds because QMm W0' gave YCbqG.ARx_frame_law its kept-bytes premise and
@@ -208,18 +209,18 @@ Variables LIBROOM NP : astate -> Prop.
 Variable fr_FP : bvmap 5 word -> alayout -> astate -> world segs -> (word -> option byte) -> list (Z * Z).
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
-(* the room record (an internal work row): a Theorem Labs lane's G-BCF B RP_cf (lib/B/CfRBridgeRulesB.v:683, a working branch room merge on
-   W8's B room branch 2e33f1270a5), as image A's top step has `Local Notation RPi := CfRBridgeRules.RP_cf`.  Its rp_RM is
+(* the room record (an internal work row): a Theorem Labs lane's G-BCF B RP_cf (lib/B/CfRBridgeRulesB.v:684, a working branch room merge on
+   W8's B room branch), as image A's top step has `Local Notation RPi := CfRBridgeRules.RP_cf`.  Its rp_RM is
    fun S _ => room_live_cf S; B keeps NP a Variable, so RP_NP / NPF below stay hypotheses (the instance, at
    NP := room_live_cf, closes them by iff_refl / room_live_set_fs, as A's top does in its proof) *)
 Local Notation RPi := CfRBridgeRulesB.RP_cf.
 (* the re-fit arms' room premises at RPi (A's top proves both in its proof: RP_NP by iff_refl at
-   NP := room_live_cf, NPF by YGcfRoomLive.room_live_set_fs; top_x.v:869-871 at 14fbe276057).  B's NP is a Variable,
+   NP := room_live_cf, NPF by YGcfRoomLive.room_live_set_fs; top_x.v:869-871).  B's NP is a Variable,
    so they are hypotheses here, discharged at the instance *)
 Hypothesis RP_NP : forall S k, rp_RM RPi S k <-> NP S.
 Hypothesis NPF : forall S f, NP S -> NP (set_fs f S).
-(* the drain arm's held-list peak: s5-r9's B twin of A's ReplyTrPeakCnl.cnl_pk term, lib/B/ReplyB3TrPeakCnl.v:1261
-   dr_cnl_pk_B h P := cnl_pk (hs_held h) (map (map (Z_to_bv 8)) (dr_lines h)) P (G-BCNL, f11c18c29ef on the window),
+(* the drain arm's held-list peak: s5-r9's B twin of A's ReplyTrPeakCnl.cnl_pk term, lib/B/ReplyB3TrPeakCnl.v:1262
+   dr_cnl_pk_B h P := cnl_pk (hs_held h) (map (map (Z_to_bv 8)) (dr_lines h)) P (G-BCNL, on the window),
    exactly A's top-step term; a Theorem Labs lane's drain arm takes it as its Section Variable dr_cnl_pk *)
 Local Notation dr_cnl_pk := ReplyB3TrPeakCnl.dr_cnl_pk_B.
 (* the gone arm's count peak: A passes s5-r1d's ReplyLScnt.pk_gone, which has no B twin; a Theorem Labs lane's B gone arm keeps
@@ -262,40 +263,40 @@ Hypothesis AIL : asink_img_laws segs TfibB tfib_K.
 (* check_bounded (_latch_x.v's W1_check_bounded) *)
 Hypothesis CB_x : cb_spec_x (PI := PB_fr) TfibB [] ARX (BASE + AF_fr_check_bounded).
 (* malloc and relay_add at their K0 tables (lib/B/YCk0.v), the premises W2's pb_op_add_g_x takes beside SR_x
-   (lib/B/W_op_add.v:1889, W2's B W_op_add.v of record, a working branch 11fb7104fb5) *)
-(* B restatement (an internal work row): image A's top step (W8 14fbe276057 :234) room text, RPi after the MMAX *)
+   (lib/B/W_op_add.v:1890, W2's B W_op_add.v of record, a working branch) *)
+(* B restatement (an internal work row): image A's top step (W8 :234) room text, RPi after the MMAX *)
 Hypothesis AMA_x : amalloc_cf_rule_c_x segs TfibB [] ARX MT CfParamsReply.fr_MMAX RPi YCk0.CTX_AMALLOC.
-(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step 14fbe276057 builds RA_x at RPi in its proof) *)
+(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step builds RA_x at RPi in its proof) *)
 Hypothesis RA_x : ra_spec_g_x TfibB [] ARX MT RPi fr_globals YCk0.CTX_AREALLOC (BASE + AF_fr_relay_add).
 (* realloc at its K0 table and the memcpy intrinsic, over ARX: the premises lib/B/W_list_push.v pb_list_push_g_x
    takes beside AMA_x (list_push's contract for ARM_write's LP), at WR_MMAX = cf_malloc_max *)
-(* B restatement (an internal work row): image A's top step (14fbe276057 :235) room text, RPi after the MMAX; B keeps its WR_MMAX
+(* B restatement (an internal work row): image A's top step (235) room text, RPi after the MMAX; B keeps its WR_MMAX
    (= CfParamsReply.fr_MMAX by reflexivity, ReplyB3LS3Peak.pk_fr_MMAX) *)
 Hypothesis ARE_x : W_journal_x.arealloc_cf_rule_c_x segs TfibB [] ARX MT W_LLVMFuzzerTestOneInput_write.WR_MMAX RPi
   YCk0.CTX_AREALLOC (pa_sigma WS_realloc).
 Hypothesis AMEMCPY_x : aintrin_realizes_x segs TfibB ARX OCpy (pa_sigma WS_asan_memcpy).
 (* check_shape_done, source_reset, check_shape_ends, relay_finish (_exit_x.v's CSD / SR / CSHE / RFg) *)
 Hypothesis CSD_x : csd_spec_x TfibB [] ARX (BASE + AF_fr_check_shape_done).
-(* B restatement (an internal work row): image A's top step (W8 14fbe276057) room text - RPi after MT (A: at RP := RPi) *)
+(* B restatement (an internal work row): image A's top step (W8) room text - RPi after MT (A: at RP := RPi) *)
 Hypothesis SR_x : sr_spec_g_x TfibB [] ARX MT RPi (BASE + AF_fr_source_reset).
-(* NEW from image A's top step (14fbe276057 :245). MO_FR: the meter's frame law (B owner: s5-r9 offered; A: a8's
-   TopxLawMeter.topx_MO_FR at MT := ameter_triv, add64d407fd).  ASM0 / ASM1 (asan_stack_malloc classes 0 / 1; class 0
+(* NEW from image A's top step (245). MO_FR: the meter's frame law (B owner: s5-r9 offered; A: a8's
+   TopxLawMeter.topx_MO_FR at MT := ameter_triv).  ASM0 / ASM1 (asan_stack_malloc classes 0 / 1; class 0
    is B's wake fake frame 0x824d0) are built in the proof by a Theorem Labs lane's AsmTopX.asm0_pres_ARX / asm1_pres_ARX, as A's
    top does *)
 (* KF-COUNT #4 (a Theorem Labs lane 09:32Z, the same line in every A and B file): the meter's set_fs law; s5-r9's
    lib/B/TopxLawMeterB.v topx_MO_FR_gen proves it at any meter with ameter_laws + mo_fs_inv, and topx_MO_FR at
    ameter_triv (A's names, a Theorem Labs lane 12:27Z; a working branch); the instance plugs it *)
 Hypothesis MO_FR : forall s f, mo_le MT s (set_fs f s) 0.
-(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step 14fbe276057 builds CSHE_x at RPi in its proof) *)
+(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step builds CSHE_x at RPi in its proof) *)
 Hypothesis CSHE_x : forall Gc, gx_ok segs TfibB Gc -> cshe_spec_x TfibB [] ARX MT RPi Gc (BASE + AF_fr_check_shape_ends).
-(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step 14fbe276057 builds RF_x at RPi in its proof) *)
+(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step builds RF_x at RPi in its proof) *)
 Hypothesis RF_x : rf_spec_x TfibB [] ARX MT RPi CfParamsReply.fr_MMAX (RF_G fr_RG AG_LISTEN ++ G_SL TfibB fr_RG) fr_RG
   AG_THREAD_UP AG_LISTEN YCk0.CTX_AFREE (BASE + AF_fr_relay_finish).
-(* NEW from image A's top step (14fbe276057 :624-625): SEG_EXIT's callee contracts at ARX - free(NULL) at the free
+(* NEW from image A's top step (624-625): SEG_EXIT's callee contracts at ARX - free(NULL) at the free
    table (B owner: none yet, a Theorem Labs lane places it) and gestures_end's _x contract at the room (B owner a Theorem Labs lane, row
-   an internal work row, pb_gestures_end_closed_x on 52dbc390dc6) *)
+   an internal work row, pb_gestures_end_closed_x) *)
 Hypothesis AFREE0_x : afree_null_cf_rule_c_x segs TfibB [] ARX MT RPi YCk0.CTX_AFREE.
-(* GSE_x is built in the proof (A: top_x.v:1019 at 3d17f490d56), from a Theorem Labs lane's pb_gestures_end_closed_x and a Theorem Labs lane's
+(* GSE_x is built in the proof (A: top_x.v:1019), from a Theorem Labs lane's pb_gestures_end_closed_x and a Theorem Labs lane's
    pb_gesture_end_x by a Theorem Labs lane's scratch proof; gesture_end's strlen (ASTRLEN_x) is built there too, by a Theorem Labs lane's
    TopX_RT_B2.topx_ASTRLEN_B_W (TRL.ARX_rt is top_x's ARX) *)
 (* ---- shadow facts over ARX: op_add's G (_pro_x.v's GSHV) and the "" literal (_exit_x.v's XE_LIT_S) ---- *)
@@ -303,13 +304,13 @@ Hypothesis GSHV_x : forall ly S Hp (W : world segs) mem md a n, ARX ly S Hp W me
   (forall x, a <= x < a + n -> inG W_LLVMFuzzerTestOneInput_pro.pro_G x) -> shadow_hull_vis (aview segs (w_H W) mem) a n.
 Hypothesis XE_LIT_S_x : ashp_x ARX (VAL W_bx_defs.AX_lit_empty) 1.
 (* ---- SEG_PRO's model rules (_pro_x.v), verbatim at the instance ---- *)
-(* NEW from image A's top step (14fbe276057 :397): the driver's FP cover of the hand-off blocks.  It replaces the
+(* NEW from image A's top step (397): the driver's FP cover of the hand-off blocks.  It replaces the
    HFP_pro hypothesis: HFP_pro is built in the proof by a Theorem Labs lane's lib/B/TopxEntry.hfp_pro_x
-   (a working branch 48eff67880c, A's twin a2 f6fc8c0f078), and FPCOV is discharged at the B driver by
+   (a working branch, A's twin a2), and FPCOV is discharged at the B driver by
    TopxEntry.fr_FP_b_cov (at fr_FP := YCfn_cf.fr_FP_b) *)
 Hypothesis FPCOV : forall regs ly S (W : world segs) mem b, In b (W_LLVMFuzzerTestOneInput_cut.fr_hblks W mem) ->
   In (fst b, fst b + snd b) (fr_FP regs ly S W mem).
-(* KF-COUNT F2 (A f937a8adaa8): `mo_le MT (c_S cx) S2 0 ->` after the blocks_bytes line *)
+(* KF-COUNT F2 (A): `mo_le MT (c_S cx) S2 0 ->` after the blocks_bytes line *)
 Hypothesis LS_pro_oa : forall cx Hp (S2 : astate) pos,
   lf_base_x TfibB MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G ARX cx Hp ->
   ablocks TfibB (c_ly cx) S2 = ablocks TfibB (c_ly cx) (c_S cx) -> frames S2 = [(1, pos)] ->
@@ -322,8 +323,8 @@ Hypothesis RI_pro : forall cx Hp q T' pj c O cap out,
   ct_cl c = 3 -> ct_br c = 0 -> ct_dd c = 0 -> ct_ei c = 0 ->
   RINV cx 0 (W_LLVMFuzzerTestOneInput_pro.pro_m q T' pj c O cap out).
 (* LS_pro at the PROPOSED text (W8Add's fr_LS_pro; _pro.v:687 / _pro_x.v) *)
-(* B restatement (an internal work row): image A's top step text (W8 a working branch 14fbe276057), B names *)
-(* KF-COUNT F2 (A f937a8adaa8): `mo_le MT (c_S cx) S2 0 ->` after the blocks_bytes line *)
+(* B restatement (an internal work row): image A's top step text (W8 a working branch), B names *)
+(* KF-COUNT F2 (A): `mo_le MT (c_S cx) S2 0 ->` after the blocks_bytes line *)
 Hypothesis LS_pro : forall cx Hp q T' pj c O cap out (S2 : astate) pos ly S,
   lf_base_x TfibB MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G ARX cx Hp ->
   (exists c0 mx0, aout_at TfibB fr_RG (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) c0 O mx0 (Z.of_nat (length O)) cap out) ->
@@ -338,23 +339,23 @@ Hypothesis LS_pro : forall cx Hp q T' pj c O cap out (S2 : astate) pos ly S,
      ((T0 = 0 /\ Permutation (ablocks TfibB ly S) ((T', ATABLE) :: (q, APARTIAL) :: ablocks TfibB (c_ly cx) (c_S cx))) \/
       (T0 <> 0 /\ T' = T0 /\ Permutation (ablocks TfibB ly S) ((q, APARTIAL) :: ablocks TfibB (c_ly cx) (c_S cx))))) ->
   LSx cx 0 (W_LLVMFuzzerTestOneInput_pro.pro_m q T' pj c O cap out) ly S.
-(* B twin to come: lib/B/W_op_add.v:215 oa_peak on a working branch 24341ca6749 (an internal work row, not yet on this base). Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: lib/B/W_op_add.v:216 oa_peak on a working branch (an internal work row, not yet on this base). Text = image A's top step (W8 a working branch) verbatim, B names *)
 Hypothesis LS_cnt_pro : forall cx T0 cap out (S2 : astate),
   ReplyCnt.xcnt_ok TfibB (c_S cx) (c_ly cx) (input_blks cx) T0 cap out ->
   ablocks TfibB (c_ly cx) S2 = ablocks TfibB (c_ly cx) (c_S cx) ->
   cnt_ok_pk RPi W_op_add.oa_peak (ablocks TfibB (c_ly cx) S2).
 (* ---- SEG_EXIT's model rules (_exit_x.v), verbatim at the instance, MMAX := fr_MMAX; W_bx_defs' model functions
    qualified ---- *)
-(* B restatement (an internal work row): image A's top step text (W8 14fbe276057 :640), = a Theorem Labs lane's B exit arm
-   (a working branch afc7ac89f0f (= 570c903d342's texts), lib/B/W_LLVMFuzzerTestOneInput_exit_x.v Section lxx).  NOT s5's TX_LS_rf_room (ReplyLSI.v:185 /
+(* B restatement (an internal work row): image A's top step text (W8 :640), = a Theorem Labs lane's B exit arm
+   (a working branch (= a commit's texts), lib/B/W_LLVMFuzzerTestOneInput_exit_x.v Section lxx).  NOT s5's TX_LS_rf_room (ReplyLSI.v:186 /
    B's ReplyLS3B_inst): that one is over lx_rf_room_p (gse_room_p / B gse_room_c3), a different Fixpoint from
    W_bx_defs.lx_rf_room (gse_room); the instance plug bridges them, as on A.  W_bx_defs.lx_rf_room's `- cap`
-   threading comes with a12's exit head (W_bx_defs.v:167-173 at 492d1f33ceb) *)
+   threading comes with a12's exit head (W_bx_defs.v:168-174) *)
 Hypothesis LS_rf_room : forall cx t m ly S,
   LSx cx t m ly S -> 0 <= t <= OPS_MAX ->
   W_bx_defs.lx_rf_room CfParamsReply.fr_MMAX (blocks_bytes S) (lm_c m) [] (lm_mx m) 0 (lm_cap m)
     (lm_es m).
-(* KF-COUNT F8 (A aacecd50fed): lregs_X's t bound and the relay entries' non-empty key texts (the exit arm's
+(* KF-COUNT F8 (A): lregs_X's t bound and the relay entries' non-empty key texts (the exit arm's
    exit_keys_nonempty, from amodel_at's aentry_ok) *)
 Hypothesis LS_exit_budget : forall cx t m ly S, LSx cx t m ly S ->
   0 <= t <= OPS_MAX ->
@@ -362,16 +363,16 @@ Hypothesis LS_exit_budget : forall cx t m ly S, LSx cx t m ly S ->
   mo_ok MT S (W_bx_defs.lx_exit_cost MT m).
 Hypothesis RI_exit_slots : forall cx t m, RINV cx t m ->
   forall j, (j < 4)%nat -> W_bx_defs.lx_ends_slot_ok (nth j (lm_hs m) None).
-(* B restatement (an internal work row): image A's RIRS text 3f40808c334, taken by pin from a Theorem Labs lane's B SEG_EXIT
-   a working branch 0b7cfc03df3 (lib/B/W_LLVMFuzzerTestOneInput_exit.v:162), qualified for top_x;
-   plugged by a Theorem Labs lane's ReplyRINVB_exit.RI_exit_ends_btop_restated (713767bda40) *)
+(* B restatement (an internal work row): image A's RIRS text, taken by pin from a Theorem Labs lane's B SEG_EXIT
+   a working branch (lib/B/W_LLVMFuzzerTestOneInput_exit.v:163), qualified for top_x;
+   plugged by a Theorem Labs lane's ReplyRINVB_exit.RI_exit_ends_btop_restated *)
 Hypothesis RI_exit_ends : forall cx t m, RINV cx t m -> (0 < length (lm_es m))%nat ->
   0 <= lm_gn m <= 1 ->
   (forall i h, nth i (lm_hs m) None = Some h -> Forall (fun r => ~ In (Z_to_bv 8 0) (snd r)) (hl_recs (hs_held h))) ->
   W_bx_defs.lx_ends_run (lm_gn m) (W_bx_defs.lx_rf_O m)
     (W_bx_defs.lx_norder m) (W_bx_defs.lx_ord m) (lm_hs m) 0 =
   Some (Z.of_nat (length (W_bx_defs.lx_rf_O m))).
-(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window 1f8fb3038b5), B names; it
+(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window), B names; it
    equals the B TX_* duplicate it used to cite, up to unfolding *)
 (* KF-COUNT F8: the start model's non-empty key texts, last *)
 Hypothesis LS_exit_end : forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem' md' fpos k' C cap out,
@@ -389,18 +390,18 @@ Hypothesis LS_exit_end : forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem'
   fr_live_post (c_S cx) (stack_free_state 1 fpos S') k' /\
   fr_surv (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) ly' (stack_free_state 1 fpos S') W' mem' /\
   mo_le MT (c_S cx) (stack_free_state 1 fpos S') (XN_LIB (c_n cx)).
-(* NEW from image A's top step (W8 14fbe276057), B names *)
+(* NEW from image A's top step (W8), B names *)
 Hypothesis LS_exit_cnt : forall cx t m ly3 S3 rest (ly' : alayout) (S' : astate) cap out,
   LSx cx t m ly3 S3 ->
   Permutation (ablocks TfibB ly3 S3) (input_blks cx ++ model_blks m ++ rest) ->
   Permutation (ablocks TfibB ly' S') (input_blks cx ++ (lm_G m, ATABLE) :: aout_blks cap out ++ rest) ->
   (forall p n, In (p, n) (ablocks TfibB ly' S') -> 4096 <= p) ->
   ReplyCnt.xcnt_ok TfibB S' ly' (input_blks cx) (lm_G m) cap out.
-(* NEW from image A's top step (W8 14fbe276057), B names *)
+(* NEW from image A's top step (W8), B names *)
 Hypothesis LS_exit_cap : forall cx t m ly S,
   LSx cx t m ly S -> RINV cx t m -> 0 <= t <= OPS_MAX ->
   gse_cap (W_bx_defs.lx_rf_run (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)) <= CAPOUT_MAX.
-(* NEW from image A's top step (W8 14fbe276057), B names *)
+(* NEW from image A's top step (W8), B names *)
 Hypothesis LS_cnt_exit : forall cx t m ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> amodel_at TfibB ly S W mem m -> 0 <= t <= OPS_MAX ->
   cnt_ok_pk RPi rf_pk (ablocks TfibB ly S).
@@ -419,16 +420,16 @@ Hypothesis RSRC_x : forall W ly S Hp (regs : bvmap 5 word) mem md ch T es fd,
             (forall i e', (i < j)%nat -> nth_error es i = Some e' -> re_fd e' <> fd) /\
             a0 = w64 (T + AENT * Z.of_nat j)) \/
          ((forall e, In e es -> re_fd e <> fd) /\ a0 = w64 0))).
-(* B restatement (an internal work row): image A's top step (W8 14fbe276057) room text - RPi after MT (A: at RP := RPi) *)
-(* DR_x is built in the proof by a Theorem Labs lane's B W_drain_pb.pb_drain_x (A: W8's fb66907d92b top_x.v:1181), which takes
+(* B restatement (an internal work row): image A's top step (W8) room text - RPi after MT (A: at RP := RPi) *)
+(* DR_x is built in the proof by a Theorem Labs lane's B W_drain_pb.pb_drain_x (A: W8's top_x.v:1181), which takes
    the allocator rules at their caller contexts; strndup's is this hypothesis, at YCej.CTX_strndup (A's ACej.CTX_strndup),
    discharged at the instance by a Theorem Labs lane's lib/B/CfRStrndup.ASTRNDUP_x_kf *)
 Hypothesis ASTRNDUP_x : astrndup_cf_rule_c_x segs TfibB [] ARX MT CfParamsReply.fr_MMAX RPi YCej.CTX_strndup
   (@pa_sigma _ fr_prog_listing PB_fr WS_strndup).
 (* ALOCK / AUNLOCK are built in the proof by a Theorem Labs lane's lib/B/TopX_RT_lock.topx_ALOCK / topx_AUNLOCK (G-BLOCK,
-   a working branch e1fae7037354), as image A's top does by TopX_RT *)
+   a working branch), as image A's top does by TopX_RT *)
 Hypothesis CNLR_x : cnlr_spec_x (PI := PB_fr) TfibB [] ARX (BASE + AF_fr_check_no_loss_read).
-(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step 14fbe276057 builds CNL_x at RPi in its proof) *)
+(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step builds CNL_x at RPi in its proof) *)
 Hypothesis CNL_x : forall Gc, gx_ok segs TfibB Gc -> gx_rt (PI := PB_fr) TfibB Gc -> rom_out segs TfibB Gc ->
   cnl_spec_x (PI := PB_fr) TfibB [] ARX MT RPi Gc CfParamsReply.fr_MMAX (BASE + AF_fr_check_no_loss).
 Hypothesis RI_drain_skip : forall cx t m si h,
@@ -437,8 +438,8 @@ Hypothesis RI_drain_skip : forall cx t m si h,
    (exists j, (j < length (lm_es m))%nat /\ re_fd (nth j (lm_es m) dr_e0) = hs_fd h /\
       re_eof (nth j (lm_es m) dr_e0) = 1)) ->
   RINV cx (t + 1) (dr_skip m (dr_k' cx m)).
-(* B restatement: a Theorem Labs lane's RI_drain_step_btop_restated (a working branch 713767bda40,
-   lib/B/ReplyRINVB_exit.v:788-798 at RINV): A's text plus the paddings and the held capacity that B's dr_step_ok
+(* B restatement: a Theorem Labs lane's RI_drain_step_btop_restated (a working branch,
+   lib/B/ReplyRINVB_exit.v:789-799 at RINV): A's text plus the paddings and the held capacity that B's dr_step_ok
    (drain_defs.v:224-249) lacks; the B arm holds all four at drain_calls_x.v:3415 *)
 Hypothesis RI_drain_step : forall cx t m si h j e' h' c' O' cap' out' ev' LB E' H',
   RINV cx t m -> 0 <= t < OPS_MAX ->
@@ -451,7 +452,7 @@ Hypothesis RI_drain_step : forall cx t m si h j e' h' c' O' cap' out' ev' LB E' 
   hl_cap H' <= Z.max 8 (Z.max (hl_cap (hs_held h'))
     (2 * (hl_n (hs_held h') + Z.of_nat (count_begin (texts (hs_expected h')))))) ->
   RINV cx (t + 1) (dr_step m (dr_k' cx m) si (set_exp_held h' E' H') j e' c' O' cap' out').
-(* B twin to come: none (msz_ok is a Theorem Labs lane's lib/B/W_LLVMFuzzerTestOneInput_drain_defs_x.v:92). Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: none (msz_ok is a Theorem Labs lane's lib/B/W_LLVMFuzzerTestOneInput_drain_defs_x.v:93). Text = image A's top step (W8 a working branch) verbatim, B names *)
 Hypothesis DR_CNT_grow : forall cx t m si h j e' h' LB out' (P : Z -> bool),
   RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->
   (j < length (lm_es m))%nat -> re_fd (nth j (lm_es m) dr_e0) = hs_fd h ->
@@ -464,7 +465,7 @@ Hypothesis DR_CNT_grow : forall cx t m si h j e' h' LB out' (P : Z -> bool),
   W_LLVMFuzzerTestOneInput_drain_defs_x.dr3_hpre h -> W_LLVMFuzzerTestOneInput_drain_defs_x.ls3_hn h -> 0 <= lm_cap m ->
   W_LLVMFuzzerTestOneInput_drain_calls.dr_dfun m si h j e' h' LB ->
   W_LLVMFuzzerTestOneInput_drain_defs_x.dr3_epost (nth j (lm_es m) dr_e0) e' h ->
-  (* added: the held-array clause of the entry drain leaves (aentry_ok e', W_rep.v:133-134); A's ReplyCntArms.v:104-105,
+  (* added: the held-array clause of the entry drain leaves (aentry_ok e', W_rep.v:133-134); A's ReplyCntArms.v:105-106,
      lib/B/W_LLVMFuzzerTestOneInput_drain_defs_x.v / _drain_x.v of this tree, lib/B/ReplyBTopCntDr.v btcnt_DR_CNT_grow_kh *)
   ((re_hp e' = 0 /\ re_keys e' = []) \/ (re_hp e' <> 0 /\ 8 <= re_kh e')) ->
   W_LLVMFuzzerTestOneInput_drain_defs_x.dr3_hpost h h' ->
@@ -489,7 +490,7 @@ Hypothesis RI_gone : forall cx t m,
   RINV cx t m ->
   (lm_gn m = 0 -> ct_cl (lm_c m) = 3 /\ ct_br (lm_c m) = 0 /\ ct_dd (lm_c m) = 0) /\
   (lm_gn m = 1 -> ct_cl (lm_c m) = -1 \/ ct_br (lm_c m) = 1 \/ ct_dd (lm_c m) = 1).
-(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window 1f8fb3038b5), B names; it
+(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window), B names; it
    equals the B TX_* duplicate it used to cite, up to unfolding *)
 Hypothesis LS_drain_pre : forall cx t m ly S si h j,
   LSx cx t m ly S -> RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->
@@ -507,7 +508,7 @@ Hypothesis LS_drain_pre : forall cx t m ly S si h j,
     tr_peak (dr_tr (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (nth j (lm_es m) dr_e0) h)
     <= LIVE_MAX /\
   mo_ok MT S (dr_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (nth j (lm_es m) dr_e0) h).
-(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window 1f8fb3038b5), B names; it
+(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window), B names; it
    equals the B TX_* duplicate it used to cite, up to unfolding *)
 Hypothesis LS_cnl_pre : forall cx t m ly S (ly' : alayout) (S' : astate) si h j h'' e' cap' out',
   LSx cx t m ly S -> RINV cx t m -> dr_pick cx m si h ->
@@ -538,7 +539,7 @@ Hypothesis LS_cnl_pre : forall cx t m ly S (ly' : alayout) (S' : astate) si h j 
   W_rep.AREC * capb (hs_held h'') (hs_expected h'') < 2 ^ 32.
 Hypothesis LS_drain_skip : forall cx t m ly S,
   LSx cx t m ly S -> LSx cx (t + 1) (dr_skip m (dr_k' cx m)) ly S.
-(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window 1f8fb3038b5), B names; it
+(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window), B names; it
    equals the B TX_* duplicate it used to cite, up to unfolding *)
 Hypothesis LS_drain_step : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
     si h j h'' e' c' O' cap' out' (E H : hlist) (ly1 : alayout) (h1 : hsrc) (E' H' : hlist),
@@ -567,13 +568,13 @@ Hypothesis LS_drain_step : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' 
   W_LLVMFuzzerTestOneInput_drain_defs_x.ls3_dpost m j h e' h1 -> W_LLVMFuzzerTestOneInput_drain_defs_x.ls3_cpost h1 E' H' ->
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (dr_step m (dr_k' cx m) si h'' j e' c' O' cap' out') ly' S'.
-(* B twin to come: none: A's ReplyTrPeakCnl.cnl_pk term is dr_cnl_pk := ReplyB3TrPeakCnl.dr_cnl_pk_B. Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: none: A's ReplyTrPeakCnl.cnl_pk term is dr_cnl_pk := ReplyB3TrPeakCnl.dr_cnl_pk_B. Text = image A's top step (W8 a working branch) verbatim, B names *)
 Hypothesis DR_CNT_cnl : forall (h h'' : hsrc) (P : Z -> bool),
   hl_recs (hs_expected h) = [] ->
   map snd (hl_recs (hs_expected h'')) = map snd (hl_recs (hs_expected h)) ++ map (map (Z_to_bv 8)) (dr_lines h) ->
   hs_held h'' = hs_held h ->
   (Z.to_nat (ReplyCnt.tr_peakP P (cnl_tr (hs_expected h'') (hs_held h''))) <= dr_cnl_pk h P)%nat.
-(* B twin to come: none (msz_ok is a Theorem Labs lane's lib/B/W_LLVMFuzzerTestOneInput_drain_defs_x.v:92); none: A's ReplyTrPeakCnl.cnl_pk term is dr_cnl_pk := ReplyB3TrPeakCnl.dr_cnl_pk_B. Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: none (msz_ok is a Theorem Labs lane's lib/B/W_LLVMFuzzerTestOneInput_drain_defs_x.v:93); none: A's ReplyTrPeakCnl.cnl_pk term is dr_cnl_pk := ReplyB3TrPeakCnl.dr_cnl_pk_B. Text = image A's top step (W8 a working branch) verbatim, B names *)
 Hypothesis LS_cnt_drain : forall cx t m ly S si h j,
   LSx cx t m ly S -> RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->
   (j < length (lm_es m))%nat -> re_fd (nth j (lm_es m) dr_e0) = hs_fd h ->
@@ -632,7 +633,7 @@ Hypothesis LS_add_open : forall cx t m i q pj ev ly S (ly' : alayout) (S' : asta
 Hypothesis LS_add_none : forall cx t m ly S,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_add.ad_at_op cx m -> W_op_add.oa_first (W_LLVMFuzzerTestOneInput_add.ad_os (lm_hs m)) = None ->
   LSx cx (t + 1) (W_LLVMFuzzerTestOneInput_add.ad_none m) ly S.
-(* B twin to come: lib/B/W_op_add.v:215 oa_peak on a working branch 24341ca6749 (an internal work row, not yet on this base). Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: lib/B/W_op_add.v:216 oa_peak on a working branch (an internal work row, not yet on this base). Text = image A's top step (W8 a working branch) verbatim, B names *)
 Hypothesis LS_cnt_add : forall cx t m ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_add.ad_at_op cx m -> amodel_at TfibB ly S W mem m -> 0 <= t < OPS_MAX ->
   cnt_ok_pk RPi W_op_add.oa_peak (ablocks TfibB ly S).
@@ -656,7 +657,7 @@ Hypothesis LS_write_room : forall cx t m si h ly S,
   (W_contract.lp_grow (hs_pending h) = true -> W_contract.lp_vbytes (hs_pending h) < W_LLVMFuzzerTestOneInput_write.WR_MMAX) /\
   blocks_bytes S + (if W_contract.lp_grow (hs_pending h) then W_contract.lp_vbytes (hs_pending h) else 0) + (W_LLVMFuzzerTestOneInput_write.wr_n cx m + 1) <= LIVE_MAX /\
   mo_ok MT S (W_contract.lp_cost MT (hs_pending h) (W_LLVMFuzzerTestOneInput_write.wr_n cx m)).
-(* KF-COUNT F5 (A 00c059c932f): `0 <= t < OPS_MAX` last *)
+(* KF-COUNT F5 (A): `0 <= t < OPS_MAX` last *)
 Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
   LSx cx t m ly S -> W_LLVMFuzzerTestOneInput_write.wr_pick cx m si h -> 0 < W_LLVMFuzzerTestOneInput_write.wr_n cx m ->
   hl_recs l' = hl_recs (hs_pending h) ++ [(d, W_LLVMFuzzerTestOneInput_write.wr_x cx m)] ->
@@ -671,7 +672,7 @@ Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
   mo_le MT S S' (W_contract.lp_cost MT (hs_pending h) (W_LLVMFuzzerTestOneInput_write.wr_n cx m)) ->
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (W_LLVMFuzzerTestOneInput_write.wr_push m (W_LLVMFuzzerTestOneInput_write.wr_k2 cx m) si (W_LLVMFuzzerTestOneInput_write.set_pending h l') ev) ly' S'.
-(* NEW from image A's top step (W8 14fbe276057), B names *)
+(* NEW from image A's top step (W8), B names *)
 Hypothesis LS_cnt_write : forall cx t m si h ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_write.wr_pick cx m si h -> 0 < W_LLVMFuzzerTestOneInput_write.wr_n cx m -> amodel_at TfibB ly S W mem m -> 0 <= t < OPS_MAX ->
   cnt_ok_pk RPi (lp_peak (hs_pending h) (W_LLVMFuzzerTestOneInput_write.wr_n cx m)) (ablocks TfibB ly S).
@@ -691,9 +692,9 @@ Hypothesis RRDS_x : forall W ly S Hp (regs : bvmap 5 word) mem md ch T es HA h,
             (forall i e', (i < j)%nat -> nth_error es i = Some e' -> re_fd e' <> hs_fd h) /\
             a0 = w64 (if re_eof e =? 0 then 1 else 0)) \/
          ((forall e, In e es -> re_fd e <> hs_fd h) /\ a0 = w64 0))).
-(* B restatement (an internal work row): image A's top step (W8 14fbe276057) room text - RPi after MT (A: at RP := RPi) *)
+(* B restatement (an internal work row): image A's top step (W8) room text - RPi after MT (A: at RP := RPi) *)
 Hypothesis RR_x : rr_spec_x TfibB [] ARX MT RPi CfParamsReply.fr_MMAX fr_RG YCk0.CTX_AFREE (BASE + AF_fr_relay_remove).
-(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step 14fbe276057 builds CNL_rm_x at RPi in its proof) *)
+(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step builds CNL_rm_x at RPi in its proof) *)
 Hypothesis CNL_rm_x : forall G, gx_ok segs TfibB G -> cnl_spec_x TfibB [] ARX MT RPi G CfParamsReply.fr_MMAX (BASE + AF_fr_check_no_loss).
 Hypothesis RGP_x : rg_place TfibB fr_RG.
 Hypothesis RI_rm_found : forall cx t m si h,
@@ -703,11 +704,11 @@ Hypothesis RI_rm_found : forall cx t m si h,
 Hypothesis RI_rm_rr_pair : forall cx t m si h j0,
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> re_eof (W_LLVMFuzzerTestOneInput_remove.rm_ent m j0) = 0 ->
   re_skip (W_LLVMFuzzerTestOneInput_remove.rm_ent m j0) = hs_overlong h /\ (re_skip (W_LLVMFuzzerTestOneInput_remove.rm_ent m j0) = 0 -> bzs (re_U (W_LLVMFuzzerTestOneInput_remove.rm_ent m j0)) = bzs (hs_W h)).
-(* B-only (a Theorem Labs lane's B remove arm, a working branch f42b3777c7b remove_x.v:194-195): the picked slot's
+(* B-only (a Theorem Labs lane's B remove arm, a working branch remove_x.v:194-195): the picked slot's
    expected list is empty at remove's entry *)
 Hypothesis RI_rm_src : forall cx t m si h j0,
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> hl_recs (hs_expected h) = [].
-(* B restatement (an internal work row): image A's top step text (W8 a working branch 14fbe276057), B names *)
+(* B restatement (an internal work row): image A's top step text (W8 a working branch), B names *)
 Hypothesis LS_rm_rr_pre : forall cx t m ly S si h j0,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 ->
   0 <= t < OPS_MAX ->
@@ -722,8 +723,8 @@ Hypothesis LS_rm_rr_pre : forall cx t m ly S si h j0,
   tr_max (W_LLVMFuzzerTestOneInput_remove.rm_rr_tr m h) < CfParamsReply.fr_MMAX /\ blocks_bytes S + tr_peak (W_LLVMFuzzerTestOneInput_remove.rm_rr_tr m h) <= LIVE_MAX /\
   mo_ok MT S ((W_LLVMFuzzerTestOneInput_remove.rm_rr_cost MT) m h) /\ lm_cap m < CfParamsReply.fr_MMAX /\
   blocks_bytes S + tr_peak (W_LLVMFuzzerTestOneInput_remove.rm_rr_tr m h) + 4 * Z.max (lm_cap m) (tr_max (W_LLVMFuzzerTestOneInput_remove.rm_rr_tr m h)) <= LIVE_MAX.
-(* B restatement: A's RIRS text (3f40808c334) = a Theorem Labs lane's RI_rm_cnl_pre_K14_holds (a working branch
-   b85392ed89c, lib/B/ReplyRINVB_rm_a12.v:1144) *)
+(* B restatement: A's RIRS text = a Theorem Labs lane's RI_rm_cnl_pre_K14_holds (a working branch,
+   lib/B/ReplyRINVB_rm_a12.v:1145) *)
 Hypothesis RI_rm_cnl_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
   Forall (fun e => Forall (fun k => 14 <= Z.of_nat (length (gestures_end_b_c.key_text k))) (re_keys e)) (lm_es m) ->
@@ -731,9 +732,9 @@ Hypothesis RI_rm_cnl_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   hl_n (hs_held h1) + Z.of_nat (count_begin (texts (hs_expected h1))) < 2 ^ 22 /\
   W_rep.AREC * capb (hs_held h1) (hs_expected h1) < 2 ^ 32 /\ Z.of_nat (length O2) < 2 ^ 32 /\
   (lm_gn m = 0 -> exists rest, O2 = bstream (hs_expected h1) ++ rest).
-(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window 1f8fb3038b5), B names; it
+(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window), B names; it
    equals the B TX_* duplicate it used to cite, up to unfolding *)
-(* KF-COUNT F9 (A aacecd50fed): after rm_rr_ok, the arm's t bound and the removed entry's partial-line bound
+(* KF-COUNT F9 (A): after rm_rr_ok, the arm's t bound and the removed entry's partial-line bound
    (rm3_pre); the same for LS_rm_cshe_pre / LS_rm_sr_pre, and LS_rm_step takes the partial-line bound after LSx *)
 Hypothesis LS_rm_cnl_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev LB c2 O2 cap2 (ly : alayout) out2,
   LSx cx t m ly0 S0 -> RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
@@ -745,7 +746,7 @@ Hypothesis LS_rm_cnl_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev LB
      Permutation (ablocks TfibB ly S) (input_blks cx ++ model_blks (W_LLVMFuzzerTestOneInput_remove.rm_mk cx m si (Some h1) j0 c2 O2 cap2 out2) ++ rest)) ->
   cnl_room CfParamsReply.fr_MMAX (blocks_bytes S) (texts (hs_held h1)) (hl_cap (hs_held h1)) (hl_recs (hs_expected h1)) /\
   mo_ok MT S ((W_LLVMFuzzerTestOneInput_remove.rm_cnl_cost MT) (hs_expected h1) (hs_held h1)).
-(* B restatement: = a Theorem Labs lane's RI_rm_cshe_pre_nz_holds (b85392ed89c, ReplyRINVB_rm_a12.v:1157) *)
+(* B restatement: = a Theorem Labs lane's RI_rm_cshe_pre_nz_holds (ReplyRINVB_rm_a12.v:1158) *)
 Hypothesis RI_rm_cshe_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H',
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> W_LLVMFuzzerTestOneInput_remove.rm_cnl_ok h1 E' H' ->
   lm_gn m = 0 ->
@@ -759,7 +760,7 @@ Hypothesis LS_rm_cshe_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev L
   W_LLVMFuzzerTestOneInput_remove.rm_cnl_ok h1 E' H' ->
   mo_le MT S0 S ((W_LLVMFuzzerTestOneInput_remove.rm_rr_cost MT) m h + (W_LLVMFuzzerTestOneInput_remove.rm_cnl_cost MT) (hs_expected h1) (hs_held h1)) ->
   mo_ok MT S ((W_LLVMFuzzerTestOneInput_remove.rm_cshe_cost MT) H').
-(* B restatement: = a Theorem Labs lane's RI_rm_csd_gn_holds (b85392ed89c, ReplyRINVB_rm_a12.v:1169) *)
+(* B restatement: = a Theorem Labs lane's RI_rm_csd_gn_holds (ReplyRINVB_rm_a12.v:1170) *)
 Hypothesis RI_rm_csd : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H' H'' ds cc,
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> W_LLVMFuzzerTestOneInput_remove.rm_cnl_ok h1 E' H' ->
   W_LLVMFuzzerTestOneInput_remove.rm_cshe_ok m (set_exp_held h1 E' H') O2 (W_LLVMFuzzerTestOneInput_remove.rm_A1 m h1) H'' ds cc ->
@@ -777,7 +778,7 @@ Hypothesis RI_rm_step : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' 
   W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> W_LLVMFuzzerTestOneInput_remove.rm_cnl_ok h1 E' H' ->
   W_LLVMFuzzerTestOneInput_remove.rm_cshe_ok m (set_exp_held h1 E' H') O2 (W_LLVMFuzzerTestOneInput_remove.rm_A1 m h1) H'' ds cc ->
   RINV cx (t + 1) (W_LLVMFuzzerTestOneInput_remove.rm_mk cx m si None j0 (W_LLVMFuzzerTestOneInput_remove.rm_cev c2 ev5) O2 cap2 out2).
-(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window 1f8fb3038b5), B names; it
+(* B restatement (an internal work row): image A's official top_x text after the #6 cutover (window), B names; it
    equals the B TX_* duplicate it used to cite, up to unfolding *)
 Hypothesis LS_rm_step : forall cx t m ly0 S0 (ly : alayout) (S : astate)
     si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc ev5,
@@ -797,25 +798,25 @@ Hypothesis LS_rm_step : forall cx t m ly0 S0 (ly : alayout) (S : astate)
    (exists r rs, hl_recs (hs_pending h) = r :: rs /\ 0 <= hs_off h < Z.of_nat (length (snd r)))) ->
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (W_LLVMFuzzerTestOneInput_remove.rm_mk cx m si None j0 (W_LLVMFuzzerTestOneInput_remove.rm_cev c2 ev5) O2 cap2 out2) ly S.
-(* B twin to come: lib/B/W_LLVMFuzzerTestOneInput_remove_x.v's rm_pk (an internal work row, a Theorem Labs lane). Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: lib/B/W_LLVMFuzzerTestOneInput_remove_x.v's rm_pk (an internal work row, a Theorem Labs lane). Text = image A's top step (W8 a working branch) verbatim, B names *)
 Hypothesis LS_cnt_remove : forall cx t m ly S (W : world segs) mem si h j0,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> amodel_at TfibB ly S W mem m -> 0 <= t < OPS_MAX ->
   cnt_ok_pk RPi (W_LLVMFuzzerTestOneInput_remove_x.rm_pk m h j0) (ablocks TfibB ly S).
-(* B twin to come: lib/B/W_LLVMFuzzerTestOneInput_remove_x.v's rm_pk (an internal work row, a Theorem Labs lane). Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: lib/B/W_LLVMFuzzerTestOneInput_remove_x.v's rm_pk (an internal work row, a Theorem Labs lane). Text = image A's top step (W8 a working branch) verbatim, B names *)
 (* B arm's text (weaker than A's: its extra premises are B-forced), adopted from the arm of record *)
 Hypothesis RM_CNT_cnl : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 out2 (P : Z -> bool),
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> W_LLVMFuzzerTestOneInput_remove.rm_mfacts m ->
   W_LLVMFuzzerTestOneInput_remove_x.rm3_pre (W_LLVMFuzzerTestOneInput_remove.rm_ent m j0) h -> hl_recs (hs_expected h) = [] ->
   (ReplyCnt.acnt P (model_blks (W_LLVMFuzzerTestOneInput_remove.rm_mk cx m si (Some h1) j0 c2 O2 cap2 out2)) +
      W_contract_x.cnl_pk (hs_expected h1) (hs_held h1) P <= ReplyCnt.acnt P (model_blks m) + W_LLVMFuzzerTestOneInput_remove_x.rm_pk m h j0 P)%nat.
-(* B twin to come: lib/B/W_LLVMFuzzerTestOneInput_remove_x.v's rm_pk (an internal work row, a Theorem Labs lane). Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: lib/B/W_LLVMFuzzerTestOneInput_remove_x.v's rm_pk (an internal work row, a Theorem Labs lane). Text = image A's top step (W8 a working branch) verbatim, B names *)
 (* B arm's text (weaker than A's: its extra premises are B-forced), adopted from the arm of record *)
 Hypothesis RM_CNT_cshe : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' (P : Z -> bool),
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> W_LLVMFuzzerTestOneInput_remove.rm_cnl_ok h1 E' H' ->
   W_LLVMFuzzerTestOneInput_remove.rm_mfacts m -> W_LLVMFuzzerTestOneInput_remove_x.rm3_pre (W_LLVMFuzzerTestOneInput_remove.rm_ent m j0) h -> hl_recs (hs_expected h) = [] ->
   (ReplyCnt.acnt P (model_blks (W_LLVMFuzzerTestOneInput_remove.rm_mk cx m si (Some (set_exp_held h1 E' H')) j0 c2 O2 cap2 out2)) +
      W_contract_x.cshe_pk P <= ReplyCnt.acnt P (model_blks m) + W_LLVMFuzzerTestOneInput_remove_x.rm_pk m h j0 P)%nat.
-(* B twin to come: lib/B/W_LLVMFuzzerTestOneInput_remove_x.v's rm_pk (an internal work row, a Theorem Labs lane). Text = image A's top step (W8 a working branch 14fbe276057) verbatim, B names *)
+(* B twin to come: lib/B/W_LLVMFuzzerTestOneInput_remove_x.v's rm_pk (an internal work row, a Theorem Labs lane). Text = image A's top step (W8 a working branch) verbatim, B names *)
 (* B arm's text (weaker than A's: its extra premises are B-forced), adopted from the arm of record *)
 Hypothesis RM_CNT_sr : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc (P : Z -> bool),
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> W_LLVMFuzzerTestOneInput_remove.rm_cnl_ok h1 E' H' ->
@@ -824,15 +825,15 @@ Hypothesis RM_CNT_sr : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H
   (ReplyCnt.acnt P (model_blks (W_LLVMFuzzerTestOneInput_remove.rm_mk cx m si (Some (set_held (set_exp_held h1 E' H') H'')) j0 c2 O2 cap2 out2)) +
      W_contract_x.sr_pk P <= ReplyCnt.acnt P (model_blks m) + W_LLVMFuzzerTestOneInput_remove_x.rm_pk m h j0 P)%nat.
 (* ---- ARM_event's callee contracts and model rules (lib/B/W_LLVMFuzzerTestOneInput_event_x.v), verbatim at the
-   instance, MMAX := fr_MMAX; ASTRNLEN_x is lib/Rt/RTx.v:155 astrnlen_whole_realizes_x (a Theorem Labs lane's event arm cites it in
+   instance, MMAX := fr_MMAX; ASTRNLEN_x is lib/Rt/RTx.v:156 astrnlen_whole_realizes_x (a Theorem Labs lane's event arm cites it in
    place of its old local et_strnlen_spec_x, the same body; a Theorem Labs lane's B RT base);
    RI_event_live is RI_gone's text and is not restated ---- *)
-(* B restatement (an internal work row): image A's top step (W8 14fbe276057) room text - RPi after MT (A: at RP := RPi) *)
+(* B restatement (an internal work row): image A's top step (W8) room text - RPi after MT (A: at RP := RPi) *)
 Hypothesis AFREE_x : afree_cf_rule_c_x segs TfibB [] ARX MT RPi YCk0.CTX_AFREE.
-(* SL_x is built in the proof from a Theorem Labs lane's lib/B/W_send_line_x.pb_send_line_x (a working branch
-   44b8b79e165f), by a1-a2's paste block (a working branch 721fe29b1f24, ZZSlTopxScratch.v:128-186) *)
+(* SL_x is built in the proof from a Theorem Labs lane's lib/B/W_send_line_x.pb_send_line_x (a working branch),
+   by a1-a2's paste block (a working branch, ZZSlTopxScratch.v:128-186) *)
 Hypothesis ASTRNLEN_x : RTx.astrnlen_whole_realizes_x segs TfibB ARX (pa_sigma WS_strnlen).
-(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step 14fbe276057 builds RE_x at RPi in its proof) *)
+(* B restatement (an internal work row): RPi after MT, the room kit's signature (A's top step builds RE_x at RPi in its proof) *)
 Hypothesis RE_x : re_spec_x (PI := PB_fr) TfibB [] ARX MT RPi CfParamsReply.fr_MMAX (W_LLVMFuzzerTestOneInput_arm_event.et_GRE TfibB) fr_RG (BASE + AF_fr_relay_event).
 Hypothesis CSE_x : cse_spec_x (PI := PB_fr) TfibB [] ARX (BASE + AF_fr_check_shape_event).
 Hypothesis RI_event_step : forall cx t m e v out',
@@ -842,7 +843,7 @@ Hypothesis RI_event_step : forall cx t m e v out',
 Hypothesis LS_event_malloc : forall cx t m ly S e,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_arm_event.ev_evt cx m e ->
   re_len e < CfParamsReply.fr_MMAX /\ blocks_bytes S + re_len e <= LIVE_MAX /\ mo_ok MT S (mo_malloc MT (re_len e)).
-(* B restatement (an internal work row): image A's top step text (W8 a working branch 14fbe276057), B names *)
+(* B restatement (an internal work row): image A's top step text (W8 a working branch), B names *)
 Hypothesis LS_event_relay : forall cx t m ly S (S1 : astate) e (ly1 : alayout) q,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_arm_event.ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
@@ -858,7 +859,7 @@ Hypothesis LS_event_free : forall cx t m ly S (S1 S2 : astate) e,
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
   mo_le MT S1 S2 (sl_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (re_len e)) ->
   mo_ok MT S2 (mo_free MT).
-(* KF-COUNT F5 (A 00c059c932f): s5's TX_LS_event_step (ReplyB3LS3cTopxPost.v:122) plus `0 <= t < OPS_MAX` last,
+(* KF-COUNT F5 (A): s5's TX_LS_event_step (ReplyB3LS3cTopxPost.v:123) plus `0 <= t < OPS_MAX` last,
    inline since the TX definition has no t premise *)
 Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout) e v out' (ly1 ly2 : alayout) q,
   LSx cx t m ly S -> W_LLVMFuzzerTestOneInput_arm_event.ev_evt cx m e ->
@@ -873,7 +874,7 @@ Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout
   (exists l1 l2, ablocks TfibB ly2 S2 = l1 ++ (q, re_len e) :: l2 /\ ablocks TfibB ly3 S3 = l1 ++ l2) ->
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (W_LLVMFuzzerTestOneInput_arm_event.ev_step cx m e v out') ly3 S3.
-(* NEW from image A's top step (W8 14fbe276057), B names *)
+(* NEW from image A's top step (W8), B names *)
 Hypothesis LS_cnt_event : forall cx t m ly S e,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_arm_event.ev_evt cx m e ->
   Forall (fun e0 => 0 <= re_cap e0 <= 16384 /\
@@ -897,23 +898,23 @@ Hypothesis HGOTG_x : forall ly S Hp (W : world segs) mem md, ARX ly S Hp W mem m
   rdword (aview segs (w_H W) mem) W_sites.FR_GOT_GUARD = Some W_sites.FR_GUARD.
 Hypothesis GN_LIT_GES_x : ashp_x (PI := PB_fr) ARX (VAL W_contract.A_lit_gesture) 14.
 Hypothesis GN_LIT_FMT_x : ashp_x (PI := PB_fr) ARX (VAL (A_OBJ 17)) 7.
-(* B restatement (an internal work row): image A's top step (W8 14fbe276057) room text - RPi after MT (A: at RP := RPi) *)
+(* B restatement (an internal work row): image A's top step (W8) room text - RPi after MT (A: at RP := RPi) *)
 Hypothesis RIG_x : rig_spec_x (PI := PB_fr) TfibB [] ARX MT RPi CfParamsReply.fr_MMAX fr_RG YCk0.CTX_AFREE
   (BASE + AF_fr_relay_instance_gone).
 Hypothesis GN_RI_pairs_x : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_pairs RINV.
 Hypothesis GN_RI_read_x : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_read RINV.
 Hypothesis GN_RI_step_x : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_step TfibB MT LSx RINV CfParamsReply.fr_MMAX.
 Hypothesis GN_RI_end_x : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_end TfibB MT LSx RINV.
-(* Image A's top step text (W8 14fbe276057), B names: GN_CNT_rig is a Theorem Labs lane's B gone_base's; A's ReplyLScnt.pk_gone is the Variable gn_pk *)
+(* Image A's top step text (W8), B names: GN_CNT_rig is a Theorem Labs lane's B gone_base's; A's ReplyLScnt.pk_gone is the Variable gn_pk *)
 Hypothesis CNT_gone_rig : W_LLVMFuzzerTestOneInput_gone_base.GN_CNT_rig gn_pk (fun cx m hs =>
   rig_pk (rig_tr (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (W_LLVMFuzzerTestOneInput_gone_base.gn_id cx m)
     (lm_es m) hs)).
-(* Image A's top step text (W8 14fbe276057), B names: GN_LS_cnt_x is a Theorem Labs lane's B gone_base_x's; A's ReplyLScnt.pk_gone is the Variable gn_pk *)
+(* Image A's top step text (W8), B names: GN_LS_cnt_x is a Theorem Labs lane's B gone_base_x's; A's ReplyLScnt.pk_gone is the Variable gn_pk *)
 Hypothesis LS_cnt_gone : W_LLVMFuzzerTestOneInput_gone_base_x.GN_LS_cnt_x TfibB LSx RINV RPi gn_pk.
-(* Image A's top step text (W8 14fbe276057), B names: GN_CNT_step is a Theorem Labs lane's B gone_base's; A's ReplyLScnt.pk_gone is the Variable gn_pk *)
+(* Image A's top step text (W8), B names: GN_CNT_step is a Theorem Labs lane's B gone_base's; A's ReplyLScnt.pk_gone is the Variable gn_pk *)
 Hypothesis CNT_gone_step : W_LLVMFuzzerTestOneInput_gone_base.GN_CNT_step RINV gn_pk
   (fun h => cnl_pk (hs_expected h) (hs_held h)).
-(* B restatement (an internal work row): image A's top step text (W8 a working branch 14fbe276057), B names *)
+(* B restatement (an internal work row): image A's top step text (W8 a working branch), B names *)
 Hypothesis GN_LS_rig_x : forall cx t m ly S hs,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_gone_base.gn_pairs m hs ->
   W_LLVMFuzzerTestOneInput_gone_base.gn_op cx t m ->
@@ -938,15 +939,15 @@ Proof.
   pose proof top_HEV as HEV.
   pose proof (c_HZS TfibB TfibB_syms) as HZS.
   assert (HPST : forall a, in_img segs a -> ~ Exists (in_zr a) ([] : list (Z * Z))) by (intros a _ H; inversion H).
-  (* SEG_PRO's HFP_pro from the FP cover (A: lib/B/W_LLVMFuzzerTestOneInput_top_x.v's plug of a2's TopxEntry.hfp_pro_x; B: a Theorem Labs lane 48eff67880c) *)
+  (* SEG_PRO's HFP_pro from the FP cover (A: lib/B/W_LLVMFuzzerTestOneInput_top_x.v's plug of a2's TopxEntry.hfp_pro_x; B: a Theorem Labs lane) *)
   pose proof (TopxEntry.hfp_pro_x TfibB MT XM_LIB RLO RHI fr_live_pre LIBROOM NP (G_fr_c TfibB) ARX fr_FP
     (fun ly S Hp W mem md p n (H : ARX ly S Hp W mem md) =>
        TopxEntry.arcf_blk ly S Hp W mem md p n (conj (proj1 H) (proj1 (proj2 H)))) FPCOV) as HFP_pro.
-  (* ASM0 / ASM1 at top_x's relation: a Theorem Labs lane's lib/B/AsmTopX.v:174 asm0_pres_ARX and :115 asm1_pres_ARX
-     (a working branch ed305db9fb3; ARX_asm is ARX over tfibsegs, AsmTopX.v:169), by conversion as A's top *)
+  (* ASM0 / ASM1 at top_x's relation: a Theorem Labs lane's lib/B/AsmTopX.v:175 asm0_pres_ARX and :115 asm1_pres_ARX
+     (a working branch; ARX_asm is ARX over tfibsegs, AsmTopX.v:170), by conversion as A's top *)
   assert (ASM0 : astack_malloc_pres_x segs TfibB ARX 0) by exact AsmTopX.asm0_pres_ARX.
   assert (ASM1 : astack_malloc_pres_x segs TfibB ARX 1) by exact AsmTopX.asm1_pres_ARX.
-  (* the pthread mutex contracts at ARX: a Theorem Labs lane's TopX_RT_lock.v:70 / :74 (G-BLOCK e1fae7037354; ARX_rt is ARX
+  (* the pthread mutex contracts at ARX: a Theorem Labs lane's TopX_RT_lock.v:71 / :75 (G-BLOCK; ARX_rt is ARX
      over segs, :57), by conversion as A's top (TopX_RT.topx_ALOCK / topx_AUNLOCK) *)
   assert (ALOCK : alock_realizes_x (PI := PB_fr) TfibB ARX (SIGMA WS_pthread_mutex_lock)) by exact TopX_RT_lock.topx_ALOCK_W.
   assert (AUNLOCK : aunlock_realizes_x (PI := PB_fr) TfibB ARX (SIGMA WS_pthread_mutex_unlock))
@@ -1025,8 +1026,8 @@ Proof.
   (* op_add at the instance (a Theorem Labs lane's ruling): W2's pb_op_add_g_x, its image facts by vm_compute at PB_fr and the
      start-up table, its two caller contexts by vm_compute at YCk0's tables (image A's top_x OA, the same proof) *)
   assert (HMMAX : APARTIAL < CfParamsReply.fr_MMAX) by (unfold APARTIAL; apply Z.ltb_lt; vm_compute; reflexivity).
-  (* op_add at RPi (a Theorem Labs lane's room-form W_op_add.pb_op_add_g_x, a working branch 24341ca6749
-     W_op_add.v:1949-1967): RP after MT, its RMM := rp_RMM RPi (A: lib/B/W_LLVMFuzzerTestOneInput_top_x.v at 14fbe276057 `(rp_RMM RPi)`) *)
+  (* op_add at RPi (a Theorem Labs lane's room-form W_op_add.pb_op_add_g_x, a working branch
+     W_op_add.v:1950-1968): RP after MT, its RMM := rp_RMM RPi (A: lib/B/W_LLVMFuzzerTestOneInput_top_x.v `(rp_RMM RPi)`) *)
   assert (OA : W_op_add.oa_spec_g_x (PI := PB_fr) TfibB [] ARX MT RPi (BASE + AF_fr_op_add)).
   { refine (W_op_add.pb_op_add_g_x (PI := PB_fr) TfibB [] ARX _ MT RPi ARX_laws HPST TL MLAW (rp_RMM RPi)
       CfParamsReply.fr_MMAX HMMAX
@@ -1100,7 +1101,7 @@ Proof.
   { apply inG_sub.
     repeat (apply Forall_cons; [intros a Ha; apply obj_c; revert a Ha; apply rng_cover_zr; vm_compute; reflexivity|]).
     apply Forall_nil. }
-  (* list_push at the instance as a named fact (A: lib/B/W_LLVMFuzzerTestOneInput_top_x.v:1171 at fb66907d92b), a Theorem Labs lane's B
+  (* list_push at the instance as a named fact (A: lib/B/W_LLVMFuzzerTestOneInput_top_x.v:1171), a Theorem Labs lane's B
      W_list_push.pb_list_push_g_x at WR_MMAX; the write arm and the drain contract take it *)
   assert (LP : lp_spec_g_x (PI := PB_fr) TfibB [] ARX MT RPi W_LLVMFuzzerTestOneInput_write.WR_MMAX
     (BASE + AF_fr_list_push)).
@@ -1108,7 +1109,7 @@ Proof.
            W_LLVMFuzzerTestOneInput_write.wr_HMMAX (W_img_x.fr_img_cover_x TfibB ARX ARX_laws) BLKN YCk0.CTX_AREALLOC ARE_x
            ltac:(vm_compute; repeat (first [left; reflexivity | right])) YCk0.CTX_AMALLOC AMA_x
            ltac:(vm_compute; repeat (first [left; reflexivity | right])) AMEMCPY_x). }
-  (* ---- SL_x at RPi: lib/B/W_send_line_x.v pb_send_line_x, its Section premises (W_send_line_cx_x.v:90-137) closed
+  (* ---- SL_x at RPi: lib/B/W_send_line_x.v pb_send_line_x, its Section premises (W_send_line_cx_x.v:91-138) closed
      from top_x's ARX facts, its hypotheses TL / MLAW / HRO / ARE_x / AMEMCPY_x, TopX_RT4 (errno_location),
      W_errno_azs (errno's zero shadow), _G.v's G_fr_c facts, and the placements decided at PB_fr / fr_RG / TfibB ---- *)
   assert (SL_x : sl_spec_x TfibB [] ARX MT RPi CfParamsReply.fr_MMAX fr_RG (BASE + AF_fr_send_line)).
@@ -1170,7 +1171,7 @@ Proof.
     pose proof ARX_laws as LAWS. pose proof ARX_hp0 as HP0.
     eapply (W_send_line_x.pb_send_line_x TfibB [] ARX MT RPi CfParamsReply.fr_MMAX fr_RG)
       with (CTX_R := YCk0.CTX_AREALLOC); eassumption. }
-  (* ---- DR_x at RPi, as image A's top (W8 fb66907d92b :1181-1199): a Theorem Labs lane's B pb_drain_x from top_x's own facts
+  (* ---- DR_x at RPi, as image A's top (W8 :1181-1199): a Theorem Labs lane's B pb_drain_x from top_x's own facts
      (MLAW, ARE_x / AFREE_x / ASTRNDUP_x at their contexts, SL_x, LP, BLKN, BLKM), a Theorem Labs lane's B TopX_RT3 (AMEMMOVE,
      AMEMCHR), TopX_RT4 (AERRNO, ASTRRCHR, ASTRNCMP, ASTRCMP), TopxDrainLitB (HLIT5-7) and W_drain_pb's instance facts ---- *)
   assert (DR_x : dr_spec_x (PI := PB_fr) TfibB [] ARX MT RPi CfParamsReply.fr_MMAX fr_RG (BASE + AF_fr_drain)).
@@ -1261,8 +1262,8 @@ Proof.
       with (CTX_AFREE := YCk0.CTX_AFREE); eassumption. }
   exact (lf_contract_of_segments_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv LIBROOM NP G fr_FP []
     ARX ARX_laws GX_ok LSx RINV
-    (* a Theorem Labs lane's B pro arm (an internal work row; KF-COUNT F2 a working branch 3e5f3fa4742): RPi RP_NP NPF MO_FR after RINV,
-       LS_cnt_pro after LS_pro (A: top_x.v:1236-1239 at 14fbe276057) *)
+    (* a Theorem Labs lane's B pro arm (an internal work row; KF-COUNT F2 a working branch): RPi RP_NP NPF MO_FR after RINV,
+       LS_cnt_pro after LS_pro (A: top_x.v:1236-1239) *)
     (W_LLVMFuzzerTestOneInput_pro_x.lf_seg_pro_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv LIBROOM
        NP G fr_FP [] ARX ARX_laws ARX_hp0 GX_ok LSx RINV RPi RP_NP NPF MO_FR OA TL TLF OWNLOW
        (Wf_cf (cp := CfParams_reply) (as_universe TfibB)) WFL SMALLOC ASM1 FFL (c_glob_wr TfibB HEV) ERRL_x HEV HZS
@@ -1270,19 +1271,19 @@ Proof.
     (W_LLVMFuzzerTestOneInput_head_x.lf_seg_head_x TfibB MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G fr_FP [] ARX
        ARX_laws ARX_hp0 GX_ok LSx RINV (c_HGnout TfibB) (c_HERRNO TfibB top_HEV)
        (c_HZS TfibB TfibB_syms) RI_head_nout LS_head_nout RI_head_skip LS_head_skip)
-    (* a Theorem Labs lane's B add arm (an internal work row, a working branch 7e3a32ed245): RPi RP_NP before OA, LS_cnt_add last
-       (A: top_x.v:1242-1244 at 14fbe276057) *)
+    (* a Theorem Labs lane's B add arm (an internal work row, a working branch): RPi RP_NP before OA, LS_cnt_add last
+       (A: top_x.v:1242-1244) *)
     (W_LLVMFuzzerTestOneInput_add_x.lf_arm_add_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv LIBROOM
        NP G fr_FP [] ARX ARX_laws GX_ok LSx RINV RPi RP_NP OA HEV HZS (obj_c TfibB) ERRL_x HRO GSHV_x HPST BLKN RI_add_pre
        RI_add_open RI_add_none LS_add_room LS_add_open LS_add_none LS_cnt_add)
-    (* a Theorem Labs lane's B write arm (an internal work row, a working branch 514d7e9bda3): RPi RP_NP after RINV, LS_cnt_write last;
-       list_push at RP := RPi (a Theorem Labs lane's F1B, W_list_push.v:2364 Variable RP after MT, merged on the room branch) *)
+    (* a Theorem Labs lane's B write arm (an internal work row, a working branch): RPi RP_NP after RINV, LS_cnt_write last;
+       list_push at RP := RPi (a Theorem Labs lane's F1B, W_list_push.v:2365 Variable RP after MT, merged on the room branch) *)
     (W_LLVMFuzzerTestOneInput_write_x.lf_arm_write_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv
        LIBROOM NP G fr_FP [] ARX ARX_laws ARX_hp0 GX_ok LSx RINV RPi RP_NP TL
        LP
        (c_glob_wr TfibB HEV) ERRL_x (c_HGs TfibB) HZS TfibB_syms (c_HGW TfibB) BLKN HPST RI_write_skip LS_write_skip
        RI_write_push LS_write_room LS_write_push LS_cnt_write)
-    (* a Theorem Labs lane's B drain arm (an internal work row, a working branch dd77d602fd8; A HeadX 13a792ebbad): RP RP_NP
+    (* a Theorem Labs lane's B drain arm (an internal work row, a working branch; A HeadX): RP RP_NP
        after TL, DR_CNT_grow after RI_drain_step, then dr_cnl_pk (the Variable above), DR_CNT_cnl,
        LS_cnt := LS_cnt_drain last *)
     (W_LLVMFuzzerTestOneInput_drain_x.lf_arm_drain_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv
@@ -1293,7 +1294,7 @@ Proof.
        dr_cnl_pk DR_CNT_cnl LS_cnt_drain)
     (W_LLVMFuzzerTestOneInput_small_x.lf_arm_close_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre LIBROOM NP G fr_FP []
        ARX ARX_laws GX_ok LSx RINV (c_HGs TfibB) HZS TL (c_HERRHI TfibB HEV) RI_close LS_close)
-    (* a Theorem Labs lane's B remove arm (an internal work row, a working branch f42b3777c7b; A RiRestate 5a9b16eac9e):
+    (* a Theorem Labs lane's B remove arm (an internal work row, a working branch; A RiRestate):
        fr_live_post / fr_surv before LIBROOM, RPi RP_NP after RINV, its LS_cnt = LS_cnt_remove and RM_CNT_*; its
        RI_rm_rr_fds is RI_fds (as A's top) *)
     (W_LLVMFuzzerTestOneInput_remove_x.lf_arm_remove_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv
@@ -1302,9 +1303,9 @@ Proof.
        HZS c_HAP HRO (c_HMG TfibB TfibB_syms HEV) RI_rm_found RI_fds RI_rm_rr_pair RI_rm_src LS_rm_rr_pre RI_rm_cnl_pre
        LS_rm_cnl_pre RI_rm_cshe_pre LS_rm_cshe_pre RI_rm_csd LS_rm_sr_pre RI_rm_step LS_rm_step LS_cnt_remove RM_CNT_cnl
        RM_CNT_cshe RM_CNT_sr (fun ly S Hp W mem md (H : ARX ly S Hp W mem md) => TopxImageB.ashp_str3_1_fr_cf ly S Hp W mem md (conj (proj1 H) (proj1 (proj2 H)))) BLKR PST_ROM PST_IMG)
-    (* a Theorem Labs lane's B gone arm (an internal work row, a working branch 5024fade6020): RP := RPi after the MMAX;
+    (* a Theorem Labs lane's B gone arm (an internal work row, a working branch): RP := RPi after the MMAX;
        gn_pk := gn_pk (no B twin yet), RPNP := RP_NP, CNTRIG / LSCNT / CNTSTEP := CNT_gone_rig / LS_cnt_gone /
-       CNT_gone_step after HLSRIG, as A's gone plug (top_x.v:1333-1338 at 3d17f490d56) *)
+       CNT_gone_step after HLSRIG, as A's gone plug (top_x.v:1333-1338) *)
     (W_LLVMFuzzerTestOneInput_gone_x.lf_arm_gone_x TfibB MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G fr_FP [] ARX ARX_laws
        ARX_hp0 GX_ok LSx RINV (c_glob_wr TfibB HEV) ERRL_x RRDS_x TL MLAW SNP_x HGOTG_x GN_LIT_GES_x GN_LIT_FMT_x
        CfParamsReply.fr_MMAX RPi RIG_x RGP_x HRO GN_CNL GN_CSHE (c_ERRNO_LOW TfibB HEV) HZS (c_HGs TfibB)
@@ -1313,7 +1314,7 @@ Proof.
        GN_RI_read_x GN_RI_step_x GN_RI_end_x GN_LS_rig_x gn_pk RP_NP CNT_gone_rig LS_cnt_gone CNT_gone_step BLKN HPST FRMF)
     (W_LLVMFuzzerTestOneInput_small_x.lf_arm_eintr_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre LIBROOM NP G fr_FP []
        ARX ARX_laws GX_ok LSx RINV (c_HGs TfibB) HZS TL (c_HERRHI TfibB HEV) RI_eintr LS_eintr)
-    (* a Theorem Labs lane's B event arm (an internal work row, a working branch 3ed6377ae1a2; checked by its scratch exact,
+    (* a Theorem Labs lane's B event arm (an internal work row, a working branch; checked by its scratch exact,
        ZZEventTopx.v (sha256 0abcbdbc7a96; internal record) rc=0): fr_live_post / fr_surv before LIBROOM, RPi RP_NP after fr_MMAX,
        LS_cnt_event last *)
     (W_LLVMFuzzerTestOneInput_event_x.lf_arm_event_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv
@@ -1328,7 +1329,7 @@ Proof.
        TL (c_HERRHI TfibB HEV) ALOCK AUNLOCK RI_default LS_default)
     (W_LLVMFuzzerTestOneInput_latch_x.lf_seg_latch_x TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv
        LIBROOM NP G fr_FP [] ARX ARX_laws GX_ok LSx RINV CB_x (c_ERRNO_LOW TfibB HEV))
-    (* a Theorem Labs lane's B exit arm (an internal work row, a working branch afc7ac89f0f (= 570c903d342's texts), Section lxx; its LS_exit_end in
+    (* a Theorem Labs lane's B exit arm (an internal work row, a working branch (= a commit's texts), Section lxx; its LS_exit_end in
        TX_LS_exit_end_e's premise order): RP RP_NP after AZS_s (here HZS), LS_exit_cnt LS_exit_cap LS_cnt (= LS_cnt_exit)
        after LS_exit_end *)
     (W_LLVMFuzzerTestOneInput_exit_x.lf_seg_exit_x_all TfibB MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv
@@ -1418,14 +1419,14 @@ Proof.
   pose proof top_HEV as HEV.
   pose proof (c_HZS TfibB TfibB_syms) as HZS.
   assert (HPST : forall a, in_img segs a -> ~ Exists (in_zr a) ([] : list (Z * Z))) by (intros a _ H; inversion H).
-  (* SEG_PRO's HFP_pro from the FP cover (A: lib/B/W_LLVMFuzzerTestOneInput_top_x.v's plug of a2's TopxEntry.hfp_pro_x; B: a Theorem Labs lane 48eff67880c) *)
+  (* SEG_PRO's HFP_pro from the FP cover (A: lib/B/W_LLVMFuzzerTestOneInput_top_x.v's plug of a2's TopxEntry.hfp_pro_x; B: a Theorem Labs lane) *)
   pose proof (TopxEntry.hfp_pro_x TfibB MT XM_LIB RLO RHI fr_live_pre LIBROOM NP (G_fr_c TfibB) ARX fr_FP
     (fun ly S Hp W mem md p n (H : ARX ly S Hp W mem md) =>
        TopxEntry.arcf_blk ly S Hp W mem md p n (conj (proj1 H) (proj1 (proj2 H)))) FPCOV) as HFP_pro.
-  (* ASM1 at top_x's relation: a Theorem Labs lane's lib/B/AsmTopX.v:115 asm1_pres_ARX (a working branch ed305db9fb3;
-     ARX_asm is ARX over tfibsegs, AsmTopX.v:169), by conversion as A's top *)
+  (* ASM1 at top_x's relation: a Theorem Labs lane's lib/B/AsmTopX.v:116 asm1_pres_ARX (a working branch;
+     ARX_asm is ARX over tfibsegs, AsmTopX.v:170), by conversion as A's top *)
   assert (ASM1 : astack_malloc_pres_x segs TfibB ARX 1) by exact AsmTopX.asm1_pres_ARX.
-  (* the pthread mutex contracts at ARX: a Theorem Labs lane's TopX_RT_lock.v:70 / :74 (G-BLOCK e1fae7037354; ARX_rt is ARX
+  (* the pthread mutex contracts at ARX: a Theorem Labs lane's TopX_RT_lock.v:71 / :75 (G-BLOCK; ARX_rt is ARX
      over segs, :57), by conversion as A's top (TopX_RT.topx_ALOCK / topx_AUNLOCK) *)
   assert (ALOCK : alock_realizes_x (PI := PB_fr) TfibB ARX (SIGMA WS_pthread_mutex_lock)) by exact TopX_RT_lock.topx_ALOCK_W.
   assert (AUNLOCK : aunlock_realizes_x (PI := PB_fr) TfibB ARX (SIGMA WS_pthread_mutex_unlock))

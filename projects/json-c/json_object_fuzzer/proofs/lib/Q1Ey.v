@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: PE_STATIC_A carries it after alloc_ceiling <= lo, named HBTs where STC is destructed). *)
 
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -216,7 +217,7 @@ Definition PE_INV_A (pf : pe_fix) (pa : pe_fixA) (q : Z) (LB0 LM : list blk) (FR
 PE_CORE_A pf pa q m ts cb nb pj sv /\ PE_REST_A pf pa q LB0 LM FRS payload me lo m md A B ts errv.
 
 Definition PE_STATIC_A (pf : pe_fix) (pa : pe_fixA) (lo : Z) : Prop :=
-alloc_ceiling <= lo /\ lo <= pf_spf pf - 12288 /\
+alloc_ceiling <= lo /\ hiA_bot A4L HIx <= lo /\ lo <= pf_spf pf - 12288 /\
 pe_geomA pf pa /\ pa_sp0 pa + 32 <= hiA_top A4L HIx /\ 0 <= pf_spf pf < 2^62 /\
 0 <= pf_len pf < 2^26 /\ 0 <= pf_sb pf /\ pf_sb pf + pf_len pf < 2^63 /\
 (0 <= pf_lenr pf < 2^64 /\ (1 <= pf_mxd pf <= 32 /\ 0 <= pf_fl pf < 2^32)) /\ LENR_OK pf.
@@ -370,7 +371,7 @@ Forall (pe_privateA pf pa q (t_pbs ts)) W ->
 disjoint_from W a n.
 Proof.
 intros pf pa q LB0 LM FRS B ts A m md lo a n W STC HP Hin Htk Hq Hpb HW.
-destruct STC as (LO & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & _ & HF0 & HFc & _).
+destruct STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & _ & HF0 & HFc & _).
 pose proof (heapA_blk A4L HIx _ _ _ _ _ _ _ a n HP Hin) as (Hn & _ & _ & Hhi & _).
 assert (INtk : In (pf_tk pf, 72) (pe_blocksA pf q LB0 ts ++ LM)) by (unfold pe_blocksA; apply in_or_app; left; apply in_or_app; right; left; reflexivity).
 assert (INq : In (q, 32 * pf_mxd pf) (pe_blocksA pf q LB0 ts ++ LM)) by (unfold pe_blocksA; apply in_or_app; left; apply in_or_app; right; right; left; reflexivity).
@@ -399,7 +400,7 @@ PE_STATIC_A pf pa lo -> HEAPA A4L HIx A LBall LM FR B m md -> incl LB0 LBall -> 
 Forall (payload_safeA pf pa LB0 FRS (LBall ++ LM)) W -> disjoint_from W (pf_sb pf) (pf_len pf).
 Proof.
 intros pf pa LB0 LBall LM FR FRS B A m md lo W STC HP Hincl HinclF PL HW.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & _). pose proof alloc_ceiling_range. pose proof (hiA_top_hi A4L HIx).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & _). pose proof alloc_ceiling_range. pose proof (hiA_top_hi A4L HIx).
 pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 unfold payload_locA in PL.
 induction W as [|[lo' hi'] W IH]; [exact I|]. apply Forall_cons_iff in HW as [H1 HW].
@@ -523,7 +524,7 @@ munch W m m' -> Forall (pe_privateA pf pa q (t_pbs ts)) W ->
 bytes_at asegs m' (pf_sb pf) payload.
 Proof.
 intros pf pa q LB0 LM FRS B ts A m m' md lo W payload STC HP STR PLEN SBin MU HW.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & _ & HF0 & HFc & _). pose proof alloc_ceiling_range.
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & _ & HF0 & HFc & _). pose proof alloc_ceiling_range.
 assert (INF : In (pa_F pa, 2) ((pa_F pa, 2) :: FRS)) by (left; reflexivity).
 eapply payload_transportA; [exact STC | exact HP | intros x Hx; unfold pe_blocksA; apply in_or_app; right; right; right; exact Hx
 | apply incl_tl; apply incl_refl | exact STR | exact PLEN | exact SBin | exact MU |].
@@ -563,7 +564,7 @@ Proof.
 intros pf pa q LB0 LM FRS B ts A m m' md lo W STC HP [L0 | PL] MU HW; [left; exact L0 | right].
 destruct PL as [BL | (Fh & kh & HFh & HF1 & HF2 & UPS)]; [left; exact BL | right].
 exists Fh, kh. split; [exact HFh|]. split; [exact HF1|]. split; [exact HF2|].
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & GF & HF0 & HFc & _). pose proof alloc_ceiling_range as ACR.
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & GF & HF0 & HFc & _). pose proof alloc_ceiling_range as ACR.
 assert (INF : In (pa_F pa, 2) ((pa_F pa, 2) :: FRS)) by (left; reflexivity).
 pose proof (heapA_frame A4L HIx _ _ _ _ _ _ _ _ _ HP (or_intror HFh)) as (Hkh & HFhal & HFh0 & HFhc & _).
 pose proof (fr_size_pos kh ltac:(lia)) as HFS. pose proof (fr_shadow_len_bnd kh Hkh) as HSK.
@@ -750,7 +751,7 @@ Forall (pe_privateA pf pa q (t_pbs ts)) W ->
 PE_REST_A pf pa q LB0 LM FRS payload me lo m' md A B ts errv.
 Proof.
 intros pf pa q LB0 LM FRS payload me lo m m' md A B ts errv W STC (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD) MU WM MI HW.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof alloc_ceiling_range as ACR. pose proof (hiA_top_hi A4L HIx) as HTH.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP) as ND.
 assert (INtk : In (pf_tk pf, 72) (pe_blocksA pf q LB0 ts ++ LM)) by (unfold pe_blocksA; apply in_or_app; left; apply in_or_app; right; left; reflexivity).
@@ -861,7 +862,7 @@ pe_frameA asegs m pf pa cb nb pj sv -> munch W m m' -> wmono asegs m m' ->
 pe_frameA asegs m' pf pa cb nb pj sv.
 Proof.
 intros pf pa LBX LM FRS B A m m' md lo W cb nb pj sv STC HP HW (SL & GP & SV & FF & FSH) MU WM.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk). pose proof alloc_ceiling_range.
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk). pose proof alloc_ceiling_range.
 assert (INF : In (pa_F pa, 2) ((pa_F pa, 2) :: FRS)) by (left; reflexivity).
 assert (BLO : forall a n, In (a, n) (LBX ++ LM) -> 0 <= n /\ a + n <= alloc_ceiling).
 { intros a n Hin. pose proof (heapA_blk A4L HIx _ _ _ _ _ _ _ _ _ HP Hin) as (Hn & _ & _ & Hhi & _). lia. }
@@ -921,7 +922,7 @@ munch W m m' -> wmono asegs m m' -> Forall (pe_wtfA pf pa) W ->
 agree_on asegs BS m m'.
 Proof.
 intros pf pa q LB0 LM FRS B ts A m m' md lo W BS STC HP MU WM HW HBS.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & _ & HF0 & HFc & _). pose proof alloc_ceiling_range.
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & _ & HF0 & HFc & _). pose proof alloc_ceiling_range.
 assert (INtk : In (pf_tk pf, 72) (pe_blocksA pf q LB0 ts ++ LM)) by (unfold pe_blocksA; apply in_or_app; left; apply in_or_app; right; left; reflexivity).
 assert (INF : In (pa_F pa, 2) ((pa_F pa, 2) :: FRS)) by (left; reflexivity).
 eapply agree_of_munch; [exact MU | exact WM |]. intros a n Hin. destruct (HBS a n Hin) as [HinL Hne].
@@ -989,7 +990,7 @@ munch W m m' -> wmono asegs m m' -> Forall (pe_wtqA pf pa q) W ->
 agree_on asegs BS m m'.
 Proof.
 intros pf pa q LB0 LM FRS B ts A m m' md lo W BS STC HP MU WM HW HBS.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & _ & HF0 & HFc & _). pose proof alloc_ceiling_range.
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (_ & _ & Hspf & _ & HF0 & HFc & _). pose proof alloc_ceiling_range.
 assert (INtk : In (pf_tk pf, 72) (pe_blocksA pf q LB0 ts ++ LM)) by (unfold pe_blocksA; apply in_or_app; left; apply in_or_app; right; left; reflexivity).
 assert (INq : In (q, 32 * pf_mxd pf) (pe_blocksA pf q LB0 ts ++ LM)) by (unfold pe_blocksA; apply in_or_app; left; apply in_or_app; right; right; left; reflexivity).
 assert (INF : In (pa_F pa, 2) ((pa_F pa, 2) :: FRS)) by (left; reflexivity).

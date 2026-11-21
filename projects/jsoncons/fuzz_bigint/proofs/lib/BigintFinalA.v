@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the input facts are read by shape, not by position, and the two sides take the launch facts (valid_launch and the entry's launch conjunct) and the channel reader. *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -42,10 +43,17 @@ Proof.
   intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid _.
   pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-  destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-  destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _).
-  specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
-  specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds).
+  destruct Hens as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [_ Halau]]]].
+  (* LPS 727298f3: the specs read the launch and the reader; [valid_input_abort]'s clauses are
+     read by shape, not by position (the via_* lemmas, lines 52-67 of projects/jsoncons/fuzz_json_cursor/proofs/lib/PmFinalSan.v as in the LPS 727298f3 update, do the same). *)
+  assert (Hvl : valid_launch inp) by (red in Hvalid; tauto).
+  assert (Hrd : in_channel_reader inp = true) by (red in Hvalid; tauto).
+  assert (Hargv : valid_argv (in_argv inp)) by (red in Hvalid; tauto).
+  assert (Henvp : valid_envp (in_envp inp)) by (red in Hvalid; tauto).
+  assert (Hfs : valid_fs (in_fs inp)) by (red in Hvalid; tauto).
+  assert (Hcreds : valid_creds inp) by (red in Hvalid; tauto).
+  specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hrd).
+  specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hvl Halau Hargv Henvp Hfs Hcreds Hrd).
   unfold ShippedBudgets.lim_source, ShippedBudgets.lim_target.
   split; [| split].
   - eapply srealizes_error_free_unkilled; [exact SRC | apply kill_free_spec].

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormLoc.v (a working branch 29b7505aa27, file sha256 6501a76bde7b) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at 3d44582d342f) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch b85bfdee67c4), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormLoc.v (a working branch, file sha256 6501a76bde7b) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, callee add-ons): location lemmas for the memnorm keeps of the cgif_file
    Allocate / Deallocate callee walks (brief, the internal file CALLEE-BRIEF.md, measurement, the internal file callee-frames.md).
    rule 24: no function proved (kind: image / location lemmas).
@@ -23,7 +24,7 @@
      AFf2.D (Enqueue, hit; AFf2.D_owned :866, which also takes k), from AFf2.D_cases :335, AFf2.HIGH :316;
      AFey.D (Drain transfer; AFey.D_owned :744, plus TfibSyms for the instance cells), from AFey.D_cases :244,
        AFey.HIGH :225.
-   The window -> keep step for any other window W is MemnormT.memnorm_frame (MemnormT.v:71) with W's own location
+   The window -> keep step for any other window W is MemnormT.memnorm_frame (MemnormT.v:72) with W's own location
    facts (e.g. YFg0.WIN_zone, YFgs.WIN_zone, YFkm.XC_where, YFhm.TABW_range, YFg8.MAP_facts) and the helpers here. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.

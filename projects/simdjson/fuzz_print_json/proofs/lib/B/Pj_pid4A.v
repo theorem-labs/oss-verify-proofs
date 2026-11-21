@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/Pj_pid4A.v, lines 66, 143. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -63,7 +64,7 @@ Theorem pid_main : forall (Σ2 : rts RT) PMc (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s
   (length (rt_frames RT Σ2) + S2A_FRAMES <= FRAMES_MAX)%nat ->
   mcost (Z.of_nat (length bs) + 64) + S2A_COST (Z.of_nat (length bs)) <= rt_credit RT Σ2 -> Z.of_nat (length (rt_live RT Σ2)) + 1 < LIVE_MAX ->
   bv_unsigned sp <= RES -> RES + 40 <= USTACK_TOP ->
-  rt_sp0 RT Σ2 - STACK_WIN <= lo -> lo + PID_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc' ->
+  rt_sp0 RT Σ2 - STACK_SPAN <= lo -> lo + PID_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc' ->
   cps_f (ASTA RT Σ2 PMc (eq (MS (mkR (Z_to_bv 64 0xb2e94) (Z_to_bv 64 (bv_unsigned sp + -112)) gp (Z_to_bv 64 0x6b4068) t0 t1 t2 (Z_to_bv 64 RES) s1
                                      (Z_to_bv 64 0) a1 a2 a3 a4 a5 a6 a7
                                      (Z_to_bv 64 (Z.of_nat (length bs))) (Z_to_bv 64 d) (Z_to_bv 64 (P + 8)) (Z_to_bv 64 P) (Z_to_bv 64 1) (Z_to_bv 64 0) (Z_to_bv 64 cap)
@@ -140,7 +141,7 @@ Proof using AF NEWA MSET MCP MCMP PARSE AFC AFV.
     assert (LV3' : rt_live RT Σ3 = [(copy, len + 64)] ++ rt_live RT Σ2) by exact LV3.
     assert (INC : In (copy, len + 64) (rt_live RT Σ3)) by (rewrite LV3; left; reflexivity).
     assert (SUB23 : forall e, In e (rt_live RT Σ2) -> In e (rt_live RT Σ3)) by (intros e He; rewrite LV3; right; exact He).
-    assert (LOW3 : rt_sp0 RT Σ3 - STACK_WIN <= lo) by (rewrite SP3; exact LOW).
+    assert (LOW3 : rt_sp0 RT Σ3 - STACK_SPAN <= lo) by (rewrite SP3; exact LOW).
     assert (INF3 : In (f, k) (rt_frames RT Σ3)) by (rewrite FRS3; exact INF).
     pose proof (af_live_range RT AF Σ3 m4 copy _ ART4 INC) as (_ & CP1 & _). rewrite SP3 in CP1.
 

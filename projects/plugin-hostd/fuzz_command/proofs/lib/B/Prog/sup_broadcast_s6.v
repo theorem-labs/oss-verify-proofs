@@ -7,8 +7,9 @@
    answer's entry (sbb_at_ans: answer's premises, the entry's frame chain by achain_kept, PASS4-REFIT.md section B);
    the tail call through PaFx.v's cl_callS_pgF with answer_c.v's contract at the walk's FP state; and the post of
    the statement from answer's post and the block history (sup_broadcast_s2.v sbb_post_blocks). The shape of
-   a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s3.v at a5a5ff08765) and of the worked re-fit
+   a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s3.v) and of the worked re-fit
    lib/A/Prog/sup_remove_all_refit_s3.v (the F tail call). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

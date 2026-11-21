@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (P_realizes_spec_drv takes the in_channel_reader, valid_launch and entry_launch_ok_va premises; heap_at_cut's cut_mem takes the entry draw rd). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -31,7 +32,7 @@ Definition heap_at_cut {LM : Lim} (DRV : nat -> hst -> Model -> Prop) (NS : hst 
          (M : word -> option byte) (fd3 : FdEntry),
     valid_argv [a0s; path] -> valid_envp envv -> valid_sp sp0 -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
     main_entry sp0 [a0s; path] envv tid rd regs0 mem0 -> valid_brk Plain.M.loaded_segments brk ->
-    cut_mem sp0 a0s path envv mem0 M ->
+    cut_mem sp0 a0s path envv rd mem0 M ->
     exists h, HEAP psegs (P_layout sp0) (P_HI sp0) h [] M (model1g sp0 tid brk mbase fs0 stdin0 fd3)
               /\ heap_top psegs (P_layout sp0) (P_HI sp0) h = bv_unsigned sp0
               /\ DRV 14%nat h (model1g sp0 tid brk mbase fs0 stdin0 fd3) /\ NS h.
@@ -97,7 +98,7 @@ Section Top.
   #[using="DRV NS MRZ FREEC DRVMO SI SIFP FUZZ HINIT"] Theorem P_realizes_spec_drv {AMB : Amb} : forall sp brk mbase (rd : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk psegs' brk ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->       (* [comment removed for export] *)
+    entry_stack_fits sp (in_argv inp) (in_envp inp) -> in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->       (* [comment removed for export] *)
     realizes psegs' (init_config psegs' ppc pph sp brk mbase rd LIM inp) (spec (in_argv inp) (in_fs inp)).
   Proof. apply P_realizes_spec_c; [apply P_file_kont | apply P_dir_kont]. Qed.
 End Top.

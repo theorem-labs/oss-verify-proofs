@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 474 of its 523 lines of code are new or changed and 879 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move):
    the composition re-fit to the text on this base (lib/A/PRH_FnCheck.v tcheck_round_trip_specX): its conclusion is at
    the step relation YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf, and it takes the new entry premise `(length rp_os <= 4)%nat`
@@ -16,11 +17,11 @@
    round_trip_rewrite new:715-769 inlined) into the contract text
    tcheck_round_trip_specX (lib/A/PRH_FnCheck.v 8feca2000b76:1326), image B' (asan-ubsan pin d663f82d7f488d30, unstripped
    twin c90d4fa54d43160b), at PA := PI_prog_B, PI := prh_img_B, L := B_prog_listing, ci := CfImg_B. The B' twin of
-   lib/A/Prog/Crt102Top.v (9e3b33aeea6d at the A' kb head a54cc6d36c2c): the same shape, the B' rows in place of the
+   lib/A/Prog/Crt102Top.v (9e3b33aeea6d at the A' kb head): the same shape, the B' rows in place of the
    A' slices.
 
-   STATUS AT THE kb ROUND (the kb Glue c580eb0fe37c, on this branch with the A' kb head a54cc6d36c2c merged into the B'
-   lane 01ab5fb67d43): THE CONTRACT IS Qed, crt102_topB (generic in B) and crt102_topB_TfibB (B := YD2l.TfibB). Every
+   STATUS AT THE kb ROUND (the kb Glue, on this branch with the A' kb head merged into the B'
+   lane): THE CONTRACT IS Qed, crt102_topB (generic in B) and crt102_topB_TfibB (B := YD2l.TfibB). Every
    piece is its own Qed lemma:
    - crt102_topB_J   the J seam (+0x348 .. ret), by Crt102TailB.crt102_tail_B (row T8).
    - crt102_topB_X   the X seam (+0x30c), by Crt102XB.cb_at_X_B with its TAIL := crt102_topB_J.
@@ -69,7 +70,7 @@
      crtB_T4 no longer takes the goal.
    - crt102_topB_open / crt102_topB_open_TfibB: without the Record they are crt102_topB / crt102_topB_TfibB.
      CONSUMERS USE crt102_topB / crt102_topB_TfibB.
-   BEFORE THE kb ROUND (the B' lane's commits up to 01ab5fb67d43; their commit messages carry the record):
+   BEFORE THE kb ROUND (the B' lane's commits up to; their commit messages carry the record):
    the rows were taken by path from their owners' cut re-fits (T2, T3, T4, T5 / T6 / T7), the open set shrank from
    five fields to one, and the contract theorems were Aborted at
    CRT_B_WILD_BUDGET. At the kb round every B' row file was re-fit on this branch to the kb Glue (the inputs below).
@@ -84,13 +85,13 @@
    every use binds as before. No other moved name has a local twin in the rows checked (T2, T3, T5, T6, T7).
    BEFORE THE kb ROUND, THE OPEN SET AT THE ROWS' CUT RE-FITS (the walk's owner, 11:10Z - 11:54Z), kept for its record: the
    lane took T2's and T3's re-fits by path, and the Record shrank from five fields to two (then to one at T4's):
-     CLOSED at T2's re-fit (commit 5bb3ae83ef19; pins102 rc=0, Crt102B_RRT.vo 17.77 s,
-       log, the internal file zf-fuzz-preset-5bb3ae83ef.build-20261030T074349Z.log): crt_B_open_copy_fo, by the cut's tround_trip_text_specX
+     CLOSED at T2's re-fit (pins102 rc=0, Crt102B_RRT.vo 17.77 s,
+       log, the internal file zf-fuzz-preset.build-20261030T074349Z.log): crt_B_open_copy_fo, by the cut's tround_trip_text_specX
        FREEORD-COPY conjunct, the read-back free order (PRH_FnCheck.v:1290-1293); crt_B_open_copy_cap, by pj_ncapR's
        first object conjunct (PRH_Reader.v:247) via crtb_n48_keep and Crt102Glue.crt_copy_cap_of_ncap48. Both goals are deleted there.
-     CLOSED at T3's re-fit (commit f3c3dd073e22; pins102 rc=0 wall=480, log
-       the internal file zf-fuzz-preset-f3c3dd073e.build-20261030T074850Z.log): crt_B_open_t3_O1. crt102b_seg_T3 : STMT_X -> STMT_W ->
-       STMT_U (Crt102B_T3.v:238) is Qed, with no Abort / admit / Axiom in the five files; its waits closed by the callee
+     CLOSED at T3's re-fit (pins102 rc=0 wall=480, log
+       the internal file zf-fuzz-preset.build-20261030T074850Z.log): crt_B_open_t3_O1. crt102b_seg_T3 : STMT_X -> STMT_W ->
+       STMT_U (Crt102B_T3.v:239) is Qed, with no Abort / admit / Axiom in the five files; its waits closed by the callee
        texts' own clauses (tpj_string_specX `cnt <> fail -> a <> 0`, PRH_FnPj.v:1275; tpj_set_specX's window clause,
        :1046; tpj_set's result free order, :1104 / :1156).
      NOT THE SAME OBLIGATION, BUT A CHAIN: crt_B_open_copy_fo (CRT_B_GOAL_COPY_FO: copy's free order after rtt1, for
@@ -99,7 +100,7 @@
        ordered entry premise reads; T3's W field crt_at_W_B_copy_fo (after pj_set, for crt_tree_J, RHS
        PresetReqAt.fo crt_tree_J) is produced from tpj_set's post and so CONSUMES the U field (T3U crt3U_fo0_keep,
        framed U -> S). THE BRIDGE between the two spellings is in the composition at T2's re-fit, provable from what the
-       cut carries, with no text change: Crt102B_RRT.crtb_fo_of_frees (:781-790 at 5bb3ae83ef19) rewrites the pj_frees
+       cut carries, with no text change: Crt102B_RRT.crtb_fo_of_frees (:781-790) rewrites the pj_frees
        form to fo t by PresetFreeFo.pj_frees_wdoc_t ReaderRes.jr_strtod t false (Spec/PresetFreeFo.v
        75c11ade43e4) under pj_wf ReaderRes.jr_strtod t, which it takes from Crt102Model.cm_in_wf x t HIN (:1842), and
        crt_at_U_B_copy_fo is built from that at :1439. The A' twin is Crt102Arms.arms_fo_of_frees.
@@ -113,7 +114,7 @@
      / the libc and frame calls have no wild site, so their old posts add [] (YCbqGwild.apost_base_xbF_of_x).
    VACUITY, the walk owner's sentence, to travel with every green result, UPDATED AT THE LANDING CUT: this statement goes
      through prh_univ_closure. Its clause 4 was false on B' for data words until the 4a / 4b split (4a: the code word
-     stays a fixed In; 4b: inU (as_universe B) (prh_trace pc_free_ra0 r [w])); the cut 7cdbb61b5fa0 carries the split
+     stays a fixed In; 4b: inU (as_universe B) (prh_trace pc_free_ra0 r [w])); the cut carries the split
      and removes DW, and the closure is now SATISFIABLE at the B' instance: PRH_Witness.prh_univ_closure_witness_B
      (lib/A/PRH_Witness.v:285-293) proves @prh_univ_closure prh_img_B B CfImg_B [[0x815c8]] for every B with
      as_code B = YF0l.Tfib_code and as_universe B = YCej.Tfib_universe, and YD2l.TfibB has both by its fields
@@ -154,7 +155,7 @@
      STRLEN / STRCMP (astrlen / astrcmp_realizes_xrom at __wrap_strlen / __wrap_strcmp)  the libc rows; T4's ASTRLEN,
                                            T5's / T6's ASTRCMP, T7's STRCMP. Dischargeable on the cut base by
                                            the libc row's ps_strcmp_xrom_B / ps_strlen_xrom_B (lib/AU/PSstrRo.v
-                                           45e63604063e:67 / :76 at commit ebb41f4e9efa, at
+                                           45e63604063e:67 / :76, at
                                            its ARc): lib/Reusable/YF0m.v f82202ebccdf and lib/A/PSstrlen.v d2c60d9c2c9f
                                            are on this base at that commit's blobs; lib/Reusable/YGcfStrRo.v,
                                            lib/A/PSstrcmp.v / PSstrRo.v and lib/AU/PSstrlen.v / PSstrcmp.v / PSstrRo.v
@@ -167,19 +168,19 @@
      PAL, pal_uar_img, pal_stack_malloc3, pal_pst_static  MARKED STAND-INS (the image binding of B); T1's
                                            (pal_uar_img at IMG_LO_B / IMG_TOP_B); PAL also gives T8's ENV (pal_env).
                                            Their B' witnesses at YD2l.TfibB are another hand's (Crt102PALibCheckB /
-                                           Crt102AF0lCheckB, commit 076d171ebe7b) and are bound
+                                           Crt102AF0lCheckB) and are bound
                                            in a TfibB section after this file.
    The text's own premises are not hypotheses: crt_B_under binds them. T3's image facts HB_base / HB_segs / HB_relro
    are CrtImgB102.HB_base_cf / HB_segs_cf / HB_relro_cf (closed at PI_prog_B).
 
-   INPUTS OF RECORD (this branch: the B' lane 01ab5fb67d43 with the A' kb head
-   a54cc6d36c2c merged; the B' image witnesses lib/B/Prog/Crt102PALibCheckB.v 1e3119b16a13 / Crt102AF0lCheckB.v
+   INPUTS OF RECORD (this branch: the B' lane with the A' kb head
+   merged; the B' image witnesses lib/B/Prog/Crt102PALibCheckB.v 1e3119b16a13 / Crt102AF0lCheckB.v
    308247543f0d, lib/B/PALibB.v 5baa19c890f7 and the cut's lib/Reusable/YD2l.v 95803a8b9493 / YCej.v 71ae24321ba4;
    only Section a, the TfibB instance, reads them; the generic sections read none):
-   - the glue Crt102Glue.v dd7e849ea932 (the kb Glue c580eb0fe37c, blob 9432a16a13f5, with the lane's host-path
+   - the glue Crt102Glue.v dd7e849ea932 (the kb Glue, blob 9432a16a13f5, with the lane's host-path
      scrub: CODE-EQUAL to it); the kit Crt102Kit.v 5c6804569429 (the A' kb head's, CODE-EQUAL; its image-free AJW
      runners serve the B' rows); the split's Crt102Img.v f40d6bb6768c, Crt102ImgB.v 312cb05235c8, CrtImgB102.v
-     4c2ff1cf5283; the contract texts PRH_FnCheck.v 8feca2000b76 (kit text 4b8f95c0455c: astack_up_x appended), PRH_FnPj.v
+     4c2ff1cf5283; the contract texts PRH_FnCheck.v 8feca2000b76 (kit text: astack_up_x appended), PRH_FnPj.v
      5aca5cbe2cfb, PRH_FnWriter.v d89d3c67b78c, PRH_FnAlloc.v 4d8aeba047e5, PRH_FnEx.v be1dd5ecaaf6, PRH_Base.v
      ef7c8ca98529; the engine's lib/Reusable/YCbqGwild.v 0c63874858e4 and YGcallStackUp.v 136e8c774182;
      lib/B/Listing_prog.v c97cc46b3e13, lib/B/PAImg_prog.v 15fab93fe702, lib/AU/CfImgB.v 519c583c9080,
@@ -187,16 +188,16 @@
      75c11ade43e4, lib/Spec/PresetRoomCounts.v e7bf70e17551.
    - the B' rows, RE-FIT TO THE kb GLUE ON THIS BRANCH (their blobs: this branch's commit messages), each from the
      owner's lint-clean blob of record (every owner cleared the re-fit, recorded by the walk's owner 17:10Z - 17:16Z):
-     T1 Crt102EntryB.v; T2 lib/A/Prog/Crt102B_RRT.v from 1896953741b4 (8d9dd8df94d8); T3
-     Crt102B_T3*.v from the scrub 2af9ca0b2c9c; T4 Crt102B_T4.v from a83ec5803824
-     (f3b229fd6b02); T5 / T6 Crt102B_T5*.v / _T6*.v from the one T5 / T6 head (01ab's blobs); T7
-     Crt102B_T7*.v from the host-path fix fcb97dbe96a5; T8 lib/A/Prog/Crt102TailB.v, X Crt102XB.v and the kit
+     T1 Crt102EntryB.v; T2 lib/A/Prog/Crt102B_RRT.v from 1896953741b4; T3
+     Crt102B_T3*.v from the scrub; T4 Crt102B_T4.v from a83ec5803824;
+     T5 / T6 Crt102B_T5*.v / _T6*.v from the one T5 / T6 head (01ab's blobs); T7
+     Crt102B_T7*.v from the host-path fix; T8 lib/A/Prog/Crt102TailB.v, X Crt102XB.v and the kit
      Crt102KitB.v (this lane's). The leaves Crt102B_T56_strcmp.v / Crt102B_T7_strcmp.v are unedited.
-   - build route pins102: the internal file zfb-targets.85055e6079bccb28.sh, FACTS 8f3e7e1a07f1,
+   - build route pins102: the internal file zfb-targets.85055e6079bccb28.sh, FACTS,
      PAU pau-preset-102.
    - rule 24: proves function check_round_trip (B' composition). proof-index check_round_trip and the B' addresses
      0x82828 / 0x82870: exit 4, the released proofs are plain / ubsan only; the second-agent check: CONFIRM
-     (recorded in commit 09469fb2a29b's message); released-branch git grep exit 1; the lane's
+     (recorded in a commit's message); released-branch git grep exit 1; the lane's
      record RULE24.md (sha256 96ef6f3404f0; internal record) (COMPLETE: no #102 walk of check_round_trip
      outside this lane). Written new.
 
@@ -224,7 +225,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0d
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YImgTop YGcfNames FCiface YGcallSx YGcfRoomKeep.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfRoomLive YAkMemnorm YCbqGcallW YSRrMemnorm.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcallMxmn.
-(* the text's last premise (astack_up_x, kit text 4b8f95c0455c), named qualified in crt_B_under *)
+(* the text's last premise (astack_up_x, kit text), named qualified in crt_B_under *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcallStackUp.
 (* the re-hiding move's step relation (YA0nH.SRr'), its mono rule (YSRrG.SRr'_mono)
    and preset's zone (YGcfRehidePost.RZ_cf), used qualified; all three are already in Crt102Glue's closure *)
@@ -328,7 +329,7 @@ End s.
 (* ---- tcheck_round_trip_specX's binders and premises at B', ALL OF THEM, in the text's order (PRH_FnCheck.v
    8feca2000b76:1326-1390, keyed on ReaderRes.jr_strtod: no rp_sm binder, no rp_sm premise), in front of a conclusion K
    at the binders K reads. kb round: the text's wild room (:1366) is in its place after ck_frm0, and its last premise
-   astack_up_x (:1390, kit text 4b8f95c0455c) after prh_cons_from. crt102_topB_of hands the text's own premises to it,
+   astack_up_x (:1390, kit text) after prh_cons_from. crt102_topB_of hands the text's own premises to it,
    so a premise here that is not the text's does not typecheck there. ---- *)
 Definition crt_B_under (CTX0 : list (list Z)) (a_mod_at a_stamp : Z)
   (K : list Z -> list (option nat * option nat * option nat) -> nat -> list Z ->
@@ -695,7 +696,7 @@ End f.
 
 (* ======================================================================================================== *)
 (* ---- THE B' INSTANCE OF B: YD2l.TfibB, the B' asan-ubsan image's generated record (lib/Reusable/YD2l.v
-   0d0bc856b447, TfibB_syms : YF0m.TfibSyms TfibB), on the lane head 15ae54c1afac. T1's four image stand-ins and BOK
+   0d0bc856b447, TfibB_syms : YF0m.TfibSyms TfibB), on the lane head. T1's four image stand-ins and BOK
    are discharged here, not assumed:
      PAL               Crt102PALibCheckB.crt102_PAL_TfibB (= PALibB.exvi_eh_palib, lib/B/PALibB.v 5baa19c890f7), which
                        also gives T8's ENV (pal_env);

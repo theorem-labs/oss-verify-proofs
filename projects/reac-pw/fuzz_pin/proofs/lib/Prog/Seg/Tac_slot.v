@@ -2,7 +2,7 @@
    FrameAPI.frame_facts_plain (the ff_ lemmas), the image bound SL_TOP, munch/writability transport, the run lemma sl_run
    (evt -> SR through MemNorm), FR from scratch (sl_fr_of), FR across a Kind A run (sl_fr_run, sl_mid), and FR's
    window and bounds.
-   Adapted from libreac/fuzz_ctrl's released Prog/Seg/Tac_slot.v (origin/ossv/recipes 25e3d17bdb50), same lemma
+   Adapted from libreac/fuzz_ctrl's released Prog/Seg/Tac_slot.v, same lemma
    names, with pin's numbers: the frame is 64 bytes, so the saved registers at S - 48 are fsp g + 16 (sl_fp); the
    sink and errno numerals (sl_sink, sl_errno_val) are frame_facts_plain's (ofl_head 0x4eeb0, ofl_lock 0x4eea8,
    __libc 0x4ea80, builtin_tls 0x2e7f0); the last PT_LOAD ends at 0x4f2c8, under SL_TOP. pin's slot hypothesis is

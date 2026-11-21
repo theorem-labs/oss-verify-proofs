@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed as0_drv_main, dg_overrun_stmt, dg_refuse_stmt and 3 more. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -134,11 +135,11 @@ Record drv_ctxA (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) (a
 }.
 (* [comment removed for export] *)
 Record drv_pathA (sp0 : word) (M0 : word -> option byte) (p1 : word) (path : list byte) : Prop := DRV_PATHA {
-  dp_lo : bv_unsigned sp0 <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47;
+  dp_lo : bv_unsigned sp0 <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47;
   dp_str : rdn ASEGS M0 p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]);
   dp_nonul : ~ In (Z_to_bv 8 0) path;
   dp_len : Z.of_nat (length path) <= 131071;
-  dp_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16)          (* [comment removed for export] *)
+  dp_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8)          (* [comment removed for export] *)
 }.
 
 (* [comment removed for export] *)
@@ -148,37 +149,37 @@ Definition dg_openerr_stmt (L : asan_layout) (C : asan_statics_cells) (IL : icpt
     open_err_kA scfg ar HI sp0 fs0 fdata p1 M0 [] cr0 A0 (t_die (msg_cannot_open path) fs0).
 (* [comment removed for export] *)
 Definition dg_short_stmt (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) : Prop :=
-  forall ar HI sp0 M0, drv_ctxA L C IL ar HI sp0 M0 -> forall fs0 fdata p0 p1 can A0 CAP crC,
+  forall ar HI sp0 M0, drv_ctxA L C IL ar HI sp0 M0 -> forall fs0 fdata auxvp p1 can A0 CAP crC,
     65536 <= CAP <= 67108864 -> Z.of_nat (length fdata) < CAP -> (length fdata < 6)%nat ->
-    close_kgA scfg ar HI sp0 fs0 fdata p0 p1 can M0 [] A0 CAP crC (t_die msg_short fs0).
+    close_kgA scfg ar HI sp0 fs0 fdata auxvp p1 can M0 [] A0 CAP crC (t_die msg_short fs0).
 Definition dg_overrun_stmt (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) : Prop :=
-  forall ar HI sp0 M0, drv_ctxA L C IL ar HI sp0 M0 -> forall fs0 fdata p0 p1 can A0 CAP crC,
+  forall ar HI sp0 M0, drv_ctxA L C IL ar HI sp0 M0 -> forall fs0 fdata auxvp p1 can A0 CAP crC,
     65536 <= CAP <= 67108864 -> Z.of_nat (length fdata) < CAP -> (6 <= length fdata)%nat -> Z.of_nat (length fdata) < 6 + CFGA fdata ->
-    close_kgA scfg ar HI sp0 fs0 fdata p0 p1 can M0 [] A0 CAP crC (t_die msg_overrun fs0).
+    close_kgA scfg ar HI sp0 fs0 fdata auxvp p1 can M0 [] A0 CAP crC (t_die msg_overrun fs0).
 (* [comment removed for export] *)
 Definition dg_refuse_stmt (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) : Prop :=
-  forall ar HI sp0 M0, drv_ctxA L C IL ar HI sp0 M0 -> forall path fs0 fdata p0 p1 can A0,
+  forall ar HI sp0 M0, drv_ctxA L C IL ar HI sp0 M0 -> forall path fs0 fdata auxvp p1 can A0,
     fs_lookup fs0 path = Some fdata -> 67108864 <= Z.of_nat (length fdata) ->
-    refuse_kA scfg ar HI sp0 path fs0 fdata p0 p1 can M0 [] A0 (t_die msg_refused fs0).
+    refuse_kA scfg ar HI sp0 path fs0 fdata auxvp p1 can M0 [] A0 (t_die msg_refused fs0).
 (* [comment removed for export] *)
 Definition drv_main_on (P : list byte -> Fs.Fs -> Prop) (KP : list byte -> Fs.Fs -> TSet)
            (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) (Lay : lib_layoutA) (LSt : asan_run -> lib_statics) : Prop :=
   sc_alloc scfg = false -> sc_fs scfg = true -> drv_consts_stmt L C IL ->
   forall (sp : word) (a0s path : list byte) (envp : list (list byte)) (fs : Fs.Fs),
     valid_sp sp -> valid_argv [a0s; path] -> valid_envp envp -> valid_fs fs -> P path fs ->
-  forall (ar : asan_run) (HI : asan_iface) (p0 p1 can tid : word) (A0 : list (Z * Z)) (cr0 : credit)
+  forall (ar : asan_run) (HI : asan_iface) (p0 p1 can tid auxvp : word) (A0 : list (Z * Z)) (cr0 : credit)
          (R : bvmap 5 word) (M0 : word -> option byte) (model : Model),
     asan_iface_okB L ar C scfg HI -> afree_null_spec L ar scfg HI -> aicpt_ok L ar IL scfg HI -> lib_iface_okA Lay ar scfg HI (LSt ar) -> drv_layoutA L ar IL sp ->
-    SX2S.regs_ok (env_mainA sp p0 p1 can tid R) sr_mainA R ->
-    SX2S.know_ok ASEGS (env_mainA sp p0 p1 can tid R) (mrestrict (ahid A0 model) M0) kn_mainA ->
-    auxv_atA sp p0 M0 ->
+    SX2S.regs_ok (env_mainA sp p0 p1 can tid auxvp R) sr_mainA R ->
+    SX2S.know_ok ASEGS (env_mainA sp p0 p1 can tid auxvp R) (mrestrict (ahid A0 model) M0) kn_mainA ->
+    auxv_atA sp auxvp M0 ->
     dinv ar HI sp M0 [] [] cr0 A0 M0 model ->
     defined M0 (bv_unsigned sp) (ar_stack_top ar - bv_unsigned sp) ->
     m_fds model = APSK.fds_std -> m_fs model = fs ->
     rdn ASEGS (mrestrict (ahid A0 model) M0) p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
-    bv_unsigned sp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47 ->
+    bv_unsigned sp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47 ->
     cr0 = (8192, 2 ^ 34) ->
-    defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16) ->
+    defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8) ->
     shadow_allowed A0 (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa7b04) M0 (seg_rom ASEGS)) model) (KP path fs).
 (* [comment removed for export] *)
@@ -203,20 +204,20 @@ Definition drv_budgetA (L : asan_layout) (Lay : lib_layoutA) : Prop :=
 Proof.
   intros L C IL Lay LSt DLL DLC HBUD DG_OPENERR DG_SHORT DG_OVERRUN DG_REFUSE DG_NOFILE DG_DOT.
   unfold drv_main_stmt.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok LSXa DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs ar HI p0 p1 can tid auxvp A0 cr0 R M0 model HIok FNok ICok LIok LSXa DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   cbn [spec].
   destruct (Nat.leb_spec0 4096 (length path)) as [Hlong|Hshort].
-  { exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_introl Hlong) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+  { exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_introl Hlong) ar HI p0 p1 can tid auxvp A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   destruct (list_byte_eqb path []) eqn:Hemp.
   { apply list_byte_eqb_iffA in Hemp.
-    exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_intror (or_introl Hemp)) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+    exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_intror (or_introl Hemp)) ar HI p0 p1 can tid auxvp A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   assert (Hne : path <> []) by (intros E; apply list_byte_eqb_iffA in E; rewrite E in Hemp; discriminate).
   destruct (list_byte_eqb path dot_path) eqn:Hdot.
   { apply list_byte_eqb_iffA in Hdot.
-    exact (DG_DOT Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+    exact (DG_DOT Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hdot ar HI p0 p1 can tid auxvp A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   assert (Hnd : path <> dot_path) by (intros E; apply list_byte_eqb_iffA in E; rewrite E in Hdot; discriminate).
   destruct (fs_lookup fs path) as [fdata|] eqn:Hlk.
-  2:{ exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_intror (or_intror (conj Hnd Hlk))) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO
+  2:{ exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_intror (or_intror (conj Hnd Hlk))) ar HI p0 p1 can tid auxvp A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO
                Ecr PDEF SAH). }
   (* [comment removed for export] *)
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
@@ -247,34 +248,34 @@ Proof.
   unfold env_mainA in HR, HK.
   pose proof (regs_ok_nb _ _ (blobs_ev [[]; []; []; []; fdata]) _ _ NB1 HR) as HR'.
   pose proof (know_ok_nb ASEGS _ _ (blobs_ev [[]; []; []; []; fdata]) _ _ NB2 HK) as HK'.
-  apply (@drv_openA PropExec.fx0 scfg L ar C IL HI HIok sp Hsp Hal DL path fs fdata p0 p1 can M0 M0def Hlk Hne Hppl Hfs ltac:(lia) Hnonul ltac:(lia) STRF [] (8192, 2 ^ 34) A0 Hcr65536
-           (t_die (msg_cannot_open path) fs) (t_body fdata fs) R model tid HR' HK' DI FDS EFS).
+  apply (@drv_openA PropExec.fx0 scfg L ar C IL HI HIok sp Hsp Hal DL path fs fdata auxvp p1 can M0 M0def Hlk Hne Hppl Hfs ltac:(lia) Hnonul ltac:(lia) STRF [] (8192, 2 ^ 34) A0 Hcr65536
+           (t_die (msg_cannot_open path) fs) (t_body fdata fs) R model tid p0 HR' HK' DI FDS EFS).
   - exact (DG_OPENERR ar HI sp M0 CTX path fs fdata p1 (8192, 2 ^ 34) A0 PTH SAH).
-  - apply (@drv_fileA PropExec.fx0 scfg L ar C IL HI HIok ICok ILY sp Hsp Hal DL HRD (conj Hkpm (conj Hlin Hovh)) path fs fdata p0 p1 can M0 M0def Hlk [] A0
+  - apply (@drv_fileA PropExec.fx0 scfg L ar C IL HI HIok ICok ILY sp Hsp Hal DL HRD (conj Hkpm (conj Hlin Hovh)) path fs fdata auxvp p1 can M0 M0def Hlk [] A0
              (hl_k_per_malloc L + 4 * fst (lla_credit Lay PLv)) (hl_b_lin L * PLv + hl_b_overhead L + 4 * snd (lla_credit Lay PLv)) ltac:(lia) ltac:(nia)
              (t_body fdata fs) (t_body_nilA fdata fs)); [ | | exact HB].
     + (* [comment removed for export] *)
       intros Hlt CAP crC HCAP HltC HK1 HB1'.
       destruct (Nat.lt_ge_cases (length fdata) 6) as [Hs|Hge6].
-      { rewrite (t_body_shortA fdata fs) by (unfold MAX_INPUT; lia). exact (DG_SHORT ar HI sp M0 CTX fs fdata p0 p1 can A0 CAP crC HCAP HltC Hs). }
+      { rewrite (t_body_shortA fdata fs) by (unfold MAX_INPUT; lia). exact (DG_SHORT ar HI sp M0 CTX fs fdata auxvp p1 can A0 CAP crC HCAP HltC Hs). }
       destruct (Z.lt_ge_cases (Z.of_nat (length fdata)) (6 + CFGA fdata)) as [Hov|Hok].
-      { rewrite (t_body_overrunA fdata fs) by (unfold MAX_INPUT; lia). exact (DG_OVERRUN ar HI sp M0 CTX fs fdata p0 p1 can A0 CAP crC HCAP HltC Hge6 Hov). }
+      { rewrite (t_body_overrunA fdata fs) by (unfold MAX_INPUT; lia). exact (DG_OVERRUN ar HI sp M0 CTX fs fdata auxvp p1 can A0 CAP crC HCAP HltC Hge6 Hov). }
       rewrite (t_body_okA fdata fs) by (unfold MAX_INPUT; lia).
-      apply (@hdr_okA PropExec.fx0 scfg L ar C IL HI HIok sp Hsp Hal DL fs fdata p0 p1 can M0 [] A0 CAP HCAP crC HltC Hok); [| apply t_emit_has_nil].
+      apply (@hdr_okA PropExec.fx0 scfg L ar C IL HI HIok sp Hsp Hal DL fs fdata auxvp p1 can M0 [] A0 CAP HCAP crC HltC Hok); [| apply t_emit_has_nil].
       assert (HPLeq : PLA fdata = PLv) by (unfold PLv, PLA; pose proof (CFGA_range sp fdata); lia).
-      apply (@drv_targetA PropExec.fx0 scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata p0 p1 can M0 M0def [] A0 CAP HCAP crC HltC Hok); [ | | apply t_emit_has_nil].
+      apply (@drv_targetA PropExec.fx0 scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata auxvp p1 can M0 M0def [] A0 CAP HCAP crC HltC Hok); [ | | apply t_emit_has_nil].
       * intros HPLp. unfold acredit_ok. rewrite HPLeq. lia.
-      * apply (@drv_loopA scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata p0 p1 can M0 M0def A0 CAP HCAP HltC Lay (LSt ar) ILY HPR DLL DLC LIok [] crC AUXV).
+      * apply (@drv_loopA scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata auxvp p1 can M0 M0def A0 CAP HCAP HltC Lay (LSt ar) ILY HPR DLL DLC LIok [] crC AUXV).
         -- (* [comment removed for export] *)
            pose proof (CALLSA_range sp fdata) as HCL.
            unfold Ba0DrvE_b.lib_roomA, Ba0DrvE_b.credit_scaleA, credit_le, cr1A. rewrite HPLeq. cbn [fst snd].
            split.
            ++ destruct (PLv =? 0)%Z eqn:EP; unfold adebit; cbn [fst snd]; split; nia.
            ++ intros c Hc. destruct (dlla_frames Lay L DLL c Hc) as (LK1 & LK2). change (ff_count c []) with 0%nat. change (Z.of_nat 0) with 0. nia.
-        -- exact (tail_XA scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata p0 p1 can M0 M0def A0 CAP HCAP Lay (LSt ar) ILY HEX FNok LSXa).
+        -- exact (tail_XA scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata auxvp p1 can M0 M0def A0 CAP HCAP Lay (LSt ar) ILY HEX FNok LSXa).
     + (* [comment removed for export] *)
       intros Hge. rewrite (t_body_refusedA fdata fs) by (unfold MAX_INPUT; lia).
-      exact (DG_REFUSE ar HI sp M0 CTX path fs fdata p0 p1 can A0 Hlk Hge).
+      exact (DG_REFUSE ar HI sp M0 CTX path fs fdata auxvp p1 can A0 Hlk Hge).
   - apply t_body_nilA.
 Qed.
 End Main.

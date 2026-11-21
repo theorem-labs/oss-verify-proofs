@@ -6,9 +6,10 @@
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module paths, module names and numbers changed; 1266 of its 1332 lines of code are new or changed and 1014 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_dec_E.v, with its module paths, module names and numbers changed; 1247 of its 1346 lines of code are new or changed and 1233 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): the FAILED and the FAST arm of put (preset_file.c:454-476, A_put 0x8449c,
    612 bytes, FRAME_put 112), the image-B twin of lib/A/FSW_put.v, and their composition into the two arms of
-   lib/B/FSH_Fn_writer.v `put_spec` (the CTX-drop text, by path from a working branch dda8331bd25).
+   lib/B/FSH_Fn_writer.v `put_spec` (the CTX-drop text, by path from a working branch).
    FAILED arm: `put` reads o->failed first; when it is set the function returns at once. The run is the prologue,
    UBSan's alignment check of o, the inline ASan shadow check of o + 24, the branch, the epilogue, and ends at the
    `ret` 0x84668. It makes no runtime and no allocator call, so it needs only FSW_K's entry state and the U-form
@@ -43,10 +44,10 @@
    fsw_ecall_preU_at, fsw_intrin_atU, the same_below lemmas), lib/B/FSW_ret.v (fsw_retU, fsT_ret_regions),
    lib/A/FSupoisonStack.v (fsw_ARU_stack_ra, image-agnostic). The decoded code is this file's own table of put's
    153 words (fsw_put_tbl, built like lib/A/FSW_writer_tbl.v over YB1w's tfib_A_put .. tfib_E_put).
-   TAKEN FROM: lib/A/FSW_put.v at a working branch 3cd58aafb9b (the lane's named template) with the one later
-   change of e78287af146 (RT_memcpy, the single interceptor field instead of the whole FsRt record): the definitions,
+   TAKEN FROM: lib/A/FSW_put.v at a working branch (the lane's named template) with the one later
+   change (RT_memcpy, the single interceptor field instead of the whole FsRt record): the definitions,
    the helper section `pf`, put_failed_run and put_fast_run, re-measured as above; lib/A/FSW_put_close.v at
-   a working branch 14dd44c5348: put_pf_wevk0, put_pf_calls_failed / _fast, put_post, put_close_failed /
+   a working branch: put_pf_wevk0, put_pf_calls_failed / _fast, put_post, put_close_failed /
    _fast. The old-line image-B walk lib/B/Prog/put.v (a working branch) was not used.
 
    RULE-24: proves function put (omx-clap-core/fuzz_state, image B = asan-ubsan, entry 0x8449c, failed + fast arms)
@@ -329,7 +330,7 @@ Hypothesis HSS : FsShadowSyms B.
 (* the runtime contracts (lib/B/FSH_Rt.v:111) and the image facts (:76): the FAST arm calls __asan_memcpy
    (fr_memcpy) and reads fs's read-only literals through fs_img_facts' cstr_ok. put_failed_run uses neither. *)
 (* only the PC_memcpy interceptor's contract, FSH_Rt.v's FsRt field fr_memcpy (:117): the walk projects nothing else
-   from the runtime record, so it takes just this field (lib/A/FSW_put.v at e78287af146 does the same). *)
+   from the runtime record, so it takes just this field (lib/A/FSW_put.v does the same). *)
 Hypothesis RT_memcpy : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Hypothesis IMG : fs_img_facts tfibsegs B.
 
@@ -1448,7 +1449,7 @@ unfold wpost, wcalls. cbn [WriterApp.w_calls length Z.of_nat]. rewrite Z.mul_0_r
 Qed.
 
 (* ================= the two arms in put_spec's form =================
-   lib/A/FSW_put_close.v (a working branch 14dd44c5348) over image B. The run lemmas above state the
+   lib/A/FSW_put_close.v (a working branch) over image B. The run lemmas above state the
    journal count as `3 * wcalls st'`, the count put_spec had when lib/A/FSW_put.v was proved; lib/B/FSH_Fn_writer.v
    put_spec (:240) reports `wevk cap st'` (:120), and on both arms put1 makes no request, so the two are the same
    number, 0 (put_pf_wevk0). put_close_failed / put_close_fast are put_spec's conclusion, verbatim (put_post), on the

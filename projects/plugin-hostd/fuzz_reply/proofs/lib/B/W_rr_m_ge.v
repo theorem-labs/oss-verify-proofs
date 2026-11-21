@@ -29,7 +29,7 @@
      largest request at any addresses is W_tr_peak.v tr_sz_measures / gesture_end_tr_sz (rgr_key); the sum-form
      arithmetic copied from lib/B/W_ge_room.v (rgr_tr_alloc_cons .. rgr_ge_tr_alloc_nonneg) is gone. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 in the room form (lane RRX), the image-A twin's (a Theorem Labs lane,
-   commit f4cd818e98d, lib/A/W_rr_m_ge.v) over image B's hop: GE over ANY allocator relation ARx, IN PLACE (the AR
+    lib/A/W_rr_m_ge.v) over image B's hop: GE over ANY allocator relation ARx, IN PLACE (the AR
    theorem is dropped).  Section c is W_relay_remove_cx.v's generic block, verbatim; rr_m_ge : hop_ge_stmt B PST ARx
    MT RP MMAX RG.  The laws and the journal lemmas are their _x twins (alx_blocks, sep_blocks_x, blk_img_x,
    ajournal_gx_AR_x), the call helpers W_rr_m_kit.v's generic ones (rm_gx_callS, rm_ajgx_keep_img with the PST premise
@@ -43,6 +43,7 @@
    continuation receives the callee's head set, so the A twin's HP0 steps (EHq / EHp2) are not needed and RRF keeps
    the callee's Hp2; image B's rmbud has no `0 <= spent` conjunct (W_rr_match_cx.v), so its room is its fifth
    conjunct; g_out's facts are the kit's rm_aout_facts (W_rr_m_kit.v; the A twin cites W_gesture_end.aout_facts). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -741,7 +742,7 @@ intros a Ha. apply PSTG. unfold rr_gcells. destruct Ha as [Ha | [Ha | [Ha | Ha]]
 - do 3 apply Exists_cons_tl. apply Exists_cons_hd. cbn [fst snd]. lia.
 - do 4 apply Exists_cons_tl. apply Exists_cons_hd. cbn [fst snd]. lia.
 Qed.
-(* the room round's count after gestures_end (the step of commit 67327a6003d, W_gse_cut.v gse_cnt_at): the blocks
+(* the room round's count after gestures_end (the step of W_gse_cut.v gse_cnt_at): the blocks
    lose gse_blks and the g_out block (at most one, aout_blks) is replaced, so a live P-count rises by at most one,
    under gse_pk's 4 *)
 Lemma rgl_cnt_ge : forall TB (G : list (Z * Z)) cap out cap' out' R l l',

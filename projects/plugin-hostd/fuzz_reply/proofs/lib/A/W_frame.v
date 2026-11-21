@@ -5,6 +5,7 @@
    flag store that ends a fake frame), lib/YC1h.v (atoms above A_LIM, after-call with high atoms), lib/YC45.v (the
    plain pi run that stops at a call) and the generic lemmas of lib/A/AC8j.v.  Only the symbol type, the module paths
    and PALibF's two stack_malloc fields (fuzz_reply calls classes 0 and 1) change. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* A fuzz_reply function with a fake frame (relay_add, relay_finish, relay_remove, relay_instance_gone,
    LLVMFuzzerTestOneInput) reads the stack-use-after-return word through the GOT slot A_OBJ 1 (0x9da28), calls
    __asan_stack_malloc_<cid>, poisons the frame's shadow, and at its exit stores 0 at the frame's flag
@@ -1123,7 +1124,7 @@ Qed.
    lemma without it (acall_kept's image clause, Reusable/YCbq.v:830, excepts errno), kept so that no caller
    changes.  A walk that must carry errno across the seat uses this one with errno_not_aowned below.  The last
    conjunct is the seat's state as a set_fs of the call's (stack_malloc_post, Reusable/YG01.v:571), the form the
-   walks' meter hypothesis MO_FR takes (W_frame_x.v:810 states the same for the _x seat). *)
+   walks' meter hypothesis MO_FR takes (W_frame_x.v:811 states the same for the _x seat). *)
 Lemma aj_stack_malloc_pres_at_raw : forall cid, astack_malloc_pres cid -> 0 <= cid <= 10 ->
 forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k (o : Z) raw,
 ajournal STK sp0 FP ly S W0 mem md own lyc Sc W memT mdc k ->

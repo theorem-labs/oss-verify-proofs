@@ -1,4 +1,5 @@
 (* This file states or restates instruction words of the task's compiled program (third-party object code: the upstream library at its pinned commit, the C library, the sanitizer runtime and the task authors' wrapper) for use in the proofs - see NOTICE. No Anthropic licence header is applied to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise on the writev wall statements). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -913,6 +914,7 @@ Definition HYP_writev1_wall_stmt (R : shape_rel RSEGS) : Prop :=
   fetch_word RSEGS pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2 ^ 31)%Z ->
   getr regs 17 = Z_to_bv 64 66 -> getr regs 10 = Z_to_bv 64 fd -> getr regs 11 = iov -> getr regs 12 = Z_to_bv 64 1 ->
   rdn RSEGS m iov 8%nat = Some (word_to_le_bytes 8 b1) ->
@@ -936,6 +938,7 @@ Definition HYP_writev2_wall_stmt (R : shape_rel RSEGS) : Prop :=
   fetch_word RSEGS pc = Some w -> is_ecall w = true ->
   m_halted model = None ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2 ^ 31)%Z ->
   getr regs 17 = Z_to_bv 64 66 -> getr regs 10 = Z_to_bv 64 fd -> getr regs 11 = iov -> getr regs 12 = Z_to_bv 64 2 ->
   rdn RSEGS m iov 8%nat = Some (word_to_le_bytes 8 b1) ->

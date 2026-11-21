@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: DMOD has a fourth field, the channel reader, so the DMOD destructs in trun_empty, trun_alloc and trun_main name four fields. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -135,7 +136,7 @@ Section S.
              (t_emit (W 1 emit_line) KT).
   Proof.
     intros until x31. intros DH DM FRM ST MI CJ ER DS INC SOF SEF MFR TFR Hc HK KB.
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     eapply rz_step_evt; [exact MOK'|].
     unfold PINITFLAG. do 4 step. apply evt_done.
     change (Z_to_bv 64 215232) with (Z_to_bv 64 PINITFLAG).
@@ -165,7 +166,7 @@ Section S.
              (t_emit (W 1 emit_line) KT).
   Proof.
     intros until x31. intros len plen DH RP BUF CL0 CL6 LEN2 LENC PNZ DM FRM ST MI CJ ER DS INC SOF SEF MFR TFR Hc HK KB. unfold PINCB in INC.
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (dheap_block_range _ _ _ _ _ (p, A, cap) DH ltac:(left; reflexivity)) as BR. cbn [blk_addr blk_size fst snd] in BR.
     pose proof BR as (BR1 & BR2 & BR3 & BR4 & BR5). unfold alloc_ceiling in BR4.
     try (assert (BR6 : 0x56000 <= A) by (destruct BR5; lia); clear BR5).   (* [comment removed for export] *)
@@ -284,7 +285,7 @@ Section S.
   Proof.
     intros t0 t1 t2 a4 a5 a6 a7 t3 t4 t5 t6 F fc m mo cs d p junk data cl e KT len plen.
     intros DH RP BUF CL0 CL6 LEN2 LENC DM FRM ST MI CJ ER IFL DS SOF SEF MFR HK KB.
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (dheap_block_range _ _ _ _ _ (p, A, cap) DH ltac:(left; reflexivity)) as BR. cbn [blk_addr blk_size fst snd] in BR.
     pose proof BR as (BR1 & BR2 & BR3 & BR4 & BR5). unfold alloc_ceiling in BR4.
     try (assert (BR6 : 0x56000 <= A) by (destruct BR5; lia); clear BR5).   (* [comment removed for export] *)

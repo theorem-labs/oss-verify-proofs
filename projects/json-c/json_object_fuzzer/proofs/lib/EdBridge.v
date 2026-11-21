@@ -1,6 +1,8 @@
 From Stdlib Require Import ZArith List Bool Lia Setoid.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Import EdAlloc.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QwNp.
 Import ListNotations.
 Open Scope bv_scope.
 Open Scope sys_scope.
@@ -43,15 +45,12 @@ Definition ed_rw_arm (prot flags len off : word) : Prop :=
   mmap_off_aligned_b off = true /\ mmap_anon_b flags = true /\ w_is0 len = false
   /\ mmap_modeled_b prot flags off = true.
 
-Definition ed_rw_grant (flags len : word) (m : Model)
+Definition ed_rw_grant (addr flags len : word) (m : Model)
     (eff : SyscallEffect) (m' : Model) (evs : list event) : Prop :=
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
-  exists a, ((bv_unsigned a mod page_size = 0)%Z
-             /\ (0 < bv_unsigned a)%Z
-             /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-             /\ region_free (vm_reserved h ++ vm_maps h) a n = true
+  exists a, (linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
              /\ mmap_noreserve_backed_ok flags m nZ = true)
     /\ eff = mkEffect a [] [(a, n)]
     /\ m' = with_mmap_backing flags a n
@@ -66,15 +65,12 @@ Definition ed_reserve_arm (prot flags len off : word) : Prop :=
   mmap_off_aligned_b off = true /\ mmap_anon_b flags = true /\ w_is0 len = false
   /\ mmap_modeled_b prot flags off = false /\ mmap_noaccess_b prot flags off = true.
 
-Definition ed_reserve_grant (flags len : word) (m : Model)
+Definition ed_reserve_grant (addr flags len : word) (m : Model)
     (eff : SyscallEffect) (m' : Model) (evs : list event) : Prop :=
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
-  exists a, ((bv_unsigned a mod page_size = 0)%Z
-             /\ (0 < bv_unsigned a)%Z
-             /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-             /\ region_free (vm_reserved h ++ vm_maps h) a n = true)
+  exists a, linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
     /\ eff = mkEffectU a [] [] [(a, n)] [] []
     /\ m' = with_mmap_backing flags a n
               (with_vmmaps
@@ -93,7 +89,20 @@ Definition ed_expose_arm (m : Model) (addr len prot : word) : Prop :=
   /\ (map_contains (vm_noaccess (m_vmmaps m)) addr
         (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))
       && map_contains (vm_maps (m_vmmaps m)) addr
-        (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) = true.
+        (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) = true
+  (* #38 put a vDSO/vvar gate in mprotect_spec AHEAD of the containment test and
+     ahead of anything that reads prot (75d69e00 Sys/Mm/Mprotect.v:293): a request
+     that meets either mapping is `unmodeled`, not answered, because
+     __setup_additional_pages maps the text VM_MAYWRITE and the model has no term
+     for a vDSO whose bytes changed.  Without this conjunct ed_expose_spec is FALSE
+     at #38 in its right-to-left direction: ed_pick has an `unmodeled` branch to
+     reach and no fact with which to reach it.  It is a GATE of the arm, mirroring the model's
+     own gate, not a hypothesis bolted onto a consumer; it goes LAST so the
+     conjunct order of the first six is untouched.  The mmap arms do not need it:
+     their gate is region_free over the whole vm_reserved, which now ends with the
+     vDSO pair, so it already covers them. *)
+  /\ region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr
+       (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true.
 
 Definition ed_expose_grant (m : Model) (addr len : word)
     (eff : SyscallEffect) (m' : Model) (evs : list event) : Prop :=
@@ -512,44 +521,71 @@ Proof. intros m addr len eff m' evs [(-> & _ & _) | (-> & _ & _)]; reflexivity. 
 Lemma ed_refused_intro : forall m, ed_refused m (mkEffect (errno_ret ENOMEM) [] []) m [].
 Proof. intros m. split; [reflexivity | split; reflexivity]. Qed.
 
+(* A successful answer to a freely placed anonymous mmap rules out the decline for the same
+   arguments: mmap_spec tests [place_declined_b] ahead of every answer of the modeled and the
+   noaccess arms and answers unmodeled (QwNp.mmap_declined_not_ok).  So a lemma given that
+   answer takes no place_declined_b premise (LPS 727298f3). *)
+Lemma ed_ok_not_declined : forall i addr len prot flags fd off m eff m' evs,
+  ed_mmap_call i addr len prot flags fd off ->
+  mmap_off_aligned_b off = true -> mmap_anon_b flags = true -> w_is0 len = false ->
+  (mmap_modeled_b prot flags off || mmap_noaccess_b prot flags off)%bool = true ->
+  syscall_spec i m (Ok eff m' evs) ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false.
+Proof.
+  intros i addr len prot flags fd off m eff m' evs Hc Hoff Hanon Hlen Hg Hs.
+  destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)))
+    eqn:Hpd; [exfalso | reflexivity].
+  exact (QwNp.mmap_declined_not_ok addr len prot flags fd off i m eff m' evs Hoff Hanon Hlen Hg Hpd
+           (proj1 (ed_mmap_call_spec i addr len prot flags fd off m _ Hc) Hs)).
+Qed.
+
 (* ========================================================================= *)
 (* (1) anonymous rw, kernel-placed: refusable = mmap_grant_refusable.        *)
+(* LPS 727298f3: mmap_spec declines (unmodeled) a freely placed call when     *)
+(* place_declined_b holds, ahead of its alt, so every lemma of arms (1) and   *)
+(* (2) takes the model's four-argument premise that it does not, except the  *)
+(* inversion lemmas: given a successful answer, they derive it               *)
+(* (ed_ok_not_declined).                                                      *)
 
 Lemma ed_rw_spec : forall addr len prot flags fd off i m eff m' evs,
   ed_rw_arm prot flags len off ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   mmap_spec addr len prot flags fd off i m (Ok eff m' evs)
-  <-> ed_refused m eff m' evs \/ ed_rw_grant flags len m eff m' evs.
+  <-> ed_refused m eff m' evs \/ ed_rw_grant addr flags len m eff m' evs.
 Proof.
-  intros addr len prot flags fd off i m eff m' evs (Hoff & Hanon & Hlen & Hmod).
+  intros addr len prot flags fd off i m eff m' evs (Hoff & Hanon & Hlen & Hmod) Hpd.
   unfold mmap_spec. ed_spec_tac.
 Qed.
 
 Lemma ed_rw_shape : forall i addr len prot flags fd off m,
   ed_mmap_call i addr len prot flags fd off ->
   ed_rw_arm prot flags len off ->
-  arm_shape i m (mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len)))
-    (ed_refused m) (ed_rw_grant flags len m).
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
+  arm_shape i m (mmap_grant_refusable addr flags m (page_round_up_Z (bv_unsigned len)))
+    (ed_refused m) (ed_rw_grant addr flags len m).
 Proof.
-  intros i addr len prot flags fd off m Hc Harm.
+  intros i addr len prot flags fd off m Hc Harm Hpd.
   split; [exact (ed_mmap_call_sysno _ _ _ _ _ _ _ Hc)|].
   split.
   { intros eff m' evs. rewrite (ed_mmap_call_spec _ _ _ _ _ _ _ _ _ Hc).
-    apply ed_rw_spec. exact Harm. }
+    apply ed_rw_spec; [exact Harm | exact Hpd]. }
   split; [exact (ed_refused_ret m)|].
+  pose proof Harm as (_ & _ & Hlen & _).
+  destruct (ed_nZ_pos_aligned len Hlen) as [Hn Hnal].
   split.
   { intros eff m' evs HG. unfold ed_rw_grant in HG. cbv zeta in HG.
-    destruct HG as (a & (Hal & Hpos & Htop & Hfree & Hb) & -> & _).
+    destruct HG as (a & (Hpl & Hb) & -> & _).
+    destruct (linux_place_admissible _ _ _ _ _ Hn Hnal Hpl) as (_ & _ & Htop & _).
     exact (ed_below_top_ne_enomem a (m_vmmaps m) _ (ed_nZ_nonneg len) Htop). }
   unfold mmap_grant_refusable. split.
   - intros H. apply orb_false_iff in H as [H1 H2].
     apply negb_false_iff in H1. apply negb_false_iff in H2.
-    apply vm_gap_available_iff in H2 as (a & Hal & Hpos & Htop & Hfree).
+    apply (vm_place_available_iff _ _ _ _ Hn Hnal) in H2 as (a & Hpl).
     unfold ed_rw_grant. cbv zeta. do 3 eexists. exists a. ed_solve.
   - intros (eff & m' & evs & HG). unfold ed_rw_grant in HG. cbv zeta in HG.
-    destruct HG as (a & (Hal & Hpos & Htop & Hfree & Hb) & _).
+    destruct HG as (a & (Hpl & Hb) & _).
     rewrite Hb. cbn [negb orb].
-    rewrite (proj2 (vm_gap_available_iff _ _)
-               (ex_intro _ a (conj Hal (conj Hpos (conj Htop Hfree))))).
+    rewrite (proj2 (vm_place_available_iff _ _ _ _ Hn Hnal) (ex_intro _ a Hpl)).
     reflexivity.
 Qed.
 
@@ -559,24 +595,28 @@ Lemma ed_rw_inversion : forall i addr len prot flags fd off m eff m' evs,
   ed_rw_arm prot flags len off ->
   syscall_spec i m (Ok eff m' evs) ->
   ~ spurious_refusal_cfg (alloc_only_cfg false) i m eff ->
-  ed_rw_grant flags len m eff m' evs
+  ed_rw_grant addr flags len m eff m' evs
   \/ (ed_refused m eff m' evs
-      /\ mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len)) = true).
+      /\ mmap_grant_refusable addr flags m (page_round_up_Z (bv_unsigned len)) = true).
 Proof.
-  intros i addr len prot flags fd off m eff m' evs Hc Ha.
-  exact (arm_inversion _ _ _ _ _ (ed_rw_shape i addr len prot flags fd off m Hc Ha) eff m' evs).
+  intros i addr len prot flags fd off m eff m' evs Hc Ha Hs.
+  pose proof Ha as (Hoff & Hanon & Hlen & Hmod).
+  pose proof (ed_ok_not_declined i addr len prot flags fd off m eff m' evs Hc Hoff Hanon Hlen
+                ltac:(rewrite Hmod; reflexivity) Hs) as Hpd.
+  exact (arm_inversion _ _ _ _ _ (ed_rw_shape i addr len prot flags fd off m Hc Ha Hpd) eff m' evs Hs).
 Qed.
 
 (** (b) a forced refusal is an outcome, and the filter keeps it. *)
 Lemma ed_rw_forced : forall i addr len prot flags fd off m,
   ed_mmap_call i addr len prot flags fd off ->
   ed_rw_arm prot flags len off ->
-  mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len)) = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
+  mmap_grant_refusable addr flags m (page_round_up_Z (bv_unsigned len)) = true ->
   syscall_spec i m (Ok (mkEffect (errno_ret ENOMEM) [] []) m [])
   /\ ~ spurious_refusal_cfg (alloc_only_cfg false) i m (mkEffect (errno_ret ENOMEM) [] []).
 Proof.
-  intros i addr len prot flags fd off m Hc Ha HR.
-  exact (arm_forced _ _ _ _ _ (ed_rw_shape i addr len prot flags fd off m Hc Ha) HR
+  intros i addr len prot flags fd off m Hc Ha Hpd HR.
+  exact (arm_forced _ _ _ _ _ (ed_rw_shape i addr len prot flags fd off m Hc Ha Hpd) HR
            _ _ _ (ed_refused_intro m)).
 Qed.
 
@@ -584,24 +624,26 @@ Qed.
 Lemma ed_rw_grant_nonspurious : forall i addr len prot flags fd off m eff m' evs,
   ed_mmap_call i addr len prot flags fd off ->
   ed_rw_arm prot flags len off ->
-  ed_rw_grant flags len m eff m' evs ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
+  ed_rw_grant addr flags len m eff m' evs ->
   syscall_spec i m (Ok eff m' evs)
   /\ ~ spurious_refusal_cfg (alloc_only_cfg false) i m eff.
 Proof.
-  intros i addr len prot flags fd off m eff m' evs Hc Ha.
-  exact (arm_grant _ _ _ _ _ (ed_rw_shape i addr len prot flags fd off m Hc Ha) eff m' evs).
+  intros i addr len prot flags fd off m eff m' evs Hc Ha Hpd.
+  exact (arm_grant _ _ _ _ _ (ed_rw_shape i addr len prot flags fd off m Hc Ha Hpd) eff m' evs).
 Qed.
 
 Lemma ed_rw_exact : forall i addr len prot flags fd off m eff m' evs,
   ed_mmap_call i addr len prot flags fd off ->
   ed_rw_arm prot flags len off ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   (syscall_spec i m (Ok eff m' evs) /\ ~ spurious_refusal_cfg (alloc_only_cfg false) i m eff)
-  <-> ed_rw_grant flags len m eff m' evs
+  <-> ed_rw_grant addr flags len m eff m' evs
       \/ (ed_refused m eff m' evs
-          /\ mmap_grant_refusable flags m (page_round_up_Z (bv_unsigned len)) = true).
+          /\ mmap_grant_refusable addr flags m (page_round_up_Z (bv_unsigned len)) = true).
 Proof.
-  intros i addr len prot flags fd off m eff m' evs Hc Ha.
-  exact (arm_exact _ _ _ _ _ (ed_rw_shape i addr len prot flags fd off m Hc Ha) eff m' evs).
+  intros i addr len prot flags fd off m eff m' evs Hc Ha Hpd.
+  exact (arm_exact _ _ _ _ _ (ed_rw_shape i addr len prot flags fd off m Hc Ha Hpd) eff m' evs).
 Qed.
 
 (* ========================================================================= *)
@@ -609,37 +651,41 @@ Qed.
 
 Lemma ed_reserve_spec : forall addr len prot flags fd off i m eff m' evs,
   ed_reserve_arm prot flags len off ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   mmap_spec addr len prot flags fd off i m (Ok eff m' evs)
-  <-> ed_refused m eff m' evs \/ ed_reserve_grant flags len m eff m' evs.
+  <-> ed_refused m eff m' evs \/ ed_reserve_grant addr flags len m eff m' evs.
 Proof.
-  intros addr len prot flags fd off i m eff m' evs (Hoff & Hanon & Hlen & Hmod & Hna).
+  intros addr len prot flags fd off i m eff m' evs (Hoff & Hanon & Hlen & Hmod & Hna) Hpd.
   unfold mmap_spec. ed_spec_tac.
 Qed.
 
 Lemma ed_reserve_shape : forall i addr len prot flags fd off m,
   ed_mmap_call i addr len prot flags fd off ->
   ed_reserve_arm prot flags len off ->
-  arm_shape i m (mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len)))
-    (ed_refused m) (ed_reserve_grant flags len m).
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
+  arm_shape i m (mmap_reserve_refusable addr m (page_round_up_Z (bv_unsigned len)))
+    (ed_refused m) (ed_reserve_grant addr flags len m).
 Proof.
-  intros i addr len prot flags fd off m Hc Harm.
+  intros i addr len prot flags fd off m Hc Harm Hpd.
   split; [exact (ed_mmap_call_sysno _ _ _ _ _ _ _ Hc)|].
   split.
   { intros eff m' evs. rewrite (ed_mmap_call_spec _ _ _ _ _ _ _ _ _ Hc).
-    apply ed_reserve_spec. exact Harm. }
+    apply ed_reserve_spec; [exact Harm | exact Hpd]. }
   split; [exact (ed_refused_ret m)|].
+  pose proof Harm as (_ & _ & Hlen & _).
+  destruct (ed_nZ_pos_aligned len Hlen) as [Hn Hnal].
   split.
   { intros eff m' evs HG. unfold ed_reserve_grant in HG. cbv zeta in HG.
-    destruct HG as (a & (Hal & Hpos & Htop & Hfree) & -> & _).
+    destruct HG as (a & Hpl & -> & _).
+    destruct (linux_place_admissible _ _ _ _ _ Hn Hnal Hpl) as (_ & _ & Htop & _).
     exact (ed_below_top_ne_enomem a (m_vmmaps m) _ (ed_nZ_nonneg len) Htop). }
   unfold mmap_reserve_refusable. split.
   - intros H. apply negb_false_iff in H.
-    apply vm_gap_available_iff in H as (a & Hal & Hpos & Htop & Hfree).
+    apply (vm_place_available_iff _ _ _ _ Hn Hnal) in H as (a & Hpl).
     unfold ed_reserve_grant. cbv zeta. do 3 eexists. exists a. ed_solve.
   - intros (eff & m' & evs & HG). unfold ed_reserve_grant in HG. cbv zeta in HG.
-    destruct HG as (a & (Hal & Hpos & Htop & Hfree) & _).
-    rewrite (proj2 (vm_gap_available_iff _ _)
-               (ex_intro _ a (conj Hal (conj Hpos (conj Htop Hfree))))).
+    destruct HG as (a & Hpl & _).
+    rewrite (proj2 (vm_place_available_iff _ _ _ _ Hn Hnal) (ex_intro _ a Hpl)).
     reflexivity.
 Qed.
 
@@ -648,49 +694,55 @@ Lemma ed_reserve_inversion : forall i addr len prot flags fd off m eff m' evs,
   ed_reserve_arm prot flags len off ->
   syscall_spec i m (Ok eff m' evs) ->
   ~ spurious_refusal_cfg (alloc_only_cfg false) i m eff ->
-  ed_reserve_grant flags len m eff m' evs
+  ed_reserve_grant addr flags len m eff m' evs
   \/ (ed_refused m eff m' evs
-      /\ mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len)) = true).
+      /\ mmap_reserve_refusable addr m (page_round_up_Z (bv_unsigned len)) = true).
 Proof.
-  intros i addr len prot flags fd off m eff m' evs Hc Ha.
-  exact (arm_inversion _ _ _ _ _ (ed_reserve_shape i addr len prot flags fd off m Hc Ha)
-           eff m' evs).
+  intros i addr len prot flags fd off m eff m' evs Hc Ha Hs.
+  pose proof Ha as (Hoff & Hanon & Hlen & Hmod & Hna).
+  pose proof (ed_ok_not_declined i addr len prot flags fd off m eff m' evs Hc Hoff Hanon Hlen
+                ltac:(rewrite Hmod, Hna; reflexivity) Hs) as Hpd.
+  exact (arm_inversion _ _ _ _ _ (ed_reserve_shape i addr len prot flags fd off m Hc Ha Hpd)
+           eff m' evs Hs).
 Qed.
 
 Lemma ed_reserve_forced : forall i addr len prot flags fd off m,
   ed_mmap_call i addr len prot flags fd off ->
   ed_reserve_arm prot flags len off ->
-  mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len)) = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
+  mmap_reserve_refusable addr m (page_round_up_Z (bv_unsigned len)) = true ->
   syscall_spec i m (Ok (mkEffect (errno_ret ENOMEM) [] []) m [])
   /\ ~ spurious_refusal_cfg (alloc_only_cfg false) i m (mkEffect (errno_ret ENOMEM) [] []).
 Proof.
-  intros i addr len prot flags fd off m Hc Ha HR.
-  exact (arm_forced _ _ _ _ _ (ed_reserve_shape i addr len prot flags fd off m Hc Ha) HR
+  intros i addr len prot flags fd off m Hc Ha Hpd HR.
+  exact (arm_forced _ _ _ _ _ (ed_reserve_shape i addr len prot flags fd off m Hc Ha Hpd) HR
            _ _ _ (ed_refused_intro m)).
 Qed.
 
 Lemma ed_reserve_grant_nonspurious : forall i addr len prot flags fd off m eff m' evs,
   ed_mmap_call i addr len prot flags fd off ->
   ed_reserve_arm prot flags len off ->
-  ed_reserve_grant flags len m eff m' evs ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
+  ed_reserve_grant addr flags len m eff m' evs ->
   syscall_spec i m (Ok eff m' evs)
   /\ ~ spurious_refusal_cfg (alloc_only_cfg false) i m eff.
 Proof.
-  intros i addr len prot flags fd off m eff m' evs Hc Ha.
-  exact (arm_grant _ _ _ _ _ (ed_reserve_shape i addr len prot flags fd off m Hc Ha)
+  intros i addr len prot flags fd off m eff m' evs Hc Ha Hpd.
+  exact (arm_grant _ _ _ _ _ (ed_reserve_shape i addr len prot flags fd off m Hc Ha Hpd)
            eff m' evs).
 Qed.
 
 Lemma ed_reserve_exact : forall i addr len prot flags fd off m eff m' evs,
   ed_mmap_call i addr len prot flags fd off ->
   ed_reserve_arm prot flags len off ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   (syscall_spec i m (Ok eff m' evs) /\ ~ spurious_refusal_cfg (alloc_only_cfg false) i m eff)
-  <-> ed_reserve_grant flags len m eff m' evs
+  <-> ed_reserve_grant addr flags len m eff m' evs
       \/ (ed_refused m eff m' evs
-          /\ mmap_reserve_refusable m (page_round_up_Z (bv_unsigned len)) = true).
+          /\ mmap_reserve_refusable addr m (page_round_up_Z (bv_unsigned len)) = true).
 Proof.
-  intros i addr len prot flags fd off m eff m' evs Hc Ha.
-  exact (arm_exact _ _ _ _ _ (ed_reserve_shape i addr len prot flags fd off m Hc Ha)
+  intros i addr len prot flags fd off m eff m' evs Hc Ha Hpd.
+  exact (arm_exact _ _ _ _ _ (ed_reserve_shape i addr len prot flags fd off m Hc Ha Hpd)
            eff m' evs).
 Qed.
 
@@ -702,7 +754,7 @@ Lemma ed_expose_spec : forall addr len prot i m eff m' evs,
   mprotect_spec addr len prot i m (Ok eff m' evs)
   <-> ed_refused m eff m' evs \/ ed_expose_grant m addr len eff m' evs.
 Proof.
-  intros addr len prot i m eff m' evs (Hgc & Hal & Hlen & Hwrap & Hmod & Hmc).
+  intros addr len prot i m eff m' evs (Hgc & Hal & Hlen & Hwrap & Hmod & Hmc & Hvd).
   unfold mprotect_spec. ed_spec_tac.
 Qed.
 
@@ -1878,7 +1930,11 @@ Definition ed_mremap_arm (m : Model) (old old_size new_size flags : word) : Prop
   /\ page_align_is0_b new_size = false
   /\ page_align_is0_b old_size = false
   /\ (mremap_source_b (m_vmmaps m) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (page_round_up_Z (bv_unsigned old_size))
-      && mremap_backing_uniform_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))) = true.
+      && mremap_backing_uniform_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))) = true
+  (* LPS 727298f3: mremap_spec answers a deterministic -EINVAL for a page-aligned new
+     length above TASK_SIZE, ahead of the old-length gate; the arm is below it.  Last,
+     so the positions of the gates above keep. *)
+  /\ (TASK_SIZE <? page_round_up_Z (bv_unsigned new_size))%Z = false.
 
 Lemma ed_mremap_call_spec : forall i old old_size new_size flags,
   ed_mremap_call i old old_size new_size flags -> forall m o,
@@ -1895,7 +1951,7 @@ Proof. intros i old old_size new_size flags (E & _). left. exact E. Qed.
 Lemma ed_mremap_old_ne_enomem : forall m old old_size new_size flags,
   ed_mremap_arm m old old_size new_size flags -> old <> errno_ret ENOMEM.
 Proof.
-  intros m old old_size new_size flags (_ & _ & _ & _ & Hs).
+  intros m old old_size new_size flags (_ & _ & _ & _ & Hs & _).
   apply andb_true_iff in Hs as [Hs _]. unfold mremap_source_b in Hs.
   apply andb_true_iff in Hs as [Hs _]. apply andb_true_iff in Hs as [Hs _].
   apply andb_true_iff in Hs as [Hs _]. apply Z.leb_le in Hs.
@@ -1919,11 +1975,14 @@ Lemma ed_mremap_shrink_spec : forall old old_size new_size flags i m eff m' evs,
       \/ (eff = mremap_inplace_effect old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size))
           /\ m' = mremap_model_next m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) /\ evs = []).
 Proof.
-  intros old old_size new_size flags i m eff m' evs (Hfl & Hal & Hn0 & Ho0 & Hsrc) Hlt.
+  intros old old_size new_size flags i m eff m' evs (Hfl & Hal & Hn0 & Ho0 & Hsrc & Hts) Hlt.
   assert (Heq : ((page_round_up_Z (bv_unsigned old_size)) =? (page_round_up_Z (bv_unsigned new_size)))%Z = false) by (apply Z.eqb_neq; apply Z.ltb_lt in Hlt; lia).
   unfold mremap_spec. ed_spec_tac.
 Qed.
 
+(* LPS 727298f3 (as at 75d69e00): a grow with room in place takes it when the budget
+   allows ([mremap_inplace_grow_b] = room && budget), and without room moves to the
+   destination Linux's search gives ([mremap_dst_ok]: linux_place and [mremap_fresh_b]). *)
 Lemma ed_mremap_grow_spec : forall old old_size new_size flags i m eff m' evs,
   ed_mremap_arm m old old_size new_size flags ->
   ((page_round_up_Z (bv_unsigned old_size)) <? (page_round_up_Z (bv_unsigned new_size)))%Z = true ->
@@ -1932,16 +1991,18 @@ Lemma ed_mremap_grow_spec : forall old old_size new_size flags i m eff m' evs,
       \/ (mremap_inplace_grow_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = true
           /\ eff = mremap_inplace_effect old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size))
           /\ m' = mremap_model_next m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) /\ evs = [])
-      \/ (exists dst, mremap_fresh_b m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) = true
+      \/ (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false
+          /\ exists dst, mremap_dst_ok m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))
           /\ eff = mremap_move_effect old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size))
           /\ m' = mremap_model_next m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) /\ evs = []).
 Proof.
-  intros old old_size new_size flags i m eff m' evs (Hfl & Hal & Hn0 & Ho0 & Hsrc) Hlt.
+  intros old old_size new_size flags i m eff m' evs (Hfl & Hal & Hn0 & Ho0 & Hsrc & Hts) Hlt.
   apply Z.ltb_lt in Hlt.
   assert (Heq : ((page_round_up_Z (bv_unsigned old_size)) =? (page_round_up_Z (bv_unsigned new_size)))%Z = false) by (apply Z.eqb_neq; lia).
   assert (Hsh : ((page_round_up_Z (bv_unsigned new_size)) <? (page_round_up_Z (bv_unsigned old_size)))%Z = false) by (apply Z.ltb_ge; lia).
-  clear Hlt. unfold mremap_spec.
-  destruct (mremap_inplace_grow_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size))) eqn:Hip; ed_spec_tac.
+  clear Hlt. unfold mremap_spec, mremap_inplace_grow_b.
+  destruct (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size))) eqn:Hrm;
+    cbn [andb]; ed_spec_tac.
 Qed.
 
 (** (ii) shrink: the -ENOMEM is always spurious ... *)
@@ -1980,8 +2041,8 @@ Proof.
   rewrite Heff. reflexivity.
 Qed.
 
-(** (ii) grow: the -ENOMEM is spurious iff an in-place grow or a fresh
-    destination is admissible. *)
+(** (ii) grow: the -ENOMEM is spurious iff an in-place grow or (without room in place)
+    a destination Linux's search gives is admissible. *)
 Lemma ed_mremap_grow_enomem_spurious_iff : forall i old old_size new_size flags m eff,
   ed_mremap_call i old old_size new_size flags ->
   ed_mremap_arm m old old_size new_size flags ->
@@ -1989,7 +2050,7 @@ Lemma ed_mremap_grow_enomem_spurious_iff : forall i old old_size new_size flags 
   eff_ret eff = errno_ret ENOMEM ->
   spurious_refusal_cfg (alloc_only_cfg false) i m eff
   <-> mremap_inplace_grow_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = true
-      \/ exists dst, mremap_fresh_b m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) = true.
+      \/ (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false /\ exists dst, mremap_dst_ok m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))).
 Proof.
   intros i old old_size new_size flags m eff Hc Ha Hlt Hr.
   pose proof (ed_mremap_call_sysno _ _ _ _ _ Hc) as Hno.
@@ -1998,11 +2059,11 @@ Proof.
   - intros (_ & _ & (eff2 & m2 & evs2 & Hs & Hnr)).
     rewrite (ed_mremap_call_spec _ _ _ _ _ Hc), (ed_mremap_grow_spec _ _ _ _ _ _ _ _ _ Ha Hlt) in Hs.
     rewrite (ed_refusal_b i m _ Hno) in Hnr.
-    destruct Hs as [(-> & _ & _) | [(Hip & _) | (dst & Hf & _)]].
+    destruct Hs as [(-> & _ & _) | [(Hip & _) | (Hrm & dst & Hf & _)]].
     + cbn [eff_ret] in Hnr. rewrite ed_bv_eqb_refl in Hnr. discriminate Hnr.
     + left. exact Hip.
-    + right. exists dst. exact Hf.
-  - intros [Hip | (dst & Hf)].
+    + right. split; [exact Hrm|]. exists dst. exact Hf.
+  - intros [Hip | (Hrm & dst & Hf)].
     + apply (ed_spurious_intro i m eff (mremap_inplace_effect old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)))
                (mremap_model_next m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))) [] Hno Hr).
       * rewrite (ed_mremap_call_spec _ _ _ _ _ Hc), (ed_mremap_grow_spec _ _ _ _ _ _ _ _ _ Ha Hlt).
@@ -2012,9 +2073,9 @@ Proof.
     + apply (ed_spurious_intro i m eff (mremap_move_effect old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)))
                (mremap_model_next m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))) [] Hno Hr).
       * rewrite (ed_mremap_call_spec _ _ _ _ _ Hc), (ed_mremap_grow_spec _ _ _ _ _ _ _ _ _ Ha Hlt).
-        right. right. exists dst. split; [exact Hf | split; [reflexivity | split; reflexivity]].
+        right. right. split; [exact Hrm|]. exists dst. split; [exact Hf | split; [reflexivity | split; reflexivity]].
       * unfold mremap_move_effect. cbn [eff_ret].
-        exact (ed_mremap_fresh_ne_enomem _ _ _ _ _ _ _ (ed_nZ_nonneg new_size) Hf).
+        exact (ed_mremap_fresh_ne_enomem _ _ _ _ _ _ _ (ed_nZ_nonneg new_size) (proj2 Hf)).
 Qed.
 
 (** A grow with neither available forces the -ENOMEM, which is kept. *)
@@ -2023,7 +2084,7 @@ Lemma ed_mremap_grow_forced : forall i old old_size new_size flags m,
   ed_mremap_arm m old old_size new_size flags ->
   ((page_round_up_Z (bv_unsigned old_size)) <? (page_round_up_Z (bv_unsigned new_size)))%Z = true ->
   mremap_inplace_grow_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false ->
-  (forall dst, mremap_fresh_b m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) = false) ->
+  (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false -> forall dst, ~ mremap_dst_ok m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))) ->
   syscall_spec i m (Ok (mkEffect (errno_ret ENOMEM) [] []) m [])
   /\ ~ spurious_refusal_cfg (alloc_only_cfg false) i m (mkEffect (errno_ret ENOMEM) [] []).
 Proof.
@@ -2032,7 +2093,7 @@ Proof.
     left. exact (ed_refused_intro m).
   - intros Hsp. apply (ed_mremap_grow_enomem_spurious_iff i old old_size new_size flags m _ Hc Ha Hlt)
       in Hsp; [|reflexivity].
-    destruct Hsp as [H | (dst & H)]; [rewrite Hip in H | rewrite Hf in H]; discriminate H.
+    destruct Hsp as [H | (Hrm & dst & H)]; [rewrite Hip in H; discriminate H | exact (Hf Hrm dst H)].
 Qed.
 
 (** A kept grow outcome is an in-place grow, a move, or the forced -ENOMEM. *)
@@ -2045,25 +2106,24 @@ Lemma ed_mremap_grow_inversion : forall i old old_size new_size flags m eff m' e
   (mremap_inplace_grow_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = true
    /\ eff = mremap_inplace_effect old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size))
    /\ m' = mremap_model_next m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) /\ evs = [])
-  \/ (exists dst, mremap_fresh_b m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) = true
+  \/ (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false /\ exists dst, mremap_dst_ok m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))
       /\ eff = mremap_move_effect old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size))
       /\ m' = mremap_model_next m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) /\ evs = [])
   \/ (ed_refused m eff m' evs
       /\ mremap_inplace_grow_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false
-      /\ forall dst, mremap_fresh_b m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) = false).
+      /\ (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false -> forall dst, ~ mremap_dst_ok m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))))).
 Proof.
   intros i old old_size new_size flags m eff m' evs Hc Ha Hlt Hs Hns.
   rewrite (ed_mremap_call_spec _ _ _ _ _ Hc), (ed_mremap_grow_spec _ _ _ _ _ _ _ _ _ Ha Hlt) in Hs.
   destruct Hs as [Hrf | [Hip | Hmv]]; [| left; exact Hip | right; left; exact Hmv].
   right. right. split; [exact Hrf|].
   assert (Hno : ~ (mremap_inplace_grow_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = true
-                   \/ exists dst, mremap_fresh_b m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) = true)).
+                   \/ (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false /\ exists dst, mremap_dst_ok m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))))).
   { intros Hav. apply Hns.
     apply (ed_mremap_grow_enomem_spurious_iff i old old_size new_size flags m eff Hc Ha Hlt);
       [exact (ed_refused_ret m eff m' evs Hrf) | exact Hav]. }
   split.
   - destruct (mremap_inplace_grow_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size))) eqn:E; [|reflexivity].
     exfalso. apply Hno. left. reflexivity.
-  - intros dst. destruct (mremap_fresh_b m (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) dst (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))) eqn:E; [|reflexivity].
-    exfalso. apply Hno. right. exists dst. exact E.
+  - intros Hrm dst Hd. apply Hno. right. split; [exact Hrm|]. exists dst. exact Hd.
 Qed.

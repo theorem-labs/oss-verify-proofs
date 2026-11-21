@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormLoc.v (a working branch 29b7505aa27, file sha256 6501a76bde7b) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 74f20580f552) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (0 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormLoc.v (a working branch, file sha256 6501a76bde7b) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (0 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, callee add-ons): location lemmas for the memnorm keeps of the cgif_file
    Allocate / Deallocate callee walks (brief, the internal file CALLEE-BRIEF.md, measurement, the internal file callee-frames.md).
    rule 24: no function proved (kind: image / location lemmas).
@@ -23,7 +24,7 @@
      YFf2.D (Enqueue, hit; YFf2.D_owned :866, which also takes k), from YFf2.D_cases :335, YFf2.HIGH :316;
      YFey.D (Drain transfer; YFey.D_owned :744, plus TfibSyms for the instance cells), from YFey.D_cases :244,
        YFey.HIGH :225.
-   The window -> keep step for any other window W is MemnormT.memnorm_frame (MemnormT.v:71) with W's own location
+   The window -> keep step for any other window W is MemnormT.memnorm_frame (MemnormT.v:72) with W's own location
    facts (e.g. YFg0.WIN_zone, YFgs.WIN_zone, YFkm.XC_where, YFhm.TABW_range, YFg8.MAP_facts) and the helpers here. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.

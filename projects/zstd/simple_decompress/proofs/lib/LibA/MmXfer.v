@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO gate, the MAP_FIXED overflow branch, brk's whole-page bytes and the placement test's kb_thp). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -302,7 +303,7 @@ Qed.
 
 Lemma brk_r_ok_X : forall mo mat req r,
   m_vm_materialized mo = [] -> (length mat <= NMAX)%nat ->
-  robust (nonlazy_bytes mo + bv_unsigned (bv_sub req (vm_brk (m_vmmaps mo)))) (vm_limit (m_vmmaps mo)) ->
+  robust (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req) (vm_limit (m_vmmaps mo)) ->
   brk_r_ok (MX mo mat) req r = brk_r_ok mo req r.
 Proof.
   intros mo mat req r CAN LEN R. unfold brk_r_ok, brk_grow_ok, brk_budget_ok. rewrite !m_vmmaps_MX.
@@ -313,8 +314,8 @@ Proof.
   - apply bv_eqb_eq in Er. subst r.
     destruct ((0 <? bv_unsigned (vm_brk (m_vmmaps mo))) && (bv_unsigned (vm_brk (m_vmmaps mo)) <? bv_unsigned req))%bool; [|reflexivity].
     f_equal. f_equal.
-    replace (nonlazy_bytes mo + Z.of_nat (length mat) * page_size + bv_unsigned (req - vm_brk (m_vmmaps mo)))
-      with (nonlazy_bytes mo + bv_unsigned (req - vm_brk (m_vmmaps mo)) + Z.of_nat (length mat) * page_size) by lia.
+    replace (nonlazy_bytes mo + Z.of_nat (length mat) * page_size + brk_grow_bytes (m_vmmaps mo) req)
+      with (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req + Z.of_nat (length mat) * page_size) by lia.
     apply robust_leb; [exact R| apply mat_bound0; exact LEN].
   - destruct (bv_eqb r (vm_brk (m_vmmaps mo))) eqn:Eb; cbn [andb]; [|reflexivity].
     apply bv_eqb_eq in Eb. subst r.
@@ -406,12 +407,14 @@ Proof.
   intros addr len prot eff mo mat CAN LEN R. unfold check_mprotect.
   rewrite !(mprotect_budget_ok_X NMAX) by assumption.
   rewrite !m_vmmaps_MX, !mprotect_model_next_MX.
+  (* The vDSO/vvar gate (08b1429) reads m_kernel, which MX leaves alone. *)
+  try change (m_kernel (MX mo mat)) with (m_kernel mo).
   xfer.
 Qed.
 
 Lemma check_brk_X : forall req eff mo mat,
   m_vm_materialized mo = [] -> (length mat <= NMAX)%nat ->
-  robust NMAX (nonlazy_bytes mo + bv_unsigned (bv_sub req (vm_brk (m_vmmaps mo)))) (vm_limit (m_vmmaps mo)) ->
+  robust NMAX (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req) (vm_limit (m_vmmaps mo)) ->
   relX mo mat (check_brk req eff (MX mo mat)) (check_brk req eff mo).
 Proof.
   intros req eff mo mat CAN LEN R. unfold check_brk.
@@ -437,10 +440,18 @@ Lemma check_mmap_X : forall addr len prot flags fd off eff mo mat,
   relX mo mat (check_mmap addr len prot flags fd off eff (MX mo mat)) (check_mmap addr len prot flags fd off eff mo).
 Proof.
   intros addr len prot flags fd off eff mo mat CAN LEN nZ R1 R2 R3. unfold check_mmap.
+  (* cd320f53 Checks/Sys/Mm/Mmap.v:79-88: the four MAP_FIXED-family arms now take their
+     overflow branch through check_mmap_fixed_overflow, which [xfer] cannot walk while it is
+     a constant. Its body reads only addr, nZ and eff, so MX passes through it unchanged. *)
+  unfold check_mmap_fixed_overflow.
   rewrite !(noreserve_backed_ok_X NMAX) by assumption.
   rewrite !(fixed_rw_budget_ok_X NMAX) by assumption.
   rewrite !(fixed_rw_span_budget_ok_X NMAX) by assumption.
   rewrite !m_vmmaps_MX, !with_vmmaps_MX, !with_mmap_backing_MX, !with_mmap_destroyed_MX, !with_mmap_replacement_MX.
+  (* 08b1429: the fresh-grant placement test reads kb_thp (m_kernel _), and a non-anonymous
+     request looks its fd up in m_fds; MX leaves both alone. *)
+  try change (m_kernel (MX mo mat)) with (m_kernel mo).
+  rewrite ?m_fds_MX.
   xfer.
 Qed.
 

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the start-up plan, certificate and shape are taken per CONFIG_RSEQ value (LPS 727298f3). *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound AsanPlanImages BothPlanImages BothTableL AsanInit BothStartup
   AsanNodesArg AsanNodesIO AsanNodesRP AsanMainLib AsanShape AsanMainDefs BothMainDefs BothMain BothTop
-  StartupPlanBoth StartupHSBoth BothStartupCert KindHSBoth MainHSBoth MainItabBoth TreesTopBoth.
+  StartupPlanBoth StartupPlanBothR StartupHSBoth BothStartupCert KindHSBoth MainHSBoth MainItabBoth TreesTopBoth.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import APC. Import AP. Import APS.
 Open Scope Z_scope.
@@ -25,7 +26,7 @@ Section K.
     {| ac_IT0 := BothStartupCert.IT0b;
        ac_IT0_ok := BothStartupCert.IT0b_ok;
        ac_HS := HS_both;
-       ac_plan := startup_plan_both;
+       ac_plan := startup_plan_both_r;
        ac_shape := BothStartupCert.startup_shape_both;
        ac_KC0 := BothStartupCert.KC0; ac_BFUEL := BothStartupCert.BFUEL; ac_FUEL := BothStartupCert.FUEL;
        ac_TT0 := AP.TT_none;

@@ -2,13 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK0j.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YK0j.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_rate. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YK0j.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_rate. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the initial model and its reservations; the launch's ProcInput, mmap base and entry draw; the run's segment list with the vDSO pair and the system-call nodes' robustness facts; binary addresses); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require Import YK11.
+From LinuxProcessSemantics.LinuxProcessSem Require Import Vdso.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -472,10 +474,11 @@ End h.
 End g.
 Module SelfJumpImage.
 Definition spin_seg : Segment := {|
-seg_base := 0x10000;
-seg_size := 4;
-seg_perms := "r-x"%string;
-seg_bytes := ["6f000000"%pstring]
+  seg_base := 0x10000;
+  seg_size := 4;
+  seg_perms := "r-x"%string;
+  seg_bytes := ["6f000000"%pstring];
+  seg_kind  := SegLoader
 |}.
 Definition spin_segs : list Segment := [spin_seg].
 Definition spin_img : Image :=
@@ -483,20 +486,21 @@ mkImage spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6).
 Example j_dot_decodes :
 decode_any (Z_to_bv 32 0x6f) = Some (Jal 0 (Z_to_bv 21 0), 4%Z).
 Proof. div_vm_refl. Qed.
-Lemma spin_img_to_spin : forall sp brk0 mbase (rnd : EntryDraw) lim inp,
-to_spin spin_segs
-(init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6) sp rnd
-(in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved spin_segs) brk0 mbase sp lim inp).
+Lemma spin_img_to_spin : forall vt sp brk0 mbase (rnd : EntryDraw) lim inp,
+  to_spin (spin_segs ++ vt)
+    (init_machine_state (spin_segs ++ vt) 0x10000 (mkPhdrInfo 0x10040 56 6)
+       sp mbase rnd inp)
+    (with_vdso (vdso_run_init (ed_vdso rnd))
+       (init_model (segments_reserved (spin_segs ++ vt)) brk0 mbase sp lim inp)).
 Proof.
-intros sp brk0 mbase rnd lim inp.
-eapply ts_spin_of_step_j with (w := Z_to_bv 32 0x6f).
-- reflexivity.
-- div_vm_refl.
-- div_vm_refl.
-- apply j_dot_decodes.
-- div_vm_refl.
-- div_vm_refl.
+  intros vt sp brk0 mbase rnd lim inp.
+  eapply ts_spin_of_step_j with (w := Z_to_bv 32 0x6f).
+  - reflexivity.
+  - div_vm_refl.
+  - div_vm_refl.
+  - apply j_dot_decodes.
+  - div_vm_refl.
+  - div_vm_refl.
 Qed.
 Example spin_img_obs_iff : forall lim en inp tr,
 bh_traces (run spin_img lim en inp) tr <-> tr = [].
@@ -525,14 +529,18 @@ apply spin_not_all_errors.
 - apply spin_img_to_spin.
 - reflexivity.
 Qed.
+Definition spin_exec_input : ProcInput :=
+  mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
+    net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48.
+
 Example spin_img_to_spin_by_execution :
-to_spin spin_segs
-(init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6)
-(Z_to_bv 64 65536) (mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0))
-[[]] [] (Z_to_bv 64 1000) hwcap_rv64gc)
-(init_model (segments_reserved spin_segs) (Z_to_bv 64 1048576)
-(Z_to_bv 64 0x7fff7f800000) (Z_to_bv 64 65536) 0x40000000%Z
-(mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
-net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48)).
+  to_spin spin_segs
+    (init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6)
+       (Z_to_bv 64 65536) (Z_to_bv 64 0x7fff7f800000)
+       (mkDraw (Z_to_bv 128 0) (Z_to_bv 64 69632) vdso_keeps_all)
+       spin_exec_input)
+    (init_model (segments_reserved spin_segs) (Z_to_bv 64 1048576)
+       (Z_to_bv 64 0x7fff7f800000) (Z_to_bv 64 65536) 0x40000000%Z
+       spin_exec_input).
 Proof. prove_to_spin 1%nat. Qed.
 End SelfJumpImage.

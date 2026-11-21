@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the load and AMO proofs pass sym_load's vvar guard (segs_novvar); case_sc_fail deleted, since a failing sc is now a load and a store back and the engine stops at an sc with no reservation). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -543,6 +544,10 @@ Lemma case_fload : ltac2:(tb__ "0|5|
 S5S2dS28Q5A1M0G0S28QcA1S6S5S8S4aS65A1M1S57S66S0S4bS2cA1S67Vsegs;S7RbA1A2S4dS2cS3aRaR9R8R7A4A2A3S2dOLfmt;RbS0S79S7aVsegs;RcS7fS6cRcR9A2S7eR8A1A2M2Z4M3S51A5S7bR7R6A2M4A3S0S79S7aVsegs;RcG2Z8S49A5G4A3X2dx2S9Vsegs;R6RdS4cG1S63R5S64R4R3A2A4A4Sb5Vsegs;ReS68S6aR8RcS2dS6Lfmt;RdS72R9A1R9X2dx2A3S86S7ReA1G3A2A2R7R6R5R4A7F_;F_;F_;Fmd;Fms;Ftr;Frho;FS';Fv;Fimm;Frs1;Frd;Ffmt;FS;").
 Proof using .
   intros S fmt rd rs1 imm v S' rho tr ms md Hi Hload Hsm.
+  (* LPS 08b1429: a miss that meets the vvar page is MachineUnmodeled; [sym_load] only
+     runs over an image with no vvar segment, which is what closes the fault branch. *)
+  assert (Hnv : segs_novvar segs = true)
+    by (unfold sym_load in Hload; destruct (segs_novvar segs); [reflexivity | try destruct fmt; discriminate Hload]).
   pose proof (smatch_swf segs _ _ _ Hsm) as Hwf.
   assert (Hae : sv_below (ss_next S) (mk_addk (get_reg S rs1) (immI imm)) = true).
   { apply mk_addk_below. apply get_reg_below. exact Hwf. }
@@ -558,7 +563,7 @@ Proof using .
     { left. split; [exact Hlen|]. rewrite <- (ov_read_bytes_rd segs ms) in Hrd by exact Hrom.
       rewrite (step_instr_at segs ms (ss_pc S) _ Hpc Hi ltac:(discriminate)).
       cbn [exec]. cbn [interp_eff0 width_bytes]. rewrite Haddr.
-      change (Z.to_nat 4) with 4%nat in Hrd. rewrite Hrd. reflexivity. }
+      change (Z.to_nat 4) with 4%nat in Hrd. rewrite Hrd. rewrite ?(range_meets_vvar_novvar segs _ _ Hnv). reflexivity. }
     right.
     destruct (load_post_proj _ _ _ _ _ _ _ _ _ _ HLP)
       as (bs & rho' & Hrd & Hag & Hnext & Hsm' & Hev & Hbelow & Hpc' & Hregs' & Hfregs' & Hfcsr' & Hresv' & Hfacts').
@@ -566,7 +571,7 @@ Proof using .
     rewrite <- (ov_read_bytes_rd segs ms) in Hrd by exact Hrom.
     eapply (next_rel_core1 rho rho' S S'); [exact Hsm | exact Hi | discriminate | | exact Hag | | exact Hsm' | | | | | | | |].
     + cbn [exec]. cbn [interp_eff0 width_bytes]. rewrite Haddr.
-      change (Z.to_nat 4) with 4%nat in Hrd. rewrite Hrd. reflexivity.
+      change (Z.to_nat 4) with 4%nat in Hrd. rewrite Hrd. rewrite ?(range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
     + cbn. lia.
     + rewrite swf_set_pc. apply swf_set_freg; [exact Hwf'|]. apply mk_nanbox_below. exact Hbelow.
     + cbn [ss_pc set_pc set_freg c_pc fset with_fregs with_pc core_of]. unfold ms_pc in Hpc. rewrite Hpc. apply pc_plus'.
@@ -583,7 +588,7 @@ Proof using .
     { left. split; [exact Hlen|]. rewrite <- (ov_read_bytes_rd segs ms) in Hrd by exact Hrom.
       rewrite (step_instr_at segs ms (ss_pc S) _ Hpc Hi ltac:(discriminate)).
       cbn [exec]. cbn [interp_eff0 width_bytes]. rewrite Haddr.
-      change (Z.to_nat 8) with 8%nat in Hrd. rewrite Hrd. reflexivity. }
+      change (Z.to_nat 8) with 8%nat in Hrd. rewrite Hrd. rewrite ?(range_meets_vvar_novvar segs _ _ Hnv). reflexivity. }
     right.
     destruct (load_post_proj _ _ _ _ _ _ _ _ _ _ HLP)
       as (bs & rho' & Hrd & Hag & Hnext & Hsm' & Hev & Hbelow & Hpc' & Hregs' & Hfregs' & Hfcsr' & Hresv' & Hfacts').
@@ -591,7 +596,7 @@ Proof using .
     rewrite <- (ov_read_bytes_rd segs ms) in Hrd by exact Hrom.
     eapply (next_rel_core1 rho rho' S S'); [exact Hsm | exact Hi | discriminate | | exact Hag | | exact Hsm' | | | | | | | |].
     + cbn [exec]. cbn [interp_eff0 width_bytes]. rewrite Haddr.
-      change (Z.to_nat 8) with 8%nat in Hrd. rewrite Hrd. reflexivity.
+      change (Z.to_nat 8) with 8%nat in Hrd. rewrite Hrd. rewrite ?(range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
     + cbn. lia.
     + rewrite swf_set_pc. apply swf_set_freg; [exact Hwf'|]. exact Hbelow.
     + cbn [ss_pc set_pc set_freg c_pc fset with_fregs with_pc core_of]. unfold ms_pc in Hpc. rewrite Hpc. apply pc_plus'.
@@ -808,6 +813,10 @@ Lemma case_lr : ltac2:(tb__ "0|2|
 S5S30S48S48S28Q5A1M0G0S6S5S8S4aS65A1M1S57S66S0S4bS2cA1S67Vsegs;S7RcA1A2S4dS2cS43RbRaR9R8R7A5A2A3S0S48S6fSbRdA1S6cRdR8A2S71RcA1A3S49A3S0S79S7aVsegs;ReS6cReR9A2S76RdA1S49A5S7bR8R7A2A3S9Vsegs;R7RfS4cG1S63R6S64R5R4A2A4A4Sb5Vsegs;R10S68S73S6bR9RcRaA3S4dS6S6cR10RbA2A2A2S86S7R10A1Z4A2A2R8R7R6R5A7F_;F_;F_;F_;Fmd;Fms;Ftr;Frho;FS';Fv;Frs1;Frd;Frl;Faq;Fwd;FS;").
 Proof using .
   intros S wd aq rl rd rs1 v S' rho tr ms md Hi Hal Hload Hsm.
+  (* LPS 08b1429: a miss that meets the vvar page is MachineUnmodeled; [sym_load] only
+     runs over an image with no vvar segment, which is what closes the fault branch. *)
+  assert (Hnv : segs_novvar segs = true)
+    by (unfold sym_load in Hload; destruct (segs_novvar segs); [reflexivity | try destruct fmt; discriminate Hload]).
   pose proof (smatch_swf segs _ _ _ Hsm) as Hwf.
   assert (Hae : sv_below (ss_next S) (get_reg S rs1) = true) by (apply get_reg_below; exact Hwf).
   assert (Hrom : rom_ok segs ms) by (destruct Hsm as (_ & _ & _ & _ & Hrom & _); exact Hrom).
@@ -820,8 +829,8 @@ Proof using .
     rewrite <- (rget_match segs rho S tr ms md rs1 Hsm) in Hrd.
     rewrite (step_instr_at segs ms (ss_pc S) _ Hpc Hi ltac:(discriminate)).
     destruct wd; cbn [exec]; rewrite Hamo; cbn [negb amo_k interp_eff0 width_bytes].
-    - change (Z.to_nat (amo_k AW)) with 4%nat in Hrd. rewrite Hrd. reflexivity.
-    - change (Z.to_nat (amo_k AD)) with 8%nat in Hrd. rewrite Hrd. reflexivity. }
+    - change (Z.to_nat (amo_k AW)) with 4%nat in Hrd. rewrite Hrd. rewrite ?(range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
+    - change (Z.to_nat (amo_k AD)) with 8%nat in Hrd. rewrite Hrd. rewrite ?(range_meets_vvar_novvar segs _ _ Hnv). reflexivity. }
   right.
   destruct (load_post_proj _ _ _ _ _ _ _ _ _ _ HLP)
     as (bs & rho' & Hrd & Hag & Hnext & Hsm' & Hev & Hbelow & Hpc' & Hregs' & Hfregs' & Hfcsr' & Hresv' & Hfacts').
@@ -833,7 +842,7 @@ Proof using .
   destruct wd.
   - eapply (next_rel_core1 rho rho' S S'); [exact Hsm | exact Hi | discriminate | | exact Hag | | exact Hsm' | | | | | | | |].
     + cbn [exec]. rewrite Hamo. cbn [negb amo_k interp_eff0 width_bytes].
-      change (Z.to_nat (amo_k AW)) with 4%nat in Hrd. rewrite Hrd. reflexivity.
+      change (Z.to_nat (amo_k AW)) with 4%nat in Hrd. rewrite Hrd. rewrite ?(range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
     + cbn. rewrite ss_next_set_reg. lia.
     + rewrite swf_set_pc. apply swf_set_resv; [apply swf_set_reg; assumption|]. rewrite ss_next_set_reg. exact Hbelow2.
     + cbn [ss_pc set_pc set_resv].
@@ -855,7 +864,7 @@ Proof using .
     + cbn. rewrite ss_facts_set_reg. reflexivity.
   - eapply (next_rel_core1 rho rho' S S'); [exact Hsm | exact Hi | discriminate | | exact Hag | | exact Hsm' | | | | | | | |].
     + cbn [exec]. rewrite Hamo. cbn [negb amo_k interp_eff0 width_bytes].
-      change (Z.to_nat (amo_k AD)) with 8%nat in Hrd. rewrite Hrd. reflexivity.
+      change (Z.to_nat (amo_k AD)) with 8%nat in Hrd. rewrite Hrd. rewrite ?(range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
     + cbn. rewrite ss_next_set_reg. lia.
     + rewrite swf_set_pc. apply swf_set_resv; [apply swf_set_reg; assumption|]. rewrite ss_next_set_reg. exact Hbelow2.
     + cbn [ss_pc set_pc set_resv].
@@ -877,35 +886,8 @@ Proof using .
     + cbn. rewrite ss_facts_set_reg. reflexivity.
 Qed.
 
-Lemma case_sc_fail : ltac2:(tb__ "0|2|
-S5S30S48S48S28Q5A1M0G0G0S8S4aS65A1M1S57S66S0S4bS2cA1S67Vsegs;S7RbA1A2S4dS2cS35RaR9R8R7R6R5A6A2A3S0S48S6fSbRcA1S6cRcR7A2S71RbA1A3S49A3S0S4bS6A1SfRdA1S50S6A1A3S9Vsegs;R7ReS4cG1S63R6S64R5R4A2A4A4S83Vsegs;RfS68S6bRfRbS17Z1A1A3S86S7RfA1Z4A2A2R8R7R6R5A7F_;F_;F_;F_;Fmd;Fms;Ftr;Frho;Frs2;Frs1;Frd;Frl;Faq;Fwd;FS;").
-Proof using .
-  intros S wd aq rl rd rs1 rs2 rho tr ms md Hi Hal Hresv Hsm.
-  pose proof (smatch_swf segs _ _ _ Hsm) as Hwf.
-  pose proof Hsm as Hsm0.
-  destruct Hsm0 as (_ & Hpc & _ & _ & _ & _ & Hr1 & Hfr1 & Hc1 & Hv1 & _). cbn [fst snd cfg_ms cfg_model] in *.
-  assert (Hresv0 : ms_resv ms = None).
-  { unfold resv_match in Hv1. rewrite Hresv in Hv1. destruct (ms_resv ms); [destruct Hv1|reflexivity]. }
-  pose proof (amo_aligned_of rho S _ wd _ Hsm Hal) as Hamo.
-  rewrite <- (rget_match segs rho S tr ms md rs1 Hsm) in Hamo.
-  eapply (next_rel_core1 rho rho S S); [exact Hsm | exact Hi | discriminate | | apply agree_below_refl | | exact Hsm | | | | | | | |].
-  - cbn [exec]. rewrite Hamo. cbn [negb c_resv core_of]. rewrite Hresv0.
-    destruct wd; reflexivity.
-  - cbn. rewrite ss_next_set_reg. lia.
-  - rewrite swf_set_pc. apply swf_set_reg; [exact Hwf | reflexivity].
-  - cbn [ss_pc set_pc].
-    unfold rset, with_resv, with_regs, with_pc, core_of; destruct (is_x0 rd); cbn [c_pc]; unfold ms_pc in Hpc; rewrite Hpc; apply pc_plus'.
-  - eapply (regs_match_same rho (set_reg S rd (SLit 1)) _ (ms_of ms _ (ms_mem ms))); [| reflexivity | cbn [set_pc ss_regs]; reflexivity].
-    eapply (regs_match_rset_gen rho S _ ms); [exact Hwf | exact Hr1 | reflexivity |].
-    cbn [ms_regs ms_of]. unfold rset, with_resv, with_regs, with_pc, core_of; destruct (is_x0 rd); reflexivity.
-  - eapply fregs_match_same; [exact Hfr1 | | ]; [unfold rset; destruct (is_x0 rd); reflexivity|].
-    cbn. rewrite ss_fregs_set_reg. reflexivity.
-  - cbn [ss_fcsr set_pc]. rewrite ss_fcsr_set_reg.
-    unfold fcsr_match in Hc1 |- *. unfold rset; destruct (is_x0 rd); cbn; exact Hc1.
-  - cbn [ss_resv set_pc]. rewrite ss_resv_set_reg, Hresv. unfold resv_match. unfold rset; destruct (is_x0 rd); cbn; exact I.
-  - cbn. rewrite ss_objs_set_reg. reflexivity.
-  - cbn. rewrite ss_facts_set_reg. reflexivity.
-Qed.
+(* case_sc_fail: deleted. At LPS 08b1429 a failing sc is a load and a store back of the same
+   bytes, not EDone; the engine now stops at an sc with no reservation (SymStep.sc_unres_b). *)
 
 Lemma case_sc_ok : ltac2:(tb__ "0|2|
 S5S30S48S48S28Q5A1M0G0G0S6S5S8S4aS65A1M1S57S66S0S4bS2cA1S67Vsegs;S7RdA1A2S4dS2cS35RcRbRaR9R8R7A6A2A3S0S48S6fSbReA1S6cReR9A2S71RdA1A3S49A3S0S4bS6A1SfRfA1S4dS6R8A2A3S0S48S27R9S6cR10RbA2A2S49A3S0S4bS5A1S81S73R11S50S6A1A2S6cR11RcA2S76R10A1S6cR11RbA2A4S4dS5R9A2A3S9Vsegs;R9R12S4cG1S63R8S64R7R6A2A4A4S83Vsegs;R13S68S6bRbRfS17Z0A1A3S86S7R13A1Z4A2A2RaR9R8R7A7F_;F_;F_;F_;F_;F_;Fmd;Fms;Ftr;Frho;FS';Fe;Frs2;Frs1;Frd;Frl;Faq;Fwd;FS;").

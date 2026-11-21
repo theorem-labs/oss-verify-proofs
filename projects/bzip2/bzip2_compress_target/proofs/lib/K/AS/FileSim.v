@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the argument block over the launch input ProcInput and the CONFIG_RSEQ flag). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -180,21 +181,31 @@ Proof. reflexivity. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma read_argv_cstr_k : forall ph segs (sp : word) av ev k uid hw rnd,
-  (k < length av)%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-      (cat_argv_ptr sp av ev k) (length (nth k av []) + 1)
-  = Some (nth k av [] ++ [Z_to_bv 8 0]).
+Lemma read_argv_cstr_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k)
+      (length (nth k (in_argv inp) []) + 1)
+  = Some (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]).
 Proof.
-  intros ph segs sp av ev k uid hw rnd Hk Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    pre (nth k av [] ++ [Z_to_bv 8 0]) post (length (nth k av []) + 1)) as H.
+  intros v segs inp mbase ph entry sp brk draw k Hlaunch Hk.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) post
+    (length (nth k (in_argv inp) []) + 1)) as H.
   rewrite Hlen in H.
-  replace (cat_argv_ptr sp av ev k)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite nat_to_word_add_merge. reflexivity. }
   apply H; [exact E | | exact Hnw].
   rewrite length_app. cbn [length]. lia.
@@ -971,6 +982,15 @@ Lemma tfo_write_file : forall ms model x8 p off data bs U,
   fd_lookup (m_fds model) (ms_gpr ms 0) = Some (FdFileW p off) ->
   fd32 (ms_gpr ms 0) = ms_gpr ms 0 ->
   read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+  (* THE RANGE [vfs_write]'s [access_ok] ACCEPTS, a premise this lemma did
+     not used to carry.  The [FdFileW] arm now asks [access_ok] on the
+     named count before it reads the source, so the statement was true of
+     an arm that judged the write by a walk that could wrap at 2^64 and is
+     false of one that does not, exactly where the buffer leaves the user
+     address space: there the answer is -EFAULT and the file is not
+     written.  A repair of a statement that had become false, not a
+     weakening *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
   fs_lookup (m_fs model) p = Some data ->
   (* [comment removed for export] *)
@@ -989,7 +1009,7 @@ Lemma tfo_write_file : forall ms model x8 p off data bs U,
     U ->
   to_fout segs ms model U.
 Proof.
-  intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hcnt Hfs Hgap Hnz Hh Hlazy Hcont.
+  intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hok Hcnt Hfs Hgap Hnz Hh Hlazy Hcont.
   assert (Hrb : read_bytes_map (in_mem (sys_input segs ms x8))
                   (ms_gpr ms 1) (ms_gpr ms 2) = Some bs).
   { rewrite in_mem_si. exact Hrd. }
@@ -1003,6 +1023,7 @@ Proof.
     rewrite (check_syscall_64 segs ms x8 eff model Hno). unfold check_write.
     rewrite Hfd32, Hfd. cbv beta iota.
     rewrite (rw_range_in_range _ _ Hcnt). cbv beta iota zeta.
+    rewrite Hok. cbn [negb]. cbv beta iota.
     rewrite (write_source_of_rw _ _ _ Hcnt), (readable_bytes_full _ _ _ _ Hrb).
     pose proof (read_bytes_map_length _ _ _ _ Hrb) as Hlen.
     assert (Hret : len_word bs = ms_gpr ms 2).
@@ -1075,6 +1096,7 @@ Proof.
     rewrite (check_syscall_64 segs ms x8 eff model Hno). unfold check_write.
     rewrite Hfd32, Hfd. cbv beta iota.
     rewrite (rw_range_in_range _ _ Hcnt). cbv beta iota zeta.
+    rewrite Hok. cbn [negb]. cbv beta iota.
     rewrite (write_source_of_rw _ _ _ Hcnt), (readable_bytes_full _ _ _ _ Hrb).
     pose proof (read_bytes_map_length _ _ _ _ Hrb) as Hlen.
     assert (Hret : len_word bs = ms_gpr ms 2).
@@ -1240,8 +1262,14 @@ Lemma tfo_write_rec : forall regs pc mem model fdv p off data bs buf cnt U,
   fs_lookup (m_fs model) p = Some data ->
   (* [comment removed for export] *)
   negb (modeled_file_gap data off bs) = false ->
-  (* [comment removed for export] *)
-  (access_okb buf (bv_unsigned cnt) = true \/ (0 < bv_unsigned cnt)%Z) ->
+  (* the range [vfs_write]'s [access_ok] accepts, on EVERY count.  This
+     premise used to be [access_okb buf (bv_unsigned cnt) = true \/
+     (0 < bv_unsigned cnt)%Z], on the argument that a positive-count write
+     needs no range premise because the mapping settles the copy.  That
+     argument held of a walk that could wrap at 2^64 and does not hold of
+     the [FdFileW] arm, which asks [access_ok] on the named count before
+     it reads a byte; see [tfo_write_file]. *)
+  access_okb buf (bv_unsigned cnt) = true ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
   to_fout segs (mkst (regupd regs 10 cnt) (v_addi pc 4) mem (seg_rom segs))
@@ -1278,10 +1306,7 @@ Proof.
     + exact Hfs.
     + exact Hgap.
     + rewrite Hg2. exact Hz.
-    + destruct Hok as [Hfl | Hp].
-      * rewrite Hg1, Hg2. exact Hfl.
-      * (* [comment removed for export] *)
-        rewrite (w_is0_pos cnt Hp) in Hz. discriminate.
+    + rewrite Hg1, Hg2. exact Hok.
     + exact Hh.
     + exact Hlazy.
     + rewrite Hg0, Hg2. unfold ms.
@@ -1296,6 +1321,7 @@ Proof.
       rewrite read_bytes_map_read_byte.
       rewrite (ms_read_bytes_rdn segs ms) by reflexivity.
       exact Hrd.
+    + rewrite Hg1, Hg2. exact Hok.
     + rewrite Hg2. exact Hcnt.
     + exact Hfs.
     + exact Hgap.

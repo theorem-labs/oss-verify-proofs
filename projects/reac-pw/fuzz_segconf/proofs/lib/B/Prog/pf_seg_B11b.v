@@ -2,11 +2,11 @@
    reac_segconf_parse_file's walk, S_B11b_holds : S_B11b B of lib/B/Prog/pf_pieces.v
    (MISS 0x88a50 -> KREFM 0x88bd0: HA_KREFM n -> H_MISS n at every ambient FP state). The B11b segment lane of the image-B G3 walk owner,
    2026-10-30.
-    proves function reac_segconf_parse_file (segment B11b; reuse search, rule 24: origin/main 6e24fa4d602c, origin/ossv/recipes 3abc3740de97, origin/ossv/candidates ee89628c9971, origin/release/pau-projects-recipes b6a0088adcb4, the earlier proof delivery and the working heads, by name and by the image-B address 0x87e38 (index and path-scoped git grep); confirmed by the rule-24 checker 2026-10-30T16:55:47Z; the result is recorded with the commissioning brief;
+    proves function reac_segconf_parse_file (segment B11b; reuse search, rule 24:, the earlier proof delivery and the working heads, by name and by the image-B address 0x87e38 (index and path-scoped git grep); confirmed by the rule-24 checker 2026-10-30T16:55:47Z; the result is recorded with the commissioning brief;
    reuse verdict: none released).
    ADAPTED from the image-A G3 walk owner's image-A lane, on a working branch (pf_a11b_d.v, pf_a11b_f.v) and the unit owner's
    UBSan piece walk on a working branch (lib/U/Prog/pf_p7_miss.v), re-derived on image B's code; closed
-   against G3 FINAL at 6f783602b5e3 (lib/B/Prog/reac_segconf_parse_file_c.v, the B-kit copies at 694f3575dda2).
+   against G3 FINAL (lib/B/Prog/reac_segconf_parse_file_c.v, the B-kit copies).
 
    THE B CUT PLAN of the segment (PLAN-pf-asanubsan.md section 5.2 row B11b; reac_segconf_parse_file.
    fuzz_segconf.asan-ubsan.s): 98 instructions = 0x88a50 .. 0x88bcc (96) and the slow path 0x89234 .. 0x89238 (2,

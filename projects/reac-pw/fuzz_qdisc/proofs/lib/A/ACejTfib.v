@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer's trace facts for libreac/fuzz_knock's ASan
+   image, in the form fuzz_pcap's lib/A/ACejTfib.v states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/ACejTfib.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to reac-pw/fuzz_qdisc's ASan build. *)
-   image, in the form fuzz_pcap's lib/A/ACejTfib.v (cold/port-pcap-comp fe3d720b4c7) states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* libreac/fuzz_knock, fuzz_knock.asan (pin sha256 61768cf4739b...): the facts about the allocation-trace universe
    (lib/A/ACej.v Tfib_universe, regenerated from that image) that cgif_file_fuzzer's TFIB_T closing takes at its entry
    points:
-   - donor lib/A/AD2l.v:37 `as_universe := Tfib_universe`: ACej.Tfib_universe (re-exported here);
-   - donor lib/A/AD2l.v:78, field ts_universe (donor lib/A/AF0m.v:313) `universe_ok (as_universe B)`:
+   - donor lib/A/AD2l.v:38 `as_universe := Tfib_universe`: ACej.Tfib_universe (re-exported here);
+   - donor lib/A/AD2l.v:79, field ts_universe (donor lib/A/AF0m.v:314) `universe_ok (as_universe B)`:
      ACej.Tfib_universe_ok;
-   - donor lib/A/AD2l.v:79-82, field ts_universe_drv (donor lib/A/AF0m.v:314)
+   - donor lib/A/AD2l.v:80-83, field ts_universe_drv (donor lib/A/AF0m.v:315)
      `forall t, In t DRV_TRACES -> In t (as_universe B)`: Tfib_universe_drv below, over Tfib_drv_traces, the list that
      knock's lib/A/AF0m.v DRV_TRACES is.
    This file proves no function's walk (OSS Verify rule 24). *)

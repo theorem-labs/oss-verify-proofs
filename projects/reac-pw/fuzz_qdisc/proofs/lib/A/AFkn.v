@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFkn.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AFkn.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_qdisc's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the reserved ledger). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -1161,10 +1162,10 @@ assert (PB6 : region_base ly c <= fadr) by (rewrite <- (K3F_addr xg); unfold YG0
 pose proof (COV_prim (holeF xg) fadr mdN MWN ltac:(clear - PB2 PB6; zlia) ltac:(clear - PB3 PB4; zlia)) as COV.
 unfold holeF in *. destruct (in_dec zz_eq_dec (kFreeArrayOffset + mf, kFreeArrayMapSize) (HO1 xg)) as [Hin|Hnin].
 - pose proof (grant_hole_shape (w64 fadr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP).
-apply (ALedger_fa_granted_hole tfibsegs (as_universe B) pp 0 0 ly (St1 xg) mdN _ c LY WP HcR L RES LIM ISP PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) HFA ltac:(unfold YG0h.offF; rewrite reg_S1; unfold rg1; cbn; exact Hin)); [|exact EG].
+apply (ALedger_fa_granted_hole tfibsegs (as_universe B) pp 0 0 ly (St1 xg) mdN _ c LY WP HcR L RES LIM ISP (YG0h.vdsor_of _ _ ltac:(reflexivity) MMB ISP) PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) HFA ltac:(unfold YG0h.offF; rewrite reg_S1; unfold rg1; cbn; exact Hin)); [|exact EG].
 rewrite K3F_addr. unfold wiv. cbn [fst snd]. exact VM.
 - pose proof (grant_piece_shape (w64 fadr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP).
-apply (ALedger_fa_granted_piece tfibsegs (as_universe B) pp 0 0 ly (St1 xg) mdN _ c WP HcR L RES LIM ISP PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offF; rewrite reg_S1; unfold rg1; cbn; exact Hnin) VM EG).
+apply (ALedger_fa_granted_piece tfibsegs (as_universe B) pp 0 0 ly (St1 xg) mdN _ c WP HcR L RES LIM ISP (YG0h.vdsor_of _ _ ltac:(reflexivity) MMB ISP) PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offF; rewrite reg_S1; unfold rg1; cbn; exact Hnin) VM EG).
 Qed.
 Lemma WfP_SUp : mu < tot -> mu + kUserMapSize <= kFreeArrayOffset -> WfP (as_universe B) 0 0 0 SUp.
 Proof.
@@ -1197,10 +1198,10 @@ assert (PB6 : region_base ly c <= adr) by (rewrite <- K3U_addr; unfold YG0h.addr
 pose proof (COV_prim holeU adr mdN MWN ltac:(clear - PB2 PB6; zlia) ltac:(clear - PB3 PB4; unfold kFreeArrayOffset, kFreeArrayMax, kPrimResvSize in *; zlia)) as COV.
 unfold holeU in *. destruct (in_dec zz_eq_dec (mu, kUserMapSize) hol) as [Hin|Hnin].
 - pose proof (grant_hole_shape (w64 adr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP).
-apply (ALedger_user_granted_hole tfibsegs (as_universe B) 1 0 0 ly S mdN _ c LY W1P HcR L RES LIM ISP PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offU; rewrite reg_S; cbn; exact Hin)); [|exact EG].
+apply (ALedger_user_granted_hole tfibsegs (as_universe B) 1 0 0 ly S mdN _ c LY W1P HcR L RES LIM ISP (YG0h.vdsor_of _ _ ltac:(reflexivity) MMB ISP) PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offU; rewrite reg_S; cbn; exact Hin)); [|exact EG].
 rewrite K3U_addr. unfold wiv. cbn [fst snd]. exact VM.
 - pose proof (grant_piece_shape (w64 adr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP).
-apply (ALedger_user_granted_piece tfibsegs (as_universe B) 1 0 0 ly S mdN _ c W1P HcR L RES LIM ISP PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offU; rewrite reg_S; cbn; exact Hnin) VM EG).
+apply (ALedger_user_granted_piece tfibsegs (as_universe B) 1 0 0 ly S mdN _ c W1P HcR L RES LIM ISP (YG0h.vdsor_of _ _ ltac:(reflexivity) MMB ISP) PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offU; rewrite reg_S; cbn; exact Hnin) VM EG).
 Qed.
 Lemma slack_at : forall md (Wx : world tfibsegs) k, ALedger tfibsegs ly S md0 -> vm_limit (m_vmmaps md) = vm_limit (m_vmmaps md0) ->
 eager_used md <= eager_used md0 + k -> A_bytes (w_A Wx) <= A_bytes (w_A W) + k -> 0 <= k <= 2 ^ 20 ->
@@ -1272,10 +1273,12 @@ WfP (as_universe B) pp 0 0 S' -> sec_placed ly S' -> ALedger tfibsegs ly S' mdN 
 (ly_prim ly <= lo /\ lo < lo + kUserMapSize /\ lo + kUserMapSize <= ly_prim ly + kPrimResvSize) ->
 cut_ok ly S' lo -> cut_ok ly S' (lo + kUserMapSize) -> (forall x, cut_ok ly S' x -> ~ (lo < x < lo + kUserMapSize)) -> lo mod 4096 = 0 ->
 same_led (fixedin_destroyed_model (w64 lo) (w64 kUserMapSize) mdN) mdD ->
+(* 727298f3: the ledger names the kernel build's vvar/vDSO pair, which [same_led] does not carry. *)
+m_kernel mdD = m_kernel mdN ->
 eager_used (restore_md FLR (w64 lo) (w64 kUserMapSize) mdD) <= eager_used mdN ->
 ALedger tfibsegs ly S' (restore_md FLR (w64 lo) (w64 kUserMapSize) mdD).
 Proof.
-intros S' pp lo mdN mdD WP PL L MWN WIN CUTlo CUThi NOCUT LOAL [EV EL] EG.
+intros S' pp lo mdN mdD WP PL L MWN WIN CUTlo CUThi NOCUT LOAL [EV EL] KD EG.
 pose proof (lo_high ly LY) as HP. unfold in_high in HP. cbn [fst snd] in HP. pose proof (YG0h.prim_hi ly LY) as [C1 C2].
 assert (Ulo : bv_unsigned (w64 lo) = lo) by (unfold w64; apply unsigned_lit_small; clear - WIN HP C1 C2; unfold kHighMemBeg, kUserMapSize in *; zlia).
 assert (Un : bv_unsigned (w64 kUserMapSize) = kUserMapSize) by (unfold w64; apply unsigned_lit_small; unfold kUserMapSize; clear; zlia).
@@ -1284,13 +1287,14 @@ destruct (restore_shape FLR (w64 lo) (w64 kUserMapSize) mdD) as (RM & RN & RR & 
 assert (LI : lazy_interior (w64 lo) (w64 kUserMapSize) = [(w64 lo, w64 kUserMapSize)]).
 { apply lazy_interior_aligned; rewrite ?Ulo, ?Un; unfold page_size;
 first [exact LOAL | unfold kUserMapSize; reflexivity | clear - WIN C1 C2; unfold kUserMapSize in *; zlia]. }
-rewrite LI in RLz. cbn [app] in RLz. rewrite EV in RM, RN, RR, RL, RS. rewrite EL in RLz.
+rewrite LI in RLz. cbn [app] in RLz. rewrite EV in RM, RN, RR, RL, RB, RS. rewrite EL in RLz.
 destruct MWN as [(A1 & A2 & A3 & PW & A5) NZ].
 assert (W64 : wiv (lo, lo + kUserMapSize - lo) = (w64 lo, w64 kUserMapSize)) by (unfold wiv; cbn [fst snd]; replace (lo + kUserMapSize - lo) with kUserMapSize by (clear; zlia); reflexivity).
 apply (ALedger_restored tfibsegs (as_universe B) pp 0 0 ly S' mdN _ LY WP L) with (lo := lo) (hi := lo + kUserMapSize).
 - rewrite RR, DR. reflexivity.
 - rewrite RL, DL. reflexivity.
 - rewrite RS, DS. reflexivity.
+- apply YG0h.vdsor_of; [exact KD | rewrite RB, DB; reflexivity | rewrite RS, DS; reflexivity].
 - exact PL.
 - exact WIN.
 - exact CUTlo.

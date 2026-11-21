@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YCbo.v:1527-1530,
    1556-1561, for libreac/fuzz_identity's ASan build (lib/A). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment D4 of LLVMFuzzerTestOneInput's ASan walk (fuzz_identity.asan 0x81170 .. 0x813b4): the model-name case of
    the record switch. The case is entered only from 0x80d9c (beq s11,0x1000) and leaves only to the join 0x813b4.
      0x81170..0x81180  memchr(&id.model_name, 0, 17)          (MemchrDef.amemchr_realizes)
@@ -376,10 +377,10 @@ Hypothesis HSTK : STK_LLVMF <= LLVMF_STK.
 Hypothesis LAWS : AR_laws SEGS B.
 Hypothesis AMEMCHR : amemchr_realizes SEGS B (SIGMA IS___interceptor_trampoline_memchr).
 Hypothesis ABCMP : abcmp_realizes SEGS B (SIGMA IS___interceptor_trampoline_bcmp).
-(* the read-only image: the contract's arodata_okS gives IdentBase's arodata_okP (LLVMFuzzerTestOneInput.v:154) *)
+(* the read-only image: the contract's arodata_okS gives IdentBase's arodata_okP (LLVMFuzzerTestOneInput.v:155) *)
 Context {RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi}.
 Hypothesis HRO : forall rdr, arodata_okS SEGS B RLO RHI rdr -> arodata_okP SEGS pa_relro_lo pa_relro_hi B rdr.
-(* cgif lib/A/ACfh.v:162-164 (LLVMFuzzerTestOneInput.v:196-198) *)
+(* cgif lib/A/ACfh.v:163-165 (LLVMFuzzerTestOneInput.v:197-199) *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 m_fds md' = m_fds md /\ m_fs md' = m_fs md.

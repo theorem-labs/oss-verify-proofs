@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan harness walk of LLVMFuzzerTestOneInput
    (fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118): SEGMENT S3 LOOP,
    pc 0x7f10c-0x7f190, from the loop head ss_L (INV_L (S fuel)) to ss_T (INV_T fuel) at 0x7f194.
-   Donor model: proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v at c8557374ad2e --- rt_B_aux :410-497 (the header
+   Donor model: proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v at theorem-labs/oss-verify-proofs@6b32741d849a --- rt_B_aux :410-497 (the header
    bytes: one in_bytes :396-407, add_atom_win, in_region and rd_run per group of bytes, a br_go between groups) and
    pin_reg :268-280 (a register pinned to a fresh atom). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_knock/lib/A/APgMain3.v, with its module paths and module names changed; 649 of its 708 lines of code are new or changed and 136 lines of the source are left out. *)
@@ -48,8 +48,9 @@
    630. Per-pass atoms: 636 (q + i), 637 (q[i]); after the call 104 (want), 105 (want_label), 663 (q + tok), 661
    (q + tok + 1), 662 (q[tok + 1]). Every slot is in 630..699 or a cut slot of ss_D.
    The tactics obl_q (the moving-cursor obligation) and pm3_region_kept_eq follow fuzz_knock's lib/A/APgLoop0.v
-   obl_cur and lib/A/APgMain2.v rt_region_kept_eq (origin/ossv/recipes 6ebe35ba632); the call follows APgMain2.v's
+   obl_cur and lib/A/APgMain2.v rt_region_kept_eq; the call follows APgMain2.v's
    journal-threaded call (SRr_bind, reseatL); pin_row_site gives the callee's premises. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: segment walks computed in the build over the widened stack bound; new lemmas. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require SegCodec.  Import SegCodec.StrNota.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
@@ -24,7 +25,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
 Definition L : expr := EVar 4.
 Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; EVar 108; EVar 109; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 118; EVar 119; EVar 120; EVar 121; EVar 122; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
-Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",10'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13?000'$21#7???7?811000#7?????????>?'$22##1????)$2-10#10$21#+$22#1!$2#858,8#127<10!$2#850,8$8!$2#848,8$9!$2#840,8$12!$2#838,8$13!$2#830,8$14!$2#828,8$15!$2#820,8$16"%pstring).
+Definition kn0 : list kentry := Eval vm_compute in (SegCodec.run (SegCodec.lst SegCodec.sc_kentry) ",10'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13?000'$21#7???7?811000#7??????????6'$22##1????)$2-10#10$21#+$22#1!$2#858,8#127<10!$2#850,8$8!$2#848,8$9!$2#840,8$12!$2#838,8$13!$2#830,8$14!$2#828,8$15!$2#820,8$16"%pstring).
 Definition ss0 : sym_state := SS 411988 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := [(EVar 2, (-16), ELit 16)].
 Definition F0L : list SR.region := [(EVar 2, (-16), 16)].
@@ -39,7 +40,8 @@ Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
-Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (SegCodec.run (SegCodec.sc_pair (SegCodec.lst SegCodec.sc_aitem) (SegCodec.sc_pair SegCodec.sc_Z SegCodec.sc_sstate)) ",1!!,2#127<10#127<10#5=#127<10,20##127<10+$2#860$3$4$5$6$7$8$9$:$;$<$=$>$?$10$11$12$13$14$15$16$17$18$19$1:$1;$1<$1=$1>$1?,,10'$2#7???7?811000#800000000000&$2#10($2-10#10,$2-10#10%#10000#13?000'$21#7???7?811000#7?????????>?'$22##1????)$2-10#10$21#+$22#1!$2#858,8#127<10!$2#850,8$8!$2#848,8$9!$2#840,8$12!$2#838,8$13!$2#830,8$14!$2#828,8$15!$2#820,8$16,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).

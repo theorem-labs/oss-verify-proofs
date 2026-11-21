@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: heap_auxv admits key 33, AT_SYSINFO_EHDR, which the auxv now carries; hi_top_task, the stack top below TASK_SIZE, for the access_ok gates; heap_model_frame keeps the kernel build, which the vDSO pair's place reads). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -132,6 +133,8 @@ HEAP : AS -> list blk -> (word -> option byte) -> Model -> Prop;
 
 hi_top : Z;
 hi_top_hi : alloc_ceiling < hi_top;
+(* LPS 727298f3: the stack top lies below [TASK_SIZE], so a stack buffer passes [access_okb] *)
+hi_top_task : hi_top <= TASK_SIZE;
 
 heap_model_ok : forall A LB m md, HEAP A LB m md -> model_ok md;
 heap_mem_inv : forall A LB m md, HEAP A LB m md -> mem_inv segs m;
@@ -151,7 +154,7 @@ exists junk, bytes_at segs m (a + n) junk /\ Z.of_nat (length junk) = (16 - n mo
 
 heap_model_frame : forall A LB m md md', HEAP A LB m md ->
 m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md ->
-m_halted md' = None -> HEAP A LB m md';
+m_kernel md' = m_kernel md -> m_halted md' = None -> HEAP A LB m md';
 
 heap_frame : forall A LB m m' md, HEAP A LB m md ->
 (forall a, 0 <= a < 2^64 -> ~ (client_addr LB alloc_ceiling a /\ a < hi_top) -> ~ hl_scratch L a -> m' (wa a) = m (wa a)) ->
@@ -168,7 +171,7 @@ bytes_at segs m (hl_tp L - 16) (le8 g);
 heap_auxv : forall A LB m md, HEAP A LB m md ->
 exists (aw : Z) (keys : list Z),
 (bytes_at segs m (hl_auxv L) (le8 (Z_to_bv 64 aw)) /\ aw mod 8 = 0 /\
-Forall (fun k => 0 < k < 2^64 /\ k <> 33) keys /\
+Forall (fun k => 0 < k < 2^64) keys /\
 (forall i k, nth_error keys i = Some k -> bytes_at segs m (aw + 16 * Z.of_nat i) (le8 (Z_to_bv 64 k))) /\
 bytes_at segs m (aw + 16 * Z.of_nat (length keys)) (le8 (Z_to_bv 64 0))) /\
 

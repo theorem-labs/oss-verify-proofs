@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up stack layout: the random block's place is a premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run Specs Fs.
@@ -62,12 +63,13 @@ Hypothesis Hp5 : Forall (fun b => b <> Z_to_bv 8 0) path0.
   INV PV path0 [] fs0 true None mem0 E TMAIN MMAIN FSClosed model0 ->
   HA E MMAIN AMAIN mem0 ->
   Forall (fact_ok E) FSRT -> uE E (fst FRZT) <= uE E PV ->
-  (forall w, uE E PV <= w < uE E PV + uE E SZR - 16 -> mem0 (Z_to_bv 64 w) <> None) ->
+  (forall w, uE E PV <= w < uE E PV + uE E SZR -> mem0 (Z_to_bv 64 w) <> None) ->
+  SH_HI <= uE E (rg_base R0T) ->
   mem0 (Z_to_bv 64 (uE E PV)) = Some (Z_to_bv 8 46) /\ mem0 (Z_to_bv 64 (uE E PV + 1)) = Some (Z_to_bv 8 0) ->
   realizes_cfg ASEGS cfg (mkCfg ms model) (shp_den path0 fs0 argv0 E SHD).
 Proof. LiaFast.lf_pins (fun (Hoff Hfs Hp1 Hp2 Hp4 Hp5 : LiaFast.U) => LiaFast.u0).
-  intros model0 mem0 E ms model Hd Hi HAa HF HP0 HM HB.
-  pose proof (den_conv_rdT model0 mem0 E ms model Hd HF HP0 HM HB) as Hd1.
+  intros model0 mem0 E ms model Hd Hi HAa HF HP0 HM HR0 HB.
+  pose proof (den_conv_rdT model0 mem0 E ms model Hd HF HP0 HM HB HR0) as Hd1.
   apply (ut_realizesM cfg Hoff Hfs path0 fs0 argv0 Hp1 Hp2 Hp4 Hp5 RDCHT SRT MRT SHD ART [] rd_res_nilT model0 mem0 E ms model).
   - exact Hd1.
   - exact (INV_conv_rd path0 fs0 mem0 E TMAIN SRT MMAIN MRT FSClosed model0 SRT_next Hi).

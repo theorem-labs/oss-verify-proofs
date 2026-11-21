@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YL0v.v, with its module paths, addresses and numbers changed; 9 of its 714 lines of code are new or changed and 9 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string-tail block top; fpf_memchr's zeta-reduction of runs_main's lets and its argv spelling; the string scans over the runs ProcInput owns). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -298,24 +299,23 @@ split; [reflexivity|]. intros i Hi. destruct i; [|lia]. cbn [nth_error]. rewrite
 rewrite (bytes_at_mbyte src0segs m _ _ j HB) by (rewrite length_app; cbn; lia).
 apply nth_error_nth'. rewrite length_app; cbn; lia.
 Qed.
-Lemma bsb_over_read : forall sp argv envp rnd m p L,
-valid_sp sp ->
-YP03.bytes_at m (z_strs (bv_unsigned sp) argv envp) (stack_tail argv envp rnd) ->
-z_strs (bv_unsigned sp) argv envp <= p + L -> p + L < z_rand (bv_unsigned sp) argv envp ->
+(** A byte read past the end of a string inside the block's tail, up to the next 8-byte boundary, is
+    defined: the tail ([stack_tail]: the strings, the exec file name, its NUL and 8 zero bytes) runs
+    up to the block's top, at least 8 bytes past any string's end. *)
+Lemma bsb_over_read : forall ztop av ev efn m p L,
+YP03.bytes_at m (z_strs ztop av ev efn) (stack_tail av ev efn) ->
+z_strs ztop av ev efn + Z.of_nat (length (stack_tail av ev efn)) = ztop ->
+z_strs ztop av ev efn <= p + L -> p + L + 8 <= ztop ->
 forall a, p + L < a < p + L - (p + L) mod 8 + 8 -> rdn src0segs m (Z_to_bv 64 a) 1 <> None.
 Proof.
-intros sp argv envp rnd m p L Hsp HB Hlo Hhi a Ha.
-pose proof (stack_tail_end sp argv envp rnd) as Hlen.
-assert (Hal : p + L - (p + L) mod 8 + 8 <= z_rand (bv_unsigned sp) argv envp).
-{ apply align8_le; [lia|]. unfold z_rand.
-rewrite <- Zplus_mod_idemp_r, (rand_off_mod8 argv envp), Z.add_0_r.
-pose proof (mod8_of_mod16 (bv_unsigned sp) 0 (proj2 (proj2 Hsp))) as Hm8. rewrite Z.add_0_r in Hm8. exact Hm8. }
-rewrite (proj2 (rdn_mbytes src0segs m 1 a [match nth_error (stack_tail argv envp rnd)
-(Z.to_nat (a - z_strs (bv_unsigned sp) argv envp)) with Some b => b | None => Z_to_bv 8 0 end]));
+intros ztop av ev efn m p L HB Hlen Hlo Hhi a Ha.
+pose proof (Z.mod_pos_bound (p + L) 8 ltac:(lia)).
+rewrite (proj2 (rdn_mbytes src0segs m 1 a [match nth_error (stack_tail av ev efn)
+(Z.to_nat (a - z_strs ztop av ev efn)) with Some b => b | None => Z_to_bv 8 0 end]));
 [discriminate|].
 split; [reflexivity|]. intros i Hi. destruct i; [|lia]. cbn [nth_error]. rewrite Z.add_0_r.
-unfold mbyte. replace a with (z_strs (bv_unsigned sp) argv envp + Z.of_nat (Z.to_nat (a - z_strs (bv_unsigned sp) argv envp))) at 1 by lia.
-rewrite (HB (Z.to_nat (a - z_strs (bv_unsigned sp) argv envp))) by lia.
+unfold mbyte. replace a with (z_strs ztop av ev efn + Z.of_nat (Z.to_nat (a - z_strs ztop av ev efn))) at 1 by lia.
+rewrite (HB (Z.to_nat (a - z_strs ztop av ev efn))) by lia.
 destruct (nth_error _ _) eqn:Hn; [reflexivity|]. exfalso. apply nth_error_None in Hn. lia.
 Qed.
 Lemma img_rdn1 : forall E m rs r lo len a,
@@ -429,14 +429,20 @@ lazymatch goal with |- realizes _ (mkCfg ?ms _) _ =>
 lazymatch type of HS with st_ok _ ?E ?ss _ =>
 pose proof (runs_at_nth _ (ms_mem ms) _ si _ _ HR eq_refl) as HBs;
 pose proof (runs_at_nth _ (ms_mem ms) _ bi _ _ HR eq_refl) as HBb;
-cbn [nth_error runs_main app] in HBs, HBb;
+(* YN3e's repacked runs_main opens with `let ztop := ... in let av := in_argv inp in ...`,
+   which the old (two sp argv envp rnd) form did not have.  A delta-list `cbn [...]` does not
+   zeta-reduce, so the list never exposed its cons cells, `nth_error l i` could not compute,
+   and runs_at_nth's `eq_refl` failed - surfacing at the CALL SITES (YL0w, YL0x, YL0y and
+   twins) and never here.  Flags stated explicitly. *)
+cbn beta zeta iota delta [nth_error runs_main app] in HBs, HBb;
 lazymatch type of HBs with YP03.bytes_at _ ?a _ =>
-assert (Hp : bv_unsigned (ew E n) = a) by (evalE; lia);
+assert (Hp : bv_unsigned (ew E n) = a) by
+  (evalE; first [lia | congruence | (f_equal; first [assumption | (symmetry; assumption)])]);
 assert (Hover : forall x,
 bv_unsigned (ew E n) + Z.of_nat (length s) < x <
 bv_unsigned (ew E n) + Z.of_nat (length s) - (bv_unsigned (ew E n) + Z.of_nat (length s)) mod 8 + 8 ->
 rdn src0segs (ms_mem ms) (Z_to_bv 64 x) 1 <> None)
-by (rewrite Hp; refine (bsb_over_read _ _ _ _ (ms_mem ms) a (Z.of_nat (length s)) _ HBb _ _); [assumption| lia| lia]);
+by (rewrite Hp; refine (bsb_over_read _ _ _ _ (ms_mem ms) a (Z.of_nat (length s)) HBb _ _ _); [assumption| lia| lia]);
 pose proof (rom_reads _ _ _ HS ltac:(vm_compute; reflexivity)) as Hrom;
 let Hnul := lazymatch goal with H : ~ In _ s |- _ => H end in
 let Hrd := constr:(fun j (Hj : (j <= length s)%nat) =>
@@ -477,7 +483,9 @@ rewrite denot_lit_U, U_add_off_atom in H11 by (evalE; unfold M64; lia);
 rewrite !Z.add_0_r in H11;
 lazymatch goal with |- realizes _ (mkCfg ?ms _) _ =>
 lazymatch type of HS with st_ok _ ?E _ _ =>
-pose proof (runs_at_nth _ (ms_mem ms) _ si _ _ HR eq_refl) as HBs; cbn [nth_error runs_main app] in HBs;
+(* Match the explicit reduction flags of fpf_memchr for the ProcInput-owned runs. *)
+pose proof (runs_at_nth _ (ms_mem ms) _ si _ _ HR eq_refl) as HBs;
+cbn beta zeta iota delta [nth_error runs_main app] in HBs;
 assert (Hstep : RiscvSemantics.step src0segs (mkst (ms_regs ms) (Z_to_bv 64 0x16c5c) (ms_mem ms) (seg_rom src0segs))
 = MachineOk (mkst (regupd (ms_regs ms) 12 (Z_to_bv 64 0)) (Z_to_bv 64 0x16c60) (ms_mem ms) (seg_rom src0segs)));
 [ rewrite (step_lbu src0segs _ (Z_to_bv 64 0x16c5c) _ (seg_rom src0segs) (Z_to_bv 32 0x5c603) 12 11 0 (Z_to_bv 8 0));
@@ -619,8 +627,14 @@ destruct HK as (_ & _ & HKb);
 apply (bytes_at_wbytes_out m (zsp + woff + Z.of_nat (length s)) bs) in HKb;
 [| lia | rewrite Hlen; lia | lia | lia | left; lia ];
 replace d2 with (Z_to_bv 64 (zsp + woff + Z.of_nat (length s))) in * by (f_equal; evalE; lia);
+(* `bytes_at_app` must be NAMED. YN3e's Section e carries `Local Set Default Proof Using "All"`
+   over (inp, mbase, sp, brk, rnd, Hsp, Hva, Hve, Hvl, Hlau), so YN3e.bytes_at_app discharges
+   with five leading explicit section parameters, and YN3e is Required AFTER YN3v (:17), so it
+   shadows the parameter-free YN3v.bytes_at_app this tactic's four `_`s were written against.
+   Measured at a farm round: HKb and the posed `bytes_at_wbytes_same` both have
+   exactly the types bytes_at_app wants, and the application still fails. *)
 let HK' := fresh "HK'" in
-pose proof (bytes_at_app _ _ _ _ HKb (bytes_at_wbytes_same m (zsp + woff + Z.of_nat (length s)) bs
+pose proof (YN3v.bytes_at_app _ _ _ _ HKb (bytes_at_wbytes_same m (zsp + woff + Z.of_nat (length s)) bs
 ltac:(lia) ltac:(rewrite Hlen; lia))) as HK';
 clear HKb;
 assert (HK : runs_ok E' (wbytes m (Z_to_bv 64 (zsp + woff + Z.of_nat (length s))) bs)

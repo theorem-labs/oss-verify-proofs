@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSegM.v at
-   a working branch c91e5489711; the same layer for image B. The file it is made from Requires
+   a working branch; the same layer for image B. The file it is made from Requires
    image A's record (lib/A/HPgImgA.v) and image A's segment machinery, so NOTHING is Required from it here: a
    lib/AU file must drag no image-A module in, because fuzz_role ports this layer. The pieces of that file whose
    text names no image - the bytes of the frame object x, the nan-boxed float predicate, the two answers, the

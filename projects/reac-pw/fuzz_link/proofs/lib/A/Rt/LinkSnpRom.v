@@ -9,7 +9,7 @@
    - lsr_rom_viewN_of_arodata: arodata_okP gives rom_viewN, the unowned read-only bytes (in_rom is in_roP's first
      disjunct);
    - lsr_fm_cr_consts: consts_view over fm_cr from the two (FMsnprintfCr.fm_cr_consts_view).
-   Relocated from libreac/fuzz_disco lib/A/FMsnprintfRomO.v (origin/ossv/recipes 501c0d516c69), itself a copy of
+   Relocated from libreac/fuzz_disco lib/A/FMsnprintfRomO.v, itself a copy of
    omx-clap-core/fuzz_manifest's FMInst.v pieces. Module paths move to link's (TfibSyms -> PcapSyms, YC8g -> YC20).
    Two image-derived numerals move, each recomputed from link's own image and each the bound of a frame lemma of
    link's tree that states it: the end of the read-only segments 0x9f000 -> 0xa1000 (link's PT_LOAD RX segment ends at

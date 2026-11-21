@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reserved-range ledger; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/HandoffBInvK.v, lines 85, 112, 164-167, 183-191, 203-226, 246-247. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -72,7 +72,7 @@ Hypothesis EXTRA_wf : A_wf EXTRA.
 
 Hypothesis LIM_src : LIMIT = source_alloc_limit.
 Hypothesis GAP : AsanCeil.bottomup_floor + LENMAX + (a_totsz cs + BUDGET)
-                 + (Z.of_nat (length (segments_reserved SEGS) + length (a_maps cs)) + KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
+                 + (Z.of_nat (length (segments_reserved SEGS) + n_resx A + length (a_maps cs)) + KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
 
 #[local] Notation CSOK := (cs_ok SEGS A LIMIT SINV argH FS0).
 
@@ -86,7 +86,8 @@ Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Mod
 Hypothesis HC : CSOK E cs R FULL model.
 
 #[local] Notation MAPS0 := (vm_maps (m_vmmaps model)).
-#[local] Notation RESV0 := (segments_reserved SEGS).
+
+#[local] Notation RESV0 := (vm_reserved (m_vmmaps model)).
 #[local] Notation NOACC0 := (vm_noaccess (m_vmmaps model)).
 #[local] Notation CEIL0 := (uE E e_sp0 - 8388608).
 
@@ -136,7 +137,11 @@ Proof.
   constructor.
   - exact (proj1 (co_wf _ _ _ _ _ _ _ _ _ _ _ HC)).
   - intros q Hq. exact (proj1 (hl_maps_pos SEGS A LIMIT SINV argH FS0 E cs R FULL model q HC Hq)).
-  - exact RESV_pos.
+  - (* [bs_resv_pos] over BOTH halves of the ledger *)
+    destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & HG & _ & _).
+    intros b s Hbs. rewrite Hres in Hbs. apply in_app_iff in Hbs as [Hbs|Hbs].
+    + exact (RESV_pos b s Hbs).
+    + exact (proj1 (proj1 (Forall_forall _ _) HG _ Hbs)).
   - apply hl_seps_nodup; [exact (co_seps _ _ _ _ _ _ _ _ _ _ _ HC)|].
     intros q Hq. exact (proj1 (hl_maps_pos SEGS A LIMIT SINV argH FS0 E cs R FULL model q HC Hq)).
   - exact (hl_seps_apart _ (co_seps _ _ _ _ _ _ _ _ _ _ _ HC)).
@@ -152,12 +157,15 @@ Proof.
     destruct (hl_maps_pos SEGS A LIMIT SINV argH FS0 E cs R FULL model _ HC Hin) as [P1 P2]. unfold amap_den in P1, P2. cbn [fst snd] in P1, P2.
     unfold resZ, toW. cbn [fst snd]. unfold uE. rewrite !Z_to_bv_bv_unsigned.
     split; [exact Hin|]. pose proof (u64_range (edenot E (am_base m))). pose proof (u64_range (edenot E (am_len m))). unfold uE in *. lia.
-  -
+  - (* [bs_res_off_resv]: a tracked entry is apart from the WHOLE ledger, which
+       is what [co_mres] states; the old proof used hull-apartness, and that is
+       exactly what the launch's extra reservations falsify. *)
     intros Rz b s HR Hbs. unfold RES_of in HR. apply in_map_iff in HR as (m & <- & Hm).
     pose proof (hb_in_maps m (RESm_in m Hm)) as Hin.
-    pose proof (proj1 (Forall_forall _ _) (co_bounds _ _ _ _ _ _ _ _ _ _ _ HC) _ Hin) as (_ & _ & _ & P4 & _).
-    pose proof (proj1 (Forall_forall _ _) RES_hull _ Hbs) as [Q1 Q2].
-    unfold amap_den in P4. cbn [fst snd] in P4, Q1, Q2. unfold resZ. cbn [fst snd]. unfold uE. lia.
+    pose proof (proj1 (Forall_forall _ _) (co_mres _ _ _ _ _ _ _ _ _ _ _ HC) _ Hin) as HD.
+    pose proof (proj1 (Forall_forall _ _) HD (b, s) Hbs) as D.
+    unfold iv_disjoint, amap_den in D. cbn [fst snd] in D.
+    unfold resZ. cbn [fst snd]. unfold uE. lia.
   -
     intros x Hx. unfold SHLO, SHHI in Hx.
     destruct (Z_lt_dec x 0x8fff7000); [|destruct (Z_lt_dec x 0x2008fff7000)].
@@ -168,18 +176,31 @@ Proof.
     intros lo hi Hlh [Hx|Hx]; unfold LSH_LO, LSH_HI, HSH_LO, HSH_HI in Hx.
     + apply (hb_lit_entry M_LOW _ _ lo hi IN_LOW eq_refl eq_refl); lia.
     + apply (hb_lit_entry M_HIGH _ _ lo hi IN_HIGH eq_refl eq_refl); lia.
-  -
+  - (* [bs_shrw_off_resv] over BOTH halves: the image's reservations are below
+       the shadow, and the launch's extra reservations start at [KHI + 4096],
+       above every shadow address. *)
+    destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & HG & _ & _).
     intros x b s Hx Hbs Hin. destruct (hb_shrw_facts x Hx) as [Hh _].
-    pose proof (proj1 (Forall_forall _ _) RES_hull _ Hbs) as [Q1 Q2]. cbn [fst snd] in Q1, Q2. lia.
+    unfold in_shadow_rw, LSH_LO, LSH_HI, HSH_LO, HSH_HI in Hx.
+    rewrite Hres in Hbs. apply in_app_iff in Hbs as [Hbs|Hbs].
+    + pose proof (proj1 (Forall_forall _ _) RES_hull _ Hbs) as [Q1 Q2]. cbn [fst snd] in Q1, Q2. lia.
+    + pose proof (proj1 (Forall_forall _ _) HG _ Hbs) as (_ & _ & _ & _ & Hk & _).
+      cbn [fst] in Hk. unfold KHI in Hk. lia.
   -
     intros x Hx. rewrite hl_covered_in_ivs. exact (proj2 (hb_shrw_facts x Hx)).
   -
+    (* [RESV0] is the whole ledger, so its length is bounded by
+       [length (segments_reserved SEGS) + n_resx A], which is the count [GAP]
+       now carries. *)
+    destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & _ & Hlx & _).
+    assert (HL : (length RESV0 <= length (segments_reserved SEGS) + n_resx A)%nat)
+      by (rewrite Hres, length_app; lia).
     rewrite <- hl_sum_gw. rewrite length_app.
-    pose proof (co_totsz _ _ _ _ _ _ _ _ _ _ _ HC) as Ht. rewrite (co_res _ _ _ _ _ _ _ _ _ _ _ HC) in Ht.
+    pose proof (co_totsz _ _ _ _ _ _ _ _ _ _ _ HC) as Ht.
     rewrite Hmaps at 2. rewrite length_map.
     assert (0 <= LENMAX + 4095) by lia.
     assert (0 <= Z.of_nat (length RESV0) + Z.of_nat (length (a_maps cs)) + KMAX) by lia.
-    rewrite Nat2Z.inj_add in GAP. nia.
+    rewrite !Nat2Z.inj_add in GAP. nia.
   - unfold SHHI, stack_max_size. lia.
   - exact BUD.
 Qed.
@@ -199,7 +220,8 @@ Proof.
   - apply (MInv_mono_bm (allowA A E cs)); [reflexivity | exact (co_minv _ _ _ _ _ _ _ _ _ _ _ HC) | exact Hsub].
   - exact (co_wf _ _ _ _ _ _ _ _ _ _ _ HC).
   - reflexivity.
-  - exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC).
+  - (* [bi_resv]: [RESV0] IS the ledger now, so this is a [reflexivity] *)
+    reflexivity.
   - exact (hl_alloc_top SEGS A LIMIT SINV argH FS0 E cs R FULL model HC).
   - rewrite Hl. exact LIM_src.
   - intros x Hx. exact Hx.

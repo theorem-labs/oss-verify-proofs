@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (kd2_place's address also at or above the model's task_unmapped_base, the floor of Linux's bottom-up window, which the request's non-refusability needs; kd2_reserved stated as the image's entries followed by the vDSO/vvar pair). *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -26,13 +27,19 @@ Record KD_laws2 (K : DG -> jpredA) (n : positive) (hc : Z) : Prop := mkKDL2 {
       dtrans G tp md G' tp' md' -> K G rho tp tr md -> K G' rho tp' tr md';
 
   kd2_room : forall G rho tp tr md, K G rho tp tr md -> depot_inv segs G rho md tp -> headroom md tp + dep_cost G >= hc;
-  kd2_reserved : forall G rho tp tr md, K G rho tp tr md -> vm_reserved (m_vmmaps md) = segments_reserved segs;
+  (* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+  kd2_reserved : forall G rho tp tr md, K G rho tp tr md ->
+      exists V, vm_reserved (m_vmmaps md) = segments_reserved segs ++ V /\ vdso_pair_ok V;
   kd2_noacc : forall G rho tp tr md a n x, K G rho tp tr md -> In (a, n) (vm_noaccess (m_vmmaps md)) ->
       bv_unsigned a <= x < bv_unsigned a + bv_unsigned n ->
       exists b m, In (b, m) (vm_maps (m_vmmaps md)) /\ bv_unsigned b <= x < bv_unsigned b + bv_unsigned m;
 
+  (* LPS 727298f3: the address is also at or above the model's [task_unmapped_base], the floor of
+     Linux's bottom-up window, which the request's non-refusability needs
+     (MallocA/MmapSymG.v [not_refusable_of_place]). *)
   kd2_place : forall G rho tp tr md L, K G rho tp tr md -> depot_inv segs G rho md tp -> dN G <= DNMAX -> (L = NBSZ \/ L = FBSZ) ->
       exists a : word, mmap_place_ok_none (Z_to_bv 64 0) md (Z_to_bv 64 L) a
+                       /\ LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= bv_unsigned a
 }.
 
 End WithSegs.

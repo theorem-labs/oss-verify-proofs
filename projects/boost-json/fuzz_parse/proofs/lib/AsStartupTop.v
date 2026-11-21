@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader, the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -35,31 +36,55 @@ Section Top.
   Hypothesis Hfit : ltac2:(zQ "30!kh0!hma!hn5@3$0?3sp0@1$1?3inp@1$2?3inp").
   Hypothesis Huid : ltac2:(zQ "20!kmc!hoc@1$0@1$1?3inp").
   Hypothesis Hhw : ltac2:(zQ "20!kld!ho0@1$0@1$1?3inp").
+  (* LPS 727298f3: the launch fact that fixes the mmap base [P_main]'s invariant binds
+     ([AsanInitP.launch_base_ok]) *)
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp.
 
   Variable T : ltac2:(zQ "10!lj2$0").
   Hypothesis T_nil : T [].
   Hypothesis MAIN : ltac2:(zQ "50!kg6!kue!iia!jp9!lja>1c$0>0@6$1?3sp0?4brk0?5mbase?5rdraw?3inp^1@4$4$2$3^2?1T").
 
-  Lemma holes_ok : ltac2:(zQ "h00!hma!hn5!ho0!hoc!ht5!htc!ii0!iia!imf!hid!ir3!irc!is5!jh2!jlb!jp9@a$d$e$7$f$6$a$9@8$b$4?3sp0?5rdraw?4brk0@1$0?3inp@1$1?3inp@1$3?3inp@1$2?3inp@7$c$4?3sp0?5rdraw@1$0?3inp@1$1?3inp@1$3?3inp@1$2?3inp@1$8?1T@1$5?3inp").
+  (* LPS 727298f3 port: written out (rule 11g); [SINV0]/[argH0] are spelled through AsanInitP's
+     packed interface at this [inp], as [P_main] spells them.  [P_main]'s invariant binds the
+     mmap base ([AsanInitP.SINVm]): this is the one place its witness, the run's own [mbase],
+     is introduced; [cs_ok] reads its invariant only in [co_sinv]. *)
+  Lemma holes_ok : holes_stmt ASEGS ASAN_H AsanInit.LIMIT HSF_asan
+    (OSSVerify.Proofs.boost_json.fuzz_parse.lib.AsanInitP.SINVp APH A_PC sp0 rdraw brk0 mbase inp) (OSSVerify.Proofs.boost_json.fuzz_parse.lib.AsanInitP.argHp sp0 rdraw inp)
+    (AsStartup.HOLES T) (in_fs inp).
   Proof.
     intros h ch Hh E R FULL model HC. unfold AsStartup.HOLES.
     apply srealizes_of_realizes. rewrite (HSF_asan_pc_main h ch Hh). apply MAIN.
     split; [exact (conj Hsp (conj Hbrk (conj Hmb (conj Hva (conj Hve (conj Hfit (conj Huid Hhw)))))))|].
-    nexists h, ch, E, R, FULL, model. split; [exact Hh|]. split; [exact (HSF_asan_pc_main h ch Hh)|]. split; [reflexivity | exact HC].
+    nexists h, ch, E, R, FULL, model. split; [exact Hh|]. split; [exact (HSF_asan_pc_main h ch Hh)|]. split; [reflexivity|].
+    destruct HC. constructor; try assumption.
+    exists mbase. split; [split; assumption | assumption].
   Qed.
 End Top.
 
-Theorem as_startup_srealizes : ltac2:(zQ "hd0!iia!jqa!jse!hma!hn5!jp9!jt4!kg6!kh0!ki5!kj4!kk2!kkf!kld!kmc!kn8!kob!ksb!kt8!ku5!ho0!hoc!kue!ht5!ir3!lj2!lja!lo0!ls2>3sp0@1$2@1$1#k0>4brk0@1$2@1$1#k0>5mbase@1$2@1$1#k0>5rdraw$h1>3inp$h2>1T$h9>0@1$h0^6>0@2$b$0^6>0@1$f^6>0@1$a@1$3^5>0@1$c@1$4^6>0@3$8^b@1$3^7@1$4^7>0@1$e@1$h5^8>0@1$d@1$h4^9>0@1^9@1$6$h3>0>1c$7>0@6$h6^h0^f^e^d^c^1@4$ha$0$5^2^c@4$hb$0$5@9$9$0$hc$h7^h0^f^e^d$h8^c^b").
+(* LPS 727298f3 port: written out (rule 11g), with the two launch facts AsanInit's [init_cs_ok]
+   needs at the revision ([valid_launch], [entry_launch_ok_va]). *)
+Theorem as_startup_srealizes : forall (sp0 brk0 mbase : word) (rdraw : EntryDraw) (inp : ProcInput) (T : TSet),
+  valid_sp sp0 -> valid_brk ASEGS brk0 -> valid_mmap_base mbase ->
+  valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+  valid_id (in_uid inp) -> valid_hwcap (in_hwcap inp) ->
+  valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp -> in_channel_reader inp = true ->
+  T [] -> (forall c, P_main sp0 brk0 mbase rdraw inp c -> realizes ASEGS c T) ->
+  srealizes ASEGS (init_config ASEGS Asan.M.init_pc APH sp0 brk0 mbase rdraw AsanInit.LIMIT inp) T.
 Proof.
   (* [comment removed for export] *)
-  intros sp0 brk0 mbase rdraw [argv envp fs stdin uid gid groups net nofile sigmask hw abterm vasz urnd tmp] T Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw T_nil MAIN.
-  exact (as_startup_T sp0 rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp Hsp Hbrk Hva Hve Hfit Huid Hhw
-           (in_fs (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw abterm vasz urnd tmp)) eq_refl
-           startup_plan_xranges HS1_asan HSC_asan HSA_asan HSF_asan startup_plan AsStartupCert1.startup_shape   (* [comment removed for export] *)
-           CERT_KC0 CERT_BFUEL CERT_FUEL AsStartupCert1.startup_cert AsStartupCert1.startup_shape_holes cert2 cert3 cert4
+  (* 08b1429: ProcInput has 20 fields (in_kernel, in_execfn, in_channel_reader, in_sigpipe_default,
+     in_sigpipe_terminal appended; recipes/procinput-fields.md): all 20 are named and passed on. *)
+  intros sp0 brk0 mbase rdraw [argv envp fs stdin uid gid groups net nofile sigmask hw abterm vasz urnd tmp kern execfn cr sd st] T Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hlaunch Hlau Hrdr T_nil MAIN.
+  exact (as_startup_T sp0 rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn cr sd st Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hlaunch Hlau Hrdr
+           (in_fs (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw abterm vasz urnd tmp kern execfn cr sd st)) eq_refl
+           (* LPS 727298f3, design 1: the tables of the launch's CONFIG_RSEQ value ([kb_rseq kern]) *)
+           startup_plan_xranges (HS1_asan_k (kb_rseq kern)) (HSC_asan_k (kb_rseq kern)) (HSA_asan_k (kb_rseq kern)) HSF_asan
+           startup_plan_k (AsStartupCert1.startup_shape_k (kb_rseq kern))
+           CERT_KC0 CERT_BFUEL CERT_FUEL (AsStartupCert1.startup_cert_k kern) (AsStartupCert1.startup_shape_holes_k (kb_rseq kern))
+           (cert2_k (kb_rseq kern)) (cert3_k (kb_rseq kern)) (cert4_k (kb_rseq kern))
            T T_nil
-           (holes_ok sp0 brk0 mbase rdraw (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw abterm vasz urnd tmp)
-                     Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw T MAIN)).
+           (holes_ok sp0 brk0 mbase rdraw (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw abterm vasz urnd tmp kern execfn cr sd st)
+                     Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hlau T MAIN)).
 Qed.
 
 (* [comment removed for export] *)

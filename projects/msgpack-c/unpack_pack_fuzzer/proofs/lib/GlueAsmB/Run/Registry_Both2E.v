@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the registry tables' new valid_launch hypothesis, carried in the table's _USE tuple; no row of this table reads it). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -109,6 +110,7 @@ Variables (sp : word) (rnd : EntryDraw).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
 Let p1 : list byte := AsanDrun.TwinB.p1 inp.
 Let file : list byte := AsanDrun.TwinB.file inp.
 Let MP : Model -> Prop := AsanDrun.TwinB.MP inp.
@@ -166,7 +168,7 @@ Local Ltac ra_21 := (eapply (OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.U
 Local Ltac ra_22 := (eapply (OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA.FfSound.TwinB.fake_free_sound AIu2 AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT UNIV Cw OPSA AIu_fake (AsanRun.TwinB.OPSA_holds1 AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) (AsanRun.TwinB.OPSA_fp1 AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) (AsanRun.TwinB.OPSA_cov1 AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) F1Cw.TwinB.Cw_ghost_free_f (AsanRun.TwinB.OPSA_frame_other AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) (AsanRun.TwinB.OPSA_fp_other AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) AsanRun.TwinB.OTHERA (AsanRun.TwinB.OPSA_mo_other AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) (AsanRun.TwinB.OPSA_cov0_img AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) MP PB AsanAcct.TwinB.NMAX (Acct.TwinB.ACCT_frng AsanAcct.TwinB.NMAX AsanAcct.TwinB.SHFIX) (Acct.TwinB.ACCT_frame_out AsanAcct.TwinB.NMAX AsanAcct.TwinB.HLIM MP MINV AsanRun.TwinB.OTHERA (AcctPlug.TwinB.MP_relx inp) AcctPlug.TwinB.OTHER_relx MINV_intro AsanAcct.TwinB.SHFIX Op.TwinB.is_fake Op.TwinB.lb_del Op.TwinB.lb_del_In (fun id Aaddr sz FK => Op.TwinB.heap_not_fake (HB id Aaddr sz) (ex_intro _ id eq_refl) FK))); first [reflexivity | vm_compute; reflexivity | (apply (DrvLib.DrvLib.ecall_atb_sound bsegs); vm_compute; reflexivity)]).
 Local Ltac ra_23 := (eapply (OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.UnpA.UnpInstA.TwinB.UnpInstA.gviewgc_sound bsegs OPSA MP PB); first [reflexivity | vm_compute; reflexivity | (apply (DrvLib.DrvLib.ecall_atb_sound bsegs); vm_compute; reflexivity)]).
 Local Ltac ra_24 := (eapply (OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp.GUnrealign.GUnrealign.gunrealign_sound _ _ bsegs OPSA MP PB); first [reflexivity | vm_compute; reflexivity | (apply (DrvLib.DrvLib.ecall_atb_sound bsegs); vm_compute; reflexivity)]).
-Definition ctab_Both2E := let _USE := (Hva, Hsp, Hfit, ACCT_led, ACCT_cov, ACCT_cov_sh, ACCT_mat, AI_frame_top, ACCT_fds) in
+Definition ctab_Both2E := let _USE := (Hva, Hsp, Hfit, Hvl, ACCT_led, ACCT_cov, ACCT_cov_sh, ACCT_mat, AI_frame_top, ACCT_fds) in
 
   (ltac:(apply (DrvLib.DrvLib.ctab_ok_of_list bsegs RAx); repeat (apply Forall_cons || apply Forall_nil); cbn [snd];
     [ first [ ra_0 | fail 1 "registry row cid 400 (amalloc_c): no census theorem applies" ]

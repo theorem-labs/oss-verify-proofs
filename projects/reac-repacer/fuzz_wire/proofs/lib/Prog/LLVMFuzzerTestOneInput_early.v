@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v, with its module paths and numbers changed; 55 of its 129 lines of code are new or changed and 12 lines of the source are left out. *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_early.v (6874bc78b1f,
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_early.v (
    itself libreac/fuzz_decode's released early-exit walk) at fuzz_wire's module paths and plain image values:
    entry 0x12d78, frame 0x40; 13 instructions to and with the `bltu` at 0x12da8 (addi sp, 8 sd, lui, add, addiw,
    bltu), the taken branch to 0x12eb0, then 11 (mv a0 zero, 8 ld, addi sp, ret). It proves the return 0 of
    fuzz_wire.c:256-257 for size = 0 or size >= 64 MiB; llvm_early_cond is this image's test. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: preserved map/reserved separation through metadata allocation and brk updates. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -363,7 +364,7 @@ Section C1.
   Proof.
     pose proof c1_R_rng as (R1 & R2 & R3 & R4 & R5). pose proof c1_R_meta as (E1 & E2 & E3). pose proof c1_p_val as [P3 P4]. pose proof c1_p_in_R as [P1 P2].
     ceil; unfold HEAPLO in R1, R2.
-    destruct HLG as [LM LN LB LR LMB]. constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base s_regions s_brk c1_st1 MhAMetaN.st' c1_vm1].
+    destruct HLG as [LM LN LB LR LMB LMR]. constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base s_regions s_brk c1_st1 MhAMetaN.st' c1_vm1].
     - eapply Permutation_trans; [exact LM|]. apply Permutation_app_head.
       eapply Permutation_trans; [apply Permutation_map; exact c1_regions_perm|]. unfold c1_regions1. cbn [map]. apply Permutation_refl.
     - eapply Permutation_trans; [apply perm_maps_subtract; exact LN|].
@@ -380,6 +381,7 @@ Section C1.
     - destruct (s_brk st); exact LB.
     - exact LR.
     - exact LMB.
+    - exact LMR.
   Qed.
 
   Lemma c1_new_apart_X : forall r, In r c1_regions1 -> (exists r0, In r0 (s_regions st) /\ rg_base r0 = rg_base r /\ rg_len r0 = rg_len r) \/
@@ -562,7 +564,7 @@ Section C2.
   Proof.
     pose proof c2_B_facts as (B1 & B2 & B3 & B4). ceil. pose proof c2_Rn_shape as SH.
     assert (NSUB : maps_subtract (vm_noaccess vm) B (B + 4096) = vm_noaccess vm).
-    { destruct HLG as [LM LN LB LR LT].
+    { destruct HLG as [LM LN LB LR LT LMR].
       assert (P : Permutation (maps_subtract (vm_noaccess vm) B (B + 4096)) (maps_subtract (noacc_of st) B (B + 4096))) by (apply perm_maps_subtract; exact LN).
       apply maps_subtract_apart; [lia|]. intros en Hen.
       assert (Hen' : In en (noacc_of st)) by exact (Permutation_in _ LN Hen).
@@ -570,7 +572,7 @@ Section C2.
       apply in_flat_map in Hen'. destruct Hen' as (r & Hr & Hin).
       destruct (nr_inside st L HWF r en Hr Hin) as (x & y & -> & A1 & A2 & A3 & A4 & A5). exists x, y. split; [reflexivity|].
       destruct (proj1 c2_apart r Hr); repeat split; lia. }
-    destruct HLG as [LM LN LB LR LT]. constructor.
+    destruct HLG as [LM LN LB LR LT LMR]. constructor.
     - (* [comment removed for export] *) cbn [s_regions c2_st2 MhAMetaN.st']. unfold c2_vm2, c2_vm1, c2_regions2. destruct gk; cbn [vm_maps map].
       + replace (region_entry c2_Rn) with (vm_brk vm, Z_to_bv 64 8192).
         2:{ rewrite c2_Rn_eq. destruct SH as [(-> & -> & _)|(_ & _ & E)]; [|discriminate E]. unfold region_entry. cbn. f_equal. symmetry. apply Z_to_bv_u_eq'. symmetry. exact HB. }
@@ -592,6 +594,23 @@ Section C2.
     - (* [comment removed for export] *) cbn [s_brk c2_st2 MhAMetaN.st' c2_brk2]. unfold c2_vm2, c2_vm1. destruct gk; cbn [vm_brk vm_start_brk]; rewrite u64_lit by lia; (split; [reflexivity | exact B4]).
     - unfold c2_vm2, c2_vm1. destruct gk; cbn [vm_reserved]; exact LR.
     - unfold c2_vm2, c2_vm1. destruct gk; exact LT.
+    - assert (RF : region_free (vm_reserved vm) (Z_to_bv 64 B) (Z_to_bv 64 8192) = true).
+      { rewrite region_free_app in HRF. apply andb_true_iff in HRF. exact (proj1 HRF). }
+      unfold c2_vm2, c2_vm1. destruct gk; cbn [vm_reserved vm_maps].
+      + constructor; [|exact LMR]. cbn [fst snd].
+        rewrite <- (Z_to_bv_u_eq' (vm_brk vm) B (eq_sym HB)). exact RF.
+      + constructor; [|exact LMR]. cbn [fst snd].
+        rewrite <- (Z_to_bv_u_eq' (vm_brk vm) B (eq_sym HB)). exact RF.
+      + rewrite maps_subtract_cons.
+        rewrite (maps_subtract_apart (vm_maps vm) B (B + 4096) ltac:(lia) c2_maps_apart).
+        rewrite <- (Z_to_bv_u_eq' (vm_brk vm) B (eq_sym HB)).
+        rewrite (iv_subtract_prefix (Z_to_bv 64 B) (Z_to_bv 64 8192) B (B + 4096))
+          by (rewrite !u64_lit by lia; lia).
+        cbn [app]. constructor; [|exact LMR]. cbn [fst snd].
+        assert (Htail_len : bv_unsigned (Z_to_bv 64 B) + bv_unsigned (Z_to_bv 64 8192) - (B + 4096) = 4096).
+        { rewrite !u64_lit by lia; lia. }
+        rewrite Htail_len.
+        eapply region_free_subrange; [exact RF| |]; rewrite !u64_lit by lia; lia.
   Qed.
 
   Lemma c2_new_apart_X : forall r, In r c2_regions2 -> (exists r0, In r0 (s_regions st) /\ rg_base r0 = rg_base r /\ rg_len r0 = rg_len r) \/
@@ -728,7 +747,7 @@ Section C3.
   Lemma c3_t_ledger : LEDGERX c3_st X c3_vm.
   Proof.
     pose proof c3_b_facts as (_ & B0 & B1 & B2 & B3 & B4 & B5 & B6). unfold HEAPLO in B2. ceil.
-    destruct HLG as [LM LN LB LR LT]. constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base vm_init_sp s_regions s_brk c3_st MhAMetaN.st' c3_vm].
+    destruct HLG as [LM LN LB LR LT LMR]. constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base vm_init_sp s_regions s_brk c3_st MhAMetaN.st' c3_vm].
     - unfold c3_regions. cbn [map]. replace (region_entry c3_Rn) with (vm_brk vm, Z_to_bv 64 4096).
       2:{ unfold region_entry, c3_Rn. cbn. f_equal. symmetry. apply Z_to_bv_u_eq'. symmetry. exact B5. }
       eapply Permutation_trans; [apply perm_skip; exact LM|]. apply Permutation_middle.
@@ -737,6 +756,9 @@ Section C3.
     - rewrite u64_lit by lia. split; [reflexivity | exact B6].
     - exact LR.
     - exact LT.
+    - constructor; [|exact LMR]. cbn [fst snd].
+      rewrite <- (Z_to_bv_u_eq' (vm_brk vm) b (eq_sym B5)).
+      rewrite region_free_app in HRF. apply andb_true_iff in HRF. exact (proj1 HRF).
   Qed.
 
   Lemma c3_new_apart_X : forall r, In r c3_regions -> (exists r0, In r0 (s_regions st) /\ rg_base r0 = rg_base r /\ rg_len r0 = rg_len r) \/
@@ -902,7 +924,7 @@ Section C4.
   Lemma c4_t_ledger : LEDGERX c4_st X c4_vm.
   Proof.
     pose proof c4_N_rng as (N1 & N2 & N3). destruct Hp0 as (P1 & P2 & P3). ceil; unfold HEAPLO in P2, P3.
-    destruct HLG as [LM LN LB LR LMB]. constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base s_regions s_brk c4_st MhAMetaN.st' c4_vm].
+    destruct HLG as [LM LN LB LR LMB LMR]. constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base s_regions s_brk c4_st MhAMetaN.st' c4_vm].
     - unfold c4_regions. cbn [map]. replace (region_entry c4_Rn) with (Z_to_bv 64 p0, Z_to_bv 64 c4_N) by reflexivity.
       eapply Permutation_trans; [apply perm_skip; exact LM|]. apply Permutation_middle.
     - rewrite maps_subtract_cons, c4_nr.
@@ -919,6 +941,8 @@ Section C4.
     - exact I.
     - exact LR.
     - exact LMB.
+    - constructor; [|exact LMR]. cbn [fst snd].
+      rewrite region_free_app in HRF. apply andb_true_iff in HRF. exact (proj1 HRF).
   Qed.
 
   Lemma c4_new_apart_X : forall r, In r c4_regions -> (exists r0, In r0 (s_regions st) /\ rg_base r0 = rg_base r /\ rg_len r0 = rg_len r) \/

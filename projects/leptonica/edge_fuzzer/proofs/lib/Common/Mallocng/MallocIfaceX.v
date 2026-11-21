@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,7 +29,7 @@ Definition noroomX (dc db da dx M : Z) (A : astate) (h : VmMaps) : Prop :=
                 (~ am_room A1 s1 \/
                  exists len, 0 < len <= M /\ len mod 4096 = 0 /\
                              vm_backed_bytes (ms_vm s1) + len <= vm_backed_bytes h + db /\
-                             forall a, mmap_grant_ok MMrw (ms_vm s1) a len = false).
+                             exists thp, forall a, mmap_grant_ok MMrw thp (ms_vm s1) a len = false).
 
 Lemma snoroom_noroomX : forall sp0 argv envp cb dc db da dx M A s,
   snoroom sp0 argv envp cb dc db da dx M A s -> noroomX dc db da dx M A (ms_vm s).

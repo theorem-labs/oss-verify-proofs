@@ -8,6 +8,7 @@
    footprint is []: tfib_lib_site_x keeps lib_site_x's statement and rebuilds FINV after the call from FINV before it
    and the journal (YE01.v ameta_inv_kept, astdio_env_kept), and weakens the journal to [sink_token]
    (YCbq.v ajournal_init, ajournal_sub). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -27,7 +28,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 (* The closed sink's cells of the asan image, as the glue passes them (G_Top.v:128 g_SINK_OWNED; a Theorem Labs lane's
-   A/P_LLVMFuzzerTestOneInput.v:136 SCENE_SINK_OWNED): __libc.threaded, ofl_lock and ofl_head (A/AE2k.v:25-27). *)
+   A/P_LLVMFuzzerTestOneInput.v:137 SCENE_SINK_OWNED): __libc.threaded, ofl_lock and ofl_head (A/AE2k.v:25-27). *)
 Definition SINK_OWNED_tfa : list (Z * Z) := [(0x5f6a29, 1); (0x5f6e88, 4); (0x5f6e90, 8)].
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
 Section c.

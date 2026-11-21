@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 289 of its 323 lines of code are new or changed and 540 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment E01 of reac-pw/fuzz_rate LLVMFuzzerTestOneInput (plain): [0x12fc0, 0x13154], ENTRY -> K13158
    (Prog/LLVMFuzzerTestOneInput_c.v's S_E01).
    The prologue (0x12fc0 `addi sp,sp,-0x220`; ra, s0 .. s11 saved at S - 8 .. S - 104), the n >= 2^26 exit not taken
@@ -17,7 +18,7 @@
    whose continuation gives Inv_K13158 (the cell survives malloc by its clause on the bytes of [fsp g, g_S g), the
    registers by regs_preserved). No other call.
    Adapted from reac-pw/fuzz_role's Prog/Seg/E01.v (itself fuzz_pin's
-   Prog/Seg/E01.v and libreac/fuzz_ctrl's released segments A01 and F01, origin/ossv/recipes 25e3d17bdb50,
+   Prog/Seg/E01.v and libreac/fuzz_ctrl's released segments A01 and F01,
    Prog/Seg/): the run from Inv_ENTRY on the normalized memory, FR with hb = [], malloc as a Kind B step. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

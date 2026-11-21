@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan harness walk (LLVMFuzzerTestOneInput 0x7eed0 in
    fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118): segment S1 HEADER, from
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v (the header segment rt_B, lines 112-161, 192-251, 267-281, 396-498) at
-   c8557374ad2e, with tactic text also copied from lib/A/ACf9.v (lines 246-279, 339-340, 347-348, 489-505) and
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v (the header segment rt_B, lines 112-161, 192-251, 267-281, 396-498),
+   with tactic text also copied from lib/A/ACf9.v (lines 246-279, 339-340, 347-348, 489-505) and
    lib/A/ACew.v (lines 89-94) at the same commit, their module paths changed and tfibsegs / tfibtbl_lib_ok / TfibLib as
    in a Theorem Labs lane's lib/A/AWalkFw0.v / ACef.v / ACeh.v (a working branch). The S0 -> S1 boundary state ss_H is
    a Theorem Labs lane's lib/A/APgMain0.v (a working branch), the form of the donor's ss_A2 (A/ACf7.v:27-28);
    YCeo is a Theorem Labs lane's lib/Reusable/YCeo.v (a working branch), the donor's lib/YCeo.v.
    rule 24: no function proved (a port of the released cgif_file_fuzzer harness walk structure). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* SEGMENT S1 HEADER, pc 0x7f004-0x7f084 (33 insns), 0x7f378-0x7f3c8 (21) and the check slow paths 0x7f3d4-0x7f404 (13),
    ending at ss_P, pc 0x7f088 (internal path row S1). The code

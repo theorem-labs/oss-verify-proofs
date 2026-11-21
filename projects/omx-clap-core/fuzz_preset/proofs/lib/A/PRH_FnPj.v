@@ -9,7 +9,7 @@
    pj_get, pj_get_str, pj_set, pj_string - in cgif's per-function form (cgif_file lib/YC21.v:33-66; the fm port's FMH_Fn.v:101-231),
    copied from lib/A/PRH_FnAlloc.v: fpre (YCbqG's afn_pre_x + the read-only view), argument registers, the allocation trace
    in the image's universe where the function allocates, the alloc.c ledger (PRH_Base.v prh_ledger), and SRr or SRr' to the
-   return address. Every conclusion is `srealizes`, in the continuation form SRr (lib/Reusable/YA0n.v:38-41) or SRr' (YA0nH.v:163).
+   return address. Every conclusion is `srealizes`, in the continuation form SRr (lib/Reusable/YA0n.v:39-42) or SRr' (YA0nH.v:164).
    IMAGE-PARAMETRIC: the entry is pa_sigma AS_<fn>, the frame STK_<fn> (PRH_Base.v, depth-indexed for pj_free / pj_set); no
    image constant and no numeral address. ALLOCATOR-PARAMETRIC: ARx is an explicit argument.
    FUNCTIONAL CONTENT: preset's released plain contracts lib/Prog/{pj_parse,pj_free,pj_get,pj_get_str,pj_set,pj_string}_c.v,
@@ -57,7 +57,7 @@
    - G-Pj1 (shadow of live blocks): the tree's blocks, keys and strings lie in live harness blocks; their user bytes'
      shadow is addressable by the instance (the allocator-model owner's AR_head_shadow_cf: shadow 0 on [a + cf_head, a + req_size n),
      the head poisoned; YCbqG's generic alx_shadow is not true of harness blocks), so no text premises it. A caller's
-     struct on the real stack is addressable by alx_zshadow (YCbqG ea24ad37a3c; the stack is zero_shadow_ranges' head).
+     struct on the real stack is addressable by alx_zshadow (YCbqG; the stack is zero_shadow_ranges' head).
    - G-Pj2 (pj_string, s = NULL): `strdup (s ? s : "")` duplicates the image's empty-string literal; the walk needs that
      literal's cstr_ok and kept_at (read-only bytes via arodata_okP; shadow via in_zs), an image fact no premise can name.
      Its cstr_ok is now PRH_Base.cstr_ok_ro's, the image premise decided by YGcallRoStr.ro_str_check (vm_compute).
@@ -72,7 +72,7 @@
      outcome-list bound below); pj_free DOC_D needs
      pj_fdR .. DOC_D out D on its refusal (parse_value gives depth MAXD - 0: pj_fdR's depth is monotone).
    - G-Pj6 (composition through a caller's fake frame): a struct in a caller's frame is in the callee's FP; the callers'
-     walks compose through YCbqG b092d73a858's ajournal_x_sub (four disjuncts: the caller's FP, a temporary block, the
+     walks compose through YCbqG's ajournal_x_sub (four disjuncts: the caller's FP, a temporary block, the
      caller's own new frame, the caller's real-stack window).
    - G-Pj7 (pj_parse's live room and request over the GRANTED run): parse_value asks its live room at each event of its
      granted run (PRH_FnParse.rd_room, PRH_Base.prh_live_evs) and its request bound over that run; pj_parse states its
@@ -140,7 +140,7 @@
    lemma prhPj_bulk_nil_pos below. A pj_free text keyed on v <> 0 (the image-B pj walker's pj_free_evs) has an unsatisfiable
    premise at check_no_overread's pj_free of a refused reading's zeroed node.
    THE ORDER LIST has ONE HOME, lib/A/PRH_PjOrder.v (pj_foR and pj_free_fo, taken by path from the image-B pj walker's
-   lane, commit ab365ca51d33; that lane drops its own copies and cites the kit).
+   lane; that lane drops its own copies and cites the kit).
    ITS TIE TO A MODEL LIST IS ORDERED, NEVER A PERMUTATION (the kit owner's order 2026-10-29, the owner's
    reversal of the Permutation restatement): PresetRoomPos.iface_room_pos reads the free history IN ORDER, so
    PresetFreeFo.hbulk_perm - which settles the hlive LEDGER state after a bulk - moves no position and is cited
@@ -381,8 +381,8 @@ Proof.
 Qed.
 
 (* THE SUPPLY AT Lb := fo t, A TREE READ BACK FROM THE WRITER'S TEXT (the kit owner's order 2026-10-29, on the
-   owner's reversal; the walk that cited the earlier form is the image-B pj walker's lib/B/Prog/pj_set_seg_ret.v:210,
-   commit 76a34fc50dae). The caller holds the tree's READER-side ordered free list - the
+   owner's reversal; the walk that cited the earlier form is the image-B pj walker's lib/B/Prog/pj_set_seg_ret.v:210).
+   The caller holds the tree's READER-side ordered free list - the
    reading here is of x = wdoc t p, so map (snd + cf_head) F = PresetReqAt.pj_frees sm [] (wdoc t p), from
    PRH_FnCheck.tparse_noting_specX's Some arm (with prhPj_frees_acc below where that arm's list is at its own grants
    ok) - and the model's event at this position carries fo t. The two lists are EQUAL, in order, under pj_wf sm t:
@@ -453,7 +453,7 @@ Lemma prhPj_free_evs_nil : forall rp_sm rp_x rp_os rp_i, prh_run_at rp_sm rp_x r
 Proof. intros rp_sm rp_x rp_os rp_i. apply prhPj_run_at_nil. Qed.
 
 (* THE STEP AT pj_parse's OWN pj_free (out) ON A REFUSAL (FREEORD-NONE, #102; the B' pj_parse walk's open site,
-   commit 8a088cd72fac lib/B/Prog/pj_parse_seg_c2ref.v:388-395). On a refusal
+   lib/B/Prog/pj_parse_seg_c2ref.v:388-395). On a refusal
    PresetReqAt.parse_evs emits HBulk (pj_frees ok tl) UNCONDITIONALLY (PresetReqAt.v:300-305) - HBulk [] when the
    refused tree holds no block (no allocation made, the first allocation refused, an empty container followed by a
    non-blank tail) - while pj_free (out) makes ONE event for a non-empty order list F and NONE for F = []
@@ -653,7 +653,7 @@ Definition tpj_parse_specX (CTX0 : list (list Z)) (CW : list (list Z)) : Prop :=
      peaks of the secondary and class-24 counts along its ALL-GRANTED events (tparse_value_specX, over rd_hevs
      (prhPv_gtrace 0 ..)), and on a refusal pj_free (out), which asks `out <> 0 -> ccnt24 <= L24 + DRV` at its call
      (tpj_free_specX); this text carried no count. These two are the B' walker's twin's, VERBATIM up to the strtod name
-     (tpj_parse_specX_pkR, commit 8a088cd72fac lib/B/Prog/pj_parse_defs.v:126-129, where
+     (tpj_parse_specX_pkR, lib/B/Prog/pj_parse_defs.v:126-129, where
      the walk is PROVED with exactly these two added; prh_jr_strtod there is convertible to ReaderRes.jr_strtod), in the
      reading chain's spelling over the reading's all-granted events (tparse_noting_specX's, over the same list). They
      give BOTH callee needs: parse_value's by PresetRun.pkR_app (its granted events are this list's first part: the
@@ -667,7 +667,7 @@ Definition tpj_parse_specX (CTX0 : list (list Z)) (CW : list (list Z)) : Prop :=
      SUPPLIED (no longer open): each caller carries both verbatim - parse_noting (its callers derive them from a
      position by the driver-contract owner's PresetRoomCounts.peak_sec_of_room_pos / peak_c24_of_room_pos) and
      check_reject_clean_starved (supplied by PresetRoomCounts.peak_sec_at_tail / peak_c24_at_tail /
-     peak_sec_after_rt / peak_c24_after_rt, PresetRoomCounts.v:304-372; PRH_FnCheck's note at that text). *)
+     peak_sec_after_rt / peak_c24_after_rt, PresetRoomCounts.v:305-373; PRH_FnCheck's note at that text). *)
   Z.of_nat (PresetRun.pkR YGcfRoomLive.rl_sec_req (PresetRoom.rs_live (YGcfRoom.room_of_cf S))
     (PresetReqAt.parse_evs ReaderRes.jr_strtod tl [])) <= PresetLiveBounds.LSEC + PresetLiveBounds.DRV ->
   Z.of_nat (PresetRun.pkR (PresetRoom.in_cls YG00.kBatchClass) (PresetRoom.rs_live (YGcfRoom.room_of_cf S))
@@ -1543,8 +1543,8 @@ Definition tpj_set_specX (CTX0 : list (list Z)) (dd : nat) : Prop :=
              entry premise above gives the ORDERED list of the WHOLE object (fo (JObj ms)), and fo is
              COMPOSITIONAL - PresetFreeFo.fo_obj: fo (JObj ms) = concat (map fom ms) ++ arrz true (capf 0 0 |ms|),
              with fom m = fo (snd m) ++ [kblk (fst m)]. THE SPLIT OF pj_foR's F AT A MEMBER IS PROVED: the P8 owner's
-             pj_foR_member (lib/A/PjFoMember.v:367, taken by path at blob 0d5cd17bf504 from
-             commit 3bca528aa963; the proof commit is 9e51d07e4e62, and 3bca528aa963 is an
+             pj_foR_member (lib/A/PjFoMember.v:367, taken by path at blob 0d5cd17bf504;
+             the proof commit is a commit, and is an
              empty commit whose message records both VERIFY checks), in the lemma's own binder list:
                forall m lblk o ms D F nn i kname vi Di kids,
                  pj_nodeR segs m lblk o (PjTree.JObj ms) D ->
@@ -1564,8 +1564,8 @@ Definition tpj_set_specX (CTX0 : list (list Z)) (dd : nat) : Prop :=
              `4096 <= p` for every block of ablocks, and prh_hblock's `In (a - cf_head, ..) (ablocks B ly S)` then
              gives a >= 4096 + cf_head > 0).
              The P8 owner's reviewer's CALL-SITE CHECK: the lemma FITS this present-key arm because of the ORDERED
-             entry premise `map (fun b => snd b + cf_head) F = PresetReqAt.fo (PjTree.JObj ms)` above (the free-permutation walk's
-             2878b4c53320); at walkkit-next de5e947c224b, which had only the tblk Permutation (its :775), it does NOT
+             entry premise `map (fun b => snd b + cf_head) F = PresetReqAt.fo (PjTree.JObj ms)` above (the free-permutation walk's);
+             at walkkit-next, which had only the tblk Permutation (its :775), it does NOT
              apply. Satisfiability: no jointly unsatisfiable case, because a non-empty object forces kids >= 4096 +
              cf_head.
              Its route: pj_foR's object arm is pf_oitemsR slot by slot (value's Fv, then the key block), fo_obj is
@@ -2012,7 +2012,7 @@ Definition tpj_string_specX (CTX0 : list (list Z)) : Prop :=
      (PRH_Base.prh_cons_from_app_iff splits its window). *)
   PRH_Base.prh_cons_from ReaderRes.jr_strtod rp_x rp_os rp_i (length (prhPj_string_evs (Z.of_nat (length cs)) cnt fail)) ->
   getr regs 10 = w64 v -> getr regs 11 = w64 s ->
-  (* v is below alloc_ceiling (the image-B pj walker's finding against a3bdeca3920): pj_string holds v in s0 at its
+  (* v is below alloc_ceiling (the image-B pj walker's finding): pj_string holds v in s0 at its
      `jal fuzz_strdup` (B 0x8722c `mv s0, a0`, the call at B 0x87270), so strdup's fpre needs the chain from s0 = v;
      prhPj_slot's fourth case puts v in the caller window on the real stack, which would make that chain an fpchain
      reading stack words above sp + d that no premise makes present. Below the ceiling, achain's bad_next cuts it at

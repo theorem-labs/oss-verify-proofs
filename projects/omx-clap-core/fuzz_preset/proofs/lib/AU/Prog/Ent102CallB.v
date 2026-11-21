@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): the SHARED
    CALL-SITE LEMMAS of the B' walk of LLVMFuzzerTestOneInput (entry 0x816cc), for every lane that calls a kit check_*
@@ -10,7 +11,7 @@
    port/a2b.py (sha256 f5113cbc90e503da) and then by hand: L := B_prog_listing, PL := PL_102_B, the statement file
    lib/AU/Ent102CutsB.v in place of lib/A/Ent102CutsA.v (the same definitions over a generic listing), the shared file
    lib/AU/Prog/Ent102L6BfLem.v in place of lib/A/Prog/Ent102L6AfLem.v. Written for row LL3B (lib/AU/Prog/Ent102L3B.v);
-   no B' twin existed (the tree, a working branch 8f66e14c8df and the B' row branches LL4jB / LL5aB /
+   no B' twin existed (the tree, a working branch and the B' row branches LL4jB / LL5aB /
    LL5dB, 16:4xZ).
    (a) THE CONTEXT OF A CALL: ec_chain_at builds the frame chain a callee's afn_pre_x takes at a call site of this body
        (s0 = sp0, the entry's ra and s0 saved at sp0 - 8 / sp0 - 16), with its spine [] or [ra0]; ec_ctx_call /
@@ -33,7 +34,7 @@
        A row after cut_cno calls a kit text that takes `prh_ledger .. most 0` from ec_inv's `exists most own,
        prh_ledger ..` and the cut's ec_most / ec_own_is; ONE copy for every row (a Theorem Labs lane's decision 18:43Z; the A'
        file's lemma over B_prog_listing).
-   STATEMENT read: lib/AU/Ent102CutsB.v (read at blob d701b7b3a7bf, commit aff1e4878ed5, the exact-position
+   STATEMENT read: lib/AU/Ent102CutsB.v (read at blob d701b7b3a7bf, the exact-position
    statements: ec_inv with the cut's index pair os_c i_c, ec_pre, ec_img's ei_fp / ei_rets, ec_ctx0,
    ec_call_rets, e_x / e_n / e_p).
    TAKEN BY PATH: lib/AU/Prog/Ent102L6BfLem.v (l6f_pc4, l6f_rdword_of_rd64, l6f_nodup_pw, l6f_nodup_app_l,

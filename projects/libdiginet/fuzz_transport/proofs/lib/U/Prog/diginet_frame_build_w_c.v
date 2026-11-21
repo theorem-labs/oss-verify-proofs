@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_build_w_c.v at bb3053036017d1d92db6eca9e973ce610be16c08 to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_build_w_c.v to fuzz_transport's images *)
 (* Wide contract of diginet_frame_build in fuzz_transport.ubsan (0x18260), for the calls of a
    caller that gives body = NULL with body_len = 0, and a sum mode that is any int (an enum
    diginet_sum_mode read from memory).

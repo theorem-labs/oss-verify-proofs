@@ -5,15 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Rt/Strlen.v, with its module paths and module names changed; 15 of its 25 lines of code are new or changed and 495 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Rt/Strlen.v, with its module paths changed; 1 of its 25 lines of code is new or changed and 1 line of the source is left out. *)
 (* reac-repacer/fuzz_uci, build asan: the strlen wrapper's contract, lib/A/Rt/StrlenDef.v astrlen_realizes at
-   STRLEN_ENTRY = 0x41068, from the shared strlen walk lib/A/FMstrlen.v strlen_icpt_srr: the walk at commit
-   f8664b31b9c (cgif_file_fuzzer coordinates, SL_ENTRY 0x418f0) relocated to
+   STRLEN_ENTRY = 0x41068, from the shared strlen walk lib/A/FMstrlen.v strlen_icpt_srr: the walk
+    (cgif_file_fuzzer coordinates, SL_ENTRY 0x418f0) relocated to
    fuzz_uci.asan (SL_ENTRY 0x41068). The walk asks the contract's premises plus mconsts_view (the two musl
    constants at 0x10350 and 0x10368), which lib/A/Rt/WrapRoM.v derives from the contract's aro_unowned; the
    post-conditions are the same text. The proof names only the binders of the contract and finds each premise
    by its type, so it does not depend on the order of the premises. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_identity lib/A/Rt/Strlen.v (origin/ossv/recipes 70952e1c8c9)
-   to reac-repacer/fuzz_uci image A (fuzz_uci.asan, sha256 6ea017c24525) on the fuzz_uci A core (276afc86670b): module
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_identity lib/A/Rt/Strlen.v
+   to reac-repacer/fuzz_uci image A (fuzz_uci.asan, sha256 6ea017c24525) on the fuzz_uci A core: module
    paths; record class TfibSyms -> UciSyms (code only; the donor's own Modified-by lines are kept as its record).
    Numerals moved by symbol + offset from the fuzz_identity unstripped twin to the fuzz_uci unstripped twin (each
    function is the same code up to pc-relative fields: bytecmp 7daa0e2a03d9 with repin_check 9cbc3553c09e's target pass); a .got slot moves to the slot that
@@ -23,6 +23,7 @@
    both images, read by the auipc/ld pairs at strlen+0x3c..0x48 and memchr+0x58..0x64).
    Unchanged on purpose: cgif_file_fuzzer.asan coordinates in comments (0x418f0, 0x41908, 0x41988, 0x430d4).
    This file only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

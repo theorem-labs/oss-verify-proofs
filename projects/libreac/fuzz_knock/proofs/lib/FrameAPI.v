@@ -54,7 +54,7 @@ Definition frame_plain : Prop :=
        G_local_c B G GI ->
        (forall mem, G_img_c B G mem -> GI 0%nat mem) ->
        (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-          @lib_contract_g fx rc LS B (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
+          @lib_contract_g fx rc LS B _ (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
        Statements.plain_halts).
 
 Definition frame_facts_plain (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B)
@@ -88,14 +88,14 @@ Lemma frame_plain_split : frame_plain ->
        G_local_c B G GI ->
        (forall mem, G_img_c B G mem -> GI 0%nat mem) ->
        (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-          @lib_contract_g fx rc LS B (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
+          @lib_contract_g fx rc LS B _ (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
        Statements.plain_halts).
 Proof.
   intros (B & API & LS & SH & SK & ra & empty & H). exists B, API, LS, SH, SK, ra, empty.
   unfold frame_facts_plain. tauto.
 Qed.
 
-Definition frame_allocator_mf {rc : RunCeil} {fx : FPState} (B : malloc_syms) (API : AllocAPI B) : Prop :=
+Definition frame_allocator_mf {rc : RunCeil} {fx : FPState} (B : malloc_syms) (API : @AllocAPI rc MayFail B) : Prop :=
   block_slack_present B API /\ ctx_owned B API /\ blocks_low B API /\ blocks_nodup B API /\ blocks_writable B API /\ errno_unowned B API /\
   guard_rw B API /\ libc_no_locks B API /\
   AllocExtra B (aa_MR API) /\
@@ -103,7 +103,7 @@ Definition frame_allocator_mf {rc : RunCeil} {fx : FPState} (B : malloc_syms) (A
   (forall L A mem md a, aa_MR API L A mem md -> in_globals frame_RELRO a -> ~ owned B L A a).
 
 Definition frame_plain_mf : Prop :=
-  exists (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B)
+  exists (B : malloc_syms) (API : forall rc : RunCeil, @AllocAPI rc MayFail B)
          (LS : lib_shape) (SH : sink_head) (SK : sink_syms) (ra empty : Z),
     ms_segs B = rsegs /\ ra mod 2 = 0 /\
     ms_malloc B = 0x139c4 /\ ms_free B = 0x13884 /\ ms_realloc B = None /\ ms_calloc B = None /\
@@ -132,7 +132,7 @@ Definition frame_plain_mf : Prop :=
           @lib_contract_gm MayFail fx rc LS B (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
        Statements.plain_halts_may_fail).
 
-Definition frame_facts_plain_mf (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B)
+Definition frame_facts_plain_mf (B : malloc_syms) (API : forall rc : RunCeil, @AllocAPI rc MayFail B)
     (LS : lib_shape) (SH : sink_head) (SK : sink_syms) (ra empty : Z) : Prop :=
     ms_segs B = rsegs /\ ra mod 2 = 0 /\
     ms_malloc B = 0x139c4 /\ ms_free B = 0x13884 /\ ms_realloc B = None /\ ms_calloc B = None /\
@@ -155,7 +155,7 @@ Definition frame_facts_plain_mf (B : malloc_syms) (API : forall rc : RunCeil, Al
     (forall (rc : RunCeil) (fx : FPState), @frame_allocator_mf rc fx B (API rc)).
 
 Lemma frame_plain_mf_split : frame_plain_mf ->
-  exists (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B)
+  exists (B : malloc_syms) (API : forall rc : RunCeil, @AllocAPI rc MayFail B)
     (LS : lib_shape) (SH : sink_head) (SK : sink_syms) (ra empty : Z),
     frame_facts_plain_mf B API LS SH SK ra empty /\
     (forall (G : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop),

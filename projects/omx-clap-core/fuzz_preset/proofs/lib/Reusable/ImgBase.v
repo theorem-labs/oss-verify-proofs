@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0x.v, with its module paths changed, names TfibSyms -> BoxregSyms and its addresses moved to libreac/fuzz_boxreg's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/AF0x.v, with its module paths changed; 18 of its 75 lines of code are new or changed and 516 lines of the source are left out. *)
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/ImgBase.v@aa322d8bb0b; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/ImgBase.v; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
 (* The image-free base of the R2 interfaces (AGif0n / AGif2 / AGif4 / DGif0 / DMiface / DMspec).
 
    - [AImg]: ONE class that holds every fact about the binary's image the interfaces name.  An interface takes it as

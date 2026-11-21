@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_gap_na and node_gap find a grant under Linux's mmap placement for any transparent-huge-page flag, above task_unmapped_base and past the launch's extra reservations heap_resx; reserved_below over the image's reservations alone; the Sys.Mm.Mmap import). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.Common Require Import
   PropExec CatExec Hoare StoreOk MmapSim AllocSim ShapeAlg VmLedger VmGap.
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.Common Require BackingAlgebra.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.Common.Mallocng Require Import
   MallocLayout MallocTree MallocInv_defs MallocInv_word MallocInv_vm MallocInv_budget MallocInv_vmfree MallocInv_ametax_iface MallocSureVm.
 Import ListNotations.
@@ -148,36 +150,40 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma reserved_below : forall A h, VMok A h ->
-  forall b s, In (b, s) (vm_reserved h) -> u b + u s <= 2^32.
+Lemma reserved_below : forall b s, In (b, s) (segments_reserved ml_segs) -> u b + u s <= 2^32.
 Proof.
-  intros A h HV b s Hin. rewrite (vm_res A h HV) in Hin.
+  intros b s Hin.
   destruct (mlo_reserved_in b s Hin) as (_ & H2 & _). pose proof (mlo_hull (ML:=ML)). lia.
 Qed.
 
-Theorem node_gap_na : forall A h n, WF A -> VMok A h ->
+Theorem node_gap_na : forall A h n (thp : bool), WF A -> VMok A h ->
   0 < n -> n mod 4096 = 0 ->
-  2^32 + (vm_backed_bytes h + 4096 * (Z.of_nat (length (a_areas A)) + 1)
+  Mmap.task_unmapped_base + (vm_backed_bytes h + 4096 * (Z.of_nat (length (a_areas A)) + 1)
           + 48 * (4096 * (Z.of_nat (length (a_areas A)) + 50)) + lsum (a_xmaps A))
-       + Z.of_nat (length (vm_maps h)) * (n + 4095) + n <= alloc_ceiling ->
-  exists a, grant_ok_na_vm h a n = true.
+       + Z.of_nat (length (vm_maps h)) * (n + 4095) + n + (0x14000 + 2 * (n + 4095)) <= alloc_ceiling ->
+  exists a, grant_ok_na_vm thp (Z_to_bv 64 0) h a n = true.
 Proof.
-  intros A h n HW HV Hn Hal Hroom.
-  apply (gap_exists_na h n (2^32) Hn Hal); [lia | reflexivity | exact (reserved_below A h HV) |].
-  rewrite (vm_top A h HV). pose proof (live_le_areas A h HW HV).
-  pose proof (Zle_0_nat (length (vm_maps h))). nia.
+  intros A h n thp HW HV Hn Hal Hroom.
+  destruct (vm_res A h HV) as ((Er & Rl & Rb) & _).
+  apply (gap_exists_na_rx thp (Z_to_bv 64 0) h n Mmap.task_unmapped_base heap_resx Hn Hal); [lia | reflexivity | |].
+  - intros b s Hin. rewrite Er in Hin. apply in_app_or in Hin. destruct Hin as [Hin | Hin]; [left | right; exact Hin].
+    pose proof (reserved_below b s Hin). unfold Mmap.task_unmapped_base. lia.
+  - rewrite (vm_top A h HV). pose proof (live_le_areas A h HW HV).
+    pose proof (Zle_0_nat (length (vm_maps h))). pose proof (Zle_0_nat (length heap_resx)).
+    assert (HX : Z.of_nat (length heap_resx) * (n + 4095) <= 2 * (n + 4095)) by (apply Z.mul_le_mono_nonneg_r; lia).
+    rewrite Nat2Z.inj_add, Z.mul_add_distr_r. nia.
 Qed.
 
-Theorem node_gap : forall A h n, WF A -> VMok A h ->
+Theorem node_gap : forall A h n (thp : bool), WF A -> VMok A h ->
   0 < n -> n mod 4096 = 0 ->
-  2^32 + (vm_backed_bytes h + 4096 * (Z.of_nat (length (a_areas A)) + 1)
+  Mmap.task_unmapped_base + (vm_backed_bytes h + 4096 * (Z.of_nat (length (a_areas A)) + 1)
           + 48 * (4096 * (Z.of_nat (length (a_areas A)) + 50)) + lsum (a_xmaps A))
-       + Z.of_nat (length (vm_maps h)) * (n + 4095) + n <= alloc_ceiling ->
+       + Z.of_nat (length (vm_maps h)) * (n + 4095) + n + (0x14000 + 2 * (n + 4095)) <= alloc_ceiling ->
   vm_backed_bytes h + n <= vm_limit h ->
-  exists a, grant_ok_vm h a n = true.
+  exists a, grant_ok_vm thp (Z_to_bv 64 0) h a n = true.
 Proof.
-  intros A h n HW HV Hn Hal Hroom Hbud.
-  destruct (node_gap_na A h n HW HV Hn Hal Hroom) as [a Ha].
+  intros A h n thp HW HV Hn Hal Hroom Hbud.
+  destruct (node_gap_na A h n thp HW HV Hn Hal Hroom) as [a Ha].
   exists a. unfold grant_ok_vm. unfold grant_ok_na_vm in Ha. rewrite Ha.
   rewrite (proj2 (Z.leb_le _ _) Hbud). reflexivity.
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nodes check the read-only backing). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.openssl.hashtable.lib Require Import
   AsanAcct LazyFrame MmapSim RefNodes NoReserve AsanCeil.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import CxRel CxAcctShape CxNodesLibE.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import RomBase.
 Import ListNotations.
 Open Scope Z_scope.
 
@@ -157,7 +159,7 @@ Lemma crz_sys_lazy : forall regs pc mem rom model w T,
   crz segs (mkCfg (mkst regs pc mem rom) model) T.
 Proof.
   intros regs pc mem rom model w T Hh HF HE Hc.
-  eapply crz_silent1; [| exact Hc].
+  eapply crz_silent1; [| apply sys_rob_instr; reflexivity | exact Hc].
   apply node_instr_noacc; [exact Hh | reflexivity | eapply stepacc_ecall_epend; eassumption].
 Qed.
 

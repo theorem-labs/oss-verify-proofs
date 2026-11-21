@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfRomO.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv); rom_viewN_of_arodata, fm_cr_consts_of_arodata and the Require of YC8g (whose arodata_okP they read) left out: rate's call-site contract states rom_viewN's body itself (lib/A/Rt/SnprintfRateDef.v snp_rom_kept), so fm_cr_consts_view_AR is the corollary its proof takes. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfRomO.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv); rom_viewN_of_arodata, fm_cr_consts_of_arodata and the Require of YC8g (whose arodata_okP they read) left out: rate's call-site contract states rom_viewN's body itself (lib/A/Rt/SnprintfRateDef.v snp_rom_kept), so fm_cr_consts_view_AR is the corollary its proof takes. *)
 (* The read-only half of the premises of the disco snprintf top at cr = FMsnprintfCr.fm_cr, for fuzz_disco.asan:
    - fmi_rom_viewO: AR gives rom_viewO, the runtime-owned read-only bytes: every owned static range below 0x9f000 lies
      in load segment 0 and each of its bytes is a byte of a Tfib_const_abs cell whose value is the image byte
@@ -7,9 +7,9 @@
    - rom_viewN_of_arodata: the walk invariant YC8g.arodata_okP gives rom_viewN, the unowned read-only bytes (in_rom is
      in_roP's first disjunct). A's walk states DiscoBase.arodata_okP, which has the same body;
    - fm_cr_consts_of_arodata: consts_view over fm_cr from AR and arodata_okP. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMsnprintfRomO.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMsnprintfRomO.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMsnprintfRomO.v keeps its donor's comment text) is kept as lib/A/FMsnprintfRomO.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMsnprintfRomO.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMsnprintfRomO.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMsnprintfRomO.v keeps its donor's comment text) is kept as lib/A/FMsnprintfRomO.v writes it. *)
 (* fmi_cell_rd .. fm_cr_consts_view_AR are copied from lib/B/FMsnprintfCrRom.v (the asan-ubsan image's copy of
-   proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v, cold/c-libc-g9-R9-Y-instance e4882dd65f7) for fuzz_disco's asan
+   proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v) for fuzz_disco's asan
    image. Module paths move to lib/A (YB1v YB13 YF0m YE3h -> YB1v YB13 YF0m YE3h; lib/B FMH_Base FMsnprintfCr ->
    lib/A) and the image bytes to images/AsanUbsan (AsanUbsan_seg_bytes_000 -> AsanUbsan_seg_bytes_000). One image numeral
    moves: the end of the read-only segments 0xa0000 becomes the asan image's 0x9f000 (lib/A/YE3h.v:1353

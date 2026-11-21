@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mixed_shape_error_free_equiv and its lims form restated over run_segments; new lemmas vdso_none_plain and vdso_none_asan; the top proof lifts each walk to the run's segment list with the two RomStable modules, now imported, and passes the input's channel-reader, launch and entry-launch facts and the mmap base check to the new amb_of arguments and to the restated boot theorem). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -17,6 +18,14 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.P Require Import P_lim.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.P Require P_top.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require SpinAlg AsanPlanSound AsanPlanImages AsanCertDefs AsanInit AsanMainEntryFacts AsanBoot.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A Require AImg A_main_top.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require RomStable.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require RomStable.
+
+(* Neither image carries a vDSO text mapping of its own (the bridges' side condition). *)
+Lemma vdso_none_plain : RiscvSemantics.vdso_image Plain.M.loaded_segments = None.
+Proof. reflexivity. Qed.
+Lemma vdso_none_asan : RiscvSemantics.vdso_image Asan.M.loaded_segments = None.
+Proof. reflexivity. Qed.
 
 Definition src_img : Image :=
   mkImage Plain.M.loaded_segments Plain.M.init_pc
@@ -30,10 +39,10 @@ Lemma mixed_shape_error_free_equiv :
   forall source_segs rpc rph rsp rbrk rmb (rrnd : EntryDraw)
          target_segs apc aph asp abrk amb (arnd : EntryDraw)
          (T : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit inp) T ->
-  SpinAlg.srealizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd target_alloc_limit inp) T ->
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd source_alloc_limit inp) T ->
+  SpinAlg.srealizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd target_alloc_limit inp) T ->
   Equivalence.strong_equiv_error_free (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
      (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
@@ -43,8 +52,8 @@ Proof.
   - eapply realizes_no_error; exact Hsource.
   - eapply SpinAlg.srealizes_no_error; exact Htarget.
   - intro tr. cbn.
-    rewrite (realizes_obs_iff source_segs _ T Hsource tr).
-    rewrite (SpinAlg.srealizes_obs_iff target_segs _ T Htarget tr).
+    rewrite (realizes_obs_iff (run_segments source_segs inp rsp rmb) _ T Hsource tr).
+    rewrite (SpinAlg.srealizes_obs_iff (run_segments target_segs inp asp amb) _ T Htarget tr).
     reflexivity.
 Qed.
 
@@ -54,10 +63,10 @@ Lemma mixed_shape_error_free_equiv_lims :
          source_segs rpc rph rsp rbrk rmb (rrnd : EntryDraw)
          target_segs apc aph asp abrk amb (arnd : EntryDraw)
          (T : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd lim_s inp) T ->
-  SpinAlg.srealizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd lim_t inp) T ->
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd lim_s inp) T ->
+  SpinAlg.srealizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd lim_t inp) T ->
   Equivalence.strong_equiv_error_free_budgets lim_s lim_t (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
      (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
@@ -67,8 +76,8 @@ Proof.
   - eapply realizes_no_error; exact Hsource.
   - eapply SpinAlg.srealizes_no_error; exact Htarget.
   - intro tr. cbn.
-    rewrite (realizes_obs_iff source_segs _ T Hsource tr).
-    rewrite (SpinAlg.srealizes_obs_iff target_segs _ T Htarget tr).
+    rewrite (realizes_obs_iff (run_segments source_segs inp rsp rmb) _ T Hsource tr).
+    rewrite (SpinAlg.srealizes_obs_iff (run_segments target_segs inp asp amb) _ T Htarget tr).
     reflexivity.
 Qed.
 
@@ -101,13 +110,19 @@ Proof.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
   cbn [src_img asan_img] in Hens, Hent.
-  destruct Hens as [Vsp [Vbrk [Vmb Vfit]]]. destruct Hent as [Vsp' [Vbrk' [Vmb' Vfit']]].
-  pose proof Hvalid as (Va & Ve & Vfs & Vrel & [Vuid Vgid] & Vnf & Vsm & Vhw & Vab & Vva & _).   (* [comment removed for export] *)
+  destruct Hens as [Vsp [Vbrk [Vmb [Vfit Vlau]]]]. destruct Hent as [Vsp' [Vbrk' [Vmb' [Vfit' Vlau']]]].
+  pose proof Hvalid as (Va & Ve & Vfs & Vrel & Vreal & [Vuid Vgid] & Vnf & Vsm & Vhw & Vab & Vva & _).   (* [comment removed for export] *)
+  pose proof (Run.valid_input_channel_reader inp Hvalid) as Vrd. pose proof (Run.valid_input_launch inp Hvalid) as Vvl.
   eapply mixed_shape_error_free_equiv_lims.
-  - eapply (@P_top.P_realizes_spec_lim SIP FPP PF (amb_of inp) lim_s); eassumption.
-  - pose proof (@P_top.P_realizes_spec_lim SIP FPP PF (amb_of inp) lim_s rsp rbrk rmb rrnd inp Hlim Vsp Vbrk Va Ve Vfs Vfit) as HP.
+  (* LPS revision (run_segments): each walk is over the binary's own segments;
+     [Lib.RomStable.run_init] / [ABoot.RomStable.srun_init] lift it to the run's list from the
+     run's start. *)
+  - eapply Lib.RomStable.run_init; [exact vdso_none_plain|].
+    eapply (@P_top.P_realizes_spec_lim SIP FPP PF (amb_of inp (Run.valid_input_channel_reader inp Hvalid) (Vdso.vdso_run_init (ed_vdso rrnd))) lim_s); eassumption.
+  - eapply ABoot.RomStable.srun_init; [exact vdso_none_asan|].
+    pose proof (@P_top.P_realizes_spec_lim SIP FPP PF (amb_of inp (Run.valid_input_channel_reader inp Hvalid) (Vdso.vdso_run_init (ed_vdso rrnd))) lim_s rsp rbrk rmb rrnd inp Hlim Vsp Vbrk Va Ve Vfs Vfit Vrd Vvl Vlau) as HP.
     pose proof (realizes_nonempty _ _ _ HP) as Hnil.
-    apply (AsanBoot.asan_boot_entry_inp asp abrk amb arnd inp Vsp' Vbrk' Va Ve Vfit' Vuid Vab Vva
+    apply (AsanBoot.asan_boot_entry_inp asp abrk amb arnd inp Vsp' Vbrk' Vmb' Va Ve Vuid Vvl Vrd Vlau'
              (fun _ _ => Spec.spec (in_argv inp) (in_fs inp))).
     + intros; reflexivity.
     + intros E fs'. exact Hnil.

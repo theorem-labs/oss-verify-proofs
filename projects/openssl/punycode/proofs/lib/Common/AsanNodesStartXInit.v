@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch is the run's whole ProcInput, with the mmap base and the image entry; argv[0] sits above the AT_RANDOM bytes and the arch_align_stack pad; the obligations are discharged by naming the hypotheses that pin each witness). *)
+(* Ported to LPS 08b1429: the launch is the run's whole [ProcInput]; argv[0] sits at
+   [usp + cat_string_off] (the top of the AT_RANDOM bytes plus the [arch_align_stack]
+   pad), not at a constant offset above sp. *)
 
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -56,31 +57,43 @@ Section GenericInit.
   Hypothesis Dp3 : decode_any wp3 = Some (Branch BC_EQ 13 12 8180, 4%Z).
   Hypothesis Dp4 : decode_any wp4 = Some (Branch BC_NE 13 0 8180, 4%Z).
 
-  (* [comment removed for export] *)
+  (** the run: the input carries argv, envp, the credentials, the exec file name
+      and the kernel build; [apc] is the auxv's AT_ENTRY *)
+  Variable apc : N.
   Variable sp : word.
-  Variable rdraw : EntryDraw.   (* [comment removed for export] *)
+  Variable rdraw : EntryDraw.   (* the entry draw [Run.en_draw]; ed_random = the AT_RANDOM bytes, ed_top = the stack VMA's end *)
   Variable brk0 mbase : word.
-  Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
+  Variable inp : ProcInput.
   Variable FS0 : Fs.Fs.
+  Let entryw := Z_to_bv 64 (Z.of_N apc).
+
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Variable uid : word.
-  Variable hw : word.   (* [comment removed for export] *)
-  Hypothesis Hfit : entry_stack_fits sp argv envp.   (* [comment removed for export] *)
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  (** AsanInit's Section carries these too, and Rocq generalises each of its
+      lemmas over every hypothesis its proof term reads, so they must be here
+      for [eassumption] to discharge them. *)
+  Hypothesis IMG : AsanInit.img_facts segs A ph.
+  Hypothesis Hapc : Z.of_N apc = a_entry A.
+  Hypothesis Hbrk : valid_brk segs brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hzr : AsanCeil.zero_random_draw (ed_random rdraw).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 
   (* [comment removed for export] *)
   Variable SINV : env -> (word -> option byte) -> Prop.
-  Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 ph sp rdraw brk0 argv envp uid hw E M.
-  Hypothesis SINV_frame : forall E M M', (forall a, argH0 ph sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+  Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 ph apc sp rdraw brk0 mbase inp E M.
+  Hypothesis SINV_frame : forall E M M', (forall a, argH0 sp rdraw inp E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
   Hypothesis SINV_agree : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
 
   Let usp := bv_unsigned sp.
-  Let argc := Z.of_nat (length argv).
-  Let envc := Z.of_nat (length envp).
-  Let s0 := nth 0 argv [].
+  Let argc := Z.of_nat (length (in_argv inp)).
+  Let envc := Z.of_nat (length (in_envp inp)).
+  Let s0 := nth 0 (in_argv inp) [].
+  Let STR0 := usp + Z.of_nat (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp)).
 
   Lemma sp_lo : sp_window_lo <= bv_unsigned sp.
   Proof. destruct Hsp as [H _]. exact H. Qed.
@@ -91,70 +104,86 @@ Section GenericInit.
   Lemma SINV0_vals : forall E M, SINV E M ->
     uE E e_envp = usp + 8 * argc + 16
     /\ ev E V_ENVC = Z_to_bv 64 envc
-    /\ uE E e_str0 = usp + 8 * argc + 8 * envc + 184.
+    /\ uE E e_str0 = STR0.
   Proof.
-    intros E M HS. apply SINV_SINV0 in HS. destruct HS as [Hev _].
-    pose proof (u_e_envp ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U1.
-    pose proof (u_e_str0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U3.
-    pose proof (uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (_ & _ & _ & U2 & _).
-    assert (Hev7 : forall n, (n < NX0)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) by (intros n Hn; apply Hev; exact Hn).
-    unfold uE in *.
-    rewrite (edenot_ev_agree NX0 E (E0 ph sp rdraw brk0 argv envp uid hw) e_envp eq_refl Hev7).
-    rewrite (edenot_ev_agree NX0 E (E0 ph sp rdraw brk0 argv envp uid hw) e_str0 eq_refl Hev7).
-    split; [exact U1|]. split; [|exact U3].
-    change (ev E V_ENVC) with (edenot E (EVar V_ENVC)).
-    rewrite (edenot_ev_agree NX0 E (E0 ph sp rdraw brk0 argv envp uid hw) (EVar V_ENVC) eq_refl Hev7).
-    apply bv_eq. rewrite U2. unfold envc. destruct Hve as [H _]. rewrite u64_lit by lia. reflexivity.
+    intros E M HS. apply SINV_SINV0 in HS.
+    eapply SINV0_vals_E0; eauto.
   Qed.
 
   Lemma SINV0_envp : forall E M (a : word), SINV E M ->
-    usp + 8 * argc + 16 <= bv_unsigned a < usp + 8 * argc + 16 + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+    usp + 8 * argc + 16 <= bv_unsigned a < usp + 8 * argc + 16 + 8 * envc + 8 ->
+    M a = wrap_mem inp mbase ph entryw sp rdraw a.
   Proof.
-    intros E M a HS Ha. apply SINV_SINV0 in HS. destruct HS as [_ HM]. apply HM. unfold argH0. apply orb_true_intro. left.
-    apply andb_true_intro. unfold usp, argc, envc in Ha. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
-  Qed.
-
-  Lemma s0_fits : Z.of_nat (length s0) + 1 <= total_arg_bytes argv.
-  Proof.
-    unfold s0. rewrite total_arg_bytes_Z. destruct argv as [|a r]; [destruct Hva as [H _]; cbn in H; lia|].
-    cbn [nth]. rewrite total_arg_bytes_cons. lia.
+    intros E M a HS Ha. apply SINV_SINV0 in HS.
+    eapply SINV0_envp_E0; eauto.
   Qed.
 
   Lemma SINV0_str0 : forall E M (a : word), SINV E M ->
-    usp + 8 * argc + 8 * envc + 184 <= bv_unsigned a <= usp + 8 * argc + 8 * envc + 184 + Z.of_nat (length s0) ->
-    M a = wrap_mem ph sp argv envp uid hw rdraw a.
+    STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) ->
+    M a = wrap_mem inp mbase ph entryw sp rdraw a.
   Proof.
-    intros E M a HS Ha. apply SINV_SINV0 in HS. destruct HS as [_ HM]. apply HM. unfold argH0. apply orb_true_intro. right.
-    pose proof (W_range ph sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3).
-    pose proof (length_bsb_eq ph sp rdraw argv envp uid hw) as L. pose proof s0_fits as F.
-    pose proof (total_arg_bytes_Z envp) as TE.
-    unfold stack_image_size in L.
-    assert (Hpd : 0 <= (8 - (8 + (Z.of_nat (length argv) + 1) * 8 + (Z.of_nat (length envp) + 1) * 8 + 160
-                              + total_arg_bytes argv + total_arg_bytes envp) mod 8) mod 8 < 8) by (apply Z.mod_pos_bound; lia).
-    apply andb_true_intro. unfold usp, argc, envc in Ha. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
+    intros E M a HS Ha. apply SINV_SINV0 in HS.
+    eapply SINV0_str0_E0; eauto.
   Qed.
 
   (* [comment removed for export] *)
   Theorem init_x_sound_envscan :
-    x_stmt segs A NX0 LIM SINV (argH0 ph sp rdraw argv envp uid hw) (bv_unsigned sp) FS0 XEnvScan.
+    x_stmt segs A NX0 LIM SINV (argH0 sp rdraw inp) (bv_unsigned sp) FS0 XEnvScan.
   Proof.
-    exact (x_sound_envscan segs A NX0 LIM SINV (argH0 ph sp rdraw argv envp uid hw) (bv_unsigned sp) FS0
-              SEGS_wx SEGS_in_hull HULL_ok SINV_frame
-              we1 we2 we3 Xenv Fe1 Fe2 Fe3 Ee De1 De2 De3
-              ph sp rdraw argv envp uid hw Hva Hve sp_lo sp_hi eq_refl SINV0_vals SINV0_envp).
+    (* The Section generalises over EIGHT [bv 32] variables - we1 we2 we3 wp0 wp1 wp2 wp3
+       wp4, one [Variables] line in AsanNodesStartX.v - and over seven word-ish ones, so a
+       single [first] applied to every goal cannot tell them apart.  A diagnostic arm
+       named the actual failure, the goal fetch_word segs
+       (Z_to_bv 64 (x_envscan A)) = Some wp4 -- [eassumption], the FIRST arm, had closed
+       the bare [bv 32] goal with whichever such hypothesis the context offered last
+       (wp4), and the fetch obligation then asked for a word nothing proves.
+       So: pass one uses only arms that are unambiguous by type or that PIN the variables
+       by unification (Fe1/Fe2/Fe3 and De1/De2/De3 each mention we1/we2/we3; SINV0_envp
+       mentions ph, entryw and mbase; the conclusion already pins segs, A, SINV, sp,
+       rdraw, inp, LIM and FS0).  Pass two closes whatever is genuinely unconstrained, and
+       only there may [eassumption] choose.  Pass three closes the rest. *)
+    unshelve eapply x_sound_envscan;
+      (* Hlau pins brk0 AND mbase, Hbrk pins brk0, Hmb pins mbase - all by unification,
+         and all before any bare [word] goal can be reached.  Naming them here instead of
+         leaving them to the later [eassumption] is the whole point: two section variables
+         of one type must be pinned by a statement, never chosen by a tactic. *)
+      try first [exact Hsp | exact Hva | exact Hve | exact Hlaunch | exact Hlau
+                | exact Hbrk | exact Hmb | exact IMG | exact Hapc | exact Huid
+                | exact Hzr | exact Hrdr | exact SINV_SINV0];
+      try first [exact SEGS_wx | exact SEGS_in_hull | exact HULL_ok | exact SINV_frame | exact SINV_agree
+                | exact Xenv | exact Fe1 | exact Fe2 | exact Fe3
+                | exact Ee | exact De1 | exact De2 | exact De3
+                | exact SINV0_vals | exact SINV0_envp | exact SINV0_str0
+                | exact NX0_spw | exact (argH0_agree sp rdraw inp)
+                | intros E0_ a0_ Ha0_; eapply argH0_high; eassumption
+                | exact sp_lo | exact sp_hi | reflexivity];
+      try first [eassumption | exact we1 | exact we2 | exact we3
+                | exact ph | exact inp | exact mbase | exact entryw | exact sp | exact brk0 | exact rdraw];
+      first [eassumption | reflexivity].
   Qed.
 
   Theorem init_x_sound_pnscan :
-    x_stmt segs A NX0 LIM SINV (argH0 ph sp rdraw argv envp uid hw) (bv_unsigned sp) FS0 XPnScan.
+    x_stmt segs A NX0 LIM SINV (argH0 sp rdraw inp) (bv_unsigned sp) FS0 XPnScan.
   Proof.
-    exact (x_sound_pnscan segs A NX0 LIM SINV (argH0 ph sp rdraw argv envp uid hw) (bv_unsigned sp) FS0
-              SEGS_wx SEGS_in_hull HULL_ok
-              (argH0_high ph sp rdraw argv envp uid hw Hsp Hva) NX0_spw (argH0_agree ph sp rdraw argv envp uid hw)
-              SINV_frame SINV_agree
-              wp0 wp1 wp2 wp3 wp4 Xpn Fp0 Fp1 Fp2 Fp3 Fp4 Ep Dp0 Dp1 Dp2 Dp3 Dp4
-              ph sp rdraw argv envp uid hw Hva Hve sp_lo sp_hi eq_refl SINV0_vals SINV0_str0).
+    (* as init_x_sound_envscan: three passes, the ambiguous [bv 32] and word arms held
+       back until the hypotheses have pinned what they can. *)
+    unshelve eapply x_sound_pnscan;
+      (* as init_x_sound_envscan: the pinning hypotheses first. *)
+      try first [exact Hsp | exact Hva | exact Hve | exact Hlaunch | exact Hlau
+                | exact Hbrk | exact Hmb | exact IMG | exact Hapc | exact Huid
+                | exact Hzr | exact Hrdr | exact SINV_SINV0];
+      try first [exact SEGS_wx | exact SEGS_in_hull | exact HULL_ok | exact SINV_frame | exact SINV_agree
+                | exact Xpn | exact Fp0 | exact Fp1 | exact Fp2 | exact Fp3 | exact Fp4
+                | exact Ep | exact Dp0 | exact Dp1 | exact Dp2 | exact Dp3 | exact Dp4
+                | exact SINV0_vals | exact SINV0_envp | exact SINV0_str0
+                | exact NX0_spw | exact (argH0_agree sp rdraw inp)
+                | intros E0_ a0_ Ha0_; eapply argH0_high; eassumption
+                | exact sp_lo | exact sp_hi | reflexivity];
+      try first [eassumption | exact wp0 | exact wp1 | exact wp2 | exact wp3 | exact wp4
+                | exact ph | exact inp | exact mbase | exact entryw | exact sp | exact brk0 | exact rdraw];
+      first [eassumption | reflexivity].
   Qed.
   Theorem init_x_sound_layout :
-    x_stmt segs A NX0 LIM SINV (argH0 ph sp rdraw argv envp uid hw) (bv_unsigned sp) FS0 XLayout.
+    x_stmt segs A NX0 LIM SINV (argH0 sp rdraw inp) (bv_unsigned sp) FS0 XLayout.
   Proof. apply x_sound_layout. Qed.
 End GenericInit.

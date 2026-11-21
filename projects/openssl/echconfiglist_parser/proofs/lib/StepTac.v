@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (bsb_bound bounds the entry_stack_image under the valid_launch and entry_launch_ok_va launch facts, via new block_head_size_le, launch_sp_le_top and launch_top_minus_sp lemmas). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -733,14 +734,66 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma bsb_bound : forall ph (sp : word) (a e : list (list byte)) uid hw rnd,
-  valid_argv a -> valid_envp e ->
-  (Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd)) <= 2240000)%Z.
+Lemma block_head_size_le : forall rseq argv envp,
+  (Z.of_nat (block_head_size rseq argv envp)
+   <= 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 512)%Z.
 Proof.
-  intros ph sp a e uid hw rnd Hva Hve.
-  pose proof (build_stack_bytes_within_span ph sp a e uid hw rnd).
-  pose proof (entry_stack_span_bound a e Hva Hve).
-  unfold entry_stack_span_max in *. lia.
+  intros rseq argv envp.
+  unfold block_head_size, block_items, auxv_size, auxv_count.
+  pose proof (Nat.mod_upper_bound
+                (length argv + length envp + 3) 2 ltac:(lia)).
+  destruct rseq; lia.
+Qed.
+
+Lemma launch_sp_le_top : forall inp (top sp : word),
+  valid_launch_sp top inp sp ->
+  (bv_unsigned sp <= bv_unsigned top)%Z.
+Proof.
+  intros inp top sp [_ [_ Hhi]].
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Nat2Z.is_nonneg
+    (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))) 16 ltac:(lia)).
+  lia.
+Qed.
+
+Lemma launch_top_minus_sp : forall inp (top sp : word),
+  valid_launch inp ->
+  valid_launch_sp top inp sp ->
+  (bv_unsigned top - bv_unsigned sp <= 2101782)%Z.
+Proof.
+  intros inp top sp [_ Hb] [_ [Hlo _]].
+  unfold launch_bytes, e2big_limit in Hb.
+  unfold launch_sp_lo, align_down16 in Hlo.
+  pose proof (block_head_size_le (kb_rseq (in_kernel inp))
+                (in_argv inp) (in_envp inp)).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))
+     - 4095) 16 ltac:(lia)).
+  lia.
+Qed.
+
+(* The entry stack image's length, bounded under the launch premises
+   [Run.valid_launch] and [Run.entry_launch_ok_va] (the old bound came from
+   [build_stack_bytes_within_span], deleted upstream). *)
+Lemma bsb_bound : forall v inp mbase ph entry (sp brk : word) draw,
+  valid_launch inp ->
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+   <= 2101782)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hvl Hlau.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw
+             Hlau).
+  destruct Hlau as (_ & Hsp & _).
+  exact (launch_top_minus_sp inp (ed_top draw) sp Hvl Hsp).
 Qed.
 
 (* [comment removed for export] *)

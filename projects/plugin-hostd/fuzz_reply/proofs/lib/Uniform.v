@@ -42,7 +42,8 @@ Proof.
       assert (Hm : mmap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5)
           i m (Ok eff m' evs)).
       { revert Hs. unfold syscall_spec, dispatch. cbv beta. rewrite E. intro H. exact H. }
-      clear Hs. unfold mmap_spec in Hm. sys_outcome_cases Hm; (split; [reflexivity | proc_kept FR]).
+      clear Hs. unfold mmap_spec, mmap_fixed_overflow in Hm.
+      sys_outcome_cases Hm; (split; [reflexivity | proc_kept FR]).
     - destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_].
       + intros _ Hs.
         assert (Hm : mremap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) i m (Ok eff m' evs)).
@@ -80,8 +81,15 @@ Definition place_uniform (c : config) : Prop :=
   forall e1 c1 e2 c2, sstep_cfg segs ACFG c e1 (SNext c1) -> sstep_cfg segs ACFG c e2 (SNext c2) ->
     e1 = e2 /\ (forall tr, obs_trace_cfg segs ACFG c1 tr <-> obs_trace_cfg segs ACFG c2 tr).
 
+(* POLICY-PINNED-TO-MODEL.  [RoomShapesDraft.policy_pinned] is a premise of the
+   fit, not a hypothesis of any producer: at LPS 727298f3 [linux_place_is] pins the
+   address and [linux_place_unique] makes it the only one, so the old form --
+   quantified over every [policy_ok] policy with nothing tying it to the model --
+   is false at an mmap node.  The producers only ever ESTABLISH [canon_fit_at]; no
+   file of this unit eliminates it, and no statement reads it. *)
 Definition canon_fit_at (c : config) : Prop :=
   forall p s st, RoomShapesDraft.policy_ok p ->
+  RoomShapesDraft.policy_pinned p s (cfg_model c) ->
   (page_round_down_Z (alloc_top (m_vmmaps (cfg_model c))) <= st)%Z ->
   (vm_limit (m_vmmaps (cfg_model c)) <= AgreeLim.LIM_AG)%Z ->
   forall x8 len, RoomShapesDraft.placement_at segs c x8 len ->
@@ -125,7 +133,7 @@ Proof. intros c Hn x8 len Hp. exfalso. exact (Hn x8 len Hp). Qed.
 
 Lemma canon_fit_at_nonplacement : forall c,
   (forall x8 len, ~ RoomShapesDraft.placement_at segs c x8 len) -> canon_fit_at c.
-Proof. intros c Hn p s st _ _ _ x8 len Hp. exfalso. exact (Hn x8 len Hp). Qed.
+Proof. intros c Hn p s st _ _ _ _ x8 len Hp. exfalso. exact (Hn x8 len Hp). Qed.
 
 Lemma uniform_nonplacement : forall c,
   (forall x8 len, ~ RoomShapesDraft.placement_at segs c x8 len) ->

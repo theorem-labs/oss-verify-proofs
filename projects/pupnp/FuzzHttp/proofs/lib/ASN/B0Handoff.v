@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
-From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import PropExec ShapeAlg SpinAlg AsanPlanCore BothPlanImages AsanInit B0Img MainEntryBoth.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import PropExec ShapeAlg SpinAlg AsanPlanCore AsanPlan BothPlanImages AsanInit B0Img MainEntryBoth.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Mem.
 Import ListNotations.
 Open Scope Z_scope.
@@ -23,13 +24,13 @@ Theorem b0_handoff : forall inp en,
   srealizes bsegs (cfgB0 en inp) Tm.
 Proof.
   intros inp [sp brk0 mbase rdraw] Hi Hv Tm Tnil MAINA.
-  pose proof Hi as (Hva & Hve & Hfs & Hrel & [Huid Hgid] & Hnof & Hsigm & Hhw & Habt & Hvasz & Hurnd).
-  rewrite (valid_entry_sv48 _ _ _ Hvasz) in Hv. destruct Hv as (Hsp & Hbrk & Hmb & Hfit).
-  destruct inp as [argv envp fs stdin uid gid groups net nof sigm hw abt vasz urnd tmp].
-  cbn in Hfit, Hva, Hve, Hfs, Huid, Hgid, Hhw, Hvasz, Habt. subst vasz.
+  (* the image's entry pc is its table's entry, and the table bounds the launch's vDSO pair *)
+  assert (Hapc : Z.of_N AsanUbsan.M.init_pc = AP.a_entry AP.BOTH) by (vm_compute; reflexivity).
+  assert (Hresx : (2 <= AP.n_resx AP.BOTH)%nat /\ (20 <= AP.p_resx AP.BOTH)%nat) by (cbn; lia).
+  pose proof (launch_ok_of_valid BSEGS AP.BOTH BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase inp
+                both_img_facts Hapc Hresx Hi Hv) as HL.
   unfold cfgB0.
-  exact (both_main_boot sp brk0 mbase rdraw argv envp (fs_seed_tmp fs tmp) stdin uid gid groups net nof sigm hw abt urnd Hsp Hbrk Hva Hve Hfit Huid Hhw
-           Tm Tnil (fun ms mo Hat => MAINA (mkCfg ms mo) Hat)).
+  exact (both_main_boot sp brk0 mbase rdraw inp HL Tm Tnil (fun ms mo Hat => MAINA (mkCfg ms mo) Hat)).
 Qed.
 
 Lemma b0_rw_image_wr_at : forall (m : word -> option byte) a n,

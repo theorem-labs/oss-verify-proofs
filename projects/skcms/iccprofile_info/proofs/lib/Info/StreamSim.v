@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the stdout facts ask the input's channel reader (in_channel_reader, fd1chan). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -19,10 +20,6 @@ Open Scope bv_scope.
 
 Lemma in_arg1_sys_input : forall segs ms x8,
   in_arg (sys_input segs ms x8) 1 = ms_gpr ms 1.
-Proof. reflexivity. Qed.
-
-Lemma in_arg2_sys_input : forall segs ms x8,
-  in_arg (sys_input segs ms x8) 2 = ms_gpr ms 2.
 Proof. reflexivity. Qed.
 
 Lemma in_wmem_sys_input : forall segs ms x8,
@@ -60,19 +57,26 @@ Proof. reflexivity. Qed.
 (* [comment removed for export] *)
 Definition M_loop (model : Model) : Prop :=
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
-  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\
+  fd1chan model /\
   m_halted model = None /\
   m_vm_lazy model = [].
 
 Lemma init_M_loop : forall reserved brk0 mb sp lim inp,
+  in_channel_reader inp = true ->
   M_loop (init_model reserved brk0 mb sp lim inp).
-Proof. intros reserved brk0 mb sp lim inp. repeat split. Qed.
+Proof.
+  intros reserved brk0 mb sp lim inp Hr.
+  split; [reflexivity | split; [apply init_model_fd1chan; exact Hr | split; reflexivity]].
+Qed.
 
 (* [comment removed for export] *)
 Lemma M_loop_take : forall k model,
   M_loop model ->
   M_loop (with_stdin (snd (stream_take (m_stdin model) k)) model).
-Proof. intros k model (H0 & H1 & Hh & Hlazy). repeat split; assumption. Qed.
+Proof.
+  intros k model (H0 & H1 & Hh & Hlazy).
+  split; [exact H0 | split; [exact H1 | split; assumption]].
+Qed.
 
 Lemma M_loop_fd1chan : forall model, M_loop model -> fd1chan model.
 Proof. intros model (H0 & H1 & Hh & Hlazy). exact H1. Qed.

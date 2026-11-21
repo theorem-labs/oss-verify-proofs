@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_top.v on a working branch e2e59892bef: adapted to B (HCTX, rd_base from B's strict readings_spec). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_top.v on a working branch: adapted to B (HCTX, rd_base from B's strict readings_spec). *)
 (* lv2_locate_manifest_readings: the assembly of the segments into readings_spec. The scan's loop closes by induction
    on the fuel f (fm plain readings_scan.v LoopAt) and plain_local's loop by induction on the bytes left. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

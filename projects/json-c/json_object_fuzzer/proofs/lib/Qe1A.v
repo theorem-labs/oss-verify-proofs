@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: the frame lemma over the new witness of `rauxv_ok`, the auxv values, AT_RANDOM, AT_EXECFN and the entries after it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -4636,8 +4637,8 @@ rauxv_ok m B -> rpres_except C m m' ->
 (forall a, B <= a -> ~ C a) -> (forall a, (RATP + 131736) <= a < (RATP + 131744) -> ~ C a) ->
 rauxv_ok m' B.
 Proof. clear - RATP. gw_expose_fam RATP.
-intros C m m' B (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C1 & A1 & A2 & H) HP HB HC.
-exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|gw_exact H]]].
+intros C m m' B (av & vs & rnd & ex & rs & C1 & A1 & A2 & H) HP HB HC.
+exists av, vs, rnd, ex, rs. split; [|split; [|split; [|gw_exact H]]].
 - eapply rpres_except_rw_cells; [gw_exact HP| gw_exact C1|]. cbn. intros a Ha. apply HC. lia.
 - eapply rpres_except_bytes_at; [gw_exact HP| gw_exact A1|]. intros a Ha. apply HB. lia.
 - eapply rpres_except_bytes_at; [gw_exact HP| gw_exact A2|]. intros a Ha. apply HB. lia.

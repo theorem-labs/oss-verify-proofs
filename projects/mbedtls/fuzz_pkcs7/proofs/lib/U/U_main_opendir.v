@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (dir_seg2_kont and dir_seg1 written out from their encoded statements, dir_seg1 passing the entry draw to open_err_branch; the argv pointers taken from the entry draw; the path read also proved to end below TASK_SIZE; dir_seg2_kont's below-window premise and dir_seg1's proof of it use sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -55,13 +56,24 @@ Section DirFront.
   Definition modelD1 : Model := model1g sp0 tid brk mbase fs0 stdin0 FdDir.
 
   (* [comment removed for export] *)
-  Definition dir_seg2_kont (T : TSet) : Prop := ltac2:(CDefT.buildp (gd_tbl_P_main_opendir ()) "Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$5.(6.(1.&40.)R3.)#26.)P,(4.(1.&40.)(7.R4.#0.)Vsp0,)P,(4.(1.&40.)(7.R5.#1.)(8.Vsp0,Va0s,$9.Venvv,))P,(4.(1.&40.)(7.R6.#2.)(:.Vsp0,Va0s,$9.Venvv,))P,(4.(1.&40.)(7.R7.#5.)Vtid,)P,(;.(<.Va0s,$9.R8.)$=.R7.)P,(>.$?.(<.Va0s,$9.R9.)R7.$10.)P,Px,(1.&40.)P,(11.(12.&40.Vsp0,)(12.&40.R1.))(4.(3.(1.&8.))A1.R:.R2.A1.Vmem0,R2.)P,Px,(1.&40.)P,(13.(12.&40.R1.)(14.(12.&40.Vsp0,)+800000.))(4.(3.(1.&8.))A1.R;.R2.A1.Vmem0,R2.)(15.$?.(16.(17.$18.R;.(19.&40.+4729<.)R:.(1:.$?.))$1;.)O1.)")
-(* [comment removed for export] *).
+  Definition dir_seg2_kont (T : TSet) : Prop := (forall vals : (list word), (forall R : (bvmap (5)%N word), (forall M : (word -> (option byte)), (((length vals) = (38)%nat) -> (((vals_ev vals (0)%nat) = sp0) -> (((vals_ev vals (1)%nat) = (p0 a0s dot_path envv rd)) -> (((vals_ev vals (2)%nat) = (p1 a0s dot_path envv rd)) -> (((vals_ev vals (5)%nat) = tid) -> ((regs_ok (ENV a0s dot_path vals) srB0 R) -> ((know_ok RSEGS (ENV a0s dot_path vals) M knA) -> ((forall x : word, ((Z.le (bv_unsigned sp0) (bv_unsigned x)) -> ((M x) = (mem0 x)))) -> ((forall x : word, ((Z.lt (bv_unsigned x) (Z.sub (bv_unsigned sp0) 6144512%Z)) -> ((M x) = (mem0 x)))) -> (realizes RSEGS (mkCfg (mkst R (Z_to_bv (64)%N 0x4729c%Z) M (seg_rom RSEGS)) modelD1) T))))))))))))).
 
   #[using="Type"] Lemma dot_nonul : ~ In (Z_to_bv 8 0) dot_path.
   Proof. cbn. intros [E|[]]. apply (f_equal bv_unsigned) in E. vm_compute in E. lia. Qed.
 
-  #[using="rd Hva Hve Hvsp Htid ME"] Lemma dir_seg1 : ltac2:(CDefT.buildp (gd_tbl_P_main_opendir ()) "PKA,$1<.PT,$1<.P,(1=.VAMB,VLM,Vsp0,Va0s,$9.Venvv,Vtid,Vmem0,Vbrk,Vmbase,Vfs0,Vstdin0,R2.)P,(1>.R2.)(15.$?.(16.(17.$18.Vregs0,(19.&40.+1=24<.)Vmem0,(1:.$?.))(1?.VAMB,VLM,Vsp0,Va0s,$9.Venvv,Vtid,Vbrk,Vmbase,Vfs0,Vstdin0,))(20.R4.R3.))")
+  (* Was encoded (CDefT.buildp) over [open_err_branch]'s old arity; at the revision it reads the
+     entry draw [rd], so the encoded term no longer typechecks (a build of this port said, at
+     line 63, "Illegal application").
+     Written out from its decode (cdeft_print.py), not re-encoded; the one change is [rd] in
+     [open_err_branch]'s argument list, the section's own variable. *)
+  #[using="rd Hva Hve Hvsp Htid ME"] Lemma dir_seg1 :
+    forall KA T : TSet,
+    @U_main_open.open_err_branch AMB LM sp0 a0s dot_path envv tid rd mem0 brk mbase fs0 stdin0 KA ->
+    dir_seg2_kont T ->
+    realizes RSEGS
+      (mkCfg (@PropExec.mkst PropExec.fx0 regs0 (Z_to_bv 64 119372%Z) mem0 (PropExec.seg_rom RSEGS))
+             (@U_main_open.model0 AMB LM sp0 a0s dot_path envv tid brk mbase fs0 stdin0))
+      (t_alt2 KA T)
 (* [comment removed for export] *).
   Proof.
     intros KA T HKA HT.
@@ -73,8 +85,8 @@ Section DirFront.
     set (vals := vals0 sp0 a0s dot_path envv tid rd regs0) in *.
     assert (HL : length vals = 38%nat) by (subst vals; apply vals0_length).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0 sp0 a0s dot_path envv) by reflexivity.
-    assert (P2 : vals_ev vals 2 = p1 sp0 a0s dot_path envv) by reflexivity.
+    assert (P1 : vals_ev vals 1 = p0 a0s dot_path envv rd) by reflexivity.
+    assert (P2 : vals_ev vals 2 = p1 a0s dot_path envv rd) by reflexivity.
     assert (P5t : vals_ev vals 5 = tid) by reflexivity.
     ddestruct (main_str sp0 a0s dot_path envv tid rd regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
     cbn [nth] in Sr, Slo, Shi, Slen.
@@ -84,13 +96,13 @@ Section DirFront.
     assert (ABOVE : forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x).
     { intros x Hx. rewrite EQM. apply (mem_denot_above (ENV a0s dot_path vals) mem0 _ 0%nat 0x7e000);
         [vm_compute; reflexivity | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia | lia]. }
-    assert (BELOW : forall x : word, (bv_unsigned x < bv_unsigned sp0 - 8388608)%Z -> M x = mem0 x).
-    { intros x Hx. rewrite EQM. apply (mem_denot_below (ENV a0s dot_path vals) mem0 _ 0%nat (-8388608));
+    assert (BELOW : forall x : word, (bv_unsigned x < bv_unsigned sp0 - 6144512)%Z -> M x = mem0 x).
+    { intros x Hx. rewrite EQM. apply (mem_denot_below (ENV a0s dot_path vals) mem0 _ 0%nat (-6144512));
         [vm_compute; reflexivity | lia | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia]. }
     (* [comment removed for export] *)
-    assert (Sr' : rdn RSEGS M (p1 sp0 a0s dot_path envv) (length dot_path + 1) = Some (dot_path ++ [Z_to_bv 8 0])).
+    assert (Sr' : rdn RSEGS M (p1 a0s dot_path envv rd) (length dot_path + 1) = Some (dot_path ++ [Z_to_bv 8 0])).
     { rewrite <- Sr. apply rdn_agree. intros j Hj. apply ABOVE.
-      pose proof (u64_range (p1 sp0 a0s dot_path envv)). unfold p1 in *. rewrite u_small by lia. lia. }
+      pose proof (u64_range (p1 a0s dot_path envv rd)). unfold p1 in *. rewrite u_small by lia. lia. }
     (* [comment removed for export] *)
     eapply (rz_openat_dot RSEGS _ _ _ (model0 sp0 a0s dot_path envv tid brk mbase fs0 stdin0) ECALLW); try apply is_ecall_ECALLW.
     - vm_compute. reflexivity.
@@ -101,7 +113,11 @@ Section DirFront.
     - regv HR (12 : reg). vm_compute. reflexivity.
     - (* [comment removed for export] *) rewrite m0_fds. rewrite alloc_fd_fds0. apply fd_lookup_fds0_3.
     - (* [comment removed for export] *) split; [cbn; lia|]. split; [apply dot_nonul|].
-      regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. exact Sr'.
+      regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. split; [exact Sr'|].
+      (* path_at's TASK_SIZE conjunct (read_cstr's access_okb) *)
+      pose proof (main_str_top sp0 a0s dot_path envv tid rd regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as HTop.
+      cbn [nth] in HTop. unfold p1, TASK_SIZE in *.
+      assert (Hdl : length Uapi.dot_path = length dot_path) by reflexivity. lia.
     - (* [comment removed for export] *)
       intros e He. rewrite v_addi_pc4 by lia. change (0x47298 + 4)%Z with 0x4729c%Z.
       lazymatch type of HR with regs_ok _ ?sr ?Rc =>

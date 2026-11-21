@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; the same text at fuzz_egress's module path, over this unit's
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v;
+   the same text at fuzz_egress's module path, over this unit's
    lib/U/Prog/LLVMFuzzerTestOneInput_c.v and _fr.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (SRcf) base of the UBSan image's agree chain, as libreac/fuzz_decode's released
    lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v: the SRcf twins of the run lemmas the U walks use (llvm_run_norm, kb_run),
    the agree room (room_ag: CAP_AG slots, 2^29 bytes), malloc's contract at that room (malloc_contract_ag, from the

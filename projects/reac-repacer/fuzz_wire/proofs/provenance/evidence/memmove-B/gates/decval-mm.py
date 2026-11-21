@@ -8,7 +8,7 @@ with only the inputs changed; the decision tree per numeral is unchanged:
   target image  fuzz_wire.asan-ubsan  (sha256 af4534831a45; symbols from the unstripped twin 51eb4bef2425, bytes from
                 the stripped image of record)
   donor image   fuzz_pcap.asan-ubsan  (sha256 9e66f771f22a; symbols from the unstripped twin c969d83cdd59)
-  donor text    fuzz_pcap's released lib/B/Rt/Memmove*.v (recipes 5098883da0b) with its module paths renamed
+  donor text    fuzz_pcap's released lib/B/Rt/Memmove*.v (recipes) with its module paths renamed
                 (run-gates.sh's DON tree: --don <dir>/B/Rt/<name>.v)
   relocated     the five files, read from --lib <dir>/B/Rt/<name>.v (the committed files, or a planted copy)
   environment   WIRE_BIN (fuzz_wire.asan-ubsan and .unstripped), PCAP_PIN / PCAP_TWIN (fuzz_pcap.asan-ubsan pin /

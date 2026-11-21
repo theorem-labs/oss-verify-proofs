@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed Zify, printf1_run; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvPrintf1.v, lines 97, 176, 240, 265, 288-289, 315. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -95,7 +96,7 @@ Section Printf1.
     let MV := mrestrict (ahid A model) M in
     usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
     getr R 1%bv = Z_to_bv 64 688024 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 85514 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+    (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 1282048 -> MV (Z_to_bv 64 i) = None) ->
     rdn ASEGS MV (Z_to_bv 64 6896960) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
     rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
@@ -177,7 +178,7 @@ Section Printf1.
       subst MV1.
       set (MVa := mrestrict (ahid A model1) M1) in *.
       (* [comment removed for export] *)
-      assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVa (Z_to_bv 64 (a + d)) k = true)
+      assert (WIN1 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVa (Z_to_bv 64 (a + d)) k = true)
         by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MVa _ AGR); apply (WIN a n); assumption).
       assert (FW1 : forall a n, 1293752 <= a -> a + n <= 1293752 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVa (Z_to_bv 64 (a + d)) k = true)
         by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MVa _ AGR); apply (FW a n); assumption).
@@ -241,7 +242,7 @@ Section Printf1.
       intros M2 model2 D2 SBM2 VIS2 FRM2.
       subst MV2. set (MVb := mrestrict (ahid A model2) M2) in *.
       (* [comment removed for export] *)
-      assert (WIN2 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVb (Z_to_bv 64 (a + d)) k = true)
+      assert (WIN2 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVb (Z_to_bv 64 (a + d)) k = true)
         by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MVa MVb _ BGR); apply (WIN1 a n); assumption).
       assert (IMG2 : forall i, 65536 <= i < 1282048 -> MVb (Z_to_bv 64 i) = None).
       { intros i Hi. rewrite FRB; [apply IMG1; exact Hi | lia | unfold WB; clear - Hsp' HS1 HS2 Hi; lia]. }
@@ -266,6 +267,7 @@ Section Printf1.
       { exact HM2. }
       { exact Hh2. }
       { exact FD1b. }
+      { exact (di_rdr _ _ _ _ _ _ _ _ _ _ D2). }
       { unfold wv_regs. repeat split; try assumption. }
       { fold MVb. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
         split; [exact Bm104|]. split; [replace (q + 8) with (S - 1104 - 96) by (unfold q; ring); exact Bm96|].
@@ -288,7 +290,8 @@ Section Printf1.
         - exact GRM3.
         - exact (sbm_vml _ _ SBM3).
         - exact MI3.
-        - rewrite (sbm_halted_eq _ _ SBM3). exact Hh2. }
+        - rewrite (sbm_halted_eq _ _ SBM3). exact Hh2.
+        - exact (sbm_rdrA _ _ SBM3). }
       pose proof (ahid_sbm A model2 model3 SBM3) as AH3.
       set (MVc := mrestrict (ahid A model3) M3) in *.
       assert (EQc : mrestrict (ahid A model2) M3 = MVc) by (unfold MVc; rewrite AH3; reflexivity).
@@ -314,7 +317,7 @@ Section Printf1.
         apply Z.leb_le in Hb1, Hb2. apply orb_prop in Hb3. rewrite !Z.leb_le in Hb3.
         apply (rdn_tr MVa MVc _ _ _ Hr); [exact Hb1 | lia|].
         intros i Hi. apply FRca; unfold SC; clear - Hsp' HS1 HS2 Hb1 Hb2 Hb3 Hi; lia. }
-      assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVc (Z_to_bv 64 (a + d)) k = true)
+      assert (WIN3 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVc (Z_to_bv 64 (a + d)) k = true)
         by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MVb MVc _ GRV3); apply (WIN2 a n); assumption).
       assert (FW3 : forall a n, 1293752 <= a -> a + n <= 1293752 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVc (Z_to_bv 64 (a + d)) k = true)
         by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MVb MVc _ GRV3); apply (store_ok_mono ASEGS k MVa MVb _ BGR); apply (FW1 a n); assumption).

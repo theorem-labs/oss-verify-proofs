@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -21,6 +22,10 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section Regions.
 Variable segs : list Segment.
 Variable ρ : valuation.
@@ -33,6 +38,7 @@ Hypothesis Hhs : hs_ok ρ A m.
 Hypothesis Hcomp : comp_inv segs ρ A model.
 Hypothesis Hm_out : forall x : word, ~ (a <= bv_unsigned x < a + n) -> m' x = m x.
 
+(* [comment removed for export] *)
 Lemma RMem_cut_filter (g : region -> bool) :
   (forall X, In X A -> g X = true -> forall z, in_rg ρ X z -> ~ (a <= z < a + n)) -> RMem segs ρ (List.filter g A) m'.
 Proof.
@@ -46,6 +52,7 @@ Qed.
 Lemma filter_true (l : list region) : List.filter (fun _ => true) l = l.
 Proof. induction l as [|x r IH]; [reflexivity|]. cbn [List.filter]. rewrite IH. reflexivity. Qed.
 
+(* [comment removed for export] *)
 Section Drop.
 Variables isR isC : region -> bool.
 Variables R C : region.
@@ -119,13 +126,25 @@ End Drop.
 
 End Regions.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section Main.
 Variable segs : list Segment.
 Variable cfg : SpuriousCfg.
+(* RESTORED.  bignum's AxSysUnmap.v:125 declares it in this position and bndiv's own
+   AxDisp.v already applies sys_munmap2_sound as `segs cfg Hcfg2 LIM fs0 KT Hlow`, so
+   the hypothesis was dropped in the port, not deliberately: family_off_215
+   (AxSysNode.v:231-232) needs `sc_alloc cfg = false` and :279 passes it by name. *)
+Hypothesis Hcfg2 : sc_alloc cfg = false.
 Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* in_segs_reserved gained Section Grant's Hnk, discharged after Hlow; closed at the
+   top on the unit's own ELF image. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
 Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
@@ -198,7 +217,20 @@ Proof.
     - rewrite R10. exact Hal.
     - rewrite (gate_fix_nZ len _ R11), R10. fold nZ a. unfold TASK_SIZE. flia.
     - rewrite En, Eaddr. unfold map_has. apply existsb_exists. exists (ent_val ρ e0). split; [exact (MR_ent_in segs fs0 ρ _ model e0 H8 He0)|].
-      rewrite Ev. cbn [fst snd]. apply andb_true_intro. split; apply bv_eqb_eq; reflexivity. }
+      rewrite Ev. cbn [fst snd]. apply andb_true_intro. split; apply bv_eqb_eq; reflexivity.
+    - intros q Hq. destruct (MR_maps_ent segs fs0 ρ _ model q H8 Hq) as [e [Hein [-> Hokq]]].
+      destruct (bv_eqb (fst (ent_val ρ e)) (Z_to_bv 64 a) && bv_eqb (snd (ent_val ρ e)) (Z_to_bv 64 nZ)) eqn:Eq.
+      (* The names WERE Q1/Q2 here, ported from bignum; bndiv's own
+         proof already binds Q1 and Q2 at :186 from the gate guard, and :243/:291 read
+         those outer ones, so the inner pair is renamed rather than shadowed. *)
+      + left. apply andb_prop in Eq as [V1 V2]. apply bv_eqb_eq in V1. apply bv_eqb_eq in V2.
+        rewrite En, Eaddr, <- V1, <- V2. destruct (ent_val ρ e); reflexivity.
+      + right. assert (Hd : e <> e0).
+        { intros ->. rewrite Ev in Eq. cbn [fst snd] in Eq. rewrite !(proj2 (bv_eqb_eq _ _) eq_refl) in Eq. discriminate Eq. }
+        pose proof (um_other segs fs0 ρ _ model H8 e0 He0 e Hein Hd) as D. rewrite Ev in D. cbn [fst snd] in D.
+        pose proof (ent_val_bsz ρ e Hokq) as Sz. pose proof Hokq as (O1 & O2 & O3).
+        unfold bas, bsz in D, Sz. rewrite ?Wa, ?Wn in D.
+        rewrite Eaddr, Wa, (gate_fix_nZ len _ R11). fold nZ. split; flia. }
   set (m' := munmap_model (Z_to_bv 64 a) (Z_to_bv 64 nZ) model).
   assert (Hothers : forall q, In q (vm_maps (m_vmmaps model)) -> fst q <> Z_to_bv 64 a ->
                       iv_disj (bv_unsigned (Z_to_bv 64 a)) (bv_unsigned (Z_to_bv 64 a) + bv_unsigned (Z_to_bv 64 nZ)) q).
@@ -225,7 +257,9 @@ Proof.
   assert (Hlo : leval ρ (ae_base e0) <= leval ρ f) by (rewrite Eb; flia).
   assert (Hhi : leval ρ f + nZ <= leval ρ (ae_base e0) + ae_size e0) by (rewrite Eb, Es; flia).
   assert (Hsegs : forall z, in_segs segs z -> ~ (a <= z < a + nZ)).
-  { intros z Hz Hr. destruct (in_segs_reserved segs Hlow z Hz) as [q [Hq Hzq]]. rewrite <- (mr_res segs fs0 ρ _ model H8) in Hq.
+  { intros z Hz Hr. destruct (in_segs_reserved segs Hlow Hnk z Hz) as [q [Hq Hzq]].
+    destruct (mr_res segs fs0 ρ _ model H8) as [rx [Hrx _]].
+    apply (fun h => in_or_app _ rx q (or_introl h)) in Hq. rewrite <- Hrx in Hq.
     pose proof (rng_res segs fs0 ρ _ model H8 e0 He0 f nZ Hlo Hhi q Hq) as D. unfold iv_disj in D. fold a in D. flia. }
   assert (Hled : forall q, ~ (a <= q < a + nZ) -> in_ledger_w segs (m_vmmaps model) q -> in_ledger_w segs (m_vmmaps m') q).
   { intros q Hq [X|[X|X]]; [left; exact X | right; left; rewrite Evm; exact X|]. right. right.
@@ -240,15 +274,19 @@ Proof.
   { intros q Hq. rewrite Evm in Hq. cbn [vm_noaccess] in Hq. left. apply (inl_subtract1 _ _ _ q (mr_na segs fs0 ρ _ model H8)) in Hq as [Hq _]. exact Hq. }
 
   apply (rzc_latch segs cfg ms model w (KT ρ o) H9 H3 Hf He).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl
+           (rob_sys_215 segs (latch ms) model (rg ms (Z_to_bv 5 17)) eq_refl R17)).
   - rewrite (check_syscall_215 segs (latch ms) _ _ model R17). exact (chk_munmap_modeled model _ _ G _).
   - intros eff m1 evs Hc0. rewrite (check_syscall_215 segs (latch ms) _ _ model R17) in Hc0.
-    destruct (chk_munmap model _ _ G eff m1 evs Hc0) as (_ & -> & ->). split; [reflexivity | exact H9].
+    destruct (chk_munmap model _ _ G eff m1 evs Hc0) as [(_ & -> & ->) | (_ & -> & ->)]; split; [reflexivity | exact H9 | reflexivity | exact H9].
   - exists (mkEffectU (Z_to_bv 64 0) [] [] [(rg ms (Z_to_bv 5 10), fix_n (rg ms (Z_to_bv 5 11)))] [] []), (munmap_model (rg ms (Z_to_bv 5 10)) (fix_n (rg ms (Z_to_bv 5 11))) model). split.
     + rewrite (check_syscall_215 segs (latch ms) _ _ model R17). exact (chk_munmap_ok model _ _ G).
-    + apply refusal_b_uninjected; rewrite R17; [discriminate | reflexivity].
-  - intros eff m1 Hc0 _. rewrite (check_syscall_215 segs (latch ms) _ _ model R17) in Hc0.
-    destruct (chk_munmap model _ _ G eff m1 [] Hc0) as (-> & -> & _).
+    + rewrite (refusal_b_215 segs (latch ms) _ model _ R17). reflexivity.
+  - intros eff m1 Hc0 Hnr. specialize (Hnr (family_off_215 segs cfg (latch ms) _ Hcfg2 R17)).
+    rewrite (refusal_b_215 segs (latch ms) _ model _ R17) in Hnr.
+    rewrite (check_syscall_215 segs (latch ms) _ _ model R17) in Hc0.
+    destruct (chk_munmap model _ _ G eff m1 [] Hc0) as [(Er & _ & _) | (-> & -> & _)].
+    { apply errno_ret_in_true in Er as [e [[<-|[]] Er]]. rewrite Er in Hnr. rewrite refusal_enomem in Hnr. discriminate Hnr. }
     rewrite En, Eaddr. fold m'. exists m'. split; [exact (materialize_nil m')|]. rewrite adv_unmaps. fold mem'.
     assert (Hrv : xv_val ρ (XL w_zero) (Z_to_bv 64 0)) by reflexivity.
     assert (Hh' : m_halted m' = None) by exact H9.

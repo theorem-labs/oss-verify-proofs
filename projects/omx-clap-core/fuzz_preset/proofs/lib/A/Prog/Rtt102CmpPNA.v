@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module names changed; 949 of its 1032 lines of code are new or changed and 695 lines of the source are left out. *)
-(* R-FORM PORT (WalkRtt102-2's wave 1 on 448ecd157e57; the R-form brief, CrtFit's WLE contract): every journal
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* R-FORM PORT (WalkRtt102-2's wave 1; the R-form brief, CrtFit's WLE contract): every journal
    is ajournal_xR / ajournal_xwR at RZW := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf (AJ / AJW below, Rtt102Cut.v's rtt_J),
    the step relation is YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf, and cmp_pn concludes SRr'. parse_noting's Step-2 text
    concludes SRr' with fpostFbm (= YCbqGwild.apost_base_xbFR at wle'), so pn_call_atF is aj_call_xbF_spR's proof at a
@@ -13,9 +14,9 @@
    Its new post conjunct hull_used is not read. *)
 (* fuzz_preset, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): THE INNER SEGMENT PN of
    stretch CMP of round_trip_text's walk ON THE #102 PINS (lane CmpPN of RttCmp, WalkRtt102, the text owner): cmp_pn,
-   from the +772 cut cmp_at_len to the +788 cut cmp_at_pn (both Rtt102CmpDefs.v), RE-FITTED TO THE BATCH KIT'S CUT 7cdbb61b5fa0
-   (PRH_FnCheck blob c40cf3fdcd2a; GRANTED path only) on WalkRtt102b's shared layer 80a1d52c32c7. The pre-cut form was
-   GREEN at 0d042ecb926 (pins102) on two premises that the
+   from the +772 cut cmp_at_len to the +788 cut cmp_at_pn (both Rtt102CmpDefs.v), RE-FITTED TO THE BATCH KIT'S CUT
+   (PRH_FnCheck blob c40cf3fdcd2a; GRANTED path only) on WalkRtt102b's shared layer. The pre-cut form was
+   GREEN (pins102) on two premises that the
    cut retires (below).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma); the function-level lookup is the
    brief's (proof-index round_trip_text EXIT=0, no released ASan proof).
@@ -52,7 +53,7 @@
    THE TWO PRE-CUT PREMISES ARE GONE (cmp_pn takes none):
    - K0-SRC-CEIL: the cut's src_rd (PRH_Base.v:1660) asks `p + Z.of_nat (length l) <= YM05.alloc_ceiling`, no `+ 8`.
      At text = q it is the named assert HSRC_CEIL: the text block (q - cf_head, capw + cf_head) is live (prh_ledger's
-     harness block), so AR_laws_x's alx_blocks (YCbqG.v:113-116, ARx_blocks_law: p + req_size n <= alloc_ceiling)
+     harness block), so AR_laws_x's alx_blocks (YCbqG.v:114-117, ARx_blocks_law: p + req_size n <= alloc_ceiling)
      gives q - cf_head + req_size (capw + cf_head) <= alloc_ceiling, req_size n >= n, and len < capw (rtt_at_cmp,
      Rtt102Cut.v:575).
    - K0-UNIV-END: the cut's tparse_noting_specX (PRH_FnCheck.v:596-730) takes no membership of the cursor end
@@ -369,7 +370,7 @@ Variables (CTX0 : list (list Z)).
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 (* (a) PRH_Base.v prh_head_wide (ONE spelling a walk takes; owner: the cf instance owner's preset_head_wide, cf_head = 16) *)
 Hypothesis HW : prh_head_wide.
-(* (b) the callee's kit text, parse_noting (PRH_FnCheck.v at the batch kit's cut 7cdbb61b5fa0, blob c40cf3fdcd2a; owned by the kit), at
+(* (b) the callee's kit text, parse_noting (PRH_FnCheck.v at the batch kit's cut, blob c40cf3fdcd2a; owned by the kit), at
    EVERY float state: the call is made at the cut's fxc, which rtt_fx does not equate to fx *)
 Hypothesis TPN : forall fx0 : YK11.FPState,
   tparse_noting_specX (fx := fx0) (PI := prh_img_A) (L := A_prog_listing) (PA := PA) B ARx SK CTX0.
@@ -896,7 +897,7 @@ destruct (alx_blocks SEGS B ARx LAWS ly S Hp W mem md (q - cf_head) (capw + cf_h
 assert (Hrqw : capw + cf_head <= req_size (capw + cf_head))
   by (pose proof (req_size_pos (capw + cf_head)) as Hr; clear - Hr Hcw0 Hch; lia).
 (* K0-SRC-CEIL RETIRED: the cut's src_rd (PRH_Base.v:1660) bounds the text's own bytes by the ceiling, and the text
-   block is live: alx_blocks (YCbqG.v:113-116) ends it at or below the ceiling, and len < capw (rtt_at_cmp) *)
+   block is live: alx_blocks (YCbqG.v:114-117) ends it at or below the ceiling, and len < capw (rtt_at_cmp) *)
 assert (HSRC_CEIL : q + LEN D <= YM05.alloc_ceiling) by (clear - Hqceil Hrqw HLENW; lia).
 (* parse_noting's WILD ROOM (its 2 = prh_wk F_parse_noting): the text's entry room less the rendering's RTT_WK_T,
    Rtt102Cut.rtt_wild_room at rtt_at_cmp's last conjunct *)

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* the definitions of fuzz_command's lib/A/Rt/RtDefs.v and
-   RtSRegionDef.v (a working branch 8aaeb29ab7b2) that its strndup walk (RtDStrndup{F,R,Z}.v and the top) names,
+   RtSRegionDef.v (a working branch) that its strndup walk (RtDStrndup{F,R,Z}.v and the top) names,
    with their module paths changed: ascratch_stk, abytes_at and aerrno_cell verbatim; aread_ok, art_post_cf and the
    range check's contract as noted at each. Nothing is proved here. Image B (fuzz_reply.asan-ubsan): lib/A/Rt/RtDStrndupCfRt.v
    of this harness with the module paths lib/A -> lib/B and the range check's pc of this image. *)

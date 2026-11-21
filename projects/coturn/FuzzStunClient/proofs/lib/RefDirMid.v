@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section takes the launch input, entry point, uid and hwcap of the 12-argument main_entry and the stderr write's channel reader, vm_small reads the launch's init_reserved, and the stack window is 6144513 bytes, was 8388608. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -116,7 +117,13 @@ Section DirMid.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; dot_path] envv rdraw tid regs0 mem0.
+  (* LPS 08b1429: the launch input, entry point, uid/hwcap, the 12-argument [main_entry] and the
+     stderr write's channel reader, as in RefW65x's World section. *)
+  Variable inp : ProcInput.
+  Variable entry : word.
+  Variables uid hw : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; dot_path] envv uid hw rdraw tid regs0 mem0.
+  Hypothesis Hrdr0 : a_channel_reader = true.
   Hypothesis Hbrk : valid_brk RSEGS brk.
 
   Lemma dot_len : (length dot_path <= 4095)%nat.
@@ -130,36 +137,39 @@ Section DirMid.
   Definition after_malloc_dir (K : TSet) : Prop :=
     forall (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (mb gm sec cn : word) (area brkv mas : Z),
       area = (bv_unsigned mb + 4096)%Z ->
-      read_pre sp0 (p1 sp0 a0s dot_path envv) mb gm sec cn R M ->
+      read_pre sp0 (p1 a0s dot_path envv rdraw inp) mb gm sec cn R M ->
       world0 area (bv_unsigned gm) brkv mas (bv_unsigned tid) M ->
       main_frame (bv_unsigned sp0) M ->
-      vm_pre VM sp0 mb gm -> vm_small VM gm ->
+      (* LPS 08b1429: RefW65x.vm_small reads the launch's init_reserved, so it takes sp0 mbase *)
+      vm_pre VM sp0 mb gm -> vm_small sp0 mbase VM gm ->
       above_sp0 sp0 mem0 M ->
       realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13a34) M (seg_rom RSEGS)) (modelDir VM)) K.
 
   Theorem dir_brk : forall K, after_malloc_dir K ->
-    brk_ok_branch_g sp0 a0s dot_path envv tid mem0 brk mbase fs0 stdin0 FdDir (t_alt2 (t_die msg_oom fs0) K).
+    brk_ok_branch_g sp0 a0s dot_path envv rdraw tid mem0 brk mbase fs0 stdin0 inp FdDir (t_alt2 (t_die msg_oom fs0) K).
   Proof.
-    intros K AM. exact (brk_ok_sem_g sp0 a0s dot_path envv rdraw tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk dot_len FdDir K AM).
+    intros K AM. exact (brk_ok_sem_g sp0 a0s dot_path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 inp entry uid hw
+                          Hva Hve Hvsp Htid ME Hrdr0 Hbrk dot_len FdDir K AM).
   Qed.
 
   Theorem dir_mmap : forall K, after_malloc_dir K ->
-    mmap_ok_branch_g sp0 a0s dot_path envv tid mem0 brk mbase fs0 stdin0 FdDir
+    mmap_ok_branch_g sp0 a0s dot_path envv rdraw tid mem0 brk mbase fs0 stdin0 inp FdDir
                      (t_alt2 (t_die msg_oom fs0) (t_alt2 (t_die msg_oom fs0) K)).
   Proof.
-    intros K AM. exact (mmap_ok_sem_g sp0 a0s dot_path envv rdraw tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk dot_len FdDir K AM).
+    intros K AM. exact (mmap_ok_sem_g sp0 a0s dot_path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 inp entry uid hw
+                          Hva Hve Hvsp Htid ME Hrdr0 Hbrk dot_len FdDir K AM).
   Qed.
 
   (* [comment removed for export] *)
   Theorem dir_read : forall K,
-    (forall R' M' VM', dir_tail_pre sp0 (p1 sp0 a0s dot_path envv) (bv_unsigned tid) mem0 R' M' ->
+    (forall R' M' VM', dir_tail_pre sp0 (p1 a0s dot_path envv rdraw inp) (bv_unsigned tid) mem0 R' M' ->
        realizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 0x13c0c) M' (seg_rom RSEGS)) (modelDir VM')) K) ->
     after_malloc_dir K.
   Proof.
     intros K TAIL R M VM mb gm sec cn area brkv mas EA RP W MF VP VS HA.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. unfold sp_window_lo, sp_window_hi in *.
     pose proof (rp_gm _ _ _ _ _ _ _ _ RP) as Hgm. pose proof (rp_p1 _ _ _ _ _ _ _ _ RP) as Hp1.
-    set (p1v := p1 sp0 a0s dot_path envv) in *.
+    set (p1v := p1 a0s dot_path envv rdraw inp) in *.
     set (vals := valsr sp0 p1v mb gm sec cn (bv_unsigned tid) R).
     set (E := ENVr vals []).
     assert (HL : length vals = 40%nat) by (subst vals; unfold valsr; rewrite length_app, junk_vals_length; reflexivity).
@@ -223,8 +233,8 @@ Section DirMid.
       + kreg HR.
       + kreg HR.
       + kreg HR.
-      + unfold stack_writable. lazymatch type of HK with know_ok _ ?E _ ?kn =>
-          apply (kwr_window E M1 kn (EVar 0) (-8388608) 8388608 _ HK); [vm_compute; reflexivity | cbn [edenot ev ENVr]; pins; lia] end.
+      + apply stack_writable_of_lit. lazymatch type of HK with know_ok _ ?E _ ?kn =>
+          apply (kwr_window E M1 kn (EVar 0) (-6144513) 6144513 _ HK); [vm_compute; reflexivity | cbn [edenot ev ENVr]; pins; lia] end.
       + lazymatch type of HK with know_ok _ ?E _ ?kn =>
           apply (img_clear_of_know E); apply (kderive_all_sound RSEGS _ M1 kn); [exact HK | vm_compute; reflexivity] end.
       + kcell HK.

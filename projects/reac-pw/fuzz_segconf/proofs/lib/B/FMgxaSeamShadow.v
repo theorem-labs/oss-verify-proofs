@@ -17,8 +17,8 @@
    gives.
 
    The musl prefix (GXA's musl_prefix_addressable, AsanFacts.v:82): the nine image bytes at
-   `sym 0x1029e` = 0x10b87 (RT_IImgA.v:36) lie in fm.asan's first zero-shadow range
-   (0x10000, 0x210e0 - 0x10000) (YF0m.v:551), which AR's am_zshadow (YG0n.v:218) covers whenever that
+   `sym 0x1029e` = 0x10b87 (RT_IImgA.v:37) lie in fm.asan's first zero-shadow range
+   (0x10000, 0x210e0 - 0x10000) (YF0m.v:552), which AR's am_zshadow (YG0n.v:218) covers whenever that
    range is in `as_zero_shadow B` (SegBSyms' ts_zsh gives it).  musl_prefix_of_AR states it for AR;
    musl_prefix_of_ARU states it for ARU (lib/A/FMupoison.v:32), the form the shared contract's
    ecall_preU carries: a user-poisoned shadow byte is the shadow of a live block's granule, and no

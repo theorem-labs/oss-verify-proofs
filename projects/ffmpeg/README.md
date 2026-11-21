@@ -3,7 +3,7 @@
 
 [ffmpeg.org](https://www.ffmpeg.org) · OSS-Fuzz: [projects/ffmpeg](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/ffmpeg)
 
-**Status: available.** 420 of OSS-Fuzz's 1130 fuzz targets have statements. 1,680 binaries, 6.8 GB. 2,940 statements: 0 proved, 56 known false, 0 suspected false, 0 blocked by the model, 2,884 open.
+**Status: available.** 420 of OSS-Fuzz's 1130 fuzz targets have statements. 1,680 binaries, 6.8 GB. 2,940 statements: 1 proved, 56 known false, 0 suspected false, 0 blocked by the model, 2,883 open.
 
 Built from FFmpeg (commit `bbd37149`).
 
@@ -61,7 +61,7 @@ Built from FFmpeg (commit `bbd37149`).
 | [ffmpeg_AV_CODEC_ID_ADPCM_IMA_SMJPEG_fuzzer](ffmpeg_AV_CODEC_ID_ADPCM_IMA_SMJPEG_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [ffmpeg_AV_CODEC_ID_ADPCM_IMA_SSI_DEC_fuzzer](ffmpeg_AV_CODEC_ID_ADPCM_IMA_SSI_DEC_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_DEC_fuzzer](ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_DEC_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer](ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
+| [ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer](ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7, 1 proved |
 | [ffmpeg_AV_CODEC_ID_ADPCM_IMA_WS_DEC_fuzzer](ffmpeg_AV_CODEC_ID_ADPCM_IMA_WS_DEC_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [ffmpeg_AV_CODEC_ID_ADPCM_IMA_XBOX_fuzzer](ffmpeg_AV_CODEC_ID_ADPCM_IMA_XBOX_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [ffmpeg_AV_CODEC_ID_ADPCM_MS_DEC_fuzzer](ffmpeg_AV_CODEC_ID_ADPCM_MS_DEC_fuzzer/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
@@ -510,7 +510,9 @@ By hand: download `ffmpeg-bin.tar.zst` from release [v2026.10.0](https://github.
 - Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. A binary whose SHA-256 differs after a rebuild with it is a bug: please open an issue.
 
 ## Proofs
-None yet. See [docs/proving.md](../../docs/proving.md).
+| statement | result |
+|---|---|
+| [ffmpeg/ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/plain_halts](ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/proofs/plain_halts) | proved |
 
 ## Licence
 The licence of FFmpeg is not recorded here yet. Each binary is a combined work of FFmpeg, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `ffmpeg-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `ffmpeg-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches). Its binaries are under a GPL-family licence, so their corresponding source also takes `toolchain-src.tar.zst`, the source of the toolchain they were built with, and, for `ffmpeg_AV_CODEC_ID_APNG_DEC_fuzzer`, `ffmpeg_AV_CODEC_ID_CSCD_fuzzer`, `ffmpeg_AV_CODEC_ID_DXA_fuzzer`, `ffmpeg_AV_CODEC_ID_EXR_DEC_fuzzer`, `ffmpeg_AV_CODEC_ID_FLASHSV2_DEC_fuzzer`, `ffmpeg_AV_CODEC_ID_FLASHSV_DEC_fuzzer`, `ffmpeg_AV_CODEC_ID_G2M_fuzzer`, `ffmpeg_AV_CODEC_ID_LSCR_fuzzer`, `ffmpeg_AV_CODEC_ID_MSCC_fuzzer`, `ffmpeg_AV_CODEC_ID_MSZH_fuzzer`, `ffmpeg_AV_CODEC_ID_MVHA_fuzzer`, `ffmpeg_AV_CODEC_ID_RASC_fuzzer`, `ffmpeg_AV_CODEC_ID_RSCC_fuzzer`, `ffmpeg_AV_CODEC_ID_SCREENPRESSO_fuzzer`, `ffmpeg_AV_CODEC_ID_SRGC_fuzzer`, `ffmpeg_AV_CODEC_ID_SVQ3_fuzzer`, `ffmpeg_AV_CODEC_ID_TDSC_fuzzer`, `ffmpeg_AV_CODEC_ID_TIFF_DEC_fuzzer`, `ffmpeg_AV_CODEC_ID_TSCC_fuzzer`, `ffmpeg_AV_CODEC_ID_WCMV_fuzzer`, `ffmpeg_DEMUXER_fuzzer`, `ffmpeg_IO_DEMUXER_fuzzer` and `ffmpeg_dem_WAV_fuzzer`, `sysroot-src.tar.zst`, the source of every library they link from the build image, in release [sources-v1](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/sources-v1).

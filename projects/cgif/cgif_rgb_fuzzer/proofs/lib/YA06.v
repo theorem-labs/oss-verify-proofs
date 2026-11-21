@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the madvise node gives the third part of node_ok, sys_rob: its check reads no memory). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YK16 YK0o YK11 YK0i YK0j YK14 YK1c YK0v YK02 YK0q YK15 YK18 YK0y YK1b YK00 YK01 YK13 YQ0k YK05 YK06 YA0i YA0l YA05 YK0h.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -165,7 +167,8 @@ change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hz. lia. }
 pose proof (fun eff => eq_trans (madvise_check ms (getr regs 17) md eff Hno) (madvise_check_modeled ms md eff Hargs)) as Hchk. rewrite H0, Hpr in Hchk.
 rewrite <- ZF.
 apply (node_det_noacc segs ms md (getr regs 17) (mkEffectU (Z_to_bv 64 0) [] [(a, n)] [] [] []) (madvise_dontneed_next md a n) []);
-[exact Hh | reflexivity | | | rewrite madvise_next_halted; exact Hh | reflexivity].
+[exact Hh | reflexivity | | | rewrite madvise_next_halted; exact Hh | reflexivity
+| exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_233))].
 - intros eff m' evs. split.
 + intros Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
 destruct ws; [|discriminate]. destruct us; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].

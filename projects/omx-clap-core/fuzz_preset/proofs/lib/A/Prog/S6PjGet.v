@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 993 of its 1042 lines of code are new or changed and 729 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S6: the program walk of pj_get (82 instructions) over the ONE image-A program
    listing (lib/A/Listing_prog.v), generic in the image facts (Context PAImg A_prog_listing) and in the allocator
    relation ARx (LAWS : AR_laws_x .. cf_head), concluding the text tpj_get_specX (lib/A/PRH_FnPj.v) from the strcmp
@@ -8,21 +9,21 @@
    induction on the members left.
    THE MEMORY INVARIANT (h-hpreset-7's generic-P form, 12:18Z / 12:22Z): Section p walks pj_get_holds_P :
    tpj_get_specXP Pm (BPjGet's generalisation of K0's m-form text, lib/A/Prog/S6PjStrcmp.v section (4),
-   origin/cold/h-rw-pre-5-b-pjget b45105596b2 blob c6208f606c8e) for every Pm with srr_inv_laws SEGS Pm and
-   srr_inv_call SEGS Pm (the segment crosses the strcmp call; YSRrMemnorm.v, 5ffa8525936b on the kit's cut 7cdbb61b5fa0;
-   first from commit 161f89a71b4d). Its runs carry m |-> (Pm mem -> Pm m) (paj_run_x_inv / paj_run_to_x_inv, laws
+   blob c6208f606c8e) for every Pm with srr_inv_laws SEGS Pm and
+   srr_inv_call SEGS Pm (the segment crosses the strcmp call; YSRrMemnorm.v, 5ffa8525936b on the kit's cut;
+   first). Its runs carry m |-> (Pm mem -> Pm m) (paj_run_x_inv / paj_run_to_x_inv, laws
    YSRrMemnorm.srr_inv_laws_imp); the strcmp call is a Theorem Labs lane's family-1b rule aj_strcmp_at_xrom (YGcallMxmn.v,
-   3c08bbab8292 on the cut; first from a working branch 36d44407fa94) over its row astrcmp_realizes_xrom, whose keep is lifted to
+   3c08bbab8292 on the cut; first from a working branch) over its row astrcmp_realizes_xrom, whose keep is lifted to
    Pm by srr_inv_call. The m-form text (memnorm over YAkMemnorm; on the cut PRH_FnPj.v 5aca5cbe2cfb) is the instance
    pj_get_holds at Pm := YAkMemnorm.memnorm SEGS, by S6PjStrcmp.v's conversion tpj_get_specX_of_P. The old
-   statement (the 3f0953cd536 text, not m-form) has no corollary: The TEXT changed (fpostm, and fpre's raZ bound).
-   Texts: the kit's cut 7cdbb61b5fa0 (lib/A/PRH_FnPj.v 5aca5cbe2cfb, PRH_Base.v ef7c8ca98529, PRH_Reader.v
+   statement (the text, not m-form) has no corollary: The TEXT changed (fpostm, and fpre's raZ bound).
+   Texts: the kit's cut (lib/A/PRH_FnPj.v 5aca5cbe2cfb, PRH_Base.v ef7c8ca98529, PRH_Reader.v
    4266e709561a); engine: the cut's set (YCbqG.v 219748197d6b, YGcallMx.v 403da6c072a9, YGcallMxmn.v 3c08bbab8292).
-   History: first proved on the kit's preview walkkit-next 04388d628fb with a Theorem Labs lane's set s1b 7792959a2abb. Image-free
+   History: first proved on the kit's preview walkkit-next with a Theorem Labs lane's set s1b. Image-free
    pieces: S6PjCommon.v,
    S6PjStrcmp.v. Section hypotheses (theorem premises): the image facts Hent / Hobj / PAB (discharged at PI_prog_A) and
    the strcmp row ASCR (c-omx-alloc's astrcmp_realizes_xrom, the callee's row).
-   RE-FIT 2026-10-29 onto the #102 kit walkkit-next f97c8b2f046b (PRH_FnPj.v 908f34f0beaa, PRH_Base.v fdb45545469b,
+   RE-FIT 2026-10-29 onto the #102 kit walkkit-next (PRH_FnPj.v 908f34f0beaa, PRH_Base.v fdb45545469b,
    S1Ledger.v 8cf15eeb6311, S6PjStrcmp.v 08bc26a7e4e3): the ledger prh_ledger .. ran most own (g_most, g_own_ran_out)
    is threaded through pg_post / pg_lam_low / pg_ledger_kept / pg_fin / pg_foot / pg_loop, and fpre's last conjunct
    frm_zero (FRM0-ENTRY) is named in the intro pattern.

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v at 6ebe35ba632; its rt_chain is ported here as rl_c23_chain (statement kept, proof by the kernel's achain_push); the rest of this file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostMal.v at 01f4363fe7d2, for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v; its rt_chain is ported here as rl_c23_chain (statement kept, proof by the kernel's achain_push); the rest of this file is new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostMal.v, for reac-pw/fuzz_headamp
    image A: module paths; rl_c23_chain -> hq_c23_chain; RPgHarn's rh_cut_C2 / rh_at_C3 / rh_S_C23_stmt -> lib/A/HPgSegC23.v's
    hq_cut_C2 / hq_at_C3 / hq_S_C23_stmt over lib/A/HPgSegM.v's harness record hq_hcx; the `jal` 0x820c0 -> 0x82e60, the
    malloc trampoline 0x52428 -> 0x53060, C3 0x820c4 -> 0x82e64, the real frame 0x1a0 -> 0x1e0 below S; the allocator's
@@ -9,6 +9,7 @@
    lib/A/HPgE01D.v's e01_trace_stmt form; new: C3's whole cut (hq_cut_C3: the block list, the new block fresh, the
    carried cells, C3's value list, the frame's shadow, the record's bytes, the pod block's shadow and alignment) from
    the rule's post. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, same loaded bytes except .note.gnu.build-id): THE malloc(pod) STEP of the

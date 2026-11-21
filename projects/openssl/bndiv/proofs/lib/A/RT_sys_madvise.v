@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the madvise reserved-region goal is proved with artm_res_free_in_maps, because the reserved clause Eres is no longer an equation once the vDSO pair is carved out of the tail). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -46,7 +47,17 @@ Proof.
         cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia. }
     destruct Hin as (e & He & He1 & He2).
     apply (madvise_dontneed_ok_intro _ _ _ e He); rewrite ?Eua, ?Eul; [exact He1| exact He2| |].
-    + rewrite Eres. apply reserved_free_above. rewrite Eua. unfold SEGTOP_A. lia.
+    (* [Eres] is no longer a bare equality, so it cannot be REWRITTEN with -- the
+       rewritable/opaque axis, not just preservation/from-scratch.  The range advised
+       lies inside the shadow mapping [e] the runtime already tracks, and ARTM_A's
+       reserved clause puts every tracked mapping apart from the tail, which is what
+       carves the launch's vDSO pair out.  [artm_res_free_in_maps] packages exactly
+       that so the site is one application; hunk from bignum BgA/RT_sys_madvise.v:55-58,
+       whose preceding line is character-identical to this file's line 48. *)
+    + apply (artm_res_free_in_maps mo _ _ _ Eres He);
+        [ rewrite Eua; exact He1
+        | rewrite Eua, Eul; exact He2
+        | apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia ].
     + apply region_free_noaccess_of_uncovered; [exact Hnp| rewrite Eul; exact Hlen| rewrite Eua, Eul; unfold len; lia|].
       intros a Ha. rewrite Eua, Eul in Ha.
       refine (proj2 (Hsl a _)). unfold shreg, Shadow.SHB, K_LOW_SHADOW_lo, K_LOW_SHADOW_hi, K_HIGH_SHADOW_lo, K_HIGH_SHADOW_hi. unfold len in Ha. lia.

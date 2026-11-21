@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of impl_realizes_f, passed on to impl_realizes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -37,14 +38,16 @@ Theorem impl_realizes_f : forall {X : Type} (chans : list Z) (t : itree node (ex
     (T : X -> TSet) ms c,
   mat_stable PM ->
   (forall mo fd, PM mo -> In fd chans -> fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd))) ->
+  (* LPS 08b1429: a nonempty writev needs the channel's reader, as in [impl_realizes] *)
+  (forall mo, PM mo -> m_channel_reader mo = true) ->
   tok chans t -> AST segtop A (frmW (eq ms)) PM c -> impl segs (at_node segs) t (epost Q) ms ->
   (forall x ms' c', Q x ms' -> AST segtop A (frmW (eq ms')) PM c' -> realizes segs c' (T x)) ->
   realizes segs c (TT t T).
 Proof using Hwx Hsegs Hrom.
-  intros X chans t A PM Q T ms c HPM HFD Htok Hc Him HK.
+  intros X chans t A PM Q T ms c HPM HFD HRD Htok Hc Him HK.
   assert (F0 : frm0 (ms_fcsr ms)).
   { destruct Hc as (_ & [E HF] & _ & _). rewrite E. exact HF. }
-  apply (impl_realizes segs segtop Hwx Hsegs chans t A PM (fun x ms' => Q x ms' /\ frm0 (ms_fcsr ms')) T ms c HPM HFD Htok).
+  apply (impl_realizes segs segtop Hwx Hsegs chans t A PM (fun x ms' => Q x ms' /\ frm0 (ms_fcsr ms')) T ms c HPM HFD HRD Htok).
   - eapply AST_conseq; [exact Hc | | intros mo Hmo; exact Hmo]. intros ms0 [H _]. exact H.
   - eapply impl_mono; [exact (impl_frm (at_node segs) t (epost Q) ms Him F0)|].
     intros [|x] ms' [H1 H2]; cbn [epost] in *; [exact I | exact (conj H1 H2)].

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch cb6eddd4032,
+(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Prog/GrantImg.v, itself from proofs/cgif/cgif_file_fuzzer/lib/A/ACef.v, A/AI12.v
    and A/ACbj.v) for libreac/fuzz_decode image A: the code table of fuzz_decode.asan's program code (the listing's
    own base decode_text and its decode_nslots words), one value table over lib/A/Prog/DecodeAddr.v's addresses, the
    image bounds of lib/Reusable/YImgTop.v, the listing's 15 objects, and the listing's program-function addresses
    (decode_xcalls); module paths changed.  No address or range is written by hand: every bound is computed from the
    image modules or taken from DecodeAddr.v / DecodeList.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

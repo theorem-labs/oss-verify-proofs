@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 1684 of its 1797 lines of code are new or changed and 898 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R6.v, with its module names and numbers changed; 1086 of its 1232 lines of code are new or changed and 1651 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R7tail.v; 127 of its 214 lines of code are new or changed and 1145 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R7tail.v 0481d807aab5 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
+   FACTS, PAU pau-libreac-v190. Source: Seg/R7tail.v 0481d807aab5 (the blob this tree had at release).
    Callee: asan_set_shadow_f8_contract_F (lib/A/Prog/asan_set_shadow_cF.v, a Theorem Labs lane's
-   working branch 1afda39f97b; proved there by asan_set_shadowF.v asan_set_shadow_f8_holds_F).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   working branch; proved there by asan_set_shadowF.v asan_set_shadow_f8_holds_F).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: r7_tail_evt_of_F_bounded re-derives R7tail.r7_tail_evt at ExecF.RNG_all after the callee premise, with
    ONE bound premise added (below); r7_tail_evt_of_F_bounded_shape checks that it is the source statement plus
    premises only. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: mf_strA and its companion take it after alloc_ceiling <= lo, and their mf_genA calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -65,7 +66,7 @@ s = Sstr h ->
 HEAPAx A (BS ++ LB) LM FRS B m md ->
 jval asegs A4F s m BS x 0 ->
 mf_frameA ra sp s0 s1 s2 s3 m junk8 ->
-stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -48 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -48 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> bv_unsigned ra mod 2 = 0 ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m -> fsaved F F1 -> (frm0 fc -> frm0 fc1) -> rc = 1 ->
@@ -76,7 +77,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 A_SB) x19 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x9ac74) fc1 None m (seg_rom asegs)).
 Proof.
-intros until junk8. intros Hs HP J FR ST LO LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB0 BB K.
+intros until junk8. intros Hs HP J FR ST LO HBT LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB0 BB K.
 pose proof FR as FR0. unfold mf_frameA in FR. unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (heapA_budget A4L HIx _ _ _ _ _ _ _ HP) as [HB00 HD00].
@@ -125,7 +126,7 @@ eapply heap_pres_weaken; [exact HPR3 | lia | intros b Hb; cbn; right; apply in_o
 replace (ret_pc (Z_to_bv 64 0x9ad20)) with (Z_to_bv 64 0x9ad20) by (symmetry; apply ret_pc_even; [ lia | reflexivity ]).
 a4l.
 eapply (mf_genA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB LM FRS B0 lo errv (Sstr true) ((x, 56) :: (pd, pdn) :: PBS) x rc T);
-[ exact HP3 | lia | unfold jhdr_cells; cbn [app]; exact HDR | exact OPB3 | unfold mf_frameA; exact FR | exact ST3 | clia | clia | exact SPA | exact HT
+[ exact HP3 | lia | unfold jhdr_cells; cbn [app]; exact HDR | exact OPB3 | unfold mf_frameA; exact FR | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | exact ERR3 | exact RA | eapply model_vm_only_trans; [exact VM0 | exact VM3] | exact HPRb | exact FS | exact FRM | exact Hrc
 | cbn [bD charge] in *; lia | cbn [bB charge length app] in *; rewrite ?Nat2Z.inj_succ in *; lia | cbn [bB charge length app] in *; rewrite ?Nat2Z.inj_succ in *; lia | exact K ].
 -
@@ -148,7 +149,7 @@ step.
 step. if_truex.
 evt_done5.
 eapply (mf_genA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB LM FRS B0 lo errv (Sstr false) ((x, 49 + Z.max len 8) :: PBS) x rc T);
-[ exact HP | lia | exact HDR0 | exact OPB | exact FR0 | exact ST | clia | clia | exact SPA | exact HT
+[ exact HP | lia | exact HDR0 | exact OPB | exact FR0 | exact ST | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | exact ERR | exact RA | exact VM0 | exact HPR | exact FS | exact FRM | exact Hrc
 | exact BD | cbn [length app] in *; rewrite ?Nat2Z.inj_succ in *; lia | cbn [length app] in *; rewrite ?Nat2Z.inj_succ in *; lia | exact K ].
 Qed.
@@ -980,7 +981,7 @@ s = Sstr h ->
 HEAPAx A (BS ++ LB) LM FRS B m md ->
 jval asegs A4F s m BS x 0 ->
 mf_frameA ra sp s0 s1 s2 s3 s4 s5 s6 m ->
-stk asegs m lo (bv_unsigned sp + -64) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -64 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -64) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -64 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> bv_unsigned ra mod 2 = 0 ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m -> fsaved F F1 -> (frm0 fc -> frm0 fc1) -> rc = 1 ->
@@ -991,7 +992,7 @@ AJ5 A4L HIx A T md
 x18 (Z_to_bv 64 A_SB) x20 x21 x22 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x9c30c) fc1 None m (seg_rom asegs)).
 Proof.
-intros until B. intros Hs HP J FR ST LO LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB0 BB K.
+intros until B. intros Hs HP J FR ST LO HBT LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB0 BB K.
 pose proof FR as FR0. unfold mf_frameA in FR. unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (heapA_budget A4L HIx _ _ _ _ _ _ _ HP) as [HB00 HD00].
@@ -1040,7 +1041,7 @@ eapply heap_pres_weaken; [exact HPR3 | lia | intros b Hb; cbn; right; apply in_o
 replace (ret_pc (Z_to_bv 64 0x9c3b8)) with (Z_to_bv 64 0x9c3b8) by (symmetry; apply ret_pc_even; [ lia | reflexivity ]).
 a4l.
 eapply (mf_genA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB LM FRS B0 lo errv (Sstr true) ((x, 56) :: (pd, pdn) :: PBS) x rc T);
-[ exact HP3 | lia | unfold jhdr_cells; cbn [app]; exact HDR | exact OPB3 | unfold mf_frameA; exact FR | exact ST3 | clia | clia | exact SPA | exact HT
+[ exact HP3 | lia | unfold jhdr_cells; cbn [app]; exact HDR | exact OPB3 | unfold mf_frameA; exact FR | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | exact ERR3 | exact RA | eapply model_vm_only_trans; [exact VM0 | exact VM3] | exact HPRb | exact FS | exact FRM | exact Hrc
 | cbn [bD charge] in *; lia | cbn [bB charge length app] in *; rewrite ?Nat2Z.inj_succ in *; lia | cbn [bB charge length app] in *; rewrite ?Nat2Z.inj_succ in *; lia | exact K ].
 -
@@ -1063,7 +1064,7 @@ bstep.
 bstep. if_truex.
 evt_done5.
 eapply (mf_genA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB LM FRS B0 lo errv (Sstr false) ((x, 49 + Z.max len 8) :: PBS) x rc T);
-[ exact HP | lia | exact HDR0 | exact OPB | exact FR0 | exact ST | clia | clia | exact SPA | exact HT
+[ exact HP | lia | exact HDR0 | exact OPB | exact FR0 | exact ST | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | exact ERR | exact RA | exact VM0 | exact HPR | exact FS | exact FRM | exact Hrc
 | exact BD | cbn [length app] in *; rewrite ?Nat2Z.inj_succ in *; lia | cbn [length app] in *; rewrite ?Nat2Z.inj_succ in *; lia | exact K ].
 Qed.

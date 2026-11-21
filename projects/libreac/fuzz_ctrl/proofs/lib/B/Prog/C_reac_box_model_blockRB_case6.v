@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 922 of its 952 lines of code are new or changed and 218 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block_case6.v, with its module names changed; 21 of its 553 lines of code are new or changed and 420 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB_case6.v is the re-based copy of lib/B/Prog/reac_box_model_block_case6.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB_case6.v is the re-based copy of lib/B/Prog/reac_box_model_block_case6.v
    (source sha256 39821419f028bad88a64bf9e6cdf195566d2775240cc6aecce4fdef566467587) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: c6_call_nf, c6_loopr, c6_case6. *)
 From Stdlib Require Import ZArith List Lia Bool.

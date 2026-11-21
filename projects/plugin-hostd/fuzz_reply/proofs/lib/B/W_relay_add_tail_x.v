@@ -8,7 +8,7 @@
    W_journal_x.v ajournal_gx_sub_x; its seat fact S' = set_fs f S1 carries the room by RPF_of), s1 = 0, the epilogue
    0x82c18-0x82c3c (the eight saved registers from the frame) and the return: ra_post_x's fd >= 0 arm.  No trap edge
    in this segment.
-   Donor: lib/B/W_relay_add_tail.v (pb_ra_tail, the AR walk, a working branch 22c3862876d; removed
+   Donor: lib/B/W_relay_add_tail.v (pb_ra_tail, the AR walk, a working branch; removed
    from this tree by KF-COUNT #4; its machine-code account holds unchanged), converted by
    route (b) (CONVERSION.md sha256 1015972e02a9; internal record), as image A converted its relay_add (lib/A/W_relay_add.v, the
    room form): afn_pre / ajournal_gx / the run chain to their _x twins (Hp after S, Hp' after S'), cgif's laws al_*
@@ -17,6 +17,7 @@
    Section x's text: the generic journal's image clause keeps only bytes off PST, and wake's journal carries
    relay_add's globals by that clause; trivial at PST = []).  A live block's bytes are off the image by the laws'
    alx_client_img (the kit's blk_off_imgP_x states image A's top). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

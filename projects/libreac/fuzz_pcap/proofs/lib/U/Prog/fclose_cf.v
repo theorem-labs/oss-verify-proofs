@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/Prog/mread.v, with its module paths and numbers changed; 1088 of its 1116 lines of code are new or changed and 233 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/chain_words.v; 737 of its 834 lines of code are new or changed and 1019 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/rec_canonical.v, with its module paths, module names and numbers changed; 284 of its 345 lines of code are new or changed and 773 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed fclose_cf_holds). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -203,14 +204,16 @@ Proof.
     split; [rewrite G4; exact HTP|].
     split; [intros a Ha; rewrite HSEG; apply WM1; apply HERR; exact Ha|].
     intros HI. specialize (HAUX HI). rewrite SP2.
-    destruct HAUX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-    exists av, ar.
+    destruct HAUX as (av & ar & ar0 & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+    exists av, ar, ar0.
     refine (conj _ (conj _ (conj _ (conj _ (conj B1 (conj B2 (conj B3 (conj B4 (conj _ _))))))))).
     - eapply word_mem_munch; [exact MU1 | | exact W1]. intros k Hk. rewrite PIN_LIBC.
       split; [lia|]. apply out3; lia.
     - intros k Hk. eapply word_mem_munch; [exact MU1 | | exact (W2 k Hk)]. intros k' Hk'.
       split; [lia|]. apply out3; lia.
-    - eapply word_mem_munch; [exact MU1 | | exact W3]. intros k Hk. split; [lia|]. apply out3; lia.
+    - eapply word_mem_munch; [exact MU1 | | exact W3]. intros k Hk.
+      pose proof (OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable.YO0d.auxv_types_len_ge av) as LGE. unfold OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable.YO0d.AUXV_RAND_K in *.
+      split; [lia|]. apply out3; lia.
     - eapply word_mem_munch; [exact MU1 | | exact W4]. intros k Hk. split; [lia|]. apply out3; lia.
     - lia.
     - lia. }

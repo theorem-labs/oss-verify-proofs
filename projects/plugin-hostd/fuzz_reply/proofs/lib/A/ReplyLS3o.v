@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v; 782 of its 917 lines of code are new or changed and 459 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The out-buffer half of LS v3 (row B1c, a Theorem Labs lane): fr_OUT, the conjunct that bounds g_capout, its twin of
    every rule that ends in fr_LS3c (lib/A/ReplyLS3c.v, lib/A/ReplyLS3cArms.v), and the exit obligations
    LS_exit_end restated over it (LS_rf_room's peak form is lib/A/ReplyLS3oRf.v).  proves no function (kind:
    invariant lemma).
 
-   OUT_MAX.  a8 raised the contract's g_out bound: a working branch a389032ec36 lib/A/ACfn_cf.v:57
+   OUT_MAX.  a8 raised the contract's g_out bound: a working branch lib/A/ACfn_cf.v:57
    `Definition OUT_MAX : Z := 66976770`, :59 `OUT_MAX_src : OUT_MAX = 2 * (OPS_MAX - 1) * 65535`, :67
    `fr_live_post S S' k := blocks_bytes S' <= blocks_bytes S + ATABLE + OUT_MAX /\ 0 <= k`.  THIS WORKTREE still has
    the old 33,554,430 (ACfn_cf.v:44), so OUT_MAX3 below repeats a8's value and OUT_MAX4 a Theorem Labs lane's later ruling;
@@ -15,7 +16,7 @@
 
    OUT_MAX4 = 133,953,540 = 4 * (OPS_MAX - 1) * 65,535 is a Theorem Labs lane's ruling of 2026-10-30 01:47Z, after this row
    found that a8's 66,976,770 is still too small.  WHY: relay_remove drains the source FIRST and then ends the
-   gestures of the entry the drain left (ReplyRINV.v:380-391 rm_rr_ok: `dr_rel ... e1 h1 LB` then
+   gestures of the entry the drain left (ReplyRINV.v:381-392 rm_rr_ok: `dr_rel ... e1 h1 LB` then
    `sl_sends mx c1 O1 cap1 (ge_bytes (re_keys e1))`; relay.c:463-465), so the begin lines AND the end lines of the
    keys those same begin lines made go out in ONE operation.  a8's reviewer counted each begin line once.  A Theorem Labs lane
    MEASURED it on the pinned fuzz_reply.asan (b1-RECHECK.md (sha256 2d07c55f9e3f; internal record) Part 2,
@@ -99,7 +100,7 @@ Local Notation MMAX := WR_MMAX.
 Local Notation zsum l := (fold_right Z.add 0 l).
 
 (* ================================================================== the constants *)
-(* a8's value, a working branch a389032ec36 lib/A/ACfn_cf.v:57 (copied: this worktree's ACfn_cf.v:44
+(* a8's value, a working branch lib/A/ACfn_cf.v:57 (copied: this worktree's ACfn_cf.v:44
    still has the old 2 ^ 25 - 2) *)
 Definition OUT_MAX3 : Z := 66976770.
 (* a Theorem Labs lane's ruling 2026-10-30 01:47Z, from this row's finding and a Theorem Labs lane's measurement *)
@@ -379,7 +380,7 @@ Proof.
 Qed.
 
 (* ---------------------------------------------------------------- the write arm's push *)
-(* wr_n is one fuzz_take of fuzz_u16 bytes (W_LLVMFuzzerTestOneInput_write.v:181-190): at most 65,535 *)
+(* wr_n is one fuzz_take of fuzz_u16 bytes (W_LLVMFuzzerTestOneInput_write.v:182-191): at most 65,535 *)
 Lemma ou_wr_n_le : forall cx m, wr_n cx m <= WMAX.
 Proof.
   intros cx m. unfold wr_n, wr_u, WMAX.
@@ -519,7 +520,7 @@ Qed.
 
 (* ---------------------------------------------------------------- the drain arm's step *)
 (* Hcap0' (0 <= cap') is dr_post's aout_at (W_rep.v:187-189, the disjunction's two cases both give it); Ht is the
-   arm's cut (lregs_D, W_LLVMFuzzerTestOneInput_cut.v:754 `0 <= t < OPS_MAX`), as LS_cnl_pre already takes it. *)
+   arm's cut (lregs_D, W_LLVMFuzzerTestOneInput_cut.v:755 `0 <= t < OPS_MAX`), as LS_cnl_pre already takes it. *)
 Lemma fr_OUT_drain_step_p : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
     si h j h'' e' c' O' cap' out' (E H : hlist) (ly1 : alayout) (h1 : hsrc) (E' H' : hlist),
   fr_LS3 B cx t m ly S -> fr_OUT cx t m ly S -> dr_pick cx m si h -> (j < length (lm_es m))%nat ->
@@ -1014,7 +1015,7 @@ Proof.
   unfold WMAX, OUT_MAX4, OPS_MAX in *. lia.
 Qed.
 
-(* ---- the AR text, W_LLVMFuzzerTestOneInput_exit.v:775-782 (= integ bb9dae5d905 :7750-7757) with ONE added
+(* ---- the AR text, W_LLVMFuzzerTestOneInput_exit.v:776-783 (= integ :7750-7757) with ONE added
    premise, `cap = gse_cap (lx_rf_run ..)`: the arm passes relay_finish's FINAL capacity (a Theorem Labs lane 01:02Z).
    `out` stays free.  Named hypotheses: Ht (the loop's bound on t, from lregs_H / SEG_LATCH), Hk (0 <= k', which the
    AR text cannot give - its own comment flags k' as universal), HSURV (this fr_surv takes only the entry's and
@@ -1044,11 +1045,11 @@ Proof.
   exact (ou_exit_bytes cx t m ly3 S3 rest ly' S' cap out HLS HOU HP HP' Hcap Ht).
 Qed.
 
-(* ---- the ARx text, W_LLVMFuzzerTestOneInput_exit_x.v:158-167 at integ bb9dae5d905, with the same ONE added
+(* ---- the ARx text, W_LLVMFuzzerTestOneInput_exit_x.v:159-168 at integ, with the same ONE added
    premise and its NP conclusion DROPPED (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (d), :218-219: the exit walk takes NP from the threaded
    room invariant; this proof never read NP).  0 <= k' is NOT a hypothesis: the journal premise gives it
    (YCbqG.v:249).  fr_surv stays a named hypothesis because LS cannot conclude it.  At a8's instance
-   (ACfn_cf.v at a389032ec36 :94-98) its three clauses need, besides this text's premises,
+   (ACfn_cf.v :94-98) its three clauses need, besides this text's premises,
    (i) the entry's blocks as the input, the entry's harness blocks and THIS rest:
        Permutation (ablocks B (c_ly cx) (c_S cx)) (input_blks cx ++ fr_hblks (c_W cx) (c_mem cx) ++ rest) -
        SEG_PRO holds it (LS_pro's premise, ReplyLS3c.v fr_LS3c_pro), every LS rule keeps the rest, but fr_LS3's

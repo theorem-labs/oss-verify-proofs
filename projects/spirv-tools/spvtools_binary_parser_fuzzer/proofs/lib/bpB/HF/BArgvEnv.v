@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised entry stack block, with the strings at its top, and the launch facts; the run's mmap base). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -13,41 +14,45 @@ Open Scope bv_scope.
 Section Scaffold.
 
   Variable segs : list Segment.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
 
   Variable ph : PhdrInfo.
+  Variable entry : word.
 
-  Variable sp : word.
-  Variable av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Variable sp brk : word.
+  Variable draw : EntryDraw.
 
-  Variable rnd : EntryDraw.
-
-  Hypothesis Hva : valid_argv av.
-  Hypothesis Hve : valid_envp ev.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp brk mbase draw) inp.
   Hypothesis Hsp_lo : (sp_window_lo <= bv_unsigned sp)%Z.
   Hypothesis Hsp_hi : (bv_unsigned sp <= sp_window_hi)%Z.
 
   Lemma sp_hi_num : (bv_unsigned sp <= 0x800000000000)%Z.
   Proof. exact Hsp_hi. Qed.
 
-  Definition argcN : word := len_word av.
+  Definition argcN : word := len_word (in_argv inp).
 
-  Lemma u_argcN : bv_unsigned argcN = Z.of_nat (length av).
+  Lemma u_argcN : bv_unsigned argcN = Z.of_nat (length (in_argv inp)).
   Proof.
-    pose proof (valid_argv_len av Hva).
+    pose proof (valid_argv_len (in_argv inp) Hva).
     unfold argcN, len_word. apply u_Z2bv; lia.
   Qed.
 
   Lemma bsb_nw :
-    (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z.
+    (bv_unsigned sp
+     + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw)) < 2^64)%Z.
   Proof.
-    pose proof (bsb_bound ph sp av ev uid hw rnd Hva Hve). pose proof sp_hi_num. lia.
+    pose proof (bsb_bound v inp mbase ph entry sp brk draw Hvl Hlau).
+    pose proof sp_hi_num. lia.
   Qed.
 
   Definition envp_ptr : word :=
-    Z_to_bv 64 (bv_unsigned sp + 8 + 8 * Z.of_nat (length av) + 8).
+    Z_to_bv 64 (bv_unsigned sp + 8 + 8 * Z.of_nat (length (in_argv inp)) + 8).
 
-  Definition wmem : word -> option byte := wrap_mem ph sp av ev uid hw rnd.
+  Definition wmem : word -> option byte := wrap_mem inp mbase ph entry sp draw.
 
 End Scaffold.

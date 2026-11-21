@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: reworked the entry and final-run proofs to carry launch-record premises (kb, execfn) via valid_input_launch, valid_input_either_of_valid_input and vie_parts, and applied as0_realizes_spec_run by eapply closing goals with eassumption or reflexivity; the launch input takes its SIGPIPE disposition as a variable sdf. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -28,10 +29,12 @@ drv_lib_layout_top0 (LIB0_of_packages packages_src) (fun sp _ => PMSXC.top_lsx) 
 intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid.
 pose proof (valid_input_va_size _ Hvalid) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & Hcreds & _ & _ & Hhw & _).
-specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
-specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds Hhw Hsv48).
+destruct Hens as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [Hafit Halau]]]].
+pose proof (valid_input_launch _ Hvalid) as Hvl.
+pose proof (valid_input_either_of_valid_input inp Hvalid) as Hvi.
+destruct (vie_parts inp Hvi) as (Hargv & Henvp & Hfs & Hcreds & _ & _ & Hrd & _).
+specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hrd).
+specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Halau Hvl Hvi).
 split; [| split].
 - eapply srealizes_error_free; exact SRC.
 - eapply srealizes_error_free; exact TGT.
@@ -46,9 +49,9 @@ intros L C IL BUDGET B1 B2 LY PKG H1 H1n H2 H3 H3e HG H5 H6 H7 H8.
 assert (ILY : as0_icpt_layout IL) by exact (proj1 H6).
 pose proof (@PMALO.lib_ok ScfgP_cfg0 L C IL LY ILY PKG) as H4.
 apply ubjson_pm_asan_final_scfg. apply as0_tgt_of_run.
-intros sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs.
-exact (as0_realizes_spec_run cfg0 eq_refl eq_refl L C IL (PMHAS.Lay L) (fun _ => PMSTA.TopLSA Asan.M.loaded_segments PMA.AD PMA.AAD)
-PMA.EXT BUDGET B1 B2 H1 H1n H2 H3 H3e HG H4 H5 H6 H7 H8 PMSTT.lsx_atexit
-sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs).
+intros sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd kb execfn sdf Hsp Hbrk Hmb Hva Hve Hfit Hlau Hvl Huid Hhw Hvfs.
+eapply (as0_realizes_spec_run cfg0 eq_refl eq_refl L C IL (PMHAS.Lay L) (fun _ => PMSTA.TopLSA Asan.M.loaded_segments PMA.AD PMA.AAD)
+PMA.EXT BUDGET B1 B2 H1 H1n H2 H3 H3e HG H4 H5 H6 H7 H8 PMSTT.lsx_atexit);
+first [eassumption | reflexivity].
 Qed.
 End FPX_1.

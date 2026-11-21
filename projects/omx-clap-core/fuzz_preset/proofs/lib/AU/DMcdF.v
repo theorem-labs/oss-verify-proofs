@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMcdF.v (commit ce1a656b52b7, file sha256 4fb6d3366e03) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 7 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMcdF.v (commit de8cf5c7eaaa00099a9923abf04c009a32feb4dd, CacheDealloc walk (H3 DMcd* + FG*N, a prior worker DMcdGWb / DMcdGW); file sha256 697301028505) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by code-verified function pairs (10 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 2 pcs named in comments; 7 hand maps (the internal file resolve-drain.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMcdF.v at commit 9ee489aa7d7, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (8 numerals; per-numeral report). *)
-(* Theorem Labs, 2026-10-30 (lane B1 slice H3, a Theorem Labs lane's real-merge drain walk; interface DMwalkIF.v at 3e29c198d40):
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMcdF.v (file sha256 4fb6d3366e03) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 7 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMcdF.v (CacheDealloc walk (H3 DMcd* + FG*N, a prior worker DMcdGWb / DMcdGW); file sha256 697301028505) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by code-verified function pairs (10 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 2 pcs named in comments; 7 hand maps (the internal file resolve-drain.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMcdF.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (8 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane B1 slice H3, a Theorem Labs lane's real-merge drain walk; interface DMwalkIF.v):
    the CacheDealloc walk's SEED over the opaque cut relation.  From the head's premises (DMwalkIF.cd_pre_cx,
    DMwalkIF.cd_model) and the read fields (DMcdR.cd_reads) this file builds the released walk's hypothesis record
    YFgk.free_hyps, so the released segment walks YFgy.segK1 (push arm) and YFgz.segK2 (drain arm, no growth) apply
@@ -563,7 +564,7 @@ destruct EF as [EF|EF].
 - right. intros [X0|[[X1|[X2|X3]]|[X4 _]]]; [exact (C0 X0) | exact (C1 X1) | exact (C2 X2) | exact (C3 X3) | exact (EF X4)].
 Qed.
 
-(* cdealloc_g_t's post at this cut (DMwalkIF.v:463-471), as a predicate. *)
+(* cdealloc_g_t's post at this cut (DMwalkIF.v:464-472), as a predicate. *)
 Definition cd_postR (r : unit * astate) (W' : world tfibsegs) (c' : config) : Prop :=
 exists regs' mem' md',
   c' = cfg_at tfibsegs (raZ regs) regs' mem' md' /\
@@ -1435,7 +1436,7 @@ destruct (Z.eq_dec kcnt MAXv) as [E|NE].
 Qed.
 End g.
 (* ================================================================================================================ *)
-(* H3's head: cdealloc_g_t (DMwalkIF.v:470-481) from the read fields, both arms (no growth: YFgy.segK1 / YFgz.segK2;
+(* H3's head: cdealloc_g_t (DMwalkIF.v:471-482) from the read fields, both arms (no growth: YFgy.segK1 / YFgz.segK2;
    growth: W1, EnsureFreeArraySpace, W2). *)
 Theorem cdealloc_g_of_reads : forall (B : asyms) ARXr AOX DRq RMAXD, TfibSyms B -> rmaxd_ok RMAXD ->
   cd_reads B ARXr AOX DRq RMAXD -> cdealloc_g_t B ARXr AOX RMAXD.

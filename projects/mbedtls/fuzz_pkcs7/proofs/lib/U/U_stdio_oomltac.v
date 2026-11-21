@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (oom_stdio_exit closes one more premise of stdio_call_sound, the channel-reader fact, by reflexivity or assumption). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -135,6 +136,7 @@ Ltac oom_stdio_exit HL P0 RES_EQ FD2 MFS :=
                    _ _ 0x1040c 19 HK eq_refl) by (cbn; lia);
         apply msg_oom_img
       | apply FD2
+      | first [reflexivity | assumption]
       | first [reflexivity | assumption]
       | first [reflexivity | assumption]
       | apply t_exit_has_nil

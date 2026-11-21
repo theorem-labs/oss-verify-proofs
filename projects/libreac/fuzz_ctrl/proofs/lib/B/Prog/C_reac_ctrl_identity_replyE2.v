@@ -5,7 +5,7 @@
    rule 24: no function proved here.  Released-proof lookup of record
    (`proof-index reac_ctrl_identity_reply reac_ctrl_identity_reply_contract_F`,
    lookup-reac_ctrl_identity_reply.txt (a working note, not in this delivery), checker a Theorem Labs lane CONFIRM in
-   lookup-check.md (a working note, not in this delivery)): At ossv/recipes c5e779efe8c (2026-10-31), no released proof of the function by name or
+   lookup-check.md (a working note, not in this delivery)): At (2026-10-31), no released proof of the function by name or
    address outside this unit.  Written new.
 
    THE INTERFACE (the lead's composition meets this file on exactly these two names; shape of a Theorem Labs lane's
@@ -18,7 +18,7 @@
                       writability ctl_wmono_vis_off_img over the classes the call keeps, and stk of the window below
                       the call's sp.  Never raw munch / wmono.
      rrB_E2_stmt  from the journal at the call state to SRr at the call config, with the continuation over rrB_E2_ret.
-   The call state is the left disjunct of C_reac_ctrl_identity_replyLib.rrB_QSB (lead, 65edc77b393): pc 0x83e04
+   The call state is the left disjunct of C_reac_ctrl_identity_replyLib.rrB_QSB (lead): pc 0x83e04
    (REAC_CTRL_PARSE), ra = 0x84a68, sp = rA S, a0 = fr, a1 = len, a2 = G + 32, s0 = S, s1 = rA S, s2 = s10 = G, s3 = pn,
    s4 = pp, s5 = fr, s6 = pa, s7 = len, s8 = G + 32, s9 = G / 8 + ASAN_K, s11 = wa ASAN_K, with G = fs_frame FS 1 jj =
    frame_addr lyc 1 pos (B.ProgWorld.ctl_fs_geom).
@@ -33,7 +33,7 @@
 
    THE CONVERSION ctl_post_reac_ctrl_parse (a NAMED Section hypothesis below; OWNER PENDING: a Theorem Labs lane
    lib/B/ProgWorld.v).  Text: a Theorem Labs lane's DRAFT ctl_post_reac_ctrl_parse_stmt, ctl-post-callees.md section 6.3, lines 775-800 (a working note, not in this delivery)
-   (a Theorem Labs lane's lib/A/ProgWorld.v on a working branch 1d23ced37fd has NO
+   (a Theorem Labs lane's lib/A/ProgWorld.v on a working branch has NO
    statement for parse: its only mention is the comment at :392).  Transcribed to image B: segs := YB1v.tfibsegs,
    A.Img0.rsegs -> B.Img0.rsegs, Lib.X -> lib.Lib.X, ctl_out_bytes_stmt / ctl_kept_vis / ctl_wmono_vis_off_img ->
    B.ProgWorld's (lib/B/ProgWorld.v:929-947, the same texts).  Three changes, each needed for the statement to be TRUE
@@ -61,8 +61,8 @@
 
    THE PROOF rrB_E2 : rrB_E2_stmt (Qed): YA0n.SRr_bind over TPARSE at the call registers (own' holds the frame
    (1, pos), so afobj / awr_byte for [G + 32, G + 68) are decided here), then ctl_post_reac_ctrl_parse on the
-   post.  a Theorem Labs lane's caller-side lemmas rcpB_keep / rcpB_wkeep (from a working branch c3b01f505c2) (at head
-   lib/B/Prog/C_reac_ctrl_parseLib.v:2313 / :2328) are neither used nor copied here: E2 has no pre- or post-call munch
+   post.  a Theorem Labs lane's caller-side lemmas rcpB_keep / rcpB_wkeep (from a working branch) (at head
+   lib/B/Prog/C_reac_ctrl_parseLib.v:2314 / :2329) are neither used nor copied here: E2 has no pre- or post-call munch
    of its own.  rrB_E2_ret's ctl_kept_vis IS rcpB_keep's middle premise (the call's visible keep, K := kept_class ..),
    for the composer that chains S-B, E2 and S-C; rcpB_wkeep's middle premise is the unrestricted wmono_vis, which the
    post does not give (a Theorem Labs lane's ctl-post-callees.md section 0.4 (b) (a working note, not in this delivery)): the composer uses ctl_wmono_vis_off_img on the kept off-image classes.
@@ -127,7 +127,7 @@ Definition ctl_post_reac_ctrl_parse_stmt : Prop :=
    config in world W with the call memory m5 and the journal base (ly, S0, W0, mem0, md0), STK / sp0 / FP the
    caller's, own' = (1, pos) :: own (the function's class-1 frame held across the call), the call state (lyq, Sq).
    G is the function's class-1 frame (G = frame_addr lyq 1 pos), its 36 bytes at G + 32 parse's output.
-   (a) cgif: the journal to the return state and treac_ctrl_parse_post's conjuncts (C_reac_ctrl_parse.v:49-57) at
+   (a) cgif: the journal to the return state and treac_ctrl_parse_post's conjuncts (C_reac_ctrl_parse.v:50-58) at
        n := len, o := G + 32, fr := g, spZ := rA S; wle from the post's SRr; the output clause without its o <> 0
        guard (G + 32 <> 0).  a0 = w64 (fst (ctrlparse len g)) is also the ctrl form's a0 (w64 = Z_to_bv 64).
    (b) the registers at the return: aregs_preserved of the call registers, spelled out (sp = rA S, gp, tp, s0 = S,
@@ -304,7 +304,7 @@ Proof using.
 Qed.
 
 (* ---- THE PROOF OF E2 --------------------------------------------------------------------------------------------- *)
-(* reac_ctrl_parse's contract, image B, with SEGS := Reusable.YB1v.tfibsegs passed EXPLICITLY (C_reac_ctrl_parse.v:33
+(* reac_ctrl_parse's contract, image B, with SEGS := Reusable.YB1v.tfibsegs passed EXPLICITLY (C_reac_ctrl_parse.v:34
    keeps SEGS a Section Variable).  OWNER PENDING: a Theorem Labs lane, pb_reac_ctrl_parse (not Qed). *)
 Hypothesis TPARSE : lib.B.Prog.C_reac_ctrl_parse.treac_ctrl_parse_spec segs B RLO RHI.
 (* The conversion of parse's cgif post to ctrl's visible form: the image-B text above (ctl-post-callees.md (a working note, not in this delivery),

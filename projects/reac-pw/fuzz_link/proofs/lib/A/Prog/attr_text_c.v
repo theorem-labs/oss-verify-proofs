@@ -59,7 +59,7 @@
    - K = 64 + ESTACK = 4160: the 64-byte frame (no realignment: no `andi sp`), then the deepest callee window,
      ESTACK for checked_memcpy / checked_memset (YG0d.v:325-343 aintrin_realizes) and for wrapper_strlen: link's
      strlen contract (lib/A/Rt/RtString.v:74-84 `astrlen_realizes`, the libc port of
-     plugin-hostd/fuzz_command's, on the form branch since f961453c8093) takes `PRE ESTACK` and `aread_ok ESTACK`.
+     plugin-hostd/fuzz_command's, on the form branch) takes `PRE ESTACK` and `aread_ok ESTACK`.
      The plain K (64: strlen, memcpy and memset counted as using no stack) does not carry over.
    - `anlw_at m w bs`, `nlw_wf bs`: every load and store of n, full and b. nlw_wf's n <= 4096 keeps each room test
      exact (no wrap in n - 4095, n + len, n + 3) and n <= 4096 after each step; full is only ever stored as 1.

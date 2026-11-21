@@ -3,14 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made from part of proofs/cgif/cgif_file_fuzzer/lib/A/ACfi.v (link_ML, link_SMP, link_FFL, link_ASF, link_AMEMSET, link_AMEMCPY, tfib_ROB) for libreac/fuzz_grant: the facts are stated at GrantB and at the listing's instance PI_grant, the stack_malloc, bcmp and set_shadow_f5 entries of the memory-checking runtime, the walks' PALib and PALibF records, the shadow of the image and of its registered globals, the image's read-only tables and the image facts of ctrl_finish and reac_ctrl_parse are added; module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: adapted from lib/A/Prog/GrantClose.v for image B (fuzz_grant.asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing instances of image B's walks: every runtime fact RT_* and image fact IMG_* that the closer
    lib/B/Prog/GrantBClose.v and the bridge lib/B/Prog/GrantBTFIB.v take as a named hypothesis, PROVED here at image B's
-   own runtime record GrantB (lib/B/YD2l.v:16) and image instance PI_grant (lib/B/Prog/GrantImg.v:152), and the three
+   own runtime record GrantB (lib/B/YD2l.v:16) and image instance PI_grant (lib/B/Prog/GrantImg.v:153), and the three
    facts of the record (H_universe_B, H_malloc_ra0_B, H_free_ra0_B) by reflexivity. This file proves no function: each
    runtime entry is taken by the B core's realizer of it (lib/B/Y*.v, lib/B/Rt), each image fact by the check lemmas of
    lib/B/Prog/GrantBImgFacts.v and lib/B/Prog/GrantCloseChk.v, run here on GrantB by computation.
 
-   The shape is image A's lib/A/Prog/GrantClose.v (a working branch af735a950e2), fact by fact:
+   The shape is image A's lib/A/Prog/GrantClose.v (a working branch), fact by fact:
      A (lib/A/Prog/GrantClose.v)        B (here)                      B core theorem used
      grant_LAWS                          grantB_LAWS                   Reusable/YG0q.v AR_laws_ok
      grant_PALib / grant_PALibF          grantB_PALIB / grantB_PALIBF  by computation at GrantB
@@ -177,7 +178,7 @@ Lemma grantB_ASF : GrantBContracts.RT_ASF (PI := PI_grant) GrantB.
 Proof. exact (astack_free_law_ok _ GrantB). Qed.
 
 (* RT_TP_FS: AR's constant cells hold the thread pointer's word, and image B's Tfib_const_sym holds the cell
-   `c8 (ATp 0) (AF 0)` (lib/B/YF0m.v:30). *)
+   `c8 (ATp 0) (AF 0)` (lib/B/YF0m.v:31). *)
 Lemma grantB_TP_FS : GrantBContracts.RT_TP_FS (PI := PI_grant) GrantB.
 Proof.
 unfold GrantBContracts.RT_TP_FS. apply RtTpFs.rt_tp_fs_of_const.
@@ -215,7 +216,7 @@ Lemma grantB_BCMP : GrantBContracts.RT_BCMP (PI := PI_grant) GrantB.
 Proof. exact (YE2s.bcmp_icpt_contract GrantB grantB_LAWS GrantB_syms). Qed.
 
 (* __asan_stack_malloc_0 / _1 / _2 / _4 (0x3cf4c / 0x3d0c0 / 0x3d250 / 0x3d3ec): lib/B/Rt/StackMalloc0.v, YF0s.v, YF0u.v,
-   StackMalloc4.v (a working branch cce7df57aaa), the B twins of image A's lib/A/Rt/StackMalloc0.v, AF0s.v, AF0u.v,
+   StackMalloc4.v (a working branch), the B twins of image A's lib/A/Rt/StackMalloc0.v, AF0s.v, AF0u.v,
    StackMalloc4.v. *)
 Lemma grantB_SM0 : GrantBContracts.RT_SM (PI := PI_grant) GrantB 0.
 Proof. exact (StackMalloc0.stack_malloc0_contract GrantB grantB_LAWS GrantB_syms). Qed.

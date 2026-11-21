@@ -1,8 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/StrncmpDef.v at origin/ossv/recipes f26f9fbd8777; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); STRNCMP_ENTRY relocated from fuzz_boxreg.asan 0x413f8 to fuzz_pin.asan 0x41914 (__interceptor_trampoline_strncmp; provenance/reloc-WStrncmp/ledger-rt.tsv); the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses; in the comments, internal branch and lane names are replaced by neutral words. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/StrncmpDef.v; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); STRNCMP_ENTRY relocated from fuzz_boxreg.asan 0x413f8 to fuzz_pin.asan 0x41914 (__interceptor_trampoline_strncmp; provenance/reloc-WStrncmp/ledger-rt.tsv); the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses; in the comments, internal branch and lane names are replaced by neutral words. *)
 (* libreac/fuzz_boxreg, build asan: the contract of the strncmp wrapper as the program code calls it, in the form
    the fuzz_manifest port's shared runtime contract states it, so that boxreg's instance IS fm's statement and fm's proof relocates
    onto it (VERIFY's "one of everything", 2026-10-28 22:28Z; Main's 22:38Z row).
-   Source of the form: an unreleased branch at 445e498a469, proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v:124
+   Source of the form: an unreleased branch at proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v:124
    `astrncmp_realizes` (proved at lib/A/FMstrncmp.v `astrncmp_holds` for fm's image), over FMH_Base.v's
    STK_RT_STR / ecall_pre_k / cstr / cstr_ok / rom_viewN (:218) / rom_viewO (:227) and FMH_Rt.v's rt_post_ro and
    strn_eq. Those bodies are repeated here with an `fm_` prefix, verbatim except that `rdW W mem` is written out as

@@ -5,8 +5,8 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc from
    proofs/libreac/fuzz_knock/lib/A/APgCSpec.v (the Section form of its lines 32-164) and
    proofs/libreac/fuzz_knock/lib/A/ACfn.v (lines 27-71, the harness contract tfib_lib_pre_x / _post_x /
-   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here) at origin/ossv/recipes
-   6ebe35ba632, with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
+   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here),
+   with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
    this file states the three ASan-level contracts only.
 
    THE QDISC CHANGES, and why each one is there.
@@ -46,6 +46,7 @@
    the sink `K`, the entry addresses and the harness constants are all Section variables or parameters. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_qdisc/lib/A/QPgCSpec.v, with its module paths and module names changed; 6 of its 69 lines of code are new or changed and 64 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgMainC.v, with its module paths and module names changed; 241 of its 268 lines of code are new or changed and 42 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B contracts of the checking and text functions of fuzz_codec: the harness's check_refusal,
    check_range, check_bytes, check_text_masks, check_text_seg7, check_personality, check_text_scribble,
    check_text_counter, owed_seg7, owed_counter_text, owe_sysex and text_arg, and the library's

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Loop_kitQ.v, with its module paths and module names changed; 583 of its 621 lines of code are new or changed and 158 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b): SEGMENT
    CB1 Poison of the re-walk of check_no_overread (cno, entry B' 0x819f0 = slot 201 of the whole-program listing),
    0x81a94 (offset 164, the cut CNB_FRAME) -> 0x81b80 (offset 400, the cut CNB_COPY). Row R7-4 of
    the internal file FREE-PIECES-102.md (a Theorem Labs lane, the internal file PLAN-cno-caw-102.md sections 5.0 / 5.2 row "CB1 Poison").
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   INPUTS (by path, blobs at this file's commit; the branch's base 0e85941c7687, the
-   the kit CUT a working branch 7cdbb61b5fa0, the post-implication position form):
+   INPUTS (by path, blobs at this file's commit; the branch's base, the
+   the kit CUT a working branch, the post-implication position form):
      THE CONTRACT lib/B/Prog/Cno102B_Base.v 06098b64f859: cnb_pre (no DW at the cut), the cuts cnb_at_frame /
      cnb_at_copy (both at the spent wild budget 0, cnb_base .. k 0; both state own = 0 through cnb_pre_mid's ledger and
      the progress fact cnb_prog D [] S: CB1 makes no run event and leaves the allocator state S as it is, so the fact

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the two destructs of rauxv_ok spell its new sixteen slots, so the ceiling bound names alloc_ceiling <= B again). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -185,7 +186,14 @@ Proof.
       exists (p', A', n). split; [left; reflexivity|]. cbn [blk_addr blk_size fst snd]. clear - HK. lia. }
     assert (AUX3 : rauxv_ok m3 B).
     { eapply rauxv_ok_frame; [exact AUX2| exact MU3| exact WM3|]. constructor; [| constructor]. cbn [fst snd].
-      destruct AUX2 as (av & q3 & q4 & q5 & q16 & q6 & q11 & q12 & q23 & rnd & _ & _ & _ & CB' & _). unfold RAUXV_CELL, RLIBC. pose_ceil. clear - CB' A'CE A'IMG HK HN. lia. }
+      (* The ten leading binders were the OLD ten-auxv-value existentials.  At
+         75d69e00 [rauxv_ok] (RMallocTree.v:292) opens with four existentials
+         and twelve conjuncts, so a fifteen-slot pattern slid by six and bound
+         CB' to [B <= rnd + 8] instead of [alloc_ceiling <= B] -- parsing fine,
+         because the trailing [_] absorbs whatever is left.  Spelled to the
+         full sixteen so the next arity move fails loudly. *)
+      destruct AUX2 as (rzx & avx & valsx & rndx & AX1 & AX2 & AX3 & AX4 & AX5 & AX6 & CB' & AX8 & AX9 & AX10 & AX11 & AX12).
+      unfold RAUXV_CELL, RLIBC. pose_ceil. clear - CB' A'CE A'IMG HK HN. lia. }
     assert (ST3 : stk rsegs m3 lo sp1) by (eapply rpres_except_stk; [exact PE23| exact ST2| cbv beta; intros; subst sp1; clear - H A'CE CLOv LO; lia]).
     assert (ERR3 : rw_cells rsegs m3 (errno_addr tp) [C4 errv2]).
     { eapply rpres_except_rw_cells; [exact PE23| exact ERR2|]. rewrite ETP. cbn [cells_size csize Z.of_nat Nat.add Pos.of_succ_nat]. cbv beta. intros a Ha. clear - Ha A'IMG HK HN. lia. }
@@ -470,7 +478,9 @@ Proof.
       exists (p', A', n). split; [left; reflexivity|]. cbn [blk_addr blk_size fst snd]. clear - HK. lia. }
     assert (AUX3 : rauxv_ok m3 B).
     { eapply rauxv_ok_frame; [exact AUX2| exact MU3| exact WM3|]. constructor; [| constructor]. cbn [fst snd].
-      destruct AUX2 as (av & q3 & q4 & q5 & q16 & q6 & q11 & q12 & q23 & rnd & _ & _ & _ & CB' & _). unfold RAUXV_CELL, RLIBC. pose_ceil. clear - CB' A'CE A'IMG HK HN. lia. }
+      (* Twin of :188; same sixteen-slot [rauxv_ok] shape. *)
+      destruct AUX2 as (rzx & avx & valsx & rndx & AX1 & AX2 & AX3 & AX4 & AX5 & AX6 & CB' & AX8 & AX9 & AX10 & AX11 & AX12).
+      unfold RAUXV_CELL, RLIBC. pose_ceil. clear - CB' A'CE A'IMG HK HN. lia. }
     assert (ST3 : stk rsegs m3 lo sp1) by (eapply rpres_except_stk; [exact PE23| exact ST2| cbv beta; intros; subst sp1; clear - H A'CE CLOv LO; lia]).
     assert (ERR3 : rw_cells rsegs m3 (errno_addr tp) [C4 errv2]).
     { eapply rpres_except_rw_cells; [exact PE23| exact ERR2|]. rewrite ETP. cbn [cells_size csize Z.of_nat Nat.add Pos.of_succ_nat]. cbv beta. intros a Ha. clear - Ha A'IMG HK HN. lia. }

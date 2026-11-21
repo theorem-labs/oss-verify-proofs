@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact as a section hypothesis of the sections whose posts build MInvIR, by minvir_split; the NULL-hint mmap's place_declined_b premise; the grant at Linux's address, the request non-refusable and the room kept by RoomK; cut78r_S written as plain text with mmap_reserve_refusable's new hint argument). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -89,6 +90,7 @@ Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XLia.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.HeapEx.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.VmRoom.
+Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.RoomK.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mal_ameta_C2E.
@@ -170,6 +172,7 @@ Local Abbreviation sp0 := (@U.Mal_ameta__G1.Mal_ameta_I.sp0 rho).
 Local Abbreviation D0 := (@U.Mal_ameta__G1.Mal_ameta_I.D0 rho).
 Local Abbreviation rng_stk := (@U.Mal_ameta__G1.Mal_ameta_I.rng_stk s L rho gd evb avb Hgd Hev Hav mW).
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S3S8aQ40A1SfS8aQ8A1A1F_;VmW;S27Vrho;A1A3").
 Hypothesis Hsm_pre : ltac2:(tb__ "0|0|
@@ -189,6 +192,7 @@ S68S9bLx;S6dVu;A1S99Z0A1S99N1A1S16S0S9dS6cR2S5dS6bR1A2A2A1Lp;Lr;X68x3").
 Section C2E.
 
   Variables (Kc : list event -> Model -> Prop) (ok : world -> Prop) (md2 : Model) (vm2 : VmMaps).
+  Context {Hvd2 : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md2}.
   Hypothesis HOK : ltac2:(tb__ "0|0|
 S15aS51Vok;VKc;A3").
   Hypothesis K2 : Kc tr md2.
@@ -1208,7 +1212,7 @@ SfdS51Sc2S27Vrho;A1S10bA4").
 
       Theorem post_ok2 : ltac2:(tb__ "0|0|
 S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8ScSeSf6A1Sf1Vtr;Sf2VmsF;Vmd2;A2A4A5").
-      Proof using EmW Erd Evm2 Ewok GRdec HAC2 HAMF HB2 HBW HCTX2 HCW2 HF HFP2 HFPW HFRESH HFpre HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLG2 HLctx HLext HLfp HLold HLsec HLub HMI HMW2 HNOTX HPN HPZ HRES2 HUB2 HV183 HV184 HV2 HX2 HXr HY Haddr Hav Hav_rd Hbrk2 Hev Hgd Hgd_rd Hmnew HpzR Hrom HsmF Htp K2 MF STK VF ZF bv0 bv1 rv0 rv1.
+      Proof using bv0 bv1 EmW Erd Evm2 Ewok GRdec HAC2 Haddr HAMF Hav Hav_rd HB2 Hbrk2 HBW HCTX2 HCW2 Hev HF HFP2 HFpre HFPW HFRESH Hgd Hgd_rd HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLctx HLext HLfp HLG2 HLold HLsec HLub HMI Hmnew HMW2 HNOTX HPN HPZ HpzR HRES2 Hrom HsmF Htp HUB2 HV183 HV184 HV2 Hvd Hvd2 HX2 HXr HY K2 MF rv0 rv1 STK VF ZF.
         exists (L_am_ok IEC_U), (JL_am_ok segsU C_U X R U (mkMA s L) Kc), rho'.
         split; [right; left; reflexivity|]. split; [exact agree_vals_rho'|]. split; [exact smatch_ok|].
         cbn [w_tr w_cfg fst snd cfg_model].
@@ -1216,7 +1220,7 @@ S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8ScSeSf6A1Sf1Vtr;Sf2VmsF;Vm
         pose proof HAMF as (AF & US & UB). pose proof HNOTX as (M1 & M2).
         pose proof HF as (F2 & F5 & F6 & F7 & F8 & F9 & F10 & F11 & F12 & F13 & F14 & F15 & F16 & F17 & F18 & F19).
         split; [cbn [rw rho']; unfold V_RES; rewrite U110, Haddr; unfold AREA_HDR; lia|].
-        split; [unfold MInvIR; cbn [rm rho']; rewrite rdG, wokG, Evm2; exact minvI2|].
+        split; [minvir_split; cbn [rm rho']; rewrite rdG, wokG, Evm2; exact minvI2|].
         split.
         { split; [exact HX2|]. split; [exact F5|]. split; [exact AF|]. split; [repeat split; assumption|].
           split; [exact US|]. split; [exact UB|]. cbn [ma_s ma_L]. split; [exact HKEYS | exact HLext]. }
@@ -1226,7 +1230,7 @@ S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8ScSeSf6A1Sf1Vtr;Sf2VmsF;Vm
 
       Theorem post_ok2_only : ltac2:(tb__ "0|1|
 S12bS51S52Vrho;SbS10S2bS12cA2M0ScS2bS12cS138SfcA1S13bS51Sc2VX;VR;VU;Sf4Vs;VL;A2VKc;A7A4S11G0A1A3ScSeSf6A1Sf1Vtr;Sf2VmsF;Vmd2;A2A4A5").
-      Proof using EmW Erd Evm2 Ewok GRdec HAC2 HAMF HB2 HBW HCTX2 HCW2 HF HFP2 HFPW HFRESH HFpre HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLG2 HLctx HLext HLfp HLold HLsec HLub HMI HMW2 HNOTX HPN HPZ HRES2 HUB2 HV183 HV184 HV2 HX2 HXr HY Haddr Hav Hav_rd Hbrk2 Hev Hgd Hgd_rd Hmnew HpzR Hrom HsmF Htp K2 MF STK VF ZF bv0 bv1 rv0 rv1.
+      Proof using bv0 bv1 EmW Erd Evm2 Ewok GRdec HAC2 Haddr HAMF Hav Hav_rd HB2 Hbrk2 HBW HCTX2 HCW2 Hev HF HFP2 HFpre HFPW HFRESH Hgd Hgd_rd HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLctx HLext HLfp HLG2 HLold HLsec HLub HMI Hmnew HMW2 HNOTX HPN HPZ HpzR HRES2 Hrom HsmF Htp HUB2 HV183 HV184 HV2 Hvd Hvd2 HX2 HXr HY K2 MF rv0 rv1 STK VF ZF.
         exists (L_am_ok IEC_U), (JL_am_ok segsU C_U X R U (mkMA s L) Kc), rho'.
         split; [left; reflexivity|]. split; [exact agree_vals_rho'|]. split; [exact smatch_ok|].
         cbn [w_tr w_cfg fst snd cfg_model].
@@ -1234,7 +1238,7 @@ S12bS51S52Vrho;SbS10S2bS12cA2M0ScS2bS12cS138SfcA1S13bS51Sc2VX;VR;VU;Sf4Vs;VL;A2V
         pose proof HAMF as (AF & US & UB). pose proof HNOTX as (M1 & M2).
         pose proof HF as (F2 & F5 & F6 & F7 & F8 & F9 & F10 & F11 & F12 & F13 & F14 & F15 & F16 & F17 & F18 & F19).
         split; [cbn [rw rho']; unfold V_RES; rewrite U110, Haddr; unfold AREA_HDR; lia|].
-        split; [unfold MInvIR; cbn [rm rho']; rewrite rdG, wokG, Evm2; exact minvI2|].
+        split; [minvir_split; cbn [rm rho']; rewrite rdG, wokG, Evm2; exact minvI2|].
         split.
         { split; [exact HX2|]. split; [exact F5|]. split; [exact AF|]. split; [repeat split; assumption|].
           split; [exact US|]. split; [exact UB|]. cbn [ma_s ma_L]. split; [exact HKEYS | exact HLext]. }
@@ -1245,7 +1249,7 @@ S12bS51S52Vrho;SbS10S2bS12cA2M0ScS2bS12cS138SfcA1S13bS51Sc2VX;VR;VU;Sf4Vs;VL;A2V
 
   Theorem c2e_sound : ltac2:(tb__ "0|7|
 S16S148S2eS115S51Vok;R3S112S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8R1A5Lw';A4Se7R2A1S8aQ40M0A1M1S6VGR;S8cG0R1A2M2A1A1S3SfS8aQ8M3A1M4A1M5S27R5R2A2VmW;R2A1A3F_;Fx;G1S4S56Vpz;G2A2S58G2S57Vpz;Z1000A2A2A2S3G5S27R6R2A2S14G4S8bG3Z0A2A2A3F_;Fx;S2aS51R5Sd2S51ScfSecSe4A1A3ScSeSf6A1M6Sf1Vtr;Sf2R6Vmd2;A2A4A4S113S51Vok;R8ScG6Sf1Vtr;Sf2R7Vmd2;A2A4A4F_;F_;F_;F_;F_;FrhoE;Fms1;Fn;").
-  Proof using EmW Erd Evm2 Ewok GRdec HAC2 HAMF HB2 HBW HCTX2 HCW2 HF HFP2 HFPW HFRESH HFpre HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLG2 HLctx HLext HLfp HLold HLsec HLub HMI HMW2 HNOTX HOK HPN HPZ HRES2 HUB2 HV183 HV184 HV2 HX2 HXr HY Haddr Hav Hav_rd Hbrk2 Hev Hgd Hgd_rd Hmnew HpzR Hrom Htp K2 STK.
+  Proof using EmW Erd Evm2 Ewok GRdec HAC2 Haddr HAMF Hav Hav_rd HB2 Hbrk2 HBW HCTX2 HCW2 Hev HF HFP2 HFpre HFPW HFRESH Hgd Hgd_rd HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLctx HLext HLfp HLG2 HLold HLsec HLub HMI Hmnew HMW2 HNOTX HOK HPN HPZ HpzR HRES2 Hrom Htp HUB2 HV183 HV184 HV2 Hvd Hvd2 HX2 HXr HY K2 STK.
     intros n ms1 rhoE HQ VE ME ZE HE.
     pose proof (alloc_meta_run_P (segF bT) ok (Kexact tr md2) rhoE (ok_frame_exact ok Kc tr md2 HOK K2)) as RUN.
     refine (RUN n _ (tr, mkCfg ms1 md2) (conj HE (conj eq_refl eq_refl))).
@@ -1262,7 +1266,7 @@ S16S148S2eS115S51Vok;R3S112S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A
 
   Theorem c2e_soundK : ltac2:(tb__ "0|8|
 S16S148S2eS112S12bS51S52Vrho;SbS10S2bS12cA2M0ScS2bS12cS138SfcA1S13bS51Sc2VX;VR;VU;Sf4Vs;VL;A2VKc;A7A4S11G0A1A3R1A5S3Sf8Sf3S116R2A1A1Vmd2;A3S113S51Vok;R6R3A4F_;F_;Fw';Se7R2A1S8aQ40M1A1M2S6VGR;S8cG1R1A2M3A1A1S3SfS8aQ8M4A1M5A1M6S27R5R2A2VmW;R2A1A3F_;Fx;G2S4S56Vpz;G3A2S58G3S57Vpz;Z1000A2A2A2S3G6S27R6R2A2S14G5S8bG4Z0A2A2A3F_;Fx;S2aS51R5Sd2S51ScfSecSe4A1A3ScSeSf6A1M7Sf1Vtr;Sf2R6Vmd2;A2A4A4S113S51Vok;R8ScG7Sf1Vtr;Sf2R7Vmd2;A2A4A4F_;F_;F_;F_;F_;FrhoE;Fms1;Fn;").
-  Proof using EmW Erd Evm2 Ewok GRdec HAC2 HAMF HB2 HBW HCTX2 HCW2 HF HFP2 HFPW HFRESH HFpre HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLG2 HLctx HLext HLfp HLold HLsec HLub HMI HMW2 HNOTX HOK HPN HPZ HRES2 HUB2 HV183 HV184 HV2 HX2 HXr HY Haddr Hav Hav_rd Hbrk2 Hev Hgd Hgd_rd Hmnew HpzR Hrom Htp K2 STK.
+  Proof using EmW Erd Evm2 Ewok GRdec HAC2 Haddr HAMF Hav Hav_rd HB2 Hbrk2 HBW HCTX2 HCW2 Hev HF HFP2 HFpre HFPW HFRESH Hgd Hgd_rd HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLctx HLext HLfp HLG2 HLold HLsec HLub HMI Hmnew HMW2 HNOTX HOK HPN HPZ HpzR HRES2 Hrom Htp HUB2 HV183 HV184 HV2 Hvd Hvd2 HX2 HXr HY K2 STK.
     intros n ms1 rhoE HQ VE ME ZE HE.
     pose proof (alloc_meta_run_P (segF bT) ok (Kexact tr md2) rhoE (ok_frame_exact ok Kc tr md2 HOK K2)) as RUN.
     refine (RUN n _ (tr, mkCfg ms1 md2) (conj HE (conj eq_refl eq_refl))).
@@ -1279,7 +1283,7 @@ S16S148S2eS112S12bS51S52Vrho;SbS10S2bS12cA2M0ScS2bS12cS138SfcA1S13bS51Sc2VX;VR;V
 
   Theorem c2e_ex : ltac2:(tb__ "0|8|
 S148S2eSe7R1A1S8aQ40M0A1M1S6VGR;S8cG0R1A2M2A1A1S3SfS8aQ8M3A1M4A1M5S27R4R2A2VmW;R2A1A3F_;Fx;G1S4S56Vpz;G2A2S58G2S57Vpz;Z1000A2A2A2S3G5S27R5R2A2S14G4S8bG3Z0A2A2A3F_;Fx;S2aS51R4Sd2S51ScfSecSe4A1A3ScSeSf6A1M6Sf1Vtr;Sf2R5Vmd2;A2A4A4S114S51S112S3S112R1ScG6Sf1Vtr;Sf2R7Vmd2;A2A4A3Lw;S112S4S12bS51S52Vrho;SbS10S2bS12cA2M7ScS2bS12cS138SfcA1S13bS51Sc2VX;VR;VU;Sf4Vs;VL;A2VKc;A7A4S11G7A1A3R1A5S3Sf8Sf3S116R1A1A1Vmd2;A3A2Lw';A3F_;F_;F_;F_;FrhoE;Fms1;").
-  Proof using EmW Erd Evm2 Ewok GRdec HAC2 HAMF HB2 HBW HCTX2 HCW2 HF HFP2 HFPW HFRESH HFpre HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLG2 HLctx HLext HLfp HLold HLsec HLub HMI HMW2 HNOTX HPN HPZ HRES2 HUB2 HV183 HV184 HV2 HX2 HXr HY Haddr Hav Hav_rd Hbrk2 Hev Hgd Hgd_rd Hmnew HpzR Hrom Htp K2 STK.
+  Proof using EmW Erd Evm2 Ewok GRdec HAC2 Haddr HAMF Hav Hav_rd HB2 Hbrk2 HBW HCTX2 HCW2 Hev HF HFP2 HFpre HFPW HFRESH Hgd Hgd_rd HGRblock HGRceil HGRfp HGRimg HGRmaps HGRpage HI HI2 HIMG2 HKEYS HL2 HLctx HLext HLfp HLG2 HLold HLsec HLub HMI Hmnew HMW2 HNOTX HPN HPZ HpzR HRES2 Hrom Htp HUB2 HV183 HV184 HV2 Hvd Hvd2 HX2 HXr HY K2 STK.
     intros ms1 rhoE VE ME ZE HE w ->.
     destruct (alloc_meta_run_ex_P (segF bT) (Kexact tr md2) rhoE (tr, mkCfg ms1 md2) (conj HE (conj eq_refl eq_refl)))
       as ([tr3 [ms3 md3]] & ST3 & Lf3 & rhoF & Hin3 & Hag3 & Hsm3 & HK3).
@@ -1389,6 +1393,7 @@ Local Abbreviation sp0 := (@U.Mal_ameta__G1.Mal_ameta_I.sp0 rho).
 Local Abbreviation D0 := (@U.Mal_ameta__G1.Mal_ameta_I.D0 rho).
 Local Abbreviation rng_stk := (@U.Mal_ameta__G1.Mal_ameta_I.rng_stk s L rho gd evb avb Hgd Hev Hav mW).
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S3S8aQ40A1SfS8aQ8A1A1F_;VmW;S27Vrho;A1A3").
 Hypothesis Hsm_pre : ltac2:(tb__ "0|0|
@@ -1819,12 +1824,12 @@ SfdS51Sc2S27Vrho;A1S11dA4").
 
     Theorem post_null : ltac2:(tb__ "0|0|
 S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8ScSeSf6A1Sf1Vtr;Sf2VmsF;Vmd;A2A4A5").
-    Proof using EmW Erd Evm Ewok HI HKc HMI HXr Hac HagF Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd Hinit Hrom HsmC HsmF Htp STK bv0 bv1 rv0 rv1.
+    Proof using bv0 bv1 EmW Erd Evm Ewok Hac HagF Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd HI Hinit HKc HMI Hrom HsmC HsmF Htp Hvd HXr rv0 rv1 STK.
       exists (L_am_null IEC_U), (JL_am_null segsU C_U X R U (mkMA s L) Kc), rho'.
       split; [left; reflexivity|]. split; [exact agree_vals_rho'|]. split; [exact smatch_null|].
       cbn [w_tr w_cfg fst snd cfg_model].
       exists (mkMA s L). cbn [ma_s ma_L].
-      split; [unfold MInvIR; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
+      split; [minvir_split; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
       split.
       { split; [exact HXr|]. split; [exact Hinit|]. split; [apply am_frame_refl|]. split; [apply am_fields_same_refl|].
         split; [intros g am; tauto|]. split; [apply ub_same_refl|]. split; [intros q Hq; exact Hq | apply layout_extends_refl]. }
@@ -1836,12 +1841,12 @@ S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8ScSeSf6A1Sf1Vtr;Sf2VmsF;Vm
 
     Theorem post_null_only : ltac2:(tb__ "0|1|
 S12bS51S52Vrho;SbS10S2bS12cA2M0ScS2bS12cS13aSfcA1S13eS51Sc2VX;VR;VU;Sf4Vs;VL;A2VKc;A7A4S11G0A1A3ScSeSf6A1Sf1Vtr;Sf2VmsF;Vmd;A2A4A5").
-    Proof using EmW Erd Evm Ewok HI HKc HMI HXr Hac HagF Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd Hinit Hrom HsmC HsmF Htp STK bv0 bv1 rv0 rv1.
+    Proof using bv0 bv1 EmW Erd Evm Ewok Hac HagF Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd HI Hinit HKc HMI Hrom HsmC HsmF Htp Hvd HXr rv0 rv1 STK.
       exists (L_am_null IEC_U), (JL_am_null segsU C_U X R U (mkMA s L) Kc), rho'.
       split; [left; reflexivity|]. split; [exact agree_vals_rho'|]. split; [exact smatch_null|].
       cbn [w_tr w_cfg fst snd cfg_model].
       exists (mkMA s L). cbn [ma_s ma_L].
-      split; [unfold MInvIR; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
+      split; [minvir_split; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
       split.
       { split; [exact HXr|]. split; [exact Hinit|]. split; [apply am_frame_refl|]. split; [apply am_fields_same_refl|].
         split; [intros g am; tauto|]. split; [apply ub_same_refl|]. split; [intros q Hq; exact Hq | apply layout_extends_refl]. }
@@ -1925,7 +1930,7 @@ S2dSd1S117Vs;VL;Vrho;Vgd;Vevb;Vavb;VmW;A7VrhoL;A3S3SeS10S0S0A2M0A1S123S1eG0S25Vr
 
   Theorem cut78r_sound : ltac2:(tb__ "0|0|
 S16S115S51Vok;R1S112S7S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8R1A5S104R1A1A2Lw;A4S113S51Vok;R2ScSeSf6A1Sf1Vtr;Sf2VmsC;Vmd;A2A4A4F_;Fn;").
-  Proof using EmW Erd Evm Ewok HI HIR HKc HMI HOK HXr Hac Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd Hinit Hrom HsmC Htp STK.
+  Proof using EmW Erd Evm Ewok Hac Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd HI Hinit HIR HKc HMI HOK Hrom HsmC Htp Hvd HXr STK.
     intros n HQ.
     pose proof STK as (S1 & S2 & S3 & S4). pose proof lenZ_range as [LR LA].
     pose proof (alloc_meta_run_P A78_res ok (Kexact tr md) (rho1 mW) (ok_frame_exact ok Kc tr md HOK HKc)) as RUN1.
@@ -1953,6 +1958,7 @@ S16S115S51Vok;R1S112S7S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8R1A5
       change (10 + Z.of_nat 0) with 10 in G0. change (10 + Z.of_nat 1) with 11 in G1. change (10 + Z.of_nat 2) with 12 in G2.
       change (10 + Z.of_nat 3) with 13 in G3. change (10 + Z.of_nat 4) with 14 in G4. change (10 + Z.of_nat 5) with 15 in G5.
       rewrite M10 in G0. rewrite M11, EL in G1. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5.
+      split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
       split; [rewrite G1; exact lenZ_ne0|].
       split; [rewrite G2, G3, G5; vm_compute; reflexivity|].
       split; [rewrite G2, G3, G5; vm_compute; reflexivity|].
@@ -2043,6 +2049,7 @@ S0S56Z0R1A2S56S101S5aZ2Z20A2A2S15eVmd;S57R3S101A2A2S114S51S112S3S112R1ScSeSf6A1S
       change (10 + Z.of_nat 0) with 10 in G0. change (10 + Z.of_nat 1) with 11 in G1. change (10 + Z.of_nat 2) with 12 in G2.
       change (10 + Z.of_nat 3) with 13 in G3. change (10 + Z.of_nat 4) with 14 in G4. change (10 + Z.of_nat 5) with 15 in G5.
       rewrite M10 in G0. rewrite M11, EL in G1. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5.
+      split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
       split; [rewrite G1; exact lenZ_ne0|].
       split; [rewrite G2, G3, G5; vm_compute; reflexivity|].
       split; [rewrite G2, G3, G5; vm_compute; reflexivity|].
@@ -2050,11 +2057,14 @@ S0S56Z0R1A2S56S101S5aZ2Z20A2A2S15eVmd;S57R3S101A2A2S114S51S112S3S112R1ScSeSf6A1S
 
       assert (Hpos : 0 < bv_unsigned (Z_to_bv 64 lenZ)) by (rewrite (u64 lenZ lenZ_u64); clear - LR; lia).
       assert (HXl : mmap_nZ (Z_to_bv 64 lenZ) <= Xb + lenZ) by (rewrite mmap_nZ_lenZ; clear - HXb; lia).
-      destruct (vm_room_grant md (Xb + lenZ) (Z_to_bv 64 lenZ) HR Hpos ltac:(rewrite mmap_nZ_lenZ; exact H32) HXl)
-        as (a & _ & _ & _ & _ & _ & _ & _ & _ & Hpln & _ & HRn).
-      exists a. rewrite G0, G1. split; [exact (Hpln (Z_to_bv 64 0))|].
-      split; [rewrite mmap_nZ_lenZ; exact (L78_miss rhoL a HagL (Hpln (Z_to_bv 64 0)))|].
-      unfold Jo. rewrite EL. split; [reflexivity|]. split; [reflexivity|]. split; [exact (Hpln (Z_to_bv 64 0))|].
+      (* LPS 727298f3: Linux's address, not the room's (Malloc/HeapEx.v's [etriple_mmap_none_okJ]):
+         the request is non-refusable and every admissible address keeps the room, both from the
+         S room (Malloc/RoomK.v). *)
+      split; [rewrite G0, G1; exact (RoomK.vm_room_none_not_refusable md (Xb + lenZ) (Z_to_bv 64 lenZ) (Z_to_bv 64 0) HR Hpos HXl)|].
+      intros a Hpln. rewrite G0, G1 in Hpln. rewrite G1.
+      split; [rewrite mmap_nZ_lenZ; exact (L78_miss rhoL a HagL Hpln)|].
+      unfold Jo. rewrite EL. split; [reflexivity|]. split; [reflexivity|]. split; [exact Hpln|].
+      pose proof (RoomK.vm_room_grant_none md (Xb + lenZ) (Z_to_bv 64 lenZ) a (Z_to_bv 64 0) HR Hpos HXl Hpln) as HRn.
       rewrite mmap_nZ_lenZ in HRn. replace (Xb + lenZ - lenZ) with Xb in HRn by (clear; lia). exact HRn. }
     destruct (ST2 (tr, mkCfg ms1 md) (conj HsmL (conj eq_refl eq_refl))) as (w2 & ST2' & a & HO2).
     exists w2. split; [eapply wsteps_trans; [exact ST1 | exact ST2']|].
@@ -2065,7 +2075,7 @@ S0S56Z0R1A2S56S101S5aZ2Z20A2A2S15eVmd;S57R3S101A2A2S114S51S112S3S112R1ScSeSf6A1S
 
   Theorem cut78r_anyex : ltac2:(tb__ "0|0|
 S114S51S112S3S112R1ScSeSf6A1Sf1Vtr;Sf2VmsC;Vmd;A2A4A3Lw;S112S7S12bS51S52Vrho;S139S51Sc2SfcVX;VR;VU;Sf4Vs;VL;A2VKc;A8R1A5S104R1A1A2Lw;A3").
-  Proof using EmW Erd Evm Ewok HI HIR HKc HMI HXr Hac Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd Hinit Hrom HsmC Htp STK bv0.
+  Proof using bv0 EmW Erd Evm Ewok Hac Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd HI Hinit HIR HKc HMI Hrom HsmC Htp Hvd HXr STK.
     intros w ->. pose proof lenZ_range as [LR LA].
     destruct (alloc_meta_run_ex_P A78_res (Kexact tr md) (rho1 mW) (tr, mkCfg msC md) (conj HsmC (conj eq_refl eq_refl)))
       as ([tr1 [ms1 md1]] & ST1 & Lf & rhoL & HinL & HagL & HsmL & HK1).
@@ -2092,6 +2102,7 @@ S114S51S112S3S112R1ScSeSf6A1Sf1Vtr;Sf2VmsC;Vmd;A2A4A3Lw;S112S7S12bS51S52Vrho;S13
       change (10 + Z.of_nat 0) with 10 in G0. change (10 + Z.of_nat 1) with 11 in G1. change (10 + Z.of_nat 2) with 12 in G2.
       change (10 + Z.of_nat 3) with 13 in G3. change (10 + Z.of_nat 4) with 14 in G4. change (10 + Z.of_nat 5) with 15 in G5.
       rewrite M10 in G0. rewrite M11, EL in G1. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5.
+      split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
       split; [rewrite G1; exact lenZ_ne0|].
       split; [rewrite G2, G3, G5; vm_compute; reflexivity|].
       split; [rewrite G2, G3, G5; vm_compute; reflexivity|].
@@ -2116,8 +2127,13 @@ S114S51S112S3S112R1ScSeSf6A1Sf1Vtr;Sf2VmsC;Vmd;A2A4A3Lw;S112S7S12bS51S52Vrho;S13
       rewrite M11, Mnx in Hsm2. split; [exact Hsm2|]. cbn [liftK Kexact w_tr w_cfg fst snd cfg_model]. split; [exact Etr | exact Emd].
   Qed.
 
-  Theorem cut78r_S : ltac2:(tb__ "0|0|
-S16S3SdS163Vmd;S101A2S19A3S115S51Vok;R2S104A4S113S51Vok;R3ScSeSf6A1Sf1Vtr;Sf2VmsC;Vmd;A2A4A4F_;F_;Fn;").
+  (* LPS 08b1429 (in 727298f3): [mmap_reserve_refusable] takes the mmap hint first (Fw/Refusable.v);
+     the hint of this call is NULL.  Written out as plain text (decoded from this file's [tbs__]
+     table), the hint argument added; nothing else changed. *)
+  Theorem cut78r_S : forall n : nat,
+    OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Refusable.mmap_reserve_refusable (Z_to_bv 64 0) md lenZ = false ->
+    OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety.guards segsU ok n OKP ->
+    OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety.safe segsU ok n (tr, mkCfg msC md).
   Proof using EmW Erd Evm Ewok HI HIR HKc HMI HOK HXr Hac Hav Hav_rd Hbrk Hcnt Hev Hgd Hgd_rd Hhd Hinit Hrom HsmC Htp STK.
     intros n HNR HQ.
     pose proof STK as (S1 & S2 & S3 & S4). pose proof lenZ_range as [LR LA].
@@ -2146,11 +2162,12 @@ S16S3SdS163Vmd;S101A2S19A3S115S51Vok;R2S104A4S113S51Vok;R3ScSeSf6A1Sf1Vtr;Sf2Vms
       change (10 + Z.of_nat 0) with 10 in G0. change (10 + Z.of_nat 1) with 11 in G1. change (10 + Z.of_nat 2) with 12 in G2.
       change (10 + Z.of_nat 3) with 13 in G3. change (10 + Z.of_nat 4) with 14 in G4. change (10 + Z.of_nat 5) with 15 in G5.
       rewrite M10 in G0. rewrite M11, EL in G1. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5.
+      split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
       split; [rewrite G1; exact lenZ_ne0|].
       split; [rewrite G2, G3, G5; vm_compute; reflexivity|].
       split; [rewrite G2, G3, G5; vm_compute; reflexivity|].
       split; [rewrite G3; vm_compute; reflexivity|].
-      split; [rewrite G1, mmap_nZ_lenZ; intros Hrf; rewrite HNR in Hrf; discriminate Hrf|].
+      split; [rewrite G0, G1, mmap_nZ_lenZ; intros Hrf; rewrite HNR in Hrf; discriminate Hrf|].
       intros a Hpl. split.
       +
         rewrite G0, G1 in Hpl. pose proof Hpl as (Hal & Hpos & Hceil & _). rewrite <- Evm, <- (vm_ok_top L s vm HV) in Hceil.

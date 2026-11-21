@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section hypothesis Nrob, RomBase.sys_rob at each node, for impl_twf_realizes's rz_node; imports RomBase). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -8,6 +9,7 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Lib Require Import PropEx
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common Require ShapeAlg.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Br Require Import StateGlue.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import Fcfg.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require RomBase.
 Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import ShapeAlg(TSet, t_eq, t_alt, t_alt2, t_emit, t_nil, realizes, node_ok).
@@ -30,6 +32,10 @@ Hypothesis Ncomplete : forall n ms mo evs X,
   at_node n ms -> nsafe n mo -> mo_ok mo -> sstep_cfg segs fcfg (mkCfg ms mo) evs X ->
   exists rsp mo', X = SNext (mkCfg (nret ms rsp) mo') /\ nstep n mo rsp mo' evs.
 Hypothesis Nprogress : forall n mo, nsafe n mo -> mo_ok mo -> exists rsp mo' evs, nstep n mo rsp mo' evs.
+(* LPS 727298f3: a node's system call answers the same over a larger read-only backing
+   ([ShapeAlg.rz_node]'s [RomBase.sys_rob]). *)
+Hypothesis Nrob : forall n ms mo,
+  at_node n ms -> nsafe n mo -> mo_ok mo -> RomBase.sys_rob segs (mkCfg ms mo).
 
 Fixpoint twf {R} (t : itree node R) (mo : Model) (P : R -> Model -> Prop) : Prop :=
   match t with
@@ -134,6 +140,7 @@ Proof.
         -- intros e st Hss. destruct (Ncomplete n ms1 mo e st Hat Hs Hmo Hss) as (rsp & mo1 & -> & Hst).
            destruct (Nmodel n mo rsp mo1 e Hs Hmo Hst) as (-> & _ & _).
            exists (exist _ (rsp, mo1) Hst). cbn. split; reflexivity.
+      * exact (Nrob n ms1 mo Hat Hs Hmo).
       * exact Hsub.
     + apply t_paths_vis. intros x. eapply ShapeAlg.realizes_nonempty. apply Hsub.
 Qed.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): SEGMENTS S3 and S4 of the walk of parse_noting
    (row N10-PNA; cut table lib/A/Prog/PN102Cuts.v):
@@ -13,9 +14,9 @@
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
    files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk preset-tree-at-2026-10-29T20-00-00Z.tsv (sha256 84c0bfddb1f3; internal record), its one
    announced re-bind). This file: segments S3 and S4 of that walk.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
    NUMERALS: the instruction offsets (LENGTH), 48 (the frame). No ADDRESS. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

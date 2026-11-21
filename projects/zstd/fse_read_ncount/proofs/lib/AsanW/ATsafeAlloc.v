@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nsafeA_grant supplies nsafe_mmap_rw's new place_declined_b premise for its null-hint mmap, by place_declined_b_null; TS_aembed's munmap case takes aok's new conjunct that the range's subtraction removes just its entry). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
@@ -498,7 +499,7 @@ intros b G A k mo len HK Hlen Hal HR. pose proof HK as (M & Hb & HN & _). pose p
 split.
 - cbn [nsafeA0]. unfold mmap_safeA_b.
 Local Ltac2 Set LiaHints.tbl := fun () => "0080>15043033658.2718765269464.2727574834121.2828327094703.2736418002330.2746139312466.2765127367338.279856333582.27 00000100700F00P00V00c00i00oSS4HlenS4Hlen2HR3NLZ1HS4Hlen3HalS4HlenS4Hlen2HR3NLZS4HlenS4Hlen".
-pose proof (nsafe_mmap_rw 0 len mo ltac:(lia)) as X. cbn [nsafe] in X.
+pose proof (nsafe_mmap_rw 0 len mo ltac:(lia) (place_declined_b_null _ _ _)) as X. cbn [nsafe] in X.
 change PROT_RW with (PROT_READ + PROT_WRITE). change F_ANON with (MAP_PRIVATE + MAP_ANONYMOUS). exact X.
 - cbn [nslack]. rewrite (mmap_len_lit len) by lia. cbv zeta. split.
 + right. apply robust_room; [exact M| lia].
@@ -842,7 +843,7 @@ eapply (IH a RP Post ga G b A k KCAP).
 ++ exact Hk.
 ++ exact HKC.
 +
-destruct Hok as (Hlen & Ha & Haal & Hce & Hmh). cbn [aev_node] in En. injection En as <- <-.
+destruct Hok as (Hlen & Ha & Haal & Hce & Hmh & Hex). cbn [aev_node] in En. injection En as <- <-.
 cbn [evq] in HE.
 rewrite aembed_vis. cbn [aev_tree]. apply TS_event.
 * eapply KI_acct_ok; [exact HK| lia].

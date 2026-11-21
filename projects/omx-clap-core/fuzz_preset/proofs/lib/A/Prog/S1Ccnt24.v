@@ -1,6 +1,6 @@
 (* fuzz_preset, S1 ALLOC-HEAP (lib/A/Prog): the live class-24 count across one free, for S1's two fuzz_free walks
    (FuzzFree.v, FuzzFreeB.v: tfuzz_free_specX's ccnt24 arm). The two lemmas, prh_ccnt24_ablocks (:18) and prh_ccnt24_free (:22),
-   were section 6 of S1Ledger.v on a working branch (as S1Ledger.v:851-862 at 67637094dec6); S1Ledger.v here is decff67d721f's file with comments edited in this series,
+   were section 6 of S1Ledger.v on a working branch (as S1Ledger.v:851-862); S1Ledger.v here is's file with comments edited in this series,
    and it still carries neither prh_ccnt24_ablocks nor prh_ccnt24_free, so they live here, unchanged.
    YGcfRoomLive.ccnt24 reads map snd (blocks S), which equals map snd (ablocks B ly S) (ablocks renames the pointers
    only), so the free's block equation (aj_free_x_ct's post) gives the count exactly. No image, no address. *)

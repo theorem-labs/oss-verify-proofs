@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_model_block_glue.v, with its module paths and module names changed; 268 of its 348 lines of code are new or changed and 2332 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block (0x86104) on fuzz_ctrl's ASan+UBSan build, image B (libreac v1.9.0): the SHARED base of the cgif
    glue pb_ctrl_lay_block (a Theorem Labs lane; hands a Theorem Labs lane).  rule 24: no function proved here.
 
    PLAN OF RECORD: ctrl_lay_block-B-glue-plan.md sections 1, 2 (a working note, not in this delivery).
    This file is the image-B twin of the shared part of a Theorem Labs lane's image-A glue
-   (lib/A/Prog/C_ctrl_lay_block_glue.v (from a working branch 9861af6cbb5), at head: lay_SRr_norm :103, LayLib :137,
+   (lib/A/Prog/C_ctrl_lay_block_glue.v (from a working branch), at head: lay_SRr_norm :103, LayLib :137,
    LayBase :205-385, lay_stack_malloc_atS :608, lay_acall_kept_after_munch :698, lay_ret_regs :735, lay_fs1 :744),
    same proofs with B's names, and the descriptor lay_D1 (plan section 2): the boundary facts after
    __asan_stack_malloc_1 returns at pc 0x861bc, which lay_to_ret (ctrl_lay_block_gR1.v) produces and lay_R23

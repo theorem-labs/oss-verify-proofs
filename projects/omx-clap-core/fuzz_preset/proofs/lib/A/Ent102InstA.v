@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102 pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4): THE VACUITY
    GUARD of the walk of LLVMFuzzerTestOneInput. The record of image facts ec_img (lib/A/Ent102CutsA.v blob 2fb50b636f51,
    section 5) is shown true at the concrete instance, field by field.
    rule 24: proves no function (kind: instance lemma of image facts).
 
-   THE INSTANCE. L := A_prog_listing (lib/A/Listing_prog.v blob 7ed1529926bd, a Theorem Labs lane's listings v3 74dcda1eda12;
+   THE INSTANCE. L := A_prog_listing (lib/A/Listing_prog.v blob 7ed1529926bd, a Theorem Labs lane's listings v3;
    the tables of the earlier blob 1ab147923c5d, the slot tree pre-evaluated); PA := PI_prog_A (lib/A/PAImg_prog.v
    blob 505a51ff7d08); PI := prh_img_A (lib/A/PRH_Img.v blob 934516a622e8, the kit Batch 1);
    cp := CfParams_preset (lib/A/CfParamsPreset.v blob 1333a52cd63a); fx and rc stay section variables (no field reads
@@ -139,15 +140,15 @@ Qed.
 
 (* ---------------------------------------------------------------------- *)
 (* 1. The image values of the instance that have no generated name on this branch. *)
-(* the empty payload: symbol oft_aligned_copy.empty of twin bff8519b; = PresetCfnA.v:194 A_EMPTY (blob 0c132ebd9904,
-   MEASURED) = the generated lib/A/AImgCells.v A_EMPTY of a working branch d798ccdb9a7
+(* the empty payload: symbol oft_aligned_copy.empty of twin bff8519b; = PresetCfnA.v:195 A_EMPTY (blob 0c132ebd9904,
+   MEASURED) = the generated lib/A/AImgCells.v A_EMPTY of a working branch
    (gen_cells.py 29dd926cd6b20989 over the same ELF), not on this branch *)
 Definition ia_empty : Z := 0x5dd520.
-(* check_round_trip's two literals: lib/A/Prog/Crt102Img.v CRT_MOD_AT_A / CRT_STAMP_A (a working branch
-   fbb5bc52bdb, blob 10b5850baf33, :613-614) = VAL (A_OBJ 2) + the listing's PAddHi payloads 0x110c0 / 0x11380 *)
+(* check_round_trip's two literals: lib/A/Prog/Crt102Img.v CRT_MOD_AT_A / CRT_STAMP_A (a working branch,
+   blob 10b5850baf33, :613-614) = VAL (A_OBJ 2) + the listing's PAddHi payloads 0x110c0 / 0x11380 *)
 Definition ia_mod_at : Z := A_prog_val (A_OBJ 2) + 0x110c0.
 Definition ia_stamp : Z := A_prog_val (A_OBJ 2) + 0x11380.
-(* the musl stdio half of PINV and its bytes: the text of PresetCfnA.v:296-297 (pinv_stdio) and :305-306 (stdio_img),
+(* the musl stdio half of PINV and its bytes: the text of PresetCfnA.v:297-298 (pinv_stdio) and :305-306 (stdio_img),
    blob 0c132ebd9904, with its section-1 constants (:203-206: A_THREADED 0x5fe181, A_NEED_LOCKS 0x5fe183, A_OFL_LOCK
    0x5fe5e0, A_OFL_HEAD 0x5fe5e8, MEASURED on twin bff8519b) written in. *)
 Definition ia_sio (rd : reader) : Prop :=
@@ -165,7 +166,7 @@ destruct Ha as [H|[H|[H|H]]].
 - apply Exists_cons_tl. apply Exists_cons_tl. apply Exists_cons_tl. apply Exists_cons_hd. unfold in_zr. cbn [fst snd]. lia.
 Qed.
 (* the half of kept_img (PRH_Base.v blob 3004a98fe2d9 :1020-1023) that reads the image and not B, at PI_prog_A's
-   pa_lo / pa_hi (= IMG_LO / IMG_TOP, PAImg_prog.v:406) *)
+   pa_lo / pa_hi (= IMG_LO / IMG_TOP, PAImg_prog.v:407) *)
 Definition ia_lit_ro (p n : Z) : Prop :=
   IMG_LO + 64 <= p /\ p + n + 64 <= IMG_TOP /\ (forall a, p <= a < p + n -> in_roP rsegs A_prog_relro_lo A_prog_relro_hi a).
 (* the half of kept_img that reads B *)
@@ -318,7 +319,7 @@ Qed.
 
 (* ---------------------------------------------------------------------- *)
 (* 4. The six facts that read the runtime symbol record, at the #102 A' record AD2l.TfibB (lib/A/AD2l.v blob
-      eb321db7a357, RelocA 4cd3428e06a: as_code := AF0l.Tfib_code, blob dfca6bb1a8d7; the cells, as_errno, as_const,
+      eb321db7a357, RelocA: as_code := AF0l.Tfib_code, blob dfca6bb1a8d7; the cells, as_errno, as_const,
       as_owned_static and as_zero_shadow from lib/A/AF0m.v blob 97f423adf6eb; as_universe := lib/A/ACej.v blob
       c4a400418590), each by computation on the record and the image, then ec_img at the concrete instance. *)
 (* z1 (ANum s) v is in l *)

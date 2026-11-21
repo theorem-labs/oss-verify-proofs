@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A (POISON-U lane, a Theorem Labs lane): FSupoisonU.abcmp_realizesU at pc_wrap_bcmp, i.e. the bcmp
    interceptor walk for ANY set U of user-poisoned heads (FSupoison.ARU). Rule 24: not proved from scratch. The donor
    is cgif_file_fuzzer's released lib/A/AE2s.v (bc_icpt_srr / bc_icpt_realizes, over SRr / AR_laws, our kit's
@@ -23,7 +24,7 @@
    Port-from, text unchanged except where U is threaded:
      AE2s.v:28-150   constants, mc_phase / mc_phase_to, the vm_compute'd runs (ssA .. r_epi), shapes: not copied.
                      This file Requires RELOC's relocations lib/A/AE2s.v and lib/A/AE2z.v (mc_ranges / tbl_mc, which
-                     AE2s takes from AE2z), a working branch, 685a0e62747, and uses their text.
+                     AE2s takes from AE2z), a working branch, and uses their text.
      AE2s.v:151-343  mc_tail: ecall_pre -> FSupoison.ecall_preU, AR memR -> ARU; the nested call's ecall_preU
                      (HPRER) reads its stack window on unpoison U memR through bcmp_regions_off_ush; the callee
                      step is AMEMCMPU instead of AE2z's memcmp_icpt_contract; al_frame -> FSupoison.ARU_frame.

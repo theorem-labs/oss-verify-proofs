@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -424,7 +425,9 @@ Definition astep_d (A : astate M) (d : dinstr) : ares M :=
       if a_budget A + 8192 <=? LIM then
         if a_aligned s wd av then
           match a_resv A with
-          | RNone => ANext (upd A npc (aset m rd (XL w_one)) RNone (a_mem A))
+          (* LPS 08b1429: a failing sc loads and stores back its bytes; the
+             analyzer does not model it and stops there. *)
+          | RNone => AStuck 28 A
           | RSome r =>
               if xv_same r av then
                 match a_store4 segs s (a_mem A) av (bytes_of (match wd with AW => SZ4 | AD => SZ8 end) (aget m rs2)) with
@@ -626,23 +629,23 @@ Proof.
             RR A' (mkCfg ms' model) -> exists ms1 model', mi_account_step segs ms model = MachineOk (ms1, model') /\ RR A' (mkCfg ms1 model')).
   { intros ms' Hacc HR'. exists ms', model. split; [exact (account_none segs ms ms' model Hacc) | exact HR']. }
   destruct i; cbn [dec] in Hst; try discriminate.
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_Lui segs ms w 4 rd imm Hf He Hd)).
     apply R_next_reg; [exact HR | exact Hnpc | pc4 Hpc | apply XL_w_of_bv].
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_Auipc segs ms w 4 rd imm Hf He Hd)).
     apply R_next_reg; [exact HR | exact Hnpc | pc4 Hpc |]. apply XL_val. rewrite wbv_add, Hpc, wbv_w_of_bv. reflexivity.
-  - (* [comment removed for export] *)
+  -
     destruct (pc_ok (w_add (a_pc A) (w_of_bv (sext 64 imm)))) eqn:Ht; [|discriminate]. injection Hst as <-.
     apply (Hnone _ (acc_Jal segs ms w 4 rd imm Hf He Hd)).
     apply R_next_reg; [exact HR | exact Ht | rewrite wbv_add, Hpc, wbv_w_of_bv; reflexivity |]. apply XL_val. pc4 Hpc.
-  - (* [comment removed for export] *)
+  -
     destruct (aget (a_regs A) (ri rs1)) as [b| | | | |] eqn:Eb; try discriminate.
     destruct (pc_ok (w_and (w_add b (w_of_bv (sext 64 imm))) w_not1)) eqn:Ht; [|discriminate]. injection Hst as <-.
     apply (Hnone _ (acc_Jalr segs ms w 4 rd rs1 imm Hf He Hd)).
     assert (Hbv : rg ms rs1 = wbv b) by (specialize (Hregs rs1); rewrite Eb in Hregs; apply xv_XL in Hregs; exact Hregs).
     apply R_next_reg; [exact HR | exact Ht | rewrite wbv_and, wbv_add, wbv_w_of_bv, wbv_not1, Hbv; reflexivity |]. apply XL_val. pc4 Hpc.
-  - (* [comment removed for export] *)
+  -
     destruct (pc_ok (w_add (a_pc A) (w_of_bv (sext 64 imm)))) eqn:Ht; cbn [negb] in Hst; [|discriminate].
     assert (Etk : (ms_pc_val ms + sext 64 imm)%bv = wbv (w_add (a_pc A) (w_of_bv (sext 64 imm)))) by (rewrite wbv_add, Hpc, wbv_w_of_bv; reflexivity).
     assert (Ent : (ms_pc_val ms + Z_to_bv 64 4)%bv = wbv (w_add (a_pc A) w_four)) by (pc4 Hpc).
@@ -659,7 +662,7 @@ Proof.
       destruct (List.filter (fun p : store * bool => feasible (fst p) (lsub f g)) l) as [|p [|q rest]]; try discriminate.
       injection Hst as <-. destruct Hin' as [->|[]]. cbn [fst snd]. rewrite <- Hr.
       destruct r; apply R_next_facts; assumption.
-  - (* [comment removed for export] *)
+  -
     destruct (a_budget A + 8192 <=? LIM) eqn:Ebud; [|discriminate]. apply Z.leb_le in Ebud.
     destruct (load_x segs (a_facts A) (a_mem A) (a_add (a_facts A) (aget (a_regs A) (ri rs1)) (XL (w_of_bv (sext 64 imm)))) sz signed)
       as [xl|] eqn:Eb; [|discriminate]. injection Hst as <-.
@@ -670,7 +673,7 @@ Proof.
       cbn [setx ms_pc_val ms_svc_pending ms_resv ms_rom ms_mem]; try reflexivity; try assumption.
     + pc4 Hpc.
     + apply RRegs_set; [exact Hregs | exact Hxl].
-  - (* [comment removed for export] *)
+  -
     destruct (a_budget A + 8192 <=? LIM) eqn:Ebud; [|discriminate]. apply Z.leb_le in Ebud.
     destruct (store_x segs (a_facts A) (a_mem A) (a_add (a_facts A) (aget (a_regs A) (ri rs1)) (XL (w_of_bv (sext 64 imm)))) sz (aget (a_regs A) (ri rs2)))
       as [mem'|] eqn:Es0; [|discriminate]. injection Hst as <-. pose proof (store_x_store4 segs _ _ _ _ _ _ Es0) as Es.
@@ -684,7 +687,7 @@ Proof.
              (acc_Store segs ms w 4 sz rs1 rs2 imm Hf He Hd Hok));
       cbn [setx ms_pc_val ms_svc_pending ms_resv ms_rom ms_mem]; try reflexivity; try assumption.
     all: first [ pc4 Hpc | (apply RRegs_set0; exact Hregs) | (apply RResv_store; exact Hres) ].
-  - (* [comment removed for export] *)
+  -
     assert (Hgen : ANext (upd M A (w_add (a_pc A) w_four) (aset (a_regs A) (ri rd) (a_alu64 (a_facts A) op (aget (a_regs A) (ri rs1)) (XL (w_of_bv (sext 64 imm))))) (a_resv A) (a_mem A)) = ANext A' ->
               exists ms1 model', mi_account_step segs ms model = MachineOk (ms1, model') /\ RR A' (mkCfg ms1 model')).
     { intros E. injection E as <-. apply (Hnone _ (acc_OpImm segs ms w 4 op rd rs1 imm Hf He Hd)).
@@ -692,14 +695,14 @@ Proof.
     destruct op; try exact (Hgen Hst).
     destruct (align_bits (w_of_bv (sext 64 imm))) as [k|]; [|exact (Hgen Hst)].
     destruct (need_floor (a_facts A) (aget (a_regs A) (ri rs1)) k); [discriminate | exact (Hgen Hst)].
-  - (* [comment removed for export] *)
+  -
     assert (Hgen : ANext (upd M A (w_add (a_pc A) w_four) (aset (a_regs A) (ri rd) (a_alu64 (a_facts A) op (aget (a_regs A) (ri rs1)) (XL (w_of_bv (zext 64 shamt))))) (a_resv A) (a_mem A)) = ANext A' ->
               exists ms1 model', mi_account_step segs ms model = MachineOk (ms1, model') /\ RR A' (mkCfg ms1 model')).
     { intros E. injection E as <-. apply (Hnone _ (acc_ShiftImm segs ms w 4 op rd rs1 shamt Hf He Hd)).
       apply R_next_reg; [exact HR | exact Hnpc | pc4 Hpc |]. apply a_alu64_sound; [exact Hsat | exact (Hregs rs1) | apply XL_w_of_bv]. }
     destruct op; try exact (Hgen Hst).
     destruct (need_floor (a_facts A) (aget (a_regs A) (ri rs1)) (wZ (w_of_bv (zext 64 shamt)))); [discriminate | exact (Hgen Hst)].
-  - (* [comment removed for export] *)
+  -
     assert (Hgen : ANext (upd M A (w_add (a_pc A) w_four) (aset (a_regs A) (ri rd) (a_alu64 (a_facts A) op (aget (a_regs A) (ri rs1)) (aget (a_regs A) (ri rs2)))) (a_resv A) (a_mem A)) = ANext A' ->
               exists ms1 model', mi_account_step segs ms model = MachineOk (ms1, model') /\ RR A' (mkCfg ms1 model')).
     { intros E. injection E as <-. apply (Hnone _ (acc_Op segs ms w 4 op rd rs1 rs2 Hf He Hd)).
@@ -707,32 +710,32 @@ Proof.
     destruct op; try exact (Hgen Hst).
     destruct (and_floor (a_facts A) (aget (a_regs A) (ri rs1)) (aget (a_regs A) (ri rs2))); [discriminate|].
     destruct (and_floor (a_facts A) (aget (a_regs A) (ri rs2)) (aget (a_regs A) (ri rs1))); [discriminate | exact (Hgen Hst)].
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_OpImm32 segs ms w 4 rd rs1 imm Hf He Hd)).
     apply R_next_reg; [exact HR | exact Hnpc | pc4 Hpc |].
     apply a_alu32x_sound; [exact Hsat | apply xv_val32_low32; exact (Hregs rs1) | apply sext32_imm].
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_ShiftImm32 segs ms w 4 op rd rs1 shamt Hf He Hd)).
     apply R_next_reg; [exact HR | exact Hnpc | pc4 Hpc |].
     apply a_alu32x_sound; [exact Hsat | apply xv_val32_low32; exact (Hregs rs1) | apply zext32_sh].
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_Op32 segs ms w 4 op rd rs1 rs2 Hf He Hd)).
     apply R_next_reg; [exact HR | exact Hnpc | pc4 Hpc |].
     apply a_alu32x_sound; [exact Hsat | apply xv_val32_low32; exact (Hregs rs1) | apply xv_val32_low32; exact (Hregs rs2)].
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_Fence segs ms w 4 fm pred succ rd rs1 Hf He Hd)).
     apply R_next_noreg; [exact HR | exact Hnpc | pc4 Hpc].
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_FenceI segs ms w 4 rd rs1 imm Hf He Hd)).
     apply R_next_noreg; [exact HR | exact Hnpc | pc4 Hpc].
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_Mul segs ms w 4 op rd rs1 rs2 Hf He Hd)).
     apply R_next_reg; [exact HR | exact Hnpc | pc4 Hpc |]. apply a_muldiv_sound; [exact Hsat | exact (Hregs rs1) | exact (Hregs rs2)].
-  - (* [comment removed for export] *)
+  -
     injection Hst as <-. apply (Hnone _ (acc_Mul32 segs ms w 4 op rd rs1 rs2 Hf He Hd)).
     apply R_next_reg; [exact HR | exact Hnpc | pc4 Hpc |].
     apply a_muldiv32_sound; [exact Hsat | apply xv_val32_low32; exact (Hregs rs1) | apply xv_val32_low32; exact (Hregs rs2)].
-  - (* [comment removed for export] *)
+  -
     destruct (a_budget A + 8192 <=? LIM) eqn:Ebud; [|discriminate]. apply Z.leb_le in Ebud.
     destruct (a_aligned (a_facts A) w0 (aget (a_regs A) (ri rs1))) eqn:Eal; [|discriminate].
     destruct (a_load4 segs (a_facts A) (a_mem A) (aget (a_regs A) (ri rs1)) (amo_n w0)) as [l|] eqn:Eb; [|discriminate]. injection Hst as <-.
@@ -747,18 +750,12 @@ Proof.
       replace (lr_word w0 bs) with (load_word (match w0 with AW => SZ4 | AD => SZ8 end) true bs) by (destruct w0; reflexivity).
       apply val_of_bytes_sound; [exact Hsat | exact Hf2 | destruct w0; exact Hlen].
     + cbn [RResv]. exists (rg ms rs1). split; [reflexivity | exact (Hregs rs1)].
-  - (* [comment removed for export] *)
+  -
     destruct (a_budget A + 8192 <=? LIM) eqn:Ebud; [|discriminate]. apply Z.leb_le in Ebud.
     destruct (a_aligned (a_facts A) w0 (aget (a_regs A) (ri rs1))) eqn:Eal; [|discriminate].
     pose proof (a_aligned_sound ρ _ w0 _ _ Hsat (Hregs rs1) Eal) as Hali.
     destruct (a_resv A) as [|rv|] eqn:Erv; [| |discriminate].
-    + (* [comment removed for export] *)
-      injection Hst as <-. cbn [RResv] in Hres.
-      assert (Hsc : sc_ok (ms_resv ms) (rg ms rs1) = false) by (rewrite Hres; reflexivity).
-      apply (Hnone _ (acc_Sc_fail segs ms w 4 w0 aq rl rd rs1 rs2 Hf He Hd Hali Hsc)).
-      apply (R_build A _ ms _ model model HR); cbn [upd a_pc a_regs a_resv a_mem a_model a_facts a_budget setx ms_pc_val ms_svc_pending ms_resv ms_rom ms_mem];
-        try reflexivity; try assumption.
-      all: first [ pc4 Hpc | (apply RRegs_set; [exact Hregs | apply XL_val; reflexivity]) | (left; split; [reflexivity | lia]) ].
+    + discriminate Hst.
     + destruct (xv_same rv (aget (a_regs A) (ri rs1))) eqn:Esame; [|discriminate].
       destruct (a_store4 segs (a_facts A) (a_mem A) (aget (a_regs A) (ri rs1)) (bytes_of (match w0 with AW => SZ4 | AD => SZ8 end) (aget (a_regs A) (ri rs2))))
         as [mem'|] eqn:Es; [|discriminate]. injection Hst as <-.
@@ -778,7 +775,7 @@ Proof.
         cbn [setx ms_pc_val ms_svc_pending ms_resv ms_rom ms_mem]; try reflexivity; try (rewrite Esc; assumption); try assumption.
       * pc4 Hpc.
       * apply RRegs_set; [exact Hregs | apply XL_val; reflexivity].
-  - (* [comment removed for export] *)
+  -
     destruct (a_budget A + 16384 <=? LIM) eqn:Ebud; [|discriminate]. apply Z.leb_le in Ebud.
     destruct (a_aligned (a_facts A) w0 (aget (a_regs A) (ri rs1))) eqn:Eal; [|discriminate].
     pose proof (a_aligned_sound ρ _ w0 _ _ Hsat (Hregs rs1) Eal) as Hali.
@@ -786,7 +783,7 @@ Proof.
     destruct (a_load4_sound segs ρ (a_facts A) (a_mem A) (ms_mem ms) _ _ (amo_n w0) l Hlow Hsat Hmem Hhs (Hregs rs1) (amo_lt w0) Eb) as [bs [Hr Hf2]].
     pose proof (a_load4_length segs _ _ _ _ _ Eb) as Hlen.
     destruct w0.
-    + (* [comment removed for export] *)
+    +
       cbn [amo_n] in *.
       destruct (a_store4 segs (a_facts A) (a_mem A) (aget (a_regs A) (ri rs1)) (amo_bytes_w (a_facts A) op (val_of_bytes (a_facts A) SZ4 true l) (aget (a_regs A) (ri rs2))))
         as [mem'|] eqn:Es; [|discriminate]. injection Hst as <-.
@@ -803,7 +800,7 @@ Proof.
       * pc4 Hpc.
       * apply RRegs_set; [exact Hregs|]. exact (val_of_bytes_sound ρ (a_facts A) SZ4 true l bs Hsat Hf2 Hlen).
       * apply RResv_store. exact Hres.
-    + (* [comment removed for export] *)
+    +
       cbn [amo_n] in *.
       destruct (a_store4 segs (a_facts A) (a_mem A) (aget (a_regs A) (ri rs1)) (amo_bytes_d (a_facts A) op (val_of_bytes (a_facts A) SZ8 true l) (aget (a_regs A) (ri rs2))))
         as [mem'|] eqn:Es; [|discriminate]. injection Hst as <-.

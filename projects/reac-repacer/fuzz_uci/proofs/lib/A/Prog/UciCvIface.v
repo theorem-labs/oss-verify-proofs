@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-10: the addresses, frame shape and inlined-expected_value statement of reac-repacer/fuzz_uci's
-   check_value in image A, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_iface.v and crtA_loop_stmt.v
-   (origin/ossv/recipes 88154566652a); the expected_value statement is the footprint twin of the plain walk's
+   check_value in image A, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_iface.v and crtA_loop_stmt.v;
+   the expected_value statement is the footprint twin of the plain walk's
    continuation form (lib/Prog/check_value.v, Section Ev, ev_block / KFIN). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciCvIface: what the pieces of the image-A walk of check_value (fuzz_uci.asan 0x7f62c = uci_sigma US_check_value)
    share, for the caller-journal statement lib/A/Prog/check_value_cg.v.
 

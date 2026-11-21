@@ -27,12 +27,13 @@
    that closes the record loop (K4 <= KL2 <= ... <= KO <= KRI <= KR <= K4).
 
    Rule 24 (task text of a Theorem Labs lane): a search of the proof index for LLVMFuzzerTestOneInput (index v5 built
-   2026-10-28T21:58:24Z, rebuilt 23:22:17Z, recipes 566eb6ffa5d) rc=0; the 30 named files are all in other units, and no
+   2026-10-28T21:58:24Z, rebuilt 23:22:17Z, recipes) rc=0; the 30 named files are all in other units, and no
    row names libreac/fuzz_pcap; the working-branch search found no Qed walk of it on any asan-ubsan image. CONFIRM
    (23:47Z): the released fuzz_pcap harness walks (lib/U/Prog/Slot/USegE.v etc.) are for the v1.8 UBSAN image (343
    instructions, 176-byte frame) against this pin's 530 instructions with a 256-byte frame and ASan instrumentation, so
    this is a new proof. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapEntrySkip.v, with its module paths and module names changed; 2326 of its 2461 lines of code are new or changed and 2297 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B phase file of fuzz_pcap's entry walk (LLVMFuzzerTestOneInput, 0x80818, asan-ubsan build of libreac v1.9.0):
    the TAIL, from the end of the end-of-walk check to the return (a Theorem Labs lane of entry-au-map.md
    (sha256 3f4d6f638159; internal record), the stretches R1 .. R7 and BT of lib/B/Prog/PcapEntryDefs.v). Every cut lemma has PcapEntryDefs.pe_from's form,

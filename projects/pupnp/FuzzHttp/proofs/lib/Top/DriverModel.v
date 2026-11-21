@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a descriptor step leaves the whole VM state, the kernel's build with it; the model's four new descriptor kinds). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import base list.
@@ -45,14 +46,16 @@ Section DM.
   Proof. intros X s mo [(L & _ & HK & _) _]. exact (kl_halt _ _ _ HK). Qed.
 
   Definition fdstep (mo mo' : Model) : Prop :=
-    minv mo' /\ m_halted mo' = None /\ m_vmmaps mo' = m_vmmaps mo /\ m_fs mo' = m_fs mo.
+    minv mo' /\ m_halted mo' = None /\ m_vm mo' = m_vm mo /\ m_fs mo' = m_fs mo.
 
   #[using="Type"] Lemma OW_fdstep : forall X s mo mo', OW X s mo -> fdstep mo mo' -> OW X s mo'.
   Proof.
     intros X s mo mo' [(L & Hc & HK & Hi) [Hnd [D1 D2]]] (M1 & M2 & M3 & M4).
     split; [| split; [exact Hnd| split; [exact D1| congruence]]].
     exists L. split; [exact Hc|]. split; [| exact Hi].
-    eapply KL_vm_eq; [exact HK| exact M1| exact M2| rewrite M3; reflexivity| rewrite M3; reflexivity| rewrite M3; reflexivity| rewrite M3; reflexivity| rewrite M3; reflexivity| rewrite M3; reflexivity].
+    assert (V : m_vmmaps mo' = m_vmmaps mo) by (unfold m_vmmaps; rewrite M3; reflexivity).
+    assert (Kn : m_kernel mo' = m_kernel mo) by (unfold m_kernel; rewrite M3; reflexivity).
+    eapply KL_vm_eq; [exact HK| exact M1| exact M2| rewrite V; reflexivity| rewrite V; reflexivity| rewrite V; reflexivity| rewrite V; reflexivity| rewrite V; reflexivity| rewrite V; reflexivity| rewrite V; reflexivity| exact Kn].
   Qed.
 
   #[using="Type"] Lemma OW_so : forall X s mo so, OW X s mo -> (length (so_buf so) <= 1024)%nat -> OW X (set_so_ps so s) mo.
@@ -82,7 +85,7 @@ Section DM.
       destruct (path_is_dirref (c :: p')); [exact (OR _ ST)|].
       destruct (fs_lookup (m_fs mo) (c :: p')); [exact (OR _ ST)| destruct ST as [_ ->]; apply fdstep_same; assumption].
     -   destruct ST as [_ ST].
-      destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid wr|dnr dnw| ]|]; try contradiction.
+      destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid wr|dnr dnw| |sid sside sst|ectx|dfam|aid aaf]|]; try contradiction.
       + destruct (fs_lookup (m_fs mo) p); [| contradiction]. destruct ST as [_ ->]. apply fdstep_with_fds; [exact M'| exact H].
       + destruct ST as [_ ->]. apply fdstep_same; assumption.
       + destruct ST as [_ ->]. apply fdstep_same; assumption.

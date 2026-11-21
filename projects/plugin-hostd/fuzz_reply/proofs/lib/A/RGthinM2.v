@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocARetM.v, with its module paths, module names and numbers changed; 237 of its 350 lines of code are new or changed and 119 lines of the source are left out. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinM2.v (commit 66a127cb11e, sha256 bdda493bf5b7; internal record, reply A text, no relocation); no other change. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinM2.v (sha256 bdda493bf5b7; internal record, reply A text, no relocation); no other change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply.asan: the machine runs of the thin realloc segments that end at realloc's return (the epilogues of
    Reallocate, asan_realloc and the interceptor), see RGthinM.v for the provenance:
    - [m3]: Deallocate's return into Reallocate (0x3270c) -> realloc's return with a0 = the new block

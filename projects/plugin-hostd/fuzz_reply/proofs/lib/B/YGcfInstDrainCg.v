@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b: the MODEL side of F11, the free-array growth arm of
    SizeClassAllocator64LocalCache::Deallocate (ReturnToAllocator -> EnsureFreeArraySpace -> a KMapFreeArray grant).
    rule 24: no function proved (kind: model-level facts of ensure_free_array's grant step).
@@ -112,7 +113,7 @@ unfold cgX, upd_reg. rewrite prim_committed_set_region by (lia || exact Hlenr). 
 unfold reg. lia.
 Qed.
 
-(* The budget at the grant: abudget_cf carries prim_committed / 8 (the primary's shadow, layer ae2fa80b0325), so a
+(* The budget at the grant: abudget_cf carries prim_committed / 8 (the primary's shadow, layer), so a
    free-array grant raises it by the map AND its shadow (lane F2b's second hand measured the text). *)
 Lemma cg_abudget : abudget_cf cgX = abudget_cf X + kFreeArrayMapSize + kFreeArrayMapSize / 8.
 Proof.
@@ -174,14 +175,28 @@ pose proof cgp_fa as [[F0 F1] _]. pose proof (region_in_prim ly c cgp_LO ltac:(l
 unfold fa_base, region_base in *. unfold kFreeArrayOffset, kFreeArrayMax, kUserMapSize, kFreeArrayMapSize in *. lia.
 Qed.
 
-(* The next free-array slot is not reserved by the image: only the image's segments are reserved (alc_reserved). *)
+(* The next free-array slot is not reserved: the image's segments are below it, and at 727298f3 the reservation
+   tail past them misses the primary reserve that holds the slot (alc_reserved, YG0n.res_tail_ok). *)
 Lemma cgp_reserved : region_free (vm_reserved (m_vmmaps md)) (w64 fadr) (w64 kUserMapSize) = true.
 Proof.
-rewrite (alc_reserved _ _ _ _ cgp_LED). pose proof cgp_slot as (S1 & S2 & S3). 
-apply region_free_reserved; [exact (RL.al_img_env_cf im_segs ly X md cgp_LO cgp_LED) | | unfold kUserMapSize; lia |].
-- unfold kImgEnd, kHighMemBeg in *. lia.
-- pose proof (lo_high _ cgp_LO) as IP. unfold in_high in IP. cbn [fst snd] in IP. pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as CR.
-  unfold ASAN_CEIL in *. lia.
+destruct (alc_reserved _ _ _ _ cgp_LED) as (rx & Hrx & _ & _ & _ & RP).
+rewrite Hrx, YK13.region_free_app. pose proof cgp_slot as (S1 & S2 & S3). apply andb_true_iff. split.
+- apply region_free_reserved; [exact (RL.al_img_env_cf im_segs ly X md cgp_LO cgp_LED) | | unfold kUserMapSize; lia |].
+  + unfold kImgEnd, kHighMemBeg in *. lia.
+  + pose proof (lo_high _ cgp_LO) as IP. unfold in_high in IP. cbn [fst snd] in IP. pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as CR.
+    unfold ASAN_CEIL in *. lia.
+- pose proof (lo_high _ cgp_LO) as IP. unfold in_high in IP. pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as CR.
+  unfold ASAN_CEIL, kHighMemBeg in *.
+  assert (B1 : 0 <= ly_prim ly < 2 ^ 64) by (unfold kPrimResvSize in IP; lia).
+  assert (B2 : 0 <= kPrimResvSize < 2 ^ 64) by (unfold kPrimResvSize in *; lia).
+  (* the slot's own size is a literal: without it unfolded [lia] has no upper bound on the slot *)
+  assert (B3 : 0 <= fadr < 2 ^ 64) by (unfold kUserMapSize in *; lia).
+  assert (B4 : 0 <= kUserMapSize < 2 ^ 64) by (unfold kUserMapSize; lia).
+  apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink rx
+    (Z_to_bv 64 (ly_prim ly)) (Z_to_bv 64 kPrimResvSize)); [exact RP | |];
+  try unfold YG0n.w64; try unfold w64; cbv [w64] in *;
+  rewrite ?(unsigned_lit_small _ B1), ?(unsigned_lit_small _ B2), ?(unsigned_lit_small _ B3), ?(unsigned_lit_small _ B4);
+  lia.
 Qed.
 
 
@@ -311,7 +326,7 @@ destruct (cgp_zones_apart z Hz) as (Z0 & Z1 & DJ).
 unfold in_zr in Hav. exact (cgp_zone_apart z a Z0 Z1 DJ ltac:(lia) Ha).
 Qed.
 
-(* The new map's shadow bytes are present (FGtN.v:95). *)
+(* The new map's shadow bytes are present (FGtN.v:96). *)
 Lemma cgp_shadow : forall a, shadow_addr fadr <= a < shadow_addr fadr + 32768 -> mem (w64 a) <> None.
 Proof.
 intros a Ha. pose proof cgp_slot as (S1 & S2 & S3). destruct cgp_al8 as [q Hq].
@@ -344,7 +359,7 @@ Qed.
 Lemma cgp_amwf : amwf md. Proof. exact (proj1 (proj2 (proj2 (proj2 MR)))). Qed.
 Lemma cgp_top : YM05.ceil_of_top (alloc_top (m_vmmaps md)). Proof. exact (alc_top _ _ _ _ cgp_LED). Qed.
 
-(* The growth arm's premise side, as H3 asks it (DMcdR.rd_grow, commit 74b7ca9a0cc): everything but the byte budget,
+(* The growth arm's premise side, as H3 asks it (DMcdR.rd_grow): everything but the byte budget,
    which is the named OPEN premise FREE_ROOM_cf. *)
 Lemma cgp_rd_grow : FREE_ROOM_cf md W ->
 region_free (vm_reserved (m_vmmaps md)) (w64 fadr) (w64 kUserMapSize) = true /\

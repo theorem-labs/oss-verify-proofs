@@ -12,9 +12,9 @@
    stack_free_state. The return is YA0o.SRr_ret_at. The four statics (B's FS_PSTAT_FP) lie in fs.asan-ubsan's last RW
    segment [0xa1000, 0x5fd000) (AsanUbsan_segment_003, the same range as A's).
    rule 24: proves function LLVMFuzzerTestOneInput (segment S9; reuse search: proof-index LLVMFuzzerTestOneInput,
-   no released asan or asan-ubsan proof of fuzz_state's LLVMFuzzerTestOneInput; ported from a working branch
-   08ad70da3bf).
-   Ported from: lib/A/FSW_entry_s9.v (a working branch 0d34d65d2b7); every address from the B listing.
+   no released asan or asan-ubsan proof of fuzz_state's LLVMFuzzerTestOneInput; ported from a working branch).
+   
+   Ported from: lib/A/FSW_entry_s9.v (a working branch); every address from the B listing.
    RELOC-B hypotheses: none (the Section hypotheses ML, ASF, FFL are discharged in lib/B/FSW_entry.v from the goal's
    TfibLib B, FsEntryRt and FSW_entry_link.fe_frame_flag_law). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

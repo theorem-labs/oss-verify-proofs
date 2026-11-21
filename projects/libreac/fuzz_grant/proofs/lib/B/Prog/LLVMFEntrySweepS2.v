@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: image-B walk segment; lines 228-235 follow the shape of cgif_file_fuzzer lib/A/AC8a.v:29 (licscan run). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 2 of the sweep phase of fuzz_grant's entry function on IMAGE B:
    0x81450 .. 0x815d0 (listing 0xa14 .. 0xb94), the inlined check_row loop
    (fuzz_grant.c:313-314, check_row at :94-113), by induction on the rows left.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS2.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepS2.v (a working branch, blob
    38868c298, 425 lines), which carries no licence header of its own.
    Image B hoists twelve constants where image A
    hoists seven, holds the buffer in s11 and the row in s8, reads the shadow offset

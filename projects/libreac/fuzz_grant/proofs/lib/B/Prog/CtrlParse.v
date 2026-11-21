@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_grant. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) walk of reac_ctrl_parse 0x82774, in the shape of lib/A/Prog/CtrlParse.v at a working branch 603e40683a4 (image A 0x82000), with image B's addresses, objects and the B-only UBSan branches; B's function is 2692 bytes / 673 instructions against A's 2464 / 616. Source blob de33ee0576e4 (lib/A/Prog/CtrlParse.v at a working branch 603e40683a4; the same blob at 7e98c198edd). *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) walk of reac_ctrl_parse 0x82774, in the shape of lib/A/Prog/CtrlParse.v at a working branch (image A 0x82000), with image B's addresses, objects and the B-only UBSan branches; B's function is 2692 bytes / 673 instructions against A's 2464 / 616. Source blob de33ee0576e4 (lib/A/Prog/CtrlParse.v at a working branch; the same blob). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x82774) of image B (fuzz_grant.asan-ubsan): its contract, in the caller-journal form
    (it writes the caller's `struct reac_ctrl_parsed`), and its walk on the position-abstract listing.
    The function takes a side-stack frame of class 1, calls __asan_memset once, __asan_memcpy twice,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the RomBase.sys_rob premise of each node lemma, for node_ok's third conjunct). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require MmapSim.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require BWorld ShapeAlg.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.SimInv OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.CatSim.ExitSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.CatSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.MmapSim.FileSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.BWorld OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.ShapeAlg.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 
 Import ListNotations.
 Open Scope bv_scope.
@@ -92,10 +94,11 @@ Lemma node_chk_ev : forall ms model x8 (I : Type)
   (~ syscall_spec_acfg (sys_input segs ms x8) model Unmodeled) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, m_vm_lazy (ms' i) = []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) I evs
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
 Proof.
-  intros ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hnu Hh' Hlazy. split.
+  intros ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hnu Hh' Hlazy Hrob. split; [| split; [| exact Hrob]].
   - intros i. apply (sstep_of_spec ms model x8); auto.
   - intros e st Hss.
     destruct (sstep_svc_inv ms model x8 e st Hsvc Hss)
@@ -123,10 +126,11 @@ Lemma node_family : forall ms model x8 (I : Type)
   (forall o, R o -> exists i, o = Ok (effs i) (ms' i) (evs i)) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, m_vm_lazy (ms' i) = []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) I evs
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
 Proof.
-  intros ms model x8 I effs ms' evs R Hh Hsvc HR Hin Hout Hh' Hlazy.
+  intros ms model x8 I effs ms' evs R Hh Hsvc HR Hin Hout Hh' Hlazy Hrob.
   apply (node_chk_ev ms model x8 I effs ms' evs Hh Hsvc).
   - intros i. apply HR. apply Hin.
   - intros eff m' ev Hc. apply HR in Hc. destruct (Hout _ Hc) as (i & Hi).
@@ -134,6 +138,7 @@ Proof.
   - intros Hc. apply HR in Hc. destruct (Hout _ Hc) as (i & Hi). exact (Unmodeled_Ok _ _ _ Hi).
   - exact Hh'.
   - exact Hlazy.
+  - exact Hrob.
 Qed.
 
 (* [comment removed for export] *)
@@ -143,16 +148,18 @@ Lemma node_det : forall ms model x8 eff0 m0 evs0,
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 evs0) ->
   m_halted m0 = None ->
   m_vm_lazy m0 = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) unit (fun _ => evs0)
           (fun _ => mkCfg (advance_past_svc (apply_effect ms eff0)) m0).
 Proof.
-  intros ms model x8 eff0 m0 evs0 Hh Hsvc Hchk Hh0 Hlazy0.
+  intros ms model x8 eff0 m0 evs0 Hh Hsvc Hchk Hh0 Hlazy0 Hrob.
   apply (node_family ms model x8 unit (fun _ => eff0) (fun _ => m0) (fun _ => evs0)
            (fun o => o = Ok eff0 m0 evs0) Hh Hsvc (syscall_spec_acfg_det _ _ _ _ _ Hchk)).
   - intros []. reflexivity.
   - intros o ->. exists tt. reflexivity.
   - intros []; exact Hh0.
   - intros []; exact Hlazy0.
+  - exact Hrob.
 Qed.
 
 (* [comment removed for export] *)
@@ -162,12 +169,13 @@ Lemma node_ret_only : forall ms model x8 r m' evs,
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffect r [] []) m' evs) ->
   m_halted m' = None ->
   m_vm_lazy m' = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) unit (fun _ => evs)
           (fun _ => mkCfg (advance_past_svc (set_gpr0 ms r)) m').
 Proof.
-  intros ms model x8 r m' evs Hh Hsvc Hchk Hh' Hlazy.
+  intros ms model x8 r m' evs Hh Hsvc Hchk Hh' Hlazy Hrob.
   rewrite <- (apply_effect_no_write ms r).
-  apply (node_det ms model x8 (mkEffect r [] []) m' evs Hh Hsvc Hchk Hh' Hlazy).
+  apply (node_det ms model x8 (mkEffect r [] []) m' evs Hh Hsvc Hchk Hh' Hlazy Hrob).
 Qed.
 
 (* [comment removed for export] *)
@@ -178,12 +186,13 @@ Lemma node_ret_only_copyins : forall ms model x8 reads r m' evs,
              <-> o = Ok (with_copyins reads (mkEffect r [] [])) m' evs) ->
   m_halted m' = None ->
   m_vm_lazy m' = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) unit (fun _ => evs)
           (fun _ => mkCfg (advance_past_svc (set_gpr0 ms r)) m').
 Proof.
-  intros ms model x8 reads r m' evs Hh Hsvc Hchk Hh' Hlazy.
+  intros ms model x8 reads r m' evs Hh Hsvc Hchk Hh' Hlazy Hrob.
   rewrite <- (apply_effect_copyins_no_write ms r reads).
-  apply (node_det ms model x8 (with_copyins reads (mkEffect r [] [])) m' evs Hh Hsvc Hchk Hh' Hlazy).
+  apply (node_det ms model x8 (with_copyins reads (mkEffect r [] [])) m' evs Hh Hsvc Hchk Hh' Hlazy Hrob).
 Qed.
 
 (* [comment removed for export] *)
@@ -197,10 +206,11 @@ Lemma rz_ret_only_silent : forall ms model x8 r m' T,
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffect r [] []) m' []) ->
   m_halted m' = None ->
   m_vm_lazy m' = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   realizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hlazy Hc.
+  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hlazy Hrob Hc.
   eapply rz_silent1; [eapply node_ret_only; eassumption | exact Hc].
 Qed.
 
@@ -211,10 +221,11 @@ Lemma rz_ret_only_copyins_silent : forall ms model x8 reads r m' T,
              <-> o = Ok (with_copyins reads (mkEffect r [] [])) m' []) ->
   m_halted m' = None ->
   m_vm_lazy m' = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   realizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 reads r m' T Hh Hsvc Hchk Hh' Hlazy Hc.
+  intros ms model x8 reads r m' T Hh Hsvc Hchk Hh' Hlazy Hrob Hc.
   eapply rz_silent1; [eapply node_ret_only_copyins; eassumption | exact Hc].
 Qed.
 
@@ -225,10 +236,11 @@ Lemma rz_det : forall ms model x8 eff0 m0 T,
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 []) ->
   m_halted m0 = None ->
   m_vm_lazy m0 = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   realizes segs (mkCfg (advance_past_svc (apply_effect ms eff0)) m0) T ->
   realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 eff0 m0 T Hh Hsvc Hchk Hh0 Hlazy0 Hc.
+  intros ms model x8 eff0 m0 T Hh Hsvc Hchk Hh0 Hlazy0 Hrob Hc.
   eapply rz_silent1; [eapply node_det; eassumption | exact Hc].
 Qed.
 
@@ -271,9 +283,10 @@ Lemma node_open : forall ms model x8 reads (mk : word -> Model),
   (forall fd, m_halted (mk fd) = None) ->
   (forall fd, m_vm_lazy (mk fd) = []) ->
   fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) (open_I model) (fun _ => []) (open_nx ms model mk).
 Proof.
-  intros ms model x8 reads mk Hh Hlazy Hsvc Hchk Hmk Hmklazy Hfree.
+  intros ms model x8 reads mk Hh Hlazy Hsvc Hchk Hmk Hmklazy Hfree Hrob.
   pose (effs := fun i : open_I model => match i with
           | inl (exist _ e _) => with_copyins reads (mkEffect (errno_ret e) [] [])
           | inr _ => with_copyins reads (mkEffect (alloc_fd (m_fds model)) [] []) end).
@@ -282,21 +295,21 @@ Proof.
   assert (Enx : forall i, open_nx ms model mk i
                           = mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
   { intros [[e He] | []]; cbn [open_nx effs ms']; rewrite apply_effect_copyins_no_write; reflexivity. }
-  split.
+  split; [| split; [| exact Hrob]].
   - intros i. rewrite Enx.
     apply (proj1 (node_family ms model x8 (open_I model) effs ms' (fun _ => []) _ Hh Hsvc Hchk
                     ltac:(intros [[e He] | []]; [left; exists e; auto | right; auto])
                     ltac:(intros o [(e & He & ->) | (Hlk & ->)];
                             [exists (inl (exist _ e He)) | exists (inr tt)]; reflexivity)
                     ltac:(intros [[e He] | []]; [exact Hh | apply Hmk])
-                    ltac:(intros [[e He] | []]; [exact Hlazy | apply Hmklazy])) i).
+                    ltac:(intros [[e He] | []]; [exact Hlazy | apply Hmklazy]) Hrob) i).
   - intros e st Hss.
-    destruct (proj2 (node_family ms model x8 (open_I model) effs ms' (fun _ => []) _ Hh Hsvc Hchk
+    destruct (proj1 (proj2 (node_family ms model x8 (open_I model) effs ms' (fun _ => []) _ Hh Hsvc Hchk
                     ltac:(intros [[er Her] | []]; [left; exists er; auto | right; auto])
                     ltac:(intros o [(er & Her & ->) | (Hlk & ->)];
                             [exists (inl (exist _ er Her)) | exists (inr tt)]; reflexivity)
                     ltac:(intros [[er Her] | []]; [exact Hh | apply Hmk])
-                    ltac:(intros [[er Her] | []]; [exact Hlazy | apply Hmklazy])) e st Hss)
+                    ltac:(intros [[er Her] | []]; [exact Hlazy | apply Hmklazy]) Hrob)) e st Hss)
       as (i & -> & ->).
     exists i. rewrite Enx. split; reflexivity.
 Qed.
@@ -309,13 +322,14 @@ Lemma rz_open : forall ms model x8 reads (mk : word -> Model) A B,
   (forall fd, m_halted (mk fd) = None) ->
   (forall fd, m_vm_lazy (mk fd) = []) ->
   fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall e, In e openat_errnos ->
      realizes segs (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model) A) ->
   realizes segs (mkCfg (advance_past_svc (set_gpr0 ms (alloc_fd (m_fds model))))
                        (mk (alloc_fd (m_fds model)))) B ->
   realizes segs (mkCfg ms model) (t_alt2 A B).
 Proof.
-  intros ms model x8 reads mk A B Hh Hlazy Hsvc Hchk Hmk Hmklazy Hfree HA HB.
+  intros ms model x8 reads mk A B Hh Hlazy Hsvc Hchk Hmk Hmklazy Hfree Hrob HA HB.
   apply (rz_alt2 segs (mkCfg ms model) {e : Z | In e openat_errnos} unit
            (open_nx ms model mk) A B (exist _ ENOMEM ENOMEM_in_openat_errnos) tt).
   - eapply node_open; eassumption.

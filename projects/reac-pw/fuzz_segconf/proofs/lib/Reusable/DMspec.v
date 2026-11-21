@@ -1,6 +1,7 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DMspec.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DMspec.v (c-asan, frozen), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The contract of Quarantine::Drain (0x32f58) with the REAL MergeBatches, for the shared (reply / preset)
    allocator instance, in the form of cgif_file's released tfib_drain_spec (YFeu.v:190-208).
 

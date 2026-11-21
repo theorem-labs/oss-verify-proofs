@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YD1k.v (origin/ossv/recipes c8557374ad2e) for fuzz_preset's asan-ubsan image of pin #102 (sha256 d663f82d7f48...) on 2026-10-29 by the start-up tool of record gen_ad1k.py (sha256 814c81b8966e..., frozen set startup-set-2026-10-29 of the shared tools repository, run only through frozen-run.sh sha256 40cd8a4bf5bf...), with its module paths changed and only its image literals regenerated: the YD2j chunk restatements from the generated lib/Reusable/YD2j.v, the zero-shadow and rodata-hull bounds from lib/Reusable/YF0m.v and the image's asan_globals, the stdio FILE addresses read from the unstripped twin (sha256 c90d4fa54d43...) *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YD1k.v (theorem-labs/oss-verify-proofs@6b32741d849a) for fuzz_preset's asan-ubsan image of pin #102 (sha256 d663f82d7f48...) on 2026-10-29 by the start-up tool of record gen_ad1k.py (sha256 814c81b8966e..., frozen set startup-set-2026-10-29 of the shared tools repository, run only through frozen-run.sh sha256 40cd8a4bf5bf...), with its module paths changed and only its image literals regenerated: the YD2j chunk restatements from the generated lib/Reusable/YD2j.v, the zero-shadow and rodata-hull bounds from lib/Reusable/YF0m.v and the image's asan_globals, the stdio FILE addresses read from the unstripped twin (sha256 c90d4fa54d43...) *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* The rodata hull bound of rodata_hull_zero / rodata_shadow_facts (`p + n <= 0x20f40`) is the image's LOWEST asan global beg FLOORED TO 64 BYTES, not the beg itself: this image's lowest beg is 0x20f60, which is 32 bytes into its 64-byte group, and one shadow word covers 64 memory bytes, so a word read at p + n = 0x20f60 would already read that global's own shadow. Every gen_ad1k before sha256 814c81b8966e emitted the unfloored beg and made the lemma false for such an image. *)
-(* The text outside those literals is the text of this file on cold/h-pre-b3-bp-startup (the relocation re-fit of 7f2272138d2: the YImgCellsB.B_* names in the unfold lists); the regenerated literals were carried into it by a three-way merge whose base is gen_ad1k 814c81b8966e's own output for the old pin f8f98a95bc52, which is byte-identical to that file's generated text. *)
+(* The text outside those literals is the text of this file on cold/h-pre-b3-bp-startup (the relocation re-fit: the YImgCellsB.B_* names in the unfold lists); the regenerated literals were carried into it by a three-way merge whose base is gen_ad1k 814c81b8966e's own output for the old pin f8f98a95bc52, which is byte-identical to that file's generated text. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YImgTop YImgCellsB.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -322,7 +323,7 @@ unfold aview. rewrite Hm. unfold img_byte. reflexivity.
 Qed.
 Theorem tfib_fwrite_site : fwrite_site_tfa B est.
 Proof.
-intros ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd HAI HPOST.
+intros ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as ([IR1a IR1b] & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
@@ -350,7 +351,9 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+(* [fdchan]'s third conjunct at LPS 727298f3 is the model's channel reader, which the
+   site takes beside the descriptor. *)
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -363,7 +366,7 @@ Lemma msg_refused_eq : map (Z_to_bv 8) YE3l.msg_refused = YO05.msg_refused /\ Z.
 Proof. vm_compute. split; reflexivity. Qed.
 Theorem tfib_refused_site : refused_site_tfa B est.
 Proof.
-intros ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd HAI HPOST.
+intros ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as (IR1 & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof msg_refused_eq as [ME ML].
@@ -383,7 +386,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero ly S W mem md); [exact HAR | unfold FMT_refused, YImgCellsB.B_RODATA_0X9480; lia | unfold FMT_refused, YImgCellsB.B_RODATA_0X9480; lia | lia].
-- split; [exact Hfd | reflexivity].
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-phase stack floor is sp0 - 6144512, the window the revision's launch maps; the payload-loop invariant PLA carries the channel reader, pa_rdr, which the revision's writev reads; PLA_presA, PLA_munch and PLA_incb take that it is kept, and xout_of_tmem and ret_finA that it is on, each after its fd premise; the target phase threads it from TINVA to printf1A and finA). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -76,7 +77,7 @@ Local Ltac2 e25kn_keep_near (t : Init.constr) : Init.unit :=
               end
   end.
 Ltac ff_keep_near t ::= let f := ltac2:(t |- e25kn_keep_near (Option.get (Ltac1.to_constr t))) in f t.
-Ltac2 gd_tbl_A_main_target () : Init.string Init.list := ["Corelib.Init.Datatypes.list"; "OSSVerify.KrLib.Lib.Frame.ivl"; "stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.option"; "OSSVerify.KrLib.Lib.Mem.mem_inv"; "OSSVerify.KrLib.A.AImg.asegs"; "OSSVerify.KrLib.Lib.Frame.munch"; "Corelib.Numbers.BinNums.Z"; "Corelib.Init.Logic.and"; "Stdlib.ZArith.BinInt.Z.le"; "Stdlib.ZArith.BinInt.Z.lt"; "Stdlib.ZArith.BinInt.Z.pow"; "Corelib.Init.Logic.not"; "OSSVerify.KrLib.Lib.Frame.outside"; "Corelib.Init.Logic.eq"; "Corelib.Init.Datatypes.bool"; "OSSVerify.KrLib.Lib.Mem.ro_addr"; "OSSVerify.KrLib.Lib.Mem.wa"; "Corelib.Init.Datatypes.false"; "Corelib.Init.Datatypes.cons"; "OSSVerify.KrLib.Lib.Cells.cell"; "OSSVerify.KrLib.Lib.Cells.CB"; "OSSVerify.KrLib.Lib.Cells.C8"; "stdpp.bitvector.definitions.Z_to_bv"; "OSSVerify.KrLib.A.A_main_inv.RS"; "OSSVerify.KrLib.Lib.Mem.sxb"; "Stdlib.ZArith.BinInt.Z.add"; "Corelib.Init.Datatypes.nil"; "Corelib.Init.Logic.or"; "OSSVerify.KrLib.LibA.ARt.arl_stklo"; "Stdlib.ZArith.BinInt.Z.sub"; "stdpp.bitvector.definitions.bv_unsigned"; "Corelib.Init.Datatypes.prod"; "Corelib.Init.Datatypes.pair"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state"; "Corelib.Init.Logic.ex"; "OSSVerify.KrLib.Lib.MState.MS"; "OSSVerify.KrLib.Lib.Frame.mkR"; "LinuxProcessSemantics.Riscv.Prelude.bvmap_empty"; "Corelib.Init.Datatypes.None"; "OSSVerify.KrLib.Lib.PropExec.seg_rom"; "Target.T1W"; "OSSVerify.KrLib.Lib.Frame.wmono"; "OSSVerify.KrLib.Lib.Frame.stk"; "OSSVerify.KrLib.Lib.Step.rw_cells"; "Target.TRFA"; "OSSVerify.KrLib.A.A_exit_front1.atexit_cells"; "Stdlib.ZArith.BinInt.Z.eqb"; "OSSVerify.KrLib.LibA.ALazy.crange"; "OSSVerify.KrLib.Lib.Cells.C1"; "OSSVerify.KrLib.A.AImgRT.asan_rtc"; "OSSVerify.KrLib.Lib.Step.ro_cells"; "OSSVerify.KrLib.LibA.AEvtA.evtA"; "Target.T1_post"; "Corelib.Init.Datatypes.nat"; "Stdlib.ZArith.BinInt.Z.of_nat"; "OSSVerify.KrLib.Lib.PropExec.rdn"; "Corelib.Init.Datatypes.Some"; "OSSVerify.KrLib.LibA.ARt.HST"; "OSSVerify.KrLib.Lib.HeapIface.blk"; "Target.TMEM"; "Target.tcell"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.wview"; "OSSVerify.KrLib.LibA.ARt.HM"; "OSSVerify.KrLib.LibA.ARt.presA"; "OSSVerify.KrLib.LibA.ARtDrv.drv_static"; "OSSVerify.KrLib.LibA.ARt.sshad"; "Stdlib.ZArith.BinInt.Z.mul"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes"; "OSSVerify.KrLib.A.AImgGlobals.img_shadow_ok"; "Target.incbA"; "Target.TREGS"; "OSSVerify.KrLib.A.ATopContract.FUZZ_ENTRY"; "Target.RREGS"; "OSSVerify.KrLib.A.A_main_hdr.status"; "OSSVerify.KrLib.Lib.Frame.disjoint_from"; "OSSVerify.KrLib.A.A_main_fin.xmemA"; "Stdlib.Lists.List.In"; "Target.xmem_cells"; "OSSVerify.KrLib.A.A_exit_base.file_clean"; "Stdlib.ZArith.BinInt.Z.div"; "Stdlib.ZArith.BinInt.Z.modulo"; "OSSVerify.KrLib.A.A_printf1.pf_mem"; "OSSVerify.KrLib.A.A_printfN0.pn_memA"; "OSSVerify.KrLib.A.A_printfN0.WP"; "OSSVerify.KrLib.A.A_printfN2.pn_memA"; "OSSVerify.KrLib.A.A_printfN2.WP"; "OSSVerify.KrLib.A.A_printfN4.pn_memA"; "OSSVerify.KrLib.A.A_printfN4.WP"; "LinuxProcessSemantics.LinuxProcessSem.State.Model"; "Corelib.Init.Peano.le"; "LinuxProcessSemantics.LinuxProcessSem.State.FdEntry"; "LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fds"; "LinuxProcessSemantics.LinuxProcessSem.State.FdChannel"; "OSSVerify.KrLib.A.A_main_fin.xoutA"; "OSSVerify.KrLib.Spec.Spec.zero_lines"; "Corelib.Init.Nat.sub"; "Target.PLoopA.PLA"; "OSSVerify.KrLib.Spec.SInv.si_fp"; "OSSVerify.KrLib.LibA.ARt.arl_L"; "OSSVerify.KrLib.LibA.ARt.HK"; "OSSVerify.KrLib.LibA.ARt.htop"; "OSSVerify.KrLib.LibA.ARt.hstkhi"; "OSSVerify.KrLib.Spec.SInv.si_P"; "LinuxProcessSemantics.LinuxProcessSem.Fs.Fs"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fs"; "OSSVerify.KrLib.BB.StoreOk.mem_grows"; "Target.out_state"; "OSSVerify.KrLib.Lib.Shape.TSet"; "OSSVerify.KrLib.LibA.ARt.havol"; "OSSVerify.KrLib.LibA.ARt.AVOL_MAX"; "OSSVerify.KrLib.LibA.ARt.hfr"; "OSSVerify.KrLib.LibA.ARt.FR_MAX"; "OSSVerify.KrLib.LibA.ACnt24.cnt24"; "OSSVerify.KrLib.LibA.ACnt24.C24MAX"; "LinuxProcessSemantics.LinuxProcessSem.State.event"; "Corelib.Init.Datatypes.app"; "OSSVerify.KrLib.LibA.SRz.srealizesJ"; "LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg"; "OSSVerify.KrLib.Lib.Shape.t_emit"; "OSSVerify.KrLib.Spec.Spec.W"; "Corelib.Init.Datatypes.S"; "OSSVerify.KrLib.LibA.ARt.AVOL_CALL"; "OSSVerify.KrLib.LibA.ARt.fr_charge"; "OSSVerify.KrLib.A.A_main_hdr.FDS2"; "OSSVerify.KrLib.A.A_main_fin.atx_clause"; "OSSVerify.KrLib.A.A_main_loop.FRAMEA"; "OSSVerify.KrLib.Lib.Shape.t_exit"; "OSSVerify.KrLib.Spec.Spec.exit_code"; "Corelib.Init.Nat.add"; "Target.rsum"; "Target.fsum"; "Target.csum"; "OSSVerify.KrLib.Lib.Mem.bytes_at"; "Corelib.Init.Datatypes.length"; "Corelib.Lists.ListDef.skipn"].
+Ltac2 gd_tbl_A_main_target () : Init.string Init.list := ["Corelib.Init.Datatypes.list"; "OSSVerify.KrLib.Lib.Frame.ivl"; "stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.option"; "OSSVerify.KrLib.Lib.Mem.mem_inv"; "OSSVerify.KrLib.A.AImg.asegs"; "OSSVerify.KrLib.Lib.Frame.munch"; "Corelib.Numbers.BinNums.Z"; "Corelib.Init.Logic.and"; "Stdlib.ZArith.BinInt.Z.le"; "Stdlib.ZArith.BinInt.Z.lt"; "Stdlib.ZArith.BinInt.Z.pow"; "Corelib.Init.Logic.not"; "OSSVerify.KrLib.Lib.Frame.outside"; "Corelib.Init.Logic.eq"; "Corelib.Init.Datatypes.bool"; "OSSVerify.KrLib.Lib.Mem.ro_addr"; "OSSVerify.KrLib.Lib.Mem.wa"; "Corelib.Init.Datatypes.false"; "Corelib.Init.Datatypes.cons"; "OSSVerify.KrLib.Lib.Cells.cell"; "OSSVerify.KrLib.Lib.Cells.CB"; "OSSVerify.KrLib.Lib.Cells.C8"; "stdpp.bitvector.definitions.Z_to_bv"; "OSSVerify.KrLib.A.A_main_inv.RS"; "OSSVerify.KrLib.Lib.Mem.sxb"; "Stdlib.ZArith.BinInt.Z.add"; "Corelib.Init.Datatypes.nil"; "Corelib.Init.Logic.or"; "OSSVerify.KrLib.LibA.ARt.arl_stklo"; "Stdlib.ZArith.BinInt.Z.sub"; "stdpp.bitvector.definitions.bv_unsigned"; "Corelib.Init.Datatypes.prod"; "Corelib.Init.Datatypes.pair"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state"; "Corelib.Init.Logic.ex"; "OSSVerify.KrLib.Lib.MState.MS"; "OSSVerify.KrLib.Lib.Frame.mkR"; "LinuxProcessSemantics.Riscv.Prelude.bvmap_empty"; "Corelib.Init.Datatypes.None"; "OSSVerify.KrLib.Lib.PropExec.seg_rom"; "Target.T1W"; "OSSVerify.KrLib.Lib.Frame.wmono"; "OSSVerify.KrLib.Lib.Frame.stk"; "OSSVerify.KrLib.Lib.Step.rw_cells"; "Target.TRFA"; "OSSVerify.KrLib.A.A_exit_front1.atexit_cells"; "Stdlib.ZArith.BinInt.Z.eqb"; "OSSVerify.KrLib.LibA.ALazy.crange"; "OSSVerify.KrLib.Lib.Cells.C1"; "OSSVerify.KrLib.A.AImgRT.asan_rtc"; "OSSVerify.KrLib.Lib.Step.ro_cells"; "OSSVerify.KrLib.LibA.AEvtA.evtA"; "Target.T1_post"; "Corelib.Init.Datatypes.nat"; "Stdlib.ZArith.BinInt.Z.of_nat"; "OSSVerify.KrLib.Lib.PropExec.rdn"; "Corelib.Init.Datatypes.Some"; "OSSVerify.KrLib.LibA.ARt.HST"; "OSSVerify.KrLib.Lib.HeapIface.blk"; "Target.TMEM"; "Target.tcell"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.wview"; "OSSVerify.KrLib.LibA.ARt.HM"; "OSSVerify.KrLib.LibA.ARt.presA"; "OSSVerify.KrLib.LibA.ARtDrv.drv_static"; "OSSVerify.KrLib.LibA.ARt.sshad"; "Stdlib.ZArith.BinInt.Z.mul"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes"; "OSSVerify.KrLib.A.AImgGlobals.img_shadow_ok"; "Target.incbA"; "Target.TREGS"; "OSSVerify.KrLib.A.ATopContract.FUZZ_ENTRY"; "Target.RREGS"; "OSSVerify.KrLib.A.A_main_hdr.status"; "OSSVerify.KrLib.Lib.Frame.disjoint_from"; "OSSVerify.KrLib.A.A_main_fin.xmemA"; "Stdlib.Lists.List.In"; "Target.xmem_cells"; "OSSVerify.KrLib.A.A_exit_base.file_clean"; "Stdlib.ZArith.BinInt.Z.div"; "Stdlib.ZArith.BinInt.Z.modulo"; "OSSVerify.KrLib.A.A_printf1.pf_mem"; "OSSVerify.KrLib.A.A_printfN0.pn_memA"; "OSSVerify.KrLib.A.A_printfN0.WP"; "OSSVerify.KrLib.A.A_printfN2.pn_memA"; "OSSVerify.KrLib.A.A_printfN2.WP"; "OSSVerify.KrLib.A.A_printfN4.pn_memA"; "OSSVerify.KrLib.A.A_printfN4.WP"; "LinuxProcessSemantics.LinuxProcessSem.State.Model"; "Corelib.Init.Peano.le"; "LinuxProcessSemantics.LinuxProcessSem.State.FdEntry"; "LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fds"; "LinuxProcessSemantics.LinuxProcessSem.State.FdChannel"; "OSSVerify.KrLib.A.A_main_fin.xoutA"; "OSSVerify.KrLib.Spec.Spec.zero_lines"; "Corelib.Init.Nat.sub"; "Target.PLoopA.PLA"; "OSSVerify.KrLib.Spec.SInv.si_fp"; "OSSVerify.KrLib.LibA.ARt.arl_L"; "OSSVerify.KrLib.LibA.ARt.HK"; "OSSVerify.KrLib.LibA.ARt.htop"; "OSSVerify.KrLib.LibA.ARt.hstkhi"; "OSSVerify.KrLib.Spec.SInv.si_P"; "LinuxProcessSemantics.LinuxProcessSem.Fs.Fs"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fs"; "OSSVerify.KrLib.BB.StoreOk.mem_grows"; "Target.out_state"; "OSSVerify.KrLib.Lib.Shape.TSet"; "OSSVerify.KrLib.LibA.ARt.havol"; "OSSVerify.KrLib.LibA.ARt.AVOL_MAX"; "OSSVerify.KrLib.LibA.ARt.hfr"; "OSSVerify.KrLib.LibA.ARt.FR_MAX"; "OSSVerify.KrLib.LibA.ACnt24.cnt24"; "OSSVerify.KrLib.LibA.ACnt24.C24MAX"; "LinuxProcessSemantics.LinuxProcessSem.State.event"; "Corelib.Init.Datatypes.app"; "OSSVerify.KrLib.LibA.SRz.srealizesJ"; "LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg"; "OSSVerify.KrLib.Lib.Shape.t_emit"; "OSSVerify.KrLib.Spec.Spec.W"; "Corelib.Init.Datatypes.S"; "OSSVerify.KrLib.LibA.ARt.AVOL_CALL"; "OSSVerify.KrLib.LibA.ARt.fr_charge"; "OSSVerify.KrLib.A.A_main_hdr.FDS2"; "OSSVerify.KrLib.A.A_main_fin.atx_clause"; "OSSVerify.KrLib.A.A_main_loop.FRAMEA"; "OSSVerify.KrLib.Lib.Shape.t_exit"; "OSSVerify.KrLib.Spec.Spec.exit_code"; "Corelib.Init.Nat.add"; "Target.rsum"; "Target.fsum"; "Target.csum"; "OSSVerify.KrLib.Lib.Mem.bytes_at"; "Corelib.Init.Datatypes.length"; "Corelib.Lists.ListDef.skipn"; "LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader"; "Corelib.Init.Datatypes.true"].
 
 #[local] Unset Lia Cache.
 
@@ -144,7 +145,7 @@ Section Target.
   Hypothesis SPlo : 0x7fff80000000 <= bv_unsigned sp0.       (* [comment removed for export] *)
   Hypothesis SPhi : bv_unsigned sp0 <= 0x800000000000.       (* [comment removed for export] *)
   Hypothesis SPal : bv_unsigned sp0 mod 16 = 0.
-  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 8388608.
+  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 6144512.
   Variables (path : list byte) (pathp : word) (fs0 : Fs) (fdata : list byte).
   Hypothesis Hfs : fs_lookup fs0 path = Some fdata.
   Variables (can : word) (tid : Z) (wp0 rp0 wp1 rp1 : word).
@@ -740,10 +741,10 @@ Section Target.
 
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "0050?L11452209111.83L26099350762.83L37915873968.83L49825971688.83L66748131056.7100000T01301W02;02YS3sp04SPlo5fdata3msp3tsp2Ln2k'2K32HdS3sp05fdata3msp3tsp2Ln2k'2K32HdS3sp04SPlo5fdata3msp3tsp2Ln2k'2K32HdS3sp04SPlo5fdata3msp3tsp2Ln2k'2K32HdS3sp05fdata3msp3tsp2Ln2Hd1a2Ha". (* [comment removed for export] *)
-  Lemma xout_of_tmem : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Pm,P,(2.&40.)(3.(2.&8.))Pmo,$59.Ph,(3:.$5.VR,VHIA,)PLB,(0.$3;.)PLF,(0.$3;.)P,(3<.R6.R5.)P,(5:.R7.#4.)P,(>.(3.$5;.)(5<.(5=.R6.)(17.&40.+1.))(39.$5;.(5>.(17.&40.+1.))))P,(3?.$5.VR,VHIA,R6.R5.R4.R8.)(5?.R9.R8.(60.(61.R:.#1.)))")
+  Lemma xout_of_tmem : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Pm,P,(2.&40.)(3.(2.&8.))Pmo,$59.Ph,(3:.$5.VR,VHIA,)PLB,(0.$3;.)PLF,(0.$3;.)P,(3<.R6.R5.)P,(5:.R7.#4.)P,(>.(3.$5;.)(5<.(5=.R6.)(17.&40.+1.))(39.$5;.(5>.(17.&40.+1.))))P,(>.$?.(89.R7.)$8:.)P,(3?.$5.VR,VHIA,R7.R6.R5.R9.)(5?.R:.R9.(60.(61.R;.#1.)))")
 (* [comment removed for export] *).
   Proof.
-    intros d m mo h LB LF [XM CAN OS] Hd FD1 HH.
+    intros d m mo h LB LF [XM CAN OS] Hd FD1 RD1 HH.
     pose proof (hd_rtc _ _ _ HID m (hm_rtc _ _ HIA _ _ _ _ HH)) as RTC.
     destruct d as [|k]; cbn [out_state] in OS.
     - left. split; [reflexivity|]. exists (Z_to_bv 64 0), (Z_to_bv 64 0). apply stdout_pristine_clean. intros a Ha. apply OS. lia.
@@ -751,7 +752,7 @@ Section Target.
       + left. split; [reflexivity|]. exists (Z_to_bv 64 0x659da0), (Z_to_bv 64 0). destruct SB. unfold file_clean.
         change (0x659da0 + 2 * Z.of_nat 0) with 0x659da0 in *. repeat split; assumption.
       + right. exists 0x659da0, (0x659da0 + 2 * Z.of_nat (S k')), (Z_to_bv 64 0x659da0), (Z_to_bv 64 1024), (Z_to_bv 64 0), can.
-        split; [| exact FD1]. destruct SB. replace (S (S k') - 1)%nat with (S k') by lia. split; try assumption.
+        split; [| exact (conj FD1 RD1)]. destruct SB. replace (S (S k') - 1)%nat with (S k') by lia. split; try assumption.
         * lia.
         * rewrite zero_lines_length. lia.
         * rewrite zero_lines_length. unfold rw_bytes_max. lia.
@@ -860,6 +861,7 @@ Section Target.
       pa_frame : rw_cells asegs m msp (A_main_loop.FRAMEA sp0 pad);
       pa_fs : m_fs mo = fs0;
       pa_fds : m_fds mo = FDS2;
+      pa_rdr : m_channel_reader mo = true;   (* the revision's writev reads the channel reader *)
       pa_data : bytes_at asegs m DATA pay;
       pa_atx : exists (b : bool) (jp jq jf : list byte), atexit_cells b m (Z_to_bv 8 0) jp jq jf;   (* [comment removed for export] *)
       pa_incb : incbA m icb                                                                     (* [comment removed for export] *)
@@ -867,11 +869,11 @@ Section Target.
 
     (* [comment removed for export] *)
     Local Ltac2 Set LiaOrc.tbl := fun () => "00E0@L11556280553.122L13178042328.122L1808768547.122 L28818953388.126L31907629586.127L33668808604.122L33668808604.126L34034126860.120L36029363060.124L36029363060.128L36220967052.127L37265361884.127L40836481488.122L47486133700.127L51433590761.122L53753218194.122L56303887148.122L56672648374.122L59276408844.122L67811799308.120L68059204647.12200000_01L02102V03E03j04O05405^06H07207b08T09G0:50:d0;I0;n0<S0=80=]S3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3pay4TRFmS1R3sp05STKLO5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl4plen4DATA3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1a2HaS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1a2HaS3sp05fdata3msp3tsp2Ln3buf2cl4DATA3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl4plen5Hplen3PAY3payS3sp05fdata5STKHI6HSTKHI3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl4plen4DATA3PAY3pay3DLOS3sp04SPlo5fdata3pad3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo4SPal5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay". (* [comment removed for export] *)
-    Lemma PLA_presA : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Picb,(2.&8.)PLB,(0.$3;.)PLB',(0.$3;.)Pm,P,(2.&40.)(3.(2.&8.))Pm',P,(2.&40.)(3.(2.&8.))Pmo,$59.Pmo',$59.Ph,(3:.$5.VR,VHIA,)Ph',(3:.$5.VR,VHIA,)PW,(0.$1.)PSSP,$7.P,(62.R<.R;.R:.R8.R6.R4.)P,(40.$5.VR,R;.(1;.$3;.)Vtsp,R2.VSTKHI,R3.R9.R8.)P,(1<.(>.(0.$1.)R4.(1;.$1.))(>.(0.$1.)R4.(63.(64.VR,)VSI,)))P,(1<.(>.$7.R4.(1=.VR,))(>.$7.R4.Vtsp,))P,(3?.$5.VR,VHIA,R7.R=.(1;.$3;.)R;.)P,Pb,$3;.P,(4=.$3;.R1.R10.)(4=.$3;.R2.R10.)P,(65.$5.VR,VHIA,R9.R;.)P,(>.$7.(66.$5.VR,VHIA,R:.)VTOP,)P,(>.$7.(67.$5.VR,VHIA,R;.)VSTKHI,)P,(4.$5.R10.)P,(2;.$5.R11.(1=.VR,)Vtsp,)P,(42.$5.VAL,R12.(1=.VR,)Vtsp,)P,(68.(64.VR,)VSI,R13.)P,(>.$69.(6:.R12.)(6:.R13.))P,(>.(0.(20.(2.&40.)$5;.))(5=.R13.)(5=.R14.))(62.R1;.R1:.R18.R16.R14.R12.)")
+    Lemma PLA_presA : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Picb,(2.&8.)PLB,(0.$3;.)PLB',(0.$3;.)Pm,P,(2.&40.)(3.(2.&8.))Pm',P,(2.&40.)(3.(2.&8.))Pmo,$59.Pmo',$59.Ph,(3:.$5.VR,VHIA,)Ph',(3:.$5.VR,VHIA,)PW,(0.$1.)PSSP,$7.P,(62.R<.R;.R:.R8.R6.R4.)P,(40.$5.VR,R;.(1;.$3;.)Vtsp,R2.VSTKHI,R3.R9.R8.)P,(1<.(>.(0.$1.)R4.(1;.$1.))(>.(0.$1.)R4.(63.(64.VR,)VSI,)))P,(1<.(>.$7.R4.(1=.VR,))(>.$7.R4.Vtsp,))P,(3?.$5.VR,VHIA,R7.R=.(1;.$3;.)R;.)P,Pb,$3;.P,(4=.$3;.R1.R10.)(4=.$3;.R2.R10.)P,(65.$5.VR,VHIA,R9.R;.)P,(>.$7.(66.$5.VR,VHIA,R:.)VTOP,)P,(>.$7.(67.$5.VR,VHIA,R;.)VSTKHI,)P,(4.$5.R10.)P,(2;.$5.R11.(1=.VR,)Vtsp,)P,(42.$5.VAL,R12.(1=.VR,)Vtsp,)P,(68.(64.VR,)VSI,R13.)P,(>.$69.(6:.R12.)(6:.R13.))P,(>.(0.(20.(2.&40.)$5;.))(5=.R13.)(5=.R14.))P,(>.$?.(89.R14.)(89.R15.))(62.R1<.R1;.R19.R17.R15.R13.)")
 (* [comment removed for export] *).
     Proof.
-      intros * P HP HW HSSP HH' SUB HKh' HT' HS' MI' ST' SSH' SI' FS' FDS'.
-      destruct P as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      intros * P HP HW HSSP HH' SUB HKh' HT' HS' MI' ST' SSH' SI' FS' FDS' RDR'.
+      destruct P as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS RD BY AX IC].
       assert (DW : forall A n, 0 <= n -> (A + n <= 0x638ca0 \/ 0x638d80 <= A) -> disjoint_from W A n).
       { intros A n Hn HA. destruct HW as [-> | ->]; [exact I | apply sifp_disjoint; exact HA]. }
       assert (OW : forall a, drv_static a -> outside W a).
@@ -894,6 +896,7 @@ Section Target.
       - eapply (presA_rw_cells asegs R); [exact HP | exact FR | apply client_range_stack; cbv delta [tsp msp]; lia | apply DW; [cbn; lia | cbv delta [msp]; lia]].
       - rewrite FS'. exact FS.
       - rewrite FDS'. exact FDS.
+      - rewrite RDR'. exact RD.
       - eapply (presA_bytes_at0 asegs R); [exact HP | exact BY |].
         destruct IO as [(E0 & ED & P0)|(E1 & I2 & NE & PP & DLO & DHI)].
         + left. apply Nat2Z.inj. rewrite PL, P0. reflexivity.
@@ -910,11 +913,11 @@ Section Target.
 
     (* [comment removed for export] *)
     Local Ltac2 Set LiaOrc.tbl := fun () => "01d0@L10206059612.118L11649039276.118L1206758680.117 L14174114441.121L14283716567.118L14283716567.121L14497567600.118L14874847045.121L15272343048.121L15272343048.124L1606732508.114 L1606732508.117 L16148602873.124L16281910188.118L167434444.117  L16844616326.121L17482866913.122L20700440712.124L20766034566.124L20887262360.118L21917222144.118L22041124780.118L22600841350.121L22600841350.124L23424204440.118L24160722072.118L24573328044.118L25626929916.118L26429989512.121L26474282524.118L26644621732.124L27318640032.122L27537627324.121L27632758424.118L27725659420.118L28076996617.117L28931244041.117L29067581395.121L29067581395.124L30854262956.118L31565860720.118L3185220848.118 L32080220076.118L32447669384.118L33147894444.118L33671248953.117L33671248953.121L33888846021.117L34021566124.118L34338576542.117L35245347186.124L35743089800.124L36035391119.121L36755712428.118L37213846903.117L37263706233.122L3786729798.120 L3788567612.122 L3795186566.121 L39912064728.118L40823179312.118L41209942508.118L42874000286.117L43212770862.121L43212770862.124L43769845164.118L44358114416.118L44797254407.121L45106594994.121L46013950412.117L46812090096.118L46830269592.118L47873876682.122L49570601676.117L49831031468.118L50204620208.117L50428905697.122L50567374316.118L5108865519.121 L52602237100.118L52944354556.121L53029941228.118L53371180656.118L53761255088.117L53909669640.118L55005253872.118L57645677936.118L58065063554.121L58729783686.121L58729783686.124L59125168605.124L59152609964.118L5928403096.118 L59315137787.122L61735745591.121L62022224981.117L63002543020.118L63092505737.121L63370423024.118L63711005424.118L65330261964.117L661581804.118  L66548435672.118L67467062265.121L6753814880.118 L68056928130.117L68381858694.124L7611833452.118 L7918619800.118 L8392685618.124 L8882908808.124 L9622373468.118 L9735844985.121 L9735844985.124 L9913685104.118 L9965028060.124 00000U01:01n02S03?03k04P05:05_06D06n08X08Y09>09h0:M0;@0;j0<O0=90=^0>C0>h0?M0@70@a0AF0B20BW0C<0C=0Ck0DW0EA0Ef0FK0G00GU0H:0H_0ID0Ii0JN0K80K]0LB0Lg0MQ0N60N`0OE0Oo0PX0Q=0Qb0RR0SC0T70T\0UF0Uk0VP0W:0Wn0Xb0YG0Yl0[[0\@0\j0]O0^90_e0`O0a40aY0bL0c10d20dW0eC0eh0fM0g20g\0hA0hf0iK0j00jU0k?0kd0lN0m>0mc0nJ0no0oT10910^11H11m12W12X13=13b14G15315]16B16g17L17M17N18318]S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS1R3sp05fdata5STKHI6HSTKHI3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1A1n2H2S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1A1n2H2S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1x2NOS1R1L3sp04SPlo5STKLO5fdata5STKHI6HSTKHI3msp3tsp2Ln3buf3cap2cl4plen3Hcl2HL4LCAP6BRANGE3PAY3pay1w2W12W21x2NOFS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl4plen4DATA3PAY3pay3DLOS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1w2W1S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1A1n2H3S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payFS3sp05fdata3msp3tsp2Ln3buf2cl4DATA3PAY3pay3DLOS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1A1n2H3S3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1w2W1S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1a1XS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl4plen5Hplen3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3pay1x2Hx1XS3sp04SPlo4SPhi5fdata3msp3tsp2Ln3buf2cl3PAY3pay1x2HxS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS1R3sp05fdata5STKHI6HSTKHI3msp3tsp2Ln3buf2cl3PAY3payS1R3sp05fdata5STKHI6HSTKHI3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS1R1L3sp04SPlo5STKLO5fdata5STKHI6HSTKHI3msp3tsp2Ln3buf3cap2cl4plen3Hcl2HL4LCAP6BRANGE3PAY3pay1w2W12W21A1n2H12H4S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS1R1L3sp04SPlo5STKLO5fdata5STKHI6HSTKHI3msp3tsp2Ln3buf3cap2cl4plen4DATA3Hcl2HL4LCAP6BRANGE3PAY3pay2NE2PP3DHIS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl4plen4DATA3PAY3pay3DLOS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS1R3sp04SPlo5STKLO5fdata3TOP6HTOPlo3msp3tsp2Ln3buf2cl3PAY3pay1a1XS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1A1n2H3S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1w2W1S3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3pay1a1H1XS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS1R3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payFS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1A1n2H4S3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payFFS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1w2W2". (* [comment removed for export] *)
-    Lemma PLA_munch : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Pd',$36.Picb,(2.&8.)PLB,(0.$3;.)Pm,P,(2.&40.)(3.(2.&8.))Pm',P,(2.&40.)(3.(2.&8.))Pmo,$59.Pmo',$59.Ph,(3:.$5.VR,VHIA,)PW,(0.$1.)P,(62.R:.R8.R7.R6.R4.R2.)P,(6.R2.R7.R6.)P,(2:.$5.R8.R7.)P,(6;.R9.R8.)P,(1<.(>.(0.$1.)R5.(13.(20.$7.$7.)(21.$7.$7.(1>.Vtsp,+1000.)Vtsp,)(13.(20.$7.$7.)(21.$7.$7.+?71;8.+?72:0.)(13.(20.$7.$7.)(21.$7.$7.+659=:0.+659=:1.)(1;.(20.$7.$7.))))))(23.$7.Lw,$7.(8.(9.+659=:0.R1.)(8.(9.(1:.R1.+2.)+659=:8.)(>.(0.$1.)R6.(13.(20.$7.$7.)(21.$7.$7.(1>.Vtsp,+1000.)Vtsp,)(13.(20.$7.$7.)(21.$7.$7.+?71;8.+?71;<.)(13.(20.$7.$7.)(21.$7.$7.+?71>0.+?71>8.)(13.(20.$7.$7.)(21.$7.$7.R1.(1:.R1.+2.))(1;.(20.$7.$7.)))))))))))P,(6<.R>.R:.)P,(65.$5.VR,VHIA,R8.R9.)P,(>.$69.(6:.R:.)(6:.R;.))P,(>.(0.(20.(2.&40.)$5;.))(5=.R;.)(5=.R<.))(62.R12.R11.R10.R>.R<.R;.)")
+    Lemma PLA_munch : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Pd',$36.Picb,(2.&8.)PLB,(0.$3;.)Pm,P,(2.&40.)(3.(2.&8.))Pm',P,(2.&40.)(3.(2.&8.))Pmo,$59.Pmo',$59.Ph,(3:.$5.VR,VHIA,)PW,(0.$1.)P,(62.R:.R8.R7.R6.R4.R2.)P,(6.R2.R7.R6.)P,(2:.$5.R8.R7.)P,(6;.R9.R8.)P,(1<.(>.(0.$1.)R5.(13.(20.$7.$7.)(21.$7.$7.(1>.Vtsp,+1000.)Vtsp,)(13.(20.$7.$7.)(21.$7.$7.+?71;8.+?72:0.)(13.(20.$7.$7.)(21.$7.$7.+659=:0.+659=:1.)(1;.(20.$7.$7.))))))(23.$7.Lw,$7.(8.(9.+659=:0.R1.)(8.(9.(1:.R1.+2.)+659=:8.)(>.(0.$1.)R6.(13.(20.$7.$7.)(21.$7.$7.(1>.Vtsp,+1000.)Vtsp,)(13.(20.$7.$7.)(21.$7.$7.+?71;8.+?71;<.)(13.(20.$7.$7.)(21.$7.$7.+?71>0.+?71>8.)(13.(20.$7.$7.)(21.$7.$7.R1.(1:.R1.+2.))(1;.(20.$7.$7.)))))))))))P,(6<.R>.R:.)P,(65.$5.VR,VHIA,R8.R9.)P,(>.$69.(6:.R:.)(6:.R;.))P,(>.(0.(20.(2.&40.)$5;.))(5=.R;.)(5=.R<.))P,(>.$?.(89.R<.)(89.R=.))(62.R13.R12.R11.R?.R=.R<.)")
 (* [comment removed for export] *).
     Proof.
-      intros * P MU WM GR HW OS' HKh' FS' FDS'.
-      destruct P as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      intros * P MU WM GR HW OS' HKh' FS' FDS' RDR'.
+      destruct P as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS RD BY AX IC].
       pose proof pay_len as PL. pose proof (u64_range sp0) as SPR.
       assert (DJ : forall A n, 0 <= A -> 0 <= n -> (A + n <= tsp - 4096 \/ tsp <= A) -> (A + n <= 0x0f71b8 \/ 0x0f72a0 <= A) ->
                    (A + n <= 0x659da0 \/ 0x659da8 <= A) -> disjoint_from W A n).
@@ -960,6 +963,7 @@ Section Target.
       - eapply rw_cells_transport; [exact FR | exact MU | exact WM | apply DJ; cbv delta [tsp msp]; cbn; lia].
       - rewrite FS'. exact FS.
       - rewrite FDS'. exact FDS.
+      - rewrite RDR'. exact RD.
       - eapply bytes_at_transport0; [exact BY | exact MU |].
         destruct IO as [(E0 & ED & P0)|(E1 & I2 & NE & PP & DLO & DHI)].
         + left. apply Nat2Z.inj. rewrite PL, P0. reflexivity.
@@ -973,11 +977,11 @@ Section Target.
 
     (* [comment removed for export] *)
     Local Ltac2 Set LiaOrc.tbl := fun () => "00<0@L1206709400.114 L13289838745.118L14416692944.114L1870712294.118 L1877007115.117 L23857495836.114L25745385367.116L27414129180.114L28617686819.114L36029363060.115L62022307285.114L64282238065.11900000d01I02402^03G04104`05J06406^07E088S1R3sp05fdata5STKHI6HSTKHI3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1A1n1HS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1a2HbS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1a1HS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3pay1x2HxS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1x2HxS3sp05fdata3msp3tsp2Ln3buf2cl3PAY3pay1a2HaS1R3sp05fdata3msp3tsp2Ln3buf2cl3PAY3payS3sp05fdata3msp3tsp2Ln3buf2cl4plen4DATA3PAY3pay3DLO". (* [comment removed for export] *)
-    Lemma PLA_incb : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Picb,(2.&8.)PLB,(0.$3;.)Pm,P,(2.&40.)(3.(2.&8.))Pm',P,(2.&40.)(3.(2.&8.))Pmo,$59.Pmo',$59.Ph,(3:.$5.VR,VHIA,)Pv,(2.&8.)P,(62.R9.R8.R7.R6.R4.R2.)P,(6.(13.(20.$7.$7.)(21.$7.$7.+638<54.+638<55.)(1;.(20.$7.$7.)))R7.R6.)P,(2:.$5.R8.R7.)P,(4.$5.R8.)P,(46.R9.R5.)P,(65.$5.VR,VHIA,R7.R8.)P,(>.$69.(6:.R9.)(6:.R:.))P,(>.(0.(20.(2.&40.)$5;.))(5=.R:.)(5=.R;.))(62.R11.R9.R?.R=.R;.R:.)")
+    Lemma PLA_incb : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Picb,(2.&8.)PLB,(0.$3;.)Pm,P,(2.&40.)(3.(2.&8.))Pm',P,(2.&40.)(3.(2.&8.))Pmo,$59.Pmo',$59.Ph,(3:.$5.VR,VHIA,)Pv,(2.&8.)P,(62.R9.R8.R7.R6.R4.R2.)P,(6.(13.(20.$7.$7.)(21.$7.$7.+638<54.+638<55.)(1;.(20.$7.$7.)))R7.R6.)P,(2:.$5.R8.R7.)P,(4.$5.R8.)P,(46.R9.R5.)P,(65.$5.VR,VHIA,R7.R8.)P,(>.$69.(6:.R9.)(6:.R:.))P,(>.(0.(20.(2.&40.)$5;.))(5=.R:.)(5=.R;.))P,(>.$?.(89.R;.)(89.R<.))(62.R12.R:.R10.R>.R<.R;.)")
 (* [comment removed for export] *).
     Proof.
-      intros * P MU WM MI' IC' HKh' FS' FDS'.
-      destruct P as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      intros * P MU WM MI' IC' HKh' FS' FDS' RDR'.
+      destruct P as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS RD BY AX IC].
       pose proof pay_len as PL. pose proof (u64_range sp0) as SPR.
       assert (DJ : forall A n, (A + n <= 0x638c54 \/ 0x638c55 <= A) -> disjoint_from [(0x638c54, 0x638c55)] A n).
       { intros A n H. cbn. split; [lia | exact I]. }
@@ -1004,6 +1008,7 @@ Section Target.
       - eapply rw_cells_transport; [exact FR | exact MU | exact WM | apply DJ; cbv delta [tsp msp]; cbn; lia].
       - rewrite FS'. exact FS.
       - rewrite FDS'. exact FDS.
+      - rewrite RDR'. exact RD.
       - eapply bytes_at_transport0; [exact BY | exact MU |].
         destruct IO as [(E0 & ED & P0)|(E1 & I2 & NE & PP & DLO & DHI)].
         + left. apply Nat2Z.inj. rewrite PL, P0. reflexivity.
@@ -1020,7 +1025,7 @@ Section Target.
     Lemma fuzz_callA : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Picb,(2.&8.)PLB,(0.$3;.)Pt0,(2.&40.)Pt1,(2.&40.)Pt2,(2.&40.)Pa2,(2.&40.)Pa3,(2.&40.)Pa4,(2.&40.)Pa5,(2.&40.)Pa6,(2.&40.)Pa7,(2.&40.)Pt3,(2.&40.)Pt4,(2.&40.)Pt5,(2.&40.)Pt6,(2.&40.)Ps3,(2.&40.)Pr,$7.Pm,P,(2.&40.)(3.(2.&8.))Pmo,$59.Ph,(3:.$5.VR,VHIA,)PT,$6=.P,(62.R16.R15.R14.R4.R3.R2.)P,(9.(1:.(6>.$5.VR,VHIA,R3.)A1.VPHI,Vplen,)$6?.)P,(9.(1:.(70.$5.VR,VHIA,R4.)A1.VFFR,Vplen,)$71.)P,(9.(1:.(1:.(1:.(72.R17.)+1.)(43.+2.(50.Vplen,+1701.)))VC24f,)$73.)P,A1.R5.(1;.$74.)P,Pt0',(2.&40.)Pt1',(2.&40.)Pt2',(2.&40.)Pa1',(2.&40.)Pa2',(2.&40.)Pa3',(2.&40.)Pa4',(2.&40.)Pa5',(2.&40.)Pa6',(2.&40.)Pa7',(2.&40.)Pt3',(2.&40.)Pt4',(2.&40.)Pt5',(2.&40.)Pt6',(2.&40.)Pm',P,(2.&40.)(3.(2.&8.))Pmo',$59.Ph',(3:.$5.VR,VHIA,)PLBx,(0.$3;.)P,(62.R2=.R2<.(75.$3;.R1.R2;.)R4.R3.R2.)P,(9.(6>.$5.VR,VHIA,R3.)(1:.(6>.$5.VR,VHIA,R1:.)A1.VPHI,Vplen,))P,(9.(70.$5.VR,VHIA,R4.)(1:.(70.$5.VR,VHIA,R1;.)A1.VFFR,Vplen,))P,(9.(72.(75.$3;.R4.R2>.))(1:.(1:.(72.R2>.)+1.)(43.+2.(50.Vplen,+1701.))))(76.$5.(77.(24.(47.(17.&40.+96?08.)R16.R15.R14.(17.&40.=)R13.R12.R11.R10.R?.R>.R=.(17.&40.=)(17.&40.-2.)R<.R;.R:.R9.Vplen,(17.&40.VDATA,)(17.&40.Vowned,)R21.R20.)(26.&5.(2.&40.))(17.&40.+96?08.)(17.&20.=)(27.(2.&40.))R8.(28.$5.))R7.)R1<.)(76.$5.(77.(24.(47.(17.&40.+96?08.)R19.R18.R17.(17.&40.VDATA,)(17.&40.Vplen,)R16.R15.R14.R13.R12.R11.(17.&40.=)(17.&40.-2.)R10.R?.R>.R=.Vplen,(17.&40.VDATA,)(17.&40.Vowned,)R<.R;.)(26.&5.(2.&40.))(17.&40.$48.)(17.&20.=)(27.(2.&40.))R:.(28.$5.))R9.)R7.)")
 (* [comment removed for export] *).
     Proof.
-      intros * P HV HFR HC24 Tnil HC. pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      intros * P HV HFR HC24 Tnil HC. pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS _ BY AX IC].
       pose proof pay_len as PL. pose proof (cap_ok_bounds sp0 cap COK) as CB. pose proof (u64_range sp0) as SPR.
       unfold TREGS.
       eapply srzJ_of_aevtS; [ | exact Tnil | ].
@@ -1067,6 +1072,7 @@ Section Target.
       - rewrite HS'. exact HS.
       - apply (A_main_fin.mo_frame_fs _ _ MF).
       - apply (A_main_fin.mo_frame_fds _ _ MF).
+      - apply (mo_frame_reader _ _ MF).
     Qed.
     Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1075,7 +1081,7 @@ Section Target.
     Lemma printf1_callA : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Picb,(2.&8.)PLB,(0.$3;.)Pt0,(2.&40.)Pt1,(2.&40.)Pt2,(2.&40.)Pa0,(2.&40.)Pa2,(2.&40.)Pa3,(2.&40.)Pa4,(2.&40.)Pa5,(2.&40.)Pa6,(2.&40.)Pa7,(2.&40.)Pt3,(2.&40.)Pt4,(2.&40.)Pt5,(2.&40.)Pt6,(2.&40.)Pr,$7.Pm,P,(2.&40.)(3.(2.&8.))Pmo,$59.Ph,(3:.$5.VR,VHIA,)PT,$6=.P,(62.#0.R15.R14.R4.R3.R2.)P,A1.R2.(1;.$74.)P,Pt0',(2.&40.)Pt1',(2.&40.)Pt2',(2.&40.)Pa0',(2.&40.)Pa1',(2.&40.)Pa2',(2.&40.)Pa3',(2.&40.)Pa4',(2.&40.)Pa5',(2.&40.)Pa6',(2.&40.)Pa7',(2.&40.)Pt3',(2.&40.)Pt4',(2.&40.)Pt5',(2.&40.)Pt6',(2.&40.)Pm',P,(2.&40.)(3.(2.&8.))Pmo',$59.P,(62.#1.R28.R27.R2.R1.R15.)(76.$5.(77.(24.(47.(17.&40.+96?18.)R12.R11.R10.R?.R>.R=.R<.R;.R:.R9.R8.(17.&40.=)(17.&40.-2.)R7.R6.R5.R4.Vplen,(17.&40.VDATA,)(17.&40.Vowned,)(17.&40.=)R19.)(26.&5.(2.&40.))(17.&40.+96?18.)(17.&20.=)(27.(2.&40.))R3.(28.$5.))R2.)R15.)(76.$5.(77.(24.(47.(17.&40.+96?18.)R16.R15.R14.R13.(17.&40.=)R12.R11.R10.R?.R>.R=.(17.&40.=)(17.&40.-2.)R<.R;.R:.R9.Vplen,(17.&40.VDATA,)(17.&40.Vowned,)(17.&40.=)R8.)(26.&5.(2.&40.))(17.&40.+96?<4.)(17.&20.=)(27.(2.&40.))R7.(28.$5.))R6.)(78.(79.+1.(60.#1.))R4.))")
 (* [comment removed for export] *).
     Proof.
-      intros * P Tnil HC. pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      intros * P Tnil HC. pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS RD BY AX IC].
       pose proof (u64_range sp0) as SPR. pose proof (hcs_img _ _ HIA h) as HCSI.
       pose proof IMG as IMG'. unfold asan_img_ok in IMG'. cbv delta [AL] in IMG'. destruct IMG' as (HGOT & HILO & HIHI & HGSB2).
       unfold TREGS. change (MS ?Rx bvmap_empty ?pcx (Z_to_bv 32 0) None ?Mx ?rom) with (mkst Rx pcx Mx rom).
@@ -1086,6 +1092,7 @@ Section Target.
       - cbv delta [tsp]. lia.
       - exact HKh.
       - rewrite FDS. reflexivity.
+      - exact RD.
       - eapply crange_sub; [apply (hcs_stack _ _ HIA h) | rewrite STKLO; cbv delta [tsp]; lia | rewrite HS; cbv delta [tsp]; lia].
       - apply HCSI; rewrite ?HILO, ?HIHI, ?HGOT, ?HGSB2; lia.
       - apply HCSI; rewrite ?HILO, ?HIHI, ?HGOT, ?HGSB2; lia.
@@ -1106,6 +1113,7 @@ Section Target.
         + exact HK2.
         + apply (mo_mat_fs _ _ MM2).
         + apply (A_main_fin.mo_mat_fds _ _ MM2).
+        + apply (mo_mat_rdr _ _ MM2).
     Qed.
     Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1114,7 +1122,7 @@ Section Target.
     Lemma printfN_callA : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pk,$36.Picb,(2.&8.)PLB,(0.$3;.)Pt0,(2.&40.)Pt1,(2.&40.)Pt2,(2.&40.)Pa0,(2.&40.)Pa2,(2.&40.)Pa3,(2.&40.)Pa4,(2.&40.)Pa5,(2.&40.)Pa6,(2.&40.)Pa7,(2.&40.)Pt3,(2.&40.)Pt4,(2.&40.)Pt5,(2.&40.)Pt6,(2.&40.)Pr,$7.Pm,P,(2.&40.)(3.(2.&8.))Pmo,$59.Ph,(3:.$5.VR,VHIA,)PT,$6=.P,(62.(7:.R16.)R15.R14.R4.R3.R2.)P,(5:.R17.#2.)P,Pt0',(2.&40.)Pt1',(2.&40.)Pt2',(2.&40.)Pa0',(2.&40.)Pa1',(2.&40.)Pa2',(2.&40.)Pa3',(2.&40.)Pa4',(2.&40.)Pa5',(2.&40.)Pa6',(2.&40.)Pa7',(2.&40.)Pt3',(2.&40.)Pt4',(2.&40.)Pt5',(2.&40.)Pt6',(2.&40.)Pm',P,(2.&40.)(3.(2.&8.))Pmo',$59.P,(62.(7:.(7:.R29.))R28.R27.R2.R1.R15.)(76.$5.(77.(24.(47.(17.&40.+96?18.)R12.R11.R10.R?.R>.R=.R<.R;.R:.R9.R8.(17.&40.=)(17.&40.-2.)R7.R6.R5.R4.Vplen,(17.&40.VDATA,)(17.&40.Vowned,)(17.&40.=)R19.)(26.&5.(2.&40.))(17.&40.+96?18.)(17.&20.=)(27.(2.&40.))R3.(28.$5.))R2.)R15.)(76.$5.(77.(24.(47.(17.&40.+96?18.)R16.R15.R14.R13.(17.&40.=)R12.R11.R10.R?.R>.R=.(17.&40.=)(17.&40.-2.)R<.R;.R:.R9.Vplen,(17.&40.VDATA,)(17.&40.Vowned,)(17.&40.=)R8.)(26.&5.(2.&40.))(17.&40.+96?<4.)(17.&20.=)(27.(2.&40.))R7.(28.$5.))R6.)R4.)")
 (* [comment removed for export] *).
     Proof.
-      intros * P Hk HC. pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      intros * P Hk HC. pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS _ BY AX IC].
       pose proof (u64_range sp0) as SPR. pose proof (hcs_img _ _ HIA h) as HCSI.
       pose proof IMG as IMG'. unfold asan_img_ok in IMG'. cbv delta [AL] in IMG'. destruct IMG' as (HGOT & HILO & HIHI & HGSB2).
       assert (WCS : crange (hcs asegs R HIA h) (tsp - 4096) 4096).
@@ -1157,7 +1165,8 @@ Section Target.
             eapply rdn_munch; [exact MU | cbn; cbv delta [tsp]; lia | lia | lia | exact RD].
         - exact HK2.
         - apply (mo_mat_fs _ _ MM2).
-        - apply (A_main_fin.mo_mat_fds _ _ MM2). }
+        - apply (A_main_fin.mo_mat_fds _ _ MM2).
+        - apply (mo_mat_rdr _ _ MM2). }
       destruct k as [|[|[|k']]]; [ | | | lia].
       - eapply (A_printfN0.printfNA AL (hcs asegs R HIA h) (HK asegs R HIA h) IMG ASB (hk_halted _ _ HIA h) (hk_mat _ _ HIA h) (Z_to_bv 64 tsp) mo);
           rewrite ?unsigned_lit by (cbv delta [tsp]; lia);
@@ -1191,10 +1200,10 @@ Section Target.
 
     (* [comment removed for export] *)
     Local Ltac2 Set LiaOrc.tbl := fun () => "0030@L13298636584.117L4728183951.111 L62516623220.11700000V01H02:S3sp05fdata3msp3tsp2Ln3buf2cl3PAY1d2HdS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY1d2rv2Hd3HrvS3sp04SPlo5fdata3msp3tsp2Ln3buf2cl3PAY1d2rv2Hd3Hrv". (* [comment removed for export] *)
-    Lemma ret_finA : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Prv,$7.PLB,(0.$3;.)Pt0,(2.&40.)Pt1,(2.&40.)Pt2,(2.&40.)Pa1,(2.&40.)Pa2,(2.&40.)Pa3,(2.&40.)Pa4,(2.&40.)Pa5,(2.&40.)Pa6,(2.&40.)Pa7,(2.&40.)Pt3,(2.&40.)Pt4,(2.&40.)Pt5,(2.&40.)Pt6,(2.&40.)Pm,P,(2.&40.)(3.(2.&8.))Pmo,$59.Ph,(3:.$5.VR,VHIA,)P,(5:.R14.#4.)P,(1<.(>.$7.R14.=)(>.$7.R14.+2.))P,(3?.$5.VR,VHIA,R3.R14.(1;.$3;.)R5.)P,(4=.(20.$7.$7.)(21.$7.$7.Vbuf,Vcap,)R15.)P,(65.$5.VR,VHIA,R5.R6.)P,(>.$7.(66.$5.VR,VHIA,R6.)VTOP,)P,(>.$7.(67.$5.VR,VHIA,R7.)VSTKHI,)P,(9.(1:.(6>.$5.VR,VHIA,R8.)$7;.)$6?.)P,(9.(1:.(70.$5.VR,VHIA,R9.)(7<.=))$71.)P,(>.$69.(6:.R;.)Vfs0,)P,(>.(0.(20.(2.&40.)$5;.))(5=.R<.)$7=.)P,(3<.R1?.R>.)P,(7>.R?.)P,(2<.$5.R10.Vmsp,(7?.Vsp0,Vpad,))P,(2;.$5.R11.(1=.VR,)Vmsp,)(76.$5.(77.(24.(49.R20.R1?.R1>.R1=.R1<.R1;.R1:.R19.R18.R17.Vx7,R16.R15.R14.R13.R22.Vbuf,Vcl,Vplen,Vb1,)(26.&5.(2.&40.))(17.&40.+96<>0.)(17.&20.=)(27.(2.&40.))R12.(28.$5.))R11.)(78.(79.+1.(60.(61.R23.#1.)))(80.(81.(4:.R22.Vb1,))Vfs0,)))")
+    Lemma ret_finA : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.Prv,$7.PLB,(0.$3;.)Pt0,(2.&40.)Pt1,(2.&40.)Pt2,(2.&40.)Pa1,(2.&40.)Pa2,(2.&40.)Pa3,(2.&40.)Pa4,(2.&40.)Pa5,(2.&40.)Pa6,(2.&40.)Pa7,(2.&40.)Pt3,(2.&40.)Pt4,(2.&40.)Pt5,(2.&40.)Pt6,(2.&40.)Pm,P,(2.&40.)(3.(2.&8.))Pmo,$59.Ph,(3:.$5.VR,VHIA,)P,(5:.R14.#4.)P,(1<.(>.$7.R14.=)(>.$7.R14.+2.))P,(3?.$5.VR,VHIA,R3.R14.(1;.$3;.)R5.)P,(4=.(20.$7.$7.)(21.$7.$7.Vbuf,Vcap,)R15.)P,(65.$5.VR,VHIA,R5.R6.)P,(>.$7.(66.$5.VR,VHIA,R6.)VTOP,)P,(>.$7.(67.$5.VR,VHIA,R7.)VSTKHI,)P,(9.(1:.(6>.$5.VR,VHIA,R8.)$7;.)$6?.)P,(9.(1:.(70.$5.VR,VHIA,R9.)(7<.=))$71.)P,(>.$69.(6:.R;.)Vfs0,)P,(>.(0.(20.(2.&40.)$5;.))(5=.R<.)$7=.)P,(>.$?.(89.R=.)$8:.)P,(3<.R20.R?.)P,(7>.R10.)P,(2<.$5.R11.Vmsp,(7?.Vsp0,Vpad,))P,(2;.$5.R12.(1=.VR,)Vmsp,)(76.$5.(77.(24.(49.R21.R20.R1?.R1>.R1=.R1<.R1;.R1:.R19.R18.Vx7,R17.R16.R15.R14.R23.Vbuf,Vcl,Vplen,Vb1,)(26.&5.(2.&40.))(17.&40.+96<>0.)(17.&20.=)(27.(2.&40.))R13.(28.$5.))R12.)(78.(79.+1.(60.(61.R24.#1.)))(80.(81.(4:.R23.Vb1,))Vfs0,)))")
 (* [comment removed for export] *).
     Proof.
-      intros * Hd Hrv HH IB HKh HT HS HV HFR FS FDS TX ATX FR ST.
+      intros * Hd Hrv HH IB HKh HT HS HV HFR FS FDS RD TX ATX FR ST.
       eapply (rz_evtA_K asegs AL (hcs asegs R HIA h) (HK asegs R HIA h) (hk_halted _ _ HIA h) (hk_mat _ _ HIA h));
         [exact HKh | apply (M1_steps (hcs asegs R HIA h)); lia |].
       cbn beta. intros ms1 mo1 (ra' & a0' & a1' & ->) HK1 MM1.
@@ -1203,7 +1212,7 @@ Section Target.
         [ exact HH | exact IB | exact HK1 | exact HT | exact HS | exact HV | exact HFR
         | rewrite (mo_mat_fs _ _ MM1); exact FS
         | exact (tx_x _ _ TX)
-        | eapply (xout_of_tmem d m mo1 h LB []); [exact TX | exact Hd | rewrite (A_main_fin.mo_mat_fds _ _ MM1), FDS; reflexivity | exact HH]
+        | eapply (xout_of_tmem d m mo1 h LB []); [exact TX | exact Hd | rewrite (A_main_fin.mo_mat_fds _ _ MM1), FDS; reflexivity | rewrite (mo_mat_rdr _ _ MM1); exact RD | exact HH]
         | exact ATX
         | exact FR | exact ST
         | unfold status; destruct (128 <=? bv_unsigned b1); lia ].
@@ -1225,7 +1234,7 @@ Section Target.
     Lemma last_freeA : ltac2:(CDefT.buildp (gd_tbl_A_main_target ()) "Pd,$36.PLB,(0.$3;.)Pt0,(2.&40.)Pt1,(2.&40.)Pt2,(2.&40.)Pa0,(2.&40.)Pa1,(2.&40.)Pa2,(2.&40.)Pa3,(2.&40.)Pa4,(2.&40.)Pa5,(2.&40.)Pa6,(2.&40.)Pa7,(2.&40.)Pt3,(2.&40.)Pt4,(2.&40.)Pt5,(2.&40.)Pt6,(2.&40.)Pm,P,(2.&40.)(3.(2.&8.))Pmo,$59.Ph,(3:.$5.VR,VHIA,)P,(8.(5:.#1.R14.)(5:.R14.#4.))P,(62.R15.(17.&8.=)R14.R4.R3.R2.)P,(9.(1:.(6>.$5.VR,VHIA,R3.)(43.+2.$7;.))$6?.)P,(9.(1:.(70.$5.VR,VHIA,R4.)(43.+2.(7<.=)))$71.)(76.$5.(77.(24.(47.(17.&40.+96?18.)R16.R15.R14.R13.R12.R11.R10.R?.R>.R=.R<.(17.&40.=)(17.&40.-2.)R;.R:.R9.R8.Vplen,(17.&40.VDATA,)(17.&40.Vowned,)(17.&40.-1.)=)(26.&5.(2.&40.))(17.&40.+96?2<.)(17.&20.=)(27.(2.&40.))R7.(28.$5.))R6.)(78.(79.+1.(60.(61.R18.#1.)))(80.(81.(4:.=Vb1,))Vfs0,)))")
 (* [comment removed for export] *).
     Proof.
-      intros * Hd P HV HFR. pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      intros * Hd P HV HFR. pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS RD BY AX IC].
       pose proof (hd_needs _ _ _ HID) as (NM & NF & NA). pose proof (u64_range sp0) as SPR.
       pose proof (@A_main_fin.atx_presA R HIA HID sp0 SPlo) as ATXP.
       (* [comment removed for export] *)
@@ -1236,7 +1245,7 @@ Section Target.
         HM asegs R HIA h2 LB2 [] m2 -> In (buf, cap) LB2 -> HK asegs R HIA h2 mo2 ->
         htop asegs R HIA h2 = TOP -> hstkhi asegs R HIA h2 = STKHI -> havol asegs R HIA h2 + AVOL_CALL <= AVOL_MAX ->
         hfr asegs R HIA h2 + fr_charge 0 <= FR_MAX ->
-        m_fs mo2 = fs0 -> m_fds mo2 = FDS2 -> TMEM d m2 -> mem_inv asegs m2 -> A_main_fin.atx_clause m2 ->
+        m_fs mo2 = fs0 -> m_fds mo2 = FDS2 -> m_channel_reader mo2 = true -> TMEM d m2 -> mem_inv asegs m2 -> A_main_fin.atx_clause m2 ->
         rw_cells asegs m2 tsp TRFm -> rw_cells asegs m2 msp (A_main_loop.FRAMEA sp0 pad) -> stk asegs m2 (arl_stklo R) tsp ->
         srealizesJ asegs (mkCfg (MS (mkR (Z_to_bv 64 0x096f34) (Z_to_bv 64 tsp) (Z_to_bv 64 0x10800) (Z_to_bv 64 0x639690) t0' t1' t2'
                                           (Z_to_bv 64 plen) (Z_to_bv 64 DATA) a0' a1' a2' a3' a4' a5' a6' a7'
@@ -1244,12 +1253,13 @@ Section Target.
                                           (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) t3' t4' t5' t6')
                                    bvmap_empty (Z_to_bv 64 0x096f34) (Z_to_bv 32 0) None m2 (seg_rom asegs)) mo2)
           (t_emit (W 1 (zero_lines (d - 1))) (t_exit (exit_code (status 0 b1)) fs0))).
-      { intros * HH2 IB2 HK2 HT2 HS2 HV2 HFR2 FS2 FDS2' TX2 MI2 ATX2 TR2 FR2 ST2.
+      { intros * HH2 IB2 HK2 HT2 HS2 HV2 HFR2 FS2 FDS2' RD2' TX2 MI2 ATX2 TR2 FR2 ST2.
         eapply (rz_evtA_K asegs AL (hcs asegs R HIA h2) (HK asegs R HIA h2) (hk_halted _ _ HIA h2) (hk_mat _ _ HIA h2));
           [exact HK2 | eapply (L5_steps (hcs asegs R HIA h2)); [exact TR2 | eapply crange_sub; [apply (hcs_stack _ _ HIA h2) | rewrite STKLO; cbv delta [tsp]; lia | rewrite HS2; cbv delta [tsp]; lia]] |].
         cbn beta. intros ms3 mo3 -> HK3 MM3.
         eapply (ret_finA d 0 LB2); [lia | left; reflexivity | exact HH2 | exact IB2 | exact HK3 | exact HT2 | exact HS2 | exact HV2 | exact HFR2
-          | rewrite (mo_mat_fs _ _ MM3); exact FS2 | rewrite (A_main_fin.mo_mat_fds _ _ MM3); exact FDS2' | exact TX2 | exact ATX2 | exact FR2 |].
+          | rewrite (mo_mat_fs _ _ MM3); exact FS2 | rewrite (A_main_fin.mo_mat_fds _ _ MM3); exact FDS2' | rewrite (mo_mat_rdr _ _ MM3); exact RD2'
+          | exact TX2 | exact ATX2 | exact FR2 |].
         pose proof (stk_release asegs m2 (arl_stklo R) tsp _ ST2 TR2 ltac:(rewrite STKLO; cbv delta [tsp]; lia)) as ST2'.
         unfold TRFm, TRFA in ST2'. cbn [cells_size csize Nat.add] in ST2'. replace (tsp + Z.of_nat 80) with msp in ST2' by (cbv delta [tsp msp]; lia). exact ST2'. }
       destruct IO as [(O0 & D0 & P0) | (OD & ID & NE & PP & DLO & DHI)].
@@ -1270,6 +1280,7 @@ Section Target.
         + rewrite HFR2. unfold fr_charge in *. lia.
         + rewrite (mo_mat_fs _ _ MM2), (mo_mat_fs _ _ MM1). exact FS.
         + rewrite (A_main_fin.mo_mat_fds _ _ MM2), (A_main_fin.mo_mat_fds _ _ MM1). exact FDS.
+        + rewrite (mo_mat_rdr _ _ MM2), (mo_mat_rdr _ _ MM1). exact RD.
         + eapply tmem_presA; [exact TX | exact HP2 | intros a Ha; exact I | exact HH2 | exact MI2].
         + eapply ATXP; [| exact HP2 | intros a Ha; exact I].
           destruct AX as (bb & jp & jq & jf & AT). exists bb, (Z_to_bv 8 0), jp, jq, jf. split; [exact AT | intros _; exact IC].
@@ -1296,6 +1307,7 @@ Section Target.
         + unfold fr_charge in *. lia.
         + rewrite (A_main_fin.mo_frame_fs _ _ MF2), (mo_mat_fs _ _ MM1). exact FS.
         + rewrite (A_main_fin.mo_frame_fds _ _ MF2), (A_main_fin.mo_mat_fds _ _ MM1). exact FDS.
+        + rewrite (mo_frame_reader _ _ MF2), (mo_mat_rdr _ _ MM1). exact RD.
         + eapply tmem_presA; [exact TX | exact HP2 | intros a Ha; exact I | exact HH2 | exact MI2].
         + eapply ATXP; [| exact HP2 | intros a Ha; exact I].
           destruct AX as (bb & jp & jq & jf & AT). exists bb, (Z_to_bv 8 0), jp, jq, jf. split; [exact AT | intros _; exact IC].
@@ -1311,7 +1323,7 @@ Section Target.
     Proof.
       induction r as [|r IH]; intros d LB icb ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 s3 m mo h Hr Hd Hdr P HV HFR HCN; [lia|].
       pose proof (Z.div_pos plen 5889 Hplen ltac:(lia)) as QP. pose proof (csum_nonneg (plen / 5889) r QP) as CSN. cbn [csum] in HCN.
-      pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS _ BY AX IC].
       pose proof (PHI_max plen ltac:(cbv delta [Ln] in *; pose proof (cap_ok_bounds sp0 cap COK); lia)) as PB.
       (* [comment removed for export] *)
       assert (FCS : crange (hcs asegs R HIA h) 0x638c54 1).
@@ -1320,13 +1332,13 @@ Section Target.
         [exact HKh | eapply (L1_steps (hcs asegs R HIA h)); [exact IC | exact FCS | exact (xm_mi _ _ _ _ _ (tx_x _ _ TX))] |].
       cbn beta. intros ms1 mo1 (m1 & -> & MU1 & WM1 & MI1 & IC1) HK1 MM1.
       assert (P1 : PLA d (Z_to_bv 8 1) LB m1 mo1 h).
-      { eapply (PLA_incb d icb LB m m1 mo mo1 h); [exact P | exact MU1 | exact WM1 | exact MI1 | exact IC1 | exact HK1 | apply (mo_mat_fs _ _ MM1) | apply (A_main_fin.mo_mat_fds _ _ MM1)]. }
+      { eapply (PLA_incb d icb LB m m1 mo mo1 h); [exact P | exact MU1 | exact WM1 | exact MI1 | exact IC1 | exact HK1 | apply (mo_mat_fs _ _ MM1) | apply (A_main_fin.mo_mat_fds _ _ MM1) | apply (mo_mat_rdr _ _ MM1)]. }
       pose proof (FFR_max plen ltac:(cbv delta [Ln] in *; pose proof (cap_ok_bounds sp0 cap COK); lia)) as FB.
       eapply (fuzz_callA d (Z_to_bv 8 1) LB) with (h := h); [ exact P1 | cbn [rsum] in HV; pose proof (rsum_nonneg r); unfold AVOL_CALL in *; lia
                                               | cbn [fsum] in HFR; pose proof (fsum_nonneg r); unfold fr_charge in *; lia
                                               | clear - HCN CSN; lia | apply t_emit_has_nil |].
       intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m2 mo2 h2 LBx P2 HV2 HFR2 HC2.
-      pose proof P2 as P2'. destruct P2' as [HH2 HK2 HT2 HS2 _ _ TX2 _ _ _ _ _ _ _ _ _ IC2].
+      pose proof P2 as P2'. destruct P2' as [HH2 HK2 HT2 HS2 _ _ TX2 _ _ _ _ _ _ _ _ _ _ IC2].
       (* [comment removed for export] *)
       assert (FCS2 : crange (hcs asegs R HIA h2) 0x638c54 1).
       { intros x Hx. apply (hcs_static _ _ HIA h2). apply (hd_static _ _ _ HID). unfold ARtDrv.drv_static. lia. }
@@ -1334,12 +1346,12 @@ Section Target.
         [exact HK2 | eapply (L2_steps (hcs asegs R HIA h2)); [exact IC2 | exact FCS2 | exact (xm_mi _ _ _ _ _ (tx_x _ _ TX2))] |].
       cbn beta. intros ms3 mo3 (m3 & -> & MU3 & WM3 & MI3 & IC3) HK3 MM3.
       assert (P3 : PLA d (Z_to_bv 8 0) (LBx ++ LB) m3 mo3 h2).
-      { eapply (PLA_incb d (Z_to_bv 8 1) (LBx ++ LB) m2 m3 mo2 mo3 h2); [exact P2 | exact MU3 | exact WM3 | exact MI3 | exact IC3 | exact HK3 | apply (mo_mat_fs _ _ MM3) | apply (A_main_fin.mo_mat_fds _ _ MM3)]. }
+      { eapply (PLA_incb d (Z_to_bv 8 1) (LBx ++ LB) m2 m3 mo2 mo3 h2); [exact P2 | exact MU3 | exact WM3 | exact MI3 | exact IC3 | exact HK3 | apply (mo_mat_fs _ _ MM3) | apply (A_main_fin.mo_mat_fds _ _ MM3) | apply (mo_mat_rdr _ _ MM3)]. }
       clear P2 HH2 TX2 IC2.
       destruct d as [|k]; [lia|].
       eapply (printfN_callA k (Z_to_bv 8 0) (LBx ++ LB)) with (h := h2); [exact P3 | lia |].
       intros t0'' t1'' t2'' a0'' a1'' a2'' a3'' a4'' a5'' a6'' a7'' t3'' t4'' t5'' t6'' m4 mo4 P4.
-      pose proof P4 as P4'. destruct P4' as [HH4 HK4 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _].
+      pose proof P4 as P4'. destruct P4' as [HH4 HK4 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _].
       (* [comment removed for export] *)
       eapply (rz_evtA_K asegs AL (hcs asegs R HIA h2) (HK asegs R HIA h2) (hk_halted _ _ HIA h2) (hk_mat _ _ HIA h2));
         [exact HK4 | apply (L3_steps (hcs asegs R HIA h2)); lia |].
@@ -1349,13 +1361,13 @@ Section Target.
         replace (Z.of_nat 1 =? 1) with true by reflexivity. replace (Z.of_nat 1 - 1) with 0 by lia.
         replace (S k - 1 + 1)%nat with (S (S k) - 1)%nat by lia.
         eapply (last_freeA (S (S k)) (LBx ++ LB)) with (h := h2); [lia | | cbn [rsum] in HV; unfold AVOL_CALL in *; lia | cbn [fsum] in HFR; unfold fr_charge in *; lia].
-        destruct P4; split; try assumption. all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM5), ?(mo_mat_fs _ _ MM5); assumption.
+        destruct P4; split; try assumption. all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM5), ?(mo_mat_fs _ _ MM5), ?(mo_mat_rdr _ _ MM5); assumption.
       - replace (Z.of_nat (S (S r')) =? 1) with false by (symmetry; apply Z.eqb_neq; lia). replace (Z.of_nat (S (S r')) - 1) with (Z.of_nat (S r')) by lia.
         replace (S k - 1 + S (S r'))%nat with (S (S k) - 1 + S r')%nat by lia.
         eapply (IH (S (S k)) (LBx ++ LB) (Z_to_bv 8 0) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m4 mo5 h2); [lia | lia | lia | | cbn [rsum] in *; pose proof (rsum_nonneg r'); unfold AVOL_CALL in *; lia
           | cbn [fsum] in *; pose proof (fsum_nonneg r'); unfold fr_charge in *; lia
           | clear - HCN HC2; lia].
-        destruct P4; split; try assumption. all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM5), ?(mo_mat_fs _ _ MM5); assumption.
+        destruct P4; split; try assumption. all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM5), ?(mo_mat_fs _ _ MM5), ?(mo_mat_rdr _ _ MM5); assumption.
     Qed.
     Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1366,7 +1378,7 @@ Section Target.
     Proof.
       intros * Hc P HV HFR HCN. destruct calls as [|c1]; [lia|].
       pose proof (Z.div_pos plen 5889 Hplen ltac:(lia)) as QP. pose proof (csum_nonneg (plen / 5889) c1 QP) as CSN. cbn [csum] in HCN.
-      pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS BY AX IC].
+      pose proof P as P'. destruct P' as [HH HKh HT HS IB IO TX SIm ST SSH TR FR FS FDS _ BY AX IC].
       pose proof (PHI_max plen ltac:(cbv delta [Ln] in *; pose proof (cap_ok_bounds sp0 cap COK); lia)) as PB.
       pose proof (rsum_nonneg c1) as RS. cbn [rsum] in HV.
       pose proof (FFR_max plen ltac:(cbv delta [Ln] in *; pose proof (cap_ok_bounds sp0 cap COK); lia)) as FB.
@@ -1378,10 +1390,10 @@ Section Target.
         [exact HKh | eapply (L1_steps (hcs asegs R HIA h)); [exact IC | exact FCS | exact (xm_mi _ _ _ _ _ (tx_x _ _ TX))] |].
       cbn beta. intros ms1 mo1 (m1 & -> & MU1 & WM1 & MI1 & IC1) HK1 MM1.
       assert (P1 : PLA 0%nat (Z_to_bv 8 1) LB m1 mo1 h).
-      { eapply (PLA_incb 0%nat icb LB m m1 mo mo1 h); [exact P | exact MU1 | exact WM1 | exact MI1 | exact IC1 | exact HK1 | apply (mo_mat_fs _ _ MM1) | apply (A_main_fin.mo_mat_fds _ _ MM1)]. }
+      { eapply (PLA_incb 0%nat icb LB m m1 mo mo1 h); [exact P | exact MU1 | exact WM1 | exact MI1 | exact IC1 | exact HK1 | apply (mo_mat_fs _ _ MM1) | apply (A_main_fin.mo_mat_fds _ _ MM1) | apply (mo_mat_rdr _ _ MM1)]. }
       eapply (fuzz_callA 0 (Z_to_bv 8 1) LB) with (h := h); [ exact P1 | unfold AVOL_CALL in *; lia | unfold fr_charge in *; lia | clear - HCN CSN; lia | apply t_emit_has_nil |].
       intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m2 mo2 h2 LBx P2 HV2 HFR2 HC2.
-      pose proof P2 as P2'. destruct P2' as [HH2 HK2 HT2 HS2 _ _ TX2 _ _ _ _ _ _ _ _ _ IC2].
+      pose proof P2 as P2'. destruct P2' as [HH2 HK2 HT2 HS2 _ _ TX2 _ _ _ _ _ _ _ _ _ _ IC2].
       (* [comment removed for export] *)
       assert (FCS2 : crange (hcs asegs R HIA h2) 0x638c54 1).
       { intros x Hx. apply (hcs_static _ _ HIA h2). apply (hd_static _ _ _ HID). unfold ARtDrv.drv_static. lia. }
@@ -1389,13 +1401,13 @@ Section Target.
         [exact HK2 | eapply (L2_steps (hcs asegs R HIA h2)); [exact IC2 | exact FCS2 | exact (xm_mi _ _ _ _ _ (tx_x _ _ TX2))] |].
       cbn beta. intros ms3 mo3 (m3 & -> & MU3 & WM3 & MI3 & IC3) HK3 MM3.
       assert (P3 : PLA 0%nat (Z_to_bv 8 0) (LBx ++ LB) m3 mo3 h2).
-      { eapply (PLA_incb 0%nat (Z_to_bv 8 1) (LBx ++ LB) m2 m3 mo2 mo3 h2); [exact P2 | exact MU3 | exact WM3 | exact MI3 | exact IC3 | exact HK3 | apply (mo_mat_fs _ _ MM3) | apply (A_main_fin.mo_mat_fds _ _ MM3)]. }
+      { eapply (PLA_incb 0%nat (Z_to_bv 8 1) (LBx ++ LB) m2 m3 mo2 mo3 h2); [exact P2 | exact MU3 | exact WM3 | exact MI3 | exact IC3 | exact HK3 | apply (mo_mat_fs _ _ MM3) | apply (A_main_fin.mo_mat_fds _ _ MM3) | apply (mo_mat_rdr _ _ MM3)]. }
       clear P2 HH2 TX2 IC2.
       change (zero_lines (S c1)) with (zero_lines 1 ++ zero_lines c1).
       eapply srzJ_conseq; [ | apply (t_emit_W_app 1) ].
       eapply (printf1_callA (Z_to_bv 8 0) (LBx ++ LB)) with (h := h2); [exact P3 | apply t_emit_has_nil |].
       intros t0'' t1'' t2'' a0'' a1'' a2'' a3'' a4'' a5'' a6'' a7'' t3'' t4'' t5'' t6'' m4 mo4 P4.
-      pose proof P4 as P4'. destruct P4' as [HH4 HK4 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _].
+      pose proof P4 as P4'. destruct P4' as [HH4 HK4 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _].
       (* [comment removed for export] *)
       eapply (rz_evtA_K asegs AL (hcs asegs R HIA h2) (HK asegs R HIA h2) (hk_halted _ _ HIA h2) (hk_mat _ _ HIA h2));
         [exact HK4 | apply (L3_steps (hcs asegs R HIA h2)); lia |].
@@ -1404,13 +1416,13 @@ Section Target.
       - replace (Z.of_nat 1 =? 1) with true by reflexivity. replace (Z.of_nat 1 - 1) with 0 by lia.
         change (zero_lines 0) with (zero_lines (1 - 1)).
         eapply (last_freeA 1 (LBx ++ LB)) with (h := h2); [lia | | unfold AVOL_CALL in *; lia | unfold fr_charge in *; lia].
-        destruct P4; split; try assumption. all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM5), ?(mo_mat_fs _ _ MM5); assumption.
+        destruct P4; split; try assumption. all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM5), ?(mo_mat_fs _ _ MM5), ?(mo_mat_rdr _ _ MM5); assumption.
       - replace (Z.of_nat (S (S c2)) =? 1) with false by (symmetry; apply Z.eqb_neq; lia). replace (Z.of_nat (S (S c2)) - 1) with (Z.of_nat (S c2)) by lia.
         change (zero_lines (S c2)) with (zero_lines (1 - 1 + S c2)).
         eapply (ploopA (S c2) 1 (LBx ++ LB) (Z_to_bv 8 0)) with (h := h2); [lia | lia | lia | | cbn [rsum] in *; pose proof (rsum_nonneg c2); unfold AVOL_CALL in *; lia
           | cbn [fsum] in *; pose proof (fsum_nonneg c2); unfold fr_charge in *; lia
           | clear - HCN HC2; lia].
-        destruct P4; split; try assumption. all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM5), ?(mo_mat_fs _ _ MM5); assumption.
+        destruct P4; split; try assumption. all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM5), ?(mo_mat_fs _ _ MM5), ?(mo_mat_rdr _ _ MM5); assumption.
     Qed.
     Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
   End PLoopA.
@@ -1518,7 +1530,7 @@ Section Target.
   Theorem target_phaseA : target_stmtA R HIA HID SI sp0 fs0 fdata can tid wp0 rp0 wp1 rp1 TOP STKHI V0 FR0 pad.
   Proof.
     intros buf cap cl plen t0 t1 t2 a4 a5 a6 a7 x7 t3 t4 t5 t6 m mo h TI [Hcl Hcl2] Hplen HL.
-    pose proof TI as TI'. destruct TI' as [HH HKmo HT HS VOL FRB TM FI SSH SIm ST FR FS FDSq BY WR LCAP COK BR FRSH FRSH0].
+    pose proof TI as TI'. destruct TI' as [HH HKmo HT HS VOL FRB TM FI SSH SIm ST FR FS FDSq _ BY WR LCAP COK BR FRSH FRSH0].
     pose proof (cap_ok_bounds sp0 cap COK) as CB. pose proof (u64_range sp0) as SPR.
     pose proof (art_alwf _ _ HIA) as ALWF. pose proof (hcs_ok _ _ HIA h) as CSOK.
     pose proof (hd_blk_band _ _ _ HID h _ _ m buf cap HH ltac:(left; reflexivity)) as (BLO & BCE & BHI).
@@ -1602,6 +1614,7 @@ Section Target.
       + left. repeat split; lia.
       + rewrite (mo_mat_fs _ _ MM3). exact FS2.
       + rewrite (A_main_fin.mo_mat_fds _ _ MM3). exact FDS2'.
+      + rewrite (mo_mat_rdr _ _ MM3), (mo_mat_rdr _ _ MM2), (mo_mat_rdr _ _ MM1). destruct TI; assumption.
       + (* [comment removed for export] *) replace (skipn (Z.to_nat (cl + 6)) fdata) with (@nil byte).
         2:{ symmetry. apply skipn_all2. cbv delta [Ln] in *. lia. }
         split; [lia|]. split; [cbn; lia|]. intros i Hi. cbn in Hi. lia.
@@ -1640,6 +1653,7 @@ Section Target.
           | rewrite HT4; exact HT | rewrite HS4; exact HS | unfold AVOL_CALL in *; lia | pose proof (FFR_max 0 ltac:(lia)); unfold fr_charge in *; lia
           | rewrite (mo_mat_fs _ _ MM5), (A_main_fin.mo_frame_fs _ _ MF4), (mo_mat_fs _ _ MM3); exact FS2
           | rewrite (A_main_fin.mo_mat_fds _ _ MM5), (A_main_fin.mo_frame_fds _ _ MF4), (A_main_fin.mo_mat_fds _ _ MM3); exact FDS2'
+          | rewrite (mo_mat_rdr _ _ MM5), (mo_frame_reader _ _ MF4), (mo_mat_rdr _ _ MM3), (mo_mat_rdr _ _ MM2), (mo_mat_rdr _ _ MM1); destruct TI; assumption
           | eapply tmem_presA; [exact TX1 | exact HP4 | intros a Ha; exact I | exact HH4 | exact MI4]
           | (eapply (@A_main_fin.atx_presA R HIA HID sp0 SPlo); [ | exact HP4 | intros a Ha; exact I ];
              exists (bv_unsigned fv =? 0), (Z_to_bv 8 0), jp, jq, jf; split; [exact AT1 | intros _; exact IC1])
@@ -1735,6 +1749,8 @@ Section Target.
         * eapply rw_cells_transport; [exact FR4 | exact MU6 | exact WM6 | cbn [cells_size csize A_main_loop.FRAMEA Nat.add disjoint_from fst snd]; rewrite STKLO; cbv delta [tsp msp]; lia].
         * rewrite (mo_mat_fs _ _ MM7), (mo_mat_fs _ _ MM6), (mo_mat_fs _ _ MM5), (A_main_fin.mo_frame_fs _ _ MF4), (mo_mat_fs _ _ MM3). exact FS2.
         * rewrite (A_main_fin.mo_mat_fds _ _ MM7), (A_main_fin.mo_mat_fds _ _ MM6), (A_main_fin.mo_mat_fds _ _ MM5), (A_main_fin.mo_frame_fds _ _ MF4), (A_main_fin.mo_mat_fds _ _ MM3). exact FDS2'.
+        * rewrite (mo_mat_rdr _ _ MM7), (mo_mat_rdr _ _ MM6), (mo_mat_rdr _ _ MM5), (mo_frame_reader _ _ MF4), (mo_mat_rdr _ _ MM3), (mo_mat_rdr _ _ MM2), (mo_mat_rdr _ _ MM1).
+          destruct TI; assumption.
         * destruct U6 as [BY6 _]. exact BY6.
         * destruct AX4 as (bb & jp' & jq' & jf' & AT4). exists bb, jp', jq', jf'. unfold atexit_cells in *.
           eapply rw_cells_transport; [exact AT4 | exact MU6 | exact WM6 | cbn [cells_size csize Nat.add disjoint_from fst snd]; rewrite STKLO; cbv delta [tsp]; lia].

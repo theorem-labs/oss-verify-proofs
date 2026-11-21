@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the table pattern of lib/B/FSW_parse_string_tbl.v (itself lane CRT's
-   lib/A/FSW_crt_tbl.v pattern) and of image A's lib/A/FSW_parse_value_tbl.v (a working branch
-   c4ac4207dc3), for image B's parse_value text range. *)
+   lib/A/FSW_crt_tbl.v pattern) and of image A's lib/A/FSW_parse_value_tbl.v (a working branch),
+   for image B's parse_value text range. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER group, image B (fs.asan-ubsan): the decode table of parse_value's own text (A_parse_value
    0x82fcc, pf.c:277-294), for the walk's symbolic runs (lib/B FSW_K.v fsw_run_AJU / fsw_run_to_AJU / fsw_run_tok_AJU
    and their tactics take `table_ok tfibsegs tbl`). The range is RELOC-B's B/YB1w.v:461 names: tfib_A_parse_value =

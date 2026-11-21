@@ -1,5 +1,5 @@
 (* Pure facts for the ASan+UBSan walk of name_ok on image B (lib/B/Prog/name_ok.v, name_ok_s1.v): the image-B port of
-   lib/A/Prog/name_ok_lem.v (commit ce5629fa227b). The byte test of SegModel.name_ok, the bit
+   lib/A/Prog/name_ok_lem.v. The byte test of SegModel.name_ok, the bit
    mask 2^50 + 2^13 + 3 that the loop shifts by (c - 45) after the unsigned guard (c - 45) <= 50, and the string's
    bytes one at a time. No image, no machine: image B's loop tests the same bytes with the same mask (0x8a458 ..
    0x8a490), so the text is the A file's. *)

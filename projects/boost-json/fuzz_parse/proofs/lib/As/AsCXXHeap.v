@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -25,6 +26,23 @@ Proof. reflexivity. Qed.
 
 Lemma lf_remove_head : ltac2:(zQ "80!q6!t2!md!t9!m6!o8!u0!u8>1k$0>2ff$0>2fp$0>2LF@1$2@2$1@2$1$0$0$0@3$5@1$2$6@2$7^3@3$4@2$1@2$1$0$0$0@4$3@2$1$0$0$0@4$3$0$0^4^3^2^1^1").
 Proof. intros. cbn. rewrite Z.eqb_refl. reflexivity. Qed.
+
+(* LPS revision repair (75d69e00, checker 2c6b6db8).  UNIVERSE ANCHOR for fresh_of_RFS's
+   replay below.  TWIN of Bs/AsCXXHeap.v's, which is GREEN on the farm
+   (a farm round, `built … Bs/AsCXXHeap.vo`); the anchor names only
+   `List.in_map_iff`, `fframe` and `Z`, all spelled identically on the two sides, so the
+   transfer carries no address, no hex-suffixed identifier and no literal.
+   `KReplay.run1`/`run1z` hand the decoded term to the kernel with `Std.exact_no_check`
+   (KReplay.v:627), so a replay can only CONSUME universe constraints already in the graph and
+   cannot add one.  fresh_of_RFS's term applies an `in_map_iff`-shaped hypothesis at
+   `A := fframe`, `B := Z`, and the kernel says `Type@{fframe.u0}` is not a subtype of
+   `Type@{Map.u0}` — `Map.u0` being Stdlib `List.v`'s `Section Map` universe, the section that
+   declares `map`, `in_map` and `in_map_iff` over `Variables (A B : Type)`.
+   The lemma is named FULLY QUALIFIED on purpose: this file does `From stdpp Require Import
+   gmap`, and an unqualified `map`/`in_map` need not resolve to the List section's constant at
+   all.  That is exactly how the first version of this anchor failed on the Bs side — the
+   constraint went to a different constant and the error did not move. *)
+Definition u_anchor_in_map_iff_fframe := @List.in_map_iff fframe Z.
 
 Section HH.
   Context {HCEIL : HeapCeil}.

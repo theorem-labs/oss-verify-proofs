@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v, with its module names changed; 426 of its 465 lines of code are new or changed and 927 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R8.v, with its module paths and module names changed; 288 of its 337 lines of code are new or changed and 416 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/P4.v -- GLUE for stage seg_P4 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:719):
      glue_seg_P4 : forall POST, CF POST C_A81b90 -> CF POST C_A81b80
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
@@ -14,7 +15,7 @@
    re-fit (the cut's ctl_rt -> A.ACtlRtC.ctl_rt_C, the run -> its _on twin) by a Theorem Labs lane, slice P4.
    rule 24: no function proved (stage glue of a walk).
 
-   THE SEGMENT (Seg/P4.v at U 6a74d5929d2; v1.9 0x81b80 -> 0x81b90): li a2,72 ; ld a0,192(s1) ; li a1,0 ;
+   THE SEGMENT (Seg/P4.v at U; v1.9 0x81b80 -> 0x81b90): li a2,72 ; ld a0,192(s1) ; li a1,0 ;
    jal __asan_memset (0x524c4), return pc 0x81b90.  The callee clears the 72 bytes of the fragment record at
    D = fr + 2768 and uses its own stack window [sp - ASAN_MEMSET_K, sp) (ASAN_MEMSET_K = 2208).
 
@@ -50,13 +51,13 @@
          ctl_rt_C  AsanRTFacts.asan_cells_kept (rt_disjoint W), ShadowRwOnT.shadow_rw_on_kept for each of the two
                    regions (the world ly3 S3 does not move; W is application memory: meta_kept), the run's ro_agree.
 
-   CITED BY NAME: a Theorem Labs lane's PROVED A.ProgWorld.ajournal_of_fsteps (ProgWorld.v (at head lib/A/ProgWorld.v:1091; from a working branch 7f07ac65e7b))
-   and a Theorem Labs lane's PROVED A.ACtlG.KitMem.kitmem_stk_of_present (a working branch 4a56e997c0f,
+   CITED BY NAME: a Theorem Labs lane's PROVED A.ProgWorld.ajournal_of_fsteps (ProgWorld.v (at head lib/A/ProgWorld.v:1091; from a working branch))
+   and a Theorem Labs lane's PROVED A.ACtlG.KitMem.kitmem_stk_of_present (a working branch,
    merged).
    ALSO CITED: a Theorem Labs lane's PROVED, premise-free A.ProgWorld_Fs.ctl_frame_above_img (a live fake frame lies above
    the image; a Theorem Labs lane 07:4xZ: cited instead of the Section hypothesis kit_frame6_above_img).
    SECTION HYPOTHESES (exact text below)
-   (KitMem K3 is a Theorem Labs lane's PROVED A.ACtlG.KitMem.kitmem_input_apart, a working branch dcdc870e8ff.)
+   (KitMem K3 is a Theorem Labs lane's PROVED A.ACtlG.KitMem.kitmem_input_apart, a working branch.)
    - LAWS       : the core's AR laws (ACtl.v:183).
 
    CLOSURE: every Require is qualified.  The six modules that exist both as the core's lib/Reusable/<X> and as

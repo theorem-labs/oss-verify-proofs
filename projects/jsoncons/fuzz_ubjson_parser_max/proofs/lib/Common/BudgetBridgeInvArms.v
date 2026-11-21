@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: adds pres_fault_unfold and pres_auto_w tactics for the write, writev and pwrite64 arms, plus new set_robust_list, clock_getres and pwritev2 arm lemmas wired into the Forall arm list, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Common/BudgetBridgeInvArms.v, lines 56-74, 210-217, 265-268, 319. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Sys.SyscallTable.
@@ -48,16 +49,25 @@ Lemma arm_bnd_lseek : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "F';'9&S
 Proof. intros i m. pres_auto. Qed.
 Lemma arm_bnd_read : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "D';'9&SI':&Q8&S<&@r2(0%3221%511u1%6251u2%8271%;3531r1%?4>2:1pWNA1pWLC1").
 Proof. intros i m. pres_auto. Qed.
+Ltac pres_fault_unfold :=
+lazymatch goal with
+| |- Pres1 (match ?e with Some _ => _ | None => _ end) _ _ =>
+lazymatch type of e with
+| option (Sys ?A -> Sys ?A) =>
+let h := headc e in is_const h; unfold h; cbv beta iota zeta
+end
+end.
+Ltac pres_auto_w := repeat (first [ pres_fault_unfold | pres_step ]).
 Lemma arm_bnd_write : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "D';'9&SI':&Q:&S<&@r2(0%3221%511u1%6251u2%8271%;3531r1%?4>2:1pWNA1pWLC1").
-Proof. intros i m. pres_auto. Qed.
+Proof. intros i m. pres_auto_w. Qed.
 Lemma arm_bnd_readv : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "D';'9&SI':&Q9&S<&@r2(0%3221%511u1%6251u2%8271%;3531r1%?4>2:1pWNA1pWLC1").
 Proof. intros i m. pres_auto. Qed.
 Lemma arm_bnd_writev : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "D';'9&SI':&Q;&S<&@r2(0%3221%511u1%6251u2%8271%;3531r1%?4>2:1pWNA1pWLC1").
-Proof. intros i m. pres_auto. Qed.
+Proof. intros i m. pres_auto_w. Qed.
 Lemma arm_bnd_pread64 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "F';'9&SI':&Q6&S<&@r2(0%3221%511u1%6251u2%8271u3%:291%=47531r1%A4@2<1pWNC1pWLE1").
 Proof. intros i m. pres_auto. Qed.
 Lemma arm_bnd_pwrite64 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "F';'9&SI':&Q7&S<&@r2(0%3221%511u1%6251u2%8271u3%:291%=47531r1%A4@2<1pWNC1pWLE1").
-Proof. intros i m. pres_auto. Qed.
+Proof. intros i m. pres_auto_w. Qed.
 Lemma arm_bnd_pselect6 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "J';'9&SI':&Q>&S@&@r2(0%3221%511u1%6251u2%8271u3%:291u4%<2;1u5%>2=1%A6;97531r1%E4D2@1pWNG1pWLI1").
 Proof. intros i m. pres_auto. Qed.
 Lemma arm_bnd_ppoll : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "H';'9&SI':&Q=&@r2(0%3221&SDu1%6251%311u2%9281u3%;2:1u4%=2<1%?5;7531r1%C4B2?1pWNE1pWLG1").
@@ -190,6 +200,14 @@ Lemma arm_bnd_clone3 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "@';'9&
 Proof. intros i m. pres_auto. Qed.
 Lemma arm_bnd_faccessat2 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "F';'9&SI':&Q0&S<&@r2(0%3221%511u1%6251u2%8271u3%:291%=47531r1%A4@2<1pWNC1pWLE1").
 Proof. intros i m. pres_auto. Qed.
+Lemma arm_bnd_set_robust_list : forall i m, Pres1 (set_robust_list_spec (in_arg i 1)) i m.
+Proof. intros i m. pres_auto. Qed.
+Lemma arm_bnd_clock_getres : forall i m,
+Pres1 (clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1)) i m.
+Proof. intros i m. pres_auto. Qed.
+Lemma arm_bnd_pwritev2 : forall i m,
+Pres1 (pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5))) i m.
+Proof. intros i m. pres_auto_w. Qed.
 Lemma lookup_arm_in_b : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvArms "F'3'A%211'8'6'4%115&Br3r2%3221(1r1%22<1%:3841&SKr4%23@81p041pWJB1pX0A1pX4C1").
 Proof.
 induction t as [| x t IH]; intros n a H; [discriminate H |].
@@ -237,8 +255,10 @@ apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : Sys
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => exit_spec (in_arg i 0))); exact (arm_bnd_exit_group i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => set_tid_address_spec)); exact (arm_bnd_set_tid_address i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => futex_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3))); exact (arm_bnd_futex i m) |].
+apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => set_robust_list_spec (in_arg i 1))); exact (arm_bnd_set_robust_list i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => nanosleep_spec (in_arg i 0) (in_arg i 1))); exact (arm_bnd_nanosleep i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1))); exact (arm_bnd_clock_gettime i m) |].
+apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1))); exact (arm_bnd_clock_getres i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => sched_setscheduler_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))); exact (arm_bnd_sched_setscheduler i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => sched_getaffinity_spec (in_arg i 1))); exact (arm_bnd_sched_getaffinity i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => sched_yield_spec)); exact (arm_bnd_sched_yield i m) |].
@@ -289,6 +309,7 @@ apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : Sys
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => wait4_spec (pid32 (in_arg i 0)) (in_arg i 1) (waitopts32 (in_arg i 2)) (in_arg i 3))); exact (arm_bnd_wait4 i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => prlimit64_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3))); exact (arm_bnd_prlimit64 i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))); exact (arm_bnd_getrandom i m) |].
+apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)))); exact (arm_bnd_pwritev2 i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => clone3_spec (in_arg i 0) (in_arg i 1))); exact (arm_bnd_clone3 i m) |].
 apply Forall_cons; [ intros i m; cbn [sa_spec]; apply (pres1_reader (fun i : SyscallInput => faccessat2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3))); exact (arm_bnd_faccessat2 i m) |].
 apply Forall_nil.

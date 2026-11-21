@@ -9,8 +9,8 @@
    Section, is exactly these names, the kernel's primitives and the allowed axioms the discharges cite. Nothing in
    this file is a proof of a function (rule 24:
    no function proved; this is the composition / driver layer of a port).
-   ON THE MEMNORM INTERFACE (lane MnTop, a Theorem Labs lane, 2026-10-29; interface a working branch 3a622dfaff87,
-   prefix and closed driver a working branch 8a59abdc84b7):
+   ON THE MEMNORM INTERFACE (lane MnTop, a Theorem Labs lane, 2026-10-29; interface a working branch,
+   prefix and closed driver a working branch):
    - the driver walk is CwD1pB's tfib_drv_main_B_holds (lib/AU/PresetD1pBPfC.v), now over MnPrefix's
      memnorm twins (lib/AU/PresetD2runBRd0mnPf.v) and the PROVED loop premise PresetD1rBmn.H_memnorm_drv_B_holds; it
      carries no premise: the image rows and the three start-up rows (YGcfNilInit.ARcf_nil_init's start-up premises,
@@ -18,11 +18,11 @@
    - the memcpy / memset premises are in a Theorem Labs lane's KEEP form YGcallMxmn.aintrin_realizes_xm (the driver's AICPY and
      CwSites' printf results take it), H_aintrin_realizes_xm_cpy_B / _set_B in place of the plain aintrin_realizes_cf;
    - the ten program callees' contracts come from the B program bridge (lib/AU/Prog/PRW_AfnBridgeBProg.v,
-     a working branch c6bc6e90d8f1) and the B bridge (lib/B/Prog/PRW_AfnBridgeB.v): check_bounded_alloc
+     a working branch) and the B bridge (lib/B/Prog/PRW_AfnBridgeB.v): check_bounded_alloc
      and check_reject_clean from a Theorem Labs lane's signed walks (pcc_check_bounded_alloc_of_walk,
      pcc_check_reject_clean_of_walk), the other eight from THE KIT'S TEXTS, which stay named premises (section 0b), each at
      the bridge's record prwB_F_<f> ctx fr bud DW.
-   #102 (no-DW interface, PresetCfnB.v, first at commit 8259b94c42ee; on the kit's batch; driver relocation 2026-10-29):
+   #102 (no-DW interface, PresetCfnB.v, first; on the kit's batch; driver relocation 2026-10-29):
    the program part is the interface's ONE callee record preset_callee_contracts
    (PresetCfnB.v section 6), assembled here by field name at the B' instance (B := TfibB, L := B_prog_listing,
    PA := PI_prog_B, ci := CfImg_B, RL := prh_room_live_a8, ARx := iface_ARx = ARcf /\ xs_placed_cf): the kit's texts
@@ -39,6 +39,7 @@
    conjunct, YGcallStackUp.astack_up_x at each harness call's state, is PROVED by the driver walk from main's entry
    (lane StackDrv: the loop's invariant, carried by every prefix leaf, seeded at main by the start-up lane's
    stack_up_main_W1_B over the kit's argH0; lib/AU/PresetD1pBPfC.v H_stackup_main_B_holds). No premise remains for it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -53,7 +54,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YG0ncf YG0dcf YG0d2cf YGcfRoomKeep YG0tcf.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YP0b YPsym YC4aP YGcallMxmn YGcfMallocComposeKeep.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcfInstReallocKKeep.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB1v YB01 YF0m YD2l YCeg YD1w YD1x YD1k.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB1v YB01r YF0m YD2l YCeg YD1w YD1x YD1k.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B Require Import Listing_prog PAImg_prog.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import CfParamsPreset.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import PresetCfnB PresetTFIBAU.
@@ -93,7 +94,7 @@ Open Scope Z_scope.
 
 (* START-UP: the B core's tfib_startup_T1 (lib/Reusable/YB1n.v:52, at the hand-off table of record HS_tfib,
    lib/Reusable/YB01.v) is the statement tfib_startup_T1_B HS_tfib (lib/AU/PresetD1qB.v) by conversion. *)
-Lemma tfib_startup_T1_B_at_HS : tfib_startup_T1_B HS_tfib.
+Lemma tfib_startup_T1_B_at_HS : tfib_startup_T1_B HS_tfib_r.
 Proof. exact YB1n.tfib_startup_T1. Qed.
 
 (* THE NON-PRIMARY ROOM: iface_room_np := np_live_B (lib/AU/PresetDrvTopBStmt.v: room_live_cf at preset's parameters,
@@ -156,7 +157,7 @@ Definition crc_img_shadow_vis_B (rc : YM05.RunCeil) : Prop :=
 
 (* THE INSTANCE UNIVERSE'S CLOSURE at the slot's context set (the no-DW slot pre's conjunct before the last, state-free),
    at the
-   instance: the batch kit's witness (lib/A/PRH_Witness.v prh_univ_closure_witness_B, the batch kit 8ba304fe2f93: a decision
+   instance: the batch kit's witness (lib/A/PRH_Witness.v prh_univ_closure_witness_B, the batch kit: a decision
    procedure proved sound once and run by vm_compute) at TfibB, whose code record and universe are the witness's by
    definition (YD2l.TfibB); preset_prh_img and iface_ctx0 = [[RA_LLVMF]] are the witness's image table and context
    by conversion. No room count is stated here (the wild traces' depot room is a Theorem Labs lane's count thread). *)
@@ -167,7 +168,7 @@ Section closed.
 (* ---------------------------------------------------------------------- *)
 (* A. The parts of the driver layer (the same names as lib/AU/PresetD2oBPf.v). *)
 #[local] Existing Instance YK11.fx0.
-(* the image's CfImg record: CfImg_B (lib/AU/CfImgB.v, blob 4b8e1b9596a7; its one home a working branch 5023be8f2869; owner
+(* the image's CfImg record: CfImg_B (lib/AU/CfImgB.v, blob 4b8e1b9596a7; its one home a working branch; owner
    order 06:00Z), so the result is TFIB_T_closed_B at the image *)
 #[local] Existing Instance CfImg_B.
 (* START-UP: discharged, tfib_startup_T1_B_at_HS above (YB1n.tfib_startup_T1). *)

@@ -1,10 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (origin/cold/h-rw-cmd-7-rt 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (
    proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v, owner h-rw-cmd-7) to libreac/fuzz_identity's ASan build
    (image A) by an address map recorded by the porting lane; module paths, GrantSyms ->
    TfibSyms. The proof script is h-rw-cmd-7's, unchanged. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/StrcmpLoop.v at origin/ossv/recipes 2d2ff01bb6f2 (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_rate's ASan build (fuzz_rate.asan sha256 22bc8613d780) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strcmp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/StrcmpLoop.v (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_rate's ASan build (fuzz_rate.asan sha256 22bc8613d780) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strcmp.tsv). *)
 (* libreac/fuzz_identity, build asan: the byte loop of ___interceptor_strcmp,
    as a plain machine walk (msteps), in the form of A/AE3a.v's byte loop (mc_tail). checked against fuzz_identity.asan:
      0x427a8  add  a0,s2,s4      01490533
@@ -19,6 +19,7 @@
    register but a0, s4, s9, s10 is the one at the first entry. The loop leaves at 0x427c4 after the iteration
    i = k (x[k] = 0 or x[k] <> y[k]) with s4 = k + 1, s9 = x[k], s10 = y[k]. Memory is only read. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

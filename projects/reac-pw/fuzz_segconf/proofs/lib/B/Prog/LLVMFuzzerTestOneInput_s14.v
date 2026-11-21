@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the head of the top loop of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86654 .. 0x866bc with r > 0: UBSan's p + 1 tests, the header bytes, the cases r = 1, r = 2 and r >= 3 with the out-of-line high byte 0x86888 .. 0x868b0, 0x86a64 .. 0x86a78, the 8192 clamp), from LT_LH_stmt's state to the mid point LH_M1_stmt, the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s23.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (a segment lemma from one point of the function to the next, its seed lemma cl_seedX) and A/ACbk.v (the walk through the branches). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_s23.v, with its module paths, module names and numbers changed; 1206 of its 1286 lines of code are new or changed and 389 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the walk of the
    test harness's entry function LLVMFuzzerTestOneInput (0x84dc0), segment S04 of PLAN-asanubsan-main section 2.3:
    lt_seg_S04 : lt_seg_S04_stmt (LLVMFuzzerTestOneInput_defs.v), K85110 f -> K85210 f, 0x85110 .. 0x8520c
@@ -17,12 +18,12 @@
    a0 = 0; 152(s1) := s7; s4 := (a0 ? a0 - s3 : s7), the text's length; a0 := s4 + 1 and malloc (0x8520c), whose
    return is K85210 f.
 
-   THE FORM: plugin-hostd/fuzz_command's image-B harness walk (origin/ossv/recipes 3abc3740de97): its
+   THE FORM: plugin-hostd/fuzz_command's image-B harness walk: its
    lib/B/Prog/LLVMFuzzerTestOneInput_s23.v for the header bytes (a seed with the cursor's bytes as a region and the
    cursor's range as a fact, so the instrumented checks vanish by the region's shadow entry and UBSan's p + k tests
    are decided in the run), its _s24.v:574-579 for a trap branch the run cannot decide (psrr_branch_tok, the trap
    side refuted by exfalso and the arithmetic fact, B-DELTA.md section 2.2 (c)), its _s41.v aw_strnlen_loc for the
-   runtime call; image A's S01 / S02 walk (LLVMFuzzerTestOneInput_s12.v, image A's S01 / S02 commit 119b28fad68f)
+   runtime call; image A's S01 / S02 walk (LLVMFuzzerTestOneInput_s12.v, image A's S01 / S02)
    for the allocator call and the cut's premises from the run's registers (prreg) and the call's post. The walk is cut
    at three inner points, each stated as "from this point to the return, under the entry's context" in the shape
    of the defs file's cut statements:

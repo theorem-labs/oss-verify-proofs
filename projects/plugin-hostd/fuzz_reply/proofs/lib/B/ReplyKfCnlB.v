@@ -1,6 +1,6 @@
-(* The image-B (asan-ubsan) twin of lib/A/ReplyKfCnl.v at a working branch 3d1ff6eaa94 (a Theorem Labs lane, 2026-10-30):
+(* The image-B (asan-ubsan) twin of lib/A/ReplyKfCnl.v at a working branch (a Theorem Labs lane, 2026-10-30):
    the same text over lib/B, the same lemma names, all of it: B's W_contract.v gm_cost / gmc / cnl_go / gm_post /
-   gm_spec (and W_contract_x.v's _x twins) are token-identical to A's from a Theorem Labs lane's kit 3a33ee94ccc on. *)
+   gm_spec (and W_contract_x.v's _x twins) are token-identical to A's from a Theorem Labs lane's kit on. *)
 (* KF-COUNT, the check_no_loss / check_shape part (CUT-k4.md (sha256 2ee9221a56b3; internal record)): how many SECONDARY requests
    (Psec n, n >= 64,513 bytes: ReplyLSCntL.is_sec_iff) the plain model's request traces of check_shape_ends,
    source_reset, list free / drop, gesture_model and check_no_loss make, at a meter MT that charges 1 for a secondary
@@ -15,7 +15,7 @@
    - check_no_loss (kf_cnl_tr_le, kf_cnl_le): the potentials telescope (kf_cnl_psi); the held capacity either never
      moves or ends at most max 8 (2 (n + the begin records)) < 2^26 (kf_cnl_cap), so the trace costs at most
      ReplyKfCB.kf_vec_range's 15.  No capacity premise.  The text premise is alist_at's (kf_alist_short).
-   - the SPEC costs, W8's fixed kit text (e09792169e4: gesture_model's charge is its trace's): gm_cost (W_contract.v:1651)
+   - the SPEC costs, W8's fixed kit text (gesture_model's charge is its trace's): gm_cost (W_contract.v:1652)
      is gmc (:1993) at the held list's texts and capacity (kf_gm_cost_gmc); one gmc is at most the potential's rise to
      capstep's capacity (kf_gmc_le, kf_gm_cost_le, and kf_gm_cost_le_post over gm_post's H'), and per call between 0
      and 1 (kf_gm_cost_nonneg, kf_gm_cost_le1: at most one growth, the key copy primary, a free 0); over the expected
@@ -262,7 +262,7 @@ Proof.
     assert (R0 : ReplyKfCB.kf_psi_v 0 = 10) by reflexivity. lia.
 Qed.
 
-(* the spec-level form, at W_contract_x.v:296-297's cnl_tr *)
+(* the spec-level form, at W_contract_x.v:297-298's cnl_tr *)
 Lemma kf_cnl_le : forall E H : hlist,
   hl_n H + Z.of_nat (count_begin (texts E)) < 2 ^ 25 ->
   Forall (fun r => Z.of_nat (length (snd r)) <= APARTIAL) (hl_recs E) ->

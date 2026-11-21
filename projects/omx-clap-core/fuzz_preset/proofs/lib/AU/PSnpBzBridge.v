@@ -6,16 +6,17 @@
    donor's call-site form (`SRr segs W (cfg_at segs pc regs mem md) POST`).
 
    Three facts make it one short file:
-   - the two trees name the same image: `asegs = tfibsegs` by reflexivity (PSnpBzStr.v:26);
+   - the two trees name the same image: `asegs = tfibsegs` by reflexivity (PSnpBzStr.v:27);
    - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:16) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the donor's `msteps` (lib/Reusable/YK0i.v:284-290) asks;
-   - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:148),
+   - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:149),
      and the donor's own walks of library code use it that way (cgif_file A/AE6x.v:190).
 
    The shadow half of the bridge (chk_ok from the donor's range facts) is RtStr's, in PSnpBzStr.v. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v at origin/cold/port-fm-rtprintf-param 7e395de08f5: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; nothing else changes. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; nothing else changes. *)
 (* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpBzBridge.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): module paths lib/A/PSnpBz -> lib/AU/PSnpBz (alreloc's image-B relocation), the image-A core A<x> -> image B's Y<x> (lib/Reusable), lib/A/Img0 -> lib/B/Img0, the PSnp glue lib/A -> lib/AU. Sentences above that name image A describe the A twin. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

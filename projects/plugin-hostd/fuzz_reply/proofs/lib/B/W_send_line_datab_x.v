@@ -4,7 +4,7 @@
    (fuzz_reply.asan-ubsan), in the form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and
    lib/A/AC8b.v (a loop over concrete cut states).  Proves no function (kind: segment lemma of send_line's image-B walk:
    W_send_line_cx.v sl_copy_stmt, the copy half J -> L or X; reuse search in W_send_line_cx.v's header,
-   `R24BSendLine: CONFIRM`).  STRUCTURE ported from image A's closed sl_copy (a working branch a78a220dc8e
+   `R24BSendLine: CONFIRM`).  STRUCTURE ported from image A's closed sl_copy (a working branch
    lib/A/W_send_line_datab.v: the seat at the join, the memcpy call, aout_at_copy, the exit); no theorem crosses images.
    From the join A_sl_join = 0x82a08 (W_send_line_cx.v SLM) to the loop head or the epilogue:
      0x82a08 ld a0,24(sp)      the spilled auipc value of g_out (A_HI 25)
@@ -30,6 +30,7 @@
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, row G-BSL-b):
    the ARx-generic room-form twin of W_send_line_datab.v: sl_copy_x over ARx (a Theorem Labs lane; the B twin of its
    lib/A/W_send_line_datab_x.v) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-generic twin of lib/B/W_send_line_datab.v's sl_copy (the copy half of a
    data round of fuzz_reply's send_line loop on IMAGE B, fuzz_reply.asan-ubsan), transformed as image A's
    lib/A/W_send_line_datab.v was into lib/A/W_send_line_datab_x.v; W_send_line_datab.v is NOT edited.  Proves no
@@ -127,10 +128,10 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* a live block's request is below 2 ^ 30 (image A's BLKM text, W_LLVMFuzzerTestOneInput_exit_x.v:269; the top states it
+(* a live block's request is below 2 ^ 30 (image A's BLKM text, W_LLVMFuzzerTestOneInput_exit_x.v:270; the top states it
    at ARX from the cf instance's AR_blocks_law_cf): the copy half's memcpy at 0x82a34 needs n < 2 ^ 32 *)
 Hypothesis BLKM : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 30.
-(* W_send_line_cx_x.v's header (W_send_line_cx.v:97-140 over ARx, LAWS, PST, RP, HP0) *)
+(* W_send_line_cx_x.v's header (W_send_line_cx.v:98-141 over ARx, LAWS, PST, RP, HP0) *)
 Hypothesis HG : gx_ok SEGS B (G_SL B RG).
 Hypothesis HGR : forall a, inG (G_SL B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_SL B RG).
@@ -141,7 +142,7 @@ Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, YCk0.v:34, holds [0x829f4]; YCk0.v:175 is send_line's edge to it); send_line hands the rule a cut
-   chain (ch = []), so the trace is the return address alone (image A's a0c781b35e6..0828d5d79f5 form). *)
+   chain (ch = []), so the trace is the return address alone (image A.. form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x1a0] CTX_R.   (* realloc returns to 0x829f4 *)
@@ -676,7 +677,7 @@ Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CT
 Let RUNG := paj_run_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let BRR := paj_branch_xR (PI := PI) (R := R).
-(* W_send_line_datab_x.v:649 sc_exit_x at R *)
+(* W_send_line_datab_x.v:650 sc_exit_x at R *)
 Lemma sc_exit_xR : forall regsE ly S Hp W mem md c O mx no cap out Bl lyX SX HpX WX regsX memX mdX k out' rest kr,
 ajournal_gx_xR SEGS B PST ARx R (G_SL B RG) 0 [] SL_STK (spZ regsE) (ablocks_fp (aout_blks cap out)) ly S Hp W mem md []
   lyX SX HpX WX memX mdX k ->
@@ -710,7 +711,7 @@ intros r _ a _. split.
 - exact (aview_eq_of SEGS (w_H WX) memX mem' a (Hm' _)).
 - unfold arm. apply writable_kept. intros Hpa. exact (apresent_grows _ _ _ _ GRX Hpa).
 Qed.
-(* W_send_line_datab_x.v:657 sl_copy_x at R *)
+(* W_send_line_datab_x.v:658 sl_copy_x at R *)
 Theorem sl_copy_xR : sl_copy_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 intros n0 regsE ly S Hp W mem md c O mx no cap out line Bl WM regsM memM mdM sent n kr IH HM Hb.

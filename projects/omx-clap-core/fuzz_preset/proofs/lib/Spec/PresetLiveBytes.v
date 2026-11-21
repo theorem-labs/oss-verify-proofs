@@ -28,8 +28,8 @@
    (entry_sum_closed), in the form the texts take at their entry: blocks_bytes S + n <= LIVE_MAX.
 
    CLOSURE: no lib/Prog/*_c.v and no Lib/LiaTwx2.v. The facts this leaf takes from files whose closure has them
-   (lib/Prog/SlotSizes.v, lib/Spec/PresetFlush.v, lib/Prog/check_round_trip_m.v, lib/Spec/PjReqBoundW.v at
-   origin/cold/c-frame-alloc-p8 d6092ab75a2) are PORTED below, each with its source cited. *)
+   (lib/Prog/SlotSizes.v, lib/Spec/PresetFlush.v, lib/Prog/check_round_trip_m.v, lib/Spec/PjReqBoundW.v)
+   are PORTED below, each with its source cited. *)
 From Stdlib Require Import ZArith List Lia Bool Arith Permutation.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Prog Require Import WriterSpec WriterValue.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require Import PjTree PjGrammar PjRoundTrip.
@@ -838,7 +838,7 @@ Qed.
 
 (* ================================================================ PORT 3: the rewritten copy's text
    check_round_trip_m.v (blob 6fa8a67e4c56) :101-143 (crtm_wcomma_len, crtm_wgo_set, crtm_wdoc_len, crtm_obj_len,
-   crt_len) and lib/Spec/PjReqBoundW.v at origin/cold/c-frame-alloc-p8 d6092ab75a2 (blob 0394d1a7ad83: wdoc_false_len,
+   crt_len) and lib/Spec/PjReqBoundW.v (blob 0394d1a7ad83: wdoc_false_len,
    obj_len_false, crt_len_false), over PresetReqAt.copy_set ms = JObj (pj_set_model ms MOD_KEY (JStr MOD_VAL)), which
    is check_round_trip_c.crt_tree (JObj ms) (MOD_AT = MOD_KEY, STAMP = MOD_VAL byte for byte). Both sources Require
    lib/Prog/check_round_trip_c.v. Proofs verbatim but for those names. *)
@@ -1523,7 +1523,7 @@ Proof.
   - rewrite blocks_bytes_zsum, (zsum_perm _ _ Hp), zsum_app. reflexivity.
 Qed.
 
-(* M2: every live request of a Wf_cf state is below cf_malloc_max (chunk_ok_cf, YG01cf.v:107-108) *)
+(* M2: every live request of a Wf_cf state is below cf_malloc_max (chunk_ok_cf, YG01cf.v:108-109) *)
 Theorem blocks_req_lt_cf : forall (cp : CfParams) U S z, @Wf_cf cp U S -> In z (map snd (blocks S)) ->
   0 <= z < cf_malloc_max.
 Proof.
@@ -1534,7 +1534,7 @@ Proof.
 Qed.
 
 (* the driver's blocks at preset's instance: 3 * (cf_malloc_max - 1) <= DRV_BYTES = 3 * (2 ^ 29 - 2 ^ 20 - 1), the
-   value at the cf_malloc_max of 298d096d6893 (the internal file LIVE-BYTES-PEAK.md section 2, DRVc). int102 lowered cf_malloc_max to
+   value at the cf_malloc_max (the internal file LIVE-BYTES-PEAK.md section 2, DRVc). int102 lowered cf_malloc_max to
    2 ^ 28 + 2 ^ 27 (CfParamsPreset.v:94, b60d0f63c926), so drv_bytes uses only cf_malloc_max <= 2 ^ 29 - 2 ^ 20 and
    holds at either value (h-pre-b2, PEAK-BYTES-102: the proof's `= 535822336 by reflexivity` failed on int102). *)
 Definition DRV_BYTES : Z := 1607467005.
@@ -1601,7 +1601,7 @@ Proof.
 Qed.
 
 (* ================================================================ ENTRY SUMS (row ENTRY-SUMS, h-pre-b2)
-   The texts (d6318e886fd9) take `blocks_bytes S + LIVE_<fn> args <= LIVE_MAX` at their ENTRY: the subtree's summed
+   The texts take `blocks_bytes S + LIVE_<fn> args <= LIVE_MAX` at their ENTRY: the subtree's summed
    live room on top of what is live, not one request. This section turns the byte peak above into that form:
    - ev_req_nn: every event of the run asks a nonnegative request (PROVED from the model: chain_nn for the writer's
      and rendered ()'s buffers, set_evs_nn, rd_hevs_nn, and the literal events of call_evs), so the peak
@@ -1819,10 +1819,10 @@ Lemma call_tail_refused_noalloc : forall sm x, fst (jr_run sm x []) = None -> ca
 Proof. intros sm x Hn Hc. unfold call_tail. rewrite Hn, Hc. reflexivity. Qed.
 
 (* THE HARNESS ENTRY (the owner's addition (a)). The premises are, conjunct for conjunct, those of the walk's entry
-   premise ec_pre (lib/A/Ent102CutsA.v at d6318e886fd9 :388 `PresetRoomPos.iface_room_pos (e_sm E) (e_x E) (e_os E)
+   premise ec_pre (lib/A/Ent102CutsA.v :388 `PresetRoomPos.iface_room_pos (e_sm E) (e_x E) (e_os E)
    (e_i0 E) (e_H0 E) (e_hist0 E) (e_S E)` and :390 `e_i0 E = length (PresetRun.hruns (e_sm E) (e_x E) (e_os E))`),
    and the conclusion at n := LIVE_LIB is its conjunct :397 `blocks_bytes (e_S E) + LIVE_LIB <= LIVE_MAX`, the top
-   cut's budget (first used at lib/A/Prog/Ent102L0A.v:677, with ec_lcut E 0 <= LIVE_LIB from ec_lcut_ok :561).
+   cut's budget (first used at lib/A/Prog/Ent102L0A.v:678, with ec_lcut E 0 <= LIVE_LIB from ec_lcut_ok :561).
    LIVE_LIB within CLOSED_ROOM: lib/A/PresetEntryLib.v live_lib_fits. *)
 Theorem entry_sum_closed :
   forall U (sm : list Z -> Z * Z) (x : list Z) (os : list (option nat * option nat * option nat))

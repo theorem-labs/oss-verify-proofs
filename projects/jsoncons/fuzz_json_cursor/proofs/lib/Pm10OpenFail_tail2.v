@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed of_segFG4, of_segG3, of_segH3 and 2 more; added Hrdr. *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -68,7 +69,7 @@ Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
 
 Section Tail2.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable sp0 : word.
   Variable BL : list (list byte).
   Variable model : Model.
@@ -76,6 +77,8 @@ Section Tail2.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev_spec reads [m_channel_reader] (recipes/channel-reader-premise.md) *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -107,7 +110,7 @@ Section Tail2.
     pose proof itinerary_63_64 as (_ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srH3 knH3 Rc Mc model scH3 [] []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srH3 knH3) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n srH3 knH3) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scH3 length Z.of_nat] end.
     - lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
@@ -170,7 +173,7 @@ Section Tail2.
     pose proof itinerary_63_64 as (_ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srG3 knG3 Rc Mc model scG3 (PRE17 ++ path) [Z_to_bv 8 10]
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srG3 knG3) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n srG3 knG3) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scG3];
       rewrite ?length_app, ?PRE17_len end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
@@ -228,7 +231,7 @@ Section Tail2.
     pose proof itinerary_63_64 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srH4 knH4 Rc Mc model scH4 [Z_to_bv 8 10] []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srH4 knH4) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n srH4 knH4) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scH4 length Z.of_nat] end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
@@ -304,7 +307,7 @@ Section Tail2.
     pose proof itinerary_63_64 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srF4 knF4 Rc Mc model scF4 PRE17 path
-             (t_emit (W 2 [Z_to_bv 8 10]) (t_exit (exit_code 2) (m_fs model))) HR HK
+             (t_emit (W 2 [Z_to_bv 8 10]) (t_exit (exit_code 2) (m_fs model))) ltac:(rdr) HR HK
              (eq_trans (f_equal (fun n => stdio_call n srF4 knF4) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scF4];
       rewrite ?PRE17_len end.
@@ -406,7 +409,7 @@ Section Tail2.
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
     destruct (Z.le_gt_cases (Z.of_nat (length path)) 62) as [Hle | Hgt].
-    - eapply (of_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    - eapply (of_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
     - destruct (Z.le_gt_cases (Z.of_nat (length path)) 63) as [Hle2 | Hgt2].
       + assert (E63 : Z.of_nat (length path) = 63%Z) by lia. rewrite E63 in Q113.
         eapply (of_segF_gen scfg sp0 BL model Hvsp Hh Hlazy path pp 63 _ vals'); try eassumption; try lia.

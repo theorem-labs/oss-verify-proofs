@@ -10,11 +10,12 @@
    meter's laws (MTL, and MTFL for the class-7 side-stack frame) and the callees' and runtime entries' contracts at
    every FP state. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/AnswerClosed.v, with its module paths and module names changed; 37 of its 58 lines of code are new or changed and 37 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing file of sup_instance_verb's ASan+UBSan walk (plugin-hostd/fuzz_command, image fuzz_command.asan-ubsan),
    in the pattern of a Theorem Labs lane's PASS4-REFIT.md section F: the walk's theorem (lib/B/Prog/sup_instance_verb.v,
    tsup_instance_verb_holds) at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are
    tfibsegs, and B's sink head YE2k.tfib_sink_head), with the per-binary facts that its Section names discharged by
-   the Theorem Labs lane lemmas of the same names, as A's SupRemoveAllRefitClosed.v (a working branch e84227c9553) does for
+   the Theorem Labs lane lemmas of the same names, as A's SupRemoveAllRefitClosed.v (a working branch) does for
    sup_remove_all: cmd_img_facts_tfib (CmdRecImg), cmd_palib, cmd_sig_prog_PB, the PALibF record (cmd_palibf, the
    walk's TLF), the side-stack frames' flag law (cmd_frame_flag_law, the walk's FFL), the astack free law
    (cmd_astack_free_law, the statement's AFREE_LAW) and the object bridge (cmd_val_objs_PB, the statement's VOBJS)

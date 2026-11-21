@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK04.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed interp_eff_accesses_restrict, step_accesses_restrict, step_accesses_ecall_shape, node_ok, node_instr_restricted, node_syscall_restricted). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -10,6 +11,7 @@ BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YK0i YK11.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable.R Require Import Cfg.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache.
 Local Instance asanreflect_fx : YK11.FPState := YK11.fx0.
 Import ListNotations.
@@ -365,7 +367,7 @@ split; [reflexivity|]. split; [reflexivity|]. split; [intros; reflexivity|].
 apply ranges_avoid_nil.
 -
 destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-[|discriminate].
+[|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
 destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
 rewrite Hfull.
 destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -444,7 +446,7 @@ destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|].
 destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
 { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
 exfalso. unfold fetch_failure in Hs.
-destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
 destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
 || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
 | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
@@ -498,7 +500,7 @@ destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)
 destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
 exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
 unfold fetch_failure in Hf.
-destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
 destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
 || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
 | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
@@ -849,7 +851,9 @@ Hypothesis Hwx : wx_segs_nowrap segs.
 Definition node_ok (c : config) (I : Type)
 (evs : I -> list event) (nx : I -> config) : Prop :=
 (forall i, sstep_cfg segs ACFG c (evs i) (SNext (nx i)))
-/\ (forall e st, sstep_cfg segs ACFG c e st -> exists i, e = evs i /\ st = SNext (nx i)).
+/\ (forall e st, sstep_cfg segs ACFG c e st -> exists i, e = evs i /\ st = SNext (nx i))
+(* LPS 08b1429: the same third conjunct as [YK15.node_ok] ([RomBase.sys_rob]) *)
+/\ sys_rob segs c.
 Theorem mi_account_step_restricted : forall A ms msr' model,
 lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
 RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
@@ -900,7 +904,7 @@ as (mat' & Hacc & Hinv' & Hcl).
 exists (with_vm_backing (m_vm_lazy model) mat' model).
 split; [exact Hinv'|]. split; [apply with_vm_backing_same|]. split; [exact Hcl|].
 split; [exact Hacc|].
-split.
+split; [| split; [| apply sys_rob_instr; exact Hsvc]].
 - intros []. apply sstep_cfg_instr; [exact Hh | exact Hsvc | exact Hacc].
 - intros e st Hss. exists tt.
 exact (sstep_instr_det ms model _ _ e st Hsvc Hacc (sstep_of_cfg segs ACFG _ _ _ Hss)).
@@ -1020,6 +1024,7 @@ exists i, r = Ok (eff i) (mdl i) (evs i)) ->
 (forall i, lazy_cover H (m_vm_lazy (mdl i)) A) ->
 (forall i, MInv A (mdl i)) ->
 (forall i, ranges_avoid H (syscall_effect_accesses (eff i))) ->
+sys_rob segs (mkCfg ms model) ->
 (forall i, MInv A (materialized_succ (mdl i) (syscall_effect_accesses (eff i)))
 /\ same_but_materialized (mdl i)
 (materialized_succ (mdl i) (syscall_effect_accesses (eff i))))
@@ -1027,7 +1032,7 @@ exists i, r = Ok (eff i) (mdl i) (evs i)) ->
 (fun i => mkCfg (advance_past_svc (apply_effect ms (eff i)))
 (materialized_succ (mdl i) (syscall_effect_accesses (eff i)))).
 Proof.
-intros A ms model x8 I eff mdl evs Hwf Hh Hsvc Hsound Hcompl Hnh Hns Hcov Hinv Hav.
+intros A ms model x8 I eff mdl evs Hwf Hh Hsvc Hsound Hcompl Hnh Hns Hcov Hinv Hav Hrob.
 assert (Hmat : forall i, exists mat',
 materialize_model_accesses (mdl i) (syscall_effect_accesses (eff i))
 = Some (with_vm_backing (m_vm_lazy (mdl i)) mat' (mdl i))
@@ -1036,7 +1041,7 @@ materialize_model_accesses (mdl i) (syscall_effect_accesses (eff i))
 split.
 - intros i. destruct (Hmat i) as (mat' & Hm & Hinv').
 unfold materialized_succ. rewrite Hm. split; [exact Hinv' | apply with_vm_backing_same].
-- split.
+- split; [| split; [| exact Hrob]].
 + intros i. destruct (Hmat i) as (mat' & Hm & Hinv').
 unfold materialized_succ. rewrite Hm.
 eapply sstep_cfg_syscall; [exact Hh | exact Hsvc | exact (Hsound i) | exact (Hns i) | exact (Hnh i) | exact Hm].

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PutB_Base.v, with its module paths and module names changed; 220 of its 265 lines of code are new or changed and 1360 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset (omx-clap-core), lane PValueB: the FREE-ORDER and CAPACITY lemmas the batch kit reader texts' posts ask
-   (the batch kit, a working branch 8ba304fe2f93: lib/A/PRH_FnParse.v tparse_value_specX /
+   (the batch kit, a working branch: lib/A/PRH_FnParse.v tparse_value_specX /
    tparse_items_specX, the free-order tie `pj_foR .. n v D F /\ map (fun b => snd b + cf_head) F = prhPv_frees ..`
    and `pj_ncapR .. v t`). Image-free and state-free: the model side (prhPv_frees at a leaf, at a container; the
    fuel of jfl, a Theorem Labs lane's lib/Spec/PresetFreeFo.v), the tree side (a leaf node's pj_foR at every depth, a

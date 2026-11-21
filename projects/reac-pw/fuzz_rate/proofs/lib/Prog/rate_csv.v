@@ -23,7 +23,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (** task_mem across a callee whose footprint was writable before it ran (copied from the released
-    libreac/fuzz_disco Prog/tj_lemmas.v:221, origin/ossv/recipes 25e3d17bdb50). *)
+    libreac/fuzz_disco Prog/tj_lemmas.v:221). *)
 Lemma task_mem_munch : forall W m m', MemNorm.task_mem rsegs m -> munch W m m' ->
   (forall a : word, ~ outside W (bv_unsigned a) -> wview rsegs m a <> None) -> MemNorm.task_mem rsegs m'.
 Proof.

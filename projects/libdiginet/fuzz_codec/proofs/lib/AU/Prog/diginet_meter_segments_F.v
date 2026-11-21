@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/diginet_meter_segments.v, with its module paths, module names and addresses changed; 35 of its 74 lines of code are new or changed and 123 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_decode.asan-ubsan) text of lib/A/Prog/diginet_meter_segments_F.v, proof of diginet_meter_segments_contract_F (lib/B/Prog/diginet_meter_segments_F_c.v) in the leaf form of proofs/libreac/fuzz_decode/lib/B/Prog/check_braid_F.v at recipes commit 88154566652a, step for step with lib/Prog/diginet_meter_segments.v (the plain walk, whose pure lemmas it uses). *)
+(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_decode.asan-ubsan) text of lib/A/Prog/diginet_meter_segments_F.v, proof of diginet_meter_segments_contract_F (lib/B/Prog/diginet_meter_segments_F_c.v) in the leaf form of proofs/libreac/fuzz_decode/lib/B/Prog/check_braid_F.v at recipes, step for step with lib/Prog/diginet_meter_segments.v (the plain walk, whose pure lemmas it uses). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Proof of diginet_meter_segments_contract_F (image B, entry 0x82dc8). The 14 words are image A's word for word, so
    the walk is image A's with StepF's step at the image-B pcs: `loop` (0x82dcc-0x82de8) by induction on the fuel of
    DgnLib.v's meter_count, then `fin` (0x82dec-0x82dfc). The code makes no data access, so no step needs an rng fact,

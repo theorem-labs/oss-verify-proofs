@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the steps of a program walk through a runtime entry whose contract is art_post (lib/A/Rt/RtDefs.v) and whose writes leave the errno cell, after PaArt.v's aj_art_at and cgif_file_fuzzer's aj_intrin_atS: aj_art_own_at, for an entry that writes bytes the caller's journal may write (its side-stack frame, its footprint, a block made in the call), is the sup_resp walk's lemma (an earlier version of lib/A/Prog/sup_resp_s0.v); aj_art_blk_at, for an entry that writes inside one live heap block, and awrite_ok_of_block, the entry's write premise on a range of such a block, are the sup_host_setting walk's lemmas hs5_art_wr_at and hs6_wr_block (lib/A/Prog/sup_host_setting_s5.v and sup_host_setting_s6.v), stated over any segments and symbols. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaArtOwn.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaArtOwn.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

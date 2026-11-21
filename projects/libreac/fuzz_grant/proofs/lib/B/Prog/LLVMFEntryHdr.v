@@ -6,8 +6,9 @@
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryLeave), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACez.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACfh.v, proofs/cgif/cgif_file_fuzzer/lib/YCbo.v, proofs/cgif/cgif_file_fuzzer/lib/YCbq.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryEndFree.v and lib/A/Prog/GrantEntryLeave.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/B/Prog/LLVMFEntryEnd.v; 1076 of its 1158 lines of code are new or changed and 1159 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B (fuzz_grant.asan-ubsan) walk of the header read of
-   LLVMFuzzerTestOneInput, in the shape of lib/A/Prog/GrantEntryHdr.v at a working branch 5651bf66924 (blob
+   LLVMFuzzerTestOneInput, in the shape of lib/A/Prog/GrantEntryHdr.v at a working branch (blob
    9b7cfb99703, the bytes first read; lib/A/AB01.v there is the current 1e6f4323d1e)
    (image A, fuzz_grant.asan, 0x80944 .. 0x8098c): the same lemma inventory and per-size runs, over image
    B's code, registers, spill slots and UBSan trap guards. *)

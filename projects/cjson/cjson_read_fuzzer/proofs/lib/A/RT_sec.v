@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reserved ledger holds the launch's vDSO pair after the image's reservations, so segs_reserved_below bounds the image's part and secreg_fixed_site reads the rest off the map the site sits in (lok_resv_free). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -448,10 +449,10 @@ Qed.
 Lemma asegs_reserved_sec : segments_reserved asegs =
   [(Z_to_bv 64 0x10000, Z_to_bv 64 0x20000); (Z_to_bv 64 0x30000, Z_to_bv 64 0x71000); (Z_to_bv 64 0xa1000, Z_to_bv 64 0x2000); (Z_to_bv 64 0xa3000, Z_to_bv 64 0x55c000)].
 Proof. vm_compute. reflexivity. Qed.
-Lemma reserved_below : forall mo (b s : word), LOK asegs mo -> In (b, s) (vm_reserved (m_vmmaps mo)) ->
+Lemma segs_reserved_below : forall (b s : word), In (b, s) (segments_reserved asegs) ->
   bv_unsigned b + bv_unsigned s <= AIMG_HI.
 Proof.
-  intros mo b s HO Hin. rewrite (lok_resv _ _ HO), asegs_reserved_sec in Hin. unfold AIMG_HI.
+  intros b s Hin. rewrite asegs_reserved_sec in Hin. unfold AIMG_HI.
   destruct Hin as [E|[E|[E|[E|[]]]]]; injection E as <- <-; rewrite !unsigned_lit by lia; lia.
 Qed.
 
@@ -677,9 +678,12 @@ Proof.
   pose proof (ablk_img _ _ G4) as G4i. unfold AIMG_HI in G4i.
   unfold mmap_fixed_site. unfold PTRARR_BLOCK, PTRARR_RES_SIZE, KHIGHMEM_BEG, CEIL in *.
   split; [exact G3|]. split; [blia|]. split; [rewrite CEIL_eq; unfold CEIL; lia|]. split.
-  - apply region_free_intro. intros b s Hin. pose proof (reserved_below mo b s HO Hin) as R. unfold AIMG_HI in R.
-    unfold iv_overlap. rewrite !unsigned_lit by blia. apply andb_false_iff.
-    first [left; apply Z.ltb_ge; lia | right; apply Z.ltb_ge; lia].
+  - apply (lok_resv_free _ mo _ _ HO).
+    + apply region_free_intro. intros b s Hin. pose proof (segs_reserved_below b s Hin) as R. unfold AIMG_HI in R.
+      unfold iv_overlap. rewrite !unsigned_lit by blia. apply andb_false_iff.
+      first [left; apply Z.ltb_ge; lia | right; apply Z.ltb_ge; lia].
+    + unfold map_contains. apply existsb_exists. exists (wz a7, wz PTRARR_RES_SIZE). split; [exact M2|]. cbn [fst snd].
+      unfold wz, PTRARR_RES_SIZE. rewrite !unsigned_lit by lia. apply andb_true_iff. split; apply Z.leb_le; lia.
   - unfold map_contains. apply existsb_exists. exists (wz a7, wz PTRARR_RES_SIZE). split; [exact M2|]. cbn [fst snd].
     unfold wz, PTRARR_RES_SIZE. rewrite !unsigned_lit by lia. apply andb_true_iff. split; apply Z.leb_le; lia.
 Qed.

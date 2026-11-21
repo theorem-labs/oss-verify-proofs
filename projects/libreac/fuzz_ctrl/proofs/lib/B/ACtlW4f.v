@@ -4,14 +4,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module names changed; 3841 of its 4451 lines of code are new or changed and 2502 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW4f.v -- piece W4f (S_F30 .. S_F36_c2c, the row stages included, cut-table-B.tsv rows 74-83: B82abc_at j ..
    B82c90_at j) of fuzz_ctrl image B's (asan-ubsan) walk of LLVMFuzzerTestOneInput in the released
    cgif_file_fuzzer form.  One writer: a Theorem Labs lane.  rule 24: no function proved (segment lemmas of a
    walk).
 
    WHAT THIS FILE PROVES (when it builds): one stage lemma per stage hypothesis of lib/B/ACtl.v in the piece
-   (seg_F30 .. seg_F36_c2c, ACtl.v:597-629 at 576147dfd46), with the SAME NAME and, once the top instantiates
-   SK := Reusable.YE2k.tfib_sink_head and FP := [] (ACtl.v:171-177), the same statement, so the top cites
+   (seg_F30 .. seg_F36_c2c, ACtl.v:597-629), with the SAME NAME and, once the top instantiates
+   SK := Reusable.YE2k.tfib_sink_head and FP := [] (ACtl.v:172-178), the same statement, so the top cites
    ACtlW4f.seg_F30 .. directly.  Shape: "the successor cuts hold -> this cut holds" (the donor's rt_B / rt_C shape),
    POINTWISE in the frame turn j (and in the row i for the three row cuts) with ACtlCut.ix_cut.  The row loop
    itself is the top's (ACtl.v turn_rows / loop_rows :655-672, base vac_B82bf4 :342), over seg_F34 / seg_F35 /
@@ -52,21 +53,21 @@
    OWNER where declared):
    - reac_box_catalogue is NOT a hypothesis: its footprint contract is PROVED here with no premise, in its route (C)
      form B.Prog.reac_box_catalogueF.reac_box_catalogue_F_holds_on : reac_box_catalogue_contract_F_on
-     (reac_box_catalogue_c.v, premise shadow_rw DROPPED; files by path from a working branch
-     7cfe4683a44; plan F.2 row 38); seg_F32_b5c uses it directly.
+     (reac_box_catalogue_c.v, premise shadow_rw DROPPED; files by path from a working branch;
+     plan F.2 row 38); seg_F32_b5c uses it directly.
    - declaration_of_F_holds_on: declaration_of's route (C) footprint contract `declaration_of_contract_F_on`
-     (B/Prog/declaration_of_c.v, statements by path from a working branch 78f53925b08; the plan F.2 row 39 (a working note, not in this delivery)), a
+     (B/Prog/declaration_of_c.v, statements by path from a working branch; the plan F.2 row 39 (a working note, not in this delivery)), a
      NAMED hypothesis until a Theorem Labs lane's image-B proof lands (this file does not Require declaration_ofF.v).
    - TCLS: reac_ctrl_classify_box_frame (0x837c4; it reaches __asan_stack_malloc_1 through reac_ctrl_parse, so it
      does not lift whole) by its cgif-form spec in the CALLER-JOURNAL form, by name:
      `treac_ctrl_classify_box_frame_spec B RLO RHI` of lib/B/Prog/C_reac_ctrl_classify_box_frame.v (sink head
      fixed there; SK_TFIB ties this Section's SK to it)
-     (statement of record a Theorem Labs lane 24eccbe90cb, aligned to image A at 05:52Z, on the walk line since 4f5b5522959),
+     (statement of record a Theorem Labs lane, aligned to image A at 05:52Z, on the walk line),
      proved there as `pb_reac_ctrl_classify_box_frame` (owner a Theorem Labs lane).
    - TMATCH: reac_box_catalogue_match (0x84e40; its own __asan_stack_malloc_2, the _1 in reac_ctrl_parse, the _0
      in reac_box_model_block) by `treac_box_catalogue_match_spec (SK := SK) RLO RHI B` of
-     lib/B/Prog/C_reac_box_catalogue_match.v (brought by path from a working branch
-     5608c59483e; gate finding w4f-tcls-tmatch.md (a working note, not in this delivery)), to be proved as `pb_reac_box_catalogue_match` (owner
+     lib/B/Prog/C_reac_box_catalogue_match.v (brought by path from a working branch;
+     gate finding w4f-tcls-tmatch.md (a working note, not in this delivery)), to be proved as `pb_reac_box_catalogue_match` (owner
      a Theorem Labs lane).  Its FORM is afn_pre / apost_base (NOT the caller-journal form TCLS has), with no achain premise.
      OBLIGATION at the composition: pb_reac_box_catalogue_match takes RELRO_IMG `forall a, RLO <= a < RHI ->
      in_img segs a` (the B PA instance's pa_relro) and `RLO <= A_CM_TBL /\ A_CM_TBL + CM_ROWS <= RHI` (lia at
@@ -85,8 +86,8 @@
    (`AC.GT = Reusable.YImgTop.IMG_TOP`, before Section W4f), so its statements say IMG_TOP only.  The other GT
    uses in a Theorem Labs lane's W4f texts are F30F.v:175 f30s_evt_ro_F and F32F.v:274 f32c_evt_pre_F_on (cited; their GT is rewritten the same way), F34F.v:409 f34_evt_ro_pre_F_on (cited; its GT is computed to 6283264, not rewritten) and, uncited, F32F.v:478
    f32c_evt_post_F, F34F.v:495 f34_evt_ro_pre_F.
-   CITED (all PROVED on a working branch 12a7ea50807, the one branch with every image-B `_F`, first
-   landed on a working branch 74c801af405; Required qualified):
+   CITED (all PROVED on a working branch, the one branch with every image-B `_F`, first
+   landed on a working branch; Required qualified):
    - B.Prog.Seg.F30F.f30s_evt_F      (F30F.md:18-35; Seg/F30.v:356; 0x82abc -> the classify entry 0x837c4 with
                                      ra = 0x82af8; it IS the pre stretch of the segment's one call and needs no
                                      split, F30F.md:6-8)
@@ -119,11 +120,11 @@
    be applied at all (rule ~00:45Z (2)); after a FOOTPRINT callee (reac_box_catalogue_F_holds_on, declaration_of_F_holds_on) the same
    zero-step `_post_F` is not needed.
    CLOSURE (rule (3)-(4)): the frame-route files reached through the `_F` modules must be, up to comment text, the v1.9 blobs of record:
-   lib/B/Prog/SlotModel.v de18d111c37, SlotInv.v dfc10b8f7a4 (23a791566db = UB 3803efccea0), AsanRT.v
-   32e0f5191fd, Contract.v 65b05173b1a, and the Seg sources at a working branch 3803efccea0, the blobs a Theorem Labs lane re-runs (each
+   lib/B/Prog/SlotModel.v de18d111c37, SlotInv.v dfc10b8f7a4 (= UB), AsanRT.v
+   32e0f5191fd, Contract.v 65b05173b1a, and the Seg sources at a working branch, the blobs a Theorem Labs lane re-runs (each
    `_F` module's `Source:` line): Seg/F30.v d2349dd89bf, Seg/F31.v 14939e90cc5, Seg/F32.v 8aab0c37ec8,
    Seg/F33.v 333b7b7d641, Seg/F34.v 3ea1805a512, Seg/F35.v cc6ce088e25, Seg/Tac_f36.v 6c08f44bcc3
-   (Seg/F30.v-F36.v (Seg/F36.v not in this delivery) and Tac_f36.v are not in 23a791566db or the union).  No lib/AZ/AsanW, W6 or
+   (Seg/F30.v-F36.v (Seg/F36.v not in this delivery) and Tac_f36.v are not or the union).  No lib/AZ/AsanW, W6 or
    cut-free file.  lib/AZ in the closure: exactly AcctCore.v, AsanCtrl.v, AsanCtrlProps.v and STree.v, with the
    blobs and paths in lib/B/ACtlW4e1.v's header (allowed in the closure only, porter 00:24Z / 00:25Z); no
    statement or hypothesis here names any of them.
@@ -136,13 +137,13 @@
      plan here claims a raw `mem x` equality.  (The earlier Section hypothesis ctl_post_bcmp, B.ProgWorld.ctl_post_bcmp
      there, was used by no proof here and is gone.)
 
-   MODEL: drafted against image B's v1.9 SlotModel (blob de18d111c37 by path from 23a791566db: SM.CAT = 0x9f620;
-   porter ruling via a Theorem Labs lane ~23:30Z), which this branch carries (up to comment text) since the shell re-twin (blob de18d111c37 at
-   576147dfd46).
+   MODEL: drafted against image B's v1.9 SlotModel (blob de18d111c37 by path: SM.CAT = 0x9f620;
+   porter ruling via a Theorem Labs lane ~23:30Z), which this branch carries (up to comment text) since the shell re-twin (blob de18d111c37).
+   
 
-   PROVENANCE: cut table rows 74-83 (lines 75-84); cut records lib/B/ACtlCutP.v (6d691a975b6); plan 2.3 rows
+   PROVENANCE: cut table rows 74-83 (lines 75-84); cut records lib/B/ACtlCutP.v; plan 2.3 rows
    74-82, 3 (loop 13), F.2 rows 37-40, F.3 rows 24-25, 6.2, F.4.1 rows 65-70; ctrl's runs at
-   a working branch 3803efccea0 (Seg/F30.v-F36.v (Seg/F36.v not in this delivery), Tac_f36.v, Slot.v (not in this delivery)); objdump
+   a working branch (Seg/F30.v-F36.v (Seg/F36.v not in this delivery), Tac_f36.v, Slot.v (not in this delivery)); objdump
    fuzz_ctrl.objdump.txt L85500-L85621 (a working note, not in this delivery). *)
 
 From Stdlib Require Import ZArith List Permutation Lia.
@@ -156,8 +157,8 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YG0d Reusable.YC5d 
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YCfn.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Img0 B.AsanRT B.ACtlK B.ACtlCut B.ACtlCutP.
 (* The kit bridge (fevt_of_evtF, RNG_W, rng_of_visible, img_vis_W, tfibsegs_rsegs, cfg_at_MS; a Theorem Labs lane's image-B
-   ProgBridge, FROZEN 03:17Z, on this branch since 6fe149485c2) and lib/Lib's footprint-run and register vocabulary.
-   lib/B/ACtlW4e1.v is NOT Required: it is another lane's file and does not build at 87506cf93a9 (its line 311). *)
+   ProgBridge, FROZEN 03:17Z, on this branch) and lib/Lib's footprint-run and register vocabulary.
+   lib/B/ACtlW4e1.v is NOT Required: it is another lane's file and does not build (its line 311). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.ProgBridge.
 (* route (C) (a Theorem Labs lane 11:03Z): the cut carries ctl_rt_C (B.ACtlRtC); at a cut state it is a Theorem Labs lane's
    B.ProgWorldCtlRtC.ctl_rt_C_of_AR (no AR_states_vis0_shadow, no AR_states_owned_ro); B.ShadowRwOn's region form. *)
@@ -272,7 +273,7 @@ Hypothesis ctl_relro_not_owned : forall a : Z,
 Hypothesis ctl_cat_relro_lo : RLO <= B.ACtlCutP.SM.CAT.
 Hypothesis ctl_cat_relro_hi : B.ACtlCutP.SM.CAT + B.ACtlCutP.SM.CAT_ROW * B.ACtlCutP.SM.CAT_N <= RHI.
 
-(* The catalogue's data (RTPOST-SHARED-B.txt (a working note, not in this delivery) at df3f9451f96, token for token; OWNER a Theorem Labs lane,
+(* The catalogue's data (RTPOST-SHARED-B.txt (a working note, not in this delivery), token for token; OWNER a Theorem Labs lane,
    lib/B/ProgBridgeData.v): addressable, and its 8-aligned shadow cover visible, at every AR state. *)
 Hypothesis ctl_cat_addressable : forall ly S (W : Reusable.YA0n.world segs) mem md,
   Reusable.YG0n.AR segs B ly S W mem md ->
@@ -286,7 +287,7 @@ Hypothesis ctl_cat_shadow_vis : forall ly S (W : Reusable.YA0n.world segs) mem m
      B.Prog.rng_asan.sh_al8_lo B.ACtlCutP.SM.CAT).
 
 (* declaration_of's footprint contract in its route (C) form (B/Prog/declaration_of_c.v, statements by path from
-   a working branch 78f53925b08: shadow_rw narrowed to shadow_rw_on declaration_of_shadow_R, post
+   a working branch: shadow_rw narrowed to shadow_rw_on declaration_of_shadow_R, post
    region transport).  OBLIGATION: image B's proof of declaration_of_contract_F_on (declaration_of_F_holds_on, over
    asan_memcpy_contract_F_on; ETA ~14:00Z).  OWNER: a Theorem Labs lane. *)
 Hypothesis declaration_of_F_holds_on : B.Prog.declaration_of_c.declaration_of_contract_F_on.
@@ -302,7 +303,7 @@ Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> Reusable.YG0d.in_img segs a.
 Context {RO_OFL : Reusable.APostBase.ro_below_ofl segs RLO RHI}.
 
 (* TCLS: reac_ctrl_classify_box_frame (entry 0x837c4) by its cgif-form spec in the CALLER-JOURNAL form, cited by
-   name from lib/B/Prog/C_reac_ctrl_classify_box_frame.v (on the walk line since 0110c1f2b9b; spec aligned to image A
+   name from lib/B/Prog/C_reac_ctrl_classify_box_frame.v (on the walk line; spec aligned to image A
    at 05:52Z: premises 0 <= f < 2^64, 0 <= u < 2^64 and C22; its post Q2 states the journal at k + EV_CLASSIFY,
    EV_CLASSIFY = 0).  OBLIGATION: pb_reac_ctrl_classify_box_frame : treac_ctrl_classify_box_frame_spec B RLO RHI.
    OWNER: a Theorem Labs lane (glue lane: another Theorem Labs lane).  The spec has no SK binder: its file fixes the journal's sink head to the
@@ -315,7 +316,7 @@ Hypothesis SK_TFIB : SK = OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YE2k.t
 
 (* TMATCH: reac_box_catalogue_match (entry 0x84e40) by a Theorem Labs lane's treac_box_catalogue_match_spec (afn_pre /
    apost_base form, no achain), cited by name from lib/B/Prog/C_reac_box_catalogue_match.v (brought by path from
-   a working branch 5608c59483e).  OBLIGATION: pb_reac_box_catalogue_match, whose Section
+   a working branch).  OBLIGATION: pb_reac_box_catalogue_match, whose Section
    takes RELRO_IMG (the B PA instance's pa_relro) and RLO <= 0x9f620 /\ 0x9f620 + 3256 <= RHI (lia at RLO = 0x9f168,
    RHI = 0xa15e8) at the composition.  OWNER: a Theorem Labs lane. *)
 Hypothesis TMATCH : B.Prog.C_reac_box_catalogue_match.treac_box_catalogue_match_spec (SK := SK) RLO RHI B.
@@ -4778,7 +4779,7 @@ Qed.
    li s6,1; beqz a0,82c88 (hit: the block is row i's declaration) else the latch 0x82c70-0x82c80 (a0 = [fr + 32]
    = 11; s9 := i + 1; s7 += 296; bltu s9,a0,82be4 -> the row head -> 0x82bf4 at row i + 1, or i = 10: 0x82c84
    li s7,0); 0x82c88 sb s11,4(s3); j 82c94; 0x82c94 mv a0,s2; mv a1,s4; jal reac_box_catalogue_match (entry
-   0x84e40, ra 0x82ca0) (UB Seg/F36.v:3-25).
+   0x84e40, ra 0x82ca0) (UB Seg/F36.v:3-26).
    SINK BRANCH (objdump L85596): 0x82c3c `beqz a0,82fa0` (plan F.4.1 row 70): never executed, the guard
    `bnez s8` is taken because RLc pins s8 = CAT + 296 i with CAT = 0x9f620 <> 0; discharged INSIDE f36_evt_pre_F. *)
 (* Proof: f36_evt_pre_F (the four shadow bytes [Sfr fr + 8, Sfr fr + 12) of the owned frame; journal by
@@ -5041,7 +5042,7 @@ Qed.
 (* ---------------------------------------------------------------------------------------------------------
    B82c84_at j (0x82c84) --S_F36_c20--> B82ca0_at j.
    0x82c84 li s7,0; 0x82c88 sb s11,4(s3); j 82c94; mv a0,s2; mv a1,s4; jal reac_box_catalogue_match (ra 0x82ca0)
-   (UB Seg/F36.v:19-25).  SINK BRANCHES: none. *)
+   (UB Seg/F36.v:20-26).  SINK BRANCHES: none. *)
 (* Proof: f36_evt_c20_F, f36_evt_c24_F (the one shadow byte Sfr fr + 4 of the owned frame: stk and rng from
    w4f_f36_stk_fsh, the journal by w4f_f36_aj_store, FRAC's shadow bytes by w4f_f36_sh_store, every other body
    byte kept off the write by w4f_f36_munchK / w4f_f36_R_off), f36_evt_call_pre_F, then w4f_f36_match with
@@ -5152,7 +5153,7 @@ Qed.
 
 (* ---------------------------------------------------------------------------------------------------------
    B82c90_at j (0x82c90) --S_F36_c2c--> B82ca0_at j.
-   0x82c90 li s7,0; 0x82c94 mv a0,s2; mv a1,s4; jal reac_box_catalogue_match (ra 0x82ca0) (UB Seg/F36.v:22-25).
+   0x82c90 li s7,0; 0x82c94 mv a0,s2; mv a1,s4; jal reac_box_catalogue_match (ra 0x82ca0) (UB Seg/F36.v:23-26).
    SINK BRANCHES: none. *)
 (* Proof: f36_evt_c2c_F then f36_evt_call_pre_F at RNG := RNG_W (w_H W3) (no memory access, journal by
    w4f_aj_nowrite), then w4f_f36_match: s7 = 0 = t_want_m j (the body), t_want j = t_want_m j

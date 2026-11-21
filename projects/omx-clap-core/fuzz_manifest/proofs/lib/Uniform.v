@@ -42,7 +42,8 @@ Proof.
       assert (Hm : mmap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5)
           i m (Ok eff m' evs)).
       { revert Hs. unfold syscall_spec, dispatch. cbv beta. rewrite E. intro H. exact H. }
-      clear Hs. unfold mmap_spec in Hm. sys_outcome_cases Hm; (split; [reflexivity | proc_kept FR]).
+      clear Hs. unfold mmap_spec, mmap_fixed_overflow in Hm.
+      sys_outcome_cases Hm; (split; [reflexivity | proc_kept FR]).
     - destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_].
       + intros _ Hs.
         assert (Hm : mremap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) i m (Ok eff m' evs)).

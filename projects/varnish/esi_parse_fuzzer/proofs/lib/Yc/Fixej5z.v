@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob, node_ok's third conjunct, at the mmap (222) node). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -27,6 +28,7 @@ Local Ltac lia ::= OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.LiaLt.lia_t
 (* [comment removed for export] *)
 Import ListNotations.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 Open Scope bv_scope.
 
 (* [comment removed for export] *)
@@ -328,10 +330,12 @@ Proof.
                         | exists (inr (exist _ e He))]; reflexivity)
                 ltac:(intros [[[e He] | [u Hu]] | [e He]]; cbn [ms'];
                         [exact Hh | rewrite commit_model_halted; exact Hh | rewrite destroy_model_halted; exact Hh])
-                ltac:(intros [[[e He] | [u Hu]] | [e He]]; reflexivity)) as Hnode.
-  split.
+                ltac:(intros [[[e He] | [u Hu]] | [e He]]; reflexivity)
+                (RomBase.sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_222)))
+    as Hnode.
+  split; [| split; [| exact (proj2 (proj2 Hnode))]].
   - intros i. rewrite Enx. apply (proj1 Hnode).
-  - intros e st Hss. (first [ pose proof ((proj2 Hnode e st Hss)) as dR_8; dex1 dR_8 as i; destruct dR_8 as [-> ->] | pose proof ((proj2 Hnode e st Hss)) as dR_8; dand3 dR_8 as i -> -> | destruct (proj2 Hnode e st Hss) as (i & -> & ->) ]).
+  - intros e st Hss. (first [ pose proof ((proj1 (proj2 Hnode) e st Hss)) as dR_8; dex1 dR_8 as i; destruct dR_8 as [-> ->] | pose proof ((proj1 (proj2 Hnode) e st Hss)) as dR_8; dand3 dR_8 as i -> -> | destruct (proj1 (proj2 Hnode) e st Hss) as (i & -> & ->) ]).
     exists i. rewrite Enx. split; reflexivity.
 Qed.
 

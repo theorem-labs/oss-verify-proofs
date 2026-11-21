@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (region_free_rsep: a range inside a mapping is free of the reservations by rsep, as the vDSO/vvar pair now among them has no address bound; the reserved-ledger bound admits that pair above KHIGH; the secondary map's availability is vm_place_available with the literal-0 hint and a page-aligned size). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs.
@@ -199,6 +200,23 @@ Proof.
   pose proof (commit_bytes_bound _ _ _ HA). rewrite vm_backing_used_split. destruct HM as (-> & _). cbn [length Z.of_nat]. lia.
 Qed.
 
+(* a range inside a mapping [E] that [AMI]'s [rsep] keeps apart from every reservation is free of them
+   (LPS 727298f3: the reservations include the vdso/vvar pair, so no address bound separates them) *)
+Lemma region_free_rsep : forall (r : list (word * word)) (E : word * word) (a n : Z),
+  Forall (fun q => bv_unsigned (fst E) + bv_unsigned (snd E) <= bv_unsigned (fst q)
+                   \/ bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned (fst E)) r ->
+  bv_unsigned (fst E) <= a -> a + n <= bv_unsigned (fst E) + bv_unsigned (snd E) ->
+  0 <= a -> a + n < 2^64 -> 0 <= n ->
+  region_free r (Z_to_bv 64 a) (Z_to_bv 64 n) = true.
+Proof.
+  induction r as [|[b s] r IH]; intros E a n Hf H1 H2 Ha Han Hn; [reflexivity|].
+  apply Forall_cons_iff in Hf as [Hq Hf]. cbn [region_free]. rewrite (IH E a n Hf H1 H2 Ha Han Hn).
+  unfold iv_overlap. rewrite !unsigned_lit by lia. cbn [fst snd] in Hq.
+  destruct Hq as [Hq|Hq].
+  - replace (bv_unsigned b <? a + n) with false by (symmetry; apply Z.ltb_ge; lia). rewrite andb_false_r. reflexivity.
+  - replace (a <? bv_unsigned b + bv_unsigned s) with false by (symmetry; apply Z.ltb_ge; lia). reflexivity.
+Qed.
+
 Lemma INV_fixed_aok : forall pc pb st mo E a len,
   INV pc pb st mo -> In E (vm_maps (m_vmmaps mo)) -> B E <= a -> a + len <= B E + S E ->
   region_free (vm_reserved (m_vmmaps mo)) (Z_to_bv 64 a) (Z_to_bv 64 len) = true -> 0 < a ->
@@ -224,7 +242,7 @@ Proof.
 Qed.
 
 Lemma INV_resv_hi : forall pc pb st mo, INV pc pb st mo ->
-  Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (vm_reserved (m_vmmaps mo)).
+  Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI \/ KHIGH <= bv_unsigned (fst e)) (vm_reserved (m_vmmaps mo)).
 Proof. intros pc pb st mo [_ HM]. destruct HM as (_ & _ & M3 & _). exact M3. Qed.
 
 Lemma INV_fixed_aok_high : forall pc pb st mo E a len,
@@ -237,7 +255,8 @@ Proof.
   assert (HEok : bv_unsigned (fst E) + bv_unsigned (snd E) <= ATOP) by (destruct (proj1 (Forall_forall _ _) M6 E HinE) as (_ & _ & _ & ?); assumption).
   unfold ACEIL, ATOP_MAX in T1, T2. unfold B, S in HE1, HE2. unfold RES_HI in HR.
   apply (INV_fixed_aok pc pb st mo E a len HI HinE); unfold B, S; auto; try lia.
-  apply (region_free_above _ a len RES_HI M3); unfold RES_HI in *; lia.
+  destruct M9 as [_ M9r]. unfold rsep in M9r.
+  apply (region_free_rsep _ E); [exact (proj1 (Forall_forall _ _) M9r E HinE) | lia | lia | lia | lia | lia].
 Qed.
 
 Lemma INV_recommit_aok : forall pc pb st mo E a len,
@@ -254,7 +273,8 @@ Proof.
   cbn [AsanNodeSem.aok]. split; [reflexivity|]. split; [lia|]. split; [exact T3|].
   replace (a =? 0) with false by (symmetry; apply Z.eqb_neq; lia).
   rewrite ML. split; [right; reflexivity|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [|split].
-  - apply (region_free_above _ a len 0x7fff7000); auto; try lia.
+  - destruct M9 as [_ M9r]. unfold rsep in M9r.
+    apply (region_free_rsep _ E); [exact (proj1 (Forall_forall _ _) M9r E HinE) | lia | lia | lia | lia | lia].
   - apply (map_contains_In _ E); auto; rewrite !unsigned_lit by lia; lia.
   - apply mmap_fixed_rw_budget_ok_recommit_intro; [reflexivity| exact Hwf| | | | |];
       rewrite ?unsigned_lit by lia; unfold page_size; try lia.
@@ -306,7 +326,7 @@ Proof.
   unfold EMB_MAX in Hlen.
   cbn [AsanNodeSem.aok]. rewrite Z.eqb_refl. rewrite ML. split; [reflexivity|]. split; [lia|]. split; [exact T3|]. split; [reflexivity|]. split.
   - rewrite M2. unfold LIMIT. pose proof (INV_backing_bound _ _ _ _ HI). unfold EAGER0, CBMAX, K_FREEARR_OFF, K_FREEARR_MAX, K_CHUNKS_BLOCK in *. lia.
-  - apply (vm_gap_available_intro_N _ _ (LEN0 + LEN0 + (SMAX + 2^15 + 1)) (2^23 + 2^12) (RTOT0 + TOT0 + 2^37)); [lia| | | |].
+  - apply (vm_place_available_intro_N _ _ _ _ (LEN0 + LEN0 + (SMAX + 2^15 + 1)) (2^23 + 2^12) (RTOT0 + TOT0 + 2^37)); [lia| exact Hl4 | | | |].
     + rewrite T3. unfold ACEIL in T1. rewrite CEIL_val. exact T1.
     + eapply Z.le_trans. { apply inj_le. apply length_filter_le. }
       rewrite length_app, Nat2Z.inj_add. fold (zlen (vm_reserved (m_vmmaps mo))). fold (zlen (vm_maps (m_vmmaps mo))).
@@ -321,7 +341,7 @@ Lemma INV_gap_sec : forall st mo n,
   INV [] [] st mo -> 64512 < n <= 2^28 ->
   secbytes (live_chunks st) <= 2^30 -> a_qloc_bytes st <= Q_CACHE -> a_qglob_bytes st <= Q_MAX ->
   zsum2 (CHX [] [] st) <= 2^37 ->
-  vm_gap_available (m_vmmaps mo) (sec_map_size n) = true.
+  vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (sec_map_size n) = true.
 Proof.
   intros st mo n HI Hn HLB Hq1 Hq2 HSB.
   pose proof HI as [HA HM]. pose proof (AMI_ivs_wf _ _ _ HM) as Hwf.
@@ -337,7 +357,10 @@ Proof.
     assert (HQB : bsum (qbatches [] st) <= 2^28 + 2^22) by (unfold qbatches; cbn [app]; rewrite bsum_app; unfold Q_CACHE, Q_MAX in *; lia).
     assert (EL : zlen (emb_ent st) <= 1) by (unfold emb_ent; destruct (a_emb st) as [[d cap] sz]; destruct (cap =? 0); unfold zlen; cbn; lia).
     unfold qbatches in *. cbn [app] in *. nia. }
-  apply (vm_gap_available_intro_N _ _ (LEN0 + LEN0 + 20873) (2^28 + 2^14) (RTOT0 + TOT0 + 2^37)); [lia| | | |].
+  apply (vm_place_available_intro_N _ _ _ _ (LEN0 + LEN0 + 20873) (2^28 + 2^14) (RTOT0 + TOT0 + 2^37)); [lia| | | | |].
+  - change page_size with 4096. unfold sec_map_size, rup, PG.
+    match goal with |- ?x mod 4096 = 0 => replace x with ((((needed_size n + 4096 - 1) / 4096) + 1) * 4096) by lia end.
+    apply Z_mod_mult.
   - rewrite T3. unfold ACEIL in T1. rewrite CEIL_val. exact T1.
   - eapply Z.le_trans. { apply inj_le. apply length_filter_le. }
     rewrite length_app, Nat2Z.inj_add. fold (zlen (vm_reserved (m_vmmaps mo))). fold (zlen (vm_maps (m_vmmaps mo))).
@@ -1208,7 +1231,7 @@ Lemma large_alloc_ok : forall R (P : R -> Model -> Prop) pc pb st n (k : astate 
   (forall st' mo' mb, INV (CSec mb (sec_map_size n) n :: pc) pb st' mo' ->
       (st' = set_nsec (a_nsec st + 1) st \/ st' = set_nres (a_nres st + K_CHUNKS_BLOCK) (set_nsec (a_nsec st + 1) st)) ->
       atot (k st' (Some (CSec mb (sec_map_size n) n))) mo' P) ->
-  (vm_gap_available (m_vmmaps mo) (sec_map_size n) = false -> atot (k st None) mo P) ->
+  (vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (sec_map_size n) = false -> atot (k st None) mo P) ->
   atot (large_alloc ATOP RESV st n k) mo P.
 Proof.
   intros R P pc pb st n k mo HI Hn HSB HSL Hk HkN.
@@ -1348,7 +1371,7 @@ Theorem amalloc_core_g : forall (NN : Prop) st mo n,
   emb_sz st + 110 <= EMB_MAX - 4096 ->
   (is_primary n = true -> class_id (needed_size n) <> K_BATCH_CLASS ->
      K_FREEARR_OFF < c_mapped_user (get_cls st (class_id (needed_size n))) + K_USER_MAP -> NN) ->
-  (is_primary n = false -> vm_gap_available (m_vmmaps mo) (sec_map_size n) = false -> NN) ->
+  (is_primary n = false -> vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (sec_map_size n) = false -> NN) ->
   atot (amalloc ATOP RESV st n) mo (fun r mo' => malloc_post st n r mo' /\ (snd r = None -> NN)).
 Proof.
   intros NN st mo n HI Hql Hqg Hn HLB HEr HNN1 HNN2.
@@ -1508,7 +1531,8 @@ Proof.
   assert (LM : (pen - pbg) mod 4096 = 0) by (rewrite Zminus_mod, P2, P4; reflexivity).
   cbn [AsanNodeSem.aok]. split; [lia|]. split; [exact LM|]. split; [lia|]. split; [exact P2|]. split; [lia|]. split; [exact M1|].
   unfold Madvise.madvise_dontneed_ok. rewrite !andb_true_iff. split; [split|].
-  - apply (region_free_above _ pbg (pen - pbg) RES_HI M3); unfold RES_HI; lia.
+  - apply region_free_sep; try lia. eapply Forall_impl; [| exact M3]. cbv beta.
+    intros e [E1|E1]; [left|right]; unfold RES_HI, KHIGH in *; lia.
   - destruct SBC as [[L1 L2]|[H1 H2]].
     + apply (map_contains_In _ (went (LS_LO, LS_SZ))); [exact HinLS| |]; unfold went, LS_LO, LS_SZ; cbn [fst snd]; rewrite !unsigned_lit by lia; lia.
     + apply (map_contains_In _ (went (HS_LO, HS_SZ))); [exact HinHS| |]; unfold went, HS_LO, HS_SZ; cbn [fst snd]; rewrite !unsigned_lit by lia; lia.

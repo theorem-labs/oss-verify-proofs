@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PutStringB.v, with its module paths and module names changed; 1139 of its 1188 lines of code are new or changed and 209 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S5b, image A' (asan 1be0f53d96cb, the #102 pins): THE TWO TOP THEOREMS of the reader's recursive
    unit, parse_value and parse_items, against the texts tparse_value_specX / tparse_items_specX of lib/A/PRH_FnParse.v,
    with the reader texts of lib/A/PRH_FnReader.v, the allocator texts of lib/A/PRH_FnAlloc.v and the kit of
@@ -84,7 +85,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YG0ncf YG0s
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require AD2l PALibA CfParamsPreset AImgShadowVis PRH_Img
   VrdArmLCWit CfPoison102 PRowSet CfImgA CfAroPresetA.
 (* S8aNumberW.v (an earlier source of the number arm's image witnesses) is NOT Required: its closure
-   S8aNumber.v -> S8aNumA.v does not compile on the kit's cut (S8aNumA.v:390, "No applicable tactic"); vt_num_arm cites
+   S8aNumber.v -> S8aNumA.v does not compile on the kit's cut (S8aNumA.v:391, "No applicable tactic"); vt_num_arm cites
    the facts those witnesses are made of directly (a Theorem Labs lane's strtod_row_sat, AE22.canary_cell_in, vt_pst) *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require S1ImgA S1ImgCheck CrsWitAp strtod_row_sat.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require AE22.
@@ -93,9 +94,10 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require VrdNumA PRowCpy PR
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require S4_PsTop PwGrow literal_bridge S3_Hex4Bridge
   FuzzMalloc FuzzFree FuzzReallocAp ExUtf8WA.
 (* the start-up of image A' (section 6, vt_ARA_init only) *)
+From OSSVerify.omx_clap_core.fuzz_preset.images Require Asan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YK0c YK09 YA0e YA01 YA02 YGcfNilInit
   YGcfImgRows.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require AB1h AB12 AB01 AD1f AD1g AD1d AD2i PWorldH8
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require AB1h AB12 AB01 AB01r AD1f AD1g AD1d AD2i PWorldH8
   CfIalApartPreset.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -1038,7 +1040,7 @@ Qed.
 (* ---- fuzz_realloc's static set at A' (FuzzReallocAp.v Section f / top, at PST := FuzzReallocAp.ra_cells, the five
    statics the walk writes): PST_sub, PST_own_out and PST_most_out are range inclusions / exclusions decided by
    vm_compute (S1ImgCheck.pst_allb); PST_ok, PST_errno, MOST_ok and OWN_ok are vt_pst at a byte of prh_pst. The method
-   of a Theorem Labs lane's allocator tops (a working branch 90ea33abfff6, lib/A/Prog/AllocTopsA102.v at_pst_sub /
+   of a Theorem Labs lane's allocator tops (a working branch, lib/A/Prog/AllocTopsA102.v at_pst_sub /
    at_own_out / at_most_out), restated here at vt_pst ---- *)
 Definition vt_mem_b (a : Z) (P : list (Z * Z)) : bool := existsb (fun r => (fst r <=? a) && (a <? fst r + snd r)) P.
 Lemma vt_mem_b_sound : forall a P, vt_mem_b a P = true -> Exists (in_zr a) P.
@@ -1419,41 +1421,61 @@ Qed.
    the RegionInfo / errbuf cells and of Printf's two cells at the start-up layout and world. They are premises here,
    facts of the start-up state; the image rows are vt_errb_rows / vt_pf_rows. The layout is the start-up layout
    AD1g.ly0, at which AD1f.tfib_AR gives AR. *)
-Lemma vt_ARA_init : forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput)
+Lemma vt_ARA_init : forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput)
   (Hsp : valid_sp sp) (Hva : valid_argv (in_argv inp)) (Hve : valid_envp (in_envp inp))
   (Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp))
+  (* LPS 727298f3: the launch facts at the entry's mmap base, which AD1d.tfib_AI reads (valid_input's valid_launch,
+     valid_entry's fifth conjunct) *)
+  (Hvl : valid_launch inp) (Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp)
   (h : nat) (ch : YK09.APC.acs) (E : YK0c.AX2.env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model)
-  (Hch : AB01.HS_tfib h = Some ch)
-  (HC : YA0e.APSG.cs_ok AB1h.TSEGS AB12.TFIB YA02.LIMIT (YA02.TOP sp)
-     (YA02.SINV0 AB1h.TSEGS AB1h.TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-     (YA02.argH0 AB1h.TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL
-     model),
+  (Hch : AB01r.HS_tfib_r (YK09.APC.rseq_z (kb_rseq (in_kernel inp))) h = Some ch)
+  (SINV : YK0c.AX2.env -> (word -> option byte) -> Prop)
+  (SINV_sp0 : forall E' M, SINV E' M -> YA0e.APSG.uE E' YK09.APC.e_sp0 = YA02.TOP sp + 8388608)
+  (HC : YA0e.APSG.cs_ok AB1h.TSEGS AB12.TFIB YA02.LIMIT (YA02.TOP sp) SINV
+     (YA02.argH0 sp rdraw
+       (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model)
+  (* the proof of W1's band field (lib/A/PWorldH8.v H1_H8), which the caller passes *)
+  (H8 : forall a : Z, YG0f.in_band_rw a ->
+     AD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 a) = AD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 (a - a mod 8))),
   (forall n, (n < YA01.NX0G)%nat -> YK0c.AX2.ev E n =
-     YK0c.AX2.ev (YA02.E0 AB1h.TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-  (forall a, YA02.argH0 AB1h.TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-     FULL a = wrap_mem AB1h.TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+     YK0c.AX2.ev (YA02.E0 sp rdraw brk
+       (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) n) ->
+  (forall a, YA02.argH0 sp rdraw
+       (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+     FULL a = wrap_mem inp mbase AB1h.TPH (Z_to_bv 64 (Z.of_N Asan.M.init_pc)) sp rdraw a) ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   (forall x, YK0g.covered (vm_noaccess (m_vmmaps model) ++ m_vm_lazy model) x = true ->
      YK0g.covered (vm_maps (m_vmmaps model)) x = true) ->
   YG0ncf.start_cells_cf AB1h.TSEGS TA (AD1g.ly0 ch E model) init_state
     (AD2i.W1 sp rdraw inp Hsp Hva ch E model
-       (PWorldH8.H1_H8 sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC)) FULL ->
+       H8) FULL ->
   YG0ncf.start_pf_cf AB1h.TSEGS TA (AD1g.ly0 ch E model)
     (AD2i.W1 sp rdraw inp Hsp Hva ch E model
-       (PWorldH8.H1_H8 sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC)) FULL ->
+       H8) FULL ->
   exists ly (W : world SEGS), vt_ARA ly init_state [] W FULL model.
 Proof.
-intros sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM Hceil Hlazy Hcells Hpf.
+intros sp rdraw brk mbase inp Hsp Hva Hve Hfit Hvl Hlau h ch E R FULL model Hch SINV SINV_sp0 HC H8 HE HM Hceil Hlazy Hcells Hpf.
+(* AD1f.tfib_AR and AD1d.tfib_AI through their Section binders at this lemma's names (A/PresetD1pAPf.v's instP), so
+   no argument is left to unification: their world is AD2i.W1 at their own w_H8 proof (AD1f's / AD1d's H1H8), and
+   AR and AI read a world only through w_H and w_A, so each is the fact at W1 with H8 by conversion. *)
+let instV H := (try specialize (H fx); try specialize (H TA); try specialize (H AD2l.TfibB_syms); try specialize (H sp);
+  try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
+  try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h);
+  try specialize (H ch); try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model);
+  try specialize (H Hch); try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC);
+  try specialize (H HE); try specialize (H rc); try specialize (H Hceil)) in
+(pose proof (@AD1f.tfib_AR) as L1; instV L1;
+ pose proof (@AD1d.tfib_AI) as L2; instV L2; specialize (L2 mbase Hvl Hlau)).
 assert (HAR : AR AB1h.TSEGS TA (AD1g.ly0 ch E model) init_state
   (AD2i.W1 sp rdraw inp Hsp Hva ch E model
-    (PWorldH8.H1_H8 sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC)) FULL model)
-  by (eapply (AD1f.tfib_AR TA AD2l.TfibB_syms); eassumption).
+    H8) FULL model)
+  by exact L1.
 assert (HAI : AI AB1h.TSEGS
   (w_H (AD2i.W1 sp rdraw inp Hsp Hva ch E model
-    (PWorldH8.H1_H8 sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC)))
+    H8))
   (w_A (AD2i.W1 sp rdraw inp Hsp Hva ch E model
-    (PWorldH8.H1_H8 sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC))) model).
-{ eapply AD1d.tfib_AI; first [eassumption | exact AD2l.TfibB_syms]. }
+    H8)) model)
+  by exact L2.
 destruct (YGcfNilInit.ARcf_nil_init AB1h.TSEGS TA (AD1g.ly0 ch E model) _ FULL model HAR HAI Hlazy Hcells Hpf
   vt_errb_rows vt_pf_rows) as (W' & _ & _ & HARcf).
 exists (AD1g.ly0 ch E model), W'. unfold vt_ARA. split; [exact HARcf|].

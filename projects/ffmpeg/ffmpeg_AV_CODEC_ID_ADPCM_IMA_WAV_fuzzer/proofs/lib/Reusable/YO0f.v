@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0f.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YO0f.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (regions_after keeps the region on a refused munmap; the campaign grants every munmap; two examples of a granted and a refused cleanup). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YO0i.
 Import ListNotations.
@@ -999,7 +1000,7 @@ match tr with
 | (KBrkGrow 2, z) :: t => regions_after (if z =? 0 then rs else rs ++ [mkRegion RkBrk (2 * PGSZ) [] true]) t
 | (KBrkGrow _, z) :: t =>
 regions_after rs t
-| (KMunmap r len, _) :: t => regions_after (lupd rs r (mkRegion RkMap (rg_len (nth r rs (mkRegion RkMap 0 [] false))) [] false)) t
+| (KMunmap r len, z) :: t => regions_after (if z =? 0 then rs else lupd rs r (mkRegion RkMap (rg_len (nth r rs (mkRegion RkMap 0 [] false))) [] false)) t
 | (KMremap r ol nl, z) :: t =>
 regions_after (if z =? 0 then rs
 else lupd (rs ++ [mkRegion RkMap nl [] true]) r
@@ -1057,8 +1058,12 @@ let r := lcg seed in
 let c := (Z.shiftr r 29) mod 100 in
 gen_ans f r pr ((if c <? pr then Some 0 else if c <? pr + 20 then Some ((Z.shiftr r 13) mod 256) else None) :: acc)
 end.
+(* Legacy campaigns ignored sampled munmap replies and therefore exercised only successful unmaps. *)
+Definition granting_munmap_input (ans : list (option Z)) (ops : list op) : list (option Z) :=
+map (fun qz => Some (match fst qz with KMunmap _ _ => 1 | _ => snd qz end)) (trace_of ans ops).
 Definition campaign (seeds : list Z) (nops : nat) (pfree pr : Z) : list (Z * bool * option failure) :=
-map (fun sd => check (gen_ans 2000 (sd + 7) pr []) (gen nops sd O [] pfree [])) seeds.
+map (fun sd => let ops := gen nops sd O [] pfree [] in
+  check (granting_munmap_input (gen_ans 2000 (sd + 7) pr []) ops) ops) seeds.
 Fixpoint pingpong (n : nat) (k : nat) (sz : Z) : list op :=
 match n with O => [] | S n' => Malloc sz :: Free k :: pingpong n' (S k) sz end.
 Definition bounce_script : list op :=
@@ -1084,6 +1089,22 @@ Proof. vm_compute. reflexivity. Qed.
 Example wf_random : campaign [23] 300 50 10 ++ campaign [31] 300 70 30
 = [(301, true, None); (301, true, None)].
 Proof. vm_compute. reflexivity. Qed.
+Definition cleanup_probe (reply : option Z) : srun :=
+let r := run_script [] [Malloc 200000] in
+run_op (mkRun (sr_state r) (sr_ptrs r) [] [reply] None) (Free 0).
+Example granted_cleanup_control :
+sr_trace (cleanup_probe grant) = [(KMunmap 0 200704, 1)] /\
+option_map rg_live (region_of (sr_state (cleanup_probe grant)) 0) = Some false /\
+wf_map_regions (sr_state (cleanup_probe grant)) = true.
+Proof. vm_compute. repeat split; reflexivity. Qed.
+Example refused_cleanup_retains_orphan :
+sr_err (cleanup_probe refuse) = None /\
+sr_trace (cleanup_probe refuse) = [(KMunmap 0 200704, 0)] /\
+option_map (fun rg => (rg_kind rg, rg_live rg, rg_len rg))
+  (region_of (sr_state (cleanup_probe refuse)) 0) = Some (RkMap, true, 200704) /\
+used_metas (sr_state (cleanup_probe refuse)) = [] /\
+wf_map_regions (sr_state (cleanup_probe refuse)) = false.
+Proof. vm_compute. repeat split; reflexivity. Qed.
 Definition st1 : astate := sr_state (run_script [] [Malloc 100; Malloc 100; Malloc 5000; Malloc 200000; Free 0]).
 Definition first_used (s : astate) : option (sptr * ameta) := hd_error (used_metas s).
 Example wf_mutations :

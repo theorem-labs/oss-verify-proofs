@@ -2,7 +2,7 @@
    (lib/B/Prog/CrsSeg_E_B.v, row E_B of the crcs walk) that PALibB does not cover: each lemma is the premise's text with
    B := YD2l.TfibB (the B' instance record PALibB's exvi_eh_palib is stated at) and PA := PI_prog_B, the statement the
    composition plugs in, closed by computation (the PALibB form, lib/B/PALibB.v blob 5baa19c890f7). B' twin of
-   lib/A/Prog/CrsWitAp.v (a working branch 80467ffbd3ed).
+   lib/A/Prog/CrsWitAp.v (a working branch).
      crs_wit_pal_uar_img_B'    = HX_pal_uar_img    : the use-after-return option cell lies in [pa_lo, pa_hi) of PI_prog_B
      crs_wit_pal_sm1_B'        = HX_pal_sm1        : the listing's __asan_stack_malloc_1 is the code record's class-1
                                                      frame-area entry

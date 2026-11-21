@@ -2,7 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0l.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refusal under a may-fail allocator). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require YZ00.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable.R Require Import Cfg.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -24,6 +26,7 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section f. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Definition toMq (q : apath) : apathM :=
 match q with Q1 => MQ1 | Q2 => MQ2 | Q3 => MQ3 | Q4V1 => MQ4V1 | Q4V2 => MQ4V2 | Q5V1 => MQ5V1 | Q5V2 => MQ5V2
 | Q6V1 => MQ6V1 | Q6V2 => MQ6V2 | Q7V1 => MQ7V1 | Q7V2 => MQ7V2 end.

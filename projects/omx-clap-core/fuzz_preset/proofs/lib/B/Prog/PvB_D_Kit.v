@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-366, for
    libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_D1p56.v, with its module paths and module names changed; 298 of its 342 lines of code are new or changed and 697 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image B (asan-ubsan), parse_value 0x8637c (lane PValueB, segment D): the helpers the dispatch walk
    (PvB_D.v) and its three call arms (PvB_D_CLit.v, PvB_D_CStr.v, PvB_D_CItems.v) share: list / byte facts, the
    dispatch's branch conditions on the byte c (atom 34), the shadow address q / 8 + base, the frame pv_frame keeps,
@@ -45,7 +46,7 @@ Open Scope Z_scope.
 #[local] Instance PIB : PrhImg := prh_img_B.
 
 (* ---- a listing slot's pc is below the run's allocation ceiling (PvB_NC.v pnc_slot_lt_ceil, restated: no D file
-   imports PvB_NC.v; the proof is PRW_StepKit.pa_slot_lt_ceil's, cold/h-hpreset-7-walk-S7b c3a0b928f54). The slot's
+   imports PvB_NC.v; the proof is PRW_StepKit.pa_slot_lt_ceil). The slot's
    word is fetched from an image segment (pa_cert, pa_tbl_ok), so the pc is in_img, so below kLowMemEnd
    (pa_segs_low), which is below CEIL_MIN <= YM05.alloc_ceiling. ---- *)
 Section pc. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

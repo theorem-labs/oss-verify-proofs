@@ -2,8 +2,8 @@
    lanes of the image-B m_file-family owner's G2B: one model step never shrinks seg or kept and keeps the cursor inside seg, and so the
    kept list of any state on the way is no longer than the final model's (the premise of an m_refuse step).
    Build-independent: SegModel and lib/B/Prog/m_file_m.v's model terms only (mf_cur_ok, the same text as image A's).
-   Image A's lib/A/Prog/m_file_mdl.v (commit d42018d52ee3, the image-A m_file-family lane's G2;
-   restated there from the segconf porter's plain lib/Prog/mfu_facts.v:112-222 at dec616e11c2f), statements and proofs
+   Image A's lib/A/Prog/m_file_mdl.v (the image-A m_file-family lane's G2;
+   restated there from the segconf porter's plain lib/Prog/mfu_facts.v:112-222), statements and proofs
    unchanged; only this comment and the Require of m_file_m (lib.B.Prog, not lib.A.Prog) differ. A walk lane of
    the image-B m_file-family owner's G2B. *)
 From Stdlib Require Import ZArith List Bool Lia.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (impl, tree_at and node_sound take the per-node post-state npost, so a vDSO call node can return through vdso_post; node_sound gains the RomBase.sys_rob field ns_rob). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import PropExec MState Mem Exec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Export Scfg.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -67,6 +69,29 @@ Variable minv : Model -> Prop.
 (* [comment removed for export] *)
 Variable nsafe : node -> Model -> Prop.
 
+(* WHERE A NODE'S STEP LEAVES THE MACHINE.  Until LPS 75d69e00 every node was a TRAP, so
+   this was [nret] for all of them -- [advance_past_svc (apply_effect ms eff)], the same
+   function of the state and the effect whichever node it was.  The vDSO call is a node
+   whose post-state is [Run.vdso_post] instead (Run.v:604): the draw's leftovers go into
+   the sixteen caller-saved registers of [Vdso.vdso_caller_saved] and into
+   [[sp - vdso_frame segs, sp)], then the effect goes on top so the RESULT is the
+   specification's and not the draw's, then pc becomes the old ra.
+
+   So the post-state is per NODE, and this is the one thing about the node layer that had
+   to change.  Declared LAST among the section's variables on purpose: a node family that
+   does not care appends [fun _ => nret] to what it already writes, instead of every
+   existing application of [node_sound], [impl] and [tree_at] shifting an argument.
+
+   It stays a FUNCTION of the node, the machine state and the response -- not a relation,
+   and not a function of the model -- because [impl] is model-free by construction and
+   making it see the model would be a different layer, not a wider one.  A node whose
+   post-state really does depend on the model carries that dependence in its own INDEX and
+   discharges it in [nsafe]: the vDSO node is indexed on the launch's [Vdso.VdsoDraw] and
+   its call count, and [nsafe] says they are the model's.  That works because
+   [Vdso.VdsoRun] (Vdso.v:249) carries the draw in [State.Model] and the run quantifies
+   over it ONCE, at [Vdso.vdso_run_init] -- the draw is not re-chosen at each call. *)
+Variable npost : node -> machine_state -> resp -> machine_state.
+
 (* [comment removed for export] *)
 Variable minv_lazy : forall mo, minv mo -> m_vm_lazy mo = [].
 
@@ -77,19 +102,24 @@ Record node_sound : Prop := {
   (* [comment removed for export] *)
   ns_complete : forall n ms mo evs X, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
       SSTEP (mkCfg ms mo) evs X ->
-        (exists rsp mo', X = SNext (mkCfg (nret ms rsp) mo') /\ nstep n mo rsp mo' evs)
+        (exists rsp mo', X = SNext (mkCfg (npost n ms rsp) mo') /\ nstep n mo rsp mo' evs)
      \/ (exists code mo', X = SNext (mkCfg ms mo') /\ nexit n mo code mo' /\ evs = [ExitEv code (m_fs mo')]);
   (* [comment removed for export] *)
   ns_sound : forall n ms mo rsp mo' evs, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
       nstep n mo rsp mo' evs ->
       m_halted mo' = None /\ minv mo'
-      /\ SSTEP (mkCfg ms mo) evs (SNext (mkCfg (nret ms rsp) mo'));
+      /\ SSTEP (mkCfg ms mo) evs (SNext (mkCfg (npost n ms rsp) mo'));
   ns_exit : forall n ms mo code mo', at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
       nexit n mo code mo' ->
       m_halted mo' = Some code /\ SSTEP (mkCfg ms mo) [ExitEv code (m_fs mo')] (SNext (mkCfg ms mo'));
   (* [comment removed for export] *)
   ns_progress : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
-      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo')
+      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo');
+  (* LPS 08b1429: the node's system-call specification is the same over every larger read-only
+     backing ([RomBase.sys_rob]; [ShapeAlg.rz_node] and [SReach.sr_step] ask it, so a walk over a
+     binary's own segments lifts to the run's segment list, [Common/Cfg/RomStable.run_init]) *)
+  ns_rob : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
+      RomBase.sys_rob segs (mkCfg ms mo)
 }.
 
 (* [comment removed for export] *)
@@ -97,7 +127,7 @@ Record node_sound : Prop := {
 Fixpoint impl {R} (t : itree R) (Q : R -> machine_state -> Prop) (ms : machine_state) : Prop :=
   match t with
   | Ret r => evt segs (Q r) ms
-  | Vis n k => evt segs (fun ms1 => at_node n ms1 /\ forall rsp, impl (k rsp) Q (nret ms1 rsp)) ms
+  | Vis n k => evt segs (fun ms1 => at_node n ms1 /\ forall rsp, impl (k rsp) Q (npost n ms1 rsp)) ms
   end.
 
 Lemma impl_ret_intro : forall {R} (r : R) Q ms, evt segs (Q r) ms -> impl (Ret r) Q ms.
@@ -281,7 +311,7 @@ Proof.
   intros R t. induction t as [r|n k IH]; intros ms mo Ht tr r' mo' Hp; cbn in *.
   - destruct Ht as (ms' & _ & F). destruct F.
   - destruct Ht as (ms1 & _ & _ & Hk). destruct Hp as (rsp & mo1 & evs & tr' & Hst & Hp & _).
-    exact (IH rsp (nret ms1 rsp) mo1 (Hk rsp) tr' r' mo' Hp).
+    exact (IH rsp (npost n ms1 rsp) mo1 (Hk rsp) tr' r' mo' Hp).
 Qed.
 
 (* [comment removed for export] *)
@@ -396,7 +426,7 @@ Proof. induction l; cbn; auto. Qed.
 Lemma impl_inv : forall {R} (t : itree R) Q ms mo,
   impl t Q ms -> leaves_unreachable_m t mo ->
   exists n k ms1, t = Vis n k /\ msteps segs ms ms1 /\ at_node n ms1
-               /\ forall rsp, impl (k rsp) Q (nret ms1 rsp).
+               /\ forall rsp, impl (k rsp) Q (npost n ms1 rsp).
 Proof.
   intros R t Q ms mo H Hl. destruct t as [r|n k]; cbn in H.
   - destruct (leaves_unreachable_m_ret r mo Hl).
@@ -408,10 +438,10 @@ Definition tree_at {R} (t : itree R) Q (ms : machine_state) (mo : Model) : Prop 
   impl t Q ms /\ leaves_unreachable_m t mo /\ m_halted mo = None /\ minv mo /\ tsafe t mo.
 
 Lemma tree_at_step : node_sound -> forall {R} n (k : resp -> itree R) Q ms1 mo rsp mo' evs,
-  at_node n ms1 -> (forall rsp, impl (k rsp) Q (nret ms1 rsp)) ->
+  at_node n ms1 -> (forall rsp, impl (k rsp) Q (npost n ms1 rsp)) ->
   leaves_unreachable_m (Vis n k) mo -> m_halted mo = None -> minv mo -> tsafe (Vis n k) mo ->
   nstep n mo rsp mo' evs ->
-  tree_at (k rsp) Q (nret ms1 rsp) mo' /\ SSTEP (mkCfg ms1 mo) evs (SNext (mkCfg (nret ms1 rsp) mo')).
+  tree_at (k rsp) Q (npost n ms1 rsp) mo' /\ SSTEP (mkCfg ms1 mo) evs (SNext (mkCfg (npost n ms1 rsp) mo')).
 Proof.
   intros NS R n k Q ms1 mo rsp mo' evs Hat Hk Hl Hh Hinv Hsf Hst.
   destruct (ns_sound NS n ms1 mo rsp mo' evs Hat Hh Hinv (proj1 Hsf) Hst) as (Hh' & Hinv' & Hss).
@@ -429,7 +459,7 @@ Proof.
     cbn in Ht. destruct Ht as (ms1 & Hm & Hat & Hk).
     destruct (ns_progress NS n ms1 mo Hat Hh Hinv (proj1 Hsf)) as [(rsp & mo' & evs & Hst)|(code & mo' & Hex)].
     + destruct (tree_at_step NS n k Q ms1 mo rsp mo' evs Hat Hk Hl Hh Hinv Hsf Hst) as [HT' _].
-      destruct (IH rsp Q (nret ms1 rsp) mo' HT') as (full' & Hfull').
+      destruct (IH rsp Q (npost n ms1 rsp) mo' HT') as (full' & Hfull').
       exists (evs ++ full'). cbn. right. exists rsp, mo', evs, full'. repeat split; assumption.
     + exists [ExitEv code (m_fs mo')]. cbn. left. exists code, mo'. split; [assumption|reflexivity].
 Qed.
@@ -439,8 +469,8 @@ Lemma impl_sstep_inv : node_sound -> forall {R} (t : itree R) Q ms mo evs X,
   tree_at t Q ms mo ->
   SSTEP (mkCfg ms mo) evs X ->
      (exists ms', X = SNext (mkCfg ms' mo) /\ evs = [] /\ mstep segs ms ms' /\ tree_at t Q ms' mo)
-  \/ (exists n k rsp mo', t = Vis n k /\ at_node n ms /\ X = SNext (mkCfg (nret ms rsp) mo')
-        /\ nstep n mo rsp mo' evs /\ tree_at (k rsp) Q (nret ms rsp) mo')
+  \/ (exists n k rsp mo', t = Vis n k /\ at_node n ms /\ X = SNext (mkCfg (npost n ms rsp) mo')
+        /\ nstep n mo rsp mo' evs /\ tree_at (k rsp) Q (npost n ms rsp) mo')
   \/ (exists n k code mo', t = Vis n k /\ at_node n ms /\ X = SNext (mkCfg ms mo')
         /\ nexit n mo code mo' /\ evs = [ExitEv code (m_fs mo')] /\ m_halted mo' = Some code).
 Proof.
@@ -501,7 +531,7 @@ Proof.
       as [(ms' & E & -> & _ & HT')|[(n & k & rsp & mo' & -> & Hat & E & Hst & HT')
          |(n & k & code & mo' & -> & Hat & E & Hex & -> & Hh')]]; inversion E; subst.
     + exact (IH t ms' mo eq_refl HT').
-    + destruct (IH (k rsp) (nret ms rsp) mo' eq_refl HT') as (full' & Hf' & Hp').
+    + destruct (IH (k rsp) (npost n ms rsp) mo' eq_refl HT') as (full' & Hf' & Hp').
       exists (evs ++ full'). split.
       * cbn. right. exists rsp, mo', evs, full'. repeat split; assumption.
       * apply is_prefix_app_l. exact Hp'.
@@ -526,7 +556,7 @@ Proof.
       exists (mkCfg ms1 mo'). change [ExitEv code (m_fs mo')] with ([] ++ [ExitEv code (m_fs mo')]).
       eapply star_cfg_trans; [exact Hs0|]. apply star_cfg_one. exact Hss.
     + destruct (tree_at_step NS n k Q ms1 mo rsp mo' evs Hat Hk Hl Hh Hinv Hsf Hst) as [HT' Hss].
-      destruct (IH rsp Q (nret ms1 rsp) mo' tr' Hf' HT') as (c' & Hs').
+      destruct (IH rsp Q (npost n ms1 rsp) mo' tr' Hf' HT') as (c' & Hs').
       exists c'. change (evs ++ tr') with ([] ++ (evs ++ tr')).
       eapply star_cfg_trans; [exact Hs0|]. eapply star_cfg_step; [exact Hss| exact Hs'].
 Qed.
@@ -665,7 +695,7 @@ Definition enode {A} (n : node) (pl : resp -> option A) : itree (exc A) :=
   Vis n (fun rsp => match pl rsp with Some a => Ret (Ok a) | None => Ret Unr end).
 
 Lemma impl_enode : forall {A} n (pl : resp -> option A) (Q : A -> machine_state -> Prop) ms,
-  evt segs (fun ms1 => at_node n ms1 /\ forall rsp a, pl rsp = Some a -> evt segs (Q a) (nret ms1 rsp)) ms ->
+  evt segs (fun ms1 => at_node n ms1 /\ forall rsp a, pl rsp = Some a -> evt segs (Q a) (npost n ms1 rsp)) ms ->
   impl (enode n pl) (epost Q) ms.
 Proof.
   intros A n pl Q ms H. cbn. eapply evt_mono; [exact H|]. intros ms1 [Hat Hk]. split; [exact Hat|].
@@ -769,12 +799,12 @@ End ITree.
 
 Arguments Ret {node R} r.
 Arguments Vis {node R} n k.
-Arguments impl {node} segs at_node {R} t Q ms.
+Arguments impl {node} segs at_node npost {R} t Q ms.
 Arguments ttrace {node} nstep nexit {R} t mo tr.
 Arguments tsafe {node} nstep nsafe {R} t mo.
 Arguments tpath {node} nstep {R} t mo tr r mo'.
 Arguments texit {node} nstep nexit {R} t mo tr.
 Arguments leaves_unreachable_m {node} nstep {R} t mo.
-Arguments tree_at {node} segs at_node nstep minv nsafe {R} t Q ms mo.
+Arguments tree_at {node} segs at_node nstep minv nsafe npost {R} t Q ms mo.
 Arguments ebind {node A B} t f.
 Arguments enode {node A} n pl.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (impl takes its new node post-state argument, fun _ => nret, on these trap nodes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -99,7 +100,7 @@ Lemma rmunmap_spec : forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s
   (164 <= bv_unsigned tp)%Z ->
   (RVMLOCK + 4 <= lo)%Z -> (errno_addr tp + 4 <= RVMLOCK \/ RVMLOCK + 4 <= errno_addr tp)%Z ->   (* [comment removed for export] *)
   (A + mmap_len L <= RVMLOCK \/ RVMLOCK + 4 <= A)%Z ->   (* [comment removed for export] *)
-  impl rsegs (at_node rsegs) (enode (NMunmap A L) (dec_munmap A L))
+  impl rsegs (at_node rsegs) (fun _ => nret) (enode (NMunmap A L) (dec_munmap A L))
        (epost (rmunmap_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc A L errv lo m))
        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
            F (Z_to_bv 64 rmunmap_entry) fc None m (seg_rom rsegs)).
@@ -182,7 +183,7 @@ Lemma rmprotect_spec : forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7
   (A + L <= 0x10000 \/ 0x311000 <= A)%Z ->
   (0x311000 <= lo)%Z -> (errno_addr tp + 4 <= RPAGE_SIZE \/ RPAGE_SIZE + 8 <= errno_addr tp)%Z ->
   (164 <= bv_unsigned tp)%Z ->
-  impl rsegs (at_node rsegs) (enode (NMprotect A L P) (dec_mprotect A L))
+  impl rsegs (at_node rsegs) (fun _ => nret) (enode (NMprotect A L P) (dec_mprotect A L))
        (epost (rmprotect_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc A L errv lo m))
        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
            F (Z_to_bv 64 rmprotect_entry) fc None m (seg_rom rsegs)).
@@ -261,7 +262,7 @@ Lemma rmmap_anon_spec : forall (isnone : bool) ra sp gp tp t0 t1 t2 s0 s1 a0 a1 
   (lo <= bv_unsigned sp - 80)%Z -> (hceil <= lo)%Z ->
   (errno_addr tp + 4 <= bv_unsigned sp - 80 \/ bv_unsigned sp <= errno_addr tp)%Z ->
   (164 <= bv_unsigned tp)%Z ->
-  impl rsegs (at_node rsegs) (enode (NMmap 0 len prot 34) (if isnone then dec_mmap_none len avoid else dec_mmap len avoid))
+  impl rsegs (at_node rsegs) (fun _ => nret) (enode (NMmap 0 len prot 34) (if isnone then dec_mmap_none len avoid else dec_mmap len avoid))
        (epost (rmmap_anon_post isnone ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc len avoid errv lo m))
        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
            F (Z_to_bv 64 rmmap_entry) fc None m (seg_rom rsegs)).
@@ -372,7 +373,7 @@ Lemma rmmap_fixed_spec : forall {X} (dec : resp -> option X) (R : X -> word -> b
   (164 <= bv_unsigned tp)%Z ->
   (RVMLOCK + 4 <= lo)%Z -> (errno_addr tp + 4 <= RVMLOCK \/ RVMLOCK + 4 <= errno_addr tp)%Z ->   (* [comment removed for export] *)
   (A + mmap_len L <= RVMLOCK \/ RVMLOCK + 4 <= A)%Z ->   (* [comment removed for export] *)
-  impl rsegs (at_node rsegs) (enode (NMmap A L P 50) dec)
+  impl rsegs (at_node rsegs) (fun _ => nret) (enode (NMmap A L P 50) dec)
        (epost (rmmap_fixed_post R ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc A L errv lo m))
        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
            F (Z_to_bv 64 rmmap_entry) fc None m (seg_rom rsegs)).

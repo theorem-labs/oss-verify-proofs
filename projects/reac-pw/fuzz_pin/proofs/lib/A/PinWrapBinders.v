@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: made from part of proofs/cgif/cgif_file_fuzzer/lib/A/ACfi.v (link_ML, link_SMP, link_FFL, link_ASF, link_AMEMSET, link_AMEMCPY, tfib_ROB) for libreac/fuzz_grant: the facts are stated at GrantB and at the listing's instance PI_grant, the stack_malloc, bcmp and set_shadow_f5 entries of the memory-checking runtime, the walks' PALib and PALibF records, the shadow of the image and of its registered globals, the image's read-only tables and the image facts of ctrl_finish and reac_ctrl_parse are added; module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_grant/lib/A/Prog/GrantClose.v (sections 6, the shadow of the
    image and of its registered globals) and lib/A/Prog/GrantCloseChk.v (the computable checks), with the binder form of
-   proofs/libreac/fuzz_identity/lib/A/Rt/WrapBinders.v, all at origin/ossv/recipes 6ebe35ba632; taken for reac-pw/fuzz_pin
+   proofs/libreac/fuzz_identity/lib/A/Rt/WrapBinders.v, all; taken for reac-pw/fuzz_pin
    image A: the checks are stated over any segment list and symbol record (the granule check of a registered global
    allows a zero cell in place of a zero range, the hull check runs per object, and a tail check for the bytes musl's word
    loops read past a NUL is added); they discharge PPgCSpec.pin_ro_law (the one image fact the program walks take) and
    bind the program walks' runtime hypotheses at fuzz_pin.asan's own record TfibB; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The binders of fuzz_pin's image-A program walks: each Section hypothesis of the walks about the image, the
    memory-checking runtime and its wrappers, proved at fuzz_pin.asan's own symbol record TfibB (lib/A/AD2l.v), so that
    lib/A/AD2o.v closes the program contract with none left. Rule 24: proves no function (kind: binding). *)

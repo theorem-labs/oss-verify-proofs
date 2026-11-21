@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfImgRows.v, sha256 bb51d500185fb488f92980f5fed9612f2fe126dd37b7e28a0e090b50b297c411 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,12 +6,13 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch 76362ece943 (CfInstHit's class-free image rows), for field round 2: AR_frame_law_ok_cf takes EXH_OFF_t; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Taken by path from a working branch (CfInstHit's class-free image rows), for field round 2: AR_frame_law_ok_cf takes EXH_OFF_t; the text is otherwise unchanged. *)
 (* Theorem Labs, 2026-10-30 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    The CLASS-FREE cf unit IMAGE ROWS, each stated ONCE (Main, 2026-10-30): no AGImg / AImgS class, so the drain layer
    (CfF2b's YGcfInstDrain*.v) and the Allocate instance files both take them by path.
    - ERRB_QAPART: the error-message-buffer object is apart from the instance object.  CfF2b's text VERBATIM
-     (YGcfInstDrainX.v:77-78 @ a working branch 8b12df2b772); it is the first clause of YGcfErrbSep.ERRB_SEP_t.
+     (YGcfInstDrainX.v:77-78 @ a working branch); it is the first clause of YGcfErrbSep.ERRB_SEP_t.
    - EXH_OFF_t: the per-class exhausted byte is RegionInfo + 68 (YGcfInstBase.exh_cell_cf's offset is the walks'
      RGv + 68); [EXH_OFF_bound] is the bound the hit and secondary posts read.
    rule 24: no function proved (statements of unit image rows and a projection). *)

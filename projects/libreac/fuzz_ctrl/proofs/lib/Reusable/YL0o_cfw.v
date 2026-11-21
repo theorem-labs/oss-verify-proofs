@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/Reusable/YL0o.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/Reusable/YL0o_cfw.v, with its module paths changed; 2 of its 261 lines of code are new or changed and 2 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed src0_memcpy_site_cf, src0_memcpy_from_abs_cf). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -121,7 +122,7 @@ ltac:(cbn [YP09.r_lo]; lia) ltac:(cbn [YP09.r_hi]; lia) ltac:((first [lazymatch 
 unfold extent_disjoint in Hd. cbn [YP09.r_base YP09.r_lo YP09.r_hi base_val] in Hd. rewrite E10 in Hd. lia.
 +
 cbn [ms_mem ms_regs mkst].
-eapply (mr_frame _ _ LAWS L A (ms_mem ms) _ md md HMR).
+eapply (mr_frame _ _ LAWS L A (ms_mem ms) _ md md HMR eq_refl).
 * intros a Ho. pose proof (mr_owned_low _ _ LAWS _ _ _ _ a HMR Ho) as Hlo. unfold mbyte. rewrite Hout; [reflexivity | lia |].
 intros Hin. apply (proj2 (proj2 (proj2 (HBq (a - ptr_addr L q) HMR Hq ltac:(lia))))). replace (ptr_addr L q + (a - ptr_addr L q)) with a by lia. exact Ho.
 * intros a Ho [b Hb].
@@ -238,7 +239,7 @@ ltac:(cbn [YP09.r_lo]; lia) ltac:(cbn [YP09.r_hi]; lia) ltac:((first [lazymatch 
 unfold extent_disjoint in Hd. cbn [YP09.r_base YP09.r_lo YP09.r_hi base_val] in Hd. rewrite Enq in Hd. lia.
 +
 cbn [ms_mem ms_regs mkst].
-eapply (mr_frame _ _ LAWS L A (ms_mem ms) _ md md HMR).
+eapply (mr_frame _ _ LAWS L A (ms_mem ms) _ md md HMR eq_refl).
 * intros a Ho. pose proof (mr_owned_low _ _ LAWS _ _ _ _ a HMR Ho) as Hlo. unfold mbyte. rewrite Hout; [reflexivity | lia |].
 intros Hin. apply (proj2 (proj2 (proj2 (HBq (a - ptr_addr L q) HMR Hq ltac:(lia))))). replace (ptr_addr L q + (a - ptr_addr L q)) with a by lia. exact Ho.
 * intros a Ho [b Hb].

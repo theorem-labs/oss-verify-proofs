@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainV1.v (commit fe876300d09, Quarantine::Drain walk set; file sha256 d38434acc2a7) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 12 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainV1.v (Quarantine::Drain walk set; file sha256 d38434acc2a7) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 12 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane drain-merge, for WalkB1's lane B1): the MERGE arm's first half - from
    Quarantine::Drain's entry at 0x337ec to Recycle's call of DoRecycle at 0x33afc, on the arm where the quarantine
    is over kQuarantineMax and Recycle's merge test holds, so Recycle calls MergeBatches (DMsegD.at_MB, the second
-   outcome of DMsegD.postDm) before the dequeue loop.  The twin of DMdrainV0.nomerge_to_call (DMdrainV0.v:76-82, the
+   outcome of DMsegD.postDm) before the dequeue loop.  The twin of DMdrainV0.nomerge_to_call (DMdrainV0.v:77-83, the
    no-merge arm, moved there from DMdrainU2.v; same post);
-   its post is the shared recycle tail's input DMdrainU9.recyc_cut_in (DMdrainU9.v:49-96).
-   The statements [merge_to_call_t] and [deq_pre_merge_t] were fixed first (c394e337102); [merge_to_call] and
+   its post is the shared recycle tail's input DMdrainU9.recyc_cut_in (DMdrainU9.v:50-97).
+   The statements [merge_to_call_t] and [deq_pre_merge_t] were fixed first; [merge_to_call] and
    [deq_pre_merge] prove them.
    Chain: DMdrainG4.entry_free_hyps -> DMdrainT1.drain_entry_run -> DMsegD.at_MB -> DMmergeL.mb_ok (H1, MergeBatches
    to its return at 0x33a38) -> DMseg_rjL.segR (0x33a38 -> the loop head 0x33a8c, at_RJL; or straight to
@@ -302,8 +303,8 @@ Hypothesis TB : TfibSyms B.
 Hypothesis QV : di_qview_t B ARX L24 QB.
 Hypothesis QBB : forall X, QB X -> qc_bytes (st_qglobal X) <= 2 ^ 30 /\ qc_bytes (st_qthread X) <= 2 ^ 29.
 
-(* DMdrainV0.nomerge_to_call's text (DMdrainV0.v:76-82) with the branch condition [= true]; the post
-   is the shared recycle tail's input DMdrainU9.recyc_cut_in (DMdrainU9.v:49-96). *)
+(* DMdrainV0.nomerge_to_call's text (DMdrainV0.v:77-83) with the branch condition [= true]; the post
+   is the shared recycle tail's input DMdrainU9.recyc_cut_in (DMdrainU9.v:50-97). *)
 Definition merge_to_call_t : Prop := forall inst ly X W regs mem md mat,
 drain_pre_cf B ARX L24 QB inst ly X W regs mem md ->
 kQuarantineMax < AFgj.LBv (st_qglobal X) (st_qthread X) ->

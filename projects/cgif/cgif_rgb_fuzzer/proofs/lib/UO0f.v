@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (malloc_direct_mreal discharges the mmap node's new place_declined_b premise for the NULL hint in a0). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -588,6 +589,7 @@ eapply (knode_mmap_rw ubs2segs regs2 _ mem2 (seg_rom ubs2segs) md A (n + IB + UN
 - rewrite (Hregs2 13%bv). vm_compute. reflexivity.
 - rewrite (Hregs2 14%bv). eval_sr_get. cbn [sv_denot]. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs2 15%bv). vm_compute. reflexivity.
+- rewrite (Hregs2 10%bv). eval_sr_get. cbn [sv_denot]. apply place_declined_b_null.
 -
 intros e He. destruct He as [<- | []].
 match goal with |- mreal _ _ ?t _ => change t with (@IRet astate (option sptr * astate) (None, A)) end.

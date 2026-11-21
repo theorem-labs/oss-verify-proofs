@@ -5,8 +5,8 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc from
    proofs/libreac/fuzz_knock/lib/A/APgCSpec.v (the Section form of its lines 32-164) and
    proofs/libreac/fuzz_knock/lib/A/ACfn.v (lines 27-71, the harness contract tfib_lib_pre_x / _post_x /
-   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here) at origin/ossv/recipes
-   6ebe35ba632, with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
+   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here),
+   with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
    this file states the three ASan-level contracts only.
 
    THE QDISC CHANGES, and why each one is there.
@@ -46,16 +46,17 @@
    the sink `K`, the entry addresses and the harness constants are all Section variables or parameters. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_qdisc/lib/A/QPgCSpec.v, with its module paths and module names changed; 6 of its 69 lines of code are new or changed and 64 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgMainC.v, with its module paths changed; 144 of its 166 lines of code are new or changed and 47 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMainL.v at 3c7e900fc63 (its lines 1-232: the loop-head bounds and role_build_holds) for reac-pw/fuzz_headamp image A; module paths changed, the rs_ prefix renamed to hs_ (lib/A/HPgSeg.v), role_build_contract to headamp_build_contract, the bounds read by explicit patterns over HPgSeg's cuts; role's check half (lines 234-305) is not taken: headamp's checking segment is closed by lib/A/HPgSegM.v headamp_check_holds. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMainL.v (its lines 1-232: the loop-head bounds and role_build_holds) for reac-pw/fuzz_headamp image A; module paths changed, the rs_ prefix renamed to hs_ (lib/A/HPgSeg.v), role_build_contract to headamp_build_contract, the bounds read by explicit patterns over HPgSeg's cuts; role's check half (lines 234-305) is not taken: headamp's checking segment is closed by lib/A/HPgSegM.v headamp_check_holds. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgMainL.v, with its module paths changed; 199 of its 285 lines of code are new or changed and 80 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMainL.v at ad0e022f7af7 for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMainL.v for reac-pw/fuzz_rate
    image A: role's two middle contracts and pieces become rate's three (lib/A/RtPgCSpec.v rate_build_contract,
    rate_check_contract, rate_csv_contract over lib/A/RtPgSeg.v's pieces); the build's latch has a third entry (from the
    Int-7 piece), the checks' tail becomes the asked[] set-up, the decide loop (closed by its two turns) and its tail,
    and the list segment is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgMainL.v at af0538adbf24 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgMainL.v for image B
    (fuzz_rate.asan-ubsan): the pieces are lib/AU/RtPgSegB.v's (rs_ -> rsb_), the record is RtPgImgB.rate_himg_B, and the
    build's latch has two entries (from the Struct's close and, at LATCH7, from the shape-7 and the Int-7 pieces). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; addresses measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): THE THREE MIDDLE SEGMENTS of

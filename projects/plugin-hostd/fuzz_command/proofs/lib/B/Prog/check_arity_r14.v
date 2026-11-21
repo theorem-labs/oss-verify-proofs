@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the fifth segment of check_reply's walk (fuzz_command.asan, 0x86d78), the
    strcmp call of the refusal path (0x86fb8) and the branch into the epilogue, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (the step through a call and back) and A/ACh5.v (a segment that ends
-   in another segment's statement), at c8557374ad2e.
+   in another segment's statement).
 
    The code of the segment is
      0x86fb8  jal  wrapper_strcmp       a0 = g_rec.reply, a1 = s3 = F + 32, which holds "resp <code>"
@@ -17,11 +17,12 @@
    memory, so the engine's frame is empty and every byte the walk reads is the byte of the state the segment was
    entered in. The interceptor's own writes are the ones its contract allows, inside its scratch window below sp. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s5.v, with its module paths and module names changed; 69 of its 99 lines of code are new or changed and 382 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_arity on the ASan+UBSan build of plugin-hostd/fuzz_command (image fuzz_command.asan-ubsan, lib/B): ROW 14 of
    g_parsed (`chain`, syntax "<chain> <instance> [<instance> ...]" at 0x21760, (mn, mx) = (2, 2147483647)), from the
    matched-row entry BASE + CA_SEG (0x87478) to `ret` (BASE + CA_RET, 0x87998), with its 13 calls of the bcmp
-   wrapper. The port of a Theorem Labs lane's A walk check_arity_r14.v (a working branch
-   7061bc8b5e9), shaped like it.
+   wrapper. The port of a Theorem Labs lane's A walk check_arity_r14.v (a working branch),
+   shaped like it.
 
    B facts the walk meets (the run computes them; listed here as the cross-check):
    - entry 0x87478 to the first call: 628 instructions (the jal included);
@@ -49,21 +50,21 @@
    (sym_runN_pi) decides each by computation; RUNC (SRr_run_pi_AJ_call, lib/B/Prog/PaCallRun.v:41) certifies a run
    that ends at a call, RUNP (SRr_run_pi_AJ, lib/B/Prog/PaLibF.v:424) the run that ends at `ret`. The runs stop at
    no branch but the `beqz a0` after each call (measured: (internal path)).
-   - 0x87654: refuted by RUNC at check_arity_r14.v:131, from the syntax pointer ca_syn_addr 14 = 0x21760, a
+   - 0x87654: refuted by RUNC at check_arity_r14.v:132, from the syntax pointer ca_syn_addr 14 = 0x21760, a
      literal of ca_ss (check_arity_s1.v) from cmd_ro_ok / cmd_val_objs.
-   - 0x876bc, 0x87720: refuted by RUNC at check_arity_r14.v:131, from the literal scan pointer (inside the literal
+   - 0x876bc, 0x87720: refuted by RUNC at check_arity_r14.v:132, from the literal scan pointer (inside the literal
      0x21760).
-   - 0x8770c: refuted by RUNC at check_arity_r14.v:131, from the literal depth of the run (0 or 1).
-   - 0x87840: refuted by RUNC at check_arity_r14.v:131, from the literal ~item and len - 1 of the run.
-   - 0x87918: refuted by RUNC at check_arity_r14.v:131, from the literal min of the run (0 or 1).
-   - 0x87880: refuted by RUNC at check_arity_r14.v:131-142 and :144 (once per call), from the literal ~item
+   - 0x8770c: refuted by RUNC at check_arity_r14.v:132, from the literal depth of the run (0 or 1).
+   - 0x87840: refuted by RUNC at check_arity_r14.v:132, from the literal ~item and len - 1 of the run.
+   - 0x87918: refuted by RUNC at check_arity_r14.v:132, from the literal min of the run (0 or 1).
+   - 0x87880: refuted by RUNC at check_arity_r14.v:132-143 and :145 (once per call), from the literal ~item
      reloaded from the frame slot 0x20 (a chunk ca_bcmp_step keeps) and the literal i in s1 (callee-saved).
-   - 0x87954: refuted by RUNP at check_arity_r14.v:146, from the atom-32 fact [mn + 1, Z.min mx 63 + 1] = [3, 64]
+   - 0x87954: refuted by RUNP at check_arity_r14.v:147, from the atom-32 fact [mn + 1, Z.min mx 63 + 1] = [3, 64]
      of ca_facts (check_arity_s1.v), seeded by ca_row_open (check_arity_s3.v) from ca_row_pre's
      `mn <= s3v - 1 <= mx /\ 1 <= s3v <= 64`.
    The arity tests 0x87958 / 0x8795c fall through by the same fact (the abort edge 0x87a94 is not reached).
 
-   Templates (read only, never imported): a working branch fd8e07f77cd lib/B/Prog/check_arity.v, the
+   Templates (read only, never imported): a working branch lib/B/Prog/check_arity.v, the
    old-route B walk in the abandoned lib/Lib `evt` / MState framework against the OLD check_arity_contract. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

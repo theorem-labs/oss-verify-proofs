@@ -1,0 +1,625 @@
+(* elf , front , img own, defs ,
+   statements (TEMPLATE; synthesized from the run), context , conventions ;
+   valtac4: 'reflexivity' from 'WalkTac.v stepld_pc value side; S0Startup2.v F_152d4'; split-rseq all. *)
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only Require Import RunCtx.
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.World Require Import Tgt_zlib_uncompress2_fuzzer_ubsan.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only Require Import StartupTac ArgvEnv RefLayout U7StartupDefs U7_code_19000_1a000 U7_code_1a000_1b000 U7_code_21000_21d00.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only Require Import LiaFast.
+Unset Lia Cache.
+Unset Nia Cache.
+Unset Nra Cache.
+#[local] Existing Instance PropExec.fx0.
+Import ListNotations.
+Open Scope bv_scope.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only Require L10Walk.
+Ltac OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.StepTac.chain_step ::= OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_chain_step.
+Abbreviation SEGS := Tgt_zlib_uncompress2_fuzzer_ubsan.M.loaded_segments.
+Abbreviation RPH := Tgt_zlib_uncompress2_fuzzer_ubsan.M.phdrs.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+Lemma s2img_10040_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65600) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 6)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_10050_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65616) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 65600)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_10078_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65656) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 1)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_100b0_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65712) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 1)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_100e8_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65768) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 1)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_10120_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65824) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 1)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_10158_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65880) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 1685382482)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_10190_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65936) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 1685382480)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_101c8_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 65992) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 1685382481)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_101f0_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 66032) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_10200_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 66048) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 4)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_10238_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 66104) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 1879048195)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_22e78_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 142968) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_24110_4 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 147728) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 131072)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_94288_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 606856) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_94298_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 606872) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_942a0_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 606880) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_944e0_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 607456) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_94508_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 607496) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+Proof. vm_refl_bv. Qed.
+Lemma s2img_94520_8 {RCa1 : RunCtx} : rdn (LinuxProcessSemantics.LinuxProcessSem.Run.run_segments SEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 607520) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+Proof. vm_refl_bv. Qed.
+Section P4.
+Variable sp0 : word.
+Variable Jb : word -> option byte.
+Variable inp : ProcInput.
+Variables mbase brk : word.
+#[local] Instance RC_a1_1 : RunCtx := mkRunCtx inp sp0 mbase.
+Variable rdraw : EntryDraw.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
+Local Notation uid := (in_uid inp) (only parsing).
+Local Notation hw := (in_hwcap inp) (only parsing).
+Local Notation gid := (in_gid inp) (only parsing).
+Local Notation rseq := (kb_rseq (in_kernel inp)) (only parsing).
+Hypothesis Hva : valid_argv av.
+Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
+Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
+Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
+Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
+Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH (Z_to_bv 64 (Z.of_N Tgt_zlib_uncompress2_fuzzer_ubsan.M.init_pc)) sp0 rdraw)) (only parsing).
+
+  Lemma tls_c1 : forall G, bwd (run_segments SEGS rc_inp rc_sp rc_mb) G -> forall regs rom (s1v tid : word), wfJ sp0 Jb -> getr regs 1 = Z_to_bv 64 105732 -> getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 416) -> getr regs 3 = Z_to_bv 64 67584 -> getr regs 8 = pn_w inp rdraw -> getr regs 9 = s1v -> getr regs 10 = Z_to_bv 64 (bv_unsigned sp0 - 368) -> getr regs 18 = Z_to_bv 64 607480 -> getr regs 19 = Z_to_bv 64 0 -> getr regs 20 = Z_to_bv 64 0 -> getr regs 21 = Z_to_bv 64 0 -> getr regs 22 = Z_to_bv 64 0 -> getr regs 23 = Z_to_bv 64 0 -> getr regs 24 = Z_to_bv 64 0 -> getr regs 25 = Z_to_bv 64 0 -> getr regs 26 = Z_to_bv 64 0 -> getr regs 27 = Z_to_bv 64 0 -> (forall regs', getr regs' 2 = (Z_to_bv 64 (bv_unsigned sp0 - 480)) -> getr regs' 3 = (Z_to_bv 64 67584) -> getr regs' 5 = (Z_to_bv 64 0) -> getr regs' 7 = (Z_to_bv 64 7) -> getr regs' 9 = (Z_to_bv 64 607480) -> getr regs' 10 = (Z_to_bv 64 56) -> getr regs' 11 = (Z_to_bv 64 606840) -> getr regs' 12 = (Z_to_bv 64 0) -> getr regs' 13 = (Z_to_bv 64 10) -> getr regs' 15 = (Z_to_bv 64 65600) -> getr regs' 16 = (Z_to_bv 64 6) -> getr regs' 17 = (Z_to_bv 64 0) -> getr regs' 22 = (Z_to_bv 64 0) -> getr regs' 23 = (Z_to_bv 64 0) -> getr regs' 24 = (Z_to_bv 64 0) -> getr regs' 25 = (Z_to_bv 64 0) -> getr regs' 26 = (Z_to_bv 64 0) -> getr regs' 27 = (Z_to_bv 64 0) -> getr regs' 28 = (Z_to_bv 64 1685382481) -> getr regs' 29 = (Z_to_bv 64 65600) -> getr regs' 30 = (Z_to_bv 64 131072) -> regs_agree (fun r => In r [2; 5; 6; 7; 9; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30]%list) regs regs' -> G (mkst regs' (0x19f9c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)) -> G (mkst regs (0x19f14 : word) (CM (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (D_libc sp0 inp rdraw)) rom).
+  Proof.
+    intros G HG regs rom s1v tid HJ H1 H2 H3 H8 H9 H10 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
+    unfold J_aux, J_aux0, J_lsm, D_libc, aux_base, argv_w in *.
+    destruct (kb_rseq (in_kernel inp)) eqn:RSQ; rewrite ?RSQ in *; cbn iota in *.
+    {
+    eapply HG.
+    { sv F_19dbc D_19dbc (Z_to_bv 64 (bv_unsigned sp0 - 480)).  (* 0x19f14 addi sp, sp, -0x40 *)
+      stw TF_19f18 TD_19f18 (Z_to_bv 64 (bv_unsigned sp0 - 424)) (Z_to_bv 64 105732) ltac:(ok_win HJ).  (* 0x19f18 sd ra, 0x38(sp) *)
+      stw TF_19f1c TD_19f1c (Z_to_bv 64 (bv_unsigned sp0 - 432)) (pn_w inp rdraw) ltac:(ok_win HJ).  (* 0x19f1c sd s0, 0x30(sp) *)
+      stw TF_19f20 TD_19f20 (Z_to_bv 64 (bv_unsigned sp0 - 440)) (s1v) ltac:(ok_win HJ).  (* 0x19f20 sd s1, 0x28(sp) *)
+      stw TF_19f24 TD_19f24 (Z_to_bv 64 (bv_unsigned sp0 - 448)) (Z_to_bv 64 607480) ltac:(ok_win HJ).  (* 0x19f24 sd s2, 0x20(sp) *)
+      stw TF_19f28 TD_19f28 (Z_to_bv 64 (bv_unsigned sp0 - 456)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* 0x19f28 sd s3, 0x18(sp) *)
+      stw TF_19f2c TD_19f2c (Z_to_bv 64 (bv_unsigned sp0 - 464)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* 0x19f2c sd s4, 0x10(sp) *)
+      stw TF_19f30 TD_19f30 (Z_to_bv 64 (bv_unsigned sp0 - 472)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* 0x19f30 sd s5, 0x8(sp) *)
+      ld_step TF_19f34 TD_19f34 (word_to_le_bytes 8 (Z_to_bv 64 10)) (Z_to_bv 64 10) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f34 ld a3, 0x28(a0) *)
+      sn TF_19f38 TD_19f38.  (* 0x19f38 auipc a1, 0x7a *)
+      sn TF_19f3c TD_19f3c.  (* 0x19f3c addi a1, a1, 0x340 *)
+      sn TF_19f40 TD_19f40.  (* 0x19f40 auipc a2, 0x7a *)
+      sn TF_19f44 TD_19f44.  (* 0x19f44 addi s1, a2, 0x5b8 *)
+      stepb_ft TF_19f48 TD_19f48 ltac:(pin; cond_compute).  (* 0x19f48 beqz a3, 0x1a024 <static_init_tls+0x110> *)
+      sn TF_19f4c TD_19f4c.  (* 0x19f4c li a2, 0x0 *)
+      sn TF_19f50 TD_19f50.  (* 0x19f50 li a7, 0x0 *)
+      sn TF_19f54 TD_19f54.  (* 0x19f54 auipc a4, 0xa *)
+      ld_step TF_19f58 TD_19f58 (word_to_le_bytes 8 (Z_to_bv 64 0x10040)) (Z_to_bv 64 65600) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f58 ld a5, 0x18(a0) *)
+      ld_step TF_19f5c TD_19f5c (word_to_le_bytes 8 (Z_to_bv 64 56)) (Z_to_bv 64 56) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f5c ld a0, 0x20(a0) *)
+      sn TF_19f60 TD_19f60.  (* 0x19f60 li a6, 0x6 *)
+      sn TF_19f64 TD_19f64.  (* 0x19f64 auipc t0, 0x9 *)
+      ld_step TF_19f68 TD_19f68 (word_to_le_bytes 4 (Z_to_bv 64 131072)) (Z_to_bv 64 131072) ltac:(rd_img s2img_24110_4) ltac:(reflexivity).  (* 0x19f68 lwu t5, 0x1bc(a4) *)
+      ld_step TF_19f6c TD_19f6c (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_22e78_8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f6c ld t0, -0xec(t0) *)
+      sn TF_19f70 TD_19f70.  (* 0x19f70 li t1, 0x2 *)
+      sn TF_19f74 TD_19f74.  (* 0x19f74 li t2, 0x7 *)
+      sn TF_19f78 TD_19f78.  (* 0x19f78 lui t3, 0x6474e *)
+      sn TF_19f7c TD_19f7c.  (* 0x19f7c addiw t3, t3, 0x551 *)
+      sn TF_19f80 TD_19f80.  (* 0x19f80 mv t4, a5 *)
+      sn TF_19f84 TD_19f84.  (* 0x19f84 j 0x19f9c <static_init_tls+0x88> *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+    {
+    eapply HG.
+    { sv F_19dbc D_19dbc (Z_to_bv 64 (bv_unsigned sp0 - 480)).  (* 0x19f14 addi sp, sp, -0x40 *)
+      stw TF_19f18 TD_19f18 (Z_to_bv 64 (bv_unsigned sp0 - 424)) (Z_to_bv 64 105732) ltac:(ok_win HJ).  (* 0x19f18 sd ra, 0x38(sp) *)
+      stw TF_19f1c TD_19f1c (Z_to_bv 64 (bv_unsigned sp0 - 432)) (pn_w inp rdraw) ltac:(ok_win HJ).  (* 0x19f1c sd s0, 0x30(sp) *)
+      stw TF_19f20 TD_19f20 (Z_to_bv 64 (bv_unsigned sp0 - 440)) (s1v) ltac:(ok_win HJ).  (* 0x19f20 sd s1, 0x28(sp) *)
+      stw TF_19f24 TD_19f24 (Z_to_bv 64 (bv_unsigned sp0 - 448)) (Z_to_bv 64 607480) ltac:(ok_win HJ).  (* 0x19f24 sd s2, 0x20(sp) *)
+      stw TF_19f28 TD_19f28 (Z_to_bv 64 (bv_unsigned sp0 - 456)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* 0x19f28 sd s3, 0x18(sp) *)
+      stw TF_19f2c TD_19f2c (Z_to_bv 64 (bv_unsigned sp0 - 464)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* 0x19f2c sd s4, 0x10(sp) *)
+      stw TF_19f30 TD_19f30 (Z_to_bv 64 (bv_unsigned sp0 - 472)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* 0x19f30 sd s5, 0x8(sp) *)
+      ld_step TF_19f34 TD_19f34 (word_to_le_bytes 8 (Z_to_bv 64 10)) (Z_to_bv 64 10) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f34 ld a3, 0x28(a0) *)
+      sn TF_19f38 TD_19f38.  (* 0x19f38 auipc a1, 0x7a *)
+      sn TF_19f3c TD_19f3c.  (* 0x19f3c addi a1, a1, 0x340 *)
+      sn TF_19f40 TD_19f40.  (* 0x19f40 auipc a2, 0x7a *)
+      sn TF_19f44 TD_19f44.  (* 0x19f44 addi s1, a2, 0x5b8 *)
+      stepb_ft TF_19f48 TD_19f48 ltac:(pin; cond_compute).  (* 0x19f48 beqz a3, 0x1a024 <static_init_tls+0x110> *)
+      sn TF_19f4c TD_19f4c.  (* 0x19f4c li a2, 0x0 *)
+      sn TF_19f50 TD_19f50.  (* 0x19f50 li a7, 0x0 *)
+      sn TF_19f54 TD_19f54.  (* 0x19f54 auipc a4, 0xa *)
+      ld_step TF_19f58 TD_19f58 (word_to_le_bytes 8 (Z_to_bv 64 0x10040)) (Z_to_bv 64 65600) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f58 ld a5, 0x18(a0) *)
+      ld_step TF_19f5c TD_19f5c (word_to_le_bytes 8 (Z_to_bv 64 56)) (Z_to_bv 64 56) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f5c ld a0, 0x20(a0) *)
+      sn TF_19f60 TD_19f60.  (* 0x19f60 li a6, 0x6 *)
+      sn TF_19f64 TD_19f64.  (* 0x19f64 auipc t0, 0x9 *)
+      ld_step TF_19f68 TD_19f68 (word_to_le_bytes 4 (Z_to_bv 64 131072)) (Z_to_bv 64 131072) ltac:(rd_img s2img_24110_4) ltac:(reflexivity).  (* 0x19f68 lwu t5, 0x1bc(a4) *)
+      ld_step TF_19f6c TD_19f6c (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_22e78_8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f6c ld t0, -0xec(t0) *)
+      sn TF_19f70 TD_19f70.  (* 0x19f70 li t1, 0x2 *)
+      sn TF_19f74 TD_19f74.  (* 0x19f74 li t2, 0x7 *)
+      sn TF_19f78 TD_19f78.  (* 0x19f78 lui t3, 0x6474e *)
+      sn TF_19f7c TD_19f7c.  (* 0x19f7c addiw t3, t3, 0x551 *)
+      sn TF_19f80 TD_19f80.  (* 0x19f80 mv t4, a5 *)
+      sn TF_19f84 TD_19f84.  (* 0x19f84 j 0x19f9c <static_init_tls+0x88> *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+  Qed.
+
+  Lemma tls_c2 : forall G, bwd (run_segments SEGS rc_inp rc_sp rc_mb) G -> forall regs rom (s1v tid : word), wfJ sp0 Jb -> getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 480) -> getr regs 3 = Z_to_bv 64 67584 -> getr regs 5 = Z_to_bv 64 0 -> getr regs 7 = Z_to_bv 64 7 -> getr regs 9 = Z_to_bv 64 607480 -> getr regs 10 = Z_to_bv 64 56 -> getr regs 11 = Z_to_bv 64 606840 -> getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 10 -> getr regs 15 = Z_to_bv 64 65600 -> getr regs 16 = Z_to_bv 64 6 -> getr regs 17 = Z_to_bv 64 0 -> getr regs 22 = Z_to_bv 64 0 -> getr regs 23 = Z_to_bv 64 0 -> getr regs 24 = Z_to_bv 64 0 -> getr regs 25 = Z_to_bv 64 0 -> getr regs 26 = Z_to_bv 64 0 -> getr regs 27 = Z_to_bv 64 0 -> getr regs 28 = Z_to_bv 64 1685382481 -> getr regs 29 = Z_to_bv 64 65600 -> getr regs 30 = Z_to_bv 64 131072 -> (forall regs', getr regs' 2 = (Z_to_bv 64 (bv_unsigned sp0 - 480)) -> getr regs' 3 = (Z_to_bv 64 67584) -> getr regs' 5 = (Z_to_bv 64 0) -> getr regs' 7 = (Z_to_bv 64 7) -> getr regs' 9 = (Z_to_bv 64 607480) -> getr regs' 10 = (Z_to_bv 64 56) -> getr regs' 11 = (Z_to_bv 64 606840) -> getr regs' 12 = (Z_to_bv 64 0) -> getr regs' 13 = (Z_to_bv 64 5) -> getr regs' 16 = (Z_to_bv 64 6) -> getr regs' 17 = (Z_to_bv 64 0) -> getr regs' 22 = (Z_to_bv 64 0) -> getr regs' 23 = (Z_to_bv 64 0) -> getr regs' 24 = (Z_to_bv 64 0) -> getr regs' 25 = (Z_to_bv 64 0) -> getr regs' 26 = (Z_to_bv 64 0) -> getr regs' 27 = (Z_to_bv 64 0) -> getr regs' 28 = (Z_to_bv 64 1685382481) -> getr regs' 29 = (Z_to_bv 64 65880) -> getr regs' 30 = (Z_to_bv 64 131072) -> regs_agree (fun r => In r [8; 12; 13; 17; 29; 31]%list) regs regs' -> G (mkst regs' (0x19f9c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)) -> G (mkst regs (0x19f9c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom).
+  Proof.
+    intros G HG regs rom s1v tid HJ H2 H3 H5 H7 H9 H10 H11 H12 H13 H15 H16 H17 H22 H23 H24 H25 H26 H27 H28 H29 H30 Hk.
+    unfold J_aux, J_aux0, J_lsm, D_libc, aux_base, argv_w in *.
+    destruct (kb_rseq (in_kernel inp)) eqn:RSQ; rewrite ?RSQ in *; cbn iota in *.
+    {
+    eapply HG.
+    { ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 6)) (Z_to_bv 64 6) ltac:(rd_img s2img_10040_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_tk TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      ld_step TF_19f88 TD_19f88 (word_to_le_bytes 8 (Z_to_bv 64 65600)) (Z_to_bv 64 65600) ltac:(rd_img s2img_10050_8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f88 ld a2, 0x10(t4) *)
+      sn TF_19f8c TD_19f8c.  (* 0x19f8c sub a2, a5, a2 *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1)) (Z_to_bv 64 1) ltac:(rd_img s2img_10078_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1)) (Z_to_bv 64 1) ltac:(rd_img s2img_100b0_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1)) (Z_to_bv 64 1) ltac:(rd_img s2img_100e8_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1)) (Z_to_bv 64 1) ltac:(rd_img s2img_10120_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+    {
+    eapply HG.
+    { ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 6)) (Z_to_bv 64 6) ltac:(rd_img s2img_10040_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_tk TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      ld_step TF_19f88 TD_19f88 (word_to_le_bytes 8 (Z_to_bv 64 65600)) (Z_to_bv 64 65600) ltac:(rd_img s2img_10050_8) ltac:(apply bytes_le_to_Z_8).  (* 0x19f88 ld a2, 0x10(t4) *)
+      sn TF_19f8c TD_19f8c.  (* 0x19f8c sub a2, a5, a2 *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1)) (Z_to_bv 64 1) ltac:(rd_img s2img_10078_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1)) (Z_to_bv 64 1) ltac:(rd_img s2img_100b0_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1)) (Z_to_bv 64 1) ltac:(rd_img s2img_100e8_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1)) (Z_to_bv 64 1) ltac:(rd_img s2img_10120_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+  Qed.
+
+  Lemma tls_c3 : forall G, bwd (run_segments SEGS rc_inp rc_sp rc_mb) G -> forall regs rom (s1v tid : word), wfJ sp0 Jb -> getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 480) -> getr regs 3 = Z_to_bv 64 67584 -> getr regs 5 = Z_to_bv 64 0 -> getr regs 7 = Z_to_bv 64 7 -> getr regs 9 = Z_to_bv 64 607480 -> getr regs 10 = Z_to_bv 64 56 -> getr regs 11 = Z_to_bv 64 606840 -> getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 5 -> getr regs 16 = Z_to_bv 64 6 -> getr regs 17 = Z_to_bv 64 0 -> getr regs 22 = Z_to_bv 64 0 -> getr regs 23 = Z_to_bv 64 0 -> getr regs 24 = Z_to_bv 64 0 -> getr regs 25 = Z_to_bv 64 0 -> getr regs 26 = Z_to_bv 64 0 -> getr regs 27 = Z_to_bv 64 0 -> getr regs 28 = Z_to_bv 64 1685382481 -> getr regs 29 = Z_to_bv 64 65880 -> getr regs 30 = Z_to_bv 64 131072 -> (forall regs', getr regs' 2 = (Z_to_bv 64 (bv_unsigned sp0 - 480)) -> getr regs' 3 = (Z_to_bv 64 67584) -> getr regs' 9 = (Z_to_bv 64 607480) -> getr regs' 11 = (Z_to_bv 64 606840) -> getr regs' 12 = (Z_to_bv 64 0) -> getr regs' 17 = (Z_to_bv 64 0) -> getr regs' 22 = (Z_to_bv 64 0) -> getr regs' 23 = (Z_to_bv 64 0) -> getr regs' 24 = (Z_to_bv 64 0) -> getr regs' 25 = (Z_to_bv 64 0) -> getr regs' 26 = (Z_to_bv 64 0) -> getr regs' 27 = (Z_to_bv 64 0) -> regs_agree (fun r => In r [8; 13; 17; 29; 31]%list) regs regs' -> G (mkst regs' (0x19fec : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)) -> G (mkst regs (0x19f9c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom).
+  Proof.
+    intros G HG regs rom s1v tid HJ H2 H3 H5 H7 H9 H10 H11 H12 H13 H16 H17 H22 H23 H24 H25 H26 H27 H28 H29 H30 Hk.
+    unfold J_aux, J_aux0, J_lsm, D_libc, aux_base, argv_w in *.
+    destruct (kb_rseq (in_kernel inp)) eqn:RSQ; rewrite ?RSQ in *; cbn iota in *.
+    {
+    eapply HG.
+    { ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1685382482)) (Z_to_bv 64 1685382482) ltac:(rd_img s2img_10158_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1685382480)) (Z_to_bv 64 1685382480) ltac:(rd_img s2img_10190_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1685382481)) (Z_to_bv 64 1685382481) ltac:(rd_img s2img_101c8_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_ft TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      ld_step TF_19fc8 TD_19fc8 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_101f0_8) ltac:(apply bytes_le_to_Z_8).  (* 0x19fc8 ld a7, 0x28(t4) *)
+      stepb_tk TF_19fcc TD_19fcc ltac:(pin; cond_compute).  (* 0x19fcc bgeu t5, a7, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 4)) (Z_to_bv 64 4) ltac:(rd_img s2img_10200_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1879048195)) (Z_to_bv 64 1879048195) ltac:(rd_img s2img_10238_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_tk TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+    {
+    eapply HG.
+    { ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1685382482)) (Z_to_bv 64 1685382482) ltac:(rd_img s2img_10158_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1685382480)) (Z_to_bv 64 1685382480) ltac:(rd_img s2img_10190_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1685382481)) (Z_to_bv 64 1685382481) ltac:(rd_img s2img_101c8_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_ft TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      ld_step TF_19fc8 TD_19fc8 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_101f0_8) ltac:(apply bytes_le_to_Z_8).  (* 0x19fc8 ld a7, 0x28(t4) *)
+      stepb_tk TF_19fcc TD_19fcc ltac:(pin; cond_compute).  (* 0x19fcc bgeu t5, a7, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 4)) (Z_to_bv 64 4) ltac:(rd_img s2img_10200_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_ft TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      ld_step TF_19f9c TD_19f9c (word_to_le_bytes 4 (Z_to_bv 64 1879048195)) (Z_to_bv 64 1879048195) ltac:(rd_img s2img_10238_4) ltac:(reflexivity).  (* 0x19f9c lw s0, 0x0(t4) *)
+      stepb_ft TF_19fa0 TD_19fa0 ltac:(pin; cond_compute).  (* 0x19fa0 beq s0, a6, 0x19f88 <static_init_tls+0x74> *)
+      stepb_tk TF_19fa4 TD_19fa4 ltac:(pin; cond_compute).  (* 0x19fa4 beqz t0, 0x19fb8 <static_init_tls+0xa4> *)
+      sn TF_19fb8 TD_19fb8.  (* 0x19fb8 mv t6, t4 *)
+      stepb_ft TF_19fbc TD_19fbc ltac:(pin; cond_compute).  (* 0x19fbc beq s0, t2, 0x19fc4 <static_init_tls+0xb0> *)
+      sn TF_19fc0 TD_19fc0.  (* 0x19fc0 mv t6, a7 *)
+      stepb_tk TF_19fc4 TD_19fc4 ltac:(pin; cond_compute).  (* 0x19fc4 bne s0, t3, 0x19fe4 <static_init_tls+0xd0> *)
+      sn TF_19fe4 TD_19fe4.  (* 0x19fe4 mv a7, t6 *)
+      sn TF_19fe8 TD_19fe8.  (* 0x19fe8 j 0x19f90 <static_init_tls+0x7c> *)
+      sn TF_19f90 TD_19f90.  (* 0x19f90 addi a3, a3, -0x1 *)
+      sn TF_19f94 TD_19f94.  (* 0x19f94 add t4, t4, a0 *)
+      stepb_tk TF_19f98 TD_19f98 ltac:(pin; cond_compute).  (* 0x19f98 beqz a3, 0x19fec <static_init_tls+0xd8> *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+  Qed.
+
+  Lemma tls_c4 : forall G, bwd (run_segments SEGS rc_inp rc_sp rc_mb) G -> forall regs rom (s1v tid : word), wfJ sp0 Jb -> getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 480) -> getr regs 3 = Z_to_bv 64 67584 -> getr regs 9 = Z_to_bv 64 607480 -> getr regs 11 = Z_to_bv 64 606840 -> getr regs 12 = Z_to_bv 64 0 -> getr regs 17 = Z_to_bv 64 0 -> getr regs 22 = Z_to_bv 64 0 -> getr regs 23 = Z_to_bv 64 0 -> getr regs 24 = Z_to_bv 64 0 -> getr regs 25 = Z_to_bv 64 0 -> getr regs 26 = Z_to_bv 64 0 -> getr regs 27 = Z_to_bv 64 0 -> (forall regs', getr regs' 1 = (Z_to_bv 64 106824) -> getr regs' 2 = (Z_to_bv 64 (bv_unsigned sp0 - 480)) -> getr regs' 3 = (Z_to_bv 64 67584) -> getr regs' 4 = (Z_to_bv 64 475760) -> getr regs' 8 = (Z_to_bv 64 475760) -> getr regs' 10 = (Z_to_bv 64 606840) -> getr regs' 11 = (Z_to_bv 64 607536) -> getr regs' 12 = (Z_to_bv 64 0) -> getr regs' 13 = (Z_to_bv 64 475552) -> getr regs' 14 = (Z_to_bv 64 0) -> getr regs' 15 = (Z_to_bv 64 18446744073709075856) -> getr regs' 17 = (Z_to_bv 64 96) -> getr regs' 18 = (Z_to_bv 64 475560) -> getr regs' 19 = (Z_to_bv 64 0) -> getr regs' 20 = (Z_to_bv 64 475776) -> getr regs' 22 = (Z_to_bv 64 0) -> getr regs' 23 = (Z_to_bv 64 0) -> getr regs' 24 = (Z_to_bv 64 0) -> getr regs' 25 = (Z_to_bv 64 0) -> getr regs' 26 = (Z_to_bv 64 0) -> getr regs' 27 = (Z_to_bv 64 0) -> regs_agree (fun r => In r [1; 4; 8; 10; 11; 12; 13; 14; 15; 17; 18; 19; 20]%list) regs regs' -> G (mkst regs' (0x1a170 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 606872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 606888) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 606880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 607504) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 607512) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 475776) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 475752) (word_to_le_bytes 8 (Z_to_bv 64 475776))) (Z_to_bv 64 475560) (word_to_le_bytes 8 (Z_to_bv 64 475560))) (Z_to_bv 64 607480) ([Z_to_bv 8 1])) (Z_to_bv 64 475600) (word_to_le_bytes 4 (Z_to_bv 64 2)))) rom)) -> G (mkst regs (0x19fec : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom).
+  Proof.
+    intros G HG regs rom s1v tid HJ H2 H3 H9 H11 H12 H17 H22 H23 H24 H25 H26 H27 Hk.
+    unfold J_aux, J_aux0, J_lsm, D_libc, aux_base, argv_w in *.
+    destruct (kb_rseq (in_kernel inp)) eqn:RSQ; rewrite ?RSQ in *; cbn iota in *.
+    {
+    eapply HG.
+    { stepb_tk TF_19fec TD_19fec ltac:(pin; cond_compute).  (* 0x19fec beqz a7, 0x1a024 <static_init_tls+0x110> *)
+      ld_step TF_1a024 TD_1a024 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_94288_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a024 ld a2, 0x10(a1) *)
+      ld_step TF_1a028 TD_1a028 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_94298_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a028 ld a3, 0x20(a1) *)
+      ld_step TF_1a02c TD_1a02c (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_942a0_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a02c ld a0, 0x28(a1) *)
+      sn TF_1a030 TD_1a030.  (* 0x1a030 add a4, a3, a2 *)
+      sn TF_1a034 TD_1a034.  (* 0x1a034 addi a5, a0, -0x1 *)
+      sn TF_1a038 TD_1a038.  (* 0x1a038 neg a4, a4 *)
+      sn TF_1a03c TD_1a03c.  (* 0x1a03c and a2, a5, a2 *)
+      sn TF_1a040 TD_1a040.  (* 0x1a040 and a4, a5, a4 *)
+      sn TF_1a044 TD_1a044.  (* 0x1a044 li a5, 0x7 *)
+      sn TF_1a048 TD_1a048.  (* 0x1a048 add a3, a4, a3 *)
+      stw TF_1a04c TD_1a04c (Z_to_bv 64 606872) (Z_to_bv 64 0) ltac:(ok_data).  (* 0x1a04c sd a3, 0x20(a1) *)
+      stw TF_1a050 TD_1a050 (Z_to_bv 64 606888) (Z_to_bv 64 0) ltac:(ok_data).  (* 0x1a050 sd a2, 0x30(a1) *)
+      stepb_ft TF_1a054 TD_1a054 ltac:(pin; cond_compute).  (* 0x1a054 bltu a5, a0, 0x1a060 <static_init_tls+0x14c> *)
+      sn TF_1a058 TD_1a058.  (* 0x1a058 li a0, 0x8 *)
+      stw TF_1a05c TD_1a05c (Z_to_bv 64 606880) (Z_to_bv 64 8) ltac:(ok_data).  (* 0x1a05c sd a0, 0x28(a1) *)
+      sn TF_1a060 TD_1a060.  (* 0x1a060 add a2, a2, a3 *)
+      sn TF_1a064 TD_1a064.  (* 0x1a064 lui a1, 0x20 *)
+      sn TF_1a068 TD_1a068.  (* 0x1a068 add a2, a2, a0 *)
+      sn TF_1a06c TD_1a06c.  (* 0x1a06c addiw a3, a1, 0xd1 *)
+      sn TF_1a070 TD_1a070.  (* 0x1a070 addi a1, a2, 0xdf *)
+      sn TF_1a074 TD_1a074.  (* 0x1a074 andi a1, a1, -0x8 *)
+      stw TF_1a078 TD_1a078 (Z_to_bv 64 607504) (Z_to_bv 64 224) ltac:(ok_data).  (* 0x1a078 sd a1, 0x18(s1) *)
+      stw TF_1a07c TD_1a07c (Z_to_bv 64 607512) (Z_to_bv 64 8) ltac:(ok_data).  (* 0x1a07c sd a0, 0x20(s1) *)
+      stepb_tk TF_1a080 TD_1a080 ltac:(pin; cond_compute).  (* 0x1a080 bltu a1, a3, 0x1a0b4 <static_init_tls+0x1a0> *)
+      sn TF_1a0b4 TD_1a0b4.  (* 0x1a0b4 auipc a3, 0x5a *)
+      ld_step TF_1a0b8 TD_1a0b8 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_94508_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a0b8 ld s3, 0x10(s1) *)
+      ld_step TF_1a0bc TD_1a0bc (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_94520_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a0bc ld a2, 0x28(s1) *)
+      sn TF_1a0c0 TD_1a0c0.  (* 0x1a0c0 addi a4, a0, -0x1 *)
+      sn TF_1a0c4 TD_1a0c4.  (* 0x1a0c4 li a5, -0xc8 *)
+      sn TF_1a0c8 TD_1a0c8.  (* 0x1a0c8 addi a0, a3, 0xf4 *)
+      sn TF_1a0cc TD_1a0cc.  (* 0x1a0cc sub a5, a5, a0 *)
+      sn TF_1a0d0 TD_1a0d0.  (* 0x1a0d0 and a4, a4, a5 *)
+      sn TF_1a0d4 TD_1a0d4.  (* 0x1a0d4 not a3, a2 *)
+      sn TF_1a0d8 TD_1a0d8.  (* 0x1a0d8 add s2, a0, a4 *)
+      sn TF_1a0dc TD_1a0dc.  (* 0x1a0dc slli a3, a3, 0x3 *)
+      sn TF_1a0e0 TD_1a0e0.  (* 0x1a0e0 add a3, a0, a3 *)
+      sn TF_1a0e4 TD_1a0e4.  (* 0x1a0e4 add s4, a3, a1 *)
+      sn TF_1a0e8 TD_1a0e8.  (* 0x1a0e8 addi s0, s2, 0xc8 *)
+      stepb_tk TF_1a0ec TD_1a0ec ltac:(pin; cond_compute).  (* 0x1a0ec beqz s3, 0x1a134 <static_init_tls+0x220> *)
+      stw TF_1a134 TD_1a134 (Z_to_bv 64 475776) (Z_to_bv 64 0) ltac:(ok_data).  (* 0x1a134 sd a2, 0x0(s4) *)
+      stw TF_1a138 TD_1a138 (Z_to_bv 64 475752) (Z_to_bv 64 475776) ltac:(ok_data).  (* 0x1a138 sd s4, 0xc0(s2) *)
+      stw TF_1a13c TD_1a13c (Z_to_bv 64 475560) (Z_to_bv 64 475560) ltac:(ok_data).  (* 0x1a13c sd s2, 0x0(s2) *)
+      sn TF_1a140 TD_1a140.  (* 0x1a140 mv a0, s0 *)
+      sn TF_1a144 TD_1a144.  (* 0x1a144 jal 0x21da0 <__set_thread_area> *)
+      sn F_21c54 D_21c54.  (* 0x21da0 mv tp, a0 *)
+      sn F_21c58 D_21c58.  (* 0x21da4 li a0, 0x0 *)
+      stepret F_21c5c D_21c5c (0x1a148 : word) ltac:(pin; first [reflexivity | bveq]).  (* 0x21da8 ret *)
+      stepb_ft TF_1a148 TD_1a148 ltac:(pin; cond_compute).  (* 0x1a148 bltz a0, 0x1a19c <static_init_tls+0x288> *)
+      stepb_ft TF_1a14c TD_1a14c ltac:(pin; cond_compute).  (* 0x1a14c bnez a0, 0x1a158 <static_init_tls+0x244> *)
+      sn TF_1a150 TD_1a150.  (* 0x1a150 li a0, 0x1 *)
+      stw TF_1a154 TD_1a154 (Z_to_bv 64 607480) (Z_to_bv 64 1) ltac:(ok_data).  (* 0x1a154 sb a0, 0x0(s1) *)
+      sn TF_1a158 TD_1a158.  (* 0x1a158 li a0, 0x2 *)
+      sn TF_1a15c TD_1a15c.  (* 0x1a15c auipc a1, 0x7a *)
+      stw TF_1a160 TD_1a160 (Z_to_bv 64 475600) (Z_to_bv 64 2) ltac:(ok_data).  (* 0x1a160 sw a0, 0x28(s2) *)
+      sn TF_1a164 TD_1a164.  (* 0x1a164 li a7, 0x60 *)
+      sn TF_1a168 TD_1a168.  (* 0x1a168 addi a0, a1, 0x11c *)
+      sn TF_1a16c TD_1a16c.  (* 0x1a16c addi a1, s1, 0x38 *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+    {
+    eapply HG.
+    { stepb_tk TF_19fec TD_19fec ltac:(pin; cond_compute).  (* 0x19fec beqz a7, 0x1a024 <static_init_tls+0x110> *)
+      ld_step TF_1a024 TD_1a024 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_94288_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a024 ld a2, 0x10(a1) *)
+      ld_step TF_1a028 TD_1a028 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_94298_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a028 ld a3, 0x20(a1) *)
+      ld_step TF_1a02c TD_1a02c (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_942a0_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a02c ld a0, 0x28(a1) *)
+      sn TF_1a030 TD_1a030.  (* 0x1a030 add a4, a3, a2 *)
+      sn TF_1a034 TD_1a034.  (* 0x1a034 addi a5, a0, -0x1 *)
+      sn TF_1a038 TD_1a038.  (* 0x1a038 neg a4, a4 *)
+      sn TF_1a03c TD_1a03c.  (* 0x1a03c and a2, a5, a2 *)
+      sn TF_1a040 TD_1a040.  (* 0x1a040 and a4, a5, a4 *)
+      sn TF_1a044 TD_1a044.  (* 0x1a044 li a5, 0x7 *)
+      sn TF_1a048 TD_1a048.  (* 0x1a048 add a3, a4, a3 *)
+      stw TF_1a04c TD_1a04c (Z_to_bv 64 606872) (Z_to_bv 64 0) ltac:(ok_data).  (* 0x1a04c sd a3, 0x20(a1) *)
+      stw TF_1a050 TD_1a050 (Z_to_bv 64 606888) (Z_to_bv 64 0) ltac:(ok_data).  (* 0x1a050 sd a2, 0x30(a1) *)
+      stepb_ft TF_1a054 TD_1a054 ltac:(pin; cond_compute).  (* 0x1a054 bltu a5, a0, 0x1a060 <static_init_tls+0x14c> *)
+      sn TF_1a058 TD_1a058.  (* 0x1a058 li a0, 0x8 *)
+      stw TF_1a05c TD_1a05c (Z_to_bv 64 606880) (Z_to_bv 64 8) ltac:(ok_data).  (* 0x1a05c sd a0, 0x28(a1) *)
+      sn TF_1a060 TD_1a060.  (* 0x1a060 add a2, a2, a3 *)
+      sn TF_1a064 TD_1a064.  (* 0x1a064 lui a1, 0x20 *)
+      sn TF_1a068 TD_1a068.  (* 0x1a068 add a2, a2, a0 *)
+      sn TF_1a06c TD_1a06c.  (* 0x1a06c addiw a3, a1, 0xd1 *)
+      sn TF_1a070 TD_1a070.  (* 0x1a070 addi a1, a2, 0xdf *)
+      sn TF_1a074 TD_1a074.  (* 0x1a074 andi a1, a1, -0x8 *)
+      stw TF_1a078 TD_1a078 (Z_to_bv 64 607504) (Z_to_bv 64 224) ltac:(ok_data).  (* 0x1a078 sd a1, 0x18(s1) *)
+      stw TF_1a07c TD_1a07c (Z_to_bv 64 607512) (Z_to_bv 64 8) ltac:(ok_data).  (* 0x1a07c sd a0, 0x20(s1) *)
+      stepb_tk TF_1a080 TD_1a080 ltac:(pin; cond_compute).  (* 0x1a080 bltu a1, a3, 0x1a0b4 <static_init_tls+0x1a0> *)
+      sn TF_1a0b4 TD_1a0b4.  (* 0x1a0b4 auipc a3, 0x5a *)
+      ld_step TF_1a0b8 TD_1a0b8 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_94508_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a0b8 ld s3, 0x10(s1) *)
+      ld_step TF_1a0bc TD_1a0bc (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_94520_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a0bc ld a2, 0x28(s1) *)
+      sn TF_1a0c0 TD_1a0c0.  (* 0x1a0c0 addi a4, a0, -0x1 *)
+      sn TF_1a0c4 TD_1a0c4.  (* 0x1a0c4 li a5, -0xc8 *)
+      sn TF_1a0c8 TD_1a0c8.  (* 0x1a0c8 addi a0, a3, 0xf4 *)
+      sn TF_1a0cc TD_1a0cc.  (* 0x1a0cc sub a5, a5, a0 *)
+      sn TF_1a0d0 TD_1a0d0.  (* 0x1a0d0 and a4, a4, a5 *)
+      sn TF_1a0d4 TD_1a0d4.  (* 0x1a0d4 not a3, a2 *)
+      sn TF_1a0d8 TD_1a0d8.  (* 0x1a0d8 add s2, a0, a4 *)
+      sn TF_1a0dc TD_1a0dc.  (* 0x1a0dc slli a3, a3, 0x3 *)
+      sn TF_1a0e0 TD_1a0e0.  (* 0x1a0e0 add a3, a0, a3 *)
+      sn TF_1a0e4 TD_1a0e4.  (* 0x1a0e4 add s4, a3, a1 *)
+      sn TF_1a0e8 TD_1a0e8.  (* 0x1a0e8 addi s0, s2, 0xc8 *)
+      stepb_tk TF_1a0ec TD_1a0ec ltac:(pin; cond_compute).  (* 0x1a0ec beqz s3, 0x1a134 <static_init_tls+0x220> *)
+      stw TF_1a134 TD_1a134 (Z_to_bv 64 475776) (Z_to_bv 64 0) ltac:(ok_data).  (* 0x1a134 sd a2, 0x0(s4) *)
+      stw TF_1a138 TD_1a138 (Z_to_bv 64 475752) (Z_to_bv 64 475776) ltac:(ok_data).  (* 0x1a138 sd s4, 0xc0(s2) *)
+      stw TF_1a13c TD_1a13c (Z_to_bv 64 475560) (Z_to_bv 64 475560) ltac:(ok_data).  (* 0x1a13c sd s2, 0x0(s2) *)
+      sn TF_1a140 TD_1a140.  (* 0x1a140 mv a0, s0 *)
+      sn TF_1a144 TD_1a144.  (* 0x1a144 jal 0x21da0 <__set_thread_area> *)
+      sn F_21c54 D_21c54.  (* 0x21da0 mv tp, a0 *)
+      sn F_21c58 D_21c58.  (* 0x21da4 li a0, 0x0 *)
+      stepret F_21c5c D_21c5c (0x1a148 : word) ltac:(pin; first [reflexivity | bveq]).  (* 0x21da8 ret *)
+      stepb_ft TF_1a148 TD_1a148 ltac:(pin; cond_compute).  (* 0x1a148 bltz a0, 0x1a19c <static_init_tls+0x288> *)
+      stepb_ft TF_1a14c TD_1a14c ltac:(pin; cond_compute).  (* 0x1a14c bnez a0, 0x1a158 <static_init_tls+0x244> *)
+      sn TF_1a150 TD_1a150.  (* 0x1a150 li a0, 0x1 *)
+      stw TF_1a154 TD_1a154 (Z_to_bv 64 607480) (Z_to_bv 64 1) ltac:(ok_data).  (* 0x1a154 sb a0, 0x0(s1) *)
+      sn TF_1a158 TD_1a158.  (* 0x1a158 li a0, 0x2 *)
+      sn TF_1a15c TD_1a15c.  (* 0x1a15c auipc a1, 0x7a *)
+      stw TF_1a160 TD_1a160 (Z_to_bv 64 475600) (Z_to_bv 64 2) ltac:(ok_data).  (* 0x1a160 sw a0, 0x28(s2) *)
+      sn TF_1a164 TD_1a164.  (* 0x1a164 li a7, 0x60 *)
+      sn TF_1a168 TD_1a168.  (* 0x1a168 addi a0, a1, 0x11c *)
+      sn TF_1a16c TD_1a16c.  (* 0x1a16c addi a1, s1, 0x38 *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+  Qed.
+
+  Lemma tls_c5 : forall G, bwd (run_segments SEGS rc_inp rc_sp rc_mb) G -> forall regs rom (s1v tid : word), wfJ sp0 Jb -> getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 480) -> getr regs 3 = Z_to_bv 64 67584 -> getr regs 4 = Z_to_bv 64 475760 -> getr regs 10 = tid -> getr regs 11 = Z_to_bv 64 607536 -> getr regs 18 = Z_to_bv 64 475560 -> getr regs 22 = Z_to_bv 64 0 -> getr regs 23 = Z_to_bv 64 0 -> getr regs 24 = Z_to_bv 64 0 -> getr regs 25 = Z_to_bv 64 0 -> getr regs 26 = Z_to_bv 64 0 -> getr regs 27 = Z_to_bv 64 0 -> (forall regs', getr regs' 1 = (Z_to_bv 64 105732) -> getr regs' 2 = (Z_to_bv 64 (bv_unsigned sp0 - 416)) -> getr regs' 3 = (Z_to_bv 64 67584) -> getr regs' 4 = (Z_to_bv 64 475760) -> getr regs' 8 = (pn_w inp rdraw) -> getr regs' 9 = (s1v) -> getr regs' 10 = (Z_to_bv 64 0) -> getr regs' 12 = (Z_to_bv 64 475680) -> getr regs' 18 = (Z_to_bv 64 607480) -> getr regs' 19 = (Z_to_bv 64 0) -> getr regs' 20 = (Z_to_bv 64 0) -> getr regs' 21 = (Z_to_bv 64 0) -> getr regs' 22 = (Z_to_bv 64 0) -> getr regs' 23 = (Z_to_bv 64 0) -> getr regs' 24 = (Z_to_bv 64 0) -> getr regs' 25 = (Z_to_bv 64 0) -> getr regs' 26 = (Z_to_bv 64 0) -> getr regs' 27 = (Z_to_bv 64 0) -> regs_agree (fun r => In r [1; 2; 8; 9; 10; 12; 18; 19; 20; 21]%list) regs regs' -> G (mkst regs' (0x19d04 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 606872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 606888) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 606880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 607504) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 607512) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 475776) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 475752) (word_to_le_bytes 8 (Z_to_bv 64 475776))) (Z_to_bv 64 475560) (word_to_le_bytes 8 (Z_to_bv 64 475560))) (Z_to_bv 64 607480) ([Z_to_bv 8 1])) (Z_to_bv 64 475600) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 475592) (word_to_le_bytes 4 tid)) (Z_to_bv 64 475712) (word_to_le_bytes 8 (Z_to_bv 64 607536))) (Z_to_bv 64 475680) (word_to_le_bytes 8 (Z_to_bv 64 475680))) (Z_to_bv 64 475568) (word_to_le_bytes 8 (Z_to_bv 64 475560))) (Z_to_bv 64 475576) (word_to_le_bytes 8 (Z_to_bv 64 475560))) (Z_to_bv 64 475584) (word_to_le_bytes 8 (Z_to_bv 64 0)))) rom)) -> G (mkst regs (0x1a174 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 105732))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 607480))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 606872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 606888) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 606880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 607504) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 607512) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 475776) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 475752) (word_to_le_bytes 8 (Z_to_bv 64 475776))) (Z_to_bv 64 475560) (word_to_le_bytes 8 (Z_to_bv 64 475560))) (Z_to_bv 64 607480) ([Z_to_bv 8 1])) (Z_to_bv 64 475600) (word_to_le_bytes 4 (Z_to_bv 64 2)))) rom).
+  Proof.
+    intros G HG regs rom s1v tid HJ H2 H3 H4 H10 H11 H18 H22 H23 H24 H25 H26 H27 Hk.
+    unfold J_aux, J_aux0, J_lsm, D_libc, aux_base, argv_w in *.
+    destruct (kb_rseq (in_kernel inp)) eqn:RSQ; rewrite ?RSQ in *; cbn iota in *.
+    {
+    eapply HG.
+    { sn TF_1a174 TD_1a174.  (* 0x1a174 addi a2, s2, 0x78 *)
+      stw TF_1a178 TD_1a178 (Z_to_bv 64 475592) (tid) ltac:(ok_data).  (* 0x1a178 sw a0, 0x20(s2) *)
+      stw TF_1a17c TD_1a17c (Z_to_bv 64 475712) (Z_to_bv 64 607536) ltac:(ok_data).  (* 0x1a17c sd a1, 0x98(s2) *)
+      stw TF_1a180 TD_1a180 (Z_to_bv 64 475680) (Z_to_bv 64 475680) ltac:(ok_data).  (* 0x1a180 sd a2, 0x78(s2) *)
+      sn TF_1a184 TD_1a184.  (* 0x1a184 auipc a0, 0x7a *)
+      ld_step TF_1a188 TD_1a188 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_944e0_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a188 ld a0, 0x35c(a0) *)
+      stw TF_1a18c TD_1a18c (Z_to_bv 64 475568) (Z_to_bv 64 475560) ltac:(ok_data).  (* 0x1a18c sd s2, 0x8(s2) *)
+      stw TF_1a190 TD_1a190 (Z_to_bv 64 475576) (Z_to_bv 64 475560) ltac:(ok_data).  (* 0x1a190 sd s2, 0x10(s2) *)
+      stw TF_1a194 TD_1a194 (Z_to_bv 64 475584) (Z_to_bv 64 0) ltac:(ok_data).  (* 0x1a194 sd a0, 0x18(s2) *)
+      sn TF_1a198 TD_1a198.  (* 0x1a198 j 0x1a1a0 <static_init_tls+0x28c> *)
+      ld_step TF_1a1a0 TD_1a1a0 (word_to_le_bytes 8 (Z_to_bv 64 105732)) (Z_to_bv 64 105732) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1a0 ld ra, 0x38(sp) *)
+      ld_step TF_1a1a4 TD_1a1a4 (word_to_le_bytes 8 (pn_w inp rdraw)) (pn_w inp rdraw) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1a4 ld s0, 0x30(sp) *)
+      ld_step TF_1a1a8 TD_1a1a8 (word_to_le_bytes 8 s1v) (s1v) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1a8 ld s1, 0x28(sp) *)
+      ld_step TF_1a1ac TD_1a1ac (word_to_le_bytes 8 (Z_to_bv 64 607480)) (Z_to_bv 64 607480) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1ac ld s2, 0x20(sp) *)
+      ld_step TF_1a1b0 TD_1a1b0 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1b0 ld s3, 0x18(sp) *)
+      ld_step TF_1a1b4 TD_1a1b4 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1b4 ld s4, 0x10(sp) *)
+      ld_step TF_1a1b8 TD_1a1b8 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1b8 ld s5, 0x8(sp) *)
+      sv TF_1a1bc TD_1a1bc (Z_to_bv 64 (bv_unsigned sp0 - 416)).  (* 0x1a1bc addi sp, sp, 0x40 *)
+      stepret TF_1a1c0 TD_1a1c0 (0x19d04 : word) ltac:(pin; first [reflexivity | bveq]).  (* 0x1a1c0 ret *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+    {
+    eapply HG.
+    { sn TF_1a174 TD_1a174.  (* 0x1a174 addi a2, s2, 0x78 *)
+      stw TF_1a178 TD_1a178 (Z_to_bv 64 475592) (tid) ltac:(ok_data).  (* 0x1a178 sw a0, 0x20(s2) *)
+      stw TF_1a17c TD_1a17c (Z_to_bv 64 475712) (Z_to_bv 64 607536) ltac:(ok_data).  (* 0x1a17c sd a1, 0x98(s2) *)
+      stw TF_1a180 TD_1a180 (Z_to_bv 64 475680) (Z_to_bv 64 475680) ltac:(ok_data).  (* 0x1a180 sd a2, 0x78(s2) *)
+      sn TF_1a184 TD_1a184.  (* 0x1a184 auipc a0, 0x7a *)
+      ld_step TF_1a188 TD_1a188 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rd_img s2img_944e0_8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a188 ld a0, 0x35c(a0) *)
+      stw TF_1a18c TD_1a18c (Z_to_bv 64 475568) (Z_to_bv 64 475560) ltac:(ok_data).  (* 0x1a18c sd s2, 0x8(s2) *)
+      stw TF_1a190 TD_1a190 (Z_to_bv 64 475576) (Z_to_bv 64 475560) ltac:(ok_data).  (* 0x1a190 sd s2, 0x10(s2) *)
+      stw TF_1a194 TD_1a194 (Z_to_bv 64 475584) (Z_to_bv 64 0) ltac:(ok_data).  (* 0x1a194 sd a0, 0x18(s2) *)
+      sn TF_1a198 TD_1a198.  (* 0x1a198 j 0x1a1a0 <static_init_tls+0x28c> *)
+      ld_step TF_1a1a0 TD_1a1a0 (word_to_le_bytes 8 (Z_to_bv 64 105732)) (Z_to_bv 64 105732) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1a0 ld ra, 0x38(sp) *)
+      ld_step TF_1a1a4 TD_1a1a4 (word_to_le_bytes 8 (pn_w inp rdraw)) (pn_w inp rdraw) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1a4 ld s0, 0x30(sp) *)
+      ld_step TF_1a1a8 TD_1a1a8 (word_to_le_bytes 8 s1v) (s1v) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1a8 ld s1, 0x28(sp) *)
+      ld_step TF_1a1ac TD_1a1ac (word_to_le_bytes 8 (Z_to_bv 64 607480)) (Z_to_bv 64 607480) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1ac ld s2, 0x20(sp) *)
+      ld_step TF_1a1b0 TD_1a1b0 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1b0 ld s3, 0x18(sp) *)
+      ld_step TF_1a1b4 TD_1a1b4 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1b4 ld s4, 0x10(sp) *)
+      ld_step TF_1a1b8 TD_1a1b8 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* 0x1a1b8 ld s5, 0x8(sp) *)
+      sv TF_1a1bc TD_1a1bc (Z_to_bv 64 (bv_unsigned sp0 - 416)).  (* 0x1a1bc addi sp, sp, 0x40 *)
+      stepret TF_1a1c0 TD_1a1c0 (0x19d04 : word) ltac:(pin; first [reflexivity | bveq]).  (* 0x1a1c0 ret *)
+      OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.ubsan_agrees_alloc_forced_only.L10Walk.l10_mst_refl. }
+    apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
+    ra_chain.
+    }
+  Qed.
+
+End P4.

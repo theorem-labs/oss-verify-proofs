@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v; 326 of its 355 lines of code are new or changed and 937 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/P8.v -- GLUE for stage seg_P8 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:727),
    and the W3-between-loops body lemmas the stages seg_P7, seg_P9 and seg_P10 also use (lib/A/ACtlG/P7.v, P9.v,
    P10.v Require this file qualified).  Written by a Theorem Labs lane's glue lane (piece W3, second part); single
@@ -37,7 +38,7 @@
 
    SECTION HYPOTHESIS (exact text below)
    - LAWS: the core's AR law record (YCbq.v Section a0), as A5.v takes it; ACtl.v:183 has it.
-   CITED BY NAME from a Theorem Labs lane's shared lib/A/ACtlG/KitMem.v (a working branch 4a56e997c0f, merged):
+   CITED BY NAME from a Theorem Labs lane's shared lib/A/ACtlG/KitMem.v (a working branch, merged):
      kitmem_stk_of_journal (the window present), kitmem_bytes_munch / kitmem_addr_munch / kitmem_spill_munch /
      kitmem_frac_munch (body bytes outside the write list), kitmem_asan_cells_img / kitmem_ro_agree_img /
      kitmem_outside_dec (inside w3_ctlrtC_munch).  FRAC is

@@ -1,6 +1,6 @@
 (* the premises slot_sr_all and slot_sr_cf_all of fuzz_frame's UBSan top, and ubsan_halts, from the contracts of the callees of LLVMFuzzerTestOneInput. *)
 (* In the form of libreac/fuzz_decode's lib/U/Prog/LLVMFuzzerTestOneInput_link.v and the link of its
-   LLVMFuzzerTestOneInput_cgt.v (bf7779f81ed7). The walks LLVMFuzzerTestOneInput.v and
+   LLVMFuzzerTestOneInput_cgt.v. The walks LLVMFuzzerTestOneInput.v and
    LLVMFuzzerTestOneInput_cg.v take the callee contracts as Section hypotheses; here they are put in:
    - malloc and free: the allocator contracts of llvm_frame (frame_allocator), and for the crash-free walk the
      crash-free contracts of slot_sr_cf_all (malloc through malloc_ag_of_cf with llvm_limlaw);

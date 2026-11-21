@@ -1,7 +1,7 @@
 (* crtA_enc: the image-A part of the braid/encoder math of check_round_trip: the lemmas over rsegs and over
    lib/A/Prog/check_braid_c.v's braid_off and braid_map. The image-free part is lib/Lib/CrtEnc.v.
 
-   PORT of a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:1-355.
+   PORT of a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:1-355.
    Lemma names, statements and proofs are the record's; each block below cites its source lines.
    Changes, all in the imports: lib/A/AsanCells.v in place of the record's old-lane runtime-cells file (built on
    the toolchain-N pin; not on this branch and not Required here); lib/Lib/CrtEnc.v in place of StrFun and
@@ -21,7 +21,7 @@ From OSSVerify.Proofs.libreac.fuzz_decode.lib.A.Prog Require Import check_braid_
 Import ListNotations.
 Open Scope Z_scope.
 
-(* braid_off_at: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:223-228. *)
+(* braid_off_at: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:223-228. *)
 Lemma braid_off_at : forall N s ch j, 0 <= ch -> 0 <= j < 3 ->
   3 * (s * N + 2 * (ch / 2)) + braid_off ch j = rb_at N s ch j.
 Proof.
@@ -29,11 +29,11 @@ Proof.
   destruct (Z.even ch); destruct (j =? 0); destruct (j =? 1); lia.
 Qed.
 
-(* crt_rd: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:268-269. *)
+(* crt_rd: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:268-269. *)
 Definition crt_rd (m : word -> option byte) (base i : Z) : byte :=
   match mrd rsegs m (wa (base + i)) with Some b => b | None => Z_to_bv 8 0 end.
 
-(* crt_rd_some, crt_pcm_ok, crt_audio_hit, crt_audio_ok, crt_out: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:274-333. *)
+(* crt_rd_some, crt_pcm_ok, crt_audio_hit, crt_audio_ok, crt_out: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:274-333. *)
 Lemma crt_rd_some : forall m base i b, mrd rsegs m (wa (base + i)) = Some b -> crt_rd m base i = b.
 Proof. intros m base i b H. unfold crt_rd. rewrite H. reflexivity. Qed.
 
@@ -95,14 +95,14 @@ Proof.
   destruct C as [-> | [-> | ->]]; cbn [Z.eqb]; f_equal; lia.
 Qed.
 
-(* crt_list, crt_list_len: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:335-339. *)
+(* crt_list, crt_list_len: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:335-339. *)
 Definition crt_list (m : word -> option byte) (base n : Z) : list byte :=
   map (fun k => crt_rd m base (Z.of_nat k)) (seq 0 (Z.to_nat n)).
 
 Lemma crt_list_len : forall m base n, length (crt_list m base n) = Z.to_nat n.
 Proof. intros. unfold crt_list. rewrite length_map, length_seq. reflexivity. Qed.
 
-(* crt_list_bytes: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:347-355. *)
+(* crt_list_bytes: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:347-355. *)
 Lemma crt_list_bytes : forall m m' base A n, 0 <= A -> 0 <= n -> A + n <= 2^64 ->
   (forall i, 0 <= i < n -> mrd rsegs m' (wa (A + i)) = Some (crt_rd m base i)) ->
   bytes_at rsegs m' A (crt_list m base n).

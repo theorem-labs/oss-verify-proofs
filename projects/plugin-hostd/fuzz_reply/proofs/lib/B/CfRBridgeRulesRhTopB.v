@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/CfRBridgeRulesB.v, with its module paths and module names changed; 66 of its 278 lines of code are new or changed and 600 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* plugin-hostd/fuzz_reply.asan_ubsan, image B: the image-B twin of lib/A/CfRBridgeRulesRhTop.v, under lib/B so the B tree is
-   self-contained: the A file's text (a Theorem Labs lane's re-fit, a working branch 76a84b5b0b9f) with the lib/B
+   self-contained: the A file's text (a Theorem Labs lane's re-fit, a working branch) with the lib/B
    modules for lib/A's (A's CfParamsReply kept), CfImg_B and the line numbers of the lib/B files, at lib/B's
-   CfRBridgeRulesB.v QMm fit (a Theorem Labs lane, fu2-mp 7855f46a8936); the A file's header follows.
+   CfRBridgeRulesB.v QMm fit (a Theorem Labs lane, fu2-mp); the A file's header follows.
    top_x's allocator rules at route R, at its room record RP_cf and the KF meter
    (a Theorem Labs lane R, CfRBridgeRulesB.v Section TOPK at R; new file). Rule 24: proves no function (kind: bridge lemmas
    between existing contract forms).
-   At CfF1's A rule fit (fu2-mp 9118a6a96818) and part 3c at R (a Theorem Labs lane 955086633601): stated against
+   At CfF1's A rule fit (fu2-mp) and part 3c at R (a Theorem Labs lane): stated against
    CfRBridgeRulesB.v's names (RP_cf, cb_cf, cnt_ok_cb_cf, kf_MO_LE_R, kf_MO_OK_HULL_R, AMA_x_kf, and the helpers of its
    Sections AK / B / R), with CfRBridgeRulesB.v's Section R / TOPK headers verbatim (top_x's ARX with arodata_ok_cf on
    the memory; MO_OK_HULL_R; the image rows HRS / HER; MT_ok). The strndup rule at R is in CfRBridgeRulesRhStrndupB.v.
@@ -77,7 +78,7 @@ Variable segs : list Segment.
 Hypothesis L : AR_laws_cf segs TfibB.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Hypothesis errno_low : api_env segs TfibB.
-(* The room record's two fields the rules read (W_journal_x.v Record roomp at commit 479fec81839: rp_RM, and the count
+(* The room record's two fields the rules read (W_journal_x.v Record roomp: rp_RM, and the count
    premise cnt_ok RP), as parameters: there the bridges apply at RM := rp_RM RPi and CNT := cnt_ok RPi.  R1 (the
    ruled placement): RM is room_live_cf with the budget ignored.  The count premise gives the cf count block. *)
 Variable RM : astate -> nat -> Prop.
@@ -294,7 +295,7 @@ Hypothesis errno_low : api_env segs TfibB.
 Local Abbreviation ARX := (fun ly S Hp W mem md => ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
     @arodata_ok_cf CfImg_B segs TfibB mem).
 (* FIT CHECK of the relation: the rules' ARX is top_x's relation after W1, whose text is quoted
-   here VERBATIM from commit b27e847023f8, lib/A/W_LLVMFuzzerTestOneInput_top_x.v:171-172
+   here VERBATIM from lib/A/W_LLVMFuzzerTestOneInput_top_x.v:172-173
    (Definition ARX's body); it closes by reflexivity only if the two are the same term. *)
 Goal ARX = (
   fun ly S Hp W mem md => ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
@@ -305,14 +306,14 @@ Variable nsec_cf : astate -> Z.
 Hypothesis nsec_malloc_cf : forall n tr s,
   cfx_ipost (malloc_cf n tr s) (fun r => nsec_cf (snd r) <= nsec_cf s + (if from_primary n then 0 else 1)).
 Hypothesis nsec_free_cf : forall p tr s, cfx_ipost (free_cf p tr s) (fun r => nsec_cf (snd r) <= nsec_cf s).
-(* MT_sec's defining equations, its literal text (ReplyKfMeter.v at a968c6e24aec: mkAMeter (fun s m => nsec s + m <= KMAX)
+(* MT_sec's defining equations, its literal text (ReplyKfMeter.v: mkAMeter (fun s m => nsec s + m <= KMAX)
    (fun s s' m => nsec s' <= nsec s + m) (fun n => if 64512 <? n then 1 else 0) 0); each holds by reflexivity at
    MT := MT_sec nsec_cf cf_kmax.  mo_ok is not used by these rules' posts. *)
 Hypothesis MT_malloc : forall n, mo_malloc MT n = if 64512 <? n then 1 else 0.
 Hypothesis MT_free : mo_free MT = 0.
 Hypothesis MT_le : forall s s' m, mo_le MT s s' m <-> nsec_cf s' <= nsec_cf s + m.
-(* MT_sec's fourth defining equation, its mo_ok (MT_ok, the same text route R's TOPK_rh takes, commit
-   07260ccc92a1 lib/A/CfRBridgeRulesRhTopB.v:267): at MT := MT_sec YGcfNames.nsec_cf cf_kmax it holds by iff_refl. *)
+(* MT_sec's fourth defining equation, its mo_ok (MT_ok, the same text route R's TOPK_rh takes,
+    lib/A/CfRBridgeRulesRhTopB.v:267): at MT := MT_sec YGcfNames.nsec_cf cf_kmax it holds by iff_refl. *)
 Hypothesis MT_ok : forall s m, mo_ok MT s m <-> YGcfNames.nsec_cf s + m <= cf_kmax.
 (* The unit's two image rows (Section B's HRS / HER). *)
 Hypothesis HRS : relro_seg_t segs.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: certify the free fixed-mmap position and charge the reservation tail in the gap checker. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -17,6 +18,13 @@ From OSSVerify.Proofs.glaze.binary_reflection.lib Require Import PropExec.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require Import AzSymExec3 AzSymExec3B.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require Import AzKBits.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require AzHashK.
+(* [StackLayout] is Required but NOT Imported: [AUXSZ_of] names
+   [StackLayout.auxv_size] qualified, and importing it would shadow
+   [auxv_size] for consumers.  It MUST stay above the [Open Scope Z_scope]
+   at :25 -- StackLayout.v:45 is a non-Local [Open Scope bv_scope], so a
+   Require placed BELOW the scope line would make every bare numeral in this
+   file parse as a [bv]. *)
+From LinuxProcessSemantics.LinuxProcessSem Require StackLayout.
 #[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).   (* [comment removed for export] *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.   (* [comment removed for export] *)
 #[local] Set Keyed Unification.
@@ -2212,8 +2220,9 @@ Proof. intros. unfold kn_grant_filter. rewrite grant_keep_bB_eqf. reflexivity. Q
 
 
 (* [comment removed for export] *)
+(* The reservation tail has at most two entries in addition to the image. *)
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-  let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
+  let cnt := Z.of_nat (n_res A + 2 + length (a_maps cs))%nat in
   Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
 
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
@@ -2353,7 +2362,8 @@ Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : op
       if (no_fogtok (a_maps cs)           (* [comment removed for export] *)
           && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
           && (negb eager || budget_ok cs nhi)
-          && expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) a)%bool
+          && expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) a
+          && lin_ge0 k [(ELit KHI, 0%Z)] [(b, off); (ne, 0%Z)])%bool
       then mmap_fixed_grant cs (a_maps cs) b off ne nhi kind eager visible
       else
       (* [comment removed for export] *)
@@ -2837,12 +2847,23 @@ Definition brk_base_ok (cs : acs) (d : Z) : bool :=
       | _, _ => false
       end)%bool.
 
+(* LPS 08b1429: the reserved ledger holds the launch's vDSO intervals besides the
+   image's segments ([State.init_reserved]), and [AzAPS.resx_entry_ok] puts each
+   of them at or above [KHI + 4096].  A granted brk must clear them, so the grant
+   branch asks the grown break, with its guard page, to end at or below [KHI] --
+   the bound [mmap_fixed_free] asks of a free fixed mapping. *)
+Definition brk_khi_ok (cs : acs) (d : Z) : bool :=
+  match xhi (kn cs) (a_brk cs) with
+  | Some hi => Z.leb (hi + d + 4096) KHI
+  | None => false
+  end.
+
 (* [comment removed for export] *)
 Definition brk_grow_possible (cs : acs) (d : Z) : bool :=
   let k := kn cs in let '(bb, bk) := split_lit (a_brk cs) in
   (brk_base_ok cs d && no_fogtok (a_maps cs)           (* [comment removed for export] *)
    && forallb (fun m => ranges_apart_x k bb bk (ELit (d + 4096)) (am_base m) 0 (am_len m)) (a_maps cs)  (* [comment removed for export] *)
-   && budget_ok cs d)%bool.
+   && budget_ok cs d && brk_khi_ok cs d)%bool.
 
 (* [comment removed for export] *)
 Definition brk_grow_blocked (cs : acs) (d : Z) : bool :=
@@ -3575,21 +3596,51 @@ Definition V_S2 : nat := 6.     (* [comment removed for export] *)
 Definition V_L1 : nat := 7.     (* [comment removed for export] *)
 Definition V_UID : nat := 8.    (* [comment removed for export] *)
 
+(* [V_G]: [StackLayout.block_items argv envp mod 2], the eight-byte gap
+   [STACK_ROUND] clears below the AT_RANDOM block.  No linear form over argc
+   and envc spells "mod 2", so the gap is its own variable.
+
+   INDEX 13, NOT 9, AND THE REASON IS SPECIFIC TO THIS FILE.  Two acs
+   families are built over these expressions and [V_G] must be free in BOTH:
+   this file's own [init_acs_of], which uses variables 0..8 ([NX0] 9); and
+   AsStartupTabs.v's [init_acs3], which layers V_HW := 9, V_T := 10,
+   V_P := 11, V_R8 := 12 on top of them ([NXS] 13).  They are ONE namespace,
+   not two that merely overlap: AsStartupTabs.v:79 puts V_ARGC, V_ENVC, V_W
+   and V_S2 together with V_R8 inside a SINGLE expression tree, which must
+   evaluate in one environment.  9 is therefore taken; 13 is the lowest index
+   free in both, and nothing raw references it (EVar 13 occurs zero times in
+   any plan or tab file).  [NX0] goes to 14 to cover it. *)
+Definition V_G : nat := 13.
+
+(* The auxv's size as a function of the run's CONFIG_RSEQ flag [r]: 29 entries
+   of 16 bytes (464) with CONFIG_RSEQ, 27 (432) without.  [r] stays FREE. *)
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
+Definition AUXSZ (r : Z) : Z := 432 + 32 * r.
+Lemma AUXSZ_of : forall b, AUXSZ (rseq_z b) = Z.of_nat (StackLayout.auxv_size b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+
 (* [comment removed for export] *)
 Definition e_sp0 : expr := eadd (escale 32768 (EVar V_S1)) (escale 16 (EVar V_S2)).
 (* [comment removed for export] *)
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition AUXV_SIZE : Z := 160.
-Definition e_str0 : expr := eaddz e_auxv AUXV_SIZE.
-Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
+(* [AUXV_SIZE := 160] IS DELETED, not re-valued: the auxv's size is no longer
+   a constant of this plan at all, it is the model's [AUXSZ r].  A consumer
+   that did [unfold AUXV_SIZE] will now fail loudly, which is correct -- such
+   a consumer is still describing the old layout.
+   The strings are ABOVE the random bytes at this revision, so the derivation
+   order REVERSES: [e_atrandom] was built from [e_str0] and is now its base. *)
+Definition e_atrandom (r : Z) : expr := eadd (eaddz e_auxv (AUXSZ r)) (escale 8 (EVar V_G)).
+Definition e_str0 (r : Z) : expr := eadd (eaddz (e_atrandom r) 16) (EVar V_W).
+Definition e_str1 (r : Z) : expr := eadd (e_str0 r) (eaddz (EVar V_L0) 1).
 (* [comment removed for export] *)
 Definition e_atr8 : expr :=
-  eadd (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
+  eadd (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_G))).
 
 (* [comment removed for export] *)
-Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
+Definition e_argv1w (r : Z) : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) (e_str1 r).
 
 (* [comment removed for export] *)
 Definition node_envscan (cs : acs) : option acs :=
@@ -3599,11 +3650,11 @@ Definition node_envscan (cs : acs) : option acs :=
   else None.
 
 (* [comment removed for export] *)
-Definition node_pnscan (cs : acs) : option acs :=
+Definition node_pnscan (r : Z) (cs : acs) : option acs :=
   let k := kn cs in
   match reg_lit cs 10, reg_lit cs 12 with
   | Some p, Some 47 =>
-      if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz e_str0 1)
+      if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz (e_str0 r) 1)
           && kwritable k k (ELit 0) p 8 && Z.leb (img_lo A) p && Z.leb (p + 8) (img_hi A) && fresh_ok cs)%bool then
         let v := nxt cs in
         let k' := kn_havoc (kimg_cut k p 8) (ELit 0) p (ELit 8) in
@@ -3616,13 +3667,13 @@ Definition node_pnscan (cs : acs) : option acs :=
 (* [comment removed for export] *)
 Definition kw_argv1 (v : expr) : kentry := KWord (SA e_sp0 16) 8 v.
 
-Definition node_layout (cs : acs) (args : list expr) : option acs :=
+Definition node_layout (r : Z) (cs : acs) (args : list expr) : option acs :=
   let k := kn cs in
-  if negb (existsb (kentry_eqb (kw_argv1 e_argv1w)) k) then None else
-  let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) k in
+  if negb (existsb (kentry_eqb (kw_argv1 (e_argv1w r))) k) then None else
+  let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w r)) K)) k in
   match args with
   | [ELit 1] => match xlo k (EVar V_ARGC) with
-                | Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 e_str1 :: k')) else None
+                | Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 (e_str1 r) :: k')) else None
                 | None => None
                 end
   | [ELit 0] => match xhi k (EVar V_ARGC) with
@@ -4902,28 +4953,44 @@ End WithSegs.
 
 (* [comment removed for export] *)
 Definition BRK_ASLR : Z := 0x80000000.
-Definition NX0 : nat := 9.   (* [comment removed for export] *)
+(* 9 -> 14, not 10: [V_G] sits at 13 here (see its comment), so the initial
+   variable count must cover it.  Indices 9..12 are AsStartupTabs.v's
+   V_HW/V_T/V_P/V_R8; in THIS file's own acs they are simply unconstrained,
+   which is sound -- NX0 bounds the initial block, it does not assert every
+   index below it carries a meaning here. *)
+Definition NX0 : nat := 14.
 
 (* [comment removed for export] *)
 Definition e_auxb : expr * Z := split_lit e_auxv.
-Definition e_atrb : expr * Z := split_lit e_atrandom.
+Definition e_atrb (r : Z) : expr * Z := split_lit (e_atrandom r).
 Definition auxw (i : Z) (ty : Z) (v : expr) : list kentry :=
   [KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty); KWord (SA (fst e_auxb) (snd e_auxb + 16 * i + 8)) 8 v].
 
 (* [comment removed for export] *)
-Definition init_kn (A : atable) : list kentry :=
+Definition init_kn (r : Z) (A : atable) : list kentry :=
   [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 2047;
-   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE9;
+   KRange (eaddz (e_atrandom r) 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 (0xFFFFFFFFFC5 - 4 * r);
    KRange e_sp0 0x7fff80000000 0x7fffffffff40;
    KRange (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) 0xFFFF0000000 0xFFFFFFFFFE8;
    KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
    KRange (EVar V_UID) 0 0xFFFFFFFE;
-   KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
-   KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
-   KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
-  ++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 3 6 (ELit 4096)
-  ++ auxw 4 11 (EVar V_UID) ++ auxw 5 12 (EVar V_UID) ++ auxw 6 23 (ELit 0) ++ auxw 7 25 e_atrandom ++ auxw 8 0 (ELit 0)
-  ++ [KZero (SA (fst e_atrb) (snd e_atrb)) (ELit 16);
+   (* [V_W] CHANGES MEANING: from a count of string words below the random
+      bytes to [StackLayout.block_pad_len], the arch_align_stack pad in BYTES
+      above them.  Bound 4110, not 4095: the pad is arch_align_stack's own r
+      in [0,4095] PLUS the remainder the low-four-bit mask leaves. *)
+   KRange (EVar V_W) 0 4110; KRange (EVar V_G) 0 1;
+   KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+   (* 12i: see AsStartupTabs.v:132 for the derivation.  wok_lo sp0 = sp0 - 6144513. *)
+   KWr (SA e_sp0 (-6144513)) (ELit 6144513); KZero (SA e_sp0 (-6144513)) (ELit 6144513);
+   KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 (e_str0 r); kw_argv1 (e_argv1w r)]
+  (* Slot indices are positions in [auxv_entries] at 75d69e00, verified entry
+     by entry against the model; they do not depend on how many pairs this
+     table constrains.  AT_HWCAP (16 -> slot 10) is NOT carried here and was
+     NOT added: whether its absence is intentional is the open question this
+     file raises, and it is held until AsStartupTabs.v is read. *)
+  ++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 11 6 (ELit 4096)
+  ++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 (e_atrandom r) ++ auxw (26 + 2 * r) 0 (ELit 0)
+  ++ [KZero (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16);
       KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
 
 Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
@@ -4931,8 +4998,31 @@ Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
 Definition init_vis (A : atable) : list (expr * expr) :=
   [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (ELit CEIL, ELit (2^47 - CEIL))].
 
-Definition init_acs_of (A : atable) : acs :=
-  ACS (mk_ss (a_entry A) init_regs (init_kn A) NX0) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis A) []
+(* The launch's EXTRA reserved intervals -- the vDSO pair that [State.init_reserved]
+   appends after the image's own segments -- occupy ledger bytes that [a_totsz] must
+   carry, because [co_totsz] (AzAPS.v:310) bounds
+   [sum_sizes (vm_reserved ++ vm_maps)] and [vm_reserved] is
+   [segments_reserved SEGS ++ vdso_reserved ...], NOT the image alone.
+
+   Ported from leptonica/edge_fuzzer proofs/lib/K5/AS/AsanPlanCore.v:73 at
+   the donor's revision, where the same widening is already reconciled in seven trees:
+   there the [a_totsz] slot of [init_acs_of_with] (:3895) reads
+   [img_hi A - img_lo A + resx_bytes A] and [resx_bytes_lo] (AsanInit.v:587) is
+   consumed by [init_co_totsz] (:1195) and [init_co_res] (:1175).
+
+   NAMED [resx_budget], NOT [resx_bytes], DELIBERATELY.  Two declarations of
+   [resx_bytes] already exist and THEY DIFFER IN ARITY: the model's
+   [resx_bytes (A : atable) : Z] (75d69e0079f9 theories/Common/AsanPlanCore.v:155,
+   one explicit argument) and this tree's [APS.resx_bytes : Z] (AzAPS.v:238, none).
+   Neither is in scope in this file.  Introducing a third under that name would put
+   a nullary and a unary candidate in scope together in every file that imports both
+   [APC] and [APS] -- which AsSInit.v:15,22 does -- so an unqualified use would
+   resolve by import order.  A fresh name cannot collide.  [APS.resx_budget_eq]
+   (AzAPS.v) reconciles this constant to [APS.resx_bytes] by [reflexivity]. *)
+Definition resx_budget : Z := 81920.
+
+Definition init_acs_of (r : Z) (A : atable) : acs :=
+  ACS (mk_ss (a_entry A) init_regs (init_kn r A) NX0) [] (img_hi A - img_lo A + resx_budget) MBASE_MIN 0 (init_vis A) []
       (vis_cost (img_hi A - img_lo A) + vis_cost (2^47 - CEIL)) (escale 4096 (EVar V_BRK)) FdStd false (ELit 0) [] (ELit 0).   (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -4952,7 +5042,7 @@ Definition ASAN : atable :=
 (* [comment removed for export] *)
 Definition ASAN_TEXT_LO : Z := 0x4ba64.
 Definition ASAN_TEXT_N : nat := 252263.
-Definition asan_init : acs := init_acs_of ASAN.
+Definition asan_init (r : Z) : acs := init_acs_of r ASAN.
 
 (* [comment removed for export] *)
 Definition BOTH : atable :=
@@ -4965,6 +5055,6 @@ Definition BOTH : atable :=
      stops_more := [0x506d4; 0x51cf8; 0xddd78; 0xee060; 0xee1f0] |}.
 Definition BOTH_TEXT_LO : Z := 0x4ba54.
 Definition BOTH_TEXT_N : nat := 252267.
-Definition both_init : acs := init_acs_of BOTH.
+Definition both_init (r : Z) : acs := init_acs_of r BOTH.
 
 End APC.

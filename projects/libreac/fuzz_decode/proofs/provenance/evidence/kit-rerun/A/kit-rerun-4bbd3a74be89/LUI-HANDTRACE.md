@@ -1,7 +1,7 @@
 # libreac/fuzz_decode, image A alloc-reloc: every lui of the 7 compared functions, hand-traced through ALL ALU ops
 
-Why: the KIT LIMIT registered by WORKER at BRANCH 6d8ff128a01 (AGENT TIME) and its addendum at
-797c750bbb0 (TIME). strictcmp3 65688e94214a's rule 8, and therefore luiscan 9ae61e4a0e01, carry a lui value
+Why: the KIT LIMIT registered by WORKER at BRANCH (AGENT TIME) and its addendum
+ (TIME). strictcmp3 65688e94214a's rule 8, and therefore luiscan 9ae61e4a0e01, carry a lui value
 forward through addi / load / store / jalr only, and call a value that goes through logical ops `lui-const
 (dataflow)` and prints EQUAL. So `memfed 0` is not proof, and SCANS-86da41d3ef68.md beside this file, which reports
 `exposure 0` for all 7 pairs, needs this hand trace under it. Provenance only: no .v file, no theorem, no function
@@ -410,7 +410,7 @@ involved resolves to `memset+0x0` on both sides, and the reaching definitions ar
 
 ## 9. 86da fail-open shapes (a)-(h)
 
-WORKER's registry of cmpkit 86da41d3ef68's known fail-opens (BRANCH 7f2e3c70626, AGENT TIME):
+WORKER's registry of cmpkit 86da41d3ef68's known fail-opens (BRANCH, AGENT TIME):
 an EQUAL verdict of the kit is no evidence where an address reaches a load / store / jalr / AMO base through one
 of eight shapes. Per shape: whether luitrace + the may-static check cover it, with the code line, and the
 measurement on the 7 functions (out/luitrace-shapes.out; both images give the same numbers).

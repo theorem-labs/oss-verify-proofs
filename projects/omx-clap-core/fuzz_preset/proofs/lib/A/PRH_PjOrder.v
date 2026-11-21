@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, kit: THE FREE ORDER of pj_free (src/preset_file.c:334-350), pure and image-free, and
    its one fact against the model.
    proves no function (kind: pure definitions and lemmas).
 
    ONE HOME (the kit owner's ruling, 2026-10-29). These definitions and proofs are TAKEN BY PATH, verbatim, from
-   the image-B pj_free lane, commit ab365ca51d33:
+   the image-B pj_free lane:
    - lib/B/Prog/pj_free_defs.v (blob bd4c58302fde) Section ord: pf_oitemsR, pj_oshapeR, pj_foR;
    - lib/B/Prog/pj_free_pure.v (blob b54814f20036) Section shape, in full: pj_foR_fdR / pj_fdR_foR (the order list of
      a pj_fdR tree exists and is a permutation of its block list), the lblk and frame laws, and pj_free_fo.

@@ -1,7 +1,7 @@
 (* fuzz_preset, harness fix #102 (pins A' asan 1be0f53d96cb9d6c, B' asan-ubsan d663f82d7f488d30): the IMAGE-FREE KEEP
    LEMMAS of the tx_put walks, shared by the A' and B' walks (lanes TxPutA102 / TxPutB102 of h-rw-pre-7). Owner of
    this file: TxPutB102; the A' lane takes it BY PATH.
-   K0 text served: ttx_put_specX, lib/A/PRH_FnTx.v blob b6f264e13647 (cold/h-hpreset-7-walkkit-next eee71ebe8d49),
+   K0 text served: ttx_put_specX, lib/A/PRH_FnTx.v blob b6f264e13647,
    over its predicates prhtx_inv / prhtx_place / prhtx_trace and PRH_Base.v's src_rd / bytes_at / prh_ledger /
    prh_own / arodata_okP.
    rule 24: proves no function (kind: shared lemmas)
@@ -15,7 +15,7 @@
      twin tpk_mhi and tpk_ahi_of_mhi.
    THE WORLD (Wl). Every predicate here reads W only through w_H W (aview segs (w_H W) mem and
    mrestrict (w_H W) mem), and each keep hypothesis is stated between (w_H W, mem) and (w_H W', mem'). So every
-   lemma is W'-GENERAL and NONE needs wle W W' or W' = W. wle W W' (YA0n.v:23, hsub (w_H W') (w_H W)) only GROWS the
+   lemma is W'-GENERAL and NONE needs wle W W' or W' = W. wle W W' (YA0n.v:24, hsub (w_H W') (w_H W)) only GROWS the
    view (YG0n.v aview_ext: rd_ext (aview segs H mem) (aview segs H' mem)), so it never gives a keep hypothesis by
    itself: a walk gets KA-lo / KM-lo / KA-hi from a frame fact (keep_bundle_frame, W' = W) or from a journal.
    WHERE THE BYTES LIE (why KA-lo reaches them): the buffer and its shadow (b + cap + 8 <= alloc_ceiling in
@@ -241,7 +241,7 @@ apply (prh_val_mem_keep _ _ _ _ _ Hv). intros k Hk. apply prh_mbyte_of_aview. ap
 unfold prh_pst. do 6 apply Exists_cons_tl. apply Exists_cons_hd. unfold in_zr. cbn [fst snd]. lia.
 Qed.
 
-(* g_most (prh_most of d7c502629be9; prh_pst's 6th cell) is kept below the ceiling *)
+(* g_most (prh_most; prh_pst's 6th cell) is kept below the ceiling *)
 Lemma keep_prh_most : forall W W' mem mem' m,
   prh_most W mem m -> tpk_alo W W' mem mem' -> (forall a, Exists (in_zr a) prh_pst -> in_img segs a) ->
   prh_most W' mem' m.

@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 2093 of its 2111 lines of code are new or changed and 230 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_parseLib.v, with its module paths, module names, addresses and numbers changed; 2748 of its 2983 lines of code are new or changed and 1876 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, image A (asan, fuzz_ctrl v1.9.0): the body of reac_ctrl_parseF_body.v (not in this delivery), RE-BASED for the cgif-form
    walk (a Theorem Labs lane 23:53Z ruling (2): a re-based Section copy of the stretch after the fake-stack call, the instruction
    proofs verbatim, every re-proved helper named below).  The walk instantiates the Section's base memory m with the
    memory at the return of __asan_stack_malloc_1 (flag jj read as 0), so the frame block's write set no longer needs
    the class-1 hint word: __asan_stack_malloc_1 wrote it before the base.  The journal step after the lift needs the
    EXACT write set (every written byte an awr_byte or the released flag; the hint word is allocator-owned), so:
-   - Wf2 is Wf (reac_ctrl_parseF.v:1196) with the hint interval (fs_hint FS 1, fs_hint FS 1 + 8) replaced by the
+   - Wf2 is Wf (reac_ctrl_parseF.v:1197) with the hint interval (fs_hint FS 1, fs_hint FS 1 + 8) replaced by the
      empty interval (fs_hint FS 1, fs_hint FS 1) (the list keeps its shape, so every `outside` proof keeps its shape);
      Wf2_sub (new, 3 lines): Wf2 is inside Wf;
    - KBx, fwords_x, L_join, L_kind, L_be0, L_bdc, body_copy, body_tail, body_main, body_holds_x: BI (Wf2 fra j nn) ->
@@ -40,7 +41,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import reac_ctrl_pars
 Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.acc_hint ::= acc_hintF.
 Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.mem_after_store_opt ::= rcpF_store_opt.
 
-(* reac_ctrl_parseF.v:373-383, the store tracking of the rd_mono facts, here as this file's own. *)
+(* reac_ctrl_parseF.v:374-384, the store tracking of the rd_mono facts, here as this file's own. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -1636,7 +1637,7 @@ End RBodyF.
    (the region lemmas srw_* / frame_in_R; the post's forall-P form). Section RBodyF above keeps its own text; since Module RBodyFOn was added, Section RBodyF gained the hide_h / hide_sec tactics, `Proof. hide_sec.` openings, the junk / HOK notation arguments and a few proof steps.
    rule 24: no function proved beyond reac_ctrl_parseF.v's own run (proof-index reac_ctrl_parse 2026-10-29
    00:3xZ, exit 0: 12 named files + 8 lemma rows, plain / ubsan builds of other units; checker a Theorem Labs lane: CONFIRM). ==== *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import ShadowRwOn.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_cF_on
   asan_memcpy_cF_on bcmp_wrap_c_on.

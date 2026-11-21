@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-10: the straight-line segments of reac-repacer/fuzz_wire's check_forward in image A, in the form
    and with the helpers of reac-repacer/fuzz_uci's lib/A/Prog/UciCvSegs.v (cv_c8s, cv_rw_c8s, cv_frame_words, cv_rd_all,
    cv_regs, cv_usub, cv_shift, cv_w, cv_finF, cv_memF, cv_lit) and the guarded shadow-checked byte reads of
-   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v (commit 88154566652a), the model steps
+   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v, the model steps
    of the plain walk lib/Prog/check_forward.v (eqb_facts, fwd_eval, fwd_done, fwd_audio). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WireCfSegs: the footprint (ExecF.evtF) runs of check_forward (fuzz_wire.asan 0x7fff0 = wire_sigma WS_check_forward),
    stepped by lib/Lib/StepF.v, split at its one call:
      cf_seg1_F  entry -> rp_fwd_class (0x80ec4, ra = CF_RET): the 0x30-byte frame (s3, s2, s1, s0, ra at 8(sp) ..

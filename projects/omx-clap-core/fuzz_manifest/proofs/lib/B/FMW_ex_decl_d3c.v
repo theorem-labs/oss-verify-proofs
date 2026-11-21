@@ -1,6 +1,6 @@
 (* G4.ExDecl, IMAGE B: dseg_D3c (FMW_ex_decl_base.v). From D3c (0x81630, the '<' at p3 found, s7 = ns):
    0x81630 a1 = '>', 0x81634 a0 = s7 = text + S p3 = ns, 0x81638 jal strchr (PC_strchr 0x41340, ra 0x8163c)
-   [fm_b_expected_iface.out lines 251-253]. B twin of lib/A/FMW_ex_decl_d3c.v (06d82004dc3). strchr (ns, '>') on
+   [fm_b_expected_iface.out lines 251-253]. B twin of lib/A/FMW_ex_decl_d3c.v. strchr (ns, '>') on
    l = skipn (S p3) text (dd_cstr_suffix) decides the model's declaration (dm_decl_gt): no '>' (r = 0) is DCut
    (dm_find_none), a first '>' at o (r = ns + o) is DFound p1 (p2 - p1) (S p3) o (S p3 + o) (dm_find_some). dat_D4 at the
    return EX_D4 (0x8163c): the callee-saved registers kept (aregs_preserved), the memory kept outside strchr's window

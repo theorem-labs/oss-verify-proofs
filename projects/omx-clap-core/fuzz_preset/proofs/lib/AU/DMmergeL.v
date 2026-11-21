@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMmergeL.v (commit ce1a656b52b7, file sha256 d96cb539d419) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 17 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 10 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMmergeL.v (commit fe876300d09, Quarantine::Drain walk set; file sha256 15bdb0d91019) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 15 image addresses moved by code-verified function pairs (15 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 1 code pcs the tool read as sizes, by the internal file funcpair.py), and 10 pcs named in comments; 1 hand maps (the internal file resolve-drain.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMmergeL.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (26 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMmergeL.v (file sha256 d96cb539d419) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 17 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 10 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMmergeL.v (Quarantine::Drain walk set; file sha256 15bdb0d91019) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 15 image addresses moved by code-verified function pairs (15 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 1 code pcs the tool read as sizes, by the internal file funcpair.py), and 10 pcs named in comments; 1 hand maps (the internal file resolve-drain.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMmergeL.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (26 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1 slice H1 of ReallocPrimary's Theorem Labs walk lanes, brief
-   a Theorem Labs lane's internal file B-WALK-LANES.md; interface DMwalkIF.v at 3e29c198d40, FROZEN):
+   a Theorem Labs lane's internal file B-WALK-LANES.md; interface DMwalkIF.v, FROZEN):
    QuarantineCache::MergeBatches (0x34640, fuzz_reply's asan-ubsan image B) against the shared model's
-   merge_batches_cf (YG00cf.v:283-297).  This file proves the heads DMwalkIF.v states for H1:
+   merge_batches_cf (YG00cf.v:284-298).  This file proves the heads DMwalkIF.v states for H1:
    - [mb_model_facts] (pure, section 1 below);
    - [mb_inv_entry_t] (the loop invariant at the first arrival at 0x34678: the satisfiability witness);
    - [mb_ok_t] (the walk from 0x34640 to the return at 0x34504).
@@ -238,7 +239,7 @@ Lemma ent_b : forall b, In b L0 ->
   (addrb ly b + kBatchBytes <= spr - 16 \/ spr + 32 <= addrb ly b).
 Proof. intros b Hb. exact (mb_bfacts _ _ _ _ _ _ HP b Hb). Qed.
 
-(* the atoms' facts: a value in range, aligned (DMdeq.v:357's AF) *)
+(* the atoms' facts: a value in range, aligned (DMdeq.v:358's AF) *)
 Lemma ent_AF : forall (E : env) k0 Xv lo hi al, ew E k0 = w64 Xv -> 0 <= Xv < 2 ^ 64 -> lo <= Xv <= hi ->
   Xv mod 2 ^ al = 0 -> 0 <= al <= 64 -> afact_ok E k0 (mkAF lo hi al).
 Proof.

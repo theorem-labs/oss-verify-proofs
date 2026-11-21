@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10-29: new file for libreac/fuzz_scene (asan). The start-up certificate
-   lib/A/SceneBCert.v (a working branch e89cf69d744) at scene's concrete record B := TfibB
-   (lib/A/AD2l.v). SceneBCert's only Section hypothesis, `HB : TfibSyms B` (SceneBCert.v:202), is discharged
+   lib/A/SceneBCert.v (a working branch) at scene's concrete record B := TfibB
+   (lib/A/AD2l.v). SceneBCert's only Section hypothesis, `HB : TfibSyms B` (SceneBCert.v:203), is discharged
    by `TfibB_syms`; nothing here is a hypothesis. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   `scene_bcert_TfibB` is the certificate's content at TfibB: the two blanket facts the walks take
    (`img_shadow_vis`, `globs_marked` over the five registered globals, SceneBCert.v section 11), the
@@ -71,11 +72,11 @@ split; [exact (scene_uar_cell_addr TfibB TfibB_syms ly)|].
 split; [exact (scene_got_shadow_addr TfibB TfibB_syms ly) | exact (scene_got_uar_addr TfibB TfibB_syms ly)].
 Qed.
 
-(* HB_Z_TT at TfibB: SceneBCert.v's `scene_z_tt` (e89cf69d744), in a Theorem Labs lane's frozen wide form. *)
+(* HB_Z_TT at TfibB: SceneBCert.v's `scene_z_tt`, in a Theorem Labs lane's frozen wide form. *)
 Theorem scene_z_tt_TfibB : in_zs TfibB (0x20e20 - 0x20) (0x20 + (12 - 12 mod 8)).
 Proof. exact (scene_z_tt TfibB TfibB_syms). Qed.
 
-(* HB_C_PL at TfibB: SceneBCert.v's `scene_c_pl` (e89cf69d744), the eight 0xf9 cells from shadow 0x7fffc629. *)
+(* HB_C_PL at TfibB: SceneBCert.v's `scene_c_pl`, the eight 0xf9 cells from shadow 0x7fffc629. *)
 Theorem scene_c_pl_TfibB : forall ly, Forall (fun c => In c (as_const TfibB ly))
   (map (fun k => z1 (ANum (0x7fffc629 + Z.of_nat k)) 0xf9) (seq 0 8)).
 Proof. exact (scene_c_pl TfibB TfibB_syms). Qed.
@@ -85,8 +86,8 @@ End b.
 (* ---- the entry statement's minimal HRO_TT premise, at TfibB ----------------------------
    The twelve bytes [0x20e20, 0x20e2c) (the check_step trailer window) are in no owned-static row
    of B and not in B's errno word. Owned rows nearest the window: (0x20dd2, 0x2e), which ends at
-   0x20e00, and (0x20e2c, 0x14), which starts at 0x20e2c (AF0m.v:899); errno is TFIB_ERRNO
-   0x5d66f4 (AF0m.v:21). *)
+   0x20e00, and (0x20e2c, 0x14), which starts at 0x20e2c (AF0m.v:900); errno is TFIB_ERRNO
+   0x5d66f4 (AF0m.v:22). *)
 Definition own_hit (a : Z) (r : Z * Z) : bool := ((fst r <=? a) && (a <? fst r + snd r))%bool.
 Definition hro_tt_ok (i : Z) : bool :=
   (negb (existsb (own_hit (0x20e20 + i)) (as_owned_static TfibB)) &&
@@ -116,16 +117,16 @@ split.
 Qed.
 
 (* ---- the entry statement's HRO_PL and HRO_PLGOT premises, at TfibB --------------------
-   a Theorem Labs lane be134c66f29 lib/A/P_LLVMFuzzerTestOneInput.v:212-216 states them over A_reac_scene_placeholder,
+   a Theorem Labs lane lib/A/P_LLVMFuzzerTestOneInput.v:213-217 states them over A_reac_scene_placeholder,
    LLVMF_SCENE_BYTES and VAL (A_OBJ 4). None of those names is reachable from this file without the statement file
    or the program-walk listing (lib/A/Prog/{PaTable, SceneAddr, SceneCode, SceneImg, ...}, absent from this
    branch), so both lemmas are stated over the literal values, which the names are equal to:
      - A_reac_scene_placeholder := 0x20e80 and LLVMF_SCENE_BYTES := 8904 are Definitions (statement :128-129), so
        `TfibB_HRO_PL` has HRO_PL's type at B := TfibB up to unfolding them;
      - VAL (A_OBJ 4) = pa_val PI_scene 245 = scene_val 245 = scene_obj 4 = 0x9c388 (PaTable.v:15, SceneImg.v:60,
-       SceneCode.v:28-29, SceneAddr.v:56, all at be134c66f29): the .got word holding 0x20e80.
+       SceneCode.v:28-29, SceneAddr.v:56, all): the .got word holding 0x20e80.
    The length is the descriptor's 8904, NOT the ELF st_size 11136. Zero margin above, in both: the owned row
-   (0x23148, 0x8b8) starts at 0x20e80 + 8904 and (0x9c390, 0x10) starts at 0x9c388 + 8 (AF0m.v:898-899). *)
+   (0x23148, 0x8b8) starts at 0x20e80 + 8904 and (0x9c390, 0x10) starts at 0x9c388 + 8 (AF0m.v:899-900). *)
 Definition hro_ok (a : Z) : bool :=
   (negb (existsb (own_hit a) (as_owned_static TfibB)) &&
    negb ((as_errno TfibB <=? a) && (a <? as_errno TfibB + 4)))%bool.

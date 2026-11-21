@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the SIGPIPE disposition as a launch variable; the new launch (process input, auxv, group id, exec file name); start-up certificates and hand-off states computed in the build; new lemmas; unused lemmas removed; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0StkShK.v, lines 27-28, 40-50, 60, 142-149, 157-160. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -10,7 +11,7 @@ From OSSVerify.jsoncons.fuzz_ubjson_encoder.images Require Import Asan.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import AsanAcct.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import PropExec AgentLib AxSymExec3K AxSymExec3SoundK AxSymRun3K
   AsanPlanCoreK AsanPlanK AsanPlanSoundK AsanInitK Ea0DefsK Ea0PlanImagesK HandoffBridgeK HandoffLedgerK HandoffBInvK HandoffCellsK HandoffRolesK
-  Ea0HandoffK Ea0HSK_0 Ea0HSK_1 Ea0MainTableK Ea0HandoffInstK EraArtHandoffK EraArtHandoffInstK.
+  Ea0HandoffK Ea0CertK_202 Ea0HandoffInstK EraArtHandoffK EraArtHandoffInstK.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import HeapIface HeapIfaceA HeapIfaceAEx.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.L5FastLia. Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.L5FastLiaT. Local Ltac lia := L5FastLiaT.plia2.
@@ -26,8 +27,8 @@ Definition K_STKSH : kentry := KZero (SA E_SHB 2146402304) E_SHL.
 Definition stksh_chk (cs : acs) : bool :=
   let k := kn cs in (existsb (kentry_eqb K_STKSH) k && lin_nowrapR k E_SHB && lin_nowrapR k E_SHL)%bool.
 
-Lemma stksh_chk_0 : stksh_chk HS_0 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma stksh_chk_1 : stksh_chk HS_1 = true.   Proof. vm_compute. reflexivity. Qed.
+Lemma stksh_chk_HSA : forall r h, (h < 2)%nat -> stksh_chk (HSA r h) = true.
+Proof. intros r [|[|h]] H; [| |lia]; unfold HSA; destruct (Z.eqb r 1); vm_compute; reflexivity. Qed.
 
 Section StkSh.
   Variable sp brk0 : word.
@@ -35,12 +36,26 @@ Section StkSh.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
   Variable fs : Fs.Fs.
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable abrt : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sdf : bool.
+  Variable apc : N.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+    (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
   #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
   #[local] Notation usp := (bv_unsigned sp).
 
@@ -61,7 +76,7 @@ Section StkSh.
     repeat match type of H with context [bv_unsigned (ev E ?n)] => change (bv_unsigned (ev E n)) with (VZ E n) in H end;
     rewrite ?Z.add_0_r in H.
 
-  #[using="brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit SCHK GCHK R model HC"] Theorem stksh_main : forall x,
+  #[using="brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit Hlau SCHK GCHK R model HC"] Theorem stksh_main : forall x,
     in_shadow_of (usp - 8388608) (Z.max usp (uE E (topE cs)) - (usp - 8388608)) x -> byte_at FULL x 0.
   Proof.
     intros x Hx.
@@ -71,8 +86,8 @@ Section StkSh.
     unfold estart, elenZ in Hz. cbn [a_base a_off] in Hz.
     remember (bv_unsigned (edenot E E_SHB)) as shb eqn:Eb. remember (bv_unsigned (edenot E E_SHL)) as shl eqn:El.
     LINEQS E_SHB L1. rewrite <- Eb in L1. LINEQS E_SHL L2. rewrite <- El in L2.
-    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit E cs R FULL model HC) as U0.
-    destruct (geo_stk sp brk0 rdraw argv envp uid hw fs cs GCHK E R FULL model HC) as (_ & _ & _ & _ & TOP).
+    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp uid hw fs stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau E cs R FULL model HC) as U0.
+    destruct (geo_stk sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc cs GCHK E R FULL model HC) as (_ & _ & _ & _ & TOP).
     assert (SR : 0x7fff80000000 <= usp <= 2 ^ 47) by (destruct Hsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
     pose proof (Z.ge_le _ _ (Z.le_ge _ _ (proj1 (u64_range (ev E 6))))) as V6. change (bv_unsigned (ev E 6)) with (VZ E 6) in V6.
     unfold in_shadow_of, S, SB in Hx.
@@ -86,7 +101,7 @@ Section StkSh.
     unfold byte_at. replace x with (shb + 2146402304 + (x - (shb + 2146402304))) by ring. apply Hz. lia.
   Qed.
 
-  #[using="brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit cs SCHK GCHK E R model HC"] Theorem stksh_main_hi : forall x,
+  #[using="brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit Hlau cs SCHK GCHK E R model HC"] Theorem stksh_main_hi : forall x,
     in_shadow_of (usp - 8388608) (2 ^ 47 - (usp - 8388608)) x -> byte_at FULL x 0.
   Proof.
     intros x Hx.
@@ -96,8 +111,8 @@ Section StkSh.
     unfold estart, elenZ in Hz. cbn [a_base a_off] in Hz.
     remember (bv_unsigned (edenot E E_SHB)) as shb eqn:Eb. remember (bv_unsigned (edenot E E_SHL)) as shl eqn:El.
     LINEQS E_SHB L1. rewrite <- Eb in L1. LINEQS E_SHL L2. rewrite <- El in L2.
-    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit E cs R FULL model HC) as U0.
-    destruct (geo_stk sp brk0 rdraw argv envp uid hw fs cs GCHK E R FULL model HC) as (_ & _ & _ & _ & TOP).
+    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp uid hw fs stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau E cs R FULL model HC) as U0.
+    destruct (geo_stk sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc cs GCHK E R FULL model HC) as (_ & _ & _ & _ & TOP).
     assert (SR : 0x7fff80000000 <= usp <= 2 ^ 47) by (destruct Hsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
     pose proof (Z.ge_le _ _ (Z.le_ge _ _ (proj1 (u64_range (ev E 6))))) as V6. change (bv_unsigned (ev E 6)) with (VZ E 6) in V6.
     unfold in_shadow_of, S, SB in Hx.
@@ -113,25 +128,27 @@ Section StkSh.
 End StkSh.
 
 Theorem as0_stksh_main :
-  forall sp brk0 rdraw argv envp uid hw fs, valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  forall h, (h < 2)%nat -> forall E R FULL model,
-    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 argv envp uid hw) (argH0 APH0 sp rdraw argv envp uid hw) fs E (HSA h) R FULL model ->
-    forall x, in_shadow_of (bv_unsigned sp - 8388608) (Z.max (bv_unsigned sp) (APSK.uE E (topE (HSA h))) - (bv_unsigned sp - 8388608)) x -> byte_at FULL x 0.
+  forall sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc,
+  valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+    (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) ->
+  forall r h, (h < 2)%nat -> forall E R FULL model,
+    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc) (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) fs E (HSA r h) R FULL model ->
+    forall x, in_shadow_of (bv_unsigned sp - 8388608) (Z.max (bv_unsigned sp) (APSK.uE E (topE (HSA r h))) - (bv_unsigned sp - 8388608)) x -> byte_at FULL x 0.
 Proof.
-  intros sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit h Hh E R FULL model HC.
-  destruct h as [|[|h]]; [| |lia].
-  - exact (stksh_main sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit HS_0 stksh_chk_0 geo_chk_0 E R FULL model HC).
-  - exact (stksh_main sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit HS_1 stksh_chk_1 geo_chk_1 E R FULL model HC).
+  intros sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau r h Hh E R FULL model HC.
+  exact (stksh_main sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau (HSA r h) (stksh_chk_HSA r h Hh) (geo_chk_HSA r h Hh) E R FULL model HC).
 Qed.
 
 Theorem as0_stksh_main_hi :
-  forall sp brk0 rdraw argv envp uid hw fs, valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  forall h, (h < 2)%nat -> forall E R FULL model,
-    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 argv envp uid hw) (argH0 APH0 sp rdraw argv envp uid hw) fs E (HSA h) R FULL model ->
+  forall sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc,
+  valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+    (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) ->
+  forall r h, (h < 2)%nat -> forall E R FULL model,
+    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc) (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) fs E (HSA r h) R FULL model ->
     forall x, in_shadow_of (bv_unsigned sp - 8388608) (2 ^ 47 - (bv_unsigned sp - 8388608)) x -> byte_at FULL x 0.
 Proof.
-  intros sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit h Hh E R FULL model HC.
-  destruct h as [|[|h]]; [| |lia].
-  - exact (stksh_main_hi sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit HS_0 stksh_chk_0 geo_chk_0 E R FULL model HC).
-  - exact (stksh_main_hi sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit HS_1 stksh_chk_1 geo_chk_1 E R FULL model HC).
+  intros sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau r h Hh E R FULL model HC.
+  exact (stksh_main_hi sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau (HSA r h) (stksh_chk_HSA r h Hh) (geo_chk_HSA r h Hh) E R FULL model HC).
 Qed.

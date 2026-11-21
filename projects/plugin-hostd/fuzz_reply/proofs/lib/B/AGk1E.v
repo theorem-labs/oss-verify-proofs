@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk1E.v (commit 30a1993588f, c5 + memnorm; file sha256 2bfaa2bc9453) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AGk1E.v at commit 789778cb16f, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk1E.v (c5 + memnorm; file sha256 2bfaa2bc9453) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AGk1E.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The errno-kept twin of the miss arms' shared OOM tail AGk1.miss_oom_tail: the same tail, concluding
    ErrnoG.alloc_leaf_e (AllocG.alloc_leaf plus errno kept on the grant branch) in place of alloc_leaf.
 
@@ -162,7 +163,7 @@ Theorem miss_oom_tail_e : amreal tfibsegs (AGif0n.malloc_join_t stag n tr cl S')
 (fun r W'' c'' => (exists trc, apath (mt n tr S) trc r /\ gflag trc = true) ->
   alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regsU mem0 md0 n tr r W'' c'').
 Proof.
-(* copy of AGk1.v:338-341, + errno *)
+(* copy of AGk1.v:339-342, + errno *)
 unfold AGif0n.malloc_join_t. rewrite bind_assoc_eq. eapply amreal_pure; [exact (pop_miss S' cl Hc0)|]. eapply amreal_pure; [reflexivity|].
 unfold AGif0n.malloc_K_t. cbn [amreal].
 replace (cfg_at tfibsegs A_REFILL_RET regsR memR mdR) with cR by (unfold cfg_at, cR, msR; rewrite with_vm_backing_id; reflexivity).

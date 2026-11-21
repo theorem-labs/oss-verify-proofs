@@ -4,23 +4,24 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 741 of its 860 lines of code are new or changed and 892 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R2.v; 114 of its 170 lines of code are new or changed and 804 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source runs: lib/B/Prog/Seg/R2.v r2_evt :199.  R2.v is not in a working branch 3803efccea0: it
-     is a Theorem Labs lane's WIP d574f6c66de (blob c8e8264e8e3a1815df751c41d25dd3dff05bb6e7), taken by path onto
-     3803efccea0 on a working branch f9a9f80d79e (unchanged, same blob) and built there (-s ours
+   source runs: lib/B/Prog/Seg/R2.v r2_evt :199.  R2.v is not in a working branch: it
+     is a Theorem Labs lane's WIP (blob c8e8264e8e3a1815df751c41d25dd3dff05bb6e7), taken by path onto
+     on a working branch (unchanged, same blob) and built there (-s ours
      type-check rc=0);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: r2_evt calls meta_fill_00 (__asan_set_shadow_00) at 0x8163c, so it is split there: r2_evt_pre_F
-     re-runs R2.v lines 224-249 (0x815fc .. the jal, stopping AT the callee entry SSH.ASAN_SET_SHADOW_00 with
+     re-runs R2.v lines 225-250 (0x815fc .. the jal, stopping AT the callee entry SSH.ASAN_SET_SHADOW_00 with
      ra = 0x81640), r2_evt_post_F lines 256-275 (from the return pc 0x81640; the run ends there, so it has no
      instruction); r2_evt_of_F re-derives the source statement from the pair and the __asan_set_shadow_00
      contract taken at the call (checked by conversion against R2.r2_evt, r2_evt_src_check).
    R2.v's other lemma named in the inventory, r2_run :415, is not a run: it has no instruction and no Exec.evt
      conclusion (it lifts an evt on MemNorm.normalize to SR through evt_normalize and evt_SR_canon_lazy), so it has
-     no footprint twin here; the evtF form of evt_normalize is not in 3803efccea0's kit.
+     no footprint twin here; the evtF form of evt_normalize is not in's kit.
    No _F steps through a callee.  This file states no callee contract. *)
 (* rule 24: no function proved. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -48,12 +49,12 @@ Ltac r2F_s2 :=
   rewrite ?R2.r2_srl1;
   f_equal; lia.
 
-(* ---- r2_evt (R2.v:199-276), split at the call 0x8163c jal meta_fill_00.
+(* ---- r2_evt (R2.v:200-277), split at the call 0x8163c jal meta_fill_00.
    _pre_F: 0x815fc bnez a0 (taken), 0x81604 ld a1,0(s4) (= 11), 0x81608 bnez a1 (taken), the row offset arithmetic
    0x81610 .. 0x81620, the UBSan wrap test 0x81624 (T04, taken), 0x8162c add s2, 0x81630 li a1,186,
    0x81634 sd s11,8(s1), 0x81638 mv a0,s11, 0x8163c jal, stopping AT the callee entry SSH.ASAN_SET_SHADOW_00 with
    ra = 0x81640, a0 = s11 = Q, a1 = 186.  Accesses: the catalogue count [c, c + 8) and the spill [Ab + 8, Ab + 16).
-   Its post is the state at the jal target with the facts the source run has there (R2.v:244-249: the write set and
+   Its post is the state at the jal target with the facts the source run has there (R2.v:245-250: the write set and
    wmono from m, the 186 shadow bytes still one cell, the spill window's stk, [Ab + 8] = s11, asan_cells, and
    mem_inv carried by the stores) and uses at the call or after it. ---- *)
 Lemma r2_evt_pre_F :
@@ -116,7 +117,7 @@ Proof.
   split; [exact B11|]. split; [exact HAC1 | exact HMI].
 Qed.
 
-(* _post_F: from the return pc 0x81640, with the __asan_set_shadow_00 post facts as R2.v:256-260 uses them (a0 kept
+(* _post_F: from the return pc 0x81640, with the __asan_set_shadow_00 post facts as R2.v:257-261 uses them (a0 kept
    = s11, the write set [(Q, Q + 186)], wmono, the 186 bytes now 00) over the post-call state m2, and the pre-call
    facts on m1 the source run carries across the call (the write set and wmono from m, the spill window's stk,
    [Ab + 8] = s11).  s2 is callee-saved, so it still holds the row address.  The run ends at 0x81640: no
@@ -163,7 +164,7 @@ Proof.
   split; [exact RW2|]. split; [exact STf | exact B11'].
 Qed.
 
-(* r2_evt from its two stretches and the __asan_set_shadow_00 contract taken at the call, as R2.v:250-255 takes
+(* r2_evt from its two stretches and the __asan_set_shadow_00 contract taken at the call, as R2.v:251-256 takes
    it. *)
 Lemma r2_evt_of_F : SSH.asan_set_shadow_00_contract ->
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)

@@ -1,8 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: preserve vDSO reservation inclusion through free completion and munmap. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
+From OSSVerify.Proofs.glaze.binary_reflection.lib Require MhKXSys.
 (* [comment removed for export] *)
 Require Stdlib.ZArith.ZArith Stdlib.Lists.List Stdlib.micromega.Lia Stdlib.Bool.Bool LinuxProcessSemantics.LinuxProcessSem.BvBase LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics LinuxProcessSemantics.LinuxProcessSem.MemImageType LinuxProcessSemantics.Riscv.Prelude LinuxProcessSemantics.Riscv.Instr LinuxProcessSemantics.Riscv.Decode LinuxProcessSemantics.Riscv.DecodeC OSSVerify.glaze.binary_reflection.images.Ubsan OSSVerify.Proofs.glaze.binary_reflection.lib.Common.PropExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CatExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.Hoare OSSVerify.Proofs.glaze.binary_reflection.lib.Mh32 OSSVerify.Proofs.glaze.binary_reflection.lib.Common.WalkTac OSSVerify.Proofs.glaze.binary_reflection.lib.Common.StoreOk OSSVerify.Proofs.glaze.binary_reflection.lib.Common.AllocSim OSSVerify.Proofs.glaze.binary_reflection.lib.Common.MmapSim OSSVerify.Proofs.glaze.binary_reflection.lib.MemsetLibF OSSVerify.Proofs.glaze.binary_reflection.lib.Common.SumWalkTac OSSVerify.Proofs.glaze.binary_reflection.lib.UbMhDefs OSSVerify.Proofs.glaze.binary_reflection.lib.UbMhTac OSSVerify.Proofs.glaze.binary_reflection.lib.UbCodeM0 OSSVerify.Proofs.glaze.binary_reflection.lib.UbCodeM1 OSSVerify.Proofs.glaze.binary_reflection.lib.PuStep.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -407,6 +409,9 @@ Section Free.
       (exists st', WF st' L' /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\ nojunk st' /\ nolimbo st' /\ fsub st st') /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
       m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      (* [m_channel_reader] rides with the group above; see UbMhUnmap.with_vmmaps_rdr. *)
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
       vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl).
 
   (* [comment removed for export] *)
@@ -424,6 +429,7 @@ Section Free.
   Theorem free_kat : forall st regs (M : mem) mdl rom L L' (p n sp : Z) (Q : config -> Prop),
     WF st L -> REP st M -> LEDGER st (m_vmmaps mdl) -> nojunk st -> nolimbo st ->
     m_halted mdl = None -> m_vm_lazy mdl = [] -> m_vm_materialized mdl = [] ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     In (p, n) L -> (forall x, In x L' <-> In x L /\ x <> (p, n)) -> NoDup L' -> (length L' <= length L)%nat ->
     getr regs 10 = Z_to_bv 64 p -> ret_ok (getr regs 1) ->
     getr regs 2 = Z_to_bv 64 sp -> sp mod 16 = 0 -> CEIL + FSTK <= sp -> sp < 2 ^ 64 ->
@@ -432,7 +438,7 @@ Section Free.
     (forall c', free_post st L' sp regs M mdl rom c' -> Q c') ->
     kat RSEGS (mkCfg (mkst regs (0x665b4%bv : word) M rom) mdl) Q.
   Proof using. repeat match reverse goal with PinX : _ |- _ => clear PinX end.
-    intros st regs M mdl rom L L' p n sp Q HWF HREP HLG NJ NL Hh Hlz Hmat Hin HL'in HL'nd HL'len H10 Hra H2 Hsp16 Hsplo Hsphi H4 DEF HQ.
+    intros st regs M mdl rom L L' p n sp Q HWF HREP HLG NJ NL Hh Hlz Hmat HVDSO Hin HL'in HL'nd HL'len H10 Hra H2 Hsp16 Hsplo Hsphi H4 DEF HQ.
     unfold FSTK in *.
     destruct (wL_in st L (WF_live st L HWF) p n Hin) as (m & i & off & res & Hgrp & Hi & Hslot).
     pose proof (wG_each st L (WF_groups st L HWF) m Hgrp) as WG.
@@ -532,6 +538,8 @@ Section Free.
     assert (FIN : forall stF (MF : mem) mdlF rF,
       WF stF L' -> REP stF MF -> LEDGER stF (m_vmmaps mdlF) -> nojunk stF -> s_limbo stF = s_limbo st -> fsub st stF ->
       m_halted mdlF = None -> m_vm_lazy mdlF = [] -> m_vm_materialized mdlF = [] -> m_fs mdlF = m_fs mdl -> m_fds mdlF = m_fds mdl ->
+      m_channel_reader mdlF = m_channel_reader mdl ->
+      incl (vdso_reserved (m_kernel mdlF) (vdso_top (m_vmmaps mdlF))) (vm_reserved (m_vmmaps mdlF)) ->
       vm_limit (m_vmmaps mdlF) = vm_limit (m_vmmaps mdl) ->
       defined MF (sp - 912) sp ->
       (forall a, 0 <= a < 2 ^ 64 -> MF (Z_to_bv 64 a) <> M (Z_to_bv 64 a) ->
@@ -541,7 +549,7 @@ Section Free.
       getr rF 20 = getr regs 20 -> getr rF 21 = getr regs 21 -> getr rF 22 = getr regs 22 -> getr rF 23 = getr regs 23 ->
       getr rF 24 = getr regs 24 -> getr rF 25 = getr regs 25 -> getr rF 26 = getr regs 26 -> getr rF 27 = getr regs 27 ->
       Q (mkCfg (mkst rF (getr regs 1) MF rom) mdlF)).
-    { intros stF MF mdlF rF W' R' LG' NJ' LB' FS' X1 X2 X3 X4 X5 X6 GR FRM E2 E3 E4 E8 E9 E18 E19 E20 E21 E22 E23 E24 E25 E26 E27.
+    { intros stF MF mdlF rF W' R' LG' NJ' LB' FS' X1 X2 X3 X4 X5 XR XVDSO X6 GR FRM E2 E3 E4 E8 E9 E18 E19 E20 E21 E22 E23 E24 E25 E26 E27.
       apply HQ. exists rF, MF, mdlF. split; [reflexivity|]. split.
       { rewrite E2, H2. repeat split; try assumption; reflexivity. }
       split; [exact FRM|]. split; [exact GR|].
@@ -602,7 +610,7 @@ Section Free.
       assert (Q25 : getr r3 25 = getr regs 25) by (kept_rw K3; exact A25).
       assert (Q26 : getr r3 26 = getr regs 26) by (kept_rw K3; exact A26).
       assert (Q27 : getr r3 27 = getr regs 27) by (kept_rw K3; exact A27).
-      exact (FIN (UbMhSetBit.st' st1 m i) M3 mdl r3 WF3 REP3 LG3 NJ3 eq_refl (fsub_trans _ _ _ (fsub_junk st m i off) (fsub_setbit st1 m i)) Hh Hlz Hmat eq_refl eq_refl eq_refl (defined_grows M M3 _ _ GR3 DEF) FRM3
+      exact (FIN (UbMhSetBit.st' st1 m i) M3 mdl r3 WF3 REP3 LG3 NJ3 eq_refl (fsub_trans _ _ _ (fsub_junk st m i off) (fsub_setbit st1 m i)) Hh Hlz Hmat eq_refl eq_refl eq_refl HVDSO eq_refl (defined_grows M M3 _ _ GR3 DEF) FRM3
                  T2 Q3 Q4 T8 T9 T18 T19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27). }
     (* [comment removed for export] *)
     intros HNT.
@@ -683,7 +691,7 @@ Section Free.
       assert (Q25 : getr r6 25 = getr regs 25) by (kept_rw K6; exact P25).
       assert (Q26 : getr r6 26 = getr regs 26) by (kept_rw K6; exact P26).
       assert (Q27 : getr r6 27 = getr regs 27) by (kept_rw K6; exact P27).
-      exact (FIN st4 M4 mdl r6 WF4 REP4 LG4 NJ4 L4 FS04 Hh Hlz Hmat eq_refl eq_refl eq_refl (defined_grows M M4 _ _ GR4 DEF) FRM4
+      exact (FIN st4 M4 mdl r6 WF4 REP4 LG4 NJ4 L4 FS04 Hh Hlz Hmat eq_refl eq_refl eq_refl HVDSO eq_refl (defined_grows M M4 _ _ GR4 DEF) FRM4
                  X2 Q3 Q4 X8 X9 X18 X19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27).
     - (* [comment removed for export] *)
       pose proof (rg_rng st1 st4 L' b len x WF1 PERM) as (R1 & R2 & R3 & R4 & R5). pose proof (rg_img st1 st4 L' b len x WF1 PERM) as RI. ceil; unfold HEAPLO in R1, R2.
@@ -705,7 +713,9 @@ Section Free.
       apply (kat_ecall_munmap r6 (0x68518%bv : word) M5 rom mdl W_684c4 (Z_to_bv 64 b) len Q F_684c4 eq_refl Hh Hlz Y17 Y10
                ltac:(rewrite u_Z2bv by (first [ (clear H0 R5 FRM4 W4 HNT FIN METAown HDRown Ear Hpg PI Pmod Pal Smod MR8 Hsp16; lia) | lia ]); exact R3) Y11 R4 R5 ltac:(rewrite u_Z2bv by (first [ (clear H0 R5 FRM4 W4 HNT FIN METAown HDRown Ear Hpg PI Pmod Pal Smod MR8 Hsp16; lia) | lia ]); (first [ (clear HNT Ear Hpg PI Pmod Pal Smod MR8 Hsp16; lia) | lia ])) (rg_map_has st1 st4 b len x PERM _ LG1)).
       replace (v_addi (0x68518%bv : word) 4) with (0x6851c%bv : word) by (apply bv_eq; reflexivity).
-      rewrite (munmap_model_eq (Z_to_bv 64 b) (Z_to_bv 64 len) mdl Hlz Hmat).
+      rewrite (munmap_model_eq (Z_to_bv 64 b) (Z_to_bv 64 len) mdl Hlz Hmat
+                 ltac:(rewrite u_Z2bv by lia; lia)
+                 ltac:(intros bbX ssX HinX; eapply (rg_exact st1 st4); eassumption)).
       rewrite !(u_Z2bv b), !(u_Z2bv len) by (first [ (clear H0 FRM4 W4 HNT FIN METAown HDRown Ear Hpg PI Pmod Pal Smod MR8 Hsp16; lia) | lia ]).
       set (vm' := mkVmMapsFull (vm_reserved (m_vmmaps mdl)) (map_remove (vm_maps (m_vmmaps mdl)) (Z_to_bv 64 b))
                     (maps_subtract (vm_noaccess (m_vmmaps mdl)) b (b + len))
@@ -789,6 +799,10 @@ Section Free.
       + rewrite MF4. exact Hmat.
       + exact MF5.
       + exact MF6.
+      + (* m_channel_reader through the [munmap] [with_vmmaps] step *)
+        exact (with_vmmaps_rdr vm' mdl).
+      + eapply OSSVerify.Proofs.glaze.binary_reflection.lib.MhKXSys.MhGap.vdso_included_same; [| | | |exact HVDSO];
+          cbn [mdl' with_vmmaps vm']; reflexivity.
       + rewrite MF1. reflexivity.
       + exact Q3. + exact Q4. + exact X8. + exact X9. + exact X18. + exact X19.
       + exact Q20. + exact Q21. + exact Q22. + exact Q23. + exact Q24. + exact Q25. + exact Q26. + exact Q27.

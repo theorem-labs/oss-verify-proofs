@@ -2,16 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/fd_glue.v,
-   fd_seghelp.v and LLVMFuzzerTestOneInput.v at 25e3d17bdb50 and from reac-repacer/fuzz_uci
-   proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput.v at bc49657c087a; module path, this unit's callee
+   fd_seghelp.v and LLVMFuzzerTestOneInput.v and from reac-repacer/fuzz_uci
+   proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput.v; module path, this unit's callee
    contracts (g_cr, g_cm, g_ci in the form of uci's g_cno), and the cell lemmas rwc_cons, rwc_c1. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/Prog/lt_glue.v, with its module paths changed; 90 of its 369 lines of code are new or changed and 227 lines of the source are left out. *)
 (* Modified by Theorem Labs: ported for reac-repacer/fuzz_egress. g_pre, g_above and g_run are
-   reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput.v at
-   bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1 (Section G), g_malloc and g_free are libreac/fuzz_decode
-   proofs/libreac/fuzz_decode/lib/U/Prog/fd_glue.v at 25e3d17bdb5059606131377a3722d585415ab5d6, both with their module paths changed;
+   reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput.v
+    (Section G), g_malloc and g_free are libreac/fuzz_decode
+   proofs/libreac/fuzz_decode/lib/U/Prog/fd_glue.v, both with their module paths changed;
    g_crs, g_cm and g_ci are that file's g_crt at this program's three K-style callees (check_restamp,
    check_mute, check_inject). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

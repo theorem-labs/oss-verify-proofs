@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module names changed; 989 of its 1047 lines of code are new or changed and 456 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): row T6 at the re-hiding contract.
    crtB_T6's text is unchanged (CRT_B_SEG_T6 now means CRT_B_AT_C -> CRT_B_AT_L3 at the step
    relation YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf); the stretches ct6_at_M / _R / _K and the notations ATC / ATL3 are
@@ -34,16 +35,16 @@
    journal at a budget WS (the A' twin's convention, Crt102Loops.cl_live_keep); crtB_T6's statement is unchanged.
 
    INPUTS OF RECORD (taken by path where named):
-   - base commit cbe6d10993c2 (candidate base) (Crt102Glue.v: the frozen crt_at_L3_B / crt_at_C_B /
+   - base (candidate base) (Crt102Glue.v: the frozen crt_at_L3_B / crt_at_C_B /
      CRT_B_SEG_T6 in the permutation form; Crt102Img.v; Crt102Model.v; lib/B/Prog/Crt102KitB.v: cb4_sp, cb4_ff,
      cb4_doc_home, cb4_ar0, cb4_fb, cb4_live_call, cb4_fregs_trans, cb4_ro_img; lib/A/Prog/Crt102Kit.v:
      crt102rw_fdR_frame).
-   - lib/B/Prog/Crt102B_T7_kit.v blob 6eb58703733e and lib/B/Prog/Crt102B_T7_tree.v blob b95480cf94ff, BY PATH from
-     commit b91538550ad (row T7's call rule cb7k_call / cb7k_ret and reader layer cb7t_str_prem /
+   - lib/B/Prog/Crt102B_T7_kit.v blob 6eb58703733e and lib/B/Prog/Crt102B_T7_tree.v blob b95480cf94ff, BY PATH
+      (row T7's call rule cb7k_call / cb7k_ret and reader layer cb7t_str_prem /
      cb7t_garr8_at).
    - lib/B/Prog/Crt102B_T6_st.v (this row): the symbolic state ct6_ssx and ct6_entry.
    - callee texts: NAMED HYPOTHESIS ASTRCMP (owner: the libc strcmp row; discharge ps_strcmp_xrom_B, lib/AU/PSstrRo.v
-     45e63604063e at commit ebb41f4e9efa, at the top where ARx is fixed) and SAME
+     45e63604063e, at the top where ARx is fixed) and SAME
      (the contract text tsame_specX at DOC_D); text premises HPRE, HTREE, HMN, HREAD (tcheck_round_trip_specX's own).
 
    NUMERALS. DERIVED: 27632 (STK_check_round_trip, by computation), 240 (A_TEXT, the engine's base atom), the return

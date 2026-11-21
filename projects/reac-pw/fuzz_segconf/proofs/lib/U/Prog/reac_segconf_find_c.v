@@ -17,8 +17,8 @@ Open Scope Z_scope.
     Post in the spine's terms: a0 = seg_spec.find_ptr c rc nm, i.e. &c->seg[i] for SegModel.r_find rc nm = Some i,
     else 0 (strcmp's r = 0 <-> sx = sy is SegModel.strcmp's = 0 on C strings: Spec/SegBridge.v).
 
-    Callee contract its walk takes as a premise: strcmp_contract (Prog/strcmp_c.v under lib/U, STRCMP = 0x1f594;
-    commit f0ba542764d9): both strings NUL-terminated, no stack, no store.
+    Callee contract its walk takes as a premise: strcmp_contract (Prog/strcmp_c.v under lib/U, STRCMP = 0x1f594):
+    both strings NUL-terminated, no stack, no store.
 
     Call sites: check_absent 0x14db4 (c, name = the probe "<name>x" on LLVMFuzzerTestOneInput's frame, or
     "nosuch0" at seg_spec.STR_NOSUCH in .rodata), and through the accessors (ignored, role, role_file, ignore_file,

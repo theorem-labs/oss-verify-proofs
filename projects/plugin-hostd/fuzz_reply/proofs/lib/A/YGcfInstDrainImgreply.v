@@ -3,10 +3,10 @@
 
    The three image premises of the generic cf layer's drain walk (Section T of YGcfInstDrainTop.v: SBC, IQA, CA), stated
    TOKEN-EQUAL to F2b's Definitions at IM := AImg_reply (A/AGif2reply.v): SB_CONST (A/YGcfInstDrainQ.v),
-   IMG_QAPART and CONST_APART (A/YGcfInstDrainX.v), the files ReplyCfSync carries by path from cf-f2b-hull
-   558af51dcc1. None of the three texts reads DImg, CfImg or CfParams, and each binds B itself under im_syms B (TfibSyms B
-   at AImg_reply), so no premise is added. The cgif twin is a Theorem Labs lane's YGcfInstDrainImgcgif.v (a Theorem Labs lane
-   e75683af832a). Each is CITED from reply A's image rows, not re-proved (the values are reply A's own tables, computed
+   IMG_QAPART and CONST_APART (A/YGcfInstDrainX.v), the files ReplyCfSync carries by path from cf-f2b-hull.
+   None of the three texts reads DImg, CfImg or CfParams, and each binds B itself under im_syms B (TfibSyms B
+   at AImg_reply), so no premise is added. The cgif twin is a Theorem Labs lane's YGcfInstDrainImgcgif.v (a Theorem Labs lane).
+   Each is CITED from reply A's image rows, not re-proved (the values are reply A's own tables, computed
    there):
    - SB_CONST_reply_A    = ReplyImg_sbconst.SB_CONST_A     (vm_compute over reply A's const table, AF0m.v's Tfib_const)
    - IMG_QAPART_reply_A  = ReplyImg_qapart.IMG_QAPART_A    (reply A's TfibSyms fields and numerals; qhdr_inst unfolded)

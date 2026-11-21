@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image's run segments replace its segments, and each node checks the read-only backing). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit FinInput Classifier.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
-From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import ShapeAlgBase.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import ShapeAlgBase RomBase.
 
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -30,6 +31,9 @@ Inductive realizes_cfg : config -> TSet -> Prop :=
 | rzc_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                     (T : I -> TSet) (i0 : I),
     node_ok_cfg c I evs nx ->
+    (* LPS 08b1429: the node's system call reads no byte the run's backing adds
+       ([RomBase.sys_rob]; [RomStable] lifts a walk to the run's segment list) *)
+    sys_rob segs c ->
     (forall i, realizes_cfg (nx i) (T i)) ->
     realizes_cfg c (t_alt (fun i => t_emit (evs i) (T i)))
 | rzc_halt : forall c,
@@ -47,7 +51,7 @@ Proof. intros c T T' Heq H. eapply rzc_conseq; eassumption. Qed.
 
 Lemma realizes_cfg_nonempty : forall c T, realizes_cfg c T -> T [].
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - apply Heq. exact IH.
@@ -56,7 +60,7 @@ Qed.
 Lemma realizes_cfg_pclosed : forall c T, realizes_cfg c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -106,7 +110,7 @@ Proof. intros c. exists [], c. split; [apply star_cfg_refl | exact I]. Qed.
 Lemma realizes_cfg_star_only : forall c T, realizes_cfg c T ->
   forall tr c', star_cfg segs cfg c tr c' -> T tr.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -123,7 +127,7 @@ Qed.
 Lemma realizes_cfg_complete : forall c T, realizes_cfg c T ->
   forall tr, T tr -> obs_trace_cfg segs cfg c tr.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -162,7 +166,7 @@ Lemma realizes_cfg_step : forall c T e c',
   exists T', realizes_cfg c' T' /\ (forall tr, T' tr -> T (e ++ tr)).
 Proof.
   intros c T e c' H; revert e c';
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & -> & Heq2).
@@ -190,7 +194,7 @@ Lemma realizes_cfg_no_sserror : forall c T e,
   realizes_cfg c T -> ~ sstep_cfg segs cfg c e SError.
 Proof.
   intros c T e H; revert e;
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
@@ -224,13 +228,13 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma rzc_silent1 : forall c c' T,
-  node_ok_cfg c unit (fun _ => []) (fun _ => c') ->
+  node_ok_cfg c unit (fun _ => []) (fun _ => c') -> sys_rob segs c ->
   realizes_cfg c' T ->
   realizes_cfg c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (rzc_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (rzc_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rzc_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -239,44 +243,44 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma rzc_emit1 : forall c c' e T,
-  node_ok_cfg c unit (fun _ => e) (fun _ => c') ->
+  node_ok_cfg c unit (fun _ => e) (fun _ => c') -> sys_rob segs c ->
   realizes_cfg c' T ->
   realizes_cfg c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (rzc_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (rzc_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rzc_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
 
 (* [comment removed for export] *)
 Lemma rzc_cases : forall c (I : Type) (nx : I -> config) (T : I -> TSet) (i0 : I),
-  node_ok_cfg c I (fun _ => []) nx ->
+  node_ok_cfg c I (fun _ => []) nx -> sys_rob segs c ->
   (forall i, realizes_cfg (nx i) (T i)) ->
   realizes_cfg c (t_alt T).
 Proof.
-  intros c I nx T i0 Hnode Hc.
+  intros c I nx T i0 Hnode Hrob Hc.
   apply (rzc_conseq c (t_alt (fun i => t_emit [] (T i)))).
-  - apply (rzc_node c I (fun _ => []) nx T i0 Hnode Hc).
+  - apply (rzc_node c I (fun _ => []) nx T i0 Hnode Hrob Hc).
   - apply t_alt_emit_nil. intros i. eapply realizes_cfg_nonempty. apply Hc.
 Qed.
 
 (* [comment removed for export] *)
 Lemma rzc_cases_same : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
-  node_ok_cfg c I (fun _ => []) nx ->
+  node_ok_cfg c I (fun _ => []) nx -> sys_rob segs c ->
   (forall i, realizes_cfg (nx i) T) ->
   realizes_cfg c T.
 Proof.
-  intros c I nx T i0 Hnode Hc.
-  eapply rzc_conseq; [apply (rzc_cases c I nx (fun _ => T) i0 Hnode Hc) |].
+  intros c I nx T i0 Hnode Hrob Hc.
+  eapply rzc_conseq; [apply (rzc_cases c I nx (fun _ => T) i0 Hnode Hrob Hc) |].
   apply t_alt_const. exact i0.
 Qed.
 
 (* [comment removed for export] *)
 Lemma rzc_emit_cases : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                               (T : I -> TSet) (i0 : I),
-  node_ok_cfg c I evs nx ->
+  node_ok_cfg c I evs nx -> sys_rob segs c ->
   (forall i, realizes_cfg (nx i) (T i)) ->
   realizes_cfg c (t_alt (fun i => t_emit (evs i) (T i))).
 Proof. intros. eapply rzc_node; eassumption. Qed.
@@ -284,19 +288,19 @@ Proof. intros. eapply rzc_node; eassumption. Qed.
 (* [comment removed for export] *)
 Lemma rzc_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
                         (a0 : IA) (b0 : IB),
-  node_ok_cfg c (IA + IB) (fun _ => []) nx ->
+  node_ok_cfg c (IA + IB) (fun _ => []) nx -> sys_rob segs c ->
   (forall i, realizes_cfg (nx (inl i)) A) ->
   (forall i, realizes_cfg (nx (inr i)) B) ->
   realizes_cfg c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply realizes_cfg_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply realizes_cfg_nonempty; apply (HB b0)).
   apply (rzc_conseq c
     (t_alt (fun i : IA + IB =>
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (rzc_node c (IA + IB) (fun _ => []) nx
-             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode).
+             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -311,28 +315,28 @@ Qed.
 Inductive det_path_cfg : config -> list event -> config -> Prop :=
 | dpc_refl : forall c, det_path_cfg c [] c
 | dpc_step : forall c e c1 tr c2,
-    node_ok_cfg c unit (fun _ => e) (fun _ => c1) ->
+    node_ok_cfg c unit (fun _ => e) (fun _ => c1) -> sys_rob segs c ->
     det_path_cfg c1 tr c2 ->
     det_path_cfg c (e ++ tr) c2.
 
 Lemma det_path_cfg_one : forall c e c',
-  node_ok_cfg c unit (fun _ => e) (fun _ => c') -> det_path_cfg c e c'.
+  node_ok_cfg c unit (fun _ => e) (fun _ => c') -> sys_rob segs c -> det_path_cfg c e c'.
 Proof.
-  intros c e c' H. rewrite <- (app_nil_r e). eapply dpc_step; [exact H | apply dpc_refl].
+  intros c e c' H Hr. rewrite <- (app_nil_r e). eapply dpc_step; [exact H | exact Hr | apply dpc_refl].
 Qed.
 
 Lemma det_path_cfg_trans : forall c1 t1 c2 t2 c3,
   det_path_cfg c1 t1 c2 -> det_path_cfg c2 t2 c3 -> det_path_cfg c1 (t1 ++ t2) c3.
 Proof.
   intros c1 t1 c2 t2 c3 H1; revert t2 c3.
-  induction H1 as [c | c e c1' tr c2' Hn Hp IH]; intros t2 c3 H2; cbn; [assumption|].
-  rewrite <- app_assoc. eapply dpc_step; [exact Hn | apply IH; exact H2].
+  induction H1 as [c | c e c1' tr c2' Hn Hr Hp IH]; intros t2 c3 H2; cbn; [assumption|].
+  rewrite <- app_assoc. eapply dpc_step; [exact Hn | exact Hr | apply IH; exact H2].
 Qed.
 
 Lemma det_path_cfg_star : forall c tr c',
   det_path_cfg c tr c' -> star_cfg segs cfg c tr c'.
 Proof.
-  intros c tr c' H. induction H as [c | c e c1 tr c2 [Hcomp _] Hp IH].
+  intros c tr c' H. induction H as [c | c e c1 tr c2 [Hcomp _] _ Hp IH].
   - apply star_cfg_refl.
   - eapply star_cfg_step; [exact (Hcomp tt) | exact IH].
 Qed.
@@ -344,10 +348,10 @@ Lemma rzc_det_path : forall c tr c' T,
   realizes_cfg c (t_emit tr T).
 Proof.
   intros c tr c' T Hp. revert T.
-  induction Hp as [c | c e c1 tr c2 Hn Hp IH]; intros T Hc.
+  induction Hp as [c | c e c1 tr c2 Hn Hr Hp IH]; intros T Hc.
   - eapply rzc_conseq; [exact Hc |].
     apply t_eq_sym, t_emit_nil_eq. eapply realizes_cfg_nonempty; exact Hc.
-  - eapply rzc_conseq; [eapply rzc_emit1; [exact Hn | apply IH; exact Hc] |].
+  - eapply rzc_conseq; [eapply rzc_emit1; [exact Hn | exact Hr | apply IH; exact Hc] |].
     apply t_eq_sym, t_emit_app.
 Qed.
 
@@ -396,13 +400,13 @@ Qed.
 Lemma rzc_node_wb : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                            (T : I -> TSet) (i0 : I),
   within_budget_cfg c ->
-  (~ budget_refused_at segs c -> node_ok_cfg c I evs nx) ->
+  (~ budget_refused_at segs c -> node_ok_cfg c I evs nx) -> sys_rob segs c ->
   (forall i, within_budget_cfg (nx i) -> realizes_cfg (nx i) (T i)) ->
   realizes_cfg c (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros c I evs nx T i0 Hwb Hnode Hcont.
+  intros c I evs nx T i0 Hwb Hnode Hrob Hcont.
   pose proof (Hnode (within_budget_cfg_here c Hwb)) as Hn.
-  apply (rzc_node c I evs nx T i0 Hn).
+  apply (rzc_node c I evs nx T i0 Hn Hrob).
   intros i. apply Hcont. eapply within_budget_cfg_step; [exact Hwb | apply (proj1 Hn i)].
 Qed.
 
@@ -472,7 +476,7 @@ Theorem realizes_cfg_must_exit : forall code c T,
   must_exit_at_cfg cfg segs code c.
 Proof.
   intros code c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros Hrun Hex.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_at_cfg_running.
@@ -510,12 +514,12 @@ End WithCfg.
 Definition init_cfg (img : Image) (lim : Z) (en : ExecEntry) (inp : ProcInput) : config :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-      init_config segs pc ph sp brk0 mbase rnd lim inp
+      init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp
   end.
 
 Lemma init_cfg_eq : forall segs pc ph sp brk0 mbase rnd lim inp,
   init_cfg (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp
-  = init_config segs pc ph sp brk0 mbase rnd lim inp.
+  = init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp.
 Proof. reflexivity. Qed.
 
 Lemma init_cfg_not_halted : forall img lim en inp,
@@ -527,7 +531,7 @@ Variable cfg : SpuriousCfg.
 
 (* [comment removed for export] *)
 Lemma realizes_cfg_run_traces_iff : forall img lim en inp T,
-  realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T ->
+  realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T ->
   forall tr, bh_traces (run_scfg cfg img lim en inp) tr <-> T tr.
 Proof.
   intros [segs pc ph] lim [sp brk0 mbase rnd] inp T H tr.
@@ -535,7 +539,7 @@ Proof.
 Qed.
 
 Lemma realizes_cfg_run_error_free : forall img lim en inp T,
-  realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T ->
+  realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T ->
   error_free (run_scfg cfg img lim en inp).
 Proof.
   intros [segs pc ph] lim [sp brk0 mbase rnd] inp T H.
@@ -543,7 +547,7 @@ Proof.
 Qed.
 
 Lemma realizes_cfg_run_modeled : forall img lim en inp T,
-  realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T ->
+  realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T ->
   modeled (run_scfg cfg img lim en inp).
 Proof.
   intros img lim en inp T H Hun.
@@ -552,7 +556,7 @@ Proof.
 Qed.
 
 Lemma realizes_cfg_run_not_all_errors : forall img lim en inp T,
-  realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T ->
+  realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T ->
   ~ bh_all_errors (run_scfg cfg img lim en inp).
 Proof.
   intros img lim en inp T H Hall.
@@ -564,8 +568,8 @@ Qed.
 Theorem shape_cfg_strong_equiv_ef_img :
   forall (lim_s lim_t : Z) (src tgt : Image) (en_s en_t : ExecEntry)
          (T : TSet) (inp : ProcInput),
-  realizes_cfg cfg (img_segments src) (init_cfg src lim_s en_s inp) T ->
-  realizes_cfg cfg (img_segments tgt) (init_cfg tgt lim_t en_t inp) T ->
+  realizes_cfg cfg (image_run_segments src en_s inp) (init_cfg src lim_s en_s inp) T ->
+  realizes_cfg cfg (image_run_segments tgt en_t inp) (init_cfg tgt lim_t en_t inp) T ->
   strong_equiv_error_free_budgets_scfg cfg lim_s lim_t src tgt en_s en_t inp.
 Proof.
   intros lim_s lim_t src tgt en_s en_t T inp Hs Ht.
@@ -582,8 +586,8 @@ Qed.
 Corollary shape_cfg_strong_equiv_ef_img_eq :
   forall (lim_s lim_t : Z) (src tgt : Image) (en_s en_t : ExecEntry)
          (T T' : TSet) (inp : ProcInput),
-  realizes_cfg cfg (img_segments src) (init_cfg src lim_s en_s inp) T ->
-  realizes_cfg cfg (img_segments tgt) (init_cfg tgt lim_t en_t inp) T' ->
+  realizes_cfg cfg (image_run_segments src en_s inp) (init_cfg src lim_s en_s inp) T ->
+  realizes_cfg cfg (image_run_segments tgt en_t inp) (init_cfg tgt lim_t en_t inp) T' ->
   t_eq T T' ->
   strong_equiv_error_free_budgets_scfg cfg lim_s lim_t src tgt en_s en_t inp.
 Proof.
@@ -597,10 +601,10 @@ Theorem shape_cfg_strong_equiv_ef :
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T : TSet) (inp : ProcInput),
-  realizes_cfg cfg source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  realizes_cfg cfg target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  realizes_cfg cfg (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  realizes_cfg cfg (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   error_free (run_scfg cfg (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg cfg (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv
@@ -618,10 +622,10 @@ Corollary shape_cfg_strong_equiv_ef_eq :
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T T' : TSet) (inp : ProcInput),
-  realizes_cfg cfg source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  realizes_cfg cfg target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T' ->
+  realizes_cfg cfg (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  realizes_cfg cfg (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T' ->
   t_eq T T' ->
   strong_equiv_error_free_budgets_scfg cfg rlim alim
     (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
@@ -637,14 +641,14 @@ Qed.
 (* [comment removed for export] *)
 Lemma source_within_budget_init : forall lim_s src en_s inp,
   source_within_budget_scfg cfg lim_s src en_s inp ->
-  within_budget_cfg cfg (img_segments src) (init_cfg src lim_s en_s inp).
+  within_budget_cfg cfg (image_run_segments src en_s inp) (init_cfg src lim_s en_s inp).
 Proof.
   intros lim_s [segs pc ph] [sp brk0 mbase rnd] inp H. exact H.
 Qed.
 
 Lemma source_within_budget_init_iff : forall lim_s src en_s inp,
   source_within_budget_scfg cfg lim_s src en_s inp
-  <-> within_budget_cfg cfg (img_segments src) (init_cfg src lim_s en_s inp).
+  <-> within_budget_cfg cfg (image_run_segments src en_s inp) (init_cfg src lim_s en_s inp).
 Proof.
   intros lim_s [segs pc ph] [sp brk0 mbase rnd] inp. split; intros H; exact H.
 Qed.
@@ -658,8 +662,8 @@ Theorem shape_cfg_universal :
      valid_input inp ->
      source_within_budget_scfg cfg lim_s src en_s inp ->
      exists T : TSet,
-       realizes_cfg cfg (img_segments src) (init_cfg src lim_s en_s inp) T
-       /\ realizes_cfg cfg (img_segments tgt) (init_cfg tgt lim_t en_t inp) T) ->
+       realizes_cfg cfg (image_run_segments src en_s inp) (init_cfg src lim_s en_s inp) T
+       /\ realizes_cfg cfg (image_run_segments tgt en_t inp) (init_cfg tgt lim_t en_t inp) T) ->
   strong_universal_error_free_T_scfg_budgets cfg lim_s lim_t src tgt.
 Proof.
   intros lim_s lim_t src tgt H en_s en_t inp Hvs Hvt Hvi Hb.
@@ -676,8 +680,8 @@ Theorem shape_cfg_universal_eq :
      valid_input inp ->
      source_within_budget_scfg cfg lim_s src en_s inp ->
      exists Ts Tt : TSet,
-       realizes_cfg cfg (img_segments src) (init_cfg src lim_s en_s inp) Ts
-       /\ realizes_cfg cfg (img_segments tgt) (init_cfg tgt lim_t en_t inp) Tt
+       realizes_cfg cfg (image_run_segments src en_s inp) (init_cfg src lim_s en_s inp) Ts
+       /\ realizes_cfg cfg (image_run_segments tgt en_t inp) (init_cfg tgt lim_t en_t inp) Tt
        /\ t_eq Ts Tt) ->
   strong_universal_error_free_T_scfg_budgets cfg lim_s lim_t src tgt.
 Proof.
@@ -689,8 +693,8 @@ Qed.
 (* [comment removed for export] *)
 Theorem shape_cfg_strong_equiv_ef_pinned :
   forall (src tgt : Image) (en_s en_t : ExecEntry) (T : TSet) (inp : ProcInput),
-  realizes_cfg cfg (img_segments src) (init_cfg src source_alloc_limit en_s inp) T ->
-  realizes_cfg cfg (img_segments tgt) (init_cfg tgt target_alloc_limit en_t inp) T ->
+  realizes_cfg cfg (image_run_segments src en_s inp) (init_cfg src source_alloc_limit en_s inp) T ->
+  realizes_cfg cfg (image_run_segments tgt en_t inp) (init_cfg tgt target_alloc_limit en_t inp) T ->
   strong_equiv_error_free_scfg cfg src tgt en_s en_t inp.
 Proof.
   intros src tgt en_s en_t T inp Hs Ht.
@@ -705,8 +709,8 @@ Theorem shape_cfg_universal_pinned :
      valid_entry tgt en_t inp ->
      valid_input inp ->
      exists T : TSet,
-       realizes_cfg cfg (img_segments src) (init_cfg src source_alloc_limit en_s inp) T
-       /\ realizes_cfg cfg (img_segments tgt) (init_cfg tgt target_alloc_limit en_t inp) T) ->
+       realizes_cfg cfg (image_run_segments src en_s inp) (init_cfg src source_alloc_limit en_s inp) T
+       /\ realizes_cfg cfg (image_run_segments tgt en_t inp) (init_cfg tgt target_alloc_limit en_t inp) T) ->
   strong_universal_error_free_T_scfg cfg src tgt.
 Proof.
   intros src tgt H en_s en_t inp Hvs Hvt Hvi.
@@ -722,8 +726,8 @@ Theorem shape_cfg_good_input_s :
   (forall en1 en2,
      valid_entry O1 en1 inp -> valid_entry O2 en2 inp ->
      exists T : TSet,
-       realizes_cfg cfg (img_segments O1) (init_cfg O1 source_alloc_limit en1 inp) T
-       /\ realizes_cfg cfg (img_segments O2) (init_cfg O2 target_alloc_limit en2 inp) T) ->
+       realizes_cfg cfg (image_run_segments O1 en1 inp) (init_cfg O1 source_alloc_limit en1 inp) T
+       /\ realizes_cfg cfg (image_run_segments O2 en2 inp) (init_cfg O2 target_alloc_limit en2 inp) T) ->
   good_input_s cfg O1 O2 inp.
 Proof.
   intros O1 O2 inp H en1 en2 H1 H2.
@@ -742,9 +746,9 @@ Proof. intros O1 O2 inp en1 en2 Hg H1 H2. exact (proj1 (Hg en1 en2 H1 H2)). Qed.
 Theorem shape_cfg_agree_s :
   forall (X Y : Image) (lim : Z) (inp : ProcInput) (T : TSet),
   (forall en, valid_entry X en inp ->
-     realizes_cfg cfg (img_segments X) (init_cfg X lim en inp) T) ->
+     realizes_cfg cfg (image_run_segments X en inp) (init_cfg X lim en inp) T) ->
   (forall en, valid_entry Y en inp ->
-     realizes_cfg cfg (img_segments Y) (init_cfg Y lim en inp) T) ->
+     realizes_cfg cfg (image_run_segments Y en inp) (init_cfg Y lim en inp) T) ->
   agree_s cfg X Y lim inp.
 Proof.
   intros X Y lim inp T HX HY.
@@ -768,7 +772,7 @@ Qed.
 Corollary shape_cfg_agree_s_self :
   forall (X : Image) (lim : Z) (inp : ProcInput) (T : TSet),
   (forall en, valid_entry X en inp ->
-     realizes_cfg cfg (img_segments X) (init_cfg X lim en inp) T) ->
+     realizes_cfg cfg (image_run_segments X en inp) (init_cfg X lim en inp) T) ->
   agree_s cfg X X lim inp.
 Proof. intros X lim inp T HX. exact (shape_cfg_agree_s X X lim inp T HX HX). Qed.
 
@@ -788,7 +792,7 @@ Theorem shape_cfg_error_free_input_s :
   forall (O : Image) (inp : ProcInput),
   (forall en, valid_entry O en inp ->
      exists T : TSet,
-       realizes_cfg cfg (img_segments O) (init_cfg O source_alloc_limit en inp) T) ->
+       realizes_cfg cfg (image_run_segments O en inp) (init_cfg O source_alloc_limit en inp) T) ->
   error_free_input_s cfg O inp.
 Proof.
   intros O inp H en Hv. destruct (H en Hv) as (T & HT).
@@ -798,13 +802,13 @@ Qed.
 (* [comment removed for export] *)
 Theorem realizes_cfg_must_exit_with :
   forall (code : word) (img : Image) (lim : Z) (en : ExecEntry) (inp : ProcInput) (T : TSet),
-  realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T ->
+  realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T ->
   exits_only code T ->
   must_exit_with_scfg cfg code img lim en inp.
 Proof.
   intros code [segs pc ph] lim [sp brk0 mbase rnd] inp T H Hex.
   cbn [must_exit_with_scfg].
-  exact (realizes_cfg_must_exit cfg segs code _ T H eq_refl Hex).
+  exact (realizes_cfg_must_exit cfg _ code _ T H eq_refl Hex).
 Qed.
 
 End RunLevel.
@@ -821,7 +825,7 @@ Theorem classifier_total_fo_of_realizes : forall (C : Image),
   (forall f : FinProcInput, valid_fin_input f ->
    forall en, valid_entry C en (to_proc_input f) ->
      exists T : TSet,
-       realizes_cfg forced_only_cfg (img_segments C)
+       realizes_cfg forced_only_cfg (image_run_segments C en (to_proc_input f))
          (init_cfg C classifier_alloc_limit en (to_proc_input f)) T
        /\ (exits_only verdict_accept T \/ exits_only verdict_reject T)) ->
   classifier_total_T_fo C.
@@ -836,7 +840,7 @@ Theorem decides_fo_of_realizes : forall (C : Image) (spec : ProcInput -> Prop),
   (forall f : FinProcInput, valid_fin_input f ->
    forall en, valid_entry C en (to_proc_input f) ->
      exists T : TSet,
-       realizes_cfg forced_only_cfg (img_segments C)
+       realizes_cfg forced_only_cfg (image_run_segments C en (to_proc_input f))
          (init_cfg C classifier_alloc_limit en (to_proc_input f)) T
        /\ ((exits_only verdict_accept T /\ spec (to_proc_input f))
            \/ (exits_only verdict_reject T /\ ~ spec (to_proc_input f)))) ->
@@ -862,7 +866,7 @@ Corollary decides_fo_always_accept : forall (C : Image) (spec : ProcInput -> Pro
   (forall f : FinProcInput, valid_fin_input f ->
    forall en, valid_entry C en (to_proc_input f) ->
      exists T : TSet,
-       realizes_cfg forced_only_cfg (img_segments C)
+       realizes_cfg forced_only_cfg (image_run_segments C en (to_proc_input f))
          (init_cfg C classifier_alloc_limit en (to_proc_input f)) T
        /\ exits_only verdict_accept T) ->
   (forall f : FinProcInput, valid_fin_input f -> spec (to_proc_input f)) ->

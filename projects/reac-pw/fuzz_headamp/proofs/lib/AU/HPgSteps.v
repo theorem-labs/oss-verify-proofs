@@ -4,8 +4,8 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/YN13.v:121-125; projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC1n.v:201-203, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/LLVMFuzzerTestOneInput_seg_D1.v, with its module paths and module names changed; 2089 of its 2218 lines of code are new or changed and 5936 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSteps.v at a58a6fc257b (parts 1, 2) and
-   a6c23b42ca2 (part 3); ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSteps.v (parts 1, 2) and
+   (part 3); ported to
    reac-pw/fuzz_headamp image A: module paths fuzz_role -> fuzz_headamp, RPgBase / RPgCSpec -> HPgBase / HPgCSpec, the
    rl_ prefix -> hd_; every image address relocated from role's image A to headamp's (the jump table 0x20e94 ->
    0x20e9c with its nine entries and targets measured from headamp's pinned bytes, the dispatch block 0x80b1c ->
@@ -17,8 +17,8 @@
    role-object pair replaced by headamp's res and x sites, the run 0x82578 stated with the value it leaves in a1
    (hd_scope_stmtAx, hd_inc_a1, sv_addiw1), role's unused fsh_ss2 dropped, fsh_pts added for the 17-granule x
    sites. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSteps.v at f9231666453 (parts 1, 2) and
-   98dfdeee412 (part 3); the image-B twin
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSteps.v (parts 1, 2) and
+   (part 3); the image-B twin
    (fuzz_headamp.asan-ubsan): lib/A/Img0 -> lib/AU/Img0U, the hd_ prefix -> hdu_; part 1 at B's dispatch block
    0x81928 over B's table 0x20ecc (entries and targets measured from B's pinned bytes; B keeps the sign-extended kind
    byte in a3 where A keeps it in s4); part 2 restated at B's registers (cursor s2, c - 2 in a7, bytes left in a2,
@@ -28,6 +28,7 @@
    at B's eighteen scope-store sites, each measured on image B (B's three e objects e, e42, e62 give six e sites; the
    r sites store t0 and s7, stated with hdu_scope_stmtR; four runs also set s7 := -8 and one sets a1 := a1 + 1, stated
    with hdu_scope_stmtAx and hdu_s7_m8 / hdu_inc_a1 / hdu_inc_a1_s7), the generic lemmas as A's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address below is measured on its unstripped
    twin sha256 1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, whose loaded bytes at these addresses
@@ -1103,7 +1104,7 @@ Print Assumptions hdu_u32_block3.
    the token layer's cells_safe_b would ask the shadow of the shadow row, which is not addressable. What the block
    needs instead is the right to write there, and the kit's journal already grants it: awr_byte's in_frames case
    covers [shadow_addr F, shadow_addr F + fs_frame_bytes cid / 8) for a frame the walk owns (YCbq.v:348-351), and
-   the frames law gives those bytes present (YG0d.v:463-465). *)
+   the frames law gives those bytes present (YG0d.v:464-466). *)
 
 Section fsh. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.

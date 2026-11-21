@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfFm.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfFm.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfFm.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfFm.table). *)
 (* fm.asan's snprintf over the shared contract (FMsnprintfShared.v sh_asnprintf_realizesU), composed from the four walks:
    __wrap_snprintf / __interceptor_snprintf (FMsnprintfSnp.v snp_ok) -> __interceptor_vsnprintf (FMsnprintfSvsni.v
    svsni_ok) -> musl vsnprintf (FMsnprintfSvsn.v svsn_ok) -> __interceptor_vfprintf (FMsnprintfSvfi.v svfi_ok) ->
@@ -29,7 +29,7 @@ Definition fm_glue_img : Z := 0xa30.
 Lemma fm_glue_img_parts : fm_glue_img = 0x60 + 0x870 + 0x130 + 0x30.
 Proof. reflexivity. Qed.
 (* GXA's released musl vfprintf window: VF_DEPTH = VFA_DEPTH 368 + PC_DEPTH 5184 (fuzz_reply
-   lib/CJ/RL/GXA/G_printf_core_common.v:141, G_vfprintf_snf.v:54, origin/ossv/recipes 568db058c1d) *)
+   lib/CJ/RL/GXA/G_printf_core_common.v:141, G_vfprintf_snf.v:54) *)
 Definition GXA_VF_DEPTH : Z := 5552.
 (* on the GXA route the top's window is at least 8160 (= 2256 to musl vsnprintf + VSN_DEPTH 5904); 2 * ESTACK fits *)
 Lemma fm_K_min_gxa : fm_glue_img + GXA_VF_DEPTH = 8160.

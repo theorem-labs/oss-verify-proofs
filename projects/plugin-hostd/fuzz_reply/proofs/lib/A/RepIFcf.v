@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepIFcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 b8fc87cc008a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 16 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 11 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 2 pair(s) carry a BY-HAND acceptance (accept.tsv, re-measured each run): _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17PopulateFreeArrayEPNS_14AllocatorStatsEmPNS5_10RegionInfoEm+0xb0 (lui-in-section: CONSTANT (size; enters a store base only as a scaled count into a runtime array): kUserMapSize = 0x40000), _ZN11__sanitizer9VSNPrintfEPciPKcPv+0x1c0 (data-differs: ACCEPTED by hand: jump table (33 entries, each the same VSNPrintf+off on both images))), and 21 pcs named in comments; 5 hand maps (resolve-run-f01d79f3fb5.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepIFcf.v (cf refill round 3; file sha256 b8fc87cc008a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 16 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 11 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 2 pair(s) carry a BY-HAND acceptance (accept.tsv, re-measured each run): _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17PopulateFreeArrayEPNS_14AllocatorStatsEmPNS5_10RegionInfoEm+0xb0 (lui-in-section: CONSTANT (size; enters a store base only as a scaled count into a runtime array): kUserMapSize = 0x40000), _ZN11__sanitizer9VSNPrintfEPciPKcPv+0x1c0 (data-differs: ACCEPTED by hand: jump table (33 entries, each the same VSNPrintf+off on both images))), and 21 pcs named in comments; 5 hand maps (resolve-run.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, a Theorem Labs lane's class-full report walk): the INTERFACE of the report walk at
    cgif_file_fuzzer's asan-ubsan image (pin 1c29845fe605), so its slices can be written in parallel against a fixed
    text.  This file states; it proves nothing about the machine.
@@ -10,7 +11,7 @@
 
    The walk concludes MnRefillSeamcf.refill_B3_classfull_cf: PopulateFreeArray's class-full arm (0x37058: lbu
    0x44(s0); 0x370a8 sb 1; the two Printfs at 0x370b8 / 0x3712c) realizes the cf tree's
-   `errb_report_cf c ;; set_exh_cf c` (YG00cf.v:147-150, :177).  Every number below was read from the image bytes
+   `errb_report_cf c ;; set_exh_cf c` (YG00cf.v:148-151, :178).  Every number below was read from the image bytes
    (a Theorem Labs lane's rvdis.py over a Theorem Labs lane's recovered-symbol cache 1c29845fe6058de6.978e0a064c5a4c6e.v4.json).
 
    The slices and their heads:
@@ -19,7 +20,7 @@
    - F4+F5 [append_spec_cf]: __asan::AppendToErrorMessageBuffer (0x563c0): the Mutex lock / unlock on the object's
      state word, InternalMmapVector<char> resize (InternalMmapVectorNoCtor<char,true>::Realloc 0x59de4 ->
      MmapOrDie 0x670d4 -> GetNamedMappingFd / internal_mmap / IncreaseTotalMmap; UnmapOrDie of the old buffer),
-     internal_strlen / internal_memset / internal_memcpy.  It realizes the model's errb_append_cf (YG00cf.v:133):
+     internal_strlen / internal_memset / internal_memcpy.  It realizes the model's errb_append_cf (YG00cf.v:134):
      the KMmapSec ask of each (re)map is the machine's mmap node, and the grant is forced there (a Theorem Labs lane's
      errb_map_fits_cf, a named hypothesis of the slice until a Theorem Labs lane's lane proves it), so the machine's refused
      branch is vacuous.
@@ -169,8 +170,8 @@ SRr tfibsegs W (mkCfg (mkst regs (w64 A_VSNPRINTF) mem (seg_rom tfibsegs)) md)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* 4. The errbuf calls (F2, F4+F5): one append of [len] bytes, model step errb_append_cf len.                      *)
 Variable B : asyms.
-(* a Theorem Labs lane's two relation facts, by name: YG0ncf.v exh_cell_cf / errb_cells_cf (commit 24612d340b06's text, agreed with
-   a Theorem Labs lane 2026-10-30 02:13Z; moved unchanged from YGcfInstBase.v by field round 2, dd8e46fd954). *)
+(* a Theorem Labs lane's two relation facts, by name: YG0ncf.v exh_cell_cf / errb_cells_cf (a commit's text, agreed with
+   a Theorem Labs lane 2026-10-30 02:13Z; moved unchanged from YGcfInstBase.v by field round 2). *)
 (* The image facts at the call state: the three cells and VSNPrintf's read-only bytes. *)
 Record rep_img_facts (W : world tfibsegs) (mem : word -> option byte) : Prop := {
   rif_toolname : val_mem tfibsegs (mrestrict (w_H W) mem) C_TOOLNAME 8 A_TOOLNAME;
@@ -180,7 +181,7 @@ Record rep_img_facts (W : world tfibsegs) (mem : word -> option byte) : Prop := 
 }.
 
 (* A HELD region lock (a Theorem Labs lane's decision (B), 2026-10-30 03:42Z; RepF1Top's gap: the class-full arm calls Printf with
-   class c's RegionInfo mutex word at 2^60, the __sanitizer::Mutex writer bit (YFk8cf.v:33 R3_P .. R3_M4), and ARcf pins
+   class c's RegionInfo mutex word at 2^60, the __sanitizer::Mutex writer bit (YFk8cf.v:34 R3_P .. R3_M4), and ARcf pins
    that word to 0 (YG0ncf.v:44, region_cells' first cell z8 (ASp (kRegionInfoOff + 128 * c)) 0, YG0n.v:33-36)).  The
    relation is stated over the memory with the held word reset to 0; the word itself is 2^60.  The layer is unchanged.
    [lk = None] is the unlocked call.  exh_cell_cf and errb_cells_cf read other cells (RegionInfo + 68 and the errbuf
@@ -225,17 +226,17 @@ Lemma ARcf_locked_none : forall Hp ly S W mem md,
 Proof. intros. unfold ARcf_locked, lk_ok. cbn [held_mem]. split; [tauto | intros H; split; [left; reflexivity | tauto]]. Qed.
 
 (* The event slack one append needs (RepF4Append's 6th finding): the FIRST append adds the capacity entry with one
-   tick (errb_map_cf, YG00cf.v:122-127) AND the size entry with none (errb_set_size, :91-96, find_sz = None), so the
+   tick (errb_map_cf, YG00cf.v:123-128) AND the size entry with none (errb_set_size, :91-96, find_sz = None), so the
    entry count gains one more than the event count; every later append updates the size entry in place.  This is
-   errb_append_cf_ok's premise (YG06bcf.v:321-323) in the model's slack vocabulary. *)
+   errb_append_cf_ok's premise (YG06bcf.v:322-324) in the model's slack vocabulary. *)
 Definition errb_slack (S : astate) : Z := match find_sz (st_secs S) 0 with None => 1 | Some _ => 0 end.
 
 (* qloose S (YG01.v:337) is the quarantine bound the layer's room of record needs (room_rec_cf_of_live,
-   YGcfRoomCf.v:322; RepF4Append's 9th finding); the refill state carries it (YGcfInstRefill.v:485) and the errbuf
+   YGcfRoomCf.v:322; RepF4Append's 9th finding); the refill state carries it (YGcfInstRefill.v:486) and the errbuf
    steps keep it (they touch only st_secs). *)
 (* The state premises an errbuf call needs, re-established by its post: the relation and its two named conjuncts.
-   The room of the call is a separate premise (errb_room_for, YG06bcf.v:322's errb_append_cf_ok premise): one
-   report's ERRB_ROOM (YG00cf.v:107) gives it for both of the arm's appends, 33 + at most 67 bytes.
+   The room of the call is a separate premise (errb_room_for, YG06bcf.v:323's errb_append_cf_ok premise): one
+   report's ERRB_ROOM (YG00cf.v:108) gives it for both of the arm's appends, 33 + at most 67 bytes.
    cf_hull_ok S (CfParams' hull admission, YGcfNames.v) is the room of record's other premise
    (YGcfRoomCf.room_rec_cf_of_live; a Theorem Labs lane 2026-10-30 11:31Z). *)
 Definition errb_call_pre (lk : option Z) (Hp : list Z) (ly : alayout) (S : astate) (W : world tfibsegs)

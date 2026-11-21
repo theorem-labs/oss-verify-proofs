@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the section also takes the run's launch class (runLaunchT) and passes it to ubsan_main_closed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -21,7 +22,7 @@ Import ITree.Exc.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {rl : runLaunchT}.
 (* [comment removed for export] *)
 Lemma ubsan_target_run_closed : fuzz_oneU_stmt ProgP.fuzz_one -> ptarget_run_stmt.
 Proof.
@@ -46,5 +47,5 @@ Theorem ubsan_impl : (forall rc : runConstT, @fuzz_oneU_stmt rc ProgP.fuzz_one) 
     impl usegs (at_node usegs) (ProgP.prog usegs UREAD_STAGE inp en) (epost (fun (_ : unit) (_ : machine_state) => True))
          (ms0 usegs u_init_pc u_phdrs en inp).
 Proof.
-  intros FUZZ EXIT. exact (ubsan_impl_from_main EXIT (fun rc => @ubsan_main_closed rc (FUZZ rc))).
+  intros FUZZ EXIT. exact (ubsan_impl_from_main EXIT (fun rc rl => @ubsan_main_closed rc rl (FUZZ rc))).
 Qed.

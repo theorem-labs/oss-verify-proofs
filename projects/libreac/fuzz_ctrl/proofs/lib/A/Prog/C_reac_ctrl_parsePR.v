@@ -3,7 +3,7 @@
    (Module RBodyFOn): its writes Wf2 S FS fra jj 1 ++ [(ob, ob + 36)] are the journal's awr bytes or the class-1 flag
    byte, and with the flag byte read 0 the journal steps to stack_free_state 1 pos (own drops (1, pos)).
      rcpPR_wr       the write cases: image B's rcpB_wq_cases and the J3 block of a Theorem Labs lane's
-                    lib/B/Prog/C_reac_ctrl_parsePf.v (@ 3e03efa9e16 / 258208c7d59), on image A's write list Wf2.
+                    lib/B/Prog/C_reac_ctrl_parsePf.v, on image A's write list Wf2.
      rcpPR_release  A.ProgWorldAstack.ctl_release_of_free_law at cid 1, with AR_laws_ok / astack_free_law_ok (core,
                     proved) and CtrlImg.ctrl_wx; its flag premise from the bytes_at premise (YP09.mbyte = mrd).
    B -> A: lib.B.ProgWorldAstack -> A.ProgWorldAstack; lib.B.ProgBridgeData.rsegs_wx_nowrap -> A.Prog.CtrlImg.ctrl_wx;

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's pure facts as kept (BPKN) and its computed total (BTOTSZ); AMI_init_L reads bmodelL's reserved ledger with the vDSO pair and the mappings' clearance from it, and proves AMI's new fact that the mappings miss the reserved ledger (new lemmas region_free_of_disj, fold_uns2_sizes, live_bytes_app_sizes); minv_fds3 takes the channel reader, which AI_init_L reads from bmodelL's channel-reader fact). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs Run.
@@ -102,7 +103,7 @@ apply zexp_eqb_eq in H1. apply Z.eqb_eq in H2. apply zexp_eqb_eq in H3. apply Z.
 - apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
 apply zexp_eqb_eq in H1. apply zexp_eqb_eq in H2. apply zexp_eqb_eq in H3. apply zexp_eqb_eq in H4. subst. reflexivity.
 Qed.
-Lemma pfact_find : forall V f, Forall (pfact_ok V) both_pure_facts -> existsb (pfact_eqb f) both_pure_facts = true -> pfact_ok V f.
+Lemma pfact_find : forall V f, Forall (pfact_ok V) BPKN -> existsb (pfact_eqb f) BPKN = true -> pfact_ok V f.
 Proof.
 intros V f HF HE. apply existsb_exists in HE as (g & Hin & Hg). apply pfact_eqb_eq in Hg. subst g.
 exact (proj1 (Forall_forall _ _) HF f Hin).
@@ -144,7 +145,7 @@ rewrite !unsigned_lit by lia.
 apply negb_true_iff. apply andb_false_iff.
 destruct HD as [HD|HD]; [right| left]; apply Z.ltb_ge; lia.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-Lemma placement_facts : forall V, Forall (pfact_ok V) both_pure_facts ->
+Lemma placement_facts : forall V, Forall (pfact_ok V) BPKN ->
 4295491576 <= V 208%nat <= 34326181871 /\ 0 <= V 209%nat <= 15 /\ 1527 <= V 226%nat <= 34359734272
 /\ (4096 * V 208%nat) mod 65536 = 4096 * V 209%nat
 /\ (0 <= V 6%nat <= 255 /\ 0 <= V 10%nat <= 7 /\ 4294901760 <= V 0%nat <= 4294967295)
@@ -179,12 +180,35 @@ Lemma ivs_wf_of_bounds : forall l K, K <= 2^64 ->
 Forall (fun iv : word * word => bv_unsigned (fst iv) + bv_unsigned (snd iv) <= K) l -> ivs_wf l.
 Proof. intros l K HK H q Hq. rewrite Forall_forall in H. unfold iv_wf, B, BackingAlgebra.S. pose proof (H q Hq). Local Ltac2 Set LiaHints.tbl := fun () => "0010=13423404452.7000007S2HK2H0".
 lia. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+(* LPS 727298f3: a mapping disjoint from every reserved entry misses the reserved ledger *)
+Lemma region_free_of_disj : forall R (a n : word),
+  Forall (fun q : word * word => bv_unsigned a + bv_unsigned n <= bv_unsigned (fst q)
+                                 \/ bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned a) R ->
+  region_free R a n = true.
+Proof.
+  induction R as [|[b s] R IH]; intros a n H; [reflexivity|].
+  apply Forall_cons_iff in H as [H0 H]. cbn [fst snd] in H0.
+  cbn [region_free]. rewrite (IH a n H), andb_true_r.
+  unfold iv_overlap. apply negb_true_iff. apply andb_false_iff.
+  destruct H0 as [H0|H0]; first [left; apply Z.ltb_ge; lia | right; apply Z.ltb_ge; lia].
+Qed.
+(* LPS 727298f3: the bytes of a reserved ledger that ends with the vDSO pair *)
+Lemma fold_uns2_sizes : forall l, fold_right (fun q acc => snd q + acc) 0 (map uns2 l) = AsanPlanSound.APS.sum_sizes l.
+Proof. induction l as [|[a s] l IH]; [reflexivity|]. cbn [map fold_right uns2 fst snd AsanPlanSound.APS.sum_sizes]. rewrite IH. reflexivity. Qed.
+Lemma live_bytes_app_sizes : forall l1 l2, live_bytes (l1 ++ l2) = live_bytes l1 + AsanPlanSound.APS.sum_sizes l2.
+Proof.
+  intros l1 l2. rewrite !live_bytes_uns2, <- fold_uns2_sizes, map_app, fold_right_app.
+  generalize (fold_right (fun q acc => snd q + acc) 0 (map uns2 l2)) as c. generalize (map uns2 l1) as m.
+  induction m as [|q m IH]; intros c; cbn [fold_right]; [lia| rewrite IH; lia].
+Qed.
 Lemma AMI_init_L : forall lim V sp fs mo, LIMIT34 <= lim ->
-bmodelL lim V sp fs mo -> Forall (pfact_ok V) both_pure_facts ->
+  bmodelL lim V sp fs mo -> Forall (pfact_ok V) BPKN ->
 AMI (resv_of V) (atop_of sp) [] (ainit (a_space_beg0 V) (a_ptr_array0 V)) (MX mo []).
 Proof.
 intros lim V sp fs mo HLIM HM HP. destruct (placement_facts V HP) as (F208 & F209 & F226 & FR & _ & _ & _).
-destruct HM as [Hh Hfds Hfs Hres Hlim Hbrk Hsbrk Htop Husp Hmaps Hkinds Hsep Hbnd Hlzb Hnawf Hnasub Hnapos Htot Hnl Hab Hbud Halw Hnd Hmat].
+  destruct HM as [Hh Hrdr Hfds Hfs Hres Hlim Hbrk Hsbrk Htop Husp Hmaps Hkinds Hsep Hbnd Hlzb Hnawf Hnasub Hnapos Htot Hnl Hab Hbud Halw Hnd Hmat Hmres].
+  (* LPS 727298f3: the reserved ledger is the image's and the vDSO pair ([bmL_reserved], AsanPlanSound.co_res) *)
+  destruct Hres as (rx & Hres & Hrx & Hrxn & Hrxb).
 unfold AMI. rewrite m_vm_materialized_MX, m_vmmaps_MX, m_vm_lazy_MX. change (Pm (MX mo [])) with (Pm mo).
 destruct reserved_facts as (R1 & R2 & R3 & R4).
 set (ATOP := atop_of sp). assert (EA : ATOP = bv_unsigned sp - 8388608) by reflexivity. clearbody ATOP.
@@ -198,9 +222,23 @@ assert (END : forall b n, In (b, n) (vm_maps (m_vmmaps mo)) -> bv_unsigned b + b
 /\ (bv_unsigned b + bv_unsigned n <= 65536 \/ 6254592 <= bv_unsigned b)).
 { intros b n Hin. rewrite Forall_forall in Hbnd. destruct (Hbnd _ Hin) as (_ & _ & _ & _ & A5 & A6). cbn [fst snd] in A5, A6.
 unfold MainEntryBoth.BIMG_LO, MainEntryBoth.BIMG_HI in A5. lia. }
+  (* LPS 727298f3: AMI's new fact: the mappings miss the reserved ledger, the vDSO pair included ([bmL_mres]) *)
+  assert (NEWC : forall e, In e (vm_maps (m_vmmaps mo)) -> region_free (vm_reserved (m_vmmaps mo)) (fst e) (snd e) = true).
+  { intros [b n] Hin. cbn [fst snd]. apply region_free_of_disj. rewrite Forall_forall in Hmres. exact (Hmres _ Hin). }
 split; [reflexivity|].
 split; [rewrite Hlim; exact HLIM|].
-rewrite Hres. split; [exact R1|]. split; [exact R2|]. split; [exact R3|].
+  split; [exact NEWC|].
+  rewrite Hres. split.
+  { (* the image's four entries and at most n_resx entries for the vDSO pair *)
+    unfold AsanInv.zlen in *. rewrite length_app, Nat2Z.inj_add.
+    pose proof (f_equal (@length _) reserved_eval) as LE. rewrite length_map in LE. cbn [length] in LE. rewrite LE.
+    assert (NR : (AsanPlan.AP.n_resx AsanPlan.AP.BOTH <= 28)%nat) by (vm_compute; lia).
+    unfold LEN0. lia. }
+  split.
+  { (* the image's reserved bytes and the vDSO pair's, at most resx_bytes *)
+    rewrite live_bytes_app_sizes, live_bytes_uns2, reserved_eval. cbn [fold_right fst snd].
+    assert (RB : AsanPlan.AP.resx_bytes AsanPlan.AP.BOTH <= 2^29) by (vm_compute; discriminate).
+    unfold RTOT0. lia. }
 split. { eapply Forall_impl; [|exact Hbnd]. cbv beta. intros iv (A1 & A2 & A3 & A4 & A5 & A6). unfold entry_ok. repeat split; try assumption. lia. }
 split; [exact W2|]. split; [exact W3|]. split; [apply ivs_sep_seps; exact Hsep|].
 split. { split; [unfold atop_ok, ACEIL, AsanInv.ATOP_MAX; lia|]. unfold alloc_top, stack_max_size. rewrite Htop. lia. }
@@ -223,19 +261,20 @@ split.
 { exists (4096 * V 208%nat). split; [exact INP|]. unfold a_space_beg0, PRIM_SZ, KHIGH in *. lia. }
 split; [exact INQ|].
 split; [unfold a_ptr_array0; lia|].
-split. { unfold a_ptr_array0. apply region_free_of_hull; [lia| unfold PTR_SZ; lia| unfold PTR_SZ in *; lia| exact R4| exact HQ]. }
+    split. { (* LPS 727298f3: the pointer array is a mapping, so it misses the reserved ledger *)
+             pose proof (NEWC _ INQ) as RQ. rewrite Hres in RQ. unfold a_ptr_array0. exact RQ. }
 split; [apply (INL (ZLit LS_LO) _ AsanPlan.AP.KRWLAZY); inled|].
 split; [apply (INL (ZLit GAP_LO) _ AsanPlan.AP.KNONELAZY); inled|].
 split; [apply (INL (ZLit HS_LO) _ AsanPlan.AP.KRWLAZY); inled|].
 split; [unfold AsanInv.zlen, LEN0; cbn [length both_ledger] in HLEN; lia|].
 split. { rewrite live_bytes_ivs_sum. rewrite ivs_sum_app in Htot. pose proof (ivs_sum_nonneg (vm_reserved (m_vmmaps mo))).
-unfold TOT0. unfold both_totsz in Htot. lia. }
+             unfold TOT0. unfold BTOTSZ in Htot. lia. }
 unfold resv_of, resv_entries. rewrite map_app. apply Forall_app. split.
 + apply Forall_forall. intros iv Hiv. apply in_map_iff in Hiv as (e & <- & He). apply in_flat_map in He as (le & Hle & He).
 destruct le as [b n k|n]; [|destruct He]. destruct He as [<-|[]].
 exists (wa (zv V b), wa n). split; [apply in_app_iff; right; exact (INL b n k Hle)|]. unfold iv_of. cbn [fst snd]. lia.
 + apply Forall_forall. intros iv Hiv. apply in_map_iff in Hiv as (e & <- & He).
-exists e. split; [apply in_app_iff; left; exact He|]. unfold iv_of. cbn [fst snd]. lia.
+      exists e. split; [apply in_app_iff; left; apply in_app_iff; left; exact He|]. unfold iv_of. cbn [fst snd]. lia.
 - rewrite commit_bytes_ainit, Z.add_0_r.
 assert (W4 : AsanCeil.init_sp_ok (m_vmmaps mo)) by (unfold AsanCeil.init_sp_ok, sp_window_lo; rewrite Htop; lia).
 rewrite <- (nonlazy_sum_count (MX mo []) eq_refl ltac:(split; [exact W1| split; [exact W2| split; [exact W3| rewrite m_vmmaps_MX; exact W4]]])).
@@ -243,11 +282,11 @@ rewrite (same_but_mat_nonlazy mo (MX mo []) (same_but_mat_MX mo [])). unfold EAG
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 Lemma minv_fds3 : forall mo,
 m_fds mo = init_fds -> m_tid mo = Some (Z_to_bv 64 1) -> m_vm_lazy mo = [] -> m_vm_materialized mo = [] ->
-sp_window_lo <= bv_unsigned (vm_init_sp (m_vmmaps mo)) <= sp_window_hi -> minv mo.
+  sp_window_lo <= bv_unsigned (vm_init_sp (m_vmmaps mo)) <= sp_window_hi -> m_channel_reader mo = true -> minv mo.
 Proof.
-intros mo Hf Ht Hl Hm Hsp. unfold minv. rewrite Hf, Ht, Hl, Hm. unfold init_fds. cbn [fd_lookup].
+  intros mo Hf Ht Hl Hm Hsp Hrdr. unfold minv. rewrite Hf, Ht, Hl, Hm. unfold init_fds. cbn [fd_lookup].
 Local Ltac2 Set LiaHints.tbl := fun () => "0070=19565405918.619613117664.649602658903.851043007538.654707272175.860826458291.6721811629.6  00000100200300400500:00?FFFFFS3HspS3Hsp".
-repeat split; try reflexivity; try (intros; discriminate); try lia.
+repeat split; try exact Hrdr; try reflexivity; try (intros; discriminate); try lia.
 - intros k c H.
 destruct (bv_eqb (Z_to_bv 64 0) k) eqn:E0. { apply bv_eqb_eq in E0. subst k. vm_compute. reflexivity. }
 destruct (bv_eqb (Z_to_bv 64 1) k) eqn:E1. { apply bv_eqb_eq in E1. subst k. vm_compute. reflexivity. }
@@ -264,7 +303,7 @@ destruct (bv_eqb (Z_to_bv 64 2) k); [inversion H; exact I|discriminate].
 - match goal with H : Some _ = Some _ |- _ => injection H as <- end. vm_compute. reflexivity.
 - match goal with H : Some _ = Some _ |- _ => injection H as <- end. vm_compute. reflexivity.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-Lemma space_beg0_facts : forall V, Forall (pfact_ok V) both_pure_facts ->
+Lemma space_beg0_facts : forall V, Forall (pfact_ok V) BPKN ->
 a_space_beg0 V mod 65536 = 0 /\ 0 < a_space_beg0 V /\ a_ptr_array0 V mod 4096 = 0 /\ 0 < a_ptr_array0 V.
 Proof.
 intros V HP. destruct (placement_facts V HP) as (F208 & F209 & F226 & FR & _). unfold a_space_beg0, a_ptr_array0.
@@ -275,7 +314,7 @@ replace (4096 * V 208%nat - 4096 * V 209%nat + 65536) with ((4096 * V 208%nat / 
 apply Z_mod_mult.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 Theorem AI_init_L : forall lim V sp fs mo, LIMIT34 <= lim ->
-bmodelL lim V sp fs mo -> Forall (pfact_ok V) both_pure_facts ->
+  bmodelL lim V sp fs mo -> Forall (pfact_ok V) BPKN ->
 AsanOK.AI0 [] (aps_init (a_space_beg0 V) (a_ptr_array0 V) (resv_of V) (atop_of sp)) (MX mo [])
 /\ aps_so (aps_init (a_space_beg0 V) (a_ptr_array0 V) (resv_of V) (atop_of sp)) = stdout_init
 /\ m_fds (MX mo []) = init_fds /\ m_fs (MX mo []) = fs /\ m_halted (MX mo []) = None.
@@ -302,9 +341,10 @@ rewrite strip_MX. apply minv_fds3.
 - reflexivity.
 - reflexivity.
 - change (m_vmmaps (strip mo)) with (m_vmmaps mo). rewrite Htop'. unfold sp_window_lo, sp_window_hi. lia.
+  - change (m_channel_reader (strip mo)) with (m_channel_reader mo). exact (bmL_reader _ _ _ _ _ HM).
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 Corollary AHAND_init_L : forall lim rsA V sp inp mo, LIMIT34 <= lim ->
-bmodelL lim V sp (in_fs inp) mo -> Forall (pfact_ok V) both_pure_facts ->
+  bmodelL lim V sp (in_fs inp) mo -> Forall (pfact_ok V) BPKN ->
 AHAND AAllocAsan nstepA PhiA minvA rsA AAllocAsanOK inp (aps_init (a_space_beg0 V) (a_ptr_array0 V) (resv_of V) (atop_of sp)) (MX mo []).
 Proof.
 intros lim rsA V sp inp mo HL HM HP. destruct (AI_init_L lim V sp (in_fs inp) mo HL HM HP) as (H1 & H2 & H3 & H4 & _).
@@ -314,7 +354,7 @@ apply tglob_trivial. intros; exact I.
 Qed.
 Corollary equiv_PA_both_toP_LL : forall lim, LIMIT34 <= lim -> forall LS, 2^31 <= LS -> forall rsP rsA V sp segsX pcX phX enX inp mo,
 valid_entry (mkImage segsX pcX phX) enX inp -> valid_input_either inp ->
-bmodelL lim V sp (in_fs inp) mo -> Forall (pfact_ok V) both_pure_facts ->
+  bmodelL lim V sp (in_fs inp) mo -> Forall (pfact_ok V) BPKN ->
 trace_equiv (tree_traces (prog psegs rsP inp (toP enX)) (mo0 psegs LS (toP enX) inp))
 (ptraces nstepA nexit (progA_tree AAllocAsan (aps_init (a_space_beg0 V) (a_ptr_array0 V) (resv_of V) (atop_of sp)) rsA (argv_Z (in_argv inp))) (MX mo []))
 /\ (forall tr r mo', ~ tpath nstepA (progA_tree AAllocAsan (aps_init (a_space_beg0 V) (a_ptr_array0 V) (resv_of V) (atop_of sp)) rsA (argv_Z (in_argv inp))) (MX mo []) tr r mo').

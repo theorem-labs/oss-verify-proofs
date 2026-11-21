@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition the launch leaves free; the input's kernel build and exec file name; the launch's vDSO draw and reservation; the channel-reader premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs Vdso State.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.pem.lib.Common Require Export SpecConsts.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -23,7 +24,12 @@ Record AmbIn := mkAmbIn {
   ia_hwcap  : word;          (* [comment removed for export] *)
   ia_abort_terminal : bool;  (* [comment removed for export] *)
   ia_va : VaSize;            (* [comment removed for export] *)
-  ia_urandom : InputStream   (* [comment removed for export] *)
+  ia_urandom : InputStream   (* [comment removed for export] *);
+  ia_kernel : KernelBuild;
+  ia_execfn : list byte;
+  ia_channel_reader : bool;
+  ia_sigpipe_default : bool;
+  ia_sigpipe_terminal : bool
 }.
 
 (* [comment removed for export] *)
@@ -34,10 +40,11 @@ Definition amb_creds (a : AmbIn) : Creds :=
 Definition mkModelA (fds : list (word * FdEntry)) (vm : VmMaps) (a : AmbIn)
     (fs : Fs.Fs) (halted : option word) (tid : option word)
     (rlim : option (list byte)) : Model :=
-  mkModelOf (mkFdState fds []) (mkVmState vm [] [])
+  mkModelOf (mkFdState fds []) (mkVmState vm [] [] (ia_kernel a) (vdso_run_init vdso_draw_keep))
             (mkIoState (ia_stdin a) (ia_urandom a) (ia_net a) (Z_to_bv 64 0)) (mkFsState fs)
             (mkProcState halted tid (amb_creds a)
-               false (ia_sigmask a) false None false false false (ia_abort_terminal a) [])
+               false (ia_sigmask a) false None false false false (ia_abort_terminal a) [] false (ia_channel_reader a)
+               (sigpipe_action_at_exec (ia_sigpipe_default a)) (ia_sigpipe_terminal a))
             (mkLimState rlim (ia_nofile a))
             (mkTimeState (Z_to_bv 64 0)).
 
@@ -45,12 +52,15 @@ Definition mkModelA (fds : list (word * FdEntry)) (vm : VmMaps) (a : AmbIn)
 Definition mkProcInputA (argv envp : list (list byte)) (fs : Fs.Fs) (a : AmbIn) : ProcInput :=
   mkProcInput_full argv envp fs (ia_stdin a) (ia_uid a) (ia_gid a) (ia_groups a) (ia_net a)
               (ia_nofile a) (ia_sigmask a) (ia_hwcap a) (ia_abort_terminal a) (ia_va a)
-              (ia_urandom a) [].
+              (ia_urandom a) []
+              (ia_kernel a) (ia_execfn a) (ia_channel_reader a) (ia_sigpipe_default a) (ia_sigpipe_terminal a).
 
 Definition amb_of (inp : ProcInput) : AmbIn :=
   mkAmbIn (in_stdin inp) (in_uid inp) (in_gid inp) (in_groups inp) (in_net inp)
           (in_nofile inp) (in_sigmask inp) (in_hwcap inp) (in_abort_terminal inp) (in_va_size inp)
-          (in_urandom inp).
+          (in_urandom inp)
+          (in_kernel inp) (in_execfn inp) (in_channel_reader inp)
+          (in_sigpipe_default inp) (in_sigpipe_terminal inp).
 
 (* [comment removed for export] *)
 Lemma mkProcInputA_of_fs : forall inp : ProcInput,
@@ -104,7 +114,7 @@ Lemma init_model_A : forall reserved (brk0 mbase sp : word) lim argv envp fs a,
   = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
                (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
                (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
-             (mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp) a fs None None None.
+             (mkVmMapsFull (init_reserved reserved mbase sp (ia_kernel a)) [] [] brk0 brk0 lim mbase sp) a fs None None None.
 Proof. reflexivity. Qed.
 
 Lemma with_tid_init_model_A : forall reserved (brk0 mbase sp : word) lim argv envp fs a tid,
@@ -112,7 +122,7 @@ Lemma with_tid_init_model_A : forall reserved (brk0 mbase sp : word) lim argv en
   = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
                (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
                (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
-             (mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp) a fs None (Some tid) None.
+             (mkVmMapsFull (init_reserved reserved mbase sp (ia_kernel a)) [] [] brk0 brk0 lim mbase sp) a fs None (Some tid) None.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -121,7 +131,7 @@ Lemma init_model_amb_of : forall reserved (brk0 mbase sp : word) lim inp,
   = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
                (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
                (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
-             (mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp) (amb_of inp) (in_fs inp)
+             (mkVmMapsFull (init_reserved reserved mbase sp (in_kernel inp)) [] [] brk0 brk0 lim mbase sp) (amb_of inp) (in_fs inp)
              None None None.
 Proof. intros. destruct inp. reflexivity. Qed.
 

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the runtime's reserved-ledger premise is discharged on the class's primary region by AllocRepX.ak_resf_prim, since the launch's vDSO/vvar pair is reserved above AHI_LO). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -222,7 +223,7 @@ Section CDStep.
     { exact RST. }
     { exact FARR. }
     { exact FAJ. }
-    { intros a kk Ha. exact (ak_resf_hi s mo AK a kk Ha). }
+    { intros a kk Ha Hk. apply (ak_resf_prim s mo AK a kk c HCC); [exact Ha| unfold kRegionSize; exact Hk]. }
     { intros a kk Ha Hk. apply (ak_prim s mo AK a kk c HCC); [exact Ha| unfold kRegionSize; exact Hk]. }
     { exact NW. }
     { exact NWA. }

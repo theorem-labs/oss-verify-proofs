@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): the SUPPORT LEMMAS of segment S2 of the walk of
    parse_noting (row N10-PNA; cut table lib/A/Prog/PN102Cuts.v; the segment lib/A/Prog/PN102S2.v): registers across a
@@ -10,16 +11,16 @@
    blocks. No function is proved here.
    rule 24: proves function parse_noting (reuse search: `proof-index parse_noting` exit 4 at 2026-10-30 07:2xZ,
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
-   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk 13970867e0c9, its one
+   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk, its one
    announced re-bind). This file: support lemmas of that walk only.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
    TAKEN BY PATH (each restated under a pn2_ name, at the A' instance):
    - pn2_req, pn2_shadow_out, pn2_hull_sub, pn2_hull_img, pn2_ro_img, pn2_text_shadow (its kept_at arms):
      lib/A/Prog/FuzzStrdup.v sd_req / sd_shadow_out / sd_hull_sub / sd_hull_img / sd_ro_img / sd_src_shadow (this tree);
    - pn2_upd_other / pn2_upd_same, pn2_pw_cross, pn2_garr8_kept, pn2_hd_skip_out: a working branch
-     b1bc025047ea lib/A/Prog/Ent102L2AHelp.v l2_getr_upd_other / l2_getr_upd_same, Ent102L6AfLem.v l6f_pw_cross /
+     lib/A/Prog/Ent102L2AHelp.v l2_getr_upd_other / l2_getr_upd_same, Ent102L6AfLem.v l6f_pw_cross /
      l6f_garr8_kept, Ent102CallA.v ec_hd_skip_out; pn2_mbyte_of_aview and pn2_hblk (prh_ledger_hblock's content, by
      the named projection prh_ledger_blocks): lib/A/Prog/S1Ledger.v prh_mbyte_of_aview / prh_ledger_hblock, restated
      because S1Ledger.v (and FuzzStrdup.v, which imports it) does not compile on this tree (prh_glob gained g_most /

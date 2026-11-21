@@ -11,8 +11,8 @@
      FSRealloc_S2b.fs_seg_mid_b, FSRealloc_S3.fs_seg_ret, FSRealloc_S4.fs_seg_nret).  Its only hypotheses are fs's symbol
      fact [TfibSyms B] and a Theorem Labs lane's two callee contracts at fs's pcA / pcD: AllocG.aalloc_realizes (Allocate, 0x31ef4)
      and DeallocG.adealloc_realizes_raw (Deallocate, 0x31be0).
-   - [fs_arealloc_AU] (step 5): FSupoisonRealloc.FS_AREALLOC_AU (lib/A/FSupoisonRealloc.v @ a working branch
-     e0461c947a1) at the universe [as_universe B], from [fs_realloc_all] for every user-poison set, modulo the same two
+   - [fs_arealloc_AU] (step 5): FSupoisonRealloc.FS_AREALLOC_AU (lib/A/FSupoisonRealloc.v @ a working branch)
+     at the universe [as_universe B], from [fs_realloc_all] for every user-poison set, modulo the same two
      callee contracts (for every poison set Up, as FS_AREALLOC_AU quantifies Up).  The bridge:
      * acall_preU (AR over the unpoisoned reading) -> c5's realloc_pre (raw memory): the user-poisoned bytes are shadow
        bytes below kHighMemBeg (FSupoison.ush_facts), so the stack window's presence and the frame-pointer chain read the

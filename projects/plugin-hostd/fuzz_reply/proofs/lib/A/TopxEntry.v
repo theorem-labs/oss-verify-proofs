@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, a Theorem Labs lane's TOPX group ENTRY): top_x's Section hypothesis HFP_pro
-   (W_LLVMFuzzerTestOneInput_top_x.v:320 at integ bb9dae5d905, SEG_PRO's entry facts) as a LEMMA.
+   (W_LLVMFuzzerTestOneInput_top_x.v:321 at integ, SEG_PRO's entry facts) as a LEMMA.
 
    HFP_pro's three conclusions at the entry cx:
    (1) the live blocks split into the input block, g_src's table (T, ATABLE) when T <> 0, g_out's buffer
@@ -19,7 +20,7 @@
      AR_blocks_law_cf: 4096 <= p, p + req_size n <= alloc_ceiling, 0 <= n).
    - FPCOV (fr_FP is top_x's Variable, so HFP_pro's (2) / (3) hold only for a footprint that covers the harness
      blocks): every block (b, s) of fr_hblks W mem has its range (b, b + s) in fr_FP regs ly S W mem.  The footprint
-     of record, lib/A/ACfn_cf.v:61-66 fr_FP (a working branch 5ab58d26200; not on integ), is fr_hblks's two
+     of record, lib/A/ACfn_cf.v:61-66 fr_FP (a working branch; not on integ), is fr_hblks's two
     matches with (G, ATABLE) -> (G, G + ATABLE) and (o, c) -> (o, o + c); fr_FP_text_cov below proves FPCOV for that
     body word for word, so FPCOV at ACfn_cf.fr_FP is `fun regs ly S W mem b H => fr_FP_text_cov W mem b H`.  While
     fr_FP stays top_x's Variable, the plug of HFP_pro := hfp_pro_x .. arcf_blk FPCOV carries FPCOV as a top_x
@@ -28,8 +29,8 @@
   (_cut.v:150-151), so they add no constraint; the pre's HB clause holds at the first call's entry (_cut.v:257-265
   fr_hb_pre_of_image: fr_hblks = [] there); BLK holds at every ARcf state (arcf_blk); FPCOV holds at ACfn_cf.fr_FP
   (fr_FP_text_cov).
-  ROOM ROUND (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (e)): fr_lib_pre_cf_x carries XCNT (ReplyCnt.xcnt_ok) and CAPOUT after HB (lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:104-110
-  on a working branch e1bf3549b61); pre_facts' one positional destruct names HB as `(HND & HINC)` and
+  ROOM ROUND (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (e)): fr_lib_pre_cf_x carries XCNT (ReplyCnt.xcnt_ok) and CAPOUT after HB (lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:105-111
+  on a working branch); pre_facts' one positional destruct names HB as `(HND & HINC)` and
   skips the two clauses after it. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -180,7 +181,7 @@ Proof.
 Qed.
 End e.
 
-(* ---- FPCOV at the footprint of record: the body of lib/A/ACfn_cf.v:61-66 fr_FP (a working branch 5ab58d26200),
+(* ---- FPCOV at the footprint of record: the body of lib/A/ACfn_cf.v:61-66 fr_FP (a working branch),
    word for word with fr_globals = fr_RG (_cut.v:104), so ACfn_cf.fr_FP regs ly S W mem is this term by delta and
    FPCOV there is `fun regs ly S W mem b H => fr_FP_text_cov W mem b H` ---- *)
 Lemma fr_FP_text_cov : forall (W : world tfibsegs) mem b, In b (fr_hblks W mem) ->

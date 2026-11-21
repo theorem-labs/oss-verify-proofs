@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Theorem Labs, 2026-10: fuzz_preset, the twins of YC80xf.v's runners that carry a memory invariant P across the
-   symbolic run, as YSRrMemnorm.v (h-w6u-pre's override-free split, origin/cold/h-srr-inv ee86d811008, blob
+   symbolic run, as YSRrMemnorm.v (h-w6u-pre's override-free split, blob
    898b7550dec7) carries it for YC80x.v's runners. Written once at the lead's approval (h-hpreset-7 11:20Z), for the
    walks that also write an output through a caller's pointer into a frame of the journal's entry state (YCbqG.v
    wr_fp_frame). GENERIC in
@@ -27,6 +27,7 @@
    paj_run_to_xmf_invR are the PAImg-level runners over them, Section g's binders then P and PLAW as the plain ones
    take them, so a caller writes `pose (RUN := @paj_run_xf_invR fx rc SK L PL PI B PST ARx _ LAWS P PLAW R R_refl
    R_trans)` and YC1fPx.v's paj_run_tok_x_invR / paj_run_to_tok_x_invR drive it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

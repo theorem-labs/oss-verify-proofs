@@ -6,12 +6,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_strkit.v, with its module paths and module names changed; 240 of its 267 lines of code are new or changed and 303 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head.v; 259 of its 305 lines of code are new or changed and 221 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_e.v, with its module paths, module names and numbers changed; 247 of its 304 lines of code are new or changed and 248 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4 IMAGE B, kit for tk_seg_LH (lib/B/FMW_ex_tok_base.v): expected's ex_token loop body (fuzz_manifest.c:103-108)
    at TK_LH 0x81730 .. 0x817c8 of B's expected (listing lines 315-353): the guard 0x81734 `bltu ~text, s8`; s1 = a6 + s8
    = text + j; bcmp (text + j, text + name, nl); a7, t1, a6 re-made; the guard 0x8175c `bltu s10, s5`; the ASan check
    and the load of text[j + nl] (':' or not); the guard 0x81780 `beq a0, s0`; bcmp (text + j + nl + 1, local, ll); a7,
    t1, a6 re-made; then j = 0 goes to TK_E, j > 0 (after the guard 0x817c4 `beq s1, 1`) to TK_B; every mismatch goes to
-   TK_N. Twin of image A's lib/A/FMW_ex_tok_lha.v (06d82004dc3) over B's registers and frame.
+   TK_N. Twin of image A's lib/A/FMW_ex_tok_lha.v over B's registers and frame.
    The walk's symbolic state at TK_LH: registers are their own atoms, s9 = extra atom 32 (the shadow base); the frame
    (based at sp = F, read-only) holds F+0x18 = ll (atom 36), F+0x20 = local (atom 34), F+0x70 = the mask (a literal),
    F+0x78 = text (a6's atom 16), F+0x80 = ~text (atom 37); the byte text[j + nl] is atom 35 in a 1-byte region at

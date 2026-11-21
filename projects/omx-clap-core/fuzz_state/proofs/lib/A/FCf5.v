@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the core's memset entry is named tfib_A_memset, following S0's AB1w regeneration by name (834df0ca5d9), which dropped the musl_ infix; same value 0x98e24. *)
+(* Modified by Theorem Labs, 2026-10: the core's memset entry is named tfib_A_memset, following S0's AB1w regeneration by name, which dropped the musl_ infix; same value 0x98e24. *)
 (* Theorem Labs, 2026-10: __asan_set_shadow_f5 of omx-clap-core/fuzz_preset's ASan image, stated over the frame-area
    interface (a relation ARx with the poisoned-head set Hp). Ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF8u.v
    (set_shadow_gen and its f8 stub instance) into the cgif_file-based core's names: YF8r's musl memset run is the
@@ -13,9 +13,10 @@
    invariant is NOT cgif's AR (preset's ARcf, fuzz_state's ARU) and for classes with no released cgif walk. A unit
    whose invariant IS cgif's AR should take the released AR-form walk (cgif_file A/AF0s.v, AF0u.v and their kin,
    relocated) and, if it needs this shape, obtain it through FCiface.fs_iface_AR plus
-   FCiface.astack_malloc_realizes_of_x (FCiface.v:168-200, Qed) for the malloc contracts; for set_shadow the AR form is the _x
+   FCiface.astack_malloc_realizes_of_x (FCiface.v:169-201, Qed) for the malloc contracts; for set_shadow the AR form is the _x
    form at AR_nohp by definition (cgif_rgb YG0e.v:48 with AR). *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch b120217aa206) to omx-clap-core/fuzz_state's ASan image A as fuzz_state's __asan_set_shadow_f5 at 0x55030: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch) to omx-clap-core/fuzz_state's ASan image A as fuzz_state's __asan_set_shadow_f5 at 0x55030: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

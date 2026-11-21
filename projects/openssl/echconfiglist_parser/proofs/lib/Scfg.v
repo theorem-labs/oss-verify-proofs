@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (write and munmap now have injected ENOMEM arms; new lemmas not_spurious_nonrefusal, injected_family_off_munmap, refusal_b_write, refusal_b_munmap and family_off_munmap_true). *)
 (* [comment removed for export] *)
 
 From LinuxProcessSemantics.LinuxProcessSem Require Import Run.
@@ -20,12 +21,12 @@ Import ListNotations.
 Lemma injected_arm_none_29 : Run.injected_arm 29 = None.   Proof. reflexivity. Qed. (* [comment removed for export] *)
 Lemma injected_arm_none_57 : Run.injected_arm 57 = None.   Proof. reflexivity. Qed. (* [comment removed for export] *)
 Lemma injected_arm_none_63 : Run.injected_arm 63 = None.   Proof. reflexivity. Qed. (* [comment removed for export] *)
-Lemma injected_arm_none_64 : Run.injected_arm 64 = None.   Proof. reflexivity. Qed. (* [comment removed for export] *)
+Lemma injected_arm_64 : Run.injected_arm 64 = Some (Run.mkInjectedArm 64 Run.FamFs [ENOMEM]).   Proof. reflexivity. Qed. (* [comment removed for export] *)
 Lemma injected_arm_none_66 : Run.injected_arm 66 = None.   Proof. reflexivity. Qed. (* [comment removed for export] *)
 Lemma injected_arm_none_93 : Run.injected_arm 93 = None.   Proof. reflexivity. Qed. (* [comment removed for export] *)
 Lemma injected_arm_none_94 : Run.injected_arm 94 = None.   Proof. reflexivity. Qed. (* [comment removed for export] *)
 Lemma injected_arm_none_96 : Run.injected_arm 96 = None.   Proof. reflexivity. Qed. (* [comment removed for export] *)
-Lemma injected_arm_none_215 : Run.injected_arm 215 = None. Proof. reflexivity. Qed. (* [comment removed for export] *)
+Lemma injected_arm_215 : Run.injected_arm 215 = Some (Run.mkInjectedArm 215 Run.FamAlloc [ENOMEM]). Proof. reflexivity. Qed. (* [comment removed for export] *)
 Lemma injected_arm_openat : Run.injected_arm 56 = Some (Run.mkInjectedArm 56 Run.FamFs openat_errnos).
 Proof. reflexivity. Qed.
 Lemma injected_arm_brk : Run.injected_arm 214 = Some (Run.mkInjectedArm 214 Run.FamAlloc []).
@@ -50,6 +51,12 @@ Proof.
   apply injected_family_off_none. exact H.
 Qed.
 
+(* A step whose answer is not one of the arm's errnos is never a spurious refusal. *)
+Lemma not_spurious_nonrefusal : forall cfg i m eff,
+  Run.refusal_b i m (eff_ret eff) = false ->
+  ~ Run.spurious_refusal_cfg cfg i m eff.
+Proof. exact Run.spurious_refusal_not_refusal. Qed.
+
 (* [comment removed for export] *)
 Lemma injected_family_off_openat : forall cfg i,
   bv_unsigned (in_sysno i) = 56%Z ->
@@ -71,6 +78,11 @@ Lemma injected_family_off_mprotect : forall cfg i,
   Run.injected_family_off cfg i = negb (Run.sc_alloc cfg).
 Proof. intros cfg i H. unfold Run.injected_family_off. rewrite H. reflexivity. Qed.
 
+Lemma injected_family_off_munmap : forall cfg i,
+  bv_unsigned (in_sysno i) = 215%Z ->
+  Run.injected_family_off cfg i = negb (Run.sc_alloc cfg).
+Proof. intros cfg i H. unfold Run.injected_family_off. rewrite H. reflexivity. Qed.
+
 (* [comment removed for export] *)
 Lemma refusal_b_mmap : forall i m ret,
   bv_unsigned (in_sysno i) = 222%Z ->
@@ -84,6 +96,21 @@ Lemma refusal_b_mprotect : forall i m ret,
   Run.refusal_b i m ret = bv_eqb ret (errno_ret ENOMEM).
 Proof.
   intros i m ret H. unfold Run.refusal_b. rewrite H. cbn. rewrite Bool.orb_false_r. reflexivity.
+Qed.
+
+(* The revision's [injected_table] registers write and munmap with [ENOMEM] alone. *)
+Lemma refusal_b_write : forall i m r,
+  bv_unsigned (in_sysno i) = 64%Z -> Run.refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r H. unfold Run.refusal_b. rewrite H.
+  exact (Bool.orb_false_r (bv_eqb r (errno_ret ENOMEM))).
+Qed.
+
+Lemma refusal_b_munmap : forall i m r,
+  bv_unsigned (in_sysno i) = 215%Z -> Run.refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r H. unfold Run.refusal_b. rewrite H.
+  exact (Bool.orb_false_r (bv_eqb r (errno_ret ENOMEM))).
 Qed.
 
 Lemma refusal_b_brk : forall i m ret,
@@ -128,4 +155,8 @@ Section ScfgFacts.
   Lemma family_off_mprotect_true {AF : AllocForced SC} : forall i,
     bv_unsigned (in_sysno i) = 226%Z -> Run.injected_family_off the_scfg i = true.
   Proof. intros i H. rewrite (injected_family_off_mprotect _ _ H), alloc_forced. reflexivity. Qed.
+
+  Lemma family_off_munmap_true {AF : AllocForced SC} : forall i,
+    bv_unsigned (in_sysno i) = 215%Z -> Run.injected_family_off the_scfg i = true.
+  Proof. intros i H. rewrite (injected_family_off_munmap _ _ H), alloc_forced. reflexivity. Qed.
 End ScfgFacts.

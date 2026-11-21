@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the string read-ahead slack of 9; addresses and numbers. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -32,7 +33,7 @@ Section UA.
   Hypothesis HW : L5.writable RSEGS M (S - 5440) 5440.
   Hypothesis HD : L5.defined M (S - 5440) 5440.
   Hypothesis HIMG : L5.img_clear M 65536 1306624.
-  Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+  Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
   Hypothesis Hn : 67 <= n <= 73.
   Hypothesis HSTR : cstr M p bs t8.
   Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
@@ -82,7 +83,7 @@ Section UA.
     intros fx5 R5 M5 INV.
     destruct Hm as ((Hm1 & Hm2 & Hm3 & Hm4) & (Hm5 & Hm6 & Hm7 & Hm8)).
     pose proof HC as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & FW).
-    assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+    assert (Pr : 140735332552704 <= p <= 140737488355318) by lia.
     assert (Nr : 0 <= n <= 131071) by lia.
     assert (DIV : 0 <= (p + n) / 8 <= 2 ^ 44) by (split; [apply Z.div_pos; lia | apply Z.div_le_upper_bound; lia]).
     assert (S8 : 0 <= S / 8 <= 2 ^ 44) by (split; [apply Z.div_pos; lia | apply Z.div_le_upper_bound; lia]).

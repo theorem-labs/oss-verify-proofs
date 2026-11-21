@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the shape join of check_reply's walk (fuzz_command.asan, 0x86fcc .. 0x86ff8),
    ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's segments and
-   their program calls, cl_callS then a fresh seed at the return) at c8557374ad2e.
+   their program calls, cl_callS then a fresh seed at the return).
 
    From CR_JOIN (a0 = the shape string q) the code re-checks the shadow of g_rec.reply, loads the reply into s3 and
    calls syntax_reply_matches(q, reply) (0x86fdc). A match goes to the epilogue CR_EPI; otherwise it calls
    syntax_reply_matches("resp 0" @ 0x210e0, reply) (0x86ff0), and a second miss would abort, which reply_okA's
    second conjunct refutes (0 <= code: one of the two shapes matches). Each run starts from the mid-walk seed
    (check_reply_sd.v cr_seed) with the frame header read-only, so the run changes no byte the walk reads. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

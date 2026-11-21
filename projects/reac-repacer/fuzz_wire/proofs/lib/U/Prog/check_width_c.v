@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/check_clamp_c.v, with its module paths changed; 12 of its 27 lines of code are new or changed and 18 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Lib Require Import PropExec MState Mem Exec Frame.
@@ -20,7 +21,7 @@ Open Scope Z_scope.
    bytes more), inlined.
    fuzz_wire ubsan 6e91fe0b5555 at 0x1328c (116 bytes): a 16-byte frame (ra, s0), two calls of rp_frame_channels
    (0x13938), each with its own 16-byte frame below.
-   The form is libreac/fuzz_decode's check_braid_c.v (25e3d17bdb5): the check RETURNS NORMALLY from every entry state
+   The form is libreac/fuzz_decode's check_braid_c.v: the check RETURNS NORMALLY from every entry state
    LLVMFuzzerTestOneInput gives it (fuzz_wire.c:270), so its abort() is unreachable; the property it checks is no
    premise.
    Premises: n <= W_RECV_MAX = 1600 (LLVMFuzzerTestOneInput cuts n to it, fuzz_wire.c:261-262), mem_inv

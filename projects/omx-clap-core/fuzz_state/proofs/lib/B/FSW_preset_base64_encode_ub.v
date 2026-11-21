@@ -55,11 +55,11 @@
    enc_ub_not turns the engine's `xori _, -1` into 2^64 - 1 - x.
 
    rule 24: proves function preset_base64_encode (part ub; reuse search: proof-index preset_base64_encode,
-   ported from a working branch 402eb5565fc + donor a working branch b96980d72d1)
-   Port-from: A lib/A/FSW_preset_base64_encode_blocks.v:1-40 (402eb5565fc; form: model half, pure arithmetic) and
+   ported from a working branch + donor a working branch)
+   Port-from: A lib/A/FSW_preset_base64_encode_blocks.v:1-40 (form: model half, pure arithmetic) and
    lib/A/FSW_preset_base64_encode.v:1241-1244 encR_loop_regs, 1510-1513 encR_exit_regs, 1571-1572 encR_round_step's
    index premises (the quantities r, 3r + 2, q + 4r; R, 3R, q + 4R); image A has no UBSan check, so the checks
-   themselves come from the old B donor a working branch 7676bbb0e23 lib/B/Prog/preset_base64_encode_blocks.v:
+   themselves come from the old B donor a working branch lib/B/Prog/preset_base64_encode_blocks.v:
    328-344 (lnot64 -> enc_ub_not), 353 (HD0, here 4096 <= data), 374-379 (BL register file), 383-386 (brk: each
    unimp branch refuted by lia / a computed lxor), 401-459 (enc_B_r1 / r2: 0x8478c .. 0x847bc), 470-633
    (enc_B_o0 .. o3: 0x847f4 .. 0x848d0), 792-1051 (enc_tail_c0 .. enc_tail_e: 0x849c0 .. 0x84b04). *)

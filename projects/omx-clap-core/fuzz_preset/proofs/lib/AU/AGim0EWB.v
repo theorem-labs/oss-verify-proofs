@@ -8,8 +8,9 @@
    twins' lemmas, and the imports of the W twins.  AGim0E.v is unchanged.  rule 24: no function proved (kind:
    re-statement of a proved miss walk over a wider refill window). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGim0EW.v (a working branch 3cae605a900a, file sha256 a91e4b8988c0) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 08394634e479) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve none (alreloc flagged no numeral of these files) (0 lines name this file); 6 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGim0EW.v (a working branch, file sha256 a91e4b8988c0) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve none (alreloc flagged no numeral of these files) (0 lines name this file); 6 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The errno-kept twins of AGim0's g-path MISS arms: [alloc_missg0_e] (can_fill = 0) and [alloc_missg_cf_e]
    (can_fill cf in {0, 1}) conclude ErrnoG.alloc_leaf_e (AllocG.alloc_leaf plus errno's 4 bytes unchanged on the grant
    branch) in place of alloc_leaf.
@@ -54,7 +55,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require ErrnoApart.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require AGimWB AGim0WB AGimEWB.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
-(* copy of AGim0.v:44 *)
+(* copy of AGim0.v:45 *)
 Local Ltac bvne := first [cbn; lia | vm_compute; congruence | intros X; vm_compute in X; discriminate X].
 Local Set Warnings "-abstract-large-number".
 Local Set Warnings "-notation-for-abbreviation".
@@ -210,7 +211,7 @@ Local Abbreviation LEAFJ_e := (AGimEWB.LEAFJ_e B U mt ARX AOX rpre nmax lmax lpo
   S' ly' W' memR mdR HARXp CIp HBBp Hly HWLE HSIO HFRA HFRR HPRR HERR l off Hcache').
 Lemma JOIN0_e : amreal tfibsegs (malloc_join_t stag n tr cl S') W' (cfg_at tfibsegs 0x36ff4 regsR memR mdR) PL_e.
 Proof.
-(* copy of AGim0.v:391-394, + errno *)
+(* copy of AGim0.v:392-395, + errno *)
 destruct (@AGiz.vw_junk_values _ _ B W' ly' inst memR n cl cnt' v' kz TS HV' Hkz1 Nrange Hcl_class)
   as (j0 & j1 & j2 & j3 & j4 & jb & Hj0 & Hj1 & Hj2 & Hj3 & Hj4 & Hjb & Hjb_def).
 eapply amreal_mono; [| eapply TAILJ0; eassumption].
@@ -226,7 +227,7 @@ End f.
 Lemma missg_core0_e : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0)
 (alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regsU mem0 md0 n tr).
 Proof.
-(* copy of AGim0.v:405-440, + errno *)
+(* copy of AGim0.v:406-441, + errno *)
 assert (CORE : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0) PL_e).
 {
 rewrite (Fshape_miss n tr S Hn0 FP Hmiss). fold cl.
@@ -275,7 +276,7 @@ YG0dcf.arodata_ok_cf tfibsegs B mem ->
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGim0.v:453-497, + errno *)
+(* copy of AGim0.v:454-498, + errno *)
 intros inst so bp ly S W regs mem md n tr PRE HRO Nrange0 Hmiss.
 destruct PRE as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres0 & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
 Hso1 & Hso2 & Hso3 & Hbp1 & Hbp2 & Hbp3 & Htrlen & PSO & PLEN & PBUF & Htr & Hn0 & Hlive).
@@ -330,7 +331,7 @@ YG0dcf.arodata_ok_cf tfibsegs B mem ->
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGim0.v:506-508, + errno *)
+(* copy of AGim0.v:507-509, + errno *)
 intros cf inst so bp ly S W regs mem md n tr [-> | ->].
 - exact (alloc_missg0_e inst so bp ly S W regs mem md n tr).
 - exact (AGimEWB.alloc_missg_e B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag IF TS rtree RW RWB IFM IFME EII ESH EDZ inst so bp ly S W regs mem md n tr).

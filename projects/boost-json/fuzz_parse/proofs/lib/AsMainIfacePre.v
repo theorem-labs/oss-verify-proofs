@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch input as a ProcInput, the stack window below the entry stack pointer at the revision's depth of 6144513 bytes (LSTK, stk_check, stack_full, pre_stk). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Top0Gc4. (* [comment removed for export] *)
@@ -17,7 +18,7 @@ From OSSVerify.Proofs.boost_json.fuzz_parse.lib.As Require Import AsMainSyms.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.BJA Require Import BJRep.   (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshf2bv37Corelib4Init9Datatypesk14Nonek16option37Corelib4Init5Logicm92eqhfbbv_unsigned69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainFacts~~~~~~p03Xofp0chole_granted69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainIface~~~~~~u37pm_vmem01Zk14boolk14truem93and69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainCells~~~~~~hk29img_check46Stdlib6ZArith6BinInt1Zhod2lehod2lthf7Z_to_bv79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As9AsDrvDefs~~~~~~hrbbarelro_none79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As5ASegs~~~~~~ig95asegs79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib3Mem~~~~~~ikd7mem_invk14list79OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsanPlan2AP~~~~~~ip98list_eqbhod3eqb79OSSVerify6Proofsaboost_jsonafuzz_parse3libeAsMainIfacePre7AT_MAIN~~~~~~iua9bytes_eqbk14prodk13natk13orbiuaeovl_cell_checkiuaerom_cell_check79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As0d1A1s1P1r1i1n1t1f1F1i1r1s1t~~~~~~jn77cell_okjn78cells_okiuaacell_check36Stdlib5Lists4Listjud7forallbhrbaadrv_cellshrb8astdout0hrb8adrv_ax1hk22cxhk25world79OSSVerify6Proofsaboost_jsonafuzz_parse3libaAxSymExec33AX2~~~~~~kk04exprhk24csymk13fstk13sndhk2ball_holes_whk29csym_baseip93acsip9akentry_eqbip92knkk05KWordkk02SAkk06kentryjud7existsbhod3addhk26cx_valhod6of_natk14Some37Corelib4Init5Peanolha2lt3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticslj4h0word_to_le_bytes79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2AsaAsMainSyms~~~~~~lo08pm_shorthk28world_oku36vrangeiuadkword_check_w69OSSVerify6Proofsaboost_jsonafuzz_parse3libcAsPlanImages~~~~~~lv25ASEGSkk06edenot69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8PropExec~~~~~~mk43rdnhod3powhrb9atid_celllo06ps_tidm92exhrb7acanary79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5Cells~~~~~~mr44cellk14consk13nil79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As7AsIface~~~~~~ng56AERRNOmr42C479OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib4Step~~~~~~nl28rw_cellskk03lin79OSSVerify6Proofsaboost_jsonafuzz_parse3libbAxSymExec3B4AX2B~~~~~~nq04bctxk15falsekk05saddrk14andb3h5LinuxProcessSemantics5Riscv5Instrog35aluopog35mulop69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsMainVM~~~~~~oj97le_linBhod3leboj98lin_ofaBhod3ltboj98lin_ofxBk14pairkk04EVarhk29all_holesiua4LSTKiua4kwr1nq04mkbciua6LSHLENiua6LSHSTKiua6kzero1iua9stk_checkiua9shz_check79OSSVerify6Proofsaboost_jsonafuzz_parse3libfAxSymExec3Sound4AX2S~~~~~~ph14ldenhod3sub69OSSVerify6Proofsaboost_jsonafuzz_parse3libaAsMainLazy~~~~~~pm75SHOFFlo09page_downhod3divikd2wa79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5Frame~~~~~~ps73stk79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib4TacX~~~~~~qga2b879OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As8AsStack0~~~~~~qkb6stack069OSSVerify6Proofsaboost_jsonafuzz_parse3lib8HeapCeil~~~~~~qp38HeapCeilqp35hceilm91Imk44getrhf2BVhf4BvWfk16length3h5LinuxProcessSemanticsfLinuxProcessSem5Staterg47in_argvng53ATPrg47FdEntryrg49FdChannelrg45m_fds3h5LinuxProcessSemanticsfLinuxProcessSem2Fsrm52Fsrg45in_fsrg44m_fs3h5LinuxProcessSemanticsfLinuxProcessSem3Runrq78valid_sprq79valid_brkrq7avalid_argvrq7avalid_envprg47in_envprq7h0entry_stack_fits69OSSVerify6Proofsaboost_jsonafuzz_parse3libcAsStartupHSF~~~~~~si88HSF_asanrg48in_hwcaprg46in_uidlv23APH69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsImages~~~~~~sp06ASAN_H69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsanInit~~~~~~st55LIMITst55SINV0st55argH079OSSVerify6Proofsaboost_jsonafuzz_parse3libdAsanPlanSound3APS~~~~~~tib5cs_ok" s.   (* [comment removed for export] *)
+Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshf2bv37Corelib4Init9Datatypesk14Nonek16option37Corelib4Init5Logicm92eqhfbbv_unsigned69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainFacts~~~~~~p03Xofp0chole_granted69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainIface~~~~~~u37pm_vmem01Zk14boolk14truem93and69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainCells~~~~~~hk29img_check46Stdlib6ZArith6BinInt1Zhod2lehod2lthf7Z_to_bv79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As9AsDrvDefs~~~~~~hrbbarelro_none79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As5ASegs~~~~~~ig95asegs79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib3Mem~~~~~~ikd7mem_invk14list79OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsanPlan2AP~~~~~~ip98list_eqbhod3eqb79OSSVerify6Proofsaboost_jsonafuzz_parse3libeAsMainIfacePre7AT_MAIN~~~~~~iua9bytes_eqbk14prodk13natk13orbiuaeovl_cell_checkiuaerom_cell_check79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As0d1A1s1P1r1i1n1t1f1F1i1r1s1t~~~~~~jn77cell_okjn78cells_okiuaacell_check36Stdlib5Lists4Listjud7forallbhrbaadrv_cellshrb8astdout0hrb8adrv_ax1hk22cxhk25world79OSSVerify6Proofsaboost_jsonafuzz_parse3libaAxSymExec33AX2~~~~~~kk04exprhk24csymk13fstk13sndhk2ball_holes_whk29csym_baseip93acsip9akentry_eqbip92knkk05KWordkk02SAkk06kentryjud7existsbhod3addhk26cx_valhod6of_natk14Some37Corelib4Init5Peanolha2lt3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticslj4h0word_to_le_bytes79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2AsaAsMainSyms~~~~~~lo08pm_shorthk28world_oku36vrangeiuadkword_check_w69OSSVerify6Proofsaboost_jsonafuzz_parse3libcAsPlanImages~~~~~~lv25ASEGSkk06edenot69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8PropExec~~~~~~mk43rdnhod3powhrb9atid_celllo06ps_tidm92exhrb7acanary79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5Cells~~~~~~mr44cellk14consk13nil79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As7AsIface~~~~~~ng56AERRNOmr42C479OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib4Step~~~~~~nl28rw_cellskk03lin79OSSVerify6Proofsaboost_jsonafuzz_parse3libbAxSymExec3B4AX2B~~~~~~nq04bctxk15falsekk05saddrk14andb3h5LinuxProcessSemantics5Riscv5Instrog35aluopog35mulop69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsMainVM~~~~~~oj97le_linBhod3leboj98lin_ofaBhod3ltboj98lin_ofxBk14pairkk04EVarhk29all_holesiua4LSTKiua4kwr1nq04mkbciua6LSHLENiua6LSHSTKiua6kzero1iua9stk_checkiua9shz_check79OSSVerify6Proofsaboost_jsonafuzz_parse3libfAxSymExec3Sound4AX2S~~~~~~ph14ldenhod3sub69OSSVerify6Proofsaboost_jsonafuzz_parse3libaAsMainLazy~~~~~~pm75SHOFFlo09page_downhod3divikd2wa79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5Frame~~~~~~ps73stk79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib4TacX~~~~~~qga2b879OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As8AsStack0~~~~~~qkb6stack069OSSVerify6Proofsaboost_jsonafuzz_parse3lib8HeapCeil~~~~~~qp38HeapCeilqp35hceilm91Imk44getrhf2BVhf4BvWfk16length3h5LinuxProcessSemanticsfLinuxProcessSem5Staterg47in_argvng53ATPrg47FdEntryrg49FdChannelrg45m_fds3h5LinuxProcessSemanticsfLinuxProcessSem2Fsrm52Fsrg45in_fsrg44m_fs3h5LinuxProcessSemanticsfLinuxProcessSem3Runrq78valid_sprq79valid_brkrq7avalid_argvrq7avalid_envprg47in_envprq7h0entry_stack_fits69OSSVerify6Proofsaboost_jsonafuzz_parse3libcAsStartupHSF~~~~~~si88HSF_asanrg48in_hwcaprg46in_uidlv23APH69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsImages~~~~~~sp06ASAN_H69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsanInit~~~~~~st55LIMITst55SINV0st55argH079OSSVerify6Proofsaboost_jsonafuzz_parse3libdAsanPlanSound3APS~~~~~~tib5cs_oklv24A_PC69OSSVerify6Proofsaboost_jsonafuzz_parse3lib9AsanInitPto05SINVmto05argHp" s.   (* [comment removed for export] *)
 Import ListNotations. Import AX2. Import AX2S. Import AX2B. Import APC. Import AP. Import APS. Import APSX.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
@@ -34,7 +35,7 @@ Section AT_MAIN.
   Hypothesis Vev : ltac2:(zQ "20!rva!sg8@1$0@1$1?3inp").
   Hypothesis Vfit : ltac2:(zQ "30!sh3!rj2!sg8@3$0?3sp0@1$1?3inp@1$2?3inp").
   Hypothesis Hh : ltac2:(zQ "50!kr9!lh3!m0!nd!sm7@3$3@1$2$0@1$4?1h@2$1$0?2ch").
-  Hypothesis HC : ltac2:(zQ "c0!rj2!sg8!sn3!snf!so9!rp6!ssb!mj1!th0!th9!ti2!tmf@b$b$7$6$8@8$9$4?3sp0?5rdraw?4brk0@1$0?3inp@1$1?3inp@1$3?3inp@1$2?3inp@7$a$4?3sp0?5rdraw@1$0?3inp@1$1?3inp@1$3?3inp@1$2?3inp@1$5?3inp?1E?2ch?1R?4FULL?5model").
+  Hypothesis HC : ltac2:(zQ "90!tmf!mj1!ssb!th0!tr6!so9!tn8!trf!rp6@b$0$1$2$3@6$4$5$6?3sp0?5rdraw?4brk0?3inp@3$7?3sp0?5rdraw?3inp@1$8?3inp?1E?2ch?1R?4FULL?5model").
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -174,8 +175,8 @@ Section AT_MAIN.
 
   (* [comment removed for export] *)
   #[local] Notation CXV a := (cx_val sp0z brk0z X a).
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model FULL).
-  #[local] Notation HID := (hid ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model).
+  #[local] Notation MR := (Mr ASAN_H (AsanInitP.argHp sp0 rdraw inp) E ch model FULL).
+  #[local] Notation HID := (hid ASAN_H (AsanInitP.argHp sp0 rdraw inp) E ch model).
   Let KNF := co_know _ _ _ _ _ _ _ _ _ _ _ HC.
   Ltac csz := cbn [cells_size csize cells_bytes cbytes le8 le4 le2 le1 word_to_le_bytes Z_to_le_bytes length Nat.add Z.of_nat Pos.of_succ_nat Pos.succ Pos.add app repeat map].
 
@@ -309,8 +310,9 @@ Section AT_MAIN.
 
   Lemma pre_can : ltac2:(zQ "80!h9!hib!o2!mq4!mq9!se!t4!hi1@2$3$1\3can$1@2$4@4$7@2$2@1$0#k0?3sp0@2$2@1$0#k0?4brk0@2$5@1$6?1h?1E?4FULL^1").
   Proof.
-    exists (bv_unsigned (edenot E (EVar 61))). split; [|apply u64_range].
-    pose proof (kword_main w_all (CAbs, 0x714418) 8 (EVar 61) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
+    (* LPS 727298f3: the recorded variable 61 under the segment map [AsStartupHSC.G1] *)
+    exists (bv_unsigned (edenot E (EVar 66))). split; [|apply u64_range].
+    pose proof (kword_main w_all (CAbs, 0x714418) 8 (EVar 66) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
     revert W. pmc_simpl. rewrite Z.add_0_l. intros W. change Asan.M.loaded_segments with ASEGS.
     rewrite (W ltac:(lia) ltac:(lia) ltac:(apply vr_img; lia)). do 2 f_equal. apply bv_eq. rewrite Z_to_bv_unsigned. symmetry. apply bv_wrap_small. apply bv_unsigned_in_range.
   Qed.
@@ -342,15 +344,18 @@ Section AT_MAIN.
   (* [comment removed for export] *)
   Definition kzero1 : ltac2:(zQ "40!np9!hie!ku3!nu3>2bc$3>2qa$0>2qn$0>1K$2$1") := ltac2:(zQ "e0!nub!ko1!nv3!hib!np9!m0!hie!on4!ku3!nvc!jk7!oo6!op9!nu3\2bc$d\2qa$4\2qn$4\1K$8M8\1K$8$6^1\1a$2\1w$a\1v$1$0\2za$2\2zn$1M5\1x@1$5$4$6@2$b^6^2\2l0$4M5\1x@1$5$4$6@2$c^7^2\2ln$4@2$9@2$9@3$7^8^2^7@3$7^8^7^2@3$7^8^6^1$0$0\1a$2\1n$1\1k$a$0\2lo$3\2hi$3$0\1e$1\1m$3$0\1e$1\2lo$3\2hi$3$0\1a$2\1n$1$0\2a1$2\2n1$1\2a2$2\2n2$1$0\1a$2\1n$1\1c$3$0\1a$2\1n$1$0").
   (* [comment removed for export] *)
-  Definition LSTK : ltac2:(zQ "10!np9$0") := ltac2:(zQ "80!hib!ko1!jk0!oq5!mv8!oqc!ip2!mvf@4$3$0@1$6@2$2$0$1-ogggg0@3$4@2$2$0$1@4$3$0$1+ogg0@1$5N0@3$4@2$2$0$1@4$3$0$1+hgg0@1$5N6@3$4@2$2$0$1@4$3$0$1+h0@1$5Na@1$7@2$2$0$1").
+  (* LPS 727298f3: the plan's stack window below sp0 is 6144513 bytes ([StoreOk.stack_window_depth],
+     AsanPlanCore's [init_kn_with]), not 8 MiB: the entry block now runs to the stack VMA's end, so
+     [LSTK] is sp0 - 6144513 and [stk_check], [lden_LSTK], [stack_full] and [pre_stk] use that depth. *)
+  Definition LSTK : ltac2:(zQ "10!np9$0") := ltac2:(zQ "80!hib!ko1!jk0!oq5!mv8!oqc!ip2!mvf@4$3$0@1$6@2$2$0$1-ltsig1@3$4@2$2$0$1@4$3$0$1+ogg0@1$5N0@3$4@2$2$0$1@4$3$0$1+hgg0@1$5N6@3$4@2$2$0$1@4$3$0$1+h0@1$5Na@1$7@2$2$0$1").
   Definition LSHSTK : ltac2:(zQ "10!np9$0") := ltac2:(zQ "80!hib!ko1!jk0!oq5!mv8!oqc!ip2!mvf@4$3$0@1$6@2$2$0$1+nvuvogg0@3$4@2$2$0$1@4$3$0$1+hgg0@1$5N0@3$4@2$2$0$1@4$3$0$1+ig0@1$5N6@1$7@2$2$0$1").
   Definition LSHLEN : ltac2:(zQ "10!np9$0") := ltac2:(zQ "80!hib!ko1!jk0!oq5!mv8!oqc!ip2!mvf@4$3$0@1$6@2$2$0$1+hggggghgggg0@3$4@2$2$0$1@4$3$0$1-hgg0@1$5N0@3$4@2$2$0$1@4$3$0$1-ig0@1$5N6@1$7@2$2$0$1").
-  Definition stk_check : ltac2:(zQ "10!hie$0") := ltac2:(zQ "a0!kse!hie!jk7!or4!os1!os9!kr9!ku3!ot1!kud@1$3\1g$1\3cls$2\2ch$6@3$9$7@3$5@1$8@1$0^1$4+ogggg0@1$0^1").
+  Definition stk_check : ltac2:(zQ "10!hie$0") := ltac2:(zQ "a0!kse!hie!jk7!or4!os1!os9!kr9!ku3!ot1!kud@1$3\1g$1\3cls$2\2ch$6@3$9$7@3$5@1$8@1$0^1$4+ltsig1@1$0^1").
   Definition shz_check : ltac2:(zQ "10!hie$0") := ltac2:(zQ "b0!kse!hie!jk7!or4!ot9!ou3!oud!kr9!ku3!ot1!kud@1$3\1g$1\3cls$2\2ch$7@3$a$8@3$6@1$9@1$0^1$5$4@1$0^1").
   Lemma stk_check_ok : ltac2:(zQ "40!hie!hj5!nd!ov7@3$2$0$3$1").  Proof. vm_compute. reflexivity. Qed.
   Lemma shz_check_ok : ltac2:(zQ "40!hie!hj5!nd!pg4@3$2$0$3$1").  Proof. vm_compute. reflexivity. Qed.
 
-  Lemma lden_LSTK : ltac2:(zQ "70!nd!h9!hib!os1!pl8!pm0!o2@3$0$2@2$4?1E$3@2$5@2$6@1$1#k0?3sp0+ogggg0").
+  Lemma lden_LSTK : ltac2:(zQ "70!nd!h9!hib!os1!pl8!pm0!o2@3$0$2@2$4?1E$3@2$5@2$6@1$1#k0?3sp0+ltsig1").
   Proof.
     npose (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & SP & _).
     unfold LSTK, lden. cbn [fst snd tden]. rewrite !uE_var. lia.
@@ -362,7 +367,7 @@ Section AT_MAIN.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma stack_full : ltac2:(zQ "d0!h9!jc!o2!lh3!m0!hjc!nd!mq4!hib!ps1!hq5!hqb!pm0>1z$8>0@2$5@2$a@2$c@2$2@1$0#k0?3sp0+ogggg0^1@2$b^1@2$2@1$0#k0?3sp0@2$7@1$1@1$0#8\1b@1$1@1$0#8@3$6@1$4@1$1@1$0#8@1?4FULL@1$9^3@2$3@1$1@1$0#8^1").
+  Lemma stack_full : ltac2:(zQ "d0!h9!jc!o2!lh3!m0!hjc!nd!mq4!hib!ps1!hq5!hqb!pm0>1z$8>0@2$5@2$a@2$c@2$2@1$0#k0?3sp0+ltsig1^1@2$b^1@2$2@1$0#k0?3sp0@2$7@1$1@1$0#8\1b@1$1@1$0#8@3$6@1$4@1$1@1$0#8@1?4FULL@1$9^3@2$3@1$1@1$0#8^1").
   Proof.
     intros z Hz. pose proof stk_check_ok as H0. unfold stk_check in H0. pose proof (all_holes_here _ H0) as H. cbv beta in H. clear H0.
     apply existsb_exists in H as [K [HK HW]]. pose proof (proj1 (Forall_forall _ _) KNF _ HK) as KO.
@@ -387,7 +392,7 @@ Section AT_MAIN.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma pre_stk : ltac2:(zQ "a0!h9!o2!hq5!hib!ik4!se!t4!hi1!qg3!pm0>2lo$3>0@2$2@2$9@2$1@1$0#k0?3sp0+ogggg0^1>0@2$2^2@2$1@1$0#k0?3sp0@4$8$4@4$7@2$1@1$0#k0?3sp0@2$1@1$0#k0?4brk0@2$5@1$6?1h?1E?4FULL^3@2$1@1$0#k0?3sp0").
+  Lemma pre_stk : ltac2:(zQ "a0!h9!o2!hq5!hib!ik4!se!t4!hi1!qg3!pm0>2lo$3>0@2$2@2$9@2$1@1$0#k0?3sp0+ltsig1^1>0@2$2^2@2$1@1$0#k0?3sp0@4$8$4@4$7@2$1@1$0#k0?3sp0@2$1@1$0#k0?4brk0@2$5@1$6?1h?1E?4FULL^3@2$1@1$0#k0?3sp0").
   Proof.
     intros lo H1 H2. pose proof Vsp as [V1 [V2 _]]. unfold sp_window_lo, sp_window_hi in V1, V2.
     pose proof pd_facts as PD.

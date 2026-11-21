@@ -22,9 +22,12 @@
     WHAT THE HARNESS CHECKS.  Picks a 2D block size, profile, quality
     (fastest..medium) and flags; compresses exactly one block of fuzzer RGBA8
     pixels into a 16-byte buffer. astcenc_compress_image's status is stored and
-    never read.  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    never read.  The harness makes no check of its own beyond not crashing.  Its
+    halts statements say only that the code it calls never crashes, hangs or
+    trips a sanitizer.  Its agreement statements say only that the code never
+    crashes or trips a sanitizer, and allow a run that never ends.  Its bound
+    statements say only how often its builds may disagree.  Its decidability
+    statements say only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

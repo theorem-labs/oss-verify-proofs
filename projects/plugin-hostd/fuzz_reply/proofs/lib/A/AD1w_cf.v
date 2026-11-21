@@ -2,8 +2,8 @@
    target_run's calls of LLVMFuzzerTestOneInput, and what it may assume back.  Stated over ARcf (Reusable/YG0ncf.v) at
    Hp = [] and the YCbqG journal forms, in the shape of the one cf library contract that exists,
    preset_lib_contract_x (a working branch's fuzz_preset/lib/A/PresetCfnA.v:647), with three
-   fuzz_reply changes, and with the per-call invariant of fuzz_state's driver port (a working branch
-   e16cb210877, A/AD1w.v lib_inv_stable / lib_inv_init, A/ACfn.v tfib_lib_contract_xI) widened from (W, mem) to
+   fuzz_reply changes, and with the per-call invariant of fuzz_state's driver port (a working branch,
+   A/AD1w.v lib_inv_stable / lib_inv_init, A/ACfn.v tfib_lib_contract_xI) widened from (W, mem) to
    (ly, S, W, mem), because fuzz_reply's invariant names the blocks that survive a call.
    The three changes against preset's form:
    - the post's `Permutation (ablocks ...)` is REPLACED by W8's fr_surv (ACfn_cf.v): fuzz_reply's entry keeps g_src's
@@ -66,7 +66,7 @@ Variable LIBROOM : astate -> Prop.
 (* NP: the cf allocator's NON-primary room between calls (preset: iface_room_np, PresetCfnA.v section 3b); in the pre
    at each call AND back in the post, so W8's contract owes it at the return.  Without it in the post the driver
    cannot free what it allocated: after the last call it frees q (AD1r.v:845 / :860) and the buffer, afree_realizes_cf
-   needs acall_pre_cf, and acall_pre_cf's ROOM_cf (YGcfRoomPre.v:37) follows from no ARcf fact (CfDriver's finding,
+   needs acall_pre_cf, and acall_pre_cf's ROOM_cf (YGcfRoomPre.v:38) follows from no ARcf fact (CfDriver's finding,
    approved by a Theorem Labs lane 2026-10-29).  Instantiated by the cf driver lane; its laws below are the driver's named
    hypotheses, preset's texts verbatim at our types.  The step law serves only the driver's own allocator calls
    BEFORE the first call (at most 2 live blocks there); after the last call the tail law gives ROOM_cf_k S 2 once and
@@ -113,7 +113,7 @@ Definition fr_lib_inv_stable : Prop :=
    (fpgen's lib_inv_init, whose premise is the statics holding their image values); errno is AF0m's (ts_errno:
    as_errno B = TFIB_ERRNO), whose four bytes are image bytes, readable and writable in every memory.  No presence:
    start-up never stores to a global, so its bytes read through seg_rom and are absent, and fr_gi asks writability
-   (W8's ruling G4, a working branch ec4dd616ed1 W_LLVMFuzzerTestOneInput_cut.v:148) *)
+   (W8's ruling G4, a working branch W_LLVMFuzzerTestOneInput_cut.v:149) *)
 Definition fr_lib_inv_init : Prop :=
   as_errno B = TFIB_ERRNO_A ->
   forall (ly : alayout) (S : astate) (W : world segs) mem (init : Z -> Z),

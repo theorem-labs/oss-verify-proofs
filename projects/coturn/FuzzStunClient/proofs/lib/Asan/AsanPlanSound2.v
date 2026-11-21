@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: node_join_sound carries the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -132,7 +133,7 @@ Proof.
   - intros j Hj. rewrite (flat_u E _ (Z.of_nat n)) by (unfold flat; lia). exact (Rb j Hj).
 Qed.
 
-Theorem node_join_sound : join_stmt SEGS A nx0 LIMIT SINV argH FS0.
+Theorem node_join_sound {fl : bool} : join_stmt SEGS A nx0 LIMIT SINV argH FS0 fl.
 Proof.
   intros b off n cs cs' E R FULL model T HC _ Hn Hk. cbv beta in Hn.
   assert (Hpc : pc cs' = pc cs).

@@ -1,6 +1,7 @@
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/DGleafE.v@e8a7dd66acf2; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/DGleafE.v; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The errno-kept forms the Deallocate arms and DGtop share (step 2 of the errno-kept twins, beside DIfaceR).
 
    DIfaceR gives the arms one proof for both frames ([rawb]: the view frame, plus the raw frame when [rawb = true]).

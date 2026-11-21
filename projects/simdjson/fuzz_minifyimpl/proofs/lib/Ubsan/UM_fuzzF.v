@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv premise is taken apart in its new shape (the list of auxv values and the CONFIG_RSEQ flag), and the 54-word bound on the auxv is derived from its length in either CONFIG_RSEQ layout. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -190,7 +191,9 @@ Section Proof.
     intros until errv. intros FA HP DAT PLB DCR DCW D0 DTOP NLT CS AUX SPB ST LOA LOS ERR MI FZ TP SPA A0 A1 RA.
     pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
     pose proof LOS as LOS'. unfold PHARNESS_STACK in LOS. atop_facts.
-    pose proof AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & AB1 & AB2 & AB3 & _).
+    pose proof AUX as (av & vs & r & rnd & _ & _ & _ & AB1 & AB2 & AB3 & _).
+    assert (AB3' : av + 8 * 54 <= 2^64)
+      by (destruct r; unfold rauxv_list in AB3; rewrite length_map in AB3; cbn [length app] in AB3; lia).
     destruct CS as [CI CST]. rewrite FA in CST. destruct CST as [NONE PAT].
     pose proof CI as (CI1 & CI2 & CI3 & CI4 & CI5).
     pose proof (RMalloc_ifaceP.RHEAP_block_range_proof s LB m) as LBR.

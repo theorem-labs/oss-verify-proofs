@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the place_declined_b premise of the mmap decline; the vDSO; the read-only-backing form of the system-call steps; imports. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import RefNode
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8.CJ.Lib Require Import MStateS8 ITreeS8.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8.CJ.Lib Require NodesS8.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import BMode.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -105,7 +107,8 @@ Proof.
   { unfold mmap_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
     repeat split; try reflexivity. apply lit_ne0. lia. }
   assert (H0 : ms_gpr ms 0 = Z_to_bv 64 0) by (rewrite gpr_areg0; exact H10).
-  eapply (srz_mmap segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs Halloc).
+  eapply (srz_mmap segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs
+            ltac:(rewrite H0; apply place_declined_b_null) Halloc).
   - intros a Ha. rewrite Hpr. rewrite H0, Hu1 in Ha. apply HB. exact Ha.
   - rewrite H0, Hu1. exact Hex.
 Qed.
@@ -126,7 +129,9 @@ Proof.
   { unfold mmap_noaccess_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
     repeat split; try reflexivity. apply lit_ne0. lia. }
   assert (H0 : ms_gpr ms 0 = Z_to_bv 64 0) by (rewrite gpr_areg0; exact H10).
-  apply (srz_mmap_noaccess_at segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs Halloc);
+  apply (srz_mmap_noaccess_at segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs
+           ltac:(rewrite H0; apply place_declined_b_null)
+           Halloc);
     rewrite H0, Hu1; [exact Hex | exact HB].
 Qed.
 
@@ -159,6 +164,7 @@ Lemma bn_mprotect : forall ms model (addr len : Z) K,
   addr mod page_size = 0 -> 0 < len -> 0 <= addr ->
   addr + page_round_up_Z len < two_pow_64 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_maps (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   mprotect_budget_ok model (Z_to_bv 64 addr) n = true ->
@@ -166,7 +172,7 @@ Lemma bn_mprotect : forall ms model (addr len : Z) K,
                             (mprotect_model (Z_to_bv 64 addr) n model)) K ->
   srealizes segs scfg (mkCfg ms model) K.
 Proof.
-  intros ms model addr len K Hh Hlazy (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hna Hma Hbud HB.
+  intros ms model addr len K Hh Hlazy (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hvd Hna Hma Hbud HB.
   pose proof (page_round_up_Z_bounds len ltac:(lia)) as Hpr.
   assert (Haddr : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64_lit; unfold two_pow_64 in Hnw; lia).
   apply (srz_mprotect_at segs scfg ms model (Z_to_bv 64 226) (Z_to_bv 64 addr) len K Hh Hlazy Hsvc u226 Halloc);
@@ -193,7 +199,7 @@ Proof.
   assert (Hargs : munmap_args_ok ms model).
   { unfold munmap_args_ok. rewrite H0, Hu1, Hprr, Haddr. repeat split; try assumption.
     intro Hz. apply (f_equal bv_unsigned) in Hz. rewrite Hu1 in Hz. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hz. lia. }
-  eapply (SpinAlg.srz_munmap segs scfg ms model (Z_to_bv 64 215) K Hh Hlazy Hsvc u215 Hargs).
+  eapply (SpinAlg.srz_munmap segs scfg ms model (Z_to_bv 64 215) K Hh Hlazy Hsvc u215 Hargs Halloc).
   unfold munmap_eff. rewrite H0, Hprr. exact Hc.
 Qed.
 
@@ -206,7 +212,8 @@ Lemma bn_mmap_rw_refused : forall ms model (len : Z) K,
   srealizes segs scfg (mkCfg ms model) K.
 Proof.
   intros ms model len K Hon Hh (Hsvc & H10 & H11 & H12 & H13 & H14 & H15) Hlen Hfit HK.
-  apply (srz_brefused segs scfg (mkCfg ms model) K Hon); [| exact HK].
+  apply (srz_brefused segs scfg (mkCfg ms model) K Hon);
+    [| exact (RomBase.sys_rob_memfree segs ms model _ Hsvc ltac:(rewrite u222; exact RomBase.memfree_222)) | exact HK].
   apply (budget_refused_at_of_mark ms model (Z_to_bv 64 222) Hh Hsvc).
   unfold alloc_budget_refused_b. cbn [in_sysno sys_input]. rewrite u222. cbn [Z.eqb Pos.eqb].
   unfold in_arg. cbn [in_args sys_input syscall_args nth].
@@ -228,17 +235,21 @@ Lemma bn_mprotect_refused : forall ms model (addr len : Z) K,
   addr mod page_size = 0 -> 0 < len -> 0 <= addr ->
   addr + page_round_up_Z len < two_pow_64 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* [mprotect_budget_refused_b] answers [false] on a range meeting the vdso/vvar pair
+     (LPS 727298f3), before its ledger test, as for [bn_mprotect] *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_maps (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   mprotect_budget_ok model (Z_to_bv 64 addr) n = false ->
   K [] ->
   srealizes segs scfg (mkCfg ms model) K.
 Proof.
-  intros ms model addr len K Hon Hh (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hna Hma Hbud HK.
+  intros ms model addr len K Hon Hh (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hvd Hna Hma Hbud HK.
   pose proof (page_round_up_Z_bounds len ltac:(lia)) as Hpr.
   assert (Haddr : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64_lit; unfold two_pow_64 in Hnw; lia).
   assert (Hulen : bv_unsigned (Z_to_bv 64 len) = len) by (apply u64_lit; unfold two_pow_64 in Hnw; lia).
-  apply (srz_brefused segs scfg (mkCfg ms model) K Hon); [| exact HK].
+  apply (srz_brefused segs scfg (mkCfg ms model) K Hon);
+    [| exact (RomBase.sys_rob_memfree segs ms model _ Hsvc ltac:(rewrite u226; exact RomBase.memfree_226)) | exact HK].
   apply (budget_refused_at_of_mark ms model (Z_to_bv 64 226) Hh Hsvc).
   unfold alloc_budget_refused_b. cbn [in_sysno sys_input]. rewrite u226. cbn [Z.eqb Pos.eqb].
   unfold in_arg. cbn [in_args sys_input syscall_args nth].
@@ -249,7 +260,7 @@ Proof.
   replace (w_is0 (Z_to_bv 64 len)) with false by (symmetry; unfold w_is0; apply bv_eqb_neq; apply (lit_ne0 len ltac:(unfold two_pow_64 in Hnw; lia))).
   rewrite Hulen. replace (two_pow_64 <=? addr + page_round_up_Z len) with false by (symmetry; apply Z.leb_gt; lia).
   replace (mprotect_modeled_b (Z_to_bv 64 3)) with true by reflexivity.
-  fold n. rewrite Hna, Hma. cbn [andb]. rewrite Hbud. reflexivity.
+  fold n. rewrite Hna, Hma. cbn [andb]. rewrite Hbud, Hvd. reflexivity.
 Qed.
 
 End WithSegs.

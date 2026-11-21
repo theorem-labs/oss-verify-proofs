@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: segment C1 of pj_string's image-B walk (fuzz_preset asan-ubsan; the cuts of
    lib/B/Prog/pj_string_defs.v): from PJS_C1 (+0x68, `jal fuzz_strdup`, a0 = the string) through the call to the cut
    pjs_C2 at its return site (+0x6c), then the segment pjs_seg_C2 (a premise).
      +0x68  jal fuzz_strdup   stepped concretely (YA0n.v SRr_step / YK14.v step_jal_link; pj_parse_seg_c2ref.v's
-                              pjr_step_jal), then the kit's tfuzz_strdup_specX (the kit's tip d607d12e4b0f,
+                              pjr_step_jal), then the kit's tfuzz_strdup_specX (the kit's tip,
                               lib/A/PRH_FnAlloc.v:517-558: the post-implication form with THE OUTCOME conjunct) by
                               YCbqGcallW.v aj_call_xW at the callee window e1 = 0 (the text is fpost:
                               fpostW_x_of_apost) with an EMPTY footprint; the chain from s0 = v is empty
@@ -88,7 +89,7 @@ Ltac pjs1_fd k Hl Hd :=
     assert (Hd : decode_any (Z_to_bv 32 w) = dz) by (vm_compute; reflexivity)
   | _ => fail "pjs1_fd: no image word at offset" k
   end.
-(* a callee's post BY NAME (the kit's ec_conj_split / ec_conj_pick, lib/AU/Prog/Ent102CallB.v:168-174 at d607d12e4b0f):
+(* a callee's post BY NAME (the kit's ec_conj_split / ec_conj_pick, lib/AU/Prog/Ent102CallB.v:168-174):
    split the top-level conjunctions, then close the goal by its type, so a conjunct added to the post shifts nothing *)
 Ltac pjs1_conj_split H :=
   lazymatch type of H with
@@ -245,7 +246,7 @@ eapply SRr_bind.
   - intros a (r & Hr & _). destruct Hr. }
 cbv beta. intros W2 c2 _ (ly2 & S2 & Hp2 & regs2 & mem2 & md2 & k1 & -> & HJ2 & HJc & _ & HP2 & HK).
 destruct HK as (HKQ & HMN2). destruct HKQ as (res & HKQ). cbv beta in HKQ.
-(* fuzz_strdup's post (tfuzz_strdup_specX, PRH_FnAlloc.v:532-558 at d607d12e4b0f), each conjunct picked BY ITS TYPE *)
+(* fuzz_strdup's post (tfuzz_strdup_specX, PRH_FnAlloc.v:532-558), each conjunct picked BY ITS TYPE *)
 assert (H10' : getr regs2 10 = w64 res) by pjs1_conj_pick HKQ.
 assert (HROOM2 : room_live_cf S2) by pjs1_conj_pick HKQ.
 assert (HRI0 : res = 0 -> forall (sm : list Z -> Z * Z) (x : list Z) (os : list (option nat * option nat * option nat))
@@ -260,7 +261,7 @@ assert (HRI1 : res <> 0 -> forall (sm : list Z -> Z * Z) (x : list Z) (os : list
     exists hist', PresetRoomPos.iface_room_pos sm x os
       (i + length [PresetReqAt.HMal (Z.of_nat (length cs) + 1 + cf_head)])%nat H0 hist' S2)
   by pjs1_conj_pick HKQ.
-(* THE OUTCOME conjunct (PRH_FnAlloc.v:548-556 at d607d12e4b0f) *)
+(* THE OUTCOME conjunct (PRH_FnAlloc.v:548-556) *)
 assert (HOUT : forall (sm : list Z -> Z * Z) (x : list Z) (os : list (option nat * option nat * option nat))
     (i : nat) (H0 : list Z) (hist : list YG00.chunk),
     PresetRoomPos.iface_room_pos sm x os i H0 hist S0 ->

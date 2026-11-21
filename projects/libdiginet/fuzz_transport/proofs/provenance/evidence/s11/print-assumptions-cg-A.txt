@@ -1,6 +1,6 @@
 # Print Assumptions of the image-A cg walk theorems (S11 step 3), from a temporary audit file (lib/A/Prog/ZzS11AuditB.v,
 # not committed: one Require of the three modules, then one Print Assumptions per theorem below, in this order), built
-# by `cb build` with CB_COMPILE at clone HEAD d1c428870de (log build-20261031T072541Z.log, sha256
+# by `cb build` with CB_COMPILE at clone HEAD (log build-20261031T072541Z.log, sha256
 # a6f37916c52ef1478ab69cc275a9a6f6cace9ae63e90d79844df1c618801b4f4, rc=0). Each theorem: the kernel's primitive types and operations (PrimInt63 / PrimString /
 # PrimArray) and FunctionalExtensionality.functional_extensionality_dep (the unit's library: lib/Lib/PropExec.v,
 # CrtFevt.v and the kit use functional_extensionality); no Axiom, Parameter or Admitted of the walks.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, as fuzz_grant's lib/A/Prog/GrantBase.v (a working branch 4a980cd5011) and fuzz_identity's lib/A/Prog/IdentBase.v (a working branch ea5560a967b) carry it, with only the unit's module prefix changed, for libreac/fuzz_boxreg: the read-only range, the frame object and the shape of a call's post-condition. *)
+(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, as fuzz_grant's lib/A/Prog/GrantBase.v (a working branch) and fuzz_identity's lib/A/Prog/IdentBase.v (a working branch) carry it, with only the unit's module prefix changed, for libreac/fuzz_boxreg: the read-only range, the frame object and the shape of a call's post-condition. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -61,7 +62,7 @@ aregs_preserved regs regs' /\ Q ly' S' W' regs' mem' md'.
 (* apost_base for a function that calls the snprintf wrapper (reac_boxreg_declare, reac_boxreg_set_name): the
    return configuration carries SOME fx' whose f registers equal the entry's except f10 and whose fcsr has rounding
    mode 0, or is the entry's own fcsr (a Theorem Labs lane's shared snprintf post, a working branch
-   401616133a7 FMsnprintfShared.v:142-145, gives rounding mode 0; a path that never reaches the wrapper, e.g.
+   FMsnprintfShared.v:142-145, gives rounding mode 0; a path that never reaches the wrapper, e.g.
    set_name's two early returns, takes fx' := fx). The relation is reflexive and transitive, so a function with
    several calls composes. AR and the journal take no FP state, so the rest is apost_base's. The f-register clause
    reads fp_regs through getr, which returns 0 for register 0 (PropExec.v:28), so f0 is NOT covered by it; boxreg

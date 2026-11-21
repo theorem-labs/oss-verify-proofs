@@ -5,18 +5,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2004 of its 2120 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F30.v, with its module paths, addresses and numbers changed; 450 of its 544 lines of code are new or changed and 2026 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F29.v; 65 of its 145 lines of code are new or changed and 464 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F29.v f29_evt (:145), f29_evt_ro (:208) at a working branch
-     3803efccea0 (blob d3a8027a51921bbae135e8e3f445db865b9f9bb6);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c),
-         lib/B/MemNormF.v blob 99f8b314301ceb0f253f1a6c8165b488b23ce218 (taken by path from dba073859bd: the
-         evtF twin of MemNorm.evt_normalize, which 3803efccea0 has only in Exec.evt form);
+     (blob d3a8027a51921bbae135e8e3f445db865b9f9bb6);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release),
+         lib/B/MemNormF.v blob 99f8b314301ceb0f253f1a6c8165b488b23ce218 (taken by path: the
+         evtF twin of MemNorm.evt_normalize, which has only in Exec.evt form);
    compare: f29_evt_of_F (evtF_evt + rng_all) re-derives F29.f29_evt verbatim; f29_evt_ro_F is the same run on the
-     cut's own memory (ro_agree in place of mem_inv), re-run of F29.v:226-249 with evtF_normalize_ro.
+     cut's own memory (ro_agree in place of mem_inv), re-run of F29.v:227-250 with evtF_normalize_ro.
    Neither run calls anything (0x82aa4 -> 0x82abc is six straight-line instructions), so there is no _pre_F/_post_F
    split here. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

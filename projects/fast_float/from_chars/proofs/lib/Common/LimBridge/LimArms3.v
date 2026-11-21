@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new arms of checked_table). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
@@ -557,6 +558,26 @@ Lemma arm_278_inv : arm_inv_ok (mkSpecArm 278%Z (fun i => getrandom_spec (in_arg
 Proof.
   unfold arm_inv_ok. cbn [sa_spec]. intros i0 m x m' evs H HI.
   assert (HV : vpres (getrandom_spec (in_arg i0 0) (in_arg i0 1) (in_arg i0 2))) by (first [ solve [vpres_go] | vpres_brute ]).
+  exact (vpres_inv _ HV i0 m x m' evs H HI).
+Qed.
+
+(* LPS 08b1429: checked_table gained this arm *)
+Lemma arm_287_frame : arm_frame_ok (mkSpecArm 287%Z (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i)).
+Proof.
+  intros L i0 m o _ _ H _ _. cbn [sa_spec] in *.
+  assert (HL : lrel L (pwritev2_spec (fd32 (in_arg i0 0)) (in_arg i0 1) (in_arg i0 2) (in_arg i0 3) (in_arg i0 4) (flag32 (in_arg i0 5))) (pwritev2_spec (fd32 (in_arg i0 0)) (in_arg i0 1) (in_arg i0 2) (in_arg i0 3) (in_arg i0 4) (flag32 (in_arg i0 5)))) by (lrel_go; try assumption).
+  exact (HL i0 m o H).
+Qed.
+Lemma arm_287_lpres : arm_lpres_ok (mkSpecArm 287%Z (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i)).
+Proof.
+  unfold arm_lpres_ok. cbn [sa_spec]. intros i0 m x m' evs H.
+  assert (HP : lpres (pwritev2_spec (fd32 (in_arg i0 0)) (in_arg i0 1) (in_arg i0 2) (in_arg i0 3) (in_arg i0 4) (flag32 (in_arg i0 5)))) by (lpres_go).
+  exact (HP i0 m x m' evs H).
+Qed.
+Lemma arm_287_inv : arm_inv_ok (mkSpecArm 287%Z (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i)).
+Proof.
+  unfold arm_inv_ok. cbn [sa_spec]. intros i0 m x m' evs H HI.
+  assert (HV : vpres (pwritev2_spec (fd32 (in_arg i0 0)) (in_arg i0 1) (in_arg i0 2) (in_arg i0 3) (in_arg i0 4) (flag32 (in_arg i0 5)))) by (first [ solve [vpres_go] | vpres_brute ]).
   exact (vpres_inv _ HV i0 m x m' evs H HI).
 Qed.
 

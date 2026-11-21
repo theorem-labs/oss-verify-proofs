@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (geoA restated for ALO inside the 6,144,513-byte stack window below sp). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -97,7 +98,7 @@ Section A.
     bytes_at bsegs mm (usp + 8) (u64s [wz P0]) /\ astring usp mm P0 arg0 slack0 RA0
     /\ (2 <= argc -> bytes_at bsegs mm (usp + 16) (u64s [wz P1]) /\ astring usp mm P1 arg1 slack1 RA1).
 
-  Lemma geoA : ATOP <= LO /\ LO + 8388608 - 4096 = usp /\ KHIGH <= LO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
+  Lemma geoA : ATOP <= LO /\ LO + 6144512 = usp /\ KHIGH <= LO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
   Proof. clear BOT. unfold ALO, KHIGH in *. repeat split; lia. Qed.   (* [comment removed for export] *)
 
   Lemma argc_facts : 1 <= argc <= 1024.

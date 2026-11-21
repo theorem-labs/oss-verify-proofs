@@ -1,6 +1,6 @@
 (* check_round_trip_cg: the ASan walk contract of check_round_trip (fuzz_decode.asan, listing name
    DS_check_round_trip, AF_check_round_trip of lib/A/Prog/DecodeList.v), in cgif_file_fuzzer's program-contract form, as
-   STATEMENTS only (no proof). Form: cgif's allocator-calling caller-journal contract (origin/ossv/recipes c8557374ad2e,
+   STATEMENTS only (no proof). Form: cgif's allocator-calling caller-journal contract (theorem-labs/oss-verify-proofs@6b32741d849a,
    proofs/cgif/cgif_file_fuzzer/lib/A/ACey.v:224 trfc_specX, lib/YC20.v:350 tlzw_spec): the caller's journal is the
    premise, the post extends it by the call's events, the allocations are metered (mo_ok / mo_le), and the blocks the
    call allocates are all freed (Permutation of ablocks). A callee (reac_braid_encode, and the float code of
@@ -49,7 +49,7 @@ Definition DEC_CRT_EV : Z := 6.
 Definition DEC_CRT_LIVE : Z := 2 ^ 13.
 
 (* The trace the allocator records at a call: the call's return address and the return addresses of the
-   frame-pointer chain after it (YG00.v:375 unwind_of_chain; YG0d.v call_trace0 and YGCalloc.v:216 ctrace0 are this at
+   frame-pointer chain after it (YG00.v:376 unwind_of_chain; YG0d.v call_trace0 and YGCalloc.v:216 ctrace0 are this at
    ras = raZ regs :: spine ch). *)
 Definition dec_utrace (pc0 : Z) (ras : list Z) : list Z :=
   firstn kUnwindMax (pc0 :: flat_map (fun ra => if ra =? pc0 then [] else [ra]) ras).
@@ -90,7 +90,7 @@ Proof. vm_compute. reflexivity. Qed.
    0x20d40 / 0x20d60 / 0x20d80, size 12, size_with_redzone 32): their payload is program data, never an owned static,
    so it cannot be a constant cell (YG0n.v:212 am_const_owned) and is read through the image view. The div-by-36 word
    0x10338 is not here: it is an owned constant cell (dec_crt_cells' last row). A_M stays first and A_T third, so the
-   walks' positional membership proofs (LLVMFuzzerTestOneInput_seg_copy.v:348, :353-354, :997, :1001) keep working.
+   walks' positional membership proofs (LLVMFuzzerTestOneInput_seg_copy.v:349, :354-355, :998, :1002) keep working.
    `dec_in_ro_rd` is the membership the lanes' cut Props use (crtA_in_ro_rd's shape). *)
 Definition DEC_RO_RD : list (Z * Z) :=
   [(0x10310, 8); (0x20d44, 8); (0x103c0, 8); (0x20dac, 4); (0x20d64, 8); (0x20d84, 8)].
@@ -344,7 +344,7 @@ Definition dec_leaf_wr_at
     ly_stk_lo ly_stk_hi YK0s.ret_ok (as_gp B) (as_tp B) (aowned B).
 
 (* The traces the six allocator calls record, which the call rules ask to be in the trace universe (YC5d.v:66, :86;
-   YGCalloc.v:240). Which chain each call sees is fixed by s0 at the call (YG0d.v:218-223 chain_pre, YG00.v:367
+   YGCalloc.v:240). Which chain each call sees is fixed by s0 at the call (YG0d.v:218-223 chain_pre, YG00.v:368
    bad_next):
    - the first malloc (+0x60): s0 is still the caller's frame pointer (check_round_trip first writes s0 at +0x64), so
      the chain is the one at entry and the trace is the call's return address followed by the tail of the entry

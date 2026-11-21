@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cg.v, with its module paths and module names changed; 76 of its 269 lines of code are new or changed and 761 lines of the source are left out. *)
-(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/fd_glue_cg.v at bf7779f81ed7 for libdiginet/fuzz_frame: the crash-free (SRcf) glue of the UBSan walk of LLVMFuzzerTestOneInput, with fuzz_frame's check_round_trip_contract_cf. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/fd_glue_cg.v for libdiginet/fuzz_frame: the crash-free (SRcf) glue of the UBSan walk of LLVMFuzzerTestOneInput, with fuzz_frame's check_round_trip_contract_cf. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

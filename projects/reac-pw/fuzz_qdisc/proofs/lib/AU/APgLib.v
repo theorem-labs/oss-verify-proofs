@@ -4,7 +4,7 @@
    are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc's ASan image (fuzz_qdisc.asan, sha256
    980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
-   proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632, with its module paths
+   proofs/libreac/fuzz_knock/lib/A/APgLib.v, with its module paths
    changed. rule 24 (reuse): no function is proved here; this file is the program contract's statement, its
    closed form and the bridge to the core's contract text. Names knock_* -> qdisc_*; the pre and the post are
    lib/A/QPgCSpec.v's image-independent text (qd_lib_pre_x / qd_lib_post_x / qd_lib_contract_x) at this image's
@@ -26,6 +26,7 @@
      needs neither knock's lib/AU/APgImg.v nor APgImgLink.v.
    The statement of qdisc_lib_x_all is the A file's at image B's names: Section {rc} {LS} and the one hypothesis
    LEAF, which the closing join discharges by eq_refl at AgreeQdisc.ag_sil_shape. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -135,7 +136,7 @@ Lemma qd_rod_of_P : forall B rd, arodata_okP tfibsegs RO_LO RO_HI B rd -> arodat
 Proof. intros B rd H a Ha. apply H. exact Ha. Qed.
 (* in_ro_tfa lies below the sink head A_ofl_head 0x5f0f48 (lib/AU/YE2k.v:28, 37): its read-only segments
    are the first two PT_LOADs, which end at 0x2e9ec and 0x94368, and its second disjunct is 0x953a0 ..
-   0x965f8 (lib/AU/YCeh.v:58-60). lib/AU/APgMain2.v and APgMain3.v carry arodata_ok along the journal with
+   0x965f8 (lib/AU/YCeh.v:59-61). lib/AU/APgMain2.v and APgMain3.v carry arodata_ok along the journal with
    YCeh.arodata_ok_journal, which needs this. Local, so the statement of qdisc_lib_x_all does not change. *)
 #[local] Instance qdisc_ROB : @YCeh.ro_tfa_below_ofl tfib_sink_head.
 Proof.
@@ -232,7 +233,7 @@ End g.
 Lemma qdisc_TfibLib : TfibLib TfibB.
 Proof.
 constructor; try reflexivity.
-- (* errno sits in the bss: TFIB_ERRNO = 0x5d07ac (lib/AU/YF0m.v:21) *)
+- (* errno sits in the bss: TFIB_ERRNO = 0x5d07ac (lib/AU/YF0m.v:22) *)
   cbn [as_errno TfibB]. unfold TFIB_ERRNO, kLowMemEnd. lia.
 - (* ... inside the fourth PT_LOAD [0x975f8, 0x5f2130), page range [0x97000, 0x5f3000) *)
   intros a Ha. cbn [as_errno TfibB] in Ha. unfold TFIB_ERRNO in Ha.

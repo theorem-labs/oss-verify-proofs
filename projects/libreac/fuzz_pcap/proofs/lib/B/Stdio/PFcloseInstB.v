@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, a segment lemma: no function is walked here): the lib/B twin of
-   lib/A/Stdio/PFcloseInst.v (a working branch c35658def122). It states the fclose / meter facts that the
-   asan-ubsan top lib/B/Prog/PcapEntryTop.v (Section top, a working branch 5811b4315d4) takes as Section
+   lib/A/Stdio/PFcloseInst.v (a working branch). It states the fclose / meter facts that the
+   asan-ubsan top lib/B/Prog/PcapEntryTop.v (Section top, a working branch) takes as Section
    hypotheses, at the asan-ubsan instance:
      SK := PcapSinkHeads.asan_ubsan_sink_head (sk_ofl_head 0x5f4e88; lib/B/PcapDriver.v pcap_drv_SK),
-     B  := YD2l.PcapB (the asan-ubsan core's symbol record, a working branch ef393153661),
+     B  := YD2l.PcapB (the asan-ubsan core's symbol record, a working branch),
      K  := lib/B/Stdio/PSourceK.pcap_KS (KS_U),
      MT := YCbp.ameter_triv,
    the instance at which Reusable/YD2o.v (pcap_drv_mainX_rc) and lib/B/PcapDriver.v (LIBX) take
@@ -32,21 +33,21 @@
                       YCej.Tfib_universe, pc_free_ra0 (as_code PcapB) is WFclose.WF_FREE_RA0).
 
    inst_AFCLOSE_U IS THE COMPOSITION (every premise is discharged by a proved lemma):
-     WFcloseI.pcapu_afclose_source_spec_icpt fx rc SK PcapB rlo rhi TB MUSL                   (WFcloseI.v:445)
-       TB    := YD2l.TfibB_syms : YF0m.PcapSyms PcapB                                          (YD2l.v:71)
-       MUSL  := WFclose.pcapu_afclose_source_spec_musl fx rc SK PcapB                          (WFclose.v:1367)
+     WFcloseI.pcapu_afclose_source_spec_icpt fx rc SK PcapB rlo rhi TB MUSL                   (WFcloseI.v:446)
+       TB    := YD2l.TfibB_syms : YF0m.PcapSyms PcapB                                          (YD2l.v:72)
+       MUSL  := WFclose.pcapu_afclose_source_spec_musl fx rc SK PcapB                          (WFclose.v:1368)
                   ENV   := fcu_ENV: YCeh.tl_env at lib/B/PcapBFacts.v PcapB_lib (the lib/B twin of pcap's
                            lib/A/PcapBFacts.v PcapB_lib / PcapB_env, at the asan-ubsan PcapB)
                   ML    := fcu_ML: YG05.model_laws_ok at YF0m.ts_universe (pcap's PcapBFacts.PcapB_ML, restated)
                   AFREE := YF0q.afree_realizes_closed PcapB TfibB_syms (fun _ => eq_refl) (as AF0q.v's
-                           pcap_afree_realizes; as_dhash PcapB is tfib_dhash, YD2l.v:31)
+                           pcap_afree_realizes; as_dhash PcapB is tfib_dhash, YD2l.v:32)
                   K := pcap_KS, HKS := eq_refl
-                  ASIL  := fcu_ASIL: YD1u.tfib_ASIL at SK := asan_ubsan_sink_head (YD1u.v:87; its pcap_head
+                  ASIL  := fcu_ASIL: YD1u.tfib_ASIL at SK := asan_ubsan_sink_head (YD1u.v:88; its pcap_head
                            class by eq_refl, sk_ofl_head asan_ubsan_sink_head = 0x5f4e88)
                   HSK / HWRAPF / HRA0 := fcu_HSK / fcu_HWRAPF / fcu_HRA0 (computation)
                   rlo rhi := PCAP_RLO PCAP_RHI
-                  FFLUSH := WFflush.pcapu_afflush_source_spec_icpt fx rc SK PcapB TB ASIL MSEEK     (WFflush.v:1231)
-                    MSEEK := WMseek.pcapu_amseek_rewind fx rc SK PcapB ASIL                     (WMseek.v:278)
+                  FFLUSH := WFflush.pcapu_afflush_source_spec_icpt fx rc SK PcapB TB ASIL MSEEK     (WFflush.v:1232)
+                    MSEEK := WMseek.pcapu_amseek_rewind fx rc SK PcapB ASIL                     (WMseek.v:279)
    BRIDGES, each settled by conversion (delta, with iota, of named Definitions only; the kernel checks each):
      segments   the walks state YB1v.tfibsegs, WFclose.wsegs, WFflush's YB1v.tfibsegs and WMseek.msegs; each one
                 is := AsanUbsan.M.loaded_segments, the top's PSEGS.
@@ -74,7 +75,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* ---- The meter law at ameter_triv: RELOCATED, not re-proved. ----
-   DONOR: cgif_file_fuzzer's asan-ubsan copy lib/YCke.v:26-27 (origin/ossv/recipes c8557374ad2e, blob d3aaaad6bd5b;
+   DONOR: cgif_file_fuzzer's asan-ubsan copy lib/YCke.v:26-27 (theorem-labs/oss-verify-proofs@6b32741d849a, blob d3aaaad6bd5b;
    its ASan copy is lib/A/ACke.v:33-34, the donor of lib/A/Stdio/PFcloseInst.v's asrc_file_meter_trivB)
      Lemma afile_meter_trivB : forall segs B, afile_meter segs B ameter_triv.
      Proof. intros segs B. constructor; intros; exact I. Qed.
@@ -94,12 +95,12 @@ Proof. intros segs B. constructor; intros; exact I. Qed.
 End fm.
 
 (* ---- The library facts of the asan-ubsan PcapB: TAKEN FROM lib/B/PcapBFacts.v, not restated. ----
-   lib/B/PcapBFacts.v (a working branch c4b2695e96b) states PcapB_lib : YCeh.TfibLib YD2l.PcapB, the same
+   lib/B/PcapBFacts.v (a working branch) states PcapB_lib : YCeh.TfibLib YD2l.PcapB, the same
    statement this file held as a local fcu_lib while no lib/B facts file existed. That local copy is gone; every
    position below takes PcapBFacts.PcapB_lib. *)
-(* ENV: lib/A/PcapBFacts.v:51 PcapB_env, at the asan-ubsan record. *)
+(* ENV: lib/A/PcapBFacts.v:52 PcapB_env, at the asan-ubsan record. *)
 Definition fcu_ENV : api_env YB1v.tfibsegs YD2l.PcapB := YCeh.tl_env YD2l.PcapB PcapBFacts.PcapB_lib.
-(* ML: lib/A/PcapBFacts.v:53-54 PcapB_ML, at the asan-ubsan record. *)
+(* ML: lib/A/PcapBFacts.v:54-55 PcapB_ML, at the asan-ubsan record. *)
 Lemma fcu_ML : model_laws (as_universe YD2l.PcapB).
 Proof. exact (YG05.model_laws_ok (as_universe YD2l.PcapB) (YF0m.ts_universe YD2l.PcapB YD2l.TfibB_syms)). Qed.
 
@@ -117,13 +118,13 @@ Proof. exact (@asrc_file_meter_trivB rc SK SEGS B). Qed.
 
 (* ---- The musl body's image side conditions at SK, PcapB, pcap_KS. ---- *)
 (* ASIL: YD1u.tfib_ASIL with its pcap_head class at SK by computation (sk_ofl_head asan_ubsan_sink_head = 0x5f4e88,
-   YD1u.v:59, PcapSinkHeads.v). Conversion: YB1v.tfibsegs = AsanUbsan.M.loaded_segments. *)
+   YD1u.v:60, PcapSinkHeads.v). Conversion: YB1v.tfibsegs = AsanUbsan.M.loaded_segments. *)
 Lemma fcu_ASIL : asource_img_laws SK SEGS B pcap_KS.
 Proof. exact (YD1u.tfib_ASIL (SK := PcapSinkHeads.asan_ubsan_sink_head) (PH := eq_refl) B YD2l.TfibB_syms). Qed.
 (* HSK: AOFL_HEAD = sk_ofl_head asan_ubsan_sink_head = WFclose.WF_OFL_HEAD (YCbq.v:84). *)
 Lemma fcu_HSK : @YCbq.AOFL_HEAD SK = WFclose.WF_OFL_HEAD.
 Proof. reflexivity. Qed.
-(* HWRAPF / HRA0: PcapB's code table is YF0l.Tfib_code (YD2l.v:14), whose pc_wrap_free / pc_free_ra0 are the
+(* HWRAPF / HRA0: PcapB's code table is YF0l.Tfib_code (YD2l.v:15), whose pc_wrap_free / pc_free_ra0 are the
    musl body's measured WF_FREETR / WF_FREE_RA0 (lib/Reusable/YF0l.v:11). *)
 Lemma fcu_HWRAPF : pc_wrap_free (as_code B) = WFclose.WF_FREETR.
 Proof. reflexivity. Qed.

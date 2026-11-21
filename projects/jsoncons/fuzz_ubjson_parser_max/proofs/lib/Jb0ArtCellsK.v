@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: dropped the TCodec name table, wrote art_lit1, art_lit and cell0_cat as plain statements, and added section variables such as stdin, gid, groups, kernel build and execfn to the SINV, argH and argH0_high arguments; the launch input takes its SIGPIPE disposition as a variable sdf; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0ArtCellsK.v, lines 77-87, 95-96, 108-109, 117-118. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -11,8 +12,6 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AxSymExec3K.AX2K AxSymExec3SoundK.AX2SK AsanPlanK.APK AsanPlanSoundK.APSK.
 Open Scope Z_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__Jb0ArtCellsK () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Nat."; "Corelib.Init.Peano."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ArtMem."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanInitK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanK.APK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSoundK.APSK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3K.AX2K."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0ArtCellsK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DefsK."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1bool"; "1fst"; "1nat"; "1option"; "1pair"; "1prod"; "1snd"; "1true"; "2eq"; "3add"; "4le"; "5Z"; "0E"; "0FULL"; "6Model"; "7bvmap"]; ["0M"; "0R"; "8cell"; "9LIMIT"; "9SINV0"; "9argH0"; ":acs"; ":kn"; ";cs_ok"; "<env"; "=ART_LITW"; "=art_lits_chk"; "=chk_lit1"; ">APH0"; ">ASAN0"; ">ASEGS0"]; ["?In"; "@add"; "@le"; "@lt"; "@of_nat"; "@pow"; "0a"; "0argv"; "0brk0"; "0c"; "0cs"; "0envp"; "0fs"; "0hw"; "0model"; "0rdraw"]; ["0sp"; "Abv"; "0uid"; "0v"; "0w"; "0w1"; "0w2"]]).
 Definition ART_LITW : list (Z * nat * Z) :=
 [
 (1283032 + 40, 4%nat, 0xffffffff); (1283032 + 56, 1%nat, 0); (0x10400, 8%nat, 0xafffff00000fffff); (0x134380, 8%nat, 0x1cc4e0); (0x1cc4e0, 8%nat, 4096);
@@ -57,13 +56,26 @@ Variable rdraw : EntryDraw.
 Variable argv envp : list (list byte).
 Variables uid hw : word.
 Variable fs : Fs.Fs.
+Variable mbase : word.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abrt : bool.
+Variable ur : InputStream.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variable sdf : bool.
+Variable apc : N.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
-#[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+#[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc).
+#[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
 #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
-Let AH := argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva.
-Lemma art_lit1 : ltac2:(TCodec.tc2 tcn__Jb0ArtCellsK "R2'I'F&?y5'QAyR0%211%5241'3y8%611%311p061'>'5';'2%3221%4213'H&O&N&C&D&MvQ@vQ?vQ8vQ7vQ;vQBvQ=%9887654321&E%17:986543vQ<r6r5r4r3r2%F;EDC97654321'8'0&L&G%11:%3217(7%73621&B&1%13Q3Q5=%23Q6Q51&6%13Q8Q73%23Q7Q9A%75Q5D421p091p0B1pRDQ:1pRNQ@1pLQB1pQ4QH1pRFQO1pJR11").
+Let AH := argH0_high sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva.
+Lemma art_lit1 : forall E cs R FULL model c, CSOK E cs R FULL model -> chk_lit1 (kn cs) c = true ->
+cell ASEGS0 FULL (fst (fst c)) (snd (fst c)) (snd c).
 Proof.
 intros E cs R FULL model [[a w] v] HC H. cbn [fst snd]. unfold chk_lit1 in H. unfold cell.
 apply orb_prop in H as [H|H]; [apply orb_prop in H as [H|H]|].
@@ -74,13 +86,15 @@ apply Z.eqb_eq in Hv. subst v. apply Nat.leb_le in Hw. apply Z.leb_le in Ha.
 apply (hc_zero_cell ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs E cs R FULL model (ELit 0) a (Z.of_nat w) HC H a w Hw);
 unfold uE; cbn [edenot]; rewrite u64_lit by lia; lia.
 Qed.
-Lemma art_lit : ltac2:(TCodec.tc2 tcn__Jb0ArtCellsK "R4'I'F&?y5'QAyR0%211%5241'3y8%611%311p061'>'H&O&N&C&D&MvQ@vQ?vQ8vQ7vQ;vQBvQ=%9887654321&E%17:986543vQ<r5r4r3r2r1%F;EDC97654321'8'0&K%119(7%53421';'2&Q0'5%1243%2215(4%1476A@%24481@&J%83521&Br8%25Q91HGFp041pS8?1pS:?1pR>A1p0C1p0J1pRNQB1pLQD1pQ4QJ1pRFR11pJR31").
+Lemma art_lit : forall E cs R FULL model, CSOK E cs R FULL model -> art_lits_chk cs = true ->
+forall a w v, In (a, w, v) ART_LITW -> cell ASEGS0 FULL a w v.
 Proof.
 intros E cs R FULL model HC H a w v Hin.
 exact (art_lit1 E cs R FULL model (a, w, v) HC (proj1 (forallb_forall _ _) H _ Hin)).
 Qed.
 End Lits.
-Lemma cell0_cat : ltac2:(TCodec.tc2 tcn__Jb0ArtCellsK "QD'QAyR0%211'3y8%511%311p051';'2&Q2zr3%3221&Q3&Q1r4&Q4%116%4231&Q5+2+R0%3221%:251':&9%12;?u8%4221&B&Or7r6r5%554321Hr8%D14%G261%958315Lr9%?298%<5;261Op041p091p0@1p0F1p0Q21pS>Q71pS<Q81pR>Q:1pQ2Q<1").
+Lemma cell0_cat : forall (M : word -> option byte) a (w1 w2 : nat), 0 <= a -> a + Z.of_nat w1 < 2 ^ 64 -> (w1 + w2 <= 8)%nat ->
+cell ASEGS0 M a w1 0 -> cell ASEGS0 M (a + Z.of_nat w1) w2 0 -> cell ASEGS0 M a (w1 + w2) 0.
 Proof.
 intros M a w1 w2 Ha Hn Hw H1 H2. unfold cell in *. rewrite wleb_zero in * by lia.
 assert (H2' : rdn ASEGS0 M (Z_to_bv 64 a + nat_to_word w1)%bv w2 = Some (repeat (Z_to_bv 8 0) w2)).

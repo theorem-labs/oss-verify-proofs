@@ -10,11 +10,12 @@
    meter's laws (MTL, and MTFL for the class-7 side-stack frame) and the callees' and runtime entries' contracts at
    every FP state. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/AnswerClosed.v, with its module paths, module names and addresses changed; 18 of its 49 lines of code are new or changed and 27 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for sup_add's ASan+UBSan walk (lib/B/Prog/sup_add.v,
    sup_add_holds): the per-binary record hypotheses it names discharged at the pinned image (lib/B/Prog/CmdImg.v's
    instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head), as A's worked example
-   lib/A/Prog/SupRemoveAllRefitClosed.v and a Theorem Labs lane's RecBClosed.v (a working branch
-   f349bdaedba) do, each by the B kit's lemma (lib/B/Prog/CmdRecRest.v, CmdRecImg.v): LAWS is the core's AR_laws_ok,
+   lib/A/Prog/SupRemoveAllRefitClosed.v and a Theorem Labs lane's RecBClosed.v (a working branch)
+   do, each by the B kit's lemma (lib/B/Prog/CmdRecRest.v, CmdRecImg.v): LAWS is the core's AR_laws_ok,
    TL is cmd_palib, TLF is cmd_palibf, ML is cmd_model_laws, SMP is cmd_stack_malloc_progress, ASF is
    cmd_astack_free_law, FFL is cmd_frame_flag_law, SIGP is cmd_sig_prog_PB, PRW is cmd_prw_tfib, IMG is
    cmd_img_facts_tfib and VOBJS is cmd_val_objs_PB. What remains is the statement's own hypotheses (the callees' and

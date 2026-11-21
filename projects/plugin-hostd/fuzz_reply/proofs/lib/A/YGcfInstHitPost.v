@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    The hit AR link over the cf relation: ARcf at the state a hit leaves (ImgBaseAG.st_final: the popped cache, the
-   depot after the put, the new chunk), at the memory the hit walk returns.  The cf twin of c5 30a1993588f's
+   depot after the put, the new chunk), at the memory the hit walk returns.  The cf twin of c5
    AGj1.v (AR_transport, the g path) and AGjf.v (the k path), as ONE transport over the chunk's redzone rz_size n
    and size req_size n: the g path (49 <= n <= 64512, AGif0n.at_RETw) and the k path (0 <= n <= 48,
    AGif0n.at_RETkw) are its two instances (YGcfInstHit.v).

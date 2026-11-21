@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 234 of its 303 lines of code are new or changed and 709 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A: the generic walk layer proved in the S10 lane, in one file other walks can cite without merging
    that lane's branch (a merge of it drags the PRH_Base.v / PRH_FnTx.v / PRH_Img.v into conflict).
    Rule 24: no function is proved here. Nothing new is stated: every declaration is MOVED.
    ORIGIN. Each declaration below is moved BY PATH, CHARACTER FOR CHARACTER (statement, proof and the comment above it),
-   from the S10 lane, branch origin/cold/h-hpreset-7-walk-S10 at commit 9c35e29a72ce382785e1fc17ea781fa51fea6ec8
-   (read with `git show 9c35e29a72c:proofs/omx-clap-core/fuzz_preset/lib/A/Prog/<file>`):
+   from the S10 lane, branch origin/cold/h-hpreset-7-walk-S10
+   (read with `git show:proofs/omx-clap-core/fuzz_preset/lib/A/Prog/<file>`):
      lib/A/Prog/S10TxKit.v     blob 25f898edb9f8c51a28d23c9084825466d4552c17
        :33-112   s10_pairwise_perm, s10_zdisjoint_sym, s10_rdword_some, s10_chain_ex_n, s10_chain_of_present,
                  s10_aview_byte
@@ -26,11 +27,11 @@
    IMAGE. The TE section is bound to image A's listing instance (S10TxString.v:118 `PA := (PI_prog_A)`, :130
    `@Eimg _ A_prog_listing PA`); that is why this file lives in lib/A/Prog (the PRW_* walk-kit convention) and not in
    lib/Reusable, which Requires nothing from lib/A. The S10TxKit pieces are image-generic.
-   SET. Built on K0 walkkit 2e154b9c0ce6 + the engine fold origin/cold/c-omx-alloc-preset-s1 63997a07aa6, by path:
-   lib/Reusable/YCbqG.v blob 83da015952be (= cold/h-hpreset-7-walks-new a14d426ce3f1) and lib/A/Img0.v / Listing_prog.v
-   / PAImg_prog.v (image A asan d83eb25d). This file's 204-file closure differs from S10's tree (9c35e29a72c) only in
+   SET. Built on K0 walkkit + the engine fold, by path:
+   lib/Reusable/YCbqG.v blob 83da015952be (=) and lib/A/Img0.v / Listing_prog.v
+   / PAImg_prog.v (image A asan d83eb25d). This file's 204-file closure differs from S10's tree only in
    PRH_Base.v, YCbqG.v, Listing_prog.v and PAImg_prog.v (S10 has listing v4), and from h-w6u-rep's crs2 tree
-   (99b1377a9e8) only in PRH_Base.v and YCbqG.v. Of those, the moved pieces cite only PRH_Base's fabortW (the same text
+   only in PRH_Base.v and YCbqG.v. Of those, the moved pieces cite only PRH_Base's fabortW (the same text
    in all three) and the listing's names PI_prog_A / A_prog_listing.
    STAYED IN S10 (not moved): tx_string's own functional model, pcs, frame and entry segments (S10TxString.v :49-105,
    :322-337, :401-537, :549-559, :593-655); its Admitted segment lemmas (:659-761) and what rests on them (ts_loop

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: SEG_LATCH of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput
    (lib/B/W_LLVMFuzzerTestOneInput_cut.v :963), the image-B twin of lib/A/W_LLVMFuzzerTestOneInput_latch.v
-   (a working branch ec4dd616ed1), in the form of that file's worked dispatch lf_seg_jt.  It walks
+   (a working branch), in the form of that file's worked dispatch lf_seg_jt.  It walks
    fuzz_reply.asan-ubsan 0x84804-0x84820 (read from B's own objdump,
    fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) of the pinned image fuzz_reply.asan-ubsan, sha256 10ffb5f9202ae2bd...):
      0x84804  jal   856a0 <check_bounded>                 (fuzz_reply.c:740)
@@ -26,6 +26,7 @@
      cbk_spec; so W1_check_bounded below is cb_spec itself (W_asm.v P_check_bounded's text).
    - ERRNO_LOW is lib/B/W_LLVMFuzzerTestOneInput_G.v c_ERRNO_LOW's text.
    - The globals are fr_globals_b (the cut's fr_RG). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -288,7 +289,7 @@ Hypothesis LAWS : AR_laws segs B.
 Hypothesis HG : gx_ok segs B G_fr.
 Variable LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
-(* check_bounded's contract at B's entry 0x856a0: the kit's cb_spec (lib/B/W_contract.v:212), whose post
+(* check_bounded's contract at B's entry 0x856a0: the kit's cb_spec (lib/B/W_contract.v:213), whose post
    aleafx_post keeps every byte outside the callee's 16-byte frame; the text lib/B/W_asm.v P_check_bounded states
    and S_check_bounded proves from lib/B/W_check_bounded.v pb_check_bounded. *)
 Hypothesis W1_check_bounded : cb_spec (PI := PB_fr) B (BASE + AF_fr_check_bounded).

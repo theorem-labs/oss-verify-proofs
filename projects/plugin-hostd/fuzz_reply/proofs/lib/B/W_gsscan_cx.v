@@ -6,7 +6,7 @@
    the machine-state helpers of the walk and the loop's two symbolic seats.  Proves no function (kind: segment
    lemma of drain's image-B walk, GS piece gs_scan).  The stage statement is lib/B/W_drain_gs.v's gs_scan_stmt;
    the Section header below is that file's, verbatim.
-   Structure from image A's lib/A/W_gsscanb_cx.v / W_gsscanb.v (a working branch 0c06ccc287f); every
+   Structure from image A's lib/A/W_gsscanb_cx.v / W_gsscanb.v (a working branch); every
    pc, register, frame slot and trap is read from image B's listing (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) 0x83aa4 .. 0x83db0)
    and checked against the symbolic engine's own states (the cuts below are the ones it computes).
 
@@ -28,6 +28,7 @@
    Cuts: GSL (0x83b34, slot n read next, none below n matched) and GSN (0x83b8c, slot n read and not matched),
    both GSBODY with the head's pc / no-match bound n or S n.  kf = the slots left = s3, so the induction is on
    the external kf. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1232,7 +1233,7 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file (image B's DR_x slice D, 2026-10-30; the B twin of lib/A/W_gsscanb_cx.v's
-   Section cx and of lib/A/W_gsscanb.v's cut lemmas at a working branch 50623273289): the loop's cuts and
+   Section cx and of lib/A/W_gsscanb.v's cut lemmas at a working branch): the loop's cuts and
    the machine-state helpers over lib/B/W_drain_cx_x.v's Section variables (B PST ARx MT RP MMAX RG), with the entry's
    ghost list Hp and budget kr after cx and a cut's own ghost list Hp1 after S1 (lib/B/W_drain_gs.v's GSB_x).
    Everything above this line is unchanged, so every AR statement of this file keeps its text and its Section list.

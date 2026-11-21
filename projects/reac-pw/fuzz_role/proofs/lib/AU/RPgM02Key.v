@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v at 48d3cf0d8e40 (its closing
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v (its closing
    theorem rt_m02_key_A and m2k_near) for image B (fuzz_rate.asan-ubsan): the four pieces are image B's files
    lib/AU/RtPgM02KeyCB.v, RtPgM02KeyVB.v, RtPgM02KeyFB.v chained by lib/AU/RtPgM02KitB.v m2kb_chain, and pod_nearest's
    contract comes from lib/AU/RtPgNearB.v rt_pod_nearest_B (its Section hypotheses are this file's). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02KeyB.v at f07713e8e823 and
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02Key.v at 887bee7c56d for reac-pw/fuzz_role image B (fuzz_role.asan-ubsan):
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02KeyB.v and
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02Key.v for reac-pw/fuzz_role image B (fuzz_role.asan-ubsan):
    the four pieces are image B's files lib/AU/RPgM02KeyC.v, RPgM02KeyI.v, RPgM02KeyF.v and RPgM02KeyV.v chained by
    lib/AU/RPgM02KeyBase.v m2k_chain; pod_nearest's contract is the theorem lib/AU/RPgNearA.v rl_pod_nearest_B,
    called inside lib/AU/RPgM02KeyF.v, and check_role's lib/AU/RPgCheck.v rl_check_role_B, called inside
    lib/AU/RPgM02KeyV.v; the Section hypotheses are role A's (MTL, LAWS, ASTRCMP, HGOT, HSC) at image B's
    addresses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role, image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, the same loaded bytes): THE KEY MATCH of

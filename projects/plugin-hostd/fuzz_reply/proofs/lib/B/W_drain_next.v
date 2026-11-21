@@ -10,15 +10,16 @@
      0x839e0  bne s7,a0 -> 0x8395c            the UBSan pointer-overflow check of s7 + 1 (PTR_EQK_FT): its
      0x839e4  j 0x84004 (unimp)                NOT-TAKEN edge traps.  Refuted with the trap kit's recipe for this
                                               site (lib/B/W_traps.v census row "WRAP p+1 = 0, ft",
-                                              a working branch 6c73ae99620): R1 (s7's atom fact 4096 .. DCEIL) plus
+                                              a working branch): R1 (s7's atom fact 4096 .. DCEIL) plus
                                               the seated closer trap_seat (trap_br_eq ..) : acond_ok (s7 <> -1), so
                                               the runner decides the branch taken.
    then 0x8395c is lib/B/W_drain_join.v's cut DJ at p, and dr_memchr_join ends in DLL p q or DLR p.
-   STRUCTURE PORTED FROM a working branch 1c09e330abe lib/B/Prog/drain_p_next_step.v (the step
+   STRUCTURE PORTED FROM a working branch lib/B/Prog/drain_p_next_step.v (the step
    from the line's NUL to the next memchr); nothing is copied, the vocabulary is this framework's.
    ARx FORM (an internal work row): Section cx proves dr_next_x, W_drain_cx_x.v's dr_next_stmt_x, over any allocator relation ARx
    (the twin of lib/A/W_drain_next.v's dr_next_x of DR_x slice B): the same walk to DJ, then W_drain_join.v's
    dr_memchr_join_x; its journal is at W_contract_x.v's DRAIN_STK_x; the AR walk dr_next (Section c) is unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

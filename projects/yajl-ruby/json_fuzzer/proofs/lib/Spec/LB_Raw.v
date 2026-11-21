@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (QI_fds takes that the model's vDSO/vvar pair is unchanged, for KLink's kl_vdso, and QI_after_node gives it by Nodes.nstep_vdso). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -100,11 +101,14 @@ Proof.
   - rewrite <- (zsum_map_perm _ _ _ HXY) || idtac. unfold R63X in *. rewrite (zsum_map_perm _ _ _ (Permutation_sym HXY)). exact HB.
 Qed.
 
-Lemma QI_fds X P s mo mo' : QI X P s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_vm_materialized mo' = [] -> QI X P s mo'.
+(* LPS 727298f3: [KLink.kl_vdso] reads the vDSO/vvar pair of the model ([Nodes.vdso_of]), which
+   the kernel build and the mmap base fix, so a model with the same maps must also keep it. *)
+Lemma QI_fds X P s mo mo' : QI X P s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_vm_materialized mo' = [] ->
+  vdso_of mo' = vdso_of mo -> QI X P s mo'.
 Proof.
-  intros [(st & L & BL & LS & E & INV & SI & HAQ & HK & HL & HP & HLV) HB] Hvm Hmi Hh Hmat. split; [| exact HB].
+  intros [(st & L & BL & LS & E & INV & SI & HAQ & HK & HL & HP & HLV) HB] Hvm Hmi Hh Hmat Hvd. split; [| exact HB].
   exists st, L, BL, LS. repeat (split; [assumption|]). split; [| split; [| split; [exact HP| exact HLV]]].
-  - destruct HK; constructor; try (rewrite Hvm); auto.
+  - destruct HK; constructor; try (rewrite Hvm); try (rewrite Hvd); auto.
   - unfold LI in *. rewrite Hvm. exact HL.
 Qed.
 
@@ -119,8 +123,8 @@ Lemma QI_after_node X P s mo n rsp mo' evs :
   QI X P s mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo -> QI X P s mo'.
 Proof.
   intros Hlf HQ Hst Hvm. destruct (QI_minv _ _ _ _ HQ) as [Hmi Hh].
-  destruct (minv_preserved n mo rsp mo' evs Hlf Hmi Hh Hst) as [Hh' Hmi']. eapply QI_fds; eauto.
-  exact (nstep_mat_nil _ _ _ _ _ Hst (QI_mat _ _ _ _ HQ)).
+  destruct (minv_preserved n mo rsp mo' evs Hlf Hmi Hh Hst) as [Hh' Hmi'].
+  exact (QI_fds X P s mo mo' HQ Hvm Hmi' Hh' (nstep_mat_nil _ _ _ _ _ Hst (QI_mat _ _ _ _ HQ)) (nstep_vdso _ _ _ _ _ Hst)).
 Qed.
 
 (* [comment removed for export] *)

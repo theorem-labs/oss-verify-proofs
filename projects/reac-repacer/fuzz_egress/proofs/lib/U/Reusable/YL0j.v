@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0j.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv memory facts (26 common pairs, the rseq pairs, AT_NULL) derived from the entry runs before the start-up cut; the launch's in_channel_reader fact passed to the read loop). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -50,25 +51,31 @@ Lemma dir_arm : forall sp brk mbase tid lim a0 inp rnd ms1,
 in_argv inp = [a0; dot_path] ->
 valid_sp sp -> YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 valid_brk src0segs brk -> valid_argv [a0; dot_path] -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 entry_stack_fits sp [a0; dot_path] (in_envp inp) ->
-0 < bv_unsigned tid < 4194304 -> SRC_LIM_MIN <= lim ->
-st_ok src0segs (E_main sp [a0; dot_path] (in_envp inp) tid rnd) ss_m1 ms1 ->
-runs_at (bv_unsigned sp) (ms_mem ms1) (runs_main true sp [a0; dot_path] (in_envp inp) rnd) ->
-realizes src0segs (mkCfg ms1 (MD_dir tid brk mbase sp lim inp)) (SPEC_dir dot_path (in_fs inp)).
+0 < bv_unsigned tid < 4194304 -> SRC_LIM_MIN <= lim -> valid_mmap_base mbase -> YM05.rc_lim = lim -> in_channel_reader inp = true ->
+st_ok src0segs (E_main sp inp tid rnd) ss_m1 ms1 ->
+runs_at (bv_unsigned sp) (ms_mem ms1) (runs_main true sp inp rnd) ->
+realizes src0segs (mkCfg ms1 (MD_dir tid brk mbase sp lim inp rnd)) (SPEC_dir dot_path (in_fs inp)).
 Proof.
-intros sp brk mbase tid lim a0 inp rnd ms1 Hargv Hsp Hceil Hbrk Hva Hve Hfits Htid Hlim HS HR.
+intros sp brk mbase tid lim a0 inp rnd ms1 Hargv Hsp Hceil Hbrk Hva Hve Hvl Hlau Hfits Htid Hlim Hmb Hrclim Hcr HS HR.
+assert (HvaI : valid_argv (in_argv inp)) by (rewrite Hargv; exact Hva).
+assert (HfitsI : entry_stack_fits sp (in_argv inp) (in_envp inp)) by (rewrite Hargv; exact Hfits).
 unfold SPEC_dir. rewrite (tset_bind_eq _ _ _ _ _ (dir_m_eq init_state)).
-eapply (src0_malloc1 API AX sp brk mbase tid lim [a0; dot_path] (in_envp inp) rnd Hsp Hbrk Hlim Hva Hve Hceil ms1 (MD_dir tid brk mbase sp lim inp));
+eapply (src0_malloc1 API AX sp brk mbase tid lim inp rnd Hsp Hbrk Hlim HvaI Hve Hvl Hlau HfitsI Hceil Hrclim Hmb Hcr ms1 (MD_dir tid brk mbase sp lim inp rnd));
 [ unfold MD_dir, MD0, init_model; autorewrite with model; reflexivity
-| reflexivity | reflexivity | reflexivity | exact HS | |].
+| reflexivity | reflexivity | reflexivity | exact HS | exact HR | |].
 - exact (jinv_head_eq _ _ _ _ _ (dir_m_eq init_state) (dir_jinv dot_path (in_fs inp))).
 - intros res A' L' ms' md' g tr HS' HSA' HMR' HW' HB' [vm' Hmd] Hpath Hfr Hres.
 destruct (mr_model _ _ (aa_laws API) _ _ _ _ HMR') as (Hh' & Hlz' & _).
 assert (Hch : fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md').
-{ split; [| reflexivity]. rewrite Hmd. autorewrite with model. unfold MD_dir. autorewrite with model. rewrite MD0_fds. reflexivity. }
+{ split; [| split; [reflexivity|]].
+  - rewrite Hmd. autorewrite with model. unfold MD_dir. autorewrite with model. rewrite MD0_fds. reflexivity.
+  - rewrite Hmd. autorewrite with model. unfold MD_dir. autorewrite with model.
+    first [ rewrite MD0_channel_reader; exact Hcr | unfold MD0, init_model; autorewrite with model; exact Hcr ]. }
 assert (Hfs : m_fs md' = in_fs inp).
 { rewrite Hmd. autorewrite with model. unfold MD_dir. autorewrite with model. apply MD0_fs. }
-assert (HR' : runs_at (bv_unsigned sp) (ms_mem ms') (runs_main true sp [a0; dot_path] (in_envp inp) rnd)).
+assert (HR' : runs_at (bv_unsigned sp) (ms_mem ms') (runs_main true sp inp rnd)).
 { eapply runs_at_mbyte; [| | exact HR].
 - destruct Hsp as (H & _). revert H. unfold sp_window_lo. lia.
 - intros a Ha1 Ha2. apply Hfr; [| exact Ha1 | exact Ha2].
@@ -76,40 +83,46 @@ pose proof (YM05.ceil_le_top _ Hceil) as Hle. revert Hle Ha1. unfold stack_max_s
 destruct res as [q|]; cbn [tset dir_k ret fst snd].
 + rewrite <- Hfs. destruct Hres as (Ha0 & Hnz & b1 & b2 & Hub & _).
 assert (Hin : In (q, CAP0) (user_blocks A')) by (rewrite Hub; apply in_app_iff; right; left; reflexivity).
-pose proof (src0_dir_after_m1 API AX sp brk mbase tid lim [a0; dot_path] (in_envp inp) rnd Hsp Hva Hve Hfits Hceil a0 dot_path (ms_regs ms') g ms' md' L' A' q
-eq_refl HRE ltac:(cbn; lia) Htid HS' eq_refl HR' HMR' Hin Ha0 inp (ex_intro _ vm' Hmd)) as X.
+pose proof (src0_dir_after_m1 API AX sp brk mbase tid lim inp rnd Hsp Hbrk Hlim HvaI Hve Hvl Hlau HfitsI Hceil Hrclim Hmb Hcr a0 dot_path (ms_regs ms') g ms' md' L' A' q
+Hargv HRE ltac:(cbn; lia) Htid HS' eq_refl HR' HMR' Hin Ha0 (ex_intro _ vm' Hmd)) as X.
 exact X.
 + rewrite <- Hfs. destruct Hres as [Ha0 _].
-exact (src0_m1_oom sp tid [a0; dot_path] (in_envp inp) rnd (ms_regs ms') g ms' md' _ HS' Ha0 eq_refl Hh' Hlz' Hch eq_refl).
+exact (src0_m1_oom API AX sp brk mbase tid lim inp rnd Hsp Hbrk Hlim HvaI Hve Hvl Hlau HfitsI Hceil Hrclim Hmb Hcr (ms_regs ms') g ms' md' _ HS' Ha0 eq_refl Hh' Hlz' Hch eq_refl).
 Qed.
 Lemma file_arm : forall sp brk mbase tid lim a0 path inp data rnd ms1,
 in_argv inp = [a0; path] ->
 valid_sp sp -> YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 valid_brk src0segs brk -> valid_argv [a0; path] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 entry_stack_fits sp [a0; path] (in_envp inp) ->
-0 < bv_unsigned tid < 4194304 -> SRC_LIM_MIN <= lim ->
+0 < bv_unsigned tid < 4194304 -> SRC_LIM_MIN <= lim -> valid_mmap_base mbase -> YM05.rc_lim = lim -> in_channel_reader inp = true ->
 fs_lookup (in_fs inp) path = Some data ->
-st_ok src0segs (E_main sp [a0; path] (in_envp inp) tid rnd) ss_m1 ms1 ->
-runs_at (bv_unsigned sp) (ms_mem ms1) (runs_main true sp [a0; path] (in_envp inp) rnd) ->
-realizes src0segs (mkCfg ms1 (MD_file path tid brk mbase sp lim inp)) (SPECX_loaded data (in_fs inp)).
+st_ok src0segs (E_main sp inp tid rnd) ss_m1 ms1 ->
+runs_at (bv_unsigned sp) (ms_mem ms1) (runs_main true sp inp rnd) ->
+realizes src0segs (mkCfg ms1 (MD_file path tid brk mbase sp lim inp rnd)) (SPECX_loaded data (in_fs inp)).
 Proof.
-intros sp brk mbase tid lim a0 path inp data rnd ms1 Hargv Hsp Hceil Hbrk Hva Hve Hvfs Hfits Htid Hlim Hlk HS HR.
+intros sp brk mbase tid lim a0 path inp data rnd ms1 Hargv Hsp Hceil Hbrk Hva Hve Hvfs Hvl Hlau Hfits Htid Hlim Hmb Hrclim Hcr Hlk HS HR.
+assert (HvaI : valid_argv (in_argv inp)) by (rewrite Hargv; exact Hva).
+assert (HfitsI : entry_stack_fits sp (in_argv inp) (in_envp inp)) by (rewrite Hargv; exact Hfits).
 unfold SPECX_loaded. rewrite (tset_bind_eq _ _ _ _ _ (driver_tree_eq data)).
 pose proof (do_jinvX DOB data (in_fs inp)) as HJ. pose proof (do_gtreeX DOB data) as HGT.
 pose proof (DRV data) as HL. rewrite (driver_tree_eq data) in HL.
-assert (HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G).
-{ intros G HG. apply (anchored_main sp [a0; path] (in_envp inp) rnd Hsp Hva Hve Hceil G tid). rewrite HG. vm_compute. reflexivity. }
-eapply (src0_malloc1 API AX sp brk mbase tid lim [a0; path] (in_envp inp) rnd Hsp Hbrk Hlim Hva Hve Hceil ms1 (MD_file path tid brk mbase sp lim inp));
+assert (HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G).
+{ intros G HG. apply (anchored_main API AX sp brk mbase tid lim inp rnd Hsp Hbrk Hlim HvaI Hve Hvl Hlau HfitsI Hceil Hrclim Hmb Hcr G tid). rewrite HG. vm_compute. reflexivity. }
+eapply (src0_malloc1 API AX sp brk mbase tid lim inp rnd Hsp Hbrk Hlim HvaI Hve Hvl Hlau HfitsI Hceil Hrclim Hmb Hcr ms1 (MD_file path tid brk mbase sp lim inp rnd));
 [ unfold MD_file, MD0, init_model; autorewrite with model; reflexivity
-| reflexivity | reflexivity | reflexivity | exact HS | |].
+| reflexivity | reflexivity | reflexivity | exact HS | exact HR | |].
 - exact (jinv_head_eq _ _ _ _ _ (driver_tree_eq data) HJ).
 - intros res A' L' ms' md' g tr HS' HSA' HMR' HW' HB' [vm' Hmd] Hpath Hfr Hres.
 destruct (mr_model _ _ (aa_laws API) _ _ _ _ HMR') as (Hh' & Hlz' & _).
 assert (Hch : fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md').
-{ split; [| reflexivity]. rewrite Hmd. autorewrite with model. unfold MD_file. autorewrite with model. rewrite MD0_fds. reflexivity. }
+{ split; [| split; [reflexivity|]].
+  - rewrite Hmd. autorewrite with model. unfold MD_file. autorewrite with model. rewrite MD0_fds. reflexivity.
+  - rewrite Hmd. autorewrite with model. unfold MD_file. autorewrite with model.
+    first [ rewrite MD0_channel_reader; exact Hcr | unfold MD0, init_model; autorewrite with model; exact Hcr ]. }
 assert (Hfs : m_fs md' = in_fs inp).
 { rewrite Hmd. autorewrite with model. unfold MD_file. autorewrite with model. apply MD0_fs. }
-assert (HR' : runs_at (bv_unsigned sp) (ms_mem ms') (runs_main true sp [a0; path] (in_envp inp) rnd)).
+assert (HR' : runs_at (bv_unsigned sp) (ms_mem ms') (runs_main true sp inp rnd)).
 { eapply runs_at_mbyte; [| | exact HR].
 - destruct Hsp as (H & _). revert H. unfold sp_window_lo. lia.
 - intros a Ha1 Ha2. apply Hfr; [| exact Ha1 | exact Ha2].
@@ -122,78 +135,87 @@ destruct b1; [| discriminate]. destruct b2; [| discriminate]. auto. }
 destruct Hb12 as [-> ->]. cbn [app] in Hub.
 assert (Hid : st_init_done A' = true).
 { exact (malloc_init_state_init_done CAP0 tr b0 A' ltac:(unfold CAP0; lia) (cpath_yields _ _ _ Hpath)). }
-pose proof (src0_read_loop API AX sp tid a0 path inp data rnd Hlk HSA0 (run_RI RI (payload data)) brk mbase lim (ms_regs ms') g ms' md' L' A' b0 vm' _
-HS' Ha0 HMR' HW' HB' Hid Hub Hmd
+pose proof (src0_read_loop API AX sp tid path inp data rnd Hlk HSA0 (run_RI RI (payload data)) brk mbase lim (ms_regs ms') g ms' md' L' A' b0 vm' _
+HS' Ha0 HMR' HW' HB' Hid Hub Hmd Hcr
 (jinv_after_eq _ _ _ _ _ _ _ _ (driver_tree_eq data) HJ Hpath) (gtree_after_eq _ _ _ _ _ _ _ _ (driver_tree_eq data) HGT Hpath)
 (leaves_mbind_after _ _ _ _ _ _ _ HL Hpath)
-(fun r => t_eq_refl _) (src0_postX API AX GI RI OUT GIL GI0 LIBX fp_frm_zero_fx0 sp tid a0 path inp data rnd HSA0 Hvfs ltac:(exact (proj1 (proj2 Hsp))) _ (fun r => t_eq_refl _))) as X.
+(fun r => t_eq_refl _) (src0_postX API AX GI RI OUT GIL GI0 LIBX fp_frm_zero_fx0 sp tid inp data rnd HSA0 Hvfs ltac:(exact (proj1 (proj2 Hsp))) _ (fun r => t_eq_refl _))) as X.
 exact X.
 + rewrite <- Hfs. destruct Hres as [Ha0 _].
-exact (src0_m1_oom sp tid [a0; path] (in_envp inp) rnd (ms_regs ms') g ms' md' _ HS' Ha0 eq_refl Hh' Hlz' Hch eq_refl).
+exact (src0_m1_oom API AX sp brk mbase tid lim inp rnd Hsp Hbrk Hlim HvaI Hve Hvl Hlau HfitsI Hceil Hrclim Hmb Hcr (ms_regs ms') g ms' md' _ HS' Ha0 eq_refl Hh' Hlz' Hch eq_refl).
 Qed.
 Lemma argv2_arm : forall sp brk mbase tid lim a0 path inp rnd ms,
 in_argv inp = [a0; path] ->
 valid_sp sp -> YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 valid_brk src0segs brk -> valid_argv [a0; path] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 entry_stack_fits sp [a0; path] (in_envp inp) ->
-0 < bv_unsigned tid < 4194304 -> SRC_LIM_MIN <= lim ->
-st_ok src0segs (E_main sp [a0; path] (in_envp inp) tid rnd) ss_main_t ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main true sp [a0; path] (in_envp inp) rnd) ->
-realizes src0segs (mkCfg ms (MD0 tid brk mbase sp lim inp)) (SPECX_args [a0; path] (in_fs inp)).
+0 < bv_unsigned tid < 4194304 -> SRC_LIM_MIN <= lim -> valid_mmap_base mbase -> YM05.rc_lim = lim -> in_channel_reader inp = true ->
+st_ok src0segs (E_main sp inp tid rnd) ss_main_t ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main true sp inp rnd) ->
+realizes src0segs (mkCfg ms (MD0 tid brk mbase sp lim inp rnd)) (SPECX_args [a0; path] (in_fs inp)).
 Proof.
-intros sp brk mbase tid lim a0 path inp rnd ms Hargv Hsp Hceil Hbrk Hva Hve Hvfs Hfits Htid Hlim HS HR.
+intros sp brk mbase tid lim a0 path inp rnd ms Hargv Hsp Hceil Hbrk Hva Hve Hvfs Hvl Hlau Hfits Htid Hlim Hmb Hrclim Hcr HS HR.
 unfold SPECX_args, classify_open.
 destruct (Nat.leb_spec path_max (length path)) as [Hlong|Hshort].
-{ change path_max with 4096%nat in Hlong. exact (src0_open_toolong sp brk mbase tid lim a0 path inp rnd Hsp Hva Hve Htid Hfits HCO ms Hlong HS HR). }
+{ change path_max with 4096%nat in Hlong. exact (src0_open_toolong sp brk mbase tid lim a0 path inp rnd Hargv Hsp Hva Hve Hvl Hlau Htid Hfits HCO Hcr ms Hlong HS HR). }
 change path_max with 4096%nat in Hshort.
 destruct (path_eqb path []) eqn:Enil.
-{ apply path_eqb_eq in Enil. exact (src0_open_empty sp brk mbase tid lim a0 path inp rnd Hsp Hva Hve Htid Hfits HCO ms Enil HS HR). }
+{ apply path_eqb_eq in Enil. exact (src0_open_empty sp brk mbase tid lim a0 path inp rnd Hargv Hsp Hva Hve Hvl Hlau Htid Hfits HCO Hcr ms Enil HS HR). }
 assert (Hne : path <> []) by (intros ->; rewrite path_eqb_refl in Enil; discriminate).
 destruct (path_eqb path dot_path) eqn:Edot.
 { apply path_eqb_eq in Edot. subst path.
-apply (src0_open_dir sp brk mbase tid lim a0 dot_path inp rnd Hsp Hva Hve Htid Hfits HCO ms eq_refl HS HR).
-intros ms1 HS1 HR1. exact (dir_arm sp brk mbase tid lim a0 inp rnd ms1 Hargv Hsp Hceil Hbrk Hva Hve Hfits Htid Hlim HS1 HR1). }
+apply (src0_open_dir sp brk mbase tid lim a0 dot_path inp rnd Hargv Hsp Hva Hve Hvl Hlau Htid Hfits HCO Hcr ms eq_refl HS HR).
+intros ms1 HS1 HR1. exact (dir_arm sp brk mbase tid lim a0 inp rnd ms1 Hargv Hsp Hceil Hbrk Hva Hve Hvl Hlau Hfits Htid Hlim Hmb Hrclim Hcr HS1 HR1). }
 assert (Hnd : path <> dot_path) by (intros ->; rewrite path_eqb_refl in Edot; discriminate).
 pose proof (plain_name_of_argv a0 path Hva Hnd) as Hpn.
 destruct (fs_lookup (in_fs inp) path) as [data|] eqn:Hlk.
-- apply (src0_open_file sp brk mbase tid lim a0 path inp rnd Hsp Hva Hve Htid Hfits HCO ms data Hshort Hne Hpn Hlk HS HR).
-intros ms1 HS1 HR1. exact (file_arm sp brk mbase tid lim a0 path inp data rnd ms1 Hargv Hsp Hceil Hbrk Hva Hve Hvfs Hfits Htid Hlim Hlk HS1 HR1).
-- exact (src0_open_absent sp brk mbase tid lim a0 path inp rnd Hsp Hva Hve Htid Hfits HCO ms Hshort Hne Hpn Hlk HS HR).
+- apply (src0_open_file sp brk mbase tid lim a0 path inp rnd Hargv Hsp Hva Hve Hvl Hlau Htid Hfits HCO Hcr ms data Hshort Hne Hpn Hlk HS HR).
+intros ms1 HS1 HR1. exact (file_arm sp brk mbase tid lim a0 path inp data rnd ms1 Hargv Hsp Hceil Hbrk Hva Hve Hvfs Hvl Hlau Hfits Htid Hlim Hmb Hrclim Hcr Hlk HS1 HR1).
+- exact (src0_open_absent sp brk mbase tid lim a0 path inp rnd Hargv Hsp Hva Hve Hvl Hlau Htid Hfits HCO Hcr ms Hshort Hne Hpn Hlk HS HR).
 Qed.
 Theorem src0_realizes_specX : forall sp brk mbase rnd lim inp,
 valid_sp sp -> valid_brk src0segs brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 valid_input inp -> SRC_LIM_MIN <= lim ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
+YM05.rc_lim = lim ->
 realizes src0segs (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk mbase rnd lim inp) (SPECX inp).
 Proof.
-intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits (Hva & Hve & Hvfs & Hcreds) Hlim Hceil.
+intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hlau Hinput Hlim Hceil Hrclim.
+pose proof (valid_input_argv inp Hinput) as Hva. pose proof (valid_input_envp inp Hinput) as Hve.
+pose proof (valid_input_launch inp Hinput) as Hvl. pose proof (proj1 (proj2 (proj2 Hinput))) as Hvfs.
+pose proof (valid_input_channel_reader inp Hinput) as Hcr.
 unfold SPECX.
 destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen | Hlen].
 - destruct (in_argv inp) as [|a0 [|path [|x r]]] eqn:Hargv; try (cbn in Hlen; lia).
-apply (src0_start true sp brk mbase rnd lim inp _ Hsp); [rewrite Hargv; exact Hva | exact Hve | rewrite Hargv; exact Hfits | rewrite Hargv; cbn; lia |].
-intros ms tid Htid HS HR. rewrite Hargv in HS, HR.
-change (with_tid tid (init_model (segments_reserved src0segs) brk mbase sp lim inp)) with (MD0 tid brk mbase sp lim inp).
-exact (argv2_arm sp brk mbase tid lim a0 path inp rnd ms Hargv Hsp Hceil Hbrk Hva Hve Hvfs Hfits Htid Hlim HS HR).
-- apply (src0_start false sp brk mbase rnd lim inp _ Hsp Hva Hve Hfits I).
+assert (HvaL : valid_argv [a0; path]) by (rewrite <- Hargv; exact (valid_input_argv inp Hinput)).
+assert (HfitsL : entry_stack_fits sp [a0; path] (in_envp inp)) by (first [exact Hfits | rewrite <- Hargv; exact Hfits]).
+apply (src0_start true sp brk mbase rnd lim inp _ Hsp); [exact (valid_input_argv inp Hinput) | exact Hve | rewrite Hargv; exact HfitsL | exact Hvl | exact Hlau | rewrite Hargv; cbn; lia |].
+intros ms tid Htid HS HR. rewrite ?Hargv in HS, HR.
+change (with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved src0segs) brk mbase sp lim inp))) with (MD0 tid brk mbase sp lim inp rnd).
+exact (argv2_arm sp brk mbase tid lim a0 path inp rnd ms Hargv Hsp Hceil Hbrk HvaL Hve Hvfs Hvl Hlau HfitsL Htid Hlim Hmb Hrclim Hcr HS HR).
+- apply (src0_start false sp brk mbase rnd lim inp _ Hsp Hva Hve Hfits Hvl Hlau I).
 intros ms tid Htid HS HR.
 assert (Hh : m_halted (with_tid tid (init_model (segments_reserved src0segs) brk mbase sp lim inp)) = None) by reflexivity.
 assert (Hlz : m_vm_lazy (with_tid tid (init_model (segments_reserved src0segs) brk mbase sp lim inp)) = []) by reflexivity.
 replace (SPECX_args (in_argv inp) (in_fs inp)) with (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 2:{ unfold SPECX_args. destruct (in_argv inp) as [|x [|y [|z r]]]; try reflexivity. cbn in Hlen. lia. }
-change (in_fs inp) with (m_fs (MD0 tid brk mbase sp lim inp)).
-apply (HU sp (in_argv inp) (in_envp inp) tid rnd ms _ Hsp Hva Hve Hfits).
+change (in_fs inp) with (m_fs (MD0 tid brk mbase sp lim inp rnd)).
+apply (HU sp inp mbase brk tid rnd ms _ Hsp Hva Hve Hvl Hlau Hfits).
 + exact Hlen.
 + apply st_ok_add_cond; [exact HS |].
-pose proof (ew3 sp (in_argv inp) (in_envp inp) Hva (xw_main sp (in_argv inp) (in_envp inp) tid rnd) (xd_main rnd)) as H3.
-change (E0 _ _ _ _ _) with (E_main sp (in_argv inp) (in_envp inp) tid rnd) in H3.
+pose proof (ew3 src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau 1 ltac:(lia) (xw_main inp rnd tid) (xd_main rnd)) as H3.
+change (E0 _ _ _ _ _ _ _ _) with (E_main sp inp tid rnd) in H3.
 unfold branch_taken. cbn [sv_denot]. rewrite Z.add_0_r, Z_to_bv_bv_unsigned.
 apply Bool.negb_true_iff. apply bv_eqb_neq. intros Heq.
 apply (f_equal bv_unsigned) in Heq. rewrite H3 in Heq. change (bv_unsigned (Z_to_bv 64 2)) with 2 in Heq. lia.
 + exact HR.
 + exact Hh.
 + exact Hlz.
-+ split; reflexivity.
++ split; [reflexivity | split; [reflexivity |]].
+  first [ rewrite MD0_channel_reader; exact Hcr | unfold MD0, init_model; autorewrite with model; exact Hcr | cbn; exact Hcr ].
 Qed.
 End c.
 End b.

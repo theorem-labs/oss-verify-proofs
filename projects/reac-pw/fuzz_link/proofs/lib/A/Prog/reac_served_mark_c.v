@@ -159,7 +159,7 @@
    leaves g_nl alone (it returns before any callee), even though it does push a frame and take a side frame.
    THE FLOATING-POINT STATE is `aleaf_fx`'s. Entry: the shape takes `YK0o.frm_zero (fp_csr fx)`, which the
    released printf-family contracts ask (boxreg A/Rt/SnprintfDef.v; the printf family's shared contract) and the plain
-   mark_quietly states (lib/Prog/mark_quietly_c.v:151); it holds at every call site, because the start-up fcsr
+   mark_quietly states (lib/Prog/mark_quietly_c.v:152); it holds at every call site, because the start-up fcsr
    is 0 (`fp_frm_zero_fx0`, Reusable/YK0o.v:15) and none of link's own functions holds an f* or csr*
    instruction. Exit: `apostF` returns at some fx' with `BoxBase.fxr fx fx'` (every f register but f10 kept,
    the fcsr kept or its rounding mode 0), which is what the two wrapper_fprintf calls, reac_code_emit and

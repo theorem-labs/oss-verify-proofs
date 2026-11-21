@@ -5,7 +5,7 @@
 
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-A walk, segment A9; the whole
    function's rule-24 line and the G3 walk owner's CONFIRM of 2026-10-30T15:42:08Z are in the unit's internal
-   record, commit dfb49d6ad789, path records/segp/g3-lookup.md, reuse verdict
+   record, path records/segp/g3-lookup.md, reuse verdict
    none: written new)
 
    THE CHAIN, read from the last cut back to the first, as chain_words_a.v chains its six segments:

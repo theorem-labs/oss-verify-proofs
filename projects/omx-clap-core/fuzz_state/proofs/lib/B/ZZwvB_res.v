@@ -6,13 +6,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_write_value.v, with its module names changed; 222 of its 422 lines of code are new or changed and 1492 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/ZZwv_cps.v; 469 of its 545 lines of code are new or changed and 346 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/ZZwv_cind.v, with its module paths, module names and numbers changed; 248 of its 297 lines of code are new or changed and 496 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_res.v (a working branch
-   1a5dc5b2e7c): same lemma names; adapted to image B's frame (WVC_F = 192, the entry d in the frame slot 24, so
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_res.v (a working branch):
+   same lemma names; adapted to image B's frame (WVC_F = 192, the entry d in the frame slot 24, so
    wvc_cs0 names xatom 4), B's loop registers (ZZwvB_defs.wvc_Lregs), B's atom facts (wvc_gfA / wvc_gfK carry facts on
    s5 = i, kids and keys, so wvc_resume_rs takes the premises they need), B's open state (the plain fss_retT, so
    wvc_ssO_ret is the identity) and the close-point state (the new wvc_ssN_ret); the root node's place facts come from
    FSW_write_value_entry.wv_pobj (lib/B's FSH_Fn_reader.pobj); imports point at lib/B's image files and walk kit.
    rule 24: proves no function (kind: segment lemma) - the container arms of write_value B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* write_value's CONTAINER arms (fs.asan-ubsan image B, write_value 0x84010): the RESUMED STATE of the container loop.
    - wvc_resume_rs / wvc_resume_rs0: the extra regions (the node at atom 9, the object's key slot), the whole region
      list's disjointness, the atom facts and the shadow entries of a loop state and of the open state, from the facts at

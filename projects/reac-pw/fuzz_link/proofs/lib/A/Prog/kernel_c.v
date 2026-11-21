@@ -87,7 +87,7 @@
    - the 2- and 4-byte stores into w2 (first and last byte of each; slow paths +0xf88..+0x1068, +0x1b90..+0x1e78):
      +0x718 .. +0x1b00 (78 loads), every one inside [w2, w2 + 4096). They pass with no premise: frame_alloc_8 zeroes
      the shadow of the 0x2240 bytes asked (class 8 is size-premised: A/AStackApi.v:10-16 astack_malloc_sz_realizes,
-     Reusable/AsStackSz.v:41), which hold w1 and w2; kernel poisons only its redzones and w1 / w2, and unpoisons w2
+     Reusable/AsStackSz.v:42), which hold w1 and w2; kernel poisons only its redzones and w1 / w2, and unpoisons w2
      (meta_fill_00 +0x5b0, +0x1e88) before any of them.
 
    WHICH INSTRUCTION NEEDS WHICH PREMISE:
@@ -165,7 +165,7 @@
      visible (`atail_vis`), which holds at every state at the image, not by a read set: mbyte falls back to seg_rom
      (YP09.v:18-22), seg_rom is Some on all of [0x10000, 0x654000) (AB13.v:148 tfib_rom_all), and image bytes are
      never hidden (YK04.v:38 H_off_segments). (No callee contract keeps an owned-static byte: frame_alloc_8's
-     Reusable/AsStackSz.v:44-45 and the A posts' akept do not.) A length known only from memory (the input's wn, a
+     Reusable/AsStackSz.v:45-46 and the A posts' akept do not.) A length known only from memory (the input's wn, a
      string's |s|) is the unique value the Pre's views fix: the ranges are stated (au64_at with 0 <= v < 2 ^ 64;
      acstr_at's abytes bounds p and p + |s| + 1).
    EV = 0: no allocator event (stack_malloc / stack_free change only st_fs, YG00.v:576-589).

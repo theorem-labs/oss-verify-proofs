@@ -339,7 +339,7 @@ Definition srm_gspan (p n a : Z) : Prop := p <= a < p + n - (p + n) mod 8 + 8.
 
 (* Every byte of the name and of each live table string, with its NUL, is one the call keeps (akb at the entry):
    the contract's read set (amk_rd: astr_rd and amk_tab_rd, string + NUL over the live entries; the mark contracts'
-   W6 revert ab90b9e2923d). The rest of each NUL's granule is not here: astr_rt_ok asks it only VISIBLE, which
+   W6 revert). The rest of each NUL's granule is not here: astr_rt_ok asks it only VISIBLE, which
    reac_served_markKitAt.v srm_tail_vis derives at every cut from AR and the image's ROM fallback. The name
    `srm_gspan_ok` is kept so that the segments' premises do not move. *)
 Definition srm_gspan_ok (cx : srmcx) : Prop :=

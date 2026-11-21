@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact as a section hypothesis of each section whose post builds MInvIR, by minvir_split). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -306,6 +307,7 @@ Local Notation mprev := (RingFacts.mprev s).
 
 Section ReabG.
 Variables (tr : list event) (md : Model) (msF : machine_state) (rhoF : valuation).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S0SbfQ40A1S31SbfQ8A1A1F_;VmW;S59Vrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -501,7 +503,7 @@ Qed.
 
 Theorem post_G : ltac2:(tb__ "0|0|
 S191VX;VU;S156Vs;VL;A2VKc;Vrho;S33S2cS114A1S154Vtr;S155VmsF;Vmd;A2A4A6").
-Proof using EmW Erd Evm Ewok HI HI' HKc HMI HSF_fcsr HSF_fregs HSF_match HSF_objs HSF_pc HSF_regs HSF_resv HXr HXr' HagF Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdelta Hdepth HdsC HdsF_ent HdsF_head HdsF_sem HdsF_vars Hent_hold Hgd Hgd_holds Hhd Hhd' Hheads' Hlocs Hm_ctz Hm_sct Hmaskv Hreq Hreq_rho Hrom Hsc Hsc_rho HsmF Hsm_pre Hsp Hsp_high Hspanv Hta0 Htier Htp Hub' Rg mG.
+Proof using EmW Erd Evm Ewok HagF Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdelta Hdepth HdsC HdsF_ent HdsF_head HdsF_sem HdsF_vars Hent_hold Hgd Hgd_holds Hhd Hhd' Hheads' HI HI' HKc Hlocs Hm_ctz Hm_sct Hmaskv HMI Hreq Hreq_rho Hrom Hsc Hsc_rho HSF_fcsr HSF_fregs HSF_match HSF_objs HSF_pc HSF_regs HSF_resv Hsm_pre HsmF Hsp Hsp_high Hspanv Hta0 Htier Htp Hub' Hvd HXr HXr' mG Rg.
   unfold GX. cbn [ma_s ma_L]. rewrite Hsc_rho.
   exists (mkMA s' L), rhoG.
   split; [exact agree_vals_rhoG|]. split; [reflexivity|]. split; [exact Hheads'|]. split; [exact Hub'|].
@@ -515,7 +517,7 @@ Proof using EmW Erd Evm Ewok HI HI' HKc HMI HSF_fcsr HSF_fregs HSF_match HSF_obj
   split; [exact smatch_G|].
 
   unfold J_as_pre. cbn [w_tr w_cfg cfg_model fst snd ma_s].
-  split. { unfold MInvIR. cbn [rm rhoG]. unfold mG. rewrite <- Evm.
+  split. { minvir_split. cbn [rm rhoG]. unfold mG. rewrite <- Evm.
            exact (minvI' tr md msF rhoF EmW HagF SF stkcG objsF dsF dsC HSF_objs HSF_match HsmF HdsF_vars HdsF_sem HdsF_ent Hent_hold s' None locs HI' HXr' Hdelta HdsC Hlocs). }
   split; [exact HXr'|]. split; [exact HKc|].
   cbn [rw rhoG]. rewrite !rwG_low by (unfold V_DEPTH; lia). rewrite Hsc_rho, Hreq_rho. pose proof Hsc. pose proof Hreq.
@@ -780,6 +782,7 @@ Local Notation mnext := (RingFacts.mnext s).
 Local Notation mprev := (RingFacts.mprev s).
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S0SbfQ40A1S31SbfQ8A1A1F_;VmW;S59Vrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -1310,7 +1313,7 @@ Qed.
 
 Lemma T0_ok : ltac2:(tb__ "0|0|
 S55S11aVrhoW;R1A2VTR;Z0S181Sb8VK;S11cR2A4S163VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3F_;FrhoA;").
-Proof using CS EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 CS EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   intros rhoA HagA.
   apply (seg_run 300 ST0_R1ns LT0_R1ns _ rhoA ST0_len ST0_next runT0_R1ns HagA).
   intros Lf rhoF [tr' [msF md']] Hin HagF [HsmF HK']. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HsmF, HK'.
@@ -1534,7 +1537,7 @@ Qed.
 
 Lemma T2_ok : ltac2:(tb__ "0|0|
 S55S11aVrhoW;R1A2VTR;Z0S181Sb8VK;S11dR2A4S163VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3F_;FrhoA;").
-Proof using CS EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 CS EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   intros rhoA HagA.
   apply (seg_run 300 ST2_R1ns LT2_R1ns _ rhoA ST2_len ST2_next runT2_R1ns HagA).
   intros Lf rhoF [tr' [msF md']] Hin HagF [HsmF HK']. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HsmF, HK'.
@@ -1578,7 +1581,7 @@ End T2.
 
 Theorem variant_R1ns : ltac2:(tb__ "0|0|
 VTR;Z0S181Sb8VK;S11eVrhoW;A4S163VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVpart HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv Hsv RR Rg am0.
+Proof using am0 EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv Hsv HVa0 HVact Hvd HVf0 HVpart HVskip HXr Rg RR.
   pose proof (aidx_range MM0) as AR. pose proof last_R as LR. pose proof cnt1_ge as CG. pose proof size_range as [SR _].
   destruct (span_facts sc (am_aidx (mam MM0)) Hsc ltac:(lia) HVpart) as [EX LE]. fold cnt1 in LE.
 
@@ -1881,6 +1884,7 @@ Local Notation mnext := (RingFacts.mnext s).
 Local Notation mprev := (RingFacts.mprev s).
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S0SbfQ40A1S31SbfQ8A1A1F_;VmW;S59Vrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -2468,7 +2472,7 @@ Qed.
 
 Lemma T0_ok : ltac2:(tb__ "0|0|
 S55S11aVrhoW;R1A2VTR;Z0S181Sb8VK;S12eR2A4S163VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3F_;FrhoA;").
-Proof using CS EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 CS EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   intros rhoA HagA.
   apply (seg_run 300 ST0_D2ns LT0_D2ns _ rhoA ST0_len ST0_next runT0_D2ns HagA).
   intros Lf rhoF [tr' [msF md']] Hin HagF [HsmF HK']. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HsmF, HK'.
@@ -2697,7 +2701,7 @@ Qed.
 
 Lemma T2_ok : ltac2:(tb__ "0|0|
 S55S11aVrhoW;R1A2VTR;Z0S181Sb8VK;S12fR2A4S163VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3F_;FrhoA;").
-Proof using CS EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 CS EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   intros rhoA HagA.
   apply (seg_run 300 ST2_D2ns LT2_D2ns _ rhoA ST2_len ST2_next runT2_D2ns HagA).
   intros Lf rhoF [tr' [msF md']] Hin HagF [HsmF HK']. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HsmF, HK'.
@@ -2741,7 +2745,7 @@ End T2.
 
 Theorem variant_D2ns : ltac2:(tb__ "0|0|
 VTR;Z0S181Sb8VK;S130VrhoW;A4S163VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVpart HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv Hsv RR Rg am0.
+Proof using am0 EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv Hsv HVa0 HVact Hvd HVf0 HVpart HVskip HXr Rg RR.
   pose proof (aidx_range MA_) as AR. pose proof last_R as LR. pose proof cnt1_ge as CG. pose proof size_range as [SR _].
   destruct (span_facts sc (am_aidx (mam MA_)) Hsc ltac:(lia) HVpart) as [EX LE]. fold cnt1 in LE.
 
@@ -2954,6 +2958,7 @@ Local Notation mnext := (RingFacts.mnext s).
 Local Notation mprev := (RingFacts.mprev s).
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S0SbfQ40A1S31SbfQ8A1A1F_;VmW;S59Vrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -3111,7 +3116,7 @@ Qed.
 
 Theorem variant_E : ltac2:(tb__ "0|0|
 VTR;Z0S181Sb8VK;S126VrhoW;A4S191VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVf0 HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv Htier Htp RR Rg am0.
+Proof using am0 EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv Htier Htp HVa0 Hvd HVf0 HXr Rg RR.
   apply (seg_run 300 SA_E LA_E _ rhoW eq_refl eq_refl runA_E (agrees_refl rhoW)).
   intros Lf rhoF [tr' [msF md']] Hin HagF [HsmF HK']. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HsmF, HK'.
   destruct (HKc _ _ HK') as (HKc' & -> & ->).
@@ -3333,6 +3338,7 @@ S0S31S98A1S74Vs;Vsc;A2S36S98A1A3").
 Ltac cells_inside_tac := unfold cells_inside; repeat constructor; cbn; lia.
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S0SbfQ40A1S31SbfQ8A1A1F_;VmW;S59Vrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -3586,7 +3592,7 @@ Qed.
 
 Theorem post_N : ltac2:(tb__ "0|0|
 S191VX;VU;S156Vs;VL;A2VKc;Vrho;S33S2cS114A1S154Vtr;S155VmsF;Vmd;A2A4A6").
-Proof using EmW Erd Evm Ewok HKc' HMI HXr HagF Hdepth Hgd Hgd_holds HhdN HinitN Hm_ctz Hm_sct Hreq Hreq_rho Hsc Hsc_rho HsmF Hsm_pre Hsp Hsp_high Htier Htp.
+Proof using EmW Erd Evm Ewok HagF Hdepth Hgd Hgd_holds HhdN HinitN HKc' Hm_ctz Hm_sct HMI Hreq Hreq_rho Hsc Hsc_rho Hsm_pre HsmF Hsp Hsp_high Htier Htp Hvd HXr.
   unfold GX. cbn [ma_s ma_L]. rewrite Hsc_rho.
   exists (mkMA s L), rhoN. cbn [ma_s ma_L].
   split; [exact agree_vals_rhoN|]. split; [reflexivity|]. split; [intros; reflexivity|]. split; [apply ub_same_refl|].
@@ -3599,7 +3605,7 @@ Proof using EmW Erd Evm Ewok HKc' HMI HXr HagF Hdepth Hgd Hgd_holds HhdN HinitN 
            rewrite <- EmW. pose proof Hgd_holds as HG. rewrite Erd in HG. exact HG. }
   split; [exact smatch_N|].
   unfold J_as_pre. cbn [w_tr w_cfg cfg_model fst snd ma_s].
-  split. { unfold MInvIR. cbn [rm rhoN]. rewrite <- EmW, <- Evm. pose proof HMI as H. rewrite Erd, Ewok in H. exact H. }
+  split. { minvir_split. cbn [rm rhoN]. rewrite <- EmW, <- Evm. pose proof HMI as H. rewrite Erd, Ewok in H. exact H. }
   split; [exact HXr|]. split; [exact HKc'|].
   cbn [rw rhoN]. rewrite !rwN_low by (unfold V_DEPTH; lia). rewrite Hsc_rho, Hreq_rho. pose proof Hsc. pose proof Hreq.
   split; [repeat split; try lia; try exact Htier|].
@@ -3615,7 +3621,7 @@ End PostN.
 
 Theorem variant_N : ltac2:(tb__ "0|0|
 VTR;Z0S181Sb8VK;S127VrhoW;A4S191VX;VU;S156Vs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HK HKc HMI HXr Hdepth Hgd Hgd_holds HhdN HinitN Hm_ctz Hm_sct Hreq Hreq_rho Hsc Hsc_rho Hsm_pre Hsp Hsp_high Htier Htp RR.
+Proof using EmW Erd Evm Ewok Hdepth Hgd Hgd_holds HhdN HinitN HK HKc Hm_ctz Hm_sct HMI Hreq Hreq_rho Hsc Hsc_rho Hsm_pre Hsp Hsp_high Htier Htp Hvd HXr RR.
   apply (seg_run 300 SA_N LA_N _ rhoW eq_refl eq_refl runA_N (agrees_refl rhoW)).
   intros Lf rhoF [tr' [msF md']] Hin HagF [HsmF HK']. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HsmF, HK'.
   destruct (HKc _ _ HK') as (HKc' & -> & ->).

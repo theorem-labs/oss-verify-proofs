@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (ras_pre2_intro, ralloc_slot_spec)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -24,9 +25,15 @@ Section CANSEC1. Context {rc : runConstT}.
 Lemma ras_pre2_intro : forall st LB t sc n, RAREACH st LB -> RMFACTS st LB -> (s_tick st < t)%N -> 0 <= sc < 48 -> 0 <= n < 2^32 ->
   n + 4 <= 16 * size_class sc -> ras_pre2 st (set_tick t st) sc n FUEL.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_alloc_slot ()) ["CANSEC1"] "h04__x1h14__p1h27__arithh34__ffh48__varmaph55__with62LBh74__x2h82ARh93FITh:2MFh;1Nh<2SCh=2TTh>1nh?2sch@2sthA1tp;1p;4p;2p;3p;5p;6p;7p;8g0000j1DTg000Pj4?Tg001Vj4OTg002Zj1GTg003Qj2eTg003mj1UTg004Rj12Tg0057j16Tg005Uj21Tg0061j20Tg006Lj2FTg006ij2;Tg007Fj1>Tg008Aj29Tg008^j27Tg009:j2BTg00:3j2CTg00;3j2VTg00;Mj2TTg00<Lj1RTg00=Dj3QTg00>Dj43Tg00>_j4NTg00?9j2MTg00@:j5LTg00AAj4KTg00B?j1ITg00B_j2ATg00C=j1HTg00C[j1JTg00DFj25Tg00Dij2@Tg00ELj4<Tg00F7j6PTg00F[j1ETg00G=j2STg00G_j2dTg00H9j2cTg00Hej3bTg00I?j3`Tg00I^j4_Tg00JPj1]Tg00Jnj3ZTg00KQj1[Tg00Koj4\Tg00LMj3YTg00M0j3XTg00MSj7^Tg00N7j7WTg00N[j8aTg00O?R0f0R1'7p=4f1R2g00O]R3g00P<R4P4g00P\R5P1g00Q<F^p=:f2R6P3P4P4P5P2P1FWp==f3R7P3P4P4P5P6P2P1Gap=8g00Q\g00RU#DR8g00SSg00T1R9p,2rcR:g00TOR;f4R<P7C?P:P;f5R=P<COf6R>#G/e<%4<R?g00UQR@#U#2#2#2#2#6RA,1<'0%2@RB#6RC%2BRD#2#2RE#2RF#6'FRG,1<,0?%6DRD,;=%6ERE%>>'9'7P:P;f;R?P1C?f9RH/B?,C?'0X68R?,V8f:RIf8RJ/BIRK'TRL%RKRMf7RN#4RO11NARP'0RQ%4>RR11>GRS'0RT1;>D%>N,9E'7R>'0RU'0RV'0RW'0P8P?PHP:P;PIPHC?1CIKP=AQIJ7C3CNPLPW1MIJPMPVPIPJP:P;PIPHP<DLP7CKPQPUPOPPp-0RPg00V6RU#IRQ%DURU1A92R<%H9RH%J9RIP91590g00VbR;1@9@R@C<,:IR:PIP3P4P4P5P7EPR35=I%E4R4P:C81SI5R5P1P6g00WIR:g00WiRV'd1c16=b:VdA`902C_R0b3b4b5X09W1RV%41/02%42[^09^1PR:P111JAPJP7O3b2PQPUP<PHPIP9P@g00XIRM159AC<,:IRW9=I3P4PWC8P5P0b3b4b5X09X1P111A,02112A[^09^1PP1%4JPJP7O3b2C3PTP>PRPSPVP:P111NGPNP6O3b2PQPUP<PHPIP9P@PM159C%]F5Z9C<,:IRF9=I3P4PFC8P5P0b3b4b5X09X1P111G,02112G[^09^1PP1POPNP6O3b2C3PQPUP91A96P2%[9C\PHPIP9159D9Y9@P;159E1@9B5X9C<,:IRIP4PIC8P5P0b3b4b5X09X791;1D19E2'71;2D19E6'7[^09^79P1%>JPNP2O3b2C3C3C3C3C3W9W;W<W=W:W8X>9W?WAW6W@o"). Qed.
+  intros st LB t sc n AR MF TT SC N FIT. split; [| split; [| split; [| repeat split; lia]]].
+  - exists LB. split; [exact AR| apply ist_top; exact TT].
+  - apply ER_refl_tick.
+  - apply ALLC_tick; [| exact TT]. exact (mf_cell_ticks _ _ MF).
+Qed.
 
 Theorem ralloc_slot_spec : ralloc_slot_stmt ras_pre2 as_inv2.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_alloc_slot ()) ["CANSEC1"] "h04fuelp;2p;1p;5p;3p100Y0p5p73110R0g00Z5R1p5p7511110R2p8P2P0p8g00[Aj25Tg00\Dj14Tg00]Mj20Tg00^Yj51Tg00_\j13TP1j32Tg00`Xp,2rcR1g00TOR0,51%411010f0D1W0%31g00a7521eo"). Qed.
+  unfold ralloc_slot_stmt. intros fuel.
+  exact (ralloc_slot_ok ram_pre ralloc_meta_spec MallocFacts_inv4.ist_ampre_proof fuel).
+Qed.
 End CANSEC1.

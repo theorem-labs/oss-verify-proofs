@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95be for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v for
    reac-pw/fuzz_rate's image A: role's pcs (C3 0x820c4, the memcpy return 0x820e4, the parse return 0x8210c, E
    0x8212c, MAL 0x823fc, T 0x82408) become rate's (0x828b8, 0x828dc, 0x8290c, E 0x82930, MAL 0x82c9c, A 0x82ca8);
    the registers are renamed as rate's code has them (pod s2 -> s6, &cell s6 -> s5 = &hz, flags & 1 s4 -> s3, the
@@ -10,7 +10,7 @@
    is lib/A/RtPgSteps.v rts_intrin_at (role's hd_memcpy dropped), the .rodata zone is [0x10000, 0x22000), the cut file
    is lib/A/RtPgSeg.v (rl_ -> rt_, e_ -> q_, the role cell -> rs_hz_at, the frame pattern at the exits rs_PZ), the
    entry-state and list lemmas come from lib/A/RtPgScanKit.v and the memory facts from lib/A/RtPgMem.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanHead.v at fa28558fbb17 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanHead.v for image B
    (fuzz_rate.asan-ubsan); image B's pcs (C3 0x82a30, the memcpy return 0x82a58, the parse return 0x82a80, E 0x82aac,
    MAL 0x82de0, A 0x82dec, the slow block 0x830c0) and runtime entries (memcpy 0x518b8, the parse 0x8474c with its five
    doubles); image B's registers (pod s9, &hz s5 = F + 0x2a0, the flags byte s7 read before the memcpy, flags & 1 s2,
@@ -19,6 +19,7 @@
    rsb_PB at the exits); pod is stored into R+0x178 in block C after the parse (block C's region at R has a write
    window, so its exits are read from the run's final state); the cut file is lib/AU/RtPgSegB.v and the kit, model
    facts, memory and step layers are lib/AU's RtPgScanKitB.v, RtPgScanFB.v, RtPgMemB.v and RtPgStepsB.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): the head of the checking

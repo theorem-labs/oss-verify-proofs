@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* IMAGE B TWIN (row G-BCF): lib/A/CfRBridgeNev.v at c6394a5bd7e (sha256 2c2f0894c74c; internal record), byte for byte below this
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* IMAGE B TWIN (row G-BCF): lib/A/CfRBridgeNev.v (sha256 2c2f0894c74c; internal record), byte for byte below this
    paragraph, under lib/B so the B tree is self-contained (as lib/B/CfParamsReplyB.v). It imports Reusable only and
-   compiles unchanged on the B carry of record (a working branch b3dbf4b34566). *)
+   compiles unchanged on the B carry of record (a working branch). *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan, the cf allocator bridge (a Theorem Labs lane R, new file), part 3:
    the TICK UPDATE of a malloc_cf that returns a block (EXCEPTION 3 of the event-term gate, Main 2026-10-30 00:2xZ:
-   the journal's st_nev conjunct, YCbqG.v:219, grows by the call's own model ticks). malloc_cf (YG00cf.v) ticks once
+   the journal's st_nev conjunct, YCbqG.v:220, grows by the call's own model ticks). malloc_cf (YG00cf.v) ticks once
    at its entry; the only other ticks are errb_map_cf's (YG00cf.v), which run only inside the class-full report of
    map_more_user_cf, an arm that returns false, so populate_cf, get_from_allocator_cf and cache_alloc_cf then fail
    and malloc_cf returns PNull. So every return of malloc_cf with a block has st_nev = the entry's + 1
-   (malloc_cf_block_nev). malloc_post_cf (YG07cf.v:263) gives only the lower bound.
+   (malloc_cf_block_nev). malloc_post_cf (YG07cf.v:264) gives only the lower bound.
    Proved over YGcfXs.cfx_ipost (every return of the tree), by the fr_* walk of YGcfXs.v (:440-470) restated with two
    predicates: the tick count, and the cache (unchanged by a failed refill). Model lemmas only; no function is proved
    (rule 24); no address. *)

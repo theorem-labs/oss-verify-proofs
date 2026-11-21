@@ -2,7 +2,7 @@
 
 The files: lib/A/Rt/MemmoveDef.v, MemmoveIm.v, MemmoveK.v, MemmovePaths.v and Memmove.v (blobs 71b483627f30,
 1c0011e111a0, e50a6822820d, 00eab34ae3b0, 53570a3cdeb6), relocated from libreac/fuzz_pcap's released lib/A/Rt/ files of
-the same names (recipes 5098883da0b; blobs 7f72addf7a2a, 3476ea79d91d, 0c435d181bef, 275ded8e8c5c, 3a8554c369c6) by
+the same names (recipes; blobs 7f72addf7a2a, 3476ea79d91d, 0c435d181bef, 275ded8e8c5c, 3a8554c369c6) by
 `provenance/evidence/memmove-reloc/run.sh A`: alreloc frozen a5c53bb2bed4ad03 with the 60 measured resolutions of
 `asan-resolve-A.txt`, then `adapt_memmove.py A`. Target fuzz_wire.asan (sha256 2f8f8697cd4f, unstripped twin
 d2f662a22962); donor fuzz_pcap.asan (sha256 b7a91d9b1fb0, unstripped twin 36da3052c383). The image-A core (lib/A,
@@ -92,7 +92,7 @@ Controls (records/flag-gate.txt), each a copy of the five files with one value p
 
 ## 2. codeptr, atable, and the by-value check
 
-### 2a. codeptr 12348302dfd2 (start-up set bundle 453349f98b04 at tool-registry commit 5aa27b4282c, frozen-run.sh; records/codeptr.txt)
+### 2a. codeptr 12348302dfd2 (start-up set bundle 453349f98b04 at tool-registry, frozen-run.sh; records/codeptr.txt)
 
 On fuzz_wire.asan with its twin, stale against fuzz_pcap.asan with its twin and each file's donor text
 (`--stale-file`): 5 findings, each also a literal of the donor file, each a number that is not an address. They are
@@ -137,13 +137,13 @@ symbol, so this check classes them OTHER; the flag gate checks each as SAME-SYMB
 `MM_ENTRY` planted as the donor's 0x51bf0 gives DONOR-STALE 1 (that row; TARGET 17 -> 16) and nothing else changes.
 
 records/byvalue.txt (lines 6 and 17) lists the core table's interior rows as the gate read them at the time; two of
-them, `tfib_A_FakeStack_SetShadow` and `tfib_E_FakeStack_SetShadow`, were removed from lib/A/AB1w.v in e06a69e09264
+them, `tfib_A_FakeStack_SetShadow` and `tfib_E_FakeStack_SetShadow`, were removed from lib/A/AB1w.v
 (unread cells). No file of this row reads them, and the record stays as it was measured.
 
 ## 3. v10: global_settings 439f8e3bd463 (records/settings-count.txt)
 
 The five files: ESCAPES 0, PLAIN 8, UNMEASURED 0, KERNEL 0 (TACTIC 8: `Unset Lia Cache.` / `Unset Nia Cache.` in
-MemmoveIm, MemmoveK, MemmovePaths and Memmove). fuzz_pcap's released counterparts (lib/A/Rt/ at 5098883da0b): ESCAPES 0,
+MemmoveIm, MemmoveK, MemmovePaths and Memmove). fuzz_pcap's released counterparts (lib/A/Rt/): ESCAPES 0,
 PLAIN 8, UNMEASURED 0, KERNEL 0: equal. The Zify flag line of MemmoveIm, MemmoveK, MemmovePaths and Memmove is `Local`
 in each, as in the donor. Control: Memmove.v's line made global gives ESCAPES 1 (Memmove.v:31).
 

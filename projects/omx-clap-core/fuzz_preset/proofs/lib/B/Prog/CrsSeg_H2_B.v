@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module names changed; 683 of its 755 lines of code are new or changed and 856 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrsSeg_H1_B.v, with its module names and numbers changed; 345 of its 916 lines of code are new or changed and 184 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): segment H2 of the walk of check_reject_clean_starved against
    the kit's text tcheck_reject_clean_starved_specX, row H2_B (a Theorem Labs lane's internal file BRIEF-crcs-Bprime-seg.md; lane CrsX2H2,
    a working branch). It proves the row's closing lemma over the FROZEN B' kit lib/B/Prog/CrsKitBp.v
-   (a working branch fb124cd27931):
+   (a working branch):
      crs_seg_H2_B : HT_fuzz_alloc_count -> HT_fuzz_alloc_ran_out -> HK -> crs_from_R_B .. -> crs_from_X2_B .. ->
                     crs_from_H2_B ..
    rule 24: proves function check_reject_clean_starved on image B' (reuse search: `proof-index
@@ -13,15 +14,15 @@
    CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its released rows
    were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). This file is one SEGMENT of that walk (kind: segment lemma); it is new.
-   DONOR (rule 24, reuse): this lane's A' file lib/A/Prog/CrsSeg_H2.v (a working branch 7fea2e4fd8c0, blob
+   DONOR (rule 24, reuse): this lane's A' file lib/A/Prog/CrsSeg_H2.v (a working branch, blob
    ea5b62219e06): the same engine prefix, transport, loop invariant and closing proof, with the kit's `_B` names and
    every number re-read at B'. THE HAND-STEP KIT (the hw_ / h_ lemmas and the h* tactics below, h_sltu / h_sltiu /
    h_xor included) and the loop step's UBSan refutations are restated VERBATIM from lane CrsX1H1's
-   lib/B/Prog/CrsSeg_H1_B.v :81-453 and :516-701 (a working branch eb01d000c4c), its h1_iter re-read at L2's
+   lib/B/Prog/CrsSeg_H1_B.v :81-453 and :516-701 (a working branch), its h1_iter re-read at L2's
    offsets and registers (every register of the loop is one up: hash a2, count a5, cursors a1 / a4, the UBSan flag
    a3, the shadow and byte temporaries a6 / a7).
    INPUTS.
-   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml);
      unstripped twin .../bound-fix/9e1283d1/unstripped/fuzz_preset/fuzz_preset.asan-ubsan sha256 c90d4fa54d43160b
      (the segment read by capstone, the internal file elfdis.py --addr 0x822f0 0xd0).
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (a Theorem Labs lane's listings v3).

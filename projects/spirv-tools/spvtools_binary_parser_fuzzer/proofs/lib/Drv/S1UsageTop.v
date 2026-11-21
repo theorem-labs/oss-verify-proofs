@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised entry stack block, with the strings at its top, and the launch facts; the run's mmap base; the model's channel reader as a premise of the writes; recorded proofs re-encoded or written as text where the change reaches them). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,14 +10,26 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer.images Require Import Plain.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Amb PropExec ShapeAlg ArgvEnv SRealizes.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Drv Require Import S1Spec S1Start S1Usage.
-From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require KReplay.
-Ltac2 kr_t_S1UsageTop () := "C4ELinuxProcessSemantics?LinuxProcessSem2Fs4pathC47Corelib4Init5Logic8eq_ind_rC4ELinuxProcessSemantics?LinuxProcessSem2Fs2FsC4ELinuxProcessSemantics?LinuxProcessSem5State7PipeBufK47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00C4ELinuxProcessSemantics?LinuxProcessSem3Run8valid_spC4ELinuxProcessSemantics?LinuxProcessSem5State7in_argvC4ELinuxProcessSemantics?LinuxProcessSem3Run:valid_argvC4ELinuxProcessSemantics?LinuxProcessSem5State7in_envpC4ELinuxProcessSemantics?LinuxProcessSem3Run:valid_envpC4ELinuxProcessSemantics?LinuxProcessSem3Run@entry_stack_fitsI47Corelib4Init9Datatypes4list00C47Corelib4Init9Datatypes6lengthK47Corelib4Init9Datatypes3nat02I47Corelib4Init5Logic2eq00C47Corelib4Init5Logic3notK47Corelib4Init9Datatypes4list01C46Stdlib5Lists4List2hdC59OSSVerify5KrLib3Drv6S1Spec9msg_usageC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem5State5in_fsC59OSSVerify5KrLib3Drv6S1Spec5t_dieC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive01C4ELinuxProcessSemantics5Riscv7Prelude5bvmapI47Corelib4Init9Datatypes6option00C45stdpp9bitvector;definitions;bv_unsignedC56Stdlib6ZArith6BinInt1Z2ltI47Corelib4Init5Logic3and00C4ELinuxProcessSemantics?LinuxProcessSem5State6in_uidC4ELinuxProcessSemantics?LinuxProcessSem5State8in_hwcapI59OSSVerify5KrLib3Drv7S1Start:main_entry00C1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem3RunAsegments_reservedC49OSSVerify5KrLib3Amb6amb_ofC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem5State8in_stdinC49OSSVerify5KrLib3Amb<mkProcInputCC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem5State:init_modelK47Corelib7Numbers7BinNums1Z02K45stdpp9bitvector;definitions2bv01C49OSSVerify5KrLib8PropExec7seg_romC1?~~~~~~~~~~~~~~~C49OSSVerify5KrLib8PropExec4mkstC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem5State8with_tidK4ELinuxProcessSemantics?LinuxProcessSem3Run6config01I49OSSVerify5KrLib9SRealizes9srealizes00C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Drv7S1Usage;ref_usage_wC1?~~~~~~~~~~~~~~~C49OSSVerify5KrLib3Amb?init_model_seedC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Drv7S1Start:s1_startupC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive03I4ELinuxProcessSemantics?LinuxProcessSem;StackLayout9EntryDraw00I47Corelib7Numbers7BinNums1Z00I4ELinuxProcessSemantics?LinuxProcessSem5State9ProcInput00I47Corelib4Init9Datatypes3nat00K47Corelib4Init9Datatypes3nat01K47Corelib7Numbers7BinNums1Z01C6ELinuxProcessSemantics?LinuxProcessSem3Sys6Kernel4Fork@PID_MAX_ENVELOPEI4ELinuxProcessSemantics?LinuxProcessSem5State5Model00C69OSSVerify6KrSpec8ProblemscSrc_spirv_tools_spvtools_binary_parser_fuzzer_repro1M?loaded_segmentsC1@~~~~~~~~~~~~~~~~C49OSSVerify5KrLib8PropExec3fx0C1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic4True01I49OSSVerify5KrLib3Amb3Amb00C1?~~~~~~~~~~~~~~~".
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
 Import ListNotations.
+
+(* LPS 727298f3: the start-up hands the run's own input [inp]; the driver Sections name it as
+   [mkProcInputC] of its ambient record [amb_of inp].  The entry state reads the input only
+   through projections the two share; [in_fs] of the second is [fs_seed_tmp (in_fs inp) []],
+   which computes to [in_fs inp] ([State.fs_seed_tmp_nil]). *)
+Lemma main_entry_C : forall sp rnd inp mbase tid regs mem,
+  main_entry sp rnd inp mbase tid regs mem ->
+  main_entry sp rnd (@mkProcInputC (amb_of inp) (in_argv inp) (in_envp inp) (in_fs inp) (in_stdin inp))
+    mbase tid regs mem.
+Proof. intros sp rnd inp mbase tid regs mem []. constructor; assumption. Qed.
 
 Theorem s1_usage_top : forall sp brk mbase rnd lim inp,
   valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+  (* LPS 727298f3: [s1_startup] takes the launch facts, and the usage line is a write
+     to the launch's channel ([Run.valid_input]'s launch and reader clauses). *)
+  valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+  in_channel_reader inp = true ->
   length (in_argv inp) <> 2%nat ->
   srealizes Plain.M.loaded_segments
            (init_config Plain.M.loaded_segments
@@ -24,4 +37,10 @@ Theorem s1_usage_top : forall sp brk mbase rnd lim inp,
               sp brk mbase rnd lim inp)
            (t_die (msg_usage (hd [] (in_argv inp))) (in_fs inp)).
 Proof.
-ltac2:(KReplay.run1 (kr_t_S1UsageTop ()) [] "h03AMBh15Hargch24Hfith33Hsph44Htidh53Hvah63Hveh72MEh83brkh93inph:3limh;1mh<5mbaseh=3memh>4regsh?3rndh@2sphA3tidp;1p;3p;2p;9p;5p;6p;Dp;<p10000p4p70g000`R0p4p710R1p8p1001>p4p70P1p8p1001lp4p70P1p8g002bj10Tg003Gj15Tg003ej18Tg004Hj1ATg005=j12Tg0063j1UTg006jj13Tg007`j1ETg008Wj3CTg009Tj1BTg00:4j2@Tg00:Tj19Tg00;3j3>Tg00;Mj1[Tg00;fj1VTg00<Fj3=Tg00<]j1;Tg00=Vj14Tg00>Jj26Tg00??j11Tg00?dj2OTg00@Pj1NTg00A2j2DTg00A\j2<Tg00B8j2FTg00BSj1GTg00CHj1HTg00D?l9ITg00E<j1JTg00F:j1KTg00Fij17Tg00G`j5LTg00HUj6:Tg00INj1MTg00Ilj3?Tg00JOj1PTg00KDj5QTg00L6j2RTg00Lmj2STg00Mbj3TTg00N\lDZTg00OXj6YTP0j6XTg00PPl<WTg00QKR0#0R1#0#0R2#0#0#0#5R3#8R4g00R0g00S0g00SNf5R5#Af1R6#2#Uf2R7#3#Ef8R8f3R9#2%393Cg00TH%52#8R2#BR:f4R;#2'@g00Tg#9#93>#[f:R<f9R=P8f7f6R>P5%V2R?%255=:#;%45'6P;P9P7P6%11#5/O4%N2\4g00UF1D37R2'<g00Ud,<2'Ff>R2f;R1%2=%3=%G=%H=P9P7P6M9Ig00VmR@g00WcRA#JRBP2f=RCf?RDP1%K<RE%2<%3<%4<%7<DLE:g00YXRFP;%10#0#0#1#0#1#0#1#0#1#1#1#1#0#1#0#0#0#Mg00ZI5?3P9%PADQf0R3,R5'S%21R09=:?#;%41R?'65TAX;@PEg00ZePFP3f@P0%31P5PCP;P9PDP2P?%71f<P=P8P<P7P6P>MDZb0PBP2PCPDP1P<E:PBP2PCPDP1P<EYEXW7W4W=W>XA4M<WW1W2W6W5W3W9W:W?X<4X84W@o"). Qed.
+  intros sp brk mbase rnd lim inp Hsp Hva Hve Hfit Hvl Hlau Hrd Hargc.
+  apply s1_startup; try assumption.
+  intros tid regs mem Htid ME.
+  exact (@ref_usage_w fx0 (amb_of inp) sp (in_argv inp) (in_envp inp) tid rnd regs mem brk mbase
+           (in_fs inp) (in_stdin inp) lim Hva Hve Hsp Htid (main_entry_C sp rnd inp mbase tid regs mem ME)
+           Hrd Hargc).
+Qed.

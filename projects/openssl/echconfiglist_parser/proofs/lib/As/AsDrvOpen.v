@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the too-long openat case takes the path's below-TASK_SIZE premise, passed to rz_openat_toolong_lazy; new Section OpenRT: the openat and directory-read drivers over the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing, for the run's driver-law record asan_driver_laws_run). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,6 +17,8 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
   LazyRestrict LazySR LazyFdNodes.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import MState Exec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsShadow AsConst AsIface AsDriverLaws AsDrvRun.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail PairCleanAll.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import LazyTail LazyTailOpen.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -45,13 +48,14 @@ Section DrvOpen.
     (* [comment removed for export] *)
     Theorem drv_openat_toolong : forall bs K,
       rdn asegs mem (getr regs 11) 4096 = Some bs -> ~ In (Z_to_bv 8 0) bs ->
+      (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z ->
       (forall msF' mo', as_VIS H s msF' = post (errno_ret ENAMETOOLONG) -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
          realizes asegs (mkCfg msF' mo') K) ->
       realizes asegs (mkCfg msF mo) K.
     Proof.
-      intros bs K Hrd Hnz Hc.
+      intros bs K Hrd Hnz Hts Hc.
       apply (drv_lazy H DL s msF mo regs pc mem K HV HA). intros L S Zr OK RS BACK.
-      eapply (rz_openat_toolong_lazy asegs L S Zr msF regs pc mem mo w HF HE OK RS H17 H10 Hfl bs K Hrd Hnz).
+      eapply (rz_openat_toolong_lazy asegs L S Zr msF regs pc mem mo w HF HE OK RS H17 H10 Hfl bs K Hrd Hnz Hts).
       intros msF' mo' OK' SB' RS' HS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
       exact (Hc msF' mo' HV' HA' SB').
     Qed.
@@ -155,3 +159,160 @@ Section DrvOpen.
     exact (Hc msF' HV' HA').
   Qed.
 End DrvOpen.
+
+(** * The openat and directory-read drivers over the run's segment list (LPS 727298f3)
+
+    Section DrvOpen's drivers with their walks over [asegs ++ RunTail.rt_tail] from the
+    configuration with that list's read-only backing ([arz], As/AsDriverLaws.v), through
+    [drv_lazy_rt] and the two-list lazy lemmas of LazyTailOpen.v / LazyTail.v. *)
+Section OpenRT.
+  Context {HCEIL : HeapCeil} {RT : RunTail.RunTail}.
+  Variable H : asr.
+  Hypothesis HH : asan_rt_hyps H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
+
+  Let rom := seg_rom asegs.
+  Local Notation rV := (seg_rom (asegs ++ RunTail.rt_tail)) (only parsing).
+
+  Section OpenatRT.
+    Variables (s : as_St H) (msF : machine_state) (regs : bvmap 5 word) (pc : word) (mem : word -> option byte) (mo : Model) (w : bv 32).
+    Hypothesis HF : fetch_word asegs pc = Some w.
+    Hypothesis HE : is_ecall w = true.
+    Hypothesis HV : as_VIS H s msF = mkst regs pc mem rom.
+    Hypothesis HA : as_AKREL H s (mkCfg msF mo).
+    Hypothesis H17 : getr regs 17 = Z_to_bv 64 56.
+    Hypothesis H10 : getr regs 10 = AT_FDCWD.
+    Hypothesis Hfl : Z.ldiff (bv_unsigned (getr regs 12)) open_ignored_flags = 0%Z.
+
+    Let post (r : word) := mkst (regupd regs 10 r) (v_addi pc 4) mem rom.
+
+    Theorem drv_openat_toolong_rt : forall bs K,
+      rdn asegs mem (getr regs 11) 4096 = Some bs -> ~ In (Z_to_bv 8 0) bs ->
+      (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z ->
+      (forall msF' mo', as_VIS H s msF' = post (errno_ret ENAMETOOLONG) -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
+         arz (mkCfg msF' mo') K) ->
+      arz (mkCfg msF mo) K.
+    Proof.
+      intros bs K Hrd Hnz Hts Hc.
+      apply (drv_lazy_rt H DLR s msF mo regs pc mem K HV HA). intros L S Zr OK RS VC BACK.
+      eapply (rz_openat_toolong_lazy_tail asegs RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw (vcm2 vlo vb vhi) (vs_inv H DLR)
+                L S Zr (RomBase.wrom msF rV) regs pc mem mo w HF HE OK VC RS H17 H10 Hfl bs K Hrd Hnz Hts).
+      intros msF'' mo' OK' SB' RS' HS' VC'.
+      destruct (BACK msF'' mo' (regupd regs 10 (errno_ret ENAMETOOLONG)) (v_addi pc 4) mem OK' (same_vm_sb _ _ SB') RS' VC')
+        as (msF' & EQc & HV' & HA').
+      rewrite EQc. exact (Hc msF' mo' HV' HA' SB').
+    Qed.
+
+    Theorem drv_openat_empty_rt : forall K,
+      path_at_lazy asegs regs mem [] ->
+      (forall msF' mo', as_VIS H s msF' = post (errno_ret ENOENT) -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
+         arz (mkCfg msF' mo') K) ->
+      arz (mkCfg msF mo) K.
+    Proof.
+      intros K Hp Hc.
+      apply (drv_lazy_rt H DLR s msF mo regs pc mem K HV HA). intros L S Zr OK RS VC BACK.
+      eapply (rz_openat_empty_lazy_tail asegs RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw (vcm2 vlo vb vhi) (vs_inv H DLR)
+                L S Zr (RomBase.wrom msF rV) regs pc mem mo w HF HE OK VC RS H17 H10 Hfl K Hp).
+      intros msF'' mo' OK' SB' RS' HS' VC'.
+      destruct (BACK msF'' mo' (regupd regs 10 (errno_ret ENOENT)) (v_addi pc 4) mem OK' (same_vm_sb _ _ SB') RS' VC')
+        as (msF' & EQc & HV' & HA').
+      rewrite EQc. exact (Hc msF' mo' HV' HA' SB').
+    Qed.
+
+    Theorem drv_openat_absent_rt : forall p K,
+      path_at_lazy asegs regs mem p -> p <> [] -> path_has_slash p = false -> path_is_dirref p = false ->
+      fs_lookup (m_fs mo) p = None ->
+      (forall msF' mo', as_VIS H s msF' = post (errno_ret ENOENT) -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
+         arz (mkCfg msF' mo') K) ->
+      arz (mkCfg msF mo) K.
+    Proof.
+      intros p K Hp Hne Hsl Hnd Hfs Hc.
+      apply (drv_lazy_rt H DLR s msF mo regs pc mem K HV HA). intros L S Zr OK RS VC BACK.
+      eapply (rz_openat_absent_lazy_tail asegs RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw (vcm2 vlo vb vhi) (vs_inv H DLR)
+                L S Zr (RomBase.wrom msF rV) regs pc mem mo w HF HE OK VC RS H17 H10 Hfl p K Hp Hne Hsl Hnd Hfs).
+      intros msF'' mo' OK' SB' RS' HS' VC'.
+      destruct (BACK msF'' mo' (regupd regs 10 (errno_ret ENOENT)) (v_addi pc 4) mem OK' (same_vm_sb _ _ SB') RS' VC')
+        as (msF' & EQc & HV' & HA').
+      rewrite EQc. exact (Hc msF' mo' HV' HA' SB').
+    Qed.
+
+    Hypothesis Hfree : fd_lookup (m_fds mo) (alloc_fd (m_fds mo)) = None.
+
+    Theorem drv_openat_dot_rt : forall p KA KB,
+      path_at_lazy asegs regs mem p -> path_is_dirref p = true ->
+      (forall e msF' mo', In e openat_errnos ->
+         as_VIS H s msF' = post (errno_ret e) -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
+         arz (mkCfg msF' mo') KA) ->
+      (forall msF' mo',
+         as_VIS H s msF' = post (alloc_fd (m_fds mo)) -> as_AKREL H s (mkCfg msF' mo') ->
+         same_but_materialized (with_fds (fd_insert (m_fds mo) (alloc_fd (m_fds mo)) FdDir) mo) mo' ->
+         arz (mkCfg msF' mo') KB) ->
+      arz (mkCfg msF mo) (t_alt2 KA KB).
+    Proof.
+      intros p KA KB Hp Hdr HAc HBc.
+      apply (drv_lazy_rt H DLR s msF mo regs pc mem _ HV HA). intros L S Zr OK RS VC BACK.
+      eapply (rz_openat_dot_lazy_tail asegs RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw (vcm2 vlo vb vhi) (vs_inv H DLR)
+                L S Zr (RomBase.wrom msF rV) regs pc mem mo w HF HE OK VC RS H17 H10 Hfl Hfree p KA KB Hp Hdr).
+      - intros e msF'' mo' He OK' SB' RS' HS' VC'.
+        destruct (BACK msF'' mo' (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem OK' (same_vm_sb _ _ SB') RS' VC')
+          as (msF' & EQc & HV' & HA').
+        rewrite EQc. exact (HAc e msF' mo' He HV' HA' SB').
+      - intros msF'' mo' OK' SB' RS' HS' VC'.
+        destruct (BACK msF'' mo' (regupd regs 10 (alloc_fd (m_fds mo))) (v_addi pc 4) mem OK'
+                    (same_vm_trans _ _ _ (same_vm_with_fds _ _) (same_vm_sb _ _ SB')) RS' VC')
+          as (msF' & EQc & HV' & HA').
+        rewrite EQc. exact (HBc msF' mo' HV' HA' SB').
+    Qed.
+
+    Theorem drv_openat_file_rt : forall p d KA KB,
+      path_at_lazy asegs regs mem p -> p <> [] -> path_has_slash p = false -> path_is_dirref p = false ->
+      fs_lookup (m_fs mo) p = Some d ->
+      (forall e msF' mo', In e openat_errnos ->
+         as_VIS H s msF' = post (errno_ret e) -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
+         arz (mkCfg msF' mo') KA) ->
+      (forall msF' mo',
+         as_VIS H s msF' = post (alloc_fd (m_fds mo)) -> as_AKREL H s (mkCfg msF' mo') ->
+         same_but_materialized (with_fds (fd_insert (m_fds mo) (alloc_fd (m_fds mo)) (FdFile p (Z_to_bv 64 0))) mo) mo' ->
+         arz (mkCfg msF' mo') KB) ->
+      arz (mkCfg msF mo) (t_alt2 KA KB).
+    Proof.
+      intros p d KA KB Hp Hne Hsl Hnd Hfs HAc HBc.
+      apply (drv_lazy_rt H DLR s msF mo regs pc mem _ HV HA). intros L S Zr OK RS VC BACK.
+      eapply (rz_openat_file_lazy_tail asegs RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw (vcm2 vlo vb vhi) (vs_inv H DLR)
+                L S Zr (RomBase.wrom msF rV) regs pc mem mo w HF HE OK VC RS H17 H10 Hfl Hfree p d KA KB Hp Hne Hsl Hnd Hfs).
+      - intros e msF'' mo' He OK' SB' RS' HS' VC'.
+        destruct (BACK msF'' mo' (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem OK' (same_vm_sb _ _ SB') RS' VC')
+          as (msF' & EQc & HV' & HA').
+        rewrite EQc. exact (HAc e msF' mo' He HV' HA' SB').
+      - intros msF'' mo' OK' SB' RS' HS' VC'.
+        destruct (BACK msF'' mo' (regupd regs 10 (alloc_fd (m_fds mo))) (v_addi pc 4) mem OK'
+                    (same_vm_trans _ _ _ (same_vm_with_fds _ _) (same_vm_sb _ _ SB')) RS' VC')
+          as (msF' & EQc & HV' & HA').
+        rewrite EQc. exact (HBc msF' mo' HV' HA' SB').
+    Qed.
+  End OpenatRT.
+
+  Theorem drv_read_dir_rt : forall s msF regs (pc : word) mem mo w fd (cnt : Z) K,
+    fetch_word asegs pc = Some w -> is_ecall w = true ->
+    as_VIS H s msF = mkst regs pc mem rom -> as_AKREL H s (mkCfg msF mo) ->
+    getr regs 17 = Z_to_bv 64 63 ->
+    getr regs 10 = fd -> (bv_unsigned fd < 2 ^ 32)%Z ->
+    fd_lookup (m_fds mo) fd = Some FdDir ->
+    getr regs 12 = Z_to_bv 64 cnt -> (1 <= cnt)%Z -> (cnt <= 2 ^ 24)%Z ->
+    (bv_unsigned (getr regs 11) + cnt <= TASK_SIZE)%Z ->
+    store_ok asegs mem (getr regs 11) (Z.to_nat cnt) = true ->
+    (forall msF', as_VIS H s msF' = mkst (regupd regs 10 (errno_ret EISDIR)) (v_addi pc 4) mem rom ->
+       as_AKREL H s (mkCfg msF' mo) ->
+       arz (mkCfg msF' mo) K) ->
+    arz (mkCfg msF mo) K.
+  Proof.
+    intros s msF regs pc mem mo w fd cnt K HF HE HV HA H17 H10 Hfd32 Hlk H12 Hc1 Hc2 Htask Hso Hc.
+    apply (drv_lazy_rt H DLR s msF mo regs pc mem K HV HA). intros L S Zr OK RS VC BACK.
+    eapply (rz_read_dir_mapped_lazy_tail asegs RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw (vcm2 vlo vb vhi) (vs_inv H DLR)
+              L S Zr (RomBase.wrom msF rV) regs pc mem mo w fd cnt K HF HE OK VC RS H17 H10 Hfd32 Hlk H12 Hc1 Hc2 Htask Hso).
+    intros msF'' OK' RS' HS' VC'.
+    destruct (BACK msF'' mo _ _ _ OK' (same_vm_refl _) RS' VC') as (msF' & EQc & HV' & HA').
+    rewrite EQc. exact (Hc msF' HV' HA').
+  Qed.
+End OpenRT.

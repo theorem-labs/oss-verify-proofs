@@ -23,9 +23,10 @@
      byte-identical), so the code addresses (0x6e8f4, the jal Alloc 0x6ea18 at 0x6e968 with ra 0x6e96c, the jal
      internal_memcpy 0x6232c at 0x6e988 with ra 0x6e98c, MC_LOOP 0x62338, the amoadd.w at 0x6e9a0); the image end
      YImgTop.IMG_TOP = 0x5f3000 and the writable window's low end 0x96000 (YB1h.v:87-88 tfib_rw_window).
-   lib/B/YF0m.v (WireSyms, TFIB_STORE) is on this base, generated for this image; the donor (projects/libreac/fuzz_knock/proofs/lib/AU/YD3a.v:26-27 at 41e80c0a1bbb) built its copy from a working branch
+   lib/B/YF0m.v (WireSyms, TFIB_STORE) is on this base, generated for this image; the donor (projects/libreac/fuzz_knock/proofs/lib/AU/YD3a.v:26-27) built its copy from a working branch
    (a build-only input). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3a.v at 88154566652a (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build, YImgTop taken from lib/B instead of lib/Reusable and its proofs' unfolds of YImgTop.IMG_TOP (in 2 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3a.v (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build, YImgTop taken from lib/B instead of lib/Reusable and its proofs' unfolds of YImgTop.IMG_TOP (in 2 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -65,7 +66,7 @@ Local Open Scope Z_scope.
 Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 Section kd.
-(* The layout step, as S3 states it (YD3c.v:98-102, amendment 8): the first Put's growth is the placeholder relation
+(* The layout step, as S3 states it (YD3c.v:99-103, amendment 8): the first Put's growth is the placeholder relation
    layout_grow_kd, swapped by name when the owner fixes the signature. Satisfiable: fun _ _ => True. *)
 Variable layout_grow_kd : alayout -> alayout -> Prop.
 Variable B : asyms.
@@ -155,17 +156,17 @@ Definition store_post (W : world tfibsegs) (ly : alayout) (S : astate) (regs : b
      of lib/A/AD3i.v:266), from WireSyms B, Wf (as_universe B) S, In tr (as_universe B) and
      F <= 32 + depot_frames S, with n := length tr.
    - 0 <= ly_SB ly < 2 ^ 64 (amendment 3): 0 while the store block is unmapped (a Theorem Labs lane's encoding); once mapped,
-     knock-branch lo_app (YG0f.v:436) gives in_app (ly_SB ly) kStoreBlockSize, so 4096 <= ly_SB ly < ASAN_CEIL.
+     knock-branch lo_app (YG0f.v:437) gives in_app (ly_SB ly) kStoreBlockSize, so 4096 <= ly_SB ly < ASAN_CEIL.
    - md_takes md (SS, 32), kHighMemBeg <= ly_stk_lo ly, md_takes's 0 < snd e (amendment 1): as cited in AD3c.v's
-     header: asyms_areas (YG0f.v:255-258) / aso_cover (YG0f.v:262) / am_static_img (YG0n.v:399) /
-     al_imgcov (YG0n.v:615-616) / al_reserved (YG0n.v:597); lo_top (YG0f.v:439-441).
+     header: asyms_areas (YG0f.v:256-259) / aso_cover (YG0f.v:263) / am_static_img (YG0n.v:399) /
+     al_imgcov (YG0n.v:615-616) / al_reserved (YG0n.v:597); lo_top (YG0f.v:440-442).
    - ivs_wf, ceil_of_top and the mnr_cell_extents takes (amendment 8): as cited in AD3c.v's header;
      ly_stk_hi ly <= kHighMemEnd, which amendment 8 adds to Create's pre, was already a premise here.
-   - the later-call slot (amendment 2): layout_ok's lo_app (YG0f.v:436: in_app (ly_SB ly) kStoreBlockSize, the SB entry
-     of owned_extents), lo_disj (YG0f.v:438: (ly_SB ly, kStoreBlockSize) disjoint from the stack extent and from ly_img
-     in static_extents), img_cover (YF0x.v:57: ly_img covers the image, where as_store B = TFIB_STORE lies, so the
-     store cells are off SB), lo_SB_al (YG0f.v:432); the slot's presence from depot_mem_ok's range_vis of
-     (ASB 0, kStoreBlockSize) (YFl0.v:66-68), SB being off the image. *)
+   - the later-call slot (amendment 2): layout_ok's lo_app (YG0f.v:437: in_app (ly_SB ly) kStoreBlockSize, the SB entry
+     of owned_extents), lo_disj (YG0f.v:439: (ly_SB ly, kStoreBlockSize) disjoint from the stack extent and from ly_img
+     in static_extents), img_cover (YF0x.v:58: ly_img covers the image, where as_store B = TFIB_STORE lies, so the
+     store cells are off SB), lo_SB_al (YG0f.v:433); the slot's presence from depot_mem_ok's range_vis of
+     (ASB 0, kStoreBlockSize) (YFl0.v:67-69), SB being off the image. *)
 Definition tfib_store_spec : Prop :=
   forall (W : world tfibsegs) (ly : alayout) (S : astate) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
     (targ buf pk F std alloc : Z) (tr : list Z),

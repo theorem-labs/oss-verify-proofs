@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/bzip2/bzip2_compress_target/lib/K/A/I_amemcpy.v, with its module paths and addresses changed; 65 of its 187 lines of code are new or changed and 17 lines of the source are left out. *)
-(* Port-from: origin/cold/c-asan-rt-stateio-n 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_amemcpy.v.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Port-from: proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_amemcpy.v.
    Changes (PfCalls, 2026-10-29): module path fuzz_state -> fuzz_reply; 6 fuzz_state.asan address numerals moved to
    fuzz_reply.asan (6 code, 0 data cell), each paired by code (instruction by instruction, pc-relative
    fields masked) or, for a data cell, by the auipc pair that loads it (table: lib/A/RT_gxa_mem_Tbl.v); 4 geometry

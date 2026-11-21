@@ -1,10 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/FSRealloc_S1_t.v (337e6a94485, blob eabcf47ad845) for realloc(NULL, n) (segment S5, RGtop's seg_npre): segA walks the same prefix from A/RGcfS5_u.v's seed (a0 = 0) and leaves asan_realloc on its NULL-input arm (`beqz a0` 0x32f50 taken -> 0x32f98 .. `jal Allocate` 0x32fb4, capstone over fuzz_preset.asan sha256 f0d2e8d40c7e...) to Allocate's entry 0x325b8 (at_PA states PAST_topN of A/RGcfS5_pa.v). With a0 a literal, the PointerIsMine probe 0x53b7c-0x53b98 needs no pins: the run goes from the internal allocator's return to UnwindImpl 0x5b4d4 in one piece, reading the map word at the literal 0xac0c8 (A/RGcfS5_r.v R_IMN) in place of R_IMR. *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_t.v (hub ddc081c1a03, blob d465368ea429) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), every image numeral moved by symbol + offset; the jal immediates in the comment (0x20314, -0x20da0, 0x290e8) are the same on image A; record, the internal file A5.md. *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/FSRealloc_S1_t.v (blob eabcf47ad845) for realloc(NULL, n) (segment S5, RGtop's seg_npre): segA walks the same prefix from A/RGcfS5_u.v's seed (a0 = 0) and leaves asan_realloc on its NULL-input arm (`beqz a0` 0x32f50 taken -> 0x32f98 .. `jal Allocate` 0x32fb4, capstone over fuzz_preset.asan sha256 f0d2e8d40c7e...) to Allocate's entry 0x325b8 (at_PA states PAST_topN of A/RGcfS5_pa.v). With a0 a literal, the PointerIsMine probe 0x53b7c-0x53b98 needs no pins: the run goes from the internal allocator's return to UnwindImpl 0x5b4d4 in one piece, reading the map word at the literal 0xac0c8 (A/RGcfS5_r.v R_IMN) in place of R_IMR. *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_t.v (blob d465368ea429) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), every image numeral moved by symbol + offset; the jal immediates in the comment (0x20314, -0x20da0, 0x290e8) are the same on image A; record, the internal file A5.md. *)
 (* fuzz_state image A, realloc segment S1 (RtS1, 2026-10-29).
    segA: the machine walk from __wrap_realloc 0x5373c to Allocator::Allocate's entry 0x325b8 under free_hyps.
-   Port of cgif_rgb_fuzzer lib/YF6t.v (released donor of the realloc prefix; hub checkout 102d6008296,
+   Port of cgif_rgb_fuzzer lib/YF6t.v (released donor of the realloc prefix; hub checkout theorem-labs/oss-verify-proofs@6b32741d849a,
    byte-equal to h-state-a5/realloc-thin/donor/), translated by h-state-a5/realloc-thin/s1/translate_rgb_to_fs.py:
    module names mapped to fs's (the map checked on cgif_rgb YF2w / YF2i / YF1y against fs's A/AFh1 / AFgn / AFg3),
    img_* tactics to plain ones, (addr + D_xxx) to fs.asan addresses (the internal file fs-addr-map.tsv; 0x53b7c = return pc
@@ -21,6 +21,7 @@
    symbolic run from free_hyps.
    Changed against the donor: at_PA and the last run stop at 0x325b8 (one `jal` after the donor's 0x33054) *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

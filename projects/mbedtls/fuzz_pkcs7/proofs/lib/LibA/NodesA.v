@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok's third conjunct, sys_rob: a new premise on the syscall node and rz lemmas, discharged in the instruction node and the concrete syscall wrappers; the encoded statements of the changed lemmas decoded to plain text; imports of RomBase and RomWritev). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -13,6 +14,8 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common Require Import SimInv ExitSi
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB Require Import Amb RelSpec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim ShapeX StoreOk AgentLib.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Sys Require Import Nodes AgentNodes SysNodes NodesDir.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ALazy SRz AEvtS AEvtA.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require RomBase.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB Require RomWritev.
 Import ListNotations.
 #[local] Existing Instance Lib.PropExec.fx0.
 Open Scope bv_scope.
@@ -57,10 +60,11 @@ Variable segs : list Segment.
 #[using="Type"] Lemma node_instr_acc : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmo,$<.Pms',$;.Pmo',$<.P,(1.(9.(6.&40.))(:.R3.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R5.)(=.(6.&40.)))P,(1.(?.(5.$;.$<.))(10.Vsegs,R6.R5.)(11.(5.$;.$<.)(12.$;.$<.R4.R3.)))(13.Vsegs,(14.R7.R6.)$15.L,$15.(16.$17.)L,$15.(14.R6.R5.))")
 (* [comment removed for export] *).
 Proof.
-  intros ms mo ms' mo' Hh Hsvc Hacc. split.
+  intros ms mo ms' mo' Hh Hsvc Hacc. split; [|split].
   - intros []. apply (sstep_instr segs ms mo ms' mo'); assumption.
   - intros e st Hss. destruct (sstep_acc_inv segs ms mo ms' mo' e st Hsvc Hacc Hss) as [-> ->].
     exists tt. split; reflexivity.
+  - apply RomBase.sys_rob_instr. exact Hsvc.
 Qed.
 
 #[using="Type"] Lemma rz_step_acc : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmo,$<.Pms',$;.Pmo',$<.PT,$18.P,(1.(9.(6.&40.))(:.R4.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R6.)(=.(6.&40.)))P,(1.(?.(5.$;.$<.))(10.Vsegs,R7.R6.)(11.(5.$;.$<.)(12.$;.$<.R5.R4.)))P,(19.Vsegs,(14.R6.R5.)R4.)(19.Vsegs,(14.R9.R8.)R5.)")
@@ -105,10 +109,26 @@ Proof.
   apply (sstep_syscall segs ms model x8 eff m' m'' evs Hh Hsvc Hc Hh' Hmat).
 Qed.
 
-#[using="Type"] Lemma node_chk_ev_mat : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmodel,$<.Px8,(6.&40.)PI,StPeffs,P,R1.$2:.Pms',P,R2.$<.Pms'',P,R3.$<.Pevs,P,R4.(4.$17.)P,(1.(9.(6.&40.))(:.R7.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R9.)(20.(6.&40.)R7.))P,Pi,R7.(2;.(2<.Vsegs,R;.R9.)R:.(2=.$2:.A1.R7.R1.A1.R6.R1.A1.R4.R1.))P,Peff,$2:.Pm',$<.Pev,(4.$17.)P,(2;.(2<.Vsegs,R>.R<.)R=.(2=.$2:.R3.R2.R1.))(34.R<.Li,R<.(0.(1.$2:.R5.A1.R<.R1.)(0.(1.$<.R4.A1.R;.R1.)(1.(4.$17.)R3.A1.R9.R1.))))P,(35.(2;.(2<.Vsegs,R<.R:.)R;.(36.$2:.)))P,Pi,R:.(1.(9.(6.&40.))(:.A1.R9.R1.)(=.(6.&40.)))P,Pi,R;.(1.(9.$<.)(2>.A1.R:.R1.(2?.A1.R;.R1.))(20.$<.A1.R9.R1.))(13.Vsegs,(14.R?.R>.)R<.R8.Li,R<.(14.(32.(33.R10.A1.R<.R1.))A1.R:.R1.))")
-(* [comment removed for export] *).
+(* node_chk_ev_mat .. rz_ret_only_noacc_silent here, and rz_ret_only_copyinsK(_silent) below:
+   were encoded statements (CDefT.buildp); written out from their decodes (cdeft_print.py), not
+   re-encoded, each with one premise added, [RomBase.sys_rob segs (mkCfg ms model)] (the
+   copyinsK pair: [.. (mkCfg ms mo)]), which [Shape.node_ok]'s third conjunct now asks for
+   (LPS revision, run_segments).  The concrete wrappers discharge it at their syscall numbers. *)
+#[using="Type"] Lemma node_chk_ev_mat : forall (ms : machine_state) (model : Model) (x8 : bv 64)
+    (I : Type) (effs : I -> SyscallEffect) (ms' ms'' : I -> Model) (evs : I -> list event),
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  (forall i : I, syscall_spec (sys_input segs ms x8) model (Ok (effs i) (ms' i) (evs i))) ->
+  (forall eff m' ev, syscall_spec (sys_input segs ms x8) model (Ok eff m' ev) ->
+     exists i : I, eff = effs i /\ m' = ms' i /\ ev = evs i) ->
+  ~ syscall_spec (sys_input segs ms x8) model Unmodeled ->
+  (forall i : I, m_halted (ms' i) = None) ->
+  (forall i : I, materialize_model_accesses (ms' i) (syscall_effect_accesses (effs i)) = Some (ms'' i)) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  Shape.node_ok segs (mkCfg ms model) I evs
+    (fun i : I => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms'' i)).
 Proof.
-  intros ms model x8 I effs ms' ms'' evs Hh Hsvc Hok Hinv Hnu Hh' Hmat. split.
+  intros ms model x8 I effs ms' ms'' evs Hh Hsvc Hok Hinv Hnu Hh' Hmat Hrob. split; [|split].
   - intros i. apply (sstep_of_spec_mat ms model x8 _ (ms' i)); auto.
   - intros e st Hss.
     destruct (sstep_svc_inv segs ms model x8 e st Hsvc Hss)
@@ -119,12 +139,24 @@ Proof.
     + destruct (Hinv _ _ _ Hc) as (i & -> & -> & ->). rewrite (Hmat i) in Hm. discriminate.
     + destruct (Hinv _ _ _ Hc) as (i & -> & -> & ->). rewrite Hh' in Hh2. discriminate.
     + exfalso. exact (Hnu Hc).
+  - exact Hrob.
 Qed.
 
-#[using="Type"] Lemma node_family_mat : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmodel,$<.Px8,(6.&40.)PI,StPeffs,P,R1.$2:.Pms',P,R2.$<.Pms'',P,R3.$<.Pevs,P,R4.(4.$17.)PR,P,(37.$2:.)SpP,(1.(9.(6.&40.))(:.R8.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R:.)(20.(6.&40.)R8.))P,Po,(37.$2:.)(38.(2;.(2<.Vsegs,R<.R:.)R;.R1.)A1.R4.R1.)P,Pi,R9.A1.R5.(2=.$2:.A1.R9.R1.A1.R8.R1.A1.R6.R1.)P,Po,(37.$2:.)P,A1.R6.R1.(34.R<.Li,R<.(1.(37.$2:.)R3.(2=.$2:.A1.R<.R1.A1.R;.R1.A1.R9.R1.)))P,Pi,R;.(1.(9.(6.&40.))(:.A1.R:.R1.)(=.(6.&40.)))P,Pi,R<.(1.(9.$<.)(2>.A1.R;.R1.(2?.A1.R<.R1.))(20.$<.A1.R:.R1.))(13.Vsegs,(14.R10.R?.)R=.R9.Li,R=.(14.(32.(33.R11.A1.R=.R1.))A1.R;.R1.))")
-(* [comment removed for export] *).
+#[using="Type"] Lemma node_family_mat : forall (ms : machine_state) (model : Model) (x8 : bv 64)
+    (I : Type) (effs : I -> SyscallEffect) (ms' ms'' : I -> Model) (evs : I -> list event)
+    (R : outcome SyscallEffect -> Prop),
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> R o) ->
+  (forall i : I, R (Ok (effs i) (ms' i) (evs i))) ->
+  (forall o, R o -> exists i : I, o = Ok (effs i) (ms' i) (evs i)) ->
+  (forall i : I, m_halted (ms' i) = None) ->
+  (forall i : I, materialize_model_accesses (ms' i) (syscall_effect_accesses (effs i)) = Some (ms'' i)) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  Shape.node_ok segs (mkCfg ms model) I evs
+    (fun i : I => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms'' i)).
 Proof.
-  intros ms model x8 I effs ms' ms'' evs R Hh Hsvc HR Hin Hout Hh' Hmat.
+  intros ms model x8 I effs ms' ms'' evs R Hh Hsvc HR Hin Hout Hh' Hmat Hrob.
   apply (node_chk_ev_mat ms model x8 I effs ms' ms'' evs Hh Hsvc).
   - intros i. apply HR. apply Hin.
   - intros eff m' ev Hc. apply HR in Hc. destruct (Hout _ Hc) as (i & Hi).
@@ -132,50 +164,90 @@ Proof.
   - intros Hc. apply HR in Hc. destruct (Hout _ Hc) as (i & Hi). exact (Unmodeled_Ok _ _ _ Hi).
   - exact Hh'.
   - exact Hmat.
+  - exact Hrob.
 Qed.
 
-#[using="Type"] Lemma node_det_mat : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmodel,$<.Px8,(6.&40.)Peff0,$2:.Pm0,$<.Pm1,$<.Pevs0,(4.$17.)P,(1.(9.(6.&40.))(:.R6.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R8.)(20.(6.&40.)R6.))P,Po,(37.$2:.)(38.(2;.(2<.Vsegs,R:.R8.)R9.R1.)(1.(37.$2:.)R1.(2=.$2:.R7.R6.R4.)))P,(1.(9.(6.&40.))(:.R6.)(=.(6.&40.)))P,(1.(9.$<.)(2>.R7.(2?.R8.))(20.$<.R6.))(13.Vsegs,(14.R<.R;.)$15.L,$15.R7.L,$15.(14.(32.(33.R=.R:.))R8.))")
-(* [comment removed for export] *).
+#[using="Type"] Lemma node_det_mat : forall (ms : machine_state) (model : Model) (x8 : bv 64)
+    (eff0 : SyscallEffect) (m0 m1 : Model) (evs0 : list event),
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 evs0) ->
+  m_halted m0 = None ->
+  materialize_model_accesses m0 (syscall_effect_accesses eff0) = Some m1 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  Shape.node_ok segs (mkCfg ms model) unit (fun _ : unit => evs0)
+    (fun _ : unit => mkCfg (advance_past_svc (apply_effect ms eff0)) m1).
 Proof.
-  intros ms model x8 eff0 m0 m1 evs0 Hh Hsvc Hchk Hh0 Hmat.
+  intros ms model x8 eff0 m0 m1 evs0 Hh Hsvc Hchk Hh0 Hmat Hrob.
   apply (node_family_mat ms model x8 unit (fun _ => eff0) (fun _ => m0) (fun _ => m1) (fun _ => evs0)
            (fun o => o = Ok eff0 m0 evs0) Hh Hsvc Hchk).
   - intros []. reflexivity.
   - intros o ->. exists tt. reflexivity.
   - intros []; exact Hh0.
   - intros []; exact Hmat.
+  - exact Hrob.
 Qed.
 
-#[using="Type"] Lemma rz_det_mat : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmodel,$<.Px8,(6.&40.)Peff0,$2:.Pm0,$<.Pm1,$<.Pevs,(4.$17.)PT,$18.P,(1.(9.(6.&40.))(:.R7.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R9.)(20.(6.&40.)R7.))P,Po,(37.$2:.)(38.(2;.(2<.Vsegs,R;.R9.)R:.R1.)(1.(37.$2:.)R1.(2=.$2:.R8.R7.R5.)))P,(1.(9.(6.&40.))(:.R7.)(=.(6.&40.)))P,(1.(9.$<.)(2>.R8.(2?.R9.))(20.$<.R7.))P,(19.Vsegs,(14.(32.(33.R=.R:.))R8.)R6.)(19.Vsegs,(14.R>.R=.)(39.R8.R7.))")
-(* [comment removed for export] *).
+#[using="Type"] Lemma rz_det_mat : forall (ms : machine_state) (model : Model) (x8 : bv 64)
+    (eff0 : SyscallEffect) (m0 m1 : Model) (evs : list event) (T : TSet),
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 evs) ->
+  m_halted m0 = None ->
+  materialize_model_accesses m0 (syscall_effect_accesses eff0) = Some m1 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  srealizesJ segs (mkCfg (advance_past_svc (apply_effect ms eff0)) m1) T ->
+  srealizesJ segs (mkCfg ms model) (t_emit evs T).
 Proof.
-  intros ms model x8 eff0 m0 m1 evs T Hh Hsvc Hchk Hh0 Hmat Hc.
+  intros ms model x8 eff0 m0 m1 evs T Hh Hsvc Hchk Hh0 Hmat Hrob Hc.
   eapply srzJ_emit1; [eapply node_det_mat; eassumption | exact Hc].
 Qed.
 
-#[using="Type"] Lemma rz_det_mat_silent : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmodel,$<.Px8,(6.&40.)Peff0,$2:.Pm0,$<.Pm1,$<.PT,$18.P,(1.(9.(6.&40.))(:.R6.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R8.)(20.(6.&40.)R6.))P,Po,(37.$2:.)(38.(2;.(2<.Vsegs,R:.R8.)R9.R1.)(1.(37.$2:.)R1.(2=.$2:.R7.R6.(16.$17.))))P,(1.(9.(6.&40.))(:.R6.)(=.(6.&40.)))P,(1.(9.$<.)(2>.R7.(2?.R8.))(20.$<.R6.))P,(19.Vsegs,(14.(32.(33.R<.R9.))R7.)R6.)(19.Vsegs,(14.R=.R<.)R7.)")
-(* [comment removed for export] *).
+#[using="Type"] Lemma rz_det_mat_silent : forall (ms : machine_state) (model : Model) (x8 : bv 64)
+    (eff0 : SyscallEffect) (m0 m1 : Model) (T : TSet),
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 []) ->
+  m_halted m0 = None ->
+  materialize_model_accesses m0 (syscall_effect_accesses eff0) = Some m1 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  srealizesJ segs (mkCfg (advance_past_svc (apply_effect ms eff0)) m1) T ->
+  srealizesJ segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 eff0 m0 m1 T Hh Hsvc Hchk Hh0 Hmat Hc.
+  intros ms model x8 eff0 m0 m1 T Hh Hsvc Hchk Hh0 Hmat Hrob Hc.
   eapply srzJ_silent1; [eapply node_det_mat; eassumption | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma rz_ret_only_noacc : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmodel,$<.Px8,(6.&40.)Pr,(6.&40.)Pm',$<.Pevs,(4.$17.)PT,$18.P,(1.(9.(6.&40.))(:.R6.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R8.)(20.(6.&40.)R6.))P,Po,(37.$2:.)(38.(2;.(2<.Vsegs,R:.R8.)R9.R1.)(1.(37.$2:.)R1.(2=.$2:.(3:.R7.(16.(5.(6.&40.)(4.(6.&8.))))(16.(5.(6.&40.)(6.&40.)))(16.(5.(6.&40.)(6.&40.)))(16.$3;.)(16.(5.(6.&40.)$3<.)))R6.R5.)))P,(1.(9.(6.&40.))(:.R6.)(=.(6.&40.)))P,(19.Vsegs,(14.(32.(3=.R;.R8.))R7.)R5.)(19.Vsegs,(14.R<.R;.)(39.R7.R6.))")
-(* [comment removed for export] *).
+#[using="Type"] Lemma rz_ret_only_noacc : forall (ms : machine_state) (model : Model) (x8 r : bv 64)
+    (m' : Model) (evs : list event) (T : TSet),
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffectU r [] [] [] [] []) m' evs) ->
+  m_halted m' = None ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  srealizesJ segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
+  srealizesJ segs (mkCfg ms model) (t_emit evs T).
 Proof.
-  intros ms model x8 r m' evs T Hh Hsvc Hchk Hh' Hc.
+  intros ms model x8 r m' evs T Hh Hsvc Hchk Hh' Hrob Hc.
   rewrite <- (apply_effect_no_write ms r) in Hc.
-  eapply rz_det_mat; [exact Hh | exact Hsvc | exact Hchk | exact Hh' | | exact Hc].
+  eapply rz_det_mat; [exact Hh | exact Hsvc | exact Hchk | exact Hh' | | exact Hrob | exact Hc].
   rewrite syscall_effect_accesses_ret. apply materialize_nil.
 Qed.
 
-#[using="Type"] Lemma rz_ret_only_noacc_silent : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmodel,$<.Px8,(6.&40.)Pr,(6.&40.)Pm',$<.PT,$18.P,(1.(9.(6.&40.))(:.R5.)(=.(6.&40.)))P,(1.(9.(6.&40.))(>.R7.)(20.(6.&40.)R5.))P,Po,(37.$2:.)(38.(2;.(2<.Vsegs,R9.R7.)R8.R1.)(1.(37.$2:.)R1.(2=.$2:.(3:.R6.(16.(5.(6.&40.)(4.(6.&8.))))(16.(5.(6.&40.)(6.&40.)))(16.(5.(6.&40.)(6.&40.)))(16.$3;.)(16.(5.(6.&40.)$3<.)))R5.(16.$17.))))P,(1.(9.(6.&40.))(:.R5.)(=.(6.&40.)))P,(19.Vsegs,(14.(32.(3=.R:.R7.))R6.)R5.)(19.Vsegs,(14.R;.R:.)R6.)")
-(* [comment removed for export] *).
+#[using="Type"] Lemma rz_ret_only_noacc_silent : forall (ms : machine_state) (model : Model) (x8 r : bv 64)
+    (m' : Model) (T : TSet),
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffectU r [] [] [] [] []) m' []) ->
+  m_halted m' = None ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  srealizesJ segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
+  srealizesJ segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hc.
+  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hrob Hc.
   rewrite <- (apply_effect_no_write ms r) in Hc.
-  eapply rz_det_mat_silent; [exact Hh | exact Hsvc | exact Hchk | exact Hh' | | exact Hc].
+  eapply rz_det_mat_silent; [exact Hh | exact Hsvc | exact Hchk | exact Hh' | | exact Hrob | exact Hc].
   rewrite syscall_effect_accesses_ret. apply materialize_nil.
 Qed.
 
@@ -197,27 +269,45 @@ Hypothesis K_vmonly : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pmo,$<.Pmo',$<.P,A
 Proof. intros mo mo' HK (A & B & C & D). eapply K_vmonly; eauto. Qed.
 
 (* [comment removed for export] *)
-#[using="K_halted K_mat K_vmonly"] Lemma rz_ret_only_copyinsK : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmo,$<.Px8,(6.&40.)Preads,(4.(5.(6.&40.)$3<.))Pr,(6.&40.)Pm',$<.Pevs,(4.$17.)PT,$18.P,A1.VK,R7.P,(1.(9.(6.&40.))(>.R9.)(20.(6.&40.)R7.))P,Po,(37.$2:.)(38.(2;.(2<.Vsegs,R;.R9.)R:.R1.)(1.(37.$2:.)R1.(2=.$2:.(40.R8.(3:.R7.(16.(5.(6.&40.)(4.(6.&8.))))(16.(5.(6.&40.)(6.&40.)))(16.(5.(6.&40.)(6.&40.)))(16.$3;.)(16.(5.(6.&40.)$3<.))))R6.R5.)))P,(41.R:.R6.)P,(3>.VAL,VCS,R9.)P,Pmo'',$<.P,A1.VK,R1.P,(3?.R:.R2.)(19.Vsegs,(14.(32.(3=.R10.R<.))R3.)R9.)(19.Vsegs,(14.R>.R=.)(39.R8.R7.))")
-(* [comment removed for export] *).
+#[using="K_halted K_mat K_vmonly"] Lemma rz_ret_only_copyinsK : forall (ms : machine_state) (mo : Model)
+    (x8 : bv 64) (reads : list (bv 64 * nat)) (r : bv 64) (m' : Model) (evs : list event) (T : TSet),
+  K mo ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) mo o <->
+     o = Ok (with_copyins reads (mkEffectU r [] [] [] [] [])) m' evs) ->
+  vm_same mo m' ->
+  acc_ok AL CS reads ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
+  (forall mo'', K mo'' -> mo_mat m' mo'' -> srealizesJ segs (mkCfg (advance_past_svc (set_gpr0 ms r)) mo'') T) ->
+  srealizesJ segs (mkCfg ms mo) (t_emit evs T).
 Proof.
-  intros ms mo x8 reads r m' evs T HK Hsvc Hchk VS OK Hc.
+  intros ms mo x8 reads r m' evs T HK Hsvc Hchk VS OK Hrob Hc.
   pose proof (K_halted mo HK) as Hh.
   pose proof (K_vm_same mo m' HK VS) as HK'.
   destruct (K_mat m' reads HK' OK) as (mo'' & Hm & HK'' & MM).
   rewrite <- (apply_effect_copyins_no_write ms r reads) in Hc.
-  eapply (rz_det_mat _ _ _ _ m' mo''); [exact Hh | exact Hsvc | exact Hchk | exact (K_halted _ HK') | | apply Hc; [exact HK''|exact MM]].
+  eapply (rz_det_mat _ _ _ _ m' mo''); [exact Hh | exact Hsvc | exact Hchk | exact (K_halted _ HK') | | exact Hrob | apply Hc; [exact HK''|exact MM]].
   rewrite syscall_effect_accesses_copyins. exact Hm.
 Qed.
 
-#[using="K_halted K_mat K_vmonly"] Lemma rz_ret_only_copyinsK_silent : ltac2:(CDefT.buildp (gd_tbl_NodesA ()) "Pms,$;.Pmo,$<.Px8,(6.&40.)Preads,(4.(5.(6.&40.)$3<.))Pr,(6.&40.)Pm',$<.PT,$18.P,A1.VK,R6.P,(1.(9.(6.&40.))(>.R8.)(20.(6.&40.)R6.))P,Po,(37.$2:.)(38.(2;.(2<.Vsegs,R:.R8.)R9.R1.)(1.(37.$2:.)R1.(2=.$2:.(40.R7.(3:.R6.(16.(5.(6.&40.)(4.(6.&8.))))(16.(5.(6.&40.)(6.&40.)))(16.(5.(6.&40.)(6.&40.)))(16.$3;.)(16.(5.(6.&40.)$3<.))))R5.(16.$17.))))P,(41.R9.R5.)P,(3>.VAL,VCS,R8.)P,Pmo'',$<.P,A1.VK,R1.P,(3?.R9.R2.)(19.Vsegs,(14.(32.(3=.R?.R;.))R3.)R9.)(19.Vsegs,(14.R=.R<.)R7.)")
-(* [comment removed for export] *).
+#[using="K_halted K_mat K_vmonly"] Lemma rz_ret_only_copyinsK_silent : forall (ms : machine_state) (mo : Model)
+    (x8 : bv 64) (reads : list (bv 64 * nat)) (r : bv 64) (m' : Model) (T : TSet),
+  K mo ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec (sys_input segs ms x8) mo o <->
+     o = Ok (with_copyins reads (mkEffectU r [] [] [] [] [])) m' []) ->
+  vm_same mo m' ->
+  acc_ok AL CS reads ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
+  (forall mo'', K mo'' -> mo_mat m' mo'' -> srealizesJ segs (mkCfg (advance_past_svc (set_gpr0 ms r)) mo'') T) ->
+  srealizesJ segs (mkCfg ms mo) T.
 Proof.
-  intros ms mo x8 reads r m' T HK Hsvc Hchk VS OK Hc.
+  intros ms mo x8 reads r m' T HK Hsvc Hchk VS OK Hrob Hc.
   pose proof (K_halted mo HK) as Hh.
   pose proof (K_vm_same mo m' HK VS) as HK'.
   destruct (K_mat m' reads HK' OK) as (mo'' & Hm & HK'' & MM).
   rewrite <- (apply_effect_copyins_no_write ms r reads) in Hc.
-  eapply (rz_det_mat_silent _ _ _ _ m' mo''); [exact Hh | exact Hsvc | exact Hchk | exact (K_halted _ HK') | | apply Hc; [exact HK''|exact MM]].
+  eapply (rz_det_mat_silent _ _ _ _ m' mo''); [exact Hh | exact Hsvc | exact Hchk | exact (K_halted _ HK') | | exact Hrob | apply Hc; [exact HK''|exact MM]].
   rewrite syscall_effect_accesses_copyins. exact Hm.
 Qed.
 
@@ -232,10 +322,13 @@ Proof.
   intros regs pc mem mo w fd e T HF HE HK H17 Hfd Hfd32 Hlk Hc.
   pose proof (K_halted mo HK) as Hh.
   eapply rz_sysA; [exact Hh | exact HF | exact HE |].
-  eapply rz_ret_only_noacc_silent; [exact Hh | reflexivity | | | rewrite adv_set_epend; exact Hc].
+  eapply rz_ret_only_noacc_silent;
+    [exact Hh | reflexivity | | |
+    | rewrite adv_set_epend; exact Hc].
   - intros o. rewrite (syscall_spec_57 _ mo o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
     rewrite in_arg0_si, ms_gpr_epend0, Hfd, (fd32_id fd Hfd32). exact (close_outcome fd _ mo e o Hlk).
   - rewrite with_fds_halted'. exact Hh.
+  - eapply RomBase.sys_rob_memfree; [reflexivity |]. rewrite H17, u64_lit by lia. exact RomBase.memfree_57.
 Qed.
 
 #[using="K_vmonly"] Lemma K_with_fds : forall fds mo, K mo -> K (with_fds fds mo).
@@ -248,7 +341,11 @@ Proof.
   intros regs pc mem mo w fd e T HF HE HK H17 Hfd Hfd32 Hlk Hnd H11 Hc.
   pose proof (K_halted mo HK) as Hh.
   eapply rz_sysA; [exact Hh | exact HF | exact HE |].
-  eapply rz_ret_only_noacc_silent; [exact Hh | reflexivity | | exact Hh | rewrite adv_set_epend; exact Hc].
+  eapply rz_ret_only_noacc_silent;
+    [exact Hh | reflexivity | | exact Hh
+    | eapply (RomWritev.ioctl_rob_tty segs); [reflexivity | rewrite H17; apply u64_lit; lia
+                                         | rewrite ms_gpr_epend1, H11; vm_compute; reflexivity]
+    | rewrite adv_set_epend; exact Hc].
   intros o. rewrite (syscall_spec_29 _ mo o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
   rewrite in_arg0_si, in_arg1_si, ms_gpr_epend0, ms_gpr_epend1, Hfd, (fd32_id fd Hfd32), H11.
   apply (ioctl_tty_outcome fd _ _ mo e o Hlk Hnd). reflexivity.
@@ -261,7 +358,10 @@ Proof.
   intros regs pc mem mo w fd cnt T HF HE HK H17 Hfd Hfd32 Hlk H12 Hc1 H64 Hover Hok Hc.
   pose proof (K_halted mo HK) as Hh.
   eapply rz_sysA; [exact Hh | exact HF | exact HE |].
-  eapply rz_ret_only_noacc_silent; [exact Hh | reflexivity | | exact Hh | rewrite adv_set_epend; exact Hc].
+  eapply rz_ret_only_noacc_silent;
+    [exact Hh | reflexivity | | exact Hh
+    | eapply RomBase.sys_rob_memfree; [reflexivity | rewrite H17, u64_lit by lia; exact RomBase.memfree_63]
+    | rewrite adv_set_epend; exact Hc].
   intros o. rewrite (syscall_spec_63 _ mo o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si, ms_gpr_epend0, ms_gpr_epend1, ms_gpr_epend2, Hfd, (fd32_id fd Hfd32).
   apply (read_dir_outcome fd _ _ _ mo o Hlk).
@@ -304,7 +404,8 @@ Proof.
     - intros z (a & n & Hin & Hz). destruct Hin as [E|[]]. injection E as <- <-. apply OK. cbn [length] in HL, Hz |- *. lia. }
   destruct (K_mat m' _ HK' OKw) as (mo'' & Hm & HK'' & MM).
   eapply (rz_det_mat_silent _ mo _ (mkEffect (len_word bs) (delivered_writes (getr regs 11) bs) []) m' mo'');
-    [exact Hh | reflexivity | exact Hchk | exact (K_halted _ HK') | exact Hm | ].
+    [exact Hh | reflexivity | exact Hchk | exact (K_halted _ HK') | exact Hm
+    | apply (RomBase.sys_rob_memfree segs ms mo (getr regs 17) eq_refl); rewrite Hno; exact RomBase.memfree_63 | ].
   destruct bs as [|b bsr]; cbn [delivered_writes].
   - unfold ms. rewrite adv_ret_epend. cbn [wbytes] in Hc. apply Hc; assumption.
   - unfold ms. rewrite adv_write1_epend. apply Hc; assumption.

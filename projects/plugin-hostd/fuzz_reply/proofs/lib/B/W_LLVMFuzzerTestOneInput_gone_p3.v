@@ -3,25 +3,26 @@
 (* Modified by Theorem Labs, 2026-10-30: KF-COUNT F3: HLS1 carries gn_cst (relay_instance_gone's cost at q = 0) *)
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE 3: GRG 0x84b40 -> GC1 0 0x84b5c, the call relay_instance_gone(id) (fuzz_reply.c:642).  The image-B port of
-   lib/A/W_LLVMFuzzerTestOneInput_gone_p3.v (a working branch 32b23a20c3e), at B's addresses,
+   lib/A/W_LLVMFuzzerTestOneInput_gone_p3.v (a working branch), at B's addresses,
    registers and frame (the objdump of the pinned binary fuzz_reply.asan-ubsan),
-   over the base lib/B/W_LLVMFuzzerTestOneInput_gone_base.v (85b530db754):
+   over the base lib/B/W_LLVMFuzzerTestOneInput_gone_base.v:
      0x84b40  sd   s10,24(s1)          HI_G_NOUT to F+24 (B spills s10 here; 0x84cb0 reloads it)
      0x84b44  mv   a0,s5               the id
      0x84b48  jal  82ca0 <relay_instance_gone>
      0x84b4c  auipc a0,0x554; addi s4,a0,788    s4 = &g_s[0] (0x5d8e60)
      0x84b54  addi s5,s1,192           &reads[0]
      0x84b58  addi s6,s1,208           the loop's end pointer
-   The callee's contract is W6's, taken verbatim (lib/B/W_contract.v:1474 rig_spec, :1174 rg_place); its journal is at
+   The callee's contract is W6's, taken verbatim (lib/B/W_contract.v:1475 rig_spec, :1174 rg_place); its journal is at
    G_RIG B fr_RG, lifted to G_fr with ajournal_gx_G_mono under GN_HG_RIG and spliced into the arm's with
    ajournal_gx_sub, as B's latch walk (lf_seg_latch) does for check_bounded.  The run before the call writes the frame
    cell F+24 (a plain frame store of the token run: every other byte is kept by the run's frame_of), so the cut point's
    facts are carried to the call's entry state with the base's transport kit (_gone_tk.v) and gp3_gframe_st.
    B against A in the Section hypotheses: A's GN_ROM_PIN and the errno-not-rom half of A's GP3_ERRNO_APART are
-   replaced by HRO : rom_out segs B G_fr (lib/B/W_journal.v:397; B's add walk's HRO, discharged by
+   replaced by HRO : rom_out segs B G_fr (lib/B/W_journal.v:398; B's add walk's HRO, discharged by
    lib/B/W_LLVMFuzzerTestOneInput_G.v c_rom_out at G_fr_c): on B rom_out names the sink head AOFL_HEAD, a field of the
    Context sink_head that no vm_compute decides here; the errno half over the four cells is DERIVED from the base's
    GN_CELLS_ERRNO (gp3_errno_g4), as A's composition derives gx_errno_apart. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -178,7 +179,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 Variable MMAX : Z.
 (* relay_instance_gone, W6: lib/B/W_contract.v's rig_spec (Section s6 at CTX_AFREE := image B's K0 table
    YCk0.CTX_AFREE; its last premise is the free's caller context [0x82fb8; 0x84b4c(; 0x82240)]) and rg_place,
-   verbatim.  The adaptation to the CTX_AFREE rig_spec is image A's (95cae0d4740), at B's numbers. *)
+   verbatim.  The adaptation to the CTX_AFREE rig_spec is image A, at B's numbers. *)
 Hypothesis RIG : rig_spec (PI := PB_fr) B MT MMAX fr_RG YCk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 Hypothesis RGP : rg_place (PI := PB_fr) B fr_RG.
 (* the model obligations, by the base's names *)
@@ -195,7 +196,7 @@ Hypothesis GWR : glob_wr_law G_fr.
 (* errno is none of the model's cells (the base's name) *)
 Hypothesis HCE : GN_CELLS_ERRNO B.
 (* the read-only bytes are off G_fr, pinned when the allocator owns them, off errno and off the sink head
-   (lib/B/W_journal.v:397 rom_out; B's add walk's HRO; _G.v c_rom_out at G_fr_c): with GN_HG_RIG it gives rom_out at
+   (lib/B/W_journal.v:398 rom_out; B's add walk's HRO; _G.v c_rom_out at G_fr_c): with GN_HG_RIG it gives rom_out at
    G_RIG (gp3_rom_out), so the cut's rom_view survives the callee's journal *)
 Hypothesis HRO : rom_out segs B G_fr.
 
@@ -670,7 +671,7 @@ Qed.
 Lemma gp3_errno_g4 : forall a, gp3_g4 a -> ~ (as_errno B <= a < as_errno B + 4).
 Proof. intros a H. exact (HCE a (gp3_g4_cells a H)). Qed.
 (* relay_instance_gone's aothers_at: the other three slots are closed or carry another fd (B's aothers_at compares
-   the low 32 bits, W_contract.v:969; both fds are below 2 ^ 31, asrc_at) *)
+   the low 32 bits, W_contract.v:970; both fds are below 2 ^ 31, asrc_at) *)
 Lemma gp3_others : forall cx t m ly S (W : world segs) mem (j : nat) (h : hsrc),
   RINV cx t m -> amodel_at B ly S W mem m -> (j < 4)%nat ->
   nth j (lm_hs m) None = Some h -> aothers_at (PI := PB_fr) fr_RG W mem j (hs_fd h).
@@ -859,8 +860,8 @@ Definition gp3_kept2 : list (bv 5) :=
    30; 31]%bv.
 
 (* the callee's afn_pre at sp = F: _gone_base.v's gn_afn_pre, with the chain's spine (empty, or the entry's return
-   RA_LLVMF) and the room above sp that rig_spec's caller-context premise names (image A's gp3_afn_pre,
-   95cae0d4740) *)
+   RA_LLVMF) and the room above sp that rig_spec's caller-context premise names (image A's gp3_afn_pre)
+   *)
 Lemma gp3_afn_pre : forall cx ly3 S3 fpos k (W : world segs) mem md regs STK1,
   lf_base B MT XM_LIB RLO RHI fr_live_pre G_fr cx ->
   ajournal_gx segs B G_fr 0 [] LLVMF_STK (spZ (c_regs cx)) (lf_FP fr_FP cx)
@@ -1108,7 +1109,7 @@ Proof.
     as (ch & HPREc & HSPINE & HTOP).
   (* GN_LS_rig's premises at GRG: gn_op (HOP), aentry_ok's |re_U| <= APARTIAL, the model blocks' sizes not negative
      (the AR block law over ablocks_sep's Permutation HPERM0), every open source's pending offset (asrc_at), and the
-     entry pre's CAPOUT clause (fr_lib_pre_cf, its last conjunct); A f5d40188e29 *)
+     entry pre's CAPOUT clause (fr_lib_pre_cf, its last conjunct); A *)
   pose proof HOP as (_ & HO0 & Ht0 & _).
   assert (HUs : Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL) (lm_es m)).
   { pose proof HREL as (_ & _ & _ & _ & _ & _ & _ & _ & _ & GdAE & _).

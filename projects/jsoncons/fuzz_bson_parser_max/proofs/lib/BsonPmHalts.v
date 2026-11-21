@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed bson_pm_halts_plain. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -77,9 +78,12 @@ Proof.
   intros [sp brk mb rnd] inp Hen Hvalid Hsw.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-  destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-  destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _).
-  pose proof (SRC_on sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds) as SRC.
+  destruct Hen as [Hsp [Hbrk [Hmb [_ Hlau]]]].
+  pose proof (valid_input_launch _ Hvalid) as Hvl.
+  pose proof (valid_input_channel_reader _ Hvalid) as Hrd.
+  (* [valid_input]'s fifth conjunct is [fs_image_real] at LPS 727298f3 *)
+  destruct Hvalid as (Hargv & Henvp & Hfs & _ & _ & Hcreds & _).
+  pose proof (SRC_on sp brk mb rnd inp Hsp Hbrk Hmb Hvl Hlau Hargv Henvp Hfs Hcreds Hrd) as SRC.
   eapply (srealizes_init_must_exit (bmK := bm_on_inst) eq_refl cfg0).
   - exact SRC.
   - apply exit_codes_in_spec.

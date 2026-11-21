@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_cmp_scan: the scan loop L2 of the cmp segment of the image-A walk of libreac/fuzz_decode's
    LLVMFuzzerTestOneInput, cmp_scan : from cmp_q624 (+0x624, the loop head, entered when the plain check refused) the
    machine SRr-realizes cmp_q734 (+0x734) (lib/A/Prog/LLVMFuzzerTestOneInput_seg_cmp.v).
@@ -28,7 +29,7 @@
    another spill slot.
 
    Steps follow the scan loop L6 of this walk (LLVMFuzzerTestOneInput_seg_exit_scan.v, sc_loop: the seat, the run,
-   the split, the pointwise memory) and libreac/fuzz_boxreg's ReadName.v (pb_read_name, 1d92330b7ad: paj_run_tok,
+   the split, the pointwise memory) and libreac/fuzz_boxreg's ReadName.v (pb_read_name: paj_run_tok,
    psrr_branch_tok, st_ok_pi_add_region / st_ok_pi_add_fact, kept_of_frame, field_of_region). *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

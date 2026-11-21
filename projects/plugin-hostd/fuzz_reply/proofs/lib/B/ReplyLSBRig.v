@@ -2,8 +2,8 @@
    LLVMFuzzerTestOneInput, GN_LS_rig in C3's peak form with its four proposed premises (lib/B/ReplyLSBArms.v
    GN_LS_rig_p_T, whose meter conjunct is the LS instance's since KF-COUNT #6), at LS := ReplyLSB.fr_LS B CR,
    RINV := ReplyRINVB.fr_RINV, MMAX := fr_MMAX *)
-(* THE PORT.  A's proof is B1cTopxLS's lib/A/ReplyLS3cTopxRig.v (a working branch 9f4cbd12a19, the file
-   at 2db71055935): fr_LS3_gone_rig_c1 :402 (tr_max tr < MMAX), fr_LS3_gone_rig_c2p :610 (blocks_bytes S + tr_peak tr
+(* THE PORT.  A's proof is B1cTopxLS's lib/A/ReplyLS3cTopxRig.v (a working branch, the file):
+   fr_LS3_gone_rig_c1 :402 (tr_max tr < MMAX), fr_LS3_gone_rig_c2p :610 (blocks_bytes S + tr_peak tr
    + 636848 <= LIVE_MAX) and fr_LS3_gone_rig_c3 :421 (mo_ok, True at ameter_triv), with that file's helpers grg_*
    (:106-397, :475-605).  Each helper here is A's renamed grg_ -> brig_, its proof A's but for the swaps below; the
    rules: c1 -> brig_rig_c1 (without A's unused fr_LS3 premise), c3 -> brig_rig_c3 (at any S and trace),
@@ -37,7 +37,7 @@
        :212-213), not negative only under the allocator's chunk_ok (YG01.v :387-388), which fr_LS does not carry; and
        a negative block can cancel a positive one in fr_LS's sums (brig_probe_cap below).  The arm has it from
        amodel_at (the remove arm's rr_blks_pos).
-   A -> B SWAPS (A at a working branch 9f4cbd12a19):
+   A -> B SWAPS (A at a working branch):
      imports: A's list (A :53-96) with lib/A AB1v -> lib/B YB1v; Reusable YE01 + lib/A AE2k -> lib/B YE01 YE2k;
        lib/A ACfn -> lib/B YCfn (Required only); lib/A W_syms .. W_journal, W_rep W_contract W_sites W_frame,
        W_LLVMFuzzerTestOneInput_cut -> lib/B's files of the same names, then lib/B ReplyGuardB (Required);

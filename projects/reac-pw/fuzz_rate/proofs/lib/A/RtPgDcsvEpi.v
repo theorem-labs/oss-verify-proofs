@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88; its helpers rx_reg_atom,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgX01.v; its helpers rx_reg_atom,
    rx_reg_ext, rx_reg_lit, rx_st_region, rx_chunk_zero, rx_flag0_of, the tactics z5 / z5g / rx_mach / rx_atom / rx_ext /
    rx_lit / rx_run_flag (the flag-store run with aj_flag_store's full argument count) and the shape of its release run
    (the flag pointer word, the flag byte and the 13 save slots as one symbolic state, then SRr_ret_at) are kept with the
    prefix ep_, on reac-pw/fuzz_rate's image A and lib/A/RtPgDcsvDefs.v's code table dc_tbl; the tail walk of
    reac_rate_drivable_csv below is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, same loaded bytes): PART 3 of the walk of

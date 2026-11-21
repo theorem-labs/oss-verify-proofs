@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -39,7 +40,7 @@ Section SEAMS.
   Context {HGW : HasGuard} {HCEIL : HasCeiling}.
   Variables (sp0 : word) (argv : list (list byte)) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
 
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
@@ -87,7 +88,7 @@ Section SEAMS.
   Definition SEAM (cb own : bool) (ap : at_parser (ptr:=bptr)) (d : dlay) (s : PState) (LB : list block) (m : mem) : Prop :=
     DLAY_ok ap d /\ DMEM cb ap d m /\ DBYTES own ap d m /\ DBLOCKS own ap d LB /\ RHEAP s LB m
     /\ stdout_file m (ps_so s) /\ (exists errv : word, rw_cells rsegs m RERRNO [C4 errv])
-    /\ stk rsegs m (usp0 - 8388608) (usp0 + -208).
+    /\ stk rsegs m (usp0 - 6144512) (usp0 + -208).
 
   Definition rat_head (k : Z) (fl : bool) (ap : at_parser (ptr:=bptr)) (d : dlay) (s : PState) (LB : list block) (m : mem) (ms : machine_state) : Prop :=
     exists (x1 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 x19 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32),
@@ -147,7 +148,7 @@ Section SEAMS.
       /\ DLAY_ok ap d /\ MFRAME sp0 argv m (d_mpad d) S7 S6 S5 S4 /\ mem_inv rsegs m /\ RSTAT TID m /\ rauxv_ok m usp0 /\ stderr_wfile0 m /\ CJ1 m
       /\ DBYTES false ap d m /\ DBLOCKS false ap d LB /\ RHEAP s LB m
       /\ stdout_file m (ps_so s) /\ (exists errv : word, rw_cells rsegs m RERRNO [C4 errv])
-      /\ stk rsegs m (usp0 - 8388608) (usp0 + -128).
+      /\ stk rsegs m (usp0 - 6144512) (usp0 + -128).
 
   Definition rat_main_ret (st : Z) (s : PState) (LB : list block) (m : mem) (ms : machine_state) : Prop :=
     exists (x1 t0 t1 t2 x9 a0 a1 a2 a3 a4 a5 a6 a7 x18 x19 x20 x21 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (mpad : list byte),
@@ -155,7 +156,7 @@ Section SEAMS.
       /\ 0 <= st < 256
       /\ MFRAME sp0 argv m mpad S7 S6 S5 S4 /\ mem_inv rsegs m /\ RSTAT TID m /\ RHEAP s LB m
       /\ stdout_file m (ps_so s) /\ stderr_wfile0 m
-      /\ stk rsegs m (usp0 - 8388608) (usp0 + -128).
+      /\ stk rsegs m (usp0 - 6144512) (usp0 + -128).
 
   #[using="Type"] Lemma valid_sp_facts : valid_sp sp0 -> 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0.
   Proof. intros (A & B & C). unfold sp_window_lo, sp_window_hi in *. lia. Qed.
@@ -351,7 +352,7 @@ Section SEAMS.
     pose proof (F_printf_diag.emit_printf_proof ps_so set_so_ps ps_get_set ps_set_set) as EP. unfold F_printf_diag.emit_printf_stmt in EP.
     eapply implM_mono.
     { eapply (implM_keepsf rsegs (fun x => set_so_ps stdout_init x)).
-      - eapply EP with (lo := usp0 - 8388608) (canary := guard_word);
+      - eapply EP with (lo := usp0 - 6144512) (canary := guard_word);
           [exact SOF| rewrite unsigned_lit by lia; reflexivity| rewrite unsigned_lit by lia; exact ST
           | rewrite unsigned_lit by lia; unfold F_printf_iface.EMIT_DEPTH; lia| unfold F_printf_iface.GLOBALS_TOP; lia
           | rewrite unsigned_lit by lia; lia| apply (RHEAP_ssp _ _ _ HP)| exact MI| exact FRM].
@@ -364,8 +365,8 @@ Section SEAMS.
     exists m', (ps_so s'). split; [| exact Es].
     pose proof (agree_on_of_munch rsegs _ _ _ MU WM) as AG.
     pose proof OK as (_ & _ & _ & _ & LEN & _ & _ & _ & BR & OWN). pose proof BR as (BR1 & BR2 & BR3 & BR4 & BR5). rewrite CEIL in BR4. unfold LO in BR4.
-    assert (OUT : forall a, ((a < usp0 - 8388608 \/ usp0 - 208 <= a) /\ ~ (RSTDOUT <= a < RSTDOUT + 232) /\ ~ (RSTDOUT_BUF <= a < RSTDOUT_BUF + 1024)) ->
-                            (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -208); (RSTDOUT, RSTDOUT + 232); (RSTDOUT_BUF, RSTDOUT_BUF + 1024)] a0) a).
+    assert (OUT : forall a, ((a < usp0 - 6144512 \/ usp0 - 208 <= a) /\ ~ (RSTDOUT <= a < RSTDOUT + 232) /\ ~ (RSTDOUT_BUF <= a < RSTDOUT_BUF + 1024)) ->
+                            (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -208); (RSTDOUT, RSTDOUT + 232); (RSTDOUT_BUF, RSTDOUT_BUF + 1024)] a0) a).
     { intros a Ha. cbn. lia. }
     unfold rat_emit_ret. do 18 eexists. split; [replace (ret_pc (Z_to_bv 64 0x13e3c)) with (Z_to_bv 64 0x13e3c) by (symmetry; rpc); reflexivity|].
     split; [exact FRM'|]. split; [exact HK|]. split; [exact HRC|].
@@ -384,7 +385,7 @@ Section SEAMS.
              constructor; [right; left; cbn [fst snd]; unfold RLIBC, RCTX, RSSP_GUARD, RGOT_SSP, RVMLOCK; lia| constructor]. }
     split; [exact SOF'|].
     split. { exists errv. eapply rw_cells_agree; [exact AG| exact ERR|]. intros a Ha. apply OUT. cbn in Ha. unfold RERRNO in Ha. lia. }
-    replace (usp0 - 8388608) with (usp0 - 8388608) in ST' by lia. exact ST'.
+    exact ST'.
   Qed.
 
   #[using="Type"] Lemma emit_ret_call : forall k rc fl ap d s LB m ms, valid_sp sp0 -> rat_emit_ret k rc fl ap d s LB m ms -> 1 < k ->
@@ -426,7 +427,7 @@ Section SEAMS.
   Proof.
     intros st s LB m ms VSP HT (x1 & t0 & t1 & t2 & x9 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & x18 & x19 & x20 & x21 & t3 & t4 & t5 & t6 & F & fc & mpad
                               & -> & HST & FR & MI & RS & HP & SOF & SE & ST).
-    eapply (main_return sp0 argv TID VSP CEIL HT st s LB); [exact FR| unfold LO; replace (usp0 - 8388608) with (usp0 + -8388608) in ST by lia; first [exact ST| replace (usp0 + -8388608) with (usp0 - 8388608) in ST by lia; exact ST]
+    eapply (main_return sp0 argv TID VSP CEIL HT st s LB); [exact FR| unfold LO; replace (usp0 - 6144512) with (usp0 + -6144512) in ST by lia; first [exact ST| replace (usp0 + -6144512) with (usp0 - 6144512) in ST by lia; exact ST]
       | exact RS| exact HP| exact SOF| apply stderr_wfile0_file; exact SE| exact MI].
   Qed.
 End SEAMS.

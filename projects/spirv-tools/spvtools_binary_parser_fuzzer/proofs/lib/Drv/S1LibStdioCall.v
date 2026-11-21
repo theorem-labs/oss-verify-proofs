@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -254,6 +255,11 @@ Theorem stdio_call_sound_fr :
   rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
   rdn RSEGS M s (length extra) = Some extra ->
   fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+  (* 75d69e00: [ReadWrite.writev_spec] answers a byte count only with a reader at
+     the far end (Linux v6.18.46 fs/pipe.c:460-465); the bit is free, not derivable
+     from the [fd_lookup] above, so it is a premise here as it is in
+     [ref_stdio_write]. *)
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   K [] ->
   (forall R' M',
@@ -285,7 +291,7 @@ Proof.
   match type of Hc with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
   lazymatch type of Hc with Some ?x = Some _ => assert (Eres : res = x) by congruence end. clear Hc. subst res.
   cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn].
-  intros Hwbwp Hlenp Hlene H30 Dw Ds Hsl Rpend Rextra Hfdlk Hh Hlz HKnil HCONT.
+  intros Hwbwp Hlenp Hlene H30 Dw Ds Hsl Rpend Rextra Hfdlk Hrdr Hh Hlz HKnil HCONT.
   set (wb := bv_unsigned (edenot E wbe)) in *. set (wp := bv_unsigned (edenot E wpe)) in *.
   set (s := edenot E (nth 11 sr (ELit 0))) in *. set (l := edenot E (nth 12 sr (ELit 0))) in *.
   set (su := bv_unsigned (edenot E (nth 2 sr (ELit 0)))) in *.
@@ -370,6 +376,7 @@ Proof.
     rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. unfold two64 in Hcgv. rewrite Hcgv. reflexivity.
   - apply orb_prop in Hfd12 as [H|H]; apply Z.eqb_eq in H; subst fd; lia.
   - exact Hfdlk.
+  - exact Hrdr.
   - exact Hh.
   - exact Hlz.
   - lia.
@@ -474,6 +481,11 @@ Theorem stdio_call_sound :
   rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
   rdn RSEGS M s (length extra) = Some extra ->
   fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+  (* 75d69e00: [ReadWrite.writev_spec] answers a byte count only with a reader at
+     the far end (Linux v6.18.46 fs/pipe.c:460-465); the bit is free, not derivable
+     from the [fd_lookup] above, so it is a premise here as it is in
+     [ref_stdio_write]. *)
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   K [] ->
   (forall R' M',
@@ -483,7 +495,7 @@ Theorem stdio_call_sound :
   srealizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0xd537c) M (seg_rom RSEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-  intros vals ebs sr kn R M model res pending extra K E HR HK Hc wb wp s l su H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 HCONT.
+  intros vals ebs sr kn R M model res pending extra K E HR HK Hc wb wp s l su H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 Hrdr H11 H12 H13 HCONT.
   eapply stdio_call_sound_fr; try eassumption.
   intros R' M' HR' HK' _ _. apply HCONT; assumption.
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise HRDR and the co_rdr field in entry_cs_ok, the exit cs_ok and cs_ok_model). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -91,6 +92,10 @@ Variable B C K ret n sp : Z.
 Hypothesis Hpre : hmalloc_pre BSEGS G fx_ok (AzBridgeH.AINVH_bt bt) AzBridgeC3.FPCw false fx R M mdl L LF B C K ret n sp MSTK_N.
 Hypothesis HX : hopnew_x BSEGS G M.
 Hypothesis HFDS : m_fds mdl = APS.fds_std.
+(* [co_rdr] (AzGPS.v:244): [entry_cs_ok] builds a [GPS.cs_ok] from scratch, so the
+   reader has to arrive with the precondition; [h_alloc1_at] (AzNSpec.v:415) now
+   carries it and every caller holds a [cs_ok] to discharge it from. *)
+Hypothesis HRDR : m_channel_reader mdl = true.
 Hypothesis HLF : Z.of_nat (length LF) + 1 <= FMIN.
 Hypothesis HK0 : 0 <= K.     (* [comment removed for export] *)
 
@@ -250,6 +255,7 @@ Proof.
     unfold uE. change (edenot E0 (EVar 34)) with (Z_to_bv 64 1). rewrite u64_lit by lia. lia.
   - change (floor_sem E0 None ESP 3600). cbn [floor_sem]. change (sptop_den E0 ESP) with (sptop_den E0 ESP).
     unfold sptop_den. rewrite US. destruct (Z.eqb_spec sp 0); [lia|]. cbn [SFLOOR SFLop]. unfold MSTK_N. lia.
+  - (* co_rdr *) exact HRDR.
 Qed.
 
 (* [comment removed for export] *)
@@ -349,7 +355,12 @@ Qed.
 Lemma exit_model : nmodel mdl mdl'.
 Proof.
   split; [exact (co_halt HC1)|]. split; [exact (co_fs HC1)|].
-  pose proof (co_fds HC1) as X. change (a_fd H1) with FdStd in X. cbn [APS.fds_ok] in X. rewrite X, HFDS. reflexivity.
+  split.
+  - pose proof (co_fds HC1) as X. change (a_fd H1) with FdStd in X. cbn [APS.fds_ok] in X. rewrite X, HFDS. reflexivity.
+  - (* [co_rdr] (AzGPS.v:244): the exit [cs_ok] carries the reader at [mdl'] and the
+       precondition carries it at [mdl] (HRDR, :97), so the two sides meet at [true].
+       No model-move fact is needed and none is available on this path. *)
+    rewrite HRDR. first [ exact (co_rdr HC1) | exact (GPS.co_rdr HC1) ].
 Qed.
 Lemma exit_errno : errno_kept G M M'.
 Proof. destruct exit_ainv as (_ & _ & _ & _ & HD). intros a Hew HM. apply HD; [right; right; exact Hew | exact HM]. Qed.
@@ -489,13 +500,17 @@ Lemma cs_ok_model : forall E cs fx' R' M' m1 m2,
   cs_okop E cs fx' R' M' m1 ->
   GPS.hid SHCb VSHo E cs m2 = GPS.hid SHCb VSHo E cs m1 -> m_halted m2 = None -> m_fs m2 = m_fs m1 -> m_fds m2 = m_fds m1 ->
   AINVop (blocks_den E (a_vis cs)) (blocks_den E (a_fake cs)) (bcost E (a_vis cs)) (bcount (a_vis cs)) (uE E (a_meter cs)) M' m2 ->
+  (* [co_rdr] (AzGPS.v:244): the reader is a projection of [m_proc] and no setter on this
+     path writes it; the caller discharges this by conversion. *)
+  m_channel_reader m2 = m_channel_reader m1 ->
   cs_okop E cs fx' R' M' m2.
 Proof.
-  intros E cs fx' R' M' m1 m2 [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL] Hh Hha Hfs Hfds HA.
+  intros E cs fx' R' M' m1 m2 [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD] Hh Hha Hfs Hfds HA Hrdr.
   constructor; try assumption.
   - unfold GPS.Mr in *. rewrite Hh. exact CK.
   - rewrite Hfs. exact CF.
   - eapply GPS.fds_ok_model; [exact Hfds | exact Hfs | exact CD].
+  - (* co_rdr *) rewrite Hrdr. exact CRD.
 Qed.
 
 Section GenRZ.
@@ -541,7 +556,7 @@ Proof.
   intros model' Hsame Hhid Hhalt' Hfs2 Hfds2 HAm Hclean.
   unfold unrestrict. cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom mkstF mkst].
   unfold GPS.Mr. rewrite munrestrict_mrestrict.
-  pose proof (cs_ok_model E H1 fx' R' M' mdl' model' HC Hhid Hhalt' Hfs2 Hfds2 HAm) as HC'.
+  pose proof (cs_ok_model E H1 fx' R' M' mdl' model' HC Hhid Hhalt' Hfs2 Hfds2 HAm (APS.rdr_sbm _ _ Hsame)) as HC'.
   destruct Hpre as (_ & _ & _ & (Hr1 & Hr2 & Hr3 & _) & _).
   assert (HR1 : getr R' (Z_to_bv 5 1) = Z_to_bv 64 ret).
   { change (Z_to_bv 5 1) with (Z_to_bv 5 (Z.of_nat 1)). rewrite (exit_reg E fx' R' M' model' HC' 1%nat ltac:(lia)).
@@ -600,7 +615,7 @@ Theorem opnew_h_B_j : forall {RC : run_ceil} (bt : AsAinvDefs3.as_boot)
   forall RZg : GPS.rz_t, (forall T, AsIface3.AsK.kclosedD BSEGS (fun c => RZg c T)) -> GPS.RZ_SILENT1 BSEGS RZg -> GPS.RZ_EXIT BSEGS RZg -> GPS.RZ_CONSEQ RZg ->
   h_alloc1_at BSEGS GBOTH fx_ok RZg (AzBridgeH.AINVH_bt bt) AzBridgeC3.FPCw (hopnew_x BSEGS GBOTH) MSTK_N (g_opnew GBOTH).
 Proof.
-  intros RC bt FRESH ASC Gl Gh SW Gtp Ger Gpr Gmt Gsk Gam RZg RZg_kc RZg_silent1 RZg_exit RZg_conseq fx R M mdl L LF B C K ret n sp T Hpre HX HFDS HLF HT Hk.
+  intros RC bt FRESH ASC Gl Gh SW Gtp Ger Gpr Gmt Gsk Gam RZg RZg_kc RZg_silent1 RZg_exit RZg_conseq fx R M mdl L LF B C K ret n sp T Hpre HX HFDS HLF HT HRDR Hk.
   assert (HK0 : 0 <= K).
   { destruct Hpre as (_ & _ & (FF & _ & (HA & _)) & _).
     pose proof (AsVocab.aap_bounds _ _ _ _ (AsAinvFrame3b.AAINV_props_all bt (AsAinvEntry3.AsAinvHole3.holes_lsopt None)) L FF B C K M mdl HA) as X. lia. }

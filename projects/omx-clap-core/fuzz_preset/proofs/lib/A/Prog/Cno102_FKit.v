@@ -9,14 +9,14 @@
 (* Modified by Theorem Labs, 2026-10: cgif's frame-area call rule aj_stack_malloc_at (proofs/cgif/cgif_file_fuzzer/lib/
    YCbq.v:1749-1809, this tree's copy lib/Reusable/YCbq.v:1749) restated over YCbqG.v's journal ajournal_x (allocator
    invariant a parameter ARx, ghost head set Hp after S / Hpc after Sc, program statics PST), for the frame-area
-   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass d9a884240c6e, sha256
+   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass, sha256
    673aac5ee2f6ed86). Generic: no image
    class, no address, no allocator instance.
    Differences from the donor, each minimal:
    (a) cgif read the model's progress and post from model_laws (stack_malloc_progressP, ml_stack_malloc through
        am_wf); here they are ONE hypothesis in ARx form, SMX, which an instance discharges from its own model laws
        (the cf instance: YG05cf.v stack_malloc_progress_cf and stack_malloc_ok_cf with Wf_cf from ARcf);
-   (b) the call's own journal is call_effect_journal_x (YGcallx.v:251) at PST = [], lifted by ajournal_x_nil_pst, and
+   (b) the call's own journal is call_effect_journal_x (YGcallx.v:252) at PST = [], lifted by ajournal_x_nil_pst, and
        composed by ajournal_x_sub (YCbqG.v, footprint FP1 = []); Hp is threaded unchanged (FCiface: a frame-area call
        neither poisons nor unpoisons a head);
    (c) the frame's presence (FCiface's post) is also returned, which a caller writing its new frame needs;
@@ -27,26 +27,27 @@
    (ASFX = YG0dcf.v astack_free_law_cf; FFLX = the two conjuncts of cgif's frame_flag_lawP the rule reads, over ARx;
    SFX = YG05cf.v stack_free_ok_cf).
    THIRD RULE, aj_set_shadow_at_x: cgif's frame-area set_shadow call rule (cgif_rgb_fuzzer lib/YC05.v:206) over
-   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch (cold/h-hpreset-7-walk-H6
-   321efcb143d) unchanged but for its comment.
+   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch
+    unchanged but for its comment.
    Rule 24: no ajournal_x port of aj_stack_malloc_at or aj_flag_store existed on any branch read (WalkS8a confirmed,
    2026-10-28 ~23:40Z; h-hpreset-7 stopped c-omx-alloc's lane for both); cgif's released YCbq.v is the source ported.
    Numerals: 0, 10 (cgif's class range), 16 (stack alignment), 64 (the smallest frame), 4096 (= ESTACK, YG0d.v),
    2 ^ 40, 2 ^ 64: LENGTH / DERIVED. No ADDRESS. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSx.v, with its module names changed; 735 of its 901 lines of code are new or changed and 195 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset #102, the IMAGE-FREE kit of check_no_overread's Free and End segments (lane
    CnoA102f of a Theorem Labs lane; cited by the cno A' walk lib/A/Prog/Cno102A_F.v and the cno B' walk lib/B/Prog/Cno102B_F.v,
    lane CnoB102f, so the lemmas have ONE home).
    rule 24: no function proved. rule 24: proves no function (kind: segment-kit lemmas: tree port + runner twin).
-   FILE SET: every path at the kit cut 7cdbb61b5fa0's blob (lib/A/PRH_Reader.v, the
-   engine's YGcallSx.v / YCbqG.v / YC80x.v / YSRrMemnorm.v); first written against walkkit-next 3438f3406f33 and the
-   engine s1b 459129c18903, re-fitted at the cut (the journal's 18th conjunct, ajx_qt; the free's admits).
+   FILE SET: every path at the kit cut's blob (lib/A/PRH_Reader.v, the
+   engine's YGcallSx.v / YCbqG.v / YC80x.v / YSRrMemnorm.v); first written against walkkit-next and the
+   engine s1b, re-fitted at the cut (the journal's 18th conjunct, ajx_qt; the free's admits).
    WHAT:
    1. The PORT of preset's plain tree lemmas (lib/Prog/PjStruct.v) to the kit's reader predicates (lib/A/PRH_Reader.v), the
       premise the kit's tpj_free_specX asks (`pj_fdR .. n v D`, lib/A/PRH_FnPj.v). Transcribed from the donor
-      103fdaa2432 lib/B/Prog/CnoB_Free.v (never compiled there), clause by clause against
+      lib/B/Prog/CnoB_Free.v (never compiled there), clause by clause against
       PjStruct.v (donor lines in each comment); no plain file is Required and no plain lemma is cited. The zero case is
-      lib/Prog/PvMain0.v pv_fd_zeroR (afdd7e86e67b), not repeated here.
+      lib/Prog/PvMain0.v pv_fd_zeroR, not repeated here.
    2. pjf_fdR_lblk: pj_fdR over a block predicate that agrees on the tree's own blocks (lane CnoB102f's request: after
       pj_free #1 the ledger list is Lam' with Lam ~ D1 ++ Lam', so trees 2 and 3 move to prh_lin Lam').
    3. aj_flag_store_x_inv: YGcallSx.v's aj_flag_store_x (the inline release of an own fake frame, :248-335) with the
@@ -69,7 +70,7 @@
       post does not give the keep. free_leaf_x's raw frame lets mem2 differ from memT on the owned bytes and the
       scratch, and at preset an owned static lies in the read-only segment (lib/Reusable/YF0m.v Tfib_owned_static;
       lib/Prog/RttModel.v img_empty proves that byte read-only), so the post admits an overlay byte there, which
-      memnorm forbids (YGcfMallocComposeE.v:33-35, MemnormT.v:29-31).
+      memnorm forbids (YGcfMallocComposeE.v:34-36, MemnormT.v:30-32).
    Numerals: 56 (LENGTH: a node), 8 (LENGTH: a key pointer); 0 (DERIVED); 16 (LENGTH: stack alignment), 2 ^ 64
    (LENGTH: the word range), 2 ^ 40 (LENGTH: the code-span bound), 4 (LENGTH: an instruction). No ADDRESS. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -393,8 +394,8 @@ intros t. induction t as [| | | txt bits | s | items IH | members IH] using jv_i
 Qed.
 End pjf.
 
-(* ==== 3. the inline release carrying the runner's invariant P: YGcallSx.v:248 aj_flag_store_x, with
-   SRr_msteps -> SRr_msteps_inv (YC80x.v:83). Section hypotheses: YGcallSx.v Section x's that aj_flag_store_x
+(* ==== 3. the inline release carrying the runner's invariant P: YGcallSx.v:249 aj_flag_store_x, with
+   SRr_msteps -> SRr_msteps_inv (YC80x.v:84). Section hypotheses: YGcallSx.v Section x's that aj_flag_store_x
    reads (LAWS, segs_low, ASFX, FFLX, SFX; verbatim) and Section e's listing hypotheses (verbatim), then P, PLAW. ==== *)
 Section x. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.

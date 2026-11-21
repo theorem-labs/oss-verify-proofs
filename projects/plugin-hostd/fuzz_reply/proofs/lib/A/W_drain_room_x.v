@@ -1,6 +1,6 @@
 (* The room round's bookkeeping at an allocator call of the drain walks over ARx (DR_x, 2026-10-30): one text for the
    stages that call the allocator (gesture_seen's add / free, drop).  Moved verbatim from DR_x slice D's
-   lib/A/W_drain_gs.v:926-1001 (a working branch 50623273289, its Section rk): W_drain_cx_x.v's dbud_x carries
+   lib/A/W_drain_gs.v:927-1002 (a working branch, its Section rk): W_drain_cx_x.v's dbud_x carries
    the room rp_RM at MT_rk's charge of the requests still owed plus kr, and the live counts plus their peak
    tr_peakP + 2; at a call the head request's room and count premise come from it (gs_rm_take, gs_cnt_call), and the
    counts after the call for the three request kinds (gs_cnt_malloc, gs_cnt_realloc, gs_cnt_free, through gs_cnt_step).

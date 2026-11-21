@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the simulation arms of the system calls the revision adds). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -13,6 +14,18 @@ Set Default Proof Mode "Classic".
 
 Section Arms.
 Variable L0 L : Z.
+
+(* As in LimSimArms1: the revision's write-family arms (pwritev2 here) pass a
+   state update as an option of a continuation wrapper; unfold its producer
+   rather than destruct the option into an opaque function. *)
+Ltac sim_hook ::=
+  lazymatch goal with
+  | |- DIR _ _ _ _ _ (match ?e with Some _ => _ | None => _ end) _ =>
+      lazymatch type of e with
+      | option (Sys SyscallEffect -> Sys SyscallEffect) =>
+          unfold_head e; lazy beta iota zeta
+      end
+  end.
 
 Lemma sim_arm_175 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => getid_spec cr_euid i) (fun i => getid_spec cr_euid i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => getid_spec cr_euid) (fun i => getid_spec cr_euid)). sim_arm m HM. Qed.
@@ -91,6 +104,10 @@ Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => prlimit64_spe
 
 Lemma sim_arm_278 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) i) (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2)) (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))). sim_arm m HM. Qed.
+
+(* new at the revision: pwritev2 (287) *)
+Lemma sim_arm_287 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i) (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i).
+Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5))) (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)))). sim_arm m HM. Qed.
 
 Lemma sim_arm_435 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => clone3_spec (in_arg i 0) (in_arg i 1) i) (fun i => clone3_spec (in_arg i 0) (in_arg i 1) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => clone3_spec (in_arg i 0) (in_arg i 1)) (fun i => clone3_spec (in_arg i 0) (in_arg i 1))). sim_arm m HM. Qed.

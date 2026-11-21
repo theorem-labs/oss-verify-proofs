@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: written for zlib/checksum_fuzzer on the frame of the cgif proof's library; 5 of its 29 lines of code, among them its imports, match lines of proofs/cgif/cgif_rgb_fuzzer/lib/YCfw.v up to module paths and module names, and the rest is new. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_knock's port of its copy of this file (changed CAL, zlib_API). *)
 (** Allocator composition adapted from the pinned cgif YZ04 proof, using the
     separately rechecked zlib-specific routine certificates. *)
 From Stdlib Require Import ZArith List.
@@ -19,8 +20,8 @@ Let MSH : forall fx : FPState, @malloc_small_hyp fx rc Cfg.AcfgMode src0_msyms :
   fun fx => @src0_malloc_small fx rc Cfg.AcfgMode (ASH fx).
 Let NTA : forall fx : FPState, @YN0w.ntA_hyp fx rc Cfg.AcfgMode src0_msyms :=
   fun fx => @src0_ntA fx rc Cfg.AcfgMode.
-Let CAL := fun fx => @src0_calloc_realizes fx rc.
-Definition zlib_API : AllocAPI src0_msyms := src0_API AMH MSH NTA CAL.
+Let CAL := fun fx => @src0_calloc_realizes fx rc Cfg.AcfgMode.
+Definition zlib_API : AllocAPI src0_msyms := src0_API (AM:=Cfg.AcfgMode) AMH MSH NTA CAL.
 Theorem zlib_allocator_extra : AllocExtra src0_msyms (aa_MR zlib_API).
 Proof. apply MRx_AllocExtra. Qed.
 End Allocator.

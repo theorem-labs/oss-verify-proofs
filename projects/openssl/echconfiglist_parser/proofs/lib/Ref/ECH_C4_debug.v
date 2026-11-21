@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv claim is destructured in its Lib/AuxvTable.v form and bounded by auxv_vec_bytes_range). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import HeapCeil.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Tac Arr Bytes ZBridge SysStep Exec CellsX TacX Frame.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Tac Arr Bytes ZBridge SysStep Exec CellsX TacX Frame AuxvTable.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref Require Import RSegs RMalloc_iface_stmt HeapSR_iface F_strlen F_strcpy ECH_Img ECH_Xpres ECH_SR ECH_Kit ECH_Kit2 ECH_Rep ECH_LibState
      ECH_C0_stmt ECH_C1_stmt ECH_C1_malloc ECH_C1_free ECH_C2_stmt ECH_LibFrame ECH_C4_stmt ECH_C4_rep ECH_C4_frame ECH_C4_egs.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Spec Require Import Prelim STree Malloc Prog.
@@ -278,7 +279,8 @@ Section W.
     { unfold ERRDEBUG_STACK, FR_ERR_set_debug, EGS_STACK, FR_ossl_err_get_state_int, CINITCRYPTO_STACK, FR_OPENSSL_init_crypto, FR_CRYPTO_THREAD_wrap,
         FR_CRYPTO_THREAD_read_lock, CMALLOC_STACK, FR_CRYPTO_malloc, RMALLOC_STACK in LO. lia. }
     assert (SP8 : bv_unsigned sp + 8 <= 2^64).
-    { destruct (AUXE _ _ AUX) as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & sec & _ & _ & _ & _ & K1 & K2 & _). lia. }
+    { destruct (AUXE _ _ AUX) as (av & v0 & rnd0 & execfn0 & r0 & sec & _ & _ & _ & _ & K1 & K2 & _).
+      pose proof (auxv_vec_bytes_range r0). lia. }
     set (SB := blocks_ERRST E) in *. set (es := blk_addr (ec_es c)) in *. set (top := es_top E) in *.
     cbn [ERRPH CTXPH] in EP, CP. destruct EP as [ES EC]. destruct CP as [CS CBK].
     assert (SUBx : forall b, In b LB -> In b (SB ++ LB)) by (intros b Hb; apply in_or_app; right; exact Hb).

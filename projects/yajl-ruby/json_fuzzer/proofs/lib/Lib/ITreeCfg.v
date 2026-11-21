@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nsc_rob field: a node's system call reads the same input over a larger read-only backing). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState Mem Exec ITree.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common.Cfg Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
@@ -35,7 +37,10 @@ Record node_sound_cfg : Prop := {
       m_halted mo' = Some code /\ sstep_cfg segs cfg (mkCfg ms mo) [ExitEv code (m_fs mo')] (SNext (mkCfg ms mo'));
   nsc_progress : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
       (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo');
-  nsc_lazy : forall mo, minv mo -> m_vm_lazy mo = []
+  nsc_lazy : forall mo, minv mo -> m_vm_lazy mo = [];
+  (* LPS 08b1429: a node's system call reads the same input over a larger read-only backing
+     ([RomBase.sys_rob], asked by [ShapeAlgCfg.rz_node_cfg]) *)
+  nsc_rob : forall n ms mo, at_node n ms -> minv mo -> sys_rob segs (mkCfg ms mo)
 }.
 
 End ITreeCfg.

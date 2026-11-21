@@ -22,7 +22,7 @@
        a Theorem Labs lane) across the one malloc, from a well-formed (amc_wf), qtight (qtight_init) state with no live block.
        No headroom number. xs_placed_cf from xs_placed_cf_init and the leaf's own conjunct.
    (4) prim_pristine_except S' [] / quar_bytes S' = 0 -> prim_pristine_except S' [kBatchClass] only, from a8's
-       malloc_cf_keeps_pristine_except (lib/Reusable/YGcfPristine.v, REAL since 404e3cabb354) at cs = [kBatchClass],
+       malloc_cf_keeps_pristine_except (lib/Reusable/YGcfPristine.v, REAL) at cs = [kBatchClass],
        with YG0k's pristine_init weakened by prim_pristine_mono. It is a theorem, not a premise.
    (5) FINV -> PresetCfnA.PINV at 0 0, kept by CwPinvA's PROVED finv_run_pinv_A_holds / finv_site_pinv_A_holds
        (lib/A/PresetPinvAPf.v:117 / :156).
@@ -35,6 +35,7 @@
        leaf (malloc_leaf_cf, YG0dcf.v) ends with the keep `memnorm mem -> memnorm mem'`, and the hand steps
        drv_after_call_cf / st_ok_add_cond keep the memory.
    Nothing in this file is a proof of a function (rule 24: the driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -83,14 +84,19 @@ Variable NR : ProcInput -> Prop.
 (* a8's malloc_cf_keeps_pristine_except is a theorem (YGcfPristine.v), so no hypothesis of that name is taken. *)
 Hypothesis RDF : rd0_file_tfa_cf (LS := LS) B iface_room_np NR.
 Hypothesis RDD : rd0_dir_tfa_cf B iface_room_np.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+(* the entry draw and the launch premises, as the core's AD26.v Section M1 (727298f3; entry_stack_fits is dropped,
+   entry_launch_ok_va implies it) *)
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-Hypothesis Hfit : entry_stack_fits sp [a0; p] (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 #[local] Notation envp := (in_envp inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation efn := (in_execfn inp).
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 
 (* NEW (no donor twin): the errbuf extents of the first malloc's frame exception (malloc_leaf_cf, YG0dcf.v) lie
@@ -114,13 +120,17 @@ Qed.
 Section d.
 Variables (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (e : FdEntry).
 Hypothesis HS1 : st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms).
-Hypothesis HR1 : runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp).
+Hypothesis HR1 : runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn).
 Hypothesis HAI1 : AI tfibsegs (w_H W) (w_A W) md.
 Hypothesis HAR1 : ARcf tfibsegs B ly init_state [] W (ms_mem ms) md.
 Hypothesis HTOP1 : top_ok usp ly.
 Hypothesis HFI1 : PCA.PINV (aview tfibsegs (w_H W) (ms_mem ms)) 0 0.
 Hypothesis Hfs1 : m_fs md = in_fs inp.
 Hypothesis Hfds1 : m_fds md = APSG.fds3 e.
+(* Beside [Hfds1]: [fdchan] at LPS 727298f3 asks for the model's channel reader, which the
+   arms below carry to the diagnostic sites (as the core's AD26.v).  It comes from the hand-off ([cs_ok]'s
+   [co_rdr]) and is never assumed above a top theorem. *)
+Hypothesis Hcr1 : m_channel_reader md = true.
 (* TEMPORARY (removed when the call contracts drop memnorm): memnorm of the full overlay at the
    first malloc's entry, as a fact for drv_pre_cf's memnorm conjunct; the file arm has it (its statement's premise),
    the dir arm takes it as the same TEMPORARY premise *)
@@ -130,7 +140,7 @@ Hypothesis HMN1 : YAkMemnorm.memnorm tfibsegs (ms_mem ms).
 Theorem m1_common_cf : forall KB : TSet,
 (forall ws (W' : world tfibsegs) ms1 md1 ly' S' (pb : sptr),
 st_ok tfibsegs (havoc EL K_M1 ws) ss_rd0 (restrict (w_H W') ms1) ->
-runs_at usp (mrestrict (w_H W') (ms_mem ms1)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W') (ms_mem ms1)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) ->
 AI tfibsegs (w_H W') (w_A W') md1 -> ARcf tfibsegs B ly' S' [] W' (ms_mem ms1) md1 -> iface_room_np S' ->
 xs_placed_cf ly' S' -> top_ok usp ly' ->
 blocks S' = [(pb, 65536)] -> pb <> PNull -> sptr_addr B ly' pb = bv_unsigned (ew (havoc EL K_M1 ws) A_BUF) ->
@@ -141,16 +151,23 @@ PCA.PINV (aview tfibsegs (w_H W') (ms_mem ms1)) 0 0 ->
 (YAkMemnorm.memnorm tfibsegs (ms_mem ms) -> YAkMemnorm.memnorm tfibsegs (ms_mem ms1)) ->
 (* #102 (lane StackDrv): the keep of the live stack above usp (the dir arm's statement takes no stack premise) *)
 (YGcallStackUp.astack_up_x tfibsegs ly W usp (ms_mem ms) -> YGcallStackUp.astack_up_x tfibsegs ly' W' usp (ms_mem ms1)) ->
-m_fs md1 = in_fs inp -> m_fds md1 = APSG.fds3 e ->
+m_fs md1 = in_fs inp -> m_fds md1 = APSG.fds3 e -> m_channel_reader md1 = true ->
 srealizes tfibsegs (mkCfg ms1 md1) KB) ->
 srealizes tfibsegs (mkCfg ms md) KB.
 Proof.
 intros KB CONT.
-pose proof (AD26.EL0 sp inp xw xd a0 p) as EL0. pose proof (AD26.EL6 sp inp xw xd a0 p Hsp Hva Hve) as EL6.
+assert (EL0 : bv_unsigned (ew EL 0) = usp) by reflexivity.
+(* AD26.v:88 EL6, over this Section's names *)
+assert (EL6 : usp <= bv_unsigned (ew EL 6)).
+{ change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) envp + 16 < 2 ^ 63)
+by exact (YP08.z_rand_end TSEGS TPH inp mbase Asan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau).
+rewrite Hargv in Hz. pose proof (u64_range sp).
+unfold z_rand in *. rewrite u64_lit by lia. lia. }
 pose proof (usp_facts sp Hsp) as [[Ulo Uhi] U16]. pose proof (u64_range sp) as Usp. pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
 pose proof m1_checks as (CK1 & CK2 & CK3 & CK4 & CK5). pose proof (top_ok_ceil _ _ HTOP1) as HCT.
 pose proof (YSRrMemnorm.srr_inv_laws_imp tfibsegs (YAkMemnorm.memnorm tfibsegs) (ms_mem ms) (YSRrMemnorm.srr_inv_laws_memnorm_k tfibsegs)) as PLAW.
-apply (SRr_srealizes tfibsegs W (mkCfg ms md) _ _ (AD2mnSeg.m1c_run_mn _ PLAW sp inp xw xd a0 p W ms md HS1 (fun h => h)) HAI1).
+apply (SRr_srealizes tfibsegs W (mkCfg ms md) _ _ (AD2mnSeg.m1c_run_mn _ PLAW sp inp xw xd a0 p rnd W ms md HS1 (fun h => h)) HAI1).
 intros W0 c' _ HAI' [HAT (msk & mdk & Ec & HMK)]. destruct HAT as (-> & ms' & mat & -> & HS & HF & HFr). cbn [cfg_model] in HAI'.
 injection Ec as <- <-.
 pose proof (st_ok_restrict_mkst tfibsegs (w_H W) EL ss_m1c ms' HS eq_refl) as Hshape.
@@ -170,7 +187,7 @@ assert (Hra : raZ regs = 0x81194) by (unfold raZ; rewrite R1; apply u64_lit; lia
 pose proof (st_ok_mem_ok tfibsegs EL ss_m1c _ HS) as HM. cbn [restrict ms_mem] in HM. fold mem in HM.
 assert (Hwin : forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a).
 { intros a Ha. eapply (win_present sp Hsp EL (w_H W) mem (ss_mem ss_m1c)); [exact HM | left; reflexivity | exact EL0 | lia | lia | cbn; lia]. }
-assert (HR : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] envp)).
+assert (HR : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn)).
 { eapply (runs_at_frame EL (ss_facts ss_m1c) (ss_mem ss_m1)); [exact (st_ok_facts_ok tfibsegs EL ss_m1c _ HS) | exact wbs_m1c | exact HFr | rewrite EL0; lia | exact HR1]. }
 assert (HAR : ARcf tfibsegs B ly init_state [] W mem md').
 { apply (AR_after_run_cf B HB ARL ly init_state [] W EL (ss_mem ss_m1) (ms_mem ms) mem md mat HAR1 ss_m1_win_ok); [rewrite EL0; exact Ulo | rewrite EL0; exact HCT | exact HF |].
@@ -246,7 +263,7 @@ intros W1 c1 _ HAI3 [HAT3 (ms4 & md4 & Ec3 & HMK3)]. destruct HAT3 as (-> & ms3 
 injection Ec3 as <- <-.
 assert (E2_0 : bv_unsigned (ew E2 0) = usp) by (subst E2; rewrite ew_havoc_old by (unfold K_M1; lia); exact EL0).
 pose proof (st_ok_mem_ok tfibsegs E2 ss_rd0 _ HS4) as HM3. cbn [restrict ms_mem] in HM3.
-destruct (same_io_fs_fds _ _ Hio) as [Efs Efds].
+destruct (same_io_fs_fds _ _ Hio) as [Efs Efds]. pose proof (same_io_rdr _ _ Hio) as Ecr.
 subst E2. apply (CONT (map (getr regs') CLOB) W' ms3 _ ly' S' pb HS4).
 +
 eapply (runs_at_frame _ (ss_facts ss_rd0) (ss_mem ss_m1r));
@@ -318,6 +335,7 @@ apply (PresetStkUpA.stk_up_acall B ASTACK ly init_state [] W regs mem md' _ ly' 
 * exact (PresetStkUpA.stk_up_frame EL (ss_mem ss_m1) ly W (ms_mem ms) mem usp ss_m1_win_ok EL0 ltac:(lia) HTOP1 HF HU0).
 + rewrite wvb_fs', Efs. subst md'. rewrite wvb_fs', Hfs1. reflexivity.
 + rewrite wvb_fds', Efds. subst md'. rewrite wvb_fds', Hfds1. reflexivity.
++ rewrite wvb_rdr', Ecr. subst md'. rewrite wvb_rdr', Hcr1. reflexivity.
 Qed.
 End d.
 
@@ -325,38 +343,40 @@ End d.
 Theorem tfib_file_arm_at_cf : forall (W : world tfibsegs) ms md ly data,
 valid_fs (in_fs inp) -> NR inp -> (length p < 4096)%nat -> p <> [] -> p <> dot_path -> fs_lookup (in_fs inp) p = Some data ->
 st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly init_state [] W (ms_mem ms) md -> top_ok usp ly ->
 PCA.PINV (aview tfibsegs (w_H W) (ms_mem ms)) 0 0 ->
 YAkMemnorm.memnorm tfibsegs (ms_mem ms) ->
 YGcallStackUp.astack_up_x tfibsegs ly W usp (ms_mem ms) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds3 (FdFile p (Z_to_bv 64 0)) ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds3 (FdFile p (Z_to_bv 64 0)) -> m_channel_reader md = true ->
 srealizes tfibsegs (mkCfg ms md) (CLOSEDX_loaded (LS := LS) data (in_fs inp)).
 Proof.
-intros W ms md ly data Hvfs HNR Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI HMN HUP0 Hfs Hfds.
-unfold CLOSEDX_loaded. apply (m1_common_cf W ms md ly _ HS HR HAI HAR HTOP HFI Hfs Hfds HMN).
-intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HRK1 HXS1 HTOP1 Hbl Hnn Hpb HF1 HT1 HP1 HD1 HSC1 HFI1 HMK1 HSU1 Hfs1 Hfds1.
-exact (RDF sp inp xw xd ws W' ms1 md1 ly' S' a0 p data pb Hargv Hsp Hva Hve Hvfs HNR Hlen Hne Hnd Hlk HS1 HR1 HAI1 HAR1 HRK1 HXS1
-HTOP1 Hbl Hnn Hpb HF1 HT1 HP1 HD1 HSC1 HFI1 (HMK1 HMN) (HSU1 HUP0) Hfs1 Hfds1).
+intros W ms md ly data Hvfs HNR Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI HMN HUP0 Hfs Hfds Hcr.
+unfold CLOSEDX_loaded. apply (m1_common_cf W ms md ly _ HS HR HAI HAR HTOP HFI Hfs Hfds Hcr HMN).
+intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HRK1 HXS1 HTOP1 Hbl Hnn Hpb HF1 HT1 HP1 HD1 HSC1 HFI1 HMK1 HSU1 Hfs1 Hfds1 Hcr1.
+exact (RDF sp brk mbase inp xw xd ws W' ms1 md1 ly' S' a0 p data pb rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNR
+Hlen Hne Hnd Hlk HS1 HR1 HAI1 HAR1 HRK1 HXS1
+HTOP1 Hbl Hnn Hpb HF1 HT1 HP1 HD1 HSC1 HFI1 (HMK1 HMN) (HSU1 HUP0) Hfs1 Hfds1 Hcr1).
 Qed.
 
 (* AD26.v:306 *)
 Theorem tfib_dir_arm_at_cf : forall (W : world tfibsegs) ms md ly,
 p = dot_path ->
 st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly init_state [] W (ms_mem ms) md -> top_ok usp ly ->
 PCA.PINV (aview tfibsegs (w_H W) (ms_mem ms)) 0 0 ->
 (* TEMPORARY (removed when the call contracts drop memnorm): memnorm at the first malloc's entry, for drv_pre_cf's memnorm conjunct *)
 YAkMemnorm.memnorm tfibsegs (ms_mem ms) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds3 FdDir ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds3 FdDir -> m_channel_reader md = true ->
 srealizes tfibsegs (mkCfg ms md) (CLOSEDX_dir p (in_fs inp)).
 Proof.
-intros W ms md ly Hdot HS HR HAI HAR HTOP HFI HMN Hfs Hfds. unfold CLOSEDX_dir.
-apply (m1_common_cf W ms md ly _ HS HR HAI HAR HTOP HFI Hfs Hfds HMN).
-intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HRK1 HXS1 HTOP1 Hbl Hnn Hpb _ HT1 _ _ _ _ _ _ Hfs1 Hfds1.
-exact (RDD sp inp xw xd ws W' ms1 md1 ly' S' a0 p pb Hargv Hsp Hva Hve Hfit Hdot HS1 HR1 HAI1 HAR1 HRK1 HXS1 HTOP1 Hbl HT1 Hpb
-Hfs1 Hfds1).
+intros W ms md ly Hdot HS HR HAI HAR HTOP HFI HMN Hfs Hfds Hcr. unfold CLOSEDX_dir.
+apply (m1_common_cf W ms md ly _ HS HR HAI HAR HTOP HFI Hfs Hfds Hcr HMN).
+intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HRK1 HXS1 HTOP1 Hbl Hnn Hpb _ HT1 _ _ _ _ _ _ Hfs1 Hfds1 Hcr1.
+exact (RDD sp brk mbase inp xw xd ws W' ms1 md1 ly' S' a0 p pb rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hdot
+HS1 HR1 HAI1 HAR1 HRK1 HXS1 HTOP1 Hbl HT1 Hpb
+Hfs1 Hfds1 Hcr1).
 Qed.
 End M1.
 
@@ -365,9 +385,11 @@ Theorem tfib_file_arm_cf (B : asyms) (iface_room_np : astate -> Prop) (NR : Proc
 (HNPi : PCA.iface_room_np_init iface_room_np) (HNPs : PCA.iface_room_np_step (cp := cp) iface_room_np)
 (MSITE : malloc_site_tfa_cf B iface_room_np) (RDF : rd0_file_tfa_cf (LS := LS) B iface_room_np NR) : file_arm_tfa_cf (LS := LS) B NR.
 Proof.
-intros sp inp xw xd W ms md ly a0 p data Hargv Hsp Hva Hve Hvfs HNR Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI HMN HUP0 Hfs Hfds.
-exact (tfib_file_arm_at_cf B HB iface_room_np HNPi HNPs MSITE NR RDF sp inp xw xd a0 p Hargv Hsp Hva Hve
-W ms md ly data Hvfs HNR Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI HMN HUP0 Hfs Hfds).
+intros sp brk mbase inp xw xd W ms md ly a0 p data rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNR Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI HMN HUP0 Hfs Hfds Hcr.
+exact (tfib_file_arm_at_cf B HB iface_room_np HNPi HNPs MSITE NR RDF sp brk mbase inp xw xd a0 p rnd
+Hargv Hsp Hva Hve Hvl Hlau Hvi
+W ms md ly data Hvfs HNR Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI HMN HUP0 Hfs Hfds Hcr).
 Qed.
 
 (* AD26.v:326 *)
@@ -375,9 +397,10 @@ Theorem tfib_dir_arm_cf (B : asyms) (iface_room_np : astate -> Prop) (HB : TfibS
 (HNPi : PCA.iface_room_np_init iface_room_np) (HNPs : PCA.iface_room_np_step (cp := cp) iface_room_np)
 (MSITE : malloc_site_tfa_cf B iface_room_np) (RDD : rd0_dir_tfa_cf B iface_room_np) : dir_arm_tfa_cf B.
 Proof.
-intros sp inp xw xd W ms md ly a0 p Hargv Hsp Hva Hve Hfit Hdot HS HR HAI HAR HTOP HFI HMN Hfs Hfds.
-exact (tfib_dir_arm_at_cf B HB iface_room_np HNPi HNPs MSITE RDD sp inp xw xd a0 p Hargv Hsp Hva Hve Hfit
-W ms md ly Hdot HS HR HAI HAR HTOP HFI HMN Hfs Hfds).
+intros sp brk mbase inp xw xd W ms md ly a0 p rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hdot HS HR HAI HAR HTOP HFI HMN Hfs Hfds Hcr.
+exact (tfib_dir_arm_at_cf B HB iface_room_np HNPi HNPs MSITE RDD sp brk mbase inp xw xd a0 p rnd
+Hargv Hsp Hva Hve Hvl Hlau Hvi
+W ms md ly Hdot HS HR HAI HAR HTOP HFI HMN Hfs Hfds Hcr).
 Qed.
 End c.
 

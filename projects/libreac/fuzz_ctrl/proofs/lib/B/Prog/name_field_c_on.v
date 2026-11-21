@@ -9,15 +9,15 @@
      - the post's `shadow_rw m'` becomes `forall P, shadow_rw_on P m -> shadow_rw_on P m'` (the wave's post form,
        a Theorem Labs lane 09:38Z): every shadow region the caller holds before the call it holds after it.
    R, MEASURED on name_field_holds_F (name_fieldF.v): the proof uses its shadow_rw premise at two places only.
-     - name_fieldF.v:380 (HSW) -> :410 shadow_rw_kept carries it to the memory of the call, -> :439 it closes the
+     - name_fieldF.v:381 (HSW) -> :410 shadow_rw_kept carries it to the memory of the call, -> :439 it closes the
        shadow premise of __asan_memset(N, 0, 16). In the callee's _on form (asan_memset_cF_on.v) that premise is
        shadow_rw_on (asan_memset_shadow_R N 16), that is sh_word_on N 16: the aligned 8-byte shadow words of
        [N, N + 16), which the callee's check READS. N is the register a1 of name_field (mv s0,a1; mv a0,s0).
-     - name_fieldF.v:94 (HSW, Section NFF) -> :162 nfF_cells (shadow_rw_kept) -> :175, :180 the post's shadow_rw m'.
+     - name_fieldF.v:95 (HSW, Section NFF) -> :162 nfF_cells (shadow_rw_kept) -> :175, :180 the post's shadow_rw m'.
        This reads and stores no byte: it is the post's transport, which the forall-P post form replaces
        (ShadowRwOnT.shadow_rw_on_kept from munch W0 and wmono, no premise needed).
-   The callee's post fact on the shadow (name_fieldF.v:453, HSW2) is never used. The function's own shadow loads (the
-   lbu checks of the 8 bytes at m + 280, of the name bytes and of the stores at N + i: name_fieldF.v:331, :347, :297,
+   The callee's post fact on the shadow (name_fieldF.v:454, HSW2) is never used. The function's own shadow loads (the
+   lbu checks of the 8 bytes at m + 280, of the name bytes and of the stores at N + i: name_fieldF.v:332, :348, :298,
    :465) take their shadow byte from the addressable premises (AsanRT.addr_byte through name_field.v's nf_sh8 and
    nf_sh), not from shadow_rw. The run stores no shadow byte: the post's munch is the window [sp - K, sp) and
    [N, N + 16), all in AppMem (name_field.v nf_aw). So R = sh_word_on N 16, the reads of the one callee. *)

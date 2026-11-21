@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -29,7 +30,7 @@ Definition itoa_cpsA (pc : Z) : Prop :=
   fdfs_only PMc -> mat_stable PMc ->
   In (fN, kN) (rt_frames RT Σ) -> fN <= DST -> DST + 24 <= fN + fs_size kN - 8 -> DST mod 8 = 0 ->
   rw_cells bsegs m DST [CB 24 junk] -> bytes_at bsegs m (shad DST) (repeat z8 3) ->
-  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PJ_ITOA_STACK_A <= q ->
+  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PJ_ITOA_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 -> 0 <= v < 2^64 ->
   Z.of_nat (length (rt_frames RT Σ)) + 1 <= FRAMES_TOT -> 1 <= rt_credit RT Σ ->
   (forall (Σ' : rts RT) (e : Z) (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) (F' : bvmap 5 word) (m' : mem) (nb : list byte),

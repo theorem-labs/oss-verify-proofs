@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plan is checked at a CONFIG_RSEQ flag rz, which node_pnscan and node_layout read; new checkC, check's walk that records the state at each hand-off (through a given hstep) instead of testing it, used only to compute the start-up hand-off tables in one run). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -25,6 +26,9 @@ Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.     (* [comment removed for export] *)
 Variable LIMIT : Z.     (* [comment removed for export] *)
+(* the run's CONFIG_RSEQ flag as 0 or 1 ([APC.rseq_z]), which fixes the auxv size [APC.AUXSZ rz];
+   a certificate is checked at one literal value (model commit 0c15dd4) *)
+Variable rz : Z.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -115,8 +119,8 @@ Definition node_x (x : xnode) (args : list expr) (cs : acs) : option acs :=
   | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
   | XMemIsZero => summary_miz A nx0 cs
   | XEnvScan => node_envscan A cs
-  | XPnScan => node_pnscan A nx0 cs
-  | XLayout => node_layout cs args
+  | XPnScan => node_pnscan A nx0 rz cs
+  | XLayout => node_layout rz cs args
   | XIStrncpy => summary_istrncpy A nx0 cs
   | XPopFree => summary_popfree A nx0 cs args
   | XMaxVA => summary_maxva A cs
@@ -141,7 +145,7 @@ Variable bfuel : nat.              (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of rz A)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>
@@ -384,6 +388,241 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
   end
   end.
 End Check.
+
+(* [checkC] (LPS 727298f3): [check]'s walk with the hand-off table built in the same pass, for the
+   start-up data computed in the build (PlanRegen.v, StartupRegen*.v).  Every node is [check]'s, the
+   state [m] is threaded through the walk in [check]'s order, and at [PHandoff h] [hstep h cs m] records
+   the reached state and the walk goes on as if the hand-off held.  Nothing reads [checkC] but the
+   computation of those tables: each certificate re-runs [check] against the computed table, so a
+   table that is wrong only makes a certificate fail. *)
+Section CheckC.
+Variable XN : nat -> list expr -> acs -> option acs.
+Variable XE : nat -> list expr -> acs -> option (Z * list spiece * acs).
+Variable XB : nat -> list expr -> acs -> option (acs * acs).
+Variable KC : nat.
+Variable bfuel : nat.
+Variable hstep : nat -> acs -> list (nat * acs) -> list (nat * acs).
+Fixpoint checkC (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) (m : list (nat * acs)) {struct fuel}
+  : cres * list (nat * acs) :=
+match fuel with
+| O => (CErr 0 p cs, m)
+| S f =>
+let check_in := checkC in
+let check (f : nat) := check_in f lc in
+let gcb := match lc with Some c => lc_bnd c | None => nx0 end in
+if negb match lc with Some c => Nat.leb (lc_bnd c) (nxt cs) | None => true end then (CErr 9 p cs, m) else
+match p with
+| PRun stops k =>
+match run_block_gc segs IT gcb KC bfuel (stops ++ STOPS A) cs with
+| Some cs' => check f cs' k m
+| None => (CErr 1 p cs, m)
+end
+| PSplit e mid k1 k2 =>
+if expr_vars_lt nx0 e then
+match erange (kn cs) e with
+| Some (lo, hi) =>
+if (Z.leb lo mid && Z.ltb mid hi)%bool then
+match check f (set_kn cs (KRange e lo mid :: kn cs)) k1 m with
+| (COk s1, m1) =>
+match check f (set_kn cs (KRange e (mid + 1) hi :: kn cs)) k2 m1 with
+| (COk s2, m2) => (COk (SCase e mid s1 s2), m2)
+| err => err
+end
+| err => err
+end
+else
+if Z.leb hi mid then check f cs k1 m else check f cs k2 m
+| None => (CErr 3 p cs, m)
+end
+else (CErr 3 p cs, m)
+| PCase2 e mid k1 k2 =>
+match erange (kn cs) e with
+| Some (lo, hi) =>
+if negb (Z.leb lo mid && Z.ltb mid hi)%bool then (if Z.leb hi mid then check f cs k1 m else check f cs k2 m) else
+if (Z.leb lo mid && Z.ltb mid hi)%bool then
+let cs1 := set_kn cs (KRange e lo mid :: kn cs) in
+let cs2 := set_kn cs (KRange e (mid + 1) hi :: kn cs) in
+if kn_contra (kn cs1) then check f cs2 k2 m
+else if kn_contra (kn cs2) then check f cs1 k1 m
+else
+match check f cs1 k1 m with
+| (COk s1, m1) =>
+match check f cs2 k2 m1 with
+| (COk s2, m2) => ((if shape_eqb s1 s2 then COk s1 else CErr 6 p cs), m2)
+| err => err
+end
+| err => err
+end
+else (CErr 3 p cs, m)
+| None => (CErr 3 p cs, m)
+end
+| PCaseDisj b1 b2 k1 k2 =>
+match node_casedisj cs b1 b2 with
+| Some (csa, csb) =>
+match check f csa k1 m with
+| (COk s1, m1) => match check f csb k2 m1 with
+| (COk s2, m2) => ((if shape_eqb s1 s2 then COk s1 else CErr 6 p cs), m2)
+| err => err
+end
+| err => err
+end
+| None => (CErr 3 p cs, m)
+end
+| PShDisj b1 n1 b2 n2 k => match node_shdisj A cs b1 n1 b2 n2 with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PContra => ((if kn_contra (kn cs) then COk SNil else CErr 3 p cs), m)
+| PFact K k => if fact_ok (kn cs) K then check f (add_kn cs [K]) k m else (CErr 3 p cs, m)
+| PJoin b off n k => match node_join segs cs b off n with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PForget ixs k => check f (set_kn cs (drop_ixs ixs 0 (kn cs))) k m
+| PDropRange b n k => check f (node_droprange cs b n) k m
+| PGcKeep ws k => check f (set_kn cs (kn_keep (kn cs) ws)) k m
+| PBump mm k => match node_bump cs mm with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PHavoc rs k => match node_havoc nx0 cs rs with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PHavocBig K k => match node_havocbig nx0 cs K with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PFresh r logc base k => match node_fresh nx0 cs r logc base with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PSys y k =>
+if is_ecall_at segs cs then
+match node_sys y cs with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+else (CErr 2 p cs, m)
+| PBrk2 ka kb =>
+if is_ecall_at segs cs then
+match node_brk2 A LIMIT cs with
+| Some (csa, csb) =>
+match check f csa ka m with
+| (COk sa, m1) => match check f csb kb m1 with
+| (COk sb, m2) => ((if shape_eqb sa sb then COk sa else CErr 6 p cs), m2)
+| err => err
+end
+| err => err
+end
+| None => (CErr 3 p cs, m)
+end
+else (CErr 2 p cs, m)
+| PMmap ka kb =>
+if is_ecall_at segs cs then
+match node_mmap2 A nx0 LIMIT cs with
+| Some (csa, csb) => check f csb kb m
+| None => (CErr 3 p cs, m)
+end
+else (CErr 2 p cs, m)
+| PMmapIn ka kb kc =>
+if is_ecall_at segs cs then
+match node_mmapin A LIMIT false cs with
+| Some (csa, csb, cscs) => check f csb kb m
+| None => (CErr 3 p cs, m)
+end
+else (CErr 2 p cs, m)
+| PMmapInH ka kb kc =>
+if is_ecall_at segs cs then
+match node_mmapin A LIMIT true cs with
+| Some (csa, csb, cscs) => check f csb kb m
+| None => (CErr 3 p cs, m)
+end
+else (CErr 2 p cs, m)
+| PMprotect ka kb =>
+if is_ecall_at segs cs then
+match node_mprotect2 A LIMIT cs with
+| Some (csa, csb) => check f csb kb m
+| None => (CErr 3 p cs, m)
+end
+else (CErr 2 p cs, m)
+| PX x args k => match node_x x args cs with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PExt id args k => match XN id args cs with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PEmit id args k =>
+match XE id args cs with
+| Some (fd, ps, cs') => match check f cs' k m with (COk s, m1) => (COk (SEmitP fd ps s), m1) | err => err end
+| None => (CErr 3 p cs, m)
+end
+| PExt2 id args k1 k2 =>
+match XB id args cs with
+| Some (csa, csb) =>
+match check f csa k1 m with
+| (COk sa, m1) => match check f csb k2 m1 with (COk sb, m2) => (COk (SAlt2 sa sb), m2) | err => err end
+| err => err
+end
+| None => (CErr 3 p cs, m)
+end
+| PLoop J N inv body k =>
+match loop_ok nx0 cs J N inv with
+| Some nhi =>
+let lo := S J in let hi := nxt inv in
+if (Z.eqb (pc inv) (pc cs) && entails_h A lo hi cs (inst inv J (ELit 0)))%bool then
+match check_in f (Some (LC (pc cs) (inst inv J (eaddz (EVar J) 1)) lo hi)) (loop_body_state J N nhi inv) body m with
+| (COk SNext, m1) => check f (inst inv J N) k m1
+| (COk _, m1) => (CErr 7 p cs, m1)
+| err => err
+end
+else (CErr 3 p cs, m)
+| None => (CErr 3 p cs, m)
+end
+| PNext =>
+match lc with
+| Some (LC h nx lo hi) =>
+((if (Z.eqb (pc cs) h && entails_h A lo hi cs nx)%bool then COk SNext else CErr 3 p cs), m)
+| _ => (CErr 8 p cs, m)
+end
+| PHandoff h => (COk (SHole h), hstep h cs m)
+| PExit =>
+if is_ecall_at segs cs then
+((match node_exit cs with Some code => COk (SExit code) | None => CErr 3 p cs end), m)
+else (CErr 2 p cs, m)
+| PSpin => ((if node_spin segs cs then COk SNil else CErr 2 p cs), m)
+| PFog i sz k => match node_fog cs i sz with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PFogNew i sz k => match node_fognew cs i sz with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PGhost b n k => match node_ghost LIMIT cs b n with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PUnvis b n k => match node_unvis A cs b n with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PHavocBrk lo hi k => match node_havocbrk nx0 cs lo hi with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PIntro lo hi k => match node_intro nx0 cs lo hi with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PRename mm k => match node_rename gcb cs mm with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PCompact k => match node_compact gcb cs with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PVia j js lo karms k =>
+if via_ok nx0 cs js lo then
+match check f js k m with
+| (COk sk, m1) => check_in f (Some (JC j js sk (nxt cs) lo)) cs karms m1
+| err => err
+end
+else (CErr 3 p cs, m)
+| PMerge j =>
+match lc with
+| Some (JC j' js sk b lo) =>
+((if (Nat.eqb j j' && Z.eqb (pc cs) (pc js) && shape_vars_lt nx0 sk && entails_h A lo (nxt js) cs js)%bool
+then COk sk else CErr 3 p cs), m)
+| _ => (CErr 8 p cs, m)
+end
+| PAbstractCell b n k => match node_abstractcell A cs b n with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PHavocWords bs k => match node_havocwords nx0 cs bs with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PRespell r e k => match node_respell cs r e with Some cs' => check f cs' k m | None => (CErr 3 p cs, m) end
+| PDiamond joinpc rs k =>
+match branch_probe IT cs with
+| Some e =>
+match erange (kn cs) e with
+| Some (lo, hi) =>
+if (Z.ltb hi 1 || Z.ltb 0 lo)%bool then
+match run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A) cs with
+| Some cs' => if Z.eqb (pc cs') joinpc then check f cs' k m else (CErr 3 p cs', m)
+| None => (CErr 1 p cs, m)
+end
+else
+let cs1 := set_kn cs (KRange e lo 0 :: kn cs) in
+let cs2 := set_kn cs (KRange e 1 hi :: kn cs) in
+match run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A) cs1 with
+| Some ca =>
+match run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A) cs2 with
+| Some cb =>
+match node_diamond_join A nx0 (nxt cs) joinpc rs ca cb with
+| Some csj => check f csj k m
+| None => (CErr 3 p ca, m)
+end
+| None => (CErr 1 p cs2, m)
+end
+| None => (CErr 1 p cs1, m)
+end
+| None => (CErr 3 p cs, m)
+end
+| None => (CErr 2 p cs, m)
+end
+end
+end.
+End CheckC.
 
 End WithSegs.
 End AP.

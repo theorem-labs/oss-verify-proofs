@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up certificate). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
 
@@ -11,5 +12,5 @@ From OSSVerify.Proofs.openssl.bignum.lib.BgAxBdB Require Import BdBParams BdBHin
 From OSSVerify.Proofs.openssl.bignum.lib.BgAxB Require Import ArtB.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-Lemma bdb_cert_main : bdb_cert fin_mainB = true.
+Lemma bdb_cert_main : bdb_cert true fin_mainB = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.

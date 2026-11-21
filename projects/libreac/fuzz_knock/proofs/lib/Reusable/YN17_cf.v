@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN17.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ledger_new_map). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -21,6 +22,7 @@ YN2k YN0j_cf YN0h_cf YN0i_cf YN1k_cf YN1l_cf YN1m_cf
 YN2w YN1d_cf YN0z_cf YN13_cf YN14_cf YN15_cf YN16_cf.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YM06_cf YO0d_cf YN2b_cf.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -165,14 +167,20 @@ rewrite (Lset_lt L A _ r (BR r p eq_refl)). exact HB.
 * destruct (Nat.eqb_spec k N); [|discriminate]. injection Hk as <-. subst k. rewrite Lset_new. cbn [rg_len].
 split; [exact Hal|]. split; [apply Z.mod_divide in Hal; [destruct Hal as [q Hq]; lia | lia]|].
 split; [exact Hceil|]. intros x Hx Himg. exact (FI x Himg Hx).
-+ cbn [length]. rewrite NS. pose proof (lg_count _ _ _ _ LG). lia.
-+ rewrite LB. constructor.
++ intros Eaf. cbn [length]. rewrite NS. pose proof (lg_count _ _ _ _ LG Eaf). lia.
++ intros Eaf. rewrite LB. constructor.
 * cbn [snd]. rewrite NU. lia.
-* apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ LG) e He). cbn beta in *. lia.
-+ rewrite LB. destruct MD as (_ & ML & MM).
+* apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ LG Eaf) e He). cbn beta in *. lia.
++ intros Eaf. rewrite LB. destruct MD as (_ & ML & MM).
 pose proof (vm_backing_used_le_maps (mmap_model a (Z_to_bv 64 n) md) ltac:(rewrite mmap_model_lazy; exact ML) MM) as VB.
-rewrite VM in VB. cbn [State.live_bytes] in VB. rewrite NU in VB. pose proof (lx_lb _ _ _ LX). lia.
+rewrite VM in VB. cbn [State.live_bytes] in VB. rewrite NU in VB. pose proof (lx_lb _ _ _ LX Eaf). lia.
 +   exact (lg_ceil _ _ _ _ LG).
++ exact (lg_vdso _ _ _ _ LG).
++ intros k rg Hk Hl Hkind. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
+* rewrite (Lset_lt L A _ k H). exact (lg_rfree _ _ _ _ LG k rg Hk Hl Hkind).
+* destruct (Nat.eqb_spec k N); [|discriminate]. injection Hk as <-. subst k. unfold w64. rewrite Lset_new, w64_u64. cbn [rg_len].
+exact (rfree_app_l _ _ _ _ RF).
++ exact (lg_brk_vdso _ _ _ _ LG).
 - split; rewrite ?VM.
 + intros k rg x Hk Hl Hx. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
 * rewrite (Lset_lt L A _ k H) in Hx. destruct (lx_cov _ _ _ LX k rg x Hk Hl Hx) as (e & He & Hex). exists e. split; [right; exact He | exact Hex].
@@ -196,13 +204,13 @@ cbn [reg_lo rg_kind rg_len] in *. unfold ranges_disjoint; cbn [fst snd].
 pose proof (FRG k2 rg2 (ly_reg L k2 + reg_lo rg2) H2 Hl2 ltac:(lia)).
 pose proof (FRG k2 rg2 (bv_unsigned a) H2 Hl2). lia.
 * destruct (Nat.eqb_spec k1 N); [|discriminate]. destruct (Nat.eqb_spec k2 N); [|discriminate]. exfalso. apply Hne. lia.
-+ intros e [<- | He].
++ intros Eaf e [<- | He].
 * exists N, (YO0i.mkRegion RkMap n [] true). rewrite RO, Nat.ltb_irrefl, Nat.eqb_refl. split; [reflexivity|]. split; [reflexivity|].
 rewrite Lset_new. unfold iv_lo, iv_len; cbn [fst snd rg_len]. rewrite NU. lia.
-* destruct (lx_in _ _ _ LX e He) as (k & rg & Hk & Hl & G1 & G2). exists k, rg.
+* destruct (lx_in _ _ _ LX Eaf e He) as (k & rg & Hk & Hl & G1 & G2). exists k, rg.
 pose proof (region_of_lt _ _ _ Hk) as HkN. fold N in HkN.
 rewrite RO. rewrite (proj2 (Nat.ltb_lt k N) HkN). rewrite (Lset_lt L A _ k HkN). auto.
-+ rewrite LB. cbn [State.live_bytes]. rewrite NU. pose proof (lx_lb _ _ _ LX). lia.
++ intros Eaf. rewrite LB. cbn [State.live_bytes]. rewrite NU. pose proof (lx_lb _ _ _ LX Eaf). lia.
 +
 change (vm_noaccess (m_vmmaps (mmap_model a (Z_to_bv 64 n) md))) with (vm_noaccess (m_vmmaps md)).
 intros e He. destruct (lx_noacc _ _ _ LX e He) as (E & HE & G1 & G2 & HR). exists E. split; [right; exact HE|].

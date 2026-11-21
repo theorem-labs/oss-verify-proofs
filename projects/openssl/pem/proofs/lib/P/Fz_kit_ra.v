@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the input's kernel build and exec file name; the larger auxiliary vector and its CONFIG_RSEQ entries). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -364,7 +365,8 @@ Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
   unfold RMEMALIGN_STACK, RMALLOC_STACK, MMAP_THRESHOLD, GLOBALS_TOP in *.
   pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
   assert (CW : alloc_ceiling < 2^63) by (unfold ceil_window in *; lia).
-  assert (RESB : res < 2^64) by (destruct AV as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & _ & BAV & AVB & _); lia).
+  assert (RESB : res < 2^64) by (destruct AV as (av & axv & rnd & execfn & r & _ & _ & _ & _ & BAV & AVB & _);
+    destruct r; cbn [auxv_vec_bytes] in AVB; first [ lia | exact I ]).
   eapply implM_evt.
   { eapply (PRE ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s LBall len lo); try eassumption; lia. }
   cbv beta. intros ms1 (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & ma & j8 & E1 & FRP & FRA & STa & MUa & WMa & MIa & HPa).

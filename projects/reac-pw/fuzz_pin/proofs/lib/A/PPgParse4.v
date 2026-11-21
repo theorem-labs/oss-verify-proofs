@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_hand, fs_roF / fs_rwF) and
-   APgStep.v (same_io_wvb) at 6ebe35ba632; adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
+   APgStep.v (same_io_wvb); adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_pin_parse of reac-pw/fuzz_pin, image A (fuzz_pin.asan): segment 4 of the walk, 0x80d9c -> `ret`.
    The frame on the side stack is given back: its first word is set to 0x45E0360E, `beqz s2` is not taken (s2 = F,
    at least 4096), its 8 shadow bytes are set to 0xf5, the flag pointer is loaded from F + 56 and the flag byte is

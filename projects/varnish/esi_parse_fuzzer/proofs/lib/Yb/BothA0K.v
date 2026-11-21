@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack-window key is the launch's 6144513-byte window below sp, the range row of the launch's stack padding (EVar 4) is the [0, 4110] the computed main-entry states hold in the place of the old word-count bound 280000, and the main-entry facts are stated of the main-entry states computed at each value of the run's CONFIG_RSEQ flag. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Instr Sem.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Import PropExec AxSyioe Asanz3l AsanPlan Starr0h Stargqr Bothgt0.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Import BothRegen2 PropExec AxSyioe Asanz3l AsanPlan Bothgt0.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AxSyclu.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyclu.Boot34w.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Boots35.   (* [comment removed for export] *)
@@ -68,7 +69,7 @@ Definition A0K_L : list kentry :=
     (KWr (SA (EMd Instr.M_MUL (ELit 4096) (EVar 78)) 0) (ELit 65536));
     (KWr (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 208)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 209))) 137439019008) (ELit 4096));
     (KZero (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 208)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 209))) 137439019008) (ELit 4096));
-    (KWr (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EMd Instr.M_MUL (ELit 16) (EVar 6))) (-8388608)) (ELit 8388608));
+    (KWr (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EMd Instr.M_MUL (ELit 16) (EVar 6))) (-6144513)) (ELit 6144513));   (* LPS 727298f3: the launch's window below sp, [Asanz3l.init_kn_with]; it was the 8 MiB one *)
     (KWr (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 0)) (EMd Instr.M_MUL (ELit 512) (EVar 10))) 2146402304) (EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 0)) (EMd Instr.M_MUL (ELit (-512)) (EVar 10))) (ELit 17592187092992)));
     (KZero (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 0)) (EMd Instr.M_MUL (ELit 512) (EVar 10))) 2146402304) (EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 0)) (EMd Instr.M_MUL (ELit (-512)) (EVar 10))) (ELit 17592187092992)));
     (KWr (SA (ELit 0) 2147459072) (ELit 783360));
@@ -87,7 +88,7 @@ Definition A0K_L : list kentry :=
     (KRange (EVar 1) 1 1024);
     (KRange (EVar 2) 0 256);
     (KRange (EVar 3) 0 131071);
-    (KRange (EVar 4) 0 280000);
+    (KRange (EVar 4) 0 4110);   (* LPS 727298f3: the launch's stack padding ([AsanInit.pad_range]), as the computed main-entry states hold it; it WAS 0..280000 *)
     (KRange (EVar 7) 0 131071);
     (KRange (EVar 10) 0 7);
     (KRange (EVar 78) 1546 34359736304);
@@ -344,7 +345,7 @@ Lemma k_ri_wr : forall cs : acs, a0k cs -> khas cs (KWr (SA (EAlu Instr.ALU_ADD 
 Proof. intros cs H. exact (BFXT.pt_all_get kentry (khas cs) (xI (xI (xO (xO (xI xH))))) A0K_T _ H eq_refl). Qed.
 Lemma k_ri_z : forall cs : acs, a0k cs -> khas cs (KZero (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 208)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 209))) 137439019008) (ELit 4096)) = true.
 Proof. intros cs H. exact (BFXT.pt_all_get kentry (khas cs) (xO (xO (xI (xO (xI xH))))) A0K_T _ H eq_refl). Qed.
-Lemma k_stk_wr : forall cs : acs, a0k cs -> khas cs (KWr (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EMd Instr.M_MUL (ELit 16) (EVar 6))) (-8388608)) (ELit 8388608)) = true.
+Lemma k_stk_wr : forall cs : acs, a0k cs -> khas cs (KWr (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EMd Instr.M_MUL (ELit 16) (EVar 6))) (-6144513)) (ELit 6144513)) = true.
 Proof. intros cs H. exact (BFXT.pt_all_get kentry (khas cs) (xI (xO (xI (xO (xI xH))))) A0K_T _ H eq_refl). Qed.
 Lemma k_stksh_wr : forall cs : acs, a0k cs -> khas cs (KWr (SA (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 0)) (EMd Instr.M_MUL (ELit 512) (EVar 10))) 2146402304) (EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 0)) (EMd Instr.M_MUL (ELit (-512)) (EVar 10))) (ELit 17592187092992))) = true.
 Proof. intros cs H. exact (BFXT.pt_all_get kentry (khas cs) (xO (xI (xI (xO (xI xH))))) A0K_T _ H eq_refl). Qed.
@@ -382,7 +383,7 @@ Lemma k_rng_2 : forall cs : acs, a0k cs -> khas cs (KRange (EVar 2) 0 256) = tru
 Proof. intros cs H. exact (BFXT.pt_all_get kentry (khas cs) (xO (xI (xI (xO (xO (xO xH)))))) A0K_T _ H eq_refl). Qed.
 Lemma k_rng_3 : forall cs : acs, a0k cs -> khas cs (KRange (EVar 3) 0 131071) = true.
 Proof. intros cs H. exact (BFXT.pt_all_get kentry (khas cs) (xI (xI (xI (xO (xO (xO xH)))))) A0K_T _ H eq_refl). Qed.
-Lemma k_rng_4 : forall cs : acs, a0k cs -> khas cs (KRange (EVar 4) 0 280000) = true.
+Lemma k_rng_4 : forall cs : acs, a0k cs -> khas cs (KRange (EVar 4) 0 4110) = true.
 Proof. intros cs H. exact (BFXT.pt_all_get kentry (khas cs) (xO (xO (xO (xI (xO (xO xH)))))) A0K_T _ H eq_refl). Qed.
 Lemma k_rng_7 : forall cs : acs, a0k cs -> khas cs (KRange (EVar 7) 0 131071) = true.
 Proof. intros cs H. exact (BFXT.pt_all_get kentry (khas cs) (xI (xO (xO (xI (xO (xO xH)))))) A0K_T _ H eq_refl). Qed.
@@ -797,10 +798,20 @@ Definition A0_GHOST_A : list (expr * expr) := [(EMd Instr.M_MUL (ELit 4096) (EVa
 Definition A0_GHOST_B : list (expr * expr) := [(EMd Instr.M_MUL (ELit 4096) (EVar 323), ELit 4096); (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 422)) (ELit 4096), ELit 4096); (EMd Instr.M_MUL (ELit 4096) (EVar 423), ELit 4096); (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 422)) (ELit 4096), ELit 4096); (EMd Instr.M_MUL (ELit 4096) (EVar 423), ELit 4096)].
 
 Record a0s (cs : acs) (gh : list (expr * expr)) : Prop := A0S { s_maps : a_maps cs = A0_MAPS; s_vis : a_vis cs = A0_VIS; s_ghost : a_ghost cs = gh; s_eager : Z.leb (a_eager cs) (2^30) = true; s_abytes : Z.leb (a_abytes cs) (2^34) = true }.
-Lemma a0s_1 : a0s HS_both2_1 A0_GHOST_A. Proof. constructor; reflexivity. Qed.
-Lemma a0s_2 : a0s HS_both2_2 A0_GHOST_A. Proof. constructor; reflexivity. Qed.
-Lemma a0s_3 : a0s HS_both2b_1 A0_GHOST_B. Proof. constructor; reflexivity. Qed.
-Lemma a0s_4 : a0s HS_both2b_2 A0_GHOST_B. Proof. constructor; reflexivity. Qed.
+(* LPS 727298f3: the main-entry states [BothRegen2] computes, at each value [r] of the run's
+   CONFIG_RSEQ flag; each fact is computed at both values.
+   [BothRegen] renames the root hand-off states' fresh variables back to the recorded numbers,
+   so the maps, visibility, ghosts and knowledge here name the recorded variable numbers and the
+   root-segment indices (78, 207-209, 226-228, 257, 322, 323, 356, 405, 422, 423) are the
+   recorded ones. *)
+Lemma a0s_1 : forall r, 0 <= r <= 1 -> a0s (HS_both2_1r r) A0_GHOST_A.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; constructor; reflexivity. Qed.
+Lemma a0s_2 : forall r, 0 <= r <= 1 -> a0s (HS_both2_2r r) A0_GHOST_A.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; constructor; reflexivity. Qed.
+Lemma a0s_3 : forall r, 0 <= r <= 1 -> a0s (HS_both2b_1r r) A0_GHOST_B.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; constructor; reflexivity. Qed.
+Lemma a0s_4 : forall r, 0 <= r <= 1 -> a0s (HS_both2b_2r r) A0_GHOST_B.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; constructor; reflexivity. Qed.
 (* [comment removed for export] *)
 Lemma pt_all_ext_a0k : forall (A : Type) (f g : A -> bool) (t : ptree A), (forall a, f a = g a) -> BFXT.pt_all f t = BFXT.pt_all g t.
 Proof.
@@ -811,15 +822,27 @@ Lemma a0k_fast : forall cs : acs, BFXT.pt_all (Boots35.BFXE.mem' (Boots35.BFXE.b
 Proof.
   intros cs H. unfold a0k. rewrite <- H. apply pt_all_ext_a0k. intros K. unfold khas. symmetry. apply Boots35.BFXE.mem'_eq.
 Qed.
-Lemma a0k_1 : a0k HS_both2_1. Proof. apply a0k_fast. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma a0k_2 : a0k HS_both2_2. Proof. apply a0k_fast. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma a0k_3 : a0k HS_both2b_1. Proof. apply a0k_fast. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma a0k_4 : a0k HS_both2b_2. Proof. apply a0k_fast. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma a0kd_1 : a0kd1 HS_both2_1. Proof. constructor; vm_compute; reflexivity. Qed.
-Lemma a0kd_2 : a0kd2 HS_both2_2. Proof. constructor; vm_compute; reflexivity. Qed.
-Lemma a0kd_3 : a0kd1 HS_both2b_1. Proof. constructor; vm_compute; reflexivity. Qed.
-Lemma a0kd_4 : a0kd2 HS_both2b_2. Proof. constructor; vm_compute; reflexivity. Qed.
-Lemma a0_disj_1 : forallb (khas HS_both2_1) A0_DISJ = true. Proof. vm_compute. reflexivity. Qed.
-Lemma a0_disj_2 : forallb (khas HS_both2_2) A0_DISJ = true. Proof. vm_compute. reflexivity. Qed.
-Lemma a0_disj_3 : forallb (khas HS_both2b_1) A0_DISJ = true. Proof. vm_compute. reflexivity. Qed.
-Lemma a0_disj_4 : forallb (khas HS_both2b_2) A0_DISJ = true. Proof. vm_compute. reflexivity. Qed.
+Lemma a0k_1 : forall r, 0 <= r <= 1 -> a0k (HS_both2_1r r).
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; apply a0k_fast; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma a0k_2 : forall r, 0 <= r <= 1 -> a0k (HS_both2_2r r).
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; apply a0k_fast; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma a0k_3 : forall r, 0 <= r <= 1 -> a0k (HS_both2b_1r r).
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; apply a0k_fast; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma a0k_4 : forall r, 0 <= r <= 1 -> a0k (HS_both2b_2r r).
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; apply a0k_fast; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma a0kd_1 : forall r, 0 <= r <= 1 -> a0kd1 (HS_both2_1r r).
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; constructor; vm_compute; reflexivity. Qed.
+Lemma a0kd_2 : forall r, 0 <= r <= 1 -> a0kd2 (HS_both2_2r r).
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; constructor; vm_compute; reflexivity. Qed.
+Lemma a0kd_3 : forall r, 0 <= r <= 1 -> a0kd1 (HS_both2b_1r r).
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; constructor; vm_compute; reflexivity. Qed.
+Lemma a0kd_4 : forall r, 0 <= r <= 1 -> a0kd2 (HS_both2b_2r r).
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; constructor; vm_compute; reflexivity. Qed.
+Lemma a0_disj_1 : forall r, 0 <= r <= 1 -> forallb (khas (HS_both2_1r r)) A0_DISJ = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma a0_disj_2 : forall r, 0 <= r <= 1 -> forallb (khas (HS_both2_2r r)) A0_DISJ = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma a0_disj_3 : forall r, 0 <= r <= 1 -> forallb (khas (HS_both2b_1r r)) A0_DISJ = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.
+Lemma a0_disj_4 : forall r, 0 <= r <= 1 -> forallb (khas (HS_both2b_2r r)) A0_DISJ = true.
+Proof. intros r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute; reflexivity. Qed.

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0s.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed md_inv_vm). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -153,7 +154,14 @@ Proof. intros E data buf k regs g Hk H. eapply run_env_agree; [exact Hk | apply 
 Definition md_inv (fs : Fs) (md : Model) : Prop :=
 fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = fs.
 Lemma md_inv_vm : forall fs md vm, md_inv fs md -> md_inv fs (with_vmmaps vm md).
-Proof. intros fs md vm ([H1 H1'] & [H2 H2'] & H3). unfold md_inv, fdchan. autorewrite with model. repeat split; assumption. Qed.
+(* A round's error at :156 chars 112-122 -- `No such assumption` at the
+   `assumption` of `repeat split; assumption`.  `fdchan` has THREE conjuncts at this revision
+   (Reusable/YK0i.v:1161-1163): `fd_lookup ... = Some (FdChannel ch)`, `w_is0 ch = false`,
+   and `m_channel_reader model = true` -- the last being one of the four fields ProcState
+   gained at #38.  The two-component patterns [H1 H1'] and [H2 H2'] bound the second AND
+   third together, so `repeat split` left two goals with no assumption to close them.  The
+   same cause and the same repair as YL0l:157, which is already landed on this branch. *)
+Proof. intros fs md vm ([H1 [H1' H1'']] & [H2 [H2' H2'']] & H3). unfold md_inv, fdchan. autorewrite with model. repeat split; assumption. Qed.
 Lemma md_inv_ex : forall fs md md', md_inv fs md -> (exists vm, md' = with_vmmaps vm md) -> md_inv fs md'.
 Proof. intros fs md md' H [vm ->]. apply md_inv_vm. exact H. Qed.
 Lemma md_inv_ch1 : forall fs md, md_inv fs md -> fdchan (Z_to_bv 64 1) ch_stdout md.

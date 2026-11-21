@@ -1,8 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag, mremap's maps_subtract cut, Linux's mmap placement). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.leptonica.colorfill_fuzzer.lib.Common Require Import BudgetBridgeCore BudgetBridgeTac BudgetBridgeMm BudgetBridgeMove.
 Import ListNotations.
 Open Scope Z_scope.
@@ -80,17 +82,41 @@ intros l lo hi H b s Hin.
 destruct (maps_subtract_In l lo hi b s Hin) as (a & sz & Hin0 & Hin1).
 pose proof (iv_subtract_within a sz lo hi b s (H a sz Hin0) Hin1). pose proof (H a sz Hin0). lia.
 Qed.
+Lemma page_round_up_Z_le_2p64 : forall x, 0 <= x < two_pow_64 -> 0 <= page_round_up_Z x <= two_pow_64.
+Proof.
+intros x Hx. change two_pow_64 with 18446744073709551616 in *.
+unfold page_round_up_Z, page_size.
+pose proof (Z.mul_div_le (x + 4096 - 1) 4096 ltac:(lia)) as H1.
+pose proof (Z.div_pos (x + 4096 - 1) 4096 ltac:(lia) ltac:(lia)) as H2.
+lia.
+Qed.
 Lemma maps_bounded_brk_maps_next : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeInvCore "B'F'QNyR0%211&Q6&Mr3%211%411&Q0r4r2%33261%911p061pSH<1pSJ=1pRNA1").
 Proof.
+(* 08b1429 Sys/Mm/Mmap.v: the shrink cuts whole pages ([brk_unmap_cut], a [maps_subtract] or
+   nothing) and the grow grants the page range [brk_page_range (PAGE_ALIGN old) (PAGE_ALIGN r)]
+   (was the byte range [(old, r - old)]). Both page ends are at most 2^64. *)
 intros h req r H. unfold brk_maps_next.
-destruct (_ && _); [apply maps_bounded_subtract; exact H|].
-apply maps_bounded_app; [|exact H].
-unfold brk_grants. destruct (brk_is_grow req r (vm_brk h)) eqn:E; [|apply maps_bounded_nil].
-unfold brk_is_grow in E. apply andb_true_iff in E as [_ E]. apply Z.ltb_lt in E.
-apply maps_bounded_cons; [|apply maps_bounded_nil].
-pose proof (wrange r). pose proof (wrange (vm_brk h)).
-rewrite bv_sub_unsigned. unfold bv_wrap. rewrite Z.mod_small; [unfold two_pow_64 in *; lia|].
-change (bv_modulus 64) with two_pow_64. unfold two_pow_64 in *. lia.
+destruct (_ && _).
+- unfold brk_unmap_cut. cbv zeta.
+  destruct (_ <? _); [apply maps_bounded_subtract; exact H | exact H].
+- apply maps_bounded_app; [|exact H].
+  unfold brk_grants. destruct (brk_is_grow req r (vm_brk h)); [|apply maps_bounded_nil].
+  unfold brk_page_range.
+  destruct (page_round_up_Z (bv_unsigned (vm_brk h)) <? page_round_up_Z (bv_unsigned r)) eqn:E;
+    [|apply maps_bounded_nil].
+  apply Z.ltb_lt in E.
+  apply maps_bounded_cons; [|apply maps_bounded_nil].
+  pose proof (page_round_up_Z_le_2p64 (bv_unsigned (vm_brk h)) (wrange (vm_brk h))) as B1.
+  pose proof (page_round_up_Z_le_2p64 (bv_unsigned r) (wrange r)) as B2.
+  set (lo := page_round_up_Z (bv_unsigned (vm_brk h))) in *.
+  set (hi := page_round_up_Z (bv_unsigned r)) in *.
+  assert (Hlo : bv_unsigned (Z_to_bv 64 lo) = lo)
+    by (apply Z_to_bv_small; change (bv_modulus 64) with two_pow_64; lia).
+  rewrite Hlo.
+  pose proof (bv_unsigned_in_range 64 (Z_to_bv 64 (hi - lo))) as R.
+  change (bv_modulus 64) with two_pow_64 in R.
+  destruct (Z.eq_dec (hi - lo) two_pow_64) as [Eq|Ne]; [lia|].
+  rewrite Z_to_bv_small by (change (bv_modulus 64) with two_pow_64; lia). lia.
 Qed.
 Ltac bfacts :=
 repeat match goal with
@@ -105,8 +131,41 @@ repeat match goal with
 | H : (_ =? _) = true |- _ => apply Z.eqb_eq in H
 | H : (_ =? _) = false |- _ => apply Z.eqb_neq in H
 end.
+(* 0 < the page-rounded length, from the [w_is0 len = false] the mmap argument gate leaves: what
+   [Placement.linux_place_admissible] needs. Same proof as [page_align_is0_b_false_pos] (BudgetBridgeMm),
+   minus its first step. *)
+Lemma pru_pos_w : forall len : word, w_is0 len = false -> 0 < page_round_up_Z (bv_unsigned len).
+Proof.
+intros len H0. unfold w_is0 in H0.
+assert (Hn : bv_unsigned len <> 0).
+{ intros E. assert (len = Z_to_bv 64 0) as E'.
+{ apply bv_eq. rewrite E. reflexivity. }
+apply bv_eqb_eq in E'. congruence. }
+pose proof (bv_unsigned_nonneg len).
+unfold page_round_up_Z, page_size.
+assert (1 <= (bv_unsigned len + 4096 - 1) / 4096).
+{ apply Z.div_le_lower_bound; lia. }
+lia.
+Qed.
 Ltac bnd_arith :=
-unfold mremap_source_b, mremap_inplace_grow_b, mremap_fresh_b in *; cbv zeta in *;
+(* 08b1429 Sys/Mm/Mremap.v: the in-place grow is gated by [mremap_inplace_room_b] and the move
+   by [mremap_dst_ok] ([linux_place] /\ [mremap_fresh_b]); both carry the address bounds *)
+unfold mremap_dst_ok, mremap_inplace_grow_b, mremap_source_b, mremap_inplace_room_b,
+  mremap_fresh_b in *; cbv zeta in *;
+bfacts;
+(* 08b1429 Sys/Mm/Mmap.v: a fresh grant's address comes from [linux_place], a Prop, where the old
+   spec carried explicit bounds. [Placement.linux_place_admissible] turns it back into them. *)
+repeat match goal with
+| H : linux_place ?h ?thp ?hint ?nZ ?a |- _ =>
+let Hb := fresh "Hpl" in
+pose proof (Placement.linux_place_admissible h thp hint nZ a
+  ltac:(first [ apply pru_pos_w; assumption
+              | apply page_align_is0_b_false_pos; assumption
+              | assumption ])
+  (page_round_up_Z_mod' _) H) as Hb;
+clear H; destruct Hb as (? & ? & ? & ?)
+end;
+rewrite ?Z_to_bv_bv_unsigned in *;
 bfacts;
 repeat match goal with H : ?x = ?y |- _ => is_var x; lazymatch type of x with word => subst x end end;
 repeat match goal with

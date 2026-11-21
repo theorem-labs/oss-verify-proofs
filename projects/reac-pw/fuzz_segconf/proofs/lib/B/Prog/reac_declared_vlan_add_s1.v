@@ -16,10 +16,11 @@
      0x89fb4 and 0x89fec (a + 56i < a, b + 56i < b unsigned) and 0x8a064, 0x8a068 (~(a[i].args) < 8k, ~(b[i].args) < 8k)
      are refuted at the branch from the values of their operands. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_calls_equal.v, with its module paths and module names changed; 277 of its 351 lines of code are new or changed and 1518 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_add on fuzz_segconf.asan-ubsan (image B, entry BASE + AF_reac_declared_vlan_add = 0x8a514):
    segment 1 of the walk of lib/B/Prog/reac_declared_vlan_add_c.v, the entry stretch 0x8a514 .. 0x8a5b8 (the search
    loop's head at entry 0, when the count is > 0) or .. 0x8a614 (after the search, when the count is 0).
-   The image-B port of lib/A/Prog/reac_declared_vlan_add_s0.v (commit fcd2fa03dd27): its entry
+   The image-B port of lib/A/Prog/reac_declared_vlan_add_s0.v: its entry
    seed vad_entry_seed, the tactics vad_entry_cut and vad_entry_regs, and vad_entry. Written for the image-B G4 + G5
    walks. Image B adds to A's stretch: the UBSan alignment test of n (andi a0,s0,3; bnez to the trap at
    0x8a568, decided by the executor from atom 12's alignment fact), the spill of the count cell's shadow address to

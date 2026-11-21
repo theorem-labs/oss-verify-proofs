@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VCommon proof library over the revised model). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -382,6 +383,9 @@ Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* in_segs_reserved gained Section Grant's Hnk, discharged after Hlow; closed at the
+   top on the unit's own ELF image. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
 Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
@@ -498,7 +502,8 @@ Proof.
   assert (Hout : forall x : word, ~ (a <= bv_unsigned x < a + nZ) -> mem' x = ms_mem ms x) by (intros x Hx; unfold mem'; apply unmaps_out; rewrite Wa, Wn; exact Hx).
   (* [comment removed for export] *)
   apply (rzc_latch segs cfg ms model w (KT ρ o) H9 H3 Hf He).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl
+           (rob_sys_222 segs (latch ms) model (rg ms (Z_to_bv 5 17)) eq_refl R17)).
   - rewrite (check_syscall_222 segs (latch ms) _ _ model R17).
     exact (chk_fix_none_modeled model addr (rg ms (Z_to_bv 5 11)) (rg ms (Z_to_bv 5 12)) flagsw (rg ms (Z_to_bv 5 14)) (rg ms (Z_to_bv 5 15)) S G _).
   - intros eff m1 evs Hc0. rewrite (check_syscall_222 segs (latch ms) _ _ model R17) in Hc0.
@@ -527,7 +532,9 @@ Proof.
       assert (Hmode : plain_mode (a_mem A) -> plain_mode (replace_nth (replace_nth (a_mem A) i R') j C')).
       { intros [_ Hno]. exfalso. pose proof (Hno C (nth_error_In _ j Hj)) as X. unfold is_shadow in X. rewrite Ck in X. discriminate X. }
       assert (Hsegs : forall z, in_segs segs z -> ~ (a <= z < a + nZ)).
-      { intros z Hz Hr. destruct (in_segs_reserved segs Hlow z Hz) as [q [Hq Hzq]]. rewrite <- (mr_res segs fs0 ρ _ model H8) in Hq.
+      { intros z Hz Hr. destruct (in_segs_reserved segs Hlow Hnk z Hz) as [q [Hq Hzq]].
+        destruct (mr_res segs fs0 ρ _ model H8) as [rx [Hrx _]].
+        apply (fun h => in_or_app _ rx q (or_introl h)) in Hq. rewrite <- Hrx in Hq.
         pose proof (rng_res segs fs0 ρ _ model H8 e0 He0 f nZ Hlo Hhi q Hq) as D. unfold iv_disj in D. fold a in D. flia. }
       assert (Hled : forall q, ~ (a <= q < a + nZ) -> in_ledger_w segs (m_vmmaps model) q -> in_ledger_w segs (m_vmmaps m') q)
         by (intros q _ Hq; unfold in_ledger_w in *; rewrite Evm; exact Hq).

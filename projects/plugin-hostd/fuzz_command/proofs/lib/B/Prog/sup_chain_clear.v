@@ -4,8 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: the walk of sup_chain_clear on plugin-hostd/fuzz_command's ASan+UBSan build
    (fuzz_command.asan-ubsan, entry 0x8c570, 122 instructions to the `ret` at 0x8c754), proving a Theorem Labs lane's
    tsup_chain_clear_spec (lib/B/Prog/sup_chain_clear_c.v). A B re-walk of lib/A/Prog/sup_chain_clear.v and its _s1,
-   _s2 (a working branch abd8a14a6b8): B calls record (A inlines it) and inlines arg_i (A calls it), so the
-   frame, snprintf and release steps follow lib/A/Prog/answer_code.v (a working branch 2ba4488ce71). The B
+   _s2 (a working branch): B calls record (A inlines it) and inlines arg_i (A calls it), so the
+   frame, snprintf and release steps follow lib/A/Prog/answer_code.v (a working branch). The B
    code: a 96-byte frame realigned by `andi sp,sp,-32`; a class-0 side-stack frame from __asan_stack_malloc_0
    (0x8c5d0, the use-after-return flag read through the record's const cell) with its header and shadow; record(18)
    at 0x8c668; snprintf(b, 16, "%d", id) at 0x8c68c into the frame's buffer b = F + 32, in pass 4b's art form
@@ -15,6 +15,7 @@
    site lies in [0x8c570, 0x8c758). Every call's frame chain is afn_pre's chain pushed at the frame pointer
    (achain_push, scc_chain_call). After the snprintf and answer, whose posts are at a new FP state, the walk goes on
    at that state (scc_st_ok_fx, PASS4-REFIT.md A.5's second way). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -58,7 +59,7 @@ lazymatch type of HS with
 end.
 
 (* a register's symbolic value in a symbolic state, without normalising the denotation (CmdPaLib's prreg
-   normalises it); answer_code.v's preg (a working branch 2ba4488ce71) *)
+   normalises it); answer_code.v's preg (a working branch) *)
 Ltac preg HS r Hr :=
 lazymatch type of HS with
 | st_ok_pi ?segs ?val ?E ?ss (restrict ?H ?ms) =>
@@ -115,7 +116,7 @@ eapply (awr_ok_cons_stack_off _ _) with (n := 2%nat) (d := 0); [reflexivity | re
 eapply (awr_ok_cons_stack_off _ _) with (n := 34%nat) (d := sp1 - spZ regs); [reflexivity | rewrite V34; lia | cbn; rewrite FS; lia | cbn; lia |];
 apply (awr_ok_nil _ _).
 (* --- the text snprintf writes for "%d" (.str 0x21f40) and the record's constant-shadow cells of that format:
-   lib/B/Prog/sup_after_reply_aux.v's sar_* helpers (a working branch 8c121344905), themselves ported
+   lib/B/Prog/sup_after_reply_aux.v's sar_* helpers (a working branch), themselves ported
    from the ASan arg_i walk -------------------------------------------------------------------------------------- *)
 Lemma scc_dec_len : forall v, -2^31 <= v < 2^31 -> length (PF.pf_dec v) = length (dec v).
 Proof. intros v Hv. rewrite <- (PAI.ai_pf_dec v Hv). unfold PF.pf_bytes. rewrite length_map. reflexivity. Qed.
@@ -176,7 +177,7 @@ Context {PI : PAImg cmd_listing}.
 #[local] Notation BASE := (@pa_val _ cmd_listing PI A_TEXT).
 #[local] Notation SIG s := (@pa_sigma _ cmd_listing PI s).
 #[local] Notation rdW W mem := (aview SEGS (w_H W) mem).
-(* answer_code.v's region_kept_hi / region_kept_hi2 / aview_frame_pt (a working branch 2ba4488ce71) *)
+(* answer_code.v's region_kept_hi / region_kept_hi2 / aview_frame_pt (a working branch) *)
 Lemma region_kept_hi : forall E H (m m2 : word -> option byte) n b lo hi wlo whi cs,
 bv_unsigned (ew E n) = b ->
 (forall a, b + lo <= a < b + hi -> aview SEGS H m2 a = aview SEGS H m a) ->

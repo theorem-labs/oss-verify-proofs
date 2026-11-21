@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths changed; 150 of its 167 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/Prog/FrameRet.v, with its module paths, module names, addresses and numbers changed; 257 of its 295 lines of code are new or changed and 129 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_pin/lib/U/Prog/SlotInvCF.v, with its module paths and numbers changed; 33 of its 164 lines of code are new or changed and 164 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot frame of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (UBSan, [0x13888, 0x14268)): ghost values, the
    frame FR over a list hb of live harness blocks, CUTST, Inv_ENTRY, Post, Hcut and the slot obligation. Statement
    text: no function is proved here; the cut invariants are stated over CUTST in Prog/SlotInv.v.
-   Taken from reac-pw/fuzz_role's Prog/SlotFR.v (commit 52bb2f1ed35d), itself reac-pw/fuzz_pin's
-   Prog/SlotInv.v and libreac/fuzz_ctrl's released Prog/SlotInv.v (commit 25e3d17bdb50, lines 98-194
+   Taken from reac-pw/fuzz_role's Prog/SlotFR.v, itself reac-pw/fuzz_pin's
+   Prog/SlotInv.v and libreac/fuzz_ctrl's released Prog/SlotInv.v (lines 98-194
    and 318-393), with segconf's numbers (ELF afc060e3cc9c):
    - Frame (0x13888 `addi sp,sp,-0xf0`): SLOT_FRAME 240; the prologue saves ra, s0-s11 at S-8 .. S-104
      (0x1388c `sd ra,0xe8(sp)` .. 0x138bc `sd s11,0x88(sp)`), SLOT_SAVE 104: ctrl's thirteen saved registers.

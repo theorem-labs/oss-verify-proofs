@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/B/Prog/is_tagged_reac_F.v, with its module paths, module names and numbers changed; 167 of its 236 lines of code are new or changed and 123 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rp_ds_accept_FW: the footprint walk of reac-repacer/fuzz_wire's rp_ds_accept in image A (fuzz_wire.asan),
    against the frozen lib/A/Prog/rp_ds_accept_F_c.v rp_ds_accept_contract_F (so it proves lib/A/Prog/rp_ds_accept_cg.v
    wire_rp_ds_accept_holds_stmt). The footprint idioms are libreac/fuzz_decode's released walk
-   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v (origin/ossv/recipes 88154566652a: StepF's step, one
+   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v (StepF's step, one
    rng fact per access, the frame carved and released, the shadow base through its GOT word, the shadow loads read
    from the `addressable` premise); the branch order and the closing of each exit by evaluating ds_accept_result on
    the branch facts are this unit's released plain walk lib/Prog/rp_ds_accept.v; the one lemma per shadow check with
-   its continuation and the Section's state abbreviation are reac-repacer/fuzz_uci's lib/A/Prog/rp_hot_clamp_FW.v
-   (origin/ossv/recipes 0295462466b2). *)
+   its continuation and the Section's state abbreviation are reac-repacer/fuzz_uci's lib/A/Prog/rp_hot_clamp_FW.v.
+   *)
 (* rp_ds_accept of fuzz_wire.asan (entry 0x8106c, 0xfc bytes, 63 words):
      0x8106c `addi sp, sp, -0x10`, 0x81070 `sd ra, 8(sp)`;
      0x81074 `li a2, 18`, 0x81078 `bltu a1, a2, 0x810f4`: n < 18 goes to 0x810f4 `li a0, 0`;

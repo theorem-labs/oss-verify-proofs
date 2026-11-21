@@ -1,5 +1,5 @@
 (* reac_declared_vlan_split on fuzz_segconf image B (fuzz_segconf.asan-ubsan): the image-B port of
-   lib/A/Prog/reac_declared_vlan_split_lem.v (commit ceb7e39832b2), image B's addresses.
+   lib/A/Prog/reac_declared_vlan_split_lem.v, image B's addresses.
    The facts of its walk that do not name the machine.
 
    1. vs_code: SegModel.vlan_split in the order the compiled code tests it (0x8a280 dot NULL, 0x8a284 dot =

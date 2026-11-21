@@ -24,7 +24,7 @@
        so the exit cut C_A82178_at is taken at the SAME registers and memory; its body is the entry's with
        (exists A v w280, f14_tail ..) at (A, vcmp, 0).  Journal: ajournal_exec with the empty write set (the model
        is materialized); frames, frame law, k bound and the cut's ctl_rt_C B ly3 S3 mem3 unchanged (route (C), a working branch
-       shell 1899bed1aee: the same ly3 S3 mem3 at the exit, so `exact Hrt`; the stage
+       shell: the same ly3 S3 mem3 at the exit, so `exact Hrt`; the stage
        reads no shadow byte).
 
    SECTION HYPOTHESES: LAWS (the core's AR laws, YCbq.v:207, as ACtl.v:244 states it; ajournal_exec and
@@ -38,7 +38,7 @@
    Require Reusable.<X> matches ctrl's lib.A.Reusable.<X> by suffix).  The same for lib/Lib's modules (twins under
    lib/A/Bz/Lib and lib/AZ/Lib): written OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.<X>, loaded absolutely.
 
-   BUILD STATE: TYPE-CHECK on a working branch shell 1899bed1aee (cb build, BASE row 23b918fe0c2e, a build machine,
+   BUILD STATE: TYPE-CHECK on a working branch shell (cb build, BASE row, a build machine,
    workspace (internal path)); the build of record is cbrec.sh's, named in the lane's
    report. *)
 

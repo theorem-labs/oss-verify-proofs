@@ -3,7 +3,10 @@ project: wt
 harness: fuzz-eval
 rocq: OSSVerify.wt.fuzz_eval
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Copies the input (Size from 10 to 5120 bytes) into a string and evaluates it as a plural-case
+  expression with n = 0 through Wt::WMessageResources::evalPluralCase, catching and dropping WInvalidFormatException
+  and WInvalidOperationException, and drops the result. It returns -1 for an input with Size below 10
+  or above 5120.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +15,7 @@ source:
     repository: https://github.com/emweb/wt
     commit: 0ec92b6bfc41be037dcf3ddfc72664ca261821bd
     path: fuzz/fuzz-eval.C
-  modified: false
+  modified: true
   licence: NOASSERTION
 library:
   repository: https://github.com/emweb/wt
@@ -23,11 +26,14 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/fuzz-eval.C is wt 0ec92b6b''s fuzz/fuzz-eval.C with one Theorem
+  Labs change: its length check returns -1, not 1, for an input outside its limits (libFuzzer rejects
+  the input; the driver exits 0, not 78).'
 builds:
   plain:
     file: fuzz-eval.plain
     bytes: 7967168
-    sha256: ceb86d5d95b34f82adf52a6ca282bf96e1f1c328aa3fe44290286d6a807defdb
+    sha256: 1189add50a3902b521dd24c40cf8de2ea74474841d52a81f5a2308415d1748aa
     segments:
     - 1
     - 1
@@ -61,7 +67,7 @@ builds:
   ubsan:
     file: fuzz-eval.ubsan
     bytes: 8491472
-    sha256: 15f2af7f106bbd3f8c39575a4c11f47566607006de7898b2eaaea96c80da4b0f
+    sha256: 1f38f3c4d47ac980c77437ebea44ad5c6a255c7d0cd2b1bed007abc9a2a019ca
     segments:
     - 1
     - 1
@@ -95,7 +101,7 @@ builds:
   asan:
     file: fuzz-eval.asan
     bytes: 15630392
-    sha256: b12f969ab15e6a6200668e5585839b2467aa94006fee4f5adc4581441da1186a
+    sha256: 99cff11c257cab2d1328e33ac3841a8327e31afb2481e7cfe7d2fbda4637f759
     segments:
     - 1
     - 2
@@ -132,7 +138,7 @@ builds:
   asan-ubsan:
     file: fuzz-eval.asan-ubsan
     bytes: 16095224
-    sha256: 3e7c85e96d55b1ffff9370df48d1810824989e7209d360a40f15856d020852d4
+    sha256: 68bd8b43c919637afec6dc87baca4129c8ee400fca3f3bf7bbb05f6623fd9ff4
     segments:
     - 1
     - 2
@@ -178,6 +184,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -187,6 +194,7 @@ statements:
     budgets: standard
     abort: signal
     status: open
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -196,6 +204,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -206,6 +215,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -216,6 +226,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -226,6 +237,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -236,3 +248,4 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2

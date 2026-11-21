@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_catalogue_match (0x84498 = BASE + AF_reac_box_catalogue_match) of fuzz_ctrl's ASan build
    (image A, libreac v1.9.0): the WALK of the cgif-form contract stated in C_reac_box_catalogue_match.v
    (`treac_box_catalogue_match_spec`, statement only). This file glues the lifted footprint stretches
    reac_box_catalogue_match_F<n>.v with cgif's runtime / callee rules at the events between them; the
    world-to-machine facts it cannot prove on this base are named Section hypotheses (see the report).
    Rule 24: `proof-index reac_box_catalogue_match` = 0 named / 0 by address / 0 related (a Theorem Labs lane,
-   2026-10-28 21:05Z), a Theorem Labs lane CONFIRM: no released proof is reused. At ossv/recipes c5e779efe8c (2026-10-31), reac_box_catalogue_match has no released proof outside this unit. *)
+   2026-10-28 21:05Z), a Theorem Labs lane CONFIRM: no released proof is reused. At (2026-10-31), reac_box_catalogue_match has no released proof outside this unit. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -36,9 +37,9 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import APostBase.
 (* ctrl's plain files: Required QUALIFIED only, never Imported (glue closure rule, porter 23:38Z; a Theorem Labs lane Q6). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require RcMatch.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require reac_box_catalogue_match_lib.
-(* The two callees' specs of record, Required QUALIFIED: reac_ctrl_parse (a working branch
-   55301a93133) and reac_box_model_block (a Theorem Labs lane, statement-only file, a working branch
-   2249a9686c1). The walk uses the caller-journal shapes and the model they name. *)
+(* The two callees' specs of record, Required QUALIFIED: reac_ctrl_parse (a working branch)
+   and reac_box_model_block (a Theorem Labs lane, statement-only file, a working branch).
+   The walk uses the caller-journal shapes and the model they name. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require C_reac_ctrl_parse C_reac_box_model_block.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import CtrlCallerJ.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require RcModel RcBox RcSynth.
@@ -93,8 +94,8 @@ Section d.
 (* ---- a Theorem Labs lane's ProgWorld facts the walk takes ---------------------------------------------------------------
    lib/A/ProgWorld.v (blob d63a6e41b51) and its proof files ProgWorld_Fs.v (9209c78fc84), ProgWorldAstack.v
    (d98becdc45d), ProgWorldShadow.v (a10a774a57e), with A.AF0m (44930bfd861), lib/A/ProgWorldBlkApart.v (22f3e61fbe0)
-   and lib/A/ProgWorldTlsApart.v (1f4f062c65a) (both by path from 87fcd8d0b28), and for route (C) L3 (a working branch
-   1899bed1aee) lib/A/ProgWorldCtlRtC.v (9bde20fbe52) and ProgWorldRtC.v (a0e814a689c) over a Theorem Labs lane's
+   and lib/A/ProgWorldTlsApart.v (1f4f062c65a) (both by path), and for route (C) L3 (a working branch)
+   lib/A/ProgWorldCtlRtC.v (9bde20fbe52) and ProgWorldRtC.v (a0e814a689c) over a Theorem Labs lane's
    lib/A/ACtlRtC.v (50a0bf66916). Section h cites the PROVED lemmas and keeps as a Section hypothesis only what
    ProgWorld states without a proof (CtrlTSyms). *)
 #[local] Notation segs := A.AB1v.tfibsegs (only parsing).
@@ -128,17 +129,17 @@ Hypothesis ASM2 : astack_malloc_realizes tfibsegs B 2.
 Hypothesis SMP : stack_malloc_progressP B.
 Hypothesis ASF : astack_free_law tfibsegs B.
 (* The image's library facts: objects 0 = GOT_UAR, 1 = GOT_CELL_K, 30 = CELL_K, 31 = UAR (a Theorem Labs lane, Q8 21:29Z).
-   `palf_sm2` (CtrlFrame.v:100) is what the class-2 stack-malloc call needs. *)
+   `palf_sm2` (CtrlFrame.v:101) is what the class-2 stack-malloc call needs. *)
 Hypothesis TL : PALib B.
 Hypothesis TLF : PALibF B.
 (* The registered globals (CtrlRo.v:44-46). *)
 Hypothesis HGM : globs_marked tfibsegs B GLOBS.
-(* The read-only window lies below the sink's overflow head (CtrlBase.v:23-24 / APostBase.v:27-28). *)
+(* The read-only window lies below the sink's overflow head (CtrlBase.v:24-25 / APostBase.v:28-29). *)
 Context {RO : ro_below_ofl tfibsegs RLO RHI}.
 (* The two callees, at the call sites 0x84684 (parse(f, len, F + 32)) and 0x846c8 (model_block(row_i, 0, F + 112)),
    both in the caller-journal form with this walk's journal (own = [(2, pos)]), in their owners' citation form
-   (CONVENTIONS sec. 2): REAC_CTRL_PARSE_STK = 8800 (C_reac_ctrl_parse.v:46), REAC_BOX_MODEL_BLOCK_STK = 4320
-   (C_reac_box_model_block.v:102). *)
+   (CONVENTIONS sec. 2): REAC_CTRL_PARSE_STK = 8800 (C_reac_ctrl_parse.v:47), REAC_BOX_MODEL_BLOCK_STK = 4320
+   (C_reac_box_model_block.v:103). *)
 Hypothesis TPARSE : C_reac_ctrl_parse.treac_ctrl_parse_spec (SK := SK) B RLO RHI.
 Hypothesis TMB : C_reac_box_model_block.treac_box_model_block_spec (SK := SK) B GLOBS
   (BASE + AF_reac_box_model_block) RLO RHI.
@@ -148,7 +149,7 @@ Hypothesis TMB : C_reac_box_model_block.treac_box_model_block_spec (SK := SK) B 
    (ProgWorld.v:1091), ctl_fs_of_astack and ctl_release_of_free_law (ProgWorldAstack.v:225, :333),
    ctl_block_shadow_of_AR and ctl_stack_shadow_of_AR (ProgWorldShadow.v:63, :113), as_tp_RT_TP and as_tsd_TSD
    (ProgWorld.v:876, :1192), and ctl_block_apart_fs (ProgWorldBlkApart.v:23) and fp_tls_apart
-   (ProgWorldTlsApart.v:159), from 87fcd8d0b28. The one Section hypothesis left: the composer's symbol facts
+   (ProgWorldTlsApart.v:159). The one Section hypothesis left: the composer's symbol facts
    A.AF0m.CtrlTSyms B. AR_states_vis0_shadow (false at AR) is gone with the universal shadow_rw it fed. *)
 Hypothesis CTS : A.AF0m.CtrlTSyms B.
 Let TLSAP : A.ProgWorld.fp_tls_apart_stmt B := A.ProgWorldTlsApart.fp_tls_apart B.
@@ -638,7 +639,7 @@ Qed.
 
 (* ==== The walk, part 4: the base bundle =========================================================================
    Each stretch runs on `normalize mr`, mr the real memory at its start (the entry, or a call's return). cmBB is the
-   source's Section hypotheses (reac_box_catalogue_match.v:115-141) at that memory; cm_base derives them from the
+   source's Section hypotheses (reac_box_catalogue_match.v:116-142) at that memory; cm_base derives them from the
    journal state at mr (AR, the window's presence, the static stack bounds) and the spec's premises. *)
 
 (* At a visible address the core's view is ctrl's mrd (ProgWorld.v:559-567, proof text verbatim). *)

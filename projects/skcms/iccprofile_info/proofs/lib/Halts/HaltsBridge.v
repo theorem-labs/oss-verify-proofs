@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/Common/RealizesHalts.v at commit c395a1e0dfa (its whole content bar the abort section: refusal_decided_classic, decided_from_classic, the two cfg-monotonicity lemmas, exits_in, kill_free and their closure lemmas, realizes_cfg_must_exit_in and the three corollaries), with [realizes_cfg segs cfg] replaced throughout by skcms/iccprofile_info's Info.ShapeAlg.realizes, whose node relation is pinned to Info.ShapeAlg.CFG, and with the image premise taken as Info.ProofInfoPlan.realizes_spec_stmt rather than from_chars's image_realizes_cfg_e. *)
+(* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/Common/RealizesHalts.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8 (its whole content bar the abort section: refusal_decided_classic, decided_from_classic, the two cfg-monotonicity lemmas, exits_in, kill_free and their closure lemmas, realizes_cfg_must_exit_in and the three corollaries), with [realizes_cfg segs cfg] replaced throughout by skcms/iccprofile_info's Info.ShapeAlg.realizes, whose node relation is pinned to Info.ShapeAlg.CFG, and with the image premise taken as Info.ProofInfoPlan.realizes_spec_stmt rather than from_chars's image_realizes_cfg_e. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the walk induction names the read-only-backing premise (sys_rob), the bridge lifts the walk to the run's segments (RomStable.run_init) for an image with no vDSO, the launch facts are read from valid_entry, and the cited source commit is named by its public id; of that whole content, HaltsBridge.v does not hold must_exit_in_scfg_mono_classic, realizes_cfg_must_exit_in_le, spec_exits_in, no_kill_kill_free, must_exit_in_scfg_of_realizes, halts_allowed_of_realizes, halts_allowed_forced_only_of_realizes and halts_allowed_scfg_of_realizes: its must_exit_of_realizes_spec applies must_exit_in_at_cfg_mono_classic and realizes_must_exit_in directly, its exits_in_spec and kill_free_spec state exits_in and kill_free for this target's spec, and its halts_of_realizes_spec is the one halting theorem, at forced_only_cfg with budgets; every comment of the public RealizesHalts.v after its licence lines reads [comment removed for export], so the comments of HaltsBridge.v are its own. *)
 (** From a [realizes] fact about an image to [HaltsAllowed.halts_allowed_T_scfg_budgets].
 
     [Info.ShapeAlg.realizes] has no spinning leaf: its three constructors are a
@@ -100,7 +101,7 @@ Theorem realizes_must_exit_in : forall c T,
   must_exit_in_at_cfg CFG segs S c.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros Hnone HE HK.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running.
@@ -142,22 +143,37 @@ Qed.
 (** ** From [realizes_spec_stmt] to the halting statement *)
 
 Theorem must_exit_of_realizes_spec : forall segs pc ph lim,
+  (* LPS 08b1429 reads the run against [run_segments segs inp sp mb] and from the
+     start configuration over THAT list ([727298f3:theories/LinuxProcessSem/Run.v:3077-3083]), so the walk's
+     own segments have to be lifted with [RomStable.run_init].  Its premise is
+     this one, which [Asan/RunSegsCfg.v:18] records as "true of every binary image
+     by computation"; [Info/ProofInfoRows.v:19,:50] already carries it on the same
+     layer, and [Halts/HaltsTops.v] discharges it at the concrete image.  Nothing
+     is weakened: the premise is PROVED where the image is known. *)
+  vdso_image segs = None ->
   realizes_spec_stmt segs pc ph lim ->
   forall en inp,
     valid_entry (mkImage segs pc ph) en inp ->
     valid_input inp ->
     must_exit_in_scfg forced_only_cfg HALT_CODES (mkImage segs pc ph) lim en inp.
 Proof.
-  intros segs pc ph lim HR [sp brk0 mbase rnd] inp Hen Hinp.
+  intros segs pc ph lim Hvi HR [sp brk0 mbase rnd] inp Hen Hinp.
   cbn [must_exit_in_scfg].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-  destruct Hen as (Hsp & Hbrk & _ & Hfit).
+  (* [valid_entry] is a five-fold conjunction at 727298f3, and [realizes_spec_stmt] asks for
+     the launch's reader (LPS #38, in 727298f3); [Run.valid_input] pins it
+     ([c0dd863a:theories/LinuxProcessSem/Run.v:4657]), so pose it BEFORE the destruct that consumes [Hinp].  Same
+     shape as Info.ProofInfoRows:30-40. *)
+  destruct Hen as (Hsp & Hbrk & _ & Hfit & Hlau).
+  pose proof (valid_input_launch _ Hinp) as Hvl.
+  pose proof (valid_input_channel_reader _ Hinp) as Hcr.
   destruct Hinp as (Hargv & Henvp & Hfs & _).
-  apply (must_exit_in_at_cfg_mono_classic forced_only_cfg CFG segs HALT_CODES _
+  apply (must_exit_in_at_cfg_mono_classic forced_only_cfg CFG (run_segments segs inp sp mbase) HALT_CODES _
            (forced_only_cfg_least CFG)).
-  apply (realizes_must_exit_in segs HALT_CODES _ (spec (in_argv inp) (in_fs inp))
-           (HR sp brk0 mbase rnd inp Hsp Hbrk Hfit Hargv Henvp Hfs)).
+  apply (realizes_must_exit_in (run_segments segs inp sp mbase) HALT_CODES _ (spec (in_argv inp) (in_fs inp))
+           (RomStable.run_init segs inp sp mbase pc ph brk0 rnd lim _ Hvi
+              (HR sp brk0 mbase rnd inp Hsp Hbrk Hfit Hargv Henvp Hfs Hvl Hcr Hlau))).
   - cbn [init_config cfg_model]. reflexivity.
   - exact (exits_in_spec (in_argv inp) (in_fs inp)).
   - exact (kill_free_spec (in_argv inp) (in_fs inp)).
@@ -166,9 +182,10 @@ Qed.
 (** The statement's own form: the budget premise is not needed at the budget
     the realization is proved at, so it is dropped. *)
 Theorem halts_of_realizes_spec : forall segs pc ph lim,
+  vdso_image segs = None ->      (* the run's segment list, as in [must_exit_of_realizes_spec] *)
   realizes_spec_stmt segs pc ph lim ->
   halts_allowed_T_scfg_budgets forced_only_cfg lim HALT_CODES (mkImage segs pc ph).
 Proof.
-  intros segs pc ph lim HR en inp Hen Hinp _.
-  exact (must_exit_of_realizes_spec segs pc ph lim HR en inp Hen Hinp).
+  intros segs pc ph lim Hvi HR en inp Hen Hinp _.
+  exact (must_exit_of_realizes_spec segs pc ph lim Hvi HR en inp Hen Hinp).
 Qed.

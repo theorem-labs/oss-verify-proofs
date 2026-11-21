@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase robustness premises on silent and exit steps; an unmodeled step is an error only off a vDSO entry, with the vDSO-call arm; munmap joins the alloc-only family; runs are read over image_run_segments); Section WithCfg is generic in the Leaf class of its realizes_cfg walks. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,8 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence Clas
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import ShapeAlgBase ShapeCfg.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RomBase.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -119,6 +122,7 @@ Proof. intros c m. autorewrite with model. reflexivity. Qed.
 Section WithCfg.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 
 (* [comment removed for export] *)
 
@@ -160,7 +164,7 @@ Lemma rzc_step : forall ms model ms' model' T,
   realizes_cfg cfg segs (mkCfg ms model) T.
 Proof.
   intros ms model ms' model' T Hh Hsvc Hstep Hc.
-  eapply rzc_silent1; [apply node_instr_cfg; eassumption | exact Hc].
+  eapply rzc_silent1; [apply node_instr_cfg; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
@@ -193,7 +197,7 @@ Lemma rzc_step_no_lazy : forall ms model ms' T,
   realizes_cfg cfg segs (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply rzc_silent1; [apply node_instr_cfg_no_lazy; eassumption | exact Hc].
+  eapply rzc_silent1; [apply node_instr_cfg_no_lazy; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
@@ -299,6 +303,7 @@ Proof.
       change (@nil event) with (@nil event ++ @nil event).
       eapply dpc_step.
       * apply node_instr_cfg; eassumption.
+      * apply sys_rob_instr. exact Hsvc.
       * apply IH; [| exact H].
         rewrite (m_halted_account_step segs ms model ms1 model1 Hstep). exact Hh.
 Qed.
@@ -494,34 +499,39 @@ Proof.
   apply (reaches_error_cfg_here _ []). apply sstep_cfg_instr_fault; assumption.
 Qed.
 
+(* At the revision an unmodeled instruction step is an error only off a vDSO
+   entry: at an entry it is [sstep_cfg_vdso_*]'s call instead. *)
 Lemma reaches_error_cfg_instr_unmodeled : forall ms model,
   m_halted model = None ->
   ms_svc_pending ms = None ->
   mi_account_step segs ms model = MachineUnmodeled ->
+  vdso_entry_fn segs (ms_pc ms) = None ->
   reaches_error_cfg segs cfg (mkCfg ms model).
 Proof.
-  intros ms model Hh Hsvc Hstep.
+  intros ms model Hh Hsvc Hstep Hv.
   apply (reaches_error_cfg_here _ []). apply sstep_cfg_instr_unmodeled; assumption.
 Qed.
 
 (* [comment removed for export] *)
 Lemma asteps_bad_reaches_error : forall n ms model,
   m_halted model = None ->
-  (asteps n (ms, model) = MachineFault \/ asteps n (ms, model) = MachineUnmodeled) ->
+  (asteps n (ms, model) = MachineFault
+   \/ (asteps n (ms, model) = MachineUnmodeled /\ forall a, vdso_entry_fn segs a = None)) ->
   reaches_error_cfg segs cfg (mkCfg ms model).
 Proof.
   induction n as [|n IH]; intros ms model Hh H.
-  - cbn in H. destruct H as [H | H]; discriminate H.
+  - cbn in H. destruct H as [H | [H _]]; discriminate H.
   - cbn [asteps fst snd] in H.
     destruct (ms_svc_pending ms) as [x8|] eqn:Hsvc.
-    + destruct H as [H | H]; discriminate H.
+    + destruct H as [H | [H _]]; discriminate H.
     + destruct (mi_account_step segs ms model) as [[ms1 model1]| |] eqn:Hstep.
       * eapply reaches_error_cfg_star.
         { apply star_cfg_one. apply sstep_cfg_instr; eassumption. }
         apply IH; [| exact H].
         rewrite (m_halted_account_step segs ms model ms1 model1 Hstep). exact Hh.
       * apply reaches_error_cfg_instr_fault; assumption.
-      * apply reaches_error_cfg_instr_unmodeled; assumption.
+      * destruct H as [H | [_ Hnv]]; [discriminate H|].
+        apply reaches_error_cfg_instr_unmodeled; [exact Hh | exact Hsvc | exact Hstep | apply Hnv].
 Qed.
 
 Lemma asteps_fault_reaches_error : forall n ms model,
@@ -533,8 +543,9 @@ Proof. intros n ms model Hh H. eapply asteps_bad_reaches_error; [exact Hh | left
 Lemma asteps_unmodeled_reaches_error : forall n ms model,
   m_halted model = None ->
   asteps n (ms, model) = MachineUnmodeled ->
+  (forall a, vdso_entry_fn segs a = None) ->
   reaches_error_cfg segs cfg (mkCfg ms model).
-Proof. intros n ms model Hh H. eapply asteps_bad_reaches_error; [exact Hh | right; exact H]. Qed.
+Proof. intros n ms model Hh H Hnv. eapply asteps_bad_reaches_error; [exact Hh | right; split; [exact H | exact Hnv]]. Qed.
 
 (* [comment removed for export] *)
 
@@ -631,6 +642,8 @@ Proof.
   intros ms model e c' Hss Hns.
   inversion Hss; subst.
   - apply sstep_cfg_instr; assumption.
+  - (* vDSO call: the cfg relation has the same arm, with no filter premise *)
+    eapply sstep_cfg_vdso_call; eassumption.
   - eapply sstep_cfg_syscall; try eassumption.
     intro Hsp. apply spurious_refusal_cfg_ret in Hsp.
     match goal with Hs : ms_svc_pending ms = Some ?y |- _ =>
@@ -1082,7 +1095,7 @@ Lemma rzc_exit : forall ms model x8,
     (t_exit (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (m_fs model)).
 Proof.
   intros ms model x8 Hh Hsvc Hx8. unfold t_exit.
-  eapply rzc_emit1; [apply (node_exit_cfg ms model x8 Hh Hsvc Hx8) |].
+  eapply rzc_emit1; [apply (node_exit_cfg ms model x8 Hh Hsvc Hx8) | exact (sys_rob_exit segs ms model x8 Hsvc Hx8) |].
   apply rzc_halt. cbn [cfg_model]. rewrite m_halted_with_halted. discriminate.
 Qed.
 
@@ -1177,7 +1190,7 @@ Proof.
   destruct (materialize_model_accesses model (@accessed_ranges _ report)) as [m'|] eqn:Hmat;
     [exists m'; reflexivity |].
   exfalso. apply (within_budget_cfg_here cfg segs _ Hwb).
-  split; [exact Hh |]. left. split; [exact Hsvc |]. exists report. split; assumption.
+  split; [exact Hh |]. left. split; [exact Hsvc |]. left. exists report. split; assumption.
 Qed.
 
 End WithCfg.
@@ -1187,7 +1200,7 @@ End WithCfg.
 (* [comment removed for export] *)
 Lemma sysno_family_off_alloc_only : forall no,
   sysno_family_off (alloc_only_cfg false) no
-  = (Z.eqb no 214 || Z.eqb no 216 || Z.eqb no 222 || Z.eqb no 226)%bool.
+  = (Z.eqb no 214 || Z.eqb no 215 || Z.eqb no 216 || Z.eqb no 222 || Z.eqb no 226)%bool.
 Proof.
   intros no. unfold sysno_family_off, injected_arm, injected_table.
   cbn [lookup_injected ia_no].
@@ -1207,11 +1220,11 @@ Proof.
 Qed.
 
 Lemma sysno_family_off_alloc_only_false : forall no,
-  no <> 214%Z -> no <> 216%Z -> no <> 222%Z -> no <> 226%Z ->
+  no <> 214%Z -> no <> 215%Z -> no <> 216%Z -> no <> 222%Z -> no <> 226%Z ->
   sysno_family_off (alloc_only_cfg false) no = false.
 Proof.
-  intros no H1 H2 H3 H4. rewrite sysno_family_off_alloc_only.
-  apply Z.eqb_neq in H1, H2, H3, H4. rewrite H1, H2, H3, H4. reflexivity.
+  intros no H1 H5 H2 H3 H4. rewrite sysno_family_off_alloc_only.
+  apply Z.eqb_neq in H1, H5, H2, H3, H4. rewrite H1, H5, H2, H3, H4. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -1309,20 +1322,20 @@ Qed.
 (* [comment removed for export] *)
 
 Lemma run_scfg_errors_of_reaches : forall cfg img lim en inp,
-  reaches_error_cfg (img_segments img) cfg (init_cfg img lim en inp) ->
+  reaches_error_cfg (image_run_segments img en inp) cfg (init_cfg img lim en inp) ->
   bh_errors (run_scfg cfg img lim en inp).
 Proof. intros cfg [segs pc ph] lim [sp brk0 mbase rnd] inp H. exact H. Qed.
 
 Lemma run_scfg_errors_iff_reaches : forall cfg img lim en inp,
   bh_errors (run_scfg cfg img lim en inp)
-  <-> reaches_error_cfg (img_segments img) cfg (init_cfg img lim en inp).
+  <-> reaches_error_cfg (image_run_segments img en inp) cfg (init_cfg img lim en inp).
 Proof. intros cfg [segs pc ph] lim [sp brk0 mbase rnd] inp. split; intro H; exact H. Qed.
 
 (* [comment removed for export] *)
 Lemma good_input_s_refuted_by_reaches_error : forall cfg O1 O2 inp en1 en2,
   valid_entry O1 en1 inp ->
   valid_entry O2 en2 inp ->
-  reaches_error_cfg (img_segments O1) cfg (init_cfg O1 source_alloc_limit en1 inp) ->
+  reaches_error_cfg (image_run_segments O1 en1 inp) cfg (init_cfg O1 source_alloc_limit en1 inp) ->
   ~ good_input_s cfg O1 O2 inp.
 Proof.
   intros cfg O1 O2 inp en1 en2 H1 H2 Herr.

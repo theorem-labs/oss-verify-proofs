@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1137 of its 1175 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 462 of its 587 lines of code are new or changed and 1077 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R2 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): [0x814f8, 0x81528], Inv_A814f8 -> Inv_A8152c.
    rule 24: no function proved (a slot segment).  After reac_box_catalogue(s2 = fr + 2656) the code checks the
    result a0 = BOX_CATALOGUE != 0 (0x814f8, the abort branch 0x814fc not taken) and the count [s2] = 11 != 0 (0x81504,
@@ -345,7 +346,7 @@ Variables ra empty : Z.
 Hypothesis FF : frame_facts B APIf LS SH SK ra empty.
 Hypothesis SH00 : OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.asan_set_shadow_c.asan_set_shadow_00_contract.
 
-(* The cuts are SlotInv.v's own (push 8, e2cbb53991f).  Entry Inv_A814f8: the catalogue result a0 = CAT, the
+(* The cuts are SlotInv.v's own (push 8).  Entry Inv_A814f8: the catalogue result a0 = CAT, the
    frame-shadow pointer spill [A + 152] = S(fr) + 68 that the 0x81528 fill reads, s2 = fr + 2656 with the catalogue
    count [s2] = CAT_N = 11 (so the branch 0x81508 is not taken), s5 = fr + 2176, CUR g 7, s7 = mode, our[]'s 6
    bytes addressable, and the spills [A + 48], [A + 128], [A + 168], [A + 144], [A + 192] and the two frame

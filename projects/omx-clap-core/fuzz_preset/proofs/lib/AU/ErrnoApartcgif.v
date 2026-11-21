@@ -1,20 +1,21 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v (a working branch 5ad50e61fc6a, file sha256 6c556421afce) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v (a working branch, file sha256 6c556421afce) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file discharges of ErrnoApart.v's image facts, at the cgif instances AImg_cgif (AGif2cgif), AGImg_cgif
-   (AGif0cgif) and DImg_cgif (DGif0cgif).  errno is TFIB_ERRNO = 0x5de68c (YF0m.v:20, ts_errno YF0m.v:1800), 4 bytes,
+   (AGif0cgif) and DImg_cgif (DGif0cgif).  errno is TFIB_ERRNO = 0x5de68c (YF0m.v:21, ts_errno YF0m.v:1801), 4 bytes,
    in the image [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x601000) (YF0x.v:26, :39):
    - errno_in_img: img_cover (YF0x.v:57) puts the layout's image window around [0x10000, 0x601000);
    - errno_unhidden: errno lies in the image's read-write window [0xa2000, 0x601000), where every byte is a segment
-     byte (YB13.tfib_rw_rom, YB13.v:109) and a world hides no segment byte (w_Hoff, YK04.memory_read1_hidden): the
+     byte (YB13.tfib_rw_rom, YB13.v:110) and a world hides no segment byte (w_Hoff, YK04.memory_read1_hidden): the
      proof of YFff.rw_unhidden / AGif1m.rw_not_hidden (AGif1m removed in this series).  It Requires YB13 alone, whose closure sets no Zify flag:
      AGif1m reaches YA09 (CLrefillR -> YFkn), and YFff reaches YB15 / YE08, which reset the flag (to true);
-   - the depot zone (AGis.v:231-232 = DGgi.v:513-514): [0x17d5c8, 0x5cdd50) ends 0x1093c below errno; the nodes and
+   - the depot zone (AGis.v:232-233 = DGgi.v:514-515): [0x17d5c8, 0x5cdd50) ends 0x1093c below errno; the nodes and
      store blocks are owned extents, apart by errno_in_img (ErrnoApart.errno_apart_owned);
-   - the internal allocator's zone (DGgi.v:515): [0xac900, 0x12d930) and [0x13b188, 0x13b18c), below errno;
-   - the shadow offset AGis.SHBv (AGis.v:166): 0x7fff8000, above errno;
+   - the internal allocator's zone (DGgi.v:516): [0xac900, 0x12d930) and [0x13b188, 0x13b18c), below errno;
+   - the shadow offset AGis.SHBv (AGis.v:167): 0x7fff8000, above errno;
    - zone3 (YF0x.v:68): off the image (zone3_off_img, YF0x.v:76);
-   - the instance window inst_ok (AGif0cgif.v:60): [inst, inst + 0xe60) inside [0xa46d8, 0xa8f20), below errno.
+   - the instance window inst_ok (AGif0cgif.v:61): [inst, inst + 0xe60) inside [0xa46d8, 0xa8f20), below errno.
    The arms apply ErrnoApart's lemmas with these as the image premises.
 
    Moved to ErrnoApartScgif.v, names and proofs unchanged, with the Props they discharge (now in ErrnoApartS.v):

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the boot chain's fresh-variable literals and EVar indices move by +16 (26, 27 and 28 to 42, 43 and 44). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -50,7 +51,7 @@ Proof. apply AX2F.mk_itab_rs_sound. apply AX2F.itab_leaf_sound. Qed.
 
 
 (* [comment removed for export] *)
-Definition run13d := ltac:(nf_run KN13c ((AX2L.sym_execFS6 SEGS IT_Kn3c KN13c F8 true STOPS3 noscr (SS PC13c SR13c [] KN13c 27) []))).
+Definition run13d := ltac:(nf_run KN13c ((AX2L.sym_execFS6 SEGS IT_Kn3c KN13c F8 true STOPS3 noscr (SS PC13c SR13c [] KN13c 43) []))).
 Definition PC13d : Z := Eval lazy in (s_pc (fst (fst run13d))).
 Definition SR13d : list expr := Eval lazy in (s_regs (fst (fst run13d))).
 Definition LG13d : list sentry := s_log (fst (fst run13d)).
@@ -58,7 +59,7 @@ Definition SK13d : list kentry := s_know (fst (fst run13d)).
 Definition NX13d : nat := Eval lazy in (s_next (fst (fst run13d))).
 Definition SC13d : list sidecond := Eval lazy in (snd (fst run13d)).
 Definition SP13d : scripts := Eval lazy in (snd run13d).
-Lemma run13d_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13c SR13c [] KN13c 27) [] = (SSR PC13d SR13d LG13d SK13d NX13d None, SC13d, SP13d).
+Lemma run13d_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13c SR13c [] KN13c 43) [] = (SSR PC13d SR13d LG13d SK13d NX13d None, SC13d, SP13d).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3c KN13c); [exact IT_Kn3c_ok | reflexivity | vm_cast_no_check (eq_refl run13d)]. Qed.
 Definition KCb3c_1 : list kentry := Eval vm_compute in (NFC.d_kl "$0010%+?80,#%&,0010%'?80&%.%@0010%&?80,#%&,0010%%?80&%/.+8000,$+&.840&<000,#@/.8102000,#@/.0404010%,?80,$+&'0000,#%''<102000$#%%-.>100000$#%%-.<102000$#%%-.:100000$#%%-.8100000$#%%-.6100000$#%%-.4100000$#%%-.2102").
 Definition KCb3c_2 : list kentry := Eval vm_compute in (NFC.d_kl "$0000$#%%-.0100000$#%%-->100000$#%%--<100000$#%%--:100000$#%%--8100000$#%%--6100000$#%%--4102000$#%%--210$,8000$#%%--010%+4000$#%%-,>100000$#%%-,<100000$#%%-,:102000$#%%-,8102000$#%%-,6100000$#%%-,4100000$#%%-,2100").
@@ -123,7 +124,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car13d). Qed.
 Definition SR14 : list expr := sr_upd SR13d 10 (ELit (2 ^ 47 - 1)).
 
 (* [comment removed for export] *)
-Definition run14 := ltac:(nf_run KN13d ((AX2L.sym_execFS6 SEGS IT_Kn3c KN13d F8 true STOPS3 noscr (SS A_maxva_smeared SR14 [] KN13d 27) []))).
+Definition run14 := ltac:(nf_run KN13d ((AX2L.sym_execFS6 SEGS IT_Kn3c KN13d F8 true STOPS3 noscr (SS A_maxva_smeared SR14 [] KN13d 43) []))).
 Definition PC14 : Z := Eval lazy in (s_pc (fst (fst run14))).
 Definition SR_E7 : list expr := Eval lazy in (s_regs (fst (fst run14))).
 Definition LG14 : list sentry := s_log (fst (fst run14)).
@@ -131,7 +132,7 @@ Definition SK14 : list kentry := s_know (fst (fst run14)).
 Definition NX14 : nat := Eval lazy in (s_next (fst (fst run14))).
 Definition SC14 : list sidecond := Eval lazy in (snd (fst run14)).
 Definition SP14 : scripts := Eval lazy in (snd run14).
-Lemma run14_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_maxva_smeared SR14 [] KN13d 27) [] = (SSR PC14 SR_E7 LG14 SK14 NX14 None, SC14, SP14).
+Lemma run14_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_maxva_smeared SR14 [] KN13d 43) [] = (SSR PC14 SR_E7 LG14 SK14 NX14 None, SC14, SP14).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3c KN13d); [exact IT_Kn3c_ok | reflexivity | vm_cast_no_check (eq_refl run14)]. Qed.
 Definition KCb3c_52 : list kentry := Eval vm_compute in (NFC.d_kl "$0010&/?800010&.?800010&-?80$#$'.@0010&,?80%//#,'0010&+?80-@,&:010&'?800010&&?80&--#$8010&%740'4010&$?802010&#?80,#@/'0010%@?80$#%%',0010%/?80,#%&,0010%.?80%,.+@0000,#@/'2102010%-?800010%,?80,$+&'0").
 Definition KCb3c_53 : list kentry := Eval vm_compute in (NFC.d_kl "$0010%+?802010%'?80$#%%',0010%&?80,#%&,0010%%?80&%//,0000@-%,.080&&#+,8000+/'-$080$0000,$$@#0402000$#%%'+0100000+/'-'0404000$#%%'+2300000$#%%@$080&$#@@0000$#%%@/080&&#'#0000$#%%@@080&&#$'0000,$+&+080+,-%./&'&.'%'>000,$+&.840&<000,#@/.8102").
@@ -152,7 +153,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car14). Qed.
 
 
 (* [comment removed for export] *)
-Definition gc7 (k : kentry) : bool := gc_keep_stack (-288) k && gc_keep_base 26 k.
+Definition gc7 (k : kentry) : bool := gc_keep_stack (-288) k && gc_keep_base 42 k.
 Definition KCb3c_62 : list kentry := Eval vm_compute in (NFC.d_kl "9010&%740'4010&$?802010&#?80,#@/'0010%@?80$#%%',0010%/?80,#%&,0010%.?80%,.+@0000,#@/'2102010%-?800010%,?80,$+&'0").
 Definition KCb3c_63 : list kentry := Eval vm_compute in (NFC.d_kl "$0000$#%%'-0100000$#%%',>100000$#%%',<100000$#%%',:100000$#%%',8100000$#%%',6100000$#%%',4100000$#%%',2100000$#%%',0102000,#%&-040$#-0000,#%&,840%@0000$#$'./0400000@-%,-08201$:0$/+@0000'.#.-#0200000'.#.,@080--+%4000'.#.,/0200").
 Definition KCb3c_64 : list kentry := Eval vm_compute in (NFC.d_kl "$0000'.#.#$0402000'.#-@/040%@2000'.#-@.080%$.@%+&/,@-$%&@/0000'.#-@-8400000'.#-@-0100000'.#.##080--+%4000'.#-@@0402000'.#-@/<100000'.#-@/8200000,#%',4100000,#%&.8100000,#%'.080--+%4000,#%'-8404000,#%'-0102000,#%',8400000,#%',0202").
@@ -199,18 +200,18 @@ Proof. apply AX2F.mk_itab_rs_sound. apply AX2F.itab_leaf_sound. Qed.
 Definition DS_E7 : list (saddr * expr) :=
   [(SA (EVar 0) (- 0x800000), ELit 0x1800000); (SA (ELit 0) A_img_lo, ELit (A_img_hi - A_img_lo));
    (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO));
-   (SA (EVar 26) 0, ELit 65536);
+   (SA (EVar 42) 0, ELit 65536);
    (SA (ELit 0x2008fff7000) 0, ELit 0xdfff0001000); (SA (ELit 0x8fff7000) 0, ELit (2 ^ 41)); (SA (ELit 0x7fff7000) 0, ELit (2 ^ 28))].
 
 (* [comment removed for export] *)
-Definition SR15 : list expr := sr_upd SR_E7 10 (EVar 27).
+Definition SR15 : list expr := sr_upd SR_E7 10 (EVar 43).
 Definition KCb4a_1 : list kentry := Eval vm_compute in (NFC.d_kl "<11$;00%//#,'061$;00%//#,'041$;'%,051$;'%,0',%###-#/,#&#&&+@.071$;00%//#,'010,+,.@#?0$.+/'.&071$;00%//#,'000,$-.00'.$@%/071$;00%//#,'000$%.+.%#.'00--.,,-&&%./.071$;00%//#,'01$:00,$-.071$;00%//#,'00@,-.#/,/@&,000,.%#$&@'+@&,071$;00%//#,'00$'++$##$&000@,,&,'+/@%&071$;00%//#,'00$%.+.%#.'000$-@&.@&@071$;00%//#,'01700'%,0").
-Definition KN15 : list kentry := ltac:(nf_rope (KCb4a_1 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_62 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_53 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_54 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_2 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_3 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_4 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_5 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_6 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_7 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_8 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_9 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_10 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_11 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_12 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_13 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_14 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_15 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_16 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_17 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_18 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_63 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_64 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_65 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_47 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_66 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_58 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_223 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_224 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_225 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3b.TwB.KCb3b_97 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_227 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_157 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_59 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_60 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_61 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_159) ((kn_grant_d DS_E7 27 0x38e000 KN_E7))).
-Lemma KN15_eq : kn_grant_d DS_E7 27 0x38e000 KN_E7 = KN15. Proof. kn_fast. Qed.
+Definition KN15 : list kentry := ltac:(nf_rope (KCb4a_1 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_62 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_53 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_54 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_2 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_3 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_4 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_5 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_6 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_7 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_8 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_9 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_10 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_11 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_12 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_13 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_14 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_15 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_16 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_17 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_18 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_63 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_64 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_65 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_47 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_66 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_58 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_223 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_224 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_225 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3b.TwB.KCb3b_97 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_227 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_157 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_59 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_60 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn3c__B3.BootKn3c.KCb3c_61 ++ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn1__A3.BootKn3a.TwB.KCb3a_159) ((kn_grant_d DS_E7 43 0x38e000 KN_E7))).
+Lemma KN15_eq : kn_grant_d DS_E7 43 0x38e000 KN_E7 = KN15. Proof. kn_fast. Qed.
 
 
 (* [comment removed for export] *)
-Definition run15a := ltac:(nf_run KN15 ((AX2L.sym_execFS6 SEGS IT_Kn4a KN15 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR15 [] KN15 28) []))).
+Definition run15a := ltac:(nf_run KN15 ((AX2L.sym_execFS6 SEGS IT_Kn4a KN15 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR15 [] KN15 44) []))).
 Definition PC15a : Z := Eval lazy in (s_pc (fst (fst run15a))).
 Definition SR15a : list expr := Eval lazy in (s_regs (fst (fst run15a))).
 Definition LG15a : list sentry := s_log (fst (fst run15a)).
@@ -218,7 +219,7 @@ Definition SK15a : list kentry := s_know (fst (fst run15a)).
 Definition NX15a : nat := Eval lazy in (s_next (fst (fst run15a))).
 Definition SC15a : list sidecond := Eval lazy in (snd (fst run15a)).
 Definition SP15a : scripts := Eval lazy in (snd run15a).
-Lemma run15a_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR15 [] KN15 28) [] = (SSR PC15a SR15a LG15a SK15a NX15a None, SC15a, SP15a).
+Lemma run15a_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR15 [] KN15 44) [] = (SSR PC15a SR15a LG15a SK15a NX15a None, SC15a, SP15a).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn4a KN15); [exact IT_Kn4a_ok | reflexivity | vm_cast_no_check (eq_refl run15a)]. Qed.
 Definition KCb4a_2 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#%@'080$#',@<000,#%@&840%@4000,#%@&040&&+$2000,#&&,080-,$.4000,#&&+080-+-$-#'#/.0000,#%.'080-@,-0000,#%.&840&-2000,#%.&040&&%/8000,#&&'080-,$-2000,#&&&080-.$--,'$,$2000,#%,.080.$.%>000,#%,-840&-2000,#%,-040&&%@4000,#%-&080$#$%%>000,#%-%080,-&+#@/$'$,2000,#%.%080.'#->").
 Definition KCb4a_3 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#%.$080,-#@+@&$&'@<000,#%@%080,--$4000,#%@$080,-#@+@&$&'@0000,#&&%080.'#,4000,#&&$080,-#@+@&$&'/8000,#&&#080@+'#4000,#&%@080%#%+:000,#%@#080$#',-0000,#%/@080-+-$-#+&/,4000,#&%/080-$%#0000,#&%.080%#&&0000,#&%-080.'#%:000,#&%,080%#%.4000,#%//080@/@&8000,#%/.840&-2000,#%/.040&&%/4").
@@ -288,7 +289,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car15a). Qed.
 
 
 (* [comment removed for export] *)
-Definition run15b := ltac:(nf_run KN15a ((AX2L.sym_execFS6 SEGS IT_Kn4a KN15a F8 true STOPS3 noscr (SS PC15a SR15a [] KN15a 28) []))).
+Definition run15b := ltac:(nf_run KN15a ((AX2L.sym_execFS6 SEGS IT_Kn4a KN15a F8 true STOPS3 noscr (SS PC15a SR15a [] KN15a 44) []))).
 Definition PC15b : Z := Eval lazy in (s_pc (fst (fst run15b))).
 Definition SR15b : list expr := Eval lazy in (s_regs (fst (fst run15b))).
 Definition LG15b : list sentry := s_log (fst (fst run15b)).
@@ -296,7 +297,7 @@ Definition SK15b : list kentry := s_know (fst (fst run15b)).
 Definition NX15b : nat := Eval lazy in (s_next (fst (fst run15b))).
 Definition SC15b : list sidecond := Eval lazy in (snd (fst run15b)).
 Definition SP15b : scripts := Eval lazy in (snd run15b).
-Lemma run15b_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15a SR15a [] KN15a 28) [] = (SSR PC15b SR15b LG15b SK15b NX15b None, SC15b, SP15b).
+Lemma run15b_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15a SR15a [] KN15a 44) [] = (SSR PC15b SR15b LG15b SK15b NX15b None, SC15b, SP15b).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn4a KN15a); [exact IT_Kn4a_ok | reflexivity | vm_cast_no_check (eq_refl run15b)]. Qed.
 Definition KCb4a_61 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#&+,080$#'-.0000,#&++840'4000,#&++040',%###-#/'.,'$-'#-8000,#''.080$$&#&0000,#''-080-/'+%,$$&.2000,#,&&080,+-&6000,#,&%080,-&+#@/$'$':000,#,&$080$#,+#<000,#,&#080&/,&/&$++.<000,#'',080.,%&0000,#''+840'4000,#''+040',%###-#/+'+$+@&#/2000,#,%.080/&'%:000,#,%-080%#$,%,@+-@@0000,#&+'080///$>000,#&+&840'4").
 Definition KCb4a_62 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#&+&040',%###-#/+'+$+@&#/:000,#'''080-&./6000,#''&080-@#&@@&@/$<000,#,%,080-@,@2000,#,%+080+&,&%-&,..-6000,#&#&080-,&#6000,#&#%840'4000,#&#%040',%###-#/+'+$+@&#/<000,#,%'080.,$%8000,#,%&080$'#&&&#',$+:000,#''%080,&@$6000,#''$840'4000,#''$040,/.,-'+#0000,#,%%080@#.#6000,#,%$080-,&#',/+#@>000,#,%#080$#$%+6").
@@ -344,7 +345,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car15b). Qed.
 Definition SR15r : list expr := sr_upd SR_E7 10 (ELit (2 ^ 64 - 12)).
 
 (* [comment removed for export] *)
-Definition run15n := ltac:(nf_run KN_E7 ((AX2L.sym_execFS6 SEGS IT_Kn4a KN_E7 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR15r [] KN_E7 27) []))).
+Definition run15n := ltac:(nf_run KN_E7 ((AX2L.sym_execFS6 SEGS IT_Kn4a KN_E7 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR15r [] KN_E7 43) []))).
 Definition PC15n : Z := Eval lazy in (s_pc (fst (fst run15n))).
 Definition SR15n : list expr := Eval lazy in (s_regs (fst (fst run15n))).
 Definition LG15n : list sentry := s_log (fst (fst run15n)).
@@ -352,7 +353,7 @@ Definition SK15n : list kentry := s_know (fst (fst run15n)).
 Definition NX15n : nat := Eval lazy in (s_next (fst (fst run15n))).
 Definition SC15n : list sidecond := Eval lazy in (snd (fst run15n)).
 Definition SP15n : scripts := Eval lazy in (snd run15n).
-Lemma run15n_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR15r [] KN_E7 27) [] = (SSR PC15n SR15n LG15n SK15n NX15n None, SC15n, SP15n).
+Lemma run15n_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR15r [] KN_E7 43) [] = (SSR PC15n SR15n LG15n SK15n NX15n None, SC15n, SP15n).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn4a KN_E7); [exact IT_Kn4a_ok | reflexivity | vm_cast_no_check (eq_refl run15n)]. Qed.
 Definition KCb4a_95 : list kentry := Eval vm_compute in (NFC.d_kl "6010&-?80',%###-#/,#&/-.'+#8010&,?80%//#,'0010&+?80-@,&:010&'?800010&&?80&--$/8010&%?40$8").
 Definition KCb4a_96 : list kentry := Eval vm_compute in (NFC.d_kl "=71$:00,$-.000$%.+.%#.'00--.,,-&&%./.071$:00,$-.00@,-.#/,/@&,000,.%#$&@'+@&,071$:00,$-.00$'++$##$&000@,,&,'+/@%&071$:00,$-.00$%.+.%#.'000$-@&.@&@071$:00,$-.01700'%,0000$#$'.@080'%,0000$#$'/&080$$%+/+.$/%$$%$@.'+8100$#$'/'00'%'>000$#$/#/080$$%+/+.$/%$$%$@.'+8100$#$/#@00'%'>000,$+&.010271700'%,000$%.+.%#.'00--.,,-&&%./.0000,$$/@080$%.+.%'@@0").

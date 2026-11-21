@@ -16,7 +16,8 @@
    (AStrcmpDefU.astrcmp_realizes_of_U) and stays as it is, so its consumers rebuild nothing. A unit with poisoned heads
    at a strcmp call proves astrcmp_realizesU for its image (fuzz_state does, from its own walk); every other unit uses
    this text. *)
-(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/Reusable/AStrcmpDef.v (a working branch 97c611eec86) by port_core.py, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/Reusable/AStrcmpDef.v (a working branch) by port_core.py, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

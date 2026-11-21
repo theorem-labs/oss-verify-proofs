@@ -52,56 +52,56 @@ Import ListNotations.
 
 (** ** Entries
 
-    [Run.valid_entry] reads the input only through argv, envp and the
-    address-space size, and the image only through its segments.  This is
+    [Run.valid_entry] reads the input through argv, envp, the program
+    name and the kernel build (the E2BIG cap of [Run.valid_launch]), and
+    the address-space size; the image only through its segments.  This is
     lps's [Equivalence.image_brk_satisfiable_entry] with its [valid_input]
-    hypothesis cut down to those three clauses, so that it serves every
-    input predicate the shapes use: the witness stack pointer is the
-    bottom of the stack window, and the third conjunct of [image_wf]
-    gives the break. *)
+    hypothesis cut down to those four clauses, so that it serves every
+    input predicate the shapes use -- each of them carries [valid_launch]
+    ([Run.valid_input] at [Run.v:4608], [valid_input_abort] at [:4682],
+    and the hwcap and finite-input predicates through those two).
+
+    The witness is the model's own ([Run.launch_entry_va], documented at
+    [Run.v:3790-3800]): the stack at the very top of the window, the
+    stack pointer at the top of rule 2, the mmap base of rule 3 with the
+    draw at 0.  [Run.launch_entry_va_valid] discharges all five conjuncts
+    of [valid_entry_va], so this file no longer carries its own
+    arithmetic for the stack-pointer window, the mmap-base window or the
+    stack fit; those obligations are proved in lps ([Run.v:4006-4062]).
+    The third conjunct of [image_wf] gives the break. *)
 Lemma entry_exists : forall img inp,
   image_wf img ->
-  valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> in_va_size inp = Sv48 ->
+  valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+  valid_launch inp ->
+  in_va_size inp = Sv48 ->
   exists en, valid_entry img en inp.
 Proof.
-  intros [segs pc ph] inp Hwf Hargv Henvp Hsize.
+  intros [segs pc ph] inp Hwf Hargv Henvp Hlaunch Hsize.
   destruct Hwf as (_ & _ & H).
   destruct (image_brk_satisfiable_sound segs H) as [brk Hbrk].
-  pose proof (entry_stack_span_bound _ _ Hargv Henvp) as Hspan.
-  exists (mkEntry (Z_to_bv 64 sp_window_lo) brk
-            (Z_to_bv 64 mmap_base_max)
-            (mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0))).
+  exists (launch_entry_va Sv48 inp brk (Z_to_bv 128 0) vdso_keeps_all).
   rewrite (valid_entry_sv48 _ _ _ Hsize).
-  cbn. split; [| split; [exact Hbrk | split]].
-  - unfold valid_sp, sp_window_lo, sp_window_hi.
-    rewrite Z_to_bv_unsigned, bv_wrap_small
-      by (unfold bv_modulus; cbn; lia).
-    lia.
-  - unfold valid_mmap_base, mmap_base_min, mmap_base_max, sp_window_hi,
-      page_size.
-    rewrite Z_to_bv_unsigned, bv_wrap_small
-      by (unfold bv_modulus; cbn; lia).
-    lia.
-  - unfold entry_stack_fits.
-    rewrite Z_to_bv_unsigned, bv_wrap_small
-      by (unfold bv_modulus, sp_window_lo; cbn; lia).
-    unfold entry_stack_span_max in Hspan.
-    unfold sp_window_lo, sp_window_hi. lia.
+  exact (launch_entry_va_valid Sv48 segs pc ph inp brk (Z_to_bv 128 0)
+           vdso_keeps_all Hargv Henvp Hlaunch Hbrk).
 Qed.
 
-(** Each input predicate the shapes use carries the three clauses. *)
+(** Each input predicate the shapes use carries these clauses. *)
 Lemma valid_input_entry : forall img inp,
   image_wf img -> valid_input inp -> exists en, valid_entry img en inp.
 Proof.
   intros img inp Hwf Hv. pose proof (valid_input_va_size _ Hv) as Hs.
-  destruct Hv as (Ha & He & _). exact (entry_exists img inp Hwf Ha He Hs).
+  pose proof (valid_input_launch _ Hv) as Hl.
+  destruct Hv as (Ha & He & _). exact (entry_exists img inp Hwf Ha He Hl Hs).
 Qed.
 
 Lemma valid_input_abort_entry : forall img inp,
   image_wf img -> valid_input_abort inp -> exists en, valid_entry img en inp.
 Proof.
   intros img inp Hwf Hv. pose proof (valid_input_abort_va_size _ Hv) as Hs.
-  destruct Hv as (Ha & He & _). exact (entry_exists img inp Hwf Ha He Hs).
+  assert (Hl : valid_launch inp)
+    by (unfold valid_input_abort in Hv;
+        repeat match goal with H : _ /\ _ |- _ => destruct H end; assumption).
+  destruct Hv as (Ha & He & _). exact (entry_exists img inp Hwf Ha He Hl Hs).
 Qed.
 
 Lemma valid_input_hwcap_rv64gc_entry : forall img inp,
@@ -143,6 +143,12 @@ Local Ltac witness_valid :=
   repeat split; cbn;
     try (unfold valid_nofile; apply Z.leb_le; vm_compute; reflexivity);
     try (unfold valid_sigmask; apply bv_eq; vm_compute; reflexivity);
+    try (unfold valid_execfn, default_execfn; left; split;
+         [ cbn; lia
+         | cbn; intros [H|[]];
+           first [ discriminate H
+                 | apply (f_equal bv_unsigned) in H; vm_compute in H;
+                   discriminate H ] ]);
     try lia; try reflexivity;
     repeat first [ apply Forall_nil | apply Forall_cons | split
                  | cbn; lia | reflexivity | intros [] ];
@@ -276,6 +282,12 @@ Proof.
     try (unfold valid_nofile; apply Z.leb_le; vm_compute; reflexivity);
     try (unfold valid_sigmask; apply bv_eq; vm_compute; reflexivity);
     try (unfold valid_hwcap; left; reflexivity);
+    try (unfold valid_execfn, default_execfn; left; split;
+         [ cbn; lia
+         | cbn; intros [H|[]];
+           first [ discriminate H
+                 | apply (f_equal bv_unsigned) in H; vm_compute in H;
+                   discriminate H ] ]);
     try lia; try reflexivity;
     repeat first [ apply Forall_nil | apply Forall_cons | split
                  | cbn; lia | reflexivity | intros [] ].

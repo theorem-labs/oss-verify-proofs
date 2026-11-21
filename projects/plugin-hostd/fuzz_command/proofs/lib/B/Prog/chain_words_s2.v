@@ -5,7 +5,7 @@
    (+0x278, 0x8dcfc) or to KR1 (+0x2d8, 0x8dd5c): the two spills of F at s1 + 8 and s1 + 16, the UBSan checks of
    0x8dca8 (tok >= 2^64 - 8) and 0x8dcb4 (tok + 8 misaligned), the inline load8 check of tok[1], the two reloads, the
    call of number at 0x8dcd8 with out = s1 + 52, and the set-up of the member loop. The B twin of A's segment 2
-   (lib/A/Prog/chain_words_s2.v on a working branch 5e2cdad423e): the same method (a program call
+   (lib/A/Prog/chain_words_s2.v on a working branch): the same method (a program call
    through cl_callS_wide, the symbolic state re-seated after it, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/
    ACaa.v and A/AChc.v), over B's code, which re-lays this region (B-PREP.md, section chain_words).
    The UBSan checks are decided by the symbolic run itself from the seed's atom facts: a0 = 2^64 - 8 against
@@ -14,6 +14,7 @@
    range_addressable, as A's does. Pass 5 (no astack_pres): number's frame chain at the call is afn_pre's own chain
    pushed by the prologue's frame record (cw2_chain, A's block), and its out cell s1 + 52 is present by the
    journal's presence clause (YCbq.v:485). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: the image-A twin of fuzz_manifest's lib/A/FMworldH8.v (origin/cold/port-fm-wh8
-   1d4efc438a0), with module paths changed and the image hull end 0x5f7000 -> 0x600000 (A/AB12.v:13) in
-   poke_H_off.  First proved on the four-field world (origin/cold/h-small-a6-p102-W8-A d00c913d34d5), where
-   poke_no_world had to take w_H8 of W as an argument; re-checked on the five-field W8-core head
-   (origin/cold/h-small-a6-p102-W8-A-core 4bfac2b9348f), where SINV0 takes TSEGS first and poke_no_world has
-   fuzz_manifest's form (below).  Ported here to the #102 asan image A' (pinned sha256 1be0f53d96cb9d6c, base
-   origin/cold/c-libc-stdio-p102-w8core102b 5f6ae1363922): every image fact this file uses was re-measured
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: the image-A twin of fuzz_manifest's lib/A/FMworldH8.v,
+   with module paths changed and the image hull end 0x5f7000 -> 0x600000 (A/AB12.v:13) in
+   poke_H_off.  First proved on the four-field world, where
+   poke_no_world had to take w_H8 of W as an argument; re-checked on the five-field W8-core head,
+   where SINV0 takes TSEGS first and poke_no_world has
+   fuzz_manifest's form (below).  Ported here to the #102 asan image A' (pinned sha256 1be0f53d96cb9d6c):
+   every image fact this file uses was re-measured
    on that head, and none changed in value (img_hi, the two KRWLAZY bands, STK_P, usp_range, shadow_off).
 
-   w_H8 (YA0n.v:25, the W8-core field) for preset's entry world W1 (A/AD2i.v:768): on the two shadow
+   w_H8 (YA0n.v:26, the W8-core field) for preset's entry world W1 (A/AD2i.v:768): on the two shadow
    bands, H1 is constant on each 8-byte-aligned word.  AD2i states it as its section hypothesis H1_8 (:507), and this
    file proves it; W1's callers pass H1_H8 in.
 
@@ -33,7 +34,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.omx_clap_core.fuzz_preset.images Require Import Asan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import
 YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB13 AB01.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB13 AB01r.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import
 YG00 YG01 YG0f YG0v YG0n YG0r YM05 YD1h.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AD1g AD2i.
@@ -57,7 +58,7 @@ end.
 Definition avis8_chk (c : acs) : bool :=
 (existsb (fun p => pair_eqb p AD1g.STK_P) (a_vis c)
  && forallb (fun p => pair_eqb p AD1g.STK_P || (pa (fst p) && pa (snd p)))%bool (a_vis c))%bool.
-Lemma avis8_all : forallb avis8_chk HS_tfib_list = true.
+Lemma avis8_all : forallb avis8_chk HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Lemma existsb_orb : forall (X : Type) (f g : X -> bool) (l : list X),
@@ -154,15 +155,20 @@ Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TSEGS TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* LPS 727298f3: the start-up invariant is abstract, as in the core sections (A/AD2i.v, A/AD1g.v),
+   with the stack-top fact the drivers read; the hidden stack bytes read the input's fields. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 #[local] Notation u := (uE E).
 #[local] Notation usp := (bv_unsigned sp).
@@ -170,7 +176,8 @@ Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model
 
 Ltac inst H := try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
 try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h); try specialize (H ch);
-try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H HC).
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC).
 Ltac get L := let H := fresh "L" in pose proof L as H; inst H; exact H.
 #[local] Definition band_vals := ltac:(get @AD1g.band_vals).
 #[local] Definition vm_In' := ltac:(get @AD1g.vm_In').
@@ -246,7 +253,7 @@ Qed.
 
 (* ---- the entries of a_vis ch ---- *)
 Lemma avis8_ch : avis8_chk ch = true.
-Proof. exact (proj1 (forallb_forall _ _) avis8_all ch (HS_tfib_In h ch Hch)). Qed.
+Proof. exact (proj1 (forallb_forall _ _) avis8_all ch (HS_tfib_r_In _ h ch Hch)). Qed.
 Lemma stk_in : In AD1g.STK_P (a_vis ch).
 Proof.
 pose proof avis8_ch as X. unfold avis8_chk in X. apply andb_prop in X as [X _].
@@ -354,7 +361,11 @@ destruct (band_facts (Z_to_bv 64 z) ltac:(rewrite UZ; exact Hz)) as (Hna & Hlz &
 rewrite UZ in Hna, Hmp.
 assert (HA : argH E (Z_to_bv 64 z) = false).
 { destruct (argH E (Z_to_bv 64 z)) eqn:Eh; [exfalso|reflexivity].
-  pose proof (YA02.argH0_high TPH sp rdraw argv envp uid hw Hsp Hva E (Z_to_bv 64 z) Eh) as HT.
+  assert (HT : YA02.TOP sp <= bv_unsigned (Z_to_bv 64 z)).
+  { unshelve eapply (YA02.argH0_high sp rdraw argv envp
+      (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+      (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp)
+      (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)); try exact Eh; try exact Hva; try exact Hsp; try exact 0%N. }
   rewrite UZ in HT. unfold YA02.TOP in HT.
   unfold in_band_rw, kLowShadowEnd, kHighShadowEnd in Hz. lia. }
 assert (HH : in_hull TFIB z = false).
@@ -458,7 +469,7 @@ End f.
 
 (* ---- negative control: a one-byte change of a hidden set breaks w_H8 ----
    Hpoke hides exactly kHighShadowBeg + 1 and nothing else.  It satisfies the world's other law on
-   its hidden set, w_Hoff = H_off_segments (YA0n.v:23), because that address lies outside every
+   its hidden set, w_Hoff = H_off_segments (YA0n.v:24), because that address lies outside every
    segment of preset's asan image; w_H8 is what stops it.  So no world over TSEGS has Hpoke as its
    hidden set, and the field is not vacuous. *)
 Definition POKE : Z := kHighShadowBeg + 1.
@@ -482,9 +493,9 @@ by (apply u64_lit; rewrite M; unfold POKE, kHighShadowBeg; lia).
 specialize (H POKE HB). unfold Hpoke in H. rewrite U1, U2, M, Z.eqb_refl in H.
 symmetry in H. apply Z.eqb_eq in H. unfold POKE, kHighShadowBeg in H. lia.
 Qed.
-(* poke_no_world in fuzz_manifest's form (FMworldH8.v:474 at 1d4efc438a0; c-libc-stdio's ruling of
-   2026-10-29 15:34Z), proved through the record's field w_H8 W (YA0n.v:25).  The four-field file
-   (d00c913d34d5) stated it with the H8 property of W as an explicit argument, and that was not a choice
+(* poke_no_world in fuzz_manifest's form (FMworldH8.v:474; c-libc-stdio's ruling of
+   2026-10-29 15:34Z), proved through the record's field w_H8 W (YA0n.v:26).  The four-field file
+   stated it with the H8 property of W as an explicit argument, and that was not a choice
    of style: on the four-field world this form is FALSE.  h-rw-pca-3 built the counterexample there, in
    its scratch ZzW8bPokeCx.v on the four-field s1b world with image B's TSEGS (build 20261029T160343Z of
    clone h-rw-pca-3-p102-w8-b, rc=0): `Wpoke := mkW TSEGS Hpoke [] poke_H_off (Forall_nil _)` compiles,

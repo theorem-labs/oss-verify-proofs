@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the walk kit of rec_shape_of on fuzz_command.asan-ubsan (0x896d4), ported from
-   the ASan walk's kit lib/A/Prog/rec_shape_of_k.v (a working branch 6648665b722), itself in the form of
+   the ASan walk's kit lib/A/Prog/rec_shape_of_k.v (a working branch), itself in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v (cgif_close's offsets, symbolic register files, regions and seeds):
    the loop head, the two return sites of the wrapper calls, the frame of eleven saved registers, the row of the
    read-only table g_shapes that iteration i reads, and the shadow entries the inline checks are discharged
    against. B's instruction stream is A's with only the pc-relative offsets changed, so the program points, the
    frame and the register files are A's; the addresses (g_shapes 0xa5a20, "resp 0" 0x21d20, the rows) are B's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AB16.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to reac-pw/fuzz_pin's ASan build. *)
-(* Ported to libreac/fuzz_knock by c-libc-fmt (lane KnockA) from proofs/cgif/cgif_file_fuzzer/lib/A/AB16.v at c8557374ad2: module paths renamed; image values re-derived by symbol + offset / content from fuzz_knock.asan (sha256 61768cf4..): tfib_istrncpy_entry 0x63d94 -> 0x627d4 = __sanitizer::internal_strncpy+0x0 (= A/AB12 x_istrncpy; the 28 words Reusable/YB1o W_e29c0..W_e2a2c, cgif-address names used as labels only, are at 0x627d4 in the knock image); tfib_sealed_src 0x11806 -> 0x117ee = the string "<sealed>" NUL in .rodata (= A/AB12 x_sealed). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported to libreac/fuzz_knock by c-libc-fmt (lane KnockA) from proofs/cgif/cgif_file_fuzzer/lib/A/AB16.v at theorem-labs/oss-verify-proofs@6b32741d849a: module paths renamed; image values re-derived by symbol + offset / content from fuzz_knock.asan (sha256 61768cf4..): tfib_istrncpy_entry 0x63d94 -> 0x627d4 = __sanitizer::internal_strncpy+0x0 (= A/AB12 x_istrncpy; the 28 words Reusable/YB1o W_e29c0..W_e2a2c, cgif-address names used as labels only, are at 0x627d4 in the knock image); tfib_sealed_src 0x11806 -> 0x117ee = the string "<sealed>" NUL in .rodata (= A/AB12 x_sealed). *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

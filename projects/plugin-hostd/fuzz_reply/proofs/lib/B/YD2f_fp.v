@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, the fuzz_reply.asan-ubsan twin of lib/A/AD2f_fp.v (RelocA-2,
-   a working branch 50f0c528115): the driver's call-site view (IMG_LCF, L_memF, S_LF, L_piecesF)
+   a working branch): the driver's call-site view (IMG_LCF, L_memF, S_LF, L_piecesF)
    and after-call views (IMG_LF, CM_memF and the free / exit states built on it), text copied from B/YD2f.v as AD2f_fp
    copies A/AD2f.v, with fuzz_reply's program globals G_fr_c TfibB CLIPPED OUT (GF_RANGES below), because the cf program
    contract lets LLVMFuzzerTestOneInput write them on every call. B/YD2f.v keeps the donor's views for the donor
@@ -9,6 +9,7 @@
    asan_globals descriptor arrays (A 0xa2320.., B 0xa28a0..; same index, same size; each B object = A + 0x580) ++ B's
    errno (TFIB_ERRNO 0x5d994c, B/YF0m.v); tp 6134256 (B/YD2f.v L_regs); the region counts are read by vm_compute on
    this image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -39,16 +40,16 @@ Definition clip_ivs (ivs : list (Z * Z)) (r : YP09.region) : list YP09.region :=
 Definition clipLF (r : YP09.region) : list YP09.region :=
   flat_map (clip_ivs GF_IVS) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r)).
 
-(* ---- the after-call and call-site views (YD2f.v:153-154) ---- *)
+(* ---- the after-call and call-site views (YD2f.v:154-155) ---- *)
 Definition IMG_LF : smem := Eval vm_compute in flat_map clipLF IMG_B.
 Definition IMG_LCF : smem := Eval vm_compute in flat_map clipLF IMG_E.
-(* the call site (YD2f.v:166-170) *)
+(* the call site (YD2f.v:167-171) *)
 Definition L_memF : smem := Eval vm_compute in ([WIN208; TRF] ++ firstn 2 (skipn 1 (ss_mem S_Pm)) ++ IMG_LCF).
 Definition S_LF : sstate := mkSS A_LLVMF L_regs L_memF None L_facts.
 Lemma L_memF_wf : regions_wf L_memF = true /\ mem_atoms_lt K_L L_memF = true /\ length IMG_LF = 41%nat /\ forallb drv_win_ok L_memF = true.
 Proof. vm_compute. repeat split; reflexivity. Qed.
 Lemma IMG_LCF_len : length IMG_LCF = 41%nat /\ length L_memF = 45%nat. Proof. vm_compute. split; reflexivity. Qed.
-(* YD2f.v:178-184 *)
+(* YD2f.v:179-185 *)
 Definition L_piecesF : list smem :=
 [ [WIN208; TRF] ] ++ map (fun r => [r]) (firstn 2 (skipn 1 (ss_mem S_Pm)))
 ++ map clipLF IMG_E ++ [ []; []; []; []; [] ].
@@ -59,7 +60,7 @@ Lemma L_piecesCF_eq : L_piecesCF = L_piecesF /\ concat L_piecesCF = L_memF. Proo
 Lemma S_LF_eq : ss_mem S_LF = L_memF /\ ss_pc S_LF = A_LLVMF /\ ss_regs S_LF = L_regs /\ ss_facts S_LF = L_facts /\ ss_resv S_LF = None.
 Proof. repeat split; reflexivity. Qed.
 
-(* ---- target_run's tail after the loop, on the clipped view (YD2f.v:238-286) ---- *)
+(* ---- target_run's tail after the loop, on the clipped view (YD2f.v:239-287) ---- *)
 Definition CM_memF : smem := Eval vm_compute in (WIN208 :: TRF0 :: firstn 2 (skipn 1 (ss_mem S_Pm)) ++ IMG_LF).
 Definition S_CMF : sstate := mkSS A_CM CM_regs CM_memF None CM_facts.
 Definition S_FBtF : sstate := Eval vm_compute in run_lp (add_cond S_CMF cond_CMt).

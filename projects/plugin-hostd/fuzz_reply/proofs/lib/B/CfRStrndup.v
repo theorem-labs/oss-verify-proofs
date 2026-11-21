@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan-ubsan (image B), the cf allocator bridge, part 5: the STRNDUP rule
-   of the `_x` journal at top_x's B instance. The B TWIN of lib/A/CfRStrndup.v, in its QMm form (commit 9118a6a96818):
+   of the `_x` journal at top_x's B instance. The B TWIN of lib/A/CfRStrndup.v, in its QMm form:
    the same statements and proofs at image B's names.
    Name swap: lib/A W_syms / W_kit / W_listing / W_img / W_journal_x / AD2l / ACej / CfImgA / ReplyCnt and
    CfRBridgePrim / CfRBridgeNev / CfRBridgeRules / CfRBridgeAjRealloc -> lib/B W_syms / W_kit / W_listing / W_img /
@@ -79,7 +80,7 @@ destruct (_ || _ || _).
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* 2. The call-site rule of strndup, at the shared cf shape (YGcallcf.v:221-363). *)
+(* 2. The call-site rule of strndup, at the shared cf shape (YGcallcf.v:222-364). *)
 Section SD. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Context {SK : YI16.sink_head}.
 Variable segs : list Segment.
@@ -96,7 +97,7 @@ Local Abbreviation WFL := (ARx_wf_law_xs segs B).
 Local Abbreviation LBLK := (alx_blocks segs B ARxs LAWS).
 Local Abbreviation LLAY := (alx_layout segs B ARxs LAWS).
 
-(* YGcallx.v:917 aj_malloc_at_x_ct over astrndup_realizes_cf (tree malloc_cf (m + 1) at the adup trace, leaf
+(* YGcallx.v:918 aj_malloc_at_x_ct over astrndup_realizes_cf (tree malloc_cf (m + 1) at the adup trace, leaf
    strndup_leaf_cf); m is the copied length (the leaf's k), x / n the source and its bound. *)
 Lemma aj_strndup_at_x_ct : forall (pc mid : Z),
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x n m (o : Z) raw ch,
@@ -426,8 +427,8 @@ Hypothesis errno_low : api_env segs TfibB.
 Local Abbreviation ARX := (fun ly S Hp W mem md => ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
     @arodata_ok_cf CfImg_B segs TfibB mem).
 (* FIT CHECK of the relation: the rules' ARX is B top_x's relation after W1, whose text is quoted
-   here VERBATIM from commit 4cfb2903f860, lib/B/W_LLVMFuzzerTestOneInput_top_x.v:175-176
-   (Definition ARX's body, the same quote as lib/B/CfRBridgeRulesB.v's fit Goal at commit 7855f46a8936); it closes by
+   here VERBATIM from lib/B/W_LLVMFuzzerTestOneInput_top_x.v:176-177
+   (Definition ARX's body, the same quote as lib/B/CfRBridgeRulesB.v's fit Goal); it closes by
    reflexivity only if the two are the same term. *)
 Goal ARX = (
   fun ly S Hp W mem md => ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\

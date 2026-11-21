@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk0.v (installed c5 a working branch 84ee52cd012, file sha256 faeb6bfce0b3) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 14 image addresses moved by code-verified function pairs (55 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk0.v (installed c5 a working branch, file sha256 faeb6bfce0b3) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 14 image addresses moved by code-verified function pairs (55 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL hint of grant_ok_na_pin; the grant's facts from YK13.grant_ok_na_pin_facts at the secondary path's sizes; the reservation tail past the image's reservations at the pointer-array commit). *)
 (* The SECONDARY arms of the frame-generic Allocate walk (n >= 64513, LargeMmapAllocator::Allocate), over the
    interfaces AGif0n.AIface and AGif4.AIfaceS.
 
@@ -53,6 +54,22 @@ Local Set Warnings "-notation-for-abbreviation".
 Open Scope Z_scope.
 Set Printing Depth 50. Set Printing Width 180.
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+(* YFia.grant_parts for the secondary path's map sizes, which pass YFia's bound MALLOC_MAX + 4 pages: at
+   727298f3 the grant's own facts need only a positive, page-aligned size (YK13.grant_ok_na_pin_facts);
+   the proof is YFia.grant_parts'. *)
+Lemma grant_parts_sec : forall (md : Model) (a : word) (nZ : Z), 0 < nZ -> nZ mod 4096 = 0 ->
+grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true ->
+bv_unsigned a mod 4096 = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top (m_vmmaps md) /\
+region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (Z_to_bv 64 nZ) = true /\
+bv_unsigned a + nZ <= alloc_top (m_vmmaps md).
+Proof.
+intros md a nZ Hpos Hal0 HG.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hpos ltac:(unfold page_size; exact Hal0) HG) as Hg.
+unfold YK13.grant_ok_na_pin_b in Hg.
+apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos'].
+apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos'. apply Z.leb_le in Htop.
+unfold page_size in Hal. repeat split; assumption.
+Qed.
 Ltac zlia := first [ lia | ceil; unfold zone3, zone3cases, off_img, in_app, app_addr, in_band_rw, TFIB_IMG_LO, TFIB_IMG_END, kLowShadowBeg, kLowShadowEnd, kHighShadowBeg, kHighShadowEnd, kHighMemBeg, kHighMemEnd, ASAN_CEIL, kThreadObjSize, kNodesBlockSize, kStoreBlockSize, kPrimResvSize, kSpaceSize, kPtrArrayResv, kMaxNumChunks in *; lia ].
 Ltac numconst := ceil; unfold zone3, kHighMemBeg, kHighMemEnd, ASAN_CEIL, kThreadObjSize, kSpaceSize, kPrimResvSize, kNodesBlockSize, kStoreBlockSize,
 t_cache, t_unwinding, t_stats, AFSTACK, TFIB_IMG_END, TFIB_IMG_LO, kLowShadowBeg, UNW_STK, BST_SIZE, DEP_STK in *.
@@ -404,7 +421,7 @@ at_N W md0 WINP PBUF S_N W c1 -> AI tfibsegs (w_H W) (w_A W) (cfg_model c1) ->
 amreal tfibsegs (K 0) W c' Q) ->
 (forall (a : word) (W3 : world tfibsegs) (ms : machine_state) (E' : env),
 let A := bv_unsigned a in let md2 := mmap_model a (w64 MSv) (cfg_model c1) in
-grant_ok_na_pin (cfg_model c1) a MSv = true ->
+grant_ok_na_pin (Z_to_bv 64 0) (cfg_model c1) a MSv = true ->
 wle W W3 -> hsub (w_H W3) (w_H W) -> (forall x : word, w_H W x = false -> w_H W3 x = false) ->
 w_A W3 = (AGif4.SHLO A, AGif4.SHHI A MSv) :: (A, A + MSv) :: w_A W ->
 (forall x : word, A <= bv_unsigned x < A + MSv -> w_H W3 x = false) ->
@@ -451,15 +468,15 @@ assert (R15 : getr regs 15 = Z_to_bv 64 0) by (rewrite (Hregs 15%bv), H15; refle
 assert (MSB : 0 < MSv <= SEC_NMAX + 4 * 4096) by (clear - Z8 Z1 Z2 Z3; unfold SEC_NMAX in *; lia).
 (* the map is at most n + 3 pages, so it is inside the instance's bounds NOBW and ROOMW *)
 pose proof MSBW_g as MSBW. pose proof MS8_g as MS8.
-destruct (IFG inst ly S W mem0 md0 mat MSv HARX ltac:(clear - MSBW HNOB; lia)) as [a0 Ha0].
+destruct (IFG inst ly S W mem0 md0 mat MSv HARX ltac:(clear - MSBW HNOB; lia) Z9) as [a0 Ha0].
 assert (SL0 : eager_used mdN + A_bytes (w_A W) + ROOMW <= vm_limit (m_vmmaps mdN))
 by (unfold mdN; rewrite eager_used_wvb, m_vmmaps_wvb; exact (IFR inst ly S W mem0 md0 n HARX HRP)).
-assert (PER : forall a : word, grant_ok_na_pin mdN a MSv = true ->
+assert (PER : forall a : word, grant_ok_na_pin (Z_to_bv 64 0) mdN a MSv = true ->
 (AI tfibsegs (w_H W) (w_A W) (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) /\ MWF (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)) /\
 mmap_noreserve_backed_ok (Z_to_bv 64 34) mdN MSv = true /\
 eager_used (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) <= eager_used mdN + MSv /\
 maps_nonempty (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)).
-{ intros a Ha. pose proof (YFia.grant_parts mdN a MSv Ha) as (Pal & Ppos & Pce & Prf & Ppl).
+{ intros a Ha. pose proof (grant_parts_sec mdN a MSv (proj1 MSB) Z9 Ha) as (Pal & Ppos & Pce & Prf & Ppl).
 assert (CE : bv_unsigned a + page_round_up_Z MSv <= alloc_top (m_vmmaps mdN)) by (rewrite pru_MS; exact Pce).
 assert (PL' : region_free (vm_reserved (m_vmmaps mdN) ++ vm_maps (m_vmmaps mdN)) a (Z_to_bv 64 (page_round_up_Z MSv)) = true) by (rewrite pru_MS; exact Prf).
 assert (SL1 : eager_used mdN + A_bytes (w_A W) + page_round_up_Z MSv <= vm_limit (m_vmmaps mdN)) by (rewrite pru_MS; clear - SL0 MSBW HROOM MS8; lia).
@@ -485,7 +502,7 @@ set (a := ga i) in *. set (A := bv_unsigned a) in *.
 destruct (PER a Hg) as ([AIg MWFg] & _ & EG & NZg).
 pose proof (grant_anon_shapeG a (w64 MSv) mdN) as (SH1 & SH2' & SH3 & SH4' & SH4i & SH5').
 set (md2 := grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) in *.
-pose proof (YFia.grant_parts mdN a MSv Hg) as (Pal & Ppos & Pce & Prf & Ppl).
+pose proof (grant_parts_sec mdN a MSv (proj1 MSB) Z9 Hg) as (Pal & Ppos & Pce & Prf & Ppl).
 fold A in Pal, Ppos, Pce.
 pose proof (SH_hull A) as (UH1 & U2 & U3 & U4 & U5 & U6).
 assert (AL1 : A <= A + MSv) by (clear - MSB; lia).
@@ -538,7 +555,7 @@ Variables (W3 : world tfibsegs) (mat : list word) (ms : machine_state) (E' : env
 Let mdN : Model := with_vm_backing (m_vm_lazy md0) mat md0.
 Let md2 : Model := mmap_model (w64 mb) (w64 MSv) mdN.
 Let ccont : config := mkCfg (mkst (regupd (ms_regs ms) 10%bv (w64 mb)) (v_addi (Z_to_bv 64 (ss_pc S_N)) 4) (zfill (w64 mb) (w64 MSv) (ms_mem ms)) (seg_rom tfibsegs)) md2.
-Hypothesis GOK : grant_ok_na_pin mdN (w64 mb) MSv = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 mb) MSv = true.
 Hypothesis LE3 : wle W W3.
 Hypothesis SUB3 : hsub (w_H W3) (w_H W).
 Hypothesis MON3 : forall x : word, w_H W x = false -> w_H W3 x = false.
@@ -806,7 +823,7 @@ idx = res ->
 at_N Wy md1 WIN (PSR Wy SH2 R) S_V Wy c1 -> AI tfibsegs (w_H Wy) (w_A Wy) (cfg_model c1) ->
 (forall m m' : word -> option byte, (forall x : word, ~ QR (bv_unsigned x) -> m' x = m x) -> R m -> R m') ->
 amwf (cfg_model c1) ->
-vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ->
+(exists rx, vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ++ rx /\ region_free rx (w64 Qb) (w64 kPtrArrayResv) = true) ->
 (forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 In (wiv (Qb, kPtrArrayResv)) (vm_maps (m_vmmaps (cfg_model c1))) ->
 eager_used (cfg_model c1) + A_bytes (w_A Wy) + 2 ^ 19 <= vm_limit (m_vmmaps (cfg_model c1)) ->
@@ -1187,7 +1204,8 @@ pose proof VM2 as (VMa & VMr & VMl & VMb & VMi).
 apply (nodeV_ W3 md2 sV KV QLEAF (fun _ => True) c4 EQ HN HAI).
 - clear; intros m m' _ _; exact I.
 - rewrite EcM. exact MWV.
-- rewrite EcM. unfold mdV. rewrite m_vmmaps_wvb, VMr. unfold mdN. rewrite m_vmmaps_wvb. exact LR.
+- rewrite EcM. unfold mdV. rewrite m_vmmaps_wvb, VMr. unfold mdN. rewrite m_vmmaps_wvb.
+  destruct LR as (rx & Hrx & _ & _ & RQ & _). exists rx. split; [exact Hrx | exact RQ].
 - exact LSEG.
 - rewrite EcM. unfold mdV. rewrite m_vmmaps_wvb, VMa. right. unfold mdN. rewrite m_vmmaps_wvb. exact LQ.
 - rewrite EcM. unfold mdV. rewrite eager_used_wvb, m_vmmaps_wvb, VMl. unfold mdN in EG2 |- *. rewrite m_vmmaps_wvb. rewrite eager_used_wvb in EG2.
@@ -1275,7 +1293,7 @@ rewrite EA in GOK, AI2, MW2, IO2, EG2, VM2. rewrite EA.
 pose proof (AGjm.size_facts n Nrange) as (Z1 & Z2 & Z3 & Z4 & Z5 & Z6 & Z7 & Z8 & Z9 & Z10 & _).
 (* the map is at most n + 3 pages: inside the bound up to which grants stay apart (ifs_apart_w) *)
 assert (MSBW : 0 < AGjm.MSv n <= NMAXW + 4 * 4096) by (clear - Z3 Z7 Z8 Z10 HnW; lia).
-pose proof (YFia.grant_parts _ (w64 A) _ GOK) as (GP1 & _).
+pose proof (grant_parts_sec _ (w64 A) _ (proj1 MSBW) Z9 GOK) as (GP1 & _).
 destruct (IFA inst ly S W mem0 md0 mat1 (AGjm.MSv n) (w64 A) HARX MSBW Z9 GOK) as (GH & GA & _).
 assert (UA : bv_unsigned (w64 A) = A) by (rewrite <- EA; reflexivity). rewrite UA in GP1, GH, GA.
 assert (HmapA : A mod 4096 = 0 /\ AGjm.mzone A (AGjm.MSv n)) by (split; [exact GP1 | exact GH]).

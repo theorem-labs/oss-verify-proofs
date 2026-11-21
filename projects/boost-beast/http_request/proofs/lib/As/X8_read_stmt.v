@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the read takes the caller's stack floor, inside the stack window the launch maps, as its last premise). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require TP_0Gc. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -203,6 +204,7 @@ Definition hread_stmt (MA MR : Z) : Prop :=
     w_nr w <= c_N C - zlength (w_sds w) ->
     as_AKREL H s (mkCfg msF mo) -> as_MPRES H (c_mo0 C) mo ->
     bv_unsigned ra mod 2 = 0 ->
+    hceil + 2244096 <= c_lo C ->      (* LPS 727298f3: the stack floor the wild free (AsIface7) takes *)
     as_SR H (rs_done C MA MR sp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra fr (wM (c_N C) w)) (mkCfg msF mo).
 
 End HCW.

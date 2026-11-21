@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepRelXcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 e6145c46443f) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 6 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepRelXcf.v (cf refill round 3; file sha256 e6145c46443f) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 6 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, the class-full report walk, slice F4 / RepF4Append.ErrbRelRebuild's
    open piece; field round 2 re-fit, RepLayerMerge): errb_ARmcf_move / errb_rel_post, the relation at the end of an
    errbuf step when the bytes that change include the error-message buffer's object [cf_errbuf_obj,
-   cf_errbuf_obj + 56) (= [0xa5ae8, 0xa5b20)), which ARcf owns (Tfib_owned_static's (0xa5ad0, ...), YF0m.v:280)
-   and, since field round 2 (dd8e46fd954), pins through ARmcf's amc_errb_cells at the state.  So the cells are given
+   cf_errbuf_obj + 56) (= [0xa5ae8, 0xa5b20)), which ARcf owns (Tfib_owned_static's (0xa5ad0, ...), YF0m.v:281)
+   and, since field round 2, pins through ARmcf's amc_errb_cells at the state.  So the cells are given
    at the end state, and the state moves with the memory in one step (errb_frame).
    rule 24: proves no function (kind: invariant lemma, no machine code runs in this file; the lane's reuse search is
    `proof-index UnmapOrDie internal_memset internal_memcpy internal_strlen GetNamedMappingFd IncreaseTotalMmap`,
    2026-10-30T02:55Z, 0 released lemmas).
-   The proof is YG0qcf.v:669 AR_frame_law_ok_cf with every value-read byte shown outside the object, by YG0tcf.v's
-   footprint family (cell_bytes_in over an address predicate, YG0tcf.v:96-326) at PW := not in the object.
+   The proof is YG0qcf.v:670 AR_frame_law_ok_cf with every value-read byte shown outside the object, by YG0tcf.v's
+   footprint family (cell_bytes_in over an address predicate, YG0tcf.v:97-327) at PW := not in the object.
    YG0tcf's fp_zones cannot be used as it stands: its fz_img asks the predicate on the whole image, and the
    object is in the image.  So the family is re-proved here over [fpz], whose fields are the zones the cells
    live in (prim, core, secondary extents, the fake stack, and the five image areas inst / depot / store /
@@ -111,13 +112,13 @@ intros ly S Hp rd M IC TS. pose proof (amc_layout _ _ _ _ _ M) as LO. constructo
 - intros a Ha. rewrite (ts_ial_flag _ TS) in Ha. unfold PW, TFIB_IAL_FLAG in *. lia.
 Qed.
 
-(* YG0tcf.v:141 rinfo_in_cf *)
+(* YG0tcf.v:142 rinfo_in_cf *)
 Lemma rx_rinfo : forall ly S Hp rd a, ARmcf B ly S Hp rd -> fpz ly S -> ly_space ly + kRegionInfoOff <= a < ly_space ly + kRegionInfoOff + 4096 -> PW a.
 Proof.
 intros ly S Hp rd a M FZ Ha. pose proof (amc_layout _ _ _ _ _ M) as LO. pose proof (lo_space_in _ LO) as [S1 S2]. unfold kRegionInfoOff, kSpaceSize in *.
 apply (fzx_prim _ _ FZ). lia.
 Qed.
-(* YG0tcf.v:146 meta_in_cf *)
+(* YG0tcf.v:147 meta_in_cf *)
 Lemma rx_meta : forall ly S Hp rd k a, ARmcf B ly S Hp rd -> fpz ly S -> In k (st_chunks S) ->
 ck_base B ly k - (match ck_beg k with PSec _ _ => kPage | _ => 0 end) <= a < ck_base B ly k + ck_rz k -> PW a.
 Proof.
@@ -130,7 +131,7 @@ apply (fzx_prim _ _ FZ). lia.
 - destruct GG as (-> & _ & Gbase & Gext & Gin & _).
 apply (fzx_sec _ _ FZ (ly_sec ly r, sec_map_size (ck_req k)) a Gin). cbn [fst snd]. unfold kPage in *. lia.
 Qed.
-(* YG0tcf.v:158 batch_in_cf *)
+(* YG0tcf.v:159 batch_in_cf *)
 Lemma rx_batch : forall ly S Hp rd b a, ARmcf B ly S Hp rd -> fpz ly S -> In b (all_batches S) ->
 ly_space ly + b_self b <= a < ly_space ly + b_self b + kBatchBytes -> PW a.
 Proof.
@@ -147,13 +148,13 @@ assert (BX : ly_space ly + b_self b = region_base ly kBatchClass + x) by (unfold
 apply (fzx_prim _ _ FZ). lia.
 Qed.
 Local Ltac fcons' := apply Forall_cons; [cbn; lia|].
-(* YG0tcf.v:174 region_cells_in_cf *)
+(* YG0tcf.v:175 region_cells_in_cf *)
 Lemma rx_region_cells : forall ly S Hp rd c, ARmcf B ly S Hp rd -> fpz ly S -> 1 <= c <= 31 -> Forall (cell_bytes_in B PW ly) (region_cells S c).
 Proof.
 intros ly S Hp rd c M FZ Hc. apply (Forall_cbi_of_range B PW ly _ (ly_space ly + kRegionInfoOff) 4096); [intros a Ha; eapply rx_rinfo; [exact M | exact FZ | exact Ha]|].
 unfold region_cells, kRegionInfoOff. repeat fcons'. apply Forall_nil.
 Qed.
-(* YG0tcf.v:179 cache_cells_in_cf *)
+(* YG0tcf.v:180 cache_cells_in_cf *)
 Lemma rx_cache_cells : forall ly S Hp rd c, ARmcf B ly S Hp rd -> fpz ly S -> 1 <= c <= 31 -> Forall (cell_bytes_in B PW ly) (cache_cells S c).
 Proof.
 intros ly S Hp rd c M FZ Hc.
@@ -166,7 +167,7 @@ unfold cache_cells, t_cache, kThreadObjSize. destruct (st_cache_inited S).
 apply in_combine_l in Hiv. apply in_seq in Hiv. cbn. lia.
 - repeat fcons'. apply Forall_nil.
 Qed.
-(* YG0tcf.v:191 chunk_cells_in_cf *)
+(* YG0tcf.v:192 chunk_cells_in_cf *)
 Lemma rx_chunk_cells : forall ly S Hp rd k, ARmcf B ly S Hp rd -> fpz ly S -> In k (st_chunks S) -> Forall (cell_bytes_in B PW ly) (chunk_cells k).
 Proof.
 intros ly S Hp rd k M FZ Hk. pose proof (chunk_facts_cf B ly S Hp rd k M Hk) as (G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8 & GG).
@@ -184,7 +185,7 @@ unfold chunk_cells, kChunkHeaderSize. apply Forall_app. split.
 assert (32 <= ck_rz k). { apply Z.mod_divide in G6 as [q Hq]; [|lia]. lia. }
 repeat (apply Forall_cons; [cbn [c_at c_w z8 c8]; rewrite ?EA2, ?EA, ?EA0; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia|]). apply Forall_nil.
 Qed.
-(* YG0tcf.v:208 sec_cells_in_cf *)
+(* YG0tcf.v:209 sec_cells_in_cf *)
 Lemma rx_sec_cells : forall ly S Hp rd, ARmcf B ly S Hp rd -> fpz ly S -> Forall (cell_bytes_in B PW ly) (sec_cells S).
 Proof.
 intros ly S Hp rd M FZ. pose proof (wfc_secondary _ _ _ _ _ (amc_wf _ _ _ _ _ M)) as X. destruct X as [Snd Sac Sal Sres Sral].
@@ -206,7 +207,7 @@ assert (OR : forall a, ly_sec ly r <= a < ly_sec ly r + kPage -> PW a).
 unfold kPage in OR.
 destruct Hc as [<-|[<-|[<-|[<-|[]]]]]; (eapply cbi_of_range; [exact OR | cbn; lia | cbn; lia]).
 Qed.
-(* YG0tcf.v:229 batch_cells_in_cf *)
+(* YG0tcf.v:230 batch_cells_in_cf *)
 Lemma rx_batch_cells : forall ly S Hp rd l, ARmcf B ly S Hp rd -> fpz ly S -> incl l (all_batches S) -> Forall (cell_bytes_in B PW ly) (batch_cells l).
 Proof.
 intros ly S Hp rd l M FZ. induction l as [|b t IH]; intros Hincl; [apply Forall_nil|]. cbn [batch_cells].
@@ -223,7 +224,7 @@ apply Forall_app. split.
 eapply cbi_of_range; [exact OR | cbn; lia | cbn; lia].
 - apply IH. intros x Hx. apply Hincl. right. exact Hx.
 Qed.
-(* YG0tcf.v:245 quar_cells_in_cf *)
+(* YG0tcf.v:246 quar_cells_in_cf *)
 Lemma rx_quar_cells : forall ly S Hp rd, ARmcf B ly S Hp rd -> fpz ly S -> Forall (cell_bytes_in B PW ly) (quar_cells S).
 Proof.
 intros ly S Hp rd M FZ.
@@ -240,7 +241,7 @@ eapply rx_batch_cells; [exact M | exact FZ | intros b Hb; unfold all_batches; ap
 - do 4 (apply Forall_cons; [eapply cbi_of_range; [exact ORI | cbn; lia | cbn; lia]|]).
 eapply rx_batch_cells; [exact M | exact FZ | intros b Hb; unfold all_batches; apply in_app_iff; right; exact Hb].
 Qed.
-(* YG0tcf.v:261 fs_hdr_in_cf *)
+(* YG0tcf.v:262 fs_hdr_in_cf *)
 Lemma rx_fs_hdr : forall ly S, fpz ly S -> Forall (cell_bytes_in B PW ly) fs_hdr.
 Proof.
 intros ly S FZ. assert (OR : forall a, ly_F ly + 88 <= a < ly_F ly + 88 + (kFakeFlagsOff - 88) -> PW a)
@@ -249,7 +250,7 @@ unfold kFakeFlagsOff in OR. unfold fs_hdr.
 apply Forall_cons; [eapply cbi_of_range; [exact OR | cbn; lia | cbn; lia]|].
 apply Forall_cons; [eapply cbi_of_range; [exact OR | cbn; lia | cbn; lia]|]. apply Forall_nil.
 Qed.
-(* YG0tcf.v:268 depot_cells_in_cf *)
+(* YG0tcf.v:269 depot_cells_in_cf *)
 Lemma rx_depot_cells : forall ly S, fpz ly S -> Forall (cell_bytes_in B PW ly) (depot_cells ly S).
 Proof.
 intros ly S FZ.
@@ -261,7 +262,7 @@ apply Forall_cons; [eapply cbi_of_range; [exact ORD | cbn; lia | cbn; lia]|].
 apply Forall_cons; [eapply cbi_of_range; [exact ORS | cbn; lia | cbn; lia]|].
 apply Forall_cons; [eapply cbi_of_range; [exact ORS | cbn; lia | cbn; lia]|]. apply Forall_nil.
 Qed.
-(* YG0tcf.v:279 ialloc_cells_in_cf *)
+(* YG0tcf.v:280 ialloc_cells_in_cf *)
 Lemma rx_ialloc_cells : forall ly S Hp rd, ARmcf B ly S Hp rd -> fpz ly S -> Forall (cell_bytes_in B PW ly) (ialloc_cells B S).
 Proof.
 intros ly S Hp rd M FZ. pose proof (aso_ialloc _ (amc_syms _ _ _ _ _ M)) as [I1 I2].
@@ -273,13 +274,13 @@ apply Forall_cons; [eapply cbi_of_range; [exact ORF | cbn; lia | cbn; lia]|].
 apply Forall_cons; [eapply cbi_of_range; [exact ORA | cbn; lia | cbn; lia]|].
 apply Forall_cons; [eapply cbi_of_range; [exact ORA | cbn; lia | cbn; lia]|]. apply Forall_nil.
 Qed.
-(* YG0tcf.v:292 thread_cells_in_cf *)
+(* YG0tcf.v:293 thread_cells_in_cf *)
 Lemma rx_thread_cells : forall ly S, fpz ly S -> Forall (cell_bytes_in B PW ly) thread_cells.
 Proof.
 intros ly S FZ. unfold thread_cells, t_unwinding. apply Forall_cons; [|apply Forall_nil].
 eapply cbi_of_range; [intros a Ha; apply (fzx_core _ _ FZ (ly_T ly, kThreadObjSize)); [unfold core_extents; cbn; tauto | exact Ha] | cbn; lia | cbn; unfold kThreadObjSize; lia].
 Qed.
-(* YG0tcf.v:306 acells_in_cf *)
+(* YG0tcf.v:307 acells_in_cf *)
 Lemma rx_acells : forall ly S Hp rd, ARmcf B ly S Hp rd -> fpz ly S -> Forall (cell_bytes_in B PW ly) (acells_cf B ly S).
 Proof.
 intros ly S Hp rd M FZ. unfold acells_cf. rewrite (fs_cells_split S).

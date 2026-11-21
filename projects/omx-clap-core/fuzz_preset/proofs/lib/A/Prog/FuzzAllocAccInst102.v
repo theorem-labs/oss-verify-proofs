@@ -1,9 +1,9 @@
 (* fuzz_preset image A' (asan, #102 pin 1be0f53d96cb): the INSTANCE corollaries of FuzzAllocAcc102.v's two walks,
    fuzz_alloc_ran_out_holds_inst and fuzz_alloc_ran_out_reset_holds_inst: the texts (lib/A/PRH_FnAlloc.v
-   tfuzz_alloc_ran_out_specX / tfuzz_alloc_ran_out_reset_specX, byte-equal at decff67d721f :127 / :138 and at the kit
-   of record f97c8b2f046b :166 / :177) at the real image-A' record B := AD2l.TfibB, with NO image premise.
+   tfuzz_alloc_ran_out_specX / tfuzz_alloc_ran_out_reset_specX, byte-equal :127 / :138 and at the kit
+   of record :166 / :177) at the real image-A' record B := AD2l.TfibB, with NO image premise.
    THE RECORD is the one h-rw-man-5's PALib binds at the program listing: lib/A/PALibA.v 88c72c8175cf
-   (origin/cold/h-rw-man-5-palib102i d00dd1234426; on int102), palib_A : YC1fP.PALib (PI := PI_prog_A) AD2l.TfibB,
+   (on int102), palib_A : YC1fP.PALib (PI := PI_prog_A) AD2l.TfibB,
    with palib_errno_A (api_env rsegs AD2l.TfibB), palib_head_A and palib_laws_A (AR_laws_x rsegs AD2l.TfibB ARcf).
    The walks take none of these: their laws are AR_laws_ok_cf's, proved inside, and PALib has no field for the walks'
    one stand-in, pal_pst_ok (the seven statics off as_owned_static B and off errno). So pal_pst_ok is DISCHARGED here

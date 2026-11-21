@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* libreac/fuzz_decode image A (fuzz_decode.asan): the zero-fill row H_CALLOC_FILL of lib/A/DecodeClose.v:254,
    [decode_zero_fill_spec_A B] (lib/A/DecodeCallocRt.v:331, [zero_fill_specP] :250-266 at DEC_A_memset).
 
-   The entry.  DEC_A_memset (DecodeCallocRt.v:124) = 0x92474 = tfib_A_musl_memset (lib/A/AB1w.v:551), the entry
+   The entry.  DEC_A_memset (DecodeCallocRt.v:124) = 0x92474 = tfib_A_musl_memset (lib/A/AB1w.v:552), the entry
    the machine run lib/A/AE3d.v:1050 [tfib_memset] starts at.  Measured in image A:
      fuzz_decode.objdump.txt:102972 `0000000000092474 <memset>:`
      (first instruction :102973 `92474: 0e060a63 beqz a2,92568`, last :103034 `92568: 00008067 ret`);
      fuzz_decode.nm.txt:1585 `0000000000092474 00000000000000f8 W memset` (248 bytes, 62 instructions).
-   The image.  decodesegs0 (lib/A/DecodeTFIB.v:19) and tfibsegs (lib/A/AB1v.v:13) are both
+   The image.  decodesegs0 (lib/A/DecodeTFIB.v:19) and tfibsegs (lib/A/AB1v.v:14) are both
    OSSVerify.libreac.fuzz_decode.images.Asan.M.loaded_segments, so the two are the same term, and
    [dec_a_fill] states the row exactly as DecodeCallocRt.v does and closes it by conversion from [musl_memset_srr].
 

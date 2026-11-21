@@ -1,10 +1,10 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSeg.v at 256ddb9487c and
-   proofs/reac-pw/fuzz_role/lib/A/RPgHarn.v at 680a13dcf7c for reac-pw/fuzz_rate image A: role's pcs, registers and
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSeg.v and
+   proofs/reac-pw/fuzz_role/lib/A/RPgHarn.v for reac-pw/fuzz_rate image A: role's pcs, registers and
    real-frame cells are replaced by the ones measured on fuzz_rate.asan and its contract file and image record by
    rate's (lib/A/RtPgCSpec.v, lib/A/RtPgImgA.v; the rl_ vocabulary becomes rt_); the build's latch gains a third
    entry; the checks' tail becomes the asked[] set-up, the decide loop and its tail; the third segment (the list), the
    two malloc steps and the five segment statements S_E01 .. S_X01 in the plain walk's continuation form are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSeg.v at 24edf5468644 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSeg.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs, registers, real-frame cells and frame objects, each list measured on image B's
    code; the record is lib/AU/RtPgImgB.v's and the frame's shadow lib/AU/RtPgMemB.v's; the latch has two entries; the
    pod object of the pod loop is e62; the Int pods of the shape-7 and the Int-7 pieces are written by a call. *)

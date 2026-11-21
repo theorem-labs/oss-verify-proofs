@@ -2,7 +2,7 @@
    (lib/B/Prog/read_members_Bp.v, read_members_holds_Bp) with a Theorem Labs lane's pj_get / pj_get_str B' tops
    (lib/B/Prog/PjGetB.v 7946e6065cb8: pj_get_holds_B_top / pj_get_str_holds_B_top, K0's tpj_get_specX /
    tpj_get_str_specX at PI_prog_B, TfibB, ARcf at CfParams_preset), on a Theorem Labs lane's P'' set
-   (a working branch 19a067d0b7eb, which carries all three files; nothing taken by path).
+   (a working branch, which carries all three files; nothing taken by path).
    REMAINING PREMISE, exactly one: ASC, the tops' one hypothesis - a Theorem Labs lane's strcmp row astrcmp_realizes_xrom at
    the wrapper AS___wrap_strcmp (YGcallMxmn.v), which read_members does not supply. (The former gap premise RM_G3 is
    gone: read_members takes both its halves from LAWS at cf_head, fields 14 alx_hshadow and 22 alx_hhead.) *)

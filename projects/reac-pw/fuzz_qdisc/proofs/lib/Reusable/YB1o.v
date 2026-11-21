@@ -7,7 +7,8 @@
    `python3 yb1o_find.py` (sha256 07b47f19b9a5..), which matches each whole run of words
    against the two pinned fuzz_knock binaries (asan, asan-ubsan) and maps the hit through the PT_LOAD headers.
    The W_<addr> NAMES are cgif's addresses, kept as names only; no knock address is stated in this file. *)
-(* Modified by Theorem Labs, 2026-10: copied for reac-pw/fuzz_qdisc from proofs/libreac/fuzz_knock/lib/Reusable/YB1o.v at origin/ossv/recipes 6ebe35ba632, module paths changed. Image-independent in reac-pw/fuzz_qdisc too: the file states no address, and both runs of words are present in both qdisc pins (measured by h-small-a3's A3 lane QdA3Reloc): the 28-word run at 0x61f90 (asan 980e2b845852, = internal_strncpy) / 0x61f98 (asan-ubsan eb657d77bd4b), the 87-word run at 0x4fd50 / 0x4fd58. A/AB16.v Requires it. *)
+(* Modified by Theorem Labs, 2026-10: copied for reac-pw/fuzz_qdisc from proofs/libreac/fuzz_knock/lib/Reusable/YB1o.v, module paths changed. Image-independent in reac-pw/fuzz_qdisc too: the file states no address, and both runs of words are present in both qdisc pins (measured by h-small-a3's A3 lane QdA3Reloc): the 28-word run at 0x61f90 (asan 980e2b845852, = internal_strncpy) / 0x61f98 (asan-ubsan eb657d77bd4b), the 87-word run at 0x4fd50 / 0x4fd58. A/AB16.v Requires it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

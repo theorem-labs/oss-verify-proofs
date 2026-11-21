@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0h.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: SR_unlink_tmp_isdir's continuation premise covers each errno in EISDIR :: unlink_before_type_errnos, not EISDIR alone, as rz_unlink_tmp_isdir now asks. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -192,11 +193,13 @@ path_eqb p [] = false -> path_strip_trailing_slashes p = p -> path_has_slash p =
 Nat.ltb NAME_MAX (length n) = false ->
 fs_under (m_fs model) p = true ->
 fd_names_path (m_fds model) p = false ->
-SR segs (mkCfg (mkst (regupd regs 10 (errno_ret EISDIR)) (v_addi pc 4) mem rom) model) Q ->
+(forall e, In e (EISDIR :: unlink_before_type_errnos) ->
+SR segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) Q) ->
 SR segs (mkCfg (pend_at regs pc mem rom) model) Q.
 Proof.
 intros regs pc mem rom model p n Q Hh Hlz Hno Hdir Hfl Hp Hpe Hstrip Hsl Htmp Hnm Hun Hfdn HK0 T HK.
-apply (rz_unlink_tmp_isdir segs regs pc mem rom model p n T Hh Hlz Hno Hdir Hfl Hp Hpe Hstrip Hsl Htmp Hnm Hun Hfdn). exact (HK0 T HK).
+apply (rz_unlink_tmp_isdir segs regs pc mem rom model p n T Hh Hlz Hno Hdir Hfl Hp Hpe Hstrip Hsl Htmp Hnm Hun Hfdn).
+intros e He. exact (HK0 e He T HK).
 Qed.
 Lemma SR_openat_tmp_isdir : forall regs pc mem rom model p n Q,
 m_halted model = None -> m_vm_lazy model = [] ->

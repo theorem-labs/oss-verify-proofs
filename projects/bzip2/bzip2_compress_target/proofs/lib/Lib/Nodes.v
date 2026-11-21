@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vm_only keeping the kernel build and the vDSO run, and the channel reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -560,9 +561,24 @@ Definition nsafe (n : node) (mo : Model) : Prop :=
   end.
 
 (* [comment removed for export] *)
+(* LPS revision #38 (75d69e00): the model's VmState gained [vmst_vdso] (the vDSO run: counter and
+   draw).  The old definition, kept for the record:
+     Definition vm_only (m m' : Model) : Prop :=
+       m_fd m' = m_fd m /\ m_io m' = m_io m /\ m_fsys m' = m_fsys m /\ m_proc m' = m_proc m
+       /\ m_lim m' = m_lim m /\ m_time m' = m_time m
+       /\ m_kernel m' = m_kernel m.
+   left the vDSO run free, so [S0Grow.modelG_canon] (MD = modelG .. (m_vmmaps MD)) was false:
+   [ModelAmb.mkModelA] fixes [vmst_vdso].  A VM-only step (brk, mmap, munmap, mprotect, a lazy
+   or forgotten range) never touches the vDSO run, which only a vDSO call moves
+   ([State.with_vdso_bump]); the new last conjunct says so.  It equates two models' runs and pins
+   no kernel field. *)
 Definition vm_only (m m' : Model) : Prop :=
   m_fd m' = m_fd m /\ m_io m' = m_io m /\ m_fsys m' = m_fsys m /\ m_proc m' = m_proc m
-  /\ m_lim m' = m_lim m /\ m_time m' = m_time m.
+  /\ m_lim m' = m_lim m /\ m_time m' = m_time m
+  (* the kernel build is fixed at launch at the revision ([init_model]); the
+     vDSO/vvar pair the reserved ledger carries is that build's *)
+  /\ m_kernel m' = m_kernel m
+  /\ m_vdso m' = m_vdso m.
 
 Lemma vm_only_refl : forall m, vm_only m m.
 Proof. intros; repeat split; reflexivity. Qed.
@@ -574,6 +590,12 @@ Lemma vm_only_fs : forall m m', vm_only m m' -> m_fs m' = m_fs m.
 Proof. intros m m' H. unfold m_fs. destruct H as (_&_&H&_). rewrite H. reflexivity. Qed.
 Lemma vm_only_halted : forall m m', vm_only m m' -> m_halted m' = m_halted m.
 Proof. intros m m' H. unfold m_halted. destruct H as (_&_&_&H&_). rewrite H. reflexivity. Qed.
+Lemma vm_only_rdr : forall m m', vm_only m m' -> m_channel_reader m' = m_channel_reader m.
+Proof. intros m m' H. unfold m_channel_reader. destruct H as (_&_&_&H&_). rewrite H. reflexivity. Qed.
+Lemma vm_only_kernel : forall m m', vm_only m m' -> m_kernel m' = m_kernel m.
+Proof. intros m m' H. destruct H as (_&_&_&_&_&_&H&_). exact H. Qed.
+Lemma vm_only_vdso : forall m m', vm_only m m' -> m_vdso m' = m_vdso m.
+Proof. intros m m' H. destruct H as (_&_&_&_&_&_&_&H). exact H. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)

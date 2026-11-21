@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecFc.v (commit 5ad50e61fc6a, file sha256 fc38cbf5add2) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 26 image addresses moved by code-verified function pairs (28 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (head H4 of the interface DMwalkIF.v at dc3949af11c): the CUT-READ record of the
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecFc.v (file sha256 fc38cbf5add2) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 26 image addresses moved by code-verified function pairs (28 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (head H4 of the interface DMwalkIF.v): the CUT-READ record of the
    SECONDARY arm of __asan::QuarantineCallback::Recycle (0x34810), i.e. LargeMmapAllocator::Deallocate's walk.
    rule 24: no function proved here (kind: field statements; the walk is DMrcSec.v).
    WHY.  cgif derives every fact the secondary walk reads from ARm (AFfc.v, plus YFf4's MAPX / SX / SECX / LST): the layout,

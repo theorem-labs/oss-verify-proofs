@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for record's ASan+UBSan
    walk (lib/B/Prog/record.v, trecord_holds) on fuzz_command.asan-ubsan: the walk's per-binary hypotheses discharged
    at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are B's tfibsegs, and the sink head
-   YE2k.tfib_sink_head), after A's lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch e84227c9553) and
-   RecBClosed.v (a working branch f349bdaedba): VOBJS is CmdRecRest.v cmd_val_objs_PB, cmd_sig_prog_PB is
+   YE2k.tfib_sink_head), after A's lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch) and
+   RecBClosed.v (a working branch): VOBJS is CmdRecRest.v cmd_val_objs_PB, cmd_sig_prog_PB is
    CmdRecRest.v cmd_sig_prog_PB, cmd_img_facts_tfib is CmdRecImg.v cmd_img_facts_tfib, and PRW is CmdRecRest.v
    cmd_prw_tfib (the program's statics lie in tfibsegs' read-write window). What remains is the statement's callee
    contract (rec_calls_free at every FP state), HB and MTL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.B.Prog Require record.
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

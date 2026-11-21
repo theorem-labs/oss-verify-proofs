@@ -42,7 +42,7 @@
      change any byte the runtime owns, and the whole low shadow is owned (YG0n.v:432 `aowned`'s lm_zone
      disjunct), so range_addressable and the values do not reach this segment by themselves. `rate_A_i32tab_at`
      (RtPgSiteA.v:231) rebuilds the table at the segment's own state from HIMG, the call's premise and the bytes
-     the cut's keep clause carries; `rt_img_unowned` (RtPgBase.v:222) with `rate_A_i32_unowned`
+     the cut's keep clause carries; `rt_img_unowned` (RtPgBase.v:223) with `rate_A_i32_unowned`
      (RtPgSiteA.v:205) pays the keep clause's "not owned" side condition. Step A5 discharges HIMG by
      computation. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.

@@ -1,29 +1,30 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30 (row M3, route R; new file). rule 24: proves no function (kind: invariant lemma; the route-R
    crossing rule of a re-hiding free call over the journal, plus the realization lifts at R).
 
    aj_free_at_x_ct_rh is the route-R twin of lib/Reusable/YGcallx.v aj_free_at_x_ctR (:715-821) at
    R := wle' segs RZ_cf, for the RE-HIDING cf free (the shape agreed in
    CROSSING-SHAPE-PROPOSAL.md (sha256 25c63e2cb70b; internal record) section 2). It is stated in Section n at the shape of
-   lib/A/CfRBridgeAjFreeN.v: ARx := ARxs (Reusable/YGcallcf.v:252, ARcf /\ xs_placed_cf), QMm := QMm_cf segs B,
+   lib/A/CfRBridgeAjFreeN.v: ARx := ARxs (Reusable/YGcallcf.v:253, ARcf /\ xs_placed_cf), QMm := QMm_cf segs B,
    ft := free_cf, code := as_code B, with the Section r laws of YGcallx.v from YGcallcf.v (LAWS := AR_laws_x_xs L,
    OWNLOW := ARx_owned_low_law_xs L, WFL := ARx_wf_law_xs, the model laws := alloc_model_laws_x_cf HU). Against
    aj_free_at_x_ctR's text it changes, and only:
-   - the realization `afree_realizes_xR R` is `afree_realizes_cf_rh segs B` (lib/A/YG0dcfR.v:61, primed);
+   - the realization `afree_realizes_xR R` is `afree_realizes_cf_rh segs B` (lib/A/YG0dcfR.v:62, primed);
    - both journals are `ajournal_xR segs B PST ARxs (wle' segs RZ_cf)`, the step is `SRrG segs (wle' segs RZ_cf)`;
    - the call's QM premise `QMm Sc memT` is `QMm_cf segs B Sc memT`, by name (it carries arodata_ok_cf at the call
      memory, and since part 3c no memnorm; no separate premise at the lemma level, proposal row 5);
-   - the leaf `free_leaf_xR R` is `free_leaf_cf_rh segs B` (lib/A/YG0dcfR.v:46);
+   - the leaf `free_leaf_xR R` is `free_leaf_cf_rh segs B` (lib/A/YG0dcfR.v:47);
    - R_trans is not a premise: R is fixed, and wle'_trans segs RZ_cf discharges it.
    QMm_cf is never unfolded here: the proof reads it only through YGcallcf's QMQ_cf and acall_pre_x_xs; no memnorm use.
    Event terms: st_nev appears only in the journal index k + (st_nev S2 - st_nev Sc) and, inside the proof, in the
    call journal's index st_nev S2 - st_nev Sc, both as YGcallx.v:722 / :791 (exception 3, the tick update).
 
-   The proof is aj_free_at_x_ctR's, with: the callee journal from call_effect_journal_rh_cf_pst (lib/A/AjxCallRh.v:183;
+   The proof is aj_free_at_x_ctR's, with: the callee journal from call_effect_journal_rh_cf_pst (lib/A/AjxCallRh.v:184;
    its world and frame premises are the primed post's two changed conjuncts, its ARcf premise is the call state's
-   HAR); amreal'_SRr'04 (Reusable/YG0dH.v:224) in place of amrealG_SRrG04; SRrG_mono; ajournal_x_subR with
-   wle'_trans segs RZ_cf; acall_kept_of_journal_xR (Reusable/YGcallx.v:676) for the kept conjunct.
+   HAR); amreal'_SRr'04 (Reusable/YG0dH.v:225) in place of amrealG_SRrG04; SRrG_mono; ajournal_x_subR with
+   wle'_trans segs RZ_cf; acall_kept_of_journal_xR (Reusable/YGcallx.v:677) for the kept conjunct.
 
    The realization lifts at R. A re-hiding leaf is not an acall_post_xR post at any R (its frame also excepts the
    call's dead set dead_shadow_new), so the YGcallx forms at R do not hold it. free_leaf_x_rh / afree_realizes_x_rh below
@@ -72,7 +73,7 @@ Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte
 Variable QMm : astate -> (word -> option byte) -> Prop.
 Variable ft : sptr -> list Z -> YG00.M unit.
 
-(* YGcallx.free_leaf_x with the re-hide post: acall_post_cf_rh's body (YGcfRehidePost.v:330-338) at ARx in place of
+(* YGcallx.free_leaf_x with the re-hide post: acall_post_cf_rh's body (YGcfRehidePost.v:331-339) at ARx in place of
    ARcf; every other conjunct is free_leaf_x's (= YG0dcfR.free_leaf_cf_rh's). *)
 Definition free_leaf_x_rh (ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) (p : sptr) (n : Z)

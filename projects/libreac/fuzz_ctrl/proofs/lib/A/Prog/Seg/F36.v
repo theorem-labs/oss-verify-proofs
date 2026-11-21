@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2962 of its 3089 lines of code are new or changed and 884 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F36 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): 0x8289c-0x828d4 (plan-asan section 2 row F36,
    call CATM@0x828d4 = reac_box_catalogue_match by its contract; ubsan twin C04).  rule 24: no function proved.
 
@@ -36,13 +37,13 @@
    assembly's S_F36_827f0 / S_F36_827f4) take the exit 0x828bc from 0x828d8 through seg_F36_82810; their _810 forms
    take it as a premise.
 
-   v1.9 (libreac v1.9.0): every pc is the v1.8 one + 0xac and the cuts carry a Theorem Labs lane's v1.9 names (a working branch
-   0a1d413d7c3); the seg_F36_* lemma NAMES keep their v1.8 pcs, so no caller changes.  PRO gains [A + 32] = fr + 2880
+   v1.9 (libreac v1.9.0): every pc is the v1.8 one + 0xac and the cuts carry a Theorem Labs lane's v1.9 names (a working branch);
+   the seg_F36_* lemma NAMES keep their v1.8 pcs, so no caller changes.  PRO gains [A + 32] = fr + 2880
    as its 16th conjunct and FLC gains [A + 56] = fr + 2889 and [A + 48] = fr + 2890 as its 13th and 14th (both at the
    end); FSb takes fr and its positions 3 / 4 are the 35 body bytes at fr + 2880 and their addressability; the frame
    is FRAME_BYTES = 3136 bytes with 392 shadow bytes; frame_RELRO is the one range (0x9e348, 9344).
    v1.9 STATUS (2026-10-28): UNVERIFIED.  No build without probes has checked this file on v1.9.0.  It closed only in
-   ITERATION-ONLY builds on the v1.9 bytes (FACTS 0bfe9aa0d452) with Seg/Tac_slot.v and Seg/Tac_fsfree.v probed; it
+   ITERATION-ONLY builds on the v1.9 bytes (FACTS) with Seg/Tac_slot.v and Seg/Tac_fsfree.v probed; it
    waits for those two files' re-fit to the regenerated Contract.v / FrameAPI.v. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation Setoid.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

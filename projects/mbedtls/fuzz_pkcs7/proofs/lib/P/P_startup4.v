@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section restated over the whole process input with the launch hypotheses; rnd_bounds, rd_rnd, rdn_addr and fin_c6 to fin_c9 written out from their encoded statements; rnd_facts_here added; the gid loads in fin_c7 read the input's gid; the encoding table, the LiaOrc tables and the using attributes removed). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,63 +17,78 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import PropExec.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import DietDestruct.   (* [comment removed for export] *)
 #[local] Existing Instance PropExec.fx0.
 Open Scope bv_scope.
+Local Set Default Proof Using "All".
 
 Abbreviation SEGS := Plain.M.loaded_segments.
 Abbreviation RPH := Plain.M.phdrs.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
-From Ltac2 Require Ltac2.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import LiaOrc. (* [comment removed for export] *)
-Local Ltac Stdlib.micromega.Lia.lia ::= orc_lia. (* [comment removed for export] *)
-Ltac2 gd_tbl_P_startup4 () : Init.string Init.list := ["Corelib.Init.Logic.and"; "Stdlib.ZArith.BinInt.Z.le"; "stdpp.bitvector.definitions.bv_unsigned"; "OSSVerify.KrLib.P.P_startup_defs.rnd_w"; "Stdlib.ZArith.BinInt.Z.lt"; "Stdlib.ZArith.BinInt.Z.add"; "Stdlib.ZArith.BinInt.Z.pow"; "Corelib.Init.Logic.eq"; "Corelib.Numbers.BinNums.Z"; "Stdlib.ZArith.BinInt.Z.modulo"; "stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.option"; "Corelib.Init.Datatypes.nat"; "Corelib.Init.Peano.le"; "Corelib.Init.Nat.add"; "Corelib.Init.Datatypes.list"; "OSSVerify.KrLib.Lib.PropExec.rdn"; "OSSVerify.KrSpec.Problems.Src_mbedtls_fuzz_pkcs7_repro.M.loaded_segments"; "OSSVerify.KrLib.BB.MemSplit.cmem"; "OSSVerify.KrLib.Lib.PropExec.wrap_mem"; "OSSVerify.KrSpec.Problems.Src_mbedtls_fuzz_pkcs7_repro.M.phdrs"; "stdpp.bitvector.definitions.Z_to_bv"; "Stdlib.ZArith.BinInt.Z.of_nat"; "Corelib.Init.Datatypes.Some"; "Corelib.Lists.ListDef.firstn"; "Corelib.Lists.ListDef.skipn"; "OSSVerify.KrLib.P.P_startup_defs.rnd_bytes"; "LinuxProcessSemantics.LinuxProcessSem.MemImageType.Segment"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state"; "OSSVerify.KrLib.BB.StartupTac.bwd"; "LinuxProcessSemantics.Riscv.Prelude.bvmap"; "OSSVerify.KrLib.BB.MemSplit.wfJ"; "OSSVerify.KrLib.Lib.PropExec.getr"; "stdpp.bitvector.definitions.BV"; "Corelib.Init.Logic.I"; "Stdlib.ZArith.BinInt.Z.sub"; "OSSVerify.KrLib.BB.Hoare.regs_agree"; "Stdlib.Lists.List.In"; "Corelib.Init.Datatypes.cons"; "Corelib.Init.Datatypes.nil"; "OSSVerify.KrLib.Lib.PropExec.mkst"; "OSSVerify.KrLib.Lib.PropExec.fx0"; "OSSVerify.KrLib.BB.CatExec.wbytes"; "OSSVerify.KrLib.P.P_startup_defs.J_aux"; "OSSVerify.KrLib.P.P_startup_defs.J_lsm"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes"; "OSSVerify.KrLib.P.P_startup_defs.pn_w"; "OSSVerify.KrLib.P.P_startup_defs.D_libc"; "OSSVerify.KrLib.P.P_startup_defs.guard_lo"; "OSSVerify.KrLib.P.P_startup_defs.guard_hi"; "OSSVerify.KrLib.P.P_startup_defs.canary_w"; "OSSVerify.KrLib.P.P_startup_defs.argc_w"; "Stdlib.ZArith.BinInt.Z.mul"; "Corelib.Init.Datatypes.length"].
 
 
 Section P6.
-  Variable sp0 : word.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Variable sp0 brk : word.
+  Variable rdraw : EntryDraw.
   Variable Jb : word -> option byte.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.          (* [comment removed for export] *)
-  Variable rdraw : EntryDraw.  (* [comment removed for export] *)
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp ev.
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rdraw) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rdraw)) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rdraw)) (only parsing).
 
-  #[using="Hlo"] Lemma Hsp_lo' : (sp_window_lo <= bv_unsigned sp0)%Z. Proof. exact Hlo. Qed.
-  #[using="Hhi"] Lemma Hsp_hi' : (bv_unsigned sp0 <= sp_window_hi)%Z. Proof. exact Hhi. Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "0010?L65706034349.1400000>S3sp02av2H12H2". (* [comment removed for export] *)
-  #[using="sp0 Hva"] Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
+  Lemma Hsp_lo' : (sp_window_lo <= bv_unsigned sp0)%Z. Proof. exact Hlo. Qed.
+  Lemma Hsp_hi' : (bv_unsigned sp0 <= sp_window_hi)%Z. Proof. exact Hhi. Qed.
+  Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "0030?L15571093014.16L59990563804.16L62261551779.1600000P00j01JS3sp02av2ev3uid2hw5rdraw3Hlo1B1CS3sp02av2ev3uid2hw5rdraw1AS3sp02av2ev3uid2hw5rdraw3Hlo1A1D". (* [comment removed for export] *)
-  #[using="uid hw rdraw Hva Hve Hlo Hhi Hal"] Lemma rnd_bounds : ltac2:(CDefT.buildp (gd_tbl_P_startup4 ()) "(0.(1.(2.&40.Vsp0,)(2.&40.(3.Vsp0,Vav,Vev,)))(0.(4.(5.(2.&40.(3.Vsp0,Vav,Vev,))+10.)(6.+2.+40.))(7.$8.(9.(2.&40.(3.Vsp0,Vav,Vev,))+8.)=)))")
-(* [comment removed for export] *).
+Lemma rnd_facts_here :
+    (bv_unsigned sp0
+     <= bv_unsigned (at_random_ptr sp0 (kb_rseq (in_kernel inp)) av ev))%Z
+    /\ (bv_unsigned (at_random_ptr sp0 (kb_rseq (in_kernel inp)) av ev) + 16
+        <= bv_unsigned sp0 + Z.of_nat (length (entry_stack_image inp mbase RPH entry sp0 rdraw)))%Z
+    /\ (bv_unsigned sp0 + Z.of_nat (length (entry_stack_image inp mbase RPH entry sp0 rdraw)) < 2^64)%Z
+    /\ (bv_unsigned (at_random_ptr sp0 (kb_rseq (in_kernel inp)) av ev) mod 8 = 0)%Z
+    /\ (forall j n, (j + n <= 16)%nat ->
+          rdn SEGS (stack_to_mem sp0 (entry_stack_image inp mbase RPH entry sp0 rdraw))
+            (Z_to_bv 64 (bv_unsigned (at_random_ptr sp0 (kb_rseq (in_kernel inp)) av ev)
+                         + Z.of_nat j)) n
+          = Some (firstn n (skipn j (at_random_bytes (ed_random rdraw))))).
   Proof.
-    ddestruct (rnd_facts SEGS RPH sp0 rdraw av ev uid hw Hva Hve Hsp_lo' Hsp_hi' Hal) as (A & B & C & D & _).
+    eapply rnd_facts;
+      first [exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hsp_lo' | exact Hsp_hi' | exact Hal].
+  Qed.
+
+  Lemma rnd_bounds :
+    (bv_unsigned sp0 <= bv_unsigned (rnd_w sp0 inp))%Z
+    /\ (bv_unsigned (rnd_w sp0 inp) + 16 < 2^64)%Z
+    /\ (bv_unsigned (rnd_w sp0 inp) mod 8 = 0)%Z.
+  Proof.
+    destruct rnd_facts_here as (A & B & C & D & _).
     unfold rnd_w. repeat split; lia.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "0040?L10263942985.22L59099666335.22L5989655790.22 L62480621614.2200000X01>01f02LS3sp02av2ev3uid2hw5rdraw3Hlo1j1n3Hjn1B1CS3sp02av2ev3uid2hw5rdraw3Hlo1j1n3Hjn1AS3sp02av2ev3uid2hw5rdraw3Hlo1j1n3Hjn1B1CS3sp02av2ev3uid2hw5rdraw3Hlo1j1n3Hjn1A". (* [comment removed for export] *)
-  #[using="Hva Hve Hlo Hhi Hal"] Lemma rd_rnd : ltac2:(CDefT.buildp (gd_tbl_P_startup4 ()) "PJ,P,(:.&40.)(;.(:.&8.))PD,P,(:.&40.)(;.(:.&8.))Pj,$<.Pn,$<.P,(=.(>.R2.R1.)#10.)(7.(;.(?.(:.&8.)))(10.$11.(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)R5.R4.)(15.&40.(5.(2.&40.(3.Vsp0,Vav,Vev,))(16.R3.)))R2.)(17.(?.(:.&8.))(18.(:.&8.)R2.(19.(:.&8.)R3.(1:.Vrdraw,)))))")
-(* [comment removed for export] *).
+  Lemma rd_rnd : forall J D j n, (j + n <= 16)%nat ->
+    rdn SEGS (CM J D) (Z_to_bv 64 (bv_unsigned (rnd_w sp0 inp) + Z.of_nat j)) n
+    = Some (firstn n (skipn j (at_random_bytes (ed_random rdraw)))).
   Proof.
     intros J D j n Hjn.
-    (* [comment removed for export] *)
-    ddestruct (rnd_facts [] RPH sp0 rdraw av ev uid hw Hva Hve Hsp_lo' Hsp_hi' Hal) as (A & B & C & D' & E).
-    unfold rnd_w, rnd_bytes. rewrite rdn_cmem_above by (unorm; lia).
-    apply rdn_wrap_stack_above. apply E. exact Hjn.
+    destruct rnd_facts_here as (A & B & C & D' & E).
+    unfold rnd_w. rewrite rdn_cmem_above by (unorm; lia).
+    rewrite rdn_wrap_stack_above by (unorm; lia). apply E. exact Hjn.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  #[using="Type"] Lemma rdn_addr : ltac2:(CDefT.buildp (gd_tbl_P_startup4 ()) "Psegs,(?.$1;.)Pm,P,(:.&40.)(;.(:.&8.))Pa,(:.&40.)Pa',(:.&40.)Pn,$<.Pr,(;.(?.(:.&8.)))P,(7.(;.(?.(:.&8.)))(10.R6.R5.R3.R2.)R1.)P,(7.(:.&40.)R5.R4.)(7.(;.(?.(:.&8.)))(10.R8.R7.R6.R4.)R3.)")
-(* [comment removed for export] *).
+  Lemma rdn_addr : forall segs m (a a' : word) n (r : option (list byte)),
+    rdn segs m a' n = r -> a = a' -> rdn segs m a n = r.
   Proof. intros; subst; reflexivity. Qed.
 
   Ltac RD_RND j :=
@@ -83,28 +99,53 @@ Section P6.
   Ltac RD_GUARD :=
     rewrite rdn_cmem_data by region_side; apply guard_read.
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "0020?L29782367974.13L7860731522.13 00000800@S3sp02avS3sp02av". (* [comment removed for export] *)
-  #[using="sp0 Hva"] Lemma slli_argc : v_slli (argc_w av) 3 = Z_to_bv 64 (8 * Z.of_nat (length av)).
+  Lemma slli_argc : v_slli (argc_w inp) 3 = Z_to_bv 64 (8 * Z.of_nat (length av)).
   Proof.
-    pose proof len_av. unfold argc_w, v_slli. rewrite (u_argcN av Hva).
+    pose proof len_av. unfold argc_w, v_slli. rewrite (u_argcN inp Hva).
     f_equal. rewrite Z.shiftl_mul_pow2 by lia. change (2^3)%Z with 8%Z. lia.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "00h0?L10411091066.37L10903733347.37L11773938131.37L12775297797.37L15726410298.37L16860346596.37L17048895803.37L17795555155.37L18323992919.37L20095745483.37L2010180433.37 L20133644987.37L21212082962.39L21922840534.37L21958259707.37L23061425480.37L23587705302.37L23797768915.37L23983361999.37L25276001795.37L28025106159.37L31332446948.37L31879737210.37L33355361455.37L34498063873.37L35991877697.37L37216260353.37L38041305700.37L38900005975.37L39083223967.37L39121613115.37L40299605476.37L41236970101.37L4236013395.37 L46253329256.37L47906735080.37L48725731077.37L48917508795.37L50382551914.37L5057860584.37 L50595121327.37L51080600727.37L54079201531.37L54602173903.37L57630997882.37L60326922327.37L61894973562.37L62267325975.37L62630599937.37L63174404097.37L63571308170.37L64685521473.37L68577448839.37L7198683194.37 L8441492072.37 L8702444643.37 00000;00F00U00`00k01601E01T01c01d01o02>02O02^02_03203A03P03[03f03g04204=04>04I04T04_04j05905:05I05T05_05n06=06L06W06f07107@07A07B07C07N07Y07h08308B08M08X08c08n09=09H09W09bS3sp02av2evS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2ev3HloFS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3Hlo1HS3sp02av2ev3HloFS3sp02av2ev3Hlo3HhiS3sp02av2ev3HloS3sp02av2ev3HloS3sp02av2evS3sp02av2evFS3sp02av2evS3sp02av2evFS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HloFS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiFFFS3sp02av2evS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev". (* [comment removed for export] *)
-  #[using="Hva Hve Hlo Hhi Hal"] Lemma fin_c6 : ltac2:(CDefT.buildp (gd_tbl_P_startup4 ()) "PG,P,$1<.SpP,(1=.$11.R1.)Pregs,(1>.&5.(:.&40.))Prom,P,(:.&40.)(;.(:.&8.))Ps1v,(:.&40.)Ptid,(:.&40.)P,(1?.Vsp0,VJb,)P,(7.(:.&40.)(20.R5.(21.&5.+2.$22.))(15.&40.(23.(2.&40.Vsp0,)+1:0.)))P,(7.(:.&40.)(20.R6.(21.&5.+3.$22.))(15.&40.+10800.))P,(7.(:.&40.)(20.R7.(21.&5.+4.$22.))(15.&40.+599<8.))P,(7.(:.&40.)(20.R8.(21.&5.+13.$22.))(15.&40.=))P,(7.(:.&40.)(20.R9.(21.&5.+14.$22.))(15.&40.=))P,(7.(:.&40.)(20.R:.(21.&5.+15.$22.))(15.&40.=))P,(7.(:.&40.)(20.R;.(21.&5.+16.$22.))(15.&40.=))P,(7.(:.&40.)(20.R<.(21.&5.+17.$22.))(15.&40.=))P,(7.(:.&40.)(20.R=.(21.&5.+18.$22.))(15.&40.=))P,(7.(:.&40.)(20.R>.(21.&5.+19.$22.))(15.&40.=))P,(7.(:.&40.)(20.R?.(21.&5.+1:.$22.))(15.&40.=))P,(7.(:.&40.)(20.R10.(21.&5.+1;.$22.))(15.&40.=))P,Pregs',(1>.&5.(:.&40.))P,(7.(:.&40.)(20.R1.(21.&5.+2.$22.))(15.&40.(23.(2.&40.Vsp0,)+1:0.)))P,(7.(:.&40.)(20.R2.(21.&5.+3.$22.))(15.&40.+10800.))P,(7.(:.&40.)(20.R3.(21.&5.+4.$22.))(15.&40.+599<8.))P,(7.(:.&40.)(20.R4.(21.&5.+13.$22.))(15.&40.=))P,(7.(:.&40.)(20.R5.(21.&5.+14.$22.))(15.&40.=))P,(7.(:.&40.)(20.R6.(21.&5.+15.$22.))(15.&40.=))P,(7.(:.&40.)(20.R7.(21.&5.+16.$22.))(15.&40.=))P,(7.(:.&40.)(20.R8.(21.&5.+17.$22.))(15.&40.=))P,(7.(:.&40.)(20.R9.(21.&5.+18.$22.))(15.&40.=))P,(7.(:.&40.)(20.R:.(21.&5.+19.$22.))(15.&40.=))P,(7.(:.&40.)(20.R;.(21.&5.+1:.$22.))(15.&40.=))P,(7.(:.&40.)(20.R<.(21.&5.+1;.$22.))(15.&40.=))P,(24.Lr,(:.&5.)(25.(:.&5.)R1.(26.(:.&5.)(21.&5.+1.$22.)(26.(:.&5.)(21.&5.+2.$22.)(26.(:.&5.)(21.&5.+:.$22.)(26.(:.&5.)(21.&5.+;.$22.)(26.(:.&5.)(21.&5.+<.$22.)(26.(:.&5.)(21.&5.+=.$22.)(26.(:.&5.)(21.&5.+>.$22.)(26.(:.&5.)(21.&5.+?.$22.)(27.(:.&5.)))))))))))R1>.R=.)A1.R21.(28.$29.R>.(21.&40.+3;9:<.$22.)(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2;.Vsp0,Vav,Vev,Vuid,Vhw,(2<.Vsp0,Vav,VJb,))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:4.)))(15.&40.(23.(2.&40.Vsp0,)+1;0.))(2=.#8.(2>.Vsp0,Vav,Vev,)))(15.&40.(23.(2.&40.Vsp0,)+1;8.))(2=.#8.R1=.))(15.&40.(23.(2.&40.Vsp0,)+1<0.))(2=.#8.(15.&40.+79<50.)))(15.&40.(23.(2.&40.Vsp0,)+1<8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=0.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:<.)))(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2?.Vsp0,Vav,Vev,Vhw,)(15.&40.+799?0.)(2=.#8.(15.&40.=)))(15.&40.+79:00.)(2=.#8.(15.&40.=)))(15.&40.+799?8.)(2=.#8.(15.&40.+8.)))(15.&40.+79<68.)(2=.#8.(15.&40.+>0.)))(15.&40.+79<70.)(2=.#8.(15.&40.+8.)))(15.&40.+599=8.)(2=.#8.(15.&40.=)))(15.&40.+599<0.)(2=.#8.(15.&40.+599=8.)))(15.&40.+59900.)(2=.#8.(15.&40.+59900.)))(15.&40.+79<50.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.))))(15.&40.+59928.)(2=.#4.(15.&40.+2.)))(15.&40.+59920.)(2=.#4.R1<.))(15.&40.+59998.)(2=.#8.(15.&40.+79<88.)))(15.&40.+59978.)(2=.#8.(15.&40.+59978.)))(15.&40.+59908.)(2=.#8.(15.&40.+59900.)))(15.&40.+59910.)(2=.#8.(15.&40.+59900.)))(15.&40.+59918.)(2=.#8.(15.&40.=)))(15.&40.+79<30.)(2=.#4.(30.Vrdraw,)))(15.&40.+79<34.)(2=.#4.(31.Vrdraw,)))(15.&40.+79<31.)(26.(:.&8.)(15.&8.=)(27.(:.&8.))))(15.&40.+599;8.)(2=.#8.(32.Vrdraw,))))R1>.)A1.R14.(28.$29.R12.(21.&40.+3;9:4.$22.)(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2;.Vsp0,Vav,Vev,Vuid,Vhw,(2<.Vsp0,Vav,VJb,))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:4.)))(15.&40.(23.(2.&40.Vsp0,)+1;0.))(2=.#8.(2>.Vsp0,Vav,Vev,)))(15.&40.(23.(2.&40.Vsp0,)+1;8.))(2=.#8.R10.))(15.&40.(23.(2.&40.Vsp0,)+1<0.))(2=.#8.(15.&40.+79<50.)))(15.&40.(23.(2.&40.Vsp0,)+1<8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=0.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=8.))(2=.#8.(15.&40.=)))(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2?.Vsp0,Vav,Vev,Vhw,)(15.&40.+799?0.)(2=.#8.(15.&40.=)))(15.&40.+79:00.)(2=.#8.(15.&40.=)))(15.&40.+799?8.)(2=.#8.(15.&40.+8.)))(15.&40.+79<68.)(2=.#8.(15.&40.+>0.)))(15.&40.+79<70.)(2=.#8.(15.&40.+8.)))(15.&40.+599=8.)(2=.#8.(15.&40.=)))(15.&40.+599<0.)(2=.#8.(15.&40.+599=8.)))(15.&40.+59900.)(2=.#8.(15.&40.+59900.)))(15.&40.+79<50.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.))))(15.&40.+59928.)(2=.#4.(15.&40.+2.)))(15.&40.+59920.)(2=.#4.R?.))(15.&40.+59998.)(2=.#8.(15.&40.+79<88.)))(15.&40.+59978.)(2=.#8.(15.&40.+59978.)))(15.&40.+59908.)(2=.#8.(15.&40.+59900.)))(15.&40.+59910.)(2=.#8.(15.&40.+59900.)))(15.&40.+59918.)(2=.#8.(15.&40.=))))R11.)")
-(* [comment removed for export] *).
+  Lemma fin_c6 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+    wfJ sp0 Jb ->
+    getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 416) ->
+    getr regs 3 = Z_to_bv 64 67584 ->
+    getr regs 4 = Z_to_bv 64 367048 ->
+    getr regs 19 = Z_to_bv 64 0 ->
+    getr regs 20 = Z_to_bv 64 0 ->
+    getr regs 21 = Z_to_bv 64 0 ->
+    getr regs 22 = Z_to_bv 64 0 ->
+    getr regs 23 = Z_to_bv 64 0 ->
+    getr regs 24 = Z_to_bv 64 0 ->
+    getr regs 25 = Z_to_bv 64 0 ->
+    getr regs 26 = Z_to_bv 64 0 ->
+    getr regs 27 = Z_to_bv 64 0 ->
+    (forall regs',
+        getr regs' 2 = Z_to_bv 64 (bv_unsigned sp0 - 416) ->
+        getr regs' 3 = Z_to_bv 64 67584 ->
+        getr regs' 4 = Z_to_bv 64 367048 ->
+        getr regs' 19 = Z_to_bv 64 0 ->
+        getr regs' 20 = Z_to_bv 64 0 ->
+        getr regs' 21 = Z_to_bv 64 0 ->
+        getr regs' 22 = Z_to_bv 64 0 ->
+        getr regs' 23 = Z_to_bv 64 0 ->
+        getr regs' 24 = Z_to_bv 64 0 ->
+        getr regs' 25 = Z_to_bv 64 0 ->
+        getr regs' 26 = Z_to_bv 64 0 ->
+        getr regs' 27 = Z_to_bv 64 0 ->
+        regs_agree (fun r => In r [1; 2; 10; 11; 12; 13; 14; 15]%list) regs regs' ->
+        G (mkst regs' (0x3b9ac : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244132))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 498768))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244140))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 498160) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498176) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498168) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 498792) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 498800) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 367064) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 367040) (word_to_le_bytes 8 (Z_to_bv 64 367064))) (Z_to_bv 64 366848) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 498768) ([Z_to_bv 8 1])) (Z_to_bv 64 366888) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 366880) (word_to_le_bytes 4 tid)) (Z_to_bv 64 367000) (word_to_le_bytes 8 (Z_to_bv 64 498824))) (Z_to_bv 64 366968) (word_to_le_bytes 8 (Z_to_bv 64 366968))) (Z_to_bv 64 366856) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366864) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498736) (word_to_le_bytes 4 (guard_lo rdraw))) (Z_to_bv 64 498740) (word_to_le_bytes 4 (guard_hi rdraw))) (Z_to_bv 64 498737) ([Z_to_bv 8 0])) (Z_to_bv 64 367032) (word_to_le_bytes 8 (canary_w rdraw)))) rom)) ->
+    G (mkst regs (0x3b9a4 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244132))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 498768))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 498160) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498176) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498168) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 498792) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 498800) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 367064) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 367040) (word_to_le_bytes 8 (Z_to_bv 64 367064))) (Z_to_bv 64 366848) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 498768) ([Z_to_bv 8 1])) (Z_to_bv 64 366888) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 366880) (word_to_le_bytes 4 tid)) (Z_to_bv 64 367000) (word_to_le_bytes 8 (Z_to_bv 64 498824))) (Z_to_bv 64 366968) (word_to_le_bytes 8 (Z_to_bv 64 366968))) (Z_to_bv 64 366856) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366864) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366872) (word_to_le_bytes 8 (Z_to_bv 64 0)))) rom).
   Proof.
     intros G HG regs rom s1v tid HJ H2 H3 H4 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
     pose proof len_av as Hlen. dpose rnd_bounds as (Hr1 & Hr2 & Hr3). pose proof (u64_range tid) as Htid.
     unfold J_aux, J_lsm, D_libc, aux_base, argv_w in *.
     eapply HG.
-    { ld_step F_3b944 D_3b944 (word_to_le_bytes 8 (rnd_w sp0 av ev)) (rnd_w sp0 av ev) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
+    { ld_step F_3b944 D_3b944 (word_to_le_bytes 8 (rnd_w sp0 inp)) (rnd_w sp0 inp) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       sn F_3b948 D_3b948.  (* [comment removed for export] *)
       sv F_3c174 D_3c174 (Z_to_bv 64 (bv_unsigned sp0 - 432)).  (* [comment removed for export] *)
       stw F_3c178 D_3c178 (Z_to_bv 64 (bv_unsigned sp0 - 424)) (Z_to_bv 64 244140) ltac:(ok_win HJ).  (* [comment removed for export] *)
       stepb_ft F_3c17c D_3c17c ltac:(pin; apply c_eq_0_false; pose proof rnd_bounds; lia).  (* [comment removed for export] *)
-      sv F_3c180 D_3c180 ((rnd_w sp0 av ev)).  (* [comment removed for export] *)
+      sv F_3c180 D_3c180 ((rnd_w sp0 inp)).  (* [comment removed for export] *)
       sn F_3c184 D_3c184.  (* [comment removed for export] *)
       ld_step F_3c188 D_3c188 (word_to_le_bytes 8 (Z_to_bv 64 498736)) (Z_to_bv 64 498736) ltac:(rd_img img_48590_8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       sn F_3c18c D_3c18c.  (* [comment removed for export] *)
@@ -123,7 +164,7 @@ Section P6.
       stw F_43460 D_43460 (Z_to_bv 64 498736) (guard_lo rdraw) ltac:(ok_data).  (* [comment removed for export] *)
       stw F_43464 D_43464 (Z_to_bv 64 498740) (guard_hi rdraw) ltac:(ok_data).  (* [comment removed for export] *)
       sn F_43468 D_43468.  (* [comment removed for export] *)
-      sv F_4346c D_4346c (Z_to_bv 64 (bv_unsigned (rnd_w sp0 av ev) + 8)).  (* [comment removed for export] *)
+      sv F_4346c D_4346c (Z_to_bv 64 (bv_unsigned (rnd_w sp0 inp) + 8)).  (* [comment removed for export] *)
       sn F_43470 D_43470.  (* [comment removed for export] *)
       stepb_tk F_43474 D_43474 ltac:(pin; cond_compute).  (* [comment removed for export] *)
       sn F_436b4 D_436b4.  (* [comment removed for export] *)
@@ -145,34 +186,67 @@ Section P6.
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "01i0?L10284330885.37L10513223099.37L12517991941.37L12908231523.37L13718234211.37L14176161091.37L14181501668.37L15146220497.37L1574701155.37 L16325727080.37L1672483643.37 L17976576955.37L17993559016.37L19044923451.37L1974200123.37 L21075469928.37L2245302355.37 L22523947269.37L23061425480.37L23797768915.37L24828228613.37L26532606056.37L26694907108.37L27149436091.37L27324189907.37L27699533923.37L27788321764.37L28075018555.37L28528786565.37L28892846384.37L289598651.37  L29917778152.37L30594608773.37L30910170043.37L30912532579.37L31163462331.37L31332446948.37L31388518651.37L32374490212.37L33326404179.37L33944277206.37L34547745285.37L34584847023.37L35988138083.37L36286192740.37L36849936645.37L37863910459.37L38407023080.37L3848058710.37 L39041719216.37L39348019667.37L39771651131.37L39923920100.37L40380549893.37L42871553157.37L44003206523.37L44929458427.37L45367015251.37L46253329256.37L46397447813.37L47233061627.37L47247759976.37L4734176723.37 L47902437115.37L48050963451.37L48737116155.37L48890774021.37L49494530006.37L50666262075.37L5110043835.37 L51236457403.37L51403283155.37L52061059171.37L52222288342.37L52400188421.37L5263880036.37 L52894903283.37L53481205860.37L53528348132.37L54843430351.37L54848770811.37L55090703203.37L55530300758.37L5576947707.37 L55786807528.37L57420441683.37L58225030998.37L58419180421.37L59610551524.37L5988407651.37 L60164302678.37L60168598075.37L60321456891.37L60393679844.37L60546060886.37L60908999523.37L60934015571.37L61547694294.37L61675632187.37L61852912315.37L63422660563.37L63570490088.37L64243997398.37L65210645307.37L65725237307.37L65935156987.37L659382376.37  L66565317078.37L66769836027.37L67085642084.37L67118111931.37L67549912662.37L67851462139.37L7224698724.37 L724766035.37  L7786679016.37 L8264822739.37 L8605515195.37 L8847168872.37 L9844364387.37 L9865452246.37 00000;00J00U00`00k01601A01B01M01\01k02:02I02X02g03603E03P03c04204=04L04W04f05505@05K05Z05e06006?06N06Y06h06i07807C07D07O07^07m08808908D08O08Z08i09809G09R09a0:00:;0:F0:Q0:R0:S0:b0;10;<0;=0;L0;[0;\0;]0;^0;i0<80<G0<V0<e0=40=?0=N0=Y0=d0=o0>:0>E0>P0>Q0>\0>k0>l0?;0?J0?Y0?d0?o0@:0@I0@X0@Y0@d0A30A>0AM0A\0Ak0B:0BI0BX0Bg0C60CE0CF0CU0Cd0Ce0D00D?0DN0DO0DZ0Di0E80EG0EV0Ee0F00F?S3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evFS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3Hlo3HhiS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiFS3sp02av2ev3HhiS3sp02av2evFS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HloS3sp02av2evFS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2evFFS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2evFS3sp02av2ev3HhiS3sp02av2ev3HloFFFS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evFS3sp02av2evS3sp02av2ev3HloFS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2ev3HloS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HhiFS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2ev3HhiFS3sp02av2ev3HhiS3sp02av2ev3HloFS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HloFS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3Hlo". (* [comment removed for export] *)
-  #[using="Hva Hve Hlo Hhi Hal"] Lemma fin_c7 : ltac2:(CDefT.buildp (gd_tbl_P_startup4 ()) "PG,P,$1<.SpP,(1=.$11.R1.)Pregs,(1>.&5.(:.&40.))Prom,P,(:.&40.)(;.(:.&8.))Ps1v,(:.&40.)Ptid,(:.&40.)P,(1?.Vsp0,VJb,)P,(7.(:.&40.)(20.R5.(21.&5.+2.$22.))(15.&40.(23.(2.&40.Vsp0,)+1:0.)))P,(7.(:.&40.)(20.R6.(21.&5.+3.$22.))(15.&40.+10800.))P,(7.(:.&40.)(20.R7.(21.&5.+4.$22.))(15.&40.+599<8.))P,(7.(:.&40.)(20.R8.(21.&5.+13.$22.))(15.&40.=))P,(7.(:.&40.)(20.R9.(21.&5.+14.$22.))(15.&40.=))P,(7.(:.&40.)(20.R:.(21.&5.+15.$22.))(15.&40.=))P,(7.(:.&40.)(20.R;.(21.&5.+16.$22.))(15.&40.=))P,(7.(:.&40.)(20.R<.(21.&5.+17.$22.))(15.&40.=))P,(7.(:.&40.)(20.R=.(21.&5.+18.$22.))(15.&40.=))P,(7.(:.&40.)(20.R>.(21.&5.+19.$22.))(15.&40.=))P,(7.(:.&40.)(20.R?.(21.&5.+1:.$22.))(15.&40.=))P,(7.(:.&40.)(20.R10.(21.&5.+1;.$22.))(15.&40.=))P,Pregs',(1>.&5.(:.&40.))P,(7.(:.&40.)(20.R1.(21.&5.+1.$22.))(15.&40.=))P,(7.(:.&40.)(20.R2.(21.&5.+2.$22.))Vsp0,)P,(7.(:.&40.)(20.R3.(21.&5.+3.$22.))(15.&40.+10800.))P,(7.(:.&40.)(20.R4.(21.&5.+4.$22.))(15.&40.+599<8.))P,(7.(:.&40.)(20.R5.(21.&5.+8.$22.))(15.&40.=))P,(7.(:.&40.)(20.R6.(21.&5.+9.$22.))(15.&40.=))P,(7.(:.&40.)(20.R7.(21.&5.+:.$22.))(15.&40.+1<=<<.))P,(7.(:.&40.)(20.R8.(21.&5.+;.$22.))(33.Vav,))P,(7.(:.&40.)(20.R9.(21.&5.+<.$22.))(15.&40.(5.(2.&40.Vsp0,)+8.)))P,(7.(:.&40.)(20.R:.(21.&5.+12.$22.))(15.&40.=))P,(7.(:.&40.)(20.R;.(21.&5.+13.$22.))(15.&40.=))P,(7.(:.&40.)(20.R<.(21.&5.+14.$22.))(15.&40.=))P,(7.(:.&40.)(20.R=.(21.&5.+15.$22.))(15.&40.=))P,(7.(:.&40.)(20.R>.(21.&5.+16.$22.))(15.&40.=))P,(7.(:.&40.)(20.R?.(21.&5.+17.$22.))(15.&40.=))P,(7.(:.&40.)(20.R10.(21.&5.+18.$22.))(15.&40.=))P,(7.(:.&40.)(20.R11.(21.&5.+19.$22.))(15.&40.=))P,(7.(:.&40.)(20.R12.(21.&5.+1:.$22.))(15.&40.=))P,(7.(:.&40.)(20.R13.(21.&5.+1;.$22.))(15.&40.=))P,(24.Lr,(:.&5.)(25.(:.&5.)R1.(26.(:.&5.)(21.&5.+1.$22.)(26.(:.&5.)(21.&5.+2.$22.)(26.(:.&5.)(21.&5.+6.$22.)(26.(:.&5.)(21.&5.+8.$22.)(26.(:.&5.)(21.&5.+9.$22.)(26.(:.&5.)(21.&5.+:.$22.)(26.(:.&5.)(21.&5.+;.$22.)(26.(:.&5.)(21.&5.+<.$22.)(26.(:.&5.)(21.&5.+12.$22.)(27.(:.&5.))))))))))))R25.R14.)A1.R28.(28.$29.R15.(21.&40.+3;;6<.$22.)(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2;.Vsp0,Vav,Vev,Vuid,Vhw,(2<.Vsp0,Vav,VJb,))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:4.)))(15.&40.(23.(2.&40.Vsp0,)+1;0.))(2=.#8.(2>.Vsp0,Vav,Vev,)))(15.&40.(23.(2.&40.Vsp0,)+1;8.))(2=.#8.R24.))(15.&40.(23.(2.&40.Vsp0,)+1<0.))(2=.#8.(15.&40.+79<50.)))(15.&40.(23.(2.&40.Vsp0,)+1<8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=0.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:<.)))(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2?.Vsp0,Vav,Vev,Vhw,)(15.&40.+799?0.)(2=.#8.(15.&40.=)))(15.&40.+79:00.)(2=.#8.(15.&40.=)))(15.&40.+799?8.)(2=.#8.(15.&40.+8.)))(15.&40.+79<68.)(2=.#8.(15.&40.+>0.)))(15.&40.+79<70.)(2=.#8.(15.&40.+8.)))(15.&40.+599=8.)(2=.#8.(15.&40.=)))(15.&40.+599<0.)(2=.#8.(15.&40.+599=8.)))(15.&40.+59900.)(2=.#8.(15.&40.+59900.)))(15.&40.+79<50.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.))))(15.&40.+59928.)(2=.#4.(15.&40.+2.)))(15.&40.+59920.)(2=.#4.R23.))(15.&40.+59998.)(2=.#8.(15.&40.+79<88.)))(15.&40.+59978.)(2=.#8.(15.&40.+59978.)))(15.&40.+59908.)(2=.#8.(15.&40.+59900.)))(15.&40.+59910.)(2=.#8.(15.&40.+59900.)))(15.&40.+59918.)(2=.#8.(15.&40.=)))(15.&40.+79<30.)(2=.#4.(30.Vrdraw,)))(15.&40.+79<34.)(2=.#4.(31.Vrdraw,)))(15.&40.+79<31.)(26.(:.&8.)(15.&8.=)(27.(:.&8.))))(15.&40.+599;8.)(2=.#8.(32.Vrdraw,))))R25.)A1.R14.(28.$29.R12.(21.&40.+3;9:<.$22.)(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2;.Vsp0,Vav,Vev,Vuid,Vhw,(2<.Vsp0,Vav,VJb,))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:4.)))(15.&40.(23.(2.&40.Vsp0,)+1;0.))(2=.#8.(2>.Vsp0,Vav,Vev,)))(15.&40.(23.(2.&40.Vsp0,)+1;8.))(2=.#8.R10.))(15.&40.(23.(2.&40.Vsp0,)+1<0.))(2=.#8.(15.&40.+79<50.)))(15.&40.(23.(2.&40.Vsp0,)+1<8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=0.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:<.)))(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2?.Vsp0,Vav,Vev,Vhw,)(15.&40.+799?0.)(2=.#8.(15.&40.=)))(15.&40.+79:00.)(2=.#8.(15.&40.=)))(15.&40.+799?8.)(2=.#8.(15.&40.+8.)))(15.&40.+79<68.)(2=.#8.(15.&40.+>0.)))(15.&40.+79<70.)(2=.#8.(15.&40.+8.)))(15.&40.+599=8.)(2=.#8.(15.&40.=)))(15.&40.+599<0.)(2=.#8.(15.&40.+599=8.)))(15.&40.+59900.)(2=.#8.(15.&40.+59900.)))(15.&40.+79<50.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.))))(15.&40.+59928.)(2=.#4.(15.&40.+2.)))(15.&40.+59920.)(2=.#4.R?.))(15.&40.+59998.)(2=.#8.(15.&40.+79<88.)))(15.&40.+59978.)(2=.#8.(15.&40.+59978.)))(15.&40.+59908.)(2=.#8.(15.&40.+59900.)))(15.&40.+59910.)(2=.#8.(15.&40.+59900.)))(15.&40.+59918.)(2=.#8.(15.&40.=)))(15.&40.+79<30.)(2=.#4.(30.Vrdraw,)))(15.&40.+79<34.)(2=.#4.(31.Vrdraw,)))(15.&40.+79<31.)(26.(:.&8.)(15.&8.=)(27.(:.&8.))))(15.&40.+599;8.)(2=.#8.(32.Vrdraw,))))R11.)")
-(* [comment removed for export] *).
+  Lemma fin_c7 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+    wfJ sp0 Jb ->
+    getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 416) ->
+    getr regs 3 = Z_to_bv 64 67584 ->
+    getr regs 4 = Z_to_bv 64 367048 ->
+    getr regs 19 = Z_to_bv 64 0 ->
+    getr regs 20 = Z_to_bv 64 0 ->
+    getr regs 21 = Z_to_bv 64 0 ->
+    getr regs 22 = Z_to_bv 64 0 ->
+    getr regs 23 = Z_to_bv 64 0 ->
+    getr regs 24 = Z_to_bv 64 0 ->
+    getr regs 25 = Z_to_bv 64 0 ->
+    getr regs 26 = Z_to_bv 64 0 ->
+    getr regs 27 = Z_to_bv 64 0 ->
+    (forall regs',
+        getr regs' 1 = Z_to_bv 64 0 ->
+        getr regs' 2 = sp0 ->
+        getr regs' 3 = Z_to_bv 64 67584 ->
+        getr regs' 4 = Z_to_bv 64 367048 ->
+        getr regs' 8 = Z_to_bv 64 0 ->
+        getr regs' 9 = Z_to_bv 64 0 ->
+        getr regs' 10 = Z_to_bv 64 118220 ->
+        getr regs' 11 = (argc_w inp) ->
+        getr regs' 12 = Z_to_bv 64 (bv_unsigned sp0 + 8) ->
+        getr regs' 18 = Z_to_bv 64 0 ->
+        getr regs' 19 = Z_to_bv 64 0 ->
+        getr regs' 20 = Z_to_bv 64 0 ->
+        getr regs' 21 = Z_to_bv 64 0 ->
+        getr regs' 22 = Z_to_bv 64 0 ->
+        getr regs' 23 = Z_to_bv 64 0 ->
+        getr regs' 24 = Z_to_bv 64 0 ->
+        getr regs' 25 = Z_to_bv 64 0 ->
+        getr regs' 26 = Z_to_bv 64 0 ->
+        getr regs' 27 = Z_to_bv 64 0 ->
+        regs_agree (fun r => In r [1; 2; 6; 8; 9; 10; 11; 12; 18]%list) regs regs' ->
+        G (mkst regs' (0x3bb6c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244132))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 498768))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244140))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 498160) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498176) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498168) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 498792) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 498800) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 367064) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 367040) (word_to_le_bytes 8 (Z_to_bv 64 367064))) (Z_to_bv 64 366848) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 498768) ([Z_to_bv 8 1])) (Z_to_bv 64 366888) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 366880) (word_to_le_bytes 4 tid)) (Z_to_bv 64 367000) (word_to_le_bytes 8 (Z_to_bv 64 498824))) (Z_to_bv 64 366968) (word_to_le_bytes 8 (Z_to_bv 64 366968))) (Z_to_bv 64 366856) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366864) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498736) (word_to_le_bytes 4 (guard_lo rdraw))) (Z_to_bv 64 498740) (word_to_le_bytes 4 (guard_hi rdraw))) (Z_to_bv 64 498737) ([Z_to_bv 8 0])) (Z_to_bv 64 367032) (word_to_le_bytes 8 (canary_w rdraw)))) rom)) ->
+    G (mkst regs (0x3b9ac : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244132))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 498768))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244140))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 498160) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498176) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498168) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 498792) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 498800) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 367064) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 367040) (word_to_le_bytes 8 (Z_to_bv 64 367064))) (Z_to_bv 64 366848) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 498768) ([Z_to_bv 8 1])) (Z_to_bv 64 366888) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 366880) (word_to_le_bytes 4 tid)) (Z_to_bv 64 367000) (word_to_le_bytes 8 (Z_to_bv 64 498824))) (Z_to_bv 64 366968) (word_to_le_bytes 8 (Z_to_bv 64 366968))) (Z_to_bv 64 366856) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366864) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498736) (word_to_le_bytes 4 (guard_lo rdraw))) (Z_to_bv 64 498740) (word_to_le_bytes 4 (guard_hi rdraw))) (Z_to_bv 64 498737) ([Z_to_bv 8 0])) (Z_to_bv 64 367032) (word_to_le_bytes 8 (canary_w rdraw)))) rom).
   Proof.
     intros G HG regs rom s1v tid HJ H2 H3 H4 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
     pose proof len_av as Hlen. dpose rnd_bounds as (Hr1 & Hr2 & Hr3). pose proof (u64_range tid) as Htid.
     unfold J_aux, J_lsm, D_libc, aux_base, argv_w in *.
     eapply HG.
-    { ld_step F_3b94c D_3b94c (word_to_le_bytes 8 uid) uid ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
-      ld_step F_3b950 D_3b950 (word_to_le_bytes 8 uid) uid ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
+    { ld_step F_3b94c D_3b94c (word_to_le_bytes 8 uid) (in_uid inp) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
+      ld_step F_3b950 D_3b950 (word_to_le_bytes 8 uid) (in_uid inp) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       stepb_ft F_3b954 D_3b954 ltac:(pin; apply c_eq_refl).  (* [comment removed for export] *)
-      ld_step F_3b958 D_3b958 (zeros 8) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; peel; apply rdn_wbytes_zeros_in; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; unorm; lia) ltac:(reflexivity).  (* [comment removed for export] *)
-      ld_step F_3b95c D_3b95c (zeros 8) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; peel; apply rdn_wbytes_zeros_in; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; unorm; lia) ltac:(reflexivity).  (* [comment removed for export] *)
-      stepb_ft F_3b960 D_3b960 ltac:(pin; cond_compute).  (* [comment removed for export] *)
+      ld_step F_3b958 D_3b958 (word_to_le_bytes 8 (in_gid inp)) (in_gid inp) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
+      ld_step F_3b95c D_3b95c (word_to_le_bytes 8 (in_gid inp)) (in_gid inp) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
+      stepb_ft F_3b960 D_3b960 ltac:(pin; first [apply c_eq_refl | cond_compute]).  (* [comment removed for export] *)
       ld_step F_3b964 D_3b964 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       stepb_tk F_3b968 D_3b968 ltac:(pin; cond_compute).  (* [comment removed for export] *)
       ld_step F_3ba48 D_3ba48 (word_to_le_bytes 8 (Z_to_bv 64 244544)) (Z_to_bv 64 244544) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       ld_step F_3ba4c D_3ba4c (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned sp0 + 8))) (Z_to_bv 64 (bv_unsigned sp0 + 8)) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
-      ld_step F_3ba50 D_3ba50 (word_to_le_bytes 8 (argc_w av)) (argc_w av) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
+      ld_step F_3ba50 D_3ba50 (word_to_le_bytes 8 (argc_w inp)) (argc_w inp) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       ld_step F_3ba54 D_3ba54 (word_to_le_bytes 8 (Z_to_bv 64 118220)) (Z_to_bv 64 118220) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       sv F_3ba58 D_3ba58 (Z_to_bv 64 (bv_unsigned sp0 - 32)).  (* [comment removed for export] *)
       stepret F_3ba5c D_3ba5c (0x3bb40 : word) ltac:(pin; first [reflexivity | bveq]).  (* [comment removed for export] *)
       sn F_3bae0 D_3bae0.  (* [comment removed for export] *)
       sn F_3bae4 D_3bae4.  (* [comment removed for export] *)
       sn F_3bae8 D_3bae8.  (* [comment removed for export] *)
-      sv F_3baec D_3baec (argc_w av).  (* [comment removed for export] *)
+      sv F_3baec D_3baec (argc_w inp).  (* [comment removed for export] *)
       sv F_3baf0 D_3baf0 (Z_to_bv 64 (bv_unsigned sp0 + 8)).  (* [comment removed for export] *)
       ld_step F_3baf4 D_3baf4 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       ld_step F_3baf8 D_3baf8 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
@@ -184,11 +258,48 @@ Section P6.
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "0150?L13222933633.44L15270767571.44L16325727080.44L16462298618.44L17993559016.44L18821165284.44L21004103780.44L21307062611.44L21972523471.44L22708664777.44L23149777314.44L24426667471.44L26532606056.44L27023591396.44L27324189907.44L29090781813.44L29100437079.44L29749826298.44L29983743749.44L31332446948.44L32374490212.44L33025807716.44L33326404179.44L34584847023.44L37242852055.44L37296702052.44L38101370344.44L38407023080.44L38639028483.44L38862020559.44L39348019667.44L39769201768.44L419710052.44  L44811340938.44L45367015251.44L47247759976.44L47907027919.44L48828588495.44L50374016975.44L51094323876.44L51299771855.44L51403283155.44L5263880036.44 L52894903283.44L53381666426.44L53945866049.44L55786807528.44L56872023178.44L57420441683.44L59610551524.44L60393679844.44L61406026212.44L62630597434.44L63120226020.44L63422660563.44L63733409537.44L63988390273.44L64024881914.44L64231688061.44L65646852708.44L67719537615.44L68360020353.44L68434901719.44L724766035.44  L7786679016.44 L8268844772.44 L8847168872.44 L891354250.44  L8946720612.44 00000;00J00Y00d01301>01I01X01c02;02O02Z02i03403C03N03]03h03i04404?04J04Y04Z04i05405C05R05j06506D06S06^06i07807G07R07]07h08D08O08^08i09409?09J09Y09d0:30:>0:I0:T0:_0:j0;90;D0;O0;Z0;e0<00<;0<F0<U0<d0=30=>0=M0=X0=cS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3Hlo4Hlen3Hr1S3sp02av2ev3Hlo4HlenS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HloS3sp02av2evFS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HloFS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3Hlo4Hlen3Hr1S3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3Hlo3Hhi4Hlen3Hr1S3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev". (* [comment removed for export] *)
-  #[using="Hva Hve Hlo Hhi Hal"] Lemma fin_c8 : ltac2:(CDefT.buildp (gd_tbl_P_startup4 ()) "PG,P,$1<.SpP,(1=.$11.R1.)Pregs,(1>.&5.(:.&40.))Prom,P,(:.&40.)(;.(:.&8.))Ps1v,(:.&40.)Ptid,(:.&40.)P,(1?.Vsp0,VJb,)P,(7.(:.&40.)(20.R5.(21.&5.+1.$22.))(15.&40.=))P,(7.(:.&40.)(20.R6.(21.&5.+2.$22.))Vsp0,)P,(7.(:.&40.)(20.R7.(21.&5.+3.$22.))(15.&40.+10800.))P,(7.(:.&40.)(20.R8.(21.&5.+4.$22.))(15.&40.+599<8.))P,(7.(:.&40.)(20.R9.(21.&5.+8.$22.))(15.&40.=))P,(7.(:.&40.)(20.R:.(21.&5.+9.$22.))(15.&40.=))P,(7.(:.&40.)(20.R;.(21.&5.+:.$22.))(15.&40.+1<=<<.))P,(7.(:.&40.)(20.R<.(21.&5.+;.$22.))(33.Vav,))P,(7.(:.&40.)(20.R=.(21.&5.+<.$22.))(15.&40.(5.(2.&40.Vsp0,)+8.)))P,(7.(:.&40.)(20.R>.(21.&5.+12.$22.))(15.&40.=))P,(7.(:.&40.)(20.R?.(21.&5.+13.$22.))(15.&40.=))P,(7.(:.&40.)(20.R10.(21.&5.+14.$22.))(15.&40.=))P,(7.(:.&40.)(20.R11.(21.&5.+15.$22.))(15.&40.=))P,(7.(:.&40.)(20.R12.(21.&5.+16.$22.))(15.&40.=))P,(7.(:.&40.)(20.R13.(21.&5.+17.$22.))(15.&40.=))P,(7.(:.&40.)(20.R14.(21.&5.+18.$22.))(15.&40.=))P,(7.(:.&40.)(20.R15.(21.&5.+19.$22.))(15.&40.=))P,(7.(:.&40.)(20.R16.(21.&5.+1:.$22.))(15.&40.=))P,(7.(:.&40.)(20.R17.(21.&5.+1;.$22.))(15.&40.=))P,Pregs',(1>.&5.(:.&40.))P,(7.(:.&40.)(20.R1.(21.&5.+1.$22.))(15.&40.+3;:?0.))P,(7.(:.&40.)(20.R2.(21.&5.+2.$22.))(15.&40.(23.(2.&40.Vsp0,)+50.)))P,(7.(:.&40.)(20.R3.(21.&5.+3.$22.))(15.&40.+10800.))P,(7.(:.&40.)(20.R4.(21.&5.+4.$22.))(15.&40.+599<8.))P,(7.(:.&40.)(20.R5.(21.&5.+8.$22.))(15.&40.+44<60.))P,(7.(:.&40.)(20.R6.(21.&5.+9.$22.))(15.&40.+44<58.))P,(7.(:.&40.)(20.R7.(21.&5.+12.$22.))(15.&40.+1<=<<.))P,(7.(:.&40.)(20.R8.(21.&5.+13.$22.))(15.&40.(5.(5.(2.&40.Vsp0,)+10.)(34.+8.(16.(35.(?.(:.&8.))Vav,))))))P,(7.(:.&40.)(20.R9.(21.&5.+14.$22.))(15.&40.=))P,(7.(:.&40.)(20.R:.(21.&5.+15.$22.))(15.&40.=))P,(7.(:.&40.)(20.R;.(21.&5.+16.$22.))(15.&40.=))P,(7.(:.&40.)(20.R<.(21.&5.+17.$22.))(15.&40.=))P,(7.(:.&40.)(20.R=.(21.&5.+18.$22.))(15.&40.=))P,(7.(:.&40.)(20.R>.(21.&5.+19.$22.))(15.&40.=))P,(7.(:.&40.)(20.R?.(21.&5.+1:.$22.))(15.&40.=))P,(7.(:.&40.)(20.R10.(21.&5.+1;.$22.))(15.&40.=))P,(24.Lr,(:.&5.)(25.(:.&5.)R1.(26.(:.&5.)(21.&5.+1.$22.)(26.(:.&5.)(21.&5.+2.$22.)(26.(:.&5.)(21.&5.+8.$22.)(26.(:.&5.)(21.&5.+9.$22.)(26.(:.&5.)(21.&5.+:.$22.)(26.(:.&5.)(21.&5.+;.$22.)(26.(:.&5.)(21.&5.+12.$22.)(26.(:.&5.)(21.&5.+13.$22.)(27.(:.&5.)))))))))))R29.R11.)A1.R2<.(28.$29.R12.(21.&40.+1<<<8.$22.)(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2;.Vsp0,Vav,Vev,Vuid,Vhw,(2<.Vsp0,Vav,VJb,))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:4.)))(15.&40.(23.(2.&40.Vsp0,)+1;0.))(2=.#8.(2>.Vsp0,Vav,Vev,)))(15.&40.(23.(2.&40.Vsp0,)+1;8.))(2=.#8.R28.))(15.&40.(23.(2.&40.Vsp0,)+1<0.))(2=.#8.(15.&40.+79<50.)))(15.&40.(23.(2.&40.Vsp0,)+1<8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=0.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:<.)))(15.&40.(23.(2.&40.Vsp0,)+8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+10.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+18.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+20.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+28.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+38.))(2=.#8.(15.&40.+3;;:0.)))(15.&40.(23.(2.&40.Vsp0,)+40.))(2=.#8.(15.&40.(5.(2.&40.Vsp0,)+8.))))(15.&40.(23.(2.&40.Vsp0,)+48.))(2=.#8.(33.Vav,)))(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2?.Vsp0,Vav,Vev,Vhw,)(15.&40.+799?0.)(2=.#8.(15.&40.=)))(15.&40.+79:00.)(2=.#8.(15.&40.=)))(15.&40.+799?8.)(2=.#8.(15.&40.+8.)))(15.&40.+79<68.)(2=.#8.(15.&40.+>0.)))(15.&40.+79<70.)(2=.#8.(15.&40.+8.)))(15.&40.+599=8.)(2=.#8.(15.&40.=)))(15.&40.+599<0.)(2=.#8.(15.&40.+599=8.)))(15.&40.+59900.)(2=.#8.(15.&40.+59900.)))(15.&40.+79<50.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.))))(15.&40.+59928.)(2=.#4.(15.&40.+2.)))(15.&40.+59920.)(2=.#4.R27.))(15.&40.+59998.)(2=.#8.(15.&40.+79<88.)))(15.&40.+59978.)(2=.#8.(15.&40.+59978.)))(15.&40.+59908.)(2=.#8.(15.&40.+59900.)))(15.&40.+59910.)(2=.#8.(15.&40.+59900.)))(15.&40.+59918.)(2=.#8.(15.&40.=)))(15.&40.+79<30.)(2=.#4.(30.Vrdraw,)))(15.&40.+79<34.)(2=.#4.(31.Vrdraw,)))(15.&40.+79<31.)(26.(:.&8.)(15.&8.=)(27.(:.&8.))))(15.&40.+599;8.)(2=.#8.(32.Vrdraw,))))R29.)A1.R1;.(28.$29.R19.(21.&40.+3;;6<.$22.)(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2;.Vsp0,Vav,Vev,Vuid,Vhw,(2<.Vsp0,Vav,VJb,))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:4.)))(15.&40.(23.(2.&40.Vsp0,)+1;0.))(2=.#8.(2>.Vsp0,Vav,Vev,)))(15.&40.(23.(2.&40.Vsp0,)+1;8.))(2=.#8.R17.))(15.&40.(23.(2.&40.Vsp0,)+1<0.))(2=.#8.(15.&40.+79<50.)))(15.&40.(23.(2.&40.Vsp0,)+1<8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=0.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:<.)))(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2?.Vsp0,Vav,Vev,Vhw,)(15.&40.+799?0.)(2=.#8.(15.&40.=)))(15.&40.+79:00.)(2=.#8.(15.&40.=)))(15.&40.+799?8.)(2=.#8.(15.&40.+8.)))(15.&40.+79<68.)(2=.#8.(15.&40.+>0.)))(15.&40.+79<70.)(2=.#8.(15.&40.+8.)))(15.&40.+599=8.)(2=.#8.(15.&40.=)))(15.&40.+599<0.)(2=.#8.(15.&40.+599=8.)))(15.&40.+59900.)(2=.#8.(15.&40.+59900.)))(15.&40.+79<50.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.))))(15.&40.+59928.)(2=.#4.(15.&40.+2.)))(15.&40.+59920.)(2=.#4.R16.))(15.&40.+59998.)(2=.#8.(15.&40.+79<88.)))(15.&40.+59978.)(2=.#8.(15.&40.+59978.)))(15.&40.+59908.)(2=.#8.(15.&40.+59900.)))(15.&40.+59910.)(2=.#8.(15.&40.+59900.)))(15.&40.+59918.)(2=.#8.(15.&40.=)))(15.&40.+79<30.)(2=.#4.(30.Vrdraw,)))(15.&40.+79<34.)(2=.#4.(31.Vrdraw,)))(15.&40.+79<31.)(26.(:.&8.)(15.&8.=)(27.(:.&8.))))(15.&40.+599;8.)(2=.#8.(32.Vrdraw,))))R18.)")
-(* [comment removed for export] *).
+  Lemma fin_c8 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+    wfJ sp0 Jb ->
+    getr regs 1 = Z_to_bv 64 0 ->
+    getr regs 2 = sp0 ->
+    getr regs 3 = Z_to_bv 64 67584 ->
+    getr regs 4 = Z_to_bv 64 367048 ->
+    getr regs 8 = Z_to_bv 64 0 ->
+    getr regs 9 = Z_to_bv 64 0 ->
+    getr regs 10 = Z_to_bv 64 118220 ->
+    getr regs 11 = (argc_w inp) ->
+    getr regs 12 = Z_to_bv 64 (bv_unsigned sp0 + 8) ->
+    getr regs 18 = Z_to_bv 64 0 ->
+    getr regs 19 = Z_to_bv 64 0 ->
+    getr regs 20 = Z_to_bv 64 0 ->
+    getr regs 21 = Z_to_bv 64 0 ->
+    getr regs 22 = Z_to_bv 64 0 ->
+    getr regs 23 = Z_to_bv 64 0 ->
+    getr regs 24 = Z_to_bv 64 0 ->
+    getr regs 25 = Z_to_bv 64 0 ->
+    getr regs 26 = Z_to_bv 64 0 ->
+    getr regs 27 = Z_to_bv 64 0 ->
+    (forall regs',
+        getr regs' 1 = Z_to_bv 64 244464 ->
+        getr regs' 2 = Z_to_bv 64 (bv_unsigned sp0 - 80) ->
+        getr regs' 3 = Z_to_bv 64 67584 ->
+        getr regs' 4 = Z_to_bv 64 367048 ->
+        getr regs' 8 = Z_to_bv 64 281696 ->
+        getr regs' 9 = Z_to_bv 64 281688 ->
+        getr regs' 18 = Z_to_bv 64 118220 ->
+        getr regs' 19 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)) ->
+        getr regs' 20 = Z_to_bv 64 0 ->
+        getr regs' 21 = Z_to_bv 64 0 ->
+        getr regs' 22 = Z_to_bv 64 0 ->
+        getr regs' 23 = Z_to_bv 64 0 ->
+        getr regs' 24 = Z_to_bv 64 0 ->
+        getr regs' 25 = Z_to_bv 64 0 ->
+        getr regs' 26 = Z_to_bv 64 0 ->
+        getr regs' 27 = Z_to_bv 64 0 ->
+        regs_agree (fun r => In r [1; 2; 8; 9; 10; 11; 18; 19]%list) regs regs' ->
+        G (mkst regs' (0x1ccc8 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244132))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 498768))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244140))) (Z_to_bv 64 (bv_unsigned sp0 - 8)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 16)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 24)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 32)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 40)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 (Z_to_bv 64 244640))) (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned sp0 + 8)))) (Z_to_bv 64 (bv_unsigned sp0 - 72)) (word_to_le_bytes 8 (argc_w inp))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 498160) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498176) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498168) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 498792) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 498800) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 367064) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 367040) (word_to_le_bytes 8 (Z_to_bv 64 367064))) (Z_to_bv 64 366848) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 498768) ([Z_to_bv 8 1])) (Z_to_bv 64 366888) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 366880) (word_to_le_bytes 4 tid)) (Z_to_bv 64 367000) (word_to_le_bytes 8 (Z_to_bv 64 498824))) (Z_to_bv 64 366968) (word_to_le_bytes 8 (Z_to_bv 64 366968))) (Z_to_bv 64 366856) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366864) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498736) (word_to_le_bytes 4 (guard_lo rdraw))) (Z_to_bv 64 498740) (word_to_le_bytes 4 (guard_hi rdraw))) (Z_to_bv 64 498737) ([Z_to_bv 8 0])) (Z_to_bv 64 367032) (word_to_le_bytes 8 (canary_w rdraw)))) rom)) ->
+    G (mkst regs (0x3bb6c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244132))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 498768))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244140))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 498160) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498176) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498168) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 498792) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 498800) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 367064) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 367040) (word_to_le_bytes 8 (Z_to_bv 64 367064))) (Z_to_bv 64 366848) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 498768) ([Z_to_bv 8 1])) (Z_to_bv 64 366888) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 366880) (word_to_le_bytes 4 tid)) (Z_to_bv 64 367000) (word_to_le_bytes 8 (Z_to_bv 64 498824))) (Z_to_bv 64 366968) (word_to_le_bytes 8 (Z_to_bv 64 366968))) (Z_to_bv 64 366856) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366864) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498736) (word_to_le_bytes 4 (guard_lo rdraw))) (Z_to_bv 64 498740) (word_to_le_bytes 4 (guard_hi rdraw))) (Z_to_bv 64 498737) ([Z_to_bv 8 0])) (Z_to_bv 64 367032) (word_to_le_bytes 8 (canary_w rdraw)))) rom).
   Proof.
     intros G HG regs rom s1v tid HJ H1 H2 H3 H4 H8 H9 H10 H11 H12 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
     pose proof len_av as Hlen. dpose rnd_bounds as (Hr1 & Hr2 & Hr3). pose proof (u64_range tid) as Htid.
@@ -201,7 +312,7 @@ Section P6.
       stw F_3bb1c D_3bb1c (Z_to_bv 64 (bv_unsigned sp0 - 32)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* [comment removed for export] *)
       stw F_3bb20 D_3bb20 (Z_to_bv 64 (bv_unsigned sp0 - 40)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* [comment removed for export] *)
       sv F_3bb24 D_3bb24 (Z_to_bv 64 (bv_unsigned sp0 + 8)).  (* [comment removed for export] *)
-      sv F_3bb28 D_3bb28 (argc_w av).  (* [comment removed for export] *)
+      sv F_3bb28 D_3bb28 (argc_w inp).  (* [comment removed for export] *)
       sn F_3bb2c D_3bb2c.  (* [comment removed for export] *)
       stepiv F_3bb30 D_3bb30 (Z_to_bv 64 (8 * Z.of_nat (length av))) ltac:(gres; pin; imm_norm; apply slli_argc).  (* [comment removed for export] *)
       sv F_3bb34 D_3bb34 (Z_to_bv 64 (bv_unsigned sp0 + 8 + 8 * Z.of_nat (length av))).  (* [comment removed for export] *)
@@ -210,7 +321,7 @@ Section P6.
       sv F_3ba60 D_3ba60 (Z_to_bv 64 (bv_unsigned sp0 - 80)).  (* [comment removed for export] *)
       stw F_3ba64 D_3ba64 (Z_to_bv 64 (bv_unsigned sp0 - 56)) (Z_to_bv 64 244640) ltac:(ok_win HJ).  (* [comment removed for export] *)
       stw F_3ba68 D_3ba68 (Z_to_bv 64 (bv_unsigned sp0 - 64)) (Z_to_bv 64 (bv_unsigned sp0 + 8)) ltac:(ok_win HJ).  (* [comment removed for export] *)
-      stw F_3ba6c D_3ba6c (Z_to_bv 64 (bv_unsigned sp0 - 72)) (argc_w av) ltac:(ok_win HJ).  (* [comment removed for export] *)
+      stw F_3ba6c D_3ba6c (Z_to_bv 64 (bv_unsigned sp0 - 72)) (argc_w inp) ltac:(ok_win HJ).  (* [comment removed for export] *)
       sn F_3ba70 D_3ba70.  (* [comment removed for export] *)
       stepret F_3b830 D_3b830 (0x3bad4 : word) ltac:(pin; first [reflexivity | bveq]).  (* [comment removed for export] *)
       sn F_3ba74 D_3ba74.  (* [comment removed for export] *)
@@ -224,11 +335,48 @@ Section P6.
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "0150?L10247363427.41L11305409019.41L12253246927.41L12477102436.41L12645338762.41L13613715771.41L14985637514.41L15270767571.41L15298324923.41L20521492723.41L21307062611.41L22661536599.41L23061425480.41L23095894.41   L23261402838.41L23370622330.41L27254267223.41L27324189907.41L29562355560.41L29983743749.41L30159980033.41L308120808.41  L31253910779.41L31332446948.41L3246962387.41 L32799413818.41L33326404179.41L34584847023.41L34782512932.41L34874051845.41L38084027899.41L38101370344.41L38291341412.41L38407023080.41L39042971876.41L39769201768.41L42308968911.41L43119095611.41L43608704577.41L44545561201.41L46897620485.41L48488790115.41L48772623226.41L49383676003.41L50666262075.41L50684830678.41L5074667707.41 L50819621889.41L50851895268.41L51236457403.41L5160683003.41 L52149222459.41L5263880036.41 L52894903283.41L52917138821.41L55236059579.41L60393679844.41L60445558901.41L60554993615.41L62284635653.41L62529192777.41L62742185174.41L63039977903.41L65573261923.41L68669369083.41L724766035.41  L7786679016.41 L8847168872.41 L9251767379.41 00000;00<00G00R00]00l01701F01U01`01o02>02Q02`02o03:03I03X03g03h04304B04C04N04]04h05705805T05_05`05o06:06I06T06c06n07=07H07S07^07i08408?08N08]08l09709B09Q09R09a09l0:70:B0:Q0:\0:g0;20;=0;U0;d0;e0<00<10<@0<O0<^0<mS3sp02av2evFS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HloS3sp02av2ev3Hlo3HhiS3sp02av2ev3HloS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HloS3sp02av2ev3HloS3sp02av2ev3HhiFS3sp02av2evS3sp02av2ev3HhiFS3sp02av2evS3sp02av2ev3HloS3sp02av2evS3sp02av2ev3HloFS3sp02av2ev3Hlo3Hhi4Hlen3Hr1S3sp02av2evFS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2ev3HhiFS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3HhiS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2evS3sp02av2ev3Hlo4Hlen3Hr1S3sp02av2ev3HloFS3sp02av2evFS3sp02av2ev3HloS3sp02av2ev3HhiS3sp02av2ev3HhiS3sp02av2ev3Hlo". (* [comment removed for export] *)
-  #[using="Hva Hve Hlo Hhi Hal"] Lemma fin_c9 : ltac2:(CDefT.buildp (gd_tbl_P_startup4 ()) "PG,P,$1<.SpP,(1=.$11.R1.)Pregs,(1>.&5.(:.&40.))Prom,P,(:.&40.)(;.(:.&8.))Ps1v,(:.&40.)Ptid,(:.&40.)P,(1?.Vsp0,VJb,)P,(7.(:.&40.)(20.R5.(21.&5.+1.$22.))(15.&40.+3;:?0.))P,(7.(:.&40.)(20.R6.(21.&5.+2.$22.))(15.&40.(23.(2.&40.Vsp0,)+50.)))P,(7.(:.&40.)(20.R7.(21.&5.+3.$22.))(15.&40.+10800.))P,(7.(:.&40.)(20.R8.(21.&5.+4.$22.))(15.&40.+599<8.))P,(7.(:.&40.)(20.R9.(21.&5.+8.$22.))(15.&40.+44<60.))P,(7.(:.&40.)(20.R:.(21.&5.+9.$22.))(15.&40.+44<58.))P,(7.(:.&40.)(20.R;.(21.&5.+12.$22.))(15.&40.+1<=<<.))P,(7.(:.&40.)(20.R<.(21.&5.+13.$22.))(15.&40.(5.(5.(2.&40.Vsp0,)+10.)(34.+8.(16.(35.(?.(:.&8.))Vav,))))))P,(7.(:.&40.)(20.R=.(21.&5.+14.$22.))(15.&40.=))P,(7.(:.&40.)(20.R>.(21.&5.+15.$22.))(15.&40.=))P,(7.(:.&40.)(20.R?.(21.&5.+16.$22.))(15.&40.=))P,(7.(:.&40.)(20.R10.(21.&5.+17.$22.))(15.&40.=))P,(7.(:.&40.)(20.R11.(21.&5.+18.$22.))(15.&40.=))P,(7.(:.&40.)(20.R12.(21.&5.+19.$22.))(15.&40.=))P,(7.(:.&40.)(20.R13.(21.&5.+1:.$22.))(15.&40.=))P,(7.(:.&40.)(20.R14.(21.&5.+1;.$22.))(15.&40.=))P,Pregs',(1>.&5.(:.&40.))P,(7.(:.&40.)(20.R1.(21.&5.+1.$22.))(15.&40.+3;;;0.))P,(7.(:.&40.)(20.R2.(21.&5.+2.$22.))(15.&40.(23.(2.&40.Vsp0,)+30.)))P,(7.(:.&40.)(20.R3.(21.&5.+3.$22.))(15.&40.+10800.))P,(7.(:.&40.)(20.R4.(21.&5.+4.$22.))(15.&40.+599<8.))P,(7.(:.&40.)(20.R5.(21.&5.+8.$22.))(15.&40.(5.(2.&40.Vsp0,)+8.)))P,(7.(:.&40.)(20.R6.(21.&5.+9.$22.))(33.Vav,))P,(7.(:.&40.)(20.R7.(21.&5.+:.$22.))(33.Vav,))P,(7.(:.&40.)(20.R8.(21.&5.+;.$22.))(15.&40.(5.(2.&40.Vsp0,)+8.)))P,(7.(:.&40.)(20.R9.(21.&5.+<.$22.))(15.&40.(5.(5.(2.&40.Vsp0,)+10.)(34.+8.(16.(35.(?.(:.&8.))Vav,))))))P,(7.(:.&40.)(20.R:.(21.&5.+12.$22.))(15.&40.+1<=<<.))P,(7.(:.&40.)(20.R;.(21.&5.+13.$22.))(15.&40.(5.(5.(2.&40.Vsp0,)+10.)(34.+8.(16.(35.(?.(:.&8.))Vav,))))))P,(7.(:.&40.)(20.R<.(21.&5.+14.$22.))(15.&40.=))P,(7.(:.&40.)(20.R=.(21.&5.+15.$22.))(15.&40.=))P,(7.(:.&40.)(20.R>.(21.&5.+16.$22.))(15.&40.=))P,(7.(:.&40.)(20.R?.(21.&5.+17.$22.))(15.&40.=))P,(7.(:.&40.)(20.R10.(21.&5.+18.$22.))(15.&40.=))P,(7.(:.&40.)(20.R11.(21.&5.+19.$22.))(15.&40.=))P,(7.(:.&40.)(20.R12.(21.&5.+1:.$22.))(15.&40.=))P,(7.(:.&40.)(20.R13.(21.&5.+1;.$22.))(15.&40.=))P,(24.Lr,(:.&5.)(25.(:.&5.)R1.(26.(:.&5.)(21.&5.+1.$22.)(26.(:.&5.)(21.&5.+2.$22.)(26.(:.&5.)(21.&5.+8.$22.)(26.(:.&5.)(21.&5.+9.$22.)(26.(:.&5.)(21.&5.+:.$22.)(26.(:.&5.)(21.&5.+;.$22.)(26.(:.&5.)(21.&5.+<.$22.)(27.(:.&5.))))))))))R29.R14.)A1.R2<.(28.$29.R15.(21.&40.+1<=<<.$22.)(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2;.Vsp0,Vav,Vev,Vuid,Vhw,(2<.Vsp0,Vav,VJb,))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:4.)))(15.&40.(23.(2.&40.Vsp0,)+1;0.))(2=.#8.(2>.Vsp0,Vav,Vev,)))(15.&40.(23.(2.&40.Vsp0,)+1;8.))(2=.#8.R28.))(15.&40.(23.(2.&40.Vsp0,)+1<0.))(2=.#8.(15.&40.+79<50.)))(15.&40.(23.(2.&40.Vsp0,)+1<8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=0.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:<.)))(15.&40.(23.(2.&40.Vsp0,)+8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+10.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+18.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+20.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+28.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+38.))(2=.#8.(15.&40.+3;;:0.)))(15.&40.(23.(2.&40.Vsp0,)+40.))(2=.#8.(15.&40.(5.(2.&40.Vsp0,)+8.))))(15.&40.(23.(2.&40.Vsp0,)+48.))(2=.#8.(33.Vav,)))(15.&40.(23.(2.&40.Vsp0,)+58.))(2=.#8.(15.&40.+3;:?0.)))(15.&40.(23.(2.&40.Vsp0,)+60.))(2=.#8.(15.&40.+44<60.)))(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2?.Vsp0,Vav,Vev,Vhw,)(15.&40.+799?0.)(2=.#8.(15.&40.=)))(15.&40.+79:00.)(2=.#8.(15.&40.=)))(15.&40.+799?8.)(2=.#8.(15.&40.+8.)))(15.&40.+79<68.)(2=.#8.(15.&40.+>0.)))(15.&40.+79<70.)(2=.#8.(15.&40.+8.)))(15.&40.+599=8.)(2=.#8.(15.&40.=)))(15.&40.+599<0.)(2=.#8.(15.&40.+599=8.)))(15.&40.+59900.)(2=.#8.(15.&40.+59900.)))(15.&40.+79<50.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.))))(15.&40.+59928.)(2=.#4.(15.&40.+2.)))(15.&40.+59920.)(2=.#4.R27.))(15.&40.+59998.)(2=.#8.(15.&40.+79<88.)))(15.&40.+59978.)(2=.#8.(15.&40.+59978.)))(15.&40.+59908.)(2=.#8.(15.&40.+59900.)))(15.&40.+59910.)(2=.#8.(15.&40.+59900.)))(15.&40.+59918.)(2=.#8.(15.&40.=)))(15.&40.+79<30.)(2=.#4.(30.Vrdraw,)))(15.&40.+79<34.)(2=.#4.(31.Vrdraw,)))(15.&40.+79<31.)(26.(:.&8.)(15.&8.=)(27.(:.&8.))))(15.&40.+599;8.)(2=.#8.(32.Vrdraw,)))(15.&40.+49820.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.)))))R29.)A1.R18.(28.$29.R16.(21.&40.+1<<<8.$22.)(12.Vsp0,(13.$14.Vsp0,Vav,Vev,Vuid,Vhw,Vrdraw,)(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2;.Vsp0,Vav,Vev,Vuid,Vhw,(2<.Vsp0,Vav,VJb,))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:4.)))(15.&40.(23.(2.&40.Vsp0,)+1;0.))(2=.#8.(2>.Vsp0,Vav,Vev,)))(15.&40.(23.(2.&40.Vsp0,)+1;8.))(2=.#8.R14.))(15.&40.(23.(2.&40.Vsp0,)+1<0.))(2=.#8.(15.&40.+79<50.)))(15.&40.(23.(2.&40.Vsp0,)+1<8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=0.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1=8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+1:8.))(2=.#8.(15.&40.+3;9:<.)))(15.&40.(23.(2.&40.Vsp0,)+8.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+10.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+18.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+20.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+28.))(2=.#8.(15.&40.=)))(15.&40.(23.(2.&40.Vsp0,)+38.))(2=.#8.(15.&40.+3;;:0.)))(15.&40.(23.(2.&40.Vsp0,)+40.))(2=.#8.(15.&40.(5.(2.&40.Vsp0,)+8.))))(15.&40.(23.(2.&40.Vsp0,)+48.))(2=.#8.(33.Vav,)))(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2:.(2?.Vsp0,Vav,Vev,Vhw,)(15.&40.+799?0.)(2=.#8.(15.&40.=)))(15.&40.+79:00.)(2=.#8.(15.&40.=)))(15.&40.+799?8.)(2=.#8.(15.&40.+8.)))(15.&40.+79<68.)(2=.#8.(15.&40.+>0.)))(15.&40.+79<70.)(2=.#8.(15.&40.+8.)))(15.&40.+599=8.)(2=.#8.(15.&40.=)))(15.&40.+599<0.)(2=.#8.(15.&40.+599=8.)))(15.&40.+59900.)(2=.#8.(15.&40.+59900.)))(15.&40.+79<50.)(26.(:.&8.)(15.&8.+1.)(27.(:.&8.))))(15.&40.+59928.)(2=.#4.(15.&40.+2.)))(15.&40.+59920.)(2=.#4.R13.))(15.&40.+59998.)(2=.#8.(15.&40.+79<88.)))(15.&40.+59978.)(2=.#8.(15.&40.+59978.)))(15.&40.+59908.)(2=.#8.(15.&40.+59900.)))(15.&40.+59910.)(2=.#8.(15.&40.+59900.)))(15.&40.+59918.)(2=.#8.(15.&40.=)))(15.&40.+79<30.)(2=.#4.(30.Vrdraw,)))(15.&40.+79<34.)(2=.#4.(31.Vrdraw,)))(15.&40.+79<31.)(26.(:.&8.)(15.&8.=)(27.(:.&8.))))(15.&40.+599;8.)(2=.#8.(32.Vrdraw,))))R15.)")
-(* [comment removed for export] *).
+  Lemma fin_c9 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+    wfJ sp0 Jb ->
+    getr regs 1 = Z_to_bv 64 244464 ->
+    getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 80) ->
+    getr regs 3 = Z_to_bv 64 67584 ->
+    getr regs 4 = Z_to_bv 64 367048 ->
+    getr regs 8 = Z_to_bv 64 281696 ->
+    getr regs 9 = Z_to_bv 64 281688 ->
+    getr regs 18 = Z_to_bv 64 118220 ->
+    getr regs 19 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)) ->
+    getr regs 20 = Z_to_bv 64 0 ->
+    getr regs 21 = Z_to_bv 64 0 ->
+    getr regs 22 = Z_to_bv 64 0 ->
+    getr regs 23 = Z_to_bv 64 0 ->
+    getr regs 24 = Z_to_bv 64 0 ->
+    getr regs 25 = Z_to_bv 64 0 ->
+    getr regs 26 = Z_to_bv 64 0 ->
+    getr regs 27 = Z_to_bv 64 0 ->
+    (forall regs',
+        getr regs' 1 = Z_to_bv 64 244656 ->
+        getr regs' 2 = Z_to_bv 64 (bv_unsigned sp0 - 48) ->
+        getr regs' 3 = Z_to_bv 64 67584 ->
+        getr regs' 4 = Z_to_bv 64 367048 ->
+        getr regs' 8 = Z_to_bv 64 (bv_unsigned sp0 + 8) ->
+        getr regs' 9 = (argc_w inp) ->
+        getr regs' 10 = (argc_w inp) ->
+        getr regs' 11 = Z_to_bv 64 (bv_unsigned sp0 + 8) ->
+        getr regs' 12 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)) ->
+        getr regs' 18 = Z_to_bv 64 118220 ->
+        getr regs' 19 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)) ->
+        getr regs' 20 = Z_to_bv 64 0 ->
+        getr regs' 21 = Z_to_bv 64 0 ->
+        getr regs' 22 = Z_to_bv 64 0 ->
+        getr regs' 23 = Z_to_bv 64 0 ->
+        getr regs' 24 = Z_to_bv 64 0 ->
+        getr regs' 25 = Z_to_bv 64 0 ->
+        getr regs' 26 = Z_to_bv 64 0 ->
+        getr regs' 27 = Z_to_bv 64 0 ->
+        regs_agree (fun r => In r [1; 2; 8; 9; 10; 11; 12]%list) regs regs' ->
+        G (mkst regs' (0x1cdcc : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244132))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 498768))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244140))) (Z_to_bv 64 (bv_unsigned sp0 - 8)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 16)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 24)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 32)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 40)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 (Z_to_bv 64 244640))) (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned sp0 + 8)))) (Z_to_bv 64 (bv_unsigned sp0 - 72)) (word_to_le_bytes 8 (argc_w inp))) (Z_to_bv 64 (bv_unsigned sp0 - 88)) (word_to_le_bytes 8 (Z_to_bv 64 244464))) (Z_to_bv 64 (bv_unsigned sp0 - 96)) (word_to_le_bytes 8 (Z_to_bv 64 281696))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 498160) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498176) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498168) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 498792) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 498800) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 367064) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 367040) (word_to_le_bytes 8 (Z_to_bv 64 367064))) (Z_to_bv 64 366848) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 498768) ([Z_to_bv 8 1])) (Z_to_bv 64 366888) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 366880) (word_to_le_bytes 4 tid)) (Z_to_bv 64 367000) (word_to_le_bytes 8 (Z_to_bv 64 498824))) (Z_to_bv 64 366968) (word_to_le_bytes 8 (Z_to_bv 64 366968))) (Z_to_bv 64 366856) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366864) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498736) (word_to_le_bytes 4 (guard_lo rdraw))) (Z_to_bv 64 498740) (word_to_le_bytes 4 (guard_hi rdraw))) (Z_to_bv 64 498737) ([Z_to_bv 8 0])) (Z_to_bv 64 367032) (word_to_le_bytes 8 (canary_w rdraw))) (Z_to_bv 64 301088) ([Z_to_bv 8 1]))) rom)) ->
+    G (mkst regs (0x1ccc8 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244132))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 498768))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 244140))) (Z_to_bv 64 (bv_unsigned sp0 - 8)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 16)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 24)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 32)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 40)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 (Z_to_bv 64 244640))) (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned sp0 + 8)))) (Z_to_bv 64 (bv_unsigned sp0 - 72)) (word_to_le_bytes 8 (argc_w inp))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 498160) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498176) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498168) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 498792) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 498800) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 367064) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 367040) (word_to_le_bytes 8 (Z_to_bv 64 367064))) (Z_to_bv 64 366848) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 498768) ([Z_to_bv 8 1])) (Z_to_bv 64 366888) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 366880) (word_to_le_bytes 4 tid)) (Z_to_bv 64 367000) (word_to_le_bytes 8 (Z_to_bv 64 498824))) (Z_to_bv 64 366968) (word_to_le_bytes 8 (Z_to_bv 64 366968))) (Z_to_bv 64 366856) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366864) (word_to_le_bytes 8 (Z_to_bv 64 366848))) (Z_to_bv 64 366872) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 498736) (word_to_le_bytes 4 (guard_lo rdraw))) (Z_to_bv 64 498740) (word_to_le_bytes 4 (guard_hi rdraw))) (Z_to_bv 64 498737) ([Z_to_bv 8 0])) (Z_to_bv 64 367032) (word_to_le_bytes 8 (canary_w rdraw)))) rom).
   Proof.
     intros G HG regs rom s1v tid HJ H1 H2 H3 H4 H8 H9 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
     pose proof len_av as Hlen. dpose rnd_bounds as (Hr1 & Hr2 & Hr3). pose proof (u64_range tid) as Htid.
@@ -258,10 +406,10 @@ Section P6.
       stepb_ft F_3ba94 D_3ba94 ltac:(pin; cond_compute).  (* [comment removed for export] *)
       ld_step F_3ba98 D_3ba98 (word_to_le_bytes 8 (Z_to_bv 64 244640)) (Z_to_bv 64 244640) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       ld_step F_3ba9c D_3ba9c (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned sp0 + 8))) (Z_to_bv 64 (bv_unsigned sp0 + 8)) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
-      ld_step F_3baa0 D_3baa0 (word_to_le_bytes 8 (argc_w av)) (argc_w av) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
+      ld_step F_3baa0 D_3baa0 (word_to_le_bytes 8 (argc_w inp)) (argc_w inp) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       sv F_3baa4 D_3baa4 (Z_to_bv 64 (bv_unsigned sp0 - 48)).  (* [comment removed for export] *)
       stepret F_3baa8 D_3baa8 (0x3bba0 : word) ltac:(pin; first [reflexivity | bveq]).  (* [comment removed for export] *)
-      sv F_3bb40 D_3bb40 (argc_w av).  (* [comment removed for export] *)
+      sv F_3bb40 D_3bb40 (argc_w inp).  (* [comment removed for export] *)
       sv F_3bb44 D_3bb44 (Z_to_bv 64 (bv_unsigned sp0 + 8)).  (* [comment removed for export] *)
       sv F_3bb48 D_3bb48 (Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av))).  (* [comment removed for export] *)
       stepjr F_3bb4c D_3bb4c (0x1cdcc : word) ltac:(gres; pin; first [reflexivity | bveq]).  (* [comment removed for export] *)
@@ -269,7 +417,6 @@ Section P6.
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 End P6.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the global set G_fr of fuzz_reply.asan's LLVMFuzzerTestOneInput, concretely, and
    every G_fr / errno fact that the W8 segment files (W_LLVMFuzzerTestOneInput_*.v, W_x*.v) take as a Section
    hypothesis, proved for it.  One witness that satisfies all of them at once is the check that those hypotheses do
-   not contradict each other (at 45b95aa1834 SEG_EXIT's HG_SL and HG_err did); at integration these lemmas discharge
+   not contradict each other (SEG_EXIT's HG_SL and HG_err did); at integration these lemmas discharge
    the hypotheses.
 
    G_fr_c = the program's 20 objects [addr, addr + plain size) (maps/EvBound/GLOBALS.md: exactly the complement of
@@ -13,11 +13,12 @@
    Premises, each a start-up / instance fact discharged at the milestone:
      HEV  : as_errno B = 0x5d93cc      - AF0m's ts_errno (TFIB_ERRNO = TFIB_TP - 164; maps/EvBound/GLOBALS.md);
      HOWN : the bytes of G_fr_c are not in as_owned_static B - AF0m's ts_owned (as_owned_static B = Tfib_owned_static),
-            by vm_compute at the milestone (AF0m is not in this tree).  Measured on cold/port-reply-startup
-            56fc92fe6b0's AF0m.v: 0 of G_fr_c's 513 bytes lie in its 61 Tfib_owned_static ranges, and Tfib_zero_shadow
+            by vm_compute at the milestone (AF0m is not in this tree).  Measured on a commit's
+             AF0m.v: 0 of G_fr_c's 513 bytes lie in its 61 Tfib_owned_static ranges, and Tfib_zero_shadow
             has the range (0x5d88e0, 0x180) that makes `azs B (rg_s fr_RG) (4 * ASRC)` (HZS / AZS_s) true under ts_zsh
             (script and output: port-reply's w8/vac/own-zsh-check.txt). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_G.v, with its module paths changed; 347 of its 535 lines of code are new or changed and 16 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The global set G_fr of fuzz_reply.asan's LLVMFuzzerTestOneInput, concretely, and
    every G_fr / errno / image fact that the W8 segment files (W_LLVMFuzzerTestOneInput_*.v, W_x*.v) take as a Section
    hypothesis, proved for it.  At integration these lemmas discharge the hypotheses.
@@ -27,10 +28,10 @@
    (the script hyps.py (sha256 88e1e8be1088; internal record) DIR, output hyps.txt (sha256 017859357386; internal record) beside it); (2) write ONE concrete witness
    for the shared objects and prove every
    hypothesis TEXT about them for it, in one file.  A single model that satisfies all of them rules out a
-   contradiction among them, across files too, which reading pairs never can.  This found, at 45b95aa1834, HG_SL
+   contradiction among them, across files too, which reading pairs never can.  This found, HG_SL
    (send_line's G_SL, which names errno, inside G_fr) against HG_err / HGRT (errno outside G_fr) in
    W_LLVMFuzzerTestOneInput_exit.v, W_xends.v, W_xrf.v, and HGRT false at such a G_fr in _write.v and W_xreset.v:
-   every one of those Sections was provable by `exfalso`.  Removed at cc0dc82f9f6 and f32b851cd82.
+   every one of those Sections was provable by `exfalso`.  Removed.
    What the witness does NOT check: the RINV / LS rule families (predicate Variables: RINV := False satisfies every
    rule, so the entry composition must exhibit RINV and LS at the entry state) and single-object instance facts.
 
@@ -42,11 +43,11 @@
    (a change of either AF0m row invalidates it; re-run the script own-zsh-check.py (sha256 5876c8bf7a46; internal record)
    [REF] against the new AF0m - exit 0 means the witness still holds):
      HEV  : as_errno B = 0x5d93cc - AF0m's `ts_errno : as_errno B = TFIB_ERRNO` with `TFIB_ERRNO : Z := 0x5d93cc`
-            (56fc92fe6b0, lib/A/AF0m.v:22 and :861; = TFIB_TP - 164, GLOBALS.md (sha256 d3788bf0c2b6; internal record) errno section);
+            (lib/A/AF0m.v:23 and :862; = TFIB_TP - 164, GLOBALS.md (sha256 d3788bf0c2b6; internal record) errno section);
      HOWN : the bytes of G_fr_c are not in as_owned_static B - AF0m's `ts_owned : as_owned_static B =
-            Tfib_owned_static` (same ref, AF0m.v:870), by vm_compute at the milestone (AF0m is not in this tree).
-            Measured on a working branch 56fc92fe6b0's AF0m.v: 0 of G_fr_c's 513 bytes lie in its 61
-            Tfib_owned_static ranges; and Tfib_zero_shadow (AF0m.v:815, `ts_zsh` :875) has the range
+            Tfib_owned_static` (same ref, AF0m.v:871), by vm_compute at the milestone (AF0m is not in this tree).
+            Measured on a working branch's AF0m.v: 0 of G_fr_c's 513 bytes lie in its 61
+            Tfib_owned_static ranges; and Tfib_zero_shadow (AF0m.v:816, `ts_zsh` :875) has the range
             (0x5d88e0, 0x180) that makes `azs B (rg_s fr_RG) (4 * ASRC)` (HZS / AZS_s) true
             (the script own-zsh-check.py (sha256 5876c8bf7a46; internal record), output own-zsh-check.txt (sha256 0cb6efd3ef2a; internal record) beside it);
      HPIN : (c_ROM_OUT's premise) every owned read-only byte is rom_pinned - AF0m's Tfib_const_abs pins all 408
@@ -120,7 +121,7 @@ Section img.
 Variable segs : list Segment.
 (* a byte the loaded image holds writable is writable in every memory, hidden or not (mrestrict H m gives None on a
    hidden byte, and wview then reads the segment): the shape W8ArmRemove measured (W_LLVMFuzzerTestOneInput_remove.v
-   probe_wr) and W6's writable_of_seg (W_relay_instance_gone.v:73), for any H *)
+   probe_wr) and W6's writable_of_seg (W_relay_instance_gone.v:74), for any H *)
 Lemma wr_of_seg : forall (H : word -> bool) (m : word -> option byte) a,
   wview segs (fun _ => None) (Z_to_bv 64 a) <> None -> writable_at segs (mrestrict H m) a.
 Proof.
@@ -227,7 +228,7 @@ Proof.
   exact (obj_c a (rng_cover_zr (rg_s fr_RG) (4 * ASRC) G_fr_obj ltac:(vm_compute; reflexivity) a Ha)).
 Qed.
 (* HG_RIG: W_LLVMFuzzerTestOneInput_gone_base.v's GN_HG_RIG - relay_instance_gone's G_RIG, the lock and
-   drain's G (W_contract.v:1349) *)
+   drain's G (W_contract.v:1350) *)
 Lemma c_HG_RIG : forall a, inG (G_RIG B fr_RG) a -> inG G_fr_c a.
 Proof.
   intros a Ha. unfold G_RIG in Ha. apply inG_cons in Ha as [Ha|Ha]; [|exact (c_HG_DR a Ha)].
@@ -313,7 +314,7 @@ Qed.
 Lemma c_XRF_ERRNO : 0x5d8b48 <= as_errno B /\ as_errno B + 4 <= 2 ^ 64.
 Proof. rewrite HEV. unfold TFIB_ERRNO_A. lia. Qed.
 (* the program globals ARM_event's tail carries across its calls: a verbatim copy of et_GL,
-   W_LLVMFuzzerTestOneInput_event.v:124 *)
+   W_LLVMFuzzerTestOneInput_event.v:125 *)
 Definition et_GL_c : list (Z * Z) :=
   [ (rg_s fr_RG, 4 * ASRC); (rg_src fr_RG, 8); (rg_nsrc fr_RG, 4); (rg_capsrc fr_RG, 4); (rg_gone fr_RG, 1);
     (rg_lock fr_RG, 12); (rg_wake fr_RG + 4, 4); (AG_NFD, 4); (AG_THREAD_UP, 1); (AG_LISTEN, 4);
@@ -372,11 +373,11 @@ Proof. intros HOWN HKEPT a Ha. exact (conj (c_img a Ha) (conj (HOWN a Ha) (HKEPT
 (* XRF_ROM_OUT's G_fr conjunct (W_xrf.v): no read-only byte is in G_fr_c *)
 Lemma c_rom_apart : forall a, in_rom segs a -> ~ inG G_fr_c a.
 Proof. intros a. rewrite G_fr_c_val. apply rom_apart_ok. vm_compute. reflexivity. Qed.
-(* ET_ROM_OUT: _event.v (the W_journal.v:396 rom_out text, as W_xrf.v's XRF_ROM_OUT): conjunct 1 is c_rom_apart;
+(* ET_ROM_OUT: _event.v (the W_journal.v:397 rom_out text, as W_xrf.v's XRF_ROM_OUT): conjunct 1 is c_rom_apart;
    conjuncts 3 and 4 are image checks (no read-only segment meets errno's 4 bytes or the sink's overflow head
    [AOFL_HEAD, AOFL_HEAD + 8)); conjunct 2 is the premise HPIN, an instance fact: every owned read-only byte is
    pinned by one of AR's AV const cells - AF0m's Tfib_const_abs pins all 408 owned read-only bytes of image A
-   (56fc92fe6b0; measured by rom_owned_check.py (sha256 13958cb8b3c1; internal record)), discharged at the
+   (measured by rom_owned_check.py (sha256 13958cb8b3c1; internal record)), discharged at the
    milestone from AF0m's ts_owned / ts_const *)
 Lemma c_ROM_OUT : (forall a, in_rom segs a -> Exists (in_zr a) (as_owned_static B) -> rom_pinned segs B a) ->
   rom_out segs B G_fr_c.
@@ -389,7 +390,7 @@ Proof.
     intros Ho. refine (rom_apart_ok segs [(AOFL_HEAD, 8)] a _ Ha _); [vm_compute; reflexivity|].
     apply inG_cons. left. unfold in_zr. cbn [fst snd]. exact Ho.
 Qed.
-(* relay_event's own G at _event.v's call site: a verbatim copy of et_GRE, W_LLVMFuzzerTestOneInput_event.v:101 *)
+(* relay_event's own G at _event.v's call site: a verbatim copy of et_GRE, W_LLVMFuzzerTestOneInput_event.v:102 *)
 Definition et_GRE_c : list (Z * Z) := (rg_lock fr_RG, 12) :: G_SL B fr_RG.
 (* RE's gx_ok side fact at _event.v's relay_event call: every et_GRE byte is in G_fr_c (the lock by c_HGlock, G_SL by
    c_HG_SL), then c_gx_ok's two halves; HOWN is the premise c_gx_ok takes (AF0m's ts_owned, see the header) *)
@@ -472,7 +473,7 @@ Proof.
     apply inG_cons. left. unfold in_zr. cbn [fst snd]. exact Hh.
 Qed.
 (* HRO: rom_out at G_fr_c.  Premise HPIN, an instance fact as HOWN is: every owned read-only byte is pinned
-   (AF0m's Tfib_const_abs cells cover all 408 owned read-only bytes; a working branch 56fc92fe6b0, checked by
+   (AF0m's Tfib_const_abs cells cover all 408 owned read-only bytes; a working branch, checked by
    the remove arm's pin script) *)
 Lemma c_HRO : (forall a, in_rom segs a -> Exists (in_zr a) (as_owned_static B) -> rom_pinned segs B a) ->
   rom_out segs B G_fr_c.
@@ -580,7 +581,7 @@ Qed.
 End g.
 
 (* ------------------------------------------------------------------ the re-based rom_out's instance obligation *)
-(* W_journal.v rom_out (a working branch 45a3cc9bdd0) asks that an owned read-only byte be pinned by AR's const
+(* W_journal.v rom_out (a working branch) asks that an owned read-only byte be pinned by AR's const
    cells (rom_pinned).  At the start-up instance (AF0m's TfibSyms) every such byte is: 408 bytes in 18 runs of
    Tfib_owned_static lie in fuzz_reply.asan's read-only LOADs, and each is an AV (ANum v) cell of Tfib_const_abs at
    an ANum address holding the image's byte (W1's rom_owned_check.py (sha256 13958cb8b3c1; internal record): 408 pinned, 0 wrong, 0 missing; run by

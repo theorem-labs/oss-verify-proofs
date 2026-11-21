@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: IMAGE-B segment KEY of fuzz_reply's relay_instance_gone (lib/B/W_relay_instance_gone_cx.v rig_key_stmt): the
    model and budget lemmas (prefix rkb_; pure, no machine state), ported from k3's image-A lib/A/W_rig_key.v
-   (a working branch 8cfff43c147); the cut predicates GIN / GOUT / gbud are the same text on both images.
+   (a working branch); the cut predicates GIN / GOUT / gbud are the same text on both images.
    Proves no function (kind: segment lemma).
    C3 (the peak form; the image-A twin's re-fit of lib/A/W_rig_key.v, mirrored): ge_room and gbud's room are over
    tr_peak; each key's gesture_end takes its room from the remaining trace's prefix (rkb_ker_split, rkb_ge_room), and
@@ -10,7 +10,7 @@
    lowers the live bytes by |key| + 1; rkb_gbud_end).  The tr_alloc-only helpers (rkb_alloc_head, rkb_slr_cap,
    rkb_slr_fin) are gone; rkb_er_sz / rkb_er_pn carry the peak and the net change across the addresses. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)), the RIGX round of
-   image B (the image-A twin: a Theorem Labs lane's lib/A/W_rig_key.v at f4cd818e98d, its rkb_ / rkm / rkc_ part): KEY's model
+   image B (the image-A twin: a Theorem Labs lane's lib/A/W_rig_key.v, its rkb_ / rkm / rkc_ part): KEY's model
    and budget over any allocator relation ARx with the room record RP, against the cx file's generic Section
    (lib/B/W_relay_instance_gone_cx.v; its Section c copied below).  gbud takes the cut's layout ly1 and carries the room
    round's two facts: the room rp_RM RP S1 (MT_rk's count of the requests still owed, on top of gxkr) and the live
@@ -23,6 +23,7 @@
    cphi P (ge_cap ..) - cphi P cap = tr_netP P (ge_tr ..) (rkc_ge_netP, from the round chain's equality rkc_slr_net)
    less the free's zb (P (|key| + 1)) (rkc_end_cnt), against the count peak's split (rkc_peak_split; rkb_gbud_end,
    rkb_gin_end, rkb_gout_end). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

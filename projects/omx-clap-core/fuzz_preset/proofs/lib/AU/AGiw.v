@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGiw.v (cold/c-asan-realloc-c5 ced28ed2383, file sha256 0b5b8464b6a9) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 3 image addresses moved by code-verified function pairs (2 port_addr_check 0767e70e074a MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py; 1 the tool cannot place or places wrongly, read out of image B itself); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGiw.v (file sha256 0b5b8464b6a9) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 3 image addresses moved by code-verified function pairs (2 port_addr_check 0767e70e074a MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py; 1 the tool cannot place or places wrongly, read out of image B itself); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seed of the g-path MISS arm of the frame-generic Allocate walk: the walk's environment E0 satisfies
    AGi4.MS_1 at Allocate's entry, where the registers [regsU] are REGS_G over the virtual regs0 (as AGj0.SEED_ok) and
    the memory is read through the miss view [mview] (no allocator model).  Ported from the released YFiw (SEEDM_ok
@@ -32,7 +33,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Ltac zlia := first [ lia | ceil; unfold zone3, zone3cases, in_app, app_addr, in_band_rw, TFIB_IMG_LO, TFIB_IMG_END, kLowShadowBeg, kLowShadowEnd, kHighShadowBeg, kHighShadowEnd, kHighMemBeg, ASAN_CEIL in *; lia ].
 
 (* The miss view.  lib/Reusable/AGif0n.v now carries it over the class fields (Record mview :148; the AIfaceM field
-   if_mview :276); this local copy is kept (lib/AU/AGim.v:158 / AGimWB.v:171 mview_iw convert to it).  The cells the miss seed MS_1 reads
+   if_mview :276); this local copy is kept (lib/AU/AGim.v:159 / AGimWB.v:172 mview_iw convert to it).  The cells the miss seed MS_1 reads
    (AGi4.MREG0): hview's layout / image / tsd / constant cells / instance fields / unwinding byte, and the class
    count = 0 (no cached chunk, no shadow, no junk: those regions of MREG0 are bare). *)
 Record mview (B : asyms) (W : world tfibsegs) (ly : alayout) (inst : Z) (mem : word -> option byte) (cl : Z) : Prop := {

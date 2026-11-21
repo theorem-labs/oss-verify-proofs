@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the class lemmas take the launch's kernel build (Amb), which target_vm reads. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,6 +12,7 @@ From OSSVerify.coturn.FuzzStunClient.images Require Import Plain.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import PropExec CatExec CatSim SeqExec StoreOk ShapeAlg.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import
   Spec TargetSpec TargetKDefs RefWorld RefTargetPre RefWorldK RefTargetPreK SymExec3 SymPlan SymPlanSoundA FContract RefTargetAssembly.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Amb.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import WalkFast.
@@ -34,6 +36,9 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 Definition TP0 (lo hi : Z) : Prop :=
   ref_tphase_hyps ->      (* [comment removed for export] *)
+  (* LPS 08b1429: target_vm reads the launch's kernel build ([init_reserved]), so the class
+     lemmas quantify the Amb; explicit binder, since TP0 is unfolded at its uses. *)
+  forall (AMB : Amb.Amb),
   forall (sp0 gm area brkv mas tid : Z) (content : list byte)
          (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (model : Model),
     target_pre sp0 gm area brkv mas tid content R M -> target_vm sp0 gm area VM -> SPSA.std_model VM model ->
@@ -43,6 +48,7 @@ Definition TP0 (lo hi : Z) : Prop :=
 (* [comment removed for export] *)
 Definition TPK (k lo hi : Z) : Prop :=
   ref_tphase_hyps ->      (* [comment removed for export] *)
+  forall (AMB : Amb.Amb),   (* LPS 08b1429: as TP0 *)
   forall (sp0 B area brkv mas tid : Z) (content : list byte)
          (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (model : Model),
     target_pre_k k sp0 B area brkv mas tid content R M -> target_vm_k k sp0 B area VM -> SPSA.std_model VM model ->
@@ -83,19 +89,19 @@ Definition ivsk {k : Z} (cls : list (tpck k)) : list (Z * Z) := map (fun c => (c
 Theorem tp0_dispatch : forall (cls : list tpc) (lo hi : Z),
   covers (ivs0 cls) lo hi = true -> TP0 lo hi.
 Proof.
-  intros cls lo hi Hc FC sp0 gm area brkv mas tid content R M VM model TP TV SM Hn.
+  intros cls lo hi Hc FC AMB sp0 gm area brkv mas tid content R M VM model TP TV SM Hn.
   destruct (covers_sound (ivs0 cls) lo hi (hdr_paylen content) Hc Hn) as (ab & Hin & Hab).
   unfold ivs0 in Hin. apply in_map_iff in Hin as (c & <- & Hin). cbn [fst snd] in Hab.
-  exact (c_ok c FC sp0 gm area brkv mas tid content R M VM model TP TV SM Hab).
+  exact (c_ok c FC AMB sp0 gm area brkv mas tid content R M VM model TP TV SM Hab).
 Qed.
 
 Theorem tpk_dispatch : forall (k : Z) (cls : list (tpck k)) (lo hi : Z),
   covers (ivsk cls) lo hi = true -> TPK k lo hi.
 Proof.
-  intros k cls lo hi Hc FC sp0 B area brkv mas tid content R M VM model TP TV SM Hn.
+  intros k cls lo hi Hc FC AMB sp0 B area brkv mas tid content R M VM model TP TV SM Hn.
   destruct (covers_sound (ivsk cls) lo hi (hdr_paylen content) Hc Hn) as (ab & Hin & Hab).
   unfold ivsk in Hin. apply in_map_iff in Hin as (c & <- & Hin). cbn [fst snd] in Hab.
-  exact (ck_ok c FC sp0 B area brkv mas tid content R M VM model TP TV SM Hab).
+  exact (ck_ok c FC AMB sp0 B area brkv mas tid content R M VM model TP TV SM Hab).
 Qed.
 
 (* [comment removed for export] *)

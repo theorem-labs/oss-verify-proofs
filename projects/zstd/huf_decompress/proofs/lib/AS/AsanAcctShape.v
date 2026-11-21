@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (4 recorded proofs replaced by written proofs (rz_step_restricted_T, rz_msteps_restricted_T, srz_step_restricted_T and 1 more); P_of_silent1 and SP_of_silent1 take the premise that no system call is pending and give rz_silent1 and srz_silent1 RomBase.sys_rob through sys_rob_instr; imports RomBase). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,6 +11,7 @@ From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import CatSim.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import ShapeAlg. (* [comment removed for export] *)
 From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import AsanAcct SpinAlg.
 From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
+From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import RomBase.
 Ltac2 kr_t_AsanAcctShape () := "C59OSSVerify5KrLib2AS8AsanAcct7node_okC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg7node_okC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4list00K47Corelib4Init5Logic2eq01I4ELinuxProcessSemantics?LinuxProcessSem3Run6config00I4ELinuxProcessSemantics?LinuxProcessSem5State5event00I47Corelib4Init9Datatypes4prod00C59OSSVerify5KrLib2AS8AsanAcctBrz_step_restrictedC1?~~~~~~~~~~~~~~~I47Corelib7Numbers7BinNums1Z00I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=machine_state00I4ELinuxProcessSemantics?LinuxProcessSem5State5Model00C59OSSVerify5KrLib2AS8ShapeAlg4TSetC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8AsanAcctErz_msteps_restricted'C1?~~~~~~~~~~~~~~~".
 Import ListNotations.
 Open Scope bv_scope.
@@ -27,8 +29,9 @@ Let P_of (T : TSet) : config -> Prop := fun c => realizes segs c T.
 
 Let P_of_silent1 (T : TSet) : forall c c',
     AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+    ms_svc_pending (cfg_ms c) = None ->
     P_of T c' -> P_of T c :=
-  fun c c' Hn Hr => rz_silent1 segs c c' T Hn Hr.
+  fun c c' Hn Hs Hr => rz_silent1 segs c c' T Hn (sys_rob_instr segs c Hs) Hr.
 
 Theorem rz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -39,7 +42,9 @@ Theorem rz_step_restricted_T : forall A ms msr' model T,
                   realizes segs (mkCfg (unrestrict H (ms_mem ms) msr') model') T) ->
   realizes segs (mkCfg ms model) T.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanAcctShape ()) ["WithSegs"] "h01Ah11Th25modelh32msh44msr'p;2p;1p;:g004Ej22Tg001`j11Tg004el:0Tg005hR0/20#1g006FR0g007Mg008Cp,4segsp,1Hp,2HHp,3Hwxp,4P_off0R1O1p,<P_of_silent1P1O1f4f3f2f1M:0W1W2X40W3W0o"). Qed.
+  intros A ms msr' model T.
+  exact (rz_step_restricted segs H HH Hwx (P_of T) (P_of_silent1 T) A ms msr' model).
+Qed.
 
 Theorem rz_msteps_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -51,14 +56,17 @@ Theorem rz_msteps_restricted_T : forall A ms msr' model T,
       realizes segs (mkCfg (unrestrict H (ms_mem ms) msr') model') T) ->
   realizes segs (mkCfg ms model) T.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanAcctShape ()) ["WithSegs"] "h01Ah11Th25modelh32msh44msr'p;2p;1p;:g004Ej22Tg001`j11Tg0098l:0Tg005hR0/20#1g006FR0g007Mg008Cp,4segsp,1Hp,2HHp,3Hwxp,4P_off0R1O1p,<P_of_silent1P1O1f4f3f2f1M:0W1W2X40W3W0o"). Qed.
+  intros A ms msr' model T.
+  exact (rz_msteps_restricted' segs H HH Hwx (P_of T) (P_of_silent1 T) A ms msr' model).
+Qed.
 (* [comment removed for export] *)
 Let SP_of (T : TSet) : config -> Prop := fun c => srealizes segs c T.
 
 Let SP_of_silent1 (T : TSet) : forall c c',
     AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+    ms_svc_pending (cfg_ms c) = None ->
     SP_of T c' -> SP_of T c :=
-  fun c c' Hn Hr => srz_silent1 segs c c' T Hn Hr.
+  fun c c' Hn Hs Hr => srz_silent1 segs c c' T Hn (sys_rob_instr segs c Hs) Hr.
 
 Theorem srz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -69,7 +77,9 @@ Theorem srz_step_restricted_T : forall A ms msr' model T,
                   srealizes segs (mkCfg (unrestrict H (ms_mem ms) msr') model') T) ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanAcctShape ()) ["WithSegs"] "h01Ah11Th25modelh32msh44msr'p;2p;1p;:g004Ej22Tg001`j11Tg004el:0Tg005hR0/20#1g006FR0g007Mg008Cp,4segsp,1Hp,2HHp,3Hwxp,5SP_off0R1O1p,=SP_of_silent1P1O1f4f3f2f1M:0W1W2X40W3W0o"). Qed.
+  intros A ms msr' model T.
+  exact (rz_step_restricted segs H HH Hwx (SP_of T) (SP_of_silent1 T) A ms msr' model).
+Qed.
 
 Theorem srz_msteps_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -81,5 +91,7 @@ Theorem srz_msteps_restricted_T : forall A ms msr' model T,
       srealizes segs (mkCfg (unrestrict H (ms_mem ms) msr') model') T) ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanAcctShape ()) ["WithSegs"] "h01Ah11Th25modelh32msh44msr'p;2p;1p;:g004Ej22Tg001`j11Tg0098l:0Tg005hR0/20#1g006FR0g007Mg008Cp,4segsp,1Hp,2HHp,3Hwxp,5SP_off0R1O1p,=SP_of_silent1P1O1f4f3f2f1M:0W1W2X40W3W0o"). Qed.
+  intros A ms msr' model T.
+  exact (rz_msteps_restricted' segs H HH Hwx (SP_of T) (SP_of_silent1 T) A ms msr' model).
+Qed.
 End WithSegs.

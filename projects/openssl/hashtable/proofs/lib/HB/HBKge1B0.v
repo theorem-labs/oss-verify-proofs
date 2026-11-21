@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it; the plans are renumbered to the new numbering). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -27,21 +28,22 @@ Section Kge1B0.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
   Let argv1 := nth 1 argv [].
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   #[local] Notation PIECE := (piece SV argH ISP fs).
   #[local] Notation FXHOLE := (fx_hole SV argH ISP fs).
-  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw c.
+  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw L c.
   #[local] Notation CHK1 := (ha1_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV1 SVF SVA).
 
   (* [comment removed for export] *)
@@ -135,7 +137,7 @@ Section Kge1B0.
     { intros h ch Hh. unfold C7B0_HS, C7B0_HS0 in Hh. destruct (Nat.eqb h 21) eqn:H21; [apply Nat.eqb_eq in H21; diet_injection Hh; left; split; [exact H21 | reflexivity]|].
       destruct (Nat.eqb h 25) eqn:HN; [|discriminate Hh]. apply Nat.eqb_eq in HN. diet_injection Hh. right. split; [exact HN | split; [discriminate | reflexivity]]. }
     pose proof (stepk_sd TT TA TN 25%nat ltac:(lia) (ION.IOT (ION.OFile 6 65535) 32 (Some (0, 32767)) (Some (0, 65529)) None None) 6 65535 eq_refl eq_refl HF (hdr_ok_k0 _ HF Hr)
-                  C7B0_HS c7b0_hs25 HHS Hn c7b0_IT c7b0_IT_ok c3b0_hs98 c7_top0 c7b0_shape c7b0_cert E R FULL m HC) as RZ.
+                  C7B0_HS c7b0_hs25 HHS Hn c7b0_IT c7b0_IT_ok c3b0_hs98 (HBReg.mplan c7_top0) c7b0_shape c7b0_cert E R FULL m HC) as RZ.
     rewrite c7b0_shape_eq in RZ. eapply crz_conseq; [exact RZ|]. cbn [sd].
     destruct (vals1_b0 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E FULL (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC)) as [U7 B2].
     apply t_eq_alt2; [exact (noent_eval E (m_fs m) argv1 U7 B2)|].
@@ -155,7 +157,7 @@ Section Kge1B0.
       assert (HHS : forall h ch, KPB0_HS h = Some ch -> (h = 21%nat /\ ch = c4b0_hs21) \/ (h = 101%nat /\ 101%nat <> 21%nat /\ ch = kpb0_hs101)).
       { intros h ch Hh. unfold KPB0_HS, KPB0_HS0 in Hh. destruct (Nat.eqb h 21) eqn:H21; [apply Nat.eqb_eq in H21; diet_injection Hh; left; split; [exact H21 | reflexivity]|]. destruct (Nat.eqb h 101) eqn:HN; [|discriminate Hh]. apply Nat.eqb_eq in HN. diet_injection Hh. right. split; [exact HN | split; [discriminate | reflexivity]]. }
       pose proof (stepk_sd TT TT_agree TT_nil 101%nat ltac:(lia) (ION.IOT (ION.OFile 65536 67108864) 32 None None None None) 65536 67108864 eq_refl eq_refl (conj HF flen_cap') (hdr_ok_simple _)
-                    KPB0_HS kpb0_hs101 HHS Hn kpb0_IT kpb0_IT_ok c3b0_hs98k kpb0_pl kpb0_shape kpb0_cert E R FULL m HC) as RZ.
+                    KPB0_HS kpb0_hs101 HHS Hn kpb0_IT kpb0_IT_ok c3b0_hs98k (HBReg.mplan kpb0_pl) kpb0_shape kpb0_cert E R FULL m HC) as RZ.
       rewrite kpb0_shape_eq in RZ. eapply crz_conseq; [exact RZ|]. cbn [sd].
       destruct (vals1_b0 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E FULL (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC)) as [U7 B2].
       apply t_eq_alt2; [exact (noent_eval E (m_fs m) argv1 U7 B2)|].

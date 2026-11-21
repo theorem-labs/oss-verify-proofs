@@ -1,5 +1,5 @@
 (** The walk of musl strcasecmp in the plain image (Prog/strcasecmp_c.v), written new for reac-pw/fuzz_segconf on the
-    pattern of omx-clap-core/fuzz_manifest's strncasecmp walk (lib/Prog/strncasecmp.v at 25e3d17bdb50): the same
+    pattern of omx-clap-core/fuzz_manifest's strncasecmp walk (lib/Prog/strncasecmp.v): the same
     loop without the counter. tolower is a premise (tolower_contract, Prog/tolower_c.v).
 
     Code (plain; the ubsan copy at 0x1f3c4 is the same 160 bytes):

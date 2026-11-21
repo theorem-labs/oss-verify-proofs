@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v at 57c6c35a3757 (the stage form of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v (the stage form of
    a walk with calls: a run to the `jal`, the callee's contract through SRr_bind, a fresh entry state at the return
    pc; tl_enter, tl_r234, tl_sp_of_cs) for reac-pw/fuzz_rate's image A: rate's pcs, registers, callees and contracts
    (lib/A/RtPgCSpec.v), the cut states of lib/A/RtPgSeg.v and the M02 seam of lib/A/RtPgM02Base.v; the asked[t]
    check, the two closed_list scans, the zone of the two .data.rel.ro tables and the latch of the decide loop are
    new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, the same loaded bytes). Proves no function

@@ -1,6 +1,6 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/InstP.v at da0a37fe570; the instances are taken at the symbol map of the ASan image A (IImgA). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/InstA.v at 92636bfca57; the module paths name reac-pw/fuzz_headamp (its IImgA is the symbol map of fuzz_headamp.asan). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/CJ/RL/I/InstA.v at a20012f42d99; the instances are taken at the symbol map of the ASan+UBSan image B (IImgB, fuzz_headamp.asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/InstP.v; the instances are taken at the symbol map of the ASan image A (IImgA). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/InstA.v; the module paths name reac-pw/fuzz_headamp (its IImgA is the symbol map of fuzz_headamp.asan). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/CJ/RL/I/InstA.v; the instances are taken at the symbol map of the ASan+UBSan image B (IImgB, fuzz_headamp.asan-ubsan). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.CJ.RL.Reloc Require Import RStep.

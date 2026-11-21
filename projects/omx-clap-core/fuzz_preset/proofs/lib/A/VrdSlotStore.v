@@ -38,7 +38,7 @@
    TWO SECTION VARIABLES, both image / instance facts, as VrdCurStore.v takes them: PST_IMG (alloc.c's statics are
    image bytes; discharged at prh_img_A by S1ImgA.v pst_in_img_A) and HW (`8 <= cf_head`; a Theorem Labs lane's
    preset_head_wide, lib/A/CfParamsPreset.v:95).
-   SET: a working branch on a working branch 7cc876957dd (record texts 265bfe65918). A-only: B sites not
+   SET: a working branch on a working branch (record texts). A-only: B sites not
    measured.
    Numerals: 144 (LENGTH, parse_items' frame, as VrdIElem.v states it), 56 / 24 / 8 (LENGTH: node, cursor, head word),
    2 ^ 44 / 2 ^ 47 / 2 ^ 64 (LENGTH: bounds). No ADDRESS literal. *)

@@ -1,4 +1,4 @@
-(* Ported from: a working branch 7ba11794c88 proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v:1-386 (a Theorem Labs lane,
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v:1-386 (a Theorem Labs lane,
    design/POISON.md), relocated to fuzz_state: module prefix fuzz_manifest -> fuzz_state only, plus this line. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

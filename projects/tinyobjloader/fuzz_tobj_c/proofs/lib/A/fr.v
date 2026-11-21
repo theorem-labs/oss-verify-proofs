@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (URNG, the end of the printed string inside the image, lowered from 2 ^ 47 - 16 to 2 ^ 47 - 10: the launch admits a stack top of 2 ^ 47 with the string last and a 1-byte exec file name at LPS 727298f3). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -64,7 +65,7 @@ Import ListNotations. Import MCHAddr. Import RegionAddr. Import ISLAddr.
 Close Scope bv_scope. Open Scope Z_scope.
 
 Definition URNG (v : positive) : sprop := ltac2:(tb__ "0|0|
-S23S21S43S69S1aVv;A1A3S19S38S34Z2Z2fA2Z10A2A1A2").
+S23S21S43S69S1aVv;A1A3S19S38S34Z2Z2fA2ZaA2A1A2").
 Definition big_facts_C (a : Z) (v : positive) : list sprop := ltac2:(tb__ "0|0|
 SbS17S3S17S76S1aVv;A1A1S3S17S75Va;Vv;A2S3S17S55Vv;A1SaS17A1A3A3A3SbS17S6aS6dA3A3").
 Definition T8C (a : Z) (T7 : axst) : axst := ltac2:(tb__ "0|0|

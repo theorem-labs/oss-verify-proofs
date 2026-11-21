@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact as a section hypothesis for the post's MInvIR, which minvir_split builds and minvir_dest takes apart). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -122,6 +123,7 @@ Local Abbreviation D0 := (@P.Mal_ameta__G1.Mal_ameta_I.D0 rho).
 Local Abbreviation rng_stk := (§7§ P.Mal_ameta__G1.Mal_ameta_I.rng_stk).
 Local Abbreviation rng_lit := (§7§ P.Mal_ameta__G1.Mal_ameta_I.rng_lit).
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : mW = rm rho.
 Hypothesis Hsm_pre : ltac2:(tb__ "0|0|
 S45S74Vrho;Sf4Se5A1ScSdSebA1Sf0Vtr;Sf1Vms;Vmd;A2A4A4").
@@ -1165,7 +1167,7 @@ SdSebA1SecOF_;F_;").
 
   Theorem post_ok_in posts : ltac2:(tb__ "0|0|
 Sd6S11S47S100A2ScS47S100Sf3Se5A1Sf5S74Sd9VX;VR;VU;Se9Vs;VL;A2VKc;A7A4Vposts;A3SffS74S75Vrho;Vposts;ScSdSebA1Sf0Vtr;Sf1VmsF;Vmd;A2A4A5F_;").
-  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd Hinit HmH HnH Hnm HpH Hpm Hpn Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1.
+  Proof using bv0 bv1 EmW Erd Evm Ewok HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd HI Hinit HKc HmH HMI HnH Hnm HpH Hpm Hpn Hrom Hsm_pre HsmF Htop Htp Hvd HXr rv0 rv1.
     intros HINP.
     destruct SPEC as (HI2 & Hmemb & Hkey & Hraw & Hfr & Hux & Hub).
     exists (L_am_ok IEC_P), (JL_am_ok segsP C_P X R U (mkMA s L) Kc), rho'.
@@ -1173,7 +1175,7 @@ Sd6S11S47S100A2ScS47S100Sf3Se5A1Sf5S74Sd9VX;VR;VU;Se9Vs;VL;A2VKc;A7A4Vposts;A3Sf
     cbn [w_tr w_cfg fst snd cfg_model].
     exists (mkMA sH L), mH. cbn [ma_s ma_L].
     split; [cbn [rw rho']; symmetry; exact U110|].
-    split; [unfold MInvIR; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
+    split; [minvir_split; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
     split.
     {
       destruct sH_fields as (Fa & Fr & Fb & Fi & Fh & Fav & Fc & Fac & Fsh & Fah & Fat & Far & Fact & Fus & Fun & Fbo & Fsq & Fmc & Fmt).
@@ -1186,7 +1188,7 @@ Sd6S11S47S100A2ScS47S100Sf3Se5A1Sf5S74Sd9VX;VR;VU;Se9Vs;VL;A2VKc;A7A4Vposts;A3Sf
   Qed.
   Theorem post_ok : ltac2:(tb__ "0|0|
 SffS74S75Vrho;Sf7S74Sd9Se5VX;VR;VU;Se9Vs;VL;A2VKc;A8ScSdSebA1Sf0Vtr;Sf1VmsF;Vmd;A2A4A5").
-  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd Hinit HmH HnH Hnm HpH Hpm Hpn Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1. apply post_ok_in. right; left; reflexivity. Qed.
+  Proof using bv0 bv1 EmW Erd Evm Ewok HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd HI Hinit HKc HmH HMI HnH Hnm HpH Hpm Hpn Hrom Hsm_pre HsmF Htop Htp Hvd HXr rv0 rv1. apply post_ok_in. right; left; reflexivity. Qed.
 End Head3.
 
 End InstX.
@@ -1197,7 +1199,7 @@ Proof.
   intros ok X R U [s L] Kc rho HOK m nn p pp n2 Hhd Hnm Hpm Hpn HmH HnH HpH Hinit. cbn [ma_s ma_L] in *.
   intros n HQ [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -1235,7 +1237,7 @@ Proof.
   intros X R U [s L] Kc rho posts HINP m nn p pp n2 Hhd Hnm Hpm Hpn HmH HnH HpH Hinit. cbn [ma_s ma_L] in *.
   intros [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.

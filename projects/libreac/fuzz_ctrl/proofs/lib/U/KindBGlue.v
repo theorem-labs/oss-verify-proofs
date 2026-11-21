@@ -8,6 +8,7 @@ YO0p YO0j YO0m YO0l YO0n YO0k YO0o YO09.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require Import YM05 YL0i.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YK14.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U Require Import Contract.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.R Require Import Cfg.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require MState Mem Frame Exec Regs6ss RegisterBridge Bytes.
 Import ListNotations.
 Local Open Scope Z_scope.
@@ -303,6 +304,43 @@ Ltac kb_lbu :=
 
 Ltac kb_lbu8 v := kb_lbu; pose proof (kb_le8_digits v ltac:(lia)); kb_pow; lia.
 
+(* The allocation mode: [kb_MR_A] holds for an allocator API of either mode, so the may-fail slot
+   proof ([Prog/KnockSlot.knock_slot]) uses it too. *)
+Section KindBA.
+Context {rc : YM05.RunCeil} {AM : AllocMode}.
+Variable B : malloc_syms.
+Variable API : AllocAPI B.
+Let MR := aa_MR API.
+
+Lemma kb_MR_A : forall L A mem mem' md W, MR L A mem md -> Frame.munch W mem mem' ->
+  (forall x, 0 <= x < alloc_ceiling -> (owned B L A x \/ exists p n, In (p, n) (blocks L A) /\ p <= x < p + n) ->
+     Frame.outside W x) ->
+  MR L A mem' md.
+Proof.
+  intros L A mem mem' md W HM Hm HW.
+  pose proof alloc_ceiling_lt as Hc.
+  assert (Heq : forall x, 0 <= x < alloc_ceiling ->
+            (owned B L A x \/ exists p n, In (p, n) (blocks L A) /\ p <= x < p + n) ->
+            mem' (Z_to_bv 64 x) = mem (Z_to_bv 64 x)).
+  { intros x Hx Ho. apply Hm. rewrite MState.unsigned_lit by lia. apply HW; assumption. }
+  destruct (mr_model _ _ (aa_laws API) _ _ _ _ HM) as (Hh & Hl & Hmat).
+  apply (mr_frame _ _ (aa_laws API) L A mem mem' md md HM eq_refl).
+  - intros a Ho. pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ HM Ho).
+    unfold mbyte. rewrite (Heq a); [reflexivity | lia | left; exact Ho].
+  - intros a Ho (b & Hb). pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ HM Ho).
+    exists b. rewrite (Heq a); [exact Hb | lia | left; exact Ho].
+  - intros p n i Hin Hi. destruct (mr_blocks _ _ (aa_laws API) _ _ _ _ p n i HM Hin Hi) as ((b & Hb) & H1 & H2 & _).
+    exists b. rewrite (Heq (ptr_addr L p + i)); [exact Hb | lia |].
+    right. exists (ptr_addr L p), n. split; [|lia]. unfold blocks. apply in_map_iff.
+    exists (p, n). split; [reflexivity | exact Hin].
+  - reflexivity.
+  - exact Hh.
+  - exact Hl.
+  - exact Hmat.
+Qed.
+
+End KindBA.
+
 Section KindB.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : malloc_syms.
@@ -363,33 +401,6 @@ Proof.
   rewrite MState.unsigned_lit in Hw by lia.
   destruct (find_segment segs a 1) as [seg|] eqn:F; [|contradiction].
   exfalso. destruct (HI a seg F). lia.
-Qed.
-
-Lemma kb_MR_A : forall L A mem mem' md W, MR L A mem md -> Frame.munch W mem mem' ->
-  (forall x, 0 <= x < alloc_ceiling -> (owned B L A x \/ exists p n, In (p, n) (blocks L A) /\ p <= x < p + n) ->
-     Frame.outside W x) ->
-  MR L A mem' md.
-Proof.
-  intros L A mem mem' md W HM Hm HW.
-  pose proof alloc_ceiling_lt as Hc.
-  assert (Heq : forall x, 0 <= x < alloc_ceiling ->
-            (owned B L A x \/ exists p n, In (p, n) (blocks L A) /\ p <= x < p + n) ->
-            mem' (Z_to_bv 64 x) = mem (Z_to_bv 64 x)).
-  { intros x Hx Ho. apply Hm. rewrite MState.unsigned_lit by lia. apply HW; assumption. }
-  destruct (mr_model _ _ (aa_laws API) _ _ _ _ HM) as (Hh & Hl & Hmat).
-  apply (mr_frame _ _ (aa_laws API) L A mem mem' md md HM).
-  - intros a Ho. pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ HM Ho).
-    unfold mbyte. rewrite (Heq a); [reflexivity | lia | left; exact Ho].
-  - intros a Ho (b & Hb). pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ HM Ho).
-    exists b. rewrite (Heq a); [exact Hb | lia | left; exact Ho].
-  - intros p n i Hin Hi. destruct (mr_blocks _ _ (aa_laws API) _ _ _ _ p n i HM Hin Hi) as ((b & Hb) & H1 & H2 & _).
-    exists b. rewrite (Heq (ptr_addr L p + i)); [exact Hb | lia |].
-    right. exists (ptr_addr L p), n. split; [|lia]. unfold blocks. apply in_map_iff.
-    exists (p, n). split; [reflexivity | exact Hin].
-  - reflexivity.
-  - exact Hh.
-  - exact Hl.
-  - exact Hmat.
 Qed.
 
 Lemma kb_blocks_munch : forall L A mem mem' md W, MR L A mem md -> Frame.munch W mem mem' ->
@@ -466,7 +477,7 @@ Lemma kb_mid_A : img_low -> forall K sp L A mem md mem' W (E : Z -> Prop),
 Proof.
   intros [HI _] K sp L A mem md mem' W E HM HWF HB HS Hm Hw HE HO.
   pose proof alloc_ceiling_lt as Hc. pose proof alloc_ceiling_val as Hc'.
-  split; [exact (kb_MR_A L A mem mem' md W HM Hm HO)|].
+  split; [exact (kb_MR_A B API L A mem mem' md W HM Hm HO)|].
   split; [exact HWF|]. split; [exact HB|]. split; [apply layout_le_refl|].
   split; [intros; reflexivity|]. split; [exists (m_vmmaps md); symmetry; apply kb_vm_id|].
   split.
@@ -557,7 +568,7 @@ Proof.
   pose proof alloc_ceiling_lt as Hc. pose proof alloc_ceiling_val as Hc'.
   destruct (mr_model _ _ (aa_laws API) _ _ _ _ M1) as (Hh & Hl & Hmat).
   split.
-  { apply (mr_frame _ _ (aa_laws API) L' A' mem1 mem' md' md' M1).
+  { apply (mr_frame _ _ (aa_laws API) L' A' mem1 mem' md' md' M1 eq_refl).
     - intros a Ho. pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ M1 Ho).
       apply (mbyte_munch segs W); [exact Hm | lia | apply HO; [lia | exact Ho]].
     - intros a Ho Hpr. pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ M1 Ho).
@@ -592,8 +603,10 @@ Lemma kb_auxv : forall sec lo mem mem' W L A md, MR L A mem md -> auxv_pre B sec
   (forall x, 0 <= x < alloc_ceiling -> owned B L A x -> Frame.outside W x) ->
   auxv_pre B sec lo mem'.
 Proof.
-  intros sec lo mem mem' W L A md HM (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) Hm Hhi Hlo.
-  exists av, ar. pose proof alloc_ceiling_lt as Hc.
+  intros sec lo mem mem' W L A md HM (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) Hm Hhi Hlo.
+  exists rs, av, ar. pose proof alloc_ceiling_lt as Hc.
+  assert (HRK : Z.of_nat AUXV_RAND_K = 24) by reflexivity.
+  pose proof (auxv_types_len_ge rs) as HLge. rewrite HRK in H3 |- *.
   assert (Hst : forall k, 0 <= k < 8 -> 0 <= ms_libc B + 8 + k < alloc_ceiling /\ owned B L A (ms_libc B + 8 + k)).
   { intros k Hk. assert (Ho : owned B L A (ms_libc B + 8 + k)) by (right; unfold static_owned; right; right; left; lia).
     split; [exact (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ HM Ho) | exact Ho]. }
@@ -602,7 +615,8 @@ Proof.
     split; [lia | apply Hlo; [lia | exact Ho]]. }
   split.
   { intros k Hk. apply (kb_word_munch segs mem mem' W); [exact (H2 k Hk) | exact Hm |]. intros j Hj.
-    assert (Z.of_nat k < 10) by lia. split; [lia | apply Hhi; lia]. }
+    assert (16 * Z.of_nat k + 8 <= 16 * Z.of_nat (length (auxv_types rs))) by lia.
+    split; [lia | apply Hhi; lia]. }
   split.
   { apply (kb_word_munch segs mem mem' W); [exact H3 | exact Hm |]. intros j Hj. split; [lia | apply Hhi; lia]. }
   split.
@@ -622,7 +636,7 @@ Lemma kb_pre_A : forall K f K1 L A regs mem md regs1 mem1 W,
 Proof.
   intros K f K1 L A regs mem md regs1 mem1 W (HM & HWF & HB & Hra & Hal & Hlo & Hhi & HW & Htp & Herr & Haux)
     Hf HK1 HfK Hsp Hal1 Htp1 Hra1 Hm Hw Hup Hown.
-  split; [exact (kb_MR_A L A mem mem1 md W HM Hm Hown)|].
+  split; [exact (kb_MR_A B API L A mem mem1 md W HM Hm Hown)|].
   split; [exact HWF|]. split; [exact HB|]. split; [exact Hra1|]. split; [exact Hal1|].
   split; [lia|]. split; [lia|].
   split; [intros a Ha; unfold writable_at; apply Hw; exact (HW a ltac:(lia))|].

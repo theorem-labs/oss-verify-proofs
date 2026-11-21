@@ -5,10 +5,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names changed; 1538 of its 1613 lines of code are new or changed and 509 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v; 71 of its 126 lines of code are new or changed and 1558 lines of the source are left out. *)
-(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 82a1d1bf3a6 lib/A/FSH_crt_segD1_inv.v)
-   Port source: a working branch 82a1d1bf3a6 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_inv.v (the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD1_inv.v)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_inv.v (the
    inner boundary invariants of check_round_trip's D1 segment lemma), itself PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17 :521 / St18 :535 - the holdings
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17 :521 / St18 :535 - the holdings
    of the two fuzz_free stages, restated in the S0 form of FSH_crt_base.crt_inv. Same Definition names and statement
    shapes as the A file, over image B (lib/B/YB1v.v tfibsegs, fs.asan-ubsan sha256 5ac5ce0954f8...). A new file: no
    licence lines.

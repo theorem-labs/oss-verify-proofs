@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -28,6 +29,7 @@ Definition ASAN_A : atable :=
 Definition ASAN_A_TEXT_LO : Z := 0x3efbc.
 Definition ASAN_A_TEXT_N : nat := 163865.
 Definition ASAN_A_MAIN : Z := 0x90388.
-Definition asan_a_init : acs := init_acs_of ASAN_A.
+(* the initial state at CONFIG_RSEQ value [r] (0 or 1, [AsanPlanCore.rseq_z]): one certificate per [r] *)
+Definition asan_a_init (r : Z) : acs := init_acs_of r ASAN_A.
 
 (* [comment removed for export] *)

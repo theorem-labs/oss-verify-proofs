@@ -2,14 +2,14 @@
    rule 24: proves no function (kind: segment lemma)
    fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b): the
    INSTANCE WITNESS of check_no_overread's image record cnb_img (lib/B/Prog/Cno102B_Base.v :167-184, blob
-   06098b64f859, a working branch 162ea90da065: the contract restated on the KIT CUT
-   a working branch 7cdbb61b5fa0, comments only over its first cut form 20c89a1d4da2; the record's eight
+   06098b64f859, a working branch: the contract restated on the KIT CUT
+   a working branch, comments only over its first cut form 20c89a1d4da2; the record's eight
    fields are unchanged from the f97c contract) at the image's own data, and the SATISFIABILITY WITNESSES, at the
    real binding, of three premises of cnb_pre: the cut's two new ones and the context premise.
    Lane CnoB102rR, sub-lane CutImg (the re-fit to the cut of sub-lane CnoBImg's file). Each field is a CLOSED lemma: a
    boolean checker evaluated by a guarded vm_compute on the concrete image, then the checker's soundness lemma; the
    assembly cnb_img_inst only unfolds the instance.
-   THE IMAGE DATA OF RECORD (every path is the cut's blob, 7cdbb61b5fa0, carried unchanged into 162ea90da065):
+   THE IMAGE DATA OF RECORD (every path is the cut's blob, carried unchanged into):
      segments   rsegs of lib/B/Img0.v d17de1e3b380 (= images.AsanUbsan.M.loaded_segments, generated from the staged
                 asan-ubsan binary; on the pins102 route that is d663f82d7f488d30, pau-preset-102).
      listing    lib/B/Listing_prog.v c97cc46b3e13 and lib/B/PAImg_prog.v 15fab93fe702 (the v3 listing, a

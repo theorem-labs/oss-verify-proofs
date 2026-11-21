@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a system call's return clears the LR/SC reservation, so successor states carry None there; the C-string walks and openat lemmas take a TASK_SIZE bound; syscall nodes discharge RomBase.sys_rob, with new open_rob_latch); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.openssl.bndiv.lib.VCommon Require Import
   NodesOpenCfg StoreOk.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.BootWitness Require Import BootDefs BootStep.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.Ax Require Import AsanWLazy AsanWAcc.
+From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.Cfg Require RomBase RomWrite.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -132,53 +134,107 @@ Lemma lsvc : forall S, ms_svc_pending (latch S) = Some (rg S 17). Proof. reflexi
 Lemma mrb_latch : forall segs S, ms_rom S = seg_rom segs -> ms_read_byte (latch S) = mrb segs (ms_mem S).
 Proof. intros segs S H. unfold ms_read_byte, mrb, latch. cbn [ms_mem ms_rom]. rewrite H. reflexivity. Qed.
 
+(* WAS, and a farm round measured it false at AsanWSys.v:138 chars 7-18
+   ("Unable to unify "setx S 10 r (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (ms_mem S)"
+   with "advance_past_svc (set_gpr0 (latch S) r)""):
+     Lemma adv_ret_latch : forall S (r : word),
+       advance_past_svc (set_gpr0 (latch S) r)
+       = setx S 10 r (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (ms_mem S).
+     Lemma adv_write_latch : forall S (r buf : word) (bs : list byte),
+       advance_past_svc (apply_effect (latch S) (mkEffect r (delivered_writes buf bs) []))
+       = setx S 10 r (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (write_to_mem (ms_mem S) buf bs).
+   advance_past_svc now sets `ms_resv := None` (LPS@75d69e00 theories/LinuxProcessSem/Run.v,
+   inside the definition at :221-228, the line reading `ms_resv := None;`), and setx's fifth
+   argument IS that slot (BootWitness/BootStep.v:28-29), so the literal `None` is what the
+   two sides now share.  Nothing is weakened: only the reservation slot of the right-hand
+   side moved, exactly as in AsanWSw.v's adv_latch.  The nine realizes_cfg premises of this
+   file's rzc_* theorems carry the same move; see the note above rzc_open_toolong. *)
 Lemma adv_ret_latch : forall S (r : word),
-  advance_past_svc (set_gpr0 (latch S) r) = setx S 10 r (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (ms_mem S).
+  advance_past_svc (set_gpr0 (latch S) r) = setx S 10 r (ms_pc_val S + Z_to_bv 64 4) None (ms_mem S).
 Proof. reflexivity. Qed.
 
 Lemma adv_write_latch : forall S (r buf : word) (bs : list byte),
   advance_past_svc (apply_effect (latch S) (mkEffect r (delivered_writes buf bs) []))
-  = setx S 10 r (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (write_to_mem (ms_mem S) buf bs).
+  = setx S 10 r (ms_pc_val S + Z_to_bv 64 4) None (write_to_mem (ms_mem S) buf bs).
 Proof. intros S r buf bs. destruct bs; reflexivity. Qed.
 
 Lemma with_fds_no_lazy : forall f model lo hi, no_lazy (with_fds f model) lo hi <-> no_lazy model lo hi.
 Proof. intros f model lo hi. split; intros H; exact H. Qed.
 
 (* [comment removed for export] *)
+(* NEW premise at this revision, in cstr_access_len_aux's own slot.  LPS@75d69e00
+   theories/LinuxProcessSem/State.v added `if negb (access_okb a 1) then O` as the first
+   test of every step (at the previous revision the Fixpoint went straight to `match mp a`),
+   so both of these walks are FALSE of a name at or above TASK_SIZE and now ask for the
+   bound.  The donor tree measured the base case -- where the old `reflexivity` met the new
+   guard -- as "Unable to unify "S (length [])" with "if negb (access_okb a 1) then 0%nat
+   else 1%nat"" (ct AsanWSys.v:173); in bndiv this file is
+   NOT-BUILT past :138 in a farm round, so the site is unmeasured HERE and
+   ported from ct's landed, kernel-confirmed text (ct 132/145).  TASK_SIZE is
+   2 ^ 47, so the `<= 2 ^ 64` bounds this file's callers already carry do NOT imply it.
+   Premise shape and the three helpers below are copied from the already-building twin in
+   this same tree, VCommon/FileSim.v:345-405 (read_cstr_of_rdn /
+   read_cstr_aux_toolong_of_rdn): access_okb_one (`access_okb a 1 = (bv_unsigned a <?
+   TASK_SIZE)`, used there at :352 and :397) and bv_unsigned_succ_below_task_size (:367,
+   :404), both reachable through the State import at :9.  Nothing is weakened: the
+   conclusion is untouched and the callers (open_acc_ok, cstr_len_toolong's user in
+   rzc_openat_toolong_nl) already hold the bound. *)
 Lemma cstr_len_of_rdn : forall segs mem (p : list byte) (a : word) (fuel : nat),
   (length p < fuel)%nat -> ~ In (Z_to_bv 8 0) p ->
+  (bv_unsigned a + Z.of_nat (length p) < TASK_SIZE)%Z ->
   rdn segs mem a (length p + 1) = Some (p ++ [Z_to_bv 8 0]) ->
   cstr_access_len_aux (mrb segs mem) a fuel = S (length p).
 Proof.
-  intros segs mem p. induction p as [|b p IH]; intros a fuel Hf Hnz Hr.
+  intros segs mem p. induction p as [|b p IH]; intros a fuel Hf Hnz Hts Hr.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [rdn length Nat.add app] in Hr.
-    cbn [cstr_access_len_aux]. unfold mrb at 1.
+    assert (Ha : access_okb a 1 = true)
+      by (rewrite access_okb_one; apply Z.ltb_lt; cbn [length] in Hts; lia).
+    cbn [cstr_access_len_aux]. rewrite Ha. cbn [negb]. cbv beta iota. unfold mrb at 1.
     destruct (match mem a with Some b => Some b | None => seg_rom segs a end) as [b|] eqn:E; [|discriminate].
     injection Hr as ->. rewrite bv_eqb_refl. reflexivity.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [rdn length Nat.add app] in Hr.
-    cbn [cstr_access_len_aux]. unfold mrb at 1.
+    assert (Hlt : (bv_unsigned a < TASK_SIZE)%Z) by (cbn [length] in Hts; lia).
+    assert (Ha : access_okb a 1 = true) by (rewrite access_okb_one; apply Z.ltb_lt; exact Hlt).
+    assert (Hu1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+      by (apply bv_unsigned_succ_below_task_size; exact Hlt).
+    cbn [cstr_access_len_aux]. rewrite Ha. cbn [negb]. cbv beta iota. unfold mrb at 1.
     destruct (match mem a with Some b => Some b | None => seg_rom segs a end) as [b'|] eqn:E; [|discriminate].
     destruct (rdn segs mem (a + 1) (length p + 1)) as [rest|] eqn:Er; [|discriminate].
     injection Hr as Eb Hrest. subst b' rest.
     assert (Hb : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:Eb; [|reflexivity]. exfalso. apply Hnz. left.
       apply bv_eqb_eq in Eb. exact Eb. }
-    rewrite Hb. f_equal. apply IH; [cbn in Hf; lia | intros Hin; apply Hnz; right; exact Hin | exact Er].
+    rewrite Hb. f_equal.
+    apply IH; [cbn in Hf; lia | intros Hin; apply Hnz; right; exact Hin
+              | rewrite Hu1; cbn [length] in Hts; lia | exact Er].
 Qed.
 
 Lemma cstr_len_toolong : forall segs mem (bs : list byte) (a : word),
-  ~ In (Z_to_bv 8 0) bs -> rdn segs mem a (length bs) = Some bs ->
+  ~ In (Z_to_bv 8 0) bs ->
+  (* Same new guard as cstr_len_of_rdn above, over every byte this walk steps.  The model's
+     own twin states it this way too (LPS@75d69e00 Common/FileSim.v,
+     read_cstr_aux_toolong_of_rdn), with `<=` rather than `<` because the walk stops after
+     the last byte instead of reading a terminator past it. *)
+  (bv_unsigned a + Z.of_nat (length bs) <= TASK_SIZE)%Z ->
+  rdn segs mem a (length bs) = Some bs ->
   cstr_access_len_aux (mrb segs mem) a (length bs) = length bs.
 Proof.
-  intros segs mem bs. induction bs as [|b bs IH]; intros a Hnz Hr; [reflexivity|].
-  cbn [rdn length] in Hr. cbn [cstr_access_len_aux length]. unfold mrb at 1.
+  intros segs mem bs. induction bs as [|b bs IH]; intros a Hnz Hts Hr; [reflexivity|].
+  cbn [rdn length] in Hr.
+  assert (Hlt : (bv_unsigned a < TASK_SIZE)%Z) by (cbn [length] in Hts; lia).
+  assert (Ha : access_okb a 1 = true) by (rewrite access_okb_one; apply Z.ltb_lt; exact Hlt).
+  assert (Hu1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+    by (apply bv_unsigned_succ_below_task_size; exact Hlt).
+  cbn [cstr_access_len_aux length]. rewrite Ha. cbn [negb]. cbv beta iota. unfold mrb at 1.
   destruct (match mem a with Some b => Some b | None => seg_rom segs a end) as [b'|] eqn:E; [|discriminate].
   destruct (rdn segs mem (a + 1) (length bs)) as [rest|] eqn:Er; [|discriminate].
   injection Hr as Eb Hrest. subst b' rest.
   assert (Hb : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:Eb; [|reflexivity]. exfalso. apply Hnz. left.
     apply bv_eqb_eq in Eb. exact Eb. }
-  rewrite Hb. f_equal. apply IH; [intros Hin; apply Hnz; right; exact Hin | exact Er].
+  rewrite Hb. f_equal.
+  apply IH; [intros Hin; apply Hnz; right; exact Hin
+            | rewrite Hu1; cbn [length] in Hts; lia | exact Er].
 Qed.
 
 (* [comment removed for export] *)
@@ -245,6 +301,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma rzc_det_nl : forall ms model x8 (z : Z) eff0 m' T,
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   bv_unsigned x8 = z -> negb (existsb (Z.eqb z) alloc_mark_sysnos) = true ->
   (forall eff m2 evs, check_syscall (sys_input segs ms x8) eff model = CheckOk m2 evs <->
                       (eff = eff0 /\ m2 = m' /\ evs = [])) ->
@@ -254,8 +311,8 @@ Lemma rzc_det_nl : forall ms model x8 (z : Z) eff0 m' T,
   realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms eff0)) m') T ->
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
-  intros ms model x8 z eff0 m' T Hh Hsvc Hz Hb Hiff Hnu Hh' Hacc Hc.
-  eapply rzc_silent1; [|exact Hc].
+  intros ms model x8 z eff0 m' T Hh Hsvc Hrob Hz Hb Hiff Hnu Hh' Hacc Hc.
+  eapply rzc_silent1; [| exact Hrob | exact Hc].
   apply (node_chk_nl segs cfg ms model x8 (fun eff => check_syscall (sys_input segs ms x8) eff model) unit
            (fun _ => eff0) (fun _ => m') (fun _ => [])); [exact Hh | exact Hsvc | intros; reflexivity | | | | | | ].
   - intros []. apply Hiff. auto.
@@ -269,6 +326,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma rzc_ret_copyins_nl : forall ms model x8 (z : Z) reads r m' T,
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   bv_unsigned x8 = z -> negb (existsb (Z.eqb z) alloc_mark_sysnos) = true ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = check_ret_only_copyins reads eff r m' []) ->
   m_halted m' = None ->
@@ -276,8 +334,8 @@ Lemma rzc_ret_copyins_nl : forall ms model x8 (z : Z) reads r m' T,
   realizes_cfg segs cfg (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
-  intros ms model x8 z reads r m' T Hh Hsvc Hz Hb Hchk Hh' Hacc Hc.
-  apply (rzc_det_nl ms model x8 z (with_copyins reads (mkEffect r [] [])) m' T Hh Hsvc Hz Hb).
+  intros ms model x8 z reads r m' T Hh Hsvc Hrob Hz Hb Hchk Hh' Hacc Hc.
+  apply (rzc_det_nl ms model x8 z (with_copyins reads (mkEffect r [] [])) m' T Hh Hsvc Hrob Hz Hb).
   - intros eff m2 evs. rewrite Hchk. apply check_ret_only_copyins_ok_iff.
   - rewrite Hchk. apply check_ret_only_copyins_no_unmodeled.
   - exact Hh'.
@@ -287,7 +345,9 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma rzc_open_nl : forall ms model x8 reads (mk : word -> Model) A B,
-  m_halted model = None -> ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 56%Z ->
+  m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  bv_unsigned x8 = 56%Z ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = check_open_result_copyins reads eff model mk) ->
   (forall fd, m_halted (mk fd) = None) ->
   fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
@@ -298,7 +358,7 @@ Lemma rzc_open_nl : forall ms model x8 reads (mk : word -> Model) A B,
                                (mk (alloc_fd (m_fds model)))) B ->
   realizes_cfg segs cfg (mkCfg ms model) (t_alt2 A B).
 Proof.
-  intros ms model x8 reads mk A B Hh Hsvc H56 Hchk Hmk Hfree Hacc1 Hacc2 HA HB.
+  intros ms model x8 reads mk A B Hh Hsvc Hrob H56 Hchk Hmk Hfree Hacc1 Hacc2 HA HB.
   set (I := ({e : Z | In e openat_errnos} + unit)%type).
   set (E := fun i : I => match i with
                          | inl (exist _ e _) => with_copyins reads (mkEffect (errno_ret e) [] [])
@@ -323,6 +383,7 @@ Proof.
     + apply check_open_result_copyins_never_unmodeled.
     + intros [[e He] | []]; cbn [E M]; unfold syscall_effect_accesses;
         cbn [eff_copyins eff_writes with_copyins write_accesses]; rewrite app_nil_r; assumption.
+  - exact Hrob.
   - intros [e He]. cbn [E M]. rewrite apply_effect_copyins_no_write. exact (HA e He).
   - intros []. cbn [E M]. rewrite apply_effect_copyins_no_write. exact HB.
 Qed.
@@ -336,23 +397,48 @@ Local Existing Instance PropExec.fx0.
 Lemma open_acc_ok : forall S model (p : list byte),
   ms_rom S = seg_rom segs ->
   (length p <= 4095)%nat -> ~ In (Z_to_bv 8 0) p ->
+  (* NEW, cstr_len_of_rdn's new premise (:183), in path_cstr_latch's slot and with its
+     exact shape so the three callers pass the Hts they already carry.  The `<= 2 ^ 64`
+     bound two lines down is the copy-in ledger's, is weaker (TASK_SIZE is 2 ^ 47), and
+     does NOT imply this one. *)
+  (bv_unsigned (rg S 11) + Z.of_nat (length p) < TASK_SIZE)%Z ->
   rdn segs (ms_mem S) (rg S 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]) ->
   (bv_unsigned (rg S 11) + Z.of_nat (length p) + 1 <= 2 ^ 64)%Z ->
   no_lazy model (bv_unsigned (rg S 11)) (bv_unsigned (rg S 11) + Z.of_nat (length p) + 1) ->
   acc_ok model (open_copyins (latch S)).
 Proof.
-  intros S model p Hrom Hlen Hnz Hr Hnw Hnl. unfold open_copyins. rewrite lg1, (mrb_latch segs S Hrom).
-  rewrite (cstr_len_of_rdn segs (ms_mem S) p (rg S 11) path_max) by (try exact Hr; try exact Hnz; change path_max with 4096%nat; lia).
+  intros S model p Hrom Hlen Hnz Hts Hr Hnw Hnl. unfold open_copyins. rewrite lg1, (mrb_latch segs S Hrom).
+  rewrite (cstr_len_of_rdn segs (ms_mem S) p (rg S 11) path_max)
+    by (try exact Hr; try exact Hnz; try exact Hts; change path_max with 4096%nat; lia).
   apply acc_ok_one; rewrite Nat2Z.inj_succ; lia || (eapply no_lazy_sub; [exact Hnl | lia | lia]).
 Qed.
 
 Lemma path_cstr_latch : forall S (p : list byte),
   ms_rom S = seg_rom segs ->
   (length p <= 4095)%nat -> ~ In (Z_to_bv 8 0) p ->
+  (* NEW at this revision, in read_cstr_of_rdn's own slot (vendored FileSim.v:376):
+     LPS@75d69e00 made State.read_cstr_aux test `access_okb a 1` at every byte it
+     steps, so the lemma is false of a name at or above TASK_SIZE and now asks for
+     this bound.  TASK_SIZE is 2 ^ 47, so the `<= 2 ^ 64` bounds this file's callers
+     already carry do NOT imply it.  Same cause as NodesOpenCfg.v:205, which the farm
+     measured as "No such assumption"; this file was
+     NOT-BUILT in that round, so the site is unmeasured and ported from the diagnosis
+     rather than from an error line. *)
+  (bv_unsigned (rg S 11) + Z.of_nat (length p) < TASK_SIZE)%Z ->
   rdn segs (ms_mem S) (rg S 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]) ->
   read_cstr (ms_read_byte (latch S)) (ms_gpr (latch S) 1) = CstrOk p.
 Proof.
-  intros S p Hrom Hlen Hnz Hr. rewrite lg1, (mrb_latch segs S Hrom). apply read_cstr_of_rdn; assumption.
+  intros S p Hrom Hlen Hnz Hts Hr. rewrite lg1, (mrb_latch segs S Hrom). apply read_cstr_of_rdn; assumption.
+Qed.
+
+(* LPS 08b1429: an openat node whose path read does not fault reads the same over a larger
+   backing ([RomWrite.openat_rob]) *)
+Lemma open_rob_latch : forall ms model, rg ms 17 = Z_to_bv 64 56 ->
+  read_cstr (ms_read_byte (latch ms)) (ms_gpr (latch ms) 1) <> CstrFault ->
+  RomBase.sys_rob segs (mkCfg (latch ms) model).
+Proof.
+  intros ms model H17 Hnf.
+  exact (RomWrite.openat_rob segs (latch ms) model (rg ms 17) (lsvc ms) ltac:(rewrite H17; reflexivity) Hnf).
 Qed.
 
 Theorem rzc_openat_toolong_nl : forall ms model w (bs : list byte) K,
@@ -362,20 +448,42 @@ Theorem rzc_openat_toolong_nl : forall ms model w (bs : list byte) K,
   Z.ldiff (bv_unsigned (rg ms 12)) open_ignored_flags = 0%Z ->
   rdn segs (ms_mem ms) (rg ms 11) 4096 = Some bs -> ~ In (Z_to_bv 8 0) bs ->
   (bv_unsigned (rg ms 11) + 4096 <= 2 ^ 64)%Z ->
+  (* NEW, read_cstr_toolong_of_rdn's own new premise (vendored FileSim.v:414); see
+     path_cstr_latch at :358. *)
+  (bv_unsigned (rg ms 11) + 4096 <= TASK_SIZE)%Z ->
   no_lazy model (bv_unsigned (rg ms 11)) (bv_unsigned (rg ms 11) + 4096) ->
+  (* NEW at this revision, the reservation slot only: advance_past_svc clears ms_resv
+     (LPS@75d69e00 theories/LinuxProcessSem/Run.v, `ms_resv := None;` inside the
+     definition at :221-228), so the successor these premises describe -- the one
+     rzc_ret_copyins_nl and rzc_det_nl hand back as `advance_past_svc (set_gpr0 ms r)`
+     -- carries `None` there, and `(ms_resv ms)` named a state the machine never
+     reaches.  The same move at the eight sibling premises below; measured at
+     AsanWSys.v:138 in a farm round. *)
   realizes_cfg segs cfg
-    (mkCfg (setx ms 10 (errno_ret ENAMETOOLONG) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (ms_mem ms)) model) K ->
+    (mkCfg (setx ms 10 (errno_ret ENAMETOOLONG) (ms_pc_val ms + Z_to_bv 64 4) None (ms_mem ms)) model) K ->
   realizes_cfg segs cfg (mkCfg ms model) K.
 Proof.
-  intros ms model w bs K Hsvc Hrom HF HE Hh H17 Hfl Hrd Hnz Hnw Hnl Hc.
+  (* Hnw/Hts WERE swapped here against the statement above (:449 is the 2 ^ 64 copy-in
+     ledger bound, :452 the TASK_SIZE one), so `exact Hts` at :480 and the
+     read_cstr_toolong_of_rdn slot at :470 were each handed the other bound.  ct's
+     already-building twin names them in statement order; corrected to match. *)
+  intros ms model w bs K Hsvc Hrom HF HE Hh H17 Hfl Hrd Hnz Hnw Hts Hnl Hc.
   pose proof (rdn_length _ _ _ _ _ Hrd) as Hlen.
   eapply rzc_ecall_nl; [exact Hh | exact Hsvc | exact HF | exact HE |].
+  assert (Hrob : RomBase.sys_rob segs (mkCfg (latch ms) model)).
+  { apply (open_rob_latch ms model H17). rewrite lg1, (mrb_latch segs ms Hrom).
+    rewrite (read_cstr_toolong_of_rdn segs (ms_mem ms) (rg ms 11) bs Hlen Hnz Hts Hrd). discriminate. }
   apply (rzc_ret_copyins_nl (latch ms) model (rg ms 17) 56 (open_copyins (latch ms)) (errno_ret ENAMETOOLONG) model K
-           Hh (lsvc ms)); [rewrite H17; reflexivity | reflexivity | | exact Hh | | ].
+           Hh (lsvc ms) Hrob); [rewrite H17; reflexivity | reflexivity | | exact Hh | | ].
   - apply (openat_toolong_check segs (latch ms) (rg ms 17) model); [rewrite H17; reflexivity | rewrite lg2; exact (modeled_open_flags_rd _ Hfl) |].
-    rewrite lg1, (mrb_latch segs ms Hrom). exact (read_cstr_toolong_of_rdn segs (ms_mem ms) (rg ms 11) bs Hlen Hnz Hrd).
+    rewrite lg1, (mrb_latch segs ms Hrom). exact (read_cstr_toolong_of_rdn segs (ms_mem ms) (rg ms 11) bs Hlen Hnz Hts Hrd).
   - unfold open_copyins. rewrite lg1, (mrb_latch segs ms Hrom). change path_max with 4096%nat.
-    rewrite <- Hlen. rewrite (cstr_len_toolong segs (ms_mem ms) bs (rg ms 11) Hnz) by (rewrite Hlen; exact Hrd).
+    rewrite <- Hlen.
+    (* cstr_len_toolong's new TASK_SIZE premise (:217), in the slot this theorem's own Hts
+       fills; Hlen turns its 4096 into `Z.of_nat (length bs)`. *)
+    rewrite (cstr_len_toolong segs (ms_mem ms) bs (rg ms 11) Hnz
+               ltac:(rewrite Hlen; change (Z.of_nat 4096) with 4096%Z; exact Hts))
+      by (rewrite Hlen; exact Hrd).
     rewrite Hlen. apply acc_ok_one; [exact Hnw | exact Hnl].
   - rewrite adv_ret_latch. exact Hc.
 Qed.
@@ -388,20 +496,24 @@ Theorem rzc_openat_enoent_nl : forall ms model w (p : list byte) K,
   (length p <= 4095)%nat -> ~ In (Z_to_bv 8 0) p ->
   rdn segs (ms_mem ms) (rg ms 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]) ->
   (bv_unsigned (rg ms 11) + Z.of_nat (length p) + 1 <= 2 ^ 64)%Z ->
+  (* NEW, path_cstr_latch's new premise; see :358. *)
+  (bv_unsigned (rg ms 11) + Z.of_nat (length p) < TASK_SIZE)%Z ->
   no_lazy model (bv_unsigned (rg ms 11)) (bv_unsigned (rg ms 11) + Z.of_nat (length p) + 1) ->
   (p = [] \/ (openat_plain_name p = true /\ fs_lookup (m_fs model) p = None)) ->
   realizes_cfg segs cfg
-    (mkCfg (setx ms 10 (errno_ret ENOENT) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (ms_mem ms)) model) K ->
+    (mkCfg (setx ms 10 (errno_ret ENOENT) (ms_pc_val ms + Z_to_bv 64 4) None (ms_mem ms)) model) K ->
   realizes_cfg segs cfg (mkCfg ms model) K.
 Proof.
-  intros ms model w p K Hsvc Hrom HF HE Hh H17 H10 Hfl Hlen Hnz Hrd Hnw Hnl Hcase Hc.
+  intros ms model w p K Hsvc Hrom HF HE Hh H17 H10 Hfl Hlen Hnz Hrd Hnw Hts Hnl Hcase Hc.
   eapply rzc_ecall_nl; [exact Hh | exact Hsvc | exact HF | exact HE |].
+  assert (Hrob : RomBase.sys_rob segs (mkCfg (latch ms) model)).
+  { apply (open_rob_latch ms model H17). rewrite (path_cstr_latch ms p Hrom Hlen Hnz Hts Hrd). discriminate. }
   apply (rzc_ret_copyins_nl (latch ms) model (rg ms 17) 56 (open_copyins (latch ms)) (errno_ret ENOENT) model K
-           Hh (lsvc ms)); [rewrite H17; reflexivity | reflexivity | | exact Hh | | ].
+           Hh (lsvc ms) Hrob); [rewrite H17; reflexivity | reflexivity | | exact Hh | | ].
   - apply (openat_enoent_check segs (latch ms) (rg ms 17) model p); [rewrite H17; reflexivity | rewrite lg0; exact H10
-      | exact (path_cstr_latch ms p Hrom Hlen Hnz Hrd) | rewrite lg2; exact Hfl |].
+      | exact (path_cstr_latch ms p Hrom Hlen Hnz Hts Hrd) | rewrite lg2; exact Hfl |].
     destruct Hcase as [-> | Hpl]; [left; reflexivity | right; exact Hpl].
-  - exact (open_acc_ok ms model p Hrom Hlen Hnz Hrd Hnw Hnl).
+  - exact (open_acc_ok ms model p Hrom Hlen Hnz Hts Hrd Hnw Hnl).
   - rewrite adv_ret_latch. exact Hc.
 Qed.
 
@@ -413,25 +525,29 @@ Theorem rzc_openat_file_nl : forall ms model w (p : list byte) (d : list byte) K
   (length p <= 4095)%nat -> ~ In (Z_to_bv 8 0) p ->
   rdn segs (ms_mem ms) (rg ms 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]) ->
   (bv_unsigned (rg ms 11) + Z.of_nat (length p) + 1 <= 2 ^ 64)%Z ->
+  (* NEW, path_cstr_latch's new premise; see :358. *)
+  (bv_unsigned (rg ms 11) + Z.of_nat (length p) < TASK_SIZE)%Z ->
   no_lazy model (bv_unsigned (rg ms 11)) (bv_unsigned (rg ms 11) + Z.of_nat (length p) + 1) ->
   path_eqb p [] = false -> openat_plain_name p = true -> fs_lookup (m_fs model) p = Some d ->
   fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
   (forall e, In e openat_errnos ->
      realizes_cfg segs cfg
-       (mkCfg (setx ms 10 (errno_ret e) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (ms_mem ms)) model) KA) ->
+       (mkCfg (setx ms 10 (errno_ret e) (ms_pc_val ms + Z_to_bv 64 4) None (ms_mem ms)) model) KA) ->
   realizes_cfg segs cfg
-    (mkCfg (setx ms 10 (alloc_fd (m_fds model)) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (ms_mem ms))
+    (mkCfg (setx ms 10 (alloc_fd (m_fds model)) (ms_pc_val ms + Z_to_bv 64 4) None (ms_mem ms))
            (with_fds (fd_insert (m_fds model) (alloc_fd (m_fds model)) (FdFile p (Z_to_bv 64 0))) model)) KB ->
   realizes_cfg segs cfg (mkCfg ms model) (t_alt2 KA KB).
 Proof.
-  intros ms model w p d KA KB Hsvc Hrom HF HE Hh H17 H10 Hfl Hlen Hnz Hrd Hnw Hnl Hpe Hpl Hfs Hfree HA HB.
-  pose proof (open_acc_ok ms model p Hrom Hlen Hnz Hrd Hnw Hnl) as Hacc.
+  intros ms model w p d KA KB Hsvc Hrom HF HE Hh H17 H10 Hfl Hlen Hnz Hrd Hnw Hts Hnl Hpe Hpl Hfs Hfree HA HB.
+  pose proof (open_acc_ok ms model p Hrom Hlen Hnz Hts Hrd Hnw Hnl) as Hacc.
   eapply rzc_ecall_nl; [exact Hh | exact Hsvc | exact HF | exact HE |].
+  assert (Hrob : RomBase.sys_rob segs (mkCfg (latch ms) model)).
+  { apply (open_rob_latch ms model H17). rewrite (path_cstr_latch ms p Hrom Hlen Hnz Hts Hrd). discriminate. }
   apply (rzc_open_nl (latch ms) model (rg ms 17) (open_copyins (latch ms))
            (fun fd => with_fds (fd_insert (m_fds model) fd (FdFile p (Z_to_bv 64 0))) model));
-    [exact Hh | reflexivity | rewrite H17; reflexivity | | | exact Hfree | exact Hacc | | | ].
+    [exact Hh | reflexivity | exact Hrob | rewrite H17; reflexivity | | | exact Hfree | exact Hacc | | | ].
   - exact (openat_rd_check segs (latch ms) (rg ms 17) model p d ltac:(rewrite H17; reflexivity) ltac:(rewrite lg0; exact H10)
-             (path_cstr_latch ms p Hrom Hlen Hnz Hrd) Hpe ltac:(rewrite lg2; exact Hfl) Hpl Hfs).
+             (path_cstr_latch ms p Hrom Hlen Hnz Hts Hrd) Hpe ltac:(rewrite lg2; exact Hfl) Hpl Hfs).
   - intros fd. exact Hh.
   - unfold acc_ok in *. exact Hacc.
   - intros e He. rewrite adv_ret_latch. exact (HA e He).
@@ -445,28 +561,37 @@ Theorem rzc_openat_dot_nl : forall ms model w KA KB,
   Z.ldiff (bv_unsigned (rg ms 12)) open_ignored_flags = 0%Z ->
   rdn segs (ms_mem ms) (rg ms 11) 2 = Some (dot_path ++ [Z_to_bv 8 0]) ->
   (bv_unsigned (rg ms 11) + 2 <= 2 ^ 64)%Z ->
+  (* NEW, path_cstr_latch's new premise at dot_path's length; see :358. *)
+  (bv_unsigned (rg ms 11) + 2 <= TASK_SIZE)%Z ->
   no_lazy model (bv_unsigned (rg ms 11)) (bv_unsigned (rg ms 11) + 2) ->
   fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
   (forall e, In e openat_errnos ->
      realizes_cfg segs cfg
-       (mkCfg (setx ms 10 (errno_ret e) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (ms_mem ms)) model) KA) ->
+       (mkCfg (setx ms 10 (errno_ret e) (ms_pc_val ms + Z_to_bv 64 4) None (ms_mem ms)) model) KA) ->
   realizes_cfg segs cfg
-    (mkCfg (setx ms 10 (alloc_fd (m_fds model)) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (ms_mem ms))
+    (mkCfg (setx ms 10 (alloc_fd (m_fds model)) (ms_pc_val ms + Z_to_bv 64 4) None (ms_mem ms))
            (with_fds (fd_insert (m_fds model) (alloc_fd (m_fds model)) FdDir) model)) KB ->
   realizes_cfg segs cfg (mkCfg ms model) (t_alt2 KA KB).
 Proof.
-  intros ms model w KA KB Hsvc Hrom HF HE Hh H17 H10 Hfl Hrd Hnw Hnl Hfree HA HB.
+  intros ms model w KA KB Hsvc Hrom HF HE Hh H17 H10 Hfl Hrd Hnw Hts Hnl Hfree HA HB.
   assert (Hlen : (length dot_path <= 4095)%nat) by (cbn; lia).
   assert (Hnz : ~ In (Z_to_bv 8 0) dot_path) by (cbn; intros [E|[]]; discriminate E).
   assert (Hrd' : rdn segs (ms_mem ms) (rg ms 11) (length dot_path + 1) = Some (dot_path ++ [Z_to_bv 8 0])) by exact Hrd.
-  pose proof (open_acc_ok ms model dot_path Hrom Hlen Hnz Hrd' ltac:(change (Z.of_nat (length dot_path)) with 1%Z; lia)
+  pose proof (open_acc_ok ms model dot_path Hrom Hlen Hnz
+                ltac:(change (Z.of_nat (length dot_path)) with 1%Z; lia) Hrd'
+                ltac:(change (Z.of_nat (length dot_path)) with 1%Z; lia)
                 ltac:(change (Z.of_nat (length dot_path)) with 1%Z; eapply no_lazy_sub; [exact Hnl | lia | lia])) as Hacc.
   eapply rzc_ecall_nl; [exact Hh | exact Hsvc | exact HF | exact HE |].
+  assert (Hrob : RomBase.sys_rob segs (mkCfg (latch ms) model)).
+  { apply (open_rob_latch ms model H17).
+    rewrite (path_cstr_latch ms dot_path Hrom Hlen Hnz
+               ltac:(change (Z.of_nat (length dot_path)) with 1%Z; lia) Hrd'). discriminate. }
   apply (rzc_open_nl (latch ms) model (rg ms 17) (open_copyins (latch ms))
            (fun fd => with_fds (fd_insert (m_fds model) fd FdDir) model));
-    [exact Hh | reflexivity | rewrite H17; reflexivity | | | exact Hfree | exact Hacc | | | ].
+    [exact Hh | reflexivity | exact Hrob | rewrite H17; reflexivity | | | exact Hfree | exact Hacc | | | ].
   - exact (openat_dot_check segs (latch ms) (rg ms 17) model ltac:(rewrite H17; reflexivity) ltac:(rewrite lg0; exact H10)
-             (path_cstr_latch ms dot_path Hrom Hlen Hnz Hrd') ltac:(rewrite lg2; exact Hfl)).
+             (path_cstr_latch ms dot_path Hrom Hlen Hnz
+                ltac:(change (Z.of_nat (length dot_path)) with 1%Z; lia) Hrd') ltac:(rewrite lg2; exact Hfl)).
   - intros fd. exact Hh.
   - unfold acc_ok in *. exact Hacc.
   - intros e He. rewrite adv_ret_latch. exact (HA e He).
@@ -489,7 +614,7 @@ Theorem rzc_read_file_nl : forall ms model w (fd buf cnt : word) (p : list byte)
   access_okb buf (bv_unsigned cnt) = true ->
   no_lazy model (bv_unsigned buf) (bv_unsigned buf + bv_unsigned cnt) ->
   realizes_cfg segs cfg
-    (mkCfg (setx ms 10 (len_word (file_read data off cnt)) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms)
+    (mkCfg (setx ms 10 (len_word (file_read data off cnt)) (ms_pc_val ms + Z_to_bv 64 4) None
                  (write_to_mem (ms_mem ms) buf (file_read data off cnt)))
            (with_fds (fd_insert (m_fds model) fd (FdFile p (off + len_word (file_read data off cnt)))) model)) K ->
   realizes_cfg segs cfg (mkCfg ms model) K.
@@ -545,7 +670,9 @@ Proof.
         rewrite bv_eqb_refl. rewrite (proj2 (listN_eqb_eq _ _) eq_refl).
         rewrite bv_eqb_refl. cbn [andb]. reflexivity. }
   apply (rzc_det_nl S model (rg ms 17) 63 (mkEffect (len_word bs) (delivered_writes buf bs) []) m1 K
-           Hh (lsvc ms) Hno eq_refl Hchk).
+           Hh (lsvc ms)
+           (RomBase.sys_rob_memfree segs S model (rg ms 17) (lsvc ms) ltac:(rewrite Hno; exact RomBase.memfree_63))
+           Hno eq_refl Hchk).
   - intros Hs.
     rewrite (check_syscall_63 segs S _ _ model Hno) in Hs. unfold check_read in Hs.
     rewrite G0, G1, G2, Hfd32, Hfd in Hs. cbv beta iota in Hs.
@@ -577,13 +704,15 @@ Theorem rzc_read_dir_nl : forall ms model w K,
   fd32 (rg ms 10) = rg ms 10 ->
   access_okb (rg ms 11) (bv_unsigned (rg ms 12)) = true ->
   realizes_cfg segs cfg
-    (mkCfg (setx ms 10 (errno_ret EISDIR) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (ms_mem ms)) model) K ->
+    (mkCfg (setx ms 10 (errno_ret EISDIR) (ms_pc_val ms + Z_to_bv 64 4) None (ms_mem ms)) model) K ->
   realizes_cfg segs cfg (mkCfg ms model) K.
 Proof.
   intros ms model w K Hsvc HF HE Hh H17 Hfd Hfd32 Haok Hc.
   eapply rzc_ecall_nl; [exact Hh | exact Hsvc | exact HF | exact HE |].
   assert (Hno : bv_unsigned (rg ms 17) = 63%Z) by (rewrite H17; reflexivity).
-  apply (rzc_det_nl (latch ms) model (rg ms 17) 63 (mkEffect (errno_ret EISDIR) [] []) model K Hh (lsvc ms) Hno eq_refl).
+  apply (rzc_det_nl (latch ms) model (rg ms 17) 63 (mkEffect (errno_ret EISDIR) [] []) model K Hh (lsvc ms)
+           (RomBase.sys_rob_memfree segs (latch ms) model (rg ms 17) (lsvc ms) ltac:(rewrite Hno; exact RomBase.memfree_63))
+           Hno eq_refl).
   - intros eff m2 evs. rewrite (read_dir_check segs (latch ms) (rg ms 17) model Hno); rewrite ?lg0, ?lg1, ?lg2; try assumption.
     apply check_ret_only_ok_iff.
   - rewrite (read_dir_check segs (latch ms) (rg ms 17) model Hno); rewrite ?lg0, ?lg1, ?lg2; try assumption.
@@ -599,7 +728,7 @@ Theorem rzc_close_nl : forall ms model w (fd : word) e K,
   rg ms 17 = Z_to_bv 64 57 -> rg ms 10 = fd -> fd32 fd = fd ->
   fd_lookup (m_fds model) fd = Some e ->
   realizes_cfg segs cfg
-    (mkCfg (setx ms 10 (Z_to_bv 64 0) (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (ms_mem ms))
+    (mkCfg (setx ms 10 (Z_to_bv 64 0) (ms_pc_val ms + Z_to_bv 64 4) None (ms_mem ms))
            (with_fds (fd_remove (m_fds model) fd) model)) K ->
   realizes_cfg segs cfg (mkCfg ms model) K.
 Proof.
@@ -611,7 +740,9 @@ Proof.
                              = check_ret_only eff (Z_to_bv 64 0) m1 []).
   { intro eff. rewrite (check_syscall_57 segs (latch ms) _ eff model Hno). unfold check_close.
     rewrite lg0, H10, Hfd32, Hfd. reflexivity. }
-  apply (rzc_det_nl (latch ms) model (rg ms 17) 57 (mkEffect (Z_to_bv 64 0) [] []) m1 K Hh (lsvc ms) Hno eq_refl).
+  apply (rzc_det_nl (latch ms) model (rg ms 17) 57 (mkEffect (Z_to_bv 64 0) [] []) m1 K Hh (lsvc ms)
+           (RomBase.sys_rob_memfree segs (latch ms) model (rg ms 17) (lsvc ms) ltac:(rewrite Hno; exact RomBase.memfree_57))
+           Hno eq_refl).
   - intros eff m2 evs. rewrite Hchk. apply check_ret_only_ok_iff.
   - rewrite Hchk. apply check_ret_only_no_unmodeled.
   - unfold m1. rewrite with_fds_halted. exact Hh.

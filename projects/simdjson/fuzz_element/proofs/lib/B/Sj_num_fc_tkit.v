@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/Sj_num_fc_tkit.v, line 45. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -41,7 +42,7 @@ Section FCTK.
   Notation spq := (q_spq E).
   Notation OUT := (q_OUT E).
   Hypothesis OK : fcb_ok E.
-  Hypothesis LOR : rt_sp0 RT Σ0 - STACK_WIN <= lo.
+  Hypothesis LOR : rt_sp0 RT Σ0 - STACK_SPAN <= lo.
   Hypothesis EF : rt_frames RT Σ1 = (f, 4%nat) :: rt_frames RT Σ0.
   Hypothesis EL : rt_live RT Σ1 = rt_live RT Σ0.
   Hypothesis ES : rt_sp0 RT Σ1 = rt_sp0 RT Σ0.

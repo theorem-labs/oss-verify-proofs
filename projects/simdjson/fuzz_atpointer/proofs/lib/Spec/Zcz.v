@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's kernel field and mprotect changes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -107,12 +108,18 @@ Proof.
     assert (Hab : b + PGSZ <= a /\ a + PGSZ <= b + nb) by (subst a; unfold PGSZ in *; nia).
     assert (Ua : bv_unsigned (Z_to_bv 64 a) = a) by (apply unsigned_lit; unfold PGSZ in *; lia).
     assert (Un : bv_unsigned (Z_to_bv 64 PGSZ) = PGSZ) by (apply unsigned_lit; unfold PGSZ; lia).
-    apply (unforced_mprotect a mo); [unfold PGSZ in *; lia| unfold PGSZ in *; lia| exact Hal| | | exact Hbud].
+    apply (unforced_mprotect a mo); [unfold PGSZ in *; lia| unfold PGSZ in *; lia| exact Hal| | | exact Hbud| ].
     + destruct (Ana (1 + k) ltac:(lia) ltac:(lia)) as (e & He & Hel & Heh). unfold map_contains. apply existsb_exists. exists e. split; [exact He|].
       rewrite Ua, Un. unfold elo, ehi in Hel, Heh. subst a. rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
     + unfold map_contains. apply existsb_exists. exists (went b nb). split; [exact A5|]. rewrite Ua, Un. unfold elo, ehi in B5, B6. rewrite B5.
       replace (bv_unsigned (fst (went b nb)) + bv_unsigned (snd (went b nb))) with (b + nb) by (symmetry; exact B6).
       rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
+    + (* LPS 727298f3: [check_mprotect]'s vDSO gate.  The page lies inside the mapping
+         [went b nb], which is free of the reserved ledger ([kl_mres]), and the vDSO pair
+         is part of that ledger ([kl_vin]). *)
+      apply region_free_sep. intros y Hy.
+      pose proof (region_free_disj _ _ _ y (kl_mres _ _ _ HK _ A5) (kl_vin _ _ _ HK y Hy)) as D.
+      rewrite Ua, Un. unfold elo, ehi in D, B5, B6 |- *. cbn [fst snd] in D. lia.
 Qed.
 
 End WithCeiling.

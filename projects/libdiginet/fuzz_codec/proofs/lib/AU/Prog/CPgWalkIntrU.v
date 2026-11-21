@@ -4,9 +4,10 @@
    the image-A core modules are image B's (lib/AU), YImgTop is YImgTopU, the CA_ constants are CB_ ones with
    image B's values; lemma and tactic names unchanged. *)
 (* Modified by Theorem Labs, 2026-10: cw_writable_kept is the text of writable_keptP in
-   proofs/libreac/fuzz_knock/lib/A/APgInit.v:75-83 (origin/ossv/recipes 4b6f0df50aa7), and the call and resume follow
+   proofs/libreac/fuzz_knock/lib/A/APgInit.v:75-83, and the call and resume follow
    the same file's lines 282-346 (the __asan_memset call and the state after it), on the concrete image B of
    libdiginet/fuzz_codec's ASan build (tfibsegs, no listing layer). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The call of a runtime intrinsic (__asan_memcpy at image B 0x51ae8, __asan_memset at 0x51f84) from a walk of
    codec's own code, and the symbolic state after it.
    - The walk's run stops at the intrinsic's entry after the `jal` (ra = the return address, a literal).

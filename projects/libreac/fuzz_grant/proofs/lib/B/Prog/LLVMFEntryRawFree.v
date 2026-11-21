@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryRawFree), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACjo.v, proofs/cgif/cgif_file_fuzzer/lib/A/AE3f.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryRawFree.v. *)
-(* Ported from lib/A/Prog/GrantEntryRawFree.v of a working branch 7c8c67da870 (blob 52d41dc7e08). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryRawFree.v of a working branch (blob 52d41dc7e08). *)
 (* The last slot of the hand-built allocation phase of LLVMFuzzerTestOneInput on image B:
    0x81940 (GR_free), `jal 0x52ed8 <wrapper_free>` with a0 = s, the 4352-byte sweep buffer
    the phase allocated, and the return address BASE + 0xf08 (GP_sched0, one of the three

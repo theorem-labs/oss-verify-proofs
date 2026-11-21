@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_m.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses, and the words' clause of cr_cx carries the statement's `ww mod 8 = 0` (the UBSan alignment check of w->w[0]). *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_m.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses, and the words' clause of cr_cx carries the statement's `ww mod 8 = 0` (the UBSan alignment check of w->w[0]). *)
 (* Modified by Theorem Labs, 2026-10: the segment statements of check_reply's walk (fuzz_command.asan-ubsan, 0x86e64), in
    the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (cgif_close's CL_*_stmtX: the entry facts bundled, a
    mid-walk invariant, the registers at the program point, and the configuration at BASE + pc realizing the
@@ -26,6 +26,7 @@
    walk's only FP change: the segments up to it carry the statement's rounding-mode-0 premise at the entry's FP state
    (the call's frm0_entry), and CR_RSNP_stmt, the point it returns to, is used at the FP state the call returns
    (PaFx.v srr_after_artF; a Theorem Labs lane's PASS4-REFIT.md A.5). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

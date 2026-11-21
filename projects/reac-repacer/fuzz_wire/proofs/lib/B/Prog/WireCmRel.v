@@ -1,6 +1,6 @@
 (* WireCmRel: the release and return piece of the image-B walk of check_meter (fuzz_wire.asan-ubsan 0x8016c), the
    footprint run (lib/Lib/ExecF.v evtF) of lib/B/Prog/WireCmIface.v cm_rel_stmt, stepped by lib/Lib/StepF.v in the
-   form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v cv_end_F (recipes commit 0295462466b2):
+   form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v cv_end_F (recipes):
      0x803c4 `li a0, -8`, 0x803c8 `sb a0, 4(s7)`: ctr's shadow byte := 0xf8;
      0x803cc `lui`, 0x803d0 `addiw`, 0x803d4 `sd a0, 0(s6)`: the frame's first word := 0x45e0360e;
      0x803d8 `beqz s2` not taken (s2 = Fa >= 4096);

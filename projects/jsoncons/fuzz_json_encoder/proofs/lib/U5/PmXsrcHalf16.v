@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed xsrc_half16. *)
 (* The source half of ubsan_agrees at lim_source = ShippedBudgets.lim_source = 2^34: PmXasanBaseW.xsrc_half on the
    2^34 copies of the XLIM layer, closed with the plain library (TopGlueXW.Lay0, PMX.pm_staticsx) and
    PHI0U = phi_lim (2^34). L0, KPM, BOV, K0 and B0 of PmHeapInst6_s34 have the bodies of PmHeapInst6's, so the
@@ -18,6 +19,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.PmInteg Require PmLibInstXW
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5.CJ.Bridge Require PmHeapInst6_s34 PmHeapClosed6_s34.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5.PmInteg Require AssemblyFullXW_s34.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require PmPhiX_s34 PmXubsanStmt.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.Common.Cfg Require SRomStable.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -93,7 +95,10 @@ Theorem xsrc_half16 : forall en_s inp,
 Proof.
   intros [sp brk mb rnd] inp Hen Hvalid Hwb.
   apply half_ok_of_srealizes.
-  - apply (srz_conseq _ _ _ (specG (fun d => PHI0U (Pm6DrvD.payload d)) (in_argv inp) (in_fs inp))).
+  - (* the walk is over the binary's own segments; [SRomStable.srun_init] lifts it to the
+       run's segments with the vDSO pair appended ([Run.run_segments], LPS 727298f3) *)
+    apply (SRomStable.srun_init PmPhiX_s34.PmPhiX16.cfg0 Plain.M.loaded_segments inp sp mb _ _ _ _ _ _ eq_refl).
+    apply (srz_conseq _ _ _ (specG (fun d => PHI0U (Pm6DrvD.payload d)) (in_argv inp) (in_fs inp))).
     + exact (PmPhiX_s34.PmPhiX16.srealizes_specG_init Lay0F (fun _ => PMX.pm_staticsx) PHI0U DLL16 lib_iface16 LX16 BUD16
                ShippedBudgets.lim_source sp brk mb rnd inp lim16_le Hen Hvalid).
     + apply specG_eq. intros a0 path data Hargv Hlen Hne Hnd Hlk Hhdr.

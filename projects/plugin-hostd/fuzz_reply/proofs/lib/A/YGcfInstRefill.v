@@ -1,45 +1,46 @@
-(* CARRIED from commit ef59884ff3b253ed0d7cd40347e9e12f81402e5d,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRefill.v, sha256 695235d24fc6eb97585bb005980e0fc5aa6829e7864a45be41b0bab8988e256c (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the
    module paths only: OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib M -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable M, except lib.A for: YGcfRmodel AllocG ImgBaseAG AGif0n MemnormT ImgBaseDG DGif0 CLenq YGcfMallocCompose YGcfInstBase. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cf layer's REFILL walk premise, one shared text for every cf unit (lane M, the cf layer).
 
    [refill_walk_cf] is what a unit's refill walk proves (cgif: CLrefillR.tfib_refill_okR / MnRefillR.tfib_refill_okR_em,
    re-based on the cf model): Allocate's refill subroutine, entered at AGImg's [ag_refill] with AIfaceM.if_refill's
-   registers and stack (AGif0n.v:288-300), runs the cf refill tree from the TICKED entry state and ends in
-   [rwalk_leaf_cf].  Text by CfInstMiss (commit 5ab4f0658bd, YGcfInstMiss.v:270-295), stated through the
+   registers and stack (AGif0n.v:289-301), runs the cf refill tree from the TICKED entry state and ends in
+   [rwalk_leaf_cf].  Text by CfInstMiss (YGcfInstMiss.v:271-296), stated through the
    interface's own premises: ARXq_cf and rpre_cf at the ENTRY state S0, at the call-time memory and model.
 
-   It REPLACES the earlier refill_pre_cf / refill_leaf_cf / tfib_refill_spec_cf (commits ad082add249, 381bf57c5b3), which
+   It REPLACES the earlier refill_pre_cf / refill_leaf_cf / tfib_refill_spec_cf (commits), which
    CORRECTS those commits' messages on three points:
    - the old leaf's frame was acall_post_cf with exception (fun _ => False) over aowned, which is FALSE on the class-full
      path: a non-batch class-full report inside the refill writes the errbuf (errb_report_cf / errb_map_cf,
-     YG00cf.v:126-182), an xs_cf extent and not aowned.  The new leaf frames outside AOX_cf (= aowned plus the errbuf,
+     YG00cf.v:127-183), an xs_cf extent and not aowned.  The new leaf frames outside AOX_cf (= aowned plus the errbuf,
      AOXm_cf) and restates xs_mapped_cf at the result;
    - the old leaf had no raw frame, no memnorm_keep, errno inside ascratch and the layout fixed, so it could not give
      MnRefill.rleaf_em; the new one has all four;
    - E2 (`prim_user_mapped S + kUserMapSize <= kUserMapSize * st_nev S`) is DROPPED, not kept: the tree runs from
-     set_nev (st_nev S0 + 1) S0, and WfP_cf_tick' (YG02cf.v:159, `Wf_cf U s -> WfP_cf U 1 1 1 (set_nev (st_nev s + 1)
+     set_nev (st_nev S0 + 1) S0, and WfP_cf_tick' (YG02cf.v:160, `Wf_cf U s -> WfP_cf U 1 1 1 (set_nev (st_nev s + 1)
      s)`) gives wfc_prim_ev one user map ahead from S0's Wf_cf alone.
-   The old text's own source, commit 5ab58d26200, lib/A/AFl1cf.v:35-57, carried event regime clauses (refill_reg,
+   The old text's own source, lib/A/AFl1cf.v:35-57, carried event regime clauses (refill_reg,
    YG0m.v:63-64) and cgif's non-cf meter (qloosem, YG0n.v:545-547) at tfibsegs; none of that is here.
    EVENT-FREE: no st_nev bound, EV_A, EV_MAX, EV_BIG, mtr_ok, aregime or non-cf abudget; st_nev appears only in the
    tick `set_nev (st_nev S0 + 1) S0`.
 
    The CALL-SITE-GENERIC refill contract [refill_spec_cf] (a Theorem Labs lane RefillSpec, 2026-10-30, lane M second hand): the cf
-   twin of cgif's MnRefillLoc.tfib_refill_specR_em (MnRefillLoc.v:52-55) over cgif's refill_pre registers (YFl1.v:27-38).
+   twin of cgif's MnRefillLoc.tfib_refill_specR_em (MnRefillLoc.v:53-56) over cgif's refill_pre registers (YFl1.v:27-38).
    The tree runs UNTICKED at the CALL state; any caller (its own return address, a0 = the cache, a1 = the class's cache,
    a2 = the instance, a3 = the class, its own stack); ARX_cf by name, NOT ARXq_cf (qtight is false at Enqueue's call,
-   chunk CQuarantined but not queued); the leaf is a Theorem Labs lane's LEAF_B2 form (commit 5aba6f8274ea,
-   YFkzcf.v:999-1005) over the window REP_STACK and the class-full exception refill_exc_cf, plus the fields
+   chunk CQuarantined but not queued); the leaf is a Theorem Labs lane's LEAF_B2 form (
+   YFkzcf.v:1000-1006) over the window REP_STACK and the class-full exception refill_exc_cf, plus the fields
    rwalk_leaf_cf needs, plus the model clause refill_q_cf (chunks and quarantine unchanged, caches inited).
-   Callers: Allocate's primary miss arm (AGif0n.v:295, via refill_walk_cf) and Enqueue's miss arm inside Deallocate
-   (cgif YFg6.v:272-279; Enqueue enters at Deallocate's sp0 - 80, DGfz.v:282, and calls the refill at its sp - 64).
-   The refill window: the class-full report path writes 224 + 1232 = 1456 bytes below the refill's sp (commit
-   5af9fe91f6d: APP_STK 512, PR_STK 1232, refusal head removed), more than RSTACK = 1024; the batch class has no report
+   Callers: Allocate's primary miss arm (AGif0n.v:296, via refill_walk_cf) and Enqueue's miss arm inside Deallocate
+   (cgif YFg6.v:272-279; Enqueue enters at Deallocate's sp0 - 80, DGfz.v:283, and calls the refill at its sp - 64).
+   The refill window: the class-full report path writes 224 + 1232 = 1456 bytes below the refill's sp (
+   APP_STK 512, PR_STK 1232, refusal head removed), more than RSTACK = 1024; the batch class has no report
    path (refill_batch_secs), so the contract's window is REP_W c: RSTACK for kBatchClass (Enqueue's call fits its
    QSTACK_G = 64 + RSTACK, REP_W_enq), REP_STACK otherwise; rwalk_leaf_cf frames and presents
    [spZ regs - REP_STACK, spZ regs).  Every proof uses the names and REP_STACK_le / REP_W_le only. *)
@@ -71,12 +72,12 @@ Local Open Scope am_scope.
 (* The cf refill tree, as malloc_cf's primary miss arm runs it (YGcfInstMiss.shape_miss_cf). *)
 Definition refill_tree_cf (c : Z) : M unit := init_cache_if_needed ;; refill_if_empty_cf c.
 
-(* The refill's stack window: 2048 >= the report path's 1456 bytes (commit 5af9fe91f6d), and >= RSTACK, the window
+(* The refill's stack window: 2048 >= the report path's 1456 bytes, and >= RSTACK, the window
    cgif's B2 walk runs in (YFkw.segB2 / YFkzcf.LEAF_B2 except [sp - RSTACK, sp)), so a walk entered with the REP_STACK
    window may step into the RSTACK one; [0 <= RSTACK] keeps REP_STACK's sign for the consumers' lia (CfInstMiss's
    REP_STACK_af).  Proofs use the NAME and [REP_STACK_le] only.  Room at both callers: Allocate 176 + 3840 = 4016 <=
-   AFSTACK 4096 (ImgBaseAG.v:58, AGif0n.v:295); Enqueue via Deallocate 80 + 64 + 3840 = 3984 <= DFSTACK 8192
-   (DGfz.v:282 / :201). *)
+   AFSTACK 4096 (ImgBaseAG.v:59, AGif0n.v:296); Enqueue via Deallocate 80 + 64 + 3840 = 3984 <= DFSTACK 8192
+   (DGfz.v:283 / :202). *)
 Definition REP_STACK : Z := 2048.
 Lemma REP_STACK_le : 0 <= RSTACK /\ RSTACK <= REP_STACK <= 3840.
 Proof. unfold RSTACK, REP_STACK. lia. Qed.
@@ -100,14 +101,14 @@ Proof. rewrite REP_W_batch. unfold RSTACK, CLenq.QSTACK_G. reflexivity. Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The batch class's refill tree is cgif's: Enqueue's model (YG00.enqueue, :442-445) runs cgif's cache_alloc         *)
 (* kBatchClass, whose refill part is init_cache_if_needed ;; refill_if_empty kBatchClass; populate_cf kBatchClass is  *)
-(* cgif's populate (YG00cf.v:185-186), so the two trees are the same term.                                           *)
+(* cgif's populate (YG00cf.v:186-187), so the two trees are the same term.                                           *)
 Lemma refill_tree_cf_batch : forall s, refill_tree_cf kBatchClass s = (init_cache_if_needed ;; refill_if_empty kBatchClass) s.
 Proof. intros s. reflexivity. Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The model clause, PROVED from the model: on every returning path the refill tree keeps the chunks, both          *)
 (* quarantine caches and the fakestack, and leaves the caches inited (an all-paths walk, YGcfXs.cfx_ipost).  The rq_*  *)
-(* family is CfInstMiss's (commit f97ba5d2889, YGcfInstMiss.v), with st_fs added (TkSecLink's draft).                *)
+(* family is CfInstMiss's (YGcfInstMiss.v), with st_fs added (TkSecLink's draft).                *)
 Definition rq_same (s s' : astate) : Prop :=
 st_chunks s' = st_chunks s /\ st_qthread s' = st_qthread s /\ st_qglobal s' = st_qglobal s /\
 st_fs s' = st_fs s /\ st_cache_inited s' = st_cache_inited s.
@@ -193,7 +194,7 @@ Proof. intros c s. unfold refill_if_empty_cf. repeat rq_step. Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* THE SOUNDNESS OF REP_W at kBatchClass, from the model: the batch class's tree is cgif's (refill_tree_cf_batch:    *)
-(* map_more_user_cf / populate_cf call cgif's map_more_user / populate for it, YG00cf.v:163-186, whose class-full    *)
+(* map_more_user_cf / populate_cf call cgif's map_more_user / populate for it, YG00cf.v:164-187, whose class-full    *)
 (* arm is cgif's vacuous mcheck, under batch_room_cf), and on every returning path it keeps the secondary table      *)
 (* st_secs, so no errbuf map, retire or print (errb_map_cf / errb_retire / errb_set_size all change st_secs): the  *)
 (* report path, the only one deeper than RSTACK, is not in the tree.                                                *)
@@ -251,7 +252,7 @@ Proof. intros s. rewrite refill_tree_cf_batch. repeat rs_step. Qed.
 
 (* The exhausted bytes at the batch class: the tree's hole operations (cgif's map_more_user / ensure_free_array,
    YG00.v:268 / :273 / :286 / :290) act at offsets rg_mapped_user >= 0 and kFreeArrayOffset + rg_mapped_fa >= 0, never
-   at the EXH_HOLE sentinel (-1, YG00cf.v:39-41), and the mapped sizes only grow; so on every returning path every
+   at the EXH_HOLE sentinel (-1, YG00cf.v:40-42), and the mapped sizes only grow; so on every returning path every
    class's exh_mem_cf is unchanged (refill_batch_exh).  With refill_batch_secs this is the batch class's FRAME of the
    leaf's exh_cell_cf / errb_cells_cf: the model values of both cell families are those of the call state. *)
 Definition hsent (r : region) : bool := existsb (fun h => fst h =? EXH_HOLE) (rg_holes r).
@@ -407,7 +408,7 @@ intros segs t. induction t as [r | q s k IH | pc | f]; intros W c Q P HP H; cbn 
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The tick transport (a Theorem Labs lane's YGcfRefillTick.v:36-49, commit 9031d3b24a79): the tick changes                  *)
+(* The tick transport (a Theorem Labs lane's YGcfRefillTick.v:37-50): the tick changes                  *)
 (* st_nev only, and of the cf relation only amc_wf reads it, which YG02cf.WfP_cf_tick keeps.  The layer's one copy.  *)
 Section tick.
 Variable segs : list Segment.
@@ -433,7 +434,7 @@ Qed.
 End tick.
 
 (* Wf_cf with one user map of credit at Enqueue's call state: X = qx S0 k z tr is Deallocate's entry state S0 after
-   its tick, the depot answer and the chunk's change (DGif0.v:74-80), none of which maps user memory, so the credit
+   its tick, the depot answer and the chunk's change (DGif0.v:75-81), none of which maps user memory, so the credit
    WfP_cf_tick' gives at the ticked state is X's (the proof of CfF1's enq_tick_bounds_cf, as a WfP_cf field). *)
 Lemma WfP_cf_qx : forall U S0 k z tr, Wf_cf U S0 -> Wf_cf U (DGif0.qx S0 k z tr) -> WfP_cf U 1 0 0 (DGif0.qx S0 k z tr).
 Proof.
@@ -493,12 +494,12 @@ amreal im_segs (refill_tree_cf (chunk_class n) (set_nev (st_nev S0 + 1) S0)) W
 (* The state the refill needs, at the CALL state S: the relation (by name), Wf_cf with one user map of credit (the
    tree maps at most one kUserMapSize with no tick of its own; Allocate's entry tick gives it by WfP_cf_tick',
    Enqueue's by its call-state bound, YGcfInstEnq.enq_pre_tick_cf), the loose quarantine (mroom_cf from it,
-   YGcfInstBase.ARX_cf_mroom), the class room as the model branches (map_more_user_cf, YG00cf.v:163-183: the batch
+   YGcfInstBase.ARX_cf_mroom), the class room as the model branches (map_more_user_cf, YG00cf.v:164-184: the batch
    class keeps cgif's vacuous class-full arm, so it needs batch_room_cf; every other class takes the class-full report
    path, which writes the errbuf, so it needs ERRB_ROOM and one spare event for the report's first append,
-   errb_append_cf_ok's premise, YG06bcf.v:321-323: WfP_cf .. 1 1 0), the class, and the empty cache.  NO qtight.
+   errb_append_cf_ok's premise, YG06bcf.v:322-324: WfP_cf .. 1 1 0), the class, and the empty cache.  NO qtight.
    The spare event sits with ERRB_ROOM, not in the second conjunct: Enqueue's site (the batch class, no report path)
-   cannot carry cc = 1 at its state qx S0 k z tr, whose chunks are upd_chunk .. (qk k) (DGif0.v:75-76) and upd_chunk
+   cannot carry cc = 1 at its state qx S0 k z tr, whose chunks are upd_chunk .. (qk k) (DGif0.v:76-77) and upd_chunk
    appends k when its ck_beg is absent (YG00.v:224-227), a fact the site's premise does not exclude. *)
 Definition refill_state_gen_cf (Hp : list Z) (inst : Z) (ly : alayout) (S : astate) (W : world im_segs)
 (mem : word -> option byte) (md : Model) (c : Z) : Prop :=
@@ -617,7 +618,7 @@ exact (amreal_ipost im_segs _ W _ _ _ (cfx_ipost_conj _ _ _ (refill_tree_cf_q c 
   (H Hp inst ly S W regs mem md c HS AD HO HC)).
 Qed.
 
-(* The owned set is inside AOX_cf (its first disjunct, YGcfMallocCompose.v:123). *)
+(* The owned set is inside AOX_cf (its first disjunct, YGcfMallocCompose.v:124). *)
 Lemma aowned_AOX_cf : forall ly S a, aowned B ly S a -> AOX_cf B ly S a.
 Proof. intros ly S a H. unfold AOX_cf, AOXm_cf. left. exact H. Qed.
 
@@ -666,7 +667,7 @@ intros Hp inst ly S W mem md H. unfold ARX_cf in *. destruct H as (I & A & R).
 split; [exact I|]. split; [exact (ARcf_tick im_segs B ly S Hp W mem md A)|]. destruct S; exact R.
 Qed.
 
-(* ---- Allocate's site (AGif0n.v:285-300): the call state is Allocate's entry state S0 after its tick. ---- *)
+(* ---- Allocate's site (AGif0n.v:286-301): the call state is Allocate's entry state S0 after its tick. ---- *)
 Lemma refill_state_gen_tick : forall Hp inst ly S0 W mem md n,
 ARXq_cf B IOK Hp inst ly S0 W mem md -> rpre_cf B S0 n -> 0 <= n -> from_primary n = true ->
 pc_chunks (cache S0 (chunk_class n)) = [] ->
@@ -771,11 +772,11 @@ Qed.
 
 (* The unit's image fact for Enqueue's site: the symbol table's thread pointer is the image's (refill_call_gen_cf
    states tp as Allocate's interface does, w64 im_tp; Enqueue's pre gives w64 (as_tp B)).  An IMAGE row of the unit
-   hypotheses (cgif: AImg_cgif's im_tp := TFIB_TP, AGif2cgif.v:30, with TfibSyms' ts_tp, YF0m.v:293). *)
+   hypotheses (cgif: AImg_cgif's im_tp := TFIB_TP, AGif2cgif.v:30, with TfibSyms' ts_tp, YF0m.v:294). *)
 Definition tp_img_t : Prop := as_tp B = im_tp.
 
-(* ---- WITNESS at Enqueue's miss arm inside Deallocate (cgif YFg6.v:272-279; the cf call state is CfF1's, commit
-   f8bbf53382b1): the hypotheses are exactly what enq_pre_cf (YGcfInstEnq.v:134-145) and its call
+(* ---- WITNESS at Enqueue's miss arm inside Deallocate (cgif YFg6.v:272-279; the cf call state is CfF1):
+   the hypotheses are exactly what enq_pre_cf (YGcfInstEnq.v:135-146) and its call
    segment give at the refill call, NO qtight among them (quar_n X = queued_n X + ck_n k there): ARX_cf (:136),
    batch_room_cf (:136), qloose (:145), X as Deallocate's ticked entry state qx S0 .. with Wf_cf S0 (:137), the miss
    arm's empty batch cache, the call's registers (YFh5.at_CALLR, sp = Enqueue's entry sp - 64), and Enqueue's own

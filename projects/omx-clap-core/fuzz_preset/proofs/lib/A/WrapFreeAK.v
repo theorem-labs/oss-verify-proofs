@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: RELOCATED to the #102 pins (image A' = asan 1be0f53d96cb, twin bff8519bbe3e) from commit preset-tree-at-2026-10-29T17-46-55Z.tsv (sha256 7c0bbc66e4a5; internal record) (old-pin image A) by the relocation script, the internal file reloc_A2.py (named with its outputs in the commit that added this line): every code address moved by symbol + offset (the internal file reloc_A2.out), the walk's functions checked by bytecmp 1480ca2faea0 + a target pass (the internal file measure_A2.out); data addresses come by name from int102's A' tables; ARXs_cf / ARmcf follow preset-tree-at-2026-10-29T18-16-07Z.tsv (sha256 4c721de248fd; internal record) (xs_placed is ARmcf's field amc_xs_placed). *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A' (#102 asan, pin 1be0f53d96cb, twin bff8519bbe3e): K_A, the
-   invariant of the Record wrap_free_walk_cf (lib/Reusable/YGcfMallocCompose.v:334-336 Kfree_t) that the
+   invariant of the Record wrap_free_walk_cf (lib/Reusable/YGcfMallocCompose.v:335-337 Kfree_t) that the
    call segment (WrapFreeACall.v, field wf_call) hands to the return segment (WrapFreeARet.v, field wf_ret).
    It carries what ___interceptor_free's epilogue (0x538e8-0x5390c) reads: the stack pointer and the return address
    at Deallocate's entry (asan_free tail-jumps to Deallocate, so Deallocate returns to 0x538e8, after

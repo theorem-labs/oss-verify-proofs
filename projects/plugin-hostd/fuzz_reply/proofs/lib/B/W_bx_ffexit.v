@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: image B's lx_ffexit (lib/B/W_bx_defs.v lx_ffexit_S), the fake frame's release
    and the epilogue of fuzz_reply.asan-ubsan's LLVMFuzzerTestOneInput, 0x85014 .. the ret 0x850f8; the port of the A
-   donor b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v :99-125 (ss_ffexit) and
+   donor lib/A/W_LLVMFuzzerTestOneInput_exit.v :99-125 (ss_ffexit) and
    :7421-7645 (lx_ffexit).  B's block, read from the objdump of fuzz_reply.asan-ubsan (sha256
    10ffb5f9202ae2bdb01b7a49df9866843a6a6a0e0c50bc67cdba6ce2f6d3cf2c):
      85014 lui a0,0x45e03; 85018 addiw a0,a0,1550     the retired-frame magic 0x45e0360e
@@ -16,6 +16,7 @@
    FF's header word and flag pointer word are ONE region based at s4 (atom 20): [0,128) with the write window [0,8)
    and the chunk FL at 120 (the donor had them at two atoms, s7 and s4).  Everything after the magic store is the
    donor's code instruction for instruction (B's saved-register slots below s0 are the cut's saved_regs, as A's). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the main checks are made for each launch rseq layout (rsb): the shadow table, the start states and the node table take rsb. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
@@ -35,11 +36,11 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Definition HSA (HS_asan : nat -> option acs) (h : nat) : acs := match HS_asan h with Some cs => cs | None => both_init end.
+Definition HSA (rsb : bool) (HS_asan : nat -> option acs) (h : nat) : acs := match HS_asan h with Some cs => cs | None => (both_init (rseq_z rsb)) end.
 
 (* [comment removed for export] *)
 Definition pay_start (ch : acs) (C : class) : acs := set_kn ch (facts_of_class C ++ kn ch).
-Definition main_start (HS_asan : nat -> option acs) (h : nat) (C : class) : acs := pay_start (HSA HS_asan h) C.
+Definition main_start (rsb : bool) (HS_asan : nat -> option acs) (h : nat) (C : class) : acs := pay_start (HSA rsb HS_asan h) C.
 
 (* [comment removed for export] *)
 Definition ebounds (k : list kentry) (e : expr) : Z * Z :=
@@ -72,26 +73,25 @@ Definition class_le (C C' : class) : bool :=
 
 (* [comment removed for export] *)
 Definition BSEGS : list MemImageType.Segment := OSSVerify.coturn.FuzzStunClient.images.AsanUbsan.M.loaded_segments.
-Definition ATAB : atable := BOTH.
+Definition ATAB (rsb : bool) : atable := (BOTH_at (rseq_z rsb)).
 Definition RPTAB : RPN.rptab := RPN.RP_BOTH.
 Definition FPAR : FAParams := FPA_both.
 Definition DPLAY : Z * Z * Z := DPL_both.
-Definition XNM (T : ION.iotab) (id : nat) (args : list expr) (cs : acs) : option acs :=
-  XNm BSEGS ATAB NX0 RPTAB FPAR DPLAY UGN.UG_BOTH LC_BOTH T id args cs.   (* [comment removed for export] *)
+Definition XNM (rsb : bool) (T : ION.iotab) (id : nat) (args : list expr) (cs : acs) : option acs :=
+  XNm BSEGS (ATAB rsb) NX0 RPTAB FPAR DPLAY UGN.UG_BOTH LC_BOTH T id args cs.   (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 Section Forms.
+  Variable rsb : bool.   (* explicit, so every form names the r it checks under *)
   Variable HS_asan : nat -> option acs.
   Variables KCm BFUELm FUELm : nat.
   Variable ITm : itab.
 
   #[local] Notation CHK C HS cs p :=
-    (check BSEGS ITm BOTH NX0 AsanInit.LIMIT (XNM (iotab_of C)) (XEm BSEGS BOTH NX0) (XBm BSEGS NX0 (iotab_of C))
+    (check BSEGS ITm (BOTH_at (rseq_z rsb)) NX0 AsanInit.LIMIT (XNM rsb (iotab_of C)) (XEm BSEGS (BOTH_at (rseq_z rsb)) NX0) (XBm BSEGS (BOTH_at (rseq_z rsb)) NX0 (iotab_of C))
            HS KCm BFUELm FUELm None cs p).
 
   (* [comment removed for export] *)
-  Definition main_check (h : nat) (C : class) (p : plan) : cres := CHK C HS_none (main_start HS_asan h C) p.
-  Definition pre_check (h : nat) (C : class) (HT : list (nat * (nat * acs))) (p : plan) : cres := CHK C (hs_of HT) (main_start HS_asan h C) p.
-  Definition pay_check (ch : acs) (C : class) (p : plan) : cres := CHK C HS_none (pay_start ch C) p.
+  Definition main_check (h : nat) (C : class) (p : plan) : cres := CHK C HS_none (main_start rsb HS_asan h C) p.
   Definition seg_check (ch : acs) (C : class) (HT : list (nat * (nat * acs))) (p : plan) : cres := CHK C (hs_of HT) (pay_start ch C) p.
 End Forms.

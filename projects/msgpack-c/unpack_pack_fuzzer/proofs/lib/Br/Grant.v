@@ -1,8 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a NULL-hint grant is at Linux's own placement: the candidates start at task_unmapped_base, the floor of Linux's bottom-up window, and grant_exists_gen finds the address by Placement.linux_place_exists and its conjuncts by linux_place_admissible; grant_len_aligned added; imports Placement). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Lib Require Import PropExec MState NodesM DecodeM.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Malloc Require Import Ceiling.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Br Require Import StateGlue MPath Room.
@@ -73,8 +75,15 @@ Proof.
   unfold mprotect_model_next. cbn [m_vmmaps vm_live_bytes vm_maps vm_limit with_vmmaps vmst_maps m_vm]. exact Hlive.
 Qed.
 
-Definition FLOOR : Z := 2 ^ 32.
+(** The candidates start at [Mmap.task_unmapped_base], the floor of Linux's
+    bottom-up window, so a free candidate is a gap that window offers and
+    [Placement.linux_place_exists] turns it into Linux's own address. *)
+Definition FLOOR : Z := 0x2aaaaab000.
+Lemma FLOOR_tub : FLOOR = task_unmapped_base. Proof. reflexivity. Qed.
 Definition cand (N : Z) (j : nat) : Z := FLOOR + Z.of_nat j * (2 * N).
+
+Lemma grant_len_aligned : forall z, page_round_up_Z z mod page_size = 0.
+Proof. intros z. unfold page_round_up_Z. apply Z_mod_mult. Qed.
 
 Definition zconflict (a n : Z) (p : word * word) : Prop :=
   a < bv_unsigned (fst p) + bv_unsigned (snd p) /\ bv_unsigned (fst p) < a + n.
@@ -158,49 +167,56 @@ Proof.
 Qed.
 
 Lemma grant_exists_gen : forall (m : Model) (N n C : Z),
-  0 < N -> N mod page_size = 0 -> 0 <= n <= N ->
+  0 < N -> N mod page_size = 0 -> 0 < n <= N -> n mod page_size = 0 ->
   Forall (fun p => bv_unsigned (snd p) <= N) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) ->
   Z.of_nat (length (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= C ->
   FLOOR + C * (2 * N) + N <= alloc_ceiling -> ceil_ok (m_vmmaps m) ->
   vm_backing_used m + n <= vm_limit (m_vmmaps m) ->
   exists a, grant_ok m a n.
 Proof.
-  intros m N n C HN HNal Hn Hsz Hcnt Hband Hck Hlive.
+  intros m N n C HN HNal Hn Hnal Hsz Hcnt Hband Hck Hlive.
   set (l := vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) in *.
-  destruct (pick_candidate N n l (seq 0 (S (length l))) Hn Hsz (List.seq_NoDup _ _) ltac:(rewrite length_seq; lia))
+  destruct (pick_candidate N n l (seq 0 (S (length l))) ltac:(lia) Hsz (List.seq_NoDup _ _) ltac:(rewrite length_seq; lia))
     as (j & Hj & Hfree).
   apply in_seq in Hj.
-  exists (Z_to_bv 64 (cand N j)).
   pose_ceil. unfold ceil_ok in Hck.
-  assert (Hc : FLOOR <= cand N j <= FLOOR + C * (2 * N)) by (unfold cand; nia).
-  unfold grant_ok. unfold FLOOR in *. rewrite !unsigned_lit by lia.
+  assert (Hc : FLOOR <= cand N j <= FLOOR + C * (2 * N)) by (clear HNal Hnal; unfold cand; nia).
   assert (E1 : cand N j mod page_size = 0).
   { unfold cand, FLOOR. unfold page_size in *. rewrite Z.add_mod, Z.mul_assoc, Z.mul_mod, HNal by lia.
     rewrite Z.mul_0_r. reflexivity. }
-  split; [exact E1|]. split; [lia|]. split; [lia|]. split; [| exact Hlive].
-  fold l. apply (region_free_of_noconflict l (cand N j) n); first [lia | exact Hfree].
+  assert (Hgap : gap_fits l task_unmapped_base (alloc_top (m_vmmaps m)) n (cand N j)).
+  { unfold gap_fits. split; [exact E1|]. rewrite <- FLOOR_tub. split; [clear HNal Hnal E1; lia|].
+    split; [clear HNal Hnal E1; lia|].
+    apply (region_free_of_noconflict l (cand N j) n); first [clear HNal Hnal E1; unfold FLOOR in *; lia | exact Hfree]. }
+  destruct (linux_place_exists (m_vmmaps m) (kb_thp (m_kernel m)) (Z_to_bv 64 0) n ltac:(lia) Hnal
+              (ex_intro _ (cand N j) (or_intror Hgap))) as (a & Ha).
+  destruct (linux_place_admissible (m_vmmaps m) (kb_thp (m_kernel m)) (Z_to_bv 64 0) n a ltac:(lia) Hnal Ha)
+    as (A1 & A2 & A3 & A4).
+  assert (Ua : bv_unsigned (Z_to_bv 64 a) = a) by (apply unsigned_lit; clear HNal Hnal E1 A1; lia).
+  exists (Z_to_bv 64 a). unfold grant_ok. rewrite Ua.
+  split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [exact A4|]. split; [exact Hlive | exact Ha].
 Qed.
 
 Lemma grant_exists : forall (m : Model) (n : Z),
-  0 <= n <= 2 ^ 30 ->
+  0 < n <= 2 ^ 30 -> n mod page_size = 0 ->
   sizes_le (2 ^ 30) (vmaps m) ->
   Z.of_nat (length (vmaps m)) <= 40000 ->
   ceil_ok (m_vmmaps m) ->
   vm_backing_used m + n <= vm_limit (m_vmmaps m) ->
   exists a, grant_ok m a n.
 Proof.
-  intros m n Hn Hsz Hcnt Hck Hlive.
+  intros m n Hn Hnal Hsz Hcnt Hck Hlive.
   apply (grant_exists_gen m (2 ^ 30) n 40000); try assumption; try lia.
   - reflexivity.
   - pose_ceil. unfold FLOOR. lia.
 Qed.
 
 Lemma room_grant : forall mo j nZ,
-  room mo j -> 0 <= j <= 27 -> mo_ok mo -> ceil_ok (m_vmmaps mo) -> 0 <= nZ <= 2 ^ 27 ->
+  room mo j -> 0 <= j <= 27 -> mo_ok mo -> ceil_ok (m_vmmaps mo) -> 0 < nZ <= 2 ^ 27 -> nZ mod page_size = 0 ->
   exists a, grant_ok mo a nZ.
 Proof.
-  intros mo j nZ [Rs Rc Rl Rm] Hj Hmo Hck Hn.
-  apply (grant_exists mo nZ ltac:(lia) Rs); [lia | exact Hck|].
+  intros mo j nZ [Rs Rc Rl Rm] Hj Hmo Hck Hn Hnal.
+  apply (grant_exists mo nZ ltac:(lia) Hnal Rs); [lia | exact Hck|].
   apply grant_budget_intro; [exact Hmo|]. nia.
 Qed.
 

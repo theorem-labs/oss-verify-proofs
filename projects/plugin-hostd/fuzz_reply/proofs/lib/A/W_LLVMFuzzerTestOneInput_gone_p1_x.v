@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of ARM_gone's PHASE 1 (lib/A/W_LLVMFuzzerTestOneInput_gone_p1.v,
    a Theorem Labs lane's gp1_join_l1, Qed), the join 0x846f0 to the reads[] loop's head 0x84738, to the cut points of
    lib/A/W_LLVMFuzzerTestOneInput_gone_base_x.v (a Theorem Labs lane's route (b), step 7).  _gone_p1.v is not edited.
    - The Section header is cut_x's Section w header (B .. RINV, with PST / ARx / hl / LAWS / HP0 / HG / LSx).
-   - _gone_p1.v's own hypotheses, in its order: TL verbatim; SNP at W_sites_x.v:392 asnprintf_realizes_x; HGOTG and
+   - _gone_p1.v's own hypotheses, in its order: TL verbatim; SNP at W_sites_x.v:393 asnprintf_realizes_x; HGOTG and
      GN_LITS with their text over `ARx ly S Hp W mem md`.  After them: BLKN (OWED, W_kit_x.v's text: AR's al_blocks
-     has 0 <= n, AR_laws_x's alx_blocks does not) and FRMF (W_frame_x.v:105's Section hypothesis, for frame_al64_x /
+     has 0 <= n, AR_laws_x's alx_blocks does not) and FRMF (W_frame_x.v:106's Section hypothesis, for frame_al64_x /
      shadow_hull_vis_of_frame_x).  W_frame_x's IMGC is W_img_x.fr_img_cover_x (a Let, no hypothesis).
    - HP0 makes every ghost list of the walk empty, so the converted helpers are stated at Hp = [] (AR0).  The AR-free
      items of _gone_p1.v (the printf text, the view lemmas, p1_ib / p1_fp and their lemmas, p1_errno, the symbolic
@@ -92,7 +93,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* ---- _gone_p1.v's Section hypotheses, in its order ---- *)
 (* the allocator instance (W_kit.v): errno's 4 bytes lie in the image (pal_env, Reusable/YCbq.v api_env) *)
 Hypothesis TL : PALib B.
-(* snprintf at the interceptor's entry: W_sites_x.v:392's contract (W_sites.v:305's over ARx), at the image's two
+(* snprintf at the interceptor's entry: W_sites_x.v:393's contract (W_sites.v:306's over ARx), at the image's two
    stack-protector cells *)
 Hypothesis SNP : asnprintf_realizes_x B ARx (SIGMA WS_snprintf) FR_GOT_GUARD FR_GUARD.
 (* INSTANCE FACT, _gone_p1.v:92-101's text over ARx: the GOT word FR_GOT_GUARD = 0x9e658 holds &__stack_chk_guard =
@@ -108,7 +109,7 @@ Hypothesis GN_LITS : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem m
   shadow_hull_vis (aview segs (w_H W) mem) (VAL (A_OBJ 21)) 14.
 (* OWED: kit _x twin of al_blocks' last conjunct; W_kit_x.v's BLKN *)
 Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
-(* W_frame_x.v:105's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
+(* W_frame_x.v:106's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
 Hypothesis FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.
 (* W_frame_x's IMGC (W_kit.v:52 pa_img_cover over ARx), from the image law *)
@@ -550,7 +551,7 @@ Proof.
           + intros _. exact (shadow_hull_vis_of_frame_x segs B ARx LAWS FRMF ly S [] W (ms_mem msT) _ 1 fpos (FF + 32) 48
               HART Hfin
               ltac:(fold FF; lia) ltac:(change (fs_frame_bytes 1) with 128; fold FF; lia) ltac:(lia)).
-        - (* seven bytes past prefix[48] (W_sites.v:319, W6's f4dbfd816b6): [FF + 32, FF + 87) still lies in the
+        - (* seven bytes past prefix[48] (W_sites.v:320, W6): [FF + 32, FF + 87) still lies in the
              128-byte fake frame, application memory below the ceiling (in_app, either memory arm) *)
           exact (amem_range_sub_app FF 128 (FF + 32) (48 + 7) HFFapp HFFc ltac:(lia) ltac:(lia) ltac:(lia)).
         - exact (rt_rom_view_of_rom_view B W (ms_mem msT) HRVT). }
@@ -951,7 +952,7 @@ Proof.
           + intros _. exact (shadow_hull_vis_of_frame_x segs B ARx LAWS FRMF ly S [] W (ms_mem msT) _ 1 fpos (FF + 32) 48
               HART Hfin
               ltac:(fold FF; lia) ltac:(change (fs_frame_bytes 1) with 128; fold FF; lia) ltac:(lia)).
-        - (* seven bytes past prefix[48] (W_sites.v:319, W6's f4dbfd816b6): [FF + 32, FF + 87) still lies in the
+        - (* seven bytes past prefix[48] (W_sites.v:320, W6): [FF + 32, FF + 87) still lies in the
              128-byte fake frame, application memory below the ceiling (in_app, either memory arm) *)
           exact (amem_range_sub_app FF 128 (FF + 32) (48 + 7) HFFapp HFFc ltac:(lia) ltac:(lia) ltac:(lia)).
         - exact (rt_rom_view_of_rom_view B W (ms_mem msT) HRVT). }

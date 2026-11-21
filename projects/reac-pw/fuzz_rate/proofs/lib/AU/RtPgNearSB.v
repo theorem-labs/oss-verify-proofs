@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgNearS.v at 92636bfca57b; the module paths name reac-pw/fuzz_rate, and the image is reac-pw/fuzz_rate's image A (fuzz_rate.asan). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgNearS.v at b089f28d962e; the image is reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan, lib/AU/Img0.v). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgNearS.v; the module paths name reac-pw/fuzz_rate, and the image is reac-pw/fuzz_rate's image A (fuzz_rate.asan). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgNearS.v; the image is reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan, lib/AU/Img0.v). *)
 (* The seam of reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14) between the lib/Lib walks over the image
    lib/AU/Img0.v rsegs and the call-site form the harness continues from (SRr, lib/Reusable/YA0n.v).
@@ -22,7 +22,7 @@
      reflexivity), so a view equation becomes a lib/Lib `bytes_at` and an 8-byte cell value becomes `le8`.
 
    These are short generic lemmas; the shapes follow proofs/libreac/fuzz_boxreg/lib/A/FMgxa_bridge.v and
-   proofs/libreac/fuzz_boxreg/lib/A/Rt/FMgxaSeamNorm.v at 781f46bc05c, and the le8 / le_byte digit bridges
+   proofs/libreac/fuzz_boxreg/lib/A/Rt/FMgxaSeamNorm.v, and the le8 / le_byte digit bridges
    follow this unit's lib/KindBGlue.v (word_mem_le8, bytes_at_le8_word). *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.

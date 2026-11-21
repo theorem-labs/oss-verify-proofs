@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: the proofs of the results stated in lib/AU/PresetD1sitesB.v (fuzz_preset,
    asan-ubsan image), ported from proofs/cgif/cgif_file_fuzzer/lib (here relocated as lib/Reusable) with cgif's AR
    replaced by ARcf at Hp = [], AR_laws by a8's AR_laws_ok_cf (YG0lawscf.v) and ml_free by a8's ml_free_cf
-   (YG03dcf.v:428):
+   (YG03dcf.v:429):
      acall_pre_cf_of_drv    from YD1i.v:39-53 acall_pre_of_drv (through a8's acall_pre_cf_intro, YGcfRoomPre.v);
      call_trace_drv         YD1i.v:54-60, unchanged;
      free_site_cf_B_holds / free_null_site_cf_B_holds    (room: the interface's NP with PCB.iface_room_np_tail /
                                                           iface_room_np_step as hypotheses) from YD1i.v:61-94;
-     drv_not_owned_cf / ARcf_after_run                    from YD1y.v:76-87 / :102-134;
+     drv_not_owned_cf / ARcf_after_run                    from YD1y.v:77-88 / :103-135;
      est_frame_run_cf / so_state_run_cf / run_to_exit_cf  from YD27.v:118-135 / :258-308;
      exit_leaf_cf_B_holds                                 from YD27.v:671-699.
    The symbolic runs of the driver's exit path (jx_run and the XSTS facts of YD27.v / YD28.v) name no allocator
    invariant and are used as they are. Rule 24: no function is proved here (composition / driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -187,7 +188,7 @@ Qed.
 (* 3. ARcf across a driver run that writes only its stack window and the driver's image cells. Local: CwLoopB's
       lib/A/PresetD1rAx.v (lib/AU/PresetD1rBx.v) owns drv_not_owned_cf / AR_after_run_cf for the port; these copies go
       when it lands.
-      Donor: YD1y.v:76-87 (drv_not_owned) and :102-134 (AR_after_run). *)
+      Donor: YD1y.v:77-88 (drv_not_owned) and :102-134 (AR_after_run). *)
 Section R.
 Hypothesis HB : TfibSyms B.
 Let ARL : AR_laws_cf tfibsegs B := AR_laws_ok_cf tfibsegs B.
@@ -276,10 +277,13 @@ bv_unsigned (ew E 0) = usp -> sp_window_lo <= usp <= sp_window_hi -> usp mod 16 
 sv_denot E (nth i X_a0 (SLit 0)) = w64 code -> (code = 0 \/ code = 2) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly S [] W (ms_mem ms) md -> top_ok usp ly ->
 est (w_H W) (ms_mem ms) -> so_state xst k (w_H W) (ms_mem ms) ->
-((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) -> m_fs md = fs ->
+((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ->
+(* [fdchan] at LPS 727298f3 asks for the model's channel reader beside the descriptor, and only a run that
+   writes a line needs it, so it is guarded as that one is (as the core's AD27.v). *)
+((1 <= k)%nat -> m_channel_reader md = true) -> m_fs md = fs ->
 srealizes tfibsegs (mkCfg ms md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 Proof.
-intros i ss0 E W ms md ly S usp fs code k I0 spo0 wf0 Hi HRUN Hm0 HI0 Hspo0 Hik E0 [Ulo Uhi] U16 Htid Hcode Hc02 HAI HAR HTOP HE HSO Hfd1 Hfs.
+intros i ss0 E W ms md ly S usp fs code k I0 spo0 wf0 Hi HRUN Hm0 HI0 Hspo0 Hik E0 [Ulo Uhi] U16 Htid Hcode Hc02 HAI HAR HTOP HE HSO Hfd1 Hcr Hfs.
 pose proof (u64_range (ew E 0)) as U0.
 set (ssx := nth i XSTS S_J7x) in *.
 pose proof (proj1 (Forall_forall _ _) XSTS_facts ssx ltac:(subst ssx; apply nth_In; cbn; lia)) as (Hpc & G3 & G4 & Hrv & _).
@@ -316,12 +320,13 @@ rewrite E0. intros a Ha. exact (apresent_some' _ _ _ (HwinX a Ha)).
 - exact (est_frame_run_cf (w_H W) E (jmemI I0 spo0 wf0) _ _ HFrX SEK0 ltac:(rewrite E0; exact Ulo) HE).
 - exact (so_state_run_cf k (w_H W) E (jmemI I0 spo0 wf0) _ _ HFrX SXK0 ltac:(rewrite E0; exact Ulo) HSO).
 - intros Hk. rewrite wvb_fds'. exact (Hfd1 Hk).
+- intros Hk. exact (Hcr Hk).
 - rewrite wvb_fs'. exact Hfs.
 Qed.
 
 Lemma exit_leaf_cf_sec : exit_leaf_cf B xst.
 Proof.
-intros E W regs mem md ly S usp fs code k E0 [Ulo Uhi] U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP HSO Hfds Hfs.
+intros E W regs mem md ly S usp fs code k E0 [Ulo Uhi] U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP HSO Hfds Hcr Hfs.
 pose proof (ESTI (w_H W) mem (stderr_of_L E (w_H W) mem HM)) as HE.
 pose proof (regs_ok_J E regs (-48) usp E0 ltac:(lia) Ulo ltac:(lia) R3 R4) as HR.
 pose proof (st_ok_J IMG_XL E regs (jregs (-48)) (-48) YD1w.A_EXIT usp false (w_H W) mem (or_intror eq_refl) HR E0 Ulo ltac:(right; split; reflexivity) (mem_ok_XL_of_L E _ HM) Hwin ltac:(discriminate)) as HS.
@@ -346,6 +351,7 @@ apply (run_to_exit_cf 2%nat S_JX E2 W _ md ly S usp fs code k IMG_XL (-48) false
 - exact HE.
 - exact HSO.
 - intros Hk. rewrite Hfds. reflexivity.
+- intros Hk. exact Hcr.
 - exact Hfs.
 Qed.
 End R.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: relocated to libreac/fuzz_disco (the walk and the composition of libreac/fuzz_grant's lib/A/Prog/CtrlParse.v on a working branch, split at n = 50 as fuzz_disco's contract is: the short path n < 50 is CtrlParseShort.v). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4): lib/A/Prog/CtrlParseWalk.v (a working branch a6498221fa6) over lib/Y/Prog/CtrlParseCut.v, with the walk to cut A as fuzz_grant image B's lib/B/Prog/CtrlParse.v (a working branch edc3e948664) walks the same code; the image regions are fuzz_disco.asan-ubsan's objects 1 (atom 242, the side-stack flag's GOT word), 0 (atom 241, the shadow-base cell's GOT word) and 12 (atom 253, the shadow-base cell) and the flag cell atom 34 (as_uar_cell B). *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4): lib/A/Prog/CtrlParseWalk.v (a working branch) over lib/Y/Prog/CtrlParseCut.v, with the walk to cut A as fuzz_grant image B's lib/B/Prog/CtrlParse.v (a working branch) walks the same code; the image regions are fuzz_disco.asan-ubsan's objects 1 (atom 242, the side-stack flag's GOT word), 0 (atom 241, the shadow-base cell's GOT word) and 12 (atom 253, the shadow-base cell) and the flag cell atom 34 (as_uar_cell B). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x874a4) of fuzz_disco's asan-ubsan build: its contract treac_ctrl_parse_spec (CtrlParse.v),
    proved from the walk's segments. For n < 50 the whole path is CtrlParseShort.v (pz_segShort). For
    50 <= n: pz_segA here walks from the entry to cut A (the side-stack frame of class 1 seated);

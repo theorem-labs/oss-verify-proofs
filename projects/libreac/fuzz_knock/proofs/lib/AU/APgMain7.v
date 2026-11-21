@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to libreac/fuzz_knock: segment S7 EXIT of the ASan harness walk of
    LLVMFuzzerTestOneInput in fuzz_knock.asan-ubsan (sha256 f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82).
    The asan-ubsan twin of lib/A/APgMain7.v (the asan image, sha256 61768cf4..), changed as the donor changes
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACf4.v / A/ACf7.v into lib/YCf4.v / lib/YCf7.v at c8557374ad2e: the exit lemma and
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACf4.v / A/ACf7.v into lib/YCf4.v / lib/YCf7.v: the exit lemma and
    its tactics are unchanged; the module paths become the AU twins; the exit state ss_X moves to the asan-ubsan pc.
    Framework: lib/AU (derive_y.py twins of the lib/A files): AWalkFw0
    (tfibsegs = AsanUbsan.M.loaded_segments), YCef (tfibtbl_lib), YF0l, YCej, YCeh (TfibLib, SB, tfib_img_range), YCem
@@ -13,6 +13,7 @@
    uses its definitions and its rt_base_eq / rt_F_eq / rt_FL_eq / rt_E_eq / rt_from_eq / rt_postP_eq / rt_post_eq
    where the proof needs the body. Its tactics relowRT and fs_rwF come from APgRt too; its rt_prelude is written out
    in rt_XP_aux, which generalizes the projections of cx where rt_prelude destructs cx. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. A port of the released cgif_file_fuzzer harness-walk structure.
 
    THE LEMMA
@@ -87,7 +88,7 @@ Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.
 Context {ROB : YCeh.ro_tfa_below_ofl}.
 
-(* The exit state at 0x7f2c4 [lib/A/APgMain7.v:90-124; A/ACf7.v:35-50 -> YCf7.v:35-50]. *)
+(* The exit state at 0x7f2c4 [lib/A/APgMain7.v:91-125; A/ACf7.v:35-50 -> YCf7.v:35-50]. *)
 (* Registers: x0; x2 = sp = sp1 (slot 70); gp, tp (x3, x4) as at entry; x8 = s0 = sp0 (slot 2); x9 = s1 = sp1;
    x22 = s6 = SB + F/8 (slot 88). The others are dead: fresh slots from RT_XN. *)
 Definition rt_X_deads : list nat := [1; 5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 18; 19; 20; 21; 23; 24; 25; 26; 27; 28; 29; 30; 31]%nat.
@@ -124,7 +125,7 @@ None (mkFacts rt_X_atoms [] rt_X_alias).
 Definition ss_X : sstate := Eval vm_compute in ss_havoc_regs ss_X_0 RT_XN rt_X_deads.
 
 
-(* [lib/A/APgMain7.v:126-131; A/ACf7.v:51-56] *)
+(* [lib/A/APgMain7.v:127-132; A/ACf7.v:51-56] *)
 Definition INV_XP (B : asyms) (MT : ameter_ops) (PX : alayout -> list (Z * Z) -> world tfibsegs -> (word -> option byte) -> Model -> Prop)
 : rtcx -> env -> Z -> Z -> alayout -> astate -> world tfibsegs -> machine_state -> Model -> Prop :=
 fun cx E k acc ly3 S3 W3 ms3 md3 => k <= EV_LIB /\ acc <= c_T cx /\
@@ -147,7 +148,7 @@ Variable PX : alayout -> list (Z * Z) -> world tfibsegs -> (word -> option byte)
 Hypothesis PXK : forall ly bl (W : world tfibsegs) (m m' : word -> option byte) (md : Model) mat,
 (forall a, in_img tfibsegs a -> aview tfibsegs (w_H W) m' a = aview tfibsegs (w_H W) m a) ->
 PX ly bl W m md -> PX ly bl W m' (with_vm_backing (m_vm_lazy md) mat md).
-(* [lib/A/APgMain7.v:148-164; A/ACf4.v:46-61], unchanged *)
+(* [lib/A/APgMain7.v:149-165; A/ACf4.v:46-61], unchanged *)
 Ltac add_flag_regionRT HS AG E87 Hp HFLrng HFLown HnoF :=
 lazymatch type of HS with st_ok _ ?Ev _ _ =>
 let HS3 := fresh "HS3" in
@@ -163,7 +164,7 @@ destruct (Z_lt_ge_dec fl (x + l)); [left; lia|]; destruct (Z_lt_ge_dec fl (x + h
 first [apply (HnoF fl); [lia | exact HFLown] | match goal with |- ?g => idtac "DISJFAIL" g end] end
 | match goal with |- ?g => idtac "DISJ?" g end ])) as HS3;
 clear HS; rename HS3 into HS; norm_ss HS end.
-(* [lib/A/APgMain7.v:165-182; A/ACf4.v:62-77], unchanged *)
+(* [lib/A/APgMain7.v:166-183; A/ACf4.v:62-77], unchanged *)
 Ltac wrangeRT AG fpos F EFA EFL :=
 let a := fresh "a" in let r := fresh "r" in let Hin := fresh "Hin" in let Hr := fresh "Hr" in
 intros a (r & Hin & Hr); rewrite ?EFA, ?EFL;
@@ -180,8 +181,8 @@ first [ left; unfold in_zr; cbn [fst snd]; change (fs_frame_bytes 1) with 128; r
 | match goal with |- ?g => match type of Hr with ?t => idtac "WRFAIL" t g end end; fail 2 "wrangeRT" ]
 | ]);
 destruct Hin.
-(* [lib/A/APgMain7.v:183-226; A/ACf4.v:78-117 -> YCf4.v:76-115]. The first block is lib/A/APgRt.v's rt_prelude
-   (APgRt.v:299-342) for the abstract record: the projections of cx are generalized where rt_prelude destructs cx. *)
+(* [lib/A/APgMain7.v:184-227; A/ACf4.v:78-117 -> YCf4.v:76-115]. The first block is lib/A/APgRt.v's rt_prelude
+   (APgRt.v:300-343) for the abstract record: the projections of cx are generalized where rt_prelude destructs cx. *)
 Lemma rt_XP_aux : True -> rt_from B MT FP (rt_postP B MT FP PX) ss_X (INV_XP B MT PX).
 Proof.
 intros _. rewrite rt_from_eq, rt_postP_eq, rt_base_eq, rt_E_eq, rt_F_eq, rt_FL_eq. unfold INV_XP. cbv beta.
@@ -249,7 +250,7 @@ split; [apply aregs_preserved_eqs; creg HS AG EE|].
 split; [rewrite Ra0; reflexivity|].
 split; [unfold ablocks; rewrite blocks_stack_free_state; fold (ablocks B ly3 S3); exact HPerm3|].
 split; [unfold stack_free_state; apply (mo_le_set_fs_r MT MTF); exact (mo_le_mono MT MTL _ _ _ _ HMLE Hacc)|].
-(* PX [lib/A/APgMain7.v:210-225; A/ACf4.v:104-116]: the run wrote only the frame, its shadow, the flag byte and the stack,
+(* PX [lib/A/APgMain7.v:211-226; A/ACf4.v:104-116]: the run wrote only the frame, its shadow, the flag byte and the stack,
    none of them an image byte. tfib_img_range's bounds and off_img are named (TFIB_IMG_LO / TFIB_IMG_END =
    YImgTop.IMG_LO / IMG_TOP); unfolded here. *)
 lazymatch goal with HFrx : frame_of _ _ (mrestrict _ (ms_mem ms3)) (mrestrict _ ?m1) |- _ =>
@@ -270,7 +271,7 @@ Qed.
 Lemma rt_XP : rt_from B MT FP (rt_postP B MT FP PX) ss_X (INV_XP B MT PX).
 Proof. exact (rt_XP_aux I). Qed.
 End c.
-(* [lib/A/APgMain7.v:230-237; A/ACf4.v:121-127]; rt_post has PX = True (lib/A/APgRt.v:89-90), so PXK holds trivially. *)
+(* [lib/A/APgMain7.v:231-238; A/ACf4.v:121-127]; rt_post has PX = True (lib/A/APgRt.v:90-91), so PXK holds trivially. *)
 Lemma rt_X (B : asyms) (MT : ameter_ops) (FP : list (Z * Z)) :
 ameter_laws MT -> TfibLib B -> AR_laws tfibsegs B -> model_laws (as_universe B) -> astack_free_law tfibsegs B -> frame_flag_lawP tfibsegs B ->
 ameter_fs_laws MT -> rt_from B MT FP (rt_post B MT FP) ss_X (INV_X B MT).

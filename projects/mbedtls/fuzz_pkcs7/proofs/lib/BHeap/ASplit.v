@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap proofs unfold the new fixed-overflow check and show the NULL hint is never declined; the grant case names the new placement conjunct of AO_grant; srzJ_sys2 written out in plain text and srzJ_sys3 restated, each with a new premise RomBase.sys_rob for node_ok's third conjunct, which their mmap callers discharge by RomBase.sys_rob_memfree; srzJ_mmap_anon_split written out in plain text with AO_grant's placement placed_at added to its grant continuation, its encoded statement kept verbatim with a lemma proving it equal to the written-out statement without that premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -34,17 +35,31 @@ Proof. intros A B tr. unfold t_alt2. tauto. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-#[using="Type"] Lemma srzJ_sys2 : ltac2:(CDefT.buildp (gd_tbl_ASplit ()) "Pms,$0.Pmo,$1.Px8,(2.&40.)PA,$3.PTB,$3.PPA,P,$4.P,$1.SpPPB,P,$4.P,$1.SpP,(5.(6.(2.&40.))(7.R7.)(8.(2.&40.)R5.))P,(5.(6.(2.&40.))(9.R7.)(:.(2.&40.)))P,Peff,$4.Pmo',$1.Pevs,(;.$<.)P,(=.(>.Vsegs,R<.R:.)R;.(?.$4.R3.R2.R1.))(10.(5.(;.$<.)R2.(11.$<.))(10.(5.(6.(2.&40.))(9.R3.)(:.(2.&40.)))(10.(5.(;.(12.(2.&40.)$13.))(14.R4.)(11.(12.(2.&40.)$13.)))(15.A2.R8.R4.R3.A2.R7.R4.R3.))))P,(16.(=.(>.Vsegs,R:.R8.)R9.(17.$4.)))P,(18.$4.Leff,$4.(18.$1.Lmo',$1.(10.(=.(>.Vsegs,R=.R;.)R<.(?.$4.R2.R1.(11.$<.)))A2.R8.R2.R1.)))P,(18.$4.Leff,$4.(18.$1.Lmo',$1.(10.(=.(>.Vsegs,R>.R<.)R=.(?.$4.R2.R1.(11.$<.)))A2.R8.R2.R1.)))P,Peff,$4.Pmo',$1.P,(=.(>.Vsegs,R?.R=.)R>.(?.$4.R2.R1.(11.$<.)))P,A2.R;.R3.R2.(19.Vsegs,(1:.(1;.R11.R4.)R3.)R>.)P,Peff,$4.Pmo',$1.P,(=.(>.Vsegs,R10.R>.)R?.(?.$4.R2.R1.(11.$<.)))P,A2.R;.R3.R2.(19.Vsegs,(1:.(1;.R12.R4.)R3.)R>.)(19.Vsegs,(1:.R?.R>.)(1<.R<.R;.))")
-(* [comment removed for export] *).
+(* Was an encoded statement (CDefT.buildp); written out from its decode, not re-encoded, with
+   one premise added: [RomBase.sys_rob segs (mkCfg ms mo)], which [node_ok]'s third conjunct
+   now asks for (the run_segments lift).  Its caller below is at x8 = 222 and discharges it by
+   [RomBase.sys_rob_memfree]. *)
+#[using="Type"] Lemma srzJ_sys2 : forall ms mo x8 (A TB : TSet) (PA PB : SyscallEffect -> Model -> Prop),
+  ms_svc_pending ms = Some x8 -> m_halted mo = None ->
+  (forall eff mo' evs, syscall_spec (sys_input segs ms x8) mo (Ok eff mo' evs) ->
+      evs = [] /\ m_halted mo' = None /\ syscall_effect_accesses eff = [] /\ (PA eff mo' \/ PB eff mo')) ->
+  (~ syscall_spec (sys_input segs ms x8) mo Unmodeled) ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
+  (exists eff mo', syscall_spec (sys_input segs ms x8) mo (Ok eff mo' []) /\ PA eff mo') ->
+  (exists eff mo', syscall_spec (sys_input segs ms x8) mo (Ok eff mo' []) /\ PB eff mo') ->
+  (forall eff mo', syscall_spec (sys_input segs ms x8) mo (Ok eff mo' []) -> PA eff mo' -> srealizesJ segs (mkCfg (nret ms eff) mo') A) ->
+  (forall eff mo', syscall_spec (sys_input segs ms x8) mo (Ok eff mo' []) -> PB eff mo' -> srealizesJ segs (mkCfg (nret ms eff) mo') TB) ->
+  srealizesJ segs (mkCfg ms mo) (t_alt2 A TB).
+(* [comment removed for export] *)
 Proof.
-  (intros ms mo x8 A TB PA PB Hsvc Hh HINV HU dd_H; ddestruct dd_H as (effa & moa & Hsa & HPa); intros dd_H; ddestruct dd_H as (effb & mob & Hsb & HPb); intros HA HB).
+  (intros ms mo x8 A TB PA PB Hsvc Hh HINV HU Hrob dd_H; ddestruct dd_H as (effa & moa & Hsa & HPa); intros dd_H; ddestruct dd_H as (effb & mob & Hsb & HPb); intros HA HB).
   set (IA := { p : SyscallEffect * Model | syscall_spec (sys_input segs ms x8) mo (Ok (fst p) (snd p) []) /\ PA (fst p) (snd p) }).
   set (IB := { p : SyscallEffect * Model | syscall_spec (sys_input segs ms x8) mo (Ok (fst p) (snd p) []) /\ PB (fst p) (snd p) }).
   set (nx := fun i : IA + IB => match i with
                                  | inl p => mkCfg (nret ms (fst (proj1_sig p))) (snd (proj1_sig p))
                                  | inr p => mkCfg (nret ms (fst (proj1_sig p))) (snd (proj1_sig p)) end).
   apply (srzJ_alt2 segs (mkCfg ms mo) IA IB nx A TB (exist _ (effa, moa) (conj Hsa HPa)) (exist _ (effb, mob) (conj Hsb HPb))).
-  - split.
+  - split; [|split].
     + intros [[[eff mo'] [Hs HP]]|[[eff mo'] [Hs HP]]]; cbn in Hs, HP |- *;
         (destruct (HINV _ _ _ Hs) as (_ & Hh' & Hacc & _); unfold nret;
          eapply sstep_syscall; [exact Hh| exact Hsvc| exact Hs| exact Hh'| rewrite Hacc; apply materialize_nil]).
@@ -56,6 +71,7 @@ Proof.
       * exfalso. destruct (HINV _ _ _ Hsp) as (_ & Hh2 & _). congruence.
       * exfalso. destruct (HINV _ _ _ Hsp) as (_ & Hh2 & _). rewrite (m_killed_of_m_halted_none _ Hh2) in Hk. discriminate.
       * exfalso. exact (HU Hsp).
+    + exact Hrob.
   - (intros dd_H; ddestruct dd_H as [[eff mo'] [Hs HP]]). cbn in Hs, HP |- *. exact (HA _ _ Hs HP).
   - (intros dd_H; ddestruct dd_H as [[eff mo'] [Hs HP]]). cbn in Hs, HP |- *. exact (HB _ _ Hs HP).
 Qed.
@@ -68,6 +84,7 @@ Qed.
   (forall eff mo' evs, syscall_spec (sys_input segs ms x8) mo (Ok eff mo' evs) ->
       evs = [] /\ m_halted mo' = None /\ syscall_effect_accesses eff = [] /\ (PN eff mo' \/ PA eff mo' \/ PB eff mo')) ->
   (~ syscall_spec (sys_input segs ms x8) mo Unmodeled) ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
   (exists eff mo', syscall_spec (sys_input segs ms x8) mo (Ok eff mo' []) /\ PA eff mo') ->
   (exists eff mo', syscall_spec (sys_input segs ms x8) mo (Ok eff mo' []) /\ PB eff mo') ->
   (forall eff mo', syscall_spec (sys_input segs ms x8) mo (Ok eff mo' []) -> PN eff mo' ->
@@ -77,7 +94,7 @@ Qed.
   srealizesJ segs (mkCfg ms mo) (t_alt2 A TB).
 (* [comment removed for export] *)
 Proof.
-  (intros ms mo x8 A TB PN PA PB Hsvc Hh HINV HU dd_H; ddestruct dd_H as (effa & moa & Hsa & HPa); intros dd_H; ddestruct dd_H as (effb & mob & Hsb & HPb); intros HN HA HB).
+  (intros ms mo x8 A TB PN PA PB Hsvc Hh HINV HU Hrob dd_H; ddestruct dd_H as (effa & moa & Hsa & HPa); intros dd_H; ddestruct dd_H as (effb & mob & Hsb & HPb); intros HN HA HB).
   set (IN := { p : SyscallEffect * Model | syscall_spec (sys_input segs ms x8) mo (Ok (fst p) (snd p) []) /\ PN (fst p) (snd p) }).
   set (IA := { p : SyscallEffect * Model | syscall_spec (sys_input segs ms x8) mo (Ok (fst p) (snd p) []) /\ PA (fst p) (snd p) }).
   set (IB := { p : SyscallEffect * Model | syscall_spec (sys_input segs ms x8) mo (Ok (fst p) (snd p) []) /\ PB (fst p) (snd p) }).
@@ -90,7 +107,7 @@ Proof.
   assert (HB0 : TB []) by (eapply (srzJ_nonempty segs); exact (HB _ _ Hsb HPb)).
   apply (srzJ_conseq segs _ (t_alt (fun i => t_emit [] (T i)))).
   - apply (srzJ_node_sp segs (mkCfg ms mo) _ (fun _ => []) nx T (inr (inl (exist _ (effa, moa) (conj Hsa HPa))))).
-    + split.
+    + split; [|split].
       * intros [[[eff mo'] [Hs HP]]|[[[eff mo'] [Hs HP]]|[[eff mo'] [Hs HP]]]]; cbn in Hs, HP |- *;
           (destruct (HINV _ _ _ Hs) as (_ & Hh' & Hacc & _); unfold nret;
            eapply sstep_syscall; [exact Hh| exact Hsvc| exact Hs| exact Hh'| rewrite Hacc; apply materialize_nil]).
@@ -105,6 +122,7 @@ Proof.
         -- exfalso. destruct (HINV _ _ _ Hsp) as (_ & Hh2 & _). congruence.
         -- exfalso. destruct (HINV _ _ _ Hsp) as (_ & Hh2 & _). rewrite (m_killed_of_m_halted_none _ Hh2) in Hk. discriminate.
         -- exfalso. exact (HU Hsp).
+      * exact Hrob.
     + intros [[[eff mo'] [Hs HP]]|[[[eff mo'] [Hs HP]]|[[eff mo'] [Hs HP]]]]; cbn in Hs, HP |- *;
         [| left; exact (HA _ _ Hs HP)| left; exact (HB _ _ Hs HP)].
       (* [comment removed for export] *)
@@ -131,37 +149,86 @@ Proof.
   intros ms x8 mo nZ flags e Hno HA He.
   dpose (anon_gates ms nZ flags HA) as (Ga & Gb & G0 & G1).
   apply check_syscall_ok_iff. rewrite (mmap_check segs ms x8 mo _ Hno).
-  unfold check_mmap. rewrite Ga, Gb, G0, G1. cbn [negb]. cbv zeta beta iota.
+  unfold check_mmap, check_mmap_fixed_overflow. rewrite Ga, Gb, G0, G1. cbn [negb]. cbv zeta beta iota.
+  (* LPS 727298f3: the call's hint is NULL, which no decline holds of *)
+  pose proof HA as HA0. destruct HA0 as [H10 _].
+  lazymatch goal with |- context [place_declined_b ?dk ?dh ?da ?dn] =>
+    replace (place_declined_b dk dh da dn) with false
+      by (rewrite (H10 : da = Z_to_bv 64 0); reflexivity) end.
+  cbv iota.
   replace (errno_ret_in mmap_errnos (errno_ret e)) with true; [reflexivity|].
   symmetry. destruct He as [<-|[]]. vm_compute. reflexivity.
 Qed.
 
-#[using="Type"] Lemma srzJ_mmap_anon_split : ltac2:(CDefT.buildp (gd_tbl_ASplit ()) "PR,(26.&5.(2.&40.))PF,(26.&5.(2.&40.))Ppc,(2.&40.)Pfc,(2.&20.)Prv,(6.(2.&40.))Pm,P,(2.&40.)(6.(2.&8.))Pmo,$1.PnZ,$1>.Pflags,$1>.PA,$3.PTB,$3.Zms,$0.(27.R;.R:.R9.(28.&40.+=>.)R8.R7.R6.(29.Vsegs,))P,(5.(6.(2.&40.))(9.R6.)(:.(2.&40.)))P,(2:.VhAR,(2;.(2<.R7.)))P,(20.R3.R7.R6.)P,(18.(2.&40.)La,(2.&40.)(2=.VhAR,R8.R9.R:.R1.))P,Pe,$1>.P,(21.$1>.R1.$22.)(19.Vsegs,(1:.(1;.R7.(23.(24.R2.)(11.(12.(2.&40.)(;.(2.&8.))))(11.(12.(2.&40.)(2.&40.)))(11.(12.(2.&40.)(2.&40.)))(11.$25.)(11.(12.(2.&40.)$13.))))R<.)R9.)P,Pa,(2.&40.)P,(5.$1>.(2>.(1?.&40.R1.)+1000.)=)P,(2?.=(1?.&40.R2.))P,(30.(31.(1?.&40.R3.)R=.)(32.VhAR,))P,(5.$33.(34.(35.(12.(2.&40.)(2.&40.))(36.(2<.R?.))(37.(2<.R?.)))R4.(28.&40.R>.))$38.)(19.Vsegs,(1:.(1;.R;.(23.R5.(11.(12.(2.&40.)(;.(2.&8.))))(39.(12.(2.&40.)(2.&40.))(3:.(2.&40.)(2.&40.)R5.(28.&40.R?.))(11.(12.(2.&40.)(2.&40.))))(11.(12.(2.&40.)(2.&40.)))(11.$25.)(11.(12.(2.&40.)$13.))))(3;.R>.R5.R?.R10.))R<.)(19.Vsegs,(1:.R7.R<.)(1<.R9.R8.))")
-(* [comment removed for export] *).
+(* LPS 727298f3: the grant continuation takes AO_grant's placement ASys.placed_at, which
+   the large chunk's T_large now asks for.  Written out from its decode; the encoded statement
+   is kept as ZZ_srzJ_mmap_anon_split_old, and ZZ_srzJ_mmap_anon_split_faithful proves it equal
+   to the text below without that premise. *)
+Definition ZZ_srzJ_mmap_anon_split_old : Prop := ltac2:(CDefT.buildp (gd_tbl_ASplit ()) "PR,(26.&5.(2.&40.))PF,(26.&5.(2.&40.))Ppc,(2.&40.)Pfc,(2.&20.)Prv,(6.(2.&40.))Pm,P,(2.&40.)(6.(2.&8.))Pmo,$1.PnZ,$1>.Pflags,$1>.PA,$3.PTB,$3.Zms,$0.(27.R;.R:.R9.(28.&40.+=>.)R8.R7.R6.(29.Vsegs,))P,(5.(6.(2.&40.))(9.R6.)(:.(2.&40.)))P,(2:.VhAR,(2;.(2<.R7.)))P,(20.R3.R7.R6.)P,(18.(2.&40.)La,(2.&40.)(2=.VhAR,R8.R9.R:.R1.))P,Pe,$1>.P,(21.$1>.R1.$22.)(19.Vsegs,(1:.(1;.R7.(23.(24.R2.)(11.(12.(2.&40.)(;.(2.&8.))))(11.(12.(2.&40.)(2.&40.)))(11.(12.(2.&40.)(2.&40.)))(11.$25.)(11.(12.(2.&40.)$13.))))R<.)R9.)P,Pa,(2.&40.)P,(5.$1>.(2>.(1?.&40.R1.)+1000.)=)P,(2?.=(1?.&40.R2.))P,(30.(31.(1?.&40.R3.)R=.)(32.VhAR,))P,(5.$33.(34.(35.(12.(2.&40.)(2.&40.))(36.(2<.R?.))(37.(2<.R?.)))R4.(28.&40.R>.))$38.)(19.Vsegs,(1:.(1;.R;.(23.R5.(11.(12.(2.&40.)(;.(2.&8.))))(39.(12.(2.&40.)(2.&40.))(3:.(2.&40.)(2.&40.)R5.(28.&40.R?.))(11.(12.(2.&40.)(2.&40.))))(11.(12.(2.&40.)(2.&40.)))(11.$25.)(11.(12.(2.&40.)$13.))))(3;.R>.R5.R?.R10.))R<.)(19.Vsegs,(1:.R7.R<.)(1<.R9.R8.))").
+Lemma ZZ_srzJ_mmap_anon_split_faithful : ZZ_srzJ_mmap_anon_split_old =
+    (forall (R F : bvmap 5 word) (pc : word) (fc : bv 32) (rv : option word) (m : word -> option (bv 8))
+         (mo : Model) (nZ flags : Z) (A TB : TSet),
+      let ms : machine_state := MSsvc R F pc (Z_to_bv 64 222) fc rv m (seg_rom segs) in
+      m_halted mo = None ->
+      atop_ok (alloc_top (m_vmmaps mo)) ->
+      mmap_anon_args ms nZ flags ->
+      (exists a : word, anon_grantable flags nZ mo a) ->
+      (forall e : Z, In e mmap_errnos ->
+         srealizesJ segs (mkCfg (nret ms (mkEffectU (errno_ret e) [] [] [] [] [])) mo) A) ->
+      (forall a : word,
+         bv_unsigned a mod 4096 = 0 ->
+         0 < bv_unsigned a ->
+         bv_unsigned a + nZ <= ACEIL ->
+         region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 nZ) = true ->
+         srealizesJ segs (mkCfg (nret ms (mkEffectU a [] [(a, Z_to_bv 64 nZ)] [] [] [])) (anon_grant flags a nZ mo)) TB) ->
+      srealizesJ segs (mkCfg ms mo) (t_alt2 A TB)).
+Proof. exact eq_refl. Qed.
+
+#[using="Type"] Lemma srzJ_mmap_anon_split :
+  forall (R F : bvmap 5 word) (pc : word) (fc : bv 32) (rv : option word) (m : word -> option (bv 8))
+       (mo : Model) (nZ flags : Z) (A TB : TSet),
+    let ms : machine_state := MSsvc R F pc (Z_to_bv 64 222) fc rv m (seg_rom segs) in
+    m_halted mo = None ->
+    atop_ok (alloc_top (m_vmmaps mo)) ->
+    mmap_anon_args ms nZ flags ->
+    (exists a : word, anon_grantable flags nZ mo a) ->
+    (forall e : Z, In e mmap_errnos ->
+       srealizesJ segs (mkCfg (nret ms (mkEffectU (errno_ret e) [] [] [] [] [])) mo) A) ->
+    (forall a : word,
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       ASys.placed_at nZ mo a ->
+       bv_unsigned a + nZ <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 nZ) = true ->
+       srealizesJ segs (mkCfg (nret ms (mkEffectU a [] [(a, Z_to_bv 64 nZ)] [] [] [])) (anon_grant flags a nZ mo)) TB) ->
+    srealizesJ segs (mkCfg ms mo) (t_alt2 A TB).
 Proof.
   intros R F pc fc rv m mo nZ flags A TB ms Hh ATOP HA (aw & GW) HR HG.
   assert (E222 : bv_unsigned (Z_to_bv 64 222) = 222) by (vm_compute; reflexivity).
   apply (srzJ_sys2 ms mo (Z_to_bv 64 222) A TB
            (fun eff mo' => exists e, In e mmap_errnos /\ eff = mkEffectU (errno_ret e) [] [] [] [] [] /\ mo' = mo)
-           (fun eff mo' => exists a : word, bv_unsigned a mod 4096 = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= ACEIL
+           (fun eff mo' => exists a : word, bv_unsigned a mod 4096 = 0 /\ 0 < bv_unsigned a /\ ASys.placed_at nZ mo a
+                              /\ bv_unsigned a + nZ <= ACEIL
                               /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 nZ) = true
                               /\ eff = mkEffect a [] [(a, Z_to_bv 64 nZ)] /\ mo' = anon_grant flags a nZ mo)).
   - reflexivity.
   - exact Hh.
   - intros eff mo' evs Hs.
     destruct (mmap_anon_inv segs ms (Z_to_bv 64 222) mo nZ flags eff mo' evs E222 HA ATOP Hs) as [-> OUT].
-    split; [reflexivity|]. destruct OUT as [e HIn | a AL A0 CE RF].
+    (* [AO_grant] gained the checker's placement test; one more name *)
+    split; [reflexivity|]. destruct OUT as [e HIn | a AL A0 PL CE RF].
     + split; [exact Hh|]. split; [reflexivity|]. left. exists e. repeat split; auto.
     + split; [rewrite halted_anon_grant; exact Hh|]. split; [reflexivity|]. right. exists a. repeat split; auto.
   - eapply (mmap_anon_no_unmodeled segs ms (Z_to_bv 64 222)); eauto.
+  - eapply (RomBase.sys_rob_memfree segs); [reflexivity | exact RomBase.memfree_222].
   - dexists (mkEffectU (errno_ret ENOMEM) [] [] [] [] []), mo. split.
     + apply (mmap_anon_refuse_spec ms (Z_to_bv 64 222) mo nZ flags ENOMEM E222 HA). left. reflexivity.
     + exists ENOMEM. repeat split; auto. left. reflexivity.
   - dexists (mkEffect aw [] [(aw, Z_to_bv 64 nZ)]), (anon_grant flags aw nZ mo). split.
     + exact (mmap_anon_grant_spec segs ms (Z_to_bv 64 222) mo nZ flags aw E222 HA ATOP GW).
-    + ddestruct GW as (AL & A0 & FL & CE & RF & BU). exists aw. repeat split; auto.
+    + ddestruct GW as (AL & A0 & FL & CE & RF & BU). exists aw. repeat split; first [exact (proj1 FL) | auto].
   - (intros eff mo' _ dd_H; ddestruct dd_H as (e & He & -> & ->)). exact (HR e He).
-  - (intros eff mo' _ dd_H; ddestruct dd_H as (a & AL & A0 & CE & RF & -> & ->)). exact (HG a AL A0 CE RF).
+  - (intros eff mo' _ dd_H; ddestruct dd_H as (a & AL & A0 & PL & CE & RF & -> & ->)). exact (HG a AL A0 PL CE RF).
 Qed.
 
 (* [comment removed for export] *)
@@ -181,7 +248,7 @@ Proof.
   dpose HA as (H10 & Hn & H11 & H12 & H13 & H14 & H15 & AL & A0 & N0 & CE & FL).
   assert (ER : errno_ret_in mmap_errnos (errno_ret e) = true) by (destruct He as [<-|[]]; vm_compute; reflexivity).
   apply check_syscall_ok_iff. rewrite (mmap_check segs _ _ _ _ Hno).
-  unfold check_mmap. rewrite Ga, Gb, G0, G1, G2, G3, G4. cbn [negb]. cbv zeta.
+  unfold check_mmap, check_mmap_fixed_overflow. rewrite Ga, Gb, G0, G1, G2, G3, G4. cbn [negb]. cbv zeta.
   rewrite H10. rewrite !unsigned_lit by lia. rewrite Hn.
   destruct (Z.leb_spec0 two_pow_64 (addr + nZ)) as [L|L]; [unfold two_pow_64 in L; lia|].
   destruct (Z.leb_spec0 (addr + nZ) (alloc_top (m_vmmaps mo))) as [L2|L2]; [| pose proof (atop_ok_le _ ATOP); lia]. cbn [negb].
@@ -227,6 +294,7 @@ Proof.
     + split; [rewrite halted_fixrw_commit; exact Hh|]. split; [reflexivity|]. right. right. split; [reflexivity| exact OUT'].
     + split; [rewrite halted_fixrw_fresh; exact Hh|]. split; [reflexivity|]. right. right. split; [reflexivity| exact OUT'].
   - eapply (mmap_fixrw_no_unmodeled segs ms (Z_to_bv 64 222)); eauto.
+  - eapply (RomBase.sys_rob_memfree segs); [reflexivity | exact RomBase.memfree_222].
   - dexists (mkEffectU (errno_ret ENOMEM) [] [] [(Z_to_bv 64 addr, Z_to_bv 64 nZ)] [] []), (fixrw_destroyed addr nZ mo). split.
     + apply (mmap_fixrw_destroy_spec ms (Z_to_bv 64 222) mo addr nZ flags ENOMEM E222 HA ATOP RF MC). left. reflexivity.
     + exists ENOMEM. split; [left; reflexivity|]. split; reflexivity.
@@ -267,6 +335,7 @@ Proof.
     + exfalso. rewrite FR in OCC. discriminate OCC.
     + split; [rewrite halted_norep_grant; exact Hh|]. split; [reflexivity|]. right. left. split; reflexivity.
   - eapply (mmap_norep_no_unmodeled segs ms (Z_to_bv 64 222)); eauto.
+  - eapply (RomBase.sys_rob_memfree segs); [reflexivity | exact RomBase.memfree_222].
   - dexists (mkEffectU (Z_to_bv 64 addr) [] [] [(Z_to_bv 64 addr, Z_to_bv 64 nZ)] [] []), (norep_grant addr nZ mo). split; [exact Hsg| split; reflexivity].
   - dexists (mkEffectU (Z_to_bv 64 addr) [] [] [(Z_to_bv 64 addr, Z_to_bv 64 nZ)] [] []), (norep_grant addr nZ mo). split; [exact Hsg| split; reflexivity].
   - intros eff mo' _ (-> & ->). split; [exact HN|].

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap's moved source cut out with maps_subtract, and a grow's budget mark read by the room test: the in-place grow's final budget or the move's charge). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -91,6 +92,27 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+(* LPS 08b1429: the moved source is cut out with [maps_subtract]; its pieces stay clear of a fresh
+   range the whole map is clear of ([LimInterval.clear_of_maps_subtract]). *)
+Lemma clear_of_fresh_all : forall m dst new_n,
+  linv m ->
+  region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) dst new_n = true ->
+  Forall (clear_of (bv_unsigned dst) (bv_unsigned dst + bv_unsigned new_n)) (vm_maps (m_vmmaps m)).
+Proof.
+  intros m dst new_n HI Hfree.
+  pose proof (proj1 HI) as HF. pose proof (linv_nonzero m HI) as HNZ.
+  unfold fits in HF. apply Forall_forall. intros [a sz] Hin.
+  pose proof (proj1 (Forall_forall _ _) HF _ Hin) as Hfit.
+  pose proof (proj1 (Forall_forall _ _) HNZ _ Hin) as Hnz.
+  pose proof (region_free_In _ dst new_n a sz Hfree (in_or_app _ _ _ (or_intror Hin))) as Hov.
+  unfold entry_fits in Hfit. cbn [fst snd] in *.
+  pose proof (word_range sz) as Rs.
+  unfold iv_overlap in Hov. apply andb_false_iff in Hov.
+  unfold clear_of. cbn [fst snd].
+  split; [lia |]. split; [exact Hfit |].
+  destruct Hov as [Hov | Hov]; apply Z.ltb_ge in Hov; [left | right]; lia.
+Qed.
+
 Theorem move_charge_bound : forall m old old_n dst new_n,
   linv m ->
   bv_unsigned dst mod page_size = 0 ->
@@ -101,7 +123,8 @@ Theorem move_charge_bound : forall m old old_n dst new_n,
   vm_backing_used (mremap_model_next m old old_n dst new_n) <= mremap_move_charge m old old_n new_n.
 Proof.
   intros m old old_n dst new_n HI Halign Hnalign Hpos Hend Hfree.
-  pose proof (clear_of_fresh m old dst new_n HI Hfree) as HC0.
+  pose proof (clear_of_maps_subtract _ _ _ (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)
+                (clear_of_fresh_all m dst new_n HI Hfree)) as HC0.
   assert (P1 : forall L P m', m_vmmaps (with_vm_backing L P m') = m_vmmaps m') by reflexivity.
   assert (P2 : forall L P m', m_vm_lazy (with_vm_backing L P m') = L) by reflexivity.
   assert (P3 : forall L P m', m_vm_materialized (with_vm_backing L P m') = P) by reflexivity.
@@ -116,7 +139,7 @@ Proof.
   set (KL := maps_subtract (m_vm_lazy m) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
   set (KP := List.filter (page_outside_range (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n))
                (m_vm_materialized m)) in *.
-  set (R0 := map_remove (vm_maps (m_vmmaps m)) old) in *.
+  set (R0 := maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
   set (NA := vm_noaccess (m_vmmaps m)) in *.
   pose proof (word_range dst) as Rd. pose proof (word_range new_n) as Rn.
   assert (Hlh : dlo <= dhi) by (unfold dlo, dhi; lia).
@@ -179,33 +202,68 @@ Lemma move_budget_sl : forall m old old_n new_n,
   mremap_move_budget_b (sl L m) old old_n new_n = (mremap_move_charge m old old_n new_n <=? L).
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-Lemma mark_grow : forall old old_size new_size flags m,
+(* LPS 08b1429: a grow has ONE resolution, chosen by the room test, and the mark reads only that
+   resolution's gate: with room, the in-place grow's final budget; without, the move's charge. *)
+Lemma mark_grow_room : forall old old_size new_size flags m,
   mremap_budget_refused_b old old_size new_size flags (sl L m) = false ->
   negb (bv_unsigned flags =? MREMAP_MAYMOVE) = false ->
   negb (bv_unsigned old mod page_size =? 0) = false ->
   page_align_is0_b new_size = false ->
+  (TASK_SIZE <? page_round_up_Z (bv_unsigned new_size)) = false ->
   page_align_is0_b old_size = false ->
   negb (mremap_source_b (m_vmmaps m) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))
           (page_round_up_Z (bv_unsigned old_size))
         && mremap_backing_uniform_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))) = false ->
   page_round_up_Z (bv_unsigned old_size) < page_round_up_Z (bv_unsigned new_size) ->
+  mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))
+    (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))
+    (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = true ->
   vm_backing_used (mremap_model_next m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) old
-                     (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))) <= L
-  /\ mremap_move_charge m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))
-       (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) <= L.
+                     (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))) <= L.
 Proof.
-  intros old old_size new_size flags m HM E0 E1 E2 E3 E4 Hgrow.
+  intros old old_size new_size flags m HM E0 E1 E2 Et E3 E4 Hgrow Hroom.
   unfold mremap_budget_refused_b in HM. cbv zeta in HM.
-  rewrite E0, E1, E2, E3 in HM.
+  rewrite E0, E1, E2, Et, E3 in HM.
   change (m_vmmaps (sl L m)) with (vml L (m_vmmaps m)) in HM.
   change (mremap_source_b (vml L (m_vmmaps m))) with (mremap_source_b (m_vmmaps m)) in HM.
   change (mremap_backing_uniform_b (sl L m)) with (mremap_backing_uniform_b m) in HM.
   rewrite E4 in HM.
   rewrite (proj2 (Z.leb_gt _ _) Hgrow) in HM.
-  apply negb_false_iff in HM. apply andb_true_iff in HM as [H1 H2].
-  rewrite final_budget_sl in H1. rewrite move_budget_sl in H2.
-  apply Z.leb_le in H1, H2. split; assumption.
+  change (mremap_inplace_room_b (sl L m)) with (mremap_inplace_room_b m) in HM.
+  rewrite Hroom in HM. apply negb_false_iff in HM.
+  rewrite final_budget_sl in HM. apply Z.leb_le in HM. exact HM.
+Qed.
+
+(* The no-room twin of [mark_grow_room]: without room the mark reads the move's charge
+   ([mremap_move_budget_b]), which at [sl L m] is the charge against [L]. *)
+Lemma mark_grow_move : forall old old_size new_size flags m,
+  mremap_budget_refused_b old old_size new_size flags (sl L m) = false ->
+  negb (bv_unsigned flags =? MREMAP_MAYMOVE) = false ->
+  negb (bv_unsigned old mod page_size =? 0) = false ->
+  page_align_is0_b new_size = false ->
+  (TASK_SIZE <? page_round_up_Z (bv_unsigned new_size)) = false ->
+  page_align_is0_b old_size = false ->
+  negb (mremap_source_b (m_vmmaps m) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))
+          (page_round_up_Z (bv_unsigned old_size))
+        && mremap_backing_uniform_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))) = false ->
+  page_round_up_Z (bv_unsigned old_size) < page_round_up_Z (bv_unsigned new_size) ->
+  mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))
+    (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))
+    (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false ->
+  mremap_move_charge m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))
+    (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) <= L.
+Proof.
+  intros old old_size new_size flags m HM E0 E1 E2 Et E3 E4 Hgrow Hroom.
+  unfold mremap_budget_refused_b in HM. cbv zeta in HM.
+  rewrite E0, E1, E2, Et, E3 in HM.
+  change (m_vmmaps (sl L m)) with (vml L (m_vmmaps m)) in HM.
+  change (mremap_source_b (vml L (m_vmmaps m))) with (mremap_source_b (m_vmmaps m)) in HM.
+  change (mremap_backing_uniform_b (sl L m)) with (mremap_backing_uniform_b m) in HM.
+  rewrite E4 in HM.
+  rewrite (proj2 (Z.leb_gt _ _) Hgrow) in HM.
+  change (mremap_inplace_room_b (sl L m)) with (mremap_inplace_room_b m) in HM.
+  rewrite Hroom in HM. apply negb_false_iff in HM.
+  rewrite move_budget_sl in HM. apply Z.leb_le in HM. exact HM.
 Qed.
 
 Lemma inplace_sl : forall m old old_n new_n old_nZ new_nZ,
@@ -270,16 +328,36 @@ Lemma fr_mremap : forall old old_size new_size flags i m,
 Proof.
   intros old old_size new_size flags i m HI HL HM. unfold mremap_spec.
   frE.
-  (* [comment removed for export] *)
-  apply Z.eqb_neq in Heqb4. apply Z.ltb_ge in Heqb5.
-  assert (Hgrow : page_round_up_Z (bv_unsigned old_size) < page_round_up_Z (bv_unsigned new_size)) by lia.
-  destruct (mark_grow old old_size new_size flags m HM Heqb Heqb0 Heqb1 Heqb2 Heqb3 Hgrow) as [Hip Hmv].
-  assert (Hpos0 : 0 < page_round_up_Z (bv_unsigned new_size)).
-  { pose proof (BudgetPremise.page_round_up_Z_nonneg (bv_unsigned old_size) (proj1 (word_range old_size))). lia. }
-  rewrite (inplace_sl m old _ _ _ _ HL Hip).
-  frE.
-  all: try (rewrite (fresh_sl m old _ new_size _ _ HI HL Heqb1 Hpos0 Hmv); reflexivity).
   all: try (fr_inv; reflexivity).
+  (* Two arms can be left, and which one depends on the room test, so close each by its own
+     mark: with room, the in-place grow's final budget; without, the move's charge at the
+     destination Linux places (LPS 08b1429). *)
+  (* The two size arguments are matched as pattern variables, not spelled out: a [match goal]
+     PATTERN is globalised statically, so a name bound only by this proof's [intros] is not in
+     scope in it, while the [assert] terms below are interpreted per goal and may spell it. *)
+  all: try (match goal with H1 : (page_round_up_Z (bv_unsigned ?os) =? page_round_up_Z (bv_unsigned ?ns)) = false |- _ =>
+              apply Z.eqb_neq in H1 end).
+  all: try (match goal with H2 : (page_round_up_Z (bv_unsigned ?ns) <? page_round_up_Z (bv_unsigned ?os)) = false |- _ =>
+              apply Z.ltb_ge in H2 end).
+  all: assert (Hgrow : page_round_up_Z (bv_unsigned old_size) < page_round_up_Z (bv_unsigned new_size)) by lia.
+  all: assert (Hpos0 : 0 < page_round_up_Z (bv_unsigned new_size))
+         by (pose proof (BudgetPremise.page_round_up_Z_nonneg (bv_unsigned old_size) (proj1 (word_range old_size))); lia).
+  all: first
+    [ (* room above the source *)
+      pose proof (mark_grow_room old old_size new_size flags m HM
+                    ltac:(eassumption) ltac:(eassumption) ltac:(eassumption) ltac:(eassumption)
+                    ltac:(eassumption) ltac:(eassumption) Hgrow ltac:(eassumption)) as Hip;
+      rewrite final_budget_sl, final_budget_big, (proj2 (Z.leb_le _ _) Hip);
+      rewrite (proj2 (Z.leb_le _ (mlim m))) by lia;
+      reflexivity
+    | (* no room: the move *)
+      pose proof (mark_grow_move old old_size new_size flags m HM
+                    ltac:(eassumption) ltac:(eassumption) ltac:(eassumption) ltac:(eassumption)
+                    ltac:(eassumption) ltac:(eassumption) Hgrow ltac:(eassumption)) as Hmv;
+      unfold mremap_dst_ok;
+      rewrite (fresh_sl m old _ new_size _ _ HI HL ltac:(eassumption) Hpos0 Hmv);
+      reflexivity
+    | fr_inv; reflexivity ].
 Qed.
 
 End Mremap.

@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/A/IcptSpec.v, with its module paths changed; 1 of its 38 lines of code is new or changed. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/IcptSpec.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan-ubsan from the disco-A copy lib/A/Bz/A/IcptSpec.v (a working branch 93aa2291ee6) by changing only the module paths lib.A.Bz -> lib.B.Bz (BvWfKernel, Spec.StrFun): StrFun.find_byte is a per-image constant, so the Y walks need the Y copy (a Theorem Labs lane, 15:03Z). *)
-(* Ported by a Theorem Labs lane from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/IcptSpec.v, unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/IcptSpec.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan from the disco-A copy lib/A/Bz/A/IcptSpec.v (a working branch) by changing only the module paths lib.A.Bz -> lib.B.Bz (BvWfKernel, Spec.StrFun): StrFun.find_byte is a per-image constant, so the Y walks need the Y copy (a Theorem Labs lane, 15:03Z). *)
+(* Ported by a Theorem Labs lane from a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/IcptSpec.v, unchanged. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.B.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)

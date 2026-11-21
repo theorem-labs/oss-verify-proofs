@@ -12,7 +12,7 @@
    object). It subsumes the literal instance of libreac/fuzz_pcap lib/A/Rt/StrcmpDef.v (x = y, k = the literal's
    length, c1 = c2 = 0, result 0). *)
 (* Modified by Theorem Labs, 2026-10-29: taken by path from libreac/fuzz_grant lib/Reusable/AStrcmpDef.v
-   (a working branch 97c611eec86, owner a Theorem Labs lane, the text of record for the strcmp trampoline contract in
+   (a working branch, owner a Theorem Labs lane, the text of record for the strcmp trampoline contract in
    a Theorem Labs lane's registry). Only the module paths change (fuzz_grant -> fuzz_identity); the statement is identical. The
    walk is a Theorem Labs lane's lib/A/Rt/Strcmp.v, relocated to identity's addresses separately. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/AStrcmpDef.v (donor image sha256 c954b804786c), with its module paths changed. *)
@@ -21,7 +21,7 @@
    for the strcmp wrapper's contract astrcmp_realizes of lib/Reusable/AStrcmpDef.v (fuzz_identity's text, module paths
    changed): the same journal threading through ecall_pre_at and ajournal_after_write, with the strcmp contract's
    str_meet premise and its strcmp_res result in place of bcmp's n-byte compare. The string lemmas below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStrcmp.v at afaa3cb55c1 for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStrcmp.v for reac-pw/fuzz_headamp
    image A; module paths changed; the contract astrcmp_realizes is taken as the Section hypothesis STRCMP at 0x41ba0,
    for every float state, with str_meet and strcmp_res unfolded (hks_meet / hks_res name the same two texts inside
    this file); aj_strcmp_at -> hks_strcmp_at, cstr_at -> hks_cstr_at, strcmp_res_0 -> hks_res_0, cstr_at_cons /
@@ -30,6 +30,7 @@
    rl_cstr_args -> hks_cstr_args (from HPgBase.hd_cstr, with the wrapper's 2 ESTACK window); hks_blk_args,
    hks_cstr_of_garr8, hks_zbytes_inj and the call-site lemma hks_strcmp_call are new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgKcStr.v, with its module names changed; 433 of its 486 lines of code are new or changed and 304 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp: the IMAGE-INDEPENDENT lemmas of the key segment of reac_headamp_prop_parse_result's walks
    (image A lib/A/HPgParseKey.v; image B takes them as they stand): where the parse's frame, the hole, out, res and
    the errno cell lie (from the call's premises, HPgParseBase.hp_call_ok), hp_core again after a run or a wrapper

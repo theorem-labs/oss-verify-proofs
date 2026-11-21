@@ -53,14 +53,14 @@ Definition bytes_at (W : world segs) (mem : word -> option byte) (p : Z) (l : li
 
 (* the non-owned part of the donor's rom_view (YG0d.v:382): every read-only byte that is not a runtime-owned static and
    not errno reads as the image byte. arodata_okP gives it at every state; rom_view itself is not provable for fm, whose
-   .rodata global redzones are owned statics (A/AF0m.v:557) that no AR clause pins (Integrate). The runtime walks read
+   .rodata global redzones are owned statics (A/AF0m.v:558) that no AR clause pins (Integrate). The runtime walks read
    only non-owned read-only bytes (musl's word constants, the formats). *)
 Definition rom_viewN (W : world segs) (mem : word -> option byte) : Prop :=
   forall a, in_rom segs a -> ~ Exists (in_zr a) (as_owned_static B) -> ~ (as_errno B <= a < as_errno B + 4) ->
   aview segs (w_H W) mem a = option_map (fun b : byte => bv_unsigned b) (seg_rom segs (Z_to_bv 64 a)).
 
 (* the owned part: every read-only byte that is a runtime-owned static (fm's .rodata global redzones and the runtime's
-   read-only cells, A/AF0m.v:555-559) reads as the image byte. A runtime word read of a read-only string's NUL word
+   read-only cells, A/AF0m.v:556-560) reads as the image byte. A runtime word read of a read-only string's NUL word
    reaches a redzone; the clean-memory transfer of the runtime string walks needs these bytes. Source: AR's
    constant cells, once Tfib_const pins every owned read-only byte to its image value (Reloc); the final instance
    proves it inside fm_img_facts. *)

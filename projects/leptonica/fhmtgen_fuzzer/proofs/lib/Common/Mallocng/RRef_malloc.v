@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO, the THP flag, Linux's mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -27,7 +28,7 @@ Context {fx : FPState} {RL : Reloc} {RC : RelocCode RL} {RS : RelocSites RL}.
 (* [comment removed for export] *)
 Lemma alloc_slot_refines5 : forall md regs mm rom (s : mstate) (sc req sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 864 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -37,7 +38,8 @@ Lemma alloc_slot_refines5 : forall md regs mm rom (s : mstate) (sc req sp ret : 
   tsafe (m_alloc_slot ALLOC_FUEL (at_ sp (-144)) sc req s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -62,7 +64,7 @@ Ltac malloc_calls Hp HS Hag HI HW t :=
 Theorem malloc_refines : malloc_stmt.
 Proof.
   unfold malloc_stmt.
-  intros md regs mm rom s n sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 HS HK.
+  intros md regs mm rom s n sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 HS HK.
   unfold ALLOC_STACK in *.
   pose proof (minv_init s sp 1024 Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.
   pose proof (mwin_init s mm sp 1024 Hstk) as HW.

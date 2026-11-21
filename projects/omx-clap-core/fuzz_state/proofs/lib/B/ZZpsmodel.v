@@ -5,7 +5,7 @@
    sources, every pc walked and every report site). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value.v, with its module names and numbers changed; 1163 of its 1272 lines of code are new or changed and 1247 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/FSW_put_string.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
@@ -14,13 +14,14 @@
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_put_string.v; 537 of its 624 lines of code are new or changed and 1185 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/ZZpsmodel.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
    Every address, cut, branch, offset and register of put_string's own code is RE-MEASURED on image B
    (A_put_string 0x85fc8, 928 bytes; the neutral excerpt put_string.fuzz_state.asan-ubsan.s), never copied.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* put_string, a Theorem Labs lane, piece R6 (image-agnostic text, used unchanged on image B):
    the MODEL ALGEBRA that glues the walk's three put calls into put_string_spec's single post (lib/B/FSH_Fn_writer.v).
 
@@ -56,14 +57,14 @@
    uswap and bswap themselves are unchanged.
 
    Templates (case structure only; every proof here is written fresh): a Theorem Labs lane's ZZwv_comp.v:351-421
-   (wv_bswap_trans / wv_uswap_trans, a working branch b28b3e2d1bd) and a Theorem Labs lane's
+   (wv_bswap_trans / wv_uswap_trans, a working branch) and a Theorem Labs lane's
    FSW_pj_write.v:2571-2755 (pjw_c_wev_split, pjw_c_split_uniq, pjw_c_bswap_comp, pjw_c_uswap_comp,
-   a working branch f5d78102c21). Released lemmas reused by name: FSW_writer_model.spieces_plain,
+   a working branch). Released lemmas reused by name: FSW_writer_model.spieces_plain,
    WriterRet.put1_cap, WriterRet.put1_failed, WriterApp.putN_cons / putN_nil, YG0d.al_blocks through
    YG0q.AR_laws_ok, YCbq.req_size_pos.
    Rule 24 (2026-10-29, git grep -n -w -E 'psm_[a-z0-9_]+' -- 'proofs/*', each ref's own exit code, output to a
-   file): origin/main f4cc67298b7, origin/ossv/recipes e5e7eba2cc0, origin/ossv/candidates ee89628c997,
-   origin/release/pau-projects-recipes b6a0088adcb have NO hit for any name defined here; the only psm_ names
+   file):,
+   have NO hit for any name defined here; the only psm_ names
    there are psm_sm / psm_facts / psm_grows / psm_in / psm_out (boost-beast, glaze), unrelated.
    Sink probes (Fail Definition probe_SK / probe_SH at top level) compiled in this file at commit time and were
    removed before it, as the lane asks. *)

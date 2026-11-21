@@ -1,35 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: one tree per launch rseq layout, with holes 3 and 26 started from the collected templates TOTmplRAsan.TO_asan_r and TOTmplRAsan.REP4_r, every plan renumbered by VarShift.psh and each tree decided by one reflection per layout, in place of the recorded certificates. *)
+(* One tree per r. Holes 3 and 26 hold the per-r collected templates [TOTmplRAsan.TO_asan_r rsb]
+   and [TOTmplRAsan.REP4_r rsb]; every plan is renumbered by [VarShift.psh]; the whole tree is decided by one
+   [mtree_ok] reflection per r ([TREE4_ok1] r = 1, [TREE4_ok0] r = 0), joined in [TREE4_ok]. *)
 From Stdlib Require Import ZArith NArith List Bool.
-From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Asan Require Import AxSymExec3 AsanPlan AsanPlanSound AsanMainLib AsanShape MainGlueDefs MainGlue StartupHSMainAsan ItabAsan ArgleafPlansAsan ArgleafTmplAsan ArgleafContOAllAsan ContOAll5Asan ArgR234PlansAsan ArgR4RepAsan ArgR4AsanDefs ArgR4AsanCerts0.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Asan Require Import AxSymExec3 AsanPlan AsanPlanSound AsanMainLib AsanShape MainGlueDefs MainGlue StartupHSMainAsan ItabAsan ArgleafPlansAsan ArgleafTmplAsan ArgleafContOAllAsan ArgR234PlansAsan ArgR4RepAsan VarShift TOTmplRAsan ContOAll5Asan.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
-Lemma pay_5 : class_pay_ok 0%nat (root_class 4) (subst_holes (rs_of HR_1) s_4) = true.
-Proof. vm_compute; reflexivity. Qed.
-Lemma covs_6 : mcoverS HR_1 [(3%nat, (RClass (C_o_asan) (RLeaf cont_o_all_asan))); (26%nat, (RClass ((root_class 4)) (RLeaf argda1o_tospin1)))] = true.
-Proof. vm_compute; reflexivity. Qed.
-Lemma le_8 : class_le (root_class 4) ((root_class 4)) = true.
-Proof. vm_compute; reflexivity. Qed.
-Lemma eq_12 : shape_eqb s_11 (SNil) = true.
-Proof. vm_compute; reflexivity. Qed.
-Lemma vl_13 : shape_vars_lt NX0 (SNil) = true.
-Proof. vm_compute; reflexivity. Qed.
-Lemma le_15 : class_le (root_class 4) (C_o_asan) = true.
-Proof. vm_compute; reflexivity. Qed.
-Lemma rn_9 : rtree_ok 0%nat 400000%nat 5000%nat IT_asan (SNil) REP4_s ((root_class 4)) (RLeaf argda1o_tospin1) = true.
-Proof. exact (rtree_ok_leaf 0%nat 400000%nat 5000%nat IT_asan (SNil) REP4_s ((root_class 4)) argda1o_tospin1 _ c_10 eq_12 vl_13). Qed.
-Lemma rn_7 : rtree_ok 0%nat 400000%nat 5000%nat IT_asan (SNil) REP4_s (root_class 4) (RClass ((root_class 4)) (RLeaf argda1o_tospin1)) = true.
-Proof. exact (rtree_ok_class 0%nat 400000%nat 5000%nat IT_asan (SNil) REP4_s (root_class 4) ((root_class 4)) _ le_8 rn_9). Qed.
-Lemma rn_16 : rtree_ok 0%nat 400000%nat 5000%nat IT_asan (cont_o_all_asan_s) TO_asan (C_o_asan) (RLeaf cont_o_all_asan) = true.
-Proof. exact (o_leaf_ok). Qed.
-Lemma rn_14 : rtree_ok 0%nat 400000%nat 5000%nat IT_asan (cont_o_all_asan_s) TO_asan (root_class 4) (RClass (C_o_asan) (RLeaf cont_o_all_asan)) = true.
-Proof. exact (rtree_ok_class 0%nat 400000%nat 5000%nat IT_asan (cont_o_all_asan_s) TO_asan (root_class 4) (C_o_asan) _ le_15 rn_16). Qed.
-Lemma rf_17 : rforest_ok 0%nat 400000%nat 5000%nat IT_asan HR_1 (root_class 4) [(3%nat, (RClass (C_o_asan) (RLeaf cont_o_all_asan))); (26%nat, (RClass ((root_class 4)) (RLeaf argda1o_tospin1)))] = true.
-Proof. exact (rforest_ok_cons 0%nat 400000%nat 5000%nat IT_asan HR_1 (root_class 4) 3%nat (RClass (C_o_asan) (RLeaf cont_o_all_asan)) _ (cont_o_all_asan_s) TO_asan eq_refl rn_14 (rforest_ok_cons 0%nat 400000%nat 5000%nat IT_asan HR_1 (root_class 4) 26%nat (RClass ((root_class 4)) (RLeaf argda1o_tospin1)) _ (SNil) REP4_s eq_refl rn_7 (rforest_ok_nil 0%nat 400000%nat 5000%nat IT_asan HR_1 (root_class 4)))). Qed.
-Lemma nd_2 : mtree_ok 0%nat 400000%nat 5000%nat IT_asan 0%nat 0%nat (HSA HS_mainA 0%nat) (root_class 4) (MPreS 0%nat argda1otr HR_1 [(3%nat, (RClass (C_o_asan) (RLeaf cont_o_all_asan))); (26%nat, (RClass ((root_class 4)) (RLeaf argda1o_tospin1)))]) = true.
-Proof. exact (mtree_ok_preS 0%nat 400000%nat 5000%nat IT_asan 0%nat 0%nat (HSA HS_mainA 0%nat) (root_class 4) 0%nat argda1otr HR_1 [(3%nat, (RClass (C_o_asan) (RLeaf cont_o_all_asan))); (26%nat, (RClass ((root_class 4)) (RLeaf argda1o_tospin1)))] _ eq_refl c_3 pay_5 covs_6 rf_17). Qed.
-Definition TREE4 : mtree := (MPreS 0%nat argda1otr HR_1 [(3%nat, (RClass (C_o_asan) (RLeaf cont_o_all_asan))); (26%nat, (RClass ((root_class 4)) (RLeaf argda1o_tospin1)))]).
-Lemma TREE4_ok : mtree_ok 0%nat 400000%nat 5000%nat IT_asan 0%nat 0%nat (HSA HS_mainA 0%nat) (root_class 4) TREE4 = true.
-Proof. exact nd_2. Qed.
+Definition HR_1 (rsb : bool) : list (nat * (shape * acs)) := [(3%nat, (cont_o_all_asan_s, TO_asan_r rsb)); (26%nat, (SNil, REP4_r rsb))].
+Definition TREE4 (rsb : bool) : mtree := (MPreS 0%nat (psh argda1otr) (HR_1 rsb) [(3%nat, (RClass (C_o_asan) (RLeaf cont_o_all_asanR))); (26%nat, (RClass ((root_class 4)) (RLeaf (psh argda1o_tospin1))))]).
+Lemma TREE4_ok1 : mtree_ok (rsb := true) 0%nat 400000%nat 5000%nat IT_asan 0%nat 0%nat (HSA true (HS_mainA (rseq_z true)) 0%nat) (root_class 4) (TREE4 true) = true.
+Proof. vm_cast_no_check (eq_refl true). Qed.
+Lemma TREE4_ok0 : mtree_ok (rsb := false) 0%nat 400000%nat 5000%nat IT_asan 0%nat 0%nat (HSA false (HS_mainA (rseq_z false)) 0%nat) (root_class 4) (TREE4 false) = true.
+Proof. vm_cast_no_check (eq_refl true). Qed.
+Lemma TREE4_ok {rsb : bool} : mtree_ok (rsb := rsb) 0%nat 400000%nat 5000%nat IT_asan 0%nat 0%nat (HSA rsb (HS_mainA (rseq_z rsb)) 0%nat) (root_class 4) (TREE4 rsb) = true.
+Proof. destruct rsb; [exact TREE4_ok1 | exact TREE4_ok0]. Qed.

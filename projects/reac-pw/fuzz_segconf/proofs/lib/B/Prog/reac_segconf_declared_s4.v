@@ -10,8 +10,9 @@
    check and the same call once, for the first word; its lemmas are copied here with the prefix cw3_ and generalised
    over the pass index. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s3.v, with its module paths and module names changed; 350 of its 413 lines of code are new or changed and 810 lines of the source are left out. *)
-(* Segment 4 of the walk of reac_segconf_declared, the image-B port of lib/A/Prog/reac_segconf_declared_s4.v
-   (commit 29221b01c4cd), on fuzz_segconf.asan-ubsan (image B; the interface is
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Segment 4 of the walk of reac_segconf_declared, the image-B port of lib/A/Prog/reac_segconf_declared_s4.v,
+   on fuzz_segconf.asan-ubsan (image B; the interface is
    reac_segconf_declared_d.v): the latch of the loop over c->seg, from the cut KT (0x8a0b4) at pass i to the loop
    head KL (0x8a000) at pass i + 1 or to the join KX (0x8a0fc). The stretch: the inline check of c->n
    (0x8a0b4-0x8a0b8: lb of its shadow byte through s4, bnez to the slow path at 0x8a0e8), the reload of c->n (lw at

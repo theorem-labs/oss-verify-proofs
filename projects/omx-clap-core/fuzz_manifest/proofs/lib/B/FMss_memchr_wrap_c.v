@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_memchr_wrap_c.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
-(* lib/A/Prog/memchr_wrap_c.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8) with the one change
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_memchr_wrap_c.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* lib/A/Prog/memchr_wrap_c.v (a Theorem Labs lane's port, unchanged from a working branch) with the one change
    of the local-shadow variant (FMss_shv.v): `shadow_rw m` becomes `shvis m P N` for the checked range, and the post's
    `shadow_rw m'` becomes `shvis m' P N`.  The constants and memchr_n stay in the original module. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the room above an argument string is 10 bytes, the exec name's NUL and the top slot of the revised entry block; the model's channel reader a premise at main). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -39,8 +40,12 @@ Section MainPre.
     12 * (as_Cm H (2 ^ 26) + as_Cf H (2 ^ 26)) + (as_Cm H (2 ^ 26) + as_Cf H (2 ^ 26) + 4 * afuzz_cost H (2 ^ 26)).
 
   (* [comment removed for export] *)
+  (* LPS 727298f3: the strings sit at the TOP of the entry block, so above the last argv NUL there are at least the
+     exec name's NUL and the eight-byte top slot (StackLayout.string_base_addr), and the block ends at or below
+     0x800000000000 (Run.valid_stack_top_va): hence 10, where the old block's sixteen AT_RANDOM bytes above the
+     strings gave 17. *)
   Definition astr_at (mem : word -> option byte) (sp0 : word) (p : Z) (s : list byte) : Prop :=
-    bv_unsigned sp0 <= p /\ p + Z.of_nat (length s) + 17 <= 0x800000000000 /\ ~ In (Z_to_bv 8 0) s
+    bv_unsigned sp0 <= p /\ p + Z.of_nat (length s) + 10 <= 0x800000000000 /\ ~ In (Z_to_bv 8 0) s
     /\ rdn RSEGS mem (Z_to_bv 64 p) (length s + 1) = Some (s ++ [Z_to_bv 8 0])
     /\ exists t8, rdn RSEGS mem (Z_to_bv 64 (p + Z.of_nat (length s))) 8 = Some t8.
 
@@ -93,5 +98,9 @@ Section MainPre.
            (regs : bvmap 5 word) (mem : word -> option byte) (B tid can : Z),
       valid_argv argv -> valid_fs (m_fs mo) ->
       AMpre sp0 argv s0 msF mo regs mem B tid can ->
+      (* The model's channel reader at main, which every write to fd 1/2 needs.  A premise,
+         not an [AMpre] field: Bo/AsMainOpen.v:116 and Bo/AsMainTop.v:124 eliminate [AMpre]
+         positionally.  Bo/BoTop.v proves it from the start-up state's [co_rdr]. *)
+      m_channel_reader mo = true ->
       realizes bsegs (mkCfg msF mo) (spec argv (m_fs mo)).
 End MainPre.

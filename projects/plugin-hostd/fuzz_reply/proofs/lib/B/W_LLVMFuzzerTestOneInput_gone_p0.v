@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE p0 (lib/B/W_LLVMFuzzerTestOneInput_gone.v's GP0): the arm's entry 0x849a0 to the join 0x84aa8
    (fuzz_reply.asan-ubsan, fuzz_reply.c:718-720 `op_gone(fuzz_u8(&in))`), the image-B twin of
-   lib/A/W_LLVMFuzzerTestOneInput_gone_p0.v (a working branch 32b23a20c3e), read from B's objdump:
+   lib/A/W_LLVMFuzzerTestOneInput_gone_p0.v (a working branch), read from B's objdump:
      0x849a0  sd   s9,88(s1)          t to F+88 (s9 is rewritten by the reads[] loop; reloaded at 0x84da4)
      0x849a4  beqz t1,84a9c           t1 = in.n left after the op byte
    in.n = 0:  0x84a9c sd zero,144(s1); li s5,0; sd s4,16(s1)      (fuzz_u8 gives 0 and consumes nothing)
@@ -14,6 +14,7 @@
    The entry state carries three narrow frame windows (F+16, F+88, F+144), so the run's frame_of keeps every other
    frame byte; the cut's facts are carried across the stores with the arm's transport kit
    (W_LLVMFuzzerTestOneInput_gone_tk.v).  The model m at the join is INV_A's own model. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

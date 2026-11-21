@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the runtime's mapped-stack window starts 0x5D0000 bytes (STACK_SPAN) below the start's stack pointer instead of at the 8 MiB allocator ceiling. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -254,7 +255,7 @@ Qed.
 Lemma shadow_rep_nw : forall W L (m m' : mem), shadow_rep L m -> munch W m m' -> shadow_avoid W L ->
   disjoint_from W (shad (l_ACEIL L)) (shad (2 ^ 47) - shad (l_ACEIL L)) ->
   disjoint_from W (pg_dn (shad 0x10000)) (shad SEGTOP_A - pg_dn (shad 0x10000)) ->
-  stk asegs m' (l_ACEIL L) (l_top L) ->
+  stk asegs m' (l_sp0 L - STACK_SPAN) (l_top L) ->
   shadow_rep L m'.
 Proof.
   intros W L m m' (B & S1 & S2 & SA & _) MU (A & AS) D1 D2 SW'.

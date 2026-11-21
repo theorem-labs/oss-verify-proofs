@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the steps of a program walk through a runtime entry whose contract is art_post (lib/A/Rt/RtDefs.v) and whose writes leave the errno cell, after PaArt.v's aj_art_at and cgif_file_fuzzer's aj_intrin_atS: aj_art_own_at, for an entry that writes bytes the caller's journal may write (its side-stack frame, its footprint, a block made in the call), is the sup_resp walk's lemma (an earlier version of lib/A/Prog/sup_resp_s0.v); aj_art_blk_at, for an entry that writes inside one live heap block, and awrite_ok_of_block, the entry's write premise on a range of such a block, are the sup_host_setting walk's lemmas hs5_art_wr_at and hs6_wr_block (lib/A/Prog/sup_host_setting_s5.v and sup_host_setting_s6.v), stated over any segments and symbols. *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/PaArtOwn.v for fuzz_command.asan-ubsan: module paths. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -99,7 +100,7 @@ Hypothesis errno_low : api_env segs B.
    or a block made in this call): the strcat / sprintf target on the heap. PaArt's aj_art_at with the entry's cells
    in that block instead of the errno cell and the inner journal's footprint that block, composed by
    call_effect_journal and ajournal_sub_tok as aj_art_at composes. The sup_host_setting walk's hs5_art_wr_at
-   (an earlier version of lib/A/Prog/sup_host_setting_s5.v:1132), over any segments and symbols. *)
+   (an earlier version of lib/A/Prog/sup_host_setting_s5.v:1133), over any segments and symbols. *)
 Lemma aj_art_blk_at : forall stk (Eb : Z -> Prop) pc W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc
   mdc k (o : Z) raw bq nq (Qr : bvmap 5 word -> (word -> option byte) -> Prop),
 ajournal segs B STK sp0 FP ly S W0 mem md own lyc Sc W memT mdc k ->

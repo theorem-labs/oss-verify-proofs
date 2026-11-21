@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (cs_ok gains the channel-reader field co_rdr, and every cs_ok lemma carries it). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -232,7 +233,16 @@ Record cs_ok (E : env) (cs : acs) (fx : FX) (R : bvmap 5 word) (M : word -> opti
   co_top   : sptop_den E (a_brk cs) = SPTOPc;
   co_kcap  : uE E (a_meter cs) <= KCAP;                      (* [comment removed for export] *)
   co_fbud  : Z.of_nat (length (a_fake cs)) + uE E (a_fbud cs) <= FTOPc;  (* [comment removed for export] *)
-  co_floor : floor_sem E (acs_floor (a_maps cs)) (a_brk cs) (a_ylo cs)   (* [comment removed for export] *)
+  co_floor : floor_sem E (acs_floor (a_maps cs)) (a_brk cs) (a_ylo cs);   (* [comment removed for export] *)
+  (* LPS 08b1429: the far end of the standard channels has a reader.  [init_model] seeds it
+     from [in_channel_reader], which the launch predicate pins, and no model setter writes
+     it ([m_channel_reader] is a projection of [m_proc]); [writev_spec]'s channel arm reads
+     it, so every node that flushes stdout needs it.  This is the Asan/Both lane's copy of
+     the field an earlier commit added to the plain lane's record at GlzPlanSound.v:3676, and the
+     same reasoning applies: nothing at the consuming sites can prove the reader locally.
+     LAST field, so the twenty-seven short [destruct ... as [CR .. CFL]] patterns across the
+     Az/As/Bo lane keep every name they already bind. *)
+  co_rdr   : m_channel_reader model = true
 }.
 Arguments co_regs {E cs fx R M model} _.
 Arguments co_log {E cs fx R M model} _.
@@ -248,6 +258,7 @@ Arguments co_top {E cs fx R M model} _.
 Arguments co_kcap {E cs fx R M model} _.
 Arguments co_fbud {E cs fx R M model} _.
 Arguments co_floor {E cs fx R M model} _.
+Arguments co_rdr {E cs fx R M model} _.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -837,7 +848,7 @@ Proof.
   intros E E' cs fx R M model Hag Hf HC.
   destruct (fresh_ok_parts nx0 cs Hf) as (Fsr & Fkn & Fmaps & Fallow & Fbrk & Ffd & Fle).
   destruct (fresh_ok_parts2 cs Hf) as [Ffk Fmt]. pose proof (fresh_ok_parts3 cs Hf) as Ffb.
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; try assumption.
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; try assumption.
   - eapply regs_ok_agree'; eassumption.
   - unfold Mr. rewrite (hid_agree E E' cs model Hag Hf). eapply know_ok_agree'; eassumption.
   - eapply APS.fds_ok_agree; eassumption.
@@ -861,7 +872,7 @@ Lemma cs_ok_frame : forall E cs fx R M model ss' fx' R' M',
   cs_ok E (with_ss cs ss') fx' R' M' model.
 Proof.
   intros E cs fx R M model ss' fx' R' M' HC HR HL HK HF Hown.
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor;
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor;
     cbn [with_ss a_ss a_vis a_fake a_meter a_totsz a_eager kn]; try assumption.   (* [comment removed for export] *)
   eapply AINV_frame; [exact CA | exact Hown].
 Qed.
@@ -884,19 +895,22 @@ Proof.
   intros E cs fx R M model ss' fx' R' M' model' HC HR HL HK HF Hown Hsame HA.
   pose proof (same_but_materialized_frame model model' Hsame) as
     (_ & _ & _ & _ & _ & _ & _ & _ & Hfds & _ & _ & Hfs & Hhalt & _).
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor;
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor;
     cbn [with_ss a_ss a_vis a_fake a_meter a_totsz a_eager kn]; try assumption.
   - rewrite Hhalt. exact CH.
   - rewrite Hfs. exact CF.
   - eapply fds_ok_model; [exact Hfds | exact Hfs | exact CD].
   - eapply AINV_frame; [exact HA | exact Hown].
+  - (* co_rdr: [same_but_materialized] leaves [m_proc] alone (AsVocab.v:941), and the
+       reader is a projection of it. *)
+    rewrite (APS.rdr_sbm _ _ Hsame). exact CRD.
 Qed.
 
 Lemma cs_ok_set_kn : forall E cs fx R M model k',
   cs_ok E cs fx R M model -> know_ok SEGS E (Mr E cs model M) k' -> cs_ok E (set_kn cs k') fx R M model.
 Proof.
   intros E cs fx R M model k' HC HK.
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor;
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor;
     cbn [set_kn with_ss a_ss a_vis a_fake a_meter a_totsz a_eager kn mk_ss s_regs s_log s_know]; try assumption; try reflexivity.
 Qed.
 
@@ -909,7 +923,7 @@ Qed.
 Lemma cs_ok_bump : forall E cs fx R M model d, cs_ok E cs fx R M model -> cs_ok E (bump cs d) fx R M model.
 Proof.
   intros E cs fx R M model d HC.
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor;
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor;
     cbn [bump with_ss a_ss mk_ss s_regs s_log s_know kn a_vis a_fake a_meter a_totsz a_eager]; try assumption; try reflexivity.
 Qed.
 
@@ -1339,7 +1353,7 @@ Proof.
   assert (Hag : env_agree (nxt cs) E E') by apply ext_list_agree.
   exists E'. split; [split; [eapply env_agree_le; [exact Hag | exact Fle] | exact Hag]|]. split; [|reflexivity].
   pose proof (cs_ok_agree E E' cs fx R M model Hag Hf HC) as HC'.
-  destruct HC' as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; cbn [with_ss a_ss mk_ss s_regs s_log s_know kn a_vis a_totsz a_eager]; try assumption; [|reflexivity].
+  destruct HC' as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; cbn [with_ss a_ss mk_ss s_regs s_log s_know kn a_vis a_totsz a_eager]; try assumption; [|reflexivity].
   apply regs_ok_sr_fresh; [exact (co_regs HC) | exact Fsr |].
   apply Forall_forall. intros r Hr. pose proof (proj1 (forallb_forall _ _) Hrs r Hr) as Hb.
   apply andb_prop in Hb as [H1 H2]. apply Nat.ltb_lt in H1. apply Nat.ltb_lt in H2. lia.
@@ -1434,7 +1448,7 @@ Proof.
       rewrite !u_sub64. rewrite Z.sub_diag, Z.mod_0_l by lia. lia.
     - eapply (residue_fact_sound SEGS E E' _ _ (kn cs) e); [exact HK | exact Hne |].
       intros e1 s1 Hd1. symmetry. eapply (edenot_agree' v); [exact Hag | exact (deand_vars v e e1 s1 Hd1 Hve)]. }
-  destruct HC' as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; cbn [bump set_reg add_kn set_kn with_ss a_ss mk_ss s_regs s_log s_know kn a_vis a_fake a_meter a_totsz a_eager]; try assumption; try gpsa_know cs.
+  destruct HC' as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; cbn [bump set_reg add_kn set_kn with_ss a_ss mk_ss s_regs s_log s_know kn a_vis a_fake a_meter a_totsz a_eager]; try assumption; try gpsa_know cs.
   - apply regs_ok_respell; [exact CR | lia |].
     unfold eadd. rewrite mkAlu_denot, Hne, Hbv. fold (reg cs r). rewrite Hrv, He_sem.
     apply bv_eq. rewrite u_add64, u_sub64. pose proof (u64_range (edenot E (reg cs r))). pose proof (u64_range (edenot E b)).
@@ -1534,7 +1548,7 @@ Proof.
   apply andb_prop in Hc as [Hc Hok]. apply andb_prop in Hc as [Hc _]. apply andb_prop in Hc as [H1 H2]. apply Nat.ltb_lt in H1. apply Nat.ltb_lt in H2.
   pose proof (respell_ok_sound SEGS E _ (kn cs) (reg cs r) e (co_know HC) Hok) as Heq.
   split; [|reflexivity].
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; cbn [set_reg with_ss a_ss mk_ss s_regs s_log s_know kn a_vis a_totsz a_eager]; try assumption; try reflexivity.
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; cbn [set_reg with_ss a_ss mk_ss s_regs s_log s_know kn a_vis a_totsz a_eager]; try assumption; try reflexivity.
   apply regs_ok_respell; [assumption | lia | unfold reg in Heq; symmetry; exact Heq].
 Qed.
 
@@ -1716,7 +1730,7 @@ Proof.
   pose proof (floor_sem_msubst E J e (a_maps inv) (a_brk inv) (a_ylo inv)) as HFL.
   assert (AG' : env_agree nx0 (upd E J (edenot E e)) E).
   { destruct AG as [AG1 AG2]. split; [intros n Hn; symmetry; apply AG1; exact Hn | symmetry; exact AG2]. }
-  split; intros HC; destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor;
+  split; intros HC; destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor;
     rewrite ?HMR in *;
     cbn [inst a_ss s_regs s_log s_know kn a_totsz a_eager a_vis a_fake a_meter a_fbud a_fd a_ghost a_brk a_ylo a_maps mk_ss] in *; try assumption; try reflexivity;
     unfold bcount in *; rewrite ?length_map in *;
@@ -1908,7 +1922,7 @@ Proof.
   match goal with Hd : afd_eqb (a_fd cs) _ = true |- _ => apply afd_eqb_eq in Hd; rename Hd into Hfd end.
   assert (HMR : Mr E ch model M = Mr E cs model M) by (apply Mr_fields; symmetry; assumption).
   match goal with Hm : list_eqb amap_eqb (a_maps cs) _ = true |- _ => apply (list_eqb_eq amap_eqb amap_eqb_eq) in Hm; rename Hm into Hmaps end.
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor;
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor;
     rewrite <- ?Hregs, <- ?Hvis, <- ?Hghost, <- ?Hbrk, <- ?Hfake, <- ?Hmeter, <- ?Hfbud, <- ?Hfd, <- ?Hmaps, ?HMR; try assumption.
   2:{ (* [comment removed for export] *) eapply floor_sem_weaken; [|exact CFL]. assumption. }
   exact (kn_ent_sound _ _ _ _ CK Hkn).
@@ -1958,7 +1972,7 @@ Proof.
   { unfold Mr. f_equal. apply functional_extensionality. intros a. unfold hid, vlz. unfold E'.
     rewrite <- in_shb_ptsubst, !map_app, Hvis, Hfake. reflexivity. }
   split; [exact Hag|]. split; [|symmetry; exact Hpc].
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; try assumption.
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; try assumption.
   - (* [comment removed for export] *)
     apply (proj1 (regs_ok_tsubst E th (s_regs (a_ss T)) R)).
     destruct (regs_ent_sound E _ (kn cs) _ _ 0%nat CK Hregs) as [Hlen Hn].
@@ -2008,7 +2022,7 @@ Proof.
   { unfold Mr. rewrite (hid_fields E' cs (set_regs cs sr') model) by reflexivity. f_equal.
     apply functional_extensionality. intros a. unfold hid, vlz. rewrite (in_shb_agree b E E'); [reflexivity | exact Hag |].
     unfold pairs_vars_lt in *. rewrite !forallb_app, Hvis, Hfk. reflexivity. }
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; rewrite ?HMR;
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; rewrite ?HMR;
     cbn [set_regs with_ss a_ss mk_ss s_regs s_log s_know kn a_totsz a_eager a_vis a_fake a_meter a_fbud a_fd a_ghost a_brk] in *; try assumption; try reflexivity.
   - eapply know_ok_agree'; eassumption.
   - eapply APS.fds_ok_agree; eassumption.
@@ -2058,7 +2072,7 @@ Proof.
   assert (HMR : Mr E Tc model M = Mr E cs model M).
   { apply Mr_fields; unfold Tc; cbn [set_regs with_ss a_vis a_fake a_ghost]; symmetry; assumption. }
   assert (HC1 : cs_ok E Tc fx R M model).
-  { destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; rewrite ?HMR;
+  { destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; rewrite ?HMR;
       try (unfold Tc; cbn [set_regs with_ss a_ss mk_ss s_regs s_log s_know kn a_totsz a_eager a_vis a_fake a_meter a_fbud a_fd a_ghost a_brk a_ylo a_maps];
            rewrite <- ?Hvis, <- ?Hghost, <- ?Hbrk, <- ?Hfake, <- ?Hmeter, <- ?Hfbud, <- ?Hfd, <- ?Hmaps; first [assumption | reflexivity | lia | eapply floor_sem_weaken; [|exact CFL]; assumption]).
     unfold Tc. cbn [set_regs with_ss a_ss mk_ss s_know kn]. eapply kn_incl_h_sound; [exact SEGS_in_hull | exact HULL_ok | exact CK | exact Hkn]. }
@@ -2177,7 +2191,7 @@ Section RenameCS.
     apply andb_prop in Hv as [Hv Hfd]. apply andb_prop in Hv as [Hv Hbrk]. apply andb_prop in Hv as [Hv Hgh].
     apply andb_prop in Hv as [Hv Hvis]. apply andb_prop in Hv as [Hv Hmaps]. apply andb_prop in Hv as [Hregs Hkn].
     pose proof (Mr_rename E cs nx model M Hvis Hfk Hgh) as HMR.
-    destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; rewrite ?HMR;
+    destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; rewrite ?HMR;
       cbn [rename_cs a_ss a_totsz a_eager a_vis a_fake a_meter a_fbud a_fd a_ghost a_brk a_ylo kn mk_ss s_regs s_log s_know s_pc s_next] in *; try assumption.
     - apply (regs_ok_rename m fw bw Hfw Hbw); assumption.
     - reflexivity.
@@ -3041,4 +3055,5 @@ Arguments co_top {SEGS RC SFL PERMc SPTOPc FS0 SHC VSH AINV KCAP FTOPc FXOK UINV
 Arguments co_kcap {SEGS RC SFL PERMc SPTOPc FS0 SHC VSH AINV KCAP FTOPc FXOK UINV E cs fx R M model} _.
 Arguments co_fbud {SEGS RC SFL PERMc SPTOPc FS0 SHC VSH AINV KCAP FTOPc FXOK UINV E cs fx R M model} _.
 Arguments co_floor {SEGS RC SFL PERMc SPTOPc FS0 SHC VSH AINV KCAP FTOPc FXOK UINV E cs fx R M model} _.
+Arguments co_rdr {SEGS RC SFL PERMc SPTOPc FS0 SHC VSH AINV KCAP FTOPc FXOK UINV E cs fx R M model} _.
 End GPS.

@@ -23,15 +23,16 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 414 of its 496 lines of code are new or changed and 4971 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3;
    the neutral excerpt reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s): segment B2 of
    reac_segconf_parse_file's walk (0x87edc .. 0x88074, 102 instructions, no conditional branch, one call, no
-   instrumented check, no UBSan trap site), the theorem S_B2_holds : S_B2 B of lib/B/Prog/pf_pieces.v (the image-B piece statements at
-   80a6c9c97a8b; FTAKEN -> FRAME). The B2 segment lane of the image-B G3 walk owner, 2026-10-30.
+   instrumented check, no UBSan trap site), the theorem S_B2_holds : S_B2 B of lib/B/Prog/pf_pieces.v (the image-B piece statements;
+   FTAKEN -> FRAME). The B2 segment lane of the image-B G3 walk owner, 2026-10-30.
    proves function reac_segconf_parse_file (segment B2; reuse search and CONFIRM:
    the rule-24 lookup record, the rule-24 checker 2026-10-30T16:55:47Z; reuse verdict none).
-   ADAPTED from commit c181e576cd21 lib/A/Prog/pf_a2.v (image A, 0x87b24 .. 0x87cc4), re-derived
-   on image B's code; closed against G3 FINAL at 6f783602b5e3 (lib/B/Prog/reac_segconf_parse_file_c.v, the B-kit copy lane).
+   ADAPTED from lib/A/Prog/pf_a2.v (image A, 0x87b24 .. 0x87cc4), re-derived
+   on image B's code; closed against G3 FINAL (lib/B/Prog/reac_segconf_parse_file_c.v, the B-kit copy lane).
    The code (BASE + AF_reac_segconf_parse_file = 0x87e38, SegList AF = 0x3078; offsets below from 0x87e38):
      0x87edc sd a0,136(s1) (slot 0x88 = F); 0x87ee0 sd a3,240(s1) (slot 0xf0 = F, never read); 0x87ee4 .. 0x87f14
      the frame header F + 0 / 8 / 16 (the magic 0x41b58ab3, the description .rodata 0x11b81, the pc 0x87e38) and

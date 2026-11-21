@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AllocGtopcgif.v (a working branch 86aa4177b94, file sha256 dd1d36ce64cb) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AllocGtopcgif.v (a working branch, file sha256 dd1d36ce64cb) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: the secondary arm's instance line takes fs's instance U `fun tr S => tr_admit (as_universe B) S tr` (the U of AGif1.iface_cgif / AGif5.ifaceS_cgif at fs, FS-INSTANCE.md 1.4, and of AllocGcgif.aalloc_realizes_cgif). *)
 (* The whole cgif_file Allocate contract, closed: AllocGcgif.aalloc_realizes_cgif for can_fill in {0, 1}, with no
    premise beyond the image's symbols and the depot's callee contract.

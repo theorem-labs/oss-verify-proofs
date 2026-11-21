@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (s3s_closed premised on topA_runseg_lift, the lift to the run segment list). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.leptonica.kernel_fuzzer.images Require Asan.
@@ -18,8 +19,9 @@ Lemma km_tr4 : In [0x9130c] CLIENT_TRACES. Proof. vm_compute. tauto. Qed.
 Lemma km_tr5 : In [0x9134c] CLIENT_TRACES. Proof. vm_compute. tauto. Qed.
 Lemma km_tr6 : In [0x91354] CLIENT_TRACES. Proof. vm_compute. tauto. Qed.
 
-Theorem s3s_closed : S3s_stmt Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
+Theorem s3s_closed : topA_runseg_lift -> S3s_stmt Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
 Proof.
-  exact (s3s_of_conetop (fun RC GP => km_fuzz_adapt RTA (km_cone RTA (AFt RTA RC) RC GP rta_callocK_ok (REPt RTA RC GP) (DESERt RTA RC GP)
+  intros RUNSEG.
+  exact (s3s_of_conetop RUNSEG (fun RC GP => km_fuzz_adapt RTA (km_cone RTA (AFt RTA RC) RC GP rta_callocK_ok (REPt RTA RC GP) (DESERt RTA RC GP)
     (DESTROYt RTA RC GP) km_tr1 km_tr2 km_tr3 km_tr4 km_tr5 km_tr6))).
 Qed.

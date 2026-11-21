@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise on the stdio write and exit-flush nodes, from cs_ok's co_rdr; RomBase.sys_rob at the ioctl node, RomSys.sys_rob_ioctl_tty). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -1073,6 +1074,7 @@ Section Loop.
   Hypothesis Fhi : (f + 232 <= 0xa6790)%Z.
   Hypothesis FD : (0 < fd < 2147483648)%Z.
   Hypothesis Hfd : fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+  Hypothesis Hrdr : m_channel_reader model = true.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hret : ret_ok ret.
@@ -1199,7 +1201,7 @@ Section Loop.
     (0 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= 2 ^ 30)%Z ->
     R (mkCfg (mkst regs (0x64ac0 : word) m (seg_rom RSEGS)) model)
              (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k bs)) K).
-  Proof using HK Mfd Mbsz Mbuf Mcan M72 M64 M56 M48 M40 M32 M24 M16 M8 SOK1 HKnil Hret Hlazy Hh Hfd FD Fhi Flo SUhi SUlo e22 e21 e20 e19 e18 e9 e8 ret can bufsz bufp.
+  Proof using HK Mfd Mbsz Mbuf Mcan M72 M64 M56 M48 M40 M32 M24 M16 M8 SOK1 HKnil Hret Hrdr Hlazy Hh Hfd FD Fhi Flo SUhi SUlo e22 e21 e20 e19 e18 e9 e8 ret can bufsz bufp.
     induction n as [|n IH]; intros regs m k b bs LEN RIr LMm Ha0 Hs6 Hs2 Hs3 Kb Mb Mn Bbs DISJ NW MAX M30.
     { exfalso. lia. }
     pose proof RIr as RIr'.
@@ -1222,7 +1224,7 @@ Section Loop.
     eapply (sr_writev1_wall RSEGS R regs1 (0x64ab0 : word) m' model W_64a5c fd
               (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b + Z.of_nat k))
               (Z_to_bv 64 (Z.of_nat (length bs) - Z.of_nat k)) (skipn k bs) K);
-      [ exact F_64a5c | exact E_64a5c | exact Hh | exact Hlazy | exact Hfd | exact FD
+      [ exact F_64a5c | exact E_64a5c | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
       | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | exact HKnil | ].
     - subst m'. rdn_solve.
     - subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -1303,7 +1305,7 @@ Section Loop.
     (Z.of_nat (length bs0) + Z.of_nat (length bs1) <= 2 ^ 30)%Z ->
     R (mkCfg (mkst regs (0x64ac0 : word) m (seg_rom RSEGS)) model)
              (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k (bs0 ++ bs1))) K).
-  Proof using HK Mfd Mbsz Mbuf Mcan M72 M64 M56 M48 M40 M32 M24 M16 M8 SOK1 HKnil Hret Hlazy Hh Hfd FD Fhi Flo SUhi SUlo e22 e21 e20 e19 e18 e9 e8 ret can bufsz bufp.
+  Proof using HK Mfd Mbsz Mbuf Mcan M72 M64 M56 M48 M40 M32 M24 M16 M8 SOK1 HKnil Hret Hrdr Hlazy Hh Hfd FD Fhi Flo SUhi SUlo e22 e21 e20 e19 e18 e9 e8 ret can bufsz bufp.
     induction n as [|n IH]; intros regs m k b0 bs0 b1 bs1 LEN RIr LMm Ha0 Hs6 Hs2 Hs3 Kb
       Mb0 Mn0 Mb1 Mn1 Bbs0 Bbs1 DISJ0 NW0 DISJ1 NW1 MAX M30.
     { exfalso. lia. }
@@ -1329,7 +1331,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 104)) (Z_to_bv 64 (bv_unsigned b0 + Z.of_nat k))
                 (Z_to_bv 64 (Z.of_nat (length bs0) - Z.of_nat k))
                 b1 (Z_to_bv 64 (Z.of_nat (length bs1))) (skipn k bs0) bs1 K);
-        [ exact F_64a5c | exact E_64a5c | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_64a5c | exact E_64a5c | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. rdn_solve.
@@ -1419,7 +1421,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b1 + Z.of_nat (k - length bs0)))
                 (Z_to_bv 64 (Z.of_nat (length bs1) - Z.of_nat (k - length bs0)))
                 (skipn (k - length bs0) bs1) K);
-        [ exact F_64a5c | exact E_64a5c | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_64a5c | exact E_64a5c | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -1529,6 +1531,7 @@ Theorem ref_stdio_write_R :
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   (0 <= wb <= wp)%Z -> (wp <= 0x800000000000)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -1555,7 +1558,7 @@ Theorem ref_stdio_write_R :
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
 Proof using.
   intros regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K
-         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hh Hlazy WBP WPhi
+         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hrdr Hh Hlazy WBP WPhi
          LENP LENE MAX M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
   pose proof (u64_range s) as Hs. pose proof (u64_range l) as Hl.
   pose proof SWF as SWF'. pose proof SSP as SSP'.
@@ -1609,11 +1612,11 @@ Proof using.
   pose proof (loop1 R su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 model K
-                SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
+                SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
   pose proof (loop2 R su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 model K
-                SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
+                SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
   pose proof (LM_refl su mem1) as LM1.
   destruct (Z.eq_dec wb wp) as [EQ|NEQ].
   - (* [comment removed for export] *)
@@ -1648,7 +1651,7 @@ Proof using.
     + (* [comment removed for export] *)
       eapply (sr_writev1_wall RSEGS R regs1 (0x64a28 : word) mem1 model W_649d4 fd
                 (Z_to_bv 64 (su - 88)) s l (x0 :: extra') K);
-        [ exact F_649d4 | exact E_649d4 | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_649d4 | exact E_649d4 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | | | | | | | exact HKnil | ].
       * u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. exact M80.
       * unfold word_to_nat. rewrite LENE, Nat2Z.id. exact Be.
@@ -1697,7 +1700,7 @@ Proof using.
     { unfold RI. repeat split; assumption. }
     eapply (sr_writev2_wall RSEGS R regs1 (0x64a28 : word) mem1 model W_649d4 fd
               (Z_to_bv 64 (su - 104)) (Z_to_bv 64 wb) (Z_to_bv 64 (wp - wb)) s l pending extra K);
-      [ exact F_649d4 | exact E_649d4 | exact Hh | exact Hlazy | exact Hfd | exact FD
+      [ exact F_649d4 | exact E_649d4 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
       | exact R17 | exact R10 | exact R11 | exact R12 | exact M104 | | | | | | | | | | | | exact HKnil | ].
     + u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. exact M96.
     + u_norm. replace (su - 104 + 16)%Z with (su - 88)%Z by lia. exact M88.
@@ -1763,6 +1766,7 @@ Theorem ref_stdio_write :
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   (0 <= wb <= wp)%Z -> (wp <= 0x800000000000)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -1859,10 +1863,11 @@ Theorem ref_exit_flush :
   stdout_pending mem wb wp bufp bufsz rp1 can pending ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader model = true ->
   realizes RSEGS (mkCfg (mkst regs (0x617e0 : word) mem (seg_rom RSEGS)) model)
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
-  intros regs mem model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd.
+  intros regs mem model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd Hrdr.
   destruct EC. destruct SP as [P1l P1wp P1wb P1wr P1buf P1bsz P1fd P1rp P1re RANGE LEN PMAX BYTES [Ggot Gcan]].
   zaddr P1l; zaddr P1wp; zaddr P1wb; zaddr P1wr; zaddr P1buf; zaddr P1bsz; zaddr P1fd; zaddr P1rp; zaddr P1re.
   (* [comment removed for export] *)
@@ -1889,7 +1894,7 @@ Proof.
     | lia | lia
     | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a; zaddr_goal; rdn_solve
     | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a; rdn_solve
-    | lia | exact Hfd | exact Hh | exact Hlazy
+    | lia | exact Hfd | exact Hrdr | exact Hh | exact Hlazy
     | lia | lia | exact LEN
     | cbn [length]; u_norm; reflexivity
     | cbn [length]; lia
@@ -1928,7 +1933,7 @@ Theorem ref_exit : forall regs mem model code pending,
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
   intros regs mem model code pending (sp & wp2 & rp2 & EC & Hh & Hlazy & CASES).
-  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd)].
+  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd & Hrdr)].
   - eapply rz_conseq; [ | apply t_emit_nil_exit ].
     eapply ref_exit_clean; eassumption.
   - eapply ref_exit_flush; eassumption.
@@ -1958,6 +1963,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.glaze.binary_reflection.images Require Import Plain.
 Require OSSVerify.Proofs.glaze.binary_reflection.lib.Common.PropExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CatExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.StoreOk OSSVerify.Proofs.glaze.binary_reflection.lib.Spec4 OSSVerify.Proofs.glaze.binary_reflection.lib.Common.AsanAcctShape OSSVerify.Proofs.glaze.binary_reflection.lib.Common.RefNodes OSSVerify.Proofs.glaze.binary_reflection.lib.Mh32 OSSVerify.Proofs.glaze.binary_reflection.lib.LibWritevF OSSVerify.Proofs.glaze.binary_reflection.lib.GlzConst OSSVerify.Proofs.glaze.binary_reflection.lib.GxSymExec3 OSSVerify.Proofs.glaze.binary_reflection.lib.GxSymExec3B OSSVerify.Proofs.glaze.binary_reflection.lib.GxSymExec3Sound OSSVerify.Proofs.glaze.binary_reflection.lib.GlzPlanSound OSSVerify.Proofs.glaze.binary_reflection.lib.GxPlanCore OSSVerify.Proofs.glaze.binary_reflection.lib.GxPlan OSSVerify.Proofs.glaze.binary_reflection.lib.GlzSpecsStr OSSVerify.Proofs.glaze.binary_reflection.lib.GlzIface OSSVerify.Proofs.glaze.binary_reflection.lib.MhDefs OSSVerify.Proofs.glaze.binary_reflection.lib.RefStdioDefs. Import OSSVerify.Proofs.glaze.binary_reflection.lib.Common.PropExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CatExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.StoreOk OSSVerify.Proofs.glaze.binary_reflection.lib.Spec4.AgentLib OSSVerify.Proofs.glaze.binary_reflection.lib.Common.StoreOk.ShapeAlg OSSVerify.Proofs.glaze.binary_reflection.lib.Common.AsanAcctShape.ShapeRel OSSVerify.Proofs.glaze.binary_reflection.lib.Common.RefNodes.Nodes OSSVerify.Proofs.glaze.binary_reflection.lib.Common.RefNodes.FileSim OSSVerify.Proofs.glaze.binary_reflection.lib.Common.RefNodes.ShapeNodes OSSVerify.Proofs.glaze.binary_reflection.lib.Mh32.StepTac OSSVerify.Proofs.glaze.binary_reflection.lib.LibWritevF OSSVerify.Proofs.glaze.binary_reflection.lib.GlzConst OSSVerify.Proofs.glaze.binary_reflection.lib.GxSymExec3 OSSVerify.Proofs.glaze.binary_reflection.lib.GxSymExec3B OSSVerify.Proofs.glaze.binary_reflection.lib.GxSymExec3Sound OSSVerify.Proofs.glaze.binary_reflection.lib.GlzPlanSound.GxSymRun3 OSSVerify.Proofs.glaze.binary_reflection.lib.GxPlanCore OSSVerify.Proofs.glaze.binary_reflection.lib.GxPlan OSSVerify.Proofs.glaze.binary_reflection.lib.GlzPlanSound.GxPlanSound OSSVerify.Proofs.glaze.binary_reflection.lib.GlzPlanSound OSSVerify.Proofs.glaze.binary_reflection.lib.GlzSpecsStr.GlzCallLib OSSVerify.Proofs.glaze.binary_reflection.lib.GlzSpecsStr.GlzKnowLib OSSVerify.Proofs.glaze.binary_reflection.lib.GlzIface OSSVerify.Proofs.glaze.binary_reflection.lib.GlzSpecsStr.GlzNodesSound OSSVerify.Proofs.glaze.binary_reflection.lib.MhDefs.RefImg OSSVerify.Proofs.glaze.binary_reflection.lib.RefStdioDefs OSSVerify.Proofs.glaze.binary_reflection.lib.RefStdioDefs.RefExitBase RefStdioWrite RefExit OSSVerify.Proofs.glaze.binary_reflection.lib.GlzSpecsStr.DrvNodes.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Require OSSVerify.Proofs.glaze.binary_reflection.lib.Common.RomSys.
 Import ListNotations.
 Import AX2. Import AX2S. Import AP. Import APS. Import GPS.
 Open Scope Z_scope.
@@ -1982,9 +1988,11 @@ Lemma ioctl_tty_node : forall ms model x8 (fd : Z) ch,
 Proof.
   intros ms model x8 fd ch Hh Hlazy Hsvc Hx8 Hfd Hfdr Hlk Htty.
   apply (node_ret_only RSEGS ms model x8 (errno_ret ENOTTY) model []); try assumption.
-  intros eff. rewrite check_syscall_ioctl by (rewrite in_sysno_si; exact Hx8).
-  rewrite in_arg0_si, in_arg1_si, Hfd, fd32_small by (rewrite u64_lit by lia; lia).
-  unfold check_ioctl. rewrite Hlk, Htty. reflexivity.
+  - intros eff. rewrite check_syscall_ioctl by (rewrite in_sysno_si; exact Hx8).
+    rewrite in_arg0_si, in_arg1_si, Hfd, fd32_small by (rewrite u64_lit by lia; lia).
+    unfold check_ioctl. rewrite Hlk, Htty. reflexivity.
+  - (* a terminal-only request reads no byte of the caller's memory *)
+    exact (RomSys.sys_rob_ioctl_tty RSEGS ms model x8 Hsvc Hx8 Htty).
 Qed.
 
 (* [comment removed for export] *)
@@ -2387,7 +2395,7 @@ Proof using FDS1 SR_det AINV_frame SWIN.
     split; [exact EC|]. split; [exact (co_halt HC)|]. split; [exact (co_lazy HC)|].
     destruct PEND as [[-> CL] | PD]; [left; split; [reflexivity | exact CL] | right].
     destruct PD as (wb & wp & bufp & bufsz & rp1 & can & PD). exists wb, wp, bufp, bufsz, rp1, can.
-    split; [exact PD | rewrite (co_fds HC); exact FDS1]. }
+    split; [exact PD | split; [rewrite (co_fds HC); exact FDS1 | exact (co_rdr HC)]]. }
   (* [comment removed for export] *)
   set (R' := regupd (regupd R (Z_to_bv 5 10) (getr R (Z_to_bv 5 8))) (Z_to_bv 5 17) (Z_to_bv 64 94)).
   assert (G17 : getr R' (Z_to_bv 5 17) = Z_to_bv 64 94) by (unfold R'; apply getr_same; intro; discriminate).
@@ -2593,6 +2601,7 @@ Proof using FDS2 FDS1 SWINc UINV_agree AINV_frame SWIN.
   - lia.
   - lia.
   - rewrite (co_fds HC). destruct Hfdv as [-> | ->]; [exact FDS1 | exact FDS2].
+  - (* [comment removed for export] *) exact (co_rdr HC).
   - exact (co_halt HC).
   - exact (co_lazy HC).
   - lia.

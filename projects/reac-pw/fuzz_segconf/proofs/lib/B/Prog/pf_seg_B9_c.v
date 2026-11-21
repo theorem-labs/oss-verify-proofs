@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 590 of its 615 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the vocabulary
    segment B9 of reac_segconf_parse_file's walk shares between its call sites and its runs, and what its three
    INTERCEPTOR calls ask (a B9 sub-lane of the image-B G3 walk owner, 2026-10-30). proves no function (kind: segment
    lemma of reac_segconf_parse_file's walk: call-site premises of segment B9, image B). No instruction is walked.
-   ADAPTED from the image-A G3 walk owner's image-A files lib/A/Prog/pf_a7_d.v + lib/A/Prog/pf_a7_r.v (commit
-   a78dafc7ecfa, the image-A A7 segment lane): the same lemmas with a7_ renamed b9_, over image B's pf_pieces.v (the realigned base
+   ADAPTED from the image-A G3 walk owner's image-A files lib/A/Prog/pf_a7_d.v + lib/A/Prog/pf_a7_r.v (
+   the image-A A7 segment lane): the same lemmas with a7_ renamed b9_, over image B's pf_pieces.v (the realigned base
    pf_s1 = (sp0 - 0x160) & -32, STK_reac_segconf_parse_file = 12832, SegInstB's values), and the call sites
    replaced by B9's; plus the cur_name facts B9's shared key refusal KREF needs.
 

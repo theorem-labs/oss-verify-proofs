@@ -65,7 +65,7 @@ Variable B : asyms.
 (* the premises both specs share, then the two placements of *lenp: a caller real-stack object under the raised window
    top ot (decode_spec), or 8 bytes of a live caller fake frame with ot = sp and the slot in FP, its shadow addressable
    (decode_spec_ff). No CTX conjunct: the specs dropped `In (raZ regs :: spine ch) CTX` and their CTX binder
-   (a working branch 50968be8342). *)
+   (a working branch). *)
 Definition dec_entry_ok (d : DE) : Prop :=
   let ly := d_ly d in let S := d_S d in let U := d_U d in let W := d_W d in let regs := d_regs d in
   let mem := d_mem d in let tb := d_tb d in let text := d_text d in let lenp := d_lenp d in
@@ -130,7 +130,7 @@ Definition dec_head (d : DE) (q : Z) (i : nat) (six : list Z) (pad acc : Z)
   dec_frame_ok Wc memc (d_sp d - DEC_F) (d_regs d) /\ dec_lenp_slot Wc memc (d_sp d - DEC_F) (d_lenp d) /\
   (* the data *)
   dec_kept d Wc memc /\ zbytes_at tfibsegs Wc memc q (WriterSpec.six_bytes six) /\
-  (* the model (old proof's at_head, 211ff3e9df0 lib/A/Prog/preset_base64_decode_blocks.v:627-640) *)
+  (* the model (old proof's at_head, lib/A/Prog/preset_base64_decode_blocks.v:627-640) *)
   (i <= length tb)%nat /\ 0 <= pad <= Z.of_nat i /\ (length six <= i)%nat /\
   Forall (fun x => 0 <= x < 64) six /\ acc mod 64 = last six 0 /\
   WriterSpec.b64_dec tb =

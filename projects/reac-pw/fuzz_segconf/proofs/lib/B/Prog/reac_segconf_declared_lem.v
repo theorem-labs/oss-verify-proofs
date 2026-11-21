@@ -1,4 +1,4 @@
-(* The image-B port of lib/A/Prog/reac_segconf_declared_lem.v (commit 29221b01c4cd): the model
+(* The image-B port of lib/A/Prog/reac_segconf_declared_lem.v: the model
    facts the segments of the walk of reac_segconf_declared (fuzz_segconf.asan-ubsan, image B) share: the steps of
    SegModel.r_decl_go that one pass of the loop takes, the answers of vlan_add and vlan_split, and the growth of the
    table (it only grows, never past max). Pure Gallina over SegModel; no machine state, so the text is image A's,

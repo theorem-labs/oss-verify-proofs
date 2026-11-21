@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormMissG0.v (a working branch 30a1993588f, c5 + memnorm; file sha256 7532f9348cfa) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormMissG0.v (a working branch, c5 + memnorm; file sha256 7532f9348cfa) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM): the memnorm-kept twins of AGim0E's g-path MISS arms: [alloc_missg0_em]
    (can_fill = 0) and [alloc_missg_cf_em] (can_fill cf in {0, 1}) conclude MemnormT.alloc_leaf_em (ErrnoG.alloc_leaf_e
    plus `memnorm mem -> memnorm mem'`) in place of ErrnoG.alloc_leaf_e.
@@ -36,7 +37,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require ErrnoApart AGim AGim
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require MemnormT MnRefill MemnormMissG.
 Import ListNotations.
 Local Unset Lia Cache. Local Unset Nia Cache.
-(* copy of AGim0.v:44 *)
+(* copy of AGim0.v:45 *)
 Local Ltac bvne := first [cbn; lia | vm_compute; congruence | intros X; vm_compute in X; discriminate X].
 Local Set Warnings "-abstract-large-number".
 Local Set Warnings "-notation-for-abbreviation".

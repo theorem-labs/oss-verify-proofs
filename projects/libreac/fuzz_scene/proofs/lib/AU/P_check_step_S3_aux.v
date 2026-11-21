@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/ct/lib/CtColB/W_set0A.v, with its module paths and module names changed; 604 of its 627 lines of code are new or changed and 122 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/Prog/check_step.v, with its module paths and module names changed; 407 of its 449 lines of code are new or changed and 585 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Pure facts for segment S3 of the ASan walk of check_step (fuzz_scene.asan-ubsan): the 50-byte frame object that
    the two __asan_memcpy calls build, what reac_ctrl_parse's model returns on it, and the 32 control-block bytes
    frame[18..50) that reac_ctrl_checksum_verify sums (the pure part: no kit, no Section). The asan copy is
-   lib/A/P_check_step_S3_aux.v (at 8cb4af36d62); only the cut module changes.
+   lib/A/P_check_step_S3_aux.v; only the cut module changes.
    After the pure part, a Section with S3's hypothesis names proves s3u_tail (a Theorem Labs lane's TAIL.md): the walk from
    reac_ctrl_parse's return 0x836a0 to the cut 0x836d4 (the five checks, reac_ctrl_checksum_verify through cl_callS,
    cs_st4), with its helper s3t_after (the call and the rest).
@@ -157,7 +158,7 @@ Qed.
    by the run: k splits into k = 0 / k = 342 / else, where scene_seg k, scene_len k are the literals 1, 24 / 2, 14 /
    0, 26 (SceneBlock.v:6-7); s4, s5, s8 and a0 are pinned to those literals and the o region (s7 = F + 128) holds the
    parse result's bytes 22..26 (s3_fr_parse) as literal chunks. The call 0x836cc reac_ctrl_checksum_verify(f = s6 =
-   F + 32) goes through cl_callS (AU/Prog/YC85.v:384, o = -128, TCKV_STK, EV1 = 0) with CKV; its achain is
+   F + 32) goes through cl_callS (AU/Prog/YC85.v:385, o = -128, TCKV_STK, EV1 = 0) with CKV; its achain is
    achain_push of the entry chain with the saved ra / s0 slots (cs_saved j = 0, 1); its afobj is afobj_of_own; its
    32 bytes frame[18..50) are s3_bs b k, whose blocksum is 0 (s3_bs_ok), so a0 = 0 and `bnez a0` 0x836d0 falls
    through to the cut. The cut's memory facts (flag word, saved slots) are carried over the call by the callee's
@@ -226,7 +227,7 @@ Section h.
 Variable B : asyms.
 (* The hypotheses of lib/AU/P_check_step_S3.v that this part uses, with the same names and text. *)
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.
-(* reac_ctrl_checksum_verify (a Theorem Labs lane 33d26845cd2). *)
+(* reac_ctrl_checksum_verify (a Theorem Labs lane). *)
 Hypothesis CKV : tctrl_checksum_verify_spec (SK := SK) B.
 Let RUNP := SRr_run_pi_AJ (PL := PL_scene) (PI := PI) B LAWS.
 Let RUNC := SRr_run_pi_AJ_call (PL := PL_scene) (PI := PI) B LAWS.

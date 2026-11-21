@@ -12,13 +12,13 @@
    size < res + 1 side of the branch at 0x45940 (MEASURED: from 0x45940 not taken the run reaches 0x45944 with
    s1 = s3 = size, s2 = str, a0 = res; run r_fEt), whose check WRITE_RANGE (str, size) is FMsnprintfGwrcT.v's
    vsn_wr_check_srrUT; there sn_len (n - 1) T = n. *)
-(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfSvsni.v (origin/cold/port-fm-rtprintf-param 7e395de08f5)
+(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfSvsni.v
    restated over the engine's generic ARx with the ghost list Hp fixed (route (a), c-omx-hpreset 10:51Z) and re-pinned
    at preset image A (fuzz_preset.asan, unstripped f0d2e8d4, pin d83eb25d). Restatement: ARU tfibsegs B .. U .. ->
    ARx .. Hp ..; the shared contracts -> their _x forms (PSnpSx: sh_apcommon_realizes_xz, sh_avsnprintf_realizes_xa,
    sh_avsnprintf_icpt_realizes_xa); the laws are Section hypotheses named after their AR_laws_x fields (alx_frame,
    alx_stack, alx_const_cells), not the record; stk_kHighMemBeg (ARU_ARm ..) -> stk_bounds_x, a Section hypothesis of
-   the engine lemma's exact statement (YCbqG.stk_bounds_x, 7792959a2abb); g_ecall_preU -> PSnpGt's g_ecall_pre_x; Gwrc / GwrcT's
+   the engine lemma's exact statement (YCbqG.stk_bounds_x); g_ecall_preU -> PSnpGt's g_ecall_pre_x; Gwrc / GwrcT's
    vsn_wr_check_srrU(T) -> PSnpGwrc / PSnpGwrcT's vsn_wr_check_srr_x(T); the entry's rodata site (fm :933-949:
    AE2y.rodata_ok over unpoison U mem and ARU_ARm, then kregion_transport with the ARU_mem_low rewrite) -> one
    one PSnpRodata.rodata_ok_lx at vsni_rodata (its real_vsnprintf cell is a row of AF0m.v since h-pre-b3's
@@ -32,11 +32,11 @@
      ___interceptor_vsnprintf  +0x178   0x45a18 -> 0x46300   (the size >= res + 1 side's check)
    '+ 8' in this file: the shadow hull's granule end and the saved-register slot offsets (address ranges), no presence
    form. *)
-(* Modified by Theorem Labs, 2026-10: port-fm 00daeaf3796's destination slack (origin/cold/port-fm-rtprintf-param, the
-   final text 3e35620c52e) passed through: the _xa entry's 'amem_range d (sn_len (n - 1) T + 8)' is the Section
+(* Modified by Theorem Labs, 2026-10: port-fm's destination slack (origin/cold/port-fm-rtprintf-param, the
+   final text) passed through: the _xa entry's 'amem_range d (sn_len (n - 1) T + 8)' is the Section
    hypothesis HD8, handed unchanged to musl vsnprintf's contract (sn_applyA). The '+ 8' is an address-range fact. *)
-(* Modified by Theorem Labs, 2026-10: the memnorm keep (c-omx-alloc 17:03Z ruling (b); the kit texts of
-   origin/cold/c-libc-stdio-presetsnp-vfp 43002a8926a7): the post ends in `YAkMemnorm.memnorm segs mem ->
+(* Modified by Theorem Labs, 2026-10: the memnorm keep (c-omx-alloc 17:03Z ruling (b); the kit texts):
+   the post ends in `YAkMemnorm.memnorm segs mem ->
    YAkMemnorm.memnorm segs mem'` (sn_post), from sw_frame's 6th conjunct; at each sw_step the callee's keep: printf_common's
    and musl vsnprintf's from their posts' last conjunct (printf_common's through kcall's Q), Gwrc / GwrcT's from POSTr's
    raw frame over [sp - RC_SCR, sp) and the present window by PSnpKeep.memnorm_of_subframe_dw (empty destination);
@@ -50,13 +50,13 @@
    larger than a K the contract allows (K = 8160 on GXA's route), so the two runs are G's over a stack region of SNP_R =
    0x70 bytes (the interceptor's 0x60 frame and TryAsanInitFromRtl's 0x10, MEASURED: G's run 1 writes 8-byte chunks at
    sp - 0x70 .. sp - 8); G's sn_facts0, KEPT and reg_is are reused. New file. *)
-(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfSnp.v (origin/cold/port-fm-rtprintf-param 7e395de08f5)
+(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfSnp.v
    restated over the engine's generic ARx with the ghost list Hp fixed (route (a), c-omx-hpreset 10:51Z) and re-pinned
    at preset image A (fuzz_preset.asan, unstripped f0d2e8d4, pin d83eb25d). Restatement: ARU tfibsegs B .. U .. ->
    ARx .. Hp ..; ecall_preU -> ecall_pre_x; the shared contracts -> their _x forms (PSnpShared / PSnpSx); the laws are
    Section hypotheses named after their AR_laws_x fields (alx_frame, alx_stack, alx_const_cells), not the record;
    stk_kHighMemBeg (ARU_ARm ..) -> stk_bounds_x, a Section hypothesis of the engine lemma's exact statement
-   (YCbqG.stk_bounds_x, 7792959a2abb); FMsnprintfGwrc.icpt_rodata_okU (ARU_mem_low + AE2y.rodata_ok over ARU_ARm) -> PSnpRodata's
+   (YCbqG.stk_bounds_x); FMsnprintfGwrc.icpt_rodata_okU (ARU_mem_low + AE2y.rodata_ok over ARU_ARm) -> PSnpRodata's
    rodata_ok_lx at icpt_rodata; snp_ok's premise is ecall_pre_x, one flat conjunction (fm's three-conjunct ecall_preU
    destructure and ARU rebuild go). Re-pin: TFIB_IMG_END 0x5f7000 (fm) -> 0x600000 (preset A's AF0x.v); the walk's
    addresses (PC_snprintf, A_VSNI, RA_VSNI) are PSnpI's and icpt_rodata is preset A's AE2y.v. Relocation table of
@@ -72,15 +72,16 @@
      __wrap_snprintf (alias __interceptor_trampoline_snprintf) +0x0    0x42cc4 -> 0x42d48
      ___interceptor_snprintf                          +0x0    0x46578 -> 0x465fc
    TFIB_IMG_END is 0x600000 at A' and 0x601000 at B' (YF0x.v). *)
-(* Modified by Theorem Labs, 2026-10: port-fm 00daeaf3796's destination slack (origin/cold/port-fm-rtprintf-param, the
-   final text 3e35620c52e) passed through: snp_ok's top (sh_asnprintf_realizes_x) now carries
+(* Modified by Theorem Labs, 2026-10: port-fm's destination slack (origin/cold/port-fm-rtprintf-param, the
+   final text) passed through: snp_ok's top (sh_asnprintf_realizes_x) now carries
    'amem_range d (sn_len (n - 1) T + 8)' (Ham); the callee's bundle keeps the written extent (Ham0, by amem_range's
    definition) and sn_applyA gets Ham itself for the _xa contract's new premise. The '+ 8' is an address-range fact. *)
-(* Modified by Theorem Labs, 2026-10: the memnorm keep (c-omx-alloc 17:03Z ruling (b); the kit texts of
-   origin/cold/c-libc-stdio-presetsnp-vfp 43002a8926a7): snp_ok's post ends in `YAkMemnorm.memnorm segs mem ->
+(* Modified by Theorem Labs, 2026-10: the memnorm keep (c-omx-alloc 17:03Z ruling (b); the kit texts):
+   snp_ok's post ends in `YAkMemnorm.memnorm segs mem ->
    YAkMemnorm.memnorm segs mem'`, from sw_frame's 6th conjunct; at the one sw_step the vsnprintf interceptor's keep,
    its post's last conjunct. *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpSnp.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpSnp.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -179,7 +180,7 @@ Qed.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop.
-(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc 7792959a2abb YCbqG.v:308,
+(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc YCbqG.v:309,
    which needs the whole AR_laws_x record): an instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`; never proved here *)
 Hypothesis stk_bounds_x : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
   kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd.
@@ -291,7 +292,7 @@ Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option 
 Hypothesis alx_frame : ARx_frame_law tfibsegs B ARx.
 Hypothesis alx_stack : ARx_stack_law tfibsegs B ARx.
 Hypothesis alx_const_cells : ARx_const_cells_law tfibsegs B ARx.
-(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc 7792959a2abb YCbqG.v:308,
+(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc YCbqG.v:309,
    which needs the whole AR_laws_x record): an instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`; never proved here *)
 Hypothesis stk_bounds_x : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
   kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd.

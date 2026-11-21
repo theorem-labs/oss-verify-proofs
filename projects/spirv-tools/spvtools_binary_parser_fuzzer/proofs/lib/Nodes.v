@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the family of non-spurious outcomes of a syscall node, and that it is inhabited). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Classical IndefiniteDescription.
@@ -323,6 +324,69 @@ Proof.
   split.
   - intros i. exact (H1 (exist _ i (Hns i))).
   - intros e st Hss. destruct (H2 e st Hss) as ([i Hi] & -> & ->). exists i. split; reflexivity.
+Qed.
+
+(* THE FAMILY OF NON-SPURIOUS OUTCOMES.  [node_family_cfg] above asks for
+   the spec and the family to agree on EVERY outcome.  At the revision a
+   syscall of a forced-only family admits refusals the family does not
+   list ([Run.spurious_refusal_cfg] filters them out of [sstep_cfg]), so
+   the agreement that can be had is: every family member is admissible,
+   and every admissible NON-SPURIOUS outcome is a family member. *)
+Lemma node_family_cfg_sp : forall ms model x8 (I : Type)
+    (effs : I -> SyscallEffect) (ms' : I -> Model) (evs : I -> list event),
+  m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  (forall i, syscall_spec (sys_input segs ms x8) model (Ok (effs i) (ms' i) (evs i))) ->
+  (forall eff m' ev, syscall_spec (sys_input segs ms x8) model (Ok eff m' ev) ->
+     ~ spurious_refusal_cfg CFG (sys_input segs ms x8) model eff ->
+     exists i, eff = effs i /\ m' = ms' i /\ ev = evs i) ->
+  (~ syscall_spec (sys_input segs ms x8) model Unmodeled) ->
+  (* EVERY admissible outcome keeps the process alive, the spurious ones
+     included: [sstep_cfg_exit] carries no filter premise, so a halting
+     outcome would be a step whatever the filter says *)
+  (forall eff m' ev, syscall_spec (sys_input segs ms x8) model (Ok eff m' ev) ->
+     m_halted m' = None) ->
+  (forall i, m_vm_lazy (ms' i) = []) ->
+  node_ok segs (mkCfg ms model)
+    {i : I | ~ spurious_refusal_cfg CFG (sys_input segs ms x8) model (effs i)}
+    (fun j => evs (proj1_sig j))
+    (fun j => mkCfg (advance_past_svc (apply_effect ms (effs (proj1_sig j)))) (ms' (proj1_sig j))).
+Proof.
+  intros ms model x8 I effs ms' evs Hh Hsvc Hin Hout Hnu Hhalt Hlazy. split.
+  - intros [i Hi]. cbn [proj1_sig].
+    apply (sstep_cfg_syscall segs CFG ms model x8 (effs i) (ms' i) (ms' i) (evs i));
+      [exact Hh | exact Hsvc | apply Hin | exact Hi
+      | exact (Hhalt _ _ _ (Hin i))
+      | apply materialize_model_accesses_no_lazy; apply Hlazy].
+  - intros e st Hss.
+    destruct (sstep_cfg_svc_inv segs ms model x8 e st Hsvc Hss)
+      as [(eff & m' & ev & Hc & Hcase) | (Hc & _ & _)]; [| exfalso; exact (Hnu Hc)].
+    destruct Hcase as [(m'' & Hns & _ & -> & Hmat & ->)
+                      | [(Hns & _ & _ & Hmat & _) | (code & Hh2 & _)]].
+    + destruct (Hout _ _ _ Hc Hns) as (i & -> & -> & ->).
+      rewrite (materialize_model_accesses_no_lazy _ _ (Hlazy i)) in Hmat.
+      injection Hmat as <-. exists (exist _ i Hns). split; reflexivity.
+    + exfalso. destruct (Hout _ _ _ Hc Hns) as (i & -> & -> & ->).
+      rewrite (materialize_model_accesses_no_lazy _ _ (Hlazy i)) in Hmat. discriminate.
+    + exfalso. rewrite (Hhalt _ _ _ Hc) in Hh2. discriminate.
+Qed.
+
+(* The non-spurious index is inhabited whenever the family is. *)
+Lemma family_cfg_sp_nonempty : forall ms model x8 (I : Type)
+    (effs : I -> SyscallEffect) (ms' : I -> Model) (evs : I -> list event),
+  (forall i, syscall_spec (sys_input segs ms x8) model (Ok (effs i) (ms' i) (evs i))) ->
+  (forall eff m' ev, syscall_spec (sys_input segs ms x8) model (Ok eff m' ev) ->
+     ~ spurious_refusal_cfg CFG (sys_input segs ms x8) model eff ->
+     exists i, eff = effs i /\ m' = ms' i /\ ev = evs i) ->
+  I ->
+  {i : I | ~ spurious_refusal_cfg CFG (sys_input segs ms x8) model (effs i)}.
+Proof.
+  intros ms model x8 I effs ms' evs Hin Hout i0.
+  apply constructive_indefinite_description.
+  destruct (classic (spurious_refusal_cfg CFG (sys_input segs ms x8) model (effs i0))) as [Hsp | Hns].
+  - destruct Hsp as (_ & _ & (eff' & m' & evs' & Hs & Hnr)).
+    destruct (Hout _ _ _ Hs (not_spurious_of_not_refusal _ _ _ Hnr)) as (j & -> & _ & _).
+    exists j. apply not_spurious_of_not_refusal. exact Hnr.
+  - exists i0. exact Hns.
 Qed.
 
 Lemma family_cfg_nonempty : forall ms model x8 (I : Type)

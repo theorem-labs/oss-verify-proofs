@@ -13,6 +13,7 @@
    The image facts are decided by vm_compute over the cell list PINV_IVS: the cells lie in the image hull, avoid the
    unit's owned statics, errno and the driver's write windows, and the start-up certificate knows each of them at its
    image value. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,7 +21,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.omx_clap_core.fuzz_preset.images Require Import Asan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB13 AB01.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB13 AB01r.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG01 YG0f YG0v YG0n YG0r YG0b.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AF0m.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YD1h.
@@ -39,7 +40,7 @@ Open Scope Z_scope.
 Local Notation segs := tfibsegs.
 
 (* ---------------------------------------------------------------------- *)
-(* 1. The cell facts (donor AD1u.v:91-125), decided over PINV_IVS. *)
+(* 1. The cell facts (donor AD1u.v:92-126), decided over PINV_IVS. *)
 Lemma PINV_IVS_img : forallb (fun iv => (YImgTop.IMG_LO <=? fst iv) && (snd iv <=? YImgTop.IMG_TOP))%bool PINV_IVS = true.
 Proof. vm_compute. reflexivity. Qed.
 Lemma PINV_IVS_unowned : forallb (fun iv => forallb (AD1y.ext_avoids (fst iv) (snd iv)) Tfib_owned_static) PINV_IVS = true.
@@ -231,7 +232,7 @@ forallb (fun k => match seg_rom tfibsegs (Z_to_bv 64 (a + Z.of_nat k)) with
 Lemma PINV_CELLS_img : forallb img_cell_ok PINV_CELLS = true.
 Proof. vm_compute. reflexivity. Qed.
 Definition pinv_check (ch : acs) : bool := forallb (cell_known ch) PINV_CELLS.
-Lemma pinv_check_all : forallb pinv_check HS_tfib_list = true.
+Lemma pinv_check_all : forallb pinv_check HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 Lemma PINV_CELLS_ok : forallb (fun c => let '(a, n, v) := c in
 ((0 <=? a) && (0 <=? v) && (v <? 2 ^ (8 * Z.of_nat n)) && (v <? 2 ^ 64))%bool) PINV_CELLS = true.
@@ -245,15 +246,20 @@ Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TSEGS TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* LPS 727298f3: the start-up invariant is abstract, as in the core sections (A/AD2i.v, A/AD1g.v),
+   with the stack-top fact the drivers read; the hidden stack bytes read the input's fields. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 Let MRm1 := AD2i.mbyte_MR_m1 sp rdraw inp Hsp Hva ch E FULL model.
 
@@ -277,7 +283,7 @@ Lemma cell_rd : forall a n v, In (a, n, v) PINV_CELLS -> forall k, (k < n)%nat -
 aview tfibsegs (AD2i.H1 sp rdraw inp ch E model) FULL (a + Z.of_nat k) = Some (le_byte v n k).
 Proof.
 intros a n v Hin k Hkn.
-pose proof (proj1 (forallb_forall _ _) pinv_check_all ch (HS_tfib_In h ch Hch)) as K. unfold pinv_check in K.
+pose proof (proj1 (forallb_forall _ _) pinv_check_all ch (HS_tfib_r_In _ h ch Hch)) as K. unfold pinv_check in K.
 pose proof (proj1 (forallb_forall _ _) K _ Hin) as Hk. unfold cell_known in Hk. cbn beta iota in Hk.
 pose proof (proj1 (forallb_forall _ _) PINV_CELLS_ok _ Hin) as Hok. cbn beta iota in Hok.
 apply andb_prop in Hok as [Hok Hv64]. apply andb_prop in Hok as [Hok Hvn]. apply andb_prop in Hok as [Ha Hv0].
@@ -323,6 +329,11 @@ End c.
 
 Theorem tfib_finv_handoff_pinv_A_holds : tfib_finv_handoff_pinv_A.
 Proof.
-intros fx rc sp rdraw brk inp Hsp Hva h ch E R FULL model H8 Hch HC.
-exact (pinv_handoff_at sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC).
+intros fx rc sp rdraw brk inp Hsp Hva h ch E R FULL model H8 SINV SINV_sp0 Hch HC.
+pose proof (@pinv_handoff_at) as L.
+try specialize (L fx); try specialize (L sp); try specialize (L rdraw); try specialize (L brk); try specialize (L inp);
+try specialize (L Hsp); try specialize (L Hva); try specialize (L h); try specialize (L ch); try specialize (L E);
+try specialize (L R); try specialize (L FULL); try specialize (L model); try specialize (L Hch); try specialize (L SINV);
+try specialize (L SINV_sp0); try specialize (L HC).
+exact L.
 Qed.

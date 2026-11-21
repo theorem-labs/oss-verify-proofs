@@ -14,6 +14,7 @@
    (W_sites_x.v amemmove_realizes_x, entered by aj_gx_entry_at_x), has_prefix through W_has_prefix.pb_has_prefix_x;
    P's facts are W_check_shape_ends.v's cshe_P_at_x, the epilogue its cshe_epi_x.  The AR statement is re-derived at
    ARi0 in W_cshe_top.v. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* One turn at index i = m - 1 (m the records not yet examined, counting down from n):
      0x854c4  the shadow check of l->v, s3 = l->v + 16 i                       (l2_A, state ss_l2a)
      0x854d4  the two shadow checks of v[i], has_prefix(v[i].s, v[i].n, PF)  (l2_B, state ss_l2b)
@@ -202,7 +203,7 @@ Context {PI : PAImg fr_prog_listing}.
 Definition A_cshe_l2b : Z := AF_fr_check_shape_ends + 0x124.
 Definition A_cshe_l2h : Z := AF_fr_check_shape_ends + 0x15c.
 
-(* The vector's records as 8-byte cells (check_no_loss's cnl_rec_fields, W_check_no_loss.v:148-194). *)
+(* The vector's records as 8-byte cells (check_no_loss's cnl_rec_fields, W_check_no_loss.v:149-195). *)
 Lemma l2_garr8_val_mem8 : forall (m : word -> option byte) a (w : word),
 garr8 SEGS m a (HarnessRep.bzs (word_to_le_bytes 8 w)) -> val_mem SEGS m a 8 (bv_unsigned w).
 Proof.
@@ -2256,7 +2257,7 @@ eapply SRr_bind.
   right. left. split; [apply HvFP; lia|].
   exists (hl_v H1), (AREC * hl_cap H1). split; [exact Hvin2 | rewrite HreqV; lia].
 - intros HPRE2 HSC.
-  (* the destination is a heap block, so no byte of it is an image byte (W_list_drop.v:961-963 on a working branch) *)
+  (* the destination is a heap block, so no byte of it is an image byte (W_list_drop.v:962-964 on a working branch) *)
   assert (MNIMG : forall a, RA <= a < RA + CNT -> ~ in_img SEGS a).
   { intros a Ha. apply (blk_img_x SEGS B ARx LAWS ly2 S2 [] W2 (ms_mem ms0) _ (hl_v H1) (AREC * hl_cap H1) a HAR3 Hvin2).
     rewrite HreqV. lia. }
@@ -4174,7 +4175,7 @@ eapply (SRrG_bind SEGS R R_trans).
   right. left. split; [apply HvFP; lia|].
   exists (hl_v H1), (AREC * hl_cap H1). split; [exact Hvin2 | rewrite HreqV; lia].
 - intros HPRE2 HSC.
-  (* the destination is a heap block, so no byte of it is an image byte (W_list_drop.v:961-963 on a working branch) *)
+  (* the destination is a heap block, so no byte of it is an image byte (W_list_drop.v:962-964 on a working branch) *)
   assert (MNIMG : forall a, RA <= a < RA + CNT -> ~ in_img SEGS a).
   { intros a Ha. apply (blk_img_x SEGS B ARx LAWS ly2 S2 [] W2 (ms_mem ms0) _ (hl_v H1) (AREC * hl_cap H1) a HAR3 Hvin2).
     rewrite HreqV. lia. }

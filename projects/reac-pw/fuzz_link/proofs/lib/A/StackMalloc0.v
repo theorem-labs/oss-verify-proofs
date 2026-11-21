@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of stack_malloc_0 at 0x3e88c of libreac/fuzz_grant: class-0 frame constants (64-byte frames, 8 shadow bytes, hint at +0, flags at +0x1000, frames at +0x9000), the registers of its probe loop, image numbers; module names; TfibSyms renamed PcapSyms. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0.v (a working branch ff613211c119) to lib/A/StackMalloc0.v, with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0.v (a working branch) to lib/A/StackMalloc0.v, with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

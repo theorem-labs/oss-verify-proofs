@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the PURE grammar layer of parse_items' image-B walk (lane PItemsB of a Theorem Labs lane's image-B
    walk list): the okf ok-list, the uniqueness of a run split at a call, the agreement of two runs whose ok lists agree
    on the calls made, the trace extension lemmas of jbind, the peak of a trace, and the one-member unfolding of
    PjGrammar's member loop jrl (jturn / jafter / jval / jtail) with jr_items' entry and depth-refusal equations.
    PROVENANCE: ported BY PATH, with a Theorem Labs lane's explicit approval (00:1xZ), from
-     a working branch, sha 7fb5ff296a0c,
+     a working branch, sha,
      file proofs/omx-clap-core/fuzz_preset/lib/B/Prog/parse_items_model.v (203 lines).
    CHANGES, line by line against that donor file (every other line is copied unchanged):
      - donor line 3, `From ...lib.B.Prog Require Import ReaderRes.`: redirected to `From ...lib.Prog Require Import

@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the second segment of check_reply's walk (fuzz_command.asan, 0x86d78), from the
    memchr call 0x86ef8 to the return of sup_reply_code 0x86f18, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's call steps: cl_callS, the state
-   after the return) at c8557374ad2e.
+   after the return).
 
    The pieces: 0x86ef8 jal memchr (the reply holds no NUL, so the wrapper returns 0: the not-found contract
    through PaArt.v's aj_art_at); 0x86efc bnez a0 (not taken); 0x86f00 mv a0,s3; 0x86f04 jal check_reply_answer
@@ -14,6 +14,7 @@
    (the frame (1, pos) is among the caller's frames, the saved registers lie above the callee's stack pointer, g_rec
    is a program static), and the walk is seeded again with check_reply_sd.v's cr_seed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s2.v, with its module paths and module names changed; 330 of its 373 lines of code are new or changed and 542 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A), segment S_MF_KIGNP: the call of ieq(k, kl, "ignore") from the KIGN cut
    0x8693c to its return 0x86950 (KI_R1, lib/A/Prog/m_file_s_kign_m.v). The KIGNP segment lane of the G2 walk owner's G2.
    proves no function (kind: segment lemma of m_file's walk: S_MF_KIGNP's first piece).

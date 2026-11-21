@@ -16,7 +16,7 @@
    the cb build tool as well as in the warm workspace.
    Numerals: 56 (LENGTH: the node struct, PRH_Reader.v:98), 8 / 4 / 24 (LENGTH: the fields' widths, the cursor),
    0 (DERIVED). No ADDRESS.
-   The kit's CUT (lane RBase, a working branch 7cdbb61b5fa0; PRH_Reader.v 4266e709561a, PRH_PjOrder.v
+   The kit's CUT (lane RBase, a working branch; PRH_Reader.v 4266e709561a, PRH_PjOrder.v
    e5917626b82b): tparse_items_specX's post gained pj_ncapR (Some arm) and pj_free's order list (both arms), so the loop
    carries the members' caps and the completed slots' order list (VrdIElem.v's vrd_incaps / vrd_iforder). Their frame
    lemmas are here, in this file's form: pj_ncapR_keep (a tree's caps read only its node and its blocks' bytes) with
@@ -24,7 +24,7 @@
    vrd_ncaps_mems_move (grow's realloc copies the members' headers), the order list's keep through PRH_PjOrder's
    pf_oitemsR_frame (vrd_agree_of_keep bridges rd_keep to its pj_agreeR) and its moves vrd_fo_node_move /
    vrd_fo_items_move (after a Theorem Labs lane's B' pis_fo_node_xfer / pis_fo_items_xfer, a working branch
-   34d46afa0965 lib/B/Prog/PItems_forder.v), the u64 read's determinism vrd_rd_u64_det, and the slot-list forms
+   lib/B/Prog/PItems_forder.v), the u64 read's determinism vrd_rd_u64_det, and the slot-list forms
    vrd_kids_snd / vrd_kids_let. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

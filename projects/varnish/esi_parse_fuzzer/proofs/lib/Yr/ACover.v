@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (segments_reserved keeps only the segments that are not kernel maps; the reserved ledger is the image's reservations followed by the launch's vDSO pair, so pa_cover_reserved states that split, pa_cover_reserved_free takes a range ending at most a page above kHighMemBeg, and grant_room counts the pair as up to two more zones and 81920 more bytes, with a gap search that needs no disjoint zones). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -100,6 +101,113 @@ Proof. induction A as [|z A IH]; intros; cbn; [lia|]. rewrite IH. lia. Qed.
 Lemma zcount_app : forall A B x y, zcount (A ++ B) x y = zcount A x y + zcount B x y.
 Proof. induction A as [|z A IH]; intros; cbn; [lia|]. rewrite IH. lia. Qed.
 
+(* LPS 727298f3: the launch's reserved pair may overlap the zones of the mappings, so the gap
+   search of [grant_room] takes no disjointness: a cursor walks up the window from its low end and
+   jumps past each zone that blocks it; a jump costs that zone's clamped length and one count, so
+   the room the totals promise is never used up. *)
+Lemma zclamp_mono_lo : forall z x x' y, x <= x' -> zclamp z x' y <= zclamp z x y.
+Proof. intros [a b] x x' y H. unfold zclamp. cbn [fst snd]. lia. Qed.
+Lemma zmeets_mono_lo : forall z x x' y, x <= x' -> zmeets z x' y -> zmeets z x y.
+Proof. intros [a b] x x' y H M. unfold zmeets in *. cbn [fst snd] in *. lia. Qed.
+
+Lemma zsum_mono_lo : forall zs x x' y, x <= x' -> zsum_in zs x' y <= zsum_in zs x y /\ zcount zs x' y <= zcount zs x y.
+Proof.
+  induction zs as [|w r IH]; intros x x' y H; cbn [zsum_in zcount]; [lia|].
+  destruct (IH x x' y H) as [Sr Cr]. pose proof (zclamp_mono_lo w x x' y H) as ZC.
+  destruct (zmeets_dec w x' y) as [M|M]; destruct (zmeets_dec w x y) as [M'|M']; try (split; lia).
+  exfalso. exact (M' (zmeets_mono_lo w x x' y H M)).
+Qed.
+
+(* [zsum_past]: moving the low end past the end of a zone [z] that meets the window drops at least
+   [z]'s clamped length and one count *)
+Lemma zsum_past : forall zs z x x' y, x <= x' -> In z zs -> snd z <= x' -> zmeets z x y ->
+  zsum_in zs x' y + zclamp z x y <= zsum_in zs x y /\ zcount zs x' y + 1 <= zcount zs x y.
+Proof.
+  induction zs as [|w r IH]; intros z x x' y H Hin Hs Mz; [destruct Hin|]. cbn [zsum_in zcount].
+  destruct (zsum_mono_lo r x x' y H) as [S0 C0].
+  destruct Hin as [E|Hin].
+  - subst w.
+    assert (Z0 : zclamp z x' y = 0) by (apply zclamp_notmeets; intros (_ & _ & M3); lia).
+    destruct (zmeets_dec z x' y) as [M|M]; [exfalso; destruct M as (_ & _ & M3); lia|].
+    destruct (zmeets_dec z x y) as [M'|M']; [| exfalso; exact (M' Mz)]. split; lia.
+  - destruct (IH z x x' y H Hin Hs Mz) as [S1 C1]. pose proof (zclamp_mono_lo w x x' y H) as ZC.
+    destruct (zmeets_dec w x' y) as [M|M]; destruct (zmeets_dec w x y) as [M'|M']; try (split; lia).
+    exfalso. exact (M' (zmeets_mono_lo w x x' y H M)).
+Qed.
+
+Lemma zblock_dec : forall zs x K,
+  (exists z, In z zs /\ fst z < snd z /\ fst z < x + K /\ x < snd z) \/ (forall z, In z zs -> zavoids x K z).
+Proof.
+  induction zs as [|w r IH]; intros x K.
+  - right. intros z [].
+  - destruct (IH x K) as [(z & Hz & H1 & H2 & H3)|H].
+    + left. exists z. split; [right; exact Hz|]. split; [exact H1|]. split; [exact H2| exact H3].
+    + destruct (Z_lt_le_dec (fst w) (snd w)) as [W1|W1].
+      * destruct (Z_lt_le_dec (fst w) (x + K)) as [W2|W2].
+        -- destruct (Z_lt_le_dec x (snd w)) as [W3|W3].
+           ++ left. exists w. split; [left; reflexivity|]. split; [exact W1|]. split; [exact W2| exact W3].
+           ++ right. intros z [<-|Hz]; [intros _; left; exact W3| exact (H z Hz)].
+        -- right. intros z [<-|Hz]; [intros _; right; exact W2| exact (H z Hz)].
+      * right. intros z [<-|Hz]; [intros X; lia| exact (H z Hz)].
+Qed.
+
+(* [APlace.zone_gap] without its disjointness premise *)
+Lemma zone_gap_any : forall zs x y K,
+  0 < K -> zsum_in zs x y + (zcount zs x y + 1) * K <= y - x ->
+  exists g, x <= g /\ g + K <= y /\ forall z, In z zs -> zavoids g K z.
+Proof.
+  intros zs x0 y K HK Hroom0.
+  assert (MAIN : forall n x, x0 <= x -> zcount zs x y <= Z.of_nat n ->
+            zsum_in zs x y + (zcount zs x y + 1) * K <= y - x ->
+            exists g, x0 <= g /\ g + K <= y /\ forall z, In z zs -> zavoids g K z).
+  { induction n as [|n IH]; intros x Hx Hn Hroom.
+    all: pose proof (zsum_in_nonneg zs x y) as S0; pose proof (zcount_nonneg zs x y) as C0.
+    all: assert (CK : 0 <= zcount zs x y * K) by (apply Z.mul_nonneg_nonneg; lia).
+    all: assert (KY : x + K <= y) by lia.
+    all: destruct (zblock_dec zs x K) as [(z & Hz & B1 & B2 & B3)|FREE];
+           [| exists x; split; [exact Hx|]; split; [exact KY| exact FREE]].
+    all: assert (MZ : zmeets z x y) by (unfold zmeets; lia).
+    all: destruct (zsum_past zs z x (snd z) y ltac:(lia) Hz ltac:(lia) MZ) as [S1 C1].
+    all: pose proof (zcount_nonneg zs (snd z) y) as C2; pose proof (zsum_in_nonneg zs (snd z) y) as S2.
+    - (* no step left, yet the blocking zone is counted *)
+      exfalso. cbn [Z.of_nat] in Hn. lia.
+    - (* jump to the end of the blocking zone *)
+      assert (CL : snd z <= y -> snd z - x <= zclamp z x y + K) by (intros; unfold zclamp; lia).
+      assert (CY : y < snd z -> y - x - K < zclamp z x y) by (intros; unfold zclamp; lia).
+      assert (M1 : (zcount zs (snd z) y + 1) * K <= zcount zs x y * K) by (apply Z.mul_le_mono_nonneg_r; lia).
+      assert (M3 : 1 * K <= zcount zs x y * K) by (apply Z.mul_le_mono_nonneg_r; lia).
+      rewrite Nat2Z.inj_succ in Hn.
+      apply (IH (snd z)); [lia | lia |].
+      destruct (Z_le_gt_dec (snd z) y) as [Y|Y]; [specialize (CL Y)| specialize (CY (Z.gt_lt _ _ Y))]; first [lia | nia]. }
+  apply (MAIN (Z.to_nat (zcount zs x0 y)) x0); [lia| | exact Hroom0].
+  pose proof (zcount_nonneg zs x0 y) as Q. rewrite Z2Nat.id by exact Q. lia.
+Qed.
+
+(* [APlace.asan_grant_exists] without its disjointness premise *)
+Lemma asan_grant_any : forall (h : VmMaps) (zs : list zone) (nZ T C : Z),
+  0 < nZ -> nZ mod page_size = 0 ->
+  (forall b s, In (b, s) (vm_reserved h ++ vm_maps h) ->
+     bv_unsigned b < alloc_top h -> kHighMemBeg < bv_unsigned b + bv_unsigned s ->
+     exists z, In z zs /\ fst z < snd z /\ fst z <= bv_unsigned b /\ bv_unsigned b + bv_unsigned s <= snd z) ->
+  ztotal zs kHighMemBeg (alloc_top h) <= T -> znum zs kHighMemBeg (alloc_top h) <= C ->
+  kHighMemBeg + T + (C + 1) * (nZ + page_size) <= alloc_top h ->
+  exists g, g mod page_size = 0 /\ 0 < g /\ kHighMemBeg <= g /\ g + nZ <= alloc_top h
+            /\ region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true.
+Proof.
+  intros h zs nZ T C HnZ HnAl Hcov HT HC Hroom.
+  pose proof (alloc_top_lt h) as Htop. try (unfold two_pow_64 in Htop).
+  unfold ztotal, znum in HT, HC.
+  pose proof (zcount_nonneg zs kHighMemBeg (alloc_top h)) as C0.
+  assert (M : (zcount zs kHighMemBeg (alloc_top h) + 1) * (nZ + page_size) <= (C + 1) * (nZ + page_size))
+    by (apply Z.mul_le_mono_nonneg_r; unfold page_size; lia).
+  destruct (zone_gap_any zs kHighMemBeg (alloc_top h) (nZ + page_size) ltac:(unfold page_size; lia) ltac:(lia)) as (g & G1 & G2 & G3).
+  destruct (free_window_of_gap h zs kHighMemBeg (alloc_top h) nZ HnZ HnAl ltac:(unfold kHighMemBeg; lia) ltac:(lia) Hcov g G1 G2 G3)
+    as (A1 & A2 & A3 & FREE).
+  cbv zeta in A1, A2, A3, FREE.
+  exists (page_round_up_Z g). unfold kHighMemBeg in *.
+  split; [exact A1|]. split; [lia|]. split; [lia|]. split; [lia| exact FREE].
+Qed.
+
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -123,6 +231,17 @@ Lemma zsum_fog : forall fog x y, Forall (fun bs => 0 <= fst bs /\ 0 < snd bs <= 
 Proof.
   induction fog as [|bs fog IH]; intros x y F; [cbn; lia|]. apply Forall_cons_iff in F as [X F]. cbv beta in X.
   cbn [map zsum_in length]. rewrite Nat2Z.inj_succ. pose proof (zclamp_ofZ_le bs x y ltac:(lia)). specialize (IH x y F). lia.
+Qed.
+
+(* LPS 727298f3: the launch's reserved pair as zones: in any window they weigh at most their
+   sizes, and count at most their number *)
+Lemma rx_zones_weight : forall rx x y,
+  zsum_in (map zone_of rx) x y <= res_bytes rx /\ zcount (map zone_of rx) x y <= Z.of_nat (length rx).
+Proof.
+  induction rx as [|e rx IH]; intros x y; cbn [map zsum_in zcount res_bytes length]; [cbn; lia|].
+  destruct (IH x y) as [Sr Cr]. pose proof (bv_unsigned_in_range 64 (snd e)) as R. rewrite Nat2Z.inj_succ.
+  assert (CLe : zclamp (zone_of e) x y <= bv_unsigned (snd e)) by (unfold zclamp, zone_of, Ledger.lo, Ledger.hi; cbn [fst snd]; lia).
+  destruct (zmeets_dec (zone_of e) x y); lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -206,7 +325,10 @@ Lemma pa_reserved_eq : segments_reserved rsegs =
   [(Z_to_bv 64 0x10000, Z_to_bv 64 0x25000); (Z_to_bv 64 0x35000, Z_to_bv 64 0x73000); (Z_to_bv 64 0xa8000, Z_to_bv 64 0x2000); (Z_to_bv 64 0xaa000, Z_to_bv 64 0x560000)].
 Proof.
   pose proof pa_seg_bases as (B0 & S0 & B1 & S1 & B2 & S2 & B3 & S3).
-  unfold segments_reserved, rsegs, Asan.M.loaded_segments, Asan.Asan_loaded_segments.
+  (* LPS 727298f3: [segments_reserved] keeps the segments that are not kernel maps; the image's
+     segments are none, by computation *)
+  assert (Hfl : segments_reserved rsegs = map segment_reservation rsegs) by reflexivity.
+  rewrite Hfl. unfold rsegs, Asan.M.loaded_segments, Asan.Asan_loaded_segments.
   cbn [map]. unfold segment_reservation. rewrite B0, S0, B1, S1, B2, S2, B3, S3. cbv zeta.
   change (page_round_down_Z 0x10000) with 0x10000. change (page_round_up_Z (0x10000 + 0x25000)) with 0x35000.
   change (page_round_down_Z 0x35000) with 0x35000. change (page_round_up_Z (0x35000 + 0x73000)) with 0xa8000.
@@ -241,21 +363,57 @@ Proof.
   apply andb_false_iff. left. apply Z.ltb_ge. lia.
 Qed.
 
+(* LPS 727298f3: the launch's reserved pair ([AInv.res_launch]): each entry has a positive size and
+   lies a page above kHighMemBeg, below 2^47; at most two of them, 81920 bytes in all *)
+Lemma res_launch_facts : forall cl rx, res_launch cl rx ->
+  (forall e, In e rx -> 0 < bv_unsigned (snd e) /\ kHighMemBeg + 4096 <= bv_unsigned (fst e)
+                        /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 2^47)
+  /\ (length rx <= 2)%nat /\ res_bytes rx <= 81920.
+Proof.
+  intros cl rx (F & L & Bt). split; [| exact (conj L Bt)].
+  intros e He. pose proof (proj1 (Forall_forall _ _) F e He) as (P1 & _ & _ & _ & P5 & P6).
+  split; [exact P1|]. split; [exact P5| exact P6].
+Qed.
+
+(* below a page above kHighMemBeg the reserved ledger is the image's alone: the launch's pair
+   sits higher *)
+Lemma reserved_free_low : forall rx b k, res_launch LPA rx -> 0x60a000 <= b -> 0 < k -> b + k <= kHighMemBeg + 4096 ->
+  region_free (segments_reserved rsegs ++ rx) (Z_to_bv 64 b) (Z_to_bv 64 k) = true.
+Proof.
+  intros rx b k RX Hb Hk Hbk. destruct (res_launch_facts LPA rx RX) as (RXE & _ & _). unfold kHighMemBeg in *.
+  apply region_free_intro. intros b' s' Hin. apply in_app_iff in Hin as [Hin|Hin].
+  - pose proof (pa_reserved_inside _ Hin) as X. cbn [fst snd] in X. unfold iv_overlap. rewrite !unsigned_lit by lia.
+    apply andb_false_iff. left. apply Z.ltb_ge. lia.
+  - pose proof (RXE _ Hin) as (_ & X & _). cbn [fst snd] in X. unfold iv_overlap. rewrite !unsigned_lit by lia.
+    apply andb_false_iff. right. apply Z.ltb_ge. lia.
+Qed.
+
 Section Cover.
 Context {Clg : Ceiling}.  (* [comment removed for export] *)
   Context {DR : DepotRep}.
 
   (* [comment removed for export] *)
-  Lemma pa_cover_reserved : forall A m md, pa_ainv A m md -> vm_reserved (m_vmmaps md) = segments_reserved rsegs.
+  (* LPS 727298f3: the reserved ledger is the image's reservations followed by the launch's pair
+     ([acover_]); it WAS the image's alone *)
+  Lemma pa_cover_reserved : forall A m md, pa_ainv A m md ->
+    exists rx, vm_reserved (m_vmmaps md) = segments_reserved rsegs ++ rx /\ res_launch LPA rx.
   Proof. intros A m md AI. exact (proj2 (proj2 (ai_cover _ _ _ _ _ _ _ AI))). Qed.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Lemma pa_cover_image_reserved : forall A m md x, pa_ainv A m md -> 0x10000 <= x < 0x60a000 ->
     zcovb (vm_reserved (m_vmmaps md)) x = true.
-  Proof. intros A m md x AI Hx. rewrite (pa_cover_reserved A m md AI). exact (pa_reserved_cover x Hx). Qed.
-  Lemma pa_cover_reserved_free : forall A m md b k, pa_ainv A m md -> 0x60a000 <= b -> 0 < k -> b + k <= 2^64 ->
+  Proof.
+    intros A m md x AI Hx. destruct (pa_cover_reserved A m md AI) as (rx & E & _).
+    rewrite E, zcovb_app, (pa_reserved_cover x Hx). reflexivity.
+  Qed.
+  (* LPS 727298f3: the range ends at most a page above kHighMemBeg (it WAS any range below 2^64),
+     so it misses the launch's pair *)
+  Lemma pa_cover_reserved_free : forall A m md b k, pa_ainv A m md -> 0x60a000 <= b -> 0 < k -> b + k <= kHighMemBeg + 4096 ->
     region_free (vm_reserved (m_vmmaps md)) (Z_to_bv 64 b) (Z_to_bv 64 k) = true.
-  Proof. intros A m md b k AI Hb Hk Hbk. rewrite (pa_cover_reserved A m md AI). exact (pa_reserved_free b k Hb Hk Hbk). Qed.
+  Proof.
+    intros A m md b k AI Hb Hk Hbk. destruct (pa_cover_reserved A m md AI) as (rx & E & RX). rewrite E.
+    exact (reserved_free_low rx b k RX Hb Hk Hbk).
+  Qed.
 
   (* [comment removed for export] *)
   Theorem grant_room : forall A (h : VmMaps) (nZ : Z),
@@ -264,26 +422,30 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
     exists g, g mod 4096 = 0 /\ 0 < g /\ kHighMemBeg <= g /\ g + nZ <= alloc_top h
               /\ region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true.
   Proof.
-    intros A h nZ W ((fog & FL & FS & COV & _ & _) & _ & RSV) NO TOP HnZ HAl Hcap. pose proof alloc_ceiling_val as CE.
-    assert (RES : forall e, In e (vm_reserved h) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= kHighMemBeg).
-    { intros e He. rewrite RSV in He. pose proof (pa_reserved_inside e He). unfold kHighMemBeg. lia. }
+    intros A h nZ W ((fog & FL & FS & COV & _ & _) & _ & (rx & RSV & RX)) NO TOP HnZ HAl Hcap. pose proof alloc_ceiling_val as CE.
+    (* LPS 727298f3: the reserved ledger is the image's reservations, all below kHighMemBeg, then the
+       launch's pair [rx], which may lie in the window and overlap the mappings: each of its entries
+       is a zone of its own, at most two and 81920 bytes ([res_launch]) *)
+    assert (RES : forall e, In e (segments_reserved rsegs) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= kHighMemBeg).
+    { intros e He. pose proof (pa_reserved_inside e He). unfold kHighMemBeg. lia. }
+    destruct (res_launch_facts LPA rx RX) as (RXE & RXL & RXB).
     destruct (wfM A W) as [_ BB].
-    set (zs := map zone_of (vm_maps h)).
+    set (zm := map zone_of (vm_maps h)).
     set (B := map zone_ofZ (big_maps_ (a_pl A) (a_sec A) ++ fog ++ [(kShadowGapBeg, kHighShadowMapBeg - kShadowGapBeg)])).
-    assert (NEz : forall z, In z zs -> fst z < snd z).
-    { intros z Hz. subst zs. apply in_map_iff in Hz as (e & <- & He). unfold zone_of, Ledger.lo, Ledger.hi. cbn.
+    assert (NEz : forall z, In z zm -> fst z < snd z).
+    { intros z Hz. subst zm. apply in_map_iff in Hz as (e & <- & He). unfold zone_of, Ledger.lo, Ledger.hi. cbn.
       pose proof (COV e He) as X. cbv zeta in X. destruct X as [X|[X|X]].
       - pose proof (BB _ _ X). lia.
       - pose proof (proj1 (Forall_forall _ _) FS _ X) as Y. cbn in Y. lia.
       - injection X as E1 E2. rewrite E2. unfold kShadowGapBeg, kHighShadowMapBeg. lia. }
-    assert (INC : forall z, In z zs -> In z B).
-    { intros z Hz. subst zs B. apply in_map_iff in Hz as (e & <- & He). rewrite zone_of_ofZ. apply in_map_iff.
+    assert (INC : forall z, In z zm -> In z B).
+    { intros z Hz. subst zm B. apply in_map_iff in Hz as (e & <- & He). rewrite zone_of_ofZ. apply in_map_iff.
       exists (bv_unsigned (fst e), bv_unsigned (snd e)). split; [reflexivity|].
       pose proof (COV e He) as X. cbv zeta in X. destruct X as [X|[X|X]].
       - apply in_app_iff. left. exact X.
       - apply in_app_iff. right. apply in_app_iff. left. exact X.
       - apply in_app_iff. right. apply in_app_iff. right. left. symmetry. exact X. }
-    pose proof (zsum_in_dominated zs B kHighMemBeg (alloc_top h) (zdisj_of_nooverlap _ NO) NEz INC) as [DS DC].
+    pose proof (zsum_in_dominated zm B kHighMemBeg (alloc_top h) (zdisj_of_nooverlap _ NO) NEz INC) as [DS DC].
     (* [comment removed for export] *)
     assert (BW : zsum_in B kHighMemBeg (alloc_top h) <= 2^38 /\ zcount B kHighMemBeg (alloc_top h) <= 18 + NLIVE_MAX + 4178).
     { subst B. rewrite (big_maps_split A (a_sec A)). rewrite !map_app, !zsum_in_app, !zcount_app.
@@ -300,17 +462,21 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       unfold kSpaceReserve, kPtrArrayReserve, kFakeStackBytes, kDepotNodesBlock, kStackStoreBlockBytes in F1. rewrite NLIVE_MAX_eq in *.
       split; lia. }
     destruct BW as [BW1 BW2].
-    apply (asan_grant_exists h zs nZ (2^38) (18 + NLIVE_MAX + 4178)).
+    pose proof (rx_zones_weight rx kHighMemBeg (alloc_top h)) as [RW1 RW2].
+    apply (asan_grant_any h (zm ++ map zone_of rx) nZ (2^38 + 81920) (18 + NLIVE_MAX + 4178 + 2)).
     - exact HnZ.
     - unfold page_size. exact HAl.
-    - exact (zdisj_of_nooverlap _ NO).
     - intros b s Hin Hb Hk. apply in_app_iff in Hin as [Hin|Hin].
-      + exfalso. pose proof (RES _ Hin) as X. cbn in X. lia.
-      + exists (zone_of (b, s)). split; [subst zs; apply in_map_iff; exists (b, s); split; [reflexivity| exact Hin]|].
-        split; [apply NEz; subst zs; apply in_map_iff; exists (b, s); split; [reflexivity| exact Hin]|].
+      + rewrite RSV in Hin. apply in_app_iff in Hin as [Hin|Hin].
+        * exfalso. pose proof (RES _ Hin) as X. cbn in X. lia.
+        * exists (zone_of (b, s)). split; [apply in_or_app; right; apply in_map_iff; exists (b, s); split; [reflexivity| exact Hin]|].
+          pose proof (RXE _ Hin) as (P1 & _). cbn [fst snd] in P1.
+          unfold zone_of, Ledger.lo, Ledger.hi. cbn. lia.
+      + exists (zone_of (b, s)). split; [apply in_or_app; left; subst zm; apply in_map_iff; exists (b, s); split; [reflexivity| exact Hin]|].
+        split; [apply NEz; subst zm; apply in_map_iff; exists (b, s); split; [reflexivity| exact Hin]|].
         unfold zone_of, Ledger.lo, Ledger.hi. cbn. lia.
-    - unfold ztotal. lia.
-    - unfold znum. lia.
+    - unfold ztotal. rewrite zsum_in_app. lia.
+    - unfold znum. rewrite zcount_app. lia.
     - rewrite TOP. rewrite NLIVE_MAX_eq. unfold page_size, kHighMemBeg. lia.
   Qed.
 

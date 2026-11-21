@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 537 of its 580 lines of code are new or changed and 968 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R18.v, with its module paths, module names and numbers changed; 253 of its 304 lines of code are new or changed and 529 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/R18Fon.v -- the route (C) twin of Seg/R18F.v's (not in this delivery) footprint run r18_evt_F (image A = fuzz_ctrl.asan,
    libreac v1.9.0, the run [0x81858, 0x818d0) of segment R18).  Written by a Theorem Labs lane,
    single writer of this file.  rule 24: no function proved (stage glue of a walk; kind: segment lemma).
 
    PROVENANCE.  The text is a Theorem Labs lane's fold blob d8b02189343 of lib/A/Prog/Seg/R18F.v (not in this delivery)
-   (`git show 4bae33fdf54:proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R18F.v`, a working branch; the same
-   blob as the route (C) walk's, a working branch 1899bed1aee).  Seg/R18F.v (not in this delivery) itself is NOT changed: this is an
+   (`git show:proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R18F.v`, a working branch; the same
+   blob as the route (C) walk's, a working branch).  Seg/R18F.v (not in this delivery) itself is NOT changed: this is an
    ADDITIVE beside-file.
 
    THE FORM RULE (L3 brief L3-brief.md (a working note, not in this delivery): a Theorem Labs lane 12:52Z,
@@ -19,23 +20,23 @@
    stores through it, by the callee's own region; the callee in its _on form.
 
    WHAT IS NARROWED, AND TO WHICH REGION.  r18_evt_F has one universal shadow premise: the `shadow_rw m1` conjunct of
-   A.Prog.Seg.R18.r18_pre (Seg/R18.v:452-457), which its caller obligation HPRE concludes (R18F.v:120-124).  Here it is
+   A.Prog.Seg.R18.r18_pre (Seg/R18.v:452-457), which its caller obligation HPRE concludes (R18F.v:121-125).  Here it is
    r18_pre_on below: r18_pre with that conjunct, and only it, replaced by
      A.ShadowRwOn.shadow_rw_on (A.Prog.declaration_of_c.declaration_of_shadow_R mr D) m1,
    the callee's own region at a0 := mr (the catalogue row) and a1 := D (the declaration slot):
    sh_word_on (mr + 24) 32 \/ sh_word_on (mr + 254) 11 \/ sh_word_on D 32 (declaration_of_c.v:171-173).  The
    callee premise declaration_of_contract_F becomes its _on form
-   A.Prog.declaration_of_c.declaration_of_contract_F_on (declaration_of_c.v ffd64306c80 (the blob this tree had at release c5e779efe8c), :210), whose asan premise
+   A.Prog.declaration_of_c.declaration_of_contract_F_on (declaration_of_c.v ffd64306c80 (the blob this tree had at release), :210), whose asan premise
    is exactly that region and whose post keeps every region (declaration_of_post_on, :175-185).  Every binder, every
-   other premise, their order and the post are r18_evt_F's (R18F.v:88-166).  r18_pre_on_verbatim checks the seven
+   other premise, their order and the post are r18_evt_F's (R18F.v:89-167).  r18_pre_on_verbatim checks the seven
    other conjuncts of r18_pre_on against r18_pre's by constr_eq.
 
    WHY THAT REGION, read off R18F.v's proof: the run's ONLY use of the universal premise is HSW, destructed from HPRE
-   (R18F.v:209-210), moved to the normalized memory (R18F.v:229) and handed to the callee's asan premise (R18F.v:248).
+   (R18F.v:210-211), moved to the normalized memory (R18F.v:230) and handed to the callee's asan premise (R18F.v:249).
    The run's own shadow accesses do not use it: the two shadow-byte loads `lb a3,0(a0)` at
-   Z.shiftr (mr + 16) 3 + ASAN_K and Z.shiftr (mr + 20) 3 + ASAN_K (R18F.v:181-192) are paid by the ov_read_bytes
-   premises R18F.v:112-113, and the four metadata stores at SHv + 320 .. + 323 (R18F.v:196-200) by
-   `stk m (SHv + 320) (SHv + 324)` (R18F.v:118).  So the run reads and stores shadow through `shadow_rw m1` only where
+   Z.shiftr (mr + 16) 3 + ASAN_K and Z.shiftr (mr + 20) 3 + ASAN_K (R18F.v:182-193) are paid by the ov_read_bytes
+   premises R18F.v:113-114, and the four metadata stores at SHv + 320 .. + 323 (R18F.v:197-201) by
+   `stk m (SHv + 320) (SHv + 324)` (R18F.v:119).  So the run reads and stores shadow through `shadow_rw m1` only where
    the callee does, and the callee's region is the narrowed premise.  In the proof the one changed step is the move to
    the normalized memory: A.ShadowRwOnT.shadow_rw_on_rel in place of b3n_rel_sw; the call's post is destructed per
    declaration_of_post_on (same conjunct count; the shadow conjunct is not used).
@@ -106,7 +107,7 @@ Proof.
   exact I.
 Qed.
 
-(* R18.v's r18_sb / r18_newb / r18_keepb with the goal pattern of evtF (R18F.v:49-86, unchanged). *)
+(* R18.v's r18_sb / r18_newb / r18_keepb with the goal pattern of evtF (R18F.v:50-87, unchanged). *)
 Ltac r18F_sb SHv off STh MUh WMh :=
   let HS := fresh "HSok" in
   (lazymatch goal with
@@ -145,7 +146,7 @@ Ltac r18F_keepb SHv off Bn :=
           | rewrite ?length_le1; cbn [length Z.of_nat]; lia ]
   end.
 
-(* r18_evt_F (R18F.v:88-166) with its callee premise in the _on form and HPRE concluding r18_pre_on; nothing else
+(* r18_evt_F (R18F.v:89-167) with its callee premise in the _on form and HPRE concluding r18_pre_on; nothing else
    in the statement differs. *)
 Lemma r18_evt_F_on : OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.declaration_of_c.declaration_of_contract_F_on ->
   forall (RNG : footprint)

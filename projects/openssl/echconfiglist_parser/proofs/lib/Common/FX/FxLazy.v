@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failed sc's accesses are its store-permission probe, which is claimed, instead of none); Section Lazy is generic in the Leaf class of its realizes_cfg walks. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import
   ShapeAlgBase ShapeCfg NodesCfg LedgerCfg LazyCfg LazyAccCfg.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import
@@ -20,6 +22,7 @@ Proof. intros (_ & _ & H & _). exact H. Qed.
 
 Section Lazy.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable rho : int -> word.
 Hypothesis Hrho0 : rho 0%uint63 = Z_to_bv 64 0.
@@ -155,8 +158,13 @@ Proof.
       pose proof (fm_store_claimed _ _ _ _ _ _ Hmok Es) as Hcl. rewrite Ea', <- Hregs in Hcl.
       eapply Forall_impl; [|exact Hex]. intros r [E1 E2]. right. rewrite E1, E2. cbn [exec_addr exec_nbytes].
       destruct w0; exact Hcl.
-    + unfold resv_hit in Ehit.
-      rewrite (step_accesses_sc_fail segs ms w w0 _ _ _ _ _ 4 report Hf He Hd Eal Ehit Hacc). constructor.
+    + (* [comment removed for export] *)
+      destruct (fm_load_abs IM (f_mem F) (FxState.rget F (ireg rs1)) (awidth_sz w0) true) as [old|] eqn:El0; [|discriminate].
+      destruct (fm_store_abs IM (f_mem F) (FxState.rget F (ireg rs1)) (awidth_sz w0) old) as [M'|] eqn:Es0; [|discriminate].
+      destruct (fm_store_abs_inv rho Hrho0 IM _ _ _ _ _ HM Es0) as (a' & Ea' & Es).
+      pose proof (fm_store_claimed _ _ _ _ _ _ Hmok Es) as Hcl. rewrite Ea', <- Hregs in Hcl.
+      eapply Forall_impl; [|exact Hex]. intros r [E1 E2]. right. rewrite E1, E2. cbn [exec_addr exec_nbytes].
+      destruct w0; exact Hcl.
   - (* [comment removed for export] *)
     apply some_inj in Hc. subst fi. cbv beta iota zeta in H.
     destruct (aligned_for w0 (FxState.rget F (ireg rs1)) (f_mem F)) eqn:Eal; cbn [negb] in H; [|discriminate].

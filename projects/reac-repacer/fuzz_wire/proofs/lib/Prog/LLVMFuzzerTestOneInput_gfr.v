@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: the plain image's slot contract for any lib_shape whose continuation, room and
-   delta are kept_shape's, as libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_gfr.v (25e3d17bdb5,
-   decode_slot_g_frame) and reac-repacer/fuzz_uci's (ddb6d58bbed), over this unit's llvm_contract
+   delta are kept_shape's, as libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_gfr.v (
+   decode_slot_g_frame) and reac-repacer/fuzz_uci, over this unit's llvm_contract
    (LLVMFuzzerTestOneInput_end.v). The plain image has no symbol named `calloc` (musl's __libc_calloc is linked), and fuzz_wire's deepest callee stack is CC_STACK
    (check_copy_c.v), so the bound is LLVM_FRAME + CHECK_COPY_FRAME + ALLOC_STACK. *)
 From Stdlib Require Import ZArith List Bool Lia.

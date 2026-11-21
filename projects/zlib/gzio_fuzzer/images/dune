@@ -25,3 +25,39 @@
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
        --namespace OSSVerify.zlib.gzio_fuzzer.images)))
+(rule
+ (targets ClassifierAUbsan.v ClassifierAUbsan_seg_000.hex ClassifierAUbsan_seg_001.hex ClassifierAUbsan_seg_002.hex ClassifierAUbsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/gzio_fuzzer/gzio_fuzzer.classifier-a-ubsan))
+ (action
+  (run elf-snapshot %{elf} ClassifierAUbsan.v --prefix ClassifierAUbsan --module-name M
+       --namespace OSSVerify.zlib.gzio_fuzzer.images)))
+(rule
+ (targets ClassifierBUbsan.v ClassifierBUbsan_seg_000.hex ClassifierBUbsan_seg_001.hex ClassifierBUbsan_seg_002.hex ClassifierBUbsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/gzio_fuzzer/gzio_fuzzer.classifier-b-ubsan))
+ (action
+  (run elf-snapshot %{elf} ClassifierBUbsan.v --prefix ClassifierBUbsan --module-name M
+       --namespace OSSVerify.zlib.gzio_fuzzer.images)))
+(rule
+ (targets ClassifierAAsan.v ClassifierAAsan_seg_000.hex ClassifierAAsan_seg_001.hex ClassifierAAsan_seg_002.hex ClassifierAAsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/gzio_fuzzer/gzio_fuzzer.classifier-a-asan))
+ (action
+  (run elf-snapshot %{elf} ClassifierAAsan.v --prefix ClassifierAAsan --module-name M
+       --namespace OSSVerify.zlib.gzio_fuzzer.images)))
+(rule
+ (targets ClassifierBAsan.v ClassifierBAsan_seg_000.hex ClassifierBAsan_seg_001.hex ClassifierBAsan_seg_002.hex ClassifierBAsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/gzio_fuzzer/gzio_fuzzer.classifier-b-asan))
+ (action
+  (run elf-snapshot %{elf} ClassifierBAsan.v --prefix ClassifierBAsan --module-name M
+       --namespace OSSVerify.zlib.gzio_fuzzer.images)))
+(rule
+ (targets ClassifierAAsanUbsan.v ClassifierAAsanUbsan_seg_000.hex ClassifierAAsanUbsan_seg_001.hex ClassifierAAsanUbsan_seg_002.hex ClassifierAAsanUbsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/gzio_fuzzer/gzio_fuzzer.classifier-a-asan-ubsan))
+ (action
+  (run elf-snapshot %{elf} ClassifierAAsanUbsan.v --prefix ClassifierAAsanUbsan --module-name M
+       --namespace OSSVerify.zlib.gzio_fuzzer.images)))
+(rule
+ (targets ClassifierBAsanUbsan.v ClassifierBAsanUbsan_seg_000.hex ClassifierBAsanUbsan_seg_001.hex ClassifierBAsanUbsan_seg_002.hex ClassifierBAsanUbsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/gzio_fuzzer/gzio_fuzzer.classifier-b-asan-ubsan))
+ (action
+  (run elf-snapshot %{elf} ClassifierBAsanUbsan.v --prefix ClassifierBAsanUbsan --module-name M
+       --namespace OSSVerify.zlib.gzio_fuzzer.images)))

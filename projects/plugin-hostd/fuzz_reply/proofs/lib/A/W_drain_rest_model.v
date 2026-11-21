@@ -7,6 +7,7 @@
    variables, no hypotheses.  Ported from W_drain_gs.v gsx_scan_nz_app / gsx_scan_pre and its helpers
    (= released lib/Prog/drain_b.v scan_nz_app / scan_pre / drl_end / drlq_0). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_rest_model.v, with its module paths changed; 5 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The pure model facts of the REST segment of fuzz_reply's drain ASan walk
    (DLR 0x83a4c -> DI): when the relay's buffer dW s1 holds no NUL from p on, the line loop has nothing left to
    relay (drlq s1 p = []), the round's chunk is the rest [p, |dW s1|) (or the long-line reset), and the next
@@ -44,7 +45,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- scan over NUL-free bytes, and the prefix [0, p) of the buffer (ported from W_drain_gs.v:67-172). ---- *)
+(* ---- scan over NUL-free bytes, and the prefix [0, p) of the buffer (ported from W_drain_gs.v:68-173). ---- *)
 Lemma rmx_scan_zero_fst : forall sk acc d, fst (scan sk acc (0 :: d)) = fst (scan false [] d).
 Proof. intros sk acc d. rewrite scan_zero. destruct (scan false [] d) as [[a b] c]. reflexivity. Qed.
 

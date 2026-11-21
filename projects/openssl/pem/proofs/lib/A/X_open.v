@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the bounds below the top of user memory; the load reservation a system call clears). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -22,7 +23,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc : forall R F pc x8 fc rv m ro r,
-  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv m ro.
+  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None m ro.
 Proof. reflexivity. Qed.
 
 Lemma pc_93368 : (Z_to_bv 64 0x5275c0 + Z_to_bv 64 4)%bv = Z_to_bv 64 0x5275c4.
@@ -78,7 +79,9 @@ Proof using AF.
     split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|]. split; [exact HSL|].
     split; [exact HDD|]. split; [reflexivity|].
     change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound asegs m1 path _ HB1) as BB.
-    rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
+    pose proof (bytes_at_below asegs m1 path _ MI1 HB1 ltac:(intros E; apply app_eq_nil in E; destruct E as [_ E]; discriminate)) as BL.
+    unfold UTOP in BL. rewrite length_app in BB, BL. cbn [length] in BB, BL.
+    rewrite unsigned_lit by lia. exact HB1.
   - intros mo (HAR & HF & HFS). split; [exact HFS|]. split; [split; [exact HAR| split; assumption]|].
     rewrite HF. split; [exact HFREE|]. split; [reflexivity|].
     split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| exact HFS]].
@@ -194,7 +197,9 @@ Proof using AF.
     split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|]. split; [exact HSL|].
     split; [exact HDD|]. split; [reflexivity|].
     change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound asegs m1 path _ HB1) as BB.
-    rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
+    pose proof (bytes_at_below asegs m1 path _ MI1 HB1 ltac:(intros E; apply app_eq_nil in E; destruct E as [_ E]; discriminate)) as BL.
+    unfold UTOP in BL. rewrite length_app in BB, BL. cbn [length] in BB, BL.
+    rewrite unsigned_lit by lia. exact HB1.
   - intros mo (HAR & HF & HFS). split; [exact HFS| split; [exact HAR| split; assumption]].
   - intros c2 (e & HeR & Hc2).
     assert (EQ : nretA msA (efferr e) = MS (mkR (Z_to_bv 64 0x51b354) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 0xba3ef0) (Z_to_bv 64 path)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-all node and twl_write_rec gain the access_ok premise on the write buffer; the run-level lemmas restated over run_segments with the vDSO initial model, with a new lemma fdchan_with_vdso; the pair-equivalence lemmas gain the channel-reader premise; encoded statements decoded to plain text; using annotations dropped; comments restored). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -21,30 +22,36 @@ Section WithFP1.
 Context {fx : FPState}.
 
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma fd32_1 : fd32 (Z_to_bv 64 1) = Z_to_bv 64 1.
+(** The stdout/stderr fd literals are 32-bit-stable (the [fd32]
+    truncation [check_syscall] applies leaves them unchanged) — the
+    [Hfd32] instantiations every consumer needs. *)
+Lemma fd32_1 : fd32 (Z_to_bv 64 1) = Z_to_bv 64 1.
 Proof. apply bv_eq. vm_compute. reflexivity. Qed.
 
-#[using="Type"] Lemma fd32_2 : fd32 (Z_to_bv 64 2) = Z_to_bv 64 2.
+Lemma fd32_2 : fd32 (Z_to_bv 64 2) = Z_to_bv 64 2.
 Proof. apply bv_eq. vm_compute. reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Put-loop arithmetic: the delivered length as a word, the pointer bump,    *)
+(* and the count decrement, in the forms the per-binary retry-loop proofs    *)
+(* meet (a0 = [len_word (firstn n bs)] after the write).                     *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma u_len_word : forall {A} (l : list A), (Z.of_nat (length l) < 2^64)%Z ->
+(** [bv_unsigned] of a modeled block length (all lengths here are far
+    below 2^64). *)
+Lemma u_len_word : forall {A} (l : list A), (Z.of_nat (length l) < 2^64)%Z ->
   bv_unsigned (len_word l) = Z.of_nat (length l).
 Proof.
   intros A l H. unfold len_word. apply Z_to_bv_small.
   unfold bv_modulus. change (Z.of_N 64) with 64%Z. lia.
 Qed.
 
-(* [comment removed for export] *)
+(* [c_lts_0_pos] — [blez a0] falling through on a nonempty delivery —
+   lives in PropExec, beside [c_lts_pos_0] and [c_lts_small], and so
+   does [c_eq_0_of_u], the [beqz] on full delivery, beside
+   [c_eq_0_false]. *)
 
-#[using="Type"] Lemma len_word_firstn_nat : forall n (bs : list byte),
+Lemma len_word_firstn_nat : forall n (bs : list byte),
   (n <= length bs)%nat ->
   len_word (firstn n bs) = nat_to_word n.
 Proof.
@@ -52,8 +59,9 @@ Proof.
   rewrite firstn_length_le by exact Hn. reflexivity.
 Qed.
 
-#[using="Type"] Lemma u_len_word_firstn : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pn,$0.Pbs,(1.(2.&8.))P,(3.R2.(4.(2.&8.)R1.))P,(5.(6.(4.(2.&8.)R2.))(7.+2.+40.))(8.$9.(:.&40.(;.(2.&8.)(<.(2.&8.)R4.R3.)))(6.R4.))")
-(* [comment removed for export] *).
+Lemma u_len_word_firstn : forall n (bs : list byte),
+  (n <= length bs)%nat -> (Z.of_nat (length bs) < 2^64)%Z ->
+  bv_unsigned (len_word (firstn n bs)) = Z.of_nat n.
 Proof.
   intros n bs Hn Hlen.
   rewrite len_word_unsigned by (rewrite firstn_length_le by exact Hn;
@@ -61,26 +69,30 @@ Proof.
   rewrite firstn_length_le by exact Hn. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma v_add_len_firstn : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pp,(2.&40.)Pn,$0.Pbs,(1.(2.&8.))P,(3.R2.(4.(2.&8.)R1.))(8.(2.&40.)(=.R4.(;.(2.&8.)(<.(2.&8.)R3.R2.)))(>.&40.R4.(?.R3.)))")
-(* [comment removed for export] *).
+(** The pointer bump [add a1,a1,a0] after a delivery of [n] bytes lands
+    on the address the suffix-read lemma [SeqExec.rdn_skipn] names. *)
+Lemma v_add_len_firstn : forall (p : word) n (bs : list byte),
+  (n <= length bs)%nat ->
+  v_add p (len_word (firstn n bs)) = p + nat_to_word n.
 Proof.
   intros p n bs Hn. rewrite len_word_firstn_nat by exact Hn.
   unfold v_add. apply bv_eq.
   rewrite Z_to_bv_unsigned, bv_add_unsigned. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma v_add_len_firstn_Z : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pp,(2.&40.)Pn,$0.Pbs,(1.(2.&8.))P,(3.R2.(4.(2.&8.)R1.))P,(5.(6.(4.(2.&8.)R2.))(7.+2.+40.))(8.(2.&40.)(=.R5.(;.(2.&8.)(<.(2.&8.)R4.R3.)))(10.&40.(11.(:.&40.R5.)(6.R4.))))")
-(* [comment removed for export] *).
+(** [v_add] variant landing on the canonical [Z_to_bv 64 (...)] form. *)
+Lemma v_add_len_firstn_Z : forall (p : word) n (bs : list byte),
+  (n <= length bs)%nat -> (Z.of_nat (length bs) < 2^64)%Z ->
+  v_add p (len_word (firstn n bs)) = Z_to_bv 64 (bv_unsigned p + Z.of_nat n).
 Proof.
   intros p n bs Hn Hlen. unfold v_add.
   rewrite u_len_word_firstn by assumption. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat_Z : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pp,(2.&40.)Pk,$0.P,(5.(6.R1.)(7.+2.+40.))(8.(2.&40.)(>.&40.R3.(?.R2.))(10.&40.(11.(:.&40.R3.)(6.R2.))))")
-(* [comment removed for export] *).
+(** [SeqExec.rdn_skipn]'s address, in the canonical form. *)
+Lemma word_add_nat_Z : forall (p : word) (k : nat),
+  (Z.of_nat k < 2^64)%Z ->
+  p + nat_to_word k = Z_to_bv 64 (bv_unsigned p + Z.of_nat k).
 Proof.
   intros p k Hk. apply bv_eq.
   rewrite bv_add_unsigned. unfold nat_to_word.
@@ -89,9 +101,10 @@ Proof.
   rewrite Z_to_bv_unsigned. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma v_sub_len_firstn : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pn,$0.Pbs,(1.(2.&8.))P,(3.R2.(4.(2.&8.)R1.))P,(5.(6.(4.(2.&8.)R2.))(7.+2.+40.))(8.(2.&40.)(12.(;.(2.&8.)R3.)(;.(2.&8.)(<.(2.&8.)R4.R3.)))(;.(2.&8.)(13.(2.&8.)R4.R3.)))")
-(* [comment removed for export] *).
+(** The count decrement [sub a2,a2,a0] is the remainder's length. *)
+Lemma v_sub_len_firstn : forall n (bs : list byte),
+  (n <= length bs)%nat -> (Z.of_nat (length bs) < 2^64)%Z ->
+  v_sub (len_word bs) (len_word (firstn n bs)) = len_word (skipn n bs).
 Proof.
   intros n bs Hn Hlen. apply bv_eq.
   rewrite v_sub_small
@@ -107,17 +120,24 @@ Section WithSegsCh.
 Variable segs : list Segment.
 Variable fd ch : word.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* The write-all node.                                                       *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** [to_wall ms rest k]: [ms] is a write-pending ecall state offering
+    [rest] (nonempty) on [fd]; the machine delivers exactly [rest] across
+    one or more (possibly short) channel writes, then reaches a state
+    satisfying [k].  The trace contribution is exactly
+    [map (WriteEv ch) rest].  The write node is RET-OBLIVIOUS: the
+    continuation must handle every delivered length [n]. *)
 Inductive to_wall : machine_state -> list byte -> (machine_state -> Prop) -> Prop :=
 | twl_write : forall ms x8 rest k,
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = fd ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length rest)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
        to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
@@ -139,16 +159,17 @@ Scheme to_wall_min := Minimality for to_wall Sort Prop
   with to_wall_tail_min := Minimality for to_wall_tail Sort Prop.
 Combined Scheme to_wall_mutind from to_wall_min, to_wall_tail_min.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma msteps_to_wall_tail : forall ms ms' rest k,
+(** msteps-prepend glue (the ergonomic bridge per-binary loop proofs
+    use, mirroring [CatSim.msteps_to_wexit]). *)
+Lemma msteps_to_wall_tail : forall ms ms' rest k,
   msteps segs ms ms' -> to_wall_tail ms' rest k -> to_wall_tail ms rest k.
 Proof.
   intros ms ms' rest k H; induction H; [auto|].
   intro Hw. eapply twt_step; eauto.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma to_wall_tail_nil_msteps : forall ms k,
+(** An empty remainder is a straight instruction line to a [k]-state. *)
+Lemma to_wall_tail_nil_msteps : forall ms k,
   to_wall_tail ms [] k -> exists ms', msteps segs ms ms' /\ k ms'.
 Proof.
   intros ms k H.
@@ -162,28 +183,43 @@ Qed.
 
 Hypothesis Hfd32 : fd32 fd = fd.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* One-step inversion at the write-pending head, WITH the continuation:      *)
+(* the delivered chunk is a nonempty prefix, and the remainder derivation    *)
+(* continues at [skipn n rest].  This is the shape the downstream loop      *)
+(* invariants ([sinv], [dinv]) and [to_wall_exec_mut] consume (an SError    *)
+(* [st] is refuted by the [SNext] equation).                                 *)
+(* ========================================================================= *)
 
-#[using="Hfd32"] Lemma sstep_to_wall_inv : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpPmodel,$15.Pevs,(1.$16.)Pst,$17.P,(8.(18.(2.&40.))(19.R3.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R4.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R5.)P,(1?.R8.)P,(20.R:.R9.R8.)P,(21.Vsegs,(22.R;.R8.)R7.R6.)(23.$0.Ln,$0.(24.(3.#1.R1.)(24.(3.R1.(4.(2.&8.)R<.))(24.(8.(1.$16.)R9.(25.(2.&8.)$16.(26.Vch,)(<.(2.&8.)R1.R<.)))(24.(8.$17.R8.(27.(22.(28.(29.R=.(;.(2.&8.)(<.(2.&8.)R1.R<.))))R:.)))(2:.(28.(29.R=.(;.(2.&8.)(<.(2.&8.)R1.R<.))))(13.(2.&8.)R1.R<.)R;.))))))")
-(* [comment removed for export] *).
+Lemma sstep_to_wall_inv : forall ms rest k model evs st,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  buf_modeled rest ->
+  to_wall ms rest k ->
+  sstep segs (mkCfg ms model) evs st ->
+  exists n, (1 <= n)%nat /\ (n <= length rest)%nat /\
+    evs = map (WriteEv ch) (firstn n rest) /\
+    st = SNext (mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n rest)))) model) /\
+    to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
+      (skipn n rest) k.
 Proof.
   intros ms rest k model evs st Hh Hlazy Hfdc Hbm Hw Hss.
   revert Hbm.
-  destruct Hw as [ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont]. intro Hbm.
+  destruct Hw as [ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont]. intro Hbm.
   destruct (sstep_write_ch_inv segs fd ch Hfd32 ms model x8 rest evs st
-              Hh Hlazy Hfdc Hsvc Hno Hg Hr Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hst).
+              Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hst).
   exists n. repeat split; try assumption.
   apply (Hcont n Hn1 Hn2).
 Qed.
 
-#[using="Hfd32"] Lemma to_wall_no_error_sstep : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpPmodel,$15.Pevs,(1.$16.)P,(8.(18.(2.&40.))(19.R2.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R3.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R4.)P,(1?.R7.)P,(20.R9.R8.R7.)(2;.(21.Vsegs,(22.R:.R7.)R6.$2<.))")
-(* [comment removed for export] *).
+Lemma to_wall_no_error_sstep : forall ms rest k model evs,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  buf_modeled rest ->
+  to_wall ms rest k ->
+  ~ sstep segs (mkCfg ms model) evs SError.
 Proof.
   intros ms rest k model evs Hh Hlazy Hfdc Hbm Hw Hss.
   destruct (sstep_to_wall_inv ms rest k model evs SError Hh Hlazy Hfdc Hbm Hw Hss)
@@ -191,13 +227,23 @@ Proof.
   discriminate Hst.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Star admissibility: the retry loop realizes the full-buffer trace.        *)
+(* One syscall (full delivery) per node suffices as the witness.             *)
+(* ========================================================================= *)
 
-#[using="Hfd32"] Lemma to_wall_star_admits_mut : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pmodel,$15.Ptr_k,(1.$16.)P,(8.(18.(2.&40.))(19.R2.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R3.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R4.)(24.Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(20.R3.R2.R1.)P,(1?.R3.)P,Pms',$14.P,A1.R4.R1.(23.$2=.Lc,$2=.(2>.Vsegs,(22.R3.R=.)R<.R1.))(23.$2=.Lc,$2=.(2>.Vsegs,(22.R7.R<.)(2?.$16.(25.(2.&8.)$16.(26.Vch,)R6.)R;.)R1.))Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(2:.R3.R2.R1.)P,(1?.R3.)P,Pms',$14.P,A1.R4.R1.(23.$2=.Lc,$2=.(2>.Vsegs,(22.R3.R=.)R<.R1.))(23.$2=.Lc,$2=.(2>.Vsegs,(22.R7.R<.)(2?.$16.(25.(2.&8.)$16.(26.Vch,)R6.)R;.)R1.)))")
-(* [comment removed for export] *).
+Lemma to_wall_star_admits_mut : forall model tr_k,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  (forall ms rest k, to_wall ms rest k ->
+     buf_modeled rest ->
+     (forall ms', k ms' -> exists c, star segs (mkCfg ms' model) tr_k c) ->
+     exists c, star segs (mkCfg ms model) (map (WriteEv ch) rest ++ tr_k) c)
+  /\ (forall ms rest k, to_wall_tail ms rest k ->
+     buf_modeled rest ->
+     (forall ms', k ms' -> exists c, star segs (mkCfg ms' model) tr_k c) ->
+     exists c, star segs (mkCfg ms model) (map (WriteEv ch) rest ++ tr_k) c).
 Proof.
   intros model tr_k Hh Hlazy Hfdc.
   apply (to_wall_mutind
@@ -209,8 +255,8 @@ Proof.
        buf_modeled rest ->
        (forall ms', k ms' -> exists c, star segs (mkCfg ms' model) tr_k c) ->
        exists c, star segs (mkCfg ms model) (map (WriteEv ch) rest ++ tr_k) c)).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm Hk.
+  - (* twl_write: deliver everything in one syscall *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm Hk.
     destruct (IH (length rest) Hnb (Nat.le_refl _)
                 (buf_modeled_skipn (length rest) rest Hbm) Hk) as [c Hstar].
     exists c.
@@ -229,11 +275,11 @@ Proof.
       [exact Hh | exact Hsvc | | exact Hh |].
     eapply write_ch_ok_n; try eassumption. apply Nat.le_refl.
     rewrite (materialize_model_accesses_no_lazy model _ Hlazy). reflexivity.
-  - (* [comment removed for export] *)
+  - (* twt_done: hand off to the continuation *)
     intros ms k Hk Hbm Hcont. cbn [map app]. apply (Hcont ms Hk).
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm Hk. exact (IH Hbm Hk).
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm Hk.
     destruct (IH Hbm Hk) as [c Hstar].
     exists c.
@@ -244,27 +290,53 @@ Proof.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-#[using="Hfd32"] Lemma to_wall_star_admits : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(20.R3.R2.R1.)P,(1?.R3.)Pmodel,$15.Ptr_k,(1.$16.)P,(8.(18.(2.&40.))(19.R2.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R3.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R4.)P,Pms',$14.P,A1.R9.R1.(23.$2=.Lc,$2=.(2>.Vsegs,(22.R3.R8.)R7.R1.))(23.$2=.Lc,$2=.(2>.Vsegs,(22.R<.R7.)(2?.$16.(25.(2.&8.)$16.(26.Vch,)R;.)R6.)R1.))")
-(* [comment removed for export] *).
+Lemma to_wall_star_admits : forall ms rest k,
+  to_wall ms rest k ->
+  buf_modeled rest ->
+  forall model tr_k,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  (forall ms', k ms' -> exists c, star segs (mkCfg ms' model) tr_k c) ->
+  exists c, star segs (mkCfg ms model) (map (WriteEv ch) rest ++ tr_k) c.
 Proof.
   intros ms rest k Hw Hbm model tr_k Hh Hlazy Hfdc Hk.
   exact (proj1 (to_wall_star_admits_mut model tr_k Hh Hlazy Hfdc) ms rest k Hw Hbm Hk).
 Qed.
 
-#[using="Hfd32"] Lemma to_wall_tail_star_admits : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(2:.R3.R2.R1.)P,(1?.R3.)Pmodel,$15.Ptr_k,(1.$16.)P,(8.(18.(2.&40.))(19.R2.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R3.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R4.)P,Pms',$14.P,A1.R9.R1.(23.$2=.Lc,$2=.(2>.Vsegs,(22.R3.R8.)R7.R1.))(23.$2=.Lc,$2=.(2>.Vsegs,(22.R<.R7.)(2?.$16.(25.(2.&8.)$16.(26.Vch,)R;.)R6.)R1.))")
-(* [comment removed for export] *).
+Lemma to_wall_tail_star_admits : forall ms rest k,
+  to_wall_tail ms rest k ->
+  buf_modeled rest ->
+  forall model tr_k,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  (forall ms', k ms' -> exists c, star segs (mkCfg ms' model) tr_k c) ->
+  exists c, star segs (mkCfg ms model) (map (WriteEv ch) rest ++ tr_k) c.
 Proof.
   intros ms rest k Hw Hbm model tr_k Hh Hlazy Hfdc Hk.
   exact (proj2 (to_wall_star_admits_mut model tr_k Hh Hlazy Hfdc) ms rest k Hw Hbm Hk).
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Star exhaustiveness: every trace out of the retry loop is a prefix of     *)
+(* the full-buffer events followed by whatever the continuation admits.      *)
+(* ========================================================================= *)
 
-#[using="Hfd32"] Lemma to_wall_star_only_mut : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pmodel,$15.PT,(1.$16.)P,(8.(18.(2.&40.))(19.R2.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R3.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R4.)(24.Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(20.R3.R2.R1.)P,(1?.R3.)P,Pms',$14.Ptr,(1.$16.)Pc,$2=.P,A1.R6.R3.P,(2>.Vsegs,(22.R4.R>.)R3.R2.)(30.$16.R4.R>.)Ptr,(1.$16.)Pc,$2=.P,(2>.Vsegs,(22.R8.R=.)R2.R1.)(30.$16.R3.(2?.$16.(25.(2.&8.)$16.(26.Vch,)R8.)R=.))Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(2:.R3.R2.R1.)P,(1?.R3.)P,Pms',$14.Ptr,(1.$16.)Pc,$2=.P,A1.R6.R3.P,(2>.Vsegs,(22.R4.R>.)R3.R2.)(30.$16.R4.R>.)Ptr,(1.$16.)Pc,$2=.P,(2>.Vsegs,(22.R8.R=.)R2.R1.)(30.$16.R3.(2?.$16.(25.(2.&8.)$16.(26.Vch,)R8.)R=.)))")
-(* [comment removed for export] *).
+Lemma to_wall_star_only_mut : forall model T,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  (forall ms rest k, to_wall ms rest k ->
+     buf_modeled rest ->
+     (forall ms' tr c, k ms' -> star segs (mkCfg ms' model) tr c -> is_prefix tr T) ->
+     forall tr c, star segs (mkCfg ms model) tr c ->
+     is_prefix tr (map (WriteEv ch) rest ++ T))
+  /\ (forall ms rest k, to_wall_tail ms rest k ->
+     buf_modeled rest ->
+     (forall ms' tr c, k ms' -> star segs (mkCfg ms' model) tr c -> is_prefix tr T) ->
+     forall tr c, star segs (mkCfg ms model) tr c ->
+     is_prefix tr (map (WriteEv ch) rest ++ T)).
 Proof.
   intros model T Hh Hlazy Hfdc.
   apply (to_wall_mutind
@@ -278,22 +350,22 @@ Proof.
        (forall ms' tr c, k ms' -> star segs (mkCfg ms' model) tr c -> is_prefix tr T) ->
        forall tr c, star segs (mkCfg ms model) tr c ->
        is_prefix tr (map (WriteEv ch) rest ++ T))).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm HK tr c Hstar.
+  - (* twl_write *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm HK tr c Hstar.
     inversion Hstar as [|c1 evs c2 tr2 c3 Hss Hstar2]; subst.
     { apply is_prefix_nil. }
     destruct (sstep_write_ch_inv segs fd ch Hfd32 ms model x8 rest evs (SNext c2)
-                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hc2).
+                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hc2).
     subst evs. inversion Hc2; subst c2.
     pose proof (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbm) HK tr2 c Hstar2) as Hp.
     rewrite <- (firstn_skipn n rest) at 2.
     rewrite map_app, <- app_assoc.
     apply is_prefix_app_mono. exact Hp.
-  - (* [comment removed for export] *)
+  - (* twt_done *)
     intros ms k Hk Hbm HK tr c Hstar. cbn [map app]. exact (HK ms tr c Hk Hstar).
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm HK tr c Hstar. exact (IH Hbm HK tr c Hstar).
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm HK tr c Hstar.
     inversion Hstar as [|c1 evs c2 tr2 c3 Hss Hstar2]; subst.
     { apply is_prefix_nil. }
@@ -303,22 +375,45 @@ Proof.
     exact (IH Hbm HK tr2 c Hstar2).
 Qed.
 
-#[using="Hfd32"] Lemma to_wall_star_only : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(20.R3.R2.R1.)P,(1?.R3.)Pmodel,$15.PT,(1.$16.)P,(8.(18.(2.&40.))(19.R2.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R3.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R4.)P,Pms',$14.Ptr,(1.$16.)Pc,$2=.P,A1.R;.R3.P,(2>.Vsegs,(22.R4.R9.)R3.R2.)(30.$16.R4.R9.)Ptr,(1.$16.)Pc,$2=.P,(2>.Vsegs,(22.R=.R8.)R2.R1.)(30.$16.R3.(2?.$16.(25.(2.&8.)$16.(26.Vch,)R=.)R8.))")
-(* [comment removed for export] *).
+Lemma to_wall_star_only : forall ms rest k,
+  to_wall ms rest k ->
+  buf_modeled rest ->
+  forall model T,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  (forall ms' tr c, k ms' -> star segs (mkCfg ms' model) tr c -> is_prefix tr T) ->
+  forall tr c, star segs (mkCfg ms model) tr c ->
+  is_prefix tr (map (WriteEv ch) rest ++ T).
 Proof.
   intros ms rest k Hw Hbm model T Hh Hlazy Hfdc HK tr c Hstar.
   exact (proj1 (to_wall_star_only_mut model T Hh Hlazy Hfdc) ms rest k Hw Hbm HK tr c Hstar).
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Ergonomic raw-ecall-record wrapper (mirrors CatExec/SeqExec's [_rec]      *)
+(* entry points): the write node at the state [step_ecall] leaves.           *)
+(* ========================================================================= *)
 
-#[using="Type"] Lemma twl_write_rec : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pk,P,$14.SpPrest,(1.(2.&8.))Pregs,(31.&5.(2.&40.))Ppc,(2.&40.)Pmem,P,(2.&40.)(18.(2.&8.))Prom,P,(2.&40.)(18.(2.&8.))P,(8.$9.(:.&40.(32.R4.(33.&5.+11.$34.)))+40.)P,(8.(2.&40.)(35.R5.(33.&5.+:.$34.))Vfd,)P,(8.(18.(1.(2.&8.)))(36.(37.R6.(38.Vfx,)R5.(39.(2.&40.)(32.R6.(33.&5.+11.$34.)))(1:.(2.&40.))(3:.Vfx,)R4.R3.)(35.R6.(33.&5.+;.$34.))(35.R6.(33.&5.+<.$34.)))(39.(1.(2.&8.))R7.))P,(3.#1.(4.(2.&8.)R8.))P,Pn,$0.P,(3.#1.R1.)P,(3.R2.(4.(2.&8.)R;.))(2:.(3;.Vfx,(3<.R;.(33.&5.+:.$34.)(;.(2.&8.)(<.(2.&8.)R3.R<.)))(3=.R:.+4.)R9.R8.)(13.(2.&8.)R3.R<.)R=.)(20.(37.R9.(38.Vfx,)R8.(39.(2.&40.)(32.R9.(33.&5.+11.$34.)))(1:.(2.&40.))(3:.Vfx,)R7.R6.)R:.R;.)")
-(* [comment removed for export] *).
+Lemma twl_write_rec : forall (k : machine_state -> Prop) rest regs pc mem rom,
+  bv_unsigned (getr regs 17) = 64%Z ->
+  reg_get regs 10 = fd ->
+  ms_read_bytes {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                   ms_svc_pending := Some (getr regs 17); ms_resv := None;
+                   ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
+    (reg_get regs 11) (reg_get regs 12) = Some rest ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
+  (1 <= length rest)%nat ->
+  (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
+     to_wall_tail (mkst (regupd regs 10 (len_word (firstn n rest)))
+                        (v_addi pc 4) mem rom)
+       (skipn n rest) k) ->
+  to_wall {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+             ms_svc_pending := Some (getr regs 17); ms_resv := None;
+             ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
+    rest k.
 Proof.
-  intros k rest regs pc mem rom H17 H10 Hr Hnb Hcont.
+  intros k rest regs pc mem rom H17 H10 Hr Hok Hnb Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
@@ -327,23 +422,24 @@ Proof.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E10. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. exact (Hcont n Hn1 Hn2).
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* to_wallexit: an exit-after-writes run whose EVERY write goes through a     *)
+(* put-style retry loop (a [to_wall] node).  Because each retry loop          *)
+(* delivers exactly its full buffer — chunking-independently — the trace      *)
+(* set of such a run is the ORIGINAL full-delivery form: the prefixes of      *)
+(* [wevents_ch ch bufs ++ [ExitEv code fs]].  This is the wall-node           *)
+(* counterpart of [CatSim.to_wexit] (whose ret-oblivious write node keeps     *)
+(* serving binaries that genuinely propagate short deliveries).               *)
+(*                                                                           *)
+(* The base case [bufs = []] is [CatSim.to_wexit ms [] code] — the exit       *)
+(* straight line — so all existing per-example exit-path lemmas apply         *)
+(* unchanged.                                                                *)
+(* ========================================================================= *)
 
 Fixpoint to_wallexit (bufs : list (list byte)) (code : word)
     (ms : machine_state) : Prop :=
@@ -354,26 +450,29 @@ Fixpoint to_wallexit (bufs : list (list byte)) (code : word)
       to_wall_tail ms buf (to_wallexit rest code)
   end.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma to_wall_k_ex_mut : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "(24.Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(20.R3.R2.R1.)(23.$14.Lms',$14.A1.R3.R1.)Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(2:.R3.R2.R1.)(23.$14.Lms',$14.A1.R3.R1.))")
-(* [comment removed for export] *).
+(** Every finite wall derivation bottoms out in a continuation state
+    (deliver everything at each write). *)
+Lemma to_wall_k_ex_mut :
+  (forall ms rest k, to_wall ms rest k -> exists ms', k ms')
+  /\ (forall ms rest k, to_wall_tail ms rest k -> exists ms', k ms').
 Proof.
   apply (to_wall_mutind
            (fun ms rest k => exists ms', k ms')
            (fun ms rest k => exists ms', k ms')).
-  - intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH.
+  - intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH.
     exact (IH (length rest) Hnb (Nat.le_refl _)).
   - intros ms k Hk. exists ms. exact Hk.
   - intros ms rest k Hnb Hw IH. exact IH.
   - intros ms ms' rest k Hsvc Hstep Ht IH. exact IH.
 Qed.
 
-#[using="Type"] Lemma to_wall_tail_k_ex : forall ms rest k,
+Lemma to_wall_tail_k_ex : forall ms rest k,
   to_wall_tail ms rest k -> exists ms', k ms'.
 Proof. exact (proj2 to_wall_k_ex_mut). Qed.
 
-#[using="Type"] Lemma to_wallexit_bufs_nonempty : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pms,$14.P,(3>.R3.R2.R1.)(3?.(1.(2.&8.))Lb,(1.(2.&8.))(3.#1.(4.(2.&8.)R1.))R4.)")
-(* [comment removed for export] *).
+Lemma to_wallexit_bufs_nonempty : forall bufs code ms,
+  to_wallexit bufs code ms ->
+  Forall (fun b : list byte => (1 <= length b)%nat) bufs.
 Proof.
   induction bufs as [|buf rest IH]; intros code ms Hw; [constructor|].
   destruct Hw as [Hnb Hw]. constructor; [exact Hnb|].
@@ -381,9 +480,12 @@ Proof.
   exact (IH code ms' Hk).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma twe_step : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Pms',$14.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)P,(8.(18.(2.&40.))(40.R4.)(1:.(2.&40.)))P,(8.(41.$14.)(42.Vsegs,R5.)(43.$14.R4.))P,(3>.R4.R3.R5.)(3>.R5.R4.R7.)")
-(* [comment removed for export] *).
+(** Single-instruction prepend, in the shape [StepTac.chain_step]
+    consumes (the [to_wallexit] counterpart of [CatSim.tw_step]). *)
+Lemma twe_step : forall ms ms' bufs code,
+  ms_svc_pending ms = None ->
+  RiscvSemantics.step segs ms = MachineOk ms' ->
+  to_wallexit bufs code ms' -> to_wallexit bufs code ms.
 Proof.
   intros ms ms' bufs code Hsvc Hstep Hw.
   destruct bufs as [|buf rest].
@@ -392,8 +494,8 @@ Proof.
     eapply twt_step; eauto.
 Qed.
 
-#[using="Type"] Lemma msteps_to_wallexit : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Pms',$14.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)P,(44.Vsegs,R4.R3.)P,(3>.R3.R2.R4.)(3>.R4.R3.R6.)")
-(* [comment removed for export] *).
+Lemma msteps_to_wallexit : forall ms ms' bufs code,
+  msteps segs ms ms' -> to_wallexit bufs code ms' -> to_wallexit bufs code ms.
 Proof.
   intros ms ms' bufs code Hms Hw. destruct bufs as [|buf rest].
   - exact (msteps_to_wexit segs ms ms' [] code Hms Hw).
@@ -401,17 +503,29 @@ Proof.
     eapply msteps_to_wall_tail; eauto.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* The omni reading.  One mutual induction over [to_wall]/[to_wall_tail]     *)
+(* gives, for every chunking at once, that the node emits exactly its buffer  *)
+(* and then continues into a configuration satisfying the continuation's own  *)
+(* judgment; [to_wallexit_exec] then chains the nodes and the exit into the   *)
+(* exact full-delivery trace.  The star-only, star-admits and no-error lemmas *)
+(* below are its corollaries.                                                  *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Hfd32"] Lemma to_wall_exec_mut : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pmodel,$15.PQ,$45.P,(8.(18.(2.&40.))(19.R2.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R3.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R4.)(24.Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(20.R3.R2.R1.)P,(1?.R3.)P,Pms',$14.P,A1.R4.R1.(46.Vsegs,(22.R2.R<.)R;.)(46.Vsegs,(22.R6.R;.)Ltr,(1.$16.)Lo,$47.(23.(1.$16.)Ltr',(1.$16.)(24.(8.(1.$16.)R3.(2?.$16.(25.(2.&8.)$16.(26.Vch,)R8.)R1.))A2.R=.R1.R2.)))Pms,$14.Prest,(1.(2.&8.))Pk,P,$14.SpP,(2:.R3.R2.R1.)P,(1?.R3.)P,Pms',$14.P,A1.R4.R1.(46.Vsegs,(22.R2.R<.)R;.)(46.Vsegs,(22.R6.R;.)Ltr,(1.$16.)Lo,$47.(23.(1.$16.)Ltr',(1.$16.)(24.(8.(1.$16.)R3.(2?.$16.(25.(2.&8.)$16.(26.Vch,)R8.)R1.))A2.R=.R1.R2.))))")
-(* [comment removed for export] *).
+Lemma to_wall_exec_mut : forall model (Q : post),
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  (forall ms rest k, to_wall ms rest k ->
+     buf_modeled rest ->
+     (forall ms', k ms' -> OmniRun.exec segs (mkCfg ms' model) Q) ->
+     OmniRun.exec segs (mkCfg ms model)
+       (fun tr o => exists tr', tr = map (WriteEv ch) rest ++ tr' /\ Q tr' o))
+  /\ (forall ms rest k, to_wall_tail ms rest k ->
+     buf_modeled rest ->
+     (forall ms', k ms' -> OmniRun.exec segs (mkCfg ms' model) Q) ->
+     OmniRun.exec segs (mkCfg ms model)
+       (fun tr o => exists tr', tr = map (WriteEv ch) rest ++ tr' /\ Q tr' o)).
 Proof.
   intros model Q Hh Hlazy Hfdc.
   apply (to_wall_mutind
@@ -425,11 +539,11 @@ Proof.
        (forall ms', k ms' -> OmniRun.exec segs (mkCfg ms' model) Q) ->
        OmniRun.exec segs (mkCfg ms model)
          (fun tr o => exists tr', tr = map (WriteEv ch) rest ++ tr' /\ Q tr' o))).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm HK.
+  - (* twl_write: every delivered length is a successor, each covered by the IH *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm HK.
     assert (Hw : to_wall ms rest k) by (eapply twl_write; eassumption).
     apply exec_step; [exact Hh | | |].
-    + (* [comment removed for export] *)
+    + (* progress: deliver everything in one syscall *)
       eexists; eexists.
       apply (sstep_syscall segs ms model x8
                (with_copyins [(ms_gpr ms 1, length rest)]
@@ -450,13 +564,13 @@ Proof.
         [exact (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbm) HK) |].
       intros tr o (tr' & -> & HQ). exists tr'. split; [| exact HQ].
       rewrite <- (firstn_skipn n rest) at 3. rewrite map_app, <- app_assoc. reflexivity.
-  - (* [comment removed for export] *)
+  - (* twt_done: the continuation's own judgment *)
     intros ms k Hk Hbm HK.
     eapply exec_conseq; [exact (HK ms Hk) |].
     intros tr o HQ. exists tr. split; [reflexivity | exact HQ].
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm HK. exact (IH Hbm HK).
-  - (* [comment removed for export] *)
+  - (* twt_step: one silent instruction *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm HK.
     apply (exec_step_only segs _ _ [] (mkCfg ms' model)).
     + apply (sstep_instr segs ms model ms' model); [exact Hh | exact Hsvc |].
@@ -465,14 +579,21 @@ Proof.
     + eapply exec_conseq; [exact (IH Hbm HK) |]. intros tr o H. cbn [app]. exact H.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma to_wexit_nil_exec_aux : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pmodel,$15.P,(8.(18.(2.&40.))(19.R1.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R2.)(1=.(1;.(2.&40.)(2.&40.))))P,(48.Vsegs,R6.R5.R4.)P,(8.(1.(1.(2.&8.)))R6.(1=.(1.(2.&8.))))(46.Vsegs,(22.R8.R5.)Ltr,(1.$16.)Lo,$47.(24.(8.(1.$16.)R2.(49.$16.(4:.R8.(4;.R7.))(1=.$16.)))(4<.R8.R2.R1.)))")
-(* [comment removed for export] *).
+(** The exit straight line at the bottom of every [to_wallexit]: the
+    [bufs = []] fragment of [CatSim.to_wexit], which needs no channel
+    assumption. *)
+Lemma to_wexit_nil_exec_aux : forall ms bufs code model,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_wexit segs ms bufs code ->
+  bufs = [] ->
+  OmniRun.exec segs (mkCfg ms model)
+    (fun tr o => tr = [ExitEv code (m_fs model)] /\ exits_with code tr o).
 Proof.
   intros ms bufs code model Hh Hlazy Hte.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH]; intro Hbufs; [| discriminate Hbufs |].
   - apply (exec_step_only segs _ _
              [ExitEv (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (m_fs model)]
@@ -504,16 +625,28 @@ Proof.
     + eapply exec_conseq; [exact (IH Hbufs) |]. intros tr o H. cbn [app]. exact H.
 Qed.
 
-#[using="Type"] Lemma to_wexit_nil_exec : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Pcode,(2.&40.)Pmodel,$15.P,(8.(18.(2.&40.))(19.R1.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R2.)(1=.(1;.(2.&40.)(2.&40.))))P,(48.Vsegs,R5.(1=.(1.(2.&8.)))R4.)(46.Vsegs,(22.R6.R4.)Ltr,(1.$16.)Lo,$47.(24.(8.(1.$16.)R2.(49.$16.(4:.R7.(4;.R6.))(1=.$16.)))(4<.R7.R2.R1.)))")
-(* [comment removed for export] *).
+Lemma to_wexit_nil_exec : forall ms code model,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_wexit segs ms [] code ->
+  OmniRun.exec segs (mkCfg ms model)
+    (fun tr o => tr = [ExitEv code (m_fs model)] /\ exits_with code tr o).
 Proof.
   intros ms code model Hh Hlazy Hte.
   exact (to_wexit_nil_exec_aux ms [] code model Hh Hlazy Hte eq_refl).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Hfd32"] Lemma to_wallexit_exec : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pms,$14.Pmodel,$15.P,(8.(18.(2.&40.))(19.R1.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R2.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R3.)P,(4=.R7.)P,(3>.R8.R7.R6.)(46.Vsegs,(22.R7.R6.)Ltr,(1.$16.)Lo,$47.(24.(8.(1.$16.)R2.(2?.$16.(4>.Vch,R;.)(49.$16.(4:.R:.(4;.R8.))(1=.$16.))))(4<.R:.R2.R1.)))")
-(* [comment removed for export] *).
+(** THE judgment for a retry-loop run: exactly the full-delivery trace,
+    then the exit, on every execution. *)
+Lemma to_wallexit_exec : forall bufs code ms model,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  bufs_modeled bufs ->
+  to_wallexit bufs code ms ->
+  OmniRun.exec segs (mkCfg ms model)
+    (fun tr o => tr = wevents_ch ch bufs ++ [ExitEv code (m_fs model)]
+                 /\ exits_with code tr o).
 Proof.
   induction bufs as [|buf rest IH]; intros code ms model Hh Hlazy Hfdc Hbm Hw.
   - cbn [wevents_ch app]. apply to_wexit_nil_exec; assumption.
@@ -525,13 +658,19 @@ Proof.
     rewrite Heq. cbn [wevents_ch]. rewrite <- app_assoc. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Star admissibility and exhaustiveness for [to_wallexit] -- the ORIGINAL   *)
+(* full-delivery trace set -- as corollaries of [to_wallexit_exec].          *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Hfd32"] Lemma to_wallexit_star_admits : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pms,$14.Pmodel,$15.P,(8.(18.(2.&40.))(19.R1.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R2.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R3.)P,(4=.R7.)P,(3>.R8.R7.R6.)(23.$2=.Lc,$2=.(2>.Vsegs,(22.R8.R7.)(2?.$16.(4>.Vch,R:.)(49.$16.(4:.R9.(4;.R7.))(1=.$16.)))R1.))")
-(* [comment removed for export] *).
+Lemma to_wallexit_star_admits : forall bufs code ms model,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  bufs_modeled bufs ->
+  to_wallexit bufs code ms ->
+  exists c, star segs (mkCfg ms model)
+              (wevents_ch ch bufs ++ [ExitEv code (m_fs model)]) c.
 Proof.
   intros bufs code ms model Hh Hlazy Hfdc Hbm Hw.
   destruct (exec_realizes _ _ _ (to_wallexit_exec bufs code ms model Hh Hlazy Hfdc Hbm Hw))
@@ -540,9 +679,19 @@ Proof.
   exists c'. exact Hstar.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Hfd32"] Lemma to_wallexit_no_other_exit : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pms,$14.Pmodel,$15.P,(8.(18.(2.&40.))(19.R1.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R2.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R3.)P,(4=.R7.)P,(3>.R8.R7.R6.)Pcode',(2.&40.)P,(2;.(8.(2.&40.)R1.R9.))(2;.(46.Vsegs,(22.R9.R8.)(4<.R2.)))")
-(* [comment removed for export] *).
+(** Bites.  The judgment names the trace AND the code: it does not exit
+    with any other code, its trace is no other list, and it does not
+    stay silent.  ([to_wallexit_no_other_exit] would survive a
+    postcondition that forgot the writes; [to_wallexit_trace_unique] is
+    the one that pins them.) *)
+Lemma to_wallexit_no_other_exit : forall bufs code ms model,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  bufs_modeled bufs ->
+  to_wallexit bufs code ms ->
+  forall code', code' <> code ->
+  ~ OmniRun.exec segs (mkCfg ms model) (exits_with code').
 Proof.
   intros bufs code ms model Hh Hlazy Hfdc Hbm Hw code' Hne Hex.
   destruct (exec_realizes _ _ _ (to_wallexit_exec bufs code ms model Hh Hlazy Hfdc Hbm Hw))
@@ -553,8 +702,14 @@ Proof.
   exact (Hne (eq_sym Hx')).
 Qed.
 
-#[using="Hfd32"] Lemma to_wallexit_trace_unique : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pms,$14.Pmodel,$15.P,(8.(18.(2.&40.))(19.R1.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R2.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R3.)P,(4=.R7.)P,(3>.R8.R7.R6.)Ptr',(1.$16.)P,(2;.(8.(1.$16.)R1.(2?.$16.(4>.Vch,R:.)(49.$16.(4:.R9.(4;.R7.))(1=.$16.)))))(2;.(46.Vsegs,(22.R9.R8.)Ltr,(1.$16.)L,$47.(8.(1.$16.)R2.R4.)))")
-(* [comment removed for export] *).
+Lemma to_wallexit_trace_unique : forall bufs code ms model,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  bufs_modeled bufs ->
+  to_wallexit bufs code ms ->
+  forall tr', tr' <> wevents_ch ch bufs ++ [ExitEv code (m_fs model)] ->
+  ~ OmniRun.exec segs (mkCfg ms model) (fun tr _ => tr = tr').
 Proof.
   intros bufs code ms model Hh Hlazy Hfdc Hbm Hw tr' Hne Hex.
   destruct (exec_realizes _ _ _ (to_wallexit_exec bufs code ms model Hh Hlazy Hfdc Hbm Hw))
@@ -563,8 +718,13 @@ Proof.
   apply Hne. rewrite <- Heq', Heq. reflexivity.
 Qed.
 
-#[using="Hfd32"] Lemma to_wallexit_not_silent : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pms,$14.Pmodel,$15.P,(8.(18.(2.&40.))(19.R1.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R2.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R3.)P,(4=.R7.)P,(3>.R8.R7.R6.)(2;.(4?.Vsegs,(22.R7.R6.)Ltr,(1.$16.)(8.(1.$16.)R1.(1=.$16.))))")
-(* [comment removed for export] *).
+Lemma to_wallexit_not_silent : forall bufs code ms model,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  bufs_modeled bufs ->
+  to_wallexit bufs code ms ->
+  ~ cosafe segs (mkCfg ms model) (fun tr => tr = []).
 Proof.
   intros bufs code ms model Hh Hlazy Hfdc Hbm Hw Hc.
   destruct (to_wallexit_star_admits bufs code ms model Hh Hlazy Hfdc Hbm Hw) as (c' & Hstar).
@@ -572,8 +732,14 @@ Proof.
   destruct (wevents_ch ch bufs); discriminate Hnil.
 Qed.
 
-#[using="Hfd32"] Lemma to_wallexit_star_only : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pms,$14.Pmodel,$15.P,(8.(18.(2.&40.))(19.R1.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R2.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R3.)P,(4=.R7.)P,(3>.R8.R7.R6.)Ptr,(1.$16.)Pc,$2=.P,(2>.Vsegs,(22.R9.R8.)R2.R1.)(30.$16.R3.(2?.$16.(4>.Vch,R<.)(49.$16.(4:.R;.(4;.R9.))(1=.$16.))))")
-(* [comment removed for export] *).
+Lemma to_wallexit_star_only : forall bufs code ms model,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  bufs_modeled bufs ->
+  to_wallexit bufs code ms ->
+  forall tr c, star segs (mkCfg ms model) tr c ->
+  is_prefix tr (wevents_ch ch bufs ++ [ExitEv code (m_fs model)]).
 Proof.
   intros bufs code ms model Hh Hlazy Hfdc Hbm Hw tr c Hstar.
   destruct (exec_realizes _ _ _
@@ -582,13 +748,17 @@ Proof.
   cbn beta in HQ. destruct HQ as (Heq & _). rewrite <- Heq. apply is_prefix_app.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* No-error: a corollary of the omni judgment.                               *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Hfd32"] Lemma to_wallexit_no_error : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pms,$14.Pmodel,$15.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)P,(8.(18.(2.&40.))(19.R3.)(1:.(2.&40.)))P,(8.(1.(1;.(2.&40.)(2.&40.)))(1<.R4.)(1=.(1;.(2.&40.)(2.&40.))))P,(1>.Vfd,Vch,R5.)P,(4=.R5.)P,(3>.R6.R5.R8.)(2;.(50.Vsegs,(22.R9.R8.)))")
-(* [comment removed for export] *).
+Lemma to_wallexit_no_error : forall ms model bufs code,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fdchan fd ch model ->
+  bufs_modeled bufs ->
+  to_wallexit bufs code ms ->
+  ~ reaches_error segs (mkCfg ms model).
 Proof.
   intros ms model bufs code Hh Hlazy Hfdc Hbm Hw. apply exec_no_error.
   eapply exec_conseq; [exact (to_wallexit_exec bufs code ms model Hh Hlazy Hfdc Hbm Hw) |].
@@ -597,36 +767,58 @@ Qed.
 
 End WithSegsCh.
 
-(* [comment removed for export] *)
+(** [to_wallexit] at fd 1, in [CatSim.to_wexit]'s argument order — the
+    drop-in replacement for a per-binary [to_wexit] chain whose writes
+    all go through put-style retry loops. *)
 Abbreviation wexit1 segs ms bufs code :=
   (to_wallexit segs (Z_to_bv 64 1) bufs code ms).
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma wevents_ch_fd1 : forall bufs,
+(** The generic-channel event list at fd 1 is [CatSim.wevents]. *)
+Lemma wevents_ch_fd1 : forall bufs,
   wevents_ch (Z_to_bv 64 1) bufs = wevents bufs.
 Proof.
   induction bufs as [|b bs IH]; cbn [wevents_ch wevents];
     [reflexivity | rewrite IH; reflexivity].
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Run-level packaging: the ORIGINAL full-delivery statements, for binaries   *)
+(* whose every write is a put-style retry loop.                               *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma wall_omni_run : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pfd,(2.&40.)Pch,(2.&40.)P,(8.(2.&40.)(51.R2.)R2.)Psegs,(1.$52.)Ppc,$53.Pph,$54.Psp,(2.&40.)Pbrk0,(2.&40.)Pmb,(2.&40.)Prnd,$55.Plim,$9.Pinp,$56.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)P,(1>.R>.R=.(57.(58.R;.)R7.R6.R8.R4.R3.))P,(4=.R3.)P,(59.R=.R10.R4.R3.(5:.R=.R<.R;.R:.R7.(5;.R5.)(5<.R5.)(5=.R5.)(5>.R5.)))(5?.(60.R>.R=.R<.)R7.(61.R;.R:.R9.R8.)R6.Ltr,(1.$16.)Lo,$47.(24.(8.(1.$16.)R2.(2?.$16.(4>.R12.R7.)(49.$16.(4:.R6.(62.R8.))(1=.$16.))))(4<.R6.R2.R1.)))")
-(* [comment removed for export] *).
+(** The vDSO counter does not move a descriptor's channel: [with_vdso]
+    rebuilds the VM subsystem and keeps [m_fd]. *)
+Lemma fdchan_with_vdso : forall v m fd ch, fdchan fd ch m -> fdchan fd ch (with_vdso v m).
+Proof. intros v m fd ch H; exact H. Qed.
+
+(** The run-level omni judgment of a retry-loop run. *)
+Lemma wall_omni_run : forall fd ch, fd32 fd = fd ->
+  forall segs pc ph sp brk0 mb rnd lim inp bufs code,
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
+  bufs_modeled bufs ->
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
+  omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
+    (fun tr o => tr = wevents_ch ch bufs ++ [ExitEv code (in_fs inp)]
+                 /\ exits_with code tr o).
 Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw.
   cbn [omni_run]. unfold init_config.
-  exact (to_wallexit_exec segs fd ch Hfd32 bufs code _
-           (init_model (segments_reserved segs) brk0 mb sp lim inp)
-           eq_refl eq_refl Hfdc Hbm Hw).
+  exact (to_wallexit_exec (run_segments segs inp sp mb) fd ch Hfd32 bufs code _
+           (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+              (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp))
+           eq_refl eq_refl (fdchan_with_vdso _ _ _ _ Hfdc) Hbm Hw).
 Qed.
 
-#[using="Type"] Lemma wall_obs_iff : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pfd,(2.&40.)Pch,(2.&40.)P,(8.(2.&40.)(51.R2.)R2.)Psegs,(1.$52.)Ppc,$53.Pph,$54.Psp,(2.&40.)Pbrk0,(2.&40.)Pmb,(2.&40.)Prnd,$55.Plim,$9.Pinp,$56.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)P,(1>.R>.R=.(57.(58.R;.)R7.R6.R8.R4.R3.))P,(4=.R3.)P,(59.R=.R10.R4.R3.(5:.R=.R<.R;.R:.R7.(5;.R5.)(5<.R5.)(5=.R5.)(5>.R5.)))Ptr,(1.$16.)(63.(64.R?.(65.R?.R>.R=.R<.R;.R:.R9.R8.R7.)R1.)(30.$16.R1.(2?.$16.(4>.R11.R6.)(49.$16.(4:.R5.(62.R7.))(1=.$16.)))))")
-(* [comment removed for export] *).
+Lemma wall_obs_iff : forall fd ch, fd32 fd = fd ->
+  forall segs pc ph sp brk0 mb rnd lim inp bufs code,
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
+  bufs_modeled bufs ->
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
+             <-> is_prefix tr (wevents_ch ch bufs ++ [ExitEv code (in_fs inp)]).
 Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw tr.
   apply exec_obs_iff.
@@ -635,8 +827,14 @@ Proof.
   intros tr' o (Heq & Hx). split; [exact Heq | exact (exits_with_never_errors _ _ _ Hx)].
 Qed.
 
-#[using="Type"] Lemma wall_no_error_run : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Pfd,(2.&40.)Pch,(2.&40.)P,(8.(2.&40.)(51.R2.)R2.)Psegs,(1.$52.)Ppc,$53.Pph,$54.Psp,(2.&40.)Pbrk0,(2.&40.)Pmb,(2.&40.)Prnd,$55.Plim,$9.Pinp,$56.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)P,(1>.R>.R=.(57.(58.R;.)R7.R6.R8.R4.R3.))P,(4=.R3.)P,(59.R=.R10.R4.R3.(5:.R=.R<.R;.R:.R7.(5;.R5.)(5<.R5.)(5=.R5.)(5>.R5.)))(2;.(50.R>.(65.R>.R=.R<.R;.R:.R9.R8.R7.R6.)))")
-(* [comment removed for export] *).
+Lemma wall_no_error_run : forall fd ch, fd32 fd = fd ->
+  forall segs pc ph sp brk0 mb rnd lim inp bufs code,
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
+  bufs_modeled bufs ->
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw. apply exec_no_error.
   eapply exec_conseq;
@@ -644,18 +842,30 @@ Proof.
   intros tr o (_ & Hx). exact (exits_with_never_errors _ _ _ Hx).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma wall_omni_strong_equiv : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Psource_segs,(1.$52.)Prpc,$53.Prph,$54.Prsp,(2.&40.)Prbrk,(2.&40.)Prmb,(2.&40.)Prrnd,$55.Ptarget_segs,(1.$52.)Papc,$53.Paph,$54.Pasp,(2.&40.)Pabrk,(2.&40.)Pamb,(2.&40.)Parnd,$55.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pinp,$56.P,(59.R11.(10.&40.+1.)R3.R2.(5:.R11.R10.R?.R>.R;.(5;.R1.)(5<.R1.)(5=.R1.)(5>.R1.)))P,(59.R;.(10.&40.+1.)R4.R3.(5:.R;.R:.R9.R8.R5.(5;.R2.)(5<.R2.)(5=.R2.)(5>.R2.)))P,(4=.R5.)(66.(60.R14.R13.R12.)(60.R=.R<.R;.)(61.R11.R10.R?.R>.)(61.R:.R9.R8.R7.)R4.)")
-(* [comment removed for export] *).
+(** The omni equivalence for two retry-loop exit-after-writes binaries
+    emitting the same buffers and exit code, at the two role budgets, on
+    a launch with a reader on the far end of fd 1: a reader-gone write
+    KILLS the process (see [CatSim.fd1chan]), which the retry loop's
+    derivation does not describe. *)
+Lemma wall_omni_strong_equiv :
+  forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd bufs code inp,
+  to_wallexit (run_segments source_segs inp rsp rmb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_wallexit (run_segments target_segs inp asp amb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  bufs_modeled bufs ->
+  in_channel_reader inp = true ->
+  omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+                    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd bufs code inp
-    Hsource Htarget Hbm.
+    Hsource Htarget Hbm Hr.
   assert (HfdS : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp source_alloc_limit inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   assert (HfdT : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp target_alloc_limit inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   split.
   { cbn [img_segments].
     eapply coexec_conseq;
@@ -676,18 +886,30 @@ Proof.
              target_segs apc aph asp abrk amb arnd target_alloc_limit inp bufs code HfdT Hbm Htarget).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma wall_strong_equiv : ltac2:(CDefT.buildp (gd_tbl_WallSim ()) "Psource_segs,(1.$52.)Prpc,$53.Prph,$54.Prsp,(2.&40.)Prbrk,(2.&40.)Prmb,(2.&40.)Prrnd,$55.Prlim,$9.Ptarget_segs,(1.$52.)Papc,$53.Paph,$54.Pasp,(2.&40.)Pabrk,(2.&40.)Pamb,(2.&40.)Parnd,$55.Palim,$9.Pbufs,(1.(1.(2.&8.)))Pcode,(2.&40.)Pinp,$56.P,(59.R13.(10.&40.+1.)R3.R2.(5:.R13.R12.R11.R10.R=.(5;.R1.)(5<.R1.)(5=.R1.)(5>.R1.)))P,(59.R<.(10.&40.+1.)R4.R3.(5:.R<.R;.R:.R9.R6.(5;.R2.)(5<.R2.)(5=.R2.)(5>.R2.)))P,(4=.R5.)(24.(67.(68.(60.R16.R15.R14.)R?.(61.R13.R12.R11.R10.)R4.))(69.(68.(60.R16.R15.R14.)R?.(61.R13.R12.R11.R10.)R4.)(68.(60.R>.R=.R<.)R7.(61.R;.R:.R9.R8.)R4.)))")
-(* [comment removed for export] *).
+(** The [Equivalence]-level equivalence for two retry-loop exit-after-writes
+    binaries emitting the same buffers and exit code — the statement
+    [CatSim.cat_strong_equiv_te] had before short channel writes — on a
+    launch with a reader. *)
+Lemma wall_strong_equiv :
+  forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim bufs code inp,
+  to_wallexit (run_segments source_segs inp rsp rmb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_wallexit (run_segments target_segs inp asp amb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  bufs_modeled bufs ->
+  in_channel_reader inp = true ->
+  Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+  /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+                       (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-         bufs code inp Hsource Htarget Hbm.
+         bufs code inp Hsource Htarget Hbm Hr.
   assert (HfdS : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   assert (HfdT : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved target_segs) abrk amb asp alim inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   split.
   { apply no_error_run_modeled.
     apply (wall_no_error_run (Z_to_bv 64 1) (Z_to_bv 64 1) fd32_1

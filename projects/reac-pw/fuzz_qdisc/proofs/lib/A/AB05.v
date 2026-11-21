@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: the plan is fuzz_qdisc.asan's own: cgif_file_fuzzer's start-up plan (A/AB05.v at c8557374ad2e) relocated to this image by remap.py (asan-kit) with port_core 0e4e065eab9f's elfmap map, its itab ranges from itabranges.py --rule text (the .text whole: (0x2f9e4, 102995)), and each registration arm's tail measured by plantail.py probef on this image (all 50 arms [XMemset; XMemset; main], no PMmap: one asan global, no ODR indicator) and written by plantail.py insert --replace-tail --from-probe; the donor checker accepts the start-up with it (Cert: cgif's startup_shape) (h-small-a3). *)
+(* Modified by Theorem Labs, 2026-10: the plan is fuzz_qdisc.asan's own: cgif_file_fuzzer's start-up plan (A/AB05.v at theorem-labs/oss-verify-proofs@6b32741d849a) relocated to this image by remap.py (asan-kit) with port_core 0e4e065eab9f's elfmap map, its itab ranges from itabranges.py --rule text (the .text whole: (0x2f9e4, 102995)), and each registration arm's tail measured by plantail.py probef on this image (all 50 arms [XMemset; XMemset; main], no PMmap: one asan global, no ODR indicator) and written by plantail.py insert --replace-tail --from-probe; the donor checker accepts the start-up with it (Cert: cgif's startup_shape) (h-small-a3). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_qdisc.asan (reac-pw/fuzz_qdisc asan) sha256 980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e; unstripped twin sha256 d77ead7cec5c42ebc28aff0443565f333cbb4dd08f5f1101d3deb805d5e34aac *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

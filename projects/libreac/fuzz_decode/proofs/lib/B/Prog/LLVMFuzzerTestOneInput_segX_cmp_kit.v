@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_cmp_kit: the facts the image-B cmp segment (lib/B/Prog/LLVMFuzzerTestOneInput_segF.v,
    llvm_b_cmp_stmt, +0x6f0 .. +0x83c) uses to carry the interface's frame invariant (dec_b_core of
    lib/B/Prog/LLVMFuzzerTestOneInput_segs.v) and the cut point's memory clauses across a symbolic run or a call.
    Nothing here is new; each lemma is a copy, with the prefix cm_, of the lemma of the same body named beside it:
-     lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_defs.v (the exit group's kit, 44e7264cb0a and its working copy):
+     lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_defs.v (the exit group's kit, and its working copy):
        ex_perm_twice, ex_garr8_kept, ex_core_kept, ex_ch, ex_achain, ex_acall_keep, ex_base, ex_ro_rd_covered,
        ex_in_rom, ex_rom_rd;
      lib/B/Prog/LLVMFuzzerTestOneInput_segX_up_kit.v (the up group's kit, working copy):

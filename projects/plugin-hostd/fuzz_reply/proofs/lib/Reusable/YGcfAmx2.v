@@ -1,15 +1,16 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfAmx2.v, sha256 118126df571666420512aa7443763260270b2659a4ed8d63b088c5f510a1e922.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
-   Plus the P'' (Univ trace carrier) delta of commit 94ab015e127b for cgif/cgif_file_fuzzer/lib/YGcfAmx2.v, taken 3-way (base d94d29d53c8). *)
+   Plus the P'' (Univ trace carrier) delta for cgif/cgif_file_fuzzer/lib/YGcfAmx2.v, taken 3-way. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the walk-side facts for
    c-omx-alloc's generic kit:
    - universe_ok_of_ARcf: ARcf's universe field, by name;
    - img_shadow_vis_cf: the image's shadow is present in the view. Like the donor (img_shadow_vis,
-     proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v at a970a282587) it is a DEFINITION, a fact of the runtime's
+     proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v) it is a DEFINITION, a fact of the runtime's
      symbols that the unit supplies, NOT a theorem. The image bounds are the unit's own, the CfImg fields
      cf_img_lo / cf_img_top (generated from the pinned image), never the donor's literals and never one unit's YImgTop.v;
    - amx_realloc_cf_room: realloc's model law over ReallocP.v's realloc_tree_with malloc_cf free_cf, from

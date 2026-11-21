@@ -7,12 +7,13 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_realloc.v (this lane), same lemma
    names and statement shapes, image B's names: the B kit (lib/B/FSW_K / K3 / ret / rres / statics / poison_conv / head),
    lib/B/FSH_Fn_alloc.v's specs, the image-free realloc model lib/A/FSH_ReallocModelG.v and contract
-   lib/A/FSupoisonReallocG.v through lib/B/FSH_ReallocModel.v / lib/B/FSupoisonRealloc.v (a Theorem Labs lane b7139cbe20d:
+   lib/A/FSupoisonReallocG.v through lib/B/FSH_ReallocModel.v / lib/B/FSupoisonRealloc.v (a Theorem Labs lane:
    FS_AREALLOC_BU at FS_AREALLOC_PC_B 0x530e8 / FS_AREALLOC_IPC_B 0x53620). No lib/A image file is Required.
-   proves function fuzz_realloc (B 0x82bc4) (reuse search: proof-index on main@f4cc67298b7 / ossv/recipes@5121fb8693b
-   / ossv/candidates@ee89628c997 / release/pau-projects-recipes@b6a0088adcb, by address on those four refs, and on named
+   proves function fuzz_realloc (B 0x82bc4) (reuse search: proof-index on main / ossv/recipes
+   / ossv/candidates / release/pau-projects-recipes, by address on those four refs, and on named
    lane branches / `proof-index fuzz_realloc`, `git grep -i -e <addr>`, `git grep -E '^(Theorem|Lemma)
    .*fuzz_realloc_spec'`; B 0x82bc4: 0 hits, CONFIRM). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (*
    port-from: lib/A/FSW_realloc.v (image A, this lane; its port-from list applies unchanged: the released plain control
    flow, the realloc model and its any-U contract, cgif_rgb's realloc call site, the donor's granted-allocation rule).
@@ -478,7 +479,7 @@ End k.
 (* only: the NULL answer is dead, arealloc_granted). From a within-walk journal over `unpoison U mem` and ARU of the  *)
 (* machine memory, consume `jal __wrap_realloc`: the composed journal (k + 3), ARU at the result with the same U, the *)
 (* block swap, the kept bytes, and the caller's kept frame. Shape of a Theorem Labs lane's fsw_aj_mallocU                 *)
-(* (lib/A/FSW_malloc_free.v, a working branch 89a91617162).                                                  *)
+(* (lib/A/FSW_malloc_free.v, a working branch).                                                  *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
 Section r. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
@@ -543,7 +544,7 @@ assert (HPRE : FSupoisonU.acall_preU tfibsegs B lyc Sc U W regsT memT mdc ch)
   by (split; [exact HPRE0 | split; [exact HARU_OK | exact HARU_PO]]).
 pose proof (am_wf _ _ _ _ (proj1 HAR)) as HWF.
 pose proof (model_laws_ok (as_universe B) (am_universe _ _ _ _ (proj1 HAR))) as ML.
-(* the trace premise in C5 form (FSupoisonRealloc @ fda61055856): two events remain, the room premise itself *)
+(* the trace premise in C5 form (FSupoisonRealloc): two events remain, the room premise itself *)
 assert (Htr' : In (call_trace lyc FS_AREALLOC_IPC_B regsT ch) (as_universe B) \/ st_nev Sc + 2 < EV_MAX)
   by (right; exact Hev).
 pose proof (AREALLOC lyc Sc U W regsT memT mdc q n_old n ch HPRE (or_introl Hev) Hqin

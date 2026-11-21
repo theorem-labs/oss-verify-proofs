@@ -4,6 +4,7 @@
    [Apache-2.0]; projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC59.v:27-30 [Apache-2.0 OR MIT], for libreac/fuzz_identity's ASan
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec.v; 7 of its 53 lines of code are new or changed and 277 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* sb_dec (fuzz_identity.asan 0x83494, AF_sb_dec = 0x2d88): the whole ASan-build walk, composed from the
    three segments against the boundary layer of lib/A/Prog/sb_dec_inv.v (unchanged):
      A 0x83494 .. 0x835f4   lib/A/Prog/sb_dec_A.v, pb_seg_sbd_A
@@ -11,7 +12,7 @@
      C 0x836e8 .. ret       lib/A/Prog/sb_dec_C.v, seg_sbd_C_holds
    pb_sb_dec_of_segs (sb_dec_inv.v) chains them into tsb_dec_spec. The Section hypotheses are exactly the
    union of the three segments': the walk's runtime entries, which
-   lib/A/IdentTop.v:32-42 discharges through the link (lib/A/Prog/IdentEntryLink.v:283). *)
+   lib/A/IdentTop.v:32-42 discharges through the link (lib/A/Prog/IdentEntryLink.v:284). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

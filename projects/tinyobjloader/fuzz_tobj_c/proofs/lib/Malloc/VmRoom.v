@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vm_room_grant deleted; total_filter_le0 copied from RoomS; vm_room_munmap re-proved for the room's bound on the count of ledger entries in place of the ledger discipline). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -132,45 +133,6 @@ Proof.
   - rewrite map_app. cbn [map]. apply pairwise_disjoint_middle. rewrite <- map_app. exact Hpw.
 Qed.
 
-Theorem vm_room_grant : ltac2:(tb__ "0|a|
-S1aS0ScQ40M0A1M1S28R3R2A2S10Z0M2SdG0R2A2A2SeS33R3A1S11Z2Z20A2A2SeS33R4A1R5A2S17G1G1S16S15S0S13SdG0R1A2M3S25A2G2A3S16S10G2G3A2S16SeZ2aaaaaaab000G3A2S16SeSfG3S33R6A1M4A2Z7fff7f800000A2S16S15S0SdG0S34R6A1M5A2G4A3S16S15S5S26S3S1G1G1A2M6S1cS19R8A1M7A1S1bG7A1A3R1G5A3S8A3S16G6S3bG6R1S3G6S1cS19R9A1M8A1S1bG8A1A3A3S2aS4S0S0SdG0R3A2S33R8A1A4S2bR2A1A2F_;Fe;S16G1G1S15S5S3dR1A1S9A3S36R3R2RbR9R4A5F_;Fflags;Fhint;S16G1S37R1R9R7R2A4Fhint;S16S28S20S38G7R6R1A3R8A2S14R7G4A2M9A2S28S20S35G7R6R1A3R8A2G9A2A2A2A2A2A2A2A2A2A2A2La;A2F_;F_;F_;F_;Flen;FX;Fmd;").
-Proof.
-  intros md X len HR Hlen H32 HX. pose proof HR as (D & H0 & HP & HL & HTOP).
-  pose proof (mmap_nZ_page_len len Hlen) as Hpl. pose proof Hpl as [Hnpos Hnal]. unfold PG in Hnal.
-  assert (HB : ledger_budget_ok (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))).
-  { eapply disciplined_budget; [exact D | exact H0 | | exact HL]. unfold vm_pot in HP. unfold PGSZ in HP. nia. }
-  destruct (free_gap_exists_ledger _ _ D HB Hpl H32) as (aZ & W & Pal & HF & HC & Hpos & Hrf & Hdj).
-  unfold F in HF. unfold CEIL in HC. unfold PG in Pal.
-  assert (Ha : bv_unsigned (Z_to_bv 64 aZ) = aZ).
-  { rewrite Z_to_bv_unsigned. apply bv_wrap_small. rewrite two64_eq. lia. }
-  assert (Hn : bv_unsigned (mmap_n len) = mmap_nZ len).
-  { unfold mmap_n. rewrite Z_to_bv_unsigned. apply bv_wrap_small. rewrite two64_eq. lia. }
-  assert (Hfl : 0x2aaaaaaab000 <= aZ) by lia.
-  assert (Hceil : aZ + mmap_nZ len <= aceil_lo) by lia.
-  assert (Hbud : vm_backing_used md + mmap_nZ len <= vm_limit (m_vmmaps md)).
-  { pose proof (vm_backing_used_le_pot md). lia. }
-  assert (Hent : entry_ok (aZ, mmap_nZ len)).
-  { split; [left; exact W|]. split; [exact Hpl | exact H32]. }
-  assert (Dnew : ledger_disciplined (vm_reserved (m_vmmaps md) ++ (Z_to_bv 64 aZ, mmap_n len) :: vm_maps (m_vmmaps md))).
-  { apply disciplined_middle. apply disciplined_cons; [exact D | rewrite Ha, Hn; exact Hent | rewrite Ha, Hn; exact Hdj]. }
-  assert (Hpot : forall h', vm_reserved h' = vm_reserved (m_vmmaps md) -> vm_maps h' = (Z_to_bv 64 aZ, mmap_n len) :: vm_maps (m_vmmaps md) ->
-                 vm_limit h' = vm_limit (m_vmmaps md) -> vm_init_sp h' = vm_init_sp (m_vmmaps md) ->
-                 vm_room (with_vmmaps h' md) (X - mmap_nZ len)).
-  { intros h' Hr Hm Hl Hsp. unfold vm_room, vm_pot.
-    change (m_vmmaps (with_vmmaps h' md)) with h'.
-    change (m_vm_materialized (with_vmmaps h' md)) with (m_vm_materialized md).
-    rewrite Hr, Hm, Hl. split; [exact Dnew|]. split; [lia|]. split; [|split; [exact HL|]].
-    2:{ unfold alloc_top in *. rewrite Hsp. exact HTOP. }
-    unfold vm_pot in HP. rewrite map_app, total_app in *. cbn [map].
-    change (total ((zpair (Z_to_bv 64 aZ, mmap_n len)) :: map zpair (vm_maps (m_vmmaps md))))
-      with (snd (zpair (Z_to_bv 64 aZ, mmap_n len)) + total (map zpair (vm_maps (m_vmmaps md)))).
-    change ((zpair (Z_to_bv 64 aZ, mmap_n len)).2) with (bv_unsigned (mmap_n len)). rewrite Hn. lia. }
-  exists (Z_to_bv 64 aZ). rewrite Ha. repeat match goal with |- _ /\ _ => split end; auto.
-  - intros hint flags Hnr. unfold mmap_place_ok. rewrite Ha. repeat split; auto; [lia|].
-    unfold mmap_noreserve_backed_ok. rewrite Hnr. apply Z.leb_le. exact Hbud.
-  - intros hint. unfold mmap_place_ok_none. rewrite Ha. repeat split; auto. lia.
-Qed.
-
 Theorem vm_room_mprotect : ltac2:(tb__ "0|1|
 S1aS0ScQ40A1M0G0S28R4R3A2S16S15S5S3eR5R3R2A3S8A3S28S3fR5R3R2A3R4A2A2F_;Fn;Faddr;FX;Fmd;").
 Proof.
@@ -212,6 +174,17 @@ Proof.
   apply filter_In in Hy as [Hy _]. apply Hx; apply in_app_iff; right; exact Hy.
 Qed.
 
+(* LPS 727298f3: copied with its proof from Malloc/RoomS.v (its only user there is
+   [vm_roomS_munmap]), so [vm_room_munmap] below can use it too. *)
+Lemma total_filter_le0 : forall (f : Z * Z -> bool) (l : list (Z * Z)),
+  (forall e, In e l -> 0 <= snd e) -> total (List.filter f l) <= total l.
+Proof.
+  induction l as [|e t IH]; intros Hl; [unfold total; cbn; lia|].
+  cbn [List.filter]. pose proof (Hl e ltac:(left; reflexivity)). specialize (IH ltac:(intros x Hx; apply Hl; right; exact Hx)).
+  change (total (e :: t)) with (snd e + total t).
+  destruct (f e); [change (total (e :: List.filter f t)) with (snd e + total (List.filter f t))|]; lia.
+Qed.
+
 Theorem vm_room_munmap : ltac2:(tb__ "0|1|
 S1aS0ScQ40A1M0G0S28R4R3A2S28S39R5R3R2A3R4A2F_;Fn;Faddr;FX;Fmd;").
 Proof.
@@ -223,17 +196,15 @@ Proof.
   assert (Hmat : m_vm_materialized md'
                  = List.filter (page_outside_range (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)) (m_vm_materialized md)) by reflexivity.
   unfold vm_room, vm_pot. rewrite Hr, Hm, Hl, Hmat. unfold vm_pot in HP.
-  destruct D as [Hent Hpw].
   split; [|split; [exact H0 | split; [|split; [exact HL|exact HT]]]].
-  - split.
-    + intros e He. apply Hent. apply in_app_iff in He as [He|He]; apply in_app_iff; [left; exact He|right].
-      unfold map_remove in He. apply filter_In in He as [He _]. exact He.
-    + rewrite map_app, map_zpair_filter_base. apply pairwise_app_filter. rewrite <- map_app. exact Hpw.
+  - rewrite length_app, Nat2Z.inj_add in *. unfold map_remove.
+    pose proof (filter_length_le (fun p : word * word => negb (bv_eqb (fst p) addr)) (vm_maps (m_vmmaps md))) as FL.
+    apply Nat2Z.inj_le in FL. unfold PGSZ in *. lia.
   - rewrite map_app, total_app, map_zpair_filter_base. rewrite map_app, total_app in HP.
     assert (Hf : total (List.filter (fun p : Z * Z => negb (fst p =? bv_unsigned addr)) (map zpair (vm_maps (m_vmmaps md))))
                  <= total (map zpair (vm_maps (m_vmmaps md)))).
-    { apply total_filter_le. intros e He. apply in_map_iff in He as (e' & <- & He').
-      destruct (Hent e' ltac:(apply in_app_iff; right; exact He')) as (_ & [Hp _] & _). exact Hp. }
+    { apply total_filter_le0. intros e He. apply in_map_iff in He as (e' & <- & _).
+      unfold zpair. cbn [snd]. pose proof (urange (snd e')). lia. }
     pose proof (filter_length_le (page_outside_range (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)) (m_vm_materialized md)) as Hlen.
     apply Nat2Z.inj_le in Hlen. unfold PGSZ in *. nia.
 Qed.

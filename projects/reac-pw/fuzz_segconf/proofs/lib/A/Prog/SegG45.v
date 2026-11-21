@@ -8,10 +8,10 @@
      seg_val_relro_PB, the core AD2l's errno_rom lemma, SegRecRo.ROB, SegRecCells.seg_ssp);
    - the runtime rows (the interceptor layer's interface rows and the kit's intrinsic / side-stack laws), each at the listing's
      call target.
-   The walks (lib/A/Prog/<F>.v) are the G4 / G5 walks' 21 counted shas, from their integration head
-   a15759b59213, merged into this close; FINAL
-   6f783602b5e3 is an ancestor of each (INSTANTIATE.md section E). This file states no contract: each lemma's
-   statement is the contract of lib/A/Prog/<F>_c.v at contracts FINAL 6f783602b5e3, at SegInstA's terms.
+   The walks (lib/A/Prog/<F>.v) are the G4 / G5 walks' 21 counted shas, from their integration head,
+   merged into this close; FINAL
+   is an ancestor of each (INSTANTIATE.md section E). This file states no contract: each lemma's
+   statement is the contract of lib/A/Prog/<F>_c.v at contracts FINAL, at SegInstA's terms.
    proves no function (kind: merge; the composition of G4 / G5's walk theorems). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

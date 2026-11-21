@@ -1,4 +1,4 @@
-(* CARRIED from commit ae2fa80b0325f09472155bcfce1c36e649d6ff60,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG07cf.v, sha256 9034ce76b999ffdef42a18e647811245ee77a45ce8195300f8c5dbb5b8d9158d (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,8 +6,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: WfP_cf_add_sec proves WfP_cf's new field wfc_qsize (the queues do not change). *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), malloc_cf's law. cgif's YG07.v
    (malloc_gen :292, malloc_ok :470) restated over WfP_cf (YG01cf.v), atok_cf (YGcfTok.v) and malloc_cf
    (YG00cf.v), with the cache path of YG06bcf.v. malloc_gen_cf has NO event premise: cgif's regime_ok /

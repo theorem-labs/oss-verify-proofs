@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ports the usage proof to the new process model: ReaderOn context, main_entry over ProcInput and entry, init_reserved in model0, inp-indexed EN/valsN/p0N, len_word argc, decoded model0_* and helper lemma statements; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0Usage.v, 26 lines within its lines 33-170. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -26,7 +27,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
 Section Usage.
-Context {RE : RunEnv}.
+Context {RE : RunEnv}. Context {RO : ReaderOn}.
 Variable sp0 : word.
 Variables av envv : list (list byte).
 Variable uid : word.
@@ -44,56 +45,59 @@ Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av envv uid hw rdraw tid regs0 mem0.
-Hypothesis Hfits : entry_stack_fits sp0 av envv.
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 av envv uid hw rdraw tid regs0 mem0.
 Hypothesis Hargc : length av <> 2%nat.
 Definition model0 : Model :=
-mkModelE fds_init (mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk lim mbase sp0) stdin0 fs0 None (Some tid) None.
+mkModelE fds_init (mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp0 (in_kernel inp)) [] [] brk brk lim mbase sp0) stdin0 fs0 None (Some tid) None.
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
-Lemma model0_halted : ltac2:(TCodec.tc2 tcn__Ju0Usage "<':'7'QDyR0%211%411&E&J%211(0%116%;3631"). Proof. reflexivity. Qed.
-Lemma model0_lazy : ltac2:(TCodec.tc2 tcn__Ju0Usage ">':'4'8'QDyR0%211%4211%611&F&J%211(6%116%=3631"). Proof. reflexivity. Qed.
-Lemma model0_fd2 : ltac2:(TCodec.tc2 tcn__Ju0Usage "B':'7'A%211&B&C&J%211&QCyR0+2%3221%8251(2(@%114%32>1%A3>51"). Proof. reflexivity. Qed.
-Lemma model0_fs : ltac2:(TCodec.tc2 tcn__Ju0Usage "7':&=&D&J%211vQ:%63521"). Proof. reflexivity. Qed.
-Lemma a0s_nonul : ltac2:(TCodec.tc2 tcn__Ju0Usage "A&;&Q6'QDy8%211&QCz%2241&Q7'4%116(6%118vQ9%63421%>3;81%@11").
+Lemma model0_halted : m_halted model0 = None. Proof. reflexivity. Qed.
+Lemma model0_lazy : m_vm_lazy model0 = []. Proof. reflexivity. Qed.
+Lemma model0_fd2 : fd_lookup (m_fds model0) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)). Proof. reflexivity. Qed.
+Lemma model0_fs : m_fs model0 = fs0. Proof. reflexivity. Qed.
+Lemma a0s_nonul : ~ In (Z_to_bv 8 0) (hd [] av).
 Proof.
 destruct Hva as ([H1 _] & _ & _ & Hn & _). destruct av as [|a0s rest]; [cbn in H1; lia|].
 inversion Hn; subst. assumption.
 Qed.
-Lemma hd_nth : ltac2:(TCodec.tc2 tcn__Ju0Usage "?':'4'QDy8%211%411&Q7(6%114vQ9%43521&<(1%248145%>3941").
+Lemma hd_nth : hd [] av = nth 0 av [].
 Proof. destruct av; reflexivity. Qed.
-Lemma umemcpy1_denot : ltac2:(TCodec.tc2 tcn__Ju0Usage "Q9'4'QDyR0%211%411'7y8%611%311p061':&Q4r2(1%3221vQA%63=21&Q3&L&IvQ<vQ>%3221r3%6221&K%932>1&H&QC&Q8&QE%12M@+a@%4221%62Q01&M%93H21%K3L;1p0F1pQ@N1pS>Q41").
+Lemma umemcpy1_denot : forall vals M, vals_ev vals 0 = sp0 ->
+mem_denot (ENV (blobsN hw rdraw) vals) M u_logM1 = wbytes M (Z_to_bv 64 (bv_unsigned sp0 - 560)) PRE7.
 Proof.
 intros vals M P0. pose proof SPlo. pose proof SPhi.
 rewrite <- PRE7_word. cbn [mem_denot u_logM1].
 unfold adenot, v_addi. cbn [a_base a_off edenot ev ENV]. rewrite P0.
 f_equal; f_equal; lia.
 Qed.
-Lemma pre7_len_w : ltac2:(TCodec.tc2 tcn__Ju0Usage "?':'5&3'QDy8%211&>u7&QCyR0+XQj\ecfRlkE%3221%6251%;281%>3=17").
+Lemma pre7_len_w : length (word_to_le_bytes 7 (Z_to_bv 64 9071406455288693)) = 7%nat.
 Proof. apply length_N_to_le_bytes. Qed.
 Theorem ref_usage : ltac2:(TCodec.tc2 tcn__Ju0Usage "Q1'Q2&Q5vQ@(?&NvQ;vQ?&QCyR0+V_`L%3221vQ=&O%11<%:598431&J%=221&Q1&Q0&Q7'4'QDy8%211%411(6%113vQ9%93421%;11vQ:%>221%Q04ON@1").
 Proof.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
 assert (Hlen : (1 <= length av <= 1024)%nat) by (destruct Hva as [[H1 H2] _]; lia).
-assert (HR : regs_ok (EN sp0 av envv hw rdraw tid regs0) sr_mainN regs0) by (eapply main_regs_okN; eassumption).
-assert (HK : know_ok RSEGS (EN sp0 av envv hw rdraw tid regs0) mem0 kn_mainN) by (eapply main_know_okN; eassumption).
-assert (Hac : ev (EN sp0 av envv hw rdraw tid regs0) 16 = argcN av) by (eapply evN_argc; eassumption).
-change (EN sp0 av envv hw rdraw tid regs0) with (ENV (blobsN hw rdraw) (valsN sp0 av envv tid regs0)) in HR, HK, Hac.
-set (vals := valsN sp0 av envv tid regs0) in *.
+assert (HR : regs_ok (EN sp0 av envv hw rdraw tid regs0 inp) sr_mainN regs0) by (eapply main_regs_okN; eassumption).
+assert (HK : know_ok RSEGS (EN sp0 av envv hw rdraw tid regs0 inp) mem0 kn_mainN) by (eapply main_know_okN; eassumption).
+assert (Hac : ev (EN sp0 av envv hw rdraw tid regs0 inp) 16 = len_word av) by (eapply evN_argc; eassumption).
+change (EN sp0 av envv hw rdraw tid regs0 inp) with (ENV (blobsN hw rdraw) (valsN sp0 av envv rdraw tid regs0 inp)) in HR, HK, Hac.
+set (vals := valsN sp0 av envv rdraw tid regs0 inp) in *.
 assert (HL : length vals = 38%nat) by (subst vals; unfold valsN; rewrite length_app, junk_vals_length; reflexivity).
 assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-assert (P1 : vals_ev vals 1 = p0N sp0 av envv) by reflexivity.
+assert (P1 : vals_ev vals 1 = p0N av envv rdraw inp) by reflexivity.
 cbn [ev ENV] in Hac.
 edestruct (main_strN sp0 av envv uid hw rdraw tid regs0 mem0) as (Sr & Slo & Shi & Slen & t8 & Ht8); try eassumption.
 1:{ instantiate (1 := 0%nat). lia. }
-pose proof (main_strN_fits sp0 av envv uid hw rdraw Hva Hve Hvsp Hfits 0%nat ltac:(lia)) as Sfit.
+assert (Sfit : (bv_unsigned (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) 0) + Z.of_nat (length (nth 0 av [])) + 9 <= 0x800000000000)%Z)
+by (eapply (main_strN_fits sp0 av envv uid hw rdraw tid regs0 mem0); try eassumption; lia).
 rewrite <- hd_nth in Sr, Slen, Ht8, Sfit. set (a0s := hd [] av) in *.
-pose proof (u64_range (cat_argv_ptr sp0 av envv 0)) as Hppr.
+pose proof (u64_range (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) 0)) as Hppr.
 clearbody vals.
 pose proof model0_halted as Hh.
 run_blk_keep u_scrA 38%nat.
 { unfold sc_denot. cbn [branch_taken edenot ev ENV]. rewrite Hac.
-unfold bv_eqb. rewrite (u_argcN av Hva). change (bv_unsigned (Z_to_bv 64 2)) with 2%Z.
+unfold bv_eqb. unfold len_word. rewrite (u64_lit (Z.of_nat (length av))) by (pose proof (valid_argv_len av Hva); lia). change (bv_unsigned (Z_to_bv 64 2)) with 2%Z.
 apply Bool.negb_true_iff. apply Z.eqb_neq. lia. }
 assert (Habove : forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x).
 { intros x Hx. rewrite EQM. apply (mem_denot_above (ENV (blobsN hw rdraw) vals) mem0 _ 0%nat 0xea000);
@@ -142,11 +146,11 @@ clear HK2.
 set (vals1 := vals ++ junk_vals R2) in *.
 assert (HL1 : length vals1 = 70%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
 assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-assert (Q1 : vals_ev vals1 1 = p0N sp0 av envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
+assert (Q1 : vals_ev vals1 1 = p0N av envv rdraw inp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
 clearbody vals1.
 change (Env (vals_ev vals1) (blobs_ev (blobsN hw rdraw))) with (ENV (blobsN hw rdraw) vals1) in HR, HK.
 rewrite <- model0_fs.
-eapply (us_tail scfg sp0 (blobsN hw rdraw) model0 Hvsp model0_halted model0_lazy model0_fd2 a0s (p0N sp0 av envv) t8 vals1); try eassumption.
+eapply (us_tail scfg sp0 (blobsN hw rdraw) model0 Hvsp model0_halted model0_lazy model0_fd2 ltac:(rdr) a0s (p0N av envv rdraw inp) t8 vals1); try eassumption.
 - apply a0s_nonul.
 - unfold p0N. lia.
 - unfold p0N. lia.

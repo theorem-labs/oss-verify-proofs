@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: E10, at_E3, vals0, blobs0 and wrap_mem take the launch's inputs (inp, mbase and the entry PC0), M_E3 takes draw and its reserved list is init_reserved (the binary's reservations and the vDSO pair), the three shadow mappings are shown clear of the vDSO pair, and the fresh-variable literals and env lengths move by +16. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -80,25 +81,26 @@ Section Theorems.
   Let uid := in_uid inp.
   Let hw := in_hwcap inp.
   Let usp := bv_unsigned sp.
+  Let entry := Z_to_bv 64 (Z.of_N PC0).
 
   #[using="brk mbase draw inp VI VE"] Lemma SL : 0x7fff80000000 <= usp. Proof. destruct (Hsp sp brk mbase draw inp VI VE) as (H & _ & _). exact H. Qed.
   #[using="brk mbase draw inp VI VE"] Lemma SH : usp <= 0x800000000000. Proof. destruct (Hsp sp brk mbase draw inp VI VE) as (_ & H & _). exact H. Qed.
 
   (* [comment removed for export] *)
-  Definition M_E3g (a tid : word) : Model := noreplace_model 3 FL_NR LO_A LO_N (M_E3 sp brk mbase lim inp a tid).
+  Definition M_E3g (a tid : word) : Model := noreplace_model 3 FL_NR LO_A LO_N (M_E3 sp brk mbase draw lim inp a tid).
 
   #[using="Type"] Lemma M_E3_vm : forall a tid,
-    m_vmmaps (M_E3 sp brk mbase lim inp a tid) = mkVmMapsFull (segments_reserved SEGS) [] [] brk brk lim mbase sp.
+    m_vmmaps (M_E3 sp brk mbase draw lim inp a tid) = mkVmMapsFull (init_reserved (segments_reserved SEGS) mbase sp (in_kernel inp)) [] [] brk brk lim mbase sp.
   Proof. intros. reflexivity. Qed.
-  #[using="Type"] Lemma M_E3_halted : forall a tid, m_halted (M_E3 sp brk mbase lim inp a tid) = None. Proof. intros. reflexivity. Qed.
-  #[using="Type"] Lemma M_E3_lazy : forall a tid, m_vm_lazy (M_E3 sp brk mbase lim inp a tid) = []. Proof. intros. reflexivity. Qed.
-  #[using="Type"] Lemma M_E3_mat : forall a tid, m_vm_materialized (M_E3 sp brk mbase lim inp a tid) = []. Proof. intros. reflexivity. Qed.
+  #[using="Type"] Lemma M_E3_halted : forall a tid, m_halted (M_E3 sp brk mbase draw lim inp a tid) = None. Proof. intros. reflexivity. Qed.
+  #[using="Type"] Lemma M_E3_lazy : forall a tid, m_vm_lazy (M_E3 sp brk mbase draw lim inp a tid) = []. Proof. intros. reflexivity. Qed.
+  #[using="Type"] Lemma M_E3_mat : forall a tid, m_vm_materialized (M_E3 sp brk mbase draw lim inp a tid) = []. Proof. intros. reflexivity. Qed.
 
   (* [comment removed for export] *)
   #[using="usp"] Lemma KN_E3d_ok : forall a tid c M,
     tls_ok sp a -> tls_clear a = true ->
-    know_ok SEGS (E10 sp draw argv envp uid hw a tid c) M KN_E3 ->
-    know_ok SEGS (E10 sp draw argv envp uid hw a tid c) M KN_E3d.
+    know_ok SEGS (E10 inp mbase entry sp draw a tid c) M KN_E3 ->
+    know_ok SEGS (E10 inp mbase entry sp draw a tid c) M KN_E3d.
   Proof.
     intros a tid c M HT Hcl HK. unfold KN_E3d. constructor; [|exact HK].
     cbn [kentry_ok KDJ_TLS]. unfold estart, elenZ. cbn [a_base a_off edenot]. rewrite ev_E10_tls.
@@ -108,9 +110,9 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="usp"] Lemma know_shadow_change : forall a tid c M M',
-    know_ok SEGS (E10 sp draw argv envp uid hw a tid c) M KN_E3d ->
+    know_ok SEGS (E10 inp mbase entry sp draw a tid c) M KN_E3d ->
     (forall x : word, bv_unsigned x < SHB_LO \/ SHB_HI <= bv_unsigned x -> M' x = M x) ->
-    know_ok SEGS (E10 sp draw argv envp uid hw a tid c) M' KN_E3d.
+    know_ok SEGS (E10 inp mbase entry sp draw a tid c) M' KN_E3d.
   Proof.
     intros a tid c M M' HK Hout. rewrite <- KN_E3d_apart.
     eapply KNA.know_ok_filter_apart; [exact HK | intros K _ Hb; left; exact Hb |].
@@ -118,13 +120,13 @@ Section Theorems.
     rewrite !u_small in Hx by (unfold SHB_LO, SHB_HI; lia). unfold SHB_LO, SHB_HI in *. lia.
   Qed.
   (* [comment removed for export] *)
-  #[using="Type"] Lemma e3_regs : forall a tid c R, regs_ok (E10 sp draw argv envp uid hw a tid c) SR_E3 R ->
+  #[using="Type"] Lemma e3_regs : forall a tid c R, regs_ok (E10 inp mbase entry sp draw a tid c) SR_E3 R ->
     getr R 17%bv = Z_to_bv 64 222 /\ getr R 10%bv = LO_A /\ getr R 11%bv = Z_to_bv 64 LO_LEN
     /\ getr R 12%bv = Z_to_bv 64 3 /\ getr R 13%bv = FL_NR /\ getr R 15%bv = Z_to_bv 64 0.
   Proof. intros a tid c R HR. repeat split; rewrite (HR _); try reflexivity. Qed.
 
   (* [comment removed for export] *)
-  #[using="draw VI VE usp"] Lemma M_E3_wf : forall a tid, model_ivs_wf (M_E3 sp brk mbase lim inp a tid).
+  #[using="draw VI VE usp"] Lemma M_E3_wf : forall a tid, model_ivs_wf (M_E3 sp brk mbase draw lim inp a tid).
   Proof.
     intros a tid. unfold model_ivs_wf. rewrite M_E3_vm, M_E3_lazy. cbn [vm_maps vm_noaccess].
     split; [apply ivs_wf_nil | split; [apply ivs_wf_nil | split; [apply ivs_wf_nil |]]].
@@ -132,10 +134,10 @@ Section Theorems.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Type"] Lemma M_E3g_post : forall a tid, grant_post AP.KRWLAZY LO_A LO_N (M_E3 sp brk mbase lim inp a tid) (M_E3g a tid).
+  #[using="Type"] Lemma M_E3g_post : forall a tid, grant_post AP.KRWLAZY LO_A LO_N (M_E3 sp brk mbase draw lim inp a tid) (M_E3g a tid).
   Proof.
     intros a tid. unfold M_E3g, noreplace_model, with_mmap_backing. rewrite FL_NR_noreserve.
-    generalize (M_E3 sp brk mbase lim inp a tid) as m. intros m. destruct m. constructor; reflexivity.
+    generalize (M_E3 sp brk mbase draw lim inp a tid) as m. intros m. destruct m. constructor; reflexivity.
   Qed.
 
   #[using="draw VI VE usp"] Lemma M_E3g_wf : forall a tid, model_ivs_wf (M_E3g a tid).
@@ -195,9 +197,9 @@ Section Theorems.
   Qed.
   (* [comment removed for export] *)
   Record at_E3g (a tid c : word) (R : bvmap 5 word) (M : word -> option byte) (mdl : Model) : Prop := AtE3g {
-    g3_regs  : regs_ok (E10 sp draw argv envp uid hw a tid c) SR8 R;
-    g3_know  : know_ok SEGS (E10 sp draw argv envp uid hw a tid c) (mrestrict H2 M) KN_E3d;
-    g3_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem PH sp argv envp uid hw draw x;
+    g3_regs  : regs_ok (E10 inp mbase entry sp draw a tid c) SR8 R;
+    g3_know  : know_ok SEGS (E10 inp mbase entry sp draw a tid c) (mrestrict H2 M) KN_E3d;
+    g3_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem inp mbase PH entry sp draw x;
     g3_lowz  : forall x : word, SHB_LO <= bv_unsigned x < SHB_LO + 2 ^ 28 -> M x = Some (Z_to_bv 8 0);
     g3_minv  : MInv A2 mdl;
     g3_same  : same_but_materialized (M_E3g a tid) mdl;
@@ -206,16 +208,16 @@ Section Theorems.
     g3_tid   : 0 < bv_unsigned tid < 4194304 }.
 
   #[using="VI VE"] Theorem s2_e3 : forall a tid c R M K, 4096 <= lim ->
-    at_E3 sp draw argv envp uid hw a tid c R M -> tls_clear a = true ->
+    at_E3 inp mbase entry sp draw a tid c R M -> tls_clear a = true ->
     (forall R' M' mdl', at_E3g a tid c R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 A_internal_mmap_ret) M' ROM) mdl') K) ->
-    srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_internal_mmap_ecall) M ROM) (M_E3 sp brk mbase lim inp a tid)) K.
+    srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_internal_mmap_ecall) M ROM) (M_E3 sp brk mbase draw lim inp a tid)) K.
   Proof.
     intros a tid c R M K Hlim HE Hcl HK. destruct HE as [HR HKN HA HG HT Ht].
     pose proof SL as SL'. pose proof SH as SH'.
     destruct (e3_regs a tid c R HR) as (H17 & H10 & H11 & H12 & H13 & H15).
     assert (ULO : bv_unsigned LO_A = SHB_LO) by (vmeq_refl).
-    assert (Htop : bv_unsigned LO_A + page_round_up_Z LO_LEN <= alloc_top (m_vmmaps (M_E3 sp brk mbase lim inp a tid))).
+    assert (Htop : bv_unsigned LO_A + page_round_up_Z LO_LEN <= alloc_top (m_vmmaps (M_E3 sp brk mbase draw lim inp a tid))).
     { rewrite M_E3_vm. unfold alloc_top. cbn [vm_init_sp]. rewrite ULO. change (page_round_up_Z LO_LEN) with (2 ^ 28).
       unfold SHB_LO, stack_max_size, usp in *. lia. }
     eapply (srz_mmap_noreplace_free SEGS R (Z_to_bv 64 A_internal_mmap_ecall) M ROM _ ECALLW 3 FL_NR LO_A LO_LEN
@@ -224,7 +226,10 @@ Section Theorems.
               H12 H13 H15 Htop ltac:(intros _; unfold mmap_noreserve_backed_ok; rewrite FL_NR_noreserve; reflexivity) K).
     - (* [comment removed for export] *)
       rewrite M_E3_vm. cbn [vm_reserved vm_maps]. rewrite region_free_app. apply andb_true_intro. split.
-      + apply region_free_above_top. rewrite reserved_top_val, ULO. unfold IMG_HI, SHB_LO. lia.
+      + unfold init_reserved. rewrite region_free_app. apply andb_true_intro. split.
+        * apply region_free_above_top. rewrite reserved_top_val, ULO. unfold IMG_HI, SHB_LO. lia.
+        * apply vdso_free_low; [exact (proj1 (proj2 (proj2 (VE48 sp brk mbase draw inp VI VE)))) | exact SL |].
+          fold LO_N. rewrite ULO, LO_N_val. unfold SHB_LO. lia.
       + reflexivity.
     - (* [comment removed for export] *)
       replace (v_addi (Z_to_bv 64 A_internal_mmap_ecall) 4) with (Z_to_bv 64 A_internal_mmap_ret) by (apply bv_eq; reflexivity).
@@ -249,9 +254,9 @@ Section Theorems.
   (* [comment removed for export] *)
   Record bootA2 (a tid c : word) (sr : list expr) (kn : list kentry) (Mk : Model) (zr : list (Z * Z))
                  (R : bvmap 5 word) (M : word -> option byte) (mdl : Model) : Prop := BootA2 {
-    b2_regs  : regs_ok (E10 sp draw argv envp uid hw a tid c) sr R;
-    b2_know  : know_ok SEGS (E10 sp draw argv envp uid hw a tid c) (mrestrict H2 M) kn;
-    b2_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem PH sp argv envp uid hw draw x;
+    b2_regs  : regs_ok (E10 inp mbase entry sp draw a tid c) sr R;
+    b2_know  : know_ok SEGS (E10 inp mbase entry sp draw a tid c) (mrestrict H2 M) kn;
+    b2_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem inp mbase PH entry sp draw x;
     b2_zero  : Forall (fun r => forall x : word, fst r <= bv_unsigned x < snd r -> M x = Some (Z_to_bv 8 0)) zr;
     b2_minv  : MInv A2 mdl;
     b2_same  : same_but_materialized Mk mdl;
@@ -273,8 +278,8 @@ Section Theorems.
   (* [comment removed for export] *)
   #[using="Type"] Lemma munrestrict_denot_above : forall a tid c M log x,
     H2 x = false ->
-    mem_denot (E10 sp draw argv envp uid hw a tid c) (mrestrict H2 M) log x = mrestrict H2 M x ->
-    munrestrict H2 M (mem_denot (E10 sp draw argv envp uid hw a tid c) (mrestrict H2 M) log) x = M x.
+    mem_denot (E10 inp mbase entry sp draw a tid c) (mrestrict H2 M) log x = mrestrict H2 M x ->
+    munrestrict H2 M (mem_denot (E10 inp mbase entry sp draw a tid c) (mrestrict H2 M) log) x = M x.
   Proof.
     intros a tid c M log x Hh Heq. rewrite (munrestrict_visible _ _ _ _ Hh), Heq. apply mrestrict_visible'. exact Hh.
   Qed.
@@ -360,7 +365,7 @@ Section Theorems.
     - rewrite (sbm_eager _ _ HS'), (sbm_vmmaps _ _ HS'), (M_E4g_eager a tid).
       rewrite (gp_limit _ _ _ _ _ (M_E4g_post a tid)), (gp_limit _ _ _ _ _ (M_E3g_post a tid)), M_E3_vm. cbn. lia.
   Qed.
-  #[using="Type"] Lemma sr8e_regs : forall a tid c R, regs_ok (E10 sp draw argv envp uid hw a tid c) SR8e R ->
+  #[using="Type"] Lemma sr8e_regs : forall a tid c R, regs_ok (E10 inp mbase entry sp draw a tid c) SR8e R ->
     getr R 17%bv = Z_to_bv 64 222 /\ getr R 10%bv = GAP_A /\ getr R 11%bv = Z_to_bv 64 GAP_LEN
     /\ getr R 12%bv = Z_to_bv 64 0 /\ getr R 13%bv = FL_NR /\ getr R 15%bv = Z_to_bv 64 0.
   Proof. intros a tid c R HR. repeat split; rewrite (HR _); try reflexivity; apply bv_eq; reflexivity. Qed.
@@ -377,7 +382,7 @@ Section Theorems.
     assert (Hh : m_halted mdl = None) by (rewrite (sbm_halted _ _ HS); apply M_E3g_halted).
     assert (HL : lazy_cover H2 (m_vm_lazy mdl) A2) by (apply (sbm_lazy_cover _ _ HS); apply H2_cover_E3g).
     (* [comment removed for export] *)
-    run_block_A HR HKN HM HL Hh HH Hwx HA2 FUEL SHADOW_STOPS noscr 10%nat.
+    run_block_A HR HKN HM HL Hh HH Hwx HA2 FUEL SHADOW_STOPS noscr 26%nat.
     assert (EM0 : M0 = M) by (subst M0; cbn [mem_denot]; apply munrestrict_mrestrict). clearbody M0. subst M0.
     pose proof (same_but_materialized_trans _ _ _ HS HS0) as HS1.
     assert (Hh1 : m_halted mdl0 = None) by (rewrite (sbm_halted _ _ HS1); apply M_E3g_halted).
@@ -395,7 +400,10 @@ Section Theorems.
     - (* [comment removed for export] *)
       rewrite (sbm_vmmaps _ _ HS1), (gp_res _ _ _ _ _ (M_E3g_post a tid)), (gp_maps _ _ _ _ _ (M_E3g_post a tid)), M_E3_vm.
       cbn [vm_reserved vm_maps]. rewrite region_free_app. apply andb_true_intro. split.
-      + apply region_free_above_top. rewrite reserved_top_val, GAP_A_val. unfold IMG_HI. lia.
+      + unfold init_reserved. rewrite region_free_app. apply andb_true_intro. split.
+        * apply region_free_above_top. rewrite reserved_top_val, GAP_A_val. unfold IMG_HI. lia.
+        * apply vdso_free_low; [exact (proj1 (proj2 (proj2 (VE48 sp brk mbase draw inp VI VE)))) | exact SL |].
+          fold GAP_N. rewrite GAP_A_val, GAP_N_val. lia.
       + assert (ULO : bv_unsigned LO_A = SHB_LO) by (vmeq_refl).
         cbn [region_free]. unfold iv_overlap. fold GAP_N. rewrite GAP_A_val, GAP_N_val, ULO, LO_N_val.
         unfold SHB_LO. rewrite (proj2 (Z.ltb_ge 0x8fff7000 _)) by lia. cbn [andb negb]. reflexivity.
@@ -502,7 +510,7 @@ Section Theorems.
     - rewrite ULO, LO_N_val in *. rewrite (H2_in w) in Hh; [discriminate|]. unfold page_size, SHB_LO, SHB_HI in *. lia.
   Qed.
 
-  #[using="Type"] Lemma sr9e_regs : forall a tid c R, regs_ok (E10 sp draw argv envp uid hw a tid c) SR9e R ->
+  #[using="Type"] Lemma sr9e_regs : forall a tid c R, regs_ok (E10 inp mbase entry sp draw a tid c) SR9e R ->
     getr R 17%bv = Z_to_bv 64 222 /\ getr R 10%bv = HI_A /\ getr R 11%bv = Z_to_bv 64 HI_LEN
     /\ getr R 12%bv = Z_to_bv 64 3 /\ getr R 13%bv = FL_NR /\ getr R 15%bv = Z_to_bv 64 0.
   Proof. intros a tid c R HR. repeat split; rewrite (HR _); try reflexivity; apply bv_eq; reflexivity. Qed.
@@ -519,7 +527,7 @@ Section Theorems.
     assert (Hh : m_halted mdl = None) by (rewrite (sbm_halted _ _ HS); apply M_E4g_halted).
     assert (HL : lazy_cover H2 (m_vm_lazy mdl) A2) by (apply (sbm_lazy_cover _ _ HS); apply H2_cover_E4g).
     (* [comment removed for export] *)
-    run_block_A HR HKN HM HL Hh HH Hwx HA2 FUEL SHADOW_STOPS noscr 10%nat.
+    run_block_A HR HKN HM HL Hh HH Hwx HA2 FUEL SHADOW_STOPS noscr 26%nat.
     assert (EM0 : M0 = M) by (subst M0; cbn [mem_denot]; apply munrestrict_mrestrict). clearbody M0. subst M0.
     pose proof (same_but_materialized_trans _ _ _ HS HS0) as HS1.
     assert (Hh1 : m_halted mdl0 = None) by (rewrite (sbm_halted _ _ HS1); apply M_E4g_halted).
@@ -538,7 +546,10 @@ Section Theorems.
       rewrite (sbm_vmmaps _ _ HS1), (gp_res _ _ _ _ _ (M_E4g_post a tid)), (gp_maps _ _ _ _ _ (M_E4g_post a tid)),
               (gp_res _ _ _ _ _ (M_E3g_post a tid)), (gp_maps _ _ _ _ _ (M_E3g_post a tid)), M_E3_vm.
       cbn [vm_reserved vm_maps]. rewrite region_free_app. apply andb_true_intro. split.
-      + apply region_free_above_top. rewrite reserved_top_val, HI_A_val. unfold IMG_HI. lia.
+      + unfold init_reserved. rewrite region_free_app. apply andb_true_intro. split.
+        * apply region_free_above_top. rewrite reserved_top_val, HI_A_val. unfold IMG_HI. lia.
+        * apply vdso_free_low; [exact (proj1 (proj2 (proj2 (VE48 sp brk mbase draw inp VI VE)))) | exact SL |].
+          fold HI_N. rewrite HI_A_val, HI_N_val. lia.
       + assert (ULO : bv_unsigned LO_A = SHB_LO) by (vmeq_refl).
         cbn [region_free]. unfold iv_overlap. fold HI_N.
         rewrite HI_A_val, HI_N_val, GAP_A_val, GAP_N_val, ULO, LO_N_val. unfold SHB_LO.
@@ -568,27 +579,27 @@ Section Theorems.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition VALS (a tid c : word) (pl : placements) (js : list word) : list word :=
-    vals0 PH sp draw argv envp uid hw ++ [a; tid; c] ++ pl_list pl ++ js.
-  Definition EJ (a tid c : word) (pl : placements) (js : list word) : env := Env (vals_ev (VALS a tid c pl js)) (blobs0 draw argv).
+    vals0 inp mbase entry sp draw ++ [a; tid; c] ++ pl_list pl ++ js.
+  Definition EJ (a tid c : word) (pl : placements) (js : list word) : env := Env (vals_ev (VALS a tid c pl js)) (blobs0 inp draw).
 
-  #[using="Type"] Lemma EJ_app : forall a tid c pl js ks, EJ a tid c pl (js ++ ks) = Env (vals_ev (VALS a tid c pl js ++ ks)) (blobs0 draw argv).
+  #[using="Type"] Lemma EJ_app : forall a tid c pl js ks, EJ a tid c pl (js ++ ks) = Env (vals_ev (VALS a tid c pl js ++ ks)) (blobs0 inp draw).
   Proof. intros. unfold EJ, VALS. rewrite <- !app_assoc. reflexivity. Qed.
-  #[using="Type"] Lemma EJ_nil : forall a tid c pl, EJ a tid c pl [] = Env (vals_ev ((vals0 PH sp draw argv envp uid hw ++ [a; tid; c]) ++ pl_list pl)) (blobs0 draw argv).
+  #[using="Type"] Lemma EJ_nil : forall a tid c pl, EJ a tid c pl [] = Env (vals_ev ((vals0 inp mbase entry sp draw ++ [a; tid; c]) ++ pl_list pl)) (blobs0 inp draw).
   Proof. intros. unfold EJ, VALS. rewrite app_nil_r, <- app_assoc. reflexivity. Qed.
-  #[using="Type"] Lemma E10_eq : forall a tid c, E10 sp draw argv envp uid hw a tid c = Env (vals_ev (vals0 PH sp draw argv envp uid hw ++ [a; tid; c])) (blobs0 draw argv).
+  #[using="Type"] Lemma E10_eq : forall a tid c, E10 inp mbase entry sp draw a tid c = Env (vals_ev (vals0 inp mbase entry sp draw ++ [a; tid; c])) (blobs0 inp draw).
   Proof. reflexivity. Qed.
-  #[using="usp"] Lemma length_E10_vals : forall a tid c, length (vals0 PH sp draw argv envp uid hw ++ [a; tid; c]) = 10%nat.
+  #[using="usp"] Lemma length_E10_vals : forall a tid c, length (vals0 inp mbase entry sp draw ++ [a; tid; c]) = 26%nat.
   Proof. intros. rewrite length_app. cbn. unfold vals0. cbn. lia. Qed.
   #[using="Type"] Lemma ev_EJ_sp : forall a tid c pl js, ev (EJ a tid c pl js) 0%nat = sp. Proof. reflexivity. Qed.
   #[using="Type"] Lemma ev_EJ_tls : forall a tid c pl js, ev (EJ a tid c pl js) V_TLS = a. Proof. reflexivity. Qed.
-  #[using="usp"] Lemma length_VALS : forall a tid c pl js, length (VALS a tid c pl js) = (16 + length js)%nat.
+  #[using="usp"] Lemma length_VALS : forall a tid c pl js, length (VALS a tid c pl js) = (32 + length js)%nat.
   Proof. intros. unfold VALS. rewrite !length_app. cbn. unfold vals0. cbn. lia. Qed.
 
   Record bootA2j (a tid c : word) (pl : placements) (js : list word) (sr : list expr) (kn : list kentry) (Mk : Model) (zr : list (Z * Z))
                   (R : bvmap 5 word) (M : word -> option byte) (mdl : Model) : Prop := BootA2j {
     j2_regs  : regs_ok (EJ a tid c pl js) sr R;
     j2_know  : know_ok SEGS (EJ a tid c pl js) (mrestrict H2 M) kn;
-    j2_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem PH sp argv envp uid hw draw x;
+    j2_above : forall x : word, usp <= bv_unsigned x -> M x = wrap_mem inp mbase PH entry sp draw x;
     j2_zero  : Forall (fun r => forall x : word, fst r <= bv_unsigned x < snd r -> M x = Some (Z_to_bv 8 0)) zr;
     j2_minv  : MInv A2 mdl;
     j2_same  : same_but_materialized Mk mdl;
@@ -597,7 +608,7 @@ Section Theorems.
     j2_tid   : 0 < bv_unsigned tid < 4194304 }.
 
   #[using="Type"] Lemma bootA2_j : forall a tid c pl sr kn Mk zr R M mdl,
-    sr_vars_lt 10 sr = true -> kn_vars_lt 10 kn = true ->
+    sr_vars_lt 26 sr = true -> kn_vars_lt 26 kn = true ->
     bootA2 a tid c sr kn Mk zr R M mdl -> bootA2j a tid c pl [] sr kn Mk zr R M mdl.
   Proof.
     intros a tid c pl sr kn Mk zr R M mdl Hsr Hkn [G1 G2 G3 G4 G5 G6 G7 G8 G9]. constructor; rewrite ?EJ_nil; try assumption.
@@ -608,11 +619,11 @@ Section Theorems.
   (* [comment removed for export] *)
   #[using="brk mbase VI VE"] Lemma frame_block : forall a tid c pl js M log zr,
     log_below_b 0%nat [] log = true ->
-    (forall x : word, usp <= bv_unsigned x -> M x = wrap_mem PH sp argv envp uid hw draw x) ->
+    (forall x : word, usp <= bv_unsigned x -> M x = wrap_mem inp mbase PH entry sp draw x) ->
     Forall (fun r => forall x : word, fst r <= bv_unsigned x < snd r -> M x = Some (Z_to_bv 8 0)) zr ->
     Forall (fun r => forall x : word, fst r <= bv_unsigned x < snd r -> H2 x = true) zr ->
     let M0 := munrestrict H2 M (mem_denot (EJ a tid c pl js) (mrestrict H2 M) log) in
-    (forall x : word, usp <= bv_unsigned x -> M0 x = wrap_mem PH sp argv envp uid hw draw x)
+    (forall x : word, usp <= bv_unsigned x -> M0 x = wrap_mem inp mbase PH entry sp draw x)
     /\ Forall (fun r => forall x : word, fst r <= bv_unsigned x < snd r -> M0 x = Some (Z_to_bv 8 0)) zr.
   Proof.
     intros a tid c pl js M log zr Hlog HA HZ HH M0. pose proof SL. pose proof SH. split.
@@ -665,7 +676,7 @@ Section Theorems.
     pose proof H2_off as HH. pose proof wx_nowrap as Hwx. pose proof A2_wf as HA2.
     assert (Hh : m_halted mdl = None) by (rewrite (sbm_halted _ _ HS); apply M_E5g_halted).
     assert (HL : lazy_cover H2 (m_vm_lazy mdl) A2) by (apply (sbm_lazy_cover _ _ HS); apply H2_cover_E5g).
-    run_block_A HR HKN HM HL Hh HH Hwx HA2 FUEL SHADOW_STOPS noscr 16%nat.
+    run_block_A HR HKN HM HL Hh HH Hwx HA2 FUEL SHADOW_STOPS noscr 32%nat.
     lazymatch goal with |- srealizes _ (mkCfg (mkst _ _ ?m _) _) _ =>
       let body := eval unfold m in m in
       lazymatch body with munrestrict H2 M (mem_denot _ _ ?lg) =>
@@ -754,7 +765,7 @@ Section Theorems.
       - unfold H2 in Hx. apply andb_prop in Hx as [Hx _]. apply Z.leb_le in Hx. lia. }
     apply HK. constructor.
     - (* [comment removed for export] *)
-      unfold n, E, EJ. apply (regs_after_clob istrncpy_clob (VALS a tid c pl js) (blobs0 draw argv) sr R R' Hsr HR).
+      unfold n, E, EJ. apply (regs_after_clob istrncpy_clob (VALS a tid c pl js) (blobs0 inp draw) sr R R' Hsr HR).
       + intros r Hr. apply AG. exact Hr.
       + cbn. intros [H|[H|[H|[H|[H|[]]]]]]; apply (f_equal bv_unsigned) in H; discriminate H.
       + repeat constructor; cbn; intros HH; repeat (destruct HH as [HH|HH]; [apply (f_equal bv_unsigned) in HH; discriminate HH|]); exact HH.
@@ -806,8 +817,8 @@ Section Theorems.
                 (kimg_cut A_process_name_cache (A_process_name_cache + 4095) KN11e)
     = kimg_cut A_process_name_cache (A_process_name_cache + 4095) KN11e.
   Proof. vmeq_refl. Qed.
-  #[using="Type"] Lemma SR11_eq : sr_after_call_c SR10e istrncpy_clob 16 = SR11. Proof. vmeq_refl. Qed.
-  #[using="Type"] Lemma SR12_eq : sr_after_call_c SR11e istrncpy_clob 21 = SR12. Proof. vmeq_refl. Qed.
+  #[using="Type"] Lemma SR11_eq : sr_after_call_c SR10e istrncpy_clob 32 = SR11. Proof. vmeq_refl. Qed.
+  #[using="Type"] Lemma SR12_eq : sr_after_call_c SR11e istrncpy_clob 37 = SR12. Proof. vmeq_refl. Qed.
 
   Ltac kidx_img kn src :=
     kidx kn (fun K => match K with KImg lo hi => ((lo <=? src) && (src + 9 <=? hi))%Z | _ => false end).
@@ -851,7 +862,7 @@ Section Theorems.
     (forall R' M' mdl', bootA2j a tid c pl js SR11e KN11e (M_E5g a tid) ZR5 R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 A_istrncpy) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_cbn_mid) M ROM) mdl) K.
-  Proof. intros a tid c pl js R M mdl K HB HK. s2_block HB HK SHADOW_STOPS 21%nat. Qed.
+  Proof. intros a tid c pl js R M mdl K HB HK. s2_block HB HK SHADOW_STOPS 37%nat. Qed.
 
   #[using="VI VE"] Theorem s2_cbn2 : forall a tid c pl (js : list word) R M mdl K, length js = 5%nat ->
     bootA2j a tid c pl js SR11e KN11e (M_E5g a tid) ZR5 R M mdl ->
@@ -860,7 +871,7 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_istrncpy) M ROM) mdl) K.
   Proof.
     intros a tid c pl js R M mdl K Hjs HB HK.
-    assert (LEN : length (VALS a tid c pl js) = 21%nat) by (rewrite length_VALS, Hjs; reflexivity).
+    assert (LEN : length (VALS a tid c pl js) = 37%nat) by (rewrite length_VALS, Hjs; reflexivity).
     let iK := kidx_img KN11e a3_sealed_src in let iW := kidx_kwr KN11e A_process_name_cache in
     eapply (cross_istrncpy a tid c pl js SR11e KN11e (M_E5g a tid) ZR5 A_process_name_cache A_init_after_cbn iK _ _ iW _ _ R M mdl K HB
               (M_E5g_halted a tid) (H2_cover_E5g a tid)); rewrite ?LEN; try reflexivity.
@@ -877,22 +888,22 @@ Section Theorems.
     (forall R' M' mdl', at_E6 a tid c pl js R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 A_internal_mmap_ecall) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_init_after_cbn) M ROM) mdl) K.
-  Proof. intros a tid c pl js R M mdl K HB HK. unfold at_E6 in HK. s2_block HB HK SHADOW_STOPS 26%nat. Qed.
+  Proof. intros a tid c pl js R M mdl K HB HK. unfold at_E6 in HK. s2_block HB HK SHADOW_STOPS 42%nat. Qed.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   #[using="VI VE"] Theorem boot_s2 : forall a tid c pl R M K, 4096 <= lim ->
-    at_E3 sp draw argv envp uid hw a tid c R M -> tls_clear a = true ->
+    at_E3 inp mbase entry sp draw a tid c R M -> tls_clear a = true ->
     (forall js R' M' mdl', length js = 10%nat -> at_E6 a tid c pl js R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 A_internal_mmap_ecall) M' ROM) mdl') K) ->
-    srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_internal_mmap_ecall) M ROM) (M_E3 sp brk mbase lim inp a tid)) K.
+    srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_internal_mmap_ecall) M ROM) (M_E3 sp brk mbase draw lim inp a tid)) K.
   Proof.
     intros a tid c pl R M K Hlim HE Hcl HK.
     apply (s2_e3 a tid c R M K Hlim HE Hcl). intros R1 M1 m1 H1.
     apply (s2_e4 a tid c R1 M1 m1 K Hlim (at_E3g_bootA2 _ _ _ _ _ _ H1)). intros R2 M2 m2 H2'.
     apply (s2_e5 a tid c R2 M2 m2 K Hlim H2'). intros R3 M3 m3 H3.
-    assert (V1 : sr_vars_lt 10 SR10 = true) by (vmeq_refl).
-    assert (V2 : kn_vars_lt 10 KN_E3d = true) by (vmeq_refl).
+    assert (V1 : sr_vars_lt 26 SR10 = true) by (vmeq_refl).
+    assert (V2 : kn_vars_lt 26 KN_E3d = true) by (vmeq_refl).
     apply (s2_b10 a tid c pl R3 M3 m3 K (bootA2_j a tid c pl SR10 KN_E3d _ _ _ _ _ V1 V2 H3)). intros R4 M4 m4 H4.
     apply (s2_cbn1 a tid c pl R4 M4 m4 K H4). intros R5 M5 m5 H5.
     apply (s2_b11 a tid c pl _ R5 M5 m5 K H5). intros R6 M6 m6 H6.

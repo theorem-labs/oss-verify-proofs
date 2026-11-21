@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AFeu.v, with its module paths and module names changed; 81 of its 105 lines of code are new or changed and 258 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v (c-asan, frozen), module paths changed only. *)
 (* The image-free base of the Deallocate interface DGif0.DIface and its drain contract (DMspec / DMiface), beside
    ImgBase.
 
@@ -14,6 +14,7 @@
      module named after the original's file (DGgiC.Bv is the copy of DGgi.Bv), so a copy and its original are
      convertible and the walk files and their proofs are untouched. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/ImgBaseDG.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

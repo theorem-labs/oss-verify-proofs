@@ -7,9 +7,9 @@
    lib/B/YD1u.v tfib_AIL from TfibSyms B). The B twin of lib/A/FSW_entry.v fs_entry_proof, with the CTX lists and their
    trace premises dropped.
    rule 24: proves function LLVMFuzzerTestOneInput (segment top; reuse search: proof-index LLVMFuzzerTestOneInput,
-   no released asan or asan-ubsan proof of fuzz_state's LLVMFuzzerTestOneInput; ported from a working branch
-   08ad70da3bf).
-   Ported from: lib/A/FSW_entry.v (a working branch 0d34d65d2b7), itself from cgif_file_fuzzer
+   no released asan or asan-ubsan proof of fuzz_state's LLVMFuzzerTestOneInput; ported from a working branch).
+   
+   Ported from: lib/A/FSW_entry.v (a working branch), itself from cgif_file_fuzzer
    lib/A/ACfj.v:230-257 and lib/A/ACfi.v:103-141.
    Section t hypotheses: none. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

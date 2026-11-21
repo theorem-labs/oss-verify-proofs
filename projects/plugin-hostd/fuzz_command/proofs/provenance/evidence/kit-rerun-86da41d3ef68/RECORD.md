@@ -30,7 +30,7 @@ behind `strictcmp3.py cmp`) by address. It is used where `strictcmp3.py cmp` can
 one image, a part of a function, or the parts before and after an inserted word. It checks the kit id and every
 member's sha256 before it runs, and it lists the words that bytecmp counts as real differences.
 
-## Inventory of the claims (shipped tree 781f46bc05cd, series base plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record))
+## Inventory of the claims (shipped tree, series base plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record))
 
 Lines of `proofs/plugin-hostd/fuzz_command` matched: `modulo pc-relative` 39 lines in 26 files; `same code` 9 lines;
 `byte for byte` or `byte-identical` 3 lines; `word for word` 125 lines in 104 files; other code-equality wordings

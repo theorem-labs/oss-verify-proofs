@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the gap witness keeps its lower bound, for the revised placement window). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -144,4 +145,35 @@ Proof.
   intros h B n Hn HB HBal HT BND.
   destruct (gap_witness_fit h B (alloc_top h) n Hn HB HBal HT BND) as (g & G1 & G2 & G3 & G4 & G5).
   exists g. repeat split; assumption.
+Qed.
+
+(* LPS 727298f3: a fresh grant is placed only in [page_size, mmap_top) or
+   [task_unmapped_base, alloc_top).  The two corollaries below keep the lower bound
+   that [gap_witness_fit_top] drops, and turn it into that window fact; they are
+   as in boost-beast/http_request As/SecGap.v. *)
+Corollary gap_witness_fit_top_lo : forall (h : VmMaps) (B n : Z),
+  0 < n -> 0 < B -> B mod 4096 = 0 -> alloc_top h < 2^64 ->
+  B + cost n B (vm_reserved h ++ vm_maps h) + n <= alloc_top h ->
+  exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g
+                   /\ B <= bv_unsigned g
+                   /\ bv_unsigned g + n <= alloc_top h
+                   /\ region_free (vm_reserved h ++ vm_maps h) g (Z_to_bv 64 n) = true.
+Proof.
+  intros h B n Hn HB HBal HT BND.
+  destruct (gap_witness_fit h B (alloc_top h) n Hn HB HBal HT BND) as (g & G1 & G2 & G3 & G4 & G5).
+  exists g. repeat split; assumption.
+Qed.
+
+Corollary gap_witness_fit_top_window : forall (h : VmMaps) (B n : Z),
+  0 < n -> task_unmapped_base <= B -> B mod 4096 = 0 -> alloc_top h < 2^64 ->
+  B + cost n B (vm_reserved h ++ vm_maps h) + n <= alloc_top h ->
+  exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g
+                   /\ bv_unsigned g + n <= alloc_top h
+                   /\ region_free (vm_reserved h ++ vm_maps h) g (Z_to_bv 64 n) = true
+                   /\ (bv_unsigned g + n <= mmap_top h \/ task_unmapped_base <= bv_unsigned g).
+Proof.
+  intros h B n Hn HB HBal HT BND.
+  assert (HB0 : 0 < B) by (unfold task_unmapped_base in HB; lia).
+  destruct (gap_witness_fit_top_lo h B n Hn HB0 HBal HT BND) as (g & G1 & G2 & G3 & G4 & G5).
+  exists g. repeat split; try assumption. right. lia.
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fdchan_sbm over the seven-field Model record; writev's iovec copy-in accesses now start with iovec_entry_accesses, so each access lies inside its own 16-byte descriptor instead of being exactly 16 bytes: new iovec_entry_accesses_in, and copy_iovecs_accesses_in, import_iovecs_accesses_in and wl_copyins_avoid restated). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -148,7 +149,9 @@ Local Notation AIW md := (AI tfxsegs (w_H W) (w_A W) md).
 Lemma fdchan_sbm : forall fd ch m m', fdchan fd ch m -> same_but_materialized m m' -> fdchan fd ch m'.
 Proof.
 intros fd ch m m' Hf Hs. unfold same_but_materialized in Hs. rewrite Hs.
-destruct m as [fds [maps lazy mat] io fs proc lim tm sg sc]; img_exact Hf.
+(* 08b1429: Model is mkModelOf fd vm io fsys proc lim time; fdchan reads only m_fd and m_proc, which
+   with_vm_backing keeps *)
+destruct m as [fd0 vm0 io0 fs0 pr0 lim0 tm0]; img_exact Hf.
 Qed.
 Lemma mrestrict_vis : forall (m : word -> option byte) (x : word), HH x = false -> mrestrict HH m x = m x.
 Proof. intros m x Hx. unfold mrestrict. rewrite Hx. img_refl. Qed.
@@ -272,39 +275,70 @@ Qed.
 Lemma ranges_avoid_of_elems : forall l,
 (forall a n, In (a, n) l -> range_avoids HH a n) -> ranges_avoid HH l.
 Proof. intros l Hl a n Hin. img_exact (Hl a n Hin). Qed.
+(* [copy_iovecs_accesses] (LPS State.v:1728) no longer heads with the
+   unconditional [(a, 16%nat)].  It heads with [iovec_entry_accesses]
+   (State.v:1713), which answers [] when [iov_len] at [a + 8] is
+   unreadable, [(a + 8, 8%nat)] when only [iov_base] is, and the old
+   [(a, 16%nat)] when both read.  So the length is no longer always 16;
+   what every caller here uses, and what still holds, is that each
+   access lies inside its own descriptor's 16 bytes. *)
+Lemma iovec_entry_accesses_in : forall mp (a b : word) n,
+bv_unsigned a + 16 <= 2^64 ->
+In (b, n) (iovec_entry_accesses mp a) ->
+bv_unsigned a <= bv_unsigned b /\ bv_unsigned b + Z.of_nat n <= bv_unsigned a + 16.
+Proof.
+intros mp a b n Ha Hin. pose proof (u64_range a) as Hra.
+assert (Hu : bv_unsigned (a + 8)%bv = bv_unsigned a + 8).
+{ rewrite bv_add_unsigned. unfold bv_wrap. img_change (bv_modulus 64) with (2^64).
+replace (bv_unsigned (8%bv : word)) with 8 by img_refl. img_apply Z.mod_small. img_lia. }
+unfold iovec_entry_accesses in Hin.
+destruct (read_u64 mp (a + 8)%bv); [|img_try (destruct Hin)].
+destruct (read_u64 mp a).
+- destruct Hin as [Heq | []]. injection Heq as <- <-.
+cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. img_lia.
+- destruct Hin as [Heq | []]. injection Heq as <- <-.
+rewrite Hu. cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. img_lia.
+Qed.
 Lemma copy_iovecs_accesses_in : forall mp k (a b : word) n,
 bv_unsigned a + 16 * Z.of_nat k <= 2^64 ->
 In (b, n) (copy_iovecs_accesses mp a k) ->
-n = 16%nat /\ exists i, (i < k)%nat /\ bv_unsigned b = bv_unsigned a + 16 * Z.of_nat i.
+exists i, (i < k)%nat /\ bv_unsigned a + 16 * Z.of_nat i <= bv_unsigned b
+/\ bv_unsigned b + Z.of_nat n <= bv_unsigned a + 16 * Z.of_nat i + 16.
 Proof.
-intros mp k; induction k as [|k IH]; intros a b n Hk Hin; cbn in Hin; [img_try (destruct Hin)|].
-destruct Hin as [Heq | Hin].
-- injection Heq as <- <-. split; [img_refl|]. exists 0%nat. split; [img_lia|]. img_lia.
+intros mp k; induction k as [|k IH]; intros a b n Hk Hin;
+cbn [copy_iovecs_accesses] in Hin; [img_try (destruct Hin)|].
+pose proof (u64_range a) as Hra.
+apply in_app_or in Hin. destruct Hin as [Hin | Hin].
+- destruct (iovec_entry_accesses_in mp a b n ltac:(img_lia) Hin) as [Hlo Hhi].
+exists 0%nat. split; [img_lia|]. split; img_lia.
 - destruct (read_iovec_entry mp a) as [? len| |]; [|img_try (destruct Hin)|img_try (destruct Hin)].
 destruct k as [|k']; [img_try (cbn in Hin; destruct Hin)|].
 assert (Hu : bv_unsigned (a + 16)%bv = bv_unsigned a + 16).
 { rewrite bv_add_unsigned. unfold bv_wrap. img_change (bv_modulus 64) with (2^64).
-pose proof (u64_range a). replace (bv_unsigned (16%bv : word)) with 16 by img_refl.
+replace (bv_unsigned (16%bv : word)) with 16 by img_refl.
 img_apply Z.mod_small. img_lia. }
-destruct (IH (a + 16)%bv b n ltac:(img_try (rewrite Hu; img_lia)) Hin) as [Hn [i [Hi Hb]]].
-split; [img_try (img_exact Hn)|]. exists (S i). split; [img_lia|]. rewrite Hb, Hu. img_lia.
+destruct (IH (a + 16)%bv b n ltac:(img_try (rewrite Hu; img_lia)) Hin) as [i [Hi [Hlo Hhi]]].
+rewrite Hu in Hlo, Hhi. exists (S i). split; [img_lia|]. split; img_lia.
 Qed.
 Lemma import_iovecs_accesses_in : forall mp (a b cnt : word) n,
 (1 <= bv_unsigned cnt <= 2)%Z ->
 bv_unsigned a + 16 * bv_unsigned cnt <= 2^64 ->
 In (b, n) (import_iovecs_accesses mp a cnt) ->
-n = 16%nat /\ exists i, (Z.of_nat i < bv_unsigned cnt)%Z /\ bv_unsigned b = bv_unsigned a + 16 * Z.of_nat i.
+exists i, (Z.of_nat i < bv_unsigned cnt)%Z
+/\ bv_unsigned a + 16 * Z.of_nat i <= bv_unsigned b
+/\ bv_unsigned b + Z.of_nat n <= bv_unsigned a + 16 * Z.of_nat i + 16.
 Proof.
 intros mp a b cnt n Hc Ha Hin. unfold import_iovecs_accesses in Hin.
 destruct (bv_eqb cnt (Z_to_bv 64 1)) eqn:E1.
-- apply bv_eqb_eq in E1. destruct (negb (access_okb a 16)); [img_try (destruct Hin)|].
-destruct Hin as [Heq|[]]. injection Heq as <- <-. split; [img_refl|]. exists 0%nat. split; [img_lia|img_lia].
+- destruct (negb (access_okb a 16)); [img_try (destruct Hin)|].
+destruct (iovec_entry_accesses_in mp a b n ltac:(img_lia) Hin) as [Hlo Hhi].
+exists 0%nat. split; [img_lia|]. split; img_lia.
 - destruct (bv_eqb cnt (Z_to_bv 64 0)); [img_try (destruct Hin)|].
 destruct (IOV_MAX <? bv_unsigned cnt)%Z; [img_try (destruct Hin)|].
 destruct (negb (access_okb a (16 * bv_unsigned cnt))); [img_try (destruct Hin)|].
 assert (Hw : Z.of_nat (word_to_nat cnt) = bv_unsigned cnt) by (img_try (unfold word_to_nat; rewrite Z2Nat.id; [img_refl|img_lia])).
-destruct (copy_iovecs_accesses_in mp (word_to_nat cnt) a b n ltac:(img_try (rewrite Hw; img_lia)) Hin) as [Hn [i [Hi Hb]]].
-split; [img_try (img_exact Hn)|]. exists i. split; [img_lia|img_try (img_exact Hb)].
+destruct (copy_iovecs_accesses_in mp (word_to_nat cnt) a b n ltac:(img_try (rewrite Hw; img_lia)) Hin) as [i [Hi [Hlo Hhi]]].
+exists i. split; [img_lia|]. split; [img_exact Hlo | img_exact Hhi].
 Qed.
 Lemma iov_prefix_accesses_in : forall iovs left (b : word) m,
 In (b, m) (iov_prefix_accesses iovs left) -> exists len, In (b, len) iovs /\ (m <= word_to_nat len)%nat.
@@ -406,9 +440,9 @@ assert (Hcv : iovcnt32 (Z_to_bv 64 c) = Z_to_bv 64 c) by (img_try (destruct Hc12
 rewrite Hcv in Hin.
 assert (Hcu : (1 <= bv_unsigned (Z_to_bv 64 c) <= 2)%Z) by (img_try (rewrite u_Z2bv by img_lia; img_lia)).
 assert (Hnw : bv_unsigned (Z_to_bv 64 (SP + 40 - 16 * c)) + 16 * bv_unsigned (Z_to_bv 64 c) <= 2 ^ 64) by (img_try (rewrite !u_Z2bv by img_lia; img_lia)).
-destruct (import_iovecs_accesses_in _ _ _ _ _ Hcu Hnw Hin) as [-> [i [Hi Hb]]].
-rewrite !u_Z2bv in Hi, Hb by img_lia.
-img_apply (range_avoids_of_vis W a 16 (SP + 8) (SP + 40) HvisW); cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in *; img_lia.
+destruct (import_iovecs_accesses_in _ _ _ _ _ Hcu Hnw Hin) as [i [Hi [Hlo Hhi]]].
+rewrite !u_Z2bv in Hi, Hlo, Hhi by img_lia.
+img_apply (range_avoids_of_vis W a m (SP + 8) (SP + 40) HvisW); cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in *; img_lia.
 - destruct (iov_prefix_accesses_in _ _ _ _ Hin) as [len [Hil Hm]].
 destruct (Nat.eq_dec m 0) as [-> | Hm0]; [img_try (intros k Hk; exfalso; img_lia)|].
 destruct Hc12 as [-> | ->]; cbn [Z.eqb Pos.eqb] in Hil, Hv0.

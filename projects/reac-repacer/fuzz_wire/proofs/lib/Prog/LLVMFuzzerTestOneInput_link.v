@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_link.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_link.v at fuzz_wire's
    module paths and callees. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The per-callee bundle of fuzz_wire plain (as libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_link.v).
    It takes the frame allocator apart and hands the harness-body walk (lib/Prog/LLVMFuzzerTestOneInput.v) every
    contract it assumes: malloc (0x14484) and free (0x14344) from the allocator, memcpy from the kit's walk, the seven

@@ -7,10 +7,10 @@
 
    port-from:
    - fuzz_alloc_live / _peak / _peak_reset / _fail, fuzz_malloc, fuzz_free: a Theorem Labs lane's lib/A/FMH_Fn.v:75-157
-     (a working branch e48bf3cce32). fs's code for these is byte-identical to fm's modulo addresses
+     (a working branch). fs's code for these is byte-identical to fm's modulo addresses
      (a Theorem Labs lane FsBinMatch.md section 3), and the specs are fm's generalised from U = [] to any U.
    - fuzz_strdup, fuzz_realloc: NEW (fm links neither). Functional content from fs's own released plain contracts
-     lib/Prog/fuzz_strdup_c.v:29-60 and lib/Prog/fuzz_realloc_c.v:29-66 @ c8557374ad2e, restated in ASan form.
+     lib/Prog/fuzz_strdup_c.v:29-60 and lib/Prog/fuzz_realloc_c.v:29-66, restated in ASan form.
 
    All numerals, frames, stack budgets and the fpreU / fs_glob / fs_rblock instances come from S0
    (lib/A/FSH_Base.v, lib/A/FSH_Gen.v); this file defines no numeral of its own. fs_heads is FSupoisonU's
@@ -18,7 +18,7 @@
    (a Theorem Labs lane, 20:41Z). The realloc arm itself is NOT stated here: a Theorem Labs lane owns the one shared primary-size realloc
    contract (lead, 20:53Z), and this group's fuzz_realloc walk consumes it.
 
-   RESTATED 2026-10-28T21:3xZ on S0 7dd4849273a, three changes, all found by the ALLOC walk lanes:
+   RESTATED 2026-10-28T21:3xZ on S0, three changes, all found by the ALLOC walk lanes:
    (1) FP. The ajournal image clause used to freeze every non-owned in-image byte when FP = [], which made any
        post that changes fuzz/alloc.c's statics contradictory (a Theorem Labs lane / owner 21:23Z, a Theorem Labs lane's text). The
        clause now exempts `inFP FP a`, and fs's four statics are FS_PSTAT_FP (lib/A/FSPstat.v). So every arm that
@@ -35,7 +35,7 @@
        all 9 sites in each image build a size >= 1 by construction (strlen + 1, len + 1, count + 1, len/4*3 + 3,
        (len+2)/3*4 + 1, 8 * cap and 56 * cap with cap >= 8, and a capacity >= 4096), and the released
        `n + 16 <= 2 ^ 30` premise (lib/Prog/fuzz_malloc_c.v:34) rules out a wrap to 0. Measured list, disassembly-based
-       (src/preset_file.c is not in git at c8557374ad2e): (internal path).
+       (src/preset_file.c is not in git): (internal path).
        This matches the donor a Theorem Labs lane, whose fuzz_malloc_spec takes `1 <= n`. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

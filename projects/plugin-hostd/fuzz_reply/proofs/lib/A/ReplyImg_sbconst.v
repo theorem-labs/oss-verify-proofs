@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs (for the cf layer at plugin-hostd/fuzz_reply; row img-sbconst-A).
    rule 24: no function proved (kind: image row; a closed computation over reply image A's constant-cell table,
    fuzz_reply.asan, pin 42c58610e125).
 
-   SB_CONST at image A.  The cf layer's Definition SB_CONST (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainQ.v:45
-   @ 1c81ef042c9; the premise SBC at :154) is stated over the image class's im_const under [Context {IM : AImg}].  The
+   SB_CONST at image A.  The cf layer's Definition SB_CONST (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainQ.v:45;
+   the premise SBC at :154) is stated over the image class's im_const under [Context {IM : AImg}].  The
    reply tree does not carry that layer file, so the Lemma below states SB_CONST's body VERBATIM at reply's instance
-   IM := AImg_reply (proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:23 @ d2bd679271c, im_const := lib/A/AF0m.v:817
+   IM := AImg_reply (proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:24, im_const := lib/A/AF0m.v:818
    Tfib_const).  The cell c8 (AInst o_space) (ASp 0) is found by a scan of that table (ImgBase.cell_lookup, vm_compute).
-   cgif's discharge pattern: YFhl.sb_cell (at reply: proofs/plugin-hostd/fuzz_reply/lib/A/AFhl.v:122-126 @ d2bd679271c). *)
+   cgif's discharge pattern: YFhl.sb_cell (at reply: proofs/plugin-hostd/fuzz_reply/lib/A/AFhl.v:122-126). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -26,7 +27,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import ImgBas
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AGif2reply.
 Open Scope Z_scope.
 
-(* SB_CONST at image A: YGcfInstDrainQ.v:45, commit 1c81ef042c9. *)
+(* SB_CONST at image A: YGcfInstDrainQ.v:46. *)
 Lemma SB_CONST_A : forall ly, In (ACell (AInst o_space) 8 (AV (ASp 0))) (@im_const AImg_reply ly).
 Proof.
 intros ly. apply (cell_lookup_In _ (AInst o_space)). vm_compute. reflexivity.

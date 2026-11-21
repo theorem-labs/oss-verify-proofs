@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YC7z.v, with its module paths and module names changed; 18 of its 40 lines of code are new or changed and 51 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_catalogue (catalogue.c:38-43; fuzz_segconf.asan 0x8a100, 72 bytes, 18 instructions; frame 16 bytes, no
    side-stack frame): the contract of the ASan build's code, in plugin-hostd/fuzz_command's lib/A/Prog form
    (afn_pre at the entry, SRr of apost_base at the return).
@@ -12,7 +13,7 @@
    agreed with the G3 contracts lane (reac_segconf_parse_file, the one caller) and accepted by the contracts lane.
    The same code is walked in libreac/fuzz_identity's ASan image: its lib/A/Prog/reac_box_catalogue.v (tcat_spec)
    is one of the callee contracts with a proved walk that its lib/A/Prog/IdentEntryLink.v:22 lists (and :261-263
-   applies), at origin/ossv/recipes 501c0d516c69. Its spec takes the count pointer nonzero (8-aligned, in a
+   applies). Its spec takes the count pointer nonzero (8-aligned, in a
    side-stack frame or the real stack); this one keeps the plain contract's c = 0 arm, which the code has
    (beqz 0x8a108).
    What the code does (objdump of fuzz_segconf.asan, 0x8a100-0x8a144): a 16-byte frame (saves ra); c = 0 skips to

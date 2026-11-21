@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v for fuzz_grant's ASan image and grant_shape; module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_grant/lib/A/GrantTFIB.v for fuzz_command's ASan image and cmd_shape; names, comment and module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/CmdTFIB.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; cmd_shape -> seg_shape (lib/A/SegShape.v), cmdsegs0 -> segsegs0. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/CmdTFIB.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; cmd_shape -> seg_shape (lib/A/SegShape.v), cmdsegs0 -> segsegs0. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput); internal commit ids in comments replaced by public commits or removed. *)
 (* What the ASan side of fuzz_command's two ASan statements proves: from every valid start, the ASan build realizes
    the same trace set SPECX as the plain build (lib/Reusable/YK18.v srealizes, no cut). *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -20,6 +21,8 @@ Definition TFIB_T : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk segsegs0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+(* 727298f3: [valid_entry]'s fifth conjunct, the launch's own check, read by the start-up's invariant. *)
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes segsegs0
 (init_config segsegs0 Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=seg_shape) inp).

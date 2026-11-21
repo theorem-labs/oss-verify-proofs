@@ -11,7 +11,7 @@ From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Rt Require Import PfFacts SnShared S
 Import ListNotations.
 Local Open Scope Z_scope.
 
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamDef.v (a working branch 3e35620c52e) *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamDef.v (a working branch) *)
 Fixpoint pf_args_slack (ws : list Z) (args : list pf_arg) : Prop :=
   match args, ws with
   | [], _ => True
@@ -33,7 +33,7 @@ intros PK ilo ihi rd rs f ws T (fmt & ps & args & A & B & C & D & E & F & _ & _ 
 exists fmt, ps, args. repeat (split; [assumption|]). exact F.
 Qed.
 
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_sh.v (a working branch 3e35620c52e) *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_sh.v (a working branch) *)
 Fixpoint pf_args_amem (ws : list Z) (args : list pf_arg) : Prop :=
   match args, ws with
   | APtr s :: a', w :: w' => amem_range w (Z.of_nat (length s) + 8) /\ pf_args_amem w' a'
@@ -41,7 +41,7 @@ Fixpoint pf_args_amem (ws : list Z) (args : list pf_arg) : Prop :=
   | _, _ => True
   end.
 
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFF.v (a working branch 3e35620c52e) *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFF.v (a working branch) *)
 Lemma amem_range_top : forall p n, amem_range p n -> p + n <= kHighMemEnd - 1.
 Proof. intros p n H. unfold amem_range, kLowMemEnd, kHighMemBeg, kHighMemEnd in *. lia. Qed.
 

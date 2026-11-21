@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image B (asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43; relocated from pin f8f98a95bc52 by alreloc c4338d099cfb8025): field
    wfrk_ret of the primed keep record wrap_free_walk_keep_cf_rh (lib/Reusable/YGcfMallocComposeKeep.v:408-422)
    at image B, as WrapFreeBStmt.wf_ret_stmt (the field verbatim; wf_ret_of_record checks it) with segs := tfibsegs,
-   atpD := 1 (FROM_MALLOC, asan_free's a5), ARX := YGcfInstBase.ARXq_cf (YGcfInstBase.v:480) at IM := AGif2cgif.AImg_cgif
+   atpD := 1 (FROM_MALLOC, asan_free's a5), ARX := YGcfInstBase.ARXq_cf (YGcfInstBase.v:481) at IM := AGif2cgif.AImg_cgif
    and IOK := (fun i => i = as_inst B), K := K_F.
    K_F, the invariant from the call segment (WrapFreeBF1.v) to this one, carries what the interceptor's epilogue reads
    after Deallocate returns: the stack pointer and return address at Deallocate's entry (asan_free tail-jumps, so
@@ -11,16 +12,16 @@
    saved registers in the interceptor's frame, and the caller's stack window present.
    The run is WrapFreeBRet.seg_ret (the ten-instruction epilogue, ported from YFh1.v:336-370); this file reads no
    instruction. What carries the frame over Deallocate: the primed post YGcfRehidePost.dealloc_post_raw_rh
-   (YGcfRehidePost.v:395-401). Its raw frame keeps the caller's stack window outside Deallocate's own window: the window
+   (YGcfRehidePost.v:396-402). Its raw frame keeps the caller's stack window outside Deallocate's own window: the window
    is not aowned (AR_stack_law_cf at both states, layout_le keeping the stack bounds), not errno, and not the freed block
    (YGcfBlockRange.block_user_range_cf, YGcfBlockRange.v:31, puts a live block below the stack). Its hidden-set bound
    wle_in grows the hidden set only inside dead_shadow_new, which lies below kHighMemBeg
-   (YGcfRehidePost.dead_shadow_new_high, YGcfRehidePost.v:244), so the window stays visible.
+   (YGcfRehidePost.dead_shadow_new_high, YGcfRehidePost.v:245), so the window stays visible.
    The post's ARX is built by ARXq_cf_intro / ARX_cf_start: IOK from the post's ARX (ARXq_cf_iok), ARcf by
    AR_laws_ok_cf's frame law (the epilogue stores nothing; the model changes by materialization only), xs_mapped_cf by
    YGcfXs.ARcf_xsm (YGcfXs.v:201), qtight the field's premise. The memnorm keep holds as the memory is unchanged.
    Port: the block arm of the malloc walk's lib/AU/WrapMallocBM2.v (its return-segment proof), whose
-   helpers ap_tr (WrapMallocBM2.v:63-69) and wvb_self_m / same_io_wvb_m (WrapMallocBM1.v:55-58) are restated here
+   helpers ap_tr (WrapMallocBM2.v:64-70) and wvb_self_m / same_io_wvb_m (WrapMallocBM1.v:56-59) are restated here
    with the suffix _f (the free walk does not import the malloc walk's field files). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YImgCellsB.

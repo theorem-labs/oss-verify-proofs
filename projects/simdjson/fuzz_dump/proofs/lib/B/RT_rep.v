@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the runtime representation's mapped-stack window starts 0x5D0000 bytes (STACK_SPAN) below the start's stack pointer instead of at the 8 MiB allocator ceiling, and the runtime invariant's reserved list is the image's reservations followed by at most two vDSO intervals of at most 81920 bytes that every tracked mapping stays apart from (with lemmas for ranges inside a mapping, a grant and an unmap). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Permutation.
@@ -153,7 +154,10 @@ Definition shadow_rep (L : layoutA) (m : mem) : Prop :=
   /\ stk bsegs m (pg_dn (shad 0x10000)) (shad SEGTOP_A)
   /\ static_acc m
 
-  /\ stk bsegs m (l_ACEIL L) (l_top L).
+  (* LPS 727298f3: the mapped stack is guaranteed only [STACK_SPAN] below the
+     start's sp, not [STACK_WIN] (RT_iface.STACK_SPAN); the window was
+     [stk bsegs m (l_ACEIL L) (l_top L)]. *)
+  /\ stk bsegs m (l_sp0 L - STACK_SPAN) (l_top L).
 
 Definition shreg (z : Z) : Prop := (K_LOW_SHADOW_lo <= z < K_LOW_SHADOW_hi) \/ (K_HIGH_SHADOW_lo <= z < K_HIGH_SHADOW_hi).
 
@@ -206,8 +210,108 @@ Definition artm_sys (Σ : rtsA) (mo : Model) : Prop :=
   /\ NodesA_madv.noaccess_pos mo.
 
 Definition ARTM_A (Σ : rtsA) (mo : Model) : Prop :=
-  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ) /\ vm_reserved (m_vmmaps mo) = segments_reserved bsegs
+  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ)
+  (* LPS 75d69e00: the reserved ledger is NO LONGER the image's reservations alone.
+     [State.init_model] seeds [vm_reserved] with [State.init_reserved reserved mbase sp kb
+     = reserved ++ vdso_reserved kb (page_round_down_Z (Z.min mbase (sp - stack_max_size)))]
+     (75d69e00:theories/LinuxProcessSem/State.v:7716-7721, :7786), and [State.vdso_reserved]
+     (State.v:6540-6545) answers [[]] only when [top - vdso_len kb < page_size], which
+     [Run.valid_mmap_base] never permits.  So the tail is always the vDSO pair: at most two
+     intervals (State.v:6540-6545 emits exactly two).  The clause keeps the tail's COUNT
+     (at most two) and its BYTES (at most 81920, the table's [resx_bytes] of 20 pages):
+     [AS/AsanPlanSound.v]'s [co_res] bounds them by [n_resx] and [resx_bytes], which the
+     ASan tables set to 2 and 20 pages; the byte bound is what keeps
+     [RT_sys_grant.ledger_gap]'s [live_bytes] finite.  The fourth component
+     -- every tracked mapping apart from the tail -- is its [co_mres], and it is the one
+     that does the work at this layer.  NO NUMERIC BOUND separates these nodes' ranges from
+     the pair: [RT_state.grant_ok] forces [K_HIGH_SHADOW_hi <= l_PRB], because its low-shadow
+     disjunct [l_PRB + 0x2000011000 <= K_LOW_SHADOW_lo] is impossible for a reservation of
+     0x2000011000 bytes, so the primary allocator region sits ABOVE the pair and every range
+     [RT_sys_stmt.fixed_commit_node] grants lies inside it.  That is the model's own finding for the
+     same obligation (75d69e00:theories/Common/AsanPlanSound.v:420-427, [co_mres]: "their
+     range is named up to the allocation ceiling, inside a tracked entry, which may sit above
+     the extra reservations, so no numeric bound can place it below them"). *)
+  /\ (exists rx, vm_reserved (m_vmmaps mo) = segments_reserved bsegs ++ rx
+                 /\ (length rx <= 2)%nat
+                 /\ live_bytes rx <= 81920
+                 /\ Forall (fun e => Forall (iv_apart e) rx) (vm_maps (m_vmmaps mo)))
   /\ vm_limit (m_vmmaps mo) = VMLIMIT /\ eager_used mo <= E0_MAX + rt_eager Σ /\ artm_sys Σ mo.
+
+(* The three ways this tree uses ARTM_A's reserved clause, packaged so each consumer is one
+   application and the LPS 75d69e00 argument is written down once.
+
+   [artm_res_free_in_maps]: a range INSIDE a tracked mapping is free of the whole ledger.
+   Every range the mmap_fixed, madvise and munmap nodes name is of that shape, and the
+   clause's fourth component is what carves the vDSO tail out of it.
+
+   [artm_res_cons]: the clause survives a step that only GROWS [vm_maps] by a range already
+   known free of the ledger -- which is exactly what a grant proves of itself.
+
+   [artm_res_sub]: it survives a step that only SHRINKS [vm_maps] entrywise. *)
+Lemma artm_res_free_in_maps : forall (mo : Model) (lo n : word) (e : word * word),
+  (exists rx, vm_reserved (m_vmmaps mo) = segments_reserved bsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 81920
+              /\ Forall (fun q => Forall (iv_apart q) rx) (vm_maps (m_vmmaps mo))) ->
+  In e (vm_maps (m_vmmaps mo)) ->
+  bv_unsigned (fst e) <= bv_unsigned lo ->
+  bv_unsigned lo + bv_unsigned n <= bv_unsigned (fst e) + bv_unsigned (snd e) ->
+  region_free (segments_reserved bsegs) lo n = true ->
+  region_free (vm_reserved (m_vmmaps mo)) lo n = true.
+Proof.
+  intros mo lo n e (rx & Hres & _ & _ & Hme) He H1 H2 Himg.
+  rewrite Hres. apply region_free_intro. intros a sz Hin.
+  apply in_app_or in Hin as [Hin|Hin].
+  - exact (region_free_In _ _ _ a sz Himg Hin).
+  - pose proof (proj1 (Forall_forall _ _) (proj1 (Forall_forall _ _) Hme e He) (a, sz) Hin) as D.
+    unfold iv_apart in D. cbn [fst snd] in D.
+    unfold iv_overlap. apply andb_false_iff.
+    destruct D as [D|D]; [right | left]; apply Z.ltb_ge; lia.
+Qed.
+
+Lemma artm_res_cons : forall (R M : list (word * word)) (p : word * word),
+  (exists rx, R = segments_reserved bsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 81920
+              /\ Forall (fun q => Forall (iv_apart q) rx) M) ->
+  region_free (R ++ M) (fst p) (snd p) = true ->
+  exists rx, R = segments_reserved bsegs ++ rx
+             /\ (length rx <= 2)%nat
+             /\ live_bytes rx <= 81920
+             /\ Forall (fun q => Forall (iv_apart q) rx) (p :: M).
+Proof.
+  intros R M p (rx & Hres & Hcnt & Hrx & Hme) Hfp.
+  exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hrx|].
+  constructor; [|exact Hme].
+  apply Forall_forall. intros [b sz] Hq.
+  assert (Hin : In (b, sz) (R ++ M))
+    by (apply in_or_app; left; rewrite Hres; apply in_or_app; right; exact Hq).
+  pose proof (region_free_In _ _ _ b sz Hfp Hin) as X.
+  unfold iv_overlap in X. unfold iv_apart. cbn [fst snd].
+  apply andb_false_iff in X as [X|X]; apply Z.ltb_ge in X; [right | left]; lia.
+Qed.
+
+Lemma artm_res_sub : forall (R M M' : list (word * word)),
+  (exists rx, R = segments_reserved bsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 81920
+              /\ Forall (fun q => Forall (iv_apart q) rx) M) ->
+  (forall q, In q M' -> exists r, In r M
+                                  /\ bv_unsigned (fst r) <= bv_unsigned (fst q)
+                                  /\ bv_unsigned (fst q) + bv_unsigned (snd q)
+                                     <= bv_unsigned (fst r) + bv_unsigned (snd r)) ->
+  exists rx, R = segments_reserved bsegs ++ rx
+             /\ (length rx <= 2)%nat
+             /\ live_bytes rx <= 81920
+             /\ Forall (fun q => Forall (iv_apart q) rx) M'.
+Proof.
+  intros R M M' (rx & Hres & Hcnt & Hrx & Hme) Hsub.
+  exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hrx|].
+  apply Forall_forall. intros q Hq. destruct (Hsub q Hq) as (r & Hr & L1 & L2).
+  pose proof (proj1 (Forall_forall _ _) Hme r Hr) as F.
+  apply Forall_forall. intros iv Hiv.
+  pose proof (proj1 (Forall_forall _ _) F iv Hiv) as D. unfold iv_apart in *. lia.
+Qed.
 
 Definition RTA : rt_sig := mkRTS rtsA ART_A ARTM_A rtA_live rtA_frames rtA_allow rtA_sp0 rtA_credit.
 

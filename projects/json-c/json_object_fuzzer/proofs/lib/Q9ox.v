@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the walk over run_segments segs inp sp mb in place of the loaded segments in realizes_not_killed and realizes_error_free_unkilled). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -841,7 +842,7 @@ Lemma kill_free_t_eq : forall T T', t_eq T T' -> kill_free T -> kill_free T'.
 Proof. intros T T' Heq HT tr Htr. apply HT. apply (proj2 (Heq tr)), Htr. Qed.
 
 Lemma realizes_not_killed : forall segs pc ph sp brk0 mb rnd lim inp T,
-realizes segs (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+realizes (run_segments segs inp sp mb) (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
 kill_free T ->
 ~ dies_by_signal (run_scfg (alloc_only_cfg false) (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
@@ -851,7 +852,7 @@ exact (Hkf tr Htr sig fs Hin).
 Qed.
 
 Lemma realizes_error_free_unkilled : forall segs pc ph sp brk0 mb rnd lim inp T,
-realizes segs (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+realizes (run_segments segs inp sp mb) (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
 kill_free T ->
 error_free_unkilled (run_scfg (alloc_only_cfg false) (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.

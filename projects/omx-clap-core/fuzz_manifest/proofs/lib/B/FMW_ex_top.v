@@ -1,4 +1,4 @@
-(* G4, IMAGE B: expected_spec from the segments of lib/B/FMW_ex_base.v (B twin of lib/A/FMW_ex_top.v, 06d82004dc3): the scan's head by strong induction on |text| - i (fm plain
+(* G4, IMAGE B: expected_spec from the segments of lib/B/FMW_ex_base.v (B twin of lib/A/FMW_ex_top.v): the scan's head by strong induction on |text| - i (fm plain
    expected_ml.v:983), then the entry. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

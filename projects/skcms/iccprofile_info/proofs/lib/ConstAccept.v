@@ -12,8 +12,6 @@ Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.StartHooks.
 Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.StartHooksBoth.
 Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.AsanMainForest.
 Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.AsanMainForestBoth.
-Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.AsanMainCertKWClosed.
-Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.AsanMainCertKWClosedBoth.
 Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.InfoAsanTop.
 Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.InfoAsanFinal.
 Require OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.InfoBothTop.
@@ -27,8 +25,6 @@ Module ASH := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.StartHooks.
 Module BSH := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.StartHooksBoth.
 Module AMF := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.AsanMainForest.
 Module BMF := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.AsanMainForestBoth.
-Module AKW := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.AsanMainCertKWClosed.
-Module BKW := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.AsanMainCertKWClosedBoth.
 Module IAT := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.InfoAsanTop.
 Module IAF := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.InfoAsanFinal.
 Module IBT := OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan.InfoBothTop.
@@ -38,7 +34,8 @@ Definition accept_segment : Segment := {|
   seg_base := 65536%N;
   seg_size := 132%N;
   seg_perms := "r-x"%string;
-  seg_bytes := ["7f454c460201010000000000000000000200f30001000000780001000000000040000000000000000000000000000000040000004000380001004000000000000100000005000000000000000000000000000100000000000000010000000000840000000000000084000000000000000010000000000000130500009308e00573000000"%pstring]
+  seg_bytes := ["7f454c460201010000000000000000000200f30001000000780001000000000040000000000000000000000000000000040000004000380001004000000000000100000005000000000000000000000000000100000000000000010000000000840000000000000084000000000000000010000000000000130500009308e00573000000"%pstring];
+  seg_kind := SegLoader
 |}.
 Definition accept_segments : list Segment := [accept_segment].
 Definition accept_phdrs : PhdrInfo := mkPhdrInfo 65600%N 56%N 1%N.
@@ -47,14 +44,16 @@ Definition accept_image : Image := mkImage accept_segments 65656%N accept_phdrs.
 Lemma accept_image_wf : image_wf accept_image.
 Proof. check_image_wf. Qed.
 
-Lemma accept_exits_c : forall sp rnd argv envp uid hw,
-  exits_c accept_segments verdict_accept 8
-    (init_machine_state accept_segments 65656%N accept_phdrs sp rnd argv envp uid hw)
+Lemma accept_exits_c : forall sp mbase draw inp,
+  exits_c (run_segments accept_segments inp sp mbase) verdict_accept 8
+    (init_machine_state (run_segments accept_segments inp sp mbase) 65656%N accept_phdrs sp
+       mbase draw inp)
   = true.
 Proof.
-  intros. rewrite (with_mem_eta (init_machine_state _ _ _ _ _ _ _ _ _)).
-  generalize (ms_mem (init_machine_state accept_segments 65656%N accept_phdrs sp rnd argv envp uid hw)).
-  intros mem. vm_compute. reflexivity.
+  intros. rewrite (with_mem_eta (init_machine_state _ _ _ _ _ _ _)).
+  generalize (ms_mem (init_machine_state (run_segments accept_segments inp sp mbase) 65656%N
+                        accept_phdrs sp mbase draw inp)).
+  intros mem. unfold run_segments. vm_compute. reflexivity.
 Qed.
 
 Lemma accept_must_exit : forall inp en,
@@ -106,10 +105,10 @@ Proof.
 Qed.
 
 Definition asan_certs : IAT.asan_certs :=
-  IAF.info_asan_certs (AMF.TREE AKW.KWT) (AMF.TREES AKW.KWT AKW.KW_ok).
+  IAF.info_asan_certs AMF.TREE_rsb AMF.TREES_rsb.
 
 Definition both_certs : IBT.both_certs :=
-  IBF.info_both_certs (BMF.TREE BKW.KWT) (BMF.TREES BKW.KWT BKW.KW_ok).
+  IBF.info_both_certs BMF.TREE_rsb BMF.TREES_rsb.
 
 Lemma asan_base :
   strong_universal_error_free_T_scfg Env.alloc_forced_only

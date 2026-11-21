@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: the twin of lib/Reusable/YO06.v (SPECX) for a return value of the fuzz target of 0 or -1, the trace both builds walk in the agreement step *)
-(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/Reusable/YO06.v at 901d1549395.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/Reusable/YO06.v.
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.AgreeRetD1.
    SPECX_q ret is YO06.v SPECX with the driver leaf chosen on the payload of the input file: the kit's leaf_shapeX where
    ret is 0 on that payload, Prog/FrameRetD2.v leaf_shapeX_r where it is -1. The agreement step takes any shape LS, so

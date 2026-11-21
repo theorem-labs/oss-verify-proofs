@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-366, for
    libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_D1p56.v, with its module paths and module names changed; 1017 of its 1069 lines of code are new or changed and 689 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (asan-ubsan, pin c3796c0b38f3): segment S10 of
    LLVMFuzzerTestOneInput's walk (0x84dc0): lt_seg_S10 : lt_seg_S10_stmt (LTA_K85868 -> LT_K856f4_stmt), statement in
    LLVMFuzzerTestOneInput_defs.v.
@@ -18,7 +19,7 @@
    Each UBSan trap branch is refuted by the values of the blocks (B-DELTA.md section 0: AR_blocks_law's bounds,
    c, m >= 4096 and below the allocation ceiling) and of i < n_kept <= 8. Every ASan check passes by the shadow of
    the live blocks c and m (the seeds' shadow entries). No runtime entry is reached but the three program calls.
-   Adopted from image A's twin (image A's S10 commit 5d411a135ac8, lib/A/Prog/LLVMFuzzerTestOneInput_s19.v):
+   Adopted from image A's twin (image A's S10, lib/A/Prog/LLVMFuzzerTestOneInput_s19.v):
    the loop's decomposition (the body's two return points s19_PA / s19_PK, s19_stepCA / s19_stepCK, the vacuous
    turns and the induction s19_loop), s19_regs_ok_set, s19_shent, s19_blocks, s19_model, s19_pre_ca, s19_pre_ck,
    s19_rreg, s19_awr_ro, s19_pres / s19_cs, renamed to image B's registers, slots and pcs. *)
@@ -127,8 +128,8 @@ rewrite (s19_pres regs regs' 18 HP), (s19_pres regs regs' 19 HP), (s19_pres regs
 repeat split; assumption.
 Qed.
 
-(* a register set to a value its expression denotes (image A's twin s19_regs_ok_set, image A's S10 commit
-   5d411a135ac8, LLVMFuzzerTestOneInput_s19.v:217-224) *)
+(* a register set to a value its expression denotes (image A's twin s19_regs_ok_set, image A's S10,
+   LLVMFuzzerTestOneInput_s19.v:217-224) *)
 Lemma s19_regs_ok_set : forall E sr regs (r : bv 5) e, regs_ok E sr regs -> bv_eqb r 0 = false ->
   getr regs r = sv_denot E e -> regs_ok E (sr_set sr r e) regs.
 Proof.
@@ -148,7 +149,7 @@ Lemma s19_val_rng4 : forall (rd : reader) a v, sa_val rd a 4 v -> 0 <= v < 2 ^ 3
 Proof. intros; assumption. Qed.
 
 (* a register of a symbolic state, its value as the run left it (image A's twin s19_rreg,
-   LLVMFuzzerTestOneInput_s19.v:274-284) *)
+   LLVMFuzzerTestOneInput_s19.v:275-285) *)
 Ltac s19_rreg HS r Hr :=
   lazymatch type of HS with
   | st_ok_pi ?segs ?val ?E ?ss (restrict ?H ?ms) =>
@@ -175,7 +176,7 @@ Definition s19L_E (regs : bvmap 5 word) (n kn kp : Z) : env :=
   Eimg (Ereg regs (map (Z_to_bv 64) [SB; n; kn; kp])).
 
 (* the shadow entry of [p + lo, p + hi), inside a live heap block whose shadow is addressable (image A's twin
-   s19_shent, LLVMFuzzerTestOneInput_s19.v:239-254) *)
+   s19_shent, LLVMFuzzerTestOneInput_s19.v:240-255) *)
 Lemma s19_shent : forall (W : world SEGS) mem E (mt : nat) b n p lo hi,
   range_addressable (rdW W mem) SHADOW_OFF b n -> in_app b n ->
   ew E 32 = Z_to_bv 64 SHADOW_OFF -> ew E mt = Z_to_bv 64 p -> 0 <= p < 2 ^ 64 ->
@@ -518,7 +519,7 @@ apply (s19_prog_call B MT MTFL STK_check_refusals (BASE + AF_check_refusals) cx 
 Qed.
 
 (* the two harness blocks at a point of the segment: where they lie, apart, their shadow (image A's twin
-   s19_blocks, LLVMFuzzerTestOneInput_s19.v:945-961) *)
+   s19_blocks, LLVMFuzzerTestOneInput_s19.v:946-962) *)
 Lemma s19_blocks : forall cx ly S W regs mem md k acc c m, s19_inv B MT cx ly S W regs mem md k acc c m ->
   4096 <= c /\ c + seg_spec.SEG_C_SIZE <= alloc_ceiling /\ 4096 <= m /\ m + seg_spec.SEG_M_SIZE <= alloc_ceiling /\
   (c + seg_spec.SEG_C_SIZE <= m \/ m + seg_spec.SEG_M_SIZE <= c) /\
@@ -548,7 +549,7 @@ split; [exact H1|]. split; [exact H2|]. exact (s19_nref_eq _ _ H1).
 Qed.
 
 (* check_address's pre at turn i of the loop: refusal[i] of c, kept[i] of m (image A's twin s19_pre_ca,
-   LLVMFuzzerTestOneInput_s19.v:782-813, over this walk's encoding lemmas) *)
+   LLVMFuzzerTestOneInput_s19.v:783-814, over this walk's encoding lemmas) *)
 Lemma s19_pre_ca : forall cx ly S W regs mem md k acc c m i, s19_inv B MT cx ly S W regs mem md k acc c m ->
   (i < length (SegModel.mc_kept (x_mcF cx)))%nat ->
   check_address_pre B ly S (rdW W mem) (c + 11912 + 200 * Z.of_nat i) (m + 8204 + 112 * Z.of_nat i)
@@ -578,7 +579,7 @@ exact CK1.
 Qed.
 
 (* check_knock_refused's pre at turn i: refusal[i] of c and kept_knock[i] of m (image A's twin s19_pre_ck,
-   LLVMFuzzerTestOneInput_s19.v:816-839) *)
+   LLVMFuzzerTestOneInput_s19.v:817-840) *)
 Lemma s19_pre_ck : forall cx ly S W regs mem md k acc c m i, s19_inv B MT cx ly S W regs mem md k acc c m ->
   (i < length (SegModel.mc_kept (x_mcF cx)))%nat ->
   check_knock_refused_pre SEGS B ly S (rdW W mem) seg_litA_fz (c + 11912 + 200 * Z.of_nat i)

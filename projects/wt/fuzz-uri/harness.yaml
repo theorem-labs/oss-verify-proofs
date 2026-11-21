@@ -3,7 +3,9 @@ project: wt
 harness: fuzz-uri
 rocq: OSSVerify.wt.fuzz_uri
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Copies the input (Size from 10 to 5120 bytes) into a string and parses it as a URL with Wt::Http::Client::parseUrl
+  into a new Wt::Http::Client::URL, and drops the result and the parsed URL. It returns -1 for an input
+  with Size below 10 or above 5120.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +14,7 @@ source:
     repository: https://github.com/emweb/wt
     commit: 0ec92b6bfc41be037dcf3ddfc72664ca261821bd
     path: fuzz/fuzz-uri.C
-  modified: false
+  modified: true
   licence: NOASSERTION
 library:
   repository: https://github.com/emweb/wt
@@ -23,11 +25,14 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/fuzz-uri.C is wt 0ec92b6b''s fuzz/fuzz-uri.C with one Theorem
+  Labs change: its length check returns -1, not 1, for an input outside its limits (libFuzzer rejects
+  the input; the driver exits 0, not 78).'
 builds:
   plain:
     file: fuzz-uri.plain
     bytes: 8912576
-    sha256: 8a0677a066f113453e783d7553759e0164be6040aef72ee9968ee46e0a54b6d0
+    sha256: 00dc883c83e3a516005552c07c09bed2e63fb32c1f2ed9159ac82f677052c209
     segments:
     - 1
     - 1
@@ -61,7 +66,7 @@ builds:
   ubsan:
     file: fuzz-uri.ubsan
     bytes: 9439632
-    sha256: b7f4a2c6e33b2bf6957feda7c0c3b0fab342cee83d59f948ff630da820f7823e
+    sha256: d746e5599a45ee926c32415d932daf8b0d08cf95225665492792f96bd8b30b61
     segments:
     - 1
     - 1
@@ -95,7 +100,7 @@ builds:
   asan:
     file: fuzz-uri.asan
     bytes: 17073208
-    sha256: 48543dff3ceb262c88ab50f3e325b20fd713844e43fe3a6f38563a27cd212f0f
+    sha256: 035a184e7006b85b42280a83636fce3a0e1d2328f7d9f3e47bf7fcee0e1cb226
     segments:
     - 1
     - 2
@@ -132,7 +137,7 @@ builds:
   asan-ubsan:
     file: fuzz-uri.asan-ubsan
     bytes: 17491288
-    sha256: 891a1b605c490b37925cb7941f82db750a6d49a4a81e0adcf73f5cff09b23796
+    sha256: 77d10ae7e3c25dbfdd314bd180453bc900664132fff37d0ad28ea1e91513d804
     segments:
     - 1
     - 2
@@ -178,6 +183,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -187,6 +193,7 @@ statements:
     budgets: standard
     abort: signal
     status: open
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -196,6 +203,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -206,6 +214,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -216,6 +225,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -226,6 +236,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -236,3 +247,4 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2

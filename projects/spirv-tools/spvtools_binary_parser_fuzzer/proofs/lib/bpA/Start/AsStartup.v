@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one start state per CONFIG_RSEQ value, and the run's whole input with its mmap base, launch facts, group id and channel reader). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -42,23 +43,31 @@ Proof.
 Qed.
 
 Section XAll.
+  (* LPS #38: [AsanInit]'s Section takes the run's whole input, the ELF entry as an
+     [N] and the mmap base; [AsanNodesStartXInit] mirrors it, and its
+     [init_x_sound_*] discharge the launch facts rather than [entry_stack_fits].
+     Arities measured, not guessed, in two earlier farm rounds on the image
+     sha256:2c6b6db8...e590fe. *)
+  Variable apc : N.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variable brk0 : word.
-  Variable argv envp : list (list byte).
+  Variables brk0 mbase : word.
+  Variable inp : ProcInput.
   Variable FS0 : Fs.Fs.
+  Let argv : list (list byte) := in_argv inp.
+  Let envp : list (list byte) := in_envp inp.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Variables uid hw : word.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  Let AH := argH0_high APH sp rdraw argv envp uid hw Hsp Hva.
-  Let AS := argH0_sp0 APH sp rdraw argv envp uid hw.
-  Let AA := argH0_agree APH sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame APH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH sp rdraw brk0 argv envp uid hw.
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
+  #[local] Notation SINV := (SINV0 APH apc sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
+  Let AH := argH0_high ASEGS ASAN_H APH apc sp rdraw brk0 mbase inp Hsp Hva Hve Hlau.
+  Let AS := argH0_sp0 sp rdraw inp.
+  Let AA := argH0_agree sp rdraw inp.
+  Let SF := SINV0_frame APH apc sp rdraw brk0 mbase inp.
+  Let SA := SINV0_agree ASEGS ASAN_H APH apc sp rdraw brk0 mbase inp.
 
   Theorem asan_node_x_sound_all : forall x, x_stmt ASEGS ASAN_H NX0 AsanInit.LIMIT SINV argH FS0 x.
   Proof.
@@ -74,7 +83,7 @@ Section XAll.
                 (fetch_lit _ _ _ _ eq_refl F_163018) (fetch_lit _ _ _ _ eq_refl F_16301c) (fetch_lit _ _ _ _ eq_refl F_163020)
                 ltac:(repeat split; reflexivity)
                 D_163018 D_16301c D_163020
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF).
+                apc sp rdraw brk0 mbase inp FS0 Hsp Hva Hve Hlaunch Hlau SINV (fun E M H => H) SF).
     - eapply (init_x_sound_pnscan ASEGS ASAN_H APH asan_wx asan_in_hull asan_hull_ok
                 W_1630d4 W_1630d8 W_1630dc W_1630e0 W_1630e4
                 ltac:(cbn [x_pnscan x_pnscan_k ASAN_H]; lia)
@@ -82,8 +91,8 @@ Section XAll.
                 (fetch_lit _ _ _ _ eq_refl F_1630e0) (fetch_lit _ _ _ _ eq_refl F_1630e4)
                 ltac:(repeat split; reflexivity)
                 D_1630d4 D_1630d8 D_1630dc D_1630e0 D_1630e4
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF SA).
-    - apply (init_x_sound_layout ASEGS ASAN_H APH sp rdraw argv envp FS0 uid hw SINV).
+                apc sp rdraw brk0 mbase inp FS0 Hsp Hva Hve Hlau SINV (fun E M H => H) SF SA).
+    - apply (init_x_sound_layout ASEGS ASAN_H sp rdraw inp FS0 SINV).
     - exact (asan_node_x_sound_XIStrncpy NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA FS0).
     - exact (asan_node_x_sound_XPopFree NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA FS0).
     -
@@ -101,34 +110,37 @@ Definition level_certified (KC0 BFUEL FUEL : nat) (HSs HSt : nat -> option acs) 
 
 Section Startup.
 
+  (* LPS #38: [AsanInit.inp] is gone -- the Section takes a [ProcInput] directly, so
+     this Section does too and projects the fields it still names. *)
+  Variable apc : N.
   Variable sp : word.
   Variable rdraw : EntryDraw.
   Variables brk0 mbase : word.
-  Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
-  Variable abterm : bool.
-  Variable vasz : VaSize.
-  Variable urandom : InputStream.
-  Variable tmp : Fs.Fs.
+  Variable inp : ProcInput.
+  Let argv : list (list byte) := in_argv inp.
+  Let envp : list (list byte) := in_envp inp.
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN_H.
+  Hypothesis Hmb : valid_mmap_base mbase.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk ASEGS brk0.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid.
-  Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Huid : valid_id (in_uid inp).
+  (** [Run.valid_input]'s credentials clause, gid half: the start state names the gid ([V_GID]) *)
+  Hypothesis Hgid : valid_id (in_gid inp).
+  Hypothesis Hhw : valid_hwcap (in_hwcap inp).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
+  (** [Run.valid_input]'s channel-reader clause; [init_cs_ok] takes it *)
+  Hypothesis Hrdr : in_channel_reader inp = true.
 
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 APH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH apc sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
+  #[local] Notation E0a := (E0 sp rdraw brk0 inp).
   #[local] Notation LIM := AsanInit.LIMIT.
-  #[local] Notation INP := (AsanInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp).
-  #[local] Notation FSS := (in_fs INP).
+  #[local] Notation INP := inp.
+  #[local] Notation FSS := (in_fs inp).
 
   Variable RANGES : list (Z * nat).
   Variables HS1 HSC HSA HSF : nat -> option acs.
@@ -136,7 +148,11 @@ Section Startup.
   Variable shape1 : shape.
   Variables KC0 BFUEL FUEL : nat.
   #[local] Notation IT := (mk_itab_ranges ASEGS RANGES).
-  Hypothesis cert1 : check ASEGS IT ASAN_H NX0 LIM XN0 XE0 XB0 HS1 KC0 BFUEL FUEL None hinit plan1 = COk shape1.
+  (* LPS 727298f3: the start state depends on the run's CONFIG_RSEQ value ([AsImages.hinit_r]), so the
+     first plan is certified from the run's own value's start state (the hand-off tables up to
+     100 .. 105 are that value's, [AsStartupHS1] .. [AsStartupHSA]) *)
+  Hypothesis cert1 :
+    check ASEGS IT ASAN_H NX0 LIM XN0 XE0 XB0 HS1 KC0 BFUEL FUEL None (hinit_r (rseq_z (kb_rseq (in_kernel inp)))) plan1 = COk shape1.
   Hypothesis shape1_holes : holes_only shape1 = true.
   #[local] Notation LEVEL := (level_certified KC0 BFUEL FUEL).
   Hypothesis cert2 : LEVEL HS1 HSC.
@@ -148,13 +164,13 @@ Section Startup.
   Definition HOLES (h : nat) (E : env) (fs' : Fs.Fs) : TSet := T.
   Hypothesis HOLESF_sound : holes_stmt ASEGS ASAN_H LIM HSF SINV argH HOLES FSS.
 
-  Let AH := argH0_high APH sp rdraw argv envp uid hw Hsp Hva.
-  Let AS := argH0_sp0 APH sp rdraw argv envp uid hw.
-  Let AA := argH0_agree APH sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame APH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH sp rdraw brk0 argv envp uid hw.
+  Let AH := argH0_high ASEGS ASAN_H APH apc sp rdraw brk0 mbase inp Hsp Hva Hve Hlau.
+  Let AS := argH0_sp0 sp rdraw inp.
+  Let AA := argH0_agree sp rdraw inp.
+  Let SF := SINV0_frame APH apc sp rdraw brk0 mbase inp.
+  Let SA := SINV0_agree ASEGS ASAN_H APH apc sp rdraw brk0 mbase inp.
 
-  Let SP := SINV0_pg APH sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SINV (fun E M H => H).
+  Let SP := SINV0_pg APH apc sp rdraw brk0 mbase inp Hsp Hva Hve Hlau SINV (fun E M H => H).
 
   Lemma asan_check_sound : forall RS HS,
     holes_stmt ASEGS ASAN_H LIM HS SINV argH HOLES FSS ->
@@ -170,11 +186,11 @@ Section Startup.
               (AsanNodesMmB.node_sys_sound ASEGS ASAN_H NX0 LIM SINV argH FSS asan_res_len asan_hull_ok asan_shadow_ok AA SF SA AS E_SP0)
               (AsanNodesMmB.node_brk2_sound ASEGS ASAN_H NX0 LIM SINV argH FSS asan_in_hull asan_hull_ok asan_shadow_ok AH SF asan_res_len asan_res_cover AS)
               (node_mmap1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH FSS asan_in_hull asan_res_len asan_res_hull asan_res_cover asan_hull_ok asan_shadow_ok AH AS E_SP0 AA SF SA SP)
-              (node_mmapin1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH FSS asan_in_hull asan_res_len asan_res_hull asan_res_cover asan_hull_ok asan_shadow_ok AH AS SF)
-              (node_mprotect1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH FSS asan_in_hull asan_res_len asan_res_hull asan_res_cover asan_hull_ok asan_shadow_ok AH AS SF)
+              (node_mmapin1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH FSS asan_in_hull asan_res_len asan_res_cover asan_hull_ok asan_shadow_ok AH AS SF)
+              (node_mprotect1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH FSS asan_in_hull asan_res_len asan_res_cover asan_hull_ok asan_shadow_ok AH AS SF)
               (node_mmapgaps_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH FSS asan_in_hull asan_res_len asan_res_cover asan_hull_ok asan_shadow_ok AH AS E_SP0 AA SF SA SP)
               (AsanNodesMmB.node_exit_sound ASEGS ASAN_H LIM SINV argH FSS)
-              (asan_node_x_sound_all sp rdraw brk0 argv envp FSS Hsp Hva Hve uid hw Hfit)
+              (asan_node_x_sound_all apc sp rdraw brk0 mbase inp FSS Hsp Hva Hve Hlaunch Hlau)
               (node_join_sound ASEGS ASAN_H NX0 LIM SINV argH FSS)
               (XN0_sound _ _ _ _ _ _ _ _) (XE0_sound _ _ _ _ _ _ _ _) (XB0_sound _ _ _ _ _ _ _ _)
               HS_sound
@@ -198,20 +214,25 @@ Section Startup.
   Proof. exact (level_sound HS1 HSC cert2 HOLESC_sound). Qed.
 
   Theorem as_startup_shape :
-    srealizes ASEGS (init_config ASEGS Asan.M.init_pc APH sp brk0 mbase rdraw LIM INP) (sd HOLES t_nil E0a FSS shape1).
+    srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw LIM inp) (sd HOLES t_nil E0a FSS shape1).
   Proof.
     pose proof asan_img_facts as IMG.
-    rewrite (init_cfg_eq ASEGS ASAN_H APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp
-               Asan.M.init_pc eq_refl).
-    pose proof (init_cs_ok ASEGS ASAN_H APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp
-                  IMG Hsp Hbrk Hva Hve Hfit Huid Hhw) as HC.
-    pose proof (asan_check_sound RANGES HS1 HOLES1_sound FUEL BFUEL plan1 hinit shape1 cert1 _ _ _ _ HC) as R.
-    replace (m_fs (model0 ASEGS sp brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp)) with FSS in R by reflexivity.
+    rewrite (init_cfg_eq ASEGS ASAN_H APH apc sp rdraw brk0 mbase inp Hapc).
+    (* LPS #38 moved which of [AsanInit]'s Section hypotheses [init_cs_ok] discharges.
+       Feeding them by [assumption] rather than positionally keeps this robust to that
+       list, which is how [AsanInit.inst_hyps] does it inside the Section. *)
+    pose proof (init_cs_r_ok ASEGS ASAN_H APH apc sp rdraw brk0 mbase inp) as HC.
+    repeat (lazymatch type of HC with
+            | ?P -> _ => let h := fresh "Hp" in assert (h : P) by assumption;
+                         specialize (HC h); clear h
+            end).
+    pose proof (asan_check_sound RANGES HS1 HOLES1_sound FUEL BFUEL plan1 _ shape1 cert1 _ _ _ _ HC) as R.
+    replace (m_fs (model0 ASEGS sp rdraw brk0 mbase inp)) with FSS in R by reflexivity.
     exact R.
   Qed.
 
   Theorem as_startup_T :
-    srealizes ASEGS (init_config ASEGS Asan.M.init_pc APH sp brk0 mbase rdraw LIM INP) T.
+    srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw LIM inp) T.
   Proof.
     eapply srz_conseq; [exact as_startup_shape|]. apply sd_holes_only; [intros; reflexivity | exact shape1_holes].
   Qed.

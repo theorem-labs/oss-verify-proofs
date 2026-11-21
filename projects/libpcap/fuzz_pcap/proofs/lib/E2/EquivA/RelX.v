@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: minvX's transport through lf destructs the six equations of vm_only, the new one being the channel reader's. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -28,7 +29,10 @@ Qed.
 Lemma minvX_vm_only mo mo' : vm_only mo mo' -> minvX mo -> minvX mo'.
 Proof.
   intros HV HM. unfold minvX in *. apply (minv_vm_only (lf mo) (lf mo')); [| split; reflexivity | exact HM].
-  destruct HV as (E1 & E2 & E3 & E4 & E5). unfold vm_only. repeat split; assumption.
+  (* [lf] touches only the lazy/materialized ledgers, so the six equations
+     of [vm_only] -- including the channel-reader one [minv]'s new conjunct
+     needs (Nodes.v, [Definition vm_only]) -- transport verbatim. *)
+  destruct HV as (E1 & E2 & E3 & E4 & E5 & E6). unfold vm_only. repeat split; assumption.
 Qed.
 
 Lemma fdnode_xnode n : fdnode n -> xnode n.

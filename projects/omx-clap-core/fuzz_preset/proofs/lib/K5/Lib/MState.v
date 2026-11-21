@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Theorem Labs, 2026-10-28: copied from proofs/leptonica/fhmtgen_fuzzer/lib/K5/Lib/MState.v at origin/ossv/recipes c8557374ad2e, with its module paths changed to fuzz_preset's. It states no address. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-28: copied from proofs/leptonica/fhmtgen_fuzzer/lib/K5/Lib/MState.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed to fuzz_preset's. It states no address. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -43,7 +44,7 @@ Fixpoint interp_eff (segs : list Segment) (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -56,7 +57,7 @@ Lemma interp_eff_spec : forall segs t m,
 Proof.
   intros segs t. unfold RiscvSemantics.interp_eff.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m; cbn [interp_eff interp_eff_accesses drop_access_report]; try reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs (k _) m) as [r| |]; reflexivity.
   - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs k _) as [r| |]; reflexivity.

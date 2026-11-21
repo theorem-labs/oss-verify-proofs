@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a load that misses on the vvar range, and the new fetch-failure cases). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -145,7 +146,7 @@ Lemma interp_eff_eqv : forall t t', eff_eqv t t' -> forall m,
   end.
 Proof.
   intros t t' H m. rewrite !interp_eff_eq0. revert m. induction H; intros m; cbn [interp_eff0]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [apply H0| exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [apply H0| destruct (segs_vvar segs && range_meets_vvar segs a (width_bytes n))%bool; exact I].
   - destruct (store_ok segs m a (width_bytes n)); [apply IHeff_eqv| exact I].
 Qed.
 
@@ -179,7 +180,7 @@ Proof.
   destruct (fetch_word segs (ms_pc_val ms)); [apply D|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply D|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply D|].
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure. repeat match goal with |- context [if ?b then _ else _] => destruct b end; cbn; exact I.
 Qed.
 
 Lemma apply_effect_eqv : forall ms ms' eff, ms_eqv ms ms' ->

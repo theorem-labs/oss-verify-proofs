@@ -2,7 +2,7 @@
    F, on the B image): trec_clear_closed proves a Theorem Labs lane's trec_clear_spec (lib/B/Prog/rec_clear_c.v) at the pinned
    image, lib/B/Prog/CmdImg.v's instance PB_cmd (segments tfibsegs) with B's sink head YE2k.tfib_sink_head, both
    passed explicitly. It discharges the walk's (lib/B/Prog/rec_clear.v, trec_clear_holds) per-binary hypotheses as
-   a Theorem Labs lane's lib/A/Prog/RecBClosed.v (a working branch f349bdaedba) and lib/A/Prog/SupRemoveAllRefitClosed.v
+   a Theorem Labs lane's lib/A/Prog/RecBClosed.v (a working branch) and lib/A/Prog/SupRemoveAllRefitClosed.v
    do on A: TL is CmdRecRest.cmd_palib, VOBJS is CmdRecRest.cmd_val_objs_PB, cmd_sig_prog_PB is CmdRecRest's lemma of
    that name, cmd_img_facts_tfib is CmdRecImg's lemma of that name, and PRW is CmdRecRest.cmd_prw_tfib (the program's
    statics lie in tfibsegs' read-write window, lib/B/YB13.v's tfib_rw_window). What remains: the allocator record HB,

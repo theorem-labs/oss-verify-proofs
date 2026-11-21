@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Row img-su-tool-B of REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record) (CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) line 153, class A11): "the cell holds
    \"AddressSanitizer\0\"".  The B twin of a Theorem Labs lane's lib/A/ReplyImg_su_tool.v
-   (a working branch 6302064e89f7), same structure and the same consumer stem su_tool, so lane W's
+   (a working branch), same structure and the same consumer stem su_tool, so lane W's
    A -> B relocation maps by name.  That row carries no cf-layer accessor (unlike HOOM's as_oom_byte), so per the
    pool brief the text below is the UNFOLDED one, over the unit's own tfibsegs.
 

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the time() call's vdso_func value is hvdso, the vDSO's clock_gettime entry, not 0, once resolved); xpres_of_munch is named by its longer path lib.Both.As.ECH_Xpres, which the short ECH_Xpres no longer names at this tree. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.
@@ -935,7 +936,7 @@ Section RC.
     idtac "P8_TIME".
     pose proof TIME as TM. unfold atime_stmt, atime_stmt_at in TM.
     eapply (ah_seq H HH).
-    { eapply TM with (lo := lo) (B := B) (LB := mid_errblocks M2 ++ drestc Lx NB LE2) (s := s') (vf := if mid_vdso M2 then 0 else P_cgt_init) (errv := errv1); clear TM.
+    { eapply TM with (lo := lo) (B := B) (LB := mid_errblocks M2 ++ drestc Lx NB LE2) (s := s') (vf := if mid_vdso M2 then hvdso else P_cgt_init) (errv := errv1); clear TM.
       all: try first [exact VIS1| exact HP1| exact KREL1| exact AUX1| exact MI1| exact CEIL| exact AC1| exact ERR1| exact RL1| exact VD1].
       all: lazymatch goal with
            | |- _ = Z_to_bv _ _ => reflexivity
@@ -944,7 +945,7 @@ Section RC.
            | |- bv_unsigned _ <= B => rewrite unsigned_lit by (clear - Q2 SPR CEIL LOS LO0; lia); clear - SPB Q2; lia
            | |- stk _ _ _ _ => rewrite unsigned_lit by (clear - Q2 SPR CEIL LOS LO0; lia); exact ST1
            | |- lo <= _ => rewrite unsigned_lit by (clear - Q2 SPR CEIL LOS LO0; lia); unfold ATIME_STACK; clear - LOS; lia
-           | |- (_ = 0 \/ _ = P_cgt_init) => destruct (mid_vdso M2); [left| right]; reflexivity
+           | |- (_ = _ \/ _ = P_cgt_init) => destruct (mid_vdso M2); [left| right]; reflexivity
            | |- _ mod 2 = 0 => unfold ADE_R8; rewrite unsigned_lit by (clear; lia); reflexivity
            | |- ?G => idtac "TM_LEFT" G
            end. }
@@ -1023,7 +1024,7 @@ Section RC.
       apply Forall_cons; [right; right; right; right; left; cbn; split; apply Z.le_refl|].
       apply Forall_cons; [do 5 right; left; cbn; clear; lia|]. apply Forall_cons; [do 5 right; left; cbn; clear; lia| apply Forall_nil]. }
     assert (XP23 : xpres H (drestc Lx NB LE2) S1c [(ee + 64, ee + 72); (SH + 4, SH + 5); (SH + 8, SH + 9); (SH + 10, SH + 266)] m2 m3).
-    { eapply (xpres_weaken H); [eapply (ECH_Xpres.xpres_of_munch H s' _ S1c [(ee + 64, ee + 72); (SH + 4, SH + 5); (SH + 8, SH + 9); (SH + 10, SH + 266)] _ m2); [exact HH| exact HP2'| exact MU3| exact WM3|]
+    { eapply (xpres_weaken H); [eapply (lib.Both.As.ECH_Xpres.xpres_of_munch H s' _ S1c [(ee + 64, ee + 72); (SH + 4, SH + 5); (SH + 8, SH + 9); (SH + 10, SH + 266)] _ m2); [exact HH| exact HP2'| exact MU3| exact WM3|]
         | apply Z.le_refl| intros b Hb; apply in_or_app; right; exact Hb| intros a Ha; exact Ha].
       apply Forall_cons; [right; cbn [fst snd]; intros a Ha; cbn; left; exact Ha|].
       apply Forall_cons; [right; cbn [fst snd]; intros a Ha; cbn; right; left; exact Ha|].
@@ -1285,7 +1286,7 @@ Section RC.
         | apply T12; [exact FSH1| unfold dfsh, arp_fshadow; cbn [cells_size csize Nat.add length Z.of_nat Pos.of_succ_nat Pos.succ]; rewrite ?LSH1; clear - ENS' SHL SHU; unfold ASHB, AHI_LO, AIMG_TOP in *; lia]
         | exact LSH1]. }
     assert (XP12 : xpres H (drestc Lx NB LE2) S1c [(ee + 88, ee + 96)] m' m2).
-    { eapply (xpres_weaken H); [eapply (ECH_Xpres.xpres_of_munch H s' _ S1c [(ee + 88, ee + 96)] _ m'); [exact HH| exact HP1| exact MU2| exact WM2| apply Forall_cons; [right; cbn [fst snd]; intros a Ha; cbn; left; exact Ha| apply Forall_nil]]
+    { eapply (xpres_weaken H); [eapply (lib.Both.As.ECH_Xpres.xpres_of_munch H s' _ S1c [(ee + 88, ee + 96)] _ m'); [exact HH| exact HP1| exact MU2| exact WM2| apply Forall_cons; [right; cbn [fst snd]; intros a Ha; cbn; left; exact Ha| apply Forall_nil]]
         | apply Z.le_refl| intros b Hb; apply in_or_app; right; exact Hb| intros a Ha; exact Ha]. }
     assert (EO2 : ENTRYobj (drestc Lx NB LE2) m2 ee E2).
     { eapply (eobj_updX _ S1c [(ee + 88, ee + 96)] m' m2); [exact EO| exact SBe| exact L1| exact L2| exact L3| exact L4| exact EC2| exact XP12|].
@@ -1394,7 +1395,7 @@ Section RC.
         | apply T34; [exact FSHc| unfold dfsh, arp_fshadow; cbn [cells_size csize Nat.add length Z.of_nat Pos.of_succ_nat Pos.succ]; rewrite ?LSHc; clear - ENS' SHL SHU; unfold ASHB, AHI_LO, AIMG_TOP in *; lia]
         | exact LSHc]. }
     assert (XP34 : xpres H (drestc Lx3 NB LE2) S1c [(ee + 96, ee + 104)] m3 m4).
-    { eapply (xpres_weaken H); [eapply (ECH_Xpres.xpres_of_munch H s3' _ S1c [(ee + 96, ee + 104)] _ m3); [exact HH| exact HPc| exact MU4| exact WM4| apply Forall_cons; [right; cbn [fst snd]; intros a Ha; cbn; left; exact Ha| apply Forall_nil]]
+    { eapply (xpres_weaken H); [eapply (lib.Both.As.ECH_Xpres.xpres_of_munch H s3' _ S1c [(ee + 96, ee + 104)] _ m3); [exact HH| exact HPc| exact MU4| exact WM4| apply Forall_cons; [right; cbn [fst snd]; intros a Ha; cbn; left; exact Ha| apply Forall_nil]]
         | apply Z.le_refl| intros b Hb; apply in_or_app; right; exact Hb| intros a Ha; exact Ha]. }
     pose proof (T34 _ _ SC3 ltac:(rewrite SSZ; clear - SEA SN6 NSR; lia)) as SC4.
     pose proof (bytes_at_transport asegs _ _ _ _ _ NMB3 MU4 ltac:(cbn; rewrite length_app, Nat2Z.inj_add; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; clear - NEA NMRn; unfold zlength in *; lia)) as NMB4.

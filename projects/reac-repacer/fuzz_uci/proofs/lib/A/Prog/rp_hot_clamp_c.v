@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: the evt contract of reac-repacer/fuzz_uci's rp_hot_clamp in image A, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_c.v (origin/ossv/recipes 88154566652a: entry, frame, the ASan runtime cells and addressability premises) over the plain contract's cells and model (lib/Prog/rp_hot_clamp_c.v hot_cells / hot_int, lib/Spec/UciModel.v rp_hot_clamp_m). *)
+(* Modified by Theorem Labs: the evt contract of reac-repacer/fuzz_uci's rp_hot_clamp in image A, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_c.v (entry, frame, the ASan runtime cells and addressability premises) over the plain contract's cells and model (lib/Prog/rp_hot_clamp_c.v hot_cells / hot_int, lib/Spec/UciModel.v rp_hot_clamp_m). *)
 (* rp_hot_clamp_c: rp_hot_clamp of fuzz_uci.asan (0x7fc64 = uci_sigma US_rp_hot_clamp, lib/A/Prog/UciPAddr.v), a leaf.
    The code (DIS of image A): `addi sp, sp, -0x10`, `sd ra, 8(sp)` ... `ld ra, 8(sp)` (frame [sp - 16, sp)); it loads the
    shadow base through its GOT word (`auipc a2`; `ld a2, 0x3b4(a2)` = 0x97020, then `ld a4, 0(a2)` = the cell

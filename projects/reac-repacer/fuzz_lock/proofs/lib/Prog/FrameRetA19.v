@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: the -1 twin of lib/Reusable/YL19.v (return value of the fuzz target 0 or -1) *)
-(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/Reusable/YL19.v at 901d1549395.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/Reusable/YL19.v.
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Prog.FrameRetA19. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

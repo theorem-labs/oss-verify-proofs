@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-repacer/fuzz_wire image B by gen_ad2.py (sha256 979c52cd71c6, the start-up tool set at commit dbb5a97ad14) from fuzz_wire.asan-ubsan, its atable (lib/B/YB12.v), its TSEGS window (lib/B/YB1h.v), its owned statics (lib/B/YF0m.v) and the 50 hand-off states of lib/B/YB01.v; the image registers 0 ASan globals (no asan_globals section); proofs/cgif/cgif_file_fuzzer/lib/YD2i.v and YD2j.v at commit 25e3d17bdb50 give the text only *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-repacer/fuzz_wire image B by gen_ad2.py (sha256 979c52cd71c6, the start-up tool set) from fuzz_wire.asan-ubsan, its atable (lib/B/YB12.v), its TSEGS window (lib/B/YB1h.v), its owned statics (lib/B/YF0m.v) and the 50 hand-off states of lib/B/YB01.v; the image registers 0 ASan globals (no asan_globals section); proofs/cgif/cgif_file_fuzzer/lib/YD2i.v and YD2j.v at commit theorem-labs/oss-verify-proofs@6b32741d849a give the text only *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_wire.asan-ubsan (reac-repacer/fuzz_wire asan-ubsan) sha256 af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6; unstripped twin sha256 51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3 *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module names changed; 728 of its 804 lines of code are new or changed and 852 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): segment H2 of the walk of check_reject_clean_starved (row CR-H2).
    rule 24: proves function check_reject_clean_starved (reuse search: `proof-index
    check_reject_clean_starved 0x82160`, the internal file index-crcs-Aprime.out, and an internal record
@@ -8,7 +9,7 @@
    or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan
    Proof.v existed for check_reject_clean_starved). Written new.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
    - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (listings v3). Entry 0x82160
      = slot 736 (A_entry_check_reject_clean_starved).
    - The texts at the kit cut preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record), by path: tcheck_reject_clean_starved_specX (lib/A/PRH_FnCheck.v), the
@@ -36,7 +37,7 @@
    instruction is stepped by hand (memory is only read), a plain SRr stretch whose post is the goal at R. THE LOOP cites PRW_CrcGen.djb_loop with this file's one-iteration step
    h2_iter; the report arm is unreachable by PRW_CrcGen.djb_byte_shadow over crs_dat's range_addressable.
    THE HAND-STEP KIT (the hw_ / h_ lemmas and the h* tactics below) is restated verbatim from lane CrsX1H1's
-   lib/A/Prog/CrsSeg_H1.v :73-439 (cold/h-w6u-rep-p102-CR-X1 1c8cfa6aba1, blob 0acc226c8af6), which follows lane
+   lib/A/Prog/CrsSeg_H1.v :73-439 (blob 0acc226c8af6), which follows lane
    CnoA102fA's lib/A/Prog/Cno102A_FA.v cfa_step / cfa_hs_*; only its loop-register list (h2_keep) and its crs_pre
    facts (h2_pre_facts, without the took bound) are this segment's.
    PREMISES of crs_seg_H2, in the rows' order: HT_fuzz_alloc_count, HT_fuzz_alloc_ran_out, HK, then crs_from_R and

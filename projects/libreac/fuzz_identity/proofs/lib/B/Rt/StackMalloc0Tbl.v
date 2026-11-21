@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the tables of stack_malloc_0 at 0x3cfe8 of libreac/fuzz_identity: class-0 frame constants (16384 frames of 64 bytes, hints at +0, flags at +0x1000, frames at +0x9000), the probe loop of this class (mask in a3, flag base in a1, index in a6, flag byte in a7), addresses; module names. *)
-(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a Theorem Labs lane a1ee3c81405) to libreac/fuzz_identity: hex addresses for fuzz_identity.asan, record name TfibSyms (original; identity runs the release with no --rename, a Theorem Labs lane, 10-29), code table StackMallocTbl. *)
+(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a Theorem Labs lane) to libreac/fuzz_identity: hex addresses for fuzz_identity.asan, record name TfibSyms (original; identity runs the release with no --rename, a Theorem Labs lane, 10-29), code table StackMallocTbl. *)
 (* Modified by Theorem Labs, 2026-10: image B: hex addresses for fuzz_identity.asan-ubsan (baf1a4d065e0), each relocated by function symbol + offset (code) or by image read-back / containing symbol (data); the entries and helpers used here sit at A + 0x68, which is NOT a rule for other code (memset: A 0x94a18, B 0x94d04); modules lib.B. *)
 (* Modified by Theorem Labs, 2026-10: image B on the release two-image layout: Requires of lib.B.A<x> are lib.ReusableB.Y<x>, image-specific Reusable modules are lib.ReusableB. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

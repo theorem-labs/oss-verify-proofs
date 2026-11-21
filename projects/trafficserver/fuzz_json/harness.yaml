@@ -3,7 +3,12 @@ project: trafficserver
 harness: fuzz_json
 rocq: OSSVerify.trafficserver.fuzz_json
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Copies the input (size_data from 5 to 1024 bytes) into a string and passes it as a JSON-RPC 2.0
+  message to rpc::JsonRPCManager::handle_call, with a default-constructed rpc::Context, on a new manager
+  to which the harness adds no handlers (only the manager's own show_registered_handlers and get_service_descriptor
+  methods are registered), and drops the response. Before the call it installs a new Diags object with
+  DiagsPtr::set, and it deletes that object after. It returns -1 for an input with size_data below 5 or
+  above 1024.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +17,7 @@ source:
     repository: https://github.com/apache/trafficserver
     commit: 97d2831fbd38c8f43b39e3ed996d9bd6e3173384
     path: tests/fuzzing/fuzz_json.cc
-  modified: false
+  modified: true
   licence: NOASSERTION
 library:
   repository: https://github.com/apache/trafficserver
@@ -24,11 +29,14 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/fuzz_json.cc is trafficserver 97d2831f''s tests/fuzzing/fuzz_json.cc
+  with one Theorem Labs change: its length check returns -1, not 1, for an input outside its limits (libFuzzer
+  rejects the input; the driver exits 0, not 78).'
 builds:
   plain:
     file: fuzz_json.plain
     bytes: 1369376
-    sha256: ffe243452c990278ebd326540d8f15e290cd108de43cf0416b8ec427b231ac64
+    sha256: 7c799008eaee85673d7b23aea55c279d448542b6a72ddb28b1238a168af41e63
     segments:
     - 1
     - 1
@@ -59,7 +67,7 @@ builds:
   ubsan:
     file: fuzz_json.ubsan
     bytes: 1416552
-    sha256: 261e2b05fbbf832481066b29378dad51f543ddb3c44dfc222907e2919aa71e0b
+    sha256: f3a9ba0276c398631d91400f7bcbfcc333ac74f876855fc58e0352656fbc077f
     segments:
     - 1
     - 1
@@ -90,7 +98,7 @@ builds:
   asan:
     file: fuzz_json.asan
     bytes: 2630744
-    sha256: b4777a56ff4a7b62eecd73ff83e24048d21ceeab9348b21813a0bc75a7e7c66a
+    sha256: 9c78e19e516dd21e664f668de382b686d260847a6e3d02c6bac2747f6124f9d8
     segments:
     - 1
     - 1
@@ -124,7 +132,7 @@ builds:
   asan-ubsan:
     file: fuzz_json.asan-ubsan
     bytes: 2667928
-    sha256: 1a0c083bf43147eb823d4e5321aa6652d1dbd20ea0e5401edcc9dfb3fa1daf41
+    sha256: 67b9b6aae38d21ad4d7689ec1f3b4a20c0235e4195cdd451d79eb56609c0acb7
     segments:
     - 1
     - 1
@@ -167,6 +175,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -176,6 +185,7 @@ statements:
     budgets: standard
     abort: signal
     status: open
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -185,6 +195,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -195,6 +206,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -205,6 +217,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -215,6 +228,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -225,3 +239,4 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2

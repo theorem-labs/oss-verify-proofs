@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Copyright 2026 Theorem Labs *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): the B top's XE_LIT_S_x row.  lib/B/ReplyBTop.v's Context premise
      XE_LIT_S_x : forall rc fx, ashp_x PB_fr top_x.ARX (pa_val .. W_bx_defs.AX_lit_empty) 1
-   (ReplyBTop.v:89; lib/B/W_LLVMFuzzerTestOneInput_top_x.v:303 at the Section level), stated below token for token,
+   (ReplyBTop.v:89; lib/B/W_LLVMFuzzerTestOneInput_top_x.v:304 at the Section level), stated below token for token,
    so the plug is `exact (topx_XE_LIT_S_x rc fx)`.
-   - AX_lit_empty is A_OBJ 25 (lib/B/W_bx_defs.v:91: .str.3 "", 0x20ee0, 1 byte), and lib/B/TopxImageB.v
+   - AX_lit_empty is A_OBJ 25 (lib/B/W_bx_defs.v:92: .str.3 "", 0x20ee0, 1 byte), and lib/B/TopxImageB.v
      ashp_str3_1_fr_cf already proves that shape at the relation `ARcf segs TfibB /\ Hp = []`.  top_x's ARX is that
-     relation and one more conjunct, arodata_ok_cf (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:175-177), and ashp_x is antitone in its relation, so
+     relation and one more conjunct, arodata_ok_cf (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:176-178), and ashp_x is antitone in its relation, so
      the row follows by WEAKENING: the ARX hypothesis is taken apart and its first two conjuncts are handed to
      ashp_str3_1_fr_cf.  No shp_check is decided here, so no vm_compute runs (the direct route through
      TopX_LIT.topx_lit_shp did not finish in 15 minutes on a Theorem Labs lane's base).

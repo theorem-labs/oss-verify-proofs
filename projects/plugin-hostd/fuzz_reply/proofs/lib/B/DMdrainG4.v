@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainG4.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 46d324445dcd) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainG4.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainG4.v (Quarantine::Drain walk set; file sha256 46d324445dcd) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainG4.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the ENTRY BRIDGE - from the drain contract's premise
-   DMspec.drain_pre_cf (DMspec.v:90-99) at the cgif image, the instance's view field DMiface.di_qview_t
-   (DMiface.v:189-190) and QB's two cache byte bounds, to YFgj.free_hyps, so that DMdrainT1.drain_entry_run runs
+   DMspec.drain_pre_cf (DMspec.v:91-100) at the cgif image, the instance's view field DMiface.di_qview_t
+   (DMiface.v:190-191) and QB's two cache byte bounds, to YFgj.free_hyps, so that DMdrainT1.drain_entry_run runs
    Drain's entry walk.  This is where the drain's composition stops reading anything instance-specific: all the
    facts the released entry shell needs come out of qview (DMdrainG1 / G2 / G3) or the premise's registers.
    QB's two bounds (the global cache at most 2 ^ 30, the thread cache at most 2 ^ 29: the released shell's,

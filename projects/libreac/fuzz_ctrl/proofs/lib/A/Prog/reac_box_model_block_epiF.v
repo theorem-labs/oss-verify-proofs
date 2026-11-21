@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 897 of its 911 lines of code are new or changed and 234 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_epi.v at a working branch d69f7c708f6 (proved v1.9 run of
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_epi.v at a working branch (proved v1.9 run of
    record) over lib/Lib/StepF: the script edits include `hide_sec.` in est, rd8_at, td_tail_F and epi_close_F, and footprint steps and a new closing in td_tail_F; the run lemma epi is re-proved in stretches split at the release (epi_pre_F, epi_post_F, bmb_KR_Q0) through new lemmas.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: none read (the epilogue 0x864c0 -> ret 0x86560 reads no
    image or runtime cell: it writes the release magic word at the ASan frame, the frame's eight shadow bytes and,
    on the side-stack arm, the class-0 flag byte, then restores the saved registers from its own window and
@@ -16,7 +17,7 @@
       no new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk. No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell. The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header (image root, ELF sha256, tool version, which compare) and goes to
       the auditor a Theorem Labs lane, who signs it against its proved run before it counts.
@@ -83,7 +84,7 @@ Module C_ON := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.reac_box_model_bloc
 Module BF := reac_box_model_block_baseF.
 
 (* The store hook of the proved file, re-issued for the evtF walk: it also transports rd_mono
-   (text of 3c9fcc93205 reac_box_model_blockF.v:46-57).  Local: this redefinition must not escape the file
+   (text of reac_box_model_blockF.v:47-58).  Local: this redefinition must not escape the file
    (the coordinating lane, 2026-10-29). *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
@@ -100,7 +101,7 @@ Local Ltac footprint_after_store segs m a bs ::=
 (* An address the walk builds from a register holds [bv_unsigned (Z_to_bv 64 e)], which StepF's syntactic matching
    does not relate to the [rng] premise of its region (the frame words and the shadow bytes of the frame, the flag
    byte). Normalize the wrap, then close the bounds from an rng hypothesis by lia alone.
-   Text of reac_box_model_block_cases0aF.v (at head lib/A/Prog/reac_box_model_block_cases0aF.v:120-132) (the narrow hook, a Theorem Labs lane's S3 speed patch; from a working branch 9d19e850454): StepF
+   Text of reac_box_model_block_cases0aF.v (at head lib/A/Prog/reac_box_model_block_cases0aF.v:121-133) (the narrow hook, a Theorem Labs lane's S3 speed patch; from a working branch): StepF
    calls acc_hint FIRST in solve_acc1, at every access of the run, under a backtracking match over every rng
    hypothesis, so it fires only on the wrapped shape and does no division reasoning (each lia already turns the
    division of a shadow byte x / 8 + off into equations).  The division argument of the frame's shadow bytes is
@@ -189,7 +190,7 @@ Section MainF.
     fp_dj [(rname row, rname row + Z.of_nat (length nb))] (fp_w [0%nat] FS).
 
   (* The footprint and the regions this unit's runs read or write: the nine of reac_box_model_block_cF.v's list
-     (text of 3c9fcc93205 reac_box_model_blockF.v:147-159), then the data-region set every F file of this family
+     (text of reac_box_model_blockF.v:148-160), then the data-region set every F file of this family
      carries (the lead, interface decision (B)). The epilogue uses only Rwin, Rwsh, RFSw and RFSsh. *)
   Variable RNG : footprint.
   Hypothesis Rimg : rng RNG 0x10000 0x5ee000.
@@ -356,7 +357,7 @@ Section MainF.
   (* The regions of the epilogue in rng form. *)
 
   (* The class-0 frame area [fs_frame FS 0 0, + 2^20): the second range of tl (fp_w [0%nat] FS) (RFSw), its
-     bounds from fs_place (text of 3c9fcc93205 reac_box_model_blockF.v RFSf_F). *)
+     bounds from fs_place (text of reac_box_model_blockF.v RFSf_F). *)
   Lemma epi_RFSf_F : rng RNG (fs_frame FS 0%nat 0) 1048576.
   Proof.
     pose proof FP0 as (DT & TS & C & T & DB & k & _ & _ & HPl & _).
@@ -397,7 +398,7 @@ Section MainF.
 
   (* The frame and its eight shadow bytes are in the footprint: the real-stack frame and its shadow lie in the
      window and in the window's shadow cover, the class-0 frame and its shadow in the class-0 frame area and in
-     the shadow of the class-0 frames (text of 3c9fcc93205 reac_box_model_blockF.v fk_rng_F, at B.FK). *)
+     the shadow of the class-0 frames (text of reac_box_model_blockF.v fk_rng_F, at B.FK). *)
   Lemma epi_fk_rng_F : forall fr f spc j n w56, FK fr f spc j n w56 ->
     rng RNG fr 64 /\ rng RNG (fr / 8 + off) 8.
   Proof.

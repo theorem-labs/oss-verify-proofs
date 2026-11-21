@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN06.v, with its module paths, addresses and numbers changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: libreac/fuzz_boxreg's repair of this file, with this unit's module paths and addresses. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -672,6 +673,7 @@ split; rewrite ?ER, ?EL, ?EN; try apply LG.
 - intros k rg0 off Hk0. rewrite ER in Hk0. exact (lg_noaccess _ _ _ _ LG k rg0 off Hk0).
 - rewrite K2. exact (lg_brk _ _ _ _ LG).
 - intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_placed _ _ _ _ LG k rg0 Hk0).
+- intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_rfree _ _ _ _ LG k rg0 Hk0).
 Qed.
 Lemma ledger_f : ledger_ok B1 L Af mdf /\ ledger_x L Af mdf /\
 m_halted mdf = None /\ m_vm_lazy mdf = [] /\ m_vm_materialized mdf = [] /\ (exists vm', mdf = with_vmmaps vm' md).

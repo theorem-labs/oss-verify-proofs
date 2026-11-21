@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): the SUPPORT LEMMAS of the walk of parse_noting
    (row N10-PNA; cut table lib/A/Prog/PN102Cuts.v). No function is proved here: the concrete step rules over the
@@ -9,14 +10,14 @@
    callee.
    rule 24: proves function parse_noting (reuse search: `proof-index parse_noting` exit 4 at 2026-10-30 07:2xZ,
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
-   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk 13970867e0c9, its one
+   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk, its one
    announced re-bind). This file: support lemmas of that walk only.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
    TAKEN BY PATH (image-free; each restated under a pn_ name):
    - pn_step_addi / pn_step_call / pn_pc4: lib/A/Prog/Ent102L6AfLem.v l6f_step_addi / l6f_step_call / l6f_pc4
-     (a working branch b1bc025047ea), at the listing instance PL_prog_A in place of PL_102_A;
+     (a working branch), at the listing instance PL_prog_A in place of PL_102_A;
    - pn_step_branch: lib/A/Prog/Ent102CallA.v ec_step_branch (same branch), at PL_prog_A;
    - pn_call / pn_callF: lib/A/Prog/Ent102L2AHelp.v l2_call / l2_callF (same branch), at a caller budget WS0 through
      YCbqGwild.afn_pre_x_at_w and YCbqG.ajournal_xw_sub; pn_callFb: the same with YCbqGwild.v aj_call_xbF's budget;

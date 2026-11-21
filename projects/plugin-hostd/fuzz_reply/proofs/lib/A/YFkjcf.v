@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFkjcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 1ac5cc609b4e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Theorem Labs, 2026-10-30 (ReallocPrimary.CfW, lane W, cf refill re-base, B3 half; base a working branch on a working branch d50ec3c8a93a): YFkjcf, the cf twin of YFkj.v (this tree's copy, = c5 8d6c9f45705b).
-   A hand port of YFkj.v at commit 8d6c9f45705b (its mechanical part scripted outside the tree): imports YFkpcf / YFhmcf / YFhncf and the B3 cf twins; RI+68 is the junk
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFkjcf.v (cf refill round 3; file sha256 1ac5cc609b4e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (ReallocPrimary.CfW, lane W, cf refill re-base, B3 half; base a working branch on a working branch): YFkjcf, the cf twin of YFkj.v (this tree's copy, = c5).
+   A hand port of YFkj.v (its mechanical part scripted outside the tree): imports YFkpcf / YFhmcf / YFhncf and the B3 cf twins; RI+68 is the junk
    atom rJEX = 55 of YFkpcf with value jex (0 <= jex < 2 ^ 8), so the B3 atoms are 56..69; the text is otherwise YFkj.v verbatim.
    EVENT-FREE: no st_nev, EV_A, EV_MAX, EV_BIG, mtr_ok, aregime, refill_reg, qloosem or non-cf abudget.
    rule 24: no function proved (kind: re-base of the proved refill walk onto the cf instance). *)
@@ -411,7 +412,7 @@ Lemma PM3 : pc_max (cache S c) = maxc.
 Proof. pose proof (wfc_classes _ _ _ _ _ WF c HcR) as C. unfold wf_class_cf in C. rewrite Hinited in C. rewrite Hmax. exact (proj1 (wrc_cache _ _ _ _ _ _ C)). Qed.
 (* cgif's WF1 built WfP 1 0 0 from Wf and the refill regime's event premise (prim_user_mapped S + kUserMapSize <=
    kUserMapSize * st_nev S), dropped in the cf layer. The cf walk runs from the call state (refill_spec_core_cf,
-   YGcfInstRefill.v:171 at d80162ffa5c9, unticked), whose refill_state_gen_cf carries WfP_cf (as_universe B) 1 0 0 S
+   YGcfInstRefill.v:171, unticked), whose refill_state_gen_cf carries WfP_cf (as_universe B) 1 0 0 S
    (one user map of credit, :115): the B3 Section takes it as HWT. *)
 Hypothesis HWT : WfP_cf (as_universe B) 1 0 0 S.
 Lemma WF1 : WfP_cf (as_universe B) 1 0 0 S.

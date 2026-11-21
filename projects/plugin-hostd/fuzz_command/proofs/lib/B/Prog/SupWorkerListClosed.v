@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the closing of sup_worker_list's ASan+UBSan walk (lib/B/Prog/sup_worker_list.v,
    tsup_worker_list_holds) at the pinned image, after the pattern of a Theorem Labs lane's PASS4-REFIT.md section F
-   (lib/A/Prog/SupRemoveAllRefitClosed.v on a working branch e84227c9553). *)
+   (lib/A/Prog/SupRemoveAllRefitClosed.v on a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* tsup_worker_list_closed: tsup_worker_list_spec B MT at the pinned image of fuzz_command.asan-ubsan
    (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head). The

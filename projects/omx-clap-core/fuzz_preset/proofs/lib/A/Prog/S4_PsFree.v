@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -37,12 +37,13 @@
    conclusion at R. Each plain lemma is its R form at wle (wle_refl / wle_trans); its statement is unchanged.
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* fuzz_preset lib/A, slice S4 (parse_string, image A, ASan build): PsDec's sub-stretch A, the FREE PATH, from its cut
    ps_at_freeP (S4_PsDecKit.v) at PS_FREECUT to the NULL return PS_RET0, where the Section hypothesis ps_seg_ret0P takes
    over. Contract: this row's lib/A/Prog/S4_PsBase.v and PsDec's split lib/A/Prog/S4_PsDecKit.v (ps_at_freeP,
-   ps_at_free; S4_PsDecWalk.v), as this row carries them (at a working branch 322e57164236 they
+   ps_at_free; S4_PsDecWalk.v), as this row carries them (at a working branch they
    were blobs ddfbf3f650fe / 22d1543a7e2d / a66ce71e7d7b).
-   FILE SET (a Theorem Labs lane PsRebindA): the kit's cut 7cdbb61b5fa0 merged forward into the row's
+   FILE SET (a Theorem Labs lane PsRebindA): the kit's cut merged forward into the row's
    prep head (PRH_Base ef7c8ca98529, PRH_FnAlloc 4d8aeba047e5, PRH_FnReader f1ae32e3b2cd; the P'' set's YCbqG.v /
    YCbqGwild.v / YCbqGcallW.v: the budgeted journal ajournal_xw, aj_call_xWb, wild_room_admits, AR_laws_x's field 25);
    the listing and image files are the cut's (int102's). PRW_StepKit.v (pa_slot_lt_ceil_b); PRW_HShadow.v.
@@ -59,14 +60,14 @@
    below q only: prh_cur_low ends it after one record), the NULL arm of the text refuted (out <> 0: the ledger holds
    out), the non-NULL arm: the block given back (ablocks and Hp the entry's, the ledger's Lam the entry's), the text
    across the call by ps_src_after_call; then ps_seg_ret0P at PS_RET0, with ps_Qres's bad-escape arm.
-   THE ADMISSION AND THE BUDGET (the kit's cut 7cdbb61b5fa0: tfuzz_free_specX :320-353 asks
+   THE ADMISSION AND THE BUDGET (the kit's cut: tfuzz_free_specX :320-353 asks
    `admits (as_universe B) (call_trace ..) S` and posts at wbudget [ct] 0; parse_string's text gives the cursor set CW
    by prh_cw_ok and `wild_room (as_universe B) CW 0 (st_depot S)` at entry). The call trace is either a FIXED trace
    (the literal site, or a cursor trace whose saved ra is a pi_call_rets return: prh_univ_closure_cur) or a cursor
    trace IN CW (prh_cw_ok's first arm). Fixed: admits_ct_fix; after the call the free's budget is fixed traces only,
    so the journal goes back to budget [] (ajournal_xw_incl, ajournal_xw_fix1). In CW: wild_room_admits at the room the
    journal keeps from the entry (ajournal_xw_room at WS = []), with the depot's NoDup from AR_laws_x's FIELD 25
-   alx_depot_nodup (a Theorem Labs lane's working branch b4ca247aad5d, YCbqG.v 219748197d6b; ruled by the
+   alx_depot_nodup (a Theorem Labs lane's working branch, YCbqG.v 219748197d6b; ruled by the
    owner 02:32Z on a Theorem Labs lane PsRebindA's countermodel); after the call the budget [ct] is within CW.
    THE ROOM POSITION (tfuzz_free_specX of PRH_FnAlloc.v 4d8aeba047e5 at the cut; POST-IMPLICATION):
    no position at entry; for p <> 0 the post transfers any position at the call's state S by its own event
@@ -92,8 +93,8 @@
    m-form (fpostm, Q = fQmn mem Q0: `Q0 .. /\ (memnorm segs mem -> memnorm segs mem')`), so P mem2 is PCALL mem mem2
    applied to the post's own keep and to the cut's P mem: no argument.
    THE STABLE STATEMENT ps_seg_free_cnt (Section pfT) is the P := (fun _ => True) instance (srr_inv_laws_True,
-   srr_inv_call_True, ps_seg_ret0_of_True, ps_ex_carryP_T, ps_postP_T of the base). Its statement is the one of
-   7e5a49a2288 at the cursor set CW (for DW) with the position argument ps_free_rp deleted (ps_free_rp, ps_free_KF
+   srr_inv_call_True, ps_seg_ret0_of_True, ps_ex_carryP_T, ps_postP_T of the base). Its statement is the one
+    at the cursor set CW (for DW) with the position argument ps_free_rp deleted (ps_free_rp, ps_free_KF
    and the interim keep ps_free_mn are deleted): an EXEMPT change, made for the callee's TEXT, which now gives the keep
    and the position transfer; its consumer is S4_PsTop.
    SECTION HYPOTHESES (owner: WalkS4's S4_PsTop / the slice's assembly): LAWS (the base's), HFREE (the base's callee
@@ -181,7 +182,7 @@ Variable SK : YI16.sink_head.
 Variable CTX : list (list Z).
 Variable CW : list (list Z).
 Hypothesis LAWS : AR_laws_x segs B ARx cf_head.
-(* the callee's kit text (the kit's cut 7cdbb61b5fa0, PRH_FnAlloc.v blob 4d8aeba047e5 :320-360: the admission premise and the
+(* the callee's kit text (the kit's cut, PRH_FnAlloc.v blob 4d8aeba047e5 :320-360: the admission premise and the
    budgeted post at wbudget [ct] 0), the base's Section hypothesis *)
 Hypothesis HFREE : tfuzz_free_specX B ARx SK.
 (* S4_PsSrc.v's two image facts *)
@@ -494,7 +495,7 @@ assert (Eab2 : ablocks B ly2 S2 = ablocks B (pi_ly D) (pi_S D)).
 pose proof HLED as HND; apply ps_led_nodup in HND. pose proof HLED as HFa; apply ps_led_blocks in HFa. pose proof HLED as HPm; apply ps_led_heads in HPm.
 assert (Hnot : ~ In out (map fst (pi_Lam D))).
 { cbn [map fst] in HND. inversion HND as [|x l HN HND2]; subst. intros Hi. apply HN.
-  first [ apply list_elem_of_In; exact Hi | apply elem_of_list_In; exact Hi | exact Hi ]. }
+  first [ apply list_elem_of_In; exact Hi | apply list_elem_of_In; exact Hi | exact Hi ]. }
 assert (El12 : l1 ++ l2 = pi_Lam D).
 { apply (f_equal (@tl (Z * Z))) in El. destruct l1 as [|x l1]; cbn in El; [symmetry; exact El|].
   exfalso. apply Hnot. rewrite El. apply in_map_iff. exists (out, Z.of_nat Q + 1). split; [reflexivity|].
@@ -678,7 +679,7 @@ apply ps_finP_hand. apply (ps_free_callP D ly S Hp W _ mem _ out Q k HPRE).
 Qed.
 End pf.
 
-(* ---- the stable statement as the P := (fun _ => True) instance: 7e5a49a2288's ps_seg_free_cnt, at CW, with the count
+(* ---- the stable statement as the P := (fun _ => True) instance: a commit's ps_seg_free_cnt, at CW, with the count
    argument (the free text gives the memnorm keep and the position transfer) ---- *)
 Section pfT. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {RL : PrhRoomLive}.
 #[local] Existing Instances PSB.PS_PrhImg PSB.PS_PAListing PSB.PS_PAImg.

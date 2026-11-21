@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN15.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap's declined placement, guarded by the model's own mmap gates). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -213,19 +214,23 @@ unfold MG_LIVE, MG_REQ in *.
 pose proof (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (inv_areas I3))))))))) as NN. cbv beta in NN.
 pose proof (live_bytes_nonneg' s3 NN) as Hlb.
 destruct src0_reserved_small as [RS RL]. pose proof src0_reserved_bytes as RB.
-destruct (region_free_exists_cap (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1)) (page_round len) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
-- lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with src0segs. unfold KRES in Hcap. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G). change (ms_segs B) with src0segs.
-rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md1))). pose proof (lx_lb _ _ _ LX). unfold SLOT_BYTES. lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
 pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
-assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md1)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ exact Hbud. }
-reflexivity.
+assert (Hnal : page_round len mod page_size = 0) by (unfold page_round; change page_size with PGSZ; apply Z_mod_mult).
+(* 727298f3: as [YN0c.direct_grant_exists], the grant is Linux's placement for the NULL hint,
+   and [vm_reserved] carries the vDSO pair after the image's reservations. *)
+destruct (place_exists_cap (m_vmmaps md1) (kb_thp (m_kernel md1)) (Z_to_bv 64 0) (page_round len) (page_round len)) as (a & Ha).
+- lia.
+- exact Hnal.
+- rewrite length_app. rewrite (lg_reserved _ _ _ _ G), length_app.
+pose proof (lg_count _ _ _ _ G).
+pose proof (vdso_reserved_len (m_kernel md1) (vdso_top (m_vmmaps md1))).
+change (ms_segs B) with src0segs. unfold KRES in Hcap. lia.
+- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G), ivs_bytes_app. change (ms_segs B) with src0segs.
+pose proof (vdso_reserved_bytes (m_kernel md1) (vdso_top (m_vmmaps md1))).
+rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md1))). pose proof (lx_lb _ _ _ LX).
+unfold SLOT_BYTES, page_size in *. lia.
+- exact Htop.
+- exists a. apply grant_ok_intro; [lia | exact Hnal | exact Ha | exact Hbud].
 Qed.
 Lemma to_Kf : forall regs3 mem3 RET, regs_ok E6 (ss_regs ss_MK) regs3 -> mem_ok src0segs E6 mem3 (ss_mem ss_MK) -> facts_ok E6 (ss_facts ss_MK) ->
 RET = Z_to_bv 64 (2 ^ 64 - 12) -> midrep B L1 s3 mem3 md1 -> FRcB mem3 ->
@@ -281,9 +286,8 @@ region_free (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1)) a (Z_to_bv 64
 Proof.
 intros mm a len HM Hlen Hmod GR. pose proof (proj1 alloc_ceiling_val) as AC. pose proof (u64_range a) as Ua.
 assert (PR : page_round len = len) by (apply page_round_fixed; unfold PGSZ; exact Hmod). rewrite PR in GR.
-unfold grant_ok in GR. apply andb_prop in GR as [GR _]. apply andb_prop in GR as [GR RF].
-apply andb_prop in GR as [GR Htop]. apply andb_prop in GR as [Hal Ha0].
-apply Z.eqb_eq in Hal. apply Z.ltb_lt in Ha0. apply Z.leb_le in Htop. unfold page_size in Hal.
+(* 727298f3: [grant_ok]'s alignment test leads with Linux placement; unpack it as YN2c does. *)
+destruct (grant_ok_unpack _ _ _ _ GR) as (Hal & Ha0 & Htop & RF & _). unfold page_size in Hal.
 assert (Hceil : bv_unsigned a + len <= alloc_ceiling).
 { apply (YM05.grant_below_ceil _ _ (lg_ceil _ _ _ _ (mid_ledger _ _ _ _ _ HM))); [| exact Htop].
 rewrite Z.add_mod, Hal, Hmod by lia. reflexivity. }
@@ -378,6 +382,8 @@ apply (knode_mmap_rw src0segs regs3 (Z_to_bv 64 (src0_A_mmap + 0xc4)) mem3 (seg_
 - rewrite (Hregs 13%bv), G13. reflexivity.
 - rewrite (Hregs 14%bv), G14. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs 15%bv), G15. reflexivity.
+(* #146's decline premise; G10 pins a0 to the literal 0. *)
+- rewrite (Hregs 10%bv), G10. cbn [sv_denot]. apply place_declined_b_null.
 -
 intros e He. apply LF.
 assert (Ee : errno_ret e = Z_to_bv 64 (2 ^ 64 - 12)) by (destruct He as [<-|[]]; unfold errno_ret; apply bv_eq; reflexivity). rewrite Ee.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: KL_remap takes the premise that the step keeps the kernel build and reads mremap's maps_subtract cut of the source range as map_remove of the group's entry, the mremap node discharges the new nvdso_free conjunct and nsafe's alloc_top bound, and its error answer may be the model's -EINVAL as well as -ENOMEM (realloc falls back on either). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -172,10 +173,33 @@ Theorem KL_remap : forall L pbrk mo mo1 b l d nn,
   let h := m_vmmaps mo in
   region_free (vm_reserved h ++ map_remove (vm_maps h) (Z_to_bv 64 b)) (Z_to_bv 64 d) (Z_to_bv 64 nn) = true ->
   m_vm_lazy mo1 = [] -> m_vm_materialized mo1 = [] ->
-  m_vmmaps mo1 = mremap_maps_next h (Z_to_bv 64 b) (Z_to_bv 64 d) (Z_to_bv 64 nn) ->
+  (* #38: KL_mmap_new now needs the kernel build for kl_vdso, and vm_only does not carry it
+     (Lib/SCPS.v:45-47).  mo' is with_vmmaps h' mo, so m_kernel mo' reduces to m_kernel mo and
+     this premise is exactly what the inner call wants. *)
+  m_kernel mo1 = m_kernel mo ->
+  m_vmmaps mo1 = mremap_maps_next h (Z_to_bv 64 b) (Z_to_bv 64 (mmap_len l)) (Z_to_bv 64 d) (Z_to_bv 64 nn) ->
   KL (L_remap L b d nn) pbrk mo1.
 Proof.
-  intros L pbrk mo mo1 b l d nn HK Hq Hin Hnn Hnna Hd Hda Hce h Hrf Hl1 Hm1 Evm1.
+  intros L pbrk mo mo1 b l d nn HK Hq Hin Hnn Hnna Hd Hda Hce h Hrf Hl1 Hm1 Ekb1 Evm1.
+  (* LPS 727298f3: mremap_maps_next takes the source length and cuts the source range
+     [b, b + mmap_len l) with maps_subtract.  The group's own entry fills that range exactly and
+     every other entry of the ledger is apart from it, so the cut is map_remove of that entry,
+     as in ev_munmap_ok (Spec/KRaw.v). *)
+  assert (Hex : maps_subtract (vm_maps h) (bv_unsigned (Z_to_bv 64 b))
+                  (bv_unsigned (Z_to_bv 64 b) + bv_unsigned (Z_to_bv 64 (mmap_len l)))
+                = map_remove (vm_maps h) (Z_to_bv 64 b)).
+  { pose proof (went_In_bounds _ _ _ b l HK (or_introl Hin)) as (B1 & B2 & B3 & B4 & B5 & B6).
+    pose proof (kl_wf _ _ _ HK) as [Wpos Wd]. fold h in Wpos, Wd, B4.
+    unfold elo, ehi, went in B5, B6. cbn [fst snd] in B5, B6.
+    apply maps_subtract_exact_k; [lia | | |].
+    - intros b' s Hbs. pose proof (Wpos (b', s) Hbs) as W. unfold elo, ehi in W. cbn [fst snd] in W. lia.
+    - intros b' s Hbs ->. destruct (pwdisj_In _ _ _ Wd Hbs B4) as [E|D].
+      + unfold went in E. congruence.
+      + pose proof (Wpos (Z_to_bv 64 b, s) Hbs) as W. unfold edisj, elo, ehi, went in D, W. cbn [fst snd] in D, W. exfalso; lia.
+    - intros b' s Hbs Hne. destruct (pwdisj_In _ _ _ Wd Hbs B4) as [E|D].
+      + exfalso. apply Hne. unfold went in E. congruence.
+      + unfold edisj, elo, ehi, went in D. cbn [fst snd] in D. lia. }
+  unfold mremap_maps_next in Evm1. rewrite Hex in Evm1.
   set (h' := mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) (Z_to_bv 64 b)) (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
   set (mo' := with_vmmaps h' mo).
   assert (Hl' : m_vm_lazy mo' = []) by (subst mo'; rewrite m_vm_lazy_with_vmmaps; exact (kl_lazy _ _ _ HK)).
@@ -188,6 +212,7 @@ Proof.
   all: try (unfold brk_quiet in *; cbn; exact Hq).
   all: try lia.
   all: try (rewrite Evm1; reflexivity).
+  all: try exact Ekb1.
   all: try exact HK1.
 Qed.
 
@@ -246,7 +271,7 @@ Qed.
 Definition remap_post (L : mled) (b on nn : Z) (s0 : PState) (mo0 : Model) : mremap_ans -> PState -> Model -> Prop :=
   fun a s mo => s = s0 /\ vm_only mo0 mo /\
     match a with
-    | MrErr e => e = ENOMEM /\ KL L (ps_brk s0) mo
+    | MrErr e => (e = ENOMEM \/ e = EINVAL) /\ KL L (ps_brk s0) mo
     | MrInPlace => KL (L_remap L b b nn) (ps_brk s0) mo
                    /\ (on < nn -> b + nn <= alloc_ceiling /\ ranges_free (lranges L) (b + on) (nn - on) = true)
     | MrMoved d => d <> b /\ 0 < d /\ d mod PGSZ = 0 /\ d + nn <= alloc_ceiling /\ ranges_free (lranges L) d nn = true
@@ -294,7 +319,12 @@ Proof.
   split.
   { cbn [nsafe]. rewrite page_size_eq. change (page_round_up_Z on) with (mmap_len on). change (page_round_up_Z nn) with (mmap_len nn). rewrite Hmo, Hmn, (kl_top _ _ _ HK). fold h bw onw.
     unfold PGSZ in A3. split; [reflexivity|]. split; [lia|]. split; [exact A3|]. split; [lia|]. split; [lia|].
-    split; [unfold LEN_MAX in *; lia|]. split; [exact A4|]. exact (conj Hrfr (conj Hhas Hrfn)). }
+    split; [unfold LEN_MAX in *; lia|]. split; [pose proof alloc_ceiling_hi as Hch; unfold TASK_SIZE; lia|].
+    split; [exact A4|]. exact (conj Hrfr (conj Hhas Hrfn)). }
+  (* mspec_sys's obligation gained nvdso_free as its middle conjunct (Spec/KRaw.v:200).
+     nvdso_free is a match that is True off NMprotect (Lib/NodesSound.v:688-694) and this
+     node is NMremap, so the component is exact I -- no new fact is needed here. *)
+  split; [exact I|].
   intros rsp mo' Hst.
   pose proof (anstep_books _ _ _ _ (kl_lazy _ _ _ HK) (kl_mat _ _ _ HK) Hst) as (Hl' & Hm' & Hvo).
   replace Realloc.MREMAP_MAYMOVE with Uapi.MREMAP_MAYMOVE in Hst by reflexivity.
@@ -303,12 +333,29 @@ Proof.
   rewrite Hmo, Hmn in Hx. fold h bw onw nnw in Hx.
   exists x. split; [exact Hd|]. split; [reflexivity|]. split; [exact Hvo|].
   destruct x as [e| |d].
-  - destruct Hx as (-> & -> & _). split; [reflexivity| exact HK].
+  - destruct Hx as (He & -> & _). split; [exact He| exact HK].
   - destruct Hx as [[E _]|(_ & Hgrow & Evm)]; [exfalso; exact (Hne E)|].
     (* [comment removed for export] *)
     assert (Hrf : region_free (vm_reserved h ++ map_remove (vm_maps h) bw) bw nnw = true /\ b + nn <= alloc_ceiling).
     { destruct (Z.lt_ge_cases on nn) as [Hlt|Hge].
-      - specialize (Hgrow Hlt). unfold mremap_inplace_grow_b in Hgrow. fold h in Hgrow. rewrite Ub in Hgrow.
+      - (* LPS 727298f3: the room test is mremap_inplace_room_b, which cuts the source range out of
+           the maps with maps_subtract; the group's own entry fills that range exactly and every
+           other entry is apart from it, so the cut is map_remove of that entry (as in KL_remap). *)
+        specialize (Hgrow Hlt). unfold mremap_inplace_grow_b, mremap_inplace_room_b in Hgrow. cbv zeta in Hgrow. fold h in Hgrow.
+        assert (Hex : maps_subtract (vm_maps h) (bv_unsigned bw) (bv_unsigned bw + bv_unsigned onw) = map_remove (vm_maps h) bw).
+        { pose proof (went_In_bounds _ _ _ b l HK (or_introl Hin)) as (C1 & C2 & C3 & C4 & C5 & C6).
+          pose proof (kl_wf _ _ _ HK) as [Wpos Wd]. fold h on in Wpos, Wd, C4, C5, C6.
+          unfold elo, ehi, went in C5, C6. cbn [fst snd] in C5, C6. fold bw onw in C5, C6.
+          apply maps_subtract_exact_k; [lia | | |].
+          - intros b' s Hbs. pose proof (Wpos (b', s) Hbs) as W. unfold elo, ehi in W. cbn [fst snd] in W. lia.
+          - intros b' s Hbs ->. destruct (pwdisj_In _ _ _ Wd Hbs C4) as [E|D].
+            + unfold went in E. fold bw onw in E. congruence.
+            + pose proof (Wpos (bw, s) Hbs) as W. unfold edisj, elo, ehi, went in D, W. cbn [fst snd] in D, W.
+              fold bw onw in D. exfalso; lia.
+          - intros b' s Hbs Hnb. destruct (pwdisj_In _ _ _ Wd Hbs C4) as [E|D].
+            + exfalso. apply Hnb. unfold went in E. fold bw in E. congruence.
+            + unfold edisj, elo, ehi, went in D. cbn [fst snd] in D. fold bw onw in D. lia. }
+        rewrite Hex, Ub in Hgrow.
         apply andb_prop in Hgrow as [Hgrow _]. apply andb_prop in Hgrow as [Hce Hrf]. apply Z.leb_le in Hce. rewrite (kl_top _ _ _ HK) in Hce. auto.
       - split; [| lia].
         set (h' := mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) bw) (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
@@ -317,7 +364,7 @@ Proof.
         fold h on bw onw in Hrf0. apply region_free_intro_Z. rewrite Ub, Unn. intros e He.
         pose proof (region_free_disj _ _ _ _ Hrf0 He) as D. rewrite Ub, Uon in D. lia. }
     destruct Hrf as [Hrf Hce]. split.
-    + apply (KL_remap L (ps_brk s0) mo0 mo' b l b nn HK Hq Hin Hnn Hnna ltac:(lia) ltac:(unfold PGSZ in A3; exact A3) Hce Hrf Hl' Hm' Evm).
+    + apply (KL_remap L (ps_brk s0) mo0 mo' b l b nn HK Hq Hin Hnn Hnna ltac:(lia) ltac:(unfold PGSZ in A3; exact A3) Hce Hrf Hl' Hm' (NodesSound.anstep_kernel _ _ _ _ Hst) Evm).
     + intros Hlt. split; [exact Hce|].
       apply (KL_rf_lranges L (ps_brk s0) mo0 (b + on) (nn - on) HK); [lia| lia| lia|].
       apply (region_free_but_self L (ps_brk s0) mo0 b l (b + on) (nn - on) HK Hin); [lia| lia| lia| right; lia|].
@@ -339,7 +386,7 @@ Proof.
     refine (conj Hdb (conj Hpos (conj _ (conj Hce (conj _ _))))).
     + unfold PGSZ. exact Hal.
     + apply (KL_rf_lranges L (ps_brk s0) mo0 d nn HK); [lia| lia| lia| exact Hrf].
-    + apply (KL_remap L (ps_brk s0) mo0 mo' b l d nn HK Hq Hin Hnn Hnna Hpos Hal Hce Hrf' Hl' Hm' Evm).
+    + apply (KL_remap L (ps_brk s0) mo0 mo' b l d nn HK Hq Hin Hnn Hnna Hpos Hal Hce Hrf' Hl' Hm' (NodesSound.anstep_kernel _ _ _ _ Hst) Evm).
 Qed.
 
 
@@ -508,7 +555,7 @@ Proof.
     intros a. unfold remap_post. cbn beta.
     destruct a as [e| |d].
     + (* [comment removed for export] *)
-      apply mspec_pointwise. intros s mo (-> & Hvo & -> & HK1).
+      apply mspec_pointwise. intros s mo (-> & Hvo & _ & HK1).
       apply (rr_fallback_own X s0 mo0 mo p n); [| exact Hin| lia| exact Hvo].
       split; [| exact ND]. exists L. auto.
     + (* [comment removed for export] *)

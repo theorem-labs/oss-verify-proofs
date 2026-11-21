@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_errbqapart.v (commit ce1a656b52b7, file sha256 66afb4f61878) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 1 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_errbqapart.v (file sha256 66afb4f61878) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 1 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row ERRB_QAPART at image B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the symbol table and the CfImg constants of reply's
    image B, fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
 
-   ERRB_QAPART, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:77-78 @ 8b12df2b772, over the image classes
-   (Context {ci : CfImg} {IM : AImg}, YGcfInstDrainX.v:57 @ 8b12df2b772).  Reply does not carry YGcfInstDrainX.v, so the
+   ERRB_QAPART, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:77-78, over the image classes
+   (Context {ci : CfImg} {IM : AImg}, YGcfInstDrainX.v:57).  Reply does not carry YGcfInstDrainX.v, so the
    Lemma states ERRB_QAPART's body VERBATIM at reply's instances IM := AImg_cgif (B/AGif2cgif.v:24,
    im_syms := YF0m.TfibSyms) and ci := CfImg_B (B/CfImgB.v:11).
    At image B: cf_errbuf_obj = 0xaaf68 (B/CfImgB.v:33), the symtab value of _ZN6__asanL20error_message_bufferE in the
@@ -28,7 +29,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import ImgB
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import AGif2cgif CfImgB.
 Open Scope Z_scope.
 
-(* ERRB_QAPART at image B: YGcfInstDrainX.v:77-78 @ 8b12df2b772, at IM := AImg_cgif, ci := CfImg_B. *)
+(* ERRB_QAPART at image B: YGcfInstDrainX.v:77-78, at IM := AImg_cgif, ci := CfImg_B. *)
 Lemma ERRB_QAPART_B : forall B, @im_syms AImg_cgif B -> forall a,
   @cf_errbuf_obj CfImg_B <= a < @cf_errbuf_obj CfImg_B + 56 -> ~ (as_inst B <= a < as_inst B + 3632).
 Proof.

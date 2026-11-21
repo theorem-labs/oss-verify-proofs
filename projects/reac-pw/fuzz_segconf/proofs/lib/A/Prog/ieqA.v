@@ -12,8 +12,8 @@
 (* Modified by Theorem Labs, 2026-10: the walk of ieq on fuzz_segconf.asan (image A, entry 0x87904, 232 bytes,
    58 instructions, a 48-byte frame, no side-stack frame): ieq_contract of lib/A/Prog/ieq_c.v at image A's numbers,
    in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the entry, SRr of apost_base at the return, over
-   `Context {PI : PAImg seg_listing}`). Written new: the control flow of the plain / image-B owner's plain walk lib/Prog/ieq.v
-   (commit d1b7ffc06b25), the seed / cut / loop form of the listing owner's check_declared walk.
+   `Context {PI : PAImg seg_listing}`). Written new: the control flow of the plain / image-B owner's plain walk lib/Prog/ieq.v,
+   the seed / cut / loop form of the listing owner's check_declared walk.
 
    The code (listing dis/ieq.fuzz_segconf.asan.s):
      0x87904-0x87934  frame of 48: ra s0 s1 s2 s3 at sp+40 .. sp+8; s0 := word, s1 := n, s3 := the shadow base
@@ -37,6 +37,7 @@
    Image numbers: the entry BASE + AF_ieq, the trampoline SIGMA SS___interceptor_trampoline_strlen (listing terms),
    STK_ieq, RLO_A and RHI_A from lib/A/Prog/SegInstA.v. The contract's argument `word` is named wd here: `word` is
    also the machine-word type these lemmas use. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

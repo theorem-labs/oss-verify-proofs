@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 4213 of its 4307 lines of code are new or changed and 684 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Crt102Rewrite.v, with its module paths and module names changed; 497 of its 546 lines of code are new or changed and 4258 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, file Crt102Img: the IMAGE FACTS of check_round_trip on the
    harness-fix #102 pins that a walk of tcheck_round_trip_specX (lib/A/PRH_FnCheck.v) reads off the listing, and the
    capacity discharge of its frame-area call. Image A' concretely (PI_prog_A, prh_img_A); image B' from the B listing
@@ -15,18 +16,18 @@
    INPUTS OF RECORD (taken by path):
    - pins: A' asan 1be0f53d96cb9d6c (unstripped twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin
      c90d4fa54d43160b).
-   - branch base: first commit 3971724b617 (this file is written on 3a2bafc75c92, which re-takes
-     the contract texts by path from 00b50c5745fb: lib/A/PRH_FnCheck.v 6f6bc83d7420;
+   - branch base: first (this file is written, which re-takes
+     the contract texts by path: lib/A/PRH_FnCheck.v 6f6bc83d7420;
      lib/A/PRH_Base.v 016934fdc1af, lib/A/PRH_Img.v 934516a622e8, lib/B/PRH_ImgB.v 3216eca68342 unchanged).
    - listings of record: lib/A/Listing_prog.v 1ab147923c5d, lib/A/PAImg_prog.v 47eeb54e93be, lib/B/Listing_prog.v
      8bcc2c9e7809, lib/B/PAImg_prog.v 4392ab2c09ba, lib/Reusable/YPsym.v b6f5a85d234d.
-   - engine: the allocator engine's whole set by path from commit 459129c18903 (YG0dcf.v f2e11ac13457, YGcallScf.v
+   - engine: the allocator engine's whole set by path (YG0dcf.v f2e11ac13457, YGcallScf.v
      f19b92982613, YG05.v).
    - segment cut: the walk's internal file DESIGN.md; listings of the body
      the walk's internal file crt.A.s (A' entry 0x82870, size 0x748) and the internal file crt.B.s (B' entry
      0x82828, size 0x880); source fuzz_preset.c (sha256
      c7b4007bba7bab3e).
-   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1, PAU
+   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS, PAU
      the #102 pin set (pau-preset-102).
    - rule 24: no function proved (the proof-index lookup for check_round_trip, proof-index, exit 0): only the
      plain (lib/Prog) and ubsan (lib/U/Prog) proofs,
@@ -302,7 +303,7 @@ exact (YGcallScf.stack_malloc_x_any segs ARx ly S Hp W mem md 3 HAR ltac:(lia) H
 Qed.
 End s.
 
-(* the call rules' stack premise (YGcallSx.v:76 / :152, and every call rule of the engine): `spZ regsT = sp0 + o ->
+(* the call rules' stack premise (YGcallSx.v:77 / :153, and every call rule of the engine): `spZ regsT = sp0 + o ->
    o mod 16 = 0 -> o <= 0 -> STK_callee - o <= STK`. At every call of check_round_trip sp is Crt102Glue.CRT_sp1 =
    (sp0 - CRT_FRAME) / CRT_ALIGN * CRT_ALIGN (the fake-frame path; the alloca fallback is unreachable), so for the
    16-aligned entry sp the rule's o is a multiple of 16 in [- (CRT_FRAME + (CRT_ALIGN - 16)), 0]: the own frame of

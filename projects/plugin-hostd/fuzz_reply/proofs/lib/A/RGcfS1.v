@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10-31: field round 3 part 3c (YGcfMallocCompose.ikeep_cf no longer keeps the overlay
    normal form): seg_pre_cf's ikeep_cf goal is its two raw-frame conjuncts; MNK stays proved for pa_leaf's post
    (FSRealloc_S1_pa.v), which still states it. *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1.v (hub ddc081c1a03, sha256 17b3e8d95811; internal record) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's alreloc.py (frozen-c4338d099cfb8025; one resolve line, 86568 -> 87896 = 0xac0c0 / 8), then restated at preset's event-free allocator instance (record p102-notes/A5.md):
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1.v (sha256 17b3e8d95811; internal record) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's alreloc.py (frozen-c4338d099cfb8025; one resolve line, 86568 -> 87896 = 0xac0c0 / 8), then restated at preset's event-free allocator instance (record p102-notes/A5.md):
    - the Section premise PRE is acall_pre_cf tfibsegs B ly S Hp W regs mem md ch (YG0dcf.v:231), whose ARcf reads the machine's memory itself, so fs's user-poison layer (FSupoison.unpoison, ARU, appz, vm_lo / vm_T / vm_C) is gone and Up is preset's ghost set Hp;
    - the cell facts come from a Theorem Labs lane's WrapAKit.v (cf_const_lookup / cf_const_lookup_sym / cf_cell_state / cf_unwinding_val, img_cover_of_ledger_cf), p's facts from chunk_facts_cf (YG0scf.v);
    - FINH re-establishes RGcfLaws.ARXqA B Hp (YGcfInstBase.ARXq_cf at image A) at s1 with A/AFf0cfR.v's free_finn_ARcf (AFf0cf's realloc twin), xs_mapped_cf from the rebuilt ARcf's ledger field (YGcfXs.ARcf_xsm), and pa_leaf's relation parameter R := ARXqA.
@@ -24,7 +24,8 @@
    entry 0x31bd8 (one `jal` after the donor's 0x32674); word_of_bytes is fs's A/AFio.v lemma (copied).
    Every error / CHECK branch of the prefix is decided untaken by the symbolic walk (FSRealloc_S1_t.segA). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10-31: relocated from fuzz_preset (commit dc970db26dad) to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125): module paths changed (AllocG RGtop YGcfRmodel YGcfMallocCompose YGcfReallocCompose from lib.Reusable to lib.A) and every image numeral moved by symbol + offset. *)
+(* Modified by Theorem Labs, 2026-10-31: relocated from fuzz_preset to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125): module paths changed (AllocG RGtop YGcfRmodel YGcfMallocCompose YGcfReallocCompose from lib.Reusable to lib.A) and every image numeral moved by symbol + offset. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

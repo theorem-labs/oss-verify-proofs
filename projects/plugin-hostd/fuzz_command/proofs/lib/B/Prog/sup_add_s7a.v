@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: made from an earlier version of lib/A/Prog/send_message_l.v (ported there from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v, ACke.v at c8557374ad2e) for fuzz_command's program walk: the call rule for a callee whose footprint holds the program's statics (g_rec, record.spill), built on PaNoChain.v's cl_callS_wide, with its statement (send_message_k.v's cl_callS_pg_stmt) stated in the lemma and over any PAImg listing; and the transport lemmas the callers of such a callee need (readers that agree on the bytes read, a journal's footprint widened, the recorder's representation kept). send_message's own lemmas (sm_achain, ev_vr_nonneg, rec_spill_frees_nonneg) are left in its walk. *)
+(* Modified by Theorem Labs, 2026-10: made from an earlier version of lib/A/Prog/send_message_l.v (ported there from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v, ACke.v) for fuzz_command's program walk: the call rule for a callee whose footprint holds the program's statics (g_rec, record.spill), built on PaNoChain.v's cl_callS_wide, with its statement (send_message_k.v's cl_callS_pg_stmt) stated in the lemma and over any PAImg listing; and the transport lemmas the callers of such a callee need (readers that agree on the bytes read, a journal's footprint widened, the recorder's representation kept). send_message's own lemmas (sm_achain, ev_vr_nonneg, rec_spill_frees_nonneg) are left in its walk. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaCallPg.v, with its module paths and module names changed; 586 of its 650 lines of code are new or changed and 143 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, the M6 stage's shared lemmas (lane
    SaBranch: sup_add_s7.v and sup_add_s7b.v / sup_add_s7c.v).
 
@@ -15,7 +16,7 @@
    (sab_aro_kept, sab_pres_at), the footprint arithmetic of answer's call (sab_ansFP_*, sab_ans_blocks) and the
    last step of the refused arm (sab_m9_jmp: `j 0x8a634` at EVERY FP state, used at the fx1 answer returns).
 
-   The A walk's file for the same stage is lib/A/Prog/sup_add_s5.v on a working branch 87f17ee4716; the
+   The A walk's file for the same stage is lib/A/Prog/sup_add_s5.v on a working branch; the
    lemmas keep its shapes, re-derived on B's code, B's mid-states (lib/B/Prog/sup_add_s0.v) and B's kit. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.

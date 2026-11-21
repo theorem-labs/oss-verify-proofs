@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it; the plans are renumbered to the new numbering). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -24,21 +25,22 @@ Section DirA2.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
   Let argv1 := nth 1 argv [].
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   #[local] Notation PIECE := (piece SV argH ISP fs).
   #[local] Notation FXHOLE := (fx_hole SV argH ISP fs).
-  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw c.
+  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw L c.
   #[local] Notation CHK1 := (ha1_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV1 SVF SVA).
 
   (* [comment removed for export] *)
@@ -78,7 +80,7 @@ Section DirA2.
     pose proof (ha2_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV1 SVF SVA (ION.iot_simple ION.ODir 32)
                   (conj Hd (ltac:(pose proof (dirref_len argv1 Hd); lia) : (length argv1 <= 4095)%nat))
                   C5A2_HS HOLES5 HOLES5_agree HOLES5_nil HOLES5_mod c5_holes_a2 c5a2_IT c5a2_IT_ok 0%nat true 3000%nat 400000%nat
-                  c4d0_top c3a2_hs98 c5a2_shape c5a2_cert E R FULL m HC) as RZ.
+                  (HBReg.mplan c4d0_top) c3a2_hs98 c5a2_shape c5a2_cert E R FULL m HC) as RZ.
     rewrite c5a2_shape_eq in RZ. eapply crz_conseq; [exact RZ|].
     destruct (vals1_a2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E FULL (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC)) as [U7 B2].
     exact (dir_eval1 E (m_fs m) argv1 U7 B2 (dirref_len argv1 Hd)).

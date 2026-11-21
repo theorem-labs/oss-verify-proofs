@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require As0Gc.
@@ -78,6 +79,8 @@ Section TR.
     Variables (sp : word) (A cap : Z) (data : list byte) (p : bptr) (s0 : as_St H) (LB : list block)
               (msF0 : machine_state) (mo0 : Model) (regs0 : bvmap 5 word) (mem0 : word -> option byte).
     Hypothesis PRE : ATRpre H FZP sp A cap data p s0 LB msF0 mo0 regs0 mem0.
+    (* LPS 727298f3: a write needs the launch's channel reader; as_target_run_stmt's premise *)
+    Hypothesis RDR0 : m_channel_reader mo0 = true.
 
     Let cfg : Z := hdr_cfg data.
     Let N : Z := hdr_payload_len data.
@@ -833,6 +836,8 @@ Section TR.
       Proof. intros mo MP. destruct (adl_mpres H DL _ _ MP) as (_ & E & _). rewrite E. exact (atr_fd1 _ _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
       Let Hfd2 : forall mo, as_MPRES H mo0 mo -> fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
       Proof. intros mo MP. destruct (adl_mpres H DL _ _ MP) as (_ & E & _). rewrite E. exact (atr_fd2 _ _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
+      Let Hrd : forall mo, as_MPRES H mo0 mo -> m_channel_reader mo = true.
+      Proof. intros mo MP. rewrite (adl_rdr H DL _ _ MP). exact RDR0. Qed.
       Let Hfs : forall mo, as_MPRES H mo0 mo -> m_fs mo = m_fs mo0.
       Proof. intros mo MP. exact (proj1 (adl_mpres H DL _ _ MP)). Qed.
 
@@ -1283,7 +1288,7 @@ Section TR.
           - exact CAN64.
           - intros a Ha. eapply (stack0_qsh0 m _ _ (bv_unsigned sp - 80) SH0); [unfold ATR_STACK; lia | lia | rewrite ASHADOW_BASE_val; exact Ha]. }
         unfold W. cbn [map].
-        apply (drv_printf_first H DL sC msF mo regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx PH HV HA (Hfd1 mo MP) K0).
+        apply (drv_printf_first H DL sC msF mo regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx PH HV HA (Hfd1 mo MP) (Hrd mo MP) K0).
         intros regs' mem' msF' mo' PP HV' HA' SB'. destruct PP. rewrite u_small in P_frame by lia.
         assert (RS : forall rr, In rr [(Z_to_bv 64 (bv_unsigned sp - 80 - 3400), 3400); (Z_to_bv 64 0x188140, 232); (Z_to_bv 64 0x6e4b40, 1)] -> still_region rr).
         { intros rr Hr. pf_still Hr. }
@@ -1559,7 +1564,7 @@ Section TR.
 
   Theorem as_target_run : as_target_run_stmt H FZP.
   Proof.
-    intros sp A cap data p s LB msF mo regs mem K PRE K0 HPOST.
-    exact (as_target_run_ok sp A cap data p s LB msF mo regs mem PRE K K0 HPOST).
+    intros sp A cap data p s LB msF mo regs mem K PRE RDR K0 HPOST.
+    exact (as_target_run_ok sp A cap data p s LB msF mo regs mem PRE RDR K K0 HPOST).
   Qed.
 End TR.

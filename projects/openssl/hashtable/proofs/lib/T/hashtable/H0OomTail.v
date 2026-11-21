@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the out-of-memory tail takes the output channel's reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -84,6 +85,7 @@ Section OomTail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 08b1429: SIGPIPE otherwise *)
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -109,7 +111,7 @@ Section OomTail.
       - run_blk scr0 39%nat. apply HT; assumption. }
     apply STEP. clear STEP HR HK R M. intros R M HR HK.
     (* [comment removed for export] *)
-    H0W65x.H0W65.oom_stdio_exit HL P0 resB_eq Hfd2 (@eq_refl _ (m_fs model)).
+    H0W65x.H0W65.oom_stdio_exit HL P0 resB_eq Hfd2 Hrdr (@eq_refl _ (m_fs model)).
   Qed.
 
   (* [comment removed for export] *)
@@ -231,6 +233,7 @@ Section BigLeaves.
   Variables (path : list byte) (stdin0 : AmbIn) (fs0 : Fs).
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis W : world0 (bv_unsigned sp0) area (bv_unsigned gm) brkv mas (bv_unsigned tid) (bv_unsigned can) (bv_unsigned sec) M0.
+  Hypothesis Hrdr0 : ia_channel_reader stdin0 = true.   (* LPS 08b1429: SIGPIPE otherwise *)
 
   Lemma leaf_facts : forall R M, oom_leaf sp0 M0 R M ->
     getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) /\ getr R 3 = Z_to_bv 64 0x10800 /\ getr R 4 = Z_to_bv 64 0x2ebf58
@@ -256,7 +259,7 @@ Section BigLeaves.
     intros R M off V HL. pose proof (u64_range can) as Hcan.
     destruct (leaf_facts R M HL) as (Rsp & Rgp & Rtp & STK & IMG & Ctid & Htid & Cself & Ccan & Cpg).
     change fs0 with (m_fs (modelG path stdin0 fs0 tid off V)).
-    apply (ref_oom_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl (bv_unsigned tid) (bv_unsigned can) R M
+    apply (ref_oom_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl Hrdr0 (bv_unsigned tid) (bv_unsigned can) R M
              Rsp Rgp Rtp STK IMG Ctid Htid Cself Ccan Hcan Cpg 0xdd334).
     left. reflexivity.
   Qed.
@@ -269,7 +272,7 @@ Section BigLeaves.
     intros R M off V HL. pose proof (u64_range can) as Hcan.
     destruct (leaf_facts R M HL) as (Rsp & Rgp & Rtp & STK & IMG & Ctid & Htid & Cself & Ccan & Cpg).
     change fs0 with (m_fs (modelG path stdin0 fs0 tid off V)).
-    apply (ref_refused_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl (bv_unsigned tid) (bv_unsigned can) R M
+    apply (ref_refused_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl Hrdr0 (bv_unsigned tid) (bv_unsigned can) R M
              Rsp Rgp Rtp STK IMG Ctid Htid Cself Ccan Hcan Cpg).
   Qed.
 End BigLeaves.

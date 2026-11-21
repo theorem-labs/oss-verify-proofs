@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (base_ok over the entry draw, and md_ok's channel-reader field for the stdout writes and the pending flush at exit), as bzip2/bzip2_compress_target's main phase was. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -79,7 +80,8 @@ Record md_ok (fs0 : Fs) (md : Model) : Prop := MDOK_ {
   mk_fd1 : fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1));
   mk_fd2 : fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2));
   mk_h   : m_halted md = None;
-  mk_lz  : m_vm_lazy md = [] }.
+  mk_lz  : m_vm_lazy md = [];
+  mk_rdr : m_channel_reader md = true }.   (* LPS 727298f3: the stdout writes need a reading far end. *)
 
 Lemma zero_lines_length : forall n, length (zero_lines n) = (2 * n)%nat.
 Proof. induction n; cbn; [reflexivity|]. rewrite IHn. lia. Qed.
@@ -122,7 +124,7 @@ Section Loop.
 
   Record lp_st (first : bool) (j nb : nat) (vals : list word) (R : bvmap 5 word) (M : word -> option byte)
          (md : Model) (A : AS) : Prop := LPST {
-    p_base : base_ok sp0 a0s path envv tid vals;
+    p_base : base_ok sp0 a0s path envv rdraw tid vals;
     p_v6   : vals_ev vals 6 = v6;
     p_v20  : vals_ev vals 20 = Z_to_bv 64 b;
     p_v23  : vals_ev vals 23 = Z_to_bv 64 owned;
@@ -169,7 +171,7 @@ Section Loop.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Lemma knL_dw : nth_error knL knL_dwi = Some (KWr (SA (ELit 0) 0x31000) 0x33000). Proof. vm_compute. reflexivity. Qed.
-  Lemma incb_sok : forall vals M, base_ok sp0 a0s path envv tid vals -> know_ok RSEGS (ENV a0s path rdraw vals) M knL ->
+  Lemma incb_sok : forall vals M, base_ok sp0 a0s path envv rdraw tid vals -> know_ok RSEGS (ENV a0s path rdraw vals) M knL ->
     store_ok RSEGS M (Z_to_bv 64 0x41ba4) 1%nat = true.
   Proof.
     intros vals M HB HK.
@@ -229,11 +231,11 @@ Section Loop.
     intros first j nb vals R0 M0 md A T ST0 K.
     (* [comment removed for export] *)
     destruct (call_prep first j nb vals R0 M0 md A ST0) as (R1 & MS & ST & A10 & A11 & A1).
-    pose proof ST0 as [_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ MD0 _ _ _ _]. pose proof MD0 as [_ _ _ Mh0 Mlz0].
+    pose proof ST0 as [_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ MD0 _ _ _ _]. pose proof MD0 as [_ _ _ Mh0 Mlz0 _].
     eapply rz_msteps; [exact Mh0 | exact Mlz0 | exact MS |]. clear MS ST0 MD0 Mh0 Mlz0.
     set (M := wbytes M0 (Z_to_bv 64 0x41ba4) [Z_to_bv 8 1]) in *.
     pose proof ST as [HB V6 V20 V23 HK P2 P3 P4 P8 P9 P18 P20 P21 P22 P23 AI0 MI MD LIVEB OWN OUT BUD].
-    (first [ pose proof (HB) as dR_2; dand5 dR_2 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    (first [ pose proof (HB) as dR_2; dand5 dR_2 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *. pose proof (u64_range sp0) as Hsp.
     replace (0x1807c : word) with (Z_to_bv 64 0x1807c) by (apply bv_eq; reflexivity).
@@ -291,12 +293,13 @@ Section Loop.
       + rewrite CSR by mem_side. exact P23.
       + exact AI'.
       + exact MI'.
-      + (first [ dand12 MDF as FD _ FS _ _ _ _ _ _ _ LZ' HH | destruct MDF as (FD & _ & FS & _ & _ & _ & _ & _ & _ & _ & LZ' & HH) ]). split.   (* [comment removed for export] *)
+      + (first [ dand12 MDF as FD _ FS PR _ _ _ _ _ _ LZ' HH | destruct MDF as (FD & _ & FS & PR & _ & _ & _ & _ & _ & _ & LZ' & HH) ]). split.   (* [comment removed for export] *)
         * unfold m_fs. rewrite FS. exact Mfs.
         * unfold m_fds. rewrite FD. exact Mfd1.
         * unfold m_fds. rewrite FD. exact Mfd2.
         * exact HH.
         * exact LZ'.
+        * unfold m_channel_reader. rewrite PR. exact Mrdr.
       + apply LV. exact LIVEB.
       + destruct OWN as [P0|[LVo BY]]; [left; exact P0| right]. split; [apply LV; exact LVo|].
         intros i Hi. rewrite (LVB owned plen i LVo Hi). apply BY. exact Hi.
@@ -389,11 +392,11 @@ Section Loop.
     intros j nb vals R0 M0 md A T ST0 A0 Tnil K.
     (* [comment removed for export] *)
     destruct (pf_prep true j nb vals R0 M0 md A ST0 A0) as (R2 & MS & ST & A19 & A11 & A1 & INCB).
-    pose proof ST0 as [_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ MD0 _ _ _ _]. pose proof MD0 as [_ _ _ Mh0 Mlz0].
+    pose proof ST0 as [_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ MD0 _ _ _ _]. pose proof MD0 as [_ _ _ Mh0 Mlz0 _].
     eapply rz_msteps; [exact Mh0 | exact Mlz0 | exact MS |]. clear MS ST0 MD0 Mh0 Mlz0.
     set (M := wbytes M0 (Z_to_bv 64 0x41ba4) [Z_to_bv 8 0]) in *.
     pose proof ST as [HB V6 V20 V23 HK P2 P3 P4 P8 P9 P18 P20 P21 P22 P23 AI0 MI MD LIVEB OWN OUT BUD].
-    (first [ pose proof (HB) as dR_7; dand5 dR_7 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    (first [ pose proof (HB) as dR_7; dand5 dR_7 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *. pose proof (u64_range sp0) as Hsp.
     replace (0x17ff0 : word) with (Z_to_bv 64 0x17ff0) by (apply bv_eq; reflexivity).
@@ -408,7 +411,7 @@ Section Loop.
       - rewrite Z_to_bv_bv_unsigned. apply (knL_can vals M HK).
       - apply u64_range. }
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-    apply (first_printf R2 M md (Z_to_bv 64 (bv_unsigned sp0 - 208)) (bv_unsigned CANW) PH A1 P2 A11 Mfd1 Mh Mlz T Tnil).
+    apply (first_printf R2 M md (Z_to_bv 64 (bv_unsigned sp0 - 208)) (bv_unsigned CANW) PH A1 P2 A11 Mfd1 Mrdr Mh Mlz T Tnil).
     intros R' M' CS PP. destruct PP as [AG G F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12].
     unfold FP1_FR, STDOUT_F, STDOUT_BUF in AG. rewrite u64 in AG by lia.
     assert (CSR : forall r : reg, In r callee_saved -> r <> 1 -> r <> 19 -> getr R' r = getr R2 r).
@@ -464,11 +467,11 @@ Section Loop.
     intros j nb vals R0 M0 md A T ST0 A0 Hnb K.
     (* [comment removed for export] *)
     destruct (pf_prep false j nb vals R0 M0 md A ST0 A0) as (R2 & MS & ST & A19 & A11 & A1 & INCB).
-    pose proof ST0 as [_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ MD0 _ _ _ _]. pose proof MD0 as [_ _ _ Mh0 Mlz0].
+    pose proof ST0 as [_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ MD0 _ _ _ _]. pose proof MD0 as [_ _ _ Mh0 Mlz0 _].
     eapply rz_msteps; [exact Mh0 | exact Mlz0 | exact MS |]. clear MS ST0 MD0 Mh0 Mlz0.
     set (M := wbytes M0 (Z_to_bv 64 0x41ba4) [Z_to_bv 8 0]) in *.
     pose proof ST as [HB V6 V20 V23 HK P2 P3 P4 P8 P9 P18 P20 P21 P22 P23 AI0 MI MD LIVEB OWN OUT BUD].
-    (first [ pose proof (HB) as dR_10; dand5 dR_10 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    (first [ pose proof (HB) as dR_10; dand5 dR_10 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof OUT as [F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13].
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *. pose proof (u64_range sp0) as Hsp.
@@ -573,7 +576,7 @@ Section Loop.
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x17f44) M (seg_rom RSEGS)) md) T.
   Proof.
     intros f j nb vals R M md A T ST H19 Hj K.
-    pose proof ST as [HB V6 V20 V23 HK P2 P3 P4 P8 P9 P18 P20 P21 P22 P23 AI0 MI MD LIVEB OWN OUT]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    pose proof ST as [HB V6 V20 V23 HK P2 P3 P4 P8 P9 P18 P20 P21 P22 P23 AI0 MI MD LIVEB OWN OUT]. pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     destruct (tr_dec R M (seg_rom RSEGS) j P21 Hj H19 P23) as (R' & MS & S5 & KEEP).
     replace (Z_to_bv 64 0x17f44) with (0x17f44 : word) by (apply bv_eq; reflexivity).
     eapply rz_msteps; [exact Mh | exact Mlz | exact MS |].
@@ -678,7 +681,7 @@ Section Loop.
   Proof.
     intros nb vals R M md A cnt ST INCB Hnb Hcnt.
     pose proof ST as [HB V6 V20 V23 HK0 P2 P3 P4 P8 P9 P18 P20 P21 P22 P23 AI0 MI MD LIVEB OWN OUT].
-    (first [ pose proof (HB) as dR_15; dand5 dR_15 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz].
+    (first [ pose proof (HB) as dR_15; dand5 dR_15 as HL V0 V1 V2 V5 | pose proof HB as (HL & V0 & V1 & V2 & V5) ]). pose proof MD as [Mfs Mfd1 Mfd2 Mh Mlz Mrdr].
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *. pose proof (u64_range sp0) as Hsp.
     set (valsE := rebase vals 23 (Z_to_bv 64 owned) R).
@@ -687,7 +690,7 @@ Section Loop.
     assert (AGE : forall j, (j < NB)%nat -> vals_ev valsE j = vals_ev vals j).
     { intros j Hj. destruct (Nat.eq_dec j 23) as [->|Hne]; subst valsE; [rewrite rebase_at by (assumption || (unfold NB; lia)); symmetry; exact V23|].
       apply rebase_lt; [exact HLv| unfold NB; lia| exact Hj| exact Hne]. }
-    assert (HBE : base_ok sp0 a0s path envv tid valsE) by (split; [exact HLE|]; rewrite !AGE by (unfold NB; lia); OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; assumption).
+    assert (HBE : base_ok sp0 a0s path envv rdraw tid valsE) by (split; [exact HLE|]; rewrite !AGE by (unfold NB; lia); OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; assumption).
     assert (HR : regs_ok (ENV a0s path rdraw valsE) sr_le R).
     { apply (sr_le_ok valsE R HLE); rewrite ?AGE by (unfold NB; lia); try assumption.
       - subst valsE. apply rebase_junk; [exact HLv| unfold NB; lia].
@@ -739,6 +742,8 @@ Section Loop.
     assert (SSP : ssp_cells M1 CANW) by (unfold CANW; split; krd_solve HK).
     assert (FD1 : fd_lookup (m_fds md1) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))).
     { destruct MF1 as (FD & _). unfold m_fds. rewrite FD. exact Mfd1. }
+    assert (RD1 : m_channel_reader md1 = true).
+    { destruct MF1 as (_ & _ & _ & PR & _). unfold m_channel_reader. rewrite PR. exact Mrdr. }
     replace fs0 with (m_fs md1).
     2:{ (first [ dand4 MF1 as _ _ FS _ | destruct MF1 as (_ & _ & FS & _) ]). unfold m_fs. rewrite FS. exact Mfs. }
     assert (TAIL : forall R2 sr, regs_ok (ENV a0s path rdraw vals1) sr R2 ->
@@ -777,7 +782,7 @@ Section Loop.
           change (0x62bf8 + 2 * Z.of_nat 0)%Z with 0x62bf8%Z in F5.
           OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; assumption.
         + right. exists 0x62bf8%Z, (0x62bf8 + 2 * Z.of_nat (S n))%Z, (Z_to_bv 64 0x62bf8), (Z_to_bv 64 1024), (Z_to_bv 64 0), CANW.
-          split; [|split; [lia| exact FD1]].
+          split; [|split; [lia| split; [exact FD1 | exact RD1]]].
           split; try assumption.
           * lia.
           * rewrite zero_lines_length. lia.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Sj_stage2_iface.v, lines 58, 110. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -53,7 +54,7 @@ Definition stage2a_cps : Prop :=
   blen bs + 4 <= Z.of_nat (length iws) -> Z.of_nat (length iws) < 2^40 ->
 
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + S2A_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + S2A_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 ->
   (length (rt_frames RT Σ) + S2A_FRAMES <= FRAMES_MAX)%nat -> S2A_COST (blen bs) <= rt_credit RT Σ ->
   Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX ->
@@ -105,7 +106,7 @@ Definition stage2at_cps : Prop :=
   blen bs + 4 <= Z.of_nat (length iws) -> Z.of_nat (length iws) < 2^40 ->
 
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + S2A_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + S2A_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 ->
   (length (rt_frames RT Σ) + S2A_FRAMES <= FRAMES_MAX)%nat -> S2A_COST (blen bs) <= rt_credit RT Σ ->
   Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX ->

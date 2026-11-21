@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -109,6 +110,9 @@ Record pf1_pre {AMB : Amb} (mem : word -> option byte) (sp can : word) (model : 
   p1_stdio : forall i, 0xee1b0 <= i < 0xee480 -> mem (Z_to_bv 64 i) = None;
   p1_can   : rdn RSEGS mem (Z_to_bv 64 0x120928) 8 = Some (word_to_le_bytes 8 can);
   p1_fd1   : fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1));
+  (* 75d69e00: writev answers a byte count only with a reader at the far end
+     ([ReadWrite.writev_spec]); free, not derivable from [p1_fd1]. *)
+  p1_rdr   : m_channel_reader model = true;
   p1_halt  : m_halted model = None;
   p1_lazy  : m_vm_lazy model = []
 }.
@@ -211,7 +215,7 @@ Definition vals : list word := [sp; Z_to_bv 64 0; can] ++ junk_vals regs ++ [Z_t
   Proof.
     intros K HKnil CONT.
     pose proof pf1_regs_ok as HR. pose proof pf1_know_ok as HK.
-    destruct PRE as [SPlo SPhi SP16 STK IMG STD CAN FD1 Hh Hlazy]. pose proof (u64_range sp) as Usp.
+    destruct PRE as [SPlo SPhi SP16 STK IMG STD CAN FD1 Hrdr Hh Hlazy]. pose proof (u64_range sp) as Usp.
 
     destruct (run_sound RSEGS 5000 pf1_stops (SCR [] [] []) PF1_ENTRY pf1_sr pf1_kn 40 ssA [] scrA
                 E mem (seg_rom RSEGS) regs rA_eq HR HK ltac:(constructor)) as (RA & HRA & HlfA & HmsA).
@@ -265,6 +269,7 @@ Definition vals : list word := [sp; Z_to_bv 64 0; can] ++ junk_vals regs ++ [Z_t
     + split; [krd_solve HKB | krd_solve HKB].
     + lia.
     + exact FD1.
+    + exact Hrdr.
     + exact Hh. + exact Hlazy.
     + lia. + lia.
     + reflexivity.

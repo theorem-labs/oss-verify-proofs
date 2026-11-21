@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader carried through the header read; the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -167,7 +168,7 @@ Section Header.
           cbn [kentry_ok]; unfold flat, estart, elenZ, adenot, v_addi; cbn [a_base a_off]; rewrite ?SPX; cbn [edenot]; rewrite ?E0, ?Uspw.
         * split; [lia | exact (proj2 Hsp)].
         * lia.
-        * split; [lia|]. intros d m Hd Hm. replace (sp0 + -8388608 + d)%Z with (sp0 - 8388608 + d)%Z by lia. apply (rm_stack _ _ _ _ _ QM); lia.
+        * split; [lia|]. intros d m Hd Hm. replace (sp0 + -6144513 + d)%Z with (sp0 - 8388608 + (d + 2244095))%Z by lia. apply (rm_stack _ _ _ _ _ QM); lia.
         * split; [lia|]. split; [lia|]. replace (sp0 + -56)%Z with (sp0 - 56)%Z by lia. exact F1.
         * split; [lia|]. split; [lia|]. replace (sp0 + -64)%Z with (sp0 - 64)%Z by lia. exact F2.
         * split; [lia|]. split; [lia|]. replace (sp0 + -72)%Z with (sp0 - 72)%Z by lia. exact F3.
@@ -274,11 +275,11 @@ Section Header.
       + apply (MF (-112)%Z); [tauto | destruct Hkn as [-> | ->]; vm_compute; reflexivity].
       + apply (MF (-120)%Z); [tauto | destruct Hkn as [-> | ->]; vm_compute; reflexivity].
     -   intros d m Hd Hm.
-      assert (HW : kentry_ok RSEGS (ENVh content vals) M (KWr (SA (EVar 0) (-8388608)) 8388608)).
+      assert (HW : kentry_ok RSEGS (ENVh content vals) M (KWr (SA (EVar 0) (-6144513)) 6144513)).
       { eapply (proj1 (Forall_forall _ _) HK). destruct Hkn as [-> | ->]; unfold knSB, knOB;
         repeat first [ apply in_eq | apply in_cons ]. }
       cbn [kentry_ok] in HW. destruct HW as [_ HW]. unfold estart in HW. cbn [a_base a_off edenot ev ENVh] in HW. rewrite P0, Uspw in HW.
-      replace (sp0 - 8388608 + d)%Z with (sp0 + -8388608 + d)%Z by lia. apply HW; lia.
+      replace (sp0 - 8388608 + d)%Z with (sp0 + -6144513 + (d - 2244095))%Z by lia. apply HW; lia.
     -   unfold cell. destruct Hkn as [-> | ->]; (krd HK 0x100610%Z 4%nat H; cbn [edenot ev ENVh] in H; rewrite P4 in H;
         rewrite ext_val_zx_id in H by (rewrite u_small by lia; cbn; lia); exact H).
     - destruct Hkn as [-> | ->]; xcell HK 0x100688%Z 8%nat.
@@ -502,7 +503,7 @@ Section Header.
       apply (xf_stack _ _ _ XF); lia.
     - rewrite MSc. intros a Ha. unfold zwin in Ha. exact (high_not_owned MI A M mo a AI ltac:(lia)).
     -
-      intros A' R' M' mo' AI' TI' MS' FS' FDS' KEPT LDEL CP BG OWN FR DEF.
+      intros A' R' M' mo' AI' TI' MS' FS' FDS' RD' KEPT LDEL CP BG OWN FR DEF.
       pose proof (xfacts_free A A' M M' mo mo' XF RA Hin AI' OWN FR DEF) as XF'.
       destruct (blk_Y R' M' (seg_rom RSEGS) sp0 2 p 0 0 1 (0%bv : word) (0%bv : word) (0%bv : word) (0%bv : word) (0%bv : word) (0%bv : word) (0%bv : word) (0%bv : word) Hsp ltac:(lia)
                   ltac:(rewrite (KEPT 3%bv) by reg_in; exact G3) ltac:(rewrite (KEPT 4%bv) by reg_in; exact G4)
@@ -553,6 +554,7 @@ Section Header.
                  _ _ msg_addr 31 HK eq_refl) by (cbn; lia);
       apply msg_img
     | rewrite (re_fds _ _ _ _ _ _ _ _ _ _ _ _ _ _ RE); apply fds_std_2
+    | exact (re_rdr _ _ _ _ _ _ _ _ _ _ _ _ _ _ RE)
     | exact MH
     | exact ML
     | apply t_exit_has_nil

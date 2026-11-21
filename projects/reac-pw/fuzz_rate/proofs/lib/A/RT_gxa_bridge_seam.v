@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths and module names changed; 125 of its 195 lines of code are new or changed and 89 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMgxa_bzcj.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan-ubsan: module paths changed; 0 address numerals relocated (port_addr_check 0767e70e074a predict mode, symbol + offset). *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMgxa_bzcj.v (a working branch) to libreac/fuzz_boxreg.asan-ubsan: module paths changed; 0 address numerals relocated (port_addr_check 0767e70e074a predict mode, symbol + offset). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/B/Rt/FMgxa_bzcj.v, with its module paths changed; 28 of its 85 lines of code are new or changed and 138 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_bzcj.v (cold/port-fm-rtprintf-param 3e35620c52e) *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_bzcj.v *)
 (* Modified by Theorem Labs, 2026-10: module prefix omx_clap_core.fuzz_manifest -> libreac.fuzz_disco, record RT_IImgA.A_img -> RecAsanVfA.N_img_asan_vf; every lemma keeps fm's statement and is proved from the lemma of the same name in lib/A/RT_gxa_bridge.v (it states them at RecAsanA.N_img_asan, whose img_segs is the same rsegs), word_of_mem is an abbreviation of its word_of_mem; in-body comments dropped. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_gxa_bridge_seam.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_gxa_bridge_seam.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* The generic bridge between the Bz tree's walks (lib/A/Bz) and GXA's CJ call contracts (lib/CJ/RL/GXA), at the
    ASan instance A_img (RT_IImgA.v) on the pinned fuzz_manifest.asan.  Nothing here is about one interceptor: each
    GXA call-contract proof (strnlen in RT_gxa_strnlen.v; memcpy, memset) imports it.
@@ -17,7 +17,8 @@
    - the shadow: chk_ok_of_pf_rng gives the interceptors' range check `chk_ok` (Bz/A/I_qck.v) from GXA's own ASan
      vocabulary (AsanFacts.v pf_rng / shadow_rw), the quick-check words through ro_C8_of_vis.
    No address numerals. *)
-(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; the image-generic lemmas of origin/cold/port-reply-r4 5247aa4d0b9 proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls.v (ms_cj_bz .. mem_inv_bz_cj, shad_eq .. chk_ok_of_pf_rng), module path fuzz_reply -> fuzz_manifest, the Local lemmas made global, FRbz_str's Z_to_le_bytes_roundtrip / word_of_mem / ro_C8_of_vis copied in from origin/cold/port-fm-rtscan 445e498a469 lib/A/FMbz_str.v:99-152 (proofs unchanged) so the closure has no Reusable file, split out of RT_gxa_strnlen.v so the memcpy and memset contracts can import them; proofs unchanged. *)
+(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; the image-generic lemmas of proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls.v (ms_cj_bz .. mem_inv_bz_cj, shad_eq .. chk_ok_of_pf_rng), module path fuzz_reply -> fuzz_manifest, the Local lemmas made global, FRbz_str's Z_to_le_bytes_roundtrip / word_of_mem / ro_C8_of_vis copied in from lib/A/FMbz_str.v:99-152 (proofs unchanged) so the closure has no Reusable file, split out of RT_gxa_strnlen.v so the memcpy and memset contracts can import them; proofs unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

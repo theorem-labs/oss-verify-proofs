@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed srealizes_must_exit, srealizes_must_exit_down, srealizes_must_exit_init and 1 more; added srealizes_must_exit_fo, srealizes_must_exit_gen, srealizes_must_exit_init_fo; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/HaltsBridge.v, lines 54-57, 62-63, 92, 106-116, 121-150. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
@@ -58,18 +59,18 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Theorem srealizes_must_exit : forall c T,
+Theorem srealizes_must_exit_gen : forall c T,
   srealizes segs scfg c T ->
   Safe segs scfg c ->
-  ~ spin_site_present segs ->
+  (spin_site_present segs -> sc_alloc scfg = true -> False) ->
   halt_ok c -> codes_ok T -> nokill T ->
   must_exit_in_at_cfg scfg segs S c.
 Proof.
   intros c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                 | c Hsite Hspin Hh | c T T' H IH Heq | c T Hbr Hlt HT0];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                 | c Hsite Hal Hspin Hh | c T T' H IH Heq | c T Hbr Hrr Hlt HT0];
     intros Hsafe Hns Hhalt Hcodes Hnk.
-  - (* [comment removed for export] *)
+  -
     destruct Hnode as [Hsteps Hsound].
     apply must_exit_in_at_cfg_running.
     + exact (sstep_cfg_not_halted _ _ _ _ _ (Hsteps i0)).
@@ -92,15 +93,25 @@ Proof.
            rewrite He. apply in_app_iff. right. left. reflexivity.
       * exact (codes_ok_child I evs T i Hcodes).
       * exact (nokill_child I evs T i Hnk).
-  - (* [comment removed for export] *)
+  -
     destruct Hhalt as [Hn | (code & Hc & Hin & Hk)]; [congruence |].
     exact (must_exit_in_at_cfg_halted _ _ _ _ code Hc Hin Hk).
-  - (* [comment removed for export] *)
-    exfalso. exact (Hns Hsite).
-  - (* [comment removed for export] *)
+  -
+    exfalso. exact (Hns Hsite Hal).
+  -
     apply IH; [exact Hsafe | exact Hns | exact Hhalt | exact (codes_ok_eq _ _ Heq Hcodes) | exact (nokill_eq _ _ Heq Hnk)].
-  - (* [comment removed for export] *)
+  -
     exfalso. exact (Safe_not_refused _ _ _ Hsafe Hbr Hlt).
+Qed.
+
+Theorem srealizes_must_exit : forall c T,
+  srealizes segs scfg c T ->
+  Safe segs scfg c ->
+  ~ spin_site_present segs ->
+  halt_ok c -> codes_ok T -> nokill T ->
+  must_exit_in_at_cfg scfg segs S c.
+Proof.
+  intros c T Hsr Hsafe Hns. apply (srealizes_must_exit_gen c T Hsr Hsafe). intros Hs _. exact (Hns Hs).
 Qed.
 
 (* [comment removed for export] *)
@@ -114,8 +125,8 @@ Theorem srealizes_must_exit_down : forall cfg1 c T,
   must_exit_in_at_cfg cfg1 segs S c.
 Proof.
   intros cfg1 c T Hle H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                 | c Hsite Hspin Hh | c T T' H IH Heq | c T Hbr Hlt HT0];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                 | c Hsite Hal Hspin Hh | c T T' H IH Heq | c T Hbr Hrr Hlt HT0];
     intros Hdec Hsafe Hns Hhalt Hcodes Hnk.
   - destruct Hnode as [Hsteps Hsound].
     apply must_exit_in_at_cfg_running.
@@ -151,41 +162,70 @@ Proof.
   - exfalso. exact (Safe_not_refused _ _ _ Hsafe Hbr Hlt).
 Qed.
 
-Theorem srealizes_must_exit_init_down : forall cfg1 pc ph sp brk0 mbase rnd lim inp T,
-  cfg_le cfg1 scfg ->
-  srealizes segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp) T ->
-  decided_from cfg1 segs (init_config segs pc ph sp brk0 mbase rnd lim inp) ->
-  Safe segs cfg1 (init_config segs pc ph sp brk0 mbase rnd lim inp) ->
-  ~ spin_site_present segs ->
-  codes_ok T -> nokill T ->
-  must_exit_in_scfg cfg1 S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
+Theorem srealizes_must_exit_fo : forall c T,
+  srealizes segs scfg c T ->
+  Safe segs scfg c ->
+  sc_alloc scfg = false ->
+  halt_ok c -> codes_ok T -> nokill T ->
+  must_exit_in_at_cfg scfg segs S c.
 Proof.
-  intros cfg1 pc ph sp brk0 mbase rnd lim inp T Hle Hsr Hdec Hsafe Hns Hc Hk.
-  cbn [must_exit_in_scfg].
-  apply (srealizes_must_exit_down cfg1 _ T Hle Hsr Hdec Hsafe Hns); [| exact Hc | exact Hk].
-  left. reflexivity.
-Qed.
-
-(* [comment removed for export] *)
-Theorem srealizes_must_exit_init : forall pc ph sp brk0 mbase rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp) T ->
-  Safe segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp) ->
-  ~ spin_site_present segs ->
-  codes_ok T -> nokill T ->
-  must_exit_in_scfg scfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
-Proof.
-  intros pc ph sp brk0 mbase rnd lim inp T Hsr Hsafe Hns Hc Hk.
-  cbn [must_exit_in_scfg].
-  apply (srealizes_must_exit _ T Hsr Hsafe Hns); [| exact Hc | exact Hk].
-  left. reflexivity.
+  intros c T Hsr Hsafe Hfo. apply (srealizes_must_exit_gen c T Hsr Hsafe). intros _ Hal. rewrite Hfo in Hal. discriminate Hal.
 Qed.
 
 End WithSegs.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* At 08b1429 [must_exit_in_scfg] runs over [run_segments segs inp sp mbase]
+   (Run.v run_segments: the binary's segments followed by the vDSO pair), so
+   the realization it consumes is the one over that list. *)
+Theorem srealizes_must_exit_init_down : forall segs scfg S cfg1 pc ph sp brk0 mbase rnd lim inp T,
+  cfg_le cfg1 scfg ->
+  srealizes (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) T ->
+  decided_from cfg1 (run_segments segs inp sp mbase)
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) ->
+  Safe (run_segments segs inp sp mbase) cfg1
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) ->
+  ~ spin_site_present (run_segments segs inp sp mbase) ->
+  codes_ok S T -> nokill T ->
+  must_exit_in_scfg cfg1 S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
+Proof.
+  intros segs scfg S cfg1 pc ph sp brk0 mbase rnd lim inp T Hle Hsr Hdec Hsafe Hns Hc Hk.
+  cbn [must_exit_in_scfg].
+  apply (srealizes_must_exit_down _ scfg S cfg1 _ T Hle Hsr Hdec Hsafe Hns); [| exact Hc | exact Hk].
+  left. reflexivity.
+Qed.
 
-(* [comment removed for export] *)
+Theorem srealizes_must_exit_init_fo : forall segs scfg S pc ph sp brk0 mbase rnd lim inp T,
+  srealizes (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) T ->
+  Safe (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) ->
+  sc_alloc scfg = false ->
+  codes_ok S T -> nokill T ->
+  must_exit_in_scfg scfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
+Proof.
+  intros segs scfg S pc ph sp brk0 mbase rnd lim inp T Hsr Hsafe Hfo Hc Hk.
+  cbn [must_exit_in_scfg].
+  apply (srealizes_must_exit_fo _ scfg S _ T Hsr Hsafe Hfo); [| exact Hc | exact Hk].
+  left. reflexivity.
+Qed.
+
+Theorem srealizes_must_exit_init : forall segs scfg S pc ph sp brk0 mbase rnd lim inp T,
+  srealizes (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) T ->
+  Safe (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) ->
+  ~ spin_site_present (run_segments segs inp sp mbase) ->
+  codes_ok S T -> nokill T ->
+  must_exit_in_scfg scfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
+Proof.
+  intros segs scfg S pc ph sp brk0 mbase rnd lim inp T Hsr Hsafe Hns Hc Hk.
+  cbn [must_exit_in_scfg].
+  apply (srealizes_must_exit _ scfg S _ T Hsr Hsafe Hns); [| exact Hc | exact Hk].
+  left. reflexivity.
+Qed.
+
+
 Lemma refusal_decided_classic : forall cfg i m, refusal_decided cfg i m.
 Proof.
   intros cfg i m _.

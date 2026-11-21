@@ -1,6 +1,7 @@
-(* CARRIED BY PATH from commit d61fa45ba152, proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfStr.v, sha256 bcda7cdd2d66. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfStr.v, sha256 bcda7cdd2d66. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-28 (PresetStr, c-libc-stdio lane): the strcmp and strlen interceptor contracts of the
    SECOND allocator instance, the text of record for AsanAPI_cf's strcmp and strlen fields. rule 24: no function
    is proved in this file; nothing is proved here at all.
@@ -20,7 +21,7 @@
    unstripped twins, asan f0d2e8d4..0b15 and asan-ubsan 3b5e1a09..3c58.)
 
    THE TEXTS. These are the shared texts with the instance swapped, and one premise strengthened:
-   - strcmp: the AR-form text of record is h-rw-cmd-7's AStrcmpDef (origin/cold/h-rw-cmd-7-rt 97c611eec86, the
+   - strcmp: the AR-form text of record is h-rw-cmd-7's AStrcmpDef (the
      PROVED head, with the walk lib/A/Rt/Strcmp.v grant_strcmp_icpt on fuzz_grant image A;
      proofs/libreac/fuzz_grant/lib/Reusable/AStrcmpDef.v; c-asan named it the shared strcmp text). Its
      strcmp_res / str_meet are copied below verbatim, and astrcmp_realizes_cf is its astrcmp_realizes over the
@@ -59,16 +60,16 @@
    ISTRCMP_DEPTH) and 2224 B (strlen, ISTRLEN_DEPTH) below sp, inside the 2 * ESTACK window of the texts.
 
    TAKEN FROM, one entry per callee (rule 24):
-   - strcmp interceptor: machine walk = leptonica/fhmtgen_fuzzer lib/K5/{A10,B10}/I_strcmp.v (origin/ossv/recipes
-     c8557374ad2e), ported as lib/K5; contract text = AStrcmpDef (origin/cold/h-rw-cmd-7-rt 97c611eec86), copied
-     verbatim and moved to ARcf; composition to the contract = fuzz_state's FSstrcmp.v (origin/cold/port-state-rt-str
-     17818dd9abc), in port.
-   - strlen interceptor: machine walk = bzip2/bzip2_compress_target lib/K/A/I_strlen.v (origin/ossv/recipes
-     c8557374ad2e), ported as lib/K, musl strlen walked inside it; contract text = YG0dcf.v astrnlen_realizes_cf
-     less its bound; composition = fuzz_state's FSstrlen.v (port-state-rt-str 17818dd9abc), in port.
-   - the pieces those compositions compose: the evt -> SRr bridge = port-fm's FMbz_bridge.v (origin/cold/port-fm-rtscan
-     10d0c5cd0be), ported as lib/Reusable/YEvtSRr.v; the shadow half = FMbz_str.v's chk_ok_of_view (via fuzz_state's
-     FSbz_str.v, from port-fm-rtscan cedf3d02589); the transports = c-asan-rt's MemNorm / RegisterBridge (already in
+   - strcmp interceptor: machine walk = leptonica/fhmtgen_fuzzer lib/K5/{A10,B10}/I_strcmp.v,
+     ported as lib/K5; contract text = AStrcmpDef, copied
+     verbatim and moved to ARcf; composition to the contract = fuzz_state's FSstrcmp.v,
+     in port.
+   - strlen interceptor: machine walk = bzip2/bzip2_compress_target lib/K/A/I_strlen.v (
+     theorem-labs/oss-verify-proofs@6b32741d849a), ported as lib/K, musl strlen walked inside it; contract text = YG0dcf.v astrnlen_realizes_cf
+     less its bound; composition = fuzz_state's FSstrlen.v (port-state-rt-str), in port.
+   - the pieces those compositions compose: the evt -> SRr bridge = port-fm's FMbz_bridge.v,
+     ported as lib/Reusable/YEvtSRr.v; the shadow half = FMbz_str.v's chk_ok_of_view (via fuzz_state's
+     FSbz_str.v, from port-fm-rtscan); the transports = c-asan-rt's MemNorm / RegisterBridge (already in
      this unit as lib/MemNorm.v, lib/Lib/RegisterBridge.v).
    - ruled out: r-identity's strcmp (origin/cold/h-rw-ide-6-id-wrap lib/A/Rt/Strcmp.v): not built, and its post is
      equality only. disco's proved strlen (libreac/fuzz_disco lib/A/Rt/Strlen.v, strlen_icpt_contract): a different
@@ -99,7 +100,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Variable segs : list Segment.
 Variable B : asyms.
 
-(* origin/cold/h-rw-cmd-7-rt 97c611eec86 proofs/libreac/fuzz_grant/lib/Reusable/AStrcmpDef.v, verbatim: the result
+(* proofs/libreac/fuzz_grant/lib/Reusable/AStrcmpDef.v, verbatim: the result
    (the interceptor's CharCmpX) and where the compare stops (the bytes before k equal and nonzero; at k they differ
    or s1's byte is 0). *)
 Definition strcmp_res (c1 c2 : Z) : Z := if c1 =? c2 then 0 else if c1 <? c2 then -1 else 1.

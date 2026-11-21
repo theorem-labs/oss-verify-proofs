@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (3 recorded proofs replaced by written proofs (carry_sym, carry_sym', wrap64_lit)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -20,11 +21,14 @@ Open Scope bv_scope.
 Lemma carry_sym : forall x y, (0 <= x < 2^64)%Z -> (0 <= y < 2^64)%Z ->
   ((x + y) mod 18446744073709551616 <? x)%Z = ((x + y) mod 18446744073709551616 <? y)%Z.
 Proof.
-ltac2:(KReplay.run1 (kr_t_Walk ()) [] "h04__p1h14__p2h24__x1h34__x2h47__arithh54__ffh68__varmaph75__with85lemmah91Hh:2Hxh;2Hyh<1oh=1xh>1yh?1zp;1p;2p;3p;7p;4p;6p;9p;8p-1R0g0000R1p4p710p9P0g000\R2p4p710p9P0p1001NR3p4p710p9P0P3p4p7210p9P0P3p4p73110p9P0g001lR0p4p710p9g002fj18Tg003Kj1HTg003ij2TTg004Fj20Tg004bj23Tg005=j22Tg005Zj2\Tg006?j2<Tg006[R3j2VTg0075j2@Tg007Uj21Tg0082j3>Tg008LR4j27TP1j2ITg008ej2?TP2j3aTg009Ej7OTg00:@j1^Tg00:`j1]Tg00;@j2[Tg00;^j1ZTg00<<j4YTg00<Zj1XTg00=8j1WTg00=cj2ATg00>Fj2GTg00>ij1STg00?Kj3ETg00?nj2RTg00@Pj2UTg00@jj2qTg00AVj3pTg00B5j4oTg00Bgj3QTg00CIj1PTg00Chj2BTg00DQj3NTg00E:j2nTg00Efj3mTg00FFj1gTg00Fdj3fTg00GGj3LTg00Gjj6KTg00HHj1dTg00Hfj2cTg00ICj3bTg00Ifj4CTg00JQj6eTg00K5j4`Tg00KVj6_TP0l9hTg00L2j7JTg00LVj6iTg00M:j7jTg00M^j7kTg00NBj8lTg00NfR0f0R2'<p=;g00ODR1g00OdR57>2p=5p-0R6P4g00PDf5R7f4R8f3R9f2R:f1R;P2M9hp=Mg00Q5R<P;g00QSP2CCp==P;g00R:R=g00RYR>P>g00S9R?P2g00SYR@FJp=9P;P=P>P>P?P2Eip=FP:P=P>P>P?P;P2Fjp=:P:P=P>P>P?P<P;g00T9P2CCP@FJp=6P:P=P>P>P?P;P2Fkp=DP9P=P>P>P?P:P;P2Glp=4%;;R@g00T`RA#8RB#HRC%8B#8#8#8#8RD#H'TRE,0;RF'3RG129:RH/\E10HE1<EH'VP31289R3/0E1<E31278R3/@ERH/1711H85>1P2103EP<f6RH/27RIf7RJ,12112H5>1X?<RK11IHRL11I7RM%5L10IH'712JHRL/1J#510LJRNP211LH#5ROPO1I6OEMW81?IH%5M10I7'7P6P4g00UE9a64RMPNPO10LHP2FOW81?I7g00V7RO#^RN%]ORPP<1[<:P;%Z<RQCYRR%X<RS%W<RT1A<0RU1G<BRB'=,9T1FT8RV5:TRW%S>RXPT1G<ARY,=U,9T1FT7RZ5:TR[PXAE<YBR\=6TYA6T\B5DTC4C41RT?R]P2P:1U151q2:#5dAp<0;CoR5b5b6b7X2<X3<X06X1613@:13@812:9R@/0:10@9'7[[^2<^3<^06^16P210JER110HER^PHPJP8P7O6b4O2O23Q1@IER_g00VcR`#PRa#P,B<1B<a1B<`5N<5N<g00WB'n=mONROPPPRPSPT1A<C%gD5f<RD96T\RCPXPTPWPXPTP[PX1=U\,9T=:TCC4C4C4P]P5b5b6b7X2<X3<X06X16122;RC/0E%;:R[/3913[71298R[#;10[E'3[[[^2<^3<^06^16P2P1P^PHPJP;P8P7O7b49LIEEKW9P2O11<E3P<%dARA/cER3,2IR^/@ER1PKP<P^PK11^HRK11^7RW%5K10^H'712L3RL/1J#510LJRKP211LH#5R`P`1I6`EMW81?^H%5W10^7'7P6P4PMPKP`10LHP2FOW81?^7PNPPPRPSPTA6TBD9:TVRVPXPTA6TYD9:TZRZPX1A<A=b<D9E<\RL=6TYA6TLB5DTC4C4P]P5b5b6b7X2<X3<X06X1613:F138F12@3R@/0:10@9'7[[^2<^3<^06^16P2%;JR@%;HRFPHPJP8P7O6b4O2O23QP1POPPPRPSPT1=D\,9TPXPTPVPXPTPZPX1=UL,9TA6TLD5:TC4C4C4P]P5b5b6b7X2<X3<X06X161<EC10:ER:,39137:12[3R3#;103E'3[[[^2<^3<^06^16P2P@PFPHPJP;P8P7O7b49L^EEKP_PIPAPEPNPPPQPSPTP=P>P>P?P<PDg00WnPUCC,9TEeP]P5b5b6b7A><E0g00XU[P2b4C`E_W9P2O1n200100000021100011000b<X;GW:X><X=<o"). Qed.
+  intros x y Hx Hy. change 18446744073709551616%Z with (2^64)%Z.
+  destruct (Z.lt_ge_cases (x + y) (2^64)).
+  - rewrite Z.mod_small by lia. apply eq_true_iff_eq. rewrite !Z.ltb_lt. lia.
+  - rewrite <- (Z.mod_add _ (-1)), Z.mod_small by lia. apply eq_true_iff_eq. rewrite !Z.ltb_lt. lia.
+Qed.
 Lemma carry_sym' : forall x y, (0 <= x < 2^64)%Z -> (0 <= y < 2^64)%Z ->
   ((y + x) mod 18446744073709551616 <? x)%Z = ((x + y) mod 18446744073709551616 <? x)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Walk ()) [] "h01xh11yh21zp;2p;1p;3p;6g006?j2?Tg002fj10Tg003Kj12Tg003ij2>Tg004Fj2:Tg004bj28Tg005=j23Tg0075j24Tg007Uj25Tg0082j39Tg00@Pj2=Tg00Y2j2<Tg00Gjj6;Tf0R0#0#0#0#0p=6%00#0p=7%00#0#0#0#0#0#0#0p=1g00Q5R1g00Nff1R2'?g00T`#0R3#2%03#6R3#2'>,:2'8R2P1f3R4f2R5'3R6g00ODR7%73#1#1#1#1#1#1#1#2R3,40f4R0'51304/43/5039X211463/54,=713541<54E;V2UX11W0o"). Qed.
+Proof. intros. rewrite Z.add_comm. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Ltac zeq :=
@@ -156,8 +160,7 @@ Tactic Notation "model_reg" constr(n) ident(X) constr(mexpr) := model_reg_tac n 
 
 (* [comment removed for export] *)
 Lemma wrap64_lit : forall x, (x mod 2^64 = x mod 18446744073709551616)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Walk ()) [] "h01xp;1p;2g003Kj14Tg0075j23Tg00@Pj22Tg002fj10Tf0R0#0#0#0#0#0#0#0#0p=1g00Q5R1g00T`#1#1#1#1#1#1#1#1#4,30,21W0o"). Qed.
+Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Ltac name_virtual_tac X e :=

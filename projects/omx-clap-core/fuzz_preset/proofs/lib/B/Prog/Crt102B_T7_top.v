@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 996 of its 1069 lines of code are new or changed and 441 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Crt102B_T7.v; 33 of its 93 lines of code are new or changed and 1009 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan
    d663f82d7f488d30, unstripped twin c90d4fa54d43160b), FREE-PIECES-102 Part 7a row T7 = CRT-B-CEXIT: THE ROW'S
    COMPOSITION.
@@ -16,7 +17,7 @@
    - Crt102B_T7_E.v  t7_stretch_E  : T7_AT_X  -> T7_AT_E   (`mv s5, zero`; `j` X)
    composed here: crtB_T7 : CRT_B_SEG_T7, the glue's statement (Crt102Glue.v) at the B instance (PI_prog_B, CRT_PC_B,
    CRT_X_OFF_B, CRT_C_OFF_B), by conversion: T7_AT_X is CRT_B_AT_X and T7_AT_C is CRT_B_AT_C there. back's free order,
-   which pj_free (&back) needs, is crt_at_C_B's own conjunct since 7281359fe8bc; no premise beyond the Section's.
+   which pj_free (&back) needs, is crt_at_C_B's own conjunct; no premise beyond the Section's.
    KB ROUND (Crt102Glue.v G3 / G4): the glue's crt_at_C_B and crt_at_X_B now carry crt_live at kb = prh_wk
    F_check_round_trip and QF is the budgeted post; the four stretches are re-fit at that budget, and crtB_T7's
    statement and this composition are unchanged.
@@ -34,7 +35,7 @@
    does not Require PSstrRo.v: it loads lib/K/Lib/LiaTuning.v / lib/K5/Lib/LiaTuning.v, whose global `Ltac lia ::=`
    changes later proofs in any file that loads it.
 
-   INPUTS OF RECORD: this tree's files (the row's base was commit cbe6d10993c2, an ancestor of this tree;
+   INPUTS OF RECORD: this tree's files (the row's base was, an ancestor of this tree;
    Crt102Glue.v with back's free order in crt_at_C_B); the B' helpers Crt102KitB.v (through Crt102B_T7_kit.v); this
    row's Crt102B_T7_bd / _kit / _tree / T7 / _FP / _E.
 

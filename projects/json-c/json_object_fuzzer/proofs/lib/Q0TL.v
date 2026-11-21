@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (open_pre carries the openat path's TASK_SIZE bound, below which the model reads the path). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -28,7 +29,9 @@ Definition open_pre (regs : bvmap 5 word) (mem : word -> option byte) (path : li
 getr regs 17 = Z_to_bv 64 56 /\ getr regs 10 = Z_to_bv 64 (-100) /\
 Z.ldiff (bv_unsigned (getr regs 12)) open_ignored_flags = 0 /\
 ~ In (Z_to_bv 8 0) path /\ path_has_slash path = false /\ path_eqb path dotdot_path = false /\
-QZDE.bytes_at segs mem (bv_unsigned (getr regs 11)) (path ++ [Z_to_bv 8 0]).
+QZDE.bytes_at segs mem (bv_unsigned (getr regs 11)) (path ++ [Z_to_bv 8 0]) /\
+(* LPS 727298f3: the model reads an openat path only below TASK_SIZE (QJFf's at_node NOpen) *)
+bv_unsigned (getr regs 11) + Z.of_nat (length path) < TASK_SIZE.
 
 Definition same_io (c c' : config) : Prop :=
 m_fds (cfg_model c') = m_fds (cfg_model c) /\ m_fs (cfg_model c') = m_fs (cfg_model c).

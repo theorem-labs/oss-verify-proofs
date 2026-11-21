@@ -41,7 +41,10 @@ Proof.
     split; [reflexivity|]. split; [exact HR|]. split; [intros x _; reflexivity|]. reflexivity.
   - rewrite (ov_read_rel rsegs m m0 a (width_bytes n) HR). revert H.
     destruct (ov_read_bytes rsegs m0 a (width_bytes n)) as [bs|]; intros H; cbn beta iota in H |- *;
-      [|discriminate H].
+      (* LPS 08b1429: a failed [ov_read_bytes] now branches on [range_meets_vvar] (a read that
+         meets the vvar page is Unmodeled rather than a fault), so the failure is two
+         constructors, not one.  Same arm as MemNorm.v:178 / MemNormP.v:236. *)
+      [|destruct (range_meets_vvar rsegs a (width_bytes n)); discriminate H].
     revert H.
     lazymatch goal with
     | |- context [interp_eff_accesses rsegs ?t m0] => destruct (interp_eff_accesses rsegs t m0) as [r1| |] eqn:E1

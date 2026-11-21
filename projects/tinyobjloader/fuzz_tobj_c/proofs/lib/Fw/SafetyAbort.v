@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the error-free budgets theorem takes each binary's three facts over the run's segment list and the run's start, where Run.run_scfg reads the binary, LPS 75d69e00). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia.
@@ -24,22 +25,29 @@ Proof.
   eapply in_is_prefix; [exact Hp|]. exact Hin.
 Qed.
 
+(* LPS 75d69e00: [Run.run_scfg] reads a binary against [run_segments segs inp sp mb] from
+   [init_config (run_segments ..) ..], so the six facts are taken over that list and that start;
+   the producers lift the walks' facts there (Fw3A/RobReach.v [facts_run_init]). *)
 Theorem strong_equiv_error_free_budgets_scfg_abort_of_facts_lim :
   forall (ls lt : Z) (src tgt : Image) (en_s en_t : ExecEntry) (inp : ProcInput)
          (Spec : list event -> Prop),
   (forall t, Spec t -> forall sig fs, ~ In (KillEv sig fs) t) ->
+  let ss := match src, en_s with
+            | mkImage segs _ _, mkEntry sp _ mb _ => run_segments segs inp sp mb end in
+  let st := match tgt, en_t with
+            | mkImage segs _ _, mkEntry sp _ mb _ => run_segments segs inp sp mb end in
   let cs := match src, en_s, inp with
             | mkImage segs pc ph, mkEntry sp brk0 mb rnd, _ =>
-                init_config segs pc ph sp brk0 mb rnd ls inp end in
+                init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd ls inp end in
   let ct := match tgt, en_t, inp with
             | mkImage segs pc ph, mkEntry sp brk0 mb rnd, _ =>
-                init_config segs pc ph sp brk0 mb rnd lt inp end in
-  SOUND (img_segments src) cs Spec ->
-  COMPLETE (img_segments src) cs Spec ->
-  ~ reaches_error_a (img_segments src) cs ->
-  SOUND (img_segments tgt) ct Spec ->
-  COMPLETE (img_segments tgt) ct Spec ->
-  ~ reaches_error_a (img_segments tgt) ct ->
+                init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lt inp end in
+  SOUND ss cs Spec ->
+  COMPLETE ss cs Spec ->
+  ~ reaches_error_a ss cs ->
+  SOUND st ct Spec ->
+  COMPLETE st ct Spec ->
+  ~ reaches_error_a st ct ->
   strong_equiv_error_free_budgets_scfg_abort ACFG ls lt src tgt en_s en_t inp.
 Proof.
   intros ls lt [ssegs spc sph] [tsegs tpc tph] [ssp sbrk smb srnd] [tsp tbrk tmb trnd] inp Spec Hnk.

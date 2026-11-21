@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise of the printf write). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -86,6 +87,7 @@ Section WithImg.
       (forall i, f <= i < f + FILE_SIZE -> mem (Z_to_bv 64 i) = None) ->
       cellZ mem (pf_canary I) 8 can -> 0 <= can < 2 ^ 64 ->
       fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+      m_channel_reader model = true ->
       m_halted model = None -> m_vm_lazy model = [] ->
       K [] ->
       (forall regs' mem',

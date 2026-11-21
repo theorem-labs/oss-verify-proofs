@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -94,7 +95,7 @@ Hypothesis LOC0 : lib0_local_d LIB0P.
 Hypothesis LOCP : lib_local_d LIBP.
 Hypothesis CGH : cg_has CG FZ_SITES FZ_CALLS.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage in *; lia.
+Local Ltac ul := pose proof STACK_WOK_val; unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage in *; lia.
 
 (* [comment removed for export] *)
 Lemma tr_later : forall n k j usp buf cap x0 x1 x2 x3 x4 x5, Z.to_nat k = n -> 1 <= k <= 4 -> (j + n < 499)%nat ->
@@ -123,7 +124,7 @@ Proof using AF FRE FRN OUT_loc ERR_loc XENV'_loc IO_img XENV_img LOCP.
                   & t3 & t4 & t5 & t6 & c0 & c1 & c2 & c3 & c4 & c5 & c6 & c7 & F & fc & m & HA & HT).
   pose proof HT as (ART0 & MI0 & CLX0 & FR0 & TF0 & ST0 & B16 & ULO & USP0 & SPW & (LVP & LIBc & LVN & LVS & LCG) & FRS & PL & PB & BD & P0 & P1 & CAP0 & UT0).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 160)) = usp - 160) by (apply unsigned_lit; ul).
   assert (B16' : (usp - 80) mod 16 = 0) by (apply Z.mod_divide; [lia|]; apply Z.mod_divide in B16; [| lia]; destruct B16 as (q & ->); exists (q - 5); lia).
   assert (CLIN : forall p n, In (p, n) CL -> In (p, n) (rt_live RT Σ)).

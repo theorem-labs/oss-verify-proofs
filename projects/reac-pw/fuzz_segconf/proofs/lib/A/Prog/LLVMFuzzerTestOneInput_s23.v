@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the first half of a round of the split loop of LLVMFuzzerTestOneInput's inlined words_of (plugin-hostd/fuzz_command, 0x86850 .. 0x868a4: the strspn wrapper call, the exit when only separators are left, the 8-byte check and the store of the word's address, the strcspn wrapper call), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (a symbolic seed at a point of the function and the runs from it) and A/ACh2.v:122-290 (a call and back, with the facts carried over it); the two wrapper call steps aj_strspn_at_loc and aj_strcspn_at_loc are lib/A/Prog/check_words_art.v's aj_strspn_at and aj_strcspn_at (PaArt.v's aj_art_at), with the guard cells from CmdRecFacts' cmd_rec_cells. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s45.v, with its module paths changed; 1698 of its 1785 lines of code are new or changed and 818 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): segment S15 of the walk of the
    test harness's entry function LLVMFuzzerTestOneInput (_s23): from K85ac4 i (0x85ac4, m_split of segment i
    succeeded and v holds its parent and vid) through the duplicate scan of the model's VLAN table (the loop 0x85ad8
@@ -12,8 +13,8 @@
    or K85bd0; or, when the table is full, through the -1 exit 0x85d44 .. 0x85d68 to K85bd0. Proves
    lt_seg_S15_stmt of LLVMFuzzerTestOneInput_defs.v.
 
-   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_s42.v (origin/ossv/recipes
-   501c0d516c69): seeds of symbolic states, the symbolic runs (plain where no check is crossed, by token where the
+   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_s42.v:
+   seeds of symbolic states, the symbolic runs (plain where no check is crossed, by token where the
    two checks are), the calls taken through aj_art_at (strcmp, RtString.astrcmp_realizes, the interceptor-layer owner's row 17) and
    aj_intrin_atS (checked_memcpy), and the next cut applied to the run's last state. The internal points (stated in
    LLVMFuzzerTestOneInput_s23k.v, Section w): S15_LOOP j (0x85ad8, the scan's head after j entries), S15_X38
@@ -56,7 +57,7 @@ Open Scope Z_scope.
 
 (* ===== piece j ===== *)
 (* ================= piece j: helpers that need no section variable ================= *)
-(* a 64-bit word plus a literal (_s22's LLVMFuzzerTestOneInput_s22f.v:73-77, p6_w64_off) *)
+(* a 64-bit word plus a literal (_s22's LLVMFuzzerTestOneInput_s22f.v:74-78, p6_w64_off) *)
 Lemma s23j_w64_off : forall x y, Z_to_bv 64 (bv_unsigned (Z_to_bv 64 x) + y) = Z_to_bv 64 (x + y).
 Proof.
 intros x y. apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
@@ -78,7 +79,7 @@ replace (sh + j) with (sh + 4 + Z.of_nat (Z.to_nat (j - 4))) by lia.
 rewrite (H (Z.to_nat (j - 4)) ltac:(cbn [length]; lia)).
 assert (Hc : j = 4 \/ j = 5 \/ j = 6) by lia. destruct Hc as [-> | [-> | ->]]; reflexivity.
 Qed.
-(* 1-byte literal chunks read back as bytes (_s10's LLVMFuzzerTestOneInput_s10k.v:116-159, s10_c1 ..
+(* 1-byte literal chunks read back as bytes (_s10's LLVMFuzzerTestOneInput_s10k.v:117-160, s10_c1 ..
    s10_zs_ok, over any segment list) *)
 Definition s23j_c1 (c : YP09.chunk) (off : Z) : option Z :=
   match c with
@@ -202,7 +203,7 @@ change (s23_dup par vid (nth j t ([], 0))) with
   ((snd (nth j t ([], 0)) =? vid) && (SegModel.strcmp (fst (nth j t ([], 0))) par =? 0)).
 rewrite Heq, Z.eqb_refl. reflexivity.
 Qed.
-(* a callee-saved register across a call (_s22's p1_pres, LLVMFuzzerTestOneInput_s22a.v:246-251) *)
+(* a callee-saved register across a call (_s22's p1_pres, LLVMFuzzerTestOneInput_s22a.v:247-252) *)
 Lemma s23l_pres : forall regs regs2 (r : bv 5), aregs_preserved regs regs2 -> acallee_saved (bv_unsigned r) ->
   getr regs2 r = getr regs r.
 Proof. intros regs regs2 r HP Hr. pose proof (HP _ Hr) as H. rewrite Z_to_bv_bv_unsigned in H. exact H. Qed.
@@ -831,7 +832,7 @@ Qed.
    (aj_art_at with ASTRCMP) and a5 := 176(s1); s8 |= the test, s3 += 20, s4 += 20, s5 -= 1, and on to S15_X38
    (s5 = 0) or S15_LOOP (j + 1). ==== *)
 (* the frame's object v = FR + 32 is usable for its 20 bytes under lt_fsh LFO_NV (_s22's s22e_v_addr,
-   LLVMFuzzerTestOneInput_s22e.v:101-117) *)
+   LLVMFuzzerTestOneInput_s22e.v:102-118) *)
 Lemma s23l_v_addr : forall (rd : reader) F, F mod 8 = 0 -> sa_zs rd (shadow_addr F) (lt_fsh LFO_NV) ->
   range_addressable rd SHADOW_OFF (F + 32) 20.
 Proof.
@@ -887,7 +888,7 @@ unfold s23l_ssC. rewrite restrict_mkst_fx. apply pa_entry_st_ok_full.
 - split; [exact I | split; exact I].
 Qed.
 (* the call of the strcmp interceptor trampoline (row 17, RtString.astrcmp_realizes) as a step of the walk's journal,
-   through PaArt.aj_art_at (_s22's p1_strrchr_at, LLVMFuzzerTestOneInput_s22a.v:379-412) *)
+   through PaArt.aj_art_at (_s22's p1_strrchr_at, LLVMFuzzerTestOneInput_s22a.v:380-413) *)
 Lemma s23l_strcmp_at : forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k x y sx sy (o : Z) raw,
   ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W memT mdc k ->
   getr regsT 10 = w64 x -> getr regsT 11 = w64 y -> 0 < x -> 0 < y ->
@@ -1337,7 +1338,7 @@ Qed.
    or, the table full, through the -1 exit 0x85d44 .. 0x85d68 (v out of scope: the frame's shadow bytes 4 .. 6
    become 0xf8) to K85bd0 ---- *)
 
-(* a word read back from a symbolic state's chunk (LLVMFuzzerTestOneInput_s10k.v:95-102, _s10, copied) *)
+(* a word read back from a symbolic state's chunk (LLVMFuzzerTestOneInput_s10k.v:96-103, _s10, copied) *)
 Lemma s23m_rd_chunk8 : forall E H mem base off a e v cs,
   Forall (YP09.chunk_ok SEGS E (mrestrict H mem) base) cs -> In (YP09.mkChunk off (CVal 8 e)) cs ->
   a = base + off -> sv_denot E e = Z_to_bv 64 v -> 0 <= v < 2 ^ 64 -> rdword (aview SEGS H mem) a = Some v.
@@ -1355,7 +1356,7 @@ intros regs2 regs3 r HP Hz. pose proof (HP (bv_unsigned r) Hz) as H.
 rewrite Z_to_bv_bv_unsigned in H. exact H.
 Qed.
 
-(* a callee-saved register across a call, by its number (LLVMFuzzerTestOneInput_s22e.v:80-82, copied) *)
+(* a callee-saved register across a call, by its number (LLVMFuzzerTestOneInput_s22e.v:81-83, copied) *)
 Lemma s23m_pres' : forall regs regs' (r : bv 5) z,
   aregs_preserved regs regs' -> acallee_saved z -> Z_to_bv 5 z = r -> getr regs' r = getr regs r.
 Proof. intros regs regs' r z HP Hz <-. exact (HP z Hz). Qed.

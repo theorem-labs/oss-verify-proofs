@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch record is the input's (launchL_of_input)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -37,30 +38,33 @@ Qed.
 Theorem ha_full :
   file_leaf_stmt K0 T_file -> file_leaf_stmt KGE1 T_file -> file_leaf_stmt REFUSED T_refused -> ha_full_stmt t_target_ht.
 Proof.
-  intros L0 LK LR lim Hlim sp brk mbase rnd i Hsp Hbrk Hmb Hfit Hvi.   (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  destruct i as [argv envp ifs sin0 uid gid groups net nofile sigmask hw abt vasz urnd tmp].
-  destruct Hvi as (Hva & Hve & Hfs & _ & (Huid & Hgid) & Hnof & Hsig & Hhw & Habt & Hvas & _).   (* [comment removed for export] *)
-  cbn [in_argv in_envp in_uid in_gid in_abort_terminal in_va_size] in *. subst abt vasz.
-  set (i0 := mkProcInput_full argv envp ifs sin0 uid gid groups net nofile sigmask hw false Sv48 urnd tmp) in *.
-  set (fs := in_fs i0) in *. set (sin := mkInStreams sin0 urnd).
-  rewrite (init_config_inp_of _ _ _ _ _ _ _ _ i0 eq_refl eq_refl).
-  change (init_config HASEGS Asan.M.init_pc HAPH sp brk mbase rnd lim _)
-    with (INITA sp rnd brk mbase lim argv envp fs sin uid gid hw groups net nofile sigmask).
-  clearbody fs.
+  intros L0 LK LR lim Hlim sp brk mbase rnd i Hsp Hbrk Hmb Hfit Hlau Hvi.
+  (* the launch facts, by name from [valid_input] and the entry premise *)
+  pose proof (launchL_of_input HAT Asan.M.init_pc sp rnd brk mbase i (eq_trans ha_entry_eq (eq_sym hat_entry)) Hmb Hvi Hlau) as HLX.
+  pose proof (valid_input_argv _ Hvi) as Hva. pose proof (valid_input_envp _ Hvi) as Hve.
+  destruct (valid_input_creds _ Hvi) as [Huid _].
+  rewrite (init_config_LX HASEGS Asan.M.init_pc HAPH sp rnd brk mbase lim i (valid_input_abort_terminal _ Hvi)
+             (valid_input_va_size _ Hvi) (valid_input_recorded_kernel _ Hvi)).
+  set (L := LX_of Asan.M.init_pc mbase i) in *.
+  change (in_fs i) with (lx_fs L).
+  change (INITL HASEGS HAPH sp rnd brk lim (in_argv i) (in_envp i) (in_uid i) (in_hwcap i) L)
+    with (INITA sp rnd brk lim (in_argv i) (in_envp i) (in_uid i) (in_hwcap i) L).
+  set (fs := lx_fs L) in *. set (argv := in_argv i) in *. set (envp := in_envp i) in *.
+  set (uid := in_uid i) in *. set (hw := in_hwcap i) in *.
   destruct (drv_verdict argv fs) eqn:Hv.
   - (* [comment removed for export] *)
     rewrite (spec_g_acc t_target_ht _ _ Hv).
     destruct (drv_classify argv fs) as [|p|p|p data] eqn:EC.
-    + apply (HAConeWClosed.haw_cone_closed sp rnd brk mbase lim argv envp fs sin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid Hv).
-      intros path d E. rewrite EC in E. discriminate E.
-    + apply (HAConeWClosed.haw_cone_closed sp rnd brk mbase lim argv envp fs sin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid Hv).
-      intros path d E. rewrite EC in E. discriminate E.
-    + apply (HAConeWClosed.haw_cone_closed sp rnd brk mbase lim argv envp fs sin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid Hv).
-      intros path d E. rewrite EC in E. discriminate E.
+    + apply (HAConeWClosed.haw_cone_closed sp rnd brk lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX Hv).
+      intros path d E. assert (E' : drv_classify argv fs = DcFile path d) by exact E. rewrite EC in E'. discriminate E'.
+    + apply (HAConeWClosed.haw_cone_closed sp rnd brk lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX Hv).
+      intros path d E. assert (E' : drv_classify argv fs = DcFile path d) by exact E. rewrite EC in E'. discriminate E'.
+    + apply (HAConeWClosed.haw_cone_closed sp rnd brk lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX Hv).
+      intros path d E. assert (E' : drv_classify argv fs = DcFile path d) by exact E. rewrite EC in E'. discriminate E'.
     + destruct (Z_lt_ge_dec (Z.of_nat (length data)) MAX_INPUT) as [Hlt|Hge].
-      * apply (HAConeWClosed.haw_cone_closed sp rnd brk mbase lim argv envp fs sin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid Hv).
-        intros path d E. rewrite EC in E. injection E as <- <-. exact Hlt.
+      * apply (HAConeWClosed.haw_cone_closed sp rnd brk lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX Hv).
+        intros path d E. assert (E' : drv_classify argv fs = DcFile path d) by exact E. rewrite EC in E'.
+        injection E' as <- <-. exact Hlt.
       * (* [comment removed for export] *)
         destruct (file_path_facts argv fs p data Hva EC) as (Hargc & Hp & Hne & Hsl & Hdr & Hln & HL).
         assert (Hb : body_pre_target data = true) by (unfold drv_verdict in Hv; rewrite EC in Hv; exact Hv).
@@ -68,7 +72,7 @@ Proof.
         rewrite (proj2 (Z.leb_le MAX_INPUT (Z.of_nat (length data)))) by lia.
         rewrite <- HAConeW.T_cannot_die, <- T_refused_die.
         change (t_alt2 (T_cannot p fs) (T_lit refused_lit fs)) with (T_refused p data fs). rewrite <- Hp.
-        apply (LR lim Hlim sp rnd brk mbase argv envp fs sin uid gid hw groups net nofile sigmask Hsp Hbrk Hva Hve Hfit Huid Hargc data);
+        apply (LR lim Hlim sp rnd brk argv envp uid hw L Hsp Hbrk Hva Hve Hfit Huid HLX Hargc data);
           rewrite ?Hp; try assumption.
         unfold REFUSED, flen. unfold MAX_INPUT in Hge. lia.
   - (* [comment removed for export] *)
@@ -80,12 +84,12 @@ Proof.
     apply Z.leb_gt in H1. apply Nat.ltb_ge in H2. apply Nat.ltb_ge in H3. unfold MAX_INPUT in H1. unfold HDR_MIN in H2, H3.
     assert (Hfl : flen data = Z.of_nat (length data)) by (unfold flen; lia).
     destruct (Z_le_gt_dec (Z.of_nat (length data)) 65535) as [Hk0|Hk1].
-    + apply (L0 lim Hlim sp rnd brk mbase argv envp fs sin uid gid hw groups net nofile sigmask Hsp Hbrk Hva Hve Hfit Huid Hargc data);
+    + apply (L0 lim Hlim sp rnd brk argv envp uid hw L Hsp Hbrk Hva Hve Hfit Huid HLX Hargc data);
         rewrite ?Hp; try assumption.
       unfold K0. rewrite Hfl. split; [lia|].
       unfold ION.room, ION.flenZ, ION.cfglen, ION.hbyte. unfold config_len, cfg_word, byte_at in H3.
       pose proof (Z.mod_pos_bound (bv_unsigned (nth 0 data (Z_to_bv 8 0)) + 256 * bv_unsigned (nth 1 data (Z_to_bv 8 0))) 32768 ltac:(lia)). lia.
-    + apply (LK lim Hlim sp rnd brk mbase argv envp fs sin uid gid hw groups net nofile sigmask Hsp Hbrk Hva Hve Hfit Huid Hargc data);
+    + apply (LK lim Hlim sp rnd brk argv envp uid hw L Hsp Hbrk Hva Hve Hfit Huid HLX Hargc data);
         rewrite ?Hp; try assumption.
       unfold KGE1. rewrite Hfl. lia.
 Qed.

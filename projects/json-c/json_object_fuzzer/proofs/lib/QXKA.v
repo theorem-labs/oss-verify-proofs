@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: auxv_at's keys may include AT_SYSINFO_EHDR, 33). *)
 
 
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib Require CodeAt StepGen GwInst GwApply GwApply2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6nq.
@@ -121,7 +122,7 @@ Definition libc_auxv_cell : Z := 0x96108.
 
 Definition auxv_at (m : word -> option byte) (aw : Z) (keys : list Z) : Prop :=
 bytes_at rsegs m libc_auxv_cell (le8 (Z_to_bv 64 aw)) /\ aw mod 8 = 0 /\
-Forall (fun k => 0 < k < 2^64 /\ k <> 33) keys /\
+Forall (fun k => 0 < k < 2^64) keys /\
 (forall i k, nth_error keys i = Some k -> bytes_at rsegs m (aw + 16 * Z.of_nat i) (le8 (Z_to_bv 64 k))) /\
 bytes_at rsegs m (aw + 16 * Z.of_nat (length keys)) (le8 (Z_to_bv 64 0)).
 

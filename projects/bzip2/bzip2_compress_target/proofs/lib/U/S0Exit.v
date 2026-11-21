@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise of the exit writes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -827,10 +828,11 @@ Theorem ref_fini_flush :
   stdout_pending mem wb wp bufp bufsz rp1 can pending ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader model = true ->
   realizes RSEGS (mkCfg (mkst regs (0x29174 : word) mem (seg_rom RSEGS)) model)
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
-  intros regs mem model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending FP SP Hh Hlazy Hfd.
+  intros regs mem model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending FP SP Hh Hlazy Hfd Hrdr.
   destruct FP as [Fsp Fs0 Fra Fsplo Fsphi Fsok Ffe Ffs Ffa Fcomp Fg1 Fg2 Fdso Fglob Ferr].
   destruct SP as [P1l P1wp P1wb P1wr P1buf P1bsz P1fd P1rp P1re RANGE LEN PMAX BYTES [Ggot Gcan]].
   zaddr P1l; zaddr P1wp; zaddr P1wb; zaddr P1wr; zaddr P1buf; zaddr P1bsz; zaddr P1fd; zaddr P1rp; zaddr P1re.
@@ -860,7 +862,7 @@ Proof.
     | lia | lia
     | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a, mem_w2; zaddr_goal; rdn_solve
     | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a, mem_w2; rdn_solve
-    | lia | exact Hfd | exact Hh | exact Hlazy
+    | lia | exact Hfd | exact Hrdr | exact Hh | exact Hlazy
     | lia | lia | exact LEN
     | cbn [length]; u_norm; reflexivity
     | cbn [length]; lia
@@ -942,10 +944,11 @@ Theorem ref_exit_flush :
   stdout_pending mem wb wp bufp bufsz rp1 can pending ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader model = true ->
   realizes RSEGS (mkCfg (mkst regs (0x291c0 : word) mem (seg_rom RSEGS)) model)
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
-  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd.
+  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd Hrdr.
   destruct EC. destruct SP as [P1l P1wp P1wb P1wr P1buf P1bsz P1fd P1rp P1re RANGE LEN PMAX BYTES [Ggot Gcan]].
   zaddr P1l; zaddr P1wp; zaddr P1wb; zaddr P1wr; zaddr P1buf; zaddr P1bsz; zaddr P1fd; zaddr P1rp; zaddr P1re.
   cps_destruct ec_glob as (Gnl & Gofl & Gin & Gout & Gerr & F0l & F0wp & F0wb & F0rp & F0re).
@@ -958,12 +961,12 @@ Proof.
       try assumption.
     eapply rz_msteps; [exact Hh | exact Hlazy | exact RUN1 |]. clear RUN1.
     eapply (ref_fini_flush regs1 _ model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending);
-      [ fini_pre_of mem_w1e | stdout_pending_of mem_w1e RANGE LEN PMAX BYTES | exact Hh | exact Hlazy | exact Hfd ].
+      [ fini_pre_of mem_w1e | stdout_pending_of mem_w1e RANGE LEN PMAX BYTES | exact Hh | exact Hlazy | exact Hfd | exact Hrdr ].
   - cps_destruct (w1o regs mem (seg_rom RSEGS) sp tp code tid) as (regs1 & RUN1 & R1sp & R1s0 & R1ra & R1tp & R1gp & R1s1);
       try assumption.
     eapply rz_msteps; [exact Hh | exact Hlazy | exact RUN1 |]. clear RUN1.
     eapply (ref_fini_flush regs1 _ model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending);
-      [ fini_pre_of mem_w1o | stdout_pending_of mem_w1o RANGE LEN PMAX BYTES | exact Hh | exact Hlazy | exact Hfd ].
+      [ fini_pre_of mem_w1o | stdout_pending_of mem_w1o RANGE LEN PMAX BYTES | exact Hh | exact Hlazy | exact Hfd | exact Hrdr ].
 Qed.
 
 (* [comment removed for export] *)
@@ -983,7 +986,7 @@ Theorem ref_exit : forall regs mem model code pending,
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
   (intros regs mem model code pending; cps_intros (sp & tp & tid & wp2 & rp2 & EC & Hh & Hlazy & CASES)).
-  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd)].
+  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd & Hrdr)].
   - eapply rz_conseq; [ | apply t_emit_nil_exit ].
     eapply ref_exit_clean; eassumption.
   - eapply ref_exit_flush; eassumption.

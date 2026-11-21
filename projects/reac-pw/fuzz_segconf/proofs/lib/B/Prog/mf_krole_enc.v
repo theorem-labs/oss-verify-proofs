@@ -5,7 +5,7 @@
    the block held mc (sa_mconf) and the three ranges now hold those bytes, every other byte of the block kept, the
    block holds m_upd mc gi (ms_with_role r file) (SegModel's role branch of m_key). Gallina over readers only; no
    instruction is executed here, no image number appears. A walk lane of the image-B m_file-family owner's G2B. Image A's
-   lib/A/Prog/m_file_s_krole_enc.v (the image-A m_file-family lane, commit e8a825b42b08)
+   lib/A/Prog/m_file_s_krole_enc.v (the image-A m_file-family lane)
    word for word; only this comment and the Require lines (image B's kit copies YA0n YG0f YG0n YG0d YCbq from
    lib.B, SegPgBase / SegABase from lib.B.Prog) differ: the struct offsets are seg_spec's, the same in both images. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

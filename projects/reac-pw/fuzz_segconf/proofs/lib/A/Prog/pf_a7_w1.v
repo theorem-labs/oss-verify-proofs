@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -38,6 +38,7 @@
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 824 of its 867 lines of code are new or changed and 410 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a10b_b.v, with its module paths and module names changed; 598 of its 666 lines of code are new or changed and 799 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the HEADER piece of segment A7 of
    reac_segconf_parse_file's walk (2026-10-30):
 
@@ -45,7 +46,7 @@
            = forall f0 n, HA_FUN B n -> HA_CLOSE B n -> H_HDR (fx := f0) B n
 
    HDR 0x87f6c -> CLOSE 0x880ac, or -> the funnel FUN 0x88064 through the refuse call at 0x88060.
-   The code (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s): 20
+   The code (the unit's internal record, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s): 20
    instructions on the two paths, plus the 3 of check 8's slow arm, 23 walked in all:
      0x87f6c addi a1, zero, 0x5d (']')   0x87f70 mv a0, s7 (= lp, the trimmed line)
      0x87f74 jal <wrapper_strchr>                      -- a0 = the ']' or 0
@@ -88,7 +89,7 @@
      VRO, SSPX  forced ONLY by pf_a6_k.v's a6_base_move, the rebuild AFTER the refuse call: refuse's post
               gives only its journal, which keeps an image byte only when it is not an owned static, and
               arodata_okP there needs pa_relro_img. Both are discharged by listing stage 2
-             (SegRecCells.seg_rec_cells, after AF0m), in reac_segconf_parse.v:137's shape.
+             (SegRecCells.seg_rec_cells, after AF0m), in reac_segconf_parse.v:138's shape.
    Nothing else: sa_ssp, arodata_okP and rt_rom_view before the refuse call and across the strchr call come
    out of pf_base itself (pf_a5_k's a5_keep_obj0 inside a5_move0, pf_a7_r's a7_rom). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

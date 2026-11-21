@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30, QMm W1 (B) (a Theorem Labs lane; the lib/B twin of lib/A/ReplyKeptAroA.v at
-   a working branch 787ba93d6df4 (a Theorem Labs lane); owner a Theorem Labs lane / ReallocPrimary): image B's side of the kept-bytes
+   a working branch (a Theorem Labs lane); owner a Theorem Labs lane / ReallocPrimary): image B's side of the kept-bytes
    carry. QMm W0' gave YCbqG.ARx_frame_law a premise that the image's KEPT bytes (YCbqG.kept_x, the non-owned
    as_kept ranges) are unchanged, and YGcallcf.AR_laws_x_and_mem turns any memory predicate those bytes decide into
    a conjunct a relation may carry. This file supplies, for image B (TfibB of lib/B/YD2l.v, CfImg_B of

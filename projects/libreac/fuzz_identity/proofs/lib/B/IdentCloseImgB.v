@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_identity's ASan+UBSan build (image B) from
-   proofs/libreac/fuzz_identity/lib/ReusableB/YF0m.v lines 24 and 1576-1633 (a working branch 1ddc6a57e5d,
+   proofs/libreac/fuzz_identity/lib/ReusableB/YF0m.v lines 24 and 1576-1633 (a working branch,
    sha256 e44564d37ee32f63946a2c422917759b2ed5af6b79bcabbf1c5801a4cbf7efec; TFIB_ERRNO and Tfib_owned_static, copied
    verbatim into this file's lines 50-108, inside Module IdentCloseTables) and from the RO_IN glue of
-   proofs/libreac/fuzz_grant/lib/A/AGrantT.v line 47 (a working branch e47e01e8e06; itself from
+   proofs/libreac/fuzz_grant/lib/A/AGrantT.v line 47 (a working branch; itself from
    proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v, B twin lib/YD2o.v line 42). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Closing lemmas for four premises that lib/B/IdentTopB.v supplies (:235, :242, :264): HOWN and HERRNO of
-   IdentHimgOwned.v:103-104, AJ_NIL_IO of Prog/IdentEntryLink.v:710, and RO_IN. Each conclusion is the premise's type.
+   IdentHimgOwned.v:103-104, AJ_NIL_IO of Prog/IdentEntryLink.v:711, and RO_IN. Each conclusion is the premise's type.
 
    The B core's record is ReusableB/YD2l.v:12 IdentB (the AD2l twin); in this file the record and the core's in_ro_tfa
    are Section variables, and each core fact a lemma needs is a Section premise of exactly the form the core gives:
@@ -19,7 +20,7 @@
                          disjunction whose right arm is the relro range [0x9b080, 0x9d388).
    With these premises HOWN and HERRNO are the premise itself (the frozen list below and IdentHimgOwned.v:23-80 are
    the same text; both errno words are 0x5d81ac), and RO_IN is or_intror. AJ_NIL_IO takes no core fact: it is
-   jl2_nil_io (lib/B/Prog/LLVMFuzzerTestOneInput_seg_J_lit2glue.v:185) at the root's sink head and image instance.
+   jl2_nil_io (lib/B/Prog/LLVMFuzzerTestOneInput_seg_J_lit2glue.v:186) at the root's sink head and image instance.
    At the applied B core's IdentB, TS_OWNED and TS_ERRNO hold by eq_refl (or as ts_owned / ts_errno of
    TfibB_syms), and IN_RO_TFA by fun a => eq_refl. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.

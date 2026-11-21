@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: heapc_auxv over the revision's auxv, AT_SYSINFO_EHDR first among the keys QCa8.Mq5.rauxv_keys0, then AT_RANDOM and AT_EXECFN; the CONFIG_RSEQ flag of the start-up layer: the two rseq keys under CONFIG_RSEQ). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From stdpp Require gmap.
@@ -588,7 +589,8 @@ From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q6q3.
 Section RC__1. Context {RC__ : Q6q3.RunConsts}.
 
-Definition auxv_keys : list Z := [3; 4; 5; 16; 6; 11; 12; 23; 25].
+(* LPS 727298f3: the keys before AT_RANDOM in the revision's auxv (QCa8.Mq5.rauxv_keys0) *)
+Definition auxv_keys : list Z := QCa8.Mq5.rauxv_keys0.
 
 #[using="Type"] Lemma bytes_at_u64s_nth segs m a ws i w :
 bytes_at segs m a (u64s ws) -> nth_error ws i = Some w -> bytes_at segs m (a + 8 * Z.of_nat i) (le8 w).
@@ -604,29 +606,48 @@ Variable B : Z.
 #[using="Type"] Theorem heapc_auxv A LB m md : HEAPc B A LB m md ->
 exists (aw : Z) (keys : list Z),
 (bytes_at rsegs m RAUXV_CELL (le8 (Z_to_bv 64 aw)) /\ aw mod 8 = 0 /\
-Forall (fun k => 0 < k < 2^64 /\ k <> 33) keys /\
+Forall (fun k => 0 < k < 2^64) keys /\
 (forall i k, nth_error keys i = Some k -> bytes_at rsegs m (aw + 16 * Z.of_nat i) (le8 (Z_to_bv 64 k))) /\
 bytes_at rsegs m (aw + 16 * Z.of_nat (length keys)) (le8 (Z_to_bv 64 0))) /\
 B <= aw.
 Proof.
 intros HP.
 destruct HP as (LB0 & _ & _ & _ & _ & _ & _ & _ & _ & AUX & _).
-
-destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & CELL & ARR & _ & HB1 & HB2 & HAV & REST).
-assert (AL : av mod 8 = 0) by (repeat match type of REST with _ /\ _ => destruct REST as [_ REST] end; exact REST).
-exists av, auxv_keys.
+(* LPS 727298f3: the revision's auxv (QCa8.Mq5.rauxv_list): its keys are the model's, AT_SYSINFO_EHDR (33)
+   first, and the two CONFIG_RSEQ keys when the kernel has CONFIG_RSEQ *)
+destruct AUX as (av & vs & rnd & ex & rs & CELL & ARR & _ & HB1 & HB2 & HAV & _ & _ & _ & _ & _ & RS & _ & AL).
 pose proof (rw_cells_bytes_at _ _ _ _ CELL) as BC. cbn [cells_bytes cbytes app] in BC. rewrite app_nil_r in BC.
+destruct RS as [-> | ->].
+- exists av, (auxv_keys ++ [25; 31]).
 split; [| exact HB2].
 split; [exact BC|]. split; [exact AL|]. split.
-{ unfold auxv_keys. repeat constructor; lia. }
+{ unfold auxv_keys, QCa8.Mq5.rauxv_keys0. cbn [app]. repeat constructor; lia. }
 split.
-- intros i k Hk.
-assert (NTH : nth_error (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd) (2 * i) = Some (wz k)).
-{ unfold auxv_keys in Hk. unfold rauxv_list.
-destruct i as [|[|[|[|[|[|[|[|[|i]]]]]]]]]; cbn in Hk |- *; try (injection Hk as <-; reflexivity). destruct i; discriminate. }
++ intros i k Hk.
+assert (NTH : nth_error (rauxv_list vs rnd ex []) (2 * i) = Some (wz k)).
+{ unfold auxv_keys, QCa8.Mq5.rauxv_keys0 in Hk. cbn [app] in Hk. unfold rauxv_list.
+do 26 (destruct i as [|i]; [cbn in Hk; injection Hk as <-; reflexivity|]).
+destruct i; cbn in Hk; discriminate. }
 pose proof (bytes_at_u64s_nth _ _ _ _ _ _ ARR NTH) as H. replace (av + 16 * Z.of_nat i) with (av + 8 * Z.of_nat (2 * i)) by lia. exact H.
-- assert (NTH : nth_error (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd) 18 = Some (wz 0)) by reflexivity.
-pose proof (bytes_at_u64s_nth _ _ _ _ _ _ ARR NTH) as H. cbn [length auxv_keys]. replace (av + 16 * Z.of_nat 9) with (av + 8 * Z.of_nat 18) by lia. exact H.
++ assert (NTH : nth_error (rauxv_list vs rnd ex []) 52 = Some (wz 0)) by reflexivity.
+pose proof (bytes_at_u64s_nth _ _ _ _ _ _ ARR NTH) as H.
+replace (length (auxv_keys ++ [25; 31])) with 26%nat by reflexivity.
+replace (av + 16 * Z.of_nat 26) with (av + 8 * Z.of_nat 52) by lia. exact H.
+- exists av, (auxv_keys ++ [25; 31; 27; 28]).
+split; [| exact HB2].
+split; [exact BC|]. split; [exact AL|]. split.
+{ unfold auxv_keys, QCa8.Mq5.rauxv_keys0. cbn [app]. repeat constructor; lia. }
+split.
++ intros i k Hk.
+assert (NTH : nth_error (rauxv_list vs rnd ex [27; 28; 28; 32]) (2 * i) = Some (wz k)).
+{ unfold auxv_keys, QCa8.Mq5.rauxv_keys0 in Hk. cbn [app] in Hk. unfold rauxv_list.
+do 28 (destruct i as [|i]; [cbn in Hk; injection Hk as <-; reflexivity|]).
+destruct i; cbn in Hk; discriminate. }
+pose proof (bytes_at_u64s_nth _ _ _ _ _ _ ARR NTH) as H. replace (av + 16 * Z.of_nat i) with (av + 8 * Z.of_nat (2 * i)) by lia. exact H.
++ assert (NTH : nth_error (rauxv_list vs rnd ex [27; 28; 28; 32]) 56 = Some (wz 0)) by reflexivity.
+pose proof (bytes_at_u64s_nth _ _ _ _ _ _ ARR NTH) as H.
+replace (length (auxv_keys ++ [25; 31; 27; 28])) with 28%nat by reflexivity.
+replace (av + 16 * Z.of_nat 28) with (av + 8 * Z.of_nat 56) by lia. exact H.
 Qed.
 End Aux.
 

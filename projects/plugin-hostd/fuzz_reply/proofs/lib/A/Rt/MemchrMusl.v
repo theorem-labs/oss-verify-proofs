@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE3a.v's walk of musl memchr, generalised to any byte c in a1 and to a window that may hold no c at all (the count runs out); AE3a's fetch/decode lemmas, constants and step tactics are used as AE3a states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/A/Rt/MemchrMusl.v
-   (origin/cold/h-rw-dis-7-rt 3b8a77d146c, the shared general memchr), with its module paths changed (it carries no address: the musl memchr body is AE3a.v's fetch/decode lemmas, already at fuzz_reply.asan's 0x963d0). *)
+   (the shared general memchr), with its module paths changed (it carries no address: the musl memchr body is AE3a.v's fetch/decode lemmas, already at fuzz_reply.asan's 0x963d0). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

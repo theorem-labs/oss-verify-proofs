@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v; 296 of its 313 lines of code are new or changed and 231 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_cases0b.v at a working branch d69f7c708f6 (proved v1.9
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_cases0b.v at a working branch (proved v1.9
    run of record) over lib/Lib/StepF: gram_eq by the same script, mc0A_F and tail0A_F with `hide_sec.` moved first and footprint steps added, and the new lemmas sh_cover_sub and sh_word_on_sub.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: none read (the two runs of this file read the row
    [p + 254, p + 265), the out block [o, o + 32) and their shadow; they read no image or runtime cell with a fixed
    value. The pcs 0x8667c, 0x8669c / 0x866a0, 0x866ac / 0x866b0 are of the v1.9.0 image).
@@ -81,7 +82,7 @@ Set Default Proof Mode "Classic".
 (* An opaque wrapper: a hypothesis of type mb_hide T is invisible to lia. *)
 Definition mb_hide (P : Prop) : Prop := P.
 
-(* The store hook of the evtF walk of this function (reac_box_model_blockF.v of 3c9fcc93205, as
+(* The store hook of the evtF walk of this function (reac_box_model_blockF.v, as
    reac_box_model_block_cases0aF.v re-issues it): it also transports rd_mono. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
@@ -136,7 +137,7 @@ Proof.
 Qed.
 
 (* A sub-range's 8-aligned shadow WORDS are shadow words of the enclosing range: the membership side of
-   sh_cover_sub, for the `_on` region R.  Same text as reac_box_model_block_cases2aF.v:319 (a Theorem Labs lane), restated
+   sh_cover_sub, for the `_on` region R.  Same text as reac_box_model_block_cases2aF.v:320 (a Theorem Labs lane), restated
    here at top level so that `lia` does not see the Section's own division facts. *)
 Lemma sh_word_on_sub : forall pp nn0 qq kk aa, 0 < kk -> pp <= qq -> qq + kk <= pp + nn0 ->
   sh_word_on qq kk aa -> sh_word_on pp nn0 aa.
@@ -192,7 +193,7 @@ Section MainF.
   Hypothesis NDJ : p <> 0 -> (b = 5 \/ b = 6) -> has row <> 0 -> rname row <> 0 ->
     fp_dj [(rname row, rname row + Z.of_nat (length nb))] (fp_w [0%nat] FS).
 
-  (* The footprint and the regions these runs read or write (text of 3c9fcc93205 reac_box_model_blockF.v:147-159
+  (* The footprint and the regions these runs read or write (text of reac_box_model_blockF.v:148-160
      for the nine, then the data-region facts fixed for every F file of this family). *)
   Variable RNG : footprint.
   Hypothesis Rimg : rng RNG 0x10000 0x5ee000.

@@ -14,7 +14,7 @@
 
    IMAGE ROOT: the ORIGINAL v1.9.0 set, which is what the statements target --
    pins (internal path), unstripped twins under
-   x/unstripped/, statements ed6b6b7b0ab. NOT the toolchain-N images: a runtime premise
+   x/unstripped/, statements. NOT the toolchain-N images: a runtime premise
    true on one can be false on the other (Lead; the Theorem Labs lane's AsanRT.v
    malloc_context_size = 1 is exactly such a premise, true on N and false here).
 
@@ -22,6 +22,7 @@
    (internal path) (unstripped twin of the
    pin s/fuzz_pcap/fuzz_pcap.asan), from its nm / readelf / objdump dumps in
    (internal path). Addresses are cited at each definition. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 (* val_mem / garr8 / bytes_ok come from pcap's own Reusable layer, which is

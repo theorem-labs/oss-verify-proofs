@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepAppXcf.v (commit 4d286b2e618d, file sha256 6aecbdbe0f71) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 8 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppXcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 e2ac69863a2e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 7 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 7 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); 1 hand maps (the internal file resolve-run-f01d79f3fb5.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepAppXcf.v (file sha256 6aecbdbe0f71) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 8 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppXcf.v (cf refill round 3; file sha256 e2ac69863a2e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 7 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 7 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); 1 hand maps (the internal file resolve-run.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, the class-full report walk, slice F4 / RepF4Append.AppendWalk's H_apart):
    app_apart_of_pre, the layer facts the Append walk uses at an errbuf call (RepAppWcf.v's Hypothesis H_apart, the
    same text), from RepIFcf.errb_call_pre and errb_call_regs APP_STK.
@@ -68,7 +69,7 @@ Lemma app_apart_of_pre : forall lk Hp ly S W mem md regs,
   0 <= d /\ d + cap <= TASK_SIZE /\ d + cap < 2 ^ 64 /\
   (errb_mapped_cf S = true -> 0 < cap /\ 0 < d /\ d mod 4096 = 0 /\ In (w64 d, w64 cap) (vm_maps (m_vmmaps md))) /\
   (forall i, 0 <= i < cap -> off_img (d + i) /\ (d + i < spZ regs - APP_STK \/ ly_stk_hi ly <= d + i)) /\
-  (forall (a : word) n, 0 < n -> n mod 4096 = 0 -> YK13.grant_ok_na_pin md a n = true ->
+  (forall (a : word) n, 0 < n -> n mod 4096 = 0 -> YK13.grant_ok_na_pin (Z_to_bv 64 0) md a n = true ->
      (bv_unsigned a + n <= TFIB_IMG_LO \/ TFIB_IMG_END <= bv_unsigned a) /\
      (bv_unsigned a + n <= spZ regs - APP_STK \/ ly_stk_hi ly <= bv_unsigned a)) /\
   val_mem tfibsegs m 0x103b8 8 0xafffff00000fffff /\
@@ -112,7 +113,7 @@ split.
   split; [unfold off_img, TFIB_IMG_LO, TFIB_IMG_END in *; lia | left; lia]. }
 split.
 { intros a n Hn Hal G.
-  assert (G' : YK13.grant_ok_na_pin md (w64 (bv_unsigned a)) n = true) by (unfold w64; rewrite Z_to_bv_bv_unsigned; exact G).
+  assert (G' : YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 (bv_unsigned a)) n = true) by (unfold w64; rewrite Z_to_bv_bv_unsigned; exact G).
   pose proof (u64_range a) as Ua.
   destruct (rep_grant_apart B lk Hp ly S W mem md n (bv_unsigned (getr regs 2)) 512 PRE Hn Hal HLO ltac:(lia) (bv_unsigned a) G') as (GI & _ & _).
   destruct (rep_grant_below_ceil B lk Hp ly S W mem md n PRE Hn Hal (bv_unsigned a) Ua G') as (GC & _).

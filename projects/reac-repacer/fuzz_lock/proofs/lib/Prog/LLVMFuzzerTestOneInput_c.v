@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths, addresses and numbers changed; 39 of its 99 lines of code are new or changed and 7 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Contract of fuzz_lock's LLVMFuzzerTestOneInput (fuzz_lock.c:181-207) in fuzz_lock.plain, 0x12b78, in the form of
-   libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_c.v (release 25e3d17bdb50), with the return value
+   libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_c.v (release), with the return value
    lock_ret pl, 0 or -1, in place of decode's 0. Written by Theorem Labs.
 
    The image facts are fuzz_lock.plain's, read from the unstripped ELF

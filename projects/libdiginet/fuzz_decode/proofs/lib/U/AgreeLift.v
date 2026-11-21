@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/AgreeLift.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/AgreeLift.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -20,7 +20,7 @@ Proof using.
   intros ms model ms' Hh Hl Hsvc Hstep Hc tr c' Hstar.
   inversion Hstar as [c0 | c1 evs c2 tr' c3 Hs Hst]; subst.
   - exact (budget_refused_at_no_lazy_instr segs ms model Hl Hsvc).
-  - destruct (node_instr segs ms model ms' Hh Hl Hsvc Hstep) as [_ Hall].
+  - destruct (node_instr segs ms model ms' Hh Hl Hsvc Hstep) as [_ [Hall _]].
     destruct (Hall evs (SNext c2) Hs) as [[] [_ Heq]].
     injection Heq as ->. exact (Hc tr' c' Hst).
 Qed.

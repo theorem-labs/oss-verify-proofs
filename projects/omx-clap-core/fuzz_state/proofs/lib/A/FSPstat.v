@@ -1,7 +1,7 @@
 (* The 8-byte statics of fuzz_state's fuzz/alloc.c in fuzz_state.asan: g_fail_at, g_live, g_peak, g_count (journal
    footprint ranges [lo, hi)). A walk that writes a static declares it in the journal's FP; the image clause of
-   ajournal (lib/Reusable/YCbq.v) spares the footprint (RELOC's FP-keyed journal, a working branch 5658cc32098).
-   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMPstat.v (5658cc32098), same shape at fs's addresses.
+   ajournal (lib/Reusable/YCbq.v) spares the footprint (RELOC's FP-keyed journal, a working branch).
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMPstat.v, same shape at fs's addresses.
    MEASURED from the unstripped twin of the pinned fuzz_state.asan (sha256 64b53ff8...) by
    (internal path) and a capstone scan of fuzz/alloc.c's functions: the four symbols are 32 bytes each
    (asan global with redzone), but the code writes only the first 8 bytes of each, with `sd`, at offset 0:

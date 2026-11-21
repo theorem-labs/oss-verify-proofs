@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExUtf8RunB.v, with its module paths and module names changed; 116 of its 146 lines of code are new or changed and 664 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/B, the #102 re-walk of check_as_written on image B' (lane CawA102R for B', h-rw-pre-5): the
    INSTANCE WITNESS of every static image premise of the walk (the 16:45Z witness rule: an image premise counts only
    beside a lemma closed by vm_compute at the real image record), and the walk's top AT THE INSTANCE.
@@ -16,13 +17,13 @@
      Hown_obj (cawb_own), Hmal (cawb_mal), Hown_hi (cawb_hi); PAL is h-rw-man-5's PALibB.v 5baa19c890f7 exvi_eh_palib;
    - PAB is stated at IMG_LO_B (image B's own bound; the walk reads it as the base's lower bound, not as a box), and
      cawb_band_cf proves PI_prog_B's band [pa_lo, pa_hi) EQUAL to the generated per-instance class CfImgB.CfImg_B's
-     [cf_img_lo, cf_img_top) (h-mani-a8's rule), the twin of h-rw-dec-2's cnbw_band_cf (Cno102B_Wit.v c8cda7ca7340,
-     on origin/cold/h-rw-dec-2-p102-R7-7-wit 5c26ed6e511a; not cited, because the tree of record does not carry
+     [cf_img_lo, cf_img_top) (h-mani-a8's rule), the twin of h-rw-dec-2's cnbw_band_cf (Cno102B_Wit.v c8cda7ca7340,;
+     not cited, because the tree of record does not carry
      Cno102B_Wit.v or its Cno102B_* Requires);
    - caw_B_top_inst: caw_B_top at PI_prog_B / TfibB, its premises the callee texts and runtime rows only.
-   BASE OF RECORD: the kit's cut 7cdbb61b5fa0 (text lib/A/PRH_FnCheck.v c40cf3fdcd2a
+   BASE OF RECORD: the kit's cut (text lib/A/PRH_FnCheck.v c40cf3fdcd2a
    :832-902), this row's lib/B/Prog/Caw102B.v (its statements); INT102-READY (prepared at batchprep
-   92d5baf78806 on the batch kit's tip e45217a4c7ba). WHAT CHANGED and why: the text lost the run-word list DW, so caw_B_top_inst
+   on the batch kit's tip). WHAT CHANGED and why: the text lost the run-word list DW, so caw_B_top_inst
    quantifies over CTX0 only; the room counts are the text's own entry premises (:862-863), so the named argument
    CAW_CNT is no longer a premise of caw_B_top_inst. Every image premise is still closed here at PI_prog_B.
    The statics prh_pst are lib/B/PRH_ImgB.v 3216eca68342's prh_img_B (the #102 B' record, confirmed by a Theorem Labs lane 17:37Z).

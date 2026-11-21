@@ -2,8 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator ReallocPrimary): the
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFg6cf.v (commit af0289e23fe, CfF1 round-3 re-fit; file sha256 f8fb3aad3f72) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 7 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 7 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); 2 data addresses the tool read as sizes, each a pc-relative target of both paired functions; 2 hand maps (resolve-all.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
-   RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg6.v at commit 30a1993588f (Enqueue's MISS arm: a new batch
+   RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg6.v at commit theorem-labs/oss-verify-proofs@6b32741d849a (Enqueue's MISS arm: a new batch
    after the class-24 refill), ported from cgif's AR / enq_pre to the cf instance's ARX_cf / enq_pre_cf, as YFg4cf.v /
    YFg5cf.v ported YFg4.v / YFg5.v.  The changes, and nothing else: the Section's call premise is
    YGcfInstEnq.enq_pre_cf at YGcfInstBase.ARX_cf B IOK Hp; the memory facts read YFfqcf over ARmcf; HTSD is a lemma;
@@ -15,6 +14,8 @@
    IMAGE-SPECIFIC (cgif_file's image, TfibSyms): each unit relocates this file to its own image (preset A' / B': A11;
    reply A / B: lane W).
    rule 24: no function proved (kind: relational transport of the allocator relation over Enqueue's miss arm). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFg6cf.v (CfF1 round-3 re-fit; file sha256 f8fb3aad3f72) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 7 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 7 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); 2 data addresses the tool read as sizes, each a pc-relative target of both paired functions; 2 hand maps (resolve-all.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

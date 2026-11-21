@@ -2,17 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/bzip2/bzip2_compress_target/lib/K/A/I_memcpyw.v, with its module paths, module names, addresses and numbers changed; 252 of its 509 lines of code are new or changed and 282 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_pcap/lib/A/Bz/A/I_amemmovew.v
-   (commit eabce720039), the __asan_memmove walk, with its module paths changed and its code
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_pcap/lib/A/Bz/A/I_amemmovew.v,
+   the __asan_memmove walk, with its module paths changed and its code
    addresses moved from fuzz_pcap.asan's __asan_memmove (0x51c50) to fuzz_reply.asan's (0x52e04) in the lib/A source (of
    that source: the 220 words differ only in auipc/ld/jal relocations, so each pc keeps its offset, +0x11b4), and from
    there to fuzz_reply.asan-ubsan's (0x52e5c: each pc at +0x58 from its fuzz_reply.asan twin, +0x120c from pcap's).
    pcap's I_memcpyw.icells and I_amemcpy.stk_after_copy are restated here (amm_cells at fuzz_reply.asan-ubsan's cells;
    stk_after_copy unchanged) instead of importing the two memcpy walks. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/Bz/A/I_amemmovew.v at commit 8fe76247f18, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (32 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/Bz/A/I_amemmovew.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (32 numerals; per-numeral report). *)
 (* Modified by Theorem Labs, 2026-10-30: comments only: the inherited comments made true of this image-B file (addresses,
    offsets and loads named as fuzz_reply.asan-ubsan's); the inherited fuzz_pcap -> fuzz_reply.asan claims are kept and
    marked as about the lib/A source. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

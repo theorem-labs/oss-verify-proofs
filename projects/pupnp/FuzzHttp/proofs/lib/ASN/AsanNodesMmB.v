@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO pair; munmap's cut; the launch's reader of the standard channels). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -105,7 +106,7 @@ Proof.
   intros m d h b Hbal Hdal Hd Hb0 Hnw Hg.
   unfold page_size in Hnw. pose proof (u64_range b) as Hbr.
   assert (Hureq : bv_unsigned (Z_to_bv 64 (bv_unsigned b + d)) = (bv_unsigned b + d)%Z) by (apply u64_lit; lia).
-  unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok in Hg. fold h in Hg. fold b in Hg. rewrite Hureq in Hg.
+  unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok, Mmap.brk_grow_bytes in Hg. fold h in Hg. fold b in Hg. rewrite Hureq in Hg.
   rewrite (proj2 (Z.ltb_lt 0 _) Hb0), (proj2 (Z.ltb_lt (bv_unsigned b) _)) in Hg by lia. cbn [andb] in Hg.
   rewrite (page_round_up_Z_aligned (bv_unsigned b)) in Hg by (first [lia | exact Hbal]).
   rewrite (page_round_up_Z_aligned (bv_unsigned b + d)) in Hg
@@ -115,7 +116,7 @@ Proof.
   replace (bv_unsigned b + d + page_size - bv_unsigned b)%Z with (d + page_size)%Z in Hg by lia.
   apply andb_prop in Hg as [Hg Hbud]. apply andb_prop in Hg as [Htop Hrf].
   apply Z.leb_le in Htop. apply Z.leb_le in Hbud.
-  rewrite bv_sub_unsigned, Hureq, bv_wrap_small in Hbud by (unfold bv_modulus; lia).
+  replace (Z.max 0 (bv_unsigned b + d - bv_unsigned b))%Z with d in Hbud by lia.
   repeat split; [exact Htop | exact Hrf | lia].
 Qed.
 
@@ -195,6 +196,35 @@ Proof.
   apply seps_cons_inv in Hs as [Hf Ht]. constructor.
   - intros Hin. pose proof (proj1 (Forall_forall _ _) Hf h Hin) as D. pose proof (Hpos h (or_introl eq_refl)). unfold iv_disjoint in D. lia.
   - apply IH; [exact Ht|]. intros iv Hiv. apply Hpos. right. exact Hiv.
+Qed.
+
+(* LPS 727298f3: munmap's ledger is [Mmap.mmap_fixed_destroyed_next], which cuts [[lo, hi)] out
+   of every entry ([maps_subtract]).  When the range is exactly one entry and every other entry
+   is apart from it, that is the old [map_remove] of the entry. *)
+Lemma maps_subtract_exact_entry : forall l (addr : word) lo hi,
+  lo = bv_unsigned addr -> lo < hi ->
+  (forall iv, In iv l -> 0 < bv_unsigned (snd iv)) ->
+  (forall iv, In iv l -> fst iv = addr -> bv_unsigned (fst iv) + bv_unsigned (snd iv) = hi) ->
+  (forall iv, In iv l -> fst iv <> addr ->
+     bv_unsigned (fst iv) + bv_unsigned (snd iv) <= lo \/ hi <= bv_unsigned (fst iv)) ->
+  maps_subtract l lo hi = map_remove l addr.
+Proof.
+  induction l as [|[a sz] l IH]; intros addr lo hi Hlo Hlt Hpos Hex Hdis; [reflexivity|].
+  assert (IH' : maps_subtract l lo hi = map_remove l addr).
+  { apply IH; [exact Hlo | exact Hlt
+              | intros iv Hiv; apply Hpos; right; exact Hiv
+              | intros iv Hiv; apply Hex; right; exact Hiv
+              | intros iv Hiv; apply Hdis; right; exact Hiv]. }
+  unfold map_remove in *. cbn [maps_subtract List.filter fst]. rewrite IH'.
+  destruct (bv_eqb a addr) eqn:Ea; cbn [negb].
+  - apply bv_eqb_eq in Ea. subst a.
+    pose proof (Hex (addr, sz) (or_introl eq_refl) eq_refl) as E. cbn [fst snd] in E.
+    cbv beta zeta delta [iv_subtract]. subst lo.
+    rewrite Z.ltb_irrefl, E, Z.ltb_irrefl. reflexivity.
+  - assert (Hne : a <> addr) by (intros ->; rewrite bv_eqb_refl in Ea; discriminate).
+    pose proof (Hdis (a, sz) (or_introl eq_refl) Hne) as D. cbn [fst snd] in D.
+    pose proof (Hpos (a, sz) (or_introl eq_refl)) as P. cbn [snd] in P.
+    rewrite (AsanNodesMmLib.iv_subtract_disjoint a sz lo hi Hlt P D). reflexivity.
 Qed.
 
 Section SoundB.
@@ -593,6 +623,12 @@ Proof.
         unfold iv_disjoint; cbn [fst snd]; rewrite Udw in D |- *; lia
     | |- model_ivs_wf _ =>
         apply model_ivs_wf_with_vmmaps; [exact co_wf0 | apply ivs_wf_cons; [exact Wb | exact Wf] | exact (proj1 (proj2 co_wf0)) | reflexivity]
+    | |- Forall (fun _ => Forall _ _) (vm_maps _) =>   (* co_mres: the new heap range is free of the whole reserved ledger *)
+        rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps]; constructor; [|exact co_mres0];
+        apply Forall_forall; intros [b0 s0] Hin0; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+        pose proof (RefNodes.region_free_In _ _ _ b0 s0 Hrf
+          ltac:(apply in_app_iff; left; exact Hin0)) as DD;
+        rewrite Udw in DD; lia
     | |- Forall _ (vm_maps _) =>
         rewrite Hvm'; unfold h'; cbn [vm_maps]; constructor; [|exact co_bounds0];
         cbn [fst snd]; rewrite Udw; unfold hull_clear; cbn [fst snd]; rewrite Udw; repeat split; try lia
@@ -635,6 +671,10 @@ Proof.
     | |- Forall (lzwf _) _ =>
         rewrite Hlz', Hvm'; unfold h'; cbn [vm_maps]; eapply lzwf_mono; [|exact co_lzwf0]; intros e He; right; exact He
     | |- (_ -> m_tid _ <> None) /\ _ => change (m_tid model') with (m_tid model); exact co_tidv0
+    | |- incl _ _ =>   (* co_vdso: the grow keeps the ledger, the kernel build and the bounds [vdso_top] reads *)
+        exact co_vdso0
+    | |- m_channel_reader _ = true =>   (* co_rdr: no step writes the reader *)
+        change (m_channel_reader model') with (m_channel_reader model); exact co_rdr0
     | |- ?g => idtac "UNSOLVED FIELD:" g
     end.
   +
@@ -807,15 +847,6 @@ Proof. reflexivity. Qed.
 
 #[using="Type"] Lemma Z_to_bv64_m1 : forall m1, m1 = two64 - 1 -> Z_to_bv 64 m1 = Z_to_bv 64 (-1).
 Proof. intros m1 ->. apply bv_eq. rewrite !Z_to_bv_unsigned. reflexivity. Qed.
-
-#[using="RES_len HULL_ok RES_hullH"] Lemma reserved_free_above : forall model (lo n : word),
-  vm_reserved (m_vmmaps model) = segments_reserved SEGS ->
-  img_hi A <= bv_unsigned lo ->
-  region_free (vm_reserved (m_vmmaps model)) lo n = true.
-Proof.
-  intros model lo n Hres Hlo. rewrite Hres. apply RefNodes.region_free_intro. intros b s Hin.
-  pose proof (proj1 (Forall_forall _ _) RES_hullH _ Hin) as [H1 H2]. cbn [fst snd] in H1, H2. right. lia.
-Qed.
 
 #[using="Type"] Lemma vis_add_inv : forall cs b n k cs2,
   vis_add A LIMIT cs b n k = Some cs2 ->
@@ -1120,7 +1151,7 @@ Proof.
 
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt. pose proof (co_wf _ _ _ _ _ _ _ _ _ _ _ HC) as Hwf. pose proof Hwf as (W1 & W2 & W3 & Wsp).
   unfold cfg_of.
-  eapply (srz_munmap_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len T Hf He Hhalt R17 R10 B2 R11 ltac:(lia)).
+  eapply (srz_munmap_acfg SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len T Hf He Hhalt R17 R10 B2 R11 ltac:(lia)).
   { unfold TASK_SIZE. fold nZ. lia. }
   { fold nZ. rewrite HnZw. apply map_has_intro. rewrite <- Haddr. exact HIN. }
   fold nZ. rewrite HnZw. rewrite (v_addi_pc (pc cs) Hp0 Hp4).
@@ -1130,7 +1161,11 @@ Proof.
   specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
   unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
 
-  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+  { change (vm_maps (m_vmmaps model')) with (maps_subtract (vm_maps (m_vmmaps model)) lo (lo + bv_unsigned n)).
+    rewrite Un. apply (maps_subtract_exact_entry _ addr lo (lo + nZ) eq_refl); [lia | exact BPOS | |].
+    - intros iv Hiv Hfst. rewrite (UNIQ iv Hiv Hfst). unfold amap_den. cbn [fst snd]. rewrite Haddr. fold n. rewrite Un. reflexivity.
+    - intros iv Hiv Hne0. apply DISJl; [exact Hiv|]. intros Heq. apply Hne0. rewrite Heq. unfold amap_den. cbn [fst]. exact Haddr. }
   assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PL : m_vm_lazy model' = maps_subtract (m_vm_lazy model) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.
@@ -1202,7 +1237,7 @@ Proof.
     split; [exact Hm'|]. split; [exact Hne'|]. intros Hnf'. exact (DISJ' m' Hm' Hnf' Hne'). }
   assert (KNF : forall m', am_kind m' = KNONE \/ am_kind m' = KNONELAZY \/ am_kind m' = KRWLAZY -> is_fog m' = false).
   { intros m' Hk. unfold is_fog. destruct Hk as [-> |[-> | ->]]; reflexivity. }
-  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xtop Xsp0 Xnasub Xnone Xkinds Xtotsz Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xlzwf Xtidv Xnapos].
+  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xtop Xsp0 Xnasub Xnone Xkinds Xtotsz Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xlzwf Xtidv Xnapos Xmres Xvdso Xrdr].
   destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
   assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) (kept ++ gone ++ a_ghost cs)) by reflexivity.
   constructor; rewrite ?HAeq; subst cs'; cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn s_regs s_log s_know s_next mk_ss];
@@ -1344,6 +1379,16 @@ Proof.
   -   change (m_tid model') with (m_tid model). exact Xtidv.
   -
     rewrite PN. apply napos_subtract; [|exact Xnapos]. apply Forall_forall. intros q Hq. exact (W2 q Hq).
+  -   (* co_mres: munmap drops one tracked entry and keeps the reserved ledger *)
+    rewrite PM. change (vm_reserved (m_vmmaps model')) with (vm_reserved (m_vmmaps model)).
+    apply Forall_forall. intros iv Hiv. unfold map_remove in Hiv. apply filter_In in Hiv as [Hiv _].
+    exact (proj1 (Forall_forall _ _) Xmres iv Hiv).
+  -   (* co_vdso: munmap keeps the ledger, the kernel build and the bounds [vdso_top] reads *)
+    change (m_kernel model') with (m_kernel model).
+    change (vm_reserved (m_vmmaps model')) with (vm_reserved (m_vmmaps model)).
+    rewrite (vdso_top_eq (m_vmmaps model) (m_vmmaps model') eq_refl eq_refl). exact Xvdso.
+  -   (* co_rdr: munmap does not write the reader *)
+    change (m_channel_reader model') with (m_channel_reader model). exact Xrdr.
 Qed.
 
 #[using="RES_len HULL_ok SHADOW_ok argH_high2 SINV_frame reg_sound' reg_lit_sound' kentry_apart_b_sem' regs_ok_set_n'"] Theorem node_sys_sound_YMunmap : sys_stmt SEGS A nx0 LIMIT SINV argH FS0 YMunmap.

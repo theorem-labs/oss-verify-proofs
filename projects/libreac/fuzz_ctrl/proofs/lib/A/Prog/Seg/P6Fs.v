@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 823 of its 864 lines of code are new or changed and 970 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3F.v, with its module paths, module names, addresses and numbers changed; 312 of its 369 lines of code are new or changed and 807 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P6F.v; 30 of its 136 lines of code are new or changed and 263 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/P6Fs.v -- segment P6 of fuzz_ctrl image A (libreac v1.9.0, ASan build): the pre stretch of the
    split runs p6_evt / p6_evt_ro of lib/A/Prog/Seg/P6F.v (a Theorem Labs lane's), restated with the MINIMAL premise list the
    walk's glue (lib/A/ACtlG/P6.v) consumes.  rule 24: no function proved (a segment stretch).  Written by a Theorem Labs
@@ -28,12 +29,12 @@
      p6_evt_ro_pre_F_of_Fs    P6F.p6_evt_ro_pre_F's text verbatim, proved from p6_evt_pre_Fs.
    No post stretch: the reply spec's continuation is the exit cut 0x81bf8 itself.  The rng rows are P6Fs.rng.tsv.
 
-   PROVENANCE.  Source: Seg/P6F.v on the glue base (from a working branch eb89fed7fac) (its script at
-   P6F.v (at head lib/A/Prog/Seg/P6F.v:65-88 and :252-268) is the script here, unchanged).  Image A = fuzz_ctrl.asan, pinned
+   PROVENANCE.  Source: Seg/P6F.v on the glue base (from a working branch) (its script at
+   P6F.v (at head lib/A/Prog/Seg/P6F.v:66-89 and :253-269) is the script here, unchanged).  Image A = fuzz_ctrl.asan, pinned
    (internal path) sha256
    aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d.  The Require / Import block is P6F.v's own
-   (P6F.v:11-27); the ro statement names image-A's YK11 seg_rom through a full-path alias instead of P6F.v:216's
-   Import.  Built on a build machine (cb, packed fuzz_ctrl base 23b918fe0c2e, FACTS ed6b6b7b0ab). *)
+   (P6F.v:12-28); the ro statement names image-A's YK11 seg_rom through a full-path alias instead of P6F.v:217's
+   Import.  Built on a build machine (cb, packed fuzz_ctrl base, FACTS). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes.
@@ -93,7 +94,7 @@ Proof.
   apply ExecF.evtF_done. reflexivity.
 Qed.
 
-(* ---- a Theorem Labs lane's p6_evt_pre_F (P6F.v:36-64), verbatim, from the minimal stretch ---- *)
+(* ---- a Theorem Labs lane's p6_evt_pre_F (P6F.v:37-65), verbatim, from the minimal stretch ---- *)
 
 Lemma p6_evt_pre_F_of_Fs :
   forall (RNG : ExecF.footprint)
@@ -138,12 +139,12 @@ Proof.
   exact I.
 Qed.
 
-(* P6F.v imports image-A's YK11 before its ro stretches (P6F.v:214-217), so P6F.p6_evt_ro_pre_F's seg_rom is that
+(* P6F.v imports image-A's YK11 before its ro stretches (P6F.v:215-218), so P6F.p6_evt_ro_pre_F's seg_rom is that
    YK11's.  This file names it through a full-path alias instead (no short name of the six twin modules), so the ro
    statement below is P6F.p6_evt_ro_pre_F's term; the constr_eq pin checks it. *)
 Module AYK := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Reusable.YK11.
 
-(* ---- a Theorem Labs lane's p6_evt_ro_pre_F (P6F.v:222-251), verbatim, from the minimal stretch ---- *)
+(* ---- a Theorem Labs lane's p6_evt_ro_pre_F (P6F.v:223-252), verbatim, from the minimal stretch ---- *)
 
 Lemma p6_evt_ro_pre_F_of_Fs :
   forall (RNG : ExecF.footprint)

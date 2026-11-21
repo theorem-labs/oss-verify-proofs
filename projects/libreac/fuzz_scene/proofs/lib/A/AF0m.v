@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v; every per-image value re-derived from libreac/fuzz_scene's pinned asan image by meaning (reference table AF0m.asan.tsv), cgif-only cells dropped, scene-only cells added. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v (origin/ossv/recipes c8557374ad2e) for libreac/fuzz_scene's asan image by a Theorem Labs lane's af0m.py, --base the hand-assembled AF0m.v (scene's own addresses in all four lists): every TFIB_* constant and every const cell derived from the pinned image and the 50 hand-off states of lib/A/AB01.v (collector pass 2, passA2-final), the shadow and owned-static lists regenerated from the image's asan_globals descriptors *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v (theorem-labs/oss-verify-proofs@6b32741d849a) for libreac/fuzz_scene's asan image by a Theorem Labs lane's af0m.py, --base the hand-assembled AF0m.v (scene's own addresses in all four lists): every TFIB_* constant and every const cell derived from the pinned image and the 50 hand-off states of lib/A/AB01.v (collector pass 2, passA2-final), the shadow and owned-static lists regenerated from the image's asan_globals descriptors *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_scene.asan (libreac/fuzz_scene asan) sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026; unstripped twin sha256 6ed872f7cc8c1e426ccbd2a7d1ae20b71d1cb347bd6c2cb9746780771da2a003 *)
 (* owned read-only static bytes pinned as const cells from the image: 2550 bytes in 326 cells, from 17 ranges of Tfib_owned_static; counted from this file's own tables *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
@@ -889,7 +890,7 @@ Definition Tfib_zero_shadow : list (Z * Z) :=
 [ (0x10000, 0x20d88 - 0x10000); (0x20da0, 0x20dd0 - 0x20da0); (0x20e00, 0x20e28 - 0x20e00); (0x20e60, 0x23148 - 0x20e60); (0x23a00, 0x9ffd0 - 0x23a00); (0xa0110, 0x5f9000 - 0xa0110) ].
 (* Tfib_owned_static: the entries the image's shadow facts give, in the donor's order:
    the asan_globals descriptor array, then each global's poisoned tail (beg + size, size_with_redzone - size).
-   The donor's remaining entries (AF0m.v:280-286 / YF0m.v:280-286) are runtime .data/.bss and .rodata ranges,
+   The donor's remaining entries (AF0m.v:281-287 / YF0m.v:281-287) are runtime .data/.bss and .rodata ranges,
    not shadow facts; shadowfacts.py does not give them. They are listed in REPORT.md step 4. *)
 Definition Tfib_owned_static : list (Z * Z) :=
 [ (0x9d410, 0x9fc88 - 0x9d410); (0x9ffd0, 0x140); (0xa0140, 8); (0xa0198, 0xa3048 - 0xa0198); (0xa3050, 0x5c5e50 - 0xa3050)    ; (0x5d6798, 0x3c)  ;

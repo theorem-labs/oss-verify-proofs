@@ -6,13 +6,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 540 of its 622 lines of code are new or changed and 2475 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F20.v; 186 of its 245 lines of code are new or changed and 563 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F20.v blob 1cf48b422ebf (the blob this tree had at release c5e779efe8c) (the step script F20.v:496-545,
+   FACTS, PAU pau-libreac-v190. Source: Seg/F20.v blob 1cf48b422ebf (the blob this tree had at release) (the step script F20.v:496-545,
    inside seg_F20). Companion twin: Seg/F20F.v blob 4527ef54d8e7 (f20_call_evt_F, the call half).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    rule 24: no function proved (stage glue of a walk; this file is one segment's head run).
 
    WHY THIS FILE EXISTS. Segment F20 (0x82418 -> 0x824b4) has NO `_F` of record for its head stretch
@@ -220,7 +221,7 @@ Qed.
    `F20F.f20_call_evt_F` re-derive together at ExecF.RNG_all. This is what F20.seg_F20 produces inline at
    F20.v:496-545 (its step script) and F20.v:455-472 (its CALL assert), with the register pins F20.v's
    subst_slot chain puts on the state. Proved exactly as F20F.f20_call_evt_of_F proves its own corollary
-   (F20F.v:133-139): ExecF.evtF_evt of the composition, each `rng` premise by ExecF.rng_all. ---- *)
+   (F20F.v:134-140): ExecF.evtF_evt of the composition, each `rng` premise by ExecF.rng_all. ---- *)
 Lemma f20_of_head_call :
   forall (ra0 gp tp t0 t1 t2 s0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s5 s9 s11 t3 t4 t5 t6 : word)
          (Fr : bvmap 5 word) (fc : bv 32) (m : word -> option byte)
@@ -277,14 +278,14 @@ Qed.
 
 (* ---- Route (C) twin of a Theorem Labs lane's F20F.f20_call_evt_F, WITHOUT its `shadow_rw m` premise (the Seg *F.v twin rule
    of a Theorem Labs lane 12:52Z: an F20F twin goes in this lane's existing beside-file; Seg/F20F.v is unchanged apart from comment text).
-   BASE: f20_call_evt_F at a Theorem Labs lane's fold a working branch 4bae33fdf54, Seg/F20F.v blob
-   4527ef54d8e (= a working branch 1899bed1aee's blob), lines 45-105, with exactly these changes: the premise `shadow_rw m` and
+   BASE: f20_call_evt_F at a Theorem Labs lane's fold a working branch, Seg/F20F.v blob
+   4527ef54d8e (= a working branch's blob), lines 45-105, with exactly these changes: the premise `shadow_rw m` and
    its intro name HSW removed, and the call cut through the callee's narrowed footprint contract
-   reac_ctrl_checksum_verify_contract_F_on (premise dropped; a Theorem Labs lane 9509908083d, LANDED.md (a working note, not in this delivery), 11:38Z) and its proof
-   reac_ctrl_checksum_verify_F.reac_ctrl_checksum_verify_F_holds_on (a Theorem Labs lane 36bfd511da3, LANDED.md (a working note, not in this delivery), 11:12Z, a Theorem Labs lane
+   reac_ctrl_checksum_verify_contract_F_on (premise dropped; a Theorem Labs lane, LANDED.md (a working note, not in this delivery), 11:38Z) and its proof
+   reac_ctrl_checksum_verify_F.reac_ctrl_checksum_verify_F_holds_on (a Theorem Labs lane, LANDED.md (a working note, not in this delivery), 11:12Z, a Theorem Labs lane
    SIGNED) instead of reac_ctrl_checksum_verify_F_holds.  REGION: none.  The two instructions (mv a0,s7; jal) touch no
    data, and the old proof passed HSW only to the callee, whose _F_on form has no shadow premise (it reads the 32
-   record bytes' shadow from addressable).  a Theorem Labs lane's f20_call_evt_on (Seg/F20.v (a version not in this delivery; written on a working branch 4488b0c2fd2))
+   record bytes' shadow from addressable).  a Theorem Labs lane's f20_call_evt_on (Seg/F20.v (a version not in this delivery; written on a working branch))
    is the plain Lib.Exec.evt form of the same stretch; the stage glue needs this footprint form. ---- *)
 Module CKVFon := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.reac_ctrl_checksum_verify_F.
 

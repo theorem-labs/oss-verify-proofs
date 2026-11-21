@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag of mstate, TMmap and sys_mmap; mmap_grant_ok and mmap_refusable_k over Linux's mmap placement (linux_place_b), with the new lemmas mmap_grant_ok_place and mmap_refusable_k_vm; the vDSO reservation check of sys_mprotect_rw; imports). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.leptonica.jpegiostub_fuzzer.lib.Common Require Import
   PropExec CatExec Hoare StoreOk MmapSim AllocSim ShapeAlg RefNodes AsanCeil PureModel VmLedger.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.leptonica.jpegiostub_fuzzer.lib.Common.Mallocng Require Import MallocLayout.
 Import ListNotations.
 Open Scope bv_scope.
@@ -17,11 +19,11 @@ Local Open Scope Z_scope.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Record mstate := MS { ms_mem : word -> option byte; ms_vm : VmMaps; ms_lo : Z; ms_hi : Z }.
+Record mstate := MS { ms_mem : word -> option byte; ms_vm : VmMaps; ms_lo : Z; ms_hi : Z; ms_thp : bool }.
 
 (* [comment removed for export] *)
 Definition upd (s : mstate) (m : word -> option byte) (h : VmMaps) : mstate :=
-  MS m h (ms_lo s) (ms_hi s).
+  MS m h (ms_lo s) (ms_hi s) (ms_thp s).
 
 (* [comment removed for export] *)
 Definition acc_ok (s : mstate) (a : word) (n : Z) : bool :=
@@ -36,7 +38,7 @@ Inductive itree (A : Type) : Type :=
   (* [comment removed for export] *)
 | TBrk (req : word) (vm : VmMaps) (kfail kok : itree A)
   (* [comment removed for export] *)
-| TMmap (k : mmkind) (len : word) (vm : VmMaps) (kfail : itree A) (kok : word -> itree A)
+| TMmap (k : mmkind) (thp : bool) (len : word) (vm : VmMaps) (kfail : itree A) (kok : word -> itree A)
   (* [comment removed for export] *)
 | TMmapFixed (addr len : word) (kkeep kok kdestroy : itree A)
   (* [comment removed for export] *)
@@ -45,7 +47,7 @@ Inductive itree (A : Type) : Type :=
 Arguments TRet {A} a s.
 Arguments TCrash {A}.
 Arguments TBrk {A} req vm kfail kok.
-Arguments TMmap {A} k len vm kfail kok.
+Arguments TMmap {A} k thp len vm kfail kok.
 Arguments TMmapFixed {A} addr len kkeep kok kdestroy.
 Arguments TMprot {A} addr len vm kfail kok.
 
@@ -56,7 +58,7 @@ Fixpoint tbind {A B : Type} (t : itree A) (f : A -> M B) : itree B :=
   | TRet a s => f a s
   | TCrash => TCrash
   | TBrk req vm kf ko => TBrk req vm (tbind kf f) (tbind ko f)
-  | TMmap k len vm kf ko => TMmap k len vm (tbind kf f) (fun a => tbind (ko a) f)
+  | TMmap k thp len vm kf ko => TMmap k thp len vm (tbind kf f) (fun a => tbind (ko a) f)
   | TMmapFixed addr len k1 k2 k3 => TMmapFixed addr len (tbind k1 f) (tbind k2 f) (tbind k3 f)
   | TMprot addr len vm kf ko => TMprot addr len vm (tbind kf f) (tbind ko f)
   end.
@@ -150,7 +152,7 @@ Definition sys_mmap (k : mmkind) (len : word) : M word :=
   fun s =>
     let h := ms_vm s in
     if (0 <? bv_unsigned len) && (bv_unsigned len <? 2^62)
-    then TMmap k len h
+    then TMmap k (ms_thp s) len h
            (tbind (set_errno ENOMEM s) (fun _ s' => TRet MAP_FAILED s'))
            (fun a => let n := page_round_up len in
                      match k with
@@ -184,6 +186,7 @@ Definition sys_mprotect_rw (addr len : word) : M word :=
     if (0 <? bv_unsigned len) && (bv_unsigned addr mod page_size =? 0)
        && (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top h)
        && map_contains (vm_maps h) addr n
+       && region_free (vm_reserved h) addr n   (* the vDSO gate: [mprotect_spec] at 08b1429 *)
     then if map_contains (vm_noaccess h) addr n
          then TMprot addr len h
                 (tbind (set_errno ENOMEM s) (fun _ s' => TRet MAP_FAILED s'))
@@ -211,20 +214,69 @@ End WithLayout.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition mmap_grant_ok (k : mmkind) (vm : VmMaps) (a : word) (n : Z) : bool :=
-  match k with MMrw => grant_ok_vm vm a n | MMnone => grant_ok_na_vm vm a n end.
+Definition mmap_grant_ok (k : mmkind) (thp : bool) (vm : VmMaps) (a : word) (n : Z) : bool :=
+  match k with
+  | MMrw => grant_ok_vm thp (Z_to_bv 64 0) vm a n
+  | MMnone => grant_ok_na_vm thp (Z_to_bv 64 0) vm a n
+  end.
 
 (* [comment removed for export] *)
-Definition mmap_refusable_k (k : mmkind) (vm : VmMaps) (n : Z) : bool :=
-  match k with MMrw => mmap_refusable_vm vm n | MMnone => mmap_na_refusable_vm vm n end.
+Definition mmap_refusable_k (k : mmkind) (thp : bool) (vm : VmMaps) (n : Z) : bool :=
+  match linux_place_b vm thp (Z_to_bv 64 0) n with
+  | Some x => negb (mmap_grant_ok k thp vm (Z_to_bv 64 x) n)
+  | None => true
+  end.
 
-Lemma mmap_refusable_k_iff : forall k vm n,
-  mmap_refusable_k k vm n = true <-> forall a, mmap_grant_ok k vm a n = false.
-Proof. intros [|] vm n; cbn; [apply mmap_refusable_vm_iff | apply mmap_na_refusable_vm_iff]. Qed.
+Lemma mmap_grant_ok_place : forall k thp vm a n,
+  mmap_grant_ok k thp vm a n = true -> linux_place_is vm thp (Z_to_bv 64 0) n a = true.
+Proof.
+  intros [|] thp vm a n H; cbn [mmap_grant_ok] in H;
+    [exact (grant_ok_vm_place _ _ _ _ _ H) | exact (grant_ok_na_vm_place _ _ _ _ _ H)].
+Qed.
 
-Lemma mmap_refusable_k_false_iff : forall k vm n,
-  mmap_refusable_k k vm n = false <-> exists a, mmap_grant_ok k vm a n = true.
-Proof. intros [|] vm n; cbn; [apply mmap_refusable_vm_false_iff | apply mmap_na_refusable_vm_false_iff]. Qed.
+Lemma mmap_refusable_k_iff : forall k thp vm n,
+  mmap_refusable_k k thp vm n = true <-> forall a, mmap_grant_ok k thp vm a n = false.
+Proof.
+  intros k thp vm n. unfold mmap_refusable_k. split.
+  - intros H a. destruct (mmap_grant_ok k thp vm a n) eqn:E; [exfalso|reflexivity].
+    pose proof (mmap_grant_ok_place _ _ _ _ _ E) as Hp. unfold linux_place_is in Hp.
+    revert H Hp. destruct (linux_place_b vm thp (Z_to_bv 64 0) n) as [x|]; intros H Hp; [|discriminate].
+    apply Z.eqb_eq in Hp. subst x. rewrite Z_to_bv_bv_unsigned, E in H. cbn in H. discriminate.
+  - intros H. destruct (linux_place_b vm thp (Z_to_bv 64 0) n) as [x|]; [|reflexivity].
+    rewrite H. reflexivity.
+Qed.
+
+Lemma mmap_refusable_k_false_iff : forall k thp vm n,
+  mmap_refusable_k k thp vm n = false <-> exists a, mmap_grant_ok k thp vm a n = true.
+Proof.
+  intros k thp vm n. split.
+  - unfold mmap_refusable_k. destruct (linux_place_b vm thp (Z_to_bv 64 0) n) as [x|]; intros H; [|discriminate].
+    exists (Z_to_bv 64 x). apply negb_false_iff. exact H.
+  - intros [a Ha]. destruct (mmap_refusable_k k thp vm n) eqn:E; [|reflexivity].
+    rewrite (proj1 (mmap_refusable_k_iff k thp vm n) E a) in Ha. discriminate.
+Qed.
+
+(* [comment removed for export] *)
+Lemma mmap_refusable_k_vm : forall k thp vm n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  mmap_refusable_k k thp vm n
+  = match k with
+    | MMrw => mmap_refusable_vm thp (Z_to_bv 64 0) vm n
+    | MMnone => mmap_na_refusable_vm thp (Z_to_bv 64 0) vm n
+    end.
+Proof.
+  intros [|] thp vm n Hn Hnal.
+  - destruct (mmap_refusable_vm thp (Z_to_bv 64 0) vm n) eqn:E.
+    + apply mmap_refusable_k_iff. intros a. cbn [mmap_grant_ok].
+      exact (proj1 (mmap_refusable_vm_iff _ _ _ _ Hn Hnal) E a).
+    + apply mmap_refusable_k_false_iff. cbn [mmap_grant_ok].
+      exact (proj1 (mmap_refusable_vm_false_iff _ _ _ _ Hn Hnal) E).
+  - destruct (mmap_na_refusable_vm thp (Z_to_bv 64 0) vm n) eqn:E.
+    + apply mmap_refusable_k_iff. intros a. cbn [mmap_grant_ok].
+      exact (proj1 (mmap_na_refusable_vm_iff _ _ _ _ Hn Hnal) E a).
+    + apply mmap_refusable_k_false_iff. cbn [mmap_grant_ok].
+      exact (proj1 (mmap_na_refusable_vm_false_iff _ _ _ _ Hn Hnal) E).
+Qed.
 
 (* [comment removed for export] *)
 Fixpoint tshape {A : Type} (t : itree A) (L : A -> mstate -> TSet) : TSet :=
@@ -234,9 +286,9 @@ Fixpoint tshape {A : Type} (t : itree A) (L : A -> mstate -> TSet) : TSet :=
   | TBrk req vm kf ko =>
       fun tr => (brk_grow_ok_vm vm req req = false /\ tshape kf L tr)
                 \/ (brk_grow_ok_vm vm req req = true /\ tshape ko L tr)
-  | TMmap k len vm kf ko =>
-      fun tr => (mmap_refusable_k k vm (page_round_up_Z (bv_unsigned len)) = true /\ tshape kf L tr)
-                \/ exists a, mmap_grant_ok k vm a (page_round_up_Z (bv_unsigned len)) = true
+  | TMmap k thp len vm kf ko =>
+      fun tr => (mmap_refusable_k k thp vm (page_round_up_Z (bv_unsigned len)) = true /\ tshape kf L tr)
+                \/ exists a, mmap_grant_ok k thp vm a (page_round_up_Z (bv_unsigned len)) = true
                              /\ tshape (ko a) L tr
   | TMmapFixed addr len k1 k2 k3 => tshape k2 L
   | TMprot addr len vm kf ko =>
@@ -251,9 +303,9 @@ Fixpoint tsafe {A : Type} (t : itree A) (P : A -> mstate -> Prop) : Prop :=
   | TCrash => False
   | TBrk req vm kf ko =>
       (brk_grow_ok_vm vm req req = false -> tsafe kf P) /\ (brk_grow_ok_vm vm req req = true -> tsafe ko P)
-  | TMmap k len vm kf ko =>
-      (mmap_refusable_k k vm (page_round_up_Z (bv_unsigned len)) = true -> tsafe kf P)
-      /\ forall a, mmap_grant_ok k vm a (page_round_up_Z (bv_unsigned len)) = true -> tsafe (ko a) P
+  | TMmap k thp len vm kf ko =>
+      (mmap_refusable_k k thp vm (page_round_up_Z (bv_unsigned len)) = true -> tsafe kf P)
+      /\ forall a, mmap_grant_ok k thp vm a (page_round_up_Z (bv_unsigned len)) = true -> tsafe (ko a) P
   | TMmapFixed addr len k1 k2 k3 => tsafe k2 P
   | TMprot addr len vm kf ko =>
       (mprot_ok_vm vm addr (page_round_up len) = false -> tsafe kf P)
@@ -297,7 +349,7 @@ Proof.
       * left. split; [reflexivity | apply (IHt1 S P HS (H1 eq_refl) tr); exact X].
   - destruct Hsafe as [H1 H2]. split.
     + intros [[Y X] | (a & Y & Z)]; [apply (IHt S P HS (H1 Y) tr); exact X | apply (H a S P HS (H2 a Y) tr); exact Z].
-    + intros X. destruct (mmap_refusable_k k vm (page_round_up_Z (bv_unsigned len))) eqn:Er.
+    + intros X. destruct (mmap_refusable_k k thp vm (page_round_up_Z (bv_unsigned len))) eqn:Er.
       * left. split; [reflexivity | apply (IHt S P HS (H1 eq_refl) tr); exact X].
       * apply mmap_refusable_k_false_iff in Er as [a Ha]. right. exists a. split; [exact Ha|].
         apply (H a S P HS (H2 a Ha) tr). exact X.

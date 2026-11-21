@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -48,6 +49,12 @@ Record exit_pre_tp (w : Z) (pend : list byte) (regs : bvmap 5 word) (mem : word 
   etp_plen  : Z.of_nat (length pend) = (w - 0x1212a8)%Z;
 
   etp_fd1   : fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1));
+  (* 75d69e00: [ReadWrite.writev_spec] answers a byte count only when the far
+     end still has a reader (Linux v6.18.46 fs/pipe.c:460-465); without one the
+     channel arm takes [ReadWrite.sigpipe_write].  The bit is free - it is not
+     derivable from [etp_fd1] - so the entry record carries it, exactly as the
+     published [Run.valid_input] pins [in_channel_reader inp = true]. *)
+  etp_rdr   : m_channel_reader model = true;
   etp_halt  : m_halted model = None;
   etp_lazy  : m_vm_lazy model = []
 }.

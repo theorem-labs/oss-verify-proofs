@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (top_closed_A states its three facts over the run's segment list and the run's start, where Run.run_scfg reads the binary, LPS 75d69e00, lifted from the walk's by RobReach.facts_run_init with TopA.top_rob_A). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool PArith Lia.
@@ -25,6 +26,7 @@ From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B Require Lib_load_obj_iface
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB Require F0T_close.   (* [comment removed for export] *)
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.
+Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.RobReach.
 Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
@@ -319,14 +321,20 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Theorem top_closed_A :
-  SOUND segsA (c0A sp brk mb draw target_alloc_limit inp) (Spec inp) /\
-  COMPLETE segsA (c0A sp brk mb draw target_alloc_limit inp) (Spec inp) /\
-  ~ reaches_error_a segsA (c0A sp brk mb draw target_alloc_limit inp).
+  SOUND (run_segments segsA inp sp mb) (init_config (run_segments segsA inp sp mb) pcA phA sp brk mb draw target_alloc_limit inp) (Spec inp) /\
+  COMPLETE (run_segments segsA inp sp mb) (init_config (run_segments segsA inp sp mb) pcA phA sp brk mb draw target_alloc_limit inp) (Spec inp) /\
+  ~ reaches_error_a (run_segments segsA inp sp mb) (init_config (run_segments segsA inp sp mb) pcA phA sp brk mb draw target_alloc_limit inp).
 Proof.
-  exact (TopA.top_A sp brk mb draw inp Hent Hinp AInv_A CST_A XGL_A
-           TODO_ALA HCST_A HXGL_A HLV_A HLF_A HCSTok_A HCSTdrv_A HLPP_A HCSTdrv2_A
-           AC_A ACX_A TODO_malloc_strong TODO_malloc_strong_ex
-           TODO_fuzz_one TODO_fuzz_one_ex HandM_A HandU_A).
+  apply (RobReach.facts_run_init segsA inp sp brk mb pcA phA draw target_alloc_limit (Spec inp)).
+  - reflexivity.
+  - exact (TopA.top_rob_A sp brk mb draw inp Hent Hinp AInv_A CST_A XGL_A
+             TODO_ALA HCST_A HXGL_A HLV_A HLF_A HCSTok_A HCSTdrv_A HLPP_A HCSTdrv2_A
+             AC_A ACX_A TODO_malloc_strong TODO_malloc_strong_ex
+             TODO_fuzz_one TODO_fuzz_one_ex HandM_A HandU_A).
+  - exact (TopA.top_A sp brk mb draw inp Hent Hinp AInv_A CST_A XGL_A
+             TODO_ALA HCST_A HXGL_A HLV_A HLF_A HCSTok_A HCSTdrv_A HLPP_A HCSTdrv2_A
+             AC_A ACX_A TODO_malloc_strong TODO_malloc_strong_ex
+             TODO_fuzz_one TODO_fuzz_one_ex HandM_A HandU_A).
 Qed.
 End TopClosedA.
 

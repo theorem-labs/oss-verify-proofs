@@ -23,8 +23,8 @@ library:
 modifications:
 - Linked against libpsl 0.23.3 at commit c486db8d with 2 patches to the library (listed on the project
   page).
-- In every build, getenv() returns NULL and mkstemp() uses a fixed name, so the program depends only on
-  its input.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
+  depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
 builds:
   plain:

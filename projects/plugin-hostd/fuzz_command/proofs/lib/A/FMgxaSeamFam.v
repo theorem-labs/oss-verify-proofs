@@ -5,7 +5,7 @@
    pf_family_ro) states the format and the arguments over the harness's reader
    `aview tfibsegs H mem`: fmt_at for the format, words_at for the va_list words, pf_args_asan per
    argument and pf_args_slack for the word past each string.  The released GXA statement
-   (lib/CJ/RL/GXA/G_vfprintf_snf.v:194 vfprintf_snf_a_stmt) asks instead, over the CJ store
+   (lib/CJ/RL/GXA/G_vfprintf_snf.v:195 vfprintf_snf_a_stmt) asks instead, over the CJ store
    `cjstore H mem` at the image A_img:
      bytes_at img_segs m A (zb fmt), Forall (0 <= c < 256) fmt   the format, its NUL included
      va_area m VA slots                                           (G_pop_arg.v:456)

@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/FMgxaSeamReadyX.v, with its module paths and addresses changed; 565 of its 1010 lines of code are new or changed and 313 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 8 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamReady.table); by hand (numerals.py HAND, reason in the table): 0x20d00 -> 0x20f98; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf; hand checks: FMgxa_mem STOP: names differ: fm FMgxa_mem.copy_ready/set_ready = disco lib/<img>/RT_gxa_calls_mem.copy_ready/set_ready; fm memcpy_stack_contract_A/memset_stack_contract_A (at A_img) = disco lib/<img>/RT_gxa_calls_mem_vf.memcpy_stack_contract_Avf/_Avf (Y: _Bvf); map each use by hand. *)
-(* Modified by Theorem Labs, 2026-10: hand check of the STOP module FMgxa_mem (G9 row P7-A-ready-FMgxaSeamReady): fm's FMgxa_mem.copy_ready / set_ready are disco lib/A/RT_gxa_calls_mem.v copy_ready / set_ready (same text; set_ready guarded by 0 <= n as fm 3899f140f93, cold/h-disco-6-setready 97f92fff44e), so the Require and the alias FMM name lib.A.RT_gxa_calls_mem; the comment address of sym 0x1029e is disco's 0x10b7c (lib/A/FMgxaSeamShadow.v sym_musl_prefix). The six lemmas that reach the world field w_H8 (word_vis .. seam_ready_holds) read it from G9 P1 (h-disco-15, origin/cold/h-disco-15-wh8 f034d618450). Evidence: g9-notes/P7-A-ready-FMgxaSeamReady.md. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamReady.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv); word_vis is proved without the world field w_H8, which rate's world record (lib/Reusable/YA0n.v) does not have: the seam's store keeps no band byte outside the carved hulls (FMgxaSeamNorm.v dz_shadow), so a byte it holds lies in a hull of R, whose aligned words are visible; for that word_vis takes one more premise, LOWMEM_END <= s0 (the band starts one page below the shadow base), which its three uses in hull_of_pf_rng_H8 give by the new lemma shadow_low. hull_of_pf_rng_H8 keeps its statement; every other lemma (seam_ready_copy .. seam_ready_holds included) is the donor's text. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 8 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamReady.table); by hand (numerals.py HAND, reason in the table): 0x20d00 -> 0x20f98; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf; hand checks: FMgxa_mem STOP: names differ: fm FMgxa_mem.copy_ready/set_ready = disco lib/<img>/RT_gxa_calls_mem.copy_ready/set_ready; fm memcpy_stack_contract_A/memset_stack_contract_A (at A_img) = disco lib/<img>/RT_gxa_calls_mem_vf.memcpy_stack_contract_Avf/_Avf (Y: _Bvf); map each use by hand. *)
+(* Modified by Theorem Labs, 2026-10: hand check of the STOP module FMgxa_mem (G9 row P7-A-ready-FMgxaSeamReady): fm's FMgxa_mem.copy_ready / set_ready are disco lib/A/RT_gxa_calls_mem.v copy_ready / set_ready (same text; set_ready guarded by 0 <= n as fm), so the Require and the alias FMM name lib.A.RT_gxa_calls_mem; the comment address of sym 0x1029e is disco's 0x10b7c (lib/A/FMgxaSeamShadow.v sym_musl_prefix). The six lemmas that reach the world field w_H8 (word_vis .. seam_ready_holds) read it from G9 P1 (h-disco-15). Evidence: g9-notes/P7-A-ready-FMgxaSeamReady.md. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamReady.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv); word_vis is proved without the world field w_H8, which rate's world record (lib/Reusable/YA0n.v) does not have: the seam's store keeps no band byte outside the carved hulls (FMgxaSeamNorm.v dz_shadow), so a byte it holds lies in a hull of R, whose aligned words are visible; for that word_vis takes one more premise, LOWMEM_END <= s0 (the band starts one page below the shadow base), which its three uses in hull_of_pf_rng_H8 give by the new lemma shadow_low. hull_of_pf_rng_H8 keeps its statement; every other lemma (seam_ready_copy .. seam_ready_holds included) is the donor's text. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* READINESS OF THE THREE INTERCEPTORS FROM LOCAL SHADOW FACTS, for the GXA seam at musl vfprintf
    (FMgxaSeam.v READY, :317-328).
 
-   The interceptors' range check chk_ok (lib/A/Bz/A/I_qck.v:31) reads, for a range [p, p + n):
+   The interceptors' range check chk_ok (lib/A/Bz/A/I_qck.v:32) reads, for a range [p, p + n):
    - the shadow byte of each byte (acc), which GXA's pf_rng gives (AsanFacts.v:64-68 addr_byte);
    - for 1 <= n <= 64, the two 8-byte ALIGNED shadow words at al8 (shad p) and al8 (shad (p + n - 1))
      (qc_words), which pf_rng does not give: those words also hold the shadow bytes of the bytes
      around the range.
    FMgxa_bzcj.v:218 chk_ok_of_pf_rng takes the words from the GLOBAL AsanFacts.shadow_rw.  Here they
-   come from the hull the harness states per named range, shadow_hull_vis (YG0d.v:310): every byte
+   come from the hull the harness states per named range, shadow_hull_vis (YG0d.v:311): every byte
    from shadow_addr x / 8 * 8 to shadow_addr (x + n - 1) / 8 * 8 + 8 is readable.  That interval is
    exactly the two aligned words and everything between them.
 
@@ -43,14 +44,14 @@
         the bytes past the destination's end that pf_rng reads (dest_tail_of_amem8), and with them
         the destination's pf_rng (seam_dest_rng) and the memcpy clause up to the source hull
         (seam_ready_dest).
-   6. the hull of a range named only by pf_rng, from the world's w_H8 (YA0n.v:25), AR's shadow
+   6. the hull of a range named only by pf_rng, from the world's w_H8 (YA0n.v:26), AR's shadow
       presence and the hulls of R, and READY from READY's premises (seam_ready_holds):
       - each shadow byte of the range is present in cjnormv (NM.cjnormv_present_of_pf_rng); a byte s
         of the two aligned words around them shares its word with one of those bytes s0, so w_H8
         makes s visible (word_vis) and s is readable: in U by upoisoned, a client byte by
         YG0q.client_band_vis, any other byte by ahs_pres (YG0n.v:442-444) when s is not in_vis0;
       - an in_vis0 byte that is not a client byte nor in U is NOT covered by AR: layout_ok's
-        lo_vis0 (YG0f.v:332-333) puts every ly_vis0 entry inside the shadow of a vis0 zone (T, F, NB,
+        lo_vis0 (YG0f.v:333-334) puts every ly_vis0 entry inside the shadow of a vis0 zone (T, F, NB,
         SB, C, D, Q, region info, the image, the extra zones), so such bytes are band bytes, and
         ahs_pres gives no presence for a visible one.  cjnormv drops a band word that meets ly_vis0
         unless a hull of R carves it out, so s0 present in cjnormv puts s in a hull of R; the hulls
@@ -59,10 +60,10 @@
       - seam_ready_holds: READY at fm's three predicates, for every R that carves out the
         destination and the stack window and whose hulls the harness sees.
 
-   THE DOCUMENTED CONTROL AGAINST THE OLD set_ready.  Before 3899f140f93, FMgxa_mem.set_ready asked
-   sp < 2 ^ 63 at every n (FMgxa_mem.v:219-224 at 8c70fb561b7).  Against that set_ready this file
-   proved the two lemmas below (proofs at e36171fe839, lib/A/FMgxaSeamReady.v:419-440; SG is
-   lib/A/FMgxaSeamGuard.v); cbe21760a93 removed them:
+   THE DOCUMENTED CONTROL AGAINST THE OLD set_ready.  Before, FMgxa_mem.set_ready asked
+   sp < 2 ^ 63 at every n (FMgxa_mem.v:219-224).  Against that set_ready this file
+   proved the two lemmas below (proofs at lib/A/FMgxaSeamReady.v:419-440; SG is
+   lib/A/FMgxaSeamGuard.v); removed them:
 
      Lemma seam_calls_ready_false : forall (m : word -> option byte) (q lo Fp CK D : Z) (dn : nat),
        ~ SG.seam_calls_ready FMM.copy_ready FMM.set_ready RSN.strn_ready m q lo Fp CK D dn.
@@ -152,7 +153,7 @@ Module BzI := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.A.Bz.Lib.ImageA.
 Module BzM := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.A.Bz.Lib.Mem.
 Module BzCl := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.A.Bz.Lib.Cells.
 Module BzSt := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.A.Bz.Lib.Step.
-(* strn_ready counts with the Bz tree's strnlen_res (RT_gxa_strnlen.v:100) *)
+(* strn_ready counts with the Bz tree's strnlen_res (RT_gxa_strnlen.v:101) *)
 #[local] Abbreviation strnlen_res := BSF.strnlen_res.
 
 #[local] Existing Instance N_img_asan_vf.
@@ -365,7 +366,7 @@ split; [exact (chk_ok_of_pf_rng_loc m d Ld n PD VD ltac:(lia))|].
 exact (conj C1 C2).
 Qed.
 
-(* RT_gxa_strnlen.strn_ready_intro (RT_gxa_strnlen.v:153) with the hull of the bytes strnlen checks,
+(* RT_gxa_strnlen.strn_ready_intro (RT_gxa_strnlen.v:154) with the hull of the bytes strnlen checks,
    [S, S + min (strnlen_res N buf + 1) N) *)
 Lemma strn_ready_intro_loc : forall (m : word -> option byte) sp S N L buf,
   BR.kHighShadowEnd < sp - GNC.STRN_DEPTH -> sp < 2 ^ 63 ->
@@ -458,11 +459,11 @@ Qed.
 End N.
 
 (* ===================================================================================== *)
-(* 5. READY's clauses (FMgxaSeam.v:317-328, FMgxaSeamGuard.v:99-112): what closes          *)
+(* 5. READY's clauses (FMgxaSeam.v:318-329, FMgxaSeamGuard.v:99-112): what closes          *)
 (* ===================================================================================== *)
 
 (* ---- the runtime's fixed cells as the interceptors read them.  bz_mrd_mbyte .. cells_cons8 are
-   cold/port-fm-walkvsn 3b35fff5df2 lib/A/FMrt_pre.v:77-233 (that file is not on this branch), proofs
+   lib/A/FMrt_pre.v:77-233 (that file is not on this branch), proofs
    unchanged up to module names and SnUpoison.wz for its u64z ---- *)
 Lemma bz_mrd_mbyte : forall (m : word -> option byte) a, BzM.mrd BzI.asegs m (BzM.wa a) = mbyte tfibsegs m a.
 Proof. intros m a. reflexivity. Qed.
@@ -675,7 +676,7 @@ exact (cells_of_agree ly S (w_H W) (unpoison U mem) m' (proj1 HAR)
 Qed.
 
 (* ---- the stack: AR's zero shadow over [ly_stk_lo, ly_stk_hi) (zero_shadow_ranges, YG0n.v:188-191),
-   both ends page-aligned (YG0f.v:322-323), and no live block there, so no user poison ---- *)
+   both ends page-aligned (YG0f.v:323-324), and no live block there, so no user poison ---- *)
 Lemma stack_view0 : forall ly S U (W : world tfibsegs) mem md a, ARU tfibsegs B ly S U W mem md ->
   ly_stk_lo ly <= a < ly_stk_hi ly -> aview tfibsegs (w_H W) mem (shadow_addr a) = Some 0.
 Proof.
@@ -782,7 +783,7 @@ destruct (in_ush U (bv_unsigned (Z_to_bv 64 s))) eqn:EU.
 - rewrite (ARU_view_out tfibsegs B ly S U W mem md s HU EU), Hv. discriminate.
 Qed.
 
-(* ---- the clauses.  Premises: READY's (FMgxaSeam.v:318-327), only those each clause uses ---- *)
+(* ---- the clauses.  Premises: READY's (FMgxaSeam.v:319-328), only those each clause uses ---- *)
 
 (* memcpy from ranges whose pf_rng and hull are known: the whole of copy_ready but the two ranges *)
 Lemma seam_copy_of_rng : forall ly R S U (W : world tfibsegs) regs mem md (lo Fp CK D : Z) (dn : nat)

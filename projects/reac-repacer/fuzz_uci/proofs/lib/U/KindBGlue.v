@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/ct/lib/CtColB/W_set0A.v, with its module paths and module names changed; 44 of its 60 lines of code are new or changed and 129 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/Prog/SceneTac.v, with its module paths changed; 1051 of its 1066 lines of code are new or changed and 45 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/U/Prog/pcap_source_open.v, with its module paths and module names changed; 546 of its 621 lines of code are new or changed and 991 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv layout of LPS 727298f3). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -598,8 +599,8 @@ Lemma kb_auxv : forall sec lo mem mem' W L A md, MR L A mem md -> auxv_pre B sec
   (forall x, 0 <= x < alloc_ceiling -> owned B L A x -> Frame.outside W x) ->
   auxv_pre B sec lo mem'.
 Proof.
-  intros sec lo mem mem' W L A md HM (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) Hm Hhi Hlo.
-  exists av, ar. pose proof alloc_ceiling_lt as Hc.
+  intros sec lo mem mem' W L A md HM (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) Hm Hhi Hlo.
+  exists rs, av, ar. pose proof alloc_ceiling_lt as Hc. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
   assert (Hst : forall k, 0 <= k < 8 -> 0 <= ms_libc B + 8 + k < alloc_ceiling /\ owned B L A (ms_libc B + 8 + k)).
   { intros k Hk. assert (Ho : owned B L A (ms_libc B + 8 + k)) by (right; unfold static_owned; right; right; left; lia).
     split; [exact (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ HM Ho) | exact Ho]. }
@@ -608,9 +609,15 @@ Proof.
     split; [lia | apply Hlo; [lia | exact Ho]]. }
   split.
   { intros k Hk. apply (kb_word_munch segs mem mem' W); [exact (H2 k Hk) | exact Hm |]. intros j Hj.
-    assert (Z.of_nat k < 10) by lia. split; [lia | apply Hhi; lia]. }
+    assert (Z.of_nat k < Z.of_nat (length (auxv_types rs))) by lia. split; [lia | apply Hhi; lia]. }
   split.
-  { apply (kb_word_munch segs mem mem' W); [exact H3 | exact Hm |]. intros j Hj. split; [lia | apply Hhi; lia]. }
+  { apply (kb_word_munch segs mem mem' W); [exact H3 | exact Hm |]. intros j Hj.
+    (* The pre-#38 address here was the literal 16*8+8, so lia closed this bound from H5 and
+       H6 alone.  AUXV_RAND_K and length (auxv_types rs) are both opaque atoms to lia and no
+       hypothesis relates them; the goal printed at this line named exactly that gap, so give
+       lia both facts.  Nothing here is assumed about which launch key order the process got. *)
+    pose proof (length_auxv_types rs) as HL. change AUXV_RAND_K with 24%nat.
+    split; [lia | apply Hhi; lia]. }
   split.
   { apply (kb_word_munch segs mem mem' W); [exact H4 | exact Hm |]. intros j Hj. split; [lia | apply Hhi; lia]. }
   repeat split; assumption.

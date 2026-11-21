@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: fuzz_preset's two IAL rows of the cf instance (field round 3, YG0ncf.v), at both images.
    PER-UNIT file, not in the shared set.
    - errb_ial_apart_t: the errbuf object [cf_errbuf_obj, + 56) is apart from the internal allocator's arena
      [as_ialloc_lo B, as_ialloc_hi B) and its 4-byte flag (amc_cells_owned's third conjunct).
    - pf_ial_apart_t: the same for Printf's two cells, the tool-name pointer and the callback cell (pf_cells_owned_t's
-     second conjunct; in the layer since commit d0377850faab).
+     second conjunct; in the layer).
    Values, from the generated facts (no raw dump):
    - A' (CfImg_A, lib/A/CfImgA.v:34 / :74 / :78; TfibSyms lib/A/AF0m.v:16-17, fields :1798 / :1799 / :1801):
      errbuf 0xaa728 + 56 = 0xaa760 and toolname 0xa3ed8 + 8 = 0xa3ee0, both below IAL_LO 0xac0c0; pfcb 0x13cbd0 above
      IAL_HI 0x12d0f0 and above the flag's last byte 0x13a94b.
-   - B' (CfImg_B, lib/AU/CfImgB.v:34 / :74 / :78; TfibSyms lib/Reusable/YF0m.v:17-18, fields :1803 / :1804 / :1806):
+   - B' (CfImg_B, lib/AU/CfImgB.v:34 / :74 / :78; TfibSyms lib/Reusable/YF0m.v:18-19, fields :1803 / :1804 / :1806):
      errbuf 0xaaf68 + 56 = 0xaafa0 and toolname 0xa4718 + 8 = 0xa4720, both below 0xac900; pfcb 0x13d410 above
      0x12d930 and above the flag's last byte 0x13b18b.
-   - pf_cells_apart_t (YG0ncf.v, layer 5034424e29db; not an ARmcf field): every toolname / pfcb cell byte is below
+   - pf_cells_apart_t (YG0ncf.v, layer; not an ARmcf field): every toolname / pfcb cell byte is below
      as_store B, is not as_oom_byte B and is outside the errbuf object. A': cells 0xa3ed8 / 0x13cbd0 (+8) vs STORE
-     0x17cd88 (AF0m.v:15), OOM 0x12d120 (:17), errbuf [0xaa728, +56); B': 0xa4718 / 0x13d410 vs 0x17d5c8 (YF0m.v:16),
+     0x17cd88 (AF0m.v:15), OOM 0x12d120 (:17), errbuf [0xaa728, +56); B': 0xa4718 / 0x13d410 vs 0x17d5c8 (YF0m.v:17),
      0x12d960 (:18), [0xaaf68, +56) (the same numbers are checked by lia in the layer; the cgif model proof is
      YGcfImgcgif.pf_cells_apart_cgif).
    The IAL rows are premises of the fresh builder YGcfNilInit.ARcf_nil_init; this file is where a unit's driver takes

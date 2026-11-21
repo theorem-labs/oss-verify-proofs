@@ -2,7 +2,7 @@
    (reac_ctrl_parse on Φ and len with no output struct, o = 0). *)
 (* libreac v1.9.0 (IDENTICAL, segment table 5a S_F07): v1.8 [0x137bc, 0x137c8] K137bc -> K137cc, pcs only
    (reac_ctrl_parse 0x141d0, contract; return 0x137d8); FB / IFS are SlotInv.v's v1.9 forms, kept by Tac_b5's
-   b5_FB_keep / b5_IFS_keep (7808a0ecf88). Statement kept on the renamed cuts. rule 24: no function proved. *)
+   b5_FB_keep / b5_IFS_keep. Statement kept on the renamed cuts. rule 24: no function proved. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

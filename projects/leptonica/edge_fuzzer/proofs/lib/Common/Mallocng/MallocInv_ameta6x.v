@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -348,14 +349,15 @@ Section Prov.
     eapply tw_sys_mmap04; [rewrite HLu; lia | rewrite HLu; lia | |].
     - (* [comment removed for export] *)
       (* [comment removed for export] *)
-      intros Hnone. assert (HWf : W <> WOk \/ forall a0, mmap_grant_ok MMnone (ms_vm s) a0 (mm_len (Z_to_bv 64 L)) = false) by (right; exact Hnone).
+      intros Hnone. assert (HWf : W <> WOk \/ forall a0, mmap_grant_ok MMnone (ms_thp s) (ms_vm s) a0 (mm_len (Z_to_bv 64 L)) = false) by (right; exact Hnone).
       eapply tw_set_errno; [exact HWIN|]. cbv beta.
       unfold MAP_FAILED at 1. rewrite wm1_eq, c_eq_Z by lia. rewrite Z.eqb_refl.
       apply tw_ret'. cbn [ProvPost]. exists A.
       split.
       { (* [comment removed for export] *)
         split; [cbn [ms_vm upd]; rewrite Hvm; apply am_grow_refl|].
-        intros _ Hroom. destruct Hroom as [Hsp | [_ [Hpos | [a0 Ha0]]]]; [lia | lia |].
+        intros _ Hroom. destruct Hroom as [Hsp | [_ [Hpos | Hr0]]]; [lia | lia |].
+        destruct (Hr0 (ms_thp s)) as [a0 Ha0].
         specialize (Hnone a0). unfold mm_len in Hnone. rewrite HLu, HprZ in Hnone. cbn [mmap_grant_ok] in Hnone.
         assert (EL : L = 2 ^ (a_ctx A0 KShift + 13)) by (rewrite <- Hshift; reflexivity).
         rewrite Hvm, EL in Hnone. rewrite Ha0 in Hnone. discriminate Hnone. }
@@ -363,7 +365,8 @@ Section Prov.
       + apply (FR_trans A0 s0 A s); [exact HFR | apply FR_errno; exact HW].
       + apply (AMvm_of_AMK 0); [| lia]. apply AMK_vm; [cbn; exact Hvm | intros x Hx; exact (Hdom x Hx) | lia].
       + intros HWk Hb. destruct HWf as [HWf | Hall]; [exact (HWf HWk)|].
-        destruct Hb as [Hsp | [_ [Hpos | [Har [a Ha]]]]]; [lia | lia |].
+        destruct Hb as [Hsp | [_ [Hpos | [Har Hr1]]]]; [lia | lia |].
+        destruct (Hr1 (ms_thp s)) as [a Ha].
         assert (Hsh : sh = 0) by (unfold sh; apply (wf_noarea_shift A HW); [rewrite Hareas; exact Har | exact Haac]).
         specialize (Hall a). unfold mm_len in Hall. rewrite HLu, HprZ in Hall. cbn [mmap_grant_ok] in Hall. rewrite Hvm in Hall.
         unfold L in Hall. rewrite Hsh in Hall. change (2 ^ (0 + 13)) with 8192 in Hall. rewrite Ha in Hall. discriminate Hall.
@@ -568,7 +571,8 @@ Section Prov.
       constructor.
       + exact HI1.
       + exact HVc1.
-      + rewrite Hvm1. apply VMall_brk_grow; [| lia | rewrite uZ by lia; lia]. pose proof HVo as [Vg Vb Va Vres Vbv Vpw Vmw Vna Vac Vpc Vall Vspan Vtop]. exact Vall.
+      + rewrite Hvm1. apply VMall_brk_grow; [| lia | rewrite uZ by lia; lia | unfold page_aligned in *; exact K3
+          | unfold page_aligned in *; rewrite uZ by lia; rewrite <- Zplus_mod_idemp_l, K3; reflexivity]. pose proof HVo as [Vg Vb Va Vres Vbv Vpw Vmw Vna Vac Vpc Vall Vspan Vtop]. exact Vall.
       + exact HAV.
       + exact HUS.
       + exact HD.
@@ -733,7 +737,8 @@ Section Prov.
       assert (Hnaf : forall lo n, B <= lo -> 0 < n -> lo + n <= B + 8192 -> region_free (vm_noaccess (ms_vm s)) (Z_to_bv 64 lo) (Z_to_bv 64 n) = true).
       { intros lo n H1 H2 H3. apply (nafree_of_apart A); [exact HVc | lia | lia | lia |]. intros b sz Hin. destruct (Hapart b sz Hin); lia. }
       assert (Vall2 : VMall A1 h2).
-      { unfold h2. apply VMall_brk_grow; [apply VMall_actx_upd | lia | rewrite uZ by lia; lia]. pose proof HVo as [Vg Vb Va Vres Vbv Vpw Vmw Vna Vac Vpc Vall Vspan Vtop]. exact Vall. }
+      { unfold h2. apply VMall_brk_grow; [apply VMall_actx_upd | lia | rewrite uZ by lia; lia | unfold page_aligned in *; exact K3
+          | unfold page_aligned in *; rewrite uZ by lia; rewrite <- Zplus_mod_idemp_l, K3; reflexivity]. pose proof HVo as [Vg Vb Va Vres Vbv Vpw Vmw Vna Vac Vpc Vall Vspan Vtop]. exact Vall. }
       assert (Hdom1' : forall x, dom A1 x <-> dom A x) by (intros x; reflexivity).
       treassoc.
       eapply (tw_ld_ctx W A1); [exact HW1 | exact HR2 | exact HWIN2 | exact I | reflexivity | rewrite EA1brk; lia |]. rewrite EA1brk.

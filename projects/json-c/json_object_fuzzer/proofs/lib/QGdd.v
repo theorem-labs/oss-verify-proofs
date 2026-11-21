@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the tok_reset_level_B_cps calls discharge it; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -87,7 +88,7 @@ AJ5 A4L HIx A T md (MS (mkR x1 (Z_to_bv 64 (pf_spf pf)) gp (Z_to_bv 64 A_TP) t0 
 F (Z_to_bv 64 0x99ae4) fc None m (seg_rom asegs)).
 Proof.
 intros until sv. intros STC Hl Hi LEN HP EREST LOK TS BLK FR ST HPR ERR BB K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (wmono_refl asegs m) as WM. pose proof (munch_refl [] m) as MU.
 destruct LOK as [JO NM].
@@ -100,7 +101,7 @@ eapply (tok_reset_level_B_cps HIx PUT) with (i := i) (l := l) (levels := levels)
 [ exact Hl | lia | exact (proj1 (proj2 RR)) | exact LEN | exact HP | exact EREST
 | unfold put_pre; destruct (tl_cs l) as [s'|]; [destruct JO as [Hp J]; split; [exact Hp | split; [lia | exact J]] | exact JO]
 | exact NM | exact TS | exact BLK
-| rewrite unsigned_lit by lia; exact ST | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOS; lia
+| rewrite unsigned_lit by lia; exact ST | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOS; lia
 | rewrite unsigned_lit by lia; clear - Gspf; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; clear - HT Gle; lia
 | apply heap_pres_refl | exact ERR
 | unfold put_costA; destruct (tl_cs l); [rewrite Z.eqb_refl; unfold lvl_blocks in BB; rewrite length_app, Nat2Z.inj_add in BB; lia | lia]
@@ -169,7 +170,7 @@ AJ5 A4L HIx A T md (MS (mkR x1 (Z_to_bv 64 (pf_spf pf)) gp (Z_to_bv 64 A_TP) t0 
 F (Z_to_bv 64 0x99ae4) fc None m (seg_rom asegs)).
 Proof.
 induction i as [|i IH]; intros until sv; intros STC Hi LEN HP LOK TS BLK FR ST HPR ERR BB K;
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR).
 -
 destruct (nth_error levels 0) as [l|] eqn:Hl; [| apply nth_error_None in Hl; lia].
 rewrite (lvblocks_S _ _ _ Hl) in HP, BB. rewrite <- app_assoc in HP. rewrite lvblocks_0, app_nil_r in BB.
@@ -349,7 +350,7 @@ AJ5 A4L HIx A T md
 F (Z_to_bv 64 0x981d4) fc None m (seg_rom asegs)).
 Proof.
 intros until sv. intros STC Hl Hi LEN HP EREST LOK TS BLK FR ST HPR ERR S0V RAV BB K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct pf as [r oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
 destruct pa as [sp0 Ff oldloc newloc bsl dsl]; cbn [pa_sp0 pa_F pa_oldloc pa_newloc pa_bslack pa_dslack] in *.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO, SB7, shA, PE_RA2 in *. unfold A_SB in *.
@@ -626,7 +627,7 @@ AJ5 A4L HIx A T md
 F (Z_to_bv 64 0x981d4) fc None m (seg_rom asegs)).
 Proof.
 induction i as [|i IH]; intros until sv; intros STC Hi LEN HP LOK TS BLK FR ST HPR ERR S0V RAV BB K;
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN26 & SB0 & SBL & RR & LENR).
 -
 destruct (nth_error levels 0) as [l|] eqn:Hl; [| apply nth_error_None in Hl; lia].
 rewrite (lvblocks_S _ _ _ Hl) in HP, BB. rewrite <- app_assoc in HP. rewrite lvblocks_0, app_nil_r in BB.

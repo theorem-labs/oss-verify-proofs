@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfReallocCompose.v, with its module paths changed; 127 of its 527 lines of code are new or changed and 422 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The PRIMED realloc(p, n) composition under the re-hide (a Theorem Labs lane R, plan row R-1; one text for cgif, reply and
    preset).  realloc(p, n) frees the old block inside the call, and a secondary free may re-hide shadow
    (YGcfRehidePost), so its contract is YG0dcfR.arealloc_realizes_cf_rh: the run amreal' over RZ_cf and the leaf
@@ -151,7 +152,7 @@ rwh_mid_a : forall ly S Hp W regs mem md p n_old n ch S1 W1 inst so bp regsA mem
     same_io md2 mdM /\ RGtop.rkeep segs B regs W2 mem2 W3 memM /\
     errno_kept_cf B mem2 memM /\ 
     K2 ly S Hp W regs mem md p n_old n ch q ly2 S2 W3 regsM memM mdM);
-(* The copy routine (REAL(memcpy), reached at cf_pc_memcpy): ReallocG.amemcpy_realizes (ReallocG.v:243-251) at that
+(* The copy routine (REAL(memcpy), reached at cf_pc_memcpy): ReallocG.amemcpy_realizes (ReallocG.v:244-252) at that
    pc, with the overlay normal form kept. *)
 rwh_memcpy : forall (W : world segs) regs mem md d s n,
   ReallocG.rmemcpy_pre segs W regs mem d s n ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (read_cstr_aux's per-byte access_okb: the TASK_SIZE premises of read_cstr_aux_bytes_in and read_cstr_aux_toolong_bytes_in; mremap_maps_next's source-length argument; check_mmap's fixed-overflow arm, check_mmap_fixed_overflow; the place_declined_b premise on nsafe_mmap_rw and nsafe_mmap_none; the vDSO layer: mprotect's vdso/vvar gate as a premise of nsafe_mprotect_contains). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -181,34 +182,75 @@ Proof.
 intros. apply readable_bytes_full, read_bytes_map_bytes_in; assumption.
 Qed.
 
+(* #38 made State.read_cstr_aux test State.access_okb a 1 at EVERY byte it steps, so
+   the unguarded walk these two lemmas described no longer exists and they are false
+   exactly where a name's bytes sit at or above TASK_SIZE -- a range
+   strncpy_from_user refuses (lib/strncpy_from_user.c, max_addr = TASK_SIZE_MAX).
+   The model repaired its own copies rather than weakening them and says so at
+   75d69e00 Common/FileSim.v:389-399; the premises below are its premises
+   (:401-405 and :449-451), restated for this file's `a : Z` dialect, and each is the
+   weakest that makes its lemma true.  The CstrOk one bounds the last byte the walk
+   steps -- the NUL; the TooLong one bounds the last of `fuel` non-NUL bytes and is
+   GUARDED at fuel = 0, where the walk steps no byte and the lemma holds wherever a
+   is.  Below TASK_SIZE the walk's a + 1 does not wrap, so one bound puts every
+   stepped byte there and nothing is assumed about the rest of memory.
+   bytes_in cannot supply this: it bounds the range by 2^64 and TASK_SIZE is far
+   below that, so there is no proof-only route.  The non-wrap step is remade here at
+   wa (a + 1) rather than taken from State.bv_unsigned_succ_below_task_size, which is
+   stated on a word. *)
 #[using="Type"] Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
 (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+(a + Z.of_nat (length str) < TASK_SIZE)%Z ->
 bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
 read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
-- destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-cbn [read_cstr_aux]. rewrite Hb. reflexivity.
-- destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-cbn [read_cstr_aux]. rewrite Hb.
+induction str as [|b str IH]; intros fuel mp a Hf Hnz Hlo H.
+- destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [length] in Hlo. cbn [app] in H.
+assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+assert (Hr : (0 <= a < 2 ^ 64)%Z)
+  by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+assert (Hok : access_okb (wa a) 1 = true)
+  by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+apply bytes_in_cons in H as [Hb _].
+rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb. reflexivity.
+- destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [length] in Hf, Hlo. cbn [app] in H.
+assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+assert (Hr : (0 <= a < 2 ^ 64)%Z)
+  by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+assert (Hok : access_okb (wa a) 1 = true)
+  by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+apply bytes_in_cons in H as [Hb H].
+rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb.
 assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
 { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-intro Hin. apply Hnz. right. exact Hin.
+rewrite Hne, wa_succ.
+rewrite (IH fuel mp (a + 1) ltac:(lia)
+           ltac:(intro Hin; apply Hnz; right; exact Hin) ltac:(lia) H).
+reflexivity.
 Qed.
 
 #[using="Type"] Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
 (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+(fuel <> 0%nat -> (a + Z.of_nat fuel <= TASK_SIZE)%Z) ->
 bytes_in mp a str ->
 read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
-destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-cbn [read_cstr_aux]. rewrite Hb.
+induction fuel as [|fuel IH]; intros str mp a Hf Hnz Hlo H; [reflexivity|].
+specialize (Hlo ltac:(discriminate)).
+destruct str as [|b str]; [cbn in Hf; lia|].
+assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+assert (Hr : (0 <= a < 2 ^ 64)%Z)
+  by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+assert (Hok : access_okb (wa a) 1 = true)
+  by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+apply bytes_in_cons in H as [Hb H].
+rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb.
 assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
 { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-intro Hin. apply Hnz. right. exact Hin.
+rewrite Hne, wa_succ.
+rewrite (IH str mp (a + 1) ltac:(cbn in Hf; lia)
+           ltac:(intro Hin; apply Hnz; right; exact Hin) ltac:(intros _; lia) H).
+reflexivity.
 Qed.
 
 Definition iovec_bytes (iovs : list (word * word)) : list byte :=
@@ -743,10 +785,16 @@ Qed.
 vm_only m (mremap_model_next m old on dst nn).
 Proof.
 intros. unfold mremap_model_next.
-eapply vm_only_trans; [apply (vm_only_with_vmmaps (mremap_maps_next (m_vmmaps m) old dst nn)); reflexivity|].
+(* #38 gave mremap_maps_next the SOURCE LENGTH as its second argument
+   (75d69e00 Sys/Mm/Mremap.v:166, `h old old_n dst new_n`), because the new
+   maps list subtracts [old, old + old_n) rather than assuming the source's
+   extent.  Both uses below passed four arguments and so had type
+   word -> VmMaps where a VmMaps was wanted.  `on` is already bound by this
+   lemma's own statement, so the repair is the argument and nothing else. *)
+eapply vm_only_trans; [apply (vm_only_with_vmmaps (mremap_maps_next (m_vmmaps m) old on dst nn)); reflexivity|].
 unfold vm_resize_backing. split; [repeat split; reflexivity|].
 intros HL. unfold mremap_source_lazy_b.
-assert (E : m_vm_lazy (with_vmmaps (mremap_maps_next (m_vmmaps m) old dst nn) m) = []) by exact HL.
+assert (E : m_vm_lazy (with_vmmaps (mremap_maps_next (m_vmmaps m) old on dst nn) m) = []) by exact HL.
 unfold m_vm_lazy in E |- *. cbn [m_vm with_vm_backing vmst_lazy]. rewrite E.
 replace (vmst_lazy (m_vm m)) with (@nil (word * word)) by (symmetry; exact E).
 cbn. reflexivity.
@@ -776,7 +824,18 @@ Proof. intros req eff m m' evs H. unfold check_brk in H. crush_check H; vm_only_
 #[using="Type"] Lemma check_mmap_shape : forall addr len prot flags fd off eff m m' evs,
 mmap_noreserve_b flags = false ->
 check_mmap addr len prot flags fd off eff m = CheckOk m' evs -> vm_only m m' /\ evs = [].
-Proof. intros until evs; intros NR H. unfold check_mmap in H. crush_check H; vm_only_done. Qed.
+(* #38 gave check_mmap a FIXED-OVERFLOW arm that delegates to a separate constant
+   (75d69e00 Checks/Sys/Mm/Mmap.v:79 check_mmap_fixed_overflow), reached when
+   two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len).  crush_check
+   cannot see through it, so the hypothesis stayed at
+   `check_mmap_fixed_overflow addr (page_round_up_Z (bv_unsigned len)) eff m
+    = CheckOk m' evs` and vm_only_done's `reflexivity` failed with
+   "Unable to unify [] with evs" -- the goal about evs, not about vm_only.
+   Unfolding it exposes `CheckOk m []` (Mmap.v:85), after which the existing
+   machinery gives m' = m and evs = [] and vm_only_refl closes the rest.
+   This is the model's own shape for the same arm: 75d69e00 Checks/KillFree.v:455
+   reads `unfold check_mmap, check_mmap_fixed_overflow in H.` *)
+Proof. intros until evs; intros NR H. unfold check_mmap, check_mmap_fixed_overflow in H. crush_check H; vm_only_done. Qed.
 
 #[using="Type"] Lemma check_munmap_shape : forall addr len eff m m' evs,
 check_munmap addr len eff m = CheckOk m' evs -> vm_only m m' /\ evs = [].
@@ -958,22 +1017,29 @@ repeat first [ apply check_ret_only_no_unmodeled
 | match goal with |- (match ?x with _ => _ end) <> _ => destruct x end
 | progress cbv zeta beta iota ].
 
+(* LPS 727298f3: check_mmap answers Unmodeled in both freely placed arms when
+   place_declined_b holds (the model's mmap_succ_ok / mmap_no_unmodeled take the same
+   four-argument premise), so each lemma below takes it. *)
 #[using="Type"] Lemma nsafe_mmap_rw : forall addr len mo,
+place_declined_b (m_kernel mo) (m_vmmaps mo) (Z_to_bv 64 addr)
+  (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = false ->
 nsafe (NMmap addr len (PROT_READ + PROT_WRITE) (MAP_PRIVATE + MAP_ANONYMOUS)) mo.
 Proof.
-intros addr len mo eff. unfold check_mmap.
+intros addr len mo Hpd eff. unfold check_mmap.
 replace (mmap_off_aligned_b (Z_to_bv 64 0)) with true by (vm_compute; reflexivity).
 replace (mmap_anon_b (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS))) with true by (vm_compute; reflexivity).
 replace (mmap_plain_anon_b (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS))) with true by (vm_compute; reflexivity).
 replace (mmap_modeled_b (Z_to_bv 64 (PROT_READ + PROT_WRITE)) (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS))
 (Z_to_bv 64 0)) with true by (vm_compute; reflexivity).
-cbn [negb]. destruct (w_is0 _); [apply check_ret_only_no_unmodeled|]. no_unm.
+cbn [negb]. destruct (w_is0 _); [apply check_ret_only_no_unmodeled|]. rewrite Hpd. no_unm.
 Qed.
 
 #[using="Type"] Lemma nsafe_mmap_none : forall addr len mo,
+place_declined_b (m_kernel mo) (m_vmmaps mo) (Z_to_bv 64 addr)
+  (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = false ->
 nsafe (NMmap addr len PROT_NONE (MAP_PRIVATE + MAP_ANONYMOUS)) mo.
 Proof.
-intros addr len mo eff. unfold check_mmap.
+intros addr len mo Hpd eff. unfold check_mmap.
 replace (mmap_off_aligned_b (Z_to_bv 64 0)) with true by (vm_compute; reflexivity).
 replace (mmap_anon_b (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS))) with true by (vm_compute; reflexivity).
 replace (mmap_plain_anon_b (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS))) with true by (vm_compute; reflexivity).
@@ -981,7 +1047,7 @@ replace (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 (MAP_PRIVATE + MAP_AN
 (Z_to_bv 64 0)) with false by (vm_compute; reflexivity).
 replace (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS))
 (Z_to_bv 64 0)) with true by (vm_compute; reflexivity).
-cbn [negb]. destruct (w_is0 _); [apply check_ret_only_no_unmodeled|]. no_unm.
+cbn [negb]. destruct (w_is0 _); [apply check_ret_only_no_unmodeled|]. rewrite Hpd. no_unm.
 Qed.
 
 #[using="Type"] Lemma nsafe_munmap_has : forall addr len mo,
@@ -1002,12 +1068,25 @@ map_contains (vm_noaccess (m_vmmaps mo)) (Z_to_bv 64 addr)
 (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len)))) = true ->
 map_contains (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr)
 (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len)))) = true ->
+(* #38 put a vDSO/vvar gate in mprotect_spec AHEAD of the containment test and ahead of
+   anything that reads prot (75d69e00 Sys/Mm/Mprotect.v:293): a request that meets either
+   mapping is `unmodeled`, because __setup_additional_pages maps the vDSO text VM_MAYWRITE
+   and the model has no term for a vDSO whose bytes changed.  `nsafe` says no outcome is
+   unmodeled, so WITHOUT this premise the lemma is FALSE at #38 for a range meeting the
+   pair.  The premise is the model's own gate, not a new kind of assumption; EdBridge.v:104 carries the same
+   one as the seventh conjunct of ed_expose_arm.  It goes LAST so the three conjuncts
+   above keep their positions.  (b): nsafe_mprotect_contains has ZERO consumers in this
+   project -- `git grep -w` over projects/json-c finds only its own definition and comments naming it -- so the
+   premise reaches no caller and cannot surface in a published file. *)
+region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (Z_to_bv 64 addr)
+(Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len)))) = true ->
 nsafe (NMprotect addr len prot) mo.
 Proof.
-intros addr len prot mo Hp Hna Hm eff. unfold check_mprotect.
+intros addr len prot mo Hp Hna Hm Hvd eff. unfold check_mprotect.
 destruct (mprotect_grows_conflict_b _); [no_unm|].
 destruct (negb (_ =? 0)); [no_unm|]. destruct (w_is0 _); [no_unm|].
-destruct (two_pow_64 <=? _); [no_unm|]. rewrite Hp. cbn [negb]. cbv zeta. rewrite Hna, Hm. cbn [andb]. no_unm.
+destruct (two_pow_64 <=? _); [no_unm|]. rewrite Hp. cbn [negb]. cbv zeta.
+rewrite Hvd. cbn [negb]. rewrite Hna, Hm. cbn [andb]. no_unm.
 Qed.
 
 #[using="Type"] Lemma alloc_fd_range : forall mo,

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aBase.v at 80bf14ccf11
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aBase.v
    (its block-statement shape: one statement per block of the piece, each in the shape of a callee
    contract, so the blocks are proved independently and the piece is their chaining) for reac-pw/fuzz_headamp's
    image B: the rs_ prefix renamed to w6b_, every pc, register and real-frame cell measured on image B's own twin,

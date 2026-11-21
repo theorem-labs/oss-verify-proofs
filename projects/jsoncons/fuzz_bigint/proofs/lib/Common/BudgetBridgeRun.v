@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the run lemmas cover the vDSO call arm (vdso_alloc_false) and the three clauses of unmodeled_at. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run RiscvSemantics MemImageType.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Sys.SyscallTable.
@@ -37,7 +38,10 @@ Proof.
 intros [ms m] evs c' Hn Hl Hs. pose proof (okc_of _ Hn Hl) as Hok.
 remember (mkCfg ms m) as c eqn:Ec. remember (SNext c') as r eqn:Er.
 destruct Hs as
-[ms0 M ms' M' Hh Hs Ha | ms0 M Hh Hs Ha | ms0 M Hh Hs Ha
+[ms0 M ms' M' Hh Hs Ha | ms0 M Hh Hs Ha | ms0 M Hh Hs Ha Hnv
+| ms0 M fn n eff M' M'' evs0 Hh Hs Ha Hfn Hno Hsp Hef Hh' Hm
+| ms0 M fn n eff M' evs0 Hh Hs Ha Hfn Hno Hsp Hef Hh' Hm
+| ms0 M fn Hh Hs Ha Hfn Hun
 | ms0 M x8 eff M' M'' evs0 Hh Hs Hsp Hnsp Hh' Hm
 | ms0 M x8 eff M' evs0 Hh Hs Hsp Hnsp Hh' Hm
 | ms0 M x8 eff M' evs0 code Hh Hs Hsp Hh' Hk
@@ -48,6 +52,14 @@ destruct Hl as [Hl Hb]; unfold okl; cbn [cfg_model] in *.
 -
 destruct (mi_account_step_model_frame segs _ _ _ _ Ha) as (_ & Hv & _).
 rewrite Hv. split; assumption.
+- (* 08b1429 Run.v: the vDSO call, an [sstep_cfg] arm that reaches [SNext]; its
+     sysno is never an allocation call ([vdso_alloc_false]) *)
+pose proof (vdso_alloc_false segs ms m fn n Hno) as Hmk.
+pose proof (spec_limit MCLE _ _ _ _ _ Hmk Hb Hsp) as Hl'.
+pose proof (BND _ _ _ _ _ Hsp Hb) as Hb'.
+rewrite <- (materialize_limit _ _ _ Hm) in Hl', Hb'.
+change (m_vmmaps (with_vdso_bump M'')) with (m_vmmaps M'').
+split; [rewrite Hl'; exact Hl | exact Hb'].
 -
 pose proof (okc_mark segs L _ _ _ Hok Hh Hs) as Hmk.
 pose proof (spec_limit MCLE _ _ _ _ _ Hmk Hb Hsp) as Hl'.
@@ -109,19 +121,49 @@ Lemma unmodeled_at_iff : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeRun "@':&EvLv
 Proof.
 intros [ms m] Hok. unfold unmodeled_at, liftc. cbn [cfg_ms cfg_model].
 change (m_halted (setlim L m)) with (m_halted m).
-split; intros (Hh & [(Hs & Ha) | (x8 & Hs & Hu)]); split; try exact Hh.
-- left. split; [exact Hs|]. unfold mi_account_step in *.
-destruct (RiscvSemantics.step_accesses segs ms) as [report| |]; try reflexivity.
-+ destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate.
-+ discriminate.
-- right. exists x8. split; [exact Hs|].
-apply (sim_unm_iff L _ m (okc_sim segs L MCLE ms m x8 Hok Hh Hs)). exact Hu.
-- left. split; [exact Hs|]. unfold mi_account_step in *.
-destruct (RiscvSemantics.step_accesses segs ms) as [report| |]; try reflexivity.
-+ destruct (materialize_model_accesses (setlim L m) (@accessed_ranges _ report)); discriminate.
-+ discriminate.
-- right. exists x8. split; [exact Hs|].
-apply (sim_unm_iff L _ m (okc_sim segs L MCLE ms m x8 Hok Hh Hs)). exact Hu.
+(* 08b1429 Run.v: [unmodeled_at] has three clauses: an instruction the model does not follow at
+   a pc outside the vDSO text, a vDSO call it declines ([vdso_call_unmodeled]), a syscall *)
+assert (Hmi : mi_account_step segs ms (setlim L m) = MachineUnmodeled
+              <-> mi_account_step segs ms m = MachineUnmodeled).
+{ unfold mi_account_step. destruct (RiscvSemantics.step_accesses segs ms) as [report| |].
+  - destruct (materialize_model_accesses (setlim L m) (@accessed_ranges _ report));
+    destruct (materialize_model_accesses m (@accessed_ranges _ report));
+    split; intro H; discriminate H.
+  - split; intro H; discriminate H.
+  - split; intro H; reflexivity. }
+assert (Hvu : forall fn, vdso_call_unmodeled segs ms (setlim L m) fn
+                         <-> vdso_call_unmodeled segs ms m fn).
+{ intros fn. destruct Hok as (_ & Hle & Hb). split.
+  - intros [Hu | [(n & Hn & Hsu) | (n & eff & mo & evs1 & Hn & Hsp & Hd)]].
+    + left; exact Hu.
+    + right; left. exists n. split; [exact Hn|].
+      pose proof (syscall_nat MCLE L _ m (vdso_alloc_false segs ms m fn n Hn) Hle Hb) as S.
+      apply (sim_unm_iff L _ m S). exact Hsu.
+    + right; right.
+      pose proof (syscall_nat MCLE L _ m (vdso_alloc_false segs ms m fn n Hn) Hle Hb) as S.
+      destruct (sim_fwd_ok L _ m eff mo evs1 S Hsp) as (m0 & Hsp0 & ->).
+      exists n, eff, m0, evs1. split; [exact Hn|]. split; [exact Hsp0|]. exact Hd.
+  - intros [Hu | [(n & Hn & Hsu) | (n & eff & mo & evs1 & Hn & Hsp & Hd)]].
+    + left; exact Hu.
+    + right; left. exists n. split; [exact Hn|].
+      pose proof (syscall_nat MCLE L _ m (vdso_alloc_false segs ms m fn n Hn) Hle Hb) as S.
+      apply (sim_unm_iff L _ m S). exact Hsu.
+    + right; right.
+      pose proof (syscall_nat MCLE L _ m (vdso_alloc_false segs ms m fn n Hn) Hle Hb) as S.
+      exists n, eff, (setlim L mo), evs1. split; [exact Hn|].
+      split; [exact (sim_bwd_ok L _ m eff mo evs1 S Hsp)|]. exact Hd. }
+split; intros (Hh & [(Hs & Ha & Hnv) | [(Hs & Ha & fn & Hfn & Hun) | (x8 & Hs & Hu)]]);
+  split; try exact Hh.
+- left. split; [exact Hs|]. split; [apply Hmi; exact Ha | exact Hnv].
+- right; left. split; [exact Hs|]. split; [apply Hmi; exact Ha|].
+  exists fn. split; [exact Hfn | apply Hvu; exact Hun].
+- right; right. exists x8. split; [exact Hs|].
+  apply (sim_unm_iff L _ m (okc_sim segs L MCLE ms m x8 Hok Hh Hs)). exact Hu.
+- left. split; [exact Hs|]. split; [apply Hmi; exact Ha | exact Hnv].
+- right; left. split; [exact Hs|]. split; [apply Hmi; exact Ha|].
+  exists fn. split; [exact Hfn | apply Hvu; exact Hun].
+- right; right. exists x8. split; [exact Hs|].
+  apply (sim_unm_iff L _ m (okc_sim segs L MCLE ms m x8 Hok Hh Hs)). exact Hu.
 Qed.
 Lemma unmodeled_iff : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeRun "E':&Br1%211&Cr2%211&4&=vLvJr3%43321&Dv6%2214%83761%:251p0<1p0@1pQ>D1").
 Proof.
@@ -158,11 +200,29 @@ Qed.
 Lemma okc_lift_nref : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeRun "?':&EvLv6r1%43321&5&9&Dr2%2271%4291%611p081pQ>>1").
 Proof.
 intros [ms m] Hok. unfold liftc. cbn [cfg_ms cfg_model].
-intros (Hh & [(Hs & report & Hst & Hm) | (x8 & Hs & [Hmk | (eff & M' & evs & Hsp & Hh' & Hm)])]);
+intros (Hh & [(Hs & [(report & Hst & Hm)
+                    | (Ha & fn & n & eff & M' & evs & Hfn & Hno & Hsp & Hef & Hh' & Hm)])
+              | (x8 & Hs & [Hmk | (eff & M' & evs & Hsp & Hh' & Hm)])]);
 cbn [cfg_ms cfg_model] in *; change (m_halted (setlim L m)) with (m_halted m) in Hh.
 - destruct (okc_instr_mat segs L ms m report Hok Hh Hs Hst) as (m1 & E1).
 destruct Hok as (_ & Hle & _).
 rewrite (materialize_setlim L m _ m1 Hle E1) in Hm. discriminate.
+- (* 08b1429 Run.v: [budget_refused_at]'s vDSO clause; the source would be refused too *)
+assert (Ha0 : mi_account_step segs ms m = MachineUnmodeled).
+{ unfold mi_account_step in *.
+  destruct (RiscvSemantics.step_accesses segs ms) as [report| |]; try discriminate.
+  - destruct (materialize_model_accesses (setlim L m) (@accessed_ranges _ report)); discriminate.
+  - reflexivity. }
+pose proof (vdso_alloc_false segs ms m fn n Hno) as Hmk.
+destruct Hok as (Hnr & Hle & Hb).
+pose proof (syscall_nat MCLE L (sys_input segs ms (Z_to_bv 64 n)) m Hmk Hle Hb) as S.
+destruct (sim_fwd_ok L _ m eff M' evs S Hsp) as (m0 & Hsp0 & ->).
+destruct (materialize_model_accesses m0 (syscall_effect_accesses eff)) as [m1|] eqn:E1.
++ pose proof (spec_limit MCLE _ m eff m0 evs Hmk Hb Hsp0) as Hl0.
+rewrite (materialize_setlim L m0 _ m1 ltac:(rewrite Hl0; exact Hle) E1) in Hm. discriminate.
++ apply Hnr. split; [exact Hh|]. left. split; [exact Hs|]. right. split; [exact Ha0|].
+exists fn, n, eff, m0, evs.
+split; [exact Hfn|]. split; [exact Hno|]. split; [exact Hsp0|]. split; [exact Hef|]. split; [exact Hh'|]. exact E1.
 - pose proof (okc_mark segs L ms m x8 Hok Hh Hs) as Hmk0. destruct Hok as (_ & Hle & _).
 rewrite (alloc_mark_setlim L _ m Hle Hmk0) in Hmk. discriminate.
 - pose proof (okc_sim segs L MCLE ms m x8 Hok Hh Hs) as S.

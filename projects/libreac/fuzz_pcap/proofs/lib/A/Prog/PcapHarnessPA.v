@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file for libreac/fuzz_pcap's program walk, written in the form of
    lib/A/Prog/PcapHarnessTail.v (the same lane's tail walks) and of cgif_file_fuzzer's per-function walks. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* Phase A of fuzz_pcap's entry walk (LLVMFuzzerTestOneInput, 0x807c8, ASan build of libreac v1.9.0):
    PcapEntryPhases.GI_K1 (0x80944) to GI_K2 (0x809a0), in PcapEntryDefs.pe_from's shape
@@ -34,7 +35,7 @@
      HCPY, HSET                   aintrin_realizes SEGS B OCpy / OSet at the two trampolines, from AsanAPI's
                                   aa_asan_memcpy / aa_asan_memset (Reusable/YG0d.v:538-539);
      (the writability of a byte of pe_G, that no byte of pe_G is a stream environment cell, and the separation of
-      g_file_len below g_file are not Section hypotheses: pe_base carries them since a working branch 4b5f67b5a60, a Theorem Labs lane)
+      g_file_len below g_file are not Section hypotheses: pe_base carries them since a working branch, a Theorem Labs lane)
      OPENS, FM_RA, CTX, ROI, HROI, HPATH, HCTX, HFMU, HGLEN   pcap_source_open's statement and its side
                                   conditions, with the tail lane's names; HCTX is at PP_K2, this call's landing. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00 YG0h.
@@ -170,7 +171,7 @@ pose proof pa_B_ok as (HB0 & HB1 & HB2).
 pose proof (p_sizes cx) as (Hsz1 & Hsz2 & Hsz3).
 pose proof HB as ((HAR0 & Hrok & Hra4 & Hgp0 & Htp0 & _) & HraL & _ & _ & _ & _ & _ & Hev & Hlive & _ & _ & _ & _ &
   _ & _ & _ & Hmok & Hneed & HGX & HGD & HGDISJ & _).
-(* what pe_base's per-byte pe_G clause gives the global store 0x80970 (a working branch 4b5f67b5a60) *)
+(* what pe_base's per-byte pe_G clause gives the global store 0x80970 (a working branch) *)
 assert (HGW : forall (W : world SEGS) (mem : word -> option byte) a, inG pe_G a -> writable_at SEGS (rdW W mem) a)
   by (intros W mem a Ha; exact (proj2 (proj2 (proj2 (proj2 (proj2 (HGD a Ha))))) _)).
 assert (HGENV : forall a, inG pe_G a -> ~ asrc_env_addr KS a)

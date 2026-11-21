@@ -1,6 +1,6 @@
 (* Helpers of S_M01 (K12d1c -> K12de4) of reac-pw/fuzz_pin LLVMFuzzerTestOneInput (plain): the input block's bytes
    at a cut and its separation from the live harness block (libreac/fuzz_ctrl's released Prog/Seg/Tac_b4.v
-   b4_in_all / b4_hb_disj, origin/ossv/recipes 25e3d17bdb50, restated for pin's GV), the string fuzz_str copies
+   b4_in_all / b4_hb_disj, restated for pin's GV), the string fuzz_str copies
    (pin_spec.pin_str at g_src) with its separation from the live block, the live block's bytes after a run that keeps
    them writable, and the SSP cells of reac_box_pin_parse_contract from the allocator relation's statics
    (AllocExtra.ax_statics: the GOT word at ms_got_guard holds ms_guard, and the guard word is readable). *)

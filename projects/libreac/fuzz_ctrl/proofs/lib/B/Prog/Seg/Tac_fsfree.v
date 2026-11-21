@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 803 of its 886 lines of code are new or changed and 3770 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The class-generic side-stack fact FSFREE of the fuzz_ctrl LLVMFuzzerTestOneInput slot proof (asan-ubsan,
    image B), and the lemmas that rebuild a callee's side-stack package from it. rule 24: no function proved.
 
@@ -699,7 +700,7 @@ Qed.
 
 (* ==== The facts of the generated laws (lib/B/Contract.v, generation N.1b) that fs_tls_core reads, each by its
    statement (a Theorem Labs lane 15:18Z: a generated conjunction is never destructed by position at a use; the twin of a Theorem Labs lane's
-   thr_fields, fuzz_manifest's lib/B/SlotTies.v (a version not in this delivery; from a working branch 3d75efd5ce9)). Each field is matched
+   thr_fields, fuzz_manifest's lib/B/SlotTies.v (a version not in this delivery; from a working branch)). Each field is matched
    to a conjunct of AC.a_laws_thread / AC.a_laws_fs_state by `eassumption`, so a conjunct that a later generation adds
    or moves does not change these lemmas or their users. The fields that fix an existential come first. *)
 Record fsf_thr_fields (API : AC.AsanAllocAPI AC.ASYMS AsanRTInv.RT) (H : list (Z * Z))
@@ -934,7 +935,7 @@ Proof.
 Qed.
 
 (* The thread cells of every asan_tls_cells instance of an FRA state are apart from the slot window and the frame
-   (prover a Theorem Labs lane's r13_tls_fra, lib/B/Prog/Seg/R13.v (a version not in this delivery) on a working branch 6a3ed3e194, in the slot-window form):
+   (prover a Theorem Labs lane's r13_tls_fra, lib/B/Prog/Seg/R13.v (a version not in this delivery) on a working branch, in the slot-window form):
    the instance is FSFREE's (tls_uniq). So no cut carries this clause; a segment rebuilds it from FRA. *)
 Lemma tls_fra : forall g fr hb regs mem md, FRA B APIf ra g fr hb regs mem md ->
   forall DT TS C T DB k, SMC.asan_tls_cells mem (AC.as_tp AC.ASYMS) DT TS C T DB k ->

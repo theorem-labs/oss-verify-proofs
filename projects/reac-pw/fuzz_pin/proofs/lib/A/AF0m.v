@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to reac-pw/fuzz_pin's ASan build. *)
-(* Modified by Theorem Labs: regenerated for reac-pw/fuzz_pin image A by af0m.py 3681a21ca430 (the start-up tool set at tools commit 96d2c32e287) from fuzz_pin.asan and its 50 collected hand-off states (lib/A/AB01.v); base: proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v at c8557374ad2e through port_core 0e4e065eab9f's stage-out, with Tfib_owned_static relocated by object to this image's symbols, .got slots and .rodata cells *)
+(* Modified by Theorem Labs: regenerated for reac-pw/fuzz_pin image A by af0m.py 3681a21ca430 (the start-up tool set at tools) from fuzz_pin.asan and its 50 collected hand-off states (lib/A/AB01.v); base: proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v at theorem-labs/oss-verify-proofs@6b32741d849a through port_core 0e4e065eab9f's stage-out, with Tfib_owned_static relocated by object to this image's symbols, .got slots and .rodata cells *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_pin.asan (reac-pw/fuzz_pin asan) sha256 3e4859aed23f78a6eb028120d664abda29bcb8a3bfdea5d6ee5b32b646de9d16; unstripped twin sha256 435309a6b12c4d3e09a8484ec253b5fab600e4f00c28694ac28db2fc7a4475ab *)
 (* owned read-only static bytes pinned as const cells from the image: 947 bytes in 140 cells, from 35 ranges of Tfib_owned_static; counted from this file's own tables *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.

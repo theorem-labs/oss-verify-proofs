@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of the event arm (op 7) of fuzz_reply.asan-ubsan's
    LLVMFuzzerTestOneInput, image B: lib/B/W_LLVMFuzzerTestOneInput_arm_event.v (lf_arm_event_b, Qed at
-   a working branch dfb0177d1b9 on kit cand11 fb28b53a2b8) carried to the cut invariants of
+   a working branch on kit cand11) carried to the cut invariants of
    lib/B/W_LLVMFuzzerTestOneInput_cut_x.v (a Theorem Labs lane's route (b), step 7), in the form of image A's conversion
-   lib/A/W_LLVMFuzzerTestOneInput_event_x.v (a working branch b4343cabfa9). lf_arm_event_x is exactly cut_x's
-   Section w hypothesis ARM_event (W_LLVMFuzzerTestOneInput_cut_x.v:632). Neither the AR file nor cut_x is edited.
+   lib/A/W_LLVMFuzzerTestOneInput_event_x.v (a working branch). lf_arm_event_x is exactly cut_x's
+   Section w hypothesis ARM_event (W_LLVMFuzzerTestOneInput_cut_x.v:633). Neither the AR file nor cut_x is edited.
    - The Section header is cut_x's Section w header (B .. RINV, with LAWS / HP0 / HG / LSx). The piece's own
      hypotheses follow: the AR file's AR-free ones verbatim (MMAX, TL, GWR, ET_ROM_OUT, HGlock, HG_SL, HG_carry,
      HERR_AP, and the RI_event_* / LS_event_* model rules with LS renamed LSx); ERRL at cut_x's errno_law_x; the callees
@@ -34,11 +35,11 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG 
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import
 W_kit_x W_journal_x W_frame_x W_contract_x W_sites_x W_LLVMFuzzerTestOneInput_cut_x.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require YCk0.
-(* the room round (image A: lib/A/W_LLVMFuzzerTestOneInput_event_x.v at a working branch 7631f71c0bb,
-   commits 88557c15170 (C3) and 0a210345fcc (the RP re-fit)). acnt, the one count definition (the room round's cnt_ok /
+(* the room round (image A: lib/A/W_LLVMFuzzerTestOneInput_event_x.v at a working branch,
+   commits (C3) and (the RP re-fit)). acnt, the one count definition (the room round's cnt_ok /
    cnt_ok_pk count with it); sl_tr_peak_le_alloc: re_spec_x's byte peak premise from LS_event_relay's sum form;
    fr_img_cover_x: the image law's cover of the image (blk_off_imgP0). ReplyCnt and W_tr_peak come with cand13's B kit. *)
-(* strnlen's spec over ARx: the B RT base's astrnlen_whole_realizes_x (lib/Rt/RTx.v:155) *)
+(* strnlen's spec over ARx: the B RT base's astrnlen_whole_realizes_x (lib/Rt/RTx.v:156) *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Rt Require RTx.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ReplyCnt.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require W_tr_peak.
@@ -95,7 +96,7 @@ Lemma ev_HCTX_f : In [0x84da0] YCk0.CTX_AFREE /\ In [0x84da0; 0x82240] YCk0.CTX_
 Proof. split; et_in_tab. Qed.
 
 Section evx.
-(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:199-220, 243-244) *)
+(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:200-221, 243-244) *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.
@@ -210,7 +211,7 @@ Hypothesis LS_event_malloc : forall cx t m ly S e,
   re_len e < MMAX /\ blocks_bytes S + re_len e <= LIVE_MAX /\ mo_ok MT S (mo_malloc MT (re_len e)).
 (* relay_event's room (re_spec_x's send_line premises), at the state after malloc: the stream is empty at the call
    (lregs_P1's lm_O m = []) and malloc's post adds the line's block (amalloc_cf_rule's ablocks equation); image A's
-   text (C3, 88557c15170), LS -> LSx *)
+   text (C3), LS -> LSx *)
 Hypothesis LS_event_relay : forall cx t m ly S (S1 : astate) e (ly1 : alayout) q,
   LSx cx t m ly S -> RINV cx t m -> ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
@@ -225,8 +226,8 @@ Hypothesis LS_event_free : forall cx t m ly S (S1 S2 : astate) e,
   mo_le MT S1 S2 (sl_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (re_len e)) ->
   mo_ok MT S2 (mo_free MT).
 (* the three states are tied to the calls' posts - S1 by the malloc rule's ablocks equation, S1 / S2 by relay_event's
-   (send_line's) aout Permutations, S3 by the free's split with the event's block removed (image A's text,
-   0a210345fcc: s5-r1d's fr_LS3c_event_step_p, LS -> LSx) *)
+   (send_line's) aout Permutations, S3 by the free's split with the event's block removed (image A's text,:
+   s5-r1d's fr_LS3c_event_step_p, LS -> LSx) *)
 Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout) e v out' (ly1 ly2 : alayout) q,
   LSx cx t m ly S -> ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
@@ -241,7 +242,7 @@ Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (ev_step cx m e v out') ly3 S3.
 (* the live counts at the arm's entry leave room for its peak (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), CORRECTION 2; image A's
-   text, 0a210345fcc, from s5-r1d's row fr_LS3cp_cnt_event): malloc (re_len e) at the entry's counts, relay_event's
+   text, from s5-r1d's row fr_LS3cp_cnt_event): malloc (re_len e) at the entry's counts, relay_event's
    count premise (re_pk = 2) at the entry's blocks plus the event's, free at relay_event's post. Stated over the room
    record's count fields. *)
 Hypothesis LS_cnt : forall cx t m ly S e,
@@ -987,7 +988,7 @@ Proof.
     + intros x Hx. unfold in_app, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in Hqapp.
       unfold SHADOW_OFF. lia.
 Qed.
-(* ---- the tail after relay_event (image A's twin, a working branch 1172d6d9065,
+(* ---- the tail after relay_event (image A's twin, a working branch,
    et_nodup_x .. et_aout_errno_x, verbatim but for B's names): the transport across relay_event, check_shape_event and
    free, the stream's errno rebuilt, the latch's entry state ---- *)
 (* the live blocks are pairwise distinct (W_gesture_end.v ablocks_nodup) *)
@@ -1080,7 +1081,7 @@ Proof.
 Qed.
 (* LS_cnt's guard (s5-r1d's msz_ok) at a cut's model: the relay's entries have a capacity and key texts of bounded
    length (aentry_ok, W_rep), and each held slot's two line lists have records of bounded length (alist_at .. true);
-   image A's lemma (0a210345fcc), the model files being kit twins *)
+   image A's lemma, the model files being kit twins *)
 Lemma ev_msz_x : forall ly S (W : world segs) mem m, amodel_at B ly S W mem m ->
   Forall (fun e0 => 0 <= re_cap e0 <= 16384 /\
     Forall (fun kk => Z.of_nat (length (gestures_end_b_c.key_text kk)) <= APARTIAL) (re_keys e0)) (lm_es m) /\
@@ -1556,7 +1557,7 @@ Proof.
       * rewrite Q20, Hk2. apply ev_sv_of_U; [|lia].
         apply trap_U_add; [apply (U_atom _ 6 _ V6); lia | apply (U_atom _ 20 _ V20); lia | lia].
 Qed.
-(* a callee's afn_pre at sp = F (lib/B/W_LLVMFuzzerTestOneInput_latch.v lt_afn_pre_at, ee519e5e2f5, verbatim but for
+(* a callee's afn_pre at sp = F (lib/B/W_LLVMFuzzerTestOneInput_latch.v lt_afn_pre_at, verbatim but for
    the name): the donor's afn_pre_at, whose achain is the entry's chain with this frame pushed, or the empty chain *)
 Lemma ek_afn_pre_at_xR : forall cx ly3 S3 fpos k (W : world segs) mem md regs STK1,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx [] ->
@@ -3099,10 +3100,10 @@ End evx.
 
 (* ---------------------------------------------------------------- THE CHECK
    In cut_x's scope (its Section w header and this piece's hypotheses): lf_arm_event_x's type is cut_x's Section w
-   hypothesis ARM_event (W_LLVMFuzzerTestOneInput_cut_x.v:632), restated and closed by `exact`, and it fills that slot
+   hypothesis ARM_event (W_LLVMFuzzerTestOneInput_cut_x.v:633), restated and closed by `exact`, and it fills that slot
    of cut_x's composition lf_contract_of_segments_x. *)
 Section chk.
-(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:199-220, 243-244) *)
+(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:200-221, 243-244) *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.

@@ -1,7 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_pcap proofs/libreac/fuzz_pcap/lib/Prog/memmove_c.v at bdfe881c79ce48f2ab686e0aa4ea503bbb4be095, donor pin sha256 1e8e7da32456ca11f5e70cba9413adf96bbeb09fb14d1c68e2a3c29a6cb0de01, for reac-repacer/fuzz_wire: module paths and image addresses only, entry memmove 0x1bf88 (donor) -> 0x1b6f8 (this image). *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_pcap proofs/libreac/fuzz_pcap/lib/Prog/memmove_c.v, donor pin sha256 1e8e7da32456ca11f5e70cba9413adf96bbeb09fb14d1c68e2a3c29a6cb0de01, for reac-repacer/fuzz_wire: module paths and image addresses only, entry memmove 0x1bf88 (donor) -> 0x1b6f8 (this image). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

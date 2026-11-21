@@ -2,7 +2,7 @@
    from fuzz_state.c:296 - on the pinned fs.asan (image tfibsegs, build A, sha256 64b53ff86172...), head 0x81fb8,
    exit 0x82028 (crt_INV_81fb8 -> crt_INV_82028).
 
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from d25a984c903
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_loops.v - cs_pre / cs_j / cs_facts :806-809,
    crt_canonical :1032, ws_bit :717). The lane head's checker verdict (a Theorem Labs lane, role check, 04:3xZ) stands on
    that hit: "The new lane head meets the condition I set ... Its full Require closure (334 files on d25a984c903) has
@@ -208,7 +208,7 @@ Proof.
 Qed.
 
 (* ---- the three data branches of the body, as closed facts about the byte c under the cursor. Ported from the
-   bespoke ASan proof a working branch d25a984c903 lib/A/Prog/check_round_trip_loops.v:717 ws_bit (the same
+   bespoke ASan proof a working branch lib/A/Prog/check_round_trip_loops.v:717 ws_bit (the same
    constant 4294977024 and the same forallb / vm_compute check over 0 .. 32); restated here on the engine's branch
    condition, so no rewrite ever has to reach inside the run's hypothesis. ---- *)
 Lemma l7_bit_val : forall E c, ew E 33 = Z_to_bv 64 c -> 0 <= c < 256 ->
@@ -1175,7 +1175,7 @@ Proof.
   intros tb. unfold l7_pre. rewrite Nat2Z.id, firstn_all2 by (rewrite l7_zs_len; lia). reflexivity.
 Qed.
 
-(* The stability predicate this lemma takes is the base's crt_stable7E (FSH_crt_base.v:674, base v21 058755bb8ac):
+(* The stability predicate this lemma takes is the base's crt_stable7E (FSH_crt_base.v:674, base v21):
    the boundary env is free on both sides, because a boundary state has every register as an atom and the loop
    changes a0 a1 a2 a5 a6 a7 s9, so the exit is read under E' = Ereg regs' (crt_extra cx), not under E. The local
    copy this file carried until base v21 published it is deleted. *)

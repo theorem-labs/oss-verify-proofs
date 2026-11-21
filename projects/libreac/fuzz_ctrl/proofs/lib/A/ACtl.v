@@ -6,15 +6,15 @@
    PROVENANCE
    - brief: top-compose.md (a working note, not in this delivery).
    - RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28
-     20:16:23Z from e966c513ee6, ossv/recipes@a8831f7c5c), second-agent check a Theorem Labs lane 21:10Z CONFIRM:
+     20:16:23Z, ossv/recipes), second-agent check a Theorem Labs lane 21:10Z CONFIRM:
      cgif/cgif_file_fuzzer is the only released ASan donor on this branch, LPS and framework.  This file follows
-     that donor's own composition, proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v at origin/ossv/recipes c8557374ad2e:
+     that donor's own composition, proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v at theorem-labs/oss-verify-proofs@6b32741d849a:
      the loop lemma rt_G_allX (:157-163), the leaf lx_leaf_fail (:180-207), tfib_lib_x_body (:230-257) and
      tfib_lib_x (:258).  ctrl's own assembly of the same cuts, lib/A/Prog/Seg/Slot.v (not in this delivery) from a working branch
-     6a74d5929d2 (S_ forms, vac_*, turn_* / loop_*, slot_entry), is the
+     (S_ forms, vac_*, turn_* / loop_*, slot_entry), is the
      segment graph and the proof pattern of the loops.
    - cut layer: lib/A/ACtlCut.v (ctlcx, ctl_base, ctlcut, ctl_from, ix_cut / ctl_from_ix, ctl_post, ctl_rt) and
-     lib/A/ACtlCutP.v (the cut records C_<cut>), a working branch 6446767144e plus the worktree's
+     lib/A/ACtlCutP.v (the cut records C_<cut>), a working branch plus the worktree's
      uncommitted edits (segs = the core's list, the core's arities, the cut state pinned by
      cfg_at, ix_cut, SK, asyms from YG0f).  Segment rows: the translation
      llvmf-cgif-walk-plan.md section 2.3 with Appendix B (a working note, not in this delivery), with the loops section 3,
@@ -22,7 +22,7 @@
    - route (lead, 22:15Z, via a Theorem Labs lane): route (a).  ctrl's proved v1.9 segment runs are re-run in footprint form
      (_F over StepF) and the cut glue lifts each through a Theorem Labs lane's bridge into a stage.  The comment line
      "glue:" above each stage hypothesis names the proved run(s) its glue lifts (segment file, seg_ lemma and its
-     line and commit from section 2.3, run lemmas from Appendix A).  U = 6a74d5929d2, E = e8259d2f41e.
+     line and commit from section 2.3, run lemmas from Appendix A).  U =, E =.
 
    WHAT IS A HYPOTHESIS HERE, AND WHAT IS NOT
    - 94 stage hypotheses seg_<NAME>, one per live segment of section 2.3, in continuation form (the donor's rt_A2 /
@@ -67,9 +67,9 @@
    NAMES THIS FILE TAKES FROM THE CORE (the relocated cgif core, porter's flat layout; nothing here is restated)
      A.ACfn      tfib_lib_contract_x (the statement proved), tfib_lib_post_x (ctl_post_leaf), A_LLVMF, RA_LLVMF,
                  LLVMF_STK, EV_LIB
-     A.AB1v      tfibsegs, the core's segment list (donor A/AB1v.v:11; the porter confirms the name)
-     A.AE2k      tfib_sink_head, the core's sink head (donor AE2k.v:44)
-     A.AF0m      CtrlTSyms, the donor's TfibSyms (donor AF0m.v:292) under the core's name (AF0m.v:293)
+     A.AB1v      tfibsegs, the core's segment list (donor A/AB1v.v:12; the porter confirms the name)
+     A.AE2k      tfib_sink_head, the core's sink head (donor AE2k.v:45)
+     A.AF0m      CtrlTSyms, the donor's TfibSyms (donor AF0m.v:293) under the core's name (AF0m.v:294)
      A.ACeh      TfibLib, the donor's ACeh.v:25 record (the core's ACeh.v:26)
      Reusable.YK11   FPState                         Reusable.YM05  RunCeil
      Reusable.YG0f   asyms (donor YG0f.v:154)        Reusable.YC5d  ameter_ops
@@ -96,8 +96,8 @@
    and for ACtl.v also lib/A/MemNorm.v through batch 4's A.ProgWorld (ProgWorld.v:786).  Batch 4's own Requires
    (ProgWorld, the C_<f> specs, ACtlCutC) are the glue's statements of record.
 
-   BUILD STATE: type-check on the interim core (a working branch, merged on this branch at
-   f06258db897 and again at 15e182dd785, batch 5), `cb build` on the packed fuzz_ctrl base 23b918fe0c2e with NO
+   BUILD STATE: type-check on the interim core (a working branch, merged on this branch
+    and again, batch 5), `cb build` on the packed fuzz_ctrl base with NO
    port_core_refused substitution and NO AD2l stand-in; the closure reaches no stand-in. *)
 
 From Coq Require Import ZArith List Lia Permutation.
@@ -172,7 +172,7 @@ Lemma ixn1 : forall j i : nat, ACtlCutP.ixn 1 [Z.of_nat j; Z.of_nat i] = i.
 Proof. intros j i. exact (Nat2Z.id i). Qed.
 
 (* ajournal_fp_nil, COPIED VERBATIM from the donor, proofs/cgif/cgif_file_fuzzer/lib/A/ACfh.v:29-43 at
-   origin/ossv/recipes c8557374ad2e (its sections: d with {fx} {rc} {SK} :24-25, e with segs / B :26-28); only the
+   theorem-labs/oss-verify-proofs@6b32741d849a (its sections: d with {fx} {rc} {SK} :24-25, e with segs / B :26-28); only the
    module paths change, and the Section's sink head is passed BY NAME, `(SK := SK)`, to ajournal and
    fp_spares_closed (porter 00:59Z: an implicit sink head can elaborate to a global instance such as YI5b's
    src0_sink_head).  A/ACfh.v does not join the core (porter 22:43Z: its closure pulls 26 non-core files),
@@ -232,7 +232,7 @@ Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> Reusable.YG0d.in_img segs a.
    A.Prog.SlotModel.CAT [0x9e800, + CAT_N * CAT_ROW = 11 * 296 = 3256) feeds reac_box_catalogue's (seg_R1_turn) and
    a Theorem Labs lane's catalogue hand; CTRL_FRAMES [0x9f7e0, +264) feeds the frame-table stages.  Addition from
    a Theorem Labs lane's RELRO_CAT request widened by a Theorem Labs lane's measurement (a Theorem Labs lane 04:59Z): no existing statement
-   changes.  Text: a Theorem Labs lane's RELRO hunk (a working branch 8c94b04d4eb), except that RELRO_CAT is
+   changes.  Text: a Theorem Labs lane's RELRO hunk (a working branch), except that RELRO_CAT is
    written in a Theorem Labs lane's SYMBOLIC form (CAT_N * CAT_ROW, SlotModel.v:39-41), the exact text two of a Theorem Labs lane's stages
    already use (a Theorem Labs lane, 05:5xZ). *)
 Hypothesis RELRO_KIND_NAME : RLO <= 0x9e760 /\ 0x9e760 + 112 <= RHI.
@@ -243,7 +243,7 @@ Hypothesis RELRO_FRAMES : RLO <= 0x9f7e0 /\ 0x9f7e0 + 264 <= RHI.
    as the donor's walk does (A/ACfj.v:99, A/ACf2.v:47).  Discharged in section 9 by Reusable.YG0q.AR_laws_ok. *)
 Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 (* The meter (a Theorem Labs lane's request, 03:56Z; its exact text, from its Y3 glue lane, lib/A/ACtlG/Y3.v at
-   a working branch b890ce26836 :170).  ctl_lib_x's post (tfib_lib_post_x) has the conjunct
+   a working branch :170).  ctl_lib_x's post (tfib_lib_post_x) has the conjunct
    `mo_le MT S S' (XN_LIB n)`, and nothing in the cut layer carries a meter fact: ctl_base has only
    `mo_ok MT S (XM_LIB n)`, and no cut body or ctl_from premise names MT.  The meter is trivial for ctrl, but MT is
    a Variable here, so no stage can prove it.  Discharged in section 9 at MT := Reusable.YCbp.ameter_triv
@@ -252,8 +252,8 @@ Hypothesis MO_LE : forall (S S' : Reusable.YG00.astate) (m : Z), Reusable.YC5d.m
 (* The core's symbol facts for B, as named Section hypotheses (porter 23:10Z), in the donor's place: its Section h
    takes them (root A/ACfj.v:91-95), and the stage lemmas that discharge the stage hypotheses below read them.
    ctl_lib_x stays generic in B; section 9 instantiates B := A.AD2l.CtrlB (AD2l.v:14) and supplies both.
-   - TFIB_SYMS: the donor's TfibSyms (proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v:292 at c8557374ad2e) under the
-     core's name A.AF0m.CtrlTSyms (AF0m.v:2986).  a Theorem Labs lane 23:06Z: am_const gives ctrl's rows only under it.
+   - TFIB_SYMS: the donor's TfibSyms (proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v:292 at theorem-labs/oss-verify-proofs@6b32741d849a) under the
+     core's name A.AF0m.CtrlTSyms (AF0m.v:2987).  a Theorem Labs lane 23:06Z: am_const gives ctrl's rows only under it.
    - TFIB_LIB: the donor's TfibLib (A/ACeh.v:25), the core's A.ACeh.TfibLib (ACeh.v:26).
    No stage hypothesis states either, so ctl_lib_x takes them through `Proof using All` below. *)
 Hypothesis TFIB_SYMS : A.AF0m.CtrlTSyms B.
@@ -279,17 +279,17 @@ Hypothesis KPARSE : REAC_CTRL_PARSE_BC = 0x21200.
    CtrlB_asm6 (A.Rt.StackMalloc6.disco_stack_malloc6).  OPEN (the reason at each): TPARSE, TREPLY, GLOBS_A_MARKED,
    NAME_GLOB (batch 5), TBUILD, CLS, CM_SPEC, AMEMCHR_SITE, H_strcmp.  A new Section CONJUNCTION would make vac_split
    loop (batch 3), so none of these is a top-level conjunction or existential. *)
-(* The core's free rule (a Theorem Labs lane's F37.v Section GlueF37 at a working branch 121bf608343; donor
+(* The core's free rule (a Theorem Labs lane's F37.v Section GlueF37 at a working branch; donor
    A/ACfj.v:110).  Top: Reusable.YCbp.afree04_rule_triv at the core's afree_realizes. *)
 Hypothesis AFREE4 : Reusable.YC5d.afree04_rule (SK := A.AE2k.tfib_sink_head) segs B MT.
 (* The trivial meter (F37.v; the core's text A/AD1m.v:29).  Top: fun _ _ => I at ameter_triv.  Free81920.v's
    MOK_FREE is (MT_FREE _ _). *)
 Hypothesis MT_FREE : forall S m, Reusable.YC5d.mo_ok MT S m.
-(* The core's malloc rule and its meter obligation (a Theorem Labs lane's lib/A/ACtlG/R7.v at a working branch
-   e4c3f328f3c).  Top: Reusable.YCbp.amalloc04_rule_triv at the core's amalloc_realizes / fun _ _ => I. *)
+(* The core's malloc rule and its meter obligation (a Theorem Labs lane's lib/A/ACtlG/R7.v at a working branch).
+   Top: Reusable.YCbp.amalloc04_rule_triv at the core's amalloc_realizes / fun _ _ => I. *)
 Hypothesis AMALLOC4 : Reusable.YC5d.amalloc04_rule (SK := A.AE2k.tfib_sink_head) segs B MT.
 Hypothesis MO_MALLOC_OK : forall (S : Reusable.YG00.astate) (n : Z), Reusable.YC5d.mo_ok MT S (Reusable.YC5d.mo_malloc MT n).
-(* The fake-stack malloc rule of class 6 (batch 5; a Theorem Labs lane's text, lib/A/ACtlG/A1.v:288 at
+(* The fake-stack malloc rule of class 6 (batch 5; a Theorem Labs lane's text, lib/A/ACtlG/A1.v:289 at
    a working branch 35e7be65fb5): the A1 glue needs it at the frame request 0x80f50.  Top: the CtlTop
    Let CtrlB_asm6, A.Rt.StackMalloc6.disco_stack_malloc6 at CtrlB (section 9). *)
 Hypothesis ASM6 : Reusable.YG0d.astack_malloc_realizes segs B 6.
@@ -298,18 +298,18 @@ Hypothesis ASM6 : Reusable.YG0d.astack_malloc_realizes segs B 6.
 Hypothesis BLKSH : A.ProgWorld.ctl_block_shadow_of_AR_stmt B.
 (* The sink's image laws (a Theorem Labs lane's Y3.v).  Top: the core's A.AD1u.tfib_AIL at CtrlB's syms. *)
 Hypothesis AIL : Reusable.YE01.asink_img_laws (SK := A.AE2k.tfib_sink_head) segs B A.AE2k.tfib_K.
-(* The constant-shadow row of the "?" string, 0x7fffc23c := 2 (a Theorem Labs lane's P12.v at a working branch
-   d8cb9c69f58; its KNA = A.Prog.reac_ctrl_kind_name_c).  Top: the record AF0m's Tfib_const_shadow row (AF0m.v:2179),
+(* The constant-shadow row of the "?" string, 0x7fffc23c := 2 (a Theorem Labs lane's P12.v at a working branch;
+   its KNA = A.Prog.reac_ctrl_kind_name_c).  Top: the record AF0m's Tfib_const_shadow row (AF0m.v:2180),
    decided by YConstIn's existsb_row_In and vm_compute (qmark_row_ctrl). *)
 Hypothesis QMARK_ROW : forall ly,
   In (Reusable.YG0f.z1 (Reusable.YG0f.ANum (Reusable.YG0f.shadow_addr A.Prog.reac_ctrl_kind_name_c.QMARK)) 2) (A.AF0m.Tfib_const ly).
-(* ctrl A's __wrap_strcmp trampoline (image B's lib/B/ACtlW2b.v at a working branch 5826fdf4d4d,
+(* ctrl A's __wrap_strcmp trampoline (image B's lib/B/ACtlW2b.v at a working branch,
    switched to A): the entry stays a Variable, pinned to A.Prog.strcmp_wrap_c.STRCMP_WRAP = 0x42964.  Top: the
    entry 0x42964 and eq_refl. *)
 Variable A_strcmp_tramp_entry : Z.
 Hypothesis A_strcmp_tramp_at : A_strcmp_tramp_entry = A.Prog.strcmp_wrap_c.STRCMP_WRAP.
 (* The callee specs, at the walk's sink head, B and read-only span.  OPEN: this file applies no owner's pb_ proof of TPARSE (a Theorem Labs lane),
-   TBUILD (a Theorem Labs lane), CLS or CM_SPEC (a Theorem Labs lane), though such proofs are on this base (C_reac_ctrl_parseP.v:210, reac_ctrl_build_asG.v:585, reac_ctrl_classify_box_frame_glue.v:1105, reac_box_catalogue_match_glue.v:2948).  a Theorem Labs lane's pb_reac_ctrl_identity_reply IS (C_reac_ctrl_identity_reply.v),
+   TBUILD (a Theorem Labs lane), CLS or CM_SPEC (a Theorem Labs lane), though such proofs are on this base (C_reac_ctrl_parseP.v:210, reac_ctrl_build_asG.v:586, reac_ctrl_classify_box_frame_glue.v:1105, reac_box_catalogue_match_glue.v:2949).  a Theorem Labs lane's pb_reac_ctrl_identity_reply IS (C_reac_ctrl_identity_reply.v),
    but it takes PALib, PALibF, astack_malloc_realizes 1, stack_malloc_progressP, astack_free_law and frame_flag_lawP
    at B, which this base does not prove at CtrlB, so TREPLY stays OPEN rather than trade one hypothesis for six. *)
 Hypothesis TPARSE : A.Prog.C_reac_ctrl_parse.treac_ctrl_parse_spec (SK := A.AE2k.tfib_sink_head) B RLO RHI.
@@ -364,7 +364,7 @@ Hypothesis AMEMCHR_SITE : forall ly S (W : Reusable.YA0n.world segs) (regs : bvm
    lib/A/Rt/Strcmp.v) is on the base. *)
 Hypothesis H_strcmp : Reusable.AStrcmpDef.astrcmp_realizes segs B A_strcmp_tramp_entry.
 (* The image's shadow is mapped (a Theorem Labs lane's F34.v name).  NOT a hypothesis: a Theorem Labs lane's PROVED
-   A.ACtlCutC.ctrl_img_shadow_vis (lib/A/ACtlCutC.v at a working branch c0f1486102e), so F34's discharge
+   A.ACtlCutC.ctrl_img_shadow_vis (lib/A/ACtlCutC.v at a working branch), so F34's discharge
    call `... IMG_SHADOW_VIS` passes this term. *)
 Let IMG_SHADOW_VIS : A.Prog.CtrlRo.img_shadow_vis segs B := A.ACtlCutC.ctrl_img_shadow_vis B TFIB_SYMS LAWS.
 
@@ -372,7 +372,7 @@ Let IMG_SHADOW_VIS : A.Prog.CtrlRo.img_shadow_vis segs B := A.ACtlCutC.ctrl_img_
    1. The cut layer with its Section arguments absorbed once (the only place they appear).  After ACtlCut.v's
    End CtlCut: ctlcx / ctlcut and their fields take nothing, ctl_base takes B MT XM_LIB RLO RHI, ctl_from
    B MT XM_LIB RLO RHI FP, ctl_post B MT XN_LIB (ACtlCut.v:248-252).  The walk is instantiated HERE, once:
-   - the journal's sink head SK := A.AE2k.tfib_sink_head, the core's (donor AE2k.v:44, ofl_head = ctrl's
+   - the journal's sink head SK := A.AE2k.tfib_sink_head, the core's (donor AE2k.v:45, ofl_head = ctrl's
      A ofl_head; porter 22:42Z), by NAME, so instance search never picks YL0j's global src0_sink_head.  It is the
      instance the core's tfib_lib_post_x journal is elaborated with (donor ACfn.v:14 Imports AE2k, whose
      instance is #[export]), so the walk's journal and the post's are over the same head;
@@ -606,7 +606,7 @@ Let CTLRT_ENTRY : forall cx : ctlcx, CB cx ->
    saved-register bytes are FRAC's (ACtlCutP.saved_bytes, ctrl's SlotInv.v:275-279, written out because this file
    states the premise itself); s0 = S and the spill-base window (S - 4096 < sp, sp + 416 <= S) are FRAC's too (A's
    window is 416, image B's is 448).  Statement: the image-B twin's CHAIN_OF_CUT (lib/B/ACtl.v at
-   a working branch 6adbb8c9272) with A names, over the walk's journal (sink head as in CF, FP
+   a working branch) with A names, over the walk's journal (sink head as in CF, FP
    quantified).  A HYPOTHESIS, not a lemma: its proof needs the entry chain of the core's afn_pre, the journal's
    kept view above S and the bridge from lib/Lib's bytes_at to the core's aview (a Theorem Labs lane's ProgBridge /
    ProgWorld do not state it). *)
@@ -642,7 +642,7 @@ Hypothesis CHAIN_OF_CUT : forall (FP : list (Z * Z)) (cx : ctlcx) own ly3 S3 W3 
 (* glue: Seg/A1.v seg_A1 :1019 @E via _F; runs a1_store_evt :97, a1_tail_evt :197, a1_req_evt :785 *)
 (* Batch 4 (B5.2; image B's twin): the entry stage concludes only for posts that do not read c_fpos (premise on POST,
    ACtlCut.cx_set_fpos): A1's frame request at 0x80f50 picks the frame position, which no entry fact ties to
-   c_fpos cx (found by the ENTRY glue, lib/A/ACtlG/A1.v:26-29; the donor's entry segment has
+   c_fpos cx (found by the ENTRY glue, lib/A/ACtlG/A1.v:27-30; the donor's entry segment has
    `exists fpos`, cgif A/ACfj.v:252). *)
 Hypothesis seg_A1 : forall POST, (forall cx p, POST (ACtlCut.cx_set_fpos cx p) = POST cx) -> CF POST C_A80f54 -> CF POST C_A80f88 -> CF POST C_ENTRY.
 (* glue: Seg/A2.v seg_A2 :237 @E via _F; runs a2_side_evt :221 (a2_real_evt :184 is the discharged class-full arm) *)
@@ -791,14 +791,14 @@ Hypothesis seg_F15b : forall POST (j : nat),
 (* glue: Seg/F16.v seg_F16 :826 @U via _F; runs f16_loop :276, f16_p284 :386, f16_p270 :424, f16_p250 :457, f16_p238 :490, f16_p210 :526, f16_evt :570 *)
 Hypothesis seg_F16 : forall POST (j : nat), CF POST (ix_cut C_A8229c_at [Z.of_nat j]) -> CF POST (ix_cut C_A821d0_at [Z.of_nat j]).
 (* glue: PROVED (comment corrected 04:53Z; it used to read "NO PROVED v1.9 RUN TO LIFT", which stopped being true at
-   a Theorem Labs lane's F17 proof d65d18383b1).  Seg/F17.v seg_F17 :2007; F17.v's own image-A branch ended in `fail.`
+   a Theorem Labs lane's F17 proof).  Seg/F17.v seg_F17 :2007; F17.v's own image-A branch ended in `fail.`
    (in a version not in this delivery, plan M12) and its runs f17_lib_evt :508 / f17_mcpy_evt (not in this delivery) did not close the segment, so the glue's
    run came from a NEW file: a Theorem Labs lane's Seg/F17Fs.v f17_bltz_F / f17_bltz_of_F (an earlier version, blob 7c3b68f65e6, not in this delivery) for the one
    instruction 0x8229c `bltz a0`, not taken under the entry body's 0 <= v0 < 2^63.  Discharged by
-   a Theorem Labs lane's lib/A/ACtlG/F17.v glue_seg_F17 (a working branch 775e7e341a5) *)
+   a Theorem Labs lane's lib/A/ACtlG/F17.v glue_seg_F17 (a working branch) *)
 Hypothesis seg_F17 : forall POST (j : nat), CF POST (ix_cut C_A822a0_at [Z.of_nat j]) -> CF POST (ix_cut C_A8229c_at [Z.of_nat j]).
 (* glue: Seg/F17.v seg_F17b :1383; its form in a version not in this delivery stopped at `fail.` (plan M12), and that version's f17_mcpy_evt was proved but unused.
-   The old "NO PROVED v1.9 RUN TO LIFT" prefix was removed 04:53Z: a Theorem Labs lane proved F17b on v1.9 at d65d18383b1 and
+   The old "NO PROVED v1.9 RUN TO LIFT" prefix was removed 04:53Z: a Theorem Labs lane proved F17b on v1.9 and
    a Theorem Labs lane's F17b lane wrote the glue, lib/A/ACtlG/F17b.v:258 glue_seg_F17b *)
 Hypothesis seg_F17b : forall POST (j : nat), CF POST (ix_cut C_A823e8_at [Z.of_nat j]) -> CF POST (ix_cut C_A822a0_at [Z.of_nat j]).
 (* ----- W4d: F18-F29 ----- *)
@@ -1115,7 +1115,7 @@ End Ctl.
 
 (* ---------------------------------------------------------------------------------------------------------
    9. THE TOP AT THE CORE'S OWN SYMBOL BUNDLE (porter a Theorem Labs lane 23:10Z; mirrors image B's twin, lib/B/ACtl.v
-   section 9 at a working branch 6adbb8c9272).  B := A.AD2l.CtrlB (AD2l.v:18, the relocated
+   section 9 at a working branch).  B := A.AD2l.CtrlB (AD2l.v:18, the relocated
    donor TfibB), TFIB_SYMS := A.AD2l.CtrlB_syms (AD2l.v:72, the donor's TfibB_syms) and TFIB_LIB := CtrlB_libS,
    with the meter and bounds fixed as the donor's AD2o.v:30-35 fixes them: MT := Reusable.YCbp.ameter_triv
    (YCbp.v:17), XM_LIB = XN_LIB := XL0 (the donor's A/ACfi.v:56; ACfi is cgif's unit file and does not join the
@@ -1127,8 +1127,8 @@ End Ctl.
    by the core's Reusable.YG0q.AR_laws_ok (YG0q.v:803), and MO_LE at ameter_triv by mo_le_triv.  The two callee
    constants are instantiated at 9072 / 0x21200, and KREPLY / KPARSE are eq_refl.
    CtrlB_libS is the port of the donor's A/ACfi.v:25 (TfibB_libS : TfibLib TfibB).  Batch 5: it is no longer a
-   hypothesis; it is a Theorem Labs lane's PROVED A.ACtlBCode.actlb_libS (lib/A/ACtlBCode.v, a working branch
-   d6d78eefbce, on this base through the interim merge 15e182dd785), bound by a Let.
+   hypothesis; it is a Theorem Labs lane's PROVED A.ACtlBCode.actlb_libS (lib/A/ACtlBCode.v, a working branch,
+   on this base through the interim merge), bound by a Let.
    BATCH 4 (section 1c), discharged here: AFREE4 / AMALLOC4 by the core's Reusable.YCbp.afree04_rule_triv /
    amalloc04_rule_triv (YCbp.v:30-47) over tfibsegs' segs_low (A.ACeh.tfib_segs_low), api_env (A.ACeh.tl_env of
    CtrlB_libS), the AR laws, model_laws (Reusable.YG05.model_laws_ok of CtrlTSyms' ts_universe) and the core's
@@ -1139,7 +1139,7 @@ End Ctl.
    qmark_row_ctrl (the record AF0m's Tfib_const_shadow row, decided by vm_compute); the strcmp entry at 0x42964
    with A_strcmp_tramp_at by eq_refl.  Batch 5: ASM6 by the Let CtrlB_asm6 : astack_malloc_realizes segs CtrlB 6,
    A.Rt.StackMalloc6.disco_stack_malloc6 at CtrlB, its AR laws and CtrlB_syms (lib/A/Rt/StackMalloc6.v on this unit,
-   (an earlier version, blob 011e76fce0c, not in this delivery), from a working branch 055c2ebca7f).
+   (an earlier version, blob 011e76fce0c, not in this delivery), from a working branch).
    Still open, so arguments of ctl_lib_x_CtrlB: TPARSE, TREPLY, GLOBS_A with GLOBS_A_MARKED and NAME_GLOB, TBUILD,
    CLS, CM_SPEC, AMEMCHR_SITE, H_strcmp (reasons in section 1c).  CTLRT_ENTRY is
    not an argument: Section Ctl binds it to the proved A.ACtlTopFacts.ctlrt_C_entry (section 4). *)
@@ -1169,8 +1169,8 @@ Lemma mo_le_triv : forall (S S' : Reusable.YG00.astate) (m : Z),
   Reusable.YC5d.mo_le Reusable.YCbp.ameter_triv S S' m.
 Proof. intros S S' m. exact I. Qed.
 
-(* QMARK_ROW at the record core: the row `z1 (ANum 0x7fffc23c) 0x2` is in Tfib_const_shadow (AF0m.v:2179), and
-   Tfib_const ly does not depend on ly (AF0m.v:2954), so membership is one boolean search, closed by vm_compute
+(* QMARK_ROW at the record core: the row `z1 (ANum 0x7fffc23c) 0x2` is in Tfib_const_shadow (AF0m.v:2180), and
+   Tfib_const ly does not depend on ly (AF0m.v:2955), so membership is one boolean search, closed by vm_compute
    (lib/Reusable/YConstIn.v's existsb_row_In). *)
 Lemma qmark_row_ctrl : forall ly,
   In (Reusable.YG0f.z1 (Reusable.YG0f.ANum (Reusable.YG0f.shadow_addr A.Prog.reac_ctrl_kind_name_c.QMARK)) 2) (A.AF0m.Tfib_const ly).

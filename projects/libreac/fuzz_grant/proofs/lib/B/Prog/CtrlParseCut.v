@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v (a walk's cut state) and lib/A/ACk8.v (the walk tactics) for reac_ctrl_parse of libreac's fuzz_grant: its contract, cuts and their tactics. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) segment of the reac_ctrl_parse 0x82774 walk, in the shape of lib/A/Prog/CtrlParseCut.v at a working branch 603e40683a4 (image A 0x82000), over image B's listing and walk layer (lib/B/Prog), with image B's addresses and objects; image B's extra UBSan guards are decided by the engine from the atom facts. Source blob 14bb21c0dfbc (lib/A/Prog/CtrlParseCut.v at a working branch 603e40683a4; the same blob at 7e98c198edd). *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) segment of the reac_ctrl_parse 0x82774 walk, in the shape of lib/A/Prog/CtrlParseCut.v at a working branch (image A 0x82000), over image B's listing and walk layer (lib/B/Prog), with image B's addresses and objects; image B's extra UBSan guards are decided by the engine from the atom facts. Source blob 14bb21c0dfbc (lib/A/Prog/CtrlParseCut.v at a working branch; the same blob). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x82774) of image B (fuzz_grant.asan-ubsan): its contract (in the caller-journal form: it writes
    the caller's `struct reac_ctrl_parsed`) and the cuts its walk is split at. The walk (CtrlParse.v) goes from
    the entry to cut A (the side-stack frame taken); CtrlParseMid.v from cut A to cut B (after the bcmp

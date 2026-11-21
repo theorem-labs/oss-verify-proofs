@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger and the m_channel_reader field of the start state). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -202,7 +203,7 @@ Definition smap_ok (E : env) (maps : list (word * word)) (m : smap) : Prop :=
   else exists lo sz, In (lo, sz) maps /\ bv_unsigned lo <= a /\ a + L <= bv_unsigned lo + bv_unsigned sz.
 
 Record vm_ok (E : env) (ms : list smap) (nmaps live : Z) (VM : VmMaps) : Prop := VM_OK {
-  vo_res   : vm_reserved VM = segments_reserved RSEGS;
+  vo_res   : ModelAmb.res_ok (segments_reserved RSEGS) VM;   (* the run's ledger ([State.init_reserved]) *)
   vo_maps  : Forall (smap_ok E (vm_maps VM)) ms;
   vo_len   : Z.of_nat (length (vm_maps VM)) <= nmaps;
   vo_live  : vm_live_bytes VM <= live;
@@ -232,12 +233,16 @@ Record std_model (VM : VmMaps) (model : Model) : Prop := STD_MODEL {
   stdm_vm   : m_vmmaps model = VM;
   stdm_halt : m_halted model = None;
   stdm_lazy : m_vm_lazy model = [];
-  stdm_mat  : m_vm_materialized model = []
+  stdm_mat  : m_vm_materialized model = [];
+  (* the far end of stdout reads ([State.m_channel_reader]); a write without
+     one raises SIGPIPE at the revision *)
+  stdm_rdr  : m_channel_reader model = true
 }.
 
 Lemma std_model_mk : forall VM stdin0 fs0 tid rlim,
+  ia_channel_reader stdin0 = true ->
   std_model VM (mkModelA fds_std VM stdin0 fs0 None tid rlim).
-Proof. intros. constructor; reflexivity. Qed.
+Proof. intros VM stdin0 fs0 tid rlim Hr. constructor; try reflexivity. exact Hr. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

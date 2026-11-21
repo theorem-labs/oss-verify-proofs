@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_readings.v on a working branch e2e59892bef: adapted to B (HCTX: called from names only). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_readings.v on a working branch: adapted to B (HCTX: called from names only). *)
 (* lv2_locate_manifest_readings 0x81e94 on fm.asan-ubsan: readings_holds, the segments (FMW_rd_pre / _lp / _pp_top /
    _c8 / _pl, each to the next cut or the shared return FMW_rd_ret.v) assembled by FMW_rd_top.v's inductions, under the
    callee contracts (Section hypotheses, the donor's ACfi.v:107-114 pattern) and HCTX: readings is called from names

@@ -3,7 +3,7 @@
 
 [coturn/coturn](https://github.com/coturn/coturn) · OSS-Fuzz: [projects/coturn](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/coturn)
 
-**Status: available.** 2 of OSS-Fuzz's 2 fuzz targets have statements. 8 binaries, 14 MB. 14 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 11 open.
+**Status: available.** 2 of OSS-Fuzz's 2 fuzz targets have statements. 8 binaries, 14 MB. 14 statements: 7 proved, 0 known false, 0 suspected false, 0 blocked by the model, 7 open.
 
 Built from coturn (commit `70ca74e0`).
 
@@ -11,7 +11,7 @@ Built from coturn (commit `70ca74e0`).
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
 | [FuzzStun](FuzzStun/) | 8 sub-harnesses (message-integrity check under all SHA types, attribute iteration, attribute append, legacy STUN, challenge-response builder, address-string parser, MESSAGE-INTEGRITY append); every return value is discarded. | none | 7 |
-| [FuzzStunClient](FuzzStunClient/) | 7 sub-harnesses (message-type classification, channel-data framing, address encode and decode, request and response builders, first-address attribute lookup, a response matrix, the stun_buffer API); every return value is discarded. | none | 7, 3 proved |
+| [FuzzStunClient](FuzzStunClient/) | 7 sub-harnesses (message-type classification, channel-data framing, address encode and decode, request and response builders, first-address attribute lookup, a response matrix, the stun_buffer API); every return value is discarded. | none | 7, 7 proved |
 
 Not included: **api-driver** (held from this release).
 
@@ -38,8 +38,12 @@ By hand: download `coturn-bin.tar.zst` from release [v2026.10.0](https://github.
 | statement | result |
 |---|---|
 | [coturn/FuzzStunClient/asan_agrees](FuzzStunClient/proofs/asan_agrees) | proved |
+| [coturn/FuzzStunClient/asan_halts](FuzzStunClient/proofs/asan_halts) | proved |
 | [coturn/FuzzStunClient/asan_ubsan_agrees](FuzzStunClient/proofs/asan_ubsan_agrees) | proved |
+| [coturn/FuzzStunClient/asan_ubsan_halts](FuzzStunClient/proofs/asan_ubsan_halts) | proved |
+| [coturn/FuzzStunClient/plain_halts](FuzzStunClient/proofs/plain_halts) | proved |
 | [coturn/FuzzStunClient/ubsan_agrees](FuzzStunClient/proofs/ubsan_agrees) | proved |
+| [coturn/FuzzStunClient/ubsan_halts](FuzzStunClient/proofs/ubsan_halts) | proved |
 
 ## Licence
 coturn is under `BSD-3-Clause`. Each binary is a combined work of coturn, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. 

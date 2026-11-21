@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACed.v (origin/ossv/recipes
-   c8557374ad2e) :145-158 tfibX_AMEMSET / tfibX_AMEMCPY / tfibX_ABCMP, and lib/YD2m.v tfib_AICPY, for
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACed.v (
+   theorem-labs/oss-verify-proofs@6b32741d849a) :145-158 tfibX_AMEMSET / tfibX_AMEMCPY / tfibX_ABCMP, and lib/YD2m.v tfib_AICPY, for
    libreac/fuzz_decode's ASan+UBSan image (image B), in the form of image A's lib/A/DecodeARtMem.v
-   (a working branch ef8bb79a22c); module paths and names changed. *)
+   (a working branch); module paths and names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Four runtime contracts of fuzz_decode image B's close (rule 24: no function proved; each lemma is an instance of a
    contract of the relocated image-B core, a working branch). The contracts of record are
    the rows '__wrap_memcpy trampoline + ___interceptor_memcpy', '__asan_memcpy / __asan_memset' and 'bcmp / memcmp
    interceptor contracts' of SHARED-WALKS.md (cgif's released core, relocated).
 
    Each lemma's statement is the text of the lib/B/DecodeBClose.v Section hypothesis of the same name
-   (a working branch 45061c42804, :225-235), with the Section's two names bound as the
+   (a working branch, :225-235), with the Section's two names bound as the
    composition binds them:
    - segs is decodesegsB0 (DecodeBClose.v:92, lib/A/DecodeTFIB.v:27), the core's tfibsegs (lib/B/YB1v.v:11): both are
      the image's AsanUbsan.M.loaded_segments;
    - B is the image's symbol record TfibB (lib/B/YD2l.v:12), the record the composition binds DecodeBClose.v:117's
-     Section variable B to (donor lib/YD2l.v TfibB). The core's contracts take TfibSyms B (lib/B/YF0m.v:321);
+     Section variable B to (donor lib/YD2l.v TfibB). The core's contracts take TfibSyms B (lib/B/YF0m.v:322);
      TfibB_syms (lib/B/YD2l.v:68) discharges it, and AR_laws_ok (lib/Reusable/YG0q.v:804) discharges AR_laws.
    No other Section hypothesis of DecodeBClose.v is used.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the resolved vdso_func cell holds hvdso, the vDSO's clock_gettime entry, not 0). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.
@@ -924,7 +925,7 @@ Section RC.
     hs_KREL H s1' mo2 -> hs_MPRES H mo1 mo2 -> mem_inv rsegs m2 -> stk rsegs m2 lo SPc -> hs_rauxv_ok H m2 B ->
     hs_RHEAP H s1' (mid_errblocks M' ++ DREST Lx NB LE) m2 ->
     munch [(SPc - TIME_STACK, SPc); (A_vdso_func, A_vdso_func + 8); (RERRNO, RERRNO + 4)] m1 m2 -> wmono rsegs m1 m2 ->
-    rw_cells rsegs m2 A_vdso_func [C8 (Z_to_bv 64 0)] -> rw_cells rsegs m2 RERRNO [C4 errv2] ->
+    rw_cells rsegs m2 A_vdso_func [C8 (Z_to_bv 64 hvdso)] -> rw_cells rsegs m2 RERRNO [C4 errv2] ->
     DWKG Lx NB S' (mkMID (mid_flag M') (mid_ctx M') (mid_err M') (mid_E M') true) LE fr j3 m2 mo2 s1'.
   Proof using A0 A1 SO SE SEO STL MBO MP0 MN0 MBB MBS DS DSL PAYL NDsm LM SUBL CTX MF1 DJ6 HP KREL BUD BUDC BUDG AUX SPB BHI SPA ST CEIL LO ERR MI TP RAE HH HX NAR NBR MST POS BTR BT_frame PERM.
     intros until errv2. intros DW KREL2 MP2 MI2 ST2 AUX2 HP2 MU WM VD2 ERR2.
@@ -1533,7 +1534,7 @@ Section RC.
       pose proof TIME as TM. unfold time_sr_stmt, time_sr_stmt_at in TM.
       pose proof LM1 as (_ & _ & _ & _ & _ & VD1 & _).
       eapply (sr_seq H HH).
-      { eapply TM with (lo := lo) (B := B) (s := s1') (vf := if mid_vdso M' then 0 else P_cgt_init) (errv := errv1); clear TM; try reflexivity.
+      { eapply TM with (lo := lo) (B := B) (s := s1') (vf := if mid_vdso M' then hvdso else P_cgt_init) (errv := errv1); clear TM; try reflexivity.
         all: try first [exact HP1| exact KREL1| exact AUX1| exact MI1| exact CEIL].
         all: lazymatch goal with
              | |- bv_unsigned _ <= B => unfold SP'; rewrite unsigned_lit by (clear - SPR LO STK0 LO0; lia); clear - SPB; lia

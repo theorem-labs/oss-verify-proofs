@@ -5,6 +5,7 @@
    a working branch's lib/A/W_list_find.v (pb_list_find); not transported: different framework (SR/a_call_pre
    over AsanAllocAPI vs SRr/afn_pre over a world W; bytes_at/addressable vs aview/alist_at/range_addressable/
    shadow_hull_vis; SR over a config vs SRr SEGS W with ajournal_gx), no bridge lemma exists. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's list_find at 0x86374, a NEW walk over
    lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)), in the form of
    lib/A/W_list_find.v (the cgif walks proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v and lib/A/ACbk.v, the loop as
@@ -164,7 +165,7 @@ Definition A_lf_head : Z := AF_fr_list_find + 0x4c.   (* 0x863c0: the shadow bas
 Definition A_lf_loop : Z := AF_fr_list_find + 0x9c.   (* 0x86410: the loop head *)
 Definition A_lf_next : Z := AF_fr_list_find + 0xf8.   (* 0x8646c: the loop latch *)
 Definition A_lf_exit : Z := AF_fr_list_find + 0x114.  (* 0x86488: a0 := s2, the epilogue *)
-(* ---- THE GENERIC WALK (route (b), step 3; lib/A/W_list_find.v's form, commit 36b7310e084): list_find over any
+(* ---- THE GENERIC WALK (route (b), step 3; lib/A/W_list_find.v's form): list_find over any
    allocator relation ARx with its laws, stated as W_contract_x.lfind_spec_x.  The Section hypotheses beyond the AR
    walk's: PST / ARx / hl / LAWS (the generic relation) and HP0 (the unit's hidden-head set is empty in every ARx
    state, so the records' / vector's / text's shadow comes from W_journal_x's range_addressable_of_block_hp0_x and

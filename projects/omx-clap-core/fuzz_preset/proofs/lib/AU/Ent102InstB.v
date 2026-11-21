@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): THE VACUITY
    GUARD of the walk of LLVMFuzzerTestOneInput, the twin of lib/A/Ent102InstA.v for the record of image facts ec_img
@@ -8,12 +9,12 @@
    rule 24: proves no function (kind: instance lemma of image facts).
 
    THE B' IMAGE TOP. Its import lib/B/PAImg_prog.v needs the #102 B' top IMG_TOP_B = 0x601000: lib/Reusable/YImgTop.v
-   blob d2a97d3111ce of record (a Theorem Labs lane, a working branch a9548e31002a; on the old pins' blob
+   blob d2a97d3111ce of record (a Theorem Labs lane, a working branch; on the old pins' blob
    cead467be393 PAImg_prog.v:160 fails). ei_empty is proved in both of its halves: against YImgTop's B' names IMG_LO_B /
    IMG_TOP_B and against PI_prog_B's own pa_lo / pa_hi (the same numbers, 0x10000 / 0x601000). The kit's kept_img
    (PRH_Base.v blob 3004a98fe2d9 :1020-1023, used by ei_lits) is bounded by pa_lo / pa_hi, so by B''s too.
 
-   THE INSTANCE. L := B_prog_listing (lib/B/Listing_prog.v blob c97cc46b3e13, a Theorem Labs lane's listings v3 74dcda1eda12;
+   THE INSTANCE. L := B_prog_listing (lib/B/Listing_prog.v blob c97cc46b3e13, a Theorem Labs lane's listings v3;
    the tables of the earlier blob 8bcc2c9e7809, the slot tree pre-evaluated); PA := PI_prog_B (lib/B/PAImg_prog.v
    blob 15fab93fe702); PI := prh_img_B (lib/B/PRH_ImgB.v blob 3216eca68342, the kit Batch 1);
    cp := CfParams_preset (lib/A/CfParamsPreset.v blob 1333a52cd63a); fx and rc stay section variables. The image
@@ -142,14 +143,14 @@ Qed.
 
 (* ---------------------------------------------------------------------- *)
 (* 1. The image values of the instance that have no generated name on this branch. *)
-(* the empty payload: symbol oft_aligned_copy.empty of twin c90d4fa5; = lib/AU/PresetCfnB.v:195 A_EMPTY (blob
+(* the empty payload: symbol oft_aligned_copy.empty of twin c90d4fa5; = lib/AU/PresetCfnB.v:196 A_EMPTY (blob
    773e6d0f6c59, MEASURED) *)
 Definition ia_empty : Z := 0x5ddd60.
-(* check_round_trip's two literals: lib/A/Prog/Crt102Img.v CRT_MOD_AT_B / CRT_STAMP_B (a working branch
-   fbb5bc52bdb, blob 10b5850baf33, :1024-1025) = VAL (A_OBJ 2) + the listing's PAddHi payloads 0x110c0 / 0x11380 *)
+(* check_round_trip's two literals: lib/A/Prog/Crt102Img.v CRT_MOD_AT_B / CRT_STAMP_B (a working branch,
+   blob 10b5850baf33, :1024-1025) = VAL (A_OBJ 2) + the listing's PAddHi payloads 0x110c0 / 0x11380 *)
 Definition ia_mod_at : Z := B_prog_val (A_OBJ 2) + 0x110c0.
 Definition ia_stamp : Z := B_prog_val (A_OBJ 2) + 0x11380.
-(* the musl stdio half of PINV and its bytes: the text of lib/AU/PresetCfnB.v:297-298 (pinv_stdio) and :306-307
+(* the musl stdio half of PINV and its bytes: the text of lib/AU/PresetCfnB.v:298-299 (pinv_stdio) and :306-307
    (stdio_img), blob 773e6d0f6c59, with its section-1 constants (:204-207: A_THREADED 0x5fe9c1, A_NEED_LOCKS 0x5fe9c3,
    A_OFL_LOCK 0x5fee20, A_OFL_HEAD 0x5fee28, MEASURED on twin c90d4fa5) written in. *)
 Definition ia_sio (rd : reader) : Prop :=
@@ -321,7 +322,7 @@ Qed.
 
 (* ---------------------------------------------------------------------- *)
 (* 4. The six facts that read the runtime symbol record, at the #102 B' record YD2l.TfibB (lib/Reusable/YD2l.v blob
-      95803a8b9493, a Theorem Labs lane's working branch cb0d7a5ccaaf: as_code := YF0l.Tfib_code, blob
+      95803a8b9493, a Theorem Labs lane's working branch: as_code := YF0l.Tfib_code, blob
       4a405a3dba65, over lib/Reusable/YImgCellsB.v blob f1cc7493a79d; the cells, as_errno, as_const, as_owned_static and
       as_zero_shadow from lib/Reusable/YF0m.v blob f82202ebccdf; as_universe := lib/Reusable/YCej.v blob 8a099324acb0),
       each by computation on the record and the image, then ec_img at the concrete instance. The decision procedures

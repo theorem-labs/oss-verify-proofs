@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of the last two steps of segment K of LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, 0x86958 .. the jal to check_round_trip at 0x86970), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (cl_seedX: the symbolic state at a point inside the function) and lib/A/Prog/check_refusal_s1.v (cr_entry): the symbolic state at 0x86958 and 0x86964 with the one frame word the step loads, and the transport of the cut's facts to a state that keeps the frame, the live blocks and the program's statics. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_Krefusal_s1.v, with its module paths and module names changed; 237 of its 269 lines of code are new or changed and 179 lines of the source are left out. *)
-(* B twin of lib/A/Prog/check_arity_s2.v (a working branch 9c6410fb32e): the shadow bytes of each
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin of lib/A/Prog/check_arity_s2.v (a working branch): the shadow bytes of each
    row's syntax string and of g_parsed's 22 rows, from the image's zero-shadow ranges and constant shadow cells
    (lib/B/YF0m.v). Pure relocation: g_parsed 0xa5b20 -> 0xa5680, its shadow 0x14b64.. -> 0x14ad0.. (66 zero bytes),
    the zero-shadow range holding it (0x22da0, 0xa5d30) -> (0x22de0, 0xa5890); the syntax strings move by + 0x40, so

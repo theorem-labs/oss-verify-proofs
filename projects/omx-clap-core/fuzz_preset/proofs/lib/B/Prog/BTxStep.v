@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1482 of its 1555 lines of code are new or changed and 441 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* THE FREE / REALLOC MOVE (S3 phase C, a Theorem Labs lane; plan rows C-2 .. C-16, rule F12): every tx_put call crosses the
    grow's free, so the loop body runs at ONE relation, WR := wle' SEGS RZ_cf. The live state liveb is the glue's
    ts_liveR at WR (its journal from the entry lifted once by the caller, BTxString.v's cut B), every segment is SRW
@@ -10,20 +11,20 @@
    hypothesis HOS, passed to the glue's ts_put_call (its premise right after the TS_ks split, in a2's glue). *)
 (* fuzz_preset IMAGE B' (asan-ubsan #102 pin d663f82d7f48; unstripped twin c90d4fa54d43; RELOCATED from B f8f98a95bc52): THE LOOP BODY of the
    tx_string walk (fuzz_preset.c :378-392), one iteration from the loop head (B' 0x85a1c) back to it or to the closing
-   quote's block (B' 0x85b5c), against K0Tx's text ttx_string_specX (lib/A/PRH_FnTx.v 88468bf162d8, the kit's cut
-   7cdbb61b5fa0: the budgeted fpostWbm post), in cgif's per-function form over the listing engine (YC80x / YC1fPx
+   quote's block (B' 0x85b5c), against K0Tx's text ttx_string_specX (lib/A/PRH_FnTx.v 88468bf162d8, the kit's cut:
+   the budgeted fpostWbm post), in cgif's per-function form over the listing engine (YC80x / YC1fPx
    over YCbqG's ajournal_x). The
    function theorem and the other segments are lib/B/Prog/BTxString.v; this file imports NONE of it, only the #102
    image-generic glue lib/A/Prog/TxStr102Glue.v (owner h-rw-pre-5, lane TxStrBp) over BTxValueB's lib/A/Prog/Tx102Glue.v
    (the text state), instantiated at PI_prog_B, the whole-program instance (PALib is satisfiable only there).
-   RE-WALK FOR #102 (donor cold/h-rw-pre-5-b-tx 043041dbb091, old-pin texts): tx_put's text has no abort arm; every
+   RE-WALK FOR #102 (donor, old-pin texts): tx_put's text has no abort arm; every
    call returns DONE / FAILED / REFUSED and the code does not test `failed`, so every call site continues on every
    outcome; the live state carries the buffer (b, cap), failed f, own and the appended prefix ap besides the calls ks
    and the text add (TxStr102Glue.v ts_live). Every statement change here threads those through; the instruction-level
    segments are the donor's. Every run's memnorm keep is YGcallMxmn.v's memnorm_frame_of; every tx_put call's fpre bound
-   raZ < YM05.alloc_ceiling is PRW_StepKit.v's pa_slot_lt_ceil_b (walk-S7B 7819c4b4583d).
+   raZ < YM05.alloc_ceiling is PRW_StepKit.v's pa_slot_lt_ceil_b (walk-S7B).
    RULE 24: proves no function. The reuse search of the donor (BTxString.v's header) found NO donor for a tx_string
-   walk over this engine; the shape is image A's closed loop body (S10TxString.v at fb08a2dcab11: ts_F_A, ts_byte_call,
+   walk over this engine; the shape is image A's closed loop body (S10TxString.v: ts_F_A, ts_byte_call,
    ts_esc_call, ts_at_E, ts_bs_call, ts_at_D2c, ts_iter_A).
    SEGMENTS. The engine is re-entered at every seam: each segment starts from a FRESH symbolic state built from
    concrete machine-state facts, with S10Env's environment TE regs rg more (atoms 0-31 the ENTRY registers, 32-63 the
@@ -251,11 +252,11 @@ Hypothesis img_shadow_vis_x : forall ly S Hp W mem md a, ARx ly S Hp W mem md ->
 (* the instance's bounds for Tx102Glue's s10_src_img (TxStr102Glue.v ts_src_lit): pa_lo / pa_hi of PI_prog_B inside the
    CfImg bounds (at CfImg_B: 0x10000 / 0x601000 both, BTxStrWitB.v tsw_img_cf_box_B) *)
 Hypothesis img_cf_box : @cf_img_lo ci <= @pa_lo _ B_prog_listing PA /\ @pa_hi _ B_prog_listing PA <= @cf_img_top ci.
-(* ---- the callee's text (K0Tx, PRH_FnTx.v 88468bf162d8 on the kit's cut 7cdbb61b5fa0 :399, the budgeted tx_put) at the
+(* ---- the callee's text (K0Tx, PRH_FnTx.v 88468bf162d8 on the kit's cut :399, the budgeted tx_put) at the
    caller's universe closure CTX0 (the batch drops DW) ---- *)
 Variables (CTX0 : list (list Z)).
 Hypothesis TXPUT : ttx_put_specX (PI := prh_img_B) (PA := PA) B ARx SK CTX0.
-(* SRC-CEIL RETIRED (on the cut 7cdbb61b5fa0, the internal file MIGRATION.md, section 4): the stand-in hypothesis is DELETED. The cut's
+(* SRC-CEIL RETIRED (on the cut, the internal file MIGRATION.md, section 4): the stand-in hypothesis is DELETED. The cut's
    src_rd states `p + len <= alloc_ceiling` (no `+ 8`), and TxStr102Glue.v ts_src_byte takes that bound from the
    string's prhtx_bvis granule bound, as BTxValue did *)
 (* MARKED STAND-IN (owner a Theorem Labs lane, the image binding of B; a Theorem Labs lane's ruling 2026-10-29 ~05:45Z): alloc.c's statics are not
@@ -592,7 +593,7 @@ Qed.
 
 (* ---- after the byte's last call: the re-poison of esc[] and the UBSan test of s + i (B 0x85ad8), the check of
    s + i + 1 and the next byte (B 0x85ae8), then the loop head (by the induction) or the closing block. The shape of
-   image A's proved ts_F_A (S10TxString.v at d0855bef274 :761), with B's two extra traps ---- *)
+   image A's proved ts_F_A (S10TxString.v :761), with B's two extra traps ---- *)
 Lemma ts_F_B : forall i Wc lyc Sc Hpc memc mdc kj pos F b cap f own ap rg pre cb post,
   ts_HX_B -> ts_IH_B i -> bs = pre ++ cb :: post -> length pre = i ->
   liveb lyc Sc Hpc Wc memc mdc kj pos F b cap f own (TxModel.plen (ts_pieces (pre ++ [cb])))

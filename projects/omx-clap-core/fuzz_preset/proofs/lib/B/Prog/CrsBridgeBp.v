@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PvB_NA.v, with its module paths and module names changed; 22 of its 51 lines of code are new or changed and 930 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrsBoundBp.v, with its module paths and module names changed; 78 of its 115 lines of code are new or changed and 14 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): the two BRIDGES that turn the crcs walk's two shared interims
    into citations of the callee texts of lib/A/PRH_*.v (the whole set
    is on this branch by path):
@@ -16,14 +17,14 @@
      gives crs_free0_B (lib/B/Prog/CrsFree0Bp.v): its p = 0 arm keeps the state (S' = S), so room_live_cf S' follows
      from room_live_cf S, and the text asks no position and no class-24 bound of a NULL free. The cut's admission
      premise and budgeted post are met by the trace being FIXED (YCbqG.admits_ct_fix, PRH_Base.fpost_of_fpostb_fix).
-   DONOR (rule 24, reuse): the A' bridges lib/A/Prog/CrsBridgeAp.v blob 4714c9a8aa0a (a working branch
-   3adfdcc651aa), restated at the B' instance. Both texts and both interims are image-free in shape, so the two
+   DONOR (rule 24, reuse): the A' bridges lib/A/Prog/CrsBridgeAp.v blob 4714c9a8aa0a (a working branch),
+   restated at the B' instance. Both texts and both interims are image-free in shape, so the two
    proofs are the A' ones at prh_img_B / PI_prog_B.
    rule 24: proves no function (kind: two kit lemmas of the walk of check_reject_clean_starved; reuse search: `proof-index
    check_reject_clean_starved 0x82160`, the internal file index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by
    checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its released rows were lib/Prog (plain) and
    lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved).
-   INPUTS. Pin B' asan-ubsan sha256 d663f82d7f488d30 (release/fuzz-preset-ran-out-pins 8f3e7e1a07f1), unstripped twin
+   INPUTS. Pin B' asan-ubsan sha256 d663f82d7f488d30, unstripped twin
    ELF sha256 c90d4fa54d43160baf62e5aa387211a798dddbad13d2619d85acbf37aee0c175; listing lib/B/Listing_prog.v
    c97cc46b3e13 + lib/B/PAImg_prog.v 15fab93fe702; image record lib/B/PRH_ImgB.v 3216eca68342; the kit texts as above;
    the kit lib/B/Prog/CrsKitBp.v with lib/B/Prog/CrsWexBp.v and CrsFree0Bp.v.

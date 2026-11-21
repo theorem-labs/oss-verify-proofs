@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the mmap refusal lemmas read Linux's placement at the call's hint (mmap_grant_refusable_at, mmap_reserve_refusable_at, place_found_of_place), the grant bound comes from the placement's admissibility, and the placement-decline and mprotect vDSO gates are ruled out from an Ok answer. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -97,6 +98,33 @@ Lemma reserve_refusable_false_intro : forall m nZ,
   vm_gap_available (m_vmmaps m) nZ = true -> mmap_reserve_refusable m nZ = false.
 Proof. intros m nZ Hg. unfold mmap_reserve_refusable. rewrite Hg. reflexivity. Qed.
 
+(* LPS 75d69e00: [check_mmap_ed]'s refusal gates read Linux's own placement at the call's hint
+   ([mmap_place_found]); these are the placement-form twins of the two lemmas above. *)
+Lemma grant_refusable_at_false_intro : forall flags m addr nZ,
+  mmap_noreserve_b flags = false ->
+  vm_backing_used m + nZ <= vm_limit (m_vmmaps m) ->
+  mmap_place_found m addr nZ = true ->
+  mmap_grant_refusable_at flags m addr nZ = false.
+Proof.
+  intros flags m addr nZ Hnr Hb Hp. unfold mmap_grant_refusable_at, mmap_noreserve_backed_ok.
+  rewrite Hnr, Hp. rewrite (proj2 (Z.leb_le _ _) Hb). reflexivity.
+Qed.
+
+Lemma reserve_refusable_at_false_intro : forall m addr nZ,
+  mmap_place_found m addr nZ = true -> mmap_reserve_refusable_at m addr nZ = false.
+Proof. intros m addr nZ Hp. unfold mmap_reserve_refusable_at. rewrite Hp. reflexivity. Qed.
+
+(* A placement Linux makes is one the checker's search finds. *)
+Lemma place_found_of_place : forall m addr nZ,
+  0 < nZ -> nZ mod page_size = 0 ->
+  (exists a, linux_place (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ a) ->
+  mmap_place_found m addr nZ = true.
+Proof.
+  intros m addr nZ Hp Ha [a Hl]. unfold mmap_place_found.
+  destruct (Placement.linux_place_b (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ) eqn:E; [reflexivity|].
+  exfalso. exact (proj1 (proj2 (Placement.linux_place_b_spec _ _ _ _ Hp Ha)) E a Hl).
+Qed.
+
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -120,7 +148,8 @@ Lemma nstep_mmap_rw_err_refusable : forall mo rsp mo' evs e,
   mmap_modeled_b (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 0) = true ->
   nstep (NMmap addr len prot flags) mo rsp mo' evs ->
   errno_of (eff_ret rsp) = Some e ->
-  e = ENOMEM /\ mmap_grant_refusable (Z_to_bv 64 flags) mo nZ = true /\ mo' = mo /\ evs = [].
+  (* LPS 75d69e00: [check_mmap_ed]'s refusal gate is the placement form [mmap_grant_refusable_at]. *)
+  e = ENOMEM /\ mmap_grant_refusable_at (Z_to_bv 64 flags) mo (Z_to_bv 64 addr) nZ = true /\ mo' = mo /\ evs = [].
 Proof.
   intros mo rsp mo' evs e Hshape H He. destruct anon_len_facts as [L0 L1].
   apply nstep_mmap_ed in H as [_ H]; [| apply mmap_corner_free_not_rw, modeled_not_fixed_rw; exact Hshape].
@@ -135,6 +164,8 @@ Proof.
     assert (T' : Z.testbit (Z.land (bv_unsigned (Z_to_bv 64 flags)) MAP_ANONYMOUS) 5 = true) by (rewrite Z.land_spec, T; reflexivity).
     rewrite Z0 in T'. discriminate. }
   rewrite G1, G2, L0, Hshape in H. cbv iota beta in H.
+  (* LPS 727298f3 (#146): the modeled arm declines first; an Ok answer proves it did not. *)
+  match type of H with (if ?c then _ else _) = _ => destruct c eqn:Hdecl; [discriminate H|] end. cbv iota in H.
   destruct rsp as [r ws zs us cs ci]. cbn [eff_ret] in He.
   destruct ws; [|discriminate]. destruct us; [|destruct zs; discriminate].
   destruct cs; [|destruct zs; discriminate]. destruct ci; [|destruct zs; discriminate].
@@ -144,9 +175,12 @@ Proof.
     rewrite errno_of_errno_ret in He by (unfold ENOMEM; lia). injection He as <-. auto.
   - exfalso. cbv zeta in H.
     match type of H with (if ?c then _ else _) = _ => destruct c eqn:E; [|discriminate] end.
-    apply andb_prop in E as [E _]. apply andb_prop in E as [E _]. apply andb_prop in E as [E _]. apply andb_prop in E as [_ E].
-    apply Z.leb_le in E. pose proof (mmap_len_bound len ltac:(lia)). fold nZ in H.
-    rewrite (errno_of_below_top r (m_vmmaps mo) nZ ltac:(lia) E) in He. discriminate.
+    (* LPS 75d69e00: the grant test is Linux's placement; its admissibility bounds the address. *)
+    apply andb_prop in E as [E _]. apply andb_prop in E as [E _].
+    assert (NP : 0 < nZ) by (unfold nZ; pose proof (mmap_len_bound len ltac:(lia)); lia).
+    assert (NA : nZ mod page_size = 0) by (unfold nZ, mmap_len, page_round_up_Z; apply Z_mod_mult).
+    destruct (Placement.linux_place_is_admissible _ _ _ _ _ NP NA E) as (_ & _ & Etop & _).
+    rewrite (errno_of_below_top r (m_vmmaps mo) nZ ltac:(lia) Etop) in He. discriminate.
 Qed.
 
 (* [comment removed for export] *)
@@ -154,7 +188,8 @@ Lemma nstep_mmap_none_err_refusable : forall mo rsp mo' evs e,
   mmap_noaccess_b (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 0) = true ->
   nstep (NMmap addr len prot flags) mo rsp mo' evs ->
   errno_of (eff_ret rsp) = Some e ->
-  e = ENOMEM /\ mmap_reserve_refusable mo nZ = true /\ mo' = mo /\ evs = [].
+  (* LPS 75d69e00: [check_mmap_ed]'s refusal gate is the placement form [mmap_reserve_refusable_at]. *)
+  e = ENOMEM /\ mmap_reserve_refusable_at mo (Z_to_bv 64 addr) nZ = true /\ mo' = mo /\ evs = [].
 Proof.
   intros mo rsp mo' evs e Hshape H He. destruct anon_len_facts as [L0 L1].
   apply nstep_mmap_ed in H as [_ H]; [| apply mmap_corner_free_not_rw, noaccess_not_fixed_rw; exact Hshape].
@@ -171,6 +206,8 @@ Proof.
   assert (G3 : mmap_modeled_b (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 0) = false).
   { unfold mmap_modeled_b. apply Z.eqb_eq in Hp. rewrite Hp. reflexivity. }
   rewrite G1, G2, L0, G3, Hshape in H. cbv iota beta in H.
+  (* LPS 727298f3 (#146): the noaccess arm declines first; an Ok answer proves it did not. *)
+  match type of H with (if ?c then _ else _) = _ => destruct c eqn:Hdecl; [discriminate H|] end. cbv iota in H.
   destruct rsp as [r ws zs us cs ci]. cbn [eff_ret] in He.
   destruct ws; [|discriminate]. destruct zs; [|discriminate].
   destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
@@ -180,9 +217,12 @@ Proof.
     rewrite errno_of_errno_ret in He by (unfold ENOMEM; lia). injection He as <-. auto.
   - exfalso. cbv zeta in H.
     match type of H with (if ?c then _ else _) = _ => destruct c eqn:E; [|discriminate] end.
-    apply andb_prop in E as [E _]. apply andb_prop in E as [E _]. apply andb_prop in E as [_ E].
-    apply Z.leb_le in E. pose proof (mmap_len_bound len ltac:(lia)). fold nZ in H.
-    rewrite (errno_of_below_top r (m_vmmaps mo) nZ ltac:(lia) E) in He. discriminate.
+    (* LPS 75d69e00: the grant test is Linux's placement; its admissibility bounds the address. *)
+    apply andb_prop in E as [E _].
+    assert (NP : 0 < nZ) by (unfold nZ; pose proof (mmap_len_bound len ltac:(lia)); lia).
+    assert (NA : nZ mod page_size = 0) by (unfold nZ, mmap_len, page_round_up_Z; apply Z_mod_mult).
+    destruct (Placement.linux_place_is_admissible _ _ _ _ _ NP NA E) as (_ & _ & Etop & _).
+    rewrite (errno_of_below_top r (m_vmmaps mo) nZ ltac:(lia) Etop) in He. discriminate.
 Qed.
 End AnonMmap.
 
@@ -451,6 +491,9 @@ Proof.
   rewrite Ll in H. fold (mmap_len len) in H. fold nZ in H.
   replace (two_pow_64 <=? a + nZ) with false in H by (symmetry; apply Z.leb_gt; unfold two_pow_64; subst nZ; lia).
   change (negb (mprotect_modeled_b (Z_to_bv 64 (PROT_READ + PROT_WRITE)))) with false in H. cbv iota zeta in H. fold nw in H.
+  (* LPS 75d69e00: [check_mprotect]'s vDSO gate answers [CheckUnmodeled]; the [CheckOk] answer rules it out. *)
+  match type of H with (if negb ?c then _ else _) = _ =>
+    destruct c eqn:Hvd; cbn [negb] in H; cbv iota in H; [|discriminate H] end.
   destruct rsp as [r ws zs us cs ci]. cbn [eff_ret] in He.
   destruct (map_contains (vm_noaccess (m_vmmaps mo)) aw nw && map_contains (vm_maps (m_vmmaps mo)) aw nw) eqn:S1.
   - apply andb_prop in S1 as [C1 C2].

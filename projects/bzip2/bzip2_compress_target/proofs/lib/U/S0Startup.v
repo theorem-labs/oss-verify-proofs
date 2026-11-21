@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the launch input ProcInput, the CONFIG_RSEQ flag, the vDSO, the init stack window and RomBase.sys_rob). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -58,27 +59,34 @@ Definition regs_init (sp0 : word) : bvmap 5 word :=
   regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp0.
 
 Section P1.
-  Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
-  Variable hw : word.    (* [comment removed for export] *)
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
+  Variable entry : word.
+  Variable sp0 brk : word.
   Variable rnd : EntryDraw.   (* [comment removed for export] *)
-  Hypothesis Hva : valid_argv av.
-  Hypothesis Hve : valid_envp ev.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rnd) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation mem0 := (wrap_mem RPH sp0 av ev uid hw rnd) (only parsing).
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rnd)) (only parsing).
+  Local Notation mem0 := (wrap_mem inp mbase RPH entry sp0 rnd) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rnd)) (only parsing).
 
-  Let argc : word := argcN av.
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top rnd) av ev (in_execfn inp) 0.
 
   Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof. exact (u_argcN av Hva). Qed.
+  Proof. exact (u_argcN inp Hva). Qed.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
@@ -112,7 +120,9 @@ Section P1.
       /\ getr regs' 12 = Z_to_bv 64 304
       /\ getr regs' 18 = Z_to_bv 64 0x13580
       /\ (forall r : reg, In r [5;19;20;21;22;23;24;25;26;27]%list -> getr regs' r = Z_to_bv 64 0).
-  Proof.
+  (* the callers pass the seven section hypotheses positionally; [Proof using] keeps them all in
+     the closed statement whether or not this proof still reads each (it stopped reading [Hve]) *)
+  Proof using entry Hva Hve Hvl Hlau Hlo Hhi Hal.
     intros rom J HJ.
     pose proof len_av as Hlen. pose proof u_argc as Hargc.
     eexists. split.
@@ -130,7 +140,7 @@ Section P1.
         [ exact F_13398 | reflexivity | exact D_13398
         | addr_norm; rewrite rdn_cmem_above by region_side;
           apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-          exact (read_argc_w SEGS RPH sp0 av ev uid hw rnd Hva Hve Hhi)
+          eapply read_argc_w; eassumption
         | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
         | step_simpl]; vnorm.
       rewrite (v_lw_small argc) by (rewrite Hargc; lia).
@@ -163,7 +173,7 @@ Section P1.
         | addr_norm; rewrite rdn_cmem_above by region_side;
           replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
             by (rewrite word_add_nat; f_equal; lia);
-          exact (read_argv_ptr_w SEGS RPH sp0 av ev uid hw rnd Hva Hve Hlo Hhi 0 ltac:(lia))
+          eapply (read_argv_ptr_w SEGS v inp mbase RPH entry sp0 brk rnd); try eassumption; lia
         | apply bytes_le_to_Z_8 ]
         | step_simpl]; vnorm.
       stepiv F_1f008 D_1f008 (Z_to_bv 64 (8 * Z.of_nat (length av)))
@@ -407,9 +417,11 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition J_main (sp0 : word) (av ev : list (list byte)) (uid hw : word) (s1v : word) : word -> option byte :=
-  let J6 := J_tls sp0 (J_aux sp0 av ev uid hw (J_lsm sp0 av (fun _ => Some (Z_to_bv 8 0))))
-              (Z_to_bv 64 0x28a3c) (pn_w sp0 av ev) s1v (Z_to_bv 64 0x64470)
+Definition J_main (inp : ProcInput) (mbase entry sp0 : word) (rnd : EntryDraw)
+    (s1v : word) : word -> option byte :=
+  let J6 := J_tls sp0 (J_aux inp mbase entry sp0 rnd (J_lsm inp sp0
+                         (stack_zero (stack_window_lo (in_kernel inp) mbase rnd))))
+              (Z_to_bv 64 0x28a3c) (pn_w inp rnd) s1v (Z_to_bv 64 0x64470)
               (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) in
   wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes J6
     (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 0x28a44)))   (* [comment removed for export] *)
@@ -420,38 +432,42 @@ Definition J_main (sp0 : word) (av ev : list (list byte)) (uid hw : word) (s1v :
     (Z_to_bv 64 (bv_unsigned sp0 - 40)) (word_to_le_bytes 8 (Z_to_bv 64 0)))          (* [comment removed for export] *)
     (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 (Z_to_bv 64 0x28c38)))    (* [comment removed for export] *)
     (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (argv_w sp0)))             (* [comment removed for export] *)
-    (Z_to_bv 64 (bv_unsigned sp0 - 72)) (word_to_le_bytes 8 (argc_w av)))              (* [comment removed for export] *)
+    (Z_to_bv 64 (bv_unsigned sp0 - 72)) (word_to_le_bytes 8 (argc_w inp)))              (* [comment removed for export] *)
     (Z_to_bv 64 (bv_unsigned sp0 - 88)) (word_to_le_bytes 8 (Z_to_bv 64 0x28b88)))    (* [comment removed for export] *)
     (Z_to_bv 64 (bv_unsigned sp0 - 96)) (word_to_le_bytes 8 (Z_to_bv 64 0x32090)).    (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Record main_entry (sp0 : word) (av ev : list (list byte)) (uid hw : word) (rnd : EntryDraw) (tid : word)
+Record main_entry (inp : ProcInput) (mbase entry sp0 : word)
+       (rnd : EntryDraw) (tid : word)
        (regs : bvmap 5 word) (mem : word -> option byte) : Prop := {
   me_ra  : getr regs 1 = Z_to_bv 64 0x28c48;
   me_sp  : getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 48);
   me_gp  : getr regs 3 = Z_to_bv 64 0x10800;
   me_tp  : getr regs 4 = Z_to_bv 64 0x441e0;
   me_s0  : getr regs 8 = Z_to_bv 64 (bv_unsigned sp0 + 8);
-  me_s1  : getr regs 9 = argcN av;
-  me_a0  : getr regs 10 = argcN av;
+  me_s1  : getr regs 9 = argcN inp;
+  me_a0  : getr regs 10 = argcN inp;
   me_a1  : getr regs 11 = Z_to_bv 64 (bv_unsigned sp0 + 8);
-  me_a2  : getr regs 12 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av));
+  me_a2  : getr regs 12 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length (in_argv inp)));
   me_s2  : getr regs 18 = Z_to_bv 64 0x13580;
-  me_s3  : getr regs 19 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av));
+  me_s3  : getr regs 19 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length (in_argv inp)));
   me_szero : forall r : reg, In r [20; 21; 22; 23; 24; 25; 26; 27]%list -> getr regs r = Z_to_bv 64 0;
   me_mem : exists (J : word -> option byte) (s1v : word),
-             wfJ sp0 J /\ J = J_main sp0 av ev uid hw s1v
-             /\ mem = cmem sp0 (wrap_mem RPH sp0 av ev uid hw rnd) J (D_main sp0 av ev hw rnd tid)
+             wfJ sp0 J /\ J = J_main inp mbase entry sp0 rnd s1v
+             /\ mem = cmem sp0 (wrap_mem inp mbase RPH entry sp0 rnd) J (D_main inp sp0 rnd tid)
 }.
 
 Section Assembly.
-  Variable sp : word.
-  Variables argv envp : list (list byte).
-  Variable uid : word.      (* [comment removed for export] *)
-  Variable hw : word.       (* [comment removed for export] *)
+  Variable inp : ProcInput.
+  Variable mbase : word.
+  Variable sp brk : word.
   Variable rnd : EntryDraw. (* [comment removed for export] *)
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
+  Local Notation argv := (in_argv inp) (only parsing).
+  Local Notation envp := (in_envp inp) (only parsing).
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
   Hypothesis Hvsp : valid_sp sp.
 
   Lemma Hlo : (0x7fff80000000 <= bv_unsigned sp)%Z.
@@ -461,11 +477,16 @@ Section Assembly.
   Lemma Hal : (bv_unsigned sp mod 16 = 0)%Z.
   Proof. destruct Hvsp as [_ [_ H]]. exact H. Qed.
 
-  Let J0 : word -> option byte := fun _ => Some (Z_to_bv 8 0).
+  Let J0 : word -> option byte :=
+    stack_zero (stack_window_lo (in_kernel inp) mbase rnd).
+
+  Lemma HJ0 : wfJ sp J0.
+  Proof. exact (wfJ_stack_zero inp sp brk mbase rnd Hvl Hlau). Qed.
 
   (* [comment removed for export] *)
   Ltac side Hva Hve HG :=
-    first [ exact Hva | exact Hve | exact Hlo | exact Hhi | exact Hal | exact HG
+    first [ exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hlo | exact Hhi | exact Hal | exact HG
+          | apply (wfJ_stack_zero inp sp brk mbase rnd Hvl Hlau)
           | apply wfJ_const
           | lazymatch goal with |- getr _ _ = _ =>
               gres; first [ assumption | reflexivity | bveq
@@ -474,20 +495,21 @@ Section Assembly.
                               first [reflexivity | f_equal; lia | bveq] end ] end
           | idtac ].
 
-  Theorem ref_startup_sec : forall brk mbase lim (inp : ProcInput) K,
-    in_argv inp = argv -> in_envp inp = envp -> in_uid inp = uid -> in_hwcap inp = hw ->
+  Theorem ref_startup_sec : forall lim K,
     (forall tid regs mem,
        (0 < bv_unsigned tid < 2^22)%Z ->
-       main_entry sp argv envp uid hw rnd tid regs mem ->
+       main_entry inp mbase (0x13434 : word) sp rnd tid regs mem ->
        realizes rsegs (mkCfg (mkst regs (0x13580 : word) mem (seg_rom rsegs))
-                             (with_tid tid (init_model (segments_reserved rsegs) brk mbase sp lim inp))) K) ->
+                             (with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                                (init_model (segments_reserved rsegs) brk mbase sp lim inp)))) K) ->
     realizes rsegs (init_config rsegs rpc rph sp brk mbase rnd lim inp) K.
   Proof.
-    intros brk mbase lim inp K Eav Eev Euid Ehw HK.
+    intros lim K HK.
     pose proof Hlo as Hlo'. pose proof Hhi as Hhi'. pose proof Hal as Hal'.
     pose proof (u64_range sp) as Hsp.
-    unfold init_config. cbn [cfg_ms cfg_model]. rewrite Eav, Eev, Euid, Ehw.
-    set (model := init_model (segments_reserved rsegs) brk mbase sp lim inp).
+    unfold init_config. cbn [cfg_ms cfg_model].
+    (* LPS 75d69e00: [Run.init_config] installs the run's vDSO draw over [init_model] *)
+    set (model := with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved rsegs) brk mbase sp lim inp)).
     assert (Hh : m_halted model = None) by reflexivity.
     assert (Hlazy : m_vm_lazy model = []) by reflexivity.
     assert (Ht0 : m_tid model = None) by reflexivity.
@@ -495,14 +517,16 @@ Section Assembly.
     assert (HG : bwd rsegs RZ) by (apply bwd_rz; [exact Hh | exact Hlazy]).
     rewrite init_mkst.
     replace (Z_to_bv 64 (Z.of_N Ubsan.M.init_pc)) with (0x13434 : word) by (apply bv_eq; reflexivity).
-    rewrite cmem_init. fold (regs_init sp).
+    rewrite (cmem_init inp mbase rph (0x13434 : word) sp brk rnd Hlau).
+    fold (regs_init sp).
     (* [comment removed for export] *)
-    destruct (p1_run sp argv envp uid hw rnd Hva Hve Hlo' Hhi' Hal' (seg_rom SEGS) J0 (wfJ_const sp _))
+    destruct (p1_run Sv48 inp mbase (0x13434 : word) sp brk rnd
+                Hva Hve Hvl Hlau Hlo' Hhi' Hal' (seg_rom SEGS) J0 HJ0)
       as [regs1 (R1 & A1 & A2 & A3 & A4 & A8 & A9 & A10 & A11 & A12 & A18 & Az)].
     eapply rz_msteps; [exact Hh | exact Hlazy | exact R1 |].
     (* [comment removed for export] *)
     assert (A1' : getr regs1 1 = (0x28958 : word)) by (rewrite A1; apply bv_eq; reflexivity).
-    destruct (memset304_run regs1 (cmem sp (wrap_mem RPH sp argv envp uid hw rnd) (J1 sp argv J0) (fun _ => None))
+    destruct (memset304_run regs1 (cmem sp (wrap_mem inp mbase RPH (0x13434 : word) sp rnd) (J1 inp sp J0) (fun _ => None))
                 (seg_rom SEGS) (Z_to_bv 64 (bv_unsigned sp - 368)) (0x28958 : word) A1')
       as [regs2 [mem2 (R2 & M2 & G2)]].
     { unfold ret_ok. apply bv_eq. vm_compute. reflexivity. }
@@ -511,15 +535,16 @@ Section Assembly.
       replace (bv_unsigned sp mod 8)%Z with 0%Z; [reflexivity|].
       symmetry. rewrite <- (Z.mod_mod_divide _ 16 8) by (exists 2%Z; reflexivity). rewrite Hal'. reflexivity. }
     { rewrite u_Z2bv by lia. lia. }
-    { apply store_ok_cmem_win; [unfold J1; repeat apply wfJ_wbytes; apply wfJ_const | region_side | region_side]. }
+    { apply store_ok_cmem_win; [unfold J1; repeat apply wfJ_wbytes; exact HJ0 | region_side | region_side]. }
     eapply rz_msteps; [exact Hh | exact Hlazy | exact R2 |]. subst mem2.
     rewrite wbytes_cmem_win by region_side.
     (* [comment removed for export] *)
     carry G2 A2 (2:reg) B2. carry G2 A8 (8:reg) B8. carry G2 A9 (9:reg) B9. carry G2 A10 (10:reg) B10.
     carry G2 A3 (3:reg) B3.
     change (realizes SEGS (mkCfg ?st model) K) with (RZ st).
-    eapply (p3_run sp argv envp uid hw rnd) with (G := RZ); try side Hva Hve HG.
-    { unfold J1; repeat apply wfJ_wbytes; apply wfJ_const. }
+    eapply (p3_run Sv48 inp mbase (0x13434 : word) sp brk rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ); try side Hva Hve HG.
+    { unfold J1; repeat apply wfJ_wbytes; exact HJ0. }
     intros regs3 C1 C2 C10 C18 G3.
     carry G3 B3 (3:reg) C3. carry G3 B8 (8:reg) C8.
     assert (Cz : forall r : reg, In r [5; 19; 20; 21; 22; 23; 24; 25; 26; 27]%list -> getr regs3 r = Z_to_bv 64 0).
@@ -532,14 +557,18 @@ Section Assembly.
     pose proof (Cz 25 ltac:(in_list)) as Z25. pose proof (Cz 26 ltac:(in_list)) as Z26.
     pose proof (Cz 27 ltac:(in_list)) as Z27.
     (* [comment removed for export] *)
-    change (J1 sp argv J0) with (J_lsm sp argv J0).
-    eapply (tls_c1 sp J0 argv envp uid hw rnd) with (G := RZ) (s1v := getr regs3 9) (tid := Z_to_bv 64 0); try side Hva Hve HG.
+    change (J1 inp sp J0) with (J_lsm inp sp J0).
+    eapply (tls_c1 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ) (s1v := getr regs3 9) (tid := Z_to_bv 64 0); try side Hva Hve HG.
     intros regs4a; intros.
-    eapply (tls_c2 sp J0 argv envp uid hw rnd) with (G := RZ) (tid := Z_to_bv 64 0); try side Hva Hve HG.
+    eapply (tls_c2 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ) (tid := Z_to_bv 64 0); try side Hva Hve HG.
     intros regs4b; intros.
-    eapply (tls_c3 sp J0 argv envp uid hw rnd) with (G := RZ) (tid := Z_to_bv 64 0); try side Hva Hve HG.
+    eapply (tls_c3 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ) (tid := Z_to_bv 64 0); try side Hva Hve HG.
     intros regs4c; intros.
-    eapply (tls_c4 sp J0 argv envp uid hw rnd) with (G := RZ) (tid := Z_to_bv 64 0); try side Hva Hve HG.
+    eapply (tls_c4 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ) (tid := Z_to_bv 64 0); try side Hva Hve HG.
     intros regs4; intros.
     (* [comment removed for export] *)
     unfold RZ at 1.
@@ -553,22 +582,28 @@ Section Assembly.
     set (RZ' := fun st : machine_state => realizes rsegs (mkCfg st model') K).
     assert (HG' : bwd rsegs RZ') by (apply bwd_rz; [exact Hh' | exact Hlazy']).
     change (realizes SEGS (mkCfg ?st model') K) with (RZ' st).
-    eapply (tls_c5 sp J0 argv envp uid hw rnd) with (G := RZ'); try side Hva Hve HG'.
+    eapply (tls_c5 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ'); try side Hva Hve HG'.
     intros regs5; intros.
-    eapply (fin_c6 sp J0 argv envp uid hw rnd) with (G := RZ'); try side Hva Hve HG'.
+    eapply (fin_c6 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ'); try side Hva Hve HG'.
     intros regs6; intros.
-    eapply (fin_c7 sp J0 argv envp uid hw rnd) with (G := RZ'); try side Hva Hve HG'.
+    eapply (fin_c7 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ'); try side Hva Hve HG'.
     intros regs7; intros.
-    eapply (fin_c8 sp J0 argv envp uid hw rnd) with (G := RZ'); try side Hva Hve HG'.
+    eapply (fin_c8 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ'); try side Hva Hve HG'.
     intros regs8; intros.
-    eapply (fin_c9 sp J0 argv envp uid hw rnd) with (G := RZ'); try side Hva Hve HG'.
+    eapply (fin_c9 Sv48 inp mbase (0x13434 : word) sp brk J0 rnd
+              Hva Hve Hvl Hlau Hlo Hhi Hal) with (G := RZ'); try side Hva Hve HG'.
     intros regs9 M1 M2 M3 M4 M8 M9 M10 M11 M12 M18 M19 M20 M21 M22 M23 M24 M25 M26 M27 G9.
     unfold RZ'. apply (HK tid regs9). { exact Htid. }
     split; try assumption.
     - intros r Hr. cbn [In] in Hr.
       repeat (destruct Hr as [<-|Hr]; [assumption|]). destruct Hr.
     - eexists _, (getr regs3 9). split; [|split; [reflexivity|]].
-      + unfold J_main, J_tls, J_aux, J_lsm. repeat apply wfJ_wbytes. apply wfJ_const.
+      + unfold J_main, J_tls, J_aux, J_rseq, J_lsm.
+        destruct (kb_rseq (in_kernel inp)); repeat apply wfJ_wbytes; exact HJ0.
       + unfold J_main, J_tls, D_main, D_fd, D_ssp, D_tls, D_tlsA, D_tlsB. reflexivity.
   Qed.
 
@@ -577,16 +612,18 @@ End Assembly.
 (* [comment removed for export] *)
 Theorem ref_startup : forall sp brk mbase rnd lim inp K,
   valid_sp sp -> valid_brk rsegs brk -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   (forall tid regs mem,
      (0 < bv_unsigned tid < 2^22)%Z ->
-     main_entry sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd tid regs mem ->
+     main_entry inp mbase (0x13434 : word) sp rnd tid regs mem ->
      realizes rsegs (mkCfg (mkst regs (0x13580 : word) mem (seg_rom rsegs))
-                           (with_tid tid (init_model (segments_reserved rsegs) brk mbase sp lim inp))) K) ->
+                           (with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                              (init_model (segments_reserved rsegs) brk mbase sp lim inp)))) K) ->
   realizes rsegs (init_config rsegs rpc rph sp brk mbase rnd lim inp) K.
 Proof.
-  intros sp brk mbase rnd lim inp K Hsp Hbrk Hva Hve HK.
-  exact (ref_startup_sec sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd Hva Hve Hsp
-           brk mbase lim inp K eq_refl eq_refl eq_refl eq_refl HK).
+  intros sp brk mbase rnd lim inp K Hsp Hbrk Hva Hve Hvl Hlau HK.
+  exact (ref_startup_sec inp mbase sp brk rnd Hva Hve Hvl Hlau Hsp lim K HK).
 Qed.
 
 (* [comment removed for export] *)
@@ -594,23 +631,22 @@ Qed.
 (* [comment removed for export] *)
 
 Section Consumers.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
-  Variable hw : word.    (* [comment removed for export] *)
   Variable rnd : EntryDraw.   (* [comment removed for export] *)
   Variable tid : word.
   Variable regs : bvmap 5 word.
   Variable mem : word -> option byte.
-  Hypothesis ME : main_entry sp0 av ev uid hw rnd tid regs mem.
+  Hypothesis ME : main_entry inp mbase entry sp0 rnd tid regs mem.
 
   (* [comment removed for export] *)
   Lemma main_entry_rdn_above : forall segs (a : word) n,
     (bv_unsigned sp0 <= bv_unsigned a)%Z ->
     (bv_unsigned a + Z.of_nat n <= 2^64)%Z ->
-    rdn segs mem a n = rdn segs (wrap_mem RPH sp0 av ev uid hw rnd) a n.
+    rdn segs mem a n = rdn segs (wrap_mem inp mbase RPH entry sp0 rnd) a n.
   Proof.
-    intros segs a n Ha Hn. cps_destruct (me_mem _ _ _ _ _ _ _ _ _ ME) as (J & s1v & HJ & _ & ->).
+    intros segs a n Ha Hn. cps_destruct (me_mem _ _ _ _ _ _ _ _ ME) as (J & s1v & HJ & _ & ->).
     apply rdn_cmem_above; assumption.
   Qed.
 
@@ -619,29 +655,53 @@ Section Consumers.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
+  (* LPS 75d69e00 (#38).  OLD TEXT, now false:
+
+       Lemma main_entry_store_ok_win : forall segs (a : word) n,
+         (bv_unsigned sp0 - stack_max_size <= bv_unsigned a)%Z ->
+         (bv_unsigned a + Z.of_nat n <= bv_unsigned sp0)%Z ->
+         store_ok segs mem a n = true.
+       Proof.
+         intros segs a n Hlo Hhi. cps_destruct ... as (J & s1v & HJ & _ & ->).
+         apply store_ok_cmem_win; [exact HJ | unfold win_lo; lia | lia].
+       Qed.
+
+     The old floor was [win_lo sp0 = sp0 - stack_max_size], the ALLOCATOR
+     CEILING: the lowest address the stack mapping may ever reach.  The only
+     fact available about stores is [store_ok_cmem_win] (MemSplit.v:291),
+     whose floor is [wok_lo sp0 = sp0 + stack_window_reach - stack_max_size],
+     the STACK SPAN: what entry actually reserves, [stack_window_depth =
+     8388608 - 2244095 = 6144513] bytes.  Since 75d69e00 those two roles are
+     distinct, [win_lo < wok_lo], and [unfold win_lo; lia] no longer closes
+     the floor side.  Restated to the span floor; the ceiling role is
+     untouched and still lives in [main_entry_mem_data] below, which is about
+     the DATA half and is correct as it stands.  BYTES, not words. *)
   Lemma main_entry_store_ok_win : forall segs (a : word) n,
-    (bv_unsigned sp0 - stack_max_size <= bv_unsigned a)%Z ->
+    (bv_unsigned sp0 - 6144513 <= bv_unsigned a)%Z ->
     (bv_unsigned a + Z.of_nat n <= bv_unsigned sp0)%Z ->
     store_ok segs mem a n = true.
   Proof.
-    intros segs a n Hlo Hhi. cps_destruct (me_mem _ _ _ _ _ _ _ _ _ ME) as (J & s1v & HJ & _ & ->).
-    apply store_ok_cmem_win; [exact HJ | unfold win_lo; lia | lia].
+    intros segs a n Hlo Hhi. cps_destruct (me_mem _ _ _ _ _ _ _ _ ME) as (J & s1v & HJ & _ & ->).
+    apply store_ok_cmem_win;
+      [ exact HJ
+      | clear - Hlo; unfold wok_lo, stack_window_reach, stack_max_size; lia
+      | clear - Hhi; lia ].
   Qed.
 
   (* [comment removed for export] *)
   Lemma main_entry_mem_data : forall (a : word),
     (bv_unsigned a < bv_unsigned sp0 - stack_max_size)%Z ->
-    mem a = D_main sp0 av ev hw rnd tid a.
+    mem a = D_main inp sp0 rnd tid a.
   Proof.
-    intros a Ha. cps_destruct (me_mem _ _ _ _ _ _ _ _ _ ME) as (J & s1v & HJ & _ & ->).
+    intros a Ha. cps_destruct (me_mem _ _ _ _ _ _ _ _ ME) as (J & s1v & HJ & _ & ->).
     apply cmem_at_data. unfold win_lo. exact Ha.
   Qed.
 
   Lemma main_entry_rdn_data : forall segs (a : word) n,
     (bv_unsigned a + Z.of_nat n <= bv_unsigned sp0 - stack_max_size)%Z ->
-    rdn segs mem a n = rdn segs (D_main sp0 av ev hw rnd tid) a n.
+    rdn segs mem a n = rdn segs (D_main inp sp0 rnd tid) a n.
   Proof.
-    intros segs a n Ha. cps_destruct (me_mem _ _ _ _ _ _ _ _ _ ME) as (J & s1v & HJ & _ & ->).
+    intros segs a n Ha. cps_destruct (me_mem _ _ _ _ _ _ _ _ ME) as (J & s1v & HJ & _ & ->).
     apply rdn_cmem_data. unfold win_lo. exact Ha.
   Qed.
 End Consumers.

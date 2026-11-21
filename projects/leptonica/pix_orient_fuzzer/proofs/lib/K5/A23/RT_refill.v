@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proof of artm_eager replaced by plain proof). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -24,7 +25,9 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 Lemma artm_eager : forall Σ Σ' mo, lay Σ' = lay Σ -> sec Σ' = sec Σ -> rt_eager Σ <= rt_eager Σ' -> ARTM_A Σ mo -> ARTM_A Σ' mo.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RT_refill ()) [] "h01Hh11zh24__x1h34__x2h44__x3h54__x4h61lh72A1h82A2h92A3h:2A4h;2A5h<2E1h=2E2h>2HEh?7__arithh@4__ffhA8__varmaphB5__withC2mohD2ΣhE3Σ'p;1p;3p;2p;4p;6p;7p;8p10000p4p7210R0p1000\p4p710p8P0g0018R0p4p710p8g001Vj16Tg002Nj31Tg002hj1MTg003Hj1CTg004@j1@Tg005=j2;Tg005Yj28Tg006Rj17Tg0077j1fTg007Uj1eTg0088j2cTg008Xj12Tg009Oj1GTg00:Ej3HTg00:`j1`Tg00;\j3ATg00<Gj19Tg00=Aj1sTg00>?j25Tg00?:R1j20Tg00?Uj2[Tg00?mj4WTg00@Ij1<Tg00AEj3>Tg00Abj1VTg00B`j1UTg00Cfj1TTg00Dgj3STg00ELj1RTg00FEj2QTg00Foj1ITg00Gij1OTg00Hcj1PTg00I[j2?Tg00J\j1NTg00KZj1bTg00LXj1aTg00M\j1_Tg00N;j2LTg00Ndj3^Tg00OMj2xTg00P9j1wTg00PYj3vTg00Q9j2]Tg00QWj1tTg00R5j4\Tg00RSj1rTg00S1j1qTg00S\j2DTg00T?j3ZTg00Tbj1pTg00UDj1oTg00Uij2nTg00VKj2mTg00Vej2kTg00WQj3jTg00X0j4lTg00Xbj2FTg00Y?j4ETP0j6XTg00YZj1iTg00ZQj4hTg00[<j7gTg00[`j8uTg00\DR0f0R2#ig00\b31p=4f1R3#Vg00]^R4%@2'F';p=3f2R51032'0p=:1F42,;3p=dg00^YR6g00_9R7712p==f4R8f3R91032,05'0'0p=BP0P3g00_YP2Chp=JP3g00`@R:g00`_R;P;g00a?R<P2g00a_Fgp=KP9P:P;P;P<P5P3P2Gup=Yg00b?R:g00c:g00d0R=%63%6531g00dnR>#MR?%C5%C931%@8%@9';f5R@/89P1g00ejRA#7RB#7RC#7#7#7#7#fRD#eRE/cEREg00fORF%28RG#G5HEf6RH#`3A%MERI%9Gg00gH#sRJ31%4G138H15H8'03:18H@P2%2H#G9HEFf8RH#`5AEf7RG#2RK#9=1IJ%4Kf9RK,3G15KG'03:P1%2HRG#9=1IJ%4Gf:RG,3H15GH3:18GKP2%2G#9=1IJf;RG#2#4f=RH,3G15HG3:P1f<RG#2#4f>RL,3G15LG'018LHP2%2L#4f?RLfARG'315GL'0P1f@R1fBRL'315L118LGP2fDRG,3LfER1fCRM'5P=fFRN#6RO%21RP#GRQ9HEFRRP>PEg00h@RS%CNRT,[>CWRU%<25>E5AE%9P=1IJRV%4PRW%V1RX%@NRY'dRZ%U1R[%T1R\g00i;R]=SEQRQ%RP,QDR^%I2510%2N#O%PN5>E/?2#=RN%<5/?3#=[^10%N1%b1%a13:R_'0DBDBX6=P?PTP>PEPS1[>2CWfGR>#6RS#<5>E9AERPVPWPZP[P\PQ%IS910^fI#6#</?3#=\N^10/0_DBDBX6?%2GR?#GR_9HEF%<O9>EU5AE%9?=1IJRJ%4?RI13G1RU%UG%TGASE]_%R?,QD%IO510%OP%P15>E/?2#=fH#6#</?3#=[^10%NG%bG%aG'03:DBRE'0RP'0RO'0PHPJPOPKPIPPP@PUPEg00j6REg00jbRU#_R@#_,L01L0@1L0U5^05^0g00kA'x%wE3v%MEP0P01]08P5%t0C\P31]09C\%r0%q0RE1D0ARU1D0BRB1D0CRC5Z0'J,KE%p;R;PE%oA,D0RA,JC,KEP;AZ0BA,JU,KECYCY1nE<P2P51m671k25#=dg00km=j03Clb@bAbBX20X30X40X501F39,;21;891F98,;5[[^20^30^40^50P2%@>PYP4PXP5PLO6b?P2CECECECE%C1PLEX%61PMEX181GeW;W:P3P2O2n2001000000121000000W0W9P3P2O2n2001000000121000000W0W8P3P2O2n2001000000121000000W0W7P3P2O2n2001000000121000000W0W>W=W<WCXE:WDo"). Qed.
+  intros Σ Σ' mo E1 E2 HE (A1 & A2 & A3 & A4 & A5). unfold ARTM_A, rt_maps, artm_sys, confined0 in *. rewrite E1, E2.
+  split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [lia | exact A5].
+Qed.
 
 Section RfCps.
 Variables (Σ : rtsA) (PMc : Model -> Prop) (m : mem) (c lo : Z) (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word)

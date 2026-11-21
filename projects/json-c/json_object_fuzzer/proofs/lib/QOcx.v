@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the open calls pass the path's bound below 2^47, from argstr; the heap interface's stack-bottom premise: the obligations OBL_MALLOC_N6, OBL_FREE_N6 and OBL_FREE_NN take hiA_bot <= lo after alloc_ceiling <= lo, and the OBL_MALLOC_N6 calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Fs Specs Run.
@@ -52,7 +53,7 @@ Hypothesis OBL_MALLOC_N6 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (n lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -76,7 +77,7 @@ Hypothesis OBL_FREE_N6 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (p lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -99,7 +100,7 @@ Hypothesis OBL_FREE_NN : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word) (u : uwd),
 HEAPAx A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -264,7 +265,7 @@ pose proof (heapA_cok A4L HIx _ _ _ _ _ _ _ HP) as HCK.    pose proof (heapA_mem
 d5_enter.
 unfold RDENTRY_A. step. step. step. evt_done5.
 eapply (OBL_MALLOC_N6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md _ A [] LM0 [] B 65536 LO errv UWptr HP6);
-[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
+[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | first [assumption | lia] | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; lia
 | exact ERR | reflexivity | reflexivity | lia
 | cbn [uw_pre]; rewrite !unsigned_lit by lia; left; lia
@@ -434,7 +435,7 @@ eapply (open_toolong_cps_A Jx SYS) with (lo := LO) (pp := p1) (p := path);
 | exact SB1 | exact PNUL | exact TL | exact PSL | exact PDD
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
 intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' MU' WM' MI' ST' ERR' HN' SIO'.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
 apply Nat.leb_gt in TL.
@@ -446,7 +447,7 @@ eapply (open_empty_cps_A Jx SYS) with (lo := LO) (pp := p1);
 | rewrite E0 in SB1; exact SB1
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
 intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' MU' WM' MI' ST' ERR' HN' SIO'.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
 apply list_byte_eqb_false in E0.
@@ -459,7 +460,7 @@ eapply (open_dot_cps_A Jx SYS) with (lo := LO) (pp := p1);
 | rewrite ED in SB1; exact SB1 | exact AFD | exact FD3
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity
 | apply t_emit_has_nil | apply t_emit_has_nil | | ].
 { intros e t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' INe MU' WM' MI' ST' ERR' HN' SIO'.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
@@ -490,7 +491,7 @@ eapply (open_absent_cps_A Jx SYS) with (lo := LO) (pp := p1);
 | exact SB1 | exact PNUL | lia | exact E0 | exact PSL | exact NDR | exact FS
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
 intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' MU' WM' MI' ST' ERR' HN' SIO'. rewrite Hfs.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
 
@@ -499,7 +500,7 @@ eapply (open_file_cps_A Jx SYS) with (lo := LO) (pp := p1);
 | exact SB1 | exact PNUL | lia | exact E0 | exact PSL | exact NDR | exact FS | exact AFD | exact FD3
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity
 | apply t_emit_has_nil | unfold t_opened; apply t_body_nil | | ].
 { intros e t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' INe MU' WM' MI' ST' ERR' HN' SIO'. rewrite Hfs.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
@@ -631,7 +632,7 @@ Hypothesis OBL_MALLOC_N6 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (n lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -655,7 +656,7 @@ Hypothesis OBL_FREE_N6 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (p lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -678,7 +679,7 @@ Hypothesis OBL_FREE_NN : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word) (u : uwd),
 HEAPAx A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -843,7 +844,7 @@ pose proof (heapA_cok A4L HIx _ _ _ _ _ _ _ HP) as HCK.    pose proof (heapA_mem
 d5_enter.
 unfold RDENTRY_A. step. step. step. evt_done5.
 eapply (OBL_MALLOC_N6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md _ A [] LM0 [] B 65536 LO errv UWptr HP6);
-[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
+[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | first [assumption | lia] | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; lia
 | exact ERR | reflexivity | reflexivity | lia
 | cbn [uw_pre]; rewrite !unsigned_lit by lia; left; lia
@@ -1013,7 +1014,7 @@ eapply (open_toolong_cps_A Jx SYS) with (lo := LO) (pp := p1) (p := path);
 | exact SB1 | exact PNUL | exact TL | exact PSL | exact PDD
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
 intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' MU' WM' MI' ST' ERR' HN' SIO'.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
 apply Nat.leb_gt in TL.
@@ -1025,7 +1026,7 @@ eapply (open_empty_cps_A Jx SYS) with (lo := LO) (pp := p1);
 | rewrite E0 in SB1; exact SB1
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
 intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' MU' WM' MI' ST' ERR' HN' SIO'.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
 apply list_byte_eqb_false in E0.
@@ -1038,7 +1039,7 @@ eapply (open_dot_cps_A Jx SYS) with (lo := LO) (pp := p1);
 | rewrite ED in SB1; exact SB1 | exact AFD | exact FD3
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity
 | apply t_emit_has_nil | apply t_emit_has_nil | | ].
 { intros e t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' INe MU' WM' MI' ST' ERR' HN' SIO'.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
@@ -1069,7 +1070,7 @@ eapply (open_absent_cps_A Jx SYS) with (lo := LO) (pp := p1);
 | exact SB1 | exact PNUL | lia | exact E0 | exact PSL | exact NDR | exact FS
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity | ].
 intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' MU' WM' MI' ST' ERR' HN' SIO'. rewrite Hfs.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }
 
@@ -1078,7 +1079,7 @@ eapply (open_file_cps_A Jx SYS) with (lo := LO) (pp := p1);
 | exact SB1 | exact PNUL | lia | exact E0 | exact PSL | exact NDR | exact FS | exact AFD | exact FD3
 | exact CG | exact CC | exact ERR
 | rewrite unsigned_lit by lia; exact ST | rewrite unsigned_lit by lia; lia | unfold alloc_ceiling; lia | rewrite unsigned_lit by lia; lia
-| right; rewrite unsigned_lit by lia; lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity
+| right; rewrite unsigned_lit by lia; lia | lia | exact MI | unfold RA_MAIN; rewrite unsigned_lit by lia; reflexivity
 | apply t_emit_has_nil | unfold t_opened; apply t_body_nil | | ].
 { intros e t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' cf' INe MU' WM' MI' ST' ERR' HN' SIO'. rewrite Hfs.
 from5 A0. eapply KFAIL; [exact MU' | exact WM' | exact MI' | exact ST' | exact ERR' | exact HN' | exact SIO']. }

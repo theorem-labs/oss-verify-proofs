@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -53,10 +54,19 @@ Section IO.
   Qed.
 
   (* [comment removed for export] *)
+  (* LPS 75d69e00, the channel-reader premise.  [aprintf0_first] (As/AsPrintfFirst.v:379) gained
+     [m_channel_reader mo = true], so this application of it was one argument short
+     ("The term HKnil has type K [] while it is expected to have type m_channel_reader mo = true",
+     a farm round, As/AsDrvIO.v:69).  The premise is forwarded, in the same slot
+     the callee puts it -- after fd_lookup, before [K []].  Proof text was already plain here, so
+     nothing is decoded and no blob moves.  Donor, statement and proof, with its branch (rule 23c):
+     a donor tree:projects/openssl/echconfiglist_parser/proofs/
+     lib/As/AsDrvIO.v:51-69; the addresses below are this tree's own and do not move. *)
   Theorem drv_printf_first : forall s msF mo regs mem (sp : word) (can : Z) (K : TSet),
     ap1H regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0xbed78) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', ap1Post regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0xbeccc) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -64,9 +74,9 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit [WriteEv (Z_to_bv 64 1) (Z_to_bv 8 48); WriteEv (Z_to_bv 64 1) (Z_to_bv 8 10)] K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd1 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd1 Hrd1 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (aprintf0_first L S Zr regs mem msF mo sp can K PH OK RS Hfd1 HKnil).
+    apply (aprintf0_first L S Zr regs mem msF mo sp can K PH OK RS Hfd1 Hrd1 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.
@@ -96,10 +106,14 @@ Section IO.
   Qed.
 
   (* [comment removed for export] *)
+  (* LPS 75d69e00, the channel-reader premise, forwarded to [as_hdr_short_fwrite]
+     (As/AsHdrErr.v:356), which gained it.  Same slot, same donor as drv_printf_first above
+     (donor As/AsDrvIO.v:95-112). *)
   Theorem drv_hdr_short : forall s msF mo regs mem (sp : word) (can : Z) (K : TSet),
     hfH regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0xbead8) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0xbeb14) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -107,17 +121,20 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit (W 2 msg_short) K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd2 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd2 Hrd2 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (as_hdr_short_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 HKnil).
+    apply (as_hdr_short_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 Hrd2 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.
 
+  (* LPS 75d69e00, the channel-reader premise, forwarded to [as_hdr_overrun_fwrite]
+     (As/AsHdrErr.v:372), which gained it (donor As/AsDrvIO.v:114-131). *)
   Theorem drv_hdr_overrun : forall s msF mo regs mem (sp : word) (can : Z) (K : TSet),
     hfH regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0xbeaf4) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0xbeb14) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -125,9 +142,9 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit (W 2 msg_overrun) K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd2 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd2 Hrd2 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (as_hdr_overrun_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 HKnil).
+    apply (as_hdr_overrun_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 Hrd2 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.

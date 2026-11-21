@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: dg_read_site rewritten from a Section SE encoded statement into a plain lemma, its path bound tightened from 16 to 9 bytes, and read_armA's p0 argument renamed auxvp with its using annotation dropped; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagArmRead.v, lines 55, 77, 106-109. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -44,25 +45,12 @@ Variable M0 : word -> option byte.
 #[local] Notation dinvA := (dinv ar HI sp0 M0).
 #[local] Notation usp := (bv_unsigned sp0).
 #[local] Notation ENV0 := (ENVA []).
-Section SE.
-Local Abbreviation SEC_T_dg_read_site := (forall (fxq : PropExec.FPState) vals R M (model : Model) LB LK cr A fs (p1 : word) (path : list byte), regs_ok (ENV0 vals) srHE R -> know_ok ASEGS (ENV0 vals) (mrestrict (ahid A model) M) knHE -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 ->
+#[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdg Hdgs"] Lemma dg_read_site : forall (fxq : PropExec.FPState) vals R M (model : Model) LB LK cr A fs (p1 : word) (path : list byte), regs_ok (ENV0 vals) srHE R -> know_ok ASEGS (ENV0 vals) (mrestrict (ahid A model) M) knHE -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 ->
 dinvA LB LK cr A M model -> m_fs model = fs -> fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
 str_atA ar sp0 M0 A p1 path -> length path = 1%nat ->
-srealizes ASEGS scfg (mkCfg (@mkst fxq R (Z_to_bv 64 0x62d34) M rom) model) (t_die (msg_read_error path) fs)) (only parsing).
-Variable fxq : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 0%nat 0%nat).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 1%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 2%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 3%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 4%nat 0%nat).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 5%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 6%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 7%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 8%nat 0%nat).
-Variable fs : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 9%nat 0%nat).
-Variable p1 : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 10%nat 0%nat).
-Variable path : ltac:(sec_ty2 constr:(SEC_T_dg_read_site) 11%nat 0%nat).
-Lemma dg_read_site : ltac:(sec_stmt2 constr:(SEC_T_dg_read_site) 12%nat 0%nat).
-Proof using L C IL HIok ICok ILY Hsp Hal DL Hex Hdg Hdgs fxq vals R M model LB LK cr A fs p1 path.
+srealizes ASEGS scfg (mkCfg (@mkst fxq R (Z_to_bv 64 0x62d34) M rom) model) (t_die (msg_read_error path) fs).
+Proof.
+intros fxq vals R M model LB LK cr A fs p1 path.
 intros HR HK P0 P2 D EFS FD2 [PLO STR NONUL PLEN PDEF SAH] Hn1.
 pose proof Hsp as Hsp'.
 destruct dot_itinerary_okA as (_ & _ & _ & OKb).
@@ -84,7 +72,7 @@ assert (G4 : getr R 4%bv = Z_to_bv 64 6752960) by (regv HR (4%bv : reg); reflexi
 assert (G10 : getr R 10%bv = Z_to_bv 64 1280936) by (regv HR (10%bv : reg); reflexivity).
 assert (G11 : getr R 11%bv = Z_to_bv 64 127189) by (regv HR (11%bv : reg); reflexivity).
 assert (G12 : getr R 12%bv = Z_to_bv 64 (bv_unsigned p1)) by (regv HR (12%bv : reg); cbn [edenot ev ENVA]; rewrite P2; symmetry; apply Z_to_bv_bv_unsigned).
-assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47) by (unfold S; lia).
+assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47) by (unfold S; lia).
 assert (HSm : 140735332552704 + 5440 <= S <= 140737488355328) by (unfold S; lia).
 apply (die_of_chain scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL Hex M0 [] [Jb0DiagReadA.DRA.PRE19 ++ path ++ Jb0DiagReadA.DRA.SUF1] _ vals knHE LB LK cr A M model fxq R fs S HK OKb P0 D EFS FD2
 ltac:(unfold S; lia) ltac:(unfold S; lia) HS16).
@@ -111,11 +99,10 @@ split; [rewrite app_nil_r; reflexivity|]. split; [exact AGE|].
 intros RX MX FRX GRX KX.
 exact (fin_ofA sp0 MV S R fxE RX MX G4 (POST fxE RX MX (fun x Hx => FRX x (fun X => Hx ltac:(lia))) GRX KX)).
 Qed.
-End SE.
-#[using="C IL HIok ICok ILY Hsp Hal DL Hex Hdg Hdgs"] Theorem read_armA : forall fs0 p0 p1 can LK0 cr0 A0, str_atA ar sp0 M0 A0 p1 dot_path ->
-read_err_kA scfg L ar HI sp0 fs0 p0 p1 can M0 LK0 cr0 A0 (t_die (msg_read_error dot_path) fs0).
+Theorem read_armA : forall fs0 auxvp p1 can LK0 cr0 A0, str_atA ar sp0 M0 A0 p1 dot_path ->
+read_err_kA scfg L ar HI sp0 fs0 auxvp p1 can M0 LK0 cr0 A0 (t_die (msg_read_error dot_path) fs0).
 Proof.
-intros fs0 p0 p1 can LK0 cr0 A0 [PLO STR NONUL PLEN PDEF SAH]. unfold read_err_kA.
+intros fs0 auxvp p1 can LK0 cr0 A0 [PLO STR NONUL PLEN PDEF SAH]. unfold read_err_kA.
 intros vals R M model A A1 HL P0 P1 P2 P3 P48 HR HK DI HINC F1 F2 HBR.
 apply (dg_read_site fx vals R M model [(A1, 65536)] LK0 (adebit L cr0 65536) A fs0 p1 dot_path HR HK P0 P2 DI F2).
 - rewrite F1. vm_compute. reflexivity.

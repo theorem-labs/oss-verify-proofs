@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed Hp, wrap_strnlen_run. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -77,7 +78,9 @@ Section SN.
   Hypothesis HW : L5.writable RSEGS M (s - 4400) 4400.
   Hypothesis HD : L5.defined M (s - 4400) 4400.
   Hypothesis HIMG : L5.img_clear M 65536 1392640.
-  Hypothesis Hp : s <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+  (* SLACK 16 -> 9, old beside new: was [p + n + 1 + 16 <= 2 ^ 47].  [cstr] reads [n + 9] bytes:
+     the string, its NUL and eight more; nothing reads past that.  See Pm8DrvEntryK.ent_str_hi. *)
+  Hypothesis Hp : s <= p /\ p + n + 1 + 9 <= 2 ^ 47.
   Hypothesis Hn : n <= 131071.
   Hypothesis HSTR : cstr M p bs t8.
   Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
@@ -92,7 +95,9 @@ Section SN.
       /\ mem_grows M M'.
   Proof.
     pose proof HC as (C1 & C2 & C3 & CG & C5 & C6).
-    assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+    (* [p <= 2^47 - 10] from [Hp] (slack 9); was [2^47 - 17] from the old slack 16.  The
+       walks' [V 33] range ([asan/Pm8DiagSP.sC1_conc]) is [2^47 - 10] to match. *)
+    assert (Pr : 140735332552704 <= p <= 140737488355318) by lia.
     assert (Nr : 0 <= n <= 131071) by lia.
 
     pose proof (sC1_conc fx R M (fun j => match j with 2%nat => s | 33%nat => p | 34%nat => n | _ => 0 end)) as P. cbn beta iota in P.

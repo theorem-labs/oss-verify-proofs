@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reserved ledger now also holds the vDSO/vvar pair, so KL reads the allocator's own reservations as a prefix of vm_reserved, kl_resv_top reads a reserved entry as below the brk start or one of the pair, and the new kl_vdso_in, kl_vdso_above and kl_vdso_disj carry the pair for mprotect's vDSO gate, with region_free_apart, vdso_gate_apart, kl_vdso_move and the interval lemmas a subtracted ledger needs). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Import X1bs X1c2 X1bn.
@@ -170,8 +171,17 @@ kl_halt : m_halted mo = None;
 kl_ceil : alloc_top (m_vmmaps mo) = ld_ceil L
 /\ alloc_ceiling_lo <= ld_ceil L <= alloc_ceiling_hi;
 kl_wf : vmwf (vm_maps (m_vmmaps mo));
-kl_resv : ld_resv L = map wwZ (vm_reserved (m_vmmaps mo));
-kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+(* The allocator's ledger names the image's own reservations; [State.init_model]
+   appends the launch's vDSO/vvar pair after them ([State.vm_reserved_init_model]),
+   so the ledger is a PREFIX of [vm_reserved].  What the tail is, [kl_vdso_in]
+   says; where it sits, [kl_resv_top]'s second disjunct says. *)
+kl_resv : exists lo hi, vm_reserved (m_vmmaps mo) = lo ++ hi /\ ld_resv L = map wwZ lo;
+(* A reserved entry is either one of the image's own, which ends below the brk
+   start, or one of the launch's vDSO/vvar pair, which [kl_vdso_above] puts far
+   above the brk guard and [kl_vdso_in] keeps in the ledger. *)
+kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) ->
+ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+\/ In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)));
 kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
 /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
 /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))
@@ -201,7 +211,146 @@ kl_phase : match ld_brk L with
 /\ (forall b l k, In (b, l, k) (ld_metas L) -> b + mmap_len l <= cur \/ cur + 2 * PGSZ <= b)
 | BPLive => exists b l, ld_brkreg L = Some (b, l) /\ bv_unsigned (vm_brk (m_vmmaps mo)) = b + l /\ pbrk = b + l
 | BPDead => True
-end }.
+end;
+(* The vDSO/vvar pair, which [State.init_model] reserves and which mprotect's
+   answer now refuses to touch ([State.vdso_reserved] above the containment test).
+   Three fields carry it, all facts the launch gives and no step disturbs:
+     [kl_vdso_in]    the pair IS in the reserved ledger -- true at the launch, and no
+                     step writes [vm_reserved], [m_kernel], [vm_mmap_base] or
+                     [vm_init_sp];
+     [kl_vdso_above] the pair sits a long way above the brk guard, because the
+                     launch's placement base is above [State.mmap_base_min] while
+                     the brk window stays below 2^40;
+     [kl_vdso_disj]  no tracked mapping meets any reserved entry -- true at the launch
+                     ([vm_maps] is empty) and kept because every grant tests
+                     [region_free] over [vm_reserved ++ vm_maps].
+   Together they put a range inside a tracked mapping apart from the pair. *)
+kl_vdso_in : incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)))
+(vm_reserved (m_vmmaps mo));
+kl_vdso_above : forall e, In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ->
+bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e;
+kl_vdso_disj : forall r, In r (vm_reserved (m_vmmaps mo)) ->
+forall e, In e (vm_maps (m_vmmaps mo)) -> edisj e r }.
+
+(* --------------------------------------------------------------------
+   Reading and moving the two vDSO facts.
+   -------------------------------------------------------------------- *)
+
+Lemma region_free_apart : forall maps aw nw,
+(forall e, In e maps -> ehi e <= bv_unsigned aw \/ bv_unsigned aw + bv_unsigned nw <= elo e) ->
+region_free maps aw nw = true.
+Proof.
+intros maps aw nw H. apply region_free_intro. intros a sz Hin.
+specialize (H (a, sz) Hin). unfold elo, ehi in H. cbn [fst snd] in H. unfold iv_overlap.
+destruct H as [H|H].
+- replace (bv_unsigned aw <? bv_unsigned a + bv_unsigned sz) with false by (symmetry; apply Z.ltb_ge; lia).
+reflexivity.
+- replace (bv_unsigned a <? bv_unsigned aw + bv_unsigned nw) with false by (symmetry; apply Z.ltb_ge; lia).
+apply andb_false_r.
+Qed.
+
+Lemma region_free_apart_In : forall maps aw nw e,
+region_free maps aw nw = true -> In e maps ->
+ehi e <= bv_unsigned aw \/ bv_unsigned aw + bv_unsigned nw <= elo e.
+Proof.
+intros maps aw nw [a sz] H Hin. pose proof (region_free_In _ _ _ _ _ H Hin) as D.
+unfold iv_overlap in D. apply andb_false_iff in D. unfold elo, ehi. cbn [fst snd].
+destruct D as [D|D]; apply Z.ltb_ge in D; [left| right]; lia.
+Qed.
+
+(* mprotect's vDSO gate: a range apart from every reserved entry misses the pair,
+   which [kl_vdso_in] puts among them. *)
+Lemma vdso_gate_apart : forall mo addr n,
+incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (vm_reserved (m_vmmaps mo)) ->
+(forall e, In e (vm_reserved (m_vmmaps mo)) ->
+ehi e <= bv_unsigned addr \/ bv_unsigned addr + bv_unsigned n <= elo e) ->
+region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) addr n = true.
+Proof.
+intros mo addr n Hinc Hap. apply region_free_apart. intros e Hin. exact (Hap e (Hinc e Hin)).
+Qed.
+
+(* [State.vdso_top] reads [vm_mmap_base] and [alloc_top], and [alloc_top] reads
+   [vm_init_sp]: a step that leaves both alone leaves the pair where it is. *)
+Lemma vdso_top_eq : forall h h',
+vm_mmap_base h' = vm_mmap_base h -> vm_init_sp h' = vm_init_sp h ->
+vdso_top h' = vdso_top h.
+Proof. intros h h' E1 E2. unfold vdso_top, mmap_top, alloc_top. rewrite E1, E2. reflexivity. Qed.
+
+(* A grant adds one mapping, which the grant's own [region_free] over
+   [vm_reserved ++ vm_maps] has already put apart from every reserved entry. *)
+Lemma kl_vdso_disj_cons : forall (R M : list (word * word)) aw nw,
+region_free (R ++ M) aw nw = true ->
+(forall r, In r R -> forall e, In e M -> edisj e r) ->
+forall r, In r R -> forall e, In e ((aw, nw) :: M) -> edisj e r.
+Proof.
+intros R M aw nw Hrf H r Hr e [<-|He]; [|exact (H r Hr e He)].
+pose proof (region_free_apart_In _ _ _ r Hrf (in_or_app _ _ _ (or_introl Hr))) as D.
+unfold edisj, elo, ehi in *. cbn [fst snd] in *. lia.
+Qed.
+
+Lemma edisj_within : forall e e0 r, elo e0 <= elo e -> ehi e <= ehi e0 -> edisj e0 r -> edisj e r.
+Proof. intros e e0 r H1 H2 [D|D]; [left| right]; lia. Qed.
+
+(* A cut of one interval lies inside it: what a step that subtracts a range from
+   [vm_maps] needs in order to keep [kl_vdso_disj]. *)
+Lemma iv_subtract_within : forall (a sz : word) lo hi e,
+bv_unsigned a + bv_unsigned sz <= 2^64 -> 0 <= lo -> 0 <= hi ->
+In e (iv_subtract a sz lo hi) ->
+bv_unsigned a <= elo e /\ ehi e <= bv_unsigned a + bv_unsigned sz.
+Proof.
+intros a sz lo hi e Hwf Hlo Hhi Hin.
+pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 sz) as Rs.
+unfold bv_modulus in Ra, Rs. cbn in Ra, Rs.
+unfold iv_subtract in Hin. apply in_app_or in Hin as [Hin|Hin].
+- destruct (Z.ltb_spec (bv_unsigned a) lo) as [Hlt|Hge]; [|destruct Hin].
+destruct Hin as [<-|[]]. unfold elo, ehi. cbn [fst snd]. rewrite X1by.unsigned_lit by lia. lia.
+- destruct (Z.ltb_spec hi (bv_unsigned a + bv_unsigned sz)) as [Hlt|Hge]; [|destruct Hin].
+destruct Hin as [<-|[]]. unfold elo, ehi. cbn [fst snd]. rewrite !X1by.unsigned_lit by lia. lia.
+Qed.
+
+Lemma maps_subtract_within : forall maps lo hi e,
+(forall e0, In e0 maps -> ehi e0 <= 2^64) -> 0 <= lo -> 0 <= hi ->
+In e (maps_subtract maps lo hi) ->
+exists e0, In e0 maps /\ elo e0 <= elo e /\ ehi e <= ehi e0.
+Proof.
+induction maps as [|[a sz] maps IH]; intros lo hi e Hwf Hlo Hhi Hin; [destruct Hin|].
+cbn [maps_subtract] in Hin. apply in_app_or in Hin as [Hin|Hin].
+- pose proof (Hwf (a, sz) (or_introl eq_refl)) as W. unfold ehi in W; cbn [fst snd] in W.
+destruct (iv_subtract_within a sz lo hi e W Hlo Hhi Hin) as [H1 H2].
+exists (a, sz). split; [left; reflexivity|]. unfold elo, ehi; cbn [fst snd]. split; assumption.
+- destruct (IH lo hi e ltac:(intros e0 He0; apply Hwf; right; exact He0) Hlo Hhi Hin) as (e0 & He0 & H1 & H2).
+exists e0. split; [right; exact He0|]. split; assumption.
+Qed.
+
+(* The ledger fact and the three vDSO facts of [KL] move across a step together: each
+   reads [m_kernel], [vm_reserved], [vm_start_brk] and -- through [State.vdso_top] --
+   [vm_mmap_base] and [vm_init_sp], and no step of this tree writes any of them.
+   [rsv] is the ledger's reservation list, which a step does not change either. *)
+Lemma kl_vdso_move : forall mo mo' (rsv : list (Z * Z)),
+m_kernel mo' = m_kernel mo ->
+vm_reserved (m_vmmaps mo') = vm_reserved (m_vmmaps mo) ->
+vm_mmap_base (m_vmmaps mo') = vm_mmap_base (m_vmmaps mo) ->
+vm_init_sp (m_vmmaps mo') = vm_init_sp (m_vmmaps mo) ->
+vm_start_brk (m_vmmaps mo') = vm_start_brk (m_vmmaps mo) ->
+(exists lo hi, vm_reserved (m_vmmaps mo) = lo ++ hi /\ rsv = map wwZ lo) ->
+(forall e, In e (vm_reserved (m_vmmaps mo)) ->
+ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+\/ In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)))) ->
+incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (vm_reserved (m_vmmaps mo)) ->
+(forall e, In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ->
+bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e) ->
+(exists lo hi, vm_reserved (m_vmmaps mo') = lo ++ hi /\ rsv = map wwZ lo)
+/\ (forall e, In e (vm_reserved (m_vmmaps mo')) ->
+ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo'))
+\/ In e (vdso_reserved (m_kernel mo') (vdso_top (m_vmmaps mo'))))
+/\ incl (vdso_reserved (m_kernel mo') (vdso_top (m_vmmaps mo'))) (vm_reserved (m_vmmaps mo'))
+/\ (forall e, In e (vdso_reserved (m_kernel mo') (vdso_top (m_vmmaps mo'))) ->
+bv_unsigned (vm_start_brk (m_vmmaps mo')) + 4 * PGSZ <= elo e).
+Proof.
+intros mo mo' rsv Ek Er Eb Es Esb H0 H1 H2 H3.
+rewrite Ek, Er, Esb, (vdso_top_eq _ _ Eb Es).
+split; [exact H0|]. split; [exact H1|]. split; [exact H2| exact H3].
+Qed.
 
 Definition frame_ok (G : PState -> Model -> Prop) : Prop :=
 forall s s' mo mo', ps_fa s' = ps_fa s -> ps_so s' = ps_so s -> vm_only mo mo' -> G s mo -> G s' mo'.

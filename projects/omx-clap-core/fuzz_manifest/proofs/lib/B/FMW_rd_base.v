@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_base.v on a working branch e2e59892bef: re-designed for B's code (code table, cut pcs, registers, frame slots, the call from names). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_base.v on a working branch: re-designed for B's code (code table, cut pcs, registers, frame slots, the call from names). *)
 (* lv2_locate_manifest_readings 0x81e94 on fm.asan-ubsan (lv2_locate.c:85-148), 340 instructions: the walk's shared base.
    The walk is cut at fixed pcs (after each call, the loop heads); every cut carries a semantic invariant (registers,
    frame slots, memory facts, the journal from readings' entry), and every segment builds its own symbolic state from

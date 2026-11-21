@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the walks these lemmas take are stated over run_segments (the binary's segments and the launch's vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -32,8 +33,12 @@ Theorem cfg_strong_equiv_ef :
   forall source_segs rpc rph rsp rbrk rmb (rrnd : EntryDraw) (rlim : Z)
          target_segs apc aph asp abrk amb (arnd : EntryDraw) (alim : Z)
          (TS TT : list event -> Prop) (inp : ProcInput),
-  src_real source_segs (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) TS ->
-  srealizes_cfg target_segs (init_config target_segs apc aph asp abrk amb arnd alim inp) TT ->
+  (* at 08b1429 a run executes over [run_segments segs inp sp mb] (the binary's segments and the
+     launch's vDSO pair), so the walks this lemma consumes are stated over that list *)
+  src_real (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) TS ->
+  srealizes_cfg (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) TT ->
   (forall tr, TS tr <-> TT tr) ->
   error_free (run_scfg CFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg CFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
@@ -46,7 +51,7 @@ Proof.
   - cbn. exact Hnoerr.
   - cbn. exact (srealizes_cfg_no_error _ _ _ Htarget).
   - intro tr. cbn.
-    rewrite (Hobs tr), (srealizes_cfg_obs_iff target_segs _ TT Htarget tr). apply Heq.
+    rewrite (Hobs tr), (srealizes_cfg_obs_iff (run_segments target_segs inp asp amb) _ TT Htarget tr). apply Heq.
 Qed.
 
 (* [comment removed for export] *)
@@ -54,8 +59,10 @@ Corollary cfg_strong_equiv_ef_ss :
   forall source_segs rpc rph rsp rbrk rmb (rrnd : EntryDraw) (rlim : Z)
          target_segs apc aph asp abrk amb (arnd : EntryDraw) (alim : Z)
          (T : TSet) (inp : ProcInput),
-  srealizes_cfg source_segs (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  srealizes_cfg target_segs (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  srealizes_cfg (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  srealizes_cfg (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   error_free (run_scfg CFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg CFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg CFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
@@ -73,12 +80,14 @@ Theorem cfg_universal_error_free_budgets :
   (forall en_source inp, valid_entry src en_source inp -> valid_input inp ->
      match src, en_source with
      | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-         src_real segs (init_config segs pc ph sp brk0 mbase rnd lim_source inp) (S inp)
+         src_real (run_segments segs inp sp mbase)
+           (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim_source inp) (S inp)
      end) ->
   (forall en_target inp, valid_entry tgt en_target inp -> valid_input inp ->
      match tgt, en_target with
      | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-         srealizes_cfg segs (init_config segs pc ph sp brk0 mbase rnd lim_target inp) (TT inp)
+         srealizes_cfg (run_segments segs inp sp mbase)
+           (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim_target inp) (TT inp)
      end) ->
   (forall inp tr, S inp tr <-> TT inp tr) ->
   strong_universal_error_free_T_scfg_budgets CFG lim_source lim_target src tgt.

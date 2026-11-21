@@ -78,8 +78,8 @@ Open Scope Z_scope.
     m_find_contract (M_FIND = 0x14ccc, M_FIND_STACK 64), m_refuse_contract (M_REFUSE = 0x14f30, M_REFUSE_STACK =
     16 + PRINTF_K), strip_contract (lib/U/Prog/strip_c.v, STRIP = 0x15028, no stack; strip_pre's two 8-aligned
     cells in this frame, strip_mid: the bytes between the new pointers are SegModel.h_strip) and fold_contract
-    (lib/U/Prog/fold_c.v, FOLD = 0x151a4, no stack; fold_out l cap = h_fold, out = low, cap 64 or 24) of
-    commit 66de2e2eba42. Why each holds at its site: as in the plain build.
+    (lib/U/Prog/fold_c.v, FOLD = 0x151a4, no stack; fold_out l cap = h_fold, out = low, cap 64 or 24).
+    Why each holds at its site: as in the plain build.
 
     Call sites: LLVMFuzzerTestOneInput 0x13b3c (c:612: a0 = 0x50(sp) = m, a1 = s7 = text, a2 = s9 = NULL, main's
     label[40] buffer or longl) and 0x13b7c (c:615: a2 = 0); the premises hold there as in the plain build. *)

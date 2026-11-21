@@ -4,9 +4,10 @@
    journal at a reflexive and transitive world relation R (binders first; the call keeps the world, so no law of R is
    read); aj_snprintf_at_xrom keeps its statement and is the instance at wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSnp.v, with its module paths and module names changed; 366 of its 437 lines of code are new or changed and 191 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMsnprintfShared.table). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMsnprintfShared.table). *)
 (* The snprintf contracts every Pau target shares (statements): h-rw-dis-5's lib/Rt/SnprintfDef.v and VsnprintfDef.v
-   (origin/cold/h-rw-dis-5-s4printf 4a8b5df89c3) restated over fm's library, with pieces, parser and renderer in
+   restated over fm's library, with pieces, parser and renderer in
    FMsnprintfPf.v. Kept as there: the arguments (va_words: a3..a7 then the caller's stack slots at sp; words_at ap for
    the v* entries), the read-only constants a run reads (consts_view cr), the stack-protector cells gc -> gv -> cval,
    the disjointness lists (no alloc_ceiling: the destination and the strings may lie on the machine stack outside the

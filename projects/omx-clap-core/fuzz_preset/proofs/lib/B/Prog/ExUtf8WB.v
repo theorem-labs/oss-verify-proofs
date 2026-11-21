@@ -1,10 +1,10 @@
-(* fuzz_preset image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43, facts 8f3e7e1a07f1): the walk
+(* fuzz_preset image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43, facts): the walk
    of put_utf8 (B' 0x88954, slot 7330) and of ex_utf8 (B' 0x84b54, slot 3362), ONE proof run from either entry slot of
    the whole-range listing B_prog_listing (lib/B/Listing_prog.v, PAImg_prog.v B_entry_put_utf8 / B_entry_ex_utf8), and
-   the text tput_utf8_specX (the kit's cut 7cdbb61b5fa0, lib/A/PRH_FnReader.v:290-303) at PA := PI_prog_B:
+   the text tput_utf8_specX (the kit's cut, lib/A/PRH_FnReader.v:290-303) at PA := PI_prog_B:
    pb_put_utf8X_Bp.
    RELOCATED B -> B' (a Theorem Labs lane's row for a Theorem Labs lane's parse_string B'): the old-pin B walk
-   a working branch dafa4151f91 lib/B/Prog/ExUtf8B.v (image B 3b5e1a099b53) moved to B'. bytecmp
+   a working branch lib/B/Prog/ExUtf8B.v (image B 3b5e1a099b53) moved to B'. bytecmp
    1480ca2faea0: put_utf8 old B 0x88464 vs B' 0x88954, 572 bytes each, EQUAL-mod-pcrel (11 pc-relative words, 0 real
    differences); all 14 pc-relative targets name the same place (put_utf8+0x1a8 x3, __asan_report_store1 x10; the
    auipc+ld at +0x8 reads .got +0x60, __asan_shadow_memory_dynamic_address, on both). The only numbers that move are
@@ -392,9 +392,9 @@ Qed.
 
 End a.
 
-(* ---- the TEXT (cut 7cdbb61b5fa0 lib/A/PRH_FnReader.v:290-303 tput_utf8_specX) at image B': PA := PI_prog_B (the
+(* ---- the TEXT (cut lib/A/PRH_FnReader.v:290-303 tput_utf8_specX) at image B': PA := PI_prog_B (the
    whole-program listing's instance), PI := prh_img_B (PRH_ImgB.v), cp := CfParams_preset (the instance a Theorem Labs lane's
-   parse_string B' cites, f8abe792280d lib/B/Prog/PSB_Inst.v:104). Discharged here from the image files: HOBJ (the
+   parse_string B' cites, lib/B/Prog/PSB_Inst.v:104). Discharged here from the image files: HOBJ (the
    shadow-base GOT word and cell are image bytes: find_segment over PI_prog_B's segments), HPST (S1ImgB.v
    pst_in_img_B), the head width (CfParamsPreset.v preset_head_wide), the entry (PAImg_prog.v B_entry_put_utf8: slot
    7330, offset 29320) and the frame (PRH_ImgB.v: 16). KEPT as named Section hypotheses: LAWS (the allocator

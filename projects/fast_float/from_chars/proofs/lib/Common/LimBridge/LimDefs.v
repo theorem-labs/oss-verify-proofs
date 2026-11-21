@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev; the SIGPIPE answer of a write to a reader-gone channel; the vDSO run state; the model's m_kernel field). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Run.
@@ -66,6 +67,13 @@ Lemma relim_m_clock : m_clock R = m_clock m. Proof. reflexivity. Qed.
 Lemma relim_m_creds : m_creds R = m_creds m. Proof. reflexivity. Qed.
 Lemma relim_m_vmmaps : m_vmmaps R = vm_relim L (m_vmmaps m). Proof. reflexivity. Qed.
 Lemma relim_vm_backing_used : vm_backing_used R = vm_backing_used m. Proof. reflexivity. Qed.
+Lemma relim_m_kernel : m_kernel R = m_kernel m. Proof. reflexivity. Qed.
+Lemma relim_m_vdso : m_vdso R = m_vdso m. Proof. reflexivity. Qed.
+Lemma relim_m_sigpipe_pending : m_sigpipe_pending R = m_sigpipe_pending m. Proof. reflexivity. Qed.
+Lemma relim_m_channel_reader : m_channel_reader R = m_channel_reader m. Proof. reflexivity. Qed.
+Lemma relim_m_sigpipe_action : m_sigpipe_action R = m_sigpipe_action m. Proof. reflexivity. Qed.
+Lemma relim_m_sigpipe_default : m_sigpipe_default R = m_sigpipe_default m. Proof. reflexivity. Qed.
+Lemma relim_m_sigpipe_terminal : m_sigpipe_terminal R = m_sigpipe_terminal m. Proof. reflexivity. Qed.
 End Acc.
 Section AccVm.
 Variable L : Z. Variable h : VmMaps.
@@ -77,6 +85,8 @@ Lemma relim_vm_brk : vm_brk (vm_relim L h) = vm_brk h. Proof. reflexivity. Qed.
 Lemma relim_vm_mmap_base : vm_mmap_base (vm_relim L h) = vm_mmap_base h. Proof. reflexivity. Qed.
 Lemma relim_vm_init_sp : vm_init_sp (vm_relim L h) = vm_init_sp h. Proof. reflexivity. Qed.
 Lemma relim_vm_limit : vm_limit (vm_relim L h) = L. Proof. reflexivity. Qed.
+Lemma relim_mmap_top : mmap_top (vm_relim L h) = mmap_top h. Proof. reflexivity. Qed.
+Lemma relim_vdso_top : vdso_top (vm_relim L h) = vdso_top h. Proof. reflexivity. Qed.
 End AccVm.
 Create Rewrite HintDb relim.
 #[export] Hint Rewrite relim_m_fd relim_m_io relim_m_fsys relim_m_proc relim_m_lim relim_m_time relim_m_fds relim_m_pipes
@@ -86,6 +96,8 @@ Create Rewrite HintDb relim.
   relim_m_clock relim_m_creds relim_m_vmmaps relim_vm_backing_used
   relim_vm_reserved relim_vm_maps relim_vm_noaccess relim_vm_start_brk relim_vm_brk relim_vm_mmap_base relim_vm_init_sp
   relim_vm_limit : relim.
+#[export] Hint Rewrite relim_m_kernel relim_m_vdso relim_m_sigpipe_pending relim_m_channel_reader
+  relim_m_sigpipe_action relim_m_sigpipe_default relim_m_sigpipe_terminal relim_mmap_top relim_vdso_top : relim.
 
 (* [comment removed for export] *)
 Lemma materialize_relim_up : forall L L' m acc m1,

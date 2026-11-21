@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items.v, with its module paths, module names and numbers changed; 1021 of its 1091 lines of code are new or changed and 499 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER group, image B (fs.asan-ubsan): the ASan+UBSan walk of skip_ws (A_skip_ws 0x83598,
    pf.c:36-40), against lib/B/FSH_Fn_reader.v:552 skip_ws_spec. skip_ws is OUT OF LINE in image B only (A inlines it
    into pj_parse, parse_value and parse_items), so this is the whole function: entry, the white-space loop and the
@@ -15,8 +16,8 @@
                                              named and 4 name(s) holding it, 32 unreleased
      proof-index 0x83598      (exit 4): 0 named, 0 by address, 0 related, 0 lemma(s), 0 by file name, an earlier delivery 0
                                              named and 0 name(s) holding it, 98 unreleased
-   PORT SOURCE (rule-24 CONFIRM by a Theorem Labs lane 06:02Z): ported from a working branch 83807a02aa29
-   (= a working branch 4c7580de8268, same blob c8d767bb5d93):proofs/omx-clap-core/fuzz_state/lib/B/Prog/
+   PORT SOURCE (rule-24 CONFIRM by a Theorem Labs lane 06:02Z): ported from a working branch
+   (= a working branch, same blob c8d767bb5d93):proofs/omx-clap-core/fuzz_state/lib/B/Prog/
    skip_ws.v `skip_ws_holds : skip_ws_contract` (Qed, no admit; skip_loop by induction on end - p; UBSan q & 7,
    p != 0 and p + 1 guards refuted; shadow checks on q, q + 8 and the text; 16-byte frame) and rdn1's
    lib/B/Prog/skip_wsF.v (footprint form). Their walk is RE-STATED here against skip_ws_spec's frame (fpreU / fpostU /
@@ -27,7 +28,7 @@
      skip_ws.v eqb0_word / zbr      -> the UBSan guards, now decided by the engine from the atom facts
      skip_ws.v skip_ws_holds        -> skw_entry / skw_exit / skip_ws_holds
    The engine-side shape (entry state, token runs, branch split, the return) follows image B's parse_string walk,
-   a working branch f1c071f7f5ce lib/B/FSW_parse_string.v and lib/B/FSW_parse_string_s2.v; the helper
+   a working branch lib/B/FSW_parse_string.v and lib/B/FSW_parse_string_s2.v; the helper
    lemmas copied from that commit's lib/B/FSW_parse_string_defs.v and _s2.v are named here with the skw_ prefix:
      pstr_cells8 -> skw_cells8, pstr_RA_stack -> skw_RA_stack, pstr_RA_stk_mem -> skw_RA_stk_mem,
      pstr_ush_blk -> skw_ush_blk, pstr_RA_unp -> skw_RA_unp, pstr_RA_blk_mem -> skw_RA_blk_mem,
@@ -38,7 +39,7 @@
      ps2_denot_lit -> skw_denot_lit, ps2_ewR -> skw_ewR, ps2_nz -> skw_nz, ps2_req -> skw_req,
      ps2_wins_b / ps2_frame_wins / ps2_awr_wins -> skw_wins_b / skw_frame_wins / skw_awr_wins.
    The white-space model bridge (skw_ws_gt32 / skw_wsmask) is image A's parse_items walk,
-   a working branch ab86042f21e lib/A/FSW_parse_items.v:391-409 (pi_ws_gt32 / pi_wsmask), restated.
+   a working branch lib/A/FSW_parse_items.v:392-410 (pi_ws_gt32 / pi_wsmask), restated.
 
    THE CODE (capstone 5.0.7, CS_ARCH_RISCV, CS_MODE_RISCV64 | CS_MODE_RISCVC over the pinned
    projects/omx-clap-core/bin/fuzz_state/fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc0
@@ -78,8 +79,8 @@
    [4096, 0x7fffff800000).
    skip_ws calls nothing (only the __asan_report_* above, all unreached), allocates nothing (U' = U, FP = [], 0
    ticks) and writes only in->p, inside the caller's window: ajournal runs at [ot - (STK_skip_ws + (ot - sp)), ot),
-   and the post's wkeep keeps every byte of [sp, ot) but in->p's word [q, q + 8) (a working branch
-   fc8603a2ee7): the one store is `sd` 0x83638 at q, and skw_keepM tracks exactly the frame and that word.
+   and the post's wkeep keeps every byte of [sp, ot) but in->p's word [q, q + 8) (a working branch):
+   the one store is `sd` 0x83638 at q, and skw_keepM tracks exactly the frame and that word.
    THE STATEMENT. skip_ws_holds : @skip_ws_spec fx rc SK tfibsegs B, i.e. lib/B/FSH_Fn_reader.v:552's Prop at segs :=
    tfibsegs (fs.asan-ubsan's loaded segments, the image the walk reads its code from), every sink argument explicit.
    SECTION HYPOTHESES: only HSS : FsShadowSyms B (lib/B/FSH_Base.v, the GOT word 0x9fc10 and the shadow-base cell

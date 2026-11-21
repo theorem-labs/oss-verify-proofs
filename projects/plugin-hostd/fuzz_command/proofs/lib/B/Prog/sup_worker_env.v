@@ -3,14 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_worker_env (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan, entry 0x8c13c, 34 instructions): tsup_worker_env_spec of a Theorem Labs lane's
-   lib/B/Prog/sup_worker_env_c.v (a working branch fc8bcbd8b42), proved over its callee contracts record_c, arg_s_c,
+   lib/B/Prog/sup_worker_env_c.v (a working branch), proved over its callee contracts record_c, arg_s_c,
    rec_shape_of_c and answer_c, each taken at every FP state as the statement states them; the post is apost_baseF,
    answer's (the tail jump).
 
-   The B re-walk of the A walk lib/A/Prog/sup_worker_env.v (a working branch 65a6716e4ad): A inlines record()
+   The B re-walk of the A walk lib/A/Prog/sup_worker_env.v (a working branch): A inlines record()
    (two arms, rec_calls_free on the spill arm) and the stores of fn, nargs and args[0..2] with their 8 inline checks,
    and calls xstrdup three times; B calls record() and arg_s(), which carry those parts and checks in their own
-   contracts. In the form of the B walk lib/B/Prog/sup_reset.v (a working branch c79a9f2daf7), whose code
+   contracts. In the form of the B walk lib/B/Prog/sup_reset.v (a working branch), whose code
    is this one's with one call of arg_s for three. The segments (lib/B/Prog/sup_worker_env_aux.v has the code):
      run A  0x8c13c .. 0x8c164  the 48-byte frame (ra, s0 .. s3), s0 := nice, s1 := cpus, s2 := format, a0 := 16,
                                 jal record
@@ -24,9 +24,9 @@
    (rec_shape_of: no footprint), the frame is carried across each call with jafter_call_keep_pi, and the tail jump
    runs answer at this function's entry sp, whose journal joins the walk's with ajournal_sub_wide.
    Report / trap edges: the function has no branch, no `jal __asan_report_*` and no unimp / ebreak
-   (lib/B/Prog/sup_worker_env_aux.v:13-36, measured with capstone), so there is no edge to refute here; the slot's
+   (lib/B/Prog/sup_worker_env_aux.v:14-37, measured with capstone), so there is no edge to refute here; the slot's
    checks and traps are record's and arg_s's, refuted in their contracts.
-   The Generation-N image-B walk lib/B/Prog/sup_worker_env.v of a working branch 543f2c3645b (same code at the
+   The Generation-N image-B walk lib/B/Prog/sup_worker_env.v of a working branch (same code at the
    same B addresses) was read as a template of the B code only, not ported.
 
    Section hypotheses beyond the statement's: the per-binary record CmdBSyms (HB), the meter's laws (MTL), the
@@ -36,6 +36,7 @@
    CmdRecRo.v / CmdRecRest.v / CmdRecImg.v lemmas over them, by exact (CMD_RO_IN, cmd_ro_ok_of_aro,
    cmd_ro_prog_apart, cmd_prog_img, cmd_rodata_kept, cmd_heap_tail_vis); a closing file at the pinned image
    (PI := PB_cmd) discharges cmd_img_facts_tfib and cmd_sig_prog_PB by a Theorem Labs lane's lemmas of those names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -68,7 +69,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---------- the representation's readers (lib/B/Prog/sup_reset.v:62-224 of a working branch c79a9f2daf7;
+(* ---------- the representation's readers (lib/B/Prog/sup_reset.v:63-225 of a working branch;
    A: lib/A/Prog/sup_worker_env_m.v:34-145, the same CmdRep forms) ---------- *)
 
 Lemma sweb_aval_keep : forall rd rd' a n v, aval_mem rd a n v ->
@@ -281,7 +282,7 @@ Hypothesis VOBJS : cmd_val_objs.
 Hypothesis HB : CmdBSyms B.
 Hypothesis MTL : ameter_laws MT.
 Hypothesis cmd_sig_prog_PB : cmd_sig_prog.
-(* the per-binary image facts (a Theorem Labs lane's lib/B/Prog/CmdRecBase.v cmd_img_facts, a working branch 6830f0bf032): a Theorem Labs lane proves
+(* the per-binary image facts (a Theorem Labs lane's lib/B/Prog/CmdRecBase.v cmd_img_facts, a working branch): a Theorem Labs lane proves
    them at the pinned image (CmdRecImg.v cmd_img_facts_tfib, at tfibsegs); this walk is over an abstract PAImg, so it
    takes that lemma's statement at its own segments, under the lemma's name, and each per-binary fact the walk uses
    is a Theorem Labs lane's lemma over them, by exact: CmdRecRo.v CMD_RO_IN and cmd_ro_ok_of_aro, CmdRecRest.v cmd_ro_prog_apart,

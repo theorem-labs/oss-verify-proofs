@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair; the model's m_kernel field; the model's placement rule; the model's brk). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -110,8 +111,56 @@ Record LINK (HTOP : Z) (FORB : list (Z * Z)) (L : layout) (x : kf) (md : Model) 
   (* [comment removed for export] *)
   lk_atop : 2 ^ 47 - 2 ^ 32 <= alloc_top (m_vmmaps md) ;
   lk_lim : 2 ^ 31 <= vm_limit (m_vmmaps md) ;
-  lk_rsz : PlacementCount.ledger_size (vm_reserved (m_vmmaps md)) <= 2 ^ 32
+  lk_rsz : PlacementCount.ledger_size (vm_reserved (m_vmmaps md)) <= 2 ^ 32 ;
+  (* LPS 08b1429: the vDSO/vvar pair the kernel installs is part of the reservation ledger
+     ([State.init_reserved]); no step changes the kernel, the ledger's reservations, the mmap
+     base or the initial sp, so this holds along the run *)
+  lk_vres : forall e, In e (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) -> In e (vm_reserved (m_vmmaps md)) ;
+  (* every reservation region was placed free of the ledger, so it misses the pair: an mprotect
+     inside it passes [Mprotect.mprotect_spec]'s vDSO gate *)
+  lk_vfree : forall r rg, live_kind (kf_regions x) r RkMetaRes rg ->
+      region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (w64 (ly_reg L r)) (w64 (rg_len rg)) = true
 }.
+
+(* [region_free] over a sub-list and a sub-range (LPS 08b1429 vDSO gate) *)
+Lemma vf_rf_In : forall l (lo n b s : word), region_free l lo n = true -> In (b, s) l -> iv_overlap lo n b s = false.
+Proof.
+  induction l as [|[b' s'] l IH]; intros lo n b s H Hin; [destruct Hin|].
+  cbn [region_free] in H. apply andb_true_iff in H as [Hd H].
+  destruct Hin as [E|Hin]; [injection E as <- <-; apply negb_true_iff; exact Hd | exact (IH _ _ _ _ H Hin)].
+Qed.
+
+Lemma vf_rf_incl : forall l1 l2 lo n, region_free l1 lo n = true -> (forall e, In e l2 -> In e l1) -> region_free l2 lo n = true.
+Proof.
+  intros l1 l2 lo n H Hi. induction l2 as [|[b s] l2 IH]; [reflexivity|]. cbn [region_free]. apply andb_true_iff. split.
+  - apply negb_true_iff. exact (vf_rf_In l1 lo n b s H (Hi _ (or_introl eq_refl))).
+  - apply IH. intros e He. apply Hi. right. exact He.
+Qed.
+
+Lemma vf_rf_sub : forall l (lo n lo' n' : word), region_free l lo n = true ->
+  bv_unsigned lo <= bv_unsigned lo' -> bv_unsigned lo' + bv_unsigned n' <= bv_unsigned lo + bv_unsigned n ->
+  region_free l lo' n' = true.
+Proof.
+  induction l as [|[b s] l IH]; intros lo n lo' n' H H1 H2; [reflexivity|].
+  cbn [region_free] in *. apply andb_true_iff in H as [Hd H]. apply andb_true_iff. split; [|exact (IH _ _ _ _ H H1 H2)].
+  apply negb_true_iff in Hd. apply negb_true_iff. unfold iv_overlap in *.
+  apply andb_false_iff in Hd. apply andb_false_iff.
+  destruct Hd as [Hd|Hd]; [left | right]; apply Z.ltb_ge in Hd; apply Z.ltb_ge; lia.
+Qed.
+
+(* the vDSO/vvar pair adds at most 20 pages to the reservation ledger *)
+Lemma vdso_ledger_le : forall kb top, PlacementCount.ledger_size (vdso_reserved kb top) <= 2 ^ 20.
+Proof.
+  intros kb top. unfold vdso_reserved. cbv zeta.
+  match goal with |- context [if ?c then _ else _] => destruct c end; [cbn; lia|].
+  cbn [PlacementCount.ledger_size].
+  pose proof (vdso_text_pages_pos kb) as P1. pose proof (vdso_text_pages_le kb) as P2.
+  assert (A1 : bv_unsigned (Z_to_bv 64 (vdso_vvar_pages * page_size)) = vdso_vvar_pages * page_size)
+    by (apply u_w64; unfold vdso_vvar_pages, page_size; lia).
+  assert (A2 : bv_unsigned (Z_to_bv 64 (vdso_text_pages kb * page_size)) = vdso_text_pages kb * page_size)
+    by (apply u_w64; unfold page_size; lia).
+  rewrite A1, A2. unfold vdso_vvar_pages, page_size. lia.
+Qed.
 
 (* [comment removed for export] *)
 Lemma rtot_app : forall l1 l2, rtot (l1 ++ l2) = rtot l1 + rtot l2.
@@ -180,6 +229,20 @@ Fixpoint rb {A : Type} (B : Z) (t : itree astate A) {struct t} : Prop :=
   end.
 End Budget.
 
+(* LPS 08b1429: [with_brk_next] ends in [forget_vm_ranges (brk_unmaps r (vm_brk h))], whose
+   list does not reduce for a symbolic break; each step only rewrites the lazy/materialized
+   backing, so the kernel build is kept. *)
+Lemma kernel_forget_vm_ranges : forall rs m, m_kernel (forget_vm_ranges rs m) = m_kernel m.
+Proof.
+  induction rs as [|[a n] rs IH]; intros m; [reflexivity|].
+  cbn [forget_vm_ranges]. rewrite IH. reflexivity.
+Qed.
+
+Lemma kernel_with_brk_next : forall md req r, m_kernel (with_brk_next md req r) = m_kernel md.
+Proof.
+  intros md req r. unfold with_brk_next. cbv zeta. rewrite kernel_forget_vm_ranges. reflexivity.
+Qed.
+
 Section TreeRz.
 Variable segs : list Segment.
 Variable cfg : SpuriousCfg.
@@ -204,12 +267,12 @@ Hypothesis ob_brk_grant : forall L x md B n cur, LINK HTOP FORB L x md -> BI x m
 Hypothesis ob_guard : forall L x md B a, LINK HTOP FORB L x md -> BI x md B -> CH KGuard <= B -> 0 <= a -> a + PGSZ < 2 ^ 64 ->
   BI (kstep x KGuard 1) (fixed_na_next (w64 50) (w64 a) (w64 PGSZ) md) (B - CH KGuard).
 Hypothesis ob_rw : forall L x md B len, LINK HTOP FORB L x md -> BI x md B -> CH (KMmapRW len) <= B -> 1 <= len < 2 ^ 63 ->
-  exists a, fresh_rw_guard (w64 34) md (page_round len) a.
+  exists a, fresh_rw_room (w64 34) md (page_round len) a.
 Hypothesis ob_rw' : forall L x md B len a, LINK HTOP FORB L x md -> BI x md B -> CH (KMmapRW len) <= B -> 1 <= len < 2 ^ 63 ->
   fresh_rw_guard (w64 34) md (page_round len) a ->
   BI (kstep x (KMmapRW len) 1) (fresh_rw_next (w64 34) a (w64 (page_round len)) md) (B - CH (KMmapRW len)).
 Hypothesis ob_na : forall L x md B s len, LINK HTOP FORB L x md -> BI x md B -> CH (KMmapNone len) <= B ->
-  kf_of s = x -> req_ok s (KMmapNone len) -> exists a, place_ok md (page_round len) a.
+  kf_of s = x -> req_ok s (KMmapNone len) -> exists a, place_room md (page_round len) a.
 Hypothesis ob_na' : forall L x md B len a, LINK HTOP FORB L x md -> BI x md B -> CH (KMmapNone len) <= B -> 1 <= len < 2 ^ 63 ->
   place_ok md (page_round len) a ->
   BI (kstep x (KMmapNone len) 1) (fresh_na_next (w64 34) a (w64 (page_round len)) md) (B - CH (KMmapNone len)).
@@ -428,10 +491,12 @@ Proof. LiaFast.lf_pins LiaFast.u0. intros L x md HL. exact (lk_brk _ _ _ _ _ HL)
   rtot (kf_regions x ++ [mkRegion kk N [] true]) = 2 * PGSZ * (2 ^ rcnt (kf_regions x ++ [mkRegion kk N [] true]) - 1) /\
   rtot (kf_regions x ++ [mkRegion kk N [] true]) <=
     2 * PGSZ * (ropen (kf_regions x ++ [mkRegion kk N [] true]) + rcnt (kf_regions x ++ [mkRegion kk N [] true])) ->
+  m_kernel md' = m_kernel md -> vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
   LINK HTOP FORB (set_reg_addr L (length (kf_regions x)) A)
        (kf_regions x ++ [mkRegion kk N [] true], b', kf_areas x) md'.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros L x md md' A N kk b' HL Hf G1 G2 G3 G4 G5 E1 E2 E3 E4 E6 E7 E8 NEWNA OLDNA HBRK NAE KK.
+  intros L x md md' A N kk b' HL Hf G1 G2 G3 G4 G5 E1 E2 E3 E4 E6 E7 E8 NEWNA OLDNA HBRK NAE KK EK EMB.
+  assert (VT : vdso_top (m_vmmaps md') = vdso_top (m_vmmaps md)) by (unfold vdso_top, mmap_top, alloc_top; rewrite EMB, E7; reflexivity).
   set (L' := set_reg_addr L (length (kf_regions x)) A) in *. set (rs := kf_regions x) in *.
   assert (RA : 0 <= A < 2 ^ 64) by (pose proof (alloc_top_lt (m_vmmaps md)); clear - G1 G3 G5 H; unfold two_pow_64, PGSZ in *; lia).
   assert (RN : 0 <= N < 2 ^ 64) by (pose proof (alloc_top_lt (m_vmmaps md)); clear - G1 G3 G5 H; unfold two_pow_64, PGSZ in *; lia).
@@ -500,6 +565,12 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - unfold alloc_top. rewrite E7. exact (lk_atop _ _ _ _ _ HL).
   - rewrite E8. exact (lk_lim _ _ _ _ _ HL).
   - rewrite E3. exact (lk_rsz _ _ _ _ _ HL).
+  - intros e He. rewrite E3. rewrite EK, VT in He. exact (lk_vres _ _ _ _ _ HL e He).
+  - intros k rgk (H1 & Hk & H2). rewrite EK, VT. destruct (nth_app_cases rs _ k rgk H1) as [(H1' & Hk')|(-> & ->)].
+    + rewrite (LY k rgk H1'). exact (lk_vfree _ _ _ _ _ HL k rgk (conj H1' (conj Hk H2))).
+    + (* the new region was placed free of the whole ledger, which holds the pair *)
+      unfold L'. rewrite ly_reg_set_same. cbn [rg_len].
+      apply (vf_rf_incl _ _ _ _ Hf). intros e He. apply in_or_app. left. exact (lk_vres _ _ _ _ _ HL e He).
 Qed.
 
 (* [comment removed for export] *)
@@ -667,7 +738,15 @@ Proof. LiaFast.lf_pins (fun (Hoff ob_pr ob_pr' : LiaFast.U) => LiaFast.u0).
   assert (P4 : map_contains (vm_noaccess (m_vmmaps md)) (w64 (loc_addr L (LMem (SP r o)))) (w64 PGSZ)
                  && map_contains (vm_maps (m_vmmaps md)) (w64 (loc_addr L (LMem (SP r o)))) (w64 PGSZ) = true) by (rewrite Ea, HNA, HMC; reflexivity).
   pose proof (ob_pr L x md B (SP r o) HL HB Hc P2 P3) as P5.
-  apply (rz_mprotect segs cfg Hoff rom L s (SP r o) regs pc m md K Hec (lk_halt _ _ _ _ _ HL) (lk_lazy _ _ _ _ _ HL) P1 P2 P3 P4 P5).
+  (* LPS 08b1429: the page lies in a reservation region, which misses the vDSO/vvar pair *)
+  assert (P6 : region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (w64 (loc_addr L (LMem (SP r o)))) (w64 PGSZ) = true).
+  { rewrite Ea. pose proof (lk_vfree _ _ _ _ _ HL r rg (conj Hrgx (conj Hk Hlv))) as V.
+    assert (U1 : bv_unsigned (w64 (ly_reg L r)) = ly_reg L r) by (apply u_w64; clear - G1 G2 G3 G4 G5 AT GT; unfold two_pow_64, PGSZ in *; lia).
+    assert (U2 : bv_unsigned (w64 (rg_len rg)) = rg_len rg) by (apply u_w64; clear - G1 G2 G3 G4 G5 AT GT; unfold two_pow_64, PGSZ in *; lia).
+    assert (U3 : bv_unsigned (w64 a) = a) by (apply u_w64; clear - Ra; unfold PGSZ in *; lia).
+    assert (U4 : bv_unsigned (w64 PGSZ) = PGSZ) by reflexivity.
+    apply (vf_rf_sub _ _ _ _ _ V); rewrite ?U1, ?U2, ?U3, ?U4; unfold a; clear - Ho1 Ho2; unfold PGSZ in *; lia. }
+  apply (rz_mprotect segs cfg Hoff rom L s (SP r o) regs pc m md K Hec (lk_halt _ _ _ _ _ HL) (lk_lazy _ _ _ _ _ HL) P1 P2 P3 P6 P4 P5).
   rewrite Ea.
   apply (Hcont (mkEffect (w64 0) [] [(w64 a, w64 PGSZ)]) 1 L _ ltac:(rewrite <- Ea; exact (o_mprotect FORB HTOP L s (SP r o))) (vm_only_mprotect_model_next _ _ _)).
   2: { rewrite <- Ea. exact (ob_pr' L x md B (SP r o) HL HB Hc P2 P3). }
@@ -758,6 +837,9 @@ Proof. LiaFast.lf_pins (fun (Hoff ob_pr ob_pr' : LiaFast.U) => LiaFast.u0).
   - exact (lk_atop _ _ _ _ _ HL).
   - exact (lk_lim _ _ _ _ _ HL).
   - exact (lk_rsz _ _ _ _ _ HL).
+  - exact (lk_vres _ _ _ _ _ HL).
+  - intros k rgk (H1 & H2 & H3). destruct (GEO k rgk H1) as (rgk0 & E1 & E2 & E3 & E4). rewrite E2.
+    rewrite E3 in H3. rewrite E4 in H2. exact (lk_vfree _ _ _ _ _ HL k rgk0 (conj E1 (conj H2 H3))).
 Qed.
 (* [comment removed for export] *)
 #[using="Type"] Lemma munmap_vmmaps : forall A N md, m_vmmaps (munmap_next A N md) =
@@ -784,8 +866,36 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - split; [exact Hne|]. cbn in H. exact H.
 Qed.
 
-#[using="HTOPB ob_munmap"] Lemma case_munmap : forall r len, node_ok (KMunmap r len).
-Proof. LiaFast.lf_pins (fun (HTOPB ob_munmap : LiaFast.U) => LiaFast.u0).
+Lemma mng_pairwise_In2 : forall {A} (R : A -> A -> Prop) l x y,
+  pairwise R l -> In x l -> In y l -> x = y \/ R x y \/ R y x.
+Proof.
+  intros A R l. induction l as [|z t IH]; intros x y H Hx Hy; [destruct Hx|].
+  destruct H as [Hz Ht]. destruct Hx as [<-|Hx], Hy as [<-|Hy].
+  - left. reflexivity.
+  - right. left. exact (Hz y Hy).
+  - right. right. exact (Hz x Hx).
+  - exact (IH x y Ht Hx Hy).
+Qed.
+
+(* the exact munmap cut is [map_remove] on a pairwise-disjoint ledger of positive entries *)
+Lemma mng_subtract_exact : forall l (a n : word),
+  pairwise edisj l -> (forall e, In e l -> 0 < bv_unsigned (snd e)) -> map_has l a n = true ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  intros l a n Hpw Hpos Hh. apply map_has_In in Hh.
+  apply maps_subtract_exact.
+  - exact (Hpos _ Hh).
+  - intros b s Hin. exact (Hpos _ Hin).
+  - intros b s Hin ->. pose proof (Hpos _ Hin) as P1. pose proof (Hpos _ Hh) as P2. cbn [snd] in P1, P2.
+    destruct (mng_pairwise_In2 edisj l _ _ Hpw Hin Hh) as [E|[D|D]]; [injection E as E; exact E| |];
+      exfalso; unfold edisj in D; apply iv_overlap_false in D; cbn [fst snd] in D; lia.
+  - intros b s Hin Hb.
+    destruct (mng_pairwise_In2 edisj l _ _ Hpw Hin Hh) as [E|[D|D]];
+      [injection E as E _; contradiction | |]; unfold edisj in D; apply iv_overlap_false in D; cbn [fst snd] in D; lia.
+Qed.
+
+#[using="HTOPB ob_munmap Hoff"] Lemma case_munmap : forall r len, node_ok (KMunmap r len).
+Proof. LiaFast.lf_pins (fun (HTOPB ob_munmap Hoff : LiaFast.U) => LiaFast.u0).
   intros r len L x md B s regs pc m K Hec Hx Hrq HL HB Hc Hcont.
   destruct Hrq as (rg & Hrg & Hk & Hlv & Hlen & Hl0 & _).
   assert (Hrgx : nth_error (kf_regions x) r = Some rg) by (subst x; exact Hrg).
@@ -795,8 +905,9 @@ Proof. LiaFast.lf_pins (fun (HTOPB ob_munmap : LiaFast.U) => LiaFast.u0).
   assert (Hlen1 : 1 <= len).
   { clear - Hlen G3 Hl0. destruct (Z_lt_le_dec len 1) as [Hl|Hl]; [|exact Hl]. exfalso. assert (len = 0) by lia. subst len.
     change (page_round 0) with 0 in Hlen. lia. }
-  apply (rz_munmap segs cfg rom L s r len regs pc m md K Hec (lk_halt _ _ _ _ _ HL) (lk_lazy _ _ _ _ _ HL) G2 Hlen1
-           ltac:(clear - G1; unfold PGSZ in *; lia) ltac:(rewrite <- Hlen; clear - G5 G1 HTOPB GT; unfold PGSZ in *; lia) ltac:(rewrite <- Hlen; exact Hhas)).
+  apply (rz_munmap segs cfg Hoff rom L s r len regs pc m md K Hec (lk_halt _ _ _ _ _ HL) (lk_lazy _ _ _ _ _ HL) G2 Hlen1
+           ltac:(clear - G1; unfold PGSZ in *; lia) ltac:(rewrite <- Hlen; clear - G5 G1 HTOPB GT; unfold PGSZ in *; lia) ltac:(rewrite <- Hlen; exact Hhas)
+           ltac:(rewrite <- Hlen; exact (mng_subtract_exact _ _ _ (lk_mdisj _ _ _ _ _ HL) (lk_mpos _ _ _ _ _ HL) Hhas))).
   apply (Hcont (eff_munmap (ly_reg L r) (page_round len)) 1 L _ (o_munmap FORB HTOP L s r len) (vm_only_munmap_next _ _ _)).
   2: { exact (ob_munmap L x md B r len rg HL HB Hc Hrgx Hk Hlv Hlen). }
   rewrite <- Hlen. fold a n.
@@ -878,6 +989,8 @@ Proof. LiaFast.lf_pins (fun (HTOPB ob_munmap : LiaFast.U) => LiaFast.u0).
   - exact (lk_atop _ _ _ _ _ HL).
   - exact (lk_lim _ _ _ _ _ HL).
   - exact (lk_rsz _ _ _ _ _ HL).
+  - exact (lk_vres _ _ _ _ _ HL).
+  - intros k rgk (Hk1 & Hk2 & Hk3). destruct (NTH k rgk Hk1 Hk3) as (_ & H). exact (lk_vfree _ _ _ _ _ HL k rgk (conj H (conj Hk2 Hk3))).
 Qed.
 
 #[using="Type"] Lemma guard_vmmaps : forall a n md, m_vmmaps (fixed_na_next (w64 50) a n md) =
@@ -971,6 +1084,8 @@ Proof. LiaFast.lf_pins (fun (Hoff ob_guard : LiaFast.U) => LiaFast.u0).
   - exact (lk_atop _ _ _ _ _ HL).
   - exact (lk_lim _ _ _ _ _ HL).
   - exact (lk_rsz _ _ _ _ _ HL).
+  - exact (lk_vres _ _ _ _ _ HL).
+  - exact (lk_vfree _ _ _ _ _ HL).
 Qed.
 
 #[using="Type"] Lemma page_round_up_aligned : forall x, x mod PGSZ = 0 -> page_round_up_Z x = x.
@@ -1029,7 +1144,8 @@ Proof. LiaFast.lf_pins (fun (Hv Hc0 Hcr Hr64 Hal Har : LiaFast.U) => LiaFast.u0)
   replace (0 <? cur) with true by (symmetry; apply Z.ltb_lt; unfold PGSZ in *; lia).
   replace (cur <? req) with true by (symmetry; apply Z.ltb_lt; lia).
   replace (req <? cur) with false by (symmetry; apply Z.ltb_ge; lia). cbn.
-  rewrite w64_sub by (unfold PGSZ in *; lia). reflexivity.
+  (* LPS 08b1429: brk_page_range builds the length as one Z_to_bv, so there is no bv subtraction left *)
+  reflexivity.
 Qed.
 
 #[using="cur Hv Hc0 Hcr Hr64 Hal Har"] Lemma brk_next_lazy : m_vm_lazy (with_brk_next md (w64 req) (w64 req)) = m_vm_lazy md.
@@ -1079,10 +1195,12 @@ Proof. LiaFast.lf_pins LiaFast.u0. intros [[rs b] ars] n. reflexivity. Qed.
   bv_unsigned (vm_brk (m_vmmaps md')) = ly_brk0 L + PGSZ * (p + 1) ->
   vm_start_brk (m_vmmaps md') = vm_start_brk (m_vmmaps md) -> vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
   vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md) ->
+  m_kernel md' = m_kernel md -> vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
   LINK HTOP FORB L (lupd (kf_regions x) r (mkRegion RkBrk (rg_len (nth r (kf_regions x) rg_dflt) + PGSZ) [] true),
                     BrkCur r (p + 1), kf_areas x ++ [SP r (PGSZ * p)]) md'.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros L x md md' r p HL Hbx Hf Htop E1 E2 E3 E4 E5 E6 E7 E8 E9.
+  intros L x md md' r p HL Hbx Hf Htop E1 E2 E3 E4 E5 E6 E7 E8 E9 EK EMB.
+  assert (VT : vdso_top (m_vmmaps md') = vdso_top (m_vmmaps md)) by (unfold vdso_top, mmap_top, alloc_top; rewrite EMB, E8; reflexivity).
   pose proof (lk_brk' L x md HL) as Hb. unfold brk_clause in Hb. rewrite Hbx in Hb. destruct Hb as (Hb1 & Hb2 & Hb3 & Hb4 & Hb5).
   set (rs := kf_regions x) in *. set (a := ly_brk0 L) in *.
   rewrite (nth_of_nth_error _ r _ rg_dflt Hb1). cbn [rg_len].
@@ -1168,6 +1286,9 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - unfold alloc_top. rewrite E8. exact (lk_atop _ _ _ _ _ HL).
   - rewrite E9. exact (lk_lim _ _ _ _ _ HL).
   - rewrite E3. exact (lk_rsz _ _ _ _ _ HL).
+  - intros e He. rewrite E3. rewrite EK, VT in He. exact (lk_vres _ _ _ _ _ HL e He).
+  - intros k rgk (H1 & H2 & H3). rewrite EK, VT. destruct (NTH k rgk H1) as [(-> & ->)|(_ & H')]; [cbn in H2; discriminate H2|].
+    exact (lk_vfree _ _ _ _ _ HL k rgk (conj H' (conj H2 H3))).
 Qed.
 
 #[using="Hoff HTOPB ob_brk_refuse ob_brk_grant"] Lemma case_brk : forall n, node_ok (KBrkGrow n).
@@ -1224,6 +1345,8 @@ Proof. LiaFast.lf_pins (fun (Hoff HTOPB ob_brk_refuse ob_brk_grant : LiaFast.U) 
         apply (region_free_mono _ _ _ _ Hf3). rewrite !u_w64 by (clear; unfold PGSZ; lia). clear. unfold PGSZ. lia.
       * intros aq Haq. left. rewrite VM in Haq. exact Haq.
       * exact (kk_other L (kf_of s) md RkBrk (PGSZ * 2) [] true HL ltac:(discriminate)).
+      * first [apply kernel_with_brk_next | symmetry; apply kernel_with_brk_next].
+      * first [reflexivity | rewrite VM; reflexivity].
     + intros Hg. rewrite Hv. rewrite Ec.
       assert (EK := o_brk_refuse FORB HTOP L s 2). fold cur in EK. rewrite Ec in EK.
       apply (Hcont _ 0 _ _ EK (vm_only_refl md)).
@@ -1274,6 +1397,8 @@ Proof. LiaFast.lf_pins (fun (Hoff HTOPB ob_brk_refuse ob_brk_grant : LiaFast.U) 
       * rewrite VM. reflexivity.
       * rewrite VM. reflexivity.
       * rewrite VM. reflexivity.
+      * first [reflexivity | unfold md'; first [apply kernel_with_brk_next | symmetry; apply kernel_with_brk_next]].
+      * first [reflexivity | rewrite VM; reflexivity].
     + intros Hg. rewrite Hv.
       assert (EK := o_brk_refuse FORB HTOP L s 1). fold cur in EK.
       apply (Hcont _ 0 _ _ EK (vm_only_refl md)).

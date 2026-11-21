@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YQ05.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed spec_table_ok, step_up, step_down, must_exit_in_scfg_relim; added vdso_alloc_false, vdso_unmodeled_up, vdso_unmodeled_down). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad 
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import SyscallTable.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YQ00 YQ03 YQ01 YQ04 YQ06.
+From LinuxProcessSemantics.LinuxProcessSem Require Import Vdso.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope. Open Scope bv_scope. Open Scope sys_scope.
@@ -79,8 +81,10 @@ destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_93 L0
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_94 L0 L d i m HM) |].
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_96 L0 L d i m HM) |].
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_98 L0 L d i m HM) |].
+destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_99 L0 L d i m HM) |].   (* [comment removed for export] *)
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_101 L0 L d i m HM) |].
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_113 L0 L d i m HM) |].
+destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_114 L0 L d i m HM) |].  (* [comment removed for export] *)
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_119 L0 L d i m HM) |].
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_123 L0 L d i m HM) |].
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_124 L0 L d i m HM) |].
@@ -131,6 +135,7 @@ destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_242 L
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_260 L0 L d i m HM) |].
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_261 L0 L d i m HM) |].
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_278 L0 L d i m HM) |].
+destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_287 L0 L d i m HM) |].  (* [comment removed for export] *)
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_435 L0 L d i m HM) |].
 destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_439 L0 L d i m HM) |].
 destruct Hin.
@@ -171,6 +176,35 @@ Proof.
 intros ms m x8 NB Hh Hp. destruct (alloc_budget_refused_b (sys_input segs ms x8) (relim L m)) eqn:E; [|reflexivity].
 exfalso. apply NB. split; [exact Hh|]. right. exists x8. split; [exact Hp|]. left. exact E.
 Qed.
+Lemma vdso_alloc_false : forall ms m fn n, vdso_fn_sysno fn = Some n ->
+  alloc_budget_refused_b (sys_input segs ms (Z_to_bv 64 n)) m = false.
+Proof. intros ms m fn n H. destruct fn; cbn in H; try discriminate H; injection H as <-; vm_compute; reflexivity. Qed.
+Lemma vdso_unmodeled_up : forall ms m fn, MOK L0 m ->
+  vdso_call_unmodeled segs ms (relim L m) fn -> vdso_call_unmodeled segs ms m fn.
+Proof.
+  intros ms m fn HM [Hu | [(n & Hn & Hs) | (n & eff & mo & evs & Hn & Hs & Hd)]].
+  - left; exact Hu.
+  - right; left. exists n. split; [exact Hn|].
+    destruct (syscall_spec_dir L0 L HLE true _ m HM (vdso_alloc_false ms (relim L m) fn n Hn) ltac:(discriminate) _ Hs) as ([e0 m0 ev0|] & Hs0 & R); cbn in R; [contradiction|exact Hs0].
+  - right; right.
+    destruct (syscall_spec_dir L0 L HLE true _ m HM (vdso_alloc_false ms (relim L m) fn n Hn) ltac:(discriminate) _ Hs) as ([e0 m0 ev0|] & Hs0 & R); cbn in R; [|contradiction].
+    destruct R as (<- & -> & <- & _). exists n, eff, m0, evs. split; [exact Hn|]. split; [exact Hs0|].
+    destruct Hd as [Hd|Hd]; [left; exact Hd | right; rewrite relim_halted in Hd; exact Hd].
+Qed.
+Lemma vdso_unmodeled_down : forall ms m fn, MOK L0 m -> MV_OK m ->
+  vdso_call_unmodeled segs ms m fn -> vdso_call_unmodeled segs ms (relim L m) fn.
+Proof.
+  intros ms m fn HM MV [Hu | [(n & Hn & Hs) | (n & eff & mo & evs & Hn & Hs & Hd)]].
+  - left; exact Hu.
+  - right; left. exists n. split; [exact Hn|].
+    destruct (syscall_spec_dir L0 L HLE false _ m HM (vdso_alloc_false ms (relim L m) fn n Hn) (fun _ => MV) _ Hs)
+      as ([e0 m0 ev0|] & Hs0 & R); cbn in R; [contradiction|exact Hs0].
+  - right; right.
+    destruct (syscall_spec_dir L0 L HLE false _ m HM (vdso_alloc_false ms (relim L m) fn n Hn) (fun _ => MV) _ Hs)
+      as ([e0 m0 ev0|] & Hs0 & R); cbn in R; [|contradiction].
+    destruct R as (-> & -> & -> & _). exists n, eff, (relim L mo), evs. split; [exact Hn|]. split; [exact Hs0|].
+    destruct Hd as [Hd|Hd]; [left; exact Hd | right; rewrite relim_halted; exact Hd].
+Qed.
 Lemma step_up : forall ms m evs st,
 MOK L0 m -> MV_OK m -> ~ budget_refused_at segs (mkCfg ms (relim L m)) ->
 sstep_cfg segs cfg (mkCfg ms (relim L m)) evs st ->
@@ -181,7 +215,11 @@ end.
 Proof.
 intros ms m evs st HM MV NB Hs.
 remember (mkCfg ms (relim L m)) as c eqn:Ec.
-destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
+destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha Hnv
+| ms0 mm fn n eff mm' mm'' evs0 Hh Hp Ha Hfn Hno Hsp Hef Hh' Hmat
+| ms0 mm fn n eff mm' evs0 Hh Hp Ha Hfn Hno Hsp Hef Hh' Hmat
+| ms0 mm fn Hh Hp Ha Hfn Hun
+| ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
 | ms0 mm x8 eff mm' evs0 Hh Hp Hsp Hnsp Hh' Hmat | ms0 mm x8 eff mm' evs0 code Hh Hp Hsp Hh' Hk | ms0 mm x8 eff mm' evs0 sig Hh Hp Hsp Hk | ms0 mm x8 Hh Hp Hsp];
 injection Ec as -> ->; rewrite relim_halted in Hh.
 -
@@ -197,13 +235,40 @@ apply sstep_cfg_instr; [exact Hh | exact Hp |]. unfold mi_account_step. rewrite 
 unfold mi_account_step in Ha.
 destruct (step_accesses segs ms) as [report| |] eqn:Est; [|apply sstep_cfg_instr_fault; [exact Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity]|discriminate].
 destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)) as [m1|] eqn:Emat; [discriminate|].
-exfalso. apply NB. split; [exact Hh|]. left. split; [exact Hp|]. exists report. split; [exact Est | exact Emat].
--
+exfalso. apply NB. split; [exact Hh|]. left. split; [exact Hp|]. left. exists report. split; [exact Est | exact Emat].
+- (* [comment removed for export] *)
 unfold mi_account_step in Ha.
 destruct (step_accesses segs ms) as [report| |] eqn:Est; [|discriminate|].
 + destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)); discriminate.
-+ apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity].
--
++ apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hnv].
+- (* [comment removed for export] *)
+unfold mi_account_step in Ha.
+destruct (step_accesses segs ms) as [report| |] eqn:Est;
+[destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)); discriminate|discriminate|].
+destruct (syscall_spec_dir L0 L HLE true _ m HM ltac:(first [exact (vdso_alloc_false segs ms (relim L m) fn n Hno)
+                                | exact (vdso_alloc_false ms (relim L m) fn n Hno)]) ltac:(discriminate) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+destruct R as (<- & -> & <- & HM0).
+rewrite relim_halted in Hh'.
+assert (HLE' : L <= vm_limit (m_vmmaps m0)) by (unfold MOK in HM0; rewrite HM0; exact HLE).
+destruct (materialize_relim_up L m0 _ _ HLE' Hmat) as (m0' & Hmat0 & ->).
+exists (vdso_post segs ms m (vdso_frame segs) eff), (with_vdso_bump m0'). split; [|split].
++ eapply sstep_cfg_vdso_call;
+[exact Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hfn | exact Hno
+| exact Hsp0 | exact Hef | exact Hh' | exact Hmat0].
++ reflexivity.
++ unfold MOK. change (vm_limit (m_vmmaps (with_vdso_bump m0'))) with (vm_limit (m_vmmaps m0')).
+rewrite (materialize_limit _ _ _ Hmat0). exact HM0.
+- (* [comment removed for export] *)
+exfalso. apply NB. split; [exact Hh|]. left. split; [exact Hp|]. right. split; [exact Ha|].
+exists fn, n, eff, mm', evs0. split; [exact Hfn|]. split; [exact Hno|]. split; [exact Hsp|].
+split; [exact Hef|]. split; [exact Hh' | exact Hmat].
+- (* [comment removed for export] *)
+unfold mi_account_step in Ha.
+destruct (step_accesses segs ms) as [report| |] eqn:Est;
+[destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)); discriminate|discriminate|].
+eapply sstep_cfg_vdso_unmodeled;
+[exact Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hfn | exact (vdso_unmodeled_up _ _ _ HM Hun)].
+- (* [comment removed for export] *)
 destruct (syscall_spec_dir L0 L HLE true _ m HM (not_refused_mark _ _ _ NB Hh Hp) ltac:(discriminate) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
 destruct R as (<- & -> & <- & HM0).
 rewrite relim_halted in Hh'.
@@ -238,7 +303,11 @@ exists evs' st', sstep_cfg segs cfg (mkCfg ms (relim L m)) evs' st'.
 Proof.
 intros ms m evs st HM MV NB Hs.
 remember (mkCfg ms m) as c eqn:Ec.
-destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
+destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha Hnv
+| ms0 mm fn n eff mm' mm'' evs0 Hh Hp Ha Hfn Hno Hsp Hef Hh' Hmat
+| ms0 mm fn n eff mm' evs0 Hh Hp Ha Hfn Hno Hsp Hef Hh' Hmat
+| ms0 mm fn Hh Hp Ha Hfn Hun
+| ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
 | ms0 mm x8 eff mm' evs0 Hh Hp Hsp Hnsp Hh' Hmat | ms0 mm x8 eff mm' evs0 code Hh Hp Hsp Hh' Hk | ms0 mm x8 eff mm' evs0 sig Hh Hp Hsp Hk | ms0 mm x8 Hh Hp Hsp];
 injection Ec as -> ->.
 -
@@ -247,20 +316,55 @@ destruct (step_accesses segs ms) as [report| |] eqn:Est; [|discriminate|discrimi
 destruct (materialize_model_accesses m (@accessed_ranges _ report)) as [m0|] eqn:Emat; [|discriminate].
 destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)) as [m1|] eqn:Emat1.
 + eexists [], _. apply sstep_cfg_instr; [halt_tac Hh | exact Hp |]. unfold mi_account_step. rewrite Est, Emat1. reflexivity.
-+ exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. exists report. split; [exact Est | exact Emat1].
--
++ exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. left. exists report. split; [exact Est | exact Emat1].
+- (* [comment removed for export] *)
 unfold mi_account_step in Ha.
 destruct (step_accesses segs ms) as [report| |] eqn:Est; [|  |discriminate].
 + destruct (materialize_model_accesses m (@accessed_ranges _ report)) as [m0|] eqn:Emat; [discriminate|].
 destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)) as [m1|] eqn:Emat1.
 * eexists [], _. apply sstep_cfg_instr; [halt_tac Hh | exact Hp |]. unfold mi_account_step. rewrite Est, Emat1. reflexivity.
-* exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. exists report. split; [exact Est | exact Emat1].
+* exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. left. exists report. split; [exact Est | exact Emat1].
 + eexists [], SError. apply sstep_cfg_instr_fault; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity].
 -
 unfold mi_account_step in Ha.
 destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
-eexists [], SError. apply sstep_cfg_instr_unmodeled; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity].
--
+eexists [], SError. apply sstep_cfg_instr_unmodeled; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hnv].
+- (* [comment removed for export] *)
+unfold mi_account_step in Ha.
+destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
+destruct (syscall_spec_dir L0 L HLE false _ m HM ltac:(first [exact (vdso_alloc_false segs ms (relim L m) fn n Hno)
+                                | exact (vdso_alloc_false ms (relim L m) fn n Hno)]) (fun _ => MV) _ Hsp)
+as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+destruct R as (-> & -> & -> & HM0).
+destruct (materialize_model_accesses (relim L mm') (syscall_effect_accesses eff)) as [m1|] eqn:Emat1.
++ eexists evs0, _. eapply sstep_cfg_vdso_call;
+[halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hfn | exact Hno
+| exact Hsp0 | exact Hef | halt_tac Hh' | exact Emat1].
++ exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. right.
+split; [cbn [cfg_ms cfg_model]; unfold mi_account_step; rewrite Est; reflexivity|].
+exists fn, n, eff, (relim L mm'), evs0. split; [exact Hfn|]. split; [exact Hno|]. split; [exact Hsp0|].
+split; [exact Hef|]. split; [halt_tac Hh' | exact Emat1].
+- (* [comment removed for export] *)
+unfold mi_account_step in Ha.
+destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
+destruct (syscall_spec_dir L0 L HLE false _ m HM ltac:(first [exact (vdso_alloc_false segs ms (relim L m) fn n Hno)
+                                | exact (vdso_alloc_false ms (relim L m) fn n Hno)]) (fun _ => MV) _ Hsp)
+as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+destruct R as (-> & -> & -> & HM0).
+destruct (materialize_model_accesses (relim L mm') (syscall_effect_accesses eff)) as [m1|] eqn:Emat1.
++ eexists evs0, _. eapply sstep_cfg_vdso_call;
+[halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hfn | exact Hno
+| exact Hsp0 | exact Hef | halt_tac Hh' | exact Emat1].
++ exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. right.
+split; [cbn [cfg_ms cfg_model]; unfold mi_account_step; rewrite Est; reflexivity|].
+exists fn, n, eff, (relim L mm'), evs0. split; [exact Hfn|]. split; [exact Hno|]. split; [exact Hsp0|].
+split; [exact Hef|]. split; [halt_tac Hh' | exact Emat1].
+- (* [comment removed for export] *)
+unfold mi_account_step in Ha.
+destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
+eexists [], SError. eapply sstep_cfg_vdso_unmodeled;
+[halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hfn | exact (vdso_unmodeled_down _ _ _ HM MV Hun)].
+- (* [comment removed for export] *)
 pose proof (not_refused_mark _ _ _ NB Hh Hp) as G.
 destruct (syscall_spec_dir L0 L HLE false _ m HM G (fun _ => MV) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
 destruct R as (-> & -> & -> & HM0).
@@ -344,17 +448,18 @@ Lemma init_config_limit : forall segs pc ph sp brk0 mbase rnd lim inp,
 vm_limit (m_vmmaps (cfg_model (init_config segs pc ph sp brk0 mbase rnd lim inp))) = lim.
 Proof. intros. reflexivity. Qed.
 Corollary must_exit_in_scfg_relim : forall cfg S img (Lbig Lsmall : Z) en inp,
-Lsmall <= Lbig ->
-source_within_budget_scfg cfg Lsmall img en inp ->
-(match img, en with mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-MREMAP_MOVE_OK segs cfg (init_config segs pc ph sp brk0 mbase rnd Lbig inp) end) ->
-must_exit_in_scfg cfg S img Lbig en inp ->
-must_exit_in_scfg cfg S img Lsmall en inp.
+  Lsmall <= Lbig ->
+  source_within_budget_scfg cfg Lsmall img en inp ->
+  (match img, en with mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
+     MREMAP_MOVE_OK (run_segments segs inp sp mbase) cfg
+       (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp) end) ->
+  must_exit_in_scfg cfg S img Lbig en inp ->
+  must_exit_in_scfg cfg S img Lsmall en inp.
 Proof.
-intros cfg S [segs pc ph] Lbig Lsmall [sp brk0 mbase rnd] inp HLE NB MV Hme.
-unfold must_exit_in_scfg in *. unfold source_within_budget_scfg, run_scfg_budget_refused in NB.
-rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp) in NB |- *.
-apply must_exit_relim; [rewrite init_config_limit; exact HLE | exact NB | exact MV | exact Hme].
+  intros cfg S [segs pc ph] Lbig Lsmall [sp brk0 mbase rnd] inp HLE NB MV Hme.
+  unfold must_exit_in_scfg in *. unfold source_within_budget_scfg, run_scfg_budget_refused in NB.
+  rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp) in NB |- *.
+  apply must_exit_relim; [rewrite init_config_limit; exact HLE | exact NB | exact MV | exact Hme].
 Qed.
 Theorem MREMAP_MOVE_OK_of_WF : forall segs cfg c, WF (cfg_model c) -> MREMAP_MOVE_OK segs cfg c.
 Proof. intros segs cfg c Hwf tr c' Hstar. apply MV_OK_wf. exact (star_cfg_WF segs cfg _ _ _ Hstar Hwf). Qed.

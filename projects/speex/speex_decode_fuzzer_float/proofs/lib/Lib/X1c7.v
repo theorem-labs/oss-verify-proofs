@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's errno answers and maps_subtract cut in munmap_exact_outcome and munmap_out, with munmap_next, munmap_grant, munmap_out_u and munmap_outcome_u in place of munmap_outcome; the place_declined_b premise on mmap_rw_outcome_u and mmap_noaccess_outcome_u; mprotect's vDSO/vvar gate; the channel-reader premise of writev_chan_outcome and write_chan_outcome, with the access_ok range in the latter; grant_witness and reserve_witness over the hint; vm_only keeps the kernel build, which the vDSO/vvar pair's width reads). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Export X1bl.
@@ -369,23 +370,23 @@ w_is0 len = false ->
 let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
 map_has (vm_maps (m_vmmaps m)) addr n = true ->
 munmap_spec addr len i m o <->
-o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
+(exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+\/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
 (with_mmap_destroyed addr n
-(mkVmMapsFull (vm_reserved (m_vmmaps m))
-(map_remove (vm_maps (m_vmmaps m)) addr)
-(maps_subtract (vm_noaccess (m_vmmaps m))
-(bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-(vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m))
-(vm_limit (m_vmmaps m)) (vm_mmap_base (m_vmmaps m))
-(vm_init_sp (m_vmmaps m))) m) [].
+(mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) [].
 Proof.
 intros addr len i m o Hal Hlen Hnw. cbv zeta. intros Hhas. unfold munmap_spec.
 rewrite (proj2 (Z.eqb_eq _ _) Hal), Hlen. cbn [negb orb].
-sys_unfold. rewrite (proj2 (Z.ltb_ge _ _) Hnw).
+rewrite (proj2 (Z.ltb_ge _ _) Hnw). sys_unfold.
 split.
-- destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys. reflexivity.
-- intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
-split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|].
+- destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys;
+solve [ left; eexists; split; [eassumption|reflexivity] | right; reflexivity ].
+- intros [(e & He & ->) | ->].
++ eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+split; [|reflexivity]. left. eexists _, _, _, _.
+split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
++ eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+split; [|reflexivity]. right. eexists _, _, _, _. split; [reflexivity|].
 split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
@@ -445,15 +446,13 @@ Qed.
 Lemma mmap_rw_outcome_u : forall addr len prot flags fd off i m o,
 w_is0 len = false ->
 mmap_modeled_b prot flags off = true ->
+place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
 let h := m_vmmaps m in
 let nZ := page_round_up_Z (bv_unsigned len) in
 let n := Z_to_bv 64 nZ in
 mmap_spec addr len prot flags fd off i m o <->
 mmap_err_out m o
-\/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-/\ (0 < bv_unsigned a)%Z
-/\ (bv_unsigned a + nZ <= alloc_top h)%Z
-/\ region_free (vm_reserved h ++ vm_maps h) a n = true
+\/ exists a, (linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
 /\ mmap_noreserve_backed_ok flags m nZ = true)
 /\ o = Ok (mkEffect a [] [(a, n)])
 (with_mmap_backing flags a n
@@ -462,17 +461,18 @@ mmap_err_out m o
 (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h)
 (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-intros addr len prot flags fd off i m o Hlen Hmod. cbv zeta. unfold mmap_spec.
+intros addr len prot flags fd off i m o Hlen Hmod Hdecl. cbv zeta. unfold mmap_spec.
 destruct (mmap_modeled_pre _ _ _ Hmod) as [-> ->]. cbn [negb].
-rewrite Hlen, Hmod. unfold mmap_err_out. sys_unfold.
+rewrite Hlen, Hmod. cbv beta iota.
+refine (iff_trans (bind_get_model _ i m o) _). cbv beta zeta.
+rewrite Hdecl. cbv beta iota. unfold mmap_err_out. sys_unfold.
 split.
 - destruct o as [x m' evs|]; intros H; inv_sys.
   + left. eexists; split; [eassumption|reflexivity].
   + right. eexists; split; [|reflexivity]. repeat split; assumption.
 - intros [(e & He & ->) | (a & Ha & ->)].
   + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
-  + right. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
-    eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
+  + right. eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
     split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
@@ -480,15 +480,13 @@ Lemma mmap_noaccess_outcome_u : forall addr len prot flags fd off i m o,
 w_is0 len = false ->
 mmap_modeled_b prot flags off = false ->
 mmap_noaccess_b prot flags off = true ->
+place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
 let h := m_vmmaps m in
 let nZ := page_round_up_Z (bv_unsigned len) in
 let n := Z_to_bv 64 nZ in
 mmap_spec addr len prot flags fd off i m o <->
 mmap_err_out m o
-\/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-/\ (0 < bv_unsigned a)%Z
-/\ (bv_unsigned a + nZ <= alloc_top h)%Z
-/\ region_free (vm_reserved h ++ vm_maps h) a n = true)
+\/ exists a, linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
 /\ o = Ok (mkEffectU a [] [] [(a, n)] [] [])
 (with_mmap_backing flags a n
 (with_vmmaps
@@ -496,17 +494,18 @@ mmap_err_out m o
 ((a, n) :: vm_noaccess h) (vm_start_brk h) (vm_brk h)
 (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-intros addr len prot flags fd off i m o Hlen Hmod Hna. cbv zeta. unfold mmap_spec.
+intros addr len prot flags fd off i m o Hlen Hmod Hna Hdecl. cbv zeta. unfold mmap_spec.
 destruct (mmap_noaccess_pre _ _ _ Hna) as [-> ->]. cbn [negb].
-rewrite Hlen, Hmod, Hna. unfold mmap_err_out. sys_unfold.
+rewrite Hlen, Hmod, Hna. cbv beta iota.
+refine (iff_trans (bind_get_model _ i m o) _). cbv beta zeta.
+rewrite Hdecl. cbv beta iota. unfold mmap_err_out. sys_unfold.
 split.
 - destruct o as [x m' evs|]; intros H; inv_sys.
   + left. eexists; split; [eassumption|reflexivity].
   + right. eexists; split; [|reflexivity]. repeat split; assumption.
 - intros [(e & He & ->) | (a & Ha & ->)].
   + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
-  + right. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
-    eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
+  + right. eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
     split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
@@ -560,6 +559,10 @@ w_is0 len = false ->
 mprotect_modeled_b prot = true ->
 let h := m_vmmaps m in
 let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
+(* LPS 75d69e00 Sys/Mm/Mprotect.v: a request meeting the vdso/vvar pair is
+   [unmodeled], and that gate sits ABOVE the containment test, so the iff
+   below is false without this premise. *)
+region_free (vdso_reserved (m_kernel m) (vdso_top h)) addr n = true ->
 map_contains (vm_noaccess h) addr n = true ->
 map_contains (vm_maps h) addr n = true ->
 mprotect_spec addr len prot i m o <->
@@ -567,16 +570,16 @@ mprotect_spec addr len prot i m o <->
 \/ (mprotect_budget_ok m addr n = true
 /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model_next m addr n) []).
 Proof.
-intros addr len prot i m o Hgc Hal Hlen Hnw Hmod. cbv zeta. intros Hna Hma.
+intros addr len prot i m o Hgc Hal Hlen Hnw Hmod. cbv zeta. intros Hvd Hna Hma.
 unfold mprotect_spec.
 rewrite Hgc, (proj2 (Z.eqb_eq _ _) Hal), Hlen, (proj2 (Z.leb_gt _ _) Hnw), Hmod. cbn [negb].
 sys_unfold.
 split.
-- destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hna, Hma in *; cbn [andb] in *; inv_sys.
+- destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hvd, Hna, Hma in *; cbn [negb andb] in *; inv_sys.
   + left. eexists; split; [eassumption|reflexivity].
   + right. split; [assumption|reflexivity].
 - intros [(e & He & ->) | (Hb & ->)]; eexists _, _, _, _; (split; [reflexivity|]);
-  rewrite Hna, Hma; cbn [andb]; (split; [|reflexivity]).
+  rewrite Hvd, Hna, Hma; cbn [negb andb]; (split; [|reflexivity]).
   + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
   + right. eexists _, _, _, _. split; [exists tt; split; [exact Hb|reflexivity]|].
     split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
@@ -862,13 +865,16 @@ import_iovecs (in_mem i) iov (iovcnt32 iovcnt) = ImpOk iovs ->
 (iovs_total iovs <= node_rw_max)%Z ->
 gather_iovecs (in_mem i) iovs = Some bs ->
 (1 <= Z.of_nat (length bs))%Z ->
+(* At LPS 08b1429 and after a nonempty writev to a channel whose reader is gone raises
+   SIGPIPE (ReadWrite.v [writev_spec]); the launch's [in_channel_reader] seeds this flag. *)
+m_channel_reader m = true ->
 let CA := import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt) in
 writev_spec fd iov iovcnt i m o <->
 exists k, (1 <= k <= length bs)%nat /\
 o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
 m (map (WriteEv ch) (firstn k bs)).
 Proof.
-intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1.
+intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1 Hrd.
 cbv zeta.
 pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
 pose proof (cap_iovecs_id_rw _ Htot) as Hcap.
@@ -882,6 +888,7 @@ unfold writev_spec. rewrite (bind_input_model (fun i0 m0 => _)). cbv beta.
 rewrite Hfd, Hch. cbv iota. rewrite Himp. cbv iota zeta.
 unfold writev_gathered. rewrite Hcap, (gather_prefix_full _ _ _ Hg).
 replace (iovs_total iovs =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia).
+rewrite Hrd. change (negb true) with false.
 replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
 replace (addr_is_error_b (len_word bs)) with false
 by (symmetry; rewrite <- (firstn_all bs); rewrite (Herrk (length bs)) by lia; reflexivity).
@@ -974,7 +981,26 @@ split.
 eexists _, _, _, _. split; [reflexivity|]. rewrite Hlk. split; reflexivity.
 Qed.
 
-Definition munmap_out (addr len : word) (m : Model) (o : outcome SyscallEffect) : Prop :=
+(* The post-state both destructive arms of [Mmap.munmap_spec] leave:
+   the request's range is cut out of BOTH ledgers.  Before LPS
+   75d69e00 the exact arm removed the whole [vm_maps] entry
+   ([map_remove]); the model now writes [maps_subtract] over the
+   request in that field too, and [mmap_fixed_destroyed_next] is the
+   name it does it under
+   (75d69e00:theories/LinuxProcessSem/Sys/Mm/Mmap.v:1488). *)
+Definition munmap_next (addr n : word) (m : Model) : Model :=
+with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
+
+Definition munmap_grant (addr n : word) (m : Model) (o : outcome SyscallEffect) : Prop :=
+o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] []) (munmap_next addr n m) [].
+
+(* [Mmap.munmap_spec] restated, outcome by outcome and with no
+   configuration filter: the two EINVAL gates, the exact arm, the
+   free-range no-op, the partial (cut) arm, and unmodeled.  Both
+   destructive arms are an [alt] of the injected -ENOMEM
+   ([munmap_errnos]) with the cut, so both are a disjunction here.
+   Source: 75d69e00:theories/LinuxProcessSem/Sys/Mm/Mmap.v:2737-2770. *)
+Definition munmap_out_u (addr len : word) (m : Model) (o : outcome SyscallEffect) : Prop :=
 let h := m_vmmaps m in
 let nZ := page_round_up_Z (bv_unsigned len) in
 let n := Z_to_bv 64 nZ in
@@ -982,31 +1008,91 @@ if negb (Z.eqb (bv_unsigned addr mod page_size) 0) || w_is0 len
 then o = Ok (mkEffect (errno_ret EINVAL) [] []) m []
 else if (TASK_SIZE <? bv_unsigned addr + nZ)%Z then o = Ok (mkEffect (errno_ret EINVAL) [] []) m []
 else if map_has (vm_maps h) addr n then
-o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
-(with_mmap_destroyed addr n
-(mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) addr)
-(maps_subtract (vm_noaccess h) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-(vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m) []
+(exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+\/ munmap_grant addr n m o
 else if munmap_free_ok h addr nZ then o = Ok (mkEffect (Z_to_bv 64 0) [] []) m []
+else if munmap_cut_ok h addr nZ then
+(exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+\/ munmap_grant addr n m o
 else o = Unmodeled.
 
-Lemma munmap_outcome : forall addr len i m o,
-munmap_spec addr len i m o <-> munmap_out addr len m o.
+(* The same table with the injected -ENOMEM dropped from the two
+   destructive arms.  That is what [kit_cfg] leaves admissible: the
+   alloc family is off ([Common.CfgStep.kit_cfg_alloc_only]), so the
+   -ENOMEM is a refusal, and the grant beside it in the SAME [alt] is
+   the witness that makes the refusal spurious
+   ([Run.spurious_refusal_cfg]'s third conjunct).  The equivalence is
+   [X1c2.munmap_outcome]; this definition is the shape every consumer
+   of [nstep (NMunmap _ _)] reads. *)
+Definition munmap_out (addr len : word) (m : Model) (o : outcome SyscallEffect) : Prop :=
+let h := m_vmmaps m in
+let nZ := page_round_up_Z (bv_unsigned len) in
+let n := Z_to_bv 64 nZ in
+if negb (Z.eqb (bv_unsigned addr mod page_size) 0) || w_is0 len
+then o = Ok (mkEffect (errno_ret EINVAL) [] []) m []
+else if (TASK_SIZE <? bv_unsigned addr + nZ)%Z then o = Ok (mkEffect (errno_ret EINVAL) [] []) m []
+else if map_has (vm_maps h) addr n then munmap_grant addr n m o
+else if munmap_free_ok h addr nZ then o = Ok (mkEffect (Z_to_bv 64 0) [] []) m []
+else if munmap_cut_ok h addr nZ then munmap_grant addr n m o
+else o = Unmodeled.
+
+Lemma munmap_outcome_u : forall addr len i m o,
+munmap_spec addr len i m o <-> munmap_out_u addr len m o.
 Proof.
-intros addr len i m o. unfold munmap_spec, munmap_out. cbv zeta.
-destruct (negb (bv_unsigned addr mod page_size =? 0)%Z || w_is0 len).
-{ apply err_ret_outcome. }
-destruct (TASK_SIZE <? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:Hwrap;
-destruct (map_has (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:Hhas;
-destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))) eqn:Hfree;
-sys_unfold; split;
-first [ destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hwrap, ?Hhas, ?Hfree in *; inv_sys; reflexivity
-| intros ->;
-first [ eexists _, _, _, _; split; [reflexivity|]; rewrite ?Hwrap, ?Hhas, ?Hfree;
-first [ split; reflexivity
-| split; [|reflexivity]; eexists _, _, _, _; split; [reflexivity|];
-split; [|reflexivity]; eexists _, _, _, _; repeat split; reflexivity ]
-| right; eexists _, _, _; split; [reflexivity|]; rewrite ?Hwrap, ?Hhas, ?Hfree; reflexivity ] ].
+intros addr len i m o. unfold munmap_out_u, munmap_grant, munmap_next. cbv zeta.
+destruct (negb (bv_unsigned addr mod page_size =? 0)%Z || w_is0 len) eqn:Hg1.
+{ unfold munmap_spec. rewrite Hg1. apply err_ret_outcome. }
+unfold munmap_spec. rewrite Hg1.
+destruct (TASK_SIZE <? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:Hwrap.
+{ sys_unfold. split.
+- destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hwrap in *; inv_sys; reflexivity.
+- intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite ?Hwrap. split; reflexivity. }
+destruct (map_has (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:Hhas.
+{ sys_unfold. split.
+- destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hwrap, ?Hhas in *; inv_sys;
+solve [ left; eexists; split; [eassumption|reflexivity] | right; reflexivity ].
+- intros [(e & He & ->) | ->].
++ eexists _, _, _, _. split; [reflexivity|]. rewrite ?Hwrap, ?Hhas.
+split; [|reflexivity]. left. eexists _, _, _, _.
+split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
++ eexists _, _, _, _. split; [reflexivity|]. rewrite ?Hwrap, ?Hhas.
+split; [|reflexivity]. right. eexists _, _, _, _. split; [reflexivity|].
+split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity. }
+destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))) eqn:Hfree.
+{ sys_unfold. split.
+- destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hwrap, ?Hhas, ?Hfree in *; inv_sys; reflexivity.
+- intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite ?Hwrap, ?Hhas, ?Hfree. split; reflexivity. }
+destruct (munmap_cut_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))) eqn:Hcut.
+{ sys_unfold. split.
+- destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hwrap, ?Hhas, ?Hfree, ?Hcut in *; inv_sys;
+solve [ left; eexists; split; [eassumption|reflexivity] | right; reflexivity ].
+- intros [(e & He & ->) | ->].
++ eexists _, _, _, _. split; [reflexivity|]. rewrite ?Hwrap, ?Hhas, ?Hfree, ?Hcut.
+split; [|reflexivity]. left. eexists _, _, _, _.
+split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
++ eexists _, _, _, _. split; [reflexivity|]. rewrite ?Hwrap, ?Hhas, ?Hfree, ?Hcut.
+split; [|reflexivity]. right. eexists _, _, _, _. repeat split; reflexivity. }
+sys_unfold. split.
+- destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hwrap, ?Hhas, ?Hfree, ?Hcut in *; inv_sys; reflexivity.
+- intros ->. right. eexists _, _, _. split; [reflexivity|].
+rewrite ?Hwrap, ?Hhas, ?Hfree, ?Hcut. reflexivity.
+Qed.
+
+(* The two tables agree on [Unmodeled]: the arms they differ in admit
+   only [Ok] outcomes.  This is what [nsafe (NMunmap _ _)] needs, and
+   it is why [X1c2.nsafe_munmap_iff] may be read against the filtered
+   [munmap_out] although safety is a question about the raw spec. *)
+Lemma munmap_out_unmodeled : forall addr len m,
+munmap_out_u addr len m Unmodeled <-> munmap_out addr len m Unmodeled.
+Proof.
+intros addr len m. unfold munmap_out_u, munmap_out, munmap_grant, munmap_next. cbv zeta.
+destruct (negb (bv_unsigned addr mod page_size =? 0)%Z || w_is0 len); [reflexivity|].
+destruct (TASK_SIZE <? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z; [reflexivity|].
+destruct (map_has (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))).
+{ split; [intros [(e & _ & E)|E]; [discriminate E| exact E]| intros E; right; exact E]. }
+destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); [reflexivity|].
+destruct (munmap_cut_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); [|reflexivity].
+split; [intros [(e & _ & E)|E]; [discriminate E| exact E]| intros E; right; exact E].
 Qed.
 
 Lemma write_chan_outcome : forall fd buf count i m o ch bs,
@@ -1015,19 +1101,23 @@ w_is0 ch = false ->
 read_bytes_map (in_mem i) buf count = Some bs ->
 bv_unsigned count = Z.of_nat (length bs) ->
 (1 <= Z.of_nat (length bs) <= rw_bytes_max)%Z ->
+(* The channel arm's two gates since LPS 08b1429, in the spec's order: [access_ok] on the
+   named range, then the reader (ReadWrite.v [write_spec]). *)
+access_okb buf (bv_unsigned count) = true ->
+m_channel_reader m = true ->
 write_spec fd buf count i m o <->
 exists k, (1 <= k <= length bs)%nat /\
 o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] [(buf, k)])
 m (map (WriteEv ch) (firstn k bs)).
 Proof.
-intros fd buf count i m o ch bs Hfd Hch Hrd Hcnt Hlen.
+intros fd buf count i m o ch bs Hfd Hch Hrd Hcnt Hlen Hacc Hrdr.
 unfold write_spec.
 rewrite (bind_input_model (fun i0 m0 => _)). cbv beta.
 rewrite Hfd, Hch.
 rewrite rw_range_in_range by lia.
 assert (Hc0 : w_is0 count = false).
 { unfold w_is0, bv_eqb. rewrite Hcnt. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. apply Z.eqb_neq. lia. }
-rewrite Hc0. cbv zeta.
+rewrite Hc0, Hacc, Hrdr. change (negb true) with false. cbv zeta.
 rewrite write_source_of_rw by lia.
 rewrite (readable_bytes_full _ _ _ _ Hrd).
 replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
@@ -1077,7 +1167,10 @@ else if negb (Z.eqb (bv_unsigned addr mod page_size) 0) then o = Ok (mkEffect (e
 else if w_is0 len then o = Ok (mkEffect (Z_to_bv 64 0) [] []) m []
 else if (two_pow_64 <=? bv_unsigned addr + nZ)%Z then o = Ok (mkEffect (errno_ret ENOMEM) [] []) m []
 else if mprotect_modeled_b prot then
-if map_contains (vm_noaccess h) addr n && map_contains (vm_maps h) addr n then
+(* LPS 75d69e00 Sys/Mm/Mprotect.v: a request meeting the vdso/vvar pair is
+   [unmodeled], and that gate sits ABOVE the containment test. *)
+if negb (region_free (vdso_reserved (m_kernel m) (vdso_top h)) addr n) then o = Unmodeled
+else if map_contains (vm_noaccess h) addr n && map_contains (vm_maps h) addr n then
 (mprotect_refusable m addr n = true
 /\ exists e, In e mprotect_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
 \/ (mprotect_budget_ok m addr n = true /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model_next m addr n) [])
@@ -1095,7 +1188,9 @@ else if negb (Z.eqb (bv_unsigned addr mod page_size) 0) then o = Ok (mkEffect (e
 else if w_is0 len then o = Ok (mkEffect (Z_to_bv 64 0) [] []) m []
 else if (two_pow_64 <=? bv_unsigned addr + nZ)%Z then o = Ok (mkEffect (errno_ret ENOMEM) [] []) m []
 else if mprotect_modeled_b prot then
-if map_contains (vm_noaccess h) addr n && map_contains (vm_maps h) addr n then
+(* LPS 75d69e00 Sys/Mm/Mprotect.v: see [mprotect_out] above. *)
+if negb (region_free (vdso_reserved (m_kernel m) (vdso_top h)) addr n) then o = Unmodeled
+else if map_contains (vm_noaccess h) addr n && map_contains (vm_maps h) addr n then
 (exists e, In e mprotect_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
 \/ (mprotect_budget_ok m addr n = true /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model_next m addr n) [])
 else if map_contains (vm_maps h) addr n && region_free (vm_noaccess h) addr n then
@@ -1112,6 +1207,13 @@ destruct (negb (bv_unsigned addr mod page_size =? 0)%Z); [apply err_ret_outcome|
 destruct (w_is0 len); [unfold ret_only, pure; reflexivity|].
 destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z; [apply err_ret_outcome|].
 destruct (mprotect_modeled_b prot); [| unfold unmodeled; reflexivity].
+(* LPS 75d69e00: the vdso/vvar gate, between [mprotect_modeled_b] and the
+   containment test; its [unmodeled] branch is discharged exactly as the
+   [mprotect_modeled_b] one above. At 727298f3 the gate reads the model
+   through a leading [get_model]. *)
+refine (iff_trans (bind_get_model _ i m o) _). cbv beta zeta.
+destruct (negb (region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr
+  (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))))); [unfold unmodeled; reflexivity|].
 destruct (map_contains (vm_noaccess (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) &&
 map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:Hc;
 destruct (map_contains (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) &&
@@ -1120,21 +1222,21 @@ sys_unfold; split.
 - destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hc in *; inv_sys.
   + left. eexists; split; [eassumption| reflexivity].
   + right. split; [assumption| reflexivity].
-- intros [(e & He & ->) | (Hb & ->)]; eexists _, _, _, _; (split; [reflexivity|]); rewrite Hc; (split; [|reflexivity]).
+- intros [(e & He & ->) | (Hb & ->)].
   + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
   + right. eexists _, _, _, _. split; [exists tt; split; [exact Hb|reflexivity]|].
     split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 - destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hc in *; inv_sys.
   + left. eexists; split; [eassumption| reflexivity].
   + right. split; [assumption| reflexivity].
-- intros [(e & He & ->) | (Hb & ->)]; eexists _, _, _, _; (split; [reflexivity|]); rewrite Hc; (split; [|reflexivity]).
+- intros [(e & He & ->) | (Hb & ->)].
   + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
   + right. eexists _, _, _, _. split; [exists tt; split; [exact Hb|reflexivity]|].
     split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 - destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hc, ?Hf in *; inv_sys. reflexivity.
-- intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hc, Hf. split; reflexivity.
+- intros ->. reflexivity.
 - destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hc, ?Hf in *; inv_sys. reflexivity.
-- intros ->. right. eexists _, _, _. split; [reflexivity|]. rewrite Hc, Hf. reflexivity.
+- intros ->. reflexivity.
 Qed.
 
 Definition iind {A} (s : Sys A) : Prop := forall i i' m o, s i m o -> s i' m o.
@@ -1189,25 +1291,32 @@ Proof. intros. iind_tac. Qed.
 Definition vm_only (m m' : Model) : Prop :=
 m_fd m' = m_fd m /\ m_io m' = m_io m /\ m_fsys m' = m_fsys m /\ m_proc m' = m_proc m /\
 m_lim m' = m_lim m /\ m_time m' = m_time m /\
-(m_vm_lazy m = [] -> m_vm_lazy m' = []).
+(m_vm_lazy m = [] -> m_vm_lazy m' = []) /\
+(* The kernel build sits in the VM state ([State.m_kernel] reads [vmst_kernel]), so a
+   step's post-state does not fix it by the fields above; no setter of the model writes
+   it, and the width of the vDSO/vvar pair reads it ([State.vdso_reserved]). *)
+m_kernel m' = m_kernel m.
+
+Lemma vm_only_kernel : forall m m', vm_only m m' -> m_kernel m' = m_kernel m.
+Proof. intros m m' (_ & _ & _ & _ & _ & _ & _ & Hk). exact Hk. Qed.
 
 Lemma vm_only_refl : forall m, vm_only m m.
 Proof. intros m. repeat split; auto. Qed.
 Lemma vm_only_trans : forall a b c, vm_only a b -> vm_only b c -> vm_only a c.
 Proof.
-intros a b c (?&?&?&?&?&?&Hl1) (?&?&?&?&?&?&Hl2). unfold vm_only.
+intros a b c (?&?&?&?&?&?&Hl1&Hk1) (?&?&?&?&?&?&Hl2&Hk2). unfold vm_only.
 repeat split; try congruence. auto.
 Qed.
 Lemma vm_only_with_vmmaps : forall m X h, vm_only m X -> vm_only m (with_vmmaps h X).
 Proof.
-intros m X h (?&?&?&?&?&?&Hl). unfold vm_only, with_vmmaps, m_vm_lazy in *; cbn. repeat split; auto.
+intros m X h (?&?&?&?&?&?&Hl&Hk). unfold vm_only, with_vmmaps, m_vm_lazy in *; cbn. repeat split; auto.
 Qed.
 Lemma maps_subtract_nil : forall lo hi, maps_subtract [] lo hi = [].
 Proof. reflexivity. Qed.
 Lemma vm_only_with_vm_backing : forall m X lazy mat,
 vm_only m X -> (m_vm_lazy X = [] -> lazy = []) -> vm_only m (with_vm_backing lazy mat X).
 Proof.
-intros m X lazy mat (?&?&?&?&?&?&Hl) Hz. unfold vm_only, with_vm_backing in *. unfold m_vm_lazy at 2. cbn.
+intros m X lazy mat (?&?&?&?&?&?&Hl&Hk) Hz. unfold vm_only, with_vm_backing in *. unfold m_vm_lazy at 2. cbn.
 repeat split; auto.
 Qed.
 Lemma vm_only_forget_range : forall m X lo hi, vm_only m X -> vm_only m (vm_forget_range lo hi X).
@@ -1340,23 +1449,21 @@ Lemma TOT_bind_choose_ex {A B} m (P : A -> Prop) (k : A -> Sys B) :
 (exists x, P x) -> (forall x, P x -> TOT m (k x)) -> TOT m (bind (choose P) k).
 Proof. intros [x HP] H. exact (TOT_bind_choose m P k x HP (H x HP)). Qed.
 
-Lemma grant_witness : forall flags m nZ, mmap_grant_refusable flags m nZ = false ->
-exists a : word, (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
-/\ (bv_unsigned a + nZ <= alloc_top (m_vmmaps m))%Z
-/\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true
+Lemma grant_witness : forall addr flags m nZ, (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+mmap_grant_refusable addr flags m nZ = false ->
+exists a : word, linux_place (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
 /\ mmap_noreserve_backed_ok flags m nZ = true.
 Proof.
-intros flags m nZ H. unfold mmap_grant_refusable in H. apply orb_false_elim in H as [Hb Hg].
-apply negb_false_iff in Hb, Hg. apply vm_gap_available_iff in Hg as (a & H1 & H2 & H3 & H4).
-exists a. repeat split; assumption.
+intros addr flags m nZ Hn Hnal H. unfold mmap_grant_refusable in H. apply orb_false_elim in H as [Hb Hg].
+apply negb_false_iff in Hb, Hg. apply (vm_place_available_iff _ _ _ _ Hn Hnal) in Hg as (a & Ha).
+exists a. split; assumption.
 Qed.
-Lemma reserve_witness : forall m nZ, mmap_reserve_refusable m nZ = false ->
-exists a : word, (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
-/\ (bv_unsigned a + nZ <= alloc_top (m_vmmaps m))%Z
-/\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true.
+Lemma reserve_witness : forall addr m nZ, (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+mmap_reserve_refusable addr m nZ = false ->
+exists a : word, linux_place (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ (bv_unsigned a).
 Proof.
-intros m nZ H. unfold mmap_reserve_refusable in H. apply negb_false_iff in H.
-apply vm_gap_available_iff in H. exact H.
+intros addr m nZ Hn Hnal H. unfold mmap_reserve_refusable in H. apply negb_false_iff in H.
+apply (vm_place_available_iff _ _ _ _ Hn Hnal) in H. exact H.
 Qed.
 Lemma fresh_witness : forall flags m nZ (addr : word), mmap_fixed_fresh_refusable flags m nZ = false ->
 addr = addr /\ mmap_noreserve_backed_ok flags m nZ = true.

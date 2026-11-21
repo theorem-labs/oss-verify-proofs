@@ -6,7 +6,7 @@
    A_prog_listing / PI_prog_A -> B_prog_listing / PI_prog_B), which the generator has no rule for, plus the _B suffix on both corollaries
    (:41, :51) and the added class-1 corollary stack_malloc1_contract_xm_cfx_B (:64-81, with its Requires YD2l / Img0 / CfParamsPreset /
    FCm01xm, :28, :32-34); no other code change. The texts are those of the Section hypotheses ASM3 (class 3) and SS5M (__asan_set_shadow_f5,
-   value 245) of the A' walks (lib/A/Prog/Cno102A_EC.v:80, Cno102A_FE.v:276), at SEGS := pa_segs PI_prog_B and SIGMA := pa_sigma PI_prog_B.
+   value 245) of the A' walks (lib/A/Prog/Cno102A_EC.v:80, Cno102A_FE.v:277), at SEGS := pa_segs PI_prog_B and SIGMA := pa_sigma PI_prog_B.
    - stack_malloc3_contract_xm_cfx_B: lib/AU/FCm3xm.v stack_malloc3_contract_xm at ARx := ARcf tfibsegs B (fs_iface from
      FCifaceCf.fs_iface_ARcf of YG0lawscf.AR_laws_ok_cf), lifted to ARcfx by YGcallMxmn.astack_malloc_realizes_xm_conj
      (xs_placed_cf is kept by set_fs: YGcallScf.xs_placed_cf_set_fs);
@@ -15,7 +15,7 @@
    pa_segs PI_prog_B is lib/B/Img0.v rsegs, the same term as YB1v.tfibsegs (AsanUbsan.M.loaded_segments), and
    pa_sigma PI_prog_B AS___asan_set_shadow_f5 is FCimgB.SET_SHADOW_F5: both by conversion (change below).
    - stack_malloc1_contract_xm_cfx_B: the class-1 contract in the form ex_value B' takes it, the text of HSM1 of
-     lib/B/Prog/ExvB_Inst.v:69 / :140 (:70 / :141 at bd31252bee60, as history): at rsegs (lib/B/Img0.v),
+     lib/B/Prog/ExvB_Inst.v:70 / :141 (:70 / :141, as history): at rsegs (lib/B/Img0.v),
      B := YD2l.TfibB and its ARXS (ARcf at cp := CfParamsPreset.CfParams_preset, with xs_placed_cf), for every fx.
      It is lib/AU/FCm01xm.v stack_malloc1_contract_xm at ARx := ARcf tfibsegs TfibB, TfibSyms from
      proj2 YD2l.TfibB_pair, lifted by YGcallMxmn.astack_malloc_realizes_xm_conj as above.

@@ -5,7 +5,7 @@
    inner cut points, in the CPS form of the cx file.  The hops are proved in their own files (W_rr_m_drain.v,
    W_rr_m_ge.v, W_rr_m_free.v, W_rr_m_cpy.v); rr_match_of_hops composes them.
 
-   Where it comes from (the retired lane form, commit 2ad36763b22, lib/A/Prog/relay_remove_p_c.v): the hop chain
+   Where it comes from (the retired lane form, lib/A/Prog/relay_remove_p_c.v): the hop chain
    DRAIN rrA_at_found -> rrA_at_ge, GE -> rrA_at_free, FREE -> rrA_at_cpy, TAIL -> rrA_unlockT, WEAKEN ->
    rrA_at_unlock (Some i) and rrA_stage_c_of_hops.  Ported: the cut points and the order of the hops, and the
    composition by plain application.  New: the cuts over concrete machine states (W6: journal from the entry, the
@@ -49,6 +49,7 @@
    journal is RLIVE's ajournal_gx_x with the head set Hp1, and they carry the room budget: RRG rmbud's
    rp_RM RP S1 (Z.to_nat (tr_cost MT_rk tl) + kr) for the rest tl and gestures_end's count premise
    cnt_ok_pk RP gse_pk; RRF rp_RM RP S1 (1 + kr) (the buf free's 1) and the free's cnt_ok; RRC rp_RM RP S1 kr. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -421,7 +422,7 @@ Proof.
 intros cx HB. destruct HB as (_ & _ & _ & _ & _ & _ & _ & _ & HR & _).
 destruct HR as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HND & _). exact (proj1 (stdpp.base.NoDup_ListNoDup _) HND).
 Qed.
-(* arelay_at's twelfth conjunct for the table after the move (W8's 42f5184c7ab): the entries of remove_at i es are
+(* arelay_at's twelfth conjunct for the table after the move (W8): the entries of remove_at i es are
    entries of es, so none of their blocks is the table *)
 Lemma rm_base_notab : forall cx i, RBASE B ARx MT RP MMAX RG cx -> (i < length (rxes cx))%nat ->
   Forall (fun e => forall b, In b (aentry_blks e) -> b <> (rxG0 cx, ATABLE)) (relay_remove_b_c.remove_at i (rxes cx)).

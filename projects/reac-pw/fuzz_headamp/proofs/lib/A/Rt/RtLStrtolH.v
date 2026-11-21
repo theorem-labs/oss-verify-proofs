@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: the proof of cmd_strtol of proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtLStrtol.v
-   and of art_post_clean of lib/A/Rt/RtBzAdaptP.v at origin/ossv/recipes 2d2ff01bb6f (ported to this unit as
+   and of art_post_clean of lib/A/Rt/RtBzAdaptP.v (ported to this unit as
    lib/A/Rt/RtLStrtol.v and RtBzAdaptP.v), re-run for the hole form of the strtol contract, lib/A/HPgHole.v
    hd_astrtol_hole; the frame step is HPgHole.v's ARH_frame argument (al_frame over the unpoisoned memories). *)
 (* The strtol interceptor of fuzz_headamp.asan (trampoline 0x41c28) inside a frame hole: HPgHole.v's

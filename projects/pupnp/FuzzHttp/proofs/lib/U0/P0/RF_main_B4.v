@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp; the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -26,13 +27,13 @@ Ltac rpc := apply ret_pc_even; [lia| reflexivity].
 
 Section B4.
   Context {HGW : HasGuard} {HCEIL : HasCeiling}.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (MPAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
   Hypothesis VARGV : valid_argv argv.
   Hypothesis VENVP : valid_envp envp.
-  Hypothesis ESF : entry_stack_fits sp0 argv envp.
+  Hypothesis ESF : stack_launch_ok inp argv envp sp0 mbase rnd.
   Hypothesis EARGV : argv = [arg0; arg1].
   Hypothesis HT : 0 < TID < 4194304.
   Hypothesis MALLOC : rmalloc_stmt.
@@ -45,13 +46,13 @@ Section B4.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+  Notation IMGB := (rimg sp0 argv envp inp mbase rnd).
   Notation LO' := (LO sp0).
-  Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
+  Notation BASE' := (BASE sp0 argv envp inp mbase rnd TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm MPAD S7 S6 S5 S4).
-  Notation RDINV' := (RDINV sp0 argv envp uid hw rnd TID MPAD S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation RDBRK' := (RDBRK sp0 argv envp uid hw rnd TID MPAD S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation POSTLOOP' := (POSTLOOP sp0 argv envp uid hw rnd TID MPAD S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation RDINV' := (RDINV sp0 argv envp inp mbase rnd TID MPAD S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation RDBRK' := (RDBRK sp0 argv envp inp mbase rnd TID MPAD S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation POSTLOOP' := (POSTLOOP sp0 argv envp inp mbase rnd TID MPAD S4 S5 S6 S7 S8 S9 S10 S11).
   Ltac hyps := first [exact VSP | exact CEIL | exact VARGV | exact VENVP | exact ESF | exact EARGV | exact HT | exact MALLOC | exact FREE | exact FPR | exact EXK | exact FWR | exact TOW].
 
   Notation GST pc x1 t0 t1 t2 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
@@ -83,15 +84,15 @@ Section B4.
           bvmap_empty (Z_to_bv 64 0x13b4c) fc None mm (seg_rom rsegs)).
   Proof.
     intros until mm. intros FR BA HP0 CJ ERR FRM.
-    pose proof (sp_facts sp0 VSP CEIL) as SF. unfold LO in SF. pose proof (IMGB_len sp0 argv envp uid hw rnd VSP VARGV VENVP) as IL.
-    pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL47.
+    pose proof (sp_facts sp0 VSP CEIL) as SF. unfold LO in SF. pose proof (IMGB_len sp0 argv envp inp mbase rnd ESF) as IL.
+    pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL47.
     assert (ERSV : RSV = 0x2b6c9) by reflexivity.
     pose proof BA as (ST & MI & RS & AUX & IMG & SE & SOF & RSS). unfold LO in ST. unfold RERRNO in ERR. unfold MFRAME in FR.
     pose proof VARGV as (_ & _ & ARGLEN & NONUL & _).
 
-    destruct (argv_cstring sp0 argv envp uid hw rnd mm IMG 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-      as (P1v & slack1 & HP1 & P1LO & P1HI & STR1 & SLK1). unfold str_base, struct_size, argc, envc in P1LO.
-    destruct (stack_pieces sp0 argv envp uid hw rnd mm IMG) as (_ & ARGVP & _).
+    destruct (argv_cstring sp0 argv envp inp mbase rnd mm IMG ESF 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
+      as (P1v & slack1 & HP1 & P1LO & P1HI & STR1 & SLK1). unfold argc, envc in P1LO.
+    destruct (rstack_pieces sp0 argv envp inp mbase rnd mm IMG ESF) as (_ & ARGVP & _).
     assert (A1NN : ~ In (Z_to_bv 8 0) arg1) by (rewrite EARGV in NONUL; inversion NONUL as [|? ? ? X]; inversion X; assumption).
     assert (A1LEN : Z.of_nat (length arg1) <= 131071) by (rewrite EARGV in ARGLEN; inversion ARGLEN as [|? ? ? X]; inversion X; assumption).
     assert (A1NS : Namei.path_has_slash arg1 = false).
@@ -100,7 +101,7 @@ Section B4.
     { change (arg1 ++ Z_to_bv 8 0 :: slack1) with (arg1 ++ ([Z_to_bv 8 0] ++ slack1)) in STR1. rewrite app_assoc in STR1. apply bytes_at_app in STR1. destruct STR1 as [S1 _]. exact S1. }
     pose proof (RHEAP_ssp _ _ _ HP0) as [G1 G2]. unfold got_ssp, ssp_guard in G1, G2.
     unfold read_all. unfold implM. iprefix.
-    pose proof (u64ro_read mm (usp0 + 8) (argv_ptrs sp0 argv envp ++ [Z_to_bv 64 0]) 1 (Z_to_bv 64 P1v) (Z_to_bv 64 (usp0 + 16))
+    pose proof (u64ro_read mm (usp0 + 8) (argv_ptrs (ed_top rnd) argv envp (in_execfn inp) ++ [Z_to_bv 64 0]) 1 (Z_to_bv 64 P1v) (Z_to_bv 64 (usp0 + 16))
                   ARGVP ltac:(rewrite nth_error_app1 by (rewrite argv_ptrs_length, EARGV; cbn; lia); exact HP1) ltac:(lia) ltac:(unfold wa; f_equal; lia)) as RD.
     zstep. clear RD. zstep. zstep. zstep.
     remember READ_FUEL as rf eqn:Erf. clear Erf.
@@ -109,7 +110,7 @@ Section B4.
     replace (map (Z_to_bv 8) (map bv_unsigned arg1)) with arg1 by (symmetry; apply zbytes_map_unsigned').
     eapply implM_bind.
     { eapply implM_of_enode.
-      eapply open_spec with (lo := usp0 - 8388608) (errv := Z_to_bv 64 0);
+      eapply open_spec with (lo := usp0 - 6144512) (errv := Z_to_bv 64 0);
         [ rewrite (unsigned_lit (usp0 + -128)) by lia; exact ST
         | rewrite (unsigned_lit P1v) by lia; exact STR1'
         | unfold RATP; rewrite (unsigned_lit 243744) by lia; exact ERR
@@ -125,7 +126,7 @@ Section B4.
     { unfold WOK, LO, RERRNO. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia| constructor]. }
     assert (HP1' : RHEAP (ps_init (reservedZ rsegs) alloc_ceiling) [] m1).
     { eapply (RHEAP_munchW sp0 VSP CEIL); [exact WOKW| exact MUc| exact WMc| | exact HP0]. intros iv [<-|[<-|[]]]; cbn [fst snd]; intros; lia. }
-    assert (BA1 : BASE' m1) by (eapply (BASE_munch sp0 argv envp uid hw rnd TID VSP CEIL VARGV VENVP); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI1| unfold LO; first [exact ST1| replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST1]]).
+    assert (BA1 : BASE' m1) by (eapply (BASE_munch sp0 argv envp inp mbase rnd TID VSP CEIL VARGV VENVP); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI1| unfold LO; first [exact ST1| replace (usp0 - 6144512) with (usp0 + -6144512) by lia; exact ST1]]).
     assert (CJ1 : CJ0 m1) by (eapply (CJ0_munchW sp0 VSP CEIL); [exact WOKW| exact MUc| exact WMc| exact CJ]).
     clear MUc WMc BA WOKW CJ HP0 G1 G2. try clear ST. try clear MI. try clear RS. try clear AUX. try clear IMG. try clear SE. try clear SOF. try clear RSS.
     pose proof BA1 as (ST & MI & RS & AUX & IMG & SE & SOF & RSS). unfold LO in ST.
@@ -138,7 +139,7 @@ Section B4.
       zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. apply evt_done.
       lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm (ps_init (reservedZ rsegs) alloc_ceiling) POSTB msx) end.
       cbn [io_diag io_S].
-      eapply (fprintf_exit sp0 argv envp uid hw rnd TID S8 S9 S10 S11 VSP CEIL HT FPR (PDCannotOpen (map bv_unsigned arg1)));
+      eapply (fprintf_exit sp0 argv envp inp mbase rnd TID S8 S9 S10 S11 VSP CEIL HT FPR (PDCannotOpen (map bv_unsigned arg1)));
         [| exact BA1| exact HP1'| reflexivity| exact FRM| intros ms'' AE; apply implM_ret; apply evt_done; exact AE].
       cbn [diag_args]. split; [reflexivity|]. exists slack1. rewrite unsigned_lit by lia.
       unfold zb. rewrite zbytes_map_unsigned'. unfold zlength. rewrite !length_map.
@@ -150,14 +151,14 @@ Section B4.
       lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm (ps_init (reservedZ rsegs) alloc_ceiling) POSTB msx) end.
       eapply implM_bind.
       { unfold rmalloc_stmt in MALLOC.
-        eapply MALLOC with (lo := usp0 - 8388608) (B := usp0); try reflexivity; unfold RATP; rewrite ?(unsigned_lit 243744) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
+        eapply MALLOC with (lo := usp0 - 6144512) (B := usp0); try reflexivity; unfold RATP; rewrite ?(unsigned_lit 243744) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
           first [ exact HP1' | exact AUX | exact ST | exact ERR1 | exact MI | unfold RMALLOC_STACK; lia | lia ]. }
       cbv beta. intros r s1 ms1 PO.
       destruct PO as (v0 & v1 & v2 & ra0 & c1 & c2 & c3 & c4 & c5 & c6 & c7 & v3 & v4 & v5 & v6 & m2 & errv2 & -> & MI2 & ST2 & ERR2 & AUX2 & HPR & FAE & SOE & RR).
       unfold RATP in ERR2. rewrite ?(unsigned_lit 243744) in ERR2 by lia. rewrite ?(unsigned_lit (usp0 + -128)) in ST2 by lia. rewrite ?(unsigned_lit (usp0 + -128)) in HPR by lia.
       change (243744 + -164) with 243580 in ERR2.
       replace (ret_pc (Z_to_bv 64 0x13b70)) with (Z_to_bv 64 0x13b70) by (symmetry; rpc).
-      assert (BA2 : BASE' m2) by (eapply (BASE_heap_pres sp0 argv envp uid hw rnd TID); [exact BA1| exact HPR| exact MI2| unfold LO; first [exact ST2| replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST2]| exact AUX2]).
+      assert (BA2 : BASE' m2) by (eapply (BASE_heap_pres sp0 argv envp inp mbase rnd TID); [exact BA1| exact HPR| exact MI2| unfold LO; first [exact ST2| replace (usp0 - 6144512) with (usp0 + -6144512) by lia; exact ST2]| exact AUX2]).
       assert (CJ2 : CJ0 m2) by (eapply CJ0_heap_pres; [exact HPR| exact CJ1]).
       assert (FR2 : FRAME' m2) by (unfold MFRAME; eapply rheap_pres_rw_cells; [exact HPR| exact FR| left; cbn; lia]).
       clear FR ST MI RS AUX IMG SE SOF ERR1 RSS.
@@ -171,7 +172,7 @@ Section B4.
           zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. apply evt_done.
           lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s1 POSTB msx) end.
           cbn [io_diag io_S].
-          eapply (fwrite_exit sp0 argv envp uid hw rnd TID S8 S9 S10 S11 VSP CEIL HT FWR TOW);
+          eapply (fwrite_exit sp0 argv envp inp mbase rnd TID S8 S9 S10 S11 VSP CEIL HT FWR TOW);
             [exact BA2| exact HEAP2| rewrite SOE; reflexivity| intros ms'' AE; apply implM_ret; apply evt_done; exact AE]. }
       destruct RR as (A & junk & -> & BR & HEAP2 & BLK & HEXP). clear HEXP.
       pose proof BR as (BR1 & BR2 & BR3 & BR4 & BR5). idtac.
@@ -182,7 +183,7 @@ Section B4.
       apply evt_done.
       lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s1 POSTB msx) end.
       eapply implM_bind.
-      { apply (rd_loop sp0 argv envp uid hw rnd arg0 arg1 TID MPAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP ESF EARGV HT MALLOC FREE FPR FWR TOW rf fd P1v); [lia| exact HP1|].
+      { apply (rd_loop sp0 argv envp inp mbase rnd arg0 arg1 TID MPAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP ESF EARGV HT MALLOC FREE FPR FWR TOW rf fd P1v); [lia| exact HP1|].
         unfold RDINV, rd_pc. cbn [rd_content rd_cap rd_buf zlength length Z.of_nat Z.eqb].
         do 17 eexists. exists bvmap_empty, fc, m2, A, [], junk, errv2.
         split; [reflexivity|]. split; [reflexivity|]. split; [| split; [exact FR2| split; [exact BA2| split; [exact CJ2| split; [exact ERR2| exact FRM]]]]].
@@ -204,7 +205,7 @@ Section B4.
       lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s2 POSTB msx) end.
       eapply implM_bind.
       { eapply implM_of_enode.
-        eapply close_spec with (lo := usp0 - 8388608) (errv := errv3); try reflexivity; unfold RATP; rewrite ?(unsigned_lit 243744) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
+        eapply close_spec with (lo := usp0 - 6144512) (errv := errv3); try reflexivity; unfold RATP; rewrite ?(unsigned_lit 243744) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
           first [ exact ST | exact ERR3 | exact MI | lia ]. }
       cbv beta. intros r3 s3 ms3 [PO ->].
       destruct PO as (y0 & y1 & y2 & e1 & e2 & e3 & e4 & e5 & e6 & e7 & y3 & y4 & y5 & y6 & m4 & -> & MUc & WMc & MI4 & ST4 & ERR4).
@@ -216,7 +217,7 @@ Section B4.
       { unfold WOK, LO, RERRNO. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia| constructor]. }
       assert (P4 : RHEAP s2 [(b, A3, cap3)] m4).
       { eapply (RHEAP_munchW sp0 VSP CEIL); [exact WOKW| exact MUc| exact WMc| | exact P3]. intros iv [<-|[<-|[]]]; cbn [fst snd]; intros; lia. }
-      assert (BA4 : BASE' m4) by (eapply (BASE_munch sp0 argv envp uid hw rnd TID VSP CEIL VARGV VENVP); [exact BA3| exact WOKW| exact MUc| exact WMc| exact MI4| unfold LO; first [exact ST4| replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST4]]).
+      assert (BA4 : BASE' m4) by (eapply (BASE_munch sp0 argv envp inp mbase rnd TID VSP CEIL VARGV VENVP); [exact BA3| exact WOKW| exact MUc| exact WMc| exact MI4| unfold LO; first [exact ST4| replace (usp0 - 6144512) with (usp0 + -6144512) by lia; exact ST4]]).
       assert (CJ4 : CJ0 m4) by (eapply (CJ0_munchW sp0 VSP CEIL); [exact WOKW| exact MUc| exact WMc| exact CJ3]).
       apply implM_ret. apply evt_done. cbn [POSTB]. unfold RDONE.
       do 16 eexists. exists F2, fc2, m4, A3, cap3, P1v, fd, DATA3. exists junk3, (close_errno r3 errv3).

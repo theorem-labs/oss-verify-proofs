@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormSecLoc.v (commit 30a1993588f, c5 + memnorm; file sha256 8ae4fc6e3a4e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/MemnormSecLoc.v at commit 789778cb16f, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (2 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormSecLoc.v (c5 + memnorm; file sha256 8ae4fc6e3a4e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/MemnormSecLoc.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (2 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, full Allocate): the two cgif_file location lemmas the secondary Allocate arms'
    memnorm twins need (measurement secondary-frames.md (sha256 05a349cba232; internal record)).
    rule 24: no function proved (kind: image / location lemmas).
@@ -11,7 +12,7 @@
    - [memnorm_winpn]: the refusal arm's frame (at_RETS's MEQ over AGjn.WINPN = AGjm.WINP, the OOM byte and errno;
      AGk0.refuseS, AGk0.v:355-390): the stack window (MemnormHitG.mn_safe_high), the thread-object cells AGjm.WINT
      (MemnormHitG.mn_safe_owned), the instance cells AGjm.WINI (RW statics: AGk0's Hinst, AGk0.v:184, and
-     AGjm.BSLv_range, AGjm.v:374: INSTv + 296 <= BSLv <= INSTv + 400 at c5 84ee52cd012), the OOM byte and errno (MemnormSafecgif.mn_safe_rw);
+     AGjm.BSLv_range, AGjm.v:375: INSTv + 296 <= BSLv <= INSTv + 400 at c5), the OOM byte and errno (MemnormSafecgif.mn_safe_rw);
    - [memnorm_sfin_win]: the grant arms' frame (AGif4.sfin's sf_MEQF, AGif4.v:88-90, over AGjm.WIN, AGif4.QRz on grow
      and AGif4.DXz; the premise shape of AGif5.frame_grant_raw, AGif5.v:977-979): besides the above, the pointer-array
      slot and the next commit (inside the owned extent (ly_Q, kPtrArrayResv), YG0f.v:296-299), the new map (a zone3

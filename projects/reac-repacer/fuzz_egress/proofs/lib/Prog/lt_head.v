@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput.v
-   at bc49657c087a (its entry segment e0_evt and the tactics usub / solve_c / take); module path, this harness's code. *)
+   (its entry segment e0_evt and the tactics usub / solve_c / take); module path, this harness's code. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The plain image's harness body LLVMFuzzerTestOneInput (fuzz_egress.c:143-157), 0x12c60, from its entry to the
    call of malloc for f = fuzz_dup(data + 53 * (size > 53), n) at 0x12d54, for size < 2^26 (the larger sizes return
    at once: LLVMFuzzerTestOneInput_early.v). One evt segment, in three lemmas:

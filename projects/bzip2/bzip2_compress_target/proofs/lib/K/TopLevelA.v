@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the walk lifted to the run segment list (SRomStable.srun_init) for an image with no vDSO segment). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.Spec Require Import Prog Canon.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS Require Import ShapeAlg SpinAlg.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common Require Import CfgStep.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS.Cfg Require SRomStable.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 Import ListNotations.
@@ -27,19 +29,24 @@ Definition S3s_stmt : Prop :=
                                  target_alloc_limit inp)
               (canonT (argv_Z (in_argv inp)) (in_fs inp)).
 
-Theorem T_canon : S3s_stmt ->
+(* LPS 08b1429: the run reads the binary against [run_segments] from the run's own start;
+   [SRomStable.srun_init] lifts the walk over the binary's segments ([vdso_image tsegs = None]
+   holds by computation for an image's own segment list; it is a library premise, not part of a
+   published statement). *)
+Theorem T_canon : S3s_stmt -> vdso_image tsegs = None ->
   forall en inp,
     valid_entry (mkImage tsegs tpc tph) en inp -> valid_input_either inp ->
     trace_equiv (bh_traces (Run.run_scfg (Run.alloc_only_cfg false) (mkImage tsegs tpc tph) target_alloc_limit en inp))
                 (canonT (argv_Z (in_argv inp)) (in_fs inp))
     /\ ~ bh_errors (Run.run_scfg (Run.alloc_only_cfg false) (mkImage tsegs tpc tph) target_alloc_limit en inp).
 Proof.
-  intros HS en inp He Hi. pose proof (HS en inp He Hi) as Hr.
+  intros HS Hvi en inp He Hi. pose proof (HS en inp He Hi) as Hr.
   destruct en as [sp brk mb rnd]. cbn [Run.run_scfg bh_traces bh_errors en_sp en_brk en_mmap_base en_draw] in *.
+  pose proof (SRomStable.srun_init tsegs inp sp mb tpc tph brk rnd target_alloc_limit _ Hvi Hr) as Hr'.
   change (Run.alloc_only_cfg false) with kit_cfg.
   split.
-  - intros tr. exact (srealizes_obs_iff tsegs _ _ Hr tr).
-  - exact (srealizes_no_error tsegs _ _ Hr).
+  - intros tr. exact (srealizes_obs_iff _ _ _ Hr' tr).
+  - exact (srealizes_no_error _ _ _ Hr').
 Qed.
 
 (* [comment removed for export] *)

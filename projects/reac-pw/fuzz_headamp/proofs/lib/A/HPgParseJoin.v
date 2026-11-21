@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: the composition of proofs/reac-pw/fuzz_role/lib/A/RPgParse.v at afaa3cb55c1
+(* Modified by Theorem Labs, 2026-10: the composition of proofs/reac-pw/fuzz_role/lib/A/RPgParse.v
    (the segment statements joined by induction on the loops) for the cuts of lib/A/HPgParseCut.v. *)
 (* reac_headamp_prop_parse_result 0x845b4 of reac-pw/fuzz_headamp's ASan image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47): hd_parse_result_specX from the eight segment

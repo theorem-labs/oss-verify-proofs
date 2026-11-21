@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgNearC.v at b089f28d962e; the contract of image B's pod_nearest (fuzz_rate.asan-ubsan): the image is lib/AU/Img0.v, the entry, the .got slot and the shadow-offset cell are lib/AU/RtPgNearImgB.v's (0x83fcc, 0x9c170, 0xa4f38), the a_ names become b_, and the comment describes image B's code (five more branches to the trap `unimp` and one more __getf2 call). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgNearC.v; the contract of image B's pod_nearest (fuzz_rate.asan-ubsan): the image is lib/AU/Img0.v, the entry, the .got slot and the shadow-offset cell are lib/AU/RtPgNearImgB.v's (0x83fcc, 0x9c170, 0xa4f38), the a_ names become b_, and the comment describes image B's code (five more branches to the trap `unimp` and one more __getf2 call). *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Sem.

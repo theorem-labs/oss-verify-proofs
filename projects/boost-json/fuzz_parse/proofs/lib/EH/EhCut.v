@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.EH Require EH0Gc1. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -47,7 +48,62 @@ Definition newh_kn : ltac2:(zQ "20!hl3!hn5@1$0$1") := ltac2:(zQ "60!hh8!hn5!hm1!
 (* [comment removed for export] *)
 Definition flags_kn : ltac2:(zQ "20!hl3!hn5@1$0$1") := ltac2:(zQ "70!hsa!hn5!hm1!hrf!hs6!hmf!ht0@3$2$1@3$3@2$4@1$0Z+hirmv8N8$6@3$2$1@3$3@2$4@1$0Z+hgrlu1N1@1$0+1@3$2$1@3$3@2$4@1$0Z+hgrlu2N1@1$0Z@3$2$1@3$3@2$4@1$0Z+hgrlu3N1@1$0+1@3$2$1@3$3@2$4@1$0Z+hgrlu4N1@1$0Z@3$2$1@3$3@2$4@1$0Z+hgrlu5N1@1$0+1@3$2$1@3$3@2$4@1$0Z+hgrlu6N1@1$0Z@1$5$1").
 (* [comment removed for export] *)
-Definition auxv_kn : ltac2:(zQ "20!hl3!hn5@1$0$1") := ltac2:(zQ "d0!hn5!hm1!hta!hrf!hs6!hsa!hmf!hu2!hu9!hv0!hv7!hve!ig5@3$1$0@3$3@2$4@1$5Z+hirpl0N8$2@3$1$0@3$3@2$4$2ZN8@1$5+3@3$1$0@3$3@2$4$2+8N8@1$5+hggk0@3$1$0@3$3@2$4$2+h0N8@1$5+4@3$1$0@3$3@2$4$2+h8N8@1$5+j8@3$1$0@3$3@2$4$2+i0N8@1$5+5@3$1$0@3$3@2$4$2+i8N8@1$5+a@3$1$0@3$3@2$4$2+j0N8@1$5+h0@3$1$0@3$3@2$4$2+j8N8$a@3$1$0@3$3@2$4$2+k0N8@1$5+6@3$1$0@3$3@2$4$2+k8N8$c@3$1$0@3$3@2$4$2+l0N8@1$5+b@3$1$0@3$3@2$4$2+l8N8$8@3$1$0@3$3@2$4$2+m0N8@1$5+c@3$1$0@3$3@2$4$2+m8N8$9@3$1$0@3$3@2$4$2+n0N8@1$5+h7@3$1$0@3$3@2$4$2+n8N8$b@3$1$0@3$3@2$4$2+o0N8@1$5+h9@3$1$0@3$3@2$4$2+o8N8$7@3$1$0@3$3@2$4$2+p0N8@1$5Z@3$1$0@3$3@2$4$2+p8N8@1$5Z@1$6$0").
+(* LPS 727298f3: the auxv block at the revision's layout ([StackLayout.auxv_entries]): every key word, the
+   values the musl loop stores (keys below 38: constants, the launch's own words, or unknown), and the
+   CONFIG_RSEQ tail; [AUXV_RSEQ] picks the tail. *)
+Definition AUXV_RSEQ : bool := false.
+Definition auxv_kn : list kentry :=
+  [ KWord (SA (lit 0) 1227088) 8 vAUXV
+  ; KWord (SA vAUXV 0) 8 (lit 33)
+  ; KUnk (SA vAUXV 8) (lit 8)
+  ; KWord (SA vAUXV 16) 8 (lit 40)
+  ; KWord (SA vAUXV 32) 8 (lit 41)
+  ; KWord (SA vAUXV 48) 8 (lit 42)
+  ; KWord (SA vAUXV 64) 8 (lit 43)
+  ; KWord (SA vAUXV 80) 8 (lit 44)
+  ; KWord (SA vAUXV 96) 8 (lit 45)
+  ; KWord (SA vAUXV 112) 8 (lit 46)
+  ; KWord (SA vAUXV 128) 8 (lit 47)
+  ; KWord (SA vAUXV 144) 8 (lit 51)
+  ; KWord (SA vAUXV 160) 8 (lit 16)
+  ; KWord (SA vAUXV 168) 8 vX16
+  ; KWord (SA vAUXV 176) 8 (lit 6)
+  ; KWord (SA vAUXV 184) 8 vX6
+  ; KWord (SA vAUXV 192) 8 (lit 17)
+  ; KWord (SA vAUXV 200) 8 (lit 100)
+  ; KWord (SA vAUXV 208) 8 (lit 3)
+  ; KWord (SA vAUXV 216) 8 (lit 65600)
+  ; KWord (SA vAUXV 224) 8 (lit 4)
+  ; KWord (SA vAUXV 232) 8 (lit 56)
+  ; KWord (SA vAUXV 240) 8 (lit 5)
+  ; KWord (SA vAUXV 248) 8 (lit 10)
+  ; KWord (SA vAUXV 256) 8 (lit 7)
+  ; KWord (SA vAUXV 264) 8 (lit 0)
+  ; KWord (SA vAUXV 272) 8 (lit 8)
+  ; KWord (SA vAUXV 280) 8 (lit 0)
+  ; KWord (SA vAUXV 288) 8 (lit 9)
+  ; KWord (SA vAUXV 296) 8 (lit 291460)
+  ; KWord (SA vAUXV 304) 8 (lit 11)
+  ; KWord (SA vAUXV 312) 8 vUID
+  ; KWord (SA vAUXV 320) 8 (lit 12)
+  ; KWord (SA vAUXV 328) 8 vX12
+  ; KWord (SA vAUXV 336) 8 (lit 13)
+  ; KUnk (SA vAUXV 344) (lit 8)
+  ; KWord (SA vAUXV 352) 8 (lit 14)
+  ; KUnk (SA vAUXV 360) (lit 8)
+  ; KWord (SA vAUXV 368) 8 (lit 23)
+  ; KWord (SA vAUXV 376) 8 vX23
+  ; KWord (SA vAUXV 384) 8 (lit 25)
+  ; KWord (SA vAUXV 392) 8 vRND
+  ; KWord (SA vAUXV 400) 8 (lit 31)
+  ; KUnk (SA vAUXV 408) (lit 8) ]
+  ++ (if AUXV_RSEQ then
+        [ KWord (SA vAUXV 416) 8 (lit 27)
+        ; KWord (SA vAUXV 424) 8 (lit 28)
+        ; KWord (SA vAUXV 432) 8 (lit 28)
+        ; KWord (SA vAUXV 440) 8 (lit 32)
+        ; KWord (SA vAUXV 448) 8 (lit 0) ]
+      else [ KWord (SA vAUXV 416) 8 (lit 0) ]).
 
 (* [comment removed for export] *)
 Definition USP_OFF : ltac2:(zQ "20!oc!ma>6phase2$0$1") := ltac2:(zQ "20!oc!ma\6phase2$0M0\6phase2$0$1^1-ks0-ii0").   (* [comment removed for export] *)
@@ -80,11 +136,11 @@ Definition Ureg : ltac2:(zQ "40!oc!hla!k5!ii0>6phase2$0@2$1$3$2") := ltac2:(zQ "
 Definition geomT_kn (phase2 : bool) : list kentry :=
   let '(U, Un) := Ureg phase2 in
   let H := SA vHDR 0 in let Hn := lit 144 in
-  let A := SA vAUXV 0 in let An := lit 160 in
+  let A := SA vAUXV 0 in let An := lit 464 in   (* LPS 727298f3: the revision's largest vector, 29 pairs *)
   [KDisj U Un H Hn; KDisj U Un A An; KDisj H Hn A An;
    KDisj H Hn (SA (lit 0) 0x10b5e0) (lit 8); KDisj H Hn (SA (lit 0) 0x12b6f8) (lit 8); KDisj H Hn (SA (lit 0) 0x12b950) (lit 8);
    KDisj H Hn (SA (lit 0) 0x10000) (lit 0xe1000); KDisj H Hn (SA (lit 0) 0xf84d8) (lit 0x1430);   (* [comment removed for export] *)
-   KRange vA 0x400000000000 0x800000000000; KRange vAUXV 0x400000000000 0xffffffffffffff60;
+   KRange vA 0x400000000000 0x800000000000; KRange vAUXV 0x400000000000 0xfffffffffffffe30;
    KRange vHDR 1 0x800000000000;
    KAlign vA 16; KAlign vHDR 16].
 (* [comment removed for export] *)

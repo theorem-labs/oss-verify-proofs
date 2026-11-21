@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the munmap section's new Hexact premise (the model cuts the range by maps_subtract) and the using attributes naming it, a new maps_subtract_cons_exact lemma, the mprotect node's vDSO premise, and the RomBase.sys_rob_memfree side goals of the brk, mmap and mprotect nodes (RomBase now required). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -27,6 +28,7 @@ From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim2__Common.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require SpinAlg.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require StoreOk.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Lib Require NodesFs__Lib.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 (* [comment removed for export] *)
@@ -463,6 +465,20 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* A cut that the head entry exactly fills, on a list whose other entries miss it. *)
+Lemma maps_subtract_cons_exact : forall (a n0 : word) rest,
+    0 < bv_unsigned n0 ->
+    (forall q, In q rest -> 0 < S q /\ (B q + S q <= bv_unsigned a \/ bv_unsigned a + bv_unsigned n0 <= B q)) ->
+    maps_subtract ((a, n0) :: rest) (bv_unsigned a) (bv_unsigned a + bv_unsigned n0) = map_remove ((a, n0) :: rest) a.
+  Proof.
+    intros a n0 rest Hn Hr. apply maps_subtract_exact; [exact Hn| | |].
+    - intros b s [E|Hin]; [injection E as <- <-; exact Hn|]. exact (proj1 (Hr _ Hin)).
+    - intros b s [E|Hin] Hb; [injection E as _ <-; reflexivity|]. subst b.
+      destruct (Hr _ Hin) as [Hs Hd]. unfold B, S in Hs, Hd. cbn [fst snd] in Hs, Hd. exfalso. lia.
+    - intros b s [E|Hin] Hne; [injection E as <- _; exfalso; apply Hne; reflexivity|].
+      destruct (Hr _ Hin) as [_ Hd]. unfold B, S in Hd. cbn [fst snd] in Hd. exact Hd.
+  Qed.
+
 Section Munmap.
   Variable A : list (Z * Z).
   Variables (addr n : word) (m : Model).
@@ -475,6 +491,9 @@ Section Munmap.
   Hypothesis Hend : bv_unsigned addr + bv_unsigned n <= 2 ^ 64.
   (* [comment removed for export] *)
   Hypothesis Hapart : forall q, In q (map_remove (vm_maps (m_vmmaps m)) addr) -> B q + S q <= lo \/ hi <= B q.
+  (* LPS 727298f3: [munmap_model] cuts the range out of [vm_maps] ([maps_subtract]); the
+     callers unmap exactly one entry, so the cut is the entry's removal. *)
+  Hypothesis Hexact : maps_subtract (vm_maps (m_vmmaps m)) lo hi = map_remove (vm_maps (m_vmmaps m)) addr.
 
   Let Wm := proj1 Hwf.
   Let Wn := proj1 (proj2 Hwf).
@@ -486,16 +505,16 @@ Section Munmap.
   #[using="lo Hal Hnl"] Lemma mun_hi_aligned : hi mod page_size = 0.
   Proof. unfold hi, page_size in *. rewrite Z.add_mod, Hal, Hnl by lia. reflexivity. Qed.
 
-  #[using="Type"] Lemma munmap_unfold :
+  #[using="Hexact"] Lemma munmap_unfold :
     m' = vm_forget_range lo hi (with_vmmaps
            (mkVmMapsFull (vm_reserved (m_vmmaps m)) (map_remove (vm_maps (m_vmmaps m)) addr)
               (maps_subtract (vm_noaccess (m_vmmaps m)) lo hi)
               (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
               (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m).
-  Proof. reflexivity. Qed.
+  Proof. rewrite <- Hexact. reflexivity. Qed.
 
-  #[using="Type"] Lemma munmap_maps : vm_maps (m_vmmaps m') = map_remove (vm_maps (m_vmmaps m)) addr.
-  Proof. reflexivity. Qed.
+  #[using="Hexact"] Lemma munmap_maps : vm_maps (m_vmmaps m') = map_remove (vm_maps (m_vmmaps m)) addr.
+  Proof. exact Hexact. Qed.
   #[using="Type"] Lemma munmap_reserved : vm_reserved (m_vmmaps m') = vm_reserved (m_vmmaps m).
   Proof. reflexivity. Qed.
   #[using="Type"] Lemma munmap_noaccess : vm_noaccess (m_vmmaps m') = maps_subtract (vm_noaccess (m_vmmaps m)) lo hi.
@@ -523,7 +542,7 @@ Section Munmap.
   #[using="Type"] Lemma munmap_tid : m_tid m' = m_tid m.
   Proof. reflexivity. Qed.
 
-  #[using="lo hi Hwf Hpos Wm Wn"] Lemma model_ivs_wf_munmap : model_ivs_wf m'.
+  #[using="lo hi Hwf Hpos Hexact Wm Wn"] Lemma model_ivs_wf_munmap : model_ivs_wf m'.
   Proof.
     rewrite munmap_unfold. apply model_ivs_wf_vm_forget_range; [apply mun_lo_le_hi|].
     apply model_ivs_wf_with_vmmaps; [exact Hwf | | | reflexivity]; cbn.
@@ -531,7 +550,7 @@ Section Munmap.
     - apply maps_subtract_wf; [exact Wn | apply mun_lo_le_hi].
   Qed.
 
-  #[using="lo hi Hwf Hpos Hapart Wm Wn Wl"] Lemma eager_used_munmap_le : eager_used m' <= eager_used m.
+  #[using="lo hi Hwf Hpos Hapart Hexact Wm Wn Wl"] Lemma eager_used_munmap_le : eager_used m' <= eager_used m.
   Proof.
     rewrite (eager_used_sem m' model_ivs_wf_munmap), (eager_used_sem m Hwf).
     rewrite munmap_maps, munmap_noaccess, munmap_lazy.
@@ -547,7 +566,7 @@ Section Munmap.
       rewrite Hr. cbn [negb]. rewrite !andb_true_r. reflexivity.
   Qed.
 
-  #[using="lo hi Hwf Hal Hnl Hpos Hapart Wm Wn Wl"] Lemma MInv_munmap : MInv A m -> MInv A m'.
+  #[using="lo hi Hwf Hal Hnl Hpos Hapart Hexact Wm Wn Wl"] Lemma MInv_munmap : MInv A m -> MInv A m'.
   Proof.
     intros [Hnd Halg Hallow Hlz Hb]. constructor.
     - rewrite munmap_mat. apply NoDup_filter. exact Hnd.
@@ -848,6 +867,7 @@ Proof.
   { apply cnode_lift_nr; [| eapply node_brk_lazy; [exact Hh | reflexivity | exact Hno]].
     intros y eff m' evs Hy _. cbn in Hy |- *. injection Hy as <-.
     rewrite (brk_refusal_b_eq segs ms _ model _ Hno), H0. unfold brk_refusal_b, w_is0. rewrite bv_eqb_refl. reflexivity. }
+  { apply (RomBase.sys_rob_memfree segs ms model (getr regs 17) (epend_svc _ _ _ _ _)). rewrite Hno. exact RomBase.memfree_214. }
   intros [r Hr]. cbn [proj1_sig].
   pose proof (proj1 (Hcases r) Hr) as Er. subst r.
   rewrite H0, brk_zeros_query, brk_unmaps_keep.
@@ -907,6 +927,7 @@ Proof.
   - intros [r Hr] Hk. cbn [proj1_sig eff_ret] in *. rewrite Hrb. unfold keep in Hk. cbn [proj1_sig] in Hk.
     destruct (bv_eqb r b); [reflexivity | discriminate Hk].
   - exact Hk0.
+  - apply (RomBase.sys_rob_memfree segs ms model (getr regs 17) (epend_svc _ _ _ _ _)). rewrite Hno. exact RomBase.memfree_214.
   - intros [r Hr] Hk. cbn [proj1_sig]. fold h.
     destruct (proj1 (Hcases r) Hr) as [-> | [-> Hg]].
     + exfalso. unfold keep in Hk. cbn [proj1_sig] in Hk. rewrite bv_eqb_refl in Hk. discriminate Hk.
@@ -971,6 +992,7 @@ Proof.
         by (symmetry; apply bv_eqb_neq; intros E; apply (f_equal bv_unsigned) in E;
             change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E; lia).
       unfold min_brk. fold h. rewrite (proj2 (Z.ltb_ge _ _)) by lia. reflexivity. }
+  { apply (RomBase.sys_rob_memfree segs ms model (getr regs 17) (epend_svc _ _ _ _ _)). rewrite Hno. exact RomBase.memfree_214. }
   intros [r Hr]. cbn [proj1_sig]. fold h.
   pose proof (proj1 (Hcases r) Hr) as Er. subst r. fold b.
   rewrite brk_zeros_keep, brk_unmaps_keep. unfold b, h. rewrite brk_model_keep.
@@ -1054,6 +1076,7 @@ Proof.
   - intros [| |] Hk; try discriminate Hk. cbn [effs eff_ret]. rewrite (mmap_refusal_b segs ms _ model _ Hno). exact Haddr_ne.
   - intros [| |] Hk; try discriminate Hk; cbn [effs eff_ret]; apply errno_refusal; first [exact Hno | exact ENOMEM_in_mmap_errnos].
   - reflexivity.
+  - apply (RomBase.sys_rob_memfree segs ms model (getr regs 17) (epend_svc _ _ _ _ _)). rewrite Hno. exact RomBase.memfree_222.
   - intros [| |] Hk; try discriminate Hk. cbn [effs ms']. unfold ms. rewrite adv_unmaps1_epend. exact HB.
 Qed.
 
@@ -1069,6 +1092,7 @@ Qed.
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   getr regs 12 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   mprotect_budget_ok model addr n = true ->
@@ -1076,14 +1100,14 @@ Qed.
                         (mprotect_model addr n model)) KB ->
   srealizes segs (mkCfg (mkst regs pc mem rom) model) KB.
 Proof.
-  intros regs pc mem rom model w addr len KB HF HE Hh H17 H10 Hal H11 Hlen Hnw H12 n Hna Hma Hbud HB.
+  intros regs pc mem rom model w addr len KB HF HE Hh H17 H10 Hal H11 Hlen Hnw H12 n Hvd Hna Hma Hbud HB.
   eapply srz_sys_lazy; [exact Hh | exact HF | exact HE |].
   set (ms := epend regs pc mem rom (getr regs 17)).
   assert (Hno : bv_unsigned (getr regs 17) = 226%Z) by (rewrite H17; apply u64_lit; lia).
   pose proof (fun eff => mprotect_check segs ms (getr regs 17) model eff addr len Hno
                            ltac:(unfold ms; rewrite ms_gpr_epend0; exact H10) Hal
                            ltac:(unfold ms; rewrite ms_gpr_epend1; exact H11) Hlen Hnw
-                           ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12) Hna Hma) as Hchk.
+                           ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12) Hvd Hna Hma) as Hchk.
   cbv zeta in Hchk. fold n in Hchk. rewrite Hbud in Hchk.
   pose (I := (unit + unit)%type).
   pose (effs := fun i : I => match i with
@@ -1120,6 +1144,7 @@ Proof.
   - intros [[] | []] Hk; [|discriminate Hk]. cbn [effs eff_ret]. rewrite (mprotect_refusal_b segs ms _ model _ Hno).
     apply errno_ret_in_intro. exact ENOMEM_in_mprotect_errnos.
   - reflexivity.
+  - apply (RomBase.sys_rob_memfree segs ms model (getr regs 17) (epend_svc _ _ _ _ _)). rewrite Hno. exact RomBase.memfree_226.
   - intros [[] | []] Hk; [discriminate Hk|]. cbn [effs ms']. unfold ms. rewrite adv_zeros1_epend. exact HB.
 Qed.
 

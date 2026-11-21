@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the walk of descriptors_get on plugin-hostd/fuzz_command.asan-ubsan, the B
-   re-walk of lib/A/Prog/descriptors_get.v (a working branch 565c61eeead, dg_entry_holds o dg_walkJ) at B's
+   re-walk of lib/A/Prog/descriptors_get.v (a working branch, dg_entry_holds o dg_walkJ) at B's
    addresses: B calls record() and arg_s() where A inlines them, so the two arms and the four inline ASan checks of
    A's walk become two callee contracts and this file is one straight walk. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* descriptors_get on fuzz_command.asan-ubsan (MEASURED with capstone over the pin's .symtab, sha256 658cefbe...):
    entry 0x8cca4, 88 bytes, 22 instructions, a 32-byte frame (ra, s0, s1), no branch, NO `jal __asan_report_*` and
@@ -16,8 +17,8 @@
      0x8cccc .. 0x8ccd8  a0 := the verb 0x21fa0, a1 := 14, call rec_shape_of  (trec_shape_of_spec, cl_callS_na)
      0x8ccdc .. 0x8ccf8  a1 := the shape, a0 := the slot, a2 := 0, frame released, `j answer`
                          (tanswer_spec, PaFx's callS_wideF: answer's post is FP-existential).
-   The statement is a Theorem Labs lane's lib/B/Prog/descriptors_get_c.v at a working branch f490061c104, over core
-   a working branch c022a2f6a88; the helpers are lib/B/Prog/descriptors_get_aux.v; callS_wideF is lib/B/Prog/PaFx.v's.
+   The statement is a Theorem Labs lane's lib/B/Prog/descriptors_get_c.v at a working branch, over core
+   a working branch; the helpers are lib/B/Prog/descriptors_get_aux.v; callS_wideF is lib/B/Prog/PaFx.v's.
    The frame chains at the calls: record's and arg_s's s0 is uri, a heap address below alloc_ceiling (achain_low);
    rec_shape_of asks none; answer runs with the caller's s0 and the entry's chain, kept (achain_kept). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.

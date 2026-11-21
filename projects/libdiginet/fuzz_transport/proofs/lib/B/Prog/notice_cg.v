@@ -178,7 +178,7 @@ Definition notice_wr (Bw : list byte) (n : TI.ntc) (a : Z) : Prop :=
   (TI.n_kind n = TC.N_FOREIGN /\ twb_fld TW.OFF_GOT TB_GOT TW.A_GOT_foreign 4 a).
 
 (* The shadow of GOT's payload (224 bytes, 28 whole granules) is 0: a range of the record's as_zero_shadow (the
-   Tfib_zero_shadow row (0x5e4f60, 0x5e5040 - 0x5e4f60), lib/B/YF0m.v:3112). The instrumented checks of the stores
+   Tfib_zero_shadow row (0x5e4f60, 0x5e5040 - 0x5e4f60), lib/B/YF0m.v:3113). The instrumented checks of the stores
    at GOT.t[GOT.n] read it. *)
 Definition trans_notice_cells (B : asyms) : Prop := decode_zshadow_at B TB_GOT (TB_GOT + TW.SZ_GOT).
 

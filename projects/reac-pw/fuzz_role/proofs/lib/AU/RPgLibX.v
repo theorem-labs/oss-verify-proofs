@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: role_ffl is proofs/libreac/fuzz_knock/lib/A/APgLib.v link_FFL at origin/ossv/recipes
-   6ebe35ba632 (in the form proofs/libreac/fuzz_decode/lib/A/DecodeARtStackMalloc.v dec_ffl states it, without the
+(* Modified by Theorem Labs, 2026-10: role_ffl is proofs/libreac/fuzz_knock/lib/A/APgLib.v link_FFL
+    (in the form proofs/libreac/fuzz_decode/lib/A/DecodeARtStackMalloc.v dec_ffl states it, without the
    unfold of YImgTop's notations), at reac-pw/fuzz_role's image A and its start-up record TfibB; the rest of the file
    is written new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgLibX.v at c9f9a5a10e3 for image B: image B's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgLibX.v for image B: image B's
    core (lib/AU YB1v / YD2l / YE2k / YCfn / YD1u / YE2q / YE2r / YF0m / YF0x / YCej), its runtime entries (memcpy
    0x5116c, memset 0x51608, the strlen wrapper 0x41b60, the strcmp wrapper 0x41b68, the class-4 frame, set_shadow_f5
    0x54134; lib/AU/Rt), the read-only range 0x9a3c0 .. 0x9b7c8, the chaining of lib/AU/RPgTopI.v, and every walk
-   piece of image B by its theorem, as proofs/reac-pw/fuzz_rate/lib/AU/RtPgTopAB.v / RtPgLinkB.v at 7ed26d298ff
+   piece of image B by its theorem, as proofs/reac-pw/fuzz_rate/lib/AU/RtPgTopAB.v / RtPgLinkB.v
    discharge theirs; image A's open W6c premise is a theorem here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; addresses from the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a): lib/AU/RPgLib.v's statement of the walk of

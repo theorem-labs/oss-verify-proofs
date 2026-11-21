@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.EH Require EH0Gc1. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -30,11 +31,11 @@ Definition statics_wr : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "60!v3!qb!v9!hn
 (* [comment removed for export] *)
 Inductive pool_state := PoolPristine | PoolIdle | PoolLive.
 Definition pool_kn : ltac2:(zQ "30!q5!ho0!qb>1p$1@1$0$2") := ltac2:(zQ "a2!v3!qb!v9!hg7!vf!hgc!ho0!hoe!q5!hna&@3$4@2$3@1$0Z+hgpsq0N8@1$0+hgpsrc&@3$4@2$3@1$0Z+hgpsrcN2@1$0+o0\1p$6@3$7$1M6\1p$6@1$8$1^1@3$2$1@3$4@2$3@1$0Z+hgpsq0N8@1$0Z@1$5$1@3$2$1~0@3$2$1~1@3$2$1@3$4@2$3@1$0Z+hgpsreN2@1$0+nd@1$5$1@3$2$1~0@3$2$1~1@3$2$1@3$4@2$3@1$0Z+hgpsreN2@1$0+l8@3$2$1@3$4@2$3@1$0Z+hgpuhcN2@1$0Z@3$2$1@3$4@2$3@1$0Z+hgpuheN2@1$0+i5@1$5$1@3$2$1@2$9@2$3@1$0Z+hgpsq0@1$0+ih0@1$5$1").
-Definition pool_geom : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "c0!v3!hg7!qb!v9!hp3!hp9!hgc!hq1!hq6!hqe!hsc!ht3@3$3$2@4$5@2$1$7$4@1$0@2$b@2$a$9+h0$4@2$1@1$0Z+hgpsq0@1$0+ih0@3$3$2@4$5@2$1@1$0Z+hgpsq0@1$0+ih0@2$1$8Z@1$0+q0@1$6$2").
+Definition pool_geom : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "c0!v9!qb!hp9!hg7!hq1!hp3!v3!ht3!hsc!hqe!hq6!hgc@3$0$1@4$2@2$3$4$5@1$6@2$7@2$8$9+h0$5@2$3@1$6Z+hgpsq0@1$6+ih0@3$0$1@4$2@2$3@1$6Z+hgpsq0@1$6+ih0@2$3$aZ@1$6+ht0@1$b$1").
 
 (* [comment removed for export] *)
 Definition opnew_frame_kn : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "a0!qb!v9!hq1!hqe!vf!hg7!hgc!hta!hu0!hsc@3$1$0@3$4@2$5$2$3N8@1$7N0@3$1$0@3$4@2$5$2@2$9$3+8N8$8@1$6$0").
-Definition th_geom : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "e0!qb!v9!hq1!hp3!v3!hq6!hu8!hg7!hgc!hqe!hv1!hp9!hsc!ht3@3$1$0@3$6$2+kgggggggggg0+ogggggggggg0@3$1$0@3$6$5+kgggggggggg0+vvvvvvvvvvvvvvm0@3$1$0@2$a$2+h0@3$1$0@4$b@2$7$2$3@1$4@2$d@2$c$9+h0$3@2$7$5Z@1$4+q0@1$8$0").
+Definition th_geom : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "e0!v9!qb!hu8!hq1!hq6!hv1!hp9!hg7!hp3!v3!ht3!hsc!hqe!hgc@3$0$1@3$2$3+kgggggggggg0+ogggggggggg0@3$0$1@3$2$4+kgggggggggg0+vvvvvvvvvvvvvuj0@3$0$1@2$5$3+h0@3$0$1@4$6@2$7$3$8@1$9@2$a@2$b$c+h0$8@2$7$4Z@1$9+ht0@1$d$1").
 Definition th_scratch : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "a0!hp3!qb!v9!hgc!v3!hq1!hqe!hna!hg7!ht3@3$2$1@2$7@2$8$5$0@1$4@2$9$6$0@1$3$1").
 (* [comment removed for export] *)
 Definition boost_regs : ltac2:(zQ "20!m2!q5>2ra$0>2sp$0>2s0$0>2a0$0>2a1$0@1$1$0") := ltac2:(zQ "c0!m2!v9!o1!hta!v3!hgc!hva!ig1!ig7!ige!ih5!ihb\2ra$0\2sp$0\2s0$0\2a0$0\2a1$0@3$1$0@1$4Z@3$1$0^5@3$1$0^4@3$1$0$7@3$1$0@1$4$6@3$1$0@1$2N5@3$1$0@1$2N6@3$1$0@1$2N7@3$1$0^3@3$1$0@1$3N1@3$1$0^2@3$1$0^1@3$1$0@1$2N9@3$1$0@1$2Na@3$1$0@1$2Nb@3$1$0@1$2Nc@3$1$0@1$2Nd@3$1$0@1$2Ne@3$1$0@1$3N2@3$1$0@1$3N3@3$1$0@1$3N4@3$1$0@1$3N5@3$1$0@1$3N6@3$1$0@1$3N7@3$1$0$a@3$1$0$b@3$1$0$8@3$1$0$9@3$1$0@1$2Nf@3$1$0@1$2Nh0@3$1$0@1$2Nh1@3$1$0@1$2Nh2@1$5$0").
@@ -48,7 +49,7 @@ Definition AA_regs : ltac2:(zQ "20!q5!m2@1$0$1") := ltac2:(zQ "60!v3!ii1!hq1!hqe
 Definition TH_T : ltac2:(zQ "50!hhb!q5!q1!ho0!qb>6steady$0>1u$2>1p$3@1$1$4") := ltac2:(zQ "f0!hoe!qb!hhb!q1!ijb!ik5!il8!im5!io5!ip2!ho0!ipd!jg6!iqb!ir6\6steady$2\1u$3\1p$a@3$0$1$c@3$0$1$e@3$0$1@1$9^1@3$0$1@1$7^2@3$0$1$b@3$0$1@1$6^3@3$0$1$4@3$0$1$5@3$0$1$d$8").
 (* [comment removed for export] *)
 Definition F2_regs : ltac2:(zQ "20!m2!q5>2a0$0@1$1$0") := ltac2:(zQ "80!o1!ii1!v3!hq1!hqe!ii7!m2!ht3\2a0$6@5$5@1$0Nh3@2$1$3@2$7$4+j0@1$2+p0^1@1$0N8").
-Definition blk_geom : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "f0!v3!hg7!qb!v9!jh6!hp9!hp3!hgc!hq1!hq6!hqe!hv1!hu8!hsc!ht3@3$3$2@3$c$4+1+ogggggggggg0@3$3$2@2$b$4+h0@3$3$2@4$5@2$1$4Z@1$0+p0@2$1@1$0Z+hggg0@1$0+uhgg0@3$3$2@4$5@2$1$4Z@1$0+p0@2$1@1$0Z+vokt8@1$0+hkj0@3$3$2@4$5@2$1$8$6@1$0@2$e@2$d$a+h0$6@2$1$4Z@1$0+p0@3$3$2@4$5@2$1$4Z@1$0+p0@2$1$9Z@1$0+q0@3$3$2@4$5@2$1$4Z@1$0+p0@2$1@1$0Z+hgrlu0@1$0+8@3$3$2@4$5@2$1$4Z@1$0+p0@2$1@1$0Z+hirmv8@1$0+8@3$3$2@4$5@2$1$4Z@1$0+p0@2$1@1$0Z+hirpl0@1$0+8@3$3$2@4$5@2$1$4Z@1$0+p0@2$1@1$0Z+hgpsp0@1$0+ii0@1$7$2").
+Definition blk_geom : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "f0!v9!qb!hu8!jh6!hv1!hp9!hg7!v3!hq1!hp3!ht3!hsc!hqe!hq6!hgc@3$0$1@3$2$3+1+ogggggggggg0@3$0$1@2$4$3+h0@3$0$1@4$5@2$6$3Z@1$7+p0@2$6@1$7Z+hggg0@1$7+uhgg0@3$0$1@4$5@2$6$3Z@1$7+p0@2$6@1$7Z+vokt8@1$7+hkj0@3$0$1@4$5@2$6$8$9@1$7@2$a@2$b$c+h0$9@2$6$3Z@1$7+p0@3$0$1@4$5@2$6$3Z@1$7+p0@2$6$dZ@1$7+ht0@3$0$1@4$5@2$6$3Z@1$7+p0@2$6@1$7Z+hgrlu0@1$7+8@3$0$1@4$5@2$6$3Z@1$7+p0@2$6@1$7Z+hirmv8@1$7+8@3$0$1@4$5@2$6$3Z@1$7+p0@2$6@1$7Z+hirpl0@1$7+8@3$0$1@4$5@2$6$3Z@1$7+p0@2$6@1$7Z+hgpsp0@1$7+ii0@1$e$1").
 (* [comment removed for export] *)
 Definition F2H_kn : ltac2:(zQ "30!hhb!q5!qb>6steady$0@1$1$2") := ltac2:(zQ "h20!qb!hoe!hhb!v9!hgc!ijb!ik5!v3!jh6!jhd!il8!im5!ipd!jg6!iqb!ir6!hna!hg7\6steady$2@3$1$0@3$3$0@2$h0@2$h1$8Z@1$7+p0@1$4$0@3$1$0$d@3$1$0$f@3$1$0@1$bZ@3$1$0$c@3$1$0@1$a^1@3$1$0$5@3$1$0$6@3$1$0$e$9").
 Definition F2h : ltac2:(zQ "20!hhb!is4>6steady$0$1") := ltac2:(zQ "a0!it0!hhb!hgc!it6!jh6!ji9!jj3!iuf!iv5!ivd\6steady$1@6$7+pksm8@1$6$4@1$2$9@1$5^1$3@1$0$8").
@@ -81,7 +82,7 @@ Definition REG_hf : ltac2:(zQ "20!q5!jv7@1$0$1") := ltac2:(zQ "b0!q1!kg1!m2!kg7!
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition PAD_regs : ltac2:(zQ "30!q5!q1!m2>3sel$1@1$0$2") := ltac2:(zQ "b0!m2!v9!kra!v3!hgc!q1!hva!ii1!ig1!jh6!ks2\3sel$5@3$1$0@1$3Z@3$1$0@1$2N1@3$1$0$a@3$1$0$8@3$1$0@1$3$6@3$1$0@1$2N5@3$1$0@1$2N6@3$1$0@1$2N7@3$1$0@1$2N8@3$1$0@1$2N9@3$1$0@2$7$9+m0@3$1$0@1$3^1@3$1$0@1$2Nc@3$1$0@1$2Nd@3$1$0@1$2Ne@3$1$0@1$2Nf@3$1$0@1$2Nh0@3$1$0@1$2Nh1@3$1$0@1$2Nh2@3$1$0@1$2Nh3@3$1$0@1$2Nh4@3$1$0@1$2Nh5@3$1$0@1$2Nh6@3$1$0@1$2Nh7@3$1$0@1$2Nh8@3$1$0@1$2Nh9@3$1$0@1$2Nha@3$1$0@1$2Nhb@3$1$0@1$2Nhc@3$1$0@1$2Nhd@3$1$0@1$2Nhe@3$1$0@1$2Nhf@1$4$0").
-Definition PAD_T : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "h00!v3!qb!hg7!v9!jh6!hp9!hoe!hq6!hu8!hgc!kke!ijb!hi1!ks9!ik5!hv1@3$6$1@1$d$a@3$6$1$c@3$6$1$b@3$6$1$e@3$3$1@3$8$7+kgggggggggg0+vvvvvvvvvvvvvvm0@3$3$1@3$8$4+1+ogggggggggg0@3$3$1@2$f$4+h0@3$3$1@4$5@2$2$4Z@1$0+p0@2$2@1$0Z+hggg0@1$0+uhgg0@3$3$1@4$5@2$2$4Z@1$0+p0@2$2@1$0Z+vokt8@1$0+hkj0@3$3$1@4$5@2$2$4Z@1$0+p0@2$2$7Z@1$0+q0@3$3$1@4$5@2$2$4Z@1$0+p0@2$2@1$0Z+hgrlu0@1$0+8@3$3$1@4$5@2$2$4Z@1$0+p0@2$2@1$0Z+hirmv8@1$0+8@3$3$1@4$5@2$2$4Z@1$0+p0@2$2@1$0Z+hirpl0@1$0+8@1$9$1").
+Definition PAD_T : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "h00!hoe!qb!ks9!kke!hi1!ijb!ik5!v9!hu8!hq6!jh6!hv1!hp9!hg7!v3!hgc@3$0$1@1$2$3@3$0$1$4@3$0$1$5@3$0$1$6@3$7$1@3$8$9+kgggggggggg0+vvvvvvvvvvvvvuj0@3$7$1@3$8$a+1+ogggggggggg0@3$7$1@2$b$a+h0@3$7$1@4$c@2$d$aZ@1$e+p0@2$d@1$eZ+hggg0@1$e+uhgg0@3$7$1@4$c@2$d$aZ@1$e+p0@2$d@1$eZ+vokt8@1$e+hkj0@3$7$1@4$c@2$d$aZ@1$e+p0@2$d$9Z@1$e+ht0@3$7$1@4$c@2$d$aZ@1$e+p0@2$d@1$eZ+hgrlu0@1$e+8@3$7$1@4$c@2$d$aZ@1$e+p0@2$d@1$eZ+hirmv8@1$e+8@3$7$1@4$c@2$d$aZ@1$e+p0@2$d@1$eZ+hirpl0@1$e+8@1$f$1").
 
 (* [comment removed for export] *)
 Definition RES_PC : Z := 0xd30f4.
@@ -90,7 +91,7 @@ Definition RES_regs : ltac2:(zQ "20!q5!m2@1$0$1") := ltac2:(zQ "80!ii1!hq1!jh6!k
 Fixpoint savedA_kn (fsize : Z) (offs : list Z) (k : nat) : list kentry :=
   match offs with [] => [] | off :: r => KWord (SA vA (RS + fsize + off)) 8 (sslot k) :: savedA_kn fsize r (S k) end.
 Definition frameA_kn : ltac2:(zQ "30!q5!kje!qb>2st$1@1$0$2") := ltac2:(zQ "d0!kt8!v9!ku2!kje!hq1!kuc!kt2!kv2!vf!hg7!qb!hsc!ht3\2st$3@3$1$a@3$8@2$9$4@2$c@2$b$6@1$0^1+8N8$5@3$7@1$0^1@1$2^1N0").
-Definition RES_kn : ltac2:(zQ "30!q5!kje!qb>2st$1@1$0$2") := ltac2:(zQ "he0!qb!hoe!v9!v3!hg7!hp3!hq1!kt2!hgc!hp9!hu8!ht3!kke!kvf!jh6!lg6!lj1!ii1!ijb!hi1!ki0!ks9!ik5!kt8!kje!hq6!ljc!hu0!lk9!hna\2st$h8@3$1$0@3$2$0@2$hd@2$4$6$5@1$3@2$b$7$5@1$8$0@3$1$0@1$ha^1@3$1$0@3$2$0@3$a$hb@1$d^1@1$d^1@3$2$0@4$9@2$4$eZ@1$3+p0@2$4$6$7@1$3@1$h7^1@3$2$0@3$a@3$hc$h0$f@2$h1$6$7+h0+ogggggggggg0@1$8$0@3$1$0@1$h5$c@3$1$0$h3@3$1$0$h2@3$1$0$h6@3$1$0@1$h4$c@3$2$0@4$9@2$4$6$5@1$3@2$b$7$5@2$4$eZ@1$3+p0@3$2$0@4$9@2$4$6$5@1$3@2$b$7$5@2$4$h9Z@1$3+q0@3$2$0@3$a$f+kgggggggggg0+ogggggggggg0@1$8$0").
+Definition RES_kn : ltac2:(zQ "30!q5!kje!qb>2st$1@1$0$2") := ltac2:(zQ "he0!kje!hoe!qb!v9!hna!hg7!hq1!hp3!v3!ht3!kt2!hgc!ljc!hu8!hu0!kvf!hp9!jh6!kt8!lk9!lj1!lg6!ii1!ks9!kke!hi1!ijb!ik5!ki0!hq6\2st$0@3$1$2@3$3$2@2$4@2$5$6$7@1$8@2$9$a$7@1$b$2@3$1$2@1$c^1@3$1$2@3$3$2@3$d$e@1$f^1@1$f^1@3$3$2@4$h0@2$5$h1Z@1$8+p0@2$5$6$a@1$8@1$h2^1@3$3$2@3$d@3$h3$h4$h5@2$h6$6$a+h0+ogggggggggg0@1$b$2@3$1$2@1$h7$h8@3$1$2$h9@3$1$2$ha@3$1$2$hb@3$1$2@1$hc$h8@3$3$2@4$h0@2$5$6$7@1$8@2$9$a$7@2$5$h1Z@1$8+p0@3$3$2@4$h0@2$5$6$7@1$8@2$9$a$7@2$5$hdZ@1$8+ht0@3$3$2@3$d$h5+kgggggggggg0+ogggggggggg0@1$b$2").
 Definition RES : ltac2:(zQ "20!kje!is4>2st$0$1") := ltac2:(zQ "a0!it0!hgc!it6!kje!ll0!lla!lm4!iuf!iv5!ivd\2st$3@6$7$4$6@1$1$9@1$5^1$2@1$0$8").
 Definition REG_res : ltac2:(zQ "20!q5!jv7@1$0$1") := ltac2:(zQ "b0!q1!kg1!m2!kg7!v9!hp3!hgc!hq1!jh6!kt2!ht3@3$4@2$1@2$1$2$0$0@4$3@2$1$2$0$0@4$3$2$0$7$5@2$a$9$5@3$4@2$1@2$1$2$0$0@4$3@2$1$2$0$0@4$3$2$0$8Z+p0@1$6@2$1@2$1$2$0$0").
 
@@ -102,8 +103,8 @@ Definition AFTER_FREE_PC : Z := 0x948a0.
 Definition AFTER_CATCH_PC : Z := 0x47984.
 Definition C_SCR : Z := 4096.
 Definition CT_regs : ltac2:(zQ "20!m2!q5>2a0$0@1$1$0") := ltac2:(zQ "50!o1!hq1!hta!ii7!m2\2a0$4@5$3@1$0Nh3$1@1$2N0^1@1$0N8").
-Definition ct_geom : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "d0!qb!v9!v3!hg7!hq1!hq6!hu8!ln0!hp9!hgc!lg6!hv1!kj7@3$1$0@3$6$4+kgggggggggg0+ogggggggggg0@3$1$0@2$b$4+h0@3$1$0@3$6$5+kgggggggggg0+vvvvvvvvvvvvvvm0@3$1$0@3$6$a+kgggggggggg0+ogggggggggg0@3$1$0@4$8@2$3$4@1$c$7@1$2$7@2$3$5Z@1$2+q0@3$1$0@4$8@2$3@1$2Z+hgpsp0@1$2+ii0@2$3$5Z@1$2+q0@1$9$0").
-Definition cth_geom : ltac2:(zQ "30!hhb!q5!qb>2hi$0@1$1$2") := ltac2:(zQ "f0!v3!hg7!qb!jh6!v9!hp9!hhb!ln0!hu8!hgc!hq1!hq6!hv1!kj7!ht3\2hi$6@3$4$2M6\2hi$6$2^1@3$8$3+hitgg0+ogggggggggg0@3$8$3+1@2$e+hggg0+p0@3$4$2@2$c$3+h0@3$4$2@4$5@2$1$3Z@1$0+p0@2$1@1$0Z+hggg0@1$0+uhgg0@3$4$2@4$5@2$1$3Z@1$0+p0@2$1@1$0Z+vokt8@1$0+hkj0@3$4$2@4$5@2$1$a@1$d$7@1$0$7@2$1$3Z@1$0+p0@3$4$2@4$5@2$1$3Z@1$0+p0@2$1$bZ@1$0+q0@3$4$2@4$5@2$1$3Z@1$0+p0@2$1@1$0Z+hgpsp0@1$0+ii0@3$4$2@4$5@2$1$3Z@1$0+p0@2$1@1$0Z+hgrlu0@1$0+8@3$4$2@4$5@2$1$3Z@1$0+p0@2$1@1$0Z+hirmv8@1$0+8@3$4$2@4$5@2$1$3Z@1$0+p0@2$1@1$0Z+hirpl0@1$0+8@1$9$2").
+Definition ct_geom : ltac2:(zQ "20!q5!qb@1$0$1") := ltac2:(zQ "d0!v9!qb!hu8!hq1!hv1!hq6!lg6!hp9!hg7!kj7!ln0!v3!hgc@3$0$1@3$2$3+kgggggggggg0+ogggggggggg0@3$0$1@2$4$3+h0@3$0$1@3$2$5+kgggggggggg0+vvvvvvvvvvvvvuj0@3$0$1@3$2$6+kgggggggggg0+ogggggggggg0@3$0$1@4$7@2$8$3@1$9$a@1$b$a@2$8$5Z@1$b+ht0@3$0$1@4$7@2$8@1$bZ+hgpsp0@1$b+ii0@2$8$5Z@1$b+ht0@1$c$1").
+Definition cth_geom : ltac2:(zQ "30!hhb!q5!qb>2hi$0@1$1$2") := ltac2:(zQ "f0!hhb!v9!qb!hu8!jh6!ht3!hv1!hp9!hg7!v3!hq1!kj7!ln0!hq6!hgc\2hi$0@3$1$2M0\2hi$0$2^1@3$3$4+hitgg0+ogggggggggg0@3$3$4+1@2$5+hggg0+p0@3$1$2@2$6$4+h0@3$1$2@4$7@2$8$4Z@1$9+p0@2$8@1$9Z+hggg0@1$9+uhgg0@3$1$2@4$7@2$8$4Z@1$9+p0@2$8@1$9Z+vokt8@1$9+hkj0@3$1$2@4$7@2$8$a@1$b$c@1$9$c@2$8$4Z@1$9+p0@3$1$2@4$7@2$8$4Z@1$9+p0@2$8$dZ@1$9+ht0@3$1$2@4$7@2$8$4Z@1$9+p0@2$8@1$9Z+hgpsp0@1$9+ii0@3$1$2@4$7@2$8$4Z@1$9+p0@2$8@1$9Z+hgrlu0@1$9+8@3$1$2@4$7@2$8$4Z@1$9+p0@2$8@1$9Z+hirmv8@1$9+8@3$1$2@4$7@2$8$4Z@1$9+p0@2$8@1$9Z+hirpl0@1$9+8@1$e$2").
 (* [comment removed for export] *)
 Definition F5a : ltac2:(zQ "30!hhb!ho0!is4>2ps$1>2hi$0$2") := ltac2:(zQ "hf0!qb!hoe!hgc!ln0!it0!hhb!v9!kke!it6!ii1!ijb!hi1!ks9!ik5!v3!hq1!jh6!ln9!lo5!lp0!lpb!im5!ip2!ho0!ipd!hna!hg7!iuf!iv5!ivd!kj7\2ps$h7\2hi$5@6$hb$h1@1$h2@2$9$h0+m0@1$2$hd@3$1$0@3$6$0@2$h9@2$ha$f@1$he$3@1$e$3@1$2$0@3$1$0@1$c$7@3$1$0@1$h5+1@3$1$0$h8@3$1$0@1$h6^2@3$1$0$b@3$1$0$a@3$1$0$d@3$1$0$h3@1$h4^1$8@1$4$hc").
 Definition FR_regs : ltac2:(zQ "20!q5!m2@1$0$1") := ltac2:(zQ "70!jh6!ii1!v3!hq1!lq7!ii7!o1@5$5@1$2$4@2$1$3-i0$0$0@1$6N8").

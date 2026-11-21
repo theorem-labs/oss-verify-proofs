@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (path_atA_of decoded from its encoded statement to plain text, with a new last premise that the path ends below TASK_SIZE as the revision's read_cstr checks; each open call site proves it from the stack-top bound; the main-phase stack floor is sp0 - 6144512, the window the revision's launch maps; the string bounds of MENTRY, ATOPEN, MENTRYU and of openfail_stmtA, readerr_stmtA and usage_stmtA are pathp + length + 11 <= STKHI, as the revision's launch places the strings at the stack top; MENTRY, ATOPEN and MENTRYU carry the channel reader, which the revision's writev reads, after their m_fs field, and the three tail statements take it after their fd premise; every branch threads it to its tail, to oom_glueA and to the read loop's invariant). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -57,7 +58,7 @@ Local Ltac2 e25kn_keep_near (t : Init.constr) : Init.unit :=
               end
   end.
 Ltac ff_keep_near t ::= let f := ltac2:(t |- e25kn_keep_near (Option.get (Ltac1.to_constr t))) in f t.
-Ltac2 gd_tbl_A_main_open () : Init.string Init.list := ["stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.option"; "Corelib.Numbers.BinNums.Z"; "Corelib.Init.Datatypes.nat"; "Corelib.Init.Datatypes.list"; "Corelib.Init.Logic.eq"; "OSSVerify.KrLib.Lib.PropExec.rdn"; "OSSVerify.KrLib.A.AImg.asegs"; "stdpp.bitvector.definitions.Z_to_bv"; "Corelib.Init.Datatypes.Some"; "Stdlib.ZArith.BinInt.Z.le"; "Stdlib.ZArith.BinInt.Z.add"; "Stdlib.ZArith.BinInt.Z.of_nat"; "Stdlib.ZArith.BinInt.Z.pow"; "OSSVerify.KrLib.Lib.Mem.bytes_at"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes"; "OSSVerify.KrLib.Lib.Step.ro_cells"; "Corelib.Init.Datatypes.cons"; "OSSVerify.KrLib.Lib.Cells.cell"; "OSSVerify.KrLib.Lib.Cells.C8"; "Corelib.Init.Datatypes.nil"; "OSSVerify.KrLib.Lib.Frame.mkR"; "stdpp.bitvector.definitions.bv_unsigned"; "Stdlib.ZArith.BinInt.Z.mul"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state"; "Corelib.Init.Logic.ex"; "Corelib.Init.Logic.and"; "OSSVerify.KrLib.Lib.MState.MS"; "LinuxProcessSemantics.Riscv.Prelude.bvmap_empty"; "Corelib.Init.Datatypes.None"; "OSSVerify.KrLib.Lib.PropExec.seg_rom"; "OSSVerify.KrLib.Lib.Frame.munch"; "Corelib.Init.Datatypes.prod"; "Corelib.Init.Datatypes.pair"; "OSSVerify.KrLib.LibA.ARt.arl_stklo"; "OSSVerify.KrLib.Lib.Frame.wmono"; "OSSVerify.KrLib.Lib.Mem.mem_inv"; "OSSVerify.KrLib.Lib.Frame.stk"; "OSSVerify.KrLib.Lib.Step.rw_cells"; "OSSVerify.KrLib.LibA.ALazy.crange"; "Stdlib.ZArith.BinInt.Z.sub"; "OSSVerify.KrLib.LibA.AEvtA.evtA"; "Open.O1_post"; "Open.MREGS"; "OSSVerify.KrLib.Lib.Cells.CB"; "OSSVerify.KrLib.A.AImgRT.asan_rtc"; "Open.O2_post"; "Open.OREGS"; "Stdlib.ZArith.BinInt.Z.lt"; "OSSVerify.KrLib.A.A_main_loop.LREGSA"; "Corelib.Init.Logic.not"; "OSSVerify.KrLib.Lib.Mem.mrd"; "OSSVerify.KrLib.Lib.Mem.wa"; "OSSVerify.KrLib.A.A_tailkit_defs.tail_memA"; "OSSVerify.KrLib.LibA.ARtDrv.drv_static"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.wview"; "OSSVerify.KrLib.A.A_tailkit_defs.SSH_LO"; "OSSVerify.KrLib.A.A_tailkit_defs.SSH_HI"; "OSSVerify.KrLib.A.A_tailkit_defs.ZIMG_LO"; "OSSVerify.KrLib.A.A_tailkit_defs.ZIMG_HI"; "rtc_zone"; "OSSVerify.KrLib.Lib.Frame.ivl"; "OSSVerify.KrLib.LibA.ARt.sshad"; "OSSVerify.KrLib.Lib.Frame.disjoint_from"; "OSSVerify.KrLib.LibA.ALazy.shadow_of"; "OSSVerify.KrLib.LibA.ARt.HM"; "OSSVerify.KrLib.Lib.HeapIface.blk"; "LinuxProcessSemantics.LinuxProcessSem.State.Model"; "OSSVerify.KrLib.LibA.ARt.HST"; "Open.near_HM"; "OSSVerify.KrLib.LibA.ARt.HK"; "OSSVerify.KrLib.LibA.ARt.htop"; "OSSVerify.KrLib.LibA.ARt.hstkhi"; "Corelib.Init.Datatypes.app"; "Stdlib.Lists.List.In"; "Corelib.Init.Datatypes.length"; "LinuxProcessSemantics.LinuxProcessSem.State.FdEntry"; "LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fds"; "LinuxProcessSemantics.LinuxProcessSem.State.FdChannel"; "LinuxProcessSemantics.LinuxProcessSem.Fs.Fs"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fs"; "OSSVerify.KrLib.LibA.SRz.srealizesJ"; "LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg"; "OSSVerify.KrLib.Spec.Spec.t_die"; "OSSVerify.KrLib.Spec.Spec.msg_cannot_open"; "OSSVerify.KrLib.Lib.Shape.TSet"; "Open.MENTRY"; "OSSVerify.KrLib.LibA.ALazy.mo_mat"; "OSSVerify.KrLib.A.A_main_inv.files_pristine"; "OSSVerify.KrLib.Spec.SInv.si_P"; "OSSVerify.KrLib.LibA.ARt.arl_L"; "OSSVerify.KrLib.Lib.PropExec.mkst"; "OSSVerify.KrLib.Lib.PropExec.fx0"; "Open.ATOPEN"; "Open.EREGS"; "OSSVerify.KrLib.Lib.PropExec.regupd"; "stdpp.bitvector.definitions.BV"; "Corelib.Init.Logic.I"; "LinuxProcessSemantics.LinuxProcessSem.State.errno_ret"; "OSSVerify.KrLib.Lib.PropExec.v_addi"; "LinuxProcessSemantics.LinuxProcessSem.Fs.fs_lookup"; "OSSVerify.KrLib.A.A_main_loop.after_loop_stmtA"; "OSSVerify.KrLib.LibA.ARt.havol"; "OSSVerify.KrLib.LibA.ARt.hfr"; "OSSVerify.KrLib.LibA.ARtDrv.hfresh"; "LinuxProcessSemantics.LinuxProcessSem.State.with_fds"; "LinuxProcessSemantics.LinuxProcessSem.State.fd_insert"; "OSSVerify.KrLib.A.A_main_hdr.FDS2"; "LinuxProcessSemantics.LinuxProcessSem.State.alloc_fd"; "LinuxProcessSemantics.LinuxProcessSem.State.FdFile"; "OSSVerify.KrLib.Spec.Spec.t_opened"; "LinuxProcessSemantics.Riscv.Prelude.bvmap"; "OSSVerify.KrLib.Lib.PropExec.getr"; "Corelib.Init.Peano.le"; "OSSVerify.KrLib.LibA.NodesA2.path_atA"; "OSSVerify.KrLib.Spec.Spec.dot_path"; "OSSVerify.KrLib.Lib.Shape.t_alt2"; "OSSVerify.KrLib.Spec.Spec.msg_read_error"; "LinuxProcessSemantics.LinuxProcessSem.State.FdDir"; "OSSVerify.KrLib.Spec.Spec.t_opened_dir"; "Open.UREGS"; "Open.UFRAME"; "OSSVerify.KrLib.Spec.Spec.msg_usage"; "Open.usage_stmtA"; "Open.MENTRYU"].
+Ltac2 gd_tbl_A_main_open () : Init.string Init.list := ["stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.option"; "Corelib.Numbers.BinNums.Z"; "Corelib.Init.Datatypes.nat"; "Corelib.Init.Datatypes.list"; "Corelib.Init.Logic.eq"; "OSSVerify.KrLib.Lib.PropExec.rdn"; "OSSVerify.KrLib.A.AImg.asegs"; "stdpp.bitvector.definitions.Z_to_bv"; "Corelib.Init.Datatypes.Some"; "Stdlib.ZArith.BinInt.Z.le"; "Stdlib.ZArith.BinInt.Z.add"; "Stdlib.ZArith.BinInt.Z.of_nat"; "Stdlib.ZArith.BinInt.Z.pow"; "OSSVerify.KrLib.Lib.Mem.bytes_at"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes"; "OSSVerify.KrLib.Lib.Step.ro_cells"; "Corelib.Init.Datatypes.cons"; "OSSVerify.KrLib.Lib.Cells.cell"; "OSSVerify.KrLib.Lib.Cells.C8"; "Corelib.Init.Datatypes.nil"; "OSSVerify.KrLib.Lib.Frame.mkR"; "stdpp.bitvector.definitions.bv_unsigned"; "Stdlib.ZArith.BinInt.Z.mul"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state"; "Corelib.Init.Logic.ex"; "Corelib.Init.Logic.and"; "OSSVerify.KrLib.Lib.MState.MS"; "LinuxProcessSemantics.Riscv.Prelude.bvmap_empty"; "Corelib.Init.Datatypes.None"; "OSSVerify.KrLib.Lib.PropExec.seg_rom"; "OSSVerify.KrLib.Lib.Frame.munch"; "Corelib.Init.Datatypes.prod"; "Corelib.Init.Datatypes.pair"; "OSSVerify.KrLib.LibA.ARt.arl_stklo"; "OSSVerify.KrLib.Lib.Frame.wmono"; "OSSVerify.KrLib.Lib.Mem.mem_inv"; "OSSVerify.KrLib.Lib.Frame.stk"; "OSSVerify.KrLib.Lib.Step.rw_cells"; "OSSVerify.KrLib.LibA.ALazy.crange"; "Stdlib.ZArith.BinInt.Z.sub"; "OSSVerify.KrLib.LibA.AEvtA.evtA"; "Open.O1_post"; "Open.MREGS"; "OSSVerify.KrLib.Lib.Cells.CB"; "OSSVerify.KrLib.A.AImgRT.asan_rtc"; "Open.O2_post"; "Open.OREGS"; "Stdlib.ZArith.BinInt.Z.lt"; "OSSVerify.KrLib.A.A_main_loop.LREGSA"; "Corelib.Init.Logic.not"; "OSSVerify.KrLib.Lib.Mem.mrd"; "OSSVerify.KrLib.Lib.Mem.wa"; "OSSVerify.KrLib.A.A_tailkit_defs.tail_memA"; "OSSVerify.KrLib.LibA.ARtDrv.drv_static"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.wview"; "OSSVerify.KrLib.A.A_tailkit_defs.SSH_LO"; "OSSVerify.KrLib.A.A_tailkit_defs.SSH_HI"; "OSSVerify.KrLib.A.A_tailkit_defs.ZIMG_LO"; "OSSVerify.KrLib.A.A_tailkit_defs.ZIMG_HI"; "rtc_zone"; "OSSVerify.KrLib.Lib.Frame.ivl"; "OSSVerify.KrLib.LibA.ARt.sshad"; "OSSVerify.KrLib.Lib.Frame.disjoint_from"; "OSSVerify.KrLib.LibA.ALazy.shadow_of"; "OSSVerify.KrLib.LibA.ARt.HM"; "OSSVerify.KrLib.Lib.HeapIface.blk"; "LinuxProcessSemantics.LinuxProcessSem.State.Model"; "OSSVerify.KrLib.LibA.ARt.HST"; "Open.near_HM"; "OSSVerify.KrLib.LibA.ARt.HK"; "OSSVerify.KrLib.LibA.ARt.htop"; "OSSVerify.KrLib.LibA.ARt.hstkhi"; "Corelib.Init.Datatypes.app"; "Stdlib.Lists.List.In"; "Corelib.Init.Datatypes.length"; "LinuxProcessSemantics.LinuxProcessSem.State.FdEntry"; "LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fds"; "LinuxProcessSemantics.LinuxProcessSem.State.FdChannel"; "LinuxProcessSemantics.LinuxProcessSem.Fs.Fs"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fs"; "OSSVerify.KrLib.LibA.SRz.srealizesJ"; "LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg"; "OSSVerify.KrLib.Spec.Spec.t_die"; "OSSVerify.KrLib.Spec.Spec.msg_cannot_open"; "OSSVerify.KrLib.Lib.Shape.TSet"; "Open.MENTRY"; "OSSVerify.KrLib.LibA.ALazy.mo_mat"; "OSSVerify.KrLib.A.A_main_inv.files_pristine"; "OSSVerify.KrLib.Spec.SInv.si_P"; "OSSVerify.KrLib.LibA.ARt.arl_L"; "OSSVerify.KrLib.Lib.PropExec.mkst"; "OSSVerify.KrLib.Lib.PropExec.fx0"; "Open.ATOPEN"; "Open.EREGS"; "OSSVerify.KrLib.Lib.PropExec.regupd"; "stdpp.bitvector.definitions.BV"; "Corelib.Init.Logic.I"; "LinuxProcessSemantics.LinuxProcessSem.State.errno_ret"; "OSSVerify.KrLib.Lib.PropExec.v_addi"; "LinuxProcessSemantics.LinuxProcessSem.Fs.fs_lookup"; "OSSVerify.KrLib.A.A_main_loop.after_loop_stmtA"; "OSSVerify.KrLib.LibA.ARt.havol"; "OSSVerify.KrLib.LibA.ARt.hfr"; "OSSVerify.KrLib.LibA.ARtDrv.hfresh"; "LinuxProcessSemantics.LinuxProcessSem.State.with_fds"; "LinuxProcessSemantics.LinuxProcessSem.State.fd_insert"; "OSSVerify.KrLib.A.A_main_hdr.FDS2"; "LinuxProcessSemantics.LinuxProcessSem.State.alloc_fd"; "LinuxProcessSemantics.LinuxProcessSem.State.FdFile"; "OSSVerify.KrLib.Spec.Spec.t_opened"; "LinuxProcessSemantics.Riscv.Prelude.bvmap"; "OSSVerify.KrLib.Lib.PropExec.getr"; "Corelib.Init.Peano.le"; "OSSVerify.KrLib.LibA.NodesA2.path_atA"; "OSSVerify.KrLib.Spec.Spec.dot_path"; "OSSVerify.KrLib.Lib.Shape.t_alt2"; "OSSVerify.KrLib.Spec.Spec.msg_read_error"; "LinuxProcessSemantics.LinuxProcessSem.State.FdDir"; "OSSVerify.KrLib.Spec.Spec.t_opened_dir"; "Open.UREGS"; "Open.UFRAME"; "OSSVerify.KrLib.Spec.Spec.msg_usage"; "Open.usage_stmtA"; "Open.MENTRYU"; "LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader"; "Corelib.Init.Datatypes.bool"; "Corelib.Init.Datatypes.true"].
 
 #[local] Unset Lia Cache.
 
@@ -140,7 +141,7 @@ Section Open.
   Hypothesis SPlo : 0x7fff80000000 <= bv_unsigned sp0.       (* [comment removed for export] *)
   Hypothesis SPhi : bv_unsigned sp0 <= 0x800000000000.       (* [comment removed for export] *)
   Hypothesis SPal : bv_unsigned sp0 mod 16 = 0.
-  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 8388608.
+  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 6144512.
   Variables (path : list byte) (pathp : word) (fs0 : Fs).
   Variables (can : word) (tid : Z) (wp0 rp0 wp1 rp1 : word).
   Variables (TOP STKHI V0 : Z).
@@ -469,9 +470,10 @@ Section Open.
     me_pathnz : ~ In (Z_to_bv 8 0) path;
     me_pathok : path_has_slash path = false /\ path_eqb path dotdot_path = false;   (* [comment removed for export] *)
     me_pathlo : bv_unsigned sp0 + 40 <= bv_unsigned pathp;
-    me_pathhi : bv_unsigned pathp + Z.of_nat (length path) + 16 <= STKHI;
+    me_pathhi : bv_unsigned pathp + Z.of_nat (length path) + 11 <= STKHI;
     me_fds : m_fds mo = FDS2;
     me_fs : m_fs mo = fs0;
+    me_rdr : m_channel_reader mo = true;   (* the revision's writev reads the channel reader *)
     me_pathlen : Z.of_nat (length path) <= 131071                            (* [comment removed for export] *)
   }.
 
@@ -480,7 +482,7 @@ Section Open.
 (* [comment removed for export] *).
 
   (* [comment removed for export] *)
-  Definition openfail_stmtA : Prop := ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt1,(0.&40.)Pt2,(0.&40.)Pa1,(0.&40.)Pa2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pm,P,(0.&40.)(1.(0.&8.))Pmo,$43.Ph,(44.$7.VR,VHIA,)P,(45.R1.(14.$42.)R3.)P,(46.$7.VR,VHIA,R2.R3.)P,(5.$2.(47.$7.VR,VHIA,R3.)VTOP,)P,(5.$2.(48.$7.VR,VHIA,R4.)VSTKHI,)P,(24.$7.R7.)P,(35.(8.&40.Vmsp,)R8.Vcan,Vtid,Vwp0,Vrp0,Vwp1,Vrp1,)P,(25.$7.R9.(22.VR,)Vmsp,)P,(3>.$7.VAL,R:.(22.VR,)VSTKHI,)P,(>.$7.R;.(16.&40.Vpathp,)(49.(0.&8.)Vpath,(11.(0.&8.)(8.&8.=)(14.(0.&8.)))))P,(32.(4:.(0.&8.)(8.&8.=)Vpath,))P,(:.(;.(16.&40.Vsp0,)+28.)(16.&40.Vpathp,))P,(:.(;.(;.(16.&40.Vpathp,)(<.(4;.(0.&8.)Vpath,)))+10.)VSTKHI,)P,(5.(1.$4<.)(4=.(4>.R>.)(8.&40.+2.))(9.$4<.(4?.(8.&40.+2.))))P,(5.$50.(51.R?.)Vfs0,)P,(:.(<.(4;.(0.&8.)Vpath,))+1????.)(52.$7.(53.(1;.(15.(8.&40.+96;:<.)(8.&40.Vmsp,)(8.&40.+10800.)(8.&40.+639690.)Vpathp,R1?.R1>.(8.&40.+2.)(8.&40.+2.)(8.&40.-1.)R1=.R1<.R1;.R1:.R19.R18.R17.Vpathp,(8.&40.(;.(16.&40.Vsp0,)+20.))(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)R16.R15.R14.R13.)(1<.&5.(0.&40.))(8.&40.+96=?<.)(8.&20.=)(1=.(0.&40.))R12.(1>.$7.))R11.)(54.(55.Vpath,)Vfs0,))")
+  Definition openfail_stmtA : Prop := ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt1,(0.&40.)Pt2,(0.&40.)Pa1,(0.&40.)Pa2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pm,P,(0.&40.)(1.(0.&8.))Pmo,$43.Ph,(44.$7.VR,VHIA,)P,(45.R1.(14.$42.)R3.)P,(46.$7.VR,VHIA,R2.R3.)P,(5.$2.(47.$7.VR,VHIA,R3.)VTOP,)P,(5.$2.(48.$7.VR,VHIA,R4.)VSTKHI,)P,(24.$7.R7.)P,(35.(8.&40.Vmsp,)R8.Vcan,Vtid,Vwp0,Vrp0,Vwp1,Vrp1,)P,(25.$7.R9.(22.VR,)Vmsp,)P,(3>.$7.VAL,R:.(22.VR,)VSTKHI,)P,(>.$7.R;.(16.&40.Vpathp,)(49.(0.&8.)Vpath,(11.(0.&8.)(8.&8.=)(14.(0.&8.)))))P,(32.(4:.(0.&8.)(8.&8.=)Vpath,))P,(:.(;.(16.&40.Vsp0,)+28.)(16.&40.Vpathp,))P,(:.(;.(;.(16.&40.Vpathp,)(<.(4;.(0.&8.)Vpath,)))+;.)VSTKHI,)P,(5.(1.$4<.)(4=.(4>.R>.)(8.&40.+2.))(9.$4<.(4?.(8.&40.+2.))))P,(5.$7?.(7>.R?.)$80.)P,(5.$50.(51.R10.)Vfs0,)P,(:.(<.(4;.(0.&8.)Vpath,))+1????.)(52.$7.(53.(1;.(15.(8.&40.+96;:<.)(8.&40.Vmsp,)(8.&40.+10800.)(8.&40.+639690.)Vpathp,R20.R1?.(8.&40.+2.)(8.&40.+2.)(8.&40.-1.)R1>.R1=.R1<.R1;.R1:.R19.R18.Vpathp,(8.&40.(;.(16.&40.Vsp0,)+20.))(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)(8.&40.=)R17.R16.R15.R14.)(1<.&5.(0.&40.))(8.&40.+96=?<.)(8.&20.=)(1=.(0.&40.))R13.(1>.$7.))R12.)(54.(55.Vpath,)Vfs0,))")
 (* [comment removed for export] *).
   Hypothesis OPENFAIL : openfail_stmtA.
 
@@ -571,11 +573,12 @@ Section Open.
     ao_pathnz : ~ In (Z_to_bv 8 0) path;
     ao_pathok : path_has_slash path = false /\ path_eqb path dotdot_path = false;
     ao_pathlo : bv_unsigned sp0 + 40 <= bv_unsigned pathp;
-    ao_pathhi : bv_unsigned pathp + Z.of_nat (length path) + 16 <= STKHI;
+    ao_pathhi : bv_unsigned pathp + Z.of_nat (length path) + 11 <= STKHI;
     ao_htop : htop asegs R HIA h = TOP;
     ao_hstkhi : hstkhi asegs R HIA h = STKHI;
     ao_fds : m_fds mo2 = FDS2;
     ao_fs : m_fs mo2 = fs0;
+    ao_rdr : m_channel_reader mo2 = true;
     ao_pathlen : Z.of_nat (length path) <= 131071
   }.
 
@@ -585,17 +588,18 @@ Section Open.
   Lemma to_openat' : ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt0,(0.&40.)Pt1,(0.&40.)Pt2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pm,P,(0.&40.)(1.(0.&8.))Pmo,$43.Ph,(44.$7.VR,VHIA,)PT,$56.P,(57.R4.R3.R2.)P,Pm2,P,(0.&40.)(1.(0.&8.))Pj16,(4.(0.&8.))Ppad,(4.(0.&8.))Pmo2,$43.P,(5>.R12.R11.R10.R?.R>.R3.R2.R4.R1.R7.)(52.$7.(53.(5<.$5=.(5?.R15.R14.(8.&40.-64.)R>.R=.R<.R;.)(8.&40.+>81=<.)R5.(1>.$7.))R2.)R7.)(52.$7.(53.(1;.(2;.R12.R11.R10.R?.R>.R=.R<.R;.R:.R9.R8.R7.+2.)(1<.&5.(0.&40.))(8.&40.+96;6<.)(8.&20.=)(1=.(0.&40.))R6.(1>.$7.))R5.)R3.)")
 (* [comment removed for export] *).
   Proof.
-    intros * ME HC. pose proof ME as ME'. destruct ME' as [HH HKmo HT HS VOL VFR FRESH TM FI SSH SIm ST AV PATH PNZ POK PLO PHI FDS FS].
+    intros * ME HC. pose proof ME as ME'. destruct ME' as [HH HKmo HT HS VOL VFR FRESH TM FI SSH SIm ST AV PATH PNZ POK PLO PHI FDS FS RDR].
     eapply to_openat; [exact ME|]. intros m2 j16 pad mo2. intros. apply (HC m2 j16 pad mo2). split; try assumption.
     - rewrite (A_main_fin.mo_mat_fds _ _ ltac:(eassumption)). exact FDS.
     - rewrite (mo_mat_fs _ _ ltac:(eassumption)). exact FS.
+    - rewrite (mo_mat_rdr _ _ ltac:(eassumption)). exact RDR.
   Qed.
 
   (* [comment removed for export] *)
   Lemma openfail_branch : ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt1,(0.&40.)Pt2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pj16,(4.(0.&8.))Ppad,(4.(0.&8.))Pe,$2.Pm2,P,(0.&40.)(1.(0.&8.))Pmo2,$43.Pmo3,$43.Ph,(44.$7.VR,VHIA,)P,(5>.R10.R?.R>.R=.R<.R7.R6.R4.R3.R1.)P,(1:.(:.+1.R6.)(:.R6.+???.))P,(46.$7.VR,VHIA,R3.R4.)P,(58.R6.R5.)(52.$7.(53.(5<.$5=.(60.(5?.R16.R15.(8.&40.-64.)R?.R>.R=.R<.)(61.&5.+:.$62.)(63.R9.))(64.(8.&40.+>81=<.)+4.)R8.(1>.$7.))R6.)(54.(55.Vpath,)Vfs0,))")
 (* [comment removed for export] *).
   Proof.
-    intros * AO He' HK3 MM3. destruct AO as [HH HKh MI TM FI SSH SIm ST FR96 FRA CAN PATH PNZ POK PLO PHI HT HS FDS FS].
+    intros * AO He' HK3 MM3. destruct AO as [HH HKh MI TM FI SSH SIm ST FR96 FRA CAN PATH PNZ POK PLO PHI HT HS FDS FS RDR].
     pose proof (u64_range sp0) as SPR. pose proof (u64_range pathp) as PPR. pose proof (hcs_ok _ _ HIA h) as CSOK.
     change (regupd (EREGS t1 t2 (Z_to_bv 64 (-100)) t3 t4 t5 t6) 10 (errno_ret e)) with (EREGS t1 t2 (errno_ret e) t3 t4 t5 t6).
     unfold EREGS. unfold errno_ret. rewrite zbv_neg_errno.
@@ -626,6 +630,7 @@ Section Open.
     - exact PLO.
     - exact PHI.
     - rewrite (A_main_fin.mo_mat_fds _ _ MM4), (A_main_fin.mo_mat_fds _ _ MM3), FDS. reflexivity.
+    - rewrite (mo_mat_rdr _ _ MM4), (mo_mat_rdr _ _ MM3). exact RDR.
     - rewrite (mo_mat_fs _ _ MM4), (mo_mat_fs _ _ MM3). exact FS.
     - assumption.
   Qed.
@@ -637,7 +642,7 @@ Section Open.
   Lemma file_branch : ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt1,(0.&40.)Pt2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pj16,(4.(0.&8.))Ppad,(4.(0.&8.))Pfdata,(4.(0.&8.))Pm2,P,(0.&40.)(1.(0.&8.))Pmo2,$43.Pmo3,$43.Ph,(44.$7.VR,VHIA,)P,(5>.R10.R?.R>.R=.R<.R7.R6.R4.R3.R1.)P,(5.(1.(4.(0.&8.)))(65.Vfs0,Vpath,)(9.(4.(0.&8.))R6.))P,(:.(;.(67.$7.VR,VHIA,R3.)+17?<0400.)VV0,)P,(:.(;.(68.$7.VR,VHIA,R4.)+3?.)VFR0,)P,Pc,$2.(69.$7.VR,VHIA,VHID,R6.R1.)P,(46.$7.VR,VHIA,R6.R7.)P,(58.(6:.(6;.$6<.(6=.$6<.)(6>.Vpath,(8.&40.=)))R9.)R8.)(52.$7.(53.(5<.$5=.(60.(5?.R19.R18.(8.&40.-64.)R12.R11.R10.R?.)(61.&5.+:.$62.)(6=.$6<.))(64.(8.&40.+>81=<.)+4.)R;.(1>.$7.))R9.)(6?.R<.Vfs0,))")
 (* [comment removed for export] *).
   Proof.
-    intros * AO Hfd VOL VFR FRESH HK3 MM3. destruct AO as [HH HKh MI TM FI SSH SIm ST FR96 FRA CAN PATH PNZ POK PLO PHI HT HS FDS FS].
+    intros * AO Hfd VOL VFR FRESH HK3 MM3. destruct AO as [HH HKh MI TM FI SSH SIm ST FR96 FRA CAN PATH PNZ POK PLO PHI HT HS FDS FS RDR].
     pose proof (u64_range sp0) as SPR. pose proof (u64_range pathp) as PPR. pose proof (hcs_ok _ _ HIA h) as CSOK. pose proof (art_alwf _ _ HIA) as ALWF.
     pose proof (hd_needs _ _ _ HID) as (NM & NF & NA). pose proof (hd_ceil _ _ _ HID) as HCEIL.
     pose proof IMG as IMG'. unfold asan_img_ok in IMG'. cbv delta [AL] in IMG'. destruct IMG' as (HGOT & HILO & HIHI & HGSB2).
@@ -691,7 +696,8 @@ Section Open.
         | eapply (tail_presA R HIA ASB HRTC HM_LOWSH HM_ZIMG DRVS can tid wp0 rp0 wp1 rp1 (Z_to_bv 64 msp) m2 m4 h4); rewrite ?unsigned_lit by (cbv delta [msp]; lia);
           [exact TM | rewrite <- HS; exact HP4 | exact HH4 | exact MI4 | exact ST4 | rewrite STKLO; cbv delta [msp]; lia | cbv delta [msp]; lia | cbv delta [msp]; lia]
         | exact HK6
-        | rewrite (A_main_fin.mo_mat_fds _ _ MM6), (A_main_fin.mo_frame_fds _ _ MF4); exact FD2 ].
+        | rewrite (A_main_fin.mo_mat_fds _ _ MM6), (A_main_fin.mo_frame_fds _ _ MF4); exact FD2
+        | rewrite (mo_mat_rdr _ _ MM6), (mo_frame_reader _ _ MF4), (mo_mat_rdr _ _ MM4), (mo_mat_rdr _ _ MM3); exact RDR ].
     - (* [comment removed for export] *)
       intros t0' t1' t2' a1'' a2'' a3'' a4'' a5'' a6'' a7'' t3' t4' t5' t6' m4 mo5 h4 buf jb MI4 ST4 MF4 WM4 HP4 HT4 HS4 HF4 HK5 HCS4 HV4 HFR4 HFRESH4 AL16 FRSH4 BLK HH4 RW4.
       reg_lit 0x096bc0.
@@ -720,6 +726,7 @@ Section Open.
       + apply rs_wr_at.
       + rewrite (mo_mat_fs _ _ MM6), (A_main_fin.mo_frame_fs _ _ MF4). exact FS4.
       + rewrite (A_main_fin.mo_mat_fds _ _ MM6), (A_main_fin.mo_frame_fds _ _ MF4). exact FDS4.
+      + rewrite (mo_mat_rdr _ _ MM6), (mo_frame_reader _ _ MF4), (mo_mat_rdr _ _ MM4), (mo_mat_rdr _ _ MM3). exact RDR.
       + cbn [Z.to_nat firstn]. apply bytes_at_nil. lia.
       + exists jb. rewrite Z.add_0_r. split; [exact (proj1 (u8arr_of_rw_cells asegs m4 buf _ jb RW4)) |].
         pose proof RW4 as RW4'. destruct RW4' as [[WF4 _] _]. cbn in WF4. destruct WF4 as [LJ _]. lia.
@@ -732,10 +739,18 @@ Section Open.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma path_atA_of : ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pregs,(70.&5.(0.&40.))Pm,P,(0.&40.)(1.(0.&8.))P,(5.(0.&40.)(71.R2.(61.&5.+;.$62.))Vpathp,)P,(>.$7.R2.(16.&40.Vpathp,)(49.(0.&8.)Vpath,(11.(0.&8.)(8.&8.=)(14.(0.&8.)))))P,(32.(4:.(0.&8.)(8.&8.=)Vpath,))P,(72.(4;.(0.&8.)Vpath,)#???.)(73.$7.R6.R5.Vpath,)")
-(* [comment removed for export] *).
+  (* Plain text (was encoded): at the revision [path_atA] also asks that the
+     path end below TASK_SIZE ([read_cstr]'s [access_okb a 1] test), so the
+     builder takes that bound as its last premise. *)
+  Lemma path_atA_of : forall (regs : bvmap 5 word) (m : word -> option byte),
+    getr regs (@BV 5 11 I) = pathp ->
+    bytes_at asegs m (bv_unsigned pathp) (path ++ [Z_to_bv 8 0]) ->
+    ~ In (Z_to_bv 8 0) path ->
+    (length path <= 4095)%nat ->
+    bv_unsigned pathp + Z.of_nat (length path) < TASK_SIZE ->
+    path_atA asegs regs m path.
   Proof.
-    intros regs m G BY NZ LEN. unfold path_atA. rewrite G. split; [exact LEN|]. split; [exact NZ|].
+    intros regs m G BY NZ LEN HB. unfold path_atA. rewrite G. split; [exact LEN|]. split; [exact NZ|]. split; [|exact HB].
     pose proof (bytes_at_rdn asegs m (bv_unsigned pathp) _ 0 (length path + 1) BY ltac:(rewrite length_app; cbn; lia)) as RD.
     rewrite Z.add_0_r in RD. unfold wa in RD. rewrite Z_to_bv_bv_unsigned in RD. rewrite RD. f_equal.
     rewrite <- (length_app path [Z_to_bv 8 0]) at 1 by reflexivity. cbn [skipn]. replace (length path + 1)%nat with (length (path ++ [Z_to_bv 8 0])) by (rewrite length_app; cbn; lia). apply firstn_all.
@@ -755,7 +770,7 @@ Section Open.
     - reflexivity.
     - vm_compute. reflexivity.
     - rewrite FDS2'. reflexivity.
-    - apply path_atA_of; [reflexivity | exact PATH2 | exact PNZ | exact Hlen].
+    - apply path_atA_of; [reflexivity | exact PATH2 | exact PNZ | exact Hlen | pose proof STKHImax as SMX; change (2^47) with 140737488355328 in SMX; unfold TASK_SIZE; lia].
     - exact Hne.
     - exact Hnd.
     - exact (proj1 POK2).
@@ -783,7 +798,7 @@ Section Open.
     - reflexivity.
     - reflexivity.
     - vm_compute. reflexivity.
-    - apply path_atA_of; [reflexivity | exact PATH2 | exact PNZ | exact Hlen].
+    - apply path_atA_of; [reflexivity | exact PATH2 | exact PNZ | exact Hlen | pose proof STKHImax as SMX; change (2^47) with 140737488355328 in SMX; unfold TASK_SIZE; lia].
     - exact Hne.
     - exact Hnd.
     - exact (proj1 POK2).
@@ -805,7 +820,7 @@ Section Open.
     - reflexivity.
     - reflexivity.
     - vm_compute. reflexivity.
-    - rewrite <- Hp. apply path_atA_of; [reflexivity | exact PATH2 | exact PNZ | rewrite Hp; cbn; lia].
+    - rewrite <- Hp. apply path_atA_of; [reflexivity | exact PATH2 | exact PNZ | rewrite Hp; cbn; lia | pose proof STKHImax as SMX; change (2^47) with 140737488355328 in SMX; unfold TASK_SIZE; lia].
     - unfold EREGS, mkR. norm_getr. left. apply (hcs_stack _ _ HIA h). rewrite STKLO, HS2. lia.
     - intros mo3 HK3 MM3. eapply openfail_branch; [exact AO | unfold ENOENT; lia | exact HK3 | exact MM3].
   Qed.
@@ -828,6 +843,8 @@ Section Open.
       rewrite Z.add_0_r in RD. unfold wa in RD. rewrite Z_to_bv_bv_unsigned in RD. rewrite RD. rewrite ?skipn_O. cbn [skipn]. rewrite firstn_app.
       replace (4096 - length path)%nat with 0%nat by lia. cbn [firstn]. rewrite app_nil_r. reflexivity.
     - intros Hin. apply PNZ. rewrite <- (firstn_skipn 4096 path). apply in_app_iff. left. exact Hin.
+    - (* the revision's [read_cstr] needs the 4096 bytes below TASK_SIZE *)
+      unfold EREGS, mkR. norm_getr. pose proof STKHImax as SMX; change (2^47) with 140737488355328 in SMX; unfold TASK_SIZE; lia.
     - unfold EREGS, mkR. norm_getr. intros z Hz. left. apply (hcs_stack _ _ HIA h). rewrite STKLO, HS2. lia.
     - intros mo3 HK3 MM3. eapply openfail_branch; [exact AO | unfold ENAMETOOLONG; lia | exact HK3 | exact MM3].
   Qed.
@@ -841,7 +858,7 @@ Section Open.
   Qed.
 
   (* [comment removed for export] *)
-  Definition readerr_stmtA : Prop := ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt0,(0.&40.)Pt1,(0.&40.)Pt2,(0.&40.)Pa1,(0.&40.)Pa2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Px7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pbuf,$2.Pm,P,(0.&40.)(1.(0.&8.))Pmo,$43.Ph,(44.$7.VR,VHIA,)P,(45.R1.(11.(20.$2.$2.)(21.$2.$2.R4.+10000.)(14.(20.$2.$2.)))R3.)P,(46.$7.VR,VHIA,R2.R3.)P,(5.$2.(47.$7.VR,VHIA,R3.)VTOP,)P,(5.$2.(48.$7.VR,VHIA,R4.)VSTKHI,)P,(24.$7.R7.)P,(35.(8.&40.Vmsp,)R8.Vcan,Vtid,Vwp0,Vrp0,Vwp1,Vrp1,)P,(25.$7.R9.(22.VR,)Vmsp,)P,(3>.$7.VAL,R:.(22.VR,)VSTKHI,)P,(>.$7.R;.(16.&40.Vpathp,)(49.(0.&8.)Vpath,(11.(0.&8.)(8.&8.=)(14.(0.&8.)))))P,(32.(4:.(0.&8.)(8.&8.=)Vpath,))P,(:.(;.(16.&40.Vsp0,)+28.)(16.&40.Vpathp,))P,(:.(;.(;.(16.&40.Vpathp,)(<.(4;.(0.&8.)Vpath,)))+10.)VSTKHI,)P,(5.(1.$4<.)(4=.(4>.R>.)(8.&40.+2.))(9.$4<.(4?.(8.&40.+2.))))P,(5.$50.(51.R?.)Vfs0,)(52.$7.(53.(1;.(31.Vsp0,Vpathp,(8.&40.+96<54.)R21.R20.R1?.(8.&40.-1.)R1>.R1=.R1<.R1;.R1:.R19.R18.R17.R16.R15.R14.R13.R12.=+10000.)(1<.&5.(0.&40.))(8.&40.+96=98.)(8.&20.=)(1=.(0.&40.))R11.(1>.$7.))R10.)(54.(76.Vpath,)Vfs0,))")
+  Definition readerr_stmtA : Prop := ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt0,(0.&40.)Pt1,(0.&40.)Pt2,(0.&40.)Pa1,(0.&40.)Pa2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Px7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pbuf,$2.Pm,P,(0.&40.)(1.(0.&8.))Pmo,$43.Ph,(44.$7.VR,VHIA,)P,(45.R1.(11.(20.$2.$2.)(21.$2.$2.R4.+10000.)(14.(20.$2.$2.)))R3.)P,(46.$7.VR,VHIA,R2.R3.)P,(5.$2.(47.$7.VR,VHIA,R3.)VTOP,)P,(5.$2.(48.$7.VR,VHIA,R4.)VSTKHI,)P,(24.$7.R7.)P,(35.(8.&40.Vmsp,)R8.Vcan,Vtid,Vwp0,Vrp0,Vwp1,Vrp1,)P,(25.$7.R9.(22.VR,)Vmsp,)P,(3>.$7.VAL,R:.(22.VR,)VSTKHI,)P,(>.$7.R;.(16.&40.Vpathp,)(49.(0.&8.)Vpath,(11.(0.&8.)(8.&8.=)(14.(0.&8.)))))P,(32.(4:.(0.&8.)(8.&8.=)Vpath,))P,(:.(;.(16.&40.Vsp0,)+28.)(16.&40.Vpathp,))P,(:.(;.(;.(16.&40.Vpathp,)(<.(4;.(0.&8.)Vpath,)))+;.)VSTKHI,)P,(5.(1.$4<.)(4=.(4>.R>.)(8.&40.+2.))(9.$4<.(4?.(8.&40.+2.))))P,(5.$7?.(7>.R?.)$80.)P,(5.$50.(51.R10.)Vfs0,)(52.$7.(53.(1;.(31.Vsp0,Vpathp,(8.&40.+96<54.)R22.R21.R20.(8.&40.-1.)R1?.R1>.R1=.R1<.R1;.R1:.R19.R18.R17.R16.R15.R14.R13.=+10000.)(1<.&5.(0.&40.))(8.&40.+96=98.)(8.&20.=)(1=.(0.&40.))R12.(1>.$7.))R11.)(54.(76.Vpath,)Vfs0,))")
 (* [comment removed for export] *).
   Hypothesis READERR : readerr_stmtA.
 
@@ -849,7 +866,7 @@ Section Open.
   Lemma dir_branch : ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt1,(0.&40.)Pt2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pj16,(4.(0.&8.))Ppad,(4.(0.&8.))Pm2,P,(0.&40.)(1.(0.&8.))Pmo2,$43.Pmo3,$43.Ph,(44.$7.VR,VHIA,)P,(5>.R?.R>.R=.R<.R;.R6.R5.R4.R3.R1.)P,(:.(;.(67.$7.VR,VHIA,R2.)+17?<0400.)VV0,)P,(:.(;.(68.$7.VR,VHIA,R3.)+3?.)VFR0,)P,(46.$7.VR,VHIA,R4.R5.)P,(58.(6:.(6;.$6<.(6=.$6<.)$77.)R7.)R6.)(52.$7.(53.(5<.$5=.(60.(5?.R16.R15.(8.&40.-64.)R?.R>.R=.R<.)(61.&5.+:.$62.)(6=.$6<.))(64.(8.&40.+>81=<.)+4.)R9.(1>.$7.))R7.)(78.Vpath,Vfs0,))")
 (* [comment removed for export] *).
   Proof.
-    intros * AO VOL VFR HK3 MM3. destruct AO as [HH HKh MI TM FI SSH SIm ST FR96 FRA CAN PATH PNZ POK PLO PHI HT HS FDS FS].
+    intros * AO VOL VFR HK3 MM3. destruct AO as [HH HKh MI TM FI SSH SIm ST FR96 FRA CAN PATH PNZ POK PLO PHI HT HS FDS FS RDR].
     pose proof (u64_range sp0) as SPR. pose proof (u64_range pathp) as PPR. pose proof (hcs_ok _ _ HIA h) as CSOK. pose proof (art_alwf _ _ HIA) as ALWF.
     pose proof (hd_needs _ _ _ HID) as (NM & NF & NA). pose proof (hd_ceil _ _ _ HID) as HCEIL.
     pose proof IMG as IMG'. unfold asan_img_ok in IMG'. cbv delta [AL] in IMG'. destruct IMG' as (HGOT & HILO & HIHI & HGSB2).
@@ -903,7 +920,8 @@ Section Open.
         | eapply (tail_presA R HIA ASB HRTC HM_LOWSH HM_ZIMG DRVS can tid wp0 rp0 wp1 rp1 (Z_to_bv 64 msp) m2 m4 h4); rewrite ?unsigned_lit by (cbv delta [msp]; lia);
           [exact TM | rewrite <- HS; exact HP4 | exact HH4 | exact MI4 | exact ST4 | rewrite STKLO; cbv delta [msp]; lia | cbv delta [msp]; lia | cbv delta [msp]; lia]
         | exact HK6
-        | rewrite (A_main_fin.mo_mat_fds _ _ MM6), (A_main_fin.mo_frame_fds _ _ MF4); exact FD2 ].
+        | rewrite (A_main_fin.mo_mat_fds _ _ MM6), (A_main_fin.mo_frame_fds _ _ MF4); exact FD2
+        | rewrite (mo_mat_rdr _ _ MM6), (mo_frame_reader _ _ MF4), (mo_mat_rdr _ _ MM4), (mo_mat_rdr _ _ MM3); exact RDR ].
     - (* [comment removed for export] *)
       intros t0' t1' t2' a1'' a2'' a3'' a4'' a5'' a6'' a7'' t3' t4' t5' t6' m4 mo5 h4 buf jb MI4 ST4 MF4 WM4 HP4 HT4 HS4 HF4 HK5 HCS4 HV4 HFR4 HFRESH4 AL16 FRSH4 BLK HH4 RW4.
       reg_lit 0x096bc0.
@@ -962,6 +980,7 @@ Section Open.
       + exact PLO.
       + exact PHI.
       + rewrite (A_main_fin.mo_mat_fds _ _ MM9), (A_main_fin.mo_mat_fds _ _ MM8), (A_main_fin.mo_mat_fds _ _ MM7), (A_main_fin.mo_mat_fds _ _ MM6), (A_main_fin.mo_frame_fds _ _ MF4). exact FD2.
+      + rewrite (mo_mat_rdr _ _ MM9), (mo_mat_rdr _ _ MM8), (mo_mat_rdr _ _ MM7), (mo_mat_rdr _ _ MM6), (mo_frame_reader _ _ MF4), (mo_mat_rdr _ _ MM4), (mo_mat_rdr _ _ MM3). exact RDR.
       + rewrite (mo_mat_fs _ _ MM9), (mo_mat_fs _ _ MM8), (mo_mat_fs _ _ MM7), (mo_mat_fs _ _ MM6), (A_main_fin.mo_frame_fs _ _ MF4). exact FS4.
   Qed.
 
@@ -979,7 +998,7 @@ Section Open.
     - vm_compute. reflexivity.
     - rewrite FDS2'. reflexivity.
     - lazymatch goal with |- path_atA _ _ _ ?d => replace d with path by (rewrite Hp; reflexivity) end.
-      apply path_atA_of; [reflexivity | exact PATH2 | exact PNZ | rewrite Hp; unfold dot_path; cbn; lia].
+      apply path_atA_of; [reflexivity | exact PATH2 | exact PNZ | rewrite Hp; unfold dot_path; cbn; lia | pose proof STKHImax as SMX; change (2^47) with 140737488355328 in SMX; unfold TASK_SIZE; lia].
     - intros z Hz. unfold EREGS, mkR in Hz. norm_getr_in Hz. left. apply (hcs_stack _ _ HIA h). rewrite Hp in PHI. unfold dot_path in PHI. cbn [length Z.of_nat Pos.of_succ_nat Pos.succ] in PHI. rewrite STKLO, HS2. lia.
     - intros e He mo3 HK3 MM3. eapply openfail_branch; [exact AO | | exact HK3 | exact MM3].
       unfold openat_errnos in He. cbn [In] in He. unfold ENOMEM, EACCES, EMFILE, ENFILE in He. lia.
@@ -1009,7 +1028,7 @@ Section Open.
   Qed.
 
   (* [comment removed for export] *)
-  Definition usage_stmtA (argc : Z) (a0p : word) (a0s : list byte) : Prop := ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt0,(0.&40.)Pt1,(0.&40.)Pt2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Ppad,(4.(0.&8.))Pm,P,(0.&40.)(1.(0.&8.))Pmo,$43.Ph,(44.$7.VR,VHIA,)P,(41.$7.VR,VHIA,R1.(14.$42.)(14.$42.)R3.)P,(46.$7.VR,VHIA,R2.R3.)P,(5.$2.(47.$7.VR,VHIA,R3.)VTOP,)P,(5.$2.(48.$7.VR,VHIA,R4.)VSTKHI,)P,(24.$7.R7.)P,(35.(8.&40.Vmsp,)R8.Vcan,Vtid,Vwp0,Vrp0,Vwp1,Vrp1,)P,(25.$7.R9.(22.VR,)Vmsp,)P,(3>.$7.VAL,R:.(22.VR,)VSTKHI,)P,(26.$7.R;.Vmsp,(7:.R<.O3.))P,(26.$7.R<.(;.(16.&40.Vsp0,)+8.)(11.$12.(13.O2.)(14.$12.)))P,(>.$7.R=.(16.&40.O2.)(49.(0.&8.)O1.(11.(0.&8.)(8.&8.=)(14.(0.&8.)))))P,(32.(4:.(0.&8.)(8.&8.=)O1.))P,(:.(;.(;.(16.&40.Vsp0,)(17.+8.O3.))+18.)(16.&40.O2.))P,(:.(;.(;.(16.&40.O2.)(<.(4;.(0.&8.)O1.)))+10.)VSTKHI,)P,(5.(1.$4<.)(4=.(4>.R10.)(8.&40.+2.))(9.$4<.(4?.(8.&40.+2.))))P,(5.$50.(51.R11.)Vfs0,)P,(:.(<.(4;.(0.&8.)O1.))+1????.)P,(1:.(:.=O3.)(30.O3.(=.+2.+1?.)))(52.$7.(53.(1;.(79.R22.R21.R20.R1?.R1>.R1=.R1<.R1;.R1:.R19.R18.R17.O3.)(1<.&5.(0.&40.))(8.&40.+96=04.)(8.&20.=)(1=.(0.&40.))R15.(1>.$7.))R14.)(54.(7;.O1.)Vfs0,))")
+  Definition usage_stmtA (argc : Z) (a0p : word) (a0s : list byte) : Prop := ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pt0,(0.&40.)Pt1,(0.&40.)Pt2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Ppad,(4.(0.&8.))Pm,P,(0.&40.)(1.(0.&8.))Pmo,$43.Ph,(44.$7.VR,VHIA,)P,(41.$7.VR,VHIA,R1.(14.$42.)(14.$42.)R3.)P,(46.$7.VR,VHIA,R2.R3.)P,(5.$2.(47.$7.VR,VHIA,R3.)VTOP,)P,(5.$2.(48.$7.VR,VHIA,R4.)VSTKHI,)P,(24.$7.R7.)P,(35.(8.&40.Vmsp,)R8.Vcan,Vtid,Vwp0,Vrp0,Vwp1,Vrp1,)P,(25.$7.R9.(22.VR,)Vmsp,)P,(3>.$7.VAL,R:.(22.VR,)VSTKHI,)P,(26.$7.R;.Vmsp,(7:.R<.O3.))P,(26.$7.R<.(;.(16.&40.Vsp0,)+8.)(11.$12.(13.O2.)(14.$12.)))P,(>.$7.R=.(16.&40.O2.)(49.(0.&8.)O1.(11.(0.&8.)(8.&8.=)(14.(0.&8.)))))P,(32.(4:.(0.&8.)(8.&8.=)O1.))P,(:.(;.(;.(16.&40.Vsp0,)(17.+8.O3.))+18.)(16.&40.O2.))P,(:.(;.(;.(16.&40.O2.)(<.(4;.(0.&8.)O1.)))+;.)VSTKHI,)P,(5.(1.$4<.)(4=.(4>.R10.)(8.&40.+2.))(9.$4<.(4?.(8.&40.+2.))))P,(5.$7?.(7>.R11.)$80.)P,(5.$50.(51.R12.)Vfs0,)P,(:.(<.(4;.(0.&8.)O1.))+1????.)P,(1:.(:.=O3.)(30.O3.(=.+2.+1?.)))(52.$7.(53.(1;.(79.R23.R22.R21.R20.R1?.R1>.R1=.R1<.R1;.R1:.R19.R18.O3.)(1<.&5.(0.&40.))(8.&40.+96=04.)(8.&20.=)(1=.(0.&40.))R16.(1>.$7.))R15.)(54.(7;.O1.)Vfs0,))")
 (* [comment removed for export] *).
 
   (* [comment removed for export] *)
@@ -1025,17 +1044,18 @@ Section Open.
     mu_a0s : bytes_at asegs m (bv_unsigned a0p) (a0s ++ [Z_to_bv 8 0]);
     mu_a0snz : ~ In (Z_to_bv 8 0) a0s;
     mu_a0lo : bv_unsigned sp0 + 8 * argc + 24 <= bv_unsigned a0p;
-    mu_a0hi : bv_unsigned a0p + Z.of_nat (length a0s) + 16 <= STKHI;
+    mu_a0hi : bv_unsigned a0p + Z.of_nat (length a0s) + 11 <= STKHI;
     mu_argc : 0 <= argc < 2^31;
     mu_fds : m_fds mo = FDS2;
     mu_fs : m_fs mo = fs0;
+    mu_rdr : m_channel_reader mo = true;   (* the revision's writev reads the channel reader *)
     mu_a0slen : Z.of_nat (length a0s) <= 131071                              (* [comment removed for export] *)
   }.
 
   Theorem main_usageA : ltac2:(CDefT.buildp (gd_tbl_A_main_open ()) "Pargc,$2.Pa0p,(0.&40.)Pa0s,(4.(0.&8.))Pt0,(0.&40.)Pt1,(0.&40.)Pt2,(0.&40.)Pa3,(0.&40.)Pa4,(0.&40.)Pa5,(0.&40.)Pa6,(0.&40.)Pa7,(0.&40.)Pt3,(0.&40.)Pt4,(0.&40.)Pt5,(0.&40.)Pt6,(0.&40.)Pm,P,(0.&40.)(1.(0.&8.))Pmo,$43.Ph,(44.$7.VR,VHIA,)P,(7<.R12.R11.R10.)P,(7=.R13.R12.R11.R4.R3.R2.)P,(32.(5.$2.R14.+2.))(52.$7.(53.(1;.(2;.R12.R11.R10.R?.R>.R=.R<.R;.R:.R9.R8.R7.R15.)(1<.&5.(0.&40.))(8.&40.+96;6<.)(8.&20.=)(1=.(0.&40.))R6.(1>.$7.))R5.)(54.(7;.R13.)Vfs0,))")
 (* [comment removed for export] *).
   Proof.
-    intros * USAGE ME Hne. destruct ME as [HH HKmo HT HS TM SSH ST AV A0S NZ LO HI ARGC FDS FS].
+    intros * USAGE ME Hne. destruct ME as [HH HKmo HT HS TM SSH ST AV A0S NZ LO HI ARGC FDS FS RDR].
     pose proof (u64_range sp0) as SPR. pose proof (u64_range a0p) as A0R. pose proof (hcs_ok _ _ HIA h) as CSOK.
     assert (SCS : crange (hcs asegs R HIA h) (arl_stklo R) (esp - arl_stklo R)).
     { eapply crange_sub; [apply (hcs_stack _ _ HIA h) | lia | rewrite HS; cbv delta [esp]; lia]. }
@@ -1067,6 +1087,7 @@ Section Open.
     - exact LO.
     - exact HI.
     - rewrite (A_main_fin.mo_mat_fds _ _ MM1), FDS. reflexivity.
+    - rewrite (mo_mat_rdr _ _ MM1). exact RDR.
     - rewrite (mo_mat_fs _ _ MM1). exact FS.
     - assumption.
     - exact ARGC.

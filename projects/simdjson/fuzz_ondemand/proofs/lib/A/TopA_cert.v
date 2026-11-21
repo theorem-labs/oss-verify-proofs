@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the hand-off checks are evaluated on the hand-off states the start-up certificate computes for each CONFIG_RSEQ value instead of the recorded ones. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType St
 From OSSVerify.simdjson.fuzz_ondemand.images Require Import Asan.
 From OSSVerify.simdjson.fuzz_ondemand.images Require Import Plain.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanTablesA AsanStartup
-  StartupHSAsan StartupPlanAsan AsanStartupCert.
+  StartupPlanAsan AsanStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.A Require Import RT_iface RT_iface2 RT_rep D_client TopA_iodefs RT_io TopA_start TopA.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib Require Import TopLevelA.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib Require Import ProofBase.
@@ -17,41 +18,29 @@ From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Lib Require Import Cfg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import AP.
 
-Lemma hs_ok_0 : hs_all_ok HS_asan_0 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_1000 : hs_all_ok HS_asan_1000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_2000 : hs_all_ok HS_asan_2000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_3000 : hs_all_ok HS_asan_3000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-
-Lemma hs_if_some_ok : forall (P : acs -> Prop) (b : bool) (s : acs) (r : option acs) (ch : acs),
-  P s -> (r = Some ch -> P ch) -> (if b then Some s else r) = Some ch -> P ch.
-Proof. intros P b s r ch Ps Pr H. destruct b; [injection H as <-; exact Ps | exact (Pr H)]. Qed.
-
-Lemma HS_asan_ok : forall h ch, HS_asan h = Some ch -> hs_all_ok ch = true.
+(* ONE EVALUATION PER CLOSED [rseq_z b]: the hand-off states are the ones
+   [AS/AsanStartupCert.v] computes at that flag, and [hs_all_ok] reads the auxv's size
+   [AUXSZ r = 432 + 32 * r].  [destruct b] leaves each branch closed for [vm_compute].
+   Not a pin: both branches are discharged. *)
+Lemma HS_asan_ok : forall (b : bool) h ch, HS_asan (rseq_z b) h = Some ch -> hs_all_ok (rseq_z b) ch = true.
 Proof.
-  intros h ch. unfold HS_asan.
-  apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_3000|].
-  apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_2000|].
-  apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_1000|].
-  apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_0| discriminate].
+  intros b. apply (HS_asan_forall (hs_all_ok (rseq_z b)) b).
+  destruct b; vm_compute; reflexivity.
 Qed.
 
-Lemma startup_shape_holes : holes_only startup_shape = true.
-Proof. reflexivity. Qed.
+Lemma startup_shape_holes : forall b : bool, holes_only (startup_shape (rseq_z b)) = true.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
 Section Client.
 
 Variable CL : client_A.
-Hypothesis HS_cl : forall h ch, HS_asan h = Some ch -> cl_hs_ok CL ch = true.
+Hypothesis HS_cl : forall (b : bool) h ch, HS_asan (rseq_z b) h = Some ch -> cl_hs_ok CL ch = true.
 
 Theorem s3s_A : rt_contracts2 RTA -> (forall Σ m, ART RTA Σ m -> io_consts m) ->
   S3s_stmt_e Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
 Proof using HS_cl.
   intros RC IOC.
-  exact (s3s_A_of IT0 IT0_ok HS_asan startup_plan startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes HS_asan_ok CL HS_cl RC IOC).
+  exact (s3s_A_of IT0 IT0_ok HS_asan startup_plan_r startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes HS_asan_ok CL HS_cl RC IOC).
 Qed.
 
 Theorem base_asan_of : rt_contracts2 RTA -> (forall Σ m, ART RTA Σ m -> io_consts m) -> impl_P_stmt ->
@@ -60,7 +49,7 @@ Theorem base_asan_of : rt_contracts2 RTA -> (forall Σ m, ART RTA Σ m -> io_con
     (mkImage Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs).
 Proof using HS_cl.
   intros RC IOC HP.
-  exact (base_asan_of_cert IT0 IT0_ok HS_asan startup_plan startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes HS_asan_ok CL HS_cl
+  exact (base_asan_of_cert IT0 IT0_ok HS_asan startup_plan_r startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes HS_asan_ok CL HS_cl
            RC IOC HP Spec.ProgNoEnomem.prog_no_enomem_P).
 Qed.
 

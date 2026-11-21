@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_grant/proofs/lib/A/Prog/CtrlChecksumVerify.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_checksum_verify (fuzz_scene.asan 0x837c0, 29 instructions): the contract of the ASan
    build's code and its walk. It sums the 32 control-block bytes frame[18..50) of the caller's 50-byte frame
    object and returns 0 when the sum is 0 mod 256, else -1. Model: RcModel.blocksum
    (lib/Prog/RcModel.v:12).
-   Ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlChecksumVerify.v
-   (at d98082bd58b): the module paths and the listing's names changed; in the walk RET
+   Ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlChecksumVerify.v:
+   the module paths and the listing's names changed; in the walk RET
    takes PL_scene and the shadow-base cell is object 16 (grant: object 32).
    Numbers: fuzz_scene.asan, sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026
-   (projects/libreac/fuzz_scene/harness.yaml at c8557374ad2e); symbols from the .symtab of
+   (projects/libreac/fuzz_scene/harness.yaml); symbols from the .symtab of
    unstripped/fuzz_scene/fuzz_scene.asan, whose bytes at 0x837c0..0x83834 equal the pinned image's.
    - reac_ctrl_checksum_verify = 0x837c0, st_size 116 = 29 instructions (no compressed instruction).
    - LLVMFuzzerTestOneInput = 0x82878 = the listing's base (SceneAddr.v scene_text), so

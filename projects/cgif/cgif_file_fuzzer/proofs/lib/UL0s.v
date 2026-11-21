@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader flag that fdchan asks for): changed md_inv_vm. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -149,7 +150,7 @@ Proof using. intros E data buf k regs g Hk H. eapply run_env_agree; [exact Hk | 
 Definition md_inv (fs : Fs) (md : Model) : Prop :=
 fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = fs.
 Lemma md_inv_vm : forall fs md vm, md_inv fs md -> md_inv fs (with_vmmaps vm md).
-Proof using. intros fs md vm ([H1 H1'] & [H2 H2'] & H3). unfold md_inv, fdchan. autorewrite with model. repeat split; assumption. Qed.
+Proof using. intros fs md vm ((H1 & H1' & H1r) & (H2 & H2' & H2r) & H3). unfold md_inv, fdchan. autorewrite with model. repeat split; assumption. Qed.
 Lemma md_inv_ex : forall fs md md', md_inv fs md -> (exists vm, md' = with_vmmaps vm md) -> md_inv fs md'.
 Proof using. intros fs md md' H [vm ->]. apply md_inv_vm. exact H. Qed.
 Lemma md_inv_ch1 : forall fs md, md_inv fs md -> fdchan (Z_to_bv 64 1) ch_stdout md.

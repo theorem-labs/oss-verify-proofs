@@ -7,7 +7,7 @@
    listing (lib/A/Listing_prog.v 7ed1529926bd, slot 1841 = 0x832a4). The register numbers are the RISC-V ABI's:
    2 sp, 3 gp, 4 tp, 8 s0, 9 s1, 10 a0, 11 a1, 12 a2, 18 s2, 19 s3, 20 s4, 21 s5, 22 s6, 23 s7, 24 s8, 25 s9,
    26 s10, 27 s11.
-   The C is fuzz_preset.c @0b89c6c1bd :307-329 with ex_ws :103-107, ex_number :216-237 and ex_items :239-293 inlined.
+   The C is fuzz_preset.c :307-329 with ex_ws :103-107, ex_number :216-237 and ex_items :239-293 inlined.
    The pure model is the text's (prhex_V over PjGrammar.jr_value with ReaderRes.jr_strtod); the loop model ev_L is plain
    ex_value_m.v:13-14's ex_L restated (pure spec; no plain file is Required, no plain lemma cited).
    MEMNORM (the unit owner's ruling, 2026-10-29 10:17Z): the memory is normal, `YAkMemnorm.memnorm segs mem` over the FULL
@@ -20,7 +20,7 @@
    #102 (relocation; words equal up to pc-relative fields, but the frame string loaded at +0xa8 / +0xc4 CHANGED
    between the pins): moved from image A (d83eb25d, twin f0d2e8d4, ex_value 0x82f30) to image A' BY SYMBOL: every pc in a comment is
    A' ex_value + the same offset (0x82f30 -> 0x832a4, +0x374); the offsets EV_* are unchanged. The kit of record on #102
-   (walkkit-next decff67d721f, PRH_Base.v 3004a98fe2d9) gives prh_ledger the two cells g_most / g_own_ran_out (`.. fail ran most
+   (walkkit-next, PRH_Base.v 3004a98fe2d9) gives prh_ledger the two cells g_most / g_own_ran_out (`.. fail ran most
    own`), so ev_act carries ea_most / ea_own after ea_ran and ev_pre / ev_mid / ev_Q pass them on as they pass peak / ran. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

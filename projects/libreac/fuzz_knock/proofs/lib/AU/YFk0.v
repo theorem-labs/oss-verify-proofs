@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFk0.v, with its module paths changed and its addresses moved to libreac/fuzz_knock's ASan build; AB1v's tfibsegs is A/AWalkFw0.v's; the mcheck / spin / FCheck / ISpin arguments are opaque labels, the tags 1..14 of the allocator model (until 2026-10-30 they kept cgif's values, by a Theorem Labs lane ruling of 2026-10-29). Kernel rev6b (knock maps the StackDepot blocks at the first Put): DPOST over (layout, world, model, z, memory); Section h's D1 is YD3j.tfib_depot_put_any_spec and HDP reads YFju.DPOSTS with the Put's call world existential (finish-jfamily-text v1.3); the post-Put tail (TAILg / TAILgB / after_depot) is at the grown layout ly' (J4); the first Put's premises come from YFix.first_put_pre_of_AR_at and the grown ledger from YFk0g.ALedger_grow. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AFk0.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libreac/fuzz_knock's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AFk0.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ccont, grantS_eq). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -894,7 +895,7 @@ Hypothesis Htr : In tr (as_universe B).
 Hypothesis D1 : YD3j.tfib_depot_put_any_spec layout_grow depot_ok YD3j.as_const_g2f B.
 Hypothesis HBC : BCELLS.
 Hypothesis HDP : forall l W' md'' z m, DPOST l W' md'' z m <-> exists Wc, DPOSTS Wc YD3j.as_const_g2f l W' md'' z m.
-Hypothesis GOK : grant_ok_na_pin mdN (w64 mb) MSv = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 mb) MSv = true.
 Hypothesis LE3 : wle W W3.
 Hypothesis SUB3 : hsub (w_H W3) (w_H W).
 Hypothesis MON3 : forall x : word, w_H W x = false -> w_H W3 x = false.
@@ -1591,7 +1592,7 @@ pose proof VM2 as (VMa & VMr & VMl & VMb).
 apply (nodeV W3 md2 sV KV QLEAF (fun _ => True) c4 EQ HN HAI).
 - clear; intros m m' _ _; exact I.
 - rewrite EcM. exact MWV.
-- rewrite EcM. exact (al_reserved _ _ _ _ (LV 0)).
+- rewrite EcM. destruct (al_reserved _ _ _ _ (LV 0)) as (rx & Hrx & _ & _ & RQ & _). exists rx. split; [exact Hrx | exact RQ].
 - exact (al_img_env tfibsegs lyF (SFS false 0) _ lyF_ok (LV 0)).
 - rewrite EcM. exact (al_Q _ _ _ _ (LV 0)).
 -

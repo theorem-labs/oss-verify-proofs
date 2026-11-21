@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) parse_items' parse_string call step on image B (the key,
    0x85044 -> 0x85048): from the call-site invariant at parse_string (pib_IP) through parse_string_spec to the resume
    interface pib_IE (FSW_parse_items_loop.v) at 0x85048, where the segment 0x85048 .. 0x851d0 starts (its walk is
-   FSW_parse_items_val.v). The call half of the A walk's pi_step_P (a working branch 4480a5df1ae
+   FSW_parse_items_val.v). The call half of the A walk's pi_step_P (a working branch
    lib/A/FSW_parse_items_stP.v) with the call step of its pic_call_ps_84c4c (lib/A/FSW_parse_items_calls.v), re-read on
    B: the chain parse_string's fpreU reads is at s0 = q + 16 (FSW_parse_items_mem.pim_chain_q16), its own chain premise
    at q from parse_string's frame (pib_stack's chain, lowered), and the resume is FSW_parse_items_calls.pic_after_callT
    into fss_retT 0x85048 144 pib_csL pib_rs pib_gfP under pib_xsK.
    rule 24: proves no function (kind: call-step lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

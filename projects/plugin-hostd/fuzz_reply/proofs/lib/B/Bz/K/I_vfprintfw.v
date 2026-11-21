@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: Image B twin of lib/A/Bz/K/I_vfprintfw.v at d49bd1db505: lib/B/Bz/K/I_vfprintfw.v at 3da0143047f (= 891ad39df4c) with its stack floor `0x5f7000 <= lo` (fuzz_state's image top) set to fuzz_reply.asan-ubsan's top 0x5fc000 (1x), as lib/A has fuzz_reply.asan's top 0x5fb000; every other numeral equals the A text's, moved by symbol + offset (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *)
+(* Modified by Theorem Labs, 2026-10: Image B twin of lib/A/Bz/K/I_vfprintfw.v: lib/B/Bz/K/I_vfprintfw.v (=) with its stack floor `0x5f7000 <= lo` (fuzz_state's image top) set to fuzz_reply.asan-ubsan's top 0x5fc000 (1x), as lib/A has fuzz_reply.asan's top 0x5fb000; every other numeral equals the A text's, moved by symbol + offset (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.

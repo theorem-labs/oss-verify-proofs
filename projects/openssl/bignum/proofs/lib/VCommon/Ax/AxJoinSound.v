@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the entry region). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -18,9 +19,14 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
 
+(* [comment removed for export] *)
 Definition Sound (segs : list Segment) (cfg : SpuriousCfg) (LIM : Z) (MR : valuation -> amodel -> Model -> Prop)
     (KT : valuation -> list byte -> TSet) (A : astate amodel) : Prop :=
   forall ρ c, R segs amodel (MR ρ) LIM ρ A c -> forall o, pieces_val ρ (am_out (a_model A)) o -> realizes_cfg segs cfg c (KT ρ o).
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma w_eqb_eq (a b : w64) : w_eqb a b = true -> a = b.
 Proof. rewrite w_eqb_spec. intros H. apply Z.eqb_eq in H. exact (wZ_inj a b H). Qed.
@@ -54,9 +60,23 @@ Qed.
 
 Lemma kind_eqb_eq (k1 k2 : rkind) : kind_eqb k1 k2 = true -> k1 = k2.
 Proof.
-  destruct k1 as [| | |w1 i1|p1], k2 as [| | |w2 i2|p2]; cbn [kind_eqb]; intros H; try discriminate; try reflexivity.
+  (* READ FROM THE DEFINITION, not guessed from the error.  AxJoin.v:52 now has
+       | KEntry r1 p1, KEntry r2 p2 =>
+           Bool.eqb r1 r2 &&& (ph_addr p1 =? ph_addr p2)%N
+                          &&& (ph_ent  p1 =? ph_ent  p2)%N
+                          &&& (ph_num  p1 =? ph_num  p2)%N
+     -- KEntry carries a BOOL as well as the PhdrInfo, and the comparison is FOUR
+     conjuncts.  The old pattern `[| | |w1 i1|p1]` gives the last constructor ONE
+     binder, so `p1` was bound to the bool and the PhdrInfo was auto-named: that is
+     why the farm's error read `(if eqb p1 p2 then (ph_addr ph =? ph_addr ph0)%N
+     else false) = true` with `ph`/`ph0` names that appear nowhere in this file.
+     `&&&` is the lazy and, which is where the `if` comes from.  So this is the
+     grown-field shape and not a tactic problem: the binder list and the conjunct
+     count both move, from one and three to two and four. *)
+  destruct k1 as [| | |w1 i1|r1 p1], k2 as [| | |w2 i2|r2 p2]; cbn [kind_eqb]; intros H; try discriminate; try reflexivity.
   - apply land_true in H as [H1 H2]. apply Bool.eqb_prop in H1. apply Nat.eqb_eq in H2. subst. reflexivity.
-  - apply land_true in H as [H H3]. apply land_true in H as [H1 H2]. apply N.eqb_eq in H1. apply N.eqb_eq in H2. apply N.eqb_eq in H3.
+  - apply land_true in H as [H H4]. apply land_true in H as [H H3]. apply land_true in H as [H1 H2].
+    apply Bool.eqb_prop in H1. apply N.eqb_eq in H2. apply N.eqb_eq in H3. apply N.eqb_eq in H4.
     destruct p1, p2. cbn in *. subst. reflexivity.
 Qed.
 
@@ -67,6 +87,10 @@ Proof.
   apply land_true in H as [H1 H2]. apply w_eqb_eq in H1. apply Uint63.eqb_spec in H2. apply Nat.eqb_eq in H3. apply kind_eqb_eq in H4. apply teqb_eq in H5.
   repeat split; congruence.
 Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma vjoin_l (ρ : valuation) (sa sb : store) (a b : xv) (w : bv 64) : sat ρ sa -> xv_val ρ a w -> xv_val ρ (vjoin sa sb a b) w.
 Proof.
@@ -113,6 +137,10 @@ Proof.
   rewrite cjoin_byte by assumption. apply bjoin1_r. exact H.
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Definition tl_ {A : Type} (t : itrie A) : itrie A := match t with INode l _ => l | _ => IEmpty end.
 Definition tr_ {A : Type} (t : itrie A) : itrie A := match t with INode _ r => r | _ => IEmpty end.
 
@@ -152,6 +180,10 @@ Lemma RRegs_rjoin_r (ρ : valuation) (sa sb : store) (ta tb : aregs) (ms : machi
   sat ρ sb -> RRegs ρ tb ms -> RRegs ρ (rjoin 5 sa sb ta tb) ms.
 Proof. intros Hs H r. rewrite aget_rjoin. apply vjoin_r; [exact Hs | exact (H r)]. Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section Mem.
 Variable segs : list Segment.
 
@@ -161,6 +193,7 @@ Proof.
   destruct (Z.eqb_spec (to_Z k mod 2) 1); lia.
 Qed.
 
+(* [comment removed for export] *)
 Lemma int_lin (acc w k : int) : to_Z acc + to_Z w * to_Z k < 2 ^ 62 -> to_Z (acc + w * k)%uint63 = to_Z acc + to_Z w * to_Z k.
 Proof.
   intros H. pose proof (to_Z_bounded acc). pose proof (to_Z_bounded w). pose proof (to_Z_bounded k).
@@ -219,6 +252,7 @@ Proof.
   destruct (fields_eqb_eq R1 R2 E) as (F1 & F2 & F3 & F4 & F5). split; repeat split; cbn [with_cells rg_ts rg_bo rg_n rg_kind rg_d]; congruence.
 Qed.
 
+(* [comment removed for export] *)
 Lemma regjoin_rbyte (ρ : valuation) (R1 R2 R : region) (y : int) (z : Z) :
   regjoin segs R1 R2 = Some R -> to_Z (rg_n R1) <= 8 * 2 ^ Z.of_nat (rg_d R1) -> (rg_d R1 <= 44)%nat -> to_Z y < to_Z (rg_n R1) ->
   (xb_z ρ (rbyte segs R1 y) z -> xb_z ρ (rbyte segs R y) z) /\ (xb_z ρ (rbyte segs R2 y) z -> xb_z ρ (rbyte segs R y) z).
@@ -242,6 +276,7 @@ Proof.
   all: rewrite <- C1, <- C2; split; [apply cjoin_l | apply cjoin_r]; apply i2n_lt8.
 Qed.
 
+(* [comment removed for export] *)
 Lemma RRegion_cover (ρ : valuation) (m : word -> option byte) (R1 R : region) :
   same_fields R1 R -> (forall y z, to_Z y < to_Z (rg_n R1) -> xb_z ρ (rbyte segs R1 y) z -> xb_z ρ (rbyte segs R y) z) ->
   RRegion segs ρ m R1 -> RRegion segs ρ m R.
@@ -299,6 +334,10 @@ Proof.
 Qed.
 
 End Mem.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma boxjoin_iget : forall (d : nat) (ta tb : itrie (Z * Z)) (k : int) (i : Z * Z),
   iget d (boxjoin ta tb) k = Some i ->
@@ -390,6 +429,7 @@ Qed.
 Lemma hole_cands_small (x : int) : In x hole_cands -> to_Z x < 2 ^ 16.
 Proof. unfold hole_cands. cbn [map In]. intros H. repeat (destruct H as [<-|H]; [cbv; reflexivity|]). destruct H. Qed.
 
+(* [comment removed for export] *)
 Lemma hjoin_sat (ρ : valuation) (sa sb : store) : box_ok ρ (st_box sa) \/ box_ok ρ (st_box sb) -> Forall (fact_sat ρ) (hjoin sa sb).
 Proof.
   intros Hb. unfold hjoin. apply Forall_flat_map. apply Forall_forall. intros x Hx. pose proof (hole_cands_small x Hx) as Hsm.
@@ -472,6 +512,10 @@ Proof.
   apply Forall_app. split; [exact (hback_r ρ sa _ (Forall_firstn' _ _ _ Hf)) | exact (fzip_r ρ sa sb Hs _ _ (Forall_skipn' _ _ _ Hf))].
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Lemma list_eqb_eq {X : Type} (e : X -> X -> bool) : (forall a b, e a b = true -> a = b) -> forall l1 l2, list_eqb e l1 l2 = true -> l1 = l2.
 Proof.
   intros He. induction l1 as [|a r IH]; intros [|b r2] H; cbn [list_eqb] in H; try discriminate; [reflexivity|].
@@ -521,6 +565,10 @@ Proof.
   destruct a, b; cbn [rsv_join RResv]; try exact (fun _ => I); try exact (fun X => X).
   destruct (xv_eqb v v0) eqn:E; [apply xv_eqb_eq in E; subst; exact (fun X => X) | exact (fun _ => I)].
 Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Section Join.
 Variable segs : list Segment.
@@ -592,6 +640,7 @@ Proof.
   - apply (HS ρ c (ajoin_R_r ρ A B J c HJ HR) o). rewrite (ajoin_out_r A B J HJ). exact Ho.
 Qed.
 
+(* [comment removed for export] *)
 Lemma ajoin_nm_R_l (ρ : valuation) (A B J : astate amodel) (c : config) : ajoin_nm A B = Some J -> RR ρ A c -> RR ρ J c.
 Proof.
   unfold ajoin_nm. destruct (w_eqb (a_pc A) (a_pc B)); [|discriminate]. intros HJ HR. apply some_inj in HJ. subst J.

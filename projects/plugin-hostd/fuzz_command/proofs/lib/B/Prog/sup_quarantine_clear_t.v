@@ -4,8 +4,9 @@
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_quarantine_clear (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan), its tail: the walk's statement and the segment from the return of rec_shape_of
    (0x8bde8) through the tail jump into answer (0x8be04) to the statement's post. In the form of
-   lib/A/Prog/sup_quarantine_clear_s3.v (the A walk, a working branch f2402580166: sqc_SX's
+   lib/A/Prog/sup_quarantine_clear_s3.v (the A walk, a working branch: sqc_SX's
    rec_shape_of return, run E and answer tail), re-derived on B's code. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* sup_quarantine_clear on B, 0x8bde8 .. 0x8be04 (8 instructions, no branch, no ASan check, no UBSan trap):
    li a2,1; mv a1,a0; mv a0,s1; ld ra,24(sp); ld s0,16(sp); ld s1,8(sp); addi sp,sp,32; j answer.

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fr_RINV, a concrete definition of the loop's relational invariant RINV of the
-   entry walk of fuzz_reply's LLVMFuzzerTestOneInput (lib/A/W_LLVMFuzzerTestOneInput_cut.v:534, the Section variable
+   entry walk of fuzz_reply's LLVMFuzzerTestOneInput (lib/A/W_LLVMFuzzerTestOneInput_cut.v:535, the Section variable
    `RINV : lfcx -> Z -> lmod -> Prop` that lcut carries at every cut point), and, below it, each model rule over RINV
    that a W8 segment takes as a Section hypothesis, restated with RINV := fr_RINV (the `_obl` definitions).  The last
    section proves the obligations that read fr_RINV alone or step only the cursor and the flags; the rest are open.
@@ -25,7 +25,7 @@
      A-proof keeps in LS (LS_write_room, LS_drain_pre); they are not here.
    - The cost counts the relay's unfinished line by its bytes, `length (re_U e)`, where SlotInv.v:56 counts
      `re_used e`: the two are equal under aentry_ok (W_rep.v:125), but the arms' rules see only the model, and W7's
-     drain fixes re_U, not re_used (dr_step_ok, W_LLVMFuzzerTestOneInput_drain.v:559).
+     drain fixes re_U, not re_used (dr_step_ok, W_LLVMFuzzerTestOneInput_drain.v:560).
    - The entries' model facts that aentry_ok (W_rep.v:120-135) states in memory and that RINV-only rules read
      (RI_pads, RI_pair, RI_rm_cnlr_eof, the exit's end matching) are fr_entry_ok.
    The `_obl` definitions are grouped by segment file, each with the rule's file:line.  Rules on atop's head (head,
@@ -35,6 +35,7 @@
    `_obl` (verbatim) and a `_fix_obl` (the amended text, with the premise the arm already holds).  The last section
    proves every rule of W_LLVMFuzzerTestOneInput_top.v (SEG_HEAD's, ARM_add's, the small arms') in the form that
    holds. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -82,7 +83,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 (* ---------------------------------------------------------------- the arms' model names, cited
-   This file used to copy them; they are the segment files' own definitions (meet 29956454065), so the _obl /
+   This file used to copy them; they are the segment files' own definitions (meet), so the _obl /
    _holds statements below and the rules of W_LLVMFuzzerTestOneInput_top_x.v name the same constants.  The
    abbreviations keep the short names for this file and for the files that Import it. *)
 Notation ev_k2 := W_LLVMFuzzerTestOneInput_event.ev_k2.
@@ -334,10 +335,10 @@ Definition RI_exit_slots_obl : Prop := forall cx t m, fr_RINV cx t m ->
 (* _exit.v:766 RI_exit_ends *)
 Definition RI_exit_ends_obl_v1 : Prop := forall cx t m, fr_RINV cx t m -> (0 < length (lm_es m))%nat ->
   lx_ends_run (lm_gn m) (lx_rf_O m) (lx_norder m) (lx_ord m) (lm_hs m) 0 = Some (Z.of_nat (length (lx_rf_O m))).
-(* MOVED: RI_exit_ends_obl_v1 above is the text before commit 3f40808c334, false for fr_RINV: ReplyRINV_a12.v's
+(* MOVED: RI_exit_ends_obl_v1 above is the text before, false for fr_RINV: ReplyRINV_a12.v's
    RI_exit_ends_obl_false, RI_exit_ends_obl_false_nul refute its copy RI_exit_ends_unrestated, equal to the _v1
    text (ReplyRINV_a12_audit.v (sha256 dc91213d303a; internal record)).
-   RI_exit_ends_obl is commit 3f40808c334's restated rule (top_x's text, with the arm's premise) at RINV := fr_RINV;
+   RI_exit_ends_obl is a commit's restated rule (top_x's text, with the arm's premise) at RINV := fr_RINV;
    ReplyRINV_a12.v's RI_exit_ends_holds proves it *)
 Definition RI_exit_ends_obl : Prop := forall cx t m, fr_RINV cx t m -> (0 < length (lm_es m))%nat ->
   0 <= lm_gn m <= 1 ->
@@ -345,7 +346,7 @@ Definition RI_exit_ends_obl : Prop := forall cx t m, fr_RINV cx t m -> (0 < leng
   lx_ends_run (lm_gn m) (lx_rf_O m) (lx_norder m) (lx_ord m) (lm_hs m) 0 = Some (Z.of_nat (length (lx_rf_O m))).
 
 (* ---------------------------------------------------------------- W_LLVMFuzzerTestOneInput_pro.v *)
-(* commit a7e2bf5856c _pro.v:203 pro_m, copied: the model at the first head *)
+(* _pro.v:203 pro_m, copied: the model at the first head *)
 Definition pro_m (q T' : Z) (pj : list byte) (c : ctl) (O : list byte) (cap out : Z) : lmod :=
   LM 0 [Some (oa_new_src 100 q pj); None; None; None] T' [ra_new 100] c O 0 cap out 0 1.
 (* pro-a2 _pro.v:205 RI_pro *)
@@ -382,7 +383,7 @@ Definition RI_add_none_obl : Prop := forall cx t m,
 
 (* ---------------------------------------------------------------- W_LLVMFuzzerTestOneInput_event.v *)
 (* the event arm's model names are W_LLVMFuzzerTestOneInput_event.v's own (ev_k2 :998, ev_evt :1000, ev_ctl :1010,
-   ev_step :1013 at meet 29956454065; this file Imports it), cited at the top of the file *)
+   ev_step :1013 at meet; this file Imports it), cited at the top of the file *)
 (* event-c-omx-reader _event.v:1024 RI_event_live *)
 Definition RI_event_live_obl : Prop := forall cx t m,
   fr_RINV cx t m ->
@@ -397,11 +398,11 @@ Definition RI_event_step_obl : Prop := forall cx t m e v out',
 (* ---------------------------------------------------------------- W_LLVMFuzzerTestOneInput_remove.v *)
 (* the remove arm's model names are W_LLVMFuzzerTestOneInput_remove.v's own (rm_set_nth :278, rm_k' :314, rm_kb :315,
    rm_ent :316, rm_at :320, rm_mk :326, rm_cev :332, rm_rr_ok :338, rm_A1 :2722, rm_cnl_ok :2724, rm_cshe_ok :3914 at
-   meet 29956454065), cited at the top of the file; rm_capb is lib/A/W_check_no_loss.v:59 capb, copied (that file
+   meet), cited at the top of the file; rm_capb is lib/A/W_check_no_loss.v:60 capb, copied (that file
    is a 3,700-line walk) *)
 Definition rm_capb (H E : hlist) : Z :=
   Z.max 8 (Z.max (hl_cap H) (2 * (hl_n H + Z.of_nat (count_begin (texts E))))).
-(* RiRestate's commit 250502f7048 RI_rm_src (W_LLVMFuzzerTestOneInput_remove_x.v:159, top_x.v:697): the slot
+(* RiRestate's RI_rm_src (W_LLVMFuzzerTestOneInput_remove_x.v:160, top_x.v:697): the slot
    relay_remove drains starts with no expected records (RI_src's first conjunct, at rm_at's slot) *)
 Definition RI_rm_src_obl : Prop := forall cx t m si h j0,
   fr_RINV cx t m -> rm_at cx m si h j0 -> hl_recs (hs_expected h) = [].
@@ -425,9 +426,9 @@ Definition RI_rm_cnl_pre_obl_v1 : Prop := forall cx t m si h j0 e1 h1 ev LB c2 O
   hl_n (hs_held h1) + Z.of_nat (count_begin (texts (hs_expected h1))) < 2 ^ 22 /\
   AREC * rm_capb (hs_held h1) (hs_expected h1) < 2 ^ 32 /\ Z.of_nat (length O2) < 2 ^ 32 /\
   (lm_gn m = 0 -> exists rest, O2 = bstream (hs_expected h1) ++ rest).
-(* MOVED: RI_rm_cnl_pre_obl_v1 above is the text before commit 3f40808c334, false for fr_RINV: ReplyRINV_a12.v's
+(* MOVED: RI_rm_cnl_pre_obl_v1 above is the text before, false for fr_RINV: ReplyRINV_a12.v's
    RI_rm_cnl_pre_obl_false refutes its copy RI_rm_cnl_pre_unrestated, equal to the _v1 text (ReplyRINV_a12_audit.v (sha256 dc91213d303a; internal record)).
-   RI_rm_cnl_pre_obl is commit 3f40808c334's restated rule (top_x's text, with the arm's premise) at RINV := fr_RINV;
+   RI_rm_cnl_pre_obl is a commit's restated rule (top_x's text, with the arm's premise) at RINV := fr_RINV;
    ReplyRINV_a12.v's RI_rm_cnl_pre_holds proves it *)
 Definition RI_rm_cnl_pre_obl : Prop := forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   fr_RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
@@ -445,9 +446,9 @@ Definition RI_rm_cshe_pre_obl_v1 : Prop := forall cx t m si h j0 e1 h1 ev LB c2 
   lm_gn m = 0 ->
   rm_A1 m h1 <= Z.of_nat (length O2) /\
   ends_run [] (hl_recs H') (skipn (Z.to_nat (rm_A1 m h1)) O2) (want_of [] (hl_recs H')) <> None.
-(* MOVED: RI_rm_cshe_pre_obl_v1 above is the text before commit 3f40808c334, false for fr_RINV: ReplyRINV_a12.v's
+(* MOVED: RI_rm_cshe_pre_obl_v1 above is the text before, false for fr_RINV: ReplyRINV_a12.v's
    RI_rm_cshe_pre_obl_false refutes its copy RI_rm_cshe_pre_unrestated, equal to the _v1 text (ReplyRINV_a12_audit.v (sha256 dc91213d303a; internal record)).
-   RI_rm_cshe_pre_obl is commit 3f40808c334's restated rule (top_x's text, with the arm's premise) at RINV := fr_RINV;
+   RI_rm_cshe_pre_obl is a commit's restated rule (top_x's text, with the arm's premise) at RINV := fr_RINV;
    ReplyRINV_a12.v's RI_rm_cshe_pre_holds proves it *)
 Definition RI_rm_cshe_pre_obl : Prop := forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H',
   fr_RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> rm_cnl_ok h1 E' H' ->
@@ -460,9 +461,9 @@ Definition RI_rm_csd_obl_v1 : Prop := forall cx t m si h j0 e1 h1 ev LB c2 O2 ca
   fr_RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> rm_cnl_ok h1 E' H' ->
   rm_cshe_ok m (set_exp_held h1 E' H') O2 (rm_A1 m h1) H'' ds cc ->
   rm_A1 m h1 + cc = Z.of_nat (length O2).
-(* MOVED: RI_rm_csd_obl_v1 above is the text before commit 3f40808c334, false for fr_RINV: ReplyRINV_a12.v's
+(* MOVED: RI_rm_csd_obl_v1 above is the text before, false for fr_RINV: ReplyRINV_a12.v's
    RI_rm_csd_obl_false refutes its copy RI_rm_csd_unrestated, equal to the _v1 text (ReplyRINV_a12_audit.v (sha256 dc91213d303a; internal record)).
-   RI_rm_csd_obl is commit 3f40808c334's restated rule (top_x's text, with the arm's premise) at RINV := fr_RINV;
+   RI_rm_csd_obl is a commit's restated rule (top_x's text, with the arm's premise) at RINV := fr_RINV;
    ReplyRINV_a12.v's RI_rm_csd_holds proves it *)
 Definition RI_rm_csd_obl : Prop := forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H' H'' ds cc,
   fr_RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> rm_cnl_ok h1 E' H' ->
@@ -481,7 +482,7 @@ Definition RI_rm_step_obl : Prop := forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2
 (* The gone arm's rules GN_RI_read / GN_RI_step / GN_RI_end are the W_LLVMFuzzerTestOneInput_gone_base.v texts at
    RINV := fr_RINV (below), and MMAX is that file's Section variable.  GN_RI_pairs / GN_RI_fds keep their copied
    text, the same word for word.  The gone model names (gn_more .. gn_at1, gn_cnl_ok, gn_run) are
-   W_LLVMFuzzerTestOneInput_gone_base.v's own (meet 29956454065 :342-:496), cited at the top of the file:
+   W_LLVMFuzzerTestOneInput_gone_base.v's own (meet :342-:496), cited at the top of the file:
    gn_cnl_ok there carries REQ5(b) `hl_cap (hs_held h) <= hl_cap H'` last, and gn_run calls it.
    ReplyRINV_gone.v proves RI_gone_pairs / RI_gone_read over them. *)
 Variable MMAX : Z.
@@ -491,17 +492,17 @@ Definition GN_RI_pairs_obl : Prop := forall cx t m, fr_RINV cx t m -> exists hs,
 Definition GN_RI_fds_obl : Prop := forall cx t m i1 i2 h1 h2,
   fr_RINV cx t m -> (i1 < 4)%nat -> (i2 < 4)%nat -> i1 <> i2 ->
   nth i1 (lm_hs m) None = Some h1 -> nth i2 (lm_hs m) None = Some h2 -> hs_fd h1 <> hs_fd h2.
-(* _gone_base.v:573 GN_RI_read (commit 6a2e02357a4; RIR, _gone.v:85, _gone_p4.v:603), at RINV := fr_RINV.  Its
-   text adds gn_rig_ok (_gone_base.v:448, rig_post's per-entry relation) after gn_after_rig; commit dc16e01b163's
+(* _gone_base.v:573 GN_RI_read (RIR, _gone.v:85, _gone_p4.v:603), at RINV := fr_RINV.  Its
+   text adds gn_rig_ok (_gone_base.v:448, rig_post's per-entry relation) after gn_after_rig; a commit's
    text, without it, was false against fr_RINV (the drained slot's source was free). *)
 Definition GN_RI_read_obl : Prop := W_LLVMFuzzerTestOneInput_gone_base.GN_RI_read fr_RINV.
-(* _gone_base.v GN_RI_step (commit a39b599f92e; RIstep, _gone_p5.v), joint with LS, at RINV := fr_RINV:
+(* _gone_base.v GN_RI_step (RIstep, _gone_p5.v), joint with LS, at RINV := fr_RINV:
    gn_rig_ok as for GN_RI_read, gn_op and the entries' NUL-free / key-length clause after RINV, the start state's
    capacity, entry-representation and pending-offset clauses (gdone carries them), W_contract.v's cnl_room /
-   cnl_cost in place of commit dc16e01b163's Section variables, and the callee posts' block relation (it takes B) *)
+   cnl_cost in place of a commit's Section variables, and the callee posts' block relation (it takes B) *)
 Definition GN_RI_step_obl : Prop := W_LLVMFuzzerTestOneInput_gone_base.GN_RI_step B MT LS fr_RINV MMAX.
-(* _gone_base.v GN_RI_end (commit a39b599f92e; RIend, _gone_p5.v), joint with LS, at RINV := fr_RINV: gn_rig_ok,
-   gn_op, the entries' clause, lm_gn m = 0 \/ lm_gn m = 1 (commit d3a30b1562c), the start state's clauses (as
+(* _gone_base.v GN_RI_end (RIend, _gone_p5.v), joint with LS, at RINV := fr_RINV: gn_rig_ok,
+   gn_op, the entries' clause, lm_gn m = 0 \/ lm_gn m = 1, the start state's clauses (as
    GN_RI_step) and the block relation added *)
 Definition GN_RI_end_obl : Prop := W_LLVMFuzzerTestOneInput_gone_base.GN_RI_end B MT LS fr_RINV.
 
@@ -1339,7 +1340,7 @@ Proof.
   pose proof HRI as ((HC & Hnfd) & HR & Hn & HG).
   destruct HR as (Hlen & Hnd & Hrng & Hent & hj & HF & HNDs & Hcl & Hc & Hcn).
   destruct Hpick as (_ & Hsi & Hh).
-  (* dr_step_ok (commit bb9dae5d905 _drain.v:549) has drain's paddings / capacity facts before check_no_loss's half *)
+  (* dr_step_ok (_drain.v:549) has drain's paddings / capacity facts before check_no_loss's half *)
   destruct Hok as (Ofd & Oeof & _ & _ & _ & Oskip & _ & _ & OND & OSS & Ohfd & _ & _ & OHP & Ooff & OST & Oexp &
     Oheld & OS2 & OW2 & _ & Oc' & _ & _ & Opad1 & Opad2 & Oecap & OE0 & _ & OEcap & OHND & OHt & OHcap).
   pose proof (Forall2_length HF) as Hlh.

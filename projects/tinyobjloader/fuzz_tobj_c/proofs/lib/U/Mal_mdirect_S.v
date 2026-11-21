@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL-hint mmap's place_declined_b premise; the vDSO fact kept in the walk's lifted invariant; the refusal corollary given the request's hint; MInvR, which pairs malloc's invariant with the vDSO fact, projected to that invariant where the proof reads only it). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "and"; "ex"; "eq"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G1.Mal_mdirect_runs.RP"; "segs"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G2.Mal_mdirect_E"; "C"; "E"; "@Corelib.Init.Datatypes"; "list"; "prod"; "cons"; "pair"; "nil"; "app"; "bool"; "true"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "rw"; "sstate"; "valuation"; "rm"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.ExampleMemcpy"; "segsU"; "NF"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "jpost"; "LQP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA"; "ma_blocks"; "ma_s"; "malloc_rel"; "@Stdlib.ZArith.BinInt.Z"; "le"; "pow"; "sub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "triple"; "world"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "L_malloc_ok"; "Pre_malloc"; "ok_sideK"; "EC_U"; "MInvR"; "V_RES"; "mem_kept"; "top_var"; "tp_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.RoomS"; "vm_roomS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv"; "JLi_ok"; "drvN"; "malloc_cost"; "initedT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractS"; "J_payload_S"; "alloc_meta_avail"; "malloc_big_S"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_U"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "MMAP_THRESHOLD"; "kreq"; "st_init_done"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocDirectPost"; "direct_case"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect_S.S"; "JLdS_core"; "J_dirS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G2.Mal_mdirect_C"; "IEC"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G4.Mal_mdirect_DX"; "am_servable"].
@@ -87,20 +88,21 @@ Proof using AMS.
     rewrite M10 in G0. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5. fold lenw in G1.
     assert (Hpos : 0 < bv_unsigned lenw) by (clear - Hlen UR; lia).
     assert (HXl : mmap_nZ lenw <= X) by (clear - Hlen UR NZ1 Hcost; lia).
+    split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
     split; [rewrite G1; intros E0; apply (f_equal bv_unsigned) in E0; rewrite Hlen in E0; change (bv_unsigned (Z_to_bv 64 0)) with 0 in E0; pose proof Hn as [N1 _]; unfold MallocModel.MMAP_THRESHOLD in N1; lia|].
     split; [apply mmap_modeled_b_intro; [rewrite G2; reflexivity | rewrite G3; reflexivity | rewrite G5; reflexivity]|].
     split; [rewrite G3; apply mmap_noreserve_b_34; reflexivity|].
     split.
-    {   rewrite G1. intros Hrf. exact (vm_roomS_rw_refused_False md X lenw (ms_gpr ms 3) Hroom Hpos HXl ltac:(rewrite G3; apply mmap_noreserve_b_34; reflexivity) Hrf). }
+    {   rewrite G1. intros Hrf. exact (vm_roomS_rw_refused_False md X lenw (ms_gpr ms 3) (ms_gpr ms 0) Hroom Hpos HXl ltac:(rewrite G3; apply mmap_noreserve_b_34; reflexivity) Hrf). }
     intros a Hpl. pose proof Hpl as (Hal & Hpos' & HceilT & Hfree & _). rewrite G1 in HceilT, Hfree |- *.
     destruct (mmap_nw _ a lenw HceilT) as [En Hnw].
-    pose proof HceilT as Hceil. rewrite <- (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 HMI)))))) in Hceil.
+    pose proof HceilT as Hceil. rewrite <- (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 (proj1 HMI))))))) in Hceil.
     assert (FREE : forall e, In e (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) ->
               forall y, bv_unsigned (fst e) <= y < bv_unsigned (fst e) + bv_unsigned (snd e) -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
     { intros [ea esz] He y Hy Hin. pose proof (region_free_In _ _ _ _ _ Hfree He) as OV. unfold iv_overlap in OV. cbn [fst snd] in Hy.
       rewrite En in OV. apply Bool.andb_false_iff in OV. destruct OV as [OV|OV]; apply Z.ltb_ge in OV; lia. }
     assert (MISS : forall y, mc_img_lo C <= y < mc_img_hi C -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
-    { intros y Hy. pose proof HMI as XM. unfold MInv in XM. cbn zeta in XM. destruct XM as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
+    { intros y Hy. pose proof (proj1 HMI) as XM. unfold MInv in XM. cbn zeta in XM. destruct XM as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
       destruct (HIR y Hy) as (e & He & Hey). exact (FREE e ltac:(apply in_app_iff; left; exact He) y Hey). }
     split.
     -
@@ -112,7 +114,7 @@ Proof using AMS.
       unfold obj_range, obj_lo_of, obj_hi_of. rewrite Eb, El, Eh. unfold V_DEPTH in *. cbn [eval]. rewrite WS, soff_lit_small by lia. unfold SymState.ranges_disjoint. cbn [fst snd]. lia.
     - split.
       + intros y Hy. apply ro_addr_outside_image. intros Himg. exact (MISS (bv_unsigned y) Himg Hy).
-      + cbn [liftK]. exists (m_vmmaps md). split; [exact HMI|]. split; [|split; [split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) |]| reflexivity]].
+      + cbn [liftK]. exists (m_vmmaps md). split; [exact (proj1 HMI)|]. split; [|split; [split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) |]| split; [reflexivity | refine (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok_grant md _ (vm_maps (m_vmmaps md)) a (mmap_n lenw) _ _ _ _ _ Hfree (proj2 HMI)); reflexivity]]].
         * split; [exact Hal|]. split; [exact Hpos'|]. split; [exact Hceil|]. exact FREE.
         * unfold X1. exact (vm_roomS_grant_rw md X lenw a (ms_gpr ms 0) (ms_gpr ms 3) Hroom Hpos HXl ltac:(rewrite G1 in Hpl; exact Hpl)). }
 

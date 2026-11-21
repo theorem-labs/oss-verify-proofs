@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: APKN). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
@@ -83,7 +84,7 @@ Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
 Section V.
   Variable V : nat -> Z.
-  Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
+  Hypothesis HP : Forall (pfact_ok V) APKN.
   (* [comment removed for export] *)
   Hypothesis HAT : a_usp0 V - 8388608 = ATOP.
   Local Notation SB := (a_space_beg0 V).
@@ -196,7 +197,7 @@ Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
 Section Main.
   Variable V : nat -> Z.
-  Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
+  Hypothesis HP : Forall (pfact_ok V) APKN.
   Hypothesis HAT : a_usp0 V - 8388608 = ATOP.
   Variable sp : word.                          (* [comment removed for export] *)
   Hypothesis HSP : atop_of sp = ATOP.
@@ -302,14 +303,14 @@ End Main.
 
 (* [comment removed for export] *)
 #[using="Type"] Corollary progA_tsafe_open : forall rs V sp inp mo,
-  Forall (pfact_ok V) asan_pure_facts -> a_usp0 V - 8388608 = ATOP -> atop_of sp = ATOP -> amodel V sp (in_fs inp) mo ->
+  Forall (pfact_ok V) APKN -> a_usp0 V - 8388608 = ATOP -> atop_of sp = ATOP -> amodel V sp (in_fs inp) mo ->
   tsafeA nstepA (nsafeA NMAX) fstepS NMAX (fp_ok (m_vm_lazy (MX mo [])) (A0 V)) (A0 V)
          (progA_tree AAllocAsan (aps_init (a_space_beg0 V) (a_ptr_array0 V) (resv_of V) (atop_of sp)) rs (argv_Z (in_argv inp))) (MX mo []).
 Proof. intros rs V sp inp mo HP HAT HSP HM. exact (progA_tsafe V HP HAT sp HSP rs inp mo HM). Qed.
 
 (* [comment removed for export] *)
 #[using="Type"] Corollary progA_tsafe_open_L : forall lim rs V sp inp mo, LIMIT34 <= lim ->
-  Forall (pfact_ok V) asan_pure_facts -> a_usp0 V - 8388608 = ATOP -> atop_of sp = ATOP -> amodelL lim V sp (in_fs inp) mo ->
+  Forall (pfact_ok V) APKN -> a_usp0 V - 8388608 = ATOP -> atop_of sp = ATOP -> amodelL lim V sp (in_fs inp) mo ->
   tsafeA nstepA (nsafeA NMAX) fstepS NMAX (fp_ok (m_vm_lazy (MX mo [])) (A0 V)) (A0 V)
          (progA_tree AAllocAsan (aps_init (a_space_beg0 V) (a_ptr_array0 V) (resv_of V) (atop_of sp)) rs (argv_Z (in_argv inp))) (MX mo []).
 Proof. intros lim rs V sp inp mo HL HP HAT HSP HM. exact (progA_tsafe_L V HP HAT sp HSP lim rs inp mo HL HM). Qed.

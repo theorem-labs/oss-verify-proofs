@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v
    (lines 132-146 ajournal_fp_nil and 156-159 ajournal_nil_io, from cgif ACfh.v; lines 207-239, the leaf of
    knock_lib_x_body: the contract's post from the walk's return state) for reac-pw/fuzz_role image A: the walk is
    role's chain of five segments over the harness-level cuts of lib/A/RPgHarn.v, with lib/A/RPgCSpec.v's two
    middle contracts in the middle and the malloc(pod) step between them; the leaf is unchanged but for the
    exists-fx' form of RPgCSpec.rl_lib_contract_x. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTop.v at ad0e022f7af7 for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTop.v for reac-pw/fuzz_rate
    image A: the walk is rate's chain of five segment statements in the continuation form of lib/A/RtPgSeg.v
    (S_E01 .. S_X01, composed by RtPgSeg.rh_seg_chain); the three middle statements S_M01, S_M02 and S_M03 are proved
    here from lib/A/RtPgCSpec.v's three middle contracts and the two malloc steps (RtPgSeg.rh_S_C23_stmt,
    rh_S_C46_stmt), over rate's harness cuts (RtPgSeg.rh_common: the blocks made so far, the header tie, the carried
    cells); role's malloc-step chaining (the step is a walk piece here) is left out; the real frame, the write ranges
    and the frame's shadow are rate's (RtPgImgA.rate_himg_A); the list segment lets runtime-owned bytes change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; addresses measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3): THE WHOLE RUN of LLVMFuzzerTestOneInput

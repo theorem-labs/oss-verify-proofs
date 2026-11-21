@@ -60,7 +60,7 @@ Let HIMGSH : B.Prog.CtrlRo.img_shadow_vis SEGS B := B.ACtlCutC.ctrl_img_shadow_v
 (* the callee reac_box_model_block (a Theorem Labs lane's statement) *)
 Hypothesis TMB : B.Prog.C_reac_box_model_block.treac_box_model_block_spec RLO RHI B GLOBS.
 (* the runtime callees in their route (C) footprint _on forms, discharged by a Theorem Labs lane's proofs (a Theorem Labs lane's base of
-   record a working branch 3b8fa882b0e, files by path: asan_memsetF_on.v / asan_memcpyF_on.v) *)
+   record a working branch, files by path: asan_memsetF_on.v / asan_memcpyF_on.v) *)
 Let MEMS : B.Prog.asan_memset_cF_on.asan_memset_contract_F_on :=
   B.Prog.asan_memsetF_on.asan_memset_holds_F_on B.Prog.memset.memset_holds.
 Let MEMC : B.Prog.asan_memcpy_cF_on.asan_memcpy_contract_F_on := B.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on.

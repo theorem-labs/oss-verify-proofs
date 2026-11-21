@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: replaced by simdjson/fuzz_minifyimpl's proofs/lib/Plain/PImg.v with its module paths, target names and image addresses relocated to simdjson/fuzz_utf8's plain binary: against the earlier file, RPAGE_SIZE, PREAD_STAGE, RAUXV_CELL and the mmap, munmap and mprotect entry addresses now come from this binary, and lia's caches are unset. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Lib Require Import PropExec MState Mem Image.
 From OSSVerify.simdjson.fuzz_utf8.images Require Export Plain.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
 
@@ -112,9 +114,9 @@ Lemma ref_mrd_overlay : forall m (x : word),
 Proof. intros m x Hx. unfold mrd. destruct (m x); [reflexivity|]. apply ref_seg_rom_none. exact Hx. Qed.
 
 (* [comment removed for export] *)
-Definition RPAGE_SIZE : Z := 0xe3738.    (* [comment removed for export] *)
-Definition PREAD_STAGE : Z := 0xd1129.   (* [comment removed for export] *)
-Definition RAUXV_CELL : Z := 0xe3710.    (* [comment removed for export] *)
-Definition rmmap_entry : Z := 0xb7218.
-Definition rmunmap_entry : Z := 0xb7420.
-Definition rmprotect_entry : Z := 0xb7304.
+Definition RPAGE_SIZE : Z := 0x103888.    (* [comment removed for export] *)
+Definition PREAD_STAGE : Z := 0xd12f9.   (* [comment removed for export] *)
+Definition RAUXV_CELL : Z := 0x103860.    (* [comment removed for export] *)
+Definition rmmap_entry : Z := 0xb73d0.
+Definition rmunmap_entry : Z := 0xb75d8.
+Definition rmprotect_entry : Z := 0xb74bc.

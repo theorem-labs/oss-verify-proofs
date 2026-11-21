@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the argument strings sit at the top of the launch's stack block (an argument-layout class carries their offset), the mapped stack below sp is 6144512 bytes, and the slack after each argument string is 8 bytes. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -67,20 +68,48 @@ Proof. apply (f_equal2 pair); [reflexivity|]. apply bytes_eq_of_unsigned. vm_com
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* LPS 727298f3: WHERE THE LAUNCH PUT THE ARGUMENT STRINGS.  [StackLayout.build_stack_bytes]
+   lays them at the TOP of the block, above the sixteen AT_RANDOM bytes and the
+   [arch_align_stack] pad: argv[0] is at [sp + C + W] ([block_head_size], [block_pad_len]),
+   which reads the stack VMA's end, the exec file name and the CONFIG_RSEQ flag as well as
+   sp, argv and envp.  The old layout put them right above a ten-entry auxv, at
+   [sp + 8*argc + 8*envc + 184].  [al_pad] is how far above that old place they are now;
+   the class carries it so that [e_p0a] keeps its three arguments.  [launch_lay] is the
+   launch's instance.  A record declared a class (not a one-method class, which would be
+   definitional): its projection takes the layout explicitly. *)
+Record ArgLayout : Type := mkArgLayout { al_pad : nat }.
+Existing Class ArgLayout.
+
+Definition launch_lay (sp top : word) (rseq : bool) (argv envp : list (list byte)) (execfn : list byte) : ArgLayout :=
+  mkArgLayout (block_head_size rseq argv envp + block_pad_len rseq sp top argv envp execfn
+               - (8 * length argv + 8 * length envp + 184))%nat.
+
 Section Addrs.
   Variable usp : Z.                       (* [comment removed for export] *)
   Variables argv envp : list (list byte).
   Definition e_argc : Z := Z.of_nat (length argv).
   Definition e_envc : Z := Z.of_nat (length envp).
-  (* [comment removed for export] *)
-  Definition e_p0a : Z := usp + 8 * e_argc + 8 * e_envc + 184.
   Definition e_L0 : Z := Z.of_nat (length (nth 0 argv [])).
-  Definition e_p1a : Z := e_p0a + e_L0 + 1.
   Definition e_L1 : Z := Z.of_nat (length (nth 1 argv [])).
-  Definition e_span : Z := entry_stack_span argv envp.
-  Definition STK_LO : Z := usp - 0x800000.
+  (* the stack below sp the launch maps: [Run.stack_window_lo] is at least
+     [StoreOk.stack_window_depth] = 6144513 bytes below sp at every kernel build.  It WAS
+     8 MiB, which LPS 727298f3 no longer gives (the 8 MiB is counted from the stack VMA's
+     end and the guard gap above the mmap base can cut it). *)
+  Definition STK_LO : Z := usp - 6144512.
   Definition SPM : Z := usp - 48.          (* [comment removed for export] *)
 End Addrs.
+
+(* argv[0] and argv[1]: the strings are consecutive, each with its NUL *)
+Definition e_p0a {LAY : ArgLayout} (usp : Z) (argv envp : list (list byte)) : Z :=
+  usp + 8 * e_argc argv + 8 * e_envc envp + 184 + Z.of_nat (al_pad LAY).
+Definition e_p1a {LAY : ArgLayout} (usp : Z) (argv envp : list (list byte)) : Z :=
+  e_p0a usp argv envp + e_L0 argv + 1.
+(* The part of the block the main phase reads: from sp to eight bytes past the argv
+   strings.  Above them the block still holds the envp strings, the exec file name with its
+   NUL and the eight-byte slot, so these eight bytes are in it.  It WAS
+   [Run.entry_stack_span], which still counts the old 160-byte auxv. *)
+Definition e_span {LAY : ArgLayout} (argv envp : list (list byte)) : Z :=
+  8 * e_argc argv + 8 * e_envc envp + 184 + Z.of_nat (al_pad LAY) + total_arg_bytes argv + 8.
 
 (* [comment removed for export] *)
 Section SH.
@@ -94,7 +123,7 @@ Definition STKSH_HI : Z := 0x10007fff8000.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section CEIL.
-Context {Clg : Ceiling}.  (* [comment removed for export] *)
+Context {Clg : Ceiling} {LAY : ArgLayout}.  (* [comment removed for export] *)
 
 Record entry_raw (usp : Z) (argv envp : list (list byte)) (fs : Fs)
                  (R : bvmap 5 word) (FULL : word -> option byte) (md : Model) : Prop := {
@@ -107,8 +136,11 @@ Record entry_raw (usp : Z) (argv envp : list (list byte)) (fs : Fs)
   er_a1 : getr R 11 = wz (usp + 8);
   (* [comment removed for export] *)
   er_usp : sp_window_lo <= usp /\ usp + e_span argv envp <= 2^47 /\ usp mod 16 = 0 /\ 0 <= e_span argv envp;
-  er_str0 : e_p0a usp argv envp + e_L0 argv + 1 + 16 <= usp + e_span argv envp;
-  er_str1 : 2 <= e_argc argv -> e_p1a usp argv envp + e_L1 argv + 1 + 16 <= usp + e_span argv envp;
+  (* LPS 727298f3: eight bytes of slack after each argument string, not sixteen: above
+     the last argv string the block holds at least the exec file name's NUL and the
+     eight-byte slot, and nothing is mapped above the block *)
+  er_str0 : e_p0a usp argv envp + e_L0 argv + 1 + 8 <= usp + e_span argv envp;
+  er_str1 : 2 <= e_argc argv -> e_p1a usp argv envp + e_L1 argv + 1 + 8 <= usp + e_span argv envp;
   (* [comment removed for export] *)
   er_halt : m_halted md = None;
   er_fs : m_fs md = fs;
@@ -130,8 +162,8 @@ Record entry_raw (usp : Z) (argv envp : list (list byte)) (fs : Fs)
   er_argv0 : bytes_at rsegs FULL (e_p0a usp argv envp) (nth 0 argv [] ++ [Z_to_bv 8 0]);
   er_argv1 : 2 <= e_argc argv -> bytes_at rsegs FULL (e_p1a usp argv envp) (nth 1 argv [] ++ [Z_to_bv 8 0]);
   (* [comment removed for export] *)
-  er_slack0 : exists sl, length sl = 16%nat /\ bytes_at rsegs FULL (e_p0a usp argv envp + e_L0 argv + 1) sl;
-  er_slack1 : 2 <= e_argc argv -> exists sl, length sl = 16%nat /\ bytes_at rsegs FULL (e_p1a usp argv envp + e_L1 argv + 1) sl
+  er_slack0 : exists sl, length sl = 8%nat /\ bytes_at rsegs FULL (e_p0a usp argv envp + e_L0 argv + 1) sl;
+  er_slack1 : 2 <= e_argc argv -> exists sl, length sl = 8%nat /\ bytes_at rsegs FULL (e_p1a usp argv envp + e_L1 argv + 1) sl
 }.
 
 End CEIL.

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_ctrl image A, PA layer: the frame / heap object predicates and the call post the program walk uses.
 
    ONE TEXT. The generic part of cgif's lib/YC20.v (in_roP, arodata_okP, ro_below_ofl, ro_spares,
    arodata_ok_journalP, afobj, apost_base) is the planning core's lib/Reusable/APostBase.v. This file used to carry
    a word-for-word second copy of those seven names (found by a Theorem Labs lane, 10-29 02:48Z; a Theorem Labs lane approved the
    retirement 02:51Z). It now re-exports APostBase and keeps each old name only as a parsing alias of the core's
-   constant, so a file that writes `A.Prog.CtrlBase.arodata_okP` (a Theorem Labs lane's lib/A/ProgWorld.v at c03ce1627b6, frozen)
+   constant, so a file that writes `A.Prog.CtrlBase.arodata_okP` (a Theorem Labs lane's lib/A/ProgWorld.v, frozen)
    or `CtrlBase.ro_below_ofl` (this PA layer) reaches the ONE definition in APostBase. No definition is left here
    except the two that APostBase does not have: afobjb and afobj_any. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.

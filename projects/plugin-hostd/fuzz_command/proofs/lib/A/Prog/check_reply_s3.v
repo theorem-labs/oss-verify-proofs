@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the third segment of check_reply's walk (fuzz_command.asan, 0x86d78), from the
    return of sup_reply_code (0x86f18) to the snprintf call (0x86f98), the strlen call (0x86f68) or the shape join
-   (0x86fcc), ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close) at
-   c8557374ad2e.
+   (0x86fcc), ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close).
+   
 
    The walk seeds the mid-walk state at 0x86f18 (check_reply_sd.v cr_seed, the frame's shadow read-only) and adds
    the harness's words: the fields w->w and w->n at w + 16 and w + 24 (base atom 19 = s3 = w, chunk values atoms 40
@@ -16,6 +16,7 @@
      checks #7 (0x86f44) and #8 (0x86f58), both covered, to the strlen call with s3 = a0 = w->w[0].
    No step stores, so the mid-walk invariant carries over by the run's frame_of (only the frame header [F, F + 32)
    is a writable window). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader conjunct of fds_ok and the 6144513-byte init stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -47,10 +48,15 @@ Section TargetRun.
   Local Notation L := S0_layout.
 
   (* [comment removed for export] *)
-  Definition fds_ok (MD : Model) : Prop := fd_lookup (m_fds MD) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  (* the reader conjunct: at the revision a write to stdout with no reader
+     raises SIGPIPE ([ReadWrite.sigpipe_write]); the launch seeds it *)
+  Definition fds_ok (MD : Model) : Prop :=
+    fd_lookup (m_fds MD) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\ m_channel_reader MD = true.
 
   Lemma fds_ok_stdout : forall MD, fds_ok MD -> fd_lookup (m_fds MD) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
-  Proof. intros MD E. exact E. Qed.
+  Proof. intros MD E. exact (proj1 E). Qed.
+  Lemma fds_ok_rdr : forall MD, fds_ok MD -> m_channel_reader MD = true.
+  Proof. intros MD E. exact (proj2 E). Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -111,7 +117,7 @@ Section TargetRun.
         * eapply stdout_used_pres; [apply pres_of_heap_pres; exact HP | | exact SU].
           intros a Ha. unfold stdout_addr, SO_FILE, SO_BUF in Ha. right; left.
           unfold L, S0_layout, errno_cell, S0_private; cbn [al_rw_lo al_img_hi al_private al_tp]. lia.
-        * rewrite (vm_only_fds _ _ VMO'). apply fds_ok_stdout. exact FDS.
+        * rewrite (vm_only_fds _ _ VMO'), (vm_only_rdr _ _ VMO'). exact FDS.
   Qed.
 
   (* [comment removed for export] *)
@@ -197,7 +203,7 @@ Section TargetRun.
   Section Run.
     Variables (sp0 tid B bufA bufN len alA : Z) (pa pb : bid) (payload : list byte) (calls : nat).
     Variables (gp s0v s2v s3v s5v s6v s7v s8v s9v s10v s11v : word).
-    Local Notation lo := (sp0 - 8388608).
+    Local Notation lo := (sp0 - 6144513).   (* #38: bottom of the init stack window *)
     Local Notation spT := (sp0 - 208).
     Local Notation spL := (sp0 - 256).
     Hypothesis SP0 : 0x7fff80000000 <= sp0 <= 0x800000000000 /\ sp0 mod 16 = 0.
@@ -349,7 +355,7 @@ Section TargetRun.
         - pose proof (stk_release s0segs m' lo spT _ ST' FR' ltac:(lia)) as R.
           unfold frame_cells in R. cbn [cells_size csize Nat.add] in R. replace (spT + Z.of_nat 80) with (sp0 - 128) in R by lia. exact R.
         - lia.
-        - unfold fds_ok. rewrite (vm_only_fds _ _ VMO'). exact FDS.
+        - unfold fds_ok. rewrite (vm_only_fds _ _ VMO'), (vm_only_rdr _ _ VMO'). exact FDS.
         - lia.
         - right. exact OUT'. }
       (* [comment removed for export] *)
@@ -441,7 +447,7 @@ Section TargetRun.
             by (clear - Hi; destruct calls as [|c]; [lia| cbn [Nat.sub]; rewrite Nat.sub_0_r; reflexivity]).
           rewrite W_app. apply t_eq_sym. apply t_emit_app. }
         eapply (printf0_cps PF0) with (sp0 := sp0) (tid := tid) (lo := lo); rewrite ?SPT;
-          [lia | exact SP | lia | exact ST | lia | lia | exact MI | exact STc | exact OUT | apply fds_ok_stdout; exact FDS | exact Hh | exact Hl
+          [lia | exact SP | lia | exact ST | lia | lia | exact MI | exact STc | exact OUT | apply fds_ok_stdout; exact FDS | apply fds_ok_rdr; exact FDS | exact Hh | exact Hl
           | apply t_emit_has_nil |].
         intros t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' MU WM MI' ST' STAT' OUT'.
         apply HK. eapply (head_inv_after_printf (pf0_W spT)); try eassumption.
@@ -575,7 +581,7 @@ Section TargetRun.
         + exact ALB.
         + exact NE.
         + exact BUFB.
-        + unfold fds_ok. rewrite (vm_only_fds _ _ VMO'). exact FDS.
+        + unfold fds_ok. rewrite (vm_only_fds _ _ VMO'), (vm_only_rdr _ _ VMO'). exact FDS.
         + exact FLG2.
     Qed.
 
@@ -743,7 +749,7 @@ Section TargetRun.
     getr R 22 = Z_to_bv 64 0x2a5d9 ->                                  (* [comment removed for export] *)
     0x7fff80000000 <= sp0 <= 0x800000000000 /\ sp0 mod 16 = 0 -> alloc_ceiling = sp0 - 8388608 -> 0 < tid < 2 ^ 22 ->
     6 + cfglen <= Lc -> Lc < 2 ^ 26 -> 0x5c000 <= bufA ->
-    stk s0segs M (sp0 - 8388608) (sp0 - 128) -> mem_inv s0segs M -> statics sp0 tid M -> stdout_untouched M ->
+    stk s0segs M (sp0 - 6144513) (sp0 - 128) -> mem_inv s0segs M -> statics sp0 tid M -> stdout_untouched M ->
     rw_cells s0segs M 0x3a5e0 [C1 (Z_to_bv 8 0)] ->
     rw_cells s0segs M bufA [CB (length content) content] ->
     rw_cells s0segs M (errno_cell L) [C4 e] ->
@@ -775,7 +781,7 @@ Section TargetRun.
     rewrite t_target_unfold.
     assert (SPM : bv_unsigned (Z_to_bv 64 (sp0 - 128)) = sp0 - 128) by (apply u64_lit; lia).
     eapply (evt_realizes s0segs); [exact Hh | exact Hl | |].
-    { eapply trP with (lo := sp0 - 8388608); rewrite ?SPM;
+    { eapply trP with (lo := sp0 - 6144513); rewrite ?SPM;
         [exact ST | lia | lia | exact MI | exact INI | exact GOT | exact AX0 | exact A00 | exact NL0]. }
     (intros ms1; cps_intros (x0 & x1 & x2 & xa1 & xa2 & xa3 & xa4 & xa5 & xa6 & xa7 & x3 & x4 & x5 & x6 & m1 & junk8 & -> & MU1 & WM1 & MI1 & ST1 & FR1 & INI1 & AX1 & A01)).
     rewrite !SPM in *. replace (sp0 - 128 + -80) with (sp0 - 208) in * by lia.
@@ -840,7 +846,7 @@ Section TargetRun.
       rewrite (u64_lit cfglen) by lia.
       replace (calls_of cfglen b2) with (Z.of_nat (callsN content)) by (subst b2 cfglen; apply callsN_calls_of).
       (* [comment removed for export] *)
-      eapply (ac_malloc_sys AC) with (s := s) (LB := LB0) (k := credit (callsN content)) (n := paylen) (lo := sp0 - 8388608) (B := B) (errv := e);
+      eapply (ac_malloc_sys AC) with (s := s) (LB := LB0) (k := credit (callsN content)) (n := paylen) (lo := sp0 - 6144513) (B := B) (errv := e);
         rewrite ?u64_lit by lia;
         [exact INV1 | apply SYS; lia | exact VM' | exact C21 | exact AUX1 | lia | exact ST1 | rewrite alloc_ceiling_val; lia | cbn [al_stack S0_layout]; lia
         | exact ERR1 | exact MI1 | reflexivity | reflexivity | unfold MAX_REQ_C; lia |].   (* [comment removed for export] *)
@@ -904,7 +910,7 @@ Section TargetRun.
         * intros _. left. reflexivity.
         * intros _ E. apply NIP. rewrite E. apply in_map_iff. exists (pb, bufA, bufN). split; [reflexivity| exact BUFB].
         * right. exact BUFB.
-        * unfold fds_ok. rewrite (vm_only_fds _ _ VMO2). exact FDS.
+        * unfold fds_ok. rewrite (vm_only_fds _ _ VMO2), (vm_only_rdr _ _ VMO2). exact FDS.
         * eapply rw_cells_transport; [| exact MU3 | exact WM3 | cbn; lia].
           eapply pres_rw_cells; [exact PR2 | exact FLG1 |]. intros a Ha. cbn [cells_size csize Nat.add] in Ha. right; left.
           unfold S0_layout, errno_cell, S0_private; cbn [al_rw_lo al_img_hi al_private al_tp]. lia.

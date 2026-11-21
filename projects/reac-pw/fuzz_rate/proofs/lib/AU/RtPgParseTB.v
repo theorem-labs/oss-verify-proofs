@@ -1,8 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseT.v at afaa3cb55c1d; for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseT.v; for
    reac-pw/fuzz_rate's reac_rate_prop_parse at image A: module paths and names are rate's, the pcs are those of
    fuzz_rate.asan, the range test of v and its return of -1 are removed (rate's T has no test: role's T_walk_sk, its
    entry state and the split of T_walk go), the store writes v mod 2^32 at Q and returns 1 (val_of_chunk_mod is new). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseT.v at f7246d55e8c3 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseT.v for image B
    (fuzz_rate.asan-ubsan); the image and the base are lib/AU/Img0.v's and lib/AU/RtPgParseBaseB.v's, the pcs are image
    B's, atom 8 (s0 = Q) has the lower bound 4 (from call_ok's 0 < Q and Q mod 4 = 0) so the engine decides image B's
    two trap branches on Q, the destructs of call_ok shift by one after rt_wcell, a0 holds the 1 returned. *)

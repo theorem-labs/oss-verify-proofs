@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_parse_seg_c1.v, with its module paths and module names changed; 607 of its 682 lines of code are new or changed and 696 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* B' TWIN (asan-ubsan d663f82d7f488d30, unstripped twin c90d4fa54d43160b) of lib/A/Prog/Rtt102O2A.v, by a name map:
    round_trip_text's body on image B is image A's instruction sequence with only pc-relative immediates changed
    (capstone over both twins' symtab bodies; every call site at the same offset), so the twin is the A' file with
@@ -22,14 +23,14 @@
      +0x330 bnez a0, X             not taken: the byte is rtt_led's own field, 0 (the engine decides it)
      +0x334 jal fuzz_alloc_ran_out the kit's text (PRH_FnAlloc.v at the batch kit's cut, blob 4d8aeba047e5, the text unchanged: S' = S, the ledger with most / own kept)
      +0x338 bnez a0, X             not taken: a0 = ranr = ri_ran D = 0 (rtt_rb, the granted read-back) -> +0x33c RT_CK
-   Both branches to X are refuted by the cut's own facts; the run reaches RT_CK only (cut 6e2b5d75a77: RTT_SEG_O2 has
-   no X edge). THE RUNS (measured on A', probe build ed82971dd4): ss_O2a stops at PTS_call AS_fuzz_alloc_ran_out
+   Both branches to X are refuted by the cut's own facts; the run reaches RT_CK only (cut: RTT_SEG_O2 has
+   no X edge). THE RUNS (measured on A', probe build): ss_O2a stops at PTS_call AS_fuzz_alloc_ran_out
    with the return offset 824 in pc / ra; ss_O2r with a0 pinned to 0 stops at RT_CK.
    Numerals. DERIVED: 824 (+0x338, fuzz_alloc_ran_out's return site, 4 * the slot inside the function), -1508 (the lbu
    immediate -0x5e4), 176 / 160 (RT_R's bounds: the frame 0xa0 and the realignment 0x20 - 16), 27392 / 0 (STK_round_trip_text
    / STK_fuzz_alloc_ran_out at prh_img_B, by vm_compute), 128 (fs_frame_bytes 1), 8 / 16 / 32 (LENGTH: word, granule,
    alignment). WORD: register indices. No ADDRESS literal: code addresses are pa_sigma / pa_val of PAImg_prog.v.
-   RE-FIT TO THE BATCH KIT'S CUT 7cdbb61b5fa0 (lane WalkRtt102b, on the shared layer 80a1d52c32c7): DW is gone (Section and
+   RE-FIT TO THE BATCH KIT'S CUT (lane WalkRtt102b, on the shared layer): DW is gone (Section and
    statement); rtt_carry's 11th conjunct, the wild traces since the entry, is kept by o2_carry_eqmem (same state) and
    o2_carry_call (Rtt102Cut.rtt_wild_keep0 across the callee's empty-budget journal); rtt_J is the depot-moved journal,
    so the call rule is applied at the entry `set_depot (st_depot S) (ri_S D)`, and its caller journal (rtt_Jc D S ..)
@@ -37,7 +38,7 @@
    rtt_rb's two appended conjuncts (back's free order at every depth bound, pj_ncapR back t) pass through, by
    PRH_PjOrder.pj_foR_frame (blob e5917626b82b) and Rtt102Cut.v rtt_ncapR_agree (PRH_Reader.v, blob 4266e709561a, has
    no frame lemma for pj_ncapR).
-   R-FORM PORT (lane WalkRtt102-2.RttO2, on wave 0 448ecd157e57 of this port): the statement concludes
+   R-FORM PORT (lane WalkRtt102-2.RttO2, on wave 0 of this port): the statement concludes
    YA0nH.SRr' segs YGcfRehidePost.RZ_cf and rtt_J is at RZW := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf
    (CrtFit's WLE contract); the runs take the R runners paj_run_x_invR / paj_run_to_x_invR at RZW, the call the R rule
    aj_call_x_spR at RZW, the plain text tfuzz_alloc_ran_out_specX lifted into its callee premise (YA0nH.SRr_SRrG,
@@ -295,7 +296,7 @@ Variables (CTX0 : list (list Z)).
 (* the allocator laws at the cf instance's head (engine interface, YCbqG.v AR_laws_x; owner the instance, the cf instance owner) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 (* The kit's text of fuzz_alloc_ran_out (lib/A/PRH_FnAlloc.v at the batch kit's cut, blob 4d8aeba047e5; the text is unchanged from
-   walkkit-next de5e947c224b), at any float state: the call is made at the cut's fxc (owned by the kit) *)
+   walkkit-next), at any float state: the call is made at the cut's fxc (owned by the kit) *)
 Hypothesis TFARO : forall fx' : YK11.FPState, tfuzz_alloc_ran_out_specX (fx := fx') B ARx SK.
 #[local] Notation AJ := (ajournal_xR (SK := SK) SEGS B PST ARx RZW).
 

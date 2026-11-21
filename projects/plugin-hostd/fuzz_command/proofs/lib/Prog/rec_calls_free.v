@@ -512,12 +512,13 @@ Proof using PRE ARR CN C0 GOWN GFACT ERRNO SEGS A0.
   split; [exact ROf|]. split; [exact GKf|]. split; [exact INI|]. split; [exact RGN|].
   split; [|exact RESf].
   intros HI. destruct (HU HI) as (EL & EA & EM). split; [exact EL|]. split; [exact EA|].
-  intros lo Hlo Hcl (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2). rewrite EL.
+  intros lo Hlo Hcl (rs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2). rewrite EL.
+  pose proof (auxv_types_len_ge rs) as HLGrs. unfold AUXV_RAND_K in *.
   assert (NF : forall x, c + 56 * Z.of_nat (length ps) <= x -> ~ nargs_field c (length ps) x).
   { intros x Hx (i & Hi & Hr). lia. }
   assert (HI8 : forall a v, lo <= a -> a + 8 <= 2 ^ 64 -> word_mem (ms_segs B) mem a v -> word_mem (ms_segs B) mf a v).
   { intros a v Ha Hb W k Hk. rewrite EM; [exact (W k Hk) | lia | lia | apply NF; lia]. }
-  exists av, ar. split.
+  exists rs, av, ar. unfold AUXV_RAND_K. split.
   - intros k Hk. assert (SO : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).
     destruct (owned_low B _ (aa_laws API) _ _ _ _ _ HM SO) as [O1 O2].
     rewrite EM; [exact (W1 k Hk) | lia | unfold RCF_K, ALLOC_STACK in *; lia |].

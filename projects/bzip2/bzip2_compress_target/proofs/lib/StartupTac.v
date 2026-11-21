@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ layer of the start-up window and the new auxv). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -53,7 +54,8 @@ Ltac len_rw :=
 
 (* [comment removed for export] *)
 Ltac region_side :=
-  unfold win_lo;
+  (* at the revision the zero window under sp is [wok_lo, sp) ([MemSplit.wok_lo]) *)
+  unfold win_lo, wok_lo; try unfold stack_window_reach;
   match goal with |- context [stack_max_size] => rewrite ?stack_max_size_val | _ => idtac end;
   len_rw;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
@@ -133,6 +135,9 @@ Ltac ok_sub Hok :=
   rewrite ?length_N_to_le_bytes, ?length_zeros; unorm; lia.
 
 (* [comment removed for export] *)
+(* LPS 08b1429: the rseq layer of the start-up window ([S0StartupDefs.J_rseq]) is an [if]. *)
+Lemma wfJ_if : forall sp0 (b : bool) J1 J2, wfJ sp0 J1 -> wfJ sp0 J2 -> wfJ sp0 (if b then J1 else J2).
+Proof. intros sp0 b J1 J2 H1 H2. destruct b; assumption. Qed.
 Ltac wfJ_peel_fast :=
   lazymatch goal with
   | |- wfJ ?sp0 ?J =>
@@ -142,7 +147,8 @@ Ltac wfJ_peel_fast :=
       refine (wfJ_chain sp0 b l _ : wfJ sp0 J)
   end.
 Ltac ok_win HJ :=
-  apply store_ok_cmem_win; [ try wfJ_peel_fast; repeat apply wfJ_wbytes; exact HJ | region_side | region_side ].
+  apply store_ok_cmem_win;
+    [ try wfJ_peel_fast; repeat first [apply wfJ_wbytes | apply wfJ_if]; exact HJ | region_side | region_side ].
 
 (* [comment removed for export] *)
 Ltac ok_data :=
@@ -185,12 +191,32 @@ Proof.
   apply rdn_wbytes_out; rewrite ?u_Z2bv by lia; lia.
 Qed.
 
+(* LPS 08b1429: the two AT_RSEQ_* auxv words are stored only when [kb_rseq] holds
+   ([S0StartupDefs.J_rseq] = [if kb_rseq .. then (two stores) else J]); a read away from both
+   slots, and the window fact, are the same in both layouts. *)
+Lemma rdn_if_out_Z : forall segs (b : bool) m (zb1 zb2 za : Z) bs1 bs2 n,
+  (0 <= za < 2^64 /\ za + Z.of_nat n <= 2^64 /\ 0 <= zb1 < 2^64 /\
+   zb1 + Z.of_nat (length bs1) <= 2^64 /\
+   (za + Z.of_nat n <= zb1 \/ zb1 + Z.of_nat (length bs1) <= za))%Z ->
+  (0 <= za < 2^64 /\ za + Z.of_nat n <= 2^64 /\ 0 <= zb2 < 2^64 /\
+   zb2 + Z.of_nat (length bs2) <= 2^64 /\
+   (za + Z.of_nat n <= zb2 \/ zb2 + Z.of_nat (length bs2) <= za))%Z ->
+  rdn segs (if b then wbytes (wbytes m (Z_to_bv 64 zb1) bs1) (Z_to_bv 64 zb2) bs2 else m) (Z_to_bv 64 za) n
+  = rdn segs m (Z_to_bv 64 za) n.
+Proof.
+  intros segs b m zb1 zb2 za bs1 bs2 n H1 H2. destruct b; [|reflexivity].
+  rewrite (rdn_wbytes_out_Z segs bs2 _ zb2 za n H2), (rdn_wbytes_out_Z segs bs1 m zb1 za n H1).
+  reflexivity.
+Qed.
+
+
 Ltac len_simpl :=
   len_rw; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul Pos.add Pos.mul].
 
 Ltac peel :=
   repeat first [ rewrite rdn_wbytes_out_Z by (len_simpl; lia)
-               | rewrite rdn_wbytes_out by region_side ].
+               | rewrite rdn_wbytes_out by region_side
+               | rewrite rdn_if_out_Z by (len_simpl; lia) ].
 
 (* [comment removed for export] *)
 Ltac rd_img L := addr_norm; rewrite rdn_cmem_data by region_side; peel; exact L.

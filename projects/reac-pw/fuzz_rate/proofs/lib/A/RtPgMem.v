@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v at 37d45827ae9e, ported to reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v, ported to reac-pw/fuzz_rate
    image A: module paths and the prefix (rm_ -> rtm_, RPgBase's rl_ -> RtPgBase's rt_) changed; the frame for locals is
    rate's (seven objects, 56 shadow bytes, fifteen store sites); risk 2 is shown at rate's site 0x808f0, where the
    region route is also run through the symbolic engine (rtm_A_808f0_step, new); the lemmas for an n-byte access

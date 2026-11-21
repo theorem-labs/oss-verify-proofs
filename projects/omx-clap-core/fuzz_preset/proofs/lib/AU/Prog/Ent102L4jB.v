@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): SEGMENT L4j of
    the walk of LLVMFuzzerTestOneInput (B' 0x816cc). Proves seg_L4j_stmt of the B' cut file lib/AU/Ent102CutsB.v
-   (read at blob a74a7497b9d0, commit b1ed4e6c944d): from cut_crs0
+   (read at blob a74a7497b9d0): from cut_crs0
    (+0x2f4 = 0x819c0) the one `j` (`jal x0,-304`) to cut_exit (+0x1c4 = 0x81890). The jump changes no state; what
    moves is the room position's index, from e_i0 + |cno ++ pn ++ sc ++ rej| to e_i0 + |call_evs trp|, and the two
    are the same prefix of the run on the arm cut_crs0 carries (the refused reading, no reading run out): l4j_index.
@@ -11,8 +12,8 @@
    THE WILD BUDGET: ec_inv's journal is `exists WS, ajournal_xw .. WS /\ wbudget [] wk WS` with
    wk = ec_wk_crs0 (10) at cut_crs0 and ec_wk_exit (76) at cut_exit. The `j` is a no-call segment: the cut file's
    shared step ec_inv_wk_grow gives the materialized journal at a budget widened from 10 to 76 (the <= by vm_compute).
-   First PORTED by port/a2b.py (sha256 f5113cbc90e503da) from lib/A/Prog/Ent102L4jA.v (seg_L4j_A, de3b748997f, on
-   3b0db38483cf); re-proved on the exact-position record.
+   First PORTED by port/a2b.py (sha256 f5113cbc90e503da) from lib/A/Prog/Ent102L4jA.v (seg_L4j_A,);
+   re-proved on the exact-position record.
    - LISTING: lib/B/Listing_prog.v c97cc46b3e13 (B' d663f82d) with the PAListing PL_102_B of lib/B/Ent102PLB.v
      e0348e1212c9; generic over {PA : PAImg B_prog_listing} (route (b)). Shared helpers: lib/AU/Prog/Ent102CallB.v
      1c7a402519bc (ec_inv_pre, ec_conj_split / ec_conj_pick) and lib/AU/Ent102PosB.v 853ec706aac5 (ec_hruns_snoc,

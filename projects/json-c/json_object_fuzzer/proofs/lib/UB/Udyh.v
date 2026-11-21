@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes: lb_node and the realizes node carry the robust-call check; star_det1 over a loop's star_rob exit path). *)
 
 From Stdlib Require ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -435,18 +436,19 @@ end.
 #[using="Type"] Lemma lbody_wider : forall V T c, lbody rsegs V T c ->
 forall V' : config -> Prop, (forall x, V x -> V' x) -> lbody rsegs V' T c.
 Proof.
-intros V T c H. induction H as [V T c Hr | V T c I nx k Hn Hk IH Hv]; intros V' HV.
+intros V T c H. induction H as [V T c Hr | V T c I nx k Hn Hrob Hk IH Hv]; intros V' HV.
 - apply lb_exit. exact Hr.
-- eapply lb_node; [exact Hn | intros i Ei; exact (IH i Ei V' HV) | intros i Ei; exact (HV _ (Hv i Ei))].
+- eapply lb_node; [exact Hn | exact Hrob | intros i Ei; exact (IH i Ei V' HV) | intros i Ei; exact (HV _ (Hv i Ei))].
 Qed.
 
-#[using="Type"] Lemma star_det1 : forall c c' tr ce,
-node_ok rsegs c unit (fun _ => []) (fun _ => c') -> star_cfg rsegs (alloc_only_cfg false) c tr ce -> tr = [] ->
-ce = c \/ star_cfg rsegs (alloc_only_cfg false) c' [] ce.
+(* LPS 727298f3: a loop's exit path is a [star_rob] path *)
+#[using="Type"] Lemma star_det1 : forall c c' ce,
+node_ok rsegs c unit (fun _ => []) (fun _ => c') -> star_rob rsegs c ce ->
+ce = c \/ star_rob rsegs c' ce.
 Proof.
-intros c c' tr ce Hn Hw. revert Hn. destruct Hw as [c0 | c1 evs c2 tr c3 Hss Hs']; intros Hn Etr.
+intros c c' ce Hn Hw. revert Hn. destruct Hw as [c0 | c1 c2 c3 Hss Hrob Hs']; intros Hn.
 - left. reflexivity.
-- right. apply app_eq_nil in Etr as [-> ->]. destruct Hn as [_ Hc].
+- right. destruct Hn as [_ Hc].
 destruct (Hc _ _ Hss) as (u & _ & Hx). cbv beta in Hx. injection Hx as ->. exact Hs'.
 Qed.
 
@@ -458,7 +460,7 @@ assert (K : (forall c T, realizes rsegs c T -> forall c', node_ok rsegs c unit (
 { apply (realizes_lbody_mutind rsegs
 (fun c T _ => forall c', node_ok rsegs c unit (fun _ => []) (fun _ => c') -> realizes rsegs c' T)
 (fun V T c _ => forall c', node_ok rsegs c unit (fun _ => []) (fun _ => c') -> lbody rsegs V T c' \/ V c')).
-- intros c I evs nx Tf i0 Hnode Hcont IH c' Hn.
+- intros c I evs nx Tf i0 Hnode Hrob Hcont IH c' Hn.
 destruct Hnode as [Hs _]. destruct Hn as [_ Hc].
 assert (E : forall i, evs i = [] /\ nx i = c').
 { intros i. destruct (Hc _ _ (Hs i)) as (u & He & Hx). cbv beta in He, Hx. split; [exact He | injection Hx as Hx; exact Hx]. }
@@ -472,14 +474,14 @@ intros tr. unfold t_alt, t_emit. split.
 - intros c Hh c' Hn. destruct Hn as [Hs _]. exfalso. apply Hh. exact (sstep_halted_none rsegs _ _ _ (Hs tt)).
 - intros c T T' H IH Heq c' Hn. exact (rz_conseq rsegs c' T T' (IH c' Hn) Heq).
 - intros V T c ce HV Hbody IHb Hw He IHe c' Hn.
-destruct (star_det1 c c' [] ce Hn Hw eq_refl) as [Ec | Hw'].
+destruct (star_det1 c c' ce Hn Hw) as [Ec | Hw'].
 + subst ce. exact (IHe c' Hn).
 + destruct (IHb c HV c' Hn) as [Lb | Vc].
 * apply (rz_loop rsegs (fun x => V x \/ x = c') T c' ce); [right; reflexivity | | exact Hw' | exact He].
 intros x [Vx | ->]; [apply (lbody_wider V T x (Hbody x Vx)) | apply (lbody_wider V T c' Lb)]; intros y Vy; left; exact Vy.
 * exact (rz_loop rsegs V T c' ce Vc Hbody Hw' He).
 - intros V T c H IH c' Hn. left. apply lb_exit. exact (IH c' Hn).
-- intros V T c I nx k Hnode Hk IHk Hv c' Hn. destruct Hn as [Hs _]. destruct Hnode as [_ Hc].
+- intros V T c I nx k Hnode Hrob Hk IHk Hv c' Hn. destruct Hn as [Hs _]. destruct Hnode as [_ Hc].
 destruct (Hc _ _ (Hs tt)) as (i & _ & Hx). cbv beta in Hx. injection Hx as Hx. rewrite Hx.
 destruct (k i) eqn:Ek; [left; exact (Hk i Ek) | right; exact (Hv i Ek)]. }
 intros c c' T Hn H. exact (proj1 K c T H c' Hn).

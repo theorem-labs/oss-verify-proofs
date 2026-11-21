@@ -2,7 +2,7 @@
    text), strncmp (r + 1, uri = s5, n = s6) at 0x81308; nonzero goes to EX_S 0x81334 (no "<uri>" at r), zero passes the
    UBSan guard 0x81314 (K2: not a0, s3; bltu a0, s0 with s0 = n + 1, the trap arm needs r + n + 1 >= 2^64, impossible
    for r + 1 + n inside text) to EX_B 0x8131c with a0 = r + 1 + n (the uri's bytes follow r). B twin of
-   lib/A/FMW_ex_entry_wl.v (06d82004dc3). ex_WL_seg (FMW_ex_entry_kit.v). *)
+   lib/A/FMW_ex_entry_wl.v. ex_WL_seg (FMW_ex_entry_kit.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

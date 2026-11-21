@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths, module names and numbers changed; 927 of its 1102 lines of code are new or changed and 2382 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F18.v; 442 of its 492 lines of code are new or changed and 1052 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F19.v -- GLUE for stage seg_F19 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:809),
    following the glue pattern (glue-pattern.md (a working note, not in this delivery)) and the pilot
    lib/A/ACtlG/A5.v.  Written by a Theorem Labs lane; single writer.  proves no function (kind: segment lemma);
@@ -26,7 +27,7 @@
    by bcmp_wrap_on.bcmp_wrap_holds_F_on, so no callee premise and no split remain: a Theorem Labs lane's split rule, 04:01Z).
    The _ro twin is used because the cut carries ro_agree (ctl_rt_C), not mem_inv.
 
-   ROUTE (C) (a working branch 1899bed1aee; recipe L3-recipe.md section 2 (a working note, not in this delivery)): the
+   ROUTE (C) (a working branch; recipe L3-recipe.md section 2 (a working note, not in this delivery)): the
    entry carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3, destructed as (Hcells & Hcut & Himg & Hroag).  The run's one
    shadow premise, the aligned shadow words of [fr + 180, fr + 186) and [phi + 6, phi + 12), comes from Hcut:
    the first range is the owned class-6 frame's shadow, cut_shadow's (F) disjunct (glue_f19_frame_sh), the second
@@ -91,8 +92,8 @@
    the AF0m zero-shadow row (no shadow byte here comes from ts_zsh: the frame's shadow is AR_frames_law's, the
    record block's AR_shadow_law's, phi + 14 .. phi + 17's the body's rec_inv).
 
-   FROM THE SHARED MEMORY KIT lib/A/ACtlG/KitMem.v (a working branch 4a56e997c0f, merged
-   into the w4d worktree at c8728e5ba73; blob 19bfb2e48a9; Required qualified, never copied): kitmem_spill_munch (a
+   FROM THE SHARED MEMORY KIT lib/A/ACtlG/KitMem.v (a working branch, merged
+   into the w4d worktree; blob 19bfb2e48a9; Required qualified, never copied): kitmem_spill_munch (a
    spill across the munch) and kitmem_frac_munch (FRAC at the run's memory, by shape).
 
    FRAC: every FRAC destruct ends in `& _`; FRAC is re-established at the run's memory m' by KitMem.kitmem_frac_munch
@@ -104,16 +105,16 @@
    (YK11 YM05 YO09) and lib/Lib's Mem / MState / Frame / ExecF / Regs6ss are Required by absolute path and named
    by full path (module aliases LMS / LMem / LFr / LEF / LR6); no statement names a frame-route identifier (the
    frame-route names F19F_on / F18 / RcAsanFPLib / SlotModel appear only inside Qed proofs).  Frame-route files
-   Required, blobs at a working branch 1899bed1aee: Seg/F19F_on.v (a Theorem Labs lane, new; Requires Seg/F18.v e414ca1bb71 for its
+   Required, blobs at a working branch: Seg/F19F_on.v (a Theorem Labs lane, new; Requires Seg/F18.v e414ca1bb71 for its
    helper lemmas), RcAsanFPLib.v e1f4a4f0b5a, SlotModel.v d544a5956be and SlotInv.v 689d6853b42 (the route (C) walk's blobs);
-   route (C) leaves by path from a Theorem Labs lane f4423e55886 (the root-free bcmp proof): bcmp_wrap_c.v 64293314ee8,
+   route (C) leaves by path from a Theorem Labs lane (the root-free bcmp proof): bcmp_wrap_c.v 64293314ee8,
    bcmp_wrap_c_on.v ca2f37ea2b6, bcmp_wrap_on.v 49fcbf2eeed, bcmp_wrap_Fk.v 1fa5b214cf3, A/MemNormP.v e45ea6f496f;
    AsanRT.v b67d26f8ec7 (mcs 30), AsanRTFacts.v 1657e654e8c.
 
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are fully qualified everywhere (checked: no unqualified
    occurrence outside comments).
 
-   BUILD STATE: type-checked with cb build on a build machine (workspace (internal path)) on a working branch 1899bed1aee;
+   BUILD STATE: type-checked with cb build on a build machine (workspace (internal path)) on a working branch;
    the build of record is the lane's cbrec run (report).  No Axiom, no Parameter, no Admitted, no admit. *)
 
 From Coq Require Import ZArith List Lia Permutation.

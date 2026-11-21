@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/A/AC95.v:145-147
    [Apache-2.0]; projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC59.v:27-30 [Apache-2.0 OR MIT], for libreac/fuzz_identity's
    asan-ubsan build (lib/B). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sb_dec (fuzz_identity.asan-ubsan 0x835d0, 0x268 bytes, listing offset AF_sb_dec = 0x2e5c): its
    ASan+UBSan-build contract tsb_dec_spec, in cgif's caller-journal form (CONVENTIONS.md §2; cgif
    lib/YC20.v:311-365, tlzw_kept / tlzw_post / tlzw_spec): sb_dec writes its caller's struct sb (on the
@@ -46,7 +47,7 @@ From OSSVerify.Proofs.libreac.fuzz_identity.lib.B.Prog Require Import IdentBCJ.
 (* The callee's contract: tsb_ch_spec,
    SB_CH_STK, EV_SB_CH. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.B.Prog Require Import sb_ch.
-(* The plain model of sb_dec (released, origin/ossv/recipes c8557374ad2e), used as it is (the A text's
+(* The plain model of sb_dec (released), used as it is (the A text's
    choice; lib/U/Prog/sb_dec_c.v defines sb_dec_lsd / sb_dec_D / sb_dec_room / sb_dec_acc with the same text). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Prog Require sb_dec_c.
 Import ListNotations.

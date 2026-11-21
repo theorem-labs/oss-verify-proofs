@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d7f48, unstripped twin c90d4fa54d43), lane
    PjwBPort of a Theorem Labs lane: the INSTANCE WITNESSES of the STATIC image premises of PRW_pj_writeB.v's Section h, each
    stated as the premise's text at the B' instance PA := PI_prog_B (the cut's lib/B/PAImg_prog.v 15fab93fe702, listing
@@ -7,7 +8,7 @@
    YF0m's tables), and closed by vm_compute on a closed term (unit ruling a Theorem Labs lane 16:45Z). The segments are named
    FULLY QUALIFIED (RSEGS_B), never by a short name a plain image could capture; pjwbw_segs_B is the guard that the
    walk's pa_segs PI_prog_B is lib/B/Img0.rsegs. Proves nothing about the program.
-   ported from the A' witnesses of the same premises (a working branch f75b9f6e6fa6:
+   ported from the A' witnesses of the same premises (a working branch:
    lib/A/Prog/PRW_S7bWit.v s7bw_pjw_ent / s7bw_pjw_ret / s7bw_pjw_nl_img / s7bw_pst_ok_pjw / s7bw_pstro_A /
    s7bw_memset_pc, lib/A/Prog/PRW_S7bLitWit.v s7bl_pjw_hlit with its checker, the s7bl_ lemmas): how - the same statements and
    proofs at the B' names (PI_prog_B, prh_img_B, YD2l.TfibB, YF0m's tables, IMG_LO_B / IMG_TOP_B, B_prog_relro_lo /

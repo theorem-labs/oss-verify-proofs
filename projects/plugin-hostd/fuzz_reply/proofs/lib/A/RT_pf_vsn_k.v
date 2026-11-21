@@ -1,6 +1,6 @@
 (* KEEP-FX copy of RT_pf_vsn.v: ___interceptor_vsnprintf at fuzz_reply.asan, entered at the trampoline 0x421d4, with
    the REAL(vsnprintf) call taken from the keep-FP twin (lib/CJ/RL/GXAK, provenance/keepfx/README.md).
-   Copy of lib/A/RT_pf_vsn.v:49-332 at d49bd1db505 (sha256 09a6db9237b7; internal record), retargeted to GXAK.
+   Copy of lib/A/RT_pf_vsn.v:49-332 (sha256 09a6db9237b7; internal record), retargeted to GXAK.
 
    vsnprintf_icpt_ok_k proves RT_pf_stmt_k.v vsnprintf_icpt_stmt_k (no frm0 premise; the post keeps the caller's F and
    fc) from the Section hypothesis VSNX, the twin's GXAK/G_vsnprintf.v vsnprintf_x_stmt at the second instance

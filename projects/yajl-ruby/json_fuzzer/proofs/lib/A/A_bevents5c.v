@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ev_munmap passes the step's non-refusal to chk_munmap_inv, which rules out munmap's ENOMEM answer, and the ledger's mwf to unmap_maps, as munmap's next ledger is the model's maps_subtract cut). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -102,13 +103,14 @@ Let n : word := Z_to_bv 64 L.
 Hypothesis INM : In (r, n) (vm_maps (m_vmmaps m)).
 Hypothesis UNC : forall x, R <= x < R + L -> covered (vm_noaccess (m_vmmaps m) ++ m_vm_lazy m) x = false.
 Hypothesis DJ : forall e, In e (map_remove (vm_maps (m_vmmaps m)) r) -> ehi e <= R \/ R + L <= elo e.
+Hypothesis MW : mwf (vm_maps (m_vmmaps m)).
 
 Lemma unmap_eager_exact : eager_used (m_unmap m R L) <= eager_used m - L.
 Proof.
   assert (ur : bv_unsigned r = R) by (apply u64_small; lia).
   assert (un : bv_unsigned n = L) by (apply u64_small; lia).
   rewrite (eager_used_sem _ (unmap_wf m R L WF HR HL HE)), (eager_used_sem _ WF).
-  rewrite unmap_maps, (unmap_noaccess m R L), (unmap_lazy m R L HR HL HE).
+  rewrite (unmap_maps m R L), (unmap_noaccess m R L), (unmap_lazy m R L HR HL HE) by first [exact INM | exact MW | assumption | lia].
   pose proof WF as (Wm & Wn & Wl & Wsp).
   destruct (maps_subtract_sem _ R (R + L) Wn ltac:(lia)) as (_ & _ & Cn).
   destruct (maps_subtract_sem _ R (R + L) Wl ltac:(lia)) as (_ & _ & Cl).
@@ -556,7 +558,7 @@ Proof.
   pose proof (chk_munmap_grant A L mo1 M1 M5 ltac:(lia) HL TS MH) as GR.
   pose proof (chk_munmap_inv A L mo1 M1 M5 ltac:(lia) HL TS MH) as INV.
   split; [exact NU|]. split; [eexists; eexists; split; [exact GR| reflexivity]|].
-  intros eff mo' HC _. destruct (INV eff mo' [] HC) as (_ & -> & ->).
+  intros eff mo' HC NR. destruct (INV eff mo' [] HC NR) as (_ & -> & ->).
   split; [eapply check_munmap_only; exact HC|]. split; [reflexivity|]. split; [reflexivity|].
   pose proof (check_munmap_only _ _ _ _ _ _ HC) as MMA.
   assert (DJ : forall e, In e (map_remove (vm_maps (m_vmmaps mo1)) (Z_to_bv 64 A)) -> ehi e <= A \/ A + L <= elo e).
@@ -567,7 +569,7 @@ Proof.
     - pose proof (proj1 KW i j _ _ Hi Hj NEQ) as D. unfold elo, ehi, went, kwz in D |- *. cbn [fst snd] in D.
       rewrite !u64_small in D by lia. lia. }
   assert (EG : eager_used (m_unmap mo1 A L) <= eager_used mo1 - L).
-  { apply unmap_eager_exact; [exact KWF| lia| exact HL| exact HE| exact INw| | exact DJ].
+  { apply unmap_eager_exact; [exact KWF| lia| exact HL| exact HE| exact INw| | exact DJ| exact KW].
     intros y Hy. exact (eager_uncovered mo1 A L y ER1 Hy). }
   change (munmap_post A L mo1) with (m_unmap mo1 A L).
   split.
@@ -584,7 +586,7 @@ Proof.
     + exact EV1.
     + rewrite unmap_limit. exact LIM1.
     + unfold KVM. unfold sA, aps_set_alloc. cbn [aps_alloc].
-      rewrite unmap_reserved, unmap_maps, (unmap_noaccess mo1 A L). split; [exact KR|]. split; [| split; [| split; [| split]]].
+      rewrite unmap_reserved, (unmap_maps mo1 A L), (unmap_noaccess mo1 A L) by first [exact INw | exact KW | assumption | lia]. split; [exact KR|]. split; [| split; [| split; [| split]]].
       * exists fog. split; [| split; [exact FG1| exact FG2]].
         destruct (in_split _ _ INw) as (l1 & l2 & EQ). rewrite EQ in PM, KW |- *.
         assert (KEEP : forall e, In e (l1 ++ l2) -> negb (bv_eqb (fst e) (Z_to_bv 64 A)) = true).
@@ -622,12 +624,12 @@ Proof.
         assert (m = went A L) as -> by (apply (mwf_base_unique _ _ _ KW Hm INw); unfold elo; rewrite EQm; reflexivity).
         pose proof (w_ext Pq Dq WF) as [W1 W2]. unfold ehi, elo in *. unfold went, kwz in W1, W2, Q1, Q2. cbn [fst snd] in *.
         rewrite !u64_small in Q1, Q2 by lia. lia.
-      * unfold m_unmap, munmap_post, with_mmap_destroyed. mproj. cbn. exact KT.
-    + split; [exact P0|]. eapply PSL_remove; [apply unmap_reserved| apply unmap_maps| unfold m_unmap, munmap_post, with_mmap_destroyed; mproj; cbn; reflexivity| exact PS1].
+      * unfold m_unmap, munmap_post, with_mmap_destroyed, mmap_fixed_destroyed_next. mproj. cbn. exact KT.
+    + split; [exact P0|]. eapply PSL_remove; [apply unmap_reserved| apply unmap_maps; first [exact INw | exact KW | assumption | lia]| unfold m_unmap, munmap_post, with_mmap_destroyed, mmap_fixed_destroyed_next; mproj; cbn; reflexivity| exact PS1].
   - (* [comment removed for export] *)
     eapply (AKern_unmap mo1 (m_unmap mo1 A L) Pq Dq K1 WF KW KWF INw).
-    + rewrite unmap_maps. reflexivity.
-    + apply unmap_noaccess.
+    + rewrite (unmap_maps mo1 A L) by first [exact INw | exact KW | assumption | lia]. reflexivity.
+    + apply unmap_noaccess; lia.
     + apply unmap_lazy; lia.
 Qed.
 End Drop.

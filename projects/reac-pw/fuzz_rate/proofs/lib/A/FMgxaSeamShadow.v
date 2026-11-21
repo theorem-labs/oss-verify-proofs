@@ -1,11 +1,11 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamShadow.v (cold/port-fm-rtprintf-param 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamShadow.table); by hand (numerals.py BY_HAND, reason in the table): 0x20d00 -> 0x20f98; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamShadow.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamShadow.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamShadow.table); by hand (numerals.py BY_HAND, reason in the table): 0x20d00 -> 0x20f98; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamShadow.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* Step 2 of the evt -> SRr seam at musl vfprintf: the ASAN SHADOW.
 
    The harness states ASan facts over its reader `aview tfibsegs H mem` (YG0n.v:18):
-   `range_addressable rd SHADOW_OFF p n` (YG0v.v:33) asks, for each byte x of [p, p + n), a shadow byte
-   s at `shadow_of_addr SHADOW_OFF x = SHADOW_OFF + x / 8` with `saddr_ok x s` (YG0v.v:29), and
-   `amem_range p n` (YG0d.v:317) puts the range in low or high application memory.
+   `range_addressable rd SHADOW_OFF p n` (YG0v.v:34) asks, for each byte x of [p, p + n), a shadow byte
+   s at `shadow_of_addr SHADOW_OFF x = SHADOW_OFF + x / 8` with `saddr_ok x s` (YG0v.v:30), and
+   `amem_range p n` (YG0d.v:318) puts the range in low or high application memory.
    GXA states them over the CJ store (lib/CJ/RL/GXA/AsanFacts.v): `addr_byte`, `addressable`,
    `pf_rng`, `shadow_rw`, with the shadow byte at `a / 8 + ASAN_K` read SIGNED (`shadow_ok`).
 
@@ -18,11 +18,11 @@
 
    The musl prefix (GXA's musl_prefix_addressable, AsanFacts.v:82): the nine image bytes at
    `sym 0x1029e` = 0x10b4c (RT_IImgA.v:36) lie in fm.asan's first zero-shadow range
-   (0x10000, 0x20d00 - 0x10000) (AF0m.v:551), which AR's am_zshadow (YG0n.v:218) covers whenever that
+   (0x10000, 0x20d00 - 0x10000) (AF0m.v:552), which AR's am_zshadow (YG0n.v:218) covers whenever that
    range is in `as_zero_shadow B` (TfibSyms' ts_zsh gives it).  musl_prefix_of_AR states it for AR;
    musl_prefix_of_ARU states it for ARU (lib/A/FMupoison.v:32), the form the shared contract's
    ecall_preU carries: a user-poisoned shadow byte is the shadow of a live block's granule, and no
-   live block meets the image (AR_client_img_law, YG0d.v:490). *)
+   live block meets the image (AR_client_img_law, YG0d.v:491). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

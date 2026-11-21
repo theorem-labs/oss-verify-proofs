@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for hand_back's ASan+UBSan
-   walk (lib/B/Prog/hand_back.v, thand_back_holds), as lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch
-   e84227c9553) and a Theorem Labs lane's RecBClosed.v (a working branch f349bdaedba) do on the A side: the
+   walk (lib/B/Prog/hand_back.v, thand_back_holds), as lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch)
+   and a Theorem Labs lane's RecBClosed.v (a working branch) do on the A side: the
    per-binary hypotheses the walk names are discharged at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd,
    whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head): VOBJS, cmd_val_his_PB, cmd_sig_prog_PB and
    cmd_palib are a Theorem Labs lane's lemmas cmd_val_objs_PB, cmd_val_his_PB, cmd_sig_prog_PB and cmd_palib (lib/B/Prog/CmdRecRest.v),
@@ -10,11 +10,12 @@
    read-write window). What remains is the statement's own contracts (the callee's and the runtime entries' at
    every FP state), HB and MTL. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/HandBackClosed.v, with its module names changed; 18 of its 42 lines of code are new or changed and 29 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for answer_code's ASan+UBSan walk (lib/B/Prog/answer_code.v,
    tanswer_code_holds): the per-binary facts the walk names as Section hypotheses are discharged at the pinned image
    (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are B's tfibsegs, and B's sink head YE2k.tfib_sink_head), as
-   a Theorem Labs lane's RecBClosed.v (a working branch f349bdaedba, lib/A/Prog/RecBClosed.v:163-191) and
-   a Theorem Labs lane's SupRemoveAllRefitClosed.v (a working branch e84227c9553) do on the ASan side: LAWS is the core's AR_laws_ok
+   a Theorem Labs lane's RecBClosed.v (a working branch, lib/A/Prog/RecBClosed.v:163-191) and
+   a Theorem Labs lane's SupRemoveAllRefitClosed.v (a working branch) do on the ASan side: LAWS is the core's AR_laws_ok
    (inside the walk), IMG is cmd_img_facts_tfib, the walk's cmd_palib / cmd_sig_prog_PB are a Theorem Labs lane's lemmas of those
    names, the statement's VOBJS is cmd_val_objs_PB, TLF (PaLibF.PALibF) is cmd_palibf (from HB's constant cells), the
    walk's cmd_frame_flag_law is a Theorem Labs lane's lemma of that name, and the statement's AFREE_LAW (the side-stack release law

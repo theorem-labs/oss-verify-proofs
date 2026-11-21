@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's check_no_loss,
    a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)), after
-   lib/A/W_check_no_loss.v (sha256 8817affe2a55; internal record) and lib/B/W_check_bounded.v (at
-   7e062bb9b9c), with the image-B facts (frame, registers, trap sites) of the old-frame walk lib/B/Prog/check_no_loss.v
-   (a working branch 0fafbcda68f). *)
+   lib/A/W_check_no_loss.v (sha256 8817affe2a55; internal record) and lib/B/W_check_bounded.v,
+   with the image-B facts (frame, registers, trap sites) of the old-frame walk lib/B/Prog/check_no_loss.v
+   (a working branch). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_check_no_loss.v; 15 of its 80 lines of code are new or changed and 4909 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Satisfiability at the real image B of the R contract texts (W_contract_xR_g6.v), at R := wle' SEGS RZ_cf: each
    lemma derives the R form from the existing strict walk, under that walk's own Section hypotheses. The import block
    is the walk file's (W_check_no_loss.v), so each hypothesis reads as there. *)

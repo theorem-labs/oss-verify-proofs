@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (G_side passes run_of_tree its channel-reader premise, vie_reader of the valid input). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -31,7 +32,7 @@ Theorem G_side : forall segs pc ph rstage lim,
 Proof.
   intros segs pc ph rstage lim Hlow Hlim HI en inp He Hi.
   destruct (progG_model_ok_run P T NBLK BSZ linv HP0 HC H_init H_one H_rc segs rstage pc ph lim Hlow Hlim en inp He Hi) as [Hl Hs].
-  destruct (run_of_tree segs pc ph lim (the_progG segs rstage inp en) (epost the_post) en inp (HI en inp He Hi) Hl Hs)
+  destruct (run_of_tree segs pc ph lim (the_progG segs rstage inp en) (epost the_post) en inp (HI en inp He Hi) Hl Hs (vie_reader inp Hi))
     as (Htr & Herr & _).
   split; [| exact Herr].
   intros tr. rewrite (Htr tr).

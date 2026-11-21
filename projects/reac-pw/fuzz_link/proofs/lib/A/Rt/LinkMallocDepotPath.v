@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfAmx.v, with its module paths changed; 81 of its 146 lines of code are new or changed and 189 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* THE DEPOT ACROSS ONE MALLOC OR FREE of the allocator model (lib/Reusable/YG00.v malloc, free), on a returning model
    path:
      ds_malloc         : ipost (malloc n tr s) (fun r => st_depot (snd r) = st_depot s \/ st_depot (snd r) = st_depot s ++ [tr])
@@ -11,7 +12,7 @@
    arm; their callees (cache_alloc, sec_alloc, enqueue, maybe_drain and theirs) keep the depot. Image-free, no
    invariant: an all-paths post (ipost) on every returning path of the model, turned into a statement about apath
    (ds_ipost_apath). lib/A/Rt/LinkMallocDepot.v uses malloc_depot_path and free_depot_path.
-   A port of omx-clap-core/fuzz_preset lib/Reusable/YGcfDepotStep.v (hub 26d8d53a1503), first allocator only:
+   A port of omx-clap-core/fuzz_preset lib/Reusable/YGcfDepotStep.v, first allocator only:
    ds_ipost_apath (:30), ds_cbn / ds_unf / ds_step (:50-73), ds_gfa (:75), ds_refill (:79), ds_calloc (:83), and the
    free-path posts ds_enqueue (:87), ds_rta (:91), ds_cdealloc (:95), ds_sdealloc (:99), ds_rchunk (:103),
    ds_ritems (:107), ds_drecycle (:114); with the pieces of YGcfAmx.v (same tree) they need: ipost, ipost_mono,

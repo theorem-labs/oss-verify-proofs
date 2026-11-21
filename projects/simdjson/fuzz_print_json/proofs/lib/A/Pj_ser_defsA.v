@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -98,7 +99,7 @@ Record sctxA (E : pjenvA) (D : nat) (I : serI) : Prop := mkSC {
   c_q16 : si_q I mod 16 = 0;
   c_lo : pa_lo E + ser_needA D <= si_q I;
   c_qtop : si_q I + 16 <= USTACK_TOP;
-  c_sp0 : si_sp0 I - STACK_WIN <= pa_lo E /\ 0x7fff80000000 <= si_sp0 I;
+  c_sp0 : si_sp0 I - STACK_SPAN <= pa_lo E /\ 0x7fff80000000 <= si_sp0 I;
 
   c_f : 0 < si_f I /\ si_f I mod 64 = 0 /\ SEGTOP_A <= si_f I /\ si_f I + 512 <= pa_lo E;
   c_fF : si_f I + 512 <= pa_F E \/ pa_F E + fs_size (pa_kF E) <= si_f I;

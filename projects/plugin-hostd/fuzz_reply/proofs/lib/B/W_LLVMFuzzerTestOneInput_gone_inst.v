@@ -15,8 +15,9 @@
      HGOTG                      gi_HGOTG         YE22.got_canary_of_AR (the const cell z8 0x9ebd8 0x5f9a30)
      GN_LIT_GES                 gi_LIT_GES       W_shadow_pin.shp_ashp over YF0m's const / zero shadow, vm_compute
                                                  (the same statement as ashp_gesture_14_fr of lib/B/W_shadow_pin_fr.v
-                                                 on a working branch d4427280250, not merged here)
+                                                 on a working branch, not merged here)
      GN_LIT_FMT                 gi_LIT_FMT       the same method at the format .str.9 "%s %d " (A_OBJ 17, 7 bytes) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

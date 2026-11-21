@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Bool List.
@@ -32,6 +33,15 @@ Definition bda_tabs : img_tabs := {|
 
 (* [comment removed for export] *)
 Lemma bda_img_ok : img_ok BDA_SEGS BDA_PC = true.
+Proof. vm_cast_no_check (eq_refl true). Qed.
+
+(* NEW: no_lazy_img/no_lazy_imgn gained the seg_kernel_map discriminant when
+   segments_reserved began filtering it (LPS@75d69e00 Run.v:253-254), so asum_ck_ok
+   and Section Start now take it as a premise -- they cannot derive it, since img_ok
+   is forallb seg_ok1 and seg_ok1 says nothing about seg_kernel_map.  Here BDA_SEGS is
+   concrete, which is exactly where AsanWLazy.v:100-105 says to close it, so this is
+   bda_img_ok's discharge applied to the sibling fact. *)
+Lemma bda_segs_nk : forallb (fun s => negb (seg_kernel_map s)) BDA_SEGS = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
 
 (* [comment removed for export] *)

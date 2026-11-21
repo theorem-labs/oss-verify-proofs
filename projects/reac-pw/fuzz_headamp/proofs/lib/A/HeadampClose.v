@@ -1,24 +1,25 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v, AD2p.v and AD1q.v (asan) and
-   lib/YD2o.v, YD2p.v and YD1q.v (asan-ubsan), ossv/recipes c8557374ad2e, for libreac/fuzz_knock: the closing of
+   lib/YD2o.v, YD2p.v and YD1q.v (asan-ubsan), for libreac/fuzz_knock: the closing of
    KnockAsanTop.ASAN_T and ASAN_UBSAN_T from named parts; module paths changed, shape AgreeKnock.ag_sil_shape
-   (KnockAsanTop.knock_shape), fuzz_knock's images. Modelled on fuzz_pcap's lib/A/PcapClose.v (a working branch
-   fe3d720b4c7). *)
-(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/KnockClose.v
-   at origin/ossv/recipes 6ebe35ba632: shape QdiscAsanTop.qdisc_shape (= AgreeQdisc.ag_sil_shape), fuzz_qdisc's images,
+   (KnockAsanTop.knock_shape), fuzz_knock's images. Modelled on fuzz_pcap's lib/A/PcapClose.v (a working branch).
+   *)
+(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/KnockClose.v:
+   shape QdiscAsanTop.qdisc_shape (= AgreeQdisc.ag_sil_shape), fuzz_qdisc's images,
    names knock_* -> qdisc_*, the parts' owners are the lanes of fuzz_qdisc; in Section asan_ubsan the trace tables of
    knock's lib/AU/YCej.v / YCejTfib.v are Section Variables and Hypotheses of the same types; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/QdiscClose.v at 56ce9edaafc, for reac-pw/fuzz_role image A
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/QdiscClose.v, for reac-pw/fuzz_role image A
    (Section asan) and image B (Section asan_ubsan): shape RoleAsanTop.role_shape, fuzz_role's images, names qdisc_* ->
    role_*; Section asan also takes its trace tables as Section Variables and Hypotheses of the types of Section
    asan_ubsan's (so this file Requires no lib/A file of the image A frame); the role agreement statements take
    RoleAsanTop.PLAIN_SLOT_AG; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RoleClose.v at fa745625e7d, for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RoleClose.v, for reac-pw/fuzz_headamp
    image A (Section asan) and image B (Section asan_ubsan): shape HeadampAsanTop.headamp_shape, fuzz_headamp's images,
    names role_* -> headamp_*, valid_sp_windowR -> valid_sp_windowH; the program contract is lib/A/HPgLib.v's; the
    entry function allocates four blocks (pp, pod, out, first; freed in reverse order) where role's allocates two, which
    no statement here counts (the allocator facts are per call, inside H_DRIVER / H_DRIVER_U); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ-sized auxiliary vector; the launch's ProcInput, mmap base and entry draw; the launch input with its SIGPIPE default free; fdchan's third conjunct, the channel-reader flag, carried in cs_ok (co_rdr) and threaded to the fd sites; the launch's string area with the exec file name); internal commit ids in comments replaced by public commits or removed. *)
 (* The closing side of fuzz_headamp's four ASan statements (rule 24: no function proved; this file is assembly).
 
    The donor (cgif_file_fuzzer) closes TFIB_T in two steps: AD2o.v:63-84 applies AD1q.v:79-98 tfib_srealizesX. tfib_srealizesX joins
@@ -37,7 +38,7 @@
    fuzz_headamp's entry function ALLOCATES (four blocks pp, pod, out and first, freed in reverse order). Its program
    contract takes the allocator's free and malloc facts at B as explicit premises, in the form of libreac/fuzz_ctrl's
    released walk top
-   (origin/ossv/recipes 75ff9552daa proofs/libreac/fuzz_ctrl/lib/A/ACtl.v:1184-1185, discharged at ACtlAll.v:110-111
+   (proofs/libreac/fuzz_ctrl/lib/A/ACtl.v:1184-1185, discharged at ACtlAll.v:110-111
    by the same AF0q / AF0w theorems CtrlClose.v:144-145 gives the driver). Here the program contract stays inside
    H_DRIVER, as in fuzz_knock's KnockClose.v, and the join feeds it the per-FPState allocator facts H_DRIVER receives,
    which ASAN_T_of_parts takes from H_ALLOC_MALLOC / H_ALLOC_FREE. So this file has no Section hypothesis beyond
@@ -72,33 +73,42 @@ Local Notation ph := OSSVerify.reac_pw.fuzz_headamp.images.Asan.M.phdrs.
 
 (* START-UP. Owner: the start-up tables generated from fuzz_headamp.asan's own collector run (lib/A/AB01.v, AB12.v) and
    the certificate (lib/A/AB1n.v). *)
-(* HS_TBL: the start-up's hand-off states, donor cgif_file_fuzzer lib/A/AB01.v:597 HS_tfib (per-binary data; headamp's lib/A/AB01.v:604). *)
-Variable HS_TBL : nat -> option acs.
-(* TFIB_TBL: the image table of the start-up certificate, donor cgif_file_fuzzer lib/A/AB12.v:10 TFIB (per-binary data; headamp's
-   lib/A/AB12.v:13). *)
+(* HS_TBL: the start-up's hand-off states, donor cgif_file_fuzzer lib/A/AB01.v:598 HS_tfib (per-binary data; headamp's lib/A/AB01.v:605). *)
+(* 727298f3: the hand-off states of the run's own CONFIG_RSEQ flag (AB01r.HS_tfib_r). *)
+Variable HS_TBL : Z -> nat -> option acs.
+(* TFIB_TBL: the image table of the start-up certificate, donor cgif_file_fuzzer lib/A/AB12.v:11 TFIB (per-binary data; headamp's
+   lib/A/AB12.v:14). *)
 Variable TFIB_TBL : atable.
 (* donor cgif_file_fuzzer lib/A/AB1n.v:45-51 HS_ok (headamp's lib/A/AB1n.v:48-54), at HS_TBL / TFIB_TBL and fuzz_headamp's ASan image. *)
-Definition HS_okA (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word)
-    (fs : Fs.Fs) (c : config) : Prop :=
+Definition HS_okA (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word)
+    (argv envp : list (list byte)) (fs0 : Fs.Fs) (stdin : InputStream) (uid gid hw : word)
+    (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs)
+    (kb : KernelBuild) (execfn : list byte) (sdef : bool) (fsq : Fs.Fs) (c : config) : Prop :=
   exists ch E R FULL model,
-    HS_TBL h = Some ch
+    HS_TBL (rseq_z (kb_rseq kb)) h = Some ch
     /\ c = cfg_of segs R (pc ch) FULL model
     /\ cs_ok segs TFIB_TBL YA02.LIMIT (YA02.TOP sp)
-         (YA02.SINV0 ph sp rdraw brk0 argv envp uid hw) (YA02.argH0 ph sp rdraw argv envp uid hw) fs E ch R FULL model.
+         (YA02.SINV0 ph sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef OSSVerify.reac_pw.fuzz_headamp.images.Asan.M.init_pc)
+         (YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) fsq E ch R FULL model.
 (* H_STARTUP: lib/A/AB1n.v:55-63 tfib_startup_T1 (the start-up certificate, closed by AB1n.v:64-76 over
    tfib_startup_closed). Owner: lib/A/AB1n.v. *)
 Hypothesis H_STARTUP :
   forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream)
-    (uid gid hw : word) (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs),
-  valid_sp sp -> valid_brk segs brk0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  valid_id uid -> valid_hwcap hw ->
+    (uid gid hw : word) (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs)
+    (kb : KernelBuild) (execfn : list byte) (sdef : bool),
+  valid_sp sp -> valid_brk segs brk0 -> valid_mmap_base mbase -> valid_argv argv -> valid_envp envp ->
+  entry_stack_fits sp argv envp -> valid_id uid -> valid_hwcap hw -> valid_nofile nofile ->
+  valid_sigmask (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
+  valid_launch (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
   forall T : TSet, T [] ->
-  (forall h c, HS_okA h sp rdraw brk0 argv envp uid hw (fs_seed_tmp fs tmp) c -> srealizes segs c T) ->
+  (forall h c, HS_okA h sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef
+     (fs_seed_tmp fs tmp) c -> srealizes segs c T) ->
   srealizes segs (init_config segs OSSVerify.reac_pw.fuzz_headamp.images.Asan.M.init_pc ph sp brk0 mbase rdraw YA02.LIMIT
-    (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)) T.
+    (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef)) T.
 
 (* THE PARTS THE DRIVER CONSUMES (donor cgif_file_fuzzer lib/A/AD1q.v:41-63, the Section of tfib_srealizesX). *)
-(* B: the image's symbol and trace table, donor cgif_file_fuzzer lib/A/AD2l.v:14 TfibB. Owner: lib/A/AD2l.v:44. *)
+(* B: the image's symbol and trace table, donor cgif_file_fuzzer lib/A/AD2l.v:14 TfibB. Owner: lib/A/AD2l.v:45. *)
 Variable B : asyms.
 (* H_ALLOC_MALLOC: donor cgif_file_fuzzer lib/A/AD1q.v:43 AMALLOC (closed by lib/A/AF0w.v tfib_amalloc_realizes, through
    lib/A/HeadampAllocClose.v). *)
@@ -112,28 +122,35 @@ Hypothesis H_RT_MEMCPY : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @aintrin_realizes fx rc segs B OCpy (pc_wrap_memcpy (as_code B)).
 (* donor cgif_file_fuzzer lib/A/AD1q.v:64-76 drv_mainX_stmt, at HS_TBL / TFIB_TBL, fuzz_headamp's ASan image and LS. *)
 Definition drv_mainA (rc : YM05.RunCeil) : Prop :=
-  forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
-    (FULL : word -> option byte) (model : Model),
+  forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
+    (FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
   valid_sp sp -> valid_brk segs brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
   @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
-  HS_TBL h = Some ch ->
-  cs_ok segs TFIB_TBL YA02.LIMIT (YA02.TOP sp)
-    (YA02.SINV0 ph sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (YA02.argH0 ph sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-  (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 ph sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-  (forall a, YA02.argH0 ph sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-    FULL a = wrap_mem ph sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+  HS_TBL (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+  (forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+  cs_ok segs TFIB_TBL YA02.LIMIT (YA02.TOP sp) SINV
+    (YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+      (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+      (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model ->
+  (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+      (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+      (in_execfn inp) (in_sigpipe_default inp)) n) ->
+  (forall a, YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+      (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+      (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+    FULL a = wrap_mem inp mbase ph (Z_to_bv 64 (Z.of_N OSSVerify.reac_pw.fuzz_headamp.images.Asan.M.init_pc)) sp rdraw a) ->
   srealizes segs (cfg_of segs R (pc ch) FULL model) (CLOSEDX (LS:=LS) inp).
 (* THE ASAN TRACE TABLES, Variables and Hypotheses of the types of Section asan_ubsan's (fuzz_knock's lib/A/ACej.v /
    ACejTfib.v names), in this order; lib/A/AD2o.v passes ACej.Tfib_universe, ACej.Tfib_universe_ok, eq_refl,
    ACejTfib.Tfib_drv_traces, ACejTfib.Tfib_universe_drv:
      Tfib_universe      : list (list Z)                                       knock A/ACej.v Tfib_universe
      Tfib_universe_ok   : universe_ok Tfib_universe                           knock A/ACej.v Tfib_universe_ok
-     H_TRACES_B         : as_universe B = Tfib_universe                       donor cgif_file_fuzzer lib/A/AD2l.v:37; here lib/A/AD2l.v:67 (eq_refl at TfibB)
+     H_TRACES_B         : as_universe B = Tfib_universe                       donor cgif_file_fuzzer lib/A/AD2l.v:38; here lib/A/AD2l.v:68 (eq_refl at TfibB)
      Tfib_drv_traces    : list (list Z)                                       knock A/ACejTfib.v Tfib_drv_traces
      Tfib_universe_drv  : forall t, In t Tfib_drv_traces -> In t Tfib_universe
                                                                               knock A/ACejTfib.v Tfib_universe_drv
-   With them, TfibSyms' fields ts_universe and ts_universe_drv (lib/A/AF0m.v:1299-1300; donor cgif_file_fuzzer lib/A/AF0m.v:313-314) hold of B. Owner: the
+   With them, TfibSyms' fields ts_universe and ts_universe_drv (lib/A/AF0m.v:1300-1301; donor cgif_file_fuzzer lib/A/AF0m.v:314-315) hold of B. Owner: the
    relocated frame (ACej, ACejTfib, AD2l.TfibB). *)
 Variable Tfib_universe : list (list Z).
 Hypothesis Tfib_universe_ok : universe_ok Tfib_universe.
@@ -147,8 +164,8 @@ Local Notation DRV_TRACES := Tfib_drv_traces.
    LIBX : the entry function's contract (fuzz_headamp: lib/A/HPgLib.headamp_lib_contract_x_all_tfib over
    headamp_lib_x_all, whose free / malloc premises the join feeds from the second and first arguments below; the four
    blocks add no premise), HB : TfibSyms B (the join passes
-   the whole record, AD2l.TfibB_syms), ARDCHK : aread_check_stmt B (AD1i.v:18), MT_FREE / RO_IN (AD1q.v:48-49;
-   in_ro_tfa ACeg.v:42), and the driver's stdio sites xst/XFR/PF1/PFN and est/ESTI/ESTF/FWS/RFS/FPO/FPR/FPU/EXS
+   the whole record, AD2l.TfibB_syms), ARDCHK : aread_check_stmt B (AD1i.v:19), MT_FREE / RO_IN (AD1q.v:48-49;
+   in_ro_tfa ACeg.v:43), and the driver's stdio sites xst/XFR/PF1/PFN and est/ESTI/ESTF/FWS/RFS/FPO/FPR/FPU/EXS
    (AD1w.v:119-151, AD1x.v:36-93). lib/A/AD2o.v discharges it. *)
 Hypothesis H_DRIVER : forall (rc : YM05.RunCeil),
   (forall fx : YK11.FPState, @amalloc_realizes fx rc segs B) ->
@@ -159,17 +176,20 @@ Hypothesis H_DRIVER : forall (rc : YM05.RunCeil),
   drv_mainA rc.
 
 (* lib/A/AB1n.v:77-90 HS_ok_open, the same proof (cs_ok's co_sinv field, Reusable/YA0e.v). *)
-Lemma HS_ok_openA : forall h sp rdraw brk0 argv envp uid hw fs c,
-  HS_okA h sp rdraw brk0 argv envp uid hw fs c ->
+Lemma HS_ok_openA : forall h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c,
+  HS_okA h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c ->
   exists ch E R FULL model,
-    HS_TBL h = Some ch /\ c = cfg_of segs R (pc ch) FULL model
+    HS_TBL (rseq_z (kb_rseq kb)) h = Some ch /\ c = cfg_of segs R (pc ch) FULL model
     /\ cs_ok segs TFIB_TBL YA02.LIMIT (YA02.TOP sp)
-         (YA02.SINV0 ph sp rdraw brk0 argv envp uid hw) (YA02.argH0 ph sp rdraw argv envp uid hw) fs E ch R FULL model
-    /\ (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 ph sp rdraw brk0 argv envp uid hw) n)
-    /\ (forall a, YA02.argH0 ph sp rdraw argv envp uid hw E a = true -> FULL a = wrap_mem ph sp argv envp uid hw rdraw a)
-    /\ eb E = eb (YA02.E0 ph sp rdraw brk0 argv envp uid hw).
+         (YA02.SINV0 ph sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef OSSVerify.reac_pw.fuzz_headamp.images.Asan.M.init_pc)
+         (YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) fsq E ch R FULL model
+    /\ (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk0 argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) n)
+    /\ (forall a, YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef E a = true ->
+         FULL a = wrap_mem (YA02.inp argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) mbase ph (Z_to_bv 64 (Z.of_N OSSVerify.reac_pw.fuzz_headamp.images.Asan.M.init_pc)) sp rdraw a)
+    /\ eb E = eb (YA02.E0 sp rdraw brk0 argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
 Proof.
-  intros h sp rdraw brk0 argv envp uid hw fs c (ch & E & R & FULL & model & Hh & Hc & HC).
+  intros h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c
+    (ch & E & R & FULL & model & Hh & Hc & HC).
   exists ch, E, R, FULL, model. split; [exact Hh|]. split; [exact Hc|]. split; [exact HC|].
   exact (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC).
 Qed.
@@ -186,34 +206,46 @@ Qed.
 Lemma headamp_srealizesX_rc : forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk segs brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes segs (init_config segs OSSVerify.reac_pw.fuzz_headamp.images.Asan.M.init_pc ph sp brk mb rdraw YA02.LIMIT inp)
     (SPECX (LS:=LS) inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
-  pose proof Hinp as (Hva & Hve & Hvfs & _ & [Huid Hgid] & Hnof & Hsig & Hhw & Hab & Hmmu & _).
-  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp]. cbn in *. subst ab mmu.
-  change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp)
-    with (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) in *.
-  apply (srz_conseq segs _ (CLOSEDX (LS:=LS) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)));
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
+  (* 727298f3: the input taken apart into its fields; [Run.valid_input] fixes the abort and terminal-SIGPIPE
+     declarations, the address size and the channel reader, and says the kernel record is its own
+     [recorded_kernel], so the input is [YA02.inp] at that record (as libreac/fuzz_boxreg's A/AD1q.v). *)
+  pose proof Hinp as (Hva & Hve & _ & _ & _ & [Huid _] & Hnof & Hsig & Hhw & Hab & Hmmu & _ & Hvl & Hcr & Hspt & Hkern).
+  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp kern execfn cr spd spt].
+  cbn [in_argv in_envp in_uid in_hwcap in_nofile in_abort_terminal in_va_size in_channel_reader in_sigpipe_terminal in_kernel]
+    in Hva, Hve, Hfit, Huid, Hhw, Hnof, Hab, Hmmu, Hcr, Hspt, Hkern.
+  subst ab mmu cr spt.
+  rewrite Hkern in Hinp, Hsig, Hvl, Hlau |- *.
+  change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp (recorded_kernel kern) execfn true spd false)
+    with (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd) in *.
+  apply (srz_conseq segs _ (CLOSEDX (LS:=LS) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)));
     [| apply t_eq_sym; apply (specx_closedx_eq (LS:=LS))].
-  apply (H_STARTUP sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hbrk Hva Hve Hfit Huid Hhw
-    (CLOSEDX (LS:=LS) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp))
-    (CLOSEDX_has_nil (LS:=LS) _)).
+  apply (H_STARTUP sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+    Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hnof Hsig Hvl Hlau
+    (CLOSEDX (LS:=LS) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)) (CLOSEDX_has_nil (LS:=LS) _)).
   intros h c Hok.
-  destruct (HS_ok_openA h sp rdraw brk argv envp uid hw (fs_seed_tmp fs tmp) c Hok) as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
-  exact (DRV_MAINA sp rdraw brk (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) h ch E R FULL model
-    Hsp Hbrk Hfit Hinp Hceil Hch HC HE HM).
+  destruct (HS_ok_openA h sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+    (fs_seed_tmp fs tmp) c Hok) as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
+  assert (SP0 : forall E' M, YA02.SINV0 ph sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp
+    kern execfn spd OSSVerify.reac_pw.fuzz_headamp.images.Asan.M.init_pc E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608).
+  { intros E' M HSv. eapply YA02.SINV0_sp0; try eassumption. Unshelve. all: first [assumption | exact segs]. }
+  exact (DRV_MAINA sp rdraw brk mb (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd) h ch E R FULL model _
+    Hsp Hbrk Hfit Hinp Hlau Hceil Hch SP0 HC HE HM).
 Qed.
 End RC.
 
 (* cgif_file_fuzzer lib/A/AD2o.v:75-84 tfib_srealizesX_top + TFIB_T_of_partsXF; here lib/A/AD2o.v:95 ASAN_T_closed applies this theorem; this kit's YM05.RunCeilOf takes the lim argument. *)
 Theorem ASAN_T_of_parts : HeadampAsanTop.ASAN_T.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   change target_alloc_limit with YA02.LIMIT.
   exact (@headamp_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowH sp Hsp) YA02.LIMIT) sp rnd brk mbase inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 
 (* The two ASan statements, given only the named parts above (the agreement also the plain slot, PLAIN_SLOT_AG). *)
@@ -235,26 +267,35 @@ Local Notation ph := OSSVerify.reac_pw.fuzz_headamp.images.AsanUbsan.M.phdrs.
 
 (* START-UP (asan-ubsan). HS_TBL_U: donor cgif_file_fuzzer lib/YB01.v:597 HS_tfib; TFIB_TBL_U: donor cgif_file_fuzzer lib/YB12.v:10 TFIB (headamp's
    lib/AU/YB12.v). Owner: image B. *)
-Variable HS_TBL_U : nat -> option acs.
+(* 727298f3: the hand-off states of the run's own CONFIG_RSEQ flag (AB01r.HS_tfib_r). *)
+Variable HS_TBL_U : Z -> nat -> option acs.
 Variable TFIB_TBL_U : atable.
 (* donor cgif_file_fuzzer lib/YB1n.v:44-50 HS_ok. *)
-Definition HS_okU (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word)
-    (fs : Fs.Fs) (c : config) : Prop :=
+Definition HS_okU (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word)
+    (argv envp : list (list byte)) (fs0 : Fs.Fs) (stdin : InputStream) (uid gid hw : word)
+    (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs)
+    (kb : KernelBuild) (execfn : list byte) (sdef : bool) (fsq : Fs.Fs) (c : config) : Prop :=
   exists ch E R FULL model,
-    HS_TBL_U h = Some ch
+    HS_TBL_U (rseq_z (kb_rseq kb)) h = Some ch
     /\ c = cfg_of segs R (pc ch) FULL model
     /\ cs_ok segs TFIB_TBL_U YA02.LIMIT (YA02.TOP sp)
-         (YA02.SINV0 ph sp rdraw brk0 argv envp uid hw) (YA02.argH0 ph sp rdraw argv envp uid hw) fs E ch R FULL model.
+         (YA02.SINV0 ph sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef OSSVerify.reac_pw.fuzz_headamp.images.AsanUbsan.M.init_pc)
+         (YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) fsq E ch R FULL model.
 (* H_STARTUP_U: donor cgif_file_fuzzer lib/YB1n.v:51-59 tfib_startup_T1. Owner: image B. *)
 Hypothesis H_STARTUP_U :
   forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream)
-    (uid gid hw : word) (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs),
-  valid_sp sp -> valid_brk segs brk0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  valid_id uid -> valid_hwcap hw ->
+    (uid gid hw : word) (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs)
+    (kb : KernelBuild) (execfn : list byte) (sdef : bool),
+  valid_sp sp -> valid_brk segs brk0 -> valid_mmap_base mbase -> valid_argv argv -> valid_envp envp ->
+  entry_stack_fits sp argv envp -> valid_id uid -> valid_hwcap hw -> valid_nofile nofile ->
+  valid_sigmask (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
+  valid_launch (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
   forall T : TSet, T [] ->
-  (forall h c, HS_okU h sp rdraw brk0 argv envp uid hw (fs_seed_tmp fs tmp) c -> srealizes segs c T) ->
+  (forall h c, HS_okU h sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef
+     (fs_seed_tmp fs tmp) c -> srealizes segs c T) ->
   srealizes segs (init_config segs OSSVerify.reac_pw.fuzz_headamp.images.AsanUbsan.M.init_pc ph sp brk0 mbase rdraw YA02.LIMIT
-    (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)) T.
+    (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef)) T.
 
 (* THE PARTS (donor cgif_file_fuzzer lib/YD1q.v Section d, the twin of AD1q.v:41-63). *)
 (* B_U: donor cgif_file_fuzzer lib/YD2l.v:11 TfibB. Owner: image B (lib/AU/YD2l.v). *)
@@ -267,27 +308,34 @@ Hypothesis H_RT_MEMCPY_U : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @aintrin_realizes fx rc segs B_U OCpy (pc_wrap_memcpy (as_code B_U)).
 (* donor cgif_file_fuzzer lib/YD1q.v drv_mainX_stmt (the twin of AD1q.v:64-76). *)
 Definition drv_mainU (rc : YM05.RunCeil) : Prop :=
-  forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
-    (FULL : word -> option byte) (model : Model),
+  forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
+    (FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
   valid_sp sp -> valid_brk segs brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
   @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
-  HS_TBL_U h = Some ch ->
-  cs_ok segs TFIB_TBL_U YA02.LIMIT (YA02.TOP sp)
-    (YA02.SINV0 ph sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (YA02.argH0 ph sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-  (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 ph sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-  (forall a, YA02.argH0 ph sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-    FULL a = wrap_mem ph sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+  HS_TBL_U (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+  (forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+  cs_ok segs TFIB_TBL_U YA02.LIMIT (YA02.TOP sp) SINV
+    (YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+      (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+      (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model ->
+  (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+      (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+      (in_execfn inp) (in_sigpipe_default inp)) n) ->
+  (forall a, YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+      (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+      (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+    FULL a = wrap_mem inp mbase ph (Z_to_bv 64 (Z.of_N OSSVerify.reac_pw.fuzz_headamp.images.AsanUbsan.M.init_pc)) sp rdraw a) ->
   srealizes segs (cfg_of segs R (pc ch) FULL model) (CLOSEDX (LS:=LS) inp).
 (* THE ASAN-UBSAN TRACE TABLES. fuzz_knock's KnockClose.v names them from lib/AU/YCej.v and lib/AU/YCejTfib.v; this
    Section takes them as Variables and Hypotheses of exactly the types of knock's names, in this order (image B's
    lib/AU/YD2o.v passes its own):
-     Tfib_universe_U      : list (list Z)                                     knock AU/YCej.v:30 Tfib_universe
-     Tfib_universe_ok_U   : universe_ok Tfib_universe_U                       knock AU/YCej.v:74 Tfib_universe_ok
+     Tfib_universe_U      : list (list Z)                                     knock AU/YCej.v:31 Tfib_universe
+     Tfib_universe_ok_U   : universe_ok Tfib_universe_U                       knock AU/YCej.v:75 Tfib_universe_ok
      H_TRACES_B_U         : as_universe B_U = Tfib_universe_U                 knock KnockClose.v:250 (eq_refl at YD2l)
-     Tfib_drv_traces_U    : list (list Z)                                     knock AU/YCejTfib.v:25 Tfib_drv_traces
+     Tfib_drv_traces_U    : list (list Z)                                     knock AU/YCejTfib.v:26 Tfib_drv_traces
      Tfib_universe_drv_U  : forall t, In t Tfib_drv_traces_U -> In t Tfib_universe_U
-                                                                              knock AU/YCejTfib.v:28 Tfib_universe_drv *)
+                                                                              knock AU/YCejTfib.v:29 Tfib_universe_drv *)
 Variable Tfib_universe_U : list (list Z).
 Hypothesis Tfib_universe_ok_U : universe_ok Tfib_universe_U.
 (* H_TRACES_B_U: donor cgif_file_fuzzer lib/YD2l.v as_universe := Tfib_universe. Owner: image B (YD2l); closes by reflexivity. *)
@@ -308,17 +356,20 @@ Hypothesis H_DRIVER_U : forall (rc : YM05.RunCeil),
   (forall t, In t DRV_TRACES_U -> In t (as_universe B_U)) ->
   drv_mainU rc.
 
-Lemma HS_ok_openU : forall h sp rdraw brk0 argv envp uid hw fs c,
-  HS_okU h sp rdraw brk0 argv envp uid hw fs c ->
+Lemma HS_ok_openU : forall h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c,
+  HS_okU h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c ->
   exists ch E R FULL model,
-    HS_TBL_U h = Some ch /\ c = cfg_of segs R (pc ch) FULL model
+    HS_TBL_U (rseq_z (kb_rseq kb)) h = Some ch /\ c = cfg_of segs R (pc ch) FULL model
     /\ cs_ok segs TFIB_TBL_U YA02.LIMIT (YA02.TOP sp)
-         (YA02.SINV0 ph sp rdraw brk0 argv envp uid hw) (YA02.argH0 ph sp rdraw argv envp uid hw) fs E ch R FULL model
-    /\ (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 ph sp rdraw brk0 argv envp uid hw) n)
-    /\ (forall a, YA02.argH0 ph sp rdraw argv envp uid hw E a = true -> FULL a = wrap_mem ph sp argv envp uid hw rdraw a)
-    /\ eb E = eb (YA02.E0 ph sp rdraw brk0 argv envp uid hw).
+         (YA02.SINV0 ph sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef OSSVerify.reac_pw.fuzz_headamp.images.AsanUbsan.M.init_pc)
+         (YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) fsq E ch R FULL model
+    /\ (forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk0 argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) n)
+    /\ (forall a, YA02.argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef E a = true ->
+         FULL a = wrap_mem (YA02.inp argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) mbase ph (Z_to_bv 64 (Z.of_N OSSVerify.reac_pw.fuzz_headamp.images.AsanUbsan.M.init_pc)) sp rdraw a)
+    /\ eb E = eb (YA02.E0 sp rdraw brk0 argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
 Proof.
-  intros h sp rdraw brk0 argv envp uid hw fs c (ch & E & R & FULL & model & Hh & Hc & HC).
+  intros h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c
+    (ch & E & R & FULL & model & Hh & Hc & HC).
   exists ch, E, R, FULL, model. split; [exact Hh|]. split; [exact Hc|]. split; [exact HC|].
   exact (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC).
 Qed.
@@ -334,33 +385,45 @@ Qed.
 Lemma headamp_srealizesXU_rc : forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk segs brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes segs (init_config segs OSSVerify.reac_pw.fuzz_headamp.images.AsanUbsan.M.init_pc ph sp brk mb rdraw YA02.LIMIT inp)
     (SPECX (LS:=LS) inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
-  pose proof Hinp as (Hva & Hve & Hvfs & _ & [Huid Hgid] & Hnof & Hsig & Hhw & Hab & Hmmu & _).
-  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp]. cbn in *. subst ab mmu.
-  change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp)
-    with (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) in *.
-  apply (srz_conseq segs _ (CLOSEDX (LS:=LS) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)));
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
+  (* 727298f3: the input taken apart into its fields; [Run.valid_input] fixes the abort and terminal-SIGPIPE
+     declarations, the address size and the channel reader, and says the kernel record is its own
+     [recorded_kernel], so the input is [YA02.inp] at that record (as libreac/fuzz_boxreg's A/AD1q.v). *)
+  pose proof Hinp as (Hva & Hve & _ & _ & _ & [Huid _] & Hnof & Hsig & Hhw & Hab & Hmmu & _ & Hvl & Hcr & Hspt & Hkern).
+  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp kern execfn cr spd spt].
+  cbn [in_argv in_envp in_uid in_hwcap in_nofile in_abort_terminal in_va_size in_channel_reader in_sigpipe_terminal in_kernel]
+    in Hva, Hve, Hfit, Huid, Hhw, Hnof, Hab, Hmmu, Hcr, Hspt, Hkern.
+  subst ab mmu cr spt.
+  rewrite Hkern in Hinp, Hsig, Hvl, Hlau |- *.
+  change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp (recorded_kernel kern) execfn true spd false)
+    with (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd) in *.
+  apply (srz_conseq segs _ (CLOSEDX (LS:=LS) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)));
     [| apply t_eq_sym; apply (specx_closedx_eq (LS:=LS))].
-  apply (H_STARTUP_U sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hbrk Hva Hve Hfit Huid Hhw
-    (CLOSEDX (LS:=LS) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp))
-    (CLOSEDX_has_nil (LS:=LS) _)).
+  apply (H_STARTUP_U sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+    Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hnof Hsig Hvl Hlau
+    (CLOSEDX (LS:=LS) (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)) (CLOSEDX_has_nil (LS:=LS) _)).
   intros h c Hok.
-  destruct (HS_ok_openU h sp rdraw brk argv envp uid hw (fs_seed_tmp fs tmp) c Hok) as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
-  exact (DRV_MAINU sp rdraw brk (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) h ch E R FULL model
-    Hsp Hbrk Hfit Hinp Hceil Hch HC HE HM).
+  destruct (HS_ok_openU h sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+    (fs_seed_tmp fs tmp) c Hok) as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
+  assert (SP0 : forall E' M, YA02.SINV0 ph sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp
+    kern execfn spd OSSVerify.reac_pw.fuzz_headamp.images.AsanUbsan.M.init_pc E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608).
+  { intros E' M HSv. eapply YA02.SINV0_sp0; try eassumption. Unshelve. all: first [assumption | exact segs]. }
+  exact (DRV_MAINU sp rdraw brk mb (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd) h ch E R FULL model _
+    Hsp Hbrk Hfit Hinp Hlau Hceil Hch SP0 HC HE HM).
 Qed.
 End RCU.
 
 Theorem ASAN_UBSAN_T_of_parts : HeadampAsanTop.ASAN_UBSAN_T.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   change target_alloc_limit with YA02.LIMIT.
   exact (@headamp_srealizesXU_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowH sp Hsp) YA02.LIMIT) sp rnd brk mbase inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 
 Theorem headamp_asan_ubsan_agrees_of_parts : PLAIN_SLOT_AG -> Statements.asan_ubsan_agrees.

@@ -4,8 +4,8 @@
    0xa8440), the engine's api_env and model_laws, the stack_malloc progress law (every B) and the frame flag law; and the
    two journal lemmas about the sink head and the footprint (image-generic).
    rule 24: proves function LLVMFuzzerTestOneInput (shared kit of the entry walk's segments; reuse search:
-   proof-index LLVMFuzzerTestOneInput, ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_link.v (a working branch 0d34d65d2b7), A's names, ACeg / ACej / AF0l replaced
+   proof-index LLVMFuzzerTestOneInput, ported from a working branch).
+   Ported from: lib/A/FSW_entry_link.v (a working branch), A's names, ACeg / ACej / AF0l replaced
    by image B's YCeg / YCej / YF0l (TFIB_IMG_END = IMG_TOP as in A). RELOC-B hypotheses: none (TfibLib B is a Section
    hypothesis of the B type, as in A). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

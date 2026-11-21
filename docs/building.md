@@ -179,7 +179,7 @@ each patch and the pinned versions, and shows this comparison. The release's
 
 As in OSS-Fuzz's sanitizer builds, every build also links code that no
 sanitizer instruments: ASan checks no load or store made inside it, and UBSan
-inserts no check there. It is of three kinds:
+inserts no check there. It is of four kinds:
 
 - **The toolchain's runtimes**, in every build: the C library (musl) and its
   start-up objects, compiler-rt, the sanitizer runtime itself, the C++ runtime
@@ -190,6 +190,20 @@ inserts no check there. It is of three kinds:
 - **Hand-written assembly and Fortran** in a library: a compiler cannot add
   sanitizer checks to either. Such a member would be listed by name with its
   source file; no build of this release has one.
+- **rustc's allocator shim**, in the AddressSanitizer builds (`asan`,
+  `asan-ubsan`) of a Rust fuzz target only. rustc generates this object, so it
+  is the project's own code and not the toolchain's. Its functions
+  (`__rust_alloc`, `__rust_dealloc`, `__rust_realloc`, `__rust_alloc_zeroed`
+  and the others) only forward to the global allocator (by default, the
+  standard library's) or to the allocation error handler, or are markers. They
+  do not read or write memory. In an ASan build, the port's
+  `tools/check --checks` requires that each object with code of the project
+  refers to `__asan_init` or to `__asan_version_mismatch_check_*`, as the
+  constructor that AddressSanitizer adds to an instrumented object does. It
+  exempts this object, because the object has no load or store to check. It
+  exempts at most one such object in a link. The `uninstrumented` list names
+  it with the kind `rust-allocator-shim`. The port's `docs/build-contract.md`
+  ("The checks of the binaries") tells the details.
 
 The `uninstrumented` list of each build in `harness.yaml`, shown in the
 harness's README, says which of these its link took. A build without the list
@@ -227,7 +241,9 @@ with status 2. A libFuzzer build would `abort()` in both cases; the hooks keep
 SIGABRT the signal of an AddressSanitizer report. A project can
 also turn on `-Cdebug-assertions` in all four builds; its harness page says
 so. The standard library is compiled with each build's flags, so
-AddressSanitizer instruments it like the rest of the Rust code.
+AddressSanitizer instruments it like the rest of the Rust code. The one
+exception is rustc's allocator shim: the ASan builds link it uninstrumented, as
+the section "Code the sanitizers do not instrument" says.
 
 The standard library compiled is not the stock one: it is the toolchain image's
 sealed copy (its `seal-std.sh`), with two edits that remove a dependence on

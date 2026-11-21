@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input): changed LIBX1, src0_realizesX_rc, src0_realizesX. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -53,28 +54,32 @@ Let MG1x := fun fx : YK11.FPState => @src0_API_malloc_g fx rc AMH1 MSH1 NTA1.
 Let NEWGIF1 := fun fx : YK11.FPState => @src0_newgif_x fx rc API1 IMG1 AX1 (MG1x fx) (RAWNEW1 fx).
 Let LIBX1 : @lib_contract_x_all rc ff_lib_shape src0_msyms API1 src0_sink_head YI5c.src0_sink YL0s.LIBPC YL0s.RA_LIB YL0s.EMPTY LIB_STACK
 := src0_lib_contract_x_all API1 IMG1 CLOSE1 ADDF1 RFC1 NEWGIF1.
+(* [entry_stack_fits] is REPLACED by [entry_launch_ok_va]: it is conjunct 5 of
+   [valid_entry_va] (75d69e00:theories/LinuxProcessSem/Run.v:3731-3738, and the Sv48
+   restatement [valid_entry_sv48] at :3746-3756), and it IMPLIES the other four.  So the
+   published quantifier already supplies it; this is not a new demand. *)
 Lemma src0_realizesX_rc : forall sp brk mbase rnd lim inp,
 valid_sp sp -> valid_brk src0segs brk -> valid_mmap_base mbase ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (SRC_LIM_MIN <= lim)%Z ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 realizes src0segs (init_config src0segs Plain.M.init_pc Plain.M.phdrs sp brk mbase rnd lim inp)
 (SPECX (LS:=ff_lib_shape) inp).
 Proof.
-intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim Hceil.
-exact (src0_realizes_specX API1 (MRx_AllocExtra src0_msyms) LIBX1 driver_obligationsX_proved ff_room_calls sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim Hceil).
+intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim Hceil.
+exact (src0_realizes_specX API1 (MRx_AllocExtra src0_msyms) LIBX1 driver_obligationsX_proved ff_room_calls sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim Hceil).
 Qed.
 End a.
 Lemma valid_sp_window' : forall sp, valid_sp sp -> (sp_window_lo <= bv_unsigned sp <= sp_window_hi)%Z.
 Proof. intros sp (H1 & H2 & _). split; assumption. Qed.
 Theorem src0_realizesX : forall sp brk mbase rnd lim inp,
 valid_sp sp -> valid_brk src0segs brk -> valid_mmap_base mbase ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (SRC_LIM_MIN <= lim)%Z ->
 realizes src0segs (init_config src0segs Plain.M.init_pc Plain.M.phdrs sp brk mbase rnd lim inp)
 (SPECX (LS:=ff_lib_shape) inp).
 Proof.
-intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim.
+intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim.
 exact (@src0_realizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_window' sp Hsp))
-sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim (YM05.ceil_of_top_run _)).
+sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim (YM05.ceil_of_top_run _)).
 Qed.

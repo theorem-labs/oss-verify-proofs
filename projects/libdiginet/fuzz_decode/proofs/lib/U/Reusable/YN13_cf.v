@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN13.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN13_cf.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN13_cf.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO-aware reserved-pair capacity, native brk guards, kernel identity ledger transports and new-brk mmap-base callers); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -195,7 +196,7 @@ destruct (LOWc x Hx) as [Hlo|Hc]; [lia|]. apply NI. apply (so_ctx_img _ SO). cha
 - intros p x H. discriminate.
 - intros c Hc. destruct (CELLS c Hc) as [[Hc1 HW]|Hm]; [left | right; exact Hm]. split; [exact Hc1|].
 intros k Hk. destruct (In_ctx_cells A1 c Hc1) as (off & El & _). change (ms_ctx B) with CTX. unfold ctx_off in HW. rewrite El in HW |- *. exact (HW k Hk). }
-pose proof (YN2i.ledger_same B L1 A1 md1 (mid_ledger _ _ _ _ _ MID1) (mid_ledgerx _ _ _ _ _ MID1) A2 md1 ER EB eq_refl eq_refl eq_refl) as [LG2 LX2].
+pose proof (YN2i.ledger_same B L1 A1 md1 (mid_ledger _ _ _ _ _ MID1) (mid_ledgerx _ _ _ _ _ MID1) A2 md1 ER EB eq_refl eq_refl eq_refl eq_refl) as [LG2 LX2].
 split.
 - exact SO.
 - exact MR'.

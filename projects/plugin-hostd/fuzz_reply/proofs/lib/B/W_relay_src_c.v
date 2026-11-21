@@ -4,15 +4,15 @@
    and relay_reads (0x864e8, 37 instructions), which image B calls where image A inlines them: LLVMFuzzerTestOneInput's
    drain arm calls relay_source (0x848c0), its remove and gone arms call relay_reads (0x84830, 0x84b0c), and relay_reads
    calls relay_source (0x86520).  Hand-written (no lib/A twin exists for mkbkit to generate), in the form of W6's
-   lib/B/W_wake_c.v (a working branch 1b9965084f9).  The texts of rs_spec and rd_spec are W8Entry-2's
-   interface, lib/B/W_LLVMFuzzerTestOneInput_cut.v `Hypothesis RSRC` (a working branch a987841a18c :683,
-   the same text at 7d4f6d8955b) and `Hypothesis RRDS` (61da015af91 :707), each with the entry pc as an argument;
+   lib/B/W_wake_c.v (a working branch).  The texts of rs_spec and rd_spec are W8Entry-2's
+   interface, lib/B/W_LLVMFuzzerTestOneInput_cut.v `Hypothesis RSRC` (a working branch :683,
+   the same text) and `Hypothesis RRDS` (707), each with the entry pc as an argument;
    rs_spec_rsrc and rd_spec_rrds below check that rs_spec at fr_B0 + AF_fr_relay_source and rd_spec at
    fr_B0 + AF_fr_relay_reads ARE those texts.  The walks are GENERIC (route (b), step 3, a Theorem Labs lane's
    CONVERSION.md (sha256 1015972e02a9; internal record)): pb_relay_source_x and pb_relay_reads_x prove rs_spec_x / rd_spec_x, the same contracts
    over any allocator relation ARx with its laws (the ghost list Hp after S, the generic journal's placement PST), at
    BASE + AF_fr_relay_source / BASE + AF_fr_relay_reads over lib/B/W_listing.v.  At fr_B0 + AF they are cut_x's RSRC_x /
-   RRDS_x (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v :348 / :360, a working branch e43cf0c7bef).
+   RRDS_x (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v :348 / :360, a working branch).
    pb_relay_source and pb_relay_reads keep their statements and Section hypotheses: they are the generic walks at
    ARx := W_journal_x.ARi0 (AR with the head set empty), PST := [] (Section cAR).  pb_relay_source_fr and
    pb_relay_reads_fr are them at B's pin (PB_fr, fr_globals_b), with the instance's laws and its two shadow cells as the
@@ -40,6 +40,7 @@
    outside the function's own frame kept (view and writability, errno's view with them), the presence of every present
    byte, and the result in a0.  Frames: relay_source has 16 bytes (RS_STK; its one call, __asan_report_load4, is on a
    refuted path); relay_reads has 16 bytes with relay_source's 16 below them (RD_STK). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -113,8 +114,8 @@ getr regs 10 = w64 fd -> 0 <= fd < 2 ^ 32 ->
 arelay_at B RG ly S W mem T es -> rom_view SEGS W mem ->
 SRr SEGS W (cfg_at SEGS pc regs mem md) (rs_post regs ly S W mem md T fd es).
 
-(* relay_reads (s): W8Entry-2's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:707, a working branch
-   61da015af91) with the entry pc as an argument.  s = HA is an open struct source whose four bytes s->fd lie in a
+(* relay_reads (s): W8Entry-2's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:708, a working branch)
+   with the entry pc as an argument.  s = HA is an open struct source whose four bytes s->fd lie in a
    zero-shadow range (azs: relay_reads reads them behind the shadow check at 0x8650c-0x86518).  The result is 1 when
    the first entry with s->fd has eof 0, and 0 when its eof is 1 or no entry has s->fd. *)
 Definition rd_spec (pc : Z) : Prop :=
@@ -136,7 +137,7 @@ End c.
    allocator relation ARx with its ghost list Hp (after S) and the generic journal's placement PST.  The posts are
    W_contract_x.aleafx_post_x (W_contract.v's aleafx_post over the generic journal; a read-only leaf allocates and
    frees nothing, so the callee's Hp is its ghost list at both ends).  These are cut_x's RSRC_x / RRDS_x
-   (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v :348 / :360, a working branch e43cf0c7bef) with the entry pc as an
+   (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v :348 / :360, a working branch) with the entry pc as an
    argument; every other conjunct is rs_spec's / rd_spec's text. *)
 Section cx.
 Variable B : asyms.
@@ -186,13 +187,13 @@ Lemma rs_rel_ents : forall B RG ly S W mem T es, arelay_at B RG ly S W mem T es 
 Proof. intros B RG ly S W mem T es H. unfold arelay_at in H. tauto. Qed.
 
 (* ================================================================== the walk: pb_relay_source
-   Structure donor (not cited): a working branch fc302b5d067 lib/B/Prog/relay_source.v, the same function's proof
+   Structure donor (not cited): a working branch lib/B/Prog/relay_source.v, the same function's proof
    in the old a_call frame.  Its decomposition (the entry, the g_nsrc = 0 exit at 0x85d38, the loop from 0x85d68 to
    0x85dc0 with a1 = the result, then mv a0,a1 and the epilogue) and its loop invariant (a1 = a2 = the entry,
    a3 = the entries left, a4 = g_src, a5 = the shadow base, a6 = a7 = 1) are this walk's.  The symbolic-run form is
-   lib/B/W_check_bounded.v's (a working branch 7e062bb9b9c: the same table walk), the entry-fd lemmas are the
-   A drain arm's (lib/A/W_LLVMFuzzerTestOneInput_drain.v dr_tbl_fd / concat_entry_nth, a working branch
-   6faf871ce4d), and the trap refutations cite lib/B/W_traps.v (a working branch 6c73ae99620). *)
+   lib/B/W_check_bounded.v's (a working branch: the same table walk), the entry-fd lemmas are the
+   A drain arm's (lib/A/W_LLVMFuzzerTestOneInput_drain.v dr_tbl_fd / concat_entry_nth, a working branch),
+   and the trap refutations cite lib/B/W_traps.v (a working branch). *)
 Definition A_relay_source : Z := AF_fr_relay_source.
 Definition A_relay_sourceP : Z := BASE + A_relay_source.
 Definition A_rs_loop : Z := AF_fr_relay_source + 0x40.   (* 0x85d68: the loop head *)
@@ -380,7 +381,7 @@ Qed.
 
 (* ---- THE GENERIC WALKS (route (b), step 3; a Theorem Labs lane's CONVERSION.md (sha256 1015972e02a9; internal record)): relay_source and relay_reads
    over any allocator relation ARx with its laws, stated as rs_spec_x / rd_spec_x, in the form of W1Verify's
-   lib/A/W_check_bounded.v (a working branch) and lib/A/W_relay_event.v pb_relay_event_x (88557c15170).  The
+   lib/A/W_check_bounded.v (a working branch) and lib/A/W_relay_event.v pb_relay_event_x.  The
    Section hypotheses beyond the AR walks': PST / ARx / hl / LAWS (the generic relation), HP0 (the unit's hidden-head
    set is empty in every ARx state, a Theorem Labs lane's ruling 15:26Z, so YCbqG.ARx_shadow_law's premise holds at every state:
    W_journal_x's range_addressable_of_block_hp0_x) and, for relay_reads, HSYM (after HVcap below). ---- *)
@@ -1350,10 +1351,10 @@ destruct HF4 as [(j & e & Hj & Hfd & Hfirst & Hr4) | (Hnone & Hz4)].
 Qed.
 End w.
 
-(* ---- THE LAWS AT ARi0 FROM AR_laws ALONE (Section cAR's laws).  YCbqG.v:1653 AR_laws_x_of_AR takes three facts beyond
+(* ---- THE LAWS AT ARi0 FROM AR_laws ALONE (Section cAR's laws).  YCbqG.v:1654 AR_laws_x_of_AR takes three facts beyond
    AR_laws; all three are theorems of cgif's AR, and lib/B carries no W_laws_x, so they are proved here as
-   lib/A/W_laws_x.v (17dd7592e52) proves them for image A: rs_AR_stk8 (layout_ok's lo_top, AR's am_layout), rs_AR_tail
-   (lib/A/W_alloc_tail.v alloc_tail, 53a00ba6fe3a: the chunk's extent is a multiple of 8, so a block's granule tail lies
+   lib/A/W_laws_x.v proves them for image A: rs_AR_stk8 (layout_ok's lo_top, AR's am_layout), rs_AR_tail
+   (lib/A/W_alloc_tail.v alloc_tail: the chunk's extent is a multiple of 8, so a block's granule tail lies
    in chunk_junk's last range, which am_junk makes visible) and rs_AR_const (AR's am_const). ---- *)
 Section laws.
 Variable segs : list Segment.
@@ -1474,7 +1475,7 @@ End cAR.
 End b.
 End a.
 
-(* rs_spec at B's pin IS W8Entry-2's RSRC (lib/B/W_LLVMFuzzerTestOneInput_cut.v:683, a987841a18c): the right-hand
+(* rs_spec at B's pin IS W8Entry-2's RSRC (lib/B/W_LLVMFuzzerTestOneInput_cut.v:684): the right-hand
    side is RSRC's text, with the cut's `segs` = pa_segs PB_fr, `fr_RG` = fr_globals_b and `RSRC_STK` = 16 written out *)
 Section fr. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
@@ -1520,7 +1521,7 @@ Proof.
   rewrite EB.
   exact (pb_relay_source (PI := PB_fr) B fr_globals_b LAWS Hg' Hc' rs_nsrc_fr rs_src_fr rs_objs_apart_fr).
 Qed.
-(* rd_spec at B's pin IS W8Entry-2's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:707, 61da015af91): the right-hand side
+(* rd_spec at B's pin IS W8Entry-2's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:708): the right-hand side
    is RRDS's text, with the cut's `segs` = pa_segs PB_fr, `fr_RG` = fr_globals_b and `RRDS_STK` = 16 + RSRC_STK = 16 + 16
    written out *)
 Lemma rd_spec_rrds : forall B : asyms,
@@ -1555,8 +1556,8 @@ Proof.
   exact (pb_relay_reads (PI := PB_fr) B fr_globals_b LAWS Hg' Hc' rs_nsrc_fr rs_src_fr rs_objs_apart_fr rd_capsrc_fr).
 Qed.
 (* the generic walks at B's pin: what cut_x's RSRC_x / RRDS_x ask for (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v :348 /
-   :360, e43cf0c7bef) at any ARx with its laws and HP0 (and HSYM for relay_reads), from the instance's two shadow cells.
-   The composition's ARX := ARcf /\ Hp = [] (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:154, 1bf97df81de) gives the laws
+   :360) at any ARx with its laws and HP0 (and HSYM for relay_reads), from the instance's two shadow cells.
+   The composition's ARX := ARcf /\ Hp = [] (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:155) gives the laws
    (ARX_laws), HP0 (its second projection) and HSYM (ARmcf's amc_syms, Reusable/YG0ncf.v:216). *)
 Theorem pb_relay_source_x_fr : forall (B : asyms) (PST : list (Z * Z))
   (ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop) (hl : Z),

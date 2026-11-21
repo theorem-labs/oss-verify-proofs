@@ -3,15 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (fs.asan-ubsan) composition of grow's walk (FSW_grow.v's stage lemmas)
    through its two fuzz_realloc calls: grow_holds : grow_spec (lib/B/FSH_Fn_reader.v:575). rule 24 line, reuse search and
    port source: FSW_grow.v's header (lane brief (internal path), CONFIRM a Theorem Labs lane;
-   ported from a working branch 75e39a1f41d:proofs/omx-clap-core/fuzz_state/lib/B/Prog/grow.v).
+   ported from a working branch:proofs/omx-clap-core/fuzz_state/lib/B/Prog/grow.v).
    The callee contract is ALLOC's fuzz_realloc_spec (lib/B/FSH_Fn_alloc.v, CTX-free, the text of S0
-   a working branch f32db4da382), the named Section hypothesis fuzz_realloc_holds; the image fact is
+   a working branch), the named Section hypothesis fuzz_realloc_holds; the image fact is
    FsShadowSyms B (the shadow-base cells; FSW_grow.v's stages). The theorem's shape mirrors image A's
    (grow_holds : forall {fx rc SK} B, FsShadowSyms B -> fuzz_realloc_spec tfibsegs B -> grow_spec tfibsegs B), with
    tfibsegs B's image (lib/B/YB1v.v, AsanUbsan's loaded segments); grow_spec's Section hypothesis IMG (fs_img_facts) is not
    needed by this walk, so it is not a premise.
    PORTED lemma by lemma (copied, never Required, never bridged), from the image-A walk of the same C, final at
-   a working branch 728177ca53c lib/A/Prog/FSW_grow_holds.v (a Theorem Labs lane; its lines 1-501 equal 582c4d69613's):
+   a working branch lib/A/Prog/FSW_grow_holds.v (a Theorem Labs lane; its lines 1-501 equal):
      fs_pstat_img, grow_frame_chunks (frame 96, s9), gB_rs_ok / gB_disj (shadow cell of v + 24 at atom 25 = s9),
      gC_rs_ok / gC_disj (frame 96), grow_bb, grow_rsum_app, grow_rsum_perm, grow_garr8_ex, grow_mbyte_eq, grow_val_eq,
      grow_writable_grows, fs_pstat_not_ro (B's static addresses 0xa41c0 / 0x5daac0 .. 0x5dab08), grow_perm_swap,
@@ -19,14 +19,15 @@
      grow_arodata_img, grow_rblock_eq, grow_pobj_run, grow_realloc_step, grow_inFP_blk, grow_val_eqm, grow_moved,
      grow_word_eq, grow_req, ghide, grow_cap_arm (B: frame 96, resumes 0x83d68 / 0x83db8, s9 = the shadow of v + 24,
      the kept registers 3 4 18 26 27) and grow_holds;
-   and, for B's own code, from a working branch 75e39a1f41d lib/B/Prog/grow.v: the realloc arms' shape
+   and, for B's own code, from a working branch lib/B/Prog/grow.v: the realloc arms' shape
    (gr_oom_seg / gr_keys_oom_seg are dead here: grow_spec's quiet makes every fuzz_realloc grant, and the resumed a0's
    fact decides the OOM beqz 0x83d6c / 0x83db8 not taken) and the size arithmetic gr_cap2 / gr_sz. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_grow_holds.v, with its module paths and module names changed; 1108 of its 1188 lines of code are new or changed and 1234 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) copy of lib/A/Prog/FSW_pj_set_fn.v (a working branch
-   866e579f961, taken there from a working branch a091229a685 with its mem_grows premise weakened), same lemma
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) copy of lib/A/Prog/FSW_pj_set_fn.v (a working branch,
+   taken there from a working branch with its mem_grows premise weakened), same lemma
    names and bodies; imports point at lib/B's image files and kit. Its image values are read by name from lib/B
    (FS_IMG_END, FS_PSTAT_FP, FS_RO_STRS, FS_SN_FMTS); fn_ro_range / fn_fmt_range are recomputed on image B's tables. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_set's DATA side (fs.asan-ubsan pj_set 0x83adc, a Theorem Labs lane): from the byte facts pj_set's machine stages export
    after each of its calls (lib/B/Prog/FSW_pj_set_holds.v pj_set_get_call / pj_set_grow_call / pj_set_sd_call
    continuations, FSW_pj_set.v pj_set_stageD's continuation, the memcpy and memset steps), the data clauses of

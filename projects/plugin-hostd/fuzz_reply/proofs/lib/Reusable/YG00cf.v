@@ -1,19 +1,20 @@
-(* CARRIED from commit ae2fa80b0325f09472155bcfce1c36e649d6ff60,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG00cf.v, sha256 0263ab873eb1f9a9c4af87a4cbb98331d5c208c22406fc0f2541c7febf0fe032 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
    (lib.Spec -> fuzz_reply.lib.Spec). *)
-(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG00cf.v@6e9ff2e6573c487199f2990b43c5e19cce86e581, do not edit (single writer: h-mani-a8; send change requests to h-mani-a8 as diffs). *)
+(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG00cf.v, do not edit (single writer: h-mani-a8; send change requests to h-mani-a8 as diffs). *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: free_cf takes Quarantine::Put's size test (a chunk above the
    quarantine's max_size is recycled at once, not enqueued). Evidence: frame/dnmax/BIG-ARM.md section 4. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the MODEL.
    cgif's map_more_user (YG00.v:279-295) closes the class-full case with a VACUOUS mcheck at :285, so a full
    class is "impossible". On preset a class DOES fill on accepted input (class 17 maps 3,584 MiB = kFreeArrayOffset,
    measured). This file replaces that one check by the arm the binary runs, in cgif's vocabulary, ported from
    msgpack-c's released refusal (proofs/msgpack-c/unpack_pack_fuzzer/lib/Spec/AsanCtrl.v:284, exh_report :363-371,
-   release ref b6a0088adc): report, flag the class, return NULL; no IFail.
+   release ref): report, flag the class, return NULL; no IFail.
    cgif's YG00.v is NOT edited; class 24 keeps cgif's vacuous arm, by calling cgif's own functions.
    No address: the image pcs come from the class CfImg (YGcfNames.v). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the mmap step's place_declined_b premise, proved for its NULL hint by computation (place_declined_b_null). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -122,6 +123,8 @@ Context {Clg : Ceiling}.
     eapply (srz_mmap_rw_nf_ex rsegs ms1 md1 (wz 222) (wz 34) T1 HH1 eq_refl eq_refl).   (* [comment removed for export] *)
     - unfold mmap_rw_args. subst ms1. rewrite !ms_gpr_MSsvc. simp_regs. split; [| OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; try reflexivity; exact mmap_modeled_b_plain].
       intros E. apply (f_equal bv_unsigned) in E. rewrite !unsigned_lit in E by lia. lia.
+    - (* LPS 727298f3: the hint is NULL here ([A0E]), so the decline is false by computation *)
+      rewrite A0E. apply OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec.place_declined_b_null.
     - cbv zeta. rewrite PRU, A0E. exact (sec_grant_exists A m md md1 n AI SB1 HI1 NR30).
     - (* [comment removed for export] *)
       intros mbw GOK. cbv zeta in GOK. rewrite PRU, A0E in GOK. subst ms1.

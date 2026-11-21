@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d): the CALL
    SITES of the write_value walk: the two tail calls (put at slot 268, put_string at slot 207) and the inner calls of
    the item loop (put, indent, put_string, the recursive write_value), ONE lemma per callee, so a new premise of a
@@ -8,8 +9,8 @@
    PUT / PUTSTR / INDENT, at the Section's float state fx. Each call takes the callee's window prh_cons_from and its
    per-event live room prh_live_evs (supplied by the caller from its own, WriteValueB_Model.prhW_cons_mid /
    prhW_live_mid), and each callee post carries prh_granted.
-   PORTED (not cited) from the kit owner's image-A walk PRW_write_value.v (a working branch
-   7819c4b4583, Section cl, :1662-2441) with these changes: B's frame 192 (oc = - (d + 192)); the #102 ledger cells
+   PORTED (not cited) from the kit owner's image-A walk PRW_write_value.v (a working branch,
+   Section cl, :1662-2441) with these changes: B's frame 192 (oc = - (d + 192)); the #102 ledger cells
    most / own threaded; tput_specX's NULL arm keyed on f' = 1; the engine's YCbqGcallW.aj_call_xW / aj_call_xWF and
    fp_sub_x (the core's, which superseded PRW_CallerJ's aj_call_xW / fp_sub_x); and the FLOAT FORM of the #102
    texts: put_string and write_value post fpostWFm, so the tail put_string concludes write_value's fpostWFm and the
@@ -670,7 +671,7 @@ Qed.
 
 Lemma wv_call_put : forall rp_sm rp_x rp_os rp_i rp_H0 rp_hist STKc sp0 FP ly S Hp W0 mem0 md0 own
     lyc Sc Hpc W memc mdc k regsc raw ra1 nfp1 o s n buf (st : WriterApp.wst) (bs : list Z) Lam peak ran gmo gow oc,
-  (* FRM0-ENTRY: the rounding mode at the call (the kit's fpre, f97c8b2f046b) *)
+  (* FRM0-ENTRY: the rounding mode at the call (the kit's fpre) *)
   frm_zero (@YK11.fp_csr fx) ->
   ajournal_xR (SK := SK) SEGS B (@prh_pst prh_img_B) ARx (wle' SEGS RZ_cf) STKc sp0 FP ly S Hp W0 mem0 md0 own
     lyc Sc Hpc W memc mdc k ->
@@ -754,7 +755,7 @@ Qed.
 
 Lemma wv_call_indent : forall rp_sm rp_x rp_os rp_i rp_H0 rp_hist STKc sp0 FP ly S Hp W0 mem0 md0 own
     lyc Sc Hpc W memc mdc k regsc raw ra1 nfp1 o pretty depth buf (st : WriterApp.wst) Lam peak ran gmo gow oc,
-  (* FRM0-ENTRY: the rounding mode at the call (the kit's fpre, f97c8b2f046b) *)
+  (* FRM0-ENTRY: the rounding mode at the call (the kit's fpre) *)
   frm_zero (@YK11.fp_csr fx) ->
   ajournal_xR (SK := SK) SEGS B (@prh_pst prh_img_B) ARx (wle' SEGS RZ_cf) STKc sp0 FP ly S Hp W0 mem0 md0 own
     lyc Sc Hpc W memc mdc k ->
@@ -829,7 +830,7 @@ Qed.
 (* the loop's put_string call (an object's key, A 0x86a20) *)
 Lemma wv_call_put_string : forall rp_sm rp_x rp_os rp_i rp_H0 rp_hist STKc sp0 FP ly S Hp W0 mem0 md0 own
     lyc Sc Hpc W memc mdc k regsc raw ra1 nfp1 o s buf (st : WriterApp.wst) (bs : list Z) Lam peak ran gmo gow oc,
-  (* FRM0-ENTRY: the rounding mode at the call (the kit's fpre, f97c8b2f046b) *)
+  (* FRM0-ENTRY: the rounding mode at the call (the kit's fpre) *)
   frm_zero (@YK11.fp_csr fx) ->
   ajournal_xR (SK := SK) SEGS B (@prh_pst prh_img_B) ARx (wle' SEGS RZ_cf) STKc sp0 FP ly S Hp W0 mem0 md0 own
     lyc Sc Hpc W memc mdc k ->
@@ -906,7 +907,7 @@ Lemma wv_call_self : forall (n' : nat) rp_sm rp_x rp_os rp_i rp_H0 rp_hist STKc 
     lyc Sc Hpc W memc mdc k regsc raw ra1 nfp1 o v2 pretty dep buf (st : WriterApp.wst) (t2 : PjTree.jv) D2
     Lam peak ran gmo gow oc,
   twrite_value_specX (PI := prh_img_B) (PA := PA) B ARx SK CTX0 n' ->
-  (* FRM0-ENTRY: the rounding mode at the call (the kit's fpre, f97c8b2f046b) *)
+  (* FRM0-ENTRY: the rounding mode at the call (the kit's fpre) *)
   frm_zero (@YK11.fp_csr fx) ->
   ajournal_xR (SK := SK) SEGS B (@prh_pst prh_img_B) ARx (wle' SEGS RZ_cf) STKc sp0 FP ly S Hp W0 mem0 md0 own
     lyc Sc Hpc W memc mdc k ->

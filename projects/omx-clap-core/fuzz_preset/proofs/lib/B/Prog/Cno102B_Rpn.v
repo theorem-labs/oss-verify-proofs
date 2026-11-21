@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1138 of its 1209 lines of code are new or changed and 707 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Crt102TailB.v, with its module paths and module names changed; 1122 of its 1216 lines of code are new or changed and 1115 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved
    rule 24: proves no function (kind: segment lemma)
    fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30): the three parse_noting CALL STEPS of the
@@ -9,8 +10,8 @@
    lane CnoB102rR (a Theorem Labs lane, plan, the internal file PLAN-cno-caw-102.md 5.2): cnb_pn1_step (CNB_PN1 632, 0x81c68 -> CNB_READ2),
    cnb_pn2_step (CNB_PN2 676, 0x81c94 -> CNB_READ3), cnb_pn3_step (CNB_PN3 720, 0x81cc0 -> 724 `mv s7, a0` -> CNB_CMP),
    each an instance of the one generic step cnb_pn_call (the `jal parse_noting` at a cut, then the call).
-   RE-FIT TO THE KIT CUT a working branch 7cdbb61b5fa0 (this row's base 
-   75415fdb6e76) from the f97c texts (sub-lane CnoBPn's proof, the port of image A''s lib/A/Prog/Cno102A_Rpn.v).
+   RE-FIT TO THE KIT CUT a working branch (this row's base)
+   from the f97c texts (sub-lane CnoBPn's proof, the port of image A''s lib/A/Prog/Cno102A_Rpn.v).
    INPUTS: the contract lib/B/Prog/Cno102B_Base.v (cnb_pre CTX0 D with the wild_room conjunct; cnb_J D wk, the budgeted
    journal at the spent wild budget; cnb_base .. k wk; cnb_at_pn1 / pn2 / pn3 at wk 0 / 2 / 4 -> cnb_ex_read2 / read3 /
    cmp at wk 2 / 4 / 6; cnb_fo, the trees' free order against pj_frees), in its forms for the move below: cnb_JR /
@@ -553,10 +554,10 @@ destruct (Nat.lt_ge_cases i (length (map PjReqBound.ev_req (filter PjGrammar.is_
 - apply (nth_In _ 0) in Hl. apply in_map_iff in Hl as (e & <- & He).
   (* prh_ev_reqs's filter is stdpp's (a decidable predicate): its membership through elem_of *)
   assert (He' : In e (snd (PjGrammar.jr_run sm x ok))).
-  { first [ apply list_elem_of_In in He | apply elem_of_list_In in He ].
+  { first [ apply list_elem_of_In in He | apply list_elem_of_In in He ].
     apply list_basics.list.list_elem_of_filter in He.
     destruct He as (_ & He).
-    first [ apply list_elem_of_In; exact He | apply elem_of_list_In; exact He ]. }
+    first [ apply list_elem_of_In; exact He | apply list_elem_of_In; exact He ]. }
   exact (cnbp_req_le sm x ok e He').
 - rewrite nth_overflow by exact Hg. apply cnbp_maxreq_nonneg.
 Qed.

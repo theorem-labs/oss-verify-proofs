@@ -8,15 +8,16 @@
    (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACai.v:156-159. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v, with its module paths and module names changed; 1279 of its 1357 lines of code are new or changed and 927 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch
-   60d0985773d, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_K.v; 996 of its 1134 lines of code are new or changed and 1219 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_scan.v (a working branch
-   50b05668b91 line), the same lemma names over B's own code (B listing: capstone over the unstripped twin of
+   line), the same lemma names over B's own code (B listing: capstone over the unstripped twin of
    fs.asan-ubsan, sha256 b1566a1c..., bytes 0x8164c .. 0x81b5c equal to the pinned image's).
    rule 24: proves no function (kind: segment lemma; check_as_written, B 0x8164c, CONFIRM by a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_as_written (fs.asan-ubsan 0x8164c): the SCAN LOOP of the inlined expected_body (fs.c:78-90), machine code
    0x8170c .. 0x81800 (head 0x8170c), walked with the token engine (FSW_K fsw_aj_run_to_tokU) from the loop state of
    FSW_caw_defs (caw_ss1). One lemma, caw_scan_loop, in continuation-passing form: from the head state at text index j

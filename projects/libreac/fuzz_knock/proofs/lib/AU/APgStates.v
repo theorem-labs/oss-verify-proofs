@@ -5,9 +5,10 @@
    walk of LLVMFuzzerTestOneInput (fuzz_knock.asan-ubsan, sha256
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82; 350 words at 0x7eed0, size 0x578), made from
    lib/A/APgLoop0.v sections 3-5 (ss_L / ss_T / ss_M / ss_C and the memory
-   shape they share), the way proofs/cgif/cgif_file_fuzzer/lib/YCf7.v is made from A/ACf7.v at c8557374ad2e: the walk
+   shape they share), the way proofs/cgif/cgif_file_fuzzer/lib/YCf7.v is made from A/ACf7.v: the walk
    framework imports move to the lib/AU twins, every pc is the asan-ubsan one, and the registers and spills follow the
    asan-ubsan code. rule 24: no function proved. Definitions and structural lemmas only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* The instruction-by-instruction comparison of the two images and the segment cut these states come from is
    (internal path). ss_H (0x7f004) and ss_X (0x7f2c4) are a Theorem Labs lane's,
@@ -36,7 +37,7 @@
      `addiw a0,a0,1280; sd a0,40(s1)` 0x7f144 / 0x7f148  [32(s1) = 500000000, 40(s1) = 499999999]. The two step checks
      read them with the swapped compare: `bltu a0,a1` 0x7f250 (a1 = 40(s1)) and `bltu a1,a0` 0x7f26c (a1 = 32(s1)).
    - the four constant cells of the lib record are the asan-ubsan image's: 615960 = 0x96618, 648568 = 0x9e578,
-     616048 = 0x96670, 648576 = 0x9e580 (lib/AU/YCeh.v:21-24)  [615888, 648504, 615976, 648512].
+     616048 = 0x96670, 648576 = 0x9e580 (lib/AU/YCeh.v:22-25)  [615888, 648504, 615976, 648512].
    Everything else is the asan state's: s1 = sp = sp1 (slot 70), s0 = sp0 (slot 2), s4 = F + 32, s6 = SB + F/8
    (slot 88), s9 = rem, s3 = cur, s2 = h, s5 = now, s7 = ev; spills 16 / 24 / 80(s1) = F, 48(s1) = quiet, 56(s1) = SB;
    the frame's 16 shadow bytes f1 x4, 0 x5, f3 x7; k at F + 32; the 13 saves; the atoms and the alias of ss_H.
@@ -62,7 +63,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ===================== the env slots of the loop [lib/A/APgLoop0.v:331-345] ===================== *)
+(* ===================== the env slots of the loop [lib/A/APgLoop0.v:332-346] ===================== *)
 Definition N_rem := 300%nat.   Definition N_cur := 301%nat.   Definition N_cnt := 302%nat.
 Definition N_d := 303%nat.     Definition N_h := 304%nat.     Definition N_now := 305%nat.
 Definition N_quiet := 306%nat. Definition N_op := 307%nat.
@@ -79,7 +80,7 @@ Definition RT_TN : nat := 700%nat.
 Definition RT_MN : nat := 720%nat.
 Definition RT_CN : nat := 740%nat.
 
-(* the registers the loop does not keep live [lib/A/APgLoop0.v:347-362]: the same in both images (s8 / s10 / s11 are
+(* the registers the loop does not keep live [lib/A/APgLoop0.v:348-363]: the same in both images (s8 / s10 / s11 are
    live in both; s7 carries ev from 0x7f170 to 0x7f220, so it is dead only at ss_L and ss_C; ss_T keeps a1 / a2 for
    `or a1,a2,a1` at 0x7f1ec) *)
 Definition rt_loop_deads : list nat :=
@@ -95,7 +96,7 @@ Definition rt_loop_deads7 : list nat :=
 Definition rt_loop_deads7_bv : list (bv 5) :=
 [1; 5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 23; 28; 29; 30; 31]%bv.
 
-(* ===================== the memory shape every loop state carries [lib/A/APgLoop0.v:364-426] ===================== *)
+(* ===================== the memory shape every loop state carries [lib/A/APgLoop0.v:365-427] ===================== *)
 (* the 16 shadow bytes of the 128-byte frame: f1 x 4, 0 x 5 (k, unpoisoned by S2 at 0x7f0e4-0x7f0f0 and 0x7f100),
    f3 x 7 *)
 Definition rl_shadow : YP09.region :=
@@ -132,7 +133,7 @@ YP09.mkChunk 80 (CVal 8 (SOff 75 0))].
 (* the thirteen callee-saved words the prologue wrote at sp0-104 .. sp0-8 (lib/AU/APgMain7.v rt_X_saves) *)
 Definition rl_saves : YP09.region :=
 YP09.mkRegion (Some 2%nat) (-104) 0 (-104) 0 rt_X_saves.
-(* the four constant cells of the lib record, at the asan-ubsan addresses [lib/AU/YCeh.v:21-24] *)
+(* the four constant cells of the lib record, at the asan-ubsan addresses [lib/AU/YCeh.v:22-25] *)
 Definition rl_consts : smem :=
 [YP09.mkRegion None 615960 615968 0 0 [YP09.mkChunk 615960 (CVal 8 (SLit 648568))];
 YP09.mkRegion None 648568 648576 0 0 [YP09.mkChunk 648568 (CVal 8 (SOff 32 0))];
@@ -161,7 +162,7 @@ Definition rl_atomsR (nrem ncur ncnt nd nh nnow nq : nat) : list (nat * afact) :
 (nd, mkAF 0 1 0); (nh, mkAF 0 1 0);
 (nnow, mkAF 0 9223406396593514176 0); (nq, mkAF 0 9223406396593514176 0)].
 
-(* ===================== the four states [lib/A/APgLoop0.v:428-482] ===================== *)
+(* ===================== the four states [lib/A/APgLoop0.v:429-483] ===================== *)
 (* ss_L, pc 0x7f154: the loop head, after `beqz s9,0x7f2c4` at 0x7f150 *)
 Definition ss_L_0 : sstate :=
 mkSS 0x7f154
@@ -238,7 +239,7 @@ ss_mem ss_M = rl_mem N_stM N_p1 N_op N_due N_hnsM N_g N_p2 N_quietM /\
 ss_mem ss_C = rl_mem N_stC N_p1 N_op N_dueC N_hnsM N_gC N_p2 N_quietM.
 Proof. vm_compute. repeat split; reflexivity. Qed.
 (* the joins into ss_X: S6's exits 0x7f29c (j, after `bnez s10` falls through) and 0x7f150 (`beqz s9`), and S2's
-   exit 0x7f150, are taken from ss_C / ss_L-shaped memory; submem_to closes both, as lib/A/APgLoop0.v:568-570 says of
+   exit 0x7f150, are taken from ss_C / ss_L-shaped memory; submem_to closes both, as lib/A/APgLoop0.v:569-571 says of
    the asan states *)
 Lemma ss_X_sub_C : submem (ss_mem ss_X) (ss_mem ss_C).
 Proof. unfold ss_X, ss_C. cbn [ss_mem]. submem_to. Qed.

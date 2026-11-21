@@ -47,7 +47,7 @@ Definition MARKS_BYTES : Z := 516.
 Lemma LLVM_K_fits : LLVM_K <= SLOT_STACK.
 Proof. unfold LLVM_K, SLOT_STACK. lia. Qed.
 
-(* = lib/FrameAPI.v frame_G (the frame lane's list, 3affacb2053) *)
+(* = lib/FrameAPI.v frame_G (the frame lane's list) *)
 Definition llvm_G : list (Z * Z) := frame_G.
 
 Section K.

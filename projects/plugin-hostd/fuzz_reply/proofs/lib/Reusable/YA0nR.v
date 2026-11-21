@@ -1,4 +1,4 @@
-(* ADAPTED from commit 38f09a09fc91, proofs/cgif/cgif_file_fuzzer/lib/YA0nR.v, for this unit's world record, which has
+(* ADAPTED from proofs/cgif/cgif_file_fuzzer/lib/YA0nR.v, for this unit's world record, which has
    the field w_H8 (YA0n.v). Changes: the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib ->
    OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable, and wrehide passes mkW the w_H8 proof
    H_rehide_H8 (stated in this file, as in the source). Everything else is the source's text. *)

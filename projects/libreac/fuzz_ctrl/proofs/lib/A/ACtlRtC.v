@@ -7,7 +7,7 @@
    ctl_rt_C B ly3 S3 mem3 replaces ACtlCut.ctl_rt mem3 (ACtlCut.v:224) at ctl_from's own binders; the regions are
    (F) the shadow of every frame in frames S, (L) the 8-aligned shadow-word cover of every live block in ablocks B ly S,
    (Z) the shadow of every zero_shadow_ranges B ly entry, and (I) img_shadow, the image hull's shadow. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YG00 Reusable.YG01 Reusable.YG0f.

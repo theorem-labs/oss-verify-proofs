@@ -1,6 +1,6 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_d.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
-(* R-1 row R-d (a Theorem Labs lane's analyses/rtprintf/design/R1-FREE-PIECES.md (a working branch 952598da9f3b)): the conversion %d (Pd) in ASan printf_common's scan, as W0-pcom's per-piece
-   pcom arm (RT_pf_sh.v pcom_pcx_arm, a working branch 6c733891261). The consumers take it as
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_d.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
+(* R-1 row R-d (a Theorem Labs lane's analyses/rtprintf/design/R1-FREE-PIECES.md (a working branch)): the conversion %d (Pd) in ASan printf_common's scan, as W0-pcom's per-piece
+   pcom arm (RT_pf_sh.v pcom_pcx_arm, a working branch). The consumers take it as
    `forall p, PK p -> pcom_pcx_arm p`: RT_pf_sh.v pcx_K / pcomx_K, RT_pf_shU.v pcom_shzK, FMsnprintfFmI.v fm_snprintf_gxaP.
    %d is printf_common's grammar step pcx_dir (100 :: rest) = Some (false, PP_none, PK_int, rest) (I_pcxgram.v): no flag,
    width, precision or length modifier, an int conversion, so the walk consumes one argument word, pa_of (AInt v) = PA_i v,
@@ -8,9 +8,9 @@
    The seam arms of Pd are a Theorem Labs lane's lib/A/FMpfArmPdSeam.v (seam_text_arm_pd / seam_pargs_arm_pd / seam_bytes_arm_pd,
    with the seam-side control seam_pd_control); the printf_common-side control is lib/A/FMpfArmPdCtl.v.
    New file; nothing else is edited. *)
-(* Modified by Theorem Labs, 2026-10: the proof is RT_pf_sh.v pcom_pcx_arm_ps (6c733891261 :141-147) with the step at
-   %d in place of %s, the %d step as in a working branch a28a0fadbcc3
-   proofs/omx-clap-core/fuzz_preset/lib/A/PSnpPcGram.v (its %c case) and a working branch 21bcb7200f7
+(* Modified by Theorem Labs, 2026-10: the proof is RT_pf_sh.v pcom_pcx_arm_ps (141-147) with the step at
+   %d in place of %s, the %d step as in a working branch
+   proofs/omx-clap-core/fuzz_preset/lib/A/PSnpPcGram.v (its %c case) and a working branch
    proofs/libreac/fuzz_disco/lib/A/Prog/pf_bridge.v pcx_cargs_ok (its Pd case). *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.

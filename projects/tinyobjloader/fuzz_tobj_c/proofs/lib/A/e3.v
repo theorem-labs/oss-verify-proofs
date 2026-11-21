@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the argument layout of the new entry-stack layout: the random bytes above an auxv of at least 432 bytes, argv[0] above them, the strings ending at the exec file name's address, launch variable 13, so its lemmas take agreement below 14; written as plain text; musl malloc(40) per CONFIG_RSEQ, its states computed from the per-flag interface state once for each value of the flag, its run, entailment and fact lemmas for each value of the flag, written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -135,79 +136,82 @@ Definition CUTS_M : list Z := ltac2:(tb__ "0|0|
 S29S65Zd596cS29S65Zd5990S29S65Zd5954S29S65Zd8d60S29S65Zd8db8S29S65Zd4228S29S65Zde844S2aS65A1A3A3A3A3A3A3A3").
 Definition FUEL_M : nat := 3000%nat.
 
-Definition run_I__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S77S2bA5").
-Local Strategy expand [run_I__R].
-Definition E18 : axst := Eval vm_compute in ((fun ro1__ : option (list leafA) => ((leaf1 Pre_M (ro1__)))) run_I__R).
-Lemma run_I : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S77S2bA5S2dG0S29S1fS22S49S6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_I__R <: run_I__R = Some [mkLeafA E18 RsCut]). Qed.
+(* LPS 727298f3: per CONFIG_RSEQ [r] (the launch's auxv is 432 or 464 bytes, and mallocng's first call
+   walks its keys to AT_NULL): each state is computed from the interface state [Pre_M r] by the recorded
+   run or rule, once for each value of the flag, and [X r] is the flag's state; written as plain text. *)
+Definition E18_0 : axst := Eval vm_compute in leaf1 (Pre_M false) (sym_runA segsA FUEL_M CUTS_M (Pre_M false) true).
+Definition E18_1 : axst := Eval vm_compute in leaf1 (Pre_M true) (sym_runA segsA FUEL_M CUTS_M (Pre_M true) true).
+Definition E18 (r : bool) : axst := if r then E18_1 else E18_0.
+Lemma run_I : forall r : bool, sym_runA segsA FUEL_M CUTS_M (Pre_M r) true = Some [mkLeafA (E18 r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
 Definition live_cell (minoff : Z) (c : cell) : bool := ltac2:(tb__ "0|3|
 S0S2fLx;S1bVc;A1S65S74Vminoff;R1A2Lz;S66S2bLi;S6cS0S0S2bLb;La;M0Lop;M1G1S6dG0Lop;M2G2S2fS67S0S2bLa;Lw;Lsgn;S66S0S65S2bLk;Li;Ll;X0x8").
 Definition trim (A : axst) (minoff : Z) : axst := ltac2:(tb__ "0|2|
 S21VA;A1S12S28S2U0M0S9R1A1S76A4S2ScS14R1A1S17R1A1S16R1A1S7fS6S2eS6A1S81S6A1S6S7eS63Vminoff;R1A2M1A1Lc;S6S80G1A1Lx;SeR1A1A6S15R1A1A5S2S23VA;SdS4R3A1S5R3A1S10R3A1SfR3A1S11R3A1S71S2S9R3A1G0R1A4S7aS7R3A1S19R3A1A9A2Tstk';Tstk;TS;").
-Definition E18t : axst := Eval vm_compute in (trim E18 (-256)).
-Lemma ent_18 : ltac2:(tb__ "0|0|
-S1dS2fS25S49S43S2aS30S66S0A2A1A3S2bA3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Definition N18 : positive := Eval vm_compute in (ss_next (ax_S E18t)).
-Lemma E18_at : ltac2:(tb__ "0|4|
-S1eS1dS65S4S21S43A1M0A1M1Zd596cA3S1eS1dS2cS69A1S6fS34G1A2S2dS69S6bA2A3S1eS1dS0S28S0U11S5G0A1M2S1Z0A1M3A4S1Zd6A1A3S1dS0S28S0UaG2G3A4G3A3A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition E18t_0 : axst := Eval vm_compute in (trim (E18 false) (-256)).
+Definition E18t_1 : axst := Eval vm_compute in (trim (E18 true) (-256)).
+Definition E18t (r : bool) : axst := if r then E18t_1 else E18t_0.
+Lemma ent_18 : forall r : bool, entailsA (E18 r) (E18t r) [] = true.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Definition N18 : positive := Eval vm_compute in (ss_next (ax_S (E18t false))).
+Lemma N18_eq : forall r : bool, ss_next (ax_S (E18t r)) = N18.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma E18_at : forall r : bool,
+  ss_pc (ax_S (E18t r)) = 874860 /\ instr_at segsA (ss_pc (ax_S (E18t r))) = Some Ecall /\
+  nth 17%nat (ss_regs (ax_S (E18t r))) (SLit 0) = SLit 214 /\ nth 10%nat (ss_regs (ax_S (E18t r))) (SLit 0) = SLit 0.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
 Definition vBRK : sv := SVar N18.
 Definition F18 : list sprop := ltac2:(tb__ "0|0|
 S29S3SbS37ZcA2S29S3SaS1Z646000A1S38A2S29S3SaS38S1Z80646000A1A2S2aS3A1A3A3A3").
-Definition S18 : axst := ltac2:(tb__ "0|0|
-S39S43S38S2aS2A1S5bS68S37A1A5").
+Definition S18 (r : bool) : axst := cont (E18t r) vBRK [] F18 (Pos.succ N18).
 
-Definition run_18__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S52S2bA5").
-Local Strategy expand [run_18__R].
-Definition E19 : axst := Eval vm_compute in ((fun ro2__ : option (list leafA) => ((leaf1 S18 (ro2__)))) run_18__R).
-Lemma run_18 : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S52S2bA5S2dG0S29S1fS22S40S6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_18__R <: run_18__R = Some [mkLeafA E19 RsCut]). Qed.
-Lemma E19_at : ltac2:(tb__ "0|4|
-S1eS1dS65S4S21S40A1M0A1M1Zd5990A3S1eS1dS2cS69A1S6fS34G1A2S2dS69S6bA2A3S1eS1dS0S28S0U11S5G0A1M2S1Z0A1M3A4S1Zd6A1A3S1eS1dS0S28S0UaG2G3A4S8S6aS38S1Z2000A1A3A3S1dS66S7G0A1S68S37A1A3A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition E19_0 : axst := Eval vm_compute in leaf1 (S18 false) (sym_runA segsA FUEL_M CUTS_M (S18 false) true).
+Definition E19_1 : axst := Eval vm_compute in leaf1 (S18 true) (sym_runA segsA FUEL_M CUTS_M (S18 true) true).
+Definition E19 (r : bool) : axst := if r then E19_1 else E19_0.
+Lemma run_18 : forall r : bool, sym_runA segsA FUEL_M CUTS_M (S18 r) true = Some [mkLeafA (E19 r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma E19_at : forall r : bool,
+  ss_pc (ax_S (E19 r)) = 874896 /\ instr_at segsA (ss_pc (ax_S (E19 r))) = Some Ecall /\
+  nth 17%nat (ss_regs (ax_S (E19 r))) (SLit 0) = SLit 214 /\
+  nth 10%nat (ss_regs (ax_S (E19 r))) (SLit 0) = SAlu ALU_ADD vBRK (SLit 8192) /\
+  ss_next (ax_S (E19 r)) = Pos.succ N18.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Definition S19g : axst := ltac2:(tb__ "0|0|
-S39S40S8S6aS38S1Z2000A1A3S2aS2A1S2aS3A1S68S37A1A5").
+Definition S19g (r : bool) : axst := cont (E19 r) (SAlu ALU_ADD vBRK (SLit 8192)) [] [] (Pos.succ N18).
 
-Definition S19f : axst := ltac2:(tb__ "0|0|
-S39S40S38S2aS2A1S2aS3A1S68S37A1A5").
+Definition S19f (r : bool) : axst := cont (E19 r) vBRK [] [] (Pos.succ N18).
 
-Definition run_19g__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S54S2bA5").
-Local Strategy expand [run_19g__R].
-Definition E20g : axst := Eval vm_compute in ((fun ro3__ : option (list leafA) => ((leaf1 S19g (ro3__)))) run_19g__R).
-Lemma run_19g : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S54S2bA5S2dG0S29S1fS22S41S6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_19g__R <: run_19g__R = Some [mkLeafA E20g RsCut]). Qed.
-Lemma E20g_at : ltac2:(tb__ "0|4|
-S1eS1dS65S4S21S41A1M0A1M1Zd8d60A3S1eS1dS2cS69A1S6fS34G1A2S2dS69S6bA2A3S1eS1dS0S28S0U11S5G0A1M2S1Z0A1M3A4S1ZdeA1A3S1eS1dS0S28S0UaG2G3A4S38A3S1eS1dS0S28S0UbG2G3A4S1Z1000A1A3S1eS1dS0S28S0UcG2G3A4G3A3S1eS1dS0S28S0UdG2G3A4S1Z32A1A3S1eS1dS0S28S0UeG2G3A4S1S72S73Z2Z40A2Z1A2A1A3S1eS1dS0S28S0UfG2G3A4G3A3S1dS66S7G0A1S68S37A1A3A2A2A2A2A2A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition E20g_0 : axst := Eval vm_compute in leaf1 (S19g false) (sym_runA segsA FUEL_M CUTS_M (S19g false) true).
+Definition E20g_1 : axst := Eval vm_compute in leaf1 (S19g true) (sym_runA segsA FUEL_M CUTS_M (S19g true) true).
+Definition E20g (r : bool) : axst := if r then E20g_1 else E20g_0.
+Lemma run_19g : forall r : bool, sym_runA segsA FUEL_M CUTS_M (S19g r) true = Some [mkLeafA (E20g r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma E20g_at : forall r : bool,
+  ss_pc (ax_S (E20g r)) = 888160 /\ instr_at segsA (ss_pc (ax_S (E20g r))) = Some Ecall /\
+  nth 17%nat (ss_regs (ax_S (E20g r))) (SLit 0) = SLit 222 /\
+  nth 10%nat (ss_regs (ax_S (E20g r))) (SLit 0) = vBRK /\
+  nth 11%nat (ss_regs (ax_S (E20g r))) (SLit 0) = SLit 4096 /\
+  nth 12%nat (ss_regs (ax_S (E20g r))) (SLit 0) = SLit 0 /\
+  nth 13%nat (ss_regs (ax_S (E20g r))) (SLit 0) = SLit 50 /\
+  nth 14%nat (ss_regs (ax_S (E20g r))) (SLit 0) = SLit (2 ^ 64 - 1) /\
+  nth 15%nat (ss_regs (ax_S (E20g r))) (SLit 0) = SLit 0 /\
+  ss_next (ax_S (E20g r)) = Pos.succ N18.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Definition S20g_ok : axst := ltac2:(tb__ "0|0|
-S39S41S38S2aS2A1S2aS3A1S68S37A1A5").
-Definition S20g_ko : axst := ltac2:(tb__ "0|0|
-S39S41S1S7dA1S2aS2A1S2aS3A1S68S37A1A5").
-Definition run_20g_ok__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S29S65Zd59b4S35A3S57S2bA5").
-Local Strategy expand [run_20g_ok__R].
-Definition L24ok : axst := Eval vm_compute in ((fun ro4__ : option (list leafA) => ((leaf1 S20g_ok (ro4__)))) run_20g_ok__R).
-Definition run_20g_ko__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S29S65Zd59b4S35A3S56S2bA5").
-Local Strategy expand [run_20g_ko__R].
-Definition L24ko : axst := Eval vm_compute in ((fun ro5__ : option (list leafA) => ((leaf1 S20g_ko (ro5__)))) run_20g_ko__R).
-Lemma run_20g_ok : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S29S65Zd59b4S35A3S57S2bA5S2dG0S29S1fS22S4bS6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_20g_ok__R <: run_20g_ok__R = Some [mkLeafA L24ok RsCut]). Qed.
-Lemma run_20g_ko : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S29S65Zd59b4S35A3S56S2bA5S2dG0S29S1fS22S4aS6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_20g_ko__R <: run_20g_ko__R = Some [mkLeafA L24ko RsCut]). Qed.
+Definition S20g_ok (r : bool) : axst := cont (E20g r) vBRK [] [] (Pos.succ N18).
+Definition S20g_ko (r : bool) : axst := cont (E20g r) (SLit enomem_ret) [] [] (Pos.succ N18).
+Definition L24ok_0 : axst := Eval vm_compute in leaf1 (S20g_ok false) (sym_runA segsA FUEL_M (874932 :: CUTS_M) (S20g_ok false) true).
+Definition L24ok_1 : axst := Eval vm_compute in leaf1 (S20g_ok true) (sym_runA segsA FUEL_M (874932 :: CUTS_M) (S20g_ok true) true).
+Definition L24ok (r : bool) : axst := if r then L24ok_1 else L24ok_0.
+Definition L24ko_0 : axst := Eval vm_compute in leaf1 (S20g_ko false) (sym_runA segsA FUEL_M (874932 :: CUTS_M) (S20g_ko false) true).
+Definition L24ko_1 : axst := Eval vm_compute in leaf1 (S20g_ko true) (sym_runA segsA FUEL_M (874932 :: CUTS_M) (S20g_ko true) true).
+Definition L24ko (r : bool) : axst := if r then L24ko_1 else L24ko_0.
+Lemma run_20g_ok : forall r : bool, sym_runA segsA FUEL_M (874932 :: CUTS_M) (S20g_ok r) true = Some [mkLeafA (L24ok r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma run_20g_ko : forall r : bool, sym_runA segsA FUEL_M (874932 :: CUTS_M) (S20g_ko r) true = Some [mkLeafA (L24ko r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
 Definition common_cells (a b : list cell) : list cell := ltac2:(tb__ "0|1|
 S7fS6S2eS6A1S81S6A1S6S7eS84S6S26R1A1Vb;A3M0A1Lc;S6S80G0A1Lx;Va;A6").
@@ -215,137 +219,148 @@ Definition set_obj_cells (o : sobj) (cs : list cell) : sobj := ltac2:(tb__ "0|0|
 ScS14Vo;A1S17Vo;A1S16Vo;A1Vcs;S15Vo;A1A5").
 Definition join24 (A B : axst) : axst := ltac2:(tb__ "0|3|
 S21VA;A1S12S21VB;A1S12S64S28S2U0M0S9R2A1S76A4M1S61SeG1A1SeS28S2G0S9R1A1S76A4A1A2A2S2S71S2S71S2S9R3A1G0R1A4U6S79A4S2eS2A1S23VA;SdS4R4A1S71S0S5R4A1UaS1aS7R4A1M2A1A4S10R4A1SfR4A1S11R4A1R1S18R4A1S68G2A1S33A9A2Tobjs;Tstk;TSB;TSA;").
-Definition U24 : axst := Eval vm_compute in (join24 L24ok L24ko).
-Lemma ent_24ok : ltac2:(tb__ "0|1|
-S1dS2fS25S4bS3fS29S30S66S0A2M0S32S66S0S68S37A1S38A4S2aG0A1A3A3S2bA3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma ent_24ko : ltac2:(tb__ "0|1|
-S1dS2fS25S4aS3fS29S30S66S0A2M0S32S66S0S68S37A1S1S72S73Z2Z40A2Z1A2A1A4S2aG0A1A3A3S2bA3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Definition U24_0 : axst := Eval vm_compute in (join24 (L24ok false) (L24ko false)).
+Definition U24_1 : axst := Eval vm_compute in (join24 (L24ok true) (L24ko true)).
+Definition U24 (r : bool) : axst := if r then U24_1 else U24_0.
+Lemma ent_24ok : forall r : bool, entailsA (L24ok r) (U24 r) [(Pos.succ N18, vBRK)] = true.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma ent_24ko : forall r : bool, entailsA (L24ko r) (U24 r) [(Pos.succ N18, SLit (2 ^ 64 - 1))] = true.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
 Definition O_brk_hi : sobj := ltac2:(tb__ "0|1|
 ScS8S6aS38S1Z1000A1M0A3S1Z0A1G0S2aS6A1S13A5").
-Definition U24c : axst := ltac2:(tb__ "0|1|
-S23S3fSdS4S21S3fA1M0A1S5G0A1S10G0A1SfG0A1S11G0A1S31S2S9G0A1S29S2S60S2aS2A1A3A3S18G0A1S7G0A1S19G0A1A9A2").
-Lemma U24c_wf : ltac2:(tb__ "0|0|
-S1eS1dS2fS1cS21S46A1A1S2bA3S1dS66S7S21S3fA1A1S68S68S37A1A1A3A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition U24c (r : bool) : axst :=
+  ax_setS (U24 r) (mkSS (ss_pc (ax_S (U24 r))) (ss_regs (ax_S (U24 r))) (ss_fregs (ax_S (U24 r))) (ss_fcsr (ax_S (U24 r)))
+    (ss_resv (ax_S (U24 r))) (ss_objs (ax_S (U24 r)) ++ [O_brk_hi]) (ss_facts (ax_S (U24 r))) (ss_next (ax_S (U24 r)))
+    (ss_lenient (ax_S (U24 r)))).
+Lemma U24c_wf : forall r : bool, swf (ax_S (U24c r)) = true /\ ss_next (ax_S (U24 r)) = Pos.succ (Pos.succ N18).
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Definition run_24__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S46S2bA5").
-Local Strategy expand [run_24__R].
-Definition E22g : axst := Eval vm_compute in ((fun ro6__ : option (list leafA) => ((leaf1 U24c (ro6__)))) run_24__R).
-Lemma run_24 : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S46S2bA5S2dG0S29S1fS22S3eS6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_24__R <: run_24__R = Some [mkLeafA E22g RsCut]). Qed.
-Definition N22g : positive := Eval vm_compute in (ss_next (ax_S E22g)).
-Lemma E22g_at : ltac2:(tb__ "0|4|
-S1eS1dS65S4S21S3eA1M0A1M1Zd8d60A3S1eS1dS2cS69A1S6fS34G1A2S2dS69S6bA2A3S1eS1dS0S28S0U11S5G0A1M2S1Z0A1M3A4S1ZdeA1A3S1eS1dS0S28S0UaG2G3A4G3A3S1eS1dS0S28S0UbG2G3A4S1Z1000A1A3S1eS1dS0S28S0UcG2G3A4S1Z3A1A3S1eS1dS0S28S0UdG2G3A4S1Z22A1A3S1eS1dS0S28S0UeG2G3A4S1S72S73Z2Z40A2Z1A2A1A3S1dS0S28S0UfG2G3A4G3A3A2A2A2A2A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
-Definition run_22g_fail__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S3aS3eA1S2bA5").
-Local Strategy expand [run_22g_fail__R].
-Definition RET0g : axst := Eval vm_compute in ((fun ro7__ : option (list leafA) => ((leaf1 (refuse E22g) (ro7__)))) run_22g_fail__R).
-Lemma run_22g_fail : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S3aS3eA1S2bA5S2dG0S29S1fS22S4fS70A2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_22g_fail__R <: run_22g_fail__R = Some [mkLeafA RET0g RsSymJump]). Qed.
+Definition E22g_0 : axst := Eval vm_compute in leaf1 (U24c false) (sym_runA segsA FUEL_M CUTS_M (U24c false) true).
+Definition E22g_1 : axst := Eval vm_compute in leaf1 (U24c true) (sym_runA segsA FUEL_M CUTS_M (U24c true) true).
+Definition E22g (r : bool) : axst := if r then E22g_1 else E22g_0.
+Lemma run_24 : forall r : bool, sym_runA segsA FUEL_M CUTS_M (U24c r) true = Some [mkLeafA (E22g r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Definition N22g : positive := Eval vm_compute in (ss_next (ax_S (E22g false))).
+Lemma N22g_eq : forall r : bool, ss_next (ax_S (E22g r)) = N22g.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma E22g_at : forall r : bool,
+  ss_pc (ax_S (E22g r)) = 888160 /\ instr_at segsA (ss_pc (ax_S (E22g r))) = Some Ecall /\
+  nth 17%nat (ss_regs (ax_S (E22g r))) (SLit 0) = SLit 222 /\
+  nth 10%nat (ss_regs (ax_S (E22g r))) (SLit 0) = SLit 0 /\
+  nth 11%nat (ss_regs (ax_S (E22g r))) (SLit 0) = SLit 4096 /\
+  nth 12%nat (ss_regs (ax_S (E22g r))) (SLit 0) = SLit 3 /\
+  nth 13%nat (ss_regs (ax_S (E22g r))) (SLit 0) = SLit 34 /\
+  nth 14%nat (ss_regs (ax_S (E22g r))) (SLit 0) = SLit (2 ^ 64 - 1) /\
+  nth 15%nat (ss_regs (ax_S (E22g r))) (SLit 0) = SLit 0.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition RET0g_0 : axst := Eval vm_compute in leaf1 (refuse (E22g false)) (sym_runA segsA FUEL_M CUTS_M (refuse (E22g false)) true).
+Definition RET0g_1 : axst := Eval vm_compute in leaf1 (refuse (E22g true)) (sym_runA segsA FUEL_M CUTS_M (refuse (E22g true)) true).
+Definition RET0g (r : bool) : axst := if r then RET0g_1 else RET0g_0.
+Lemma run_22g_fail : forall r : bool, sym_runA segsA FUEL_M CUTS_M (refuse (E22g r)) true = Some [mkLeafA (RET0g r) RsSymJump].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 Definition vGRPg : sv := SVar N22g.
 Definition F22g : list sprop := ltac2:(tb__ "0|0|
 S29S3SbS45ZcA2S29S3SaS48S1S72Z7fffff800000Z1000A2A1A2S2aS3A1A3A3").
-Definition S22g : axst := ltac2:(tb__ "0|0|
-S39S3eS48S29S2S7bS45Z1000A2S2aS2A1A3S5eS68S45A1A5").
-Definition run_22g__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S5aS2bA5").
-Local Strategy expand [run_22g__R].
-Definition RETPg : axst := Eval vm_compute in ((fun ro8__ : option (list leafA) => ((leaf1 S22g (ro8__)))) run_22g__R).
-Lemma run_22g : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S5aS2bA5S2dG0S29S1fS22S51S70A2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_22g__R <: run_22g__R = Some [mkLeafA RETPg RsSymJump]). Qed.
-Lemma RETg_at : ltac2:(tb__ "0|4|
-S1eS1dS65S4S21S4fA1M0A1S75A3S1eS1dS0S28S0UaM1S5G0A1S1Z0A1M2A4G2A3S1eS1dS65S4S21S51A1M3A1S78A3S1dS0S28S0G1S5G3A1G2A4S8S6aS48S1Z40A1A3A3A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition S22g (r : bool) : axst := cont (E22g r) vGRPg [mmap_obj N22g 4096] F22g (Pos.succ N22g).
+Definition RETPg_0 : axst := Eval vm_compute in leaf1 (S22g false) (sym_runA segsA FUEL_M CUTS_M (S22g false) true).
+Definition RETPg_1 : axst := Eval vm_compute in leaf1 (S22g true) (sym_runA segsA FUEL_M CUTS_M (S22g true) true).
+Definition RETPg (r : bool) : axst := if r then RETPg_1 else RETPg_0.
+Lemma run_22g : forall r : bool, sym_runA segsA FUEL_M CUTS_M (S22g r) true = Some [mkLeafA (RETPg r) RsSymJump].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma RETg_at : forall r : bool,
+  ss_pc (ax_S (RET0g r)) = malloc_ret_null /\ nth 10%nat (ss_regs (ax_S (RET0g r))) (SLit 0) = SLit 0 /\
+  ss_pc (ax_S (RETPg r)) = malloc_ret_ok /\ nth 10%nat (ss_regs (ax_S (RETPg r))) (SLit 0) = SAlu ALU_ADD vGRPg (SLit 64).
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Definition run_19f__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S53S2bA5").
-Local Strategy expand [run_19f__R].
-Definition E20f : axst := Eval vm_compute in ((fun ro9__ : option (list leafA) => ((leaf1 S19f (ro9__)))) run_19f__R).
-Lemma run_19f : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S53S2bA5S2dG0S29S1fS22S3bS6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_19f__R <: run_19f__R = Some [mkLeafA E20f RsCut]). Qed.
-Lemma E20f_at : ltac2:(tb__ "0|4|
-S1eS1dS65S4S21S3bA1M0A1M1Zd8d60A3S1eS1dS2cS69A1S6fS34G1A2S2dS69S6bA2A3S1eS1dS0S28S0U11S5G0A1M2S1Z0A1M3A4S1ZdeA1A3S1eS1dS0S28S0UaG2G3A4G3A3S1eS1dS0S28S0UbG2G3A4S1Z2000A1A3S1eS1dS0S28S0UcG2G3A4G3A3S1eS1dS0S28S0UdG2G3A4S1Z22A1A3S1eS1dS0S28S0UeG2G3A4S1S72S73Z2Z40A2Z1A2A1A3S1eS1dS0S28S0UfG2G3A4G3A3S1dS66S7G0A1S68S37A1A3A2A2A2A2A2A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition E20f_0 : axst := Eval vm_compute in leaf1 (S19f false) (sym_runA segsA FUEL_M CUTS_M (S19f false) true).
+Definition E20f_1 : axst := Eval vm_compute in leaf1 (S19f true) (sym_runA segsA FUEL_M CUTS_M (S19f true) true).
+Definition E20f (r : bool) : axst := if r then E20f_1 else E20f_0.
+Lemma run_19f : forall r : bool, sym_runA segsA FUEL_M CUTS_M (S19f r) true = Some [mkLeafA (E20f r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma E20f_at : forall r : bool,
+  ss_pc (ax_S (E20f r)) = 888160 /\ instr_at segsA (ss_pc (ax_S (E20f r))) = Some Ecall /\
+  nth 17%nat (ss_regs (ax_S (E20f r))) (SLit 0) = SLit 222 /\
+  nth 10%nat (ss_regs (ax_S (E20f r))) (SLit 0) = SLit 0 /\
+  nth 11%nat (ss_regs (ax_S (E20f r))) (SLit 0) = SLit 8192 /\
+  nth 12%nat (ss_regs (ax_S (E20f r))) (SLit 0) = SLit 0 /\
+  nth 13%nat (ss_regs (ax_S (E20f r))) (SLit 0) = SLit 34 /\
+  nth 14%nat (ss_regs (ax_S (E20f r))) (SLit 0) = SLit (2 ^ 64 - 1) /\
+  nth 15%nat (ss_regs (ax_S (E20f r))) (SLit 0) = SLit 0 /\
+  ss_next (ax_S (E20f r)) = Pos.succ N18.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Definition run_20f_fail__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S3aS3bA1S2bA5").
-Local Strategy expand [run_20f_fail__R].
-Definition RET0a : axst := Eval vm_compute in ((fun ro10__ : option (list leafA) => ((leaf1 (refuse E20f) (ro10__)))) run_20f_fail__R).
-Lemma run_20f_fail : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S3aS3bA1S2bA5S2dG0S29S1fS22S4cS70A2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_20f_fail__R <: run_20f_fail__R = Some [mkLeafA RET0a RsSymJump]). Qed.
+Definition RET0a_0 : axst := Eval vm_compute in leaf1 (refuse (E20f false)) (sym_runA segsA FUEL_M CUTS_M (refuse (E20f false)) true).
+Definition RET0a_1 : axst := Eval vm_compute in leaf1 (refuse (E20f true)) (sym_runA segsA FUEL_M CUTS_M (refuse (E20f true)) true).
+Definition RET0a (r : bool) : axst := if r then RET0a_1 else RET0a_0.
+Lemma run_20f_fail : forall r : bool, sym_runA segsA FUEL_M CUTS_M (refuse (E20f r)) true = Some [mkLeafA (RET0a r) RsSymJump].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
 Definition vRES : sv := SVar (Pos.succ N18).
 Definition F20f : list sprop := ltac2:(tb__ "0|0|
 S29S3SbS68S37A1ZcA2S29S3SaS42S1S72Z7fffff800000Z2000A2A1A2S2aS3A1A3A3").
-Definition S20f : axst := ltac2:(tb__ "0|0|
-S39S3bS42S2aS2A1S5cS68S68S37A1A1A5").
-Definition run_20f__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S55S2bA5").
-Local Strategy expand [run_20f__R].
-Definition E21f : axst := Eval vm_compute in ((fun ro11__ : option (list leafA) => ((leaf1 S20f (ro11__)))) run_20f__R).
-Lemma run_20f : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S55S2bA5S2dG0S29S1fS22S3cS6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_20f__R <: run_20f__R = Some [mkLeafA E21f RsCut]). Qed.
-Lemma E21f_at : ltac2:(tb__ "0|5|
-S1eS1dS65S4S21S3cA1M0A1M1Zd8db8A3S1eS1dS2cS69A1S6fS34G1A2S2dS69S6bA2A3S1eS1dS0S28S0U11S5G0A1M2S1Z0A1M3A4S1Ze2A1A3S1eS1dS0S28S0UaG2G3A4S8S6aS42S1Z1000A1M4A3A3S1eS1dS0S28S0UbG2G3A4G4A3S1eS1dS0S28S0UcG2G3A4S1Z3A1A3S1dS66S7G0A1S68S68S37A1A1A3A2A2A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition S20f (r : bool) : axst := cont (E20f r) vRES [] F20f (Pos.succ (Pos.succ N18)).
+Definition E21f_0 : axst := Eval vm_compute in leaf1 (S20f false) (sym_runA segsA FUEL_M CUTS_M (S20f false) true).
+Definition E21f_1 : axst := Eval vm_compute in leaf1 (S20f true) (sym_runA segsA FUEL_M CUTS_M (S20f true) true).
+Definition E21f (r : bool) : axst := if r then E21f_1 else E21f_0.
+Lemma run_20f : forall r : bool, sym_runA segsA FUEL_M CUTS_M (S20f r) true = Some [mkLeafA (E21f r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma E21f_at : forall r : bool,
+  ss_pc (ax_S (E21f r)) = 888248 /\ instr_at segsA (ss_pc (ax_S (E21f r))) = Some Ecall /\
+  nth 17%nat (ss_regs (ax_S (E21f r))) (SLit 0) = SLit 226 /\
+  nth 10%nat (ss_regs (ax_S (E21f r))) (SLit 0) = SAlu ALU_ADD vRES (SLit 4096) /\
+  nth 11%nat (ss_regs (ax_S (E21f r))) (SLit 0) = SLit 4096 /\
+  nth 12%nat (ss_regs (ax_S (E21f r))) (SLit 0) = SLit 3 /\
+  ss_next (ax_S (E21f r)) = Pos.succ (Pos.succ N18).
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Definition run_21f_fail__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S3aS3cA1S2bA5").
-Local Strategy expand [run_21f_fail__R].
-Definition RET0b : axst := Eval vm_compute in ((fun ro12__ : option (list leafA) => ((leaf1 (refuse E21f) (ro12__)))) run_21f_fail__R).
-Lemma run_21f_fail : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S3aS3cA1S2bA5S2dG0S29S1fS22S4dS70A2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_21f_fail__R <: run_21f_fail__R = Some [mkLeafA RET0b RsSymJump]). Qed.
+Definition RET0b_0 : axst := Eval vm_compute in leaf1 (refuse (E21f false)) (sym_runA segsA FUEL_M CUTS_M (refuse (E21f false)) true).
+Definition RET0b_1 : axst := Eval vm_compute in leaf1 (refuse (E21f true)) (sym_runA segsA FUEL_M CUTS_M (refuse (E21f true)) true).
+Definition RET0b (r : bool) : axst := if r then RET0b_1 else RET0b_0.
+Lemma run_21f_fail : forall r : bool, sym_runA segsA FUEL_M CUTS_M (refuse (E21f r)) true = Some [mkLeafA (RET0b r) RsSymJump].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
 Definition O_area_f : sobj := ltac2:(tb__ "0|1|
 ScS8S6aS42S1Z1000A1M0A3S1Z0A1G0S2aS6A1S13A5").
-Definition S21f : axst := ltac2:(tb__ "0|0|
-S39S3cS1Z0A1S29S2S5fS2aS2A1A3S2aS3A1S68S68S37A1A1A5").
+Definition S21f (r : bool) : axst := cont (E21f r) (SLit 0) [O_area_f] [] (Pos.succ (Pos.succ N18)).
 
-Definition run_21f__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S58S2bA5").
-Local Strategy expand [run_21f__R].
-Definition E22f : axst := Eval vm_compute in ((fun ro13__ : option (list leafA) => ((leaf1 S21f (ro13__)))) run_21f__R).
-Lemma run_21f : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S58S2bA5S2dG0S29S1fS22S3dS6eA2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_21f__R <: run_21f__R = Some [mkLeafA E22f RsCut]). Qed.
-Definition N22f : positive := Eval vm_compute in (ss_next (ax_S E22f)).
-Lemma E22f_at : ltac2:(tb__ "0|4|
-S1eS1dS65S4S21S3dA1M0A1M1Zd8d60A3S1eS1dS2cS69A1S6fS34G1A2S2dS69S6bA2A3S1eS1dS0S28S0U11S5G0A1M2S1Z0A1M3A4S1ZdeA1A3S1eS1dS0S28S0UaG2G3A4G3A3S1eS1dS0S28S0UbG2G3A4S1Z1000A1A3S1eS1dS0S28S0UcG2G3A4S1Z3A1A3S1eS1dS0S28S0UdG2G3A4S1Z22A1A3S1eS1dS0S28S0UeG2G3A4S1S72S73Z2Z40A2Z1A2A1A3S1dS0S28S0UfG2G3A4G3A3A2A2A2A2A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
-Definition run_22f_fail__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S3aS3dA1S2bA5").
-Local Strategy expand [run_22f_fail__R].
-Definition RET0f : axst := Eval vm_compute in ((fun ro14__ : option (list leafA) => ((leaf1 (refuse E22f) (ro14__)))) run_22f_fail__R).
-Lemma run_22f_fail : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S3aS3dA1S2bA5S2dG0S29S1fS22S4eS70A2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_22f_fail__R <: run_22f_fail__R = Some [mkLeafA RET0f RsSymJump]). Qed.
+Definition E22f_0 : axst := Eval vm_compute in leaf1 (S21f false) (sym_runA segsA FUEL_M CUTS_M (S21f false) true).
+Definition E22f_1 : axst := Eval vm_compute in leaf1 (S21f true) (sym_runA segsA FUEL_M CUTS_M (S21f true) true).
+Definition E22f (r : bool) : axst := if r then E22f_1 else E22f_0.
+Lemma run_21f : forall r : bool, sym_runA segsA FUEL_M CUTS_M (S21f r) true = Some [mkLeafA (E22f r) RsCut].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Definition N22f : positive := Eval vm_compute in (ss_next (ax_S (E22f false))).
+Lemma N22f_eq : forall r : bool, ss_next (ax_S (E22f r)) = N22f.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma E22f_at : forall r : bool,
+  ss_pc (ax_S (E22f r)) = 888160 /\ instr_at segsA (ss_pc (ax_S (E22f r))) = Some Ecall /\
+  nth 17%nat (ss_regs (ax_S (E22f r))) (SLit 0) = SLit 222 /\
+  nth 10%nat (ss_regs (ax_S (E22f r))) (SLit 0) = SLit 0 /\
+  nth 11%nat (ss_regs (ax_S (E22f r))) (SLit 0) = SLit 4096 /\
+  nth 12%nat (ss_regs (ax_S (E22f r))) (SLit 0) = SLit 3 /\
+  nth 13%nat (ss_regs (ax_S (E22f r))) (SLit 0) = SLit 34 /\
+  nth 14%nat (ss_regs (ax_S (E22f r))) (SLit 0) = SLit (2 ^ 64 - 1) /\
+  nth 15%nat (ss_regs (ax_S (E22f r))) (SLit 0) = SLit 0.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition RET0f_0 : axst := Eval vm_compute in leaf1 (refuse (E22f false)) (sym_runA segsA FUEL_M CUTS_M (refuse (E22f false)) true).
+Definition RET0f_1 : axst := Eval vm_compute in leaf1 (refuse (E22f true)) (sym_runA segsA FUEL_M CUTS_M (refuse (E22f true)) true).
+Definition RET0f (r : bool) : axst := if r then RET0f_1 else RET0f_0.
+Lemma run_22f_fail : forall r : bool, sym_runA segsA FUEL_M CUTS_M (refuse (E22f r)) true = Some [mkLeafA (RET0f r) RsSymJump].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 Definition vGRPf : sv := SVar N22f.
 Definition F22f : list sprop := ltac2:(tb__ "0|0|
 S29S3SbS44ZcA2S29S3SaS47S1S72Z7fffff800000Z1000A2A1A2S2aS3A1A3A3").
-Definition S22f : axst := ltac2:(tb__ "0|0|
-S39S3dS47S29S2S7bS44Z1000A2S2aS2A1A3S5dS68S44A1A5").
-Definition run_22f__R : option (list leafA) := ltac2:(tb__ "0|0|
-S20S34S36S35S59S2bA5").
-Local Strategy expand [run_22f__R].
-Definition RETPf : axst := Eval vm_compute in ((fun ro15__ : option (list leafA) => ((leaf1 S22f (ro15__)))) run_22f__R).
-Lemma run_22f : ltac2:(tb__ "0|1|
-S1dS2cS2eS1fA1M0A1S20S34S36S35S59S2bA5S2dG0S29S1fS22S50S70A2S2aS1fA1A3A2A3").
-Proof. exact (@eq_refl (option (list leafA)) run_22f__R <: run_22f__R = Some [mkLeafA RETPf RsSymJump]). Qed.
-Lemma RETf_at : ltac2:(tb__ "0|4|
-S1eS1dS65S4S21S4eA1M0A1S75A3S1eS1dS0S28S0UaM1S5G0A1S1Z0A1M2A4G2A3S1eS1dS65S4S21S50A1M3A1S78A3S1eS1dS0S28S0G1S5G3A1G2A4S8S6aS47S1Z40A1A3A3S1eS1dS65S4S21S4cA1A1S75A3S1dS65S4S21S4dA1A1S75A3A2A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Definition S22f (r : bool) : axst := cont (E22f r) vGRPf [mmap_obj N22f 4096] F22f (Pos.succ N22f).
+Definition RETPf_0 : axst := Eval vm_compute in leaf1 (S22f false) (sym_runA segsA FUEL_M CUTS_M (S22f false) true).
+Definition RETPf_1 : axst := Eval vm_compute in leaf1 (S22f true) (sym_runA segsA FUEL_M CUTS_M (S22f true) true).
+Definition RETPf (r : bool) : axst := if r then RETPf_1 else RETPf_0.
+Lemma run_22f : forall r : bool, sym_runA segsA FUEL_M CUTS_M (S22f r) true = Some [mkLeafA (RETPf r) RsSymJump].
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma RETf_at : forall r : bool,
+  ss_pc (ax_S (RET0f r)) = malloc_ret_null /\ nth 10%nat (ss_regs (ax_S (RET0f r))) (SLit 0) = SLit 0 /\
+  ss_pc (ax_S (RETPf r)) = malloc_ret_ok /\ nth 10%nat (ss_regs (ax_S (RETPf r))) (SLit 0) = SAlu ALU_ADD vGRPf (SLit 64) /\
+  ss_pc (ax_S (RET0a r)) = malloc_ret_null /\ ss_pc (ax_S (RET0b r)) = malloc_ret_null.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 End MuslMalloc40States.
 
 (* [comment removed for export] *)
@@ -455,17 +470,30 @@ Proof.
   pose proof (urange x). rewrite Z.mod_small by lia. lia.
 Qed.
 
-Definition arg_layout (rho : valuation) : Prop := ltac2:(tb__ "0|5|
-S2cS17S3Q40M0S8Vrho;P1A2A2M1S1bZ2Z2fA2A2S2cS17S3G0S8Vrho;P2A2A2M2Z400A2S2cS17S3G0S8Vrho;P3A2A2M3Z100A2S2cS17S3G0S8Vrho;P5A2A2Z1ffffA2S2dS0S3G0S8Vrho;P4A2A2S18S18S18G1Zb8A2S1cZ8M4G2A2A2S1cG4G3A2A2A3A2A2A2A2").
+(* LPS 727298f3 (StackLayout.v [build_stack_bytes]): the head (argc, argv, envp, an auxv of at least
+   432 bytes, the parity gap) ends at the random bytes (variable 6), argv[0] (variable 4) lies above
+   them after [arch_align_stack]'s pad, and the strings end at the exec file name's address (launch
+   variable 13), which lies nine bytes or more below the stack's end.  Was: argv[0] right after a
+   160-byte auxv.  Written as plain text. *)
+Definition arg_layout (rho : valuation) : Prop :=
+  bv_unsigned (rw rho 1%positive) <= 2 ^ 47
+  /\ bv_unsigned (rw rho 2%positive) <= 1024
+  /\ bv_unsigned (rw rho 3%positive) <= 256
+  /\ bv_unsigned (rw rho 5%positive) <= 131071
+  /\ bv_unsigned (rw rho 1%positive) + 8 * bv_unsigned (rw rho 2%positive) + 8 * bv_unsigned (rw rho 3%positive) + 24 + 432
+       <= bv_unsigned (rw rho 6%positive)
+  /\ bv_unsigned (rw rho 6%positive) + 16 <= bv_unsigned (rw rho 4%positive)
+  /\ bv_unsigned (rw rho 4%positive) + bv_unsigned (rw rho 5%positive) + 1 <= bv_unsigned (rw rho 13%positive)
+  /\ bv_unsigned (rw rho 13%positive) + 9 <= 2 ^ 47.
 
-Lemma arg_layout_ext : ltac2:(tb__ "0|1|
-SbSbS1S43R1P7A2S2dS4Q40A1S8R3R2A2S8R4R2A2A3F_;Fi;S35R3A1M0G0F_;F_;Frho';Frho;").
+Lemma arg_layout_ext : forall rho rho' : valuation,
+  (forall i : positive, (i < 14)%positive -> rw rho' i = rw rho i) -> arg_layout rho -> arg_layout rho'.
 Proof. intros rho rho' E H. unfold arg_layout in *. rewrite !E by lia. exact H. Qed.
 
 Lemma argf_not_env : ltac2:(tb__ "0|4|
 SbS21SfA1S12S4Q40M0A1S35R4A1S39R5R2A2S11ScS2fScS2fSdP1A1ScS30SdP2A1SaZ3A1M1A3A3SaZ10A1A3SaZ0A1ScS2fScS30SdP3A1G1A3SaZ8A1A3R5R4A5S7S2eS2cS17S24S0S0SeR7R1A2M2A3S3G0R4A2M3A2S19G3S25S0S0G2A3A2A2A1To;F_;F_;Fa;Fd;Fcs;Frho;").
 Proof.
-  intros rho cs d a (L1 & L2 & L3 & L5 & L4) [Ha Hor]. cbv zeta.
+  intros rho cs d a (L1 & L2 & L3 & L5 & L4 & L6 & L7 & L8) [Ha Hor]. cbv zeta.
   unfold obj_range, obj_lo_of, obj_hi_of, soff. cbn [ob_base ob_lo ob_hi fst snd eval].
   pose proof (urange (rw rho 1%positive)) as U1. pose proof (urange (rw rho 2%positive)) as U2. pose proof (urange (rw rho 3%positive)) as U3.
   pose proof (urange (rw rho 5%positive)) as U5.
@@ -479,7 +507,7 @@ Qed.
 Lemma argf_not_str0 : ltac2:(tb__ "0|3|
 SbS21SfA1S12S4Q40M0A1S35R4A1S39R5R2A2S11SdP4A1SaZ0A1ScS2fSdP5A1SaZ1A1A3R5R4A5S7S2eS2cS17S24S0S0SeR7R1A2M1A3S3G0R4A2M2A2S19G2S25S0S0G1A3A2A2A1To;F_;F_;Fa;Fd;Fcs;Frho;").
 Proof.
-  intros rho cs d a (L1 & L2 & L3 & L5 & L4) [Ha Hor]. cbv zeta.
+  intros rho cs d a (L1 & L2 & L3 & L5 & L4 & L6 & L7 & L8) [Ha Hor]. cbv zeta.
   unfold obj_range, obj_lo_of, obj_hi_of, soff. cbn [ob_base ob_lo ob_hi fst snd eval].
   pose proof (urange (rw rho 5%positive)) as U5. pose proof (urange (rw rho 4%positive)) as U4.
   pose proof (urange (rw rho 1%positive)) as U1. pose proof (urange (rw rho 2%positive)) as U2. pose proof (urange (rw rho 3%positive)) as U3.

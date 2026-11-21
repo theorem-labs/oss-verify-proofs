@@ -3,10 +3,11 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 259 of its 298 lines of code are new or changed and 535 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (UBSan build) from its segment lemmas, and ubsan_halts from
-   the frame. Taken from reac-pw/fuzz_role's Prog/RoleSlot.v (commit 52bb2f1ed35d), itself
+   the frame. Taken from reac-pw/fuzz_role's Prog/RoleSlot.v, itself
    reac-pw/fuzz_pin's Prog/PinSlot.v and libreac/fuzz_ctrl's released Prog/Seg/Slot.v (Section Bridge and Bundle, the
-   loop induction loop_frames) and Prog/Seg/SlotLink.v (Section Link) (commit 25e3d17bdb50), with
+   loop induction loop_frames) and Prog/Seg/SlotLink.v (Section Link), with
    segconf's code (ELF afc060e3cc9c), cuts and G:
    - the n >= 2^26 run (early_evt): 0x13888 `addi sp,sp,-0xf0`, the thirteen saves ra, s0 .. s11 (0x1388c ..
      0x138bc), 0x138c0 `srli a2,a1,0x1a`, 0x138c4 `bnez a2` taken to 0x1420c: `mv a0,zero`, the thirteen restores,

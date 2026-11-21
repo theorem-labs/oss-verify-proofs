@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main_entry over the launch's ProcInput, mmap base and entry point; the initial reservations init_reserved, the image's intervals with the vDSO pair; the argv pointers p0/p1 over the launch's input). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -83,7 +84,10 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv tid regs0 mem0.
+(* LPS 727298f3: [main_entry] takes the launch's input, the mmap base and the entry point. *)
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv tid regs0 mem0.
 Hypothesis Hbrk : valid_brk RSEGS brk.
 Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
 Hypothesis Hpne : path <> [].
@@ -98,7 +102,8 @@ Definition fds0 : list (word * FdEntry) :=
 
 Definition model0 : Model :=
 with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputC [a0s; path] envv fs0 stdin0)).
-Definition vm0 : VmMaps := mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk LIM mbase sp0.
+(* LPS 727298f3: [init_model]'s reserved list is [init_reserved], the image's intervals and the vDSO pair. *)
+Definition vm0 : VmMaps := mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp0 a_kernel) [] [] brk brk LIM mbase sp0.
 
 Definition fds1g (fd3 : FdEntry) : list (word * FdEntry) := fd_insert fds0 (Z_to_bv 64 3) fd3.
 Definition model1g (fd3 : FdEntry) : Model :=
@@ -155,7 +160,7 @@ Definition open_err_branch (KA : TSet) : Prop :=
 forall e vals R M,
 In e openat_errnos ->
 length vals = 40%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 39 = errno_ret e ->
-vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+vals_ev vals 1 = p0 a0s path envv inp -> vals_ev vals 2 = p1 a0s path envv inp ->
 vals_ev vals 5 = tid ->
 regs_ok (ENV vals) (sr_upd srA (ridx 10) (EVar 39)) R -> know_ok RSEGS (ENV vals) M knA ->
 (forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->

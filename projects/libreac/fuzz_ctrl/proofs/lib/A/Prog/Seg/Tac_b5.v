@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 176 of its 211 lines of code are new or changed and 361 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* General helpers for the frame-loop segment lemmas of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A), segments
    F4-F12: register reads through Regs6ss.mkR_of (rg_mkR, reg_mkR, sl_rg_get, sl_mkR_set), the read-only image
    bounds (sl_ro_lo, sl_ro_keep, sl_shadow_not_ro), one instrumented 1-byte shadow read (sl_shadow1), the
@@ -187,8 +188,8 @@ Qed.
 
 (* FRA moves across a program callee whose contract gives the bespoke post (munch over its own stack window
    [sp - K, sp), wmono) instead of a_call_post, and across the lazy-page materialization md -> md' of the run
-   (sl_run / sl_run_lib): sl_stk_run with W = [(sp - K, sp)], then sl_fra_move. The official form (a Theorem Labs lane
-   3ef2305c85, a Theorem Labs lane ruling 2026-10-27): the caller gives the S-anchored window of mem' itself (FRA's own
+   (sl_run / sl_run_lib): sl_stk_run with W = [(sp - K, sp)], then sl_fra_move. The official form (a Theorem Labs lane,
+   a Theorem Labs lane ruling 2026-10-27): the caller gives the S-anchored window of mem' itself (FRA's own
    conjunct, kept through the callee), any K <= FN_STACK (a K < 0 window is empty; it is read as K = 0), the
    window top below APPMEM_END, the frame header apart from the window and the frame below APPMEM_END. The rest
    comes from FRA: the window is above HIGHMEM_BEG (stklo <= sp - FN_STACK by fra_win, HIGHMEM_BEG <= stklo by

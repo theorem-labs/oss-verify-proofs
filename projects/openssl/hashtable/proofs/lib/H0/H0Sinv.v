@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the tail invariant states argv[0]'s address by the plain bridge's own expression [e_str0t], not by the ASan layout's [e_str0]; [NX0t] is [NX0]). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -10,13 +11,23 @@ Import ListNotations.
 Import AX2. Import AX2S. Import APC. Import CAP. Import CXS.
 Open Scope Z_scope.
 
-Definition NX0t : nat := 12.
+(* LPS c0dd863a: the address the plain family states take for argv[0] (an empty string), the old
+   layout's [e_auxv + 160] at argc 1: a zero byte the plain launch leaves above the entry's stack
+   pointer, with the bridge's witness of H0FiTail.root_extra as [V_ENVC] (H0MainEntry.main_entry_hi:
+   AT_BASE's value word).  [CAP.e_str0] is the ASan layout's argv[0]; it names [V_W] = 4, [V_G] = 12
+   and [V_R] = 13, which the plain family states use for other values (the payload length, mmap
+   page numbers). *)
+Definition e_str0t : expr := eadd (eaddz e_sp0 192) (escale 8 (EVar V_ENVC)).
+
+(* the tail invariant reads variables below 11 only; [NX0t] is the bound the family certificates
+   check their numbering against *)
+Definition NX0t : nat := NX0.
 
 Section TailSinv.
   Variables usp STR0 : Z.
 
   Definition SINVt (E : env) (M : word -> option byte) : Prop :=
-    uE E e_sp0 = usp /\ uE E e_str0 = STR0
+    uE E e_sp0 = usp /\ uE E e_str0t = STR0
     /\ edenot E (EVar V_L0) = Z_to_bv 64 0 /\ edenot E (EVar V_ARGC) = Z_to_bv 64 1 /\ edenot E (EVar V_L1) = Z_to_bv 64 0
     /\ eb E 1%nat = [] /\ eb E 2%nat = []
     /\ uE E e_pgsp = pgdown usp

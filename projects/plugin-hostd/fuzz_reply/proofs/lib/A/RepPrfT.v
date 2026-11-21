@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepPrfT.v (commit f01d79f3fb5, cf refill round 3; file sha256 d77881544613) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepPrfT.v (cf refill round 3; file sha256 d77881544613) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, slice F2 of the class-full report walk): the relation-level lemmas that
-   __sanitizer::Printf's composition (printf_ok : printf_of_parts_t, commit 18d8f842334,
+   __sanitizer::Printf's composition (printf_ok : printf_of_parts_t,
    proofs/cgif/cgif_file_fuzzer/lib/RepIFcf.v) consumes.  Machine-free: no run, no decode, no model step.  Every lemma
    is stated at any held region lock [lk] (RepIFcf.ARcf_locked).
    rule 24: proves no function (kind: invariant lemma; the relation errb_call_pre / errb_call_post kept over stack-only

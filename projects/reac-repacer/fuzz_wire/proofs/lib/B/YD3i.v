@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, written by a Theorem Labs lane *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement for the NULL hint; the mprotect gate over the reservations); internal commit ids in comments replaced by public commits or removed. *)
 (* the asan-ubsan (lib/B here, lib/AU in fuzz_knock) twin of
    lib/A/AD3i.v, for a Theorem Labs lane's knock
    StackDepot first-use chain. rule 24: no function proved (a budget / room lemma that discharges premises of the
    MmapOrDie (S8, lib/A/AD3h.v) and MmapNoReserveOrDie (S4, lib/A/AD3d.v) contracts at StackDepotPut's first use,
    and a counting lemma that keeps the depot in ONE node block and ONE store block).
    Lemma names and statements are lib/A/AD3i.v's. The lib/A modules are replaced by their lib/B twins: AB1v ->
-   YB1v (tfibsegs = AsanUbsan.M.loaded_segments, YB1v.v:13), AF0m -> YF0m, AF0x -> YF0x, AFia -> YFia, AFem -> YFem;
+   YB1v (tfibsegs = AsanUbsan.M.loaded_segments, YB1v.v:14), AF0m -> YF0m, AF0x -> YF0x, AFia -> YFia, AFem -> YFem;
    lib/Reusable is shared. Of the image facts below, the order of the two maps is read in the donor fuzz_knock
    ASan+UBSan image (labelled there) and the trace cap in fuzz_wire.asan-ubsan.
 
@@ -21,7 +22,7 @@
    THE ROOM PREMISE (the core's own, cgif form): at the entry of every allocator walk the core holds
      AR tfibsegs B ly S W mem0 md0 (lib/Reusable/YG0n.v:795-796: ARm, ALedger, abudget_ok, amwf, ahs) and
      qmeter S (YG0n.v:864), whose mroom S (YG0n.v:862) is  ameter S + VM_HEAD <= ASAN_VM_LMIN  with VM_HEAD = 2^30
-     (YG0n.v:860). mroom_slack (lib/Reusable/YG08.v:188-191) turns this into
+     (YG0n.v:860). mroom_slack (lib/Reusable/YG08.v:189-192) turns this into
        eager_used md + a + (VM_HEAD - 2 * k) <= vm_limit (m_vmmaps md)
      at any later state md of the walk whose eager use and world grew by at most k (the eager-map precedent is
      YFjs.v:482-491 slackS and its use at YFjs.v:571-572). That is the room Put's call has: depot_gates below spends
@@ -42,13 +43,13 @@
    When this file was written its base had no lib/AU twin of AD3d.v or AD3h.v; this unit has lib/B/YD3d.v and lib/B/YD3h.v.
 
    THE ONE-BLOCK LEMMA: the bound the core already proves is the universe one, not an event count:
-   WireSyms B gives universe_ok (as_universe B) (YF0m.v:293 ts_universe; YG01.v:142-144: at most DEPOT_MAX = 4096
-   traces, each of at most kUnwindMax = 30 frames, YG00.v:41), Wf gives the depot NoDup inside it (YG01.v:339), and
-   YFem.v:35 depot_len_bound / YFem.v:39 depot_frames_bound bound the depot (the same two give YFem.v:145 TOT_range).
-   So s_total (F) <= 32 + 31 * 4096 and F + n + 1 <= 127039 < kStoreFramesPerBlock = 2^20 (YG00.v:40): every Store's
+   WireSyms B gives universe_ok (as_universe B) (YF0m.v:294 ts_universe; YG01.v:143-145: at most DEPOT_MAX = 4096
+   traces, each of at most kUnwindMax = 30 frames, YG00.v:42), Wf gives the depot NoDup inside it (YG01.v:340), and
+   YFem.v:36 depot_len_bound / YFem.v:40 depot_frames_bound bound the depot (the same two give YFem.v:146 TOT_range).
+   So s_total (F) <= 32 + 31 * 4096 and F + n + 1 <= 127039 < kStoreFramesPerBlock = 2^20 (YG00.v:41): every Store's
    frames lie in block 0, and Alloc's new-block branch is refuted. Node ids: at most 4096 distinct traces, so the new
-   id <= 4097 < 65536 = kDepotIdsPerBlock (YG00.v:39) and idx = id >> 16 = 0. The 32 in the F premise covers both
-   numberings of s_total: cgif's one-trace cell len(ly_tr0) + 1 + depot_frames S (YG0n.v:109, lo_tr0 YG0f.v:442) and
+   id <= 4097 < 65536 = kDepotIdsPerBlock (YG00.v:40) and idx = id >> 16 = 0. The 32 in the F premise covers both
+   numberings of s_total: cgif's one-trace cell len(ly_tr0) + 1 + depot_frames S (YG0n.v:109, lo_tr0 YG0f.v:443) and
    knock's empty-at-main store, depot_frames S.
    The 30 is measured on fuzz_wire.asan-ubsan (each address below is that image's, decoded from its .text; the
    donor fuzz_knock images place these functions elsewhere): kStackTraceMax =
@@ -57,7 +58,7 @@
    (malloc 0x5238c, free 0x5222c), which InitializeFlags sets to 30 (0x3c9f4 addi a1,zero,0x1e; 0x3c9fc sw a1,0x18c(sp))
    before parsing ASAN_OPTIONS; StackStore::Store clamps to 255 (0x6f668-0x6f670). So 30 holds when ASAN_OPTIONS sets
    neither malloc_context_size nor start_deactivated; the core states it as universe_ok (as_universe B). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3i.v at 88154566652a (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0 and names TfibSyms -> WireSyms. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3i.v (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0 and names TfibSyms -> WireSyms. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -136,15 +137,23 @@ Lemma depot_grant_exists : forall ly S md0 md (X : list (word * word)) nZ,
   (forall e, In e (vm_maps (m_vmmaps md)) -> In e (vm_maps (m_vmmaps md0)) \/ In e X) ->
   Forall (fun e => 0 < bv_unsigned (snd e) <= NOB) X -> Z.of_nat (length X) <= 1024 ->
   0 < nZ <= NOB ->
-  exists a, grant_ok_na_pin md a nZ = true.
+  exists a, YK13.grant_ok_na_pin_b md a nZ = true
+    /\ LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= bv_unsigned a.
 Proof.
 intros ly S md0 md X nZ LY L NZ SECN SECS ERS ETOP EM XS XN HnZ.
 pose proof (YM05.ceil_le_top _ (al_top _ _ _ _ L)) as Htop. pose proof bottomup_floor_val as Hfv.
-set (obs := obstacles (lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X)).
-assert (LEN : Z.of_nat (length obs) <= 257 * 25 + SEC_LIVE_N + 1024).
-{ pose proof (obstacles_app (lazy_zones ly) (sec_extents ly S ++ map YG0h.wz X)) as O1.
+(* 727298f3: the reservations end with the vDSO/vvar pair ([YG0n.res_tail_ok]); its entries join the obstacles
+   the sweep steps over, each widened by a byte, as Reusable/YF06.v [sec_grant_exists] does. *)
+destruct (al_reserved _ _ _ _ L) as (rx & Hrx & RXL & RXB & _).
+set (rxz := map (fun iv => (bv_unsigned (fst iv), bv_unsigned (snd iv) + 1)) rx).
+set (obs := obstacles ((lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X) ++ rxz)).
+assert (LEN : Z.of_nat (length obs) <= 257 * 25 + SEC_LIVE_N + 1024 + 2).
+{ pose proof (obstacles_app (lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X) rxz) as O0.
+  pose proof (obstacles_app (lazy_zones ly) (sec_extents ly S ++ map YG0h.wz X)) as O1.
   pose proof (obstacles_app (sec_extents ly S) (map YG0h.wz X)) as O2.
+  pose proof (f_equal (@length (Z * Z)) O0) as L0.
   pose proof (f_equal (@length (Z * Z)) O1) as L1. pose proof (f_equal (@length (Z * Z)) O2) as L2.
+  rewrite length_app in L0.
   rewrite (length_app (obstacles (lazy_zones ly)) (obstacles (sec_extents ly S ++ map YG0h.wz X))) in L1.
   rewrite (length_app (obstacles (sec_extents ly S)) (obstacles (map YG0h.wz X))) in L2.
   pose proof (obstacles_len (lazy_zones ly) 257 ltac:(lia) (lazy_zones_relevant ly LY)) as A.
@@ -154,46 +163,71 @@ assert (LEN : Z.of_nat (length obs) <= 257 * 25 + SEC_LIVE_N + 1024).
   { apply Forall_forall. intros z Hz _. apply in_map_iff in Hz as (e & <- & He).
     pose proof (proj1 (Forall_forall _ _) XS e He) as [X1 X2]. unfold YG0h.wz, YG0h.uw. cbn [snd]. lia. }
   pose proof (obstacles_len (map YG0h.wz X) 1 ltac:(lia) XF) as D. rewrite length_map in D.
-  subst obs. clear - L1 L2 A B C D XN SECN. lia. }
+  assert (RZ : Forall (fun z => relevantb z = true -> 0 <= snd z <= 1 * NOB) rxz).
+  { subst rxz. apply Forall_map. apply Forall_impl with (2 := RXB). intros iv [_ Hs] _. cbn [fst snd].
+    pose proof (bv_unsigned_in_range _ (snd iv)). unfold NOB. lia. }
+  pose proof (obstacles_len rxz 1 ltac:(lia) RZ) as DR.
+  assert (LR : length rxz = length rx) by (subst rxz; apply length_map).
+  subst obs. clear - L0 L1 L2 A B C D DR LR RXL XN SECN. lia. }
 destruct (pick_candidateZ NOB nZ obs (seq 0 (Datatypes.S (length obs))) ltac:(lia) (obstacles_size _) (List.seq_NoDup _ _)
   ltac:(rewrite length_seq; lia)) as (j & Hj & Hfree).
 apply in_seq in Hj.
 set (a := cand NOB j).
-assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + SEC_LIVE_N + 1024) * (2 * NOB)).
+assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + SEC_LIVE_N + 1024 + 2) * (2 * NOB)).
 { subst a. unfold cand. unfold NOB, SEC_LIVE_N in *. split; [nia|]. apply Z.add_le_mono_l. apply Z.mul_le_mono_nonneg_r; [lia|]. lia. }
 assert (Hce : a + nZ <= ASAN_CEIL) by (ceil; unfold ASAN_CEIL, NOB, SEC_LIVE_N in *; rewrite Hfv in Ha; lia).
-exists (Z_to_bv 64 a).
-unfold grant_ok_na_pin. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in Hce; lia).
+exists (Z_to_bv 64 a). split.
+2:{ rewrite u64_lit by (ceil; unfold ASAN_CEIL in Hce; lia).
+    unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base. rewrite Hfv in Ha. lia. }
+unfold YK13.grant_ok_na_pin_b. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in Hce; lia).
 assert (E1 : a mod page_size = 0).
 { subst a. unfold cand. rewrite Hfv. unfold page_size, NOB. rewrite Z.add_mod by lia.
   replace (Z.of_nat j * (2 * 536870912)) with ((Z.of_nat j * 262144) * 4096) by lia. rewrite Z_mod_mult. reflexivity. }
 rewrite (proj2 (Z.eqb_eq _ _) E1), (proj2 (Z.ltb_lt 0 _)) by lia.
 rewrite (proj2 (Z.leb_le _ _)) by (unfold ASAN_CEIL in Hce; lia).
 rewrite YK13.region_free_app.
-rewrite ERS, (al_reserved _ _ _ _ L).
+rewrite ERS, Hrx, YK13.region_free_app.
 replace (Z_to_bv 64 a) with (w64 a) by reflexivity. replace (Z_to_bv 64 nZ) with (w64 nZ) by reflexivity.
 assert (IMGb : forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd).
 { intros sg Hsg. pose proof (al_img _ _ _ _ L sg Hsg) as [I1 I2]. pose proof (lo_img ly LY) as (J0 & J1 & J2 & J3).
   rewrite J0 in I1, I2. unfold kImgLo in *. lia. }
 rewrite (YG0h.region_free_reserved tfibsegs a nZ IMGb) by (ceil; unfold kImgEnd, ASAN_CEIL in *; lia).
-rewrite (YG0h.region_free_intro); [reflexivity|].
+rewrite (YG0h.region_free_intro rx (w64 a) (w64 nZ)).
+2:{ intros e He. unfold YG0h.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
+    assert (EX : Exists (fun z => fst z <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + (bv_unsigned (snd e) + 1) <= fst z + snd z)
+      ((lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X) ++ rxz)).
+    { apply Exists_app. right. apply Exists_exists. exists (bv_unsigned (fst e), bv_unsigned (snd e) + 1). split.
+      - apply in_map_iff. exists e. split; [reflexivity | exact He].
+      - cbn [fst snd]. lia. }
+    pose proof (bv_unsigned_in_range _ (snd e)) as Ue.
+    destruct (obstacles_free ((lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X) ++ rxz) a nZ
+      (bv_unsigned (fst e)) (bv_unsigned (snd e) + 1) ltac:(lia) ltac:(lia) ltac:(lia) Hce Hfree EX) as [D|D];
+      [left | right]; lia. }
+rewrite (YG0h.region_free_intro (vm_maps (m_vmmaps md)) (w64 a) (w64 nZ)); [reflexivity|].
 intros e He. unfold YG0h.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
 destruct (EM e He) as [H0|HX].
 - pose proof (al_cover _ _ _ _ L e H0) as AC.
-  apply (obstacles_free (lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X) a nZ); [lia | exact (NZ e H0) | lia | exact Hce | exact Hfree |].
+  apply (obstacles_free ((lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X) ++ rxz) a nZ);
+    [lia | exact (NZ e H0) | lia | exact Hce | exact Hfree |].
+  apply Exists_app; left.
   apply Exists_app in AC as [AC|AC]; apply Exists_app; [left; exact AC | right; apply Exists_app; left; exact AC].
 - pose proof (proj1 (Forall_forall _ _) XS e HX) as [X1 X2].
-  apply (obstacles_free (lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X) a nZ); [lia | exact X1 | lia | exact Hce | exact Hfree |].
+  apply (obstacles_free ((lazy_zones ly ++ sec_extents ly S ++ map YG0h.wz X) ++ rxz) a nZ);
+    [lia | exact X1 | lia | exact Hce | exact Hfree |].
+  apply Exists_app; left.
   apply Exists_app; right; apply Exists_app; right. apply Exists_exists. exists (YG0h.wz e).
   split; [apply in_map; exact HX | unfold YG0h.wz, YG0h.uw; cbn [fst snd]; lia].
 Qed.
 
-(* grant_ok_na_pin is md_room's body (lib/A/AD3d.v) with g := bv_unsigned a. *)
-Lemma pin_room : forall md (a : word) n, grant_ok_na_pin md a n = true ->
+(* The old boolean [YK13.grant_ok_na_pin_b] with Linux placement's floor is md_room's body (AD3d.v) with
+   g := bv_unsigned a. *)
+Lemma pin_room : forall md (a : word) n, YK13.grant_ok_na_pin_b md a n = true ->
+  LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= bv_unsigned a ->
   exists g, g mod 4096 = 0 /\ 0 < g /\ g + n <= alloc_top (m_vmmaps md) /\
-    region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 n) = true.
+    region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 n) = true /\
+    LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g.
 Proof.
-intros md a n Hg. unfold grant_ok_na_pin in Hg.
+intros md a n Hg Hfl. unfold YK13.grant_ok_na_pin_b in Hg.
 apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop. unfold page_size in Hal.
 exists (bv_unsigned a). rewrite Z_to_bv_bv_unsigned. repeat split; assumption.
@@ -226,7 +260,8 @@ Theorem depot_room : forall B ly S W mem0 md0 (md : Model) (Wx : world tfibsegs)
   eager_used md <= eager_used md0 + k -> A_bytes (w_A Wx) <= A_bytes (w_A W) + k ->
   0 <= k -> 2 * k + 11 * 2 ^ 20 <= 2 ^ 30 ->
   ((exists g, g mod 4096 = 0 /\ 0 < g /\ g + kNodesBlockSize <= alloc_top (m_vmmaps md) /\
-      region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 kNodesBlockSize) = true) /\
+      region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 kNodesBlockSize) = true /\
+      LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g) /\
    eager_used md + A_bytes (w_A Wx) + 2 * kNodesBlockSize <= vm_limit (m_vmmaps md)) /\
   eager_used md + A_bytes (w_A Wx) + 3 * kNodesBlockSize + kStoreBlockSize <= vm_limit (m_vmmaps md) /\
   (forall (xw nw : word) (md' : Model) (Wx' : world tfibsegs),
@@ -237,7 +272,8 @@ Theorem depot_room : forall B ly S W mem0 md0 (md : Model) (Wx : world tfibsegs)
     (forall e, In e (vm_maps (m_vmmaps md')) -> e = (xw, nw) \/ In e (vm_maps (m_vmmaps md))) ->
     eager_used md' <= eager_used md + kNodesBlockSize -> A_bytes (w_A Wx') <= A_bytes (w_A Wx) + kNodesBlockSize ->
     (exists g, g mod 4096 = 0 /\ 0 < g /\ g + kStoreBlockSize <= alloc_top (m_vmmaps md') /\
-      region_free (vm_reserved (m_vmmaps md') ++ vm_maps (m_vmmaps md')) (Z_to_bv 64 g) (Z_to_bv 64 kStoreBlockSize) = true) /\
+      region_free (vm_reserved (m_vmmaps md') ++ vm_maps (m_vmmaps md')) (Z_to_bv 64 g) (Z_to_bv 64 kStoreBlockSize) = true /\
+      LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g) /\
     eager_used md' + A_bytes (w_A Wx') + kStoreBlockSize <= vm_limit (m_vmmaps md')).
 Proof.
 intros B ly S W mem0 md0 md Wx X k HAR HM LIM ERS ETOP EM XS XN EG AB Hk HK.
@@ -247,13 +283,14 @@ assert (PL : forall md' (X' : list (word * word)) nZ,
   vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md0) -> alloc_top (m_vmmaps md0) <= alloc_top (m_vmmaps md') ->
   (forall e, In e (vm_maps (m_vmmaps md')) -> In e (vm_maps (m_vmmaps md0)) \/ In e X') ->
   Forall (fun e => 0 < bv_unsigned (snd e) <= NOB) X' -> Z.of_nat (length X') <= 1024 -> 0 < nZ <= NOB ->
-  exists a, grant_ok_na_pin md' a nZ = true).
+  exists a, YK13.grant_ok_na_pin_b md' a nZ = true
+    /\ LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= bv_unsigned a).
 { intros md' X' nZ E1 E2 E3 E4 E5 E6.
   exact (depot_grant_exists ly S md0 md' X' nZ (am_layout _ _ _ _ M) L NZ
     (YFia.sec_extents_count _ _ _ _ M) (YFia.sec_extents_sizes _ _ _ _ M) E1 E2 E3 E4 E5 E6). }
 split; [split; [|exact G8] | split; [exact G84 |]].
-- destruct (PL md X kNodesBlockSize ERS ETOP EM XS ltac:(lia) ltac:(unfold kNodesBlockSize, NOB; lia)) as [a Ha].
-  exact (pin_room _ _ _ Ha).
+- destruct (PL md X kNodesBlockSize ERS ETOP EM XS ltac:(lia) ltac:(unfold kNodesBlockSize, NOB; lia)) as [a [Ha Hfl]].
+  exact (pin_room _ _ _ Ha Hfl).
 - intros xw nw md' Wx' Hnw LIM' ERS' ETOP' EM' EG' AB'.
   split.
   + assert (EM2 : forall e, In e (vm_maps (m_vmmaps md')) -> In e (vm_maps (m_vmmaps md0)) \/ In e ((xw, nw) :: X)).
@@ -263,13 +300,13 @@ split; [split; [|exact G8] | split; [exact G84 |]].
     { apply Forall_cons; [simpl; rewrite Hnw; unfold kNodesBlockSize, NOB; lia | exact XS]. }
     assert (ERS2 : vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md0)) by (rewrite ERS'; exact ERS).
     assert (XN2 : Z.of_nat (length ((xw, nw) :: X)) <= 1024) by (cbn [length]; lia).
-    destruct (PL md' ((xw, nw) :: X) kStoreBlockSize ERS2 ltac:(lia) EM2 XS2 XN2 ltac:(unfold kStoreBlockSize, NOB; lia)) as [a Ha].
-    exact (pin_room _ _ _ Ha).
+    destruct (PL md' ((xw, nw) :: X) kStoreBlockSize ERS2 ltac:(lia) EM2 XS2 XN2 ltac:(unfold kStoreBlockSize, NOB; lia)) as [a [Ha Hfl]].
+    exact (pin_room _ _ _ Ha Hfl).
   + rewrite LIM'. exact (d3i_post_arith _ _ _ _ _ G84 EG' AB').
 Qed.
 
 (* ===== THE ONE-BLOCK LEMMA, at Put's call of Store / Alloc / TwoLevelMap::Create, from premises every walk has
-   (WireSyms B, Wf (as_universe B) S, and Put's own In tr (as_universe B), tfib_depot_spec YFl0.v:66-75).
+   (WireSyms B, Wf (as_universe B) S, and Put's own In tr (as_universe B), tfib_depot_spec YFl0.v:67-76).
    F = s_total before the call, n = the trace's frames (Store), cnt = n + 1 (Alloc's count). ===== *)
 Theorem depot_store_one_block : forall B S (tr : list Z) (F : Z),
   WireSyms B -> Wf (as_universe B) S -> In tr (as_universe B) -> F <= 32 + depot_frames S ->
@@ -295,7 +332,7 @@ intros B S tr F cnt HB WF Htr HF ->.
 pose proof (depot_store_one_block B S tr F HB WF Htr HF) as X. cbv zeta in X. lia.
 Qed.
 
-(* The new node id (n_uniq_ids + 1) of an inserting Put (aok's z = 1 arm, YG00.v:601: the trace is not yet in the
+(* The new node id (n_uniq_ids + 1) of an inserting Put (aok's z = 1 arm, YG00.v:602: the trace is not yet in the
    depot) is at most 4097, in either numbering (the donor's n_uniq_ids = depot_ids S, knock's = len (st_depot S)). *)
 Theorem depot_node_one_block : forall B S (tr : list Z) (id : Z),
   WireSyms B -> Wf (as_universe B) S -> In tr (as_universe B) -> mem_trace tr (st_depot S) = false ->

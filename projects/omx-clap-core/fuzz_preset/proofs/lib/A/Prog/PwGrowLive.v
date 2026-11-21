@@ -1,5 +1,5 @@
 (* fuzz_preset, program part (image-free): the LIVE REQUESTS and the EVENT LISTS of grow's walks against the
-   post-implication text (the kit's cut 7cdbb61b5fa0, lib/A/PRH_FnReader.v blob f1ae32e3b2cd): ONE COPY for image A'
+   post-implication text (the kit's cut, lib/A/PRH_FnReader.v blob f1ae32e3b2cd): ONE COPY for image A'
    (lib/A/Prog/PwGrow.v) and image B' (writer GrowAp, a Theorem Labs lane's grow A' lane; image B takes it by path).
    rule 24: no function proved. rule 24: proves no function (kind: list lemmas of a walk).
    WHAT. tgrow_specX's arms state the live requests after the call as the entry's moved by the arm's events,
@@ -123,7 +123,7 @@ Proof. intros o cap. unfold prhPg_evs. rewrite Z.ltb_irrefl. cbn [nth]. destruct
 Lemma grow_evs_tt : forall cap, prhPg_evs true cap cap [true; true] = [prhPg_ev 56 cap; prhPg_ev 8 cap].
 Proof. intros cap. unfold prhPg_evs. rewrite Z.ltb_irrefl. reflexivity. Qed.
 
-(* ---- THE LIVE ROOM AT EACH EVENT (PRH_Base.prh_live_evs, tgrow_specX's request / live premise at the batch kit 7cdbb61b5fa0)
+(* ---- THE LIVE ROOM AT EACH EVENT (PRH_Base.prh_live_evs, tgrow_specX's request / live premise at the batch kit)
    gives each realloc's own live premise (tfuzz_realloc_specX: blocks_bytes S + (n + cf_head) <= LIVE_MAX at
    cnt <> fail): event 0 at the entry state (the kids call), event 1 at the state after the kids grant (the keys call),
    whose live list is the entry's moved by the kids event ---- *)

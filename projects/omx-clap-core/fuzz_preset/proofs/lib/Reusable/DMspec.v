@@ -1,6 +1,7 @@
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/DMspec.v@aa322d8bb0b; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/DMspec.v; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The contract of Quarantine::Drain (0x32f58) with the REAL MergeBatches, for the shared (reply / preset)
    allocator instance, in the form of cgif_file's released tfib_drain_spec (YFeu.v:190-208).
 
@@ -13,7 +14,7 @@
      instance's tree is [drain_body_cf] below, the drain sub-tree of free_cf: maybe_drain_cf's branch after the
      thread-cache test ([maybe_drain_cf_drain]);
    - the class-24 batch bound is a parameter [L24], with the premise that the number of batch objects of the
-     quarantine is at most [L24] (all_batches = thread list ++ global list, YG01.v:153; the shared instance takes
+     quarantine is at most [L24] (all_batches = thread list ++ global list, YG01.v:154; the shared instance takes
      L24 := L24MAX_cf, h-mani-a8's YGcfBatch.v). No fixed window;
    - cgif's byte bounds [qloose X] (thread bytes <= 2^29, false on the shared instance) become a parameter
      [QB : astate -> Prop] on the entry state (cgif: qloose; preset / reply: their cf bounds). The proof reads the

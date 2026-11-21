@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag and the new auxv layout). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -33,14 +33,14 @@ Inductive rkind : Type :=
 | KShadow
 | KUnk
 | KImg (w : bool) (i : nat)
-| KEntry (ph : PhdrInfo).
+| KEntry (r : bool) (ph : PhdrInfo).  (** [r]: the launch's rseq flag, which fixes the auxv's size *)
 
 Record region : Type := Rg {
-  rg_ts : terms;
+  rg_ts : terms;              (* [comment removed for export] *)
   rg_bo : w64;
-  rg_n : int;
+  rg_n : int;                 (* [comment removed for export] *)
   rg_kind : rkind;
-  rg_d : nat;
+  rg_d : nat;                 (* [comment removed for export] *)
   rg_cells : itrie cell
 }.
 
@@ -48,9 +48,9 @@ Definition with_cells (R : region) (t : itrie cell) : region :=
   Rg (rg_ts R) (rg_bo R) (rg_n R) (rg_kind R) (rg_d R) t.
 
 Definition rk_writable (k : rkind) : bool :=
-  match k with KZero | KShadow | KUnk => true | KImg w _ => w | KEntry _ => false end.
+  match k with KZero | KShadow | KUnk => true | KImg w _ => w | KEntry _ _ => false end.
 
-Definition is_entry (R : region) : bool := match rg_kind R with KEntry _ => true | _ => false end.
+Definition is_entry (R : region) : bool := match rg_kind R with KEntry _ _ => true | _ => false end.
 
 Definition rbase (ρ : valuation) (R : region) : Z := smod ρ (rg_ts R) (rg_bo R).
 
@@ -72,7 +72,7 @@ Definition default_byte (k : rkind) (x : int) : xb :=
   | KZero | KShadow => BL 0%uint63
   | KUnk => BT
   | KImg _ i => match fimg_i segs i x with Some b => BL b | None => BT end
-  | KEntry _ => BT
+  | KEntry _ _ => BT
   end.
 
 Definition get_cell_opt (R : region) (k : int) : option cell := iget (rg_d R) (rg_cells R) k.
@@ -109,7 +109,7 @@ Definition RRegion0 (ρ : valuation) (m : word -> option byte) (R : region) : Pr
 
 Definition RRegion (ρ : valuation) (m : word -> option byte) (R : region) : Prop :=
   match rg_kind R with
-  | KEntry ph => eb_rel ph ρ m (rbase ρ R) (to_Z (rg_n R))
+  | KEntry r ph => eb_rel r ph ρ m (rbase ρ R) (to_Z (rg_n R))
   | _ => RRegion0 ρ m R
   end.
 
@@ -211,6 +211,9 @@ Fixpoint replace_nth (A : list region) (i : nat) (R' : region) : list region :=
   | R0 :: A', S i' => R0 :: replace_nth A' i' R'
   end.
 
+Lemma replace_nth_length (A : list region) (i : nat) (R' : region) : length (replace_nth A i R') = length A.
+Proof. revert i; induction A as [|R0 A IH]; intros [|i]; cbn [replace_nth length]; try reflexivity. rewrite IH. reflexivity. Qed.
+
 Lemma Forall_replace_nth' (P : region -> Prop) (A : list region) (i : nat) (R' : region) :
   (forall j Rj, nth_error A j = Some Rj -> j <> i -> P Rj) -> P R' -> (i < length A)%nat -> Forall P (replace_nth A i R').
 Proof.
@@ -255,9 +258,8 @@ Definition xaddr (v : xv) : option (terms * w64) :=
 
 Definition roff (R : region) (ts : terms) (o : w64) (n : int) : option int :=
   match rg_kind R with
-  | KEntry _ => None
+  | KEntry _ _ => None
   | _ =>
-
       if teqb (rg_ts R) ts then
         let d := w_sub o (rg_bo R) in
         if wh d then None else
@@ -477,7 +479,7 @@ Definition unk_cell : cell := CB (repeat BT 8).
 Definition default_cell (kd : rkind) (k : int) : cell :=
   match kd with
   | KZero | KShadow => CW w_zero
-  | KUnk | KEntry _ => unk_cell
+  | KUnk | KEntry _ _ => unk_cell
   | KImg _ _ => let x := (k << 3)%uint63 in
                 CB [default_byte segs kd x; default_byte segs kd (x + 1)%uint63; default_byte segs kd (x + 2)%uint63;
                     default_byte segs kd (x + 3)%uint63; default_byte segs kd (x + 4)%uint63; default_byte segs kd (x + 5)%uint63;
@@ -664,6 +666,46 @@ Proof.
   - replace ((to_Z x <=? to_Z y) && (to_Z y <? to_Z x + Z.of_nat (length nb))) with false; [reflexivity|].
     symmetry. apply andb_false_iff. destruct (Z_lt_le_dec (to_Z y) (to_Z x)); [left; apply Z.leb_gt; lia|].
     right. apply Z.ltb_ge. assert (to_Z x / 8 < to_Z y / 8) by (assert (to_Z x / 8 <= to_Z y / 8) by (apply Z.div_le_mono; lia); lia). lia.
+Qed.
+
+Lemma rwrite_each_fields (nb : list xb) : forall (R : region) (x : int), same_fields R (rwrite_each segs nb R x).
+Proof.
+  induction nb as [|b nb IH]; intros R x; cbn [rwrite_each]; [repeat split|].
+  destruct (IH (rwrite1 segs [b] R x) (x + 1)%uint63) as [F1 [F2 [F3 [F4 F5]]]]. repeat split; assumption.
+Qed.
+
+Lemma rbyte_rwrite_each (nb : list xb) : forall (R : region) (x y : int),
+  to_Z (rg_n R) <= 8 * 2 ^ Z.of_nat (rg_d R) -> to_Z (rg_n R) < 2 ^ 60 ->
+  to_Z x + Z.of_nat (length nb) <= to_Z (rg_n R) -> to_Z y < to_Z (rg_n R) ->
+  rbyte segs (rwrite_each segs nb R x) y =
+  if (to_Z x <=? to_Z y) && (to_Z y <? to_Z x + Z.of_nat (length nb)) then nth (Z.to_nat (to_Z y - to_Z x)) nb BT
+  else rbyte segs R y.
+Proof.
+  induction nb as [|b nb IH]; intros R x y Hd H60 Hx Hy; cbn [rwrite_each length].
+  - replace ((to_Z x <=? to_Z y) && (to_Z y <? to_Z x + Z.of_nat 0)) with false
+      by (symmetry; apply andb_false_iff; destruct (Z_lt_le_dec (to_Z y) (to_Z x)); [left; apply Z.leb_gt; lia | right; apply Z.ltb_ge; lia]).
+    reflexivity.
+  - cbn [length] in Hx. pose proof (to_Z_bounded x) as Hxb. change wB with (2 ^ 63) in Hxb.
+    assert (HL : Z.of_nat (S (length nb)) = Z.of_nat (length nb) + 1) by lia.
+    assert (Hx1 : to_Z (x + 1)%uint63 = to_Z x + 1) by (apply int_add_1; lia).
+    destruct (rwrite1_fields [b] R x) as [_ [_ [F3 [_ F5]]]].
+    rewrite IH by (rewrite ?F3, ?F5, ?Hx1; lia).
+    rewrite Hx1. rewrite rbyte_rwrite1 by (try lia; cbn [length]; pose proof (i2n_lt8 x); lia).
+    cbn [length].
+    destruct (Z.eqb_spec (to_Z y) (to_Z x)) as [->|Hne].
+    + replace ((to_Z x + 1 <=? to_Z x) && _) with false by (symmetry; apply andb_false_iff; left; apply Z.leb_gt; lia).
+      replace ((to_Z x <=? to_Z x) && (to_Z x <? to_Z x + Z.of_nat 1)) with true by (symmetry; apply andb_true_iff; split; [apply Z.leb_le | apply Z.ltb_lt]; lia).
+      replace ((to_Z x <=? to_Z x) && (to_Z x <? to_Z x + Z.of_nat (S (length nb)))) with true by (symmetry; apply andb_true_iff; split; [apply Z.leb_le | apply Z.ltb_lt]; lia).
+      rewrite Z.sub_diag. reflexivity.
+    + destruct ((to_Z x + 1 <=? to_Z y) && (to_Z y <? to_Z x + 1 + Z.of_nat (length nb))) eqn:E1.
+      * apply andb_true_iff in E1 as [E1 E2]. apply Z.leb_le in E1. apply Z.ltb_lt in E2.
+        replace ((to_Z x <=? to_Z y) && (to_Z y <? to_Z x + Z.of_nat (S (length nb)))) with true by (symmetry; apply andb_true_iff; split; [apply Z.leb_le | apply Z.ltb_lt]; lia).
+        replace (Z.to_nat (to_Z y - to_Z x)) with (S (Z.to_nat (to_Z y - (to_Z x + 1)))) by lia. reflexivity.
+      * replace ((to_Z x <=? to_Z y) && (to_Z y <? to_Z x + Z.of_nat 1)) with false by (symmetry; apply andb_false_iff; destruct (Z_lt_le_dec (to_Z y) (to_Z x)); [left; apply Z.leb_gt; lia | right; apply Z.ltb_ge; lia]).
+        replace ((to_Z x <=? to_Z y) && (to_Z y <? to_Z x + Z.of_nat (S (length nb)))) with false; [reflexivity|].
+        symmetry. apply andb_false_iff. apply andb_false_iff in E1 as [E1|E1]; [apply Z.leb_gt in E1 | apply Z.ltb_ge in E1].
+        -- left. apply Z.leb_gt. lia.
+        -- right. apply Z.ltb_ge. lia.
 Qed.
 
 Lemma rwrite_chunks_fields (fuel : nat) : forall (nb : list xb) (R : region) (x : int), same_fields R (rwrite_chunks segs fuel nb R x).

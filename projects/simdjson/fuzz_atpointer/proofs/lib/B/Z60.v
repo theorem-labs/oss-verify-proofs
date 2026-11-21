@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -83,7 +84,7 @@ Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia.
 
 Lemma newframe_apartI : forall (Σ Σ1 : rts RT) (m1 : mem) Fr k usp a,
   ART RT Σ1 m1 -> rt_frames RT Σ1 = (Fr, k) :: rt_frames RT Σ -> (forall x, In x (rt_live RT Σ) -> In x (rt_live RT Σ1)) -> rt_sp0 RT Σ1 = rt_sp0 RT Σ ->
-  rt_sp0 RT Σ - STACK_WIN <= usp -> aclient (rt_live RT Σ) (rt_frames RT Σ) usp a ->
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= usp -> aclient (rt_live RT Σ) (rt_frames RT Σ) usp a ->
   ~ (Fr <= a < Fr + fs_size k) /\ ~ (shad Fr <= a < shad (Fr + fs_size k)).
 Proof using AF.
   intros Σ Σ1 m1 Fr k usp a ART1 FRS LV SP0 LU Ha.
@@ -363,7 +364,7 @@ Lemma aevt_opnew : forall Σ K (ra gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 
   1 <= n <= 0x20001000 -> tp = Z_to_bv 64 0x653c30 ->
   Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX -> mcost n <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo usp -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 16 + RT_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 ->
+  stk bsegs m lo usp -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 16 + RT_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 ->
   (forall (Σ' : rts RT) (p : Z) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
      ART RT Σ' m' -> mem_inv bsegs m' -> wmono bsegs m m' -> stk bsegs m' lo usp ->
      rt_pres (rt_live RT Σ) (rt_frames RT Σ) usp m m' ->

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new section premise Hrdr, the channel reader the revision's writev reads, carried to the model after the second block and passed to stdio_call_sound_frA). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -204,6 +205,8 @@ Section P1.
   Hypothesis SPal : (bv_unsigned sp0 mod 16 = 0)%Z.
   Hypothesis HKI : KI model.
   Hypothesis Hfd1 : fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  (* the revision's writev reads the channel reader *)
+  Hypothesis Hrdr : m_channel_reader model = true.
   (* [comment removed for export] *)
   Hypothesis WCS : crange CS (bv_unsigned sp0 - 4096) 4096.
   Hypothesis FCS : crange CS 0x15700 64.
@@ -536,6 +539,9 @@ Section P1.
     change (W 1 (zero_lines 1)) with (map (WriteEv (Z_to_bv 64 (sc_fd resC))) ([Z_to_bv 8 48] ++ [Z_to_bv 8 10])).
     assert (FdB : fd_lookup (m_fds mo0) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))).
     { unfold m_fds in *. destruct MMB as (E1 & _). rewrite E1. exact FdA. }
+    assert (RdB : m_channel_reader mo0 = true).
+    { pose proof MMA as X. destruct X as (_ & _ & _ & _ & _ & E6 & _). pose proof MMB as Y. destruct Y as (_ & _ & _ & _ & _ & E7 & _).
+      unfold m_channel_reader in *. rewrite E7, E6. exact Hrdr. }
     eapply (stdio_call_sound_frA AL CS KI IMG K_halted K_mat K_vmonly valsP1 (blobs_ev []) srB knB RB0 MB mo0 resC [Z_to_bv 8 48] [Z_to_bv 8 10] KK HR HK);
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn resC edenot].
     + vm_compute. reflexivity.
@@ -553,6 +559,7 @@ Section P1.
     + (* [comment removed for export] *)
       cbn [length]. krd HK 0x1573d%Z 1%nat Wnl. rewrite Wnl. reflexivity.
     + exact FdB.
+    + exact RdB.
     + exact HKB.
     + (* [comment removed for export] *)
       intros z Hz. revert Hz. evs. rewrite alu_add_zlit by lia. rewrite !u_small by lia. intros Hz. apply WCS. lia.

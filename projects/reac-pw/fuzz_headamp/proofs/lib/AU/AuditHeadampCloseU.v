@@ -11,8 +11,8 @@
    H_ALLOC_MALLOC_U, H_ALLOC_FREE_U, H_RT_MEMCPY_U, H_TRACES_B_U, H_DRIVER_U, so after End they are functions of those
    premises; their Print Assumptions shows axioms only, not those premises. The closed Statements.* come from the
    YD2o assembly, not from these conditional parts. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/AU/AuditKnockCloseU.v at origin/ossv/recipes
-   2d2ff01bb6f, for reac-pw/fuzz_headamp image B: the same pairs for headamp's lib/AU/YD2o.v, YHeadampAllocClose.v,
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/AU/AuditKnockCloseU.v,
+   for reac-pw/fuzz_headamp image B: the same pairs for headamp's lib/AU/YD2o.v, YHeadampAllocClose.v,
    HeadampAsanTop's asan_ubsan tops, HeadampClose's asan_ubsan Section (ASAN_UBSAN_T_of_parts too) and the shared plain
    slot lib/A/HeadampPlainSlot.v, with `About` for each top (YD2o's tops take no argument: image B's program contract
    is lib/AU/HPgTopI.v headamp_lib_x_all); names knock_* -> headamp_*, module paths changed. Every Print
@@ -25,6 +25,7 @@
    B's segments), lib/AU/HPgSatU.v and lib/AU/HPgSatSegU.v (image B's witness of the segment contracts' image-level
    premises) and lib/AU/HPgSegSat.v (lib/AU/HPgSeg.v's witness at headamp_himg_B / headamp_bld_B), with Print
    Assumptions of lemmas that each of them prints itself. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.AU Require YD2o YHeadampAllocClose HPgBM3aSat HPgParseSat HPgSatU
   HPgSatSegU HPgSegSat.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.A Require HeadampAsanTop HeadampClose HeadampPlainSlot.

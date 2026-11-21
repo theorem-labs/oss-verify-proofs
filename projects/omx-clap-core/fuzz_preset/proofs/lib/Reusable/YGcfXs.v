@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: cfx_fr_free_cf's script covers free_cf's recycle side (cfx_fr_recycle_chunk); statements unchanged. *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: cfx_fr_free_cf's script covers free_cf's recycle side (cfx_fr_recycle_chunk); statements unchanged. A change request to a Theorem Labs lane. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfXs.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfXs.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10: facts about xs_placed_cf (YG0ncf.v), the placement of the error-message-buffer extent
    xs_cf ly S = [(ly_sec ly i, errb_cap_cf S)] like a live secondary. ARcf does not pin that extent (every ARcf
    fact about ly_sec ranges over sec_extents, built from st_chunks), so the call leaves carry xs_placed_cf at the
@@ -126,7 +127,7 @@ replace (filter is_errb_cap [sm]) with (@nil secmap) by (cbn [filter]; rewrite H
 rewrite app_nil_r. cbn [last_cap_idx]. rewrite Hn. reflexivity.
 Qed.
 
-(* errb_retire's re-tag (YG00cf.v:97-99). *)
+(* errb_retire's re-tag (YG00cf.v:98-100). *)
 Definition cfx_retire (sm : secmap) : secmap :=
 if is_errb_cap sm then mkSec (sm_len sm) ERRB_DEAD_TAG false else sm.
 
@@ -136,7 +137,7 @@ Proof. intros sm. unfold cfx_retire. destruct (is_errb_cap sm) eqn:E; [reflexivi
 Lemma cfx_filter_retired : forall l, filter is_errb_cap (map cfx_retire l) = [].
 Proof. induction l as [|x t IH]; [reflexivity|]. cbn [map filter]. rewrite cfx_retire_noncap. exact IH. Qed.
 
-(* After errb_map_cf (YG00cf.v:121-126): every old capacity entry retired, the new one appended. *)
+(* After errb_map_cf (YG00cf.v:122-127): every old capacity entry retired, the new one appended. *)
 Lemma xs_cf_remap : forall ly S S' ncap,
 st_secs S' = map cfx_retire (st_secs S) ++ [mkSec ncap ERRB_CAP_TAG false] ->
 xs_cf ly S' = [(ly_sec ly (length (st_secs S)), Z.max 0 ncap)].
@@ -201,12 +202,16 @@ forall e, In e (xs_cf ly S) -> In (wiv e) (vm_maps (m_vmmaps md)).
 Lemma ARcf_xsm : forall segs B ly S Hp W mem md, ARcf segs B ly S Hp W mem md -> xs_mapped_cf ly S md.
 Proof. intros segs B ly S Hp W mem md (_ & L & _). exact (alc_xs _ _ _ _ L). Qed.
 
-(* The LPS grant (grant_ok_na_pin, YK13.v:204) is region_free over every map of the model. *)
-Lemma grant_apart_cf : forall md a n b s, grant_ok_na_pin md (w64 a) n = true ->
+(* The LPS grant ([grant_ok_na_pin] at the NULL hint, YK13.v) is region_free over every map of the model: the
+   placement rule's answer implies the old four-way guard (YK13.grant_ok_na_pin_facts) at a positive page-aligned
+   size. *)
+Lemma grant_apart_cf : forall md a n b s, grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) n = true -> 0 < n -> n mod 4096 = 0 ->
 0 <= a < 2 ^ 64 -> 0 <= n < 2 ^ 64 -> In (wiv (b, s)) (vm_maps (m_vmmaps md)) -> 0 <= b < 2 ^ 64 -> 0 <= s < 2 ^ 64 ->
 zdisjoint (a, n) (b, s).
 Proof.
-intros md a n b s H Ha Hn Hin Hb Hs. unfold grant_ok_na_pin in H.
+intros md a n b s H Hn0 Hnal Ha Hn Hin Hb Hs.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn0 ltac:(unfold page_size; exact Hnal) H) as H0. clear H. rename H0 into H.
+unfold YK13.grant_ok_na_pin_b in H.
 apply andb_true_iff in H as [_ H4]. rewrite YK13.region_free_app in H4. apply andb_true_iff in H4 as [_ H4].
 change (wiv (b, s)) with (w64 b, w64 s) in Hin.
 pose proof (YK13.region_free_In _ _ _ _ _ H4 Hin) as R. unfold w64 in R.
@@ -214,9 +219,12 @@ rewrite !Z_to_bv_unsigned in R. rewrite !bv_wrap_small in R by (change (bv_modul
 unfold zdisjoint. cbn [fst snd]. lia.
 Qed.
 
-Lemma grant_aligned_cf : forall md a n, grant_ok_na_pin md (w64 a) n = true -> 0 <= a < 2 ^ 64 -> page_aligned a.
+Lemma grant_aligned_cf : forall md a n, grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) n = true -> 0 < n -> n mod 4096 = 0 ->
+0 <= a < 2 ^ 64 -> page_aligned a.
 Proof.
-intros md a n H Ha. unfold grant_ok_na_pin in H.
+intros md a n H Hn0 Hnal Ha.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn0 ltac:(unfold page_size; exact Hnal) H) as H0. clear H. rename H0 into H.
+unfold YK13.grant_ok_na_pin_b in H.
 apply andb_true_iff in H as [H _]. apply andb_true_iff in H as [H _]. apply andb_true_iff in H as [H _].
 apply Z.eqb_eq in H. unfold w64 in H. rewrite Z_to_bv_unsigned, bv_wrap_small in H by (change (bv_modulus 64) with (2 ^ 64); lia).
 exact H.
@@ -230,15 +238,15 @@ Qed.
 
 (* The grow case's premise, from the grant of the new map at a and the walk fact xs_mapped_cf. *)
 Lemma xs_fresh_of_grant : forall ly S md a n, xs_placed_cf ly S -> xs_mapped_cf ly S md ->
-grant_ok_na_pin md (w64 a) n = true -> 0 <= a -> 0 <= n -> a + n < 2 ^ 64 ->
+grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) n = true -> 0 < n -> n mod 4096 = 0 -> 0 <= a -> 0 <= n -> a + n < 2 ^ 64 ->
 Forall (fun e => zdisjoint e (a, n)) (xs_cf ly S).
 Proof.
-intros ly S md a n HP Hm Hg Ha Hn Han. apply Forall_forall. intros e He.
+intros ly S md a n HP Hm Hg Hn0 Hnal Ha Hn Han. apply Forall_forall. intros e He.
 pose proof (proj1 (Forall_forall _ _) HP e He) as (_ & [I0 _] & UB & _).
 pose proof (proj1 (Forall_forall _ _) (cfx_xs_snd_nonneg ly S) e He) as S0.
 pose proof alloc_ceiling_lt as CL.
 destruct e as [b s]. cbn [fst snd] in *.
-pose proof (grant_apart_cf md a n b s Hg ltac:(lia) ltac:(lia) (Hm _ He) ltac:(lia) ltac:(lia)) as D.
+pose proof (grant_apart_cf md a n b s Hg Hn0 Hnal ltac:(lia) ltac:(lia) (Hm _ He) ltac:(lia) ltac:(lia)) as D.
 unfold zdisjoint in *. cbn [fst snd] in *. lia.
 Qed.
 

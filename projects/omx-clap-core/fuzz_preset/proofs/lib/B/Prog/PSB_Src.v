@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 635 of its 665 lines of code are new or changed and 322 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsRet.v, with its module paths and module names changed; 242 of its 285 lines of code are new or changed and 622 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/B, parse_string on image B (asan-ubsan): THE TEXT ACROSS ONE CALL, shared by every stretch of the
    B walk that calls (PSB_Scan: fuzz_malloc; PSB_U / PSB_Tail: hex4, put_utf8, fuzz_free). The B twin of WalkS4's
-   lib/A/Prog/S4_PsSrc.v (a working branch e8c3040757a): the same statements over image B's
+   lib/A/Prog/S4_PsSrc.v (a working branch): the same statements over image B's
    instances (PSB_Base.v's PSB_PrhImg / PSB_PAListing / PSB_PAImg); image B's fact prh_pst_not_ro proved by computation
    over PI_prog_B's segments and relro bounds.
    rule 24: proves no function (kind: segment lemma). The function is parse_string B (lane BParseString); its reuse
@@ -19,10 +20,10 @@
      in_zs                 alx_zshadow over the image's zero-shadow range;
      kept_img              per granule: alx_zshadow, or the const-shadow cell kept by field 16 alx_const_cells.
    The hull of an image text is the image's shadow (psb_img_shadow_vis below, over the PER-INSTANCE bounds pa_lo /
-   pa_hi that kept_at / kept_img state since decff67d721f; a Theorem Labs lane's img_shadow_vis_cf at the instance).
-   FILE SET: every non-lane file as the kit's cut 7cdbb61b5fa0 carries it (YCbqG.v 219748197d6b, PRW_HShadow.v 2662d68ca36b);
-   earlier the lane's base 4800805a954 (the kit walkkit 4eb03b7b7e8).
-   IMAGE FACTS taken as Section hypotheses (BParseString's agreement, verbatim from S4_PsSrc.v:117 / :119): ZSA, the
+   pa_hi that kept_at / kept_img state; a Theorem Labs lane's img_shadow_vis_cf at the instance).
+   FILE SET: every non-lane file as the kit's cut carries it (YCbqG.v 219748197d6b, PRW_HShadow.v 2662d68ca36b);
+   earlier the lane's base (the kit walkkit).
+   IMAGE FACTS taken as Section hypotheses (BParseString's agreement, verbatim from S4_PsSrc.v:118 / :120): ZSA, the
    zero-shadow ranges are granule-aligned (asyms_ok's aso_zshadow, YG0f.v:191); IMGV, psb_img_shadow_vis (a Theorem Labs lane's
    img_shadow_vis_cf at image B's own bounds, a unit-supplied fact; owner a Theorem Labs lane, instance
    lib/AU/AImgShadowVisCfB.v in the cut; never YImgTop's IMG_LO / IMG_TOP, which are image A's).
@@ -125,7 +126,7 @@ Qed.
 
 (* IMAGE FACT, PER INSTANCE (a Theorem Labs lane's rule 2026-10-29 18:56Z): the image's shadow bytes are present in the view at
    every address of the image's OWN bounds, here image B's listing instance's pa_lo / pa_hi (the bounds kept_at /
-   kept_img state, PRH_Base.v, per-instance since decff67d721f). At the #102 instance it is img_shadow_vis_cf at B's
+   kept_img state, PRH_Base.v, per-instance). At the #102 instance it is img_shadow_vis_cf at B's
    CfImg, whose cf_img_lo / cf_img_top equal pa_lo / pa_hi by computation (PSB_Inst.v). It replaces PRW_HShadow.v's
    ARx_img_shadow_vis, which is stated over YImgTop's IMG_LO / IMG_TOP (image A's bounds, below B''s top on #102) *)
 Definition psb_img_shadow_vis

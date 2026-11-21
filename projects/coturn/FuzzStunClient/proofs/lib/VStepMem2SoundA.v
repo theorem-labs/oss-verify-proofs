@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, a load that finds no bytes answers MachineUnmodeled on the vvar pages, and the proof rules that answer out. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Bool Lia.
@@ -946,6 +947,8 @@ Section A.
     - (* [comment removed for export] *) revert ST. destruct sz, signed; step_pipeline Hf He Hd.
       all: rewrite ?ov_rdn.
       all: match goal with |- context [rdn ?s ?m ?a ?n] => destruct (rdn s m a n) end; cbv beta iota; intros ST; try discriminate.
+      (* 08b1429: a load that finds no bytes answers MachineUnmodeled on the vvar pages, else MachineFault *)
+      all: try (match type of ST with context [if ?b then MachineUnmodeled else _] => destruct b end; discriminate ST).
       all: injection ST; intros; congruence.
     - erewrite step_opimm_gen in ST by eauto. eauto.
     - erewrite step_shiftimm_gen in ST by eauto. eauto.

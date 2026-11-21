@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, lemmas added for the revision, the launch's channel reader. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Ref0Gc. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -61,9 +62,21 @@ Proof.
 ltac2:(KReplay.run1 (kr_t_MallocSR ()) ["HCW"] "h01Lh12_Hh21Kh32moh45nd_i2h51sp;2p;1p;4p;3p;5g01=@j2HTg00NHj1GTg01>Cj2?Tg00U1j13Tg01?Kj49Tg01@Oj46Tg004Yj22Tg01AQj11Tg01B6j1=Tg01BTj1<Tg01C7j1;Tg01CYj15Tg01DPj1:Tg004?j30Tg00[:j2FTg002Ej18Tg01E2j14Tg003?j17Tg01Ejj5CTg01G0j1@Tg01H0j5ATg01I6j3BTg005hj4>Tg01IQj5DTg000Gj5ETg012Qg01JVf1R0f0R1'Hg014_R2f3R3#G/?1R4p,5HCEILR5P1%33f2R6C9R7P1P6g01KLR8P8C6R9'2'2X02g01;8#1#1#1#1#1#1#=#<R:#;R;%50%::R<301F::R=#8R>%40%7=R=30'2P4P7P9%56=0;<%46=0>='2P5P0f4R9#3P3C9P6P9P8P8C6f5R8#5=0;<%48=0>=R=P5P3f6#3R>P8P0DC%8:%@8%7:30P5P3P>P8P0DA5B=C>W1W2X14DDX02P1DEW4W3W5o"). Qed.
 
 (* [comment removed for export] *)
-Lemma KM_vm : ltac2:(zQ "c0!jrc!joa!iu8!kja!kj4!jqf!js2!jsf!kk6!jt8!kof!ihb>1s$b>2mo$2>3mo'$2>0@2$4^3^2>0@1$a^2>0@3$0@1$7@1$5@1$1#k0@1$9^3@1$6@1$5@1$1#k0>0@3$0$8@1$3^4@1$3^5@2$4^7^5").
+(* LPS 727298f3 port: the kernel relation carries the launch's channel reader ([kb_rdr]) *)
+Lemma KM_reader : forall s mo, KM s mo -> m_channel_reader mo = true.
+Proof. intros s mo K. unfold KM in K. destruct K as (L & _ & K & _). exact (kb_rdr _ _ _ K). Qed.
+
+Lemma KM_vm : forall s mo mo', KM s mo -> mminv mo' -> m_halted mo' = None ->
+  m_kernel mo' = m_kernel mo -> m_channel_reader mo' = m_channel_reader mo ->
+  m_vmmaps mo' = m_vmmaps mo -> KM s mo'.
+(* LPS 727298f3 port: restated with [m_kernel mo' = m_kernel mo] (the kernel relation's
+   vDSO fields read [m_kernel]); proof written out. *)
 Proof.
-ltac2:(KReplay.run1z (kr_t_MallocSR ()) ["HCW"] "##/?h01Lh11Bh22CRh31Eh42HHh51Kh62MIh72moh83mo'h95nd_i3h:1sh;1vp;2p;1p;3p;4p;9p;6p;5g01=@j2:Tg01Kjj1LTg01AQj11Tg01B6j1=!s/$Tj1KTg01C7j1J!s/$Yj1ETg01DPj1ATg004?j3<Tg01M0j14Tg00NHj16Tg01>Cj28Tg00U1j15Tg01?Kj42!s\$Yj20!s\$gl9ITg018lj27Tg01Noj1HTg00j[j29Tg01P4j1D!s/$kj1BTg01R0j2@Tg00;Wj6CTg005hj4;Tg006Cj4?Tg01IQj5FTg000Gj5GTg01@Oj4>Tf1R0f0R1g01KLR2P2C>p=3g012Qg01JVR3f2R4/:0%L0g01;8#1!s$-=#KR5#J%E4%A53<g01RLR5f3R6#4f4R7#4!s;$4_R8f7R9#6/81R:p,5HCEILR;P1%59f6R<C2R=131<R>'0'0X081:<7P:P=P>f5R>,:9P;P0f8R=#5P9C2134=P8f;!sz&P!sp&9R!sB$19!sl&P6f:R?#6/86P;P6%5?R?P=C2R@136=RA'0P4P@PAP;P6P?P9P=P0P<P>P7M9IP5%491722R9%H7/92g01SCR>'7%D1,7>%B!s;&TH'9g01UO'@'0'0,09'0X;5P1%4=P7ECPAeC;C;C?W1W5X2:DF!ti$DGW3W4W6W9X83W7W:o"). Qed.
+  intros s mo mo' K MI HH EK ER E. unfold KM in *. destruct K as (L & CR & K & B).
+  exists L. split; [exact CR|]. split.
+  - exact (KLB_vm_eq L (ps_brk s) mo mo' K MI HH EK ER E).
+  - unfold BUD in *. rewrite E. exact B.
+Qed.
 
 (* [comment removed for export] *)
 Definition HBYTES : ltac2:(zQ "10!kp8$0") := ltac2:(zQ "10!kpd@2$0+2+i0").

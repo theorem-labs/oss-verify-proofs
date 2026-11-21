@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the image-B (asan-ubsan) walk of plugin-hostd/fuzz_reply's list_push
    (0x85324, 223 instructions, frame 96), proving lib/B/W_contract.v's lp_spec / lp_spec_g at
    BASE + AF_fr_list_push (lib/B/W_listing.v:23, 0x2fe0).  Written in the shape of the image-A walk
-   (a working branch ff4c06b2f3a, lib/A/W_list_push.v + lib/A/W_lp_tail.v + lib/A/W_list_push_tail.v, Qed),
+   (a working branch, lib/A/W_list_push.v + lib/A/W_lp_tail.v + lib/A/W_list_push_tail.v, Qed),
    over lib/B's own listing: image B is NOT a relocation of image A (UBSan runs in trap mode here, so every
    check is an inline branch to `unimp`, which changes the register allocation and inserts 19 trap branches in
    this function).  The A tail files are inlined here as one lemma (lp_tail_seg), as the lane gets one new file.
@@ -45,13 +45,14 @@
    holds unchanged from image A.  Registers differ from A only in s5 / s6: B keeps the shadow base SB in s6
    (atom 22) and the shadow address of l->n in s5 (atom 21); A has them the other way round.
 
-   The room round (ROOM-TEXTS.md v3 sha256 767baa12f13c; internal record) and C3, as image A's F1b (lib/A/W_list_push.v / W_lp_tail.v at
-   e32cc1247c0): the Sections take the room record RP; lp_spec_x's live bytes are C3's peak over list_push's trace
+   The room round (ROOM-TEXTS.md v3 sha256 767baa12f13c; internal record) and C3, as image A's F1b (lib/A/W_list_push.v / W_lp_tail.v):
+   the Sections take the room record RP; lp_spec_x's live bytes are C3's peak over list_push's trace
    (lp_peak_grow / lp_peak_nogrow give each call's own premise), its room budget 3 (grow) or 1 (lp_rk_eq) is spent as
    realloc's 2 and the tail malloc's 1, and its peak-form counts give each call's count premise (lp_cnt_at at S; at the
    tail after realloc, S's counts plus the new vector, the old one gone).  lp_tail_pre_x (local here; image A's is
    lib/A/W_list_push_tail.v's text) takes kr and carries the tail malloc's rp_RM RP Sc (1 + kr) and cnt_ok at Sc,
    word for word as image A's; the malloc's stack room comes from the call's journal (W_journal_x.aj_stack_room_x). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

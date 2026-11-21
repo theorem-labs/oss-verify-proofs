@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the open node's proof records, from mem_inv, that the path lies below TASK_SIZE). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -321,6 +322,9 @@ Proof.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl rsegs m) as WM.
   pose proof (bytes_at_bound _ _ _ _ SRC) as BP. rewrite length_app in BP. cbn [length] in BP.
+  (* the open node's path lies below TASK_SIZE (mem_inv: every readable byte is below UTOP) *)
+  pose proof (bytes_at_below _ _ _ _ MI SRC ltac:(destruct path; discriminate)) as BU.
+  rewrite length_app in BU. cbn [length] in BU. unfold UTOP in BU.
   apply impl_enode.
   carve_frame 96%nat ST.
   zidle_begin sp 96%Z MUz WMz.

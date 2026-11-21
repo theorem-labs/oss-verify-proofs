@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sstep_cfg_instr_inv and me_cfg_instr_inv rule out the new vDSO arms of sstep_cfg with a premise that the step is not an unmodeled one at a vDSO entry). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -34,8 +35,12 @@ Proof. intros ms model Hh Hk. apply must_exit_at_cfg_halted; [exact Hh | exact H
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* At the revision [sstep_cfg] has three vDSO arms with the same
+   [ms_svc_pending ms = None] premise; they fire only on an unmodeled step at
+   an exported vDSO entry, so the inversion needs one of those two ruled out. *)
 Lemma sstep_cfg_instr_inv : forall ms model evs st,
   ms_svc_pending ms = None ->
+  (mi_account_step segs ms model <> MachineUnmodeled \/ vdso_entry_fn segs (ms_pc ms) = None) ->
   sstep_cfg segs b (mkCfg ms model) evs st ->
   evs = [] /\
   match mi_account_step segs ms model with
@@ -43,12 +48,13 @@ Lemma sstep_cfg_instr_inv : forall ms model evs st,
   | _ => st = SError
   end.
 Proof.
-  intros ms model evs st Hsvc Hss.
+  intros ms model evs st Hsvc Hnv Hss.
   inversion Hss; subst;
-    match goal with
-    | H : mi_account_step _ _ _ = _ |- _ => rewrite H; split; reflexivity
-    | H : ms_svc_pending _ = Some _ |- _ => rewrite Hsvc in H; discriminate H
-    end.
+    first
+    [ match goal with H : ms_svc_pending _ = Some _ |- _ => rewrite Hsvc in H; discriminate H end
+    | match goal with H : mi_account_step _ _ _ = MachineUnmodeled, F : vdso_entry_fn _ _ = Some _ |- _ =>
+        exfalso; destruct Hnv as [Hnv|Hnv]; [exact (Hnv H) | rewrite F in Hnv; discriminate Hnv] end
+    | match goal with H : mi_account_step _ _ _ = _ |- _ => rewrite H; split; reflexivity end ].
 Qed.
 
 (* [comment removed for export] *)
@@ -62,25 +68,32 @@ Proof.
   apply must_exit_at_cfg_running.
   - exact Hh.
   - exists [], (SNext (mkCfg ms' model')). apply sstep_cfg_instr; assumption.
-  - intros evs Hss. destruct (sstep_cfg_instr_inv _ _ _ _ Hsvc Hss) as [_ Hst].
+  - intros evs Hss.
+    assert (Hnv : mi_account_step segs ms model <> MachineUnmodeled \/ vdso_entry_fn segs (ms_pc ms) = None)
+      by (left; rewrite Hstep; discriminate).
+    destruct (sstep_cfg_instr_inv _ _ _ _ Hsvc Hnv Hss) as [_ Hst].
     rewrite Hstep in Hst. discriminate Hst.
-  - intros evs c' Hss. destruct (sstep_cfg_instr_inv _ _ _ _ Hsvc Hss) as [_ Hst].
+  - intros evs c' Hss.
+    assert (Hnv : mi_account_step segs ms model <> MachineUnmodeled \/ vdso_entry_fn segs (ms_pc ms) = None)
+      by (left; rewrite Hstep; discriminate).
+    destruct (sstep_cfg_instr_inv _ _ _ _ Hsvc Hnv Hss) as [_ Hst].
     rewrite Hstep in Hst. injection Hst as ->. exact Hme.
 Qed.
 
 (* [comment removed for export] *)
 Lemma me_cfg_instr_inv : forall ms model,
   ms_svc_pending ms = None ->
+  vdso_entry_fn segs (ms_pc ms) = None ->
   ME (mkCfg ms model) ->
   m_halted model = None ->
   exists ms' model', mi_account_step segs ms model = MachineOk (ms', model')
                      /\ ME (mkCfg ms' model').
 Proof.
-  intros ms model Hsvc Hme Hh.
+  intros ms model Hsvc Hnv0 Hme Hh.
   inversion Hme as [c Hh' Hc | c Hh' Hprog Hnoerr Hnext Hc]; subst.
   - cbn [cfg_model] in Hh'. rewrite Hh in Hh'. discriminate Hh'.
   - destruct Hprog as (evs & st & Hss).
-    destruct (sstep_cfg_instr_inv _ _ _ _ Hsvc Hss) as [-> Hst].
+    destruct (sstep_cfg_instr_inv _ _ _ _ Hsvc (or_intror Hnv0) Hss) as [-> Hst].
     destruct (mi_account_step segs ms model) as [[ms' model']| |] eqn:Hstep.
     + exists ms', model'. split; [reflexivity|]. apply (Hnext []). subst st. exact Hss.
     + subst st. exfalso. exact (Hnoerr [] Hss).

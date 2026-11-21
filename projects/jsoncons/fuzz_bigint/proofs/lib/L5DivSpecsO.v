@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv region is 464 bytes, was 160. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -31,7 +32,7 @@ Definition xs_preL (L : heap_layout) (st : XS) (M : word -> option byte) : Prop 
 Definition xdom (av a : Z) : Prop :=
   ((0x10000 <= a < 0x5f608) \/ (0x5f630 <= a < 0x5f650) \/ (0x5f660 <= a < 0x5f668)) \/ (0x6f8f8 <= a < 0x6f904) \/ (0x6fb20 <= a < 0x6fb22) \/ (0x70361 <= a < 0x70367)
   \/ (0x70408 <= a < 0x70410) \/ (0x906a8 <= a < 0x906b0) \/ (0x906d0 <= a < 0x906d8) \/ (0x90728 <= a < 0x90730)
-  \/ (av <= a < av + 160).
+  \/ (av <= a < av + 464).
 
 Definition xs_agree_hyp : Prop :=
   forall st M M', xs_pre st M -> (forall a, xdom (xs_av st) a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) -> xs_pre st M'.

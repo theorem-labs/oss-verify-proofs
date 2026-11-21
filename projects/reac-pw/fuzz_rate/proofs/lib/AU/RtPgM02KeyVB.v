@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v, RPgM02KeyI.v and RPgM02KeyV.v
-   at 595d8c5dd1b5 (the value language of the value entry's address and of a `lw`, the expect_value cases, the
+   (the value language of the value entry's address and of a `lw`, the expect_value cases, the
    shadow entry over the value entry, the value dispatch, the Int arm and the value tail),
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v at 7e8cf15c304a (the Float arm: the size test, the `flw` and
-   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v at 22306b8175e6 (the pairs of the scan across a
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v (the Float arm: the size test, the `flw` and
+   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v (the pairs of the scan across a
    key) for reac-pw/fuzz_rate image A: role's pcs become rate's, the shadow base is rate's s2 (atom 18), role's Role
    answers become Rate.expect_value / Rate.rate_of_pairs, role's value tail (a bound test and check_role) becomes
    rate's check_rate on the hz cell, the out cell is R+0x158, the `flw` is stepped by YA0n.SRr_step, and the key
    compare (the spills, the strcmp wrapper, the mismatch exit to O) is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v at 48d3cf0d8e40; m2k_jn_walk,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v; m2k_jn_walk,
    m2k_join and m2k_val ported to image B (fuzz_rate.asan-ubsan): image B's pcs (KV 0x82c98, FLT 0x82d70, JN
    0x82dd0, MAL 0x82de0, A 0x82dec), the cuts and the shared layer are lib/AU/RtPgSegB.v's, lib/AU/RtPgM02BaseB.v's and
    lib/AU/RtPgM02KitB.v's; the join's code is s10 (image A: s8) and its kept registers are chb_L, s6, s7 and s10; the
    hz cell is at F+0x2a0; the value readers load the mask, pp and the code from the real frame (R+0x148, R+0x168,
    R+0x170) and form the addresses of the size and the body word from a7 + s8 and pp + s8 + [R+0x138], which the
    engine's alias facts m2kv_alias turn into atom 10 plus a constant. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate, image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded code bytes are the pin's). Proves

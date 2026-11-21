@@ -1,6 +1,6 @@
 (* WHY fr_CAP (lib/A/ReplyLScap.v): RiRestate's LS_exit_cap is false over the top's instance WITHOUT fr_CAP.
    proves no function (kind: counterexample).
-   LS_exit_cap (a working branch 5a9b16eac9e, W_LLVMFuzzerTestOneInput_exit_x.v:196-198 /
+   LS_exit_cap (a working branch, W_LLVMFuzzerTestOneInput_exit_x.v:197-199 /
    _exit.v:7785-7787) concludes gse_cap (lx_rf_run (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)) <= CAPOUT_MAX, which is
    at least lm_cap m (ReplyLS3o.v ou_rf_cap).  At LSx := fr_LS3cp B /\ fr_OUT OM /\ fr_ENT B and RINV := fr_RINV it is
    false: cex_* is a Theorem Labs lane's first-head witness (ReplyLS3.v sat3, ReplyLSI.v lsi_sat) at t = 0 with the entry's

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,25 +25,32 @@ Open Scope Z_scope.
 
 
 Section UA.
-Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry], [brk]) instead of
+   argv/envp/uid/hwcap, as UDrvMain's Handoff section does. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
+Variables sp0 brk : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp0.
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 Hypothesis Hargc : length av <> 2%nat.
 Variable model : Model.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hl : m_vm_lazy model = [].
 Variable T : TSet.
 
-Let E := E_main sp0 av ev tid (canary rdraw) regs.
-Local Notation p0 := (cat_argv_ptr sp0 av ev 0).
+Let E := E_main inp sp0 (ed_top rdraw) tid (canary rdraw) regs.
+Local Notation p0 := (cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0).
 
 (* [comment removed for export] *)
 Hypothesis KB : forall E' ms', agree 200 E E' -> sden PSEGS E' U2 ms' -> ms_rom ms' = seg_rom PSEGS ->
@@ -53,15 +61,15 @@ Hypothesis KB : forall E' ms', agree 200 E E' -> sden PSEGS E' U2 ms' -> ms_rom 
 
 
 
-#[using="sp0 av ev uid tid hw rdraw Hsp Hva Hve Htid ME Hargc Hh Hl E KB"] Theorem usage_A : realizes PSEGS (mkCfg (mkst (fx := fx0) regs (Z_to_bv 64 0x228cc) mem (seg_rom PSEGS)) model) T.
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw Hsp Hva Hve Htid ME Hargc Hh Hl E KB : LiaFast.U) => LiaFast.u0).
-  pose proof (handoff1 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc) as Hd0.
+#[using="inp mbase entry sp0 brk tid rdraw Hsp Hva Hve Hvl Hlau Htid ME Hargc Hh Hl E KB"] Theorem usage_A : realizes PSEGS (mkCfg (mkst (fx := fx0) regs (Z_to_bv 64 0x228cc) mem (seg_rom PSEGS)) model) T.
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 brk tid rdraw Hsp Hva Hve Hvl Hlau Htid ME Hargc Hh Hl E KB : LiaFast.U) => LiaFast.u0).
+  pose proof (handoff1 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc) as Hd0.
   apply (rzc_fx_explore_frame PSEGS DCFG TBL_P IMG_P 4000 S1 P_main1 LA E _ model T TBL_P_ok IMG_P_ok certA Hd0 bases_main1 Hh Hl).
   intros L E1 ms1 HIn Hd1 Ha1 Hrom1 Hfr1. rewrite LA_one in HIn. destruct HIn as [<-|[]].
   cbn [ms_rom mkst] in Hrom1. cbn [ms_mem mkst] in Hfr1.
-  pose proof (p0_bounds sp0 av ev uid hw rdraw Hsp Hva Hve) as (B1 & B2 & B3).
+  pose proof (p0_bounds inp mbase entry sp0 brk rdraw Hsp Hva Hvl Hlau) as (B1 & B2 & B3).
   pose proof (sp0_lo sp0 Hsp) as SL. pose proof (sp0_hi sp0 Hsp) as SH.
-  destruct (argv0_window sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc) as (buf & Hbuf & Hpre & Hwin & Hbnd).
+  destruct (argv0_window inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc) as (buf & Hbuf & Hpre & Hwin & Hbnd).
   assert (HE1 : forall x, (x < 200)%positive -> E1 x = E x) by (intros x Hx; symmetry; exact (Ha1 x Hx)).
   (* [comment removed for export] *)
   assert (R1 : getr (ms_regs ms1) 1 = Z_to_bv 64 0x56868) by (apply (getr_leaf_c PSEGS E1 L1); [exact Hd1 | vm_compute; reflexivity]).
@@ -93,9 +101,9 @@ Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw Hsp Hva Hve Htid ME Harg
       assert (HW : lwf 200 (ladd P0 X0) = true) by (vm_compute; reflexivity).
       assert (HAg : agree 200 E1 E) by (intros x Hx; exact (HE1 x Hx)).
       rewrite (lden_agree 200 E1 E _ HW HAg) in N2.
-      pose proof (u_P0X0 sp0 av ev uid tid hw rdraw regs Hsp Hva Hve) as U. fold E in U. rewrite U in N2. fold K in N2.
+      pose proof (u_P0X0 inp mbase entry sp0 brk tid rdraw regs Hsp Hva Hvl Hlau) as U. fold E in U. rewrite U in N2. fold K in N2.
       rewrite N1, N2. reflexivity.
-    - unfold rd1. rewrite Hfr1; [reflexivity|]. apply (outside_main1_hi sp0 av ev uid tid hw rdraw regs Hsp Hva Hve Hargc).
+    - unfold rd1. rewrite Hfr1; [reflexivity|]. apply (outside_main1_hi inp mbase entry sp0 brk tid rdraw regs Hsp Hva Hve Hvl Hlau Hargc).
       + rewrite u_small64 by (unfold two64; lia). lia.
       + rewrite u_small64 by (unfold two64; lia). fold K. lia. }
   assert (NBk : forall j, (j < K)%nat -> nth j buf (Z_to_bv 8 0) = nth j (nth 0 av []) (Z_to_bv 8 0)).
@@ -115,8 +123,8 @@ Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw Hsp Hva Hve Htid ME Harg
       rewrite <- Hb. apply nth_In. exact Hj.
     - lia.
     - lia.
-    - intros i Hi. rewrite Hfr1; [exact (rodata_clear_main sp0 av ev uid tid hw rdraw regs mem Hsp ME Hargc i Hi)|].
-      apply (outside_main1_rodata sp0 av ev uid tid hw rdraw regs Hsp Hva Hve Hargc). rewrite u_small64 by (unfold two64; lia). lia. }
+    - intros i Hi. rewrite Hfr1; [exact (rodata_clear_main inp mbase entry sp0 tid rdraw regs mem Hsp ME Hargc i Hi)|].
+      apply (outside_main1_rodata inp mbase entry sp0 brk tid rdraw regs Hsp Hva Hve Hvl Hlau Hargc). rewrite u_small64 by (unfold two64; lia). lia. }
   assert (HOK : havoc_ok L1 [(0%nat, 64384, 32)] (Some X0) = true) by (vm_compute; reflexivity).
   assert (FRM : frame_in E1 L1 0 64384 32 (bv_unsigned (Z_to_bv 64 (bv_unsigned sp0 - 1120)) - 32)).
   { exists L1_R0. split; [exact L1_R0_eq|].

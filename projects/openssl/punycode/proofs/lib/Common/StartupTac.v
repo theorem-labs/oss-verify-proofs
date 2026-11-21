@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: region_side also unfolds wok_lo and stack_window_reach, each under try, so that lia sees the stack-window bound store_ok_cmem_win asks for; a comment gives the reason. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -51,8 +52,21 @@ Ltac len_rw :=
          end.
 
 (* [comment removed for export] *)
+(* OLD: unfold win_lo;   NEW: try unfold win_lo; try unfold wok_lo; try unfold
+   stack_window_reach.  Punycode vendors its OWN StartupTac.v and MemSplit.v and carries
+   the identical defect: this tree's store_ok_cmem_win (Common/MemSplit.v:279-282) asks
+   'wok_lo sp0 <= bv_unsigned a', wok_lo (:123-124) is 'bv_unsigned sp0 +
+   stack_window_reach - stack_max_size', and :259-260's win_lo_le_wok_lo records that the
+   two differ - yet region_side unfolded only win_lo, leaving lia an opaque atom.
+   Ported from openssl/echconfiglist_parser's copy, which the same reading produced, but
+   justified against THIS tree's own MemSplit.v rather than taken on the other's warrant.
+   PRE-EMPTIVE, not build-named: punycode's current failing set shows no 'Cannot find
+   witness', because region_side's callers here sit behind files that fail earlier.  The
+   change is strictly more permissive - each unfold is under [try], and region_side runs
+   on both side conditions of store_ok_cmem_win, the second mentioning none of these
+   constants. *)
 Ltac region_side :=
-  unfold win_lo;
+  try unfold win_lo; try unfold wok_lo; try unfold stack_window_reach;
   match goal with |- context [stack_max_size] => rewrite ?stack_max_size_val | _ => idtac end;
   len_rw;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.

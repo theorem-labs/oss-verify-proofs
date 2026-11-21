@@ -6,7 +6,8 @@
    BASE + AF_sup_connect = 0x8b45c, the prologue 0x4f2c .. 0x4f58 (the 48-byte frame with ra, s0 .. s4; s3, s2, s1,
    s0 := a0, a1, a2, a3; a0 := 4) and the call record(4) at 0x4f5c through PaCallPg's cl_callS_pg, handed over at
    the return point BASE + SCB_R1 (0x8b490) in scb_mid form. The shape is the one of the entry segment of
-   lib/B/Prog/sup_quarantine_clear.v at e2bb651b627 (its prologue and its call of record). *)
+   lib/B/Prog/sup_quarantine_clear.v (its prologue and its call of record). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -44,7 +45,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* the slot record() returns lies in g_rec's call table or is record.spill (sqcb_slot_bounds of
-   lib/B/Prog/sup_quarantine_clear_aux.v at e2bb651b627) *)
+   lib/B/Prog/sup_quarantine_clear_aux.v) *)
 Lemma scb1_slot_bounds : forall R, (length (r_calls R) <= 16)%nat ->
 ((A_G_REC + OFF_CALLS <= rec_slot R /\ rec_slot R + CALL_SIZE <= A_G_REC + REC_SIZE) \/ rec_slot R = A_REC_SPILL) /\
 A_G_REC + OFF_CALLS <= rec_slot R <= A_REC_SPILL.

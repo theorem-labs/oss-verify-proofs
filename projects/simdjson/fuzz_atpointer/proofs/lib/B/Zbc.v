@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP]); the launch stated over the run's whole input; the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs StackLayout.
@@ -8,7 +9,7 @@ From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib Require Import MState Mem 
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import Zg2 Zp7 Z10a Z1b Z78 Z7a Z2z Z2y Z33 Z1s.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import Z3j.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.A Require Import Shadow Zbe.
-From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.B Require Import Layout Zbd Zba Zmo Zm2 Zku Zkw Zkv.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.B Require Import Layout Zks Zbd Zba Zmo Zm2 Zku Zkw Zkv.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AX2S. Import AP.
@@ -22,11 +23,29 @@ Definition kw8_in (k : list kentry) (b : expr) (o : Z) : bool :=
 Definition kb16_in (k : list kentry) (b : expr) (o : Z) : bool :=
   existsb (fun K => match K with KBlob (SA b' o') (ELit 16) _ => (expr_eqb b' b && Z.eqb o' o)%bool | _ => false end) k.
 
-Definition hs_stkwin_ok (ch : acs) : bool :=
-  (kwr_cover (kn ch) e_sp0 (-8388608) 0 (S (length (kn ch)))
+Definition kunk_in (k : list kentry) (b : expr) (o n : Z) : bool :=
+  existsb (fun K => match K with KUnk (SA b' o') (ELit n') => (expr_eqb b' b && Z.eqb o' o && Z.eqb n' n)%bool | _ => false end) k.
+
+(* [r] is the launch's CONFIG_RSEQ bit as 0 or 1 ([AP.rseq_z]).  The stack the
+   runtime starts on: the [STACK_SPAN] bytes below sp the start state claims
+   writable (the model zeroes [StoreOk.stack_window_depth] = 6144513 bytes there),
+   and above sp the bytes the plan keeps: argc, argv[0] and argv[1] (or argv's
+   NULL), the whole auxv ([AUXSZ r] bytes, one [KUnk]) and the sixteen AT_RANDOM
+   bytes, which sit [24 + AUXSZ r] above the auxv's base.  Every other byte up to
+   the stack VMA's end is hidden ([Z1s.argH0]). *)
+Definition hs_stkwin_ok (r : Z) (ch : acs) : bool :=
+  (kwr_cover (kn ch) e_sp0 (- STACK_SPAN) 0 (S (length (kn ch)))
    && kw8_in (kn ch) e_sp0 0 && kw8_in (kn ch) e_sp0 8 && kw8_in (kn ch) e_sp0 16
-   && forallb (fun j => kw8_in (kn ch) (fst e_auxb) (snd e_auxb + 8 * Z.of_nat j)) (seq 0 20)
-   && kb16_in (kn ch) (fst e_atrb) (snd e_atrb))%bool.
+   && kunk_in (kn ch) (fst e_auxb) (snd e_auxb) (AUXSZ r)
+   && kb16_in (kn ch) (fst (e_atrb r)) (snd (e_atrb r)))%bool.
+
+Lemma kunk_in_sound : forall k b o n, kunk_in k b o n = true -> In (KUnk (SA b o) (ELit n)) k.
+Proof.
+  intros k b o n H. unfold kunk_in in H. apply existsb_exists in H as (K & Hin & HK).
+  destruct K as [| | | | | | | | |a l]; try discriminate. destruct a as [b' o']. destruct l as [z| | | | | | |]; try discriminate.
+  apply andb_prop in HK as [HK H3]. apply andb_prop in HK as [H1 H2].
+  apply expr_eqb_eq in H1. apply Z.eqb_eq in H2. apply Z.eqb_eq in H3. subst b' o' z. exact Hin.
+Qed.
 
 Lemma kw8_in_sound : forall k b o, kw8_in k b o = true -> exists v, In (KWord (SA b o) 8 v) k.
 Proof.
@@ -59,29 +78,46 @@ Proof.
 Qed.
 
 Lemma e_auxv_vars : expr_vars_lt NX0 e_auxv = true /\ ev_only e_auxv = true. Proof. split; reflexivity. Qed.
-Lemma e_atrandom_vars : expr_vars_lt NX0 e_atrandom = true /\ ev_only e_atrandom = true. Proof. split; reflexivity. Qed.
+Lemma e_atrandom_vars : forall b, expr_vars_lt NX0 (e_atrandom (rseq_z b)) = true /\ ev_only (e_atrandom (rseq_z b)) = true.
+Proof. intros [|]; split; reflexivity. Qed.
 Lemma e_auxb_split : split_lit e_auxv = (fst e_auxb, snd e_auxb). Proof. unfold e_auxb. destruct (split_lit e_auxv); reflexivity. Qed.
-Lemma e_atrb_split : split_lit e_atrandom = (fst e_atrb, snd e_atrb). Proof. unfold e_atrb. destruct (split_lit e_atrandom); reflexivity. Qed.
+Lemma e_atrb_split : forall r, split_lit (e_atrandom r) = (fst (e_atrb r), snd (e_atrb r)).
+Proof. intros r. unfold e_atrb. destruct (split_lit (e_atrandom r)); reflexivity. Qed.
 Lemma e_auxb_k : snd e_auxb = 24. Proof. vm_compute. reflexivity. Qed.
-Lemma e_atrb_k : snd e_atrb = 184. Proof. vm_compute. reflexivity. Qed.
+(* was [snd e_atrb = 184] at the pre-revision layout.  [AUXSZ r] is not a
+   literal at a free [r] and the smart constructors do not normalise, so
+   destruct the flag first and give both branches -- the model's own idiom and
+   its whole proof (75d69e00 AsanPlanCore.v:3874). *)
+Lemma e_atrb_k : forall b, snd (e_atrb (rseq_z b)) = 24 + AUXSZ (rseq_z b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
 Section StkWin.
 Variables (A : atable) (nx0 : nat) (LIMIT : Z) (FS0 : Fs.Fs).
-Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word).
+(* LPS 727298f3: the launch, as AS/Z1s.v's Section Init names it (the run's whole input) *)
+Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput).
+#[local] Notation argv := (in_argv inp).
+#[local] Notation envp := (in_envp inp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hlaunch : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 Hypothesis SEGS_in_hull : forall a : word, APS.in_hull A (bv_unsigned a) = false -> find_segment bsegs (bv_unsigned a) 1 = None.
 Hypothesis HULL_ok : APS.hull_ok A.
 
-#[local] Notation SINV := (SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 ph sp rdraw argv envp uid hw).
-#[local] Notation E0 := (Z1s.E0 ph sp rdraw brk0 argv envp uid hw).
+#[local] Notation SINV := (SINV0 A ph sp rdraw brk0 mbase inp).
+#[local] Notation argH := (argH0 sp rdraw inp).
+#[local] Notation E0 := (Z1s.E0 sp rdraw brk0 inp).
 #[local] Notation usp := (bv_unsigned sp).
-#[local] Notation bsb := (build_stack_bytes ph sp argv envp uid hw rdraw).
+#[local] Notation utop := (bv_unsigned (ed_top rdraw)).
+#[local] Notation bsb := (entry_stack_image inp mbase ph (Z_to_bv 64 (a_entry A)) sp rdraw).
 #[local] Notation argc := (Z.of_nat (length argv)).
 #[local] Notation envc := (Z.of_nat (length envp)).
+#[local] Notation CHEAD := (Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) argv envp)).
+#[local] Notation G := (Z.of_nat (block_items argv envp mod 2)).
+(* the launch's CONFIG_RSEQ flag, read off the kernel build: never pinned *)
+#[local] Notation RZ := (rseq_z (kb_rseq (in_kernel inp))).
 
 Variables (E : env) (ch : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
 Hypothesis HC : APS.cs_ok bsegs A nx0 LIMIT SINV argH FS0 E ch R FULL model.
@@ -91,130 +127,143 @@ Hypothesis HA' : forall p, page_allowedb (APS.allowA A E ch) p = true -> page_al
 #[local] Notation m := (mH FULL model A').
 #[local] Notation MR := (APS.Mr A argH E ch model FULL).
 
-Let AH := ha_argH_high ph sp rdraw argv envp uid hw Hsp Hva.
-
 Lemma sw_some : forall a b, CEIL <= a < 2 ^ 47 -> m (wa a) = Some b -> wview bsegs m (wa a) <> None /\ exists b', mrd bsegs m (wa a) = Some b'.
 Proof. intros a b Ha Hm. unfold wview, mrd. rewrite Hm. split; [discriminate | exists b; reflexivity]. Qed.
 
 Lemma sw_bytes : forall a0 bs a, bytes_at bsegs m a0 bs -> CEIL <= a0 -> a0 + Z.of_nat (length bs) <= 2 ^ 47 -> a0 <= a < a0 + Z.of_nat (length bs) ->
   wview bsegs m (wa a) <> None /\ exists b', mrd bsegs m (wa a) = Some b'.
 Proof.
-  intros a0 bs a B Ha0 Hb Ha. pose proof (ha_wr A SEGS_in_hull HULL_ok FULL model A' a0 bs B Ha0 Hb) as (_ & _ & W).
+  intros a0 bs a B Ha0 Hb Ha.
+  assert (WR : wr_at bsegs m a0 (Z.of_nat (length bs))) by (eapply ha_wr; first [exact B | lia | eassumption]).
+  destruct WR as (_ & _ & W).
   destruct B as (_ & _ & B3). specialize (W (a - a0) ltac:(lia)). replace (a0 + (a - a0)) with a in W by lia. split; [exact W|].
   specialize (B3 (Z.to_nat (a - a0)) ltac:(lia)). rewrite Z2Nat.id in B3 by lia. replace (a0 + (a - a0)) with a in B3 by lia.
   destruct (nth_error bs (Z.to_nat (a - a0))) as [b|] eqn:Hn; [exists b; exact B3 | apply nth_error_None in Hn; lia].
 Qed.
 
-Lemma sw_ptop : usp + Z.of_nat (length bsb) <= entry_page_top sp bsb /\ entry_page_top sp bsb mod 4096 = 0 /\ entry_page_top sp bsb <= 2 ^ 47.
+(* the block runs from sp to the stack VMA's end, which is page-aligned *)
+Lemma sw_top : usp + Z.of_nat (length bsb) = utop /\ utop mod 4096 = 0 /\ utop <= 2 ^ 47
+  /\ 8 * argc + 8 * envc + 482 <= Z.of_nat (length bsb).
 Proof.
-  destruct (ha_bsb ph sp rdraw argv envp uid hw Hfit) as (F1 & _).
-  unfold entry_page_top, entry_block_top, page_round_up_Z, page_size.
-  pose proof (Z.div_mod (usp + Z.of_nat (length bsb) + 4096 - 1) 4096 ltac:(lia)) as D.
-  pose proof (Z.mod_pos_bound (usp + Z.of_nat (length bsb) + 4096 - 1) 4096 ltac:(lia)) as M.
-  split; [lia|]. split; [apply Z.mod_mul; lia|].
-  assert (Hq : (usp + Z.of_nat (length bsb) + 4096 - 1) / 4096 <= (2 ^ 47 + 4095) / 4096) by (apply Z.div_le_mono; lia).
-  replace ((2 ^ 47 + 4095) / 4096) with (2 ^ 35) in Hq by reflexivity. lia.
+  (* stated at this section's own block, so that no evar ([ph]) is left in what lia reads *)
+  eassert (HL : usp + Z.of_nat (length bsb) <= 2 ^ 47 /\ _ /\ _ /\ _ /\ usp + Z.of_nat (length bsb) = utop)
+    by (eapply (ha_layout A); eassumption).
+  destruct HL as (L1 & _ & L3 & _ & L4).
+  pose proof Hlau as Hl. cbn [entry_launch_ok_va] in Hl. destruct Hl as (Hst & _ & _).
+  destruct Hst as (Hm & _ & _). unfold page_size in Hm.
+  set (LB := Z.of_nat (length bsb)) in *. clearbody LB.
+  split; [clear - L4; lia|]. split; [exact Hm|]. split; [clear - L1 L4; lia | clear - L3; lia].
 Qed.
 
 Lemma sw_usp : sp_window_lo <= usp <= sp_window_hi /\ 1 <= argc <= 1024 /\ 0 <= envc <= 256.
-Proof. destruct (ha_lens ph sp rdraw argv envp uid hw Hsp Hva Hve) as (L1 & L2 & L3). repeat split; lia. Qed.
-
-Lemma sw_atop : alloc_top (m_vmmaps model) = usp - 8388608.
 Proof.
-  destruct (APS.cs_isp _ _ _ _ _ _ _ _ _ _ _ _ HC) as [I1 _]. unfold alloc_top, stack_max_size.
-  rewrite I1, (ha_sp0 A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E ch R FULL model HC). lia.
+  eassert (HL : _) by (eapply ha_lens; eassumption).
+  destruct HL as (L1 & L2 & L3). repeat split; lia.
 Qed.
 
-Lemma sw_hidden : forall a, usp <= a < entry_page_top sp bsb -> argH E (wa a) = true ->
+Lemma sw_atop : alloc_top (m_vmmaps model) = usp - 8388608.
+Proof. eapply ha_isp; eassumption. Qed.
+
+Lemma sw_sp0 : APS.uE E e_sp0 = usp.
+Proof. eapply ha_sp0; eassumption. Qed.
+
+(* a hidden byte above sp holds the launch image's byte: [SINV0] fixes it *)
+Lemma sw_hidden : forall a, usp <= a < utop -> argH E (wa a) = true ->
   wview bsegs m (wa a) <> None /\ exists b', mrd bsegs m (wa a) = Some b'.
 Proof.
-  intros a Ha HH. pose proof sw_ptop as (P1 & P2 & P3). pose proof sw_usp as ((U1 & U2) & _). unfold sp_window_lo in U1.
+  intros a Ha HH. pose proof sw_top as (P1 & P2 & P3 & P4). pose proof sw_usp as ((U1 & U2) & _). unfold sp_window_lo in U1.
   assert (Hu : bv_unsigned (wa a) = a) by (apply wa_unsigned; lia).
   assert (Hv : m (wa a) = FULL (wa a)).
-  { apply (ha_visible A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw E ch R FULL model HC A'). rewrite Hu, sw_atop. lia. }
-  rewrite (ha_block A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw E ch R FULL model HC (wa a) HH) in Hv.
-  rewrite (wrap_above_sp ph sp argv envp (wa a) uid hw rdraw ltac:(rewrite Hu; lia)) in Hv.
-  pose proof (entry_stack_image_top ph sp argv envp uid hw rdraw) as T.
+  { eapply ha_visible; first [eassumption | (rewrite Hu, sw_atop; lia)]. }
+  assert (Hb : FULL (wa a) = wrap_mem inp mbase ph (Z_to_bv 64 (a_entry A)) sp rdraw (wa a))
+    by (eapply ha_block; first [exact HH | eassumption]).
+  rewrite Hb in Hv.
+  rewrite (wrap_above_sp inp mbase ph (Z_to_bv 64 (a_entry A)) sp rdraw (wa a) ltac:(rewrite Hu; lia)) in Hv.
   unfold stack_to_mem in Hv. rewrite Hu in Hv. rewrite (proj2 (Z.leb_le usp a)) in Hv by lia.
   rewrite (proj2 (Z.ltb_lt (a - usp) _)) in Hv by lia.
-  destruct (nth_error (entry_stack_image ph sp argv envp uid hw rdraw) (Z.to_nat (a - usp))) as [b|] eqn:Hn; [|apply nth_error_None in Hn; lia].
+  destruct (nth_error bsb (Z.to_nat (a - usp))) as [b|] eqn:Hn; [|apply nth_error_None in Hn; lia].
   apply (sw_some a b); [unfold CEIL; lia | exact Hv].
 Qed.
 
 Lemma sw_uauxv : APS.uE E (fst e_auxb) + 24 = usp + 8 * argc + 8 * envc + 24.
 Proof.
   pose proof sw_usp as ((U1 & U2) & LA & LE). unfold sp_window_lo in U1.
-  pose proof (ha_u A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw E ch R FULL model HC e_auxv (proj1 e_auxv_vars) (proj2 e_auxv_vars)) as U.
-  rewrite (u_e_auxv ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) in U.
+  assert (U : APS.uE E e_auxv = APS.uE E0 e_auxv)
+    by (eapply ha_u; first [exact (proj1 e_auxv_vars) | exact (proj2 e_auxv_vars) | eassumption]).
+  erewrite u_e_auxv in U by eassumption.
   pose proof (split_base_u E e_auxv (fst e_auxb) (snd e_auxb) e_auxb_split) as S. rewrite e_auxb_k in S. rewrite <- U. apply S; lia.
 Qed.
 
-Lemma sw_uatr : APS.uE E (fst e_atrb) + 184 = usp + Z.of_nat (length bsb) - 16.
+(* AT_RANDOM's sixteen bytes end at [usp + CHEAD], the top of the block's head *)
+Lemma sw_uatr : APS.uE E (fst (e_atrb RZ)) + (24 + AUXSZ RZ) = usp + CHEAD - 16.
 Proof.
   pose proof sw_usp as ((U1 & U2) & LA & LE). unfold sp_window_lo in U1.
-  pose proof (bsb_ge ph sp rdraw argv envp uid hw) as (G & _).
-  pose proof (ha_u A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw E ch R FULL model HC e_atrandom (proj1 e_atrandom_vars) (proj2 e_atrandom_vars)) as U.
-  rewrite (u_e_atrandom ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) in U.
-  pose proof (split_base_u E e_atrandom (fst e_atrb) (snd e_atrb) e_atrb_split) as S. rewrite e_atrb_k in S. rewrite <- U. apply S; lia.
+  assert (HR : 0 <= RZ <= 1) by (destruct (kb_rseq (in_kernel inp)); cbn [rseq_z]; lia).
+  assert (CR : 480 <= CHEAD <= 10752) by (eapply chead_range; eassumption).
+  assert (U : APS.uE E (e_atrandom RZ) = APS.uE E0 (e_atrandom RZ))
+    by (eapply ha_u; first [exact (proj1 (e_atrandom_vars (kb_rseq (in_kernel inp))))
+                           | exact (proj2 (e_atrandom_vars (kb_rseq (in_kernel inp)))) | eassumption]).
+  erewrite u_e_atrandom in U by eassumption.
+  pose proof (split_base_u E (e_atrandom RZ) (fst (e_atrb RZ)) (snd (e_atrb RZ)) (e_atrb_split RZ)) as S.
+  rewrite (e_atrb_k (kb_rseq (in_kernel inp))) in S. rewrite <- U. unfold AUXSZ in *. apply S; lia.
 Qed.
 
-Lemma sw_visible : hs_stkwin_ok ch = true -> forall a, usp <= a < entry_page_top sp bsb -> argH E (wa a) = false ->
+Lemma sw_visible : hs_stkwin_ok RZ ch = true -> forall a, usp <= a < utop -> argH E (wa a) = false ->
   wview bsegs m (wa a) <> None /\ exists b', mrd bsegs m (wa a) = Some b'.
 Proof.
-  intros HT a Ha HH. pose proof sw_ptop as (P1 & P2 & P3). pose proof sw_usp as ((U1 & U2) & LA & LE). unfold sp_window_lo in U1.
-  pose proof (W_range ph sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3). pose proof (bsb_ge ph sp rdraw argv envp uid hw) as (G & _).
-  destruct (ha_bsb ph sp rdraw argv envp uid hw Hfit) as (F1 & _).
+  intros HT a Ha HH. pose proof sw_top as (P1 & P2 & P3 & P4). pose proof sw_usp as ((U1 & U2) & LA & LE). unfold sp_window_lo in U1.
+  assert (HR : 0 <= RZ <= 1) by (destruct (kb_rseq (in_kernel inp)); cbn [rseq_z]; lia).
+  assert (CE : CHEAD = 8 * argc + 8 * envc + 472 + 32 * RZ + 8 * G) by (eapply chead_eq; eassumption).
+  assert (GR : 0 <= G <= 1) by (eapply gap_range; eassumption).
   assert (Hu : bv_unsigned (wa a) = a) by (apply wa_unsigned; lia).
   unfold hs_stkwin_ok in HT. apply andb_prop in HT as [HT T6]. apply andb_prop in HT as [HT T5]. apply andb_prop in HT as [HT T4].
   apply andb_prop in HT as [HT T3]. apply andb_prop in HT as [_ T2].
-
-  assert (Hc : a < usp + 24 \/ (usp + 8 * argc + 8 * envc + 24 <= a < usp + 8 * argc + 8 * envc + 184)
-               \/ (usp + Z.of_nat (length bsb) - 16 <= a < usp + Z.of_nat (length bsb))).
+  (* the visible bytes above sp: argc .. argv[1], the auxv, AT_RANDOM *)
+  assert (Hc : a < usp + 24 \/ (usp + 8 * argc + 8 * envc + 24 <= a < usp + 8 * argc + 8 * envc + 24 + AUXSZ RZ)
+               \/ (usp + CHEAD - 16 <= a < usp + CHEAD)).
   { unfold argH0, argH0_old in HH. cbv zeta in HH. rewrite Hu in HH.
-    apply orb_false_iff in HH as [HH1 HH2]. apply orb_false_iff in HH1 as [H1 H2]. apply orb_false_iff in HH2 as [H3 H4].
-    apply andb_false_iff in H1. apply andb_false_iff in H2. apply andb_false_iff in H3. apply andb_false_iff in H4.
-    rewrite !Z.leb_gt, !Z.ltb_ge in *. lia. }
-  assert (CE : CEIL <= usp) by (unfold CEIL; lia).
+    rewrite ?orb_false_iff, ?andb_false_iff, ?Z.leb_gt, ?Z.ltb_ge in HH.
+    assert (WP : 0 <= Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) sp (ed_top rdraw) argv envp (in_execfn inp))) by lia.
+    unfold AUXSZ. lia. }
+  assert (CEI : CEIL <= usp) by (unfold CEIL; lia).
   destruct Hc as [C|[C|C]].
-  -
-    assert (Ho : exists o, (o = 0 \/ o = 8 \/ o = 16) /\ kw8_in (kn ch) e_sp0 o = true /\ usp + o <= a < usp + o + 8).
+  - assert (Ho : exists o, (o = 0 \/ o = 8 \/ o = 16) /\ kw8_in (kn ch) e_sp0 o = true /\ usp + o <= a < usp + o + 8).
     { destruct (Z_lt_le_dec a (usp + 8)); [exists 0; split; [tauto|]; split; [exact T2 | lia]|].
       destruct (Z_lt_le_dec a (usp + 16)); [exists 8; split; [tauto|]; split; [exact T3 | lia]|]. exists 16. split; [tauto|]. split; [exact T4 | lia]. }
     destruct Ho as (o & Ho & Tk & Hr). destruct (kw8_in_sound _ _ _ Tk) as (v & Hin).
-    pose proof (ha_kw A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit SEGS_in_hull HULL_ok E ch R FULL model HC A' HA' o v Hin ltac:(lia)) as B.
+    assert (B : bytes_at bsegs m (usp + o) (le8 (edenot E v))) by (eapply ha_kw; first [exact Hin | lia | eassumption]).
     apply (sw_bytes (usp + o) (le8 (edenot E v)) a B); [lia | unfold le8; rewrite Z7g.length_N_to_le_bytes; lia | unfold le8; rewrite Z7g.length_N_to_le_bytes; lia].
-  -
-    set (j := Z.to_nat ((a - (usp + 8 * argc + 8 * envc + 24)) / 8)).
-    assert (Hj : (j < 20)%nat /\ usp + 8 * argc + 8 * envc + 24 + 8 * Z.of_nat j <= a < usp + 8 * argc + 8 * envc + 24 + 8 * Z.of_nat j + 8).
-    { unfold j. pose proof (Z.div_mod (a - (usp + 8 * argc + 8 * envc + 24)) 8 ltac:(lia)) as D.
-      pose proof (Z.mod_pos_bound (a - (usp + 8 * argc + 8 * envc + 24)) 8 ltac:(lia)) as M.
-      assert (0 <= (a - (usp + 8 * argc + 8 * envc + 24)) / 8 < 20) by (split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia]).
-      rewrite Z2Nat.id by lia. split; [lia | lia]. }
-    destruct Hj as (Hj & Hr).
-    pose proof (proj1 (forallb_forall _ _) T5 j ltac:(apply in_seq; lia)) as Tk. cbv beta in Tk.
-    destruct (kw8_in_sound _ _ _ Tk) as (v & Hin).
-    pose proof (hk_kword bsegs A nx0 LIMIT SINV argH FS0 SEGS_in_hull HULL_ok AH E ch R FULL model HC A' HA' _ 8%nat v Hin) as B.
-    unfold estart in B. cbn [a_base a_off] in B. rewrite e_auxb_k in B. pose proof sw_uauxv as UA. unfold APS.uE in UA.
-    replace (bv_unsigned (edenot E (fst e_auxb)) + (24 + 8 * Z.of_nat j)) with (usp + 8 * argc + 8 * envc + 24 + 8 * Z.of_nat j) in B by lia.
-    specialize (B ltac:(change (Z.of_nat 8) with 8; lia)).
-    apply (sw_bytes _ _ a B); [lia | rewrite Z7g.length_N_to_le_bytes; change (Z.of_nat 8) with 8; lia | rewrite Z7g.length_N_to_le_bytes; change (Z.of_nat 8) with 8; lia].
-  -
+  - (* the auxv: one [KUnk] fact covers it *)
+    pose proof (kunk_in_sound _ _ _ _ T5) as Hin.
+    destruct (hk_kentry bsegs A nx0 LIMIT SINV argH FS0 E ch R FULL model HC _ Hin) as (Hfl & Hb).
+    assert (HAX : 0 <= AUXSZ RZ < 2 ^ 64) by (unfold AUXSZ; lia).
+    rewrite (APS.elenZ_lit E (AUXSZ RZ) HAX) in Hb. unfold estart in Hb. cbn [a_base a_off] in Hb. rewrite e_auxb_k in Hb.
+    pose proof sw_uauxv as UA. unfold APS.uE in UA.
+    specialize (Hb (a - (usp + 8 * argc + 8 * envc + 24)) ltac:(lia)).
+    replace (bv_unsigned (edenot E (fst e_auxb)) + 24 + (a - (usp + 8 * argc + 8 * envc + 24))) with a in Hb by lia.
+    fold (wa a) in Hb.
+    destruct (MR (wa a)) as [bb|] eqn:HM; [|exfalso; exact (Hb eq_refl)].
+    assert (Hm : m (wa a) = MR (wa a)).
+    { apply (hk_mr_some bsegs A nx0 LIMIT SINV argH FS0 HULL_ok E ch R FULL model HC A' HA'); [rewrite HM; discriminate | rewrite Hu; lia]. }
+    rewrite HM in Hm. exact (sw_some a _ ltac:(lia) Hm).
+  - (* AT_RANDOM *)
     destruct (kb16_in_sound _ _ _ T6) as (kk & Hin).
     destruct (hk_kentry bsegs A nx0 LIMIT SINV argH FS0 E ch R FULL model HC _ Hin) as (Hfl & Hlen & Hb).
-    rewrite (APS.elenZ_lit E 16 ltac:(lia)) in Hb. unfold estart in Hb. cbn [a_base a_off] in Hb. rewrite e_atrb_k in Hb.
+    rewrite (APS.elenZ_lit E 16 ltac:(lia)) in Hb. unfold estart in Hb. cbn [a_base a_off] in Hb.
+    rewrite (e_atrb_k (kb_rseq (in_kernel inp))) in Hb.
     pose proof sw_uatr as UA. unfold APS.uE in UA.
-    specialize (Hb (a - (usp + Z.of_nat (length bsb) - 16)) ltac:(lia)).
-    replace (bv_unsigned (edenot E (fst e_atrb)) + 184 + (a - (usp + Z.of_nat (length bsb) - 16))) with a in Hb by lia.
+    specialize (Hb (a - (usp + CHEAD - 16)) ltac:(lia)).
+    replace (bv_unsigned (edenot E (fst (e_atrb RZ))) + (24 + AUXSZ RZ) + (a - (usp + CHEAD - 16))) with a in Hb by lia.
     fold (wa a) in Hb.
     assert (Hm : m (wa a) = MR (wa a)).
     { apply (hk_mr_some bsegs A nx0 LIMIT SINV argH FS0 HULL_ok E ch R FULL model HC A' HA'); [rewrite Hb; discriminate | rewrite Hu; lia]. }
     rewrite Hb in Hm. exact (sw_some a _ ltac:(lia) Hm).
 Qed.
 
-Lemma sw_below : kwr_cover (kn ch) e_sp0 (-8388608) 0 (S (length (kn ch))) = true -> stk bsegs m (usp - 8388608) usp.
+Lemma sw_below : kwr_cover (kn ch) e_sp0 (- STACK_SPAN) 0 (S (length (kn ch))) = true -> stk bsegs m (usp - STACK_SPAN) usp.
 Proof.
   intros H. pose proof sw_usp as ((U1 & U2) & _). unfold sp_window_lo, sp_window_hi in *.
-  pose proof (ha_sp0 A nx0 LIMIT FS0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E ch R FULL model HC) as US.
+  pose proof sw_sp0 as US.
   split; [lia|]. split; [lia|]. intros a Ha.
   destruct (kwr_cover_sound _ _ _ _ _ H (a - usp) ltac:(lia)) as (o & n & Hin & Hn & Hi).
   destruct (hi_wr_byte bsegs A nx0 LIMIT SINV argH FS0 E ch R FULL model HC e_sp0 o n (a - usp) Hin Hn Hi) as [W Hr].
@@ -229,21 +278,21 @@ Proof.
   unfold wview, mrd. rewrite Hm. split; [discriminate| exists bb; reflexivity].
 Qed.
 
-Theorem hg_stkwin : hs_stkwin_ok ch = true ->
-  forall top, top mod 4096 = 0 -> top < usp - 0xa0 + 4096 -> stk bsegs m (usp - 0x800000) top.
+(* the runtime's stack: [STACK_SPAN] bytes below sp, and every byte above it to the page
+   the first frame reaches *)
+Theorem hg_stkwin : hs_stkwin_ok RZ ch = true ->
+  forall top, top mod 4096 = 0 -> top < usp - 0xa0 + 4096 -> stk bsegs m (usp - STACK_SPAN) top.
 Proof.
-  intros HT top Hal Hlt. pose proof sw_ptop as (P1 & P2 & P3). pose proof sw_usp as ((U1 & U2) & LA & LE). unfold sp_window_lo, sp_window_hi in *.
-  pose proof (bsb_ge ph sp rdraw argv envp uid hw) as (G & _).
-  assert (T1 : kwr_cover (kn ch) e_sp0 (-8388608) 0 (S (length (kn ch))) = true).
+  intros HT top Hal Hlt. pose proof sw_top as (P1 & P2 & P3 & P4). pose proof sw_usp as ((U1 & U2) & LA & LE). unfold sp_window_lo, sp_window_hi in *.
+  assert (T1 : kwr_cover (kn ch) e_sp0 (- STACK_SPAN) 0 (S (length (kn ch))) = true).
   { unfold hs_stkwin_ok in HT. repeat (apply andb_prop in HT as [HT _]). exact HT. }
-  pose proof (sw_below T1) as S1. change 0x800000 with 8388608.
+  pose proof (sw_below T1) as S1.
   destruct (Z_le_gt_dec top usp) as [Hle|Hgt].
   - destruct S1 as (A1 & A2 & A3). split; [lia|]. split; [lia|]. intros a Ha. apply A3. lia.
-  -
-    assert (Htp : top <= entry_page_top sp bsb).
-    { pose proof (Z.div_mod top 4096 ltac:(lia)) as D1. pose proof (Z.div_mod (entry_page_top sp bsb) 4096 ltac:(lia)) as D2. rewrite Hal in D1. rewrite P2 in D2.
-      destruct (Z_le_gt_dec top (entry_page_top sp bsb)) as [X|X]; [exact X|]. exfalso.
-      assert (entry_page_top sp bsb / 4096 < top / 4096) by lia. lia. }
+  - assert (Htp : top <= utop).
+    { pose proof (Z.div_mod top 4096 ltac:(lia)) as D1. pose proof (Z.div_mod utop 4096 ltac:(lia)) as D2. rewrite Hal in D1. rewrite P2 in D2.
+      destruct (Z_le_gt_dec top utop) as [X|X]; [exact X|]. exfalso.
+      assert (utop / 4096 < top / 4096) by lia. lia. }
     apply (stk_merge bsegs m _ usp _ S1); [|lia].
     split; [lia|]. split; [lia|]. intros a Ha.
     destruct (argH E (wa a)) eqn:HH; [apply sw_hidden | apply (sw_visible HT)]; first [exact HH | lia].
@@ -303,4 +352,4 @@ Qed.
 
 End DepZ.
 
-Definition hs_g1_ok (ch : acs) : bool := (hs_stkwin_ok ch && hs_depz_ok ch)%bool.
+Definition hs_g1_ok (r : Z) (ch : acs) : bool := (hs_stkwin_ok r ch && hs_depz_ok ch)%bool.

@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/APgLoop0.v of this library (libreac/fuzz_knock's ASan
    harness walk of LLVMFuzzerTestOneInput in fuzz_knock.asan-ubsan, sha256
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82), made the way proofs/cgif/cgif_file_fuzzer/lib/YCf7.v
-   is made from A/ACf7.v at c8557374ad2e: the walk framework imports move to the lib/AU twins (AWalkFw0 YCef YF0l YCej
+   is made from A/ACf7.v: the walk framework imports move to the lib/AU twins (AWalkFw0 YCef YF0l YCej
    YCeh YCem YCep AWalkFw1 AWalkFw2 YCfm APgRt APgMain7), and the text follows the asan-ubsan code.  This module is the
    SHARED PART of the input loop (segments S3 LOOP, S4 TAIL, S5 MID, S6 CHECKS and the loop closure): the loop
    invariants INV_L / INV_T / INV_M / INV_C, the functional model the loop body needs, and the walk helpers of
@@ -48,6 +48,7 @@
 
    THE ENV SLOTS (lib/AU/APgStates.v): 300-343 for the loop's values, and the dead-register havoc windows 700 (ss_T) /
    720 (ss_M) / 740 (ss_C) / 760 (ss_L).  Slots < 33 and 70 / 75 / 87 / 88 are the context record's (AU/APgRt.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -322,7 +323,7 @@ rewrite <- (Z.lxor_lor _ _ Hd). rewrite <- (Z.add_nocarry_lxor _ _ Hd). reflexiv
 Qed.
 
 (* ===================== 2. the struct layout ===================== *)
-(* LAY_Knock is a Theorem Labs lane's (lib/A/APgCSpec.v:18), from lib/Prog/reac_knock_struct.v:9-10: state, pad1, opened,
+(* LAY_Knock is a Theorem Labs lane's (lib/A/APgCSpec.v:19), from lib/Prog/reac_knock_struct.v:9-10: state, pad1, opened,
    due, heard, granted, pad2 at 0/4/8/16/24/32/36 of widths 4/4/8/8/8/4/4.  Only the harness-side constants are
    here: the struct's size and where S2 puts it inside the fake frame. *)
 Definition KNOCK_SIZE : Z := 40.

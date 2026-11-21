@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader and the vDSO reservation inclusion in the meta-allocation specs). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -818,7 +819,11 @@ Section Spec.
       c' = mkCfg (mkst regs' (getr regs 1) M' rom) mdl' /\
       WF st' L /\ REP st' M' /\ LEDGERX st' X (m_vmmaps mdl') /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\ vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      (* [m_channel_reader] is a projection of [m_proc]; nothing on this path writes it. *)
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
+      vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
       (* [comment removed for export] *)
       s_limbo st' = m :: s_limbo st /\ metaU st' m /\ s_meta st' m = meta_zero /\ ~ In m (s_limbo st) /\
       s_flist st' = match s_flist st with [] => [] | _ :: r => r end /\
@@ -837,7 +842,10 @@ Section Spec.
       c' = mkCfg (mkst regs' (getr regs 1) M' rom) mdl' /\
       WF st' L /\ REP st' M' /\ LEDGERX st' X (m_vmmaps mdl') /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\ vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
+      vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
       (* [comment removed for export] *)
       s_limbo st' = s_limbo st /\ s_flist st' = s_flist st /\ s_areas st' = s_areas st /\ s_meta st' = s_meta st /\
       s_errno st' = 12 (* [comment removed for export] *) /\
@@ -854,6 +862,7 @@ Section Spec.
       kfam_laws RSEGS F -> (bo = true -> bi = true) ->
       WF st L -> REP st M -> LEDGERX st X (m_vmmaps mdl) -> xok X ->
       m_halted mdl = None -> m_vm_lazy mdl = [] -> m_vm_materialized mdl = [] ->
+      incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
       (s_flist st = [] -> c_avail_cnt (s_ctx st) = 0 -> Z.of_nat (length (s_areas st)) + 1 <= AREAMAX) ->
       Z.of_nat (length X) + Z.of_nat (length (s_regions st)) <= 246 ->
       XSUM X + RSUM (s_regions st) + 2 ^ 24 <= vm_limit (m_vmmaps mdl) ->
@@ -888,7 +897,10 @@ Section Flat.
       c' = mkCfg (mkst regs' (getr regs 1) M' rom) mdl' /\
       WF st' L /\ REP st' M' /\ LEDGERX st' X (m_vmmaps mdl') /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\ vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
+      vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
       s_limbo st' = m :: s_limbo st /\ metaU st' m /\ s_meta st' m = meta_zero /\
       s_groups st' = s_groups st /\ s_slot st' = s_slot st /\ s_alist st' = s_alist st /\
       s_ai st' = s_ai st /\ s_kind st' = s_kind st /\ s_flist st' = match s_flist st with [] => [] | _ :: r => r end /\
@@ -912,7 +924,7 @@ Section Flat.
   Lemma am_post_ok : forall st L X sp regs M mdl rom c', am_post st L X sp regs M mdl rom c' -> am_ok st L X sp regs M mdl rom c'.
   Proof.
     intros st L X sp regs M mdl rom c'
-      (st' & M' & mdl' & regs' & m & E & W & R & LG & X1 & X2 & X3 & X4 & X5 & X6 & Lm & Um & Zm & G1 & G2 & G3 & G4 & G5 & FL & GM & CA & ER
+      (st' & M' & mdl' & regs' & m & E & W & R & LG & X1 & X2 & X3 & X4 & X5 & XR & XV & X6 & Lm & Um & Zm & G1 & G2 & G3 & G4 & G5 & FL & GM & CA & ER
        & C1 & C2 & C3 & C4 & C5 & C6 & C7 & LM & NL & MU & RS & RL & RR & A10 & A2 & KB & FR & DF).
     exists st', M', mdl', regs', m. repeat (split; [assumption|]).
     split; [repeat (split; [assumption|]); exact MU|].
@@ -991,6 +1003,7 @@ Section AMS.
   Hypothesis Hh : m_halted mdl = None.
   Hypothesis Hlz : m_vm_lazy mdl = [].
   Hypothesis Hmat : m_vm_materialized mdl = [].
+  Hypothesis HVDSO : incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
   Hypothesis HCNT : s_flist st = [] -> c_avail_cnt (s_ctx st) = 0 -> Z.of_nat (length (s_areas st)) + 1 <= AREAMAX.
   Hypothesis HLEN : Z.of_nat (length X) + Z.of_nat (length (s_regions st)) <= 246.
   Hypothesis HBUD : XSUM X + RSUM (s_regions st) + 2 ^ 24 <= vm_limit (m_vmmaps mdl).
@@ -1145,7 +1158,8 @@ Section AMS.
         exists (MhAMeta1.st' st), M', mdl, r', fh.
         split; [reflexivity|].
         split; [exact WF'|]. split; [exact REP'|]. split; [apply (LEDGERX_same st); [reflexivity | reflexivity | exact HLG]|].
-        split; [exact Hh|]. split; [exact Hlz|]. split; [exact Hmat|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+        split; [exact Hh|]. split; [exact Hlz|]. split; [exact Hmat|]. split; [reflexivity|]. split; [reflexivity|].
+        split; [reflexivity (* m_channel_reader: the model is unchanged on this arm *)|]. split; [exact HVDSO|]. split; [reflexivity|].
         split; [reflexivity|]. split; [apply MhAMeta1.e_metaU; exact Ufh|]. split; [apply MhAMeta1.e_meta_fh; assumption|].
         split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
         split; [reflexivity|].
@@ -1289,7 +1303,8 @@ Section AMS.
       exists (MhAMeta2.st' st), M', mdl, r', am.
       split; [reflexivity|].
       split; [exact WF'|]. split; [exact REP'|]. split; [apply (LEDGERX_same st); [reflexivity | reflexivity | exact HLG]|].
-      split; [exact Hh|]. split; [exact Hlz|]. split; [exact Hmat|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+      split; [exact Hh|]. split; [exact Hlz|]. split; [exact Hmat|]. split; [reflexivity|]. split; [reflexivity|].
+      split; [reflexivity (* m_channel_reader: the model is unchanged on this arm *)|]. split; [exact HVDSO|]. split; [reflexivity|].
       split; [reflexivity|]. split; [exact Um|]. split; [cbn [s_meta MhAMeta2.st']; exact (MhAMeta2.m_zero st L HWF Hcnt)|].
       split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
       split; [cbn [s_flist MhAMeta2.st']; rewrite Hfl; reflexivity|].

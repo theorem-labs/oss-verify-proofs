@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proof of mmap_fixed_free_fast_eqc replaced by plain proof). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -812,9 +813,15 @@ Lemma mmap_fixed_grant_fast_eqc : mmap_fixed_grant_fast = mmap_fixed_grant.
 Proof.
 ltac2:(KReplay.run1 (kr_t_AsanPlanFast ()) [] "p'0h01Ah15LIMITh21bh32csh45eagerh54kindh63ms0h72neh83nhih93offh:7visiblei007visibleh;1kh<1lh=2msh>1nh?1oh@1pp;1p;2p;3p;5p;4p;8p;6g004Ij1<Tg003gj1PTg07koj2ATg058nj1=Tg05=kj1OTg07m0j2ITg003Gj2FTg05]hj12Tg07n0j2;Tg07Xmj35Tg005Fj18Tg006@j34Tg00jRj3NTg00joj3MTg07njj5LTg05aVj1HTg01lnj4GTg01mKj31Tg06Y:j1ETg05hYj1BTg07Yjj89Tg0203j2@Tg02KIj2CTg02<?j2DTg06T2R0j6?Tg009\j2:Tg009Bj33Tg06OeR1j3>Tg06U:R2j6JTg005fj2KTg000ij66Tg00Z0j17Tf0R3#7#7p=0g069^R4g027QR5#<R6g05mcR7#<R8P6]=];]0R9P1g00GXR1g05J?R:g00HTR;g07ZjR<g00ITR=%P:R>^:=]4]5^81^7;^91]2^68]3]1^04R?P=P>P3f:R@f9RAf8RBf7RC'ARD%=B#OREP=P6f2RFg07om'I1F;;RGP5f;RH%2Ag00dE#0#0#0#0#0RI,;Af5RJf3RK35%87547AN;;3AM;;3DLX@G%HBCG%85RGn0100000020000R7PHP@%2BRLPCO3515%EBRM1;BIRIf4RN;5FRFPKf1RO%BBRBG9RPPIPNf6/@JRJ/CN1DJN=45G545RG%2P515E?1::Pn0110000020100X:=X4=X5<X81X7;X91X2;X68X3:X11X04g080kRP33X<9P>^;6^>;^2;^3:^11^04R6P2P=P>P3PHP@PAPDPEA>@LC9157PMPFPKPOPBG9RBPIPN%2B915GRGO61::BR5n0110000020100X:=X4=X5<X81X7;X91X2;X68X3:X11X04=3?PX?6P=P>P3P@PAPBPIPNPGEJP5n0110000020100X:=X4=X5<X81X7;X91X2;X68X3:X11X04,K?P0g07RLE6g06NYg07\iE6g0822=3?Peo"). Qed.
 Definition mmap_fixed_free_fast := ltac:(let t := eval cbv delta [mmap_fixed_free] in mmap_fixed_free in let t := swap1 t mmap_fixed_grant mmap_fixed_grant_fast in exact t).
+(* LPS 08b1429: [AsanPlanCore.mmap_fixed_free] now clears the launch's extra
+   reserved intervals, [fixed_args cs (resx_clear cs)] in place of
+   [fixed_args cs KHI], so [mmap_fixed_free_fast] is a different term from the
+   one the recorded proof was taken against.  Proved in the plain form
+   [check_fast_eqc] uses, which tracks the body. *)
 Lemma mmap_fixed_free_fast_eqc : mmap_fixed_free_fast = mmap_fixed_free.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanPlanFast ()) [] "p'0h01Ah15LIMITh22csh35eagerh44kindh57visibleh61mh71bi001bh83ms0h92nei012neh:3nhii023nhih;1oh<3offi033offi041hi053nloi061pi072p0i082p1i092p2i0:1xp;1p;2p;3p;7p;4p;;p;6g004Ij1KTg003gR0j1JTg003GR1j23Tg083Cj37Tg05`Yj1@Tg084Dj1ITg05]hj14Tg06=ej1CTg06>cj1ATg085Aj7:Tg05R]j38Tg01;Tj20Tg03>4j15Tg086Ij3?Tg02Pjj26Tg06Y:j1=Tg06Z4j22Tg07n0j2<Tg008`j1HTg087Ij4GTg088Ij1DTg089Gj2BTg009Bj3>Tg080kR2l;;Tg005fj2ETg000ij6FTg00Z0j19Tf0R3#9#9p=1g069^R4g00GXR5g05J?R6g05mcR7#Kg00HTR8g07ZjR9g00ITR:%J6R;^5:]3]4R<^:5^98^<5]7]8]2]1]0R=P2P<^26^15^04R<P01385R2/38R>/35R?/35R@P;f5RAf3RBg06Hj37RCP1P?P5P;P3P1P>P5P;f1RDP1P2P8P;PDP1P8P5P;PDP:P;f<RE#@RF#If=RG#4f2RHPDPB%C3RIg00H6RJ%A3RKF:X67=87F'0f:RL#5f6RM9?GE'6'0%=ERN/2H'0g00dE#1#1#1#1#1RO,<ERP,2N'0RNf?RQf>RRPGPEPFPDP3PHPMf;RSPLf9RTO;%H6RUn0100000020000n2001109000120100103n2001108000120109101n2001107000120108105n2001106000120107102P0P@P;g08:D97ABRAP1P?P5P;P3P1P>P5P;PDP1P2P8P;PDP1P8P5P;PDP0P7P;%4EPFPPPHCGRPP:P;%D3#5%4RPBPHf4PIPJPKF:'6X67%@G/B3RK587%5Sf7RJ9?RG'6'0%=GRI/2B'01<GO,2I'0RIf@PQPRPGPKPHPDPBPJPEPSPLO;PUn0100000020000PUn10110:00021010400n2001109000120100103n2001108000120109101n2001107000120108105n2001106000120107102PUn10110:00021010600n10110:00021010600X5:X3:X49X26X15X04g08;?RO3>X;=P0P@P;PCP1P?P5P;P3P1P>P5P;PDP1P2P8P;PDP1P8P5P;PDP:P;PNPRPGPEPFPDP3PHPMPSPLPTM;;PUn0100000020000n2001109000120100103n2001108000120109101n2001107000120108105n2001106000120107102P0P@P;PAP1P?P5P;P3P1P>P5P;PDP1P2P8P;PDP1P8P5P;PDP0P7P;PPP:P;PIPQPRPGPKPHPDPBPJPEPSPLM;;PUn0100000020000PUn10110:00021010400n2001109000120100103n2001108000120109101n2001107000120108105n2001106000120107102PUn10110:00021010600n10110:00021010600X5:X3:X49X26X15X04,E<g0822g08<EEFg08=Z=><Oeo"). Qed.
+  unfold mmap_fixed_free_fast. rewrite ?mmap_fixed_grant_fast_eqc. reflexivity.
+Qed.
 Definition node_mmap2_fast := ltac:(let t := eval cbv delta [node_mmap2] in node_mmap2 in
   let t := swap1 t mmap_null2 mmap_null2_fast in let t := swap1 t mmap_fixed_free mmap_fixed_free_fast in exact t).
 Lemma node_mmap2_fast_eqc : node_mmap2_fast = node_mmap2.

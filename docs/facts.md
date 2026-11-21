@@ -26,8 +26,9 @@ key.
 | `patches` | public build patches: each entry gives its text's `file`, a file name in the project's patches folder (`projects/<project>/patches/`, or `patches/<project>/` in the old layout), its summary and upstream state. What the entries must agree with is under "Public patches" below |
 | `withheld` | what the project holds back, by reason only: `source_bundle` (GPL or LGPL builds waiting for their source bundle), `unpublished` (builds or statements not in this release yet) |
 | `release` | `private` when no public release carries the project: `oft release-tree` writes the held form of a project OSS-Fuzz has (status `held`) and removes a project OSS-Fuzz does not have whole, with the statements, proofs and binaries of either. Absent for every project a release publishes |
-| `enrolled` | `true` when the project's maintainers take part. An `open` finding of an enrolled project holds back only the statements it breaks, with each held agreement's bound and decidability statements; any other unpublished finding, and an `open` one of a project that is not enrolled, holds the whole project (`facts.hold`). So does an `open` one whose hold would leave a harness with no statement, or a harness that publishes a build with only withheld statements, or of a project with a proof library (`projects/<p>/<h>/proofs/lib/`, which ships unchecked), or of a project that publishes a binary `projects/<p>/unpatched.yaml` does not pin as the one its findings run on, since that build may carry the fix. A private project is held whole either way. Absent for a seeded project, and `false` is never written: absence is the negative. The enrollment writes the field, from one file: the maintainers' own `project.yaml` in each build record's copy of the port (`projects/<p>/<h>/proofs/provenance/port/<path>/projects/<p>/project.yaml`), where a `primary_contact` that is a person, and not `n/a`, makes the project enrolled. `oft lint` reads that copy again on every run and refuses a field that disagrees with it. This field is not the enrollment list: the list is `projects/` in theorem-labs/oss-verify, and a project of it is here only once its facts are written |
+| `enrolled` | `true` when the project's maintainers take part. An `open` finding of an enrolled project holds back only the statements it breaks, with each held agreement's bound, decidability and classifier statements and each twin of a held statement; any other unpublished finding, and an `open` one of a project that is not enrolled, holds the whole project (`facts.hold`). So does an `open` one whose hold would leave a harness with no statement, or a harness that publishes a build with only withheld statements, or of a project with a proof library (`projects/<p>/<h>/proofs/lib/`, which ships unchecked), or of a project that publishes a binary `projects/<p>/unpatched.yaml` does not pin as the one its findings run on, since that build may carry the fix. A private project is held whole either way. Absent for a seeded project, and `false` is never written: absence is the negative. The enrollment writes the field, from one file: the maintainers' own `project.yaml` in each build record's copy of the port (`projects/<p>/<h>/proofs/provenance/port/<path>/projects/<p>/project.yaml`), where a `primary_contact` that is a person, and not `n/a`, makes the project enrolled. `oft lint` reads that copy again on every run and refuses a field that disagrees with it. This field is not the enrollment list: the list is `projects/` in theorem-labs/oss-verify, and a project of it is here only once its facts are written |
 | `harnesses` | every fuzz target OSS-Fuzz runs and every one OSS Verify builds, and the project's API driver (`api-driver`) where it has one, included or not, with the reason for each one that is not. For a project OSS-Fuzz does not have, the project's own fuzz targets are `upstream` entries. An `oss-verify` entry is a fuzz target the port built, so it takes no reason that says it was not built (`not-attempted`, `build-system`, `harness-framework`, `dependency`) |
+| `private_harnesses` | the fuzz targets of the project, by harness name, that no public repository may hold while the rest of the project publishes. A name may come before the fuzz target's files exist. `oft generate` writes each name as `<project>/<harness>` to `tools/publish/private-harnesses.txt`, in a tree that has `tools/publish/`. `oft release-tree` removes each named fuzz target from a release: its folders in both layouts, its `harnesses` entry, its proofs, and its files and lines in each build record's copy of the port. It also removes this field. Where the project builds from the internal copy of the OSS Verify port, it writes `none` as the port repository in `build.oss_verify` and in each build record that the release keeps. `oft lint` refuses a name that is not of the form `[a-z0-9][a-z0-9_-]*`, has fewer than 8 characters, is listed more than one time, or is a harness of another project. It also refuses a name that is in the name of another harness or of a project, of any project and the project's own included, where no letter, digit or `_` is next to it: the scanners would find the held name there too. It also refuses a name whose Rocq module is the module of a fuzz target that the project keeps, when case is ignored and `-`, `.` and `+` are read as `_`: zlib may not hold `url_fuzzer` and keep `URL_FUZZER`, `url-fuzzer`, `url.fuzzer` or `url+fuzzer`, because the release's search would find the held module in the files of the kept fuzz target. More widely, it refuses every held name that the release's search or the scanners of the publication find in the name, the path or the Rocq module of a fuzz target that any project keeps, or in a project's name, in any case: zlib may not hold `url_fuzzer` while json keeps `url-fuzzer`, or `parse_cbor_x` while json keeps `PARSE_CBOR_X`. A person holds such a fuzz target with its whole project instead (`release: private`). `oft lint` also refuses a field that holds every fuzz target of the project that has a published build, when the project has one and is not `release: private`: the release would then keep no binary of the project. To hold all of them, a person holds the whole project (`release: private`). A `release: private` project may hold all of them, because the release holds the whole project back. Absent for a project that holds no fuzz target, and in every release |
 | `assets` | the release archive of the published binaries (`bin`), which names the build recipe its binaries were built with (`bin.recipe`, one of release.yaml's `recipes`, or, for a `release: private` project, a recipe of its own that no public release carries, pinned by its release, bytes and sha256 under a file name that no listed recipe has, and that another private project's own recipe has only if it is the same recipe) unless the project is port-built; the upstream source trees they were built from (`src`, required when any build is GPL or LGPL); `src_manifest`, which says where the build lays each tree down; and, for a port-built project that attaches its source trees, its port archive (`port`) |
 | `build` | the library's build system, the clang version, and the builder image; `oss_verify`, when present, names the `theorem-labs/oss-verify` port, commit and path (`projects/<project>`, this project's directory there) that built every binary of the project in place of a build recipe. Its port archive contains the source of the linked `infra/base-builder/driver/` and the other port files. |
 
@@ -49,9 +50,14 @@ project ships may still carry its patch.
   Its copy of the port's project directory:
   - has a `series` only when the project has build patches, as in the port; a
     missing `series`, or a missing copy, lists nothing;
-  - lists in that `series` each patch it carries, each with an entry of
-    identical text, and each public finding's patch, so the record of a fuzz
-    target with a public finding copies that directory;
+  - lists in that `series` each patch it carries, and each public finding's
+    patch, so the record of a fuzz target with a public finding copies that
+    directory. Each patch it lists has an entry of identical text, or the
+    record's own `port.patches` names it: an item with the patch's `file`,
+    its `sha256` and, when the patch is of one fuzz target, that `harness`.
+    So the record names every patch that reaches a build, also a build-only
+    patch that no finding discloses. The enrolment writes `port.patches` from
+    the port's `series`, and `upstream.patch_count` is how many items it has;
   - has no `*.patch` that its `series` does not list beside it, and no
     symbolic link on the way to it.
 
@@ -69,7 +75,7 @@ looks for no other form.
 
 | field | meaning |
 |---|---|
-| `counts` | what the tree this file is in holds: its projects, those that are available, their fuzz targets and their published binaries. The rendered pages and the index say the same numbers. `oft release-tree` writes the release's own counts into the cut, where a private project is held or absent |
+| `counts` | what the tree this file is in holds: its projects, those that are available, their fuzz targets and their published binaries. `binaries` counts each harness's published builds (`builds`) and no classifier or original, though `harness.yaml` pins those too. The rendered pages and the index say the same numbers. `oft release-tree` writes the release's own counts into the cut, where a private project is held or absent |
 | `oss_fuzz.projects` | the number of project.yaml files that have `oss_fuzz`: projects OSS-Fuzz has at the pinned commit. The cut carries the number the release tree has |
 | `namespace` | the Rocq namespace of this release's theories: each harness's theory is the namespace followed by the project's and the harness's Rocq identifiers (each character that is not a letter, a digit or `_` written as `_`), and the core is `<namespace>.Core`. A capital letter, then letters and digits. Absent: the namespace of every release before the field (`NAMESPACE_DEFAULT` in [`tools/oft/names.py`](../tools/oft/names.py)). A fingerprint reads it as one fixed name, so a release that changes it moves no fingerprint ([versioning.md](versioning.md)) |
 | `opam_stem` | the stem of this release's opam packages: `rocq-<opam_stem>-core`, `rocq-<opam_stem>-<project>` and `rocq-<opam_stem>-<project>-proofs`, and the dune project's name. Lower-case words of letters and digits joined by single dashes. Absent: `oss-fuzz-theorems` (`OPAM_STEM_DEFAULT`) |
@@ -91,7 +97,12 @@ looks for no other form.
 | `rejects` | each place where the fuzz target turns an input away by returning a value other than 0 or -1 (the driver's status 78), with its lines. A harness lists them exactly when its halts statements with a finite exit set allow 78; a statement with `exits: any` allows every status anyway ([statements.md](statements.md#halting-build_halts-build_halts_may_fail)) |
 | `failure_handlers` | whether code linked into the binaries can end a failed check with a status of its own: `none`, `present` or `unknown` (below). Absent is `unknown` |
 | `distribution` | the input distribution in `Distribution.v`, in words (bound statements only) |
+| `classifiers` | the classifier programs of a pair, keyed by the sanitizer build of the pair (below). The binaries job of each of the two gates, a project's publication and a platform release, checks each published one as a pinned file, its bytes and `sha256` in the release archive, since no recipe builds a classifier yet ([trust.md](trust.md)); for a project that the OSS Verify port builds, its port job does the same |
+| `originals` | the originals, keyed by build: each built by the same recipe as its build, with the same driver and modifications, but with none of the project's library patches (project.yaml `patches`, `library.patch_count`) and from the upstream harness source where `source.modified` is true. Each is pinned as a build is (`file` `<harness>.original-<build>`, `bytes`, `sha256`, `segments`, or `withheld`), and its image is `Images.<build>_original`. The binaries job of each of the two gates, a project's publication and a platform release, rebuilds each published one from the recipe with its patches (`patches/series.tsv`) left out and compares it with this pin ([trust.md](trust.md)); for a project that the OSS Verify port builds, its port job rebuilds it from the published port archive with every patch left out (the `patch` lines of the project's `sources`, its `series` and its `.patch` files) |
 | `model_gap` | features the binaries use on ordinary inputs that LPS does not cover: every statement is "blocked by the model" |
+| `deviation` | what the builds are, also where they differ from what OSS-Fuzz builds. Optional. It has these fields: `library_commit` (the library commit the builds use, equal to `library.commit`), `tls_backend` (the TLS library the binaries link: `none`, `openssl`, `gnutls`, `mbedtls` or `wolfssl`), `enable_debug` (true when the library is built with its `ENABLE_DEBUG` setting), `unittests` (true when the library is built with its `UNITTESTS` setting), `sanitizer` (the sanitizers of each build: `none`, `address`, `undefined` or `address+undefined`, with one entry for each build in `builds` and no other entry), `harness_origin` (`upstream`, `patched`, `vendored` or `extended`) and `architecture` (`riscv64`). Lint compares `tls_backend` with the TLS scans of the published builds. When every build is withheld, no published build has a scan: lint takes each of the five values of `tls_backend`, and the harness README says that no check reads the value. `upstream` means that the harness source is the upstream file with no change. `patched` means that the build applies a patch to the harness source. `vendored` means that the harness source is a kept copy and the target has no upstream harness source. `extended` means that the harness source is a kept copy beside an upstream harness source of the same target |
+| `excluded_scenarios` | the scenarios of the upstream fuzz target that these binaries do not run. Optional. Each entry has a `name` (lower-case letters, digits, `_` and `-`, 80 characters or fewer) and a `reason` (one line, 200 characters or fewer). Two entries cannot have the same name |
+| `debug_additions` | the functions that the harness calls and that only the debug configuration exports. Optional. Each entry has a `function` (its C name) and a `source` (the file of the library that defines it, as a path from the top of the library's tree at `library.commit`, for example `lib/bufq.c`). A harness lists them only when `deviation.enable_debug` or `deviation.unittests` is true |
 | `statements` | the statements (below) |
 
 ### A check
@@ -172,23 +183,50 @@ A halts statement proves a check (`binds_checks`, computed in
 `failure_handlers` is `none`, and, for `stops_with: exit`,
 `exit_reaches_guard` is `true`.
 
+### Classifiers
+
+`classifiers.<build>` holds up to two programs for the pair of `plain` and the
+sanitizer build `<build>`: `a`, about where the two originals agree, and `b`,
+about where each build agrees with its original. Each is a static riscv64
+(RV64G) Linux ELF that reads the same input file as the builds and exits 0 for
+yes, 1 for no and 2 for maybe, and each is pinned as a build is: `file`
+(`<harness>.classifier-<a or b>-<build>`), `bytes`, `sha256` and `segments`, or
+`withheld` with none of them. Its image is `Images.classifier_<a or b>_<build>`,
+and `Images.v` proves it well formed (`<id>_wf`), as it does each build, so no
+statement about it can hold because it has no valid entry. The shapes of the
+statements about classifiers are in
+[theories/ClassifierShapes.v](../theories/ClassifierShapes.v); this release
+names them. harness.yaml records no source for a classifier; where its
+source is published is for the release that first publishes one. `oft lint`
+refuses a classifier or an original that no statement names, a classifier
+pair with neither `a` nor `b`, and an original whose `sha256` is not the one
+the project's `unpatched.yaml` pins for that build; a statement whose
+classifier or original is withheld must be withheld too, and for a reason one
+of them is withheld for, as a statement of a withheld build must be. A
+project that publishes a classifier or an original is held back whole while a
+finding holds it (`facts.hold`).
+
 ### A statement
 
 | field | meaning |
 |---|---|
-| `kind` | `halts`, `agreement`, `bound` (disagrees at most *b*) or `decidability` |
+| `kind` | `halts`, `agreement`, `bound` (disagrees at most *b*), `decidability`, or a classifier statement: `classifier-total`, `classifier-sound`, `classifier-maybe` or `classifier-bound` ([statements.md](statements.md#classifier-statements-_ca_total-_cb_total-_ca_sound-_cb_sound-_maybe_good-_maybe_diff-_bound_good-_bound_diff)) |
+| `classifier` | classifier statements only: `a` or `b`, the program of `classifiers.<build>` it names |
+| `originals` | `classifier-sound` only, required there: `unpatched` (name harness.yaml's `originals`) or `published` (name the published builds; allowed only where project.yaml gives `library.patch_count` 0 and lists no patches, and `source.modified` is false) |
 | `builds` | the build it is about; for a pair statement, `plain` and the sanitizer build |
 | `reading` | what the environment may refuse. `budget` (halts only): only what the process's state forces, for example a memory request past the budget or an open of a missing file. `may-fail`: every kind of call that LPS lets fail, at any time. `alloc-forced-only`: the same, except that a memory request fails only when the budget is spent or no address range is free |
 | `exits` | halts only: the exit statuses allowed, or `any`. A finite set is 0 and 2, with 78 as well where the harness lists `rejects` |
 | `budgets` | agreement only: `standard` (16 GiB for the plain build) or `asan` (2 GiB); absent when project.yaml `budgets.agrees` sets a pair for the statement's sanitizer |
 | `abort` | agreement only: `signal` when `abort()` is read as death by SIGABRT rather than as a step that LPS does not interpret; the statement forbids it either way |
 | `machine` | `rv64gc` when the process is told its machine has no vector unit |
+| `twin` | a second statement beside its first, the statement of the harness that the twin's kind and builds (and, for `any-exit`, its reading) name without a `twin`, and how it differs from it: `any-exit` (halts: `exits: any`, beside a first with the same reading and a finite set) or `alloc-forced-only` (agreement: read `alloc-forced-only`, beside a first read `may-fail`). Its name is its first's name with `_any_exit` or `_alloc_forced_only` after it ([statements.md](statements.md), "Twins") |
 | `binds_checks` | halts only: whether a check of the harness that ends the process when it fails is excluded by this statement, so that a proof of the statement proves the check. A check binds only as "Failure handlers" above says |
 | `status` | the exported status; `proved`, `refuted` and `counterexample` are derived, never written |
 | `basis`, `reason` | why a statement is suspected false (`basis` is always `reading`). A withdrawn statement also has a `reason` |
-| `witness` | the run that shows a statement false (witnessed): the build, the input file (its bytes in hex, or its size and SHA-256), the memory request refused (which call, its position k in the run, counted as below, and its size; absent when nothing was refused), how the build ended (a signal, or an exit with a status the statement does not allow), and what ran it |
+| `witness` | the run that shows a statement false (witnessed): the build, the input file (its bytes in hex, or its size and SHA-256), the memory request refused (which call, its position k in the run, counted as below, and its size; absent when nothing was refused), how the build ended (a signal, or an exit with a status the statement does not allow), and what ran it. A classifier statement takes no witness: a witness is a run of one build, which shows no classifier's answer |
 | `gap` | for a statement "blocked by the model" when the rest of its harness is not: the feature that LPS does not cover |
 | `withheld` | why a withheld statement is withheld: `source-bundle` or `not-yet-published` |
+| `instance` | one input on which every premise of the statement is to hold. A lemma `<statement>_instance` in `proofs/lib/Instances/<statement>.v` proves that the premises hold on it, and `oft check` checks that lemma. An instance with no lemma is recorded, not yet proved, and the harness README says so. `oft check` does not check the lemma of a `withheld` or `withdrawn` statement, so the harness README says that such an instance is not proved. Optional, and a classifier statement takes none: its shapes have no instance form. It has these fields: `file` (the name of the input file in `proofs/provenance/evidence/instances/`), `sha256` (the SHA-256 of the file), `bytes` (the size of the file, from 0 to 67,108,863) and `path`. `path` is `refused-by-driver` when the driver exits with status 2 before it calls the harness, or `reaches-harness` when the driver calls the harness on the file. The input gives the program name and the input file name of the harness's `distribution` (`argv0` and `input_file`). When the harness has no `distribution`, the program name is the harness's name and the input file name is `input.bin` |
 | `revision` | the statement's revision, 1 unless its meaning changed ([versioning.md](versioning.md)) |
 
 A witness's position k counts only these calls of the run, in order:
@@ -210,7 +248,11 @@ It does not count:
 So a count of every `brk` and `mmap` call gives another k. Each witness of
 libarchive `libarchive_xar_fuzzer` refuses the 6th counted call. Before that
 call, each run makes a `brk(NULL)` and a guard-page `mmap`: a count that takes
-in both gives 8, and a count that takes in one of them gives 7.
+in both gives 8, and a count that takes in one of them gives 7. Those
+witnesses were runs of the `plain` binary of `libarchive_xar_fuzzer` in
+`libarchive-bin.tar.zst` of release v2026.10.0 (SHA-256
+`36e020476d2f4b2c666d772aae7dcaa70c4336ab314bb3b4d18138c53ea0e30b`), built
+before its fuzz harness was patched.
 
 This list is the count of the tool that recorded the witnesses here. Three
 parts make it together: the tool's test `is_alloc_backing` (lines 129-144 of
@@ -222,6 +264,13 @@ repository that is not public (file SHA-256
 `3e82405c4c7570fea38f632a642a501f5b5efd133f3324fc700dc0780ba388bc`), and each
 earlier version of the file has the same `is_alloc_backing`. The list above is
 the published definition of the count.
+
+A witness is for a halts or an agreement statement only: one run cannot
+refute a bound or a decidability statement. A witness that refuses a request
+is for a `may-fail` statement only: under `budget` and `alloc-forced-only` a
+memory request is refused only when the process's state forces it, which a
+witness does not record. A witness that ends in an exit is for a halts
+statement whose exit set leaves out its status. `oft lint` refuses any other.
 
 ## `projects/<project>/<harness>/counterexamples/<statement>/expect.yaml`
 

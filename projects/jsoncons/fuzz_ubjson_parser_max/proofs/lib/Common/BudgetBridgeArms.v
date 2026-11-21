@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: adds sim_fault_unfold, which unfolds option-valued Sys hook constants matched in Sim goals, and sim_auto_w; proves arm_nat_write/writev/pwrite64 with sim_auto_w; adds arm_nat_set_robust_list, arm_nat_clock_getres and arm_nat_pwritev2 lemmas; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Common/BudgetBridgeArms.v, lines 56-74, 202-215. *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Sys.SyscallTable.
@@ -47,16 +48,25 @@ Lemma arm_nat_lseek : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "G'3'6&S<r2
 Proof. intros L i. sim_auto. Qed.
 Lemma arm_nat_read : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "E'3'6&S<r2'5r1qW021&Q1&S1&;(0%2261%411u1%5291u2%72;1%:3531%@6?>><11pVLB1p:D1").
 Proof. intros L i. sim_auto. Qed.
+Ltac sim_fault_unfold :=
+lazymatch goal with
+| |- Sim _ _ _ (match ?e with Some _ => _ | None => _ end) =>
+lazymatch type of e with
+| option (Sys ?A -> Sys ?A) =>
+let h := headc e in is_const h; unfold h; cbv beta iota zeta
+end
+end.
+Ltac sim_auto_w := repeat (first [ sim_fault_unfold | sim_step ]).
 Lemma arm_nat_write : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "E'3'6&S<r2'5r1qW021&Q3&S1&;(0%2261%411u1%5291u2%72;1%:3531%@6?>><11pVLB1p:D1").
-Proof. intros L i. sim_auto. Qed.
+Proof. intros L i. sim_auto_w. Qed.
 Lemma arm_nat_readv : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "E'3'6&S<r2'5r1qW021&Q2&S1&;(0%2261%411u1%5291u2%72;1%:3531%@6?>><11pVLB1p:D1").
 Proof. intros L i. sim_auto. Qed.
 Lemma arm_nat_writev : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "E'3'6&S<r2'5r1qW021&Q4&S1&;(0%2261%411u1%5291u2%72;1%:3531%@6?>><11pVLB1p:D1").
-Proof. intros L i. sim_auto. Qed.
+Proof. intros L i. sim_auto_w. Qed.
 Lemma arm_nat_pread64 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "G'3'6&S<r2'5r1qW021&O&S1&;(0%2261%411u1%5291u2%72;1u3%92=1%<47531%B6A@@>11pVLD1p:F1").
 Proof. intros L i. sim_auto. Qed.
 Lemma arm_nat_pwrite64 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "G'3'6&S<r2'5r1qW021&Q0&S1&;(0%2261%411u1%5291u2%72;1u3%92=1%<47531%B6A@@>11pVLD1p:F1").
-Proof. intros L i. sim_auto. Qed.
+Proof. intros L i. sim_auto_w. Qed.
 Lemma arm_nat_pselect6 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "K'3'6&S<r2'5r1qW021&Q7&S5&;(0%2261%411u1%5291u2%72;1u3%92=1u4%;2?1u5%=2A1%@6;97531%F6EDDB11pVLH1p:J1").
 Proof. intros L i. sim_auto. Qed.
 Lemma arm_nat_ppoll : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "I'3'6&S<r2'5r1qW021&Q6&;(0%2251&S9u1%5281%311u2%82;1u3%:2=1u4%<2?1%>5;7531%D6CBB@11pVLF1p:H1").
@@ -181,3 +191,17 @@ Lemma arm_nat_clone3 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "A'3'6&S<r
 Proof. intros L i. sim_auto. Qed.
 Lemma arm_nat_faccessat2 : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeArms "G'3'6&S<r2'5r1qW021&I&S1&;(0%2261%411u1%5291u2%72;1u3%92=1%<47531%B6A@@>11pVLD1p:F1").
 Proof. intros L i. sim_auto. Qed.
+Lemma arm_nat_set_robust_list : forall (L : Z) (i : SyscallInput),
+Sim L (fun x : SyscallEffect => x)
+(set_robust_list_spec (in_arg i 1)) (set_robust_list_spec (in_arg i 1)).
+Proof. intros L i. sim_auto. Qed.
+Lemma arm_nat_clock_getres : forall (L : Z) (i : SyscallInput),
+Sim L (fun x : SyscallEffect => x)
+(clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1))
+(clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1)).
+Proof. intros L i. sim_auto. Qed.
+Lemma arm_nat_pwritev2 : forall (L : Z) (i : SyscallInput),
+Sim L (fun x : SyscallEffect => x)
+(pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)))
+(pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5))).
+Proof. intros L i. sim_auto_w. Qed.

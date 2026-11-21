@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a reserved-list consumer reads mr_res's new append form by membership; ex_eb_facts and ex_layout_ok give eb_facts for the launch's rseq flag r0; the eb_facts destructuring names more conjuncts and adds the stack-top bound Hst); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -165,7 +166,14 @@ Proof.
   (* [comment removed for export] *)
   assert (Hdq : forall q, In q RES -> leval ρ (fst g) + snd g <= fst q \/ fst q + snd q <= leval ρ (fst g)).
   { intros q Hq. rewrite <- HRES in Hq. apply in_map_iff in Hq as [q0 [<- Hq0]]. cbn [fst snd].
-    rewrite <- (mr_res bsegs fs0 ρ _ model HM) in Hq0. pose proof (mr_disj bsegs fs0 ρ _ model HM _ q0 HIn Hq0) as D.
+    (* WAS: rewrite <- (mr_res bsegs fs0 ρ _ model HM) in Hq0.
+       mr_res is an existential at the revision (VCommon/Ax/AxModelRel.v:48-51), so there
+       is no equation to rewrite with; mr_disj needs membership only, which the append
+       form gives through in_or_app.  Ported from openssl/bignum. *)
+    destruct (mr_res bsegs fs0 ρ _ model HM) as [rx [Hrx _]].
+    assert (Hq0' : In q0 (vm_reserved (m_vmmaps model)))
+      by (rewrite Hrx; apply in_or_app; left; exact Hq0).
+    pose proof (mr_disj bsegs fs0 ρ _ model HM _ q0 HIn Hq0') as D.
     rewrite (ent_val_bas ρ e (MR_ent bsegs fs0 ρ _ model e HM He)), (ent_val_bsz ρ e (MR_ent bsegs fs0 ρ _ model e HM He)), Eb, Es in D.
     unfold iv_disj, bas, bsz in D. lia. }
   destruct RES as [|q0 r]; [discriminate Hcontig|]. apply land_true in Hcontig as [Hc H3]. apply land_true in Hc as [H1 H2].
@@ -182,14 +190,15 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma ex_eb_facts : existsb is_entry (a_mem B) = true -> eb_facts ρ.
+(** the entry region carries the launch's rseq flag [r0] *)
+Lemma ex_eb_facts : existsb is_entry (a_mem B) = true -> exists r0, eb_facts r0 ρ.
 Proof.
   intros H. apply existsb_exists in H as [Rq [HIn He]]. pose proof (r_mem _ _ _ _ _ _ _ HR) as [_ HF]. cbn [cfg_ms] in HF.
   pose proof (proj1 (Forall_forall _ _) HF Rq HIn) as HRq. unfold RRegion in HRq. unfold is_entry in He.
-  destruct (rg_kind Rq); try discriminate He. exact (proj1 HRq).
+  destruct (rg_kind Rq) as [| | | | r0 ph]; try discriminate He. exists r0. exact (proj1 HRq).
 Qed.
 
-Theorem ex_layout_ok : lay_ok = true -> layout_ok L /\ leval ρ (am_atop (a_model B)) = l_ACEIL L /\ l_sp0 L = sp_val ρ /\ eb_facts ρ.
+Theorem ex_layout_ok : lay_ok = true -> layout_ok L /\ leval ρ (am_atop (a_model B)) = l_ACEIL L /\ l_sp0 L = sp_val ρ /\ exists r0, eb_facts r0 ρ.
 Proof.
   unfold lay_ok. intros H.
   apply land_true in H as [H K18]. apply land_true in H as [H K17]. apply land_true in H as [H K16]. apply land_true in H as [H K15].
@@ -198,12 +207,12 @@ Proof.
   apply land_true in H as [H K6]. apply land_true in H as [H K5]. apply land_true in H as [H K4]. apply land_true in H as [H K3].
   apply land_true in H as [K1 K2].
   (* [comment removed for export] *)
-  pose proof (lin_eqb_eq _ _ K4) as Eat. pose proof (lin_eqb_eq _ _ K5) as Esp. pose proof (ex_eb_facts K6) as Heb.
+  pose proof (lin_eqb_eq _ _ K4) as Eat. pose proof (lin_eqb_eq _ _ K5) as Esp. pose proof (ex_eb_facts K6) as [r0 Heb].
   assert (Esp0 : l_sp0 L = sp_val ρ).
   { unfold Lm, L_of. cbn [l_sp0]. rewrite Esp. unfold leval, sp_val. cbn [fst snd]. lia. }
   assert (Hat : leval ρ (am_atop (a_model B)) = l_ACEIL L).
   { rewrite Eat, leval_laddc. unfold l_ACEIL, STACK_WIN, Lm, L_of. cbn [l_sp0]. lia. }
-  split; [|split; [exact Hat | split; [exact Esp0 | exact Heb]]].
+  split; [|split; [exact Hat | split; [exact Esp0 | exists r0; exact Heb]]].
   assert (Hgf : forallb find_ent grants = true /\ forallb (fun g => alk 4096 (fst g)) grants = true).
   { clear -K1. induction grants as [|g r IH]; [split; reflexivity|]. cbn [forallb] in *. apply andb_prop in K1 as [A1 A2].
     apply land_true in A1 as [A11 A12]. destruct (IH A2) as [I1 I2]. rewrite A11, A12, I1, I2. split; reflexivity. }
@@ -212,13 +221,26 @@ Proof.
   { intros g Hg. rewrite forallb_forall in Hgf, Hga. exact (grant_facts g (Hgf g Hg) (Hga g Hg) K3 Hat). }
   assert (PA : pairwise_apart (startup_grants L)).
   { intros i j g1 g2 Hij H1 H2. exact (fop_nth _ _ (fop_grants grants Hgf K2) i j g1 g2 Hij H1 H2). }
-  destruct Heb as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hs1 & Hs2).
+  (* [eb_facts] (VCommon/Ax/AxEntryRel.v:88-101) has exactly TWENTY top-level
+     conjuncts and this pattern has exactly twenty slots, so the alignment is right
+     and is left alone -- slot 8 is the [v_g] stack-gap bound and slot 9 the
+     parenthesised [v_xl] pair, both in their proper places.  What was wrong is that
+     two of the names it introduced, [He] and [Hg], are exactly the names the
+     [maps0_ok] bullet rebinds below -- the whole of "Error: Hg is already used."
+     They are RENAMED rather than blanked: [lia] at the [Hst] assert reads the
+     context by TYPE, not by name, and a farm round measured that
+     blanking them moved the failure onto that line.  Keeping the facts and changing
+     only the two spellings removes the collision and leaves the context intact. *)
+  destruct Heb as (Hc & He0 & _ & _ & Hta & Hte & Hpar & Hg0 & (Hxl & _) & _ & _ & _ & _ & _ & _ & _ & _ & Hs1 & Hs2 & _).
+  (* the block runs from sp up to the stack top, which is at most sp_window_hi *)
+  assert (Hst : sp_val ρ <= dec_top r0 ρ).
+  { unfold dec_top, str_off. pose proof (total_arg_bytes_nonneg (dec_argv ρ)). pose proof (total_arg_bytes_nonneg (dec_envp ρ)). lia. }
   pose proof (in_rng_sound _ _ _ K8) as Rtop. rewrite leval_lsub in Rtop.
   pose proof (in_rng_sound _ _ _ K10) as RSB. rewrite leval_lsub in RSB.
   pose proof (in_rng_sound _ _ _ K12) as Rtid.
   unfold layout_ok.
   assert (G := fun k g (E : nth_error grants k = Some g) => HG g (nth_error_In _ _ E)).
-  split; [rewrite Esp0; pose proof (Zle_0_nat (length (eb_image (mkPhdrInfo 0 0 0) ρ))); lia|].
+  split; [rewrite Esp0; lia|].
   split; [rewrite Esp0; unfold sp_val, sp_terms; cbn [teval]; rewrite Z.add_0_r;
           replace (16 * ρ v_x0 + (64 * ρ v_x1 + (4096 * ρ v_x2 + 32768 * ρ v_x3))) with ((ρ v_x0 + 4 * ρ v_x1 + 256 * ρ v_x2 + 2048 * ρ v_x3) * 16) by lia;
           apply Z_mod_mult|].

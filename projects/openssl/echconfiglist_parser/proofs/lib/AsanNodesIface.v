@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: Section Iface is generic in the Leaf class of the srealizes walks its obligations state. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
   PropExec ShapeAlg SpinAlg AgentLib AsanAcct AsanAcctShape AxSymExec3 AxSymExec3Sound AxSymRun3
   AsanPlanCore AsanPlan AsanPlanSound Scfg.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import AX2. Import AX2S. Import AP. Import APS.
@@ -19,6 +21,7 @@ Open Scope Z_scope.
 Section Iface.
 Variable SEGS : list Segment.
 Context {SC : StepCfg}.   (* [comment removed for export] *)
+Context {LF : Leaf}.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.

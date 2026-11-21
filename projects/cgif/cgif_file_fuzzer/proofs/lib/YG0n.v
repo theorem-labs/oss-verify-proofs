@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO's mappings and steps): changed img_covered_b, ALedger; added al_rx_ok. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -252,8 +253,9 @@ match l with
 | [] => Z.leb hi lo
 | e :: t => Z.eqb (fst e) lo && Z.leb 0 (snd e) && Z.ltb (lo + snd e) (2 ^ 64) && tiles_b t (lo + snd e) hi
 end.
+(* 08b1429: segments_reserved skips kernel mappings (Run.v), so the tiling is over the same list. *)
 Definition img_covered_b (segs : list Segment) (img : Z * Z) : bool :=
-Z.leb 0 (fst img) && tiles_b (map seg_resv_z segs) (fst img) (fst img + snd img).
+Z.leb 0 (fst img) && tiles_b (map seg_resv_z (filter (fun s => negb (seg_kernel_map s)) segs)) (fst img) (fst img + snd img).
 Lemma tiles_b_cover : forall l lo hi a, 0 <= lo -> tiles_b l lo hi = true -> lo <= a < hi ->
 exists e, In e l /\ fst e <= a < fst e + snd e /\ 0 <= fst e /\ fst e + snd e < 2 ^ 64.
 Proof.
@@ -307,10 +309,17 @@ Definition perm_maps : list (Z * Z) :=
 (ly_C ly, kCtxMapSize); (ly_D ly, 4096)] ++ ly_extra ly.
 Definition esec (na lz : list (word * word)) (E : list (Z * Z)) : Z :=
 YK0g.sum_count (fun x => negb (YK0g.covered (na ++ lz) x)) (map wiv E).
+Definition al_rx_ok (iv : word * word) : Prop :=
+0 < bv_unsigned (snd iv) /\ bv_unsigned (snd iv) <= 81920
+/\ bv_unsigned (fst iv) mod 4096 = 0 /\ bv_unsigned (snd iv) mod 4096 = 0
+/\ 0x10007fff8000 + 4096 <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47
+/\ zdisjoint (bv_unsigned (fst iv), bv_unsigned (snd iv)) (ly_Q ly, kPtrArrayResv)
+/\ zdisjoint (bv_unsigned (fst iv), bv_unsigned (snd iv)) (ly_prim ly, kPrimResvSize).
 Record ALedger (S : astate) (md : Model) : Prop := {
 al_img : forall sg, In sg segs -> fst (ly_img ly) <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly) + snd (ly_img ly);
 al_limit : ASAN_VM_LMIN <= vm_limit (m_vmmaps md);
-al_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+al_reserved : exists rx : list (word * word),
+vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx /\ Forall al_rx_ok rx /\ (length rx <= 2)%nat;
 al_prim : exists pieces, prim_pieces_ok S pieces /\
 (forall p, In p pieces <-> (In (wiv p) (vm_maps (m_vmmaps md)) /\ 0 < snd p /\ ly_prim ly <= fst p /\ fst p + snd p <= ly_prim ly + kPrimResvSize));
 al_Q : In (wiv (ly_Q ly, kPtrArrayResv)) (vm_maps (m_vmmaps md));

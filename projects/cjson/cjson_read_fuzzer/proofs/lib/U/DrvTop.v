@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the start model mo0 adds the entry draw's vDSO run state, its reserved list is init_reserved's and mo0_dmod takes the channel-reader premise; u_main_body and u_main_stmt_lim take the entry_launch_ok_va premise and state u_main_entry over the whole ProcInput and the mmap base; the entry facts take the launch premises, the heap start is built before the argv split, the argv pointers are placed from the stack top and execfn, and the stack bound is the one entry_stk now proves; dheap_init is given the start model's kernel build; the start model's vDSO run is the model's Vdso.vdso_run_init; p_main_body reads the stack pointer's window bounds off valid_sp directly; the driver calls read argc's register value (argcN) through the argv split. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Vdso.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require PropExec.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require WallSim.
@@ -66,12 +68,14 @@ Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 
 (* [comment removed for export] *)
 Section Model.
+  Set Default Proof Using "All".
   Variables (inp : ProcInput) (tid brk mbase sp : word) (lim : Z).   (* [comment removed for export] *)
-  Let mo0 := with_tid tid (init_model (segments_reserved usegs) brk mbase sp lim inp).
+  Variable rnd : EntryDraw.
+  Let mo0 := with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved usegs) brk mbase sp lim inp)).
 
-  Lemma mo0_dmod : DMOD (in_fs inp) FDS0 mo0.
-  Proof. subst mo0. split; [split| |]; reflexivity. Qed.
-  Lemma mo0_vmmaps : m_vmmaps mo0 = mkVmMapsFull (segments_reserved usegs) [] [] brk brk lim mbase sp.
+  Lemma mo0_dmod : in_channel_reader inp = true -> DMOD (in_fs inp) FDS0 mo0.
+  Proof. intros HR. subst mo0. split; [split| | |]; first [reflexivity | exact HR]. Qed.
+  Lemma mo0_vmmaps : m_vmmaps mo0 = mkVmMapsFull (init_reserved (segments_reserved usegs) mbase sp (in_kernel inp)) [] [] brk brk lim mbase sp.
   Proof. subst mo0. reflexivity. Qed.
   Lemma mo0_lazy : m_vm_lazy mo0 = []. Proof. subst mo0. reflexivity. Qed.
   Lemma mo0_mat : m_vm_materialized mo0 = []. Proof. subst mo0. reflexivity. Qed.
@@ -112,20 +116,21 @@ Section TOP.
     valid_sp sp0 -> valid_brk usegs brk -> valid_mmap_base mbase -> valid_input inp ->
     entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
     (0 < bv_unsigned tid < 2^22)%Z ->
-    @PS.u_main_entry (AM.amb_of inp) sp0 rnd (in_argv inp) (in_envp inp) tid regs mem ->
+    entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) inp ->
+    PS.u_main_entry sp0 inp mbase rnd tid regs mem ->
     alloc_ceiling = bv_unsigned sp0 - stack_max_size ->
     ssp_guard_val = SSP.canary_w (ed_random rnd) ->
     malloc_secret_val = rnd_secret (ed_random rnd) ->
     realizes usegs
       (mkCfg (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.MState.MS (RE.mkR_of regs) bvmap_empty (Z_to_bv 64 0x1316c)
                 (Z_to_bv 32 0) None mem (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.PropExec.seg_rom usegs))
-             (with_tid tid (init_model (segments_reserved usegs) brk mbase sp0 lim inp)))
+             (with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved usegs) brk mbase sp0 lim inp))))
       (spec (in_argv inp) (in_fs inp)).
   Proof.
-    intros lim sp0 brk mbase rnd inp tid regs mem HLIM VSP VBRK VMB VINP FITS TID ME CEQ GEQ SEQ.
+    intros lim sp0 brk mbase rnd inp tid regs mem HLIM VSP VBRK VMB VINP FITS TID LAU ME CEQ GEQ SEQ.
+    pose proof (valid_input_launch _ VINP) as VL.
     pose proof VINP as (VA & VE & VFS & _).
-    set (AMB := AM.amb_of inp) in *.
-    pose proof (usp_lo sp0 VSP) as LO. pose proof (usp_hi sp0 VSP) as HI. pose proof (usp_al sp0 VSP) as AL.
+    pose proof VSP as (LO & HI & AL). unfold sp_window_lo in LO. unfold sp_window_hi in HI.
     assert (HCEIL : alloc_ceiling <= bv_unsigned sp0 - 8388608) by (rewrite CEQ; unfold stack_max_size; lia).
     unfold RE.mkR_of.
     rewrite (PS.me_ra _ _ _ _ _ _ _ ME), (PS.me_tp _ _ _ _ _ _ _ ME), (PS.me_a0 _ _ _ _ _ _ _ ME), (PS.me_a1 _ _ _ _ _ _ _ ME).
@@ -133,77 +138,82 @@ Section TOP.
     assert (USP : bv_unsigned sp = bv_unsigned sp0 - 48).
     { subst sp. rewrite (PS.me_sp _ _ _ _ _ _ _ ME). apply unsigned_lit. lia. }
     replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (wz (bv_unsigned sp + 56)) by (unfold wz; f_equal; lia).
-    pose proof (entry_stk sp0 _ _ tid rnd regs mem ME VSP) as ST.
+    pose proof (entry_stk sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as ST.
     replace (bv_unsigned sp0 - 48) with (bv_unsigned sp) in ST by lia.
-    pose proof (entry_mem_inv sp0 _ _ tid rnd regs mem ME VSP FITS) as MI.
-    pose proof (entry_dstat sp0 _ _ tid rnd regs mem ME VSP) as DS.
-    pose proof (entry_libc sp0 _ _ tid rnd regs mem ME VSP) as LC.
-    pose proof (entry_ssp sp0 _ _ tid rnd regs mem ME VSP) as SSP0. rewrite <- GEQ in SSP0.
-    pose proof (entry_stdout sp0 _ _ tid rnd regs mem ME VSP) as SOF.
-    pose proof (entry_stderr sp0 _ _ tid rnd regs mem ME VSP) as SEF.
-    pose proof (mo0_dmod inp tid brk mbase sp0 lim) as DM.
+    pose proof (entry_mem_inv sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as MI.
+    pose proof (entry_dstat sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as DS.
+    pose proof (entry_libc sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as LC.
+    pose proof (entry_ssp sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as SSP0. rewrite <- GEQ in SSP0.
+    pose proof (entry_stdout sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as SOF.
+    pose proof (entry_stderr sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as SEF.
+    pose proof (entry_cjst sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as CJ.
+    pose proof (entry_errno sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as ER.
+    pose proof (entry_initflag sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as IFL.
+    pose proof (entry_rs sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as RSC.
+    pose proof (entry_argv_str sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as EAS.
+    pose proof (entry_argv_ptr sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ) as EAP.
+    (* the heap's start: everything the image and the launch give it, before argv is split *)
+    assert (DH : DHEAP0 (bv_unsigned sp + 48) mem (with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved usegs) brk mbase sp0 lim inp)))).
+    { rewrite USP. replace (bv_unsigned sp0 - 48 + 48) with (bv_unsigned sp0) by lia.
+      eapply (dheap_init mem (PD.auxv_w sp0 inp) (bv_unsigned sp0) _ brk lim mbase sp0 (in_kernel inp)).
+      - intros a Ha. apply (entry_none sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ). lia.
+      - exact (entry_libc sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ).
+      - exact (entry_libc2 sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ).
+      - exact (entry_got_ssp sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ).
+      - rewrite GEQ. exact (entry_guard sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ).
+      - exact MI.
+      - exact (entry_rauxv sp0 inp mbase brk tid rnd regs mem ME VA VE VSP VL LAU HCEIL SEQ).
+      - apply mo0_vmmaps.
+      - apply mo0_lazy.
+      - apply mo0_mat.
+      - apply mo0_halted.
+      - reflexivity.
+      - exact VBRK.
+      - exact VMB.
+      - exact HLIM.
+      - symmetry. exact CEQ. }
+    pose proof (mo0_dmod inp tid brk mbase sp0 lim rnd (valid_input_channel_reader _ VINP)) as DM.
     destruct (in_argv inp) as [|argv0 [|path [|x rest]]] eqn:EAV.
     - exfalso. destruct VA as [[H _] _]. cbn in H. lia.
     - (* [comment removed for export] *)
-      destruct (entry_argv_str sp0 _ _ tid rnd regs mem ME VA VE VSP 0%nat ltac:(cbn; lia)) as (slack & BY & SLK & AB & _ & NONUL & LEN).
-      pose proof (entry_argv_ptr sp0 _ _ tid rnd regs mem ME VA VE VSP 0%nat ltac:(cbn; lia)) as AV.
+      destruct (EAS 0%nat ltac:(cbn; lia)) as (slack & BY & SLK & AB & _ & NONUL & LEN).
+      pose proof (EAP 0%nat ltac:(cbn; lia)) as AV.
       cbn [nth] in BY, SLK, NONUL, LEN. cbn [hd].
-      set (P0w := CE.cat_argv_ptr sp0 [argv0] (in_envp inp) 0) in *.
+      set (P0w := CE.cat_argv_ptr (ed_top rnd) [argv0] (in_envp inp) (in_execfn inp) 0) in *.
       replace (bv_unsigned sp0 + 8 + 8 * Z.of_nat 0) with (bv_unsigned sp + 56) in AV by lia.
       rewrite <- (Z_to_bv_bv_unsigned P0w) in AV. change (Z_to_bv 64 (bv_unsigned P0w)) with (wz (bv_unsigned P0w)) in AV.
-      eapply (main_usage SO_EXIT SO_USAGE) with (lo := bv_unsigned sp0 - 8388608) (argc := 1) (P0 := bv_unsigned P0w) (argv0 := argv0) (slack := slack);
+      eapply (main_usage SO_EXIT SO_USAGE) with (lo := bv_unsigned sp0 - 6144512) (argc := 1) (P0 := bv_unsigned P0w) (argv0 := argv0) (slack := slack);
         first [exact DM| exact ST| exact MI| exact DS| exact TID| exact LC| exact SSP0| exact SOF| exact SEF| exact NONUL| exact AV| exact BY| exact SLK| apply frm0_zero
-              | reflexivity | unfold GLOBALS_TOP, zlength in *; lia].
+              | reflexivity | unfold PStartupDefs.ArgvEnv.argcN; rewrite EAV; reflexivity | unfold GLOBALS_TOP, zlength in *; lia].
     - (* [comment removed for export] *)
-      destruct (entry_argv_str sp0 _ _ tid rnd regs mem ME VA VE VSP 1%nat ltac:(cbn; lia)) as (slack & BY & SLK & AB & _ & NONUL & LEN).
-      pose proof (entry_argv_ptr sp0 _ _ tid rnd regs mem ME VA VE VSP 1%nat ltac:(cbn; lia)) as AV.
+      destruct (EAS 1%nat ltac:(cbn; lia)) as (slack & BY & SLK & AB & _ & NONUL & LEN).
+      pose proof (EAP 1%nat ltac:(cbn; lia)) as AV.
       cbn [nth] in BY, SLK, NONUL, LEN.
-      set (P1w := CE.cat_argv_ptr sp0 [argv0; path] (in_envp inp) 1) in *.
+      set (P1w := CE.cat_argv_ptr (ed_top rnd) [argv0; path] (in_envp inp) (in_execfn inp) 1) in *.
       replace (bv_unsigned sp0 + 8 + 8 * Z.of_nat 1) with (bv_unsigned sp + 64) in AV by lia.
       rewrite <- (Z_to_bv_bv_unsigned P1w) in AV. change (Z_to_bv 64 (bv_unsigned P1w)) with (wz (bv_unsigned P1w)) in AV.
-      pose proof (entry_cjst sp0 _ _ tid rnd regs mem ME VSP) as CJ.
-      pose proof (entry_errno sp0 _ _ tid rnd regs mem ME VSP) as ER.
-      pose proof (entry_initflag sp0 _ _ tid rnd regs mem ME VSP) as IFL.
-      pose proof (entry_rs sp0 _ _ tid rnd regs mem ME VSP) as RSC.
       (* [comment removed for export] *)
       pose proof VA as (_ & _ & _ & _ & VTL). cbn [tl] in VTL. apply Forall_cons_iff in VTL as [[HSL HDDb] _].
       assert (HDD : path <> dotdot_path).
       { intros E. rewrite E in HDDb. rewrite (proj2 (path_eqb_eq dotdot_path dotdot_path) eq_refl) in HDDb. discriminate. }
-      assert (DH : DHEAP0 (bv_unsigned sp + 48) mem (with_tid tid (init_model (segments_reserved usegs) brk mbase sp0 lim inp))).
-      { rewrite USP. replace (bv_unsigned sp0 - 48 + 48) with (bv_unsigned sp0) by lia.
-        eapply (dheap_init mem (PD.auxv_w sp0 [argv0; path] (in_envp inp)) (bv_unsigned sp0) _ brk lim mbase sp0).
-        - intros a Ha. apply (entry_none sp0 _ _ tid rnd regs mem ME VSP). lia.
-        - exact (entry_libc sp0 _ _ tid rnd regs mem ME VSP).
-        - exact (entry_libc2 sp0 _ _ tid rnd regs mem ME VA VSP).
-        - exact (entry_got_ssp sp0 _ _ tid rnd regs mem ME VSP).
-        - rewrite GEQ. exact (entry_guard sp0 _ _ tid rnd regs mem ME VSP).
-        - exact MI.
-        - exact (entry_rauxv sp0 _ _ tid rnd regs mem ME VA VE VSP HCEIL SEQ).
-        - apply mo0_vmmaps.
-        - apply mo0_lazy.
-        - apply mo0_mat.
-        - apply mo0_halted.
-        - exact VBRK.
-        - exact HLIM.
-        - symmetry. exact CEQ. }
       rewrite spec_two.
-      eapply MAIN2 with (lo := bv_unsigned sp0 - 8388608) (P1 := bv_unsigned P1w) (slack := slack);
+      eapply MAIN2 with (lo := bv_unsigned sp0 - 6144512) (P1 := bv_unsigned P1w) (slack := slack);
         first [exact DM| exact DH| exact ST| exact MI| exact DS| exact TID| exact CJ| exact ER| exact IFL| exact SOF| exact SEF| exact NONUL| exact AV| exact BY| exact SLK| apply frm0_zero
               | exact HSL | exact HDD
               | eexists; exact RSC
-              | reflexivity | rewrite ?USP; unfold GLOBALS_TOP, zlength in *; lia ].
+              | reflexivity | unfold PStartupDefs.ArgvEnv.argcN; rewrite EAV; reflexivity | rewrite ?USP; unfold GLOBALS_TOP, zlength in *; lia ].
     - (* [comment removed for export] *)
-      destruct (entry_argv_str sp0 _ _ tid rnd regs mem ME VA VE VSP 0%nat ltac:(cbn; lia)) as (slack & BY & SLK & AB & _ & NONUL & LEN).
-      pose proof (entry_argv_ptr sp0 _ _ tid rnd regs mem ME VA VE VSP 0%nat ltac:(cbn; lia)) as AV.
+      destruct (EAS 0%nat ltac:(cbn; lia)) as (slack & BY & SLK & AB & _ & NONUL & LEN).
+      pose proof (EAP 0%nat ltac:(cbn; lia)) as AV.
       cbn [nth] in BY, SLK, NONUL, LEN. cbn [hd].
-      set (P0w := CE.cat_argv_ptr sp0 (argv0 :: path :: x :: rest) (in_envp inp) 0) in *.
+      set (P0w := CE.cat_argv_ptr (ed_top rnd) (argv0 :: path :: x :: rest) (in_envp inp) (in_execfn inp) 0) in *.
       replace (bv_unsigned sp0 + 8 + 8 * Z.of_nat 0) with (bv_unsigned sp + 56) in AV by lia.
       rewrite <- (Z_to_bv_bv_unsigned P0w) in AV. change (Z_to_bv 64 (bv_unsigned P0w)) with (wz (bv_unsigned P0w)) in AV.
       destruct VA as [[_ AC] _].
       change (spec (argv0 :: path :: x :: rest) (in_fs inp)) with (t_die (msg_usage argv0) (in_fs inp)).
-      eapply (main_usage SO_EXIT SO_USAGE) with (lo := bv_unsigned sp0 - 8388608) (argc := Z.of_nat (length (argv0 :: path :: x :: rest))) (P0 := bv_unsigned P0w) (argv0 := argv0) (slack := slack);
+      eapply (main_usage SO_EXIT SO_USAGE) with (lo := bv_unsigned sp0 - 6144512) (argc := Z.of_nat (length (argv0 :: path :: x :: rest))) (P0 := bv_unsigned P0w) (argv0 := argv0) (slack := slack);
         first [exact DM| exact ST| exact MI| exact DS| exact TID| exact LC| exact SSP0| exact SOF| exact SEF| exact NONUL| exact AV| exact BY| exact SLK| apply frm0_zero
-              | reflexivity | unfold GLOBALS_TOP, zlength in *; cbn [length] in *; lia ].
+              | reflexivity | unfold PStartupDefs.ArgvEnv.argcN; rewrite EAV; reflexivity | unfold GLOBALS_TOP, zlength in *; cbn [length] in *; lia ].
   Qed.
 End TOP.
 
@@ -216,23 +226,24 @@ Definition u_main_stmt_lim (lim : Z) : Prop :=
     valid_sp sp -> valid_brk usegs brk -> valid_mmap_base mbase -> valid_input inp ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     (0 < bv_unsigned tid < 2^22)%Z ->
-    @PS.u_main_entry (AM.amb_of inp) sp rnd (in_argv inp) (in_envp inp) tid regs mem ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+    PS.u_main_entry sp inp mbase rnd tid regs mem ->
     realizes usegs
       (mkCfg (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.MState.MS (RE.mkR_of regs) bvmap_empty (Z_to_bv 64 0x1316c)
                 (Z_to_bv 32 0) None mem (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.PropExec.seg_rom usegs))
-             (with_tid tid (init_model (segments_reserved usegs) brk mbase sp lim inp)))
+             (with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved usegs) brk mbase sp lim inp))))
       (spec (in_argv inp) (in_fs inp)).
 
 Theorem u_main_proof_lim : forall lim, KInv2.drv_limit <= lim -> u_main_stmt_lim lim.
 Proof.
-  intros lim HLIM sp0 brk mbase rnd inp tid regs mem VSP VBRK VMB VINP FITS TID ME.
+  intros lim HLIM sp0 brk mbase rnd inp tid regs mem VSP VBRK VMB VINP FITS TID LAU ME.
   pose proof VSP as (V1 & V2 & V3). unfold sp_window_lo, sp_window_hi in V1, V2.
   assert (H1 : 0x7fff7f800000 <= bv_unsigned sp0 - stack_max_size) by (unfold stack_max_size; lia).
   assert (H2 : bv_unsigned sp0 - stack_max_size <= 0x7fffff800000) by (unfold stack_max_size; lia).
   assert (H3 : (bv_unsigned sp0 - stack_max_size) mod 16 = 0).
   { unfold stack_max_size. rewrite Zminus_mod, V3. reflexivity. }
   exact (@u_main_body (ceil_of_val _ H1 H2 H3) (guard_of (SSP.canary_w (ed_random rnd)) (rnd_secret (ed_random rnd))) lim sp0 brk mbase rnd inp tid regs mem
-           HLIM VSP VBRK VMB VINP FITS TID ME eq_refl eq_refl eq_refl).
+           HLIM VSP VBRK VMB VINP FITS TID LAU ME eq_refl eq_refl eq_refl).
 Qed.
 
 Theorem u_main_proof : TU.u_main_stmt.

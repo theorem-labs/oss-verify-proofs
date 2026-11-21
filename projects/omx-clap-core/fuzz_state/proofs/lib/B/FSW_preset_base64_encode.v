@@ -19,12 +19,12 @@
    9 tail report rows; R's encR_nul: the NUL report row; entry: none lies in 0x84700 .. 0x84784 or 0x849a0 .. 0x849ac).
 
    rule 24: proves function preset_base64_encode (top; reuse search: proof-index preset_base64_encode,
-   ported from a working branch 402eb5565fc + donor a working branch b96980d72d1)
-   Port-from: image A's composition is not written at 402eb5565fc (lib/A/FSW_preset_base64_encode.v has no
+   ported from a working branch + donor a working branch)
+   Port-from: image A's composition is not written (lib/A/FSW_preset_base64_encode.v has no
    encode_proof; HANDOFF2.md lists it as still moving); the names and shapes of the exit glue and the tail are A's
-   (a working branch 0a3016aa4bf lib/A/FSW_preset_base64_encode.v: encR_loop_exit 3536-3612, the exit
+   (a working branch lib/A/FSW_preset_base64_encode.v: encR_loop_exit 3536-3612, the exit
    block, and encR_tail 2731-2749); the split into entry / loop / exit / tail / NUL is the old-B
-   donor's, a working branch b96980d72d1 lib/B/Prog/preset_base64_encode_blocks.v:1249-1296 (enc_body_B: the
+   donor's, a working branch lib/B/Prog/preset_base64_encode_blocks.v:1249-1296 (enc_body_B: the
    len < 3 arm to enc_tail at k = 0, the loop enc_loop from k = 0, its exit test to enc_finish or enc_tail) and
    lib/B/Prog/preset_base64_encode.v:155-805 (preset_base64_encode_holds, from fuzz_malloc's contract); the Section
    application by binder name is lib/B/FSW_preset_base64_encode_round.v's encI (reused, not copied). *)

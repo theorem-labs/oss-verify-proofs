@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFfk.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YFfk.v, with its module paths changed; 175 of its 234 lines of code are new or changed and 30 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The amreal combinators over a general world relation (F1, group M2). YG0dH.amrealG is YG0d.amreal over
    YA0nH.SRrG segs Rel. This file gives the generic twins of the amreal combinators that the free / drain / recycle /
    quarantine-enqueue walks use: YFfk.amreal_ibind_ext, amreal_ibind_assoc, amreal_bind_assoc, amreal_bind_assoc',
@@ -121,7 +122,7 @@ destruct HQ as (z & Hz & HR). exists z. split; [exact Hz|]. eapply IH; [exact (H
 - exact I.
 Qed.
 
-(* AGif0n.v:402 *)
+(* AGif0n.v:403 *)
 Lemma amrealG_apath_gflag {R} : forall (t : itree astate R) W c (Q : R -> world segs -> config -> Prop),
 amrealG segs Rel t W c Q ->
 amrealG segs Rel t W c (fun r W' c' => Q r W' c' /\ exists trc, apath t trc r /\ gflag trc = true).

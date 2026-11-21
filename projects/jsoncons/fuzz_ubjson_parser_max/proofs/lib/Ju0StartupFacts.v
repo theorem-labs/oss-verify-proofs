@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the Facts section now takes a ProcInput (argv and hwcap via notations) with D_main over it, and main_entry_rdn_image and the tid/guard lemmas move to a new FactsME section using main_entry_launch, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0StartupFacts.v, 64 lines within its lines 32-273. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,33 +26,33 @@ Definition range_disjoint_b (a : Z) (n : nat) (c : Z * nat) : bool :=
 Definition D_main_missb (a : Z) (n : nat) : bool :=
 forallb (range_disjoint_b a n) D_main_cells && (0 <=? a)%Z && (a + Z.of_nat n <=? 0xea000)%Z.
 Definition djw (P : Prop) : Prop := P.
-Lemma range_disjoint_djw : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q3'A'6'8%1232'<'2&Kr3r2r1%43321(:%83721&J'>&N&Mr4&Q0%11<%4231&3%13FE>%8231&9%13IHA%811%;251%=21;%?261%A11p0C1pR>M1pRLQ01pR8Q21").
+Lemma range_disjoint_djw : forall a n c,
+range_disjoint_b a n c = true ->
+djw (a + Z.of_nat n <= fst c \/ fst c + Z.of_nat (snd c) <= a)%Z.
 Proof.
 intros a n [c l] H. unfold range_disjoint_b in H. cbn [fst snd] in *.
 apply orb_true_iff in H. unfold djw. destruct H as [H|H]; apply Z.leb_le in H; lia.
 Qed.
 Section Facts.
 Context {RE : RunEnv}.
+Variable inp : ProcInput.
 Variable sp0 : word.
-Variables av ev : list (list byte).
-Variable uid : word.
-Variable hw : word.
 Variable rdraw : EntryDraw.
 Variable tid : word.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation hw := (in_hwcap inp) (only parsing).
 Hypothesis Hva : valid_argv av.
 Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
 Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
-Let D := D_main sp0 av ev hw (ed_random rdraw) tid.
+Let D := D_main inp sp0 rdraw (ed_random rdraw) tid.
 Local Notation RND := (ed_random rdraw) (only parsing).
-Lemma len_av : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "A';&N+1&Q0&4'5'QBy8%211%411vQ4%7221%911%<2;1+QP0%>231%@231").
+Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
 Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
-Section SE.
-Local Abbreviation SEC_T_D_main_miss := (ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q>'5'C%211'A'6'<'2&Ir2r1%3221(:%73621'7'QBy8%211%A11%511&Lr4&FvQ@vQ4vQ7vQ8&EvQ>%211vQD%96876521&QAyR0r3%3221%@4?51K%F14(0%11Fq031%E4D16Q0%Q43G61p0N1pRLQ71pR8Q91pS0Q;1")) (only parsing).
-Variable segs : ltac:(sec_ty2 constr:(SEC_T_D_main_miss) 0%nat 0%nat).
-Variable a : ltac:(sec_ty2 constr:(SEC_T_D_main_miss) 1%nat 0%nat).
-Variable n : ltac:(sec_ty2 constr:(SEC_T_D_main_miss) 2%nat 0%nat).
-Lemma D_main_miss : ltac:(sec_stmt2 constr:(SEC_T_D_main_miss) 3%nat 0%nat).
+Lemma D_main_miss : forall segs (a : Z) (n : nat),
+D_main_missb a n = true ->
+rdn segs (D_main inp sp0 rdraw (ed_random rdraw) tid) (Z_to_bv 64 a) n = rdn segs (fun _ => None) (Z_to_bv 64 a) n.
 Proof.
+intros segs a n.
 intros Hb.
 pose proof (u64_range tid). pose proof (u64_range hw).
 unfold D_main_missb, D_main_cells in Hb. cbn [forallb] in Hb.
@@ -74,21 +75,22 @@ lazymatch goal with
 end)).
 reflexivity.
 Qed.
-End SE.
 Ltac hitD :=
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc;
 pose proof len_av;
 peel; first [ apply rdn_wbytes_hit8; unorm; lia
 | match goal with |- rdn _ (wbytes _ ?a ?bs) ?a _ = _ =>
 rewrite <- (length_N_to_le_bytes 4) at 1; apply rdn_wbytes_hit; rewrite length_N_to_le_bytes; unorm; lia end ].
-Lemma D_main_tid : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "J'5'C%211'<'7'QBy8%211%811%511&Lr1vB&QAyR0+iSP8%3221u4%847621(1&DvQD%2251%42?1%E3?61pS0G1").
+Lemma D_main_tid : forall segs,
+rdn segs D (Z_to_bv 64 0xc8c08) 4 = Some (word_to_le_bytes 4 tid).
 Proof.
 intros segs. pose proof (u64_range tid). pose proof (u64_range hw). subst D.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 pose proof (rdn_wbytes_hit segs (word_to_le_bytes 4 tid)) as Hh.
 rewrite length_N_to_le_bytes in Hh. apply Hh. unorm; lia.
 Qed.
-Lemma D_main_guard : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "N'5'C%211'<'7'QBy8%211%811%511&Lr1vB&QAyR0+mSi0%3221u8%847621(1&D&G&EvQ>%211%411%6291%82C1%I3C:1pS0K1").
+Lemma D_main_guard : forall segs,
+rdn segs D (Z_to_bv 64 0xe8f20) 8 = Some (word_to_le_bytes 8 (canary_w RND)).
 Proof.
 intros segs. pose proof (u64_range tid). pose proof (u64_range hw). subst D.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
@@ -99,60 +101,58 @@ pose proof (rd_guard_at segs DD RND 0xe8f20 ltac:(lia) ltac:(lia)) as HG;
 cbn [Z.add Pos.add Pos.succ] in HG; exact HG
 end.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_D_main_pagesize := (ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "K'5'C%211'<'7'QBy8%211%811%511&Lr1vB&QAyR0+mSk@%3221u8%847621(1&D+TP0%9281%3261%52@1%F3@71pS0H1")) (only parsing).
-Variable segs : ltac:(sec_ty2 constr:(SEC_T_D_main_pagesize) 0%nat 0%nat).
-Lemma D_main_pagesize : ltac:(sec_stmt2 constr:(SEC_T_D_main_pagesize) 1%nat 0%nat).
+Lemma D_main_pagesize : forall segs,
+rdn segs D (Z_to_bv 64 0xe8f70) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x1000)).
 Proof.
+intros segs.
 pose proof (u64_range tid). pose proof (u64_range hw). pose proof len_av. subst D.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 apply rdn_wbytes_hit8. unorm; lia.
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_D_main_hwcap := (ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "J'5'C%211'<'7'QBy8%211%811%511&Lr1vB&QAyR0+mSm8%3221u8%847621(1&DvQ8%2251%42?1%E3?61pS0G1")) (only parsing).
-Variable segs : ltac:(sec_ty2 constr:(SEC_T_D_main_hwcap) 0%nat 0%nat).
-Lemma D_main_hwcap : ltac:(sec_stmt2 constr:(SEC_T_D_main_hwcap) 1%nat 0%nat).
+Lemma D_main_hwcap : forall segs,
+rdn segs D (Z_to_bv 64 0xe8fa8) 8 = Some (word_to_le_bytes 8 hw).
 Proof.
+intros segs.
 pose proof (u64_range tid). pose proof (u64_range hw). pose proof len_av. subst D.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 apply rdn_wbytes_hit8. unorm; lia.
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_D_main_environ := (ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "M'5'C%211'<'7'QBy8%211%811%511&Lr1vB&QAyR0+iRo0%3221u8%847621(1&D&HvQ@vQ4%3221%5281%72B1%H3B91pS0J1")) (only parsing).
-Variable segs : ltac:(sec_ty2 constr:(SEC_T_D_main_environ) 0%nat 0%nat).
-Lemma D_main_environ : ltac:(sec_stmt2 constr:(SEC_T_D_main_environ) 1%nat 0%nat).
+Lemma D_main_environ : forall segs,
+rdn segs D (Z_to_bv 64 0xc8be0) 8 = Some (word_to_le_bytes 8 (envp_w inp sp0)).
 Proof.
+intros segs.
 pose proof (u64_range tid). pose proof (u64_range hw). pose proof len_av. subst D.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 apply rdn_wbytes_hit8. unorm; lia.
 Qed.
-End SE.
-Lemma D_main_self : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "I'5'C%211'<'7'QBy8%211%811%511&Lr1vB&QAyR0+iRo8%3221u8%847621(1&D%1245%32>1%D3>51pS0F1").
+Lemma D_main_self : forall segs,
+rdn segs D (Z_to_bv 64 0xc8be8) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0xc8be8)).
 Proof.
 intros segs. pose proof (u64_range tid). pose proof (u64_range hw). subst D.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 apply rdn_wbytes_hit8. unorm; lia.
 Qed.
-Lemma D_main_locale : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "K'5'C%211'<'7'QBy8%211%811%511&Lr1vB&QAyR0+iST0%3221u8%847621(1&D+mSkH%9281%3261%52@1%F3@71pS0H1").
+Lemma D_main_locale : forall segs,
+rdn segs D (Z_to_bv 64 0xc8c80) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0xe8f78)).
 Proof.
 intros segs. pose proof (u64_range tid). pose proof (u64_range hw). subst D.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 apply rdn_wbytes_hit8. unorm; lia.
 Qed.
-Lemma D_main_canary : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "N'5'C%211'<'7'QBy8%211%811%511&Lr1vB&QAyR0+iSU0%3221u8%847621(1&D&G&EvQ>%211%411%6291%82C1%I3C:1pS0K1").
+Lemma D_main_canary : forall segs,
+rdn segs D (Z_to_bv 64 0xc8ca0) 8 = Some (word_to_le_bytes 8 (canary_w RND)).
 Proof.
 intros segs. pose proof (u64_range tid). pose proof (u64_range hw). subst D.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 apply rdn_wbytes_hit8. unorm; lia.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_rdn_pointwise_ov := (ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "R<'5'C%211'QByR0%211'7y8%511%311pS<51'6%<14&?r1r4%3221&='<r6&QA&M&QC%12C8&Q0r2%211%6241%82H1%:11(0%11G%>3G31%@11p0B1pRFH1&Nr3%@2Q21%?1H%C221&Q1+2+R0%3221%9251%Q81Q2&Lr7r5%342OQ31(1%12Q8?%Q33731%Q92Q86r9%Q22QD8%Q421O%Q62QF1%411&@z%Q:2QG1%34QGQ6Q<1%=2QH1%Q?3QH61p0<1pRFQH1p0?1p0H1p0Q31pR<QK1pR8R31pRLQN1pRHR01pS0R91")) (only parsing).
-Variable segs : ltac:(sec_ty2 constr:(SEC_T_rdn_pointwise_ov) 0%nat 0%nat).
-Variable m : ltac:(sec_ty2 constr:(SEC_T_rdn_pointwise_ov) 1%nat 0%nat).
-Lemma rdn_pointwise_ov : ltac:(sec_stmt2 constr:(SEC_T_rdn_pointwise_ov) 2%nat 0%nat).
+Lemma rdn_pointwise_ov : forall segs m n (a : word) bs,
+(forall j, (j < n)%nat -> m (Z_to_bv 64 (bv_unsigned a + Z.of_nat j)) <> None) ->
+(bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
+rdn segs m a n = Some bs ->
+forall j, (j < n)%nat -> m (Z_to_bv 64 (bv_unsigned a + Z.of_nat j)) = Some (nth j bs (Z_to_bv 8 0)).
 Proof.
+intros segs m.
 intros n.
 induction n as [|n IH]; intros a bs Hdef Hnw Hr j Hj; [lia|].
 cbn [rdn] in Hr. pose proof (u64_range a) as Ha.
@@ -167,7 +167,6 @@ apply (IH (a + 1) rest); [ | lia | exact Hr' | lia].
 intros k Hk. rewrite Hu1. replace (bv_unsigned a + 1 + Z.of_nat k)%Z with (bv_unsigned a + Z.of_nat (S k))%Z by lia.
 apply Hdef. lia.
 Qed.
-End SE.
 Ltac d_cover :=
 repeat first
 [ rewrite wbytes_inside by (rewrite ?length_N_to_le_bytes; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; unorm; lia); discriminate
@@ -180,11 +179,11 @@ assert (C : (i = 0 \/ i = 1 \/ i = 2 \/ i = 3 \/ i = 4 \/ i = 5 \/ i = 6 \/ i = 
 destruct C as [->|[->|[->|[->|[->|[->|[->| ->]]]]]]];
 lazymatch goal with |- _ (Z_to_bv 64 ?z) <> None => let c := eval vm_compute in z in change z with c end;
 d_cover.
-Lemma D_cover_guard : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q0'A';&Nzr1%3221&O+8%2241%8241&='<'7'QBy8%211%411vB&QAyR0&M+mSi0r2%3221%6251%811(0%11<%A3<31%C11p0E1pRDO1").
+Lemma D_cover_guard : forall i, (0 <= i < 8)%Z -> D (Z_to_bv 64 (0xe8f20 + i)) <> None.
 Proof. cover8. Qed.
-Lemma D_cover_canary : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q0'A';&Nzr1%3221&O+8%2241%8241&='<'7'QBy8%211%411vB&QAyR0&M+iSU0r2%3221%6251%811(0%11<%A3<31%C11p0E1pRDO1").
+Lemma D_cover_canary : forall i, (0 <= i < 8)%Z -> D (Z_to_bv 64 (0xc8ca0 + i)) <> None.
 Proof. cover8. Qed.
-Lemma D_cover_hwcap : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q0'A';&Nzr1%3221&O+8%2241%8241&='<'7'QBy8%211%411vB&QAyR0&M+mSm8r2%3221%6251%811(0%11<%A3<31%C11p0E1pRDO1").
+Lemma D_cover_hwcap : forall i, (0 <= i < 8)%Z -> D (Z_to_bv 64 (0xe8fa8 + i)) <> None.
 Proof. cover8. Qed.
 Ltac pt8 Hcov Hrd :=
 let i := fresh "i" in let Hi := fresh "Hi" in
@@ -195,35 +194,64 @@ ltac:(intros j Hj; rewrite u_Z2bv by lia; apply Hcov; lia)
 ltac:(rewrite u_Z2bv by lia; lia) (Hrd SEGS) (Z.to_nat i) ltac:(lia)) as Hp;
 rewrite u_Z2bv, Z2Nat.id in Hp by lia; exact Hp
 end.
-Lemma D_guard_pt : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q;'A';&Nzr1%3221&O+8%2241%8241'<'7'QBy8%211%411vB&QAyR0&M+mSi0r2%3221%6251%811(1&@&Q2%117&Du8&G&EvQ>%211%411%7261%D2HQ2%<4H:21%>2I1%N3I@1p0Q01pRDQ:1").
+Lemma D_guard_pt : forall i, (0 <= i < 8)%Z ->
+D (Z_to_bv 64 (0xe8f20 + i)) = Some (nth (Z.to_nat i) (word_to_le_bytes 8 (canary_w RND)) (Z_to_bv 8 0)).
 Proof. pt8 D_cover_guard D_main_guard. Qed.
-Lemma D_canary_pt : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q;'A';&Nzr1%3221&O+8%2241%8241'<'7'QBy8%211%411vB&QAyR0&M+iSU0r2%3221%6251%811(1&@&Q2%117&Du8&G&EvQ>%211%411%7261%D2HQ2%<4H:21%>2I1%N3I@1p0Q01pRDQ:1").
+Lemma D_canary_pt : forall i, (0 <= i < 8)%Z ->
+D (Z_to_bv 64 (0xc8ca0 + i)) = Some (nth (Z.to_nat i) (word_to_le_bytes 8 (canary_w RND)) (Z_to_bv 8 0)).
 Proof. pt8 D_cover_canary D_main_canary. Qed.
-Lemma D_hwcap_pt : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q7'A';&Nzr1%3221&O+8%2241%8241'<'7'QBy8%211%411vB&QAyR0&M+mSm8r2%3221%6251%811(1&@&Q2%117&Du8vQ8%3221%@2DN%84D621%:2E1%J3E<1p0L1pRDQ61").
+Lemma D_hwcap_pt : forall i, (0 <= i < 8)%Z ->
+D (Z_to_bv 64 (0xe8fa8 + i)) = Some (nth (Z.to_nat i) (word_to_le_bytes 8 hw) (Z_to_bv 8 0)).
 Proof. pt8 D_cover_hwcap D_main_hwcap. Qed.
+End Facts.
+Section FactsME.
+Context {RE : RunEnv}.
+Variable sp0 : word.
+Variables av ev : list (list byte).
+Variable uid : word.
+Variable hw : word.
+Variable rdraw : EntryDraw.
+Variable tid : word.
+Hypothesis Hva : valid_argv av.
+Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
+Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
-Hypothesis ME : main_entry sp0 av ev uid hw rdraw tid regs mem.
-Lemma main_entry_rdn_image : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "Q5'5'C%211'A'6'<'2&Ir2r1%3221(:%73621'7'QBy8%211%A11%511&Lr4vQ<&QAyR0r3%3221%74651B%=14(0%11=q031%<4;16G%K3>61p0E1pRLN1pR8Q01pS0Q21").
+Variable inp : ProcInput.
+Variable mbase entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 av ev uid hw rdraw tid regs mem.
+Local Notation RND := (ed_random rdraw) (only parsing).
+Lemma main_entry_rdn_image : forall segs (a : Z) (n : nat),
+D_main_missb a n = true ->
+rdn segs mem (Z_to_bv 64 a) n = rdn segs (fun _ => None) (Z_to_bv 64 a) n.
 Proof.
 intros segs a n Hb.
 assert (Hr : (0 <= a /\ a + Z.of_nat n <= 0xea000)%Z).
 { unfold D_main_missb in Hb. apply andb_true_iff in Hb as [Hb H2]. apply andb_true_iff in Hb as [_ H1].
 apply Z.leb_le in H1. apply Z.leb_le in H2. lia. }
-rewrite (main_entry_rdn_data sp0 av ev uid hw rdraw tid regs mem ME)
-by (rewrite stack_max_size_val; unorm; lia).
-apply D_main_miss. exact Hb.
+destruct (main_entry_launch inp mbase entry sp0 av ev uid hw rdraw tid regs mem ME)
+as (brk & E1 & _ & _ & _ & _ & _ & _ & _ & _ & Hrd).
+rewrite Hrd by (rewrite stack_max_size_val; unorm; lia).
+subst av. first [ apply (D_main_miss inp sp0 rdraw tid Hva Hlo Hhi) | apply (D_main_miss inp sp0 rdraw tid Hva) | apply (D_main_miss inp sp0 rdraw tid) ]; exact Hb.
 Qed.
-Lemma main_entry_tid : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "J'5'C%211'<'7'QBy8%211%811%511&Lr1vQ<&QAyR0+iSP8%3221u4%847621(1&DvQD%2251%42?1%E3?61pS0G1").
+Lemma main_entry_tid : forall segs,
+rdn segs mem (Z_to_bv 64 0xc8c08) 4 = Some (word_to_le_bytes 4 tid).
 Proof.
-intros segs. rewrite (main_entry_rdn_data sp0 av ev uid hw rdraw tid regs mem ME)
-by (rewrite stack_max_size_val; unorm; lia). apply D_main_tid.
+intros segs.
+destruct (main_entry_launch inp mbase entry sp0 av ev uid hw rdraw tid regs mem ME)
+as (brk & E1 & _ & _ & _ & _ & _ & _ & _ & _ & Hrd).
+rewrite Hrd by (rewrite stack_max_size_val; unorm; lia).
+subst av. first [ apply (D_main_tid inp sp0 rdraw tid Hva Hlo Hhi) | apply (D_main_tid inp sp0 rdraw tid Hva) | apply (D_main_tid inp sp0 rdraw tid) ].
 Qed.
-Lemma main_entry_guard : ltac2:(TCodec.tc2 tcn__Ju0StartupFacts "N'5'C%211'<'7'QBy8%211%811%511&Lr1vQ<&QAyR0+mSi0%3221u8%847621(1&D&G&EvQ>%211%411%6291%82C1%I3C:1pS0K1").
+Lemma main_entry_guard : forall segs,
+rdn segs mem (Z_to_bv 64 0xe8f20) 8 = Some (word_to_le_bytes 8 (canary_w RND)).
 Proof.
-intros segs. rewrite (main_entry_rdn_data sp0 av ev uid hw rdraw tid regs mem ME)
-by (rewrite stack_max_size_val; unorm; lia). apply D_main_guard.
+intros segs.
+destruct (main_entry_launch inp mbase entry sp0 av ev uid hw rdraw tid regs mem ME)
+as (brk & E1 & _ & _ & _ & _ & _ & _ & _ & _ & Hrd).
+rewrite Hrd by (rewrite stack_max_size_val; unorm; lia).
+subst av. first [ apply (D_main_guard inp sp0 rdraw tid Hva Hlo Hhi) | apply (D_main_guard inp sp0 rdraw tid Hva) | apply (D_main_guard inp sp0 rdraw tid) ].
 Qed.
-End Facts.
+End FactsME.
 End FPX_1.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

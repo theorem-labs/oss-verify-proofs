@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/RepGrantcf.v (commit eb934de95d13, blob 6625dd0eaf59) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/RepGrantcf.v (blob 6625dd0eaf59) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -22,10 +23,10 @@ Variable B : asyms.
 
 Lemma errb_grant_exists_cf : forall (Hp : list Z) (ly : alayout) (S : astate) (W : world tfibsegs)
   (mem : word -> option byte) (md : Model) (mat : list word) (nZ : Z),
-  ARcf tfibsegs B ly S Hp W mem md -> 0 < nZ <= cf_nob ->
-  exists a, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a nZ = true.
+  ARcf tfibsegs B ly S Hp W mem md -> 0 < nZ <= cf_nob -> nZ mod page_size = 0 ->
+  exists a, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a nZ = true.
 Proof.
-intros Hp ly S W mem md mat nZ (M & L & _ & MW & _) HnZ.
+intros Hp ly S W mem md mat nZ (M & L & _ & MW & _) HnZ HnZal.
 pose proof (amc_wf _ _ _ _ _ M) as WF. pose proof (amc_layout _ _ _ _ _ M) as LO.
 set (md0 := with_vm_backing (m_vm_lazy md) mat md).
 pose proof (amwf_same md md0 eq_refl eq_refl MW) as [_ NZ].
@@ -43,7 +44,7 @@ assert (XS : Forall (fun e => 0 <= snd e <= cf_nob) (xs_cf ly S)).
 { unfold xs_cf. destruct (last_cap_idx (st_secs S) 0 None); [|constructor].
   constructor; [|constructor]. cbn [snd]. exact (errb_cap_bound_cf _ _ _ _ _ WF). }
 exact (sec_grant_exists_live_P cf_nob cf_place_limit cf_malloc_max tfibsegs ly S md0 (xs_cf ly S) nZ
-  cf_nob_lo cf_nob_al cf_place_ok cf_sizes_ok LO LC NZ SC LIVE XS HnZ).
+  cf_nob_lo cf_nob_al cf_place_ok cf_sizes_ok LO LC NZ SC LIVE XS HnZ HnZal).
 Qed.
 
 End a.

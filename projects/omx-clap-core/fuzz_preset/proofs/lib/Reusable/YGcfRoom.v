@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: freed_cf appends only a quarantined chunk (ck_n <= kQuarantineMax); FREEG gains the recycle disjunct (recycle_chunk_cq); free_cf_gen / free_cf_room_inv / free_cf_fifo cover it. freed_cf and FREEG statements changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's event-free allocator instance (suffix cf), the ROOM FACTS that
    c-frame-alloc's lib/Spec/PresetRoom.v (P8 part C) asks of the instance's state.
    PresetRoom.v is not on this branch, so its definitions are copied VERBATIM into the module PresetRoom below
    (the class map, room_state, quar_bytes_ok, null_full, room_ok); the statements here are over those names.
    Facts, over the instance's astate under Wf_cf (YG01cf.v) and the model malloc_cf / free_cf (YG00cf.v):
      1. quar_bytes_ok_cf: at an allocation's entry the quarantine's accounted bytes are at most Q_MAX + Q_CACHE,
-        with at most kBatchSlots = 1,021 chunks a batch. The invariant is room_inv_cf (cgif's qtight, YG01.v:230,
+        with at most kBatchSlots = 1,021 chunks a batch. The invariant is room_inv_cf (cgif's qtight, YG01.v:231,
         which acall_pre_cf already carries through qmeter_cf); malloc_cf and free_cf preserve it.
      2. quar_fifo_cf: the quarantine, oldest first, is a suffix of the free history (free_cf appends freed_cf);
         its global part is at most Q_MAX and its thread part at most Q_CACHE accounted bytes (quar_fifo_parts_cf).
@@ -37,16 +38,16 @@ Local Open Scope Z_scope.
 
 (* ================================================================ PresetRoom.v *)
 (* c-frame-alloc's lib/Spec/PresetRoom.v is now a file of this unit (lib/Spec/PresetRoom.v, copied by path from
-   c-frame-alloc-p8 4ec915e66b6): the class map, room_state, quar_bytes_ok, null_full, room_ok, acct_size and
+   c-frame-alloc-p8): the class map, room_state, quar_bytes_ok, null_full, room_ok, acct_size and
    fifo_ok below are ITS definitions, not a copy of them. Every statement here names them qualified. *)
 
 (* ================================================================ the room view of an astate *)
-(* rs_live: the requests of the live blocks (cgif's blocks, YG01.v:212). rs_quar: the accounted size ck_n
+(* rs_live: the requests of the live blocks (cgif's blocks, YG01.v:213). rs_quar: the accounted size ck_n
    (req_size, at least 1) of every chunk in the quarantine's batches. rs_batches: the batch records. *)
 Definition room_of_cf (s : astate) : PresetRoom.room_state :=
   PresetRoom.Build_room_state (map snd (blocks s)) (map ck_n (q_items s)) (Z.of_nat (length (all_batches s))).
 
-(* The room invariant: cgif's qtight (YG01.v:230-231), thread part <= Q_CACHE, global part <= Q_MAX, and
+(* The room invariant: cgif's qtight (YG01.v:231-232), thread part <= Q_CACHE, global part <= Q_MAX, and
    every chunk marked quarantined accounted in the queue. Wf_cf does not imply it; acall_pre_cf carries it
    (qmeter_cf, YG0ncf.v:156). *)
 Definition room_inv_cf (s : astate) : Prop := qtight s.
@@ -73,7 +74,7 @@ Lemma quar_fifo_cf_init : quar_fifo_cf [] init_state.
 Proof. exists []. reflexivity. Qed.
 
 (* ================================================================ the two links to PresetRoom.fifo_ok *)
-(* LINK 1. q_items (YG01.v:209) walks the thread's batches then the global ones; q_fifo walks them oldest
+(* LINK 1. q_items (YG01.v:210) walks the thread's batches then the global ones; q_fifo walks them oldest
    first, the global ones then the thread's. Both are a flat_map of the same two lists, so the accounted
    sizes of one are a permutation of the other's. No premise: it is an identity of the two definitions. *)
 Lemma q_fifo_perm_items_cf : forall s, Permutation.Permutation (map ck_n (q_fifo s)) (map ck_n (q_items s)).
@@ -415,7 +416,7 @@ Proof.
   - destruct (fa_pop size l) as [[off l']|]; [|discriminate]. apply (IH _ _ _ _ _ _ H). left. discriminate.
 Qed.
 
-(* The arm's test (YG00cf.v:159) fails only when the request does not fit below kFreeArrayOffset: the mapped
+(* The arm's test (YG00cf.v:160) fails only when the request does not fit below kFreeArrayOffset: the mapped
    size and kFreeArrayOffset are both multiples of kUserMapSize. *)
 Lemma arm_of_full : forall m total, m mod kUserMapSize = 0 -> m < total ->
   kFreeArrayOffset < m + round_up (total - m) kUserMapSize -> kFreeArrayOffset < total.

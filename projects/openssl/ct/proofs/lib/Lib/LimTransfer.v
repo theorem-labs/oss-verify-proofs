@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the eleven constructors of sstep, with its vDSO-call arm, in sstep_fit; lim_transfer_scfg over the run's segment list run_segments). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs RiscvSemantics MemImageType Run.
@@ -36,12 +37,26 @@ Definition cfg_fit (c : config) : Prop := vm_fit (m_vmmaps (cfg_model c)).
 Lemma sstep_fit : forall segs c evs c', cfg_fit c -> sstep segs c evs (SNext c') -> cfg_fit c'.
 Proof.
   intros segs c evs c' Hf Hss. unfold cfg_fit in *.
+  (* [sstep] carries eleven constructors at 727298f3 (theories/LinuxProcessSem/Run.v:645,
+     the three vDSO arms after [sstep_instr_unmodeled]).  Only the five that conclude
+     [SNext] leave a goal: instr (slot 1), vdso_call (slot 4), syscall (slot 7),
+     exit (slot 9), killed (slot 10). *)
   inversion Hss as
     [ ms0 m0 ms1 m1 Hh Hsvc Hacc
-    | | | ms0 m0 x8 eff m1 m2 evs0 Hh Hsvc Hs Hh1 Hmat
-    | | ms0 m0 x8 eff m1 evs0 code Hh Hsvc Hs Hh1 Hk1
-    | ms0 m0 x8 eff m1 evs0 sig Hh Hsvc Hs Hk1 | ]; subst; cbn [cfg_model] in *.
+    |
+    |
+    | ms0 m0 fn n eff m1 m2 evs0 Hh Hsvc Hacc Hvf Hsn Hs Hef Hh1 Hmat
+    |
+    |
+    | ms0 m0 x8 eff m1 m2 evs0 Hh Hsvc Hs Hh1 Hmat
+    |
+    | ms0 m0 x8 eff m1 evs0 code Hh Hsvc Hs Hh1 Hk1
+    | ms0 m0 x8 eff m1 evs0 sig Hh Hsvc Hs Hk1
+    | ]; subst; cbn [cfg_model] in *.
   - destruct (mi_account_step_model_frame segs ms0 m0 ms1 m1 Hacc) as (_ & Hv & _). rewrite Hv. exact Hf.
+  - (* vDSO call: the successor's model is [with_vdso_bump] of the materialized model,
+       which keeps [m_vmmaps] by conversion (State.v [m_vmmaps_with_vdso_bump]). *)
+    exact (materialize_fit m1 _ m2 (syscall_spec_fit _ _ _ _ _ Hf Hs) Hmat).
   - exact (materialize_fit m1 _ m2 (syscall_spec_fit _ _ _ _ _ Hf Hs) Hmat).
   - exact (syscall_spec_fit _ _ _ _ _ Hf Hs).
   - exact (syscall_spec_fit _ _ _ _ _ Hf Hs).
@@ -93,5 +108,8 @@ Corollary lim_transfer_scfg : forall cfg S img en inp lim_small lim_big,
 Proof.
   intros cfg S [segs pc ph] [sp brk0 mbase rnd] inp lim_small lim_big Hle Hbig Hnr.
   cbn [must_exit_in_scfg run_scfg_budget_refused] in *.
-  exact (lim_transfer_init cfg segs S pc ph sp brk0 mbase rnd inp lim_small lim_big Hle Hbig Hnr).
+  (* LPS 727298f3: [must_exit_in_scfg] and [run_scfg_budget_refused] read the run
+     against [run_segments segs inp sp mbase] (the binary's segments and the vDSO pair),
+     and [lim_transfer_init] holds for any segment list. *)
+  exact (lim_transfer_init cfg (run_segments segs inp sp mbase) S pc ph sp brk0 mbase rnd inp lim_small lim_big Hle Hbig Hnr).
 Qed.

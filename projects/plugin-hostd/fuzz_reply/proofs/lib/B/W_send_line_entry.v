@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: the entry segment of fuzz_reply's send_line walk on IMAGE B
    (fuzz_reply.asan-ubsan 0x82854), in the form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (a cut
    at a loop head) and lib/A/ACfj.v (segments joined at cut points).  Structure ported from image A's
-   lib/A/W_send_line_entry.v (a working branch 9367674296a, sl_entry) and from the old image-B walk
-   a working branch 37280b674f71 lib/B/Prog/send_line_front.v (the entry to the loop top 0x828f8). *)
+   lib/A/W_send_line_entry.v (a working branch, sl_entry) and from the old image-B walk
+   a working branch lib/B/Prog/send_line_front.v (the entry to the loop top 0x828f8). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The entry runs the prologue (13 saved registers into the 144-byte frame at 40(sp) .. 136(sp)), the three early
    tests of relay.c:68-70 (g_client < 0, len = 0, g_client_broken) and the setup of the loop's registers
    (fuzz_reply.c:282-290: sent = 0, the flag line <> 0, EINTR, the shadow base, the kept auipc registers and the five

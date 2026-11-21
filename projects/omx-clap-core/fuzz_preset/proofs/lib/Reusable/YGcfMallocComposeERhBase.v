@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfMallocComposeERhBase.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch; plan row (c)): the PRIMED raw Deallocate leaf and contract
    under the re-hide, over MemnormT's parameters, below the cf compose layer: the frame-generic big arm (cgif's
    primed DGbig, lane DeallocNmaxA) concludes this leaf, and YGcfMallocComposeERh states the cf compose Prop on it.
    rule 24: no function proved (kind: contract definitions and their weakening from the released contracts).
 
-   Moved unchanged from YGcfMallocComposeERh.v (a working branch 750b0862a048 :45-113); YGcfMallocComposeERh
+   Moved unchanged from YGcfMallocComposeERh.v (a working branch :45-113); YGcfMallocComposeERh
    re-exports this file.  The primed forms change exactly two things against MemnormT's:
    - the post is YGcfRehidePost.dealloc_post_raw_rh (wle_in over the call's dead set dead_shadow_new, the frame
      outside it) in place of DeallocG.dealloc_post_raw;
    - the run is YG0dH.amreal' over YGcfRehidePost.RZ_cf (amreal at the relation wle') in place of amreal.
    The errno, memnorm-keep, lpost and apath conjuncts are MemnormT's; the contract takes MemnormT's memory predicate MP
-   at Deallocate's entry memory (field round 3 part 3, MemnormT.v:464-479).
+   at Deallocate's entry memory (field round 3 part 3, MemnormT.v:465-480).
 
    - [dealloc_leaf_raw_em_rh] / [adealloc_realizes_raw_em_rh]: MemnormT.dealloc_leaf_raw_em /
-     adealloc_realizes_raw_em (MemnormT.v:423-434 / :476-479) with the two changes.
+     adealloc_realizes_raw_em (MemnormT.v:424-435 / :477-480) with the two changes.
    - [dealloc_leaf_raw_em_rh_of] / [adealloc_realizes_raw_em_rh_of]: a run that re-hides nothing gives the primed
      contract from the released one (YG0dH.amreal_amreal', YG0dH.amreal'_mono, YGcfRehidePost.dealloc_post_raw_rh_of).
    - [dealloc_post_raw_rh_E_mono]: the post's extra region may grow (the twin of YGcfInstFreeTop.dealloc_post_raw_E_mono).

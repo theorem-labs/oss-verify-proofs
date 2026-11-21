@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reservation ledger is the image's reservations followed by at most two bounded launch reservations, and the mapped stack below sp is 6144512 bytes. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -449,8 +450,10 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
         ((b = 1 /\ slot_live_ fhint ffs k pos) \/ (b = 0 /\ ~ slot_live_ fhint ffs k pos)).
 
   (* [comment removed for export] *)
+  (* LPS 727298f3: the launch maps 6144512 bytes below sp ([StoreOk.stack_window_depth] is
+     6144513); it WAS the whole 8 MiB down to the heap ceiling *)
   Definition maps_repr_ (P : aplace) (m : mem) : Prop :=
-    mapped m (p_sp0 P - 0x800000) 0x800000 /\ mapped m (p_ri P) 4096 /\
+    mapped m (p_sp0 P - 6144512) 6144512 /\ mapped m (p_ri P) 4096 /\
     mapped m (fst stack_shadow_iv) (snd stack_shadow_iv) /\
     mapped m (fst (shadow_region (al_image_lo L) (al_image_hi L - al_image_lo L))) (snd (shadow_region (al_image_lo L) (al_image_hi L - al_image_lo L))).
   (* [comment removed for export] *)
@@ -592,6 +595,19 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
     intros c Hc. destruct (E c Hc) as [E1 E2]. rewrite E1, E2. exact (Z3 c Hc).
   Qed.
 
+  (* LPS 727298f3: THE LAUNCH'S OWN RESERVATIONS.  [State.init_model] seeds the ledger with
+     the image's reservations AND the vvar pages and vDSO text, which hang off the mmap base
+     above [kHighMemBeg].  [res_launch] bounds them as the model's [AsanPlanSound] does
+     ([resx_entry_ok], [NRESX] = 2, [RESX_BYTES] = 81920): page-aligned, above the image and
+     a page above [kHighMemBeg], below 2^47, at most two, 81920 bytes in all. *)
+  Fixpoint res_bytes (l : list (word * word)) : Z :=
+    match l with [] => 0 | iv :: r => bv_unsigned (snd iv) + res_bytes r end.
+  Definition res_launch (rx : list (word * word)) : Prop :=
+    Forall (fun iv => 0 < bv_unsigned (snd iv) /\ bv_unsigned (fst iv) mod 4096 = 0 /\ bv_unsigned (snd iv) mod 4096 = 0
+                      /\ cl_image_hi cl <= bv_unsigned (fst iv) /\ kHighMemBeg + 4096 <= bv_unsigned (fst iv)
+                      /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2^47) rx
+    /\ (length rx <= 2)%nat /\ res_bytes rx <= 81920.
+
   (* [comment removed for export] *)
   Definition acover_ (P : aplace) (sec : secreg) (h : VmMaps) : Prop :=
        (exists fog : list (Z * Z),
@@ -607,8 +623,9 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
                (cl_image_lo cl <= a < cl_image_hi cl) \/ in_regions (big_maps_ P (SR [] 0)) a \/ in_regions fog a))
     /\ (* [comment removed for export] *)
        In (wz kShadowGapBeg, wz (kHighShadowMapBeg - kShadowGapBeg)) (vm_maps h)
-    /\ (* [comment removed for export] *)
-       vm_reserved h = segments_reserved (cl_segs cl).
+    /\ (* LPS 727298f3: the image's reservations, then the launch's ([res_launch]); it WAS the
+          image's alone *)
+       exists rx, vm_reserved h = segments_reserved (cl_segs cl) ++ rx /\ res_launch rx.
     (* [comment removed for export] *)
   Lemma acover_vmmaps : forall P sec h h', vm_maps h' = vm_maps h -> vm_reserved h' = vm_reserved h ->
     acover_ P sec h -> acover_ P sec h'.

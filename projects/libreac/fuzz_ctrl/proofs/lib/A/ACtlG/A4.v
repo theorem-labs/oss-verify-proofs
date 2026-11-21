@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v; 289 of its 312 lines of code are new or changed and 822 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/A4.v -- GLUE for stage seg_A4 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:655,
    `Hypothesis seg_A4 : forall POST, CF POST (ix_cut C_A81400_at [0]) -> CF POST C_Jrel -> CF POST C_A810e4`).
    Written by a Theorem Labs lane's glue lane (piece W0/W1); single writer.  The pattern is
@@ -75,7 +76,7 @@
    - TFIB_SYMS : A.AF0m.CtrlTSyms B -- the core's symbol record, which ctl_rt_C_of_AR takes.
    kitmem_input_apart's premise IMG_HI <= frame_addr ly3 6 pos is a Theorem Labs lane's PROVED, premise-free
      A.ProgWorld_Fs.ctl_frame_above_img (statement ProgWorld.ctl_frame_above_img_stmt, every class; files taken by
-     path from a working branch 1d23ced37fd, a Theorem Labs lane 07:4xZ), cited by name (a4g_frame6_above_img).
+     path from a working branch, a Theorem Labs lane 07:4xZ), cited by name (a4g_frame6_above_img).
 
    STAND-IN VALUES: reads no stand-in value (no ts_gp, pc_wrap_*, pc_stack_malloc, zero-shadow or 0x9fe18 / 0xa2878
    row is read by the run or used by this proof); ctl_rt_C_of_AR reads CtrlTSyms B, a Section hypothesis.
@@ -85,7 +86,7 @@
    bytes_at_nil, a4_our_addr and a4_exit are used inside the proof only).  The twin modules are loaded by absolute
    Require lines and written through CK11 / CK1b / CM05 / CO09 (the core's) and AK11 (ctrl's YK11); lib/Lib through
    LMem / LRegs / LFrame / LStep / LCells / LExecF.  Frame-route files of record in the closure (through Seg/A4F.v),
-   blobs at the glue worktree HEAD e35bbb668b3: Seg/A4F.v 33af12fe190, Seg/A4.v d4483123111, SlotInv.v
+   blobs at the glue worktree HEAD: Seg/A4F.v 33af12fe190, Seg/A4.v d4483123111, SlotInv.v
    4cf85db229a, Seg/Tac_slot.v de02ff45188, Seg/Tac_fs.v 8bd492a660d, SlotModel.v 04dc7903221, AsanRT.v
    b67d26f8ec7 (mcs 30), AsanRTInv.v 2a8602e8526, Contract.v fa6fd478d9a, FrameAPI.v f6ffefa9bb4, MemNorm.v
    cb518fc0304.

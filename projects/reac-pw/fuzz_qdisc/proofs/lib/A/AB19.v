@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AB19.v (donor image sha256 61768cf4739b), with its module paths changed. *)
-(* Ported to libreac/fuzz_knock by h-rw-kno-5 from proofs/cgif/cgif_file_fuzzer/lib/A/AB19.v at c8557374ad2: module paths renamed; image values re-derived from fuzz_knock.asan (sha256 61768cf4..), as listed in the commit message. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported to libreac/fuzz_knock by h-rw-kno-5 from proofs/cgif/cgif_file_fuzzer/lib/A/AB19.v at theorem-labs/oss-verify-proofs@6b32741d849a: module paths renamed; image values re-derived from fuzz_knock.asan (sha256 61768cf4..), as listed in the commit message. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

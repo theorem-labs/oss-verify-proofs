@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise on the mmap nodes, whose no-access outcome is the linux_place_is address; the vDSO/vvar-free premise on the mprotect nodes; the sys_rob obligation in rz_mmap and rz_mmap_refused); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,7 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Scfg Amb RelSpec
   SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim
-  ShapeAlg Nodes StoreOk AgentLib AgentNodes Gap04 RefNodes.
+  ShapeAlg Nodes StoreOk AgentLib AgentNodes Gap04 RefNodes AsanCeil.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
@@ -94,6 +95,8 @@ Lemma node_mmap_grant : forall ms model x8,
   m_halted model = None -> m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   let n := page_round_up (ms_gpr ms 1) in
   (exists a, grant_ok (ms_gpr ms 0) model a nZ = true) ->
@@ -101,14 +104,14 @@ Lemma node_mmap_grant : forall ms model x8,
     (fun i => mkCfg (advance_past_svc (apply_effect ms (mkEffect (proj1_sig i) [] [(proj1_sig i, n)])))
                     (mmap_model (proj1_sig i) n model)).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno Hargs nZ n (a0 & Ha0).
+  intros ms model x8 Hh Hlazy Hsvc Hno Hargs Hdecl nZ n (a0 & Ha0).
   assert (HnZ : (0 <= nZ)%Z).
   { unfold nZ. apply page_round_up_Z_nonneg. apply (proj1 (word_unsigned_range _)). }
   assert (Hno' : bv_unsigned (in_sysno (sys_input segs ms x8)) = 222%Z) by (rewrite in_sysno_sys_input; exact Hno).
   apply (node_family_cfg segs ms model x8 {a : word | grant_ok (ms_gpr ms 0) model a nZ = true}
            (fun i => mkEffect (proj1_sig i) [] [(proj1_sig i, n)])
            (fun i => mmap_model (proj1_sig i) n model) (fun _ => []) _
-           Hh Hsvc (fun o => mmap_outcome_si segs ms x8 model o Hno Hargs)).
+           Hh Hsvc (fun o => mmap_outcome_si segs ms x8 model o Hno Hargs Hdecl)).
   - intros [a Ha]. right. exists a. split; [exact Ha | reflexivity].
   - intros [a Ha]. apply spurious_refusal_not_refusal. cbn [proj1_sig eff_ret].
     exact (mmap_grant_not_refusal _ model (ms_gpr ms 0) a nZ Hno' Ha HnZ).
@@ -117,7 +120,7 @@ Proof.
       apply (alloc_refusal_spurious _ model _ (mkEffect a0 [] [(a0, n)]) (mmap_model a0 n model) []).
       * apply family_off_mmap_true. exact Hno'.
       * cbn [eff_ret]. apply errno_is_refusal_mmap. exact Hno'.
-      * apply (mmap_succ_ok segs ms x8 model a0 Hno Hargs Ha0).
+      * apply (mmap_succ_ok segs ms x8 model a0 Hno Hargs Hdecl Ha0).
       * cbn [eff_ret]. exact (mmap_grant_not_refusal _ model (ms_gpr ms 0) a0 nZ Hno' Ha0 HnZ).
     + apply Ok_inj in E as (-> & -> & ->). exists (exist _ a Ha). cbn [proj1_sig]. auto.
   - intros eff m' ev [He | (a & Ha & E)].
@@ -133,6 +136,8 @@ Lemma rz_mmap : forall ms model x8 B,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
      realizes segs (mkCfg (advance_past_svc
@@ -140,11 +145,12 @@ Lemma rz_mmap : forall ms model x8 B,
                           (mmap_model a (page_round_up (ms_gpr ms 1)) model)) B) ->
   realizes segs (mkCfg ms model) B.
 Proof.
-  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs Hex HB.
+  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs Hdecl Hex HB.
   destruct Hex as [a0 Ha0].
   apply (rz_conseq segs (mkCfg ms model) (t_alt (fun _ : {a : word | grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true} => B))).
   - eapply (rz_cases segs _ _ _ (fun _ => B) (exist _ a0 Ha0)).
-    + apply (node_mmap_grant ms model x8 Hh Hlazy Hsvc Hno Hargs). exists a0. exact Ha0.
+    + apply (node_mmap_grant ms model x8 Hh Hlazy Hsvc Hno Hargs Hdecl). exists a0. exact Ha0.
+    + rob_mf Hno.
     + intros [a Ha]. cbn [proj1_sig]. apply HB. exact Ha.
   - intros tr. split; [intros [_ Ht]; exact Ht | intros Ht; exists (exist _ a0 Ha0); exact Ht].
 Qed.
@@ -154,14 +160,16 @@ Lemma node_mmap_refused : forall ms model x8,
   m_halted model = None -> m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false) ->
   node_ok segs (mkCfg ms model) unit (fun _ => [])
     (fun _ => mkCfg (advance_past_svc (set_gpr0 ms (errno_ret ENOMEM))) model).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno Hargs Hng.
+  intros ms model x8 Hh Hlazy Hsvc Hno Hargs Hdecl Hng.
   rewrite <- (apply_effect_no_write ms (errno_ret ENOMEM)).
   apply (node_det segs ms model x8 (mkEffect (errno_ret ENOMEM) [] []) model []); try assumption.
-  intros o. pose proof (mmap_outcome_si segs ms x8 model o Hno Hargs) as Hsi. cbv zeta in Hsi. rewrite Hsi. rewrite mmap_err_out_enomem.
+  intros o. pose proof (mmap_outcome_si segs ms x8 model o Hno Hargs Hdecl) as Hsi. cbv zeta in Hsi. rewrite Hsi. rewrite mmap_err_out_enomem.
   split; [| intros ->; left; reflexivity].
   intros [-> | (a & Ha & _)]; [reflexivity | rewrite Hng in Ha; discriminate Ha].
 Qed.
@@ -172,13 +180,15 @@ Lemma rz_mmap_refused : forall ms model x8 A,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false) ->
   (forall e, In e mmap_errnos ->
      realizes segs (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model) A) ->
   realizes segs (mkCfg ms model) A.
 Proof.
-  intros ms model x8 A Hh Hlazy Hsvc Hno Hargs Hng HA.
-  eapply rz_silent1; [eapply node_mmap_refused; eassumption | apply HA; left; reflexivity].
+  intros ms model x8 A Hh Hlazy Hsvc Hno Hargs Hdecl Hng HA.
+  eapply rz_silent1; [eapply node_mmap_refused; eassumption | rob_mf Hno | apply HA; left; reflexivity].
 Qed.
 
 (* [comment removed for export] *)
@@ -204,63 +214,116 @@ Qed.
 (* [comment removed for export] *)
 Lemma mmap_noaccess_outcome_si : forall ms x8 model,
   bv_unsigned x8 = 222%Z -> mmap_noaccess_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   let n := page_round_up (ms_gpr ms 1) in
   forall o, syscall_spec (sys_input segs ms x8) model o <->
     mmap_err_out model o
-    \/ exists a, grant_ok_na (ms_gpr ms 0) model a nZ = true
+    \/ exists a, Placement.linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+                   (ms_gpr ms 0) nZ a = true
                  /\ o = Ok (mkEffectU a [] [] [(a, n)] [] []) (noaccess_model a n model) [].
 Proof.
-  intros ms x8 model Hno Hargs nZ n o.
+  intros ms x8 model Hno Hargs Hdecl nZ n o.
   destruct (mmap_noaccess_args_gates ms Hargs) as (Hoff & Hanon & Hl & Hmb & Hna).
   destruct Hargs as (_ & _ & H3 & _ & _).
   rewrite (syscall_spec_222 _ model o) by (rewrite in_sysno_sys_input; exact Hno).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si,
           in_arg3_sys_input, in_arg4_sys_input, in_arg5_sys_input.
-  rewrite (mmap_noaccess_outcome _ _ _ _ _ _ _ model o Hoff Hanon Hl Hmb Hna).
-  rewrite H3. unfold grant_ok_na, place_ok, noaccess_model. fold nZ. fold n.
+  rewrite (mmap_noaccess_outcome _ _ _ _ _ _ _ model o Hoff Hanon Hl Hmb Hna Hdecl).
+  (* THE RHS IS THE MODEL'S OWN PREDICATE.  RelSpec.v:488-490 puts exactly ONE atom on this
+     iff's left at #38 - [linux_place_is] - where the released model exposed four hygiene
+     conjuncts.  Three candidates were tried and only the third is both true and provable:
+       grant_ok_na / grant_ok_na_pin  (the four)            BACKWARD FALSE - four hygiene
+         conditions do not single out the address Linux's search returns;
+       grant_ok  (placement + four + budget)                FORWARD UNPROVABLE - measured,
+         a farm round got all the way through ([admissible] applied, M1-M4
+         landed, all five rewrites fired) and left
+           Unable to unify "true" with "true && true && true && true && true &&
+            (vm_backing_used model + nZ <=? vm_limit (m_vmmaps model))".
+         grant_ok has a SIXTH conjunct, the backing budget (MmapSim.v:199-204), and
+         [linux_place_is_admissible] supplies only the four.  The budget has NO SOURCE here;
+       linux_place_is alone                                 TRUE BOTH WAYS, both bullets
+         [exact Hp], and a faithful lifting of the model's statement.
+     Nothing is lost against the old RHS: a consumer wanting the four calls
+     [Placement.linux_place_is_admissible] (75d69e00 Checks/Placement.v:1038-1043, premises
+     [0 < nZ] and [nZ mod page_size = 0]), which is what MmapSim.v:194-197 says in the tree's
+     own words the four are kept for - and it now also has the placement fact, which the old
+     RHS did not carry at all.  The atom's exact shape was printed by a speaking probe,
+     in a farm round, which is why the old [(G1 & G2 & G3 & G4)] pattern
+     reported "Expects a conjunctive pattern made of 0 patterns" and not an arity mismatch. *)
+  rewrite H3. unfold noaccess_model. fold nZ. fold n.
   split.
-  - intros [He | (a & (G1 & G2 & G3 & G4) & ->)]; [left; exact He | right].
-    exists a. rewrite with_mmap_backing_34.
-    rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4.
-    split; reflexivity.
-  - intros [He | (a & Hg & ->)]; [left; exact He | right].
-    exists a. rewrite with_mmap_backing_34.
-    rewrite !andb_true_iff in Hg. destruct Hg as [[[G1 G2] G3] G4].
-    apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3.
-    split; [repeat split; assumption | reflexivity].
+  - intros [He | (a & Hp & ->)]; [left; exact He | right].
+    exists a. rewrite with_mmap_backing_34. split; [exact Hp | reflexivity].
+  - intros [He | (a & Hp & ->)]; [left; exact He | right].
+    exists a. rewrite with_mmap_backing_34. split; [exact Hp | reflexivity].
 Qed.
 
 Lemma node_mmap_noaccess_grant : forall ms model x8,
   m_halted model = None -> m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 222%Z ->
   mmap_noaccess_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   let n := page_round_up (ms_gpr ms 1) in
-  (exists a, grant_ok_na (ms_gpr ms 0) model a nZ = true) ->
-  node_ok segs (mkCfg ms model) {a : word | grant_ok_na (ms_gpr ms 0) model a nZ = true} (fun _ => [])
+  (* THE STATEMENT CARRIES THE MODEL'S PREDICATE, PROPAGATED FROM mmap_noaccess_outcome_si.
+     That lemma now yields [Placement.linux_place_is] (RelSpec.v:488-490 puts a single atom on
+     its left at #38), and [grant_ok_na -> linux_place_is] is FALSE - four hygiene conjuncts do
+     not single out the address Linux's search returns - so there is no bridge in that direction
+     and the premise has to move.  Measured as safe to move: the caller census over
+     projects/openssl/echconfiglist_parser gives four sites, ALL inside proofs/lib, PUBLISHED
+     HITS 0, with a must-fire (asan_agrees in 1 published Proof.v) proving the query can see a
+     published hit - so no new premise surfaces in Statements.v or any Proof.v. *)
+  (exists a, Placement.linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+               (ms_gpr ms 0) nZ a = true) ->
+  node_ok segs (mkCfg ms model)
+    {a : word | Placement.linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+                  (ms_gpr ms 0) nZ a = true} (fun _ => [])
     (fun i => mkCfg (advance_past_svc (apply_effect ms (mkEffectU (proj1_sig i) [] [] [(proj1_sig i, n)] [] [])))
                     (noaccess_model (proj1_sig i) n model)).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno Hargs nZ n (a0 & Ha0).
+  intros ms model x8 Hh Hlazy Hsvc Hno Hargs Hdecl nZ n (a0 & Ha0).
   assert (HnZ : (0 <= nZ)%Z).
   { unfold nZ. apply page_round_up_Z_nonneg. apply (proj1 (word_unsigned_range _)). }
   assert (Hno' : bv_unsigned (in_sysno (sys_input segs ms x8)) = 222%Z) by (rewrite in_sysno_sys_input; exact Hno).
-  pose proof (mmap_noaccess_outcome_si ms x8 model Hno Hargs) as Hsi. cbv zeta in Hsi. fold nZ n in Hsi.
-  apply (node_family_cfg segs ms model x8 {a : word | grant_ok_na (ms_gpr ms 0) model a nZ = true}
+  (* the ONE-WAY bridge, for the two [place_not_refusal] sites that still want the four
+     conjuncts: Placement.linux_place_is_admissible, 75d69e00 Checks/Placement.v:1038-1043.
+     Its two premises are this unit's own idiom - positivity verbatim from AsanRelSpec.v:128-132,
+     alignment from AsanCeil.v:72 - and [Hl] is the w_is0 gate out of mmap_noaccess_args_ok. *)
+  destruct (mmap_noaccess_args_gates ms Hargs) as (Hoff & Hanon & Hl & Hmb & Hna).
+  assert (Hnm : (nZ mod page_size = 0)%Z) by (unfold nZ; apply page_round_up_Z_aligned').
+  assert (Hnp : (0 < nZ)%Z).
+  { unfold nZ. pose proof (page_round_up_Z_ge_all (bv_unsigned (ms_gpr ms 1))).
+    pose proof (word_unsigned_range (ms_gpr ms 1)).
+    assert (bv_unsigned (ms_gpr ms 1) <> 0%Z).
+    { intros E. unfold w_is0, bv_eqb in Hl. rewrite E in Hl. cbn in Hl. discriminate. }
+    lia. }
+  assert (Hgrant : forall a, Placement.linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+                               (ms_gpr ms 0) nZ a = true -> grant_ok_na (ms_gpr ms 0) model a nZ = true).
+  { intros a Hp.
+    destruct (Placement.linux_place_is_admissible _ _ _ _ _ Hnp Hnm Hp) as (M1 & M2 & M3 & M4).
+    unfold grant_ok_na, place_ok.
+    rewrite (proj2 (Z.eqb_eq _ _) M1), (proj2 (Z.ltb_lt _ _) M2),
+            (proj2 (Z.leb_le _ _) M3), M4. reflexivity. }
+  pose proof (mmap_noaccess_outcome_si ms x8 model Hno Hargs Hdecl) as Hsi. cbv zeta in Hsi. fold nZ n in Hsi.
+  apply (node_family_cfg segs ms model x8
+           {a : word | Placement.linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+                         (ms_gpr ms 0) nZ a = true}
            (fun i => mkEffectU (proj1_sig i) [] [] [(proj1_sig i, n)] [] [])
            (fun i => noaccess_model (proj1_sig i) n model) (fun _ => []) _
            Hh Hsvc Hsi).
   - intros [a Ha]. right. exists a. split; [exact Ha | reflexivity].
   - intros [a Ha]. apply spurious_refusal_not_refusal. cbn [proj1_sig eff_ret].
-    exact (place_not_refusal _ model a nZ Hno' Ha HnZ).
+    exact (place_not_refusal _ model a nZ Hno' (Hgrant a Ha) HnZ).
   - intros eff m' ev [He | (a & Ha & E)] Hns.
     + exfalso. apply Hns. apply mmap_err_out_enomem in He. apply Ok_inj in He as (-> & -> & ->).
       apply (alloc_refusal_spurious _ model _ (mkEffectU a0 [] [] [(a0, n)] [] []) (noaccess_model a0 n model) []).
       * apply family_off_mmap_true. exact Hno'.
       * cbn [eff_ret]. apply errno_is_refusal_mmap. exact Hno'.
       * apply (proj2 (Hsi _)). right. exists a0. auto.
-      * cbn [eff_ret]. exact (place_not_refusal _ model a0 nZ Hno' Ha0 HnZ).
+      * cbn [eff_ret]. exact (place_not_refusal _ model a0 nZ Hno' (Hgrant a0 Ha0) HnZ).
     + apply Ok_inj in E as (-> & -> & ->). exists (exist _ a Ha). cbn [proj1_sig]. auto.
   - intros eff m' ev [He | (a & _ & E)].
     + apply mmap_err_out_enomem in He. apply Ok_inj in He as (-> & -> & ->). exact Hh.
@@ -273,14 +336,28 @@ Lemma node_mmap_noaccess_refused : forall ms model x8,
   m_halted model = None -> m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 222%Z ->
   mmap_noaccess_args_ok ms ->
-  (forall a, grant_ok_na (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false) ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+  (* THE PREMISE FOLLOWS mmap_noaccess_outcome_si'S RHS, which at #38 is the single
+     atom [Placement.linux_place_is] (:206-217).  This is a WEAKER premise, not a
+     wider statement: [linux_place_is a = true -> grant_ok_na a = true] is the bridge
+     proved at :287-297, so its contrapositive turns any caller's
+     [forall a, grant_ok_na ... = false] into this one, and the lemma it states is
+     strictly stronger than the released form.  Caller census, engine `git grep -c`
+     over `projects/openssl/echconfiglist_parser/*`: this name has
+     1 hit, this declaration, so 0 call sites.  MUST-FIRE control on the same
+     engine and the same path set: `mmap_noaccess_outcome_si` gives 4 hits in this
+     file and 1 in AsanRefNodes.v, i.e. the query does reach call sites when they
+     exist, so the zero above is a real zero and not a dead query. *)
+  (forall a, Placement.linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+               (ms_gpr ms 0) (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) a = false) ->
   node_ok segs (mkCfg ms model) unit (fun _ => [])
     (fun _ => mkCfg (advance_past_svc (set_gpr0 ms (errno_ret ENOMEM))) model).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno Hargs Hng.
+  intros ms model x8 Hh Hlazy Hsvc Hno Hargs Hdecl Hng.
   rewrite <- (apply_effect_no_write ms (errno_ret ENOMEM)).
   apply (node_det segs ms model x8 (mkEffect (errno_ret ENOMEM) [] []) model []); try assumption.
-  intros o. pose proof (mmap_noaccess_outcome_si ms x8 model Hno Hargs o) as Hsi. cbv zeta in Hsi.
+  intros o. pose proof (mmap_noaccess_outcome_si ms x8 model Hno Hargs Hdecl o) as Hsi. cbv zeta in Hsi.
   rewrite Hsi. rewrite mmap_err_out_enomem.
   split; [| intros ->; left; reflexivity].
   intros [-> | (a & Ha & _)]; [reflexivity | rewrite Hng in Ha; discriminate Ha].
@@ -395,6 +472,10 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
   (0 < len)%Z -> (bv_unsigned addr + page_round_up_Z len < 2 ^ 64)%Z ->
   (bv_unsigned addr mod page_size = 0)%Z ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* 75d69e00: [mprotect_spec] is unmodeled on a range meeting the vDSO/vvar pair,
+     so RelSpec.v's [mprotect_expose_outcome] takes that gate BEFORE its noaccess
+     premise.  Positional, so without it here [Hna] lands in the vdso slot. *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   forall o, syscall_spec (sys_input segs ms x8) model o <->
@@ -402,16 +483,18 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
     \/ (mprotect_budget_ok model addr n = true
         /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model addr n model) []).
 Proof.
-  intros ms x8 model addr len Hno H0 H1 H2 Hlen Hnw Hal n Hna Hma o.
+  intros ms x8 model addr len Hno H0 H1 H2 Hlen Hnw Hal n Hvd Hna Hma o.
   pose proof (u64_range addr). pose proof (page_round_up_Z_bounds len ltac:(lia)).
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; lia).
   rewrite (syscall_spec_226 _ model o) by (rewrite in_sysno_sys_input; exact Hno).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si, H0, H2.
-  rewrite <- mprotect_model_next_eq.
-  rewrite (mprotect_expose_outcome addr (ms_gpr ms 1) (Z_to_bv 64 3) _ model o); rewrite ?Hu1;
-    [reflexivity | vm_compute; reflexivity | exact Hal | unfold w_is0; apply bv_eqb_neq; intros E;
-     apply (f_equal bv_unsigned) in E; rewrite Hu1 in E; change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E; lia
-    | unfold two_pow_64; lia | vm_compute; reflexivity | exact Hna | exact Hma].
+  rewrite <- mprotect_model_next_eq. subst n. rewrite <- Hu1.
+  apply (mprotect_expose_outcome addr (ms_gpr ms 1) (Z_to_bv 64 3) _ model o);
+    [vm_compute; reflexivity | exact Hal | | rewrite Hu1; unfold two_pow_64; lia
+    | vm_compute; reflexivity
+    | rewrite Hu1; exact Hvd | rewrite Hu1; exact Hna | rewrite Hu1; exact Hma].
+  unfold w_is0, bv_eqb. rewrite Hu1. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
+  apply Z.eqb_neq. lia.
 Qed.
 
 Lemma node_mprotect_ok : forall ms model x8 (addr : word) (len : Z),
@@ -421,6 +504,9 @@ Lemma node_mprotect_ok : forall ms model x8 (addr : word) (len : Z),
   (0 < len)%Z -> (bv_unsigned addr + page_round_up_Z len < 2 ^ 64)%Z ->
   (bv_unsigned addr mod page_size = 0)%Z ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* 75d69e00: the vDSO/vvar gate [mprotect_outcome_si] takes BEFORE its noaccess
+     premise; positional, so it has to be carried here too. *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   mprotect_budget_ok model addr n = true ->
@@ -428,9 +514,9 @@ Lemma node_mprotect_ok : forall ms model x8 (addr : word) (len : Z),
     (fun _ => mkCfg (advance_past_svc (apply_effect ms (mkEffect (Z_to_bv 64 0) [] [(addr, n)])))
                     (mprotect_model addr n model)).
 Proof.
-  intros ms model x8 addr len Hh Hlazy Hsvc Hno H0 H1 H2 Hlen Hnw Hal n Hna Hma Hb.
+  intros ms model x8 addr len Hh Hlazy Hsvc Hno H0 H1 H2 Hlen Hnw Hal n Hvd Hna Hma Hb.
   assert (Hno' : bv_unsigned (in_sysno (sys_input segs ms x8)) = 226%Z) by (rewrite in_sysno_sys_input; exact Hno).
-  pose proof (mprotect_outcome_si ms x8 model addr len Hno H0 H1 H2 Hlen Hnw Hal Hna Hma) as Hsi. cbv zeta in Hsi. fold n in Hsi.
+  pose proof (mprotect_outcome_si ms x8 model addr len Hno H0 H1 H2 Hlen Hnw Hal Hvd Hna Hma) as Hsi. cbv zeta in Hsi. fold n in Hsi.
   apply (node_family_cfg segs ms model x8 unit
            (fun _ => mkEffect (Z_to_bv 64 0) [] [(addr, n)])
            (fun _ => mprotect_model addr n model) (fun _ => []) _ Hh Hsvc Hsi).
@@ -457,16 +543,19 @@ Lemma node_mprotect_blocked : forall ms model x8 (addr : word) (len : Z),
   (0 < len)%Z -> (bv_unsigned addr + page_round_up_Z len < 2 ^ 64)%Z ->
   (bv_unsigned addr mod page_size = 0)%Z ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* 75d69e00: the vDSO/vvar gate [mprotect_outcome_si] takes BEFORE its noaccess
+     premise; positional, so it has to be carried here too. *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   mprotect_budget_ok model addr n = false ->
   node_ok segs (mkCfg ms model) unit (fun _ => [])
     (fun _ => mkCfg (advance_past_svc (set_gpr0 ms (errno_ret ENOMEM))) model).
 Proof.
-  intros ms model x8 addr len Hh Hlazy Hsvc Hno H0 H1 H2 Hlen Hnw Hal n Hna Hma Hb.
+  intros ms model x8 addr len Hh Hlazy Hsvc Hno H0 H1 H2 Hlen Hnw Hal n Hvd Hna Hma Hb.
   rewrite <- (apply_effect_no_write ms (errno_ret ENOMEM)).
   apply (node_det segs ms model x8 (mkEffect (errno_ret ENOMEM) [] []) model []); try assumption.
-  intros o. pose proof (mprotect_outcome_si ms x8 model addr len Hno H0 H1 H2 Hlen Hnw Hal Hna Hma o) as Hsi.
+  intros o. pose proof (mprotect_outcome_si ms x8 model addr len Hno H0 H1 H2 Hlen Hnw Hal Hvd Hna Hma o) as Hsi.
   cbv zeta in Hsi. fold n in Hsi. rewrite Hsi. rewrite mprotect_err_out_enomem.
   split; [| intros ->; left; reflexivity].
   intros [-> | (Hb' & _)]; [reflexivity | rewrite Hb in Hb'; discriminate Hb'].

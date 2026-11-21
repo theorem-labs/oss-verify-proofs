@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -49,13 +50,15 @@ Section DrvOpen.
     (* [comment removed for export] *)
     Theorem drv_openat_toolong : forall bs K,
       rdn asegs mem (getr regs 11) 4096 = Some bs -> ~ In (Z_to_bv 8 0) bs ->
+      (* LPS 75d69e00: the 4096 path bytes end below TASK_SIZE (LazyFdNodes.rz_openat_toolong_lazy) *)
+      (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z ->
       (forall msF' mo', as_VIS H s msF' = post (errno_ret ENAMETOOLONG) -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
          realizes asegs (mkCfg msF' mo') K) ->
       realizes asegs (mkCfg msF mo) K.
     Proof.
-      intros bs K Hrd Hnz Hc.
+      intros bs K Hrd Hnz Hlo Hc.
       apply (drv_lazy H DL s msF mo regs pc mem K HV HA). intros L S Zr OK RS BACK.
-      eapply (rz_openat_toolong_lazy asegs L S Zr msF regs pc mem mo w HF HE OK RS H17 H10 Hfl bs K Hrd Hnz).
+      eapply (rz_openat_toolong_lazy asegs L S Zr msF regs pc mem mo w HF HE OK RS H17 H10 Hfl bs K Hrd Hnz Hlo).
       intros msF' mo' OK' SB' RS' HS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
       exact (Hc msF' mo' HV' HA' SB').
     Qed.

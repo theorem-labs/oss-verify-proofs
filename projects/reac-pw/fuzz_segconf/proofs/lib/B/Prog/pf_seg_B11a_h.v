@@ -24,6 +24,7 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 583 of its 656 lines of code are new or changed and 4980 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B11b_a.v, with its module paths and module names changed; 483 of its 554 lines of code are new or changed and 585 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the RBT cut of segment B11a of
    reac_segconf_parse_file's walk, b11_rbt_ok : (RS1 at every FP state) -> HA_MISS n -> B11_RBT_stmt n
    (lib/B/Prog/pf_seg_B11a_k.v, lib/B/Prog/pf_pieces.v); the B11a segment lane of the image-B G3 walk owner (a piece sub-lane), 2026-10-30.
@@ -57,10 +58,10 @@
    A_OBJ 35).
 
    ADAPTED from a working branch + U piece walks; templates lib/B/Prog/pf_seg_B3_p1.v (the B3 segment lane,
-   a lane branch f5fd160e1686: the seed with slot chunks on s1, paj_run_tok to a snprintf call, the call through
-   the journal and the state after it), lib/B/Prog/pf_seg_B11a_m.v (the B11a segment lane, a lane branch db5280e50cc6:
+   a lane branch: the seed with slot chunks on s1, paj_run_tok to a snprintf call, the call through
+   the journal and the state after it), lib/B/Prog/pf_seg_B11a_m.v (the B11a segment lane, a lane branch:
    the registers kept by a run, b11_move with the keep lemmas, the next cut rebuilt), the released fuzz_command
-   check_reply_s4.v (origin/ossv/recipes 501c0d516c69: the snprintf call and the FP-state lift). *)
+   check_reply_s4.v (the snprintf call and the FP-state lift). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

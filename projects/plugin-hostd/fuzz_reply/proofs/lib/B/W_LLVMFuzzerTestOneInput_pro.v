@@ -1,15 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: SEG_PRO of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput, image B
-   (lib/B/W_LLVMFuzzerTestOneInput_cut.v:942, `forall cx, lf_base cx -> SRr segs (c_W cx) (lf_entry cx) (INV_H cx 0)`)
+   (lib/B/W_LLVMFuzzerTestOneInput_cut.v:943, `forall cx, lf_base cx -> SRr segs (c_W cx) (lf_entry cx) (INV_H cx 0)`)
    - the prologue 0x84408-0x845e0 (fuzz_reply.c:671-685), from the entry to the loop head H.  The image-B twin of
-   lib/A/W_LLVMFuzzerTestOneInput_pro.v (a working branch fff279dd36e), in the form of the cut's worked
+   lib/A/W_LLVMFuzzerTestOneInput_pro.v (a working branch), in the form of the cut's worked
    dispatch lf_seg_jt and of that twin's five pieces.  Every B fact below is read from B's own disassembly
    (the objdump of the pinned image fuzz_reply.asan-ubsan, sha256 10ffb5f9202ae2bd...)
    and from lib/B's listing, never by offset arithmetic from image A.
    Rule 24: no released, delivered-package or cold lemma proves this statement (proof-index, 2026-10-29: 0 named / 0
    released / the delivered package 0 on 0x84408, 0x84478, 0x84590 and on __asan_stack_malloc_1 at this function).  An OLD-FRAME B
-   donor exists (a working branch fc302b5d067, structure only); no citable proof.  Its files lib/B/Prog/SlotEntry.v,
+   donor exists (a working branch, structure only); no citable proof.  Its files lib/B/Prog/SlotEntry.v,
    SlotEntryDefs.v and SlotEntryAlloc.v (a_call_pre / a_call_post over ALI, no afn_pre / ajournal_gx / AR_laws / SRr)
    decompose this very prologue as: entry state -> __asan_stack_malloc_1 at 0x84478 with a0 = 128 (class 1, its flag
    byte and the frame's shadow) -> the size test AE_TEST 0x84530 -> op_add's entry with the globals reset (g_client
@@ -67,7 +67,8 @@
      HFP_pro, LS_pro_oa, LS_pro, RI_pro - the four model obligations, in the B form (no `full`, k = 0 at the head).
    lib/B has no latch file at this base, so the transport kit lib/A's pro file read from
    lib/A/W_LLVMFuzzerTestOneInput_latch.v (its lt_ lemmas) is restated here at image B's names, as
-   lib/B/W_LLVMFuzzerTestOneInput_add.v (a working branch e234f421174) restates it. *)
+   lib/B/W_LLVMFuzzerTestOneInput_add.v (a working branch) restates it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -634,7 +635,7 @@ Hypothesis FFL : frame_flag_lawP segs B.
 Hypothesis GWL : glob_wr_law G_fr.
 (* discharged by lib/B/W_LLVMFuzzerTestOneInput_G.v c_glob_wr (at G_fr := G_fr_c B) *)
 Hypothesis ERRL : errno_law B.
-(* discharged by the B twin of zz_ERRL (A: w8-integ 825c723c13f addI.v:242) *)
+(* discharged by the B twin of zz_ERRL (A: w8-integ addI.v:242) *)
 (* ---- the instance facts, in lib/A's texts at lib/B's names; lib/A's ROM_PIN and HROM_G are one fact here, the
    B sibling's HRO (lib/B/W_LLVMFuzzerTestOneInput_add.v), because rom_out's last conjunct names the sink head's
    AOFL_HEAD, which is a Context parameter of this Section: only the instance's head (YE2k.tfib_sink_head,
@@ -651,11 +652,11 @@ Hypothesis HRO : rom_out segs B G_fr.
 Hypothesis GSHV : forall ly S (W : world segs) mem md a n, AR segs B ly S W mem md -> 0 < n ->
   (forall x, a <= x < a + n -> inG pro_G x) -> shadow_hull_vis (aview segs (w_H W) mem) a n.
 (* discharged by lib/B/W_source_reset.v's GSHV at ARM_add's ad_G, which is pro_G (4 * ASRC = 384);
-   B twin of zz_GSHV (A: w8-integ 825c723c13f addI.v:187) *)
+   B twin of zz_GSHV (A: w8-integ addI.v:187) *)
 
 (* ---- the entry's surviving blocks (the relay's table g_src and the controller's buffer g_out): apart from the
    input block and inside the entry's footprint fr_FP over their REQUEST size, as the cut's ablocks_sep (req_size,
-   a Theorem Labs lane's ruling 12:2xZ) and op_add's journal take them; lib/A's text at 5c8023c8afd.  Conjuncts 2-3 follow
+   a Theorem Labs lane's ruling 12:2xZ) and op_add's journal take them; lib/A's text.  Conjuncts 2-3 follow
    from the instance's fr_FP (ACfn_cf.fr_FP reads g_src / g_out's ranges from entry memory).  Conjunct 1 (the entry
    split) needs the input block, g_src's table and g_out's buffer to be DISTINCT blocks, which the cut's pre does
    not state yet (a Theorem Labs lane's review 21:5xZ, reported to the cut's owner): it is not a consequence of fr_live_pre. ---- *)
@@ -681,8 +682,8 @@ Hypothesis RI_pro : forall cx q T' pj c O cap out,
   (exists c0 mx0, aout_at B fr_RG (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) c0 O mx0 (Z.of_nat (length O)) cap out) ->
   ct_cl c = 3 -> ct_br c = 0 -> ct_dd c = 0 -> ct_ei c = 0 ->
   RINV cx 0 (pro_m q T' pj c O cap out).
-(* LS_pro at the PROPOSED text (W8Add's fr_LS_pro, a working branch f57b3e2d0ca lib/A/ReplyLS.v:571; the
-   lib/A form at 6018cdef2fd): the blocks after op_add with the entry's split at its table T0 and relay_add's two
+(* LS_pro at the PROPOSED text (W8Add's fr_LS_pro, a working branch lib/A/ReplyLS.v:571; the
+   lib/A form): the blocks after op_add with the entry's split at its table T0 and relay_add's two
    cases (T0 = 0: a new table T'; T0 <> 0: T' = T0). *)
 Hypothesis LS_pro : forall cx q T' pj c O cap out (S2 : astate) pos ly S,
   lf_base B MT XM_LIB RLO RHI fr_live_pre G_fr cx ->
@@ -1247,7 +1248,7 @@ Proof.
   split; [exact HSH | exact HSW].
 Qed.
 (* a symbolic value read as a number, and the shadow address of a + c in the shadow matcher's form (W2's oa_sv_lit /
-   oa_sh_den, lib/A/W_op_add.v:532-546, which this file does not Require) *)
+   oa_sh_den, lib/A/W_op_add.v:533-547, which this file does not Require) *)
 Lemma pro_sv_lit : forall E e v, U E e = zcanon v -> sv_denot E e = Z_to_bv 64 v.
 Proof. intros E e v H. apply bv_eq. unfold U in H. rewrite H, Z_to_bv_unsigned. apply zcanon_wrap. Qed.
 Lemma pro_sh_den : forall E (bx g : nat) sb a c,
@@ -1593,7 +1594,7 @@ Proof.
 Qed.
 
 (* W_op_add.v's AR oa_call_keep / _blk / _hi (this base's lib/B/W_op_add.v, Section c), restated here: W2's
-   W_op_add.v of record (a working branch 11fb7104fb5) states those three names over ARx, so this AR walk keeps
+   W_op_add.v of record (a working branch) states those three names over ARx, so this AR walk keeps
    their AR texts and proofs under pro_ names *)
 Lemma pro_oa_call_keep : forall G' STK sp0 FP ly0 S0 (W0 : world segs) m0 md0 ly1 S1 (W1 : world segs) m1 md1 k,
 ajournal_gx segs B G' 0 [] STK sp0 FP ly0 S0 W0 m0 md0 [] ly1 S1 W1 m1 md1 k -> ~ YI16.sink_open_fp FP ->

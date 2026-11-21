@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""baseshapes.py -- the kit 86da41d3ef68 known fail-opens (registry 7f2e3c70626): an EQUAL / EQUAL-mod-pcrel verdict is
+"""baseshapes.py -- the kit 86da41d3ef68 known fail-opens (registry): an EQUAL / EQUAL-mod-pcrel verdict is
 not evidence where an address value reaches a load / store / jalr / AMO base through a shape the kit's target rule does
 not compare. This scans EVERY compared function pair of the record (the closure members and the paircl pairs, walked as
 closure_strict3 and paircl walk them) and reports, per memory / jump base, which of these shapes built it and what the

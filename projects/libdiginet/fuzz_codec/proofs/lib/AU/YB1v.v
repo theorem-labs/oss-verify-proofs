@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB1v.v (commit 25e3d17bdb50) by boxb1.py (sha256 0fe1e96732e2) from libdiginet/fuzz_codec's asan-ubsan image: tfibmusl_text_start = sysconf+0 = 0x8cfd0, count (.text end 0x9cb68 - 0x8cfd0)/4 + 3 = 16105 (cgif's rule, its own 16403), tfibguard_start = oft_exit_guard+0 = 0x80924, count 4 (cgif's); module paths changed; tfibsegs is lib/AU/AWalkFw0.v's (Require Export, libreac/fuzz_knock's lib/AU/YB1v.v form). *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB1v.v (commit theorem-labs/oss-verify-proofs@6b32741d849a) by boxb1.py (sha256 0fe1e96732e2) from libdiginet/fuzz_codec's asan-ubsan image: tfibmusl_text_start = sysconf+0 = 0x8cfd0, count (.text end 0x9cb68 - 0x8cfd0)/4 + 3 = 16105 (cgif's rule, its own 16403), tfibguard_start = oft_exit_guard+0 = 0x80924, count 4 (cgif's); module paths changed; tfibsegs is lib/AU/AWalkFw0.v's (Require Export, libreac/fuzz_knock's lib/AU/YB1v.v form). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_codec.asan-ubsan (the libdiginet/fuzz_codec asan-ubsan pin) sha256 73109e32e77beff294d41ae6f16d607479ad1884485781b322645e6f8afa99c3; unstripped twin sha256 43feeaa314a42fe569b4443c710a74561e9077e617f7412cc54fbf4a6557b266 *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List.

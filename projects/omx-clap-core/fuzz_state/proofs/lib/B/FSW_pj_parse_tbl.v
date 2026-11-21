@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the table pattern of lane CRT's lib/A/FSW_crt_tbl.v (0c8f540c787, itself from
+(* Modified by Theorem Labs, 2026-10: the table pattern of lane CRT's lib/A/FSW_crt_tbl.v (itself from
    proofs/omx-clap-core/fuzz_state/lib/A/AB1k.v), for pj_parse's text range; lib/B (fs.asan-ubsan) twin of
-   lib/A/FSW_pj_parse_tbl.v (a working branch 7583bdfb8e8). *)
+   lib/A/FSW_pj_parse_tbl.v (a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER group, image B (fs.asan-ubsan): the decode table of pj_parse's own text (A_pj_parse 0x82f3c,
    pf.c:296-309), for the walk's symbolic runs (lib/B FSW_K.v fsw_run_AJU / fsw_run_to_AJU take `table_ok tfibsegs
    tbl`). The range is RELOC-B's B/YB1w.v:460 names: tfib_A_pj_parse = 0x82f3c .. tfib_E_pj_parse = 0x82fcc, 144 bytes.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise of the printf write). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -141,6 +142,7 @@ Section P.
   Hypothesis CAN : cellZ PF0_S0 mem 0x64450 8 can.
   Hypothesis CANR : 0 <= can < 2 ^ 64.
   Hypothesis FD1 : fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  Hypothesis RD1 : m_channel_reader model = true.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hl : m_vm_lazy model = [].
   Hypothesis K0 : K [].
@@ -239,6 +241,7 @@ Section P.
     - krd_solve HKN. 
     - krd_solve HKN.
     - exact FD1.
+    - exact RD1.
     - exact Hh.
     - exact Hl.
     - exact K0.
@@ -285,6 +288,6 @@ End P.
 
 Theorem printf0_first_s0 : printf0_first_stmt_s0.
 Proof.
-  intros regs mem model sp can K R1 R2 R11 SP16 SPLO SPHI STK IMG SOF CAN CANR FD1 Hh Hl K0 HK.
+  intros regs mem model sp can K R1 R2 R11 SP16 SPLO SPHI STK IMG SOF CAN CANR FD1 RD1 Hh Hl K0 HK.
   eapply printf0_main; eassumption.
 Qed.

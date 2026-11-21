@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded register/core/machine-state equivalence lemmas (regs_eqv_*, core_eqv_*, ms_eqv_*, cfg_eqv_*, exec_eqv_core, canon_regs_eqv) into plain statements and adapted interp_eff_accesses_eqv and step_accesses_eqv proofs to vDSO-range and fetch-failure changes; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Bridge/BrRegs.v, 58 lines within its lines 23-368. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import IndefiniteDescription.
@@ -12,15 +13,13 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import SecKit.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__CJ_Bridge_BrRegs () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Peano."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Fpu."; "LinuxProcessSemantics.Riscv.Instr."; "LinuxProcessSemantics.Riscv.Prelude."; "LinuxProcessSemantics.Riscv.Sem."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Bridge.BrRegs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Bridge.BrRegs.WithSegs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CatSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1bool"; "1list"; "1nat"; "1option"; "2I"; "2and"; "2eq"; "2ex"; "3lt"; "4Z"; "0F"; "5decode_exec_accesses"; "5machine_state"; "5ms_reg"; "5step"; "5step_accesses"]; ["6advance_past_svc"; "6apply_effect"; "6config"; "6mi_account_step"; "6sys_input"; "6syscall_args"; "7Model"; "7SyscallEffect"; "7SyscallInput"; "8fflags"; "9ffmt"; "9instr"; ":bv_eqb"; ":bvmap"; ":bvmap_set"; ";Core"]; [";accrue"; ";c_fcsr"; ";c_pc"; ";c_resv"; ";core"; ";exec"; ";fget"; ";fread"; ";fset"; ";fwrite"; ";inval_resv"; ";is_x0"; ";rget"; ";rset"; ";with_fcsr"; ";with_pc"]; [";with_resv"; "0R"; "0R'"; "0R1"; "0R2"; "0R3"; "=ares_eqv"; "=cfg_eqv"; "=res2_eqv"; "<canon_regs"; "<core_eqv"; "<eff_eqv"; "<ms_eqv"; "<regs_eqv"; "<res_eqv"; ">msteps"]; ["?getr"; "@of_nat"; "0a"; "0b"; "0c"; "0c'"; "0eff"; "0fc"; "0fl"; "0fmt"; "0i"; "0k"; "0mo"; "0ms"; "0ms'"; "0ms1"]; ["0ms1'"; "0n"; "0pc"; "0r"; "0rv"; "0segs"; "ABV"; "AZ_to_bv"; "Abv"; "0sz"; "0v"; "0w"; "0x8"]]).
 Definition regs_eqv (R R' : bvmap 5 word) : Prop :=
 forall r : reg, is_x0 r = false -> reg_get R r = reg_get R' r.
-Lemma regs_eqv_refl : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs ":&My5'RHyR0%211%5241&QMr1%2211pS441").
+Lemma regs_eqv_refl : forall R, regs_eqv R R.
 Proof. intros R r _. reflexivity. Qed.
-Lemma regs_eqv_sym : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "?&My5'RHyR0%211%5241&QMr2r1%3221r3%5241p031pS681pS491").
+Lemma regs_eqv_sym : forall R R', regs_eqv R R' -> regs_eqv R' R.
 Proof. intros R R' H r Hr. symmetry. apply H, Hr. Qed.
-Lemma regs_eqv_trans : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "A&My5'RHyR0%211%5241&QMr3r2%3221r5%5214p031p041pS<91pS::1pS8;1").
+Lemma regs_eqv_trans : forall R1 R2 R3, regs_eqv R1 R2 -> regs_eqv R2 R3 -> regs_eqv R1 R3.
 Proof. intros R1 R2 R3 H1 H2 r Hr. etransitivity; [apply H1|apply H2]; exact Hr. Qed.
 Lemma reg_get_set : forall (R : bvmap 5 word) (k r : reg) v,
 reg_get (bvmap_set k v R) r = if bv_eqb k r then v else reg_get R r.
@@ -29,9 +28,10 @@ intros R k r v. destruct (bv_eqb k r) eqn:E.
 - apply bv_eqb_eq in E. subst. apply reg_get_set_same.
 - apply reg_get_set_other. intros ->. rewrite bv_eqb_refl in E. discriminate.
 Qed.
-Lemma regs_eqv_set : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "F&My5'RHyR0%211%5241%415&QMr4r3%3221&Nr2r5%35=:521%45>;637%9221p071pUF>1pTH=1pS6?1pS4@1").
+Lemma regs_eqv_set : forall R R' (k : reg) v,
+regs_eqv R R' -> regs_eqv (bvmap_set k v R) (bvmap_set k v R').
 Proof. intros R R' k v H r Hr. rewrite !reg_get_set. destruct (bv_eqb k r); [reflexivity|apply H, Hr]. Qed.
-Lemma is_x0_bv_eqb : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "@'RHy5%211'6'0&Q;r1%211&L(RFz(4%33;21%53<71%;3:71pU8=1").
+Lemma is_x0_bv_eqb : forall r : reg, is_x0 r = bv_eqb r 0.
 Proof. intros r. unfold is_x0, bv_eqb. reflexivity. Qed.
 Definition core_eqv (c c' : core) : Prop :=
 regs_eqv (c_regs c) (c_regs c') /\ c_fregs c = c_fregs c' /\
@@ -45,46 +45,47 @@ Inductive eff_eqv : eff -> eff -> Prop :=
 | EqvFault : forall c c', eff_eqv (EFault c) (EFault c')
 | EqvLoad : forall n a k k', (forall v, eff_eqv (k v) (k' v)) -> eff_eqv (ELoad n a k) (ELoad n a k')
 | EqvStore : forall n a v k k', eff_eqv k k' -> eff_eqv (EStore n a v k) (EStore n a v k').
-Lemma core_eqv_mk : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "N&My5'RHyR0%211%5241yQ0%511'3%115&QMr6r5%3221&QJ(Or7r4r3r2%5548321%65:9432%8221p0:1pU:?1pT@B1pU6F1pFF1pS6G1pS4H1").
+Lemma core_eqv_mk : forall R R' F pc fc rv, regs_eqv R R' ->
+core_eqv (Core R F pc fc rv) (Core R' F pc fc rv).
 Proof. intros. repeat split; assumption. Qed.
-Lemma rget_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "D'Q4'RHy5%211&QJr3r2%3221'6yR0%911&Q<r4%2217%3298%73521p091pU8>1pT<B1pT:C1").
+Lemma rget_eqv : forall c c' r, core_eqv c c' -> rget c r = rget c' r.
 Proof.
 intros c c' r (HR & _). unfold rget. destruct (is_x0 r) eqn:E; [reflexivity|]. apply HR, E.
 Qed.
-Lemma fget_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "D'Q4'RHy5%211&QJr3r2%3221'6yR0%911&Q6r4%2217%3298%73521p091pU8>1pT<B1pT:C1").
+Lemma fget_eqv : forall c c' r, core_eqv c c' -> fget c r = fget c' r.
 Proof. intros c c' r (_ & HF & _). unfold fget. rewrite HF. reflexivity. Qed.
-Lemma fread_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "F'Q4'J'RHy5%211&QJr4r3%3221'6'9&Q7r5r2%33271%43982%73621p091pU8>1pTDB1pT<D1pT:E1").
+Lemma fread_eqv : forall c c' fmt r, core_eqv c c' -> fread c fmt r = fread c' fmt r.
 Proof. intros c c' fmt r H. unfold fread. rewrite (fget_eqv c c' r H). reflexivity. Qed.
-Lemma c_pc_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "A'Q4&QJr2r1%3221'6'RHyR0%211&Q2r3%211%31:%83521p0:1pT<?1pT:@1").
+Lemma c_pc_eqv : forall c c', core_eqv c c' -> c_pc c = c_pc c'.
 Proof. intros c c' (_ & _ & H & _). exact H. Qed.
-Lemma c_fcsr_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "A'Q4&QJr2r1%3221'6'RHyQ0%211&Q1r3%211%31:%83521p0:1pT<?1pT:@1").
+Lemma c_fcsr_eqv : forall c c', core_eqv c c' -> c_fcsr c = c_fcsr c'.
 Proof. intros c c' (_ & _ & _ & H & _). exact H. Qed.
-Lemma c_resv_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "C'Q4&QJr2r1%3221'6'3'RHyR0%211%411&Q3r3%211%31<%:3521p0<1pT<A1pT:B1").
+Lemma c_resv_eqv : forall c c', core_eqv c c' -> c_resv c = c_resv c'.
 Proof. intros c c' (_ & _ & _ & _ & H). exact H. Qed.
 Local Ltac core_tac :=
 unfold core_eqv, rset, fset, with_regs, with_fregs, with_pc, with_fcsr, with_resv,
 accrue, fwrite, inval_resv in *; simpl in *.
-Lemma core_eqv_rset : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "F'RHy5%211yR0%411'Q4&QJr2r1%3221&Q=r5r4r3%43321%53438%:221p081pT<=1pT:>1pUF@1pU8C1").
+Lemma core_eqv_rset : forall r v c c', core_eqv c c' -> core_eqv (rset r v c) (rset r v c').
 Proof.
 intros r v [R F p f s] [R' F' p' f' s'] H. core_tac. destruct H as (HR & -> & -> & -> & ->).
 destruct (is_x0 r); simpl; repeat split; auto using regs_eqv_set.
 Qed.
-Lemma core_eqv_fset : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "F'RHy5%211yR0%411'Q4&QJr2r1%3221&Q8r5r4r3%43321%53438%:221p081pT<=1pT:>1pUF@1pU8C1").
+Lemma core_eqv_fset : forall r v c c', core_eqv c c' -> core_eqv (fset r v c) (fset r v c').
 Proof.
 intros r v [R F p f s] [R' F' p' f' s'] H. core_tac. destruct H as (HR & -> & -> & -> & ->).
 repeat split; auto.
 Qed.
-Lemma core_eqv_with_pc : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "B'RHyR0%211'Q4&QJr2r1%3221&Q?r4r3%3221%4237%9221p071pT<<1pT:=1pUF?1").
+Lemma core_eqv_with_pc : forall v c c', core_eqv c c' -> core_eqv (with_pc v c) (with_pc v c').
 Proof. intros v [R F p f s] [R' F' p' f' s'] H. core_tac. destruct H as (HR & -> & -> & -> & ->). repeat split; auto. Qed.
-Lemma core_eqv_with_fcsr : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "B'RHyQ0%211'Q4&QJr2r1%3221&Q>r4r3%3221%4237%9221p071pT<<1pT:=1pUF?1").
+Lemma core_eqv_with_fcsr : forall v c c', core_eqv c c' -> core_eqv (with_fcsr v c) (with_fcsr v c').
 Proof. intros v [R F p f s] [R' F' p' f' s'] H. core_tac. destruct H as (HR & -> & -> & -> & ->). repeat split; auto. Qed.
-Lemma core_eqv_with_resv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "D'3'RHyR0%211%411'Q4&QJr2r1%3221&Q@r4r3%3221%4237%9221p071pT<<1pT:=1pUF?1").
+Lemma core_eqv_with_resv : forall v c c', core_eqv c c' -> core_eqv (with_resv v c) (with_resv v c').
 Proof. intros v [R F p f s] [R' F' p' f' s'] H. core_tac. destruct H as (HR & -> & -> & -> & ->). repeat split; auto. Qed.
-Lemma core_eqv_accrue : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "@'I'Q4&QJr2r1%3221&Q0r4r3%3221%4237%9221p071pT<<1pT:=1pTB?1").
+Lemma core_eqv_accrue : forall fl c c', core_eqv c c' -> core_eqv (accrue fl c) (accrue fl c').
 Proof. intros fl [R F p f s] [R' F' p' f' s'] H. core_tac. destruct H as (HR & -> & -> & -> & ->). repeat split; auto. Qed.
-Lemma core_eqv_fwrite : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "H'J'RHy5%211'9'Q4&QJr2r1%3221&Q9r6r5r4r3%544321%645439%;221p091pT<>1pT:?1pUFA1pU8C1pTDG1").
+Lemma core_eqv_fwrite : forall fmt r v c c', core_eqv c c' -> core_eqv (fwrite fmt r v c) (fwrite fmt r v c').
 Proof. intros fmt r v c c' H. destruct fmt; apply core_eqv_fset; exact H. Qed.
-Lemma core_eqv_inval_resv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "B'RHyR0%211'Q4&QJr2r1%3221&Q:r4r3%3221%4237%9221p071pT<<1pT:=1pT6?1").
+Lemma core_eqv_inval_resv : forall a c c', core_eqv c c' -> core_eqv (inval_resv a c) (inval_resv a c').
 Proof.
 intros a [R F p f s] [R' F' p' f' s'] H. core_tac. destruct H as (HR & -> & -> & -> & ->).
 destruct s' as [r|]; [destruct (Z.eqb _ _)|]; simpl; repeat split; auto.
@@ -109,24 +110,18 @@ repeat first
 Local Ltac unfold_exec :=
 cbv beta iota zeta delta [exec fget fread c_regs c_fregs c_pc c_fcsr c_resv
 with_pc load_val store_val exec_csr resolve_rm frm_of].
-Lemma rget_eqvR : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "Q4&My5'RHyR0%211%5241&QMr2r1%3221yQ0%911'3%119%<1='6&Q<(Or8r5r4r3%554321?%721?r7%851654B%:21B%<3G41pU8>1pU:@1pT@C1pU6K1pFK1p0H1pS6M1pS4N1").
+Lemma rget_eqvR : forall R R', regs_eqv R R' -> forall F pc fc rv r,
+rget (Core R F pc fc rv) r = rget (Core R' F pc fc rv) r.
 Proof. intros R R' HR F pc fc rv r. apply rget_eqv. apply core_eqv_mk. exact HR. Qed.
-Section SE.
-Local Abbreviation SEC_T_exec_eqv_core := (ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "Q6&My5'RHyR0%211%5241yQ0%511'3%115'K&QMr8r7%3221'QK&Q5r3r2(Or9r6r5r4%554;321%93871%75>=543%;3:91%=231p0?1pTFD1pUDK1pU:G1pT@J1pU6N1pFN1pS6O1pS4Q01")) (only parsing).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_exec_eqv_core) 0%nat 0%nat).
-Variable R' : ltac:(sec_ty2 constr:(SEC_T_exec_eqv_core) 1%nat 0%nat).
-Variable F : ltac:(sec_ty2 constr:(SEC_T_exec_eqv_core) 2%nat 0%nat).
-Variable pc : ltac:(sec_ty2 constr:(SEC_T_exec_eqv_core) 3%nat 0%nat).
-Variable fc : ltac:(sec_ty2 constr:(SEC_T_exec_eqv_core) 4%nat 0%nat).
-Variable rv : ltac:(sec_ty2 constr:(SEC_T_exec_eqv_core) 5%nat 0%nat).
-Variable sz : ltac:(sec_ty2 constr:(SEC_T_exec_eqv_core) 6%nat 0%nat).
-Lemma exec_eqv_core : ltac:(sec_stmt2 constr:(SEC_T_exec_eqv_core) 7%nat 0%nat).
+Lemma exec_eqv_core : forall R R' F pc fc rv sz i,
+regs_eqv R R' ->
+eff_eqv (exec sz i (Core R F pc fc rv)) (exec sz i (Core R' F pc fc rv)).
 Proof.
+intros R R' F pc fc rv sz.
 intros i HR.
 destruct i; unfold_exec; rewrite ?(rget_eqvR R R' HR); eqv_struct HR.
 Qed.
-End SE.
-Lemma exec_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "F'RHyR0%211'K'Q4&QJr2r1%3221'QK&Q5r5r4r3%43321%53439%7221p091pT<>1pT:?1pTFA1pUDC1").
+Lemma exec_eqv : forall sz i c c', core_eqv c c' -> eff_eqv (exec sz i c) (exec sz i c').
 Proof.
 intros sz i [R F p f s] [R' F' p' f' s'] (HR & HF & Hp & Hf & Hs); simpl in *; subst.
 apply exec_eqv_core; assumption.
@@ -136,14 +131,14 @@ regs_eqv (ms_regs ms) (ms_regs ms') /\ ms_fregs ms = ms_fregs ms' /\
 ms_pc_val ms = ms_pc_val ms' /\ ms_svc_pending ms = ms_svc_pending ms' /\
 ms_resv ms = ms_resv ms' /\ ms_fcsr ms = ms_fcsr ms' /\
 ms_mem ms = ms_mem ms' /\ ms_rom ms = ms_rom ms'.
-Lemma ms_eqv_refl : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "5'<&QLr1%2211pTL41").
+Lemma ms_eqv_refl : forall ms, ms_eqv ms ms.
 Proof. intros ms. repeat split; apply regs_eqv_refl. Qed.
-Lemma ms_eqv_sym : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs ":'<&QLr2r1%3221r3%5241p031pTN81pTL91").
+Lemma ms_eqv_sym : forall ms ms', ms_eqv ms ms' -> ms_eqv ms' ms.
 Proof.
 intros ms ms' (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8).
 repeat split; auto using regs_eqv_sym; congruence.
 Qed.
-Lemma ms_eqv_trans : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "<'<&QLr3r2%3221r5%5214p031p041pT:91pT8:1pT6;1").
+Lemma ms_eqv_trans : forall a b c, ms_eqv a b -> ms_eqv b c -> ms_eqv a c.
 Proof.
 intros a b c (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8) (G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8).
 repeat split; eauto using regs_eqv_trans; congruence.
@@ -164,8 +159,7 @@ match r, r' with
 | MachineUnmodeled, MachineUnmodeled => True
 | _, _ => False
 end.
-Section SE.
-Local Abbreviation SEC_T_interp_eff_accesses_eqv := (forall t t', eff_eqv t t' -> forall m,
+Lemma interp_eff_accesses_eqv : forall t t', eff_eqv t t' -> forall m,
 match interp_eff_accesses segs t m, interp_eff_accesses segs t' m with
 | MachineOk a, MachineOk b => core_eqv (fst (@access_value _ a)) (fst (@access_value _ b))
 /\ snd (@access_value _ a) = snd (@access_value _ b)
@@ -173,14 +167,12 @@ match interp_eff_accesses segs t m, interp_eff_accesses segs t' m with
 | MachineFault, MachineFault => True
 | MachineUnmodeled, MachineUnmodeled => True
 | _, _ => False
-end) (only parsing).
-Variable t : ltac:(sec_ty2 constr:(SEC_T_interp_eff_accesses_eqv) 0%nat 0%nat).
-Variable t' : ltac:(sec_ty2 constr:(SEC_T_interp_eff_accesses_eqv) 1%nat 0%nat).
-Lemma interp_eff_accesses_eqv : ltac:(sec_stmt2 constr:(SEC_T_interp_eff_accesses_eqv) 2%nat 0%nat).
+end.
 Proof.
+intros t t'.
 intros H.
 induction H; intros m; cbn [interp_eff_accesses]; auto.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| exact I].
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
 specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
 destruct (interp_eff_accesses segs (k _) m) as [[[c1 m1] acc1]| |];
 destruct (interp_eff_accesses segs (k' _) m) as [[[c2 m2] acc2]| |]; cbn in *; try exact H0; try contradiction.
@@ -191,10 +183,10 @@ destruct (interp_eff_accesses segs k _) as [[[c1 m1] acc1]| |];
 destruct (interp_eff_accesses segs k' _) as [[[c2 m2] acc2]| |]; cbn in *; try exact IHeff_eqv; try contradiction.
 destruct IHeff_eqv as (A & B & C). subst. split; [exact A|]. split; reflexivity.
 Qed.
-End SE.
-Lemma ms_reg17_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "F'<&QLr2r1%3221'6'RHyR0%211&=r3(RFy5+A(4%43321%7261%82?2%=3:21p0?1pTND1pTLE1").
+Lemma ms_reg17_eqv : forall ms ms', ms_eqv ms ms' -> ms_reg ms 17 = ms_reg ms' 17.
 Proof. intros ms ms' (HR & _). unfold ms_reg. cbn. apply HR. reflexivity. Qed.
-Lemma decode_exec_accesses_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "C'<'RHyQ0%211&QLr3r2%3221&QF&;vREr4%33216%43387%6221p081pUH=1pTNA1pTLB1").
+Lemma decode_exec_accesses_eqv : forall ms ms' w, ms_eqv ms ms' ->
+ares_eqv (decode_exec_accesses segs ms w) (decode_exec_accesses segs ms' w).
 Proof.
 intros ms ms' w Heqv. pose proof (ms_reg17_eqv ms ms' Heqv) as H17.
 destruct ms as [R F pc svc rv fc m ro], ms' as [R' F' pc' svc' rv' fc' m' ro'].
@@ -208,16 +200,19 @@ destruct (interp_eff_accesses segs (exec _ i (Core R' F' pc' fc' rv')) m') as [[
 simpl in *; try exact K; try contradiction.
 destruct K as ((H1 & H2 & H3 & H4 & H5) & -> & ->). repeat split; simpl; auto.
 Qed.
-Lemma step_accesses_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "?'<&QLr2r1%3221&QF&?vREr3%3221%4238%6221p081pTN=1pTL>1").
+Lemma step_accesses_eqv : forall ms ms', ms_eqv ms ms' ->
+ares_eqv (RiscvSemantics.step_accesses segs ms) (RiscvSemantics.step_accesses segs ms').
 Proof.
 intros ms ms' Heqv. pose proof Heqv as (_ & _ & Hpc & _ & _ & _ & Hm & _).
 unfold RiscvSemantics.step_accesses, ms_pc. rewrite <- Hpc, <- Hm.
 destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
 destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
 destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
-unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+unfold fetch_failure.
+repeat match goal with |- context [if ?b then _ else _] => destruct b end; exact I.
 Qed.
-Lemma step_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "?'<&QLr2r1%3221&QN&>vREr3%3221%4238%6221p081pTN=1pTL>1").
+Lemma step_eqv : forall ms ms', ms_eqv ms ms' ->
+res_eqv (RiscvSemantics.step segs ms) (RiscvSemantics.step segs ms').
 Proof.
 intros ms ms' Heqv. unfold RiscvSemantics.step, RiscvSemantics.drop_access_report.
 pose proof (step_accesses_eqv ms ms' Heqv) as K.
@@ -231,7 +226,8 @@ match r, r' with
 | MachineUnmodeled, MachineUnmodeled => True
 | _, _ => False
 end.
-Lemma mi_account_step_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "A'<'F&QLr3r2%3221&QH&CvREr4%33216%43387%6221p081pTJ=1pTN?1pTL@1").
+Lemma mi_account_step_eqv : forall ms ms' mo, ms_eqv ms ms' ->
+res2_eqv (mi_account_step segs ms mo) (mi_account_step segs ms' mo).
 Proof.
 intros ms ms' mo Heqv. unfold mi_account_step.
 pose proof (step_accesses_eqv ms ms' Heqv) as K.
@@ -240,22 +236,24 @@ cbn in *; try exact K; try contradiction.
 destruct K as [K1 <-]. destruct (materialize_model_accesses mo (accessed_ranges machine_state a)); [|exact I].
 split; [exact K1|reflexivity].
 Qed.
-Lemma syscall_args_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "C'<&QLr2r1%3221'6'1'RHyR0%211%411&Er3%211%31<%:3521p0<1pTNA1pTLB1").
+Lemma syscall_args_eqv : forall ms ms', ms_eqv ms ms' -> syscall_args ms = syscall_args ms'.
 Proof. intros ms ms' (HR & _). unfold syscall_args, ms_gpr. rewrite !HR by reflexivity. reflexivity. Qed.
-Lemma sys_input_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "D'<'RHyR0%211&QLr3r2%3221'6'H&DvREr4%33217%43398%73621p091pUJ>1pTNB1pTLC1").
+Lemma sys_input_eqv : forall ms ms' x8, ms_eqv ms ms' -> sys_input segs ms x8 = sys_input segs ms' x8.
 Proof.
 intros ms ms' x8 Heqv. pose proof (syscall_args_eqv ms ms' Heqv) as Ha.
 destruct ms as [R F pc svc rv fc m ro], ms' as [R' F' pc' svc' rv' fc' m' ro'].
 destruct Heqv as (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro); simpl in *; subst.
 unfold sys_input. rewrite Ha. reflexivity.
 Qed.
-Lemma apply_effect_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "?'<'G&QLr3r2%3221&Ar4%2214%3265%8221p061pT>;1pTN=1pTL>1").
+Lemma apply_effect_eqv : forall ms ms' eff, ms_eqv ms ms' ->
+ms_eqv (apply_effect ms eff) (apply_effect ms' eff).
 Proof.
 intros [R F pc svc rv fc m ro] [R' F' pc' svc' rv' fc' m' ro'] eff
 (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro); simpl in *; subst.
 unfold apply_effect, set_reg; simpl. repeat split; simpl; auto using regs_eqv_set.
 Qed.
-Lemma advance_past_svc_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "='<&QLr2r1%3221&@r3%211%316%8221p061pTN;1pTL<1").
+Lemma advance_past_svc_eqv : forall ms ms', ms_eqv ms ms' ->
+ms_eqv (advance_past_svc ms) (advance_past_svc ms').
 Proof.
 intros [R F pc svc rv fc m ro] [R' F' pc' svc' rv' fc' m' ro']
 (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro); simpl in *; subst.
@@ -263,13 +261,14 @@ unfold advance_past_svc, ms_pc; simpl. repeat split; auto.
 Qed.
 Definition cfg_eqv (c c' : config) : Prop :=
 ms_eqv (cfg_ms c) (cfg_ms c') /\ cfg_model c = cfg_model c'.
-Lemma cfg_eqv_refl : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "5'B&QGr1%2211pT:41").
+Lemma cfg_eqv_refl : forall c, cfg_eqv c c.
 Proof. intros c. split; [apply ms_eqv_refl| reflexivity]. Qed.
-Lemma cfg_eqv_sym : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs ":'B&QGr2r1%3221r3%5241p031pT<81pT:91").
+Lemma cfg_eqv_sym : forall c c', cfg_eqv c c' -> cfg_eqv c' c.
 Proof. intros c c' [H1 H2]. split; [apply ms_eqv_sym; exact H1| congruence]. Qed.
-Lemma cfg_eqv_trans : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "<'B&QGr3r2%3221r5%5214p031p041pT:91pT8:1pT6;1").
+Lemma cfg_eqv_trans : forall a b c, cfg_eqv a b -> cfg_eqv b c -> cfg_eqv a c.
 Proof. intros a b c [H1 H2] [G1 G2]. split; [eapply ms_eqv_trans; eassumption| congruence]. Qed.
-Lemma msteps_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "G'<'QOvREr2r1%43321&QLr4%2214'7'5r3%;3:18r5%821:%5231qU2@1%82A1p0:1pTNC1p0?1pU0E1pTLF1").
+Lemma msteps_eqv : forall ms ms1, CatSim.msteps segs ms ms1 ->
+forall ms', ms_eqv ms ms' -> exists ms1', CatSim.msteps segs ms' ms1' /\ ms_eqv ms1 ms1'.
 Proof.
 intros ms ms1 H. induction H as [ms | ms msa msb Hsvc Hstep Hms IH]; intros ms' Heqv.
 - exists ms'. split; [apply CatSim.mst_refl| exact Heqv].
@@ -281,7 +280,7 @@ eapply CatSim.mst_step; [| exact E | exact Hms'].
 destruct Heqv as (_ & _ & _ & Hs & _). congruence.
 Qed.
 End WithSegs.
-Lemma reg_of_nat : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "E'RHy5%211'7'2'5'6r2&RG&R1r1%211%42;1%73;61&8uQ0%2261%<241qU4>1%@2?1pU8B1").
+Lemma reg_of_nat : forall r : reg, exists n, r = Z_to_bv 5 (Z.of_nat n) /\ (n < 32)%nat.
 Proof.
 intros r. exists (Z.to_nat (bv_unsigned r)). pose proof (bv_unsigned_in_range 5 r) as Hr.
 unfold bv_modulus in Hr. simpl in Hr. split; [|lia].
@@ -293,17 +292,14 @@ mkR (getr R 1) (getr R 2) (getr R 3) (getr R 4) (getr R 5) (getr R 6) (getr R 7)
 (getr R 9) (getr R 10) (getr R 11) (getr R 12) (getr R 13) (getr R 14) (getr R 15) (getr R 16)
 (getr R 17) (getr R 18) (getr R 19) (getr R 20) (getr R 21) (getr R 22) (getr R 23) (getr R 24)
 (getr R 25) (getr R 26) (getr R 27) (getr R 28) (getr R 29) (getr R 30) (getr R 31).
-Section SE.
-Local Abbreviation SEC_T_canon_regs_eqv := (ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "<&My5'RHyR0%211%5241&QMr1&QI%112%4231pS461")) (only parsing).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_canon_regs_eqv) 0%nat 0%nat).
-Lemma canon_regs_eqv : ltac:(sec_stmt2 constr:(SEC_T_canon_regs_eqv) 1%nat 0%nat).
+Lemma canon_regs_eqv : forall R, regs_eqv R (canon_regs R).
 Proof.
+intros R.
 intros r Hr.
 destruct (reg_of_nat r) as (n & -> & Hn).
 do 32 (destruct n as [|n]; [first [discriminate Hr | (unfold canon_regs, getr; cbn; reflexivity)] |]). lia.
 Qed.
-End SE.
-Lemma getr_eqv : ltac2:(TCodec.tc2 tcn__CJ_Bridge_BrRegs "E&My5'RHyR0%211%5241%415&QMr3r2%3221'6&R0r4%2215%3276%53<21p071pU8<1pS6>1pS4?1").
+Lemma getr_eqv : forall R R' r, regs_eqv R R' -> getr R r = getr R' r.
 Proof.
 intros R R' r H. unfold getr. rewrite <- is_x0_bv_eqb. destruct (is_x0 r) eqn:E; [reflexivity|]. apply H, E.
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO pair; the CONFIG_RSEQ value; the launch's reader of the standard channels). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -196,6 +197,8 @@ Variable nx0 : nat.
 Definition nx0_ok : Prop := (NX0 <= nx0)%nat.
 Hypothesis Hnx0 : nx0_ok.
 Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 (AsanPlan's [rz]; LPS 727298f3). *)
+Variable rz : Z.
 Variable HS : nat -> option acs.
 
 Variable XN : nat -> list expr -> acs -> option acs.
@@ -230,7 +233,19 @@ Variable FS0 : Fs.Fs.
 
 Variable KC : nat.
 
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT rz XN XE XB HS KC).
+
+(* LPS 727298f3: [State.init_model] seeds [vm_reserved] with the image's reservations and
+   with the vvar pages and the vDSO text the kernel maps for the process
+   ([State.init_reserved]).  [co_res] names the image's part and bounds the rest [rx]:
+   their geometry, count and total size ([n_resx A], [resx_bytes A]). *)
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -354,7 +369,11 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  co_res   : exists rx : list (word * word),
+               vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+               /\ Forall resx_entry_ok rx
+               /\ (length rx <= n_resx A)%nat
+               /\ sum_sizes rx <= resx_bytes A;
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
 
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -397,7 +416,18 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_tidv  : (a_tidset cs = true -> m_tid model <> None)
              /\ (forall t, m_tid model = Some t -> 0 < bv_unsigned t < PID_MAX_ENVELOPE);
 
-  co_napos : Forall napos (vm_noaccess (m_vmmaps model))
+  co_napos : Forall napos (vm_noaccess (m_vmmaps model));
+  (* every tracked mapping is apart from the whole reserved ledger: a grant proves it of
+     its own range and no step widens a mapping or the ledger *)
+  co_mres  : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                    (vm_maps (m_vmmaps model));
+  (* the launch's vDSO/vvar pair is part of the reserved ledger; no step changes the
+     ledger, the kernel build or the bounds [vdso_top] reads *)
+  co_vdso  : incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                  (vm_reserved (m_vmmaps model));
+  (* LPS 727298f3: the launch's reader of the standard channels; [init_model] copies it from
+     the input and no step writes it *)
+  co_rdr   : m_channel_reader model = true
 }.
 
 #[using="HS XN XE XB KC"] Lemma A_wf_allowA : forall E cs, A_wf (allowA E cs).
@@ -528,8 +558,12 @@ Proof.
   pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
   assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
   assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+  assert (Ekn : m_kernel model' = m_kernel model)
+    by (unfold same_but_materialized in Hs; rewrite Hs; reflexivity).
+  assert (Erd : m_channel_reader model' = m_channel_reader model)
+    by (unfold same_but_materialized in Hs; rewrite Hs; reflexivity).
   destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-    unfold atop in *; rewrite ?Evm, ?Elz; try assumption.
+    unfold atop in *; rewrite ?Evm, ?Elz, ?Ekn, ?Erd; try assumption.
   - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
   - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
   - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -1611,7 +1645,7 @@ Definition always (cs : acs) : bool := true.
 
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
 
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 
@@ -3139,7 +3173,7 @@ Proof. reflexivity. Qed.
 Proof. reflexivity. Qed.
 
 #[using="Type"] Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
-  check_all A chk k css = COk s ->
+  check_all A rz chk k css = COk s ->
   (exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
 Proof.
   intros chk k css s H. unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
@@ -3210,7 +3244,7 @@ Proof.
     destruct (CHECK bfuel fuel lc csa ka) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
     destruct (shape_eqb sa sb); [|discriminate]. injection Hc as <-. exact (IH _ ka _ sa H1).
-  - destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+  - destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -4297,7 +4331,7 @@ Proof.
     injection Hc as <-.
     eapply (node_brk2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT ka csa sa H1) | exact (CONT kb csb sa H2)].
   -
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
   -
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].

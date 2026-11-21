@@ -1,10 +1,10 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_IImgA_ok.v (cold/port-fm-rtprintf-param 3e35620c52e); changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfA.N_img_asan_vf/N_sym_asan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanA.N_img_asan/N_sym_asan, numerals 0x41308 -> 0x429f8 and 0x8ede0 -> 0x95fac. *)
-(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply lib/A/RT_IImgA_ok.v at
-   cold/port-reply-r4 e51895d5655; the module path prefix is this harness's, the instance is
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_IImgA_ok.v; changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfA.N_img_asan_vf/N_sym_asan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanA.N_img_asan/N_sym_asan, numerals 0x41308 -> 0x429f8 and 0x8ede0 -> 0x95fac. *)
+(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply lib/A/RT_IImgA_ok.v;
+   the module path prefix is this harness's, the instance is
    RT_IImgA.v's A_img on fuzz_manifest.asan, and the measured addresses in the comments are
    fuzz_manifest's. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RT_IImgA_ok.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/RT_IImgA_ok.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/RT_IImgA_ok.v keeps its donor's comment text) is kept as lib/A/RT_IImgA_ok.v writes it. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_IImgA_ok.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RT_IImgA_ok.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/RT_IImgA_ok.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/RT_IImgA_ok.v keeps its donor's comment text) is kept as lib/A/RT_IImgA_ok.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_IImgA_ok.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* The image facts that lib/CJ/RL/GXA/G_vfprintf_snf_closed.v takes as Context (its lines 29-78),
    proved at RT_IImgA.v's instance A_img on the pinned fuzz_manifest.asan.  Each fact is a
    vm_compute check of code bytes (CodeAtT), of read-only bytes (RoB) or of the symbol map's

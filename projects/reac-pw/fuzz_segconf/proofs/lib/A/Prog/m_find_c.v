@@ -38,9 +38,9 @@
    IMAGE-INDEPENDENT: no image module is Required; A_m_find, STK_m_find, RLO and RHI are parameters, and the
    shadow-base cells are fields of B.
    The WALK takes these runtime entries as Section hypotheses:
-     RtString.astrlen_realizes, the interceptor lane's interface row 16 (in the accepted v1, 5e0b8a44fdc; at
-     e45889d6935a strlen is DECISION 2, option (b), of provenance/evidence/interceptors/INTERFACE-A-interceptors.md
-     (commit 7068323e2626)), at the strlen trampoline (image A 0x43a0c, interceptor 0x43abc);
+     RtString.astrlen_realizes, the interceptor lane's interface row 16 (in the accepted v1;
+      strlen is DECISION 2, option (b), of provenance/evidence/interceptors/INTERFACE-A-interceptors.md),
+     at the strlen trampoline (image A 0x43a0c, interceptor 0x43abc);
      the kit's abcmp_realizes (the image-A owner's frame; lib/Reusable/YG0d.v:361), at the bcmp trampoline (image A
      0x43a38, interceptor 0x46e80).
    They are NOT premises of this contract: the statement does not mention them. *)

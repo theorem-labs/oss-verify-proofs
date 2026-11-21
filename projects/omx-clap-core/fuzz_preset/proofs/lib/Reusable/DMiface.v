@@ -1,6 +1,7 @@
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/DMiface.v@70fe07a39276 (blob 8a60e7669ffb); do not edit. Only this line is added, the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable, and line 11 rewords the donor's citation of its working note as the internal file DIface-fields.md. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/DMiface.v (blob 8a60e7669ffb); do not edit. Only this line is added, the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable, and line 11 rewords the donor's citation of its working note as the internal file DIface-fields.md. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The names the real-merge drain proof (DMdrain.v) reads the allocator relation by.
 
    The drain proof is over an opaque allocator relation [ARX inst] and owned set [AOX] (DMspec.v), and over
@@ -66,7 +67,7 @@ Definition bobj (ly : alayout) (b : batch) (a : Z) : Prop :=
 ly_space ly + b_self b <= a < ly_space ly + b_self b + kBatchBytes.
 (* The quarantine's words outside the batch objects: the mutex word (inst + o_quar + 152 .. 156) and the global
    header (+ 160 .. 192), the thread cache's header (T + t_qc .. + 32). Bytes + 156 .. 160 are outside it: cgif's ARm
-   keeps const cells there (YF0m.v:211-212; h-w6-2 03:14Z), as the released window YFgj.WINF does. *)
+   keeps const cells there (YF0m.v:212-213; h-w6-2 03:14Z), as the released window YFgj.WINF does. *)
 Definition qhdr (inst : Z) (ly : alayout) (a : Z) : Prop :=
 (inst + o_quar + 152 <= a < inst + o_quar + 156) \/ (inst + o_quar + 160 <= a < inst + o_quar + 192) \/
 (ly_T ly + t_qc <= a < ly_T ly + t_qc + 32).

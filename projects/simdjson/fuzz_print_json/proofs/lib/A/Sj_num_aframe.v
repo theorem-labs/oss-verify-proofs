@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/Sj_num_aframe.v, line 19. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -15,7 +16,7 @@ Section AFrame.
 Variable RT : rt_sig.
 Hypothesis AF : art_facts RT.
 
-Lemma new_frame_facts : forall Σ (m : mem) f k n lo, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> In (f, k) (rt_frames RT Σ) ->
+Lemma new_frame_facts : forall Σ (m : mem) f k n lo, ART RT Σ m -> rt_sp0 RT Σ - STACK_SPAN <= lo -> In (f, k) (rt_frames RT Σ) ->
   n = fs_size k - 8 -> n mod 8 = 0 -> 0 <= n ->
   f mod 64 = 0 /\ 0x6c9000 <= f /\ f + n <= lo
   /\ (f + n <= f / 8 + 2147450880 \/ f / 8 + 2147450880 + n / 8 <= f)

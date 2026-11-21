@@ -4,8 +4,9 @@
    verbs_receive's return (0x86c78) to the `ret`: the copy freed through the free wrapper, the inline release of the
    class-1 side-stack frame (shadow 0xf8, the retired magic, shadow 0xf5, the flag byte cleared), the epilogue and the
    contract's post. Ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's
-   segment chain and post assembly, ACh2.v) at c8557374ad2e, with the free call of A/ACho.v
+   segment chain and post assembly, ACh2.v), with the free call of A/ACho.v
    (flushFrame) and the frame release of A/AChx.v and A/ACk5.v (exitR). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -99,7 +100,7 @@ Let RUNP := SRr_run_pi_AJ B LAWS.
 Let RUNC := SRr_run_pi_AJ_call B LAWS.
 Let RUNF := aj_flag_store_pi B LAWS ML ASF FFL.
 
-(* the seed at verbs_receive's return (sm_entry's form, send_message_k.v:178-250) *)
+(* the seed at verbs_receive's return (sm_entry's form, send_message_k.v:179-251) *)
 Lemma sm5_seed : forall ly S W (regs : bvmap 5 word) mem md ch FP lyc Sc Wc (regs1 : bvmap 5 word) memc mdc k fpos n src res,
 afn_pre SEGS B SEND_MESSAGE_STK ly S W regs mem md ch ->
 sm_jr B FP ly S W regs mem md fpos lyc Sc Wc memc mdc k ->

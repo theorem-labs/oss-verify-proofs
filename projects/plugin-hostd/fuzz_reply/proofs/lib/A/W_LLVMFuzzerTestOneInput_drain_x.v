@@ -2,17 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_drain (op 2) of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput over the
    GENERIC allocator relation ARx: the ARx conversion of lib/A/W_LLVMFuzzerTestOneInput_drain.v's lf_arm_drain.
-   The AR proof is a Theorem Labs lane's: a working branch 129f255c729 (dr_found_join / lf_arm_drain Qed on W8
-   base ec4dd616ed1: fresh rc=0 wall 604, Print Assumptions 13 Prim* + funext), adapted to the current cut on
-   a working branch cdc87da7be0 (b5 w8c rc=0).  lf_arm_drain_x's statement is the text of the
+   The AR proof is a Theorem Labs lane's: a working branch (dr_found_join / lf_arm_drain Qed on W8
+   base: fresh rc=0 wall 604, Print Assumptions 13 Prim* + funext), adapted to the current cut on
+   a working branch (b5 w8c rc=0).  lf_arm_drain_x's statement is the text of the
    Section hypothesis ARM_drain of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v Section w (:349), checked at the end
    (lf_arm_drain_x_check).
-   THE ROOM ROUND (a working branch, on meet 393c0b2cb2a): the cut's invariants take NP
+   THE ROOM ROUND (a working branch, on meet): the cut's invariants take NP
    (lcut_x's NP S after LSx; DLK carries it); DRAIN / CNL take the room record RP (RP_NP ties its rp_RM to NP) and
    their count premises cnt_ok_pk RP (dr_pk ..) / (cnl_pk ..), the first from LS_cnt at the cut, the second at the
    state the drain leaves through the two pure model rules DR_CNT_grow / DR_CNT_cnl; LS_drain_pre's conjunct 5 is
    the peak form (with the three premises s5-r1d's rows take); LS_cnl_pre / LS_drain_step are a Theorem Labs lane's
-   TX_LS_cnl_pre / TX_LS_drain_step (d0d75bf92db), whose premises dc_stB (dcB_out) and dc_stE export.
+   TX_LS_cnl_pre / TX_LS_drain_step, whose premises dc_stB (dcB_out) and dc_stE export.
    The method (W8Entry-2's add_x method): this file Requires _drain.v and CITES every item of it that reads no AR
    and no Section variable (the model notions, the symbolic states, the pure list / byte lemmas); every item that
    reads a Section variable but no AR is restated VERBATIM (same name, same proof, up to cut_x's LS -> LSx and the
@@ -44,6 +44,7 @@
    W_sites_x / W_kit's paj_branch_xR); the call-free segments (dr_entryR, dr_scanR, dr_nf_joinR, dr_join_latchR) conclude
    strict SRr over the R journal (paj_run_x_xR) and are lifted by SRr_SRrG; the stages with a call conclude SRrG segs R
    (paj_run_x_xG runs, SRrG_bind / SRrG_mono).  The strict lemmas and their proofs are unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
@@ -279,8 +280,8 @@ End dr_kitx.
 
 (* ---- the step rules' bundles, a Theorem Labs lane's texts restated word for word (the top's TX_LS_drain_step /
    TX_LS_cnl_pre name the originals, which unfold to these): dr3_epre / dr3_hpre / dr3_epost / dr3_hpost are
-   lib/A/ReplyLSDrain3.v:78-98, ls3_kh / ls3_hn / ls3_dpost / ls3_cpost are lib/A/ReplyLS3Arms.v:306-328, at meet
-   393c0b2cb2a ---- *)
+   lib/A/ReplyLSDrain3.v:79-99, ls3_kh / ls3_hn / ls3_dpost / ls3_cpost are lib/A/ReplyLS3Arms.v:307-329, at meet
+   ---- *)
 (* LS_cnt's guard, lib/A/ReplyLSCntM.v:47-52: the model's sizes (amodel_at gives them, dr_msz_x) *)
 Definition texts_ok (l : hlist) : Prop := Forall (fun r => Z.of_nat (length (snd r)) <= APARTIAL) (hl_recs l).
 Definition msz_ok (m : lmod) : Prop :=
@@ -340,7 +341,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:191-235), verbatim ---- *)
+(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:192-236), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -427,7 +428,7 @@ Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
 (* W7, lib/A/W_contract.v, verbatim *)
 Hypothesis DRAIN : dr_spec_x B PST ARx MT RP MMAX fr_RG (BASE + AF_fr_drain).
-(* W6's W_sites.v forms, proved by R5 (a working branch b1c048a98a5) *)
+(* W6's W_sites.v forms, proved by R5 (a working branch) *)
 Hypothesis ALOCK : alock_realizes_x B ARx (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes_x B ARx (SIGMA WS_pthread_mutex_unlock).
 (* proved: lib/A/W_check_shape_done.v pb_check_shape_done *)
@@ -453,7 +454,7 @@ Hypothesis HERR_HI : rg_out fr_RG + 8 <= as_errno B.
    check_no_loss and check_shape_done keep no errno byte (their journals exclude it), so the stream's errno value
    is re-read after them *)
 Hypothesis ERR : errno_law_x B ARx.
-(* W_journal.v's rom_out at G_fr (a working branch 45a3cc9bdd0's text): ROM is outside G_fr, errno and the
+(* W_journal.v's rom_out at G_fr (a working branch's text): ROM is outside G_fr, errno and the
    sink's overflow head, and an owned ROM byte is pinned; so rom_view survives every callee's journal *)
 Hypothesis DR_ROM_OUT : rom_out segs B G_fr.
 (* _cut's glob_wr_law at G_fr, verbatim: a byte of G_fr is writable in every memory (so a kept view keeps it
@@ -549,7 +550,7 @@ Hypothesis RI_gone : forall cx t m,
 (* ---- the allocator-state facts the two calls take, read off LSx; the instance discharges them ---- *)
 (* the peak form (a Theorem Labs lane's ROOM-ROUND row #19; dr_spec's byte premise is the drain trace's byte PEAK, C3): conjunct 5
    is s5-r1d's fr_LS_drain_pre_c5p (lib/A/ReplyTrPeak.v:927), and the three premises after re_eof are the ones its
-   rows take (fr_LS3_drain_pre_c4 ReplyLS3Arms.v:791, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U| bound and
+   rows take (fr_LS3_drain_pre_c4 ReplyLS3Arms.v:792, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U| bound and
    the drained blocks' sizes (dc_stB's HXP).  The sum form (tr_alloc) was FALSE at reachable states. *)
 Hypothesis LS_drain_pre : forall cx t m ly S si h j,
   LSx cx t m ly S -> RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->
@@ -568,7 +569,7 @@ Hypothesis LS_drain_pre : forall cx t m ly S si h j,
     <= LIVE_MAX /\
   mo_ok MT S (dr_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (nth j (lm_es m) dr_e0) h).
 (* after the drain: what check_no_loss takes of the state it is called in.  A Theorem Labs lane's TX_LS_cnl_pre
-   (commit d0d75bf92db, lib/A/ReplyLS3cTopxPost.v:146; proved as ReplyLS3Arms.v:841 fr_LS3_cnl_pre_p), with
+   (lib/A/ReplyLS3cTopxPost.v:146; proved as ReplyLS3Arms.v:842 fr_LS3_cnl_pre_p), with
    CfParamsReply.fr_MMAX -> MMAX: the binders e' cap' out' and nine premises after the old ten, each held at
    dc_calls (dc_regs' Ht, dr_at_op's lm_O m = [], and dc_stB's dcB_out: the cut's entry and source at the call,
    dr_post's frame and its entry / source clauses) *)
@@ -604,10 +605,10 @@ Hypothesis LS_drain_skip : forall cx t m ly S,
   LSx cx t m ly S -> LSx cx (t + 1) (dr_skip m (dr_k' cx m)) ly S.
 (* the drain charges the meter dr_cost of the entry and source it was called with (S to S1), check_no_loss
    cnl_cost of the lists it was called with (S1 to S'); lock, unlock, check_no_loss_read and check_shape_done
-   keep the allocator state.  A Theorem Labs lane's TX_LS_drain_step (commit d0d75bf92db, lib/A/ReplyLS3cTopxPost.v:118;
-   proved as ReplyLS3cArms.v:119 fr_LS3c_drain_step_p): the binders ly1 h1 E' H' and twenty premises after the old
+   keep the allocator state.  A Theorem Labs lane's TX_LS_drain_step (lib/A/ReplyLS3cTopxPost.v:118;
+   proved as ReplyLS3cArms.v:120 fr_LS3c_drain_step_p): the binders ly1 h1 E' H' and twenty premises after the old
    five, each held at dc_calls (the drain's and check_no_loss's frames, dcB_out and dc_stE's exports); and, last,
-   dc_regs' `0 <= t < OPS_MAX`, as s5-r1d's TX_LS_drain_step_t (1318828167d lib/A/ReplyLSI.v:134, its LS instance's
+   dc_regs' `0 <= t < OPS_MAX`, as s5-r1d's TX_LS_drain_step_t (lib/A/ReplyLSI.v:135, its LS instance's
    lsi_LS_drain_step :509) *)
 Hypothesis LS_drain_step : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
     si h j h'' e' c' O' cap' out' (E H : hlist) (ly1 : alayout) (h1 : hsrc) (E' H' : hlist),
@@ -637,9 +638,9 @@ Hypothesis LS_drain_step : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' 
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (dr_step m (dr_k' cx m) si h'' j e' c' O' cap' out') ly' S'.
 (* the live counts at the cut leave room for the arm's peak (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), CORRECTION 2):
-   a Theorem Labs lane's row fr_LS3cp_cnt_drain (commit ba8e99b5bd2, lib/A/ReplyLScnt.v:371) with its guards, over the
+   a Theorem Labs lane's row fr_LS3cp_cnt_drain (lib/A/ReplyLScnt.v:371) with its guards, over the
    room record's count fields (at the cf instance they are ReplyCnt's Psec / P24 / Lsec / L24 / Pcls / LPRIM; the
-   top plugs it with ReplyLScntRP.v's lsc_rp_of_acnt).  Its peak is the row's pk_drain m h j (ReplyLScnt.v:151) with
+   top plugs it with ReplyLScntRP.v's lsc_rp_of_acnt).  Its peak is the row's pk_drain m h j (ReplyLScnt.v:152) with
    check_no_loss's part the parameter dr_cnl_pk (below): drain's trace peak + check_no_loss's peak over the drained
    lines + 2, which covers dr_spec's count premise (dr_pk) at the cut and cnl_spec's (cnl_pk) at the state the drain
    leaves (DR_CNT_grow, DR_CNT_cnl) *)
@@ -2685,7 +2686,7 @@ Proof.
     pose proof Hsl as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HEX & HHD & _).
     split; [exact (Hlist _ _ HEX) | exact (Hlist _ _ HHD)].
 Qed.
-(* the entry's bundles at the drain's call (s5-r1d's dr3_epre, ReplyLSDrain3.v:78; ls3_kh, ReplyLS3Arms.v:305):
+(* the entry's bundles at the drain's call (s5-r1d's dr3_epre, ReplyLSDrain3.v:79; ls3_kh, ReplyLS3Arms.v:306):
    aentry_ok's clauses W_rep.v:124-125, :131-132, :139 *)
 Lemma dcB_epre : forall ly S (W : world segs) mem e, aentry_ok B ly S W mem e ->
   dr3_epre e /\ ls3_kh e.
@@ -2699,7 +2700,7 @@ Proof.
     + left. split; assumption.
     + right. split; assumption.
 Qed.
-(* the source's bundles at the drain's call (dr3_hpre, ReplyLSDrain3.v:85; ls3_hn, ReplyLS3Arms.v:308): asrc_at's
+(* the source's bundles at the drain's call (dr3_hpre, ReplyLSDrain3.v:86; ls3_hn, ReplyLS3Arms.v:309): asrc_at's
    offset clause W_rep.v:104-105 and its three lists' alist_at (count clause :81, pending texts non-empty :91) *)
 Lemma dcB_hpre : forall ly S (W : world segs) mem HA h, asrc_at B ly S W mem HA h ->
   dr3_hpre h /\ ls3_hn h.
@@ -4807,7 +4808,7 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------ the arm *)
-(* the text of cut_x's Section w hypothesis ARM_drain (W_LLVMFuzzerTestOneInput_cut_x.v:554) *)
+(* the text of cut_x's Section w hypothesis ARM_drain (W_LLVMFuzzerTestOneInput_cut_x.v:555) *)
 Theorem lf_arm_drain_x : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_x B NP G_fr fr_FP PST ARx LSx RINV 2 cx Hp t W c -> SRr segs W c (INV_K_x B NP G_fr fr_FP PST ARx LSx RINV cx Hp t).
@@ -4826,7 +4827,7 @@ Proof.
 Qed.
 
 (* CHECK (cut_x's scope): lf_arm_drain_x's type is the Section w hypothesis ARM_drain of
-   W_LLVMFuzzerTestOneInput_cut_x.v:554, restated with the generic invariants at this Section's variables *)
+   W_LLVMFuzzerTestOneInput_cut_x.v:555, restated with the generic invariants at this Section's variables *)
 Lemma lf_arm_drain_x_check : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_x B NP G_fr fr_FP PST ARx LSx RINV 2 cx Hp t W c -> SRr segs W c (INV_K_x B NP G_fr fr_FP PST ARx LSx RINV cx Hp t).
@@ -4842,7 +4843,7 @@ Variable R : world segs -> world segs -> Prop.
 Hypothesis R_refl : forall W, R W W.
 Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
-(* DRAIN and CNL at R: W_contract_xR.v:294 dr_spec_xR, W_contract_xR_g6.v:267 cnl_spec_xR *)
+(* DRAIN and CNL at R: W_contract_xR.v:295 dr_spec_xR, W_contract_xR_g6.v:268 cnl_spec_xR *)
 Hypothesis DRAIN_R : W_contract_xR.dr_spec_xR B PST ARx R MT RP MMAX fr_RG (BASE + AF_fr_drain).
 Hypothesis CNL_R : forall G, gx_ok segs B G -> gx_rt B G ->
   W_contract_xR_g6.cnl_spec_xR B PST ARx R MT RP G MMAX (BASE + AF_fr_check_no_loss).
@@ -7455,7 +7456,7 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------ the arm at R *)
-(* the text of cut_x's Section wR hypothesis ARM_drain_R (W_LLVMFuzzerTestOneInput_cut_x.v:458): the call-free
+(* the text of cut_x's Section wR hypothesis ARM_drain_R (W_LLVMFuzzerTestOneInput_cut_x.v:459): the call-free
    segments lifted by SRr_SRrG (WLE_R), composed by SRrG_bind (R_trans) *)
 Theorem lf_arm_drain_xR : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
@@ -7476,7 +7477,7 @@ Proof.
 Qed.
 
 (* CHECK (cut_x's scope): lf_arm_drain_xR's type is the Section wR hypothesis ARM_drain_R of
-   W_LLVMFuzzerTestOneInput_cut_x.v:458, restated with the generic invariants at this Section's variables *)
+   W_LLVMFuzzerTestOneInput_cut_x.v:459, restated with the generic invariants at this Section's variables *)
 Lemma lf_arm_drain_xR_check : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_xR B NP G_fr fr_FP PST ARx LSx RINV R 2 cx Hp t W c ->

@@ -1,4 +1,4 @@
-(* fs program part: the ASan contract of fs's LLVMFuzzerTestOneInput in the donor's form, cgif_file lib/A/ACfn.v:59-69
+(* fs program part: the ASan contract of fs's LLVMFuzzerTestOneInput in the donor's form, cgif_file lib/A/ACfn.v:60-70
    tfib_lib_contract_x (its pre tfib_lib_pre_x :33-46 and post tfib_lib_post_x :47-58), plus fs's static-state invariant
    (fuzz/alloc.c's statics: g_fail_at = SIZE_MAX, g_live back to its entry value, g_count grows by at most FS_CNT_LIB),
    exactly as a Theorem Labs lane builds fm_lib_contract_x. The image facts fs's runtime calls take come from fs_img_facts B
@@ -6,13 +6,13 @@
    at LS := checksum_shape (fs's plain lib shape, LIBK pl fs K = K (LL 0 fs []), lib/ZTraceSpec.v:14-20, the shape fs's
    plain_rz_of_contracts_R (lib/AgreeTop.v:16) runs at), MT := ameter_triv, XM_LIB = XN_LIB := XL0, RLO..RHI := FS_RLO ..
    FS_RHI (fs.asan's .data.rel.ro start .. .got end). The constants inside tfib_lib_pre_x / tfib_lib_post_x are
-   A/ACfn.v:26-28, now fs.asan's (A_LLVMF 0x80f1c = FS_LLVMF, RA_LLVMF 0x80e18 = FS_RA_LLVMF, A_EMPTY 0x5da5a0 =
+   A/ACfn.v:27-29, now fs.asan's (A_LLVMF 0x80f1c = FS_LLVMF, RA_LLVMF 0x80e18 = FS_RA_LLVMF, A_EMPTY 0x5da5a0 =
    FS_EMPTY; relocated by S0 in this branch, because the raw copy's cgif_file values made this contract false over
    fs.asan), with EV_LIB 2000 = FS_EV_LIB, LIVE_LIB 2 ^ 33 and LLVMF_STK 32768 unchanged (policy constants; fs's
    STK_LLVMF is 18555). U = [] at entry and exit: fs frees every block on every path (Permutation of ablocks in
    tfib_lib_post_x), so no reader head is live outside the call. Statement only.
-   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Harness.v (a working branch e48bf3cce32, with the
-   text of 706affbdbe6 / 3e0aa997be6: stk_sh0, rom_view, fm_canary out of the premises). Design: a Theorem Labs lane's design/HARNESS.md
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Harness.v (a working branch, with the
+   text: stk_sh0, rom_view, fm_canary out of the premises). Design: a Theorem Labs lane's design/HARNESS.md
    section 2. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

@@ -1,9 +1,10 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfGvsni.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfGvsni.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: a new walk of fm.asan's __interceptor_vsnprintf 0x45900; the entry-state tactics
    (pairwise_disjoint_of_extents, facts_ok), the return-address step and the epilogue state built from the saved slots
    are adapted from A/AE35.v (tfib_vprintf_icpt_A / tfib_vprintf_icpt_E). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fm's snprintf glue, the vsnprintf interceptor level: avsni_realizes (FMsnprintfGI.v) for fm.asan's
    __interceptor_vsnprintf 0x45900, from printf_common's contract (apcommon_realizesU), musl vsnprintf's (avsn_realizes)
    and the WRITE_RANGE (str, res + 1) check (FMsnprintfGwrc.v vsn_wr_check_srrU).

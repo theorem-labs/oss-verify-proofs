@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACed.v (origin/ossv/recipes
-   c8557374ad2e) :145-158 tfibX_AMEMSET / tfibX_AMEMCPY / tfibX_ABCMP, and lib/A/AD2m.v tfib_AICPY, for
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACed.v (
+   theorem-labs/oss-verify-proofs@6b32741d849a) :145-158 tfibX_AMEMSET / tfibX_AMEMCPY / tfibX_ABCMP, and lib/A/AD2m.v tfib_AICPY, for
    libreac/fuzz_decode's ASan image (image A); module paths and names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Four runtime contracts of fuzz_decode image A's close (rule 24: no function proved; each lemma is an instance of a
-   contract of the relocated image-A core, a working branch e2ad4d7aa34).
+   contract of the relocated image-A core, a working branch).
 
    Each lemma's statement is the text of the lib/A/DecodeClose.v Section hypothesis of the same name
-   (a working branch 45061c42804, :231-241), with the Section's two names bound as
+   (a working branch, :231-241), with the Section's two names bound as
    DecodeClose.v binds or intends them:
-   - segs is decodesegs0 (DecodeClose.v:92, lib/A/DecodeTFIB.v:19), the core's tfibsegs (lib/A/AB1v.v:13): both are
+   - segs is decodesegs0 (DecodeClose.v:92, lib/A/DecodeTFIB.v:19), the core's tfibsegs (lib/A/AB1v.v:14): both are
      the image's Asan.M.loaded_segments;
    - B is the core's symbol record GrantB (lib/A/AD2l.v:16), the record DecodeClose.v:116 names (donor TfibB, owner
      the relocated core). The core's contracts take GrantSyms B (lib/A/AF0m.v:399); GrantB_syms (lib/A/AD2l.v:72)

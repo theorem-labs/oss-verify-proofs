@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (strnlen's word reads are bounded by the string area's END alignment, which the launch gives, where they read its start's and the length's, which it does not; a0's returned value and the stack pointer read across the library's copies of the register read by conversion instead of rewriting). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import base decidable list gmap.
@@ -13,6 +14,7 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Ref Require Import F_sysc
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common Require Import ShapeAlg.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import W64 W64Proofs Val IMap Instr Plan ValProofs MemProofs StepSoundBase StepSoundMem StepSound PlanSound.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import Mem State Step.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require StrEnd.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Ctr Require Import Lib DefsA DefsM.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Br Require Import StateGlue RegsEqv RMallocG StrG CtrFX MemFX CopyFX HeapCtr MemcpyCtr.
 Unset Nia Cache. Unset Nra Cache.
@@ -22,6 +24,22 @@ Open Scope Z_scope.
 Unset Lia Cache.
 Arguments Uint63.to_Z : simpl never.
 Arguments Z_to_bv : simpl never.
+(* [rw_read H] / [rw_read_in H X], [H : bv_unsigned (f R x) = v]: [rewrite H] (in [X]) where the goal (or
+   [X]) may spell the register read [f R x] with another of the library's copies of [getr] (strnlen_G's),
+   which [rewrite] does not match: that spelling is first changed into [H]'s, the copies meeting by
+   conversion *)
+Ltac rw_read H :=
+  first [ rewrite H
+        | match type of H with bv_unsigned (?f ?R ?x) = _ =>
+            match goal with |- context [bv_unsigned (?g R ?y)] =>
+              change (bv_unsigned (g R y)) with (bv_unsigned (f R x)); rewrite H end
+          end ].
+Ltac rw_read_in H X :=
+  first [ rewrite H in X
+        | match type of H with bv_unsigned (?f ?R ?x) = _ =>
+            match type of X with context [bv_unsigned (?g R ?y)] =>
+              change (bv_unsigned (g R y)) with (bv_unsigned (f R x)) in X; rewrite H in X end
+          end ].
 
 Section OPS.
 Variable OPS : St.optable.
@@ -34,8 +52,7 @@ Hypothesis PBstr1 : forall E, PB (eb E) -> exists str, eb E 1%uint63 = str ++ [Z
                                           /\ bv_unsigned (den E (SZ 9%uint63)) = Z.of_nat (length str) + 1.
 Hypothesis PBstr3 : forall E, PB (eb E) -> exists str, eb E 3%uint63 = str ++ [Z_to_bv 8 0] /\ ~ In (Z_to_bv 8 0) str
                                           /\ bv_unsigned (den E (SZ 10%uint63)) = Z.of_nat (length str) + 1.
-Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63))
-                                        /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 
 Lemma str_blob_ok_sound : forall E j H, PB (eb E) -> str_blob_ok j H = true ->
   exists str, eb E j = str ++ [Z_to_bv 8 0] /\ ~ In (Z_to_bv 8 0) str /\ bv_unsigned (den E H) = Z.of_nat (length str) + 1.
@@ -106,11 +123,12 @@ Proof.
   apply (known_leu_sound E _ _ _ Hfs) in LOW. rewrite !den_VPz in LOW. fold A Bs in LOW.
   apply (known_leu_sound E _ _ _ Hfs) in CONT. rewrite !den_sv_alu in CONT. cbn [alu64 alu] in CONT. rewrite !bv_add_unsigned, !den_VPz in CONT.
   fold A Bs Hz S12 in CONT.
-  pose proof (ValP.aligned_sound E _ Hfs _ _ AL ltac:(change (to_Z 3%uint63) with 3; lia)) as AL8. rewrite den_VPz in AL8. change (2 ^ to_Z 3%uint63) with 8 in AL8. fold Bs in AL8.
+  (* the string area ends 8-aligned (its start need not be) *)
+  pose proof (StrEnd.StrEnd.str_end_aligned E (s_facts st) Hfs AL) as SE.
   assert (LZs : loZ rs = 0) by (unfold loZ; rewrite LOs; reflexivity). assert (LZ12 : loZ r12 = 0) by (unfold loZ; rewrite LO12; reflexivity).
   pose proof (ro_range _ _ _ _ _ _ ROs Ks0) as [RLs RHs]. pose proof (ro_range _ _ _ _ _ _ RO12 eq_refl) as [RL12 RH12].
   fold A in RLs, RHs. fold Bs in RL12, RH12. rewrite LZs in RLs. rewrite LZ12 in RL12. unfold hiZ in RHs. fold Hz in RHs. rewrite HI12z in RH12. unfold W64.two64 in RHs, RH12.
-  destruct (PB12 E HPB) as [ES12 M8]. fold S12 in ES12.
+  pose proof (PB12 E HPB) as ES12. fold S12 in ES12.
   assert (CONT' : A + Hz <= Bs + S12).
   { unfold bv_wrap in CONT. rewrite bv_modulus_64 in CONT. rewrite !Z.mod_small in CONT; unfold W64.two64; lia. }
   destruct (str_blob_ok_sound E j (Mem.rg_hi rs) HPB SB) as (str & EBJ & NONUL & ELEN). fold Hz in ELEN.
@@ -135,7 +153,7 @@ Proof.
     - intros i Hi. rewrite length_firstn in Hi. rewrite nth_error_firstn. replace (Nat.ltb i (Z.to_nat Hz)) with true by (symmetry; apply Nat.ltb_lt; lia).
       rewrite (nth_error_nth' _ (Z_to_bv 8 0)) by lia. rewrite (nth_error_nth' _ (Z_to_bv 8 0)) by (rewrite EBJ, length_app; cbn [length]; lia).
       f_equal. apply EQJ. lia. }
-  assert (M8' : (Bs + S12) mod 8 = 0) by (rewrite ES12, Z.add_mod, AL8, M8 by lia; reflexivity).
+  assert (M8' : (Bs + S12) mod 8 = 0) by (apply SE; change (Bs + S12 <= 2 ^ 64); lia).
   pose proof (pad_room (A + Hz) (Bs + S12) CONT' M8') as PADR.
   assert (OK : memchr_ok A 0 mZ buf).
   { rewrite SPLIT. apply memchr_ok_cstr; [exact NONUL|]. rewrite length_skipn, LBUF.
@@ -161,9 +179,9 @@ Proof.
   pose proof (ms_shape OPS E st ms mo HS RV) as MSE. rewrite Hspc in MSE. cbn [c_pc CtrA.strnlen_c] in MSE. rewrite Hpc in MSE.
   rewrite MSE. pose proof two64_eq as T64.
   apply (strnlen_G (ms_regs ms) (ms_fregs ms) (ms_fcsr ms) (ms_mem ms) mo A mZ (base + loZ r1) buf K A0 A1
-           ltac:(lia) ltac:(unfold W64.two64 in Rm; lia) RA1 ltac:(rewrite SP2; exact STK1) ltac:(rewrite SP2; unfold RSTRNLEN_STACK, sp; lia)
-           BUF OK ltac:(rewrite SP2; unfold RSTRNLEN_STACK; exact SEP) MI (mf_halted _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS))) (mf_lazy _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS)))).
-  intros R' M' KEPT A0' MU WM MI' STK' BA OM. rewrite SP2 in MU, STK'. unfold RSTRNLEN_STACK in MU.
+           ltac:(lia) ltac:(unfold W64.two64 in Rm; lia) RA1 ltac:(rw_read SP2; exact STK1) ltac:(rw_read SP2; unfold RSTRNLEN_STACK, sp; lia)
+           BUF OK ltac:(rw_read SP2; unfold RSTRNLEN_STACK; exact SEP) MI (mf_halted _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS))) (mf_lazy _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS)))).
+  intros R' M' KEPT A0' MU WM MI' STK' BA OM. rw_read_in SP2 MU. rw_read_in SP2 STK'. unfold RSTRNLEN_STACK in MU.
 
   set (Fv := MemFX.cfv R' (MemFX.word4_at rsegs M' (to_Z ERRNO))). set (Gv := fun (_ : Z) (_ : Z) => Z_to_bv 8 0).
   set (E' := env_above E (s_next st) Fv Gv).
@@ -206,7 +224,7 @@ Proof.
   assert (HKR : forall x, x <> X0 -> x <> X10 -> clob_pos x = None -> PropExec.getr R' (reg_of_r5 x) = PropExec.getr (ms_regs ms) (reg_of_r5 x)).
   { intros x N0 N10 CPx. apply KEPT. apply kept_or_clobbered; assumption. }
   pose proof (MemFX.clobber_setr10_sound_above rsegs OPS E st1 (ms_regs ms) R' (ms_fregs ms) (Z_to_bv 64 RSTRNLEN_SYM) (ms_fcsr ms) None M' (seg_rom rsegs) mo Fv Gv L
-                HS1 POS B62 (fun x i H => MemFX.cfv_clob R' _ x i H) HKR ltac:(change (s_next st1) with (s_next st); fold E'; rewrite EL, A0', RES; reflexivity)) as HS2.
+                HS1 POS B62 (fun x i H => MemFX.cfv_clob R' _ x i H) HKR ltac:(change (s_next st1) with (s_next st); fold E'; rewrite EL; etransitivity; [|symmetry; exact A0']; rewrite RES; reflexivity)) as HS2.
   change (s_next st1) with (s_next st) in HS2. fold E' in HS2.
 
   assert (F1 : fact_holds E' (FULt L (Mem.rg_hi rs))).
@@ -273,8 +291,7 @@ Hypothesis PBstr1 : forall E, PB (eb E) -> exists str, eb E 1%uint63 = str ++ [Z
                                           /\ bv_unsigned (den E (SZ 9%uint63)) = Z.of_nat (length str) + 1.
 Hypothesis PBstr3 : forall E, PB (eb E) -> exists str, eb E 3%uint63 = str ++ [Z_to_bv 8 0] /\ ~ In (Z_to_bv 8 0) str
                                           /\ bv_unsigned (den E (SZ 10%uint63)) = Z.of_nat (length str) + 1.
-Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63))
-                                        /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 
 Lemma str_blob_ok_sound : forall E j H, PB (eb E) -> str_blob_ok j H = true ->
   exists str, eb E j = str ++ [Z_to_bv 8 0] /\ ~ In (Z_to_bv 8 0) str /\ bv_unsigned (den E H) = Z.of_nat (length str) + 1.
@@ -345,11 +362,12 @@ Proof.
   apply (known_leu_sound E _ _ _ Hfs) in LOW. rewrite !den_VPz in LOW. fold A Bs in LOW.
   apply (known_leu_sound E _ _ _ Hfs) in CONT. rewrite !den_sv_alu in CONT. cbn [alu64 alu] in CONT. rewrite !bv_add_unsigned, !den_VPz in CONT.
   fold A Bs Hz S12 in CONT.
-  pose proof (ValP.aligned_sound E _ Hfs _ _ AL ltac:(change (to_Z 3%uint63) with 3; lia)) as AL8. rewrite den_VPz in AL8. change (2 ^ to_Z 3%uint63) with 8 in AL8. fold Bs in AL8.
+  (* the string area ends 8-aligned (its start need not be) *)
+  pose proof (StrEnd.StrEnd.str_end_aligned E (s_facts st) Hfs AL) as SE.
   assert (LZs : loZ rs = 0) by (unfold loZ; rewrite LOs; reflexivity). assert (LZ12 : loZ r12 = 0) by (unfold loZ; rewrite LO12; reflexivity).
   pose proof (ro_range _ _ _ _ _ _ ROs Ks0) as [RLs RHs]. pose proof (ro_range _ _ _ _ _ _ RO12 eq_refl) as [RL12 RH12].
   fold A in RLs, RHs. fold Bs in RL12, RH12. rewrite LZs in RLs. rewrite LZ12 in RL12. unfold hiZ in RHs. fold Hz in RHs. rewrite HI12z in RH12. unfold W64.two64 in RHs, RH12.
-  destruct (PB12 E HPB) as [ES12 M8]. fold S12 in ES12.
+  pose proof (PB12 E HPB) as ES12. fold S12 in ES12.
   assert (CONT' : A + Hz <= Bs + S12).
   { unfold bv_wrap in CONT. rewrite bv_modulus_64 in CONT. rewrite !Z.mod_small in CONT; unfold W64.two64; lia. }
   destruct (str_blob_ok_sound E j (Mem.rg_hi rs) HPB SB) as (str & EBJ & NONUL & ELEN). fold Hz in ELEN.
@@ -374,7 +392,7 @@ Proof.
     - intros i Hi. rewrite length_firstn in Hi. rewrite nth_error_firstn. replace (Nat.ltb i (Z.to_nat Hz)) with true by (symmetry; apply Nat.ltb_lt; lia).
       rewrite (nth_error_nth' _ (Z_to_bv 8 0)) by lia. rewrite (nth_error_nth' _ (Z_to_bv 8 0)) by (rewrite EBJ, length_app; cbn [length]; lia).
       f_equal. apply EQJ. lia. }
-  assert (M8' : (Bs + S12) mod 8 = 0) by (rewrite ES12, Z.add_mod, AL8, M8 by lia; reflexivity).
+  assert (M8' : (Bs + S12) mod 8 = 0) by (apply SE; change (Bs + S12 <= 2 ^ 64); lia).
   pose proof (pad_room (A + Hz) (Bs + S12) CONT' M8') as PADR.
   assert (OK : memchr_ok A 0 mZ buf).
   { rewrite SPLIT. apply memchr_ok_cstr; [exact NONUL|]. rewrite length_skipn, LBUF.
@@ -400,9 +418,9 @@ Proof.
   pose proof (ms_shape OPS E st ms mo HS RV) as MSE. rewrite Hspc in MSE. cbn [c_pc CtrA.strnlen_c] in MSE. rewrite Hpc in MSE.
   rewrite MSE. pose proof two64_eq as T64.
   apply (strnlen_G (ms_regs ms) (ms_fregs ms) (ms_fcsr ms) (ms_mem ms) mo A mZ (base + loZ r1) buf K A0 A1
-           ltac:(lia) ltac:(unfold W64.two64 in Rm; lia) RA1 ltac:(rewrite SP2; exact STK1) ltac:(rewrite SP2; unfold RSTRNLEN_STACK, sp; lia)
-           BUF OK ltac:(rewrite SP2; unfold RSTRNLEN_STACK; exact SEP) MI (mf_halted _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS))) (mf_lazy _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS)))).
-  intros R' M' KEPT A0' MU WM MI' STK' BA OM. rewrite SP2 in MU, STK'. unfold RSTRNLEN_STACK in MU.
+           ltac:(lia) ltac:(unfold W64.two64 in Rm; lia) RA1 ltac:(rw_read SP2; exact STK1) ltac:(rw_read SP2; unfold RSTRNLEN_STACK, sp; lia)
+           BUF OK ltac:(rw_read SP2; unfold RSTRNLEN_STACK; exact SEP) MI (mf_halted _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS))) (mf_lazy _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS)))).
+  intros R' M' KEPT A0' MU WM MI' STK' BA OM. rw_read_in SP2 MU. rw_read_in SP2 STK'. unfold RSTRNLEN_STACK in MU.
 
   set (Fv := MemFX.cfv R' (MemFX.word4_at rsegs M' (to_Z ERRNO))). set (Gv := fun (_ : Z) (_ : Z) => Z_to_bv 8 0).
   set (E' := env_above E (s_next st) Fv Gv).
@@ -445,7 +463,7 @@ Proof.
   assert (HKR : forall x, x <> X0 -> x <> X10 -> clob_pos x = None -> PropExec.getr R' (reg_of_r5 x) = PropExec.getr (ms_regs ms) (reg_of_r5 x)).
   { intros x N0 N10 CPx. apply KEPT. apply kept_or_clobbered; assumption. }
   pose proof (MemFX.clobber_setr10_sound_above rsegs OPS E st1 (ms_regs ms) R' (ms_fregs ms) (Z_to_bv 64 RSTRNLEN_SYM) (ms_fcsr ms) None M' (seg_rom rsegs) mo Fv Gv L
-                HS1 POS B62 (fun x i H => MemFX.cfv_clob R' _ x i H) HKR ltac:(change (s_next st1) with (s_next st); fold E'; rewrite EL, A0', RES; reflexivity)) as HS2.
+                HS1 POS B62 (fun x i H => MemFX.cfv_clob R' _ x i H) HKR ltac:(change (s_next st1) with (s_next st); fold E'; rewrite EL; etransitivity; [|symmetry; exact A0']; rewrite RES; reflexivity)) as HS2.
   change (s_next st1) with (s_next st) in HS2. fold E' in HS2.
 
   assert (F1 : fact_holds E' (FULt L (Mem.rg_hi rs))).

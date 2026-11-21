@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (step_ecall clears the reservation; impl_from_evt takes the node post-state argument). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -47,7 +48,7 @@ Ltac step_ecall :=
 (* [comment removed for export] *)
 Lemma nret_MSsvc : forall R F pc x8 fc rv m ro r ws zs us,
   nret (MSsvc R F pc x8 fc rv m ro) (mkEffectU r ws zs us [] [])
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
 Proof. reflexivity. Qed.
 
 Lemma mkR_set_a0 : forall x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 v,
@@ -574,9 +575,10 @@ Ltac sys_finish :=
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Lemma impl_from_evt : forall {node : Type} segs (atn : node -> machine_state -> Prop) {R} (t : itree node R) Q ms,
-  evt segs (fun ms' => impl segs atn t Q ms') ms -> impl segs atn t Q ms.
-Proof. intros node segs atn R t Q ms H. eapply impl_evt; [exact H|]. intros ms' H'; exact H'. Qed.
+Lemma impl_from_evt : forall {node : Type} segs (atn : node -> machine_state -> Prop)
+    (npo : node -> machine_state -> resp -> machine_state) {R} (t : itree node R) Q ms,
+  evt segs (fun ms' => impl segs atn npo t Q ms') ms -> impl segs atn npo t Q ms.
+Proof. intros node segs atn npo R t Q ms H. eapply impl_evt; [exact H|]. intros ms' H'; exact H'. Qed.
 
 Ltac iprefix := apply impl_from_evt.
 Ltac ihere := apply evt_done.

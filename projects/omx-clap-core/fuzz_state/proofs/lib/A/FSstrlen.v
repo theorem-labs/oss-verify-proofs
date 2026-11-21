@@ -5,18 +5,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names and addresses changed; 1348 of its 1450 lines of code are new or changed and 1100 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/A1.v, with its module paths and module names changed; 631 of its 720 lines of code are new or changed and 1361 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs.asan's strlen interceptor (PC_strlen 0x42654), its runtime contract in S0's ARU form: astrlen_realizesU.
    rule 24: no function proved. This file composes existing pieces:
-   - the Bz body walk: a working branch 840c4afa7e2 lib/A/Bz/A/I_strlen.v istrlen_spec (from
+   - the Bz body walk: a working branch lib/A/Bz/A/I_strlen.v istrlen_spec (from
      __interceptor_strlen 0x426e4 to the return), with its section hypotheses RIP = R_isPoisoned.rip_proof and
      SL = FSsl.sl_proof (the plain strlen 0x99070 through REAL(strlen));
-   - the bridge: a working branch cedf3d02589 FMbz_bridge.v / FMbz_str.v (here FSbz_bridge.srr_of_evt,
+   - the bridge: a working branch FMbz_bridge.v / FMbz_str.v (here FSbz_bridge.srr_of_evt,
      stk_of_apresent; FSbz_str.chk_ok_of_view, aview_eq, hull_of_shadow_hull_vis, mbyte_mrd);
-   - a Theorem Labs lane's own transport of a Bz walk to the machine (840c4afa7e2 lib/MemNorm.v evt_normalize_cj: the walk runs on
+   - a Theorem Labs lane's own transport of a Bz walk to the machine (lib/MemNorm.v evt_normalize_cj: the walk runs on
      the memory with the read-only and above-TASK_SIZE bytes dropped; lib/Lib/RegisterBridge.v evt_register_transport:
      the walk's register tree mkR_of regs); the image lemmas of a Theorem Labs lane's lib/A/BzBridge.v:22-79 (wx_apart, seg tops,
      bz_mem_inv_normalize, wview_of_mrd) restated here without its AsanRT import;
-   - the statements: S0 a working branch cbc42a13380 lib/A/FSH_Gen.v astrlen_realizesU / astrlen_realizes_of_U.
+   - the statements: S0 a working branch lib/A/FSH_Gen.v astrlen_realizesU / astrlen_realizes_of_U.
    The trampoline __wrap_strlen 0x42654 is one `j 0x426e4` (one step, tramp_strlen).
    Named premises beyond AR_laws / TfibSyms: FsShadowSyms B (the shadow-offset cell's two symbols in AB1w's names, the
    walk kit's premise text and the relocated core's ACeg.TfibLib fields; ACeg.v cannot be Required yet) and FsRtCells B (the other fs.asan runtime cells
@@ -24,10 +25,10 @@
    The core's names (YK11.getr / mkst / seg_rom) are written qualified; lib/Lib and the Bz tree are Required, not
    Imported, outside Module W.
    Theorem Labs TEXTS (a Theorem Labs lane 2026-10-29 00:19Z): strlen has TWO runtime-contract texts, kept on purpose. This file proves fs's
-   U form (poisoned heads allowed, U <> []). The image-neutral M form is disco's: a working branch 67a52884e5d
+   U form (poisoned heads allowed, U <> []). The image-neutral M form is disco's: a working branch
    proofs/libreac/fuzz_disco/lib/Rt/StrlenDef.v:40 astrlen_realizesM lo hi pc (U = [] only; read-only bytes by consts_view lo hi plus presence of the
    tail word strlen reads past the NUL).
-   The free bridge from fs's U form to the U = [] case: S0 a working branch 77f52bf41b8 lib/A/FSupoison.v:37
+   The free bridge from fs's U form to the U = [] case: S0 a working branch lib/A/FSupoison.v:37
    unpoison_nil, :39 ARU_nil, lib/A/FSH_Gen.v:258 ecall_preU_k_nil, :419 rt_post_ro_of_U, giving astrlen_realizes_of_U (FSH_Gen.v:425).
    The two texts are not derived from each other; revisit only if a third unit needs the poisoned form. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

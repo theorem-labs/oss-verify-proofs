@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgNearS.v at 92636bfca57; module paths
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgNearS.v; module paths
    changed to reac-pw/fuzz_headamp, the image is headamp's lib/A/Img0.v rsegs (fuzz_headamp.asan), the prefix
    near_ renamed to hsn_; the three facts computed over the image (hsn_wx, hsn_wx_apart, hsn_segs_low) are
    recomputed over headamp's segments, every other line is the donor's. *)
@@ -27,7 +27,7 @@
      reflexivity), so a view equation becomes a lib/Lib `bytes_at` and an 8-byte cell value becomes `le8`.
 
    These are short generic lemmas; the shapes follow proofs/libreac/fuzz_boxreg/lib/A/FMgxa_bridge.v and
-   proofs/libreac/fuzz_boxreg/lib/A/Rt/FMgxaSeamNorm.v at 781f46bc05c, and the le8 / le_byte digit bridges
+   proofs/libreac/fuzz_boxreg/lib/A/Rt/FMgxaSeamNorm.v, and the le8 / le_byte digit bridges
    follow this unit's lib/KindBGlue.v (word_mem_le8, bytes_at_le8_word). *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.

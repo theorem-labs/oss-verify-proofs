@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the room bound grows by what the launch's reserved pair costs). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require AW_0Gc.
@@ -190,9 +191,11 @@ Section Heap.
     rewrite Nat2Z.inj_succ. pose proof (H x (or_introl eq_refl)). specialize (IH ltac:(intros y Hy; apply H; right; exact Hy)). lia.
   Qed.
 
+  (* LPS 727298f3: [AllocRepX.AGAP_of_akernel]'s room premise gains what the launch's vDSO/vvar
+     pair costs the ledger, [81920 + 2 * (M + 4096)]; the same proof, the slack absorbs it. *)
   Lemma agap_room : forall (K S M hc : Z),
     0 <= K <= 16177 -> 0 <= S <= ASECMAX * K -> 0 < M <= 2 ^ 28 + 12294 -> 0x7fff7f800000 <= hc ->
-    AHI_LO + (AHL0 + S) + (AHC0 + K) * (M + 4096) + M <= hc.
+    AHI_LO + (AHL0 + S) + (AHC0 + K) * (M + 4096) + M + (81920 + 2 * (M + 4096)) <= hc.
   Proof.
     intros K S M hc HK HS HM Hc. unfold AHI_LO, AHL0, AHC0, ASECMAX in *.
     assert (P1 : (32 + K) * (M + 4096) <= 16209 * (2 ^ 28 + 12294 + 4096)).

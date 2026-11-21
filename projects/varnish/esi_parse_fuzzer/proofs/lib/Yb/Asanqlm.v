@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the CONFIG_RSEQ flag in the plan statements; the bound on the plan's first fresh variable is 13 (was 11); the start-up invariant's reserved ledger is the image's reservations plus the launch's vDSO pair (a bounded list of extra intervals, the pair's membership, and every tracked mapping apart from the whole ledger); the stdout reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1653,6 +1654,11 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* 08b1429: mirrors [Asanz3l]:71 and [AsanPlan]'s own [Section WithSegs] -- the CONFIG_RSEQ
+   flag as 0 or 1.  [node_x] reaches it through [node_pnscan]/[node_layout] and [e_atrandom],
+   so it is discharged between [nx0] and [x]; declared in the SAME relative position here so
+   the argument orders agree. *)
+Variable rz : Z.
 Variable HS : nat -> option acs.
 (* [comment removed for export] *)
 Variable XN : nat -> list expr -> acs -> option acs.
@@ -1675,7 +1681,25 @@ Definition res_cover_ok : Prop := img_lo A < img_hi A /\ forall z, img_lo A <= z
 Hypothesis RES_cover : res_cover_ok.
 (* [comment removed for export] *)
 Definition shadow_val_ok : Prop := shadow_off A = 0x7fff8000.
-Definition nx0_ok : Prop := (11 <= nx0)%nat.   (* [comment removed for export] *)
+(* The plan's variable count, spelled as a literal because this module is BELOW
+   [Asanz3l] and cannot [Require] it (the dependency runs Asanqlm -> Asanz3l).
+   OLD  (11 <= nx0)%nat
+   NEW  (13 <= nx0)%nat
+   Forced by [Asanz3l.V_G := 11] and [Asanz3l.V_GID := 12] with [Asanz3l.NX0]
+   moving 11 -> 13: [V_G] is free in [e_atrandom], [e_str0], [e_str1],
+   [e_argv1w] and [e_atr8], and in [init_kn]'s [KRange (EVar V_G) 0 1];
+   [V_GID] is AT_GID's and AT_EGID's value in [init_kn]'s [auxv_rest].  Below
+   13 the lemmas stated over this predicate -- every one quantified by
+   [env_agree nx0], i.e. [cs_ok_agree], [argH_agree], [SINV_agree],
+   [cs_ok_reenv], [entails_h_sound] -- are FALSE, because two environments may
+   agree below the bound and differ at [V_G] or [V_GID].  The old bound is not
+   stale, it is insufficient.
+   Discharged at every consumer with NO new premise: both proofs of it
+   ([Asann1d.nx0_ok_n] and [Bothmmq.nx0_ok_n]) are
+   [unfold APS.nx0_ok; unfold NX0 in Hnx0; lia] from [Hnx0 : (NX0 <= nx0)%nat],
+   and [NX0] is now 13, so the same tactic text proves the new bound.  Every
+   other site RECEIVES it as a hypothesis and so only gets stronger. *)
+Definition nx0_ok : Prop := (13 <= nx0)%nat.
 Hypothesis SHADOW_val' : shadow_val_ok.
 Hypothesis NX0_spb' : nx0_ok.
 
@@ -1699,7 +1723,9 @@ Variable FS0 : Fs.Fs.
 (* [comment removed for export] *)
 Variable KC : nat.
 
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
+(* 08b1429: [AP.check]'s section gained [rz] after [LIMIT], so it is discharged there.  Fixing
+   the notation fixes all 32 uses of CHECK in this file at once. *)
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT rz XN XE XB HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -1810,6 +1836,26 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* THE LAUNCH'S EXTRA RESERVED INTERVALS (LPS 727298f3).  [State.init_model] seeds
+   [vm_reserved] with the image's reservations AND the vvar pages and vDSO text
+   ([State.init_reserved]), which hang off the mmap base far above the image.
+   [co_res] used to read [vm_reserved ... = segments_reserved SEGS]; that is FALSE at
+   every launch of the revision, and it asserted that nothing above the hull is
+   reserved, which a grant node could then use to certify a range over the vDSO.  The
+   existential below keeps the image part exact and bounds the rest: its geometry
+   ([resx_entry_ok]: page-aligned, above the image and a page above [KHI], below
+   2^47), its count ([APC.NRESX]) and its size ([APC.RESX_BYTES]).  The shape is the
+   model's ([theories/Common/AsanPlanSound.v] at 727298f3, [co_res]) with the table
+   fields [n_resx]/[resx_bytes] as this unit's constants.  It is spelled INLINE in
+   [co_res] so the frame lemmas' [rewrite]s of [m_vmmaps] reach under it. *)
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
 
 Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) : Prop := CS_OK {
   (* [comment removed for export] *)
@@ -1821,7 +1867,23 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  co_res   : exists rx : list (word * word),
+               vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+               /\ Forall resx_entry_ok rx
+               /\ (length rx <= NRESX)%nat
+               /\ sum_sizes rx <= RESX_BYTES;
+  (* 08b1429: the vdso/vvar pair is in the reservation ledger ([State.init_reserved] puts it
+     there and no vm operation removes it).  Stated as membership rather than as a second
+     equation for [vm_reserved] so that the hull reasoning over [co_res] is untouched; it is
+     the ASan twin of [Zk.KNodes.VD], and it is what discharges [mprotect_spec]'s vdso gate. *)
+  co_vd    : forall e, In e (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) ->
+               In e (vm_reserved (m_vmmaps model));
+  (* 08b1429: the run's stdout channel has a reader.  [co_fds] is only [m_fds model = fds_std]
+     and drops [fd1chan]'s second conjunct ([Yb.CatSim.v:457-459]), so this is the only place
+     the fact can enter the ASan layer; it is what the writev chain's new premise needs.
+     True of every launch the statements quantify over, by the model's
+     [Run.valid_input_channel_reader]. *)
+  co_rdr   : m_channel_reader model = true;
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
   (* [comment removed for export] *)
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -1867,7 +1929,16 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   (* [comment removed for export] *)
   co_tophi : alloc_top (m_vmmaps model) <= TOPMAX;
   (* [comment removed for export] *)
-  co_napos : Forall (fun iv => 0 < bv_unsigned (snd iv)) (vm_noaccess (m_vmmaps model))
+  co_napos : Forall (fun iv => 0 < bv_unsigned (snd iv)) (vm_noaccess (m_vmmaps model));
+  (* LPS 727298f3: every tracked mapping is apart from the WHOLE reserved ledger, the
+     vDSO pair included.  A grant proves it of its own range (its [region_free] over
+     [vm_reserved ++ vm_maps]) and nothing widens a mapping, so it holds throughout.
+     The slice nodes need it: their range is inside a tracked entry, which may sit
+     above the extra reservations, so no numeric bound places it below them.  Appended
+     last so that every positional projection keeps its meaning.  Model field
+     [co_mres] at 727298f3. *)
+  co_mres  : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                    (vm_maps (m_vmmaps model))
 }.
 
 (* [comment removed for export] *)
@@ -1996,8 +2067,15 @@ Proof.
   pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
   assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
   assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+  (* 08b1429: [co_rdr] reads [m_proc], which [same_but_materialized] keeps.  As an equation in
+     the rewrite list rather than a bullet, so the existing bullet list does not shift.  The
+     [unfold] is what the previous attempt lacked: [replace (m_proc model')] never fires,
+     because the goal says [m_channel_reader model'] and [replace] does not unfold
+     (an earlier build's error at Yb/Asanqlm.v:2023 was exactly that). *)
+  assert (Erd : m_channel_reader model' = m_channel_reader model)
+    by (unfold m_channel_reader; f_equal; apply Hfr).
   destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-    rewrite ?Evm, ?Elz; try assumption.
+    rewrite ?Evm, ?Elz, ?Erd; try assumption.
   - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
   - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
   - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -3170,7 +3248,7 @@ Definition always (cs : acs) : bool := true.
 (* [comment removed for export] *)
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
 (* [comment removed for export] *)
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 (* [comment removed for export] *)
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 (* [comment removed for export] *)
@@ -4845,7 +4923,7 @@ Proof.
     destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
     destruct (shape_sub sb sa && shape_sub sa sb)%bool; [|discriminate].   (* [comment removed for export] *)
     injection Hc as <-. exact (IH _ ka _ sa H1).
-  - destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+  - destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -5907,7 +5985,7 @@ Proof.
       [exact HC | exact Hec | exact Hn | exact (CONT ka csa sa H1) | exact (CONT kb csb sb H2) |].
     intros tr. split; apply sd_shape_sub; assumption.
   - (* [comment removed for export] *)
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
   - (* [comment removed for export] *)
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].

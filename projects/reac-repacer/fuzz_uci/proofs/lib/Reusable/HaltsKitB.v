@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/HaltsKitB.v, with its module paths changed; the walk lemma and the halting corollary take srealizes (YK18.v) where cgif's take realizes, because fuzz_decode's realizes (YK15.v) has a cut at a budget refusal. *)
-(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/HaltsKitB.v at 88154566652a310ff96f54a5442e5c73fdaad090 for reac-repacer/fuzz_uci; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
+(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/HaltsKitB.v for reac-repacer/fuzz_uci; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (halts_budgets_of_srealizes takes a NoVdso image and lifts the walk with srun_init, as the run starts from init_config over run_segments (LPS 08b1429); the node premise's new sys_rob conjunct); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Classical.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YK11 YK15 YK18 YO0i YO0f YM02 YJ00 YQ05.
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable.R Require Import Cfg.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import RomStableK RomStableS.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -87,7 +89,7 @@ Theorem srealizes_must_exit_in : forall c T,
 Proof using segs.
   intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
     intros S Hnone Hx.
-  - destruct Hnode as [Hsound Hinv].
+  - destruct Hnode as [Hsound [Hinv _]].
     apply must_exit_in_at_cfg_running.
     + exact Hnone.
     + eexists _, _. exact (Hsound i0).
@@ -113,7 +115,9 @@ Lemma init_config_not_halted : forall segs pc ph sp brk mb rnd lim inp,
 Proof. intros. reflexivity. Qed.
 
 (* [comment removed for export] *)
-Theorem halts_budgets_of_srealizes : forall cfg S segs pc ph (Lbig Lsmall : Z),
+(* LPS 08b1429: the run starts from [init_config (run_segments ..) ..]; the walk is lifted by
+   [RomStableS.srun_init] for an image with no vDSO text ([NoVdso], by computation). *)
+Theorem halts_budgets_of_srealizes : forall cfg S segs pc ph (Lbig Lsmall : Z) `{NoVdso (mkImage segs pc ph)},
   (Lsmall <= Lbig)%Z ->
   cfg_le cfg ACFG ->
   (forall sp brk mb rnd inp,
@@ -121,10 +125,11 @@ Theorem halts_budgets_of_srealizes : forall cfg S segs pc ph (Lbig Lsmall : Z),
       exists T, srealizes segs (init_config segs pc ph sp brk mb rnd Lbig inp) T /\ shape_ok S T) ->
   halts_allowed_T_scfg_budgets cfg Lsmall S (mkImage segs pc ph).
 Proof.
-  intros cfg S segs pc ph Lbig Lsmall HLE Hle H [sp brk mb rnd] inp Hen Hinp SWB.
+  intros cfg S segs pc ph Lbig Lsmall Hv HLE Hle H [sp brk mb rnd] inp Hen Hinp SWB.
   apply (must_exit_in_scfg_relim_closed cfg S (mkImage segs pc ph) Lbig Lsmall (mkEntry sp brk mb rnd) inp HLE SWB).
   apply (must_exit_in_scfg_mono cfg ACFG); [exact Hle | apply run_decided_classic |].
   cbn [must_exit_in_scfg].
   destruct (H sp brk mb rnd inp Hen Hinp) as (T & HR & HS).
-  exact (srealizes_must_exit_in segs _ _ HR S (init_config_not_halted _ _ _ _ _ _ _ _ _) HS).
+  exact (srealizes_must_exit_in _ _ _ (srun_init segs inp sp mb pc ph brk rnd Lbig T Hv HR) S
+    (init_config_not_halted _ _ _ _ _ _ _ _ _) HS).
 Qed.

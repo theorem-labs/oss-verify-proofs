@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1213 of its 1267 lines of code are new or changed and 724 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/BTxString.v, with its module paths and module names changed; 108 of its 138 lines of code are new or changed and 1237 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S5b, image A': parse_value's shared epilogue BOUND to the join state vrd_epi_a (lib/A/VrdNum.v)
-   on a Theorem Labs lane's green value side at the kit's cut 7cdbb61b5fa0 (a working branch e942c5680fa7: VrdNum.v
+   on a Theorem Labs lane's green value side at the kit's cut (a working branch: VrdNum.v
    636d54d20156, VrdEpi.v 38bfc716a234). Lane PV-epilogue (worker a Theorem Labs lane, lane WalkAlive).
 
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).

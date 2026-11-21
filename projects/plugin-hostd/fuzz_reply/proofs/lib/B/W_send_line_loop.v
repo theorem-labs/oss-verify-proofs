@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: the loop segment of fuzz_reply's send_line walk on IMAGE B
    (fuzz_reply.asan-ubsan), in the form of the cgif donor's loop over concrete cut states
    (proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v tcbb_loopX).  Structure ported from image A's
-   lib/A/W_send_line_loop.v (a working branch 9367674296a / ccd62d4c6f6: sl_arm_eintr, sl_arm_dead, sl_arm_data,
-   pb_sl_loop_cut) and from the old image-B walk a working branch 37280b674f71 lib/B/Prog/send_line_loop.v
+   lib/A/W_send_line_loop.v (a working branch: sl_arm_eintr, sl_arm_dead, sl_arm_data,
+   pb_sl_loop_cut) and from the old image-B walk a working branch lib/B/Prog/send_line_loop.v
    and send_line_run.v (the rounds from the loop top 0x828f8). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The loop head L = 0x828f8 (A_sl_loop).  Every round first runs B's UBSan checks of the copy's source line + sent
    (0x828fc PTR_BLTU `bltu s2,s1`, closed by W_traps.v trap_ptr_bltu; 0x82908 NULL_XOR, which the runner folds to
    `beqz (xor s8, 0)` with s8 seated as atom 24 = 1, closed by trap_null_xor_folded), then the

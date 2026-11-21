@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (module paths qualified as K5.AS.StreamSim, MmapSim, CatSim, WallSim, DrainSim and ShapeAlg where a twin module shadows them). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -212,17 +213,17 @@ Qed.
 
 Lemma msteps_to_wr : forall segs LH bs ms ms',
   msteps segs ms ms' ->
-  StreamSim.to_wr segs LH bs ms' -> StreamSim.to_wr segs LH bs ms.
+  K5.AS.StreamSim.to_wr segs LH bs ms' -> K5.AS.StreamSim.to_wr segs LH bs ms.
 Proof.
   intros segs LH bs ms ms' H; induction H as [|ms ms1 ms2 Hp Hs Hms IH];
     [auto|].
-  intro Hw. eapply StreamSim.twr_step; eauto.
+  intro Hw. eapply K5.AS.StreamSim.twr_step; eauto.
 Qed.
 
 (* [comment removed for export] *)
 Lemma msteps_lh_next : forall segs LH ms ms',
   msteps segs ms ms' ->
-  StreamSim.lh_next segs LH ms' -> StreamSim.lh_next segs LH ms.
+  K5.AS.StreamSim.lh_next segs LH ms' -> K5.AS.StreamSim.lh_next segs LH ms.
 Proof.
   intros segs LH ms ms' H (m & Hm & HL). exists m. split; [|exact HL].
   eapply msteps_trans; eauto.
@@ -233,15 +234,15 @@ End WithFP9.
 Ltac sym_halted :=
   solve [ reflexivity
         | eassumption
-        | (rewrite ?MmapSim.mmap_model_halted, ?MmapSim.munmap_model_halted;
+        | (rewrite ?K5.AS.MmapSim.mmap_model_halted, ?K5.AS.MmapSim.munmap_model_halted;
            solve [ reflexivity | eassumption ])
         | (cbn [cfg_model m_halted]; autorewrite with model; solve [ reflexivity | eassumption ]) ].
 
 Ltac sym_no_lazy :=
   cbn [cfg_model];
   repeat first
-    [ rewrite MmapSim.mmap_model_lazy
-    | apply MmapSim.munmap_model_no_lazy ];
+    [ rewrite K5.AS.MmapSim.mmap_model_lazy
+    | apply K5.AS.MmapSim.munmap_model_no_lazy ];
   solve [ reflexivity | eassumption ].
 
 Section WithFP10.
@@ -250,19 +251,19 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 End WithFP10.
 Ltac chain_mst :=
-  first [ eapply CatSim.msteps_to_wexit
-        | eapply MmapSim.msteps_twm
-        | eapply MmapSim.msteps_twm_tail
-        | eapply MmapSim.msteps_tmw
-        | eapply StreamSim.msteps_to_rd
+  first [ eapply K5.AS.CatSim.msteps_to_wexit
+        | eapply K5.AS.MmapSim.msteps_twm
+        | eapply K5.AS.MmapSim.msteps_twm_tail
+        | eapply K5.AS.MmapSim.msteps_tmw
+        | eapply K5.AS.StreamSim.msteps_to_rd
         | eapply msteps_to_wr
-        | eapply WallSim.msteps_to_wall_tail
-        | eapply WallSim.msteps_to_wallexit
-        | eapply DrainSim.msteps_to_rd
-        | eapply DrainSim.msteps_to_out
+        | eapply K5.AS.WallSim.msteps_to_wall_tail
+        | eapply K5.AS.WallSim.msteps_to_wallexit
+        | eapply K5.AS.DrainSim.msteps_to_rd
+        | eapply K5.AS.DrainSim.msteps_to_out
         | eapply msteps_to_exit
         | eapply msteps_lh_next
-        | (eapply ShapeAlg.rz_msteps; [ sym_halted | sym_no_lazy | | ])
+        | (eapply K5.AS.ShapeAlg.rz_msteps; [ sym_halted | sym_no_lazy | | ])
         | eapply msteps_trans ].
 
 Section WithFP11.
@@ -273,8 +274,8 @@ Lemma chain_mst_realizes : forall segs ms ms' model T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   msteps segs ms ms' ->
-  ShapeAlg.realizes segs (mkCfg ms' model) T ->
-  ShapeAlg.realizes segs (mkCfg ms model) T.
+  K5.AS.ShapeAlg.realizes segs (mkCfg ms' model) T ->
+  K5.AS.ShapeAlg.realizes segs (mkCfg ms model) T.
 Proof.
   intros segs ms ms' model T Hh Hlazy Hms Hr.
   chain_mst; [exact Hms | exact Hr].
@@ -285,8 +286,8 @@ Lemma chain_mst_realizes_mmap : forall segs ms ms' model a n T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   msteps segs ms ms' ->
-  ShapeAlg.realizes segs (mkCfg ms' (MmapSim.mmap_model a n model)) T ->
-  ShapeAlg.realizes segs (mkCfg ms (MmapSim.mmap_model a n model)) T.
+  K5.AS.ShapeAlg.realizes segs (mkCfg ms' (K5.AS.MmapSim.mmap_model a n model)) T ->
+  K5.AS.ShapeAlg.realizes segs (mkCfg ms (K5.AS.MmapSim.mmap_model a n model)) T.
 Proof.
   intros segs ms ms' model a n T Hh Hlazy Hms Hr.
   chain_mst; [exact Hms | exact Hr].

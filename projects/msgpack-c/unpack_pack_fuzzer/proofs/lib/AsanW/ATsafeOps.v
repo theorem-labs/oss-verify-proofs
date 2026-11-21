@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the secondary-allocation failure premise of U_malloc_g, in both sections, reads mmap's placement check vm_place_available, with the kernel's THP setting and a null hint, in place of vm_gap_available). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs.
@@ -149,7 +150,7 @@ Theorem U_malloc_g : forall (NN : Prop) v RNG A st mo n,
   size_of_class K_BATCH_CLASS * (cntP K_BATCH_CLASS (live_chunks st) + 1) <= L24MAX ->
   (is_primary n = true -> class_id (needed_size n) <> K_BATCH_CLASS ->
      K_FREEARR_OFF < c_mapped_user (get_cls st (class_id (needed_size n))) + K_USER_MAP -> NN) ->
-  (is_primary n = false -> vm_gap_available (m_vmmaps mo) (sec_map_size n) = false -> NN) ->
+  (is_primary n = false -> vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (sec_map_size n) = false -> NN) ->
   TS RNG A (aembed ATOP (amalloc ATOP RESV st n)) mo (fun r RNG' A' mo' => malloc_leaf v n st mo RNG r RNG' A' mo' /\ (snd r = None -> NN)).
 Proof.
   intros NN v RNG A st mo n HACC Hn Hnv Hcv H24 HNN1 HNN2. unfold AREQMAX in Hn.
@@ -549,7 +550,7 @@ Theorem U_malloc_g : forall (NN : Prop) v RNG A st mo n,
   size_of_class K_BATCH_CLASS * (cntP K_BATCH_CLASS (live_chunks st) + 1) <= L24MAX ->
   (is_primary n = true -> class_id (needed_size n) <> K_BATCH_CLASS ->
      K_FREEARR_OFF < c_mapped_user (get_cls st (class_id (needed_size n))) + K_USER_MAP -> NN) ->
-  (is_primary n = false -> vm_gap_available (m_vmmaps mo) (sec_map_size n) = false -> NN) ->
+  (is_primary n = false -> vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (sec_map_size n) = false -> NN) ->
   TS RNG A (aembed ATOP (amalloc ATOP RESV st n)) mo (fun r RNG' A' mo' => malloc_leaf v n st mo RNG r RNG' A' mo' /\ (snd r = None -> NN)).
 Proof.
   intros NN v RNG A st mo n HACC Hn Hnv Hcv H24 HNN1 HNN2. unfold AREQMAX in Hn.

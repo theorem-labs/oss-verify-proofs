@@ -5,8 +5,8 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc from
    proofs/libreac/fuzz_knock/lib/A/APgCSpec.v (the Section form of its lines 32-164) and
    proofs/libreac/fuzz_knock/lib/A/ACfn.v (lines 27-71, the harness contract tfib_lib_pre_x / _post_x /
-   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here) at origin/ossv/recipes
-   6ebe35ba632, with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
+   _contract_x; its lines 72-73, tfib_lib_contract_x_all, are not carried here),
+   with their module paths changed (h-small-a3). rule 24 (reuse): no function is proved here;
    this file states the three ASan-level contracts only.
 
    THE QDISC CHANGES, and why each one is there.
@@ -44,6 +44,7 @@
 
    IMAGE-INDEPENDENT: this file Requires no image module. `segs`, the symbol record `B`, the meter `MT`,
    the sink `K`, the entry addresses and the harness constants are all Section variables or parameters. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -133,7 +134,7 @@ SRr segs W (cfg_at segs a regs memc mdc)
 End d.
 
 (* ============================== LLVMFuzzerTestOneInput ==============================
-   ACfn's text (knock's lib/A/ACfn.v:27-73 at 6ebe35ba632) over abstract segs, sink and constants.
+   ACfn's text (knock's lib/A/ACfn.v:27-73) over abstract segs, sink and constants.
    lib/A/QPgLib.v instantiates it at image A's; lib/AU's twin instantiates it at image B's. *)
 Section e. Context {LS : lib_shape}.
 Variable B : asyms.

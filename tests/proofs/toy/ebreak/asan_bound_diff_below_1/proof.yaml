@@ -1,0 +1,3 @@
+refutes: toy/ebreak/asan_bound_diff_below_1
+approach: the classifier, lps's ebreak image, does not accept lps's finite-input witness, and that input weighs 1, the whole mass, so the inputs it does not accept weigh more than b * M for every b < 1
+uses: [lps-checks]

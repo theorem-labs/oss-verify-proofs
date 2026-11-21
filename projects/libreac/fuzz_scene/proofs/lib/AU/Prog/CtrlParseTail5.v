@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_grant. *)
-(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseTail5.v (a working branch 7e98c198edd) for libreac/fuzz_scene's asan-ubsan walk; the module paths and the listing's names changed (MERGE-GATES 6o: YCbq from lib.AU), the sink head is passed by name at the cross-file uses (gate 6h), the journal hypothesis is collapsed after each run, and every pc is fuzz_scene.asan-ubsan's (sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f). The walk's eight steps and two leaves are the donor's. *)
+(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseTail5.v (a working branch) for libreac/fuzz_scene's asan-ubsan walk; the module paths and the listing's names changed (MERGE-GATES 6o: YCbq from lib.AU), the sink head is passed by name at the cross-file uses (gate 6h), the journal hypothesis is collapsed after each run, and every pc is fuzz_scene.asan-ubsan's (sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f). The walk's eight steps and two leaves are the donor's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x84028) of fuzz_scene's ASan+UBSan build, the walk from cut B (0x84224) to cut J (0x84448) for the
    frames of class 5 (pz_P5): frame type cd ea, a link other than 1 and 4: LINK2 (12) for link 2, UNKNOWN_CTRL (13)
    otherwise.

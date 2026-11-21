@@ -1,7 +1,7 @@
 (* Reply's Deallocate walk under the re-hide at image B, at the cf layer's round 3 part 3: an instance of CfF2a's record
    YGcfInstFreeSig.WalkSigDrh (lib/B) at the free top's instance, in the form image B's primed top
-   YGcfInstFreeTopRh.adealloc_realizes_raw_cf_em_m_rh_cf takes it (lib/B/YGcfInstFreeTopRh.v:251-256, B row (c)
-   02b40b5bc30b): the lib/B mirror of lib/A/ReplyWalkSigDrh.v (AFREE_CF premise #12), with image B's module names.
+   YGcfInstFreeTopRh.adealloc_realizes_raw_cf_em_m_rh_cf takes it (lib/B/YGcfInstFreeTopRh.v:251-256, B row (c)):
+   the lib/B mirror of lib/A/ReplyWalkSigDrh.v (AFREE_CF premise #12), with image B's module names.
    rule 24: no function proved (kind: instance of a record of walk tops from the unit's arm theorems).
 
    The instance: B := TfibB, U := U_cf TfibB, ft := free_cf, ARX := ARX_cf TfibB IOK Hp, AOX := aowned TfibB,

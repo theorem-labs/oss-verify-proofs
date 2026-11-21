@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sp_altop_ok's bound SPALT restated against the heap's stack window at the launch's floor, the same address). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem Fpu.
@@ -646,7 +647,13 @@ Definition univ_ok (UNIV : list (list Z)) (PC : Z) (r : int) : bool :=
 Definition SP_TOPw : w64 := wlit 140737488355328%uint63.
 Definition sp_top_ok (st : sstate) : bool := KnownT.KnownT.known_ltu_t (s_facts st) (getr st X2) (VL SP_TOPw).
 
-Definition SPALT : Z := 8384352.
+(* sp_altop_ok's bound: sp at most [SPALT] above the heap op's stack window start, so at most at sp0 - 160
+   (sp0 = VP 1), an absolute address.  The released window started at sp0 - 8384512 (ATOP + 4096), where this
+   was 8384352; at LPS 727298f3 the window starts at the launch's floor sp0 - 6144513 (ATOP + 2244095), so the
+   same address is 6144353 above it ([SPALT_same_address]; Bridge/Op.v's stk0_sp_bound reads this number). *)
+Definition SPALT : Z := 6144353.
+Lemma SPALT_same_address : (-6144513 + SPALT = -8384512 + 8384352)%Z.
+Proof. unfold SPALT. lia. Qed.
 Definition sp_altop_ok (st : sstate) (hargs : list sv) : bool :=
   match heap_nwin hargs, hargs, getr st X2 with
   | Some n, _ :: _ :: _ :: rest, VP k off =>
@@ -2127,7 +2134,13 @@ Definition univ_ok (UNIV : list (list Z)) (PC : Z) (r : int) : bool :=
 Definition SP_TOPw : w64 := wlit 140737488355328%uint63.
 Definition sp_top_ok (st : sstate) : bool := KnownT.KnownT.known_ltu_t (s_facts st) (getr st X2) (VL SP_TOPw).
 
-Definition SPALT : Z := 8384352.
+(* sp_altop_ok's bound: sp at most [SPALT] above the heap op's stack window start, so at most at sp0 - 160
+   (sp0 = VP 1), an absolute address.  The released window started at sp0 - 8384512 (ATOP + 4096), where this
+   was 8384352; at LPS 727298f3 the window starts at the launch's floor sp0 - 6144513 (ATOP + 2244095), so the
+   same address is 6144353 above it ([SPALT_same_address]; Bridge/Op.v's stk0_sp_bound reads this number). *)
+Definition SPALT : Z := 6144353.
+Lemma SPALT_same_address : (-6144513 + SPALT = -8384512 + 8384352)%Z.
+Proof. unfold SPALT. lia. Qed.
 Definition sp_altop_ok (st : sstate) (hargs : list sv) : bool :=
   match heap_nwin hargs, hargs, getr st X2 with
   | Some n, _ :: _ :: _ :: rest, VP k off =>

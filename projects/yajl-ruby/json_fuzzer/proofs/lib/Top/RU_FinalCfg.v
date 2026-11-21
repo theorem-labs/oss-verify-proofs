@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launchT argument of rz_main_drv). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
@@ -56,13 +57,13 @@ Module RSide.
   End WithRC.
 
   Definition RSPEC := R_realizes_spec_cfg DRV DRV_spec
-     (fun RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
-        @rz_main_drv RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_R (yfuzz_rz_R FS0) MO).
+     (fun RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
+        @rz_main_drv RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_R (yfuzz_rz_R FS0) MO).
 
   (* [comment removed for export] *)
   Definition RSPEC_lim := R_realizes_spec_cfg_lim DRV DRV_spec
-     (fun RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
-        @rz_main_drv RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_R (yfuzz_rz_R FS0) MO).
+     (fun RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
+        @rz_main_drv RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_R (yfuzz_rz_R FS0) MO).
 End RSide.
 
 (* [comment removed for export] *)
@@ -99,13 +100,13 @@ Module USide.
   Proof. intros RC__ G s LB m mo A B C. exact (conj A (conj B C)). Qed.
 
   Definition USPEC := U_realizes_spec_cfg (@RHKG) RHKG_intro DRV DRV_spec
-     (fun RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
-        @rz_main_drv RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_U (yfuzz_rz_U FS0) MO).
+     (fun RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
+        @rz_main_drv RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_U (yfuzz_rz_U FS0) MO).
 
   (* [comment removed for export] *)
   Definition USPEC_lim := U_realizes_spec_cfg_lim (@RHKG) RHKG_intro DRV DRV_spec
-     (fun RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
-        @rz_main_drv RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_U (yfuzz_rz_U FS0) MO).
+     (fun RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
+        @rz_main_drv RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_U (yfuzz_rz_U FS0) MO).
 End USide.
 
 (* [comment removed for export] *)

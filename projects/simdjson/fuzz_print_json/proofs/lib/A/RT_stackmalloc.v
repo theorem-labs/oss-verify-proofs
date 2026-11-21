@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_stackmalloc.v, lines 540, 581. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -544,7 +545,7 @@ Proof.
   cbn [cells_size csize] in X. replace (a + sz - 8) with (a + Z.of_nat (n1 + (8 + (n2 + 0)))) by lia. exact X.
 Qed.
 
-Lemma sm_pre : forall Σ m k lo, ART_A Σ m -> (k = 5 \/ k = 3 \/ k = 4 \/ k = 1)%nat -> rtA_sp0 Σ - STACK_WIN <= lo ->
+Lemma sm_pre : forall Σ m k lo, ART_A Σ m -> (k = 5 \/ k = 3 \/ k = 4 \/ k = 1)%nat -> rtA_sp0 Σ - STACK_SPAN <= lo ->
   fs_const (l_FSB (lay Σ)) m /\ fs_hint (l_FSB (lay Σ)) (Z.of_nat k) m (fss_hint (fs_of Σ k))
   /\ fs_flags (l_FSB (lay Σ)) (Z.of_nat k) m (fss_flags (fs_of Σ k)) /\ flags_ok (Z.of_nat k) (fss_flags (fs_of Σ k))
   /\ Z.of_nat (nbusy (fss_flags (fs_of Σ k))) <= fs_cap (Z.of_nat k) /\ 0 <= fss_hint (fs_of Σ k) < 2 ^ 61
@@ -585,7 +586,7 @@ Lemma sm_finish : forall (Σ : rtsA) PMc (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8
   ART_A Σ m -> (k = 5 \/ k = 3 \/ k = 4 \/ k = 1)%nat -> 0 <= j < NF (Z.of_nat k) ->
   nth (Z.to_nat ((fss_hint (fs_of Σ k) + j) mod NF (Z.of_nat k))) (fss_flags (fs_of Σ k)) 1 = 0 ->
   1 <= credit Σ -> fs_room k (frames Σ) ->
-  rtA_sp0 Σ - STACK_WIN <= lo -> lo + RT_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP ->
+  rtA_sp0 Σ - STACK_SPAN <= lo -> lo + RT_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP ->
   AST SEGTOP_A (rtA_allow Σ) Pm (fun mo => ARTM RTA Σ mo /\ PMc mo) c1 ->
   (forall ms, Pm ms -> exists m',
      ret_stF fc ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11

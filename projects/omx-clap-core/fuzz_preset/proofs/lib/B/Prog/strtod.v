@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: asan-ubsan twin of lib/U/Prog/strtod.v for the #102 fuzz_preset images (facts 8f3e7e1a07f1; asan-ubsan pin sha256 d663f82d7f488d30), through lib/CJ/RL/I/IImgB.v and InstB.v. *)
+(* Modified by Theorem Labs, 2026-10: asan-ubsan twin of lib/U/Prog/strtod.v for the #102 fuzz_preset images (facts; asan-ubsan pin sha256 d663f82d7f488d30), through lib/CJ/RL/I/IImgB.v and InstB.v. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.

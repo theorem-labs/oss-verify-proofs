@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v (419c9d7c02f), lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v (8da615a239d) and lib/B/ReplyRINVB.v (f908a004fd1), restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
+(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v, lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v and lib/B/ReplyRINVB.v, restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyRINVB_exit.v; 242 of its 309 lines of code are new or changed and 871 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ReplyBTop's Section hypotheses DRAIN_R and CNL_dr_R (plugin-hostd fuzz_reply, image B = ASan-UBSan), each a lemma
    whose statement is the hypothesis' type for every rc and fx, at ReplyBTop's instance: MT := ReplyKfMeterB.MT_sec
    nsec_cf cf_kmax, RP := CfRBridgeRulesB.RP_cf, ARx := B top_x's ARX, R := YA0nH.wle' tfibsegs RZ_cf.  Route R only:

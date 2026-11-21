@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap may answer -ENOMEM, so segGD_f_lo and segGD_f_hi also prove at the munmap ecall, through YF2q.die_at_ecall, given the environment agreement and memory frame they hold there, that each refused answer ends in a silent spin; open_FH passes over free_hyps' new fh_gate field). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -117,7 +118,8 @@ Local Notation SHD_frame := (YF2q.SHD_frame W ly regs0 mem0 map len idx n q qi q
 Local Notation SREGS := YF2q.SREGS.
 Local Notation at_RET := (YF2q.at_RET W ly regs0 mem0 map len idx n qi lst vra vs0 vs1 vs2 own).
 Local Notation at_MUN := (YF2q.at_MUN W ly regs0 mem0 md0 map len idx n qi lst vra vs0 vs1 vs2 own).
-Ltac open_FH := pose proof FH as FH_; destruct FH_ as [LY IMG Htp Hra Hregs Hsp Hsp_al Hpres Hsaved Hmap Hdisj Hmaph Harr Hq Hqi Hql Hlst Hown Hlsth Hns Hjunk Hmut Htsd Hjst Hsh_pres SEED].
+Local Notation die_at_ecall := (YF2q.die_at_ecall W ly regs0 mem0 md0 map len idx n q qi ql lst j1 j2 j3 j4 j5 j6 vra vs0 vs1 vs2 own small FH).
+Ltac open_FH := pose proof FH as FH_; destruct FH_ as [LY IMG Htp Hra Hregs Hsp Hsp_al Hpres Hsaved Hmap Hdisj Hmaph Harr Hq Hqi Hql Hlst Hown Hlsth Hns Hjunk Hmut Htsd Hjst Hsh_pres _ SEED].
 Ltac off_by tac :=
 first [ img_apply off_img_high; tac | unfold off_img; unfold TFX_IMG_LO; unfold zone3, TFX_IMG_LO, kLowShadowBeg, TFX_IMG_END; tac ].
 Ltac meq_acc KW :=
@@ -448,6 +450,9 @@ assert (BV6 : forall (k : nat) v, (k < 56)%nat -> ew E0 k = w64 v -> ew E6 k = w
 split. { idtac "A0". rrege HS (10%bv : bv 5) Q10. rewrite Q10. cbn [sv_denot]. rewrite (BV6 34%nat map ltac:(img_try (zlia)) EqMAP). unfold w64. rewrite ?Zbv_add_unsigned, ?Z.add_0_r, ?Z_to_bv_bv_unsigned. img_refl. }
 split. { idtac "A1". rrege HS (11%bv : bv 5) Q11. rewrite Q11. cbn [sv_denot]. rewrite (BV6 35%nat len ltac:(img_try (zlia)) EqLEN). unfold w64. rewrite ?Zbv_add_unsigned, ?Z.add_0_r, ?Z_to_bv_bv_unsigned. img_refl. }
 cbv zeta.
+(* the munmap refusal child spins: YF2q.die_at_ecall, discharged from the ecall state HS *)
+split; [| img_try (img_apply (die_at_ecall E6 _ msE _ HE6' MQ HS);
+img_try ((try img_inst; img_case; vm_compute); img_refl)) ].
 assert (PV2 : bv_unsigned (ew E6 2) = sp0) by (img_try (rewrite (HE6 2%nat ltac:(zlia)), E2; img_refl)).
 assert (PV32 : bv_unsigned (ew E6 32) = T) by (img_try (rewrite (HE6 32%nat ltac:(zlia)); img_exact R32)).
 assert (PV33 : bv_unsigned (ew E6 33) = ly_C ly) by (img_try (rewrite (HE6 33%nat ltac:(zlia)); img_exact R33)).
@@ -749,6 +754,9 @@ assert (BV6 : forall (k : nat) v, (k < 56)%nat -> ew E0 k = w64 v -> ew E6 k = w
 split. { idtac "A0". rrege HS (10%bv : bv 5) Q10. rewrite Q10. cbn [sv_denot]. rewrite (BV6 34%nat map ltac:(img_try (zlia)) EqMAP). unfold w64. rewrite ?Zbv_add_unsigned, ?Z.add_0_r, ?Z_to_bv_bv_unsigned. img_refl. }
 split. { idtac "A1". rrege HS (11%bv : bv 5) Q11. rewrite Q11. cbn [sv_denot]. rewrite (BV6 35%nat len ltac:(img_try (zlia)) EqLEN). unfold w64. rewrite ?Zbv_add_unsigned, ?Z.add_0_r, ?Z_to_bv_bv_unsigned. img_refl. }
 cbv zeta.
+(* the munmap refusal child spins: YF2q.die_at_ecall, discharged from the ecall state HS *)
+split; [| img_try (img_apply (die_at_ecall E6 _ msE _ HE6' MQ HS);
+img_try ((try img_inst; img_case; vm_compute); img_refl)) ].
 assert (PV2 : bv_unsigned (ew E6 2) = sp0) by (img_try (rewrite (HE6 2%nat ltac:(zlia)), E2; img_refl)).
 assert (PV32 : bv_unsigned (ew E6 32) = T) by (img_try (rewrite (HE6 32%nat ltac:(zlia)); img_exact R32)).
 assert (PV33 : bv_unsigned (ew E6 33) = ly_C ly) by (img_try (rewrite (HE6 33%nat ltac:(zlia)); img_exact R33)).

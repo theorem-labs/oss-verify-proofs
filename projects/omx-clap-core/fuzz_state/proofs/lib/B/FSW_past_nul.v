@@ -8,8 +8,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v; 148 of its 216 lines of code are new or changed and 2618 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_frame3.v, with its module paths and module names changed; 1118 of its 1151 lines of code are new or changed and 183 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* past_nul B 0x82894 (fuzz_state.c) over fs.asan-ubsan: the ASan walk proving lib/B/FSH_Fn_cno.v's past_nul_spec
-   (CTX-free, S0 f32db4da382) at fs.asan-ubsan's image (lib/B tfibsegs), build B's sink head FSH_Base.fsB_sink_head
+   (CTX-free, S0) at fs.asan-ubsan's image (lib/B tfibsegs), build B's sink head FSH_Base.fsB_sink_head
    passed explicitly.
    MEASURED (capstone over the pinned fs.asan-ubsan, sha256 5ac5ce0954f8..., 0x82894 .. 0x829f0): 87 instructions,
    348 bytes, no compressed instruction; real 64-byte frame (ra, s0 .. s6 saved at sp + 56 .. 0), plain T entry
@@ -49,8 +50,8 @@
      obligation is left (sh_obls = []).
    Callee contracts taken as Section hypotheses: the FsRt fields fr_malloc, fr_memcpy, fr_memset (lib/B/FSH_Rt.v), the
    image facts fs_img_facts, api_env, model_laws and the two shadow-base cells of B. No CTX, no trace row.
-   Control flow templates (text only, no byte offset copied): lib/A/FSW_past_nul.v (a working branch
-   c535009186d) and the bespoke a working branch e3747952ca00 lib/B/Prog/past_nul.v. *)
+   Control flow templates (text only, no byte offset copied): lib/A/FSW_past_nul.v (a working branch)
+   and the bespoke a working branch lib/B/Prog/past_nul.v. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

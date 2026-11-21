@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (a loop by fuel induction,
-   tcbb_loopX) and lib/A/AChd.v at c8557374ad2e: the walk of syntax_reply_matches on fuzz_command.asan, the item loop
+   tcbb_loopX) and lib/A/AChd.v: the walk of syntax_reply_matches on fuzz_command.asan, the item loop
    (the plain main_loop and skip_loop, lib/Prog/syntax_reply_matches.v): L0 (0x885e8, the next item) and L1 (0x885f4,
    check C1 and the spaces before an item). *)
-(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s7.v (a working branch
-   db7d4effe38) for fuzz_command.asan-ubsan: L0 0x8890c, L1 0x88918 (s3 is both the checked and the loaded byte; the
+(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s7.v (a working branch)
+   for fuzz_command.asan-ubsan: L0 0x8890c, L1 0x88918 (s3 is both the checked and the loaded byte; the
    UBSan check of `p++` at 0x88930, s3 = -1, is decided by s3 <= CEIL_HI), a6 = 91 carried with a5. *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 713692f1e0c (statement pass 4b): ABCMP and ASTRCSPN hold at
+(* Modified by Theorem Labs, 2026-10: onto a working branch (statement pass 4b): ABCMP and ASTRCSPN hold at
    every FP state, as the statement has them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,4 +1,4 @@
-(* Image B's twin of lib/A/AD1w_cf.v (a working branch 46f1762ad5a): the interface between fuzz_reply's
+(* Image B's twin of lib/A/AD1w_cf.v (a working branch): the interface between fuzz_reply's
    program contract and the cf driver, for fuzz_reply.asan-ubsan.  The text is A's with image B's modules and names:
    lib/B's W8 files (W_LLVMFuzzerTestOneInput_cut / _G, YCfn, YCfn_cf), YE01 / YE2k from lib/B as the B cut takes them,
    YCfn_cf's _b names (fr_live_pre_b, fr_live_post_b, fr_FP_b, fr_surv_b), TFIB_ERRNO_B, ReplyGuardB.  No image-A
@@ -61,7 +61,7 @@ Variable LIBROOM : astate -> Prop.
 (* NP: the cf allocator's NON-primary room between calls (preset: iface_room_np, PresetCfnA.v section 3b); in the pre
    at each call AND back in the post, so W8's contract owes it at the return.  Without it in the post the driver
    cannot free what it allocated: after the last call it frees q and the buffer (lib/B/YD1r.v, as A's AD1r.v:845 / :860), afree_realizes_cf
-   needs acall_pre_cf, and acall_pre_cf's ROOM_cf (YGcfRoomPre.v:37) follows from no ARcf fact (CfDriver's finding,
+   needs acall_pre_cf, and acall_pre_cf's ROOM_cf (YGcfRoomPre.v:38) follows from no ARcf fact (CfDriver's finding,
    approved by a Theorem Labs lane 2026-10-29).  Instantiated by the cf driver lane; its laws below are the driver's named
    hypotheses, preset's texts verbatim at our types.  The step law serves only the driver's own allocator calls
    BEFORE the first call (at most 2 live blocks there); after the last call the tail law gives ROOM_cf_k S 2 once and
@@ -108,7 +108,7 @@ Definition fr_lib_inv_stable : Prop :=
    (fpgen's lib_inv_init, whose premise is the statics holding their image values); errno is YF0m's (ts_errno:
    as_errno B = TFIB_ERRNO_B), whose four bytes are image bytes, readable and writable in every memory.  No presence:
    start-up never stores to a global, so its bytes read through seg_rom and are absent, and fr_gi asks writability
-   (W8's ruling G4, a working branch ec4dd616ed1 W_LLVMFuzzerTestOneInput_cut.v:148) *)
+   (W8's ruling G4, a working branch W_LLVMFuzzerTestOneInput_cut.v:149) *)
 Definition fr_lib_inv_init : Prop :=
   as_errno B = TFIB_ERRNO_B ->
   forall (ly : alayout) (S : astate) (W : world segs) mem (init : Z -> Z),
@@ -166,7 +166,7 @@ Definition fr_lib_post_drv (regs : bvmap 5 word) (ly : alayout) (S : astate) (Hp
   ameta_inv segs tfib_K ly' (rd W' mem') M /\
   mo_le MT S S' (XN_LIB n) /\
   (forall i, 0 <= i < n -> aview segs (w_H W') mem' (p + i) = aview segs (w_H W) mem (p + i)) /\
-  (* HFP at the return (W8's B cut text, lib/B/W_LLVMFuzzerTestOneInput_cut.v:296 at e879350a388: the harness
+  (* HFP at the return (W8's B cut text, lib/B/W_LLVMFuzzerTestOneInput_cut.v:296: the harness
      blocks only): what the driver's fr_heap steps by (YD1r_heap_cf.v H_step) *)
   (List.NoDup (fr_hblks_b W' mem') /\ incl (fr_hblks_b W' mem') (ablocks B ly' S')) /\
   (* XCNT at the return, at the call's (p, n): fr_heap's at the next call (YD1r_heap_cf.v H_step) *)
@@ -226,7 +226,7 @@ Definition fr_lib_contract_drvR : Prop :=
 End dR.
 Lemma fr_lib_post_drv_wle : fr_lib_post_drv = fr_lib_post_drvR (@wle segs). Proof. reflexivity. Qed.
 Lemma fr_lib_contract_drv_wle : fr_lib_contract_drv = fr_lib_contract_drvR (@wle segs). Proof. reflexivity. Qed.
-(* fr_hblks_b (YCfn_cf.v) is the B cut's fr_hblks (W_LLVMFuzzerTestOneInput_cut.v:254, 'THE ONE DEFINITION on
+(* fr_hblks_b (YCfn_cf.v) is the B cut's fr_hblks (W_LLVMFuzzerTestOneInput_cut.v:255, 'THE ONE DEFINITION on
    image B'), by conversion: the driver's HB clauses and W8's are the same proposition. *)
 Lemma fr_hblks_b_cut : forall (W : world segs) mem, fr_hblks_b W mem = W_LLVMFuzzerTestOneInput_cut.fr_hblks W mem.
 Proof. reflexivity. Qed.

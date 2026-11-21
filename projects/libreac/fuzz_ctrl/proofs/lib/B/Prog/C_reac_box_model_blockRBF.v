@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_classify_box_frameLib.v, with its module paths, module names and numbers changed; 489 of its 578 lines of code are new or changed and 900 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRBF.v is the re-based copy of lib/B/Prog/reac_box_model_blockF.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRBF.v is the re-based copy of lib/B/Prog/reac_box_model_blockF.v
    (source sha256 9005bce4fa5226be1a77135817e6c161b4b71e97f3e01ad1a1c70e82895d3ebe) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: mb_retF, mb_callF, entryF. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 (* The footprint twin of C_reac_box_model_blockRB.v (image B, asan-ubsan; RECIPE.md step 1, route 2 (a working note, not in this delivery)): the
    same runs as ExecF.evtF under a footprint RNG, by the scripts of the plain files over StepF's step, except that KBF's post Q also takes fr, j and n, and its return address is a bound ra0 where KB has 0x86648.  This file is
    the twin of lib/B/Prog/C_reac_box_model_blockRB.v and the prelude the other F files of this function share: the
@@ -15,9 +16,9 @@
    mentions `evt`.
 
    Callee footprint forms: __asan_memcpy and __asan_memset from their owner's files asan_memcpy_cF.v /
-   asan_memset_cF.v (a working branch 71a8e88cc7e, merged into this branch); name_field from
-   name_field_c.v (a working branch 40a1a45d985, merged); dt1_head from dt1_head_c.v and
-   build_dt1_single from build_dt1_single_c.v (a working branch 6939dc6611d, taken by
+   asan_memset_cF.v (a working branch, merged into this branch); name_field from
+   name_field_c.v (a working branch, merged); dt1_head from dt1_head_c.v and
+   build_dt1_single from build_dt1_single_c.v (a working branch, taken by
    path with its build_dt1_singleF.v; build_dt1_single_c.v's form is still a working branch text, one more
    change pending from its owner); __asan_stack_malloc's is kept once below, marked.  __asan_memcpy's and
    __asan_memset's forms carry RngBytes.rng_bytes, so reac_box_model_block_contract_F does. *)
@@ -31,8 +32,8 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require Import Img0 AsanRT.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import RcAsanRT RcAsanFP RcAsanFPLib
   asan_stack_malloc_c asan_memset_c asan_memcpy_c build_dt1_single_c dt1_head_c name_field_c reac_box_model_block_c
   C_reac_box_model_blockRB.
-(* The owners' footprint forms of __asan_memcpy / __asan_memset (a Theorem Labs lane 9869f1d1f86, with IMG_LO / IMG_HI of
-   its ImgBounds.v); name_field's (a Theorem Labs lane dbe8f2b8dec) is in name_field_c above. *)
+(* The owners' footprint forms of __asan_memcpy / __asan_memset (a Theorem Labs lane, with IMG_LO / IMG_HI of
+   its ImgBounds.v); name_field's (a Theorem Labs lane) is in name_field_c above. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Export asan_memcpy_cF asan_memset_cF.
 (* Last: StepF's step / if_false / mem_after_store (evtF goals) shadow Step's (evt goals). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
@@ -42,7 +43,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import reac_box_model
 Import ListNotations.
 Open Scope Z_scope.
 
-(* Local copy of C_reac_box_model_blockRB.v:228's store hook: that file made it Local (a Theorem Labs lane; generator owner a Theorem Labs lane stopped, a Theorem Labs lane audits). *)
+(* Local copy of C_reac_box_model_blockRB.v:229's store hook: that file made it Local (a Theorem Labs lane; generator owner a Theorem Labs lane stopped, a Theorem Labs lane audits). *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -84,7 +85,7 @@ Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.mem_after_store_opt 
 (* ------------------------------------------------------------------------------------------------------------ *)
 (* route (C), narrowed copy: the local copy of __asan_stack_malloc's footprint contract (the accepted text's
    fs_shadow_area, asan_stack_malloc_contract_F and asan_stack_malloc_0_contract_F) is deleted.  The run cites its
-   owner's leaves, Require-Exported by C_reac_box_model_blockRB.v (a working branch 6a82e56a6ee):
+   owner's leaves, Require-Exported by C_reac_box_model_blockRB.v (a working branch):
    asan_stack_malloc_cF.v (the same text) and asan_stack_malloc_cF_on.v (the _on form that HSM names). *)
 
 (* ------------------------------------------------------------------------------------------------------------ *)
@@ -209,7 +210,7 @@ Proof.
 Qed.
 
 (* The 8-aligned shadow word cover in the form __asan_memcpy's (mbF_shw) and __asan_memset's (mbF_shws) footprint
-   forms name (sh_word_rng of rng_asan.v, its one home since a Theorem Labs lane 78b8d116a58, with its N = 0 guard), for a range
+   forms name (sh_word_rng of rng_asan.v, its one home since a Theorem Labs lane, with its N = 0 guard), for a range
    inside a region with a shkov. *)
 Lemma mbF_shw : forall RG p n q k, shkov RG p n -> 0 <= k -> p <= q -> q + k <= p + n ->
   rng_asan.sh_word_rng RG q k.
@@ -701,7 +702,7 @@ Section MainF.
 
   (* ADDED by gen_rb_modelblock.py (item 7): the re-based stretch's entry at the class-0 return 0x86648, at THIS
      Section's memory, the frame being the side-stack frame fs_frame FS 0 jj.  The steps are mb_retF's side arm,
-     reac_box_model_blockF.v:746-748, verbatim; BI is a premise (mb_retF built it from the original malloc's post,
+     reac_box_model_blockF.v:747-749, verbatim; BI is a premise (mb_retF built it from the original malloc's post,
      whose munch writes the hint). *)
   Lemma mb_sideF : forall Q (jj : Z) (ra0 x1 x2 x3 x4 x5 x6 x7 u0 u1 u2 u3 u4 u5 u6 : word),
     KBF Q -> 0 <= jj < fs_M 0 ->
@@ -726,7 +727,7 @@ Section MainF.
     rewrite EM0 in Hjj.
     assert (EFRj : fs_frame FS 0 jj = FS + 36864 + jj * 64) by (unfold fs_frame, fs_B; cbn [Z.of_nat]; lia).
     remember (fs_frame FS 0 jj) as fr eqn:Efr.
-    (* reac_box_model_blockF.v:746-748 *)
+    (* reac_box_model_blockF.v:747-749 *)
     step. step. step. step.
     rewrite (rc_neq0_64 fr) by lia. cbn [negb]. cbv iota.
     eapply (fwordsF fr fr A jj 1 (Z_to_bv 64 (fs_flag FS 0 jj))); [right; repeat split; lia | exact HB | exact K].

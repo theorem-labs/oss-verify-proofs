@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/PaJournal.v (commit 8c3eb0365c8c; itself from proofs/libreac/fuzz_decode/lib/A/Prog/PaJournal.v, from proofs/cgif/cgif_file_fuzzer/lib/YC80.v through proofs/libreac/fuzz_grant/lib/A/Prog/PaJournal.v) for reac-repacer/fuzz_uci's image B: its one per-image import, YCbq, is the B core's own copy lib/B/YCbq.v (the B core states its journal there; fuzz_decode's release Requires lib.A.Prog PaJournal from image B, but this unit's lib/A/Prog/PaJournal.v imports lib/Reusable/YCbq.v, image A's copy, so image B needs this twin); the image-generic Pa files it reads (PaTable, PaSym, PaRun, PaShadow) stay lib/A/Prog's; nothing else changed. *)
+(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/PaJournal.v (itself from proofs/libreac/fuzz_decode/lib/A/Prog/PaJournal.v, from proofs/cgif/cgif_file_fuzzer/lib/YC80.v through proofs/libreac/fuzz_grant/lib/A/Prog/PaJournal.v) for reac-repacer/fuzz_uci's image B: its one per-image import, YCbq, is the B core's own copy lib/B/YCbq.v (the B core states its journal there; fuzz_decode's release Requires lib.A.Prog PaJournal from image B, but this unit's lib/A/Prog/PaJournal.v imports lib/Reusable/YCbq.v, image A's copy, so image B needs this twin); the image-generic Pa files it reads (PaTable, PaSym, PaRun, PaShadow) stay lib/A/Prog's; nothing else changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

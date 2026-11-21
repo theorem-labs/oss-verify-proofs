@@ -1,10 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the SIGPIPE disposition as a launch variable; the new launch (process input, auxv, group id, exec file name); the reserved-range ledger; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0HandoffK.v, lines 18-19, 42-56, 73, 94. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Instr.
@@ -17,12 +15,10 @@ Import ListNotations.
 Import AxSymExec3K.AX2K AxSymExec3SoundK.AX2SK AsanPlanK.APK AsanPlanSoundK.APSK.
 Open Scope Z_scope.
 
-(* [comment removed for export] *)
-Definition M_KSPACE : amap := {| am_base := EMd M_MUL (ELit 4096) (EVar 224); am_len := ELit 0x2000011000; am_kind := KRW |}.
-Definition M_PTRARR : amap := {| am_base := EMd M_MUL (ELit 4096) (EVar 250); am_len := ELit 0x800000; am_kind := KNONELAZY |}.
+Definition M_KSPACE : amap := {| am_base := EMd M_MUL (ELit 4096) (EVar 228); am_len := ELit 0x2000011000; am_kind := KRW |}.
+Definition M_PTRARR : amap := {| am_base := EMd M_MUL (ELit 4096) (EVar 254); am_len := ELit 0x800000; am_kind := KNONELAZY |}.
 Definition RESm0 : list amap := [M_KSPACE; M_PTRARR].
 
-(* [comment removed for export] *)
 Definition as0_chk (cs : acs) : bool :=
   (no_fog (a_maps cs) && hops_in_maps (a_maps cs) (a_hna cs) && hops_in_maps (a_maps cs) (a_hlz cs)
    && forallb (vis_sh_wr ASAN0 (kn cs)) (a_vis cs) && forallb (vis_off_band (kn cs)) (a_vis cs ++ a_ghost cs)
@@ -42,12 +38,28 @@ Section As0Handoff.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
   Variable fs : Fs.Fs.
+  (* [AsanInitK]'s [Section Init] is parameterised by the full
+     [State.mkProcInput_full] field list, so [SINV0]/[argH0] discharge all
+     fifteen of [AsanInitK.inp]'s arguments plus [mbase] and [apc].  Same block
+     as the already-migrated [HandoffBridgeK.v:619-629]. *)
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable abrt : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sdf : bool.
+  Variable apc : N.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
   #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
-  Let AH := argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva.
+  Let AH := argH0_high sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva.
 
   Variables BUDGET LENMAX KMAX : Z.
   Hypothesis BUD : 0 <= BUDGET /\ 0 <= KMAX /\ 0 <= LENMAX < 2 ^ 62.
@@ -58,7 +70,7 @@ Section As0Handoff.
   Hypothesis CHK : as0_chk cs = true.
   Hypothesis BUD_le : a_eager cs + a_abytes cs + A_bytes EXTRA + BUDGET <= AsanInitK.LIMIT.
   Hypothesis GAP : AsanCeil.bottomup_floor + LENMAX + (a_totsz cs + BUDGET)
-                   + (Z.of_nat (length (segments_reserved ASEGS0) + length (a_maps cs)) + KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
+                   + (Z.of_nat (length (segments_reserved ASEGS0) + n_resx ASAN0 + length (a_maps cs)) + KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
 
   Lemma as0_chk_parts :
     no_fog (a_maps cs) = true /\ hops_in_maps (a_maps cs) (a_hna cs) = true /\ hops_in_maps (a_maps cs) (a_hlz cs) = true
@@ -79,7 +91,7 @@ Qed.
   Definition as0_A0 (E : env) : list (Z * Z) := A0_of ASAN0 cs EXTRA E.
 
   Theorem as0_bridge_static : forall E R FULL model, CSOK E cs R FULL model ->
-    bridge_static ASEGS0 (vm_maps (m_vmmaps model)) (segments_reserved ASEGS0) (vm_noaccess (m_vmmaps model)) (as0_RES E)
+    bridge_static ASEGS0 (vm_maps (m_vmmaps model)) (vm_reserved (m_vmmaps model)) (vm_noaccess (m_vmmaps model)) (as0_RES E)
                   (uE E e_sp0 - 8388608) BUDGET LENMAX KMAX.
 Proof.
 intros E R FULL model HC. destruct as0_chk_parts as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 & C9 & C10).
@@ -88,7 +100,7 @@ cs C1 C6 C7 C8 RESm0 C9 C10 BUDGET LENMAX KMAX BUD GAP E R FULL model HC).
 Qed.
 
   Theorem as0_binv_main : forall E R FULL model, CSOK E cs R FULL model ->
-    BInv ASEGS0 (vm_maps (m_vmmaps model)) (segments_reserved ASEGS0) (vm_noaccess (m_vmmaps model))
+    BInv ASEGS0 (vm_maps (m_vmmaps model)) (vm_reserved (m_vmmaps model)) (vm_noaccess (m_vmmaps model))
          (uE E e_sp0 - 8388608) as0_BASE BUDGET [] (as0_A0 E) FULL model.
 Proof.
 intros E R FULL model HC. destruct as0_chk_parts as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 & C9 & C10).

@@ -13,7 +13,7 @@
    STATED OVER THE IMAGE UNIVERSES THEMSELVES, NOT OVER THE INSTANCE RECORDS: each theorem holds for EVERY asyms B
    whose as_universe and as_code are the image's (the fields the closure reads, with the CfImg's
    cf_pc_realloc_ra0), the way tools/satchk ran with --image U. A KNOWN LIMIT, reported by the round-trip stack walker: on univcore +
-   int102, lib/A/AF0m.v:1810 and lib/Reusable/YF0m.v:1812 FAIL, so AD2l / YD2l do not build. So this file does not
+   int102, lib/A/AF0m.v:1810 and lib/Reusable/YF0m.v:1813 FAIL, so AD2l / YD2l do not build. So this file does not
    Require the instance records lib/A/AD2l.v / lib/Reusable/YD2l.v.
    THE WITNESS MENTIONS NO METER AND NO START STATE: it is a statement about the image's universe only. Whether a
    run's depot has ROOM for the wild traces (YG01.admits) is the room COUNT thread (PRH_Base.prh_univ_closure's
@@ -34,7 +34,7 @@
    clause 3. Its consumer is padded on B': c5_padded_trace_B below derives padded's trace over its caller's chain.
    THE NEGATIVE CONTROLS: B', the OLD clause 4 (`In _ (as_universe B)`, list membership, which under P'' is
    membership in the FIXED part through the coercion u_fix) is FALSE for a data word (the S1 owner's
-   B_clause4_In_fails, lib/ZZUnivWild.v on commit 8f07344ff7b7; restated here,
+   B_clause4_In_fails, lib/ZZUnivWild.v; restated here,
    because the kit cannot Require that scratch file). A', a universe with the OLD A' wild part (ACej 0ee7e2bcf2f0:
    Tfib_wild = [[0x53c74; 0x84db0]] only, fixed traces among the 98 that file had) FAILS clause 4b (the S1 owner's
    A_clause4_inU_fails_today, same scratch file; the old file is not carried: the theorem is stated for every
@@ -411,7 +411,7 @@ Qed.
 (* ---- THE ROOM CONJUNCT IS SATISFIABLE AT THE REAL INSTANCES (VERIFY rule 1 for the new premise the wild-budget
    rows add, PRH_Base's BUDGETED TWINS). NOT A REBUILD: the S1 owner proved it, in lib/A/WildRoomInstA.v and lib/AU/WildRoomInstB.v (ONE FILE PER IMAGE since the set's
     23:2xZ split, which killed the wrong-image hazard the driver-contract owner found; the old single lib/A/WildRoomInst.v is deleted) (taken by
-   path from commit d8fc0356da28), at the start state YG00.init_state, whose depot is [] -
+   path), at the start state YG00.init_state, whose depot is [] -
    that is the harness's allocator state at the driver's entry on both images (lib/A/AD1v.v:125,
    lib/AU/PresetD1preB.v:260). These two corollaries only restate it in the KIT'S OWN SPELLING, the shape the texts
    write: `wild_room (as_universe B) [] (prh_wk F) (st_depot S)` under the image's universe equation. The budgets
@@ -434,8 +434,8 @@ Proof.
   exact (YCbqGwild.wild_room_le _ _ _ _ _ Hk WildRoomInstB.wild_room_init_B).
 Qed.
 (* every budget the kit's texts write is within K_LLVMF, so the two above apply to every row. ONE HOME: that fact is
-   the S1 owner's WildBudget.prh_wk_le_K (lib/A/WildBudget.v 9134df4ca2c5, commit
-   9a41ac98d791, beside lib_wild_budget and lib_wild_need = 76), cited here; the kit's own copy
+   the S1 owner's WildBudget.prh_wk_le_K (lib/A/WildBudget.v 9134df4ca2c5,
+    beside lib_wild_budget and lib_wild_need = 76), cited here; the kit's own copy
    prh_wk_le_K_LLVMF was the same statement in a second file and is deleted (2026-10-30). *)
 
 Print Assumptions prh_univ_closure_witness_B.

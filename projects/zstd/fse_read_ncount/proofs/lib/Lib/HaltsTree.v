@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (halts_of_impl_tree takes the launch's channel-reader premise (in_channel_reader) and a bound segs_top segs <= 0x10000000; its walk premise uses init_ms's new arguments (the mmap base and the ProcInput), and its leaves and safety premises start from the initial model with the vDSO (with_vdso); re-proved by lifting the walk to run_segments, the run's segments with the vDSO pair; the Proof using lists of msteps_must_exit_in and tree_at_must_exit_in shortened; imports Vdso, RunSegs and InitMem). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Monad Specs Run Vdso.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
-From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import PropExec MState Frame Exec Cfg ITree Nodes RegsEquiv.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import PropExec MState Frame Exec ITree Nodes RegsEquiv Cfg RunSegs InitMem.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require InitMem.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -35,7 +37,7 @@ Section Bridge.
     m_halted mo = None -> minv mo ->
     must_exit_in_at_cfg ACFG segs S (mkCfg ms1 mo) ->
     must_exit_in_at_cfg ACFG segs S (mkCfg ms mo).
-  Proof using node segs at_node nstep nexit minv nsafe NS S.
+  Proof using NS.
     intros ms ms1 mo Hm Hh Hinv Hend.
     induction Hm as [ms | ms msa ms1 H1 H2 IH].
     - exact Hend.
@@ -51,7 +53,7 @@ Section Bridge.
   Theorem tree_at_must_exit_in : forall {R} (t : itree node R) Q ms mo,
     tree_at segs at_node nstep minv nsafe t Q ms mo ->
     must_exit_in_at_cfg ACFG segs S (mkCfg ms mo).
-  Proof using node segs at_node nstep nexit minv nsafe NS NK S NC.
+  Proof using NS NK NC.
     intros R t. induction t as [r | n k IH]; intros Q ms mo HT.
     - destruct HT as (_ & Hl & _). destruct (leaves_unreachable_m_ret node nstep r mo Hl).
     - pose proof HT as (Ht & Hl & Hh & Hinv & Hsf).
@@ -123,23 +125,40 @@ Qed.
 Theorem halts_of_impl_tree : forall segs pc ph lim {R} (t : itree node R) (Q : R -> machine_state -> Prop) en inp,
   valid_entry (mkImage segs pc ph) en inp ->
   in_va_size inp = Sv48 ->
+  in_channel_reader inp = true ->
+  (InitMem.segs_top segs <= 0x10000000)%Z ->
   impl segs (at_node segs) t Q
-       (init_ms segs pc ph (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) ->
-  leaves_unreachable_m nstep t (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp) ->
-  tsafe nstep nsafe t (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp) ->
+       (init_ms segs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp) ->
+  leaves_unreachable_m nstep t (with_vdso (vdso_run_init (ed_vdso (en_draw en)))
+    (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp)) ->
+  tsafe nstep nsafe t (with_vdso (vdso_run_init (ed_vdso (en_draw en)))
+    (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp)) ->
   must_exit_in_scfg ACFG AnyExit.codes (mkImage segs pc ph) lim en inp.
 Proof.
-  intros segs pc ph lim R t Q [sp brk0 mbase rnd] inp Hve Hsv48 Himpl Hleaves Hsafe.
-  cbn [en_sp en_brk en_mmap_base en_draw] in Himpl, Hleaves, Hsafe.
+  intros segs pc ph lim R t Q [sp brk0 mbase rnd] inp Hve Hsv48 Hrdr Htop Himpl0 Hleaves Hsafe.
+  cbn [en_sp en_brk en_mmap_base en_draw] in Himpl0, Hleaves, Hsafe.
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hve. destruct Hve as (Vsp & _ & Vmb & _ & _).
+  (* LPS 727298f3 runs over [run_segments segs inp sp mbase]: lift the walk to it. *)
+  pose proof (impl_lift segs (vdso_segments (in_kernel inp) sp mbase)
+                (fun s Hs => vdso_segments_high (in_kernel inp) sp mbase (InitMem.segs_top segs + 8) Vsp Vmb ltac:(lia) s Hs)
+                t Q _ Himpl0) as Himpl.
   cbn [must_exit_in_scfg]. unfold init_config.
-  set (mo := init_model (segments_reserved segs) brk0 mbase sp lim inp) in *.
+  set (V := run_segments segs inp sp mbase).
+  change (segs ++ vdso_segments (in_kernel inp) sp mbase) with V in Himpl.
+  replace (segments_reserved V) with (segments_reserved segs)
+    by (symmetry; apply segments_reserved_vdso_app).
+  set (mo := with_vdso (vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved segs) brk0 mbase sp lim inp)) in *.
   assert (Hminv : minv mo).
-  { rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hve. destruct Hve as (Vsp & _ & _ & _).
-    apply minv_init. destruct Vsp as (L & H & _). lia. }
-  apply (must_exit_in_at_eqv segs AnyExit.codes
-           (mkCfg (init_ms segs pc ph sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd) mo)).
-  - apply (tree_at_must_exit_in node segs (at_node segs) nstep nexit minv nsafe (nodes_sound segs)
-             hx_nexit_not_killed AnyExit.codes hx_nexit_any t Q).
-    split; [exact Himpl | split; [exact Hleaves | split; [reflexivity | split; [exact Hminv | exact Hsafe]]]].
+  { change (minv (init_model (segments_reserved segs) brk0 mbase sp lim inp)).
+    apply minv_init; [|exact Hrdr]. destruct Vsp as (L & H & _). lia. }
+  pose proof Himpl as Himpl'.
+  change (impl V (at_node V) t
+            (fun (r : R) (ms' : machine_state) => exists ms0 : machine_state, ms' = with_rom ms0 (seg_rom V) /\ Q r ms0)
+            (init_ms V pc ph sp mbase rnd inp)) in Himpl'.
+  apply (must_exit_in_at_eqv V AnyExit.codes
+           (mkCfg (init_ms V pc ph sp mbase rnd inp) mo)).
+  - eapply (tree_at_must_exit_in node V (at_node V) nstep nexit minv nsafe (nodes_sound V)
+             hx_nexit_not_killed AnyExit.codes hx_nexit_any t).
+    split; [exact Himpl' | split; [exact Hleaves | split; [reflexivity | split; [exact Hminv | exact Hsafe]]]].
   - split; [| reflexivity]. cbn [cfg_ms]. apply ms_eqv_sym. apply init_machine_state_eqv.
 Qed.

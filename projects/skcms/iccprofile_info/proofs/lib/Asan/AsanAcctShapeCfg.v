@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, SP_of_silent1 takes the pending-syscall fact that RomBase.sys_rob_instr turns into the read-only-backing premise. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -8,6 +9,7 @@ From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import CatSim ShapeAlg AsanAcct SpinAlgCfg.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import RomBase.
 Unset Nia Cache.  (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
@@ -22,9 +24,9 @@ Hypothesis Hwx : wx_segs_nowrap segs.
 Let SP_of (T : TSet) : config -> Prop := fun c => srealizes_cfg segs c T.
 
 Let SP_of_silent1 (T : TSet) : forall c c',
-    AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+    AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None ->
     SP_of T c' -> SP_of T c :=
-  fun c c' Hn Hr => srz_cfg_silent1 segs c c' T Hn Hr.
+  fun c c' Hn Hs Hr => srz_cfg_silent1 segs c c' T Hn (sys_rob_instr segs c Hs) Hr.
 
 Theorem srz_cfg_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->

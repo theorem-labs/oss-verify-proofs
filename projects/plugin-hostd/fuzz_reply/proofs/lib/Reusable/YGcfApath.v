@@ -1,10 +1,11 @@
-(* CARRIED from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfApath.v, sha256 116786b4352d3fe2996c94ac59ee9d88404934e37c80edde519d8b3bd1708324.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
-   Plus the P'' (Univ trace carrier) delta of commit 94ab015e127b for cgif/cgif_file_fuzzer/lib/YGcfApath.v, taken 3-way (base d94d29d53c8). *)
+   Plus the P'' (Univ trace carrier) delta for cgif/cgif_file_fuzzer/lib/YGcfApath.v, taken 3-way. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the APATH form of
    malloc_cf's post, for walks that hold a realized path (amreal / AllocG.alloc_leaf give
    `apath (malloc_cf n tr S) trc r /\ gflag trc = true`). It composes malloc_ok_cf (YG07cf.v, over

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormMissGW.v (commit 3295f3a9fd5, CfInstMiss lane M field round 3 (cf-miss 3295f3a9fd5); file sha256 62f56312bd65) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 6 image addresses moved by function pairs the comparison kit cmpkit 4bbd3a74be89 calls the same code except at the by-hand acceptances named below (strictcmp2 16982e3ef42b, by funcpair_reply 053b61532a33 on the cgif twin ce511d541cda; 6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance of the kit's known false-difference class (accept.tsv, re-measured each run: the bytes the code reads equal and read-only on both images): _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb+0xdc); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/MemnormMissGW.v at commit f7d0d764e77, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (6 numerals; per-numeral report). *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane missw): MemnormMissGW, the AIfaceMw variant of MemnormMissG.v (c5
-   8d6c9f45705b): the refill's stack window is the Section variable RW (0 <= RW, 176 + RW <= AFSTACK: hypothesis
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormMissGW.v (CfInstMiss lane M field round 3 (cf-miss); file sha256 62f56312bd65) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 6 image addresses moved by function pairs the comparison kit cmpkit 4bbd3a74be89 calls the same code except at the by-hand acceptances named below (strictcmp2 16982e3ef42b, by funcpair_reply 053b61532a33 on the cgif twin ce511d541cda; 6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance of the kit's known false-difference class (accept.tsv, re-measured each run: the bytes the code reads equal and read-only on both images): _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb+0xdc); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/MemnormMissGW.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (6 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane missw): MemnormMissGW, the AIfaceMw variant of MemnormMissG.v (c5):
+   the refill's stack window is the Section variable RW (0 <= RW, 176 + RW <= AFSTACK: hypothesis
    RWB) of MnRefillW.v, not RSTACK = 1024.  Same proof script; the changes are AIfaceM -> AIfaceMw (fields if_ ->
    ifw_), the refill leaves -> their _w forms at RW, RSTACK -> RW, the refill-window steps through
    MnRefillW.win_af_w and the other frame lia steps under RWB, RW (and RWB) in the explicit arguments of the W
@@ -60,7 +61,7 @@ Import ListNotations.
 Local Unset Lia Cache. Local Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Set Warnings "-notation-for-abbreviation".
-(* copy of AGim.v:40 *)
+(* copy of AGim.v:41 *)
 Local Ltac bvne := first [cbn; lia | vm_compute; congruence | intros X; vm_compute in X; discriminate X].
 Local Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : YGcfNames.CfImg}.
@@ -112,7 +113,7 @@ intros x Hw. destruct (HWN _ Hw) as [H|[H|H]].
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The OOM tail with memnorm kept: copy of AGk1E.v:73-155 (AGk1's section b), plus the keep up to the refill's return
+(* The OOM tail with memnorm kept: copy of AGk1E.v:74-156 (AGk1's section b), plus the keep up to the refill's return
    [HKC], and the twin of AGk1EW.miss_oom_tail_e. *)
 Section o.
 Variable B : asyms.
@@ -207,7 +208,7 @@ Theorem miss_oom_tail_em : amreal tfibsegs (AGif0n.malloc_join_t stag n tr cl S'
 (fun r W'' c'' => (exists trc, apath (mt n tr S) trc r /\ gflag trc = true) ->
   MemnormT.alloc_leaf_em tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regsU mem0 md0 n tr r W'' c'').
 Proof.
-(* copy of AGk1E.v:163-166 *)
+(* copy of AGk1E.v:164-167 *)
 unfold AGif0n.malloc_join_t. rewrite bind_assoc_eq. eapply amreal_pure; [exact (pop_miss S' cl Hc0)|]. eapply amreal_pure; [reflexivity|].
 unfold AGif0n.malloc_K_t. cbn [amreal].
 replace (cfg_at tfibsegs A_REFILL_RET regsR memR mdR) with cR by (unfold cfg_at, cR, msR; rewrite with_vm_backing_id; reflexivity).
@@ -225,7 +226,7 @@ Qed.
 End o.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* copy of AGimE.v:54-71 (AGim's section b), with the refill's memnorm-kept contract in place of IFME *)
+(* copy of AGimE.v:55-72 (AGim's section b), with the refill's memnorm-kept contract in place of IFME *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* AGim's section b: the same variables and hypotheses, in AGim's order, then the add-on and the image facts.        *)
 Section b.
@@ -323,7 +324,7 @@ Local Abbreviation MISS1 := (AGimW.MISS1 B U mt ARX AOX rpre nmax lmax lpost dpo
 Local Abbreviation ms1_shape := (AGimW.ms1_shape W).
 Local Abbreviation RAZ1 := (AGimW.RAZ1 ly W regs0 n tr Htrlen).
 
-(* copy of AGimE.v:147-150 *)
+(* copy of AGimE.v:148-151 *)
 (* AGimW.PL over alloc_leaf_e: the leaf given its granted path. *)
 Definition PL_e (r : sptr * astate) (W' : world tfibsegs) (c' : config) : Prop :=
 (exists trc, apath (mt n tr S) trc r /\ gflag trc = true) ->
@@ -485,7 +486,7 @@ End gj.
 (* AGimEW.JOIN_e over LEAFJ_em. *)
 Lemma JOIN_em : amreal tfibsegs (malloc_join_t stag n tr cl S') W' (cfg_at tfibsegs 0x36580 regsR memR mdR) PL_em.
 Proof.
-(* copy of AGimE.v:272-275 *)
+(* copy of AGimE.v:273-276 *)
 destruct (@AGiz.vw_junk_values _ _ B W' ly' inst memR n cl cnt' v' kz TS HV' Hkz1 Nrange Hcl_class)
   as (j0 & j1 & j2 & j3 & j4 & jb & Hj0 & Hj1 & Hj2 & Hj3 & Hj4 & Hjb & Hjb_def).
 eapply amreal_mono; [| eapply TAILJ; eassumption].
@@ -501,7 +502,7 @@ Hypothesis HA0 : getr regsR 10 = w64 0.
 Local Abbreviation HE1 := (@AGimW.HE1 ly regs0 n tr Htrlen Em HEm regsR).
 Lemma OOMJ_em : amreal tfibsegs (malloc_join_t stag n tr cl S') W' (cfg_at tfibsegs 0x36580 regsR memR mdR) PL_em.
 Proof.
-(* copy of AGimE.v:288-297, over miss_oom_tail_em (+ MN1) *)
+(* copy of AGimE.v:289-298, over miss_oom_tail_em (+ MN1) *)
 assert (HWN : forall a, AGiv.WINN regs0 a -> (bv_unsigned (getr regs0 2) - AFSTACK <= a < bv_unsigned (getr regs0 2)) \/
   (TFIB_OOM <= a < TFIB_OOM + 1) \/ (TFIB_ERRNO <= a < TFIB_ERRNO + 4))
 by (intros a X; unfold AGiv.WINN in X; cbv zeta in X; lia).
@@ -524,7 +525,7 @@ End f.
 Lemma missg_core_em : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0)
 (MemnormT.alloc_leaf_em tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regsU mem0 md0 n tr).
 Proof.
-(* copy of AGimE.v:309-344, over the _em lemmas *)
+(* copy of AGimE.v:310-345, over the _em lemmas *)
 assert (CORE : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0) PL_em).
 {
 rewrite (Fshape_miss n tr S Hn0 FP Hmiss). fold cl.
@@ -573,7 +574,7 @@ YG0dcf.arodata_ok_cf tfibsegs B mem ->
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x31c30 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGimE.v:357-401, over missg_core_em *)
+(* copy of AGimE.v:358-402, over missg_core_em *)
 intros inst so bp ly S W regs mem md n tr PRE HRO Nrange0 Hmiss.
 destruct PRE as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres0 & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
 Hso1 & Hso2 & Hso3 & Hbp1 & Hbp2 & Hbp3 & Htrlen & PSO & PLEN & PBUF & Htr & Hn0 & Hlive).

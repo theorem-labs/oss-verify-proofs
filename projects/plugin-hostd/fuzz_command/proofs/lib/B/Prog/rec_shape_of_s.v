@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: rec_shape_of's loop on fuzz_command.asan-ubsan (0x8973c .. 0x897d4), ported from
-   the ASan walk's loop lib/A/Prog/rec_shape_of_s.v (a working branch 6648665b722), itself in the form of
+   the ASan walk's loop lib/A/Prog/rec_shape_of_s.v (a working branch), itself in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v and ACh1.v (segment steps from one statement to the next, each seeded
    by the walk kit and run by the token-aware executor): the loop head with the inline check of the row and the
    strlen wrapper's call (HEAD -> R1), the length compare and the bcmp wrapper's call (R1 -> R2 / latch), the
    result test, the found branch's inline check and the return of the row's reply, and the latch to the next row
    or the return of "resp 0" after the last (R2 -> HEAD / return). One lemma per segment, for each of the 28
    rows. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

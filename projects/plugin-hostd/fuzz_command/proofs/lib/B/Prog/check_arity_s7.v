@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the release of number's class-0 side-stack frame (0x8e5a0..0x8e618, cgif's exitRA in A/ACam.v) and number's return. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberR.v, with its module paths and module names changed; 159 of its 189 lines of code are new or changed and 186 lines of the source are left out. *)
-(* B twin of lib/A/Prog/check_arity_s7.v (a working branch fa47a13e284, blob 2ecda1fa) on
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin of lib/A/Prog/check_arity_s7.v (a working branch, blob 2ecda1fa) on
    image B (fuzz_command.asan-ubsan, pin bbe55d24; B twin 658cefbe). check_arity's bcmp call step (rows 0, 3, 8 and
    14). At each of their call sites the inlined syntax_has scans the row's syntax string with a call of the bcmp
    wrapper against the literal "..." (CA_DOTS = 0x218c0): the jal at 0x87898 in dots_loop (head 0x8787c), RETURN
@@ -25,7 +26,7 @@
    The step starts at the wrapper entry, so no UBSan trap site is in its range; the per-site tactics below run the
    rows' code and the row files list the trap sites those runs refute.
 
-   Template (not used as a source): a working branch fd8e07f77cd lib/B/Prog/check_arity.v, an older
+   Template (not used as a source): a working branch lib/B/Prog/check_arity.v, an older
    B walk in the OLD lib/Lib `evt` / MState framework against the OLD statement; read only. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

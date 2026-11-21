@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the nodes and the cut-only munmap node). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,7 +16,10 @@ From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS Require Import
   ShapeAlg SpinAlg Nodes StoreOk AgentLib AgentNodes RefNodes
   AsanAcct AsanAcctShape AsanPlacement BackingAlgebra.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound.
-From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS Require Import AsanCeil.  (* [comment removed for export] *)
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS Require Import AsanCeil.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common.Cfg Require RomBase.
+(* the cut-only munmap node at the revision ([NoReserve.node_munmap_lazy]) *)
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS Require NoReserve.  (* [comment removed for export] *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
@@ -229,22 +233,24 @@ Lemma srz_det_noacc : forall ms model x8 eff0 m0 T,
   (forall eff, check_syscall (sys_input segs ms x8) eff model <> CheckUnmodeled) ->
   m_halted m0 = None ->
   syscall_effect_accesses eff0 = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   srealizes segs (mkCfg (advance_past_svc (apply_effect ms eff0)) m0) T ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 eff0 m0 T Hh Hsvc Hna Hchk Hnu Hh0 Hacc Hc.
-  eapply srz_silent1; [eapply node_det_noacc; eassumption | exact Hc].
+  intros ms model x8 eff0 m0 T Hh Hsvc Hna Hchk Hnu Hh0 Hacc Hrob Hc.
+  eapply srz_silent1; [eapply node_det_noacc; eassumption | exact Hrob | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
 Lemma srz_cases : forall c (I : Type) (nx : I -> config) (T : I -> TSet) (i0 : I),
   node_ok segs c I (fun _ => []) nx ->
+  RomBase.sys_rob segs c ->
   (forall i, srealizes segs (nx i) (T i)) ->
   srealizes segs c (t_alt T).
 Proof.
-  intros c I nx T i0 Hnode Hc.
+  intros c I nx T i0 Hnode Hrob Hc.
   apply (srz_conseq segs c (t_alt (fun i => t_emit [] (T i)))).
-  - apply (srz_node segs c I (fun _ => []) nx T i0 Hnode Hc).
+  - apply (srz_node segs c I (fun _ => []) nx T i0 Hnode Hrob Hc).
   - intros tr. split.
     + intros [i Hi]. exists i.
       exact (proj1 (t_emit_nil_eq (T i) (srealizes_nonempty segs _ _ (Hc i)) tr) Hi).
@@ -334,7 +340,7 @@ Lemma srz_sys_lazy : forall regs pc mem rom model w T,
   srealizes segs (mkCfg (mkst regs pc mem rom) model) T.
 Proof.
   intros regs pc mem rom model w T Hh HF HE Hc.
-  eapply srz_silent1; [| exact Hc].
+  eapply srz_silent1; [| rob_instr | exact Hc].
   apply node_instr_noacc; [exact Hh | reflexivity | eapply stepacc_ecall_epend; eassumption].
 Qed.
 
@@ -369,28 +375,14 @@ Proof.
   { unfold munmap_args_ok. rewrite H0, Hu1, Hpr. repeat split; try assumption.
     intro Hz. apply (f_equal bv_unsigned) in Hz. rewrite Hu1 in Hz.
     change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hz. lia. }
-  pose proof (fun eff => eq_trans (munmap_check segs ms (getr regs 17) model eff Hno) (munmap_check_modeled ms model eff Hargs)) as Hchk.
-  rewrite H0, Hpr in Hchk.
-  eapply (srz_det_noacc ms model (getr regs 17)
-            (mkEffectU (Z_to_bv 64 0) [] [] [(a, Z_to_bv 64 (page_round_up_Z len))] [] [])
-            (munmap_model a (Z_to_bv 64 (page_round_up_Z len)) model));
-    [exact Hh | reflexivity | CfgStep.kit_not_alloc | | | | reflexivity |].
-  - intros eff m' evs. split.
-    + intros Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
-      destruct ws; [|discriminate]. destruct zs; [|discriminate].
-      destruct cs; [|discriminate]. destruct ci; [|discriminate].
-      destruct (w_is0 r) eqn:E0; [|discriminate].
-      destruct (listNN_eqb us [(a, Z_to_bv 64 (page_round_up_Z len))]) eqn:Hl; [|discriminate].
-      apply listNN_eqb_eq in Hl. subst us. cbn [andb] in Hck. injection Hck as <- <-.
-      unfold w_is0 in E0. apply bv_eqb_eq in E0. subst r. repeat split; reflexivity.
-    + intros (-> & -> & ->). rewrite Hchk. unfold w_is0. rewrite bv_eqb_refl.
-      rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
-  - intros eff Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
-    destruct ws; [|discriminate]. destruct zs; [|discriminate].
-    destruct cs; [|discriminate]. destruct ci; [|discriminate].
-    destruct (w_is0 r && listNN_eqb us _)%bool; discriminate.
-  - rewrite munmap_model_halted. exact Hh.
-  - unfold ms. rewrite adv_unmaps1_epend. exact Hc.
+  (* At the revision munmap (215) may also answer one of [munmap_errnos]; under the
+     alloc-forced configuration ([CfgStep.kit_cfg], the one bzip2's published
+     statements read through [Env.alloc_forced_only]) that answer is a spurious
+     refusal the step does not take, so the node keeps only the cut
+     ([NoReserve.node_munmap_lazy], YMunmap ruling (a)). *)
+  eapply srz_silent1;
+    [eapply NoReserve.node_munmap_lazy; [exact Hh | reflexivity | exact Hno | exact Hargs] | rob_mf Hno |].
+  unfold munmap_eff. rewrite H0, Hpr. unfold ms. rewrite adv_unmaps1_epend. exact Hc.
 Qed.
 
 (* [comment removed for export] *)
@@ -486,13 +478,14 @@ Proof.
   assert (Hq : brk_resolution_ok model (ms_gpr ms 0) (vm_brk (m_vmmaps model))) by (apply Hcases; reflexivity).
   apply (srz_conseq segs _ (t_alt (fun _ : {r : word | brk_resolution_ok model (ms_gpr ms 0) r} => K)));
     [| intros tr; split; [intros [_ Ht]; exact Ht | intros Ht; exists (exist _ _ Hq); exact Ht]].
-  eapply srz_cases; [exact (exist _ _ Hq) | |].
+  eapply srz_cases; [exact (exist _ _ Hq) | | |].
   {
     apply node_ok_no_refusals; [eapply node_brk_lazy_u; [exact Hh | reflexivity | exact Hno] |].
     intros i. change (CfgStep.child_refusal_b segs (mkCfg ms model) (brk_nx_lz ms model i) = false).
     rewrite (brk_nx_lz_refusal ms model (getr regs 17) i Hh eq_refl Hno).
     destruct i as [r Hr]. cbn [proj1_sig]. clear Hr. rewrite H0.
     unfold brk_refusal_b, w_is0. rewrite bv_eqb_refl. reflexivity. }
+  { rob_mf Hno. }
   intros [r Hr]. cbn [proj1_sig].
   pose proof (proj1 (Hcases r) Hr) as Er. subst r.
   rewrite H0, brk_zeros_query, brk_unmaps_keep.
@@ -550,6 +543,7 @@ Proof.
       assert (X : brk_refusal_b model req b = true).
       { apply brk_refusal_b_keep_lz; [rewrite Hureq; lia | fold h; rewrite Hureq; exact Hs | exact Hneq]. }
       rewrite X in Hnr. discriminate Hnr. }
+  { rob_mf Hno. }
   cbv beta. unfold brk_nx_lz. cbn [proj1_sig]. fold h.
   - assert (Hlt : (bv_unsigned b < bv_unsigned req)%Z) by (rewrite Hureq; lia).
     assert (Hreq0 : req <> Z_to_bv 64 0).
@@ -596,7 +590,7 @@ Proof.
   assert (Hneq : req <> b).
   { intros E. unfold b, h in E. rewrite E in Hblk. unfold Mmap.brk_grow_ok in Hblk.
     rewrite Z.ltb_irrefl, andb_false_r in Hblk. discriminate Hblk. }
-  eapply srz_cases; [exact (exist _ b Hkeep) | |].
+  eapply srz_cases; [exact (exist _ b Hkeep) | | |].
   {
     apply node_ok_forced; [eapply node_brk_lazy_u; [exact Hh | reflexivity | exact Hno] | |].
     - intros i. exact (brk_nx_lz_halted ms model i Hh).
@@ -604,6 +598,7 @@ Proof.
       rewrite (brk_nx_lz_refusal ms model (getr regs 17) i Hh eq_refl Hno).
       destruct i as [r Hr]. cbn [proj1_sig]. pose proof (proj1 (Hcases r) Hr) as Er. subst r.
       clear Hr. rewrite H0. apply brk_refusal_b_keep_lz; [exact Hpos | exact Hs | exact Hneq]. }
+  { rob_mf Hno. }
   intros [r Hr]. cbn [proj1_sig]. fold h.
   pose proof (proj1 (Hcases r) Hr) as Er. subst r. fold b.
   rewrite brk_zeros_keep, brk_unmaps_keep. unfold b, h. rewrite brk_model_keep.
@@ -665,7 +660,8 @@ Proof.
   apply (srz_conseq segs _ (t_alt (fun _ : tid_I => K)));
     [| intros tr; split; [intros [_ Ht]; exact Ht | intros Ht; exists (exist _ (Z_to_bv 64 1) one_tid_ok); exact Ht]].
   eapply srz_cases; [exact (exist _ (Z_to_bv 64 1) one_tid_ok)
-                   | eapply node_set_tid_lazy; [exact Hh | reflexivity | rewrite H17; apply u64_lit; lia | exact Htid] |].
+                   | eapply node_set_tid_lazy; [exact Hh | reflexivity | rewrite H17; apply u64_lit; lia | exact Htid]
+                   | eapply RomBase.sys_rob_memfree; [reflexivity | rewrite H17; rewrite u64_lit by lia; exact RomBase.memfree_96] |].
   intros [t Ht]. cbn [proj1_sig].
   change (mkEffectU t [] [] [] [] []) with (mkEffect t [] []).
   rewrite apply_effect_no_write, adv_set_epend. apply Hk. exact Ht.
@@ -795,7 +791,7 @@ Proof.
   assert (Hlen' : (len < 2 ^ 64)%Z).
   { pose proof (page_round_up_Z_bounds len ltac:(lia)). pose proof (u64_range addr). lia. }
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; lia).
-  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap.
+  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
   assert (E1 : w_is0 (ms_gpr ms 1) = false).
   { unfold w_is0. apply bv_eqb_neq. intros Hz. rewrite Hz in Hu1. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hu1. lia. }
   rewrite E1, H2, H3, H5, H0, Hu1.
@@ -922,6 +918,7 @@ Proof.
       * exists tt. reflexivity.
       * rewrite (CfgStep.refusal_b_mmap_errno (sys_input segs ms (getr regs 17)) model ENOMEM Hno
                    ENOMEM_in_mmap_errnos) in Hnr. discriminate Hnr.
+  - rob_mf Hno.
   - cbn [effs ms']. unfold ms, fixedin_ok_eff. destruct (Z.eqb prot 0).
     + rewrite adv_unmaps1_epend. exact HB.
     + rewrite adv_zeros1_epend. exact HB.

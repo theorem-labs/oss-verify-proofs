@@ -97,8 +97,8 @@ Qed.
 
 (* Route (C), a Theorem Labs lane 11:17Z: the run reads no shadow byte through shadow_rw (its p / q shadow reads come from
    addressable; the F proof, reac_ports_parse_F_holds_on, has no shadow_rw component), so the _on forms DROP the `shadow_rw m`
-   conjunct of the guarded premise, keeping asan_cells and the two addressable. Twin of image A's reac_ports_parse
-   (d4f70537e6f). The old statements follow by supplying shadow_rw back. *)
+   conjunct of the guarded premise, keeping asan_cells and the two addressable. Twin of image A's reac_ports_parse.
+   The old statements follow by supplying shadow_rw back. *)
 Definition reac_ports_parse_contract_on : Prop :=
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
          (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (p q lo : Z) (bs : list byte),

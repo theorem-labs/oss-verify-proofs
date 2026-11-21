@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the per-entry iovec copy-in accesses, the m_channel_reader premise of writev, and RomBase.sys_rob at the writev nodes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -21,6 +22,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require Import RelSpec CatSim PropExec ShapeAlg Nodes LibWbxd.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require Import SpinAlg Hull Lazyiq4.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 (* [comment removed for export] *)
@@ -46,33 +48,37 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma copy_iovecs_accesses_2 : forall mp iov,
-  exists l, copy_iovecs_accesses mp iov 2 = (iov, 16%nat) :: l /\
-            (l = [] \/ l = [(iov + 16, 16%nat)] \/ exists l', l = (iov + 16, 16%nat) :: l' /\ (l' = [])).
+(* LPS 727298f3: the copy-in ledger of the iovec array is per entry ([iovec_entry_accesses]):
+   the whole 16-byte entry, or its length word alone when the base word does not read. *)
+Lemma accs_in_hull_iovec_entry : forall A mp a,
+  bytes_in_hull A a 16 -> accs_in_hull A (iovec_entry_accesses mp a).
 Proof.
-  intros mp iov. cbn [copy_iovecs_accesses].
-  destruct (read_iovec_entry mp iov) as [b len| |].
-  - destruct (read_iovec_entry mp (iov + 16)) as [b' len'| |]; (eexists; split; [reflexivity|]); right; left; reflexivity.
-  - exists []. split; [reflexivity| left; reflexivity].
-  - exists []. split; [reflexivity| left; reflexivity].
+  intros A mp a H.
+  assert (H8 : bytes_in_hull A (a + 8) 8).
+  { intros k Hk. unfold bytes_in_hull in H. specialize (H (8 + k)%nat ltac:(lia)).
+    replace (woff (a + 8) k) with (woff a (8 + k)); [exact H|].
+    unfold woff. apply bv_eq. rewrite !Z_to_bv_unsigned, bv_add_unsigned. change (bv_unsigned (8:word)) with 8%Z.
+    unfold bv_wrap. rewrite Nat2Z.inj_add. change (Z.of_nat 8) with 8%Z.
+    rewrite Zplus_mod_idemp_l. f_equal. lia. }
+  intros b n Hin. unfold iovec_entry_accesses in Hin.
+  destruct (read_u64 mp (a + 8)) as [v8|]; [|destruct Hin].
+  destruct (read_u64 mp a) as [v0|]; destruct Hin as [E|[]]; injection E as <- <-; assumption.
 Qed.
 
-Lemma accs_in_hull_copy_iovecs_2 : forall A mp iov,
-  bytes_in_hull A iov 32 -> accs_in_hull A (copy_iovecs_accesses mp iov 2).
+Lemma accs_in_hull_copy_iovecs : forall A mp cnt iov,
+  bytes_in_hull A iov (16 * cnt) -> accs_in_hull A (copy_iovecs_accesses mp iov cnt).
 Proof.
-  intros A mp iov H.
-  assert (H1 : bytes_in_hull A iov 16) by (eapply bytes_in_hull_shrink; [|exact H]; lia).
-  assert (H2 : bytes_in_hull A (iov + 16) 16).
-  { intros k Hk. unfold bytes_in_hull in H. specialize (H (16 + k)%nat ltac:(lia)).
-    replace (woff (iov + 16) k) with (woff iov (16 + k)); [exact H|].
-    unfold woff. apply bv_eq. rewrite !Z_to_bv_unsigned, bv_add_unsigned. change (bv_unsigned (16:word)) with 16%Z.
-    unfold bv_wrap. rewrite Nat2Z.inj_add. change (Z.of_nat 16) with 16%Z.
-    rewrite Zplus_mod_idemp_l. f_equal. lia. }
-  destruct (copy_iovecs_accesses_2 mp iov) as (l & -> & Hl).
-  intros a n Hin. destruct Hin as [E|Hin]; [injection E as <- <-; exact H1|].
-  destruct Hl as [-> | [-> | (l' & -> & ->)]]; cbn in Hin; [contradiction| |].
-  - destruct Hin as [E|[]]. injection E as <- <-. exact H2.
-  - destruct Hin as [E|[]]. injection E as <- <-. exact H2.
+  intros A mp cnt. induction cnt as [|cnt IH]; intros iov H a n Hin; cbn [copy_iovecs_accesses] in Hin; [contradiction|].
+  apply in_app_or in Hin. destruct Hin as [Hin|Hin].
+  - apply (accs_in_hull_iovec_entry A mp iov); [eapply bytes_in_hull_shrink; [|exact H]; lia | exact Hin].
+  - assert (H16 : bytes_in_hull A (iov + 16) (16 * cnt)).
+    { intros k Hk. specialize (H (16 + k)%nat ltac:(lia)).
+      replace (woff (iov + 16) k) with (woff iov (16 + k)); [exact H|].
+      unfold woff. apply bv_eq. rewrite !Z_to_bv_unsigned, bv_add_unsigned. change (bv_unsigned (16:word)) with 16%Z.
+      unfold bv_wrap. rewrite Nat2Z.inj_add. change (Z.of_nat 16) with 16%Z.
+      rewrite Zplus_mod_idemp_l. f_equal. lia. }
+    destruct (read_iovec_entry mp iov) as [b len| |]; [|destruct Hin|destruct Hin].
+    exact (IH _ H16 a n Hin).
 Qed.
 
 Lemma accs_in_hull_prefix_2 : forall A b1 n1 b2 k,
@@ -94,6 +100,7 @@ Lemma srz_writev2_hull : forall A AL E ms model x8 (fd : Z) (iov b1 n1 b2 : word
   ms_rom ms = seg_rom segs ->
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->   (* 08b1429: channel-reader-premise *)
   (0 < fd < 2^31)%Z -> bv_unsigned x8 = 66%Z ->
   ms_gpr ms 0 = Z_to_bv 64 fd -> ms_gpr ms 1 = iov -> ms_gpr ms 2 = Z_to_bv 64 2 ->
   iov_array segs (ms_mem ms) iov [(b1, n1); (b2, Z_to_bv 64 0)] ->
@@ -107,11 +114,11 @@ Lemma srz_writev2_hull : forall A AL E ms model x8 (fd : Z) (iov b1 n1 b2 : word
                      (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k bs1)) K)) ->
   srealizes segs (mkCfg ms model) (t_emit (map (WriteEv (Z_to_bv 64 fd)) bs1) K).
 Proof.
-  intros A AL E ms model x8 fd iov b1 n1 b2 bs1 K Hrom Hh Hsvc Hfd Hfdr Hno H0 H1 H2 Harr Hbs Ht1 Htmax Ht30 Hiovt Hok1 Hok2 HI Hiov Hbuf HK Hcont.
+  intros A AL E ms model x8 fd iov b1 n1 b2 bs1 K Hrom Hh Hsvc Hfd Hrdr Hfdr Hno H0 H1 H2 Harr Hbs Ht1 Htmax Ht30 Hiovt Hok1 Hok2 HI Hiov Hbuf HK Hcont.
   pose proof (u64_range n1) as Rn1. pose proof (u64_range b2) as Rb2.
   assert (Hbufs : iov_bufs segs (ms_mem ms) [(b1, n1); (b2, Z_to_bv 64 0)] [bs1; []]).
   { cbn [iov_bufs]. split; [exact Hbs|]. split; [reflexivity| exact I]. }
-  destruct (writev_outcome segs ms x8 model fd iov [(b1, n1); (b2, Z_to_bv 64 0)] [bs1; []] Hrom Hfd Hfdr Hno H0 H1 H2
+  destruct (writev_outcome segs ms x8 model fd iov [(b1, n1); (b2, Z_to_bv 64 0)] [bs1; []] Hrom Hfd Hrdr Hfdr Hno H0 H1 H2
               ltac:(cbn; lia) Harr Hbufs ltac:(cbn [iovs_total]; change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia)
               ltac:(cbn [iovs_total]; change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia)
               ltac:(cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; lia)
@@ -127,7 +134,7 @@ Proof.
   assert (Hacc : forall i, accs_in_hull A (syscall_effect_accesses (effs i))).
   { intros [k Hk]. unfold effs. cbn [proj1_sig]. unfold syscall_effect_accesses. cbn [eff_copyins eff_writes write_accesses]. rewrite app_nil_r.
     intros a n Hin. apply in_app_or in Hin. destruct Hin as [Hin|Hin].
-    - exact (accs_in_hull_copy_iovecs_2 A _ iov Hiov a n Hin).
+    - exact (accs_in_hull_copy_iovecs A _ 2 iov Hiov a n Hin).
     - exact (accs_in_hull_prefix_2 A b1 n1 b2 k Hbuf a n Hin). }
   destruct (node_family_hull segs A AL E ms model x8 (wr_index bs1) effs (fun _ => model)
               (fun i => map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs1)) _ Hh Hsvc Hchk) as [Hnode HI'].
@@ -136,6 +143,13 @@ Proof.
   - intros _; exact Hh.
   - intros _; exact HI.
   - exact Hacc.
+  - exact (writev_node_rob segs ms x8 model fd iov [(b1, n1); (b2, Z_to_bv 64 0)] [bs1; []] Hrom Hsvc Hfd Hfdr
+             Hno H0 H1 H2 ltac:(cbn; lia) Harr Hbufs
+             ltac:(cbn [iovs_total]; change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia)
+             ltac:(cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; lia)
+             ltac:(cbn [iovs_access_okb forallb fst snd];
+                   rewrite (access_okb_intro b1 n1 Hok1), (access_okb_intro b2 (Z_to_bv 64 0))
+                     by (change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia); reflexivity)).
   - eapply (srz_node segs (mkCfg ms model) (wr_index bs1) _ _ (fun i => t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn (proj1_sig i) bs1)) K)
               (wr_full bs1 Hnb) Hnode).
     intros [k [Hk1 Hk2]]. cbn [proj1_sig].
@@ -163,23 +177,6 @@ Section WithSegs.
 Variable segs : list Segment.
 
 (* [comment removed for export] *)
-Lemma accs_in_hull_copy_iovecs : forall A mp cnt iov,
-  bytes_in_hull A iov (16 * cnt) -> accs_in_hull A (copy_iovecs_accesses mp iov cnt).
-Proof.
-  intros A mp cnt. induction cnt as [|cnt IH]; intros iov H a n Hin; cbn [copy_iovecs_accesses] in Hin; [contradiction|].
-  destruct Hin as [E|Hin].
-  - injection E as <- <-. eapply bytes_in_hull_shrink; [|exact H]. lia.
-  - assert (H16 : bytes_in_hull A (iov + 16) (16 * cnt)).
-    { intros k Hk. specialize (H (16 + k)%nat ltac:(lia)).
-      replace (woff (iov + 16) k) with (woff iov (16 + k)); [exact H|].
-      unfold woff. apply bv_eq. rewrite !Z_to_bv_unsigned, bv_add_unsigned. change (bv_unsigned (16:word)) with 16%Z.
-      unfold bv_wrap. rewrite Nat2Z.inj_add. change (Z.of_nat 16) with 16%Z.
-      rewrite Zplus_mod_idemp_l. f_equal. lia. }
-    destruct (read_iovec_entry mp iov) as [b len| |]; [|destruct Hin|destruct Hin].
-    exact (IH _ H16 a n Hin).
-Qed.
-
-(* [comment removed for export] *)
 Lemma accs_in_hull_iov_prefix : forall A iovs k,
   (forall b n, In (b, n) iovs -> bytes_in_hull A b (word_to_nat n)) ->
   accs_in_hull A (iov_prefix_accesses iovs k).
@@ -200,6 +197,7 @@ Lemma srz_writev_hull : forall A AL E ms model x8 (fd : Z) (iov : word) iovs bss
   ms_rom ms = seg_rom segs ->
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->   (* 08b1429: channel-reader-premise *)
   (0 < fd < 2^31)%Z -> bv_unsigned x8 = 66%Z ->
   ms_gpr ms 0 = Z_to_bv 64 fd -> ms_gpr ms 1 = iov -> ms_gpr ms 2 = Z_to_bv 64 (Z.of_nat (length iovs)) ->
   (1 <= length iovs <= 1024)%nat ->
@@ -214,8 +212,8 @@ Lemma srz_writev_hull : forall A AL E ms model x8 (fd : Z) (iov : word) iovs bss
                      (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k (concat bss))) K)) ->
   srealizes segs (mkCfg ms model) (t_emit (map (WriteEv (Z_to_bv 64 fd)) (concat bss)) K).
 Proof.
-  intros A AL E ms model x8 fd iov iovs bss K Hrom Hh Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Ht1 Ht26 Hiovt Hokb HI Hiov Hbuf HK Hcont.
-  destruct (writev_outcome segs ms x8 model fd iov iovs bss Hrom Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Ht1
+  intros A AL E ms model x8 fd iov iovs bss K Hrom Hh Hsvc Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Ht1 Ht26 Hiovt Hokb HI Hiov Hbuf HK Hcont.
+  destruct (writev_outcome segs ms x8 model fd iov iovs bss Hrom Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Ht1
               ltac:(lia) Hiovt Hokb) as [Hlen Hchk].
   set (bs := concat bss) in *.
   set (CA := copy_iovecs_accesses (ms_read_byte ms) iov (length iovs)) in *.
@@ -235,6 +233,8 @@ Proof.
   - intros _; exact Hh.
   - intros _; exact HI.
   - exact Hacc.
+  - exact (writev_node_rob segs ms x8 model fd iov iovs bss Hrom Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs
+             ltac:(lia) Hiovt Hokb).
   - eapply (srz_node segs (mkCfg ms model) (wr_index bs) _ _ (fun i => t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn (proj1_sig i) bs)) K)
               (wr_full bs Hnb) Hnode).
     intros [k [Hk1 Hk2]]. cbn [proj1_sig].
@@ -265,7 +265,22 @@ Proof.
   { cbn [iov_array]. refine (conj Rb1 (conj Rn1 (conj _ I))). rewrite u64_lit by lia. lia. }
   pose proof (copy_iovecs_of_array segs ms [(b1, Z_to_bv 64 0)] iov Hrom Harr) as Hcp. cbn [length] in Hcp.
   set (CA := copy_iovecs_accesses (ms_read_byte ms) iov 1).
-  destruct (node_ret_only_copyins_hull segs A AL E ms model x8 CA (Z_to_bv 64 0) model [] Hh Hsvc) as [Hn HI']; [ | exact Hh | exact HI | | ].
+  (* LPS 727298f3: the one zero-length entry reads in full, so the node is robust *)
+  assert (Himp : import_iovecs (ms_read_byte ms) iov (Z_to_bv 64 1) = ImpOk [(b1, Z_to_bv 64 0)]).
+  { refine (proj1 (import_iovecs_of_copy (ms_read_byte ms) iov (Z_to_bv 64 1) [(b1, Z_to_bv 64 0)]
+                     _ _ _ Hcp _)).
+    - apply w_is0_pos. rewrite u64_lit; lia.
+    - unfold IOV_MAX. rewrite u64_lit; lia.
+    - rewrite u64_lit by lia. unfold access_okb. pose proof (u64_range iov).
+      apply andb_true_iff; split; apply Z.leb_le; unfold TASK_SIZE in *; lia.
+    - cbn [iovs_access_okb forallb fst snd]. rewrite u64_lit by lia. unfold access_okb.
+      pose proof (u64_range b1).
+      rewrite (proj2 (Z.leb_le _ _)), (proj2 (Z.leb_le _ _)) by (unfold TASK_SIZE in *; lia). reflexivity. }
+  destruct (node_ret_only_copyins_hull segs A AL E ms model x8 CA (Z_to_bv 64 0) model [] Hh Hsvc) as [Hn HI'];
+    [ | exact Hh | exact HI | |
+      apply (RomBase.writev_chan_rob segs ms model x8 (Z_to_bv 64 fd) [(b1, Z_to_bv 64 0)] [] Hsvc Hno);
+        [ rewrite H0, fd32_id by (rewrite u64_lit; lia); exact Hfd | rewrite H1, H2; exact Himp | reflexivity ]
+    | ].
   - intros o.
     rewrite (syscall_spec_66 (sys_input segs ms x8) model o) by (rewrite in_sysno_si; exact Hno).
     rewrite in_arg0_si, in_arg1_si, in_arg2_si, H0, H1, H2.

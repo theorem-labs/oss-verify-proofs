@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the halts proofs introduce the four new premises of full_stmt; both binaries' libraries are closed at their run instances, FZ_p of type Ref.ECH_LibTop.fuzz_vc_type and FZ_u of type Ub.ECH_LibTop.fuzz_vc_type). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List QArith Lia.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
@@ -38,8 +39,7 @@ Module OpensslEchconfiglistParserHaltsUbsanExits <: LinuxProcessSemantics.Equiva
 End OpensslEchconfiglistParserHaltsUbsanExits.
 
 (* [comment removed for export] *)
-Definition FZ_p : forall (HCEIL : HeapCeil) (HSEC : HeapSecret),
-    @OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_Iface.fuzz_stmt HCEIL (@OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.MallocSR.HS HCEIL HSEC)
+Definition FZ_p : OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_LibTop.fuzz_vc_type
   := OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_LibTop.fuzz_closed.
 
 Theorem halts_allowed_openssl_echconfiglist_parser_halts_plain :
@@ -49,13 +49,12 @@ Theorem halts_allowed_openssl_echconfiglist_parser_halts_plain :
     OpensslEchconfiglistParserHaltsPlainExits.codes
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.openssl.echconfiglist_parser.images.Plain.M.loaded_segments OSSVerify.openssl.echconfiglist_parser.images.Plain.M.init_pc OSSVerify.openssl.echconfiglist_parser.images.Plain.M.phdrs).
 Proof.
-  apply (@halts_of_realizes_spec hunspell_scfg). unfold full_stmt. intros sp brk mbase rnd inp Hsp Hbrk Hfit Hva Hve Hfs.
+  apply (@halts_of_realizes_spec hunspell_scfg). unfold full_stmt. intros sp brk mbase rnd inp Hsp Hbrk Hfit Hva Hve Hfs Hmb Hrd Hvl Hlau.
   apply (RefTop.ref_realizes_spec_lim FZ_p); try assumption. unfold Equivalence.ShippedBudgets.lim_source, source_alloc_limit. lia.
 Qed.
 
 (* [comment removed for export] *)
-Definition FZ_u : forall (HCEIL : HeapCeil) (HSEC : HeapSecret),
-    @OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub.ECH_Iface.fuzz_stmt HCEIL (@OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub.MallocSR.HS HCEIL HSEC)
+Definition FZ_u : OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub.ECH_LibTop.fuzz_vc_type
   := OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub.ECH_LibTop.fuzz_closed.
 
 Theorem strong_universal_error_free_echconfiglist_parser_ubsan :
@@ -74,6 +73,6 @@ Theorem halts_allowed_openssl_echconfiglist_parser_halts_ubsan :
     OpensslEchconfiglistParserHaltsUbsanExits.codes
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.openssl.echconfiglist_parser.images.Ubsan.M.loaded_segments OSSVerify.openssl.echconfiglist_parser.images.Ubsan.M.init_pc OSSVerify.openssl.echconfiglist_parser.images.Ubsan.M.phdrs).
 Proof.
-  apply (@halts_of_realizes_spec hunspell_scfg). unfold full_stmt. intros sp brk mbase rnd inp Hsp Hbrk Hfit Hva Hve Hfs.
+  apply (@halts_of_realizes_spec hunspell_scfg). unfold full_stmt. intros sp brk mbase rnd inp Hsp Hbrk Hfit Hva Hve Hfs Hmb Hrd Hvl Hlau.
   apply (OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub.UbTop.ub_realizes_spec_lim FZ_u); try assumption. unfold Equivalence.ShippedBudgets.lim_source, source_alloc_limit. lia.
 Qed.

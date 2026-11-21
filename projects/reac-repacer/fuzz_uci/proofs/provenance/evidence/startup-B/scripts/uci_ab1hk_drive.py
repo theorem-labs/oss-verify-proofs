@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """uci_ab1hk_drive.py -- runs gen_ab1hk.py (imported UNCHANGED, sha256 0f51cb9cdb18...; cited, not shipped: $UCIB_AB1HK)
-for reac-repacer/fuzz_uci image B (asan-ubsan): the B twin of decode B's dec_ab1hk_drive.py (commit 7eb81ddb186
+for reac-repacer/fuzz_uci image B (asan-ubsan): the B twin of decode B's dec_ab1hk_drive.py (
 proofs/libreac/fuzz_decode/provenance/startup-gen/B/dec_ab1hk_drive.py). Paths from ucib_env.py. It sets gen_ab1hk's configuration globals only:
 
   CGIF   the donor images (this lane's donor clone holds them; sha256 asserted equal to the tool's csha)
-  DONOR  the donor text's ref: commit 25e3d17bdb50 (the donor of record; for YB1h / YB1k /
-         YB1l the blobs equal c8557374ad2e's, asserted below)
+  DONOR  the donor text's ref: (the donor of record; for YB1h / YB1k /
+         YB1l the blobs equal, asserted below)
   PAU / TWIN / SIDE['B']: fuzz_uci's pinned asan-ubsan image + unstripped twin, its x_envscan / x_pnscan
   RENAME []: the files are written with the donor's module paths; port_core's own rename_text (tools/nsB.py)
          rewrites them afterwards, so the per-image / kernel split is port_core's B convention.

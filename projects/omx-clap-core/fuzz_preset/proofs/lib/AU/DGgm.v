@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGgm.v (cold/c-asan-realloc-primary e63c092c44c, file sha256 d737020f65ed) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 47 image addresses moved by code-verified function pairs (65 port_addr_check 8a1de5003757 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py; 6 the tool cannot place or places wrongly, read out of image B itself); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGgm.v (file sha256 d737020f65ed) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 47 image addresses moved by code-verified function pairs (65 port_addr_check 8a1de5003757 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py; 6 the tool cannot place or places wrongly, read out of image B itself); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seed and the frame facts of the frame-generic Deallocate walk, the quarantine arms that open a new batch or drain (mid / drain)
    (the DG* files, generalized from YFgm / YFfw / YFgd / YFgf / YFg1 / YFg2 / YFfz: the same segment scripts with the
    caller's frame made abstract).

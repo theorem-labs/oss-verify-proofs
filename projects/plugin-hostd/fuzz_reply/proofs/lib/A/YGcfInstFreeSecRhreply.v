@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeSecRhcgif.v (commit 2108b825fd45, lane F2a plan row (c4); file sha256 bfe97d4dc3ea) onto plugin-hostd/fuzz_reply's asan image A; module paths changed (lib.A / lib.Reusable), the image classes AImg_cgif / DImg_cgif -> AImg_reply / DImg_reply, the image modules YB1v YB1q YF0l YF0m YF0x YFg8 AGif2cgif DGif0cgif -> AB1v AB1q AF0l AF0m AF0x AFg8 AGif2reply DGif0reply, SEC_rh_cgif -> SEC_rh_reply; no numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeSecRhcgif.v (lane F2a plan row (c4); file sha256 bfe97d4dc3ea) onto plugin-hostd/fuzz_reply's asan image A; module paths changed (lib.A / lib.Reusable), the image classes AImg_cgif / DImg_cgif -> AImg_reply / DImg_reply, the image modules YB1v YB1q YF0l YF0m YF0x YFg8 AGif2cgif DGif0cgif -> AB1v AB1q AF0l AF0m AF0x AFg8 AGif2reply DGif0reply, SEC_rh_cgif -> SEC_rh_reply; no numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch, plan row (c4)): the unit walk YGcfInstFreeSig.SEC_rh_t (the
    big arm's flag-free secondary Recycle walk under the re-hide; WalkSigDrh's field wsr_rcs_rh and the second premise
    of YGcfInstFreeBig.diface_big_rh_cf_at) DISCHARGED at fuzz_reply's image A: it is H4's DMrcRh.rchunk_sec_rh_nf
-   (DMrcRh.v:447-482) at the cf choice ARXr := YGcfInstDrainR.ARXr_cf B IOK Hp, ARXsl := DMrcSecCf.ARXsl_cf B IOK Hp,
+   (DMrcRh.v:448-483) at the cf choice ARXr := YGcfInstDrainR.ARXr_cf B IOK Hp, ARXsl := DMrcSecCf.ARXsl_cf B IOK Hp,
    AOX := aowned B, DRq := DRq_cf B NMAXD_big_cf.  rule 24: no function proved (kind: instance discharge of a unit walk
    at fuzz_reply A; the walk is H4's).
 

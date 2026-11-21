@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's list_drop, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (free sites) and lib/A/ACbk.v (entry and return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* list_drop(l, i) at 0x85814 frees the text of record i (the allocator's free, through the GUIDE's allocator
    parameter: the Section hypothesis AFREE, W_journal_x.v afree_cf_rule_c_x at a caller-context table CTX), moves the
    records after it down by one
@@ -77,7 +78,7 @@ unfold HarnessRep.text_rec, OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Lib.Mem
 rewrite length_app, !length_N_to_le_bytes. cbn [length]. lia.
 Qed.
 (* `writable_at` (YP09.v:136) is "the byte is present, or the address falls in a writable segment", so it
-   survives a step that keeps presence and hides no more (W_frame.v:76 writable_kept, across two worlds). *)
+   survives a step that keeps presence and hides no more (W_frame.v:77 writable_kept, across two worlds). *)
 Lemma writable_kept_w : forall (W W' : world SEGS) (m m' : word -> option byte) a,
 (apresent (w_H W) m a -> apresent (w_H W') m' a) -> wle W W' ->
 writable_at SEGS (mrestrict (w_H W) m) a -> writable_at SEGS (mrestrict (w_H W') m' ) a.
@@ -1354,7 +1355,7 @@ intros W W' m m' a nn Hp H j Hj.
 apply (writable_kept_wR W W' m m' (a + j)); [intros Hx; exact (Hp (a + j) ltac:(lia) Hx) | exact (H j Hj)].
 Qed.
 
-(* :840 ld_bodyX_x (line at 87fe4e86c75) *)
+(* :840 ld_bodyX_x (line) *)
 Lemma ld_bodyX_xR : forall W regs memc mdc sp0 FP ly S Hp W0 mem md own lyc Sc Hpc kk
 LA v n cap (i : nat) s_i len_i raw (kr : nat),
 AJGR LDROP_STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc kk ->

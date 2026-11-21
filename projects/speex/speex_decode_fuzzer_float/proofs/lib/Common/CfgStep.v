@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (alloc_no_b counts munmap, and the new refusal_b_munmap, refusal_b_munmap_errno and refusal_b_munmap_below read munmap's errno answers). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -33,7 +34,7 @@ Proof. repeat split. Qed.
 
 (* [comment removed for export] *)
 Definition alloc_no_b (n : Z) : bool :=
-  Z.eqb n 214 || Z.eqb n 216 || Z.eqb n 222 || Z.eqb n 226.
+  Z.eqb n 214 || Z.eqb n 215 || Z.eqb n 216 || Z.eqb n 222 || Z.eqb n 226.
 
 Lemma alloc_no_b_true_iff : forall n,
   alloc_no_b n = true <-> In n alloc_mark_sysnos.
@@ -239,6 +240,8 @@ Proof.
     inversion H; subst.
     + (* [comment removed for export] *)
       intros ((x8 & Hsvc & _) & _). cbn [cfg_ms] in Hsvc. congruence.
+    + (* a vDSO call carries no pending syscall, so no child of one is spurious *)
+      intros ((x8 & Hsvc & _) & _). cbn [cfg_ms] in Hsvc. congruence.
     + (* [comment removed for export] *)
       intros ((y8 & Hy & Hoff) & Hr & Hex). cbn [cfg_ms] in Hy.
       match goal with Hs : ms_svc_pending ms = Some ?x |- _ =>
@@ -262,6 +265,7 @@ Proof.
       eapply killed_halted; eassumption.
   - intros [H Hns]. inversion H; subst.
     + apply sstep_cfg_instr; assumption.
+    + eapply sstep_cfg_vdso_call; eassumption.
     + eapply sstep_cfg_syscall; try eassumption.
       intros (Hoff & Hr & (eff' & m' & evs' & Hspec & Hnr)). apply Hns.
       match goal with
@@ -284,6 +288,9 @@ Proof.
   - apply sstep_cfg_instr; assumption.
   - apply sstep_cfg_instr_fault; assumption.
   - apply sstep_cfg_instr_unmodeled; assumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
   - eapply sstep_cfg_syscall; try eassumption.
     apply spurious_refusal_family_on. apply (Hon x8). assumption.
   - eapply sstep_cfg_syscall_materialization_fault; try eassumption.
@@ -392,6 +399,8 @@ Lemma nonrefusal_outcome_of_child : forall c e c',
 Proof.
   intros c e c' H (y8 & Hy & _) Hh' Hr. inversion H; subst; cbn [cfg_ms cfg_model] in *.
   - congruence.
+  - (* a vDSO call: no syscall is pending, against pending_off *)
+    congruence.
   - match goal with
     | Hmat : materialize_model_accesses ?m' _ = Some ?m'', Hhm : m_halted ?m' = None |- _ =>
         pose proof (eq_trans (materialize_halted _ _ _ Hmat) Hhm) as Hh''
@@ -622,6 +631,13 @@ Lemma refusal_b_mremap : forall i m r,
   bv_unsigned (in_sysno i) = 216%Z -> refusal_b i m r = ret_in_errnos mremap_errnos r.
 Proof. intros i m r H. unfold refusal_b. rewrite H. reflexivity. Qed.
 
+(* munmap joined [Run.injected_table] at LPS 75d69e00: 215 is now in
+   [Run.alloc_mark_sysnos] and [Run.injected_arm 215] is [Some _] with
+   family [FamAlloc] and errnos [Mmap.munmap_errnos]. *)
+Lemma refusal_b_munmap : forall i m r,
+  bv_unsigned (in_sysno i) = 215%Z -> refusal_b i m r = ret_in_errnos munmap_errnos r.
+Proof. intros i m r H. unfold refusal_b. rewrite H. reflexivity. Qed.
+
 Lemma refusal_b_brk : forall i m r,
   bv_unsigned (in_sysno i) = 214%Z -> refusal_b i m r = brk_refusal_b m (in_arg i 0) r.
 Proof. intros i m r H. unfold refusal_b. rewrite H. reflexivity. Qed.
@@ -691,6 +707,18 @@ Lemma refusal_b_mremap_below : forall i m r,
   refusal_b i m r = false.
 Proof.
   intros i m r H Hr. rewrite (refusal_b_mremap i m _ H).
+  apply ret_in_errnos_below; [exact enomem_window | exact Hr].
+Qed.
+
+Lemma refusal_b_munmap_errno : forall i m e,
+  bv_unsigned (in_sysno i) = 215%Z -> In e munmap_errnos -> refusal_b i m (errno_ret e) = true.
+Proof. intros i m e H He. rewrite (refusal_b_munmap i m _ H). apply ret_in_errnos_errno, He. Qed.
+
+Lemma refusal_b_munmap_below : forall i m r,
+  bv_unsigned (in_sysno i) = 215%Z -> (bv_unsigned r <= 2 ^ 64 - 4096)%Z ->
+  refusal_b i m r = false.
+Proof.
+  intros i m r H Hr. rewrite (refusal_b_munmap i m _ H).
   apply ret_in_errnos_below; [exact enomem_window | exact Hr].
 Qed.
 

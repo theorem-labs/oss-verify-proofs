@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a syscall return clears the LR/SC reservation: svc_post_mem, the st_ok_sys lemmas and their users; open_pre_facts reads the path buffer's below-TASK_SIZE end from s_facts, for read_cstr_aux_ok and read_cstr_aux_toolong; det_nomem_tail, det_nomem_tail_cp and open_fork take RomBase.sys_rob at the pending call, proved at close and read by RomBase.sys_rob_memfree, at ioctl by RomBase.sys_rob_of_char and at openat by SysSpec.openat_rob; imports RomBase). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -10,6 +11,7 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import
   W64 W64Proofs Val IMap Mem Instr State Step Plan ValProofs MemProofs StepSoundBase StepSound PlanSound.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Ctr Require Import Lib Defs.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue Require Import Nodes Ops SysSpec OblsLib.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require RomBase.
 Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import W64 Val Mem FI St Step Plan ValP StepB StepS PlanS FXN CtrLib CtrS Ops SysSpec OL.
@@ -58,8 +60,12 @@ Proof.
   - destruct Ho as [<-|Ho]; [left; reflexivity| right; exact (IH o Ho Hid)].
 Qed.
 
+(* LPS 08b1429 (at 75d69e00, Run.v advance_past_svc): a syscall return clears
+   the LR/SC reservation.  Glue/Nodes.v:352-362 is the ported sibling of this
+   pair; CtrSys was the one left behind. *)
 Definition svc_post_mem (ms : machine_state) (ret : word) (m' : word -> option byte) : machine_state :=
-  ms_upd ms (rset (reg_of_r5 X10) ret (with_pc (ms_pc_val ms + Z_to_bv 64 4)%bv (core_of ms))) m'.
+  ms_upd ms (rset (reg_of_r5 X10) ret
+               (with_resv None (with_pc (ms_pc_val ms + Z_to_bv 64 4)%bv (core_of ms)))) m'.
 
 Lemma svc_post_mem_eq : forall ms x8 r ws cps,
   advance_past_svc (apply_effect (pend ms x8) (mkEffectU r ws [] [] [] cps)) = svc_post_mem ms r (apply_writes (ms_mem ms) ws).
@@ -78,7 +84,7 @@ Lemma st_ok_sys : forall E T ms model model' ret v fs' os' n' (m' : word -> opti
      m' (Z_to_bv 64 a) = ms_mem ms (Z_to_bv 64 a)) ->
 
   (forall a b, m' a = Some b -> ms_mem ms a = None -> forall seg, find_segment segs (bv_unsigned a) 1 = Some seg -> seg_writable seg = true) ->
-  st_ok segs OPS E (SS (PrimInt63.add (s_pc T) 4%uint63) (rf_set (s_rf T) X10 v) (s_ff T) (s_resv T) (s_regs T)
+  st_ok segs OPS E (SS (PrimInt63.add (s_pc T) 4%uint63) (rf_set (s_rf T) X10 v) (s_ff T) RNone (s_regs T)
                       (fs' ++ s_facts T) os' (s_priv T) n')
         (svc_post_mem ms ret m') model'.
 Proof.
@@ -88,6 +94,8 @@ Proof.
   destruct H1 as [Hpc' Hx0 Hregs Hfregs Hsvc Hresv Hfcsr Hrom Hz Hbst Hreg Hdisj Hpub Hfacts Hops' Hapart' Hmf0 Hcov0 Hminv].
   split; cbn [s_pc s_rf s_ff s_resv s_regs s_facts s_ops s_priv setpc svc_post_mem ms_upd ms_regs ms_fregs ms_pc_val ms_svc_pending
               ms_resv ms_fcsr ms_mem ms_rom] in *; try assumption.
+  (* the syscall return clears the reservation on both sides *)
+  all: try (cbn; reflexivity).
   - intros k r Hk. apply (MemP.region_ok_frame segs (s_priv T) E (ms_mem ms) m' k r Hz (Hreg k r Hk)).
     intros a Ha Hbased Habs. apply Hmem; [exact Ha|].
     destruct (PrimInt63.eqb k 0%uint63) eqn:Hk0.
@@ -113,7 +121,7 @@ Lemma st_ok_sys_acc : forall E T ms model model' ret v fs' os' n' (m' : word -> 
   (forall a b, m' a = Some b -> ms_mem ms a = None -> forall seg, find_segment segs (bv_unsigned a) 1 = Some seg -> seg_writable seg = true) ->
   (forall a n j, In (a, n) acc -> 0 <= j < Z.of_nat n -> op_cov OPS (insts E os') (bv_unsigned a + j)) ->
   materialize_model_accesses model' acc = Some (matz model' acc) /\
-  st_ok segs OPS E (SS (PrimInt63.add (s_pc T) 4%uint63) (rf_set (s_rf T) X10 v) (s_ff T) (s_resv T) (s_regs T)
+  st_ok segs OPS E (SS (PrimInt63.add (s_pc T) 4%uint63) (rf_set (s_rf T) X10 v) (s_ff T) RNone (s_regs T)
                       (fs' ++ s_facts T) os' (s_priv T) n')
         (svc_post_mem ms ret m') (matz model' acc).
 Proof.
@@ -133,7 +141,7 @@ Lemma st_ok_sys0 : forall E T ms model model' ret v os' (m' : word -> option byt
   (forall a, 0 <= a < two64 -> (find_segment segs a 1 = None \/ ~ in_priv (s_priv T) a) ->
      m' (Z_to_bv 64 a) = ms_mem ms (Z_to_bv 64 a)) ->
   (forall a b, m' a = Some b -> ms_mem ms a = None -> forall seg, find_segment segs (bv_unsigned a) 1 = Some seg -> seg_writable seg = true) ->
-  st_ok segs OPS E (SS (PrimInt63.add (s_pc T) 4%uint63) (rf_set (s_rf T) X10 v) (s_ff T) (s_resv T) (s_regs T)
+  st_ok segs OPS E (SS (PrimInt63.add (s_pc T) 4%uint63) (rf_set (s_rf T) X10 v) (s_ff T) RNone (s_regs T)
                       (s_facts T) os' (s_priv T) (s_next T))
         (svc_post_mem ms ret m') model'.
 Proof.
@@ -339,11 +347,13 @@ Proof.
         by (rewrite in_arg0, Ha0, fd32_3; exact Hlk).
       pose proof (close_outcome _ model e o H57s Hlk') as X. rewrite in_arg0, Ha0, fd32_3 in X. exact X.
     + intros _. subst model'. split; [rewrite m_halted_with_fds; exact Hh | exact (mat_nil _)].
+  - (* LPS 727298f3: close reads no memory ([RomBase.memfree_57]) *)
+    apply (RomBase.sys_rob_memfree segs (pend ms x8) model x8 eq_refl). rewrite H57. exact RomBase.memfree_57.
   - intros []. change (mkEffect (Z_to_bv 64 0) [] []) with (mkEffectU (Z_to_bv 64 0) [] [] [] [] []).
     rewrite svc_post_mem_eq. cbn [apply_writes].
     apply (Hk _ (or_introl eq_refl) E _ model'); [apply env_ext_refl' | apply MP_fds; exact HMP |].
     change (sysret (set_ops st (OpI CtrS.FDINIT_ID [] :: remove_op oid (s_ops st))) (VL wzero)) with
-      (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 (VL wzero)) (s_ff st) (s_resv st) (s_regs st)
+      (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 (VL wzero)) (s_ff st) RNone (s_regs st)
           (s_facts st) (OpI CtrS.FDINIT_ID [] :: remove_op oid (s_ops st)) (s_priv st) (s_next st)).
     apply (st_ok_sys0 segs OPS E st ms model model' (Z_to_bv 64 0) (VL wzero)); try assumption.
     + cbn [den]. rewrite wbv_wzero. reflexivity.
@@ -378,12 +388,13 @@ Lemma det_nomem_tail_cp : forall (pc : int) (st : sstate) K E ms model (ret : wo
   bv_unsigned (den E (getr st X17)) = no -> PrimInt63.ltb (s_pc st) bit62i = true -> den E v = ret ->
   (forall o, syscall_spec (sys_input segs (pend ms (den E (getr st X17))) (den E (getr st X17))) model o <->
              o = Ok (mkEffectU ret [] [] [] [] cps) model []) ->
+  RomBase.sys_rob segs (mkCfg (pend ms (den E (getr st X17))) model) ->
   (forall a n j, In (a, n) cps -> 0 <= j < Z.of_nat n -> fx_acc segs E (s_regs st) (bv_unsigned a + j)) ->
   (forall E' ms' model', env_ext (s_next st) E E' -> MP model' ->
       st_ok segs OPS E' (sysret st v) ms' model' -> realizes segs (mkCfg ms' model') K) ->
   realizes segs (mkCfg ms model) K.
 Proof.
-  intros pc st K E ms model ret v no cps HS Hat HMP Hno Hpc62 Hv Hspec Hcps Hk.
+  intros pc st K E ms model ret v no cps HS Hat HMP Hno Hpc62 Hv Hspec Hrob Hcps Hk.
   pose proof (so_mf _ _ _ _ _ _ HS) as Hmi. pose proof (op_minv_halted OPS _ Hmi) as Hh.
   assert (ACC : forall a n j, In (a, n) (syscall_effect_accesses (mkEffectU ret [] [] [] [] cps)) -> 0 <= j < Z.of_nat n ->
                   op_cov OPS (insts E (s_ops st)) (bv_unsigned a + j)).
@@ -397,10 +408,11 @@ Proof.
              (fun _ => nonspur_det _ _ _ _ _ Hspec)).
     + intros o. apply iff_unit. apply Hspec.
     + intros _. split; [exact Hh| exact Hmat].
+  - exact Hrob.
   - intros []. rewrite svc_post_mem_eq. cbn [apply_writes].
     apply (Hk E _ mo2); [apply env_ext_refl' | exact (MP_mat _ _ _ HMP Hmat) |].
     change (sysret st v) with
-      (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 v) (s_ff st) (s_resv st) (s_regs st)
+      (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 v) (s_ff st) RNone (s_regs st)
           (s_facts st) (s_ops st) (s_priv st) (s_next st)).
     apply (st_ok_sys0 segs OPS E st ms model mo2 ret v); try assumption.
     + exact (so_apart _ _ _ _ _ _ HS).
@@ -414,12 +426,13 @@ Lemma det_nomem_tail : forall (pc : int) (st : sstate) K E ms model (ret : word)
   bv_unsigned (den E (getr st X17)) = no -> PrimInt63.ltb (s_pc st) bit62i = true -> den E v = ret ->
   (forall o, syscall_spec (sys_input segs (pend ms (den E (getr st X17))) (den E (getr st X17))) model o <->
              o = Ok (mkEffect ret [] []) model []) ->
+  RomBase.sys_rob segs (mkCfg (pend ms (den E (getr st X17))) model) ->
   (forall E' ms' model', env_ext (s_next st) E E' -> MP model' ->
       st_ok segs OPS E' (sysret st v) ms' model' -> realizes segs (mkCfg ms' model') K) ->
   realizes segs (mkCfg ms model) K.
 Proof.
-  intros pc st K E ms model ret v no HS Hat HMP Hno Hpc Hv Hspec Hk.
-  apply (det_nomem_tail_cp pc st K E ms model ret v no [] HS Hat HMP Hno Hpc Hv Hspec); [intros a n j []| exact Hk].
+  intros pc st K E ms model ret v no HS Hat HMP Hno Hpc Hv Hspec Hrob Hk.
+  apply (det_nomem_tail_cp pc st K E ms model ret v no [] HS Hat HMP Hno Hpc Hv Hspec Hrob); [intros a n j []| exact Hk].
 Qed.
 
 Lemma neg_den : forall E e, den E (errv e) = errno_ret e.
@@ -436,12 +449,18 @@ Proof.
   injection Happ as <-.
   apply andb_prop in Hpre as [Hpre Hfds]. apply andb_prop in Hpre as [Hpre H11]. apply andb_prop in Hpre as [Hno H10].
   destruct (sysno_ok E st _ Hno) as (H29 & Hpc62 & Hone). rewrite <- Hpc in Hat.
+  set (x8 := den E (getr st X17)) in *.
+  assert (Hno' : bv_unsigned (in_sysno (sys_input segs (pend ms x8) x8)) = 29) by (rewrite in_sysno_sys_input; exact H29).
+  assert (Hfd1 : fd_lookup (m_fds model) (fd32 (in_arg (sys_input segs (pend ms x8) x8) 0)) = Some (FdChannel (Z_to_bv 64 1))).
+  { rewrite in_arg0, pend_gpr, (so_a0 segs OPS E st ms model HS), (is_lit_den E _ _ H10), wlit_word. change (to_Z 1%uint63) with 1.
+    rewrite fd32_1. exact (fd1_channel E st ms model HS Hfds). }
+  assert (Hreq : tty_only_request (cmd32 (in_arg (sys_input segs (pend ms x8) x8) 1)) = true).
+  { rewrite in_arg1, pend_gpr, (so_a1 segs OPS E st ms model HS), (is_lit_den E _ _ H11), wlit_word. change (to_Z 21523%uint63) with 21523. reflexivity. }
   apply (det_nomem_tail pc st K E ms model (errno_ret ENOTTY) (errv ENOTTY) 29 HS Hat HMP H29 Hpc62 (neg_den E ENOTTY)).
-  - intros o. apply (ioctl_outcome _ model (Z_to_bv 64 1) o).
-    + rewrite in_sysno_sys_input. exact H29.
-    + rewrite in_arg0, pend_gpr, (so_a0 segs OPS E st ms model HS), (is_lit_den E _ _ H10), wlit_word. change (to_Z 1%uint63) with 1.
-      rewrite fd32_1. exact (fd1_channel E st ms model HS Hfds).
-    + rewrite in_arg1, pend_gpr, (so_a1 segs OPS E st ms model HS), (is_lit_den E _ _ H11), wlit_word. change (to_Z 21523%uint63) with 21523. reflexivity.
+  - intros o. exact (ioctl_outcome (sys_input segs (pend ms x8) x8) model (Z_to_bv 64 1) o Hno' Hfd1 Hreq).
+  - (* LPS 727298f3: this ioctl reads no memory: the same answer over a larger backing *)
+    apply (RomBase.sys_rob_of_char segs (pend ms x8) model x8 (fun o => o = Ok (mkEffect (errno_ret ENOTTY) [] []) model []) eq_refl).
+    intros r _ o. exact (ioctl_outcome (sys_input segs (RomBase.wrom (pend ms x8) r) x8) model (Z_to_bv 64 1) o Hno' Hfd1 Hreq).
   - intros E' ms' model' HX HMP' HS'. exact (Hk _ (or_introl eq_refl) E' ms' model' HX HMP' HS').
 Qed.
 
@@ -481,6 +500,9 @@ Proof.
       destruct (want_ok (getr st X12)) as [w|] eqn:Hw.
       * destruct (want_ok_small _ _ Hw) as [-> Hr]. cbn [den]. rewrite wbv_unsigned. lia.
       * rewrite (is_lit_den E _ _ H12). rewrite wbv_unsigned. change (w2Z wzero) with 0. lia.
+  - (* LPS 727298f3: read reads no memory ([RomBase.memfree_63]) *)
+    apply (RomBase.sys_rob_memfree segs (pend ms (den E (getr st X17))) model (den E (getr st X17)) eq_refl).
+    rewrite H63. exact RomBase.memfree_63.
   - intros E' ms' model' HX HMP' HS'. exact (Hk _ (or_introl eq_refl) E' ms' model' HX HMP' HS').
 Qed.
 
@@ -670,7 +692,7 @@ Lemma read_post_ok : forall E st ms model off (bs : list byte) (newoff nsv : sv)
   let model' := with_fds (fd_insert (m_fds model) fd3 (FdFile p1 (den E off + len_word bs)%bv)) model in
   let acc := syscall_effect_accesses (mkEffect (len_word bs) (delivered_writes (Z_to_bv 64 RS) bs) []) in
   materialize_model_accesses model' acc = Some (matz model' acc) /\
-  st_ok segs OPS E (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 nsv) (s_ff st) (s_resv st) (s_regs st)
+  st_ok segs OPS E (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 nsv) (s_ff st) RNone (s_regs st)
                       (fs' ++ s_facts st) os' (s_priv st) (s_next st))
         (svc_post_mem ms (len_word bs) (write_to_mem (ms_mem ms) (Z_to_bv 64 RS) bs))
         (matz model' acc).
@@ -747,6 +769,9 @@ Proof.
   { rewrite pend_gpr, (so_a0 segs OPS E st ms model HS), (is_lit_den E _ _ H10), wlit_word. reflexivity. }
   assert (Ha1 : ms_gpr (pend ms x8) 1 = Z_to_bv 64 RS).
   { rewrite pend_gpr, (so_a1 segs OPS E st ms model HS), (is_lit_den E _ _ H11), wlit_word, HRS. reflexivity. }
+  (* LPS 727298f3: read reads no memory ([RomBase.memfree_63]) *)
+  assert (ROB : RomBase.sys_rob segs (mkCfg (pend ms x8) model)).
+  { apply (RomBase.sys_rob_memfree segs (pend ms x8) model x8 eq_refl). rewrite H63. exact RomBase.memfree_63. }
 
   assert (NODE : forall (cnt : word) (bs : list byte) (mo2 : Model),
     ms_gpr (pend ms x8) 2 = cnt -> bv_unsigned cnt <= 2 ^ 40 ->
@@ -775,7 +800,7 @@ Proof.
     ms_gpr (pend ms x8) 2 = cnt -> bv_unsigned cnt <= 2 ^ 40 ->
     bs = file_read file (den E off) (Z_to_bv 64 (rw_count_clamp cnt)) -> Z.of_nat (length bs) <= 65536 ->
     In st' sts ->
-    st' = SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 nsv) (s_ff st) (s_resv st) (s_regs st)
+    st' = SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 nsv) (s_ff st) RNone (s_regs st)
              (fs' ++ s_facts st) os' (s_priv st) (s_next st) ->
     den E newoff = (den E off + len_word bs)%bv ->
     OFF + Z.of_nat (length bs) <= S ->
@@ -789,7 +814,7 @@ Proof.
   { intros cnt bs st' newoff nsv fs' os' Hcnt Hcnt40 Hbs Hlen Hin Hst' Hnew Hle Hn Hbytes Hfs Hos Hkeep.
     destruct (read_post_ok E st ms model off bs newoff nsv fs' os' HS Hpc62 Hpriv Hf3 (ex_intro _ r1 (ex_intro _ r2 (find_op_In _ _ _ Hfr)))
                 Hnew Hle Hn Hlen Hbytes Hfs Hos Hkeep) as [Hmat HSok].
-    apply (rz_silent_all segs _ unit _ tt K (NODE cnt bs _ Hcnt Hcnt40 Hbs Hlen Hmat)). intros [].
+    apply (rz_silent_all segs _ unit _ tt K (NODE cnt bs _ Hcnt Hcnt40 Hbs Hlen Hmat) ROB). intros [].
     change (mkEffect (len_word bs) (delivered_writes (Z_to_bv 64 RS) bs) []) with
            (mkEffectU (len_word bs) (delivered_writes (Z_to_bv 64 RS) bs) [] [] [] []).
     rewrite svc_post_mem_eq, apply_writes_delivered. cbn [ms_mem pend].
@@ -934,6 +959,9 @@ Lemma open_pre_facts : forall E st ms model,
   modeled_open_flags (in_arg i 2) = true /\
   in_arg i 1 = Z_to_bv 64 A /\
   A + (Z.of_nat (length p1) + 1) < two64 /\
+  (* LPS 08b1429: the path buffer ENDS below TASK_SIZE.  [region10_ok] now checks the
+     launch's own region-end fact ([Glue.InitLib.f_a1_end]) in [s_facts]. *)
+  A + (Z.of_nat (length p1) + 1) <= 140737488355328 /\
   (forall j, (j <= length p1)%nat -> in_mem i (Z_to_bv 64 (A + Z.of_nat j)) = Some (nth j (p1 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0))) /\
   m_fds model = FDS0 /\
   PrimInt63.ltb (s_pc st) bit62i = true /\ one_fd_op st = true /\ find_op CtrS.FDINIT_ID (s_ops st) = Some [].
@@ -948,6 +976,7 @@ Proof.
   unfold region10_ok in Hreg.
   destruct (IMap.find 10%uint63 (s_regs st)) as [[lo hi w bg cells]|] eqn:Hr; [|discriminate Hreg].
   destruct bg as [| | | |j sh]; try discriminate Hreg.
+  apply andb_prop in Hreg as [Hreg Hp10].
   apply andb_prop in Hreg as [Hreg Hcells]. apply andb_prop in Hreg as [Hreg Hsh]. apply andb_prop in Hreg as [Hreg Hj].
   apply andb_prop in Hreg as [Hreg Hw]. apply andb_prop in Hreg as [Hlo Hhi].
   apply Uint63.eqb_correct in Hlo. apply sv_eqb_eq in Hhi. apply Uint63.eqb_correct in Hj. apply Uint63.eqb_correct in Hsh.
@@ -965,6 +994,33 @@ Proof.
   - rewrite in_arg1, pend_gpr, (so_a1 segs OPS E st ms model HS), (sv_eqb_eq _ _ H11). cbn [den]. rewrite wbv_wzero.
     apply bv_eq. rewrite bv_add_unsigned, !Z_to_bv_unsigned. change (bv_wrap 64 0) with 0. rewrite Z.add_0_r. reflexivity.
   - lia.
+  - (* LPS 08b1429: read the region-end fact out of [s_facts]. *)
+    destruct (ValP.fact_lookup_holds E (s_facts st) _ (so_facts _ _ _ _ _ _ HS) Hp10) as (f & HF & PF).
+    destruct f as [| | |a b| | | |]; try discriminate PF.
+    destruct b as [c| | | | | | | | | |]; try discriminate PF.
+    cbn [p10_end_ok] in PF. apply andb_prop in PF as [P1 P2].
+    apply sv_eqb_eq in P1. apply Z.leb_le in P2. subst a.
+    cbn [fact_holds] in HF. unfold P10_END in HF.
+    change (den E (VAlu _ ?a ?b)) with (bv_add (den E a) (den E b)) in HF.
+    rewrite bv_add_unsigned in HF.
+    assert (HS10 : bv_unsigned (den E SIZE10) = Z.of_nat (length p1) + 1).
+    { unfold SIZE10. apply (den_param8_u E 10%uint63 _ Hb10). lia. }
+    assert (HP0 : bv_unsigned (den E (VP 10%uint63 wzero)) = bv_unsigned (ev E 10%uint63)).
+    { cbn [den]. rewrite wbv_wzero, bv_add_unsigned, Z_to_bv_unsigned.
+      change (bv_wrap 64 0) with 0. rewrite Z.add_0_r. apply bv_wrap_small.
+      (* The goal here is already [0 <= bv_unsigned (ev E 10) < bv_modulus 64]
+         -- printed verbatim by a goal probe (the probe text and its output are in
+         the pull request's probe commits) -- so there is no [two64] for
+         [rewrite <- bv_modulus_64] to find, and it reports
+         "Found no subterm matching two64".  [bv_wrap_small]'s side condition
+         is stated in [bv_modulus] at 75d69e00; the rewrite was bridging a gap
+         that no longer exists. *)
+      apply bv_unsigned_in_range. }
+    rewrite HS10, HP0 in HF.
+    assert (HRHS : bv_unsigned (den E (VL c)) = w2Z c) by (cbn [den]; apply wbv_unsigned).
+    rewrite HRHS in HF.
+    rewrite bv_wrap_small in HF by (unfold bv_modulus; unfold two64 in *; lia).
+    lia.
   - intros j Hj. rewrite in_mem_sys. unfold ms_read_byte. cbn [ms_mem ms_rom pend]. rewrite (so_rom _ _ _ _ _ _ HS).
     pose proof (ro_bg _ _ _ _ _ _ R (Z.of_nat j)) as B.
     cbn [rg_bg rg_cells bg_byte] in B. rewrite HhiZ, HloZ in B. change (to_Z 0%uint63) with 0 in B. rewrite Z.sub_0_r, Nat2Z.id, Hb3 in B.
@@ -984,7 +1040,7 @@ Lemma open_path_acc : forall E st ms model,
   forall a n j, In (a, n) (CP i) -> 0 <= j < Z.of_nat n -> fx_acc segs E (s_regs st) (bv_unsigned a + j).
 Proof.
   intros E st ms model HS HPB Hpre x8 i a n j Hin Hj.
-  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HA & Hmem & Hfds & Hpc62 & Hone & Hf5).
+  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HA & HU & Hmem & Hfds & Hpc62 & Hone & Hf5).
   fold x8 in Ha1, Hmem. fold i in Ha1, Hmem.
   unfold CP in Hin. destruct Hin as [Hin|[]].
   pose proof (f_equal fst Hin) as Ea. pose proof (f_equal snd Hin) as En. cbn [fst snd] in Ea, En. clear Hin. subst a n.
@@ -997,6 +1053,7 @@ Proof.
   unfold region10_ok in Hreg.
   destruct (IMap.find 10%uint63 (s_regs st)) as [[lo hi w bg cells]|] eqn:Hr; [|discriminate Hreg].
   destruct bg as [| | | |jj sh]; try discriminate Hreg.
+  apply andb_prop in Hreg as [Hreg Hp10].
   apply andb_prop in Hreg as [Hreg Hcells]. apply andb_prop in Hreg as [Hreg Hsh]. apply andb_prop in Hreg as [Hreg Hjj].
   apply andb_prop in Hreg as [Hreg Hw]. apply andb_prop in Hreg as [Hlo Hhi].
   apply Uint63.eqb_correct in Hlo. apply sv_eqb_eq in Hhi. subst lo hi.
@@ -1015,16 +1072,25 @@ Theorem open_absent_sound : forall pc, ecall_at segs pc -> contract_sound segs O
 Proof.
   intros pc Hat st sts Hpc Happ K E ms model HS HMP HPB Hk. cbn [c_open_absent c_pc c_apply] in Hpc, Happ.
   unfold open_absent_apply in Happ. destruct (open_pre st) eqn:Hpre; [|discriminate Happ]. injection Happ as <-.
-  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HA & Hmem & Hfds & Hpc62 & Hone & Hf5).
+  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HA & HU & Hmem & Hfds & Hpc62 & Hone & Hf5).
   destruct fam_absent as (Hsl & Hdr & Hlen & Habs).
   rewrite <- Hpc in Hat. set (x8 := den E (getr st X17)) in *. set (i := sys_input segs (pend ms x8) x8) in *.
   assert (Hcs : read_cstr (in_mem i) (in_arg i 1) = CstrOk p1).
-  { rewrite Ha1. unfold read_cstr. apply read_cstr_aux_ok; [exact p1_nz | unfold path_max; exact Hlen | exact Hmem]. }
+  { rewrite Ha1. unfold read_cstr. apply read_cstr_aux_ok;
+      [exact p1_nz | unfold path_max; exact Hlen | exact (proj1 (u64_range (ev E 10%uint63)))
+      | unfold TASK_SIZE in *; lia | exact Hmem]. }
+  assert (Habs' : path_eqb p1 [] = true \/ fs_lookup (m_fs model) p1 = None).
+  { destruct Habs as [Habs|Habs]; [left; rewrite Habs; reflexivity | right; exact (Habs model HMP)]. }
+  assert (Hnf : read_cstr (in_mem i) (in_arg i 1) <> CstrFault) by (rewrite Hcs; discriminate).
+  (* LPS 727298f3: the path reads the same over a larger backing ([SysSpec.openat_rob]) *)
+  assert (ROB : RomBase.sys_rob segs (mkCfg (pend ms x8) model)).
+  { apply (openat_rob segs (pend ms x8) model x8 (fun cp o => o = Ok (mkEffectU (errno_ret ENOENT) [] [] [] [] cp) model []) eq_refl Hnf).
+    intros r _ Hcs' o.
+    exact (openat_absent_outcome (sys_input segs (RomBase.wrom (pend ms x8) r) x8) model o p1 H56 Hld (eq_trans Hcs' Hcs) Hcwd Hsl Hdr Habs'). }
   apply (det_nomem_tail_cp pc st K E ms model (errno_ret ENOENT) (errv ENOENT) 56 (CP i) HS Hat HMP); try assumption;
     [| | exact (open_path_acc E st ms model HS HPB Hpre) |].
   - apply neg_den.
-  - intros o. apply (openat_absent_outcome i model o p1 H56 Hld Hcs Hcwd Hsl Hdr).
-    destruct Habs as [Habs|Habs]; [left; rewrite Habs; reflexivity | right; exact (Habs model HMP)].
+  - intros o. exact (openat_absent_outcome i model o p1 H56 Hld Hcs Hcwd Hsl Hdr Habs').
   - intros E' ms' model' HX HMP' HS'. exact (Hk _ (or_introl eq_refl) E' ms' model' HX HMP' HS').
 Qed.
 End Absent.
@@ -1036,17 +1102,26 @@ Theorem open_toolong_sound : forall pc, ecall_at segs pc -> contract_sound segs 
 Proof.
   intros pc Hat st sts Hpc Happ K E ms model HS HMP HPB Hk. cbn [c_open_toolong c_pc c_apply] in Hpc, Happ.
   unfold open_toolong_apply in Happ. destruct (open_pre st) eqn:Hpre; [|discriminate Happ]. injection Happ as <-.
-  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HA & Hmem & Hfds & Hpc62 & Hone & Hf5).
+  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HA & HU & Hmem & Hfds & Hpc62 & Hone & Hf5).
   rewrite <- Hpc in Hat. set (x8 := den E (getr st X17)) in *. set (i := sys_input segs (pend ms x8) x8) in *.
   assert (Hcs : read_cstr (in_mem i) (in_arg i 1) = CstrTooLong).
   { rewrite Ha1. unfold read_cstr. apply (read_cstr_aux_toolong _ _ _ (fun j => nth j p1 (Z_to_bv 8 0))).
-    intros j Hj. unfold path_max in Hj. split.
-    - rewrite (Hmem j) by lia. rewrite app_nth1 by lia. reflexivity.
-    - intros Hz. apply p1_nz. rewrite <- Hz. apply nth_In. lia. }
+    - exact (proj1 (u64_range (ev E 10%uint63))).
+    - intros _. replace (Z.of_nat path_max) with 4096 by (vm_compute; reflexivity).
+      unfold TASK_SIZE in *. lia.
+    - intros j Hj. unfold path_max in Hj. split.
+      + rewrite (Hmem j) by lia. rewrite app_nth1 by lia. reflexivity.
+      + intros Hz. apply p1_nz. rewrite <- Hz. apply nth_In. lia. }
+  assert (Hnf : read_cstr (in_mem i) (in_arg i 1) <> CstrFault) by (rewrite Hcs; discriminate).
+  (* LPS 727298f3: the path reads the same over a larger backing ([SysSpec.openat_rob]) *)
+  assert (ROB : RomBase.sys_rob segs (mkCfg (pend ms x8) model)).
+  { apply (openat_rob segs (pend ms x8) model x8 (fun cp o => o = Ok (mkEffectU (errno_ret ENAMETOOLONG) [] [] [] [] cp) model []) eq_refl Hnf).
+    intros r _ Hcs' o.
+    exact (openat_toolong_outcome (sys_input segs (RomBase.wrom (pend ms x8) r) x8) model o H56 Hmf (eq_trans Hcs' Hcs)). }
   apply (det_nomem_tail_cp pc st K E ms model (errno_ret ENAMETOOLONG) (errv ENAMETOOLONG) 56 (CP i) HS Hat HMP); try assumption;
     [| | exact (open_path_acc E st ms model HS HPB Hpre) |].
   - apply neg_den.
-  - intros o. apply (openat_toolong_outcome i model o H56 Hmf Hcs).
+  - intros o. exact (openat_toolong_outcome i model o H56 Hmf Hcs).
   - intros E' ms' model' HX HMP' HS'. exact (Hk _ (or_introl eq_refl) E' ms' model' HX HMP' HS').
 Qed.
 End TooLong.
@@ -1065,13 +1140,14 @@ Lemma open_fork : forall (isfile : bool) st (KA KB : TSet) E ms model,
      (exists e, In e openat_errnos /\ o = Ok (open_err e i) model []) \/
      (exists fd, fd_lookup (m_fds model) fd = None /\ fd = alloc_fd (m_fds model) /\
                  o = Ok (open_ret fd i) (with_fds (fd_insert (m_fds model) fd (open_entry isfile)) model) [])) ->
+  RomBase.sys_rob segs (mkCfg (pend ms x8) model) ->
   (forall ms' model', MP model' -> st_ok segs OPS E (open_okpost isfile st) ms' model' -> realizes segs (mkCfg ms' model') KA) ->
   (forall st', In st' (open_err_posts st) ->
      forall ms' model', MP model' -> st_ok segs OPS E st' ms' model' -> realizes segs (mkCfg ms' model') KB) ->
   realizes segs (mkCfg ms model) (t_alt2 KA KB).
 Proof.
-  intros isfile st KA KB E ms model Hpre HS HMP HPB Hat x8 i Hspec HA HB.
-  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HAA & Hmem & Hfds & Hpc62 & Hone & Hf5).
+  intros isfile st KA KB E ms model Hpre HS HMP HPB Hat x8 i Hspec Hrob HA HB.
+  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HAA & HU & Hmem & Hfds & Hpc62 & Hone & Hf5).
   pose proof (so_mf _ _ _ _ _ _ HS) as Hmi. pose proof (op_minv_halted OPS _ Hmi) as Hh.
   pose proof (open_path_acc E st ms model HS HPB Hpre) as PACC. fold x8 in PACC. fold i in PACC.
   set (model' := with_fds (fd_insert (m_fds model) fd3 (open_entry isfile)) model).
@@ -1080,7 +1156,7 @@ Proof.
                  st_ok segs OPS E (open_okpost isfile st) (svc_post_mem ms fd3 (ms_mem ms)) (matz model' (syscall_effect_accesses (open_ret fd3 i)))).
   { unfold open_okpost.
     change (sysret (set_ops st (open_newop isfile :: remove_op CtrS.FDINIT_ID (s_ops st))) (VL (wlit 3%uint63))) with
-      (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 (VL (wlit 3%uint63))) (s_ff st) (s_resv st) (s_regs st)
+      (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 (VL (wlit 3%uint63))) (s_ff st) RNone (s_regs st)
           ([] ++ s_facts st) (open_newop isfile :: remove_op CtrS.FDINIT_ID (s_ops st)) (s_priv st) (s_next st)).
     assert (KEEP : forall o, In o (s_ops st) -> op_id o = 1%uint63 -> In o (open_newop isfile :: remove_op CtrS.FDINIT_ID (s_ops st))).
     { intros o Ho Hid1. right. apply remove_op_keep; [exact Ho| rewrite Hid1; reflexivity]. }
@@ -1106,7 +1182,7 @@ Proof.
                  st_ok segs OPS E (sysret st (errv e)) (svc_post_mem ms (errno_ret e) (ms_mem ms)) (matz model (syscall_effect_accesses (open_err e i)))).
   { intros e.
     change (sysret st (errv e)) with
-      (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 (errv e)) (s_ff st) (s_resv st) (s_regs st)
+      (SS (PrimInt63.add (s_pc st) 4%uint63) (rf_set (s_rf st) X10 (errv e)) (s_ff st) RNone (s_regs st)
           ([] ++ s_facts st) (s_ops st) (s_priv st) (s_next st)).
     apply (st_ok_sys_acc segs OPS E st ms model model (errno_ret e) (errv e)); try assumption.
     + apply neg_den.
@@ -1137,6 +1213,7 @@ Proof.
     + intros [[]|n]; unfold MO2; cbn [MO EFF].
       * split; [subst model'; rewrite m_halted_with_fds; exact Hh | exact (proj1 SUCC)].
       * split; [exact Hh | exact (proj1 (ERR _))].
+  - exact Hrob.
   -   intros []. unfold MO2. cbn [EFF MO]. unfold open_ret. rewrite svc_post_mem_eq. cbn [apply_writes].
     apply (HA _ _ (MP_mat _ _ _ (MP_fds _ _ HMP) (proj1 SUCC))). exact (proj2 SUCC).
   -   intros n. unfold MO2. cbn [EFF MO]. unfold open_err. rewrite svc_post_mem_eq. cbn [apply_writes].
@@ -1161,15 +1238,28 @@ Proof.
   intros st sts KA KB E ms model Happ HS HMP HPB Hat HA HB.
   unfold open_file_apply in Happ. destruct (open_pre st) eqn:Hpre; [|discriminate Happ]. injection Happ as <-.
   cbn [hd tl] in HA, HB. destruct fam_file as (Hsl & Hdr & Hlen & Hne).
-  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HAA & Hmem & Hfds & Hpc62 & Hone & Hf5).
-  apply (open_fork true st KA KB E ms model Hpre HS HMP HPB Hat); [|exact HA|exact HB].
+  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HAA & HU & Hmem & Hfds & Hpc62 & Hone & Hf5).
+  assert (Hne' : path_eqb p1 [] = false).
+  { assert (G : forall p : list byte, p <> [] -> path_eqb p [] = false) by (intros [|b p] Hp; [exfalso; apply Hp; reflexivity | reflexivity]).
+    exact (G p1 Hne). }
   set (x8 := den E (getr st X17)) in *. set (i := sys_input segs (pend ms x8) x8) in *.
   assert (Hcs : read_cstr (in_mem i) (in_arg i 1) = CstrOk p1).
-  { rewrite Ha1. unfold read_cstr. apply read_cstr_aux_ok; [exact p1_nz | unfold path_max; exact Hlen | exact Hmem]. }
-  intros o. apply (openat_file_outcome i model o p1 file H56 Hld Hcs); try assumption.
-  - assert (G : forall p : list byte, p <> [] -> path_eqb p [] = false) by (intros [|b p] Hp; [exfalso; apply Hp; reflexivity | reflexivity]).
-    exact (G p1 Hne).
-  - exact (MP_file model HMP).
+  { rewrite Ha1. unfold read_cstr. apply read_cstr_aux_ok;
+      [exact p1_nz | unfold path_max; exact Hlen | exact (proj1 (u64_range (ev E 10%uint63)))
+      | unfold TASK_SIZE in *; lia | exact Hmem]. }
+  assert (Hnf : read_cstr (in_mem i) (in_arg i 1) <> CstrFault) by (rewrite Hcs; discriminate).
+  apply (open_fork true st KA KB E ms model Hpre HS HMP HPB Hat); [| |exact HA|exact HB].
+  - intros o. exact (openat_file_outcome i model o p1 file H56 Hld Hcs Hne' Hcwd Hsl Hdr (MP_file model HMP)).
+  - (* LPS 727298f3: the path reads the same over a larger backing ([SysSpec.openat_rob]) *)
+    apply (openat_rob segs (pend ms x8) model x8
+             (fun cp o => (exists e, In e openat_errnos /\ o = Ok (mkEffectU (errno_ret e) [] [] [] [] cp) model []) \/
+                          (exists fd, fd_lookup (m_fds model) fd = None /\ fd = alloc_fd (m_fds model) /\
+                                      o = Ok (mkEffectU fd [] [] [] [] cp)
+                                             (with_fds (fd_insert (m_fds model) fd (FdFile p1 (Z_to_bv 64 0))) model) []))
+             eq_refl Hnf).
+    intros r _ Hcs' o.
+    exact (openat_file_outcome (sys_input segs (RomBase.wrom (pend ms x8) r) x8) model o p1 file H56 Hld (eq_trans Hcs' Hcs)
+             Hne' Hcwd Hsl Hdr (MP_file model HMP)).
 Qed.
 End File.
 
@@ -1192,12 +1282,24 @@ Proof.
   intros st sts KA KB E ms model Happ HS HMP HPB Hat HA HB.
   unfold open_dir_apply in Happ. destruct (open_pre st) eqn:Hpre; [|discriminate Happ]. injection Happ as <-.
   cbn [hd tl] in HA, HB. destruct dirref_facts as (Hsl & Hlen & Hne).
-  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HAA & Hmem & Hfds & Hpc62 & Hone & Hf5).
-  apply (open_fork false st KA KB E ms model Hpre HS HMP HPB Hat); [|exact HA|exact HB].
+  destruct (open_pre_facts E st ms model HS HPB Hpre) as (H56 & Hcwd & Hld & Hmf & Ha1 & HAA & HU & Hmem & Hfds & Hpc62 & Hone & Hf5).
   set (x8 := den E (getr st X17)) in *. set (i := sys_input segs (pend ms x8) x8) in *.
   assert (Hcs : read_cstr (in_mem i) (in_arg i 1) = CstrOk p1).
-  { rewrite Ha1. unfold read_cstr. apply read_cstr_aux_ok; [exact p1_nz | unfold path_max; exact Hlen | exact Hmem]. }
-  intros o. apply (openat_dir_outcome i model o p1 H56 Hld Hcs Hne Hcwd Hsl fam_dir).
+  { rewrite Ha1. unfold read_cstr. apply read_cstr_aux_ok;
+      [exact p1_nz | unfold path_max; exact Hlen | exact (proj1 (u64_range (ev E 10%uint63)))
+      | unfold TASK_SIZE in *; lia | exact Hmem]. }
+  assert (Hnf : read_cstr (in_mem i) (in_arg i 1) <> CstrFault) by (rewrite Hcs; discriminate).
+  apply (open_fork false st KA KB E ms model Hpre HS HMP HPB Hat); [| |exact HA|exact HB].
+  - intros o. exact (openat_dir_outcome i model o p1 H56 Hld Hcs Hne Hcwd Hsl fam_dir).
+  - (* LPS 727298f3: the path reads the same over a larger backing ([SysSpec.openat_rob]) *)
+    apply (openat_rob segs (pend ms x8) model x8
+             (fun cp o => (exists e, In e openat_errnos /\ o = Ok (mkEffectU (errno_ret e) [] [] [] [] cp) model []) \/
+                          (exists fd, fd_lookup (m_fds model) fd = None /\ fd = alloc_fd (m_fds model) /\
+                                      o = Ok (mkEffectU fd [] [] [] [] cp) (with_fds (fd_insert (m_fds model) fd FdDir) model) []))
+             eq_refl Hnf).
+    intros r _ Hcs' o.
+    exact (openat_dir_outcome (sys_input segs (RomBase.wrom (pend ms x8) r) x8) model o p1 H56 Hld (eq_trans Hcs' Hcs)
+             Hne Hcwd Hsl fam_dir).
 Qed.
 End Dir.
 

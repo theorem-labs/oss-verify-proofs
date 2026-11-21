@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (STACK_SPAN as the guaranteed stack span in FCTX and as the stack floor of ret_tail_cpsE and diag_tail_cpsE). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
@@ -71,8 +72,8 @@ Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, F
 
 Definition FCTX (Σ : rts RT) (so : stdout_st) (usp buf cap : Z) (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
 ART RT Σ m /\ mem_inv bsegs m /\ CLX OUT_rep ERR_rep XENV LIB so m /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7
-/\ stk bsegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-/\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  /\ stk bsegs m (rt_sp0 RT Σ - STACK_SPAN) (usp - 80)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
 /\ rt_live RT Σ = [(buf, cap)] /\ rt_frames RT Σ = [] /\ usp + 16 <= USTACK_TOP.
 
 Theorem ret_tail_cpsE : forall (Σ : rts RT) (so : stdout_st) (code usp buf cap : Z)
@@ -89,7 +90,7 @@ intros Σ so code usp buf cap gp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7
 F fc m HF Hcode Hso T c HA Hk.
 destruct HF as (ART0 & MI0 & CLX0 & FR0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & UT0).
 pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
 apply (FRE Σ (PMfd fds0 fs) (Z_to_bv 64 0x964b0) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 code)
 (Z_to_bv 64 buf) (Z_to_bv 64 buf) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m buf cap lo);
@@ -142,7 +143,7 @@ HF HB HAC H1 H2 H3 HSA.
 pose proof HF as (ART0 & MI0 & CLX0 & FR0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & UT0).
 pose proof CLX0 as (_ & ERR0 & _).
 pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
 intros T c HA Hk.
 replace (evw 2 (map bv_unsigned s)) with (evw 2 (map bv_unsigned s) ++ evw 1 (so_buf stdout_init))
@@ -239,8 +240,8 @@ Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, F
 
 Definition FCTX (Σ : rts RT) (so : stdout_st) (usp buf cap : Z) (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
 ART RT Σ m /\ mem_inv asegs m /\ CLX OUT_rep ERR_rep XENV LIB so m /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7
-/\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-/\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  /\ stk asegs m (rt_sp0 RT Σ - STACK_SPAN) (usp - 80)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
 /\ rt_live RT Σ = [(buf, cap)] /\ rt_frames RT Σ = [] /\ usp + 16 <= USTACK_TOP.
 
 Theorem ret_tail_cpsE : forall (Σ : rts RT) (so : stdout_st) (code usp buf cap : Z)
@@ -257,7 +258,7 @@ intros Σ so code usp buf cap gp t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7
 F fc m HF Hcode Hso T c HA Hk.
 destruct HF as (ART0 & MI0 & CLX0 & FR0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & UT0).
 pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
 apply (FRE Σ (PMfd fds0 fs) (Z_to_bv 64 0x963c4) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 code)
 (Z_to_bv 64 buf) (Z_to_bv 64 buf) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m buf cap lo);
@@ -310,7 +311,7 @@ HF HB HAC H1 H2 H3 HSA.
 pose proof HF as (ART0 & MI0 & CLX0 & FR0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & UT0).
 pose proof CLX0 as (_ & ERR0 & _).
 pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
 intros T c HA Hk.
 replace (evw 2 (map bv_unsigned s)) with (evw 2 (map bv_unsigned s) ++ evw 1 (so_buf stdout_init))

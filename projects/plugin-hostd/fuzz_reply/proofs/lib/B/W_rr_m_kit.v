@@ -7,7 +7,7 @@
 
    Where each part comes from:
    - rr_zall_nth, rr_zpw_nth, rr_writable2, rr_nG_DR, rr_capsrc_nerr, rr_img_kept: the image-A twin's kit
-     (a working branch 30748eb0198 lib/A/W_rr_m_kit.v), verbatim but the import paths.
+     (a working branch lib/A/W_rr_m_kit.v), verbatim but the import paths.
    - rm_eb_len, rm_concat_len, rm_nth_le_bytes, rm_garr8_le, rm_concat_split: the B scan's rrs_ lemmas
      (a working branch's lib/B/W_rr_scan.v), verbatim.
    - rm_gx_callS, rm_ajgx_keep_high, rm_ajgx_keep_img, rm_ajgx_ly_top, rm_apk_trans, rm_ablocks_nodup,
@@ -19,13 +19,14 @@
      is the empty one (YCbq.v achain_low); image A's walk kept the entry sp in s0 and pushed its frame.
    - rr_live_call: the A twin's, less the fake frame (image B's RLIVE owns no frame).
    - rm_tbl_rel: NEW: RRG's / RRF's / RRC's rmtbl at slot i, from arelay_at (the table as at the entry). *)
-(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane f4cd818e98d
+(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane
    lib/A/W_rr_m_kit.v): the helpers over ARx, in place (Section c is W_relay_remove_cx.v's generic block): the call
    and journal helpers are lib/B/W_gesture_end.v's generic gx_callS / ajgx_keep_high / ajgx_keep_img (an image byte
    is kept when it is also off PST) / ablocks_nodup / ajgx_ly_top over ajournal_gx_x, verbatim but AJGX unfolded;
    rr_img_kept takes the PST premise; rr_live_call is over RLIVE's ajournal_gx_x at RR_STK_x with the callee's stack
    up to DRAIN_STK_x, rom_view by ajournal_gx_rom_view_x (PSTR) and g_lock / g_wake[1] off PST by PSTG; rm_tbl_rel at
    an ARx state (alx_blocks). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

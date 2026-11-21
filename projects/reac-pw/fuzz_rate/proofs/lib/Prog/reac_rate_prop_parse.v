@@ -1,6 +1,6 @@
 (** reac_rate_prop_parse (plain image, 0x14c58, 157 instructions) against rate_prop_parse_contract
     (Prog/reac_rate_prop_parse_c.v), with strcmp_contract as premise. An edit-port of fuzz_role's walk of
-    reac_role_prop_parse (reac-pw/fuzz_role lib/Prog/reac_role_prop_parse.v at 52bb2f1ed35): the code is role's moved
+    reac_role_prop_parse (reac-pw/fuzz_role lib/Prog/reac_role_prop_parse.v): the code is role's moved
     by +0x848 up to the Int read, +0x83c from the Float test, +0x840 from the second range test on (both bodies), with
     three spots re-walked: the key literal at 0x1045e; the Int value,
     stored as it is (0x14e08 `lw a0`, 0x14e0c `sw a0,0(s0)`: no 0/1 switch); the Float tail (`li a0,-1` before the

@@ -1,8 +1,9 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v (origin/ossv/recipes c8557374ad2e); typed over preset's asym (YPsym.v) *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v (theorem-labs/oss-verify-proofs@6b32741d849a); typed over preset's asym (YPsym.v) *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: over YC4aP's classes; PALib's allocator symbols are preset's AS___wrap_free / AS___wrap_malloc; blk_off_imgP concludes off_img_at over the instance's pa_lo / pa_hi (per-instance image bounds, c-omx-hpreset 13:19Z). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,7 +21,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0d YP0c YC80 YPsym YC4aP.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YImgTop.
-(* IMPLICIT-INSTANCE GUARD (c-omx-hpreset 22:57Z; template fuzz_state S0 bffd3c8f802, lib/A/FSH_Gen.v:28-49). The walk
+(* IMPLICIT-INSTANCE GUARD (c-omx-hpreset 22:57Z; template fuzz_state S0, lib/A/FSH_Gen.v:28-49). The walk
    kit's Section d takes {SK : YI16.sink_head}, the musl ofl_head cell of the image being walked. Reusable/YI5b.v:12
    declares `#[global] Instance src0_sink_head` = the PLAIN build's ofl_head, and the walk kit's Agree* files load YI5b,
    so a walk that leaves SK to inference would elaborate against the plain image: green and vacuous. YI5b is Required

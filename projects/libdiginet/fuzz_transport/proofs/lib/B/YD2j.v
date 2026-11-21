@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_transport image B by gen_ad2.py (frozen 3665ff2a7926, start-up tool set of commit f1417943331) from fuzz_transport.asan-ubsan, its atable (lib/B/YB12.v), its TSEGS window (lib/B/YB1h.v), its owned statics (lib/B/YF0m.v) and the 50 hand-off states of lib/B/YB01.v; the donor lib/YD2i.v and lib/YD2j.v at commit 25e3d17bdb50 give the text only *)
+(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_transport image B by gen_ad2.py (frozen 3665ff2a7926, start-up tool set) from fuzz_transport.asan-ubsan, its atable (lib/B/YB12.v), its TSEGS window (lib/B/YB1h.v), its owned statics (lib/B/YF0m.v) and the 50 hand-off states of lib/B/YB01.v; the donor lib/YD2i.v and lib/YD2j.v give the text only *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_transport.asan-ubsan (libdiginet/fuzz_transport asan-ubsan) sha256 41113a03c82fde8282db830ab5f4fbe376e392a38d22670b8cb8c9f02969ece4; unstripped twin sha256 e217cb0a84f1e1810805155304b281a259ef83a85f50efcf0c65b40697bfa4dc *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -37,7 +38,7 @@ Lemma od_exit_inv : forall (Σ : rts RT) (K : config -> Prop) (E : oaenv) (A cap
     st vs v88 v144 v152 v240 v312 v336 v352
     (xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xs2 xs3 xs4 xs5 xs6 xs8 xs9 xs11 xt3 xt4 xt5 xt6 : word) xF xfc (m1 : mem)
     (j0 j384 j432 h0 pre8 mid rest : list byte),
-  od_oka E -> o_tp E = Z_to_bv 64 0x656e70 -> rt_sp0 RT Σ - STACK_WIN <= o_lo E -> frm0 xfc ->
+  od_oka E -> o_tp E = Z_to_bv 64 0x656e70 -> rt_sp0 RT Σ - STACK_SPAN <= o_lo E -> frm0 xfc ->
   ART RT Σ m1 -> rt_frames RT Σ = [(oa_F E, 3%nat)] ->
   rt_live RT Σ = (IA, 1024) :: (OC, 8192) :: (o_IDX E, 4 * Z.of_nat (o_icap E)) :: (o_IMPL E, 96) :: (o_SB E, o_CAP E)
                  :: (o_COPY E, o_BUF E - o_COPY E + o_len E + 64) :: vblockA A cap size ++ L0 ->

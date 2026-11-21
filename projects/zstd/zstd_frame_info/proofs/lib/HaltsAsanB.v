@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's must-exit statement is over the run's segments, the image and the vDSO pair: the boot walk is lifted to them by RomStable.run_init). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -8,6 +9,7 @@ From OSSVerify.Proofs.zstd.zstd_frame_info.lib Require Import TopLevel AsanMain.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import ITree Nodes HaltsTreeB Cfg.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.LibA Require Import HaltsTrace HaltsTraceB HaltsShape.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import ShapeAlg SpinAlg MainExport MainFactsAsan MainEntry MainEntryH.
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require RomStable.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Spec Require Import Prog AsanInv ProgExits.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AsanW Require Import AImg.
 Import ListNotations.
@@ -33,7 +35,9 @@ exact (amain_atL_open source_alloc_limit en inp ms mo lim34_source HM). }
 apply (SpinAlg.srz_conseq asegs _ _ _ HS). intros tr. subst T. cbv beta. split; [intros H; right; exact H|].
 intros [->|H]; [| exact H]. exact (SpinAlg.srealizes_star_only asegs _ _ HS [] _ (star_cfg_refl _ _ _)). }
 destruct en as [sp brk0 mbase rdraw]. cbn [en_sp en_brk en_mmap_base en_draw] in HR. unfold must_exit_in_scfg.
-apply (realizes_must_exit_cfg asegs EXITS02 _ T HR).
+(* LPS 727298f3: the model's [must_exit_in_scfg] runs over [run_segments] (the image and the vDSO pair) *)
+pose proof (RomStable.run_init asegs inp sp mbase a_init_pc a_phdrs brk0 rdraw source_alloc_limit T ltac:(reflexivity) HR) as HR'.
+apply (realizes_must_exit_cfg (run_segments asegs inp sp mbase) EXITS02 _ T HR').
 - reflexivity.
 - intros tr sig fs [E|H]; [destruct tr; discriminate E|]. exact (tree_traces_no_killev _ _ tr sig fs H).
 - intros tr code fs [E|H]; [destruct tr; discriminate E|]. exact (tree_traces_exit_S EXITS02 _ _ tr code fs (prog_texits _ _ _ _) H).

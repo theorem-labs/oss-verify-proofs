@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO layer: the vDSO step cases of sstep taken by the cfg relation; RomBase.sys_rob at the system-call nodes (nsA_rob)). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -19,6 +20,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QwAs.Mq0. From OSSVeri
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qc6I.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qsn5.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qsn5.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Open Scope Z_scope.
@@ -38,6 +40,10 @@ inversion H; subst.
 - eapply sstep_cfg_instr; eassumption.
 - eapply sstep_cfg_instr_fault; eassumption.
 - eapply sstep_cfg_instr_unmodeled; eassumption.
+(* LPS 727298f3: the vDSO entry steps; the cfg relation takes them as they are *)
+- eapply sstep_cfg_vdso_call; eassumption.
+- eapply sstep_cfg_vdso_materialization_fault; eassumption.
+- eapply sstep_cfg_vdso_unmodeled; eassumption.
 - eapply sstep_cfg_syscall; try eassumption. apply NS. assumption.
 - eapply sstep_cfg_syscall_materialization_fault; try eassumption. apply NS. assumption.
 - eapply sstep_cfg_exit; eassumption.
@@ -107,6 +113,10 @@ m_halted mo' = Some code /\ sstep_cfg segs (alloc_only_cfg false) (mkCfg ms mo) 
 nsA_progress : forall n ms mo, is_spin n = false ->
 at_node n (msview L mo ms) -> m_halted mo = None -> cinv ms mo -> nsafe n mo ->
 (exists rsp mo' evs, nstep_raw n mo rsp mo' evs) \/ (exists code mo', nexit_raw n mo code mo');
+(* LPS 727298f3: the node's system call is the same over a larger read-only backing *)
+nsA_rob : forall n ms mo, is_spin n = false ->
+at_node n (msview L mo ms) -> m_halted mo = None -> cinv ms mo -> nsafe n mo ->
+RomBase.sys_rob segs (mkCfg ms mo);
 
 nsA_msim : forall n moA moB rsp mo' evs, msim moA moB -> nstep_raw n moA rsp mo' evs ->
 exists mo'b, nstep_raw n moB rsp mo'b evs /\ msim mo' mo'b;

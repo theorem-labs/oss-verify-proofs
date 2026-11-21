@@ -1,7 +1,7 @@
 (* The cut-free (agreement) slot of reac-pw/fuzz_segconf's UBSan build: lib_contract_cg for every j < 4 at the
    frame's concrete instance (src0_msyms, zlib_API, src0_sink_head, src0_sink, RA_LIB, EMPTY) and any shape LS with
    SlotInvCF.frame_facts_cf, from the cut-free copy of the slot proof (U/Prog/SlotInvCF.v, SegCF/*.v), in the form
-   of reac-pw/fuzz_pin's U/Prog/SegCF/SlotTopCF.v (commit a2a7540da98), for segconf's eight
+   of reac-pw/fuzz_pin's U/Prog/SegCF/SlotTopCF.v, for segconf's eight
    segments:
    - the CF segment statements of the five allocator-step segments, each as its CF walk file states it once its
      Section closes (SlotInvCF.frame_facts_cf, then the contracts the segment consumes: E01 calloc_contract_cfg at

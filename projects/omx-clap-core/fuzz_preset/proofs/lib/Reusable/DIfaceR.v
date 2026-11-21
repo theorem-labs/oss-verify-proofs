@@ -1,6 +1,7 @@
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/DIfaceR.v@e8a7dd66acf2; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/DIfaceR.v; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The raw-frame obligations of the frame-generic Deallocate walk, split out of DGif0.DIface.
 
    DIface's callee contracts (QuarantineCache::Enqueue, Quarantine::Drain and, inside the drain, QuarantineCallback::

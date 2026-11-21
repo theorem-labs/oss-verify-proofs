@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from projects/cgif/cgif_rgb_fuzzer/proofs/lib/YZ03.v (halts_src2, lines 12-23) and YZ00.v (cgif_rgb_fuzzer_asan_equiv, lines 112-116) at commit c395a1e0dfa, with src2segs replaced by ubs2segs, Plain.M.init_pc and Plain.M.phdrs by Ubsan.M.init_pc and Ubsan.M.phdrs, src2_realizes by UZ02.ubs2_realizes and cgif_rgb_fuzzer_asan_equiv_lim by UZZ0.cgif_rgb_fuzzer_ubsan_equiv_lim. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the entry premise's launch conjunct, and the halting proofs read the binary against the run's segment list with the vDSO pair, through RomStable.run_init and HaltsFO.fo_exits_must_exit_run). *)
 From Stdlib Require Import NArith ZArith List Lia Bool QArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -12,7 +13,7 @@ From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import Ubsan.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK15 YN05 YN0b YN01 UH04.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP07 YP08.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import UZ02.
-From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import HaltsFO.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import HaltsFO RomStable.
 Require OSSVerify.cgif.cgif_rgb_fuzzer.Images.
 Require OSSVerify.cgif.cgif_rgb_fuzzer.Statements.
 Require OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib.UZZ0.
@@ -33,10 +34,12 @@ Proof.
 intros [sp brk mb rnd] inp Hen Hinp.
 pose proof (valid_input_va_size _ Hinp) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-unfold must_exit_in_scfg.
-apply (halts_of_realizes ubs2segs byte_codes _ _ sp brk mb rnd source_alloc_limit inp (SPEC inp)).
-- apply ubs2_realizes; try assumption. apply SRC_LIM_MIN_le_source.
+destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+unfold must_exit_in_scfg. cbv zeta.
+(* the run reads the binary against its own segments and the vDSO pair ([RomStable.run_init]) *)
+apply (halts_of_realizes (run_segments ubs2segs inp sp mb) byte_codes _ _ sp brk mb rnd source_alloc_limit inp (SPEC inp)).
+- apply run_init; [first [reflexivity | unfold vdso_image, vdso_text_seg; vm_compute; reflexivity] |].
+  apply ubs2_realizes; try assumption. apply SRC_LIM_MIN_le_source.
 - apply SPEC_tsafe.
 Qed.
 
@@ -51,9 +54,12 @@ apply halts_allowed_T_scfg_budgets_of_scfg.
 intros [sp brk mb rnd] inp Hen Hinp.
 pose proof (valid_input_va_size _ Hinp) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-unfold must_exit_in_scfg.
-apply (fo_exits_must_exit ubs2segs codes02 _ (SPEC inp)).
+destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+unfold must_exit_in_scfg. cbv zeta.
+(* the walk is over the binary's own segments; the run reads them with the vDSO pair
+   ([HaltsFO.fo_exits_must_exit_run]) *)
+apply (fo_exits_must_exit_run ubs2segs codes02 inp sp mb _ _ brk rnd _ (SPEC inp)).
+- first [reflexivity | unfold vdso_image, vdso_text_seg; vm_compute; reflexivity].
 - apply fo_of_realizes. apply ubs2_realizes; try assumption. apply SRC_LIM_MIN_le_source.
 - apply OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib.HaltsPlainFO.SPEC_shape_ok02.
 - reflexivity.

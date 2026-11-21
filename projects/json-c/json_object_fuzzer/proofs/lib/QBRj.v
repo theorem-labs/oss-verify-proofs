@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of printf's stdout write; realizes_canon's equality argument). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -225,7 +226,7 @@ Section AmbP.
 Context {AMB : Amb}.
 #[using="Type"] Theorem printf1_ok : forall usp0, printf1_stmt usp0.
 Proof.
-intros usp0. unfold printf1_stmt. intros until K. cbv zeta. intros [Hh Hl] FD1 OUTC IMG ST MI SPB SPA Htp KNIL HK0. subst tp.
+intros usp0. unfold printf1_stmt. intros until K. cbv zeta. intros [Hh Hl] FD1 RDR1 OUTC IMG ST MI SPB SPA Htp KNIL HK0. subst tp.
 destruct IMG as (IM1 & HEX & IM1b & IM2 & GOT & CAN).
 set (sp := Z_to_bv 64 (usp0 - 208)).
 assert (U : bv_unsigned sp = usp0 - 208) by (subst sp; apply unsigned_lit; lia).
@@ -282,6 +283,7 @@ rewrite ?R_wb, ?R_wp, ?R_l, ?R_s, ?R_fd, ?R_sp, ?R_bufp, ?R_bufsz; cbn [edenot].
 - rewrite (kimg_rdn RSEGS _ _ p1_knB ltac:(let i := kidx p1_knB (is_kimg_cov 0x10d33 1) in exact i) _ _ 0x10d33 1 HK eq_refl) by lia.
 exact nl_img.
 - exact FD1.
+- exact RDR1.
 - exact Hh.
 - exact Hl.
 - exact KNIL.
@@ -299,7 +301,7 @@ run_block_gen FUEL P1STOPS scr0 67%nat true.
 
 lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc ?pc ?Mc ?rom) _) _ =>
 change (mkst Rc pc Mc rom) with (QEpW.MS Rc F pc fc None Mc rom) end.
-apply (realizes_canon rsegs). rewrite canonR_getr. rewrite !(reg_val _ _ _ _ HR).
+apply (realizes_canon rsegs eq_refl). rewrite canonR_getr. rewrite !(reg_val _ _ _ _ HR).
 lazymatch type of HR with regs_ok _ ?SR _ =>
 repeat match goal with |- context [sr_get SR ?r] => let e := eval vm_compute in (sr_get SR r) in change (sr_get SR r) with e end end.
 cbn [edenot ev eb].

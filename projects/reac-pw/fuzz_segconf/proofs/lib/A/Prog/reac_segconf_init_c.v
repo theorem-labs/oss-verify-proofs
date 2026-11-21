@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YC7z.v, with its module paths and module names changed; 18 of its 41 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_ignore_file_c.v; 15 of its 42 lines of code are new or changed and 14 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_init (reac_segconf.c:19-22; fuzz_segconf.asan 0x87a54, 36 bytes, 9 instructions; frame 16 bytes, no
    side-stack frame): the contract of the ASan build's code, in plugin-hostd/fuzz_command's lib/A/Prog form
    (afn_pre at the entry, SRr of apost_base at the return).
@@ -44,8 +45,8 @@
    are parameters (or fields of B).
    The WALK takes these runtime entries as Section hypotheses:
      aintrin_realizes OSet (YG0d.v:326) at pc_memset, the checked __asan_memset (image A 0x55d7c): the kit's
-     text, the image-A owner's frame, as fuzz_command's socket_send_c.v:60-61 at 501c0d516c69 takes it; "Not in this
-     layer" in provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626), not a row.
+     text, the image-A owner's frame, as fuzz_command's socket_send_c.v:60-61 takes it; "Not in this
+     layer" in provenance/evidence/interceptors/INTERFACE-A-interceptors.md, not a row.
    They are NOT premises of this contract: the statement does not mention them. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.

@@ -4,7 +4,8 @@
    cut point 0x82638 of lib/A/W_gse_cut.v (gse_tail_at), in the form of the cgif loop walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (the stretch after a loop as its own lemma from a seated state) and the
    free call sites of lib/A/AC8h.v. *)
-(* STRUCTURE PORTED FROM the same run at halts level, a working branch 38a6eaf28b2
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* STRUCTURE PORTED FROM the same run at halts level, a working branch
    lib/A/Prog/gestures_end_b.v:
      - `gse_tail` (:905): the whole stretch 0x82638 -> ret.  Its step order is this file's:
        (ag_run :941) 0x82638 -> the free trampoline, with the load8 check of s->held and no store;

@@ -64,9 +64,9 @@ Lemma FRAME_SHADOW_val : FRAME_SHADOW = 392.
 Proof. reflexivity. Qed.
 
 (* frame_asan (A/FrameAPI.v:147) without its last conjunct (the slot obligation yielding asan_halts); the conjunct
-   itself is slot_obligation. frame batch 2 (a Theorem Labs lane 48004cf7bfc) added the sink-env bound (FrameAPI.v:156, after
+   itself is slot_obligation. frame batch 2 (a Theorem Labs lane) added the sink-env bound (FrameAPI.v:156, after
    `0 < empty < 2 ^ 62`); frame_facts carries it LAST, so the v1.8 positions of frame_facts are kept. Twin of
-   lib/B/Prog/SlotInv.v (a working branch 2f906755bcb): same conjunct text, same position. *)
+   lib/B/Prog/SlotInv.v (a working branch): same conjunct text, same position. *)
 Definition frame_facts (B : malloc_syms) (APIf : forall rc : RunCeil, AC.AsanAllocAPI AC.ASYMS AsanRTInv.RT)
     (LS : lib_shape) (SH : sink_head) (SK : sink_syms) (ra empty : Z) : Prop :=
   ms_segs B = rsegs /\ ra mod 2 = 0 /\
@@ -97,7 +97,7 @@ Lemma frame_asan_split : AF.frame_asan -> exists B APIf LS SH SK ra empty,
   frame_facts B APIf LS SH SK ra empty /\ slot_obligation B APIf LS SH SK ra empty.
 (* By name: frame_asan is a Theorem Labs lane's generated bundle, so the proof names every conjunct it has and rebuilds
    frame_facts from those names (the v1.8 `tauto` searched the whole bundle and gave up on batch 2's size). The
-   rebuild is the twin of lib/B/Prog/SlotInv.v's (a working branch 2f906755bcb): Henv goes last. *)
+   rebuild is the twin of lib/B/Prog/SlotInv.v's (a working branch): Henv goes last. *)
 Proof.
   intros (B & AA & LS & SH & SK & ra & empty & Hsegs & Hra & Htp & Herrno & Hofl & Hlock & Hthr & Hempty & Hemptyr &
     Henv & HG & HRELRO & Howned & HLIBK & Hslot).
@@ -127,8 +127,8 @@ Proof. reflexivity. Qed.
 
 (* The slot's OWN share of class c: one slot of class c (the harness holds at most one block of its own at a
    time: fuzz_dup at fuzz_ctrl.c:524 freed at :613 before fuzz_dup at :704 freed at :706), 0 at the classes no
-   primary request reaches. The body of a Theorem Labs lane's CtrlClassLive.BC_ctrl (a working branch
-   61aba11640, CtrlClassLive.v (not in this delivery)), defined here at top level because CtrlClassLive.v (not in this delivery) Requires this file, so
+   primary request reaches. The body of a Theorem Labs lane's CtrlClassLive.BC_ctrl (a working branch,
+   CtrlClassLive.v (not in this delivery)), defined here at top level because CtrlClassLive.v (not in this delivery) Requires this file, so
    CtrlClassLive.BC_ctrl c = BC_ctrl c is reflexivity. Top level, not a section variable: no lemma's arity moves. *)
 Definition BC_ctrl (c : Z) : Z :=
   if (c =? 0) || (c =? 5) || (c =? 31) then 0 else AsanCtrl.size_of_class c.
@@ -138,7 +138,7 @@ Definition BC_ctrl (c : Z) : Z :=
    lemma per law). Each lemma matches its record's fields to the law's conjuncts by `eassumption` (after decompose),
    so a conjunct a later generation adds or moves changes neither the lemma nor its users. SlotInv.v, Seg/Tac_slot.v
    and Seg/Tac_fsfree.v read the laws only through these. Image A's copy of image B's section
-   (lib/B/Prog/SlotInv.v (at head lib/B/Prog/SlotInv.v:118-245; written on a working branch 1d6892010bb)), same names and fields. *)
+   (lib/B/Prog/SlotInv.v (at head lib/B/Prog/SlotInv.v:118-245; written on a working branch)), same names and fields. *)
 Section LawFields.
 Variable API : AC.AsanAllocAPI AC.ASYMS AsanRTInv.RT.
 Local Notation AHl := (AC.aa_AH AC.ASYMS AsanRTInv.RT API).
@@ -250,7 +250,7 @@ Qed.
 
 (* a_laws_fs_store: a store that, outside the allocator's store set, writes only the FakeStack region [FS, FS + FS_SIZE)
    or its shadow, and leaves the FakeStack's runtime state a_fs_ok, keeps AH, ownership and the stack bounds (same
-   record as lw_store). Image B's text (a working branch 23a791566db); A's law has the same shape. *)
+   record as lw_store). Image B's text (a working branch); A's law has the same shape. *)
 Lemma lw_fs_store : forall H mem mem' md FS, AHl H mem md ->
   word_mem rsegs mem (AC.as_tp AC.ASYMS) FS -> 0 <= FS < 2 ^ 64 ->
   (forall a, 0 <= a < 2 ^ 64 -> ~ AC.a_store_ok H (SLOl mem md) a -> ~ (FS <= a < FS + AC.FS_SIZE) ->
@@ -837,7 +837,7 @@ Definition RFx (g : ghost) (fr : Z) (b : nat) (idb fgb : list byte) (phi : Z) (r
   RFb g fr b idb fgb phi regs m /\ rg regs 18 (rnb g b).
 Definition RF (g : ghost) (fr : Z) (b : nat) (phi : Z) (regs : bvmap 5 word) (m : word -> option byte) : Prop :=
   RFx g fr b (RID (g_in g) b) (RFG (g_in g) b) phi regs m.
-(* Push 10 (a Theorem Labs lane, the R8-R12 lane's Seg/RNCuts.v (not in this delivery) at 837bd45000f): RXS, the round-trip spills and the fragment
+(* Push 10 (a Theorem Labs lane, the R8-R12 lane's Seg/RNCuts.v (not in this delivery)): RXS, the round-trip spills and the fragment
    record's addressability that the calls of R9 (0x81678 `ld a2,56(s1)`), R10 (0x816b4 .. 0x816bc, 0x816ec .. 0x81700,
    0x81754 .. 0x81768), R12 (0x816bc .. 0x816cc) and, on the b = 0 CONFIG path, R17 / R18 (0x817f8, 0x81800 ..
    0x81844) read. Producers (image-A listing, s5 = fr + 2176 from 0x81338):
@@ -1077,7 +1077,7 @@ Definition Inv_A81400 (g : ghost) (c : config) : Prop := exists t, Inv_A81400_at
    drops it. The register/model content of each cut is the ubsan twin (R01-R23, plan-ubsan 3.2) under renaming;
    stated here at the FRA + heap + a0-result + model-value level (plan 3.2/3.3). *)
 (* R1 (0x813bc, turn t of the our[] loop): push 6c, a Theorem Labs lane's Seg/R1.v (a version not in this delivery) Inv_A813bc_loc_at (
-   written on a working branch 4f3a7c0b23c, seg_R1 Qed), verbatim: the push-5 body (g_n g < 2 ^ 26) plus
+   written on a working branch, seg_R1 Qed), verbatim: the push-5 body (g_n g < 2 ^ 26) plus
    - the loop registers of turn t: a0 = a4 = our + t, a1 = t + 1, a2 = 6, a3 = 7 (0x81334 / 0x81394), the cursor
      s6 = p + min t n and left s9 = n - min t n (fuzz_u8);
    - the frame pointers the odd-mode tail spills at 0x81478-0x8148c: x1 = fr + 2496, t2 = fr + 544,
@@ -1107,7 +1107,7 @@ Definition Inv_A81414_at (g : ghost) (t : Z) (c : config) : Prop :=
     (exists junk, length junk = Z.to_nat (6 - t) /\
        bytes_at rsegs m (fr + 2624) (firstn (Z.to_nat t) (OUR (g_in g)) ++ junk))) c.
 Definition Inv_A81414 (g : ghost) (c : config) : Prop := exists t, Inv_A81414_at g t c.
-(* R2 (0x814a0): a Theorem Labs lane's Seg/R2.v (a version not in this delivery; written on a working branch c53018cf6ad) Inv_A814a0_loc. The catalogue result, the
+(* R2 (0x814a0): a Theorem Labs lane's Seg/R2.v (a version not in this delivery; written on a working branch) Inv_A814a0_loc. The catalogue result, the
    frame-shadow pointer spill the 0x814d0 fill reads, s2 = fr + 2656 with the catalogue count [s2] = CAT_N
    (0x81368 / 0x814a8), s5 = fr + 2176, CUR g 7, and the spills R3 / R6 / R8 read. mem_inv dropped (5d).
    Push 6c (a Theorem Labs lane's b = 0 chain text, via a Theorem Labs lane 23:19Z), carried on to the loop head Inv_A815cc_at:
@@ -1127,7 +1127,7 @@ Definition Inv_A814f8 (g : ghost) (c : config) : Prop :=
     (exists jy, rw_cells rsegs m (fr + 3040) [CB 1 jy]) /\ (exists junk, rw_cells rsegs m (fr + 3056) [CB 32 junk]) /\
     spill regs m 56 (fr + 2368) /\ spill regs m 88 (fr + 2448) /\ spill regs m 80 (fr + 2464) /\
     spill regs m 72 (fr + 2496) /\ spill regs m 200 (decl_slot fr) /\ spill regs m 216 (fr + 2528)) c.
-(* R3 (0x814d4): a Theorem Labs lane's Seg/R3.v (a version not in this delivery; written on a working branch 8fd8ba5b2bd) Inv_A814d4_loc, word for word R2.v's exit.
+(* R3 (0x814d4): a Theorem Labs lane's Seg/R3.v (a version not in this delivery; written on a working branch) Inv_A814d4_loc, word for word R2.v's exit.
    out[]'s first 1488 bytes are addressable after the 0x814d0 fill. mem_inv dropped (5d).
    Push 6c carries on to the loop head Inv_A815cc_at: the frame-shadow pointer spill [A + 152] = S(fr) + 68
    (Inv_A814f8 has it; R2's meta_fill_00 call writes shadow bytes S(fr) + 68 .. 253, not the spill or S(fr) + 328),
@@ -1164,7 +1164,7 @@ Definition Inv_A81578 (g : ghost) (c : config) : Prop :=
     spill regs m 56 (fr + 2368) /\ spill regs m 88 (fr + 2448) /\ spill regs m 80 (fr + 2464) /\
     spill regs m 72 (fr + 2496) /\ spill regs m 200 (decl_slot fr) /\ spill regs m 216 (fr + 2528) /\
     rg regs 18 (mrow (g_in g))) c.
-(* R5 (0x81530): a Theorem Labs lane's Seg/R4.v / Seg/R5.v (versions not in this delivery; written on working branches 215203173df / 14beceffa5f) Inv_A81530_loc, the same text in both.
+(* R5 (0x81530): a Theorem Labs lane's Seg/R4.v / Seg/R5.v (versions not in this delivery; written on working branches) Inv_A81530_loc, the same text in both.
    OUTA (a Theorem Labs lane, 2026-10-27): loop invariant, see OUTA.
    Push 6c adds what R5 must hand to Inv_A815cc_at 0 and does not write itself: s5 = fr + 2176, [A + 152],
    [A + 144], the identity record's 38 bytes addressable (Inv_A81578 has it; R4's checked memset writes only the
@@ -1184,7 +1184,7 @@ Definition Inv_A81588 (g : ghost) (c : config) : Prop :=
     spill regs m 200 (decl_slot fr) /\ spill regs m 216 (fr + 2528) /\ addressable m (fr + 2256) 72 /\
     addressable m (fr + 2176) 38 /\
     rg regs 18 (mrow (g_in g))) c.
-(* R6 (0x81574): the b-loop head. Push 6c: a Theorem Labs lane's Seg/R6.v (a version not in this delivery; written on a working branch 84a41972a7d) Inv_A81574_loc_at:
+(* R6 (0x81574): the b-loop head. Push 6c: a Theorem Labs lane's Seg/R6.v (a version not in this delivery; written on a working branch) Inv_A81574_loc_at:
    the push-5 body with a0 = fr + 544, s8 = 36 and the magic word [A + 64] = 0xe38f0000, plus the
    row spill [A + 112] = mrow (build_as's a1; it replaces `exists cb, spill regs m 112 cb`), s5 = fr + 2176 and
    [A + 152] = S(fr) + 68 (R7's n_b = 0 arm) and our[]'s 6 bytes addressable (build_as's d premise). R6.v's
@@ -1225,7 +1225,7 @@ Definition Inv_A815cc (g : ghost) (c : config) : Prop := exists b, Inv_A815cc_at
    pointer spills, s5 = fr + 2176 and the identity record's and our[]'s bytes addressable are at the top level
    (the loop body R8-R21 carries them to the latch, see R8); the n_b = 0 arm keeps the turn-b records. R6 gives
    all of them from its entry.
-   Push 10 (a Theorem Labs lane, for X81640 at R7's exit 0x815e8, the R8-R12 lane's Seg/RNCuts.v (not in this delivery) at 837bd45000f): RXS, last
+   Push 10 (a Theorem Labs lane, for X81640 at R7's exit 0x815e8, the R8-R12 lane's Seg/RNCuts.v (not in this delivery)): RXS, last
    (R6 carries it from Inv_A815cc_at; build_as writes no frame spill); the turn-b identity and fragment records on
    both arms (push 5b's `rnb g b = 0 ->` guard dropped: RS of Inv_A815cc_at gives them for every b and build_as
    writes only out[] = [fr + 544, fr + 2036), apart from fr + 2176 / fr + 2256); and, when n_b <> 0, out[]'s n_b
@@ -1263,7 +1263,7 @@ Definition Inv_A815ec_at (g : ghost) (b : nat) (c : config) : Prop :=
    No instruction of 0x81594 .. 0x81904 writes s5, stores to [s1 + ...] or stores those shadow bytes (its frame
    shadow stores are S(fr) + 296 .. 323), and the callees keep s5 and the frame spills.
    Push 10 (a Theorem Labs lane): the same holds for RXS (see RXS), which every cut from R6 to R21 carries. *)
-(* Push 10 (a Theorem Labs lane, the R8-R12 lane's Seg/RNCuts.v (not in this delivery) at 837bd45000f, adopted verbatim): each of the five cuts
+(* Push 10 (a Theorem Labs lane, the R8-R12 lane's Seg/RNCuts.v (not in this delivery), adopted verbatim): each of the five cuts
    Inv_A81640_at .. Inv_A81708_at is its push-9 body, parenthesized, conjoined with one block X<addr>: the turn-b
    facts that the calls of the segment it enters read. X81640 (R7 gives it, R8 reads it): the turn-b identity and
    fragment records (Inv_A815ec_at's, kept by wrapper_malloc), out[]'s n_b bytes = rt_F (build_as's post at
@@ -1372,7 +1372,7 @@ Definition Inv_A81708_at (g : ghost) (b : nat) (c : config) : Prop :=
 Definition Inv_A81708 (g : ghost) (c : config) : Prop := exists b, Inv_A81708_at g b c.
 (* OUTA (a Theorem Labs lane, 2026-10-27): loop invariant, see OUTA. The loop-body facts: see R8.
    Push 10: RXS, last (R11 / R12 carry it from X816c4 / X81708; R13 carries it to Inv_A81924_at).
-   Push 11 group D (the R11-R13 lane's Seg/RN2Cuts.v (not in this delivery) X816dc (X81734 here), a working branch faaa389f397), after RXS:
+   Push 11 group D (the R11-R13 lane's Seg/RN2Cuts.v (not in this delivery) X816dc (X81734 here), a working branch), after RXS:
    a0 = 1, the ingest result (R13's 0x81734 `li a1,1` / 0x81738 `beq a0,a1,8191c`, else 0x8173c `j 82bf4`);
    s8 = phi (set 0x815f0 `mv s8,a0`, callee-saved through the reply / fragment / ingest calls; R13's 0x818c4
    `mv a0,s8` frees it); RB at the turn-(S b) records (identity record = the one ingest wrote, fragment record =
@@ -1393,7 +1393,7 @@ Definition Inv_A81734_at (g : ghost) (b : nat) (c : config) : Prop :=
     RXS g fr regs m /\
     X81734 g b phi fr regs m) c.
 Definition Inv_A81734 (g : ghost) (c : config) : Prop := exists b, Inv_A81734_at g b c.
-(* ---- B3 (R14-R21, 0x81710 .. 0x81a64): a Theorem Labs lane's Seg/B3Cuts.v (not in this delivery) v4 bodies (a working branch 554c83ce6f5,
+(* ---- B3 (R14-R21, 0x81710 .. 0x81a64): a Theorem Labs lane's Seg/B3Cuts.v (not in this delivery) v4 bodies (a working branch,
    Inv_A81710s_at .. Inv_A818ccs_at), adopted as the official cuts. Each is the push-3 frozen body
    (parenthesized, with push 6a's OUTA after OURb, after RFb at 0x81878) plus the facts the B3 segments read and
    the "R21 extras": what R21's latch load, its b = 6 tail and the loop head Inv_A815cc_at (S b) read, carried on
@@ -1602,7 +1602,7 @@ Definition Inv_A81924 (g : ghost) (c : config) : Prop := exists b, Inv_A81924_at
 
 (* ---- Init and P8 (P1-P12). P1 (0x81a68) re-poisons out[]; P2 (0x81ab8) is the init join. P3-P12 ~ P01-P09.
    Bodies from a Theorem Labs lane's cut-*.v (seg_P1..seg_P6 Qed on five working branches) and
-   from a Theorem Labs lane's cutreq/p7-p10.md (a working note, not in this delivery) (seg_P7..seg_P10 Qed, a working branch 1aed2cac83). Every body drops
+   from a Theorem Labs lane's cutreq/p7-p10.md (a working note, not in this delivery) (seg_P7..seg_P10 Qed, a working branch). Every body drops
    mem_inv (push 5d) and the facts FRA / fra_frame / fra_win / fra_app / fra_call_pre carry: `aspZ <= APPMEM_END`
    (FRA's sp <= A <= S < APPMEM_END), the frame-vs-callee-window disjunction, `fr + 3040 <= A`, the FakeStack
    metadata bound and the callee window's addressability. The a3 bodies are stated as CUTST (they were raw
@@ -1817,7 +1817,7 @@ Definition Inv_A81c84 (g : ghost) (c : config) : Prop :=
    malloc(0) returns the block (q, a_size 0) = (q, 1), so AH over a list holding (q, 0) fails on the len = 0
    path. HB already has a_size inside, so only the heap list changes. *)
 Definition flen (g : ghost) (j : nat) : Z := t_len (g_in g) j.
-(* F1 (a Theorem Labs lane's Seg/F1.v, a working branch b5a32896e10). The input block the allocation call keeps live, and the
+(* F1 (a Theorem Labs lane's Seg/F1.v, a working branch). The input block the allocation call keeps live, and the
    [A + 248] = fr + 176 prologue spill F2 / F3 read. a Theorem Labs lane's f1_WIN and f1_HI are DROPPED: fra_call_pre gives the
    callee window addressable and off the live blocks (AK_MALLOC = 4096 <= FN_STACK), and the three ENTRY
    stack-top facts are FRA's, moved to the cut's state by ENT. Push 6c (a Theorem Labs lane's p5b-plan-B.md section 5 item 1 (a working note, not in this delivery)):
@@ -1875,7 +1875,7 @@ Definition FLSH (g : ghost) (j : nat) (fr : Z) (regs : bvmap 5 word) (m : word -
   PRO g fr regs m /\
   spill regs m 128 (fr + 452) /\ stk rsegs m fr (fr + FRAME_BYTES) /\
   spill regs m 144 (fr + 2688) /\ addressable m (fr + 2691) 17.
-(* FLC (push 14 group D, the F1-F3 lane's C5 result, Seg/F1.v / F2.v on a working branch fc681b5ab1d): the
+(* FLC (push 14 group D, the F1-F3 lane's C5 result, Seg/F1.v / F2.v on a working branch): the
    frame-loop pointer spills and the two record ranges, set before the loop and written by no instruction of the
    loop body 0x81ca8 .. 0x828b0 and by no callee there (the loop's inline stores to [s1 + ...] are offsets
    224 / 216 / 232 / 192 / 240 / 280 / 152 / 112 / 96 / 104 / 88 only; no store to S(fr) + 336 .. 354; s1 and s3
@@ -1925,7 +1925,7 @@ Definition FLS (g : ghost) (j : nat) (phi fr : Z) (regs : bvmap 5 word) (m : wor
      Z.of_nat (length (t_phi (g_in g) j)) <= flen g j) /\
   spill regs m 152 (b2z (t_tfill (g_in g) j)) /\
   spill regs m 280 (b2z (t_sum_ok (g_in g) j)).
-(* FLSX (a Theorem Labs lane's Seg/B8Cuts.v (not in this delivery), a working branch 4eed0e3747c): FLS without `rg regs 24 (t_k (g_in g) j)`.
+(* FLSX (a Theorem Labs lane's Seg/B8Cuts.v (not in this delivery), a working branch): FLS without `rg regs 24 (t_k (g_in g) j)`.
    Every other conjunct of FLS holds at every pc of F29-F38: register 18 (s2 = len_j) is written next at 0x828a0,
    register 22 (s6 = Phi + 18) at 0x828a0, registers 23 (s7 = Phi) and 25 (s9 = fr + 64) are not written before
    0x828a8, the bytes at Phi are written by no store of the batch (every store is `sb s11,N(s3)` into the frame's
@@ -2006,7 +2006,7 @@ Definition Inv_A81da4_at (g : ghost) (j : nat) (c : config) : Prop :=
        LK g fr j regs m /\ FC g fr j regs m /\ FLSH g j fr regs m /\
        f1_IN g m /\ spill regs m 248 (fr + 176) /\ IFS g fr j regs m /\ FLC fr regs m) c.
 Definition Inv_A81da4 (g : ghost) (c : config) : Prop := exists j, Inv_A81da4_at g j c.
-(* ---- F4-F12 (0x81d64 .. 0x82064), push 6c: a Theorem Labs lane's Seg/B5Cuts.v (not in this delivery) (a working branch 97c6173c646), one
+(* ---- F4-F12 (0x81d64 .. 0x82064), push 6c: a Theorem Labs lane's Seg/B5Cuts.v (not in this delivery) (a working branch), one
    text per address at which the nine lanes F4..F12 meet, each the union of what the exiting segment gives and
    what the entering one needs, on one shell b5_CUT (the FCUT skeleton with phi passed to the body, LK and the
    span's carry b5_C). What the base gives is not repeated (FRA / ENT, FLSI, fra_app, fra_frame, fra_win,
@@ -2212,7 +2212,7 @@ Definition b5_PF (g : ghost) (j : nat) (phi fr : Z) (regs : bvmap 5 word) (m : w
           bytes_at rsegs m (phi + 6) rs2 /\ (6 <= length rs2)%nat /\ SFA.memcmp_model ls2 rs2 6 = Some 0 /\
           addressable m (fr + 180) 6)).
 (* 0x81d38 - F2 exit / F3 entry (after F2's checked_memcpy at 0x81d34), push 14 group D: the F1-F3 lane's
-   Inv_A81d38_c5_at (Seg/F2.v (a version not in this delivery; written on a working branch fc681b5ab1d)), on the b5_CUT shell (so b5_C's
+   Inv_A81d38_c5_at (Seg/F2.v (a version not in this delivery; written on a working branch)), on the b5_CUT shell (so b5_C's
    `rg regs 23 phi` is its phi pin: s7 = phi from 0x81d0c `mv s7,a0`, a Theorem Labs lane's cut_hb item 1 (a working note, not in this delivery)). It implies the
    old FCUT text (LK, FC, IFS = IDj with b5_C's FGj / FSj); FCUT, which had no other user, is gone. s6 is
    0x81db0 `sltiu s6,s2,50`, so 0 on a long frame; the frame body is at phi after the memcpy. *)
@@ -2348,7 +2348,7 @@ Definition Inv_A820fc_at (g : ghost) (j : nat) (c : config) : Prop :=
     b5_F17 g j phi fr regs m /\ b5_W240 g j regs m /\ b5_PF g j phi fr regs m) c.
 Definition Inv_A820fc (g : ghost) (c : config) : Prop := exists j, Inv_A820fc_at g j c.
 (* ---- F13 / F14 / F15 / F16 entries (0x820a0, 0x820bc, 0x820dc, 0x820e0, 0x82134), push 11 group B: a Theorem Labs lane's
-   texts at a working branch d70d9f38074 (seg_F13 .. seg_F16 Qed there on push 8), adopted verbatim:
+   texts at a working branch (seg_F13 .. seg_F16 Qed there on push 8), adopted verbatim:
    Seg/F13.v Inv_A820a0_loc / Inv_A820bc_loc with frcl / frrec and the bundles F17CARRY / F16CARRY, Seg/F14.v
    f14_tail / Inv_A820dc_loc / Inv_A820e0_loc, Seg/F15.v Inv_A82134_loc (= Seg/F16.v's, the same text). Only the
    names a Theorem Labs lane's files import unqualified are written with SlotInv's module prefixes: RcFrag.fg_case / fg_class /
@@ -2552,7 +2552,7 @@ Definition Inv_A821d0_at (g : ghost) (j : nat) (c : config) : Prop :=
 Definition Inv_A821d0 (g : ghost) (c : config) : Prop := exists j, Inv_A821d0_at g j c.
 (* ---- F17 / F17b / F18 / F19 entries (0x821c0, 0x821c4, 0x8233c, 0x82354), push 6c: a Theorem Labs lane's Seg/F17.v (a version not in this delivery)
    Inv_A821c0_loc / Inv_A821c4_loc and Seg/F18.v (a version not in this delivery) Inv_A8233c_loc / Inv_A82354_loc / rec_inv (
-   from a working branch 30bdb238d5a, seg_F17 / seg_F17b / seg_F18 / seg_F19 Qed). a Theorem Labs lane's `exists (j : nat)` is the official index j
+   from a working branch, seg_F17 / seg_F17b / seg_F18 / seg_F19 Qed). a Theorem Labs lane's `exists (j : nat)` is the official index j
    (Inv_A8229c := exists j, Inv_A8229c_at g j); the bodies are written on the FCUT skeleton with phi named (as in
    a Theorem Labs lane's B8Cuts.v, not in this delivery), so three things differ from a Theorem Labs lane's text: the live list is `hb1 phi (AC.a_size (flen g j))` (that text:
    `hb1 phi (flen g j)`; equal when 50 <= flen g j, and only the a_size form is the malloc block on the short arm,
@@ -2729,7 +2729,7 @@ Definition Inv_A82400_at (g : ghost) (j : nat) (c : config) : Prop :=
     c.
 Definition Inv_A82400 (g : ghost) (c : config) : Prop := exists j, Inv_A82400_at g j c.
 (* F20 entry (0x8236c, the F19/F20 interface), push 6c: a Theorem Labs lane's concretized Seg/F20.v (a version not in this delivery) Inv_A8236c_loc
-   (written on a working branch 84eade9b534, seg_F20 Qed; NOT the copy in a Theorem Labs lane's F19.v (not in this delivery), whose [A+248] pointer is existential), on the
+   (written on a working branch, seg_F20 Qed; NOT the copy in a Theorem Labs lane's F19.v (not in this delivery), whose [A+248] pointer is existential), on the
    FCUT skeleton (a_size live list, FLSI, as F17-F19). It carries the is_8819 match data plus the frame/record
    state the downstream segments consume: s7 = phi, s4 = s6 = blk = phi + 18 (set 0x81e1c), s8 = k, the [A+280]
    spill and the four frame-pointer spills [A+248] = fr + 176 (set at 0x812f0-0x812f4) / [A+136] / [A+120] /
@@ -2763,7 +2763,7 @@ Definition Inv_A82418_at (g : ghost) (j : nat) (c : config) : Prop :=
        Z.of_nat (length (t_phi (g_in g) j)) <= flen g j /\ LT g fr j regs m)
     c.
 Definition Inv_A82418 (g : ghost) (c : config) : Prop := exists j, Inv_A82418_at g j c.
-(* F21 entry (0x82408), push 6c8: a Theorem Labs lane's Seg/F20.v (a version not in this delivery; written on a working branch 84eade9b534) Inv_A82408_loc (seg_F20's
+(* F21 entry (0x82408), push 6c8: a Theorem Labs lane's Seg/F20.v (a version not in this delivery; written on a working branch) Inv_A82408_loc (seg_F20's
    exit, Qed), on the FCUT skeleton (a_size live list, FLSI, as F20). After the CKV call: a0 is the call's result
    (0 exactly when the block sum is 0); the record state is unchanged (the callee wrote only its own 16 stack
    bytes). Reached only after 0x8236c, so t_8819 = true and 50 <= len_j: no short-arm guard. *)
@@ -2785,7 +2785,7 @@ Definition Inv_A824b4_at (g : ghost) (j : nat) (c : config) : Prop :=
     c.
 Definition Inv_A824b4 (g : ghost) (c : config) : Prop := exists j, Inv_A824b4_at g j c.
 (* ---- F22-F28 entries (0x824a8 .. 0x825b0, and F28's internal split 0x82628), push 6c8: a Theorem Labs lane's
-   Seg/B7Cuts.v (a working branch 2c8bf01f57e), the head-amp record check and the inlined check_ports. All of
+   Seg/B7Cuts.v (a working branch), the head-amp record check and the inlined check_ports. All of
    B7 is taken (not only F26 / F27), so that each body's producer has its own entry: F25 produces 0x82548 from
    0x82528, and so on back to F21's exits 0x824a8 / 0x824f4 (a Theorem Labs lane's F21 exits into a Theorem Labs lane's texts). a Theorem Labs lane's B7CUT is
    written on the official skeleton: the live list is `hb1 phi (AC.a_size (flen g j))` (a Theorem Labs lane: `flen g j`; equal,
@@ -2878,7 +2878,7 @@ Definition Inv_A826d4_at (g : ghost) (j : nat) (c : config) : Prop :=
     rg regs 13 (RcLeaf.cnt is_empty (t_pbs (g_in g) j) 12) /\
     rg regs 17 (RcPorts.pu_first (t_pbs (g_in g) j) 12)) c.
 Definition Inv_A826d4 (g : ghost) (c : config) : Prop := exists j, Inv_A826d4_at g j c.
-(* ---- F29-F38 (0x826a4 .. 0x82894), push 6c: a Theorem Labs lane's Seg/B8Cuts.v (not in this delivery) (a working branch 4eed0e3747c), one
+(* ---- F29-F38 (0x826a4 .. 0x82894), push 6c: a Theorem Labs lane's Seg/B8Cuts.v (not in this delivery) (a working branch), one
    body per segment boundary, so the exit cut of a segment and the entry cut of its neighbour are the same term.
    Each is the FCUT skeleton written out (phi named, since FLS / FLSX / RL take it), then LK, the frame-loop
    pass-through FLS (FLSX from 0x827b0 on), the facts the batch's instructions read, and last the hand-on bundle
@@ -3036,7 +3036,7 @@ Definition Inv_A82940 (g : ghost) (c : config) : Prop := exists j, Inv_A82940_at
 
 (* ---- Epilogue, release, abort (X1, X2, Jrel, Y). *)
 (* X1 entry (0x82a58) and X2 entry (0x82a74), push 7 (a Theorem Labs lane 01:04Z): a Theorem Labs lane's Seg/X12.v (a version not in this delivery) Inv_A82a58_loc /
-   Inv_A82a74_loc (written on a working branch e94ad2a6bfb, seg_X1 / seg_X2 Qed) word for word, so the segments move by a
+   Inv_A82a74_loc (written on a working branch, seg_X1 / seg_X2 Qed) word for word, so the segments move by a
    rename. X1 reads the identity record pointer spill [A + 144] = fr + 2688, the 21 identity bytes there with a 0
    in bytes 3 .. 19 (the memchr wrapper's 17-byte search from fr + 2691 finds it), and those 17 bytes addressable;
    X2 reads a0 <> 0 (0x82b20 `beqz a0`, the abort pair, not taken). X12.v's `SF` is lib/A/Spec/StrFun, which this
@@ -3080,7 +3080,7 @@ Definition Inv_A82bac (g : ghost) (c : config) : Prop :=
    frame, Y2 cleared its shadow), and ENT, out of which ent_post (Seg/Tac_slot.v) builds every clause of the post
    that compares the return state with the entry state. a0 is NOT 0 here: 0x82af0 `li a0,0` is the first
    instruction of this segment, so the cut before it holds the callee's result (push 5c; push 5 had a0 = 0).
-   Push 13 group D (a Theorem Labs lane's Inv_A82af0_loc, lib/A/Prog/SegCF/YTail.v (not in this delivery) at a working branch e4f35fe410a): the
+   Push 13 group D (a Theorem Labs lane's Inv_A82af0_loc, lib/A/Prog/SegCF/YTail.v (not in this delivery) at a working branch): the
    stklo bound, right after the aa_AH conjunct. Y3's reload area [S - 104, S) needs a place in the at-main window
    (Cf_run.stk_base_le_stklo bounds the window base by stklo); Y1 / Y2 prove it at their exit from FRAH's bound,
    which the release writes keep (a_laws_store / a_laws_fs_store, a_laws_mat_le). *)

@@ -2,11 +2,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) twin of ARM_add's part of lib/A/ReplyRINV.v
-   and lib/A/ReplyTopXRI.v at 8da615a239d (a working branch; file sha256 f3e0c442419d and
+   and lib/A/ReplyTopXRI.v (a working branch; file sha256 f3e0c442419d and
    cd0b3c4e0107).  FREE-PIECES.md (sha256 0f44f6fd1403; internal record) row G-BRI-add [STABLE]: B-TOPX-OWNERS.md (sha256 705727227472; internal record) rows 67-69.
 
    What is here, each with its source in A's ReplyRINV.v (A) and the B top_x hypothesis it closes
-   (lib/B/W_LLVMFuzzerTestOneInput_top_x.v at e43cf0c7bef, file sha256 44f0396075f3):
+   (lib/B/W_LLVMFuzzerTestOneInput_top_x.v, file sha256 44f0396075f3):
      fr_Forall2_r, fr_in4, fr_nopen_set, fr_nodup_snoc, fr_cost_snoc   A :605-611, :691-692, :966-990, the same text;
      RI_add_pre_B   = top_x :403-406 RI_add_pre   with RINV := ReplyRINVB.fr_RINV   (proof: A :693-725 RI_add_pre_fix_holds);
      RI_add_open_B  = top_x :407-411 RI_add_open  with RINV := ReplyRINVB.fr_RINV   (proof: A :992-1061 RI_add_open_fix_holds);
@@ -17,6 +17,7 @@
    No numeral of an image address: the model functions (ad_at_op / ad_os / ad_open / ad_none, lib/B/
    W_LLVMFuzzerTestOneInput_add.v :823-834 and :168-187; oa_first / oa_new_src, lib/B/W_op_add.v :140-149; ra_new,
    lib/B/W_contract.v :1131) have A's text, and fr_RINV is A's (ReplyRINVB.v header :10). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

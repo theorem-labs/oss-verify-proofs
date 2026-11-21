@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStrlenB, c-libc-stdio lane): fuzz_preset.asan-ubsan's (IMAGE B's) strlen
    interceptor, called at its trampoline __wrap_strlen 0x42e04 (`jal zero, 0x42e94` = ___interceptor_strlen), in the
    contract of the second allocator instance:
@@ -8,7 +9,7 @@
    generated record, the donor's premise). Its two steps are kept: `ps_strlen_realizes_cf_B : forall B, PsConstCellsB B
    -> PsRealStrlenB B -> ...` and `ps_strlen_realizes_cf_B' : forall B, YF0m.TfibSyms B -> PsRealStrlenB B -> ...`.
    Image B only.
-   2026-10-29 (pstr102, #102 pin B' asan-ubsan d663f82d, twin c90d4fa5): presetstr-ro 45e489ec67c7's file (blob
+   2026-10-29 (pstr102, #102 pin B' asan-ubsan d663f82d, twin c90d4fa5): presetstr-ro's file (blob
    0d3f7eb810a1) with every image-B numeral moved to B' by symbol + offset, the KEYING table re-keyed A' -> B' (its
    left column by A -> A', its right column by B -> B'), PS_IMG_TOP 0x600000 -> 0x601000 (B' PT_LOAD end 0x600010;
    = CfImgB cf_img_top), over the B' kit halves (lib/K/A TwinB__, RelocA), the B' YF0m.v f82202ebccdf (h-pre-b3
@@ -16,8 +17,8 @@
    YF0m line numbers in ps_cells_B are the old blob's; cells are found BY VALUE (all 14 are in f82202ebccdf).
    rule 24: no function proved. This file is the IMAGE-B RESTATEMENT of an existing, proved composition.
 
-   DONOR: lib/A/PSstrlen.v at origin/cold/c-libc-stdio-presetstr 4c5f2e59209 (`ps_strlen_realizes_cf`, image A,
-   Qed, built green), itself the port of fuzz_state's FSstrlen.v (origin/cold/port-state-rt-str 17818dd9abc). Every
+   DONOR: lib/A/PSstrlen.v (`ps_strlen_realizes_cf`, image A,
+   Qed, built green), itself the port of fuzz_state's FSstrlen.v. Every
    lemma below is the donor's, in the donor's order, under the donor's name, with the donor's proof script, unless
    listed here. Its inputs are the image-B halves of the same kits:
    - the walk: K/A/I_strlen_entry.v Module TwinB__ `istrlen_wrap_closed` (the trampoline step at 0x42e04, then
@@ -70,12 +71,12 @@
    image B's generated record lib/Reusable/YF0m.v TfibSyms B in its place, through tfibsyms_const_cells_B (ts_const,
    then each of the 14 cells found BY VALUE in Tfib_const_abs: a vm_compute-decided search for its exact address,
    width and value, cell_in / In_of_num_cell). No proof names a row index, so a regenerated table that adds, removes
-   or reorders rows breaks nothing here as long as each cell is still in it (checked against h-pre-b3's 3d8a3b2a6d6,
-   which removes row 179). Before the relocB merge (73ec04ddc49) this tree's YF0m.v was cgif's unrelocated copy
-   (8053f85d818).
+   or reorders rows breaks nothing here as long as each cell is still in it (checked against h-pre-b3,
+   which removes row 179). Before the relocB merge this tree's YF0m.v was cgif's unrelocated copy.
+   
    - PsRealStrlenB B: the 8-byte cell __interception::real_strlen at 0xa4568 holds musl's strlen 0x9c154, the donor's
      shape exactly. It is discharged by tfibsyms_real_strlen_B from the same record, by value: h-pre-b3's
-     origin/cold/h-pre-b3-preset-yf0m d5df1955955 added `z8 (ANum 0xa4568) 0x9c154` to Tfib_const_abs.
+     added `z8 (ANum 0xa4568) 0x9c154` to Tfib_const_abs.
    So ps_strlen_realizes_cf_B_closed has the donor's premise and no other. AR_laws_cf is proved (AR_laws_ok_cf), not a
    premise. No cell is added to any generated table by this file. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -709,7 +710,7 @@ Definition PsRealStrlenB (B : asyms) : Prop :=
   forall ly S Hp (W : world tfibsegs) mem md, ARcf tfibsegs B ly S Hp W mem md ->
   cell_holds B ly (aview tfibsegs (w_H W) mem) (z8 (ANum 0xa4568) 0x9c154).
 
-(* image B's generated record gives it: h-pre-b3's YF0m.v (d5df1955955 and later) carries `z8 (ANum 0xa4568) 0x9c154`
+(* image B's generated record gives it: h-pre-b3's YF0m.v (and later) carries `z8 (ANum 0xa4568) 0x9c154`
    in Tfib_const_abs, found BY VALUE (cell_in), so amc_const under ts_const reads it *)
 Lemma tfibsyms_real_strlen_B : forall B, YF0m.TfibSyms B -> PsRealStrlenB B.
 Proof.

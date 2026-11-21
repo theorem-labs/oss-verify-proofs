@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger stated as the image's entries followed by the vDSO/vvar pair: a grant's freeness and the start-up apartness read for the image's entries with the pair dropped; M1_fields taking the launch's entry fact, apart_S the launch's reserved ledger apart; the break's page alignment passed to o9's mg_shape and minv8_out18, LPS b07fadb). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -424,10 +425,12 @@ Proof.
   pose proof HS as (Sfds & Sfs & Slim & SMI & Stid & Sx & G2 & G3 & HPL & HPL4 & HPL5 & HPL6 & HPL7 & HPL8 & HPL9 & HPL10 & Ho & _).
   pose proof (mS1_facts sp brk mb draw lim inp Hent Hinp tid a1 a2 P b4 b5 b6 b7 b8 b9 b10 b12 b13 b14 x o v rho4 rho' rho1 rhoM tp w HS)
     as (SRES & SMAPS & STOP & SA1 & SA2 & Hx & H16 & Hxtop & Sx' & SLIM & SISP).
-  pose proof (StartMain.M1_fields sp brk mb draw lim inp tid) as (Fh & Flz & Fmt & Fres & Fmaps & Fna & Flim & Fsb & Fbrk & Fisp & Fused & _).
+  pose proof (StartMain.M1_fields sp brk mb draw lim inp Hent tid) as (Fh & Flz & Fmt & Fres & Fmaps & Fna & Flim & Fsb & Fbrk & Fisp & Fused & _).
   pose proof (StartMain.brk_facts sp brk mb draw inp Hent) as [Hbrk Hbal].
   pose proof (mS_fields m1 Flz Fmaps Fna a1 a2) as (RS & MS & NS & LS & LMS & IS & KS & SKS).
   assert (SBRK : 0x643000 <= bv_unsigned (vm_brk (m_vmmaps mS1)) <= 0x80643000) by (rewrite KS, Fbrk; exact Hbrk).
+  (* LPS 727298f3 (the model's b07fadb): o9's [mg_shape] reads the brk grow's page range, from the break's alignment. *)
+  assert (SBAL : (4096 | bv_unsigned (vm_brk (m_vmmaps mS1)))) by (rewrite KS, Fbrk; exact Hbal).
 
   assert (HE : HBL mE).
   { intros p H1 H2. pose proof (Start7.mE_fields mS1 P b4 b5 b6 b7 b8 b9 x b10) as (_ & _ & _ & _ & LZ & _). rewrite LZ.
@@ -442,7 +445,7 @@ Proof.
   assert (HO : HBL (Start7.out18_model mS1 P b4 b5 b6 b7 b8 b9 x b10 o)).
   { assert (H1c : forall o1, HBL (out1_model mE o1)).
     { intros [| | |a]; cbn [out1_model].
-      - apply (HBL_lazy_eq mE); [exact (proj2 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.mg_shape mS1 SBRK P b4 b5 b6 b7 b8 b9 x b10 Hx H16 Hxtop)) | exact HE].
+      - apply (HBL_lazy_eq mE); [exact (proj2 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.mg_shape mS1 SBRK SBAL P b4 b5 b6 b7 b8 b9 x b10 Hx H16 Hxtop)) | exact HE].
       - apply HSUB. exact (proj2 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.mg_ok_shape mS1 SBRK P b4 b5 b6 b7 b8 b9 x b10 Hx H16 Hxtop)).
       - apply HSUB. exact (proj2 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.mg_dead_shape mS1 SBRK P b4 b5 b6 b7 b8 b9 x b10 Hx H16 Hxtop)).
       - apply (HBL_lazy_eq mE); [|exact HE]. pose proof (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.mf_exp_shape mS1 P b4 b5 b6 b7 b8 b9 x b10 a) as X. cbv zeta in X. exact (proj2 X). }
@@ -461,17 +464,21 @@ Proof.
   pose proof HS as (Sfds & Sfs & Slim & SMI & Stid & Sx & G2 & G3 & HPL & HPL4 & HPL5 & HPL6 & HPL7 & HPL8 & HPL9 & HPL10 & Ho & HPL12 & HPL13 & HPL14 & _).
   pose proof (mS1_facts sp brk mb draw lim inp Hent Hinp tid a1 a2 P b4 b5 b6 b7 b8 b9 b10 b12 b13 b14 x o v rho4 rho' rho1 rhoM tp w HS)
     as (SRES & SMAPS & STOP & SA1 & SA2 & Hx & H16 & Hxtop & Sx' & SLIM & SISP).
-  pose proof (StartMain.M1_fields sp brk mb draw lim inp tid) as (Fh & Flz & Fmt & Fres & Fmaps & Fna & Flim & Fsb & Fbrk & Fisp & Fused & _).
+  pose proof (StartMain.M1_fields sp brk mb draw lim inp Hent tid) as (Fh & Flz & Fmt & Fres & Fmaps & Fna & Flim & Fsb & Fbrk & Fisp & Fused & _).
   pose proof (StartMain.brk_facts sp brk mb draw inp Hent) as [Hbrk Hbal].
   pose proof (mS_fields m1 Flz Fmaps Fna a1 a2) as (RS & MS & NS & LS & LMS & IS & KS & SKS).
   assert (SNA : vm_noaccess (m_vmmaps mS1) = [(Z_to_bv 64 0x8fff7000, Z_to_bv 64 0x20000000000)]) by (rewrite NS; reflexivity).
   assert (SBRK : 0x643000 <= bv_unsigned (vm_brk (m_vmmaps mS1)) <= 0x80643000) by (rewrite KS, Fbrk; exact Hbrk).
-  pose proof (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.minv8_out18 mS1 a1 a2 SRES SMAPS SNA LS STOP SA1 SA2 SBRK P b4 b5 b6 HPL HPL4 HPL5 HPL6 b7 b8 b9 HPL7 HPL8 HPL9 x b10 Hx H16 Hxtop HPL10
-                 (StartTop.apart_S m1 Flz Fres Fmaps Fna ltac:(clear - STOP IS; unfold init_sp_ok in *; rewrite <- IS; exact STOP) a1 a2 G2 G3) o Ho) as MI18.
+  assert (SBAL : (4096 | bv_unsigned (vm_brk (m_vmmaps mS1)))) by (rewrite KS, Fbrk; exact Hbal).
+  pose proof (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.minv8_out18 mS1 a1 a2 SRES SMAPS SNA LS STOP SA1 SA2 SBRK SBAL P b4 b5 b6 HPL HPL4 HPL5 HPL6 b7 b8 b9 HPL7 HPL8 HPL9 x b10 Hx H16 Hxtop HPL10
+                 (StartTop.apart_S m1 Flz Fres Fmaps Fna ltac:(clear - STOP IS; unfold init_sp_ok in *; rewrite <- IS; exact STOP)
+                    (StartMain.resv_apart_M1 sp brk mb draw lim inp Hent tid) a1 a2 G2 G3) o Ho) as MI18.
   pose proof (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.oc.Start8.MI22 mS1 x Hxtop _ _ MI18 b12 HPL12) as (MI22' & _).
   assert (N8 : mmap_n (Z_to_bv 64 8388608) = Z_to_bv 64 8388608) by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
   assert (U8 : bv_unsigned (Z_to_bv 64 8388608) = 8388608) by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
-  pose proof HPL13 as (A13 & P13 & T13 & F13). rewrite N8 in F13. rewrite (mi_res MI22'), (mi_maps MI22') in F13.
+  pose proof HPL13 as (A13 & P13 & T13 & F13). rewrite N8 in F13. rewrite (mi_maps MI22') in F13.
+  (* LPS 727298f3: the image part of the ledger, the vDSO/vvar pair dropped. *)
+  destruct (mi_res MI22') as (V22 & EV22 & _). rewrite EV22 in F13. apply Start8M.region_free_drop_mid in F13.
   split.
   - unfold StartTop.Mmain, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.oc.Start8.m24, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.oc.Start8.m23a. unfold eager_model at 1. rewrite m_vm_lazy_with_vmmaps.
     unfold null_rw_model. rewrite m_vm_lazy_vm_add_lazy, m_vm_lazy_with_vmmaps. apply in_or_app. left.
@@ -589,7 +596,8 @@ S2S3SaQ40M0A1M1G1A2M2S1G1G1Vb13;S9G0Z800000A2A4S2G2S1G1G1Vb12;S9G0Z100000A2A4S2G
 Lemma K8_apart : Start8M.ranges_apart K8.
 Proof.
   pose proof HS as (_ & _ & _ & SMI & _).
-  pose proof (mi_apart SMI) as R.
+  (* LPS 727298f3: the image's entries and the maps, the vDSO/vvar pair dropped ([minv8_apart_img]). *)
+  pose proof (Start8M.minv8_apart_img _ _ _ _ _ SMI) as R.
   rewrite (Lmain_explicit sp brk mb draw lim inp Hent Hinp tid a1 a2 P b4 b5 b6 b7 b8 b9 b10 b12 b13 b14 x o v rho4 rho' rho1 rhoM tp w HS) in R.
   refine (ranges_apart_subl K8 _ _ R).
   apply (subl_app [] _ K8). { apply subl_nil. }
@@ -603,7 +611,8 @@ Qed.
 Lemma img_avoid : ltac2:(tb__ "0|3|
 SaQ40M0A1M1G1S28S3G1G1A2S1G1G1R2R1A4S25S24Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A3S14Z0S8G0R2A2A2SdS10S11S8G0R4A2M2S8G0R3A2A2Z10000A2S10Z643000G2A2A2F_;F_;Fs;Fb;").
 Proof.
-  intros b s Hin Hs. pose proof HS as (_ & _ & _ & SMI & _). pose proof (mi_apart SMI) as R.
+  (* LPS 727298f3: the image's entries and the maps, the vDSO/vvar pair dropped ([minv8_apart_img]). *)
+  intros b s Hin Hs. pose proof HS as (_ & _ & _ & SMI & _). pose proof (Start8M.minv8_apart_img _ _ _ _ _ SMI) as R.
   apply Start8M.ranges_apart_app in R as (_ & _ & X). rewrite StartLib.segments_reserved_A in X.
   pose proof (X _ _ (or_introl eq_refl) Hin) as A1. pose proof (X _ _ (or_intror (or_introl eq_refl)) Hin) as A2.
   pose proof (X _ _ (or_intror (or_intror (or_introl eq_refl))) Hin) as A3. pose proof (X _ _ (or_intror (or_intror (or_intror (or_introl eq_refl)))) Hin) as A4.

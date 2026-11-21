@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the transfer's ledger counts the launch's vDSO/vvar pair with the image's reservations). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -233,7 +234,7 @@ Hypothesis HcwX : forall x, claimed_wr IM (rho_of TT E) (f_mem (state_of d)) x -
 
 Local Notation rho := (rho_of TT E).
 Local Notation V := (m_vmmaps m).
-Local Notation R0 := (segments_reserved segs).
+Local Notation R0 := (vm_reserved V).   (* LPS 727298f3: the whole ledger, vDSO/vvar pair included *)
 Local Notation F0 := (dress (state_of d) bs).
 Local Notation M0 := (f_mem (state_of d)).
 Local Notation ms0 := (PropExec.mkst R (Z_to_bv 64 (AX2.s_pc (CAP.a_ss CS))) FULL (PropExec.seg_rom segs)).
@@ -468,13 +469,15 @@ Proof.
   destruct HD' as (HDI & Hlp & Hsp & Hx).
   destruct HDI as (HRn' & Hr0' & Hhalt' & _ & Hli & _ & _ & _ & _ & _ & _).
   rewrite erase_halted in Hhalt'. rewrite erase_vmmaps in Hli.
-  destruct Hli as [li1 _ li3 li4 li5 li6 li7 li8 li9 li10 li11 _ _ _ _ _].
+  destruct Hli as [li1 _ li3 li4 li5 li6 li7 li8 li9 li10 li11 _ _ _ _].
   cbn [erase_vm vm_reserved vm_maps vm_init_sp] in li1, li3, li4, li5, li6, li7, li8, li9, li10, li11.
   assert (Eat : alloc_top (erase_vm (Z_to_bv 64 W) V') = alloc_top V') by reflexivity. rewrite Eat in li7.
   destruct Hlp as [lp_pi _ lp_pw lp_mat _ _ lp_lim lp_maps lp_na lp_lz _ _ _ lp_E _ lp_wfna lp_wflz lp_opsR lp_ord lp_opsF].
   destruct Hsp as [HShZ _ Hspok Hexcov]. destruct Hx as (Hfr0 & Hfc0 & Hrom0 & Hhi & Hbrk).
   destruct Hext as [(Hnn & Hrho & Hsame & Hisp & Hsbrk & _) Hmfr].
   destruct Hmfr as (new & Enew & _ & HfrA & _ & _). rewrite Eops0 in Enew. cbn [app] in Enew. subst new.
+  (* LPS 727298f3: [R0] is the whole ledger; the leaf lemmas speak of the image's own reservations. *)
+  pose proof (fun o x p Ho Hp => lp_opsR o x p Ho (CXS.co_res_in _ _ _ _ _ _ _ _ _ _ _ _ HCS1 p Hp)) as lp_opsRs.
   assert (HR1 : FxRel.R segs IM rho' F' ms') by (apply HRn'; split; [exact Hr0' | intros; reflexivity]).
   pose proof (R_mem _ _ _ _ _ HR1) as Hmem1.
   assert (HM1 : forall t rg, iget t M1 = Some rg -> region_ok rho' t rg) by (intros t rg Hg; exact (proj1 (proj1 Hmem1 t rg Hg))).
@@ -548,7 +551,7 @@ Proof.
   assert (Hunt : forall x : word, H x = false -> ~ touched rho' (List.filter (fun o => negb (is_commit o)) (fl_ops L')) (bv_unsigned x)).
   { intros x Hx. unfold H in Hx. rewrite <- Ehid in Hx. unfold CXS.hid in Hx. apply orb_false_iff in Hx as [_ Hv]. apply negb_false_iff in Hv.
     exact (leaf_untouched segs A Lim SINV argH ISP FS0 E1 CS R FULL m HCS1 Hlx1 Hres n rho (fl_all L3) Hmaps0 Htags0 rho' m' (fl_all L') (fl_ops L')
-             (fl_c (fl3 L')) (fl_S (fl3 L')) Hrho lp_maps Hfacts' Hisp lp_opsF lp_opsR Hopc fresh HALL Hav x Hv). }   (* [comment removed for export] *)
+             (fl_c (fl3 L')) (fl_S (fl3 L')) Hrho lp_maps Hfacts' Hisp lp_opsF lp_opsRs Hopc fresh HALL Hav x Hv). }   (* [comment removed for export] *)
   assert (Hfrv : forall e, In e fresh -> forall x : word, e_lo (den rho' e) <= bv_unsigned x < e_hi (den rho' e) -> H' x = false).
   { intros e He x Hx.
     exact (leaf_fresh_visible segs A Lim SINV argH ISP FS0 E1 CS R FULL m HCS1 n rho (fl_all L3) Hmaps0 Htags0 rho' m' (fl_all L') (fl_ops L')
@@ -715,7 +718,7 @@ Proof.
           apply SEGS_in_hull. unfold CXS.in_hull. apply andb_false_iff. right. apply Z.ltb_ge. exact Hih. }
       destruct (Hinfr t o nn Eif j Hj) as (e & He & Hx).
       assert (Hin' : In (den rho' e) (vm_maps V')) by (rewrite lp_maps, HALL; apply in_map; apply in_or_app; left; exact He).
-      pose proof (proj1 (Forall_forall _ _) (leaf_bounds segs A Hres m' (fl_c (fl3 L')) (fl_S (fl3 L')) Hfacts') _ Hin') as (_ & _ & _ & Hh & _).
+      pose proof (proj1 (Forall_forall _ _) (leaf_bounds segs A Lim SINV argH ISP FS0 E1 CS R FULL m HCS1 Hres m' (fl_c (fl3 L')) (fl_S (fl3 L')) Hfacts') _ Hin') as (_ & _ & _ & Hh & _).
       apply SEGS_in_hull. unfold CXS.in_hull. unfold e_hi, e_lo, e_sz in Hx.
       apply andb_false_iff. destruct Hh as [Hh|Hh]; [left; apply Z.leb_gt; lia | right; apply Z.ltb_ge; lia]. }
   assert (Hknow : AX2S.know_ok segs E1 (CXS.Mr A argH E1 END m' (ms_mem ms')) (CAP.kn END)).
@@ -768,7 +771,7 @@ Proof.
   split; [|split; [|split]].
   - refine (leaf_cs_ok segs A Lim SINV argH ISP FS0 E1 CS R FULL m HCS1 Hlx1 Hres n rho (fl_all L3) Hmaps0 Htags0 rho' m'
             (fl_all L') (fl_ops L') (fl_c (fl3 L')) (fl_S (fl3 L')) (fl_E L') Hrho lp_maps lp_na lp_lz Hfacts' lp_wfna lp_wflz Hsame Hisp Hsbrk Hbrk
-            Hhalt' lp_lim lp_E lp_opsF lp_opsR Hopc fresh HALL END XT1 Hr0' HXT (fl_lazy L') lp_pw _ (fl_ord L') Hord1 Hcommit _ (fl_allow L') (la_shp ax ++ shp_of M1)
+            Hhalt' lp_lim lp_E lp_opsF lp_opsRs Hopc fresh HALL END XT1 Hr0' HXT (fl_lazy L') lp_pw _ (fl_ord L') Hord1 Hcommit _ (fl_allow L') (la_shp ax ++ shp_of M1)
             HSHP HshK XA (pb_of M1) (pb_of_sound rho' M1 HM1) Hpi' lp_mat IM (f_mem F0) M1 (ms_mem ms') (fl_ex L') TT
             SEGS_in_hull argH_high Hrho_tt HfrA Hcw HShZ HM1 Hspok Hexcov SINV_frame Hhi' (ms_regs ms') Hmodel Hregs Hlog Hknow).
     + unfold model3_chk in Hmodel. do 4 (apply andb_prop in Hmodel as [Hmodel _]). exact Hmodel.
@@ -896,7 +899,10 @@ Qed.
 Definition rest3x_chk : bool :=
   root3_chk segs A Lim TT n classes CS d bs L3 W
   && xa_root_chk CS L3 XA
-  && (live_bytes R0 <=? Rb) && (Z.of_nat (length R0) <=? Rc)
+  (* LPS 727298f3: the ledger also holds the launch's extra reserved intervals (the vDSO/vvar
+     pair), at most [n_resx A] of them and [resx_bytes A] bytes ([CXS.co_resx]); FX charges
+     only the entries above task_unmapped_base ([res_cost], [res_count]). *)
+  && (res_cost R0 + CAP.resx_bytes A <=? Rb) && (Z.of_nat (res_count R0 + CAP.n_resx A) <=? Rc)
   && (let ra := ra_fast (CAP.kn CS) in                   (* [comment removed for export] *)
       let pre := pre_old IM A TT classes CS d bs ra END in
       match tree3x_chk ra pre (drive3 IM code Rb Rc Lim [] shp (fun _ _ _ => None) xask (xpc_of IM code xask hk) bp k fuel F0 L3 n) [] with
@@ -922,17 +928,22 @@ Proof.
   apply andb_prop in Hchk as [Hc Htree]. apply andb_prop in Hc as [Hc HRc]. apply andb_prop in Hc as [Hc HRb].
   apply andb_prop in Hc as [Hroot Hxa].
   apply Z.leb_le in HRb, HRc.
+  assert (HRb' : res_cost (vm_reserved (m_vmmaps m)) <= Rb /\ Z.of_nat (res_count (vm_reserved (m_vmmaps m))) <= Rc).
+  { destruct (CXS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ HCS) as (rx & Erx & _ & Hlen & Hsum).
+    rewrite sum_sizes_live in Hsum. rewrite Erx, res_cost_app, res_count_app.
+    pose proof (res_cost_le rx). pose proof (res_count_le rx). split; lia. }
+  destruct HRb' as [HRb' HRc'].
   pose proof (rb_DInv3_genX cfg segs IM A Lim SINV argH ISP FS0 HULL_ok argH_high TT n classes CS d bs L3 W
                 E R FULL m HCS HTT HRn0 Hdlt Hdok Hroot XA Hxa HLZX) as HD0.
   unfold CXS.cfg_of.
-  refine (drive3_universal cfg segs IM code Hcode Halloc R0 Rb Rc Lim HRb HRc [] FULL (fun _ _ => True) []
+  refine (drive3_universal cfg segs IM code Hcode Halloc (vm_reserved (m_vmmaps m)) Rb Rc Lim HRb' HRc' [] FULL (fun _ _ => True) []
             (fun _ _ _ _ H => H) (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0) (PropExec.seg_rom segs) (fun x => argH E x = true)
             (Z_to_bv 64 W) _ _ _ (map (denA (rho_of TT E)) XA ++ CXS.allowA A E CS) shp (fun _ _ _ => None) xask (xpc_of IM code xask hk) _ _ bp k Hk fuel n _ F0 L3 _ m T HD0 _).
   - intros n1 rho1 F1 L1 ms1 m1 res Hn. discriminate Hn.
   - intros n1 rho1 F1 L1 ms1 m1 res Hx HD1. destruct hk as [|Wj kwj rj]; cbn [xpc_of] in Hx.
-    + exact (xpc_builtin6_sound cfg segs IM code Hcode R0 Lim [] FULL (fun _ _ => True) [] (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0)
+    + exact (xpc_builtin6_sound cfg segs IM code Hcode (vm_reserved (m_vmmaps m)) Lim [] FULL (fun _ _ => True) [] (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0)
                (PropExec.seg_rom segs) (fun x => argH E x = true) (Z_to_bv 64 W) _ _ _ (map (denA (rho_of TT E)) XA ++ CXS.allowA A E CS) n1 rho1 F1 L1 ms1 m1 res Hx HD1).
-    + exact (xpc_builtin7_sound cfg segs IM code Hcode R0 Lim [] FULL (fun _ _ => True) [] (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0)
+    + exact (xpc_builtin7_sound cfg segs IM code Hcode (vm_reserved (m_vmmaps m)) Lim [] FULL (fun _ _ => True) [] (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0)
                (PropExec.seg_rom segs) (fun x => argH E x = true) (Z_to_bv 64 W) _ _ _ (map (denA (rho_of TT E)) XA ++ CXS.allowA A E CS)
                xask Wj kwj rj n1 rho1 F1 L1 ms1 m1 res Hx HD1).
   - intros F' L' n' r Hin rho' ms' m' HD' Hext _.

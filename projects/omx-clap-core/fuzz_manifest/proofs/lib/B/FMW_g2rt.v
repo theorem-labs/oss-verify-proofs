@@ -1,8 +1,8 @@
 (* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050, unstripped twin b9568e38145a) of lib/A/FMW_g2rt.v at a working branch
-   6397116ac79 (= a working branch 0d38fb8ac64, unchanged to 433b7106168). Its code states no image numeral (b_reloc.py
+   (= a working branch, unchanged to). Its code states no image numeral (b_reloc.py
    ad735a6c849a4c62 over mapAB.json 1fe25eab6729e252 finds 0 rows; the code here equals its output except that A's import
    order is kept): its image facts are vm_compute / case analyses over B's tfibsegs (lib.ReusableB YB1v) and FMH_Base's B
-   values. Imports by the image-B core's rule (a working branch 305d8b1527f, coreab/REUSABLEB-LIST.txt): lib.A AB1v
+   values. Imports by the image-B core's rule (a working branch, coreab/REUSABLEB-LIST.txt): lib.A AB1v
    -> lib.ReusableB YB1v (listed); every lib.Reusable module, YCbq included, stays lib.Reusable; fm's own files from
    lib.B; FMupoison shared from lib.A. *)
 (* G2 (name_char, has_prefixed) helpers: fm image facts, a journal step for a runtime call in FMH_Rt's rt_post_ro form

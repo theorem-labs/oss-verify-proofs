@@ -8,10 +8,10 @@
    (lib/A/FSH_Gen.v fpreU / fpostU, FSupoisonU.fs_heads: every fs function runs with live user-poisoned heads).
    Statements only (rule 24: no function proved).
 
-   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Fn.v:245-288 (a working branch
-   706affbdbe6: check_bounded_alloc_spec, check_as_written_spec, check_reject_clean_spec,
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Fn.v:245-288 (a working branch:
+   check_bounded_alloc_spec, check_as_written_spec, check_reject_clean_spec,
    check_reject_clean_starved_spec), re-fitted to fs's code; fs's released plain contracts
-   (origin/ossv/recipes c8557374ad2e lib/Prog/check_bounded_alloc_c.v:11-21, check_reject_clean_c.v:11-30,
+   (lib/Prog/check_bounded_alloc_c.v:11-21, check_reject_clean_c.v:11-30,
    check_as_written_c.v:24-62, check_reject_clean_starved_c.v:18-52) for each function's functional premises and post;
    the callees' specs (lib/A/FSH_Fn_writer.v decode_spec / encode_spec, a Theorem Labs lane) for what the starved check must
    supply them. Numerals: lib/A/FSH_Base.v (fs.asan) and lib/A/FSH_Gen.v; measured facts in
@@ -87,7 +87,7 @@ Definition check_reject_clean_spec : Prop :=
   fpreU segs B STK_check_reject_clean ly S U W regs mem md ch -> fs_heads B ly S U ->
   (* no extra premise here (a Theorem Labs lane ruling 01:37Z): its prover a Theorem Labs lane walks fuzz_alloc_live INLINE (3 words
      auipc / ld / ret, one run A 0x81a60 .. 0x82e5c .. 0x82e64 .. return 0x81a90; a working branch
-     bab265ebece lib/A/FSH_check_reject_clean.v:4, :114), so no callee spec and no achain over s0 is formed and
+     lib/A/FSH_check_reject_clean.v:4, :114), so no callee spec and no achain over s0 is formed and
      fs_glob's live < 2^64 suffices. The achain_low route (s0 = live via `mv s0, a2` A 0x81a78 / B 0x81b74 before
      `jal fuzz_alloc_live` A 0x81a7c / B 0x81b78) would need a bound on live, but the proof does not take it. *)
   fs_glob segs W mem live peak cnt fail ->

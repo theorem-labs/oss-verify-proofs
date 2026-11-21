@@ -1,22 +1,23 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102 pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4): THE SECOND
    COMPOSED TOP of the A' driver. The first composed top Ent102DrvTopA.TFIB_T_closed_A_walked (lib/A/Prog/Ent102DrvTopA.v,
    the driver of record lib/A/PresetD2pAPf.v TFIB_T_closed_A_holds with the walk's slot) with four more of its Section
-   hypotheses DISCHARGED BY CITATION of theorems already proved (on the kit's cut 7cdbb61b5fa0, or on the named branch of a
+   hypotheses DISCHARGED BY CITATION of theorems already proved (on the kit's cut, or on the named branch of a
    file taken by path; nothing re-proved):
-     H_aintrin_realizes_xm_cpy_A      a Theorem Labs lane's PRowCpy.prow_memcpy_icpt_xm_A (lib/A/PRowCpy.v:38) at B := TfibB,
+     H_aintrin_realizes_xm_cpy_A      a Theorem Labs lane's PRowCpy.prow_memcpy_icpt_xm_A (lib/A/PRowCpy.v:39) at B := TfibB,
                                       ARx := ARcf tfibsegs TfibB, laws YGcallcf.AR_laws_x_cf of YG0lawscf.AR_laws_ok_cf;
-     H_aintrin_realizes_xm_set_A      a Theorem Labs lane's PRowSet.prow_memset_icpt_xm_A (lib/A/PRowSet.v:4393), the same way;
+     H_aintrin_realizes_xm_set_A      a Theorem Labs lane's PRowSet.prow_memset_icpt_xm_A (lib/A/PRowSet.v:4394), the same way;
      H_astack_malloc_realizes_cfm_A   a Theorem Labs lane's FCm01xm.stack_malloc0_contract_xm / stack_malloc1_contract_xm
                                       (lib/A/FCm01xm.v:24, :32) and FCm3xm.stack_malloc3_contract_xm (lib/A/FCm3xm.v:21),
                                       one per class of cf_fs_classes CfParams_preset = [0; 1; 3], fs_iface by
                                       FCifaceCf.fs_iface_ARcf (as lib/A/FCxmCfx.v:33-36 does);
-     H_txt_parse_noting_A             a Theorem Labs lane's PN102Top.tparse_noting_specX_A_iface (lib/A/Prog/PN102Top.v:162,
-                                      lib/A/Prog/PN102*.v taken BY PATH from a working branch
-                                      b8995aca942b, lib/B/Prog/PvB_Frees.v from a working branch
-                                      c7276d935095), its callee premises cited: HLIVE PwAllocSurf.fuzz_alloc_live_holds
+     H_txt_parse_noting_A             a Theorem Labs lane's PN102Top.tparse_noting_specX_A_iface (lib/A/Prog/PN102Top.v:163,
+                                      lib/A/Prog/PN102*.v taken BY PATH from a working branch,
+                                      lib/B/Prog/PvB_Frees.v from a working branch),
+                                      its callee premises cited: HLIVE PwAllocSurf.fuzz_alloc_live_holds
                                       (lib/A/Prog/PwAllocSurf.v:796), HRO the driver's
                                       PresetD2pAPf.txt_fuzz_alloc_ran_out_A_holds, HCRC
                                       Crc102InstLive.check_reject_clean_holds_A102_inst_live (lib/A/Prog/Crc102InstLive.v:35)
@@ -106,7 +107,7 @@ intros rc fx cid Hin. cbn in Hin. destruct Hin as [<- | [<- | [<- | []]]].
     AD2l.TfibB_syms).
 Qed.
 
-(* parse_noting's callee premises HLIVE and HCRC, at the driver's parameters (the iface form of PN102Top.v:162) *)
+(* parse_noting's callee premises HLIVE and HCRC, at the driver's parameters (the iface form of PN102Top.v:163) *)
 Lemma drv2_fuzz_alloc_live_A : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   PRH_FnAlloc.tfuzz_alloc_live_specX (fx := fx) (cp := CP) (PI := PresetCfnA.preset_prh_img) (RL := RLc)
     (PA := @PAImg_prog.PI_prog_A rc) AD2l.TfibB

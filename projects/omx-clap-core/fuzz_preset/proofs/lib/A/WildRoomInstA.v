@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/WildRoomInstA.v, with its module paths and numbers changed; 14 of its 49 lines of code are new or changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset A' (fuzz_preset.asan, ELF sha256 bff8519bbe3ea0e4), THE SATISFIABILITY WITNESSES
    of the room conjunct of the trace carrier P'' at image A's universe lib/A/ACej.v (the trace-carrier form; blob
    9c1da4e01665 since prh_univ_closure's clause 5 added 78 fixed traces, 98 -> 176, so u_wmax 3998 -> 3920; it was
-   f707fd5a39dd, as at a working branch 460396d4bd13) (a Theorem Labs lane's VERIFY rule 1, ruled 22:54Z).
+   f707fd5a39dd, as at a working branch) (a Theorem Labs lane's VERIFY rule 1, ruled 22:54Z).
    rule 24: no function proved. rule 24: proves no function (kind: instance facts).
    ONE IMAGE: this file Requires image A's universe and driver traces only (ACej, AF0m); image B's are
    lib/AU/WildRoomInstB.v. The image-free parts (K_LLVMF, init_depot_nil, wild_room_init_K, wild_room_run_fits, cw_of,
    wild_room_cw_fix / _init / _stored) are lib/Reusable/YCbqGwild.v's.
-   The start state is YG00.v init_state (lib/A/AD1v.v:125 `AR tfibsegs B ly init_state ..` at univwiden 460396d4bd13),
+   The start state is YG00.v init_state (lib/A/AD1v.v:125 `AR tfibsegs B ly init_state ..` at univwiden),
    whose depot is [] (YCbqGwild.init_depot_nil). Before the first entry call the driver stores only DRV_TRACES
    (lib/A/AF0m.v), all fixed in ACej's universe (drv_fixed_A; lib/A/AD2l.v's TfibB_syms does the same computation
    against the list form). CW_A w1 w2 is the cursor set: parse_items' and parse_string's frees ([0x53878; 0x87764] /

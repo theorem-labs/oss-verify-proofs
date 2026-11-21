@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: block `ends` of image B's SEG_EXIT over the GENERIC allocator relation ARx
    (fuzz_reply.asan-ubsan 0x84f08-0x84fe8, lib/B/W_bx_defs_x.v lx_ends_S_x): the two nested loops after relay_finish
    that call check_shape_ends(&g_s[k], "", &at) for every open g_s[k] whose fd is order[i].
    SOURCE: lib/B/W_bx_ends.v (this block's AR proof, Qed), converted.  TEMPLATE: image A's ARx conversion of the same
-   block, e60b29a425a lib/A/W_LLVMFuzzerTestOneInput_exit_x.v :2130-3572 (its AR original b86949b953d
+   block, lib/A/W_LLVMFuzzerTestOneInput_exit_x.v :2130-3572 (its AR original
    lib/A/W_LLVMFuzzerTestOneInput_exit.v :3016-5897), lemma by lemma.
    What changes against lib/B/W_bx_ends.v, and nothing else:
    - `AR segs B ly S W mem md` -> `ARx ly S [] W mem md`, the journal -> ajournal_gx_x segs B PST ARx with [] after
      each state, afn_pre -> afn_pre_x, lf_base -> lf_base_x, AR's al_* laws -> AR_laws_x's alx_* fields and YCbqG's
      _x lemmas; AR's block-size bound (al_blocks' `0 <= n < MALLOC_MAX`) -> the Section's BLKN / BLKM;
-   - check_shape_ends is the kit's twin cshe_spec_x (lib/B/W_contract_x.v:1230) through CSHE, in place of the AR
-     file's verbatim copy lx_cshe_spec (lib/B/W_bx_defs.v:219).  The two texts differ only by the ARx conversion
+   - check_shape_ends is the kit's twin cshe_spec_x (lib/B/W_contract_x.v:1231) through CSHE, in place of the AR
+     file's verbatim copy lx_cshe_spec (lib/B/W_bx_defs.v:220).  The two texts differ only by the ARx conversion
      (the ghost lists Hp / Hp', afn_pre_x, ashp_x, ajournal_gx_x) and by the kit's names CSHE_STK / cshe_home /
      cshe_ds_blks / cshe_cost for lx_CSHE_STK / lx_cshe_home / lx_cshe_ds_blks / lx_cshe_cost, which have the same
-     bodies (lib/B/W_contract.v:1839-1855); the post's extra existential Hp' is [] by HP0;
+     bodies (lib/B/W_contract.v:1840-1856); the post's extra existential Hp' is [] by HP0;
    - the two journal lemmas of lib/B/W_bx_defs.v the block reads (lx_fla_kept, lx_afn_pre_at) are restated here
      over ARx (lx_fla_kept_x, lx_afn_pre_at_x), each with the proof of its AR text converted as above.
    Everything AR-free is CITED from lib/B/W_bx_ends.v (Local Notation where it takes Section arguments): the walk
@@ -74,7 +75,7 @@ Local Notation A_LLVMF := YCfn.A_LLVMF.
 Local Notation RA_LLVMF := YCfn.RA_LLVMF.
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -111,7 +112,7 @@ Hypothesis MLM : ameter_laws MT.
 Hypothesis ERR : errno_law_x B ARx.
 Hypothesis HG_SL : forall a, inG (G_SL B fr_RG) a -> inG G_fr a.
 Hypothesis AZS_s : azs B (rg_s fr_RG) (4 * ASRC).
-(* ---- the room round (image A's exit_x at 5a9b16eac9e): the allocator rules' room record RP, whose room invariant is
+(* ---- the room round (image A's exit_x): the allocator rules' room record RP, whose room invariant is
    the cut's NP (cand13's kit, W_journal_x.v Record roomp) ---- *)
 Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
@@ -869,7 +870,7 @@ Proof.
   intros a n v H1 H2 Hv. apply (xe_vm_view W W mem mem'); [|exact Hv].
   intros x Hx. apply HV; unfold AX_ORDER, AX_AT, AX_GS8 in *; lia.
 Qed.
-(* a real-stack range passes every shadow check (W_check_shape_event.v:182 range_addressable_stack) *)
+(* a real-stack range passes every shadow check (W_check_shape_event.v:183 range_addressable_stack) *)
 Lemma xe_ra_stack_x : forall ly S (W : world segs) mem md a len,
   ARx ly S [] W mem md -> ly_stk_lo ly <= a -> a + len <= ly_stk_hi ly -> 0 <= len ->
   range_addressable (aview segs (w_H W) mem) SHADOW_OFF a len.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfSegs3.v (hub dc970db26dad, blob f049bb307485) rw_ret_A, restated over Deallocate's PRIMED raw post (YGcfReallocComposeRh.free_dpost_cf_rh) as the premise of YGcfReallocComposeRh.wrap_realloc_walk_cf_rh_of at image A. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfSegs3.v (blob f049bb307485) rw_ret_A, restated over Deallocate's PRIMED raw post (YGcfReallocComposeRh.free_dpost_cf_rh) as the premise of YGcfReallocComposeRh.wrap_realloc_walk_cf_rh_of at image A. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset.asan image A, the PRIMED realloc walk (premise AREAL of fuzz_preset).
    - rw_ret_rh_A: the segment S3 under the re-hide, Deallocate's return into Reallocate -> realloc's return with a0 = the
      new block, from Deallocate's primed raw post free_dpost_cf_rh (YGcfRehidePost.dealloc_post_raw_rh) at any ghost

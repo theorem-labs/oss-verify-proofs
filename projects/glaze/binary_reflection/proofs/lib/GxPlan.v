@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (init_acs_of's new CONFIG_RSEQ argument, 0 on check_all's unreachable empty arm). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -31,6 +32,30 @@ Variable segs : list Segment.
 Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.     (* [comment removed for export] *)
+(* NO RSEQ SECTION VARIABLE HERE, and that is deliberate -- do not restore it
+   by analogy with Common/AsanPlan.v:3495 or AzPlan.v:38.  an earlier commit added
+   one, whose SOLE use was the [init_acs_of RSEQ A] payload of [check_all]'s
+   `[] =>` arm at :172.  Coq discharges a Section variable onto every
+   definition that reads it, so that one diagnostic term gave [check_all] and
+   [check] -- and therefore 42 CONSUMER FILES and several hundred call sites
+   -- an extra argument carrying no information.
+   The arm is UNREACHABLE, proved from three definitions:
+     [check_all] is called only at :448 and :465, on the [cscs] of
+     [node_mmapin A LIMIT hole cs] (GxPlanCore.v:2199), which is
+     [mmap_destroyed ...] (:2151) = [map _ (dest_cases cs ne m)]; and
+     [dest_cases] (:2138-2148) is [flat_map (fun l => map (fun r => (l,r)) rs) ls]
+     where EVERY branch of [ls] and of [rs] yields [true], [false] or
+     [true; false] -- all non-empty.  Non-empty flat_map of non-empty, so
+     [cscs] is never [], so the arm never fires.
+   So the payload is never evaluated and the 0 below is not a flag claim.
+   CONTRAST, and this is why the four plan modules must NOT be unified:
+     Common/AsanPlan  RSEQ is LIVE on the COk path, through node_x's
+                      XPnScan/XLayout arms (node_pnscan A nx0 RSEQ,
+                      node_layout RSEQ).  Its consumers DO take the flag.
+     AsStartupTabs    LIVE, through chkS r over XN_S r's 207/208 arms.
+     GxPlan           this file: dead payload only.  No flag.
+     AzPlan           check_all is dead outright (sole occurrence its own
+                      definition at :173), so checkA never discharged it. *)
 Variable LIMIT : Z.     (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -164,7 +189,7 @@ Variable bfuel : nat.              (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of 0 A)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>

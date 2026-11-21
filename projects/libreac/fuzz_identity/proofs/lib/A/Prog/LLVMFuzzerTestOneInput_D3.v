@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-366, for
    libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_H.v, with its addresses changed; 1951 of its 2084 lines of code are new or changed and 1010 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment D3 of LLVMFuzzerTestOneInput's ASan walk: the REAC-version case of the record switch,
    0x80f20 .. the join 0x813b4. seg_D3 of lib/A/Prog/LLVMFuzzerTestOneInput_inv.v: from inv_caseV to inv_tail.
 
@@ -576,7 +577,7 @@ Hypothesis PSIG : ident_prog_sig_ok (PI := PI).
 Hypothesis MTL : ameter_laws MT.
 Hypothesis HMT0 : forall s s' : astate, mo_le MT s s' 0.
 Hypothesis ABCMP : abcmp_realizes SEGS B (SIGMA IS___interceptor_trampoline_bcmp).
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
   ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
   m_fds md' = m_fds md /\ m_fs md' = m_fs md.

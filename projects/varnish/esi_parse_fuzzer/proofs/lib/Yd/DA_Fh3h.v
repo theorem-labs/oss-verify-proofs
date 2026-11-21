@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the write steps take the channel-reader premise (m_channel_reader) the model's new write arms read and carry it through page materialisation (sbm_reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -257,7 +258,7 @@ Section Leaf.
   Lemma stdout_write_ok : stdout_write_stmt.
   Proof.
     unfold stdout_write_stmt. intros until K. cbv zeta.
-    intros AINV MI A0 A1 A2 FILE FDf FLf BUF BSZ FDL WB WP PB PS LPOS PLE LS S0 S1 SEP SEPF [g CAN] GOT ST LO CEIL SPHI HK HKONT.
+    intros AINV MI A0 A1 A2 FILE FDf FLf BUF BSZ FDL RDR WB WP PB PS LPOS PLE LS S0 S1 SEP SEPF [g CAN] GOT ST LO CEIL SPHI HK HKONT.
     unfold STDOUT_WRITE_STACK in *. subst a0 a1 a2.
     pose proof (zr_word sp) as SPR; unfold inr64 in SPR. assert (CEILv : 0x7fff7f800000 <= lo) by (pose proof alloc_ceiling_val; lia).
     pose proof CAN as CAN'. unfold SSP_GUARD in CAN'. pose proof GOT as GOT'. unfold SSP_GOT, SSP_GUARD in GOT'.
@@ -308,6 +309,7 @@ Section Leaf.
       | unfold STDOUT_F; lia | unfold STDOUT_F, SSP_GUARD; lia
       | exact IMGC
       | cbn [mf_fd mf_set_write_lbf]; rewrite FDf, FDS2, FDS1; exact FDL
+      | rewrite (sbm_reader _ _ SBM0), (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
       | cbn [mf_wbase mf_buf mf_set_write_lbf]; rewrite BUF; exact WB
       | cbn [mf_wpos mf_set_write_lbf]; exact WP
       | cbn [mf_buf mf_set_write_lbf]; rewrite BUF; reflexivity
@@ -324,7 +326,7 @@ Section Leaf.
       | eexists; eassumption | eassumption
       | rewrite unsigned_lit by lia; exact ST1 | unfold STDIO_WRITE_STACK; rewrite unsigned_lit by lia; lia | exact CEIL | rewrite unsigned_lit by lia; lia | exact HK | ].
     (* [comment removed for export] *)
-    (intros m3 md3 AINV3; (first [ intro dR_5; dand3 dR_5 as FS3 FDS3 HH3 | intros (FS3 & FDS3 & HH3) ]); intros FILE3 ms' PO).
+    (intros m3 md3 AINV3; (first [ intro dR_5; dand4 dR_5 as FS3 FDS3 HH3 RDR3 | intros (FS3 & FDS3 & HH3 & RDR3) ]); intros FILE3 ms' PO).
     (first [ dex14 PO as y0 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 y11 y12 y13; dand5 PO as -> MU3 WM3 MI3 ST3 | dand19 PO as y0 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 y11 y12 y13 -> MU3 WM3 MI3 ST3 | destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & -> & MU3 & WM3 & MI3 & ST3) ]).
     unfold STDIO_WRITE_STACK, STDOUT_F in MU3. rewrite unsigned_lit in MU3 by lia. rewrite unsigned_lit in ST3 by lia.
     transport_after_call rsegs (aview A m2) (aview A m3) MU3 WM3. clear MU3 WM3.
@@ -341,7 +343,8 @@ Section Leaf.
     pose proof (as_minv LPA A m4 md4 AINV4) as [_ HH4].
     (first [ pose proof ((sbm_io _ md4 SBM1)) as dR_4; dand3 dR_4 as FS4 FDS4 _ | pose proof (sbm_io _ md4 SBM1) as (FS4 & FDS4 & _) ]).
     eapply (HKONT m4 md4 AINV4).
-    { split; [| split; [| exact HH4]]. rewrite FS4, FS3, FS2, FS1; reflexivity. rewrite FDS4, FDS3, FDS2, FDS1; reflexivity. }
+    { split; [| split; [| split; [exact HH4 |]]]. rewrite FS4, FS3, FS2, FS1; reflexivity. rewrite FDS4, FDS3, FDS2, FDS1; reflexivity.
+      rewrite (sbm_reader _ _ SBM1), RDR3, (sbm_reader _ _ SBM0), (sbm_reader _ _ SBM); reflexivity.   (* 08b1429: channel-reader-premise *) }
     { cbn [mf_buf mf_bufsize mf_set_write_lbf] in FILE3. rewrite BUF, BSZ in FILE3. exact FILE3. }
     repeat (lazymatch goal with |- ex _ => eexists end). split; [reflexivity|].
     split. { exact MU. }
@@ -681,7 +684,7 @@ Section LeafB.
   Lemma fwritex_flush_ok : fwritex_flush_stmt.
   Proof.
     unfold fwritex_flush_stmt. intros until K. cbv zeta.
-    intros AINV MI A0 A1 A2 FILE FDR WRH WB WP WE B0 B1 B2 NOFIT PLE L26 FAlo FAhi IMGC FDL PB PS S0 S1 SEPB SEPS [g CAN] GOT ST LO CEIL SPHI HK HKONT.
+    intros AINV MI A0 A1 A2 FILE FDR WRH WB WP WE B0 B1 B2 NOFIT PLE L26 FAlo FAhi IMGC FDL RDR PB PS S0 S1 SEPB SEPS [g CAN] GOT ST LO CEIL SPHI HK HKONT.
     unfold FWRITEX_STACK in *. subst a0 a1 a2.
     pose proof (zr_word sp) as SPR; unfold inr64 in SPR. assert (CEILv : 0x7fff7f800000 <= lo) by (pose proof alloc_ceiling_val; lia).
     assert (FAhi' : Fa + 152 <= 0x60a000) by (unfold SSP_GUARD in FAhi; lia).
@@ -705,17 +708,19 @@ Section LeafB.
               Fa f pend s sa (mf_buf f + Z.of_nat (length pend)) lo K AINV1 MI1 eq_refl eq_refl eq_refl);
       [ eassumption | exact FDR | exact FAlo | exact FAhi | exact IMGC
       | rewrite FDS1; exact FDL
+      | rewrite (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
       | exact WB | exact WP | reflexivity
       | eassumption | eassumption
       | exact L26 | lia | lia | lia | lia | exact PLE | lia | lia
       | unfold STDIO_WRITE_STACK; lia | unfold STDIO_WRITE_STACK; lia
       | eexists; eassumption | eassumption
       | exact ST1 | unfold STDIO_WRITE_STACK; lia | exact CEIL | rewrite ?unsigned_lit by lia; lia | exact HK | ].
-    (intros m2 md2 AINV2; (first [ intro dR_8; dand3 dR_8 as FS2 FDS2 HH2 | intros (FS2 & FDS2 & HH2) ]); intros FILE2 ms' PO).
+    (intros m2 md2 AINV2; (first [ intro dR_8; dand4 dR_8 as FS2 FDS2 HH2 RDR2 | intros (FS2 & FDS2 & HH2 & RDR2) ]); intros FILE2 ms' PO).
     (first [ dex14 PO as y0 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 y11 y12 y13; dand5 PO as -> MU2 WM2 MI2 ST2 | dand19 PO as y0 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 y11 y12 y13 -> MU2 WM2 MI2 ST2 | destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & -> & MU2 & WM2 & MI2 & ST2) ]).
     unfold STDIO_WRITE_STACK in MU2.
     eapply (HKONT m2 md2 AINV2).
-    { split; [| split; [| exact HH2]]. rewrite FS2, FS1; reflexivity. rewrite FDS2, FDS1; reflexivity. }
+    { split; [| split; [| split; [exact HH2 |]]]. rewrite FS2, FS1; reflexivity. rewrite FDS2, FDS1; reflexivity.
+      rewrite RDR2, (sbm_reader _ _ SBM); reflexivity.   (* 08b1429: channel-reader-premise *) }
     { exact FILE2. }
     hot_eexists_all. split; [reflexivity|].
     split. { eapply munch_trans; [exact MU|]. eapply munch_weaken; [| exact MU2]. unfold sub_fp; cbn [outside]; intros; lia. }
@@ -847,7 +852,7 @@ Section LeafD.
   Lemma fwritex_nl_ok : fwritex_nl_stmt.
   Proof.
     unfold fwritex_nl_stmt. intros until K. cbv zeta.
-    intros AINV MI A0 A1 A2 FILE FDf FLf BUF BSZ WRH LBF WB WP WE FIT FDL BJ PEND PS S0 S1 SL SEPF MC [g CAN] GOT ST LO CEIL SPHI HK HKONT.
+    intros AINV MI A0 A1 A2 FILE FDf FLf BUF BSZ WRH LBF WB WP WE FIT FDL RDR BJ PEND PS S0 S1 SL SEPF MC [g CAN] GOT ST LO CEIL SPHI HK HKONT.
     unfold FWRITEX_STACK in *. subst a0 a1 a2.
     pose proof (zr_word sp) as SPR; unfold inr64 in SPR. assert (CEILv : 0x7fff7f800000 <= lo) by (pose proof alloc_ceiling_val; lia).
     pose proof CAN as CAN'. unfold SSP_GUARD in CAN'. pose proof GOT as GOT'. unfold SSP_GOT, SSP_GUARD in GOT'.
@@ -882,6 +887,7 @@ Section LeafD.
               f pend [Z_to_bv 8 10] sa lo K AINV1 MI1 eq_refl eq_refl eq_refl);
       [ exact FILE' | exact FDf | exact FLf | exact BUF | exact BSZ
       | rewrite FDS1; exact FDL
+      | rewrite (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
       | exact WB | exact WP
       | (* [comment removed for export] *) eapply bytes_at_ext; [| exact PEND]; pose proof (rw_cells_bytes_at _ _ _ _ BJ') as BB; cbn [cells_bytes cbytes] in BB; rewrite app_nil_r in BB;
           rewrite <- (firstn_skipn (length pend) bj) in BB; apply bytes_at_app in BB; destruct BB as [BB _]; exact BB
@@ -891,7 +897,7 @@ Section LeafD.
       | unfold STDOUT_F; cbn [length]; lia
       | eexists; eassumption | eassumption
       | rewrite unsigned_lit by lia; exact ST1 | unfold STDOUT_WRITE_STACK; rewrite unsigned_lit by lia; lia | exact CEIL | rewrite ?unsigned_lit by lia; lia | exact HK | ].
-    (intros m2 md2 AINV2; (first [ intro dR_9; dand3 dR_9 as FS2 FDS2 HH2 | intros (FS2 & FDS2 & HH2) ]); intros FILE2 ms' PO).
+    (intros m2 md2 AINV2; (first [ intro dR_9; dand4 dR_9 as FS2 FDS2 HH2 RDR2 | intros (FS2 & FDS2 & HH2 & RDR2) ]); intros FILE2 ms' PO).
     (first [ dex14 PO as y0 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 y11 y12 y13; dand5 PO as -> MU2 WM2 MI2 ST2 | dand19 PO as y0 y1 y2 y3 y4 y5 y6 y7 y8 y9 y10 y11 y12 y13 -> MU2 WM2 MI2 ST2 | destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & -> & MU2 & WM2 & MI2 & ST2) ]).
     unfold STDOUT_WRITE_STACK, STDOUT_F in MU2. rewrite unsigned_lit in MU2 by lia. rewrite unsigned_lit in ST2 by lia.
     transport_after_call rsegs (aview A m1) (aview A m2) MU2 WM2. clear MU2 WM2.
@@ -913,7 +919,8 @@ Section LeafD.
     pose proof (as_minv LPA A m3 md3 AINV3) as [_ HH3].
     (first [ pose proof ((sbm_io _ md3 SBM0)) as dR_7; dand3 dR_7 as FS3 FDS3 _ | pose proof (sbm_io _ md3 SBM0) as (FS3 & FDS3 & _) ]).
     eapply (HKONT m3 md3 AINV3).
-    { split; [| split; [| exact HH3]]. rewrite FS3, FS2, FS1; reflexivity. rewrite FDS3, FDS2, FDS1; reflexivity. }
+    { split; [| split; [| split; [exact HH3 |]]]. rewrite FS3, FS2, FS1; reflexivity. rewrite FDS3, FDS2, FDS1; reflexivity.
+      rewrite (sbm_reader _ _ SBM0), RDR2, (sbm_reader _ _ SBM); reflexivity.   (* 08b1429: channel-reader-premise *) }
     { eassumption. }
     { eexists; exact BJ3. }
     hot_eexists_all. split; [reflexivity|].

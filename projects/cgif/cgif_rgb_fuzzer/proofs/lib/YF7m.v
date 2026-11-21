@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the Model record's revised destruct pattern, the pointer array shown free of the reserved ledger in place of the ledger being the image's reservations, and commit_node3 given the model's init_sp_ok fact). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -725,7 +726,7 @@ vm_maps (m_vmmaps md') = vm_maps (m_vmmaps md) /\ vm_reserved (m_vmmaps md') = v
 vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md) /\ vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md).
 Proof.
 clear. intros a k md. cbv zeta. unfold grant_md, fixedin_ok_model, fixedin_ok_vmmaps, with_mmap_replacement, with_mmap_backing. rewrite nores50. cbn.
-destruct md as [fd [maps lazy mat] io fs pr lim tm sg sc]. cbn. destruct maps; cbn. repeat split; img_refl.
+destruct md as [fd [maps lazy mat kb_md vd_md] io fs pr lim tm]. cbn. destruct maps; cbn. repeat split; img_refl.
 Qed.
 Lemma nodeV : forall {RT : Type} (sN : astate) (K : Z -> itree astate RT) (Q : RT -> world tfxsegs -> config -> Prop)
 (R : (word -> option byte) -> Prop) (c1 : config),
@@ -733,7 +734,7 @@ idx = res ->
 at_N Wy md1 WIN (PSR Wy SH2 R) S_V Wy c1 -> AI tfxsegs (w_H Wy) (w_A Wy) (cfg_model c1) ->
 (forall m m' : word -> option byte, (forall x : word, ~ QR (bv_unsigned x) -> m' x = m x) -> R m -> R m') ->
 amwf (cfg_model c1) ->
-vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfxsegs ->
+region_free (vm_reserved (m_vmmaps (cfg_model c1))) (w64 Qb) (w64 kPtrArrayResv) = true ->
 (forall sg, In sg tfxsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 In (wiv (Qb, kPtrArrayResv)) (vm_maps (m_vmmaps (cfg_model c1))) ->
 eager_used (cfg_model c1) + A_bytes (w_A Wy) + 2 ^ 36 <= vm_limit (m_vmmaps (cfg_model c1)) ->
@@ -791,9 +792,10 @@ assert (CEILT : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_top (m_v
 assert (PLACE : region_free (vm_reserved (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true /\
 map_contains (vm_maps (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true).
 { rewrite pru17. split.
-- rewrite RSV. pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
-img_apply (tfx_region_free_reserved QSv 131072); [img_try (clear; zlia) | img_try (clear - F9 F10 Q5 E1; ceil; unfold ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia) |].
-clear - F9z F9 Q5 E1. unfold zone3, zone3cases, TFX_IMG_LO, TFX_IMG_END, kLowShadowBeg, kHighMemBeg, kPtrArrayResv in *. try unfold Qb in *. zlia.
+- (* 08b1429: the pointer array avoids the reserved ledger (ALedger al_zres) *)
+apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink _ (w64 Qb) (w64 kPtrArrayResv)); [exact RSV | |];
+unfold w64; rewrite ?unsigned_lit_small by (img_try (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFX_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia));
+clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia.
 - img_apply (YA09.map_contains_intro _ (w64 QSv) (w64 131072) (w64 Qb) (w64 kPtrArrayResv) INQ);
 unfold w64; rewrite !unsigned_lit_small by (img_try (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFX_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia));
 clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia. }
@@ -807,7 +809,7 @@ pose proof (destroyed_AI tfxsegs (w_H Wy) (w_A Wy) mdN (w64 QSv) 131072 HAI MWF0
 rewrite pru17 in CD. fold (w64 131072) in CD.
 destruct (commit_node3 tfxsegs false regs (Z_to_bv 64 (0x64c88 + D_2c4)) mem (seg_rom tfxsegs) mdN (Z_to_bv 64 50) (w64 QSv) 131072
 (AI_halted _ _ _ _ HAI) R17 R10 ALQ ltac:(img_try (rewrite UQS; clear - F9; unfold zone3, TFX_IMG_LO, kLowShadowBeg, kHighMemBeg in *; zlia))
-R11 ltac:(img_try (clear; zlia)) CEILT R12 R13 core50 R14 R15 PLACE BUD) as (I & nx & bit & i0 & iR & NODE & Bi0 & Bi1 & _ & OUT).
+R11 ltac:(img_try (clear; zlia)) CEILT R12 R13 core50 R14 R15 (proj2 (proj2 (proj2 (proj2 (proj1 MW))))) PLACE BUD) as (I & nx & bit & i0 & iR & NODE & Bi0 & Bi1 & _ & OUT).
 rewrite pru17 in OUT. fold (w64 131072) in OUT.
 assert (IOtr : forall m2, YG0b.same_io mdN m2 -> same_io md0 m2).
 { intros m2 (X1 & X2 & X3 & X4). destruct IO0 as (Y1 & Y2 & Y3 & Y4). unfold same_io. rewrite X1, X2, X3, X4. repeat split; assumption. }

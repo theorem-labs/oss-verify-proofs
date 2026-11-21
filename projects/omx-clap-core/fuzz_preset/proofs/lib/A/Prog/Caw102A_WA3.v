@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -38,6 +38,7 @@
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v, with its module paths and module names changed; 1294 of its 1360 lines of code are new or changed and 460 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of check_as_written on image A' (ASan build): SEGMENT WA3 (lane CawA102, h-rw-pre-5,
    prover CawA102WA3; re-proved on the caw_pst base by CawA102R.CawRWA3; re-proved on the Batch-2 ledger base by
    CawA102R.CawDWA3; re-fitted to the f97c re-keyed base by CawA102R.CawGWA3; re-fitted to the batch base by
@@ -61,32 +62,32 @@
    now its NAMED projection (caw_pre_fpre, caw_pre_univ, caw_pre_rc, caw_pre_size, caw_pre_data0, caw_pre_data62,
    caw_pre_ledger); caw_carry still carries caw_cnt D (the top supplies it by caw_pre_cnt), which the free's RL_free_step reads;
    (3) the text's new OUTCOME conjunct (PRH_FnCheck.v:1379-1388) and the base's caw_dead touch no cut of this stretch (caw_at_OOM is
-   unchanged, Caw102A_Base.v:617-622; caw_at_R now ends with the free's hull budget, :607). Beyond DW, the stretch's lemmas end
+   unchanged, Caw102A_Base.v:618-623; caw_at_R now ends with the free's hull budget, :607). Beyond DW, the stretch's lemmas end
    at caw_k_OOMR, SRrG at RW (caw_wa3_holds : caw_seg_WA3R .. P RW); caw_call / caw_lx / caw_loop take the hull budget.
    THE IMAGE: A' = asan pin sha256 1be0f53d96cb9d6c, parametric over {PA : PAImg A_prog_listing} (the base's caw_img).
-   THE INPUTS, each BY PATH as first fitted at a working branch a5641d45bc36 (= the tree of record
-   #102 integration commit 41b333e9dba0, bound to the kit f97c8b2f046b, + one statements commit; blob ids at that
+   THE INPUTS, each BY PATH as first fitted at a working branch (= the tree of record
+   #102 integration, bound to the kit, + one statements commit; blob ids at that
    commit; the batch base's own blobs are named in BASE OF RECORD above):
    - the shared statements lib/A/Prog/Caw102A_Base.v deec9ccf853b and the frame-state kit Caw102A_Kit.v 3d241a90402d
-     (not edited here); the base header's input list (listing d42e123915ae lib/A/Listing_prog.v 7ed1529926bd; the
-     kit f97c8b2f046b as the #102 integration commit carries it: lib/A/PRH_Base.v fdb45545469b (prh_ledger with most and own, its NAMED
+     (not edited here); the base header's input list (listing lib/A/Listing_prog.v 7ed1529926bd; the
+     kit as the #102 integration commit carries it: lib/A/PRH_Base.v fdb45545469b (prh_ledger with most and own, its NAMED
      projections prh_ledger_blocks / prh_ledger_heads; prh_run_at; fpre with frm_zero (fp_csr fx) last, FRM0-ENTRY),
      PRH_FnCheck.v 9ecd8eb167c6, PRH_FnEx.v 45ddb7a7d5ae, PRH_Img.v 934516a622e8, lib/Spec/PresetRun.v 5ac818ab1fe6,
-     PresetReqAt.v 43c958024221; the engine set of record from the engine commit 8a01e111a410: YC80x.v
+     PresetReqAt.v 43c958024221; the engine set of record from the engine: YC80x.v
      14f84f225e8f, YC1fPx.v 7814b594066f, YCbn.v 720e5b8bc8b0, YGcallx.v 7e1faf965c0d, YGcallcf.v 6d2b13c24437,
      YSRrMemnorm.v 5ffa8525936b, lib/Spec/PresetRodata.v 4eb7e95e7e93, lib/Spec/PjGrammar.v 5d4026de2876);
-   - lib/Reusable/YGcallMxmn.v b47cf7942c3d (engine commit 8a01e111a410) and YGcallMxmnKeep.v: aj_free_x_ct_m_rh_keep, the free rule with the memnorm keep as
+   - lib/Reusable/YGcallMxmn.v b47cf7942c3d (engine) and YGcallMxmnKeep.v: aj_free_x_ct_m_rh_keep, the free rule with the memnorm keep as
      its last conjunct; P crosses the call by PCALL from that keep;
    - lib/A/Prog/S1Ledger.v 8cf15eeb6311 (prh_ledger_kept_aview, at most own), lib/Reusable/YGcfRoomLive.v 2094cd3ced43
      (ccnt24, rl_b24_ok, RL_free_step :1429, room_live_room), lib/A/CfRoomLivePreset.v d0e5e47dcb02 (preset_rl_b24_ok:
      its closed batch-room conjunct at L24 + DRV + 1), lib/Spec/PresetRoomPosKeep.v 4377d5b0def1 (room_pos_keep_free),
      lib/Spec/PresetLiveBounds.v f78da450d5f6 (L24, DRV), lib/Spec/PresetRoom.v 0b749d72634f (ccnt), lib/Reusable/YG0d.v
      4cb085950f75 (ablocks). lib/A/PresetCfnA.v is NOT Required.
-   - PORTED (statements and proofs, image-free): origin/cold/h-hpreset-7-walk-H2H5 1934271f1f4 lib/A/Prog/H2CawPure.v
+   - PORTED (statements and proofs, image-free): lib/A/Prog/H2CawPure.v
      af16a877672b (the suffix lemmas, caw_read_V, caw_skip_cons / caw_skip_end, caw_ws_mask, caw_ws_big), H2CawBase.v
      f20e6e557cb1 (caw_chain, caw_split_last, caw_blk_disj, caw_scr_new, caw_scr_not_hp, caw_kregs_st; caw_ledger_free's
      idea), H2CawR.v 134b752d22a2 (caw_aregs).
-   WHAT CHANGED ON THIS BASE (a5641d45bc36, Caw102A_Base.v deec9ccf853b; last green at the decff-era base 14b5c794bf92,
+   WHAT CHANGED ON THIS BASE (Caw102A_Base.v deec9ccf853b; last green at the decff-era base,
    Caw102A_Base.v e7a40f4137aa) AND WHY: the f97c text (PRH_FnCheck.v 9ecd8eb167c6) binds no run position at entry, so
    the base dropped caw_in's rp_* fields, caw_room_evs / caw_pre_room_evs / caw_room_evs_nth / caw_rpos_at / caw_rpos
    and the entry iface_room_pos premise; each cut carries instead THE PROGRESS FACT caw_prog D E S (for any run position
@@ -189,7 +190,7 @@ Local Set Warnings "-notation-for-abbreviation".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ======== 1. THE MODEL SIDE: pure lemmas, PORTED from origin/cold/h-hpreset-7-walk-H2H5 1934271f1f4
+(* ======== 1. THE MODEL SIDE: pure lemmas, PORTED from
    lib/A/Prog/H2CawPure.v (blob af16a877672b), statements and proofs unchanged (image-free) ======== *)
 Lemma cawp_sfx_trans : forall x y z : list Z,
   (exists p, x = p ++ y) -> (exists q, y = q ++ z) -> exists p, x = p ++ z.
@@ -439,7 +440,7 @@ Lemma caw_req : forall z, 0 < z -> req_size z = z.
 Proof. intros z Hz. unfold req_size. destruct (Z.eqb_spec z 0); lia. Qed.
 
 (* the callee-saved registers are preserved when sp, s0, s1, s2 are and the others never moved
-   (PORTED from 1934271f1f4 lib/A/Prog/H2CawR.v caw_aregs) *)
+   (PORTED from lib/A/Prog/H2CawR.v caw_aregs) *)
 Ltac caw_inbv := repeat (first [left; apply bv_eq; reflexivity | right]).
 Lemma caw_aregs : forall (regs regs' : bvmap 5 word),
   (forall r : bv 5, In r [2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27]%bv -> getr regs' r = getr regs r) ->
@@ -452,7 +453,7 @@ repeat (destruct E as [-> | E]; [apply H; caw_inbv |]). subst r. apply H; caw_in
 Qed.
 
 (* chain_pre with the empty chain: s0 holds rc (an int, sign-extended), never a frame pointer above sp
-   (PORTED from 1934271f1f4 lib/A/Prog/H2CawBase.v caw_chain) *)
+   (PORTED from lib/A/Prog/H2CawBase.v caw_chain) *)
 Lemma caw_chain : forall ly rd regs rc0, 4096 <= raZ regs -> getr regs 8 = w64 rc0 -> - 2 ^ 31 <= rc0 < 2 ^ 31 ->
   2 ^ 31 <= spZ regs -> ly_top ly <= 2 ^ 47 -> chain_pre ly rd regs [].
 Proof.

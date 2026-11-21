@@ -11,11 +11,11 @@ Built from wt (commit `0ec92b6b`).
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
 | [fuzz-cgi](fuzz-cgi/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [fuzz-css](fuzz-css/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
+| [fuzz-css](fuzz-css/) | Copies the input (Size from 10 to 5120 bytes) into a string and parses it as a CSS style sheet with Wt::Render::CssParser::parse on a new parser, and drops the returned style sheet. It returns -1 for an input with Size below 10 or above 5120. | none | 7 |
 | [fuzz-datetime](fuzz-datetime/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [fuzz-eval](fuzz-eval/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [fuzz-http](fuzz-http/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [fuzz-uri](fuzz-uri/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
+| [fuzz-eval](fuzz-eval/) | Copies the input (Size from 10 to 5120 bytes) into a string and evaluates it as a plural-case expression with n = 0 through Wt::WMessageResources::evalPluralCase, catching and dropping WInvalidFormatException and WInvalidOperationException, and drops the result. It returns -1 for an input with Size below 10 or above 5120. | none | 7 |
+| [fuzz-http](fuzz-http/) | Copies the input (Size from 10 to 5120 bytes) into a buffer and parses it as an HTTP request line and headers with the built-in httpd's http::server::RequestParser::parse, on a parser constructed with a null Server, into a new http::server::Request; when parse returns true (a complete request) it calls RequestParser::validate on that request. It drops the parse position and validate's status, and returns -1 for an input with Size below 10 or above 5120. | none | 7 |
+| [fuzz-uri](fuzz-uri/) | Copies the input (Size from 10 to 5120 bytes) into a string and parses it as a URL with Wt::Http::Client::parseUrl into a new Wt::Http::Client::URL, and drops the result and the parsed URL. It returns -1 for an input with Size below 10 or above 5120. | none | 7 |
 
 Not included: **fuzz-json** (not built yet); **fuzz-xml** (not built yet).
 
@@ -30,11 +30,11 @@ None known.
     ./oft fetch wt
     ./oft verify-sha wt
 
-By hand: download `wt-bin.tar.zst` from release [v2026.10.0](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0), unpack it into `projects/wt/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
+By hand: download `wt-bin.tar.zst` from release [v2026.11.3](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3), unpack it into `projects/wt/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
 
 ## How these binaries were built
 - Library: [emweb/wt](https://github.com/emweb/wt) at `0ec92b6bfc41be037dcf3ddfc72664ca261821bd`, built with CMake
-- Harnesses: unmodified
+- Harnesses: the harness files are modified in `fuzz-css`, `fuzz-eval`, `fuzz-http` and `fuzz-uri` (see each harness page); the others are unmodified
 - Everywhere: static riscv64 compiled for RV64G, musl, clang 20.1.8 with `-Os -g`, and a small driver that reads the input file ([docs/running.md](../../docs/running.md)). The sanitizer flags and options are in [docs/building.md](../../docs/building.md). Each harness page lists what else its builds change, and which of its checks were confirmed in the binaries.
 - Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. A binary whose SHA-256 differs after a rebuild with it is a bug: please open an issue.
 

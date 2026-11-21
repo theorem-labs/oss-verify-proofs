@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGiy.v (cold/c-asan-realloc-c5 84ee52cd012, file sha256 ef93dce7a612) onto omx-clap-core/fuzz_preset's lib/AU (asan-ubsan image B', pin d663f82d7f48); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGiy.v (file sha256 ef93dce7a612) onto omx-clap-core/fuzz_preset's lib/AU (asan-ubsan image B', pin d663f82d7f48); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* cgif_file's view facts: from ARm of the allocator state at the memory mem0, the machine facts the hit-g walk reads
    (the parts of AGif0cgif.hview, assembled in AGif1) for the cached chunk at the top of the per-thread cache of class cl.
    Ported from YFiy.v: the same scripts, restated without the walk's frame (no regs0, sp, DPOST or trace). *)

@@ -7,17 +7,17 @@ From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Spec Require Import StrFun.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/disco_table.v:112 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/disco_table.v:112 *)
 Lemma ltu_lit : forall a b, 0 <= a < 2^64 -> 0 <= b < 2^64 ->
   bv_ltu (Z_to_bv 64 a) (Z_to_bv 64 b) = (a <? b).
 Proof. intros a b Ha Hb. unfold bv_ltu. rewrite !unsigned_lit by assumption. reflexivity. Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/disco_table.v:116 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/disco_table.v:116 *)
 Lemma eqb_lit : forall a b, 0 <= a < 2^64 -> 0 <= b < 2^64 ->
   bv_eqb (Z_to_bv 64 a) (Z_to_bv 64 b) = (a =? b).
 Proof. intros a b Ha Hb. unfold bv_eqb. rewrite !unsigned_lit by assumption. reflexivity. Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_ctrl/lib/Prog/Seg/G03.v:24 (g03_memcmp) *)
+(*:proofs/libreac/fuzz_ctrl/lib/Prog/Seg/G03.v:24 (g03_memcmp) *)
 Lemma ccsv_memcmp : forall l n, (n <= length l)%nat -> memcmp_model l l n = Some 0.
 Proof.
   induction l as [|x l IH]; intros [|n] Hn; cbn in *; try reflexivity; try lia.

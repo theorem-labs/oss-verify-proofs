@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (asan_res_len re-proved for res_len_ok's new conjunct 2 <= n_resx, and asan_img_facts proves img_facts' new if_resx field (n_resx 2, p_resx 20): room for the launch's vDSO pair among the extra reservations). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.msgpack_c.unpack_pack_fuzzer.images Require Import Asan.
@@ -46,7 +47,7 @@ Proof.
 Qed.
 
 Lemma asan_res_len : APS.res_len_ok ASEGS ASAN.
-Proof. vm_compute. reflexivity. Qed.
+Proof. split; [vm_compute; reflexivity | cbn [n_resx ASAN]; lia]. Qed.
 
 Lemma asan_res_hull : Forall (fun iv => img_lo ASAN <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= img_hi ASAN) (segments_reserved ASEGS).
 Proof.
@@ -139,4 +140,5 @@ Proof.
   - rewrite asan_res_sizes. reflexivity.
   - cbn [rw_lo rw_len ASAN]. split; [lia|]. intros m x Hx. apply asan_rw_window. lia.
   - exact asan_shadow_ok.
+  - cbn [n_resx p_resx ASAN]. split; lia.
 Qed.

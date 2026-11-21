@@ -2,10 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: hop 4 (CPY) of the MATCH segment of the ASan walk of fuzz_reply's relay_remove
    (lib/A/W_rr_match_cx.v hop_cpy_stmt): RRC i 0x83f98 -> RRU (Some i) 0x83fc4.
-   rule 24: proves function relay_remove MATCH hop 4 (kind: segment lemma of the W6 walk, PORTED from 2ad36763b22
+   rule 24: proves function relay_remove MATCH hop 4 (kind: segment lemma of the W6 walk, PORTED from
    relay_remove_p_c_tail.v rrA_tail_proved / rrt_block_cpy, relay_remove_seg.v rrA_cpy; lookup + CONFIRM in context).
 
-   Where each part comes from (the retired lane form, commit 2ad36763b22, lib/A/Prog/... and lib/Prog/...):
+   Where each part comes from (the retired lane form, lib/A/Prog/... and lib/Prog/...):
    - rmc_firstn_app, rmc_skipn_app_S, rmc_remove_at_last, rmc_remove_at_mid, rmc_split_nth: P/relay_remove_b_aux.v
      rma_firstn_app / rma_skipn_app_S / rma_remove_at_last / rma_remove_at_mid / rma_split_nth, verbatim;
      rmc_skipn_app_exact: Lib/Cells.v skipn_app_exact, verbatim.
@@ -25,12 +25,13 @@
      store through the hi atom A_HI 59 (W_rebase.v prebase, as W7's W_send_line_loop.v), the call by
      aj_gx_entry_at with AMEMCPY (i < N - 1) or AMEMCPYS (i = N - 1, the lane's one-case run split as PREP (c) S2 9).
    - rmc_post (RDONE from RRC and the memory after the hop): new (W6's cut predicates); arelay_at's twelfth conjunct
-     (no entry block is the table, W8 42f5184c7ab) for remove_at i es is W_rr_match_cx.v's rm_base_notab. *)
+     (no entry block is the table, W8) for remove_at i es is W_rr_match_cx.v's rm_base_notab. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 in the room form (a Theorem Labs lane, lane RR_x): hop 4 (CPY) over ANY
    allocator relation ARx (Section c is W_relay_remove_cx.v's generic block, verbatim): laws al_X -> alx_X (BLKN for a
    live block's 0 <= n), the journal, frame and block lemmas their _x twins (the heap-block shadow facts under HP0), the
    call by aj_gx_entry_at_x with AMEMCPY / AMEMCPYS in their _x forms (the site keeps ly S Hp).  The room round: the hop
    allocates nothing, so RRC's rp_RM RP S1 kr is RDONE's last conjunct at the same state (rmc_post's new premise). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -750,7 +751,7 @@ unfold RDONE. split; [|split; [exact Hi|split; [exact Hfd|split; [exact HMO|spli
     split.
     { apply (proj2 (stdpp.base.NoDup_ListNoDup _)). apply rmc_nodup_remove; [exact Hi|].
       exact (proj1 (stdpp.base.NoDup_ListNoDup _) RND). }
-    (* no entry's block is the table (arelay_at's twelfth conjunct, W8 42f5184c7ab): MatchCx's rm_base_notab *)
+    (* no entry's block is the table (arelay_at's twelfth conjunct, W8): MatchCx's rm_base_notab *)
     exact (rm_base_notab B ARx MT RP MMAX RG cx i HB Hi). }
   split.
   { apply (aout_at_kept B RG ly1 S1 W1 m1 ly1 S1 W1 m3 _ _ _ _ _ _ HOUT).
@@ -1225,7 +1226,7 @@ unfold RDONE_xR. split; [|split; [exact Hi|split; [exact Hfd|split; [exact HMO|s
     split.
     { apply (proj2 (stdpp.base.NoDup_ListNoDup _)). apply rmc_nodup_remove; [exact Hi|].
       exact (proj1 (stdpp.base.NoDup_ListNoDup _) RND). }
-    (* no entry's block is the table (arelay_at's twelfth conjunct, W8 42f5184c7ab): MatchCx's rm_base_notab *)
+    (* no entry's block is the table (arelay_at's twelfth conjunct, W8): MatchCx's rm_base_notab *)
     exact (rm_base_notab B ARx MT RP MMAX RG cx i HB Hi). }
   split.
   { apply (aout_at_kept B RG ly1 S1 W1 m1 ly1 S1 W1 m3 _ _ _ _ _ _ HOUT).

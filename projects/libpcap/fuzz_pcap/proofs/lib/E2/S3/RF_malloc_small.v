@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: a stray Show command is removed from a proof step, in both copies. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -517,7 +518,7 @@ Proof using BL CLO HENF LO MF N0 NT TP t. pin_using (fun (BL CLO HENF LO MF N0 N
   - exact MI'.
   - eapply stk_transport; [exact ST| exact MU| exact WM|]. cbn. lia.
   - eapply rw_cells_transport; [exact FR| exact MU| exact WM|]. cbn. lia.
-  - eapply rw_cells_transport; [exact ERR| exact MU| exact WM|]. subst tp. rewrite RATP_unsigned. pose proof the_tb_facts. cbn. Show. lia.
+  - eapply rw_cells_transport; [exact ERR| exact MU| exact WM|]. subst tp. rewrite RATP_unsigned. pose proof the_tb_facts. cbn. lia.
   - eapply rauxv_ok_frame; [exact AUX| exact MU| exact WM|].
     unfold RAUXV_CELL. constructor; [cbn; lia|]. constructor.
   - eapply rpres_except_munch_frame; [| exact MU| exact WM|].
@@ -1273,7 +1274,7 @@ Proof using BL CLO HENF LO MF N0 NT TP t. pin_using (fun (BL CLO HENF LO MF N0 N
   - exact MI'.
   - eapply stk_transport; [exact ST| exact MU| exact WM|]. cbn. lia.
   - eapply rw_cells_transport; [exact FR| exact MU| exact WM|]. cbn. lia.
-  - eapply rw_cells_transport; [exact ERR| exact MU| exact WM|]. subst tp. rewrite RATP_unsigned. pose proof the_tb_facts. cbn. Show. lia.
+  - eapply rw_cells_transport; [exact ERR| exact MU| exact WM|]. subst tp. rewrite RATP_unsigned. pose proof the_tb_facts. cbn. lia.
   - eapply rauxv_ok_frame; [exact AUX| exact MU| exact WM|].
     unfold RAUXV_CELL. constructor; [cbn; lia|]. constructor.
   - eapply rpres_except_munch_frame; [| exact MU| exact WM|].

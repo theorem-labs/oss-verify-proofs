@@ -1,7 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/SpecHalts.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8 (its EXS and NK predicates, their closure lemmas and the two theorems built from them, lines 15-140), restated for skcms/iccprofile_info's Info.Spec.spec and Info.ShapeAlg trace algebra; the case analysis follows this harness's spec, not from_chars's. *)
+(* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/Common/RealizesHalts.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8 (its whole content bar the abort section: refusal_decided_classic, decided_from_classic, the two cfg-monotonicity lemmas, exits_in, kill_free and their closure lemmas, realizes_cfg_must_exit_in and the three corollaries), with [realizes_cfg segs cfg] replaced throughout by skcms/iccprofile_info's Info.ShapeAlg.realizes, whose node relation is pinned to Info.ShapeAlg.CFG, and with the image premise taken as Info.ProofInfoPlan.realizes_spec_stmt rather than from_chars's image_realizes_cfg_e. *)
 (* Modified by gabelogan195, 2026-11: made from TopHalts.v of this proof library: exit_code_in_any is replaced by HALT_CODES, halt_code_0 and halt_code_2, and its exit-code lemmas are restated for the statuses 0 and 2 instead of AnyExit.codes; its root-fact definitions and four halts_*_of theorems are replaced by the new lemma must_exit_forced_of_root_f and the four halting statements of Statements.v (forced_only_cfg, with the budget premise), proved from the root facts of DrvRootP, UbDrvRootP, AsBaseA and BoBaseB; ec_* is renamed hc_* and spec_of_exit_codes spec_of_halt_codes; its comments are left out and the doc comments are new; the Require and Import lines leave out TopProof4, MhDefs, UbMhDefs, AsImg and BoImg and add Monad, Specs, the four images, Statements, TopHalts, DrvRootP, UbDrvRootP, AsBaseA and BoBaseB; the Zify setting at line 15 of TopHalts.v is left out, and Classical_Prop is imported; lines 29-51 of projects/skcms/iccprofile_info/proofs/lib/Halts/HaltsBridge.v at commit f92feaf8b7 (refusal_decided_classic, decided_from_classic, must_exit_in_at_cfg_mono_classic) are taken unchanged. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (must_exit_forced_of_root_f reads the run's segment list, run_segments, which the halting statement's configuration now starts from). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (** The four halting statements of this harness, in the form [Statements.v]
@@ -125,7 +128,7 @@ Proof.
                 Hroot spec_of_kill_free spec_of_halt_codes Hen Hinp) as H.
   destruct en as [sp brk0 mb rnd].
   cbn [must_exit_in_scfg] in H |- *.
-  exact (must_exit_in_at_cfg_mono_classic forced_only_cfg _ segs HALT_CODES _ (forced_only_cfg_least _) H).
+  exact (must_exit_in_at_cfg_mono_classic forced_only_cfg _ _ HALT_CODES _ (forced_only_cfg_least _) H).
 Qed.
 
 (** ** The four halting statements *)

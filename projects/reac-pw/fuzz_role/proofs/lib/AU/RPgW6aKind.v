@@ -1,19 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 277 of its 306 lines of code are new or changed and 297 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aKind.v at f6a13f6f19c8 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aKind.v for reac-pw/fuzz_rate's
    image A: module paths changed; the image is fuzz_rate.asan (images.Asan); every pc and register is rate's (in.n is
    the register s8 itself instead of the frame cell [R+0xf8], so the entry state has no frame region and the in.n = 0
    arm writes nothing; the shadow offset is s2; the cursor stays in s9; a5 keeps in.n of the kind read; the dispatch
    block writes s6); the post and the chaining are RtPgSteps.v's rts_blk_post / rts_blk_seq / rts_jt_block. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6aKind.v at 88912827c774 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6aKind.v for the same unit's
    image B (fuzz_rate.asan-ubsan): images.AsanUbsan, lib/AU/RtPgW6aBaseB.v and lib/AU/RtPgStepsB.v (rtsb_blk_post /
    rtsb_blk_seq / rtsb_jt_block) instead of image A's files; every pc is image B's; in.n is s9, the cursor s10 and the
    shadow offset s4; the run passes the pointer-overflow test `bltu a6,s2` 0x813f4 (decided by the engine from the
@@ -21,25 +21,26 @@
    subtraction, so a1's sv is A's); the kind block writes s2, a6, t1 and s6 and keeps s10; one clobber list for
    both outcomes. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6aKindB.v, with its module paths, module names and numbers changed; 71 of its 315 lines of code are new or changed and 62 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aKind.v at f6a13f6f19c8 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aKind.v for reac-pw/fuzz_rate's
    image A: module paths changed; the image is fuzz_rate.asan (images.Asan); every pc and register is rate's (in.n is
    the register s8 itself instead of the frame cell [R+0xf8], so the entry state has no frame region and the in.n = 0
    arm writes nothing; the shadow offset is s2; the cursor stays in s9; a5 keeps in.n of the kind read; the dispatch
    block writes s6); the post and the chaining are RtPgSteps.v's rts_blk_post / rts_blk_seq / rts_jt_block. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6aKind.v at 88912827c774 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6aKind.v for the same unit's
    image B (fuzz_rate.asan-ubsan): images.AsanUbsan, lib/AU/RtPgW6aBaseB.v and lib/AU/RtPgStepsB.v (rtsb_blk_post /
    rtsb_blk_seq / rtsb_jt_block) instead of image A's files; every pc is image B's; in.n is s9, the cursor s10 and the
    shadow offset s4; the run passes the pointer-overflow test `bltu a6,s2` 0x813f4 (decided by the engine from the
    cursor atom's range); kind % 10 ends with `subw` / `zext.b` (the engine's range test makes the `subw` a 64-bit
    subtraction, so a1's sv is A's); the kind block writes s2, a6, t1 and s6 and keeps s10; one clobber list for
    both outcomes. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6aKindB.v at 265bf27a1874 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6aKindB.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role (lib/AU/Img0.v rsegs,
    lib/A/RPgBase and RPgCSpec, lib/AU/RPgSteps.v rl_blk_post / rl_blk_seq / rl_jt_block, lib/AU/RPgW6aBase.v); every
    pc is role B's; in.n is s2, the cursor s8 and the shadow offset s11; the left side of the pointer-overflow test
    `bltu s4,s2` 0x80bac is the premise register s4 = 1, pinned to the literal 1 in the entry state; t1 := s2 and
    t2 := 10 come before the test, a6 := s8 after it, and the kind byte is read through a6 with the instrumented check
    of s8; the kind block also writes t2 and keeps s8; the post adds a6 = cur and t2 = 10. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; addresses measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the block lemma w6b_kind of

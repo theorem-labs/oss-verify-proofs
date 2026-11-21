@@ -67,5 +67,5 @@ byte is `__sanitizer::useCounts + 0x1053f` in its own image), read by hand:
 
 `in_rom tfibsegs a` (Reusable/YG0d.v:381) holds for the addresses of the image's non-writable segments, which end at
 0xa25a4 (the read-only and executable PT_LOAD of pin 41113a03c82f; 0xa3000 rounded up to a page), so `0 <= a < X`
-holds for X = 0x143740 and for X = 0x14ea80. `git grep -nw snl_rom_low` over lib at 5fb903565376 finds its own
+holds for X = 0x143740 and for X = 0x14ea80. `git grep -nw snl_rom_low` over lib finds its own
 definition and image A's own lemma of the same name (A/AE7d.v:77), no reader.

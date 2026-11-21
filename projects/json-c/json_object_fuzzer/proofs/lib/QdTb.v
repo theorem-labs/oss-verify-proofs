@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window from the model's stack_window_lo in place of the 8 MiB bound, in wrap_mem_window_defined and store_ok_wrap_window over the launch's input). *)
 
 From Stdlib Require ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase MemImageType RiscvSemantics StackLayout State Run.
@@ -107,29 +108,32 @@ apply IH.
 rewrite Nat2Z.inj_succ. lia.
 Qed.
 
-Lemma wrap_mem_window_defined : forall ph sp argv envp (x : word) uid hw rnd,
-bv_unsigned sp - stack_max_size <= bv_unsigned x ->
-bv_unsigned x < bv_unsigned sp ->
-wrap_mem ph sp argv envp uid hw rnd x <> None.
+Lemma wrap_mem_window_defined :
+  forall inp mbase ph entry sp (x : word) draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned x ->
+  bv_unsigned x < bv_unsigned sp ->
+  wrap_mem inp mbase ph entry sp draw x <> None.
 Proof.
-intros ph sp argv envp x uid hw rnd Hlo Hhi. unfold wrap_mem.
-destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|];
-[discriminate|].
-rewrite (proj2 (Z.leb_le _ _) Hlo), (proj2 (Z.ltb_lt _ _) Hhi).
-cbn. discriminate.
+  intros inp mbase ph entry sp x draw Hlo Hhi. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|]; [discriminate|].
+  rewrite (proj2 (Z.leb_le _ _) Hlo), (proj2 (Z.ltb_lt _ _) Hhi).
+  cbn. discriminate.
 Qed.
 
-Lemma store_ok_wrap_window : forall segs ph sp argv envp a n uid hw rnd,
-bv_unsigned sp - stack_max_size <= bv_unsigned a ->
-bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
-store_ok segs (wrap_mem ph sp argv envp uid hw rnd) a n = true.
+Lemma store_ok_wrap_window :
+  forall segs inp mbase ph entry sp a n draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+  store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
 Proof.
-intros segs ph sp argv envp a n uid hw rnd Hlo Hhi.
-assert (Hsp : bv_unsigned sp < 2 ^ 64) by apply bv_unsigned_in_range.
-apply store_ok_of_all; [lia|].
-intros x Hx. unfold wview.
-destruct (wrap_mem ph sp argv envp uid hw rnd x) as [b|] eqn:Hw; [discriminate|].
-exfalso. revert Hw. apply wrap_mem_window_defined; lia.
+  intros segs inp mbase ph entry sp a n draw Hlo Hhi.
+  assert (Hsp : bv_unsigned sp < 2 ^ 64) by apply bv_unsigned_in_range.
+  apply store_ok_of_all; [lia|].
+  intros x Hx. unfold wview.
+  destruct (wrap_mem inp mbase ph entry sp draw x) as [b|] eqn:Hw;
+    [discriminate|].
+  exfalso. revert Hw. apply wrap_mem_window_defined; lia.
 Qed.
 
 Lemma store_ok_zeros_hit : forall segs m zs a n,

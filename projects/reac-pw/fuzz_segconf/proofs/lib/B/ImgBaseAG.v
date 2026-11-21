@@ -1,4 +1,4 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseAG.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseAG.v (c-asan, frozen), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
@@ -14,6 +14,7 @@
    ported.  [SHBv] is NOT a copy: the walk files write the shadow map's offset as a literal, and here it is the
    field [ag_shadow], so that every definition below it copies byte for byte. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/ImgBaseAG.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -60,9 +61,9 @@ Context {IM : AImg} {AG : AGImg}.
 (* The image-free geometry, copied from the walk files.                                                             *)
 (* copy of YFhy.v:45, remove when YFhy.v is ported *)
 Definition rz_of (k : Z) : Z := 16 * 2 ^ k.
-(* copy of AGhy.v:38, remove when AGhy.v is ported *)
+(* copy of AGhy.v:39, remove when AGhy.v is ported *)
 Definition AFSTACK : Z := 4096.
-(* copy of AGis.v:67, remove when AGis.v is ported *)
+(* copy of AGis.v:68, remove when AGis.v is ported *)
 Definition hdr_byte1 (jb : Z) : Z :=
 zcanon (Z.lor (zcanon (Z.land (zcanon (Z.lor (zcanon (Z.land (zcanon (Z.lor (zcanon (Z.land (zcanon (jb + 0)) (zcanon (-4)))) (zcanon 1))) (zcanon 143))) (zcanon 16))) (zcanon 243))) (zcanon 0)).
 (* The shadow map's offset, as the interface sees it (the walk files write the literal). *)
@@ -105,32 +106,32 @@ Variable kz : Z.
 Let sp0 : Z := bv_unsigned (getr regs0 2).
 Let T : Z := ly_T ly.
 Let SB : Z := ly_space ly.
-(* copy of AGis.v:159, remove when AGis.v is ported *)
+(* copy of AGis.v:160, remove when AGis.v is ported *)
 Definition RZ : Z := rz_of kz.
-(* copy of AGis.v:161, remove when AGis.v is ported *)
-Definition N8D : Z := n / 8 * 8.
 (* copy of AGis.v:162, remove when AGis.v is ported *)
-Definition Pv : Z := T + t_cache + 80 * cl.
+Definition N8D : Z := n / 8 * 8.
 (* copy of AGis.v:163, remove when AGis.v is ported *)
-Definition PVv : Z := Pv + 16 + 4 * (cnt - 1).
+Definition Pv : Z := T + t_cache + 80 * cl.
 (* copy of AGis.v:164, remove when AGis.v is ported *)
+Definition PVv : Z := Pv + 16 + 4 * (cnt - 1).
+(* copy of AGis.v:165, remove when AGis.v is ported *)
 Definition Kv : Z := SB + cl * 2 ^ 32 + 16 * v.
-(* copy of AGis.v:166, remove when AGis.v is ported *)
-Definition SKv : Z := SHBv + Kv / 8.
 (* copy of AGis.v:167, remove when AGis.v is ported *)
-Definition SSLOTv : Z := T + t_stats + 112 + 8 * cl.
+Definition SKv : Z := SHBv + Kv / 8.
 (* copy of AGis.v:168, remove when AGis.v is ported *)
-Definition PBv : Z := SHBv + (Kv + RZ + N8D) / 8.
+Definition SSLOTv : Z := T + t_stats + 112 + 8 * cl.
 (* copy of AGis.v:169, remove when AGis.v is ported *)
-Definition Uv : Z := Kv + RZ.
+Definition PBv : Z := SHBv + (Kv + RZ + N8D) / 8.
 (* copy of AGis.v:170, remove when AGis.v is ported *)
+Definition Uv : Z := Kv + RZ.
+(* copy of AGis.v:171, remove when AGis.v is ported *)
 Definition SUv : Z := SHBv + Uv / 8.
-(* copy of AGis.v:203, remove when AGis.v is ported *)
+(* copy of AGis.v:204, remove when AGis.v is ported *)
 Definition WINT (a : Z) : Prop :=
 (Pv <= a < Pv + 4) \/ (T + 2768 <= a < T + 2824) \/ (SSLOTv <= a < SSLOTv + 8) \/ (T + t_unwinding <= a < T + t_unwinding + 1).
-(* copy of AGis.v:205, remove when AGis.v is ported *)
-Definition PBW (odd : bool) (a : Z) : Prop := odd = true /\ PBv <= a < PBv + 1.
 (* copy of AGis.v:206, remove when AGis.v is ported *)
+Definition PBW (odd : bool) (a : Z) : Prop := odd = true /\ PBv <= a < PBv + 1.
+(* copy of AGis.v:207, remove when AGis.v is ported *)
 Definition WIN (odd : bool) (a : Z) : Prop :=
 (sp0 - AFSTACK <= a < sp0) \/ WINT a \/ ((Kv <= a < Kv + 16) \/ (Uv - 16 <= a < Uv)) \/ PBW odd a.
 End g.
@@ -140,7 +141,7 @@ End a.
 
 (* The k path's geometry (AGj6's Section g: redzone 16, and the header size is NPv).                                *)
 Module K6.
-(* copy of AGj6.v:67, remove when AGj6.v is ported *)
+(* copy of AGj6.v:68, remove when AGj6.v is ported *)
 Definition hdr_byte1 (jb : Z) : Z :=
 zcanon (Z.lor (zcanon (Z.land (zcanon (Z.lor (zcanon (Z.land (zcanon (Z.lor (zcanon (Z.land (zcanon (jb + 0)) (zcanon (-4)))) (zcanon 1))) (zcanon 143))) (zcanon 16))) (zcanon 243))) (zcanon 0)).
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {IM : AImg} {AG : AGImg}.
@@ -152,30 +153,30 @@ Variables (cl cnt v : Z).
 Let sp0 : Z := bv_unsigned (getr regs0 2).
 Let T : Z := ly_T ly.
 Let SB : Z := ly_space ly.
-(* copy of AGj6.v:157, remove when AGj6.v is ported *)
-Definition RZ : Z := 16.
 (* copy of AGj6.v:158, remove when AGj6.v is ported *)
+Definition RZ : Z := 16.
+(* copy of AGj6.v:159, remove when AGj6.v is ported *)
 Definition NPv : Z := Z.max n 1.
-(* copy of AGj6.v:160, remove when AGj6.v is ported *)
-Definition N8D : Z := NPv / 8 * 8.
 (* copy of AGj6.v:161, remove when AGj6.v is ported *)
+Definition N8D : Z := NPv / 8 * 8.
+(* copy of AGj6.v:162, remove when AGj6.v is ported *)
 Definition Pv : Z := T + t_cache + 80 * cl.
-(* copy of AGj6.v:163, remove when AGj6.v is ported *)
+(* copy of AGj6.v:164, remove when AGj6.v is ported *)
 Definition Kv : Z := SB + cl * 2 ^ 32 + 16 * v.
-(* copy of AGj6.v:166, remove when AGj6.v is ported *)
-Definition SSLOTv : Z := T + t_stats + 112 + 8 * cl.
 (* copy of AGj6.v:167, remove when AGj6.v is ported *)
-Definition PBv : Z := SHBv + (Kv + RZ + N8D) / 8.
+Definition SSLOTv : Z := T + t_stats + 112 + 8 * cl.
 (* copy of AGj6.v:168, remove when AGj6.v is ported *)
-Definition Uv : Z := Kv + RZ.
+Definition PBv : Z := SHBv + (Kv + RZ + N8D) / 8.
 (* copy of AGj6.v:169, remove when AGj6.v is ported *)
+Definition Uv : Z := Kv + RZ.
+(* copy of AGj6.v:170, remove when AGj6.v is ported *)
 Definition SUv : Z := SHBv + Uv / 8.
-(* copy of AGj6.v:203, remove when AGj6.v is ported *)
+(* copy of AGj6.v:204, remove when AGj6.v is ported *)
 Definition WINT (a : Z) : Prop :=
 (Pv <= a < Pv + 4) \/ (T + 2768 <= a < T + 2824) \/ (SSLOTv <= a < SSLOTv + 8) \/ (T + t_unwinding <= a < T + t_unwinding + 1).
-(* copy of AGj6.v:205, remove when AGj6.v is ported *)
-Definition PBW (odd : bool) (a : Z) : Prop := odd = true /\ PBv <= a < PBv + 1.
 (* copy of AGj6.v:206, remove when AGj6.v is ported *)
+Definition PBW (odd : bool) (a : Z) : Prop := odd = true /\ PBv <= a < PBv + 1.
+(* copy of AGj6.v:207, remove when AGj6.v is ported *)
 Definition WIN (odd : bool) (a : Z) : Prop :=
 (sp0 - AFSTACK <= a < sp0) \/ WINT a \/ ((Kv <= a < Kv + 16) \/ (Uv - 16 <= a < Uv)) \/ PBW odd a.
 End g.

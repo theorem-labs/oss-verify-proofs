@@ -1,24 +1,25 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset literal, image B' (#102 asan-ubsan pin d663f82d7f48, unstripped twin c90d4fa54d43;
-   facts 8f3e7e1a07f1): the BRIDGE from the memnorm-keeping leaf walk literal_x_holds_mnI4 (lib/B/Prog/literal_mn4.v,
+   facts): the BRIDGE from the memnorm-keeping leaf walk literal_x_holds_mnI4 (lib/B/Prog/literal_mn4.v,
    statement tliteral_leafXmn of lib/Prog/literal_xs_mn.v at VRA = 4) to the caller-facing m-form text tliteral_specX at
-   the kit of record decff67d721f, instantiated as the image-B texts are: (cp := CfParams_preset) (PI := prh_img_B)
+   the kit of record, instantiated as the image-B texts are: (cp := CfParams_preset) (PI := prh_img_B)
    (RL := prh_room_live_a8)
    (PA := PI_prog_B). VRA 4 is what the text gives (range_addressable v 4); image B's VRA-8 leaf cannot be bridged (a v in
    the last 4 bytes of a live block of size 4 mod 8 has shadow byte 4). B's 4-byte store check of v (B 0x887d4-0x887e8,
    slow block 0x8882c) goes through tok_branch's arm 3, h-mani-a2's generalised slow block (lib/Reusable/YCbn.v
-   720e5b8bc8b0, YP0c.v 9912341e8edc, YP0j.v edcf1ee3829d, from origin/cold/h-mani-a2-ycbn 4858de9b83fd).
-   #102: relocated from the old-pin bridge (origin/cold/h-verbs-1-lit-bridgeb 34b0f96319c6, pin f8f98a95bc52) by the
+   720e5b8bc8b0, YP0c.v 9912341e8edc, YP0j.v edcf1ee3829d).
+   #102: relocated from the old-pin bridge (pin f8f98a95bc52) by the
    alreloc of record c4338d099cfb8025 (moved: the three code addresses B 0x887d4 / 0x887e8 / 0x8882c in the comment above).
    The text, read BY PATH:
-    git rev-parse decff67d721f:proofs/omx-clap-core/fuzz_preset/lib/A/PRH_FnReader.v
-     -> 0af3032ed375 (tliteral_specX :246-275, post fpostWm with S' = S; since the donor's kit 04388d628fb it quantifies
+    git rev-parse:proofs/omx-clap-core/fuzz_preset/lib/A/PRH_FnReader.v
+     -> 0af3032ed375 (tliteral_specX :246-275, post fpostWm with S' = S; since the donor's kit it quantifies
      `most own`, and its ledger prh_ledger .. ran most own carries #102's g_most / g_own_ran_out cells), its predicates
-    git rev-parse decff67d721f:proofs/omx-clap-core/fuzz_preset/lib/A/PRH_Base.v
+    git rev-parse:proofs/omx-clap-core/fuzz_preset/lib/A/PRH_Base.v
      -> 3004a98fe2d9 (fpre and fpostWm unchanged; prh_glob gains prh_most / prh_own, prh_pst its 6th and 7th rows) and
      lib/A/PRH_Reader.v 91d2dbd40054 (unchanged). The image record: lib/B/PRH_ImgB.v 3216eca68342 (a Theorem Labs lane's Batch 1, at this
-     tree's base 6240a87c3eb7).
+     tree's base).
    The proof is lib/A/Prog/literal_bridge.v's with image B's #102 listing (lib/B/Listing_prog.v c97cc46b3e13 and
    lib/B/PAImg_prog.v 15fab93fe702, PAImg_leaves 6b3656ad1a67, at that base), image record and leaf. Witnesses
    ly' := ly, S' := S, Hp' := Hp (no allocation, no fake frame); the fQmn keep is the leaf's.
@@ -28,8 +29,8 @@
    (YGcallMxmn.astrlen_realizes_xrom at PI_prog_B's relro range / abcmp_realizes_xm, at PI_prog_B's entries).
    READ-ONLY MEMORY (2026-10-29), as lib/A/Prog/literal_bridge.v: the leaf's PresetRodata.arodata_okP SEGS rlo rhi B
    (aview ..) at PI_literal's relro range, = PI_prog_B's (lit_br_relro), is fpre's second conjunct HROD. The former
-   premise pal_rom_ok (no owned static and no errno byte in a read-only segment) is gone: it is FALSE at TfibB
-   (68059ec877b).
+   premise pal_rom_ok (no owned static and no errno byte in a read-only segment) is gone: it is FALSE at TfibB.
+   
    The caller window e: the leaf runs at STK := STK_literal + e, sp0 := spZ regs + e, FP := [(q, q + 8);
    (v, v + 4)], from the widened journal at entry (lit_br_init_W). Numerals: 16 (cf_head at CfParams_preset, by
    change), 8 / 4 / 24 (LENGTH: words, the cursor struct, the type cell), 4096, 2 ^ 47, 2 ^ 64 (LENGTH / DERIVED

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (free_K's munmap continuation keeps the region live when the munmap is refused). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -33,8 +34,10 @@ Definition free_K (r : option (nat * Z) * astate) : itree astate (unit * astate)
 match fst r with
 | Some (k, len) =>
 IAsk (KMunmap k len) (snd r)
-(fun _ => IRet (tt, set_regions (lupd (st_regions (snd r)) k
-(mkRegion RkMap (rg_len (nth k (st_regions (snd r)) (mkRegion RkMap 0 [] false))) [] false)) (snd r)))
+(* 08b1429: a refused munmap (z = 0) leaves the region live *)
+(fun z => if negb (z =? 0) then IRet (tt, set_regions (lupd (st_regions (snd r)) k
+(mkRegion RkMap (rg_len (nth k (st_regions (snd r)) (mkRegion RkMap 0 [] false))) [] false)) (snd r))
+else IRet (tt, snd r))
 | None => IRet (tt, snd r)
 end.
 Lemma free_tree :
@@ -58,7 +61,8 @@ change (mlookup (st_metas A_rel) g) with (MT A_rel g). unfold A_rel. rewrite MT_
 unfold ret. cbn [ibind]. unfold setm, modify. reflexivity.
 - unfold bind at 1. f_equal. apply FunctionalExtensionality.functional_extensionality.
 intros [mi s2]. unfold free_K. cbn [fst snd]. destruct mi as [[k len]|]; [|reflexivity].
-unfold bind, ask. cbn [ibind]. unfold upd_region, modify. reflexivity.
+unfold bind, ask. cbn [ibind]. f_equal. apply FunctionalExtensionality.functional_extensionality. intros z.
+destruct (negb (z =? 0)); unfold upd_region, modify, ret; reflexivity.
 Qed.
 End b0.
 Section c0.

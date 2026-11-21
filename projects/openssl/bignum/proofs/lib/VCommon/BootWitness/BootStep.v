@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reservation a system-call return or a failing store-conditional clears and the vDSO). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -96,6 +97,519 @@ Ltac boot_pipeline Hfetch Hecall Hdecode :=
 
 Section WithSegs.
 Variable segs : list Segment.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Lemma step_Lui : forall ms w isz rd (imm : bv 20),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Lui rd imm, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (sext 64 (bv_concat 32 imm (Z_to_bv 12 0)))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd imm Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Auipc : forall ms w isz rd (imm : bv 20),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Auipc rd imm, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (ms_pc_val ms + sext 64 (bv_concat 32 imm (Z_to_bv 12 0)))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd imm Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Jal : forall ms w isz rd (imm : bv 21),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Jal rd imm, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (ms_pc_val ms + Z_to_bv 64 isz)
+                  (ms_pc_val ms + sext 64 imm) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd imm Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Jalr : forall ms w isz rd rs1 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Jalr rd rs1 imm, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (ms_pc_val ms + Z_to_bv 64 isz)
+                  (bv_and (rg ms rs1 + sext 64 imm) (bv_not w1)) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 imm Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Branch : forall ms w isz bc rs1 rs2 (imm : bv 13),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Branch bc rs1 rs2 imm, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms 0 w0
+                  (if branch_taken bc (rg ms rs1) (rg ms rs2)
+                   then ms_pc_val ms + sext 64 imm
+                   else ms_pc_val ms + Z_to_bv 64 isz)
+                  (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz bc rs1 rs2 imm Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; rewrite is_x0_0; reflexivity.
+Qed.
+
+Lemma step_OpImm : forall ms w isz op rd rs1 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (OpImm op rd rs1 imm, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (alu64 op (rg ms rs1) (sext 64 imm))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 imm Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_ShiftImm : forall ms w isz op rd rs1 (shamt : bv 6),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (ShiftImm op rd rs1 shamt, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (alu64 op (rg ms rs1) (zext 64 shamt))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 shamt Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Op : forall ms w isz op rd rs1 rs2,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Op op rd rs1 rs2, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (alu64 op (rg ms rs1) (rg ms rs2))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 rs2 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_OpImm32 : forall ms w isz rd rs1 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (OpImm32 rd rs1 imm, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (sext 64 (alu32 ALU_ADD (low32 (rg ms rs1)) (sext 32 imm)))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 imm Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_ShiftImm32 : forall ms w isz op rd rs1 (shamt : bv 5),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (ShiftImm32 op rd rs1 shamt, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (sext 64 (alu32 op (low32 (rg ms rs1)) (zext 32 shamt)))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 shamt Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Op32 : forall ms w isz op rd rs1 rs2,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Op32 op rd rs1 rs2, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (sext 64 (alu32 op (low32 (rg ms rs1)) (low32 (rg ms rs2))))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 rs2 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Mul : forall ms w isz op rd rs1 rs2,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Mul op rd rs1 rs2, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (mul_div op (rg ms rs1) (rg ms rs2))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 rs2 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Mul32 : forall ms w isz op rd rs1 rs2,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Mul32 op rd rs1 rs2, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (sext 64 (mul_div op (low32 (rg ms rs1)) (low32 (rg ms rs2))))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 rs2 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, rg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Fence : forall ms w isz fm pred succ rd rs1,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Fence fm pred succ rd rs1, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms 0 w0 (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz fm pred succ rd rs1 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx; rewrite is_x0_0; reflexivity.
+Qed.
+
+Lemma step_FenceI : forall ms w isz rd rs1 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (FenceI rd rs1 imm, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms 0 w0 (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 imm Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx; rewrite is_x0_0; reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Lemma ms_reg_rg : forall ms r, ms_reg ms r = rg ms r.
+Proof. reflexivity. Qed.
+
+Lemma step_Ecall : forall ms w,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = true ->
+  RiscvSemantics.step segs ms =
+  MachineOk {| ms_regs := ms_regs ms; ms_fregs := ms_fregs ms;
+               ms_pc_val := ms_pc_val ms;
+               ms_svc_pending := Some (rg ms 17);
+               ms_resv := ms_resv ms; ms_fcsr := ms_fcsr ms;
+               ms_mem := ms_mem ms; ms_rom := ms_rom ms |}.
+Proof.
+  intros ms w Hfetch Hecall.
+  unfold RiscvSemantics.step, RiscvSemantics.step_accesses, ms_pc.
+  rewrite Hfetch. cbv beta iota.
+  unfold RiscvSemantics.drop_access_report, RiscvSemantics.decode_exec_accesses.
+  rewrite Hecall. cbv beta iota.
+  reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Lemma step_Load : forall ms w isz sz sg rd rs1 (imm : bv 12) bs,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Load sz sg rd rs1 imm, isz) ->
+  rdn segs (ms_mem ms) (rg ms rs1 + sext 64 imm) (msz_n sz) = Some bs ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (load_word sz sg bs)
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz sz sg rd rs1 imm bs Hfetch Hecall Hdecode Hread.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hread.
+  destruct sz; destruct sg; cbv beta iota delta [msz_n load_word] in *;
+    rewrite ov_rdn, Hread; cbv beta iota;
+    unfold setx; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Store : forall ms w isz sz rs1 rs2 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Store sz rs1 rs2 imm, isz) ->
+  store_ok segs (ms_mem ms) (rg ms rs1 + sext 64 imm) (msz_n sz) = true ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms 0 w0 (ms_pc_val ms + Z_to_bv 64 isz)
+                  (inval (rg ms rs1 + sext 64 imm) (ms_resv ms))
+                  (write_to_mem (ms_mem ms) (rg ms rs1 + sext 64 imm)
+                                (store_bytes sz (rg ms rs2)))).
+Proof.
+  intros ms w isz sz rs1 rs2 imm Hfetch Hecall Hdecode Hok.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hok.
+  unfold setx, inval, rg; rewrite is_x0_0.
+  destruct sz; cbv beta iota delta [msz_n store_bytes] in *;
+    rewrite Hok; cbv beta iota;
+    destruct (ms_resv ms) as [r|]; [|reflexivity| |reflexivity| |reflexivity| |reflexivity];
+    destruct (Z.eqb (bv_unsigned r) _); reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+Lemma step_Load_fault : forall ms w isz sz sg rd rs1 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Load sz sg rd rs1 imm, isz) ->
+  rdn segs (ms_mem ms) (rg ms rs1 + sext 64 imm) (msz_n sz) = None ->
+  (* 08b1429: a miss on the vvar page is MachineUnmodeled, not a fault *)
+  range_meets_vvar segs (rg ms rs1 + sext 64 imm) (msz_n sz) = false ->
+  RiscvSemantics.step segs ms = MachineFault.
+Proof.
+  intros ms w isz sz sg rd rs1 imm Hfetch Hecall Hdecode Hread Hvv.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hread, Hvv.
+  destruct sz; destruct sg; cbv beta iota delta [msz_n] in *;
+    rewrite ov_rdn, Hread;
+    (match goal with |- context [range_meets_vvar ?s ?a ?n] =>
+       replace (range_meets_vvar s a n) with false by (symmetry; exact Hvv) end);
+    reflexivity.
+Qed.
+
+Lemma step_Store_fault : forall ms w isz sz rs1 rs2 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Store sz rs1 rs2 imm, isz) ->
+  store_ok segs (ms_mem ms) (rg ms rs1 + sext 64 imm) (msz_n sz) = false ->
+  RiscvSemantics.step segs ms = MachineFault.
+Proof.
+  intros ms w isz sz rs1 rs2 imm Hfetch Hecall Hdecode Hok.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hok.
+  destruct sz; cbv beta iota delta [msz_n] in *; rewrite Hok; reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Lemma step_Lr : forall ms w isz wd aq rl rd rs1 bs,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Lr wd aq rl rd rs1, isz) ->
+  amo_aligned wd (rg ms rs1) = true ->
+  rdn segs (ms_mem ms) (rg ms rs1) (amo_n wd) = Some bs ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (lr_word wd bs)
+                  (ms_pc_val ms + Z_to_bv 64 isz) (Some (rg ms rs1)) (ms_mem ms)).
+Proof.
+  intros ms w isz wd aq rl rd rs1 bs Hfetch Hecall Hdecode Hal Hread.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hal, Hread. unfold setx, rg. rewrite Hal. cbv beta iota delta [negb].
+  destruct wd; cbv beta iota delta [amo_n lr_word] in *;
+    rewrite ov_rdn, Hread; cbv beta iota;
+    destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Sc_ok : forall ms w isz wd aq rl rd rs1 rs2,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Sc wd aq rl rd rs1 rs2, isz) ->
+  amo_aligned wd (rg ms rs1) = true ->
+  sc_ok (ms_resv ms) (rg ms rs1) = true ->
+  store_ok segs (ms_mem ms) (rg ms rs1) (amo_n wd) = true ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd w0 (ms_pc_val ms + Z_to_bv 64 isz) None
+                  (write_to_mem (ms_mem ms) (rg ms rs1) (sc_bytes wd (rg ms rs2)))).
+Proof.
+  intros ms w isz wd aq rl rd rs1 rs2 Hfetch Hecall Hdecode Hal Hres Hok.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg, sc_ok in Hal, Hres, Hok. unfold setx, rg. rewrite Hal. cbv beta iota delta [negb].
+  rewrite Hres.
+  destruct wd; cbv beta iota delta [amo_n sc_bytes] in *;
+    rewrite Hok; cbv beta iota;
+    destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+Lemma step_Amo_w : forall ms w isz op aq rl rd rs1 rs2 bs,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Amo op AW aq rl rd rs1 rs2, isz) ->
+  amo_aligned AW (rg ms rs1) = true ->
+  rdn segs (ms_mem ms) (rg ms rs1) 4 = Some bs ->
+  store_ok segs (ms_mem ms) (rg ms rs1) 4 = true ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (sext 64 (bv_extract 0 32 (le_bytes_to_word bs)))
+                  (ms_pc_val ms + Z_to_bv 64 isz)
+                  (inval (rg ms rs1) (ms_resv ms))
+                  (write_to_mem (ms_mem ms) (rg ms rs1)
+                     (Z_to_le_bytes 4 (bv_unsigned
+                        (amo_val op (bv_extract 0 32 (le_bytes_to_word bs)) (low32 (rg ms rs2))))))).
+Proof.
+  intros ms w isz op aq rl rd rs1 rs2 bs Hfetch Hecall Hdecode Hal Hread Hok.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hal, Hread, Hok. unfold setx, inval, rg. rewrite Hal. cbv beta iota delta [negb].
+  rewrite ov_rdn, Hread. cbv beta iota. rewrite Hok. cbv beta iota.
+  destruct (ms_resv ms) as [r|];
+    [destruct (Z.eqb (bv_unsigned r) _)|];
+    destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Amo_d : forall ms w isz op aq rl rd rs1 rs2 bs,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Amo op AD aq rl rd rs1 rs2, isz) ->
+  amo_aligned AD (rg ms rs1) = true ->
+  rdn segs (ms_mem ms) (rg ms rs1) 8 = Some bs ->
+  store_ok segs (ms_mem ms) (rg ms rs1) 8 = true ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (bv_extract 0 64 (le_bytes_to_word bs))
+                  (ms_pc_val ms + Z_to_bv 64 isz)
+                  (inval (rg ms rs1) (ms_resv ms))
+                  (write_to_mem (ms_mem ms) (rg ms rs1)
+                     (Z_to_le_bytes 8 (bv_unsigned
+                        (amo_val op (bv_extract 0 64 (le_bytes_to_word bs)) (rg ms rs2)))))).
+Proof.
+  intros ms w isz op aq rl rd rs1 rs2 bs Hfetch Hecall Hdecode Hal Hread Hok.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hal, Hread, Hok. unfold setx, inval, rg. rewrite Hal. cbv beta iota delta [negb].
+  rewrite ov_rdn, Hread. cbv beta iota. rewrite Hok. cbv beta iota.
+  destruct (ms_resv ms) as [r|];
+    [destruct (Z.eqb (bv_unsigned r) _)|];
+    destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Lemma step_FLoad_d : forall ms w isz rd rs1 (imm : bv 12) bs,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (FLoad FMT_D rd rs1 imm, isz) ->
+  rdn segs (ms_mem ms) (rg ms rs1 + sext 64 imm) 8 = Some bs ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setf ms rd (bv_extract 0 64 (le_bytes_to_word bs))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 imm bs Hfetch Hecall Hdecode Hread.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hread. unfold setf, rg.
+  rewrite ov_rdn, Hread; cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_FLoad_s : forall ms w isz rd rs1 (imm : bv 12) bs,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (FLoad FMT_S rd rs1 imm, isz) ->
+  rdn segs (ms_mem ms) (rg ms rs1 + sext 64 imm) 4 = Some bs ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setf ms rd (nan_box (bv_extract 0 32 (le_bytes_to_word bs)))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 imm bs Hfetch Hecall Hdecode Hread.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hread. unfold setf, rg.
+  rewrite ov_rdn, Hread; cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_FStore_d : forall ms w isz rs1 rs2 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (FStore FMT_D rs1 rs2 imm, isz) ->
+  store_ok segs (ms_mem ms) (rg ms rs1 + sext 64 imm) 8 = true ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms 0 w0 (ms_pc_val ms + Z_to_bv 64 isz)
+                  (inval (rg ms rs1 + sext 64 imm) (ms_resv ms))
+                  (write_to_mem (ms_mem ms) (rg ms rs1 + sext 64 imm)
+                                (Z_to_le_bytes 8 (bv_unsigned (fg ms rs2))))).
+Proof.
+  intros ms w isz rs1 rs2 imm Hfetch Hecall Hdecode Hok.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hok. unfold setx, inval, rg, fg; rewrite is_x0_0.
+  rewrite Hok; cbv beta iota.
+  destruct (ms_resv ms) as [r|]; [|reflexivity].
+  destruct (Z.eqb (bv_unsigned r) _); reflexivity.
+Qed.
+
+Lemma step_FStore_s : forall ms w isz rs1 rs2 (imm : bv 12),
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (FStore FMT_S rs1 rs2 imm, isz) ->
+  store_ok segs (ms_mem ms) (rg ms rs1 + sext 64 imm) 4 = true ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms 0 w0 (ms_pc_val ms + Z_to_bv 64 isz)
+                  (inval (rg ms rs1 + sext 64 imm) (ms_resv ms))
+                  (write_to_mem (ms_mem ms) (rg ms rs1 + sext 64 imm)
+                                (Z_to_le_bytes 4 (bv_unsigned (low32 (fg ms rs2)))))).
+Proof.
+  intros ms w isz rs1 rs2 imm Hfetch Hecall Hdecode Hok.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold rg in Hok. unfold setx, inval, rg, fg; rewrite is_x0_0.
+  rewrite Hok; cbv beta iota.
+  destruct (ms_resv ms) as [r|]; [|reflexivity].
+  destruct (Z.eqb (bv_unsigned r) _); reflexivity.
+Qed.
+
+Lemma step_Fmv_xd : forall ms w isz rd rs1,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Fmv FMV_X_F FMT_D rd rs1, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (fg ms rs1)
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, fg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Fmv_dx : forall ms w isz rd rs1,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Fmv FMV_F_X FMT_D rd rs1, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setf ms rd (rg ms rs1)
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setf, rg; reflexivity.
+Qed.
+
+Lemma step_Fmv_xs : forall ms w isz rd rs1,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Fmv FMV_X_F FMT_S rd rs1, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setx ms rd (sext 64 (low32 (fg ms rs1)))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setx, fg; destruct (is_x0 rd); cbv beta iota; reflexivity.
+Qed.
+
+Lemma step_Fmv_sx : forall ms w isz rd rs1,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Fmv FMV_F_X FMT_S rd rs1, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setf ms rd (nan_box (low32 (rg ms rs1)))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz rd rs1 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setf, rg; reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+Lemma step_Fsgnj_d : forall ms w isz op rd rs1 rs2,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Fsgnj op FMT_D rd rs1 rs2, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setf ms rd (sgnj_val op (fg ms rs1) (fg ms rs2))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 rs2 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setf, fg; reflexivity.
+Qed.
+
+Lemma step_Fsgnj_s : forall ms w isz op rd rs1 rs2,
+  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
+  decode_any w = Some (Fsgnj op FMT_S rd rs1 rs2, isz) ->
+  RiscvSemantics.step segs ms =
+  MachineOk (setf ms rd (nan_box (sgnj_val op (unbox_s (fg ms rs1)) (unbox_s (fg ms rs2))))
+                  (ms_pc_val ms + Z_to_bv 64 isz) (ms_resv ms) (ms_mem ms)).
+Proof.
+  intros ms w isz op rd rs1 rs2 Hfetch Hecall Hdecode.
+  boot_pipeline Hfetch Hecall Hdecode.
+  unfold setf, fg; reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma bv_extract_64_id : forall v : word, bv_extract 0 64 v = v.
 Proof.

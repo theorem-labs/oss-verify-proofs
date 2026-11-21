@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk0E.v (a working branch 29b7505aa27, file sha256 3c1921912ff5) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 4 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 74f20580f552) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (2 lines name this file); 4 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk0E.v (a working branch, file sha256 3c1921912ff5) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 4 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (2 lines name this file); 4 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Errno-kept twin of AGk0.sec_arms (the SECONDARY arms of the frame-generic Allocate walk, n >= 64513).
 
    [sec_arms_e] is AGk0.sec_arms with its leaf AGif4.alloc_leaf0 replaced by [alloc_leaf0_e] (alloc_leaf0 plus
    ErrnoG.errno_kept on the grant branch, fst r <> PNull), from AGk0's section hypotheses plus
-   [IFSE : ErrnoGS.AIfaceSE ..].  A caller adds the model path ([alloc_leaf_intro_e]; cgif's AGioE.alloc_sec_e did, as history); this unit has no AGioE, and AGioMB.alloc_sec_w_em adds the path to the memnorm twin's leaf (AGioMB.v:192-194).
+   [IFSE : ErrnoGS.AIfaceSE ..].  A caller adds the model path ([alloc_leaf_intro_e]; cgif's AGioE.alloc_sec_e did, as history); this unit has no AGioE, and AGioMB.alloc_sec_w_em adds the path to the memnorm twin's leaf (AGioMB.v:193-195).
 
    Route: the interface add-on.  The grant leaf's memory facts come from the interface field AGif4.ifs_post_grant,
    applied in AGk0.TAILg (AGk0.v:993); the errno fact is ErrnoGS.aes_post_grant (the raw form) applied at the same
@@ -272,7 +273,7 @@ Variables (W3 : world tfibsegs) (mat : list word) (ms : machine_state) (E' : env
 Let mdN : Model := with_vm_backing (m_vm_lazy md0) mat md0.
 Let md2 : Model := mmap_model (w64 mb) (w64 MSv) mdN.
 Let ccont : config := mkCfg (mkst (regupd (ms_regs ms) 10%bv (w64 mb)) (v_addi (Z_to_bv 64 (ss_pc S_N)) 4) (zfill (w64 mb) (w64 MSv) (ms_mem ms)) (seg_rom tfibsegs)) md2.
-Hypothesis GOK : grant_ok_na_pin mdN (w64 mb) MSv = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 mb) MSv = true.
 Hypothesis LE3 : wle W W3.
 Hypothesis SUB3 : hsub (w_H W3) (w_H W).
 Hypothesis MON3 : forall x : word, w_H W x = false -> w_H W3 x = false.
@@ -545,7 +546,8 @@ pose proof VM2 as (VMa & VMr & VMl & VMb & VMi).
 apply (NODEV_ W3 md2 sV KV QLEAF_e (fun _ => True) c4 EQ HN HAI).
 - clear; intros m m' _ _; exact I.
 - rewrite EcM. exact MWV.
-- rewrite EcM. unfold mdV. rewrite m_vmmaps_wvb, VMr. unfold mdN. rewrite m_vmmaps_wvb. exact LR.
+- rewrite EcM. unfold mdV. rewrite m_vmmaps_wvb, VMr. unfold mdN. rewrite m_vmmaps_wvb.
+  destruct LR as (rx & Hrx & _ & _ & RQ & _). exists rx. split; [exact Hrx | exact RQ].
 - exact LSEG.
 - rewrite EcM. unfold mdV. rewrite m_vmmaps_wvb, VMa. right. unfold mdN. rewrite m_vmmaps_wvb. exact LQ.
 - rewrite EcM. unfold mdV. rewrite eager_used_wvb, m_vmmaps_wvb, VMl. unfold mdN in EG2 |- *. rewrite m_vmmaps_wvb. rewrite eager_used_wvb in EG2.
@@ -637,7 +639,7 @@ assert (EA : a = w64 A) by (unfold w64, A; symmetry; apply Z_to_bv_bv_unsigned).
 rewrite EA in GOK, AI2, MW2, IO2, EG2, VM2. rewrite EA.
 pose proof (AGjm.size_facts n Nrange) as (Z1 & Z2 & Z3 & Z4 & Z5 & Z6 & Z7 & Z8 & Z9 & Z10 & _).
 pose proof MSBW_g as MSBW.
-pose proof (YFia.grant_parts _ (w64 A) _ GOK) as (GP1 & _).
+pose proof (AGk0.grant_parts_sec _ (w64 A) _ (proj1 MSBW) Z9 GOK) as (GP1 & _).
 destruct (IFA inst ly S W mem0 md0 mat1 (AGjm.MSv n) (w64 A) HARX MSBW Z9 GOK) as (GH & GA & _).
 assert (UA : bv_unsigned (w64 A) = A) by (rewrite <- EA; reflexivity). rewrite UA in GP1, GH, GA.
 assert (HmapA : A mod 4096 = 0 /\ AGjm.mzone A (AGjm.MSv n)) by (split; [exact GP1 | exact GH]).

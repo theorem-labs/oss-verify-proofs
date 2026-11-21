@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_pin image A by ae3i.py 3cf49addef7e from fuzz_pin.asan and lib/A/AF0m.v's Tfib_owned_static (IMG_RO_HI = this image's read-only PT_LOAD end 0x2f31c), template proofs/cgif/cgif_file_fuzzer/lib/A/AE3i.v at c8557374ad2e, module paths changed *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_pin image A by ae3i.py 3cf49addef7e from fuzz_pin.asan and lib/A/AF0m.v's Tfib_owned_static (IMG_RO_HI = this image's read-only PT_LOAD end 0x2f31c), template proofs/cgif/cgif_file_fuzzer/lib/A/AE3i.v at theorem-labs/oss-verify-proofs@6b32741d849a, module paths changed *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_pin.asan (reac-pw/fuzz_pin asan) sha256 3e4859aed23f78a6eb028120d664abda29bcb8a3bfdea5d6ee5b32b646de9d16; unstripped twin sha256 435309a6b12c4d3e09a8484ec253b5fab600e4f00c28694ac28db2fc7a4475ab *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

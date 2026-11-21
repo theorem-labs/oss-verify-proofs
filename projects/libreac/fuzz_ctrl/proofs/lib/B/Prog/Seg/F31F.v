@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 754 of its 794 lines of code are new or changed and 356 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F31.v; 86 of its 170 lines of code are new or changed and 710 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint (ExecF.evtF) twins of the segment-F31 machine runs of lib/B/Prog/Seg/F31.v (fuzz_ctrl
    LLVMFuzzerTestOneInput, asan-ubsan image B). Bridge input for the cgif-form walk only.
    rule 24: no function proved. *)
@@ -12,12 +13,12 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F31.v f31n_evt (:170), f31c_evt (:206), f31c_evt_ro (:322) at
-     a working branch 3803efccea0 (blob 14939e90cc5dd7199128869f82d6a8dafeb78a8f);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob 14939e90cc5dd7199128869f82d6a8dafeb78a8f);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f31n_evt_of_F (evtF_evt + rng_all) re-derives F31.f31n_evt verbatim. f31c_evt and f31c_evt_ro call
-     wrapper_bcmp (jal at 0x82b34), so each is split: f31c_evt_pre_F re-runs F31.v:264-272 (0x82af8 up to the
-     callee entry 0x42aac, ra = 0x82b38) and f31c_evt_post_F re-runs F31.v:307-315 (from the return pc 0x82b38 to
+     wrapper_bcmp (jal at 0x82b34), so each is split: f31c_evt_pre_F re-runs F31.v:265-273 (0x82af8 up to the
+     callee entry 0x42aac, ra = 0x82b38) and f31c_evt_post_F re-runs F31.v:308-316 (from the return pc 0x82b38 to
      the exit cut 0x82b38, no step); f31c_evt_ro_pre_F / f31c_evt_ro_post_F are the same split of f31c_evt_ro.
      No callee contract is stated here. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
@@ -46,7 +47,7 @@ Module SF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Spec.StrFun.
 Local Definition BCMP_WRAP_K := 4560.
 Local Notation memcmp_model := SF.memcmp_model.
 
-(* 0x82af8 with a0 = -1 (classify = None): bnez a0 is taken to 0x82b5c (F31.v:170-181). No memory access. *)
+(* 0x82af8 with a0 = -1 (classify = None): bnez a0 is taken to 0x82b5c (F31.v:171-182). No memory access. *)
 Lemma f31n_evt_F :
   forall (ra0 sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
          (Fr : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (RNG : footprint),
@@ -74,7 +75,7 @@ Definition f31n_evt_src_check : ltac:(let T := type of F31.f31n_evt in exact T) 
 
 (* 0x82af8 with a0 = 0: the three byte checks of the source field (00 40 ab) are not taken, then the call
    0x82b34 jal wrapper_bcmp. This stretch stops AT the callee entry 0x42aac with ra = 0x82b38
-   (F31.v:264-272; the ro twin f31c_evt_ro runs the same instructions and reads the same bytes). *)
+   (F31.v:265-273; the ro twin f31c_evt_ro runs the same instructions and reads the same bytes). *)
 Lemma f31c_evt_pre_F :
   forall (ra0 sp gp tp t0 t1 t2 s0 s1v a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
          (Fr : bvmap 5 word) (fc : bv 32) (m : word -> option byte)
@@ -150,7 +151,7 @@ Lemma f31c_evt_ro_pre_F :
           Fr (Z_to_bv 64 0x82af8) fc None m (seg_rom rsegs)).
 Proof. intros. eapply f31c_evt_pre_F; eassumption. Qed.
 
-(* From the return pc 0x82b38 to the exit cut 0x82b38 (F31.v:307-315): no step. The premises are the bcmp
+(* From the return pc 0x82b38 to the exit cut 0x82b38 (F31.v:308-316): no step. The premises are the bcmp
    wrapper's post facts the proved run uses at that point. *)
 Lemma f31c_evt_post_F :
   forall (ra' sp gp tp t0' t1' t2' s0 a1' a2' a3' a4' a5' a6' a7' s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
@@ -182,7 +183,7 @@ Proof.
   split; [exact AC | exact SW].
 Qed.
 
-(* The ro twin of the post (F31.v:380-386): ro_agree and ro_same in place of mem_inv, no runtime cells. *)
+(* The ro twin of the post (F31.v:381-387): ro_agree and ro_same in place of mem_inv, no runtime cells. *)
 Lemma f31c_evt_ro_post_F :
   forall (ra' sp gp tp t0' t1' t2' s0 a1' a2' a3' a4' a5' a6' a7' s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
           t3' t4' t5' t6' : word)

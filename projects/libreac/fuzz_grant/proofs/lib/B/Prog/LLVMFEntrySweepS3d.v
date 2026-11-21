@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS3d), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACgb.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS3d.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The two calls each turn of image B's group-A loops makes in the sweep phase of
    fuzz_grant's entry function (fuzz_grant.c:326-332): want_of (0x8163c, 0x816e8) and then
    check_groupa (0x81654, 0x81700), from a cut's facts to the callee's contract and back.
    Shared by LLVMFEntrySweepS3a.v and LLVMFEntrySweepS3b.v.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS3d.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepS3d.v (a working branch, blob
    b48edea0d, 155 lines), which carries no licence header of its own.
    Image B calls want_of where image A reads was_set /
    set_to in line and calls reac_headamp_default, so this file adds the call lemma
@@ -190,7 +191,7 @@ Proof.
   pose proof HJ as (_ & Hly & _).
   assert (EF : frame_addr ly3 GE_CID fp = gF cx fp).
   { unfold gF, frame_addr. destruct Hly as (_ & _ & _ & _ & _ & EF & _). rewrite EF. reflexivity. }
-  (* Image B's own image range, through YC1h.v:131 frm_off_imgB (image A's frm_off_imgP carries image A's
+  (* Image B's own image range, through YC1h.v:132 frm_off_imgB (image A's frm_off_imgP carries image A's
      top 0x5fa000; on the integration tree off_img is lib/B/YCbq.v's, over image B's top 0x5fb000; the walk does
      not depend on which). *)
   pose proof (frm_off_imgB B ly3 S3 W3 memT mdT GE_CID fp HAR3 Hfin) as HFo.

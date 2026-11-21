@@ -22,9 +22,14 @@
     WHAT THE HARNESS CHECKS.  Raw format + all decompression filters: reads one
     entry, queries filter_count/name/code/bytes for each filter, then
     decompresses up to 10 MiB (break, not a failure, beyond that). Nothing is
-    compared.  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    compared. If allocating its data buffer throws std::bad_alloc, it frees the
+    archive and returns 0. Each call first ignores SIGPIPE, as bsdtar and
+    bsdcpio do.  The harness makes no check of its own beyond not crashing.  Its
+    halts statements say only that the code it calls never crashes, hangs or
+    trips a sanitizer.  Its agreement statements say only that the code never
+    crashes or trips a sanitizer, and allow a run that never ends.  Its bound
+    statements say only how often its builds may disagree.  Its decidability
+    statements say only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

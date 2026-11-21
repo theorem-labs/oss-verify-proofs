@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed srealizes_error_free_unkilled, srealizes_error_free_unkilled_big, srealizes_error_free_unkilled_wb and 1 more. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -77,8 +78,8 @@ Proof.
 Qed.
 
 Lemma srealizes_not_dies_by_signal : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
-  VmLimitFrame.Safe segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  srealizes (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
+  VmLimitFrame.Safe (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   kill_free T ->
   ~ dies_by_signal (run_scfg scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
@@ -89,8 +90,8 @@ Proof.
 Qed.
 
 Lemma srealizes_error_free_unkilled : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
-  VmLimitFrame.Safe segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  srealizes (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
+  VmLimitFrame.Safe (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   kill_free T ->
   error_free_unkilled (run_scfg scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
@@ -98,7 +99,7 @@ Proof.
 Qed.
 
 Lemma srealizes_error_free_unkilled_big : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   (VmLimitFrame.nbr_limit <= lim)%Z ->
   kill_free T ->
   error_free_unkilled (run_scfg scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
@@ -107,7 +108,7 @@ Proof.
 Qed.
 
 Lemma srealizes_error_free_unkilled_wb : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   ~ run_scfg_budget_refused scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp ->
   kill_free T ->
   error_free_unkilled (run_scfg scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).

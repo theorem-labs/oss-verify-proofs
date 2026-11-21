@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's removal of a mapped range, maps_subtract). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad.
@@ -176,16 +177,20 @@ Proof.
   unfold vm_backed_maps. cbn [vm_maps vm_noaccess vm_limit].
   set (KL := maps_subtract (m_vm_lazy m) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
   set (KP := List.filter (page_outside_range (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) (m_vm_materialized m)) in *.
-  set (R0 := map_remove (vm_maps (m_vmmaps m)) old) in *.
+  set (R0 := maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
   set (NA := vm_noaccess (m_vmmaps m)) in *.
   set (lo := bv_unsigned dst) in *. set (hi := (lo + bv_unsigned new_n)%Z) in *.
   pose proof (mremap_word_range dst) as Hd. fold lo in Hd.
   assert (Hlo : (0 <= lo)%Z) by lia. assert (Hle : (lo <= hi)%Z) by (unfold hi; lia).
   (* [comment removed for export] *)
   assert (HX : Forall (good lo hi) (maps_subtract_all R0 NA)).
-  { apply good_msa. apply Forall_forall. intros [a sz] Hin. unfold R0, map_remove in Hin. apply List.filter_In in Hin. destruct Hin as [Hin _].
-    split; [exact (proj1 (Forall_forall _ _) HI _ Hin) |]. cbn [fst snd].
-    pose proof (region_free_In _ _ _ a sz Hmaps Hin) as Hov. unfold iv_overlap in Hov. apply andb_false_iff in Hov.
+  { apply good_msa. apply Forall_forall. intros [b s] Hin. unfold R0 in Hin.
+    destruct (maps_subtract_In _ _ _ b s Hin) as (a & sz & Hin0 & Hiv).
+    pose proof (proj1 (Forall_forall _ _) HI _ Hin0) as Hsp. unfold in_space in Hsp. cbn [fst snd] in Hsp.
+    pose proof (iv_subtract_within a sz _ _ b s (proj2 Hsp) Hiv) as Hw.
+    pose proof (iv_subtract_nonzero a sz _ _ (proj1 Hsp) b s Hiv) as Hnz.
+    split; [unfold in_space; cbn [fst snd]; lia |]. cbn [fst snd].
+    pose proof (region_free_In _ _ _ a sz Hmaps Hin0) as Hov. unfold iv_overlap in Hov. apply andb_false_iff in Hov.
     fold lo in Hov. destruct Hov as [Hov | Hov]; apply Z.ltb_ge in Hov; unfold hi; lia. }
   (* [comment removed for export] *)
   assert (HD : forall (b s : word), In (b, s) (maps_subtract_all [(dst, new_n)] NA) -> (lo <= bv_unsigned b /\ bv_unsigned b + bv_unsigned s <= hi)%Z).

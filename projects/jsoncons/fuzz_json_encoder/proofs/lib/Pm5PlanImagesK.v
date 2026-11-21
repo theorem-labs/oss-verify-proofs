@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed asan0_img_facts; added vmc_refl; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm9PlanImagesK.v, lines 14, 149-150. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,6 +17,7 @@ Import AX2K. Import APCK. Import APK.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Definition Asan0_top : Z := 0x6c4000.
 
 (* [comment removed for export] *)
@@ -155,4 +157,7 @@ Proof.
   - rewrite asan0_res_sizes. reflexivity.
   - cbn [rw_lo rw_len ASAN0]. split; [lia|]. intros m x Hx. apply asan0_rw_window. lia.
   - exact asan0_shadow_ok.
+  - (* NEW field [if_resx] (AsanInitK at an earlier revision): the table's 2 extra
+       reserved intervals of at most 20 pages; ASAN0 sets n_resx 2, p_resx 20 *)
+    split; vm_compute; lia.
 Qed.

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0e.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed malloc_direct_mreal). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -592,6 +593,9 @@ eapply (knode_mmap_rw src0segs regs2 _ mem2 (seg_rom src0segs) md A (n + IB + UN
 - rewrite (Hregs2 13%bv). vm_compute. reflexivity.
 - rewrite (Hregs2 14%bv). eval_sr_get. cbn [sv_denot]. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs2 15%bv). vm_compute. reflexivity.
+(* #146's decline premise: this walk pins a0 to the literal 0, and a NULL hint fails
+[place_declined_b]'s first conjunct, so the obligation closes outright. *)
+- rewrite (Hregs2 10%bv). eval_sr_get. cbn [sv_denot]. apply place_declined_b_null.
 -
 intros e He. destruct He as [<- | []].
 match goal with |- mreal _ _ ?t _ => change t with (@IRet astate (option sptr * astate) (None, A)) end.
@@ -618,8 +622,8 @@ assert (GR : grant_ok (Z_to_bv 64 0) md a (dlen n) = true).
 match goal with |- mreal _ _ ?t _ => change t with (dm_rest n A) end.
 exact (granted_branch L A regs mem md n regs2 mem2 a PRE Hn Hrange Hregs2 Hmem2 HG2 FR2 GR).
 -
-intros Hmg Hbud. rewrite (Hregs2 10%bv). eval_sr_get. cbn [sv_denot].
-apply (direct_grant_exists L A mem md (n + IB + UNIT) MX Hmg); [unfold IB, UNIT; lia | exact Hbud].
+intros Eaf Hmg Hbud. rewrite (Hregs2 10%bv). eval_sr_get. cbn [sv_denot].
+apply (direct_grant_exists L A mem md (n + IB + UNIT) Eaf MX Hmg); [unfold IB, UNIT; lia | exact Hbud].
 Qed.
 End h.
 Theorem src0_malloc_realizes :

@@ -19,6 +19,7 @@
    the eight _m malloc / free rules of section 10, their R forms (_mR) and section 12's two cf free forms (_m_rh) drop
    the keep (MN.memnorm segs memT -> MN.memnorm segs mem2) from their conclusion: each _m / _mR rule is now its
    YGcallx.v original VERBATIM (the _mR forms are proved by it), under its own name for the walks that apply it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the ENGINE HALF OF THE MEMNORM PER-CALL KEEPS (c-omx-alloc's MemnormKeeps
    measurement, the internal file MEMNORM-KEEPS.md; decisions a Theorem Labs lane 10:42Z / 10:50Z / 11:00Z, a Theorem Labs lane 10:41Z).
    rule 24: no function proved. rule 24: proves no function (kind: engine lemmas).
@@ -40,9 +41,9 @@
      R m := (P mem -> P m) (the srr_inv_laws_imp form), so at a call it holds the implication, not P memT;
    - aintrin_realizes_xm_conj / abcmp_realizes_xm_conj: the ARx -> ARx /\ P lifts (YGcallMx.v Section cj).
    FAMILY 1b, the strcmp / strlen twins in the read-only-premise form (c-libc-stdio 11:46Z rom_view decision; section 8
-   below). Consumers (at origin/cold/h-rw-pre-7-b-ex_value 96eea692f6cd and origin/cold/h-pre-b3-exword-b
-   2038bfaedb4e): B/Prog/ExvB_Stmt.v:317 / :321 (EXV_HYP's strcmp and strlen fields, the _xro texts),
-   B/Prog/ExvB_Disp_str.v:537 and B/Prog/ExvB_Loop_A2_call.v:494 (aj_strcmp_at_xro), B/Prog/ExwB.v:435 (Hypothesis
+   below). Consumers (and):
+   B/Prog/ExvB_Stmt.v:318 / :322 (EXV_HYP's strcmp and strlen fields, the _xro texts),
+   B/Prog/ExvB_Disp_str.v:538 and B/Prog/ExvB_Loop_A2_call.v:495 (aj_strcmp_at_xro), B/Prog/ExwB.v:436 (Hypothesis
    STRLEN, astrlen_realizes_xro) and :674 (aj_strlen_at_xro). Each passes (SK) segs B PST ARx rlo rhi LAWS segs_low in
    the order this file's twins take them.
    - astrcmp_realizes_xro / astrlen_realizes_xro: the consumers' texts, copied VERBATIM from h-rw-pre-7's
@@ -61,8 +62,8 @@
    - aj_strcmp_at_xrom / aj_strlen_at_xrom: aj_strcmp_at_xro / aj_strlen_at_xro (= YGcallMx.v's aj_strcmp_at_x /
      aj_strlen_at_x with the premise renamed) with the keep an implication in the conclusion. The proofs pass
      arodata_okP to the text unread; no proof reads rom_view.
-   - in_roP / arodata_okP: NOT defined here. They are the leaf lib/Spec/PresetRodata.v (blob 4eb7e95e7e93, by path
-     from commit 1bba49fd7ac5), Required, so every arodata_okP below is
+   - in_roP / arodata_okP: NOT defined here. They are the leaf lib/Spec/PresetRodata.v (blob 4eb7e95e7e93, by path),
+     Required, so every arodata_okP below is
      PresetRodata.arodata_okP: one home. The leaf is LiaTwx2-free but NOT override-free (a Theorem Labs lane's measured probe,
      2026-10-29: `Print Ltac lia` after Requiring the leaf alone prints the YM05 / YM03 body, "Redefined by: YM05
      YM03"), and this file already carries that override, so the leaf buys one home only, not a stock lia.
@@ -84,7 +85,7 @@
    - memnorm_frame_of: memnorm survives one symbolic-runner phase. The phase lemmas (FCm0r.v:67-88 fs_phase /
      fs_phase_to, from SRr_run_gen, YA0o.v) end in frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms1), and the walk holds
      the phase's start st_ok (FCm0s.v :167, :303, :348, :385). Evidence (s1b blobs YP09.v 2538c5959920, YP0l.v
-     12ec6262ab0c, the same as origin/cold/h-hpreset-7-frameclass 386c6872566): st_ok (YP0l.v:102) contains
+     12ec6262ab0c, the same as): st_ok (YP0l.v:102) contains
      mem_ok segs E (ms_mem ms) (ss_mem ss), which is Forall region_ok (YP09.v:158); region_ok (YP09.v:138) gives
      writable_at m (base + o) for every o in [r_wlo, r_whi); writable_at m a := wview segs m (Z_to_bv 64 a) <> None
      (YP09.v:136); in_wrange (YP09.v:861) is the union of those windows. So every byte that frame_of (YP09.v:863)
@@ -116,22 +117,11 @@
 
    FAMILY 3, helpers (consumers: rows proved by the MemNorm cj-kit composition, e.g. c-libc-stdio's strcmp row through
    MemNorm.evt_normalize_cj (memnorm_same_cj); rows whose new bytes are all wview-defined at the call
-   (memnorm_new_wview); c-omx-alloc's fuzz_malloc walk at its kernel grant nodes (region_free_reserved_off_segs)):
+   (memnorm_new_wview)):
    - memnorm_same_cj, memnorm_new_wview (the internal file MEMNORM-KEEPS.md sec. 4.5). memnorm_same_cj is stated over cj_same_ak, the
      body of MemNorm.cj_same (MemNorm.v:541, through cj_drop :527) over YAkMemnorm.ro_addr; MemNorm.cj_same segs m m'
      converts to cj_same_ak segs m m';
-   - region_free_reserved_off_segs: a grant range that region_free clears of segments_reserved segs (Run.v:216, the
-     page-rounded LOAD segments) holds no byte of any segment. It needs one bound the report did not state: every
-     nonempty segment ends at least page_size below 2 ^ 64. Without it the lemma is false: a segment with base 0 and
-     size 2 ^ 64 - 1 has the reservation (0, 2 ^ 64), whose length wraps to 0, so region_free clears every range
-     while find_segment still finds that segment. region_free_reserved_off_segs_low takes the engine's segs_low
-     (forall a, in_img segs a -> 0 <= a < kLowMemEnd) instead, so no consumer carries the bare bound: the last byte of
-     a nonempty segment is in_img, so it ends below kLowMemEnd = 0x7fff8000 (YG0f.v:18). segs_low at each instance:
-     the ARcf walks take it from the PAImg class field pa_segs_low (YC4aP.v:43), filled by A_prog_segs_low
-     (A/PAImg_prog.v:142, image A), B_prog_segs_low (B/PAImg_prog.v:142, image B) and img_segs_low (A/PAImg_S1.v:144,
-     B/PAImg_S1B.v:144, the S1 images); the frame-class image tfibsegs (cgif's AR through FCiface.AR_nohp, and ARcf
-     through fs_iface) has tfib_segs_low (A/AE7f.v:64, over A/AB1v.v's Asan tfibsegs; Reusable/YE7f.v:65 is the
-     twin over Reusable/YB1v.v's AsanUbsan tfibsegs). region_free_app_l gives
+   - region_free_app_l gives
      the reserved prefix of a fresh grant's guard (Mmap.v:1566-1570, region_free (vm_reserved h ++ vm_maps h) a n).
 
    FAMILY 4, the malloc / free call rules (section 10). They exported the leaf's memnorm keep; since field round 3
@@ -147,7 +137,7 @@
    FAMILY 5, the poison / unpoison call rules that EXPORT the text's keep (consumers: S1's walks, which cross
    __asan_poison_memory_region (own B) and __asan_unpoison_memory_region (fuzz_free A / B); h-rw-cmd-3's fuzz_realloc
    walk (AL3, three poison / unpoison calls); section 11). YGcallPx.v's texts apoison_realizes_x / aunpoison_realizes_x
-   end with (YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem') since s1b 459129c18903, so no text twin is
+   end with (YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem') since s1b, so no text twin is
    needed, and YGcallPx.v's rules drop it (`& _`):
    - aj_poison_at_x_m, aj_unpoison_at_x_m, aj_poison_x_m, aj_unpoison_x_m: each is its YGcallPx.v rule (the name
      without _m) with the same arguments, in YGcallPx.v's Section order (px: segs B PST ARx hd; l: LAWS segs_low), plus
@@ -195,8 +185,8 @@
    premise; the commit message of the commit that added section 9 has its output.
 
    WHY A SEPARATE FILE AND NOT YGcallMx.v, AND WHY YAkMemnorm: YAjMemnorm.v Requires lib/Lib/Mem.v, Mem.v Requires
-   PropExec, and PropExec Exports LiaTwx2, whose `Ltac lia ::=` (LiaTwx2.v:187) changes lia for every proof after the
-   Require. So the keeps are kept out of YGcallMx.v (whose proofs, like the image walks FCm0s / FCm1s, run on the
+   PropExec, and PropExec Exports LiaTwx2, whose `Ltac lia ::=` (LiaTwx2.v:187) changes lia for every proof after
+   the Require. So the keeps are kept out of YGcallMx.v (whose proofs, like the image walks FCm0s / FCm1s, run on the
    stock lia) and are stated over YAkMemnorm.memnorm. This file Requires neither YAjMemnorm, nor MemNorm.v, nor
    lib/Lib/Mem.v (nor lib/A/PRH_Base.v), so lib/Lib/LiaTwx2.v is not in its Require closure; lib/Spec/PresetRodata.v
    Requires only Stdlib, BvBase / MemImageType and YK11 / YG0f / YG0n, all already Required here. The lia redefinitions
@@ -254,7 +244,7 @@ Variable segs : list Segment.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 
-(* YGcallMx.v:81 aintrin_realizes_x, plus the keep *)
+(* YGcallMx.v:82 aintrin_realizes_x, plus the keep *)
 Definition aintrin_realizes_xm (op : memop) (pc : Z) : Prop :=
 forall ly S Hp W regs mem md d x n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -276,7 +266,7 @@ match op with OCpy => aview segs (w_H W) mem (x + i) | OSet => Some (x mod 256) 
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a) /\
 (MN.memnorm segs mem -> MN.memnorm segs mem')).
 
-(* YGcallMx.v:125 abcmp_realizes_x, plus the keep *)
+(* YGcallMx.v:126 abcmp_realizes_x, plus the keep *)
 Definition abcmp_realizes_xm (pc : Z) : Prop :=
 forall ly S Hp W regs mem md x y n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -299,7 +289,7 @@ getr regs' 10 = v /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a) /\
 (MN.memnorm segs mem -> MN.memnorm segs mem')).
 
-(* FCiface.v:51 astack_malloc_realizes_x, plus the keep *)
+(* FCiface.v:52 astack_malloc_realizes_x, plus the keep *)
 Definition astack_malloc_realizes_xm (cid : Z) : Prop :=
 forall ly S Hp W regs mem md pos S',
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -318,7 +308,7 @@ aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, spZ regs - ESTACK <= a < spZ regs -> apresent (w_H W) mem' a) /\
 (MN.memnorm segs mem -> MN.memnorm segs mem')).
 
-(* FCiface.v:69 aset_shadow_realizes_x, plus the keep *)
+(* FCiface.v:70 aset_shadow_realizes_x, plus the keep *)
 Definition aset_shadow_realizes_xm (pc v : Z) : Prop :=
 forall ly S Hp W regs mem md cid pos q n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md -> In (cid, pos) (frames S) ->
@@ -448,7 +438,7 @@ split; [exact HP|]. split; [exact Hres|]. split; [exact Heff|]. split; [exact Hf
 split; [exact Hpres2 | exact Hmn].
 Qed.
 
-(* YGcallMx.v:213 aj_intrin_at_x, plus the keep: the text's mem' is the call's mem2 *)
+(* YGcallMx.v:214 aj_intrin_at_x, plus the keep: the text's mem' is the call's mem2 *)
 Lemma aj_intrin_at_xm : forall op pc, aintrin_realizes_xm segs B ARx op pc ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k d x n (o : Z) raw,
 AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -593,7 +583,7 @@ apply (ajournal_x_frame_writeR (SK := SK) segs B PST ARx LAWS segs_low R STK sp0
 - apply same_but_materialized_refl.
 Qed.
 
-(* YGcallMx.v:272 aj_intrin_at_x_fr, plus the keep: mem2 is the text's mem' (memi below is the journal's only) *)
+(* YGcallMx.v:273 aj_intrin_at_x_fr, plus the keep: mem2 is the text's mem' (memi below is the journal's only) *)
 Lemma aj_intrin_at_xm_fr : forall op pc, aintrin_realizes_xm segs B ARx op pc ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k d x n (o : Z) raw,
 AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -683,7 +673,7 @@ split; [exact HP|]. split; [exact Hres|]. split; [exact Hcmp|]. split; [exact Hf
 split; [exact Hpres2 | exact Hmn].
 Qed.
 
-(* YGcallMx.v:448 aj_bcmp_at_x, plus the keep *)
+(* YGcallMx.v:449 aj_bcmp_at_x, plus the keep *)
 Lemma aj_bcmp_at_xm : forall pc, abcmp_realizes_xm segs B ARx pc ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x y n (o : Z) raw,
 AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -723,7 +713,7 @@ Hypothesis LAWS : AR_laws_x segs B ARx HL.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Hypothesis errno_low : api_env segs B.
 Hypothesis OWNLOW : ARx_owned_low_law segs B ARx.
-(* YGcallSx.v:68 SMX *)
+(* YGcallSx.v:69 SMX *)
 Hypothesis SMX : forall ly S Hp W mem md cid, ARx ly S Hp W mem md -> 0 <= cid <= 10 ->
   count_cid cid (frames S) < fs_frames cid ->
   exists pos S', apath (stack_malloc cid S) [] (PFake cid pos, S') /\ (exists f, S' = set_fs f S) /\
@@ -808,7 +798,7 @@ eapply (acall_kept_of_journal_x segs B ARx segs_low); [exact HJ1 | exact HAR | i
 intros b m i Hb Hi _. rewrite Eab2. exact Hb.
 Qed.
 
-(* YGcallSx.v:73 aj_stack_malloc_at_x, plus the keep *)
+(* YGcallSx.v:74 aj_stack_malloc_at_x, plus the keep *)
 Lemma aj_stack_malloc_at_xm : forall cid, astack_malloc_realizes_xm segs B ARx cid -> 0 <= cid <= 10 ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw,
 AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -895,7 +885,7 @@ split; [exact Hown|]. right. unfold in_zr. cbn [fst snd]. zlia.
 split; [exact HP|]. split; [exact Heff|]. split; [exact Hfr | exact Hmn].
 Qed.
 
-(* YGcallSx.v:146 aj_set_shadow_at_x, plus the keep: the text's mem' is the call's mem2 *)
+(* YGcallSx.v:147 aj_set_shadow_at_x, plus the keep: the text's mem' is the call's mem2 *)
 Lemma aj_set_shadow_at_xm : forall pc v, aset_shadow_realizes_xm segs B ARx pc v ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k cid pos q n (o : Z) raw,
 AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -1092,48 +1082,6 @@ induction l1 as [|[a0 s0] l1 IH]; intros l2 lo n Hf; [reflexivity|].
 cbn [region_free app] in Hf |- *. apply andb_prop in Hf as [H1 H2]. rewrite H1. exact (IH l2 lo n H2).
 Qed.
 
-(* the grant range of a region_free check against segments_reserved segs (Run.v:211-217) holds no segment byte *)
-Lemma region_free_reserved_off_segs : forall (segs : list Segment) (a n x : word),
-  (forall s, In s segs -> 0 < Z.of_N (seg_size s) -> Z.of_N (seg_base s) + Z.of_N (seg_size s) + page_size <= 2 ^ 64) ->
-  region_free (segments_reserved segs) a n = true ->
-  bv_unsigned a <= bv_unsigned x < bv_unsigned a + bv_unsigned n ->
-  find_segment segs (bv_unsigned x) 1 = None.
-Proof.
-intros segs a n x Hsz Hf Hx.
-destruct (find_segment segs (bv_unsigned x) 1) as [s|] eqn:Ef; [exfalso | reflexivity].
-destruct (find_segment_some_spec segs (bv_unsigned x) 1 s Ef) as (Hin & Hb & Ht).
-pose proof (bv_unsigned_in_range _ x) as Rx. change (bv_modulus 64) with (2 ^ 64) in Rx.
-pose proof (N2Z.is_nonneg (seg_base s)) as Hb0. pose proof (N2Z.is_nonneg (seg_size s)) as Hs0.
-specialize (Hsz s Hin ltac:(lia)). unfold page_size in Hsz.
-pose proof (region_free_iv_overlap _ a n _ Hf (in_map segment_reservation segs s Hin)) as Hov.
-unfold segment_reservation, page_round_down_Z, page_round_up_Z, page_size in Hov. cbn [fst snd] in Hov.
-set (t := Z.of_N (seg_base s) + Z.of_N (seg_size s) + 4096 - 1) in Hov.
-pose proof (Z.div_mod (Z.of_N (seg_base s)) 4096 ltac:(lia)) as D1.
-pose proof (Z.mod_pos_bound (Z.of_N (seg_base s)) 4096 ltac:(lia)) as M1.
-pose proof (Z.div_mod t 4096 ltac:(lia)) as D2.
-pose proof (Z.mod_pos_bound t 4096 ltac:(lia)) as M2.
-assert (Et : t = Z.of_N (seg_base s) + Z.of_N (seg_size s) + 4096 - 1) by reflexivity. clearbody t.
-unfold iv_overlap in Hov. rewrite !Z_to_bv_unsigned in Hov. unfold bv_wrap in Hov. change (bv_modulus 64) with (2 ^ 64) in Hov.
-rewrite (Z.mod_small (Z.of_N (seg_base s) / 4096 * 4096)) in Hov by lia.
-rewrite (Z.mod_small (t / 4096 * 4096 - Z.of_N (seg_base s) / 4096 * 4096)) in Hov by lia.
-apply andb_false_iff in Hov as [Hv|Hv]; apply Z.ltb_ge in Hv; lia.
-Qed.
-
-(* the same at the engine's segs_low (the Section hypothesis of YCbqG.v / YGcallMx.v / YGcallSx.v): the last byte of a
-   nonempty segment is in_img, hence below kLowMemEnd, far below 2 ^ 64 - page_size *)
-Lemma region_free_reserved_off_segs_low : forall (segs : list Segment),
-  (forall a, in_img segs a -> 0 <= a < kLowMemEnd) ->
-  forall (a n x : word),
-  region_free (segments_reserved segs) a n = true ->
-  bv_unsigned a <= bv_unsigned x < bv_unsigned a + bv_unsigned n ->
-  find_segment segs (bv_unsigned x) 1 = None.
-Proof.
-intros segs Hlow a n x Hf Hx. apply (region_free_reserved_off_segs segs a n x); [|exact Hf | exact Hx].
-intros s Hin Hsz.
-assert (Hz : in_img segs (Z.of_N (seg_base s) + Z.of_N (seg_size s) - 1)) by (exists s; split; [exact Hin | lia]).
-pose proof (Hlow _ Hz) as Hb. unfold page_size, kLowMemEnd in *. lia.
-Qed.
-
 
 (* ---------------------------------------------------------------------------- *)
 (* 8. Family 1b: strcmp / strlen in the read-only-premise form (header).         *)
@@ -1144,7 +1092,7 @@ Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Variables rlo rhi : Z.
 
-(* VERBATIM ExvB_StrcmpRo.v:43-67 (blob af14c24f474d): YGcallMx.v:149 astrcmp_realizes_x with rom_view -> arodata_okP *)
+(* VERBATIM ExvB_StrcmpRo.v:43-67 (blob af14c24f474d): YGcallMx.v:150 astrcmp_realizes_x with rom_view -> arodata_okP *)
 Definition astrcmp_realizes_xro (pc : Z) : Prop :=
 forall ly S Hp W regs mem md x y kx ky,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -1171,7 +1119,7 @@ getr regs' 10 = v /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
 
-(* VERBATIM ExwB_StrlenRo.v:45-64 (blob d38c23bec721): YGcallMx.v:103 astrlen_realizes_x with rom_view -> arodata_okP *)
+(* VERBATIM ExwB_StrlenRo.v:45-64 (blob d38c23bec721): YGcallMx.v:104 astrlen_realizes_x with rom_view -> arodata_okP *)
 Definition astrlen_realizes_xro (pc : Z) : Prop :=
 forall ly S Hp W regs mem md x k,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -1263,7 +1211,7 @@ exact (conj Hc (conj K1 (conj K2 (conj K3 (conj K4 (conj K5 K6)))))).
 Qed.
 End strtexts.
 
-(* the lifts ARx -> ARx /\ P (YGcallMx.v:589 / :605), for the texts with the keep *)
+(* the lifts ARx -> ARx /\ P (YGcallMx.v:590 / :606), for the texts with the keep *)
 Section strcj. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable segs : list Segment.
 Variable B : asyms.
@@ -1689,7 +1637,7 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Local Abbreviation AJ := (ajournal_x (SK := SK) segs B PST ARx).
 
-(* YGcallMx.v:103 astrlen_realizes_x, plus the keep *)
+(* YGcallMx.v:104 astrlen_realizes_x, plus the keep *)
 Definition astrlen_realizes_xm (pc : Z) : Prop :=
 forall ly S Hp W regs mem md x k,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->
@@ -1780,7 +1728,7 @@ split; [exact HP|]. split; [exact Hres|]. split; [exact Hfr|].
 split; [exact Hpres2 | exact Hmn].
 Qed.
 
-(* YGcallMx.v:391 aj_strlen_at_x, plus the keep (an implication in the conclusion) *)
+(* YGcallMx.v:392 aj_strlen_at_x, plus the keep (an implication in the conclusion) *)
 Lemma aj_strlen_at_xm : forall pc, astrlen_realizes_xm pc ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x len (o : Z) raw,
 AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -1823,7 +1771,7 @@ split; [reflexivity|]. exists regs', mem', md'.
 exact (conj Hc (conj K1 (conj K2 (conj K3 (conj K4 (conj K5 K6)))))).
 Qed.
 
-(* YGcallMx.v:589 astrlen_realizes_x_conj, for the text with the keep *)
+(* YGcallMx.v:590 astrlen_realizes_x_conj, for the text with the keep *)
 Lemma astrlen_realizes_xm_conj : forall pc, astrlen_realizes_xm segs B ARx pc -> astrlen_realizes_xm segs B ARP pc.
 Proof.
 intros pc AS ly S Hp W regs mem md x k [[HAR HPl] Hrest]. intros.
@@ -2530,7 +2478,7 @@ rewrite (YA0o.st_ok_restrict_mkst segs (w_H W) E ss ms HS Hrv), Hpc'.
 eapply (aj_poison_at_x_mR R); eassumption.
 Qed.
 
-(* YGcallPx.v:239 aj_poison_at_x, plus the keep (the text's last post conjunct) *)
+(* YGcallPx.v:240 aj_poison_at_x, plus the keep (the text's last post conjunct) *)
 Lemma aj_poison_at_x_m : forall pc, YGcallPx.apoison_realizes_x segs B ARx hd pc ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k b n (o : Z) raw,
 ajournal_x (SK := SK) segs B PST ARx STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -2597,7 +2545,7 @@ split; [exact HP|]. split; [|split; [exact Hfr | split; [exact Hpres2 | exact Hm
 intros g Hg. destruct (YGcallPx.shd_idx_g hd b g Hb8 H8 Hg) as [Eg Hi]. rewrite Eg. exact (Hsh _ Hi).
 Qed.
 
-(* YGcallPx.v:279 aj_unpoison_at_x, plus the keep (the text's last post conjunct) *)
+(* YGcallPx.v:280 aj_unpoison_at_x, plus the keep (the text's last post conjunct) *)
 Lemma aj_unpoison_at_x_m : forall pc, YGcallPx.aunpoison_realizes_x segs B ARx hd pc ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k b n (o : Z) raw,
 ajournal_x (SK := SK) segs B PST ARx STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -2617,7 +2565,7 @@ aview segs (w_H W) mem2 a = aview segs (w_H W) memT a) /\
 (MN.memnorm segs memT -> MN.memnorm segs mem2)).
 Proof. exact (aj_unpoison_at_x_mR (@wle segs) (wle_refl segs) (wle_trans segs)). Qed.
 
-(* YGcallPx.v:319 aj_poison_x, plus the keep at the call's memory *)
+(* YGcallPx.v:320 aj_poison_x, plus the keep at the call's memory *)
 Lemma aj_poison_x_m : forall pc, YGcallPx.apoison_realizes_x segs B ARx hd pc ->
 forall W E ss ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k b n (o : Z) spw raw,
 st_ok segs E ss (restrict (w_H W) ms) -> ss_pc ss = pc -> ss_resv ss = None ->
@@ -2676,7 +2624,7 @@ rewrite (YA0o.st_ok_restrict_mkst segs (w_H W) E ss ms HS Hrv), Hpc'.
 eapply (aj_unpoison_at_x_mR R R_refl R_trans); eassumption.
 Qed.
 
-(* YGcallPx.v:349 aj_unpoison_x, plus the keep at the call's memory *)
+(* YGcallPx.v:350 aj_unpoison_x, plus the keep at the call's memory *)
 Lemma aj_unpoison_x_m : forall pc, YGcallPx.aunpoison_realizes_x segs B ARx hd pc ->
 forall W E ss ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k b n (o : Z) spw raw,
 st_ok segs E ss (restrict (w_H W) ms) -> ss_pc ss = pc -> ss_resv ss = None ->

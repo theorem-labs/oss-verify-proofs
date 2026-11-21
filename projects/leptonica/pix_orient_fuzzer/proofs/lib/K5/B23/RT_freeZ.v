@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proof of artm_maps replaced by plain proof). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,7 +27,10 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 Lemma artm_maps : forall Σ Σ' mo, lay Σ' = lay Σ -> rt_maps Σ' = rt_maps Σ -> rt_eager Σ' = rt_eager Σ -> ARTM_A Σ mo -> ARTM_A Σ' mo.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RT_freeZ ()) [] "h01Hh11zh21lh32A1h42A2h52A3h62A4h72ASh82E1h92E2h:2E3h;2moh<2Σh=3Σ'p;1p;3p;2p;4p;6p10000p4p7210R0g000\R1p4p710p8P0p10016p4p710p8p1001Rp4p7210g001oR0p4p710p8g002Mj17TP1j31Tg003Ej1<Tg003jj1UTg004Hj1]Tg004kj2XTg005Kj1WTg005kj16Tg006gj1@Tg007dj28Tg008]j12Tg009Tj1ATg00:Jj3BTg00:ej3=Tg00;Pj1:Tg00<Jj1YTg00=Hj23Tg00>CR1j20Tg00>^j1GTg00?\j2CTg00@8j1TTg00A>j1STg00B?j3RTg00Bdj1QTg00C]j2PTg00DGj1ETg00EAj1OTg00F;j1MTg00G3j3LTg00GPj2>Tg00HQj1FTg00IMj1KTg00JKj1JTg00KIj1NTg00LMj4DTP0j6ITg00Lhj1ZTg00M_j2HTg00N<R0f0R2#Zg00NZ31p=4f1R3#Gg00OVR4%@2'H'Cp=5f2R51032'0p=;1H42p=Vg00PQg00Q1712p=?f4R6f3R71032,05'0'0p=91H42,C3p=\%G3/C2p=[g00QQR4g00RLg00SBR8%73%7531g00T@#<#<#<#<#<#<#UR9#]R:/X:R:#WR;%65%6731%@7%@6510f5R</87P1g00TeR7%26R=#A5B:f6R>#65=:%:=g00U^#YR?51;%4=156>13>6'03;18><P2%2>#A9B:7f8R>#65=:f7R6#2R=#:=1;?%4=f9R=,5613=6'03;P1%2>R6#:=1;?%46f:R6,5>136>3;186=P2%26#:=1;?f;R6#2#4f=R>,5613>63;P1f<R6#2#4f>R@,5613@6'018@>P2%2@#4f?R@fAR6'5136@'0P1f@R1fBR@'513@118@6P2fDR1,5@fERAfCRB'3P8fFRC#7RD%2ARE#ARF9B:7RG%6CRH5=:%:E=1;?RI%4ERJ%GARK%@CRL#VRM'CRN%TARO%SARPg00VVRQ=R:FRF%QE,P9RR%E2510%2C#O%MC5L:/>2#?RC%F5/>3#?[^10%KA%JA%NA3;R5'0D9D9X28P;PHA=:G2PIPJPNPOPPPFfGRF#7#E910RfI#7#F/>3#?\C^10/05D9R5D9X2;P0PL%6F9=:GPIPJ1\K2P5D9X10%21R5#ARK9B:7==:H%:5=1;?R?%45R;1[1MRM%T1%S1AR:QK%Q5,P9%ED510%OE%MA5L:/>2#?fH#7#F/>3#?[^10%K1%J1%N1'03;D9R0'0R:'0RE'0P>P?PEP=P;P:P<PMP0P3P2CDCDCDCD%@AP6EI%6AP@EI%7APBEI18A1eW7W6P3P2O2n2001000000121000000W0W5P3P2O2n2001000000121000000W0W4P3P2O2n2001000000121000000W0W3P3P2O2n2001000000121000000W0W:W9W8W;X=4W<o"). Qed.
+  intros Σ Σ' mo E1 E2 E3 (A1 & A2 & A3 & A4 & AS).
+  unfold ARTM_A, artm_sys, confined0 in *. rewrite E1, E2, E3. split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [exact A4|].
+  exact AS.
+Qed.
 
 (* [comment removed for export] *)
 Theorem rta_free_prim : drain_stmt -> fixed_commit_node ->

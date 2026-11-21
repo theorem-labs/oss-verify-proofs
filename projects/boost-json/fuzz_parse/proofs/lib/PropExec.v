@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef); ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -1804,30 +1805,97 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma build_stack_bytes_within_span : ltac2:(zQ "a0!ld!s5!iu2!kj7!sld!sm9!sne!sob!hr4!hqa>2ph$4>2sp@1$1@1$0#k0>1a@1$2@1$2@1$1@1$0#8>1e@1$2@1$2@1$1@1$0#8>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0>3rnd$6@2$8@1$9@2$3@1$1@1$0#8@7$7^7^6^5^4^3^2^1@2$5^5^4").
+Lemma entry_stack_image_block : forall inp mbase ph entry (sp : word) draw,
+  entry_stack_image inp mbase ph entry sp draw
+  = build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw.
+Proof. reflexivity. Qed.
+
+(** CONFIG_RSEQ is the one launch fact that moves the vector's length,
+    and [Run.launch_auxv] copies it straight out of the kernel build.
+    Named so the length arithmetic below can state its premises over
+    [State.kb_rseq], which is what [Run.launch_sp_hi] reads. *)
+Lemma la_rseq_launch_auxv : forall inp sp mbase,
+  la_rseq (launch_auxv inp sp mbase) = kb_rseq (in_kernel inp).
+Proof. reflexivity. Qed.
+
+(** THE ENTRY STACK IMAGE IS EXACTLY [ed_top - sp] BYTES.
+
+    [Run.entry_stack_image] lays Linux's own block, from the entry
+    stack pointer up to the stack VMA's end ([setup_arg_pages],
+    fs/exec.c, Linux v6.18.46, commit 1f99e9ab748f), so its size is not
+    something a closed form bounds — it IS the distance between the two
+    ends.  [Run] cannot prove that itself: the layout arithmetic lives
+    here.
+
+    The one thing to check is the pad.  [StackLayout.block_pad_len] is
+    "whatever is left over", clamped at 0 by [Z.to_nat] so that the
+    block is defined for every [sp] and [top], and the clamp is what
+    would break the sum.  It never bites under the launch conjunct: the
+    sp rule of [Run.valid_launch_sp] puts [sp] at or below
+    [align_down16 (top - 8 - L) - C], and [align_down16] only ever
+    rounds down, so [top - 8 - L - sp - C] is at or above zero.
+
+    This REPLACES [build_stack_bytes_within_span], which bounded the
+    model's old, shorter block by [Run.entry_stack_span].  That bound is
+    false for the kernel's block: a launch whose [arch_align_stack] pad
+    is near 4095 bytes lays a block longer than the span, and the span
+    says nothing about the strings' NULs or the exec file name the
+    model now publishes.  Everything that needs a size for the initial
+    stack image goes through this lemma. *)
+Lemma length_entry_stack_image_launch :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+  = (bv_unsigned (ed_top draw) - bv_unsigned sp)%Z.
 Proof.
-  intros ph sp a e uid hw rnd.
-  unfold entry_stack_span, build_stack_bytes. cbv zeta.
-  rewrite (string_addrs_pair a). cbv beta iota.
-  rewrite (string_addrs_pair e). cbv beta iota.
-  rewrite !length_app, repeat_length, !length_flat_map_le8,
-    !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-    !length_flatten_strings, length_at_random_bytes.
-  rewrite !total_arg_bytes_Z.
-  match goal with
-  | |- context [Z.to_nat ?pd] =>
-      assert (Hpd : (0 <= pd < 8)%Z) by (apply Z.mod_pos_bound; lia)
-  end.
-  unfold auxv_size. lia.
+  intros v inp mbase ph entry sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as (_ & (_ & _ & Hhi) & _).
+  unfold entry_stack_image.
+  rewrite length_build_stack_bytes, la_rseq_launch_auxv.
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp)))
+    16 ltac:(lia)) as Hm.
+  unfold block_pad_len.
+  rewrite !Nat2Z.inj_add.
+  rewrite Z2Nat.id by lia.
+  lia.
+Qed.
+
+(** The image does not wrap the address space, with no premise beyond
+    the launch conjunct: its top is [ed_top], a user address.  This is
+    the side condition every read-back lemma below carries, so a
+    consumer that has [Run.entry_launch_ok_va] never has to do the
+    arithmetic again. *)
+Lemma entry_stack_image_no_wrap :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hok.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw Hok).
+  pose proof (u64_range (ed_top draw)) as Hr. lia.
 Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma bsb_argc_prefix : ltac2:(zQ "b0!ld!s5!iu2!kk0!hl7!sq1!sl1!qp7!sld!sne!sob>2ph$8>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0>3rnd$9@2$5@1$2@1$1@1$0#8\2tl@1$2@1$1@1$0#8@3$4@1$2@1$1@1$0#8@7$a^8^7^6^5^4^3^2@3$3@1$1@1$0#8@1$7@2$6@1$2@1$1@1$0#8^6^1").
+Lemma bsb_argc_prefix :
+  forall la ph entry (sp top : word) argv envp execfn uid gid hwcap draw,
+  exists tl,
+  build_stack_bytes la ph entry sp top argv envp execfn uid gid hwcap draw
+  = word_le8 (len_word argv) ++ tl.
 Proof.
-  intros ph sp argv envp uid hw rnd. unfold build_stack_bytes.
+  intros la ph entry sp top argv envp execfn uid gid hwcap draw.
+  unfold build_stack_bytes. cbv zeta.
   rewrite (string_addrs_pair argv). cbv beta iota.
   rewrite (string_addrs_pair envp). cbv beta iota.
   eexists. rewrite <- !app_assoc. reflexivity.
@@ -1856,48 +1924,62 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma rdn_image_in_block : ltac2:(zQ "h30!ld!s5!iu2!sob!rje!qk5!hq3!hr4!hqa!ih5!jo6!iu9!hl7!sld!ji7!sq6!sr9!sne!hp2>4segs@1$2$e>2ph$d>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>3uid@1$1@1$0#k0>5hwcap@1$1@1$0#k0>4draw$h1>1a@1$1@1$0#k0>1n$a>0@2$7@2$6@2$9@1$0#k0^2@1$8^1@2$f^8@7$3^9^8^7^6^5^4^3>0@2$7@2$6@2$9@1$0#k0^3@1$8^2@2$h2+2+k0@3$c@1$b@1$2@1$1@1$0#8@4$5^c@2$4^a@7$h0^b^a^9^8^7^6^5^4^3@4$5^c@2$4^a@7$3^b^a^9^8^7^6^5^4^3").
-Proof.
-  intros segs ph sp argv envp uid hwcap draw a n Hin Hnw.
-  apply rdn_ext; [exact Hnw|].
-  intros x Hx. apply stack_to_mem_image_in_block. lia.
-Qed.
+Lemma rdn_image_in_block :
+  forall segs inp mbase ph entry (sp : word) draw (a : word) n,
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw)) a n
+  = rdn segs (stack_to_mem sp
+        (build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+           (in_argv inp) (in_envp inp) (in_execfn inp)
+           (in_uid inp) (in_gid inp) (in_hwcap inp) draw)) a n.
+Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
-Lemma read_at_offset_image : ltac2:(zQ "h70!ld!s5!iu2!kj7!hl7!kk0!jo6!sob!jj9!iu9!sic!sld!ji7!sr9!sne!rje!qk5!hq3!hs8!hqa!hp2!kk6!ih5>4segs@1$2$c>2ph$b>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>3uid@1$1@1$0#k0>5hwcap@1$1@1$0#k0>4draw$e>3pre@1$2@1$1@1$0#8>3mid@1$2@1$1@1$0#8>4post@1$2@1$1@1$0#8>1k$6>0@3$4@1$2@1$1@1$0#8@7$7^b^a^9^8^7^6^5@3$5@1$1@1$0#8^4@3$5@1$1@1$0#8^3^2>0@3$4$6@2$3@1$1@1$0#8^4^2>0@2$h2@2$h1@2$h6@1$0#k0^c@1$h3@2$3@1$1@1$0#8@7$7^d^c^b^a^9^8^7@2$h4+2+k0@3$4@1$9@1$2@1$1@1$0#8@4$h0^f@2$f^d@7$d^e^d^c^b^a^9^8@3$h5@1$0#k0^d@1$a@2$3@1$1@1$0#8^7^4@2$8@1$2@1$1@1$0#8^6").
+Lemma read_at_offset_image :
+  forall segs inp mbase ph entry (sp : word) draw pre mid post k,
+  entry_stack_image inp mbase ph entry sp draw = pre ++ mid ++ post ->
+  length mid = k ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (sp + nat_to_word (length pre)) k
+  = Some mid.
 Proof.
-  intros segs ph sp argv envp uid hwcap draw pre mid post k Hb Hk Hnw.
-  pose proof (u64_range sp) as Hsp64.
-  assert (Hlen : (length pre + length mid <= length (build_stack_bytes ph sp argv envp uid hwcap draw))%nat)
-    by (rewrite Hb, !length_app; lia).
-  assert (Hu : bv_unsigned (sp + nat_to_word (length pre))
-               = (bv_unsigned sp + Z.of_nat (length pre))%Z).
-  { unfold nat_to_word. rewrite bv_add_unsigned, Z_to_bv_unsigned.
-    rewrite bv_wrap_add_idemp_r, bv_wrap64_mod. apply Z.mod_small. lia. }
-  rewrite rdn_image_in_block
-    by (unfold entry_block_top; rewrite Hu; lia).
+  intros segs inp mbase ph entry sp draw pre mid post k Hb Hk Hnw.
   exact (read_at_offset segs sp _ pre mid post k Hb Hk Hnw).
 Qed.
 
-Lemma read_argc : ltac2:(zQ "h50!ld!s5!iu2!jj9!kj7!iu9!hl7!sl1!qp7!sld!ji7!sr9!sne!sob!rje!qk5!hq3!hs8!hqa!hp2!ih5>2ph$9>4segs@1$2$a>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0>3rnd$c>0@2$h1@2$h0@2$h4@1$0#k0^6@1$h2@2$4@1$1@1$0#8@7$d^8^6^5^4^3^2^1@2$h3+2+k0@3$6@1$5@1$2@1$1@1$0#8@4$f^8@2$e^7@7$b^9^7^6^5^4^3^2^7N8@2$3@1$2@1$1@1$0#8@1$8@2$7@1$2@1$1@1$0#8^6").
+Lemma read_argc : forall inp mbase ph entry segs (sp : word) draw,
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      sp 8%nat
+  = Some (word_le8 (len_word (in_argv inp))).
 Proof.
-  intros ph segs sp argv envp uid hw rnd Hnw.
-  destruct (bsb_argc_prefix ph sp argv envp uid hw rnd) as [tl E].
-  pose proof (read_at_offset_image segs ph sp argv envp uid hw rnd [] (word_le8 (len_word argv)) tl 8%nat) as H.
+  intros inp mbase ph entry segs sp draw Hnw.
+  destruct (bsb_argc_prefix (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+              (in_argv inp) (in_envp inp) (in_execfn inp)
+              (in_uid inp) (in_gid inp) (in_hwcap inp) draw) as [tl E].
+  rewrite <- entry_stack_image_block in E.
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+                [] (word_le8 (len_word (in_argv inp))) tl 8%nat) as H.
   cbn [length] in H.
   rewrite word_add_0 in H.
-  apply H; [rewrite E; reflexivity|reflexivity|exact Hnw].
+  apply H; [exact E|reflexivity|exact Hnw].
 Qed.
 
-(* [comment removed for export] *)
-Lemma read_byte_at_image : ltac2:(zQ "hd0!ld!s5!iu2!kj7!kk0!hl7!sob!jj9!jq4!jo6!jqb!iu9!qrf!ssf!st5!sic!sld!ji7!sr9!sne!rje!qk5!hq3!hs8!hqa!hp2!rb!kk6!ih5>4segs@1$2$h1>2ph$h0>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>3uid@1$1@1$0#k0>5hwcap@1$1@1$0#k0>4draw$h3>3pre@1$2@1$1@1$0#8>1s@1$2@1$1@1$0#8>4post@1$2@1$1@1$0#8>1j$9>0@3$5@1$2@1$1@1$0#8@7$6^b^a^9^8^7^6^5@3$4@1$1@1$0#8^4@3$4@1$1@1$0#8^3^2>0@2$d^2@2$3@1$1@1$0#8^4>0@2$h7@2$h6@2$hc@1$0#k0^c@1$h8@2$3@1$1@1$0#8@7$6^d^c^b^a^9^8^7@2$h9+2+k0@3$5@1$b@1$2@1$1@1$0#8@4$h5^f@2$h4^d@7$h2^e^d^c^b^a^9^8@3$hb@1$0#k0^d@1$f@2$c@2$3@1$1@1$0#8^7^4N1@2$7@1$2@1$1@1$0#8@3$8@1$1@1$0#8@4$e@1$1@1$0#8^4^6@2$ha@1$0#8Z@1$a@1$1@1$0#8").
+Lemma read_byte_at : forall segs (sp : word) bytes pre s post j,
+  bytes = pre ++ s ++ post -> (j < length s)%nat ->
+  (bv_unsigned sp + Z.of_nat (length bytes) < 2^64)%Z ->
+  rdn segs (stack_to_mem sp bytes) (sp + nat_to_word (length pre + j)) 1%nat
+  = Some [nth j s (Z_to_bv 8 0)].
 Proof.
-  intros segs ph sp argv envp uid hwcap draw pre s post j Hb Hj Hnw.
+  intros segs sp bytes pre s post j Hb Hj Hnw.
   destruct (nth_error_skipn_cons s j Hj) as [b [Hnth Hskip]].
   assert (Hsj : s = firstn j s ++ b :: skipn (S j) s)
     by (rewrite <- Hskip; symmetry; apply firstn_skipn).
-  pose proof (read_at_offset_image segs ph sp argv envp uid hwcap draw
-                (pre ++ firstn j s) [b] (skipn (S j) s ++ post) 1%nat) as H.
+  pose proof (read_at_offset segs sp bytes (pre ++ firstn j s) [b] (skipn (S j) s ++ post) 1%nat) as H.
   rewrite length_app in H.
   rewrite firstn_length_le in H by lia.
   replace (nth j s (Z_to_bv 8 0)) with b by (symmetry; apply (nth_error_nth _ _ _ Hnth)).
@@ -1906,6 +1988,22 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+Lemma read_byte_at_image :
+  forall segs inp mbase ph entry (sp : word) draw pre s post j,
+  entry_stack_image inp mbase ph entry sp draw = pre ++ s ++ post ->
+  (j < length s)%nat ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (sp + nat_to_word (length pre + j)) 1%nat
+  = Some [nth j s (Z_to_bv 8 0)].
+Proof.
+  intros segs inp mbase ph entry sp draw pre s post j Hb Hj Hnw.
+  exact (read_byte_at segs sp _ pre s post j Hb Hj Hnw).
+Qed.
+
+(* [comment removed for export] *)
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1921,25 +2019,320 @@ Qed.
 
 (* [comment removed for export] *)
 
-Definition wrap_mem : ltac2:(zQ "60!ld!s5!iu2!iu9!sld!sne>2ph$4>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0>3rnd$5>0@1$1@1$0#k0@1$3@1$1@1$0#8") := ltac2:(zQ "h20!ld!s5!iu2!iu9!ih5!jj9!ua!jj2!stc!sld!sr9!sne!rje!th1!ti3!ip5!ii3!rb\2ph$9\2sp@1$1@1$0#k0\4argv@1$2@1$2@1$1@1$0#8\4envp@1$2@1$2@1$1@1$0#8\3uid@1$1@1$0#k0\2hw@1$1@1$0#k0\3rnd$b\4addr@1$1@1$0#k0M3\1x@1$3@1$1@1$0#8@1$3@1$1@1$0#8@3$c^7@7$a^8^7^6^5^4^3^2^1\1b@1$1@1$0#8@2$5@1$1@1$0#8^1M6\0$6@1$3@1$1@1$0#8@2$8@2$e@2$h0@2$4@1$0#k0^7$d@2$4@1$0#k0^1@2$f@2$4@1$0#k0^1@2$4@1$0#k0^7@2$5@1$1@1$0#8@2$h1@1$0#8Z@1$7@1$1@1$0#8").
+Definition wrap_mem (inp : ProcInput) (mbase : word) (ph : PhdrInfo)
+    (entry sp : word) (draw : EntryDraw) : word -> option byte :=
+  fun addr =>
+    match stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) addr with
+    | Some b => Some b
+    | None =>
+      if andb (Z.leb (stack_window_lo (in_kernel inp) mbase draw)
+                     (bv_unsigned addr))
+              (Z.ltb (bv_unsigned addr) (bv_unsigned sp))
+      then Some (Z_to_bv 8 0) else None
+    end.
 
-Lemma init_mkst : ltac2:(zQ "h50!ld!s5!iu2!hg5!nsc!hjf!hk4!rb!hl7!ig5!sld!ji7!ni1!tia!sne!oa!tk1!tkd!nj2!tl2!tlb>4segs@1$2$b>2pc$9>2ph$a>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0>3rnd$e@3$8$c@9$d^9^8^7^6^1^5^4^3^2@5$h2$h1@3$4@3$4@2$f@1$0#5@1$1@1$0#k0@3$5@1$0#5+aKv$3@2$6@1$0#5+a@2$7@1$0#k0Z@3$5@1$0#5+2Kv$3@2$6@1$0#5+2^6@2$7@1$0#k0@1$h4^8@7$h0^7^6^5^4^3^2^1@1$h3^9").
+Lemma init_mkst : forall segs (pc : N) ph (sp mbase : word) draw inp,
+  init_machine_state segs pc ph sp mbase draw inp =
+  @mkst fx0 (regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp)
+       (Z_to_bv 64 (Z.of_N pc))
+       (wrap_mem inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw)
+       (seg_rom segs).
 Proof. intros. reflexivity. Qed.
 
 (* [comment removed for export] *)
-Lemma wrap_above_sp : ltac2:(zQ "c0!ld!s5!iu2!ih5!iu9!hl7!sld!sr9!sne!rje!tk1!hr4>2ph$6>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>1x@1$1@1$0#k0>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0>3rnd$8>0@2$b@2$3@1$0#k0^7@2$3@1$0#k0^4@3$5@1$4@1$1@1$0#8@8$a^9^8^7^6^4^3^2^5@3$9^8@7$7^9^8^7^6^4^3^2^5").
+Lemma wrap_above_sp : forall inp mbase ph entry (sp : word) draw (x : word),
+  (bv_unsigned sp <= bv_unsigned x)%Z ->
+  wrap_mem inp mbase ph entry sp draw x
+  = stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x.
 Proof.
-  intros ph sp argv envp x uid hw rnd Hx. unfold wrap_mem.
-  destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|] eqn:E; [reflexivity|].
-  assert (Hltf : Z.ltb (bv_unsigned x) (bv_unsigned sp) = false) by (apply Z.ltb_ge; lia).
+  intros inp mbase ph entry sp draw x Hx. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|] eqn:E; [reflexivity|].
+  assert (Hltf : Z.ltb (bv_unsigned x) (bv_unsigned sp) = false)
+    by (apply Z.ltb_ge; lia).
   rewrite Hltf, andb_false_r. reflexivity.
 Qed.
 
-Lemma rdn_wrap_stack_above : ltac2:(zQ "h20!ld!s5!iu2!ih5!qk5!hr4!jo6!iu9!hl7!sld!ji7!sr9!sne!rje!tk1!hq3!hqa!hp2>4segs@1$2$a>2ph$9>2sp@1$1@1$0#k0>4argv@1$2@1$2@1$1@1$0#8>4envp@1$2@1$2@1$1@1$0#8>1a@1$1@1$0#k0>1n$6>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0>3rnd$c>0@2$5@2$3@1$0#k0^8@2$3@1$0#k0^5>0@2$5@2$f@2$3@1$0#k0^6@1$h0^5@2$h1+2+k0@3$8@1$7@1$2@1$1@1$0#8@4$4^c@7$e^b^a^9^8^5^4^3^7^6@4$4^c@2$d^a@7$b^b^a^9^8^5^4^3^7^6").
+Lemma rdn_wrap_stack_above :
+  forall segs inp mbase ph entry (sp : word) draw (a : word) n,
+  (bv_unsigned sp <= bv_unsigned a)%Z ->
+  (bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
+  rdn segs (wrap_mem inp mbase ph entry sp draw) a n
+  = rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw)) a n.
 Proof.
-  intros segs ph sp argv envp a n uid hw rnd Hsp Hnw.
+  intros segs inp mbase ph entry sp draw a n Hsp Hnw.
   apply rdn_ext; [exact Hnw|].
   intros x Hx. apply wrap_above_sp. lia.
 Qed.
 End FPX3.
 (* [comment removed for export] *)
+
+(* 08b1429: helpers from boost-beast/http_request PropExec.v *)
+Section FPW1. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma le2_spec : forall b1 b0, bv_unsigned (le2 b1 b0) = bytes_le_to_Z [b0; b1].
+Proof.
+  intros b1 b0. unfold le2.
+  rewrite bv_concat_unsigned by reflexivity.
+  cbn [bytes_le_to_Z].
+  rewrite Z.shiftl_0_l, Z.lor_0_r. apply Z.lor_comm.
+Qed.
+End FPW1.
+
+Section FPW2. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma le4_spec : forall b3 b2 b1 b0,
+  bv_unsigned (le4 b3 b2 b1 b0) = bytes_le_to_Z [b0; b1; b2; b3].
+Proof.
+  intros b3 b2 b1 b0. unfold le4.
+  rewrite bv_concat_unsigned by reflexivity.
+  rewrite !le2_spec.
+  change [b0; b1; b2; b3] with ([b0; b1] ++ [b2; b3]).
+  rewrite bytes_le_app. cbn [length]. apply Z.lor_comm.
+Qed.
+End FPW2.
+
+Section FPW3. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma le8_spec : forall b7 b6 b5 b4 b3 b2 b1 b0,
+  bv_unsigned (le8 b7 b6 b5 b4 b3 b2 b1 b0) = bytes_le_to_Z [b0; b1; b2; b3; b4; b5; b6; b7].
+Proof.
+  intros. unfold le8.
+  rewrite bv_concat_unsigned by reflexivity.
+  rewrite !le4_spec.
+  change [b0; b1; b2; b3; b4; b5; b6; b7] with ([b0; b1; b2; b3] ++ [b4; b5; b6; b7]).
+  rewrite bytes_le_app. cbn [length]. apply Z.lor_comm.
+Qed.
+End FPW3.
+
+Section FPW4. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma ok_mkst_eq : forall (r1 r2 : bvmap 5 word) (p1 p2 : word) (m1 m2 ro : word -> option byte),
+  r1 = r2 -> p1 = p2 -> (forall a, m1 a = m2 a) ->
+  MachineOk (mkst r1 p1 m1 ro) = MachineOk (mkst r2 p2 m2 ro).
+Proof.
+  intros r1 r2 p1 p2 m1 m2 ro Hr Hp Hm.
+  assert (Em : m1 = m2) by (apply functional_extensionality; exact Hm).
+  subst. reflexivity.
+Qed.
+End FPW4.
+
+Section FPW5. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma bv_swrap_add_swrap_l : forall n x y,
+  bv_swrap n (bv_swrap n x + y) = bv_swrap n (x + y).
+Proof.
+  intros n x y. apply bv_swrap_congr.
+  unfold bv_swrap.
+  replace (bv_wrap n (x + bv_half_modulus n) - bv_half_modulus n + y)%Z
+    with (bv_wrap n (x + bv_half_modulus n) + (y - bv_half_modulus n))%Z by lia.
+  rewrite bv_wrap_add_idemp_l.
+  f_equal. lia.
+Qed.
+End FPW5.
+
+Section FPW6. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma bv_swrap_add_swrap_r : forall n x y,
+  bv_swrap n (x + bv_swrap n y) = bv_swrap n (x + y).
+Proof.
+  intros n x y. rewrite Z.add_comm, bv_swrap_add_swrap_l, Z.add_comm. reflexivity.
+Qed.
+End FPW6.
+
+Section FPW7. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma two64_pos : (0 < 2^64)%Z.
+Proof. lia. Qed.
+End FPW7.
+
+Section FPW8. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma v_addi_nneg : forall x imm, (0 <= imm)%Z -> (bv_unsigned x + imm < 2^64)%Z ->
+  bv_unsigned (v_addi x imm) = (bv_unsigned x + imm)%Z.
+Proof.
+  intros x imm Hi Hs. unfold v_addi.
+  rewrite Z_to_bv_unsigned, bv_wrap64_mod.
+  apply Z.mod_small. pose proof (u64_range x). lia.
+Qed.
+End FPW8.
+
+Section FPW9. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma v_add_small : forall x y : word, (bv_unsigned x + bv_unsigned y < 2^64)%Z ->
+  bv_unsigned (v_add x y) = (bv_unsigned x + bv_unsigned y)%Z.
+Proof.
+  intros x y H. unfold v_add.
+  rewrite Z_to_bv_unsigned, bv_wrap64_mod.
+  apply Z.mod_small. pose proof (u64_range x). pose proof (u64_range y). lia.
+Qed.
+End FPW9.
+
+Section FPW10. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma v_sub_small : forall x y : word, (bv_unsigned y <= bv_unsigned x)%Z ->
+  bv_unsigned (v_sub x y) = (bv_unsigned x - bv_unsigned y)%Z.
+Proof.
+  intros x y H. unfold v_sub.
+  rewrite Z_to_bv_unsigned, bv_wrap64_mod.
+  apply Z.mod_small. pose proof (u64_range x). pose proof (u64_range y). lia.
+Qed.
+End FPW10.
+
+Section FPW11. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma v_slli_3 : forall x : word, (8 * bv_unsigned x < 2^64)%Z ->
+  bv_unsigned (v_slli x 3) = (8 * bv_unsigned x)%Z.
+Proof.
+  intros x H8. unfold v_slli.
+  rewrite Z_to_bv_unsigned, bv_wrap64_mod.
+  rewrite Z.shiftl_mul_pow2 by lia.
+  change (2^3)%Z with 8%Z.
+  pose proof (u64_range x).
+  rewrite Z.mod_small by lia. lia.
+Qed.
+End FPW11.
+
+Section FPW12. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma v_addi_0_1 : v_addi (Z_to_bv 64 0) 1 = Z_to_bv 64 1.
+Proof. apply bv_eq. reflexivity. Qed.
+End FPW12.
+
+Section FPW13. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma v_addi_0_64 : v_addi (Z_to_bv 64 0) 64 = Z_to_bv 64 64.
+Proof. apply bv_eq. reflexivity. Qed.
+End FPW13.
+
+Section FPW14. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma v_addi_Sj : forall j : nat, (Z.of_nat j + 1 < 2^64)%Z ->
+  v_addi (nat_to_word j) 1 = nat_to_word (S j).
+Proof.
+  intros j _. apply bv_eq. unfold v_addi, nat_to_word.
+  rewrite !Z_to_bv_unsigned.
+  rewrite bv_wrap_add_idemp_l. f_equal. lia.
+Qed.
+End FPW14.
+
+Section FPW15. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_lts_small : forall x y : word,
+  (bv_unsigned x < 2^63)%Z -> (bv_unsigned y < 2^63)%Z ->
+  c_lts x y = bv_ltu x y.
+Proof.
+  intros x y Hx Hy. unfold c_lts, bv_lts, bv_ltu.
+  rewrite !bv_signed_small by assumption. reflexivity.
+Qed.
+End FPW15.
+
+Section FPW16. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_lts_neg_0 : forall x : word, (2^63 <= bv_unsigned x)%Z ->
+  c_lts x (Z_to_bv 64 0) = true.
+Proof.
+  intros x Hx. unfold c_lts, bv_lts.
+  change (bv_signed (Z_to_bv 64 0)) with 0%Z.
+  rewrite bv_signed_hi by exact Hx.
+  apply Z.ltb_lt. pose proof (u64_range x). lia.
+Qed.
+End FPW16.
+
+Section FPW17. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_lts_pos_0 : forall x : word, (bv_unsigned x < 2^63)%Z ->
+  c_lts x (Z_to_bv 64 0) = false.
+Proof.
+  intros x Hx. unfold c_lts, bv_lts.
+  change (bv_signed (Z_to_bv 64 0)) with 0%Z.
+  rewrite bv_signed_small by exact Hx.
+  apply Z.ltb_ge. pose proof (u64_range x). lia.
+Qed.
+End FPW17.
+
+Section FPW18. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_lts_0_pos : forall n : word,
+  (1 <= bv_unsigned n)%Z -> (bv_unsigned n < 2^63)%Z ->
+  c_lts (Z_to_bv 64 0) n = true.
+Proof.
+  intros n H1 H2.
+  rewrite c_lts_small;
+    [ unfold bv_ltu; apply Z.ltb_lt;
+      change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia
+    | change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia
+    | lia ].
+Qed.
+End FPW18.
+
+Section FPW19. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma errno_ret_range : forall e, (1 <= e)%Z -> (e <= 4095)%Z ->
+  (2^63 <= bv_unsigned (errno_ret e))%Z /\ (bv_unsigned (errno_ret e) < 2^64)%Z.
+Proof.
+  intros e H1 H2. unfold errno_ret.
+  rewrite Z_to_bv_unsigned, bv_wrap64_mod.
+  replace (- e)%Z with ((2^64 - e) + (-1) * 2^64)%Z by lia.
+  rewrite Z_mod_plus_full.
+  rewrite Z.mod_small by lia. lia.
+Qed.
+End FPW19.
+
+Section FPW20. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma errno_ret_signed : forall e, (1 <= e)%Z -> (e <= 4095)%Z ->
+  bv_signed (errno_ret e) = (- e)%Z.
+Proof.
+  intros e H1 H2.
+  destruct (errno_ret_range e H1 H2) as [Hlo Hhi].
+  rewrite bv_signed_hi by exact Hlo.
+  unfold errno_ret in *.
+  rewrite Z_to_bv_unsigned, bv_wrap64_mod in *.
+  replace (- e)%Z with ((2^64 - e) + (-1) * 2^64)%Z by lia.
+  rewrite Z_mod_plus_full.
+  rewrite Z.mod_small by lia. lia.
+Qed.
+End FPW20.
+
+Section FPW21. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_lts_errno : forall e, (1 <= e)%Z -> (e <= 4095)%Z ->
+  c_lts (errno_ret e) (Z_to_bv 64 0) = true.
+Proof.
+  intros e H1 H2. destruct (errno_ret_range e H1 H2) as [Hlo _].
+  apply c_lts_neg_0; assumption.
+Qed.
+End FPW21.
+
+Section FPW22. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_eq_small : forall x y : word, c_eq x y = bv_eqb x y.
+Proof. reflexivity. Qed.
+End FPW22.
+
+Section FPW23. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_ltu_small : forall x y : word, c_ltu x y = bv_ltu x y.
+Proof. reflexivity. Qed.
+End FPW23.
+
+Section FPW24. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_eq_0_of_u : forall x : word, bv_unsigned x = 0%Z ->
+  c_eq x (Z_to_bv 64 0) = true.
+Proof.
+  intros x Hx. unfold c_eq, bv_eqb. rewrite Hx. reflexivity.
+Qed.
+End FPW24.
+
+Section FPW25. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma c_eq_0_true : c_eq (Z_to_bv 64 0) (Z_to_bv 64 0) = true.
+Proof. reflexivity. Qed.
+End FPW25.
+
+Section FPW26. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma bytes_le_n_to_le_8 : forall v : word, bytes_le_to_Z (word_le8 v) = bv_unsigned v.
+Proof.
+  intro v. rewrite n_to_le_8_spec, bytes_le_N.
+  change (2 ^ (8 * Z.of_nat 8))%Z with (2^64)%Z.
+  apply Z.mod_small. apply u64_range.
+Qed.
+End FPW26.
+
+Section FPW27. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma nth_app0_bound : forall (a1 : list byte) j,
+  (bv_unsigned (nth j (a1 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)) < 256)%Z.
+Proof.
+  intros a1 j. apply u8_range.
+Qed.
+End FPW27.
+
+Section FPW28. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma entry_page_top_within_window :
+  forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (entry_page_top draw <= va_stack_top v)%Z.
+Proof.
+  intros v inp mbase sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as ((_ & Htop & _) & _ & _).
+  unfold entry_page_top. exact Htop.
+Qed.
+End FPW28.

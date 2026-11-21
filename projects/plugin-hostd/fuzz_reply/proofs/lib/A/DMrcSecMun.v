@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMun.v (commit 6fdbdd538bcf, H4 flag-free secondary Recycle walk set; file sha256 5131aab3ec3e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (lane B1, slice H4; interface DMwalkIF.v at dc3949af11c): the SECONDARY arm of
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMun.v (H4 flag-free secondary Recycle walk set; file sha256 5131aab3ec3e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane B1, slice H4; interface DMwalkIF.v): the SECONDARY arm of
    __asan::QuarantineCallback::Recycle (0x33e30), i.e. LargeMmapAllocator::Deallocate, over the opaque cut relation ARXr.
    rule 24: proves function __asan::QuarantineCallback::Recycle (secondary arm), at cgif_file_fuzzer's asan-ubsan image;
    reuse search LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record) (2026-10-29T23:07:48Z exit 0), rule-24 check B1LookupCheck CONFIRM.

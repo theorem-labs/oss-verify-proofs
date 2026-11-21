@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCem.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan+UBSan build (fuzz_state.asan-ubsan). *)
-(* Modified by Theorem Labs, 2026-10: follows lib/A/ACem.v at RELOC's working branch 22dbe11300a (awr_byte / awr_ok take segs and B and fr0 = frames S, as Reusable/YCbq.v states them; the static arm lives inside awr_byte, so awr_byte_cases is one conjunction), with B's own .data.rel.ro + .got range [0x9f6b0, 0xa0908). *)
+(* Modified by Theorem Labs, 2026-10: follows lib/A/ACem.v at RELOC's working branch (awr_byte / awr_ok take segs and B and fr0 = frames S, as Reusable/YCbq.v states them; the static arm lives inside awr_byte, so awr_byte_cases is one conjunction), with B's own .data.rel.ro + .got range [0x9f6b0, 0xa0908). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.

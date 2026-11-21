@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/KnLayoutGle.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/KnLayoutGle.v (donor image sha256 61768cf4739b), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, for a Theorem Labs lane's driver adaptation): on the empty-depot kernel (DepotCfg.v:16,
    DepotCfg.depot_has_trace = false) the layout clause of acall_post is `exists l, layout_grow ly l /\ layout_le n l ly'`.
    layout_grow changes only ly_NB and ly_SB (YG0f.layout_grow), so the composite is a plain layout_le from ly with those two

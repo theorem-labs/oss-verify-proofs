@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from parts of lib/DMwalkIFA.v (dr_leaf_r / dorecycle_spec_r / dorecycle_ok_t, rchunk_m_t / rchunk_ok_t, drain_m_cf_t / drain_ok_t), each restated at the re-hide twins of DIfaceRh.v (YG0dH.amreal' at YGcfRehidePost.RZ_cf, YGcfRehidePost.acall_post_x_rh); every premise and every other conjunct is unchanged. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMwalkIFRh.v (commit d95decb76fc2, file sha256 659853fd1369) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMwalkIFRh.v (file sha256 659853fd1369) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* F1 priming row R3 (re-hide at a secondary recycle): the heads of lane B1's real-merge drain walk at the re-hide
    twins.  Recycle's secondary arm hides the dead shadow hull's interior at its return (YA0nR.SRr'_rehide_ret), so
    Recycle (H4's head) and every walk that binds across it (DoRecycle, H2's head; the drain, the lane's top) are

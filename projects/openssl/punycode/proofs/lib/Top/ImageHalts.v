@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's configuration is over the run's segment list, the binary's segments followed by the vDSO's). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
@@ -24,9 +25,10 @@ Section ImageHalts.
   Proof.
     intros lim HR en inp Hen Hv.
     pose proof (image_realizes_at segs pc ph lim SPEC HR en inp Hen Hv) as Hs.
-    apply (realizes_of_srealizes segs) in Hs.
-    unfold init_cfg_of in Hs. cbn [img_segments img_init_pc img_phdrs] in Hs.
-    apply (realizes_must_exit_forced_only segs _ (SPEC (in_argv inp) (in_fs inp)) S Hs).
+    apply (realizes_of_srealizes (vsegs_of (mkImage segs pc ph) en inp)) in Hs.
+    unfold init_cfg_of, vsegs_of in Hs. cbn [img_segments img_init_pc img_phdrs] in Hs.
+    apply (realizes_must_exit_forced_only (run_segments segs inp (en_sp en) (en_mmap_base en))
+             _ (SPEC (in_argv inp) (in_fs inp)) S Hs).
     - apply SPEC_exits.
     - apply SPEC_kill_free.
     - reflexivity.

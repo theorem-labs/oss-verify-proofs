@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes; the vDSO run state; the launch's reservations with the vDSO pair; the model's m_kernel field; the sc_alloc premise the munmap case needs). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Run Specs.
@@ -100,7 +101,7 @@ Proof.
 Qed.
 
 Definition munmap_post (L : sst) : sst :=
-  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) (lconst 0)) (s_rgs L) (s_facts L) (s_next L) (s_resv L).
+  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) (lconst 0)) (s_rgs L) (s_facts L) (s_next L) RNone.
 Definition munmap_M (M : smodel) (j : nat) : smodel :=
   SM (remove_nth j (sm_maps M)) (sm_allow M) (sm_zr M) (sm_tid M) (sm_brk M) (sm_sbrk M) (sm_sp M) (sm_frz M) [].
 
@@ -221,7 +222,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
     { intros R HR'. unfold uE, rsz. unfold bases_wf in Hbw. rewrite forallb_forall in Hbw. destruct (andb_prop _ _ (Hbw R HR')) as [Hb1 Hb2].
       rewrite (lden_agree_wf _ E E'' _ Hb1 Ha''), (lden_agree_wf _ E E'' _ Hb2 Ha''). split; reflexivity. }
     unfold sden0, munmap_post. cbn [s_pc s_regs s_rgs s_facts s_resv mks ms_pc_val ms_svc_pending ms_resv ms_regs ms_mem ms_fcsr].
-    split; [reflexivity|]. split; [reflexivity|]. split; [exact Hrv|].
+    split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [apply regs_ok_upd; [exact HR | rewrite lden_lconst; reflexivity]|].
     split; [|split; [exact HD | split; [exact HF | exact Hfrm]]].
     apply Forall_forall. intros R HR'. rewrite Forall_forall in HG. apply (rg_ok_mem_eq segs E'' (ms_mem (restrict H ms))); [exact (HG R HR')|].
@@ -274,7 +275,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
     + intros p Hp. apply filter_In in Hp as [Hp Hout]. rewrite Hlz'.
       exact (page_in_ms_keep _ u (u + n) p Hwlz ltac:(lia) Gs3 ltac:(rewrite Z.add_mod, Gs3, Gs2 by lia; reflexivity) (N2 p Hp) Hout (N4 p Hp)).
     + rewrite Hvm'. cbn [vm_limit]. rewrite Hlim. exact Hbud'.
-  - unfold H', Hof. apply (hoff_of segs _ _ (vm_maps (m_vmmaps model')) (vm_reserved (m_vmmaps model')) Hsegb);
+  - unfold H', Hof. eapply (hoff_of segs _ _ (vm_maps (m_vmmaps model')) (vm_reserved (m_vmmaps model')) Hsegb);
       [rewrite Hvm'; exact Hres | exact Hlzm' | exact Hmres'].
   - rewrite Hvm'. exact Hres.
   - rewrite Hvm'. exact Hlim.
@@ -328,6 +329,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
   - rom_tac.
   - apply own_nil. reflexivity.
   - rewrite Hblob0. apply blob_ok_nil. exact Hnm'.
+  - vdso_keep_tac; first [exact Htop' | reflexivity | (rewrite Hvm'; reflexivity) | (unfold alloc_top; rewrite Hvm'; reflexivity)].
 Qed.
 End Unmap.
 
@@ -361,14 +363,15 @@ Variable LIMIT : Z.
 Variable model0 : Model.
 Variable mem0 : word -> option byte.
 Hypothesis Hsegb : segs_below_b segs 0x800000000000 = true.
+Hypothesis Hoff : sc_alloc cfg = false.
 
-#[using="Hsegb"] Theorem den_munmap : forall E L M ms model T j,
+#[using="Hsegb Hoff"] Theorem den_munmap : forall E L M ms model T j,
   DEN segs LIMIT model0 mem0 E L M ms model -> sm_own M = [] -> nomark (sm_maps M) = true ->
   munmap_ok (segments_reserved segs) LIMIT L M j = true ->
   (forall ms' model', DEN segs LIMIT model0 mem0 E (munmap_post L) (munmap_M M j) ms' model' ->
       realizes_cfg segs cfg (mkCfg ms' model') T) ->
   realizes_cfg segs cfg (mkCfg (svc_set ms) model) T.
-Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (Hsegb Hoff : LiaFast.U) => LiaFast.u0).
   intros E L M ms model T j Hd Hon Hnm Hok Hk.
   pose proof Hd as Hd0.
   destruct Hd0 as [Hsd Hwf Hbw Hh Hawf Hanz Hminv Hhoff Hres Hlim Hsp Hspok Hbrk Hsbrk Htid Hmaps Hgsh Hgtop Hivwf Hpd Hmres Hkind Hlzm Hzrsh Hzrm Hzr Hrl Hvmo Hproc Hfrz Hrom Hown Hblob].
@@ -400,7 +403,8 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
     - exact (rgs_sepA_sound E (s_facts L) a z R HF0 ltac:(lia) ltac:(rewrite HuA; lia) HRw S1 w Hw).
     - exact (sep_app2_sound E (s_facts L) (sm_maps M) model (sm_sp M) _ HF0 HmapsL Hpd Hgsh Hgtop Hsp (proj2 Hspok)
                j g a z R Hj (nomark_in _ g Hnm (nth_error_In _ _ Hj)) ltac:(lia) ltac:(lia) ltac:(unfold uE, two64 in *; lia) HRs HRw S1 w Hw).
-    - rewrite <- Hres in S1. exact (sep_res_sound E (sm_maps M) model _ HmapsL Hgsh Hmres
+    - apply (sep_res_b_app _ (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))) in S1.
+      rewrite <- Hres in S1. exact (sep_res_sound E (sm_maps M) model _ HmapsL Hgsh Hmres
                j g a z R Hj (nomark_in _ g Hnm (nth_error_In _ _ Hj)) ltac:(lia) ltac:(lia) S1 w Hw). }
   assert (Hsep8 : forall R, In R (s_rgs L) -> forall w, uE E (rg_base R) <= w < uE E (rg_base R) + rsz E R ->
      ~ (uE E (fst (fst g)) / 8 + SH_OFF <= w < (uE E (fst (fst g)) + z) / 8 + SH_OFF)).
@@ -427,7 +431,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
       refine (sep_pc_sound E (s_facts L) (sm_maps M) model (sm_sp M) _ HF0 HmapsL Hpd Hgsh Hgtop Hsp (proj2 Hspok)
                j g a z R Hj (nomark_in _ g Hnm (nth_error_In _ _ Hj)) ltac:(lia) ltac:(lia) Ha8 Hs8 Gs1 HP1 HP2 HRs HRw S2 w Hw _).
       rewrite HuA. rewrite Hn8 in Hin. lia.
-    - rewrite <- Hres in S2.
+    - apply (sep_pres_b_app _ (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))) in S2. rewrite <- Hres in S2.
       refine (sep_pres_sound E (sm_maps M) model _ HmapsL Hgsh Hmres j g a z R Hj (nomark_in _ g Hnm (nth_error_In _ _ Hj)) ltac:(lia) ltac:(lia)
                 Ha8 Hs8 S2 w Hw _). rewrite HuA. rewrite Hn8 in Hin. lia. }
   assert (Hnzr : forall w, uE E (fst (fst g)) <= w < uE E (fst (fst g)) + z -> in_zr (sm_zr M) w = false).
@@ -442,8 +446,8 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
   assert (Hg1 : ms_gpr ms1 1 = Z_to_bv 64 len) by exact (gpr_const segs E L (restrict H ms) ms 1 len Hsd eq_refl ltac:(lia) H1).
   destruct (is_const_sound E _ len H1) as [_ Hlen64].
   assert (HnZ : Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = Z_to_bv 64 z) by (rewrite fg64 by exact Hlen64; rewrite Hlen; reflexivity).
-  eapply rzc_silent1; [|exact (Hk _ _ HD')].
-  pose proof (node_munmap_exact segs cfg ms1 model (ms_reg ms 17) Hh eq_refl ltac:(rewrite Hx8; reflexivity)) as Hn.
+  eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD')].
+  pose proof (node_munmap_exact segs cfg ms1 model (ms_reg ms 17) Hoff Hh eq_refl ltac:(rewrite Hx8; reflexivity)) as Hn.
   rewrite Hg0, Hg1, HnZ in Hn. apply Hn.
   - unfold page_size. apply Z.eqb_eq. exact Gs3.
   - exact Hnz0.
@@ -451,5 +455,31 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
   - rewrite Hmaps. apply (map_has_intro' (List.map (gden E) (sm_maps M)) (lden E (fst (fst g))) (Z_to_bv 64 z)).
     replace (Z_to_bv 64 z) with (lden E (snd (fst g))) by exact (proj1 (is_const_sound E _ z Hgc)).
     exact (in_map (gden E) _ _ Hgj).
+  - (* the exact cut is [map_remove] on the pairwise-disjoint ledger of positive grants *)
+    pose proof (gsz_c_range g z Hgc) as Hzrg.
+    assert (Hzw : bv_unsigned (Z_to_bv 64 z) = z) by (apply fg64; exact Hzrg).
+    assert (Hgz' : bv_unsigned (lden E (snd (fst g))) = z) by (rewrite (proj1 (is_const_sound E _ z Hgc)); exact Hzw).
+    rewrite Hmaps.
+    assert (Hpd' : pdisj (List.map (gden E) (sm_maps M))) by (rewrite <- Hmaps; exact Hpd).
+    assert (Hjg : nth_error (List.map (gden E) (sm_maps M)) j = Some (gden E g)) by (rewrite nth_error_map, Hj; reflexivity).
+    apply maps_subtract_exact.
+    + rewrite Hzw. lia.
+    + intros b s Hin. apply in_map_iff in Hin as (q & Hq & Hqin).
+      destruct (Hgsh0 q Hqin) as (Q1 & _). unfold gden in Hq. injection Hq as <- <-. exact Q1.
+    + intros b s Hin Hb. apply in_map_iff in Hin as (q & Hq & Hqin). apply In_nth_error in Hqin as (i & Hi).
+      destruct (Nat.eq_dec i j) as [->|Hne].
+      * rewrite Hj in Hi. injection Hi as <-. unfold gden in Hq. injection Hq as _ <-.
+        exact (proj1 (is_const_sound E _ z Hgc)).
+      * exfalso. destruct (Hgsh0 q (nth_error_In _ _ Hi)) as (Q1 & _).
+        assert (Hi' : nth_error (List.map (gden E) (sm_maps M)) i = Some (gden E q)) by (rewrite nth_error_map, Hi; reflexivity).
+        pose proof (pdisj_nth _ _ _ _ _ Hpd' Hi' Hjg Hne) as Hdis. unfold iv_disj, B, S in Hdis. unfold gden in Hdis, Hq.
+        injection Hq as Eb Es. cbn [fst snd] in Hdis. rewrite Eb, Es, Hb in Hdis. rewrite Hgz' in Hdis.
+        unfold gsz, uE in Q1. rewrite Es in Q1. lia.
+    + intros b s Hin Hb. apply in_map_iff in Hin as (q & Hq & Hqin). apply In_nth_error in Hqin as (i & Hi).
+      destruct (Nat.eq_dec i j) as [->|Hne].
+      * rewrite Hj in Hi. injection Hi as <-. unfold gden in Hq. injection Hq as <- _. exfalso. exact (Hb eq_refl).
+      * assert (Hi' : nth_error (List.map (gden E) (sm_maps M)) i = Some (gden E q)) by (rewrite nth_error_map, Hi; reflexivity).
+        pose proof (pdisj_nth _ _ _ _ _ Hpd' Hi' Hjg Hne) as Hdis. unfold iv_disj, B, S in Hdis. unfold gden in Hdis, Hq.
+        injection Hq as Eb Es. cbn [fst snd] in Hdis. rewrite Eb, Es, Hgz' in Hdis. rewrite Hzw. lia.
 Qed.
 End UnmapNode.

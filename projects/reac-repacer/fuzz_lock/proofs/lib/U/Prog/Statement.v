@@ -1,6 +1,6 @@
 (* fuzz_lock.ubsan halts, from the frame step for a return of 0 or -1 (U/Prog/FrameRet.v frame_ret_hyp), the
    contracts of check_no_overread and check_lookup, and the walk of LLVMFuzzerTestOneInput: the shape of
-   libreac/fuzz_decode's released lib/U/Prog/Statement.v (25e3d17bdb50). Written by Theorem Labs. *)
+   libreac/fuzz_decode's released lib/U/Prog/Statement.v. Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.U.Reusable Require Import YK11 YK0s YK15 YM05 YO0f YO0d YO09 YO0o YL0g YL0i YI14 YI16 YL01.

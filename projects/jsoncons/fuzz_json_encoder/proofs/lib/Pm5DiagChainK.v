@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6144513-byte zero-filled stack window): changed dg_chain_run; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm9DiagChainK.v, lines 112-113, 170, 190-191. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -118,7 +119,8 @@ Section Chain.
     dinvA LB LK cr A M model -> m_fs model = fs ->
     agree0 MVi (mrestrict (ahid A model) M) S -> mem_grows MVi (mrestrict (ahid A model) M) ->
     usp - 4096 <= S <= usp -> S <= Sf <= usp -> Sf mod 16 = 0 ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVi (Z_to_bv 64 (a + d)) k = true) ->
+    (* WINDOW, old beside new: was [usp - 8388608 <= a]; DRV_ZWIN (Pm5DrvEntry). *)
+    (forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVi (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 1466368 -> MVi (Z_to_bv 64 i) = None) ->
     exitA tid MVi -> stdoutPA MVi ->
     fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
@@ -126,7 +128,7 @@ Section Chain.
     srealizes ASEGS scfg (mkCfg (@mkst fx R (Z_to_bv 64 pc) M rom) model) (dg_shape parts fs).
   Proof.
     induction parts as [|bs rest IH]; intros LB LK cr A MVi S Sf tid fs fx R pc M model D EFS AGI MGI HS HSf HSf16 WINi IMGi XAi SOPi FD2 CH; pose proof Hsp as Hsp'.
-    - (* [comment removed for export] *)
+    -
       cbn [dg_chain] in CH. destruct CH as (fxF & RF & MF & MS & (F10 & F2 & F4 & AGF & C1 & C2 & C3 & C4)).
       pose proof (ArtBridge.msteps_mem_grows ASEGS _ _ MS) as MGF. cbn [ms_mem] in MGF.
       apply (drv_piece scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M model fx fxF R (Z_to_bv 64 pc) RF (Z_to_bv 64 0x14538c) MF (dgW S) _ D MS MGF
@@ -153,7 +155,7 @@ Section Chain.
       rewrite <- EFS. rewrite <- (proj2 (sbm_fds model model1 SBM1)). cbn [dg_shape fold_right]. unfold exit_code.
       apply (exit_run_e scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hex M0 LB LK cr A M1 model1 RF Sf 2 tid XP ltac:(lia) F2 F4 F10).
       rewrite VIS1. unfold stdoutPA. repeat split; first [exact (TR _ _ _ P1 eq_refl) | exact (TR _ _ _ P2 eq_refl) | exact (TR _ _ _ P3 eq_refl) | exact (TR _ _ _ P4 eq_refl) | exact (TR _ _ _ P5 eq_refl)].
-    - (* [comment removed for export] *)
+    -
       cbn [dg_chain] in CH. destruct CH as (fxE & RE & ME & wlo & q & c & b1 & l1 & b2 & l2 & bs1 & bs2 & MS & WV & Ebs & AGE & KONT).
       destruct WV as [(G17 & G10 & G11 & G12 & G9 & G18 & G22 & G19) (W1 & W2 & W3 & W4 & Wc) (I0 & I1) (B1a & B1b & B1c & B1d & B1e & B1r) HC1 HC2 HTOT HFD].
       pose proof (ArtBridge.msteps_mem_grows ASEGS _ _ MS) as MGE. cbn [ms_mem] in MGE.
@@ -175,6 +177,7 @@ Section Chain.
       + exact HM1.
       + exact Hh1.
       + exact FD1.
+      + exact (di_rdr _ _ _ _ _ _ _ _ _ _ D1).
       + unfold wv_regs. repeat split; assumption.
       + rewrite VIS1. unfold wv_iov. split; [exact W3|]. split; [exact W4|]. split; [exact Wc|]. split; [exact I0|]. split; [exact I1|].
         split. { replace (Z_to_bv 64 q) with (Z_to_bv 64 (q + 0)) by (f_equal; lia). apply (store_ok_mono ASEGS _ MVi ME _ MGiE). apply (WINi q (16 * c)); lia. }
@@ -186,7 +189,7 @@ Section Chain.
         intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D1); lia.
       + exact HTOT.
       + rewrite VIS1. exact HFD.
-      + (* [comment removed for export] *)
+      +
         intros R3 M3 model3 MI3 SBM3 KR3 FRM3 FRV3 GRM3 GRV3.
         assert (D3 : dinvA LB LK cr A M3 model3).
         { apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M1 M3 model1 model3 D1).
@@ -194,7 +197,8 @@ Section Chain.
           - exact GRM3.
           - exact (sbm_vml _ _ SBM3).
           - exact MI3.
-          - rewrite (sbm_halted_eq _ _ SBM3). exact Hh1. }
+          - rewrite (sbm_halted_eq _ _ SBM3). exact Hh1.
+          - exact (sbm_rdrA _ _ SBM3). }
         pose proof (ahid_sbm A model1 model3 SBM3) as AH3. rewrite VIS1 in FRV3, GRV3. rewrite <- AH3 in FRV3, GRV3.
         set (MV3 := mrestrict (ahid A model3) M3) in *.
         apply (IH LB LK cr A MVi S Sf tid fs fxE R3 0x14ce1c M3 model3 D3).

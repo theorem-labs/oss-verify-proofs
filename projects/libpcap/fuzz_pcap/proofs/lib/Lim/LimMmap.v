@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMmap.v at commit 874e3397a35, with its module paths changed to libpcap/fuzz_pcap. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMmap.v at commit theorem-labs/oss-verify-proofs@f92feaf8b7e6, with its module paths changed to libpcap/fuzz_pcap. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: blind_mmap_fixed_overflow is added and at_step steps through mmap_fixed_overflow, the MAP_FIXED overflow answer; internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -38,6 +39,26 @@ Ltac at_choose_side :=
           repeat split; first [assumption | eassumption] ].
 Lemma errno_from_inv es i m x m1 evs : errno_from es i m (Ok x m1 evs) -> List.In x es /\ m1 = m /\ evs = [].
 Proof. exact (choose_inv (fun e => List.In e es) i m x m1 evs). Qed.
+
+(* 75d69e00 Sys/Mm/Mmap.v:1804 and :2066, :2299, :2478, :2507: the revision answers a
+   MAP_FIXED request whose [addr + nZ] overflows with [mmap_fixed_overflow addr nZ] where
+   all four MAP_FIXED arms answered [err_ret ENOMEM] -- -ENOMEM still, except that an
+   error-valued [addr] with a rounded length within [TASK_SIZE - mmap_min_addr] comes back
+   AS ITSELF: [alt (e <- errno_from mmap_errnos ;; err_ret e) (ret_only addr)].  Both arms
+   are [lim_blind] and [setL] rewrites [vm_limit] alone, so the whole branch is still a
+   leaf for the limit relation -- but [at_leaf] (LimMm.v:131) lists bare shapes only, so it
+   cannot see through the constant, [at_step]'s catch-all fails, and [repeat] STOPS rather
+   than erroring: the fixed_noaccess arm at :80 silently kept an open goal and every later
+   tactic of [mmap_at] ran on it, which is why the reported error was [intros _ _] at :82
+   meeting [lim_at]'s own [forall o] ("This variable is used in conclusion") and not the
+   missing leaf itself. *)
+Lemma blind_mmap_fixed_overflow : forall addr nZ, lim_blind (mmap_fixed_overflow addr nZ).
+Proof.
+  intros addr nZ. unfold mmap_fixed_overflow.
+  destruct (mmap_fixed_err_addr_b addr nZ).
+  - apply lim_blind_alt; [apply blind_errno_alt | apply blind_ret_only].
+  - apply blind_err_ret.
+Qed.
 Ltac at_step :=
   cbv beta zeta;
   lazymatch goal with
@@ -54,6 +75,8 @@ Ltac at_step :=
                        | let H := fresh "Hc" in let Hm := fresh "Hm" in let He := fresh "He" in let m1 := fresh "m1" in let ev := fresh "ev" in intros ? m1 ev H; apply choose_inv in H; destruct H as (? & Hm & He); subst m1 ev]
   | |- lim_at _ _ _ (bind (modify _) _) (bind (modify _) _) =>
         apply at_bind; [apply at_modify; at_mod_side | intros [] ? ? _]
+  | |- lim_at _ _ _ (mmap_fixed_overflow _ _) (mmap_fixed_overflow _ _) =>
+        apply at_blind; apply blind_mmap_fixed_overflow
   | |- lim_at _ _ _ _ _ => at_leaf
   end.
 Ltac at_auto := repeat at_step.

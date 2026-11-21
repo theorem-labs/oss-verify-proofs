@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD27.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AD27.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AD27.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AD27.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag and the auxv; the launch's ProcInput (kernel build, exec file name, SIGPIPE disposition) and entry; the channel-reader premise; the stack strings at the top of the stack VMA). *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From OSSVerify.reac_pw.fuzz_role.images Require Import AsanUbsan.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import YO0d YO0f.
-From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import YK11 YK00 YK0h YK14 YK1b YK15 YK0k YK18 YK0p YP0n YK0s YM02 YP0m YP09 YP02 YP0l YP0k YP06 YP01 YP08 YP03 YP0g YP0e YN3q YN3v YI04 YL0a YL09 YL02 YL04 YK04 YA0i YA0n YA0o YA0p YA0m YK09 YA0e YG00 YG01 YG0k YG0f YG0v YG0n YG0d YCe5.
+From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import YK11 YK00 YK0h YK14 YK1b YK0i YK15 YK0k YK18 YK0p YP0n YK0s YM02 YP0m YP09 YP02 YP0l YP0k YP06 YP01 YP08 YP03 YP0g YP0e YN3q YN3v YI04 YL0a YL09 YL02 YL04 YK04 YA0i YA0n YA0o YA0p YA0m YK09 YA0e YG00 YG01 YG0k YG0f YG0v YG0n YG0d YCe5.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.AU Require Import YB1v YB12 YF0l YB1h YB13 YF0m YD2j YD2i YD1t YD20 YD1v YD1y YD2a YD26 YD24.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.AU Require Import YD21 YD25 YD22 YD23 YD2h YD1w YD2f YD2b YD2g YD1s YD2c YD2d YD29 YD1x YD28.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import YO05 YO09 YO06 YO01.
@@ -266,10 +267,11 @@ bv_unsigned (ew E 0) = usp -> sp_window_lo <= usp <= sp_window_hi -> usp mod 16 
 sv_denot E (nth i X_a0 (SLit 0)) = w64 code -> (code = 0 \/ code = 2) ->
 AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly S W (ms_mem ms) md -> top_ok usp ly -> st_nev S < EV_MAX ->
 est (w_H W) (ms_mem ms) -> so_state xst k (w_H W) (ms_mem ms) ->
-((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) -> m_fs md = fs ->
+((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ->
+((1 <= k)%nat -> m_channel_reader md = true) -> m_fs md = fs ->
 srealizes tfibsegs (mkCfg ms md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 Proof.
-intros i ss0 E W ms md ly S usp fs code k I0 spo0 wf0 Hi HRUN Hm0 HI0 Hspo0 Hik E0 [Ulo Uhi] U16 Htid Hcode Hc02 HAI HAR HTOP Hnev HE HSO Hfd1 Hfs.
+intros i ss0 E W ms md ly S usp fs code k I0 spo0 wf0 Hi HRUN Hm0 HI0 Hspo0 Hik E0 [Ulo Uhi] U16 Htid Hcode Hc02 HAI HAR HTOP Hnev HE HSO Hfd1 Hcr1 Hfs.
 pose proof (u64_range (ew E 0)) as U0.
 set (ssx := nth i XSTS S_J7x) in *.
 pose proof (proj1 (Forall_forall _ _) XSTS_facts ssx ltac:(subst ssx; apply nth_In; cbn; lia)) as (Hpc & G3 & G4 & Hrv & _).
@@ -307,6 +309,7 @@ rewrite E0. intros a Ha. exact (apresent_some' _ _ _ (HwinX a Ha)).
 - exact (est_frame_run (w_H W) E (jmemI I0 spo0 wf0) _ _ HFrX SEK0 ltac:(rewrite E0; exact Ulo) HE).
 - exact (so_state_run k (w_H W) E (jmemI I0 spo0 wf0) _ _ HFrX SXK0 ltac:(rewrite E0; exact Ulo) HSO).
 - intros Hk. rewrite wvb_fds'. exact (Hfd1 Hk).
+- intros Hk. rewrite YK04.wvb_channel_reader. exact (Hcr1 Hk).
 - rewrite wvb_fs'. exact Hfs.
 Qed.
 Lemma exit2_tail : forall (b : bool) E (W : world tfibsegs) regs mem md ly S (usp : Z) (fs : Fs),
@@ -346,6 +349,7 @@ destruct b; cbn [nth XSTS]; [rewrite M7; exact (j7_run E2 W _ md HS') | rewrite 
 - exact HEst.
 - left. split; [reflexivity | exact HSO].
 - intros Hk. exfalso. lia.
+- intros Hk. exfalso. lia.
 - exact Hfs.
 Qed.
 Lemma sbm_fs_eq : forall md md', same_but_materialized md md' -> m_fs md' = m_fs md.
@@ -363,7 +367,7 @@ YP03.bytes_at (mrestrict (w_H W) mem) zp (p ++ [NUL]) ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly S W mem md -> top_ok usp ly -> st_nev S < EV_MAX ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_fs md = fs ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md -> m_fs md = fs ->
 srealizes tfibsegs (mkCfg (mkst regs (w64 0x41b98) mem (seg_rom tfibsegs)) md) (wr ch_stderr (lit1 ++ p ++ nlB) (ex 2 fs)).
 Proof.
 intros fmt lit1 FP E W regs mem md ly S usp p zp fs E0 [Ulo Uhi] U16 Htid R10 R11 R12 R1 Hsp R3 R4 Hzp1 Hzp2 Hnn Hlen HBr Htl HM Hwin HAI HAR HTOP Hnev Hfd2 Hfs.
@@ -466,9 +470,47 @@ apply apresent_of_writable; [lia|]. replace a with (usp + (a - usp)) by lia. app
 Qed.
 Theorem tfib_cannot_open : cannot_open_tfa B.
 Proof.
-intros sp inp xw xd W regs mem md ly a0 p e Hargv Hsp Hva Hve Hfit Hregs Hmem HG HR HAI HAR HTOP Hfs Hfds He.
+(* [cannot_open_tfa] is launch-indexed now (YD1v.v:119-136): [brk mbase rnd] and the three
+   launch premises replace [entry_stack_fits], in YL0q's order. *)
+intros sp brk mbase inp xw xd W regs mem md ly a0 p rnd e
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hregs Hmem HG HR HAI HAR HTOP Hfs Hfds Hcr He.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
-set (EL := YP08.E0 sp [a0; p] (in_envp inp) xw xd) in *. set (usp := bv_unsigned sp) in *.
+set (EL := YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+[a0; p] (in_envp inp) (in_execfn inp) xw xd) in *.
+set (usp := bv_unsigned sp) in *. set (ztop := bv_unsigned (ed_top rnd)) in *.
+(* The strings block is TOP-anchored, so [usp <= z_strs] is no longer an [unfold z_strs]
+   away: it is [YP08.str_bounds]'s first conjunct (YP08.v:665-671). *)
+assert (SB : usp <= z_strs ztop (in_argv inp) (in_envp inp) (in_execfn inp)
+/\ z_strs ztop (in_argv inp) (in_envp inp) (in_execfn inp)
++ Z.of_nat (total_arg_bytes_nat (in_argv inp)) + Z.of_nat (total_arg_bytes_nat (in_envp inp))
++ Z.of_nat (length (in_execfn inp)) + 1 + 8 = ztop)
+by (exact (YP08.str_bounds TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau)).
+assert (Htl : ztop <= kHighMemEnd).
+{ pose proof (YP08.top_le TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau) as H.
+unfold SP_HI, kHighMemEnd in *. lia. }
+assert (Hal : (2 <= length (in_argv inp))%nat) by (rewrite Hargv; cbn; lia).
+assert (H1z : bv_unsigned (ew EL 1) = z_strs ztop [a0; p] (in_envp inp) (in_execfn inp)).
+{ assert (H1 : bv_unsigned (ew (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp) (in_execfn inp) xw xd) 1)
+= z_strs ztop (in_argv inp) (in_envp inp) (in_execfn inp))
+by (exact (YP08.ew1 TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau
+1 ltac:(lia) xw xd)).
+rewrite Hargv in H1. exact H1. }
+assert (H2z : bv_unsigned (ew EL 2) = z_argv ztop [a0; p] (in_envp inp) (in_execfn inp) 1).
+{ assert (H2 : bv_unsigned (ew (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp) (in_execfn inp) xw xd) 2)
+= z_argv ztop (in_argv inp) (in_envp inp) (in_execfn inp) 1)
+by (eapply (YP08.ew2' TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau
+1 ltac:(lia) xw xd); lia).
+rewrite Hargv in H2. exact H2. }
+assert (ZB : z_strs ztop (in_argv inp) (in_envp inp) (in_execfn inp)
+<= z_argv ztop (in_argv inp) (in_envp inp) (in_execfn inp) 1
+/\ z_argv ztop (in_argv inp) (in_envp inp) (in_execfn inp) 1
++ Z.of_nat (length (nth 1 (in_argv inp) [])) + 1
+<= z_strs ztop (in_argv inp) (in_envp inp) (in_execfn inp)
++ Z.of_nat (total_arg_bytes_nat (in_argv inp)))
+by (eapply (YP08.z_argv_bounds TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau); lia).
+rewrite Hargv in SB, ZB. cbn [nth] in ZB.
 set (E1 := ewset EL A_NEGE (errno_ret e)).
 assert (E1_0 : bv_unsigned (ew E1 0) = usp) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); reflexivity).
 assert (E1_41 : ew E1 A_NEGE = errno_ret e) by (subst E1; apply ew_ewset_same).
@@ -487,10 +529,13 @@ assert (HS1 : st_ok tfibsegs E1 S_CO (restrict (w_H W) (mkst (regupd regs 10%bv 
 - intros r1 r2 Hr1 Hr2. destruct Hr2 as [<-|[]].
 pose proof (proj1 (forallb_forall _ _) (proj1 S_CO_ext) r1 Hr1) as Y. unfold ext_chk2 in Y. cbn [r_base R_errno r_lo r_hi] in Y.
 unfold extent_disjoint. cbn [r_base r_lo r_hi R_errno base_val].
-assert (A1 : usp <= bv_unsigned (ew E1 1)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; rewrite (YP08.ew1 sp [a0; p] (in_envp inp) Hsp Hva Hve); unfold z_strs; lia).
-assert (A2 : usp <= bv_unsigned (ew E1 2)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; rewrite (YP08.ew2' sp [a0; p] (in_envp inp) Hsp Hva Hve) by (cbn; lia);
-pose proof (YP08.z_argv_bounds sp [a0; p] (in_envp inp) 1 ltac:(cbn; lia)) as [Z1 _]; unfold z_strs in Z1; lia).
-assert (A6 : usp <= bv_unsigned (ew E1 6)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; exact (YD29.EL6 sp inp xw xd a0 p Hsp Hva Hve)).
+assert (A1 : usp <= bv_unsigned (ew E1 1)) by
+(subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); rewrite H1z;
+pose proof (proj1 SB); lia).
+assert (A2 : usp <= bv_unsigned (ew E1 2)) by
+(subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); rewrite H2z;
+pose proof (proj1 SB); pose proof (proj1 ZB); lia).
+assert (A6 : usp <= bv_unsigned (ew E1 6)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; exact (YD29.EL6 sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau)).
 unfold sp_window_lo in Ulo.
 destruct (r_base r1) as [[|[|[|[|[|[|[|n]]]]]]]|]; try discriminate Y; cbn [base_val]; try (apply Z.leb_le in Y).
 + rewrite E1_0. right. lia.
@@ -510,29 +555,35 @@ pose proof S_COf_facts as (Ppc & Pra & Psp & Pa0 & Pa1 & Pa2 & Pgp & Ptp & Prv).
 pose proof (st_ok_restrict_mkst tfibsegs (w_H W) E1 S_COf ms2 HS2 Prv) as Hshape. rewrite Hshape, Ppc. change (Z_to_bv 64 0x41b98) with (w64 0x41b98).
 pose proof (st_ok_mem_ok tfibsegs E1 S_COf _ HS2) as HM2. cbn [restrict ms_mem] in HM2.
 assert (RG : forall r, getr (ms_regs ms2) r = sv_denot E1 (sr_get (ss_regs S_COf) r)) by (intros r; exact (st_ok_restrict_reg tfibsegs (w_H W) E1 S_COf ms2 r HS2)).
-assert (HR2 : runs_at usp (mrestrict (w_H W) (ms_mem ms2)) (runs_main_tfa true sp [a0; p] (in_envp inp))).
+assert (HR2 : runs_at usp (mrestrict (w_H W) (ms_mem ms2))
+(runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp))).
 { eapply (runs_at_frame E1 (ss_facts S_COf) (ss_mem S_CO)); [exact (st_ok_facts_ok tfibsegs E1 S_COf _ HS2) | exact WB2 | exact HFrb | rewrite E1_0; lia |].
 eapply (runs_at_frame E1 (ss_facts S_CO1) (ss_mem S_CO)); [exact (st_ok_facts_ok tfibsegs E1 S_CO1 _ HSa) | exact WB1 | exact HFra | rewrite E1_0; lia | exact HR]. }
 pose proof (runs_at_nth _ _ _ 2 _ _ HR2 eq_refl) as HBr. cbn [nth] in HBr.
 destruct S_COf_mem as (cs0 & Hhd & _).
 pose proof (win0_present E1 (w_H W) (ms_mem ms2) (ss_mem S_COf) cs0 usp HM2 Hhd ltac:(destruct S_CO_hd as (_ & _ & _ & X); exact X) E1_0 (conj Ulo Uhi)) as Hwin2.
 unfold diag, msg_cannot_open.
-apply (fpr_leaf 0x1d7df _ FPO E1 W (ms_regs ms2) (ms_mem ms2) _ ly init_state usp p (z_argv usp [a0; p] (in_envp inp) 1) (in_fs inp) E1_0 (conj Ulo Uhi) U16).
+apply (fpr_leaf 0x1d7df _ FPO E1 W (ms_regs ms2) (ms_mem ms2) _ ly init_state usp p
+(z_argv ztop [a0; p] (in_envp inp) (in_execfn inp) 1) (in_fs inp) E1_0 (conj Ulo Uhi) U16).
 - exact (tid_of_st_ok E1 S_COf _ HS2 TIDf).
 - rewrite (RG 10%bv), Pa0. reflexivity.
 - rewrite (RG 11%bv), Pa1. reflexivity.
 - rewrite (RG 12%bv), Pa2. cbn [sv_denot]. rewrite Z.add_0_r. subst E1. rewrite ew_ewset_other by (unfold A_NEGE; lia).
-subst EL. rewrite (YP08.ew2' sp [a0; p] (in_envp inp) Hsp Hva Hve) by (cbn; lia). reflexivity.
+rewrite H2z. reflexivity.
 - rewrite (RG 1%bv), Pra. reflexivity.
 - unfold spZ. rewrite (RG 2%bv), Psp. cbn [sv_denot]. rewrite E1_0. apply u64_lit. unfold sp_window_lo in Ulo. lia.
 - rewrite (RG 3%bv), Pgp. reflexivity.
 - rewrite (RG 4%bv), Ptp. reflexivity.
-- pose proof (YP08.z_argv_bounds sp [a0; p] (in_envp inp) 1 ltac:(cbn; lia)) as [Z1 _]. unfold z_strs in Z1. subst usp. lia.
-- exact (argv_str_fits' sp [a0; p] (in_envp inp) 1 Hfit ltac:(cbn; lia)).
-- exact (argv_no_nul [a0; p] Hva 1 ltac:(cbn; lia)).
-- exact (argv_str_len [a0; p] Hva 1 ltac:(cbn; lia)).
+- pose proof (proj1 SB). pose proof (proj1 ZB). lia.
+- exact (argv_str_fits' (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp) 1 Htl ltac:(cbn; lia)).
+- assert (Hnn : ~ In NUL (nth 1 (in_argv inp) []))
+by (eapply (YP08.argv_no_nul TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau); lia).
+rewrite Hargv in Hnn. cbn [nth] in Hnn. exact Hnn.
+- assert (Hln : Z.of_nat (length (nth 1 (in_argv inp) [])) <= 131071)
+by (eapply (YP08.argv_str_len TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau); lia).
+rewrite Hargv in Hln. cbn [nth] in Hln. exact Hln.
 - exact HBr.
-- subst usp. exact (argv_over_read sp (StackLayout.mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0)) [a0; p] (in_envp inp) true _ 1 Hsp ltac:(cbn; lia) HR2).
+- subst usp. exact (argv_over_read sp [a0; p] (in_envp inp) true _ 1 ltac:(cbn; lia) HR2).
 - exact (mem_ok_sub tfibsegs E1 _ _ IMG_REGIONS img_sub_COf img_regions_wf HM2).
 - exact Hwin2.
 - exact HAIb.
@@ -544,19 +595,32 @@ apply (AR_after_run B HB ARL ly init_state W E1 (ss_mem S_CO) mem (ms_mem ms1) m
 rewrite E1_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin1 a Ha)).
 - exact HTOP.
 - cbn. unfold EV_MAX. lia.
-- rewrite !wvb_fds', Hfds. reflexivity.
+- split; [rewrite !wvb_fds', Hfds; reflexivity | split; [reflexivity | rewrite !YK04.wvb_channel_reader; exact Hcr]].
 - rewrite !wvb_fs'. exact Hfs.
 Qed.
-Lemma us_run : forall sp (argv envp : list (list byte)) xw xd (W : world tfibsegs) ms md,
-valid_sp sp -> valid_argv argv -> valid_envp envp -> (length argv <> 2)%nat ->
-st_ok tfibsegs (YP08.E0 sp argv envp xw xd) (ss_main false) (restrict (w_H W) ms) ->
-SRr tfibsegs W (mkCfg ms md) (at_st (ss_main false) S_US (YP08.E0 sp argv envp xw xd) W (ms_mem ms) md).
+(* [YP08.E0] is now TOP-anchored and launch-indexed (YP08.v:209-210): it takes the entry
+   draw's top, the run's own [kb_rseq] flag and the execfn, and [YP08]'s [ew*] lemmas are
+   discharged over YP08's section header (YP08.v:477-493), which speaks of [in_argv inp]
+   rather than a free [argv].  So this lemma is indexed by the whole [ProcInput] and the
+   entry draw, exactly as YN3e's Section f is (YN3e.v:184-194). *)
+Lemma us_run : forall (sp brk mbase : word) (inp : ProcInput) (rnd : EntryDraw) xw xd
+(W : world tfibsegs) ms md,
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
+(length (in_argv inp) <> 2)%nat ->
+st_ok tfibsegs (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp) (in_execfn inp) xw xd) (ss_main false) (restrict (w_H W) ms) ->
+SRr tfibsegs W (mkCfg ms md) (at_st (ss_main false) S_US (YP08.E0 sp (ed_top rnd)
+(kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) (in_execfn inp) xw xd) W (ms_mem ms) md).
 Proof.
-intros sp argv envp xw xd W ms md Hsp Hva Hve Hlen HS. pose proof HWXi as HWX.
+intros sp brk mbase inp rnd xw xd W ms md Hsp Hva Hve Hvl Hlau Hvi Hlen HS. pose proof HWXi as HWX.
 srr_run_with tfibtbl_drv_ok HS. rename HF into HF1. rename HFr into HFr1.
 srr_branch_with tfibtbl_drv_ok HS.
 2:{ exfalso. cbn [Sem.branch_taken sv_denot] in Hc. rewrite Z.add_0_r in Hc.
-pose proof (YP08.ew3 sp argv envp Hva xw xd) as E3.
+assert (E3 : bv_unsigned (ew (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp) (in_execfn inp) xw xd) 3) = Z.of_nat (length (in_argv inp)))
+by (exact (YP08.ew3 TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau
+1 ltac:(lia) xw xd)).
 apply Bool.negb_false_iff in Hc. apply (proj1 (Fs.bv_eqb_eq _ _)) in Hc.
 apply (f_equal bv_unsigned) in Hc. rewrite Z_to_bv_bv_unsigned, E3, u64_lit in Hc by lia. lia. }
 pose proof (proj1 (proj2 (proj2 S_COUS_eq))) as QU. unfold run_x in QU.
@@ -567,25 +631,40 @@ split; [exact HS|]. split.
 - eapply frame_of_trans; [| exact HF1 | exact HF]. vm_compute. reflexivity.
 - eapply frame_of_trans; [| exact HFr1 | exact HFr]. vm_compute. reflexivity.
 Qed.
-Theorem tfib_usage : forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+Theorem tfib_usage : forall (sp brk mbase : word) (inp : ProcInput) (rnd : EntryDraw)
+(xw : nat -> word) (xd : nat -> list byte)
 (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout),
-valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (length (in_argv inp) <> 2)%nat ->
-YP0l.st_ok tfibsegs (YP08.E0 sp (in_argv inp) (in_envp inp) xw xd) (ss_main false) (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa false sp (in_argv inp) (in_envp inp)) ->
+YP0l.st_ok tfibsegs (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp) (in_execfn inp) xw xd) (ss_main false) (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms))
+(runs_main_tfa false sp (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp)) ->
 AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly init_state W (ms_mem ms) md -> top_ok (bv_unsigned sp) ly ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true ->
 srealizes tfibsegs (mkCfg ms md) (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 Proof.
-intros sp inp xw xd W ms md ly Hsp Hva Hve Hfit Hlen HS HR HAI HAR HTOP Hfs Hfds.
+intros sp brk mbase inp rnd xw xd W ms md ly Hsp Hva Hve Hvl Hlau Hvi Hlen HS HR HAI HAR HTOP Hfs Hfds Hcr.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
-set (argv := in_argv inp) in *. set (envp := in_envp inp) in *.
-set (EL := YP08.E0 sp argv envp xw xd) in *. set (usp := bv_unsigned sp) in *.
+set (argv := in_argv inp) in *. set (envp := in_envp inp) in *. set (efn := in_execfn inp) in *.
+set (EL := YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) argv envp efn xw xd) in *.
+set (usp := bv_unsigned sp) in *. set (ztop := bv_unsigned (ed_top rnd)) in *.
+(* [z_strs] counts down from [ztop], so the old "[z_strs] unfolds to [usp + head]" step is
+   gone; the [usp <= z_strs] half now comes from [YP08.str_bounds] (YP08.v:665-671). *)
+assert (SB : usp <= z_strs ztop argv envp efn
+/\ z_strs ztop argv envp efn + Z.of_nat (total_arg_bytes_nat argv) + Z.of_nat (total_arg_bytes_nat envp)
++ Z.of_nat (length efn) + 1 + 8 = ztop)
+by (exact (YP08.str_bounds TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau)).
+assert (Htl : ztop <= kHighMemEnd).
+{ pose proof (YP08.top_le TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau) as H.
+unfold SP_HI, kHighMemEnd in *. lia. }
 assert (EL0 : bv_unsigned (ew EL 0) = usp) by reflexivity.
 assert (Hargc : (1 <= length argv)%nat) by (pose proof (proj1 Hva); lia).
 pose proof US_checks as (TIDf & NEus & WF0 & TID0).
 pose proof (tid_of_st_ok EL (ss_main false) _ HS TID0) as Htid.
-apply (SRr_srealizes tfibsegs W _ _ _ (us_run sp argv envp xw xd W ms md Hsp Hva Hve Hlen HS) HAI).
+apply (SRr_srealizes tfibsegs W _ _ _
+(us_run sp brk mbase inp rnd xw xd W ms md Hsp Hva Hve Hvl Hlau Hvi Hlen HS) HAI).
 intros Wb cb _ HAIb (-> & ms2 & mat2 & -> & HS2 & HFb & HFrb). cbn [cfg_model] in HAIb.
 pose proof S_US_facts as (Ppc & Pra & Psp & Pa0 & Pa1 & Pa2 & Pgp & Ptp & Ps0 & Prv & _).
 pose proof (st_ok_restrict_mkst tfibsegs (w_H W) EL S_US ms2 HS2 Prv) as Hshape. rewrite Hshape, Ppc.
@@ -593,7 +672,7 @@ change (mkCfg (mkst (ms_regs ms2) (Z_to_bv 64 0x41b98) (ms_mem ms2) (seg_rom tfi
 pose proof (st_ok_mem_ok tfibsegs EL S_US _ HS2) as HM2. cbn [restrict ms_mem] in HM2.
 assert (RG : forall r, getr (ms_regs ms2) r = sv_denot EL (sr_get (ss_regs S_US) r)) by (intros r; exact (st_ok_restrict_reg tfibsegs (w_H W) EL S_US ms2 r HS2)).
 set (regs := ms_regs ms2) in *. set (mem := ms_mem ms2) in *.
-assert (HR2 : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa false sp argv envp)).
+assert (HR2 : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa false sp (ed_top rnd) argv envp efn)).
 { pose proof S_CO_ext as (_ & _ & _ & _ & WBu & WBp & _).
 eapply (runs_at_frame EL (ss_facts S_US) (ss_mem (ss_main false))); [exact (st_ok_facts_ok tfibsegs EL S_US _ HS2) | | exact HFrb | rewrite EL0; lia | exact HR].
 vm_compute. reflexivity. }
@@ -607,10 +686,13 @@ assert (HAR2 : AR tfibsegs B ly init_state W mem (with_vm_backing (m_vm_lazy md)
 rewrite EL0. intros a Ha. exact (apresent_some' _ _ _ (Hwin2 a Ha)). }
 assert (Hsp2 : spZ regs = usp - 128) by (unfold spZ; rewrite (RG 2%bv), Psp; cbn [sv_denot]; rewrite EL0; apply u64_lit; unfold sp_window_lo in Ulo; lia).
 assert (Hra : raZ regs = 0x7fd34) by (unfold raZ; rewrite (RG 1%bv), Pra; reflexivity).
-assert (E1z : bv_unsigned (ew EL 1) = z_argv usp argv envp 0).
-{ subst EL usp. rewrite (YP08.ew1 sp argv envp Hsp Hva Hve). unfold z_argv. rewrite firstn_O. cbn [total_arg_bytes_nat fold_right]. lia. }
+assert (E1z : bv_unsigned (ew EL 1) = z_argv ztop argv envp efn 0).
+{ assert (H1 : bv_unsigned (ew EL 1) = z_strs ztop argv envp efn)
+by (subst EL; exact (YP08.ew1 TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau
+1 ltac:(lia) xw xd)).
+rewrite H1. unfold z_argv. rewrite firstn_O. cbn [total_arg_bytes_nat fold_right]. lia. }
 unfold diag, msg_usage.
-apply (FPU ly init_state W regs mem _ EL (z_argv usp argv envp 0) (nth 0 argv []) (ex 2 (in_fs inp))).
+apply (FPU ly init_state W regs mem _ EL (z_argv ztop argv envp efn 0) (nth 0 argv []) (ex 2 (in_fs inp))).
 - split; [exact HAR2|]. split; [rewrite (RG 1%bv), Pra; exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 ret_oks))))))|]. split; [rewrite Hra; lia|].
 split; [rewrite Hsp2, <- Zminus_mod_idemp_l, U16; reflexivity|]. split; [rewrite Hsp2; unfold sp_window_lo, sp_window_hi in *; lia|].
 split; [rewrite Hsp2; unfold top_ok in HTOP; lia|]. split; [unfold top_ok in HTOP; tauto|]. split; [unfold top_ok in HTOP; tauto|].
@@ -619,14 +701,21 @@ rewrite (ts_gp B HB), (ts_tp B HB), (RG 3%bv), (RG 4%bv), Pgp, Ptp. split; refle
 - rewrite (RG 10%bv), Pa0. reflexivity.
 - rewrite (RG 11%bv), Pa1. reflexivity.
 - rewrite (RG 12%bv), Pa2. cbn [sv_denot]. rewrite Z.add_0_r, E1z. reflexivity.
-- exact (argv_str_len argv Hva 0 ltac:(lia)).
-- exact (argv_no_nul argv Hva 0 ltac:(lia)).
-- rewrite Hsp2. pose proof (YP08.z_argv_bounds sp argv envp 0 ltac:(lia)) as [Z1 _]. unfold z_strs in Z1. subst usp. lia.
-- exact (argv_str_fits' sp argv envp 0 Hfit ltac:(lia)).
+- eapply (YP08.argv_str_len TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau); exact Hargc.
+- eapply (YP08.argv_no_nul TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau); exact Hargc.
+- rewrite Hsp2.
+(* TOP-anchored: [usp <= z_strs] is [SB], and [z_strs <= z_argv _ 0] is conjunct 1 of
+   [YP08.z_argv_bounds]; the old "[unfold z_strs] gives [usp + head]" step no longer holds. *)
+assert (ZB : z_strs ztop argv envp efn <= z_argv ztop argv envp efn 0
+/\ z_argv ztop argv envp efn 0 + Z.of_nat (length (nth 0 argv [])) + 1
+<= z_strs ztop argv envp efn + Z.of_nat (total_arg_bytes_nat argv))
+by (eapply (YP08.z_argv_bounds TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau); exact Hargc).
+subst usp. lia.
+- exact (argv_str_fits' (ed_top rnd) argv envp efn 0 Htl ltac:(lia)).
 - exact HBr.
-- subst usp. exact (argv_over_read sp (StackLayout.mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0)) argv envp false _ 0 Hsp ltac:(lia) HR2).
+- subst usp. exact (argv_over_read sp argv envp false _ 0 ltac:(lia) HR2).
 - exact HMR.
-- rewrite wvb_fds', Hfds. reflexivity.
+- split; [rewrite wvb_fds', Hfds; reflexivity | split; [reflexivity | rewrite YK04.wvb_channel_reader; exact Hcr]].
 - exact HAIb.
 -
 intros regs' mem' md' HAR' HP Hsbm Ha0 HE' Hfr Hpres HAI'. unfold cfg_at. rewrite Hra.
@@ -669,11 +758,12 @@ apply (run_to_exit 3%nat S_JU E2 W _ md' ly init_state usp (in_fs inp) 2 0%nat I
 rewrite (Hfr a); [exact (HSO a Ha) | unfold STDOUT_LO, STDOUT_HI in Ha; lia | rewrite Hsp2; unfold STDOUT_LO, STDOUT_HI, DIAG_STK, sp_window_lo in *; lia
 | unfold STDERR_MUT, F_STDERR_LO, F_STDERR_HI, STDOUT_LO, STDOUT_HI in *; lia].
 + intros Hk. exfalso. lia.
++ intros Hk. exfalso. lia.
 + rewrite (sbm_fs_eq _ md' Hsbm), wvb_fs'. exact Hfs.
 Qed.
 Theorem tfib_exit_leaf : exit_leaf_tfa B xst.
 Proof.
-intros E W regs mem md ly S usp fs code k E0 [Ulo Uhi] U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hfs.
+intros E W regs mem md ly S usp fs code k E0 [Ulo Uhi] U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hcr Hfs.
 pose proof (ESTI (w_H W) mem (stderr_of_L E (w_H W) mem HM)) as HE.
 pose proof (regs_ok_J E regs (-48) usp E0 ltac:(lia) Ulo ltac:(lia) R3 R4) as HR.
 pose proof (st_ok_J IMG_XL E regs (jregs (-48)) (-48) 0x8a618 usp false (w_H W) mem (or_intror eq_refl) HR E0 Ulo ltac:(right; split; reflexivity) (mem_ok_XL_of_L E _ HM) Hwin ltac:(discriminate)) as HS.
@@ -698,6 +788,7 @@ apply (run_to_exit 2%nat S_JX E2 W _ md ly S usp fs code k IMG_XL (-48) false lt
 - exact HE.
 - exact HSO.
 - intros Hk. rewrite Hfds. reflexivity.
+- intros Hk. exact Hcr.
 - exact Hfs.
 Qed.
 Lemma win2_present : forall E (H : word -> bool) mem rs cs usp,
@@ -719,7 +810,7 @@ tail_at B (if b then S_SHORT else S_OVR) E sp inp a0 p data W ms md ly S pb cap 
 srealizes tfibsegs (mkCfg ms md) (diag (if b then msg_short else msg_overrun) (in_fs inp)).
 Proof.
 intros b E sp inp a0 p data W ms md ly S pb cap Hsp HU6 E0 HT.
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & Hdl & Hblk & Hfs & Hfds & Hminv & HFI).
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & Hdl & Hblk & Hfs & Hfds & Hcr & Hminv & HFI).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YM05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (usp := bv_unsigned sp) in *. set (ss := if b then S_SHORT else S_OVR) in *.
@@ -763,7 +854,7 @@ rewrite (ts_gp B HB), (ts_tp B HB), (RG 3%bv), (RG 4%bv), Pgp, Ptp. split; refle
 - subst msgp; destruct b; [right | left]; lia.
 - intros i Hi. apply (img_msg_chk_sound _ _ IM i Hi).
 - exact HMR.
-- rewrite Hfds. reflexivity.
+- split; [rewrite Hfds; reflexivity | split; [reflexivity | exact Hcr]].
 - exact HAI.
 -
 intros regs' mem' md' HAR' HP Hsbm Ha0 HE' Hfr Hpres HAI'. unfold cfg_at. rewrite Hra.
@@ -859,21 +950,32 @@ apply (run_to_exit 4%nat S_JFr E6 W2 _ md6 ly6 S6 usp (in_fs inp) 2 0%nat IMG_X 
 + exact HE6.
 + exact HSO6.
 + intros Hk. exfalso. lia.
++ intros Hk. exfalso. lia.
 + rewrite Efs6. subst md1. rewrite wvb_fs', (sbm_fs_eq _ md' Hsbm). exact Hfs.
 Qed.
 Theorem tfib_short_leaf : short_leaf_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk Hdl HT.
-apply (fw_leaf true (havoc (YP08.E0 sp [a0; p] (in_envp inp) xw xd) K_M1 ws) sp inp a0 p data W ms md ly S pb cap Hsp).
-- rewrite ew_havoc_old by (unfold K_M1; lia). exact (YD29.EL6 sp inp xw xd a0 p Hsp Hva Hve).
+(* [short_leaf_tfa] is launch-indexed now (YD1w.v:74-81): binders [sp brk mbase] .. [rnd]
+   after [cap], premises [Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs].  [YP08.E0] is the
+   EIGHT-argument TOP-anchored form (YP08.v:209-210); YD1w spells it [ELV], a #[local]
+   notation, so it is written out here. *)
+intros sp brk mbase inp xw xd ws W ms md ly S a0 p data pb cap rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk Hdl HT.
+apply (fw_leaf true (havoc (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+[a0; p] (in_envp inp) (in_execfn inp) xw xd) K_M1 ws) sp inp a0 p data W ms md ly S pb cap Hsp).
+- rewrite ew_havoc_old by (unfold K_M1; lia).
+exact (YD29.EL6 sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau).
 - rewrite ew_havoc_old by (unfold K_M1; lia). reflexivity.
 - exact HT.
 Qed.
 Theorem tfib_overrun_leaf : overrun_leaf_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk Hdl HT.
-apply (fw_leaf false (edset (havoc (YP08.E0 sp [a0; p] (in_envp inp) xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S pb cap Hsp).
-- cbn [ew edset]. rewrite ew_havoc_old by (unfold K_M1; lia). exact (YD29.EL6 sp inp xw xd a0 p Hsp Hva Hve).
+intros sp brk mbase inp xw xd ws W ms md ly S a0 p data pb cap rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk Hdl HT.
+apply (fw_leaf false (edset (havoc (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+[a0; p] (in_envp inp) (in_execfn inp) xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S pb cap Hsp).
+- cbn [ew edset]. rewrite ew_havoc_old by (unfold K_M1; lia).
+exact (YD29.EL6 sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau).
 - cbn [ew edset]. rewrite ew_havoc_old by (unfold K_M1; lia). reflexivity.
 - exact HT.
 Qed.

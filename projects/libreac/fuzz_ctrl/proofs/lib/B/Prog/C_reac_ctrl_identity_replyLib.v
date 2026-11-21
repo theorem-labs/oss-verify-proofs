@@ -31,13 +31,13 @@
      asan_tls_cells (TLS0)               <- ctl_tls_of_AR        (* OWNER PENDING: B twin of lib/A/ProgWorld.v *)
      addressable (window) (AW)           <- ctl_stack_shadow_of_AR (* OWNER PENDING: B twin of lib/A/ProgWorld.v *)
      the new frame after E1              <- ctl_fs_of_astack 1   (* OWNER PENDING: B twin of lib/A/ProgWorldAstack.v,
-                                              a Theorem Labs lane's AMENDED text 878cb7afbc4: the frame condition premise after the
+                                              a Theorem Labs lane's AMENDED text: the frame condition premise after the
                                               [sp - ESTACK, sp) presence premise *)
      the flag byte at the release        <- ctl_release_of_free_law 1 (* OWNER PENDING: same file *)
    mem_inv is NOT taken from AR (decisions.md decision 27 (a working note, not in this delivery)): the stretch runs on MemNorm.normalize rsegs mb, where
    MemNorm.mem_inv_normalize gives it, and the result is carried back to the real memory by the wrapper
    rebase_ro_normalize / evtF_normalize_ro; the latter's image-B twin is lib/B/MemNormF.v (at head lib/B/MemNormF.v:148-152),
-   with the text of lib/A/MemNormF.v (at head lib/A/MemNormF.v:148-152; written on a working branch 5dbd293c250).
+   with the text of lib/A/MemNormF.v (at head lib/A/MemNormF.v:148-152; written on a working branch).
    lib/B/MemNorm.v DOES exist (merged planning core), so normalize / mem_inv_normalize are Required, not assumed.
 
    STATEMENTS AND INSTANTIATIONS ONLY: no Axiom, no Parameter, no Admitted. *)

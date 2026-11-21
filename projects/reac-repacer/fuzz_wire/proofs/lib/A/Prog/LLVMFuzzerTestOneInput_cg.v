@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: Section h of proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_cg.v (origin/ossv/recipes 88154566652a; cgif_file_fuzzer lib/A/ACfn.v / lib/A/ACfj.v) for reac-repacer/fuzz_uci's image A: the slot is the relocated core's lib/A/ACfn.v tfib_lib_contract_x_all (so decode's own slot, Section a, is not copied) at the core's lib_shape checksum_shape, the core's sink names in place of Section Variables, and fuzz_uci's three callees; module paths changed. *)
+(* Modified by Theorem Labs: Section h of proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_cg.v (cgif_file_fuzzer lib/A/ACfn.v / lib/A/ACfj.v) for reac-repacer/fuzz_uci's image A: the slot is the relocated core's lib/A/ACfn.v tfib_lib_contract_x_all (so decode's own slot, Section a, is not copied) at the core's lib_shape checksum_shape, the core's sink names in place of Section Variables, and fuzz_uci's three callees; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_cg: the statement of the walk of fuzz_wire.asan's LLVMFuzzerTestOneInput (wire_text of
    lib/A/Prog/WirePAddr.v, AF_LLVMFuzzerTestOneInput = 0 of lib/A/Prog/WirePList.v; ACfn.A_LLVMF = 0x7fe58), as a
    STATEMENT only (no proof): its own allocator and memcpy calls and the contracts of its eight callees give the core's
@@ -19,7 +20,7 @@
    r <> 0; free(s3) +0x148, free(s0) +0x150; returns 0. A NULL return of either malloc (`beqz` at +0x7c / +0x104)
    goes to __asan_handle_no_return / abort at +0x180 / +0x184. s0 is never a frame pointer: at the first malloc it
    holds the caller's s0 (an empty chain by the slot's entry premise), afterwards a heap block, which lies below
-   alloc_ceiling <= ly_stk_lo <= sp (YG0n.v:365, YCbq.v:336), so bad_next holds in chain_pre (YG0d.v:220-224) and the
+   alloc_ceiling <= ly_stk_lo <= sp (YG0n.v:365, YCbq.v:336), so bad_next holds in chain_pre (YG0d.v:221-225) and the
    chain is empty; so every trace the entry's allocator calls record is [pc0; return address]
    (lib/A/ACej.v TRACES_LLVMFuzzerTestOneInput). *)
 From Stdlib Require Import ZArith NArith List Permutation.

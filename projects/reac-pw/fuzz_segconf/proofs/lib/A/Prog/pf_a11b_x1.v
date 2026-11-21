@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 126 of its 152 lines of code are new or changed and 492 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a7_d.v, with its numbers changed; 295 of its 379 lines of code are new or changed and 68 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the PROGRAM call site of segment A11b of
    reac_segconf_parse_file's walk at KEXIT (lib/A/Prog/pf_a11b_d.v), the refusal F_badmodel (2026-10-30).
    The stream's rule that every call site is shown by its own lemma: one
@@ -25,7 +26,7 @@
    SegInstA.v) besides afn_pre, which the call rule PaFx.cl_callSF builds from the journal. No instruction is
    walked here.
 
-   COPIED FROM segment A7's lib/A/Prog/pf_a7_s.v and pf_a7_d.v at commit 980fbe9c6015 (a7_refuse_call,
+   COPIED FROM segment A7's lib/A/Prog/pf_a7_s.v and pf_a7_d.v (a7_refuse_call,
    a7_va, a7_apart, a7_va_ok, a7_refuse_site_ok, a7_round8, a7_le65535, a7_in, a7_room_ev; a7_sh_at, a7_sh_some,
    a7_addr_buf, a7_fframe_buf), renamed a7_ -> x1_. A7 states them over its record a7_st and over buf only; here
    they are stated over pf_pieces.v's pf_base at any scope sc and over THE WHOLE class-5 frame F (2048 bytes):
@@ -35,7 +36,7 @@
      and SH = SHADOW_OFF + F / 8 is a multiple of 4 (F mod 32 = 0).
    - x1_fframe_frame: a range of the frame lies in a LIVE side-stack frame (refuse_va_locs' frame arm).
 
-   WHERE EACH PREMISE COMES FROM (INV_KEXIT, pf_a11b_d.v:122-130).
+   WHERE EACH PREMISE COMES FROM (INV_KEXIT, pf_a11b_d.v:123-131).
    - The three %s arguments all lie in F, so all three take refuse_va_locs' sa_fframe arm:
        nm    at F + 0x20 (cur_name[16], cells 4..5): pf_st's pf_nm (seg_spec.cstr_enc 16) gives its bytes and NUL
              (x1_nm_str), its tail lies in the frame (a5_geo's present bytes);

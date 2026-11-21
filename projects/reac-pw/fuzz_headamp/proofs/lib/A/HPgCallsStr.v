@@ -2,7 +2,7 @@
    for the strcmp wrapper's contract astrcmp_realizes of lib/Reusable/AStrcmpDef.v (fuzz_identity's text, module paths
    changed): the same journal threading through ecall_pre_at and ajournal_after_write, with the strcmp contract's
    str_meet premise and its strcmp_res result in place of bcmp's n-byte compare. The string lemmas below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStrcmp.v at ef44c49740f for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStrcmp.v for reac-pw/fuzz_headamp
    image A; module paths changed; restated for the strncmp wrapper's contract (reac-pw/fuzz_pin lib/A/PPgWrap.v
    astrncmp_realizes), which is taken as the Section hypothesis STRNCMP: aj_strcmp_at becomes
    hc_strncmp_at, with the contract's string premises (awrap_str, the len + 8 range) and its result (a0 = 0 exactly
@@ -20,7 +20,7 @@
    marked usable in the shadow map, and returns musl's result. It uses at most 2 ESTACK bytes of stack below sp and
    writes no byte outside them. Its contract is reac-pw/fuzz_pin's text, lib/A/PPgWrap.v lines 82-133 (awrap_str,
    awrap_post, astrncmp_realizes), with aro_unowned of libreac/fuzz_identity lib/A/Rt/WrapRo.v
-   line 24 (origin/ossv/recipes 2d2ff01bb6f2). No file this one Requires, directly or through another, defines
+   line 24. No file this one Requires, directly or through another, defines
    those four names (lib/A/HPgWrap.v and lib/A/Rt/WrapRo.v do), so the Section below takes the contract at 0x41ba4
    as the hypothesis STRNCMP, with the four definitions unfolded and
    beta-reduced word for word: the port of the wrapper's walk (fuzz_pin lib/A/PPgWrapNcmp.v pin_astrncmp, which
@@ -115,7 +115,7 @@ Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 
 (* The strncmp wrapper's contract at image A's trampoline: reac-pw/fuzz_pin lib/A/PPgWrap.v:121-133
    `astrncmp_realizes segs B A_STRNCMP`, with awrap_str (PPgWrap.v:82-93), awrap_post (PPgWrap.v:98-106)
-   and aro_unowned (libreac/fuzz_identity lib/A/Rt/WrapRo.v:24-26 at origin/ossv/recipes 2d2ff01bb6f2) unfolded and
+   and aro_unowned (libreac/fuzz_identity lib/A/Rt/WrapRo.v:24-26) unfolded and
    beta-reduced. The port of the wrapper's walk (fuzz_pin lib/A/PPgWrapNcmp.v pin_astrncmp) proves
    that text; at 0x41ba4 it discharges this hypothesis by `exact`. *)
 Hypothesis STRNCMP :

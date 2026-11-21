@@ -7,12 +7,13 @@
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v, with its module paths, module names, addresses and numbers changed; 1012 of its 1163 lines of code are new or changed and 2535 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan, 243 instructions: the ASan WALK of lib/B/FSH_Fn_cno.v
    check_no_overread_spec (the FROZEN B statement; this file proves it, it does not restate it).
    Each callee's S0 contract is a Section hypothesis, CTX-free, as the lane rule asks. The kit steps are lemmas of
    lib/B's kit twins (FSW_K / FSW_K3 / FSW_rres / FSW_ret / FSW_frame / FSW_rd) and of lib/Reusable.
    Template (text only; no byte offset is copied, B's bytes differ): lib/A/FSW_check_no_overread.v at
-   a working branch 1b813dbec53 (its Section I is the A interface this file twins).
+   a working branch (its Section I is the A interface this file twins).
 
    CONTROL FLOW (MEASURED: neutral_dis listing (internal path)
    check_no_overread.fuzz_state.asan-ubsan.s on the pinned fs.asan-ubsan; every address below is from it):
@@ -58,7 +59,7 @@
    2026-10-29 05:4xZ (outputs (internal path), r24-cnoB-addr.txt): released plain /
    UBSan templates only, no released lib/A or lib/B walk; 0x8124c: 0 released hits. (internal path): no
    row. Unreleased B hits: statement / base / bkit files and the stopped bespoke route lib/B/Prog/check_no_overread*.v
-   on a working branch 83807a02aa29 (text template only). *)
+   on a working branch (text template only). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1011,9 +1012,9 @@ Definition cno_call_mset_T : Prop :=
              ~ (cno_sp1 cx - ESTACK <= a < cno_sp1 cx) -> aview tfibsegs (w_H W') mem' a = aview tfibsegs (w_H W) mem a) /\
           range_addressable (aview tfibsegs (w_H W') mem') SHADOW_OFF t (cno_n cx + 18))).
 
-(* ---- the call step of the decode lane (_dec.v cno_call_dec), A's text (1b813dbec53) at B's addresses. The bad-text
+(* ---- the call step of the decode lane (_dec.v cno_call_dec), A's text at B's addresses. The bad-text
    arm states `ablocks B ly' S' = ablocks B ly S` (owner decision (a); lib/B/FSH_Fn_writer.v decode_spec_ff states the
-   equality since a working branch 4a13d26d577). preset_base64_decode (text, lenp) at 0x81444 / 0x81454 /
+   equality since a working branch). preset_base64_decode (text, lenp) at 0x81444 / 0x81454 /
    0x81464 (ra 0x81448 / 0x81458 / 0x81468, lenp the frame locals s10 = s3 + 0x20 / s7 = s3 + 0x40 / s11 = s3 + 0x60,
    set at 0x81414 / 0x81418 / 0x8141c); the refused arm is closed by quiet; cno_dec_strs carries the other texts
    across the call ---- *)
@@ -1035,7 +1036,7 @@ Definition cno_call_dec_T : Prop :=
   (exists b m, In (b, m) (ablocks B ly S) /\ b <= text /\ text + cno_n cx + 1 <= b + m /\
      forall r, In r U -> text + cno_n cx + 1 <= fst r \/ fst r + snd r <= text) ->
   val_mem tfibsegs (mrestrict (w_H W) mem) lenp 8 v -> 0 <= v < 2 ^ 64 ->
-  (* decode_spec_ff's premise (lib/B/FSH_Fn_writer.v, a working branch 4a13d26d577): *lenp's granule is
+  (* decode_spec_ff's premise (lib/B/FSH_Fn_writer.v, a working branch): *lenp's granule is
      addressable (its shadow byte s2 + 4 / 8 / 12 is 00, written by the lifetime-start stores 0x81424 / 0x8142c /
      0x81434 before the first decode; no later store of the walk writes it before the third decode) *)
   range_addressable (aview tfibsegs (w_H W) mem) SHADOW_OFF lenp 8 ->

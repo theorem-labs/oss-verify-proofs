@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -200,3 +201,53 @@ Proof.
   destruct (gap_witness_fit h B (alloc_top h) n Hn HB HBal HT BND) as (g & G1 & G2 & G3 & G4 & G5).
   exists g. repeat split; assumption.
 Qed.
+
+(* LPS #38 (75d69e00) makes the mmap spec's fresh-grant arms CHOOSE the address
+   with [Checks.Placement.linux_place], so a builder now has to show Linux's
+   rule has an answer, not merely that some admissible address exists.
+   [Checks.Placement.linux_place_exists] asks for a fit in one of Linux's two
+   windows: below [mmap_top h], or at or above [task_unmapped_base].
+
+   [gap_witness_fit] above already proves [B <= bv_unsigned g]; the [_top]
+   wrapper discards it.  The two corollaries below keep it.  Both are PURELY
+   ADDITIVE: [gap_witness_fit_top] keeps its old statement and its old proof,
+   so no consumer of the old shape is disturbed. *)
+
+(* [old beside new, 1 of 2] the lower bound [_top] throws away, retained *)
+Corollary gap_witness_fit_top_lo : forall (h : VmMaps) (B n : Z),
+  0 < n -> 0 < B -> B mod 4096 = 0 -> alloc_top h < 2^64 ->
+  B + cost n B (vm_reserved h ++ vm_maps h) + n <= alloc_top h ->
+  exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g
+                   /\ B <= bv_unsigned g
+                   /\ bv_unsigned g + n <= alloc_top h
+                   /\ region_free (vm_reserved h ++ vm_maps h) g (Z_to_bv 64 n) = true.
+Proof.
+  intros h B n Hn HB HBal HT BND.
+  destruct (gap_witness_fit h B (alloc_top h) n Hn HB HBal HT BND) as (g & G1 & G2 & G3 & G4 & G5).
+  exists g. repeat split; assumption.
+Qed.
+
+(* [old beside new, 2 of 2] the same witness in the shape the revised chain
+   carries: the four old admissibility facts PLUS the window disjunct that
+   [linux_place_exists] consumes.  A floor at or above [task_unmapped_base]
+   (the allocator's own [AHI_LO] = 0x10007fff8000 is one) supplies the RIGHT
+   disjunct outright, so no kernel field is pinned: [kb_thp], [kb_rseq],
+   [kb_aslr], [kb_guard] and [kb_rnd_bits] all stay free. *)
+Corollary gap_witness_fit_top_window : forall (h : VmMaps) (B n : Z),
+  0 < n -> task_unmapped_base <= B -> B mod 4096 = 0 -> alloc_top h < 2^64 ->
+  B + cost n B (vm_reserved h ++ vm_maps h) + n <= alloc_top h ->
+  exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g
+                   /\ bv_unsigned g + n <= alloc_top h
+                   /\ region_free (vm_reserved h ++ vm_maps h) g (Z_to_bv 64 n) = true
+                   /\ (bv_unsigned g + n <= mmap_top h \/ task_unmapped_base <= bv_unsigned g).
+Proof.
+  intros h B n Hn HB HBal HT BND.
+  assert (HB0 : 0 < B) by (unfold task_unmapped_base in HB; lia).
+  destruct (gap_witness_fit_top_lo h B n Hn HB0 HBal HT BND) as (g & G1 & G2 & G3 & G4 & G5).
+  exists g. repeat split; try assumption. right. lia.
+Qed.
+
+(* That the window corollary is not vacuous at the allocator's own floor:
+   [AHI_LO] is above [task_unmapped_base] and page-aligned. *)
+Lemma AHI_LO_above_task_unmapped_base : task_unmapped_base <= AHI_LO /\ AHI_LO mod 4096 = 0.
+Proof. unfold task_unmapped_base, AHI_LO. split; [lia|reflexivity]. Qed.

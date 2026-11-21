@@ -5,19 +5,20 @@
    sources, every pc walked and every report site). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value.v, with its addresses and numbers changed; 2709 of its 2837 lines of code are new or changed and 1228 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSH_crt_segA.v; 2166 of its 2393 lines of code are new or changed and 2610 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   15f6f0ad6e5 lib/A/FSH_crt_segA23.v)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 1ab57ca7ad7) - RT : CrtRt B
-   (not FsRt), and the unused a23_ss54 (B 0x82094) deleted (a working branch 1ab57ca7ad7).
-   Port source: a working branch 15f6f0ad6e5 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA23.v (2582
-   lines, on A base v32 a working branch 9ffe6bce6eb: its FSH_crt_base / site / cstr / FSW_crt_tbl blobs are
-   v32's), whose own rule-24 line is: PORTED from a working branch d25a984c903
+   lib/A/FSH_crt_segA23.v)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - RT : CrtRt B
+   (not FsRt), and the unused a23_ss54 (B 0x82094) deleted (a working branch).
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA23.v (2582
+   lines, on A base v32 a working branch: its FSH_crt_base / site / cstr / FSW_crt_tbl blobs are
+   v32's), whose own rule-24 line is: PORTED from a working branch
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd2.v (sd2_tail :494-870, sd2_postlen :458-489, sd2_last
    :312-407, the canonical / non-canonical split :732-869 with B64Canon.canonical_enc the same bridge),
    check_round_trip_stdefs.v St2 :244 / St3 :260 and check_round_trip_loops.v crt_canonical :1032. The donor is a
    concrete-execution proof and is not importable; only the argument is ported.
    Same Lemma names and statement shapes as the A file, over image B (lib/B/YB1v.v tfibsegs, fs.asan-ubsan), on the B
-   interface lib/B/FSH_crt_base.v (B base v32, a working branch 985265b6291), lib/B/FSH_crt_site.v,
+   interface lib/B/FSH_crt_base.v (B base v32, a working branch), lib/B/FSH_crt_site.v,
    lib/B/FSH_crt_cstr.v and lib/B/FSW_crt_tbl.v. Base v33 (K / CNT / LIVE_82268 by trace) is not needed: this file
    reads only K_82068 / CNT_82068 / LIVE_82068 (through crt_keepA and crt_INV_82068), which v33 leaves unchanged.
    A new file: no licence lines (internal).

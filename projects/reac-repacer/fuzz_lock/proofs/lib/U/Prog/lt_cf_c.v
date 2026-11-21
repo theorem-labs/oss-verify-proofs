@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths and module names changed; 14 of its 47 lines of code are new or changed and 97 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The crash-free (SRcf) contracts the agreement of fuzz_lock.ubsan with fuzz_lock.plain needs: the contract of
    LLVMFuzzerTestOneInput and the contracts of the two harness functions it calls, in the form of
-   libreac/fuzz_decode's released lib/U/Prog/check_round_trip_ccf.v and LLVMFuzzerTestOneInput_cfb.v
-   (25e3d17bdb50). check_no_overread_contract_cf is the statement of lib/U/Prog/check_no_overread_ccf.v
+   libreac/fuzz_decode's released lib/U/Prog/check_round_trip_ccf.v and LLVMFuzzerTestOneInput_cfb.v.
+   check_no_overread_contract_cf is the statement of lib/U/Prog/check_no_overread_ccf.v
    (check_no_overread_contract_cf) and check_lookup_contract_cf that of lib/U/Prog/check_lookup_ccf.v
    (check_lookup_contract_cf), with the names prefixed by lt_, taken as given until those files land: each is its
    lane's SR contract with SRcf B in place of SR segs and the allocator's agreement budget (CAP_AG, 2 ^ 29) in

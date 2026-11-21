@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch's whole ProcInput, mmap base and kernel build, with launch_ok, the recorded kernel and entry_launch_ok_va, and reaches AsanInit's lemmas through iax/iap; hs_fact_win over the eight main-phase entry states, computed in the build per CONFIG_RSEQ value; the image words' fresh variables named as the computed entry states name them). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -243,7 +244,9 @@ Definition in_win (K : kentry) : bool :=
   end.
 Definition hs_fact_win (K : kentry) : bool :=
   existsb (kentry_eqb K) (filter in_win (kn HS_s2_00)) && existsb (kentry_eqb K) (filter in_win (kn HS_s2_01))
-  && existsb (kentry_eqb K) (filter in_win (kn HS_s2_10)) && existsb (kentry_eqb K) (filter in_win (kn HS_s2_11)).
+  && existsb (kentry_eqb K) (filter in_win (kn HS_s2_10)) && existsb (kentry_eqb K) (filter in_win (kn HS_s2_11))
+  && existsb (kentry_eqb K) (filter in_win (kn HS_s2_00R)) && existsb (kentry_eqb K) (filter in_win (kn HS_s2_01R))
+  && existsb (kentry_eqb K) (filter in_win (kn HS_s2_10R)) && existsb (kentry_eqb K) (filter in_win (kn HS_s2_11R)).
 Lemma existsb_filter_incl : forall {T} (f p : T -> bool) l, existsb f (filter p l) = true -> existsb f l = true.
 Proof.
   intros T f p l. induction l as [|x l IH]; cbn; intros H; [exact H|].
@@ -251,9 +254,9 @@ Proof.
 Qed.
 Lemma hs_fact_win_sound : forall K, hs_fact_win K = true -> hs_fact K = true.
 Proof.
-  intros K H. unfold hs_fact_win in H. unfold hs_fact.
-  apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
-  rewrite (existsb_filter_incl _ _ _ H1), (existsb_filter_incl _ _ _ H2), (existsb_filter_incl _ _ _ H3), (existsb_filter_incl _ _ _ H4). reflexivity.
+  intros K H. unfold hs_fact_win in H. unfold hs_fact. rewrite !andb_true_iff in H |- *.
+  repeat match goal with Hc : _ /\ _ |- _ => destruct Hc end.
+  repeat split; eapply existsb_filter_incl; eassumption.
 Qed.
 Lemma forallb_impl : forall {T} (f g : T -> bool) l, (forall x, f x = true -> g x = true) -> forallb f l = true -> forallb g l = true.
 Proof.
@@ -292,12 +295,43 @@ Section AtMain.
   Variable argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variable uid : word.
+  Variable mbase : word.
+  Variable ifs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kbld : KernelBuild.
+  Variable execfn : list byte.
+  Variables rdr sgd sgt : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation SINV := (SINV0 BPH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 BPH sp rdraw argv envp uid hw).
+  Hypothesis Hfit : AsanInit.launch_ok sp brk0 mbase rdraw (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  Let Hfes : entry_stack_fits sp argv envp := proj1 Hfit.
+  Let Hkernel : in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) = recorded_kernel (in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt)) := proj1 (proj2 Hfit).
+  Let Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) := proj2 (proj2 (proj2 Hfit)).
+  #[local] Ltac iax X := first [ exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) ].
+  #[local] Ltac iap X H := first [ pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                 | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) as H ].
+  #[local] Notation IA X := (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp).
+  #[local] Notation SINV := (SINV0 BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kbld execfn).
   #[local] Notation LIM := AsanInit.LIMIT.
   Variable E : env.
   Variable R : bvmap 5 word.
@@ -308,12 +342,12 @@ Section AtMain.
   Hypothesis HC : cs_ok BSEGS BOTH5 LIM SINV argH fs E hs R FULL model.
 
   #[local] Notation MR := (Mr BOTH5 argH E hs model FULL).
-  #[local] Notation FACT := (B_MainFacts.fact_sound sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC).
-  #[local] Notation IMGW := (B_MainFacts.LibBridge.img_word_rw_cells sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC).
-  #[local] Notation IMGU := (B_MainFacts.LibBridge.img_untouched_rw_cells sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC).
-  #[local] Notation HIMRD := (B_MainFacts.high_mrd sp rdraw hw argv envp uid E FULL model hs).
-  #[local] Notation IMGEW := (B_MainFacts.LibBridge.img_eword_rw_cells sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC).
-  #[local] Notation RANGE := (B_MainFacts.range_fact sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC).
+  #[local] Notation FACT := (B_MainFacts.fact_sound sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC).
+  #[local] Notation IMGW := (B_MainFacts.LibBridge.img_word_rw_cells sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC).
+  #[local] Notation IMGU := (B_MainFacts.LibBridge.img_untouched_rw_cells sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC).
+  #[local] Notation HIMRD := (B_MainFacts.high_mrd sp rdraw argv envp kbld execfn E FULL model hs).
+  #[local] Notation IMGEW := (B_MainFacts.LibBridge.img_eword_rw_cells sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC).
+  #[local] Notation RANGE := (B_MainFacts.range_fact sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC).
   (* [comment removed for export] *)
   Ltac ilia := unfold B_MainFacts.A_IMG_LO, B_MainFacts.A_IMG_HI; lia.
 
@@ -510,9 +544,9 @@ Section AtMain.
   (* [comment removed for export] *)
   Lemma at_main_tid : exists t, Step.rw_cells AImages.bsegs FULL 0x5e14a8 [Cells.C4 (Z_to_bv 64 t)] /\ 0 < t < 2^31.
   Proof.
-    pose proof (IMGEW 0x5e14a8 4%nat (EVar 44) ltac:(vm_compute; reflexivity) ltac:(ilia) ltac:(cbn; ilia) ltac:(vm_compute; reflexivity)) as W.
-    pose proof (RANGE (EVar 44) 1 4194303 ltac:(vm_compute; reflexivity)) as [R1 R2]. cbn [edenot] in R1, R2, W.
-    set (t := bv_unsigned (ev E 44)) in *. exists t. split; [| lia].
+    pose proof (IMGEW 0x5e14a8 4%nat (EVar 48) ltac:(vm_compute; reflexivity) ltac:(ilia) ltac:(cbn; ilia) ltac:(vm_compute; reflexivity)) as W.
+    pose proof (RANGE (EVar 48) 1 4194303 ltac:(vm_compute; reflexivity)) as [R1 R2]. cbn [edenot] in R1, R2, W.
+    set (t := bv_unsigned (ev E 48)) in *. exists t. split; [| lia].
     eapply (InitMem.rw_cells_recast AImages.bsegs FULL); [exact W | cbn; exact (conj I I) | | reflexivity].
     cbn [Cells.cells_bytes Cells.cbytes]. unfold Mem.le4. subst t. rewrite MState.Z_to_bv_bv_unsigned. reflexivity.
   Qed.
@@ -578,7 +612,7 @@ Section AtMain.
   (* [comment removed for export] *)
   Theorem at_main_stdio : exists guard cdt thr sec tm1, BX_Exit.stdio_state FULL StdioBase.stdout_init guard cdt thr sec tm1.
   Proof.
-    exists (ev E 61), (Z_to_bv 8 1), (Z_to_bv 8 0), (Z_to_bv 8 0), (Z_to_bv 64 0).
+    exists (ev E 65), (Z_to_bv 8 1), (Z_to_bv 8 0), (Z_to_bv 8 0), (Z_to_bv 64 0).
     unfold BX_Exit.stdio_state. split; [|split; [|split; [|split]]].
     - (* [comment removed for export] *)
       unfold BX_file.stdio_statics.
@@ -607,8 +641,8 @@ Section AtMain.
     - (* [comment removed for export] *)
       unfold BX_file.ssp_cells, BM_syscalls.got_ssp, BM_syscalls.ssp_guard.
       imgu 65536 685128 0xa6228 [Cells.C8 (Z_to_bv 64 0x601590)] G1.
-      pose proof (IMGEW 0x601590 8%nat (EVar 61) ltac:(vm_compute; reflexivity) ltac:(ilia) ltac:(cbn; ilia) ltac:(vm_compute; reflexivity)) as G2. cbn [edenot] in G2.
-      assert (G2' : Step.rw_cells AImages.bsegs FULL 0x601590 [Cells.C8 (ev E 61)])
+      pose proof (IMGEW 0x601590 8%nat (EVar 65) ltac:(vm_compute; reflexivity) ltac:(ilia) ltac:(cbn; ilia) ltac:(vm_compute; reflexivity)) as G2. cbn [edenot] in G2.
+      assert (G2' : Step.rw_cells AImages.bsegs FULL 0x601590 [Cells.C8 (ev E 65)])
         by (eapply (InitMem.rw_cells_recast AImages.bsegs FULL); [exact G2 | cbn; exact (conj I I) | reflexivity | reflexivity]).
       exact (conj G1 G2').
   Qed.

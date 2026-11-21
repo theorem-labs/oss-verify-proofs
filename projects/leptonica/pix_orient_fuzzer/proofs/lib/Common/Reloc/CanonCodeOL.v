@@ -1,10 +1,9 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proof of rl_fetch_at_OL replaced by plain proof). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.Common.Reloc Require Import Reloc RelocCode.
-From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib Require KReplay.
-Ltac2 kr_t_CanonCodeOL () := "i69OSSVerify5KrLib6Common5Reloc;CanonCodeOL;RelocCodeOL00C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00C46Stdlib5Lists4List9nth_errorK47Corelib4Init9Datatypes6option01I47Corelib4Init5Logic2eq00C45stdpp9bitvector;definitions;bv_unsignedC69OSSVerify5KrLib6Common5Reloc9RelocCode9chunk_hasC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common5Reloc5Reloc7rl_segsC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common5Reloc5Reloc8rl_deltaC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common5Reloc;CanonCodeOL=rl_code_ol_okC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common5Reloc9RelocCode;chunk_soundC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib6Common5Reloc5Reloc5Reloc00C1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes3nat00I69OSSVerify5KrLib6Common5Reloc9RelocCode6cchunk00C1?~~~~~~~~~~~~~~~I47Corelib7Numbers7BinNums1Z00K47Corelib7Numbers7BinNums8positive03c69OSSVerify5KrLib6Common5Reloc;CanonCodeOL=canon_code_OLC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01".
 Import ListNotations.
 Local Open Scope Z_scope.
 
@@ -253,8 +252,7 @@ Class RelocCodeOL (RL : Reloc) := { rl_code_ol_ok : code_check rl_segs rl_delta 
 Lemma rl_fetch_at_OL : forall {RL : Reloc} {RC : RelocCodeOL RL} (i : nat) (ch : cchunk) c (w : bv 32),
   nth_error canon_code_OL i = Some ch -> chunk_has ch c (bv_unsigned w) = true ->
   fetch_word rl_segs (rl (rl_delta (cc_blk ch)) c) = Some w.
-Proof.
-ltac2:(KReplay.run1 (kr_t_CanonCodeOL ()) [] "h01Hh12Hih22RCh32RLh41ch52chh61ih71wp;1p;3p;2p;:g0000j1=Tg001;j10Tg001`j13Tg002>j12Tg002aj1<Tg003Cj3:Tg003aj24Tg004Cj31Tg004]j25Tg005Gj36Tg006Lj17Tg007Kj18Tg008Kj29Tg009Vl:;Tg00:]f0R0#=g00;\g00<;R1g00=?g00=]#0#0#0#0#0#3R2#2%<1g00>BR3f3R45:1f2R5,4131g00?Mf1R1,529645g00?m31f7R2#7%82P3f5f4P4P5f6,92P1P0M:;W0W1W7W4W5W6W2W3o"). Qed.
+Proof. intros RL RC i ch c w Hi H. exact (chunk_sound rl_segs rl_delta canon_code_OL i ch c w rl_code_ol_ok Hi H). Qed.
 
 Ltac rl_F_OL i ch :=
   lazymatch goal with

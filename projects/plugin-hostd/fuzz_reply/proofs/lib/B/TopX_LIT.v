@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Copyright 2026 Theorem Labs *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): the B top's two snprintf literal rows.  lib/B/ReplyBTop.v's Context premises
      GN_LIT_GES_x : forall rc fx, ashp_x PB_fr top_x.ARX (pa_val .. A_lit_gesture) 14
      GN_LIT_FMT_x : forall rc fx, ashp_x PB_fr top_x.ARX (pa_val .. (A_OBJ 17)) 7
-   (ReplyBTop.v:210-211; lib/B/W_LLVMFuzzerTestOneInput_top_x.v:897-898 at the Section level), stated below with
-   top_x's ARX written as its body (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:175-177: ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB /\ Hp = []
+   (ReplyBTop.v:210-211; lib/B/W_LLVMFuzzerTestOneInput_top_x.v:898-899 at the Section level), stated below with
+   top_x's ARX written as its body (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:176-178: ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB /\ Hp = []
    /\ arodata_ok_cf), as TopX_SNP.v does, so this file does not Require top_x (whose closure is red on this base) and
    each plug is `exact (topx_GN_LIT_GES_x rc fx)` / `exact (topx_GN_LIT_FMT_x rc fx)` up to unfolding ARX.
    - The facts are the ones of lib/B/W_LLVMFuzzerTestOneInput_gone_inst.v gi_LIT_GES :118 (.str.5

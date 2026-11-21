@@ -9,9 +9,9 @@ on the base with the image-A kit (S06 + S10 A) and added the trans_src_ok mappin
 
 | what | id |
 |---|---|
-| frame source | `02fe409d4ae` (`02fe409d4aedd004fa028b5815c9f0fa8868ced5`), proofs/libdiginet/fuzz_frame/lib/{A,B}/Prog/ |
-| decode source | `7b6185922a1` (`7b6185922a15c0a042393f270448dd8af24a7ce4`), proofs/libdiginet/fuzz_decode/lib/{A,B}/Prog/ |
-| target base | `66fa526ea390` (the ASan integration branch: c8ebc3afb25 + S06 + S10 A, KitA 31331854be3d and 68912113c990), merged into this branch; the listing files DgnTransport{Syms,Addr,List}.v / DgnTransportB{Syms,Addr,List}.v are c8ebc3afb25's, unchanged. The first run (f3bc3d17832) used c8ebc3afb25 |
+| frame source |, proofs/libdiginet/fuzz_frame/lib/{A,B}/Prog/ |
+| decode source |, proofs/libdiginet/fuzz_decode/lib/{A,B}/Prog/ |
+| target base | (the ASan integration branch: + S06 + S10 A, KitA), merged into this branch; the listing files DgnTransport{Syms,Addr,List}.v / DgnTransportB{Syms,Addr,List}.v are, unchanged. The first run used |
 | fuzz_frame.asan | pin `34f028d3dec4`, unstripped twin `67d7e481d74e` |
 | fuzz_frame.asan-ubsan | pin `2574b26fc98e`, unstripped twin `ee3ea72a063b` |
 | fuzz_decode.asan | pin `47bd808e8cb9`, unstripped twin `a7133a6c74e5` |
@@ -32,7 +32,7 @@ gives the sha256 of each source file and of each relocated file, so a rerun is c
 ## Result per function and image
 
 Every function RELOCATES: no numeral stopped. bycmp = strictcmp3 `cmp` of the source twin against the target twin by
-the function's .symtab name (bycmp_<f>_<image>.txt). Names pending = names of the relocated code that base 66fa526ea390
+the function's .symtab name (bycmp_<f>_<image>.txt). Names pending = names of the relocated code that base
 does not define yet, by the piece that brings them (names-A.tsv / names-B.tsv). comments = image numerals left in
 comments (kreloc.py's rule).
 
@@ -63,7 +63,7 @@ unmeasured 0, target-differ 0. The two diginet_body_check records carry one C-st
 frame description "2 32 32 4 c:49 96 40 4 m:50" (decode 0x16e3d, transport A 0x16f72, B 0x16f4c), as in arel's record.
 Every mapped code numeral points at an instruction whose word is equal in both images (no pc-relative row was needed).
 **Image A: nothing is pending** (names-A.tsv is empty: every module and name the 54 relocated image-A files use is
-defined on 66fa526ea390). Image B: everything pending is S07 (kit B), S10 B (DgnTransportBCg.v) or TCB's core B.
+defined). Image B: everything pending is S07 (kit B), S10 B (DgnTransportBCg.v) or TCB's core B.
 
 ## The exact file lists
 
@@ -107,13 +107,13 @@ The map (namemap-A.tsv / namemap-B.tsv: every rename with its rule and count) is
   (decode_cg_post, decode_twr_ok, decode_rd_ok, decode_off_win, decode_in_block, decode_in_fake, ...). A frame_ kit name
   that decode's kit defines under the same name is kept (frame_zone: decode's DgnDecodeCJ.v:113 / DgnDecodeBCJ.v:114, so
   transport's DgnTransportCJ.v:113); a frame_ / FRAME_ kit name the base defines under the same name is kept
-  (FRAME_F_SIZE, frame_f_cells, frame_f_bytes: DgnTransportCg.v on 66fa526ea390). Listing-prefix kit names (PI_dgndec,
+  (FRAME_F_SIZE, frame_f_cells, frame_f_bytes: DgnTransportCg.v). Listing-prefix kit names (PI_dgndec,
   dgndec_tpi, frameb_segs_low, ...) go dgndec -> transport, dgndecb -> transportb.
 - own names: a frame_ / decode_ name that a relocated file of the same image defines -> transport_ (statements
   transport_diginet_<f>_cg / _cg_holds_stmt, design 1.2). Uppercase own constants (FRAME_FP_STK, ...) stay, as arel left
   them.
 
-**Names pending (names-A.tsv, names-B.tsv: only what base 66fa526ea390 does not define yet).** A name counts as a
+**Names pending (names-A.tsv, names-B.tsv: only what base does not define yet).** A name counts as a
 reference only if a file the walk file Requires (transitively, in the source tree) defines it, so a local binder that
 shares a global's name does not count. Image A: none. Image B, over the 11 walks:
 
@@ -182,21 +182,21 @@ s = the caller's a0 (send_control +0x6c / send_data +0x70: `addi s3,a0,0`), and 
   body argument (frame_build +0xa4); the design names LLVMFuzzerTestOneInput's local c and tick's body[] for these.
   No heap block in transport; a frame (side-stack, or the machine stack when the stack_malloc call returns 0).
 
-## The input premises: trans_src_ok case and lemma per use site (step 2, base 66fa526ea390)
+## The input premises: trans_src_ok case and lemma per use site (step 2)
 
 Not patched here. Each relocated input premise `frame_in_block B lyc Sc q n` / `decode_in_block B lyc Sc q n` becomes
-`trans_src_ok B STK sp0 lyc Sc W memc q n` (lib/A/Prog/DgnTransportCg.v:337-342 on 66fa526ea390: HEAP, or with
+`trans_src_ok B STK sp0 lyc Sc W memc q n` (lib/A/Prog/DgnTransportCg.v:337-342: HEAP, or with
 decode_rd_ok one of FAKE, G (per byte: `forall a, q <= a < q + n -> inG G_HARNESS a`, the range form), WIN, RO).
 `trans_src_ok_G_range` (:345-352) BUILDS the G case from a range inside one payload; the walks need the other
 direction, from the premise to each fact a site uses: the "Lemmas needed" below are those, with exact statements, all
 for lib/A/Prog/DgnTransportCg.v (one writer: not written here) or TransportGCg.v. Every use site of step 1 is listed
 with the cases the transport callers supply (the listing table above) and the lemma that serves each case. Line
-numbers in columns 1-6 are the source files' (the relocation keeps every line); base citations are file:line at
-66fa526ea390 under proofs/libdiginet/fuzz_transport/lib/. The mapping was traced by a read-only subagent and spot-checked here (DgnTransportCg.v:291, :337; TransportGCg.v:291, :472, :506; YCbq.v:335, :451,
+numbers in columns 1-6 are the source files' (the relocation keeps every line); base citations are file:line
+ under proofs/libdiginet/fuzz_transport/lib/. The mapping was traced by a read-only subagent and spot-checked here (DgnTransportCg.v:291, :337; TransportGCg.v:291, :472, :506; YCbq.v:335, :451,
 :1947, :2014, :2689; YG0d.v:427: all as cited).
 
 ### Tags of step 1 (the `uses` and `replacement` columns)
-Step 1 = the first S11 run (f3bc3d17832). These codes name what a use site derives from the block fact.
+Step 1 = the first S11 run. These codes name what a use site derives from the block fact.
 
 
 Block facts (kit): `frame_in_block` frame A DgnFrameCg.v:261-262, B :265-266; `decode_in_block` decode A
@@ -271,10 +271,10 @@ case-free), MWRD (msg_next's mw_blk -> mw_rd), SUB (a sub-range), STMTG (frame_b
 body_check call in the G form), EMPTY (frame_build's empty unaligned body), HEAPW (the block witness), POSM (`0 < body`
 without a `body <> 0` premise), AS (as another row), OUT / OUTONLY (frame_build's out, Task 4).
 
-Status used in the counts: E = an existing lemma or definition at 66fa526ea390 serves the case; M = it needs a MISSING
+Status used in the counts: E = an existing lemma or definition serves the case; M = it needs a MISSING
 lemma below (L1-L14, G1-G5); X = the case FAILS as stated (a statement or design change is needed, named in the cell).
 
-Image B: there is no lib/B/Prog/DgnTransportBCg.v (S10 B) and no image-B kit (S07) on 66fa526ea390
+Image B: there is no lib/B/Prog/DgnTransportBCg.v (S10 B) and no image-B kit (S07)
 (`git ls-tree` of B/Prog lists DgnTransportBAddr / BList / BSyms, TImgB, TWorldB, TransportGRwB). Every B row cites the
 image-A lemma; its B twin is pending S07 / S10 B (G twins: G_HARNESS_B B/TransportGB.v:19-39, G_HARNESS_B_in_hull
 :44-45, G_HARNESS_B_rw B/Prog/TransportGRwB.v:13). Reusable/YCe5.v holds a second copy of the YCbq lemmas at other lines
@@ -981,13 +981,13 @@ decode_cg_post (DgnTransportCg.v:360-372) and dcg_post (TransportGCg.v:213-226) 
 6. **frame_build empty-body shadow byte.** B/A w fb_body_run (walk.v:461-480) reads the shadow byte of body's granule when `length bb = 0`, taken from the byte before body inside the block. decode_rd_ok of an empty range states nothing; a new premise (the shadow byte of body's granule visible) is needed for the non-heap branch when the body can be empty.
 7. **msg_next `0 < body`.** image B's mn_entry_F needs `0 < body` (UBSan, decode B msg_next_segs.v:100-101); the statement has no `body <> 0`, and mw_blk supplies it from `4096 <= body` (B1). The non-heap branch gives only `0 <= body` (R5), so for the frame/G/window branch a `body <> 0` premise (or the `0 < body` the heap case derives from 4096) must be added. image A's mn_entry_F does not need it.
 
-## Step 3: image B's rule table (base 41cf46de4c30)
+## Step 3: image B's rule table
 
 The image-B walks of 10 rows were written on the image-B kit (S07, S10 B), and a few names were patched by hand that
 no rule of step 2 mapped. Step 3 puts those name edits into the tool's rule table (s11_reloc.py: CORE_B, MOD_HOME_B,
-LEAFB_B and the dgn_leafb_ rule; the docstring's item 2 lists them), moves BASE_REV to 41cf46de4c30 (the image-B
+LEAFB_B and the dgn_leafb_ rule; the docstring's item 2 lists them), moves BASE_REV to (the image-B
 ASan integration branch: the image-B kit, S10 B, the image-B statements and the ASan line with image A's S11 walks;
-the listing files are c8ebc3afb25's, unchanged) and re-runs the tool. The rules, image B only:
+the listing files are, unchanged) and re-runs the tool. The rules, image B only:
 
 | rule | source | target | where |
 |---|---|---|---|

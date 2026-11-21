@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/YGcallx.v, with its module paths and module names changed; 66 of its 188 lines of code are new or changed and 1110 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane WalkB2, route R; integrator ReallocPrimary).
    rule 24: no function proved here (the call-journal step of a re-hiding call, at the cf instance).
    POST_J_cf at fuzz_reply image A: call_effect_journal_rh_cf, the re-hide twin of Reusable/YGcallx.v's
@@ -10,7 +11,7 @@
    - the world: wle_in segs (dead_shadow_new lyc Sc S2) W W2, so the hidden set grows only inside the call's dead set;
    - the frame: view equality off the owned sets, the call's scratch, Eb AND the dead set.
    Its journal is at the world relation R := wle' segs RZ_cf (YA0nH.v), the re-hide zone: the world conjunct by
-   wle_in_mono and dead_shadow_new_RZ (lib/A/YGcfRehidePost.v:199); each of the five frame clauses is
+   wle_in_mono and dead_shadow_new_RZ (lib/A/YGcfRehidePost.v:200); each of the five frame clauses is
    call_effect_journal_xw's, its extra `~ dead_shadow_new lyc Sc S2 a` given by L2 (lib/A/AjxRhOff.v
    ajournal_x_of_rh_off) with the journal started at the call state. So the premise ARcf at the call state is the only
    one call_effect_journal_xw does not take. Statement agreed with CfR (2026-10-30). The lib/B twin is

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer: its value rz for the pnscan and layout nodes and for the initial checker state init_acs_of). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,6 +27,7 @@ Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 
 Inductive snode : Type :=
 | YMunmap
@@ -106,8 +108,8 @@ match x with
 | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
 | XMemIsZero => summary_miz A nx0 cs
 | XEnvScan => node_envscan A cs
-| XPnScan => node_pnscan A nx0 cs
-| XLayout => node_layout cs args
+| XPnScan => node_pnscan A nx0 rz cs
+| XLayout => node_layout rz cs args
 | XIStrncpy => summary_istrncpy A nx0 cs
 | XPopFree => summary_popfree A nx0 cs args
 | XSniff => None
@@ -125,7 +127,7 @@ Variable bfuel : nat.
 
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
 match css with
-| [] => CErr 3 k (init_acs_of A)
+| [] => CErr 3 k (init_acs_of rz A)
 | cs0 :: rest =>
 match chk cs0 k with
 | COk s0 =>
@@ -373,7 +375,7 @@ Definition cres2 : Type := (cres * list (nat * acs))%type.
 
 Definition collect_all (col : acs -> plan -> cres2) (k : plan) (css : list acs) : cres2 :=
 match css with
-| [] => (CErr 3 k (init_acs_of A), [])
+| [] => (CErr 3 k (init_acs_of rz A), [])
 | cs0 :: rest =>
 let r0 := col cs0 k in
 match fst r0 with

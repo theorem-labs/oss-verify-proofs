@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F12.v -- GLUE for stage seg_F12 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v (at head lib/A/ACtl.v:778-779) (an earlier version, blob a3c6b7b3501, not in this delivery)).  Written by a Theorem Labs lane; single writer of this file.
    rule 24: no function proved (stage glue of a walk).
@@ -19,23 +20,23 @@
 
    PROVENANCE
    - Brief: <lane notes> glueF12-brief.md (a working note, not in this delivery) (a Theorem Labs lane, 2026-10-29).  Pattern:
-     glue-pattern.md sections 1-8 (a working note, not in this delivery).  Template: a Theorem Labs lane's glue_seg_F26 (lib/A/ACtlG/F26.v at 3a0d3ca9bdf).
-   - The runs lifted: this lane's lib/A/Prog/Seg/F12F.v (record a working branch 90a63b68e4f, blob
+     glue-pattern.md sections 1-8 (a working note, not in this delivery).  Template: a Theorem Labs lane's glue_seg_F26 (lib/A/ACtlG/F26.v).
+   - The runs lifted: this lane's lib/A/Prog/Seg/F12F.v (record a working branch, blob
      9c88764ecd4, taken by path): F12F.f12_run_F_on (route (C): the run 0x820fc -> 0x82138, Seg/F12.v:1093-1242, under a
      footprint, premise shadow_rw_on (F12F.f12_run_shadow_R fr), post forall P) and F12F.f12_entry2_F (0x820f8 ->
      0x820fc, register only).  f12_run_F_on's callee premise asan_memcpy_contract_F_on is discharged by a Theorem Labs lane's
-     proved closed theorem A.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on (a working branch 83ab88c3325,
+     proved closed theorem A.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on (a working branch,
      asan_memcpy_cF_on.v 95a5333de98 / asan_memcpyF_on.v 7fa6770491b, by path).
    - The order of the steps follows ctrl's own proof of the same segment, Seg/F12.v f12_run (:933-1627, its exit cut
      rebuilt at :1223-1626) and f12_entry2 (:1645-1692).
-   - COPIED (allowed by the brief): from a Theorem Labs lane's F26.v (written on a working branch 3a0d3ca9bdf), b7g_frame_app (at head lib/A/ACtlG/F26.v:474-489) as
+   - COPIED (allowed by the brief): from a Theorem Labs lane's F26.v (written on a working branch), b7g_frame_app (at head lib/A/ACtlG/F26.v:475-490) as
      g12_frame_app, statement and proof unchanged except the module spelling; the spill transport g12_sp is
-     b7g_spill_keep (at head lib/A/ACtlG/F26.v:388-410) with the write set's kept range given as a premise instead of disjoint_from.  From
+     b7g_spill_keep (at head lib/A/ACtlG/F26.v:389-411) with the write set's kept range given as a premise instead of disjoint_from.  From
      lib/A/Prog/Seg/F24.v on this base, b7_segs_below / b7_seg_lt / b7_find_none as g12_segs_below / g12_seg_lt /
      g12_find_none (top IMG_HI = 6283264 instead of AC.GT, the same number), because F24.v is not otherwise in this
      closure.  The earlier copy of F26's b7g_frame_GT (g12_frame_GT) is deleted: the frame bound is now a citation
      of the base's A.ProgWorld.ctl_frame_above_img_stmt through its proof A.ProgWorld_Fs.ctl_frame_above_img
-     (premise-free since fec8db0a380, ProgWorld.v (at head lib/A/ProgWorld.v:1248-1252) (an earlier version, blob ab716e7a0e0, not in this delivery)), at cid := 6 (ACtlCut.own6 cx =
+     (premise-free, ProgWorld.v (at head lib/A/ProgWorld.v:1248-1252) (an earlier version, blob ab716e7a0e0, not in this delivery)), at cid := 6 (ACtlCut.own6 cx =
      [(6, c_fpos cx)], ACtlCut.v (at head lib/A/ACtlCut.v:188)).
 
    THE PROOF, step by step (glue-pattern.md section 3, G1-G5)
@@ -94,7 +95,7 @@
    copies of YK11 / YK1b / YM05 / YO09 are named only through the alias modules K11c / K11u / K1bc / M05c (full
    paths) or by full path; YI04 / YI16 / YP09 are not named.  No statement names a frame-route identifier.
 
-   BUILD STATE: see the commit message (a working branch 1502cba0417).  No Axiom, no Parameter, no Admitted, no admit. *)
+   BUILD STATE: see the commit message (a working branch).  No Axiom, no Parameter, no Admitted, no admit. *)
 
 From Coq Require Import ZArith List Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -138,7 +139,7 @@ Local Notation segs := A.AB1v.tfibsegs.
 (* ---------------------------------------------------------------------------------------------------------
    0. Closed helpers. *)
 
-(* COPIED from a Theorem Labs lane's F26.v (at head lib/A/ACtlG/F26.v:474-489; written on a working branch 3a0d3ca9bdf) (b7g_frame_app): a byte of an owned frame is app memory. *)
+(* COPIED from a Theorem Labs lane's F26.v (at head lib/A/ACtlG/F26.v:475-490; written on a working branch) (b7g_frame_app): a byte of an owned frame is app memory. *)
 Lemma g12_frame_app : forall {fx : K11c.FPState} {rc : M05c.RunCeil}
     (B : Reusable.YG0f.asyms) ly S (W : Reusable.YA0n.world segs) mem md cid pos a,
   Reusable.YG0d.AR_laws segs B -> Reusable.YG0n.AR segs B ly S W mem md ->
@@ -299,7 +300,7 @@ Proof.
   rewrite LMem.length_le8. exact HW.
 Qed.
 
-(* A spill survives a run that keeps s1 and misses the spill word (F26.v:376-398 b7g_spill_keep, kept range as a
+(* A spill survives a run that keeps s1 and misses the spill word (F26.v:377-399 b7g_spill_keep, kept range as a
    premise). *)
 Lemma g12_sp : forall (W : list LFr.ivl) (m m' : word -> option byte) (regs regs' : bvmap 5 word) (Aa off v : Z),
   K11c.getr regs 9 = Z_to_bv 64 Aa -> 0 <= Aa -> Aa + 416 <= 2 ^ 64 ->

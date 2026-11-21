@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstRcSec.v (commit 67deba317dfb, blob 2cb0dbfde496) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstRcSec.v (blob 2cb0dbfde496) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From Stdlib Require Import Sorting.Permutation.
@@ -1779,7 +1780,8 @@ Lemma xs_keep : forall md', amwf md -> xs_mapped_cf ly X md ->
 m_vmmaps md' = m_vmmaps (YK0v.munmap_model (w64 MAP) (w64 LEN) md) -> xs_mapped_cf ly rsX2 md'.
 Proof.
 intros md' MW Hm Ev. apply (YGcfXsMapped.xs_mapped_cf_frame ly X md ly rsX2 md' [(MAP, LEN)] Hm xs_cf_X2).
-- intros q Hq HD. rewrite Ev. exact (YGcfXsMapped.mkeep_munmap MAP LEN (w64 LEN) md q Hq HD).
+- intros q Hq HD. rewrite Ev. pose proof MR as (_ & LED & _). pose proof KFACTS as (_ & _ & _ & _ & GI & _).
+  exact (YGcfXsMapped.mkeep_munmap MAP LEN (w64 LEN) md MW (alc_sec _ _ _ _ LED _ GI) q Hq HD).
 - apply Forall_forall. intros e He. constructor; [|constructor]. cbn [fst].
   pose proof (proj1 (Forall_forall _ _) (amr_xs_placed _ _ _ _ _ rM) e He) as (P1 & P2 & P3 & P4).
   pose proof KFACTS as (_ & _ & _ & _ & GI & _).

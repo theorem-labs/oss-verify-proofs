@@ -1,6 +1,7 @@
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05 YM00 YM01 YO0i PlaceCap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
@@ -108,22 +109,71 @@ intros ivs nZ HnZ Hfit.
 apply (gap_sweep nZ ivs HnZ (length ivs) ivs page_size); [lia | reflexivity | lia | | intros p Hp; left; exact Hp].
 unfold page_size in *. nia.
 Qed.
+(* A free gap at or above lo: gap_sweep over ivs with the pseudo-entry [0, lo) prepended.  That
+   entry ends at lo, so the sweep covers it by its start and it costs no slot and no bytes; a gap
+   missing it starts at lo or later. *)
+Lemma region_free_exists_from {rc : RunCeil} : forall (ivs : list (word * word)) (nZ lo : Z),
+0 < nZ -> lo mod page_size = 0 -> page_size <= lo ->
+lo + Z.of_nat (length ivs) * (nZ + page_size) + ivs_bytes ivs + nZ <= alloc_ceiling ->
+exists a : word,
+bv_unsigned a mod page_size = 0 /\ lo <= bv_unsigned a /\
+bv_unsigned a + nZ <= alloc_ceiling /\
+region_free ivs a (Z_to_bv 64 nZ) = true.
+Proof.
+intros ivs nZ lo HnZ Hal Hlo Hfit.
+pose proof alloc_ceiling_lt as Hc. pose proof (ivs_bytes_nonneg ivs) as Hb.
+assert (Hm : 0 <= Z.of_nat (length ivs) * (nZ + page_size)) by (unfold page_size; nia).
+assert (Ulo : bv_unsigned (Z_to_bv 64 lo) = lo) by (apply Z_to_bv64_small; unfold page_size in *; lia).
+destruct (gap_sweep nZ ((Z_to_bv 64 0, Z_to_bv 64 lo) :: ivs) HnZ (length ivs) ivs lo (Nat.le_refl _) Hal Hlo Hfit)
+  as (a & A1 & A2 & A3 & A4).
+{ intros p [<- | Hp]; [right | left; exact Hp]. unfold gap_end. cbn [fst snd]. rewrite Ulo.
+  change (bv_unsigned (Z_to_bv 64 0)) with 0. lia. }
+cbn [region_free] in A4. apply andb_prop in A4 as [Hov A4]. apply negb_true_iff in Hov.
+exists a. split; [exact A1|]. split; [|split; [exact A3 | exact A4]].
+unfold iv_overlap in Hov. rewrite Ulo in Hov. change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hov.
+pose proof (u64_bounds (Z_to_bv 64 nZ)) as Un.
+apply andb_false_iff in Hov as [Hov|Hov]; apply Z.ltb_ge in Hov; lia.
+Qed.
+(* The slot budget (PlaceCap.slot_cap) leaves room for a gap in Linux's window [MMAP_FLOOR, CEIL_MIN). *)
 Corollary region_free_exists_cap {rc : RunCeil} : forall (ivs : list (word * word)) (R nZ : Z),
 0 < nZ <= R ->
 Z.of_nat (length ivs) <= slot_cap R ->
 ivs_bytes ivs <= SLOT_BYTES ->
 exists a : word,
-bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\
+bv_unsigned a mod page_size = 0 /\ MMAP_FLOOR <= bv_unsigned a /\
 bv_unsigned a + nZ <= alloc_ceiling /\
 region_free ivs a (Z_to_bv 64 nZ) = true.
 Proof.
-intros ivs R nZ HnZ Hc Hb. apply region_free_exists_gap; [lia|].
+intros ivs R nZ HnZ Hc Hb. pose proof MMAP_FLOOR_eq as HF.
+apply region_free_exists_from; [lia | rewrite HF; reflexivity | rewrite HF; unfold page_size; lia |].
 pose proof alloc_ceiling_val as Hcv. pose proof (slot_round_ge R) as HR.
 unfold slot_cap in Hc.
 assert (Hd : 0 < page_round R + PGSZ) by (unfold PGSZ; lia).
-pose proof (Z.mul_div_le (CEIL_MIN - SLOT_BYTES) (page_round R + PGSZ) Hd) as M.
-set (d := page_round R + PGSZ) in *. set (q := (CEIL_MIN - SLOT_BYTES) / d) in *.
+pose proof (Z.mul_div_le (CEIL_MIN - MMAP_FLOOR - SLOT_BYTES) (page_round R + PGSZ) Hd) as M.
+set (d := page_round R + PGSZ) in *. set (q := (CEIL_MIN - MMAP_FLOOR - SLOT_BYTES) / d) in *.
 assert (P : (Z.of_nat (length ivs) + 1) * (nZ + page_size) <= q * d).
 { apply Z.mul_le_mono_nonneg; [lia | lia | unfold page_size; lia | unfold d, PGSZ, page_size; lia]. }
-clearbody q. clearbody d. lia.
+clearbody q. clearbody d. unfold page_size in *. nia.
+Qed.
+(* Linux places the request: the gap above makes linux_place_exists's bottom-up window non-empty,
+   and the address Linux picks is the one linux_place_is accepts. *)
+Lemma linux_place_of_room {rc : RunCeil} : forall h thp hint R nZ,
+0 < nZ <= R -> nZ mod page_size = 0 -> alloc_ceiling <= alloc_top h ->
+Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= slot_cap R ->
+ivs_bytes (vm_reserved h ++ vm_maps h) <= SLOT_BYTES ->
+exists a : word, LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is h thp hint nZ a = true.
+Proof.
+intros h thp hint R nZ HnZ Hnal Htop Hc Hb.
+destruct (region_free_exists_cap _ R nZ HnZ Hc Hb) as (g & G1 & G2 & G3 & G4).
+unfold MMAP_FLOOR in G2.
+destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_exists h thp hint nZ ltac:(lia) Hnal)
+  as [x Hx].
+{ exists (bv_unsigned g). right. split; [exact G1|]. split; [lia|]. split; [lia|].
+  rewrite Z_to_bv_bv_unsigned. exact G4. }
+destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_admissible h thp hint nZ x ltac:(lia) Hnal Hx)
+  as (_ & Hx0 & Hxt & _).
+pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.alloc_top_lt_two_pow_64 h) as H64.
+exists (Z_to_bv 64 x).
+apply (proj2 (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_iff h thp hint nZ (Z_to_bv 64 x) ltac:(lia) Hnal)).
+rewrite Z_to_bv64_small; [exact Hx|]. unfold two_pow_64 in H64. lia.
 Qed.

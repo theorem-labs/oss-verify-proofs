@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the node-soundness hypothesis and impl take the node post-state npost, and impl_sreach uses the robustness field of node_sound). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -74,11 +75,14 @@ Variable nstep : node -> Model -> ITree.resp -> Model -> list event -> Prop.
 Variable nexit : node -> Model -> word -> Model -> Prop.
 Variable minv : Model -> Prop.
 Variable nsafe : node -> Model -> Prop.
-Hypothesis NS : ITree.node_sound node segs at_node nstep nexit minv nsafe.
+(* [ITree.npost]: where a node's step leaves the machine.  [fun _ => ITree.nret] for every
+   trap node; [Spec/VdNode] is the one that is not. *)
+Variable npost : node -> machine_state -> ITree.resp -> machine_state.
+Hypothesis NS : ITree.node_sound node segs at_node nstep nexit minv nsafe npost.
 Hypothesis minv_lazy : forall mo, minv mo -> m_vm_lazy mo = [].
 
 #[local] Notation "'itree'" := (ITree.itree node) (at level 0).
-#[local] Notation "'impl'" := (ITree.impl segs at_node) (at level 0).
+#[local] Notation "'impl'" := (ITree.impl segs at_node npost) (at level 0).
 #[local] Notation "'tsafe'" := (ITree.tsafe nstep nsafe) (at level 0).
 #[local] Notation "'tpath'" := (ITree.tpath nstep) (at level 0).
 
@@ -136,6 +140,14 @@ Theorem impl_sreach : forall {R} (t : itree R) (Q : R -> machine_state -> Prop) 
                  /\ m_halted mo' = None /\ minv mo' /\ tpath t mo [] r mo')
     (mkCfg ms mo).
 Proof.
+  (* Name the six fields ONCE rather than writing [ITree.ns_rob _ _ _ _ _ _ _ NS] at each
+     use.  That spelling counted the Section's generalized arguments by hand, so adding
+     [npost] silently shifted [NS] into its position -- a farm round:
+     "The term NS has type ITree.node_sound ... while it is expected to have type
+     ?node -> machine_state -> ITree.resp -> machine_state".  Destructuring is count-free
+     and cannot break again when the Section gains another variable. *)
+  pose proof NS as NSall.
+  destruct NSall as [NSblocked NScomplete NSsound NSexit NSprogress NSrob].
   intros R t. induction t as [r | n k IH]; intros Q ms mo Himpl Hh Hminv Hsafe Hsil.
   - (* [comment removed for export] *)
     cbn in Himpl.
@@ -147,28 +159,29 @@ Proof.
     apply (cj_evt_sreach_k _ ms mo _ Hh (minv_lazy mo Hminv) Himpl).
     intros ms1 [Hat Hk].
     apply sr_step.
+    + exact (NSrob n ms1 mo Hat Hh Hminv Hnsafe).
     + (* [comment removed for export] *)
-      destruct (ITree.ns_progress _ _ _ _ _ _ _ NS n ms1 mo Hat Hh Hminv Hnsafe)
+      destruct (NSprogress n ms1 mo Hat Hh Hminv Hnsafe)
         as [(rsp & mo' & evs & Hst) | (code & mo' & Hex)].
-      * destruct (ITree.ns_sound _ _ _ _ _ _ _ NS n ms1 mo rsp mo' evs Hat Hh Hminv Hnsafe Hst) as (_ & _ & Hss).
+      * destruct (NSsound n ms1 mo rsp mo' evs Hat Hh Hminv Hnsafe Hst) as (_ & _ & Hss).
         destruct (Hsil rsp mo' evs Hst) as [-> _].
         eexists. exact Hss.
       * exfalso. exact (Hnoexit code mo' Hex).
     + (* [comment removed for export] *)
       intros evs X Hss.
-      destruct (ITree.ns_complete _ _ _ _ _ _ _ NS n ms1 mo evs X Hat Hh Hminv Hnsafe Hss)
+      destruct (NScomplete n ms1 mo evs X Hat Hh Hminv Hnsafe Hss)
         as [(rsp & mo' & -> & Hst) | (code & mo' & -> & Hex & _)].
       * destruct (Hsil rsp mo' evs Hst) as [-> _]. split; [reflexivity | eexists; reflexivity].
       * exfalso. exact (Hnoexit code mo' Hex).
     + (* [comment removed for export] *)
       intros evs c' Hss.
-      destruct (ITree.ns_complete _ _ _ _ _ _ _ NS n ms1 mo evs (SNext c') Hat Hh Hminv Hnsafe Hss)
+      destruct (NScomplete n ms1 mo evs (SNext c') Hat Hh Hminv Hnsafe Hss)
         as [(rsp & mo' & E & Hst) | (code & mo' & _ & Hex & _)]; [| exfalso; exact (Hnoexit code mo' Hex)].
       injection E as ->.
-      destruct (ITree.ns_sound _ _ _ _ _ _ _ NS n ms1 mo rsp mo' evs Hat Hh Hminv Hnsafe Hst) as (Hh' & Hminv' & _).
+      destruct (NSsound n ms1 mo rsp mo' evs Hat Hh Hminv Hnsafe Hst) as (Hh' & Hminv' & _).
       destruct (Hsil rsp mo' evs Hst) as [-> Hsil'].
       eapply sreach_mono.
-      * apply (IH rsp Q (ITree.nret ms1 rsp) mo' (Hk rsp) Hh' Hminv' (Hksafe rsp mo' [] Hst) Hsil').
+      * apply (IH rsp Q (npost n ms1 rsp) mo' (Hk rsp) Hh' Hminv' (Hksafe rsp mo' [] Hst) Hsil').
       * intros c (r & mo'' & HQ & Hmo & Hh'' & Hminv'' & Hp).
         exists r, mo''. repeat split; try assumption.
         cbn. exists rsp, mo', [], []. repeat split; assumption.

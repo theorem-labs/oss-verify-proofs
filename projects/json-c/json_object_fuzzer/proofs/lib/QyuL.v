@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise on the mmap outcomes, discharged for the NULL hint by `QwNp.place_declined_b_null`; the hint in the refusal tests `mmap_reserve_refusable` and `mmap_grant_refusable`; `RomBase.sys_rob` at the mmap nodes, `memfree_222`; KL_mmap_new takes the kernel build and carries KL's ledger and vDSO facts, the grant missing every reserved entry). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From stdpp Require gmap.
@@ -60,14 +61,14 @@ KL L pbrk mo -> brk_quiet L -> 0 < len < LEN_MAX ->
 let h := m_vmmaps mo in let n := mmap_len len in
 mmap_addr_ok len [] a = true ->
 region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 a) (Z_to_bv 64 n) = true ->
-m_halted mo' = None -> m_vm_lazy mo' = [] ->
+m_halted mo' = None -> m_vm_lazy mo' = [] -> m_kernel mo' = m_kernel mo ->
 m_vmmaps mo' = mkVmMapsFull (vm_reserved h) ((Z_to_bv 64 a, Z_to_bv 64 n) :: vm_maps h)
 (if isnone then (Z_to_bv 64 a, Z_to_bv 64 n) :: vm_noaccess h else vm_noaccess h)
 (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h) ->
 KL (if isnone then set_metas ((a, len, 0) :: ld_metas L) L else set_groups ((a, len) :: ld_groups L) L) pbrk mo'
 /\ mmap_answer_ok (lranges L) len a = true /\ is_err a = false.
 Proof.
-intros L pbrk mo mo' a len isnone HK Hq Hlen h n Hok Hrf Hh' Hl' Evm.
+intros L pbrk mo mo' a len isnone HK Hq Hlen h n Hok Hrf Hh' Hl' Ek Evm.
 apply mmap_addr_ok_true in Hok as [(A1 & A2 & A3) _]. rewrite page_size_eq in A1. rewrite alloc_ceiling_State in A3. fold n in A3.
 pose proof (mmap_len_ge len ltac:(lia)) as Hn1. pose proof (mmap_len_pos_pg len ltac:(lia)) as Hn2. fold n in Hn1, Hn2.
 assert (Ua : bv_unsigned (Z_to_bv 64 a) = a) by (apply unsigned_lit; lia).
@@ -101,6 +102,12 @@ assert (Hnotin : ~ In a (map fst (ld_groups L) ++ map (fun m => fst (fst m)) (ld
 pose proof (WB a l0 (or_introl Hin)) as (B1 & B2 & _). pose proof (Dgm a l0 (or_introl Hin)). lia.
 - apply in_map_iff in Hin as ([[b0 l0] k] & E & Hin). cbn in E. subst b0.
 pose proof (WB a l0 (or_intror (ex_intro _ k Hin))) as (B1 & B2 & _). pose proof (Dgm a l0 (or_intror (ex_intro _ k Hin))). lia. }
+(* LPS 727298f3: the ledger and vDSO facts move unchanged; the grant misses every reserved entry *)
+destruct (kl_vdso_move mo mo' (ld_resv L) Ek ltac:(rewrite Evm; reflexivity) ltac:(rewrite Evm; reflexivity)
+ltac:(rewrite Evm; reflexivity) ltac:(rewrite Evm; reflexivity)
+(kl_resv _ _ _ HK) (kl_resv_top _ _ _ HK) (kl_vdso_in _ _ _ HK) (kl_vdso_above _ _ _ HK)) as (Hresv & Hrtop & Hvdi & Hvda).
+assert (Hvdd : forall r, In r (vm_reserved (m_vmmaps mo')) -> forall e, In e (vm_maps (m_vmmaps mo')) -> edisj e r).
+{ rewrite Evm. cbn [vm_reserved vm_maps]. exact (kl_vdso_disj_cons _ _ _ _ Hrf (kl_vdso_disj _ _ _ HK)). }
 pose proof HK as HK0. kl_open HK.
 assert (Hph' : forall L', ld_brk L' = ld_brk L -> ld_brkreg L' = ld_brkreg L ->
 match ld_brk L' with
@@ -117,7 +124,7 @@ match ld_brk L' with
 end).
 { intros L' E1 E2. rewrite E1, E2, Evm. cbn [vm_brk vm_start_brk]. unfold brk_quiet in Hq.
 destruct (ld_brk L); try contradiction; auto. }
-destruct isnone; constructor;
+destruct isnone; constructor; try exact Hresv; try exact Hrtop; try exact Hvdi; try exact Hvda; try exact Hvdd;
 first [ apply (Hph' (set_metas _ L)); reflexivity
 | apply (Hph' (set_groups _ L)); reflexivity
 | rewrite ?Evm; cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk set_metas set_groups ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live]; auto ].
@@ -184,7 +191,7 @@ destruct Hprot as [-> | ->].
 assert (Hargs : mmap_noaccess_args_ok ms1).
 { unfold mmap_noaccess_args_ok. rewrite ms_gpr_areg2, ms_gpr_areg3, ms_gpr_areg4, ms_gpr_areg5. auto 10. }
 
-pose (IDX := ({e : Z | In e mmap_errnos /\ mmap_reserve_refusable md (mmap_len len) = true}
+pose (IDX := ({e : Z | In e mmap_errnos /\ mmap_reserve_refusable (ms_gpr ms1 0) md (mmap_len len) = true}
 + {a : word | grant_ok_na (ms_gpr ms1 0) md a (mmap_len len) = true})%type).
 pose (effs := fun i : IDX =>
 match i with
@@ -193,16 +200,17 @@ match i with
 pose (ms' := fun i : IDX =>
 match i with inl _ => md | inr (exist _ a _) => noaccess_model a (Z_to_bv 64 (mmap_len len)) md end).
 assert (Hi0 : exists i0 : IDX, True).
-{ destruct (Bool.bool_dec (mmap_reserve_refusable md (mmap_len len)) true) as [HR|HR]; [| apply Bool.not_true_is_false in HR].
+{ destruct (Bool.bool_dec (mmap_reserve_refusable (ms_gpr ms1 0) md (mmap_len len)) true) as [HR|HR]; [| apply Bool.not_true_is_false in HR].
 - exists (inl (exist _ ENOMEM (conj ENOMEM_in_mmap_errnos HR))). exact I.
-- destruct (not_refusable_grant_ok_na (ms_gpr ms1 0) md (mmap_len len) HR) as [a Ha]. exists (inr (exist _ a Ha)). exact I. }
+- destruct (not_refusable_grant_ok_na (ms_gpr ms1 0) md (mmap_len len) (ltac:(lia)) (ltac:(unfold mmap_len, page_round_up_Z, page_size; apply Z_mod_mult)) HR) as [a Ha]. exists (inr (exist _ a Ha)). exact I. }
 destruct Hi0 as [i0 _].
 apply (EdEvNode.ncl_ekept segs J ms1 md (Z_to_bv 64 222) _ effs ms' i0 HJ Hh Hsvc (EdEvArm.Ms.mmap_noaccess_outcome_live segs ms1 (Z_to_bv 64 222) md eq_refl Hargs Hh)).
-+ intros o. rewrite (EdEvArm.Ms.mmap_noaccess_outcome_ekept segs ms1 (Z_to_bv 64 222) md eq_refl Hargs o). unfold mmap_len in IDX, effs, ms'. rewrite U1. split.
++ intros o. rewrite (EdEvArm.Ms.mmap_noaccess_outcome_ekept segs ms1 (Z_to_bv 64 222) md eq_refl Hargs ltac:(rewrite H0; apply QwNp.place_declined_b_null) o). unfold mmap_len in IDX, effs, ms'. rewrite U1. split.
 * intros [(HR & e & He & ->) | (a & Ha & ->)]; [exists (inl (exist _ e (conj He HR)))| exists (inr (exist _ a Ha))]; reflexivity.
 * intros [[[e [He HR]]|[a Ha]] ->]; [left; split; [exact HR| exists e; auto]| right; exists a; auto].
 + intros [[e [He HR]]|[a Ha]]; cbn [ms']; [exact Hh| rewrite <- Hh; reflexivity].
 + intros [[e [He HR]]|[a Ha]]; cbn [ms']; [exact Hlazy| rewrite <- Hlazy; reflexivity].
++ change (bv_unsigned (Z_to_bv 64 222)) with 222%Z. exact Cfg.RomBase.memfree_222.
 + intros [[e [He HR]]|[a Ha]]; cbn [effs ms'].
 *
 pose proof (mmap_errno_range e He) as Her. assert (E12 : e = 12) by (destruct He as [<-|[]]; reflexivity).
@@ -215,7 +223,8 @@ cbn -[errno_of neg_errno errno_ret]. rewrite errno_of_errno_ret by lia. rewrite 
 *
 set (n := mmap_len len) in *.
 unfold grant_ok_na in Ha.
-apply andb_prop in Ha as [Ha Hrf]. apply andb_prop in Ha as [Ha G3]. apply andb_prop in Ha as [G1 G2].
+apply andb_prop in Ha as [Ha _]. apply andb_prop in Ha as [Ha Hrf]. apply andb_prop in Ha as [Ha G3].
+apply andb_prop in Ha as [Ha G2]. apply andb_prop in Ha as [_ G1].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. rewrite page_size_eq in G1. rewrite (kl_ceil _ _ _ HK) in G3.
 pose proof (bv_unsigned_in_range 64 a) as Ra. unfold bv_modulus in Ra.
 assert (Ea : a = Z_to_bv 64 (bv_unsigned a)) by (symmetry; apply Z_to_bv_bv_unsigned).
@@ -224,7 +233,7 @@ assert (Hok : mmap_addr_ok len [] (bv_unsigned a) = true).
 rewrite (proj2 (Z.leb_le _ _) G3). reflexivity. }
 rewrite Ea in Hrf.
 destruct (KL_mmap_new L pbrk md (noaccess_model a (Z_to_bv 64 n) md) (bv_unsigned a) len true HK Hq Hlen Hok Hrf
-ltac:(rewrite <- Hh; reflexivity) ltac:(rewrite <- Hlazy; reflexivity)
+ltac:(rewrite <- Hh; reflexivity) ltac:(rewrite <- Hlazy; reflexivity) ltac:(reflexivity)
 ltac:(rewrite <- Ea; reflexivity)) as (HK' & Hans & Herr).
 apply (HC (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) (bv_unsigned a)).
 -- cbn [ev_dec]. rewrite Hfix. change (PROT_NONE =? 0) with true. cbv iota.
@@ -237,7 +246,7 @@ assert (Hargs : mmap_args_ok ms1).
 { unfold mmap_args_ok. rewrite ms_gpr_areg2, ms_gpr_areg3, ms_gpr_areg4, ms_gpr_areg5. auto 10. }
 
 assert (H3 : ms_gpr ms1 3 = Z_to_bv 64 34) by (rewrite ms_gpr_areg3; exact Ha3).
-pose (IDX := ({e : Z | In e mmap_errnos /\ mmap_grant_refusable (ms_gpr ms1 3) md (mmap_len len) = true}
+pose (IDX := ({e : Z | In e mmap_errnos /\ mmap_grant_refusable (ms_gpr ms1 0) (ms_gpr ms1 3) md (mmap_len len) = true}
 + {a : word | grant_ok (ms_gpr ms1 0) md a (mmap_len len) = true})%type).
 pose (effs := fun i : IDX =>
 match i with
@@ -246,16 +255,17 @@ match i with
 pose (ms' := fun i : IDX =>
 match i with inl _ => md | inr (exist _ a _) => mmap_model a (Z_to_bv 64 (mmap_len len)) md end).
 assert (Hi0 : exists i0 : IDX, True).
-{ destruct (Bool.bool_dec (mmap_grant_refusable (ms_gpr ms1 3) md (mmap_len len)) true) as [HR|HR]; [| apply Bool.not_true_is_false in HR].
+{ destruct (Bool.bool_dec (mmap_grant_refusable (ms_gpr ms1 0) (ms_gpr ms1 3) md (mmap_len len)) true) as [HR|HR]; [| apply Bool.not_true_is_false in HR].
 - exists (inl (exist _ ENOMEM (conj ENOMEM_in_mmap_errnos HR))). exact I.
-- rewrite H3 in HR. destruct (not_refusable_grant_ok (ms_gpr ms1 0) md (mmap_len len) HR) as [a Ha]. exists (inr (exist _ a Ha)). exact I. }
+- rewrite H3 in HR. destruct (not_refusable_grant_ok (ms_gpr ms1 0) md (mmap_len len) (ltac:(lia)) (ltac:(unfold mmap_len, page_round_up_Z, page_size; apply Z_mod_mult)) HR) as [a Ha]. exists (inr (exist _ a Ha)). exact I. }
 destruct Hi0 as [i0 _].
 apply (EdEvNode.ncl_ekept segs J ms1 md (Z_to_bv 64 222) _ effs ms' i0 HJ Hh Hsvc (EdEvArm.Mm.mmap_outcome_live segs ms1 (Z_to_bv 64 222) md eq_refl Hargs Hh)).
-+ intros o. rewrite (EdEvArm.Mm.mmap_outcome_ekept segs ms1 (Z_to_bv 64 222) md o eq_refl Hargs). rewrite Hpr. unfold mmap_len in IDX, effs, ms' |- *. rewrite U1. split.
++ intros o. rewrite (EdEvArm.Mm.mmap_outcome_ekept segs ms1 (Z_to_bv 64 222) md o eq_refl Hargs ltac:(rewrite H0; apply QwNp.place_declined_b_null)). rewrite Hpr. unfold mmap_len in IDX, effs, ms' |- *. rewrite U1. split.
 * intros [(HR & e & He & ->) | (a & Ha & ->)]; [exists (inl (exist _ e (conj He HR)))| exists (inr (exist _ a Ha))]; reflexivity.
 * intros [[[e [He HR]]|[a Ha]] ->]; [left; split; [exact HR| exists e; auto]| right; exists a; auto].
 + intros [[e [He HR]]|[a Ha]]; cbn [ms']; [exact Hh| rewrite <- Hh; reflexivity].
 + intros [[e [He HR]]|[a Ha]]; cbn [ms']; [exact Hlazy| rewrite <- Hlazy; reflexivity].
++ change (bv_unsigned (Z_to_bv 64 222)) with 222%Z. exact Cfg.RomBase.memfree_222.
 + intros [[e [He HR]]|[a Ha]]; cbn [effs ms'].
 *
 pose proof (mmap_errno_range e He) as Her. assert (E12 : e = 12) by (destruct He as [<-|[]]; reflexivity).
@@ -268,7 +278,8 @@ cbn -[errno_of neg_errno errno_ret]. rewrite errno_of_errno_ret by lia. rewrite 
 *
 set (n := mmap_len len) in *.
 unfold grant_ok in Ha.
-apply andb_prop in Ha as [Ha _]. apply andb_prop in Ha as [Ha Hrf]. apply andb_prop in Ha as [Ha G3]. apply andb_prop in Ha as [G1 G2].
+apply andb_prop in Ha as [Ha _]. apply andb_prop in Ha as [Ha Hrf]. apply andb_prop in Ha as [Ha G3].
+apply andb_prop in Ha as [Ha G2]. apply andb_prop in Ha as [_ G1].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. rewrite page_size_eq in G1. rewrite (kl_ceil _ _ _ HK) in G3.
 pose proof (bv_unsigned_in_range 64 a) as Ra. unfold bv_modulus in Ra.
 assert (Ea : a = Z_to_bv 64 (bv_unsigned a)) by (symmetry; apply Z_to_bv_bv_unsigned).
@@ -277,7 +288,7 @@ assert (Hok : mmap_addr_ok len [] (bv_unsigned a) = true).
 rewrite (proj2 (Z.leb_le _ _) G3). reflexivity. }
 rewrite Ea in Hrf.
 destruct (KL_mmap_new L pbrk md (mmap_model a (Z_to_bv 64 n) md) (bv_unsigned a) len false HK Hq Hlen Hok Hrf
-ltac:(rewrite <- Hh; reflexivity) ltac:(rewrite <- Hlazy; reflexivity)
+ltac:(rewrite <- Hh; reflexivity) ltac:(rewrite <- Hlazy; reflexivity) ltac:(reflexivity)
 ltac:(rewrite <- Ea; reflexivity)) as (HK' & Hans & Herr).
 apply (HC (mkEffect a [] [(a, Z_to_bv 64 n)]) (bv_unsigned a)).
 -- cbn [ev_dec]. rewrite Hfix. change (PROT_RW =? 0) with false. cbv iota.

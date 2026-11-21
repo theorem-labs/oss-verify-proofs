@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -56,7 +57,7 @@ Definition splitinto_cps0A : Prop :=
   Z.of_nat (length (rt_live RT Σ)) + 4 <= LIVE_MAX -> 1 + vcost_pushes (length (poffs d)) 0 0 <= rt_credit RT Σ ->
   (length (rt_frames RT Σ) + 1 < FRAMES_MAX2)%nat ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + ATPA_SPLITINTO_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + ATPA_SPLITINTO_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc ATPA_SPLITINTO m)))
@@ -127,7 +128,7 @@ Proof using AF RTF SM1 SPLIT.
   assert (ARTW : forall (Σx : rts RT) mA mB W, ART RT Σx mA -> munch W mA mB -> wmono asegs mA mB -> rt_sp0 RT Σx = rt_sp0 RT Σ -> In (f, 1%nat) (rt_frames RT Σx) ->
             In (f0, kf0) (rt_frames RT Σx) ->
             (forall x, (lo <= x < USTACK_TOP) \/ (f <= x < f + 120) \/ (shad f <= x < shad f + 16) \/ (RV <= x < RV + 24) \/ outside W x) -> ART RT Σx mB).
-  { intros Σx mA mB W HA MU WM SPx INFx INF0x HW. apply (art_client_write RT AF Σx mA mB lo HA ltac:(rewrite SPx; exact LOW)); [| exact WM].
+  { intros Σx mA mB W HA MU WM SPx INFx INF0x HW. apply (art_client_write RT AF Σx mA mB lo HA ltac:(rewrite SPx; lia)); [| exact WM].
     intros a Ha. destruct (HW (bv_unsigned a)) as [X|[X|[X|[X|O]]]]; [exfalso; apply Ha| exfalso; apply Ha| exfalso; apply Ha| exfalso; apply Ha| apply MU; exact O].
     - left. exact X.
     - right; right; right; left. exists f, 1%nat. change (fs_size 1) with 128. split; [exact INFx| lia].

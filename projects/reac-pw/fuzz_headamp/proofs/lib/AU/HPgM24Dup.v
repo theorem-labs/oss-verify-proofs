@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95b for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v for
    reac-pw/fuzz_headamp image A: its block A (hd_c3 / hd_c3_of, hd_bounds, hd_A: the start facts, the bounds and
    the run from C3 through the __asan_memcpy call) and its helpers hd_getr_z, hd_reg_atom, hd_reg_is,
    hd_frame_nil, hd_frame_ro, hd_aview_some, renamed to the h2_ prefix and moved to headamp's addresses,
    registers, real-frame cells and cut lists; the call is taken through lib/A/HPgIntrin.v hd_memcpy_at in place
    of the donor's own hd_memcpy; the donor's blocks B and C (the parse and its exits) are not taken; the run from
    the call's return to C4 and the segment's post are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM02.v at 3a3b1c484a4 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM02.v for image B
    (fuzz_headamp.asan-ubsan): image B's modules, pcs (C3 0x82f00 .. C4 0x82f34, fourteen words), registers (pod
    to s9, cap to s4 from R+0x20, 1 - null to s7 from R+0x38, pp in s2, len in s5, 3 cap in s2 and 3 cap + 3 in s5
    at C4), real-frame cells and cut lists (headamp_B_L23 XPod, headamp_B_L45 XCap33); the first run's read-only
    region holds two chunks (R+0x20 and R+0x38); the memcpy step is lib/AU/HPgIntrinU.v hdu_memcpy_at; names
    h2_ -> h2b_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): the segment M02 of

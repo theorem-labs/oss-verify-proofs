@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-repacer/fuzz_wire's ASan build (image A) in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (commit 25e3d17bdb50); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-repacer/fuzz_wire's ASan build (image A) in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (commit theorem-labs/oss-verify-proofs@6b32741d849a); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ACej: the trace universe of fuzz_wire's start-up certificate, image A.
    Image: reac-repacer/fuzz_wire's fuzz_wire.asan (result/bin/fuzz_wire/fuzz_wire.asan of reac-repacer's pinned build),
    sha256 2f8f8697cd4f (the pin of harness.yaml); symbols from
    the unstripped twin result/unstripped/fuzz_wire/fuzz_wire.asan of the same build, sha256
    d2f662a22962, whose .text is byte-equal to the image's.
    CTX_<f> / TRACES_<f> and Tfib_universe below are machine-generated from that image by port_core 0e4e065eab9f's
-   gen_traces.py (tools/pg-reloc/0e4e065eab9f/gen_traces.py at commit 7f0e4b05267), sha256
+   gen_traces.py (tools/pg-reloc/0e4e065eab9f/gen_traces.py), sha256
    a78026af1ae206cc68df7256ad677ca595768d16ceedd89936dd82bd9ee7c80d, run as
      gen_traces.py bin/fuzz_wire/fuzz_wire.asan unstripped/fuzz_wire/fuzz_wire.asan
        --ipc malloc=0x52594 --ipc free=0x52434

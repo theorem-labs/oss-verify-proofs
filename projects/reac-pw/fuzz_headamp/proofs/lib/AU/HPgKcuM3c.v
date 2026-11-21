@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf8.v, with its module paths and module names changed; 86 of its 105 lines of code are new or changed and 64 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgKcA.v; 27 of its 112 lines of code are new or changed and 20 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address below is measured on the
    unstripped twin 1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, whose loaded sections are
@@ -28,8 +29,8 @@
      and lib/AU/HPgKcuNcmp.v; reac-pw/fuzz_pin lib/A/PPgWrap.v astrncmp_realizes, with awrap_str,
      awrap_post and libreac/fuzz_identity lib/A/Rt/WrapRo.v aro_unowned unfolded and beta-reduced).
    - STRCMP: the strcmp wrapper's contract at image B's 0x41c20, at every float state (lib/AU/HPgKcuP4.v and
-     lib/AU/HPgKcuScmp.v; libreac/fuzz_identity lib/Reusable/AStrcmpDef.v astrcmp_realizes at origin/ossv/recipes
-     2d2ff01bb6f, with str_meet and strcmp_res unfolded and beta-reduced).
+     lib/AU/HPgKcuScmp.v; libreac/fuzz_identity lib/Reusable/AStrcmpDef.v astrcmp_realizes,
+     with str_meet and strcmp_res unfolded and beta-reduced).
    segs_low (the image lies below the shadow map) is not a hypothesis here: lib/AU/HPgSteps.v img_segs_low proves
    it for rsegs. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.

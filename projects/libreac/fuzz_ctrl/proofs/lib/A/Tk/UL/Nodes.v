@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/simdjson/fuzz_minifyimpl/lib/Lib/Nodes.v, with its module paths changed; 46 of its 1008 lines of code are new or changed and 1028 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed read_cstr_aux_bytes_in, read_cstr_aux_toolong_bytes_in, cstr_len, cstr_access_len_aux_bytes_in, copy_iovecs_accesses_bytes_in, import_iovecs_bytes_in and 12 more; added iovec_entry_accesses_bytes_in). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -138,50 +139,68 @@ Qed.
 (* [comment removed for export] *)
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  a + Z.of_nat (length str) < TASK_SIZE ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
-  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [read_cstr_aux]. rewrite Hb. reflexivity.
-  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [read_cstr_aux]. rewrite Hb.
+  induction str as [|b str IH]; intros fuel mp a Hf Hnz Hlo H.
+  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. pose proof H as (Ha0 & _ & _).
+    apply bytes_in_cons in H as [Hb _]. cbn [length] in Hlo.
+    rewrite read_cstr_aux_accepted by (rewrite access_okb_one; apply Z.ltb_lt; unfold wa; unfold TASK_SIZE in *; rewrite unsigned_lit by lia; lia).
+    rewrite Hb. reflexivity.
+  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. pose proof H as (Ha0 & _ & _).
+    apply bytes_in_cons in H as [Hb H]. cbn [length] in Hlo.
+    rewrite read_cstr_aux_accepted by (rewrite access_okb_one; apply Z.ltb_lt; unfold wa; unfold TASK_SIZE in *; rewrite unsigned_lit by lia; lia).
+    rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | | unfold TASK_SIZE in *; lia | exact H].
     intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
   (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+  a + Z.of_nat fuel <= TASK_SIZE ->
   bytes_in mp a str ->
   read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
-  destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-  cbn [read_cstr_aux]. rewrite Hb.
+  induction fuel as [|fuel IH]; intros str mp a Hf Hnz Hlo H; [reflexivity|].
+  destruct str as [|b str]; [cbn in Hf; lia|]. pose proof H as (Ha0 & _ & _). apply bytes_in_cons in H as [Hb H].
+  rewrite read_cstr_aux_accepted by (rewrite access_okb_one; apply Z.ltb_lt; unfold wa; unfold TASK_SIZE in *; rewrite unsigned_lit by lia; lia).
+  rewrite Hb.
   assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | | unfold TASK_SIZE in *; lia | exact H].
   intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
 (* [comment removed for export] *)
 Definition cstr_len (path : list byte) : nat := Nat.min (S (length path)) path_max.
 
+(* 08b1429: cstr_access_len_aux tests access_okb per byte (recipes/read-cstr-accessok.md), so the
+   string must lie below TASK_SIZE, as read_cstr_aux_bytes_in above.  No callers in libreac. *)
 Lemma cstr_access_len_aux_bytes_in : forall str fuel mp a,
   ~ In (Z_to_bv 8 0) str ->
+  a + Z.of_nat (length str) < TASK_SIZE ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   cstr_access_len_aux mp (wa a) fuel = Nat.min (S (length str)) fuel.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hnz H.
-  - destruct fuel as [|fuel]; [reflexivity|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [cstr_access_len_aux]. rewrite Hb. reflexivity.
-  - destruct fuel as [|fuel]; [reflexivity|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [cstr_access_len_aux]. rewrite Hb.
+  induction str as [|b str IH]; intros fuel mp a Hnz Hlo H.
+  - destruct fuel as [|fuel]; [reflexivity|]. cbn [app] in H. pose proof H as (Ha0 & _ & _).
+    apply bytes_in_cons in H as [Hb _]. cbn [length] in Hlo.
+    cbn [cstr_access_len_aux].
+    replace (access_okb (wa a) 1) with true
+      by (symmetry; rewrite access_okb_one; apply Z.ltb_lt; unfold wa; unfold TASK_SIZE in *; rewrite unsigned_lit by lia; lia).
+    cbn [negb]. rewrite Hb. reflexivity.
+  - destruct fuel as [|fuel]; [reflexivity|]. cbn [app] in H. pose proof H as (Ha0 & _ & _).
+    apply bytes_in_cons in H as [Hb H]. cbn [length] in Hlo.
+    cbn [cstr_access_len_aux].
+    replace (access_okb (wa a) 1) with true
+      by (symmetry; rewrite access_okb_one; apply Z.ltb_lt; unfold wa; unfold TASK_SIZE in *; rewrite unsigned_lit by lia; lia).
+    cbn [negb]. rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [| |exact H].
+    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [| | lia | exact H].
     + cbn [length]. lia.
     + intro Hin. apply Hnz. right. exact Hin.
 Qed.
@@ -216,6 +235,17 @@ Proof.
   rewrite wa_add. change (bv_unsigned (8%bv : word)) with 8.
   replace (a + Z.of_nat 8) with (a + 8) in H2 by lia. rewrite (read_u64_bytes_in _ _ _ H2).
   destruct (Z.leb_spec0 (2^63) (bv_unsigned l)); [lia| reflexivity].
+Qed.
+
+(* LPS 08b1429: [copy_iovecs_accesses] records [iovec_entry_accesses] per descriptor
+   (as simdjson/fuzz_parser Lib/Nodes.v). *)
+Lemma iovec_entry_accesses_bytes_in : forall mp a b l,
+  bytes_in mp a (le8 b ++ le8 l) -> iovec_entry_accesses mp (wa a) = [(wa a, 16%nat)].
+Proof.
+  intros mp a b l H. apply bytes_in_app in H as [H1 H2]. rewrite length_le8 in H2.
+  unfold iovec_entry_accesses. rewrite wa_add. change (bv_unsigned (8%bv : word)) with 8.
+  replace (a + Z.of_nat 8) with (a + 8) in H2 by lia.
+  rewrite (read_u64_bytes_in _ _ _ H2), (read_u64_bytes_in _ _ _ H1). reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -262,6 +292,9 @@ Proof.
   cbn [copy_iovecs_accesses iov_array_accesses length].
   inversion HL as [|x xs Hl HL']; subst. cbn [fst snd] in Hl. pose proof TASK_SIZE_val.
   pose proof (bv_unsigned_in_range 64 b).
+  rewrite (iovec_entry_accesses_bytes_in mp a b l)
+    by (rewrite app_assoc in H'; apply bytes_in_app in H' as [H' _]; exact H').
+  cbn [app].
   rewrite (read_iovec_entry_bytes_in mp a b l).
   2:{ rewrite app_assoc in H'. apply bytes_in_app in H' as [H' _]. exact H'. }
   2:{ lia. }
@@ -303,7 +336,8 @@ Proof.
     rewrite (read_iovec_entry_bytes_in mp a b l H) by lia.
     replace (access_okb b (Z.min (bv_unsigned l) MAX_RW_COUNT)) with true.
     2:{ symmetry. unfold access_okb. apply andb_true_intro; split; apply Z.leb_le; lia. }
-    split; reflexivity.
+    split; [reflexivity|]. cbn [length iov_array_accesses].
+    rewrite (iovec_entry_accesses_bytes_in mp a b l H). reflexivity.
   - destruct (Z.eqb_spec (Z.of_nat (length iovs)) 0); [lia|].
     replace (IOV_MAX <? Z.of_nat (length iovs)) with false by (symmetry; apply Z.ltb_ge; lia).
     rewrite Hok by lia. cbn [negb]. rewrite word_to_nat_of_nat by lia.
@@ -678,7 +712,10 @@ Definition munmap_safe_b (addr len : word) (h : VmMaps) : bool :=
       let n := Z_to_bv 64 nZ in
       map_has (vm_maps h) addr n || munmap_free_ok h addr nZ.
 
-Definition mprotect_safe_b (addr len prot : word) (h : VmMaps) : bool :=
+(* LPS 08b1429: [check_mprotect] answers [CheckUnmodeled] for a range that meets the vDSO/vvar
+   pair ([vdso_reserved]) before it looks at the maps; the safety test carries the same gate, so it
+   reads the model (for [m_kernel]), as openssl/bndiv Lib/Nodes.v does. *)
+Definition mprotect_safe_b (addr len prot : word) (m : Model) : bool :=
   if mprotect_grows_conflict_b prot then true
   else if negb (Z.eqb (bv_unsigned addr mod page_size) 0) then true
   else if w_is0 len then true
@@ -687,8 +724,9 @@ Definition mprotect_safe_b (addr len prot : word) (h : VmMaps) : bool :=
   else
     let nZ := page_round_up_Z (bv_unsigned len) in
     let n := Z_to_bv 64 nZ in
-    (map_contains (vm_noaccess h) addr n && map_contains (vm_maps h) addr n)
-    || (map_contains (vm_maps h) addr n && region_free (vm_noaccess h) addr n).
+    region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr n
+    && ((map_contains (vm_noaccess (m_vmmaps m)) addr n && map_contains (vm_maps (m_vmmaps m)) addr n)
+        || (map_contains (vm_maps (m_vmmaps m)) addr n && region_free (vm_noaccess (m_vmmaps m)) addr n)).
 
 (* [comment removed for export] *)
 Definition mmap_fixed_gate_b (addr : word) (nZ : Z) (h : VmMaps) : bool :=
@@ -701,23 +739,28 @@ Definition mmap_fixed_gate_b (addr : word) (nZ : Z) (h : VmMaps) : bool :=
        || region_free (vm_reserved h ++ vm_maps h) addr n
        || region_free (vm_reserved h) addr n.
 
-Definition mmap_safe_b (addr len prot flags fd off : word) (h : VmMaps) : bool :=
+(* LPS 727298f3 (#144/#146): [check_mmap]'s two freely placed arms ([mmap_modeled_b],
+   [mmap_noaccess_b]) answer [CheckUnmodeled] when [place_declined_b] holds, ahead of the [alt], so
+   each carries its negation, read with the model's own arm tests as the guard (OSSV-509 spec,
+   ruling 2); the MAP_FIXED arms never read it.  [kb] is the model's kernel. *)
+Definition mmap_safe_b (addr len prot flags fd off : word) (kb : KernelBuild) (h : VmMaps) : bool :=
   mmap_off_aligned_b off && mmap_anon_b flags &&
   if w_is0 len then mmap_plain_anon_b flags
-  else
-  mmap_modeled_b prot flags off
-  || mmap_noaccess_b prot flags off
-  || (mmap_fixed_noaccess_b prot flags off && mmap_fixed_gate_b addr (page_round_up_Z (bv_unsigned len)) h)
+  else if mmap_modeled_b prot flags off
+  then negb (place_declined_b kb h addr (page_round_up_Z (bv_unsigned len)))
+  else if mmap_noaccess_b prot flags off
+  then negb (place_declined_b kb h addr (page_round_up_Z (bv_unsigned len)))
+  else (mmap_fixed_noaccess_b prot flags off && mmap_fixed_gate_b addr (page_round_up_Z (bv_unsigned len)) h)
   || (mmap_fixed_rw_b prot flags off && mmap_fixed_gate_b addr (page_round_up_Z (bv_unsigned len)) h).
 
 Definition nsafe (n : node) (mo : Model) : Prop :=
   match n with
   | NMmap addr len prot flags =>
       mmap_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags)
-                  (Z_to_bv 64 (-1)) (Z_to_bv 64 0) (m_vmmaps mo) = true
+                  (Z_to_bv 64 (-1)) (Z_to_bv 64 0) (m_kernel mo) (m_vmmaps mo) = true
   | NMunmap addr len => munmap_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 len) (m_vmmaps mo) = true
   | NMprotect addr len prot =>
-      mprotect_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (m_vmmaps mo) = true
+      mprotect_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) mo = true
   | _ => True
   end.
 
@@ -895,7 +938,7 @@ Lemma read_pres : forall fd buf count mo eff mo' evs,
   minv mo -> m_halted mo = None -> nstep (NRead fd buf count) mo eff mo' evs -> m_halted mo' = None /\ minv mo'.
 Proof.
   intros fd buf count mo eff mo' evs Hminv Hh [_ H].
-  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid pw|dnr dnw| ]|] eqn:Hlk; try contradiction.
+  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid pw|dnr dnw| |sid sside sst|ectx|dfam|aid aaf]|] eqn:Hlk; try contradiction.
   - destruct (fs_lookup (m_fs mo) p); [|contradiction]. destruct H as [_ ->].
     split; [rewrite m_halted_with_fds; exact Hh|]. eapply minv_update_file; eassumption.
   - destruct H as [_ ->]. auto.
@@ -1046,7 +1089,7 @@ Proof. intros req eff m m' evs H. unfold check_brk in H. crush_check H; (split; 
 Lemma check_mmap_shape : forall addr len prot flags fd off eff m m' evs,
   mmap_noreserve_b flags = false ->
   check_mmap addr len prot flags fd off eff m = CheckOk m' evs -> vm_only m m' /\ rstrip eff = eff /\ evs = [].
-Proof. intros until evs; intros Hnr H. unfold check_mmap in H. crush_check H; (split; [vm_only_solve| split; reflexivity]). Qed.
+Proof. intros until evs; intros Hnr H. unfold check_mmap, check_mmap_fixed_overflow in H. crush_check H; (split; [vm_only_solve| split; reflexivity]). Qed.
 
 Lemma check_munmap_shape : forall addr len eff m m' evs,
   check_munmap addr len eff m = CheckOk m' evs -> vm_only m m' /\ rstrip eff = eff /\ evs = [].
@@ -1082,7 +1125,7 @@ Proof.
 Qed.
 
 Lemma mprotect_safe_no_unmodeled : forall addr len prot eff m,
-  mprotect_safe_b addr len prot (m_vmmaps m) = true -> check_mprotect addr len prot eff m <> CheckUnmodeled.
+  mprotect_safe_b addr len prot m = true -> check_mprotect addr len prot eff m <> CheckUnmodeled.
 Proof.
   intros addr len prot eff m. unfold mprotect_safe_b, check_mprotect.
   destruct (mprotect_grows_conflict_b prot); [intros _; apply check_ret_only_no_unmodeled|].
@@ -1090,6 +1133,7 @@ Proof.
   destruct (w_is0 len); [intros _; apply check_ret_only_no_unmodeled|].
   destruct (two_pow_64 <=? _); [intros _; apply check_ret_only_no_unmodeled|].
   destruct (mprotect_modeled_b prot); [|discriminate]. cbn [negb]. cbv zeta.
+  destruct (region_free (vdso_reserved _ _) _ _); [|discriminate]. cbn [negb andb].
   destruct (map_contains (vm_noaccess _) _ _ && map_contains _ _ _); [intros _; no_unm|].
   cbn [orb]. intros ->. no_unm.
 Qed.
@@ -1097,7 +1141,10 @@ Qed.
 Lemma mmap_fixed_gate_no_unmodeled : forall addr nZ h eff m (k1 k2 k3 : check_result),
   mmap_fixed_gate_b addr nZ h = true ->
   k1 <> CheckUnmodeled -> k2 <> CheckUnmodeled -> k3 <> CheckUnmodeled ->
-  (if two_pow_64 <=? bv_unsigned addr + nZ then check_ret_only eff (errno_ret ENOMEM) m []
+  (* #105 (75d69e00): the overflow arm's ANSWER moved from an ENOMEM check_ret_only to
+     check_mmap_fixed_overflow (Checks/Sys/Mm/Mmap.v:152); fix as G2's farm-verified fuzz_utf8
+     Lib/Nodes.v: substitute the handler, close with the model's lemma. *)
+  (if two_pow_64 <=? bv_unsigned addr + nZ then check_mmap_fixed_overflow addr nZ eff m
    else if negb (bv_unsigned addr + nZ <=? alloc_top h) then CheckUnmodeled
    else if negb (bv_unsigned addr mod page_size =? 0) then check_ret_only eff (errno_ret EINVAL) m []
    else if negb (0 <? bv_unsigned addr) then CheckUnmodeled
@@ -1107,7 +1154,7 @@ Lemma mmap_fixed_gate_no_unmodeled : forall addr nZ h eff m (k1 k2 k3 : check_re
    else CheckUnmodeled) <> CheckUnmodeled.
 Proof.
   intros addr nZ h eff m k1 k2 k3 Hg H1 H2 H3. unfold mmap_fixed_gate_b in Hg. cbv zeta in Hg.
-  destruct (two_pow_64 <=? _); [apply check_ret_only_no_unmodeled|].
+  destruct (two_pow_64 <=? _); [apply check_mmap_fixed_overflow_no_unmodeled|].
   destruct (negb (_ <=? alloc_top _)); [discriminate|].
   destruct (negb (bv_unsigned addr mod page_size =? 0)); [apply check_ret_only_no_unmodeled|].
   destruct (negb (0 <? bv_unsigned addr)); [discriminate|].
@@ -1116,15 +1163,19 @@ Proof.
 Qed.
 
 Lemma mmap_safe_no_unmodeled : forall addr len prot flags fd off eff m,
-  mmap_safe_b addr len prot flags fd off (m_vmmaps m) = true ->
+  mmap_safe_b addr len prot flags fd off (m_kernel m) (m_vmmaps m) = true ->
   check_mmap addr len prot flags fd off eff m <> CheckUnmodeled.
 Proof.
   intros addr len prot flags fd off eff m. unfold mmap_safe_b, check_mmap.
   destruct (mmap_off_aligned_b off); [|discriminate].
   destruct (mmap_anon_b flags); [|discriminate]. cbn [andb negb].
   destruct (w_is0 len). { intros ->. apply check_ret_only_no_unmodeled. }
-  destruct (mmap_modeled_b prot flags off); [intros _; no_unm|].
-  destruct (mmap_noaccess_b prot flags off); [intros _; no_unm|]. cbn [orb].
+  destruct (mmap_modeled_b prot flags off).
+  { destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)));
+      [discriminate | intros _; cbv iota; no_unm]. }
+  destruct (mmap_noaccess_b prot flags off).
+  { destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)));
+      [discriminate | intros _; cbv iota; no_unm]. }
   destruct (mmap_fixed_noaccess_b prot flags off).
   { cbn [andb]. intros Hg.
     assert (Hg2 : mmap_fixed_gate_b addr (page_round_up_Z (bv_unsigned len)) (m_vmmaps m) = true).
@@ -1181,12 +1232,16 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma nsafe_mmap_rw : forall addr len mo, 0 < len < 2^64 ->
+  place_declined_b (m_kernel mo) (m_vmmaps mo) (Z_to_bv 64 addr)
+    (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = false ->
   nsafe (NMmap addr len (PROT_READ + PROT_WRITE) (MAP_PRIVATE + MAP_ANONYMOUS)) mo.
-Proof. intros addr len mo Hl. cbn [nsafe]. unfold mmap_safe_b. rewrite w_is0_lit by lia. replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia). reflexivity. Qed.
+Proof. intros addr len mo Hl Hd. cbn [nsafe]. unfold mmap_safe_b. rewrite w_is0_lit by lia. replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia). rewrite Hd. reflexivity. Qed.
 
 Lemma nsafe_mmap_none : forall addr len mo, 0 < len < 2^64 ->
+  place_declined_b (m_kernel mo) (m_vmmaps mo) (Z_to_bv 64 addr)
+    (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = false ->
   nsafe (NMmap addr len PROT_NONE (MAP_PRIVATE + MAP_ANONYMOUS)) mo.
-Proof. intros addr len mo Hl. cbn [nsafe]. unfold mmap_safe_b. rewrite w_is0_lit by lia. replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia). reflexivity. Qed.
+Proof. intros addr len mo Hl Hd. cbn [nsafe]. unfold mmap_safe_b. rewrite w_is0_lit by lia. replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia). rewrite Hd. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Lemma alloc_fd_aux_le : forall fuel fds (cand : word),

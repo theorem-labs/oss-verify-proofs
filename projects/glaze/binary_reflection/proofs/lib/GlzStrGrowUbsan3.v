@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (resize_grow_short states the channel reader and the vDSO reservation inclusion). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -66,6 +67,7 @@ Theorem resize_grow_short : forall stk bc cc, (0 <= stk)%Z ->
     rdn USEGS M obj 8 = Some (W8 w0) -> (bv_unsigned w0 mod 256 = 2 * s)%Z ->
     (0 <= s <= cap)%Z -> (cap < n)%Z -> (4 * n <= NMAX)%Z ->
     (B + mcost (galloc n cap) <= bc)%Z -> (C + MCNT <= cc)%Z ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     (forall fx' R' M' mdl' (p : word),
         FXOK fx' ->
         (forall r, In r callee_saved_regs -> getr R' (Z_to_bv 5 r) = getr R (Z_to_bv 5 r)) ->
@@ -83,12 +85,14 @@ Theorem resize_grow_short : forall stk bc cc, (0 <= stk)%Z ->
         (forall a : word, (bv_unsigned obj <= bv_unsigned a < bv_unsigned obj + 24)%Z -> M' a <> None) ->
         AINV ((bv_unsigned p, galloc n cap) :: Lc) (B + mcost (galloc n cap)) (C + MCNT) M' mdl' ->
         m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+        m_channel_reader mdl' = m_channel_reader mdl ->
+        incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
         RZ (mkCfg (mkstF fx' R' (Z_to_bv 64 ret) M' (seg_rom USEGS)) mdl') T) ->
     RZ (mkCfg (mkstF fx R (Z_to_bv 64 0x5c1d8) M (seg_rom USEGS)) mdl) T.
 Proof using img_ok priv_img AINV_app RZ_msteps.
   intros stk bc cc Hstk MAL fx R M mdl Lc B C ret sp obj w0 cw s n T cap
          Hh Hl Hm HFX HA HT0 R1 Hret Hrete R10 R11 R12 R2 Hsp16 Hceil R4 Hscr Hobjsp Hobj STO RD8 Hw0
-         Hs Hn HnN Hb Hc K.
+         Hs Hn HnN Hb Hc HVDSO K.
   pose proof (@GlzConst.RunCeil.ceil_rng RC) as CR. pose proof img_ok as IMG.
   subst cap.
   set (spw := getr R (Z_to_bv 5 2)) in *. subst sp.
@@ -163,10 +167,10 @@ Proof using img_ok priv_img AINV_app RZ_msteps.
     split; [replace (bv_unsigned spw - 80)%Z with (bv_unsigned spw + (-5) * 16)%Z by lia; rewrite Z.mod_add by lia; exact Hsp16|].
     split; [lia|]. split; [exact D4|].
     split; [intros a Ha; eapply store_ok_mono; [exact M1grows|]; apply Hscr; lia|].
-    split; [exact Hb | exact Hc].
+    split; [exact Hb |]. split; [exact Hc | exact HVDSO].
   - exact HT0.
   - (* [comment removed for export] *)
-    intros fx2 R2x M2 mdl2 p (HFX2 & KEPT2 & P10 & Pal & (Plo & Phi & Pimg) & Pdisj & Pblk & FR2 & SCR2 & HA2 & Hh2 & Hl2 & Hm2 & Hfs2 & Hfds2).
+    intros fx2 R2x M2 mdl2 p (HFX2 & KEPT2 & P10 & Pal & (Plo & Phi & Pimg) & Pdisj & Pblk & FR2 & SCR2 & HA2 & Hh2 & Hl2 & Hm2 & Hfs2 & Hfds2 & Hrdr2 & Hvdso2).
     pose proof (u64_range p) as Hpr. unfold NMAX in Pblk. unfold GlzConst.PTRLO in Plo.
     (* [comment removed for export] *)
     assert (M2f : forall a : word, (bv_unsigned spw - 80 <= bv_unsigned a)%Z -> M2 a = M1 a).
@@ -427,5 +431,7 @@ Proof using img_ok priv_img AINV_app RZ_msteps.
       * exact Hm4.
       * exact Hfs2.
       * exact Hfds2.
+      * exact Hrdr2.
+      * exact Hvdso2.
 Qed.
 End GROWS.

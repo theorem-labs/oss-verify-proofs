@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the statement of the ASan walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput,
-   in the released form of proofs/cgif/cgif_file_fuzzer (c8557374ad2e): the entry contract is scene's own
+   in the released form of proofs/cgif/cgif_file_fuzzer: the entry contract is scene's own
    `scene_tfib_lib_contract_x` (P_LLVMFuzzerTestOneInput_ctx.v, which is A/ACfn.v:59-69 with the changes a Theorem Labs lane's
    ENTRY-REVIEW.md required), and the Section hypotheses follow A/ACfj.v:94-127 (the donor's harness walk) and
    A/ACk1.v:62-110 (its position-abstract walks), module paths changed.  STATEMENTS ONLY (rule 24): the walk
    `scene_llvmf : scene_llvmf_stmt`, proved in Section h under its hypotheses, is not in this file; its SEGMENT CUTS
    are lib/A/P_LLVMFuzzerTestOneInput_seg.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   Image: fuzz_scene.asan, sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026
    (pau-pipeline/libreac/bin/fuzz_scene/), symbols from the unstripped twin
@@ -38,7 +39,7 @@
        free 0x82ea8 (+0x634 = 0x82eac), 0x83024 (+0x7b0 = 0x83028), 0x8302c (+0x7b8 = 0x83030).
      - the allocator's own return pcs, pc_malloc_ra0 (as_code B) = 0x54fb4 (__interceptor_malloc 0x54eec + 0xc8,
        after `jal` 0x54fb0) and pc_free_ra0 (as_code B) = 0x54e54 (__interceptor_free 0x54d1c + 0x138, after `jal`
-       0x54e50); a Theorem Labs lane's universe (a working branch cd8a2bc842d, lib/A/ACej.v:35-55) holds the 12
+       0x54e50); a Theorem Labs lane's universe (a working branch, lib/A/ACej.v:36-56) holds the 12
        traces [pc; ra] and [pc; ra; 0x82774] of these sites.
      - reac_scene_placeholder = 0x20e80 (STT_OBJECT, 8904 bytes, 11136 with its redzone), read through GOT word
        0x9c388 (`auipc` 0x82bb0, `ld` 0x82bb4) for i < 8904 (`srli a0,a1,3` / `bltu 0x458,a0` 0x82bbc-0x82bc0).
@@ -47,7 +48,7 @@
        initial value 0), through GOT 0x9b768 (`lw a2` 0x828d4, decision `beqz a2` 0x828e0). These two are named in
        this file only as as_shadow_cell B / as_uar_cell B; their bindings are PALib's (ScenePaLib.v: objects 16, 17).
      - the read-only window RLO..RHI is PI_scene's pa_relro_lo / pa_relro_hi (SceneImg.v: 0x9b1b0..0x9c410, the
-       listing at a working branch 97abd483884).
+       listing at a working branch).
    THE UAR FLAG IS NOT A HYPOTHESIS (ENTRY-REVIEW.md item 5, R4).  The walk reads the flag through `al_const`
    (AR_const_law, YG0d.v:460-466) on the entry state's AR, as cgif A/ACf5.v:198 does; AR carries `asyms_ok B`
    (YG0n.v:208), whose `aso_const_law` second conjunct (YG0f.v:188-189) is the fact.  Measured chain for the value:
@@ -88,7 +89,7 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YM05.
 (* A Theorem Labs lane (landed) and a Theorem Labs lane: the three shared runtime contract types, one copy each -- no file of mine
    defines any of them.  astack_malloc_sz_realizes <- lib/Reusable/AsStackSz.v, astack_free_realizes <-
    lib/Reusable/StackFreeDef.v, aset_shadow_realizes <- lib/Reusable/SetShadowDef.v (from a Theorem Labs lane,
-   at 798447a1772 proofs/libreac/fuzz_grant/lib/A/Rt/SetShadowDef.v:19, at scene's relocated
+   at proofs/libreac/fuzz_grant/lib/A/Rt/SetShadowDef.v:19, at scene's relocated
    path). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import AsStackSz StackFreeDef SetShadowDef.
 (* scene_shape is image-independent and lives in lib/SceneAsanBase.v (split out of lib/A/SceneAsanTop.v by
@@ -97,18 +98,18 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib Require SceneAsanBase.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOneInput_ctx J_StackSz.
 (* The three callee walks of a Theorem Labs lane, written in a separate worktree, now in this tree (the Require below). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_reac_ctrl_build_scene_step P_reac_ctrl_scene_build P_reac_ctrl_scene_set_mac.
-(* A Theorem Labs lane (at 08cb863a87d, only this file, copied, then changed: 25 Seg A definitions SM8_ICPT_TGA .. SM8_IMG_END added (the TLS chain's entry points and cells, and the image extent), the SM8_WIN comment restated with its value 224 kept,
+(* A Theorem Labs lane (only this file, copied, then changed: 25 Seg A definitions SM8_ICPT_TGA .. SM8_IMG_END added (the TLS chain's entry points and cells, and the image extent), the SM8_WIN comment restated with its value 224 kept,
    the AB1v import dropped and two file citations rewritten; CID8 and PC_STACK_MALLOC_8 unchanged): the class-8 table, CID8 = 8 (:48 there, :47 here) and PC_STACK_MALLOC_8 = 0x3f40c (:49 there, :48 here). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A.Rt Require Import StackMalloc8Tbl.
 (* A Theorem Labs lane: check_step's contract tcheck_step_specX (the sink head is its explicit first argument, gate 6h) and
-   its window TCHECK_STEP_STK = 8496, exported from P_check_step_cut (at aa04a8e2795). *)
+   its window TCHECK_STEP_STK = 8496, exported from P_check_step_cut. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_check_step P_check_step_cut.
-(* A Theorem Labs lane (at aa91b415da2, merged): the fake-frame region setup, PROVED for every class and
+(* A Theorem Labs lane (merged): the fake-frame region setup, PROVED for every class and
    size (`frame_setup : forall segs val B cid n, frame_setup_stmt segs val B cid n`, Qed).  It replaces this file's
    former local copy of frame_setup_stmt and its hypothesis HFRAME8; the walk uses the instance
    `frame_setup SEGS VAL B 8 9408`. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_check_step_frame.
-(* A Theorem Labs lane (at f359228e8a1c): sink_img_laws, the laws of the closed sink's own cells. *)
+(* A Theorem Labs lane: sink_img_laws, the laws of the closed sink's own cells. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import G_Sink.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.

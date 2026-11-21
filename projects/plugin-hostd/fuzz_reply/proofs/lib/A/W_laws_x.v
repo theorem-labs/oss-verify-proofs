@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the AR instance of the generic laws, built from cgif's AR_laws ALONE, at any segs and B.
    YCbqG.v:1677 AR_laws_x_of_AR takes three facts beyond AR_laws (ly_stk_lo / ly_stk_hi 8-aligned; a live block's
    tail granule viewable; the const cells holding). All three are theorems of cgif's AR itself, so no lane proves them
@@ -7,7 +8,7 @@
    - AR_stk8: layout_ok's lo_top makes both stack bounds page-aligned (Reusable/YG0f.v:325-327), and AR carries
      layout_ok as ARm's am_layout (Reusable/YG0n.v:209);
    - AR_tail: W7's W_alloc_tail.alloc_tail (lib/A/W_alloc_tail.v), over the same range written two ways;
-   - AR_const: ARm's am_const (Reusable/YG0n.v:211), as W_journal.v:386 reads it.
+   - AR_const: ARm's am_const (Reusable/YG0n.v:211), as W_journal.v:387 reads it.
    So LX / LX0, the laws a re-derived AR theorem takes in place of LAWS, are AR_laws_x_ARi_of / AR_laws_x_ARi0_of
    applied to LAWS. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.

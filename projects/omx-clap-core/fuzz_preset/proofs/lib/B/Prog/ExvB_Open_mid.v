@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rebound onto the old-pin kit 4f18c75d4900 (base cold/h-rw-pre-7-b-ex_value-rebind): EXB carries exv_rm, the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rebound onto the old-pin kit (base cold/h-rw-pre-7-b-ex_value-rebind): EXB carries exv_rm, the
    memnorm keep from the entry memory, across every run by ExvB_Loop_exw.v's _inv runners at P := exvl_P (e_mem E)
    and across the ex_ws call by its m-form post. Does not rest on tex_word_specX. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CI: the ex_ws CALL, from the internal cut CUT_CM (entry
@@ -90,7 +91,7 @@ Let KCALL : KIT_EXB_CALL (fx := fx) B ARx SK :=
   ltac:(first [exact (exv_kit_call B ARx SK HYP fx) | exact (exv_kit_call B ARx SK fx)]).
 
 (* the post of the ex_ws call, at the allocator state (lyc, Sc, Hpc) and memory memc of the call: the kit's
-   tex_ws_specX Q (4f18c75d4900: S' = S) in its m-form (fQmn: the memnorm keep from the call memory) *)
+   tex_ws_specX Q (S' = S) in its m-form (fQmn: the memnorm keep from the call memory) *)
 Definition exo_KQ (Ex : exv_e) (lyc : alayout) (Sc : astate) (Hpc : list Z) (memc : word -> option byte)
     (ly' : alayout) (S' : astate) (Hp' : list Z)
     (W' : world rsegs) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model) : Prop :=

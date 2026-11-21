@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's op_add, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and lib/A/ACbk.v (entry and return). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_op_add.v; 13 of its 101 lines of code are new or changed and 2660 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* AR-side helper lemmas of op_add's call (oa_call_keep / _blk / _hi, oa_writable_img), as they stood in W2's
-   lib/A/W_op_add.v at a working branch 9941927fa02 (W2's text, AR form, lines 223-271 and 580-593): W2 has since
+   lib/A/W_op_add.v at a working branch (W2's text, AR form, lines 223-271 and 580-593): W2 has since
    kept only the ARx forms in W_op_add.v; the AR ARM_add walk (W_LLVMFuzzerTestOneInput_add.v) still needs these, so
    they are carried here VERBATIM (same names, same proofs) in their own module, Required without Import so the names
    do not clash with W2's.  Delete this file when ARM_add's AR proof is retired in favour of lf_arm_add_x. *)

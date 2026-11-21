@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: added fuzz_pcap_asan_srz and fuzz_pcap_both_srz, the srealizes facts of fuzz_pcap_asan_lim and fuzz_pcap_both_lim stated on their own, for the halting proofs. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the two top-level run proofs read over Run.run_segments, lifting the walk over the binary's segments by RomStable.srun_init (RomStable now required). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -12,6 +13,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
 From OSSVerify.libpcap.fuzz_pcap.images Require Plain.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim2__Common.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require SpinAlg.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require RomStable.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3 Require A3Img.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require PropExec MState ITree Nodes Decode Ceiling ImgSrc3.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Musl Require AmoStep__Musl.
@@ -251,11 +253,15 @@ Proof.
         apply (texit_wexit_wins SEGS _ _ _ _ (sim_SA_here enS enT inp HvS HvT Hvi w V m ms mo_ HO)).
         apply (tree_traces_exits _ _ _ HleavesS). apply HsoundS. exact Htr. }
   split; [exact HerrS|].
-  rewrite (run_eq SEGS PC0 PH target_alloc_limit enT inp). cbv zeta. cbn [bh_traces bh_errors]. rewrite init_config_eq in SRZ. split.
-  - exact (SpinAlg.srealizes_no_error SEGS _ _ SRZ).
+  (* LPS 727298f3: the run reads [Run.run_segments SEGS inp sp mbase]; the walk over SEGS lifts to it
+     ([RomStable.srun_init]; SEGS carries no vDSO image of its own, by computation) *)
+  pose proof (RomStable.srun_init SEGS inp (en_sp enT) (en_mmap_base enT) PC0 PH (en_brk enT) (en_draw enT)
+                target_alloc_limit K ltac:(reflexivity) SRZ) as SRZr.
+  rewrite (run_eq SEGS PC0 PH target_alloc_limit enT inp). cbv zeta. cbn [bh_traces bh_errors]. rewrite init_config_run in SRZr. split.
+  - exact (SpinAlg.srealizes_no_error _ _ _ SRZr).
   - intros tr. split.
-    + intros H. apply (SpinAlg.srealizes_obs_iff SEGS _ _ SRZ tr). exact H.
-    + intros H. apply (SpinAlg.srealizes_obs_iff SEGS _ _ SRZ tr) in H. exact H.
+    + intros H. apply (SpinAlg.srealizes_obs_iff _ _ _ SRZr tr). exact H.
+    + intros H. apply (SpinAlg.srealizes_obs_iff _ _ _ SRZr tr) in H. exact H.
 Qed.
 
 End Lim.
@@ -492,11 +498,15 @@ Proof.
         apply (texit_wexit_wins SEGS _ _ _ _ (sim_SA_here enS enT inp HvS HvT Hvi w V m ms mo_ HO)).
         apply (tree_traces_exits _ _ _ HleavesS). apply HsoundS. exact Htr. }
   split; [exact HerrS|].
-  rewrite (run_eq SEGS PC0 PH target_alloc_limit enT inp). cbv zeta. cbn [bh_traces bh_errors]. rewrite init_config_eq in SRZ. split.
-  - exact (SpinAlg.srealizes_no_error SEGS _ _ SRZ).
+  (* LPS 727298f3: the run reads [Run.run_segments SEGS inp sp mbase]; the walk over SEGS lifts to it
+     ([RomStable.srun_init]; SEGS carries no vDSO image of its own, by computation) *)
+  pose proof (RomStable.srun_init SEGS inp (en_sp enT) (en_mmap_base enT) PC0 PH (en_brk enT) (en_draw enT)
+                target_alloc_limit K ltac:(reflexivity) SRZ) as SRZr.
+  rewrite (run_eq SEGS PC0 PH target_alloc_limit enT inp). cbv zeta. cbn [bh_traces bh_errors]. rewrite init_config_run in SRZr. split.
+  - exact (SpinAlg.srealizes_no_error _ _ _ SRZr).
   - intros tr. split.
-    + intros H. apply (SpinAlg.srealizes_obs_iff SEGS _ _ SRZ tr). exact H.
-    + intros H. apply (SpinAlg.srealizes_obs_iff SEGS _ _ SRZ tr) in H. exact H.
+    + intros H. apply (SpinAlg.srealizes_obs_iff _ _ _ SRZr tr). exact H.
+    + intros H. apply (SpinAlg.srealizes_obs_iff _ _ _ SRZr tr) in H. exact H.
 Qed.
 
 End Lim.

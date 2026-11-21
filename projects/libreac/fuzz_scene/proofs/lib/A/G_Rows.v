@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the glue's rows stack_malloc_8_sz / ASF8 / ASH00 / ASHF8 (A/G_Top.v, Section g) at the
    concrete B := AD2l.TfibB, HB := AD2l.TfibB_syms, asan image. The four proofs are a Theorem Labs lane's
-   (at a423d9a58b9, lib/A/ZZ_GlueRows.v, ZZ_GlueRows.v (sha256 d621fde2e0cb; internal record)),
+   (at lib/A/ZZ_GlueRows.v, ZZ_GlueRows.v (sha256 d621fde2e0cb; internal record)),
    renamed into the glue with this header; the lemma statements and proofs are unchanged. Each lemma has exactly the
    type of the row it closes. Rule 24: no function is walked here; each lemma applies an owner's discharge:
    - p_stack_malloc_8_sz: A/Rt/StackMalloc8Closed.v stack_malloc_8_sz_discharged, with its start-up premises from

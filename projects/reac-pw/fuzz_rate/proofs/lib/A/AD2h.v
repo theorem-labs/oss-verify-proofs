@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2h.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_identity's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/AD2h.v (donor image sha256 c954b804786c), with its module paths changed and its addresses moved to reac-pw/fuzz_rate's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -63,7 +64,7 @@ Lemma S_H6_win_ok : forallb drv_win_ok (ss_mem S_H6) = true. Proof. reflexivity.
 Lemma img_sub_SHORT : submem IMG_REGIONS (ss_mem S_SHORT).
 Proof.
 (* Theorem Labs, 2026-10-29: `skipn 36` -> `skipn (3 + length IMG_REGIONS)` (h-rw-ide-7's B patch 09, same
-   class on A). 36 = 3 + cgif's 33 IMG_REGIONS entries; identity's generated A/AD2j.v:297 lists **80**
+   class on A). 36 = 3 + cgif's 33 IMG_REGIONS entries; identity's generated A/AD2j.v:298 lists **80**
    (R_A1a .. R_A9b), so the constant was false here and the `change` was not convertible. The length form is
    right for any region count, and holds as long as the hand-off state's memory really is
    3 ++ IMG_REGIONS ++ rest - which this proof's own `do 3 apply submem_drop` already assumes.

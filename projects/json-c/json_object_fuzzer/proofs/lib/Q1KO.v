@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (`RomBase.sys_rob` at the system-call nodes: writev, openat, read, close, the terminal ioctl, exit and the mmap family; mmap placement by the model's Linux placement, the first conjunct of `anon_place_ok`; the model's new descriptor kinds in the descriptor case splits). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -27,6 +28,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QJFf.Mq1. From OSSVeri
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qknc. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QBrp.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QBrp. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q2ui.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q2ui.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase RomWrite RomWritev.
 Import ListNotations.
 Open Scope bv_scope.
 Open Scope Z_scope.
@@ -56,7 +58,7 @@ destruct path; [destruct H as [-> ->]; exists moB; auto|].
 destruct (path_eqb _ _); [| destruct (fs_lookup _ _); [| destruct H as [-> ->]; exists moB; auto]];
 (destruct (open_result_msim _ _ _ _ _ Hs H) as (mo2b & H2 & Hs2); exists mo2b; auto).
 - destruct H as [-> H]. rewrite Hfd, Hfs.
-destruct (fd_lookup (m_fds moA) _) as [[c| p off| p off| p off| p off| | sk| id wr| dnr dnw| ]|]; try (destruct H; fail).
+destruct (fd_lookup (m_fds moA) _) as [[c| p off| p off| p off| p off| | sk| id wr| dnr dnw| | sq sw sv| ex| dgf| ani anf]|]; try (destruct H; fail).
 + destruct (fs_lookup _ _); [| destruct H]. destruct H as [-> ->].
 eexists. split; [split; [reflexivity| split; reflexivity]|]. apply msim_with_fds. exact Hs.
 + destruct H as [-> ->]. exists moB. auto.
@@ -109,7 +111,8 @@ pose proof (m_vmmaps_msim _ _ Hs) as Hvm.
 destruct n; try (apply FILE; exact I); try (destruct H; fail).
 -  clear FILE. cbn -[rlen rlenw grant_model commit_model remap_model anon_place_ok fixed_contained fixed_free reveal wunit rsp_grant rsp_remap rsp_err mmap_kind] in H |- *.
 destruct H as [-> H].
-assert (Hap : forall r k, anon_place_ok moB r k = anon_place_ok moA r k) by (intros; unfold anon_place_ok; rewrite Hvm; reflexivity).
+assert (Hap : forall r k, anon_place_ok moB r k = anon_place_ok moA r k)
+  by (intros; unfold anon_place_ok; rewrite Hvm; unfold msim in Hs; rewrite Hs; reflexivity).
 assert (Hfc : forall r k, fixed_contained moB r k = fixed_contained moA r k) by (intros; unfold fixed_contained; rewrite Hvm; reflexivity).
 assert (Hff : forall r k, fixed_free moB r k = fixed_free moA r k) by (intros; unfold fixed_free; rewrite Hvm; reflexivity).
 assert (Hrv : forall r k, reveal L moB r k = reveal L moA r k) by (intros; apply reveal_msim; exact Hs).
@@ -177,7 +180,7 @@ destruct n; try destruct Hn; cbn [nstep] in H.
 - destruct H as [_ H]. destruct (path_max <=? length path)%nat; [destruct H as [_ ->]; reflexivity|].
 destruct path; [destruct H as [_ ->]; reflexivity|].
 destruct (path_eqb _ _); [exact (OR _ _ _ H)|]. destruct (fs_lookup _ _); [exact (OR _ _ _ H)| destruct H as [_ ->]; reflexivity].
-- destruct H as [_ H]. destruct (fd_lookup (m_fds mo) _) as [[c| p off| p off| p off| p off| | sk| id wr| dnr dnw| ]|]; try (destruct H; fail).
+- destruct H as [_ H]. destruct (fd_lookup (m_fds mo) _) as [[c| p off| p off| p off| p off| | sk| id wr| dnr dnw| | sq sw sv| ex| dgf| ani anf]|]; try (destruct H; fail).
 + destruct (fs_lookup _ _); [| destruct H]. destruct H as [_ ->]. apply m_vm_with_fds.
 + destruct H as [_ ->]. reflexivity.
 + destruct H as [_ ->]. reflexivity.
@@ -207,7 +210,9 @@ destruct (mmap_kind addr prot flags); [| | | destruct H].
 + destruct Hns as (Hl1 & Hl2 & Hem & _). pose proof (rlen_facts len Hl1 Hl2) as (R1 & R2 & R3 & R4 & R5 & R6 & R7).
 destruct H as (r & ws & Hp & Hf & Hw & -> & ->).
 cbn [rsp_grant eff_ret]. unfold anon_place_ok in Hp. apply andb_prop in Hp as [Hp Hfree].
-apply andb_prop in Hp as [Hp Hce]. apply andb_prop in Hp as [Hal Hpos]. apply Z.eqb_eq in Hal. apply Z.leb_le in Hce. unfold page_size in Hal.
+apply andb_prop in Hp as [Hp Hce]. apply andb_prop in Hp as [Hal Hpos].
+(* LPS 727298f3: [anon_place_ok]'s first conjunct is Linux's own placement *)
+apply andb_prop in Hal as [_ Hal]. apply Z.eqb_eq in Hal. apply Z.leb_le in Hce. unfold page_size in Hal.
 rewrite (placed_not_errno0 r (rlen len)) by (first [exact (below_top_room _ _ Hce) | lia]). split; [| apply limit_grant].
 pose proof (region_free_app_r _ _ _ _ Hfree) as Hfree2. fold (rlenw len) in Hfree2.
 assert (Hex : excl_entry L (r, rlenw len) = false) by (apply (fresh_not_excl L mo); [exact Hem| rewrite R6; lia| exact Hfree2]).
@@ -356,6 +361,78 @@ assert (Hat' : at_node segs (NMunmap addr len) ms) by exact Hat. unfold nsafeA i
 split; [|split]; [eapply munmap_complete| eapply munmap_sound| eapply munmap_progress]; eassumption.
 Qed.
 
+(* LPS 727298f3: [RomBase.sys_rob] at each node's system call.  The file nodes read [in_mem] only through
+   their path (openat) or their iovec array and buffers (writev), which at_node shows readable; read, close,
+   ioctl (a terminal request), mmap, munmap and exit read none. *)
+Lemma writev_robA : forall ms mo fd bufs,
+at_node segs (NWritev fd bufs) (msview L mo ms) -> fdinv mo -> RomBase.sys_rob segs (mkCfg ms mo).
+Proof.
+intros ms mo fd bufs Hat HX.
+(* the derivation of QBrp.writev_factsA / writev_check_specA, up to the reads the check makes *)
+pose proof Hat as (Hsvc & Hfd & Ha0 & Ha2 & Hcnt & Htot & Hrom & iovs & Hiovv & Hbufsv & Hts & Hbts).
+rewrite !areg_view in Ha0, Ha2, Hiovv, Hts.
+cbn [ms_svc_pending ms_rom ms_mem ms_regs msview restrict] in Hsvc, Hrom, Hiovv, Hbufsv.
+change (mrestrict (hidden L mo) (ms_mem ms)) with (view L mo (ms_mem ms)) in Hiovv, Hbufsv.
+destruct (bytes_at_view L segs Hsegs mo (ms_mem ms) _ _ Hiovv) as [Hiov _].
+assert (Hbufs : Forall2 (fun iov bs => snd iov = Z_to_bv 64 (Z.of_nat (length bs)) /\
+bytes_at segs (ms_mem ms) (bv_unsigned (fst iov)) bs) iovs bufs).
+{ eapply Forall2_impl; [|exact Hbufsv]. intros iov bs [Hl Hb]. split; [exact Hl|].
+  exact (proj1 (bytes_at_view L segs Hsegs mo _ _ _ Hb)). }
+unfold writev_bytes_max in Htot.
+pose proof (iovs_ok_of_at segs _ _ _ Hrom Hbufs ltac:(lia)) as Hok.
+pose proof (Forall2_length Hbufs) as Hleq.
+pose proof (bytes_at_in segs _ _ _ Hrom Hiov) as Hin.
+destruct (import_iovecs_bytes_in iovs bufs (ms_read_byte ms) (bv_unsigned (areg ms 11)) Hin Hok
+  ltac:(lia) ltac:(lia) Hbts) as [Himp _].
+rewrite wa_unsigned_id, Hleq in Himp.
+destruct (std_chanA mo fd HX Hfd) as [Hch _].
+apply (RomWrite.writev_rob segs ms mo (Z_to_bv 64 66) (Z_to_bv 64 fd) iovs (concat bufs) Hsvc eq_refl).
+- change (ms_gpr ms 0) with (areg ms 10). rewrite Ha0. exact Hch.
+- change (ms_gpr ms 1) with (areg ms 11). change (ms_gpr ms 2) with (areg ms 12). rewrite Ha2.
+  unfold iovcnt32. rewrite abi_low32_small by lia. exact Himp.
+- unfold cap_iovecs. rewrite (cap_iovecs_id _ _ _ _ Hok) by (unfold MAX_RW_COUNT; lia).
+  clear -Hok. induction Hok as [|[b l] bs iovs bufs (Hl & Hlen & Hb) _ IH]; [reflexivity|].
+  cbn [gather_iovecs fst snd concat] in *. subst l.
+  pose proof (read_bytes_map_bytes_in _ _ _ Hb ltac:(lia)) as R. rewrite wa_unsigned_id in R.
+  rewrite R, IH. reflexivity.
+Qed.
+
+Lemma open_robA : forall ms mo path,
+at_node segs (NOpen path) (msview L mo ms) -> RomBase.sys_rob segs (mkCfg ms mo).
+Proof.
+intros ms mo path Hat.
+pose proof Hat as (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hpv & Hts).
+rewrite ?areg_view in Hpv, Hts.
+cbn [ms_svc_pending ms_rom ms_mem msview restrict] in Hsvc, Hrom, Hpv.
+change (mrestrict (hidden L mo) (ms_mem ms)) with (view L mo (ms_mem ms)) in Hpv.
+destruct (bytes_at_view L segs Hsegs mo (ms_mem ms) _ _ Hpv) as [Hp _].
+pose proof (bytes_at_in segs _ _ _ Hrom Hp) as Hin.
+apply (RomWrite.openat_rob segs ms mo (Z_to_bv 64 56) Hsvc eq_refl).
+change (ms_gpr ms 1) with (areg ms 11). rewrite <- (wa_unsigned_id (areg ms 11)). unfold read_cstr.
+destruct (Nat.leb_spec0 path_max (length path)) as [Hlong|Hshort].
+- rewrite (read_cstr_aux_toolong_bytes_in path_max path); [discriminate|exact Hlong|exact Hnz| intros _; lia |].
+  apply bytes_in_app in Hin as [Hin _]. exact Hin.
+- rewrite (read_cstr_aux_bytes_in path path_max); [discriminate|lia|exact Hnz|exact Hts|exact Hin].
+Qed.
+
+Lemma file_robA : forall n ms mo, is_file_node n ->
+at_nodeA L segs n (msview L mo ms) -> cinvA L ms mo -> RomBase.sys_rob segs (mkCfg ms mo).
+Proof.
+intros n ms mo Hn Hat ([HF HV] & HI & HJ). destruct n; try destruct Hn; cbn [at_nodeA] in Hat.
+- exact (writev_robA ms mo fd bufs Hat HF).
+- exact (open_robA ms mo path Hat).
+- destruct Hat as [Hs _]. change (ms_svc_pending ms = Some (Z_to_bv 64 63)) in Hs.
+  apply (RomBase.sys_rob_memfree segs ms mo _ Hs). change (bv_unsigned (Z_to_bv 64 63)) with 63%Z.
+  exact RomBase.memfree_63.
+- destruct Hat as [Hs _]. change (ms_svc_pending ms = Some (Z_to_bv 64 57)) in Hs.
+  apply (RomBase.sys_rob_memfree segs ms mo _ Hs). change (bv_unsigned (Z_to_bv 64 57)) with 57%Z.
+  exact RomBase.memfree_57.
+- destruct Hat as (Hs & _ & Hreq & _ & Hr). change (ms_svc_pending ms = Some (Z_to_bv 64 29)) in Hs.
+  rewrite areg_view in Hr. subst req.
+  apply (RomWrite.ioctl_tty_rob segs ms mo (Z_to_bv 64 29) Hs eq_refl).
+  change (ms_gpr ms 1) with (areg ms 11). rewrite Hr. reflexivity.
+Qed.
+
 Theorem nodesA_sound :
 node_soundA node segs L (at_nodeA L segs) (nstep_raw L) nexit_raw (nsafeA L) (xinvA L) is_spinA rvarA (jsome L).
 Proof.
@@ -381,6 +458,20 @@ destruct n; try (exfalso; exact (Hnf I)); try discriminate; try (destruct Hat; f
 + right. exists (exit_code code), (with_halted (exit_code code) mo). split; reflexivity.
 + left. apply (proj2 (proj2 (mmap_nodeA _ _ _ _ ms mo Hat Hh HC Hns))).
 + left. apply (proj2 (proj2 (munmap_nodeA _ _ ms mo Hat Hh HC Hns))).
+-  intros n ms mo Hsp Hat Hh HC Hns.
+destruct (file_node_dec n) as [Hf|Hnf]; [exact (file_robA n ms mo Hf Hat HC)|].
+(* every other node's system call (exit, set_tid, brk, the mmap family) reads no [in_mem]: its
+   at_node starts with the pending call's number *)
+destruct n; try (exfalso; exact (Hnf I)); try discriminate; try (destruct Hat; fail);
+cbn [at_nodeA at_node] in Hat;
+repeat match type of Hat with _ /\ _ => destruct Hat as [Hat _] end;
+cbn [ms_svc_pending msview restrict] in Hat;
+first
+  [ destruct Hat as [Hs|Hs]; apply (RomBase.sys_rob_exit segs ms mo _ Hs); [left|right]; reflexivity
+  | apply (RomBase.sys_rob_memfree segs ms mo _ Hat);
+    match goal with |- RomBase.memfree (bv_unsigned (Z_to_bv 64 ?z)) =>
+      change (bv_unsigned (Z_to_bv 64 z)) with z end;
+    RomBase.memfree_lit ].
 -  intros n moA moB rsp mo' evs Hs H. apply (nstep_raw_msim n moA moB rsp mo' evs Hs H).
 -  intros n moA moB code mo' Hs H. apply (nexit_raw_msim n moA moB code mo' Hs H).
 -  intros mo mo' Hd HX. eapply xinvA_drift; eassumption.

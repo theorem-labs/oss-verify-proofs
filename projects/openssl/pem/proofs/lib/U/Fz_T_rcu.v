@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the larger auxiliary vector and its CONFIG_RSEQ entries). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -91,8 +92,10 @@ Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
   pose proof (munch_refl [(bv_unsigned sp - 96, bv_unsigned sp)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
   pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
   pose proof (w_bounds 264 ltac:(lia)) as W264. pose proof (w_bounds 16 ltac:(lia)) as W16.
-  assert (SPHI : bv_unsigned sp <= 2^64 - 160)
-    by (destruct CST as (_ & _ & (? & (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & ? & ? & ? & _) & ? & _) & _); lia).
+  assert (SPHI : bv_unsigned sp <= 2^64 - 160).
+  { destruct CST as (_ & _ & (_ & AUX & HBB & _) & _).
+    destruct AUX as (av & _ & _ & _ & r & _ & _ & _ & _ & BAV & AVH & _).
+    destruct r; cbn [auxv_vec_bytes] in AVH; lia. }
   (* [comment removed for export] *)
   cprefix. step. th_frame 80%nat [8; 8; 8; 8; 8; 8; 8; 8; 8; 8]%nat ST. do 8 step. do 2 step. ths. ths. ths.
   step. th_if_lit. step. do 2 step.

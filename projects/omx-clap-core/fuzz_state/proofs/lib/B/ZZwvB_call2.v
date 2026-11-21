@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_call2.v (a working branch
-   1a5dc5b2e7c): same lemma names and statements; imports point at lib/B's image files and walk kit (YB1v, YB1w,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_call2.v (a working branch):
+   same lemma names and statements; imports point at lib/B's image files and walk kit (YB1v, YB1w,
    FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer, FSH_Fn_alloc, FSW_K, FSW_K3, FSW_ret, FSW_rres, FSW_rd, FSW_pj,
    FSW_write_value_entry for image A's FSW_writer_tbl, ZZwvB_defs, ZZwvB_inv, ZZwvB_kit, ZZwvB_call); the
    image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen, FSupoisonStack stay lib/A's; FSH_Fn_reader is lib/B's

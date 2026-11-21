@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v at 80bf14ccf11; restated for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v; restated for
    reac-pw/fuzz_headamp image B against lib/AU/HPgW6aBase.v's w6b_c2_stmt: image B's registers (s1 = R, s11 = the
    shadow offset, s2 = the cursor, s4 = what is left, a7 = c - 1, t1 = what was left before the kind byte), image B's
    pcs and its real-frame cells [R+0x130] = &e62 and [R+0x148] = pp, the post lib/AU/HPgSteps.v's hdu_blk_postE with

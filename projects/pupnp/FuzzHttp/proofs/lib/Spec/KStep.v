@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a fresh mapping's placement fact mmap_placed has a sixth conjunct (the address linux_place names), so nstep_mmap0_top names it apart from the alloc_top bound. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -79,7 +80,7 @@ Proof.
   destruct H as [_ H]. cbv zeta in H. rewrite (unsigned_lit len) in H by lia. fold (mmap_len len) in H.
   assert (SR : forall r ws zs us cs, Nodes.strip rsp = mkEffectU r ws zs us cs [] -> eff_ret rsp = r).
   { intros r ws zs us cs E. destruct rsp as [r0 ws0 zs0 us0 cs0 ci0]. rewrite strip_mk in E. injection E. auto. }
-  destruct H as [(e & He & Hs & _)|[(_ & a & (Q1 & Q2 & Q3 & Q4 & Q5) & _ & Hs & _)|[(_ & _ & a & (Q1 & Q2 & Q3 & Q4 & Q5) & Hs & _)|(_ & _ & Hm & _)]]].
+  destruct H as [(e & He & Hs & _)|[(_ & a & (Q1 & Q2 & Q3 & Q4 & Q5 & _) & _ & Hs & _)|[(_ & _ & a & (Q1 & Q2 & Q3 & Q4 & Q5 & _) & Hs & _)|(_ & _ & Hm & _)]]].
   - exfalso. unfold efferr, eff0 in Hs. rewrite (SR _ _ _ _ _ Hs) in Hne.
     apply mmap_errnos_ENOMEM in He. subst e. rewrite errno_of_errno_ret in Hne by (unfold ENOMEM; lia). discriminate.
   - rewrite (SR _ _ _ _ _ Hs). rewrite (unsigned_lit len) in Q5 by lia. exact Q5.

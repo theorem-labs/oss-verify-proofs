@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (commit_node3 given the model's init_sp_ok fact). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -897,7 +898,7 @@ ltac:(img_try (rewrite Uaddr; unfold page_size; img_exact A4096)) ltac:(img_try 
 change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize) in CD, EGD.
 destruct (commit_node3 tfxsegs hole regs (Z_to_bv 64 (0x64c88 + D_2c4)) mem (seg_rom tfxsegs) mdN FL50 (w64 addr) 262144
 (AI_halted _ _ _ _ HAI) R17 R10 ltac:(img_try (rewrite Uaddr; unfold page_size; img_exact A4096)) ltac:(img_try (rewrite Uaddr; clear - HaRB DR; numconst; zlia))
-R11 ltac:(img_try (clear; zlia)) CEILT R12 R13 core50 R14 R15 PLACE' BUD) as (I & nx & bit & i0 & i1 & NODE & Bi0 & Bi1 & Bi2 & OUT).
+R11 ltac:(img_try (clear; zlia)) CEILT R12 R13 core50 R14 R15 (proj2 (proj2 (proj2 (proj2 (proj1 MWn))))) PLACE' BUD) as (I & nx & bit & i0 & i1 & NODE & Bi0 & Bi1 & Bi2 & OUT).
 img_change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize) in OUT.
 destruct (Bi2 HOLEF) as (i2 & Bi2').
 destruct Hmem as (Hwf & _ & _).

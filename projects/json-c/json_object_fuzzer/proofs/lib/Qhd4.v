@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the s5_hiA_* interface rules take it after alloc_ceiling <= lo (QZsi.hiA_bot of H6) and pass it to the QZsi.hiA_* fields). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -1126,7 +1127,7 @@ hiA_malloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (n lo : Z) (errv : word) (u : uwd),
 HEAPA A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1151,7 +1152,7 @@ hiA_free : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word) (u : uwd),
 HEAPA A LB LM FR B m c ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1173,7 +1174,7 @@ hiA_calloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (cnt sz lo : Z) (errv : word) (u : uwd),
 HEAPA A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1198,7 +1199,7 @@ hiA_realloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (p n0 n lo : Z) (errv : word) (old junk0 : list byte) (u : uwd),
 HEAPA A LB LM FR B m c -> In (p, n0) LB ->
 rw_cells segs m p [CB (Z.to_nat n0) (old ++ junk0)] ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1226,7 +1227,7 @@ hiA_strdup : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4
 HEAPA A LB LM FR B m c ->
 In (ab, nb) LB -> ab <= src -> src + Z.of_nat (length str) + 1 <= ab + nb ->
 bytes_at segs m src (str ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) str -> Z.of_nat (length str) + 1 < 2^32 ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1252,7 +1253,7 @@ hiA_malloc2 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (n lo : Z) (errv : word),
 HEAPA A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1275,7 +1276,7 @@ hiA_free2 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word),
 HEAPA A LB LM FR B m c ->
 (p = 0 \/ exists n, In (p, n) LM) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1297,7 +1298,7 @@ hiA_stack_malloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2
 HEAPA A LB LM FR B m c ->
 (0 <= k <= 2 \/ (k = 3 /\ hl_stack_malloc L 3 <> 0 /\ Z.of_nat (length FR) < 2048)) -> 1 <= bytes <= fr_size k -> bytes mod 8 = 0 ->
 (Z.of_nat (length FR) < 4096) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 tp = Z_to_bv 64 (hl_tp L) ->
 a0 = Z_to_bv 64 bytes ->
@@ -1463,7 +1464,7 @@ Lemma s5_hiA_malloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : QZsi.ASA L H6) (LB LM : list blk) (FR : list frame) (B : bud) (n lo : Z) (errv : word) (u : uwd),
 HEAPA5 A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1484,12 +1485,12 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_malloc L)) fc None m (seg_rom segs)).
 Proof.
-intros until u. intros HP ST LO LOS SPA HT ERR TP A0 N UW UWK BB BD K HGP.
+intros until u. intros HP ST LO HBT LOS SPA HT ERR TP A0 N UW UWK BB BD K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 pose proof (acost_le5 n ltac:(lia)) as AC.
 eapply (QZsi.hiA_malloc L H6) with (B := B6) (n := n) (u := u) (errv := errv) (lo := lo);
-[ exact HP6 | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0
+[ exact HP6 | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0
 | lia | exact UW | exact UWK | lia | lia | lia | first [lia | nia] | ].
 intros ms' m' c' A' r errv' RS VM ST' HPR ERR' Hr BLK HP'.
 eapply (K ms' m' c' A' r errv' RS VM ST' HPR ERR').
@@ -1501,7 +1502,7 @@ Lemma s5_hiA_free : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s
 (A : QZsi.ASA L H6) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word) (u : uwd),
 HEAPA5 A LB LM FR B m c ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1520,11 +1521,11 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_free L)) fc None m (seg_rom segs)).
 Proof.
-intros until u. intros HP HIN ST LO LOS SPA HT ERR TP A0 UWP BB BD K HGP.
+intros until u. intros HP HIN ST LO HBT LOS SPA HT ERR TP A0 UWP BB BD K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 eapply (QZsi.hiA_free L H6) with (B := B6) (p := p) (u := u) (errv := errv) (lo := lo);
-[ exact HP6 | exact HIN | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0
+[ exact HP6 | exact HIN | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0
 | exact UWP | destruct (Z.eqb p 0); lia | ].
 intros ms' m' c' A' r RS VM ST' HPR ERR' HP'.
 eapply (K ms' m' c' A' r RS VM ST' HPR ERR').
@@ -1535,7 +1536,7 @@ Lemma s5_hiA_calloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : QZsi.ASA L H6) (LB LM : list blk) (FR : list frame) (B : bud) (cnt sz lo : Z) (errv : word) (u : uwd),
 HEAPA5 A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1556,12 +1557,12 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_calloc L)) fc None m (seg_rom segs)).
 Proof.
-intros until u. intros HP ST LO LOS SPA HT ERR TP A0 A1 CNT SZ PROD UW UWK BB BD K HGP.
+intros until u. intros HP ST LO HBT LOS SPA HT ERR TP A0 A1 CNT SZ PROD UW UWK BB BD K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 pose proof (acost_le5 (cnt * sz) ltac:(lia)) as AC.
 eapply (QZsi.hiA_calloc L H6) with (B := B6) (cnt := cnt) (sz := sz) (u := u) (errv := errv) (lo := lo);
-[ exact HP6 | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact A1
+[ exact HP6 | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact A1
 | nia | nia | lia | exact UW | exact UWK | lia | lia | lia | first [lia | nia] | ].
 intros ms' m' c' A' r errv' RS VM ST' HPR ERR' Hr BLK HP'.
 eapply (K ms' m' c' A' r errv' RS VM ST' HPR ERR').
@@ -1573,7 +1574,7 @@ Lemma s5_hiA_realloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a
 (A : QZsi.ASA L H6) (LB LM : list blk) (FR : list frame) (B : bud) (p n0 n lo : Z) (errv : word) (old junk0 : list byte) (u : uwd),
 HEAPA5 A LB LM FR B m c -> In (p, n0) LB ->
 rw_cells segs m p [CB (Z.to_nat n0) (old ++ junk0)] ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1596,12 +1597,12 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_realloc L)) fc None m (seg_rom segs)).
 Proof.
-intros until u. intros HP HIN BLK0 ST LO LOS SPA HT ERR TP A0 A1 N UW UWK BB BD K HGP.
+intros until u. intros HP HIN BLK0 ST LO HBT LOS SPA HT ERR TP A0 A1 N UW UWK BB BD K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 pose proof (acost_le5 n ltac:(lia)) as AC.
 eapply (QZsi.hiA_realloc L H6) with (B := B6) (p := p) (n0 := n0) (n := n) (u := u) (errv := errv) (lo := lo) (old := old) (junk0 := junk0);
-[ exact HP6 | exact HIN | exact BLK0 | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact A1
+[ exact HP6 | exact HIN | exact BLK0 | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact A1
 | lia | exact UW | exact UWK | lia | lia | lia | first [lia | nia] | ].
 intros ms' m' c' A' r errv' RS VM ST' ERR' Hr HPR BLK HP'.
 eapply (K ms' m' c' A' r errv' RS VM ST' ERR').
@@ -1614,7 +1615,7 @@ Lemma s5_hiA_strdup : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7
 HEAPA5 A LB LM FR B m c ->
 In (ab, nb) LB -> ab <= src -> src + Z.of_nat (length str) + 1 <= ab + nb ->
 bytes_at segs m src (str ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) str -> Z.of_nat (length str) + 1 < 2^32 ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1637,12 +1638,12 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_strdup L)) fc None m (seg_rom segs)).
 Proof.
-intros until u. intros HP HIN LE1 LE2 BYTES NOZ LEN ST LO LOS SPA HT ERR TP A0 UW UWK BB BD K HGP.
+intros until u. intros HP HIN LE1 LE2 BYTES NOZ LEN ST LO HBT LOS SPA HT ERR TP A0 UW UWK BB BD K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 pose proof (acost_le5 (Z.of_nat (length str) + 1) ltac:(lia)) as AC.
 eapply (QZsi.hiA_strdup L H6) with (B := B6) (src := src) (ab := ab) (nb := nb) (str := str) (u := u) (errv := errv) (lo := lo);
-[ exact HP6 | exact HIN | exact LE1 | exact LE2 | exact BYTES | exact NOZ | lia | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR
+[ exact HP6 | exact HIN | exact LE1 | exact LE2 | exact BYTES | exact NOZ | lia | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR
 | exact TP | exact GP | exact A0 | exact UW | exact UWK | lia | lia | lia | first [lia | nia] | ].
 intros ms' m' c' A' r errv' RS VM ST' HPR ERR' Hr BYTES' HP'.
 eapply (K ms' m' c' A' r errv' RS VM ST' HPR ERR').
@@ -1653,7 +1654,7 @@ Lemma s5_hiA_malloc2 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : QZsi.ASA L H6) (LB LM : list blk) (FR : list frame) (B : bud) (n lo : Z) (errv : word),
 HEAPA5 A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1672,11 +1673,11 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_malloc2 L)) fc None m (seg_rom segs)).
 Proof.
-intros until errv. intros HP ST LO LOS SPA HT ERR TP A0 N LML BM K HGP.
+intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP A0 N LML BM K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 eapply (QZsi.hiA_malloc2 L H6) with (B := B6) (n := n) (errv := errv) (lo := lo);
-[ exact HP6 | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact N | exact LML | unfold M2D in BM; lia | ].
+[ exact HP6 | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact N | exact LML | unfold M2D in BM; lia | ].
 intros ms' m' c' A' r errv' RS VM ST' HPR ERR' OUT.
 eapply (K ms' m' c' A' r errv' RS VM ST' HPR ERR').
 - destruct OUT as [(Hr & He & HP') | (Hr & BLK & HP')]; [left | right]; (split; [exact Hr|]); (split; [eassumption|]);
@@ -1688,7 +1689,7 @@ Lemma s5_hiA_free2 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 
 (A : QZsi.ASA L H6) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word),
 HEAPA5 A LB LM FR B m c ->
 (p = 0 \/ exists n, In (p, n) LM) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1705,11 +1706,11 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_free2 L)) fc None m (seg_rom segs)).
 Proof.
-intros until errv. intros HP HIN ST LO LOS SPA HT ERR TP A0 K HGP.
+intros until errv. intros HP HIN ST LO HBT LOS SPA HT ERR TP A0 K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 eapply (QZsi.hiA_free2 L H6) with (B := B6) (p := p) (errv := errv) (lo := lo);
-[ exact HP6 | exact HIN | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | ].
+[ exact HP6 | exact HIN | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | ].
 intros ms' m' c' A' r RS VM ST' HPR ERR' HP'.
 eapply (K ms' m' c' A' r RS VM ST' HPR ERR').
 - eexists; split; [exact HP' | exact LK].
@@ -1721,7 +1722,7 @@ Lemma s5_hiA_stack_malloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5
 HEAPA5 A LB LM FR B m c ->
 (0 <= k <= 2 \/ (k = 3 /\ hl_stack_malloc L 3 <> 0 /\ Z.of_nat (length FR) < 2048)) -> 1 <= bytes <= fr_size k -> bytes mod 8 = 0 ->
 (Z.of_nat (length FR) < 4096) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 tp = Z_to_bv 64 (hl_tp L) ->
 a0 = Z_to_bv 64 bytes ->
@@ -1739,11 +1740,11 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_stack_malloc L k)) fc None m (seg_rom segs)).
 Proof.
-intros until lo. intros HP K02 BYTES MOD8 FRL ST LO LOS SPA HT TP A0 K HGP.
+intros until lo. intros HP K02 BYTES MOD8 FRL ST LO HBT LOS SPA HT TP A0 K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 eapply (QZsi.hiA_stack_malloc L H6) with (B := B6) (k := k) (bytes := bytes) (lo := lo);
-[ exact HP6 | exact K02 | exact BYTES | exact MOD8 | exact FRL | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact TP | exact GP | exact A0 | ].
+[ exact HP6 | exact K02 | exact BYTES | exact MOD8 | exact FRL | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact TP | exact GP | exact A0 | ].
 intros ms' m' A' Fr RS ST' HPR FRNZ BLK SHB HP'.
 eapply (K ms' m' c A' Fr RS (model_vm_only_refl _) ST' HPR FRNZ BLK SHB).
 - eexists; split; [exact HP' | exact LK].
@@ -1777,7 +1778,7 @@ Lemma s5_hiA_realloc_nf : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a
 (A : QZsi.ASA L H6) (LB LM : list blk) (FR : list frame) (B : bud) (p n0 n lo : Z) (errv : word) (old junk0 : list byte) (u : uwd),
 HEAPA5 A LB LM FR B m c -> In (p, n0) LB ->
 rw_cells segs m p [CB (Z.to_nat n0) (old ++ junk0)] ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> (QZsi.hiA_bot L H6) <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < (QZsi.hiA_top L H6) + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) ->
@@ -1798,12 +1799,12 @@ AJ5of L J6 A T c
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 (hl_realloc L)) fc None m (seg_rom segs)).
 Proof.
-intros until u. intros HP HIN BLK0 ST LO LOS SPA HT ERR TP A0 A1 N UW UWK BB BD K HGP.
+intros until u. intros HP HIN BLK0 ST LO HBT LOS SPA HT ERR TP A0 A1 N UW UWK BB BD K HGP.
 destruct HP as (B6 & HP6 & LK). pose proof LK as LK'. unfold blink in LK'.
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
 pose proof (acost_le5 n ltac:(lia)) as AC.
 eapply (QZsi.hiA_realloc L H6) with (B := B6) (p := p) (n0 := n0) (n := n) (u := u) (errv := errv) (lo := lo) (old := old) (junk0 := junk0);
-[ exact HP6 | exact HIN | exact BLK0 | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact A1
+[ exact HP6 | exact HIN | exact BLK0 | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact A1
 | lia | exact UW | exact UWK | lia | lia | lia | first [lia | nia] | ].
 intros ms' m' c' A' r errv' RS VM ST' ERR' Hr HPR BLK HP'.
 eapply (K ms' m' c' A' r errv' RS VM ST' ERR').

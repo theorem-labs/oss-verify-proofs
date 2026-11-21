@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -231,24 +232,25 @@ Theorem as_exit_T `{fx : DFP} : forall (j : Z) regs mem msF mo L S Zr (sp code :
   axA mem sp tid can TB -> cells_ok mem (xk_T j) ->
   length pending = Z.to_nat (2 * j) -> rdn RSEGS mem (Z_to_bv 64 ASTDOUT_BUF) (length pending) = Some pending ->
   fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader mo = true ->
   getr regs 2 = sp -> getr regs 4 = Z_to_bv 64 0x6c3f18 -> getr regs 10 = code ->
   lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 AEXIT) mem (seg_rom RSEGS) ->
   realizes RSEGS (mkCfg msF mo) (t_emit (map (WriteEv (Z_to_bv 64 1)) pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs mo))).
 Proof.
-  intros j regs mem msF mo L S Zr sp code tid can TB pending Hj XA CK Hlen Hpend Hfd R2 R4 R10 OK RS.
+  intros j regs mem msF mo L S Zr sp code tid can TB pending Hj XA CK Hlen Hpend Hfd Hrd R2 R4 R10 OK RS.
   assert (Hv : vals_ev (x_vals regs sp tid code can TB) 2 = code) by reflexivity.
   rewrite <- Hv.
   assert (HJ : j = 1 \/ j = 2 \/ j = 3) by lia.
   destruct HJ as [HJ|[HJ|HJ]]; subst j.
   - apply (ax_flush_1 (x_vals regs sp tid code can TB) regs mem msF mo L S Zr pending);
       [ apply x_vals_length | apply x_regs_ok; assumption | apply x_know_ok; [exact XA | vm_compute; reflexivity | exact CK]
-      | exact Hlen | exact Hpend | exact Hfd | exact OK | exact RS ].
+      | exact Hlen | exact Hpend | exact Hfd | exact Hrd | exact OK | exact RS ].
   - apply (ax_flush_2 (x_vals regs sp tid code can TB) regs mem msF mo L S Zr pending);
       [ apply x_vals_length | apply x_regs_ok; assumption | apply x_know_ok; [exact XA | vm_compute; reflexivity | exact CK]
-      | exact Hlen | exact Hpend | exact Hfd | exact OK | exact RS ].
+      | exact Hlen | exact Hpend | exact Hfd | exact Hrd | exact OK | exact RS ].
   - apply (ax_flush_3 (x_vals regs sp tid code can TB) regs mem msF mo L S Zr pending);
       [ apply x_vals_length | apply x_regs_ok; assumption | apply x_know_ok; [exact XA | vm_compute; reflexivity | exact CK]
-      | exact Hlen | exact Hpend | exact Hfd | exact OK | exact RS ].
+      | exact Hlen | exact Hpend | exact Hfd | exact Hrd | exact OK | exact RS ].
 Qed.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

@@ -3,7 +3,7 @@
 fuzz_wire.asan (sha256 2f8f8697cd4f, unstripped twin d2f662a22962) calls `__asan_stack_malloc_0` (0x3c544) and
 `__asan_stack_malloc_1` (0x3c6b8). The contracts of both are fuzz_grant's released proofs, relocated onto this image:
 
-| file (lib/) | donor (release commit 98c99a85e4; the same blob at 4f87de75d67, under proofs/libreac/fuzz_grant/lib/) |
+| file (lib/) | donor (release; the same blob, under proofs/libreac/fuzz_grant/lib/) |
 |---|---|
 | A/Rt/StackMalloc0.v | projects/libreac/fuzz_grant/proofs/lib/A/Rt/StackMalloc0.v |
 | A/Rt/StackMalloc0Tbl.v | projects/libreac/fuzz_grant/proofs/lib/A/Rt/StackMalloc0Tbl.v |
@@ -13,7 +13,7 @@ fuzz_wire.asan (sha256 2f8f8697cd4f, unstripped twin d2f662a22962) calls `__asan
 
 Each file keeps its donor's header lines (lines 1-4: Copyright, SPDX and the two `Modified by` lines) byte for byte, as
 copied (the unit owner's ruling, 2026-10-31 18:12Z); licence-lines (C) rewrites them through the unit's path-map row.
-Commit 9031801b53fd had left them out; records/header-restore.txt is the comment-only restore (token streams and
+Commit had left them out; records/header-restore.txt is the comment-only restore (token streams and
 statements unchanged).
 
 The contracts (records/print-assumptions.txt):
@@ -37,11 +37,11 @@ pinned by sha256 in the script. Result: staged 5, 0 kept, required.tsv empty, 0 
 check 14 / 14 ok, symbol gate PASS. port_core's FAIL rows: `rename-new-undeclared WireSyms` (its Record is in the
 start-up file lib/A/AF0m.v, never staged) and `data-symbol` on AF0r.v's FS_FROFF 0x109000, three times (the model's
 class-1 frame offset, kFakeFramesOff + 2^kStackSizeLog, not an address: role table). A re-run on the base lib
-(a3f9509d24de) gives a byte-equal stage-out.
+gives a byte-equal stage-out.
 
 `sm_apply.py <work> <lib> <donor lib> <list>` copies the stage-out by port_core --apply's rule for new files (nothing
-overwritten), with the donor's header lines in place of the stage-out's (the donor's lib in repository layout at
-98c99a85e4, unnormalised). After module paths, the rename and numerals are normalised, each file equals its donor apart
+overwritten), with the donor's header lines in place of the stage-out's (the donor's lib in repository layout,
+unnormalised). After module paths, the rename and numerals are normalised, each file equals its donor apart
 from that one code-table line. run.sh, sm_apply.py and the two depot_apply.py runs of section 2 reproduce the five
 files byte for byte.
 
@@ -50,7 +50,7 @@ files byte for byte.
 The unit's kernel is the empty-depot form (lib/Reusable/DepotCfg.v:16 `depot_has_trace := false`): owned_extents
 (lib/Reusable/YG0f.v:375-383) holds `if (ly_NB ly =? 0) then (4096, 0) else ...` and the same for ly_SB, which
 fuzz_grant's kernel does not have, so the SZ step's `cbn [snd]; ... lia` failed in both files (records/build.txt, the
-build of 9031801b53fd). fuzz_knock's released lib/A/AF0s.v:74 (release commit 88154566652a) is that step on this
+build). fuzz_knock's released lib/A/AF0s.v:74 (release) is that step on this
 kernel. The fix is one line in each file, every statement byte-equal (stmt_diff.py; records/stmt-diff-*.out):
 
 - A/Rt/AF0s.v:69, the consumer route. knock/run-knock.sh (the knock run's flags, knock-files.txt = A/AF0s.v)
@@ -88,7 +88,9 @@ file. A non-writer read of the two hunks against the donor lines and the ruling 
   UNPAIRED-PORTED 4 (the `0` literals of the SZ line, two per file), UNRESOLVED 2 (the low-shadow bound above).
 - Crossed pairs (records/ab1w-swaps.*): `ab1w_swaps.py` on lib/A/AB1w.v, which this relocation does not change: 0. The
   FS_* pc cells of the four files are each the same function and offset in both images (role table).
-- Builds (records/build.txt): cb build --fresh of 9031801b53fd, rc 1 at the SZ step; of 8a2b472e9c3e, rc 0.
+- Builds (records/build.txt): cb build --fresh, rc 1 at the SZ step;, rc 0.
 
 The scripts read elftools from PYTHONPATH and every input from an argument or the environment; they read and write
 only the paths they are given.
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

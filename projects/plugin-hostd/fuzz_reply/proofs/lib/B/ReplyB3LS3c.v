@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v, with its module paths and module names changed; 141 of its 268 lines of code are new or changed and 467 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (kind: model and invariant lemmas): fr_LS3c := fr_LS3 /\ fr_CNT at image B, fr_CNT's keep rules
    and the rules that keep the model's blocks or add the opened source's partial buffer *)
 (* Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3c.v (sha256
-   041bc3ac99b3; internal record) at 1b1e21bdbd40: A's definitions, names and proofs over lib/B's
+   041bc3ac99b3; internal record): A's definitions, names and proofs over lib/B's
    records, with the swaps of lib/B/ReplyB3LS3.v's header:
    - the Require header is ReplyB3LS3.v's plus ReplyB3LSCntL (lib/A ReplyLS3 ReplyLSCntL -> lib/B ReplyB3LS3
      ReplyB3LSCntL; lib/A ReplyLS -> lib/B ReplyLSB ReplyB3Base);

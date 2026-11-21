@@ -18,6 +18,7 @@
    arodata_ok_cf_of_journal and arodata_ok_cf_of_journal_P take YGcfAroBridge.ro_reads_nw_t (a segment inside 2^64
    holds each cf_ro_reads range), as YGcfAroBridge.arodata_ok_cf_of_P does, and their PST premise covers every
    aro_addr_cf address. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the cf BRIDGE. Each call form of the second allocator instance (YG0dcf.v) IS the generic
    form of YGcallx.v at
      ARx  := fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md,
@@ -174,7 +175,7 @@ exact (YGcfHeadSh.ARx_hshadow_law_cf_ok segs B L).
 intros ly S Hp W mem md p n a HAR Hin Ha. exact (YGcfTail.amalloc_tail_vis_end_cf segs B ly S Hp W mem md p n a HAR Hin Ha).
 - (* field 16: the image's const cells, ARmcf's amc_const *)
 intros ly S Hp W mem md (M & _). exact (amc_const _ _ _ _ _ M).
-- (* field 17: ly_img covers every segment (ALedger_cf's alc_img, as FCifaceCf.v:136), and a live fake frame lies
+- (* field 17: ly_img covers every segment (ALedger_cf's alc_img, as FCifaceCf.v:137), and a live fake frame lies
      at or above the image's top: the fake stack is disjoint from ly_img (frame_facts_cf), starts at or above 4096
      and is longer than kImgLo (= fst (ly_img ly), layout_ok's lo_img), so it cannot start below the image's end *)
 intros ly S Hp W mem md HAR. pose proof HAR as (M & LG & _). split.
@@ -187,7 +188,7 @@ exfalso. apply D. exists (Z.max (ly_F ly) (fst (ly_img ly))). unfold in_zr. cbn 
 unfold kImgLo, kFakeStackSize in *. split; [lia | left; lia]. }
 pose proof (Z.mul_nonneg_nonneg cid (2 ^ 20) ltac:(lia) ltac:(lia)) as CN.
 unfold frame_addr, kFakeFramesOff in *. lia.
-- (* field 18: the layout is layout_ok, ARmcf's amc_layout (as FCifaceCf.v:135) *)
+- (* field 18: the layout is layout_ok, ARmcf's amc_layout (as FCifaceCf.v:136) *)
 intros ly S Hp W mem md HAR. exact (amc_layout _ _ _ _ _ (proj1 HAR)).
 - (* field 19: frame_facts_cf's first conjunct *)
 intros ly S Hp W mem md cid pos (M & _) Hin. exact (proj1 (frame_facts_cf B ly S Hp _ cid pos M Hin)).

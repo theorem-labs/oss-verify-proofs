@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0h.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YN0h.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YN0h.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv memory facts (26 common pairs, the rseq pairs, AT_NULL) derived from the entry runs before the start-up cut); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -349,11 +350,14 @@ repeat split; unfold extent_disjoint; cbn [base_val r_base r_lo r_hi ew E0 R_sta
 cbn [base_val r_base r_lo r_hi ew E0 R_stack R_got R_guard R_pgsz R_ctxA R_ctxB R_ctxC R_errno vml_region]; lits; lia.
 Qed.
 Hypothesis Hauxp : word_mem src0segs mem (LIBC + 8) (cx 44%nat).
-Hypothesis Hauxv : forall k, (k < 10)%nat -> word_mem src0segs mem (cx 44%nat + 16 * Z.of_nat k) (nth k AUXV_TYPES 0).
-Hypothesis Har : word_mem src0segs mem (cx 44%nat + 16 * 8 + 8) (cx 45%nat).
-Hypothesis Hav_range : 4096 <= cx 44%nat /\ cx 44%nat + 160 <= 2 ^ 63 /\ 4096 <= cx 45%nat /\ cx 45%nat + 16 <= 2 ^ 63 /\ sp <= cx 44%nat.
-Lemma facts_ok_am0 : facts_ok E facts_am0.
+Hypothesis Har : word_mem src0segs mem (cx 44%nat + 16 * Z.of_nat AUXV_RAND_K + 8) (cx 45%nat).
+Hypothesis Hav_lo : 4096 <= cx 44%nat.
+Hypothesis Hav_sp : sp <= cx 44%nat.
+Hypothesis Har_lo : 4096 <= cx 45%nat.
+Hypothesis Har_hi : cx 45%nat + 16 <= 2 ^ 63.
+Lemma facts_ok_am0 : cx 44%nat + 464 <= 2 ^ 63 -> facts_ok E facts_am0.
 Proof.
+intros Hhi.
 pose proof (proj1 alloc_ceiling_val) as ACV_p9.
 subst E sp. pose proof (proj1 alloc_ceiling_val) as AC.
 unfold facts_am0, facts_ok. cbn [f_atoms f_conds f_alias atoms_ok conds_ok alias_ok].
@@ -361,17 +365,29 @@ unfold afact_ok, F_sp, F_sh, F_av, F_ar; cbn [af_lo af_hi af_al2 ew E0]. lits.
 rewrite !u64_of_Z by lia. change (2 ^ 0) with 1. rewrite !Z.mod_1_r. change (2 ^ 4) with 16.
 repeat split; lia.
 Qed.
+Lemma facts_ok_am0_f : cx 44%nat + 432 <= 2 ^ 63 -> facts_ok E facts_am0_f.
+Proof.
+intros Hhi.
+pose proof (proj1 alloc_ceiling_val) as ACV_p9.
+subst E sp. pose proof (proj1 alloc_ceiling_val) as AC.
+unfold facts_am0_f, facts_ok. cbn [f_atoms f_conds f_alias atoms_ok conds_ok alias_ok].
+unfold afact_ok, F_sp, F_sh, F_av_f, F_ar; cbn [af_lo af_hi af_al2 ew E0]. lits.
+rewrite !u64_of_Z by lia. change (2 ^ 0) with 1. rewrite !Z.mod_1_r. change (2 ^ 4) with 16.
+repeat split; lia.
+Qed.
 Theorem st_ok_am0 :
+(forall k, (k < length (auxv_types true))%nat -> word_mem src0segs mem (cx 44%nat + 16 * Z.of_nat k) (nth k (auxv_types true) 0)) ->
+cx 44%nat + 464 <= 2 ^ 63 ->
 (forall k, (k < 4)%nat -> mbyte src0segs mem (CTX + 8 + Z.of_nat k) = Some (Z_to_bv 8 (le_byte 0 4 k))) ->
 word_mem src0segs mem CTX 0   ->
 st_ok src0segs E ss_am0 (mkst regs (Z_to_bv 64 src0_A_alloc_meta) mem (seg_rom src0segs)).
 Proof.
-intros Hinit Hsec. pose proof (proj1 alloc_ceiling_val) as AC.
+intros Hauxv Hhi Hinit Hsec. pose proof (proj1 alloc_ceiling_val) as AC.
 assert (E44 : base_val E (Some 44%nat) = cx 44%nat).
 { subst E. cbn [base_val ew E0]. apply u64_of_Z. lia. }
 unfold st_ok, ss_am0, mkst; cbn [ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_rom ms_regs ms_mem ss_pc ss_regs ss_mem ss_resv ss_facts resv_denot].
 repeat (split; [reflexivity|]).
-split; [apply regs_ok_am|]. split; [| apply facts_ok_am0].
+split; [apply regs_ok_am|]. split; [| apply facts_ok_am0; exact Hhi].
 apply mem_ok_intro; [vm_compute; reflexivity | |].
 - change mem_am0 with (((R_stack :: [R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno]) ++ [R_auxp; R_auxv]) ++ vml_mem).
 apply Forall_app. split; [| apply vml_mem_ok; exact Hvml].
@@ -380,9 +396,13 @@ apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]].
 + apply region_ok_intro; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks base_val R_auxp]; lits; try lia.
 apply Forall_cons; [|apply Forall_nil]. apply (chunk_ok_word src0segs E mem 0 _ _ (cx 44%nat)); [apply E_cx; lia | exact Hauxp].
 + apply region_ok_intro; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks R_auxv]; rewrite E44; [lia | lia | intros o Ho; lia |].
-assert (TY : forall k off ty, (k < 10)%nat -> off = 16 * Z.of_nat k -> ty = nth k AUXV_TYPES 0 ->
+assert (TY : forall k off ty, (k < 29)%nat -> off = 16 * Z.of_nat k -> ty = nth k (auxv_types true) 0 ->
 chunk_ok src0segs E mem (cx 44%nat) (mkChunk off (CVal 8 (SLit ty)))).
-{ intros k off ty Hk -> ->. apply (chunk_ok_word src0segs E mem _ _ _ (nth k AUXV_TYPES 0)); [reflexivity | apply Hauxv; exact Hk]. }
+{ intros k off ty Hk -> ->. apply (chunk_ok_word src0segs E mem _ _ _ (nth k (auxv_types true) 0)); [reflexivity | apply Hauxv; exact Hk]. }
+(* One alternative per pair index, and the AT_RANDOM value chunk last.  [first] SEARCHES, so
+   the order of the chunk list does not matter and no alternative is positional; what must
+   track [auxv_types] is the RANGE 0..28.  [repeat apply Forall_cons] consumes whatever length
+   [R_auxv] has, so neither this list nor the region is hand-counted against the other. *)
 repeat apply Forall_cons; try apply Forall_nil;
 first [ apply (TY 0%nat); [lia | reflexivity | reflexivity]
 | apply (TY 1%nat); [lia | reflexivity | reflexivity]
@@ -394,7 +414,26 @@ first [ apply (TY 0%nat); [lia | reflexivity | reflexivity]
 | apply (TY 7%nat); [lia | reflexivity | reflexivity]
 | apply (TY 8%nat); [lia | reflexivity | reflexivity]
 | apply (TY 9%nat); [lia | reflexivity | reflexivity]
-| apply (chunk_ok_word src0segs E mem _ _ _ (cx 45%nat)); [apply E_cx; lia | replace (cx 44%nat + 136) with (cx 44%nat + 16 * 8 + 8) by lia; exact Har] ].
+| apply (TY 10%nat); [lia | reflexivity | reflexivity]
+| apply (TY 11%nat); [lia | reflexivity | reflexivity]
+| apply (TY 12%nat); [lia | reflexivity | reflexivity]
+| apply (TY 13%nat); [lia | reflexivity | reflexivity]
+| apply (TY 14%nat); [lia | reflexivity | reflexivity]
+| apply (TY 15%nat); [lia | reflexivity | reflexivity]
+| apply (TY 16%nat); [lia | reflexivity | reflexivity]
+| apply (TY 17%nat); [lia | reflexivity | reflexivity]
+| apply (TY 18%nat); [lia | reflexivity | reflexivity]
+| apply (TY 19%nat); [lia | reflexivity | reflexivity]
+| apply (TY 20%nat); [lia | reflexivity | reflexivity]
+| apply (TY 21%nat); [lia | reflexivity | reflexivity]
+| apply (TY 22%nat); [lia | reflexivity | reflexivity]
+| apply (TY 23%nat); [lia | reflexivity | reflexivity]
+| apply (TY 24%nat); [lia | reflexivity | reflexivity]
+| apply (TY 25%nat); [lia | reflexivity | reflexivity]
+| apply (TY 26%nat); [lia | reflexivity | reflexivity]
+| apply (TY 27%nat); [lia | reflexivity | reflexivity]
+| apply (TY 28%nat); [lia | reflexivity | reflexivity]
+| apply (chunk_ok_word src0segs E mem _ _ _ (cx 45%nat)); [apply E_cx; lia | replace (cx 44%nat + 392) with (cx 44%nat + 16 * Z.of_nat AUXV_RAND_K + 8) by (unfold AUXV_RAND_K; lia); exact Har] ].
 - unfold mem_am0. apply pairwise_disjoint_vml.
 + subst sp. cbn [pairwise_disjoint all_disjoint app].
 repeat split; unfold extent_disjoint; subst E; cbn [base_val r_base r_lo r_hi ew E0 R_stack R_got R_guard R_pgsz R_ctxA R_ctxB R_ctxC R_errno R_auxp R_auxv];
@@ -402,6 +441,80 @@ rewrite ?(u64_of_Z (cx 44%nat)) by lia; lits; lia.
 + intros vv Hv. vml_case Hv; subst sp E; repeat apply Forall_cons; try apply Forall_nil; unfold extent_disjoint;
 cbn [base_val r_base r_lo r_hi ew E0 R_stack R_got R_guard R_pgsz R_ctxA R_ctxB R_ctxC R_errno R_auxp R_auxv vml_region];
 rewrite ?(u64_of_Z (cx 44%nat)) by lia; lits; lia.
+Qed.
+Theorem st_ok_am0_f :
+(forall k, (k < length (auxv_types false))%nat -> word_mem src0segs mem (cx 44%nat + 16 * Z.of_nat k) (nth k (auxv_types false) 0)) ->
+cx 44%nat + 432 <= 2 ^ 63 ->
+(forall k, (k < 4)%nat -> mbyte src0segs mem (CTX + 8 + Z.of_nat k) = Some (Z_to_bv 8 (le_byte 0 4 k))) ->
+word_mem src0segs mem CTX 0   ->
+st_ok src0segs E ss_am0_f (mkst regs (Z_to_bv 64 src0_A_alloc_meta) mem (seg_rom src0segs)).
+Proof.
+intros Hauxv Hhi Hinit Hsec. pose proof (proj1 alloc_ceiling_val) as AC.
+assert (E44 : base_val E (Some 44%nat) = cx 44%nat).
+{ subst E. cbn [base_val ew E0]. apply u64_of_Z. lia. }
+unfold st_ok, ss_am0_f, mkst; cbn [ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_rom ms_regs ms_mem ss_pc ss_regs ss_mem ss_resv ss_facts resv_denot].
+repeat (split; [reflexivity|]).
+split; [apply regs_ok_am|]. split; [| apply facts_ok_am0_f; exact Hhi].
+apply mem_ok_intro; [vm_compute; reflexivity | |].
+- change mem_am0_f with (((R_stack :: [R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno]) ++ [R_auxp; R_auxv_f]) ++ vml_mem).
+apply Forall_app. split; [| apply vml_mem_ok; exact Hvml].
+apply Forall_app. split; [apply Forall_cons; [apply region_ok_stack | apply (region_ok_statics false Hinit Hsec)] |].
+apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]].
++ apply region_ok_intro; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks base_val R_auxp]; lits; try lia.
+apply Forall_cons; [|apply Forall_nil]. apply (chunk_ok_word src0segs E mem 0 _ _ (cx 44%nat)); [apply E_cx; lia | exact Hauxp].
++ apply region_ok_intro; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks R_auxv_f]; rewrite E44; [lia | lia | intros o Ho; lia |].
+assert (TY : forall k off ty, (k < 27)%nat -> off = 16 * Z.of_nat k -> ty = nth k (auxv_types false) 0 ->
+chunk_ok src0segs E mem (cx 44%nat) (mkChunk off (CVal 8 (SLit ty)))).
+{ intros k off ty Hk -> ->. apply (chunk_ok_word src0segs E mem _ _ _ (nth k (auxv_types false) 0)); [reflexivity | apply Hauxv; exact Hk]. }
+(* One alternative per pair index, and the AT_RANDOM value chunk last.  [first] SEARCHES, so
+   the order of the chunk list does not matter and no alternative is positional; what must
+   track [auxv_types] is the RANGE 0..26.  [repeat apply Forall_cons] consumes whatever length
+   [R_auxv_f] has, so neither this list nor the region is hand-counted against the other. *)
+repeat apply Forall_cons; try apply Forall_nil;
+first [ apply (TY 0%nat); [lia | reflexivity | reflexivity]
+| apply (TY 1%nat); [lia | reflexivity | reflexivity]
+| apply (TY 2%nat); [lia | reflexivity | reflexivity]
+| apply (TY 3%nat); [lia | reflexivity | reflexivity]
+| apply (TY 4%nat); [lia | reflexivity | reflexivity]
+| apply (TY 5%nat); [lia | reflexivity | reflexivity]
+| apply (TY 6%nat); [lia | reflexivity | reflexivity]
+| apply (TY 7%nat); [lia | reflexivity | reflexivity]
+| apply (TY 8%nat); [lia | reflexivity | reflexivity]
+| apply (TY 9%nat); [lia | reflexivity | reflexivity]
+| apply (TY 10%nat); [lia | reflexivity | reflexivity]
+| apply (TY 11%nat); [lia | reflexivity | reflexivity]
+| apply (TY 12%nat); [lia | reflexivity | reflexivity]
+| apply (TY 13%nat); [lia | reflexivity | reflexivity]
+| apply (TY 14%nat); [lia | reflexivity | reflexivity]
+| apply (TY 15%nat); [lia | reflexivity | reflexivity]
+| apply (TY 16%nat); [lia | reflexivity | reflexivity]
+| apply (TY 17%nat); [lia | reflexivity | reflexivity]
+| apply (TY 18%nat); [lia | reflexivity | reflexivity]
+| apply (TY 19%nat); [lia | reflexivity | reflexivity]
+| apply (TY 20%nat); [lia | reflexivity | reflexivity]
+| apply (TY 21%nat); [lia | reflexivity | reflexivity]
+| apply (TY 22%nat); [lia | reflexivity | reflexivity]
+| apply (TY 23%nat); [lia | reflexivity | reflexivity]
+| apply (TY 24%nat); [lia | reflexivity | reflexivity]
+| apply (TY 25%nat); [lia | reflexivity | reflexivity]
+| apply (TY 26%nat); [lia | reflexivity | reflexivity]
+| apply (chunk_ok_word src0segs E mem _ _ _ (cx 45%nat)); [apply E_cx; lia | replace (cx 44%nat + 392) with (cx 44%nat + 16 * Z.of_nat AUXV_RAND_K + 8) by (unfold AUXV_RAND_K; lia); exact Har] ].
+- unfold mem_am0_f. apply pairwise_disjoint_vml.
++ subst sp. cbn [pairwise_disjoint all_disjoint app].
+repeat split; unfold extent_disjoint; subst E; cbn [base_val r_base r_lo r_hi ew E0 R_stack R_got R_guard R_pgsz R_ctxA R_ctxB R_ctxC R_errno R_auxp R_auxv_f];
+rewrite ?(u64_of_Z (cx 44%nat)) by lia; lits; lia.
++ intros vv Hv. vml_case Hv; subst sp E; repeat apply Forall_cons; try apply Forall_nil; unfold extent_disjoint;
+cbn [base_val r_base r_lo r_hi ew E0 R_stack R_got R_guard R_pgsz R_ctxA R_ctxB R_ctxC R_errno R_auxp R_auxv_f vml_region];
+rewrite ?(u64_of_Z (cx 44%nat)) by lia; lits; lia.
+Qed.
+Theorem st_ok_am0_either : forall rs,
+(forall k, (k < length (auxv_types rs))%nat -> word_mem src0segs mem (cx 44%nat + 16 * Z.of_nat k) (nth k (auxv_types rs) 0)) ->
+cx 44%nat + 16 * Z.of_nat (length (auxv_types rs)) <= 2 ^ 63 ->
+(forall k, (k < 4)%nat -> mbyte src0segs mem (CTX + 8 + Z.of_nat k) = Some (Z_to_bv 8 (le_byte 0 4 k))) ->
+word_mem src0segs mem CTX 0 ->
+st_ok src0segs E (if rs then ss_am0 else ss_am0_f) (mkst regs (Z_to_bv 64 src0_A_alloc_meta) mem (seg_rom src0segs)).
+Proof.
+intros [|] Hkeys Hhi Hinit Hsec; [apply st_ok_am0 | apply st_ok_am0_f]; assumption.
 Qed.
 End e.
 End a.

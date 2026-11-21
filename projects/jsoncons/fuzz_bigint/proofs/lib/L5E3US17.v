@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells are read in the launch's layout (auxv_cells with the CONFIG_RSEQ flag's fact) and that fact is passed to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -217,7 +218,7 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES30 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M30 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
+  pose proof (auxv_cells M30 av uid rnd hw S_18 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
   unshelve epose proof (e3p6u_conc fx30 R30 M30 (S - 1008) (A + 128) fb64 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx31 & R31 & M31 & MS31 & K31 & R31_2 & R31_8 & R31_10 & R31_11 & FR31 & GR31).
   { (* [comment removed for export] *) pr. }
@@ -328,14 +329,14 @@ Proof.
     exact GR31.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG31 FR31 MS31. try clear STAT31. try clear K30.
   try clear c30_Sm72. try clear c30_Sm80. try clear c30_Sm88. try clear c30_Sm96. try clear c30_Sm104. try clear c30_Sm112. try clear c30_Sm120. try clear c30_Sm128. try clear c30_Sm136. try clear c30_Sm144. try clear c30_Sm152. try clear c30_Sm160. try clear c30_Sm168. try clear c30_Sm24. try clear c30_Sm32. try clear c30_Sm8. try clear c30_Sm16. try clear c30_Sm344w1. try clear c30_Sm280w1. try clear c30_Sm248w1. try clear c30_Sm224. try clear c30_Sm232. try clear c30_Sm200w1. try clear c30_Sm176. try clear c30_Sm184. try clear c30_Sm64w1. try clear c30_Om128z8. try clear c30_Om80z12. try clear c30_Op0. try clear c30_Op8. try clear c30_Fp24. try clear c30_Fp32. try clear c30_Fp40. try clear c30_Fp48. try clear c30_Fp56. try clear c30_Fp64w1. try clear c30_Fp65w1. try clear c30_Fp16w4. try clear c30_Fp8. try clear c30_Fp0. try clear c30_Om8. try clear c30_Om40. try clear c30_Om48. try clear c30_Om56. try clear c30_Om64. try clear c30_Om68w4. try clear c30_Om16. try clear c30_Om120. try clear c30_Om24. try clear c30_Om32. try clear c30_Om88. try clear c30_Om104. try clear c30_Om112. try clear c30_Om96. try clear R30_1. try clear R30_2. try clear R30_3. try clear R30_4. try clear R30_8. try clear R30_9. try clear R30_10. try clear R30_11. try clear R30_18. try clear R30_19. try clear R30_20. try clear R30_21. try clear R30_22. try clear R30_23. try clear R30_24. try clear R30_25. try clear R30_26. try clear R30_27. try clear DEF30. try clear HH30. try clear HQ30. try clear ES30. try clear DEFref_30. try clear DEFA_30.
   (* [comment removed for export] *)
   pose proof ES31 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M31 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
-  unshelve epose proof (e3r6u_conc fx31 R31 M31 (S - 1008) (A + 128) av canary uid rnd hw (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
+  pose proof (auxv_cells M31 av uid rnd hw S_18 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
+  unshelve epose proof (e3r6u_conc X_r fx31 R31 M31 (S - 1008) (A + 128) av canary uid rnd hw (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx32 & R32 & M32 & MS32 & K32 & R32_1 & R32_2 & R32_8 & R32_10 & R32_11 & FR32 & GR32).
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -367,20 +368,6 @@ Proof.
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) first [exact c31_Om16 | cellfix c31_Om16]. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -475,7 +462,7 @@ Proof.
     exact GR32.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG32 FR32 MS32. try clear STAT32. try clear K31.
   try clear c31_Sm136. try clear c31_Sm144. try clear c31_Sm152. try clear c31_Sm160. try clear c31_Sm168. try clear c31_Sm24. try clear c31_Sm32. try clear c31_Sm8. try clear c31_Sm16. try clear c31_Sm344w1. try clear c31_Sm280w1. try clear c31_Sm248w1. try clear c31_Sm224. try clear c31_Sm232. try clear c31_Sm200w1. try clear c31_Sm176. try clear c31_Sm184. try clear c31_Sm64w1. try clear c31_Om128z8. try clear c31_Om80z12. try clear c31_Op0. try clear c31_Op8. try clear c31_Fp24. try clear c31_Fp32. try clear c31_Fp40. try clear c31_Fp48. try clear c31_Fp56. try clear c31_Fp64w1. try clear c31_Fp65w1. try clear c31_Fp16w4. try clear c31_Fp8. try clear c31_Fp0. try clear c31_Om8. try clear c31_Om40. try clear c31_Om48. try clear c31_Om56. try clear c31_Om64. try clear c31_Om68w4. try clear c31_Om16. try clear c31_Om120. try clear c31_Om24. try clear c31_Om32. try clear c31_Om88. try clear c31_Om104. try clear c31_Om112. try clear c31_Om96. try clear R31_1. try clear R31_2. try clear R31_3. try clear R31_4. try clear R31_8. try clear R31_9. try clear R31_10. try clear R31_11. try clear R31_18. try clear R31_19. try clear R31_20. try clear R31_21. try clear R31_22. try clear R31_23. try clear R31_24. try clear R31_25. try clear R31_26. try clear R31_27. try clear DEF31. try clear HH31. try clear HQ31. try clear ES31. try clear DEFref_31. try clear DEFA_31.
   (* [comment removed for export] *)

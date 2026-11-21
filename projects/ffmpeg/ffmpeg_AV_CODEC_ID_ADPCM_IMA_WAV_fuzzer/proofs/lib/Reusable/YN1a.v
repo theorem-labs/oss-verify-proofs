@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN1a.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YN1a.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed, and its addresses and numbers named by Reusable/YAddr.v, which holds this fuzz target's plain binary's values; musl's vmlock, which this binary's __vm_wait reads and zlib's binary does not link, added to the static memory the proofs track, and the proofs extended to it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ledger_same takes the kernel build's equation too). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1238,7 +1239,7 @@ destruct (In_footprint_inv sq e He) as [-> | [(ar & Har & ->) | (kk & rg2 & Hrg2
 - intros x Hx. destruct (areas_off_img B (m :: X) (Some (hg, idx)) U L' sq mem' md' HIq MID' ar x Har Hx) as [NI Rx]. apply PRES; [exact (FO x Hx) | clear - Rx AC; lia | exact NI].
 - intros x Hx. pose proof (lg_placed _ _ _ _ (mid_ledger _ _ _ _ _ MID') _ rg2 Hrg2 Hlv2) as (_ & B1 & B2 & Bimg). cbn [loc_addr] in Hx.
 apply PRES; [exact (FO x Hx) | clear - Hx B1 B2 AC; lia | exact (Bimg x ltac:(clear - Hx; lia))]. }
-destruct (ledger_same B L' sq md' (mid_ledger _ _ _ _ _ MID') (mid_ledgerx _ _ _ _ _ MID') sNq md' Qr Qb eq_refl eq_refl eq_refl) as [LG5 LX5].
+destruct (ledger_same B L' sq md' (mid_ledger _ _ _ _ _ MID') (mid_ledgerx _ _ _ _ _ MID') sNq md' Qr Qb eq_refl eq_refl eq_refl eq_refl) as [LG5 LX5].
 split.
 - exact SO.
 - split; [apply Forall_forall; exact IMG | split; [apply Forall_forall; exact TAIL | exact FOOT]].

@@ -192,7 +192,7 @@ Theorem tfib_k0_closure :
   (forall pc0 L, k0_has_site K0_SITES pc0 L = true ->
      forall ly regs ch, In (raZ regs :: spine ch) L -> In (call_trace ly pc0 regs ch) Tfib_universe).
 Proof. split; [exact (k0_callee _ _ _ K0_CLOSED) | exact (k0_call_trace _ _ _ K0_CLOSED)]. Qed.
-(* what the allocator instance proves its Section hc rules with (W_journal.v, a working branch 4d6dcd568a5) *)
+(* what the allocator instance proves its Section hc rules with (W_journal.v, a working branch) *)
 Lemma k0_afree : forall ly regs ch, In (raZ regs :: spine ch) CTX_AFREE -> In (call_trace ly 0x53f2c regs ch) Tfib_universe.
 Proof. exact (k0_call_trace _ _ _ K0_CLOSED 0x53f2c CTX_AFREE ltac:(vm_compute; reflexivity)). Qed.
 Lemma k0_amalloc : forall ly regs ch, In (raZ regs :: spine ch) CTX_AMALLOC -> In (call_trace ly 0x5408c regs ch) Tfib_universe.

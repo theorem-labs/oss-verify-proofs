@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (paintcmap_asan_pre runs the source against the run's segment list (the image plus the vDSO pair) through RomStable.run_init, with valid_input's channel-reader and launch facts; s3s_closed given TopA's topA_runseg; the RomStable import). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -22,6 +23,7 @@ From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.Top Require TopLevelA.
 Require OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.A21.TopA_final.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.Top Require Import SpecCanonBridge.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.Common.Cfg Require Import RomStable.
 Import ListNotations.
 
 Section Pre.
@@ -39,14 +41,17 @@ Section Pre.
     destruct (TopLevelA.T_canon _ _ _ S3A ent inp Hvt Hvi) as [HtrT HerrT].
     pose proof (valid_input_va_size _ Hvi) as Hsv.
     rewrite (valid_entry_sv48 _ _ _ Hsv) in Hvs.
-    destruct Hvs as (Hsps & Hbrks & _ & Hfits).
+    destruct Hvs as (Hsps & Hbrks & _ & Hfits & Hlaus).
+    pose proof (valid_input_channel_reader _ Hvi) as Hrd. pose proof (valid_input_launch _ Hvi) as Hvl.
     destruct Hvi as (Hva & Hve & _).
-    assert (Hsrc : realizes Plain.M.loaded_segments
-                     (init_config Plain.M.loaded_segments
+    (* the run reads the binary against its segments and the vDSO pair: [RomStable.run_init] *)
+    assert (Hsrc : realizes (run_segments Plain.M.loaded_segments inp sps mbs)
+                     (init_config (run_segments Plain.M.loaded_segments inp sps mbs)
                         Plain.M.init_pc Plain.M.phdrs
                         sps brks mbs draws ShippedBudgets.lim_source inp)
                      (spec (in_argv inp) (in_fs inp))).
-    { apply (@O21Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption.
+    { apply run_init; [reflexivity |].
+      apply (@O21Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption.
       unfold ShippedBudgets.lim_source, source_alloc_limit. apply Z.le_refl. }
     split; [| split].
     - cbn. eapply realizes_no_error; exact Hsrc.
@@ -63,5 +68,5 @@ Theorem strong_universal_error_free_paintcmap_fuzzer_asan :
     (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)
     (mkImage Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs).
 Proof.
-  exact (@paintcmap_asan_pre _ _ s21_sure O21Tail.O21Pins.s21_pins (s21_fuzz_call s21_sure) OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.A21.TopA_final.s3s_closed).
+  exact (@paintcmap_asan_pre _ _ s21_sure O21Tail.O21Pins.s21_pins (s21_fuzz_call s21_sure) (OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.A21.TopA_final.s3s_closed OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.A21.TopA.topA_runseg)).
 Qed.

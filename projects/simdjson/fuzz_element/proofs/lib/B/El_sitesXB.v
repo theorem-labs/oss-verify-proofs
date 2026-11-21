@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv facts are carried word by word at the revision's auxv layout, with the walk fact over the whole vector. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -69,8 +70,15 @@ Proof.
 Qed.
 Lemma el_auxvA_of_D : forall lo m, D_auxv.el_auxvA lo m -> El_xs_adaptA.el_auxvA lo m.
 Proof.
-  intros lo m (av & x16 & x11 & rnd & C & B & L1 & L2 & L3 & R1 & R2 & R3). exists av, x16, 4096, x11, x11, 0, rnd.
-  split; [exact C|]. split; [exact B|]. repeat split; lia.
+  intros lo m (av & x16 & x11 & rnd & C & B & L1 & L2 & L3 & R1 & R2 & R3 & HW). exists av, x16, 4096, x11, x11, 0, rnd.
+  unfold D_auxv.el_auxv_at, D_auxv.el_auxv_word, D_auxv.EL_AT_PHDR in B.
+  destruct B as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 & B9 & B10 & B11 & B12 & B13 & B14 & B15 & B16 & B17 & B18).
+  unfold El_xs_adaptA.el_auxv_word.
+  split; [exact C|]. split; [exact B1|]. split; [exact B2|]. split; [exact B3|]. split; [exact B4|].
+  split; [exact B5|]. split; [exact B6|]. split; [exact B7|]. split; [exact B8|]. split; [exact B9|].
+  split; [exact B10|]. split; [exact B11|]. split; [exact B12|]. split; [exact B13|]. split; [exact B14|].
+  split; [exact B15|]. split; [exact B16|]. split; [exact B17|]. split; [exact B18|].
+  do 9 (split; [lia|]). exact HW.
 Qed.
 
 Definition wsB (RA : Z) (X : lfA) : list word :=

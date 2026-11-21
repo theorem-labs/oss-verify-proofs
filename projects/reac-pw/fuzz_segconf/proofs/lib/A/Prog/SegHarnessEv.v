@@ -1,6 +1,6 @@
 (* reac-pw/fuzz_segconf, image A: the allocator events of one call of LLVMFuzzerTestOneInput are at most 16, the
    bound the close's bridge (lib/A/Prog/SegLibX.v) needs against the program interface's EV_LIB (the role of
-   plugin-hostd/fuzz_command's lib/A/Prog/HarnessArgsEv.v, origin/ossv/recipes 501c0d516c69).
+   plugin-hostd/fuzz_command's lib/A/Prog/HarnessArgsEv.v).
 
    EV_LTOI pl = 8 + 2 * seg_spec.seg_nfiles pl (lib/A/Prog/LLVMFuzzerTestOneInput_c.v): malloc(c), calloc(m),
    calloc(tab), calloc(mt) and the four frees, and a malloc / free pair per file turn. The payload decodes to 1 + b2 mod 4

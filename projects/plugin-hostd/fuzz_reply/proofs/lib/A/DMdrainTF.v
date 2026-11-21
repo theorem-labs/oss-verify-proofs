@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTF.v (commit 68fe993efc49, Quarantine::Drain walk set; file sha256 55fbc5d0fb6a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTF.v (Quarantine::Drain walk set; file sha256 55fbc5d0fb6a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the drain's RETURN ARM end to end - when the transferred
    quarantine is within kQuarantineMax, Quarantine::Drain's walk from 0x337ec reaches its return and the whole
    tree is the transfer, so the arm gives DIfaceR.drain_leaf_g at MnEnq.acall_raw_em_x, the form
@@ -54,7 +55,7 @@ Hypothesis QS : di_stack_t ARX AOX.
 Hypothesis RQX : di_requar_x_t B ARX AOX L24 QB.
 Hypothesis QBB : forall X, QB X -> qc_bytes (st_qglobal X) <= 2 ^ 30 /\ qc_bytes (st_qthread X) <= 2 ^ 29.
 (* No premise on the quarantine's header presence: DMiface.dmem_q's presence clause is stated for 0 <= a < 2^64
-   only, and in that range it excludes the header words (DMiface.v:122-126), so DMdrainTC.dmem_q_cut needs none. *)
+   only, and in that range it excludes the header words (DMiface.v:123-127), so DMdrainTC.dmem_q_cut needs none. *)
 
 (* the transferred bytes are the two caches' (DMdrainM.gxf_bytes) in the shell's vocabulary *)
 Lemma lb_eq : forall X, AFgj.LBv (st_qglobal X) (st_qthread X) = qc_bytes (gxf X).

@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v, RPgM02KeyI.v and RPgM02KeyV.v
-   at 595d8c5dd1b5 (the value language of the value entry's address and of a `lw`, the expect_value cases, the
+   (the value language of the value entry's address and of a `lw`, the expect_value cases, the
    shadow entry over the value entry, the value dispatch, the Int arm and the value tail),
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v at 7e8cf15c304a (the Float arm: the size test, the `flw` and
-   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v at 22306b8175e6 (the pairs of the scan across a
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v (the Float arm: the size test, the `flw` and
+   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v (the pairs of the scan across a
    key) for reac-pw/fuzz_rate image A: role's pcs become rate's, the shadow base is rate's s2 (atom 18), role's Role
    answers become Rate.expect_value / Rate.rate_of_pairs, role's value tail (a bound test and check_role) becomes
    rate's check_rate on the hz cell, the out cell is R+0x158, the `flw` is stepped by YA0n.SRr_step, and the key
    compare (the spills, the strcmp wrapper, the mismatch exit to O) is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate, image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, the same loaded bytes). Proves no function

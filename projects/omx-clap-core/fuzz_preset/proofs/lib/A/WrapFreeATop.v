@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: RELOCATED to the #102 pins (image A' = asan 1be0f53d96cb, twin bff8519bbe3e) from commit preset-tree-at-2026-10-29T17-46-55Z.tsv (sha256 7c0bbc66e4a5; internal record) (old-pin image A) by the relocation script, the internal file reloc_A2.py (named with its outputs in the commit that added this line): every code address moved by symbol + offset (the internal file reloc_A2.out), the walk's functions checked by bytecmp 1480ca2faea0 + a target pass (the internal file measure_A2.out); data addresses come by name from int102's A' tables; ARXs_cf / ARmcf follow preset-tree-at-2026-10-29T18-16-07Z.tsv (sha256 4c721de248fd; internal record) (xs_placed is ARmcf's field amc_xs_placed). *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A' (#102 asan, pin 1be0f53d96cb, twin bff8519bbe3e): the fields of
-   the Record wrap_free_walk_cf (lib/Reusable/YGcfMallocCompose.v:338-367) at
+   the Record wrap_free_walk_cf (lib/Reusable/YGcfMallocCompose.v:339-368) at
      segs := tfibsegs, atpD := 1 (asan_free's alloc_type, FROM_MALLOC), ARX := WrapMallocARetG.ARXq_A B (round 6),
      K := K_A (WrapFreeAK.v),
    from the walk pieces: the entry facts (WrapFreeASeed.v), the call segment (WrapFreeACall.v, __wrap_free 0x53734 to
@@ -386,7 +387,7 @@ Qed.
 (* The record at image A, from the two fields, once the caller's stack premise gives the room below sp that
    Deallocate's ly_bot conjunct needs (BOTP, acall_pre_cf's conjunct `ly_bot ly + ACALL_PREFIX < spZ regs`
    with ACALL_PREFIX = 4096; the walk uses 2128 of it; the closed forms below take it from acall_pre_cf). The constructor checks
-   both fields against YGcfMallocCompose.v:342 / :352's text. *)
+   both fields against YGcfMallocCompose.v:343 / :353's text. *)
 Theorem wrap_free_walk_keep_A_of_bot : cf_pc_deallocate = 0x322a4 ->
   (forall ly S Hp W regs mem md ch, acall_pre_cf tfibsegs B ly S Hp W regs mem md ch -> ly_bot ly + 4096 < spZ regs) ->
   YGcfMallocComposeKeep.wrap_free_walk_keep_cf tfibsegs B 1 ARX K_A.

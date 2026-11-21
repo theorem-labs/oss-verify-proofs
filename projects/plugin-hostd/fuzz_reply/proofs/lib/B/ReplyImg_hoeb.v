@@ -3,11 +3,11 @@
    rule 24: no function proved (kind: image row; two symbol-table facts at reply's image B).
 
    HOEB is the cf layer's unit premise `Hypothesis HOEB : ~ (cf_errbuf_obj <= as_oom_byte B < cf_errbuf_obj + 56)`
-   (YGcfInstMiss.v Section b, a working branch aa87040fb59), taken under `Hypothesis TS : im_syms B`. hoeb_B states
+   (YGcfInstMiss.v Section b, a working branch), taken under `Hypothesis TS : im_syms B`. hoeb_B states
    that text at reply's image class instance AImg_reply (B/AGif2reply.v) and CfImg_B (B/CfImgB.v:34, cf_errbuf_obj :=
    0xa5ea8, __asan::error_message_buffer), with TS as its premise; a consumer closes HOEB with `exact (hoeb_B B TS)`. The
-   discharge is cgif's (YGcfInstMisscgif.HOEB_cgif): reply B's TfibSyms field ts_oom (B/YF0m.v:874) with TFIB_OOM =
-   0x1288a0 (B/YF0m.v:19). *)
+   discharge is cgif's (YGcfInstMisscgif.HOEB_cgif): reply B's TfibSyms field ts_oom (B/YF0m.v:875) with TFIB_OOM =
+   0x1288a0 (B/YF0m.v:20). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

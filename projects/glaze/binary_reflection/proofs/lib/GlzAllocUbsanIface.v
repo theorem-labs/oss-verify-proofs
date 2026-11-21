@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO reservation inclusion and the channel reader in the malloc and free preconditions and results). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -83,7 +84,8 @@ Section Specs.
     bv_unsigned (getr R 2) = sp /\ sp mod 16 = 0 /\ CEIL + stk <= sp /\
     getr R 4 = Z_to_bv 64 TPV /\
     (forall a : word, sp - stk <= bv_unsigned a < sp -> store_ok RSEGS M a 1%nat = true) /\
-    B + (n + MBLK) <= MH_GBUDGET /\ C + 1 <= LMAX.
+    B + (n + MBLK) <= MH_GBUDGET /\ C + 1 <= LMAX /\
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
 
   Definition malloc_ok (INV : ainv_t) (stk : Z) (R : bvmap 5 word) (M : mem) (mdl : Model)
              (Lc : list (Z * Z)) (B C ret n sp : Z) (c' : config) : Prop :=
@@ -97,7 +99,11 @@ Section Specs.
       (forall a : word, sp - stk <= bv_unsigned a < sp -> store_ok RSEGS M' a 1%nat = true) /\
       INV ((bv_unsigned p, n) :: Lc) (B + (n + MBLK)) (C + 1) M' mdl' /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl.
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      (* Must stay convertible with UbMhIface3.malloc_ok: GlzClosureUbsanInst feeds one
+         into the other through GlzAllocUbsanIface.UBMH. *)
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')).
 
   Definition malloc_null (INV : ainv_t) (stk : Z) (R : bvmap 5 word) (M : mem) (mdl : Model)
              (Lc : list (Z * Z)) (B C ret sp : Z) (c' : config) : Prop :=
@@ -108,7 +114,9 @@ Section Specs.
       (forall a : word, sp - stk <= bv_unsigned a < sp -> store_ok RSEGS M' a 1%nat = true) /\
       INV Lc B C M' mdl' /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl.
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')).
 
   Definition malloc_cfg (R : bvmap 5 word) (M : mem) (mdl : Model) : config :=
     mkCfg (mkst R (Z_to_bv 64 A_MALLOC) M (seg_rom RSEGS)) mdl.
@@ -131,7 +139,8 @@ Section Specs.
                          /\ B' = Z.max 0 (B - (m + MBLK)) /\ C' = Z.max 0 (C - 1)) /\
     bv_unsigned (getr R 2) = sp /\ sp mod 16 = 0 /\ CEIL + stk <= sp /\
     getr R 4 = Z_to_bv 64 TPV /\
-    (forall a : word, sp - stk <= bv_unsigned a < sp -> store_ok RSEGS M a 1%nat = true).
+    (forall a : word, sp - stk <= bv_unsigned a < sp -> store_ok RSEGS M a 1%nat = true) /\
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
 
   Definition free_post (INV : ainv_t) (stk : Z) (R : bvmap 5 word) (M : mem) (mdl : Model)
              (Lc' : list (Z * Z)) (B' C' ret sp : Z) (c' : config) : Prop :=
@@ -142,7 +151,9 @@ Section Specs.
       (forall a : word, sp - stk <= bv_unsigned a < sp -> store_ok RSEGS M' a 1%nat = true) /\
       INV Lc' B' C' M' mdl' /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl.
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')).
 
   Definition free_cfg (R : bvmap 5 word) (M : mem) (mdl : Model) : config :=
     mkCfg (mkst R (Z_to_bv 64 A_FREE) M (seg_rom RSEGS)) mdl.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of projects/cgif/cgif_file_fuzzer/proofs/lib/YZ03.v for fuzz_identity's ASan+UBSan image and identity_shape, named TFIB_TB; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed TFIB_TB). *)
 (* What the ASan+UBSan side of fuzz_identity's two ASan+UBSan statements proves: from every valid start, the
    ASan+UBSan build realizes the same trace set SPECX as the plain build (lib/Reusable/YK18.v srealizes, no cut).
    lib/A/IdentityTFIB.v TFIB_T is the same proposition over the ASan image. *)
@@ -21,6 +22,8 @@ Definition TFIB_TB : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk identsegsB0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+(* LPS 727298f3: [Run.valid_entry]'s fifth conjunct, which the ASan+UBSan start-up reads; the statements give it *)
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes identsegsB0
 (init_config identsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=identity_shape) inp).

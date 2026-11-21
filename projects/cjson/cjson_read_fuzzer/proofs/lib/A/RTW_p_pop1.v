@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: prim_fixed_site reads the launch's reservations off the map the site sits in (lok_resv_free). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -128,9 +129,12 @@ Proof.
   intros st0 HM HP1 HP2 HAL HP3. pose proof HM as (M1 & _). destruct HA as (G1 & G2 & G3).
   unfold mmap_fixed_site. unfold PRIM_RES_SIZE, KHIGHMEM_BEG, AIMG_HI, CEIL in *.
   split; [exact HAL|]. split; [lia|]. split; [rewrite CEIL_eq; unfold CEIL; lia|]. split.
-  - apply region_free_intro. intros b s Hin. pose proof (reserved_below mo b s HO Hin) as R. unfold AIMG_HI in R.
-    unfold iv_overlap. rewrite !unsigned_lit by lia. apply andb_false_iff.
-    first [left; apply Z.ltb_ge; lia | right; apply Z.ltb_ge; lia].
+  - apply (lok_resv_free _ mo _ _ HO).
+    + apply region_free_intro. intros b s Hin. pose proof (segs_reserved_below b s Hin) as R. unfold AIMG_HI in R.
+      unfold iv_overlap. rewrite !unsigned_lit by lia. apply andb_false_iff.
+      first [left; apply Z.ltb_ge; lia | right; apply Z.ltb_ge; lia].
+    + unfold map_contains. apply existsb_exists. exists (wz (st_pbase st0), wz PRIM_RES_SIZE). split; [exact M1|]. cbn [fst snd].
+      unfold wz, PRIM_RES_SIZE. rewrite !unsigned_lit by lia. apply andb_true_iff. split; apply Z.leb_le; lia.
   - unfold map_contains. apply existsb_exists. exists (wz (st_pbase st0), wz PRIM_RES_SIZE). split; [exact M1|]. cbn [fst snd].
     unfold wz, PRIM_RES_SIZE. rewrite !unsigned_lit by lia. apply andb_true_iff. split; apply Z.leb_le; lia.
 Qed.

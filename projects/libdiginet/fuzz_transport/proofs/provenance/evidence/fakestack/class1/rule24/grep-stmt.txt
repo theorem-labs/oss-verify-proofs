@@ -136,7 +136,7 @@ refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/YF0u.
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCapi.v:36:  - exact (FCm1s.stack_malloc1_contract_x B ARx I TB).
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm01xm.v:32:Corollary stack_malloc1_contract_xm : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B ->
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm1s.v:564:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
-refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/PresetCfnA.v:918:   d05d97a36005) proves stack_malloc0_contract_xm for cid 0 and stack_malloc1_contract_xm for cid 1, in
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/PresetCfnA.v:918:) proves stack_malloc0_contract_xm for cid 0 and stack_malloc1_contract_xm for cid 1, in
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/Prog/S8aEntry.v:46:   astack_malloc_realizes_xm); supplier = the frame-class lane's stack_malloc1_contract_xm (lib/A/FCm01xm.v:32, Qed,
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/Prog/S8aEntry.v:132:   YGcallMxmn.v:207). DISCHARGE at image A: `FCm01xm.stack_malloc1_contract_xm B ARx I TB` (lib/A/FCm01xm.v:32, Qed,
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCapi.v:38:  - exact (FCm1s.stack_malloc1_contract_x B ARx I TB).
@@ -146,8 +146,8 @@ refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCxmCfxB.v:20:     It is lib/AU/FCm01xm.v stack_malloc1_contract_xm at ARx := ARcf tfibsegs TfibB, TfibSyms from
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCxmCfxB.v:69:Corollary stack_malloc1_contract_xm_cfx_B : forall fx : YK11.FPState,
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCxmCfxB.v:76:    (FCm01xm.stack_malloc1_contract_xm (fx := fx) YD2l.TfibB (ARcf (cp := CP) tfibsegs YD2l.TfibB)
-refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/PresetCfnB.v:919:   d05d97a36005) proves stack_malloc0_contract_xm for cid 0 and stack_malloc1_contract_xm for cid 1, in
-refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/B/Prog/ExvB_Inst.v:172:   lib/AU/FCxmCfxB.v stack_malloc1_contract_xm_cfx_B (FrameXm102 07210922d952). No premise left.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/PresetCfnB.v:919:) proves stack_malloc0_contract_xm for cid 0 and stack_malloc1_contract_xm for cid 1, in
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/B/Prog/ExvB_Inst.v:172:   lib/AU/FCxmCfxB.v stack_malloc1_contract_xm_cfx_B (FrameXm102). No premise left.
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/B/Prog/ExvB_Inst.v:180:  (fun fx' => FCxmCfxB.stack_malloc1_contract_xm_cfx_B fx') n fx).
 refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/Reusable/YGcallMxmn.v:56:   stack_malloc1_contract_xm from the image walks FCm0s.v:49 / FCm1s.v:51 in its own per-image leaves (lib/A/FCm01xm.v
 ## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/omx-clap-core/fuzz_state/proofs
@@ -209,8 +209,8 @@ refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/Rt/
 refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/UciBClose.v:197:   a record field at lib/Reusable/YG0d.v:537). lib/B/Rt/YF0s.v:516 stack_malloc1_contract (forall B, AR_laws tfibsegs B
 refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/UciBClose.v:198:   -> UciSyms B -> astack_malloc_realizes tfibsegs B 1; gate record provenance/evidence/stackmalloc1-B, commit
 refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/UciBClose.v:203:Proof. intros rc fx. exact (@BF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) BD2l.UciB_syms). Qed.
-refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/close-B/RECORD.md:20:| H_RT_STACK_MALLOC1 | lib/B/UciBClose.v:202 | DISCHARGED, Lemma | lib/B/Rt/YF0s.v:516 stack_malloc1_contract (evidence 135b5746fc67) |
-refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/close-B/scripts/mk_record.py:31:    'H_RT_STACK_MALLOC1': 'lib/B/Rt/YF0s.v:516 stack_malloc1_contract (evidence 135b5746fc67)',
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/close-B/RECORD.md:20:| H_RT_STACK_MALLOC1 | lib/B/UciBClose.v:202 | DISCHARGED, Lemma | lib/B/Rt/YF0s.v:516 stack_malloc1_contract (evidence) |
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/close-B/scripts/mk_record.py:31:    'H_RT_STACK_MALLOC1': 'lib/B/Rt/YF0s.v:516 stack_malloc1_contract (evidence)',
 refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/GATES.md:16:    Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
 refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/GATES.md:142:Print Assumptions of `stack_malloc1_contract` (an uncommitted scratch file, built and deleted): 14 axioms, PrimInt63
 refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/GATES.md:149:`exact (@AF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.UciB_syms)`: cb rc 0, the same 14 axioms.

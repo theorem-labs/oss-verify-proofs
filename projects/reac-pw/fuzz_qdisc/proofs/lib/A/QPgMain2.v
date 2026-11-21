@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc's ASan harness walk (LLVMFuzzerTestOneInput 0x7e68c,
    fuzz_qdisc.asan sha256 980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
-   proofs/libreac/fuzz_knock/lib/A/APgMain3.v at origin/ossv/recipes 6ebe35ba632 (its segment skeleton: rt_prelude, a
+   proofs/libreac/fuzz_knock/lib/A/APgMain3.v (its segment skeleton: rt_prelude, a
    read-only region added with ast_ok_add_region, the shadow-checked load, pin_by, ra_join_win, rt_hand), with its module
    paths changed; knock's input-byte read is replaced by a read of the frame-rate table in .rodata, and the image-word and
    zero-shadow lemmas are restated from this image's lib/A/AD1k.v (val_mem_img :24-35, img_rd_of_aview :58-65,
@@ -34,6 +34,7 @@
 
    Section hypotheses: TL : TfibLib B, LAWS : AR_laws tfibsegs B (as every segment) and HB : AF0m.TfibSyms B (for the
    .rodata zero shadow: the caller supplies AD2l.TfibB_syms). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

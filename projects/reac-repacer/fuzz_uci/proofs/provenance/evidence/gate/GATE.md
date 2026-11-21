@@ -1,12 +1,12 @@
 # fuzz_uci kit relocation: gate record
 
-Tool: port_addr_check.py, sha256 efa19b81e92ba289e7c185d481faadf045ce7d52d092cc10642fec69924aba03. Donor: proofs/libreac/fuzz_decode/lib at
-25e3d17bdb5059606131377a3722d585415ab5d6. Images (pins, sha256): decode plain 556b61e63c44907b003aff8b1e8b926863db277b4f2897fdc58967a7beddc9cc,
+Tool: port_addr_check.py, sha256 efa19b81e92ba289e7c185d481faadf045ce7d52d092cc10642fec69924aba03. Donor: proofs/libreac/fuzz_decode/lib.
+Images (pins, sha256): decode plain 556b61e63c44907b003aff8b1e8b926863db277b4f2897fdc58967a7beddc9cc,
 decode ubsan ff70f30e22dcdcea42fe294ed23995ec278b6c66ace0ecade26d2a917657c1b9; fuzz_uci plain a6119aa7f1f281cacb63a767e0b5e6976b8f220542f6109c4fd2cecaf98ae5ac, fuzz_uci ubsan fa87ac3037db248a9ae80eb487b18990df08b26707cb501947d2831f6ccee58c.
 
 Command (arguments in angle brackets are local paths):
 
-    port_addr_check.py --git <hub clone> --src 25e3d17bdb50:proofs/libreac/fuzz_decode/lib --dst <this unit's lib>
+    port_addr_check.py --git <hub clone>:proofs/libreac/fuzz_decode/lib --dst <this unit's lib>
       --src-image A=<decode plain pin>:<twin> --src-image U=<decode ubsan pin>:<twin>
       --dst-image A=<fuzz_uci plain pin>:<twin> --dst-image U=<fuzz_uci ubsan pin>:<twin>
       --assign 'U/**=U' --assign '**=A' --paired-only --fail-on-flags --summary --include <each file the relocation wrote>

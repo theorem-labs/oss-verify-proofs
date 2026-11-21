@@ -4,8 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: new file for libreac/fuzz_scene (asan). The tables of
    __asan_stack_malloc_8 at 0x3f40c: EVERY scene address and class constant the class-8 segment cuts name, and
    nothing image-free. The cuts themselves are in lib/A/Rt/StackMalloc8Cuts.v and hold no literal address; they
-   use the names below. Same split as a Theorem Labs lane's lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v (libreac/fuzz_grant
-   at 798447a1772) and a Theorem Labs lane's class 3 (StackMalloc3Tbl.v + StackMalloc3.v).
+   use the names below. Same split as a Theorem Labs lane's lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v (libreac/fuzz_grant)
+   and a Theorem Labs lane's class 3 (StackMalloc3Tbl.v + StackMalloc3.v).
    The asan-ubsan side is a twin of THIS file only (lib/AU/Rt/StackMalloc8Tbl.v); the cuts serve both images.
 
    Addresses, MEASURED from the pinned image's unstripped twin (.symtab) and its disassembly
@@ -32,6 +32,7 @@
    symbolic machinery belongs to each segment lane's own file, over A/AF0r.v's `tbl_icpt` base, the way
    a Theorem Labs lane's StackMalloc4Tbl.v builds on A/Rt/AF0r.v. The reason for the concrete form, and what it costs, is in
    (internal path) section 3.1. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

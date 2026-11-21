@@ -1,0 +1,95 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.Lib Require Import Arr Bytes ZBridge Tac InitMem.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.LibA Require Import Shadow.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.BothW Require Import BImg RtCells ABase AMalloc_iface AUri_kit.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.U2A Require Import U2AShadow U2AKit U2AObj.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.U2B Require Import U2BObj U2BIface.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.LibA Require Import StepF.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.U2B Require Import U2BKit.
+From OSSVerify.Proofs.zlib.zlib_uncompress2_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.Common Require Import RunDraw.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Local Ltac solve_load ::= first [ solve_load_sh0 | solve_load_shlit | solve_load_base | solve_load_image ].
+Local Ltac acc_hint ::= acc_hint_sh.
+
+Section CANSEC1. Context {rc : runConstT}.
+Section S.
+  Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (FR : bvmap 5 word) (fc : bv 32).
+  Variables (Fu Zs lo : Z) (RNG : footprint).
+  Notation SP := (bv_unsigned sp).
+  Hypothesis LOS : lo <= SP - INIT_STACK.
+  Hypothesis LOC : ATOP + 4096 <= lo.
+  Hypothesis SP16 : SP mod 16 = 0.
+  Hypothesis SPT : SP + 16 < KEND.
+  Hypothesis ZSE : Zs = Fu + 32.
+  Hypothesis FU256 : Fu mod 256 = 0.
+  Hypothesis FUB : ablk Fu (Fu + 256).
+  Hypothesis RSTK : rng RNG lo (SP - lo).
+  Hypothesis RI : rng_aimg RNG.
+  Hypothesis RISH : rng_aimg_sh RNG.
+  Hypothesis RZ : rng RNG Zs 112.
+  Hypothesis RSZ : rng RNG (Z.shiftr Zs 3 + 2147450880) 14.
+
+  (* [U14B] A2 2026-11-12: the 1.4 combined inflateInit_ has an 80-byte frame (0x8ddb8 add sp,sp,-80; 1.3.1: 96): it
+     saves ra, s0 .. s8 (no s9, no unused slot) *)
+  Definition init_W : list (Z * Z) := [(SP - 80, SP); (Zs, Zs + 112)].
+
+  Lemma init_pre : forall (t0 t1 t2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) m
+      (next_in avail_in total_in next_out avail_out total_out msg state opaque data_type adler reserved p1 p2 p3 : word),
+    stk bsegs m lo SP -> mem_inv bsegs m ->
+    rt_got m -> rt_shbase m -> u2_img m ->
+    rw_cells bsegs m Zs (strm_cells next_in avail_in total_in next_out avail_out total_out msg state
+                                    (Z_to_bv 64 0) (Z_to_bv 64 0) opaque data_type adler reserved p1 p2 p3) ->
+    shadow_bytes m (Z.shiftr Zs 3 + 2147450880) (Z.shiftr Zs 3 + 2147450880 + 14) (fun _ => 0) ->
+    (* [U14B] A2 2026-11-12: the version string "1.4" has 4 addressable bytes (U2BIface.ver_sh; 1.3.1 "1.3.1": 6) *)
+    shadow_bytes m 2147468524 2147468525 (fun _ => 4) ->
+    (* [U14B] A2 2026-11-12: the state at malloc's entry, as the 1.4 code leaves it (measured: build c17's goal at the
+       old closing step): s2 = 7176 (0x8dee0 addw s2,a1,-1016), s3 the caller's, s4 = strm (0x8dec0 mv s4,a0), s5 the
+       shadow base, s6 / s7 the shadows of strm + 72 / strm + 80; s9 is not touched *)
+    evtF bsegs RNG (fun ms' => exists m',
+        ms' = MS (mkR (Z_to_bv 64 581304) (Z_to_bv 64 (SP + -80)) gp tp t0 t1 t2 (Z_to_bv 64 (Zs + 80)) (Z_to_bv 64 (Zs + 72))
+                     (Z_to_bv 64 7176) (Z_to_bv 64 1) (Z_to_bv 64 7176) (Z_to_bv 64 610156) (Z_to_bv 64 0) a5 a6 a7
+                     (Z_to_bv 64 7176) s3 (Z_to_bv 64 Zs) (Z_to_bv 64 2147450880)
+                     (Z_to_bv 64 (Z.shiftr (Zs + 72) 3 + 2147450880)) (Z_to_bv 64 (Z.shiftr (Zs + 80) 3 + 2147450880)) s8
+                     s9 s10 s11 t3 t4 t5 t6)
+                 FR (Z_to_bv 64 AMALLOC_SYM) fc None m' (seg_rom bsegs)
+        /\ munch init_W m m' /\ wmono bsegs m m' /\ mem_inv bsegs m'
+        /\ stk bsegs m' lo (SP + -80)
+        /\ rw_cells bsegs m' (SP + -80) [C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]
+        /\ rw_cells bsegs m' Zs (strm_cells next_in avail_in total_in next_out avail_out total_out (Z_to_bv 64 0) state
+                                            (Z_to_bv 64 A_ZCALLOC) (Z_to_bv 64 A_ZCFREE) (Z_to_bv 64 0) data_type adler reserved p1 p2 p3))
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 Zs) (Z_to_bv 64 AVERSION) (Z_to_bv 64 112) a3 a4 a5 a6 a7
+               s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          FR (Z_to_bv 64 A_INFLATEINIT) fc None m (seg_rom bsegs)).
+  Proof using All.
+    intros until p3. intros ST MI GOT SHB (GSU & GZC) STRM SHZ SHV.
+    unfold init_W, A_INFLATEINIT, AVERSION, INIT_STACK, AGOT_ZCALLOC, A_ZCALLOC, A_ZCFREE, AMALLOC_SYM, strm_cells in *.
+    pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP. unfold KEND in SPT.
+    atop_facts. pose proof (ablk_lin _ _ FUB) as (FB1 & FB2 & FB3 & FB4). unfold AIMG_HI in FB1.
+    assert (Z8 : Zs mod 8 = 0) by (subst Zs; Z.div_mod_to_equations; lia).
+    assert (LO0 : 0 <= lo) by (destruct ST as [? _]; assumption).
+    pose (W := [(SP - 80, SP); (Zs, Zs + 112)]).
+    assert (DJZ : disjoint_from W (Z.shiftr Zs 3 + 2147450880) (Z.shiftr Zs 3 + 2147450880 + 14 - (Z.shiftr Zs 3 + 2147450880))).
+    { subst W. cbn [disjoint_from]. rewrite !Z.shiftr_div_pow2 by lia. change (2^3) with 8. unfold ablk, AIMG_HI, KLS in FUB. Z.div_mod_to_equations. lia. }
+    assert (DJV : disjoint_from W 2147468524 (2147468525 - 2147468524)).
+    { subst W. cbn [disjoint_from]. unfold ablk, AIMG_HI, KLS in FUB. lia. }
+    pose proof (munch_refl W m) as MU. pose proof (wmono_refl bsegs m) as WM. subst W.
+    zstep.
+    carve_frame 80%nat ST.
+    zrunb [0x8deb4].
+    zs.
+    zs. zs. zs. zs.
+    apply evtF_done. eexists. split; [reflexivity|].
+    replace (SP - 80) with (SP + -80) by lia.
+    split; [exact MU|]. split; [exact WM|]. split; [eassumption|]. split; [exact ST|]. split; [exact FR0| exact STRM].
+  Qed.
+End S.
+End CANSEC1.

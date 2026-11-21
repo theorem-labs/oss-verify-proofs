@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 34e2068e0d3fa24bb9a53b6a1d3bade004392048,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/FCiface.v, sha256 673aac5ee2f6ed862c27f80a264f15bdec15cea273694fad68aae5197dbd17d0.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the frame-area interface of fuzz_preset's walks, image-free.
    The walks of __asan_stack_malloc_{0,1,3} and __asan_set_shadow_f5 are written over a relation
    ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop,
@@ -13,7 +14,7 @@
    - astack_malloc_realizes_x = YG0d.v astack_malloc_realizes (:285-300), the same substitution, Hp quantified.
    - aset_shadow_realizes_x   = cgif_rgb_fuzzer lib/YG0e.v aset_shadow_realizes (:48-59), the same substitution,
      plus ONE final conjunct `forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a` (presence never
-     shrinks), mirrored from fuzz_state's SetShadowDef / SetShadowDefU (origin/cold/port-state-rt 5c02ddf4dee,
+     shrinks), mirrored from fuzz_state's SetShadowDef / SetShadowDefU (
      h-rw-sta-1), in FSupoisonU.aintrin_realizesU's spelling and position. It cannot be derived from the aview
      clause, because apresent_transfer needs `~ in_img a`: on image bytes aview reads the rom, so aview-equality
      says nothing about presence there. Callers that run the contract (aj_set_shadow_at_x) need it for the

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: scene's closed sink in the form of a Theorem Labs lane's release text (a working branch
-   4d244de18f0, in a Theorem Labs lane c8e8b0fa5ec): the record YE00.v:32 asink_syms and its laws YE01.v:28-40
+(* Modified by Theorem Labs, 2026-10: scene's closed sink in the form of a Theorem Labs lane's release text (a working branch,
+   in a Theorem Labs lane): the record YE00.v:32 asink_syms and its laws YE01.v:28-40
    asink_img_laws are taken BY PATH; this file only binds scene's measured values, the way fuzz_grant's
    A/AE2k.v:9-46 binds its own. Module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_scene.asan-ubsan: every cell MEASURED in the pinned image's unstripped twin (.symtab / 8-byte reads, read with
    a Theorem Labs lane's sceref over pyelftools; cells6j.tsv (sha256 90401c4f5730; internal record), leaf h).
    The owned cells are a Theorem Labs lane's aenv_core (YE00.v:132-134): the threaded byte, the need_locks byte, the 4-byte

@@ -5,10 +5,11 @@
    cgif lib/A/ACkc.v), the symbolic entry state and its seed (cgif's flushFrame seed, lib/A/ACj0.v, as sup_resp's
    sr_entry), and the recorder's representation carried over a step that keeps the recorder's bytes. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/answer_e1.v, with its module paths and module names changed; 246 of its 370 lines of code are new or changed and 150 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, stage 1, part a: the walk tactics, the
    symbolic entry state and its seed lemma, and the lemmas the entry stage (sup_add_s1.v) uses at the record call.
 
-   The walk tactics are the A walk's stage 1 (a working branch 87f17ee4716, lib/A/Prog/sup_add_s1.v, from
+   The walk tactics are the A walk's stage 1 (a working branch, lib/A/Prog/sup_add_s1.v, from
    arg_i's walk and cgif's lib/A/ACkc.v), over B's kit. The entry state is B's: the 128-byte frame below the entry
    sp, the shadow GOT word 0xa5f50 (A_OBJ 0) and the shadow-base cell (A_OBJ 12), and the frame-mode flag's GOT
    word 0xa5fa8 (A_OBJ 1) and its cell (PALibF), as sup_resp's B walk seeds it. B reads no recorder byte before the

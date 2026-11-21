@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hypotheses T_node and T_store take the placement premise placed_at, which their callers pass on from AO_grant; their encoded statements kept verbatim, with lemmas proving them equal to the written-out statements without that premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -120,10 +121,54 @@ Section DepotCfg.
   Hypothesis K_apart : ltac2:(CDefT.buildp (gd_tbl_AW_DepotCfg ()) "Pnb,(12.$18.)Pbl,(12.$18.)Pmo,$2<.Pa,(14.&40.)Pn,(14.&40.)P,A3.VK,R5.R4.R3.P,(1=.$20.(2=.(2>.(2?.(14.&40.)(14.&40.))(30.(31.R4.))(32.(31.R4.)))R3.R2.)$33.)P,(19.+10000.(34.&40.R3.))P,(19.(1:.(34.&40.R5.)(34.&40.R4.))(35.VhAR,))Px,$18.P,(29.A3.VCSf,R:.R9.R1.(0.(19.(36.VAL,)R1.)(27.R1.(37.VAL,))))(28.(0.(19.(34.&40.R8.)R2.)(27.R2.(1:.(34.&40.R8.)(34.&40.R7.)))))")
 (* [comment removed for export] *).
   Variables (Gn Gs : list Z -> list Z -> Prop).   (* [comment removed for export] *)
-  Hypothesis T_node : ltac2:(CDefT.buildp (gd_tbl_AW_DepotCfg ()) "Pnb,(12.$18.)Pbl,(12.$18.)Pmo,$2<.Pa,(14.&40.)P,A2.VGn,R4.R3.P,A3.VK,R5.R4.R3.P,(1=.$18.(38.(34.&40.R3.)+1000.)=)P,(27.=(34.&40.R4.))P,(19.(1:.(34.&40.R5.)(39.+2.+14.))(35.VhAR,))P,(1=.$20.(2=.(2>.(2?.(14.&40.)(14.&40.))(30.(31.R7.))(32.(31.R7.)))R6.(7.&40.(39.+2.+14.)))$33.)(0.A3.VK,(2>.$18.R:.(4.$18.(34.&40.R7.)(9.$18.)))R9.(3:.+22.R7.(39.+2.+14.)R8.)(3;.A2.VCSf,(2>.$18.R:.(4.$18.(34.&40.R7.)(9.$18.)))R9.(34.&40.R7.)(39.+2.+14.)))")
-(* [comment removed for export] *).
-  Hypothesis T_store : ltac2:(CDefT.buildp (gd_tbl_AW_DepotCfg ()) "Pnb,(12.$18.)Pbl,(12.$18.)Pmo,$2<.Pa,(14.&40.)P,A2.VGs,R4.R3.P,A3.VK,R5.R4.R3.P,(1=.$18.(38.(34.&40.R3.)+1000.)=)P,(27.=(34.&40.R4.))P,(19.(1:.(34.&40.R5.)(39.+2.+17.))(35.VhAR,))P,(1=.$20.(2=.(2>.(2?.(14.&40.)(14.&40.))(30.(31.R7.))(32.(31.R7.)))R6.(7.&40.(39.+2.+17.)))$33.)(0.A3.VK,R:.(2>.$18.R9.(4.$18.(34.&40.R7.)(9.$18.)))(3:.+4022.R7.(39.+2.+17.)R8.)(3;.A2.VCSf,R:.(2>.$18.R9.(4.$18.(34.&40.R7.)(9.$18.)))(34.&40.R7.)(39.+2.+17.)))")
-(* [comment removed for export] *).
+  Definition ZZ_T_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_DepotCfg ()) "Pnb,(12.$18.)Pbl,(12.$18.)Pmo,$2<.Pa,(14.&40.)P,A2.VGn,R4.R3.P,A3.VK,R5.R4.R3.P,(1=.$18.(38.(34.&40.R3.)+1000.)=)P,(27.=(34.&40.R4.))P,(19.(1:.(34.&40.R5.)(39.+2.+14.))(35.VhAR,))P,(1=.$20.(2=.(2>.(2?.(14.&40.)(14.&40.))(30.(31.R7.))(32.(31.R7.)))R6.(7.&40.(39.+2.+14.)))$33.)(0.A3.VK,(2>.$18.R:.(4.$18.(34.&40.R7.)(9.$18.)))R9.(3:.+22.R7.(39.+2.+14.)R8.)(3;.A2.VCSf,(2>.$18.R:.(4.$18.(34.&40.R7.)(9.$18.)))R9.(34.&40.R7.)(39.+2.+14.)))").
+  Lemma ZZ_T_node_faithful : ZZ_T_node_old =
+    (forall (nb bl : list Z) (mo : Model) (a : word),
+       Gn nb bl ->
+       K nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 20 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+       K (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+       /\ crange (CSf (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_node :
+    forall (nb bl : list Z) (mo : Model) (a : word),
+      Gn nb bl ->
+      K nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      K (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (CSf (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20).
+  Definition ZZ_T_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_DepotCfg ()) "Pnb,(12.$18.)Pbl,(12.$18.)Pmo,$2<.Pa,(14.&40.)P,A2.VGs,R4.R3.P,A3.VK,R5.R4.R3.P,(1=.$18.(38.(34.&40.R3.)+1000.)=)P,(27.=(34.&40.R4.))P,(19.(1:.(34.&40.R5.)(39.+2.+17.))(35.VhAR,))P,(1=.$20.(2=.(2>.(2?.(14.&40.)(14.&40.))(30.(31.R7.))(32.(31.R7.)))R6.(7.&40.(39.+2.+17.)))$33.)(0.A3.VK,R:.(2>.$18.R9.(4.$18.(34.&40.R7.)(9.$18.)))(3:.+4022.R7.(39.+2.+17.)R8.)(3;.A2.VCSf,R:.(2>.$18.R9.(4.$18.(34.&40.R7.)(9.$18.)))(34.&40.R7.)(39.+2.+17.)))").
+  Lemma ZZ_T_store_faithful : ZZ_T_store_old =
+    (forall (nb bl : list Z) (mo : Model) (a : word),
+       Gs nb bl ->
+       K nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 23 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+       K nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+       /\ crange (CSf nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_store :
+    forall (nb bl : list Z) (mo : Model) (a : word),
+      Gs nb bl ->
+      K nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      K nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (CSf nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23).
   Hypothesis ROOM_n : forall nb bl mo, Gn nb bl -> K nb bl mo -> exists a, anon_grantable 0x22 (2^20) mo a.
   Hypothesis ROOM_s : forall nb bl mo, Gs nb bl -> K nb bl mo -> exists a, anon_grantable 0x4022 (2^23) mo a.
 
@@ -201,7 +246,8 @@ Section DepotCfg.
       cbn beta. intros ms5 mo5 PO HK5 _. ddestruct PO as (r' & F' & mm' & ->).
       apply spinningJ_at; [cbn; tauto| exact (ki_halted (KL nb bl) mo5 HK5)].
     - (* [comment removed for export] *)
-      intros a AAL A0 ACE RF.
+      (* one more name: [AO_grant]'s placement, which [T_node] needs below *)
+      intros a AAL A0 APL ACE RF.
       rewrite nret_MSsvc, mkR_set_a0, apply_mem_zeros.
       change (Z_to_bv 64 A_MMAP_ECALL + Z_to_bv 64 4)%bv with (Z_to_bv 64 0x7acec).
       pose proof (bv_unsigned_in_range 64 a) as AR. unfold bv_modulus in AR. change (2 ^ Z.of_N 64) with (2^64) in AR.
@@ -215,7 +261,10 @@ Section DepotCfg.
         destruct (Z.le_gt_cases 0x10000 ua).
         - apply (AP ua). right; lia. lia.
         - apply (AP 0x10000). right; lia. lia. }
-      destruct (T_node nb bl mo3 a GN HK3 AAL A0 ltac:(change (2^20) with 1048576; lia) RF) as [HK4 CR4]. fold ua in HK4, CR4.
+      (* [APL] IS the premise [T_node] now asks for: the checker's placement
+         test, carried out of the inversion by [AO_grant].  [1048576] and
+         [2 ^ 20] are convertible, so it goes in as written. *)
+      destruct (T_node nb bl mo3 a GN HK3 AAL A0 ltac:(change (2^20) with 1048576; lia) RF APL) as [HK4 CR4]. fold ua in HK4, CR4.
       pose proof (J_anon_grant mm mo3 0x22 a 1048576 HJ3 ltac:(clear; lia) ltac:(fold ua; clear - ACE AC; lia) RF) as HJ4.
       (* [comment removed for export] *)
       rewrite <- (Z_to_bv_bv_unsigned a). fold ua. change (Z_to_bv 64 ua, Z_to_bv 64 1048576) with (wa ua, Z_to_bv 64 1048576).
@@ -408,7 +457,8 @@ Section DepotCfg.
       cbn beta. intros ms5 mo5 PO HK5 _. ddestruct PO as (r' & F' & mm' & ->).
       apply spinningJ_at; [cbn; tauto| exact (ki_halted (KL nb bl) mo5 HK5)].
     - (* [comment removed for export] *)
-      intros a AAL A0 ACE RF.
+      (* one more name: [AO_grant]'s placement, which [T_store] needs below *)
+      intros a AAL A0 APL ACE RF.
       rewrite nret_MSsvc, mkR_set_a0, apply_mem_zeros.
       change (Z_to_bv 64 A_MMAP_ECALL + Z_to_bv 64 4)%bv with (Z_to_bv 64 0x7acec).
       pose proof (bv_unsigned_in_range 64 a) as AR. unfold bv_modulus in AR. change (2 ^ Z.of_N 64) with (2^64) in AR.
@@ -422,7 +472,7 @@ Section DepotCfg.
         destruct (Z.le_gt_cases 0x10000 ua).
         - apply (AP ua). right; lia. lia.
         - apply (AP 0x10000). right; lia. lia. }
-      destruct (T_store nb bl mo3 a GS HK3 AAL A0 ltac:(change (2^23) with 8388608; lia) RF) as [HK4 CR4]. fold ua in HK4, CR4.
+      destruct (T_store nb bl mo3 a GS HK3 AAL A0 ltac:(change (2^23) with 8388608; lia) RF APL) as [HK4 CR4]. fold ua in HK4, CR4.
       pose proof (J_anon_grant mm mo3 0x4022 a 8388608 HJ3 ltac:(clear; lia) ltac:(fold ua; clear - ACE AC; lia) RF) as HJ4.
       rewrite <- (Z_to_bv_bv_unsigned a). fold ua. change (Z_to_bv 64 ua, Z_to_bv 64 8388608) with (wa ua, Z_to_bv 64 8388608).
       rewrite <- (Z_to_bv_bv_unsigned a) in HK4. fold ua in HK4. change (2 ^ 23) with 8388608 in HK4, CR4.

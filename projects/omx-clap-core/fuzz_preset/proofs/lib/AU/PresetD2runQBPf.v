@@ -4,10 +4,10 @@
    image), ported from proofs/cgif/cgif_file_fuzzer/lib/YD2d.v (relocated here as lib/Reusable/YD2d.v):
      YD2d.v:251-333 tfib_run_Q_empty -> tfib_run_Q_empty_cf
      YD2d.v:334-387 tfib_run_Q_at    -> tfib_run_Q_at_cf, tfib_run_Q -> tfib_run_Q_cf.
-   The asan twin is lib/A/PresetD2runQAPf.v (lane CwRunqA, 345a4039cd2); this file is its text through port/a2b.py
+   The asan twin is lib/A/PresetD2runQAPf.v (lane CwRunqA); this file is its text through port/a2b.py
    (sha256 b9c3f16342596f93d7e64903139a40399c87c0b7440f92e288113ad664f5a77c, --lib): 0 code lines differ. Lane
-   CwPinvB's finv_run_pinv_B is PROVED (finv_run_pinv_B_holds, lib/AU/PresetPinvBPf.v at a working branch
-   7ea213877203), cited as a Let, so the result takes no premise beyond its statement's.
+   CwPinvB's finv_run_pinv_B is PROVED (finv_run_pinv_B_holds, lib/AU/PresetPinvBPf.v at a working branch),
+   cited as a Let, so the result takes no premise beyond its statement's.
    The changes are the statement files' (PresetD2runB.v header (1)-(6)): AR -> ARcf at Hp = [] with a8's proved
    laws AR_laws_ok_cf (lib/Reusable/YG0lawscf.v); the event bounds are dropped; the tail is CwSites' tail_at_pinv_B
    B NP (lib/AU/PresetD1sitesB.v), whose non-primary room NP S and xs_placed_cf pass unchanged along the symbolic
@@ -19,6 +19,7 @@
    P := YAkMemnorm.memnorm tfibsegs with YSRrMemnorm.srr_inv_laws_memnorm_k), so the tail's memnorm of the full
    overlay reaches the loop head (LOOPL's memnorm premise) and RUNQM's tail (lane MnPrefix).
    Nothing in this file is a proof of a function (rule 24: the driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -74,14 +75,18 @@ Variable sm : list Z -> Z * Z.
 Hypothesis LOOPL : PresetD1rB.loop_L_cf_B (LS := LS) B xst NR sm iface_room_np.
 Hypothesis HWMAX : (4 * YCbqGwild.K_LLVMF <= u_wmax (as_universe B))%nat.
 Hypothesis RUNQM : PresetD2eB.run_QM_tfa_cf (LS := LS) B iface_room_np NR.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+(* the entry draw and the launch premises, as the core's YD2d.v Section (727298f3) *)
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 Hypothesis Hvfs : valid_fs (in_fs inp).
 Hypothesis HNR : NR inp.
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 
@@ -96,7 +101,7 @@ srealizes tfibsegs (mkCfg ms md) (run_shape (LS := LS) (payload data) (calls dat
 Proof.
 intros ws W ms md ly S data pb cap Hlk Hok Hpl0 E3 HT HUP0 E60.
 pose proof (YSRrMemnorm.srr_inv_laws_memnorm_k tfibsegs) as PLAW.
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HRK & HTOP & Hbl & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HPI & HXS & HMN).
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HRK & HTOP & Hbl & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HPI & HXS & HMN & Hcr).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (buf := sptr_addr B ly pb) in *. set (c0 := config_len data =? 0) in *. set (k := Z.of_nat (calls data)) in *.
@@ -133,8 +138,8 @@ assert (Hwin : forall a, usp - 65536 <= a < usp -> apresent (w_H W) (ms_mem ms1)
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms1) (ss_mem (sPE1 k))); [exact HMB | left; reflexivity | exact E3_0 | lia | lia | cbn; lia].
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms1) (ss_mem (sPE1 k))); [exact HMB | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia]. }
 change (run_shape (LS := LS) (payload data) (calls data) (in_fs inp)) with (loop_tgt (LS := LS) (payload data) (calls data) 0%nat (calls data) (in_fs inp)).
-apply (LOOPL fx Hfrm sp inp xw xd E4 W ms1 (with_vm_backing (m_vm_lazy md) mat1 md) ly S a0 p data pb PNull cap 0 0%nat (calls data) (in_fs inp) 0 0
-Hargv Hsp Hva Hve Hvfs HNR Hlk ltac:(unfold dlen; lia)).
+apply (LOOPL fx Hfrm sp brk mbase inp xw xd E4 W ms1 (with_vm_backing (m_vm_lazy md) mat1 md) ly S a0 p data pb PNull cap 0 0%nat (calls data) (in_fs inp) 0 0
+rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNR Hlk ltac:(unfold dlen; lia)).
 - intros j Hj. rewrite E4old by (unfold K_L, K_M1 in *; lia). subst E3. rewrite E_P_old by (unfold K_M1 in Hj; lia). cbn [ew edset]. apply ew_havoc_old. exact Hj.
 - change (ed E4 2) with (ed E3 2). exact Ed2.
 - rewrite E4old by (unfold K_L, A_BUF; lia). exact E41.
@@ -174,7 +179,8 @@ exact HMN1.
 - (* #102: the loop's stack invariant *)
 exact HUP1.
 -   split; [intros k0; rewrite wvb_fds', Hfds; reflexivity|].
-split; [rewrite wvb_fs'; exact Hfs | exact (proj1 Hvfs)].
+(* the loop's MDI, its last conjunct the channel reader [fdchan] asks for at LPS 727298f3 (as the core's AD2d.v) *)
+split; [rewrite wvb_fs'; exact Hfs|]. split; [exact (proj1 Hvfs) | exact Hcr].
 Qed.
 
 (* YD2d.v:334. The nonempty arm builds CwSites' tail_at_pinv_B at the payload-malloc state, as the donor builds
@@ -190,7 +196,7 @@ Proof.
 intros ws W ms md ly S data pb cap Hlk Hok E3 HT HUP0 E60.
 destruct (Z.eqb_spec (payload_len data) 0) as [Hpl0 | Hpl1]; [exact (tfib_run_Q_empty_cf ws W ms md ly S data pb cap Hlk Hok Hpl0 HT HUP0 E60)|].
 pose proof (YSRrMemnorm.srr_inv_laws_memnorm_k tfibsegs) as PLAW.
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HRK & HTOP & Hbl & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HPI & HXS & HMN).
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HRK & HTOP & Hbl & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HPI & HXS & HMN & Hcr).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (buf := sptr_addr B ly pb) in *. set (c0 := config_len data =? 0) in *. set (k := Z.of_nat (calls data)) in *.
@@ -225,17 +231,19 @@ assert (Hwin : forall a, usp - 65536 <= a < usp -> apresent (w_H W) (ms_mem ms1)
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms1) (ss_mem (sPM1 k))); [exact HM2 | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia]. }
 assert (HT1 : tail_at_pinv_B B iface_room_np (if c0 then sPM0 else sPM1 k) E3 sp inp a0 p data W ms1 (with_vm_backing (m_vm_lazy md) mat1 md) ly S pb cap).
 { split; [exact HS2|]. split; [exact E41|]. split; [exact E42|]. split.
-{ eapply (runs_at_frame E3 (ss_facts (if c0 then sPM0 else sPM1 k)) (ss_mem (sQ c0 k)));
-[exact (st_ok_facts_ok tfibsegs E3 _ _ HS2) | | exact HFr1 | rewrite E3_0; lia | exact HR].
+{ destruct HR as (rnd0 & HR0). exists rnd0.
+eapply (runs_at_frame E3 (ss_facts (if c0 then sPM0 else sPM1 k)) (ss_mem (sQ c0 k)));
+[exact (st_ok_facts_ok tfibsegs E3 _ _ HS2) | | exact HFr1 | rewrite E3_0; lia | exact HR0].
 subst c0. unfold sQ. pose proof wbs_PM as [WQ0 WQ1]. destruct (config_len data =? 0); [exact WQ0 | exact (WQ1 k)]. }
 split; [exact HAI1|]. split.
 { apply (AR_after_run_cf B HB ARL ly S [] W E3 _ (ms_mem ms) (ms_mem ms1) md mat1 HAR WOK); [rewrite E3_0; exact Ulo | rewrite E3_0; exact HCT | exact HF1 |].
 rewrite E3_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin a Ha)). }
 split; [exact HRK|]. split; [exact HTOP|]. split; [exact Hbl|]. split; [exact Hcap|]. split; [unfold dlen; lia|]. split.
 { unfold dlen. apply (blk_of_frame_r _ _ _ _ _ buf (Z.of_nat (length data)) data usp HFr1 WOK E3_0 Ulo); [intros a Ha; apply NIMG; lia | lia | lia | exact HBLK]. }
-split; [rewrite wvb_fs'; exact Hfs |]. split; [rewrite wvb_fds'; exact Hfds |]. split; [exact Hminv|]. split; [| split; [exact HXS | exact HMN1]].
+split; [rewrite wvb_fs'; exact Hfs |]. split; [rewrite wvb_fds'; exact Hfds |]. split; [exact Hminv|].
+split; [| split; [exact HXS | split; [exact HMN1 | exact Hcr]]].
 exact (Hfinv_run (w_H W) E3 _ (ms_mem ms) (ms_mem ms1) usp 0 0 HFr1 WOK E3_0 Ulo HPI). }
-apply (RUNQM sp inp xw xd ws W ms1 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs HNR Hlk ltac:(unfold dlen; lia) Hplpos); [| exact HUP1 | exact E60].
+apply (RUNQM sp brk mbase inp xw xd ws W ms1 _ ly S a0 p data pb cap rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNR Hlk ltac:(unfold dlen; lia) Hplpos); [| exact HUP1 | exact E60].
 fold buf E3. change (if config_len data =? 0 then sPM0 else sPM1 (Z.of_nat (calls data))) with (if c0 then sPM0 else sPM1 k).
 exact HT1.
 Qed.
@@ -248,8 +256,9 @@ Theorem tfib_run_Q_cf (B : asyms) (HB : TfibSyms B) (iface_room_np : astate -> P
 (HWMAX : (4 * YCbqGwild.K_LLVMF <= u_wmax (as_universe B))%nat)
 (RUNQM : PresetD2eB.run_QM_tfa_cf (LS := LS) B iface_room_np NR) : run_Q_tfa_cf (LS := LS) B iface_room_np NR.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs HNR Hlk Hok E3 HT HUP0 E60.
-exact (tfib_run_Q_at_cf B HB iface_room_np xst NR sm LOOPL HWMAX RUNQM sp inp xw xd a0 p Hargv Hsp Hva Hve Hvfs HNR ws W ms md ly S data pb cap Hlk Hok HT HUP0 E60).
+intros sp brk mbase inp xw xd ws W ms md ly S a0 p data pb cap rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNR Hlk Hok E3 HT HUP0 E60.
+exact (tfib_run_Q_at_cf B HB iface_room_np xst NR sm LOOPL HWMAX RUNQM sp brk mbase inp xw xd a0 p rnd
+Hargv Hsp Hva Hve Hvl Hlau Hvi Hvfs HNR ws W ms md ly S data pb cap Hlk Hok HT HUP0 E60).
 Qed.
 End e.
 

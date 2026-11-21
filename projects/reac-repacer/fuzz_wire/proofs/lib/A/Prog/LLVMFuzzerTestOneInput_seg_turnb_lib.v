@@ -1,8 +1,8 @@
 (* LLVMFuzzerTestOneInput_seg_turnb_lib: what the turn_b segment of the image-A walk of fuzz_wire.asan's
    LLVMFuzzerTestOneInput (+0xfc .. +0x144, lib/A/Prog/LLVMFuzzerTestOneInput_segs.v u_turn_b_stmt) needs apart from
-   the runs of the Pa engine. It is the image-A twin of this unit's image-B lib/B/Prog/LLVMFuzzerTestOneInput_seg_turnb_lib.v
-   (commit adb74ccdb2a), in the form of fuzz_uci's lib/A/Prog/LLVMFuzzerTestOneInput_seg_turnb_lib.v (commit
-   14922e68e3b0: a callee rule or contract composed into the walk, its premises at the call, its post moved to the next
+   the runs of the Pa engine. It is the image-A twin of this unit's image-B lib/B/Prog/LLVMFuzzerTestOneInput_seg_turnb_lib.v,
+   in the form of fuzz_uci's lib/A/Prog/LLVMFuzzerTestOneInput_seg_turnb_lib.v (
+   a callee rule or contract composed into the walk, its premises at the call, its post moved to the next
    state), with the malloc and __asan_memcpy calls of proofs/libreac/fuzz_decode's
    lib/A/Prog/LLVMFuzzerTestOneInput_seg_copy.v:
    - tb_st_m / tb_st_c / tb_st_r: the states at the return of the malloc of c (+0x104), at the join after the copy

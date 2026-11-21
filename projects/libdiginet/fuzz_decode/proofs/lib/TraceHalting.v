@@ -1,5 +1,5 @@
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/TraceHalting.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
 (** Derive termination from the published inductive trace certificates.
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/TraceHalting.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
     A trace certificate alone does not restrict exit statuses or exclude kills;
     those obligations are explicit below. Restricting environment failures
     additionally requires LPS's original progress/decision premise. *)

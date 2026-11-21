@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the TOP COMPOSITION of the walk of libreac/fuzz_scene's
    LLVMFuzzerTestOneInput in the ASAN-UBSAN build (lib/AU).  This is the twin of lib/A/P_LLVMFuzzerTestOneInput_Top.v
-   (a working branch f4279258d43, Qed): the same text over this image's statement files, the
+   (a working branch, Qed): the same text over this image's statement files, the
    lib/AU listing, this image's geometry `scene_geom_asan_ubsan` and this image's sink head 0x5f7190.  Two theorems,
    both Qed, below. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*     llvmf_compose : forall segs B MT WK IM, llvmf_compose_stmt segs B MT WK IM
        -- the seven segment statements of lib/AU/P_LLVMFuzzerTestOneInput_seg.v compose into scene's entry contract
@@ -51,7 +52,7 @@
    lib/A/SceneAsanTop.v, which pulls in the released lib/U/Reusable twins of YI16 and YO09; those twins capture the
    short names `YI16.sink_head`, `lib_shape`, `LIBK` and `LL`, which Section d below has to write.  The statement
    file hit exactly this and had to fully qualify its sink head
-   (lib/AU/P_LLVMFuzzerTestOneInput.v:163); here the Require is simply placed after the section that needs the
+   (lib/AU/P_LLVMFuzzerTestOneInput.v:164); here the Require is simply placed after the section that needs the
    short names, and the second section names none of them.
    MODULE LAYOUT (gate 6o, a Theorem Labs lane): every module of the trunk's lib/Reusable comes from lib.Reusable; the
    image-differing modules (YCbq, YC5d, YE01, YCbp), the listing lib.AU.Prog and the entry's own statement files
@@ -81,9 +82,9 @@ Open Scope Z_scope.
 
 (* ---- scene's segment list, meter and walk constants, resolved HERE, where the short names are the ones of
    lib/Reusable and lib/AU/Prog (see FILE ORDER above).  `scene_walk` takes the entry constants as arguments: the
-   instance file binds them (lib/AU/P_LLVMFuzzerTestOneInput.v:182), this file must not.  The section is over
+   instance file binds them (lib/AU/P_LLVMFuzzerTestOneInput.v:183), this file must not.  The section is over
    RunCeil alone: `pa_segs` / `pa_relro_lo` / `pa_relro_hi` of PI_scene need it, as the statement file's own SEGS /
-   RLO / RHI notations do (lib/AU/P_LLVMFuzzerTestOneInput.v:165-170, inside its Section d). ---- *)
+   RLO / RHI notations do (lib/AU/P_LLVMFuzzerTestOneInput.v:166-171, inside its Section d). ---- *)
 Section c. Context {rc : YM05.RunCeil}.
 Definition scene_segs : list Segment := @pa_segs _ scene_listing PI_scene.
 Definition scene_mt : ameter_ops := ameter_triv.
@@ -143,10 +144,10 @@ Qed.
 End d.
 
 (* ---- this image's closed sink head: musl's ofl_head of fuzz_scene.asan-ubsan, 0x5f7190 (MEASURED in the
-   unstripped twin's .symtab; lib/AU/P_LLVMFuzzerTestOneInput.v:27-28 and :165).  WHY A LOCAL COPY IS NEEDED.  The
+   unstripped twin's .symtab; lib/AU/P_LLVMFuzzerTestOneInput.v:28-29 and :166).  WHY A LOCAL COPY IS NEEDED.  The
    seven `seg_*_stmt` applications of Section t have an implicit `sink_head` to resolve (the cuts' return post,
    seg.v, passes it to scene_tfib_lib_post_x), and gate 6h forbids a GLOBAL sink-head instance: the statement
-   file's own head is `#[local]` (lib/AU/P_LLVMFuzzerTestOneInput.v:165), so its name does not leave that file, and
+   file's own head is `#[local]` (lib/AU/P_LLVMFuzzerTestOneInput.v:166), so its name does not leave that file, and
    lib/Reusable/SinkGuard.v removes the released src0 ones.  A Theorem Labs lane's glue meets the same wall and answers it
    the same way (G_Top.v: "both are passed by name, and neither is an instance here").  This is the SAME record
    value as the statement file's `scene_sink_head`, so every hypothesis below is convertible with the lanes' own
@@ -159,7 +160,7 @@ End d.
    SCENE'S ASAN-UBSAN INSTANCE.  From here on lib/A/SceneAsanTop.v's released lib/U/Reusable twins are in scope, so
    the short names YI16.sink_head, lib_shape, LIBK and LL must not be written; the section below writes none of
    them.  The shape is resolved by unification against `scene_llvmf_stmt`, which names scene's own
-   (lib/AU/P_LLVMFuzzerTestOneInput.v:164, :289).
+   (lib/AU/P_LLVMFuzzerTestOneInput.v:165, :290).
    ================================================================================================================ *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_LLVMFuzzerTestOneInput.
 

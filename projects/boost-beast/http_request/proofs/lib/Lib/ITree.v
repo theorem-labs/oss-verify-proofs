@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.boost_beast.http_request.lib.Lib Require Import PropExec MState Mem Exec.
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Export Scfg.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -89,7 +91,12 @@ Record node_sound : Prop := {
       m_halted mo' = Some code /\ SSTEP (mkCfg ms mo) [ExitEv code (m_fs mo')] (SNext (mkCfg ms mo'));
   (* [comment removed for export] *)
   ns_progress : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
-      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo')
+      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo');
+  (* LPS 08b1429: the node's system-call specification is the same over every larger read-only
+     backing ([RomBase.sys_rob]; [ShapeAlg.rz_node] and [SReach.sr_step] ask it, so a walk over a
+     binary's own segments lifts to the run's segment list, [Common/Cfg/RomStable.run_init]) *)
+  ns_rob : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
+      RomBase.sys_rob segs (mkCfg ms mo)
 }.
 
 (* [comment removed for export] *)

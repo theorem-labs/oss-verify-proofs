@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: in the final equivalence proof, entry hypotheses now yield launch facts instead of fit facts, valid-input components come from valid_input lemmas projection lemmas including launch and channel reader, and SRC/TGT receive these; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/BigintTop2.v, lines 30-37. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -29,11 +30,14 @@ intros SRC TGT.
 intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid.
 pose proof (valid_input_va_size _ Hvalid) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & Hcreds & _).
+destruct Hens as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [_ Halau]]]].
+pose proof (valid_input_launch _ Hvalid) as Hvl.
+pose proof (valid_input_channel_reader _ Hvalid) as Hrd.
+pose proof (valid_input_argv _ Hvalid) as Hargv. pose proof (valid_input_envp _ Hvalid) as Henvp.
+pose proof (valid_input_fs _ Hvalid) as Hfs. pose proof (valid_input_creds _ Hvalid) as Hcreds.
 apply (shape_strong_equiv_efs scfg _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (spec (in_argv inp) (in_fs inp))).
-- exact (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
-- exact (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds).
+- exact (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hrd).
+- exact (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hvl Halau Hargv Henvp Hfs Hcreds Hrd).
 Qed.
 Lemma drv_lib_layout_top0 : ltac2:(TCodec.tc2 tcn__UbjsonPmFinal "A'QIyR0%211&<r1%211'K&Q4&B&QJr2%22:1%411%611%8212p0:1pSB>1").
 Proof.

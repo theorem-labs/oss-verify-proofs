@@ -8,11 +8,11 @@
    FMH_Fn.v:101-180): fpre (YCbqG's afn_pre_x + the read-only view), argument registers, the allocation trace in the
    image's universe where the function calls the allocator, the alloc.c ledger (PRH_Base.v prh_ledger), and SRr to the
    return address through fpost (YCbqG's apost_base_x at PST := prh_pst). Every conclusion is `srealizes`: SRr
-   (lib/Reusable/YA0n.v:38-41) is the continuation form over srealizes.
+   (lib/Reusable/YA0n.v:39-42) is the continuation form over srealizes.
    IMAGE-PARAMETRIC: the image is the listing class (YC4aP PAImg L): the segments are pa_segs and each text's entry is
    pa_sigma AS_<fn>; the other image numbers are PrhImg's (PRH_Base.v). No image constant is named here.
    ALLOCATOR-PARAMETRIC: ARx is an explicit argument; the walks instantiate it at the allocator-model owner's ARcf segs B.
-   The functional content is preset's source alloc.c @0b89c6c1bd (:36-162), re-read against the rebuilt image's bytes
+   The functional content is preset's source alloc.c (:36-162), re-read against the rebuilt image's bytes
    by the S1 owner: the arm structure, the write sets, the two tail calls, the constant malloc / realloc
    traces (n is held in s0 at the call, so the frame chain is empty). Preset's released plain texts lib/Prog/fuzz_*_c.v
    are not ported (they conclude in SR / realizes) and none of their lemmas is cited.
@@ -27,8 +27,8 @@
    image B's fuzz_malloc / fuzz_realloc AFTER the allocator call, where the room of the post state is not derivable
    (the secondary count may have risen to the maximum), so a room premise on own would make B's fuzz_malloc walk
    unprovable; and own makes no allocator call itself (it writes the head and calls the poison entry). Do not add it.
-   THE PROGRAM LIVE-SET BOUNDS (the kit owner's ruling, on the S1 owner's measurement while re-proving fuzz_free on kit
-   9d109484e53): room_live_cf S does NOT give room_live_cf S' across one allocator step on its own. free_cf can grow
+   THE PROGRAM LIVE-SET BOUNDS (the kit owner's ruling, on the S1 owner's measurement while re-proving fuzz_free on kit):
+   room_live_cf S does NOT give room_live_cf S' across one allocator step on its own. free_cf can grow
    the batch class (enqueue, populate class 24: by YGcfRoomLive.v M24 one growth adds kBatchBytes + kUserMapSize to
    its mapped size), and malloc_cf can raise the secondary count. a8's keeps (RL_free_step :1442, RL_malloc_step
    :1433, RL_realloc_step :1451) take rl_b24_ok L24 S (and rl_sec_ok Lsec S for malloc / realloc), and nothing in
@@ -354,13 +354,13 @@ Definition tfuzz_free_specX : Prop :=
   (* THE FREE'S TRACE IN THE ENGINE'S OWN FORM (the unit owner's reviewer, 23:46Z): afree_realizes_cf's premise,
      `admits (as_universe B) (call_trace ..) S` (YG0d.v:286, YG0dcf.v:452). The old `In (call_trace ..) (as_universe B)`
      meant, through the coercion u_fix, the FIXED list, which the cursor callers cannot supply on B' (their trace
-     carries a DATA word), and the closure's clause 4b gives only `inU`, a DISJUNCTION (YG01.v:145-146) whose fixed half
+     carries a DATA word), and the closure's clause 4b gives only `inU`, a DISJUNCTION (YG01.v:146-147) whose fixed half
      cannot be extracted. SUPPLIERS: a caller whose trace is fixed (clauses 1-3, 4a of PRH_Base.prh_univ_closure)
      supplies it by YG01.admits_fix; a CURSOR caller (parse_string, parse_items) supplies it from clause 4b plus the
      ROOM COUNT (|wild_part| < u_wmax), so those rows stay CONDITIONAL ON THE COUNT THREAD (owned by the S1 owner, not
      proved). The cursor walks do so: a FIXED trace (prh_univ_closure_cur) is admitted at every state, a CW trace by
-     YCbqGwild.wild_room_admits(_laws): parse_string lib/A/Prog/S4_PsFree.v:375-391 (HISTORY: it used prh_cur_ok at
-     c7796752a117), parse_items lib/A/VrdIKeyB.v:1611-1622 / lib/B/Prog/PItems_body_free.v:732-740. *)
+     YCbqGwild.wild_room_admits(_laws): parse_string lib/A/Prog/S4_PsFree.v:375-391 (HISTORY: it used prh_cur_ok),
+     parse_items lib/A/VrdIKeyB.v:1611-1622 / lib/B/Prog/PItems_body_free.v:733-741. *)
   admits (as_universe B) (call_trace ly (pc_free_ra0 (as_code B)) regs ch) S ->
   getr regs 10 = w64 p -> (p = 0 \/ In (p, n) Lam) ->
   prh_ledger B ly S Hp W mem Lam peak cnt fail ran most own ->

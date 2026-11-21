@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfFreeBranchWit.v, with its module paths changed; 10 of its 168 lines of code are new or changed and 4 lines of the source are left out. *)
-(* Taken by path from commit f381ad4bcd7, proofs/cgif/cgif_file_fuzzer/lib/YGcfFreeBranchWit.v (the P'' successor); module paths changed to fuzz_preset lib.Reusable, the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfFreeBranchWit.v (the P'' successor); module paths changed to fuzz_preset lib.Reusable, the text is otherwise unchanged. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, DeallocNmaxA): the two branches of free_cf's size test (YG00cf.free_cf, Quarantine::Put's
    `size <= max_size`) are both taken at a reachable state of the cf model.
    From init_state (ARcf_nil_init's state), a granted malloc_cf of n, then a granted free_cf of the result:

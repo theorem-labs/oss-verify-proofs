@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/A/PWorldH8.v, with its module paths and addresses changed. *)
-(* Modified by Theorem Labs, 2026-10: adapted from proofs/omx-clap-core/fuzz_manifest/lib/A/FMworldH8.v (3e35620c52e), the source of plugin-hostd/fuzz_command's lib/A/CmdWorldH8.v (e1e9207caab), for plugin-hostd/fuzz_reply's ASan build: module paths changed; reply's hand-off states are the concrete list of lib/A/AB01.v, so avis8_all is proved by vm_compute as fm proves it and fuzz_command's class TfibAvis8 is not needed; the image hull ends at 0x5fb000; lia's euclidean-division flag is set Local (the file exports no setting); the line references are this tree's. *)
+(* Modified by Theorem Labs, 2026-10: adapted from proofs/omx-clap-core/fuzz_manifest/lib/A/FMworldH8.v, the source of plugin-hostd/fuzz_command's lib/A/CmdWorldH8.v, for plugin-hostd/fuzz_reply's ASan build: module paths changed; reply's hand-off states are the concrete list of lib/A/AB01.v, so avis8_all is proved by vm_compute as fm proves it and fuzz_command's class TfibAvis8 is not needed; the image hull ends at 0x5fb000; lia's euclidean-division flag is set Local (the file exports no setting); the line references are this tree's. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 (* w_H8 (YA0n.v:24) for reply's entry world W1 (AD2i.v:773): on the two shadow bands, H1 is constant on
    each 8-byte-aligned word.  AD2i states it as its section hypothesis H1_8 and this file proves it;
    AD1d, AD1dcf, AD1f and AD1p pass the proof in.
@@ -9,8 +10,8 @@
    Why it holds.  On a band byte every disjunct of vis (YA0e.v:139-145) but in_allow is decided:
    band_facts below says the byte is mapped, is not noaccess and is lazy, the image hull ends at
    0x5fb000, and TOP = usp - 8388608 lies above both bands.  So there H1 = negb (in_allow || sliverb).
-   in_allow runs over a_vis ch (YA0e.v:126-136).  Every entry of every a_vis of HS_tfib_list
-   (AB01.v:600) has a base and a length that are multiples of 4096, except STK_P (AD1g.v:99); a
+   in_allow runs over a_vis ch (YA0e.v:126-136).  Every entry of every a_vis of HS_tfib_list_all
+   (AB01r.v) has a base and a length that are multiples of 4096, except STK_P (AD1g.v:99); a
    multiple of 4096 is a multiple of 8 in app space and, after the division by 8, in shadow space, so
    every window of every other entry has ends that are multiples of 8.  STK_P's app window starts at
    usp - 8388608, above both bands, and its shadow window is [SL, SHE) with
@@ -26,7 +27,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.plugin_hostd.fuzz_reply.images Require Import Asan.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
 YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AB12 AB1h AB13 AB01.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AB12 AB1h AB13 AB01r.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
 YG00 YG01 YG0f YG0v YG0n YG0r YM05 YD1h.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AD1g AD2i.
@@ -50,7 +51,7 @@ end.
 Definition avis8_chk (c : acs) : bool :=
 (existsb (fun p => pair_eqb p AD1g.STK_P) (a_vis c)
  && forallb (fun p => pair_eqb p AD1g.STK_P || (pa (fst p) && pa (snd p)))%bool (a_vis c))%bool.
-Lemma avis8_all : forallb avis8_chk HS_tfib_list = true.
+Lemma avis8_all : forallb avis8_chk HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Lemma existsb_orb : forall (X : Type) (f g : X -> bool) (l : list X),
@@ -147,15 +148,19 @@ Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TSEGS TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* The invariant abstract and the input's own fields, as A/AD2i.v. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 #[local] Notation u := (uE E).
 #[local] Notation usp := (bv_unsigned sp).
@@ -163,7 +168,8 @@ Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model
 
 Ltac inst H := try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
 try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h); try specialize (H ch);
-try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H HC).
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC).
 Ltac get L := let H := fresh "L" in pose proof L as H; inst H; exact H.
 #[local] Definition band_vals := ltac:(get @AD1g.band_vals).
 #[local] Definition vm_In' := ltac:(get @AD1g.vm_In').
@@ -239,7 +245,7 @@ Qed.
 
 (* ---- the entries of a_vis ch ---- *)
 Lemma avis8_ch : avis8_chk ch = true.
-Proof. exact (proj1 (forallb_forall _ _) avis8_all ch (HS_tfib_In h ch Hch)). Qed.
+Proof. exact (proj1 (forallb_forall _ _) avis8_all ch (HS_tfib_r_In _ h ch Hch)). Qed.
 Lemma stk_in : In AD1g.STK_P (a_vis ch).
 Proof.
 pose proof avis8_ch as X. unfold avis8_chk in X. apply andb_prop in X as [X _].
@@ -347,7 +353,12 @@ destruct (band_facts (Z_to_bv 64 z) ltac:(rewrite UZ; exact Hz)) as (Hna & Hlz &
 rewrite UZ in Hna, Hmp.
 assert (HA : argH E (Z_to_bv 64 z) = false).
 { destruct (argH E (Z_to_bv 64 z)) eqn:Eh; [exfalso|reflexivity].
-  pose proof (YA02.argH0_high TPH sp rdraw argv envp uid hw Hsp Hva E (Z_to_bv 64 z) Eh) as HT.
+  (* As A/AD1g.v: [YA02.argH0_high] over the input's own fields, its entry pc left to [eapply]. *)
+  assert (HT : TOP <= bv_unsigned (Z_to_bv 64 z)).
+  { unshelve eapply (YA02.argH0_high sp rdraw argv envp
+      (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+      (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp)
+      (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)); try exact Eh; try exact Hva; try exact Hsp; try exact 0%N. }
   rewrite UZ in HT. unfold YA02.TOP in HT.
   unfold in_band_rw, kLowShadowEnd, kHighShadowEnd in Hz. lia. }
 assert (HH : in_hull TFIB z = false).

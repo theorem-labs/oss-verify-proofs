@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the brk budget charges brk_grow_bytes; munmap cuts its range with maps_subtract; the reserved ledger with the vDSO/vvar pair and the channel reader are carried through); Sections SoundB, SoundMunmap and SoundSys are generic in the Leaf class; the brk grant carries co_res's ghost part (co_gres) and munmap proves it for the ranges it takes out of the visible set, which lay inside the unmapped entry. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -14,6 +15,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec CatExec CatSim SeqExec StoreOk ShapeAlg SpinAlg AgentLib AgentNodes Nodes RefNodes AllocSim MmapSim AsanAcct AsanAcctShape AsanPlacement BackingAlgebra AsanNodesMmLib AsanNodesLibE.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AsanCeil Scfg AsanRefNodes. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import LiaGuard.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 Import ListNotations.
 Open Scope Z_scope.
 
@@ -115,7 +117,7 @@ Proof.
   intros m d h b Hbal Hdal Hd Hb0 Hnw H.
   unfold page_size in Hnw. pose proof (u64_range b) as Hbr.
   assert (Hureq : bv_unsigned (Z_to_bv 64 (bv_unsigned b + d)) = (bv_unsigned b + d)%Z) by (apply u64_lit; lia).
-  unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok in H. fold h in H. fold b in H. rewrite Hureq in H.
+  unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok, Mmap.brk_grow_bytes in H. fold h in H. fold b in H. rewrite Hureq in H.
   rewrite (proj2 (Z.ltb_lt 0 _) Hb0), (proj2 (Z.ltb_lt (bv_unsigned b) _)) in H by lia. cbn [andb] in H.
   rewrite (page_round_up_Z_aligned (bv_unsigned b)) in H by (first [lia | exact Hbal]).
   rewrite (page_round_up_Z_aligned (bv_unsigned b + d)) in H
@@ -126,9 +128,9 @@ Proof.
   apply andb_prop in H as [H Hbud]. apply andb_prop in H as [Htop Hrf].
   apply Z.leb_le in Htop. apply Z.leb_le in Hbud.
   split; [exact Htop|]. split; [exact Hrf|].
-  rewrite bv_sub_unsigned in Hbud. rewrite Hureq in Hbud. fold h b in Hbud.
-  replace (bv_unsigned b + d - bv_unsigned b)%Z with d in Hbud by lia.
-  unfold bv_wrap in Hbud. change (bv_modulus 64) with (2 ^ 64)%Z in Hbud. rewrite Z.mod_small in Hbud by lia. exact Hbud.
+  (* 727298f3: the budget charges [brk_grow_bytes], the page-rounded growth, which is
+     [d] here because both ends are page-aligned. *)
+  fold h b in Hbud. lia.
 Qed.
 
 Lemma sum_sizes_app : forall l1 l2, sum_sizes (l1 ++ l2) = sum_sizes l1 + sum_sizes l2.
@@ -243,6 +245,8 @@ Hypothesis argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsign
 Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
+(* LPS c0dd863a: [APS.cs_ok_agree]'s transport of [co_ehdr] *)
+Hypothesis EHDR_lt : V_EHDR_below nx0.
 (* [comment removed for export] *)
 Hypothesis RES_len : res_len_ok SEGS A.
 Hypothesis RES_cover : img_lo A < img_hi A /\ forall z, img_lo A <= z < img_hi A ->
@@ -250,6 +254,7 @@ Hypothesis RES_cover : img_lo A < img_hi A /\ forall z, img_lo A <= z < img_hi A
 Hypothesis argH_sp0 : forall E (a : word), argH E a = true -> bv_unsigned (edenot E e_sp0_early) <= bv_unsigned a.
 Hypothesis E_SP0 : AP.expr_vars_lt nx0 e_sp0_early = true.
 Context {SC : StepCfg} {AF : AllocForced SC}.
+Context {LF : Leaf}.
 
 #[local] Notation cs_ok := (APS.cs_ok SEGS A LIMIT SINV argH FS0).
 Let kn_grant_filter_ok := AsanNodesMmLib.kn_grant_filter_ok SEGS A RES_len RES_cover HULL_ok.
@@ -297,7 +302,7 @@ Proof.
   set (v := nxt cs) in *.
   set (E' := ext1 E v tid).
   assert (Hag : env_agree v E E') by apply (ext1_agree).
-  pose proof (cs_ok_agree SEGS A nx0 LIMIT SINV argH E_SP0 argH_agree SINV_agree FS0 E E' cs R FULL model Hag Hfresh HC) as HC'.
+  pose proof (cs_ok_agree SEGS A nx0 LIMIT SINV argH E_SP0 argH_agree SINV_agree EHDR_lt FS0 E E' cs R FULL model Hag Hfresh HC) as HC'.
   rewrite (v_addi_pc (pc cs) Hpc0 Hpc4).
   replace (pc cs + 4) with (pc cs') by (rewrite <- Ecs'; reflexivity).
   apply (Hk E' (regupd R 10 tid) FULL (with_tid tid model)).
@@ -658,6 +663,21 @@ Proof.
           eapply SINV_frame; [|exact co_sinv0]; intros a Ha; apply F1; pose proof (argH_high _ _ Ha); unfold CEIL, KHI in *; lia
       | |- vm_noaccess _ = _ /\ m_vm_lazy _ = _ =>     (* [comment removed for export] *)
           rewrite Hvm', Hlz'; unfold h'; cbn [vm_noaccess]; exact co_vmx0
+      | |- (exists _, _) /\ _ =>
+          (* the reserved ledger and the kernel build are unchanged; the new heap
+             entry sits above the hull and below [KHI], so it is apart from the
+             image reservations and from the launch's extra ones (base >= KHI + 4096);
+             LPS c0dd863a: [co_ehdr] as [co_vdso], the pair's top unchanged *)
+          destruct co_res0 as [Xrx [Xmres [Xvdso [Xgres Xehdr]]]];
+          split; [exact Xrx | split; [| split; [exact Xvdso
+                                               | split; [first [exact Xgres | (rewrite Hvm'; unfold h'; cbn [vm_reserved]; exact Xgres)]
+                                                        | first [exact Xehdr | (rewrite Hvm'; unfold h'; exact Xehdr)]]]]];
+          destruct Xrx as (rx & Hrx & HG & _);
+          rewrite Hvm'; unfold h'; cbn [vm_maps vm_reserved]; constructor; [| exact Xmres];
+          rewrite Hrx; apply Forall_forall; intros [rb rs] Hin; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+          apply in_app_iff in Hin as [Hin|Hin];
+          [ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [Q1 Q2]; cbn [fst snd] in Q1, Q2; unfold KHI in *; lia
+          | pose proof (proj1 (Forall_forall _ _) HG _ Hin) as (_ & _ & _ & _ & Q & _); cbn [fst] in Q; unfold KHI in *; lia ]
       | |- ?g => idtac "UNSOLVED FIELD:" g
       end.
     + (* [comment removed for export] *)
@@ -745,10 +765,12 @@ Hypothesis argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsign
 Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
+Hypothesis EHDR_lt : V_EHDR_below nx0.
 Hypothesis argH_sp0 : forall E (a : word), argH E a = true -> bv_unsigned (edenot E e_sp0_early) <= bv_unsigned a.   (* [comment removed for export] *)
 Hypothesis E_SP0 : AP.expr_vars_lt nx0 e_sp0_early = true.
 Variable FS0 : Fs.Fs.
 Context {SC : StepCfg} {AF : AllocForced SC}.
+Context {LF : Leaf}.
 
 #[local] Notation CSOK := (APS.cs_ok SEGS A LIMIT SINV argH FS0).
 #[local] Notation HID := (APS.hid A argH).
@@ -765,7 +787,7 @@ Let kentry_apart_b_sem' := APS.kentry_apart_b_sem SEGS.
 Let regs_ok_set_n' := APS.regs_ok_set_n.
 Let in_ivs_map_den' := APS.in_ivs_map_den.
 Let kimg_clip_in_hull' := APS.kimg_clip_in_hull A.
-Let cs_ok_agree' := APS.cs_ok_agree SEGS A nx0 LIMIT SINV argH E_SP0 argH_agree SINV_agree FS0.
+Let cs_ok_agree' := APS.cs_ok_agree SEGS A nx0 LIMIT SINV argH E_SP0 argH_agree SINV_agree EHDR_lt FS0.
 Let hid_agree' := APS.hid_agree A nx0 argH argH_agree.
 Let vis_add_sound' := APS.vis_add_sound SEGS A LIMIT HS XN XE XB SHADOW_ok SINV argH argH_sp0 FS0 0%nat.
 Let A_wf_allowA' := APS.A_wf_allowA A HS XN XE XB 0%nat.
@@ -1173,7 +1195,22 @@ Proof.
   specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
   unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
   (* [comment removed for export] *)
-  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+  (* 727298f3: munmap cuts [addr, addr+n) out of the ledger (maps_subtract); on this ledger the cut
+     removes exactly the entry (addr, n): every entry is positive (BPOS), the entry at addr is
+     unique (UNIQ) and every other one is apart (DISJl), so MmapSim.maps_subtract_exact applies
+     (as boost-json/fuzz_parse's AsanNodesMmB.v). *)
+  assert (HDEN : amap_den E m = (addr, n)) by (unfold amap_den; rewrite Haddr; reflexivity).
+  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+  { change (vm_maps (m_vmmaps model'))
+      with (maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)).
+    apply maps_subtract_exact.
+    - pose proof (BPOS _ HIN) as P. rewrite HDEN in P. cbn [snd] in P. exact P.
+    - intros b s Hbs. pose proof (BPOS _ Hbs) as P. cbn [snd] in P. exact P.
+    - intros b s Hbs Hba. subst b. pose proof (UNIQ _ Hbs eq_refl) as E1. rewrite HDEN in E1.
+      injection E1 as E1. exact E1.
+    - intros b s Hbs Hba.
+      assert (Hne' : (b, s) <> amap_den E m) by (rewrite HDEN; intros Heq; injection Heq as Heq _; exact (Hba Heq)).
+      pose proof (DISJl _ Hbs Hne') as D. cbn [fst snd] in D. subst lo hi. lia. }
   assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PL : m_vm_lazy model' = maps_subtract (m_vm_lazy model) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.  (* [comment removed for export] *)
@@ -1244,7 +1281,7 @@ Proof.
     split; [exact Hm'|]. split; [exact Hne'|]. intros Hnf'. exact (DISJ' m' Hm' Hnf' Hne'). }
   assert (KNF : forall m', am_kind m' = KNONE \/ am_kind m' = KNONELAZY \/ am_kind m' = KRWLAZY -> is_fog m' = false).
   { intros m' Hk. unfold is_fog. destruct Hk as [-> |[-> | ->]]; reflexivity. }
-  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xtop Xsp0 Xnasub Xnone Xkinds Xtotsz Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xvmx].
+  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xtop Xsp0 Xnasub Xnone Xkinds Xtotsz Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xvmx Xrdr].
   destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
   assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) (kept ++ gone ++ a_ghost cs)) by reflexivity.
   assert (HTOPEQ : TOP model' = TOP model) by (unfold TOP, alloc_top; rewrite PISP; reflexivity).
@@ -1272,7 +1309,24 @@ Proof.
   - unfold fds_ok in *. exact Xfds.
   - exact Xfs.
   - exact Xtid.
-  - exact Xres.
+  - destruct Xres as [Xrx [Xmres [Xvdso [Xgres Xehdr]]]]. split; [exact Xrx | split; [| split; [exact Xvdso | split; [| exact Xehdr]]]].
+    + (* the surviving entries are a sub-list of the old ones, each apart from the reserved ledger *)
+      rewrite PM. unfold map_remove. apply Forall_forall. intros iv Hiv. apply filter_In in Hiv as [Hiv _].
+      exact (proj1 (Forall_forall _ _) Xmres iv Hiv).
+    + (* [co_gres]: a range the munmap takes out of the visible set lay inside the unmapped entry
+         [addr, addr + n) ([GONE]), which [co_mres] kept apart from the reserved ledger; the
+         ledger is unchanged *)
+      change (vm_reserved (m_vmmaps model')) with (vm_reserved (m_vmmaps model)).
+      apply Forall_app. split; [| exact Xgres].
+      apply Forall_forall. intros p Hp z Hz.
+      destruct (GONE p Hp) as (G1 & _).
+      assert (Hzr : lo <= z < hi)
+        by (apply G1; apply andb_true_intro; split; [apply Z.leb_le | apply Z.ltb_lt]; lia).
+      pose proof (proj1 (Forall_forall _ _) Xmres (amap_den E m) HIN) as Dm.
+      destruct (in_ivs z (vm_reserved (m_vmmaps model))) eqn:Er; [exfalso | reflexivity].
+      apply in_ivs_true' in Er as (r & Hr & Hzr2).
+      pose proof (proj1 (Forall_forall _ _) Dm r Hr) as D.
+      unfold iv_disjoint, amap_den in D. cbn [fst snd] in D. rewrite Haddr in D. fold n lo in D. subst hi. lia.
   - exact Xlimit.
   - rewrite PM. exact MAPS'.
   - (* [comment removed for export] *)
@@ -1372,9 +1426,16 @@ Proof.
   - (* [comment removed for export] *) eapply SINV_frame; [|exact Xsinv]. intros x Hx. unfold FULL'. apply unfill_out. pose proof (argH_sp0 _ _ Hx). rewrite Un. subst hi. lia.
   - (* [comment removed for export] *) subst cs'. cbn [a_vmops vm_replay]. destruct (vm_replay E (a_vmops cs)) as [na lz]. cbn [fst snd] in Xvmx |- *. destruct Xvmx as [Xna Xlz].
     rewrite PN, PL, <- Xna, <- Xlz. unfold vm_step, vm_lo, vm_hi. rewrite Hne, HnZw. fold addr. fold lo. rewrite Un. unfold hi. split; reflexivity.
+  - (* co_rdr: munmap does not touch the channel reader *) exact Xrdr.
 Qed.
 
 
+(* The step at 215 may answer the injected -ENOMEM at 08b1429.  That refusal is
+   spurious under AllocForced (sc_alloc = false), the published config of this tree:
+   Statements.v:83/97 asan_agrees / asan_ubsan_agrees =
+   agrees_in Env.alloc_forced_only, and Statements.v:58/65 halts_within_budget.
+   So [srz_munmap_lazy] keeps only the cut outcome, which goes to the plan's one
+   child. *)
 Theorem node_sys_sound_YMunmap : sys_stmt SEGS A nx0 LIMIT SINV argH FS0 YMunmap.
 Proof. intros cs cs' E R FULL model T HC Hpre Hn HK. eapply node_munmap_sound; eauto. Qed.
 
@@ -1398,11 +1459,13 @@ Hypothesis argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsign
 Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
+Hypothesis EHDR_lt : V_EHDR_below nx0.
 Hypothesis RES_cover : img_lo A < img_hi A /\ forall z, img_lo A <= z < img_hi A ->
   exists iv, In iv (segments_reserved SEGS) /\ bv_unsigned (fst iv) <= z < bv_unsigned (fst iv) + bv_unsigned (snd iv).
 Hypothesis argH_sp0 : forall E (a : word), argH E a = true -> bv_unsigned (edenot E e_sp0_early) <= bv_unsigned a.
 Hypothesis E_SP0 : AP.expr_vars_lt nx0 e_sp0_early = true.
 Context {SC : StepCfg} {AF : AllocForced SC}.
+Context {LF : Leaf}.
 
 Theorem node_sys_sound : forall y, sys_stmt SEGS A nx0 LIMIT SINV argH FS0 y.
 Proof.

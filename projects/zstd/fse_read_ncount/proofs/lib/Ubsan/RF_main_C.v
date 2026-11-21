@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch values (launchT); diagC_exit re-proved with the stack window's low end 6,144,513 bytes below sp, not 8,388,608; #[using] list of diagC_exit updated). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -18,7 +19,7 @@ Open Scope mspec_scope.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 Ltac ua := idtac.
 Ltac rpc := apply ret_pc_even; [lia| reflexivity].
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {lx : launchT}.
 #[using="Type"] Lemma byte_range : forall b : byte, 0 <= bv_unsigned b < 256.
 Proof. intros b. pose proof (bv_unsigned_in_range 8 b) as R. unfold bv_modulus in R. cbn in R. Local Ltac2 Set LiaHints.tbl := fun () => "0010=21381470951.3000003S1R".
 lia. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
@@ -161,7 +162,7 @@ ms = GST 0x131e8 x1 t0 t1 t2 (Z_to_bv 64 (A + 2)) (Z_to_bv 64 A) a0 a1 a2 a3 a4 
 /\ RHEAP s [(bufp, A, cap)] mm /\ ps_so s = stdout_init
 /\ rw_cells usegs mm A [CB (length DATA) DATA; CB (Z.to_nat (cap - Z.of_nat (length DATA))) junk]
 /\ FRAME' mm /\ BASE' mm /\ rw_cells usegs mm RERRNO [C4 errv] /\ frm0 fc.
-#[using="VSP HT FREE FWR TOW"] Lemma diagC_exit : forall (d : diag_msg) (msg : list Z) (PA : Z) (s : PState) (bufp : bptr) (A cap : Z)
+  #[using="VSP HT FREE FWR TOW lx"] Lemma diagC_exit : forall (d : diag_msg) (msg : list Z) (PA : Z) (s : PState) (bufp : bptr) (A cap : Z)
 x1 t0 t1 t2 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 (F : bvmap 5 word) (fc : bv 32) (mm : mem) (errv : word),
 s_diag (St:=PState) d = stderr_fwrite msg -> ro_bytes_b usegs PA (zbytes msg) = true -> zlength msg = 31 -> Forall (fun c => 0 <= c < 256) msg ->
 0x10000 <= PA -> PA + 31 <= 0x1d000 ->
@@ -179,7 +180,7 @@ unfold implM. iprefix. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s RQEXIT msx) end.
 eapply implM_bind.
 { Local Ltac2 Set LiaHints.tbl := fun () => "00N0?10898349623.13611126984331.11111561318432.87 13548026367.87 14357939516.87 22345614936.11424361825921.87 26772152872.11432059271057.87 40703369393.1094425429372.115 47854222187.87 49366584741.11549371035685.1115437840273.114 56323174152.87 57628696595.11257628696595.11360778449190.87 61249635161.13663468596703.87 66023801653.10966026048179.13666026193812.87 66028024501.1116669525048.114 6669525048.115 67174027184.11167560135324.87 8826078769.111 00000100200300;00C00G00K00O00P00Q00R00Z00^00b00i00m01101801C01D01I01M01Q01U01Y01]01a01b01k01lSSSS2ML3HIAS2ML3HIAS2SFS2SFS2SFSSSS2ML3HIAS2SFS2SFS2SF2HaS2SFS2HaS2SF2HaS2ML3HIA2SFSS3LOAS2SFS2SFS2SFS2SFS2HaS2HaSS3LOA3HIAS".
-eapply (FWR) with (lo := usp0 - 8388608) (canary := CAN) (s := msg);
+eapply (FWR) with (lo := usp0 - 6144513) (canary := CAN) (s := msg);
 [exact TOW| apply stderr_file0_wfile0; exact SE| rewrite unsigned_lit by lia; apply rodata_bytes; [exact MI| exact RO| lia| lia]
 | exact RNG | rewrite ML; lia| rewrite ML; reflexivity| reflexivity| reflexivity
 | rewrite unsigned_lit by lia; exact ST
@@ -194,9 +195,9 @@ destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 &
 ua. rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST1 by lia.
 replace (ret_pc (Z_to_bv 64 0x1327c)) with (Z_to_bv 64 0x1327c) by (symmetry; rpc).
 pose proof (magree_of_munch usegs _ _ _ MUc WMc) as AG.
-assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x1ebf0 <= a < 0x1ebf0 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x1ebf0, 0x1ebf0 + 232)] a0) a).
+assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x1ebf0 <= a < 0x1ebf0 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x1ebf0, 0x1ebf0 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
-assert (OUT2 : forall a, (0x10000 <= a < 0x50000 /\ ~ (0x1ebf0 <= a < 0x1ebf0 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x1ebf0, 0x1ebf0 + 232)] a0) a).
+assert (OUT2 : forall a, (0x10000 <= a < 0x50000 /\ ~ (0x1ebf0 <= a < 0x1ebf0 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x1ebf0, 0x1ebf0 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
 apply (rw_cells_magree usegs _ _ _ _ _ AG) in FR; [| intros a Ha; apply OUT; cbn in Ha; lia].
 apply (rw_cells_magree usegs _ _ _ _ _ AG) in ERR; [| intros a Ha; apply OUT2; cbn in Ha; lia].
@@ -214,7 +215,7 @@ unfold implM. iprefix. zstep. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s RQEXIT msx) end.
 eapply implM_bind.
 { unfold rfree_stmt in FREE.
-eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
+      eapply FREE with (lo := usp0 - 6144513) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
 rewrite ?(unsigned_lit 192304) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
 first [ exact P1 | left; reflexivity | exact AUX1 | exact ST1 | exact MI1 | exact ERR | unfold RFREE_STACK; lia | lia ]. }
 cbv beta. intros [] s2 ms2 PO.
@@ -225,7 +226,7 @@ cbn [lb_remove filter bptr_eqb fst snd] in HEAP3, HPR3.
 apply implM_ret. change (RQEXIT 2 s2) with (pat_exit 2 s2).
 eapply (main_return sp0 argv envp TID VSP HT 2 s2).
 - unfold MFRAME. eapply rheap_pres_rw_cells; [exact HPR3| exact FR| left; cbn; lia].
-- unfold LO. first [exact ST3| replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST3].
+    - unfold LO. first [exact ST3| replace (usp0 - 6144513) with (usp0 + -6144513) by lia; exact ST3].
 - eapply RSTAT_heap_pres; [exact HPR3| exact RS1].
 - rewrite bptr_eqb_refl in HEAP3 || idtac. exact HEAP3.
 - rewrite SOE3, SO. eapply stdout_file_heap_pres; [exact HPR3| exact SOF1].

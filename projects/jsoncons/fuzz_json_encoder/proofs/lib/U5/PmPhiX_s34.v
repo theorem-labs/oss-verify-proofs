@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed phi_xsrc_at, srealizes_specG_init. *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec Sto
   VmLimitFrame Scfg HaltsBridge Spec BigintSpec PhiExtract SpecG Pm6NoSpin Pm6DrvLibL Pm6DrvG.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require Import Pm6DrvMainW_s34 Pm6HeapBridgeW_s34.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5.CJ.Bridge Require Import PmHeapInst6_s34.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.Common.Cfg Require SRomStable.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -48,10 +50,12 @@ Section Src.
     intros lim sp brk mb rnd inp Hlim Hen Hvalid.
     pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
     rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-    destruct Hen as [Hrsp [Hrbrk [Hrmb Hrfit]]].
-    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _).
+    (* LPS 727298f3: [valid_entry]'s fifth conjunct is the launch, and [valid_input_abort]
+       has sixteen conjuncts; the source walk reads the launch and the channel reader. *)
+    destruct Hen as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]].
+    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & _ & Hcreds & _ & _ & _ & _ & _ & _ & Hvl & Hcr & _ & _).
     exact (Pm6HeapBridgeW_s34.src0_realizes_specG_heap_lim cfg0 eq_refl eq_refl Lay0F LS0F PHI DLL0 LIOKW0 LX0 BUD0 lim Hlim
-             sp brk mb rnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
+             sp brk mb rnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hcr).
   Qed.
 
   (* [comment removed for export] *)
@@ -65,9 +69,12 @@ Section Src.
   Proof.
     intros lim sp brk mb rnd inp a0 path data Hlim Hen Hvalid Hwb Hargv Hlen Hne Hnd Hlk Hhdr.
     pose proof (srealizes_specG_init lim sp brk mb rnd inp Hlim Hen Hvalid) as Hsrz. rewrite Hargv in Hsrz.
-    apply (phi_extract_after Plain.M.loaded_segments cfg0 CODES _ _ SpecG.t0 (PHI (Pm6DrvD.payload data)) Hsrz).
+    (* the run reads the binary's segments with the vDSO pair appended ([Run.run_segments],
+       LPS 727298f3), which is the configuration the budget premise speaks about *)
+    apply (SRomStable.srun_init cfg0 Plain.M.loaded_segments inp sp mb _ _ _ _ _ _ eq_refl) in Hsrz.
+    apply (phi_extract_after (run_segments Plain.M.loaded_segments inp sp mb) cfg0 CODES _ _ SpecG.t0 (PHI (Pm6DrvD.payload data)) Hsrz).
     - apply Safe_init_within_budget. exact Hwb.
-    - exact Pm6NoSpin.src11_no_spin_site.
+    - intros _ Hal. cbv in Hal. discriminate Hal.
     - reflexivity.
     - apply (codes_ok_specG CODES codes_0 codes_2).
     - apply nokill_specG.

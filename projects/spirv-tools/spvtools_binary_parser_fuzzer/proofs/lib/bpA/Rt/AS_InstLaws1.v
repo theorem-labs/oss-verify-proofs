@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes; the reserved ledger now holds the launch's vDSO/vvar pair: the kernel invariant's launch-pair half carried over). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -20,7 +21,7 @@ Section Laws.
 
   Lemma akernel_vm_ext : forall (s : ast) mo mo',
     m_vmmaps mo' = m_vmmaps mo -> akernel s mo -> akernel s mo'.
-  Proof. intros s mo mo' E K. unfold akernel in *. rewrite E. exact K. Qed.
+  Proof. intros s mo mo' E K. unfold akernel, akernel_resx in *. rewrite E. exact K. Qed.
 
   Lemma AMODEL_vm_ext : forall (s : ast) mo mo',
     m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> AMODEL s mo -> AMODEL s mo'.
@@ -173,5 +174,6 @@ Section Laws.
     -   intros mo mo' (Efd & _ & Efs & Epr & _). unfold m_fs, m_fds, m_halted. rewrite Efd, Efs, Epr. repeat split; reflexivity.
     -   intros mo mo' SB. exact (nonvm_same_mat mo mo' SB).
     -   exact inst_live.
+    -   intros mo mo' (_ & _ & _ & Epr & _). unfold m_channel_reader. rewrite Epr. reflexivity.
   Qed.
 End Laws.

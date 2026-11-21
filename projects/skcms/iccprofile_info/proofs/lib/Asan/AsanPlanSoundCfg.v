@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by gabelogan195, 2026-11: the PSpin cases of check_vars_fo and check_sound_cfg are closed by discriminate, APF.check now refusing PSpin, and node_spin_cfg, which built a spinning leaf, is removed. *)
+(* Modified by Theorem Labs, 2026-11: the checker refuses every PSpin node, so the PSpin case closes by discrimination and node_spin_cfg is removed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 

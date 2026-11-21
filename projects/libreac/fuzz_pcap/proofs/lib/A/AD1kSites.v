@@ -2,7 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proof half of cgif c8557374ad2e lib/A/AD1k.v:272-346 (tfib_fwrite_site, msg_refused_eq, tfib_refused_site); the data half is a Theorem Labs lane's generated A/AD1k.v. Ported for libreac/fuzz_pcap's ASan build: module paths changed, TfibSyms -> PcapSyms; F_STDERR 0xa2578 -> 0x9de08 (__stderr_FILE+0, the unstripped twin's symtab, st_size 232 = FILE_SZ) at AD1k.v:279 / :320; the stderr FILE image range 664880 665712 -> 646592 647424 at AD1k.v:292 / :326 (A/AD2j.v R_A3, the range of A/AD1k.v img_facts' third conjunct: [__stderr_FILE-72, .data end) in both images; pcap: oft_arg0+0 to __start_asan_globals+0). The data half's Section d closes before this file, so its lemmas take the Section variables explicitly: icpt_pre_facts B (AD1k.v:275 / :316), icpt_pre_room B (AD1k.v:282 / :323), rodata_shadow_facts B HB LAWS (AD1k.v:300-301), rodata_hull_zero B HB LAWS (AD1k.v:334). The stack bounds FWI_STK 6224 (A/AE2x.v), FPI_STK 9216 (A/AE2v.v), DIAG_STK 16384 (A/AD1x.v), the message length 38 (Reusable/YO05.v msg_refused, V_refused 67108864) and the canary's start-up atom SOff 41 0 (A/AD1k.v img_facts) equal the donor's. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-10: proof half of cgif lib/A/AD1k.v:273-347 (tfib_fwrite_site, msg_refused_eq, tfib_refused_site); the data half is a Theorem Labs lane's generated A/AD1k.v. Ported for libreac/fuzz_pcap's ASan build: module paths changed, TfibSyms -> PcapSyms; F_STDERR 0xa2578 -> 0x9de08 (__stderr_FILE+0, the unstripped twin's symtab, st_size 232 = FILE_SZ) at AD1k.v:280 / :321; the stderr FILE image range 664880 665712 -> 646592 647424 at AD1k.v:293 / :327 (A/AD2j.v R_A3, the range of A/AD1k.v img_facts' third conjunct: [__stderr_FILE-72, .data end) in both images; pcap: oft_arg0+0 to __start_asan_globals+0). The data half's Section d closes before this file, so its lemmas take the Section variables explicitly: icpt_pre_facts B (AD1k.v:276 / :317), icpt_pre_room B (AD1k.v:283 / :324), rodata_shadow_facts B HB LAWS (AD1k.v:301-302), rodata_hull_zero B HB LAWS (AD1k.v:335). The stack bounds FWI_STK 6224 (A/AE2x.v), FPI_STK 9216 (A/AE2v.v), DIAG_STK 16384 (A/AD1x.v), the message length 38 (Reusable/YO05.v msg_refused, V_refused 67108864) and the canary's start-up atom SOff 41 0 (A/AD1k.v img_facts) equal the donor's. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader that fdchan asks for at LPS 727298f3 carried beside the descriptor fact, from cs_ok's co_rdr). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -29,7 +30,7 @@ Hypothesis LAWS : AR_laws tfibsegs B.
 Hypothesis TL : PcapSyms B.
 Theorem tfib_fwrite_site : fwrite_site_tfa B est.
 Proof.
-intros ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd HAI HPOST.
+intros ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts B ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as ([IR1a IR1b] & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
@@ -57,7 +58,9 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts B HB LAWS ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts B HB LAWS ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+(* [fdchan]'s third conjunct at LPS 727298f3 is the model's channel reader, which the
+   site takes beside the descriptor. *)
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -70,7 +73,7 @@ Lemma msg_refused_eq : map (Z_to_bv 8) AE3l.msg_refused = YO05.msg_refused /\ Z.
 Proof. vm_compute. split; reflexivity. Qed.
 Theorem tfib_refused_site : refused_site_tfa B est.
 Proof.
-intros ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd HAI HPOST.
+intros ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts B ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as (IR1 & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof msg_refused_eq as [ME ML].
@@ -90,7 +93,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero B HB LAWS ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

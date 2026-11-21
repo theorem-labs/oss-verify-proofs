@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (materialize_model_accesses_disjoint, accesses outside the lazy ranges materializing nothing, with its two helper lemmas, in place of a run of blank lines). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -67,8 +68,66 @@ split; [left; reflexivity | split; assumption].
 + right. exists a', n', k.
 split; [right; exact Hin | split; assumption].
 Qed.
-
-
-
-
-
+(* Model LazyFrame.v (08b1429): the disjoint-ledger materialization frame the NoReserve write node uses. *)
+Lemma materialize_accesses_no_new : forall lazy materialized used limit accs,
+  newly_materialized_pages lazy materialized accs = [] ->
+  materialize_accesses lazy materialized used limit accs = Some materialized.
+Proof.
+  intros lazy materialized used limit accs Hnew.
+  unfold materialize_accesses. rewrite Hnew. reflexivity.
+Qed.
+Lemma page_in_ranges_outside : forall lazy (a : word) (n k : nat),
+  (k < n)%nat ->
+  (forall lo sz, In (lo, sz) lazy -> access_outside_range a n lo sz) ->
+  page_in_ranges (page_base_of (bv_unsigned a + Z.of_nat k)) lazy = false.
+Proof.
+  intros lazy a n k Hk Hout.
+  set (z := (bv_unsigned a + Z.of_nat k)%Z).
+  apply Bool.not_true_is_false. intro Htrue.
+  unfold page_in_ranges in Htrue.
+  apply existsb_exists in Htrue.
+  destruct Htrue as ([lo sz] & Hin & Htest).
+  cbn [fst snd] in Htest.
+  apply andb_true_iff in Htest. destruct Htest as [Hlo Hhi].
+  apply Z.leb_le in Hlo. apply Z.leb_le in Hhi.
+  destruct (Hout lo sz Hin) as [Hnw Hdisj].
+  pose proof (bv_unsigned_in_range 64 a) as Ha.
+  pose proof (bv_unsigned_in_range 64 lo) as Hlo_rg.
+  pose proof (bv_unsigned_in_range 64 sz) as Hsz_rg.
+  assert (Hz0 : (0 <= z)%Z) by (unfold z; lia).
+  (* the page base, unwrapped *)
+  assert (Hq0 : (0 <= z / page_size)%Z)
+    by (apply Z.div_pos; [exact Hz0 | unfold page_size; lia]).
+  pose proof (Z.div_mod z page_size
+                ltac:(unfold page_size; lia)) as Hdm.
+  pose proof (Z.mod_pos_bound z page_size
+                ltac:(unfold page_size; lia)) as Hmb.
+  assert (Hpb : bv_unsigned (page_base_of z)
+                = ((z / page_size) * page_size)%Z).
+  { unfold page_base_of. rewrite Z_to_bv_unsigned. apply bv_wrap_small.
+    change (bv_modulus 64) with (2 ^ 64)%Z.
+    unfold page_size in *. unfold z in *. lia. }
+  rewrite Hpb in Hlo, Hhi.
+  (* [z] sits inside its own page, and inside the access *)
+  unfold page_size in *. unfold z in *. lia.
+Qed.
+Theorem materialize_model_accesses_disjoint : forall m accs,
+  accesses_outside_lazy accs (m_vm_lazy m) ->
+  materialize_model_accesses m accs = Some m.
+Proof.
+  intros m accs Hout.
+  assert (Hnew : newly_materialized_pages
+                   (m_vm_lazy m) (m_vm_materialized m) accs = []).
+  { unfold newly_materialized_pages. apply filter_all_false.
+    intros p Hp.
+    destruct (accesses_pages_in accs [] p Hp)
+      as [[] | (a & n & k & Hin & Hk & ->)].
+    rewrite (page_in_ranges_outside (m_vm_lazy m) a n k Hk).
+    - reflexivity.
+    - intros lo sz Hlz. exact (Hout a n lo sz Hin Hlz). }
+  unfold materialize_model_accesses.
+  rewrite (materialize_accesses_no_new (m_vm_lazy m) (m_vm_materialized m)
+             (vm_backing_used m) (vm_limit (m_vmmaps m)) accs Hnew).
+  cbv iota beta.
+  rewrite with_vm_backing_id. reflexivity.
+Qed.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start state is init_acs_r at either CONFIG_RSEQ value). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -43,9 +44,10 @@ Section Holes3.
   Proof. intros h E fs0. unfold HOLES2, CAP.hole_cls. rewrite Nat.Div0.mod_mod. reflexivity. Qed.
 End Holes3.
 
-Lemma SVm_to1 : forall sp rdraw brk0 argv envp uid hw c E M,
-  SINVm HAPH sp rdraw brk0 argv envp uid hw c E M -> HBArg.SINV1 sp brk0 argv envp rdraw hw uid E M.
-Proof. intros sp rdraw brk0 argv envp uid hw c E M (H0 & H1 & H2 & _). exact (conj H0 (conj H1 H2)). Qed.
+Lemma SVm_to1 : forall sp rdraw brk0 argv envp uid hw L c E M,
+  SINVm HAPH sp rdraw brk0 argv envp uid hw L c E M -> HBArg.SINV1 (L:=L) sp brk0 argv envp rdraw hw uid E M.
+Proof. intros sp rdraw brk0 argv envp uid hw L c E M (H0 & H1 & H2 & _). exact (conj H0 (conj H1 H2)). Qed.
 
-Lemma ha_init_noblob : acs_noblob (init_acs_of HAT) = true.
-Proof. vm_compute. reflexivity. Qed.
+(* the start state at either CONFIG_RSEQ value carries no blob *)
+Lemma ha_init_noblob : forall b, acs_noblob (init_acs_r (rseq_z b) HAT) = true.
+Proof. intros []; vm_compute; reflexivity. Qed.

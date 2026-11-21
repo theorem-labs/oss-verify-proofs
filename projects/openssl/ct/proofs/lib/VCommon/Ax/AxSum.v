@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VCommon proof library over the revised model); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -206,16 +207,35 @@ Proof. destruct model as [fd [maps lazy mat] io fs proc lim tm]. split; reflexiv
 Definition in_seg (segs : list Segment) (a : Z) : bool :=
   existsb (fun sg => (Z.of_N (seg_base sg) <=? a) && (a + 8 <=? Z.of_N (seg_base sg) + Z.of_N (seg_size sg))) segs.
 
-Lemma no_lazy_img (segs : list Segment) (Hlow : segs_low segs) (model : Model) (a n : Z) :
-  vm_reserved (m_vmmaps model) = segments_reserved segs ->
+(* Hfk is the closed Boolean AsanWLazy's no_lazy_in_segment now takes.
+   It is a BINDER here rather than a section hypothesis because this lemma already
+   takes segs and Hlow as explicit binders, so the eleven call sites keep a predictable
+   argument order: segs Hlow Hfk model a n.  Discharged at the top -- run_segments is a
+   literal append (LPS@75d69e00 Run.v:328-330), so the vDSO tail is the only place a
+   kernel-mapped segment enters and segs is the unit's own ELF image. *)
+Lemma no_lazy_img (segs : list Segment) (Hlow : segs_low segs)
+  (Hfk : forallb (fun s => negb (seg_kernel_map s)) segs = true) (model : Model) (a n : Z) :
+  (* WAS: vm_reserved (m_vmmaps model) = segments_reserved segs.  Weakened to the
+     append form MR now carries; used once, at :218, in the membership direction only. *)
+  (* SHAPED EXACTLY LIKE mr_res, not weaker.  My first pass wrote the one-conjunct
+     `exists rx, … ++ rx`, which is what this proof USES -- but every caller passes
+     `(mr_res …)` whole, and that is the FOUR-conjunct field, so a one-conjunct premise
+     is a type mismatch at all ten sites.  Taking the field's own shape costs this
+     proof one `_` in its destruct and costs the callers nothing. *)
+  (exists rx, vm_reserved (m_vmmaps model) = segments_reserved segs ++ rx
+              /\ (length rx <= 2)%nat /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => 0x154500000000 <= bas q) rx) ->
   (forall p q, In p (m_vm_lazy model) -> In q (vm_reserved (m_vmmaps model)) -> iv_disj (bas p) (bas p + bsz p) q) ->
   in_seg segs a = true -> no_lazy model a (a + Z.min n 8).
 Proof.
   intros Hres Hlz Hin. unfold in_seg in Hin. apply existsb_exists in Hin as [sg [HIn Hc]].
   apply andb_prop in Hc as [C1 C2]. apply Z.leb_le in C1. apply Z.leb_le in C2. pose proof (Hlow sg HIn) as Hl. unfold ls_beg in Hl.
   destruct (Z_lt_le_dec 0 (Z.min n 8)) as [Hpos|Hpos]; [|intros p z _ Hz; lia].
-  apply (no_lazy_in_segment model segs sg a (a + Z.min n 8)); [|exact HIn|lia|lia|lia|lia].
-  intros p q Hp Hq. rewrite <- Hres in Hq. destruct (Hlz p q Hp Hq) as [X|X]; unfold bas, bsz in X; [left | right]; lia.
+  (* one more subgoal than before: no_lazy_in_segment gained Hfk after its H. *)
+  apply (no_lazy_in_segment model segs sg a (a + Z.min n 8)); [|exact Hfk|exact HIn|lia|lia|lia|lia].
+  intros p q Hp Hq. destruct Hres as [rx [Hrx _]].
+  assert (Hq' : In q (vm_reserved (m_vmmaps model))) by (rewrite Hrx; apply in_or_app; left; exact Hq).
+  destruct (Hlz p q Hp Hq') as [X|X]; unfold bas, bsz in X; [left | right]; lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -228,16 +248,23 @@ Proof.
   apply Z.leb_le in C1. apply Z.leb_le in C2. pose proof (Hlow sg HIn). lia.
 Qed.
 
-Lemma no_lazy_imgn (segs : list Segment) (Hlow : segs_low segs) (model : Model) (a n : Z) :
-  vm_reserved (m_vmmaps model) = segments_reserved segs ->
+Lemma no_lazy_imgn (segs : list Segment) (Hlow : segs_low segs)
+  (Hfk : forallb (fun s => negb (seg_kernel_map s)) segs = true) (model : Model) (a n : Z) :
+  (* WAS: vm_reserved (m_vmmaps model) = segments_reserved segs.  Same weakening and
+     the same single membership use, at :240. *)
+  (exists rx, vm_reserved (m_vmmaps model) = segments_reserved segs ++ rx
+              /\ (length rx <= 2)%nat /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => 0x154500000000 <= bas q) rx) ->
   (forall p q, In p (m_vm_lazy model) -> In q (vm_reserved (m_vmmaps model)) -> iv_disj (bas p) (bas p + bsz p) q) ->
   in_segn segs a n = true -> no_lazy model a (a + n).
 Proof.
   intros Hres Hlz Hin. apply lexists_exists in Hin as [sg [HIn Hc]]. apply land_true in Hc as [C1 C2].
   apply Z.leb_le in C1. apply Z.leb_le in C2. pose proof (Hlow sg HIn) as Hl. unfold ls_beg in Hl.
   destruct (Z_lt_le_dec 0 n) as [Hpos|Hpos]; [|intros p z _ Hz; lia].
-  apply (no_lazy_in_segment model segs sg a (a + n)); [|exact HIn|lia|lia|lia|lia].
-  intros p q Hp Hq. rewrite <- Hres in Hq. destruct (Hlz p q Hp Hq) as [X|X]; unfold bas, bsz in X; [left | right]; lia.
+  apply (no_lazy_in_segment model segs sg a (a + n)); [|exact Hfk|exact HIn|lia|lia|lia|lia].
+  intros p q Hp Hq. destruct Hres as [rx [Hrx _]].
+  assert (Hq' : In q (vm_reserved (m_vmmaps model))) by (rewrite Hrx; apply in_or_app; left; exact Hq).
+  destruct (Hlz p q Hp Hq') as [X|X]; unfold bas, bsz in X; [left | right]; lia.
 Qed.
 
 (* [comment removed for export] *)

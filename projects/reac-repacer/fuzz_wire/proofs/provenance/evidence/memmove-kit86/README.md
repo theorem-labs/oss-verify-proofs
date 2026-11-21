@@ -11,7 +11,7 @@ Every member and every pair the kit does not certify is settled here target by t
 listed NOT CERTIFIED.
 
 This version carries the fixes three read-only audits of the earlier versions asked for (findings F1-F6, G1, G2,
-R1-R5, and the four of the check of 2f38af68638) and applies the pool owner's rulings O1 and O3 throughout. Every
+R1-R5, and the four of the check) and applies the pool owner's rulings O1 and O3 throughout. Every
 change in the last round only removed settlements: no row, target or member settles here that was not settled before.
 
 **No ABI assumption is made at calls or at returns.** At a call, every register that holds the value goes into the
@@ -154,7 +154,7 @@ object-pointer test, and 1 other. By role: 131 a non-argument register at a call
 compare, 55 an argument, 28 a base, 13 a store. The 85 NOT CERTIFIED rows hold REAL 0: the lui word of all 115 rows is
 byte-equal in X and Y on both images (90 distinct functions have a NOT CERTIFIED member or pair).
 
-**Against the reviewers' estimates.** The settled lui set is exactly the 30 rows the check of 2f38af68638 confirmed:
+**Against the reviewers' estimates.** The settled lui set is exactly the 30 rows the check confirmed:
 the 33 settled there minus `StackDepotBase::find +0x1c` (a2 reaches `Printf`'s varargs save through `Put`,
 `StackDepotPut`, `LeakReport::AddLeakedChunks` and `CheckForLeaks +0x364`), `__lsan_unregister_root_region +0x238` (a4
 leaves `___interceptor_free` in its tail call into `InternalFree`, which may return it intact, and goes on to callers
@@ -192,8 +192,8 @@ at `+0x100` reads the string's NUL, named by its own consumer line.
 | 2a frame stores | every store of the register into a callee's frame was skipped | skipped only when the callee forms no sp-derived pointer and nothing reads the stored bytes back (except the restore of a save / restore pair); refuses `find +0x1c` |
 | 2b tail calls in a caller | a value leaving a caller in a tail call was not followed | followed one level up when the tail callee may return it intact; refuses `__lsan_unregister_root_region +0x238` |
 | extra: CSTR hand override | a CSTR hand line settled a whole row whatever its other uses showed | a row settles only when every use does; a hand line names the class of the store use(s) it cites; refuses `InitializeFlags +0x104`, `RegisterCommonFlags +0x1218` |
-| 3 (check of 7047c7c1a9d) first event in `reads_after_call` | the caller test stopped at the first event in word order, so a `ret` or tail call that hands the value back could hide a real read at a later word on another path | every live word on every path is examined, and a real read anywhere wins over `RET-LIVE` (tested one level up). No verdict changed (every lui row with its per-use classes, every target and every member is identical on both images). The masked caller contexts are recorded as now examined in `records/reads-after-call-masked-asan.txt`: walking every caller chain from every `ret` use of image A in full (no stop at the first refusal), 2743 contexts, of which 90 (45 on X, 45 on Y) changed from `RET-LIVE` to a real read. This covers the reviewer's 25, among them `InternalAlloc +0x3c` a4, `LeakSuppressionContext::Suppress +0x100` a5 and `fflush +0xf0` a2, and the 8 contexts settle3's own runs query |
-| 4 (check of 7047c7c1a9d) the printer mechanism | named `Printf` / `Report` / `VSNPrintf` and a `va_list` | corrected: the s-register saves are in `SharedPrintfCode` / `StackTrace::Print` (and `SharedPrintfCodeNoBuffer`, `VSNPrintf`), each passing the address of a local; `Printf` / `Report` save only ra and their varargs registers |
+| 3 (check) first event in `reads_after_call` | the caller test stopped at the first event in word order, so a `ret` or tail call that hands the value back could hide a real read at a later word on another path | every live word on every path is examined, and a real read anywhere wins over `RET-LIVE` (tested one level up). No verdict changed (every lui row with its per-use classes, every target and every member is identical on both images). The masked caller contexts are recorded as now examined in `records/reads-after-call-masked-asan.txt`: walking every caller chain from every `ret` use of image A in full (no stop at the first refusal), 2743 contexts, of which 90 (45 on X, 45 on Y) changed from `RET-LIVE` to a real read. This covers the reviewer's 25, among them `InternalAlloc +0x3c` a4, `LeakSuppressionContext::Suppress +0x100` a5 and `fflush +0xf0` a2, and the 8 contexts settle3's own runs query |
+| 4 (check) the printer mechanism | named `Printf` / `Report` / `VSNPrintf` and a `va_list` | corrected: the s-register saves are in `SharedPrintfCode` / `StackTrace::Print` (and `SharedPrintfCodeNoBuffer`, `VSNPrintf`), each passing the address of a local; `Printf` / `Report` save only ra and their varargs registers |
 | 1 `sysconf +0x214` | settled with no reason given | NOT CERTIFIED: a call at a function's last word, or a tail call, whose callee may return without writing the register leaves the trace with nowhere to go |
 | O1 psABI | relied on at calls and returns | not relied on anywhere (above) |
 | O3 `dead-at-ret`, mixed `compare` | | settled classes; `dead-at-ret` only by the complete-caller test |

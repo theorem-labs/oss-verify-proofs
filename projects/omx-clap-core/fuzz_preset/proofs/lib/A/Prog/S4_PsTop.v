@@ -8,7 +8,7 @@
      retok    S4_PsRet.ps_retok_walk
      ret0     S4_PsRet.ps_ret0_walk
    THE TOP: ps_K0_of_counts : tparse_string_specX B ARx SK CTX CW, the KIT TEXT of THE KIT'S CUT
-   a working branch 7cdbb61b5fa0 (PRH_FnReader.v f1ae32e3b2cd :517-681) itself. The change from
+   a working branch (PRH_FnReader.v f1ae32e3b2cd :517-681) itself. The change from
    the earlier statement DRAFT_tparse_string_specX (deleted) was NOT a conversion: the kit's refused arm adds the outcome-exclusion conjunct
    (:624-629) and counts ((cnt + 1) mod 2 ^ 64) (:634-635) where the earlier statement had (cnt + 1); its g_peak and
    g_ran_out are the earlier statement's (fuzz_malloc's prh_alloc_post values). The walk proves both: the exclusion
@@ -160,7 +160,7 @@ exact (ps_entry_holdsP B ARx SK CTX CW LAWS TL P PLAW HSCAN HRET0).
 Qed.
 End topP.
 
-(* ---- THE INSTANCE, P := ps_mn D: the kit text (the kit's cut 7cdbb61b5fa0, PRH_FnReader f1ae32e3b2cd) is m-form and
+(* ---- THE INSTANCE, P := ps_mn D: the kit text (the kit's cut, PRH_FnReader f1ae32e3b2cd) is m-form and
    budgeted, fpostWbm .. (wbudget CW 0) .. (fQmn mem Q), and ps_postP (ps_mn D) CW D IS that post
    (S4_PsBase.ps_postm_is_K0). THE TOP: the KIT TEXT itself; its premises beyond the text are the Section hypotheses
    (the callee texts and the image facts; no named open fact). ---- *)

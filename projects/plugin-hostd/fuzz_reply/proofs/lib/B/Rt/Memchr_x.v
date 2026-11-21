@@ -3,22 +3,23 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/YE6x.v's walk of the memchr wrapper, generalised to any byte c in a1 and to a window that may hold no c: the musl call is MemchrMusl's walk, and after it the found case keeps YE6x's check (YE6y, count a0 - s2 + 1) while the not-found case takes the twin check of MemchrChk (count s1). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/A/Rt/Memchr.v
-   (a working branch 3b8a77d146c, the general memchr), with its module paths changed and its seven addresses moved to fuzz_reply.asan (lib/A/Rt/Memchr.v, by code pairing), and from there to fuzz_reply.asan-ubsan (this file): trampoline 0x42208, musl memchr 0x96950, return 0x445fc, epilogue 0x4465c, REAL(memchr) cell 0x9fca8, and the musl mask window 0x10350/0x10370 (YE39.v mc_bounds). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/Memchr.v (a working branch b499e5453f1): lib/A's cgif-layer modules replaced by their lib/B twins, and its addresses moved to fuzz_reply.asan-ubsan by code pairing. *)
+   (a working branch, the general memchr), with its module paths changed and its seven addresses moved to fuzz_reply.asan (lib/A/Rt/Memchr.v, by code pairing), and from there to fuzz_reply.asan-ubsan (this file): trampoline 0x42208, musl memchr 0x96950, return 0x445fc, epilogue 0x4465c, REAL(memchr) cell 0x9fca8, and the musl mask window 0x10350/0x10370 (YE39.v mc_bounds). *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/Memchr.v (a working branch): lib/A's cgif-layer modules replaced by their lib/B twins, and its addresses moved to fuzz_reply.asan-ubsan by code pairing. *)
 (* Modified by Theorem Labs, 2026-10: made generic in place on image A (lib/A/Rt/Memchr.v) over AE2y.v's icpt_laws_x (any
    allocator invariant ARx; ghost head set Hpx threaded unchanged): each walk lemma stated over ARx (<name>_x, and
    POSTC_x for the section post). *)
 (* Modified by Theorem Labs, 2026-10-30: the image-B twin of that generic part, as the new module Rt/Memchr_x beside
-   lib/B/Rt/Memchr.v (not edited): lib/A/Rt/Memchr.v at commit 8fe76247f18 moved to fuzz_reply.asan-ubsan by alreloc
+   lib/B/Rt/Memchr.v (not edited): lib/A/Rt/Memchr.v moved to fuzz_reply.asan-ubsan by alreloc
    ced0368250cb6538 (same-unit A -> B direct map, A<r> -> Y<r>; per-numeral report).  Its Section f came out
-   byte-identical to lib/B/Rt/Memchr.v:35-103, so that file is Required for it instead of a copy; the result is cut to
+   byte-identical to lib/B/Rt/Memchr.v:36-104, so that file is Required for it instead of a copy; the result is cut to
    Sections g and h (chk_found_x, chk_none_x, chk_zero_x, mch_tail_x, memchr_icpt_srr_x) and memchr_icpt_realizesM_x
    (the AR instances gA / hA and the AR theorems are lib/B/Rt/Memchr.v's own); its two calls of A's generic
    MemchrChk.mchr_check_srr_x / mchr_check0_srr_x name their image-B twins in lib/B/Rt/MemchrChk_x.v.  The contract
-   text amemchr_realizesM_x is lib/A/IcptRealizesX.v:89-105's (Rt/MemchrDef.v:39 over YE2y's ecall_pre_ix), restated
+   text amemchr_realizesM_x is lib/A/IcptRealizesX.v:90-106's (Rt/MemchrDef.v:40 over YE2y's ecall_pre_ix), restated
    here: lib/B/IcptRealizesX.v has no memchr row, and a walk must not Require W_sites_x (FCiface / YCbqG redefine Zify /
    lia globally).  It is W_sites_x.v's amemchr_realizesM_x at tfibsegs by conversion (lib/B/RTxIcpt.v
    ecall_pre_ix_iff). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -506,7 +507,7 @@ split; [reflexivity|]. split; [exact HAR'|]. split; [exact HKP|]. split; [exact 
 split; [exists k; split; [exact FB | exact HA10]|]. split; [exact HFR | exact HPR].
 Qed.
 End h.
-(* lib/A/IcptRealizesX.v:89-105's amemchr_realizesM_x (Rt/MemchrDef.v:39 amemchr_realizesM over ARx) *)
+(* lib/A/IcptRealizesX.v:90-106's amemchr_realizesM_x (Rt/MemchrDef.v:40 amemchr_realizesM over ARx) *)
 Section t. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop.

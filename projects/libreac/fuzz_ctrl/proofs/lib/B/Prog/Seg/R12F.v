@@ -1,10 +1,10 @@
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source runs: lib/B/Prog/Seg/R12.v (not in this delivery) r12_evt at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/R12.v (not in this delivery) r12_evt at a working branch
      (blob dba11fb6f43cab8beccbd1296d1528d724c5acdd);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: the run calls reac_identity_ingest, so it is split and there is no r12_evt_of_F.
      r12_pre_F re-runs R12.v:170-175 (the ten instructions 0x81834 .. 0x8185c, up to the callee entry);
      r12_post_F re-runs R12.v:200-221 (the run's Q from the callee post facts; no instruction follows the

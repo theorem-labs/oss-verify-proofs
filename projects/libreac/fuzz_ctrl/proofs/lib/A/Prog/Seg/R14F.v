@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1392 of its 1502 lines of code are new or changed and 901 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R14.v, with its module names changed; 350 of its 474 lines of code are new or changed and 1378 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R14.v blob 471ba94eddd7 at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/R14.v blob 471ba94eddd7.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: r14_head_of_F re-derives R14.r14_head at ExecF.RNG_all; r14_head_of_F_verbatim checks by constr_eq that
    its type is the type of R14.r14_head. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -24,7 +25,7 @@
 
    r14_call (R14.v:712) is re-run in BOTH agreed forms, side by side.
    (A) THE ONE TEXT. r14_call_F cites a Theorem Labs lane's `reac_box_catalogue_match_contract_F` BY NAME in the plain
-   contract's premise position (lib/A/Prog/reac_box_catalogue_match_c.v:152 (an earlier version, blob ccd3e1f3c75, not in this delivery) (from a working branch 901563ab46f),
+   contract's premise position (lib/A/Prog/reac_box_catalogue_match_c.v:152 (an earlier version, blob ccd3e1f3c75, not in this delivery) (from a working branch),
    the text of record; its IMG_HI needs the bcmp_wrap_c.v of record (an earlier version, blob
    270745d3d2e, not in this delivery)), and passes that contract's footprint premises through unchanged,
    instantiated at this call's values (f := phi, len := len, S := S, FS := FS). Two of them are forall-memory
@@ -52,7 +53,7 @@
                      R14.r14_call's own first-premise position, re-derive R14.r14_call; r14_call_of_pre_post_verbatim
                      pins it to R14.r14_call's type by constr_eq (the no-weakening check). The middle piece is
                      R14.v's own contract application through MemNorm.evt_normalize, cut from its script unchanged.
-   R14.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 17 of its code lines changed or removed, 17 added. *)
+   R14.v's code is unchanged since release (comments edited); it differs from the source blob above: 17 of its code lines changed or removed, 17 added. *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -64,7 +65,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import Img0 AsanRT AsanRTI
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require MemNormF.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require Import RcModel RcLib RcMatch.
 (* rt_addressable_bound (the bounds of an `addressable` range) for r14_head_of_F at RNG_all; the callee's contract
-   file, a Theorem Labs lane's blob ccd3e1f3c75 at a working branch 901563ab46f (the text of record: the auditor
+   file, a Theorem Labs lane's blob ccd3e1f3c75 at a working branch (the text of record: the auditor
    a Theorem Labs lane's signed text with the header's catalogue address corrected to CM_T), for BOTH the plain
    reac_box_catalogue_match_contract and reac_box_catalogue_match_contract_F, and for CM_K / CM_T / want /
    rng_fp_cm and the W / D / tls names. That text states its image premise with the LITERALS

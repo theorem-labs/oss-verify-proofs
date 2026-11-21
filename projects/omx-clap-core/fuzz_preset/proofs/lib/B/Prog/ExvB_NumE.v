@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX; memnorm only as EXN_keepM(_cur)'s keep: runs' frames, m-form call keeps (kit 4f18c75d4900). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX; memnorm only as EXN_keepM(_cur)'s keep: runs' frames, m-form call keeps (kit). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's NUMBER SEGMENT, sub-piece Ec (lib/B/Prog/ExvB_NumCut.v EXN_Ec): the cut CC (exv_pc 0x910, B 0x83e3c) to
    the cut CD (exv_pc 0x9a8, B 0x83ed4), where in->differs is decided. Proves no function (kind: segment lemma).
@@ -29,7 +30,7 @@
    (strcmp <> 0) and ExvB_NumE_a.v's exe_arm_r2 (bcmp <> 0). The strcmp call's operands are v->str (a Lam block:
    exe_hdr, exv_sh_lam) and in->scratch (prhex_inblk), both by exe_blk_op; its read-only premise is KIT_RODATA's
    first half (exv_kit_rodata); the bcmp call's operands are v's num field and the frame's num slot f + 64.
-   Old-pin kit 4f18c75d4900 (rebind base a9d3e245c2b): EXN_keepM / EXN_keepM_cur and ExvB_Open_kt.exv_kt ask the
+   Old-pin kit (rebind base): EXN_keepM / EXN_keepM_cur and ExvB_Open_kt.exv_kt ask the
    memnorm keep from the cut's memory; each engine run gives it from its frame on the whole overlay (exe_mn_of /
    exe_mn_run, ExvB_NumE_a.v: the run writes only in->differs, on the real stack, where no image segment lies), each
    call from its m-form rule's last conjunct, and exv_kt's from EXB's exv_rm. Image A's

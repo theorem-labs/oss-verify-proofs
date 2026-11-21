@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 (* Theorem Labs, 2026-10-31, QMm W1 entry (a Theorem Labs lane; owner a Theorem Labs lane / ReallocPrimary): arodata_ok_cf (Reusable/YG0dcf.v)
    at the cf driver's first state, main's hand-off, whose memory is the FULL start-up memory. The cf driver
    (A/AD1pcf.v) took it as the Section hypothesis HSTART_ARO; arodata_ho_A states it in the shape of
@@ -11,7 +12,10 @@
      read memory Mr = mrestrict hid FULL holds no byte there" (YK0e.v kentry_ok); hid is false at those addresses,
      since they lie in the image hull (YA0e.v vis) and below TOP, where argH is false (YA02.v argH0_high, top_ok0).
    - arodata_ho_A: ReplyKeptAroA.arodata_none_A, at an address that relro_kept_A puts in as_kept.
-   rule 24: proves no function (kind: start-up facts). *)
+   rule 24: proves no function (kind: start-up facts).
+   LPS 727298f3: both facts are stated over the start of A/AD1q.v's drv_mainX_stmt, A/AD1pcf.v start_aro_ho_t's binders
+   and premises (A/AB01r.v's hand-off state of the run's own CONFIG_RSEQ flag, the invariant abstract with SINV_sp0,
+   the mmap base and the launch premises), and the KImg check runs over both flags' hand-off states. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -19,7 +23,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.plugin_hostd.fuzz_reply.images Require Import Asan.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AB12 AB1h AB13 AB01.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AB12 AB1h AB13 AB01r.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG01 YG0f YG0n.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AF0m.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
@@ -37,23 +41,29 @@ Definition kept_hull_ok (G : list (Z * Z)) : bool :=
 Lemma kept_hull_A : kept_hull_ok Tfib_kept = true.
 Proof. vm_compute. reflexivity. Qed.
 
-(* Every hand-off state carries a KImg over each kept range. *)
+(* Every hand-off state of both CONFIG_RSEQ flags carries a KImg over each kept range. *)
 Definition kept_img_ok (ch : acs) : bool := forallb (fun r => kn_img ch (fst r) (snd r)) Tfib_kept.
-Lemma kept_img_all : forallb kept_img_ok HS_tfib_list = true.
+Lemma kept_img_all : forallb kept_img_ok HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
+
+#[local] Notation ARGH sp rdraw inp := (YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp)
+  (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+  (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 
 Section s. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* The start-up fact, at an arbitrary kept address: the hand-off memory FULL holds no byte there. *)
-Lemma kept_none_ho_A : forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs)
-  (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-  valid_sp sp -> valid_argv (in_argv inp) -> HS_tfib h = Some ch ->
-  cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-    (YA02.SINV0 TSEGS TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
+Lemma kept_none_ho_A : forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs)
+  (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
+  valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+  entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
+  HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+  (forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+  cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp) SINV (ARGH sp rdraw inp) (in_fs inp) E ch R FULL model ->
   forall a, Exists (in_zr a) (as_kept TfibB) -> FULL (Z_to_bv 64 a) = None.
 Proof.
-intros sp rdraw brk inp h ch E R FULL model Hsp Hva Hch HC a Ha.
+intros sp rdraw brk mbase inp h ch E R FULL model SINV Hsp Hva Hve Hfit Hinp Hlau Hch SP0 HC a Ha.
 rewrite (@ts_kept TfibB TfibB_syms) in Ha.
 apply Exists_exists in Ha as ([s n] & Hr & Hz). unfold in_zr in Hz. cbn [fst snd] in Hz.
 (* the kept range lies in the image hull, below TOP *)
@@ -66,46 +76,46 @@ pose proof (YA02.top_ok0 sp Hsp) as T. unfold top_ok in T. destruct T as [T _]. 
 unfold APC.CEIL in HB1.
 assert (Ha64 : 0 <= a < 2 ^ 64) by lia.
 (* a KImg of ch covers the kept range, so the read memory holds no byte at a *)
-pose proof (proj1 (forallb_forall _ _) kept_img_all ch (HS_tfib_In h ch Hch)) as K. unfold kept_img_ok in K.
+pose proof (proj1 (forallb_forall _ _) kept_img_all ch (HS_tfib_r_In _ h ch Hch)) as K. unfold kept_img_ok in K.
 rewrite forallb_forall in K. specialize (K _ Hr). cbn [fst snd] in K.
 unfold kn_img in K. apply existsb_exists in K as (Kn & HK & HKb).
 destruct Kn as [| | |lo hi| | | | | |]; try discriminate HKb.
 apply andb_prop in HKb as [K1 K2]. apply Z.leb_le in K1. apply Z.leb_le in K2.
 pose proof (proj1 (Forall_forall _ _)
-  (ho_know TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-     (YA02.SINV0 TSEGS TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-     (YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model HC)
+  (ho_know TSEGS TFIB YA02.LIMIT (YA02.TOP sp) SINV (ARGH sp rdraw inp) (in_fs inp) E ch R FULL model HC)
   _ HK) as (_ & _ & Hnone).
 specialize (Hnone a ltac:(lia)).
 (* the hand-off hides nothing at a: argH lies at or above TOP, and a is in the image hull *)
-assert (HA : YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E (Z_to_bv 64 a) = false).
-{ destruct (YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E (Z_to_bv 64 a)) eqn:EA;
-    [|reflexivity].
-  pose proof (YA02.argH0_high TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) Hsp Hva E _ EA) as X.
+assert (HA : ARGH sp rdraw inp E (Z_to_bv 64 a) = false).
+{ destruct (ARGH sp rdraw inp E (Z_to_bv 64 a)) eqn:EA; [|reflexivity].
+  assert (X : YA02.TOP sp <= bv_unsigned (Z_to_bv 64 a)).
+  { unshelve eapply (YA02.argH0_high sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp)
+      (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp));
+      try exact EA; try exact Hva; try exact Hsp; try exact 0%N. }
   rewrite (u64_lit a Ha64) in X. lia. }
-assert (HH : hid TFIB (YA02.TOP sp) (YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-               E ch model (Z_to_bv 64 a) = false).
+assert (HH : hid TFIB (YA02.TOP sp) (ARGH sp rdraw inp) E ch model (Z_to_bv 64 a) = false).
 { unfold hid. rewrite HA. cbn [orb]. unfold vis. cbv zeta. rewrite (u64_lit a Ha64). unfold in_hull.
   rewrite (proj2 (Z.leb_le (img_lo TFIB) a)) by lia. rewrite (proj2 (Z.ltb_lt a (img_hi TFIB))) by lia.
   reflexivity. }
 unfold Mr, mrestrict in Hnone. rewrite HH in Hnone. exact Hnone.
 Qed.
 
-Theorem arodata_ho_A : forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs)
-  (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-  valid_sp sp -> valid_argv (in_argv inp) -> HS_tfib h = Some ch ->
-  cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-    (YA02.SINV0 TSEGS TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
+(* A/AD1pcf.v start_aro_ho_t at CfImg_A / TfibB, its binders and premises *)
+Theorem arodata_ho_A : forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs)
+  (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
+  valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+  entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
+  HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+  (forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+  cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp) SINV (ARGH sp rdraw inp) (in_fs inp) E ch R FULL model ->
   @arodata_ok_cf CfImg_A TSEGS TfibB FULL.
 Proof.
-intros sp rdraw brk inp h ch E R FULL model Hsp Hva Hch HC.
+intros sp rdraw brk mbase inp h ch E R FULL model SINV Hsp Hva Hve Hfit Hinp Hlau Hch SP0 HC.
 apply (ReplyKeptAroA.arodata_none_A FULL). intros a Ha Hno.
-apply (kept_none_ho_A sp rdraw brk inp h ch E R FULL model Hsp Hva Hch HC a).
+apply (kept_none_ho_A sp rdraw brk mbase inp h ch E R FULL model SINV Hsp Hva Hve Hfit Hinp Hlau Hch SP0 HC a).
 destruct (ReplyKeptAroA.aro_kept_A a Ha Hno) as (_ & _ & Hk & _). exact Hk.
 Qed.
 
 End s.
-
-Check arodata_ho_A.
-Print Assumptions arodata_ho_A.

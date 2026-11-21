@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -40,7 +41,7 @@ Local Ltac ul := unfold OSS_CTOR_STACK_A, PJ_LOC_STACK_A, SEGTOP_A, STACK_WIN, U
 
 Lemma append_short0A : forall (Σ : rts RT) (K : config -> Prop) (lo P q fO : Z) (kO : nat)
     (ra gp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
-  In (fO, kO) (rt_frames RT Σ) -> fO <= P -> P + 24 <= fO + fs_size kO - 8 -> P mod 8 = 0 -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  In (fO, kO) (rt_frames RT Σ) -> fO <= P -> P + 24 <= fO + fs_size kO - 8 -> P mod 8 = 0 -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   rw_cells bsegs m P [C8 (wz 0); C8 (wz 0); C8 (wz 0)] -> bytes_at bsegs m (shad P) [z8; z8; z8] ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> lo + 80 + RT_STACK <= q -> q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
@@ -165,7 +166,7 @@ Local Ltac unz := rewrite ?b2z_pos, ?b2z_lt1 by lia.
 
 Lemma init_bufA : forall (Σ : rts RT) (K : config -> Prop) (lo O q fO : Z) (kO : nat) (j108 : list byte)
     (ra gp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
-  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   rw_cells bsegs m (O + 8) [C8 (wz OSS_SB_VPTR_A); C8 (wz OSS_CLASSIC_A); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0)] ->
   rw_cells bsegs m (O + 72) [C8 (wz 0); C8 (wz 0); C8 (wz 0)] -> rw_cells bsegs m (O + 96) [C8 (wz 0)] -> rw_cells bsegs m (O + 104) [CB 4 mode16; CB 4 j108] ->
   OSHADOWA m O ->
@@ -300,7 +301,7 @@ Qed.
 
 Lemma sb_ctorA : forall (Σ : rts RT) (K : config -> Prop) (lo O q fO : Z) (kO : nat) (junk : list byte)
     (ra gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
-  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   rw_cells bsegs m (O + 8) [CB 104 junk] -> OSHADOWA m O -> LOCBA m ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> lo + 240 + RT_STACK <= q -> q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m' j108,

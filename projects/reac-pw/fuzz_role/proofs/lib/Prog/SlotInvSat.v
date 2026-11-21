@@ -1,5 +1,5 @@
 (* Satisfiability of the slot invariant of reac-pw/fuzz_role LLVMFuzzerTestOneInput (plain): SlotFR.Inv_ENTRY
-   (Prog/SlotFR.v:184-191) holds of a concrete state at the frame's REAL instance, the one
+   (Prog/SlotFR.v:185-192) holds of a concrete state at the frame's REAL instance, the one
    FrameProof.frame_plain_holds exhibits (B = src0_msyms, APIf = @zlib_API, SH = src0_sink_head, SK = src0_sink,
    ra = RA_LIB, empty = EMPTY), with the real allocator relation aa_MR (@zlib_API rc) = YN2b.MRx src0_msyms; and
    at that state's entry bound the resources of the two live harness blocks (SlotInv.hb_pp, hb_pod) have room:
@@ -64,11 +64,16 @@ Definition W_MBASE : Z := mmap_base_max.
 Definition W_INP : ProcInput :=
   mkProcInput [[Z_to_bv 8 112]] [] [] (stream_const (Z_to_bv 8 0)) (Z_to_bv 64 1000) (Z_to_bv 64 1000) []
     net_silent (Z_to_bv 64 1024) (Z_to_bv 64 0) hwcap_rv64gc false Sv48.
+(* 727298f3: the start model takes the entry draw (its vDSO draw, [Run.init_config]'s [with_vdso]); the witness's
+   draw keeps every vDSO call's state, the draw [State.init_model] itself starts from. *)
+Definition W_RND : EntryDraw := mkDraw (Z_to_bv 128 0) (Z_to_bv 64 W_SP0) vdso_keeps_all.
 Definition W_MD : Model :=
-  MD0 (Z_to_bv 64 2) (Z_to_bv 64 W_BRK) (Z_to_bv 64 W_MBASE) (Z_to_bv 64 W_SP0) Budgets.Standard.lim_source W_INP.
+  MD0 (Z_to_bv 64 2) (Z_to_bv 64 W_BRK) (Z_to_bv 64 W_MBASE) (Z_to_bv 64 W_SP0) Budgets.Standard.lim_source W_INP W_RND.
 
+(* 727298f3: the reserved ledger is [State.init_reserved], the image's reservations with the vvar/vDSO pair. *)
 Lemma W_MD_vm : m_vmmaps W_MD =
-  mkVmMapsFull (segments_reserved src0segs) [] [] (Z_to_bv 64 W_BRK) (Z_to_bv 64 W_BRK) Budgets.Standard.lim_source
+  mkVmMapsFull (init_reserved (segments_reserved src0segs) (Z_to_bv 64 W_MBASE) (Z_to_bv 64 W_SP0) (in_kernel W_INP))
+    [] [] (Z_to_bv 64 W_BRK) (Z_to_bv 64 W_BRK) Budgets.Standard.lim_source
     (Z_to_bv 64 W_MBASE) (Z_to_bv 64 W_SP0).
 Proof. reflexivity. Qed.
 
@@ -223,6 +228,14 @@ Proof.
   - unfold ceil_of_top, alloc_top. rewrite W_MD_vm. vm_compute. reflexivity.
   - intros i Hi. assert (E : vml_len src0_msyms = 0) by reflexivity. rewrite E in Hi. lia.
   - rewrite W_MD_vm. reflexivity.
+  (* 727298f3: [heap_pristine]'s two vDSO fields (Reusable/YO0d.v): the pair is in the ledger, which is the
+     image's reservations with the pair appended (as in [hp_vm] above), and the pair's top is at or above
+     [mmap_base_min] (computed on this witness; reac-pw/fuzz_pin's Prog/SlotInvSat.v). *)
+  - assert (Er : vm_reserved (m_vmmaps W_MD)
+      = segments_reserved (ms_segs src0_msyms) ++ vdso_reserved (m_kernel W_MD) (vdso_top (m_vmmaps W_MD)))
+      by reflexivity.
+    rewrite Er. apply incl_appr, incl_refl.
+  - rewrite W_MD_vm. vm_compute. discriminate.
 Qed.
 
 Definition W_L : layout := layout0 src0_msyms W_BRK 0.
@@ -282,6 +295,8 @@ Proof.
   - reflexivity.
   - reflexivity.
   - reflexivity.
+  - reflexivity.
+  (* 727298f3: [YN2m.post_fail0] also asks [m_kernel md' = m_kernel md] (the run's own kernel record) *)
   - reflexivity.
   - apply (midrep_MRx src0_msyms W_L W_A W_MEM W_MD MID W_A_wf BND); [| exact AMA |].
     + intros g am i fr Hin. cbn in Hin. destruct Hin.

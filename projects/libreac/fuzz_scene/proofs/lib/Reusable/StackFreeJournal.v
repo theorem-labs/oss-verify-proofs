@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the journal rule of a call to the stack-frame release entry (aj_stack_free_at of proofs/cgif/cgif_rgb_fuzzer/lib/YC05.v) and the write rule it uses (ajournal_after_write_win of that file), restated over the journal of the cgif_file_fuzzer proof (YCbq.ajournal) as libreac/fuzz_grant holds it; module names. The released shadow span is sf_span cid n (StackFreeDef.v), not n / 8. The rule has no frame_flag_law hypothesis: the facts it needs about the frame's flag byte (owned, an application address, outside the image) come from AR_laws (al_flag, al_client_img). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/StackFreeJournal.v at c3bfa00452c (owner a Theorem Labs lane), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/StackFreeJournal.v (owner a Theorem Labs lane), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

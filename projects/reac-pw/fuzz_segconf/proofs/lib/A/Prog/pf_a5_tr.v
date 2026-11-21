@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PutStringB_Base.v, with its module paths and module names changed; 941 of its 1032 lines of code are new or changed and 1922 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the TRIM CALL and the R5 EXITS of segment A5 of
    reac_segconf_parse_file's walk (2026-10-30).
 
@@ -37,13 +38,13 @@
    2026-10-30.
 
    DONORS, all in this clone unless said otherwise. The seeds and the register readers follow segment A7's
-   lib/A/Prog/pf_a7_q.v (commit 7831f455a1ce; read-only -- its
+   lib/A/Prog/pf_a7_q.v (read-only -- its
    a7_shb_line / a7q_byte_self / a7q_val_mem1 / a7_seed shape and the a7_addr_buf / a7_fframe_buf of its
    pf_a7_d.v are reproduced here under a5tr_ names, over pf_base instead of a7_st, and its a7_trim_call of
    pf_a7_s.v is the shape of a5_trim_call). The token run, the branch lemmas and the kept-memory bookkeeping
    follow the trim walk's trim_l.v / trim_tr.v / trim_s.v / trim_t.v; a5tr_den_off / a5tr_den_atom0 / a5tr_in follow
-   segment A2's pf_a2_g.v (pa2_den_off :65, pa2_crt_den_atom0 :63, pa2_in :78), a5tr_bvr its pf_a2.v:70, and a
-   register of a list is pf_a5_k.v's a5_rg_get; a5tr_ag32 / a5tr_ag_ew are trim_k.v:364-368. *)
+   segment A2's pf_a2_g.v (pa2_den_off :65, pa2_crt_den_atom0 :63, pa2_in :78), a5tr_bvr its pf_a2.v:71, and a
+   register of a list is pf_a5_k.v's a5_rg_get; a5tr_ag32 / a5tr_ag_ew are trim_k.v:365-369. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -108,7 +109,7 @@ Lemma a5tr_rbv : forall (rr : bvmap 5 word) (r : bv 5) k x, bv_unsigned r = k ->
 Proof. intros rr r k x Hr H. subst k. rewrite Z_to_bv_bv_unsigned. exact H. Qed.
 Ltac a5tr_in := cbn [In app]; repeat first [left; reflexivity | right].
 
-(* trim_k.v:364-368 *)
+(* trim_k.v:365-369 *)
 Lemma a5tr_ag32 : forall (regs1 : bvmap 5 word) extra E0 E (k : nat), (32 <= k)%nat ->
   env_agree 32 (Ereg regs1 extra) E0 -> env_agree k E0 E -> env_agree 32 (Ereg regs1 extra) E.
 Proof.

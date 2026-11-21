@@ -18,7 +18,7 @@ Each of these rows of the three gate runs was checked again in another way:
 | RB | cgif lib/Y*.v | lib/B/Y*.v | asan-ubsan |
 | RU | cgif lib/Y*.v | lib/Reusable/Y*.v | the image each file names (see below) |
 
-Inputs: ported tree plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record) (proofs/plugin-hostd/fuzz_command/lib), donor tree c8557374ad2e
+Inputs: ported tree plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record) (proofs/plugin-hostd/fuzz_command/lib), donor tree
 (proofs/cgif/cgif_file_fuzzer/lib), the gate's full.tsv of each run, and these images. The bytes come from the pin
 and the symbol names come from the twin, which is the same link:
 

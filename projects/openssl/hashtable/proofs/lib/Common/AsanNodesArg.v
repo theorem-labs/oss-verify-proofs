@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the argument strings' last byte lies below the stack VMA's top). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -76,7 +77,9 @@ Definition argtab_of (A : atable) : argtab := argtab_find (a_entry A) ARGTABS.
 
 Definition LMAX : Z := 131071.   (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition TOPNUL : Z := 2 ^ 47 - 17.
+(* The strings end eight bytes below the stack VMA's top, which may be 2^47 itself (LPS 727298f3,
+   Run.v valid_stack_top_va), so the last string byte lies at or below 2^47 - 9. *)
+Definition TOPNUL : Z := 2 ^ 47 - 9.
 Definition STRLO : Z := 0x7fff80000000 + 192.   (* [comment removed for export] *)
 
 Definition arg_idx (args : list expr) : option nat :=

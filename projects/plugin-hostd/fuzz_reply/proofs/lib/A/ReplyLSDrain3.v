@@ -2,17 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_drain (op 2) of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput over the
    GENERIC allocator relation ARx: the ARx conversion of lib/A/W_LLVMFuzzerTestOneInput_drain.v's lf_arm_drain.
-   The AR proof is a Theorem Labs lane's: a working branch 129f255c729 (dr_found_join / lf_arm_drain Qed on W8
-   base ec4dd616ed1: fresh rc=0 wall 604, Print Assumptions 13 Prim* + funext), adapted to the current cut on
-   a working branch cdc87da7be0 (b5 w8c rc=0).  lf_arm_drain_x's statement is the text of the
+   The AR proof is a Theorem Labs lane's: a working branch (dr_found_join / lf_arm_drain Qed on W8
+   base: fresh rc=0 wall 604, Print Assumptions 13 Prim* + funext), adapted to the current cut on
+   a working branch (b5 w8c rc=0).  lf_arm_drain_x's statement is the text of the
    Section hypothesis ARM_drain of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v Section w (:349), checked at the end
    (lf_arm_drain_x_check).
-   THE ROOM ROUND (a working branch, on meet 393c0b2cb2a): the cut's invariants take NP
+   THE ROOM ROUND (a working branch, on meet): the cut's invariants take NP
    (lcut_x's NP S after LSx; DLK carries it); DRAIN / CNL take the room record RP (RP_NP ties its rp_RM to NP) and
    their count premises cnt_ok_pk RP (dr_pk ..) / (cnl_pk ..), the first from LS_cnt at the cut, the second at the
    state the drain leaves through the two pure model rules DR_CNT_grow / DR_CNT_cnl; LS_drain_pre's conjunct 5 is
    the peak form (with the three premises s5-r1d's rows take); LS_cnl_pre / LS_drain_step are a Theorem Labs lane's
-   TX_LS_cnl_pre / TX_LS_drain_step (d0d75bf92db), whose premises dc_stB (dcB_out) and dc_stE export.
+   TX_LS_cnl_pre / TX_LS_drain_step, whose premises dc_stB (dcB_out) and dc_stE export.
    The method (W8Entry-2's add_x method): this file Requires _drain.v and CITES every item of it that reads no AR
    and no Section variable (the model notions, the symbolic states, the pure list / byte lemmas); every item that
    reads a Section variable but no AR is restated VERBATIM (same name, same proof, up to cut_x's LS -> LSx and the
@@ -45,8 +45,9 @@
    strict SRr over the R journal (paj_run_x_xR) and are lifted by SRr_SRrG; the stages with a call conclude SRrG segs R
    (paj_run_x_xG runs, SRrG_bind / SRrG_mono).  The strict lemmas and their proofs are unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_drain_x.v, with its module paths and module names changed; 475 of its 588 lines of code are new or changed and 6933 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Row B1c (a Theorem Labs lane's FREE-PIECES, a Theorem Labs lane): the drain arm's two post-state LS rules, LS_cnl_pre and
-   LS_drain_step (a working branch 129f255c729 lib/A/W_LLVMFuzzerTestOneInput_drain.v:743, :765),
+   LS_drain_step (a working branch lib/A/W_LLVMFuzzerTestOneInput_drain.v:744, :766),
    at the instance LS := fr_LS B (lib/A/ReplyLS.v), RINV := fr_RINV (lib/A/ReplyRINV.v), MT := ameter_triv,
    MMAX := WR_MMAX.
 
@@ -54,7 +55,7 @@
    which is True at ameter_triv (Reusable/YCbp.v), so the post-state's blocks are free and neither text is provable
    for an LS that bounds live bytes.  The lemmas below are the PROPOSED texts: every published premise and the
    published conclusion, plus premises the arm holds at its Qed head, each named with the clause that gives it:
-   - dr_post (W_contract.v at 129f255c729, :938-976): the blocks' change :949-950, the cap' it names :943, the entry
+   - dr_post (W_contract.v, :938-976): the blocks' change :949-950, the cap' it names :943, the entry
      it leaves (:952 aentry_ok e' - W_rep.v aentry_ok's re_cap clause -, :957, :958, :959) and the source (:964,
      :966, :967);
    - dr_spec's premises at the call (W_contract.v :1013 aentry_ok e, :984 asrc_at h, :986 aout_at), whose model
@@ -112,14 +113,14 @@ Import ListNotations.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:132 WR_MMAX) *)
+(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:133 WR_MMAX) *)
 Local Notation MT := ameter_triv.
 Local Notation MMAX := WR_MMAX.
 Local Notation zsum l := (fold_right Z.add 0 l).
 Local Notation dset := W_LLVMFuzzerTestOneInput_drain.set_nth.
 
 (* ------------------------------------------------------------------ the proposed premises' bundles *)
-(* (W_contract.v and W_rep.v at 129f255c729.)  dr_spec's premises at the drain call, model clauses: W_contract.v:983
+(* (W_contract.v and W_rep.v.)  dr_spec's premises at the drain call, model clauses: W_contract.v:984
    aentry_ok B ly S W mem e (W_rep.v aentry_ok: the re_cap clause :124, |re_U| = re_used <= APARTIAL and no NUL in
    re_U :125, the held array's 8 <= re_kh :131-132, the keys' 14 <= |text| :139) *)
 Definition dr3_epre (e : rentry) : Prop :=
@@ -127,7 +128,7 @@ Definition dr3_epre (e : rentry) : Prop :=
   Z.of_nat (length (re_U e)) <= APARTIAL /\ ~ In (Z_to_bv 8 0) (re_U e) /\
   (re_hp e <> 0 -> 8 <= re_kh e) /\
   Forall (fun k => 14 <= Z.of_nat (length (gestures_end_b_c.key_text k))) (re_keys e).
-(* W_contract.v:1014 asrc_at B ly S W mem HA h: the pending list's offset clause (W_rep.v:104-105) and its texts'
+(* W_contract.v:1015 asrc_at B ly S W mem HA h: the pending list's offset clause (W_rep.v:104-105) and its texts'
    non-emptiness (alist_at (HA + 16) (hs_pending h) false, W_rep.v:91) *)
 Definition dr3_hpre (h : hsrc) : Prop :=
   ((hl_recs (hs_pending h) = [] /\ hs_off h = 0) \/
@@ -489,7 +490,7 @@ Proof.
 Qed.
 
 (* ================================================================== LS_cnl_pre *)
-(* 129f255c729 _drain.v:743 LS_cnl_pre, AT THE PROPOSED TEXT: the published premises, then (1) the arm's operation
+(* _drain.v:743 LS_cnl_pre, AT THE PROPOSED TEXT: the published premises, then (1) the arm's operation
    bound and empty stream, (2) dr_spec's model clauses at the call, (3) dr_post's blocks' change and the cap' it names,
    (4) dr_post's clauses on the entry and source it leaves.  The published conclusion. *)
 Lemma fr_LS_cnl_pre_p : forall cx t m ly S (ly' : alayout) (S' : astate) si h j h'' e' cap' out',
@@ -505,7 +506,7 @@ Lemma fr_LS_cnl_pre_p : forall cx t m ly S (ly' : alayout) (S' : astate) si h j 
   hs_held h'' = hs_held h ->
   (* (1) lregs_base (DLK's Ht, drain.v:5414); dr_at_op (Hatop, drain.v:5413) *)
   0 <= t < OPS_MAX -> lm_O m = [] ->
-  (* (2) W_contract.v:1013 aentry_ok e, :984 asrc_at h, :986 aout_at (W_rep.v:177-178, the cap clause) *)
+  (* (2) W_contract.v:1014 aentry_ok e, :984 asrc_at h, :986 aout_at (W_rep.v:177-178, the cap clause) *)
   dr3_epre (nth j (lm_es m) dr_e0) -> dr3_hpre h -> 0 <= lm_cap m ->
   (* (3) dr_post :949-950, :943 *)
   (exists rest,
@@ -652,7 +653,7 @@ Qed.
 (* the potential's step: what fr_LS v2 needs of a drain and does not get (the report's quantity) *)
 Definition dr3_pays (cx : lfcx) (m m' : lmod) : Prop := PHI m' <= PHI m + MB_K * (kk cx m' - kk cx m).
 
-(* 129f255c729 _drain.v:765 LS_drain_step, AT THE PROPOSED TEXT: the published premises, then dr_post's blocks' change
+(* _drain.v:765 LS_drain_step, AT THE PROPOSED TEXT: the published premises, then dr_post's blocks' change
    (:949-950) and pending list (:966), check_no_loss's blocks' change (drain.v cnl_post :238-239) at the lists it was
    called with, the arm's h'' = set_exp_held h1 E' H' (drain.v:5471), and the ONE named extra hypothesis Hpay. *)
 Lemma fr_LS_drain_step_p : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)

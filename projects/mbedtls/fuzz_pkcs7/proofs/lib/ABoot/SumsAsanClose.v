@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a section variable rz, the plan's CONFIG_RSEQ flag, passed to x_stmt and x_stmt0 in the ASan node lemmas). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -49,6 +50,7 @@ Proof. exact asan_popfree_spec. Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Variable SP0 : Z.                        (* [comment removed for export] *)
@@ -61,7 +63,7 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis SINV_sp : forall E M, SINV E M -> APS.uE_sp0 E = SP0.   (* [comment removed for export] *)
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt ASEGS AP.ASAN nx0 LIMIT SP0 SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt ASEGS AP.ASAN nx0 LIMIT rz SP0 SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;
@@ -71,12 +73,12 @@ Variable FS0 : Fs.Fs.
 Proof. eapply APSX.node_x_sound_XIMemset; try eassumption; try apply asan_segs_wr; try apply asan_wx; try apply asan_in_hull;
        try apply asan_res_len; try apply asan_hull_ok; try apply asan_hull_cov. apply asan_fill_spec_imemset. Qed.
 (* [comment removed for export] *)
-#[using="SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem asan_node_x_sound0_XIMemset : APS.x_stmt0 ASEGS AP.ASAN nx0 LIMIT SP0 SINV argH FS0 AP.XIMemset.
+#[using="SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem asan_node_x_sound0_XIMemset : APS.x_stmt0 ASEGS AP.ASAN nx0 LIMIT rz SP0 SINV argH FS0 AP.XIMemset.
 Proof. eapply APSX.node_x_sound0_XIMemset; try eassumption; try apply asan_segs_wr; try apply asan_wx; try apply asan_in_hull;
        try apply asan_res_len; try apply asan_hull_ok; try apply asan_hull_cov. apply asan_fill_spec_imemset. Qed.
 (* [comment removed for export] *)
 #[using="SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem asan_node_x_sound0_all :
-  forall x, APS.x_spin_ok x = true -> APS.x_stmt0 ASEGS AP.ASAN nx0 LIMIT SP0 SINV argH FS0 x.
+  forall x, APS.x_spin_ok x = true -> APS.x_stmt0 ASEGS AP.ASAN nx0 LIMIT rz SP0 SINV argH FS0 x.
 Proof. intros [ | | | | | | | | | | ] H; try discriminate H. exact asan_node_x_sound0_XIMemset. Qed.
 #[using="SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem asan_node_x_sound_XMemset : XSTMT AP.XMemset.
 Proof. eapply APSX.node_x_sound_XMemset; try eassumption; try apply asan_segs_wr; try apply asan_wx; try apply asan_in_hull;

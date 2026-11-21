@@ -5,7 +5,7 @@
 
 OSS-Fuzz runs the fuzz targets of open-source projects to search for inputs that make them fail. This repository holds Rocq proofs that, for some of these fuzz targets, no such input exists within stated limits. Each proof is about compiled binaries, not source code. It shows that, on every input within the limits, the build with a sanitizer behaves like the plain build and the sanitizer never detects an error, or that every execution of a build ends with a status the statement allows. OSS Verify is a Theorem program; a maintainer enrolls a project at [theorem-labs/oss-verify](https://github.com/theorem-labs/oss-verify).
 
-90 entry points in 32 libraries have proofs. The proofs are checked with Rocq 9.2.0. They are stated in LPS, a formal model of a Linux process that runs a RISC-V binary.
+99 entry points in 34 libraries have proofs. The proofs are checked with Rocq 9.2.0. They are stated in LPS, a formal model of a Linux process that runs a RISC-V binary.
 
 **LPS is best effort and not complete.** It describes part of Linux, and it makes some assumptions that it does not check. A proof is only as good as LPS. [docs/semantics.md](docs/semantics.md) gives the design principles of LPS and its limits.
 
@@ -33,6 +33,7 @@ OSS-Fuzz runs the fuzz targets of open-source projects to search for inputs that
 | coturn | [FuzzStunClient](projects/coturn/FuzzStunClient/proofs/) | ASan, UBSan, ASan+UBSan |
 | double-conversion | [string_to_double_fuzzer](projects/double-conversion/string_to_double_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
 | fast_float | [from_chars](projects/fast_float/from_chars/proofs/) | ASan, UBSan, ASan+UBSan |
+| ffmpeg | [ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer](projects/ffmpeg/ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/proofs/) | - |
 | glaze | [binary_reflection](projects/glaze/binary_reflection/proofs/) | ASan, UBSan, ASan+UBSan |
 | json-c | [json_object_fuzzer](projects/json-c/json_object_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
 | jsoncons | [fuzz_bigint](projects/jsoncons/fuzz_bigint/proofs/) | ASan, UBSan, ASan+UBSan |
@@ -67,6 +68,7 @@ OSS-Fuzz runs the fuzz targets of open-source projects to search for inputs that
 | libreac | [fuzz_knock](projects/libreac/fuzz_knock/proofs/) | ASan, UBSan, ASan+UBSan |
 | libreac | [fuzz_pcap](projects/libreac/fuzz_pcap/proofs/) | ASan, UBSan, ASan+UBSan |
 | libreac | [fuzz_scene](projects/libreac/fuzz_scene/proofs/) | ASan, UBSan, ASan+UBSan |
+| libtasn1 | [asn1_get_length_der_fuzzer](projects/libtasn1/asn1_get_length_der_fuzzer/proofs/) | UBSan |
 | mbedtls | [fuzz_pkcs7](projects/mbedtls/fuzz_pkcs7/proofs/) | ASan, UBSan, ASan+UBSan |
 | msgpack-c | [unpack_pack_fuzzer](projects/msgpack-c/unpack_pack_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
 | omx-clap-core | [fuzz_manifest](projects/omx-clap-core/fuzz_manifest/proofs/) | ASan, UBSan, ASan+UBSan |
@@ -109,7 +111,14 @@ OSS-Fuzz runs the fuzz targets of open-source projects to search for inputs that
 | tinyobjloader | [fuzz_tobj_c](projects/tinyobjloader/fuzz_tobj_c/proofs/) | ASan, UBSan, ASan+UBSan |
 | varnish | [esi_parse_fuzzer](projects/varnish/esi_parse_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
 | yajl-ruby | [json_fuzzer](projects/yajl-ruby/json_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
-| zlib | [checksum_fuzzer](projects/zlib/checksum_fuzzer/proofs/) | - |
+| zlib | [checksum_fuzzer](projects/zlib/checksum_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
+| zlib | [compress_fuzzer](projects/zlib/compress_fuzzer/proofs/) | - |
+| zlib | [example_flush_fuzzer](projects/zlib/example_flush_fuzzer/proofs/) | UBSan |
+| zlib | [example_large_fuzzer](projects/zlib/example_large_fuzzer/proofs/) | UBSan |
+| zlib | [example_small_fuzzer](projects/zlib/example_small_fuzzer/proofs/) | - |
+| zlib | [zlib_uncompress2_fuzzer](projects/zlib/zlib_uncompress2_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
+| zlib | [zlib_uncompress3_fuzzer](projects/zlib/zlib_uncompress3_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
+| zlib | [zlib_uncompress_fuzzer](projects/zlib/zlib_uncompress_fuzzer/proofs/) | ASan, UBSan, ASan+UBSan |
 | zstd | [fse_read_ncount](projects/zstd/fse_read_ncount/proofs/) | ASan, UBSan, ASan+UBSan |
 | zstd | [huf_decompress](projects/zstd/huf_decompress/proofs/) | ASan, UBSan, ASan+UBSan |
 | zstd | [simple_decompress](projects/zstd/simple_decompress/proofs/) | ASan, UBSan, ASan+UBSan |
@@ -143,14 +152,14 @@ The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreeme
 - It is about the code that one entry point reaches, not about the whole library.
 - It is about these binaries: static riscv64 programs, built with clang 20.1.8 against musl. It is not about the source code, and not about the x86-64 builds of OSS-Fuzz.
 - It is true in LPS. Where LPS differs from Linux, the proof may not apply ([docs/semantics.md](docs/semantics.md)).
-- An agreement statement does not exclude a run that never ends. Only a halts statement does. 179 of the proved statements are halts statements; [index/PROOFS.md](index/PROOFS.md) lists them.
+- An agreement statement does not exclude a run that never ends. Only a halts statement does. 231 of the proved statements are halts statements; [index/PROOFS.md](index/PROOFS.md) lists them.
 
 ## Versions
 | item | version |
 |---|---|
 | Rocq | 9.2.0, the official release (opam package `rocq-core`). The proofs load their libraries with plain `Require`. |
-| checker image | `ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:063f93261f11ba449f1c3825884fadc65cf1fc836d4a3ee534633211abbdc3eb`. It holds Rocq, LPS with its `elf-snapshot` tool, the Rocq libraries that the proofs use, dune and Python 3, and no proof automation ([toolchain/checker.Dockerfile](toolchain/checker.Dockerfile)). |
-| LPS | [rocq-linux-process-semantics](https://github.com/theorem-labs/rocq-linux-process-semantics) commit [`f1006fe81783`](https://github.com/theorem-labs/rocq-linux-process-semantics/commit/f1006fe8178338a499b5e5c41be83006c4edd058), for every statement and every proof ([docs/semantics.md](docs/semantics.md)) |
+| checker image | `ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:dbe610615b7e22cf20e45ac04c0740b05ce9d1ad4211006abf546f845fc3f12f`. It holds Rocq, LPS with its `elf-snapshot` tool, the Rocq libraries that the proofs use, dune and Python 3, and LPS's proof library `LinuxProcessSemantics.Common` with its tactics ([toolchain/checker.Dockerfile](toolchain/checker.Dockerfile), [toolchain/lps-core.paths](toolchain/lps-core.paths)). |
+| LPS | [rocq-linux-process-semantics](https://github.com/theorem-labs/rocq-linux-process-semantics) commit [`c0dd863a0f8f`](https://github.com/theorem-labs/rocq-linux-process-semantics/commit/c0dd863a0f8f307beca7f2ee5cb4d7686a875779), for every statement and every proof ([docs/semantics.md](docs/semantics.md)) |
 | static AddressSanitizer | [static-asan](https://github.com/theorem-labs/static-asan) commit [`b0506135`](https://github.com/theorem-labs/static-asan/commit/b05061352064fa2be1813ac5429149f3de5f057d): the published source of the static AddressSanitizer that built every ASan binary of this release ([docs/building.md](docs/building.md#the-addresssanitizer-runtime)) |
 | OSS-Fuzz | [`bd2ce219`](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842) |
 | axioms | only the axioms in [toolchain/allowed-axioms.txt](toolchain/allowed-axioms.txt): the primitive integer, array and string types of Rocq with their specifications, and six axioms of the standard library (`classic`, `functional_extensionality_dep`, `constructive_indefinite_description`, `propositional_extensionality`, `sig_forall_dec` and `sig_not_dec`) |
@@ -162,7 +171,7 @@ You need Docker, zstd, and Python 3 with the packages `tools/oft/requirements.tx
     ./oft fetch coturn                   # the project's binaries, each checked against its SHA-256
     python3 -m pip install --require-hashes --target "$HOME/oft-pydeps" -r tools/oft/requirements.txt
     docker run --rm --network none --ulimit stack=-1:-1 -u "$(id -u):$(id -g)" -e HOME=/tmp -e PYTHONPATH=/pydeps \
-      -v "$HOME/oft-pydeps:/pydeps:ro" -v "$PWD:/work" -w /work ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:063f93261f11ba449f1c3825884fadc65cf1fc836d4a3ee534633211abbdc3eb \
+      -v "$HOME/oft-pydeps:/pydeps:ro" -v "$PWD:/work" -w /work ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:dbe610615b7e22cf20e45ac04c0740b05ce9d1ad4211006abf546f845fc3f12f \
       ./oft check coturn/FuzzStunClient --parts statements,proofs
 
 `oft check` does these steps. It checks each binary against its SHA-256. It builds the memory images and the statements. It compiles each proof. It compiles a small wrapper that gives the proof's theorem the type of the statement. Then it reads what `Print Assumptions` prints for the wrapper, and it refuses every assumption that is not in the allowed list ([docs/checking.md](docs/checking.md)).
@@ -180,11 +189,11 @@ Each project's published binaries are attached to the [release](https://github.c
 [docs/exploring.md](docs/exploring.md) points to what the proofs show beyond "no sanitizer error": properties that the harnesses check, and lemmas about what the library code computes. It also tells you how to find the machine-generated data in a proof.
 
 ## Statements for OSS-Fuzz fuzz targets
-This repository also states theorems about many OSS-Fuzz fuzz targets, proved or not. For each of the 1,381 projects in OSS-Fuzz there is a directory under [projects/](projects/). It also has project directories for [`libdiginet`](projects/libdiginet/), [`libreac`](projects/libreac/), [`omx-clap-core`](projects/omx-clap-core/), [`omx-dsp`](projects/omx-dsp/), [`plugin-hostd`](projects/plugin-hostd/), [`reac-pw`](projects/reac-pw/) and [`reac-repacer`](projects/reac-repacer/); OSS-Fuzz has no project for them. We can build the fuzz targets of 427 of these projects. 2,148 of their 5,290 fuzz targets have statements in this release; [index/STATUS.md](index/STATUS.md) says why the others do not. Each of these fuzz targets is compiled up to four ways (2,176 of the 2,183 harnesses have all four), and each build gets Rocq statements about those exact bytes. These are statements, not results: 526 are proved, some are known to be false, and proofs are added as they are found.
+This repository also states theorems about many OSS-Fuzz fuzz targets, proved or not. For each of the 1,381 projects in OSS-Fuzz there is a directory under [projects/](projects/). It also has project directories for [`libdiginet`](projects/libdiginet/), [`libreac`](projects/libreac/), [`omx-clap-core`](projects/omx-clap-core/), [`omx-dsp`](projects/omx-dsp/), [`plugin-hostd`](projects/plugin-hostd/), [`reac-pw`](projects/reac-pw/) and [`reac-repacer`](projects/reac-repacer/); OSS-Fuzz has no project for them. We can build the fuzz targets of 427 of these projects. 2,148 of their 5,290 fuzz targets have statements in this release; [index/STATUS.md](index/STATUS.md) says why the others do not. Each of these fuzz targets is compiled up to four ways (2,176 of the 2,183 harnesses have all four), and each build gets Rocq statements about those exact bytes. These are statements, not results: 695 are proved, 58 are known to be false, and proofs are added as they are found.
 
-In this release: 20,421 statements: 526 proved, 63 known false (56 counterexamples, 7 false (witnessed)), 3 suspected false, 229 blocked by the model, 0 withheld (0 waiting for their source bundle, 0 not published yet), 19,600 open. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
+In this release: 20,659 statements: 695 proved, 58 known false (56 counterexamples, 2 false (witnessed)), 3 suspected false, 478 blocked by the model, 0 withheld (0 waiting for their source bundle, 0 not published yet), 19,425 open. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
 
-There are four kinds of statement: a build halts; a sanitizer build agrees with the plain build; the two builds disagree on at most a fraction *b* of a stated input distribution; and the inputs on which they agree are decidable ([docs/statements.md](docs/statements.md)). One example:
+There are five kinds of statement: a build halts; a sanitizer build agrees with the plain build; the two builds disagree on at most a fraction *b* of a stated input distribution; the inputs on which they agree are decidable; and a classifier program of a pair always answers yes, no or maybe, is right when it answers yes or no, and gives no firm answer, or an answer other than yes, on at most a fraction *b* of the stated input distribution ([docs/statements.md](docs/statements.md)). One example:
 
 [`lzo/lzo_compress_target/plain_halts`](projects/lzo/lzo_compress_target/Statements.v): on every input on which the plain build is never refused memory for exceeding 16 GiB, and when the environment refuses nothing that it is not forced to (both are premises), every execution exits with status 0 or 2. The harness `lzo_compress_target` asserts that for compressible input (compressed_len < size), lzo1x_decompress into size+1 bytes must return LZO_E_OK and produce exactly size bytes. ONLY THE LENGTH is compared: the decompressed content is never memcmp'd against the input, so a decoder that returned the right number of wrong bytes would pass, so a proof shows that these hold on every input it covers.
 
@@ -203,7 +212,7 @@ There are four kinds of statement: a build halts; a sanitizer build agrees with 
 | [held](docs/status.md#held) | 32 |
 | **all projects** | **1,388** |
 
-The 434 available projects have 2,183 harnesses with statements and 20,421 statements; 8,718 binaries are attached to this release or an earlier one, and 0 more are withheld. [index/STATUS.md](index/STATUS.md) lists every project; `index/*.tsv` has the same data for scripts.
+The 434 available projects have 2,183 harnesses with statements and 20,659 statements; 8,718 binaries are attached to this release or an earlier one, and 0 more are withheld. [index/STATUS.md](index/STATUS.md) lists every project; `index/*.tsv` has the same data for scripts.
 
 To prove or refute a statement, see [docs/proving.md](docs/proving.md) and [CONTRIBUTING.md](CONTRIBUTING.md). A counterexample that shows a bug in a library goes to that library first ([SECURITY.md](SECURITY.md)). To enroll your own project, see [theorem-labs/oss-verify](https://github.com/theorem-labs/oss-verify).
 
@@ -236,4 +245,4 @@ To prove or refute a statement, see [docs/proving.md](docs/proving.md) and [CONT
 [CITATION.cff](CITATION.cff). A statement is cited as `project/harness/statement@r<revision>`, for example `lzo/lzo_compress_target/plain_halts@r1`. Until LPS is released, revisions are provisional ([docs/versioning.md](docs/versioning.md)).
 
 ## Licence
-What we wrote is under the MIT licence ([LICENSE](LICENSE)): the statements, the tools, the documentation and our proofs. Proofs that we made from proofs that Anthropic licensed under the Apache License 2.0 or the MIT licence, at the recipient's option, keep those licences. The licence texts are [LICENSES/anthropic-proofs-LICENSE](LICENSES/anthropic-proofs-LICENSE) and [LICENSES/anthropic-proofs-LICENSE-MIT](LICENSES/anthropic-proofs-LICENSE-MIT) and the notices are [LICENSES/anthropic-proofs-NOTICE](LICENSES/anthropic-proofs-NOTICE); the build record of each such proof names these three files ([docs/licensing.md](docs/licensing.md)). The binaries, the source archives and the harness copies keep their own licences ([NOTICE](NOTICE)). This project is not affiliated with or endorsed by Google or the OSS-Fuzz project.
+What we wrote is under the MIT licence ([LICENSE](LICENSE)): the statements, the tools, the documentation and our proofs. Proofs that we made from proofs that Anthropic licensed under the Apache License 2.0 or the MIT licence, at the recipient's option, keep those licences. The licence texts are [LICENSES/anthropic-proofs-LICENSE](LICENSES/anthropic-proofs-LICENSE) and [LICENSES/anthropic-proofs-LICENSE-MIT](LICENSES/anthropic-proofs-LICENSE-MIT) and the notices are [LICENSES/anthropic-proofs-NOTICE](LICENSES/anthropic-proofs-NOTICE); the build record of each such proof names these three files ([docs/licensing.md](docs/licensing.md)). The proof files that come from coq-community/huffman keep the licence of that project, LGPL-2.1-or-later. [tools/oft/third-party-proofs.yaml](tools/oft/third-party-proofs.yaml) lists each of them, and their licence text, `LICENSES/coq-community-huffman-LICENSE`, comes into this repository with them. The binaries, the source archives and the harness copies keep their own licences ([NOTICE](NOTICE)). The classifiers and the originals that a harness publishes are under the licences of the code that they are built from, as its builds are. This project is not affiliated with or endorsed by Google or the OSS-Fuzz project.

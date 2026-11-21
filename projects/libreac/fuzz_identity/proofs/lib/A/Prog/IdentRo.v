@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v (a working branch 85e206d1c4c) for libreac/fuzz_identity: module paths changed; IMG_LO / IMG_HI and the registered globals named below are fuzz_identity.asan's; YI0f (cgif's frame-flush model, which this file does not use and fuzz_identity's lib does not have) is not required. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v (a working branch) for libreac/fuzz_identity: module paths changed; IMG_LO / IMG_HI and the registered globals named below are fuzz_identity.asan's; YI0f (cgif's frame-flush model, which this file does not use and fuzz_identity's lib does not have) is not required. *)
 (* The image's read-only data is marked usable, in every state.
 
    The memory-checking runtime registers the program's globals at start-up and
@@ -12,7 +12,7 @@
        readable, which is what `__asan_memcpy` asks for before it copies. Those
        window bytes reach a global's guard bytes, which are marked unusable, not
        zero, so this one comes from the whole image's shadow being mapped
-       (`img_shadow_vis`, a fact of the runtime's symbols; lib/A/IdentStartupFacts.v:1058 ident_IV proves it).
+       (`img_shadow_vis`, a fact of the runtime's symbols; lib/A/IdentStartupFacts.v:1059 ident_IV proves it).
    A walk takes `in_zs B q n` for the table it reads and `img_shadow_vis`; never
    their consequences. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.

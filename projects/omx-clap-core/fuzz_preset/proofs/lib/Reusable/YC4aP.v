@@ -1,8 +1,9 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v (origin/ossv/recipes c8557374ad2e); typed over preset's asym (YPsym.v) *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v (theorem-labs/oss-verify-proofs@6b32741d849a); typed over preset's asym (YPsym.v) *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif's listings, their PAListing instances and PAImg2 left out; the image hull 0x10000 .. 0x600000 is fuzz_preset's (asan ends 0x5ff1b0, asan-ubsan 0x5ffa70); pa_obj_img covers all 39 object slots A_OBJ 0 .. A_OBJ 38 of YP0b. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

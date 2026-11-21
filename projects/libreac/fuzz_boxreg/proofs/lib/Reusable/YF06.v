@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YF06.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed sec_grant_exists; its imports changed. *)
 From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -147,39 +148,72 @@ layout_ok ly -> ALedger segs ly S md ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned (snd e)) ->
 Z.of_nat (length (sec_extents ly S)) <= SEC_LIVE_N ->
 Forall (fun e => 0 <= snd e <= NOB) (sec_extents ly S) ->
-0 < nZ <= NOB ->
-exists a, grant_ok_na_pin md a nZ = true.
+0 < nZ <= NOB -> nZ mod page_size = 0 ->
+(* THE HINT IS THE TRACE'S, AND ON THIS PATH IT IS NULL.  08b1429 made the
+   checker's grant test [Checks.Placement.linux_place_is], which asks whether the
+   address IS the one Linux's placement rule gives for the mmap call's addr
+   argument (Checks/Sys/Mm/Mmap.v check_mmap).  Every anonymous-mmap path that
+   consumes this lemma writes NULL into a0 -- [YF05.anon_node]'s own hypothesis,
+   [A/AFjs.v]'s R10, [YA07]'s reg_lit cs 10 -- so the hint is that NULL.  It is a
+   fact about the trace's registers, not a pin on the kernel build.
+   WITH A NULL HINT THE ADDRESS IS NO LONGER THIS PROOF'S TO CHOOSE: the rule
+   takes its top-down search, so the candidate built below is NOT Linux's answer.
+   What the candidate still proves is that the bottom-up window is not exhausted,
+   and [Checks.Placement.linux_place_exists] turns that into the rule's own
+   address.  The page-alignment premise above is what that route needs and what
+   the old boolean did not. *)
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Proof.
-intros segs ly S md nZ LY L NZ SECN SECS HnZ.
+intros segs ly S md nZ LY L NZ SECN SECS HnZ HnZal.
 pose proof (YM05.ceil_le_top _ (al_top _ _ _ _ L)) as Htop. pose proof bottomup_floor_val as Hfv.
-set (obs := obstacles (lazy_zones ly ++ sec_extents ly S)).
-assert (LEN : Z.of_nat (length obs) <= 257 * 25 + SEC_LIVE_N).
-{ subst obs. rewrite obstacles_app, length_app, Nat2Z.inj_add.
+(* 727298f3: the reservations end with the vDSO/vvar pair ([YG0n.res_tail_ok]); its entries
+   join the obstacles the sweep steps over, each widened by a byte so a zero-length entry
+   still blocks its own start. *)
+destruct (al_reserved _ _ _ _ L) as (rx & Hrx & RXL & RXB & _).
+set (rxz := map (fun iv => (bv_unsigned (fst iv), bv_unsigned (snd iv) + 1)) rx).
+set (obs := obstacles ((lazy_zones ly ++ sec_extents ly S) ++ rxz)).
+assert (LEN : Z.of_nat (length obs) <= 257 * 25 + SEC_LIVE_N + 2).
+{ subst obs. rewrite !obstacles_app, !length_app, !Nat2Z.inj_add.
 pose proof (obstacles_len (lazy_zones ly) 257 ltac:(lia) (lazy_zones_relevant ly LY)) as A.
 pose proof (lazy_zones_len ly LY) as B.
-pose proof (obstacles_len (sec_extents ly S) 1 ltac:(lia) ltac:(apply Forall_impl with (2 := SECS); intros e He _; lia)) as C. lia. }
+pose proof (obstacles_len (sec_extents ly S) 1 ltac:(lia) ltac:(apply Forall_impl with (2 := SECS); intros e He _; lia)) as C.
+assert (RZ : Forall (fun z => relevantb z = true -> 0 <= snd z <= 1 * NOB) rxz).
+{ subst rxz. apply Forall_map. apply Forall_impl with (2 := RXB). intros iv [_ Hs] _. cbn [fst snd].
+pose proof (bv_unsigned_in_range _ (snd iv)). unfold NOB. lia. }
+pose proof (obstacles_len rxz 1 ltac:(lia) RZ) as D.
+assert (LR : length rxz = length rx) by (subst rxz; apply length_map). lia. }
 destruct (pick_candidateZ NOB nZ obs (seq 0 (Datatypes.S (length obs))) ltac:(lia) (obstacles_size _) (List.seq_NoDup _ _) ltac:(rewrite length_seq; lia))
 as (j & Hj & Hfree).
 apply in_seq in Hj.
 set (a := cand NOB j).
-assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + SEC_LIVE_N) * (2 * NOB)).
+assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + SEC_LIVE_N + 2) * (2 * NOB)).
 { subst a. unfold cand. unfold NOB, SEC_LIVE_N in *. split; [nia|]. apply Z.add_le_mono_l. apply Z.mul_le_mono_nonneg_r; [lia|]. lia. }
 assert (Hce : a + nZ <= ASAN_CEIL) by (ceil; unfold ASAN_CEIL, NOB, SEC_LIVE_N in *; rewrite Hfv in Ha; lia).
-exists (Z_to_bv 64 a).
-unfold grant_ok_na_pin. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in Hce; lia).
 assert (E1 : a mod page_size = 0).
 { subst a. unfold cand. rewrite Hfv. unfold page_size, NOB. rewrite Z.add_mod by lia.
 replace (Z.of_nat j * (2 * 536870912)) with ((Z.of_nat j * 262144) * 4096) by lia. rewrite Z_mod_mult. reflexivity. }
-rewrite (proj2 (Z.eqb_eq _ _) E1), (proj2 (Z.ltb_lt 0 _)) by lia.
-rewrite (proj2 (Z.leb_le _ _)) by (unfold ASAN_CEIL in Hce; lia).
-rewrite YK13.region_free_app.
-rewrite (al_reserved _ _ _ _ L).
+apply (YK13.grant_ok_na_pin_of_gap (Z_to_bv 64 0) md a nZ ltac:(lia) HnZal E1).
+- unfold task_unmapped_base. lia.
+- unfold ASAN_CEIL in Hce; lia.
+- rewrite YK13.region_free_app.
+rewrite Hrx, YK13.region_free_app.
 replace (Z_to_bv 64 a) with (w64 a) by reflexivity. replace (Z_to_bv 64 nZ) with (w64 nZ) by reflexivity.
 assert (IMGb : forall sg, In sg segs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd).
 { intros sg Hsg. pose proof (al_img _ _ _ _ L sg Hsg) as [I1 I2]. pose proof (lo_img ly LY) as (J0 & J1 & J2 & J3). rewrite J0 in I1, I2. unfold kImgLo in *. lia. }
 rewrite (YG0h.region_free_reserved segs a nZ IMGb) by (ceil; unfold kImgEnd, ASAN_CEIL in *; lia).
-rewrite (YG0h.region_free_intro); [reflexivity|].
+rewrite (YG0h.region_free_intro rx (w64 a) (w64 nZ)).
+2:{ intros e He. unfold YG0h.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
+assert (EX : Exists (fun z => fst z <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + (bv_unsigned (snd e) + 1) <= fst z + snd z)
+((lazy_zones ly ++ sec_extents ly S) ++ rxz)).
+{ apply Exists_app. right. apply Exists_exists. exists (bv_unsigned (fst e), bv_unsigned (snd e) + 1). split.
+- apply in_map_iff. exists e. split; [reflexivity | exact He].
+- cbn [fst snd]. lia. }
+pose proof (bv_unsigned_in_range _ (snd e)) as Ue.
+destruct (obstacles_free ((lazy_zones ly ++ sec_extents ly S) ++ rxz) a nZ (bv_unsigned (fst e)) (bv_unsigned (snd e) + 1)
+ltac:(lia) ltac:(lia) ltac:(lia) Hce Hfree EX) as [D|D]; [left | right]; lia. }
+rewrite (YG0h.region_free_intro (vm_maps (m_vmmaps md)) (w64 a) (w64 nZ)); [reflexivity|].
 intros e He. unfold YG0h.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
-apply (obstacles_free (lazy_zones ly ++ sec_extents ly S) a nZ); [lia | exact (NZ e He) | lia | exact Hce | exact Hfree | exact (al_cover _ _ _ _ L e He)].
+apply (obstacles_free ((lazy_zones ly ++ sec_extents ly S) ++ rxz) a nZ); [lia | exact (NZ e He) | lia | exact Hce | exact Hfree |].
+apply Exists_app. left. exact (al_cover _ _ _ _ L e He).
 Qed.
 End b.

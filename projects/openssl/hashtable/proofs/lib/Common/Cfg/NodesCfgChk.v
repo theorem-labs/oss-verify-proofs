@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nodes check the read-only backing (sys_rob)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
-From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import ShapeAlgBase ShapeCfg NodesCfg.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import RomBase ShapeAlgBase ShapeCfg NodesCfg.
 
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -158,11 +159,12 @@ Lemma rzc_det_chk : forall ms model x8 eff0 m0 mm0 evs0 T,
   (forall eff, check_syscall (sys_input segs ms x8) eff model <> CheckUnmodeled) ->
   m_halted m0 = None ->
   materialize_model_accesses m0 (syscall_effect_accesses eff0) = Some mm0 ->
+  sys_rob segs (mkCfg ms model) ->
   realizes_cfg cfg segs (mkCfg (advance_past_svc (apply_effect ms eff0)) mm0) T ->
   realizes_cfg cfg segs (mkCfg ms model) (t_emit evs0 T).
 Proof.
-  intros ms model x8 eff0 m0 mm0 evs0 T Hh Hsvc Hchk Hnu Hh0 Hmat Hc.
-  eapply rzc_emit1; [eapply node_det_chk_cfg; eassumption | exact Hc].
+  intros ms model x8 eff0 m0 mm0 evs0 T Hh Hsvc Hchk Hnu Hh0 Hmat Hrob Hc.
+  eapply rzc_emit1; [eapply node_det_chk_cfg; eassumption | exact Hrob | exact Hc].
 Qed.
 
 Lemma rzc_det_chk_silent : forall ms model x8 eff0 m0 mm0 T,
@@ -174,11 +176,12 @@ Lemma rzc_det_chk_silent : forall ms model x8 eff0 m0 mm0 T,
   (forall eff, check_syscall (sys_input segs ms x8) eff model <> CheckUnmodeled) ->
   m_halted m0 = None ->
   materialize_model_accesses m0 (syscall_effect_accesses eff0) = Some mm0 ->
+  sys_rob segs (mkCfg ms model) ->
   realizes_cfg cfg segs (mkCfg (advance_past_svc (apply_effect ms eff0)) mm0) T ->
   realizes_cfg cfg segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 eff0 m0 mm0 T Hh Hsvc Hchk Hnu Hh0 Hmat Hc.
-  eapply rzc_silent1; [eapply node_det_chk_cfg; eassumption | exact Hc].
+  intros ms model x8 eff0 m0 mm0 T Hh Hsvc Hchk Hnu Hh0 Hmat Hrob Hc.
+  eapply rzc_silent1; [eapply node_det_chk_cfg; eassumption | exact Hrob | exact Hc].
 Qed.
 
 End WithCfg.

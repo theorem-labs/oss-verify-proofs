@@ -9,14 +9,14 @@
 (* Modified by Theorem Labs, 2026-10: cgif's frame-area call rule aj_stack_malloc_at (proofs/cgif/cgif_file_fuzzer/lib/
    YCbq.v:1749-1809, this tree's copy lib/Reusable/YCbq.v:1749) restated over YCbqG.v's journal ajournal_x (allocator
    invariant a parameter ARx, ghost head set Hp after S / Hpc after Sc, program statics PST), for the frame-area
-   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass d9a884240c6e, sha256
+   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass, sha256
    673aac5ee2f6ed86). Generic: no image
    class, no address, no allocator instance.
    Differences from the donor, each minimal:
    (a) cgif read the model's progress and post from model_laws (stack_malloc_progressP, ml_stack_malloc through
        am_wf); here they are ONE hypothesis in ARx form, SMX, which an instance discharges from its own model laws
        (the cf instance: YG05cf.v stack_malloc_progress_cf and stack_malloc_ok_cf with Wf_cf from ARcf);
-   (b) the call's own journal is call_effect_journal_x (YGcallx.v:251) at PST = [], lifted by ajournal_x_nil_pst, and
+   (b) the call's own journal is call_effect_journal_x (YGcallx.v:252) at PST = [], lifted by ajournal_x_nil_pst, and
        composed by ajournal_x_sub (YCbqG.v, footprint FP1 = []); Hp is threaded unchanged (FCiface: a frame-area call
        neither poisons nor unpoisons a head);
    (c) the frame's presence (FCiface's post) is also returned, which a caller writing its new frame needs;
@@ -27,12 +27,13 @@
    (ASFX = YG0dcf.v astack_free_law_cf; FFLX = the two conjuncts of cgif's frame_flag_lawP the rule reads, over ARx;
    SFX = YG05cf.v stack_free_ok_cf).
    THIRD RULE, aj_set_shadow_at_x: cgif's frame-area set_shadow call rule (cgif_rgb_fuzzer lib/YC05.v:206) over
-   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch (cold/h-hpreset-7-walk-H6
-   321efcb143d) unchanged but for its comment.
+   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch
+    unchanged but for its comment.
    Rule 24: no ajournal_x port of aj_stack_malloc_at or aj_flag_store existed on any branch read (WalkS8a confirmed,
    2026-10-28 ~23:40Z; h-hpreset-7 stopped c-omx-alloc's lane for both); cgif's released YCbq.v is the source ported.
    Numerals: 0, 10 (cgif's class range), 16 (stack alignment), 64 (the smallest frame), 4096 (= ESTACK, YG0d.v),
    2 ^ 40, 2 ^ 64: LENGTH / DERIVED. No ADDRESS. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -244,7 +245,7 @@ Qed.
    aj_stack_malloc_at_x, with the frame in own and the shadow bytes admitted by awr_byte through in_frames' shadow
    range; the journal is UNCHANGED (set_shadow writes only the frame's own shadow, no allocator-state change).
    It is CONTRACT-based (aview-equality, no mem_grows); it composes through YCbqG's ajournal_x_after_write, whose
-   presence premise is the contract's last conjunct (FCiface d9a884240c6e: presence never shrinks).
+   presence premise is the contract's last conjunct (FCiface: presence never shrinks).
    Rule 24: CrtS7 searched seven branches (H6, S7b, S6, S5b, S8a, frameclass, walkkit, walks-new, c-omx-alloc) and found
    no ajournal_x port; cgif's YC05.v is the source. Numerals 2^64 / 4096 (ESTACK): LENGTH/DERIVED. No ADDRESS. *)
 Lemma aj_set_shadow_at_x : forall pc v, aset_shadow_realizes_x segs B ARx pc v ->
@@ -267,14 +268,14 @@ Proof. exact (aj_set_shadow_at_xR (@wle segs) (wle_refl segs) (wle_trans segs)).
 (* ---------------------------------------------------------------------------- *)
 (* The inline release of a frame-area frame: cgif's aj_flag_store (YCbq.v:2362-2439, table engine over cgif's
    ajournal) for the LISTING engine over ajournal_x (YC80x.v's run lemma with its soundness theorem
-   sym_run_pi_tok_sound, YP0c.v:835): a run segment whose writes are the journal's allowed bytes plus the frame's flag
+   sym_run_pi_tok_sound, YP0c.v:836): a run segment whose writes are the journal's allowed bytes plus the frame's flag
    byte, ending with the flag 0 (the epilogue's `ld a0, (F + fs_frame_bytes cid - 8); sb zero, 0(a0)`), turns the
    journal's own frame list (cid, pos) :: own' into own' at the allocator state stack_free_state cid pos Sc.
    The model / allocator side enters in ARx form, each as the cf instance states it:
    - ASFX = h-mani-a8's astack_free_law_cf (YG0dcf.v Section J) with ARcf segs B -> ARx;
    - FFLX = the two conjuncts of cgif's frame_flag_lawP (YCbq.v) the rule reads, with AR -> ARx: the flag byte is
             runtime-owned, an application address, and off the image (cf: from ARcf's flag law and client-image law);
-   - SFX  = the model's stack_free post (cgif ml_stack_free / stack_free_post, YG01.v:472) in ARx form
+   - SFX  = the model's stack_free post (cgif ml_stack_free / stack_free_post, YG01.v:473) in ARx form
             (cf: YG05cf.v stack_free_ok_cf with Wf_cf from ARcf).
    The run may not end at a call or an ecall: the flag store and the epilogue are straight-line code. *)
 Hypothesis ASFX : forall ly S Hp W mem md mem' md' cid pos,

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ACONST's cells also hold intercept_strcmp, the common-flags byte ASan's strcmp interceptor tests when time() looks up the published vDSO's clock_gettime, and the shadow words of the two strings time() passes that interceptor, ASHW_VWNAME and ASHW_VWVER; their accessors are ACONST_istrcmp and ACONST_vw_shz). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -48,6 +49,7 @@ Definition AMEMCPYP_CELL : Z := 0x5eaa68.   Definition AREAL_MEMCPY : Z := 0x569
 Definition ASTRLENP_CELL : Z := 0x5ea848.   Definition AREAL_STRLEN : Z := 0x56a30c.   (* [comment removed for export] *)
 Definition ACF_ISTRLEN_CELL : Z := 0x73c523.  (* [comment removed for export] *)
 Definition ACF_STRICT_CELL  : Z := 0x73c51d.  (* [comment removed for export] *)
+Definition ACF_ISTRCMP_CELL : Z := 0x73c522.  (* common flags (0x73c428) + 0xfa: intercept_strcmp, 1 by the runtime's flag defaults *)
 Definition AF_DCO_CELL      : Z := 0x6a8158.  (* [comment removed for export] *)
 Definition AGOT_VERBOSITY   : Z := 0x5e7868.  (* [comment removed for export] *)
 Definition AVERBOSITY_CELL  : Z := 0x73a398.  (* [comment removed for export] *)
@@ -80,6 +82,12 @@ Definition ASHW_MSG_SHORT   : Z := 0x800008e8.  (* [comment removed for export] 
 Definition ASHW_STDOUTBUF   : Z := 0x801784f0.  (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition ASHW_ERRNO       : Z := 0x80174379.
+(* The shadow words ASan's strcmp interceptor checks (AsStrcmp.astrcmp_shz) for the two strings time()'s
+   __vdsosym passes it, both in the first (r--) segment: "__vdso_clock_gettime" at 0x174aa (AVdsoAddr.VW_NAME,
+   20 bytes and the NUL) and "LINUX_4.15" at 0x42283 (AVdsoAddr.VW_VERNAME, 10 bytes and the NUL).  For each,
+   the shadow bytes from sh x to sh (x + n) lie in one aligned word (ASHW_VWNAME_nul, ASHW_VWVER_nul). *)
+Definition ASHW_VWNAME      : Z := 0x7fffae90.  (* 8 * (sh 0x174aa / 8) *)
+Definition ASHW_VWVER       : Z := 0x80000450.  (* 8 * (sh 0x42283 / 8) *)
 Definition AREAD_STAGE      : Z := 0xbccf50.    (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition ASTRRCHRP_CELL   : Z := 0x5ea868.  Definition AREAL_STRRCHR  : Z := 0x56a5f8.   (* [comment removed for export] *)
@@ -119,6 +127,7 @@ Definition aconst_cells : list (Z * list cell) :=
     (ASTRLENP_CELL, [C8 (wz AREAL_STRLEN)]);
     (ACF_ISTRLEN_CELL, [C1 (b8 1)]);
     (ACF_STRICT_CELL, [C1 (b8 0)]);
+    (ACF_ISTRCMP_CELL, [C1 (b8 1)]);
     (* [comment removed for export] *)
     (AF_DCO_CELL, [C1 (b8 1)]);
     (AGOT_VERBOSITY, [C8 (wz AVERBOSITY_CELL)]);
@@ -160,7 +169,10 @@ Definition aconst_cells : list (Z * list cell) :=
     (ACF_ISTRSPN_CELL, [C1 (b8 1)]);
     (AF_REPSTR_CELL, [C1 (b8 1)]);
     (* [comment removed for export] *)
-    (ASHW_ERRNO, [C8 (wz 0)]) ].
+    (ASHW_ERRNO, [C8 (wz 0)]);
+    (* the shadow words of the two strings time()'s __vdsosym passes to ASan's strcmp interceptor *)
+    (ASHW_VWNAME, [C8 (wz 0)]);
+    (ASHW_VWVER, [C8 (wz 0)]) ].
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -411,13 +423,13 @@ Lemma aconst_cells_in_addr :
 Proof.
   unfold aconst_cells, aconst_addr, AGOT_SHBASE, AGOT_UAR, AGOT_MEMSETP, AGOT_FLAGS, AGOT_CFLAGS, AGOT_HIEND, AGOT_MIDBEG, AGOT_MIDEND, AGOT_SEALED,
     AGOT_DYING, AGOT_PGSZ, AGOT_RINTRIN, AGOT_FSTLS, ASHBASE_CELL, AUAR_CELL, AMEMSETP_CELL, AINITED_CELL, ARINTRIN_CELL, AHIEND_CELL,
-    AMIDBEG_CELL, AMIDEND_CELL, ADYING_CELL, APGSZ_CELL, ACANPOISON_CELL, AMEMCPYP_CELL, ASTRLENP_CELL, ACF_ISTRLEN_CELL, ACF_STRICT_CELL,
+    AMIDBEG_CELL, AMIDEND_CELL, ADYING_CELL, APGSZ_CELL, ACANPOISON_CELL, AMEMCPYP_CELL, ASTRLENP_CELL, ACF_ISTRLEN_CELL, ACF_STRICT_CELL, ACF_ISTRCMP_CELL,
     AF_DCO_CELL, AGOT_VERBOSITY, AVERBOSITY_CELL, ACF_CSMT_CELL,
     AGOT_DTLS, AREAL_TLSGA_CELL, AREAL_TLSGA, ACF_ITLS_CELL, ATSD_CELL, AMUSL_TSD, AMUSL_DTV, AMUSL_DTV1,
     AMEMCHRP_CELL, AREADP_CELL, AFWRITEP_CELL, AVPRINTFP_CELL, AVFPRINTFP_CELL, ASTRNLENP_CELL, ACF_CHKPRINTF_CELL, AF_REPGLOB_CELL,
     AMU_GLOBALS_CELL, AREGISTERED_CELL, ACOVFLAG_CELL, ASHW_FMTD, ASHW_MSG_USAGE, ASHW_MSG_REFUSED, ASHW_MSG_OPEN, ASHW_MSG_SHORT, ASHW_STDOUTBUF,
     ASTRRCHRP_CELL, AREAL_STRRCHR, ASTRSPNP_CELL, AREAL_STRSPN, ASTRCPYP_CELL, AREAL_STRCPY, ATIMEP_CELL, AREAL_TIME, ACF_ISTRCHR_CELL, ACF_ISTRSPN_CELL, AF_REPSTR_CELL,
-    ASHW_ERRNO, sh, AIMG_LO, AIMG_TOP.
+    ASHW_ERRNO, ASHW_VWNAME, ASHW_VWVER, sh, AIMG_LO, AIMG_TOP.
   rewrite ?ASHADOW_BASE_val.
   repeat (constructor; [cbn; intros; lia|]). constructor.
 Qed.
@@ -526,6 +538,22 @@ Proof. intros m AC. eapply ACONST_cell; [exact AC| in_nth]. Qed.
 Lemma ACONST_cflags : forall m, ACONST m ->
   rw_cells asegs m ACF_ISTRLEN_CELL [C1 (b8 1)] /\ rw_cells asegs m ACF_STRICT_CELL [C1 (b8 0)].
 Proof. intros m AC. split; (eapply ACONST_cell; [exact AC| in_nth]). Qed.
+Lemma ACONST_istrcmp : forall m, ACONST m -> rw_cells asegs m ACF_ISTRCMP_CELL [C1 (b8 1)].
+Proof. intros m AC. eapply ACONST_cell; [exact AC| in_nth]. Qed.
+(* The shadow words of the two strings time()'s __vdsosym passes to ASan's strcmp interceptor
+   (AsStrcmp.astrcmp_shz): one aligned word each, holding every shadow byte from the string's first to its NUL's. *)
+Lemma ACONST_vw_shz : forall m, ACONST m ->
+  rw_cells asegs m ASHW_VWNAME [C8 (wz 0)] /\ rw_cells asegs m ASHW_VWVER [C8 (wz 0)].
+Proof. intros m AC. split; (eapply ACONST_cell; [exact AC| in_nth]). Qed.
+Lemma ASHW_VWNAME_val : ASHW_VWNAME = 8 * (sh 0x174aa / 8).
+Proof. vm_compute. reflexivity. Qed.
+Lemma ASHW_VWVER_val : ASHW_VWVER = 8 * (sh 0x42283 / 8).
+Proof. vm_compute. reflexivity. Qed.
+(* the NUL's shadow byte is in the same word: 0x174aa + 20 and 0x42283 + 10 *)
+Lemma ASHW_VWNAME_nul : 8 * (sh (0x174aa + 20) / 8) = ASHW_VWNAME.
+Proof. vm_compute. reflexivity. Qed.
+Lemma ASHW_VWVER_nul : 8 * (sh (0x42283 + 10) / 8) = ASHW_VWVER.
+Proof. vm_compute. reflexivity. Qed.
 
 Lemma ACONST_annot : forall m, ACONST m ->
   rw_cells asegs m AF_DCO_CELL [C1 (b8 1)] /\ rw_cells asegs m AGOT_VERBOSITY [C8 (wz AVERBOSITY_CELL)]

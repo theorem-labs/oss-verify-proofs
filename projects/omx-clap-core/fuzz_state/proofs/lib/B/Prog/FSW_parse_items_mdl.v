@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) B-LOCAL COPY of the A walk's model lemmas, copied from
-   a working branch 4480a5df1ae proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_mdl.v
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_mdl.v
    (a Theorem Labs lane). It has no B twin. The lemmas name no machine state and no image value; the changes are the two
    image-bound modules: lib/A FSH_Fn_reader -> lib/B FSH_Fn_reader (the accounting functions rd_ev / rd_live / ... are
    outside its Section c and have A's text) and lib/A FSW_parse_items -> lib/B/Prog FSW_parse_items (whose pi_mgo is
    the A walk's, copied verbatim there). Statements and proofs verbatim.
    The A header, kept: *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane: the pure MODEL lemmas of parse_items' member loop (A 0x84a04), for the walk
    lib/A/FSW_parse_items.v and its composition lane. No machine state, no engine, no callee spec: every lemma here is
    about the released models (lib/Spec PjTree / PjGrammar / PjRoundTrip, lib/Prog WriterValue / WriterSpec /

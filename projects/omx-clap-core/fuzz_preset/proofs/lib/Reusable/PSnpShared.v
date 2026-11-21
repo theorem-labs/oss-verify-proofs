@@ -1,5 +1,5 @@
 (* The snprintf contracts every Pau target shares (statements): h-rw-dis-5's lib/Rt/SnprintfDef.v and VsnprintfDef.v
-   (origin/cold/h-rw-dis-5-s4printf 4a8b5df89c3) restated over fm's library, with pieces, parser and renderer in
+   restated over fm's library, with pieces, parser and renderer in
    FMsnprintfPf.v. Kept as there: the arguments (va_words: a3..a7 then the caller's stack slots at sp; words_at ap for
    the v* entries), the read-only constants a run reads (consts_view cr), the stack-protector cells gc -> gv -> cval,
    the disjointness lists (no alloc_ceiling: the destination and the strings may lie on the machine stack outside the
@@ -20,9 +20,9 @@
    The entries are separate contracts: snprintf, the vsnprintf interceptor, musl vsnprintf, the vfprintf interceptor
    on musl vsnprintf's FILE (musl vfprintf: the same interface), and ASan's printf_common (RtPrintf.Pcommon's text).
    ff_stable / ff_mono are what a family gives the format-generic chain. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's restatement for fuzz_preset (route (a), c-omx-hpreset 10:51Z) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v at origin/cold/port-fm-rtprintf-param 7e395de08f5, over the engine's generic allocator relation ARx (Reusable/YCbqG.v) with the ghost head list Hp passed through unchanged, instead of Poison's user-poisoned ranges U (FMupoison.v is not ported): `ecall_preU segs B ly S U W regs mem md` -> `ecall_pre_x segs B ARx ly S Hp W regs mem md` (FCiface.v:42-48), `ARU segs B ly S U W mem' md'` -> `ARx ly S Hp W mem' md'`, U : list (Z * Z) -> Hp : list Z, and each contract's suffix U -> _x. Left out, as the chain's four roots reach none of them and the chain is generic in FF: the format-family constructors (str_end, pf_arg_asan, pf_args_asan, fmt_at, pf_fm_piece, pf_prec_pos, pf_family, pf_prec_pos_nopps, pf_disco_prec_pos, so no FMsnprintfPf import), and the AR forms with their sh_*_of_U bridges (the AR form is the ARx form at ARx := AR). No image numeral. *)
-(* Modified by Theorem Labs, 2026-10: port-fm 00daeaf3796's destination slack (origin/cold/port-fm-rtprintf-param, the
-   final text 3e35620c52e): on sh_asnprintf_realizes_x only, 'amem_range d (sn_len (n - 1) T + 8)' replaces
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's restatement for fuzz_preset (route (a), c-omx-hpreset 10:51Z) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v, over the engine's generic allocator relation ARx (Reusable/YCbqG.v) with the ghost head list Hp passed through unchanged, instead of Poison's user-poisoned ranges U (FMupoison.v is not ported): `ecall_preU segs B ly S U W regs mem md` -> `ecall_pre_x segs B ARx ly S Hp W regs mem md` (FCiface.v:43-49), `ARU segs B ly S U W mem' md'` -> `ARx ly S Hp W mem' md'`, U : list (Z * Z) -> Hp : list Z, and each contract's suffix U -> _x. Left out, as the chain's four roots reach none of them and the chain is generic in FF: the format-family constructors (str_end, pf_arg_asan, pf_args_asan, fmt_at, pf_fm_piece, pf_prec_pos, pf_family, pf_prec_pos_nopps, pf_disco_prec_pos, so no FMsnprintfPf import), and the AR forms with their sh_*_of_U bridges (the AR form is the ARx form at ARx := AR). No image numeral. *)
+(* Modified by Theorem Labs, 2026-10: port-fm's destination slack (origin/cold/port-fm-rtprintf-param, the
+   final text): on sh_asnprintf_realizes_x only, 'amem_range d (sn_len (n - 1) T + 8)' replaces
    'amem_range d (sn_len (n - 1) T)' (GXA's pf_rng asks app_mem (D + i + 7) for every written byte). The '+ 8' is an
    address-range fact (amem_range, YG0d.v:317), not a presence form: dest_ok, range_addressable and shadow_hull_vis stay
    over the written extent. The v* contracts here are unchanged. *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the image facts hold for the shadow table of each launch rseq layout (BOTH_at (rseq_z rsb)), and the table allows the launch's vDSO pair. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -41,33 +42,33 @@ Proof.
   - symmetry. apply andb_false_iff. destruct Hx as [Hx|Hx]; [left | right]; apply Z.leb_gt; lia.
 Qed.
 
-Lemma both_segs_in_hull : segs_in_hull_b BSEGS (img_lo BOTH) (img_hi BOTH) = true.
+Lemma both_segs_in_hull {rsb : bool} : segs_in_hull_b BSEGS (img_lo (BOTH_at (rseq_z rsb))) (img_hi (BOTH_at (rseq_z rsb))) = true.
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma both_in_hull : forall a : word,
-  APS.in_hull BOTH (bv_unsigned a) = false -> find_segment BSEGS (bv_unsigned a) 1 = None.
+Lemma both_in_hull {rsb : bool} : forall a : word,
+  APS.in_hull (BOTH_at (rseq_z rsb)) (bv_unsigned a) = false -> find_segment BSEGS (bv_unsigned a) 1 = None.
 Proof.
-  intros a H. apply (find_segment1_none_outside BSEGS (img_lo BOTH) (img_hi BOTH)); [exact both_segs_in_hull|].
+  intros a H. apply (find_segment1_none_outside BSEGS (img_lo (BOTH_at (rseq_z rsb))) (img_hi (BOTH_at (rseq_z rsb)))); [exact both_segs_in_hull|].
   unfold APS.in_hull in H. apply andb_false_iff in H as [H|H]; [apply Z.leb_gt in H; left | apply Z.ltb_ge in H; right]; lia.
 Qed.
 
-Lemma both_res_len : APS.res_len_ok BSEGS BOTH.
+Lemma both_res_len {rsb : bool} : APS.res_len_ok BSEGS (BOTH_at (rseq_z rsb)).
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma both_res_hull : Forall (fun iv => img_lo BOTH <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= img_hi BOTH) (segments_reserved BSEGS).
+Lemma both_res_hull {rsb : bool} : Forall (fun iv => img_lo (BOTH_at (rseq_z rsb)) <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= img_hi (BOTH_at (rseq_z rsb))) (segments_reserved BSEGS).
 Proof.
   assert (E : segments_reserved BSEGS = [(Z_to_bv 64 0x10000, Z_to_bv 64 0x22000); (Z_to_bv 64 0x32000, Z_to_bv 64 0x76000);
                                          (Z_to_bv 64 0xa8000, Z_to_bv 64 0x3000); (Z_to_bv 64 0xab000, Z_to_bv 64 0x55c000)])
     by (vm_compute; reflexivity).
-  rewrite E. cbn [img_lo img_hi BOTH].
+  rewrite E. cbn [img_lo img_hi BOTH_at].
   repeat constructor; cbn [fst snd]; rewrite ?u64_lit by lia; lia.
 Qed.
 
-Lemma both_hull_ok : APS.hull_ok BOTH.
-Proof. unfold APS.hull_ok. cbn [img_lo img_hi BOTH]. unfold KHI. repeat split; reflexivity || lia. Qed.
+Lemma both_hull_ok {rsb : bool} : APS.hull_ok (BOTH_at (rseq_z rsb)).
+Proof. unfold APS.hull_ok. cbn [img_lo img_hi BOTH_at]. unfold KHI. repeat split; reflexivity || lia. Qed.
 
-Lemma both_shadow_ok : APS.shadow_ok BOTH.
-Proof. unfold APS.shadow_ok. cbn [shadow_off BOTH]. lia. Qed.
+Lemma both_shadow_ok {rsb : bool} : APS.shadow_ok (BOTH_at (rseq_z rsb)).
+Proof. unfold APS.shadow_ok. cbn [shadow_off BOTH_at]. lia. Qed.
 
 Lemma both_res_sizes : APS.sum_sizes (segments_reserved BSEGS) = 0x5f7000.
 Proof. vm_compute. reflexivity. Qed.
@@ -115,14 +116,15 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Definition APH : PhdrInfo := AsanUbsan.M.phdrs.
 
-Lemma both_img_facts : img_facts BSEGS BOTH APH.
+Lemma both_img_facts {rsb : bool} : img_facts BSEGS (BOTH_at (rseq_z rsb)) APH.
 Proof.
   constructor.
   - repeat split; reflexivity.
-  - cbn [img_lo img_hi BOTH]. lia.
+  - cbn [img_lo img_hi BOTH_at]. lia.
   - vm_compute. reflexivity.
   - exact both_res_hull.
   - rewrite both_res_sizes. reflexivity.
-  - cbn [rw_lo rw_len BOTH]. split; [lia|]. intros m x Hx. apply both_rw_window. lia.
+  - cbn [rw_lo rw_len BOTH_at]. split; [lia|]. intros m x Hx. apply both_rw_window. lia.
   - exact both_shadow_ok.
+  - (* the launch's vDSO pair: the table allows 2 extra intervals and 20 pages *) split; vm_compute; lia.
 Qed.

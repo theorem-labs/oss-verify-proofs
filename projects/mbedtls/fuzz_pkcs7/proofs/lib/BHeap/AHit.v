@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (F_T_node and F_T_store written out in plain text, each with a new placement premise, ASys.placed_at, passed on to D_T_node and D_T_store; their old encoded (CDefT) statements kept as definitions, with lemmas checking by reflexivity that the plain text without the new premise is their decode). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -99,18 +100,65 @@ Section Hit.
     #[using="Type"] Lemma F_apart : ltac2:(CDefT.buildp (gd_tbl_AHit ()) "Pnb,(1;.$1.)Pbl,(1;.$1.)Pmo,$19.Pa,(0.&40.)Pn,(0.&40.)P,(51.R5.R4.R3.)P,(15.$52.(53.(54.(2:.(0.&40.)(0.&40.))(55.(56.R4.))(57.(56.R4.)))R3.R2.)$58.)P,(5.+10000.(2.&40.R3.))P,(5.(<.(2.&40.R5.)(2.&40.R4.))(3:.VhAR,))Px,$1.P,(3;.(59.VhAR,VAL,Vv0,Vnb0,Vbl0,R:.R9.R1.)(4.(5.(5:.VAL,)R1.)(6.R1.(5;.VAL,))))(3.(4.(5.(2.&40.R8.)R2.)(6.R2.(<.(2.&40.R8.)(2.&40.R7.)))))")
 (* [comment removed for export] *).
     Proof. intros nb bl mo a n [K _]. apply (D_apart AL v0 nb0 bl0 nb bl mo a n K). Qed.
-    #[using="IMG ASB SLACK"] Lemma F_T_node : ltac2:(CDefT.buildp (gd_tbl_AHit ()) "Pnb,(1;.$1.)Pbl,(1;.$1.)Pmo,$19.Pa,(0.&40.)P,(5<.Vnb0,Vbl0,R4.R3.)P,(51.R5.R4.R3.)P,(15.$1.(39.(2.&40.R3.)+1000.)=)P,(6.=(2.&40.R4.))P,(5.(<.(2.&40.R5.)(=.+2.+14.))(3:.VhAR,))P,(15.$52.(53.(54.(2:.(0.&40.)(0.&40.))(55.(56.R7.))(57.(56.R7.)))R6.(23.&40.(=.+2.+14.)))$58.)(4.(51.(54.$1.R:.(29.$1.(2.&40.R7.)(42.$1.)))R9.(5=.+22.R7.(=.+2.+14.)R8.))(5>.(59.VhAR,VAL,Vv0,Vnb0,Vbl0,(54.$1.R:.(29.$1.(2.&40.R7.)(42.$1.)))R9.)(2.&40.R7.)(=.+2.+14.)))")
-(* [comment removed for export] *).
+    (* LPS #38: retain each old blob and check its explicit rendering by reflexivity. *)
+    Definition ZZ_F_T_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AHit ()) "Pnb,(1;.$1.)Pbl,(1;.$1.)Pmo,$19.Pa,(0.&40.)P,(5<.Vnb0,Vbl0,R4.R3.)P,(51.R5.R4.R3.)P,(15.$1.(39.(2.&40.R3.)+1000.)=)P,(6.=(2.&40.R4.))P,(5.(<.(2.&40.R5.)(=.+2.+14.))(3:.VhAR,))P,(15.$52.(53.(54.(2:.(0.&40.)(0.&40.))(55.(56.R7.))(57.(56.R7.)))R6.(23.&40.(=.+2.+14.)))$58.)(4.(51.(54.$1.R:.(29.$1.(2.&40.R7.)(42.$1.)))R9.(5=.+22.R7.(=.+2.+14.)R8.))(5>.(59.VhAR,VAL,Vv0,Vnb0,Vbl0,(54.$1.R:.(29.$1.(2.&40.R7.)(42.$1.)))R9.)(2.&40.R7.)(=.+2.+14.)))").
+
+    Lemma ZZ_F_T_node_faithful : ZZ_F_T_node_old =
+      (forall (nb bl : list Z) (mo : Model) (a : word),
+        Gn nb0 bl0 nb bl ->
+        KdF nb bl mo ->
+        bv_unsigned a mod 4096 = 0 ->
+        0 < bv_unsigned a ->
+        bv_unsigned a + 2 ^ 20 <= ACEIL ->
+        region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+        KdF (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+        /\ crange (CSd AL v0 nb0 bl0 (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20)).
+    Proof. exact eq_refl. Qed.
+
+    #[using="IMG ASB SLACK"] Lemma F_T_node :
+      forall (nb bl : list Z) (mo : Model) (a : word),
+        Gn nb0 bl0 nb bl ->
+        KdF nb bl mo ->
+        bv_unsigned a mod 4096 = 0 ->
+        0 < bv_unsigned a ->
+        bv_unsigned a + 2 ^ 20 <= ACEIL ->
+        region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+        ASys.placed_at (2 ^ 20) mo a ->
+        KdF (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+        /\ crange (CSd AL v0 nb0 bl0 (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20).
     Proof.
-      intros nb bl mo a G [K FR] AAL A0 ACE RF.
-      destruct (D_T_node AL ASB IML IMH v0 nb0 bl0 SLACK nb bl mo a G K AAL A0 ACE RF) as [K' C']. split; [| exact C'].
+      intros nb bl mo a G [K FR] AAL A0 ACE RF FL.
+      destruct (D_T_node AL ASB IML IMH v0 nb0 bl0 SLACK nb bl mo a G K AAL A0 ACE RF FL) as [K' C']. split; [| exact C'].
       split; [exact K'|]. eapply mo_frame_trans; [exact FR| apply mo_frame_anon_grant].
     Qed.
-    #[using="IMG ASB SLACK"] Lemma F_T_store : ltac2:(CDefT.buildp (gd_tbl_AHit ()) "Pnb,(1;.$1.)Pbl,(1;.$1.)Pmo,$19.Pa,(0.&40.)P,(5?.Vnb0,Vbl0,R4.R3.)P,(51.R5.R4.R3.)P,(15.$1.(39.(2.&40.R3.)+1000.)=)P,(6.=(2.&40.R4.))P,(5.(<.(2.&40.R5.)(=.+2.+17.))(3:.VhAR,))P,(15.$52.(53.(54.(2:.(0.&40.)(0.&40.))(55.(56.R7.))(57.(56.R7.)))R6.(23.&40.(=.+2.+17.)))$58.)(4.(51.R:.(54.$1.R9.(29.$1.(2.&40.R7.)(42.$1.)))(5=.+4022.R7.(=.+2.+17.)R8.))(5>.(59.VhAR,VAL,Vv0,Vnb0,Vbl0,R:.(54.$1.R9.(29.$1.(2.&40.R7.)(42.$1.))))(2.&40.R7.)(=.+2.+17.)))")
-(* [comment removed for export] *).
+    Definition ZZ_F_T_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AHit ()) "Pnb,(1;.$1.)Pbl,(1;.$1.)Pmo,$19.Pa,(0.&40.)P,(5?.Vnb0,Vbl0,R4.R3.)P,(51.R5.R4.R3.)P,(15.$1.(39.(2.&40.R3.)+1000.)=)P,(6.=(2.&40.R4.))P,(5.(<.(2.&40.R5.)(=.+2.+17.))(3:.VhAR,))P,(15.$52.(53.(54.(2:.(0.&40.)(0.&40.))(55.(56.R7.))(57.(56.R7.)))R6.(23.&40.(=.+2.+17.)))$58.)(4.(51.R:.(54.$1.R9.(29.$1.(2.&40.R7.)(42.$1.)))(5=.+4022.R7.(=.+2.+17.)R8.))(5>.(59.VhAR,VAL,Vv0,Vnb0,Vbl0,R:.(54.$1.R9.(29.$1.(2.&40.R7.)(42.$1.))))(2.&40.R7.)(=.+2.+17.)))").
+
+    Lemma ZZ_F_T_store_faithful : ZZ_F_T_store_old =
+      (forall (nb bl : list Z) (mo : Model) (a : word),
+        Gs nb0 bl0 nb bl ->
+        KdF nb bl mo ->
+        bv_unsigned a mod 4096 = 0 ->
+        0 < bv_unsigned a ->
+        bv_unsigned a + 2 ^ 23 <= ACEIL ->
+        region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+        KdF nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+        /\ crange (CSd AL v0 nb0 bl0 nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23)).
+    Proof. exact eq_refl. Qed.
+
+    #[using="IMG ASB SLACK"] Lemma F_T_store :
+      forall (nb bl : list Z) (mo : Model) (a : word),
+        Gs nb0 bl0 nb bl ->
+        KdF nb bl mo ->
+        bv_unsigned a mod 4096 = 0 ->
+        0 < bv_unsigned a ->
+        bv_unsigned a + 2 ^ 23 <= ACEIL ->
+        region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+        ASys.placed_at (2 ^ 23) mo a ->
+        KdF nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+        /\ crange (CSd AL v0 nb0 bl0 nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23).
     Proof.
-      intros nb bl mo a G [K FR] AAL A0 ACE RF.
-      destruct (D_T_store AL ASB IML IMH v0 nb0 bl0 SLACK nb bl mo a G K AAL A0 ACE RF) as [K' C']. split; [| exact C'].
+      intros nb bl mo a G [K FR] AAL A0 ACE RF FL.
+      destruct (D_T_store AL ASB IML IMH v0 nb0 bl0 SLACK nb bl mo a G K AAL A0 ACE RF FL) as [K' C']. split; [| exact C'].
       split; [exact K'|]. eapply mo_frame_trans; [exact FR| apply mo_frame_anon_grant].
     Qed.
     #[using="VR0 SLACK CB20"] Lemma F_ROOM_n : forall nb bl mo, Gn nb0 bl0 nb bl -> KdF nb bl mo -> exists a, anon_grantable 0x22 (2^20) mo a.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (5 recorded proofs replaced by computation, vm_compute (fmt_g_ex1, fmt_g_ex2, fmt_g_ex3 and 2 more)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith Bool List Lia.
 Import ListNotations.
@@ -615,20 +616,15 @@ Definition fmt_d (x : Z) : option (list Z * Z) :=
 
 (* [comment removed for export] *)
 Example fmt_g_ex1 : fmt_g 0x3fb999999999999a 15 = Some ([48; 46; 49], 3).
-Proof.
-ltac2:(KReplay.run1 (kr_t_FmtFp ()) [] "p;1p;2p;3p;4g0000j1@Tg000Pj2?Tg0010j19Tg001Rj11Tg0027j10Tg002\j12Tg003:j18Tg003Zj36Tg004:j47Tg004Zj2:Tg005<j2>Tg005Vj2=Tg006Mj3<Tf0R0#0#0p=;%10#1p=5%10#0p=4%00#1#1#0#0#1#1#0p=3g006gR0#@R1/?0R2#9R3P1P0g007ER1#1R4#0#;R5#0#2%01#5#4#2%15#2%80560560560%24C7,:2R2'>%54R4#5#4#5#4#3#3#3#3#3#3#4#2%24'==<32do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example fmt_g_ex2 :
   fmt_g 0x3fb999999999999a 17
   = Some ([48; 46; 49; 48; 48; 48; 48; 48; 48; 48; 48; 48; 48; 48; 48; 48; 48; 48; 49], 19).
-Proof.
-ltac2:(KReplay.run1 (kr_t_FmtFp ()) [] "p;1p;2p;4p;3g0000j1DTg000Pj2CTg0010j1;Tg001Rj11Tg0027j10Tg002\j14Tg003:j1:Tg004:j4BTg004Zj2ATg005<j2@Tg005Vj2?Tg006Mj3<Tg003Zj32Tf0R0#0#0p==%10#1p=5%10#0p=7g006gR1f1R2;20p=8f2R3A2120521p=9f4f3A21209213521521p=6%00#1#1#0#0#1#1#0p=3%00#1p=>%D1R0/C1R3#;R2P0P1g007ER0#1R4#0#=R5#0#4R6%00R0#5#7#4%15#4R5P6P6P6P6P6P6P6P6P6P6P6P6P6%:1,859966D6D6D6D6%00R0#5#4CB,A3R3'@%54#5#7#5#7#3#3#3#3#3#3#7#4%>0#4'?=<23do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Example fmt_g_ex3 : fmt_g 0x7e37e43c8800759c 15 = Some ([49; 101; 43; 51; 48; 48], 6).
-Proof.
-ltac2:(KReplay.run1 (kr_t_FmtFp ()) [] "p;1p;2p;4p;3g0000j1ATg000Pj2@Tg0010j1;Tg001Rj11Tg0027j13Tg002\j14Tg003:j1:Tg004:j48Tg004Zj29Tg005<j2?Tg005Vj2>Tg006Mj3<Tg003Zj3=Tf0R0#3#1p=5%10#3p=7%10#1p=2g006gR1f1;=0p=6%30#3p=0%A1R0/@1R2#;R3P0P1g007ER0#1R4#3R5#3R6#3R7#1#4%16R6#5#4%30#7#2#4%16#4%37#4R7%:1,67'6'6'6'6'6%45C8,92R2'?%24R4#1#7#0#2#5#2#2#7#5#0#0#2#2#0#7#0#7#0#0#0#0#0#5#2#5#5#7#5#2#0#4%44'>=<32do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example fmt_d_ex1 : fmt_d (-2147483648) = Some ([45; 50; 49; 52; 55; 52; 56; 51; 54; 52; 56], 11).
-Proof.
-ltac2:(KReplay.run1 (kr_t_FmtFp ()) [] "p;1p;2p;4p;3g0000j1ATg000Pj2@Tg0010j1<Tg0027j10Tg001Rj11Tg002\j12Tg003:j1;Tg004:j47Tg004Zj28Tg005<j29Tg007jj1?Tg008Hj1>Tg006Mj3=Tg003Zj36Tf0R0#0#0p=5g006gR1f1R2;60p=:f2A6120561p=4%00#0#0#0p=3%A1R0/@1R2#<R3P0P1g007ER0#0R4#1#1R5#0#1#2%10R0#0R6#0R7#1R8#0#2%07#1#2%16R6#5#2R7%16R6#1#2%10#0#5#2R0%18#2%06#2%;1,:0747347473434%25C7,82R2'9%54#3#3#3#3#3#3#3#?#>==32do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example fmt_d_ex2 : fmt_d 0 = Some ([48], 1).
-Proof.
-ltac2:(KReplay.run1 (kr_t_FmtFp ()) [] "p;1p;2p;3p;4g0000j1<Tg000Pj2;Tg0010j13Tg001Rj12Tg0027j10Tg002\j11Tg003:j1:Tg003Zj34Tg004:j45Tg004Zj26Tg005<j27Tg008Hj18Tg006Mj39Tg006gR0#<R1/;0R2#3R3P1P0g007ER1#2#0#0#0#0#1%:0540%11C5,62R2'7g009?#8=932do"). Qed.
+Proof. vm_compute. reflexivity. Qed.

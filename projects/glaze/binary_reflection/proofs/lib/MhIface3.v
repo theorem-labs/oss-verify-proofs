@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: preserved map/reserved separation through errno ledger transport. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -287,7 +288,7 @@ Section Errno.
   Qed.
 
   Lemma LEDGER_set_errno : forall st e vm, LEDGER st vm -> LEDGER (set_errno st e) vm.
-  Proof. intros st e vm [A B C D E]. constructor; cbn; assumption. Qed.
+  Proof. intros st e vm [A B C D E F]. constructor; cbn; assumption. Qed.
 
   (* [comment removed for export] *)
   Definition errno_write (M M' : mem) (e : Z) : Prop :=

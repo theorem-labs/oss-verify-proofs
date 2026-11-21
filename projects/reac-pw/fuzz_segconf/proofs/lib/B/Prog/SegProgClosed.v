@@ -1,6 +1,6 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the program side, composed at the
-   pinned image (the role of plugin-hostd/fuzz_command's lib/B/Prog/CmdProgClosed.v, origin/ossv/recipes
-   501c0d516c69; the twin of image A's lib/A/Prog/SegProgClosed.v, commit 6f7a1561a103): the contract `<F>_contract`
+   pinned image (the role of plugin-hostd/fuzz_command's lib/B/Prog/CmdProgClosed.v,;
+   the twin of image A's lib/A/Prog/SegProgClosed.v): the contract `<F>_contract`
    (lib/B/Prog/<F>_c.v) of each of image B's 36 program functions at image B's instance SegImg.PB_seg (segments
    tfibsegs), the sink head YE2k.tfib_sink_head and an allocator record B with image B's symbol record
    (YF0m.SegBSyms B), at every run ceiling and FP state, from each function's walk (its group's theorem, applied to

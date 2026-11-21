@@ -1,12 +1,12 @@
 (* proves no function (rule 24; kind: model instance + model rules): fr_RINV for image B and SEG_HEAD's two RINV rules *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) twin of lib/A/ReplyRINV.v at f57b3e2d0ca
+(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) twin of lib/A/ReplyRINV.v
    (a working branch): fr_RINV, the concrete relational invariant of the entry walk of
    LLVMFuzzerTestOneInput, over lib/B's records (the Section variable `RINV : lfcx -> Z -> lmod -> Prop` of
    lib/B/W_LLVMFuzzerTestOneInput_cut.v :620 and of lib/B/W_LLVMFuzzerTestOneInput_head.v :242), the two SEG_HEAD
    premises over RINV proved against it, and RI_pro: fr_RINV holds at the first head.
-   What is here, each with its source in A's file (f57b3e2d0ca lib/A/ReplyRINV.v):
+   What is here, each with its source in A's file (lib/A/ReplyRINV.v):
      fr_pair_cost, fr_cost, fr_pair_ok, fr_entry_ok, fr_count, fr_relay, fr_gone, fr_RINV   A :97-181, the same text
        (a comment's W_rep / _cut line reference is B's, and fr_RINV's comment is shortened);
      RI_head_nout_obl, RI_head_skip_obl                                                      A :187-191, the same text,
@@ -20,22 +20,22 @@
    Read A's header (A :3-37) for why fr_RINV has this shape (the counting invariant, no bound on t, the split cost bound,
    KEEP UNCONSTRAINED); every reason carries over: the model, its records' fields and the C program are the same.
    The other obligations of A's file (drain, small, write, exit, add, gone, remove arms) are not here: B has no segment
-   file for those arms at cb5e14dbcf9, and SEG_HEAD's premises need none of them.
-   A -> B swaps (A at f57b3e2d0ca, B at cb5e14dbcf9):
+   file for those arms, and SEG_HEAD's premises need none of them.
+   A -> B swaps (A at a commit of its working branch, B at an earlier commit of this tree):
      imports (where A Imports a lib/A module, this file Imports lib/B's, in A's order):
        lib/A/AB1v (A :54)                            -> lib/B/YB1v (as _head.v :55)
        lib/Reusable/YE01 (A :55), lib/A/AE2k (A :56) -> lib/B/YE01, lib/B/YE2k (as _head.v :57)
        lib/A/ACfn, Imported (A :59)                  -> lib/B/YCfn, Required only (as _head.v :60, _cut.v :138)
        lib/A/W_syms .. W_journal (A :61-62)          -> lib/B's files of the same names (as _head.v :62-63)
        lib/A/W_rep W_contract W_sites W_frame (A :70) -> lib/B's files of the same names
-       lib/A/W_op_add (A :70)                        -> NOT loaded: lib/B/W_op_add.v does not compile at cb5e14dbcf9
+       lib/A/W_op_add (A :70)                        -> NOT loaded: lib/B/W_op_add.v does not compile
          (line 1239: "Expects a disjunctive pattern with 1 branch or a conjunctive pattern made of 2 patterns"); the
          one name A reads from it, oa_new_src (B W_op_add.v :148-149), is copied verbatim below as pro_new_src
        (none in A)                                   -> lib/B/ReplyGuardB, Required (as _head.v :67: RelocB's sink guard)
        lib/A/W_LLVMFuzzerTestOneInput_cut (A :71)    -> lib/B/W_LLVMFuzzerTestOneInput_cut
        lib/A/W_LLVMFuzzerTestOneInput_head (A :73)   -> lib/B/W_LLVMFuzzerTestOneInput_head
-     not loaded: A's lib/A W_LLVMFuzzerTestOneInput_small _write _drain _event _exit _add (A :73-75; no lib/B file at
-       cb5e14dbcf9); lib/Prog RelayRunT relay_remove_b_c relay_instance_gone_b_c (A :65-66) and SlotReads SlotDrain3
+     not loaded: A's lib/A W_LLVMFuzzerTestOneInput_small _write _drain _event _exit _add (A :73-75; no lib/B file);
+       lib/Prog RelayRunT relay_remove_b_c relay_instance_gone_b_c (A :65-66) and SlotReads SlotDrain3
        SlotPass2Aux (A :69), Required only in A for the arms' proofs not ported here.
      names (each from the Import above; the text that names it is unchanged):
        lfcx, c_n, lf_base      A _cut.v :235, :238    -> B _cut.v :320, :323
@@ -58,7 +58,7 @@
      argument comes from the Context (as _head.v :137).
   CONSTANT-SWAP TABLE: every constant this file's text reads.  Each B value is read from image B's own binary
   (fuzz_reply.asan-ubsan, sha256 10ffb5f9202ae2bd..., through its fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record)) or
-  from a file at cb5e14dbcf9; none is A's value plus an offset.
+  from a file; none is A's value plus an offset.
     name                        | A value | B value | where B's value comes from
     OPS_MAX                     | 512     | 512     | B _cut.v :197; B binary 0x84818 `li a0,512`, 0x8481c `bne s9,a0` (the
                                 |         |         | loop's bound)
@@ -75,6 +75,7 @@
                                 |         |         | one file for both images
     SlotInv.WRITE_MAX           | 65535   | 65535   | no image value: lib/Prog/SlotInv.v :25, one file for both images
     SlotInv.ecap_ok             | (def.)  | (def.)  | no image value: lib/Prog/SlotInv.v :98, one file for both images *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -219,11 +220,11 @@ Definition RI_head_skip_obl : Prop := forall cx t m, 0 <= t < OPS_MAX -> 0 <= lm
 
 (* The source op_add opens (descriptor fd, the 6000-byte buffer q, everything else zero; lib/Prog/op_add_c.v:22
    new_src): a VERBATIM COPY of lib/B/W_op_add.v :148-149 oa_new_src, which this file cannot load (that file does not
-   compile at cb5e14dbcf9, see the header); replace it by W_op_add.oa_new_src when W_op_add.v builds. *)
+   compile, see the header); replace it by W_op_add.oa_new_src when W_op_add.v builds. *)
 Definition pro_new_src (fd q : Z) (pj : list byte) : hsrc :=
 HS fd 1 0 0 empty_list 0 q pj 0 0 [] empty_list empty_list.
-(* The model at the first head: A's copy (A :292-294) of a working branch a7e2bf5856c
-   lib/A/W_LLVMFuzzerTestOneInput_pro.v :203 pro_m.  B has no _pro.v at cb5e14dbcf9 (its SEG_PRO, B _cut.v :739, is a
+(* The model at the first head: A's copy (A :292-294) of a working branch
+   lib/A/W_LLVMFuzzerTestOneInput_pro.v :203 pro_m.  B has no _pro.v (its SEG_PRO, B _cut.v :739, is a
    Section hypothesis whose INV_H model is existential); the prologue is the same C code (fuzz_reply.c:681-684:
    op_add opens slot 0 with fd FIRST_FD = 100 and g_nfd = 1, the relay's table has its one entry), so the model is
    A's, over B's LM (B _cut.v :375, the same eleven fields in the same order). *)

@@ -1,7 +1,7 @@
 (* G4.ExEntry, IMAGE B: EX_B 0x8131c (fuzz_manifest.c:119): the instrumented load of r[1 + n] (a0 = r + 1 + n, shadow
    check through s9) and its test against '>' (s2): '>' goes to 0x81944 (s7 = 1), then 0x81904 (a0 = s7) and EX_R
    0x81908 with expected's answer 1; any other byte falls through to EX_S 0x81334. No UBSan guard on this path. B twin of
-   lib/A/FMW_ex_entry_b.v (06d82004dc3). ex_B_seg (FMW_ex_entry_kit.v). *)
+   lib/A/FMW_ex_entry_b.v. ex_B_seg (FMW_ex_entry_kit.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

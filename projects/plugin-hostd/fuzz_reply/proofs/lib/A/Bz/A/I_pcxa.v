@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated by R4Printf.BzPrintfPort (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pcxa.v: module paths and 5 address numerals, rewritten in one pass, each paired by object (the code functions are identical modulo pc-relative fields): 0x481a0->0x48ba8 format_get_value_size+0x0; 0x481f8->0x48c00 format_get_value_size+0x58; 0x640d8->0x64ee8 internal_atoll+0x0; 0x64158->0x64f68 internal_atoll+0x80; 0x64190->0x64fa0 internal_atoll+0xb8. *)
+(* Modified by Theorem Labs, 2026-10: relocated by R4Printf.BzPrintfPort (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pcxa.v: module paths and 5 address numerals, rewritten in one pass, each paired by object (the code functions are identical modulo pc-relative fields): 0x481a0->0x48ba8 format_get_value_size+0x0; 0x481f8->0x48c00 format_get_value_size+0x58; 0x640d8->0x64ee8 internal_atoll+0x0; 0x64158->0x64f68 internal_atoll+0x80; 0x64190->0x64fa0 internal_atoll+0xb8. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.

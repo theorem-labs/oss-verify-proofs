@@ -17,7 +17,7 @@ Open Scope Z_scope.
 Lemma le1_zero : le1 (Z_to_bv 64 0) = [Z_to_bv 8 0].
 Proof. reflexivity. Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:126 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:126 *)
 Lemma rw_cells_app : forall m A c1 c2,
   rw_cells rsegs m A (c1 ++ c2) <-> rw_cells rsegs m A c1 /\ rw_cells rsegs m (A + Z.of_nat (cells_size c1)) c2.
 Proof.
@@ -39,7 +39,7 @@ Proof.
     + replace (A + i) with (A + Z.of_nat (cells_size c1) + (i - Z.of_nat (cells_size c1))) by lia. apply Hw2. lia.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:147 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:147 *)
 Lemma bytes_at_mrd : forall m A bs x, bytes_at rsegs m A bs -> A <= x < A + Z.of_nat (length bs) ->
   exists b, mrd rsegs m (wa x) = Some b.
 Proof.
@@ -49,7 +49,7 @@ Proof.
   apply nth_error_None in E. lia.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:156 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:156 *)
 Lemma stk_tr : forall W m m' lo hi, stk rsegs m lo hi -> munch W m m' -> wmono rsegs m m' ->
   (forall x, lo <= x < hi -> outside W x \/ exists b, mrd rsegs m' (wa x) = Some b) -> stk rsegs m' lo hi.
 Proof.
@@ -60,7 +60,7 @@ Proof.
   - exact Hb'.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:166 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:166 *)
 Lemma stk_cb : forall m A n, stk rsegs m A (A + Z.of_nat n) -> exists j, rw_cells rsegs m A [CB n j].
 Proof.
   intros m A n H. pose proof H as (H1 & _ & _).
@@ -68,14 +68,14 @@ Proof.
   exists j. replace (A + Z.of_nat n - Z.of_nat n) with A in J by lia. exact J.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:173-177 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:173-177 *)
 Lemma pf_bytes_app : forall a b, pf_bytes (a ++ b) = pf_bytes a ++ pf_bytes b.
 Proof. intros. unfold pf_bytes. apply map_app. Qed.
 
 Lemma length_pf_bytes : forall a, length (pf_bytes a) = length a.
 Proof. intros. unfold pf_bytes. apply length_map. Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:221 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:221 *)
 Lemma task_mem_munch : forall W m m', MemNorm.task_mem rsegs m -> munch W m m' ->
   (forall a : word, ~ outside W (bv_unsigned a) -> wview rsegs m a <> None) -> MemNorm.task_mem rsegs m'.
 Proof.
@@ -86,7 +86,7 @@ Proof.
   exfalso. apply W0. reflexivity.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:269 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:269 *)
 Lemma rwc_stk : forall m A n j, rw_cells rsegs m A [CB n j] -> stk rsegs m A (A + Z.of_nat n).
 Proof.
   intros m A n j [[[Lj _] B] (H1 & H2 & HW)]. cbn [cells_size csize cells_bytes cbytes] in *.
@@ -96,13 +96,13 @@ Proof.
   - eapply bytes_at_mrd; [exact B|]. rewrite Lj. lia.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:278 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:278 *)
 Lemma stk_sub : forall m a b a' b', stk rsegs m a b -> a <= a' -> a' <= b' -> b' <= b -> stk rsegs m a' b'.
 Proof.
   intros m a b a' b' (H1 & H2 & H) X1 X2 X3. split; [lia|]. split; [lia|]. intros x Hx. apply H. lia.
 Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:289 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:289 *)
 Lemma rwc_cb : forall m A n j, rw_cells rsegs m A [CB n j] -> length j = n /\ bytes_at rsegs m A j.
 Proof. intros m A n j [[[Lj _] B] _]. cbn [cells_bytes cbytes] in B. rewrite app_nil_r in B. split; assumption. Qed.
 
@@ -139,7 +139,7 @@ Proof.
   intros m MI. apply ro_bytes_at; [exact MI | lia | cbn; lia | apply ro_bytes_b_sound; vm_compute; reflexivity].
 Qed.
 
-(* the shape of 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:673 tj_str *)
+(* the shape:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:673 tj_str *)
 Lemma dc_str : forall m (A : Z) (s sl : list Z) S' lo D n',
   mem_inv rsegs m -> ro_bytes_b rsegs A (pf_bytes (s ++ [0] ++ sl)) = true ->
   Forall (fun c => 0 < c < 256) s ->

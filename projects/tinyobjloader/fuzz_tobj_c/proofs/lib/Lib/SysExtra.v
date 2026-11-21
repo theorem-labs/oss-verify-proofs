@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (writev01_rob added, the zero-total writev's read-only-backing robustness, LPS 75d69e00; the writev triples take the channel-reader premise, LPS 08b1429, and close the frame obligation's new premise by writev2_rob, writev1_rob and writev01_rob). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -152,6 +153,47 @@ S3Q40M0A1M1S12S5G0R1A2S24A2S0SdS27SeS7G1G1A2M2S11G1G1R2S4G0Z0A2A4S6G2A1A3A1SfA3F
     intros R. apply (@writev0_inv (sys_input segs ms x8) m ch [(b, Z_to_bv 64 0)] Hno Hfd Hch);
       [cbn; rewrite Hcnt; reflexivity | cbn; unfold IOV_MAX; lia | apply writev01_iovecs_at; assumption | apply access_okb_of_le; autorewrite with sys_input; cbn [length]; lia | apply writev01_bok; exact Hbok | reflexivity].
   Qed.
+
+  (** LPS 75d69e00: [ok_pframe]'s fourth premise at the zero-total writev.  66 is not in
+      [RomBase.memfree_lit] and must not be: [memfree 66] is FALSE, because writev reads the
+      iovec array out of [in_mem].  [writev0_check]'s right-hand side mentions the input only
+      through [in_arg] (via [writev0_reads]), which [RomBase.with_mem] leaves alone, and the
+      one memory hypothesis -- [Hiov] -- transports by [SysStep.iovecs_at_ext]. *)
+  Lemma writev01_rob : forall ms m x8 ch b,
+    ms_svc_pending ms = Some x8 ->
+    bv_unsigned x8 = 66%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    ms_gpr ms 2 = Z_to_bv 64 1 ->
+    read_u64 (ms_read_byte ms) (ms_gpr ms 1) = Some b ->
+    read_u64 (ms_read_byte ms) (ms_gpr ms 1 + 8)%bv = Some (Z_to_bv 64 0) ->
+    (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
+    (bv_unsigned b <= TASK_SIZE)%Z ->
+    RomBase.sys_rob segs (mkCfg ms m).
+  Proof using .
+    intros ms m x8 ch b Hp Hno Hfd Hch Hcnt H1 H2 Hiok Hbok.
+    assert (Hc : bv_unsigned (in_arg (sys_input segs ms x8) 2)
+                 = Z.of_nat (length [(b, Z_to_bv 64 0)]))
+      by (cbn; rewrite Hcnt; reflexivity).
+    assert (Hc1 : (1 <= Z.of_nat (length [(b, Z_to_bv 64 0)]) <= IOV_MAX)%Z)
+      by (cbn; unfold IOV_MAX; lia).
+    assert (Hiov : iovecs_at (ms_read_byte ms) (ms_gpr ms 1) [(b, Z_to_bv 64 0)])
+      by (apply writev01_iovecs_at; assumption).
+    assert (Hok : access_okb (in_arg (sys_input segs ms x8) 1)
+                    (16 * Z.of_nat (length [(b, Z_to_bv 64 0)])) = true)
+      by (apply access_okb_of_le; autorewrite with sys_input; cbn [length]; lia).
+    assert (Hbk : iovs_access_okb [(b, Z_to_bv 64 0)] = true)
+      by (apply writev01_bok; exact Hbok).
+    assert (Hz : iovs_total [(b, Z_to_bv 64 0)] = 0) by reflexivity.
+    eapply RomBase.sys_rob_of_mem_ext; [exact Hp|]. intros mp Hx eff.
+    rewrite (@writev0_check (RomBase.with_mem (sys_input segs ms x8) mp) m ch
+               [(b, Z_to_bv 64 0)] Hno Hfd Hch Hc Hc1
+               (@iovecs_at_ext [(b, Z_to_bv 64 0)] (ms_read_byte ms) mp (ms_gpr ms 1) Hx Hiov)
+               Hok Hbk Hz).
+    rewrite (@writev0_check (sys_input segs ms x8) m ch
+               [(b, Z_to_bv 64 0)] Hno Hfd Hch Hc Hc1 Hiov Hok Hbk Hz).
+    reflexivity.
+  Qed.
 End Step.
 
 Section WithSegs.
@@ -221,10 +263,12 @@ Lemma triple1_writev2J : forall (ok : world -> Prop) (J J' : jpred) S rho ch bs1
        /\ (bv_unsigned (eval rho (reg_sv S 11)) + 32 <= TASK_SIZE)%Z
        /\ (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z
        /\ (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z) ->
+  (* LPS 08b1429: writev's reader gate (see [SysStep.wstep_writev2_inv]). *)
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md -> m_channel_reader md = true) ->
   triple1 segs ok (SPJ segs J S rho)
     (fun w => exists rho', agree_below (ss_next S) rho rho' /\ SPJ segs J' (S_after_write S e) rho' w).
 Proof using .
-  intros ok J J' S rho ch bs1 bs2 e Hokf Hokp Hi H17 H10 H12 Hch Hlen He HK Hbs.
+  intros ok J J' S rho ch bs1 bs2 e Hokf Hokp Hi H17 H10 H12 Hch Hlen He HK Hbs Hrdq.
   apply triple1_ecall_detJ; [exact Hokf | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -234,6 +278,7 @@ Proof using .
   pose proof (smatch_pending_gpr segs _ _ _ _ _ 1 Hsp ltac:(lia)) as G1. change (10 + Z.of_nat 1) with 11 in G1.
   pose proof (smatch_pending_gpr segs _ _ _ _ _ 2 Hsp ltac:(lia)) as G2. change (10 + Z.of_nat 2) with 12 in G2. rewrite H12 in G2. cbn [eval] in G2.
   destruct (Hbs tr ms md Hsp Hk) as (b1 & l1 & b2 & l2 & R1 & R2 & R3 & R4 & B1 & B2 & Hev & T0 & T1 & T2).
+  pose proof (Hrdq tr ms md Hsp Hk) as Hrdr.
   rewrite <- G1 in R1, R2, R3, R4, T0.
   assert (Hag1 : agree_below (ss_next S) rho (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat 1)))) by (apply agree_below_set_rw; lia).
   destruct (HK _ tr md 1%nat Hag1 (rho_set_rw_at _ _ _) Hk ltac:(lia)) as [Hlk _].
@@ -242,10 +287,18 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact Hlk. }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |].
-    eapply writev2_only_ok; [exact Hh | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact R3 | exact R4 | exact B1 | exact B2 | exact T0 | exact T1 | exact T2 | exact Hlen].
+  (* LPS 75d69e00: [ok_pframe]'s fourth premise.  writev is 66 and 66 is NOT in
+     [RomBase.memfree_lit] -- [memfree 66] is FALSE, because writev reads the iovec array and
+     the buffers out of [in_mem] -- so [RomBase.rob_auto] cannot close it.
+     [SysStep.writev2_rob] does, by [writev_check] at both backings. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply writev2_only_ok; [exact Hh | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact R3 | exact R4 | exact B1 | exact B2 | exact T0 | exact T1 | exact T2 | exact Hlen | exact Hrdr] ]
+        | solve [ eapply writev2_rob; [exact Hp | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact R3 | exact R4 | exact B1 | exact B2 | exact T0 | exact T1 | exact T2 | exact Hlen | exact Hrdr] ] ].
   - intros w' Hw.
-    destruct (wstep_writev2_inv Hp Hh H66 Hfd' Hch0 G2 R1 R2 R3 R4 B1 B2 T0 T1 T2 Hlen Hw) as (k & Hk1 & ->).
+    destruct (wstep_writev2_inv Hp Hh H66 Hfd' Hch0 G2 R1 R2 R3 R4 B1 B2 T0 T1 T2 Hlen Hrdr Hw) as (k & Hk1 & ->).
     assert (Hag : agree_below (ss_next S) rho (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat k)))) by (apply agree_below_set_rw; lia).
     exists (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat k))). split; [exact Hag|].
     split; [|exact (proj2 (HK _ tr md k Hag (rho_set_rw_at _ _ _) Hk Hk1))].
@@ -274,12 +327,14 @@ Lemma etriple_writev2J : forall (J J' : jpred) S rho ch bs1 bs2 e,
        /\ (bv_unsigned (eval rho (reg_sv S 11)) + 32 <= TASK_SIZE)%Z
        /\ (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z
        /\ (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z) ->
+  (* LPS 08b1429: writev's reader gate (see [SysStep.wstep_writev2_inv]). *)
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md -> m_channel_reader md = true) ->
   etriple segs (SPJ segs J S rho)
     (fun w => exists rho', agree_below (ss_next S) rho rho'
               /\ rw rho' (ss_next S) = Z_to_bv 64 (Z.of_nat (length (bs1 ++ bs2)))
               /\ SPJ segs J' (S_after_write S e) rho' w).
 Proof using .
-  intros J J' S rho ch bs1 bs2 e Hi H17 H10 H12 Hch Hlen He HK Hbs.
+  intros J J' S rho ch bs1 bs2 e Hi H17 H10 H12 Hch Hlen He HK Hbs Hrdq.
   apply etriple_ecall_detJ; [exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -289,6 +344,7 @@ Proof using .
   pose proof (smatch_pending_gpr segs _ _ _ _ _ 1 Hsp ltac:(lia)) as G1. change (10 + Z.of_nat 1) with 11 in G1.
   pose proof (smatch_pending_gpr segs _ _ _ _ _ 2 Hsp ltac:(lia)) as G2. change (10 + Z.of_nat 2) with 12 in G2. rewrite H12 in G2. cbn [eval] in G2.
   destruct (Hbs tr ms md Hsp Hk) as (b1 & l1 & b2 & l2 & R1 & R2 & R3 & R4 & B1 & B2 & Hev & T0 & T1 & T2).
+  pose proof (Hrdq tr ms md Hsp Hk) as Hrdr.
   rewrite <- G1 in R1, R2, R3, R4, T0.
   set (n := length (bs1 ++ bs2)).
   assert (Hag : agree_below (ss_next S) rho (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat n)))) by (apply agree_below_set_rw; lia).
@@ -298,7 +354,7 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact Hlk. }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   eexists. split.
-  { exact (@wstep_writev2_intro_prefix segs tr ms md _ _ _ _ _ _ _ _ n Hp Hh H66 Hfd' Hch0 G2 R1 R2 R3 R4 B1 B2 T0 T1 T2 Hlen ltac:(lia)). }
+  { exact (@wstep_writev2_intro_prefix segs tr ms md _ _ _ _ _ _ _ _ n Hp Hh H66 Hfd' Hch0 G2 R1 R2 R3 R4 B1 B2 T0 T1 T2 Hlen Hrdr ltac:(lia)). }
   exists (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat n))). split; [exact Hag|].
   split; [apply rho_set_rw_at|].
   split; [|exact Hk'].
@@ -324,10 +380,12 @@ Lemma triple1_writev1J : forall (ok : world -> Prop) (J J' : jpred) S rho ch bs1
        /\ bv_unsigned (eval rho e) = Z.of_nat (length bs1)
        /\ (bv_unsigned (eval rho (reg_sv S 11)) + 16 <= TASK_SIZE)%Z
        /\ (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z) ->
+  (* LPS 08b1429: writev's reader gate (see [SysStep.wstep_writev2_inv]). *)
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md -> m_channel_reader md = true) ->
   triple1 segs ok (SPJ segs J S rho)
     (fun w => exists rho', agree_below (ss_next S) rho rho' /\ SPJ segs J' (S_after_write S e) rho' w).
 Proof using .
-  intros ok J J' S rho ch bs1 e Hokf Hokp Hi H17 H10 H12 Hch Hlen He HK Hbs.
+  intros ok J J' S rho ch bs1 e Hokf Hokp Hi H17 H10 H12 Hch Hlen He HK Hbs Hrdq.
   apply triple1_ecall_detJ; [exact Hokf | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -337,6 +395,7 @@ Proof using .
   pose proof (smatch_pending_gpr segs _ _ _ _ _ 1 Hsp ltac:(lia)) as G1. change (10 + Z.of_nat 1) with 11 in G1.
   pose proof (smatch_pending_gpr segs _ _ _ _ _ 2 Hsp ltac:(lia)) as G2. change (10 + Z.of_nat 2) with 12 in G2. rewrite H12 in G2. cbn [eval] in G2.
   destruct (Hbs tr ms md Hsp Hk) as (b1 & l1 & R1 & R2 & B1 & Hev & T0 & T1).
+  pose proof (Hrdq tr ms md Hsp Hk) as Hrdr.
   rewrite <- G1 in R1, R2, T0.
   assert (Hag1 : agree_below (ss_next S) rho (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat 1)))) by (apply agree_below_set_rw; lia).
   destruct (HK _ tr md 1%nat Hag1 (rho_set_rw_at _ _ _) Hk ltac:(lia)) as [Hlk _].
@@ -345,10 +404,16 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact Hlk. }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |].
-    eapply writev1_only_ok; [exact Hh | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact B1 | exact T0 | exact T1 | exact Hlen].
+  (* LPS 75d69e00: as at :288 -- 66 reads [in_mem], so the fourth premise is
+     [SysStep.writev1_rob]'s. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply writev1_only_ok; [exact Hh | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact B1 | exact T0 | exact T1 | exact Hlen | exact Hrdr] ]
+        | solve [ eapply writev1_rob; [exact Hp | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact B1 | exact T0 | exact T1 | exact Hlen | exact Hrdr] ] ].
   - intros w' Hw.
-    destruct (wstep_writev1_inv Hp Hh H66 Hfd' Hch0 G2 R1 R2 B1 T0 T1 Hlen Hw) as (k & Hk1 & ->).
+    destruct (wstep_writev1_inv Hp Hh H66 Hfd' Hch0 G2 R1 R2 B1 T0 T1 Hlen Hrdr Hw) as (k & Hk1 & ->).
     assert (Hag : agree_below (ss_next S) rho (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat k)))) by (apply agree_below_set_rw; lia).
     exists (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat k))). split; [exact Hag|].
     split; [|exact (proj2 (HK _ tr md k Hag (rho_set_rw_at _ _ _) Hk Hk1))].
@@ -373,12 +438,14 @@ Lemma etriple_writev1J : forall (J J' : jpred) S rho ch bs1 e,
        /\ bv_unsigned (eval rho e) = Z.of_nat (length bs1)
        /\ (bv_unsigned (eval rho (reg_sv S 11)) + 16 <= TASK_SIZE)%Z
        /\ (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z) ->
+  (* LPS 08b1429: writev's reader gate (see [SysStep.wstep_writev2_inv]). *)
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md -> m_channel_reader md = true) ->
   etriple segs (SPJ segs J S rho)
     (fun w => exists rho', agree_below (ss_next S) rho rho'
               /\ rw rho' (ss_next S) = Z_to_bv 64 (Z.of_nat (length bs1))
               /\ SPJ segs J' (S_after_write S e) rho' w).
 Proof using .
-  intros J J' S rho ch bs1 e Hi H17 H10 H12 Hch Hlen He HK Hbs.
+  intros J J' S rho ch bs1 e Hi H17 H10 H12 Hch Hlen He HK Hbs Hrdq.
   apply etriple_ecall_detJ; [exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -388,6 +455,7 @@ Proof using .
   pose proof (smatch_pending_gpr segs _ _ _ _ _ 1 Hsp ltac:(lia)) as G1. change (10 + Z.of_nat 1) with 11 in G1.
   pose proof (smatch_pending_gpr segs _ _ _ _ _ 2 Hsp ltac:(lia)) as G2. change (10 + Z.of_nat 2) with 12 in G2. rewrite H12 in G2. cbn [eval] in G2.
   destruct (Hbs tr ms md Hsp Hk) as (b1 & l1 & R1 & R2 & B1 & Hev & T0 & T1).
+  pose proof (Hrdq tr ms md Hsp Hk) as Hrdr.
   rewrite <- G1 in R1, R2, T0.
   set (n := length bs1).
   assert (Hag : agree_below (ss_next S) rho (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat n)))) by (apply agree_below_set_rw; lia).
@@ -397,7 +465,7 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact Hlk. }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   eexists. split.
-  { exact (@wstep_writev1_intro_prefix segs tr ms md _ _ _ _ _ n Hp Hh H66 Hfd' Hch0 G2 R1 R2 B1 T0 T1 Hlen ltac:(lia)). }
+  { exact (@wstep_writev1_intro_prefix segs tr ms md _ _ _ _ _ n Hp Hh H66 Hfd' Hch0 G2 R1 R2 B1 T0 T1 Hlen Hrdr ltac:(lia)). }
   exists (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat n))). split; [exact Hag|].
   split; [apply rho_set_rw_at|].
   split; [|exact Hk'].
@@ -431,7 +499,14 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact (HJ rho tr md Hk). }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. eapply writev01_only_ok; [exact Hh | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact T0 | exact T1].
+  (* LPS 75d69e00: as at :288 -- the zero-total writev still reads the iovec descriptor out
+     of [in_mem], so the fourth premise is [writev01_rob]'s. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply writev01_only_ok; [exact Hh | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact T0 | exact T1] ]
+        | solve [ eapply writev01_rob; [exact Hp | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1 | exact R2 | exact T0 | exact T1] ] ].
   - intros w' Hw. rewrite (wstep_writev01_inv segs tr ms md _ _ b w' Hp Hh H66 Hfd' Hch0 G2 R1 R2 T0 T1 Hw).
     split; [|exact Hk]. change (SLit 0) with (SLit (bv_unsigned (Z_to_bv 64 0))).
     eapply smatch_after_ret_lit; [exact Hsp | exact Hh].

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths and module names changed; 123 of its 193 lines of code are new or changed and 89 lines of the source are left out. *)
-(* Copied from lib/A/RT_gxa_bridge.v (a working branch 8816cefba36), itself copied from a working branch 86b50358d34 proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls.v and A/FRbz_str.v; changed: module path lib.A -> lib.B (the image-B Bz kernel), instance RecAsanA.N_img_asan -> RecAsanB.N_img_asan_ubsan, module alias RTA -> RTB. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from lib/A/RT_gxa_bridge.v (a working branch), itself copied from a working branch proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls.v and A/FRbz_str.v; changed: module path lib.A -> lib.B (the image-B Bz kernel), instance RecAsanA.N_img_asan -> RecAsanB.N_img_asan_ubsan, module alias RTA -> RTB. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedTurnD), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACa1.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnD.v, with its module paths changed; 286 of its 373 lines of code are new or changed and 193 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B (UBSan) walk of segment A of the frame-loop turn of
    LLVMFuzzerTestOneInput, over image B's own addresses, registers, spill slots and UBSan guards; the shape is image A's.
-   Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnA.v at e6bd82f51c9. *)
+   Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnA.v. *)
 (* The frame-loop turn of LLVMFuzzerTestOneInput on image B (fuzz_grant.asan-ubsan, entry 0x80a3c), segment A:
    0x81bb0 (GP_sched, listing offset 0x1174) .. 0x81bdc (GP_nx, 0x11a0), the return of reac_headamp_tx_next
    (LLVMFEntrySchedTurnDefs.v). The eleven slots mark the three one-byte cells ch, param, value (F+784, F+800,

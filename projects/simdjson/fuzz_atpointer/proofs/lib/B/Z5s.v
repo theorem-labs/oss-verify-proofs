@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -120,7 +121,7 @@ Section ObjE.
     intros m a ART2 Ha.
     pose proof CTX as CTX'. destruct CTX' as [Hdd B32 Q16 LOR QHI (QN & NB & N8) (QO & OB' & O8) NO LV PAT TY NXT TEND TILES I0 EN EF1 EL1 ES1 EC1 FRB CRB LVB F0 F64 FTOP FLO FHI FSH S0 SHI].
     pose proof LV as (_ & _ & _ & _ & LWIN). pose proof (ok_lo E OK) as LOW.
-    assert (QW : rt_sp0 RT Σ - STACK_WIN <= oi_q I) by (unfold obj_needA, elem_needA, ATP_LEAFB, RT_STACK in LOR; lia).
+    assert (QW : rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= oi_q I) by (unfold obj_needA, elem_needA, ATP_LEAFB, RT_STACK in LOR; lia).
     pose proof (newframe_apartI RT AF Σ Σ2 m (oi_f I) 1%nat (oi_q I) a ART2 (sc_ef SC) sc_el (sc_es SC) QW Ha) as [N1 N2].
     rewrite fs1s in N2. rewrite fs1 in N1.
     split; [exact N1|]. split; [exact N2|].
@@ -167,7 +168,7 @@ Section ObjE.
     pose proof OK as OK'. destruct OK' as [_ _ _ _ _ _ _ _ _ LOW [HL HT]].
     pose proof (obj_room RT E OK d Σ Σ1 I CTX) as (R1 & R2 & R3). unfold RT_STACK in R1. fold q dd b in R1, R2, R3.
     assert (HinF : In (f, 1%nat) (rt_frames RT Σc')) by (rewrite EF'; left; reflexivity).
-    assert (QW : rt_sp0 RT Σ - STACK_WIN <= q) by ul.
+    assert (QW : rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= q) by ul.
 
     assert (AGC : agree_on (fun a => aclient (rt_live RT Σ) (rt_frames RT Σ) q a /\ ~ (out <= a < out + 24)) m m').
     { intros a [Ha Ho]. pose proof (newframe_apartI RT AF Σ Σc' m' f 1%nat q (bv_unsigned a) ART' EF' EL' ES' QW Ha) as [N1 _]. rewrite fs1 in N1.

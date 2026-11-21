@@ -1,7 +1,7 @@
 (* check_round_trip (fs.asan 0x81a9c, build A), WALK LANE D2, segment 36: 0x822bc -> 0x8233c, the 31 shadow stores of
    the frame's objects and the first fuzz_free.
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd21.v / sd22.v, stages St21 / St22 - the
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd21.v / sd22.v, stages St21 / St22 - the
    same two fuzz_free calls at 0x82338 and 0x82340). The function-level lookup is the one quoted in the lane head
    (internal path) (checker a Theorem Labs lane, role check, CONFIRM).
 
@@ -19,7 +19,7 @@
    write window (the saved words, the s1 slots, the frame and its shadow) holds no image byte and no byte of a live
    block (crtD2_w36), so fs's statics and back's / text's blocks reach the call memory unchanged (crtD2_rblock_frame).
 
-   What St21 of d25a984c903 does at this call, restated in S0's form: the callee frees back's reader block
+   What St21 does at this call, restated in S0's form: the callee frees back's reader block
    (back - HEAD, dec_size tb2 + HEAD) and its user-poisoned head; text's block is a different live block, outside the
    callee's footprint, so it and its head survive; g_live goes down by dec_size tb2. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

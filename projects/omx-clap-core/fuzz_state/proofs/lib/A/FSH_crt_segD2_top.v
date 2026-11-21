@@ -5,7 +5,7 @@
    of free (same)), where FSH_crt_segD.v's crt_tail is already proved.
 
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
-   a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_chain.v, whose
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_chain.v, whose
    `st_chain` composes the same stage steps St0..St25 - here only its St19..St24 part, the six free calls of this
    lane). The function-level lookup is the one quoted in the lane head
    (internal path) (checker a Theorem Labs lane, role check, CONFIRM).

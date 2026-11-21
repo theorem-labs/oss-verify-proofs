@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lf_setvm's vm state carries the model's kernel build and vDSO, the vm_only case takes its sixth, channel-reader, equation, check_mmap_fixed_overflow is unfolded, and node_soundA's new nsA_rob field is discharged by NodesRob.at_nodeA_rob. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim2__Common.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require Import NodesMmSh.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Prelude Dispatch.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require NodesRob.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -88,7 +90,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma lf_setvm : forall mo, lf mo = setvm (mkVmState (m_vmmaps mo) [] []) mo.
+Lemma lf_setvm : forall mo, lf mo = setvm (mkVmState (m_vmmaps mo) [] [] (m_kernel mo) (m_vdso mo)) mo.
 Proof. reflexivity. Qed.
 
 Lemma WB_lf : forall lz mat mo, WB lz mat (lf mo) = with_vm_backing lz mat mo.
@@ -242,7 +244,7 @@ Section Common.
     pose proof (fs_fssys x8 Hx) as FS.
     pose proof (nstep_vm_same _ _ _ _ _ Hfs HN) as VM.
     assert (HT : nstep n TW rsp (lf mo') evs).
-    { unfold TW. rewrite !lf_setvm. unfold m_vmmaps. rewrite VM. apply nstep_setvm; [exact Hfs| exact HN]. }
+    { unfold TW. rewrite !lf_setvm. unfold m_vmmaps, m_kernel, m_vdso. rewrite VM. apply nstep_setvm; [exact Hfs| exact HN]. }
     destruct (Hpres _ _ _ HT) as [Hh0 Hminv0].
     split; [exact Hh0|]. split.
     { split; [exact Hminv0|]. split.
@@ -391,7 +393,9 @@ Proof.
   split; [exact Hh'|]. split.
   { split; [| split; [rewrite Hm, mm_CAN; reflexivity| exact SH]].
     eapply (minv_vm_only (lf mo) (lf mo')); [| split; reflexivity | exact (proj1 Hminv)].
-    destruct VO as (V1 & V2 & V3 & V4 & V5). repeat split; assumption. }
+    (* six equations now, the sixth being the channel-reader one that
+       [minv]'s reader conjunct needs (Nodes.v, [Definition vm_only]). *)
+    destruct VO as (V1 & V2 & V3 & V4 & V5 & V6). repeat split; assumption. }
   exists (MX mo' (List.filter f mat)). split; [| apply mm_mrel_succ; exact Hm].
   unfold nret.
   eapply (sstep_cfg_syscall segs CFG ms mo_ x8 rsp (MX mo' (List.filter f mat)) (MX mo' (List.filter f mat)) []).
@@ -435,7 +439,7 @@ Qed.
 Lemma check_mmap_quiet : forall a l p f d off e M M' evs,
   Mmap.check_mmap a l p f d off e M = CheckOk M' evs -> eff_quiet e evs.
 Proof.
-  intros a l p f d off e M M' evs H. unfold Mmap.check_mmap in H.
+  intros a l p f d off e M M' evs H. unfold Mmap.check_mmap, Mmap.check_mmap_fixed_overflow in H.
   repeat (cbv zeta beta iota in H;
           lazymatch type of H with
           | CheckReject = CheckOk _ _ => discriminate H
@@ -615,4 +619,6 @@ Proof.
     exists (peekA_val segs ms addr). split; [apply peekA_val_range| reflexivity].
   - (* [comment removed for export] *)
     intros n f RNG ms Hn Hat. destruct n; try discriminate Hn. exact Hat.
+  - (* LPS 727298f3: the node's system call reads the same over a larger backing *)
+    intros n RNG ms mo_ Hat. exact (NodesRob.at_nodeA_rob segs n RNG ms mo_ Hat).
 Qed.

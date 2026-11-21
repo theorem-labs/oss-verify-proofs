@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stage floor LOdeep is sp0 - 6144512, the window the revision's launch maps; PL16 is pathp + length + 11 <= STKHI, as the revision's launch places the strings at the stack top; the stage premise FD2 also carries the channel reader, which the revision's writev reads, kept across each step by the new lemma mo_mat_rdr'; the reader is passed to stdio_call_sound_frA). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -41,6 +42,9 @@ Proof. intros p. unfold msg_cannot_open, PRE17. reflexivity. Qed.
 
 Lemma mo_mat_fds' : forall mo mo', mo_mat mo mo' -> m_fds mo' = m_fds mo.
 Proof. unfold mo_mat, m_fds; intros mo mo' H; intuition congruence. Qed.
+(* the revision's writev reads [m_channel_reader]; it lives in [m_proc], which [mo_mat] keeps *)
+Lemma mo_mat_rdr' : forall mo mo', mo_mat mo mo' -> m_channel_reader mo' = m_channel_reader mo.
+Proof. unfold mo_mat, m_channel_reader; intros mo mo' H; intuition congruence. Qed.
 
 Section OF.  (* [comment removed for export] *)
   Variable AL : asan_layout.
@@ -70,7 +74,7 @@ Section OF.  (* [comment removed for export] *)
   Variable lo : Z.
   Hypothesis LOlo : (0x10007fff7fff < lo)%Z.
   Hypothesis LOhi : (lo + 16384 <= bv_unsigned sp0)%Z.
-  Hypothesis LOdeep : (bv_unsigned sp0 - 8388608 <= lo)%Z.
+  Hypothesis LOdeep : (bv_unsigned sp0 - 6144512 <= lo)%Z.
   (* [comment removed for export] *)
   Variable STKHI : Z.
   Hypothesis STKHIlo : (bv_unsigned sp0 + 128 <= STKHI)%Z.
@@ -109,7 +113,7 @@ Section OF.  (* [comment removed for export] *)
   Hypothesis WIN8 : ((bv_unsigned P + L) / 8 * 8 + 8 <= bv_unsigned P + Z.of_nat (length buf))%Z.
   Hypothesis Plo : (bv_unsigned sp0 + 128 <= bv_unsigned P)%Z.
   Hypothesis Phi : (bv_unsigned P + Z.of_nat (length buf) <= STKHI)%Z.          (* [comment removed for export] *)
-  Hypothesis PL16 : (bv_unsigned P + L + 16 <= STKHI)%Z.                        (* [comment removed for export] *)
+  Hypothesis PL16 : (bv_unsigned P + L + 11 <= STKHI)%Z.                        (* [comment removed for export] *)
   Hypothesis LMAX : (L <= 131071)%Z.                                            (* [comment removed for export] *)
   Hypothesis L62 : (L <= 62)%Z.
   (* [comment removed for export] *)
@@ -475,7 +479,8 @@ Section OF.  (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition EnvV (V : list word) : env := Env (vals_ev V) (blobs_ev []).
   Definition TT : TSet := t_emit (W 2 (msg_cannot_open path)) (t_exit (exit_code 2) (m_fs model)).
-  Definition FD2 (mo : Model) : Prop := fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* fd 2 is the channel and, as the revision's writev reads, the channel has a reader *)
+  Definition FD2 (mo : Model) : Prop := fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) /\ m_channel_reader mo = true.
   Definition STG (V : list word) (nx : nat) (sr : list expr) (kn : list kentry) (pc : Z) (X : list word -> mem -> Prop) : Prop := ltac2:(CDefT.buildp (gd_tbl_A_tail_openfail_S7 ()) "PRk,(3:.&5.(3.&40.))PMk,P,(3.&40.)(9.(3.&8.))Pmok,$0.P,(21.O6.)P,(8.$4.(37.(3.&40.)O6.)O5.)P,(3;.(3<.O6.)O4.R5.)P,(3=.$3>.(3<.O6.)R5.O3.)P,(3?.VM,Vlo,(18.&40.Vsp0,)R6.)P,A1.VKI,R6.P,(8.$40.(41.R7.)(41.Vmodel,))P,(42.R8.)P,A2.O1.O6.R:.(43.$3>.(44.(45.$46.R<.(17.&40.O2.)R;.(47.$3>.))R:.)$48.)")
 (* [comment removed for export] *).
   Definition XL (V : list word) : Prop := vals_ev V 150 = Z_to_bv 64 L.
@@ -557,7 +562,7 @@ Section OF.  (* [comment removed for export] *)
     replace (PRE17 ++ path ++ [Z_to_bv 8 10]) with ((PRE17 ++ path ++ [Z_to_bv 8 10]) ++ []) by (rewrite app_nil_r; reflexivity).
     change (Z_to_bv 64 2) with (Z_to_bv 64 (sc_fd resF)).
     assert (FdA : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))).
-    { unfold FD2 in FD. unfold m_fds in *. destruct MMA as (E1 & _). rewrite E1. exact FD. }
+    { unfold FD2 in FD. unfold m_fds in *. destruct MMA as (E1 & _). rewrite E1. exact (proj1 FD). }
     assert (SC : stdio_call 237%nat srEe knEe = Some resF) by (vm_compute; reflexivity).
     assert (LP : Z.of_nat (length (PRE17 ++ path ++ [Z_to_bv 8 10])) = 18 + L).
     { rewrite !length_app, PRE17_len. cbn [length]. unfold L. lia. }
@@ -591,6 +596,7 @@ Section OF.  (* [comment removed for export] *)
            unfold wa in RD. cbn [length]. replace (bv_unsigned sp0 + -464 + 17 + Z.of_nat (length path)) with (bv_unsigned sp0 - 447 + L) by (unfold L; lia). exact RD.
     + reflexivity.
     + exact FdA.
+    + unfold FD2 in FD. rewrite (mo_mat_rdr' _ _ MMA). exact (proj2 FD).
     + exact HKA.
     + intros z Hz. revert Hz. evs. azl. intros Hz. apply WCS. lia.
     + intros z Hz. revert Hz. evs. azl. unorm. intros Hz. left. apply WCS. lia.

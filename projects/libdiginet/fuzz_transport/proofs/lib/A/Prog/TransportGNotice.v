@@ -1,12 +1,12 @@
 (* TransportGNotice: the notice-call kit of the G-form caller-journal walks of image A (lib/A/W_journalG.v ajournal_gx
    over lib/A/TransportG.v G_HARNESS) that take a side-stack frame of their own and call notice (notice_cg.v) from it.
-   It holds the one copy of the generic lemmas of AW59's MonNtcKit.v (h-hreply-s5-p7, 39e1ef73279e) and of AW54's
-   SlostNtcKit.v (h-rw-man-11, de73930eb03a). Where the two overlapped, AW59's lemma is the one kept: SlostNtcKit.v's
+   It holds the one copy of the generic lemmas of AW59's MonNtcKit.v (h-hreply-s5-p7) and of AW54's
+   SlostNtcKit.v (h-rw-man-11). Where the two overlapped, AW59's lemma is the one kept: SlostNtcKit.v's
    sn_ra_zero was frame_ra_zero, sn_hull_in frame_hull_vis (with the empty range too) and sn_tframe a case of
    trans_tframe_at_kept_gx. MonNtcKit.v's dk_kept_nfz_gw is TransportGFrame.v's, Required here. Nothing here names the
    function that calls notice, a register of a particular function or an image address.
    - garr8_of_aview: a list of bytes read off the view, in garr8's form. Ported: cgif_file_fuzzer lib/A/ACey.v
-     garr8_of_aview (origin/ossv/recipes c5e779efe8c9; the same statement up to binder names), proved from this unit's
+     garr8_of_aview (the same statement up to binder names), proved from this unit's
      AE2y.v val_mem1_of_aview.
    - garr8_of_put: the bytes a store of n bytes of v leaves (val_mem), read as garr8 of TWorld.v put n v (the form in
      which a notice's fields are compared with the bytes of check_state_data_cg.v trans_ntc_at).
@@ -18,7 +18,7 @@
      the range, the empty one included.
    - aview_of_val_mem1, chunk_zero_aview, chunks_zero_aview: a byte a run's region leaves, read off the view.
      aview_of_val_mem1 is ported: omx-clap-core fuzz_manifest lib/A/FMpoisonW.v aview_of_val_mem1
-     (origin/ossv/recipes c5e779efe8c9; the same statement up to binder names).
+     (the same statement up to binder names).
    - notice_wr_G: every byte notice stores (notice_cg.v notice_wr) is a byte of G. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

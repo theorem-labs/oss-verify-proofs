@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/A/CfNmaxwPreset.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset (a Theorem Labs lane): the instance witness of YGcfMallocComposeE.nmaxw_cf_ok
    at preset's CfParams (CfParams_preset, lib/A/CfParamsPreset.v, passed by name).
-   nmaxw_cf_ok NOBW ROOMW is the three premises of the widened secondary Allocate (lib/AU/AGioMB.v:63-65; cgif/cgif_file_fuzzer lib/AGio.v (file sha256 0a46493e54da; donor not released) :71-73, as history:
+   nmaxw_cf_ok NOBW ROOMW is the three premises of the widened secondary Allocate (lib/AU/AGioMB.v:64-66; cgif/cgif_file_fuzzer lib/AGio.v (file sha256 0a46493e54da; donor not released) :71-73, as history:
    HNW, HNOB, HROOM) at NMAXW := cf_malloc_max.  At preset: cf_malloc_max = 2 ^ 28 + 2 ^ 27 = 402,653,184,
    NOBW = 2 ^ 29 (= preset's cf_nob, ImgBaseAGS.NOB), ROOMW = 2 ^ 30 (the model's VM_HEAD, YG0n.v:543); the values of
    AGif5.sec_w_preset_room (lib/AU/AGif5.v:1218; cgif/cgif_file_fuzzer lib/AGif5.v (file sha256 6abb6763e12f; donor not released) :1200, as history).  Arithmetic only: no image constant, no function is

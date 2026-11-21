@@ -4,7 +4,7 @@
    (b8_post_FR), and the free call of a live harness block in any position of hb (b8_free_call: libreac/fuzz_ctrl's
    released Prog/Seg/Tac_b3.v b3_free_call statement on fuzz_pin's one-block proof, without ctrl's 1 <= n).
    Taken from reac-pw/fuzz_pin's Prog/Seg/Tac_b8.v, itself libreac/fuzz_ctrl's released Prog/Seg/Tac_b8.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted (ctrl's cut-bundle transports FT / VCm / IFS / CC7 / OURb / M7 and its
+   adapted (ctrl's cut-bundle transports FT / VCm / IFS / CC7 / OURb / M7 and its
    Tac_b8m model facts are not here), with role's numbers: frame 496 bytes, saved registers [S - 104, S), free at
    0x15d14, errno at 0x2f330 - 164, frame_RELRO's first block (0x1de58, 344), the sink symbols 0x4f5c1 / 0x4f9e8 /
    0x4f9f0 (frame_facts_plain's fields, read through Tac_slot's accessors). CUTST and Post take the FP state of their
@@ -548,7 +548,7 @@ Proof.
 Qed.
 
 (* free of a live harness block (p, n) in any position of hb, n >= 0: FR with hb1 ++ (p, n) :: hb2 becomes FR with
-   hb1 ++ hb2 (libreac/fuzz_ctrl's released Prog/Seg/Tac_b3.v b3_FR_free, origin/ossv/recipes 25e3d17bdb50, on
+   hb1 ++ hb2 (libreac/fuzz_ctrl's released Prog/Seg/Tac_b3.v b3_FR_free, on
    fuzz_pin's b8_FR_free proof: the other blocks keep their bytes because block starts are distinct, blocks_nodup,
    so 1 <= n is not needed). The bytes from the frame's sp up are unchanged. *)
 Lemma b8_FR_free : forall g hb1 hb2 L A regs mem md regs_c p n L' A' regs' mem' md' b1 b2,

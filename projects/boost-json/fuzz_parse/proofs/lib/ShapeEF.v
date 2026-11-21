@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the run's segment list (run_segments), the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -20,7 +21,21 @@ Section WithCfg.
   Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
 Context {SC : StepCfg}.
 
-Theorem shape_strong_equiv_ef : ltac2:(zQ "h42!h9!jc!n6!qc!r6!v8!hhb!hj7!hje!hk1!hnf!hod!hp8!hq2!hqe!hv0!ij8!ik4!io1!ioe&@5$4@1$5?2SC@3$2^h4^h3^h2^d@4$3^h1^h0^f^e^3&@5$4@1$5?2SC@3$2^c^b^a^5@4$3^9^8^7^6^3>bsource_segs@1$6$c>3rpc$8>3rph$b>3rsp@1$1@1$0#k0>4rbrk@1$1@1$0#k0>3rmb@1$1@1$0#k0>4rrnd$f>4rlim$9>btarget_segs@1$6$c>3apc$8>3aph$b>3asp@1$1@1$0#k0>4abrk@1$1@1$0#k0>3amb@1$1@1$0#k0>4arnd$f>4alim$9>1T$h3>3inp$h2>0@4$h0^h2?2SC@9$e^h2^h1^h0^f^e^d^c^b^1^2>0@4$h0^b?2SC@9$e^b^a^9^8^7^6^5^4^2^3@2$7@1$a~0@2$7@1$a~1@2$h1@1$d~0@1$d~1").
+(* LPS 08b1429: [run_scfg] runs the image against [run_segments segs inp sp mb] from
+   [init_config (run_segments ..) ..], so the shape walks are stated there (as in
+   boost-beast and openssl/echconfiglist_parser). *)
+Theorem shape_strong_equiv_ef :
+  forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
+         target_segs apc aph asp abrk amb arnd (alim : Z)
+         (T : TSet) (inp : ProcInput),
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  realizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
+  error_free (run_scfg the_scfg (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+  /\ error_free (run_scfg the_scfg (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
+  /\ trace_equiv (bh_traces (run_scfg the_scfg (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
+                 (bh_traces (run_scfg the_scfg (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
     T inp Hsource Htarget.
@@ -28,15 +43,24 @@ Proof.
   - cbn. eapply realizes_no_error; exact Hsource.
   - cbn. eapply realizes_no_error; exact Htarget.
   - intro tr. cbn.
-    rewrite (realizes_obs_iff source_segs _ T Hsource tr).
-    rewrite (realizes_obs_iff target_segs _ T Htarget tr).
+    rewrite (realizes_obs_iff (run_segments source_segs inp rsp rmb) _ T Hsource tr).
+    rewrite (realizes_obs_iff (run_segments target_segs inp asp amb) _ T Htarget tr).
     reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Corollary shape_strong_equiv_ef_scfg : ltac2:(zQ "h10!h9!jc!hhb!hje!hod!hp8!n6!hqe!qc!hv0!ij8!ip6!io1!ir7!ise!v8!ioe>bsource_segs@1$2$5>3rpc$3>3rph$4>3rsp@1$1@1$0#k0>4rbrk@1$1@1$0#k0>3rmb@1$1@1$0#k0>4rrnd$9>btarget_segs@1$2$5>3apc$3>3aph$4>3asp@1$1@1$0#k0>4abrk@1$1@1$0#k0>3amb@1$1@1$0#k0>4arnd$9>1T$h0>3inp$c>0@4$a^h0?2SC@9$7^h0^f^e^d^c^b^a$d^1^2>0@4$a^a?2SC@9$7^a^9^8^7^6^5^4$e^2^3@6$b@1$f?2SC@3$6^h2^h1^h0@3$6^b^a^9@4$8^f^e^d^c@4$8^8^7^6^5^3").
+Corollary shape_strong_equiv_ef_scfg :
+  forall source_segs rpc rph rsp rbrk rmb rrnd
+         target_segs apc aph asp abrk amb arnd
+         (T : TSet) (inp : ProcInput),
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd source_alloc_limit inp) T ->
+  realizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd target_alloc_limit inp) T ->
+  strong_equiv_error_free_scfg the_scfg (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros. unfold strong_equiv_error_free_scfg. eapply shape_strong_equiv_ef; eassumption.
 Qed.

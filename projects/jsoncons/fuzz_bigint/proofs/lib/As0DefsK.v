@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the ASan table declares the launch's two extra reservations (n_resx, p_resx), and the initial state takes the run's CONFIG_RSEQ flag (rz). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
@@ -13,7 +14,7 @@ Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Definition ASAN0 : atable :=
-  {| img_lo := 0x10000; img_hi := 0x633000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x633000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x3c12c; rw_lo := 0xd2000; rw_len := 0x561000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x71360; x_imemcpy := 0x712e4; x_memset := 0xcbb2c; x_memcpy := 0xcb728; x_memiszero := 0x71890;
      x_istrncpy := 0x7178c; x_sealed := 0x11a30; x_popfree := 0x427dc;
@@ -22,7 +23,7 @@ Definition ASAN0 : atable :=
      stops_more := [0x40450; 0x41a74; 0x6141c; 0x67a24; 0x67a38; 0x67a4c; 0x6d3dc; 0x6d4ac; 0x7a9d8; 0x7b8e4; 0x7ba74; 0x857cc] |}.
 Definition ASAN0_TEXT_LO : Z := 0x3c12c.
 Definition ASAN0_TEXT_N : nat := 152568%nat.   (* [comment removed for export] *)
-Definition asan0_init : acs := init_acs_of ASAN0.
+Definition asan0_init (rz : Z) : acs := init_acs_of rz ASAN0.
 
 Definition ASEGS0 := Asan.M.loaded_segments.
 Definition APH0 : PhdrInfo := Asan.M.phdrs.

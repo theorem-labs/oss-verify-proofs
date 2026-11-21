@@ -38,18 +38,19 @@
    So the OPEN leaves are L1 leaf_pcommon (printf_common, twice: svsni_ok's Kpc and svfi_ok's Kp), L2 leaf_memset (the
    memset interceptor) and L3 leaf_vfprintf at A_VFP (musl vfprintf); C1 link_vsn and C2 link_vsni are closed by
    svsn_ok and svsni_ok, and leaf_vfprintf at A_VFPI by svfi_ok. Image-free: pc, windows and cells are parameters.
-   Sources: FMsnprintfSx.v:64-78, :123-202, :205-251 and FMsnprintfShared.v:121-154 of origin/cold/port-fm-rtprintf-param
-   7e395de08f5 (sh_apcommon_realizesUz, sh_avsnprintf_realizesUa, sh_avsnprintf_icpt_realizesUa,
+   Sources: FMsnprintfSx.v:64-78, :123-202, :205-251 and FMsnprintfShared.v:121-154
+    (sh_apcommon_realizesUz, sh_avsnprintf_realizesUa, sh_avsnprintf_icpt_realizesUa,
    sh_avfprintf_icpt_realizesUx, sh_asnprintf_realizesU) and FMsnprintfI.v:185-204 (aintrin_realizesU) at op = OSet,
    with ecall_preU segs B .. U .. -> ecall_pre_x segs B ARx .. Hp .., ARU segs B .. U .. -> ARx .. Hp .. and
    U : list (Z * Z) -> Hp : list Z, nothing else. '+ 8' in this file: rdword / slot / cell word ranges (address ranges);
    no presence form. No image numeral. *)
-(* Modified by Theorem Labs, 2026-10: port-fm 00daeaf3796's destination slack (origin/cold/port-fm-rtprintf-param, the
-   final text 3e35620c52e): top_snprintf's 'amem_range d (sn_len (n - 1) T + 8)' replaces 'amem_range d
+(* Modified by Theorem Labs, 2026-10: port-fm's destination slack (origin/cold/port-fm-rtprintf-param, the
+   final text): top_snprintf's 'amem_range d (sn_len (n - 1) T + 8)' replaces 'amem_range d
    (sn_len (n - 1) T)'; link_vsn / link_vsni carry 'amem_range d (sn_len (n - 1) T + 8)' after the 2^47 slot bound;
    leaf_vfprintf (L3, musl vfprintf) carries GXA (5) 'amem_range s0 (sn_len n0 T + 8)' after GXA (4). leaf_pcommon and
    leaf_memset are unchanged. Each '+ 8' is an address-range fact (amem_range), not a presence form. *)
-(* Modified by Theorem Labs, 2026-10: the memnorm keep (c-omx-alloc 17:03Z ruling (b): preset's caller K0's put_string crosses the region in the m-form, so every contract pays `memnorm segs mem -> memnorm segs mem'`): each of the six texts' posts ends in `(YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem')`, last, as the engine's YGcallSnp.asnprintf_realizes_xrom; leaf_memset is now the engine's YGcallMxmn.aintrin_realizes_xm at OSet (which ends in that keep), discharged at preset A / B by c-libc-stdio RowsSet's prow_memset_icpt_xm_A_lit / _B_lit (lib/A|AU/PRowSet.v, at __wrap_memset: 0x523dc (A') / 0x524c8 (B') on the #102 pins, origin/cold/c-libc-stdio-rows102 599a4cefc740 (A') / 407ddab4a12a (B'), carried by int102 8201be0eb399; 0x52348 / 0x523cc on the old pins, origin/cold/c-libc-stdio-rows-set a6f4ebf35892). *)
+(* Modified by Theorem Labs, 2026-10: the memnorm keep (c-omx-alloc 17:03Z ruling (b): preset's caller K0's put_string crosses the region in the m-form, so every contract pays `memnorm segs mem -> memnorm segs mem'`): each of the six texts' posts ends in `(YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem')`, last, as the engine's YGcallSnp.asnprintf_realizes_xrom; leaf_memset is now the engine's YGcallMxmn.aintrin_realizes_xm at OSet (which ends in that keep), discharged at preset A / B by c-libc-stdio RowsSet's prow_memset_icpt_xm_A_lit / _B_lit (lib/A|AU/PRowSet.v, at __wrap_memset: 0x523dc (A') / 0x524c8 (B') on the #102 pins, (A') / (B'), carried by int102; 0x52348 / 0x523cc on the old pins). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

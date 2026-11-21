@@ -1,18 +1,18 @@
 (* fuzz_preset, #102 re-walk row T9 (the internal file FREE-PIECES-102.md Part 7a), file CrtImgB102: the B' IMAGE FACTS of
-   check_round_trip at the CONCRETE B instance PI_prog_B (lib/B/PAImg_prog.v:402). Crt102ImgB.v Section b proves them
+   check_round_trip at the CONCRETE B instance PI_prog_B (lib/B/PAImg_prog.v:403). Crt102ImgB.v Section b proves them
    over any {PA : PAImg B_prog_listing} from five hypotheses (HB_base, HB_entry, HB_segs, HB_relro, HB_hi); here each
    hypothesis is a closed lemma at PI_prog_B, and each Section-b lemma is instantiated with them, so the cut pcs, the
    two literals (MOD_AT / STAMP), the GOT pairs and the image facts hold at PI_prog_B with no premise left.
 
    INPUTS OF RECORD:
-   - branch base: commit 5eb767764d9 (lib/A/Prog/Crt102Img.v blob c6521f7e9afa).
+   - branch base: (lib/A/Prog/Crt102Img.v blob c6521f7e9afa).
    - IMG_TOP_B := 0x601000, lib/Reusable/YImgTop.v:23 of RECORD, taken by path from the B' line
-     commit a9548e31002 (generated from the ELF, guard img_bounds_same retired; the unit owner's 16:55Z ruling): it lets
+     (generated from the ELF, guard img_bounds_same retired; the unit owner's 16:55Z ruling): it lets
      lib/B/PAImg_prog.v (B_prog_range) build. The earlier type-check used the non-record
-     no-guard 8861a3317cf blob; the guarded 437b1552e7f blob fails at its own :32
+     no-guard blob; the guarded blob fails at its own :32
      (img_bounds_same: "Unable to unify IMG_TOP with IMG_TOP_B").
    - pins: B' asan-ubsan d663f82d7f488d30 (unstripped twin c90d4fa54d43160b).
-   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1, PAU
+   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS, PAU
      the #102 pin set (pau-preset-102).
    - rule 24: no function proved (proof-index check_round_trip 0x82828 0x816cc, exit 4,
      the lookup record, the internal file lookup-T9.txt): only the plain (lib/Prog) and ubsan (lib/U/Prog) proofs.
@@ -25,7 +25,7 @@
    - HB_relro_cf : S1ImgB.pst_not_ro_B (its pst_ro_b_B is vm_compute over prh_img_B's statics and the relro range).
    - HB_hi_cf    : pa_hi is IMG_TOP_B = 0x601000 (YImgTop.v), lia.
 
-   crt102_cap / crt102_smx (Crt102Img.v:275 / :288) name no image: the capacity bound reads the text's frames bound
+   crt102_cap / crt102_smx (Crt102Img.v:276 / :289) name no image: the capacity bound reads the text's frames bound
    (ck_FRAMES_CAP, FR_check_round_trip) and fs_frames 3, and the existential quantifies segs. They serve B' as stated;
    no B' copy is made. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

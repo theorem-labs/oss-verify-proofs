@@ -9,7 +9,7 @@
    text + len, or through rows 201 / 204 to row 267 when the byte is outside PjGrammar.numch. Both exits reach row 267
    with s6 = p' + |txt|, txt = fst (vrd_num_tok (rest_atR tb text p')) (at row 266 s6 is set to a2 = text + len =
    p' + |txt|), so the boundary has ONE pc, row 267 (VnumD's offer). The state is stated RELATIVE TO THE DISPATCH
-   STATE: VrdPro.vrd_disp_body (the dispatch state without its pc equation, a working branch 5c2e03a3e34) at the
+   STATE: VrdPro.vrd_disp_body (the dispatch state without its pc equation, a working branch) at the
    number arm with its witnesses named, the journal at the current state with the same allocator state, the memory
    equal to the dispatch memory outside the two places rows 157..266 write (the frame's 8 shadow bytes, row 157; the
    stack slots [sp, sp + 32), row 192), the registers rows 157..266 leave alone (VrdNum.vrd_kept_regs), s5 = -1,
@@ -445,7 +445,7 @@ paj_run_tok_x_inv RUN HS HJ SHOK HPM vrd_Bspan0.
               (conj HPRE1 (conj HROD1 (conj _ (conj _ HFZ0)))) HROOM HUNIV HSEC HC24 HHB _ ltac:(lia) ltac:(lia) HLED1
               (fun _ => Hlive)).
     + rewrite HspT. lia.
-    + (* fpre's fourth conjunct (record texts 51daa1e80a99): the return address is the jal's own return pc *)
+    + (* fpre's fourth conjunct (record texts): the return address is the jal's own return pc *)
       pose proof asan_consts as (AC1 & _). unfold raZ. rewrite P1.
       assert (EB : VAL A_TEXT = 529888) by (vm_compute; reflexivity).
       rewrite EB. rewrite unsigned_lit_small by lia. lia.
@@ -1774,7 +1774,7 @@ End t.
 (* rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    vrd_num_tail_P composes this file's three segments (vrd_seg_267_P / vrd_seg_271_P / vrd_seg_284_P) with WalkNumEnd's
    end segment (rows 299..328), named here H_num_end in the exact form of a Theorem Labs lane's vrd_num_end_stmt
-   (lib/A/VrdNumEnd.v, a working branch 4353090b744, blob 2d633b265fff; VrdNumEnd.v Requires this file, so
+   (lib/A/VrdNumEnd.v, a working branch, blob 2d633b265fff; VrdNumEnd.v Requires this file, so
    lib/A/VrdNumA.v discharges it with vrd_num_end), every one at the arm's memory invariant P: P of the memory at row
    267 to P of the memory at the join. The old statement vrd_num_tail (no P) is gone with the every-state memnorm
    hypothesis: its strtod row needs memnorm at the call, which only P gives (srr_inv_mn). After the row-270 malloc the
@@ -1783,7 +1783,7 @@ End t.
    step: the token present, the oracle's first answer false, tr = [EFail (|txt| + 1)], D = [], the ledger moved by
    a Theorem Labs lane's
    VrdLedgerEv.vle_fail_chosen / vle_fail_refused, pj_fdR by VrdNum.vrd_zero_fd, then VrdRefJoinP.vrd_ref_join_P with
-   VrdNum.vrd_pv_post_sh_frame. THE POSITION (post-implication text, kit 3ac20a5c9e30): there is no entry position;
+   VrdNum.vrd_pv_post_sh_frame. THE POSITION (post-implication text, kit): there is no entry position;
    vrd_pv_post's transfer and outcome clauses are proved from fuzz_malloc's own post (its two transfers and its
    OUTCOME clause, which refutes the NULL arm at a consumer HMal with cnt <> fail) and the instance fact
    cf_head = PresetReqAt.HEAD (Section n's HI_head); the row-270 call's sec_cnt / ccnt24 premises come from the
@@ -1924,7 +1924,7 @@ Hypothesis B_got_const : forall ly, In (z8 (ANum STRTOD_GOT_GUARD) STRTOD_GUARD)
    CfParamsPreset.CfParams_preset (cf_head = 16 = PresetReqAt.HEAD). *)
 Hypothesis HI_head : cf_head = PresetReqAt.HEAD.
 (* WalkNumEnd's end segment (rows 299..328), VERBATIM a Theorem Labs lane's vrd_num_end_stmt (lib/A/VrdNumEnd.v blob
-   2d633b265fff at a working branch 4353090b744). VrdNumEnd.v Requires this file, so the citation is made
+   2d633b265fff at a working branch). VrdNumEnd.v Requires this file, so the citation is made
    in lib/A/VrdNumA.v: H_num_end := vrd_num_end. vrd_num_tail_P uses it at its own P. *)
 Hypothesis H_num_end : forall (P : (word -> option byte) -> Prop), srr_inv_laws segs P ->
   forall ly0 S0 Hp0 W0 regs0 mem0 md0 ch CTX0 CW e q v text len p d tb Lam peak cnt fail ran most own

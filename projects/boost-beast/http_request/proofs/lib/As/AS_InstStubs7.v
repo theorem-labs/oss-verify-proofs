@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the wild free's stack-floor premise passed through the jump stubs). *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require AW_0Gc. (* [comment removed for export] *)
@@ -80,12 +81,12 @@ Scheme kc__2 := Elimination for Corelib.Init.Logic.and Sort Prop.
   (* [comment removed for export] *)
   Lemma free_wild_stmt_via_j7 : forall pc target, jstub pc target -> free_wild_stmt_at H target -> free_wild_stmt_at H pc.
   Proof.
-    intros pc target PT FS. unfold free_wild_stmt_at. intros until sbs. intros VIS HP K IN CF CB SH SHL AUX SPB ST CEIL LO ERR MI TP SP16 AC NS8 A0.
+    intros pc target PT FS. unfold free_wild_stmt_at. intros until sbs. intros VIS HP K IN CF CB SH SHL AUX SPB ST CEIL LO ERR MI TP SP16 AC NS8 A0 FLR.
     eapply SRlift; [exact K | exact VIS | apply j_evt7; [exact PT| exact MI] |].
     intros msF' mo' K' MP E. cbv beta in E.
     eapply SRmono.
     { exact (FS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc msF' m s LB p A n lo B errv mo' bs sbs
-                E HP K' IN CF CB SH SHL AUX SPB ST CEIL LO ERR MI TP SP16 AC NS8 A0). }
+                E HP K' IN CF CB SH SHL AUX SPB ST CEIL LO ERR MI TP SP16 AC NS8 A0 FLR). }
     intros c' PO. unfold free_wild_post in *.
     destruct PO as (x0 & x1 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & x9 & x10 & x11 & x12 & x13 & x14 & m' & s' & V' & K2 & MP2 & REST).
     exists x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, m', s'.

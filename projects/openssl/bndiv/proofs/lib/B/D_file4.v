@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (UTOP, usp + 16 <= USTACK_TOP, is now derived from 16-byte alignment and the argv-string bound under USTACK_TOP - 9, which lia alone cannot reach; the stack floor lo is rt_sp0 - STACK_WOK, the bottom of the stack the launch zero-maps, instead of rt_sp0 - STACK_WIN, and the close contract's premise rt_sp0 - STACK_WIN <= lo is proved by win_le_wok). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -104,7 +105,7 @@ Hypothesis XENV2_intro : forall m, XENV1 m -> incb 0 m -> XENV2 m.
 Hypothesis INCB_off : forall x, TR_INIT + 1 <= x < TR_INIT + 5 -> outside IO_FP x /\ outside XENV1_FP x.
 Hypothesis ATXW_off : forall x, in_ranges ATX_W x -> outside IO_FP x.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage, S_SHORT, S_OVER in *; lia.
+Local Ltac ul := unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage, S_SHORT, S_OVER in *; lia.
 
 Theorem done_cpsE : Z.of_nat (length data) < 67108864 ->
   cpsE bsegs (RDONE RT OUT_rep ERR_rep XENV LIB argvb fs data)
@@ -121,15 +122,24 @@ Proof using AF AF_DRV CLS MAL FRE FRN MCP FWR ATX INIT FUZZ LFR LEX VPR EXC EXC2
   pose proof (cap_ok_range cap HCAP) as CAPR.
   assert (INB : In (buf, cap) (rt_live RT Σ)) by (rewrite LV; left; reflexivity).
   pose proof (af_live_range RT AF Σ m buf cap ART0 INB) as (PR1 & PR2 & PR3).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   set (n := Z.of_nat (length data)) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
-  assert (UTOP : usp + 16 <= USTACK_TOP) by lia.
+  (* [usp] is 16-aligned ([B16]) and sits below [ap < path], whose argv string keeps
+     [path + |path_b| + 1 <= USTACK_TOP - 9] ([Hhi]); that bounds [usp] by
+     [USTACK_TOP - 12], and the alignment supplies the remaining 4.  Bare [lia] has
+     [USTACK_TOP] as an opaque atom and cannot take the last step, so unfold it ([ul])
+     and hand it the division equation.  Hunk from the green twin,
+     bignum BgA/D_file4.v:129-137; the context names are character-identical here. *)
+  assert (UTOP : usp + 16 <= USTACK_TOP).
+  { pose proof (Z.div_mod usp 16 ltac:(discriminate)) as HDM. rewrite B16 in HDM.
+    match type of Hhi with context [Z.of_nat ?k] => pose proof (Nat2Z.is_nonneg k) end.
+    ul. }
   pose proof CLX0 as (_ & _ & _ & _ & _ & _ & _ & _ & CC0).   (* [comment removed for export] *)
   (* [comment removed for export] *)
   apply (CLS Σ (FD argvb n) fs (Z_to_bv 64 0x1edfac) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2)
            (Z_to_bv 64 buf) (Z_to_bv 64 3) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) (Z_to_bv 64 n) (Z_to_bv 64 3) (Z_to_bv 64 cap)
-           (Z_to_bv 64 g_read_stage) (Z_to_bv 64 0) s8 s9 s10 s11 t3 t4 t5 t6 F fc m 3 lo); try reflexivity; try assumption.
+           (Z_to_bv 64 g_read_stage) (Z_to_bv 64 0) s8 s9 s10 s11 t3 t4 t5 t6 F fc m 3 lo); try reflexivity; try assumption; try exact (win_le_wok _).
   - lia.
   - unfold FD. rewrite fd_lookup_insert_same. discriminate.
   - rewrite EU. exact ST0.

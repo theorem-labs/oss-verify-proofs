@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvIR, which gained the vDSO conjunct, taken apart by minvir_dest; the vDSO fact passed to the sections that need it). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "sptr"; "mslot"; "MFree"; "st_free_meta_head"; "st_init_done"; "st_avail_meta_count"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.ExampleMemcpy"; "segsU"; "NF"; "@Corelib.Init.Logic"; "eq"; "not"; "@Corelib.Init.Datatypes"; "Some"; "list"; "option"; "prod"; "bool"; "pair"; "true"; "None"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "ma_s"; "MA"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sstate"; "valuation"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "jpost"; "LQP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI"; "IEC_U"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_U"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "ok_frame"; "SPJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "MT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "triple"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractAM"; "JL_am_ok"; "J_am_pre"; "L_am_ok"; "Pre_am"; "@Stdlib.Lists.List"; "In"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_ameta__G1.Mal_ameta_I"; "Kexact"; "@Stdlib.ZArith.BinInt.Z"; "lt"].
@@ -34,7 +35,7 @@ Proof.
   intros ok X R U [s L] Kc rho posts HOK HINP m Hhd HmH Hinit. cbn [ma_s ma_L] in *.
   intros n HQ [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -61,7 +62,7 @@ Proof.
     assert (ELF : lf_state L0 = LF_H) by (unfold LF_H; rewrite EP; reflexivity). rewrite ELF in HsmF.
     apply HQ.
     exact (post_ok_in s L X R U rho HI HXr (rd_of segsU mW) (wok_of segsU mW) (m_vmmaps md) HMI gd evb avb Hgd Hev Hav
-             mW eq_refl eq_refl ms Hrom Hgd_rd Hev_rd Hav_rd Htp' tr md eq_refl Hsm Htop m Hhd HmH Hinit msF rhoF HagF HsmF Kc HKc eq_refl posts HINP).
+             mW eq_refl eq_refl ms Hrom Hgd_rd Hev_rd Hav_rd Htp' tr md eq_refl Hsm Htop m Hhd HmH Hinit msF rhoF HagF HsmF Kc HKc eq_refl VD posts HINP).
   -
     split; [exact ENTRY | split; reflexivity].
 Qed.
@@ -76,7 +77,7 @@ Proof.
   intros ok X R U [s L] Kc rho posts HOK HINP m nn Hhd Hnm HmH HnH Hinit. cbn [ma_s ma_L] in *.
   intros n HQ [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -118,7 +119,7 @@ Proof.
   intros ok X R U [s L] Kc rho posts HOK HINP m nn p pp n2 Hhd Hnm Hpm Hpn HmH HnH HpH Hinit. cbn [ma_s ma_L] in *.
   intros n HQ [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -160,7 +161,7 @@ Proof.
   intros ok X R U [s L] Kc rho posts HOK HINP Hhd Hcnt Hinit. cbn [ma_s ma_L] in *.
   intros n HQ [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -200,7 +201,7 @@ Proof.
   intros ok X R U A Kc rho HF Havail Hinit n HQ [tr [ms md]] [Hsm HJ].
   pose proof HJ as (HMI & HXr & HKc & Hauxv & Htp & Htop). cbn [w_tr w_cfg fst snd cfg_model] in HMI.
   assert (HI : Inv X R U (ma_s A)).
-  { unfold MInvIR, MInvI in HMI. pose proof (mig_I HMI) as HI. destruct A; exact HI. }
+  { minvir_dest HMI; unfold MInvI in HMI. pose proof (mig_I HMI) as HI. destruct A; exact HI. }
   assert (HINP : In (L_am_ok IEC_U, JL_am_ok segsU C_U X R U A Kc) [ (L_am_ok IEC_U, JL_am_ok segsU C_U X R U A Kc) ]) by (left; reflexivity).
   destruct (st_free_meta_head (ma_s A)) as [m|] eqn:Hhd.
   - destruct (free_head_cases X R U (ma_s A) HI m Hhd) as [H1 | [(n' & Hne & Hm & Hn) | (p & n' & pp & n2 & Hne1 & Hne2 & Hne3 & Hm & Hn & Hp)]].

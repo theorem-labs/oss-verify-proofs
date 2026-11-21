@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (argv[1]'s bytes read below the model's TASK_SIZE; cstr_access_len_le through the path walk's stop at TASK_SIZE, LPS 08b1429). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Numbers.BinNums"; "Z"; "positive"; "@Corelib.Init.Datatypes"; "list"; "prod"; "nil"; "bool"; "true"; "option"; "length"; "app"; "nat"; "Some"; "cons"; "pair"; "false"; "fst"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Code"; "segs"; "@Corelib.Init.Logic"; "eq"; "and"; "ex"; "False"; "or"; "True"; "not"; "proj1"; "@stdpp.bitvector.definitions"; "bv"; "Z_to_bv"; "bv_unsigned"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "valuation"; "rw"; "ss_facts"; "eval"; "sobj"; "ss_next"; "agree_below"; "sv"; "ss_objs"; "holds"; "sprop"; "SLit"; "rl"; "ss_lenient"; "sstate"; "SAlu"; "mkSS"; "obj_holds"; "ss_fcsr"; "ss_fregs"; "ss_pc"; "ss_regs"; "ss_resv"; "swf"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SoundA"; "SPA"; "jpredA"; "ok_frameA"; "stableA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.DrvM.M"; "JM"; "P0M"; "KcM"; "JMe"; "P0M_SH"; "JM_stable"; "Jop"; "KcM_ok"; "KcM_tc"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.SumConv"; "NF"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "FdEntry"; "errno_ret"; "cstr_result"; "with_fds"; "CstrOk"; "CstrTooLong"; "FdChannel"; "fd_lookup"; "m_fds"; "m_fs"; "VmState"; "cstr_access_len_aux"; "read_cstr"; "@Stdlib.ZArith.BinInt.Z"; "le"; "lt"; "add"; "pow"; "of_nat"; "sub"; "div"; "mul"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "ax_S"; "leafA"; "axst"; "ax_X"; "ax_setS"; "la_state"; "ax_base"; "sym_runA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.LibB.TobjJA"; "ndesc"; "nd_tv"; "JA"; "nd_below"; "ANone"; "JAi"; "tvinA"; "amode"; "apot"; "bxa"; "nd_am"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.DrvTLXa"; "BX0"; "KV_T"; "HKVrng_T"; "KP_T"; "CST_drv"; "HCSTKV_T"; "SH0"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.DrvM_states"; "nd_M"; "vFD"; "E_op"; "T_op"; "E_copen"; "L_R0"; "L_R0h"; "nd_R1"; "C_m65"; "bd_M0"; "s_R0"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "etriple"; "triple"; "world"; "tcons"; "assn"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.DrvIfaceR"; "FD3"; "KcG"; "std_fds"; "P0Z"; "S_R0"; "nd_R0"; "SHR"; "SHR2"; "ZARG"; "CST_drv2"; "SLK1"; "Uv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Model"; "AA"; "aa_Kf"; "aa_Km"; "aa_V"; "cls_keptA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Spec.DriverSpec"; "open_may_succeed"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.RtCells"; "in_rangesZ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.DrvJ"; "lcarve"; "JAK"; "lc_obj"; "JA_carve"; "JA_uncarve"; "carve_okb"; "uncarve_okb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.DrvIfaceM"; "S_M"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Iface"; "AE_A"; "Kc_ok"; "alloc_contractsA"; "alloc_contractsA_ex"; "with_vm"; "@Stdlib.Lists.List"; "In"; "nth_error"; "@Corelib.Init.Nat"; "add"; "@Corelib.Init.Peano"; "le"; "@Corelib.Lists.ListDef"; "Forall"; "map"; "firstn"; "nth"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_read_byte"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "sys_input"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Geometry"; "Sh"; "IMG_HI"; "SHADOW_OFF";
@@ -60,9 +61,12 @@ S19Q40M0A1S7S19Q8M1A1M2A1M3Fx;S2G2A1SaS0S51Z0M4R1A2S52S53S53R2S55S8G2R4A2A1A2Z1A
 Proof.
   intros mp s. induction s as [|b s IH]; intros fuel z Hz Hnw Hmp Hnin.
   - destruct fuel as [|fuel]; cbn [cstr_access_len_aux length]; [lia|].
+    (* LPS 08b1429: the walk stops without counting at or above TASK_SIZE. *)
+    lazymatch goal with |- context [negb ?c] => destruct c eqn:Hacc end; cbn [negb]; [|lia].
     specialize (Hmp 0%nat ltac:(cbn; lia)). rewrite Z.add_0_r in Hmp. cbn in Hmp. rewrite Hmp.
     unfold bv_eqb. rewrite Z.eqb_refl. lia.
   - destruct fuel as [|fuel]; cbn [cstr_access_len_aux length]; [lia|].
+    lazymatch goal with |- context [negb ?c] => destruct c eqn:Hacc end; cbn [negb]; [|lia].
     pose proof (Hmp 0%nat ltac:(cbn; lia)) as H0. rewrite Z.add_0_r in H0. cbn [nth app] in H0. rewrite H0.
     assert (Hb : bv_eqb b (Z_to_bv 8 0) = false).
     { unfold bv_eqb. apply Z.eqb_neq. intros E. apply Hnin. left. apply bv_eq. exact E. }
@@ -326,7 +330,7 @@ S11S46S50SacVms;A1S1dVrho;P8A2A2Sd4A3").
 Proof.
   destruct arg1_nums as (N1 & N2 & N3 & N4 & N5). pose proof arg1_len as HL.
   rewrite <- (Z_to_bv_bv_unsigned 64 (rw rho 8%positive)) at 1. fold A1. unfold read_cstr, cstr1.
-  rewrite (read_cstr_aux_string (ms_read_byte ms) argv1 path_max A1); [| lia | lia | exact arg1_bytes | exact Hnonul].
+  rewrite (read_cstr_aux_string (ms_read_byte ms) argv1 path_max A1); [| lia | unfold TASK_SIZE; lia | exact arg1_bytes | exact Hnonul].
   change path_max with 4096%nat. reflexivity.
 Qed.
 

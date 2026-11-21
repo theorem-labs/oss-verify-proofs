@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (trb_cannot_open, trb_usage and the short and overrun leaves take the mmap base, break and entry draw with valid_launch and the launch premise entry_launch_ok_va, with the layout environment at the entry draw's top, the run's CONFIG_RSEQ flag and execfn string; the strings block now at the top of the entry stack, so the above-sp slot facts come from lay_strs; the argv strings' addresses measured from that top, their bounds from the launch through argv_str_fits' and YQ0a's argv_no_nul and argv_str_len, and their over-read bound at the entry draw's top; us_run quantified over the top, the flag and the execfn string; fw_leaf takes the entry draw tail_at names; the diagnostic leaves prove the model's own fdchan, three conjuncts now, from the launch's channel-reader flag carried beside the fd table, and run_to_exit takes the flag beside its fd-1 lookup). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import AsanUbsan.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP0c YP0g.
-From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK11 YK00 YK0i YK14 YK1b YK15 YK0l YK18 YK0q YQ0k YK0s YN02 YQ0j YQ0b YQ03 YQ0i YQ0h YQ09 YQ02 YQ0a YQ04 YQ0e YQ0c YO3p YO3v YI00 YL08 YL07 YL02 YL03 YK05 YA0i YA0l YA0m YA0n YA0k YK0a YA0e YG00 YG01 YG0m YG0h YG10 YG0u YG0d YCcz YB1u YB11 YF9i YB1g YB12 YF9j YD2f YD2e YD1p YD1v YD1q YD1t YD25 YD21 YD1z.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK11 YK00 YK0i YK14 YK1b YK0j YK15 YK0l YK18 YK0q YQ0k YK0s YN02 YQ0j YQ0b YQ03 YQ0i YQ0h YQ09 YQ02 YQ0a YQ04 YQ0e YQ0c YO3p YO3v YI00 YL08 YL07 YL02 YL03 YK05 YA0i YA0l YA0m YA0n YA0k YK0a YA0e YG00 YG01 YG0m YG0h YG10 YG0u YG0d YCcz YB1u YB11 YF9i YB1g YB12 YF9j YD2f YD2e YD1p YD1v YD1q YD1t YD25 YD21 YD1z.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YD1w YD20 YD1x YD1y YD2d YD1r YD2b YD26 YD2c YD1o YD28 YD29 YD24 YD1s YD23.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP07 YP01.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YG0n YG0o YG0p.
@@ -261,10 +262,11 @@ bv_unsigned (ew E 0) = usp -> sp_window_lo <= usp <= sp_window_hi -> usp mod 16 
 sv_denot E (nth i X_a0 (SLit 0)) = w64 code -> (code = 0 \/ code = 2) ->
 AI trbsegs (w_H W) (w_A W) md -> AR trbsegs B ly S W (ms_mem ms) md -> top_ok usp ly -> vev S < VEV_MAX ->
 est (w_H W) (ms_mem ms) -> so_state xst k (w_H W) (ms_mem ms) ->
-((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) -> m_fs md = fs ->
+((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ->
+((1 <= k)%nat -> m_channel_reader md = true) -> m_fs md = fs ->
 srealizes trbsegs (mkCfg ms md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 Proof.
-intros i ss0 E W ms md ly S usp fs code k I0 spo0 wf0 Hi HRUN Hm0 HI0 Hspo0 Hik E0 [Ulo Uhi] U16 Htid Hcode Hc02 HAI HAR HTOP Hnev HE HSO Hfd1 Hfs.
+intros i ss0 E W ms md ly S usp fs code k I0 spo0 wf0 Hi HRUN Hm0 HI0 Hspo0 Hik E0 [Ulo Uhi] U16 Htid Hcode Hc02 HAI HAR HTOP Hnev HE HSO Hfd1 Hcr1 Hfs.
 pose proof (u64_range (ew E 0)) as U0.
 set (ssx := nth i XSTS S_J7x) in *.
 pose proof (proj1 (Forall_forall _ _) XSTS_facts ssx ltac:(subst ssx; apply nth_In; cbn; lia)) as (Hpc & G3 & G4 & Hrv & _).
@@ -302,6 +304,7 @@ rewrite E0. intros a Ha. exact (apresent_some' _ _ _ (HwinX a Ha)).
 - exact (est_frame_run (w_H W) E (jmemI I0 spo0 wf0) _ _ HFrX SEK0 ltac:(rewrite E0; exact Ulo) HE).
 - exact (so_state_run k (w_H W) E (jmemI I0 spo0 wf0) _ _ HFrX SXK0 ltac:(rewrite E0; exact Ulo) HSO).
 - intros Hk. rewrite wvb_fds'. exact (Hfd1 Hk).
+- intros Hk. rewrite YK05.wvb_channel_reader. exact (Hcr1 Hk).
 - rewrite wvb_fs'. exact Hfs.
 Qed.
 Lemma exit2_tail : forall (b : bool) E (W : world trbsegs) regs mem md ly S (usp : Z) (fs : Fs),
@@ -340,6 +343,7 @@ destruct b; cbn [nth XSTS]; [rewrite M7; exact (j7_run E2 W _ md HS') | rewrite 
 - exact Hnev.
 - exact HEst.
 - left. split; [reflexivity | exact HSO].
+- intros Hk. exfalso. lia.
 - intros Hk. exfalso. lia.
 - exact Hfs.
 Qed.
@@ -398,7 +402,7 @@ YQ04.bytes_at (mrestrict (w_H W) mem) zp (p ++ [NUL]) ->
 mem_ok trbsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI trbsegs (w_H W) (w_A W) md -> AR trbsegs B ly S W mem md -> top_ok usp ly -> vev S < VEV_MAX ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_fs md = fs ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md -> m_fs md = fs ->
 srealizes trbsegs (mkCfg (mkst regs (w64 0x423c4) mem (seg_rom trbsegs)) md) (wr ch_stderr (lit1 ++ p ++ nlB) (ex 2 fs)).
 Proof.
 intros fmt lit1 FP E W regs mem md ly S usp p zp fs E0 [Ulo Uhi] U16 Htid R10 R11 R12 R1 Hsp R3 R4 Hzp1 Hzp2 Hnn Hlen HBr Htl HM Hwin HAI HAR HTOP Hnev Hfd2 Hfs.
@@ -501,9 +505,19 @@ apply apresent_of_writable; [lia|]. replace a with (usp + (a - usp)) by lia. app
 Qed.
 Theorem trb_cannot_open : cannot_open_tfa B.
 Proof.
-intros sp inp xw xd W regs mem md ly a0 p e Hargv Hsp Hva Hve Hfit Hregs Hmem HG HR HAI HAR HTOP Hfs Hfds He.
+intros sp inp mbase brk rnd xw xd W regs mem md ly a0 p e Hargv Hsp Hva Hve Hfit Hvl Hlau Hregs Hmem HG HR HAI HAR HTOP Hfs Hfds Hcr He.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
-set (EL := YQ0a.E0 sp [a0; p] (in_envp inp) xw xd) in *. set (usp := bv_unsigned sp) in *.
+set (EL := YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd) in *. set (usp := bv_unsigned sp) in *.
+(* #38: the strings moved to the TOP of the block (YQ0a.v:196-204), so the
+   "slot is above sp" facts now come off [lay_strs] (YQ0a.v:460), whose first
+   component is the surviving form of the dropped layout_facts conjunct.
+   Posed by unification so no discharged argument position is hard-coded. *)
+assert (HLS : YQ0a.z_rand (bv_unsigned sp) (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) + 16
+<= YQ0a.z_strs (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp)
+/\ YQ0a.z_strs (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp)
++ Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp)) + 8
+= bv_unsigned (ed_top rnd)) by (eapply YQ0a.lay_strs; eassumption).
+pose proof (YQ0a.hs_eq inp) as HSE. pose proof (YQ0a.aux_size inp) as HAS.
 set (E1 := ewset EL A_NEGE (errno_ret e)).
 assert (E1_0 : bv_unsigned (ew E1 0) = usp) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); reflexivity).
 assert (E1_41 : ew E1 A_NEGE = errno_ret e) by (subst E1; apply ew_ewset_same).
@@ -522,10 +536,12 @@ assert (HS1 : st_ok trbsegs E1 S_CO (restrict (w_H W) (mkst (regupd regs 10%bv (
 - intros r1 r2 Hr1 Hr2. destruct Hr2 as [<-|[]].
 pose proof (proj1 (forallb_forall _ _) (proj1 S_CO_ext) r1 Hr1) as Y. unfold ext_chk2 in Y. cbn [r_base R_errno r_lo r_hi] in Y.
 unfold extent_disjoint. cbn [r_base r_lo r_hi R_errno base_val].
-assert (A1 : usp <= bv_unsigned (ew E1 1)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; rewrite (YQ0a.ew1 sp [a0; p] (in_envp inp) Hsp Hva Hve); unfold z_strs; lia).
-assert (A2 : usp <= bv_unsigned (ew E1 2)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; rewrite (YQ0a.ew2' sp [a0; p] (in_envp inp) Hsp Hva Hve) by (cbn; lia);
-pose proof (YQ0a.z_argv_bounds sp [a0; p] (in_envp inp) 1 ltac:(cbn; lia)) as [Z1 _]; unfold z_strs in Z1; lia).
-assert (A6 : usp <= bv_unsigned (ew E1 6)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; exact (YD24.EL6 sp inp xw xd a0 p Hsp Hva Hve)).
+assert (A1 : usp <= bv_unsigned (ew E1 1)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; rewrite <- Hargv;
+rewrite YQ0a.ew1 with (mbase := mbase) (brk := brk) by eassumption; destruct HLS as [HL1 _]; unfold YQ0a.z_rand in *; lia).
+assert (A2 : usp <= bv_unsigned (ew E1 2)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; rewrite <- Hargv;
+rewrite YQ0a.ew2' with (mbase := mbase) (brk := brk) by (first [eassumption | rewrite Hargv; first [exact Hva | cbn [length]; lia]]);
+destruct HLS as [HL1 _]; unfold YQ0a.z_argv, YQ0a.z_rand in *; lia).
+assert (A6 : usp <= bv_unsigned (ew E1 6)) by (subst E1; rewrite ew_ewset_other by (unfold A_NEGE; lia); subst EL usp; exact (YD24.EL6 sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hlau)).
 unfold sp_window_lo in Ulo.
 destruct (r_base r1) as [[|[|[|[|[|[|[|n]]]]]]]|]; try discriminate Y; cbn [base_val]; try (apply Z.leb_le in Y).
 + rewrite E1_0. right. lia.
@@ -545,29 +561,33 @@ pose proof S_COf_facts as (Ppc & Pra & Psp & Pa0 & Pa1 & Pa2 & Pgp & Ptp & Prv).
 pose proof (st_ok_restrict_mkst trbsegs (w_H W) E1 S_COf ms2 HS2 Prv) as Hshape. rewrite Hshape, Ppc. change (Z_to_bv 64 0x423c4) with (w64 0x423c4).
 pose proof (st_ok_mem_ok trbsegs E1 S_COf _ HS2) as HM2. cbn [restrict ms_mem] in HM2.
 assert (RG : forall r, getr (ms_regs ms2) r = sv_denot E1 (sr_get (ss_regs S_COf) r)) by (intros r; exact (st_ok_restrict_reg trbsegs (w_H W) E1 S_COf ms2 r HS2)).
-assert (HR2 : runs_at usp (mrestrict (w_H W) (ms_mem ms2)) (runs_main_tfa true sp [a0; p] (in_envp inp))).
+assert (HR2 : runs_at usp (mrestrict (w_H W) (ms_mem ms2)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp))).
 { eapply (runs_at_frame E1 (ss_facts S_COf) (ss_mem S_CO)); [exact (st_ok_facts_ok trbsegs E1 S_COf _ HS2) | exact WB2 | exact HFrb | rewrite E1_0; lia |].
 eapply (runs_at_frame E1 (ss_facts S_CO1) (ss_mem S_CO)); [exact (st_ok_facts_ok trbsegs E1 S_CO1 _ HSa) | exact WB1 | exact HFra | rewrite E1_0; lia | exact HR]. }
 pose proof (runs_at_nth _ _ _ 2 _ _ HR2 eq_refl) as HBr. cbn [nth] in HBr.
 destruct S_COf_mem as (cs0 & Hhd & _).
 pose proof (win0_present E1 (w_H W) (ms_mem ms2) (ss_mem S_COf) cs0 usp HM2 Hhd ltac:(destruct S_CO_hd as (_ & _ & _ & X); exact X) E1_0 (conj Ulo Uhi)) as Hwin2.
 unfold diag, msg_cannot_open.
-apply (fpr_leaf 0x1d7c4 _ FPO E1 W (ms_regs ms2) (ms_mem ms2) _ ly init_state usp p (z_argv usp [a0; p] (in_envp inp) 1) (in_fs inp) E1_0 (conj Ulo Uhi) U16).
+apply (fpr_leaf 0x1d7c4 _ FPO E1 W (ms_regs ms2) (ms_mem ms2) _ ly init_state usp p (z_argv (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp) 1) (in_fs inp) E1_0 (conj Ulo Uhi) U16).
 - exact (tid_of_st_ok E1 S_COf _ HS2 TIDf).
 - rewrite (RG 10%bv), Pa0. reflexivity.
 - rewrite (RG 11%bv), Pa1. reflexivity.
 - rewrite (RG 12%bv), Pa2. cbn [sv_denot]. rewrite Z.add_0_r. subst E1. rewrite ew_ewset_other by (unfold A_NEGE; lia).
-subst EL. rewrite (YQ0a.ew2' sp [a0; p] (in_envp inp) Hsp Hva Hve) by (cbn; lia). reflexivity.
+subst EL. rewrite <- Hargv. rewrite YQ0a.ew2' with (mbase := mbase) (brk := brk) by (first [eassumption | rewrite Hargv; first [exact Hva | cbn [length]; lia]]). reflexivity.
 - rewrite (RG 1%bv), Pra. reflexivity.
 - unfold spZ. rewrite (RG 2%bv), Psp. cbn [sv_denot]. rewrite E1_0. apply u64_lit. unfold sp_window_lo in Ulo. lia.
 - rewrite (RG 3%bv), Pgp. reflexivity.
 - rewrite (RG 4%bv), Ptp. reflexivity.
-- pose proof (YQ0a.z_argv_bounds sp [a0; p] (in_envp inp) 1 ltac:(cbn; lia)) as [Z1 _]. unfold z_strs in Z1. subst usp. lia.
-- exact (argv_str_fits' sp [a0; p] (in_envp inp) 1 Hfit ltac:(cbn; lia)).
-- exact (argv_no_nul [a0; p] Hva 1 ltac:(cbn; lia)).
-- exact (argv_str_len [a0; p] Hva 1 ltac:(cbn; lia)).
-- exact HBr.
-- subst usp. exact (argv_over_read sp (StackLayout.mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0)) [a0; p] (in_envp inp) true _ 1 Hsp ltac:(cbn; lia) HR2).
+- pose proof (YQ0a.z_argv_bounds inp rnd 1 ltac:(rewrite Hargv; cbn [length]; lia)) as [Z1 _].
+destruct HLS as [HL1 _]. unfold YQ0a.z_rand in *. subst usp. lia.
+- pose proof (argv_str_fits' inp mbase sp brk rnd 1 Hsp ltac:(rewrite Hargv; exact Hva) Hve Hlau ltac:(rewrite Hargv; cbn [length]; lia)) as F1.
+replace (nth 1 (in_argv inp) []) with p in F1 by (rewrite Hargv; reflexivity). exact F1.
+- pose proof (YQ0a.argv_no_nul inp ltac:(rewrite Hargv; exact Hva) 1 ltac:(rewrite Hargv; cbn [length]; lia)) as NN.
+rewrite Hargv in NN. cbn [nth] in NN. exact NN.
+- pose proof (YQ0a.argv_str_len inp ltac:(rewrite Hargv; exact Hva) 1 ltac:(rewrite Hargv; cbn [length]; lia)) as SL.
+rewrite Hargv in SL. cbn [nth] in SL. exact SL.
+- rewrite Hargv. exact HBr.
+- pose proof (argv_over_read sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp) true _ 1 Hsp ltac:(cbn [length]; lia) HR2) as OR1. cbn [nth] in OR1. rewrite Hargv. exact OR1.
 - exact (mem_ok_sub trbsegs E1 _ _ IMG_REGIONS img_sub_COf img_regions_wf HM2).
 - exact Hwin2.
 - exact HAIb.
@@ -579,19 +599,21 @@ apply (AR_after_run B HB ARL ly init_state W E1 (ss_mem S_CO) mem (ms_mem ms1) m
 rewrite E1_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin1 a Ha)).
 - exact HTOP.
 - drv_lia.
-- rewrite !wvb_fds', Hfds. reflexivity.
+- split; [rewrite !wvb_fds', Hfds; reflexivity | split; [reflexivity | rewrite !YK05.wvb_channel_reader; exact Hcr]].
 - rewrite !wvb_fs'. exact Hfs.
 Qed.
-Lemma us_run : forall sp (argv envp : list (list byte)) xw xd (W : world trbsegs) ms md,
+(* #38: E0 is now (sp top rs av ev xf xw xd); [top], [rs] and [xf] are new
+   universally quantified binders here, supplied by the caller from the run. *)
+Lemma us_run : forall sp (top : word) (rs : bool) (argv envp : list (list byte)) (xf : list byte) xw xd (W : world trbsegs) ms md,
 valid_sp sp -> valid_argv argv -> valid_envp envp -> (length argv <> 2)%nat ->
-st_ok trbsegs (YQ0a.E0 sp argv envp xw xd) (ss_main false) (restrict (w_H W) ms) ->
-SRr trbsegs W (mkCfg ms md) (at_st (ss_main false) S_US (YQ0a.E0 sp argv envp xw xd) W (ms_mem ms) md).
+st_ok trbsegs (YQ0a.E0 sp top rs argv envp xf xw xd) (ss_main false) (restrict (w_H W) ms) ->
+SRr trbsegs W (mkCfg ms md) (at_st (ss_main false) S_US (YQ0a.E0 sp top rs argv envp xf xw xd) W (ms_mem ms) md).
 Proof.
-intros sp argv envp xw xd W ms md Hsp Hva Hve Hlen HS. pose proof HWXi as HWX.
+intros sp top rs argv envp xf xw xd W ms md Hsp Hva Hve Hlen HS. pose proof HWXi as HWX.
 srr_run_with trbtbl_drv_ok HS. rename HF into HF1. rename HFr into HFr1.
 srr_branch_with trbtbl_drv_ok HS.
 2:{ exfalso. cbn [Sem.branch_taken sv_denot] in Hc. rewrite Z.add_0_r in Hc.
-pose proof (YQ0a.ew3 sp argv envp Hva xw xd) as E3.
+assert (E3 : bv_unsigned (ew (YQ0a.E0 sp top rs argv envp xf xw xd) 3) = Z.of_nat (length argv)) by (cbn [ew YQ0a.E0]; pose proof (proj1 Hva); apply u64_lit; lia).
 apply Bool.negb_false_iff in Hc. apply (proj1 (Fs.bv_eqb_eq _ _)) in Hc.
 apply (f_equal bv_unsigned) in Hc. rewrite Z_to_bv_bv_unsigned, E3, u64_lit in Hc by lia. lia. }
 pose proof (proj1 (proj2 (proj2 S_COUS_eq))) as QU. unfold run_x in QU.
@@ -602,25 +624,28 @@ split; [exact HS|]. split.
 - eapply frame_of_trans; [| exact HF1 | exact HF]. vm_compute. reflexivity.
 - eapply frame_of_trans; [| exact HFr1 | exact HFr]. vm_compute. reflexivity.
 Qed.
-Theorem trb_usage : forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+Theorem trb_usage : forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte)
 (W : world trbsegs) (ms : machine_state) (md : Model) (ly : alayout),
 valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+(* #38: the layout layer is keyed on the run's draw, so the launch is a new
+   universally quantified premise - a strengthening; the caller holds it. *)
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 (length (in_argv inp) <> 2)%nat ->
-YQ0i.st_ok trbsegs (YQ0a.E0 sp (in_argv inp) (in_envp inp) xw xd) (ss_main false) (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa false sp (in_argv inp) (in_envp inp)) ->
+YQ0i.st_ok trbsegs (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) (in_execfn inp) xw xd) (ss_main false) (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa false sp (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp)) ->
 AI trbsegs (w_H W) (w_A W) md -> AR trbsegs B ly init_state W (ms_mem ms) md -> top_ok (bv_unsigned sp) ly ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true ->
 srealizes trbsegs (mkCfg ms md) (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 Proof.
-intros sp inp xw xd W ms md ly Hsp Hva Hve Hfit Hlen HS HR HAI HAR HTOP Hfs Hfds.
+intros sp inp mbase brk rnd xw xd W ms md ly Hsp Hva Hve Hfit Hvl Hlau Hlen HS HR HAI HAR HTOP Hfs Hfds Hcr.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
 set (argv := in_argv inp) in *. set (envp := in_envp inp) in *.
-set (EL := YQ0a.E0 sp argv envp xw xd) in *. set (usp := bv_unsigned sp) in *.
+set (EL := YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) argv envp (in_execfn inp) xw xd) in *. set (usp := bv_unsigned sp) in *.
 assert (EL0 : bv_unsigned (ew EL 0) = usp) by reflexivity.
 assert (Hargc : (1 <= length argv)%nat) by (pose proof (proj1 Hva); lia).
 pose proof US_checks as (TIDf & NEus & WF0 & TID0).
 pose proof (tid_of_st_ok EL (ss_main false) _ HS TID0) as Htid.
-apply (SRr_srealizes trbsegs W _ _ _ (us_run sp argv envp xw xd W ms md Hsp Hva Hve Hlen HS) HAI).
+apply (SRr_srealizes trbsegs W _ _ _ (us_run sp (ed_top rnd) (kb_rseq (in_kernel inp)) argv envp (in_execfn inp) xw xd W ms md Hsp Hva Hve Hlen HS) HAI).
 intros Wb cb _ HAIb (-> & ms2 & mat2 & -> & HS2 & HFb & HFrb). cbn [cfg_model] in HAIb.
 pose proof S_US_facts as (Ppc & Pra & Psp & Pa0 & Pa1 & Pa2 & Pgp & Ptp & Ps0 & Prv & _).
 pose proof (st_ok_restrict_mkst trbsegs (w_H W) EL S_US ms2 HS2 Prv) as Hshape. rewrite Hshape, Ppc.
@@ -628,7 +653,7 @@ change (mkCfg (mkst (ms_regs ms2) (Z_to_bv 64 0x423c4) (ms_mem ms2) (seg_rom trb
 pose proof (st_ok_mem_ok trbsegs EL S_US _ HS2) as HM2. cbn [restrict ms_mem] in HM2.
 assert (RG : forall r, getr (ms_regs ms2) r = sv_denot EL (sr_get (ss_regs S_US) r)) by (intros r; exact (st_ok_restrict_reg trbsegs (w_H W) EL S_US ms2 r HS2)).
 set (regs := ms_regs ms2) in *. set (mem := ms_mem ms2) in *.
-assert (HR2 : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa false sp argv envp)).
+assert (HR2 : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa false sp (ed_top rnd) argv envp (in_execfn inp))).
 { pose proof S_CO_ext as (_ & _ & _ & _ & WBu & WBp & _).
 eapply (runs_at_frame EL (ss_facts S_US) (ss_mem (ss_main false))); [exact (st_ok_facts_ok trbsegs EL S_US _ HS2) | | exact HFrb | rewrite EL0; lia | exact HR].
 vm_compute. reflexivity. }
@@ -642,10 +667,15 @@ assert (HAR2 : AR trbsegs B ly init_state W mem (with_vm_backing (m_vm_lazy md) 
 rewrite EL0. intros a Ha. exact (apresent_some' _ _ _ (Hwin2 a Ha)). }
 assert (Hsp2 : spZ regs = usp - 128) by (unfold spZ; rewrite (RG 2%bv), Psp; cbn [sv_denot]; rewrite EL0; apply u64_lit; unfold sp_window_lo in Ulo; lia).
 assert (Hra : raZ regs = 0x80f84) by (unfold raZ; rewrite (RG 1%bv), Pra; reflexivity).
-assert (E1z : bv_unsigned (ew EL 1) = z_argv usp argv envp 0).
-{ subst EL usp. rewrite (YQ0a.ew1 sp argv envp Hsp Hva Hve). unfold z_argv. rewrite firstn_O. cbn [total_arg_bytes_nat fold_right]. lia. }
+assert (E1z : bv_unsigned (ew EL 1) = z_argv (bv_unsigned (ed_top rnd)) argv envp (in_execfn inp) 0).
+(* #38, ABBREVIATION variant of 11c (not the flag variant): [ew1]'s LHS carries
+   [in_argv inp] while :636's [set] leaves the goal spelling [argv], which is
+   convertible but not syntactically equal, and [rewrite] matches
+   syntactically.  [subst argv envp] is load-bearing here for that reason -
+   same class as UO3p.v:461's u_envp_ptr/cat_env_base, different cause. *)
+{ subst EL usp argv envp. rewrite YQ0a.ew1 with (mbase := mbase) (brk := brk) by eassumption. unfold z_argv. rewrite firstn_O. cbn [total_arg_bytes_nat fold_right]. lia. }
 unfold diag, msg_usage.
-apply (FPU ly init_state W regs mem _ EL (z_argv usp argv envp 0) (nth 0 argv []) (ex 2 (in_fs inp))).
+apply (FPU ly init_state W regs mem _ EL (z_argv (bv_unsigned (ed_top rnd)) argv envp (in_execfn inp) 0) (nth 0 argv []) (ex 2 (in_fs inp))).
 - split; [exact HAR2|]. split; [rewrite (RG 1%bv), Pra; exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 ret_oks))))))|]. split; [rewrite Hra; lia|].
 split; [rewrite Hsp2, <- Zminus_mod_idemp_l, U16; reflexivity|]. split; [rewrite Hsp2; unfold sp_window_lo, sp_window_hi in *; lia|].
 split; [rewrite Hsp2; unfold top_ok in HTOP; lia|]. split; [unfold top_ok in HTOP; tauto|]. split; [unfold top_ok in HTOP; tauto|].
@@ -654,14 +684,21 @@ rewrite (ts_gp B HB), (ts_tp B HB), (RG 3%bv), (RG 4%bv), Pgp, Ptp. split; refle
 - rewrite (RG 10%bv), Pa0. reflexivity.
 - rewrite (RG 11%bv), Pa1. reflexivity.
 - rewrite (RG 12%bv), Pa2. cbn [sv_denot]. rewrite Z.add_0_r, E1z. reflexivity.
-- exact (argv_str_len argv Hva 0 ltac:(lia)).
-- exact (argv_no_nul argv Hva 0 ltac:(lia)).
-- rewrite Hsp2. pose proof (YQ0a.z_argv_bounds sp argv envp 0 ltac:(lia)) as [Z1 _]. unfold z_strs in Z1. subst usp. lia.
-- exact (argv_str_fits' sp argv envp 0 Hfit ltac:(lia)).
+- exact (YQ0a.argv_str_len inp Hva 0 Hargc).
+- exact (YQ0a.argv_no_nul inp Hva 0 Hargc).
+- rewrite Hsp2. pose proof (YQ0a.z_argv_bounds inp rnd 0 Hargc) as [Z1 _].
+assert (HLS : YQ0a.z_rand (bv_unsigned sp) (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) + 16
+<= YQ0a.z_strs (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp)
+/\ YQ0a.z_strs (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp)
++ Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp)) + 8
+= bv_unsigned (ed_top rnd)) by (eapply YQ0a.lay_strs; eassumption).
+pose proof (YQ0a.hs_eq inp). pose proof (YQ0a.aux_size inp).
+destruct HLS as [HL1 _]. unfold YQ0a.z_rand in *. subst usp argv envp. lia.
+- exact (argv_str_fits' inp mbase sp brk rnd 0 Hsp Hva Hve Hlau Hargc).
 - exact HBr.
-- subst usp. exact (argv_over_read sp (StackLayout.mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0)) argv envp false _ 0 Hsp ltac:(lia) HR2).
+- subst usp. exact (argv_over_read sp (ed_top rnd) argv envp (in_execfn inp) false _ 0 Hsp ltac:(lia) HR2).
 - exact HMR.
-- rewrite wvb_fds', Hfds. reflexivity.
+- split; [rewrite wvb_fds', Hfds; reflexivity | split; [reflexivity | rewrite YK05.wvb_channel_reader; exact Hcr]].
 - exact HAIb.
 -
 intros regs' mem' md' HAR' HP Hsbm Ha0 HE' Hfr Hpres HAI'. unfold cfg_at. rewrite Hra.
@@ -704,11 +741,12 @@ apply (run_to_exit 3%nat S_JU E2 W _ md' ly init_state usp (in_fs inp) 2 0%nat I
 rewrite (Hfr a); [exact (HSO a Ha) | unfold STDOUT_LO, STDOUT_HI in Ha; lia | rewrite Hsp2; unfold STDOUT_LO, STDOUT_HI, DIAG_STK, sp_window_lo in *; lia
 | unfold STDERR_MUT, F_STDERR_LO, F_STDERR_HI, STDOUT_LO, STDOUT_HI in *; lia].
 + intros Hk. exfalso. lia.
++ intros Hk. exfalso. lia.
 + rewrite (sbm_fs_eq _ md' Hsbm), wvb_fs'. exact Hfs.
 Qed.
 Theorem trb_exit_leaf : exit_leaf_tfa B xst.
 Proof.
-intros E W regs mem md ly S usp fs code k E0 [Ulo Uhi] U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hfs.
+intros E W regs mem md ly S usp fs code k E0 [Ulo Uhi] U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hcr Hfs.
 pose proof (ESTI (w_H W) mem (stderr_of_L E (w_H W) mem HM)) as HE.
 pose proof (regs_ok_J E regs (-48) usp E0 ltac:(lia) Ulo ltac:(lia) R3 R4) as HR.
 pose proof (st_ok_J IMG_XL E regs (jregs (-48)) (-48) 0x9214c usp false (w_H W) mem (or_intror eq_refl) HR E0 Ulo ltac:(right; split; reflexivity) (mem_ok_XL_of_L E _ HM) Hwin ltac:(discriminate)) as HS.
@@ -733,6 +771,7 @@ apply (run_to_exit 2%nat S_JX E2 W _ md ly S usp fs code k IMG_XL (-48) false lt
 - exact HE.
 - exact HSO.
 - intros Hk. rewrite Hfds. reflexivity.
+- intros Hk. exact Hcr.
 - exact Hfs.
 Qed.
 Lemma win2_present : forall E (H : word -> bool) mem rs cs usp,
@@ -748,13 +787,13 @@ cbn [r_base r_wlo r_whi base_val] in Wr, Wr'. rewrite E0 in Wr, Wr'.
 apply apresent_of_writable; [lia|]. replace a with (usp + (a - usp)) by lia.
 destruct (Z.lt_ge_cases a (usp - 128)); [apply Wr | apply Wr']; lia.
 Qed.
-Lemma fw_leaf : forall (b : bool) (E : YQ0j.env) sp inp (a0 p data : list byte) (W : world trbsegs) ms md ly S (pb : sptr) (cap : Z),
+Lemma fw_leaf : forall (b : bool) (E : YQ0j.env) sp inp (rnd : EntryDraw) (a0 p data : list byte) (W : world trbsegs) ms md ly S (pb : sptr) (cap : Z),
 valid_sp sp -> bv_unsigned sp <= bv_unsigned (ew E 6) -> bv_unsigned (ew E 0) = bv_unsigned sp ->
-tail_at B (if b then S_SHORT else S_OVR) E sp inp a0 p data W ms md ly S pb cap ->
+tail_at B (if b then S_SHORT else S_OVR) E sp inp rnd a0 p data W ms md ly S pb cap ->
 srealizes trbsegs (mkCfg ms md) (diag (if b then msg_short else msg_overrun) (in_fs inp)).
 Proof.
-intros b E sp inp a0 p data W ms md ly S pb cap Hsp HU6 E0 HT.
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & Hdl & Hblk & Hfs & Hfds & Hminv).
+intros b E sp inp rnd a0 p data W ms md ly S pb cap Hsp HU6 E0 HT.
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & Hdl & Hblk & Hfs & Hfds & Hcr & Hminv).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YN05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YN05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (usp := bv_unsigned sp) in *. set (ss := if b then S_SHORT else S_OVR) in *.
@@ -798,7 +837,7 @@ rewrite (ts_gp B HB), (ts_tp B HB), (RG 3%bv), (RG 4%bv), Pgp, Ptp. split; refle
 - subst msgp; destruct b; [right | left]; lia.
 - intros i Hi. apply (img_msg_chk_sound _ _ IM i Hi).
 - exact HMR.
-- rewrite Hfds. reflexivity.
+- split; [rewrite Hfds; reflexivity | split; [reflexivity | exact Hcr]].
 - exact HAI.
 -
 intros regs' mem' md' HAR' HP Hsbm Ha0 HE' Hfr Hpres HAI'. unfold cfg_at. rewrite Hra.
@@ -894,21 +933,22 @@ apply (run_to_exit 4%nat S_JFr E6 W2 _ md6 ly6 S6 usp (in_fs inp) 2 0%nat IMG_X 
 + exact HE6.
 + exact HSO6.
 + intros Hk. exfalso. lia.
++ intros Hk. exfalso. lia.
 + rewrite Efs6. subst md1. rewrite wvb_fs', (sbm_fs_eq _ md' Hsbm). exact Hfs.
 Qed.
 Theorem trb_short_leaf : short_leaf_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk Hdl HT.
-apply (fw_leaf true (havoc (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd) K_M1 ws) sp inp a0 p data W ms md ly S pb cap Hsp).
-- rewrite ew_havoc_old by (unfold K_M1; lia). exact (YD24.EL6 sp inp xw xd a0 p Hsp Hva Hve).
+intros sp inp mbase brk rnd xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk Hdl HT.
+apply (fw_leaf true (havoc (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd) K_M1 ws) sp inp rnd a0 p data W ms md ly S pb cap Hsp).
+- rewrite ew_havoc_old by (unfold K_M1; lia). exact (YD24.EL6 sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hlau).
 - rewrite ew_havoc_old by (unfold K_M1; lia). reflexivity.
 - exact HT.
 Qed.
 Theorem trb_overrun_leaf : overrun_leaf_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk Hdl HT.
-apply (fw_leaf false (edset (havoc (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S pb cap Hsp).
-- cbn [ew edset]. rewrite ew_havoc_old by (unfold K_M1; lia). exact (YD24.EL6 sp inp xw xd a0 p Hsp Hva Hve).
+intros sp inp mbase brk rnd xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk Hdl HT.
+apply (fw_leaf false (edset (havoc (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd) K_M1 ws) 2 data) sp inp rnd a0 p data W ms md ly S pb cap Hsp).
+- cbn [ew edset]. rewrite ew_havoc_old by (unfold K_M1; lia). exact (YD24.EL6 sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hlau).
 - cbn [ew edset]. rewrite ew_havoc_old by (unfold K_M1; lia). reflexivity.
 - exact HT.
 Qed.

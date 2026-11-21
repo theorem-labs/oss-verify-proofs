@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_free_defs.v, with its module paths, module names and numbers changed; 437 of its 549 lines of code are new or changed and 94 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset image A, slice S6 (WalkS6): pj_free's walk (108 instructions, recursive) over the ONE image-A program
    listing (lib/A/Listing_prog.v, h-verbs-1 v4), generic in the image facts (Context PAImg A_prog_listing), in the
    allocator relation ARx (LAWS : AR_laws_x .. cf_head) and in a memory invariant Pm (srr_inv_laws, srr_inv_call).
@@ -267,7 +268,7 @@ Definition pf_frame (en : PfEnt) (ly : alayout) (S : astate) (Hp : list Z) (W : 
 
 (* pf_frame over a world relation R: the journal conjunct is the journal's R form (ajournal_xR, whose fourth conjunct
    is R W W'), every other conjunct as in pf_frame. pf_frame keeps its own body for pfa_frame_same (S6PjFreeGlue.v:242)
-   and pfk_frame (S6PjFreeKeep.v:312), which state it; S6PjFreeEnt.v:139 unfolds pf_frameR. It is this at wle (pf_frame_R_wle) *)
+   and pfk_frame (S6PjFreeKeep.v:313), which state it; S6PjFreeEnt.v:139 unfolds pf_frameR. It is this at wle (pf_frame_R_wle) *)
 Definition pf_frameR (R : world SEGS -> world SEGS -> Prop) (en : PfEnt) (ly : alayout) (S : astate) (Hp : list Z)
   (W : world SEGS) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (k : Z) : Prop :=
   ajournal_xR (SK := SK) SEGS B PST ARx R (STK_pj_free (fe_n en) + fe_d en) (fe_sp0 en + fe_d en) (fe_FP en)

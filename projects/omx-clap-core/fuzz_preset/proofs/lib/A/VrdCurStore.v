@@ -13,13 +13,13 @@
    vrd_node_low; the array and member blocks, by rd_blocks_move and AR_laws_x's block law; the harness heads, by the
    ledger's harness blocks and the head width HW; the text, by src_rd; the statics, by the image fact PST_IMG; every
    shadow byte, being below 2 ^ 46) or in parse_items' own frame [sp0 - 144, sp0) (premise: the window avoids it).
-   The chain conjunct of vrd_ijrn is IelemE's vrd_chain_keep_w (VrdIElem.v Section W, a working branch
-   2e1d73b494d): the window lies in rd_fp q v.
+   The chain conjunct of vrd_ijrn is IelemE's vrd_chain_keep_w (VrdIElem.v Section W, a working branch):
+   the window lies in rd_fp q v.
    TWO SECTION HYPOTHESES, both image / instance facts: PST_IMG (alloc.c's statics are image bytes; discharged at
    prh_img_A by S1ImgA.v pst_in_img_A) and HW (the text of the kit's prh_head_wide, `8 <= cf_head`; discharged by
    a Theorem Labs lane's preset_head_wide, lib/A/CfParamsPreset.v:95; the S5b record texts this file sits on do not yet carry
    the kit's name).
-   SET: a working branch on a working branch 2e1d73b494d (vrd_chain_keep_w). A-only: B sites not measured.
+   SET: a working branch on a working branch (vrd_chain_keep_w). A-only: B sites not measured.
    Numerals: 144 (LENGTH, parse_items' frame, as VrdIElem.v states it), 56 / 24 / 8 (LENGTH: node, cursor, word),
    2 ^ 46 / 2 ^ 48 / 2 ^ 64 (LENGTH: bounds). No ADDRESS literal. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

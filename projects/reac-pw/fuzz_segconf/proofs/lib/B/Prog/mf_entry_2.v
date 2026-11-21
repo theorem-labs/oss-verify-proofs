@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,6 +37,7 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v; 512 of its 559 lines of code are new or changed and 406 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, twin 80e82127e8ca; 0x86140): the second half of the
    segment S_MF_ENTRY, from the cut MFE_RET_SNP 0x862ac (the snprintf return, lib/B/Prog/mf_entry_d.v) to HEAD
    0x86378 (the text is not empty) or EXIT 0x86da0 (it is), = MFE_MID_F. A walk lane and a sub-lane of the image-B m_file-family owner's
@@ -65,8 +66,8 @@
               s3 = 0x100002200, 32(s1) = c + 0x238c, 40(s1) = ~(c + 0x238c), 96(s1) = s7, 88(s1) = s8,
               112(s1) = s9; the fall-through to HEAD 0x86378.
 
-   THE FORM (the walk-form survey 2.1-2.3, 2.9; the closest released shape is lib/A/Prog/m_file_s_exit.v of
-   commit fdafeb0f1e0f and lib/B/Prog/mf_tail.v of a working branch): the state at
+   THE FORM (the walk-form survey 2.1-2.3, 2.9; the closest released shape is lib/A/Prog/m_file_s_exit.v
+    and lib/B/Prog/mf_tail.v of a working branch): the state at
    0x862ac is m_file_sd.v's mf_seed with cells = false (the cells are what this half writes), hnp = false, the two
    cells 64(s1) and 128(s1) the first half left as the caller's chunks slx, and the gen and the text's first byte as
    the extra values xs (atoms 52, 53). The mconf block's gen field and the text's byte are added as regions

@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v; 1219 of its 1297 lines of code are new or changed and 850 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102; pin sha256 1be0f53d96cb9d6c, unstripped twin bff8519b): S8a PIECE 1,
    the walk of ex_value's ENTRY, A' 0x832a4-0x833d8 with the report arms 0x83f34-0x83f40 (82 instructions), against the
-   piece interface lib/A/Prog/S8aIface.v (iface 67f35bb5f4b: ev_entry_spec, ev_at_ws, ev_mid, ev_regs), at
+   piece interface lib/A/Prog/S8aIface.v (iface: ev_entry_spec, ev_at_ws, ev_mid, ev_regs), at
    L := A_prog_listing, PA := PI_prog_A, PI := prh_img_A. Theorem ev_entry_holds.
-   BUILT ON: the kit of record a3bdeca3920 (texts: PRH_Base / PRH_FnEx / PRH_Img, fpre with `spZ regs + 64 <=
-   ly_stk_hi ly`, PrhRoomLive with RL_set_fs) plus the WHOLE engine set by path from origin/cold/c-omx-alloc-preset-s1b
-   7792959a2abb (a Theorem Labs lane's list, the internal file engine-blobs-s1b.txt plus the pair): journal lib/Reusable/YCbqG.v blob
+   BUILT ON: the kit of record (texts: PRH_Base / PRH_FnEx / PRH_Img, fpre with `spZ regs + 64 <=
+   ly_stk_hi ly`, PrhRoomLive with RL_set_fs) plus the WHOLE engine set by path
+    (a Theorem Labs lane's list, the internal file engine-blobs-s1b.txt plus the pair): journal lib/Reusable/YCbqG.v blob
    c3b5d0111037 (18-field AR_laws_x: field 17 alx_img, field 18 alx_layout_ok), YGcallcf.v a61c80afd3d4 (not in this
    file's closure), FCiface.v ac3796181712, YC80x ec48991942e4, YC1fPx 8549c953fad9, YCbqGcall 1baa92bd3c81, YGcallx
-   a4bb5c806d6d, YGcallSx 17d7d2cdbcd1. (First Qed on h-walk-ctrl's certified set 3a970962815, YCbqG 83da015952be:
-   cold/h-hpreset-7-s8a-entry-p1 7337b087a53.) Old-pin program listing (history): v4 by path from
-   cold/h-verbs-1-preset-proglisting 7c8ffeba5035 (PAImg_prog.v 0ece0b9f5a, Listing_prog.v cbba047f88, Img0.v
+   a4bb5c806d6d, YGcallSx 17d7d2cdbcd1. (First Qed on h-walk-ctrl's certified set, YCbqG 83da015952be:.)
+   Old-pin program listing (history): v4 by path
+    (PAImg_prog.v 0ece0b9f5a, Listing_prog.v cbba047f88, Img0.v
    84c90444e0), over image A (sha256 d83eb25dbf0df6d5). The record is touched through named projections only.
    #102 RELOCATION (words equal up to pc-relative fields, but the frame string loaded at +0xa8 / +0xc4 CHANGED
    between the pins): the walk moves to image A' BY SYMBOL on a Theorem Labs lane's #102 integration listing (Listing_prog.v 7ed1529926bd,
@@ -42,13 +43,13 @@
    zero_shadow_ranges) keeps the real stack's shadow 0 in every state (eve_zsh_byte at the state after the call).
    THE CUT (eve_at_ws_of): ev_mid's fourteen conjuncts (the 12th pairs the room keep with the hull use) and ev_regs
    as S8aIface states them, unchanged.
-   MEMNORM (S8a interface on walkkit old-pin 4951e104ca2e: ev_pre's and ev_mid's last conjunct
+   MEMNORM (S8a interface on walkkit old-pin: ev_pre's and ev_mid's last conjunct
    `YAkMemnorm.memnorm segs mem`): taken from ev_pre, kept across run 1 and run 2 by YC1fPx's `*_inv` runners
    (paj_run_x_inv / paj_run_to_x_inv at P := YAkMemnorm.memnorm SEGS, laws YSRrMemnorm.srr_inv_laws_memnorm_k) and
    across the frame_alloc_1 call by the callee's keep (YGcallMxmn.v aj_stack_malloc_at_xm), handed to the cut.
    HYPOTHESIS CHANGE: ASM1 strengthened to the xm form (adds the memnorm keep, YGcallMxmn.v:207
    astack_malloc_realizes_xm); supplier = the frame-class lane's stack_malloc1_contract_xm (lib/A/FCm01xm.v:32, Qed,
-   d05d97a36005, by path here). The kit's pj_cbytesR (PRH_Reader.v:107) carries its byte range
+    by path here). The kit's pj_cbytesR (PRH_Reader.v:107) carries its byte range
    `Forall (fun c => 0 < c < 256) s` first: eve_cstr passes it through.
    Every conclusion is srealizes through SRr. No released plain or UBSan file is Required and no lemma of one is
    cited.
@@ -133,8 +134,8 @@ Hypothesis OWNLOW : ARx_owned_low_law SEGS B ARx.
 (* OWNER h-hpreset-7's frame-class lane: the class-1 contract of __asan_stack_malloc_1 over ARx, in its xm form with the
    memnorm keep as the last post conjunct (YGcallMxmn.v:207 astack_malloc_realizes_xm = FCiface.v's
    astack_malloc_realizes_x plus the keep). HYPOTHESIS CHANGE: ASM1 strengthened to the xm form (adds the memnorm keep,
-   YGcallMxmn.v:207). DISCHARGE at image A: `FCm01xm.stack_malloc1_contract_xm B ARx I TB` (lib/A/FCm01xm.v:32, Qed,
-   origin/cold/h-hpreset-7-frameclass d05d97a36005), given I : fs_iface tfibsegs B ARx and TB : AF0m.TfibSyms B
+   YGcallMxmn.v:207). DISCHARGE at image A: `FCm01xm.stack_malloc1_contract_xm B ARx I TB` (lib/A/FCm01xm.v:32, Qed),
+   given I : fs_iface tfibsegs B ARx and TB : AF0m.TfibSyms B
    (tfibsegs = Img0.rsegs = pa_segs, by conversion). *)
 Hypothesis ASM1 : YGcallMxmn.astack_malloc_realizes_xm SEGS B ARx 1.
 (* OWNER h-mani-a8 (the cf instance): stack_malloc's model progress and post in ARx form (YGcallSx.v's SMX). *)
@@ -242,7 +243,7 @@ destruct (mbyte SEGS (mrestrict (w_H W) mem) x) as [b|] eqn:Eb; cbn [option_map]
 injection H as H. f_equal. apply bv_eq. rewrite Z_to_bv_unsigned, H. reflexivity.
 Qed.
 (* the shadow byte of a real-stack granule is 0: the head of zero_shadow_ranges (YG0n.v:188) at a byte.
-   (This is `alx_zshadow_byte` of YCbqG at walks-new 9052c7a7d74; on this base it is derived from alx_zshadow,
+   (This is `alx_zshadow_byte` of YCbqG at walks-new; on this base it is derived from alx_zshadow,
    which needs the 16 bytes at x to be inside the stack range.) *)
 Lemma eve_zsh_byte : forall ly S Hp (W : world SEGS) mem md x,
   ARx ly S Hp W mem md -> ly_stk_lo ly <= x -> x + 16 <= ly_stk_hi ly ->
@@ -264,7 +265,7 @@ apply HZ. split.
   pose proof (Z.div_le_mono (x + 16 - ly_stk_lo ly) (ly_stk_hi ly - ly_stk_lo ly) 8 ltac:(lia) ltac:(lia)). lia.
 Qed.
 (* the ledger across a non-allocator memory change: the seven statics and every harness head kept. COPIED SHAPE:
-   lib/A/PRH_Keep.v prh_ledger_keep / prh_ledger_keep_av (WalkS8b, cold/h-hpreset-7-walk-S8b b8cc8ce5f57), restated
+   lib/A/PRH_Keep.v prh_ledger_keep / prh_ledger_keep_av (WalkS8b), restated
    here as PRH_Keep.v is not on this base; widths prh_img_A's pi_gz_* (PRH_Img.v:147-159): 8, 8, 8, 8, 1 (g_ran_out),
    8 (g_most), 1 (g_own_ran_out). #102: the kit's prh_glob carries g_most / g_own_ran_out (PRH_Base.v 3004a98fe2d9
    prh_most / prh_own), so the keep carries the two cells as it carries the five. *)
@@ -278,7 +279,7 @@ Lemma eve_ledger_keep : forall ly S Hp (W : world SEGS) mem ly' S' Hp' (W' : wor
   prh_ledger (PI := prh_img_A) B ly' S' Hp' W' mem' Lam peak cnt fail ran most own.
 Proof.
 intros ly S Hp W mem ly' S' Hp' W' mem' Lam peak cnt fail ran most own LG Hinc -> Hfr.
-(* the ledger's facts by the named projections (PRH_Base.v Section ledger_proj, walk kit a941cee76c3f), never by
+(* the ledger's facts by the named projections (PRH_Base.v Section ledger_proj, walk kit), never by
    position: prh_glob grows on the #102 pins *)
 pose proof (prh_ledger_live _ _ _ _ _ _ _ _ _ _ _ _ _ LG) as G1.
 pose proof (prh_ledger_peak _ _ _ _ _ _ _ _ _ _ _ _ _ LG) as G2.
@@ -321,8 +322,8 @@ intros regs regs' z r H Hc Hz. pose proof (H z Hc) as HH.
 rewrite <- Hz, Z_to_bv_bv_unsigned in HH. exact HH.
 Qed.
 
-(* ---- byte transports (COPIED from h-walk-ctrl's S8aP7a.v p7a_vm / p7a_garr8 / p7a_wr_present / p7a_wr_av,
-   origin/cold/h-walk-ctrl-S8a-items-kit 0da1b512183 :153-206, restated at this file's names) ---- *)
+(* ---- byte transports (COPIED from h-walk-ctrl's S8aP7a.v p7a_vm / p7a_garr8 / p7a_wr_present / p7a_wr_av,:
+   153-206, restated at this file's names) ---- *)
 Lemma eve_vm : forall (m m' : word -> option byte) a n v,
   (forall z, a <= z < a + Z.of_nat n -> mbyte SEGS m' z = mbyte SEGS m z) ->
   val_mem SEGS m a n v -> val_mem SEGS m' a n v.
@@ -362,8 +363,8 @@ exact (apresent_transfer SEGS H H' m m' z Hz Hni E (eve_wr_present H m z Hz Hni 
 Qed.
 
 (* ---- the reader's tree is kept when its node bytes and its lblk blocks keep their value and their writability
-   (COPIED from S8aP7a.v p7a_P2 / p7a_cstr / p7a_hdr / p7a_nodeP / p7a_items_frame / p7a_mems_frame / p7a_nodeR_frame,
-   0da1b512183 :210-332) ---- *)
+   (COPIED from S8aP7a.v p7a_P2 / p7a_cstr / p7a_hdr / p7a_nodeP / p7a_items_frame / p7a_mems_frame / p7a_nodeR_frame,:
+   210-332) ---- *)
 Definition eve_P2 (m m' : word -> option byte) (z : Z) : Prop :=
   mbyte SEGS m' z = mbyte SEGS m z /\ (writable_at SEGS m z -> writable_at SEGS m' z).
 Lemma eve_cstr : forall (m m' : word -> option byte) lblk a k s,
@@ -486,7 +487,7 @@ Qed.
 
 (* ---- shadow facts at a state of the walk (COPIED from h-walk-ctrl's S8aItems.v ev_hp_apart / ev_inblk_shadow_FIX /
    ev_lam_shadow / ev_hull_sub / ev_lam_hull :1025-1116 and S8aP7a.v p7a_inblk_hull :439-452 and YGcallHull.v
-   shadow_granule_64 / stack_hull_vis_x_rng :35-59, 0da1b512183; field 14 alx_hshadow at hl := cf_head) ---- *)
+   shadow_granule_64 / stack_hull_vis_x_rng :35-59; field 14 alx_hshadow at hl := cf_head) ---- *)
 Lemma eve_hull_sub : forall (rd : Z -> option Z) p mm d n, shadow_hull_vis rd p mm -> p <= d -> d + n <= p + mm ->
   0 < n -> shadow_hull_vis rd d n.
 Proof.
@@ -643,7 +644,7 @@ exact (aview_some_of_apresent SEGS _ _ _ Hps).
 Qed.
 
 (* ---- alloc.c's statics (PST) and the class-1 frame entry, from TS, by computation (COPIED SHAPE: h-hpreset-7's
-   PwPstUnowned.v pu_off_b / pu_off_sound / pst_off_owned_A, origin/cold/h-hpreset-7-pst-unowned 1faacee1304) ---- *)
+   PwPstUnowned.v pu_off_b / pu_off_sound / pst_off_owned_A) ---- *)
 Definition eve_off_b (P O : list (Z * Z)) : bool :=
   forallb (fun r => forallb (fun o => (fst r + snd r <=? fst o) || (fst o + snd o <=? fst r)) O) P.
 Lemma eve_off_sound : forall P O a, eve_off_b P O = true -> Exists (in_zr a) P -> ~ Exists (in_zr a) O.
@@ -677,8 +678,8 @@ Qed.
 Lemma eve_sm1_pc : SIGMA AS___asan_stack_malloc_1 = pc_stack_malloc (as_code B) 1.
 Proof. rewrite (AF0m.ts_code _ TS). vm_compute. reflexivity. Qed.
 
-(* ---- small transports (COPIED from S8aP7a.v p7a_garr_av / p7a_rdword / p7a_cur_keep / p7a_fs8 / p7a_sh_in,
-   0da1b512183 :178-183, :408-436, :1490-1500) ---- *)
+(* ---- small transports (COPIED from S8aP7a.v p7a_garr_av / p7a_rdword / p7a_cur_keep / p7a_fs8 / p7a_sh_in,:
+   178-183, :408-436, :1490-1500) ---- *)
 Lemma eve_garr_av : forall H H' (m m' : word -> option byte) a l,
   (forall z, a <= z < a + Z.of_nat (length l) -> aview SEGS H' m' z = aview SEGS H m z) ->
   garr8 SEGS (mrestrict H m) a l -> garr8 SEGS (mrestrict H' m') a l.

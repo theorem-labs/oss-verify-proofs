@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (commit_node3 takes the YK07.init_sp_ok premise that Linux's placement reads and passes it to mmap_fixedin_check; the MAP_FIXED overflow check unfolded in mmap_noreplace_none_occ_check; each mmap node proves its sys_rob part by sys_rob_memfree; RomBase import). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK0d YK0f YK0g YK0
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YG0h YG0u.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05 YK07.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YG0b.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomBase.
 Import ListNotations.
 Import AX2. Import AX2S. Import APG. Import APSG.
 Unset Lia Cache. Unset Nia Cache.
@@ -72,6 +74,8 @@ getr regs 10 = addr -> bv_unsigned addr mod page_size = 0 -> 0 < bv_unsigned add
 getr regs 11 = Z_to_bv 64 len -> 0 < len -> bv_unsigned addr + page_round_up_Z len <= alloc_top (m_vmmaps md) ->
 getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = flags -> mmap_flags_core flags = 50 ->
 getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+(* 08b1429: Linux's placement reads the stack top (YA05.mmap_fixedin_check) *)
+YK07.init_sp_ok (m_vmmaps md) ->
 let n := Z_to_bv 64 (page_round_up_Z len) in
 (if hole then region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) addr n = true
 else region_free (vm_reserved (m_vmmaps md)) addr n = true /\ map_contains (vm_maps (m_vmmaps md)) addr n = true) ->
@@ -87,7 +91,7 @@ m_halted md_i = None /\ same_io md md_i /\
 \/ (bit i = 2 /\ hole = false /\
 nx i = mkCfg (mkst (regupd regs 10 (errno_ret ENOMEM)) (v_addi pc 4) (unfill addr n mem) rom) md_i /\ md_i = fixedin_destroyed_model addr n md)).
 Proof.
-intros hole regs pc mem rom md flags addr len Hh H17 H10 Hal Hpos H11 Hlen Hce H12 H13 Hcore H14 H15 n Hplace Hbud.
+intros hole regs pc mem rom md flags addr len Hh H17 H10 Hal Hpos H11 Hlen Hce H12 H13 Hcore H14 H15 Hisp n Hplace Hbud.
 pose proof (alloc_top_room (m_vmmaps md)) as Hcv. unfold two_pow_64, stack_max_size in Hcv. pose proof (u64_range addr) as Har.
 assert (Hno : bv_unsigned (getr regs 17) = 222) by (rewrite H17; apply u64_lit; lia).
 assert (Hlen' : len < 2 ^ 64) by (pose proof (page_round_up_Z_bounds len ltac:(lia)); lia).
@@ -133,6 +137,7 @@ destruct (errno_ret_in mmap_errnos r); [destruct zs; discriminate|].
 destruct (bv_eqb r addr && listNN_eqb zs [(addr, n)] && true)%bool; discriminate.
 * intros [[] | []]; cbn [ms']; [exact Hh | rewrite with_mmap_backing_halted; unfold mmap_model; rewrite with_vmmaps_halted; exact Hh].
 * intros [[] | []]; reflexivity.
+* exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_222)).
 + intros [[] | []]; cbn [effs ms'].
 * exists md. split; [exact Hh|]. split; [apply same_io_refl|]. left. split; [reflexivity|]. split; [| reflexivity].
 subst ms. rewrite RT. reflexivity.
@@ -141,7 +146,7 @@ split; [exact (same_io_grant true flags addr n md)|]. right; left. split; [refle
 subst ms. rewrite ZF. reflexivity.
 -
 destruct Hplace as [Hrf Hmc].
-pose proof (fun eff => mmap_fixedin_check segs ms (getr regs 17) md eff 3 flags addr len Hno (or_intror eq_refl) Hcore G0 Hal Hpos G1 Hlen G2 G3 G4 G5 Hce Hrf Hmc (fun _ => Hbud)) as Hchk.
+pose proof (fun eff => mmap_fixedin_check segs ms (getr regs 17) md eff 3 flags addr len Hno (or_intror eq_refl) Hcore G0 Hal Hpos G1 Hlen G2 G3 G4 G5 Hce Hisp Hrf Hmc (fun _ => Hbud)) as Hchk.
 cbv zeta in Hchk. fold n in Hchk.
 pose (effs := fun i : three => match i with
 | T1 => mkEffectU (errno_ret ENOMEM) [] [] [] [] []
@@ -176,6 +181,7 @@ cbn [Z.eqb] in Hc. destruct us; [|discriminate]. destruct (bv_eqb r addr && list
 * intros [| |]; cbn [ms']; [exact Hh | unfold fixedin_ok_model; rewrite with_mmap_replacement_halted', with_vmmaps_halted; exact Hh
 | rewrite destroyed_halted; exact Hh].
 * intros [| |]; reflexivity.
+* exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_222)).
 + intros [| |]; cbn [effs ms'].
 * exists md. split; [exact Hh|]. split; [apply same_io_refl|]. left. split; [reflexivity|]. split; [| reflexivity].
 subst ms. rewrite RT. reflexivity.
@@ -291,7 +297,7 @@ assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; li
 assert (E1 : w_is0 (ms_gpr ms 1) = false).
 { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E.
 rewrite Hu1 in E. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E. lia. }
-rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap.
+rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
 rewrite E1, H2, H3, H5, H0, Hu1, mmap_off_aligned_b_0, Hanon, Gm, Gn, Gfn, Gfr, Gnn. cbn [negb]. cbv beta iota zeta.
 rewrite G1, G2, G3, G4. fold nZ. fold n. rewrite Hrf.
 destruct eff as [r ws zs us cs ci]. destruct ws; [|reflexivity].
@@ -363,6 +369,7 @@ destruct (errno_ret_in mmap_errnos r); [destruct us; discriminate|].
 destruct (bv_eqb r addr && listNN_eqb us [(addr, n)])%bool; discriminate.
 * intros [[] | []]; cbn [ms']; [exact Hh | rewrite restore_halted; exact Hh].
 * intros [[] | []]; reflexivity.
+* exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_222)).
 + intros [[] | []]; cbn [effs ms'].
 * exists md. split; [exact Hh|]. split; [apply same_io_refl|]. left. split; [reflexivity|]. split; [reflexivity|].
 exists ENOMEM. split; [left; reflexivity|]. subst ms. rewrite RT. reflexivity.
@@ -394,6 +401,7 @@ destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct us; [|discr
 destruct (errno_ret_in mmap_errnos r || bv_eqb r (errno_ret EEXIST))%bool; discriminate.
 * intros _. exact Hh.
 * intros [[] | []]; reflexivity.
+* exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_222)).
 + intros [[] | []]; cbn [effs]; exists md; (split; [exact Hh|]); (split; [apply same_io_refl|]); left; (split; [reflexivity|]); (split; [reflexivity|]).
 * exists ENOMEM. split; [left; reflexivity|]. subst ms. rewrite RT. reflexivity.
 * exists EEXIST. split; [right; split; reflexivity|]. subst ms. rewrite RT. reflexivity.

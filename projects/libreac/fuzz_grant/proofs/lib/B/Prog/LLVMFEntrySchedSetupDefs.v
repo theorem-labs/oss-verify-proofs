@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedSetupDefs), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySchedSetupDefs.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan) twin of
-   lib/A/Prog/GrantEntrySchedSetupDefs.v, ported from a working branch 7c8c67da870 (blob
+   lib/A/Prog/GrantEntrySchedSetupDefs.v, ported from a working branch (blob
    c6145aadb59): image A's shape over image B's listing, with image B's own cut pcs
    (0x81944 .. 0x81bb0), its register file (s3 the frame's shadow, s6 the address of
    `ch`, s7 the bytes left, s4 the table), its spill slots (48 the input cursor, 144 the
@@ -642,7 +643,7 @@ Lemma achain_top : forall ly ly' rd sp v ch, ly_top ly' = ly_top ly -> achain ly
 Proof. intros ly ly' rd sp v ch E H. unfold achain in *. rewrite E. exact H. Qed.
 
 (* ======================= LOCAL BLOCK: image A's GrantEntrySetDefs.v lemmas ==========================
-   The lemmas of lib/A/Prog/GrantEntrySetDefs.v (a working branch 7c8c67da870, blob 7818e2549e1) that this
+   The lemmas of lib/A/Prog/GrantEntrySetDefs.v (a working branch, blob 7818e2549e1) that this
    phase uses, copied here with image A's names and statements. The image-B twin of that file
    (lib/B/Prog/LLVMFEntrySetDefs.v) is in this tree; this file does not Require it,
    so this block stays. *)

@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0z.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0z.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0z.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_frame/lib/U/Reusable/YL0z.v; 101 of its 248 lines of code are new or changed and 57 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0z_cfw.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0z_cfw.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ProcInput spine in the YL0z, YL0x and YL0y cut-free layers; the read loop's environment without the a0 and path variables); internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -85,8 +86,9 @@ Hypothesis RIres : forall pl j T A, RI pl j T A -> exists b, res_ok_slots A b.
 Hypothesis MRC : forall fx' : FPState, @malloc_realizes_cf fx' rc src0_msyms (aa_MR API).
 Hypothesis LIMLAW : forall L A mem md, aa_MR API L A mem md -> SRC_LIM_MIN <= vm_limit (m_vmmaps md).
 Hypothesis FRM : frm_zero fp_csr.
-Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+(* As Reusable/YL0z.v: [a0] and [path] are no longer variables at 727298f3. *)
+Variables (sp tid : word) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G.
 Hypothesis Hvfs : valid_fs (in_fs inp).
 Hypothesis Hsp47 : bv_unsigned sp <= 2 ^ 47.
 Lemma run_from_QX_cf : forall cap0 L' A' b0 E ms md (K : dleaf * astate -> TSet),
@@ -219,7 +221,7 @@ exact (src0_overrun_tail_cf API AX FCF TBL inp data cap0 L' A' b0 Hub Hcap0 HW H
 Qed.
 Theorem src0_postX_cf : forall K : dleaf * astate -> TSet,
 (forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
-POST_cf API sp tid a0 path inp data rnd (run_RI RI (payload data)) K.
+POST_cf API sp tid inp data rnd (run_RI RI (payload data)) K.
 Proof using AX GIL GI0 LIBXc FCF TBL RIres MRC LIMLAW FRM HSA0 Hvfs Hsp47.
 intros K HK. unfold POST_cf. cbv zeta beta.
 intros cap' bufp' A' Lc' J' g' len0 w ms' md' HLc Hcap Hlen0 Hub HW HB Hid HDI HRES HS Hw HL0 HMR Hmd0 HD HJ HG HL.
@@ -238,7 +240,7 @@ apply u64_of_Z. lia.
 - rewrite ew_ewset_other by lia. unfold E_lp. rewrite ew_ewset_other, ew_ewset_same by lia.
 apply u64_of_Z. unfold dlen in HLc. lia. }
 assert (HAN : hdr_anch E).
-{ intros G HGa. subst E. apply (anch_lp sp tid a0 path inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
+{ intros G HGa. subst E. apply (anch_lp sp tid inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
 apply (ext29_ewset data); [lia | apply ext29_refl]. }
 cdrv_run_with src0tbl_ok HS HF.
 lazymatch type of HS with st_ok _ _ _ ?msx => change (st_ok src0segs E ss_h0 msx) in HS end.

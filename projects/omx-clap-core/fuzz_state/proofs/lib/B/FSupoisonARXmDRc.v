@@ -1,6 +1,6 @@
 (* fuzz_state image B: DIfaceR at the any-user-poison instance ARX_ARU with no callee-spec premise: lib/B/FSReallocAG.v's
-   H_difR_U closed (a Theorem Labs lane, image-B twin of a Theorem Labs lane's lib/A/FSupoisonARXmDRc.v, a working branch
-   4a4f6558b70, 2026-10-29).  The same statements, names and proofs as the A file, over image B's modules.
+   H_difR_U closed (a Theorem Labs lane, image-B twin of a Theorem Labs lane's lib/A/FSupoisonARXmDRc.v, a working branch,
+   2026-10-29).  The same statements, names and proofs as the A file, over image B's modules.
 
    rule 24: no function proved (kind: instance lift - lib/B/FSupoisonARXmDR.fs_difR_U fed a Theorem Labs lane's U walks).
 
@@ -15,8 +15,8 @@
      tfib_cdealloc_specRU          FSupoisonAllocFcd.tfib_cdealloc_okU; its premise ly_tsd ly = TFIB_TSD from the AR of
                                    the pre (am_tsd) and TfibSyms (ts_tsd), as FSupoisonAllocF.v:47 does.
    Each walk's spec is the FSupoisonAllocFK spec; FSupoisonARXmDR's U-raw specs are those, by conversion, now that image
-   B's FK leaves carry the raw conjunct (a working branch f484dbb033e, which merges
-   a Theorem Labs lane's refill raw conjunct a working branch 7a8987cb974).  AR_laws is YG0q.AR_laws_ok at
+   B's FK leaves carry the raw conjunct (a working branch, which merges
+   a Theorem Labs lane's refill raw conjunct a working branch).  AR_laws is YG0q.AR_laws_ok at
    tfibsegs.  No as_dhash premise: no walk here reads the depot.
 
    No Axiom, no Admitted. *)

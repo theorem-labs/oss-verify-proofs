@@ -8,11 +8,12 @@
    fs_iface field (image-side forms in lib/A/FCxA.v). Class-3 constants: hint slot 24, FS_N 2048, flags at 32768,
    frame F + 0x309000 + 512 pos, 64 shadow bytes, flag pointer at frame + 504. The image top comes from AF0x.TFIB_IMG_END
    (preset's 0x600000), never from a typed literal. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Scope (c-asan, 2026-10-28 23:34Z): this is the fs_iface form, the statement of record for units whose allocator
    invariant is NOT cgif's AR (preset's ARcf, fuzz_state's ARU) and for classes with no released cgif walk. A unit
    whose invariant IS cgif's AR should take the released AR-form walk (cgif_file A/AF0s.v, AF0u.v and their kin,
    relocated) and, if it needs this shape, obtain it through FCiface.fs_iface_AR plus
-   FCiface.astack_malloc_realizes_of_x (FCiface.v:168-200, Qed), which yields the same fact. *)
+   FCiface.astack_malloc_realizes_of_x (FCiface.v:169-201, Qed), which yields the same fact. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

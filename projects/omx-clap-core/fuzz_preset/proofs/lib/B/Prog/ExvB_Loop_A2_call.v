@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL piece A2 (the key path): the three CALLS the piece
    makes from a cut-like state with EXBs (sp = s1), each in one lemma: ex_ws (B 0x83b28 / 0x83c28, the tex_ws_specX
    = EXV_HYP's exv_ws, YCbqGcallW.v aj_call_xW at e1 = exv_sp E + e_d E - exv_s1 E), ex_string (B 0x83b74, eh_string,
@@ -8,7 +9,7 @@
    the piece reads later (ex_value's frame, the cursor cells outside the callee's footprint, the root node of the tree)
    unchanged. Also the facts the key compare reads at a state with EXB: the parent node (a2_node), the key slot and
    string (a2_key, from ExvB_Loop_kitL.v exvl_node_key), the scratch block (a2_scr).
-   Old-pin kit 4f18c75d4900 rebind: fpre's `raZ regs < alloc_ceiling` from the jal's return pc (a listing literal
+   Old-pin kit rebind: fpre's `raZ regs < alloc_ceiling` from the jal's return pc (a listing literal
    below 2 ^ 32 <= CEIL_MIN); the program callees' m-form posts (S' = S: exv_room_refl; their memnorm keep composed
    with EXB's exv_rm keep) and strcmp's keep (aj_strcmp_at_xrom's last conjunct) feed KIT_CALLs / KIT_RUNs.
    Rule 24: proves no function (kind: segment lemma helper).

@@ -4,7 +4,7 @@
    aview_ext_stmt / aview_some_stmt at YG0n.aview segs (lib/Reusable/YG0n.v:18, cgif's YG0n.v:17): one unfolding
    each, the same steps as YCbq.v:148 aview_eq_of / :135 aview_some_of_apresent.
    bridge_evtF_stmt at YA0n.SRr rsegs: a Theorem Labs lane's YA0nR.SRr_fevt (lib/Reusable/YA0nR.v + YK04R.v, copied by path
-   from a working branch eea54967566 with the module path changed), after reading decode's footprint run
+   from a working branch with the module path changed), after reading decode's footprint run
    ExecF.mstepsF as YK04R.fsteps (the same step predicate: ExecF.mstepF's body is YK04R.fstep's) and with
    wx_segs_nowrap rsegs computed (as image A's A/DecodeCallocSeed.v:40 decode_wx, here at image B's segments). *)
 From Stdlib Require Import ZArith List.

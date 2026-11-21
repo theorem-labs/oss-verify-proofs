@@ -1,11 +1,11 @@
-(* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3eCap.v at
-   1318828167d3 (sha256 ca64a9d622c0; internal record), WHOLE, row G-BLS-drain:
+(* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3eCap.v
+    (sha256 ca64a9d622c0; internal record), WHOLE, row G-BLS-drain:
    the same definitions and lemmas under the same names over
    lib/B's records, at LS := lib/B/ReplyB3LS3c.v fr_LS3c B CALL_ROOM_B /\ lib/B/ReplyLSBo.v fr_OUT /\
    lib/B/ReplyB3LS3e.v fr_ENT B, MMAX := fr_MMAX.  proves no function (kind: invariant lemma).
    CAPOUT_MAX_OUT_MAX4 (A :92, by reflexivity) holds on B because B's out bound is 133,953,540: lib/B/ReplyLSBo.v
-   OUT_MAX4 and lib/B/YCfn_cf.v OUT_MAX, the B twin of a Theorem Labs lane's fix (be3d698ebfa, on a Theorem Labs lane's 8963bbb77ad4 and
-   on k3's a6411d87d214, both under this tree).  It does NOT hold on the old B top e43cf0c7bef, whose OUT_MAX is
+   OUT_MAX4 and lib/B/YCfn_cf.v OUT_MAX, the B twin of a Theorem Labs lane's fix (on a Theorem Labs lane's and
+   on k3, both under this tree).  It does NOT hold on the old B top, whose OUT_MAX is
    33,554,430; ls3e_cap_lt_MMAX and fr_LS3c_gone_rig_c4_e read it.
    A -> B SWAPS (as lib/B/ReplyB3LS3Arms.v made them): lib/A AB1v -> lib/B YB1v; Reusable YE01 + lib/A AE2k -> lib/B
    YE01 YE2k; lib/A ACfn -> lib/B YCfn (Required only); lib/A W_* -> lib/B W_* (W_rep's arm, W_frame's
@@ -31,8 +31,8 @@
      XB cx m S = bsum (fr_hblks (c_W cx) (c_mem cx)),
    the relay table it was handed (ATABLE when g_src is not 0) plus the g_out buffer it was handed (g_capout).
 
-   THE ENTRY CLAUSE AS IT LANDED on W8's room head 3250b98efc5 (3250b98efc532f6fa3a60ea8ec1796ce187cbf07):
-   lib/A/W_LLVMFuzzerTestOneInput_cut.v:181 `Definition CAPOUT_MAX : Z := 4 * (OPS_MAX - 1) * 65535.`, and LAST in
+   THE ENTRY CLAUSE AS IT LANDED on W8's room head:
+   lib/A/W_LLVMFuzzerTestOneInput_cut.v:182 `Definition CAPOUT_MAX : Z := 4 * (OPS_MAX - 1) * 65535.`, and LAST in
    fr_lib_pre_cf (:213) and in its post (:233), at the call's world and memory:
      exists c, val_mem segs (arm W mem) (rg_capout fr_RG) 8 c /\ c <= CAPOUT_MAX
    There segs is _cut.v:140 `Local Notation segs := tfibsegs` (Section cf) and arm is W_rep.v:71
@@ -48,7 +48,7 @@
 
    THE FIX, one word: give c its sign, `0 <= c <= CAPOUT_MAX` (ent_capout_ok0).  aout_at already carries it for the
    value it reads at the same address (W_rep.v:191-192: cap = 0, or 0 < cap), so W8 can state it from the same
-   source.  With it the bridge holds: W_frame.v:192 rdword_of_val_mem turns the val_mem read into fr_hblks' rdword
+   source.  With it the bridge holds: W_frame.v:193 rdword_of_val_mem turns the val_mem read into fr_hblks' rdword
    read (it needs 0 <= c < 2 ^ 64, which the fixed clause gives), and ent_hblks_bsum bounds the entry's harness
    bytes by ATABLE + CAPOUT_MAX.
 
@@ -109,18 +109,18 @@ Open Scope Z_scope.
 
 Local Notation MMAX := fr_MMAX.
 
-(* W8's bound, 3250b98efc5 lib/A/W_LLVMFuzzerTestOneInput_cut.v:181, word for word (OPS_MAX: lib/B's cut, 512) *)
+(* W8's bound, lib/A/W_LLVMFuzzerTestOneInput_cut.v:182, word for word (OPS_MAX: lib/B's cut, 512) *)
 Definition CAPOUT_MAX : Z := 4 * (OPS_MAX - 1) * 65535.
 Lemma CAPOUT_MAX_OUT_MAX4 : CAPOUT_MAX = OUT_MAX4.
 Proof. reflexivity. Qed.
 Lemma CAPOUT_MAX_val : CAPOUT_MAX = 133953540.
 Proof. reflexivity. Qed.
 
-(* the cut's Section cf context (A's 3250b98efc5 _cut.v:112-113), which arm's implicit arguments read *)
+(* the cut's Section cf context (A's _cut.v:112-113), which arm's implicit arguments read *)
 Section eclause.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* THE CLAUSE AS IT LANDED on A, 3250b98efc5 _cut.v:213 (fr_lib_pre_cf, last) and :233 (its post, last), word for
+(* THE CLAUSE AS IT LANDED on A, _cut.v:213 (fr_lib_pre_cf, last) and :233 (its post, last), word for
    word with segs := tfibsegs (lib/B/YB1v.v) and arm := lib/B/W_rep.v's (its implicit arguments: this Section's fx /
    rc and the image instance PB_fr) *)
 Definition ent_capout_ok (W : world tfibsegs) (mem : word -> option byte) : Prop :=

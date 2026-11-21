@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL piece A2 (the key path): the straight runs of the
    piece over B_prog_tbl between its calls (ExvB_Loop_A2_ss.v's symbolic states), each seated from EXBs and the
    piece's state facts, and the exits to the cuts LR (ExvB_Loop_Stmt.v CUT_LR) and CX (ExvB_Stmt.v CUT_CX).
-   Old-pin kit 4f18c75d4900 rebind: every run is ExvB_Loop_exw.v's SRr_run_to_tok_AJx_inv at P := exvl_P (e_mem E)
+   Old-pin kit rebind: every run is ExvB_Loop_exw.v's SRr_run_to_tok_AJx_inv at P := exvl_P (e_mem E)
    (EXB's exv_rm keep), so a run's post a2_runpost carries the keep at its end memory, for KIT_RUNs.
    Rule 24: proves no function (kind: segment lemma).
    Numerals: 8, 16, 24, 32, 40, 56 (LENGTH: struct ex / node fields), 72, 80, 120, 128, 136, 144, 152 (LENGTH: B's

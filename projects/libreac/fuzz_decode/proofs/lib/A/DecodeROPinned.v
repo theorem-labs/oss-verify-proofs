@@ -2,12 +2,12 @@
    Rule 24: no function is proved here. Kind: start-up facts; a fact about the image and its asyms record, proved by
    computation.
    - ro_img_word / ro_owned_pinned: verbatim from libreac/fuzz_boxreg lib/A/Rt/StrncmpView.v:33-49 and :101 (blob
-     1071839c23a3, a working branch df8841114cce), module paths changed only. They are image-generic (segs, B
+     1071839c23a3, a working branch), module paths changed only. They are image-generic (segs, B
      are parameters). Its outer Section b (the FPState / RunCeil context) is left out: neither definition uses it.
      Every runtime-owned byte of a segment without write permission lies in a cell of as_const B ly at a constant
      address whose constant value is the image's little-endian word there.
    - img_word, pinb, zbytes, ro_pinned_chk, their soundness lemmas and the gate: from boxreg lib/A/AF0mCheck.v:36-46,
-     :76-114, :135-140 (blob 4c631199f27d), with box_segs -> tfibsegs (lib/A/AB1v.v:13), box_ro_ranges ->
+     :76-114, :135-140 (blob 4c631199f27d), with box_segs -> tfibsegs (lib/A/AB1v.v:14), box_ro_ranges ->
      dec_ro_ranges, box_ro_pinned -> dec_ro_pinned, box_ro_gate -> dec_ro_gate.
    - dec_ro_ranges: the two non-writable PT_LOADs of fuzz_decode.asan (sha256 5973b76807d8...) by p_filesz,
      [0x10000, 0x2f008) and [0x30008, 0x977a8) (a Theorem Labs lane's decode/OWNED-CELLS.md section 7). No step trusts them:

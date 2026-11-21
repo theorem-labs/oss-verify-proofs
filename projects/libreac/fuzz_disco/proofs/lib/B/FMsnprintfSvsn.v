@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fm.asan's __interceptor_vsnprintf 0x458a0 over the GXA-route contract
@@ -14,13 +14,14 @@
    s1 = s3 = size, s2 = str, a0 = res; run r_fEt), whose check WRITE_RANGE (str, size) is FMsnprintfGwrcT.v's
    vsn_wr_check_srrUT; there sn_len (n - 1) T = n. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Rt/FMsnprintfSvsni.v, with its module paths and module names changed; 737 of its 804 lines of code are new or changed and 864 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvsn.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvsn.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x. *)
 (* musl vsnprintf 0x91f0c (fm.asan) over the shared contracts in their GXA-route form: FMsnprintfSx's
    sh_avsnprintf_realizesUa (and its interceptor twin) from __wrap_memset's aintrin_realizesU and the vfprintf
    interceptor's sh_avfprintf_icpt_realizesUx, proved in the kit's vocabulary (FMsnprintfSk.v sn_walkA,
    sn_contractA, vf_applyX) and generic in the format family FF and in the two windows: the walk's own window K and
    the window Kvi of the vfprintf interceptor it calls, with ESTACK <= Kvi and 0x130 + Kvi <= K (its frame is 0x130).
-   The walk is the one proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsn.v (a working branch 3e35620c52e) already proves: entry at the caller's sp, memset of the 232-byte
+   The walk is the one proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsn.v (a working branch) already proves: entry at the caller's sp, memset of the 232-byte
    FILE through __wrap_memset 0x51a60 (ra 0x91f70), the FILE fields, the cookie {d, n - 1}, *d = 0, __wrap_vfprintf
    0x41308 = j 0x457ec (ra 0x91fac) with the FILE at sp - 0x130, the canary check and the epilogue.
    Its symbolic runs are Gvsn's, recomputed twice over: the entry fact on n is the shared contract's 1 <= n < 2 ^ 31

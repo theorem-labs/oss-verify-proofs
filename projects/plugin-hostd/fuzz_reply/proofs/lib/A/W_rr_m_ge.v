@@ -4,10 +4,10 @@
    (lib/A/W_rr_match_cx.v hop_ge_stmt): RRG i 0x83f68 -> ld a0, g_src; add a0, a0, s8; jal gestures_end 0x83f70
    (GSE at BASE + AF_fr_gestures_end, ra 0x83f74) -> RRF i 0x83f74.
 
-   rule 24: proves function relay_remove MATCH hop 2 (kind: segment lemma of the W6 walk, PORTED from 2ad36763b22
+   rule 24: proves function relay_remove MATCH hop 2 (kind: segment lemma of the W6 walk, PORTED from
    relay_remove_p_c_ge_asm.v rrA_stage_c_ge / relay_remove_p_c_ge.v; lookup + CONFIRM in context).
 
-   Where each part comes from (the retired lane form: commit 2ad36763b22, lib/A/Prog/relay_remove_p_c_ge*.v):
+   Where each part comes from (the retired lane form:, lib/A/Prog/relay_remove_p_c_ge*.v):
    - rgl_live_*: the lane's liveness algebra rrA_ge_no_al / rrA_ge_live_or / rrA_ge_off_br / rrA_live_eq
      (p_c_ge.v:626-876), restated over W_contract.v's ctl (sl_live / sl_ctl / dr_ctl).
    - rgl_sends: new (gse_run, which threads g_nout, against rr_found's sl_sends).
@@ -41,6 +41,7 @@
    gestures_end's cost at the counting meter MT_rk as the key run's plus one free; rmtrF charges two frees), its count
    premise is RRG's gse_pk fact; RRF's room is gse_post_x's rp_RM, RRF's count fact cnt_ok follows from RRG's gse_pk
    fact (rgl_cnt_ge: the blocks lose gse_blks and the g_out block, at most one, is replaced). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -744,7 +745,7 @@ intros a Ha. apply PSTG. unfold rr_gcells. destruct Ha as [Ha | [Ha | [Ha | Ha]]
 - do 3 apply Exists_cons_tl. apply Exists_cons_hd. cbn [fst snd]. lia.
 - do 4 apply Exists_cons_tl. apply Exists_cons_hd. cbn [fst snd]. lia.
 Qed.
-(* the room round's count after gestures_end (the step of commit 67327a6003d, W_gse_cut.v gse_cnt_at): the blocks
+(* the room round's count after gestures_end (the step of W_gse_cut.v gse_cnt_at): the blocks
    lose gse_blks and the g_out block (at most one, aout_blks) is replaced, so a live P-count rises by at most one,
    under gse_pk's 4 *)
 Lemma rgl_cnt_ge : forall TB (G : list (Z * Z)) cap out cap' out' R l l',

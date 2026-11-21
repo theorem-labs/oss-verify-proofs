@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's four new descriptor kinds). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import base list.
@@ -49,7 +50,7 @@ Proof.
     { destruct (OR _ _ H) as (moB' & H' & U). exists moB'. split; [split; [reflexivity| exact H']| exact U]. }
     destruct H as [Hs ->]. exists moB. split; [split; [reflexivity| auto]| left; auto].
   -   destruct ST as [-> H]. rewrite EF, ES in H.
-    destruct (fd_lookup (m_fds moB) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid wr|dnr dnw| ]|]; try contradiction.
+    destruct (fd_lookup (m_fds moB) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid wr|dnr dnw| |sid sside sst|ectx|dfam|aid aaf]|]; try contradiction.
     + destruct (fs_lookup (m_fs moB) p); [| contradiction]. destruct H as [Hs ->].
       eexists. split; [split; [reflexivity| split; [exact Hs| reflexivity]]| right; eexists; split; reflexivity].
     + destruct H as [Hs ->]. exists moB. split; [split; [reflexivity| auto]| left; auto].

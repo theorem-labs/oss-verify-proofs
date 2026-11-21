@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s2.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses; check_reply_answer's premise carries `ww mod 8 = 0`. *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s2.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses; check_reply_answer's premise carries `ww mod 8 = 0`. *)
 (* Modified by Theorem Labs, 2026-10: the second segment of check_reply's walk (fuzz_command.asan-ubsan, 0x86e64), from the
    memchr call 0x86ffc to the return of sup_reply_code 0x8701c, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's call steps: cl_callS, the state
-   after the return) at origin/ossv/recipes c8557374ad2e.
+   after the return).
 
    The pieces: 0x86ffc jal memchr (the reply holds no NUL, so the wrapper returns 0: a Theorem Labs lane's not-found contract
    through PaArt.v's aj_art_at); 0x87000 bnez a0 (not taken); 0x87004 mv a0,s3; 0x87008 jal check_reply_answer
@@ -14,6 +14,7 @@
    After each call the mid-walk invariant cr_mid and the registers cr_regs_at are rebuilt from the callee's journal
    (the frame (1, pos) is among the caller's frames, the saved registers lie above the callee's stack pointer, g_rec
    is a program static), and the walk is seeded again with check_reply_sd.v's cr_seed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

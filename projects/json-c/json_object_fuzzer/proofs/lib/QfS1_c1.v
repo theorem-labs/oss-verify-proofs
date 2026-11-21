@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the serializer sections take it as HBTlo and pass it to ser_appendA). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -69,6 +70,7 @@ Hypothesis Hd : d = 0 \/ d = 16.
 Hypothesis Hq : q = usp - 128 - d.
 Hypothesis Hq32 : q mod 32 = 0.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - ADBL_STACK.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
@@ -120,7 +122,7 @@ a4l. reenterA asegs A4L HIx asegs_wx HP.
 step. step. if_truex.
 step. step. step. step. fold_mkR.
 evt_done5.
-eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 9 LO HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := firstn (Z.to_nat len) bufb) (e := 0);
+eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 9 LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := firstn (Z.to_nat len) bufb) (e := 0);
 [ exact INV1 | exact SRC | rewrite length_firstn, BL; lia | lia | lia
 | right; left; exists Fr, 2; split; [left; reflexivity | rewrite fr_size_2; lia]
 | intros Hk; apply unpoisoned_dbuf; [exact HFal | lia | exact SHW | lia]
@@ -369,6 +371,7 @@ Hypothesis Hd : d = 0 \/ d = 16.
 Hypothesis Hq : q = usp - 128 - d.
 Hypothesis Hq32 : q mod 32 = 0.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - ADBL_STACK.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
@@ -420,7 +423,7 @@ a4l. reenterA asegs A4L HIx asegs_wx HP.
 step. step. if_truex.
 step. step. step. step. fold_mkR.
 evt_done5.
-eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 9 LO HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := firstn (Z.to_nat len) bufb) (e := 0);
+eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 9 LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := firstn (Z.to_nat len) bufb) (e := 0);
 [ exact INV1 | exact SRC | rewrite length_firstn, BL; lia | lia | lia
 | right; left; exists Fr, 2; split; [left; reflexivity | rewrite fr_size_2; lia]
 | intros Hk; apply unpoisoned_dbuf; [exact HFal | lia | exact SHW | lia]

@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/PN102TopPj.v, with its module paths changed; 28 of its 78 lines of code are new or changed and 1 line of the source is left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): the top of the walk of parse_noting (row N10-PNA,
    lib/A/Prog/PN102Top.v tparse_noting_specX_A_TfibB) with its callee text HPJ (the batch kit's tpj_parse_specX at every CW)
    DISCHARGED by a Theorem Labs lane's A' walk of pj_parse, lib/A/Prog/PjParseA_top.v pj_parse_holds_A: first on the kit's cut
-   (a working branch afb1875e8b36), here as re-fit to the kit's repaired prh_cw_pj
-   (a working branch part 1 2c6f778a5d66, merged by sha: PjParseA_vac.v pjz_vac_cw_A re-fit,
-   PjParseA_top.v comments only; the 10 lib/B/Prog/pj_free_*.v as on afb1875e8b36 and a17c5f0738fc). POST-BATCH,
-   on a working branch f29626eb1667; not for the cut landing.
+   (a working branch), here as re-fit to the kit's repaired prh_cw_pj
+   (a working branch part 1, merged by sha: PjParseA_vac.v pjz_vac_cw_A re-fit,
+   PjParseA_top.v comments only; the 10 lib/B/Prog/pj_free_*.v as). POST-BATCH,
+   on a working branch; not for the cut landing.
    FORM CHECK: pj_parse_holds_A concludes `@tpj_parse_specX fx rc CfImgA.CfImg_A CfParams_preset prh_img_A
    (@prh_room_live_a8 CfParams_preset) A_prog_listing (@PI_prog_A rc) AD2l.TfibB (ARcf .. AD2l.TfibB .. /\
    xs_placed_cf ..) SK CTX0 CW` for every CTX0 CW; HPJ of tparse_noting_specX_A_TfibB is that same constant at the same
@@ -19,7 +20,7 @@
      AU   forall fy, YGcfHp.aunpoison_realizes_cf (fuzz_free's unpoison row)                 two Theorem Labs lanes
      TPV  forall CW fy CTX, the batch kit's tparse_value_specX 0 at the instance                      a Theorem Labs lane
           (pj_parse_holds_A takes it at its own CW; HPJ is at every CW, so TPV is at every CW). PROVED on combine6:
-          a Theorem Labs lane's lib/A/VrdTop.v vrd_parse_value_holds (a working branch f40eca0736e0, this
+          a Theorem Labs lane's lib/A/VrdTop.v vrd_parse_value_holds (a working branch, this
           branch's base), discharged in the second corollary below, tparse_noting_specX_A_TfibB_pjv.
    and the walk's other three callee texts, unchanged: HLIVE tfuzz_alloc_live_specX (a Theorem Labs lane), HRO forall fy
    tfuzz_alloc_ran_out_specX (a Theorem Labs lane), HCRC forall fy tcheck_reject_clean_specX (the kit owner). TB is discharged
@@ -41,7 +42,7 @@
    YGcfMallocComposeKeep.amalloc_realizes_cf_keep at ci := CfImg_A likewise; a Theorem Labs lane), and HLIVE, HRO, HCRC as above.
    rule 24: proves function parse_noting (reuse search: `proof-index parse_noting` exit 4 at 2026-10-30 07:2xZ,
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
-   files and the plain / UBSan / B' twins; own signed walk 13970867e0c9 re-bound). This file: a corollary of its top.
+   files and the plain / UBSan / B' twins; own signed walk re-bound). This file: a corollary of its top.
    NUMERALS: none. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

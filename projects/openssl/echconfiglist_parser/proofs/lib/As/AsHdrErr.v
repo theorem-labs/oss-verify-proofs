@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the header-error lemmas of Sections Sound and Plain take the channel-reader premise, carried across materialization; new hs_sound_rt, ho_sound_rt, as_hdr_short_fwrite_rt and as_hdr_overrun_fwrite_rt, the same walks over the run's segment list RSEGS ++ rt_tail with that list's read-only backing in the restricted states and a step invariant carried to every continuation, through the LazyTail lemmas and stdio_call_sound_post_rt). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -15,6 +16,8 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
   SymExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX LibKnowFrame SymAux Hoare RefPrintfLib LibTail
   LazyRestrict LazySR LazyFdNodes LazySym Spec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import RefExitBase RefStdioDefs AsLazyRun AsStdioWrite AsStdioCall AsScLib AsPrintfFirst.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Scfg LazyTail.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RunTail.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
@@ -158,7 +161,7 @@ Section Sound.
 
   (* [comment removed for export] *)
   Ltac hf_sound pcA rA cA srA knA sc rC cC srF knF ITIN COVA COVC MSG_IMG MSG_LEN msg :=
-    intros vals R M msF mo K HL P0 HR HK Hfd2 OK RS HKnil HCONT;
+    intros vals R M msF mo K HL P0 HR HK Hfd2 Hrd2 OK RS HKnil HCONT;
     pose proof (know_nth RSEGS _ _ h_kn 1%nat _ HK eq_refl) as Hrg; cbn [kentry_ok edenot ev ENV] in Hrg; rewrite P0 in Hrg;
     unfold ASP_LO, ASP_HI in Hrg;
     pose proof (h_regions_flat vals P0 ltac:(unfold ASP_LO; lia) ltac:(unfold ASP_HI; lia)) as RF;
@@ -193,6 +196,7 @@ Section Sound.
                    _ _ a 31 HK eq_refl) by (cbn; lia) end;
       apply MSG_IMG
     | rewrite (same_but_materialized_fds _ _ SBA); exact Hfd2
+    | rewrite (same_but_materialized_reader _ _ SBA); exact Hrd2
     | exact OKA
     | exact RSA
     | exact HKnil
@@ -226,6 +230,7 @@ Section Sound.
     length vals = 34%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV vals) h_sr R -> know_ok RSEGS (ENV vals) M h_kn ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst R (Z_to_bv 64 0x1f3fb4) M (seg_rom RSEGS) ->
     K [] ->
     (forall Rj R' M' msF' mo',
@@ -246,6 +251,7 @@ Section Sound.
     length vals = 34%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV vals) h_sr R -> know_ok RSEGS (ENV vals) M h_kn ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst R (Z_to_bv 64 0x1f3fd0) M (seg_rom RSEGS) ->
     K [] ->
     (forall Rj R' M' msF' mo',
@@ -260,6 +266,125 @@ Section Sound.
     unfold W.
     hf_sound 0x1f3fd0%Z ho_rA ho_cA ho_srA ho_knA ho_sc ho_rC ho_cC ho_srF ho_knF
              ho_itinerary ho_covA ho_covC msg_overrun_img msg_overrun_len msg_overrun.
+  Qed.
+
+  (* LPS 727298f3: hs_sound and ho_sound over the run's segment list RSEGS ++ rt_tail, with that
+     list's read-only backing in the restricted states and a step invariant I carried to every
+     continuation; the symbolic runs, their facts and the lazy view stay over RSEGS. *)
+  Context {RT : RunTail.RunTail}.
+  Variable I : config -> Prop.
+  Hypothesis HI : forall c evs c', I c -> sstep_cfg (RSEGS ++ RunTail.rt_tail) Scfg.the_scfg c evs (SNext c') -> I c'.
+
+  Ltac hf_sound_rt pcA rA cA srA knA sc rC cC srF knF ITIN COVA COVC MSG_IMG MSG_LEN msg :=
+    intros vals R M msF mo K HL P0 HR HK Hfd2 Hrd2 OK IV RS HKnil HCONT;
+    pose proof (know_nth RSEGS _ _ h_kn 1%nat _ HK eq_refl) as Hrg; cbn [kentry_ok edenot ev ENV] in Hrg; rewrite P0 in Hrg;
+    unfold ASP_LO, ASP_HI in Hrg;
+    pose proof (h_regions_flat vals P0 ltac:(unfold ASP_LO; lia) ltac:(unfold ASP_HI; lia)) as RF;
+    pose proof (h_regions_denot vals P0 ltac:(unfold ASP_LO; lia)) as RD;
+    pose proof ITIN as (PCA & SCA & CCA & SC & _ & PCC & SCC & CCC);
+    eapply (LazyTail.rz_run_lf_lazy_tail RSEGS RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw I HI
+              L S Zr FUELH STOPSH scr0 pcA h_sr h_kn 34 (fst (fst rA)) (snd (fst rA)) (snd rA)
+              (fst (fst cA)) (snd (fst cA)) (snd cA) (ENV vals) M (seg_rom (RSEGS ++ RunTail.rt_tail)) R msF mo);
+      [ vm_cast_no_check (@eq_refl _ rA) | vm_cast_no_check (@eq_refl _ cA)
+      | exact HR | exact HK | rewrite SCA; constructor | rewrite CCA; constructor | exact OK | exact IV | exact RS | ];
+    clear HR HK; intros RA MA msFA moA HR HK EQA LFA OKA SBA HSA RSA IVA;
+    pose proof (log_covered_frame (ENV vals) M h_regions _ COVA RF LFA) as FA; rewrite <- EQA, RD in FA;
+    change (s_regs (fst (fst rA))) with srA in HR; change (fst (fst cA)) with knA in HK;
+    rewrite PCA in RSA;
+    apply (stdio_call_sound_post_rt I HI vals (blobs_ev []) srA knA RA MA L S Zr msFA moA sc [] msg K
+             HR HK (eq_trans (f_equal (fun n => stdio_call n srA knA) HL) SC));
+      cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn sc edenot ev ENV app];
+      rewrite ?MSG_LEN; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ];
+    [ unorm; lia
+    | unorm; lia
+    | unorm; lia
+    | unorm; reflexivity
+    | lia
+    | left; rewrite P0, alu_add, vadd_wZ; unorm; lia
+    | left; rewrite P0, alu_add, vadd_wZ; unorm; lia
+    | unorm; lia
+    | unorm; reflexivity
+    | lazymatch goal with |- rdn _ _ (Z_to_bv 64 ?a) 31 = _ =>
+        rewrite (kimg_rdn RSEGS (ENV vals) _ knA ltac:(let i := kidx knA (is_kimg_cov a 31) in exact i)
+                   _ _ a 31 HK eq_refl) by (cbn; lia) end;
+      apply MSG_IMG
+    | rewrite (same_but_materialized_fds _ _ SBA); exact Hfd2
+    | rewrite (same_but_materialized_reader _ _ SBA); exact Hrd2
+    | exact OKA
+    | exact IVA
+    | exact RSA
+    | exact HKnil
+    | clear HR HK; intros Rj MC msFC moC HR HK HPOST OKC SBC HSC RSC IVC;
+      assert (FC0 : frame_mod MA MC h_regions_w);
+      [ eapply sw_post_frame_mod; [exact HPOST|]; intros x Hx; unfold h_regions_w, HF_FR in Hx; cbn [outside] in Hx;
+        unfold in_rng in Hx; rewrite P0, alu_add, vadd_wZ; revert Hx; unorm; intros (N1 & N2 & _); lia |];
+      set (vals' := vals ++ junk_vals Rj) in *;
+      assert (HL' : length vals' = 66%nat) by (subst vals'; rewrite length_app, junk_vals_length, HL; reflexivity);
+      assert (P0' : vals_ev vals' 0 = sp0) by (subst vals'; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0);
+      pose proof (h_regions_flat vals' P0' ltac:(unfold ASP_LO; lia) ltac:(unfold ASP_HI; lia)) as RF';
+      pose proof (h_regions_denot vals' P0' ltac:(unfold ASP_LO; lia)) as RD';
+      change (Env (vals_ev vals') (blobs_ev [])) with (ENV vals') in HR, HK;
+      eapply (LazyTail.rz_run_lf_lazy_tail RSEGS RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw I HI
+                L S Zr FUELH STOPSH scr0 0x52bf18 (sc_sr sc) (sc_kn sc) 66 (fst (fst rC)) (snd (fst rC)) (snd rC)
+                (fst (fst cC)) (snd (fst cC)) (snd cC) (ENV vals') MC (seg_rom (RSEGS ++ RunTail.rt_tail)) _ msFC moC);
+        [ vm_cast_no_check (@eq_refl _ rC) | vm_cast_no_check (@eq_refl _ cC)
+        | exact HR | exact HK | rewrite SCC; constructor | rewrite CCC; constructor | exact OKC | exact IVC | exact RSC | ];
+      clear HR HK; intros RC MF msFF moF HR HK EQC LFC OKF SBF HSF RSF IVF;
+      pose proof (log_covered_frame (ENV vals') MC h_regions _ COVC RF' LFC) as FC; rewrite <- EQC, RD' in FC;
+      change (s_regs (fst (fst rC))) with srF in HR; change (fst (fst cC)) with knF in HK;
+      rewrite PCC in RSF;
+      apply (HCONT Rj RC MF msFF moF HR HK);
+      [ eapply frame_mod_trans_same; [exact FA|]; eapply frame_mod_trans_same; [exact FC0 | exact FC]
+      | exact OKF
+      | eapply same_but_materialized_trans; [exact SBA|]; eapply same_but_materialized_trans; [exact SBC | exact SBF]
+      | eapply hid_same_trans; [exact HSA|]; eapply hid_same_trans; [exact HSC | exact HSF]
+      | exact RSF
+      | exact IVF ] ].
+
+  Theorem hs_sound_rt : forall vals R M msF mo (K : TSet),
+    length vals = 34%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV vals) h_sr R -> know_ok RSEGS (ENV vals) M h_kn ->
+    fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
+    lzok RSEGS L S Zr (mkCfg msF mo) -> I (mkCfg msF mo) ->
+    restrict L S msF = mkst R (Z_to_bv 64 0x1f3fb4) M (seg_rom (RSEGS ++ RunTail.rt_tail)) ->
+    K [] ->
+    (forall Rj R' M' msF' mo',
+       regs_ok (ENV (vals ++ junk_vals Rj)) hs_srF R' ->
+       know_ok RSEGS (ENV (vals ++ junk_vals Rj)) M' hs_knF ->
+       frame_mod M M' h_regions_w ->
+       lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->
+       restrict L S msF' = mkst R' (Z_to_bv 64 0x1f3ff0) M' (seg_rom (RSEGS ++ RunTail.rt_tail)) ->
+       I (mkCfg msF' mo') ->
+       realizes (RSEGS ++ RunTail.rt_tail) (mkCfg msF' mo') K) ->
+    realizes (RSEGS ++ RunTail.rt_tail) (mkCfg msF mo) (t_emit (W 2 msg_short) K).
+  Proof using sp0 L S Zr RT I HI.
+    unfold W.
+    hf_sound_rt 0x1f3fb4%Z hs_rA hs_cA hs_srA hs_knA hs_sc hs_rC hs_cC hs_srF hs_knF
+                hs_itinerary hs_covA hs_covC msg_short_img msg_short_len msg_short.
+  Qed.
+
+  Theorem ho_sound_rt : forall vals R M msF mo (K : TSet),
+    length vals = 34%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV vals) h_sr R -> know_ok RSEGS (ENV vals) M h_kn ->
+    fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
+    lzok RSEGS L S Zr (mkCfg msF mo) -> I (mkCfg msF mo) ->
+    restrict L S msF = mkst R (Z_to_bv 64 0x1f3fd0) M (seg_rom (RSEGS ++ RunTail.rt_tail)) ->
+    K [] ->
+    (forall Rj R' M' msF' mo',
+       regs_ok (ENV (vals ++ junk_vals Rj)) ho_srF R' ->
+       know_ok RSEGS (ENV (vals ++ junk_vals Rj)) M' ho_knF ->
+       frame_mod M M' h_regions_w ->
+       lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->
+       restrict L S msF' = mkst R' (Z_to_bv 64 0x1f3ff0) M' (seg_rom (RSEGS ++ RunTail.rt_tail)) ->
+       I (mkCfg msF' mo') ->
+       realizes (RSEGS ++ RunTail.rt_tail) (mkCfg msF' mo') K) ->
+    realizes (RSEGS ++ RunTail.rt_tail) (mkCfg msF mo) (t_emit (W 2 msg_overrun) K).
+  Proof using sp0 L S Zr RT I HI.
+    unfold W.
+    hf_sound_rt 0x1f3fd0%Z ho_rA ho_cA ho_srA ho_knA ho_sc ho_rC ho_cC ho_srF ho_knF
+                ho_itinerary ho_covA ho_covC msg_overrun_img msg_overrun_len msg_overrun.
   Qed.
 End Sound.
 
@@ -347,12 +472,12 @@ Section Plain.
   Qed.
 
   Ltac hf_plain SOUND :=
-    intros regs mem msF mo sp can K PH OK RS Hfd2 HKnil HCONT;
+    intros regs mem msF mo sp can K PH OK RS Hfd2 Hrd2 HKnil HCONT;
     pose proof (h_regs_ok regs mem sp can PH) as HR; pose proof (h_know_ok regs mem sp can PH) as HK;
     destruct PH; pose proof (u64_range sp) as Hsp; unfold ASP_LO, ASP_HI in *;
     apply (SOUND sp L S Zr (h_vals regs sp can) regs mem msF mo K);
       [ unfold h_vals; rewrite length_app, junk_vals_length; reflexivity | reflexivity | exact HR | exact HK
-      | exact Hfd2 | exact OK | exact RS | exact HKnil |];
+      | exact Hfd2 | exact Hrd2 | exact OK | exact RS | exact HKnil |];
     clear HR HK; intros Rj R' M' msF' mo' HR HK FM OK' SB' HS' RS';
     set (vals' := h_vals regs sp can ++ junk_vals Rj) in *;
     assert (P0 : vals_ev vals' 0 = sp) by reflexivity;
@@ -383,6 +508,7 @@ Section Plain.
     hfH regs mem sp can ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 0x1f3fb4) mem (seg_rom RSEGS) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->
@@ -395,6 +521,7 @@ Section Plain.
     hfH regs mem sp can ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 0x1f3fd0) mem (seg_rom RSEGS) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->
@@ -402,6 +529,76 @@ Section Plain.
        realizes RSEGS (mkCfg msF' mo') K) ->
     realizes RSEGS (mkCfg msF mo) (t_emit (W 2 msg_overrun) K).
   Proof. hf_plain ho_sound. Qed.
+
+  (* LPS 727298f3: the two header fwrites over the run's segment list RSEGS ++ rt_tail, with that
+     list's read-only backing in the restricted states and a step invariant I carried to the
+     continuation. *)
+  Context {RT : RunTail.RunTail}.
+  Variable I : config -> Prop.
+  Hypothesis HI : forall c evs c', I c -> sstep_cfg (RSEGS ++ RunTail.rt_tail) Scfg.the_scfg c evs (SNext c') -> I c'.
+
+  Ltac hf_plain_rt SOUND :=
+    intros regs mem msF mo sp can K PH OK IV RS Hfd2 Hrd2 HKnil HCONT;
+    pose proof (h_regs_ok regs mem sp can PH) as HR; pose proof (h_know_ok regs mem sp can PH) as HK;
+    destruct PH; pose proof (u64_range sp) as Hsp; unfold ASP_LO, ASP_HI in *;
+    apply (SOUND sp L S Zr RT I HI (h_vals regs sp can) regs mem msF mo K);
+      [ unfold h_vals; rewrite length_app, junk_vals_length; reflexivity | reflexivity | exact HR | exact HK
+      | exact Hfd2 | exact Hrd2 | exact OK | exact IV | exact RS | exact HKnil |];
+    clear HR HK; intros Rj R' M' msF' mo' HR HK FM OK' SB' HS' RS' IV';
+    set (vals' := h_vals regs sp can ++ junk_vals Rj) in *;
+    assert (P0 : vals_ev vals' 0 = sp) by reflexivity;
+    assert (P1 : vals_ev vals' 1 = Z_to_bv 64 can) by reflexivity;
+    assert (PJ : forall i, (2 <= i < 34)%nat -> vals_ev vals' i = getr regs (Z_to_bv 5 (Z.of_nat (i - 2))));
+    [ intros i Hi; subst vals'; rewrite vals_ev_app_l by (unfold h_vals; rewrite length_app, junk_vals_length; cbn; lia);
+      apply (h_ev_junk regs sp can i Hi) |];
+    apply (HCONT R' M' msF' mo'); [| exact OK' | exact SB' | exact HS' | exact RS' | exact IV']; split;
+    [ regv HR (2 : reg); exact P0
+    | regv HR (10 : reg); reflexivity
+    | intros r Hr; cbn [In] in Hr;
+      destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]];
+        lazymatch goal with |- getr R' ?rr = _ => regv HR rr end; cbn [edenot ev ENV]; rewrite PJ by lia; f_equal; apply bv_eq; reflexivity
+    | exact FM
+    | krd_solve HK
+    | krd_solve HK
+    | krd_solve HK
+    | krd_solve HK
+    | krd_solve HK
+    | krd_solve HK
+    | krd_solve HK
+    | krd_solve HK
+    | let Hc := fresh "Hc" in krd HK 0xbce690%Z 8%nat Hc; rewrite Hc; cbn [ev ENV]; rewrite P1; reflexivity
+    | intros a n Ha Hn; eapply frame_mod_store_ok; [exact FM|];
+      match goal with Hs : stk_ok _ mem sp _ |- _ => apply Hs; assumption end ].
+
+  Theorem as_hdr_short_fwrite_rt : forall regs mem msF mo (sp : word) (can : Z) (K : TSet),
+    hfH regs mem sp can ->
+    lzok RSEGS L S Zr (mkCfg msF mo) -> I (mkCfg msF mo) ->
+    restrict L S msF = mkst regs (Z_to_bv 64 0x1f3fb4) mem (seg_rom (RSEGS ++ RunTail.rt_tail)) ->
+    fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
+    K [] ->
+    (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
+       lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->
+       restrict L S msF' = mkst regs' (Z_to_bv 64 0x1f3ff0) mem' (seg_rom (RSEGS ++ RunTail.rt_tail)) ->
+       I (mkCfg msF' mo') ->
+       realizes (RSEGS ++ RunTail.rt_tail) (mkCfg msF' mo') K) ->
+    realizes (RSEGS ++ RunTail.rt_tail) (mkCfg msF mo) (t_emit (W 2 msg_short) K).
+  Proof using L S Zr RT I HI. hf_plain_rt hs_sound_rt. Qed.
+
+  Theorem as_hdr_overrun_fwrite_rt : forall regs mem msF mo (sp : word) (can : Z) (K : TSet),
+    hfH regs mem sp can ->
+    lzok RSEGS L S Zr (mkCfg msF mo) -> I (mkCfg msF mo) ->
+    restrict L S msF = mkst regs (Z_to_bv 64 0x1f3fd0) mem (seg_rom (RSEGS ++ RunTail.rt_tail)) ->
+    fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
+    K [] ->
+    (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
+       lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->
+       restrict L S msF' = mkst regs' (Z_to_bv 64 0x1f3ff0) mem' (seg_rom (RSEGS ++ RunTail.rt_tail)) ->
+       I (mkCfg msF' mo') ->
+       realizes (RSEGS ++ RunTail.rt_tail) (mkCfg msF' mo') K) ->
+    realizes (RSEGS ++ RunTail.rt_tail) (mkCfg msF mo) (t_emit (W 2 msg_overrun) K).
+  Proof using L S Zr RT I HI. hf_plain_rt ho_sound_rt. Qed.
 End Plain.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

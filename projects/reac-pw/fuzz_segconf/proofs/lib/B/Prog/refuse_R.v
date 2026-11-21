@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the release of number's class-0 side-stack frame (0x8e5a0..0x8e618, cgif's exitRA in A/ACam.v) and number's return. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberR.v, with its module paths changed; 69 of its 186 lines of code are new or changed and 99 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3...): the release of
    refuse's class-0 side-stack frame and refuse's epilogue and return, image-B pcs 0x89544 .. ret 0x895dc
    (refuse.fuzz_segconf.asan-ubsan.s lines 149-187), from the canonical state ss_rel0 at the cut RB_REL
    (lib/B/Prog/refuse_K.v). A sub-lane (sub-lane of the image-B refuse walk lane, the image-B G3 walk owner), 2026-10-30.
    proves no function (kind: segment lemma of refuse's image-B walk; statement RB_REL_stmt of refuse_K.v).
-   ADAPTED from the image-A G3 walk owner's image-A segment lib/A/Prog/refuse_r.v r_release (commit
-   5fddac45a0b2) and plugin-hostd/fuzz_command lib/B/Prog/numberR.v n_release (origin/ossv/recipes 501c0d516c69),
+   ADAPTED from the image-A G3 walk owner's image-A segment lib/A/Prog/refuse_r.v r_release
+    and plugin-hostd/fuzz_command lib/B/Prog/numberR.v n_release,
    re-derived on image B's code.
 
    The run (31 instructions, one plain run of the executor, aj_flag_store_pi): 0x89544 `lui a0,0x45e03`,

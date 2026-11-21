@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YZ03.v (agreement) and lib/Halts_tfib.v (halting) for fuzz_command's ASan+UBSan statements: the plain side is lib/A/AsanTop.v cmd_plain_rz at 2^34, brought to the statement's plain budget by shape_strong_equiv_efs_relim; the halting proof takes srealizes (halts_budgets_of_srealizes); names and module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AsanUbsanTop.v (origin/ossv/recipes bf33659295b7) for reac-pw/fuzz_segconf's image B (fuzz_segconf.asan-ubsan) as lib/B/SegAsanUbsanTop.v: module paths; cmd_shape / CmdTFIBB / HaltsSpecC / AsanTop -> seg_shape / lib/B/SegTFIBB.v / HaltsSpecS / SegAsanTop, cmd_ -> seg_ in the lemma names, cmdsegsB -> segsegsB; the plain side is SegAsanTop.seg_plain_rz at its two Section premises discharged by the released plain tree: lib/AgreeSeg.v plain_slot_ag and lib/Prog/SegEnd.v segs_holds at the plain walks' cut record (the arguments lib/Prog/SegTop.v plain_halts_holds gives plain_halts_of_callees). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AsanUbsanTop.v for reac-pw/fuzz_segconf's image B (fuzz_segconf.asan-ubsan) as lib/B/SegAsanUbsanTop.v: module paths; cmd_shape / CmdTFIBB / HaltsSpecC / AsanTop -> seg_shape / lib/B/SegTFIBB.v / HaltsSpecS / SegAsanTop, cmd_ -> seg_ in the lemma names, cmdsegsB -> segsegsB; the plain side is SegAsanTop.seg_plain_rz at its two Section premises discharged by the released plain tree: lib/AgreeSeg.v plain_slot_ag and lib/Prog/SegEnd.v segs_holds at the plain walks' cut record (the arguments lib/Prog/SegTop.v plain_halts_holds gives plain_halts_of_callees). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan; the launch's ProcInput); internal commit ids in comments replaced by public commits or removed. *)
 (* segconf's two ASan+UBSan statements from the ASan+UBSan side TFIB_T_B (lib/B/SegTFIBB.v), in the form of
    proofs/cgif/cgif_file_fuzzer/lib/YZ03.v (agreement) and lib/Halts_tfib.v (halting), the twin of SegAsanTop.v:
    - asan_ubsan_agrees: shape_strong_equiv_efs_relim (Reusable/YM09.v) over the plain build's proved realization of
@@ -45,12 +46,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     segsegsB AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=seg_shape) inp) (SPECX (LS:=seg_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem seg_asan_ubsan_halts_of_tfib : Statements.asan_ubsan_halts.
@@ -62,8 +63,8 @@ Proof.
     target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=seg_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End a.

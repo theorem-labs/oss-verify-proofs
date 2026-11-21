@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v, with its module paths and module names changed; 624 of its 739 lines of code are new or changed and 479 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3p.v (sha256
-   d9fd931228e3; internal record) at 1318828167d3 (the same blob as at 1b1e21bdbd40), for
+   d9fd931228e3; internal record) (the same blob as), for
    row G-BLS3-port: A's definitions, lemmas, names and proofs over lib/B's records, with these swaps:
    - the Require header is lib/B/ReplyB3LS3cArms.v's plus ReplyB3LS3cArms and lib/Spec PresetRoom (lib/A ReplyLS /
      ReplyLSArms / ReplyLS3Arms / ReplyLSCntL / ReplyLS3c / ReplyLS3cArms -> lib/B ReplyLSB + ReplyB3Base / ReplyLSBArms /

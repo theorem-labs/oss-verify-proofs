@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: row G-BRT4 (a Theorem Labs lane), the image-B (fuzz_reply.asan-ubsan) twin of lib/A/TopX_RT4.v
-   (a Theorem Labs lane, commit 4d211dd95bc), with the SAME lemma names: four runtime contracts AT the B top's instance ARX_rt
+   (a Theorem Labs lane), with the SAME lemma names: four runtime contracts AT the B top's instance ARX_rt
    (lib/B/TopX_RT_lock.v's verbatim copy of the B top's ARX, lib/B/W_LLVMFuzzerTestOneInput_top_x.v:162-163 on this
-   branch's base (154-155 at commit e43cf0c7bef): ARcf (cp := CfParams_reply) segs TfibB /\ Hp = []), for the B drain /
+   branch's base (154-155): ARcf (cp := CfParams_reply) segs TfibB /\ Hp = []), for the B drain /
    send_line walks' hypotheses (W_sites_x's definitions at
    B := TfibB, ARx := the B top's ARX):
      topx_AERRNO   : aerrno_realizes_x   (PI := PB_fr) TfibB ARX_rt (SIGMA WS_errno_location)
@@ -20,6 +20,7 @@
    (fun _ => False), so each lift is the ARX_rt lemma above, then TopX_RT_lock.aentry_post_x_rtW: the pre's arodata at
    mem carries to the post's mem' because the post's view frame moves only the stack window, which lies above the image.
    The ARX_rt lemmas are kept unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YA0n.
 From Stdlib Require Import ZArith NArith List Lia Bool.

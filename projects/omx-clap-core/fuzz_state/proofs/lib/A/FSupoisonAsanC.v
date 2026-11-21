@@ -3,14 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from cgif_file_fuzzer lib/A/AE2q.v with AE6k.v (mc_tail, section l), AE6l.v-AE6s.v and AE3c.v (section f) for libreac/fuzz_disco's __asan_memcpy called with the source equal to the destination: x = d in place of the disjointness premise, the branch at 0x520e0 taken past the overlap check, the musl memcpy source read through the bytes it has already written (src_read, rdn_bytes1); module paths; addresses. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Rt/AcpySame.v, with its module paths and numbers changed; 760 of its 5870 lines of code are new or changed and 1151 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A (fuzz_state.asan): __asan_memcpy (A 0x51d20, lib/A/FSH_Base.v PC_memcpy; AB1w
    tfib_A___asan_memcpy) under ARU (lib/A/FSupoison.v), for ANY set U of user-poisoned ranges (POISON-U lane; the
    statement is lib/A/FSupoisonU.v aintrin_realizesU OCpy, the FsRt field fr_memcpy of lib/A/FSH_Rt.v:121 and the
    FSClose premise H_memcpy, lib/A/FSClose.v:172).
    Rule 24: no U form of this function existed; this is the U lift of S0's own image-A AR walk (U = [] form
    lib/A/AE2q.v:143 asan_memcpy_realizes), by the method of the image-A interceptor ports (lib/A/FSupoisonIntrinC.v,
-   a working branch cd7610bc4ed). Twin: lib/B/FSupoisonAsanC.v (a working branch
-   269685bdc74); the two files are one text modulo image modules and image literals.
+   a working branch). Twin: lib/B/FSupoisonAsanC.v (a working branch);
+   the two files are one text modulo image modules and image literals.
 
    Port-from, text unchanged except where U is threaded:
      lib/A/AE6k.v:841-1037  mc_tail            -> mc_tailU   (the one step that consumes AR: al_frame / al_stack)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up definitions over the launch ProcInput, its mmap base and AT_ENTRY; the new auxv entries in J_aux27, with execfn_w and ehdr_w; the two CONFIG_RSEQ slots of J_aux and the new lemmas nth_le8_zero and J_aux_norseq; the MemSplit, ZStores and FunctionalExtensionality imports; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,6 +11,8 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common Require Import StartupTac ArgvEnv RefLayout.
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.Musl Require Import StartupBase.
+From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common Require MemSplit ZStores.
+From Stdlib Require Logic.FunctionalExtensionality.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -122,9 +125,16 @@ End Canary.
 Section Defs.
   Context {fx : FPState} {RL : Reloc} {RLC : RelocCode RL} {RLS : RelocSites RL} {RLI : RelocImg RL} {RLD : RelocData RL} {RLW : RelocRW RL RLD} {RST : RelocStart RL RLD}.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variables (hw : word) (drw : EntryDraw).   (* [comment removed for export] *)
+  Variable inp : ProcInput.
+  Variable mbase : word.
+  Variable ent : word.   (* AT_ENTRY: the image's entry, as [Run.init_machine_state] hands it to the auxv *)
+  Variable drw : EntryDraw.   (* [comment removed for export] *)
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation gid := (in_gid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
+  Local Notation rseq := (kb_rseq (in_kernel inp)) (only parsing).
 
   (* [comment removed for export] *)
   Definition aux_base : word := Z_to_bv 64 (bv_unsigned sp0 - 368).
@@ -133,13 +143,16 @@ Section Defs.
   Definition envp_w : word := Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)).
   Definition auxv_w : word :=
     Z_to_bv 64 (bv_unsigned sp0 + 24 + 8 * Z.of_nat (length av) + 8 * Z.of_nat (length ev)).
-  Definition argc_w : word := argcN av.
+  Definition argc_w : word := argcN inp.
   (* [comment removed for export] *)
-  Definition pn_w : word := cat_argv_ptr sp0 av ev 0.
+  Definition pn_w : word := cat_argv_ptr (ed_top drw) av ev (in_execfn inp) 0.
   Definition progname_w : word :=
     Z_to_bv 64 (bv_unsigned pn_w + Z.of_nat (progname_off (nth 0 av []))).
   (* [comment removed for export] *)
-  Definition rnd_w : word := at_random_ptr sp0 av ev.
+  Definition rnd_w : word := at_random_ptr sp0 rseq av ev.
+  (* AT_EXECFN's value, and AT_SYSINFO_EHDR's (the vDSO text base the launch computes from the mmap base) *)
+  Definition execfn_w : word := at_execfn_ptr (ed_top drw) (in_execfn inp).
+  Definition ehdr_w : word := la_sysinfo_ehdr (launch_auxv inp sp0 mbase).
 
   (* [comment removed for export] *)
   Definition D_libc : word -> option byte :=
@@ -165,20 +178,38 @@ Section Defs.
       (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (rl dF_131d0 0x131d0)).
 
   (* [comment removed for export] *)
-  Definition J_aux (Jf : word -> option byte) : word -> option byte :=
+  Definition J_aux27 (Jf : word -> option byte) : word -> option byte :=
     wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+    (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
       (wbytes Jf aux_base (zeros 304))
-      (Z_to_bv 64 (bv_unsigned sp0 - 344)) (word_to_le_bytes 8 (Z_to_bv 64 0x10040)))  (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 336)) (word_to_le_bytes 8 (Z_to_bv 64 56)))       (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 328)) (word_to_le_bytes 8 (Z_to_bv 64 10)))       (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 240)) (word_to_le_bytes 8 hw))                   (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 320)) (word_to_le_bytes 8 (Z_to_bv 64 4096)))     (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 uid))                  (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 uid))                  (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 184)) (word_to_le_bytes 8 (Z_to_bv 64 0)))        (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w).                  (* [comment removed for export] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 104)) (word_to_le_bytes 8 ehdr_w))              (* AT_SYSINFO_EHDR *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 240)) (word_to_le_bytes 8 hw))                  (* AT_HWCAP *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 320)) (word_to_le_bytes 8 (Z_to_bv 64 4096)))    (* AT_PAGESZ *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 232)) (word_to_le_bytes 8 (Z_to_bv 64 100)))     (* AT_CLKTCK *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 344)) (word_to_le_bytes 8 (Z_to_bv 64 0x10040)))  (* AT_PHDR *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 336)) (word_to_le_bytes 8 (Z_to_bv 64 56)))      (* AT_PHENT *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 328)) (word_to_le_bytes 8 (Z_to_bv 64 10)))      (* AT_PHNUM *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 312)) (word_to_le_bytes 8 (Z_to_bv 64 0)))       (* AT_BASE *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 304)) (word_to_le_bytes 8 (Z_to_bv 64 0)))       (* AT_FLAGS *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 296)) (word_to_le_bytes 8 ent))                 (* AT_ENTRY *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 uid))                 (* AT_UID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 uid))                 (* AT_EUID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 264)) (word_to_le_bytes 8 gid))                 (* AT_GID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 256)) (word_to_le_bytes 8 gid))                 (* AT_EGID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 184)) (word_to_le_bytes 8 (Z_to_bv 64 0)))       (* AT_SECURE *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w))               (* AT_RANDOM *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 120)) (word_to_le_bytes 8 execfn_w).            (* AT_EXECFN *)
 
-  (* [comment removed for export] *)
+  (* The two CONFIG_RSEQ slots (aux[27], aux[28]): 28 and 32 when the auxv carries
+     the pairs, the memset's 0 otherwise. *)
+  Definition J_aux (Jf : word -> option byte) : word -> option byte :=
+    wbytes (wbytes (J_aux27 Jf)
+      (Z_to_bv 64 (bv_unsigned sp0 - 152))
+      (word_to_le_bytes 8 (Z_to_bv 64 (if rseq then 28 else 0))))   (* AT_RSEQ_FEATURE_SIZE *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 144))
+      (word_to_le_bytes 8 (Z_to_bv 64 (if rseq then 32 else 0))).   (* AT_RSEQ_ALIGN *)
+
+(* [comment removed for export] *)
   Definition D_tlsA (D : word -> option byte) : word -> option byte :=
     wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes D
       (rl dA_2f6b8s 0x2f6d8) (word_to_le_bytes 8 (Z_to_bv 64 0)))        (* [comment removed for export] *)
@@ -230,3 +261,35 @@ Section Defs.
   Definition D_main (tid : word) : word -> option byte := D_fd (D_ssp (D_tls tid D_libc)).
 
 End Defs.
+
+Lemma nth_le8_zero : forall i, nth i (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 8 0) = Z_to_bv 8 0.
+Proof. intros i. do 8 (destruct i as [|i]; [reflexivity|]). destruct i; reflexivity. Qed.
+
+(* Without CONFIG_RSEQ the loop never writes aux[27] or aux[28]: the memset's zeros
+   stay, which is what [J_aux]'s two stores write. *)
+Lemma J_aux_norseq : forall sp0 inp mbase ent drw Jf,
+  (0x7fff80000000 <= bv_unsigned sp0)%Z -> (bv_unsigned sp0 <= 0x800000000000)%Z ->
+  kb_rseq (in_kernel inp) = false ->
+  J_aux sp0 inp mbase ent drw Jf = J_aux27 sp0 inp mbase ent drw Jf.
+Proof.
+  intros sp0 inp mbase ent drw Jf Hlo Hhi Hrs. unfold J_aux. rewrite Hrs. cbv iota.
+  apply Stdlib.Logic.FunctionalExtensionality.functional_extensionality. intros x.
+  pose proof (u64_range x) as Hx.
+  destruct (Z_lt_le_dec (bv_unsigned x) (bv_unsigned sp0 - 152)) as [H1|H1];
+    [| destruct (Z_lt_le_dec (bv_unsigned x) (bv_unsigned sp0 - 136)) as [H2|H2]].
+  1, 3: rewrite !OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.MemSplit.wbytes_outside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia);
+        reflexivity.
+  destruct (Z_lt_le_dec (bv_unsigned x) (bv_unsigned sp0 - 144)) as [H3|H3].
+  - rewrite (OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.MemSplit.wbytes_outside _ _ (Z_to_bv 64 (bv_unsigned sp0 - 144)))
+      by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    rewrite OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.MemSplit.wbytes_inside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    unfold J_aux27, aux_base.
+    rewrite !OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.MemSplit.wbytes_outside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    rewrite OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.MemSplit.wbytes_inside by (rewrite ?OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.ZStores.length_zeros; rewrite ?u_Z2bv by lia; lia).
+    rewrite nth_le8_zero, OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.ZStores.nth_zeros. reflexivity.
+  - rewrite OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.MemSplit.wbytes_inside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    unfold J_aux27, aux_base.
+    rewrite !OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.MemSplit.wbytes_outside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    rewrite OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.MemSplit.wbytes_inside by (rewrite ?OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.ZStores.length_zeros; rewrite ?u_Z2bv by lia; lia).
+    rewrite nth_le8_zero, OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.ZStores.nth_zeros. reflexivity.
+Qed.

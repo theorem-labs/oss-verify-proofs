@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_gone_base_x.v, with its module paths and module names changed; 329 of its 401 lines of code are new or changed and 586 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The LS_cnt rows of ReplyLScnt.v in the arms' room-record form (W8Entry-2's arms-step decision, a Theorem Labs lane 04:21Z):
    every count premise an allocating arm passes to a callee is `cnt_ok_pk RP <the callee's premise peak> (ablocks B ly S)`
    for the arm's `Variable RP : roomp`.  proves no function (kind: invariant lemma).
@@ -186,7 +187,7 @@ Proof.
   lia.
 Qed.
 (* op_add's call (_pro_x.v, at S2 after the fake frame, whose blocks are the entry's): the entry contract's XCNT
-   (_cut.v:211 at b518e48c550, ReplyCnt.xcnt_ok) *)
+   (_cut.v:211, ReplyCnt.xcnt_ok) *)
 Lemma rp_cnt_pro : forall (S0 S2 : astate) (ly : alayout) (p n T cap out : Z),
   xcnt_ok B S0 ly (if (n =? 0)%Z then [] else [(p, n)]) T cap out ->
   ablocks B ly S2 = ablocks B ly S0 ->

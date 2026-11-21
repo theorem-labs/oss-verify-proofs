@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the entry specifications use the shadow table of the launch's rseq layout (BOTH_at (rseq_z rsb)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -175,36 +176,36 @@ End Derive.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma both_fill_spec_imemset : APSX.fill_spec BSEGS (AP.x_imemset AP.BOTH) 256.
+Lemma both_fill_spec_imemset {rsb : bool} : APSX.fill_spec BSEGS (AP.x_imemset (AP.BOTH_at (AP.rseq_z rsb))) 256.
 Proof.
   apply (fill_spec_of_imemset _ both_imemset_entry); [apply bv_eq; reflexivity|].
   exact both_imemset.
 Qed.
 
-Lemma both_fill_spec_memset : APSX.fill_spec BSEGS (AP.x_memset AP.BOTH) AX2.two64.
+Lemma both_fill_spec_memset {rsb : bool} : APSX.fill_spec BSEGS (AP.x_memset (AP.BOTH_at (AP.rseq_z rsb))) AX2.two64.
 Proof.
   apply fill_spec_of_memset. intros mem0 d cv ret n rom Hn Hnw Hst Hret regs R10 R11 R12 R1.
   exact (BothMemset.memset_summary mem0 d cv ret n rom Hn Hnw Hst Hret regs R10 R11 R12 R1).
 Qed.
 
-Lemma both_copy_spec_imemcpy : APSX.copy_spec BSEGS (AP.x_imemcpy AP.BOTH).
+Lemma both_copy_spec_imemcpy {rsb : bool} : APSX.copy_spec BSEGS (AP.x_imemcpy (AP.BOTH_at (AP.rseq_z rsb))).
 Proof.
   apply (copy_spec_of_imemcpy _ both_imemcpy_entry); [apply bv_eq; reflexivity|].
   exact both_imemcpy.
 Qed.
 
-Lemma both_copy_spec_memcpy : APSX.copy_spec BSEGS (AP.x_memcpy AP.BOTH).
+Lemma both_copy_spec_memcpy {rsb : bool} : APSX.copy_spec BSEGS (AP.x_memcpy (AP.BOTH_at (AP.rseq_z rsb))).
 Proof.
   intros mem0 dst src n bs regs ret Hn Hlen Hrd Hst Hdisj Hnws Hnwd Hret R1 R10 R11 R12.
   pose proof (u64_range dst) as Hdr.
   assert (HOK : BothMemcpyBase.mcH mem0 dst src n bs) by (constructor; try assumption; lia).
   destruct (BothMemcpy.ref_memcpy mem0 dst src n bs (seg_rom BSEGS) HOK regs ret Hret R1 R10 R11 R12) as (regs' & Hms & Hk).
-  exists regs'. split; [replace (Z_to_bv 64 (AP.x_memcpy AP.BOTH)) with (0xa27e8%bv : word) by (apply bv_eq; reflexivity); exact Hms|].
+  exists regs'. split; [replace (Z_to_bv 64 (AP.x_memcpy (AP.BOTH_at (AP.rseq_z rsb)))) with (0xa27e8%bv : word) by (apply bv_eq; reflexivity); exact Hms|].
   split; [apply kept_ok_of_keeps; exact Hk|].
   rewrite <- R10. apply Hk. unfold callee_kept. in_list.
 Qed.
 
-Lemma both_miz_spec : APSX.miz_spec BSEGS (AP.x_memiszero AP.BOTH).
+Lemma both_miz_spec {rsb : bool} : APSX.miz_spec BSEGS (AP.x_memiszero (AP.BOTH_at (AP.rseq_z rsb))).
 Proof.
   apply (miz_spec_of_summary _ both_mem_is_zero_entry); [apply bv_eq; reflexivity|].
   exact both_mem_is_zero.

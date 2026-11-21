@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_strstr_wrap.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
-(* lib/A/Prog/strstr_wrap.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8), re-run over the
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_strstr_wrap.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* lib/A/Prog/strstr_wrap.v (a Theorem Labs lane's port, unchanged from a working branch), re-run over the
    local-shadow statements (FMss_strstr_wrap_c.v, FMss_strstr_c.v and the FMss_* wrappers).  Changed lines: the
    imports and module names; the two range checks (chk_ok_of_loc, the haystack's through shvis_prefix); the inner
    musl strstr's shadow premise (shvis_norm + shvis_kept, where the original used shadow_rw_norm + shadow_rw_kept;

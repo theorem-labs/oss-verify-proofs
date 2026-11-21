@@ -1,6 +1,6 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the closing file of the core's
    runtime rows that image B's walks name, in the place and the role of plugin-hostd/fuzz_command's
-   lib/B/Rt/RtClosed.v (origin/ossv/recipes bf33659295b7): each proved runtime contract of image B restated with its
+   lib/B/Rt/RtClosed.v: each proved runtime contract of image B restated with its
    `AR_laws tfibsegs B` premise discharged by the core's law proof (lib/B/YG0q.v AR_laws_ok, generic in the segment
    list and the record) and its entry stated at image B's listing term (lib/B/Prog/SegInstB.v pc_<x>A, by
    computation), so that only the per-binary record `SegBSyms B` (lib/B/YF0m.v) remains:

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YD1x.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_identity's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 with reac-pw/fuzz_rate's port of the top-anchored stack strings, rseq-aware random offset and input-owned entry consumers, this unit's declarations and image addresses kept (changed ELV); the channel reader that fdchan asks for at LPS 727298f3 carried beside the descriptor fact, from cs_ok's co_rdr. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -29,7 +30,8 @@ Definition A_exit : Z := 0x8b0e8.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.ReusableB Require Import YE2k YD1u.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
 Variable B : asyms.
-#[local] Notation ELV sp a0 p inp xw xd := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation ELV sp rnd a0 p inp xw xd :=
+(YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 Definition img_at (H : word -> bool) (m : word -> option byte) (lo hi : Z) : Prop :=
 forall a, lo <= a < hi -> aview tfibsegs H m a = option_map (fun b : byte => bv_unsigned b) (seg_rom tfibsegs (Z_to_bv 64 a)).
 Variable est : (word -> bool) -> (word -> option byte) -> Prop.
@@ -62,6 +64,10 @@ Z.of_nat (length msg) = len -> 1 <= len <= 64 -> 0x10568 <= p -> p + len <= 0x20
 (forall i, (i < length msg)%nat -> seg_rom tfibsegs (Z_to_bv 64 (p + Z.of_nat i)) = Some (nth i msg NUL)) ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
 fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+(* Beside the descriptor: [fdchan] at LPS 727298f3 asks for the model's channel reader
+   too, and this site writes to the channel.  The driver reads it from the hand-off,
+   where [cs_ok]'s [co_rdr] proves it. *)
+m_channel_reader md = true ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md 1 T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fwrite regs mem md) (wr ch_stderr msg T).
@@ -75,7 +81,7 @@ spZ regs + 128 <= s -> s + Z.of_nat (length str) + 1 < kHighMemEnd ->
 YP03.bytes_at (mrestrict (w_H W) mem) s (str ++ [NUL]) ->
 (forall a, s + Z.of_nat (length str) < a < s + Z.of_nat (length str) - (s + Z.of_nat (length str)) mod 8 + 8 -> mrestrict (w_H W) mem (Z_to_bv 64 a) <> None) ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_channel_reader md = true ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md (Z.of_nat (length lit1 + length str + length lit2)) T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fprintf regs mem md) (wr ch_stderr (lit1 ++ str ++ lit2) T).
@@ -85,7 +91,7 @@ forall (ly : alayout) (S : astate) (W : world tfibsegs) (regs : bvmap 5 word) (m
 icpt_pre ly S W regs mem md ->
 getr regs 10%bv = w64 F_STDERR_LO -> getr regs 11%bv = w64 0x1980b -> getr regs 12%bv = w64 67108864 ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_channel_reader md = true ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md (Z.of_nat (length msg_refused)) T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fprintf regs mem md) (wr ch_stderr msg_refused T).
@@ -105,6 +111,9 @@ AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly S W mem md -> top_ok usp ly -
 est (w_H W) mem ->
 ((k = 0%nat /\ stdout_img (w_H W) mem) \/ ((1 <= k)%nat /\ xst k (w_H W) mem)) ->
 ((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ->
+(* Guarded as the descriptor premise above is: only a run that writes a line needs the
+   model's channel reader, which [fdchan] asks for at LPS 727298f3. *)
+((1 <= k)%nat -> m_channel_reader md = true) ->
 m_fs md = fs ->
 srealizes tfibsegs (mkCfg (mkst regs (w64 A_exit) mem (seg_rom tfibsegs)) md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 End c.

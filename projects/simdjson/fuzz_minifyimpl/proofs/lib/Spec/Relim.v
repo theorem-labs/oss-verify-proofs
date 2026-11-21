@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the brk lemmas charge brk_grow_bytes (page-granular grants), and the munmap relimit proof covers the injected errno arm and the destructive-cut arm; taken in part from projects/simdjson/fuzz_parser/proofs/lib/Spec/Relim.v, lines 104, 117, 126-135, 222, 231-247. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -101,20 +102,23 @@ Qed.
 Lemma brk_grow_ok_relim : forall m req r L,
   brk_grow_ok m req r = true ->
   (0 < bv_unsigned (vm_brk (m_vmmaps m)) -> bv_unsigned (vm_brk (m_vmmaps m)) < bv_unsigned r ->
-   vm_backing_used m + bv_unsigned (r - vm_brk (m_vmmaps m))%bv <= L) ->
+   vm_backing_used m + brk_grow_bytes (m_vmmaps m) r <= L) ->
   brk_grow_ok (relim L m) req r = true.
 Proof.
   intros m req r L Hok HL. unfold brk_grow_ok, brk_budget_ok in *. rewrite m_vmmaps_relim, vm_backing_used_relim, alloc_top_relim_h.
   cbn [vm_brk vm_reserved vm_maps vm_limit relim_h] in *.
   destruct (Z.ltb_spec 0 (bv_unsigned (vm_brk (m_vmmaps m)))); [|reflexivity].
   destruct (Z.ltb_spec (bv_unsigned (vm_brk (m_vmmaps m))) (bv_unsigned r)); [|reflexivity]. cbn [andb] in *.
-  apply andb_prop in Hok as [H1 H2]. rewrite H1. cbn [andb]. apply Z.leb_le. apply HL; assumption.
+  apply andb_prop in Hok as [H1 H2]. rewrite H1. cbn [andb]. apply Z.leb_le.
+  (* [brk_grow_bytes] reads only [vm_brk], which [relim_h] keeps. *)
+  change (brk_grow_bytes (relim_h L (m_vmmaps m)) r) with (brk_grow_bytes (m_vmmaps m) r).
+  apply HL; assumption.
 Qed.
 
 Lemma brk_r_ok_relim : forall m req r L,
   brk_r_ok m req r = true ->
   (0 < bv_unsigned (vm_brk (m_vmmaps m)) -> bv_unsigned (vm_brk (m_vmmaps m)) < bv_unsigned r ->
-   vm_backing_used m + bv_unsigned (r - vm_brk (m_vmmaps m))%bv <= L) ->
+   vm_backing_used m + brk_grow_bytes (m_vmmaps m) r <= L) ->
   brk_r_ok (relim L m) req r = true.
 Proof.
   intros m req r L Hok HL. unfold brk_r_ok, min_brk in *. rewrite m_vmmaps_relim. cbn [vm_brk vm_start_brk relim_h] in *.
@@ -123,16 +127,29 @@ Proof.
   apply andb_prop in Hok as [H1 H2]. rewrite H1. cbn [andb]. apply brk_grow_ok_relim; assumption.
 Qed.
 
+(* LPS b07fadbb MADE THE BRK GRANT PAGE-GRANULAR: [Mmap.brk_grants]
+   (75d69e00 Sys/Mm/Mmap.v:198-201) records
+   [brk_page_range (page_round_up_Z old) (page_round_up_Z r)], so the ledger
+   grows by [page_round_up_Z r - page_round_up_Z old], which is exactly
+   [brk_grow_bytes] (:372-374) and NOT [bv_unsigned (r - vm_brk ...)].  The
+   byte-granular right-hand side was pre-#38 and is false whenever either end
+   is off a page boundary. *)
 Lemma brk_next_live : forall m req r,
   brk_r_ok m req r = true -> 0 < bv_unsigned (vm_brk (m_vmmaps m)) -> bv_unsigned (vm_brk (m_vmmaps m)) < bv_unsigned r ->
-  vm_live_bytes (brk_model_next (m_vmmaps m) req r) = vm_live_bytes (m_vmmaps m) + bv_unsigned (r - vm_brk (m_vmmaps m))%bv.
+  vm_live_bytes (brk_model_next (m_vmmaps m) req r) = vm_live_bytes (m_vmmaps m) + brk_grow_bytes (m_vmmaps m) r.
 Proof.
   intros m req r Hok Hb Hlt. unfold brk_model_next, vm_live_bytes. cbn [vm_maps]. unfold brk_maps_next.
   replace (bv_unsigned r <? bv_unsigned (vm_brk (m_vmmaps m))) with false by (symmetry; apply Z.ltb_ge; lia). rewrite andb_false_r.
   unfold brk_grants, brk_is_grow. rewrite (proj2 (Z.ltb_lt _ _) Hb), (proj2 (Z.ltb_lt _ _) Hlt).
   assert (Hreq : w_is0 req = false).
   { unfold brk_r_ok in Hok. destruct (w_is0 req) eqn:E; [|reflexivity]. cbn [orb] in Hok. apply bv_eqb_eq in Hok. rewrite Hok in Hlt. lia. }
-  rewrite Hreq. cbn. lia.
+  rewrite Hreq. cbn [negb andb]. unfold brk_page_range, brk_grow_bytes.
+  pose proof (bv_unsigned_in_range 64 r) as Rr. unfold bv_modulus in Rr. cbn in Rr.
+  destruct (Z.ltb_spec (page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m)))) (page_round_up_Z (bv_unsigned r))) as [Hp|Hp].
+  - assert (B : 0 <= page_round_up_Z (bv_unsigned r) - page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m))) < 2^64).
+    { unfold page_round_up_Z, page_size in *. Z.div_mod_to_equations. lia. }
+    cbn [app]. cbn [live_bytes fst snd]. rewrite unsigned_lit by exact B. lia.
+  - cbn [app]. lia.
 Qed.
 
 Lemma brk_model_next_relim : forall L h req r,
@@ -212,6 +229,7 @@ Lemma check_munmap_relim : forall addr len eff m m' evs L,
 Proof.
   intros addr len eff m m' evs L H. unfold check_munmap in *. cbv zeta in H. cbv zeta. rewrite m_vmmaps_relim.
   change (munmap_free_ok (relim_h L (m_vmmaps m))) with (munmap_free_ok (m_vmmaps m)).
+  change (munmap_cut_ok (relim_h L (m_vmmaps m))) with (munmap_cut_ok (m_vmmaps m)).
   cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp relim_h] in *.
   match type of H with (if ?a then _ else _) = _ => destruct a end.
   { apply (check_ret_only_relim _ _ _ _ _ _ L) in H as [-> H]. split; [reflexivity| exact H]. }
@@ -220,11 +238,25 @@ Proof.
   match type of H with (if ?a then _ else _) = _ => destruct a end.
   - destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate]. destruct zs; [|discriminate].
     destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
-    match type of H with (if ?a then _ else _) = _ => destruct a; [|discriminate] end.
-    injection H as <- <-. split; [unfold with_mmap_destroyed; rewrite m_vmmaps_vm_forget_range, m_vmmaps_with_vmmaps; reflexivity|].
-    unfold with_mmap_destroyed. rewrite relim_vm_forget_range. f_equal; f_equal; dm m; reflexivity.
-  - match type of H with (if ?a then _ else _) = _ => destruct a; [|discriminate] end.
-    apply (check_ret_only_relim _ _ _ _ _ _ L) in H as [-> H]. split; [reflexivity| exact H].
+    (* LPS 75d69e00: the injected errno arm answers before the kept arm, so the
+       refusal case has to be covered before the exact-unmap case is reached. *)
+    match type of H with (if ?a then _ else _) = _ => destruct a end.
+    + destruct us; [|discriminate]. injection H as <- <-. split; reflexivity.
+    + match type of H with (if ?a then _ else _) = _ => destruct a; [|discriminate] end.
+      injection H as <- <-. split; [unfold with_mmap_destroyed; rewrite m_vmmaps_vm_forget_range, m_vmmaps_with_vmmaps; reflexivity|].
+      unfold with_mmap_destroyed. rewrite relim_vm_forget_range. f_equal; f_equal; dm m; reflexivity.
+  - match type of H with (if ?a then _ else _) = _ => destruct a end.
+    + apply (check_ret_only_relim _ _ _ _ _ _ L) in H as [-> H]. split; [reflexivity| exact H].
+    + (* LPS 75d69e00: the destructive-cut arm repeats the same errno-first
+         dispatch over the same kept arm, so it needs the same two cases. *)
+      match type of H with (if ?a then _ else _) = _ => destruct a; [|discriminate] end.
+      destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate]. destruct zs; [|discriminate].
+      destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
+      match type of H with (if ?a then _ else _) = _ => destruct a end.
+      * destruct us; [|discriminate]. injection H as <- <-. split; reflexivity.
+      * match type of H with (if ?a then _ else _) = _ => destruct a; [|discriminate] end.
+        injection H as <- <-. split; [unfold with_mmap_destroyed; rewrite m_vmmaps_vm_forget_range, m_vmmaps_with_vmmaps; reflexivity|].
+        unfold with_mmap_destroyed. rewrite relim_vm_forget_range. f_equal; f_equal; dm m; reflexivity.
 Qed.
 
 Lemma mprotect_model_next_relim : forall L m a n, mprotect_model_next (relim L m) a n = relim L (mprotect_model_next m a n).

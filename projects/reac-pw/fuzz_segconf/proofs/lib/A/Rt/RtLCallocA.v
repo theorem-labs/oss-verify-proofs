@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf image A: the Allocate contract at asan_calloc's call, in the form the calloc closing consumes
    (lib/A/Rt/RtLCallocR.v aseg_aalloc_calloc), from the closed primary-size Allocate of the AG family
-   (lib/A/AGtopcgifC.v aalloc_prim_realizes_cgif_closed, relocated from omx-clap-core/fuzz_state at origin/ossv/recipes
-   501c0d516c69; record in provenance/evidence/interceptors/calloc/ag/) at can_fill 0.
+   (lib/A/AGtopcgifC.v aalloc_prim_realizes_cgif_closed, relocated from omx-clap-core/fuzz_state;
+   record in provenance/evidence/interceptors/calloc/ag/) at can_fill 0.
 
    Rule 24: Allocator::Allocate (0x33118) is proved by the relocated AG family; this file only restates that theorem.
    aalloc_prim_realizes_cgif B 0 (lib/A/AllocGcgif.v) is, by conversion, aseg_aalloc_calloc tfibsegs B TFIB_INST

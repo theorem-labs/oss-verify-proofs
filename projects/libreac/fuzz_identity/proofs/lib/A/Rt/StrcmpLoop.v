@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build
    (image A) by an address map recorded by the porting lane; module paths, GrantSyms ->
    TfibSyms. The proof script is a Theorem Labs lane's, unchanged. *)
@@ -18,6 +18,7 @@
    register but a0, s4, s9, s10 is the one at the first entry. The loop leaves at 0x427c4 after the iteration
    i = k (x[k] = 0 or x[k] <> y[k]) with s4 = k + 1, s9 = x[k], s10 = y[k]. Memory is only read. *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms, and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,7 +1,7 @@
 (* Interface row 11 of reac-pw/fuzz_segconf's ASan image A (provenance/evidence/interceptors/INTERFACE-A-interceptors.md):
    the strrchr wrapper at its 4-byte jump PC_strrchr = 0x43a2c (lib/A/Rt/SegRtPC.v), lifted from the relocated Bz walk to
    the accepted contract text RtSeg.astrrchr_realizes (lib/A/Rt/RtSeg.v).
-   - the walk: lib/A/Bz/A/I_strrchr.v istrrchr_spec (relocated from plugin-hostd/fuzz_reply a0dcb5cdc736; the code it
+   - the walk: lib/A/Bz/A/I_strrchr.v istrrchr_spec (relocated from plugin-hostd/fuzz_reply; the code it
      walks is the same in both images): the jump 0x43a2c, the wrapper 0x45dc4 (the init gate, internal_strlen, the
      range check of len + 1 bytes), then REAL(strrchr) = musl strrchr 0x9aecc, which calls the strlen wrapper through
      its jump 0x43a0c and tail-calls musl memrchr 0x9a7f8 over len + 1 bytes; depth 4400 bytes, inside the contract's

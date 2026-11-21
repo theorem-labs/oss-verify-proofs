@@ -10,12 +10,13 @@
    cmd_prog_unowned (CmdRecImg.v), all over IMG : cmd_img_facts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_exact.v, with its module paths and module names changed; 20 of its 39 lines of code are new or changed and 65 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/trim.v, with its module paths and module names changed; 45 of its 66 lines of code are new or changed and 18 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_split on fuzz_segconf image A (0x89b8c = BASE + AF_reac_declared_vlan_split): the walk against
    reac_declared_vlan_split_contract (lib/A/Prog/reac_declared_vlan_split_c.v), at SegInstA's image-A numbers.
    proves function reac_declared_vlan_split (reuse search: origin/main, origin/ossv/recipes, origin/ossv/candidates,
    origin/release/pau-projects-recipes and the working-branch lemma and live-head indexes /
    the stream's proof index reac_declared_vlan_split): none released; written new in the form
-   of plugin-hostd/fuzz_command's lib/A/Prog walks (origin/ossv/recipes 501c0d516c69).
+   of plugin-hostd/fuzz_command's lib/A/Prog walks.
 
    The walk is a chain of program points (reac_declared_vlan_split_d.v), each stated over the concrete state there:
      entry  -> K1 (after the strrchr wrapper)            reac_declared_vlan_split_a.v  vs_entry_walk

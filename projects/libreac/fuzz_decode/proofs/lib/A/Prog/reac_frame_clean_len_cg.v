@@ -22,7 +22,7 @@ Variable world : Type.                                                (* YA0n.v:
 Variable w_H : world -> word -> bool.                                 (* YA0n.v:18 *)
 Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:34 *)
 Variable alayout : Type.                                              (* YG0f.v:42 *)
-Variable astate : Type.                                               (* YG00.v:153 *)
+Variable astate : Type.                                               (* YG00.v:154 *)
 Variable AR : alayout -> astate -> world -> (word -> option byte) -> Model -> Prop.  (* YG0n.v:489 *)
 Variable aview : (word -> bool) -> (word -> option byte) -> Z -> option Z.          (* YG0n.v:17 *)
 Variable same_but_materialized : Model -> Model -> Prop.              (* YK04.v:538 *)

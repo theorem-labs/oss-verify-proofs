@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -280,9 +281,15 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct (find_grant_sound _ _ _ _ HjP) as (kp & Hp). destruct (find_grant_sound _ _ _ _ HjT) as (kt & Ht).
   pose proof (sden_0 _ _ _ _ (dn_sden _ _ _ _ _ _ _ _ _ Hd)) as (_ & _ & _ & _ & _ & _ & HF0 & _).
   rewrite forallb_l_eq in Hck.
+  (* the launch ledger is the segments' then the vDSO pair's ([dn_res]) *)
+  assert (Hck' : forallb (pri_sep_c (s_facts S) (sm_maps M) (ASEGSR ++ vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                            jP jT (sm_sp M) a) (s_rgs S) = true).
+  { rewrite forallb_forall in Hck |- *. intros R HR. apply pri_sep_c_app. exact (Hck R HR). }
+  clear Hck. rename Hck' into Hck.
   exact (pri_outside E (s_facts S) (sm_maps M) model (sm_sp M) _ HF0 (dn_maps _ _ _ _ _ _ _ _ _ Hd) (dn_pd _ _ _ _ _ _ _ _ _ Hd)
            (dn_gsh _ _ _ _ _ _ _ _ _ Hd) (dn_gtop _ _ _ _ _ _ _ _ _ Hd) (dn_sp _ _ _ _ _ _ _ _ _ Hd) (proj2 (dn_spok _ _ _ _ _ _ _ _ _ Hd))
-           (proj1 (dn_spok _ _ _ _ _ _ _ _ _ Hd)) (dn_mres _ _ _ _ _ _ _ _ _ Hd) ASEGSR (dn_res _ _ _ _ _ _ _ _ _ Hd) gq_res a m0 Hi jP jT _ _ Hp eq_refl eq_refl Ht eq_refl eq_refl Hsep Hxt
+           (proj1 (dn_spok _ _ _ _ _ _ _ _ _ Hd)) (dn_mres _ _ _ _ _ _ _ _ _ Hd) (ASEGSR ++ vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+           (dn_res _ _ _ _ _ _ _ _ _ Hd) (FxChSep.in_res_b_app _ _ _ _ gq_res) a m0 Hi jP jT _ _ Hp eq_refl eq_refl Ht eq_refl eq_refl Hsep Hxt
            (s_rgs S) (rgs_sz_ok E S M ms model Hd) Hck x Hx HF Hna).
 Qed.
 End PriDen.

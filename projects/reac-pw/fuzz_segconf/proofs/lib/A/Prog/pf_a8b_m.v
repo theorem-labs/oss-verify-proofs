@@ -3,7 +3,7 @@
    for segment A8b's proof, 2026-10-30.
 
    proves no function (kind: model lemma): no instruction is walked here and no machine state is named. The lane's
-   rule-24 record is the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md.
+   rule-24 record is the unit's internal record, path records/segp/g3-lookup.md.
 
    WHAT IS HERE.
    - The model side of the header step (pf_pieces.pf_seg_step on SegModel.seg_get): the NEW path (no entry has the

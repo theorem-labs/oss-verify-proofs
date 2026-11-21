@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the start-up nodes read argv, envp and execfn from inp, with the mmap base and entry; the CONFIG_RSEQ flag in the string offset and the pnscan and layout nodes; valid_launch and entry_launch_ok_va). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -571,14 +572,35 @@ Section NodesD.
   Hypothesis Dp4 : decode_any wp4 = Some (Branch BC_NE 13 0 8180, 4%Z).
 
   (* [comment removed for export] *)
+  (* THE LAYOUT BLOCK, moved onto [inp] exactly as [Mh32.Layout] already is
+     (Mh32.v:2035-2057: [segs v inp mbase ph entry sp brk rdraw] with
+      [Hva Hve Hvl Hlau Hsp_lo Hsp_hi]).  Mh32 is the donor for the shape AND
+     for every read lemma used below, so this section is spelled to match it
+     variable for variable rather than invented here.
+     [argv envp uid hw] are GONE as variables: [uid] and [hw] only ever
+     reached [wrap_mem], which now reads them from [inp] itself, and
+     [argv]/[envp] are projections.  [mbase], [entry] and [brk] are new,
+     because [entry_stack_image] and [wrap_mem] take them. *)
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
   Variable ph : PhdrInfo.
-  Variable sp : word.
+  Variable entry : word.
+  Variable sp brk : word.
   Variable rdraw : EntryDraw.
-  Variables argv envp : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
+  Local Notation argv   := (in_argv inp) (only parsing).
+  Local Notation envp   := (in_envp inp) (only parsing).
+  Local Notation execfn := (in_execfn inp) (only parsing).
+  Local Notation rseq   := (kb_rseq (in_kernel inp)) (only parsing).
+  Local Notation top    := (ed_top rdraw) (only parsing).
+  (* The plan's [r] at THIS run's CONFIG_RSEQ: [e_str0] and [e_atrandom] took
+     an [r : Z] parameter at this revision (AzPlanCore.v:3621-3623) and the
+     value a consumer must supply is [rseq_z (kb_rseq (in_kernel inp))]. *)
+  Local Notation RS     := (rseq_z (kb_rseq (in_kernel inp))) (only parsing).
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp brk mbase rdraw) inp.
   Hypothesis Hsp_lo : sp_window_lo <= bv_unsigned sp.
   Hypothesis Hsp_hi : bv_unsigned sp <= sp_window_hi.
 
@@ -586,19 +608,36 @@ Section NodesD.
   Let argc := Z.of_nat (length argv).
   Let envc := Z.of_nat (length envp).
   Let s0 := nth 0 argv [].
-  Let bsb := build_stack_bytes ph sp argv envp uid hw rdraw.
-  (* [comment removed for export] *)
+  (* The mapped image is Linux's whole block, [sp] .. [ed_top]; the old
+     [build_stack_bytes ph sp argv envp uid hw rdraw] summed a short block
+     that no longer exists. *)
+  Let bsb := entry_stack_image inp mbase ph entry sp rdraw.
+  Let stk := stack_to_mem sp (entry_stack_image inp mbase ph entry sp rdraw).
   Let EA := usp + 8 * argc + 16.
-  Let STR0 := usp + 8 * argc + 8 * envc + 184.
+  (* OLD BESIDE NEW, and this is a refuted closed form:
+       STR0 := usp + 8 * argc + 8 * envc + (24 + the old fixed auxv size)
+       STR0 := usp + cat_string_off rseq sp top argv envp execfn
+     That old constant was 24 plus the old fixed 160-byte auxv, and the
+     old definitions reproduce it; the number
+     itself is deliberately not written here, because every surviving
+     occurrence of it in this tree is now a defect.  The auxv is 432 or
+     464 bytes depending on CONFIG_RSEQ, there is a 0-or-8 STACK_ROUND gap
+     and a 0..4110 pad above it, and the strings sit at the TOP of the block
+     rather than just above the vector -- so the base is not a linear form in
+     argc and envc at all and has to be spelled with the model's own offset
+     (Common/CatExec.v:578 = block_head_size + block_pad_len).
+     THIS IS WHY THE FILE HAD TO MOVE ONTO [inp]: [cat_string_off] needs
+     [rseq] and [execfn], and the old section carried neither. *)
+  Let STR0 := usp + Z.of_nat (cat_string_off rseq sp top argv envp execfn).
 
   (* [comment removed for export] *)
   Hypothesis SINV_isp : forall E M, SINV E M -> bv_unsigned (edenot E ISP) <= usp.
   Hypothesis SINV_vals : forall E M, SINV E M ->
-    uE E e_envp = EA /\ ev E V_ENVC = Z_to_bv 64 envc /\ uE E e_str0 = STR0.
+    uE E e_envp = EA /\ ev E V_ENVC = Z_to_bv 64 envc /\ uE E (e_str0 RS) = STR0.
   Hypothesis SINV_envp : forall E M (a : word), SINV E M ->
-    EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+    EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a.
   Hypothesis SINV_str0 : forall E M (a : word), SINV E M ->
-    STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+    STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem inp mbase ph entry sp rdraw a.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -615,7 +654,9 @@ Section NodesD.
   Lemma usp_hi : usp <= 0x800000000000.
   Proof. unfold usp. unfold sp_window_hi in Hsp_hi. lia. Qed.
   Lemma bsb_nw : usp + Z.of_nat (length bsb) < 2 ^ 64.
-  Proof. unfold usp, bsb. apply lay_bsb_nw; assumption. Qed.
+  Proof. unfold usp, bsb. apply lay_bsb_nw with (v := v) (brk := brk); assumption. Qed.
+  Lemma bsb_len : Z.of_nat (length bsb) <= 2101782.
+  Proof. unfold bsb. apply lay_bsb_len with (v := v) (brk := brk); assumption. Qed.
 
   (* [comment removed for export] *)
   Lemma top_le_usp : forall E cs R FULL model, CSOK E cs R FULL model -> alloc_top (m_vmmaps model) <= usp.
@@ -626,55 +667,88 @@ Section NodesD.
     unfold alloc_top, stack_max_size. rewrite Hisp. lia.
   Qed.
 
-  Lemma STR0_eq : cat_argv_ptr sp argv envp 0 = Z_to_bv 64 STR0.
+  (* Old beside new:
+       STR0_eq : cat_argv_ptr sp argv envp 0 = Z_to_bv 64 STR0
+       STR0_eq : cat_argv_ptr top argv envp execfn 0 = Z_to_bv 64 STR0
+     [cat_argv_ptr] is (top : word) (av ev) (execfn) (k) at this revision
+     (Common/CatExec.v:574): it is anchored at the stack VMA's END, not at
+     [sp], because the strings sit at the top of Linux's block.  The old
+     proof reached [STR0] by unfolding [cat_struct_size] and [auxv_size] --
+     a closed sum over a fixed auxv.  The new one goes through the model's
+     own [cat_string_base_offset], which is the lemma that says the string
+     base IS [sp + cat_string_off ...]. *)
+  Lemma STR0_eq : cat_argv_ptr top argv envp execfn 0 = Z_to_bv 64 STR0.
   Proof.
-    pose proof len_av. pose proof len_ev. pose proof usp_hi.
-    rewrite (cat_argv_ptr_offset sp argv envp 0) by (destruct Hva as [Hl _]; lia).
-    unfold cat_string_base. rewrite nat_to_word_add_merge, word_add_nat.
-    lazymatch goal with |- Z_to_bv 64 ?a = Z_to_bv 64 ?b => replace a with b; [reflexivity|] end.
+    pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi.
+    pose proof bsb_nw.
+    rewrite (cat_argv_ptr_offset top argv envp execfn 0) by (destruct Hva as [Hl _]; lia).
+    rewrite (cat_string_base_offset v inp mbase sp brk rdraw Hlau).
     change (total_arg_bytes_nat (firstn 0 argv)) with 0%nat.
-    unfold cat_struct_size, auxv_size, STR0, usp, argc, envc. lia.
+    rewrite nat_to_word_add_merge, word_add_nat.
+    lazymatch goal with |- Z_to_bv 64 ?a = Z_to_bv 64 ?b => replace a with b; [reflexivity|] end.
+    unfold STR0, usp. lia.
   Qed.
 
-  (* [comment removed for export] *)
+  (* The three read lemmas keep their shape; only [wrap_mem]'s argument list
+     and the donors' move onto [inp].  The donors are Mh32's Section Layout
+     ([read_envp_ptr_k] Mh32.v:2133, [read_envp_null] Mh32.v:2165) and
+     Common/CatExec.v:807's [read_argv_byte_k], which takes
+     [v segs inp mbase ph entry sp brk draw k j] with an
+     [entry_launch_ok_va] premise.
+     The Mh32 donors are applied with [erewrite ... by eassumption] rather
+     than positionally: a Section lemma's discharged argument list is
+     whatever its proof uses, and spelling it by hand is the one step a
+     reader cannot check without a compiler. *)
   Lemma rd_envp_k : forall M k, (k < length envp)%nat ->
-    (forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a) ->
-    rdn SEGS M (Z_to_bv 64 (EA + 8 * Z.of_nat k)) 8 = Some (word_to_le_bytes 8 (cat_envp_ptr sp argv envp k)).
+    (forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
+    rdn SEGS M (Z_to_bv 64 (EA + 8 * Z.of_nat k)) 8 = Some (word_to_le_bytes 8 (cat_envp_ptr top argv envp execfn k)).
   Proof.
     intros M k Hk HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi.
     assert (Hk' : Z.of_nat k < envc) by (unfold envc; lia).
-    rewrite (rdn_ext SEGS 8 M (wrap_mem ph sp argv envp uid hw rdraw)).
+    rewrite (rdn_ext SEGS 8 M (wrap_mem inp mbase ph entry sp rdraw)).
     - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold EA in *; lia | rewrite u64_lit; unfold EA in *; [change (Z.of_nat 8) with 8|]; lia].
       rewrite <- n_to_le_8_spec.
-      rewrite <- (read_envp_ptr_k SEGS ph sp rdraw argv envp uid hw Hva Hve Hsp_hi k Hk).
+      erewrite <- read_envp_ptr_k by eassumption.
       f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, usp. lia.
     - rewrite u64_lit; unfold EA in *; [change (Z.of_nat 8) with 8|]; lia.
     - intros a Ha. rewrite u64_lit in Ha by (unfold EA in *; lia). change (Z.of_nat 8) with 8 in Ha. apply HM. lia.
   Qed.
 
   Lemma rd_envp_null : forall M,
-    (forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a) ->
+    (forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
     rdn SEGS M (Z_to_bv 64 (EA + 8 * Z.of_nat (length envp))) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
   Proof.
     intros M HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi.
-    rewrite (rdn_ext SEGS 8 M (wrap_mem ph sp argv envp uid hw rdraw)).
+    rewrite (rdn_ext SEGS 8 M (wrap_mem inp mbase ph entry sp rdraw)).
     - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold EA, envc in *; lia | rewrite u64_lit; unfold EA, envc in *; [change (Z.of_nat 8) with 8|]; lia].
       rewrite <- n_to_le_8_spec.
-      rewrite <- (read_envp_null SEGS ph sp rdraw argv envp uid hw Hva Hve Hsp_hi).
+      erewrite <- read_envp_null by eassumption.
       f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, usp. lia.
     - rewrite u64_lit; unfold EA, envc in *; [change (Z.of_nat 8) with 8|]; lia.
     - intros a Ha. rewrite u64_lit in Ha by (unfold EA, envc in *; lia). change (Z.of_nat 8) with 8 in Ha. apply HM. unfold envc. lia.
   Qed.
 
+  (* argv[0] and its NUL lie inside the block ([CatExec.bsb_byte_k] at k = 0), which
+     ends below 2^64 ([bsb_nw]); the string base is no longer a small offset of [sp]. *)
+  Lemma str0_fit : Z.of_nat (cat_string_off rseq sp top argv envp execfn) + Z.of_nat (length s0) + 1
+                   <= Z.of_nat (length bsb).
+  Proof.
+    destruct (bsb_byte_k inp mbase ph entry sp rdraw 0 ltac:(destruct Hva as [Hl _]; lia)) as (pre & post & Eb & Lp).
+    unfold bsb, s0. rewrite Eb, !length_app, Lp. change (total_arg_bytes_nat (firstn 0 argv)) with 0%nat.
+    cbn [length]. lia.
+  Qed.
+
   Lemma rd_str0_j : forall M j, (j <= length s0)%nat ->
-    (forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem ph sp argv envp uid hw rdraw a) ->
+    (forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
     rdn SEGS M (Z_to_bv 64 (STR0 + Z.of_nat j)) 1 = Some [byte_at s0 j].
   Proof.
     intros M j Hj HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi. pose proof len_s0.
-    rewrite (rdn_ext SEGS 1 M (wrap_mem ph sp argv envp uid hw rdraw)).
+    pose proof bsb_nw. pose proof str0_fit as HSB.
+    rewrite (rdn_ext SEGS 1 M (wrap_mem inp mbase ph entry sp rdraw)).
     - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold STR0 in *; lia | rewrite u64_lit; unfold STR0 in *; [change (Z.of_nat 1) with 1|]; lia].
       unfold byte_at, s0.
-      rewrite <- (read_argv_byte_k ph SEGS sp argv envp 0 j uid hw rdraw ltac:(destruct Hva as [Hl _]; lia) Hj bsb_nw).
+      rewrite <- (read_argv_byte_k v SEGS inp mbase ph entry sp brk rdraw 0 j Hlau
+                    ltac:(destruct Hva as [Hl _]; lia) Hj).
       f_equal. rewrite STR0_eq, word_add_nat, u64_lit by (unfold STR0 in *; lia). reflexivity.
     - rewrite u64_lit; unfold STR0 in *; [change (Z.of_nat 1) with 1|]; lia.
     - intros a Ha. rewrite u64_lit in Ha by (unfold STR0 in *; lia). change (Z.of_nat 1) with 1 in Ha. apply HM. lia.
@@ -702,12 +776,12 @@ Section NodesD.
     (* [comment removed for export] *)
     set (H2 := Hv E cs model).
     set (ms := mkst R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS)).
-    assert (HM : forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> mrestrict H2 FULL a = wrap_mem ph sp argv envp uid hw rdraw a).
+    assert (HM : forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> mrestrict H2 FULL a = wrap_mem inp mbase ph entry sp rdraw a).
     { intros a Ha. unfold H2. rewrite mrestrict_Hv_high by (unfold EA in *; lia). eapply SINV_envp; [exact HS | exact Ha]. }
     destruct (env_loop SEGS (x_envscan A) we1 we2 we3 ltac:(lia) Fe1 Fe2 Fe3 Ee1 Ee2 Ee3 De1 De2 De3
-                (mrestrict H2 FULL) (seg_rom SEGS) EA (length envp) (cat_envp_ptr sp argv envp)
+                (mrestrict H2 FULL) (seg_rom SEGS) EA (length envp) (cat_envp_ptr top argv envp execfn)
                 ltac:(unfold EA, envc in *; lia)
-                ltac:(intros k Kk; split; [apply rd_envp_k; [exact Kk | exact HM] | apply (cat_envp_ptr_nz ph sp rdraw argv envp uid hw Hva Hve Hsp_lo Hsp_hi k Kk)])
+                ltac:(intros k Kk; split; [apply rd_envp_k; [exact Kk | exact HM] | eapply cat_envp_ptr_nz; eassumption])
                 (rd_envp_null _ HM) (length envp) 0%nat R ltac:(lia) H9') as [R' [Hms Hpost]].
     unfold GPS.cfgF, GPS.mkstF. fold ms.
     assert (Hms' : msteps SEGS (restrict H2 ms) (mkst R' (Z_to_bv 64 (x_envscan A + 12)) (mrestrict H2 FULL) (seg_rom SEGS))).
@@ -739,7 +813,14 @@ Section NodesD.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  Theorem node_pnscan_here : SIF.node1_here SEGS RR A nx0 LIMIT SINV argH ISP FS0 fx SIF.always (node_pnscan A nx0).
+  (* [node_pnscan] KEEPS [nx0] and GAINS the plan's free [r], which is the
+     opposite of what the AzPlanCore definition read like on its own: it is
+     `(r : Z) (cs : acs)` there with [A] AND [nx0] discharged ahead of it.
+     The decisive reading is the CALL SITE the checker uses --
+     AsStartupTabs.v:131, `node_pnscan AT_A NXS r cs` -- not the Definition
+     line, which shows only the arguments the Section did not discharge.
+     Old beside new: [node_pnscan A nx0] -> [node_pnscan A nx0 RS]. *)
+  Theorem node_pnscan_here : SIF.node1_here SEGS RR A nx0 LIMIT SINV argH ISP FS0 fx SIF.always (node_pnscan A nx0 RS).
   Proof.
     intros cs cs' E R FULL model T HC _ Hn Hk. unfold node_pnscan in Hn.
     destruct (reg_lit cs 10) as [p|] eqn:Hp10; [|discriminate].
@@ -752,6 +833,7 @@ Section NodesD.
     apply andb_prop in Hc as [Hc Hwr]. apply andb_prop in Hc as [Hpc Heq].
     apply Z.eqb_eq in Hpc. apply Z.leb_le in Hlo. apply Z.leb_le in Hhi.
     pose proof len_av as Lav. pose proof len_ev as Lev. pose proof usp_lo as U1. pose proof usp_hi as U2. pose proof len_s0 as Ls0.
+    pose proof bsb_nw as HNW. pose proof bsb_len as HBL. pose proof str0_fit as HSB.
     destruct Xpn as (X1 & X2 & X3). destruct Ep as (Ep0 & Ep1 & Ep2 & Ep3 & Ep4).
     pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (HU0 & HU1 & HU2 & HU3).
     pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC) as HS.
@@ -763,7 +845,7 @@ Section NodesD.
     replace (Z_to_bv 5 (Z.of_nat 10)) with (10%bv : bv 5) in H10 by (apply bv_eq; reflexivity).
     destruct (reg_lit_sound' E cs R FULL model 12 _ HC ltac:(lia) Hp12) as [H12 _].
     replace (Z_to_bv 5 (Z.of_nat 12)) with (12%bv : bv 5) in H12 by (apply bv_eq; reflexivity).
-    pose proof (len_eqb_sound SEGS E _ (kn cs) (reg cs 11) (eaddz e_str0 1) HK Heq) as H11e.
+    pose proof (len_eqb_sound SEGS E _ (kn cs) (reg cs 11) (eaddz (e_str0 RS) 1) HK Heq) as H11e.
     pose proof (reg_sound' E cs R FULL model 11 HC ltac:(lia)) as H11.
     replace (Z_to_bv 5 (Z.of_nat 11)) with (11%bv : bv 5) in H11 by (apply bv_eq; reflexivity). rewrite H11e in H11.
     assert (H11' : getr R 11%bv = Z_to_bv 64 (STR0 + Z.of_nat 0 + 1)).
@@ -779,7 +861,7 @@ Section NodesD.
     set (ms := mkst R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS)).
     assert (Hst0 : store_ok SEGS M0 (Z_to_bv 64 p) 8 = true).
     { eapply store_ok_mono; [apply Mr_grows_Hv | exact HKW]. }
-    assert (HM : forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M0 a = wrap_mem ph sp argv envp uid hw rdraw a).
+    assert (HM : forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M0 a = wrap_mem inp mbase ph entry sp rdraw a).
     { intros a Ha. unfold M0, H2. rewrite mrestrict_Hv_high by (unfold STR0 in *; lia). eapply SINV_str0; [exact HS | exact Ha]. }
     destruct (pn_loop SEGS (x_pnscan A) wp0 wp1 wp2 wp3 wp4 ltac:(lia) Fp0 Fp1 Fp2 Fp3 Fp4 Ep0 Ep1 Ep2 Ep3 Ep4 Dp0 Dp1 Dp2 Dp3 Dp4
                 M0 (seg_rom SEGS) p STR0 s0
@@ -801,17 +883,17 @@ Section NodesD.
     { intros a Ha. unfold FULL', munrestrict. destruct (H2 a) eqn:H2a; [reflexivity|].
       destruct HM' as [HM1 _]. rewrite (HM1 a Ha). unfold M0, mrestrict. rewrite H2a. reflexivity. }
     (* [comment removed for export] *)
-    set (v := nxt cs). set (E' := ext1 E v (getr R' 11%bv)).
-    assert (Hag : env_agree v E E') by apply ext1_agree.
+    set (vn := nxt cs). set (E' := ext1 E vn (getr R' 11%bv)).
+    assert (Hag : env_agree vn E E') by apply ext1_agree.
     destruct (fresh_ok_parts nx0 cs Hfresh) as (Fsr & Fkn & Fmaps & Fallow & Fbrk & Ffd & Fle).
     pose proof (cs_ok_agree' E E' cs R FULL model Hag Hfresh HC) as HC'.
-    pose proof (hid_agree' v E E' cs model Hag Fle Fallow) as Hhid.
-    specialize (Hk E' R' FULL' model' (conj (env_agree_le nx0 v E E' Hag Fle) Hag)).
+    pose proof (hid_agree' vn E E' cs model Hag Fle Fallow) as Hhid.
+    specialize (Hk E' R' FULL' model' (conj (env_agree_le nx0 vn E E' Hag Fle) Hag)).
     unfold GPS.cfgF, GPS.mkstF, pc in Hk. cbn [a_ss with_ss mk_ss s_pc] in Hk. rewrite X3 in Hk.
     apply Hk; [| apply (same_but_materialized_frame _ _ Hsame)].
     (* [comment removed for export] *)
     eapply cs_ok_frame'; [exact HC' | exact Hsame | | | reflexivity | | |].
-    - rewrite (allowA_agree A v E E' cs Hag Fallow). exact Hinv'.
+    - rewrite (allowA_agree A vn E E' cs Hag Fallow). exact Hinv'.
     - cbn [s_regs]. destruct Hpost as (P11 & P13 & Pag).
       eapply (regs_ok_post2 E' _ R R' 11 11%bv _ 13 13%bv); [exact (co_regs _ _ _ _ _ _ _ _ _ _ _ _ HC') | lia | lia | lia | reflexivity | reflexivity | | |].
       + cbn [edenot]. unfold E'. rewrite ext1_at. reflexivity.
@@ -850,17 +932,30 @@ Section LayoutSound.
   Variable argH : env -> word -> bool.
   Variable ISP : expr.
   Variable FS0 : Fs.Fs.
+  (* NEW: the plan's free CONFIG_RSEQ flag.  [e_str1], [e_argv1w] and
+     [node_layout] each took an [r : Z] at this revision
+     (AzPlanCore.v:3623, :3629, :3656), and this section is abstract in
+     [SINV]/[argH] so it has no [inp] to read it from -- it carries [r]
+     itself and the caller instantiates it at [rseq_z (kb_rseq (in_kernel
+     inp))].  Old beside new, three statements:
+       e_argv1w_ge2  edenot E e_argv1w = edenot E e_str1
+                  -> edenot E (e_argv1w r) = edenot E (e_str1 r)
+       e_argv1w_le1  edenot E e_argv1w = edenot E (ELit 0)
+                  -> edenot E (e_argv1w r) = edenot E (ELit 0)
+       node_layout_here  ... (fun cs => node_layout cs args)
+                      -> ... (fun cs => node_layout r cs args) *)
+  Variable r : Z.
   Context {fx : FPState}.
 
   (* [comment removed for export] *)
-  Lemma e_argv1w_ge2 : forall E, 2 <= bv_unsigned (ev E V_ARGC) -> edenot E e_argv1w = edenot E e_str1.
+  Lemma e_argv1w_ge2 : forall E, 2 <= bv_unsigned (ev E V_ARGC) -> edenot E (e_argv1w r) = edenot E (e_str1 r).
   Proof.
     intros E H. unfold e_argv1w. cbn [edenot]. apply bv_eq. rewrite u_mul64, u_sltu64, u64_lit by lia.
     replace (1 <? bv_unsigned (ev E V_ARGC)) with true by (symmetry; apply Z.ltb_lt; lia).
-    pose proof (u64_range (edenot E e_str1)). rewrite Z.mul_1_l. apply Z.mod_small. lia.
+    pose proof (u64_range (edenot E (e_str1 r))). rewrite Z.mul_1_l. apply Z.mod_small. lia.
   Qed.
 
-  Lemma e_argv1w_le1 : forall E, bv_unsigned (ev E V_ARGC) <= 1 -> edenot E e_argv1w = edenot E (ELit 0).
+  Lemma e_argv1w_le1 : forall E, bv_unsigned (ev E V_ARGC) <= 1 -> edenot E (e_argv1w r) = edenot E (ELit 0).
   Proof.
     intros E H. unfold e_argv1w. cbn [edenot]. apply bv_eq. rewrite u_mul64, u_sltu64, !u64_lit by lia.
     replace (1 <? bv_unsigned (ev E V_ARGC)) with false by (symmetry; apply Z.ltb_ge; lia).
@@ -872,19 +967,19 @@ Section LayoutSound.
   Proof. intros E M v v' HK Hv. unfold kw_argv1 in *. cbn [kentry_ok] in *. rewrite Hv. exact HK. Qed.
 
   Theorem node_layout_here : forall args,
-    SIF.node1_here SEGS RR A nx0 LIMIT SINV argH ISP FS0 fx SIF.always (fun cs => node_layout cs args).
+    SIF.node1_here SEGS RR A nx0 LIMIT SINV argH ISP FS0 fx SIF.always (fun cs => node_layout r cs args).
   Proof.
     intros args cs cs' E R FULL model T HC _ Hn Hk. unfold node_layout in Hn.
-    destruct (existsb (kentry_eqb (kw_argv1 e_argv1w)) (kn cs)) eqn:Hex; [|discriminate]. cbn [negb] in Hn.
+    destruct (existsb (kentry_eqb (kw_argv1 (e_argv1w r))) (kn cs)) eqn:Hex; [|discriminate]. cbn [negb] in Hn.
     pose proof (co_know _ _ _ _ _ _ _ _ _ _ _ _ HC) as HK.
     (* [comment removed for export] *)
     apply existsb_exists in Hex as [K0 [Hin Heqb]]. apply kentry_eqb_eq in Heqb. subst K0.
     pose proof (proj1 (Forall_forall _ _) HK _ Hin) as HK0.
     assert (HK' : know_ok SEGS E (APS.Mr A argH E cs model FULL)
-                    (List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) (kn cs)))
+                    (List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w r)) K)) (kn cs)))
       by (apply know_ok_filter; exact HK).
-    assert (FIN : forall v, edenot E v = edenot E e_argv1w ->
-                  cs' = set_kn cs (kw_argv1 v :: List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) (kn cs)) ->
+    assert (FIN : forall v, edenot E v = edenot E (e_argv1w r) ->
+                  cs' = set_kn cs (kw_argv1 v :: List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w r)) K)) (kn cs)) ->
                   RR (GPS.cfgF SEGS fx R (pc cs) FULL model) T).
     { intros v Hv ->. specialize (Hk E R FULL model (conj (env_agree_refl nx0 E) (env_agree_refl (nxt cs) E))).
       rewrite pc_set_kn in Hk. apply Hk; [|reflexivity].
@@ -902,7 +997,7 @@ Section LayoutSound.
       destruct (xlo (kn cs) (EVar V_ARGC)) as [lo|] eqn:Hlo; [|discriminate].
       destruct (Z.leb 2 lo) eqn:Hle; [|discriminate]. apply Z.leb_le in Hle. apply some_inj_acs in Hn.
       pose proof (xlo_sound SEGS E _ (kn cs) (EVar V_ARGC) lo HK Hlo) as B. cbn [edenot] in B.
-      apply (FIN e_str1); [|symmetry; exact Hn]. symmetry. apply e_argv1w_ge2. lia.
+      apply (FIN (e_str1 r)); [|symmetry; exact Hn]. symmetry. apply e_argv1w_ge2. lia.
   Qed.
 End LayoutSound.
 
@@ -947,14 +1042,35 @@ Section Obl.
   Hypothesis Dp2 : decode_any wp2 = Some (Load SZ1 false 13 11 4095, 4%Z).
   Hypothesis Dp3 : decode_any wp3 = Some (Branch BC_EQ 13 12 8180, 4%Z).
   Hypothesis Dp4 : decode_any wp4 = Some (Branch BC_NE 13 0 8180, 4%Z).
+  (* Same move as Section NodesD above, same donor shape (Mh32.v:2035-2057).
+     Old beside new for this section's own statements:
+       section    ph sp rdraw argv envp uid hw + Hva Hve Hsp_lo Hsp_hi
+               -> v inp mbase ph entry sp brk rdraw
+                  + Hva Hve Hvl Hlau Hsp_lo Hsp_hi
+       STR0       usp + 8*argc + 8*envc + <the old constant>
+               -> usp + cat_string_off rseq sp top argv envp execfn
+       SINV_vals  ... uE E e_str0 = STR0
+               -> ... uE E (e_str0 RS) = STR0
+       SINV_envp/SINV_str0
+                  M a = wrap_mem ph sp argv envp uid hw rdraw a
+               -> M a = wrap_mem inp mbase ph entry sp rdraw a *)
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
   Variable ph : PhdrInfo.
-  Variable sp : word.
+  Variable entry : word.
+  Variable sp brk : word.
   Variable rdraw : EntryDraw.
-  Variables argv envp : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
+  Local Notation argv   := (in_argv inp) (only parsing).
+  Local Notation envp   := (in_envp inp) (only parsing).
+  Local Notation execfn := (in_execfn inp) (only parsing).
+  Local Notation rseq   := (kb_rseq (in_kernel inp)) (only parsing).
+  Local Notation top    := (ed_top rdraw) (only parsing).
+  Local Notation RS     := (rseq_z (kb_rseq (in_kernel inp))) (only parsing).
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp brk mbase rdraw) inp.
   Hypothesis Hsp_lo : sp_window_lo <= bv_unsigned sp.
   Hypothesis Hsp_hi : bv_unsigned sp <= sp_window_hi.
   Let usp := bv_unsigned sp.
@@ -962,20 +1078,25 @@ Section Obl.
   Let envc := Z.of_nat (length envp).
   Let s0 := nth 0 argv [].
   Let EA := usp + 8 * argc + 16.
-  Let STR0 := usp + 8 * argc + 8 * envc + 184.
+  Let STR0 := usp + Z.of_nat (cat_string_off rseq sp top argv envp execfn).
   Hypothesis SINV_isp : forall E M, SINV E M -> bv_unsigned (edenot E ISP) <= usp.
   Hypothesis SINV_vals : forall E M, SINV E M ->
-    uE E e_envp = EA /\ ev E V_ENVC = Z_to_bv 64 envc /\ uE E e_str0 = STR0.
+    uE E e_envp = EA /\ ev E V_ENVC = Z_to_bv 64 envc /\ uE E (e_str0 RS) = STR0.
   Hypothesis SINV_envp : forall E M (a : word), SINV E M ->
-    EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+    EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a.
   Hypothesis SINV_str0 : forall E M (a : word), SINV E M ->
-    STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+    STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem inp mbase ph entry sp rdraw a.
 
   Theorem node_envscan_stmt : SIF.node1_stmt SEGS RR A nx0 LIMIT SINV argH ISP FS0 FXOK SIF.always (node_envscan A).
   Proof. apply SIF.node1_pack. intros fx. eapply @node_envscan_here; eauto. Qed.
-  Theorem node_pnscan_stmt : SIF.node1_stmt SEGS RR A nx0 LIMIT SINV argH ISP FS0 FXOK SIF.always (node_pnscan A nx0).
+  (* Old beside new: node_pnscan A nx0 -> node_pnscan A nx0 RS, and
+     node_layout cs args -> node_layout RS cs args.  Both gained the plan's
+     free CONFIG_RSEQ flag; node_pnscan KEEPS nx0, as its call site in the
+     checker shows (AsStartupTabs.v:131, `node_pnscan AT_A NXS r cs`).
+     The value supplied is this run's own flag. *)
+  Theorem node_pnscan_stmt : SIF.node1_stmt SEGS RR A nx0 LIMIT SINV argH ISP FS0 FXOK SIF.always (node_pnscan A nx0 RS).
   Proof. apply SIF.node1_pack. intros fx. eapply @node_pnscan_here; eauto. Qed.
-  Theorem node_layout_stmt : forall args, SIF.node1_stmt SEGS RR A nx0 LIMIT SINV argH ISP FS0 FXOK SIF.always (fun cs => node_layout cs args).
+  Theorem node_layout_stmt : forall args, SIF.node1_stmt SEGS RR A nx0 LIMIT SINV argH ISP FS0 FXOK SIF.always (fun cs => node_layout RS cs args).
   Proof. intros args. apply SIF.node1_pack. intros fx. apply @node_layout_here. Qed.
 
 

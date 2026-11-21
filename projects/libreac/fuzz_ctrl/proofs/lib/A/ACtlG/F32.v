@@ -5,9 +5,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module names changed; 85 of its 151 lines of code are new or changed and 3787 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match_lib.v, with its module paths and module names changed; 717 of its 758 lines of code are new or changed and 110 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F31.v, with its module paths and module names changed; 753 of its 826 lines of code are new or changed and 685 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F32.v -- GLUE for stage seg_F32 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    Hypothesis seg_F32).  Written by a Theorem Labs lane; single writer.  rule 24: no function proved (stage
-   glue of a walk; the released-proof position of LLVMFuzzerTestOneInput was settled for this unit: At ossv/recipes c5e779efe8c (2026-10-31), no released proof of it outside this unit).
+   glue of a walk; the released-proof position of LLVMFuzzerTestOneInput was settled for this unit: At (2026-10-31), no released proof of it outside this unit).
    Pattern: glue-pattern.md (a working note, not in this delivery) (G1-G5), worked example lib/A/ACtlG/A5.v.
 
    WHAT IT PROVES
@@ -16,18 +17,18 @@
        CF POST (ix_cut C_A827d8_at [Z.of_nat j]) /\ CF POST (ix_cut C_A82800_at [Z.of_nat j])
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's seg_F32.  A two-entry
    segment (ACtl.v's note, ctrl's S_F32 Slot.v:218): both entries are proved, the entry 0x82800 first (f32g_e800) and
-   the entry 0x827d8 from it (f32g_e7d8: its run ends at 0x82800).  The source segment is Seg/F32.v seg_F32 :1353
-   (6a74d5929d2).
+   the entry 0x827d8 from it (f32g_e7d8: its run ends at 0x82800).  The source segment is Seg/F32.v seg_F32 :1353.
+   
 
    THE RUNS LIFTED (lib/A/Prog/Seg/F32F.v, this worker's v1.9 footprint re-run of Seg/F32.v)
      F32F.f32_evt_a_F  0x827d8 -> 0x82800: the three branches to 0x82bf4 are not taken (reads only).
      F32F.f32_evt_n_F  0x82800, k <> 9: the branch to 0x828c8 (register-only).
      F32F.f32_evt_m_F_on  0x82800, k = 9: the two record-byte tests, then 0x828c8 (row not selected, memory
                        unchanged) or the two stores and the call of reac_box_catalogue at 0x82858, back at 0x8285c.
-                       Route (C) form (a working branch b02bd9e287c): its callee premise
+                       Route (C) form (a working branch): its callee premise
                        reac_box_catalogue_contract_F_on (premise-free; statement blob d3c4f4d7f9d, a working branch)
                        is discharged by a Theorem Labs lane's CLOSED theorem A.Prog.reac_box_catalogueF.reac_box_catalogue_F_holds_on
-                       (Qed; file by path from a working branch 330e60af39d), and the whole run is lifted
+                       (Qed; file by path from a working branch), and the whole run is lifted
                        once; the run has no shadow_rw premise (dropped), and the write permission of its store to
                        S(fr) + 4 (its rw_cells premise) is read off ctl_rt_C's cut_shadow (F) disjunct.
 

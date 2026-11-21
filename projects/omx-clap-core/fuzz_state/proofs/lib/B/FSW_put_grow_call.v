@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 1917 of its 1994 lines of code are new or changed and 2709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_put_grow_tail.v, with its module paths, module names and numbers changed; 10 of its 428 lines of code are new or changed and 1576 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): put's GROW arm, second half, the piece around the call of the PROGRAM
    function fuzz_realloc (A_fuzz_realloc 0x82bc4 = 535492, ra = 0x84580 = 542080):
    - pgt_callee_pre: fuzz_realloc's fpreU at the call (callee sp = put's sp - 112, ra = 542080, gp / tp kept, the frame
@@ -17,10 +18,10 @@
    (fsw_pg_cs) holds o + 8 at sp - 112 and the 13 saved words at sp - 104 .. sp - 8. B's s3 / s4 are A's swapped, so
    pgt_resume re-seats x19 = (atom 8) >> 3 and x20 = atom 8 + 24 (pgt_regs1's order). STK_fuzz_realloc + 112 <=
    STK_put is computed (vm_compute), never pinned.
-   TAKEN FROM: lib/A/FSW_put_grow_tail.v lines 376-728 (pgt_callee_pre, pgt_resume) at a working branch
-   860b2fb1188, with the resume pc 541288 -> 542080 and B's s3 / s4; B kit lemmas: lib/B/FSW_ret.v:191
-   fsw_fpreU_atFP, lib/B/FSW_K3.v:70 fsw_ajournal_sub5, lib/B/FSW_K.v:123 fsw_sp, :193 fsw_got_shadow, :575
-   arodata_below, :103 fsw_aview_unpoison_high, :109 fsw_apresent_unpoison, lib/B/FSW_put.v:218 fsw_pf_chunk_move.
+   TAKEN FROM: lib/A/FSW_put_grow_tail.v lines 377-729 (pgt_callee_pre, pgt_resume) at a working branch,
+   with the resume pc 541288 -> 542080 and B's s3 / s4; B kit lemmas: lib/B/FSW_ret.v:192
+   fsw_fpreU_atFP, lib/B/FSW_K3.v:71 fsw_ajournal_sub5, lib/B/FSW_K.v:124 fsw_sp, :193 fsw_got_shadow, :575
+   arodata_below, :103 fsw_aview_unpoison_high, :109 fsw_apresent_unpoison, lib/B/FSW_put.v:219 fsw_pf_chunk_move.
    rule 24: proves no function (kind: segment lemma). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -55,7 +56,7 @@ Variable B : asyms.
 Hypothesis HSS : FsShadowSyms B.
 Hypothesis RT_memcpy : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Hypothesis IMG : fs_img_facts tfibsegs B.
-(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path from dda8331bd25:
+(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path:
    CTX-free with its `cnt <> fail ->` room guards), discharged at composition. *)
 Hypothesis HREALLOC : fuzz_realloc_spec tfibsegs B.
 
@@ -234,7 +235,7 @@ Qed.
    (FSW_K3.fsw_ajournal_sub5, the callee's FP1 under fsw_fp_sub), ARU at the callee's heads U2, and the resume state
    pgt_ss1 on the memory after the call. FSW_K3.fsw_after_callFPU_args ties the frame top to the journal top sp0;
    put's journal top is ot > sp, so the state is built here with entry_st_ok_full as that lemma builds its own
-   (FSW_K3.v:390-431): the frame's 14 words and o's len / failed fields read off the call site and kept by the
+   (FSW_K3.v:391-432): the frame's 14 words and o's len / failed fields read off the call site and kept by the
    callee journal's frames clause (at or above alloc_ceiling, outside [sp - 112 - STK_fuzz_realloc, sp - 112)), the
    shadow-base cells from AR, then the nine re-seated callee-saved registers (st_ok_set_reg). *)
 Lemma pgt_resume : forall FP1 kc ly2 S2 U2 W2 regs2 mem2 md2 res d,
@@ -332,7 +333,7 @@ assert (C0 : YP09.chunk_ok tfibsegs Er (mrestrict (w_H W2) mem2) (spZ regs - 112
   - cbn [sv_denot]. rewrite F8, E'10. reflexivity.
   - lia.
   - intros i Hi. cbn [Z.of_N] in Hi. apply KEEPC. lia. }
-(* the shadow-base cells on the memory after the call (as FSW_put.v:985-1003) *)
+(* the shadow-base cells on the memory after the call (as FSW_put.v:986-1004) *)
 destruct (fsw_got_shadow B ly2 S2 W2 (unpoison U2 mem2) md2 (proj1 HSS) (proj2 HSS) (proj1 HARU2)) as [Kgot Kcell].
 assert (MBL : forall x, 0 <= x < SHADOW_OFF ->
   mbyte tfibsegs (mrestrict (w_H W2) mem2) x = mbyte tfibsegs (mrestrict (w_H W2) (unpoison U2 mem2)) x).

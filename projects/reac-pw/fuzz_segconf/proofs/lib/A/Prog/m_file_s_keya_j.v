@@ -5,9 +5,10 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module names changed; 329 of its 363 lines of code are new or changed and 220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A), segment S_MF_KEYA: the three joins between the strip loops
-   (m_file_s_keya_d.v), in the form of plugin-hostd/fuzz_command's lib/A/Prog walks (origin/ossv/recipes
-   501c0d516c69), each a light seed and one or two runs (no load, no store):
+   (m_file_s_keya_d.v), in the form of plugin-hostd/fuzz_command's lib/A/Prog walks,
+   each a light seed and one or two runs (no load, no store):
      J1 0x86434  bgeu s11,a0 -> 0x86484        the front strip stopped at the '=' (a = i + ei):
                  0x86484 mv a2,a0; j 0x86550   J2 with the key empty, b = a
                  0x86438 addi a1,a0,-1; mv a2,a0 -> L2 0x86440 with b = i + ei

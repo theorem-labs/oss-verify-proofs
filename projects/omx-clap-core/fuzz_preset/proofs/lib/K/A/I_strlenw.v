@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Theorem Labs, 2026-10-28: copied from proofs/bzip2/bzip2_compress_target/lib/K/A/I_strlenw.v at origin/ossv/recipes c8557374ad2e, with its module paths changed to fuzz_preset's. Its address literals are still bzip2_compress_target.asan / .asan-ubsan's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-28: copied from proofs/bzip2/bzip2_compress_target/lib/K/A/I_strlenw.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed to fuzz_preset's. Its address literals are still bzip2_compress_target.asan / .asan-ubsan's. *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.

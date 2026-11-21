@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_up.v, with its module names changed; 695 of its 789 lines of code are new or changed and 2595 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_exit_check: the first piece of the exit segment of the image-A walk of
    libreac/fuzz_decode's LLVMFuzzerTestOneInput, i.e. ex_check_stmt of
    lib/A/Prog/LLVMFuzzerTestOneInput_seg_exit_cuts.v, stepped through the Pa engine
    (lib/A/Prog/{PaRun,PaShadow,PaJournal,DecodePaLib}.v) in the idiom of libreac/fuzz_boxreg's
-   lib/A/Prog/ReadName.v (pb_read_name at a working branch 1d92330b7ad) and of this unit's
+   lib/A/Prog/ReadName.v (pb_read_name at a working branch) and of this unit's
    lib/A/Prog/LLVMFuzzerTestOneInput_seg_entry.v (a Theorem Labs lane).
 
    What the code does from the return of the third reac_upstream_decode (+0x86c), offsets of the audited listing

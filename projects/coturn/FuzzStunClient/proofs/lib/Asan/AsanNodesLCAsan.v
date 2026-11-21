@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the statements carry the flag of the flagged relation SpinAlg.srealizesM and use the shadow table of the launch's rseq layout (ASAN_at (rseq_z rsb)). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -20,17 +21,19 @@ Definition TP_ASAN : list TPL.tplp := [TPL.TP 2628 [912]; TPL.TP 2634 [912]; TPL
 Lemma asan_lc_wf : forallb lc_wf LC_ASAN = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
 
-Lemma asan_lc_chk :
-  forallb (fun PT : TPL.tplp * LCN.lctab => TPL.tpl_check ASEGS IT_asan (shadow_off ASAN) (fst PT) (snd PT)) (combine TP_ASAN LC_ASAN) = true.
+Lemma asan_lc_chk {rsb : bool} :
+  forallb (fun PT : TPL.tplp * LCN.lctab => TPL.tpl_check ASEGS IT_asan (shadow_off (ASAN_at (rseq_z rsb))) (fst PT) (snd PT)) (combine TP_ASAN LC_ASAN) = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
 
-Lemma asan_lc_specs : Forall (fun T => lc_wf T = true /\ lc_spec ASEGS (shadow_off ASAN) T) LC_ASAN.
+Lemma asan_lc_specs {rsb : bool} : Forall (fun T => lc_wf T = true /\ lc_spec ASEGS (shadow_off (ASAN_at (rseq_z rsb))) T) LC_ASAN.
 Proof.
-  apply (tpl_all_sound ASEGS IT_asan (shadow_off ASAN) IT_asan_ok ltac:(vm_compute; split; [discriminate | reflexivity]) TP_ASAN LC_ASAN
+  apply (tpl_all_sound ASEGS IT_asan (shadow_off (ASAN_at (rseq_z rsb))) IT_asan_ok ltac:(vm_compute; split; [discriminate | reflexivity]) TP_ASAN LC_ASAN
            eq_refl asan_lc_wf asan_lc_chk).
 Qed.
 
 Section AsanNode.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
+  Context {rsb : bool}.   (* the launch's kb_rseq; the table is ASAN_at/BOTH_at (rseq_z rsb) *)
 Variable nx0 : N.
 Variable LIMIT : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
@@ -42,9 +45,9 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis nx0_ge7 : APS.nx0_ok nx0.
 Variable FS0 : Fs.Fs.
 
-Theorem asan_lc_ext_sound : ext_stmt ASEGS ASAN nx0 LIMIT (LCN.xn ASEGS ASAN nx0 LC_ASAN) SINV argH FS0.
+Theorem asan_lc_ext_sound : ext_stmt ASEGS (ASAN_at (rseq_z rsb)) nx0 LIMIT (LCN.xn ASEGS (ASAN_at (rseq_z rsb)) nx0 LC_ASAN) SINV argH FS0 sfl.
 Proof.
-  eapply (lc_xn_sound ASEGS ASAN nx0 LIMIT); try eassumption;
+  eapply (lc_xn_sound ASEGS (ASAN_at (rseq_z rsb)) nx0 LIMIT); try eassumption;
     first [ exact asan_wx | exact asan_in_hull | exact asan_hull_ok | exact asan_segs_wr | exact asan_shadow_ok | exact asan_lc_specs | idtac ].
 Qed.
 End AsanNode.

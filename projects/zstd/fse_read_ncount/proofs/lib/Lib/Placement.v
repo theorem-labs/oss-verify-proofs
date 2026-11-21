@@ -1,11 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's placement: mmap_place_found reads linux_place_b at the hint, and mmap_grant_refusable_at and mmap_reserve_refusable_at let a fresh mapping be refused only when that placement fails or, for a grant, the backing check fails; place_found_of_is, place_found_witness and two refusable_at_false_intro lemmas added; requires Checks.Placement). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+(* LPS 727298f3: Linux's placement, by qualified name only. *)
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -64,6 +67,58 @@ Definition mmap_grant_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
 
 Definition mmap_reserve_refusable (m : Model) (nZ : Z) : bool :=
   negb (vm_gap_available (m_vmmaps m) nZ).
+(* LPS 727298f3: a fresh grant takes the one address Linux places the request at
+   ([Checks.Placement.linux_place_b], read at the hint), so a refusal is open exactly when that
+   placement has no answer or, read-write, when the backing budget fails. *)
+Definition mmap_place_found (m : Model) (addr : word) (nZ : Z) : bool :=
+  match LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b
+          (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ with
+  | Some _ => true
+  | None => false
+  end.
+Definition mmap_grant_refusable_at (flags : word) (m : Model) (addr : word) (nZ : Z) : bool :=
+  negb (mmap_noreserve_backed_ok flags m nZ && mmap_place_found m addr nZ).
+Definition mmap_reserve_refusable_at (m : Model) (addr : word) (nZ : Z) : bool :=
+  negb (mmap_place_found m addr nZ).
+Lemma place_found_of_is : forall m addr nZ r,
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is
+    (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ r = true ->
+  mmap_place_found m addr nZ = true.
+Proof.
+  intros m addr nZ r H.
+  unfold LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is in H. unfold mmap_place_found.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b
+              (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ); [reflexivity|discriminate H].
+Qed.
+Lemma place_found_witness : forall m addr nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  mmap_place_found m addr nZ = true ->
+  exists a : word,
+    LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is
+      (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ a = true
+    /\ (bv_unsigned a mod page_size = 0)%Z.
+Proof.
+  intros m addr nZ Hpos Hal Hf. unfold mmap_place_found in Hf.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b
+              (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ) as [z|] eqn:Hb; [|discriminate Hf].
+  pose proof (proj1 (proj1 (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b_spec
+                              (m_vmmaps m) (kb_thp (m_kernel m)) addr nZ Hpos Hal) z) Hb) as Hpl.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_admissible
+              _ _ _ _ _ Hpos Hal Hpl) as (Zal & Zpos & Ztop & _).
+  pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.alloc_top_lt_two_pow_64 (m_vmmaps m)) as Hat.
+  assert (Hz : bv_unsigned (Z_to_bv 64 z) = z) by (apply bv_unsigned_Z_to_bv_u64; lia).
+  exists (Z_to_bv 64 z). split.
+  - unfold LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is. rewrite Hb, Hz. apply Z.eqb_refl.
+  - rewrite Hz. exact Zal.
+Qed.
+Lemma grant_refusable_at_false_intro : forall flags m addr nZ,
+  mmap_noreserve_backed_ok flags m nZ = true ->
+  mmap_place_found m addr nZ = true ->
+  mmap_grant_refusable_at flags m addr nZ = false.
+Proof. intros flags m addr nZ Hb Hpf. unfold mmap_grant_refusable_at. rewrite Hb, Hpf. reflexivity. Qed.
+Lemma reserve_refusable_at_false_intro : forall m addr nZ,
+  mmap_place_found m addr nZ = true -> mmap_reserve_refusable_at m addr nZ = false.
+Proof. intros m addr nZ Hpf. unfold mmap_reserve_refusable_at. rewrite Hpf. reflexivity. Qed.
 
 Definition mmap_fixed_fresh_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
   negb (mmap_noreserve_backed_ok flags m nZ).

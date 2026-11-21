@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, brk grants whole pages (brk_page_range, brk_grow_bytes), and the runs are over run_segments from the launch's start state (with_vdso), following LPS 727298f3's theories/Common/AllocSim.v. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -37,17 +38,6 @@ Proof.
   rewrite bv_add_unsigned.
   change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
   rewrite Z.add_0_r, bv_wrap64_mod. apply Z.mod_small. apply u64_range.
-Qed.
-
-(* [comment removed for export] *)
-Lemma word_add_sub_cancel : forall r t : word, r + t - r = t.
-Proof.
-  intros r t. apply bv_eq.
-  rewrite bv_sub_unsigned, bv_add_unsigned, !bv_wrap64_mod.
-  rewrite Zminus_mod_idemp_l.
-  replace (bv_unsigned r + bv_unsigned t - bv_unsigned r)%Z
-    with (bv_unsigned t) by lia.
-  apply Z.mod_small. apply u64_range.
 Qed.
 
 Lemma word_neq0_unsigned : forall r : word,
@@ -363,7 +353,9 @@ Qed.
 Lemma brk_grants_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-  brk_grants req r old = [(old, r - old)].
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
 Proof.
   intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
   assert (E1 : w_is0 req = false)
@@ -435,7 +427,7 @@ Lemma brk_grow_ok_grow : forall h req r,
                 (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
                              - page_round_up_Z (bv_unsigned (vm_brk h))))
       else true)
-     && (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
 Proof.
   intros h req r Hreq H0 Hlt.
   assert (Hmaps : m_vmmaps (vm_model h) = h) by reflexivity.
@@ -550,7 +542,7 @@ Lemma brk_grow_ok_aligned_grow : forall h req r,
       && region_free (vm_reserved h ++ vm_maps h) (vm_brk h)
            (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
                         - bv_unsigned (vm_brk h))))
-     && (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
 Proof.
   intros h req r Hreq Hpos Hlt Halign.
   rewrite brk_grow_ok_grow by assumption.
@@ -657,7 +649,8 @@ Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
                                (bv_unsigned r + bv_unsigned t)
                               + page_size - page_round_up_Z (bv_unsigned r)))
       else true)
-     && (bv_unsigned t <=? lim)%Z)%bool = true)).
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 
 (* [comment removed for export] *)
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
@@ -707,20 +700,6 @@ Proof.
   assert (E : (bv_unsigned lo <? bv_unsigned a + bv_unsigned sz)%Z = false)
     by (apply Z.ltb_ge; lia).
   rewrite E. cbn [andb negb]. apply IH. lia.
-Qed.
-
-(* [comment removed for export] *)
-Lemma region_free_above : forall (l : list (word * word)) (lo n : word),
-  Forall (fun p => (bv_unsigned (fst p) + bv_unsigned (snd p)
-                    <= bv_unsigned lo)%Z) l ->
-  region_free l lo n = true.
-Proof.
-  induction l as [|[a sz] l IH]; intros lo n Hf; [reflexivity|].
-  inversion Hf as [|? ? Ha Hl]; subst. cbn [fst snd] in Ha.
-  cbn [region_free]. unfold iv_overlap.
-  assert (E : (bv_unsigned lo <? bv_unsigned a + bv_unsigned sz)%Z = false)
-    by (apply Z.ltb_ge; lia).
-  rewrite E. cbn [andb negb]. apply IH. exact Hl.
 Qed.
 
 (* [comment removed for export] *)
@@ -851,7 +830,7 @@ Proof.
     by (intro r2; apply brk_r_ok_grow_iff with (maps := []) (noaccess := []); lia).
   split.
   - intros [[-> Hcase] | [Hg ->]].
-    + (* [comment removed for export] *)
+    + (* exit 4: failure resolution r2 = r, which exists iff t <> 0 *)
       assert (Ht0 : t <> Z_to_bv 64 0)
         by (destruct Hcase as [Hc | [Hc | Hc]]; [congruence | lia | exact Hc]).
       pose proof (word_neq0_unsigned t Ht0) as Hut0.
@@ -861,7 +840,7 @@ Proof.
       * right. split; [| reflexivity].
         intro He. apply (f_equal bv_unsigned) in He.
         rewrite Huadd in He. lia.
-    + (* [comment removed for export] *)
+    + (* success: r2 = want *)
       destruct Hg as (_ & _ & Hb).
       exists (r + t). split.
       * apply Bridge. split; [left; reflexivity|].
@@ -875,13 +854,14 @@ Proof.
         rewrite brk_grow_ok_grow;
           cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes];
           [| exact Hwant0 | lia | lia].
-        rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l.
+        unfold brk_grow_bytes. cbn [vm_brk].
+        rewrite app_nil_r, Huadd, Z.add_0_l.
         exact Hb.
       * left. split; reflexivity.
   - intros (r2 & Hrok & Hb).
     apply Bridge in Hrok. destruct Hrok as (Hcase & Hgrow).
     destruct Hb as [[-> ->] | [Hne ->]].
-    + (* [comment removed for export] *)
+    + (* success resolution *)
       right. split; [| reflexivity].
       split; [exact Hr0 | split; [exact Hnw |]].
       destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz];
@@ -889,9 +869,10 @@ Proof.
       rewrite brk_grow_ok_grow in Hgrow;
         cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes] in *;
         [| exact Hwant0 | lia | lia].
-      rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l in Hgrow.
+      unfold brk_grow_bytes in Hgrow. cbn [vm_brk] in Hgrow.
+      rewrite app_nil_r, Huadd, Z.add_0_l in Hgrow.
       exact Hgrow.
-    + (* [comment removed for export] *)
+    + (* failure resolution: r2 = r, and t <> 0 or r2 = want *)
       left. split; [reflexivity |].
       right. right.
       intro Ht0. subst t.
@@ -1304,46 +1285,53 @@ End WithSegs.
 
 (* [comment removed for export] *)
 Lemma alloc_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (outcomes_post (in_fs inp) U).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto.
   cbn [omni_run]. unfold init_config.
-  exact (to_outcomes_exec segs _ _ U Hto eq_refl eq_refl).
+  exact (to_outcomes_exec (run_segments segs inp sp mb) _ _ U Hto eq_refl eq_refl).
 Qed.
 
 Lemma alloc_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
     <-> exists o, U o /\ is_prefix tr (outcome_trace (in_fs inp) o).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto tr.
   unfold init_config.
-  set (ms := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  assert (Hh : m_halted (init_model (segments_reserved segs) brk0 mb sp lim inp) = None)
-    by reflexivity.
-  assert (Hlazy : m_vm_lazy
-      (init_model (segments_reserved segs) brk0 mb sp lim inp) = []) by reflexivity.
-  assert (Hfs : m_fs (init_model (segments_reserved segs) brk0 mb sp lim inp) = in_fs inp)
-    by reflexivity.
+  set (ms := init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) in *.
+  set (m0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+               (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) in *.
+  assert (Hh : m_halted m0 = None) by reflexivity.
+  assert (Hlazy : m_vm_lazy m0 = []) by reflexivity.
+  assert (Hfs : m_fs m0 = in_fs inp) by reflexivity.
   split.
   - intros (tr' & c & Hstar & Hp).
-    destruct (to_outcomes_star_only segs ms _ U Hto Hh Hlazy tr' c Hstar)
+    destruct (to_outcomes_star_only (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy tr' c Hstar)
       as (o & Ho & Hp').
     exists o. split; [exact Ho|].
     rewrite Hfs in Hp'. eapply is_prefix_trans; eauto.
   - intros (o & Ho & Hp).
-    destruct (to_outcomes_star_admits segs ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
+    destruct (to_outcomes_star_admits (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
     rewrite Hfs in Hstar.
     exists (outcome_trace (in_fs inp) o), c. split; assumption.
 Qed.
 
 Lemma alloc_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto. apply exec_no_error.
   eapply exec_conseq; [exact (alloc_omni_run segs pc ph sp brk0 mb rnd lim inp U Hto) |].
@@ -1353,12 +1341,14 @@ Qed.
 (* [comment removed for export] *)
 Lemma alloc_omni_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp,
-  to_outcomes source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp) U ->
-  to_outcomes target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp) U ->
+  to_outcomes (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp source_alloc_limit inp)) U ->
+  to_outcomes (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp target_alloc_limit inp)) U ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
@@ -1384,12 +1374,14 @@ Qed.
 Lemma alloc_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
          U inp,
-  to_outcomes source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) U ->
-  to_outcomes target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp alim inp) U ->
+  to_outcomes (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp)) U ->
+  to_outcomes (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp)) U ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).

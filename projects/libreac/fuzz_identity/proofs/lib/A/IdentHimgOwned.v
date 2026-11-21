@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the closer's discharge of ident_himg's HIMG_UNOWNED premise for libreac/fuzz_identity's
    ASan build (image A), against the core's generated owned-static table and errno word: verbatim copies of the frozen
-   lib/A/AF0m.v (start-up of record a working branch 4ceb4f70606, AF0m.v sha256 894ced30947c45ac...; the list is
-   the same in every frozen A AF0m since 9cf01e8ed2e), so this file builds on the integration tip, which carries no AF0m. *)
+   lib/A/AF0m.v (start-up of record a working branch, AF0m.v sha256 894ced30947c45ac...; the list is
+   the same in every frozen A AF0m), so this file builds on the integration tip, which carries no AF0m. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ident_himg (lib/A/Prog/IdentEntryLink.v) takes
      HIMG_UNOWNED : forall x, Exists (in_zr x) IDENT_RO_READS ->
        ~ Exists (in_zr x) (as_owned_static IdentB) /\ ~ (as_errno IdentB <= x < as_errno IdentB + 4)

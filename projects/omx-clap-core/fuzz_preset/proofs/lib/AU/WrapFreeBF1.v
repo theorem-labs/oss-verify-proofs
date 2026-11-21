@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/WrapFreeBF1.v, with its module paths, module names and addresses changed; 15 of its 342 lines of code are new or changed and 14 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image B (asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43; relocated from pin f8f98a95bc52 by alreloc c4338d099cfb8025): field
    wfrk_call of the primed keep record wrap_free_walk_keep_cf_rh (lib/Reusable/YGcfMallocComposeKeep.v:399-407)
    at image B, as WrapFreeBStmt.wf_call_stmt (the field verbatim; wf_call_of_record checks it), with
-     segs := tfibsegs, atpD := 1 (FROM_MALLOC), ARX := YGcfInstBase.ARXq_cf (YGcfInstBase.v:480) at
+     segs := tfibsegs, atpD := 1 (FROM_MALLOC), ARX := YGcfInstBase.ARXq_cf (YGcfInstBase.v:481) at
      IM := AGif2cgif.AImg_cgif and IOK := (fun i => i = as_inst B), K := WrapFreeBF2.K_F,
    and these premises: TfibSyms B; cf_pc_deallocate = Deallocate's entry (YB1w's symbol, 0x32390, AU/CfImgB.v's
    field). The stack room Deallocate's entry asks below the interceptor's frame of 2128 is acall_pre_cf's conjunct

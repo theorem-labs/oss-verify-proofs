@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader passed to the tails, and the 10-byte room above an argument string). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -120,7 +121,7 @@ Section Tails.
 
   Theorem atail_open : atail_open_stmt H FZP.
   Proof.
-    intros sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s msF mo regs mem Hva PRE Hargv Hpw Hstr HV HA R2 R4 R18 ST [TB AH] Hfd2.
+    intros sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s msF mo regs mem Hva PRE Hargv Hpw Hstr HV HA R2 R4 R18 ST [TB AH] Hfd2 Hrd.
     pose proof (am_vsp _ _ _ _ _ _ _ _ _ _ _ _ PRE) as Hvsp. pose proof Hvsp as (SPlo & SPhi & SP16). unfold sp_window_lo, sp_window_hi in SPlo, SPhi.
     pose proof (am_ceil _ _ _ _ _ _ _ _ _ _ _ _ PRE) as HCE.
     pose proof (exitA_of_mstatics sp0 tid can mem0 mem (Z_to_bv 64 (bv_unsigned sp0 - 128)) TB Hvsp HCE ST AH ltac:(rewrite u_small by lia; lia)) as XA.
@@ -138,16 +139,16 @@ Section Tails.
     { intros a Ha. apply (stack0_sh0_all mem _ shi (bv_unsigned sp0 - 128 - 65536) SH0);
         [unfold ATR_STACK; lia | clear - SP16; Z.div_mod_to_equations; lia | rewrite ASHADOW_BASE_val in Ha |- *; Z.div_mod_to_equations; lia]. }
     assert (PLO : bv_unsigned sp0 <= bv_unsigned (Z_to_bv 64 pp)) by (rewrite u_small by lia; lia).
-    assert (PHI : bv_unsigned (Z_to_bv 64 pp) + Z.of_nat (length path) + 17 <= AAPP_HI) by (unfold AAPP_HI; rewrite u_small by lia; lia).
+    assert (PHI : bv_unsigned (Z_to_bv 64 pp) + Z.of_nat (length path) + 10 <= AAPP_HI) by (unfold AAPP_HI; rewrite u_small by lia; lia).
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros Lz Sz Zr OK RS _.
     unfold t_die.
-    apply (as_open_tail Lz Sz Zr sp0 mem mo (Z_to_bv 64 pp) path t8 can Hvsp Hfd2 STK' RELRO AC INV (ot_cells_of mem AC CELLS) CAN Hc STR' T8' NONUL
+    apply (as_open_tail Lz Sz Zr sp0 mem mo (Z_to_bv 64 pp) path t8 can Hvsp Hfd2 Hrd STK' RELRO AC INV (ot_cells_of mem AC CELLS) CAN Hc STR' T8' NONUL
              PLO PHI SH' tid TB XA regs msF mo HPmax R2 R4 R18 OK (same_but_materialized_refl mo) RS).
   Qed.
 
   Theorem atail_rderr : atail_rderr_stmt H FZP.
   Proof.
-    intros sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s msF mo regs mem Hva PRE Hargv Hpw Hstr HV HA R2 R4 R18 ST [TB AH] Hfd2.
+    intros sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s msF mo regs mem Hva PRE Hargv Hpw Hstr HV HA R2 R4 R18 ST [TB AH] Hfd2 Hrd.
     pose proof (am_vsp _ _ _ _ _ _ _ _ _ _ _ _ PRE) as Hvsp. pose proof Hvsp as (SPlo & SPhi & SP16). unfold sp_window_lo, sp_window_hi in SPlo, SPhi.
     pose proof (am_ceil _ _ _ _ _ _ _ _ _ _ _ _ PRE) as HCE.
     pose proof (exitA_of_mstatics sp0 tid can mem0 mem (Z_to_bv 64 (bv_unsigned sp0 - 128)) TB Hvsp HCE ST AH ltac:(rewrite u_small by lia; lia)) as XA.
@@ -165,10 +166,10 @@ Section Tails.
     { intros a Ha. apply (stack0_sh0_all mem _ shi (bv_unsigned sp0 - 128 - 65536) SH0);
         [unfold ATR_STACK; lia | clear - SP16; Z.div_mod_to_equations; lia | rewrite ASHADOW_BASE_val in Ha |- *; Z.div_mod_to_equations; lia]. }
     assert (PLO : bv_unsigned sp0 <= bv_unsigned (Z_to_bv 64 pp)) by (rewrite u_small by lia; lia).
-    assert (PHI : bv_unsigned (Z_to_bv 64 pp) + Z.of_nat (length path) + 17 <= AAPP_HI) by (unfold AAPP_HI; rewrite u_small by lia; lia).
+    assert (PHI : bv_unsigned (Z_to_bv 64 pp) + Z.of_nat (length path) + 10 <= AAPP_HI) by (unfold AAPP_HI; rewrite u_small by lia; lia).
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros Lz Sz Zr OK RS _.
     unfold t_die.
-    apply (as_rderr_tail Lz Sz Zr sp0 mem mo (Z_to_bv 64 pp) path t8 can Hvsp Hfd2 STK' RELRO AC INV
+    apply (as_rderr_tail Lz Sz Zr sp0 mem mo (Z_to_bv 64 pp) path t8 can Hvsp Hfd2 Hrd STK' RELRO AC INV
              ltac:(rewrite rt_cells_eq; exact (ot_cells_of mem AC CELLS)) CAN Hc STR' T8' NONUL
              PLO PHI SH' tid TB XA regs msF mo HPmax R2 R4 R18 OK (same_but_materialized_refl mo) RS).
   Qed.
@@ -189,7 +190,7 @@ Section Tails.
 
   Theorem atail_usage : atail_usage_stmt H FZP.
   Proof.
-    intros sp0 argv s0 msF0 mo0 regs0 mem0 B tid can s msF mo regs mem Hva PRE Hargc HV HA R2 R4 R8 R10 R11 ST [TB AH] Hfds.
+    intros sp0 argv s0 msF0 mo0 regs0 mem0 B tid can s msF mo regs mem Hva PRE Hargc HV HA R2 R4 R8 R10 R11 ST [TB AH] Hfds Hrd.
     pose proof (am_vsp _ _ _ _ _ _ _ _ _ _ _ _ PRE) as Hvsp. pose proof Hvsp as (SPlo & SPhi & SP16). unfold sp_window_lo, sp_window_hi in SPlo, SPhi.
     pose proof (am_ceil _ _ _ _ _ _ _ _ _ _ _ _ PRE) as HCE.
     pose proof (exitA_of_mstatics sp0 tid can mem0 mem (Z_to_bv 64 (bv_unsigned sp0 - 48)) TB Hvsp HCE ST AH ltac:(rewrite u_small by lia; lia)) as XA.
@@ -214,10 +215,10 @@ Section Tails.
     { intros a Ha. apply (stack0_sh0_all mem _ shi (bv_unsigned sp0 - 128 - 65536) SH0);
         [unfold ATR_STACK; lia | clear - SP16; Z.div_mod_to_equations; lia | rewrite ASHADOW_BASE_val in Ha |- *; Z.div_mod_to_equations; lia]. }
     assert (PLO : bv_unsigned sp0 <= bv_unsigned (Z_to_bv 64 pp)) by (rewrite u_small by lia; lia).
-    assert (PHI : bv_unsigned (Z_to_bv 64 pp) + Z.of_nat (length a0) + 17 <= AAPP_HI) by (unfold AAPP_HI; rewrite u_small by lia; lia).
+    assert (PHI : bv_unsigned (Z_to_bv 64 pp) + Z.of_nat (length a0) + 10 <= AAPP_HI) by (unfold AAPP_HI; rewrite u_small by lia; lia).
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros Lz Sz Zr OK RS BACK.
     unfold t_die.
-    refine (as_usage_tail Lz Sz Zr sp0 mem mo (Z_to_bv 64 pp) a0 t8 can Hvsp Hfd2 STK' RELRO AC INV (ut_cells_of mem AC CELLS) CAN Hc STR' T8' NONUL
+    refine (as_usage_tail Lz Sz Zr sp0 mem mo (Z_to_bv 64 pp) a0 t8 can Hvsp Hfd2 Hrd STK' RELRO AC INV (ut_cells_of mem AC CELLS) CAN Hc STR' T8' NONUL
              PW' PLO PHI SH' (t_exit (exit_code 2) (m_fs mo)) (t_exit_has_nil _ _) _ regs msF mo HPmax R2 R4 R8 R11 OK (same_but_materialized_refl mo) RS).
 
     intros regs1 M1 msF1 mo1 Q2 Q4 Q8 OK1 SB1 FM1 RS1 CE1.

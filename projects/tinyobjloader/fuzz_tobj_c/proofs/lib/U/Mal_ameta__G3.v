@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact as a section hypothesis of the two head sections, whose posts build MInvIR by minvir_split; MInvIR taken apart by minvir_dest). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -179,6 +180,7 @@ Local Abbreviation D0 := (@U.Mal_ameta__G1.Mal_ameta_I.D0 rho).
 Local Abbreviation rng_stk := (§6§ U.Mal_ameta__G1.Mal_ameta_I.rng_stk).
 Local Abbreviation rng_lit := (§6§ U.Mal_ameta__G1.Mal_ameta_I.rng_lit).
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S3Sa7Q40A1SeSa7Q8A1A1F_;VmW;S23Vrho;A1A3").
 Hypothesis Hsm_pre : ltac2:(tb__ "0|0|
@@ -1000,7 +1002,7 @@ S3SfdVvm;SfeVmd;A1A3").
 
   Theorem post_ok_in posts : ltac2:(tb__ "0|0|
 Sc2S10S29S115A2SbS29S115S108Sf8A1S10aS4cSecVX;VR;VU;SffVs;VL;A2VKc;A7A4Vposts;A3S114S4cS4dVrho;Vposts;SbScSfbA1S106Vtr;S107VmsF;Vmd;A2A4A5F_;").
-  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hcnt Hev Hev_rd Hgd Hgd_rd Hhd Hinit Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1.
+  Proof using bv0 bv1 EmW Erd Evm Ewok HagF Hav Hav_rd Hcnt Hev Hev_rd Hgd Hgd_rd Hhd HI Hinit HKc HMI Hrom Hsm_pre HsmF Htop Htp Hvd HXr rv0 rv1.
     intros HINP.
     destruct SPEC as (HI2 & Hmemb & Hkey & Hraw & Hfr & Hux & Hub).
     exists (L_am_ok IEC_U), (JL_am_ok segsU C_U X R U (mkMA s L) Kc), rho'.
@@ -1008,7 +1010,7 @@ Sc2S10S29S115A2SbS29S115S108Sf8A1S10aS4cSecVX;VR;VU;SffVs;VL;A2VKc;A7A4Vposts;A3
     cbn [w_tr w_cfg fst snd cfg_model].
     exists (mkMA sAV L), qA. cbn [ma_s ma_L].
     split; [cbn [rw rho']; symmetry; exact U110|].
-    split; [unfold MInvIR; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
+    split; [minvir_split; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
     split.
     {
       destruct sAV_fields as (Fa & Fr & Fb & Fi & Fh & Fav & Fc & Fac & Fsh & Fah & Fat & Far & Fact & Fus & Fun & Fbo & Fsq & Fmc & Fmt).
@@ -1022,7 +1024,7 @@ Sc2S10S29S115A2SbS29S115S108Sf8A1S10aS4cSecVX;VR;VU;SffVs;VL;A2VKc;A7A4Vposts;A3
   Qed.
   Theorem post_ok : ltac2:(tb__ "0|0|
 S114S4cS4dVrho;S10cS4cSecSf8VX;VR;VU;SffVs;VL;A2VKc;A8SbScSfbA1S106Vtr;S107VmsF;Vmd;A2A4A5").
-  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hcnt Hev Hev_rd Hgd Hgd_rd Hhd Hinit Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1. apply post_ok_in. right; left; reflexivity. Qed.
+  Proof using bv0 bv1 EmW Erd Evm Ewok HagF Hav Hav_rd Hcnt Hev Hev_rd Hgd Hgd_rd Hhd HI Hinit HKc HMI Hrom Hsm_pre HsmF Htop Htp Hvd HXr rv0 rv1. apply post_ok_in. right; left; reflexivity. Qed.
 
 End ReabAV.
 
@@ -1034,7 +1036,7 @@ Proof.
   intros ok X R U [s L] Kc rho HOK Hhd Hcnt Hinit. cbn [ma_s ma_L] in *.
   intros n HQ [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -1072,7 +1074,7 @@ Proof.
   intros X R U [s L] Kc rho posts HINP Hhd Hcnt Hinit. cbn [ma_s ma_L] in *.
   intros [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -1209,6 +1211,7 @@ Local Abbreviation D0 := (@U.Mal_ameta__G1.Mal_ameta_I.D0 rho).
 Local Abbreviation rng_stk := (§15§ U.Mal_ameta__G1.Mal_ameta_I.rng_stk).
 Local Abbreviation rng_lit := (§15§ U.Mal_ameta__G1.Mal_ameta_I.rng_lit).
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S3Sa7Q40A1SeSa7Q8A1A1F_;VmW;S23Vrho;A1A3").
 Hypothesis Hsm_pre : ltac2:(tb__ "0|0|
@@ -2151,7 +2154,7 @@ S3SfdVvm;SfeVmd;A1A3").
 
   Theorem post_ok_in posts : ltac2:(tb__ "0|0|
 Sc2S10S29S115A2SbS29S115S108Sf8A1S10aS4cSecVX;VR;VU;SffVs;VL;A2VKc;A7A4Vposts;A3S114S4cS4dVrho;Vposts;SbScSfbA1S106Vtr;S107VmsF;Vmd;A2A4A5F_;").
-  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd Hinit HmH HnH Hnm Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1.
+  Proof using bv0 bv1 EmW Erd Evm Ewok HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd HI Hinit HKc HmH HMI HnH Hnm Hrom Hsm_pre HsmF Htop Htp Hvd HXr rv0 rv1.
     intros HINP.
     destruct SPEC as (HI2 & Hmemb & Hkey & Hraw & Hfr & Hux & Hub).
     exists (L_am_ok IEC_U), (JL_am_ok segsU C_U X R U (mkMA s L) Kc), rho'.
@@ -2159,7 +2162,7 @@ Sc2S10S29S115A2SbS29S115S108Sf8A1S10aS4cSecVX;VR;VU;SffVs;VL;A2VKc;A7A4Vposts;A3
     cbn [w_tr w_cfg fst snd cfg_model].
     exists (mkMA sH L), mH. cbn [ma_s ma_L].
     split; [cbn [rw rho']; symmetry; exact U110|].
-    split; [unfold MInvIR; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
+    split; [minvir_split; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
     split.
     {
       destruct sH_fields as (Fa & Fr & Fb & Fi & Fh & Fav & Fc & Fac & Fsh & Fah & Fat & Far & Fact & Fus & Fun & Fbo & Fsq & Fmc & Fmt).
@@ -2172,7 +2175,7 @@ Sc2S10S29S115A2SbS29S115S108Sf8A1S10aS4cSecVX;VR;VU;SffVs;VL;A2VKc;A7A4Vposts;A3
   Qed.
   Theorem post_ok : ltac2:(tb__ "0|0|
 S114S4cS4dVrho;S10cS4cSecSf8VX;VR;VU;SffVs;VL;A2VKc;A8SbScSfbA1S106Vtr;S107VmsF;Vmd;A2A4A5").
-  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd Hinit HmH HnH Hnm Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1. apply post_ok_in. right; left; reflexivity. Qed.
+  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd Hinit HmH HnH Hnm Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1 Hvd. apply post_ok_in. right; left; reflexivity. Qed.
 End Head2.
 
 End InstX.
@@ -2183,7 +2186,7 @@ Proof.
   intros ok X R U [s L] Kc rho HOK m nn Hhd Hnm HmH HnH Hinit. cbn [ma_s ma_L] in *.
   intros n HQ [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -2221,7 +2224,7 @@ Proof.
   intros X R U [s L] Kc rho posts HINP m nn Hhd Hnm HmH HnH Hinit. cbn [ma_s ma_L] in *.
   intros [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.

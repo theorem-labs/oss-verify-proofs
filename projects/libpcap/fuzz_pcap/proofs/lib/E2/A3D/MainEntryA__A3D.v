@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both sections VE is the launch fact entry_launch_ok_va (was vacuous; valid_entry_launch derives it from valid_entry), from which the new en_* lemmas and wrap_bytes_at size and place the entry image in place of build_stack_bytes_within_span, main's stack floor LO is ATOP + 2252800 inside the 6144512-byte window (was ATOP + 4096, 8388608), and main_entry_handoff takes the launch's entry image. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -57,6 +58,131 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
 
+(* PROVENANCE (rule 23c).  The entry-image tuple below is E2/Musl/InitMem.v's
+   [Section Layout] tuple -- (inp, mb, ph, entry, sp, rnd) -- at LPS 75d69e00.
+   TWO NAMES THIS FILE USED ARE DELETED AT THE REVISION, and only one of them
+   could be re-threaded:
+     1. [Run.entry_stack_image_top] is gone (0 rows at 75d69e00; the control
+        [entry_page_top] has 11, Run.v:1341).  The image now ENDS at [ed_top],
+        so there is nothing to round up to a page.
+     2. [PropExec.build_stack_bytes_within_span] is gone AND its bound is FALSE
+        of the kernel's block (75d69e00:theories/Common/PropExec.v:2527-2532:
+        false when the [arch_align_stack] pad is near 4095, and the span says
+        nothing about the strings' NULs or the exec file name).  Re-threading
+        its arguments would produce a statement no proof can close, so it is
+        DELETED here rather than ported (rule 12b-WITHIN-SPAN), and both of its
+        consumers go through the EQUALITY [length_entry_stack_image_launch]
+        (E2/Lib/PropExec.v:2449, model Common/PropExec.v:2534): the image's
+        length is EXACTLY [ed_top - sp].
+   The premise that equality needs is [Run.entry_launch_ok_va] (Run.v:3723),
+   the FIFTH conjunct of [Run.valid_entry_va] (Run.v:3732-3739).  The section's
+   old [VE : forall img, valid_entry img en inp -> True] was VACUOUS -- it
+   supplied nothing, which is why the two deleted lemmas were carrying the
+   work -- and is replaced below by that conjunct itself.  No published
+   statement gains a premise: E2/A3D/ImplTopA.v:124 / :274 [IMPL_A_real]
+   already takes [valid_entry IMG enT inp] and names it [VE] at :128 / :278.
+   In-tree precedents, both landed: E2/Musl/AmoStep__Musl.v:236-245
+   ([entry_bounds]) and Lib/EntryKn.v:289-297 ([usp_fit]).
+   [kb_rseq] is nowhere pinned: every length below is [ed_top - sp] or
+   [InitMem]'s [struct_size]/[pad_len]/[str_len], none of which names a count. *)
+
+(* [valid_entry] to the launch conjunct, in the shape E2/A3D/ImplTopA.v:111-115
+   ([valid_entry_fits]) already uses: destructing the image and the entry is
+   what makes [Run.valid_entry_sv48]'s match reduce, and the [Sv48] instance
+   needs [valid_input] (Run.v:3741-3742 reads the size off the input). *)
+#[using="Type"] Lemma valid_entry_launch : forall img en inp,
+  valid_input inp -> valid_entry img en inp -> entry_launch_ok_va Sv48 en inp.
+Proof.
+  intros [segs0 pc0 ph0] [sp0 brk0 mbase0 rnd0] inp Hvi Hve.
+  apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp Hvi)) in Hve.
+  exact (proj2 (proj2 (proj2 (proj2 Hve)))).
+Qed.
+
+(* The three vendored launch facts, re-stated over an abstract [ExecEntry].
+   [Run.entry_launch_ok_va] matches on [mkEntry], so an abstract [en] has to be
+   destructed once; these three do it, and nothing below repeats it. *)
+#[using="Type"] Lemma en_launch_mk : forall (en : ExecEntry) inp,
+  entry_launch_ok_va Sv48 en inp ->
+  entry_launch_ok_va Sv48
+    (mkEntry (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en)) inp.
+Proof. intros [] ? H. exact H. Qed.
+
+#[using="Type"] Lemma en_image_length : forall (en : ExecEntry) inp ph entry,
+  entry_launch_ok_va Sv48 en inp ->
+  Z.of_nat (length (entry_stack_image inp (en_mmap_base en) ph entry
+                      (en_sp en) (en_draw en)))
+  = (bv_unsigned (ed_top (en_draw en)) - bv_unsigned (en_sp en))%Z.
+Proof.
+  intros [sp0 brk0 mbase0 rnd0] inp ph entry Hok.
+  cbn [en_sp en_brk en_mmap_base en_draw] in *.
+  exact (length_entry_stack_image_launch Sv48 inp mbase0 ph entry sp0 brk0 rnd0 Hok).
+Qed.
+
+#[using="Type"] Lemma en_image_no_wrap : forall (en : ExecEntry) inp ph entry,
+  entry_launch_ok_va Sv48 en inp ->
+  (bv_unsigned (en_sp en)
+   + Z.of_nat (length (entry_stack_image inp (en_mmap_base en) ph entry
+                         (en_sp en) (en_draw en))) < 2 ^ 64)%Z.
+Proof.
+  intros [sp0 brk0 mbase0 rnd0] inp ph entry Hok.
+  cbn [en_sp en_brk en_mmap_base en_draw] in *.
+  exact (entry_stack_image_no_wrap Sv48 inp mbase0 ph entry sp0 brk0 rnd0 Hok).
+Qed.
+
+(* [va_stack_top Sv48] is [State.sp_window_hi] = 0x800000000000 = 2^47. *)
+#[using="Type"] Lemma en_top_le : forall (en : ExecEntry) inp,
+  entry_launch_ok_va Sv48 en inp ->
+  (bv_unsigned (ed_top (en_draw en)) <= 140737488355328)%Z.
+Proof.
+  intros [sp0 brk0 mbase0 rnd0] inp Hok. cbn [en_sp en_mmap_base en_draw] in *.
+  pose proof (entry_page_top_within_window Sv48 inp mbase0 sp0 brk0 rnd0 Hok) as T.
+  unfold entry_page_top in T. cbn [va_stack_top] in T. unfold sp_window_hi in T. lia.
+Qed.
+
+(* [ed_top] is page-aligned: the first component of [Run.valid_stack_top_va]
+   (Run.v:3611), which is [entry_launch_ok_va]'s first conjunct.  This is what
+   replaces the old [usp mod 8 = 0] alignment argument in the Printf_kit calls:
+   at 75d69e00 the image ends AT [ed_top], so [sp]'s alignment says nothing
+   about where the image ends.  [page_size] is 4096, strictly stronger. *)
+#[using="Type"] Lemma en_top_mod8 : forall (en : ExecEntry) inp,
+  entry_launch_ok_va Sv48 en inp ->
+  (bv_unsigned (ed_top (en_draw en)) mod 8 = 0)%Z.
+Proof.
+  intros [sp0 brk0 mbase0 rnd0] inp Hok. cbn [en_sp en_mmap_base en_draw] in *.
+  destruct Hok as ((HP & _ & _) & _ & _). unfold page_size in HP.
+  clear - HP. Z.div_mod_to_equations. lia.
+Qed.
+
+(* [InitMem.init_stack_bytes] (InitMem.v:186) lists SPLO -- the window floor
+   [Run.stack_window_lo (in_kernel inp) mb rnd <= sp] -- in its [Proof using]
+   although its body reads only [init_at], which is [#[using="Type"]].  The
+   floor lemma that would discharge SPLO, [StoreOk.stack_window_lo_valid]
+   (75d69e00:theories/Common/StoreOk.v:360), is NOT vendored in this tree --
+   E2/Musl/InitMem.v:214-215 and Lib/EntryKn.v:155-166 both record that, and
+   EntryKn carries it as a named premise instead.  Carrying it as a premise
+   HERE would put an undischargeable hypothesis on a chain that reaches
+   [ImplTopA.IMPL_A_real], so the bytes fact is re-derived from [init_at]
+   alone, which needs no floor.  Body copied from InitMem.v:186-195. *)
+#[using="Type"] Lemma wrap_bytes_at : forall segs0 inp mb ph entry (sp0 : word) rnd,
+  (bv_unsigned sp0
+   + Z.of_nat (length (entry_stack_image inp mb ph entry sp0 rnd)) <= 2 ^ 64)%Z ->
+  bytes_at segs0 (wrap_mem inp mb ph entry sp0 rnd) (bv_unsigned sp0)
+    (entry_stack_image inp mb ph entry sp0 rnd).
+Proof.
+  intros segs0 inp mb ph entry sp0 rnd IMGHI.
+  pose proof (bv_unsigned_in_range 64 sp0) as R. unfold bv_modulus in R. cbn in R.
+  split; [lia|]. split; [lia|]. intros i Hi. unfold mrd.
+  rewrite (init_at inp mb ph entry sp0 rnd). rewrite wa_unsigned by lia.
+  replace (Z.leb (bv_unsigned sp0) (bv_unsigned sp0 + Z.of_nat i)) with true
+    by (symmetry; apply Z.leb_le; lia).
+  replace (Z.ltb (bv_unsigned sp0 + Z.of_nat i - bv_unsigned sp0)
+                 (Z.of_nat (length (entry_stack_image inp mb ph entry sp0 rnd)))) with true
+    by (symmetry; apply Z.ltb_lt; lia).
+  replace (Z.to_nat (bv_unsigned sp0 + Z.of_nat i - bv_unsigned sp0)) with i by lia.
+  destruct (nth_error (entry_stack_image inp mb ph entry sp0 rnd) i) eqn:E;
+    [reflexivity|]. apply nth_error_None in E. lia.
+Qed.
+
 Section CANSEC1. Context {rc : runConstT} {tlsI : ABase.atlsT}.
 Section MainEntry.
   Variables (en : ExecEntry) (inp : ProcInput) (lim : Z) (w : bool) (V : nat -> Z) (m : amem) (ms : machine_state) (mo : Model).
@@ -67,13 +193,19 @@ Section MainEntry.
   Hypothesis HU : (length U <= Z.to_nat AUMAX)%nat.
   Hypothesis A0I : forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V asan_vis) p -> AL p.
   Hypothesis VI : valid_input inp.
-  Hypothesis VE : forall img, valid_entry img en inp -> True.
+  (* was [forall img, valid_entry img en inp -> True], which supplied nothing.
+     This is [Run.valid_entry_va]'s fifth conjunct; see the header. *)
+  Hypothesis VE : entry_launch_ok_va Sv48 en inp.
   Hypothesis VSP : valid_sp (en_sp en).
   Hypothesis FITS : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
 
   Notation USP := (bv_unsigned (en_sp en)).
+  Notation ENTRYW := (Z_to_bv 64 (Z.of_N a_init_pc)).
+  Notation IMGB := (entry_stack_image inp (en_mmap_base en) a_phdrs ENTRYW
+                      (en_sp en) (en_draw en)).
   Notation L := (mkALayout (LV V) w U).
-  Notation LO := (ATOP + 4096).
+  (* main's stack floor: page-aligned, at least [sp - 6144512] (the launch's window floor), [me_stk] *)
+  Notation LO := (ATOP + 2252800).
   Notation RNG := (fp_ok lz AL).
 
   #[using="inp lim w m ms mo AM"] Lemma me_usp : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = USP.
@@ -88,9 +220,9 @@ Section MainEntry.
     destruct me_facts as [_ HP]. pf V HP (PVar 6 0 255) P6. pose proof me_usp as E. lia.
   Qed.
 
-  #[using="lim m ms mo AM HAT HU VSP FITS"] Lemma me_geometry :
+  #[using="lim m ms mo AM HAT HU VE VSP FITS"] Lemma me_geometry :
     (ATOP + 4096 <= LO) /\ (LO + MAIN_STACK <= USP - 128) /\ (USP mod 16 = 0) /\ (USP - 160 <= al_top L) /\ (al_top L <= 2^47)
-    /\ (USP + Z.of_nat (length (build_stack_bytes a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en))) <= 2^47).
+    /\ (USP + Z.of_nat (length IMGB) <= 2^47).
   Proof.
     destruct me_facts as [_ HP]. pose proof me_atop as A. pose proof me_usp as E.
     (pose proof (alayout_stack_init V w U HP HAT) as ndP__; nd_pre ndP__ 4%nat; intros _ _ _ T47; nd_post).
@@ -98,30 +230,30 @@ Section MainEntry.
     split; [exact (proj2 (proj2 VSP))|].
     split. { unfold al_top. rewrite LV_sp0, E. pose proof (page_round_up_Z_bounds (USP - 0xa0)) as [T1 _]. lia. }
     split; [exact T47|].
-    pose proof (build_stack_bytes_within_span a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as B.
-    unfold entry_stack_fits, sp_window_hi in FITS. change (2^47) with 140737488355328. lia.
+    (* the deleted [build_stack_bytes_within_span] replaced by the equality *)
+    pose proof (en_image_length en inp a_phdrs ENTRYW VE) as ELEN.
+    pose proof (en_top_le en inp VE) as TLE.
+    change (2^47) with 140737488355328 in *. lia.
   Qed.
 
   (* [comment removed for export] *)
   #[using="inp lim w V ms mo AM HAT U HU"] Lemma me_stk : stk asegs m LO (USP + -48).
   Proof.
     destruct AM as (_ & _ & _ & _ & _ & _ & ST & _). pose proof me_atop as A.
-    assert (B1 : USP - 8388608 <= LO <= USP) by lia. assert (B2 : LO <= USP + -48 <= USP) by lia.
-    destruct (stk_split asegs m (USP - 8388608) LO USP ST B1) as [_ ST1].
+    assert (B1 : USP - 6144512 <= LO <= USP) by lia. assert (B2 : LO <= USP + -48 <= USP) by lia.
+    destruct (stk_split asegs m (USP - 6144512) LO USP ST B1) as [_ ST1].
     destruct (stk_split asegs m LO (USP + -48) USP ST1 B2) as [ST2 _]. exact ST2.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="rc lim w V ms mo AM HAT U HU VSP FITS"] Lemma me_args : bytes_at asegs m USP (build_stack_bytes a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)).
+  #[using="rc lim w V ms mo AM HAT U HU VE VSP FITS"] Lemma me_args : bytes_at asegs m USP IMGB.
   Proof.
-    destruct AM as (_ & _ & _ & _ & _ & _ & _ & PRIS & _). (nd_pre me_geometry 6%nat; intros _ _ _ _ _ B47; nd_post). pose proof me_atop as A. pose proof atop_range as AR.
-    pose proof (entry_stack_image_top a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as TOPE.
-    assert (IMGHI : USP + Z.of_nat (length (entry_stack_image a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en))) <= 2^64).
-    { rewrite TOPE. unfold entry_page_top, entry_block_top, page_round_up_Z, page_size. change (2^47) with 140737488355328 in B47. change (2^64) with 18446744073709551616.
-      clear - B47. Z.div_mod_to_equations. lia. }
-    assert (SPLO : stack_max_size <= USP) by (change stack_max_size with 8388608; clear - A AR; lia).
-    pose proof (init_stack_bytes asegs a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) SPLO IMGHI) as B0.
-    rewrite (entry_image_eq a_phdrs) in B0. apply bytes_at_app in B0. destruct B0 as [B0 _].
+    destruct AM as (_ & _ & _ & _ & _ & _ & _ & PRIS & _). pose proof me_atop as A. pose proof atop_range as AR.
+    (* [entry_stack_image_top] is deleted; the no-wrap side condition is the
+       vendored [entry_stack_image_no_wrap] (E2/Lib/PropExec.v:2472). *)
+    pose proof (en_image_no_wrap en inp a_phdrs ENTRYW VE) as NW.
+    pose proof (wrap_bytes_at asegs inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)
+                  ltac:(clear - NW; lia)) as B0.
     (nd_pre B0 3%nat; intros H0 H1 HB; nd_post). split; [exact H0|]. split; [exact H1|]. intros i Hi. rewrite <- (HB i Hi). unfold mrd.
     rewrite (PRIS (USP + Z.of_nat i)); [reflexivity|]. change (2^64) with 18446744073709551616 in *. lia.
   Qed.
@@ -146,11 +278,11 @@ Section MainEntry.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="lim mo AM HAT HTLS HU A0I VI VSP FITS"] Theorem main_entry_handoff : forall {H hptr : Type}
+  #[using="lim mo AM HAT HTLS HU A0I VI VE VSP FITS"] Theorem main_entry_handoff : forall {H hptr : Type}
       (GIOA : alayout -> footprint -> PState H hptr -> list (@cblock hptr) -> list (@cblock hptr) -> list fblock -> amem -> Prop)
       (s : PState H hptr) (FB : list (@cblock hptr)),
     GIOA L RNG s [] FB [] m ->
-    main_entry GIOA (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) L LO s RNG ms.
+    main_entry GIOA inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en) L LO s RNG ms.
   Proof.
     intros H hptr GIOA s FB G. pose proof AM as (EMS & _). cbv zeta in EMS.
     rewrite <- (tls_at_tp V HTLS) in EMS. unfold main_entry.
@@ -193,13 +325,19 @@ Section MainEntry.
   Hypothesis HU : (length U <= Z.to_nat AUMAX)%nat.
   Hypothesis A0I : forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V asan_vis) p -> AL p.
   Hypothesis VI : valid_input inp.
-  Hypothesis VE : forall img, valid_entry img en inp -> True.
+  (* was [forall img, valid_entry img en inp -> True], which supplied nothing.
+     This is [Run.valid_entry_va]'s fifth conjunct; see the header. *)
+  Hypothesis VE : entry_launch_ok_va Sv48 en inp.
   Hypothesis VSP : valid_sp (en_sp en).
   Hypothesis FITS : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
 
   Notation USP := (bv_unsigned (en_sp en)).
+  Notation ENTRYW := (Z_to_bv 64 (Z.of_N a_init_pc)).
+  Notation IMGB := (entry_stack_image inp (en_mmap_base en) a_phdrs ENTRYW
+                      (en_sp en) (en_draw en)).
   Notation L := (mkALayout (LV V) w U).
-  Notation LO := (ATOP + 4096).
+  (* as above *)
+  Notation LO := (ATOP + 2252800).
   Notation RNG := (fp_ok lz AL).
 
   #[using="inp lim w m ms mo AM"] Lemma me_usp : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = USP.
@@ -214,9 +352,9 @@ Section MainEntry.
     destruct me_facts as [_ HP]. pf V HP (PVar 6 0 255) P6. pose proof me_usp as E. lia.
   Qed.
 
-  #[using="lim m ms mo AM HAT HU VSP FITS"] Lemma me_geometry :
+  #[using="lim m ms mo AM HAT HU VE VSP FITS"] Lemma me_geometry :
     (ATOP + 4096 <= LO) /\ (LO + MAIN_STACK <= USP - 128) /\ (USP mod 16 = 0) /\ (USP - 160 <= al_top L) /\ (al_top L <= 2^47)
-    /\ (USP + Z.of_nat (length (build_stack_bytes a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en))) <= 2^47).
+    /\ (USP + Z.of_nat (length IMGB) <= 2^47).
   Proof.
     destruct me_facts as [_ HP]. pose proof me_atop as A. pose proof me_usp as E.
     (pose proof (alayout_stack_init V w U HP HAT) as ndP__; nd_pre ndP__ 4%nat; intros _ _ _ T47; nd_post).
@@ -224,30 +362,30 @@ Section MainEntry.
     split; [exact (proj2 (proj2 VSP))|].
     split. { unfold al_top. rewrite LV_sp0, E. pose proof (page_round_up_Z_bounds (USP - 0xa0)) as [T1 _]. lia. }
     split; [exact T47|].
-    pose proof (build_stack_bytes_within_span a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as B.
-    unfold entry_stack_fits, sp_window_hi in FITS. change (2^47) with 140737488355328. lia.
+    (* the deleted [build_stack_bytes_within_span] replaced by the equality *)
+    pose proof (en_image_length en inp a_phdrs ENTRYW VE) as ELEN.
+    pose proof (en_top_le en inp VE) as TLE.
+    change (2^47) with 140737488355328 in *. lia.
   Qed.
 
   (* [comment removed for export] *)
   #[using="inp lim w V ms mo AM HAT U HU"] Lemma me_stk : stk asegs m LO (USP + -48).
   Proof.
     destruct AM as (_ & _ & _ & _ & _ & _ & ST & _). pose proof me_atop as A.
-    assert (B1 : USP - 8388608 <= LO <= USP) by lia. assert (B2 : LO <= USP + -48 <= USP) by lia.
-    destruct (stk_split asegs m (USP - 8388608) LO USP ST B1) as [_ ST1].
+    assert (B1 : USP - 6144512 <= LO <= USP) by lia. assert (B2 : LO <= USP + -48 <= USP) by lia.
+    destruct (stk_split asegs m (USP - 6144512) LO USP ST B1) as [_ ST1].
     destruct (stk_split asegs m LO (USP + -48) USP ST1 B2) as [ST2 _]. exact ST2.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="rc lim w V ms mo AM HAT U HU VSP FITS"] Lemma me_args : bytes_at asegs m USP (build_stack_bytes a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)).
+  #[using="rc lim w V ms mo AM HAT U HU VE VSP FITS"] Lemma me_args : bytes_at asegs m USP IMGB.
   Proof.
-    destruct AM as (_ & _ & _ & _ & _ & _ & _ & PRIS & _). (nd_pre me_geometry 6%nat; intros _ _ _ _ _ B47; nd_post). pose proof me_atop as A. pose proof atop_range as AR.
-    pose proof (entry_stack_image_top a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as TOPE.
-    assert (IMGHI : USP + Z.of_nat (length (entry_stack_image a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en))) <= 2^64).
-    { rewrite TOPE. unfold entry_page_top, entry_block_top, page_round_up_Z, page_size. change (2^47) with 140737488355328 in B47. change (2^64) with 18446744073709551616.
-      clear - B47. Z.div_mod_to_equations. lia. }
-    assert (SPLO : stack_max_size <= USP) by (change stack_max_size with 8388608; clear - A AR; lia).
-    pose proof (init_stack_bytes asegs a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) SPLO IMGHI) as B0.
-    rewrite (entry_image_eq a_phdrs) in B0. apply bytes_at_app in B0. destruct B0 as [B0 _].
+    destruct AM as (_ & _ & _ & _ & _ & _ & _ & PRIS & _). pose proof me_atop as A. pose proof atop_range as AR.
+    (* [entry_stack_image_top] is deleted; the no-wrap side condition is the
+       vendored [entry_stack_image_no_wrap] (E2/Lib/PropExec.v:2472). *)
+    pose proof (en_image_no_wrap en inp a_phdrs ENTRYW VE) as NW.
+    pose proof (wrap_bytes_at asegs inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)
+                  ltac:(clear - NW; lia)) as B0.
     (nd_pre B0 3%nat; intros H0 H1 HB; nd_post). split; [exact H0|]. split; [exact H1|]. intros i Hi. rewrite <- (HB i Hi). unfold mrd.
     rewrite (PRIS (USP + Z.of_nat i)); [reflexivity|]. change (2^64) with 18446744073709551616 in *. lia.
   Qed.
@@ -272,11 +410,11 @@ Section MainEntry.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="lim mo AM HAT HTLS HU A0I VI VSP FITS"] Theorem main_entry_handoff : forall {H hptr : Type}
+  #[using="lim mo AM HAT HTLS HU A0I VI VE VSP FITS"] Theorem main_entry_handoff : forall {H hptr : Type}
       (GIOA : alayout -> footprint -> PState H hptr -> list (@cblock hptr) -> list (@cblock hptr) -> list fblock -> amem -> Prop)
       (s : PState H hptr) (FB : list (@cblock hptr)),
     GIOA L RNG s [] FB [] m ->
-    main_entry GIOA (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) L LO s RNG ms.
+    main_entry GIOA inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en) L LO s RNG ms.
   Proof.
     intros H hptr GIOA s FB G. pose proof AM as (EMS & _). cbv zeta in EMS.
     rewrite <- (tls_at_tp V HTLS) in EMS. unfold main_entry.

@@ -27,13 +27,14 @@
    that closes the record loop (K4 <= KL2 <= ... <= KO <= KRI <= KR <= K4).
 
    Rule 24 (task text of a Theorem Labs lane): a search of the proof index for LLVMFuzzerTestOneInput (index v5 built
-   2026-10-28T21:58:24Z, rebuilt 23:22:17Z, recipes 566eb6ffa5d) rc=0; the 30 named files are all in other units, and no
+   2026-10-28T21:58:24Z, rebuilt 23:22:17Z, recipes) rc=0; the 30 named files are all in other units, and no
    row names libreac/fuzz_pcap; the working-branch search found no Qed walk of it on any asan-ubsan image. CONFIRM
    (23:47Z): the released fuzz_pcap harness walks (lib/U/Prog/Slot/USegE.v etc.) are for the v1.8 UBSAN image (343
    instructions, 176-byte frame) against this pin's 530 instructions with a 256-byte frame and ASan instrumentation, so
    this is a new proof. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapEntrySkip.v, with its module paths and module names changed; 2326 of its 2461 lines of code are new or changed and 2297 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapEntryTail.v, with its module names changed; 335 of its 390 lines of code are new or changed and 2406 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The PROGRAM-callee call sites of fuzz_pcap's entry walk (LLVMFuzzerTestOneInput, 0x80818, asan-ubsan build of
    libreac v1.9.0), lifted once to the harness's journal, so that every phase file of the walk applies one lemma per
    call site instead of opening and repacking the journal itself (owner: a Theorem Labs lane; ruling of 02:5xZ: one text,
@@ -276,7 +277,7 @@ Qed.
 
 (* ---- pcap_source_open (0x80a0c, 0x80e4c) ---- *)
 (* TAKEN FROM: lib/A/Prog/PcapSourceOpenDefs.v tpcap_source_open_specX (a Theorem Labs lane, the post with one journal bound per
-   arm, a working branch da7eb5095c2); its asan-ubsan instance is a Theorem Labs lane's. The post is the
+   arm, a working branch); its asan-ubsan instance is a Theorem Labs lane's. The post is the
    contract's, with each arm's donor journal replaced by the harness's gx journal. *)
 Definition open_post_gx (STK sp0 : Z) (FP : list (Z * Z)) (ly : alayout) (S : astate) (W0 : world SEGS)
   (mem0 : word -> option byte) (md0 : Model) (own : list (Z * Z))
@@ -357,7 +358,7 @@ Qed.
 
 (* ---- pcap_source_next (0x80b00, 0x80db8, 0x80e64, 0x80e84) ---- *)
 (* TAKEN FROM: lib/A/Prog/PcapSourceNextSpec.v tpcap_source_next_specX (a Theorem Labs lane, image-free, blob ca692a132f5e;
-   the statement of a working branch cf12207f2a1); nstk is the image's stack datum (the caller passes this image's value). The post is the contract's
+   the statement of a working branch); nstk is the image's stack datum (the caller passes this image's value). The post is the contract's
    with its donor journal replaced by the harness's gx journal. *)
 Definition next_post_gx (nstk : Z) (STK sp0 : Z) (FP : list (Z * Z)) (ly : alayout) (S : astate) (W0 : world SEGS)
   (mem0 : word -> option byte) (md0 : Model) (own : list (Z * Z))

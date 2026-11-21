@@ -9,10 +9,11 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 532 of its 679 lines of code are new or changed and 1344 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of check_segments on fuzz_segconf.asan (image A, 0x8704c, 79 instructions), part 1: the cut points,
    the entry stretch 0x8704c .. 0x870f4 and the exit 0x87118 .. 0x87134. Part 2 (check_segments.v) walks the loop
    0x870f8 .. 0x87114 through the strcmp wrapper and states the theorem. The form is that of plugin-hostd/
-   fuzz_command's released walk of rec_calls_equal (origin/ossv/recipes 501c0d516c69, lib/A/Prog/rec_calls_equal.v):
+   fuzz_command's released walk of rec_calls_equal (lib/A/Prog/rec_calls_equal.v):
    the symbolic executor over the position-abstract listing, the four inline checks removed by the shadow entries of
    the two structs, one struct region at a time (swapped between the loads of c and of m, so that no premise has to
    keep c's bytes apart from m's), the loop cut at its head and re-seeded from the concrete state there.

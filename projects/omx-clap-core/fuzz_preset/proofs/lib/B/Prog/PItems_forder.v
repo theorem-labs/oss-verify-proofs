@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_shape.v; 346 of its 430 lines of code are new or changed and 1233 lines of the source are left out. *)
-(* Theorem Labs, 2026-10: THE FREE ORDER at parse_items' exits (lane PItemsB of a Theorem Labs lane's image-B walk, the batch kit
-   240b06ed4fd4). PItems_shape.v proves at every exit the UNORDERED freeable shape pj_fdR (pis_exit_open,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: THE FREE ORDER at parse_items' exits (lane PItemsB of a Theorem Labs lane's image-B walk, the batch kit).
+   PItems_shape.v proves at every exit the UNORDERED freeable shape pj_fdR (pis_exit_open,
    pis_exit_grow_kept, pis_exit_grow_half, pis_exit_item); the batch kit's post (lib/A/PRH_FnParse.v tparse_items_specX) states
    the ORDERED one, the kit's PRH_PjOrder.pj_foR, whose list F is pj_free's order (src/preset_file.c:334-350): for each slot
    the subtree of kids[i], then keys[i]; then kids, keys, str. This file gives the ordered twins, over `segs` as

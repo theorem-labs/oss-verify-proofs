@@ -3,8 +3,9 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 575 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/SegCF/Tac_slot.v, with its module paths and module names changed; 235 of its 284 lines of code are new or changed and 526 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Cut-free (agreement) copy of lib/U/Prog/Seg/L03.v over U/Prog/SlotInvCF.v (SR := SRcf), as reac-pw/fuzz_pin's
-   U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v (commit a2a7540da98): the same text with
+   U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v: the same text with
    SlotInvCF imported after SlotFR / SlotInv, Seg -> SegCF for the slot's tactic files, frame_facts_ubsan ->
    SlotInvCF.frame_facts_cf and the allocator contracts in their cut-free forms (frame_allocator_cf,
    malloc_contract_cfg, free_contract_cf, calloc_contract_cfg); the closing theorem states SlotTopCF.seg_L03_cf_stmt.
@@ -13,8 +14,8 @@
    of file turn f. K13c34 f -> K139e4 (S f) or K13c3c (U/Prog/LLVMFuzzerTestOneInput_c.v's S_L03 at the
    cut record CPseg, U/Prog/Seg/SegWalkMainA.v). The twin of Prog/Seg/L03.v.
    Part of the proof of LLVMFuzzerTestOneInput (its segment L03); no released proof of fuzz_segconf's
-   LLVMFuzzerTestOneInput exists; written new in the style of reac-pw/fuzz_role's U/Prog/Seg/X01.v (commit
-   cb8205fb6109).
+   LLVMFuzzerTestOneInput exists; written new in the style of reac-pw/fuzz_role's U/Prog/Seg/X01.v.
+   
    The cut is at its own FP state (Tac_b8.b8_cut_open): every step below runs at it. 0x13c34 `jal free` (ra 0x13c38;
    free at 0x173d8 = frame_facts_cf's ms_free; a0 = text from P_K13c34) through Tac_b8.b8_free_call with hb1 = [],
    the text block (t, nt) at the head and hb2 = [m; c]: its continuation gives FR with hb = [m; c], the callee-saved

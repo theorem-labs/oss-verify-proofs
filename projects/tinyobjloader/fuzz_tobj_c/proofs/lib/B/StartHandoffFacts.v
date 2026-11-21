@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger stated as the image's entries followed by the vDSO/vvar pair: mS1_facts, Mm_fds and ledger_main written as plain text, the hand-off's gap counts hwN_main and hwS_main bounding the pair's at most two entries of at most 16 pages; M1_fields taking the launch's entry fact, apart_S the launch's reserved ledger apart; the break's page alignment passed to o9's X18_facts, LPS b07fadb; the invariant's fields read at its new arity and arch_align_stack's pad length at the launch's stack pointer and draw; the sheet's touched pages and zero pages extended with the pages of main's argument shadow the hand-off paid for, HS_facts and HS_zero (stated after GM1, whose band apartness it reads), read in tpF_pages and tpF_defined; the random bytes' bounds read off the start-up's valuation, r6_bounds). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "and"; "eq"; "or"; "not"; "ex"; "True"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "lt"; "pow"; "sub"; "modulo"; "of_nat"; "max"; "to_nat"; "mul"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "Z_to_bv"; "@Corelib.Init.Datatypes"; "cons"; "pair"; "list"; "prod"; "option"; "bool"; "Some"; "app"; "true"; "None"; "negb"; "nil"; "length"; "nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "rw"; "rm"; "sv"; "ss_objs"; "eval"; "SLit"; "image_byte"; "rl"; "SAlu"; "SVar"; "enc_bytes"; "holds"; "smatch"; "sprop"; "ss_facts"; "sstate"; "valuation"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Placement"; "SHADOW_BAND_HI"; "SHADOW_BAND_LO"; "gw_sizes"; "band_covered"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.ImageFacts"; "segsA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartMain"; "M1"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.oc.Start8"; "MAIN_of"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "ax_S"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "m_vmmaps"; "vm_limit"; "alloc_top"; "vm_init_sp"; "vm_maps"; "vm_reserved"; "FdEntry"; "Model"; "event"; "in_fs"; "m_fds"; "m_fs"; "vm_noaccess"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartReshape"; "byte_info"; "binfo_eqb"; "BNone"; "zseq"; "binfo"; "BLit"; "@Stdlib.Lists.List"; "In"; "forallb"; "filter"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartTop"; "Mmain"; "Lmain"; "mS"; "GPe"; "HSe"; "LWe"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.RtCells"; "view"; "present"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartHandoff"; "ZPAGES"; "tpF"; "PA0"; "PR0"; "sheet"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.Ledger"; "hwN"; "hwS"; "ledger"; "live_hi"; "maps_disjoint"; "ranges_apart"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "segments_reserved"; "config"; "mkCfg"; "mkEntry"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.ng.Start4"; "bandav"; "spacebeg"; "n7"; "n9"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o7.Start6"; "q12x"; "n17"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartDefsA"; "pages_rev"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Start7"; "Q18"; "Wz"; "kHighMemBeg"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8CallDefs"; "PGA"; "PGB"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out"; "X18"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartArgBytes"; "RNDo"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartHandoffFacts.Facts"; "band_page"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec"; "init_sp_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymFrame"; "in_ranges"; "@Corelib.Init.Peano"; "lt"; "@Corelib.Lists.ListDef"; "Forall"; "nth"; "@LinuxProcessSemantics.LinuxProcessSem.Fs"; "Fs"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_mem"; "@LinuxProcessSemantics.Riscv.Instr"; "ALU_ADD"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.DrvIfaceR"; "std_fds"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Init"; "imgA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n1.Start4States"; "shRI_base"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Start8M"; "ranges_apart";
@@ -111,16 +112,39 @@ Local Notation Lm := (StartTop.Lmain m1 a1 a2 P b4 b5 b6 b7 b8 b9 x b10 o b12 b1
 Local Notation mS1 := (StartTop.mS m1 a1 a2).
 Local Notation objsS := (ss_objs (ax_S (MAIN_of v))).
 Local Notation vms_ := (cfg_ms (snd (virt (tpF tp) w))).
+(* LPS 727298f3: the pages of main's argument shadow the hand-off paid for (StartHandoff.v [stage0]). *)
+Local Notation qH := (StartHandoff.HSB x (bv_unsigned sp + StartArgBytes.RNDo inp)).
+Local Notation nH := (StartHandoff.HSN x (bv_unsigned sp + StartArgBytes.RNDo inp) (bv_unsigned sp + StartArgBytes.END9 sp draw inp - 1)).
 
 Ltac dsheet :=
   pose proof HS as (Sfds & Sfs & Slim & SMI & Stid & Sx & G2 & G3 & HPL & HPL4 & HPL5 & HPL6 & HPL7 & HPL8 & HPL9 & HPL10 & Ho & HPL12 & HPL13 & HPL14
                     & W12 & W13 & W14 & SJ & V25 & Lr & ROK & RW1 & RL1 & H27 & H28 & H29 & H30 & H31 & H32 & H33 & H34 & H36 & H77 & H78 & H83
-                    & H159 & H160 & H161 & Etp & Hsm1 & RMo & RMi & Z1 & O1 & RM & ZX & BD & V16).
+                    & H159 & H160 & H161 & Etp & Hsm1 & RMo & RMi & Z1 & O1 & RM & ZX & ZH & BD & V16).
 
-Lemma mS1_facts : ltac2:(tb__ "0|d|
-S0S1S17S18S13Q40M0A1M1G1A2M2A1M3S41S3cS54S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7Va1;Va2;A3A1M4A1S65S38A1A3S0S1G3S40G4A1S15G2S16G1G1Va2;S14G0Z38e000M5A2A4S15G2S16G1G1Va1;S14G0Z10000M6A2A4S15G2S16G1G1S14G0Z2008fff7000A2S14G0Zdfff0001000A2A4S15G2S16G1G1S14G0Z8fff7000A2S14G0Z20000000000A2A4S15G2S16G1G1S14G0Z7fff7000A2S14G0Z10000000A2A4S20G2A1A3A3A3A3A3A3S0S78G4A1S0S0S6Z643000M7S12G0Va1;A2M8A2S0S2S6S7G8G6A2M9S35A2S6S34G8A2A2S6G9S3eG4A1MaA2A2A2S0S0S6G7S12G0Va2;A2MbA2S0S2S6S7GbG5A2McS35A2S6S34GbA2A2S6GcGaA2A2A2S0S0S6Z7fff80000000Vx;A2S6Vx;S9Z2Z2fA2A2A2S0S1S10SbVx;Z10A2Z0A3S0S1S10GaSaVx;Z800000A2A3S0S1S10Vx;S12G0Vsp;A2A3S0S1S10S3dG4A1Vlim;A3S1G1S3fG4A1Vsp;A3A2A2A2A2A2A2A2A2A2A2").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]).  Statement written as plain text. *)
+Lemma mS1_facts :
+  (exists V, vm_reserved (m_vmmaps mS1) = segments_reserved segsA ++ V /\ vdso_pair_ok V)
+  /\ vm_maps (m_vmmaps mS1) = [(a2, Z_to_bv 64 3727360); (a1, Z_to_bv 64 65536);
+       (Z_to_bv 64 2201439137792, Z_to_bv 64 15392894357504); (Z_to_bv 64 2415882240, Z_to_bv 64 2199023255552);
+       (Z_to_bv 64 2147446784, Z_to_bv 64 268435456)]
+  /\ init_sp_ok (m_vmmaps mS1)
+  /\ (6565888 <= bv_unsigned a1
+      /\ (bv_unsigned a1 + 65536 <= OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Placement.SHADOW_BAND_LO
+          \/ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Placement.SHADOW_BAND_HI <= bv_unsigned a1)
+      /\ bv_unsigned a1 + 65536 <= alloc_top (m_vmmaps mS1))
+  /\ (6565888 <= bv_unsigned a2
+      /\ (bv_unsigned a2 + 3727360 <= OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Placement.SHADOW_BAND_LO
+          \/ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Placement.SHADOW_BAND_HI <= bv_unsigned a2)
+      /\ bv_unsigned a2 + 3727360 <= alloc_top (m_vmmaps mS1))
+  /\ (140735340871680 <= x /\ x <= 2 ^ 47)
+  /\ x mod 16 = 0
+  /\ alloc_top (m_vmmaps mS1) = x - 8388608
+  /\ x = bv_unsigned sp
+  /\ vm_limit (m_vmmaps mS1) = lim
+  /\ vm_init_sp (m_vmmaps mS1) = sp.
 Proof.
-  dsheet. pose proof (StartMain.M1_fields sp brk mb draw lim inp tid) as (Fh & Flz & Fmt & Fres & Fmaps & Fna & Flim & Fsb & Fbrk & Fisp & Fused & Ftid & Ffds & Ffs & _).
+  dsheet. pose proof (StartMain.M1_fields sp brk mb draw lim inp Hent tid) as (Fh & Flz & Fmt & Fres & Fmaps & Fna & Flim & Fsb & Fbrk & Fisp & Fused & Ftid & Ffds & Ffs & _).
   pose proof (StartMain.sp_facts sp brk mb draw inp Hent Hinp) as (Hwin & Hspr & Hsp16).
   assert (Htop : init_sp_ok (m_vmmaps m1)) by (unfold init_sp_ok; rewrite Fisp; exact Hwin).
   pose proof (mS_fields m1 Flz Fmaps Fna a1 a2) as (RS & MS & NS & LS & LMS & IS & KS & SKS).
@@ -134,8 +158,12 @@ Proof.
   split; [exact Sx|]. split; [rewrite LMS; exact Flim | rewrite IS; exact Fisp].
 Qed.
 
-Lemma Mm_fds : ltac2:(tb__ "0|5|
-S0S1S17S18S13Q40A1M0S42A2A1S46S52S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7M1Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10M2A1S81A3S0S1S7dS47G2A1S45Vinp;A1A3S0S1S10S3dS3cG2A1M3A1Vlim;A3S0S1G0S3fG3A1Vsp;A3S0S1S17S18G0G0A2A1M4S41G3A1S65S38A1A3S1G4S40G3A1S53G1Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A3A2A2A2A2A2").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]).  Statement written as plain text. *)
+Lemma Mm_fds :
+  m_fds Mm = OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.DrvIfaceR.std_fds /\ m_fs Mm = in_fs inp /\ vm_limit (m_vmmaps Mm) = lim /\ vm_init_sp (m_vmmaps Mm) = sp
+  /\ (exists V, vm_reserved (m_vmmaps Mm) = segments_reserved segsA ++ V /\ vdso_pair_ok V)
+  /\ vm_maps (m_vmmaps Mm) = Lm.
 Proof.
   dsheet. split; [exact Sfds|]. split; [exact Sfs|]. split; [exact Slim|]. split; [exact (mi_isp SMI)|]. split; [exact (mi_res SMI) | exact (mi_maps SMI)].
 Qed.
@@ -147,9 +175,10 @@ Proof.
   unfold StartTop.Lmain, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.oc.Start8.L24, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.oc.Start8.L23, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.oc.Start8.L22, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.L18, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.LmE. rewrite SMAPS. reflexivity.
 Qed.
 
-Lemma ledger_main : ltac2:(tb__ "0|3|
-S1S17S18S13Q40A1M0G0A2M1A1S61S3cS52S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7M2Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A1A1S1cG1S65S38A1S53G2Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A3A3").
-Proof. pose proof Mm_fds as (_ & _ & _ & _ & R & M). unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.Ledger.ledger. rewrite R, M. reflexivity. Qed.
+(* LPS 727298f3: the ledger's reserved part is the image then the vDSO/vvar pair, so the ledger is
+   stated with [vm_reserved] itself.  Statement written as plain text. *)
+Lemma ledger_main : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.Ledger.ledger (m_vmmaps Mm) = vm_reserved (m_vmmaps Mm) ++ Lm.
+Proof. pose proof Mm_fds as (_ & _ & _ & _ & _ & M). unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.Ledger.ledger. rewrite M. reflexivity. Qed.
 
 Lemma noaccess_pos_main : ltac2:(tb__ "0|0|
 S88S48S3cS52S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A1A1A1").
@@ -161,7 +190,7 @@ Proof. dsheet. unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.
 
 Lemma band_main : ltac2:(tb__ "0|0|
 S37S61S3cS52S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A1A1S35S34A3").
-Proof. dsheet. rewrite ledger_main. exact (mi_band SMI). Qed.
+Proof. dsheet. unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.Ledger.ledger. exact (minv8_bandM _ _ _ _ _ SMI). Qed.
 
 Lemma limit_main : ltac2:(tb__ "0|1|
 S0S1S10S3dS3cS52S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A1M0A1Vlim;A3S0S1S10S3eG0A1SaS12Q40Vsp;A2Z800000A2A3S78G0A1A2A2").
@@ -173,13 +202,16 @@ Lemma X18_small : ltac2:(tb__ "0|8|
 S0S6ScS21S18S13Q40M0A1M1G1A2M2S75S54S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7Va1;Va2;A3VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;AbM3A2A1Z2A2S0S6S36G3A1Z4000A2G1G1S4fG2S16G1G1R2R1A4G3A3S0S2S1S10S12G0R2A2M4Z2000A3S1S10G4Z1000M5A3A2S0S6G5S12G0R3A2M6A2S0S6S7G6G4A2M7SaVx;Z800000A2A2S2S6G7S35A2S6S34G6A2A2A2A2A2F_;Fs;Fb;A2A2").
 Proof.
   dsheet. pose proof mS1_facts as (SRES & SMAPS & STOP & SA1 & SA2 & Hx & H16 & Hxtop & Sx' & SLIM & SISP).
-  pose proof (StartMain.M1_fields sp brk mb draw lim inp tid) as (Fh & Flz & Fmt & Fres & Fmaps & Fna & Flim & Fsb & Fbrk & Fisp & Fused & _).
+  pose proof (StartMain.M1_fields sp brk mb draw lim inp Hent tid) as (Fh & Flz & Fmt & Fres & Fmaps & Fna & Flim & Fsb & Fbrk & Fisp & Fused & _).
   pose proof (StartMain.brk_facts sp brk mb draw inp Hent) as [Hbrk Hbal].
   pose proof (mS_fields m1 Flz Fmaps Fna a1 a2) as (RS & MS & NS & LS & LMS & IS & KS & SKS).
   assert (SNA : vm_noaccess (m_vmmaps mS1) = [(Z_to_bv 64 0x8fff7000, Z_to_bv 64 0x20000000000)]) by (rewrite NS; reflexivity).
   assert (SBRK : 0x643000 <= bv_unsigned (vm_brk (m_vmmaps mS1)) <= 0x80643000) by (rewrite KS, Fbrk; exact Hbrk).
-  assert (XF := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.X18_facts mS1 a1 a2 SRES SMAPS SNA LS STOP SA1 SA2 SBRK P b4 b5 b6 HPL HPL4 HPL5 HPL6 b7 b8 b9 HPL7 HPL8 HPL9 x b10 Hx H16 Hxtop HPL10
-                 (StartTop.apart_S m1 Flz Fres Fmaps Fna ltac:(clear - STOP IS; unfold init_sp_ok in *; rewrite <- IS; exact STOP) a1 a2 G2 G3) o).
+  (* LPS 727298f3 (the model's b07fadb): the brk grow records the pages it installs, so o9's lemmas take the break's alignment. *)
+  assert (SBAL : (4096 | bv_unsigned (vm_brk (m_vmmaps mS1)))) by (rewrite KS, Fbrk; exact Hbal).
+  assert (XF := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.X18_facts mS1 a1 a2 SRES SMAPS SNA LS STOP SA1 SA2 SBRK SBAL P b4 b5 b6 HPL HPL4 HPL5 HPL6 b7 b8 b9 HPL7 HPL8 HPL9 x b10 Hx H16 Hxtop HPL10
+                 (StartTop.apart_S m1 Flz Fres Fmaps Fna ltac:(clear - STOP IS; unfold init_sp_ok in *; rewrite <- IS; exact STOP)
+                    (StartMain.resv_apart_M1 sp brk mb draw lim inp Hent tid) a1 a2 G2 G3) o).
   assert (GEN : forall l, (forall b s, In (b, s) l -> bv_unsigned s = 8192 \/ bv_unsigned s = 4096) -> gw_sizes l <= 8192 * Z.of_nat (length l)).
   { clear. induction l as [|[b s] l IH]; intros H; cbn -[Z.mul Z.add Z.of_nat]; [lia|].
     rewrite Nat2Z.inj_succ. cbn [snd]. specialize (IH ltac:(intros b' s' H'; apply (H b' s'); right; exact H')).
@@ -195,7 +227,11 @@ Lemma hwN_main : ltac2:(tb__ "0|0|
 S6S5fS61S3cS52S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A1A1A1Z28A2").
 Proof.
   rewrite ledger_main, Lmain_explicit. pose proof X18_small as (L2 & _ & _).
-  rewrite !hwN_app. unfold hwN at 1. rewrite live_hi_image.
+  (* LPS 727298f3: the reserved ledger is the image's entries, none above GAPF, then the vDSO/vvar pair, at most 2 entries. *)
+  pose proof Mm_fds as (_ & _ & _ & _ & (V & EV & HVl & _) & _). rewrite EV.
+  assert (HI : hwN (segments_reserved segsA) = 0) by (unfold hwN; rewrite live_hi_image; reflexivity).
+  rewrite !hwN_app, HI.
+  pose proof (hwN_le_length V).
   pose proof (hwN_le_length [(b14, Z_to_bv 64 4096); (b13, Z_to_bv 64 8388608); (b12, Z_to_bv 64 1048576)]).
   pose proof (hwN_le_length (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.X18 mS1 P b4 b5 b6 b7 b8 b9 x b10 o)).
   pose proof (hwN_le_length [(b10, Z_to_bv 64 n17); (b8, Z_to_bv 64 4096); (b7, Z_to_bv 64 4096); (b6, Z_to_bv 64 65536); (b5, Z_to_bv 64 4096); (b4, n9); (P, n7)]).
@@ -207,8 +243,19 @@ Lemma hwS_main : ltac2:(tb__ "0|0|
 S6S60S61S3cS52S39Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;Vtid;A7Va1;Va2;VP;Vb4;Vb5;Vb6;Vb7;Vb8;Vb9;Vx;Vb10;Vo;Vb12;Vb13;Vb14;A10A1A1A1S9Z2Z26A2A2").
 Proof.
   rewrite ledger_main, Lmain_explicit. pose proof X18_small as (_ & S2 & _).
+  (* LPS 727298f3: the reserved ledger is the image's entries, none above GAPF, then the vDSO/vvar pair,
+     at most 2 entries of at most 16 pages each. *)
+  pose proof Mm_fds as (_ & _ & _ & _ & (V & EV & HVl & HVe) & _). rewrite EV.
+  assert (HV : gw_sizes V <= 65536 * Z.of_nat (length V)).
+  { clear - HVe. induction V as [|[b s] V IH]; cbn -[Z.mul Z.add Z.of_nat]; [lia|].
+    pose proof (HVe (b, s) (or_introl eq_refl)) as (_ & E & _). cbn [snd] in E.
+    specialize (IH (fun e' H' => HVe e' (or_intror H'))).
+    rewrite Nat2Z.inj_succ. lia. }
+  pose proof (hwS_le_sizes V) as AV.
   replace ([(a2, Z_to_bv 64 0x38e000); (a1, Z_to_bv 64 0x10000); HSe; GPe; LWe]) with ([(a2, Z_to_bv 64 0x38e000); (a1, Z_to_bv 64 0x10000)] ++ [HSe; GPe; LWe]) by reflexivity.
-  rewrite !hwS_app. unfold hwS at 1. rewrite live_hi_image. unfold hwS at 5. rewrite live_hi_band.
+  assert (HI : hwS (segments_reserved segsA) = 0) by (unfold hwS; rewrite live_hi_image; reflexivity).
+  assert (HB : hwS [HSe; GPe; LWe] = 0) by (unfold hwS; rewrite live_hi_band; reflexivity).
+  rewrite !hwS_app, HI, HB.
   pose proof (hwS_le_sizes [(b14, Z_to_bv 64 4096); (b13, Z_to_bv 64 8388608); (b12, Z_to_bv 64 1048576)]) as A1.
   pose proof (hwS_le_sizes (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8Out.X18 mS1 P b4 b5 b6 b7 b8 b9 x b10 o)) as A2.
   pose proof (hwS_le_sizes [(b10, Z_to_bv 64 n17); (b8, Z_to_bv 64 4096); (b7, Z_to_bv 64 4096); (b6, Z_to_bv 64 65536); (b5, Z_to_bv 64 4096); (b4, n9); (P, n7)]) as A3.
@@ -245,7 +292,7 @@ Lemma rho1_vals : ltac2:(tb__ "0|3|
 S0S11S1S13Q40M0A1M1S23Vrho1;R1A2S23Vrho';R1A2A3Fi;S0S11S1S17S13Q8A1A1S2aVrho1;R1A2S2aVrho';R1A2A3Fl;S0S1G1S23Vrho1;P1A2Vsp;A3S0S1G1S23Vrho1;P1bA2Va1;A3S0S1G1S23Vrho1;P1cA2Va2;A3S0S1G1S23Vrho1;P1dA2VP;A3S0S1G1S23Vrho1;P1eA2S6aVP;A1M2A3S0S1S10SfZ8S12G0S23Vrho1;P1fA2A2A2S12G0G2A2A3S0S1G1S23Vrho1;P20A2Vb4;A3S0S1G1S23Vrho1;P21A2Vb5;A3S0S1G1S23Vrho1;P22A2Vb6;A3S0S1G1S23Vrho1;P24A2Vb7;A3S0S1G1S23Vrho1;P4dA2Vb8;A3S0S1G1S23Vrho1;P4eA2Vb9;A3S0S1G1S23Vrho1;P53A2Vb10;A3S0S1G1S23Vrho1;P9fA2Vb12;A3S0S1G1S23Vrho1;Pa0A2Vb13;A3S1G1S23Vrho1;Pa1A2Vb14;A3A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2").
 Proof.
   dsheet. split; [exact RW1|]. split; [exact RL1|].
-  split; [rewrite RW1, (V25 1%positive) by lia; exact (ji_sp _ _ _ _ _ _ _ SJ)|].
+  split; [rewrite RW1, (V25 1%positive) by lia; exact (ji_sp _ _ _ _ _ _ _ _ SJ)|].
   rewrite !RW1. repeat match goal with |- _ /\ _ => split end; assumption.
 Qed.
 
@@ -294,13 +341,55 @@ Proof.
   rewrite U_add_small in X by (unfold SHADOW_BAND_HI in PLB; lia). change (2 ^ 37) with 137438953472. exact X.
 Qed.
 
+(* LPS 727298f3: the random bytes' bounds read off the start-up's valuation ([rhoOK]), for the shadow
+   layout of Start7.v [arith18] at AT_RANDOM. *)
+Lemma r6_bounds : x + 80 <= bv_unsigned sp + StartArgBytes.RNDo inp /\ bv_unsigned sp + StartArgBytes.RNDo inp + 16 <= 2 ^ 47
+  /\ bv_unsigned sp + StartArgBytes.RNDo inp + 16 <= x + 2238671.
+Proof.
+  dsheet. pose proof ROK as (_ & _ & _ & _ & _ & _ & _ & RB1 & RB2 & RB3).
+  pose proof (StartArgBytes.arg_nums sp brk mb draw inp Hent Hinp) as (Nsp & Nfit & N16 & Nargc & Nstr & Nstr8 & NA1 & NA1b & Nrnd & Npad & Nrnd8 & Nlen & Nlenb & Nlen0 & Ntab1 & Ntab2).
+  assert (R6 : Start7.r6of rho' = bv_unsigned sp + StartArgBytes.RNDo inp).
+  { unfold Start7.r6of. rewrite (V25 6%positive) by lia. rewrite (ji_rand _ _ _ _ _ _ _ _ SJ). apply u64_of_lit.
+    pose proof (Zle_0_nat (pad_len inp sp draw)) as P1. pose proof (Zle_0_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))) as P2.
+    clear -Nsp Nfit Nstr Nrnd Nargc Nlen P1 P2. lia. }
+  rewrite R6 in RB1, RB2, RB3. split; [exact RB1|]. split; [exact RB2 | exact RB3].
+Qed.
+
+(* LPS 727298f3: the pages [stage0] paid for lie in the high shadow band, from the top of the
+   start-up's cleared stack shadow. *)
+Lemma HS_facts : q12x x <= qH /\ 0x10006fef9000 <= qH /\ qH + 4096 * Z.of_nat nH <= 0x10007fff8000
+  /\ qH = Z.max (Start7.Q18 x) (Start7.Wz (bv_unsigned sp + StartArgBytes.RNDo inp)).
+Proof.
+  pose proof mS1_facts as (_ & _ & _ & _ & _ & Hx & H16 & _ & Sx' & _).
+  destruct r6_bounds as (RB1 & RB2 & RB3).
+  pose proof (Start7.arith18 x Hx H16 _ RB1 RB2 RB3) as AR.
+  destruct AR as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & A13 & A14 & _ & A16 & _ & A18 & A19 & _).
+  pose proof (q12x_lo x Hx) as [Q1 Q2].
+  pose proof (StartArgBytes.arg_nums sp brk mb draw inp Hent Hinp) as (Nsp & Nfit & N16 & Nargc & Nstr & Nstr8 & NA1 & NA1b & Nrnd & Npad & Nrnd8 & Nlen & Nlenb & Nlen0 & Ntab1 & Ntab2).
+  pose proof (StartArgBytes.EXo_nums sp brk mb draw inp Hent Hinp) as [_ E9L].
+  pose proof (StartArgBytes.argv0_tail sp brk mb draw inp Hent Hinp) as TA.
+  assert (EN : StartArgBytes.END9 sp draw inp = StartArgBytes.EXo sp draw inp + 9) by reflexivity.
+  pose proof (Zle_0_nat (pad_len inp sp draw)) as T2.
+  assert (QHv : qH = Z.max (Start7.Q18 x) (Start7.Wz (bv_unsigned sp + StartArgBytes.RNDo inp))) by reflexivity.
+  assert (QHal : qH mod 4096 = 0).
+  { rewrite QHv. destruct (Z.max_spec (Start7.Q18 x) (Start7.Wz (bv_unsigned sp + StartArgBytes.RNDo inp))) as [[_ ->]|[_ ->]]; assumption. }
+  pose proof (StartHandoff.HS_top x (bv_unsigned sp + StartArgBytes.RNDo inp) (bv_unsigned sp + StartArgBytes.END9 sp draw inp - 1) QHal) as HTOP.
+  assert (HEhi : StartHandoff.HSE (bv_unsigned sp + StartArgBytes.END9 sp draw inp - 1) <= 0x10007fff8000).
+  { apply StartHandoff.HSE_le_band. clear -Nsp Nfit E9L EN TA NA1 Nstr Nrnd Nargc T2. lia. }
+  split; [rewrite QHv; clear -A19; lia|]. split; [rewrite QHv; clear -A19 Q1; lia|]. split; [|exact QHv].
+  rewrite HTOP. rewrite QHv. clear -HEhi A14 A18. unfold kHighMemBeg in *. lia.
+Qed.
+
 Lemma tpF_pages : ltac2:(tb__ "0|3|
 S13Q40M0A1M1S4fG1R1S5bVtp;A1A3S2S5aS12G0R2A2M2A1S2S1G1R2S74A3S2S1G1R2S73A3S2S1G1R2Vb13;A3S0S6Z800bc000G2A2S6S7G2Z1000A2S34A2A2A2A2A2A2F_;Fp;").
 Proof.
   dsheet. pose proof mS1_facts as (SRES & SMAPS & STOP & SA1 & SA2 & Hx & H16 & Hxtop & _).
-  intros p Hp. unfold tpF in Hp. rewrite Etp in Hp. apply in_app_iff in Hp as [Hp|Hp]; [|apply in_app_iff in Hp as [Hp|Hp]].
+  intros p Hp. unfold tpF in Hp. rewrite Etp in Hp. apply in_app_iff in Hp as [Hp|Hp]; [|apply in_app_iff in Hp as [Hp|Hp]; [|apply in_app_iff in Hp as [Hp|Hp]]].
   - left. apply In_pages_rev in Hp as (k & Hk & ->). unfold pageZ, ZPAGES, PA0, PR0. rewrite u64_of_lit by lia. lia.
   - left. apply In_pages_rev in Hp as (k & Hk & ->). unfold pageZ, ZPAGES, PA0, PR0. rewrite u64_of_lit by lia. lia.
+  - (* LPS 727298f3: the pages of main's argument shadow the hand-off paid for *)
+    right; right; right; right. apply In_pages_rev in Hp as (k & Hk & ->). destruct HS_facts as (_ & QHlo' & HSTOP & _).
+    unfold pageZ. rewrite u64_of_lit by (clear -Hk QHlo' HSTOP; lia). unfold SHADOW_BAND_HI. clear -Hk QHlo' HSTOP. lia.
   - unfold TPmain in Hp. destruct Hp as [<-|[<-|[<-|Hp]]]; [right; left; reflexivity | right; right; left; reflexivity | right; right; right; left; reflexivity |].
     right; right; right; right. exact (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.oc.Start8.TP18_facts mS1 a1 a2 SRES SMAPS STOP P b4 b5 b6 HPL HPL4 HPL5 HPL6 b7 b8 b9 x b10 Hx H16 rho' ROK p Hp).
 Qed.
@@ -328,6 +417,19 @@ Proof.
   - destruct w as [tr [ms md]]. exact (smatch_facts segsA _ _ _ Hsm1).
 Qed.
 
+(* LPS 727298f3: those pages read zero at main's entry: the hand-off's zero pages ([ZH]), apart from the
+   main entry's objects (g5.v [main_apart_band]) and from the ZPAGES. *)
+Lemma HS_zero : forall a : Z, qH <= a < qH + 4096 * Z.of_nat nH -> rm rhoM (Z_to_bv 64 a) = Some (Z_to_bv 8 0).
+Proof.
+  dsheet. pose proof GM1 as (_ & HGhigh1 & _ & HF1). destruct HS_facts as (QHlo & QHlo' & HSTOP & _).
+  pose proof mS1_facts as (_ & _ & _ & _ & _ & Hx & _). pose proof (q12x_lo x Hx) as [Q1 Q2].
+  intros a Ha. assert (Ha64 : 0 <= a < 2 ^ 64) by (clear -Ha QHlo' HSTOP; lia).
+  rewrite (RMo (Z_to_bv 64 a)).
+  - rewrite O1 by (rewrite u64_of_lit by exact Ha64; clear -Ha QHlo'; unfold ZPAGES, PA0, PR0; lia). exact (ZH a Ha).
+  - apply (main_apart_band v rho1 HF1 (q12x x) ltac:(clear -Q1 Q2; unfold kHighMemBeg in *; lia) HGhigh1). rewrite u64_of_lit by exact Ha64.
+    clear -Ha QHlo HSTOP. unfold Placement.kHighMemBeg, Start7.kHighMemBeg, SHADOW_BAND_HI in *. lia.
+Qed.
+
 Lemma ZPAGES_zero : ltac2:(tb__ "0|2|
 S10S5aR1A1S1S19S13Q8M0A1M1A1S24VrhoM;S14Q40R2A2A2S1bG1S14G0Z0A2A2A3F_;Fa;").
 Proof.
@@ -341,8 +443,9 @@ S10S0S6S6dVx;A1R1A2S8R1SdS70Vx;A1S71S7S12Q40M0Vsp;A2S76Vinp;A1A2A1A2A2A2S1S19S13
 Proof.
   dsheet. pose proof GM1 as (_ & HGhigh1 & _ & HF1). pose proof mS1_facts as (SRES & SMAPS & STOP & SA1 & SA2 & Hx & H16 & Hxtop & Sx' & _).
   pose proof (StartArgBytes.arg_nums sp brk mb draw inp Hent Hinp) as (Nsp & Nfit & N16 & Nargc & Nstr & Nstr8 & NA1 & NA1b & Nrnd & Npad & Nrnd8 & Nlen & Nlenb & Nlen0 & Ntab1 & Ntab2).
-  pose proof (Zle_0_nat (tab (in_argv inp))) as T0. pose proof (Zle_0_nat (tab (in_envp inp))) as T1. pose proof (Zle_0_nat (pad_len (in_argv inp) (in_envp inp))) as T2.
-  pose proof (Start7.arith18 x Hx H16 (bv_unsigned sp + StartArgBytes.RNDo inp) ltac:(clear -Sx' Nrnd Nstr Nargc T0 T1 T2; lia) ltac:(clear -Sx' Nfit Nlen; lia) ltac:(clear -Sx' Nlenb Nlen Nsp; lia)) as AR.
+  pose proof (Zle_0_nat (tab (in_argv inp))) as T0. pose proof (Zle_0_nat (tab (in_envp inp))) as T1. pose proof (Zle_0_nat (pad_len inp sp draw)) as T2.
+  destruct r6_bounds as (RB1 & RB2 & RB3).
+  pose proof (Start7.arith18 x Hx H16 (bv_unsigned sp + StartArgBytes.RNDo inp) RB1 RB2 RB3) as AR.
   destruct AR as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14 & A15 & A16 & A17 & A18 & A19 & A20 & A21 & A22 & A23 & A24).
   pose proof (q12x_lo x Hx) as [Q1 Q2].
   intros a Ha.
@@ -416,11 +519,15 @@ Proof.
   intros p Hp Hb a Ha.
   assert (H64 : 0 <= a < 2 ^ 64) by (clear -Hb Ha; pose proof (urange p); bandlia).
   dsheet. pose proof mS1_facts as (SRES & SMAPS & STOP & SA1 & SA2 & Hx & H16 & Hxtop & Sx' & _).
-  unfold tpF in Hp. rewrite Etp in Hp. apply in_app_iff in Hp as [Hp|Hp]; [|apply in_app_iff in Hp as [Hp|Hp]].
+  unfold tpF in Hp. rewrite Etp in Hp. apply in_app_iff in Hp as [Hp|Hp]; [|apply in_app_iff in Hp as [Hp|Hp]; [|apply in_app_iff in Hp as [Hp|Hp]]].
   - apply In_pages_rev in Hp as (k & Hk & ->). rewrite (ZPAGES_zero a); [discriminate|].
     unfold pageZ, PR0, PA0 in Ha. rewrite u64_of_lit in Ha by (clear -Hk; lia). unfold ZPAGES, PA0, PR0. clear -Ha Hk. lia.
   - apply In_pages_rev in Hp as (k & Hk & ->). rewrite (ZPAGES_zero a); [discriminate|].
     unfold pageZ, PR0, PA0 in Ha. rewrite u64_of_lit in Ha by (clear -Hk; lia). unfold ZPAGES, PA0, PR0. clear -Ha Hk. lia.
+  - (* LPS 727298f3: the pages of main's argument shadow the hand-off paid for *)
+    apply In_pages_rev in Hp as (k & Hk & ->). destruct HS_facts as (_ & QHlo' & HSTOP & _).
+    unfold pageZ in Ha. rewrite u64_of_lit in Ha by (clear -Hk QHlo' HSTOP; lia).
+    rewrite (HS_zero a); [discriminate|]. clear -Ha Hk. lia.
   - unfold TPmain in Hp. destruct Hp as [<-|[<-|[<-|Hp]]].
     + apply regglob_pages_present. right. unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8CallDefs.PGB in Ha. rewrite u64_of_lit in Ha by (clear; lia). exact Ha.
     + apply regglob_pages_present. left. unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o9.Start8CallDefs.PGA in Ha. rewrite u64_of_lit in Ha by (clear; lia). exact Ha.

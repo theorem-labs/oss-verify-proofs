@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the section takes the input's fields (apc, mbase, kb, execfn and the other QpvH.inp fields), and its cs_ok hypothesis is over SINV0 / argH0 of them; the CONFIG_RSEQ flag of the start-up layer: the checks over the four main-entry states of HSCLASS_S; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run; the launch's extra reserved intervals (the vDSO pair) in the reserved ledger: entry_perm and hull_reserved from co_res and co_mres, resv_low as the image's intervals below kLowEnd or the extra ones at or above KHI, main_len at most 24 and KI_main_J at 24). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -49,27 +50,27 @@ Set Default Proof Using "All".
 Definition pv_ok_in (k : list kentry) (o : nat * Z) : bool :=
 existsb (fun K => match K with KRange (EVar v) lo hi => (Nat.eqb v (fst o) && (1 <=? lo) && (hi <=? 34359736319))%bool | _ => false end) k.
 Lemma PV_COVER : forall w ch, HSCLASS_S w ch -> forallb (pv_ok_in (kn ch)) (OBJS_W w) = true.
-Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
-Definition PRES (E : env) : Z := 4096 * bv_unsigned (ev E 208).
-Definition SB (E : env) : Z := PRES E + 0x10000 - 4096 * bv_unsigned (ev E 209).
-Definition PARR (E : env) : Z := 4096 * bv_unsigned (ev E 236).
+Definition PRES (E : env) : Z := 4096 * bv_unsigned (ev E 212).
+Definition SB (E : env) : Z := PRES E + 0x10000 - 4096 * bv_unsigned (ev E 213).
+Definition PARR (E : env) : Z := 4096 * bv_unsigned (ev E 240).
 Definition F209id : kentry :=
-KRange (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 209)) (EAlu Instr.ALU_AND (EMd Instr.M_MUL (ELit 4096) (EVar 208)) (ELit 65535))) 0 0.
+KRange (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 213)) (EAlu Instr.ALU_AND (EMd Instr.M_MUL (ELit 4096) (EVar 212)) (ELit 65535))) 0 0.
 Lemma HS2_layout_facts : forall w ch, HSCLASS_S w ch -> In F208 (kn ch) /\ In F209 (kn ch) /\ In F209id (kn ch).
-Proof. intros w ch HCL. repeat split; apply kn_mem_In; destruct w; destruct HCL as [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros w ch HCL. repeat split; apply kn_mem_In; destruct w; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
-Definition GRP_O (w : bool) : nat * Z := if w then (423%nat, 4096) else (424%nat, 4096).
-Definition META_O (w : bool) : nat * Z := if w then (5%nat, 8192) else (423%nat, 8192).
+Definition GRP_O (w : bool) : nat * Z := if w then (429%nat, 4096) else (430%nat, 4096).
+Definition META_O (w : bool) : nat * Z := if w then (5%nat, 8192) else (429%nat, 8192).
 
 Definition OBJS_K (w : bool) : list (nat * Z) :=
-[(2113%nat, 4096); (496%nat, 4096); (479%nat, 8388608); (478%nat, 1048576); META_O w;
-(406%nat, 11571200); (330%nat, 4096); (265%nat, 4096); (238%nat, 65536); (237%nat, 4096); (207%nat, 3727360); (78%nat, 65536)].
+[(2119%nat, 4096); (502%nat, 4096); (485%nat, 8388608); (484%nat, 1048576); META_O w;
+(412%nat, 11571200); (336%nat, 4096); (269%nat, 4096); (242%nat, 65536); (241%nat, 4096); (211%nat, 3727360); (82%nat, 65536)].
 Lemma OBJS_K_sub : forall w o, In o (OBJS_K w) -> In o (OBJS_W w).
 Proof. intros [|] o Ho; cbn in Ho |- *; tauto. Qed.
 Lemma GRP_O_in : forall w, In (GRP_O w) (OBJS_W w).  Proof. intros [|]; cbn; tauto. Qed.
-Lemma PRES_O_in : forall w, In (208%nat, 137439023104) (OBJS_W w).  Proof. intros [|]; cbn; tauto. Qed.
-Lemma PARR_O_in : forall w, In (236%nat, 8388608) (OBJS_W w).  Proof. intros [|]; cbn; tauto. Qed.
+Lemma PRES_O_in : forall w, In (212%nat, 137439023104) (OBJS_W w).  Proof. intros [|]; cbn; tauto. Qed.
+Lemma PARR_O_in : forall w, In (240%nat, 8388608) (OBJS_W w).  Proof. intros [|]; cbn; tauto. Qed.
 Definition objs_of (w : bool) (E : env) : list (Z * Z) := map (fun o => wiv2z (obj_e E o)) (OBJS_K w).
 
 Section Ledger.
@@ -79,16 +80,30 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation h := (m_vmmaps mo).
 #[local] Notation LV := (LV_J E).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
 
 Lemma pv_bound : forall o, In o (OBJS_W w) -> 1 <= bv_unsigned (ev E (fst o)) <= 34359736319.
 Proof.
@@ -148,16 +163,17 @@ split; [exact He|]. split; [|split].
 pose proof ((MA maps_disj) _ _ He' He Hne) as D. unfold iv_disjoint in D. unfold QzgH.zdisj, r, wiv2z. cbn [fst snd]. lia.
 - apply (proj1 (NoDup_count_occ' QzgH.pdec (vm_maps h))); [|exact He].
 exact (QYLF.Mq0.seps_NoDup _ (P co_seps) (MA maps_pos)).
-- apply QYLF.Mq0.region_free_intro. intros a sz Hin. rewrite (P co_res) in Hin.
-pose proof asan_res_hull as RH. rewrite Forall_forall in RH. pose proof (RH _ Hin) as [R1 R2]. cbn [fst snd img_lo img_hi BJO6] in R1, R2.
-pose proof (P co_bounds) as B. rewrite Forall_forall in B. pose proof (B e He) as (_ & _ & _ & B4 & _).
-cbn [img_lo img_hi BJO6] in B4.
-unfold iv_overlap. apply andb_false_iff. destruct B4 as [B4|B4]; [right| left]; apply Z.ltb_ge; lia.
+- (* LPS 727298f3: the ledger also holds the launch's extra intervals (co_res); every tracked map
+     lies apart from each reserved interval (co_mres) *)
+apply QYLF.Mq0.region_free_intro. intros a sz Hin.
+pose proof (proj1 (Forall_forall _ _) (P co_mres) e He) as MRe. cbv beta in MRe.
+pose proof (proj1 (Forall_forall _ _) MRe (a, sz) Hin) as D. red in D. cbn [fst snd] in D.
+unfold iv_overlap. apply andb_false_iff. destruct D as [D|D]; [right| left]; apply Z.ltb_ge; lia.
 Qed.
 
-Lemma pres_obj : (PRES E, PRES E + Q7z8.kPrimResLen) = wiv2z (obj_e E (208%nat, 137439023104)).
+Lemma pres_obj : (PRES E, PRES E + Q7z8.kPrimResLen) = wiv2z (obj_e E (212%nat, 137439023104)).
 Proof. unfold wiv2z. rewrite (u_obj_base _ (PRES_O_in w)), (u_obj_len _ (PRES_O_in w)). unfold PRES, Q7z8.kPrimResLen. reflexivity. Qed.
-Lemma parr_obj : (PARR E, PARR E + Q7z8.kPtrArrLen) = wiv2z (obj_e E (236%nat, 8388608)).
+Lemma parr_obj : (PARR E, PARR E + Q7z8.kPtrArrLen) = wiv2z (obj_e E (240%nat, 8388608)).
 Proof. unfold wiv2z. rewrite (u_obj_base _ (PARR_O_in w)), (u_obj_len _ (PARR_O_in w)). unfold PARR, Q7z8.kPtrArrLen. reflexivity. Qed.
 
 Lemma sb_layout : SB E mod 65536 = 0 /\ PRES E <= SB E /\ SB E + 2 ^ 37 <= PRES E + 0x2000011000.
@@ -167,7 +183,7 @@ destruct (HS2_layout_facts w ch HCL) as (I1 & I2 & I3).
 pose proof (K _ I1) as K1. pose proof (K _ I2) as K2. pose proof (K _ I3) as K3.
 unfold F208, F209, F209id in *. cbn [kentry_ok edenot] in K1, K2, K3.
 rewrite u_add64, u_mul64, u_and64, u_mul64, !u_lit64 in K3. unfold two64 in K3.
-set (x208 := bv_unsigned (ev E 208)) in *. set (x209 := bv_unsigned (ev E 209)) in *.
+set (x208 := bv_unsigned (ev E 212)) in *. set (x209 := bv_unsigned (ev E 213)) in *.
 unfold SB, PRES. fold x208 x209.
 assert (Hm208 : (4096 mod 2 ^ 64 * x208) mod 2 ^ 64 = 4096 * x208) by (rewrite Z.mod_small; [rewrite (Z.mod_small 4096); lia | rewrite (Z.mod_small 4096) by lia; lia]).
 rewrite Hm208 in K3.
@@ -202,7 +218,7 @@ pose proof (entry_top _ ((MA in_maps_obj) _ (PRES_O_in w))) as T1. pose proof (e
 pose proof (pv_bound _ (PRES_O_in w)) as B1. pose proof (pv_bound _ (PARR_O_in w)) as B2. cbn [fst] in B1, B2.
 rewrite (u_obj_base _ (PRES_O_in w)), (u_obj_len _ (PRES_O_in w)) in LH1, T1.
 rewrite (u_obj_base _ (PARR_O_in w)), (u_obj_len _ (PARR_O_in w)) in LH2, T2. cbn [fst snd] in LH1, LH2, T1, T2.
-assert (PM : (4096 * bv_unsigned (ev E 236)) mod 4096 = 0) by (rewrite Z.mul_comm; apply Z_mod_mult).
+assert (PM : (4096 * bv_unsigned (ev E 240)) mod 4096 = 0) by (rewrite Z.mul_comm; apply Z_mod_mult).
 constructor; unfold Q7z8.lowhigh, QzgH.kLowEnd, Qqcs.Mq0.kHighMemBeg, Q7z8.kPrimResLen,
 Q7z8.kPtrArrLen, Q7z8.CEIL, PRES, PARR in *; cbn [fst snd]; try lia; try exact PM;
 lia.
@@ -228,17 +244,25 @@ destruct Hx as [<-|[<-|[<-|[]]]]; cbn [fst snd] in Hy.
 - exists (e_high E). split; [exact (MA e_high_in)|]. unfold e_high. cbn [fst snd]. rewrite !(u_litE E) by lia. lia.
 Qed.
 
-Lemma resv_low : forall e, In e (vm_reserved h) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= QzgH.kLowEnd.
+(* LPS 727298f3: the reserved ledger is the image's intervals, below kLowEnd, and the launch's
+   extra ones (the vDSO pair), at or above KHI + 4096 and below 2^47 (co_res, resx_entry_ok) *)
+Lemma resv_low : forall e, In e (vm_reserved h) ->
+bv_unsigned (fst e) + bv_unsigned (snd e) <= QzgH.kLowEnd
+\/ (QzgH.KHI <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 2^47).
 Proof.
-intros e He. rewrite (P co_res) in He.
-pose proof asan_res_hull as RH. rewrite Forall_forall in RH. pose proof (RH _ He) as [R1 R2]. cbn [img_lo img_hi BJO6] in R1, R2.
+intros e He. destruct (P co_res) as (rx & Hres & Hrx & _). rewrite Hres in He.
+apply in_app_iff in He as [He|He].
+- left. pose proof asan_res_hull as RH. rewrite Forall_forall in RH. pose proof (RH _ He) as [R1 R2]. cbn [img_lo img_hi BJO6] in R1, R2.
 unfold QzgH.kLowEnd. lia.
+- right. rewrite Forall_forall in Hrx. pose proof (Hrx _ He) as (_ & _ & _ & _ & K1 & K2).
+change (0x10007fff8000 + 4096 <= bv_unsigned (fst e)) in K1.
+change (0x10007fff8000 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 2^47). lia.
 Qed.
 
 Lemma hull_reserved : forall y, 0x10000 <= y < 0x647000 ->
 exists e, In e (vm_reserved h) /\ bv_unsigned (fst e) <= y < bv_unsigned (fst e) + bv_unsigned (snd e).
 Proof.
-intros y Hy. rewrite (P co_res), asan_segments_reserved.
+intros y Hy. destruct (P co_res) as (rx & Hres & _). rewrite Hres, asan_segments_reserved.
 destruct (Z.lt_ge_cases y 0x3e000); [exists (Z_to_bv 64 0x10000, Z_to_bv 64 0x2e000); split; [cbn; tauto| cbn [fst snd]; rewrite !u64_lit by lia; lia]|].
 destruct (Z.lt_ge_cases y 0xe4000); [exists (Z_to_bv 64 0x3e000, Z_to_bv 64 0xa6000); split; [cbn; tauto| cbn [fst snd]; rewrite !u64_lit by lia; lia]|].
 destruct (Z.lt_ge_cases y 0xea000); [exists (Z_to_bv 64 0xe4000, Z_to_bv 64 0x6000); split; [cbn; tauto| cbn [fst snd]; rewrite !u64_lit by lia; lia]|].
@@ -252,13 +276,16 @@ Definition TOT_J : Z := 17729700000000.
 Lemma main_tot : Qqcs.Mq0.gw_sizes (vm_reserved h ++ vm_maps h) <= TOT_J.
 Proof.
 rewrite sum_sizes_gw. pose proof (P co_totsz) as T.
-assert (HTS : a_totsz ch <= TOT_J) by (apply Z.leb_le; destruct w; destruct HCL as [-> | ->]; vm_compute; reflexivity). lia.
+assert (HTS : a_totsz ch <= TOT_J) by (apply Z.leb_le; destruct w; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity). lia.
 Qed.
 
-Lemma main_len : QOb0.Mq0.zlen (vm_reserved h ++ vm_maps h) = 22.
+(* LPS 727298f3: the image's four intervals, at most n_resx = 2 extra ones (co_res) and the 18 maps *)
+Lemma main_len : QOb0.Mq0.zlen (vm_reserved h ++ vm_maps h) <= 24.
 Proof.
-unfold QOb0.Mq0.zlen. rewrite (P co_res), asan_segments_reserved, (MA main_vm_maps). rewrite !length_app, length_map.
-destruct w; reflexivity.
+destruct (P co_res) as (rx & Hres & _ & Hrl & _). change (n_resx BJO6) with 2%nat in Hrl.
+assert (Hk : (length (segments_reserved JOB6SEGS) + (length (OBJS_W w) + length [e_high E; e_gap E; e_low E]) = 22)%nat)
+by (rewrite asan_segments_reserved; destruct w; reflexivity).
+unfold QOb0.Mq0.zlen. rewrite Hres, (MA main_vm_maps). rewrite !length_app, length_map. lia.
 Qed.
 
 Lemma base_cov : forall PERM iv y, In iv (lv_base LV) -> fst iv <= y < snd iv ->
@@ -295,8 +322,8 @@ intros r Hr. destruct Hr as [<-|Hr].
 - exists (obj_e E (GRP_O w)). split; [exact ((MA in_maps_obj) _ (GRP_O_in w)) | exact grp_obj].
 - unfold PERM0_J, Q7z8.PERM_main in Hr. apply in_app_iff in Hr as [Hr|Hr].
 + cbn [In] in Hr. destruct Hr as [<-|[<-|[<-|[<-|[<-|[]]]]]].
-* exists (obj_e E (208%nat, 137439023104)). split; [exact ((MA in_maps_obj) _ (PRES_O_in w)) | exact pres_obj].
-* exists (obj_e E (236%nat, 8388608)). split; [exact ((MA in_maps_obj) _ (PARR_O_in w)) | exact parr_obj].
+* exists (obj_e E (212%nat, 137439023104)). split; [exact ((MA in_maps_obj) _ (PRES_O_in w)) | exact pres_obj].
+* exists (obj_e E (240%nat, 8388608)). split; [exact ((MA in_maps_obj) _ (PARR_O_in w)) | exact parr_obj].
 * exists (e_high E). split; [exact (MA e_high_in) | rewrite (MA e_high_z); reflexivity].
 * exists (e_low E). split; [exact (MA e_low_in) | rewrite (MA e_low_z); reflexivity].
 * exists (e_gap E). split; [exact (MA e_gap_in) | rewrite (MA e_gap_z); reflexivity].
@@ -307,7 +334,7 @@ Qed.
 Definition BC_J : Z := 0x5800000000.
 
 Theorem KI_main_J : forall g0, QvDJ.g_chunks g0 = [] -> 0 <= QvDJ.g_spent g0 ->
-QzgH.KI LV BC_J PERMc_J TOT_J 22 g0 mo.
+QzgH.KI LV BC_J PERMc_J TOT_J 24 g0 mo.
 Proof.
 intros g0 Hch Hsp0. constructor; rewrite ?Hch.
 - exact (MA xinvA_main).
@@ -322,7 +349,7 @@ split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [exact A4|]. 
 - exact resv_low.
 - exact (base_cov PERMc_J).
 - cbn [map]. change (QPa2.zsum []) with 0. change (QOb0.Mq0.zlen (@nil (Z * Z))) with 0.
-pose proof main_tot. rewrite main_len. lia.
+pose proof main_tot. pose proof main_len. lia.
 Qed.
 
 Theorem ll_ok_main_J :

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: EB, VB, ev_EB_js and dsj_entries_sub take mbase, and the indices of p8 and sb (28 and 29, now 44 and 45), L16's grant and the environment lengths move up by 16, the offsets counting from 32 (was 16). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -25,7 +26,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Definition L16 : ledger := lgrant_nr L15 28 OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE.
+Definition L16 : ledger := lgrant_nr L15 44 OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE.
 Definition L17 : ledger := lcommit L16 4096.
 Lemma DS_E8_eq : DS_std L15 = DS_E8. Proof. reflexivity. Qed.
 
@@ -57,8 +58,8 @@ Section Theorems.
   Let usp := bv_unsigned sp.
 
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
 
   (* [comment removed for export] *)
   #[using="usp"] Lemma p8_facts : forall H A a tid c pl js p8 ks sr kn L hc lz R M mdl,
@@ -67,8 +68,8 @@ Section Theorems.
   Proof.
     intros H A a tid c pl js p8 ks sr kn L hc lz R M mdl HB Hjs HL.
     destruct HB as [HR HKN HA HZ HLZ HM F HMO RG HT Hcl Ht].
-    assert (EV : edenot (EB sp draw inp a tid c pl (js ++ p8 :: ks)) (EVar 28) = p8).
-    { cbn [edenot]. replace 28%nat with (16 + 12)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl (js ++ p8 :: ks) 12).
+    assert (EV : edenot (EB sp mbase draw inp a tid c pl (js ++ p8 :: ks)) (EVar 44) = p8).
+    { cbn [edenot]. replace 44%nat with (32 + 12)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl (js ++ p8 :: ks) 12).
       rewrite app_nth2 by lia. rewrite Hjs. reflexivity. }
     pose proof HMO as MO. unfold maps_ok in MO. rewrite HL in MO. unfold L16, lgrant_nr in MO. cbn [l_maps] in MO.
     apply Forall_cons_iff in MO as [M28 MO]. unfold map_ok in M28. cbn [fst snd] in M28. rewrite EV in M28.
@@ -89,7 +90,7 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_internal_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js R M mdl K Hlim Hjs HB HK. unfold at_E8 in HB.
-    assert (LEN : length (VB' a tid c pl js) = 28%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB' a tid c pl js) = 44%nat) by (rewrite length_VB, Hjs; reflexivity).
     rewrite fetch_internal_mmap_ret_prev in HK.
     eapply (bs_mmap_none_nr_spin sp brk mbase draw lim inp VI VE H2 A2 a tid c pl js SR_E8 KN_E8 L15 HC5 LZ5 OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE A_internal_mmap_ecall ECALLW
               R M mdl K HB fetch_internal_mmap_ecall is_ecall_ECALLW);
@@ -124,35 +125,35 @@ Section Theorems.
     intros a tid c pl js p8 R M mdl Hjs HB.
     pose proof (p8_facts _ _ _ _ _ _ js p8 [] _ _ _ _ _ _ _ _ HB Hjs eq_refl) as (P1 & P2 & P3).
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. pose proof (SH sp brk mbase draw inp VI VE) as SHi.
-    assert (LEN : length (VB' a tid c pl (js ++ [p8])) = 29%nat) by (rewrite length_VB, length_app, Hjs; reflexivity).
-    assert (EV : ev (EB sp draw inp a tid c pl (js ++ [p8])) 28 = p8).
-    { replace 28%nat with (16 + 12)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl (js ++ [p8]) 12), app_nth2 by lia. rewrite Hjs. reflexivity. }
+    assert (LEN : length (VB' a tid c pl (js ++ [p8])) = 45%nat) by (rewrite length_VB, length_app, Hjs; reflexivity).
+    assert (EV : ev (EB sp mbase draw inp a tid c pl (js ++ [p8])) 44 = p8).
+    { replace 44%nat with (32 + 12)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl (js ++ [p8]) 12), app_nth2 by lia. rewrite Hjs. reflexivity. }
     pose proof HB as HB0. destruct HB0 as [HR HKN _ _ _ _ _ _ _ _ _ _].
     set (sb := getr R 10%bv).
     assert (Usb : bv_unsigned sb = SBV p8).
-    { unfold sb. rewrite (HR 10%bv), SBX_eq. change SBX with (sbx 28 (2 ^ 16)).
-      rewrite (sbx_val _ 28 16) by (rewrite ?EV; unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE, stack_max_size in *; lia).
+    { unfold sb. rewrite (HR 10%bv), SBX_eq. change SBX with (sbx 44 (2 ^ 16)).
+      rewrite (sbx_val _ 44 16) by (rewrite ?EV; unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE, stack_max_size in *; lia).
       rewrite EV. unfold SBV. reflexivity. }
     exists sb. split; [exact Usb|].
     unfold SR16f. rewrite <- KN16f_eq. change 10%nat with (ridx 10%bv).
     pose proof (bs_fresh sp brk mbase draw lim inp (H3 p8) A2 a tid c pl (js ++ [p8]) SR16a KN16a L16 (hc3 p8) (LZ16 p8) R M mdl 10%bv sb KF29 HB eq_refl) as BF.
     rewrite LEN in BF. apply BF; [vmeq_refl | vmeq_refl | reflexivity |]. clear BF.
     unfold KF29. unfold SBV, OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE, SHB_HI, stack_max_size in Usb, P1, P2, P3, SLo, SHi.
-    assert (EV' : edenot (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) (EVar 29) = sb).
+    assert (EV' : edenot (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) (EVar 45) = sb).
     { cbn [edenot]. rewrite EB_app. cbn [ev]. rewrite <- LEN, <- (Nat.add_0_r (length _)), vals_ev_app_r. reflexivity. }
     pose proof (Z.mod_pos_bound (bv_unsigned p8) 65536 ltac:(lia)) as MB.
-    assert (EV28' : edenot (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) (EVar 28) = p8).
-    { cbn [edenot]. replace 28%nat with (16 + 12)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl _ 12), <- app_assoc, app_nth2, Hjs by lia. reflexivity. }
+    assert (EV28' : edenot (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) (EVar 44) = p8).
+    { cbn [edenot]. replace 44%nat with (32 + 12)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ 12), <- app_assoc, app_nth2, Hjs by lia. reflexivity. }
     apply (proj2 (know_ok_app SEGS _ _ _ _)). split; [constructor; [| constructor; [| constructor; [| constructor]]]|].
     - cbn [kentry_ok]. rewrite EV', Usb. split; [lia|]. pose proof (Z.div_mod (bv_unsigned p8) 65536 ltac:(lia)).
       replace (bv_unsigned p8 + 65536 - bv_unsigned p8 mod 65536) with (65536 * (bv_unsigned p8 / 65536) + 1 * 65536) by lia.
       rewrite Z_mod_plus_full, Z.mul_comm. apply Z_mod_mult.
     - cbn [kentry_ok]. rewrite EV', Usb. unfold N_RI, stack_max_size. lia.
     - (* [comment removed for export] *)
-      cbn [kentry_ok]. change (edenot ?E (EAlu ALU_SUB (EVar 29) (EVar 28))) with ((edenot E (EVar 29) - edenot E (EVar 28))%bv).
+      cbn [kentry_ok]. change (edenot ?E (EAlu ALU_SUB (EVar 45) (EVar 44))) with ((edenot E (EVar 45) - edenot E (EVar 44))%bv).
       rewrite EV', EV28', bv_sub_unsigned, Usb. unfold bv_wrap, bv_modulus. change (2 ^ Z.of_N 64) with 18446744073709551616.
       rewrite Z.mod_small by lia. lia.
-    - pose proof (dsj_entries_sub sp draw inp a tid c pl (js ++ [p8]) 28 OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE N_RI DS_E8 sb (mrestrict (H3 p8) M)) as DS.
+    - pose proof (dsj_entries_sub sp mbase draw inp a tid c pl (js ++ [p8]) 44 OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE N_RI DS_E8 sb (mrestrict (H3 p8) M)) as DS.
       cbv zeta in DS. rewrite EV, LEN in DS. apply DS; try (unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE, N_RI; lia).
       + rewrite <- KN16a_dsj28. apply know_ok_filter. exact HKN.
       + unfold DS_E8. repeat apply Forall_cons; try apply Forall_nil; split; reflexivity.
@@ -181,17 +182,17 @@ Section Theorems.
     intros a tid c pl js p8 sb R M mdl K Hlim Hjs Hsb HB HK.
     pose proof (p8_facts _ _ _ _ _ _ js p8 [sb] _ _ _ _ _ _ _ _ ltac:(rewrite <- app_assoc in HB; exact HB) Hjs eq_refl) as (P1 & P2 & P3).
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. pose proof (SH sp brk mbase draw inp VI VE) as SHi.
-    assert (LEN : length (VB' a tid c pl ((js ++ [p8]) ++ [sb])) = 30%nat) by (rewrite length_VB, !length_app, Hjs; reflexivity).
-    assert (EV28 : ev (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 28 = p8).
-    { replace 28%nat with (16 + 12)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl _ 12), <- app_assoc, app_nth2, Hjs by lia. reflexivity. }
-    assert (EV29 : ev (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 29 = sb).
-    { replace 29%nat with (16 + 13)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl _ 13), app_nth2 by (rewrite length_app, Hjs; cbn; lia).
+    assert (LEN : length (VB' a tid c pl ((js ++ [p8]) ++ [sb])) = 46%nat) by (rewrite length_VB, !length_app, Hjs; reflexivity).
+    assert (EV28 : ev (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 44 = p8).
+    { replace 44%nat with (32 + 12)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ 12), <- app_assoc, app_nth2, Hjs by lia. reflexivity. }
+    assert (EV29 : ev (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 45 = sb).
+    { replace 45%nat with (32 + 13)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ 13), app_nth2 by (rewrite length_app, Hjs; cbn; lia).
       rewrite length_app, Hjs. reflexivity. }
     pose proof (mod_pos:=Z.mod_pos_bound (bv_unsigned p8) 65536 ltac:(lia)).
     unfold SBV, OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE, SHB_HI, stack_max_size in Hsb, P1, P2, P3.
     rewrite fetch_internal_mmap_ret_prev in HK.
     pose proof (bs_mmap_fixedin_rw sp brk mbase draw lim inp VI VE (H3 p8) A2 a tid c pl ((js ++ [p8]) ++ [sb]) SR16b KN16b L16 (hc3 p8) (LZ16 p8) R M mdl
-                  EB9 EO9 4096 A_internal_mmap_ecall (EVar 28) OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE ECALLW K HB fetch_internal_mmap_ecall is_ecall_ECALLW) as NODE.
+                  EB9 EO9 4096 A_internal_mmap_ecall (EVar 44) OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE ECALLW K HB fetch_internal_mmap_ecall is_ecall_ECALLW) as NODE.
     cbv zeta in NODE. unfold EB9, EO9 in NODE. cbn [edenot] in NODE. rewrite EV28, EV29 in NODE.
     change (page_round_up_Z 4096) with 4096 in NODE.
     apply NODE; clear NODE; try reflexivity; try (unfold A_internal_mmap_ecall; lia).
@@ -207,10 +208,10 @@ Section Theorems.
       (* [comment removed for export] *)
       eapply bootS_reknow; [exact HB' | auto |]. intros HKN'.
       apply (proj1 (know_ok_app SEGS _ _ [_; _] _)) in HKN' as [HK2 HKr]. apply (proj2 (know_ok_app SEGS _ _ [_; _] _)). split; [| exact HKr].
-      assert (EQB : edenot (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) RIB = edenot (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) EB9).
+      assert (EQB : edenot (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) RIB = edenot (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) EB9).
       { unfold RIB, EB9. cbn [edenot]. rewrite EV28. change (alu64 ALU_ADD ?x (alu64 ALU_SUB ?y ?x)) with (x + (y - x))%bv.
         apply bv_eq. rewrite bv_add_unsigned, bv_sub_unsigned. unfold bv_wrap. rewrite Zplus_mod_idemp_r.
-        replace (bv_unsigned p8 + (bv_unsigned (ev (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 29) - bv_unsigned p8)) with (bv_unsigned (ev (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 29)) by lia.
+        replace (bv_unsigned p8 + (bv_unsigned (ev (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 45) - bv_unsigned p8)) with (bv_unsigned (ev (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 45)) by lia.
         apply Z.mod_small. apply u64_range. }
       inversion HK2 as [|k1 l1 K1 HK3]; subst. inversion HK3 as [|k2 l2 K2 _]; subst.
       constructor; [| constructor; [| constructor]].
@@ -238,13 +239,13 @@ Section Theorems.
     intros a tid c pl js p8 sb R M mdl Hlim Hjs Hsb HB.
     pose proof (p8_facts _ _ _ _ _ _ js p8 [sb] _ _ _ _ _ _ _ _ ltac:(rewrite <- app_assoc in HB; exact HB) Hjs eq_refl) as (P1 & P2 & P3).
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. pose proof (SH sp brk mbase draw inp VI VE) as SHi.
-    assert (EV29 : ev (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 29 = sb).
-    { replace 29%nat with (16 + 13)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl _ 13), app_nth2 by (rewrite length_app, Hjs; cbn; lia).
+    assert (EV29 : ev (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 45 = sb).
+    { replace 45%nat with (32 + 13)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ 13), app_nth2 by (rewrite length_app, Hjs; cbn; lia).
       rewrite length_app, Hjs. reflexivity. }
     pose proof (Z.mod_pos_bound (bv_unsigned p8) 65536 ltac:(lia)) as MP.
     unfold SBV, OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE, SHB_HI, stack_max_size in Hsb, P1, P2, P3.
-    assert (SHv : bv_unsigned (edenot (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) EBS) + EOS = SHRI sb).
-    { unfold EBS, EOS, SHRI, RI. rewrite (shx_val _ 29 (2 ^ 37)) by (rewrite ?EV29; lia). rewrite EV29. reflexivity. }
+    assert (SHv : bv_unsigned (edenot (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) EBS) + EOS = SHRI sb).
+    { unfold EBS, EOS, SHRI, RI. rewrite (shx_val _ 45 (2 ^ 37)) by (rewrite ?EV29; lia). rewrite EV29. reflexivity. }
     assert (SHlo : 0x2008fff7000 + 2 ^ 34 <= SHRI sb /\ SHRI sb + 4096 + 2 ^ 20 <= SHB_HI /\ SHRI sb mod 4096 = 0).
     { unfold SHRI, RI, SHB_HI. pose proof (Z.div_mod (bv_unsigned p8) 65536 ltac:(lia)).
       set (q := bv_unsigned p8 / 65536) in *.
@@ -277,9 +278,9 @@ Section Theorems.
     intros a tid c pl js p8 sb R M mdl K Hjs Hsb HB HK.
     pose proof (p8_facts _ _ _ _ _ _ js p8 [sb] _ _ _ _ _ _ _ _ ltac:(rewrite <- app_assoc in HB; exact HB) Hjs eq_refl) as (P1 & P2 & P3).
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. pose proof (SH sp brk mbase draw inp VI VE) as SHi.
-    assert (LEN : length (VB' a tid c pl ((js ++ [p8]) ++ [sb])) = 30%nat) by (rewrite length_VB, !length_app, Hjs; reflexivity).
-    assert (EV29 : ev (EB sp draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 29 = sb).
-    { replace 29%nat with (16 + 13)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl _ 13), app_nth2 by (rewrite length_app, Hjs; cbn; lia).
+    assert (LEN : length (VB' a tid c pl ((js ++ [p8]) ++ [sb])) = 46%nat) by (rewrite length_VB, !length_app, Hjs; reflexivity).
+    assert (EV29 : ev (EB sp mbase draw inp a tid c pl ((js ++ [p8]) ++ [sb])) 45 = sb).
+    { replace 45%nat with (32 + 13)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ 13), app_nth2 by (rewrite length_app, Hjs; cbn; lia).
       rewrite length_app, Hjs. reflexivity. }
     pose proof (Z.mod_pos_bound (bv_unsigned p8) 65536 ltac:(lia)) as MP.
     unfold SBV, OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE, SHB_HI, stack_max_size in Hsb, P1, P2, P3.
@@ -295,10 +296,10 @@ Section Theorems.
     - vmeq_refl.
     - unfold MSV. lia.
     - replace (sr_get SR17a 12%bv) with
-        (EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit (-1)) (EAlu ALU_SRL (EAlu ALU_ADD (EVar 29) (ELit (2 ^ 37))) (ELit 3)))
-                                (EAlu ALU_SRL (EAlu ALU_ADD (EVar 29) (ELit (2 ^ 37 + 4096 - 8))) (ELit 3))) (ELit 1))
+        (EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit (-1)) (EAlu ALU_SRL (EAlu ALU_ADD (EVar 45) (ELit (2 ^ 37))) (ELit 3)))
+                                (EAlu ALU_SRL (EAlu ALU_ADD (EVar 45) (ELit (2 ^ 37 + 4096 - 8))) (ELit 3))) (ELit 1))
         by (vmeq_refl).
-      apply bv_eq. rewrite (shdiff_val _ 29 (2 ^ 37) 4096); rewrite ?EV29; try lia.
+      apply bv_eq. rewrite (shdiff_val _ 45 (2 ^ 37) 4096); rewrite ?EV29; try lia.
       + unfold MSN. reflexivity.
       + replace (bv_unsigned sb + 2 ^ 37) with (8 * (8192 * (q + 1 + 2097152))) by lia. rewrite Z.mul_comm. apply Z_mod_mult.
       + reflexivity.
@@ -308,8 +309,8 @@ Section Theorems.
     - vmeq_refl.
     - unfold MSN. lia.
     - lia.
-    - unfold EBS, EOS. rewrite (shx_val _ 29 (2 ^ 37)) by (rewrite ?EV29; lia). rewrite EV29. pose proof (Z.div_pos (bv_unsigned sb + 2 ^ 37) 8). lia.
-    - unfold EBS, EOS, MSN. rewrite (shx_val _ 29 (2 ^ 37)) by (rewrite ?EV29; lia). rewrite EV29.
+    - unfold EBS, EOS. rewrite (shx_val _ 45 (2 ^ 37)) by (rewrite ?EV29; lia). rewrite EV29. pose proof (Z.div_pos (bv_unsigned sb + 2 ^ 37) 8). lia.
+    - unfold EBS, EOS, MSN. rewrite (shx_val _ 45 (2 ^ 37)) by (rewrite ?EV29; lia). rewrite EV29.
       replace (bv_unsigned sb + 2 ^ 37) with (8 * (8192 * (q + 1 + 2097152))) by lia. rewrite (Z.mul_comm 8), Z.div_mul by lia. unfold stack_max_size. lia.
     - rewrite ?KN17m_eq, ?SR17m_eq. exact HK.   (* [comment removed for export] *)
   Qed.
@@ -322,10 +323,10 @@ Section Theorems.
   (* [comment removed for export] *)
   Definition at_E10 (a tid c : word) (pl : placements) (p8 sb : word) (js : list word) R M mdl : Prop :=
     bootS' (H5 p8 sb) (A5 sb) a tid c pl js SR_E10 KN_E10 L17 (hc3 p8) (LZ17 p8 sb) R M mdl /\ bv_unsigned sb = SBV p8
-    /\ ev (EB' a tid c pl js) 28 = p8 /\ ev (EB' a tid c pl js) 29 = sb.
+    /\ ev (EB' a tid c pl js) 44 = p8 /\ ev (EB' a tid c pl js) 45 = sb.
 
   #[using="VI VE"] Theorem s5_b17b : forall a tid c pl js p8 sb R M mdl K, bv_unsigned sb = SBV p8 ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 29 = sb ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 45 = sb ->
     bootS' (H5 p8 sb) (A5 sb) a tid c pl js SR17m KN17m L17 (hc3 p8) (LZ17 p8 sb) R M mdl ->
     (forall R' M' mdl', at_E10 a tid c pl p8 sb js R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 A_internal_mmap_ecall) M' ROM) mdl') K) ->
@@ -356,10 +357,10 @@ Section Theorems.
     apply (s5_b17a _ _ _ _ _ _ _ _ _ _ K H4'). intros R5 M5 m5 H5'.
     pose proof (s5_expose a tid c pl js p8 sb R5 M5 m5 Hlim Hjs Hsb H5') as H6.
     apply (s5_memset a tid c pl js p8 sb R5 M5 m5 K Hjs Hsb H6). intros R7 M7 m7 H7.
-    assert (E28 : ev (EB' a tid c pl (((js ++ [p8]) ++ [sb]) ++ junk_c R7 memset_clob)) 28 = p8).
-    { replace 28%nat with (16 + 12)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl _ 12), <- !app_assoc, app_nth2, Hjs by lia. reflexivity. }
-    assert (E29 : ev (EB' a tid c pl (((js ++ [p8]) ++ [sb]) ++ junk_c R7 memset_clob)) 29 = sb).
-    { replace 29%nat with (16 + 13)%nat by reflexivity. rewrite (ev_EB_js sp draw inp a tid c pl _ 13), <- !app_assoc, app_nth2 by (rewrite Hjs; lia).
+    assert (E28 : ev (EB' a tid c pl (((js ++ [p8]) ++ [sb]) ++ junk_c R7 memset_clob)) 44 = p8).
+    { replace 44%nat with (32 + 12)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ 12), <- !app_assoc, app_nth2, Hjs by lia. reflexivity. }
+    assert (E29 : ev (EB' a tid c pl (((js ++ [p8]) ++ [sb]) ++ junk_c R7 memset_clob)) 45 = sb).
+    { replace 45%nat with (32 + 13)%nat by reflexivity. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ 13), <- !app_assoc, app_nth2 by (rewrite Hjs; lia).
       rewrite Hjs. reflexivity. }
     apply (s5_b17b _ _ _ _ _ _ _ _ _ _ K Hsb E28 E29 H7). intros R8 M8 m8 H8.
     exact (HK p8 sb (junk_c R7 memset_clob) R8 M8 m8 eq_refl H8).

@@ -34,8 +34,8 @@ Proof.
       unfold W_BASE_UBSAN, W_LEN in Ha. lia.
 Qed.
 
-(* Heap: every byte of every allocator block is outside the image (AllocExtra.ax_blocks_img, U/Reusable/YL01.v:25-26,
-   and malloc's fresh_block, U/Contract.v:73-74), so a block [p, p + n) misses the world. *)
+(* Heap: every byte of every allocator block is outside the image (AllocExtra.ax_blocks_img, U/Reusable/YL01.v:26-27,
+   and malloc's fresh_block, U/Contract.v:74-75), so a block [p, p + n) misses the world. *)
 Lemma wmem_off_heap : forall (Bm : YO0d.malloc_syms) p n, YO0d.ms_segs Bm = rsegs -> 0 < n ->
   (forall i, 0 <= i < n -> ~ YO0d.in_img Bm (p + i)) ->
   p + n <= W_BASE_UBSAN \/ W_BASE_UBSAN + W_LEN <= p.
@@ -48,9 +48,9 @@ Proof.
   apply wmem_in_img; [exact HS | unfold W_LEN in *; lia].
 Qed.
 
-(* Stack: errno_addr = ms_tp + ms_errno_off = 0x43420 - 164 (U/FrameAPI.v:40-41, Reusable/YO0d.v:48 via
-   U/Reusable/YO0d.v) and errno_addr + 4 <= alloc_ceiling (U/FrameAPI.v:37); lib_pre puts the slot's stack window
-   above the ceiling (alloc_ceiling + stk <= spZ regs, U/Reusable/YL0g.v:37). So a callee window [sp - K, sp)
+(* Stack: errno_addr = ms_tp + ms_errno_off = 0x43420 - 164 (U/FrameAPI.v:41-42, Reusable/YO0d.v:48 via
+   U/Reusable/YO0d.v) and errno_addr + 4 <= alloc_ceiling (U/FrameAPI.v:38); lib_pre puts the slot's stack window
+   above the ceiling (alloc_ceiling + stk <= spZ regs, U/Reusable/YL0g.v:38). So a callee window [sp - K, sp)
    inside the slot's window lies above the world. *)
 Lemma wmem_below_ceiling : forall (Bm : YO0d.malloc_syms) ceil,
   YO0d.ms_tp Bm = 0x43420 -> YO0d.ms_errno_off Bm = -164 -> YO0d.errno_addr Bm + 4 <= ceil ->
@@ -79,7 +79,7 @@ Module DemoImg.
 Import Stdlib.Strings.String Stdlib.Strings.PrimString.
 Definition seg : Segment := {|
   seg_base := 0x1000%N; seg_size := 36%N; seg_perms := "r-x"%string;
-  seg_bytes := ["9727040003b5870e9727040023b0b70e971704009387870b93952500b387b70003a50700"%pstring] |}.
+  seg_bytes := ["9727040003b5870e9727040023b0b70e971704009387870b93952500b387b70003a50700"%pstring]; seg_kind := SegLoader |}.
 End DemoImg.
 Definition demo_segs : list Segment := [DemoImg.seg].
 
@@ -122,7 +122,7 @@ Proof.
   apply evt_done. hnf. eexists. split; [reflexivity|]. split; eassumption.
 Qed.
 
-(* A memcpy of 6 bytes into M.desk (W_BASE_UBSAN + A_M_desk), with the kit's libc contract (U/Prog/memcpy_c.v:34-43)
+(* A memcpy of 6 bytes into M.desk (W_BASE_UBSAN + A_M_desk), with the kit's libc contract (U/Prog/memcpy_c.v:35-44)
    as the callee: wm_piece gives the destination cell, wk_post_call folds the copied bytes into the world. *)
 Lemma demo_memcpy : memcpy_contract ->
   forall (ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -162,7 +162,7 @@ Module DemoCallImg.
 Import Stdlib.Strings.String Stdlib.Strings.PrimString.
 Definition seg : Segment := {|
   seg_base := 0x1000%N; seg_size := 12%N; seg_perms := "r-x"%string;
-  seg_bytes := ["ef1000009727040003b5470e"%pstring] |}.
+  seg_bytes := ["ef1000009727040003b5470e"%pstring]; seg_kind := SegLoader |}.
 End DemoCallImg.
 Definition demo_call_segs : list Segment := [DemoCallImg.seg].
 
@@ -265,14 +265,14 @@ Qed.
      0x1000 sb    a1, -8(sp)      the byte at sp - 8 := the low byte of a1
      0x1004 auipc a5, 0x42        a5 = 0x43004
      0x1008 ld    a0, 0xe4(a5)    a0 = the 8 bytes at 0x430e8 = W_BASE_UBSAN + OFF_g_now
-   The store writes le1 a1. The kit's store aftermath (mem_after_store, Lib/Tac.v:98) turns it into the cell
+   The store writes le1 a1. The kit's store aftermath (mem_after_store, Lib/Tac.v:99) turns it into the cell
    C1 (Z_to_bv 8 (bv_unsigned a1)) (cell_of_bytes, Lib/Step.v), carries the world across the store and names the
    new memory, so the world load after it reads g_now. *)
 Module DemoSbImg.
 Import Stdlib.Strings.String Stdlib.Strings.PrimString.
 Definition seg : Segment := {|
   seg_base := 0x1000%N; seg_size := 12%N; seg_perms := "r-x"%string;
-  seg_bytes := ["230cb1fe9727040003b5470e"%pstring] |}.
+  seg_bytes := ["230cb1fe9727040003b5470e"%pstring]; seg_kind := SegLoader |}.
 End DemoSbImg.
 Definition sb_segs : list Segment := [DemoSbImg.seg].
 

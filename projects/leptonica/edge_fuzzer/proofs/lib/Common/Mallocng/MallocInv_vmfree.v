@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap answers, munmap's maps_subtract cut). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -59,6 +60,8 @@ Proof.
   pose proof HV as [Vg Vb Va Vres Vbv Vpw Vmw Vna Vac Vpc Vall Vspan Vtop].
   pose proof (vm_maps_nw A h HV) as NW. pose proof (vm_na_nw A h HV) as NWa.
   assert (POS : forall b sz, In (b, sz) (vm_maps h) -> 0 < u sz) by (intros b sz Hb; exact (proj1 (Vmw b sz Hb))).
+  (* munmap cuts with [maps_subtract] at 08b1429; on this exact ledger it is [map_remove] *)
+  pose proof (maps_subtract_exact_remove _ _ _ (munmap_exact_pw (vm_maps h) (Z_to_bv 64 B) (Z_to_bv 64 L) Vpw POS Hin)) as EM.
   assert (UB : u (Z_to_bv 64 B) = B) by (rewrite uZ by lia; reflexivity).
   assert (UL : u (Z_to_bv 64 L) = L) by (rewrite uZ by lia; reflexivity).
   (* [comment removed for export] *)
@@ -70,7 +73,7 @@ Proof.
   assert (DOMR : forall pg k, (forall y, pg <= y < pg + k -> dom A y) -> forall y, pg <= y < pg + k -> ~ (B <= y < B + L)).
   { intros pg k Hd y Hy Hr. exact (Hnodom y Hr (Hd y Hy)). }
   constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_munmap a_ctx a_areas a_meta a_pages a_mblocks a_xmaps set_xmaps];
-    rewrite ?vm_munmap_maps, ?vm_munmap_noaccess, ?vm_munmap_brk, ?vm_munmap_start_brk, ?vm_munmap_reserved; try assumption.
+    rewrite ?vm_munmap_maps, ?EM, ?vm_munmap_noaccess, ?vm_munmap_brk, ?vm_munmap_start_brk, ?vm_munmap_reserved; try assumption.
   - (* [comment removed for export] *) intros ma mt aib slots Hma Hr Hml. destruct (Vg ma mt aib slots Hma Hr Hml) as [Hi Hf].
     destruct (wf_grp A HW ma mt aib slots Hma Hr) as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hmem & Hfit & Hce & Hpg).
     destruct (Hpg Hml) as [_ Hhr]. unfold heap_range in Hhr. ceil.
@@ -92,6 +95,9 @@ Proof.
     + rewrite ?UB, ?UL. apply maps_subtract_cover; [exact NWa | exact P4 | lia |].
       destruct P4 as (nb & nsz & Hnin & N1 & N2).
       destruct (proj1 (region_free_spec _ _ _) Hfree nb nsz Hnin) as [D | D]; rewrite ?UB, ?UL in D; lia.
+  - (* res: munmap only removes entries *)
+    apply (res_ok_mono h); [reflexivity | exact Vres |]. intros b0 sz0 Hin0.
+    rewrite vm_munmap_maps, EM in Hin0. apply in_map_remove in Hin0. exact (res_ok_in h b0 sz0 Vres (proj1 Hin0)).
   - (* [comment removed for export] *) unfold map_remove. apply maps_pw_filter. exact Vpw.
   - (* [comment removed for export] *) intros b sz Hb. apply in_map_remove in Hb. exact (Vmw b sz (proj1 Hb)).
   - (* [comment removed for export] *) intros b sz Hb. rewrite UB, UL in Hb. destruct (in_maps_subtract _ _ _ _ _ Hb) as (b0 & sz0 & H0 & H1).

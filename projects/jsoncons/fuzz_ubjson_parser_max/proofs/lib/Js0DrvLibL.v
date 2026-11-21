@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded regs_ok_upd_same, regions_lib, credit_le_step and credit_le_head into plain statements, folded the regions_lib section into one lemma, imported Js0MainEntry, and replaced the literal store window bounds with DRV_ZWIN; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0DrvLibL.v, 22 lines within its lines 19-220. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -11,7 +12,7 @@ From OSSVerify.jsoncons.fuzz_ubjson_parser_max.images Require Import Plain.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import RunEnv
 PropExec CatExec CatSim SeqExec StoreOk ShapeAlg ShapeLaws SpinAlg SpinAlgX
 SymExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX RefMemcpyLib Hoare AsanAcct
-HeapIface LibIface DrvKit Js0Drv_defs Js0DrvLib Js0DrvD_defs.
+HeapIface LibIface DrvKit Js0MainEntry Js0Drv_defs Js0DrvLib Js0DrvD_defs.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import SecKit.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -51,7 +52,8 @@ dll_phnum : ll_phnum Lay = 10
 }.
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
-Lemma regs_ok_upd_same : ltac2:(TCodec.tc2 tcn__Js0DrvLibL "Q='R@'8'RA%211&Q:y5'T0yR0%211%5241%415&RFr5r4r3%43321&C'B(SNz(@%33@21%53<81%711&R?r7%221<&R6%12@?%<3E31r8&RD&RC%11E%3391Er6%I3621p081p0?1p0H1pVFQ61pWDO1pRLQ11pWLQ81pQFQ<1").
+Lemma regs_ok_upd_same : forall E sr R (rd : reg) e,
+regs_ok E sr R -> rd <> 0%bv -> edenot E e = getr R rd -> regs_ok E (sr_upd sr (ridx rd) e) R.
 Proof.
 intros E sr R rd e HR Hrd He r. unfold sr_get. destruct (bv_eqb r 0) eqn:Hr0.
 - specialize (HR r). unfold sr_get in HR. rewrite Hr0 in HR. exact HR.
@@ -89,16 +91,17 @@ Lemma not_foot : ltac2:(TCodec.tc2 tcn__Js0DrvLibL "O'I'D&RNr1+hhb@%3221'A&RM+hl
 Proof.
 intros a Ha (iv & Hin & Hr). apply (dll_foot Lay L DLL) in Hin. lia.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_regions_lib := (ltac2:(TCodec.tc2 tcn__Js0DrvLibL "SE'8'T0yR0%211%411'9y8%611%811p041'I'=%1272%=11%3244%?11'R@(R>&RIr6%211r5%5221'Br7(1%8221vSL%53I21'A&RM&S1&S2+2+F%3221%511%721Bz%92D1%;231';%11Q0&Q@r2r8%3221(2r1%22Q71%K3841&QIvN&T1r<r3%Q6221%42QG1%746Q21>p091pW<QB1pW2QH1r=%Q=218%;2QN1%Q321Ep0@1pV<QI1pX6QO1&RK(5u3u4(:%11R5%53R631%63R751%83R8M1%I2R<QC%QM2AQ3%K2R>1%QC231&RL+D%QD2QC1%3251+R0%QG2QF1%QJ231%QL281p0=1pW2RF1'QA&RJr:+RPP0r9&QF&QM&QJ%B2F6%22R=1&QK%113%<<;R?:98QKL76RE31p0>1p0Q61p0Q>1p0R41p0RA1tQFRNRH1pR0S01pX<S31pV>S41pWHS81pVHS:1pX8S@1")) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_regions_lib) 0%nat 0%nat).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_regions_lib) 1%nat 0%nat).
-Variable so : ltac:(sec_ty2 constr:(SEC_T_regions_lib) 2%nat 0%nat).
-Variable bls : ltac:(sec_ty2 constr:(SEC_T_regions_lib) 3%nat 0%nat).
-Variable vbnd : ltac:(sec_ty2 constr:(SEC_T_regions_lib) 4%nat 0%nat).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_regions_lib) 5%nat 0%nat).
-Lemma regions_lib : ltac:(sec_stmt2 constr:(SEC_T_regions_lib) 6%nat 0%nat).
+Lemma regions_lib : forall vals ebs so bls vbnd LB,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+- 2 ^ 22 <= so <= 0 ->
+(forall i nb, find_nz i bls = Some nb -> sub_block L LB (bv_unsigned (vals_ev vals i)) nb) ->
+(forall v b, find_nz v vbnd = Some b -> bv_unsigned (vals_ev vals v) <= b) ->
+(forall i, In i [3%nat; 4%nat] -> bv_unsigned sp0 <= bv_unsigned (vals_ev vals i) /\ bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64) ->
+regions_ok RSEGS 0 so 65536 bls vbnd [3%nat; 4%nat] IMG_LIB IMG_RW E
+(CPl LB (bv_unsigned sp0 + so)) (SCl (bv_unsigned sp0 + so)).
 Proof.
+intros vals ebs so bls vbnd LB.
 intros E P0 Hso Hbl Hvb Hhi.
 pose proof (dl_img_lo L sp0 DL) as IL. pose proof (dl_img_hi L sp0 DL) as IH. pose proof (dl_errno L sp0 DL) as ER.
 pose proof (dl_sptop L sp0 DL) as TOP.
@@ -130,13 +133,15 @@ destruct Hin as [E1|[E1|[]]]; injection E1 as <- <-; (split; [lia|]); (split; [l
 + eapply (store_ok_window RSEGS Mx (Z_to_bv 64 0xb5000) _ 212992%nat m 0xb5000 0xe9000);
 [reflexivity | reflexivity | lia | apply wseg_5f000 | rewrite u_small by lia; lia | rewrite u_small by lia; lia].
 Qed.
-End SE.
 Definition credit_scale (k : Z) (c : credit) : credit := (k * fst c, k * snd c).
-Lemma credit_le_step : ltac2:(TCodec.tc2 tcn__Js0DrvLibL "Q8'I'=%1222&QB&RM+1r4%3221z&6%13::4%7231&>r5%23>>1%;271&QO&QLr7r6%3221%5218&R0%1245%821;&S3r9%221Fr8%<221%>21;p071p0;1p0B1p0G1p0L1pVDQ11pVBQ21pV@Q41pW4Q71").
+Lemma credit_le_step : forall k c cr cr',
+1 <= k -> 0 <= fst c -> 0 <= snd c ->
+credit_le (credit_scale k c) cr -> credit_le (credit_sub cr c) cr' -> credit_le (credit_scale (k - 1) c) cr'.
 Proof.
 intros k c cr cr' Hk H1 H2 [A B] [C D]. unfold credit_scale, credit_sub, credit_le in *. cbn [fst snd] in *. nia.
 Qed.
-Lemma credit_le_head : ltac2:(TCodec.tc2 tcn__Js0DrvLibL "N'I'=%1222&QB&RM+1r3%3221z&6%13::4%7231&>r4%23>>1%;271&QO&QLr6r5%3221%5218%6243p021p091p0>1p0C1pVBH1pV@J1pW4M1").
+Lemma credit_le_head : forall k c cr, 1 <= k -> 0 <= fst c -> 0 <= snd c ->
+credit_le (credit_scale k c) cr -> credit_le c cr.
 Proof. intros k c cr Hk H1 H2 [A B]. unfold credit_scale, credit_le in *. cbn [fst snd] in *. nia. Qed.
 Lemma lib_site : ltac2:(TCodec.tc2 tcn__Js0DrvLibL "^K'8'T0yR0%211%411'9y8%611%811p041'RA%;11'RB%=11&Q:y5%221=';%11;p0@1'Q4'='I%2211%H11&QB&R4vQ0%211%82H7%N11'Q5%Q011!pX>21'R@(R>&RIrA%211r@%5221&RFr1r>%33251&RE&RJr2%342159'B'4&RH&7rD%22QD1rB%5221(?%93821&RGrE%92QK1%3217%>3=16'Fu5rF%?2R11%4231rG(1%Q3221vSL%H3R721&RK(5u3u4(:%11R;%53R<31%63R=51%83R>Q81'A&RM&T1%12RE>rJ%QD21Q9%42RH1%6241&RL&S2+2+D%3221%5271+R0%6251%?231%A2:1p0C1pW2S21&QH%11Q6%QH3QG1Q@&R6(SN(@%23RO@1%42Q<1&SO%E2JR9%22S@1%R13S@41&S1+F%I2H1%311%Q321RBz%Q52RD1%Q7231&RO+@%22R61%R=3S916rI+1%F3SC1E%H231r?%E2T31%RD3T331%QB2>RO&RN+Q?%Q=2Q<1%32S31%QH251%A2S7Q?%RL3SH1ErL+3%Q53T21Q4%Q7231+RRP0%Q42TB1%S33TB31rM+4%Q<3T91Q;%Q>231+hoS0%Q;2TI1%S:3TI31rN+:%QC3T@1QB%QE231%QA2TOS4%S@3TO21rO+;%QI3TF1QH%QK231&S0%SC2U1SB%211%QJ2U81%SI3U851%SG2U5S?%611+J%RB2RA1%Q8231'D%SM2U;S?%T13U>1S<rH+hhb0%T43U021%S3241%A16%QA2R01(<%14U5U573%SA3U51O%S9241%=271%U>1UG&R8rQ1%RB2V0R2%T>2ULSM%44TE321(2%12UNT0%TE3831&QO&R2vQ1%TF2V4G%Q511%4231%621Q;&R3rQ3%23UFQ>1&QCvLrQ2rQ4&Q9%117%6554G31%V81VF&Q6%116(0%11VJ%U<3531%V:2VLVL%W011&Q7rQ5%211%TE15%UC3521&Q8rQ6%211%TJ1W6%UH3W621%VJ1VE&Q@%12UMH%Q92VHV3%UM3421&Gr3rQ@%UN2W@1%4231&QIvNrQ9%VC267%U32WG1%54431V:%U7271p0=1pW<W71pW2WI1rQA%V;2WM1%A2@1%VM23A%U=2X11%U?21VD%UA241p0G1pV<WA1pX6X31%UJ1W:%S711'R5&3rQF&R;r5%211%53X>41%W=1W7%W?216%VO2XAW4&ErQH%W22XD1uQ0%4221%W83XE61&RD&R<rQG&H%XN1X@&RC&QN%443XM21rQI%W?2Y11%93831%61T7(R=%11U?%>3431r8%X13WK21&QGrQ?rQ>%34QM21B%X24X1QO61rQDr6r9%RN1:%S35S24321&QE%12Q:4r;%S:3XN61&R0%X62YD>%TE11%SD2SC1%42QA1%SG21<%W:2YNXE%W<2W:1%UN1XBrQL%11XD%XC3YC31p051pX>Z41%WC2V?XM%V12XNW6%WF221&QDrQK%221XM%VN2Z<RM%Y911rQN%113%Y03Z031p061p0:1pV:YO1+RPP0%X221Y<+mTP0%VA2Y>1%X6231&C+mPS8%X821Y=+mQP@%VG2Y?1%X<231%611+hnmL%X>21SB+hnn0%VM2SD1%XB231%<11r4+hhb@%W2221+hlnH%XG214+hnl8%W6261%XK231+hnl@%XL219+loU8%W;2;1%Y0231+lof8%Y121>%V6231%V7291%V82?1%X:2[HS;%Z511rR1%113%Z<3[<31p061p0I1p0Q01p0Q81pV:[=1'R:vSJ(Q3&R7%XH2\6RG&R9%11ZK%45ZC[53[31%621X8rQB%:4ZO921p0<1p0QK1p0R:1p0RC1p0RJ1p0RM1p0S01p0S61p0S<1p0SN1tQH[FT61tX:\FT91pVD\21pW0\01pW:\91pRJ\;1pRN\?1pVLTE1vS<rQ=+V`R<%YD2]21rQ<%O55421LrQ;%Q2221%Q54[JQ41W8p0:1p0U11p0U41p0U?1p0V41p0V:1p0VB1p0VI1p0W11p0W51p0W=1p0WG1p0X61p0X<1p0XF1p0XM1p0Y51p0Y=1p0Y@1p0YG1p0YO1p0Z41p0Z=1p0ZG1p0ZK1p0[I1p0[O1p0\51p0\;1p0\F1p0\K1tQF]6]01pQL]81pW>^31pWB]F1pW@]G1pX<]@1pV>]A1pWH]J1pVN]E1pVB]I1pR0]K1pW8^01pRH^21pRL^61pW6^:1pWL^=1pVH^@1pX8^F1").
 Proof.
@@ -154,11 +159,11 @@ constructor; rewrite ?(dll_heap Lay L DLL), ?(dl_segs L sp0 DL), ?(dl_tp L sp0 D
 destruct (has_window_nth kn Hiw) as [i Hn].
 split; [rewrite Z.add_mod, Hal, Hsoal by lia; reflexivity|]. split; [lia|]. split; [lia|]. split; [lia|]. split.
 * intros d m Hd Hm.
-pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (so - 65536 + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
+pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (so - 65536 + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
 unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
 replace (bv_unsigned sp0 + so - 65536 + d) with (bv_unsigned sp0 + (so - 65536 + d)) by lia. exact W.
 * intros a Ha.
-pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (a - bv_unsigned sp0) 1%nat HK Hn ltac:(lia) ltac:(cbn; lia)) as W.
+pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (a - bv_unsigned sp0) 1%nat HK Hn ltac:(lia) ltac:(cbn; lia)) as W.
 unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
 replace (bv_unsigned sp0 + (a - bv_unsigned sp0)) with a in W by lia.
 apply (window_defined M a); [lia | lia | exact W].

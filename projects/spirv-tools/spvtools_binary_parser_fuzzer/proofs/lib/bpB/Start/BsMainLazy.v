@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -43,8 +44,10 @@ Section LZ.
   Hypothesis Vav : valid_argv (in_argv inp).
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  (* [mbase] is implicit, as in [BsMainFacts]: callers infer it from [HC]; declared right before [HC] *)
+  Context {mbase : word}.
+  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH AENTRY sp0 rdraw brk0 mbase inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   Let X := Xof g E.
@@ -164,7 +167,7 @@ Section LZ.
     - unfold pm_space_beg, X, Xof. cbn [ps_b06]. pose proof (Z.div_mod (4096 * vE E K_B06) 65536 ltac:(lia)) as H. rewrite REL in H.
       split; [lia|]. replace (4096 * vE E K_B06 / 65536 * 65536 + 65536) with ((4096 * vE E K_B06 / 65536 + 1) * 65536) by lia. apply Z_mod_mult.
     - intros Hg. unfold X, Xof in Hg. cbn [ps_granted] in Hg. specialize (G5 Hg).
-      pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5. rewrite <- (BRKg Hg). unfold ALOWSH_LO. split; [lia|].
+      pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5. rewrite <- (BRKg Hg). unfold ALOWSH_LO. split; [lia|].
       rewrite Hg in AP. cbn [map app] in AP. unfold sivZ in AP. cbn [fst snd] in AP.
       replace (lden E (pg 5)) with (4096 * vE E 5) in AP by (unfold pg, lden; cbn [fst snd tden]; rewrite ?uE_var; lia).
       replace (lden E (pgo 8192 5)) with (8192 + 4096 * vE E 5) in AP by (unfold pgo, lden; cbn [fst snd tden]; rewrite ?uE_var; lia).
@@ -551,7 +554,7 @@ Section LZ.
       - cbn [fst snd] in *. repeat split; try assumption; lia. }
     destruct lzc_parts as (_ & _ & _ & G5 & _).
     assert (BRK5 : g = true -> 7241728 <= brk0z /\ brk0z + 12288 <= 2147446784).
-    { intros Hg. specialize (G5 Hg). pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5.
+    { intros Hg. specialize (G5 Hg). pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5.
       destruct (PB Hg) as [PB1 _]. unfold ALOWSH_LO in PB1. unfold brk0z in *. lia. }
     unfold VISZ, VISZ0. rewrite (RI_lin X (4096 * vE E K_B06) (vE E K_R06) eq_refl REL).
     Ltac kb KBp := left; refine (KBp _ _); unfold pm_kernel_placed, X, Xof;

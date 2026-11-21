@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG00.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -35,7 +36,7 @@ Definition kStackSizeLog : Z := 20.
 Definition kDepotIdsPerBlock : Z := 65536.
 Definition kStoreFramesPerBlock : Z := 1048576.
 Definition kUnwindMax : nat := 30%nat.
-(* 11776 is the shared kit's value for fuzz_manifest (pg-core a34918adcbd); decode states 8192 (measured need: st_nev + DEC_EV_LIB 2000). *)
+(* 11776 is the shared kit's value for fuzz_manifest (pg-core); decode states 8192 (measured need: st_nev + DEC_EV_LIB 2000). *)
 Definition EV_MAX : Z := 8192.
 Definition MALLOC_MAX : Z := 2 ^ 28.
 Definition shAddressable : Z := 0.

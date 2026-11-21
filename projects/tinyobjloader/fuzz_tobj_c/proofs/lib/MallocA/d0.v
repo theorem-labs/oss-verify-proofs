@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the law_res hypothesis states the reserved ledger as the image's entries followed by the vDSO/vvar pair, written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -962,8 +963,10 @@ SdSaVCST;R1A2SaS23R2A2S15F_;F_;Fa;").
 Hypothesis HCSTD : ltac2:(tb__ "0|0|
 SdSaVCST;R1A2S17S22R2A1A1F_;Fa;").
 Let AInv : AA -> valuation -> list word -> Model -> Prop := AInvA segs.
-Hypothesis law_res : ltac2:(tb__ "0|1|
-S5S2S6SbQ40A1M0A1S1dVAInv;R4R3R2R1A4S16S6S8G0G0A2A1S1fS1eR2A1A1S1cS4A1A3F_;Fmd;Ftp;Frho;FA;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis law_res : forall A rho tp md, AInv A rho tp md ->
+  exists V, vm_reserved (m_vmmaps md) = segments_reserved OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.a0.CertStackFree.segsA ++ V
+            /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V.
 
 Theorem esec_ok_1h : ltac2:(tb__ "0|2|
 S5S13S2SbQ40M0A1M1S6G1A1S14R4A1S1aS9ScG0R3A2S1bScG0S3R4PcA2A2A1A3S2SeS4S10S4S19U1S0S25S5R1LX;R8R7R6R5A8S18S1S0Z3A3R1R4A5S11S4SfR6R4S12VCST;VXGL;S1S0R8R7A6A5A3FrhoX;F_;F_;Ftp;Fa;Frho;FKc;FA;").

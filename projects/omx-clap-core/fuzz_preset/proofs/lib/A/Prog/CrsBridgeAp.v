@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 671 of its 740 lines of code are new or changed and 859 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/CrsKitAp.v; 14 of its 44 lines of code are new or changed and 710 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/CrsFree0Ap.v; 82 of its 113 lines of code are new or changed and 13 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): the two BRIDGES that turn the crcs walk's two shared interims into citations
    of the texts:
    - crs_wexact_of_text: tpj_write_specX (lib/A/PRH_FnWriter.v:1142-1223) gives crs_wexact (lib/A/Prog/CrsWexAp.v) at
@@ -20,10 +21,10 @@
    internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had
    no lib/A or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan
    Proof.v existed for check_reject_clean_starved). Written new.
-   INPUTS. Pin A' asan sha256 1be0f53d96cb9d6c (release/fuzz-preset-ran-out-pins 8f3e7e1a07f1); listing
+   INPUTS. Pin A' asan sha256 1be0f53d96cb9d6c; listing
    lib/A/Listing_prog.v 7ed1529926bd + lib/A/PAImg_prog.v 505a51ff7d08; the texts as above; the kit
-   lib/A/Prog/CrsKitAp.v, CrsWexAp.v (728f24e66ca9 from commit 4828568cb5e3, with kit v4's one added
-   premise cnt < 2 ^ 62), CrsFree0Ap.v (79d50622a638 from commit 0165ddc6d5d0).
+   lib/A/Prog/CrsKitAp.v, CrsWexAp.v (728f24e66ca9, with kit v4's one added
+   premise cnt < 2 ^ 62), CrsFree0Ap.v (79d50622a638).
    Numerals: 2 ^ 62 (DERIVED: the kit's count bound), 2 ^ 28 (prhWriter_WMAX, LENGTH), 2 ^ 64 / 2 ^ 64 - 1 (WORD:
    the counter's width, SIZE_MAX). No ADDRESS. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

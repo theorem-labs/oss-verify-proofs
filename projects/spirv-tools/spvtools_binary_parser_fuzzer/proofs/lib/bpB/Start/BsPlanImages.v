@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image's ELF entry AENTRY, and the image facts' new field on the launch's reservations). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,6 +16,13 @@ Open Scope Z_scope.
 
 Definition ASEGS : list Segment := AsanUbsan.M.loaded_segments.
 Definition APH : PhdrInfo := AsanUbsan.M.phdrs.
+(* The image's ELF entry as [Run.init_config] and [BothInit]'s Section take it: an [N],
+   with [Z.of_N AENTRY = a_entry ASAN_H] by computation.  LPS #38 made the entry a Section
+   variable of [BothInit] ([apc : N], discharged second in [SINV0]), so every caller that
+   names [SINV0]/[len_av] needs this constant beside [APH]. *)
+Definition AENTRY : N := 0x91258%N.
+Lemma AENTRY_entry : Z.of_N AENTRY = a_entry ASAN_H.
+Proof. reflexivity. Qed.
 
 Lemma asan_wx : wx_segs_nowrap ASEGS.
 Proof.
@@ -97,9 +105,22 @@ Proof.
         [rewrite asan_segs_eq; cbn; tauto | cbn; lia].
 Qed.
 
-Lemma asan_img_facts : img_facts ASEGS ASAN_H APH.
+(* #38: [img_facts] (BothInit.v:30-43) gained a NINTH and last field, [if_resx]
+   (:42) - the table's bounds on what the LAUNCH reserves beside the image.  The
+   replay below still proves the first eight, so its term now has type
+     (2 <= n_resx ASAN_H)%nat /\ (20 <= p_resx ASAN_H)%nat -> img_facts ASEGS ASAN_H APH
+   which is exactly what the farm reported at :102.  The replay is therefore NOT
+   decoded, NOT re-encoded and NOT edited: its line is byte-for-byte the text that
+   was here (sha256 95a0f43aa2b0d56e..., 2946 chars), and only the statement above
+   it is restated to the type its term already has.  [asan_img_facts] keeps its
+   name and its shape below, and discharges the new field on its own. *)
+Lemma asan_img_facts_pre :
+  (2 <= n_resx ASAN_H)%nat /\ (20 <= p_resx ASAN_H)%nat -> img_facts ASEGS ASAN_H APH.
 Proof.
 ltac2:(KReplay.run1 (kr_t_BsPlanImages ()) [] "h02Hah14__x1h21mh37__arithh44__ffh58__varmaph65__with71xh84__p1h94__p2h:6__sat0h;6__sat1h<4__x2h=4__x3h>4__x4h?1Hh@2H0hA2H1hB2H2hC2H3hD2H4hE2H5hF2H6hG2H7hH2H8hI2HxhJ6__sat2hK6__sat3hL1qhM2q0hN1rhO2r0hP1zp&0p;1p;2p;4p;3p;6p;:p;7p;8g01]Nk10ATg01^Rk10@Tg00AKj1QTg01_Ok10?Tg01`Rk10;Tg01aNk105Tg01bQk103Tg00<8j22Tg0000j2@Tg00kgj4VTg008Vj1:Tg00H6j10Tg01cMj2dTg013hj2KTg00h^j2aTg006bj2<Tg00iFj2\Tg00icj3^Tg01d>j2]Tg01HRj1_Tg01d_j2gTg01e<j2LTg00KTj2BTg01eYj2hTg01f@j2[Tg007>j24Tg01fgj2ZTg01gMj2YTg01LIj1oTg01Lgj2nTg00BLj1>Tg01MHj3mTg00Bkj2lTg00CTj3FTg00D=k20>Tg01h3j2NTg00:Zk10=Tg00;:j3iTg0058k10<Tg00Dij2UTg00L1k10:Tg00EGj4fTg00Eek109Tg00FCk108Tg00M2j2eTg00:8j1cTg00Fnj2ITg01h_k604Tg01iCj3XTg00LOj3PTg00GQj1DTg00\bj1STg00jGj3`Tg00H[k202Tg00I=k201Tg001Rj3JTg00Iij3~Tg00JHj4}Tg00Ybj1zTg00Zcj1yTg00e_j1{Tg01ifj1xTg01Klj2|Tg018]j1wTg00mDk600Tg00]@j1jTg0084j1vTg00]cj2WTg01jaj3uTg01k^j3tTg01lhk106Tg01mhk107Tg01nil:sTg00Okj4TTg00PVj7kTg012Mj6rTg00o8j7qTg00Q:j8pTg00R>R0f1R1f0R23Jp=6%D2#0p=;%D2#Dp=H%02#0p=O%02#0#0#0p=?%02#0#0#0#0#0#0#0p=Mg00WMR3/42p=1AJ023p==f2R41<12'2p=81l02p=E1e02p=CP0P1g00R\P2CTp=AP1g00SCR5g00SbR6P6g00TBR7P2g00TbR8Fkp=5P1P5P6P6P7P2Erp=bP4P5P6P6P7P1P2Fqp=9f3R9P5P6P6P7P4P1P2Gpp=3P0P1g01XMP2CTp=GP4P5P6P6P7P0P1g00UBP2CTP8Fkp=7%02#Dp=Rg0037R8g00[dR:g01olR;&0A:&0@;#QR<'6&0?:&0;;#QR='6R>&05:&03;#QR;'6R?'21@0<P>P?1@0=1@0;CVCVg00VhR;#;#H#;#;#O#?#M#:R=%0;R?#0R>#0R<#OR@#0RA#O#?RB#:RC'd%1=RD%1CRE1K=CRF#1RG[[%?B#:RB/dC%1BRH1KBCRI#1RJ\E[%:?RK%:@RL'a1<3KRM%1L1\KLRN,<3[[%1KROg00o\RPA^KL1UW0%1N\P^0O1]BC%=CRL#_RQ1gBCRR,LC/BI,6B[1hBC1<3CRSA8JIC[1[BC1<C3RJ1<CI14I3'2[1ZBC%=R\L1YBC16IB\LPRP0PIP01]=C1g=CRI,LC/BF,6=\Q1h=CA8GFC\S1[=C1<CF14F3'2\J1Z=C%=I\L1Y=C16F=\LPIP0PFP0p-0RFg00WkRI%o;,n0RJg00XWRG#>RQ#>#>RR#E5m01l0GRG5F0%>RRR#>RT#ERU%ER5F0%EQ=F0Gg00Y6+0>RQ'N'NAm0JU=F0G%>TRT#>#E%ET5F0/NQ'N&0=IRQ5iI3i&0<IRIP0P0f4RT,U0P4&0:0RGCfP11U09Cf&090RU&080RJPJ1e03RR%CCRV'A,5JRW%c6RXf6RY,bJ1I0?RZ/AV,5J59JC3PXPJPJPJP5P6P6P71GVR,5JJ04R6PX%C=R51I0>9X0V=P0Z'G,5JC3PXPJPJPWPXf7RW,bJ1I0;R>/AV,5J59JC3PXPJPJP6PX%CBR6%D;,I09X0V=P0>'G,5JC3PXPJPJA7JR6R[PXPJA7JRVRVPXA7JR>C3C3PXPJPJA7JR5PXPJPVPXA7JRZC3C3PXA7J6599J[%CKR[%S@5`097J51G>R,5J1GZR,5J59J59J59JC3C3C3C3C3C3202J7R7P2P4g0048RZg004XR@'@20124=JZ@dA~031C}R@b4b5b6X10X<0X=0X>0X8FW9f5RZ?84C\Sg013K\LRL1LCZ/B9,6=[f8RZ?89C\S1LCY/BT,6B\L%1Y\E\H%1ZRL\E\D14B=,2H14=N%=Y%=W'2'2'2[[[[[[^10^<0^=0^>0^8F^9FP2PL%11P4f9P1PZPYPWf=f>fAfBO<b3bObMbHbGbFbEbDbNbLbCbBbAb@b?b:b;bJbK%z:RW#1%y:RY,4W'214YN1KWC#=1KYC#='2'2'2e1@0=%{8RC#x/6Ydg020kP0%;;#H#R#;#O#?#M#:1|YWRY,62XP01@0Y%wCg0224J00%R;#H#H#;#?#M#:R;#1%D?#R#;#;#;#?#M#:R?#11B;?RC%:ARY,\KRW38'2RN%SARA#jRZ%S<#jR<#vRL[RF1WA2RH,4;?8HCRBAu841%c<5JL#_R<[^7Z]21aKY%1Y1<3W[\MA^KY1VPX0O%1W\P^0OPQPIPGPU%C;RG97JR%C?R?97JRAP0G?R?A`0[A'A,5J59J59JP7P@b4b5b6PNP2b3b:b;P4P1O1PLPQPI1U01PUPJA7JG>RG1A>?,5J59JPX1A>5,5J99JGC3P7P@b4b5b6X1014;2?82C14;1?81=[^10P21WA9P4O2b3b29t41XIBX7ZX2FCV&06:RB#1&07:R:#11BB:R:;8W'214BH?8H:P<[^7Z^2F'2eg023>M:so"). Qed.
+
+Lemma asan_img_facts : img_facts ASEGS ASAN_H APH.
+Proof. apply asan_img_facts_pre. vm_compute. split; lia. Qed.
 
 Lemma itab_ranges_ok : forall rs, itab_sound ASEGS (mk_itab_ranges ASEGS rs).
 Proof.

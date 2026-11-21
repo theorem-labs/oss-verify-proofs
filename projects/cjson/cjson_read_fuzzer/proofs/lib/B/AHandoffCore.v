@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: bsegs_no_wx also proves no_wx's new third conjunct, that no segment is a kernel map; LOK_of_cs_ok reads the ledger's launch reservations and their distance from the maps off co_res and co_mres. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -30,7 +31,7 @@ Local Notation BSEGS := AS.BothPlanImages.BSEGS (only parsing).
 (* [comment removed for export] *)
 Lemma bsegs_no_wx : no_wx bsegs.
 Proof.
-  split; intros s Hs; cbn in Hs; destruct Hs as [<-|[<-|[<-|[<-|[]]]]];
+  repeat split; intros s Hs; cbn in Hs; destruct Hs as [<-|[<-|[<-|[<-|[]]]]];
     first [reflexivity | vm_compute; reflexivity | (vm_compute; lia)].
 Qed.
 
@@ -223,7 +224,10 @@ Proof.
   (nelimp (APS.co_wf _ _ _ _ _ _ _ _ _ _ _ HC) 4%nat; intros W1 W2 W3 W4).
   constructor.
   - exact (APS.co_halt _ _ _ _ _ _ _ _ _ _ _ HC).
-  - exact (APS.co_res _ _ _ _ _ _ _ _ _ _ _ HC).
+  - destruct (APS.co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hrx & _). exists rx. split; [exact Hrx|].
+    intros r e Hr He. pose proof (proj1 (Forall_forall _ _) (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ HC) e He) as D.
+    pose proof (proj1 (Forall_forall _ _) D r ltac:(rewrite Hrx; apply in_or_app; right; exact Hr)) as D'.
+    unfold APS.iv_disjoint in D'. unfold rdisj, uz. lia.
   - (* [comment removed for export] *) exact HTOP.
   - intros b k Hin. (nelimp (proj1 (Forall_forall _ _) (APS.co_bounds _ _ _ _ _ _ _ _ _ _ _ HC) _ Hin) 6%nat; intros _ _ _ _ _ Hc).
     cbn [fst snd] in Hc. rewrite HTOP in Hc. exact Hc.

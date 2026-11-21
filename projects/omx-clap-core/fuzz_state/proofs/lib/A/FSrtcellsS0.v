@@ -4,8 +4,8 @@
      (tl_got_shadow, tl_shadow_cell): ACeg's A_GOT_shadow 0x9f6f0 / A_shadow_glob 0xa7f38 are AB1w's
      tfib_D_GOT_asan_shadow_memory_dynamic_address / tfib_D_asan_shadow_memory_dynamic_address (AB1w.v:589, :600).
    - fs_rt_vals: at every ASan state (AR) the restricted memory holds, as val_mem facts, the cells of
-     FSstrlen.fs_rt_rest (lib/A/FSstrlen.v:533-542), read from AR's ARm and TfibSyms' ts_const through
-     AF0x.tfib_const_lookup on lib/A/AF0m.v's rows (S0 9b3dbce0433): z8 0x9f6e0 0x139a68, z8 0x9f6f8 0xa8c28,
+     FSstrlen.fs_rt_rest (lib/A/FSstrlen.v:534-543), read from AR's ARm and TfibSyms' ts_const through
+     AF0x.tfib_const_lookup on lib/A/AF0m.v's rows (S0): z8 0x9f6e0 0x139a68, z8 0x9f6f8 0xa8c28,
      z8 0x9f700 0xa8c30, z8 0x9f708 0xa8c20, z8 0xa1408 0x99070, z8 0xa1430 0x98924, z1 0xa8c18 0x1,
      z8 0xa8c20 0x7fffffffffff, z8 0xa8c28 0x0, z8 0xa8c30 0x0; the three flag bytes 0x139b5d (= 0), 0x139b62 (= 1),
      0x139b63 (= 1) are the little-endian bytes 5, 2, 3 of the words z8 0x139b58 0x101000100000000 and

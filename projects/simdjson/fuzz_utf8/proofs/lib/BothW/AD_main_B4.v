@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the open_spec call discharges its new TASK_SIZE premise on the argv[1] path. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
@@ -157,8 +158,10 @@ Section B4.
       eapply (open_spec RNG) with (lo := LO) (errv := errv) (canary := canary);
         rewrite ?(unsigned_lit (usp + -128)) by lia; rewrite ?(unsigned_lit P1) by lia; rewrite ?errno_addr_ATP; unfold ATP; rewrite ?unsigned_lit by lia;
         first [ exact ST | exact STR1' | exact ERR | exact GSSP | exact GU | exact MI | reflexivity | exact A1NN | exact A1NOSL | exact RGimg | idtac ].
+      (* LPS 08b1429: open_spec's TASK_SIZE premise; argv[1]'s NUL lies below r_rhi RA1 <= 2^47 (astring_facts) *)
       all: unfold got_ssp, ssp_guard, zlength in *; rewrite ?length_map in RGa1;
-           first [ lia | eapply rng_sub'; [exact RGstk| lia] | eapply rng_sub'; [exact RGimg| lia] | eapply rng_sub'; [exact RGa1| lia] ]. }
+           first [ lia | eapply rng_sub'; [exact RGstk| lia] | eapply rng_sub'; [exact RGimg| lia] | eapply rng_sub'; [exact RGa1| lia]
+                 | (unfold TASK_SIZE; rewrite ?length_map in *; lia) ]. }
     cbv beta. intros r s' RNG' ms' [-> [-> PO]].
     destruct PO as (u0 & u1 & u2 & b1' & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m1 & -> & MUc & WMc & MI1 & ST1 & ERR1 & _ & _ & _ & FDR).
     unfold ATP in MUc, ERR1. rewrite ?unsigned_lit in MUc by lia. rewrite ?(unsigned_lit (usp + -128)) in ST1 by lia. change (7011080 + -164) with 7010916 in MUc, ERR1.

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the shape join of check_reply's walk (fuzz_command.asan, 0x86fcc .. 0x86ff8),
    ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's segments and
-   their program calls, cl_callS then a fresh seed at the return) at c8557374ad2e.
+   their program calls, cl_callS then a fresh seed at the return).
 
    From CR_JOIN (a0 = the shape string q) the code re-checks the shadow of g_rec.reply, loads the reply into s3 and
    calls syntax_reply_matches(q, reply) (0x86fdc). A match goes to the epilogue CR_EPI; otherwise it calls
@@ -11,9 +11,10 @@
    second conjunct refutes (0 <= code: one of the two shapes matches). Each run starts from the mid-walk seed
    (check_reply_sd.v cr_seed) with the frame header read-only, so the run changes no byte the walk reads. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s7.v, with its module paths and module names changed; 1313 of its 1367 lines of code are new or changed and 489 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A, 0x85ebc): the generic keep lemmas of its walk, shared by the segment lanes
    of the G2 walk owner's G2 (the m_file keep-lemma lane; one copy, nobody writes local ones). The cut predicates are
-   lib/A/Prog/m_file_m.v's (CHANGE 3, commit 942fb04485a4, unchanged at dd4bb5fb2f90).
+   lib/A/Prog/m_file_m.v's (CHANGE 3, unchanged).
 
    WHAT A STEP KEEPS. Between two cuts the walk writes (mf_rw): the callee windows below s1 (and the unused slots
    s1 + 0 .. s1 + 24), the mconf block, its side-stack frame but the flag pointer at FB + 120, the frame's 16
@@ -36,7 +37,7 @@
    own are kept by the journal's image clause, because M_FILE_FP lies inside the mconf block, mf_fp_in_block,
    which needs the model bounds n <= 32, n_kept <= 8 of the final model, mf_final_bnd).
    mf_loop_next steps the line loop's facts to the next line.
-   the TAIL / EXIT segment lane's kit (commit 48a979165341 lib/A/Prog/m_file_s_tail_k.v: mf_win,
+   the TAIL / EXIT segment lane's kit (lib/A/Prog/m_file_s_tail_k.v: mf_win,
    mf_frame_facts, mf_block_apart, mf_stack_apart, mf_ftail_apart, mf_blk_c, mf_blk_t, mf_sp0, mf_tx_*, mf_loop_blk,
    mf_loop_hd, mf_aview_all, mf_regs_at_of, mf_carry_eq, mf_val1_of_aview, mf_cur_range) is taken in unchanged in
    statement: the runs inside mf_win (the frame's header and low.i, its shadow, its flag byte).
@@ -552,7 +553,7 @@ destruct rest as [|b r]; cbn [app nth hd0].
 Qed.
 
 (* readers that agree on [0, 2^64) agree everywhere: a byte address is taken mod 2^64 (fuzz_command's
-   check_reply_s7.v cr7_aview_all at origin/ossv/recipes 501c0d516c69) *)
+   check_reply_s7.v cr7_aview_all) *)
 Lemma mf_aview_all : forall (H : word -> bool) (m m' : word -> option byte),
 (forall a, 0 <= a < 2 ^ 64 -> aview SEGS H m' a = aview SEGS H m a) -> forall a, aview SEGS H m' a = aview SEGS H m a.
 Proof.

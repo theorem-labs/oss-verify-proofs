@@ -1,5 +1,5 @@
 (* reac-pw/fuzz_link: the generic CJ instances on link's ubsan image (IImgU), in the form of libreac/fuzz_pcap's
-   lib/CJ/RL/I/InstU.v (ossv/recipes 4b6f0df50aa). pcap's N_printf_core_err is not carried: it instantiates
+   lib/CJ/RL/I/InstU.v. pcap's N_printf_core_err is not carried: it instantiates
    G_printf_errsink, pcap's stderr FILE, which link does not use. N_towrite is added (G_towrite, the generic
    __towrite walk). The image module is the ubsan one (lib/U/Img0.v). Each instance discharges its code and
    address obligations by computation on link's image (IInst.inst: code_checkb_t_ok and vm_compute). The N_sym_*

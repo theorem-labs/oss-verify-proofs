@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: GI_ceil_lo, in both copies, states its bound as usp0 R - 8388608, since rc_lo is now the 6144512-byte floor, and the proofs that build GI unfold rc_lo. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -77,7 +78,7 @@ Section Facts.
   Lemma GI_sp47 : forall R s CL m, GI K R s CL m -> usp0 R <= 2^47.
   Proof using Type. pin_using tt. ceil_facts. intros R s CL m (FB & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SPW & _). exact (proj2 SPW). Qed.
   (* [comment removed for export] *)
-  Lemma GI_ceil_lo : forall R s CL m, GI K R s CL m -> CEILZ <= rc_lo R.
+  Lemma GI_ceil_lo : forall R s CL m, GI K R s CL m -> CEILZ <= usp0 R - 8388608.
   Proof using Type. pin_using tt. ceil_facts. intros R s CL m (FB & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & CLO). exact CLO. Qed.
 
   Lemma in_block_facts : forall u (CL : list cblk) a,
@@ -143,7 +144,7 @@ Section Facts.
       destruct Ha as [Ha|[Ha|[Ha|Ha]]]; try lia.
       apply Exists_exists in Ha as (b' & Hb'In & Hb'). pose proof (BAX b b' HbIn Hb'In) as AP. unfold apart in AP. lia. }
     assert (LO : usp0 R - 8388608 >= CEILZ). { pose proof (proj2 SPW) as CLO__. unfold rc_lo in CLO__. lia. }
-    unfold rc_spmain in *.
+    unfold rc_spmain in *. unfold rc_lo in OUT.
     exists FB. split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [exact Etls|split; [exact TB|split; [exact BOK|exact SPW]]]]]]]]]]]].
     - (* [comment removed for export] *) eapply HFL; [exact HH|exact MU|exact WM|].
       apply Forall_forall. intros [lo' hi'] Hiv. unfold heap_client_iv. pose proof (proj1 (Forall_forall _ _) HW _ Hiv) as [Hs|Hb]; cbn [fst snd] in *.
@@ -206,7 +207,7 @@ Section Facts.
       destruct Ha as [Ha|[Ha|[Ha|Ha]]]; try lia.
       apply Exists_exists in Ha as (b' & Hb'In & Hb'). pose proof (BAX b0 b' HbIn Hb'In) as AP. unfold apart in AP. lia. }
     assert (LO : usp0 R - 8388608 >= CEILZ). { pose proof (proj2 SPW) as CLO__. unfold rc_lo in CLO__. lia. }
-    unfold rc_spmain in *.
+    unfold rc_spmain in *. unfold rc_lo in OUT.
     pose proof HATX as HATX'. destruct HATX' as (reg & pad & f0 & g0 & j1 & j2 & X1 & X2 & X3 & X4).
     exists FB. split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [exact Etls|split; [exact TB|split; [exact BOK|exact SPW]]]]]]]]]]]].
     - apply HCB. eapply HFL; [exact HH|exact MU|exact WM|].
@@ -287,7 +288,7 @@ Section Facts.
       destruct Ha as [Ha|[Ha|[Ha|Ha]]]; try lia.
       apply Exists_exists in Ha as (b' & Hb'In & Hb'). pose proof (BAX b b' HbIn Hb'In) as AP. unfold apart in AP. lia. }
     assert (LO : usp0 R - 8388608 >= CEILZ). { pose proof (proj2 SPW) as CLO__. unfold rc_lo in CLO__. lia. }
-    unfold rc_spmain in *.
+    unfold rc_spmain in *. unfold rc_lo in OUT.
     exists FB. split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [exact Etls|split; [exact TB|split; [exact BOK|exact SPW]]]]]]]]]]]].
     - eapply HFL; [exact HH|exact MU|exact WM|].
       apply Forall_cons; [unfold heap_client_iv; right; right; right; cbn [fst snd]; lia|].
@@ -347,7 +348,7 @@ Section Facts.
       destruct Ha as [Ha|[Ha|[Ha|Ha]]]; try lia.
       apply Exists_exists in Ha as (b' & Hb'In & Hb'). pose proof (BAX b b' HbIn Hb'In) as AP. unfold apart in AP. lia. }
     assert (LO : usp0 R - 8388608 >= CEILZ). { pose proof (proj2 SPW) as CLO__. unfold rc_lo in CLO__. lia. }
-    unfold rc_spmain in *.
+    unfold rc_spmain in *. unfold rc_lo in OUT.
     exists FB. split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [exact Etls|split; [exact TB|split; [exact BOK|exact SPW]]]]]]]]]]]].
     - eapply HFL; [exact HH|exact MU|exact WM|].
       apply Forall_cons; [unfold heap_client_iv; right; right; right; cbn [fst snd]; lia|].
@@ -500,7 +501,7 @@ Section Facts.
   Lemma GI_sp47 : forall R s CL m, GI K R s CL m -> usp0 R <= 2^47.
   Proof using Type. pin_using tt. ceil_facts. intros R s CL m (FB & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SPW & _). exact (proj2 SPW). Qed.
   (* [comment removed for export] *)
-  Lemma GI_ceil_lo : forall R s CL m, GI K R s CL m -> CEILZ <= rc_lo R.
+  Lemma GI_ceil_lo : forall R s CL m, GI K R s CL m -> CEILZ <= usp0 R - 8388608.
   Proof using Type. pin_using tt. ceil_facts. intros R s CL m (FB & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & CLO). exact CLO. Qed.
 
   Lemma in_block_facts : forall u (CL : list cblk) a,
@@ -566,7 +567,7 @@ Section Facts.
       destruct Ha as [Ha|[Ha|[Ha|Ha]]]; try lia.
       apply Exists_exists in Ha as (b' & Hb'In & Hb'). pose proof (BAX b b' HbIn Hb'In) as AP. unfold apart in AP. lia. }
     assert (LO : usp0 R - 8388608 >= CEILZ). { pose proof (proj2 SPW) as CLO__. unfold rc_lo in CLO__. lia. }
-    unfold rc_spmain in *.
+    unfold rc_spmain in *. unfold rc_lo in OUT.
     exists FB. split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [exact Etls|split; [exact TB|split; [exact BOK|exact SPW]]]]]]]]]]]].
     - (* [comment removed for export] *) eapply HFL; [exact HH|exact MU|exact WM|].
       apply Forall_forall. intros [lo' hi'] Hiv. unfold heap_client_iv. pose proof (proj1 (Forall_forall _ _) HW _ Hiv) as [Hs|Hb]; cbn [fst snd] in *.
@@ -629,7 +630,7 @@ Section Facts.
       destruct Ha as [Ha|[Ha|[Ha|Ha]]]; try lia.
       apply Exists_exists in Ha as (b' & Hb'In & Hb'). pose proof (BAX b0 b' HbIn Hb'In) as AP. unfold apart in AP. lia. }
     assert (LO : usp0 R - 8388608 >= CEILZ). { pose proof (proj2 SPW) as CLO__. unfold rc_lo in CLO__. lia. }
-    unfold rc_spmain in *.
+    unfold rc_spmain in *. unfold rc_lo in OUT.
     pose proof HATX as HATX'. destruct HATX' as (reg & pad & f0 & g0 & j1 & j2 & X1 & X2 & X3 & X4).
     exists FB. split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [exact Etls|split; [exact TB|split; [exact BOK|exact SPW]]]]]]]]]]]].
     - apply HCB. eapply HFL; [exact HH|exact MU|exact WM|].
@@ -710,7 +711,7 @@ Section Facts.
       destruct Ha as [Ha|[Ha|[Ha|Ha]]]; try lia.
       apply Exists_exists in Ha as (b' & Hb'In & Hb'). pose proof (BAX b b' HbIn Hb'In) as AP. unfold apart in AP. lia. }
     assert (LO : usp0 R - 8388608 >= CEILZ). { pose proof (proj2 SPW) as CLO__. unfold rc_lo in CLO__. lia. }
-    unfold rc_spmain in *.
+    unfold rc_spmain in *. unfold rc_lo in OUT.
     exists FB. split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [exact Etls|split; [exact TB|split; [exact BOK|exact SPW]]]]]]]]]]]].
     - eapply HFL; [exact HH|exact MU|exact WM|].
       apply Forall_cons; [unfold heap_client_iv; right; right; right; cbn [fst snd]; lia|].
@@ -770,7 +771,7 @@ Section Facts.
       destruct Ha as [Ha|[Ha|[Ha|Ha]]]; try lia.
       apply Exists_exists in Ha as (b' & Hb'In & Hb'). pose proof (BAX b b' HbIn Hb'In) as AP. unfold apart in AP. lia. }
     assert (LO : usp0 R - 8388608 >= CEILZ). { pose proof (proj2 SPW) as CLO__. unfold rc_lo in CLO__. lia. }
-    unfold rc_spmain in *.
+    unfold rc_spmain in *. unfold rc_lo in OUT.
     exists FB. split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [exact Etls|split; [exact TB|split; [exact BOK|exact SPW]]]]]]]]]]]].
     - eapply HFL; [exact HH|exact MU|exact WM|].
       apply Forall_cons; [unfold heap_client_iv; right; right; right; cbn [fst snd]; lia|].

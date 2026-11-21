@@ -1,6 +1,6 @@
 (* Modified by Theorem Labs: the twin of lib/AgreeFrame.v ubsan_agrees_of_slots (no licence line) for a return value of the fuzz target of 0 or -1 *)
 (* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/AgreeFrame.v and lib/AgreeTop.v
-   (ubsan_agrees_of_cut_free) at 901d1549395.
+   (ubsan_agrees_of_cut_free).
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.AgreeRetOk.
    Both builds walk the same trace, SPECX_q ret (AgreeRetD1.v, U/Prog/AgreeRetD2.v): on a payload where ret is 0 the
    kit's leaf, run by the kit's arms; where ret is -1 Prog/FrameRetD2.v leaf_shapeX_r, run by the plain -1 arms
@@ -62,5 +62,5 @@ Proof.
     (SPECX_q (LS:=LS) ret inp) (U.Prog.AgreeRetD2.SPECX_q (LS:=LS) ret inp)
     (plain_rz_of_gr LS ret G GI HR01 FrameRetOk.arms_m1_proved HROOMp HG GIL GI0 Hp en_p inp Hep Hinput)
     HUr (SPECX_q_teq LS ret inp)
-    (cf_run_of_budget Images.plain Budgets.Standard.lim_source en_p inp Hbud) HUc).
+    Hbud HUc).
 Qed.

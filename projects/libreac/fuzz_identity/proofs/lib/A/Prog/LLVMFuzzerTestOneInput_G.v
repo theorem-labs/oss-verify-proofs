@@ -5,6 +5,7 @@
    projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC05.v:110-141, 221-225, 227-235, 264-270 [Apache-2.0 OR MIT], for
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module names changed; 1594 of its 1728 lines of code are new or changed and 946 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment G of LLVMFuzzerTestOneInput's ASan walk: the two capacity-chosen heap buffers, 0x816e4..0x817bc
    (54 slots). seg_G of lib/A/Prog/LLVMFuzzerTestOneInput_inv.v: from inv_F_end to inv_G_end.
 
@@ -179,7 +180,7 @@ Hypothesis HUMM : forall c, In c (LLVMF_MALLOC_CTX RA_LLVMF) ->
 Hypothesis HUMF : forall c, In c (LLVMF_FREE_CTX RA_LLVMF) ->
   In (firstn kUnwindMax (pc_free_ra0 (as_code B)
     :: flat_map (fun r => if r =? pc_free_ra0 (as_code B) then [] else [r]) c)) (as_universe B).
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
   ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
   m_fds md' = m_fds md /\ m_fs md' = m_fs md.

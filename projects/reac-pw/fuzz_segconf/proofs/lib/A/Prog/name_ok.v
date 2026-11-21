@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of mix_call (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan, entry BASE + AF_mix_call = 0x8ad54, 480 bytes, 120 instructions): tmix_call_spec of
-   a Theorem Labs lane's lib/B/Prog/mix_call_c.v (blob ebd1fd295d8, the same on a working branch f490061c104 and 707acd856cb), proved in the A walk's
-   style (lib/A/Prog/mix_call.v, a working branch fa7944d852b): the verified symbolic executor over
+   a Theorem Labs lane's lib/B/Prog/mix_call_c.v (blob ebd1fd295d8, the same on a working branch), proved in the A walk's
+   style (lib/A/Prog/mix_call.v, a working branch): the verified symbolic executor over
    cmd_listing (paj_run_tok / paj_run_to_tok / psrr_branch_tok, lib/B/Prog/CmdPaLib.v), the inline shadow checks
    removed by the token executor with their addressability obligations, the strlen wrapper through its Theorem Labs lane
    contract taken at the current FP state, and one lemma per loop (the 4 bytes of c->fn run straight; the argument
@@ -54,10 +54,11 @@
    abstract segments (used for CmdRecCells' cmd_cf_env, the errno / trace facts of the runtime-entry call). The
    shadow-cell and GOT facts are CmdRecCells' cmd_cf_cell / cmd_cf_got (HB + VOBJS), the AR laws AR_laws_ok.
 
-   TAKEN FROM: the A walk lib/A/Prog/mix_call.v (a working branch fa7944d852b), re-walked at the B
-   addresses above; the Generation-N B walk lib/B/Prog/mix_call.v (a working branch a3f99d62c52) read as a
+   TAKEN FROM: the A walk lib/A/Prog/mix_call.v (a working branch), re-walked at the B
+   addresses above; the Generation-N B walk lib/B/Prog/mix_call.v (a working branch) read as a
    template of the B code only, not ported and not required. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/mix_call.v, with its module paths, module names and numbers changed; 841 of its 1027 lines of code are new or changed and 1053 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan walk of name_ok on fuzz_segconf image A (entry BASE + AF_name_ok = 0x89d58): `name_ok_walk` proves
    name_ok_contract (lib/A/Prog/name_ok_c.v) at image A's numbers, over the Pa engine of the listing seg_listing,
    from the contract of its one callee, musl's isalnum (the interceptor layer's interface row 9). Plan:
@@ -76,10 +77,10 @@
    the call of errpath_load1 at 0x89e08 / 0x89e0c, and the call at 0x89e48) -- their branch is never taken, because
    name_ok_pre's sa_addr makes the shadow byte of every byte of the string say "addressable".
 
-   Inputs this text closes against: the contracts at the contracts commit 6f783602b5e3 (G4 FINAL;
-   name_ok_c.v), the listing at the listing commit 61d5dd44f17, the kit at the kit commit 68ab01587fc,
-   the core at the core commit 677577a4a73e, row 9's text at the interceptor-layer commit ab5c95b8897a
-   (lib/A/Rt/RtSeg.v) and the unit's numbers at the close commit 2723a39411ca (SegInstA.STK_name_ok,
+   Inputs this text closes against: the contracts at the contracts (G4 FINAL;
+   name_ok_c.v), the listing at the listing, the kit at the kit,
+   the core at the core, row 9's text at the interceptor-layer
+   (lib/A/Rt/RtSeg.v) and the unit's numbers at the close (SegInstA.STK_name_ok,
    RLO_A, RHI_A). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -1005,7 +1006,7 @@ Qed.
 (* ------------------------------------------------------------------------------------------------------------ *)
 (* The contract of the callee: the interceptor layer's interface row 9, musl's isalnum at image A 0x901a0 (a direct call, not
    intercepted; a 28-byte leaf that touches no stack and no memory), at the listing's call target
-   `pa_sigma SS_isalnum`. Its text is lib/A/Rt/RtSeg.v's (the interceptor-layer commit ab5c95b8897a). *)
+   `pa_sigma SS_isalnum`. Its text is lib/A/Rt/RtSeg.v's (the interceptor-layer). *)
 Hypothesis ISALNUM : forall fx0 : YK11.FPState, @RtSeg.aisalnum_realizes fx0 rc SEGS B (SIGMA SS_isalnum).
 
 (* NK_L, 0x89dbc: zext.b a0,s5; jal isalnum; the answer comes back at NK_R *)

@@ -9,8 +9,9 @@
    variable K instead of decode's CRT_STACK, and with cr_frame_call generalised from decode's fixed frame cell list
    to any (base, cells): so fuzz_uci's check_no_overread and check_value, whose frames differ, share one copy. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/CheckGlue.v, with its module paths and module names changed; 464 of its 559 lines of code are new or changed and 396 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_copy walk, fuzz_wire ubsan 6e91fe0b5555 0x13550..0x136d8 (fuzz_wire.c:184-210); new. Form: libreac/fuzz_decode's
-   check_round_trip.v (recipes 25e3d17bdb5). The SR run: cc_entry runs cc_segA on the normalized memory (ccg_runN; the
+   check_round_trip.v (recipes). The SR run: cc_entry runs cc_segA on the normalized memory (ccg_runN; the
    leaf contracts need mem_inv) up to malloc, MALLOC, then cc_ph_B runs cc_front up to free, FREE, then cc_ph_end runs
    the epilogue and returns. cc_inv keeps, against the entry state, cc_glue.v's cc_mid with the block at c released,
    region / user-block growth, ro_agree and guard_kept; cc_frame the saved ra / s0..s4; cc_keep gp, tp, s5..s11.

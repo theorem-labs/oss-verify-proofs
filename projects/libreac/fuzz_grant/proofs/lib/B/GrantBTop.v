@@ -14,7 +14,7 @@
        statements from TFIB_TB.
 
    Every Section variable and hypothesis of GrantBTFIB.v is instantiated here at image B's concrete runtime record
-   GrantB (lib/B/YD2l.v:16) and image instance PI_grant (lib/B/Prog/GrantImg.v:152), and discharged by a theorem:
+   GrantB (lib/B/YD2l.v:16) and image instance PI_grant (lib/B/Prog/GrantImg.v:153), and discharged by a theorem:
      B, tfib_K_B, xst_B, est_B          GrantB, YE2k.tfib_K, YD1k.xst, YD1k.est (the B core's values)
      the statement forms <A form>_B     the B core's relocated definitions (YF0m GrantSyms, YD1i, YD1w, YD1x)
      RT_* / IMG_* / H_*_B               lib/B/GrantBCloseInst.v grantB_* (the B twin of lib/A/Prog/GrantClose.v)
@@ -162,6 +162,7 @@ Lemma grantB_tfib_srealizesX : forall (rc : YM05.RunCeil),
   forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk GrantTFIBB.grantsegsB0 brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
   srealizes GrantTFIBB.grantsegsB0
     (init_config GrantTFIBB.grantsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw target_alloc_limit inp)

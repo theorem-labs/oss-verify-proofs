@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair: the address table's `n_resx` and `p_resx`; the CONFIG_RSEQ flag of the start-up layer: the initial state `ajo_init` per value). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType.
@@ -3527,7 +3528,7 @@ Import ListNotations. Import AX2. Import APC.
 Open Scope Z_scope.
 
 Definition AJO6 : atable :=
-{| img_lo := 0x10000; img_hi := 0x645000; n_res := 4; shadow_off := 0x7fff8000;
+{| img_lo := 0x10000; img_hi := 0x645000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
 a_entry := 0x3de24; rw_lo := 0xe2000; rw_len := 0x563000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
 x_imemset := 0x74f70; x_imemcpy := 0x74ef4; x_memset := 0xdb750; x_memcpy := 0xdb34c; x_memiszero := 0x754a0;
 x_istrncpy := 0x7539c; x_sealed := 0x11adc; x_popfree := 0x445b4;
@@ -3537,4 +3538,4 @@ stops_more := [0x42228; 0x4384c; 0x64cc8; 0x6b520; 0x6b534; 0x6b548; 0x70fec; 0x
 
 Definition AJO6_TEXT_LO : Z := 0x3de24.
 Definition AJO6_TEXT_N : nat := 167200.
-Definition ajo_init : acs := init_acs_of AJO6.
+Definition ajo_init (r : Z) : acs := init_acs_of r AJO6.

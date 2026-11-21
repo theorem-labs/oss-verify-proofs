@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994): SEGMENT S2 of the walk of parse_noting (the B' twin of row
    N10-PNA; cut table lib/B/Prog/PN102BCuts.v pn_seg_S2_stmt): from pn_cut_S2 (+0x28, fuzz_alloc_live returned) run
    +0x28 mv s1,a0; +0x2c mv a0,s3; +0x30 mv a1,s2; +0x34 mv a2,s0 and +0x38 jal pj_parse, close the call by the batch kit's text
-   tpj_parse_specX (lib/A/PRH_FnPj.v 3aa72eee2204 :592-736, a working branch 03fcabb582d0; the
+   tpj_parse_specX (lib/A/PRH_FnPj.v 3aa72eee2204 :592-736, a working branch; the
    statement's premise, at the CW pn_cw X) at window 0 with every premise discharged at the call state, and establish
    pn_cut_S3 at the return site +0x3c at pj_parse's float state, the journal at the budget pn_cw X.
    rule 24: proves function parse_noting (fuzz_preset, image B') (preparation; proof-index 03:20Z 0 named / 0 by
    address / 0 released; the rule-24 parse_noting check CONFIRM 03:25Z). This file: segment S2 of that walk.
-   SHAPES: the call is lib/A/Prog/Ent102L2A.v l2_pno / l2_pno_post's (a working branch b1bc025047ea), the
+   SHAPES: the call is lib/A/Prog/Ent102L2A.v l2_pno / l2_pno_post's (a working branch), the
    slot steps PN102BHelp.v's, the frame across the steps and the call PN102BKeep.v's, the call-state facts (the out
    node's slot, the text's bytes, shadow and ceiling, the grammar facts, the live requests, the requests within
    g_most, the reader's block sizes) PN102BS2Help.v's.

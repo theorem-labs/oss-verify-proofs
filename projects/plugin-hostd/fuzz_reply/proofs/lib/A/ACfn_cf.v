@@ -1,4 +1,4 @@
-(* The live-state clauses of fuzz_reply's program contract fr_lib_contract_cf (W_LLVMFuzzerTestOneInput_cut.v:234),
+(* The live-state clauses of fuzz_reply's program contract fr_lib_contract_cf (W_LLVMFuzzerTestOneInput_cut.v:235),
    which W8's segments take as the opaque Variables fr_live_pre, fr_live_post, fr_surv and fr_FP.  The text is
    W8Entry-2's (2026-10-29), agreed before this file was written; no W8 segment destructures any of them, so their
    cost lands on SEG_PRO, SEG_EXIT and the driver.
@@ -43,13 +43,13 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require W_contract ReplyCnt.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* g_out's largest buffer, from the source (projects/plugin-hostd/fuzz_reply/source/fuzz_reply.c at the pin
-   c8557374ad2e): g_nout restarts at 0 for every op (:692, :749) while g_capout persists and never shrinks, and each
+(* g_out's largest buffer, from the source (projects/plugin-hostd/fuzz_reply/source/fuzz_reply.c at the pin):
+   g_nout restarts at 0 for every op (:692, :749) while g_capout persists and never shrinks, and each
    growth of send_line sets cap = (g_nout + len) * 2 (:299-308; Prog/RelayCap.v send_line_cap_le), so
    g_capout <= 2 * (the most bytes the controller reads in one op).  Every byte the relay sends comes from what its
    source received in the call, R_s <= MASS = 511 * 65,535 (the 511 op-1 pushes :705 of at most 65,535 bytes,
    fuzz_u16).  A drain (op 2) sends each received line once at its received length: <= R_s.  relay_remove DRAINS
-   FIRST and then ends the source's held gestures in the SAME op (ReplyRINV.v:380-391 rm_rr_ok: dr_rel .. sl_sends ..
+   FIRST and then ends the source's held gestures in the SAME op (ReplyRINV.v:381-392 rm_rr_ok: dr_rel .. sl_sends ..
    ge_bytes; relay.c:464-465): each held key x costs |x| + 5 bytes to end (W_contract.v END5) against the |x| + 7 of
    the begin line received in this call that made it, and the held set has no duplicate keys, so the op sends at most
    2 * R_s - 2; gone (op 5) is the same summed over sources; an event sends one line <= 65,536 bytes; relay_finish
@@ -64,7 +64,7 @@ Open Scope Z_scope.
    for 1-byte sends from cap 0: 511 NUL writes and a drain give exactly 33,554,430 (the older 2^25 - 2,
    REPLY-INSTANCE-REQUIREMENTS.md (sha256 f19868a5803c; internal record) s.3), so the REMOVE op is what exceeds the old bounds. *)
 Definition OUT_MAX : Z := 133953540.
-(* OPS_MAX is the cut's (W_LLVMFuzzerTestOneInput_cut.v:104, the source's fuzz_reply.c:115) *)
+(* OPS_MAX is the cut's (W_LLVMFuzzerTestOneInput_cut.v:105, the source's fuzz_reply.c:115) *)
 Lemma OUT_MAX_src : OUT_MAX = 2 * (2 * ((OPS_MAX - 1) * 65535)).
 Proof. reflexivity. Qed.
 
@@ -100,7 +100,7 @@ Definition fr_FP (regs : bvmap 5 word) (ly : alayout) (S : astate) (W : world tf
   (match rdword rd (rg_out fr_globals), rdword rd (rg_capout fr_globals) with
    | Some o, Some c => if c =? 0 then [] else [(o, o + c)] | _, _ => [] end).
 (* The entry's harness blocks (g_src's table and g_out's buffer as the globals name them) are
-   W_LLVMFuzzerTestOneInput_cut.v's fr_hblks, THE ONE DEFINITION (W8Entry-2, integ 60c0b278422); this name is an
+   W_LLVMFuzzerTestOneInput_cut.v's fr_hblks, THE ONE DEFINITION (W8Entry-2, integ); this name is an
    abbreviation for that constant, so the driver files that import this file read the cut's definition. *)
 Definition fr_surv (B : asyms) (ly : alayout) (S : astate) (W : world tfibsegs) (mem : word -> option byte)
   (ly' : alayout) (S' : astate) (W' : world tfibsegs) (mem' : word -> option byte) : Prop :=

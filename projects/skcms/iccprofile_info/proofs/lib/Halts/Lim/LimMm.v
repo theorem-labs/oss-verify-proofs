@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMm.v at commit c395a1e0dfa, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMm.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the leaves (at_leaf) cover the MAP_FIXED overflow arm (blind_mmap_fixed_overflow), munmap_at covers munmap's partial cut and the injected ENOMEM of its exact arm, brk's budget charges brk_grow_bytes (brk_budget_ok_setL), mprotect_at's vDSO and vvar gate reads the kernel build and vdso_top, which setL keeps, with this file's own comments on the MAP_FIXED overflow leaf and on the munmap and mprotect changes, and the cited source commit is named by its public id. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -76,7 +77,7 @@ Proof. intros. unfold with_brk_next. cbv zeta. rewrite <- forget_vm_ranges_setL.
 Lemma mlim_with_brk_next : forall m req r, mlim (with_brk_next m req r) = mlim m.
 Proof. intros. unfold with_brk_next. cbv zeta. rewrite mlim_forget_vm_ranges. reflexivity. Qed.
 
-Lemma brk_budget_ok_setL : forall L m r, brk_budget_ok (setL L m) r = (vm_backing_used m + bv_unsigned (r - vm_brk (m_vmmaps m)) <=? L)%Z.
+Lemma brk_budget_ok_setL : forall L m r, brk_budget_ok (setL L m) r = (vm_backing_used m + brk_grow_bytes (m_vmmaps m) r <=? L)%Z.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -128,7 +129,20 @@ Proof. lim_auto. Qed.
 Lemma blind_errno_alt es : lim_blind (e <- errno_from es ;; err_ret e).
 Proof. lim_auto. Qed.
 
-Ltac at_leaf := first [ apply at_blind; first [apply blind_err_ret | apply blind_ret_only | apply blind_errno_alt | apply lim_blind_unmodeled | apply lim_blind_pure ] ].
+(* LPS #38 (in 75d69e00) answers every MAP_FIXED overflow arm with the constant
+   [mmap_fixed_overflow addr nZ] ([c0dd863a:theories/LinuxProcessSem/Sys/Mm/Mmap.v:1995-1998]), not a bare
+   [err_ret ENOMEM].  [at_leaf] is a [first] over bare shapes and cannot see through the
+   constant, and because [at_auto] is [repeat at_step] the missing leaf is SILENT: it leaves
+   the goal OPEN instead of failing, so the error surfaces at whatever later tactic trips
+   over the residue, several arms below.  The constant reads no model, so it is blind. *)
+Lemma blind_mmap_fixed_overflow addr nZ : lim_blind (mmap_fixed_overflow addr nZ).
+Proof.
+  unfold mmap_fixed_overflow. destruct (mmap_fixed_err_addr_b addr nZ).
+  - apply lim_blind_alt; [apply blind_errno_alt | apply blind_ret_only].
+  - apply blind_err_ret.
+Qed.
+
+Ltac at_leaf := first [ apply at_blind; first [apply blind_err_ret | apply blind_ret_only | apply blind_errno_alt | apply blind_mmap_fixed_overflow | apply lim_blind_unmodeled | apply lim_blind_pure ] ].
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -140,14 +154,25 @@ Proof.
   destruct (TASK_SIZE <? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z; [at_leaf|].
   cbn [setvl vm_maps vm_reserved vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
   destruct (map_has (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))).
-  - apply at_bind.
+  - (* 08b1429: the exact arm may answer an injected -ENOMEM, and the unmap
+       rebuilds the ledger through [mmap_fixed_destroyed_next] *)
+    apply at_alt; [at_leaf|].
+    apply at_bind.
     + apply at_modify; reflexivity.
     + intros [] m1 evs Hm. apply at_bind.
       * apply at_blind. unfold forget_vm_range. apply lim_blind_modify; reflexivity.
       * intros [] m2 evs2 Hm2. at_leaf.
   - change (munmap_free_ok (setvl L (m_vmmaps m)) addr (page_round_up_Z (bv_unsigned len)))
       with (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))).
-    destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); at_leaf.
+    destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); [at_leaf|].
+    (* the partial-cut arm *)
+    change (munmap_cut_ok (setvl L (m_vmmaps m)) addr (page_round_up_Z (bv_unsigned len)))
+      with (munmap_cut_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))).
+    destruct (munmap_cut_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); [|at_leaf].
+    apply at_alt; [at_leaf|].
+    apply at_bind.
+    + apply at_modify; reflexivity.
+    + intros [] m1 evs Hm. at_leaf.
 Qed.
 
 Lemma madvise_at : forall L i m addr len adv, lim_at L i m (madvise_spec addr len adv) (madvise_spec addr len adv).
@@ -182,6 +207,10 @@ Proof.
   set (n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) in *.
   change (vm_noaccess (m_vmmaps (setL L m))) with (vm_noaccess (m_vmmaps m)) in *.
   change (vm_maps (m_vmmaps (setL L m))) with (vm_maps (m_vmmaps m)) in *.
+  (* 08b1429: a range meeting the vDSO/vvar pair is unmodeled; [setL] keeps the kernel and vdso_top *)
+  change (m_kernel (setL L m)) with (m_kernel m) in *.
+  change (vdso_top (m_vmmaps (setL L m))) with (vdso_top (m_vmmaps m)) in *.
+  destruct (negb (region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr n)); [at_leaf|].
   destruct (map_contains (vm_noaccess (m_vmmaps m)) addr n && map_contains (vm_maps (m_vmmaps m)) addr n).
   - apply negb_false_iff in R1, R2.
     apply at_alt; [at_leaf|].

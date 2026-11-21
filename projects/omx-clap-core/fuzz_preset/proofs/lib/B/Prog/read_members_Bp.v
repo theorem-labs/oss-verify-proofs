@@ -2,7 +2,7 @@
    parametric read_members walk (lib/B/Prog/read_members.v, read_members_holds) at the whole-program listing's image
    PA := PI_prog_B (lib/B/PAImg_prog.v, IMG_TOP_B of lib/Reusable/YImgTop.v d2a97d3111ce), the B' asyms record
    B := YD2l.TfibB (lib/Reusable/YD2l.v 95803a8b9493, over YF0m f82202ebccdf, YF0l 4a405a3dba65, YCej 8a099324acb0,
-   YImgCellsB f1cc7493a79d: h-pre-b3's #102 records, by path from origin/cold/h-rw-man-5-palib102bj ed438196d17c)
+   YImgCellsB f1cc7493a79d: h-pre-b3's #102 records, by path)
    and the allocator instance ARx := ARcf rsegs TfibB at CfParams_preset (h-mani-a8's second instance).
    DISCHARGED HERE: the laws and the PALib core (lib/B/PALibB.v 5baa19c890f7, exvi_eh_laws / exvi_eh_palib, by path from
    the same branch); RM_IMG (RM_IMG_at_Bp) and the pure image facts of PI_prog_B (the rmB_ lemmas), each by vm_compute over a

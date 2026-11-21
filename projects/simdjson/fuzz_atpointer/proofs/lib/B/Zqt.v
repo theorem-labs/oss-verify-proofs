@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -65,7 +66,7 @@ Section FCTOP.
   Hypothesis OK : fcb_ok E.
   Hypothesis ETP : q_tp E = Z_to_bv 64 B_TP.
   Hypothesis SP16 : (SP mod 16 = 0)%Z.
-  Hypothesis LOR : (rt_sp0 RT Σ0 - STACK_WIN <= lo)%Z.
+  Hypothesis LOR : (rt_sp0 RT Σ0 - STACK_WIN + STACK_GAP <= lo)%Z.
   Hypothesis FRL : (length (rt_frames RT Σ0) + FFB_FRAMES <= FRAMES_MAX)%nat.
   Hypothesis CRD : (FFB_CREDIT <= rt_credit RT Σ0)%Z.
 

@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: relocated from fuzz_preset (commit d0fcb396eeeb); module paths changed and every image numeral moved by symbol + offset to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125). *)
-(* Modified by Theorem Labs, 2026-10-29: copied from the preset unit's lib/A/FSRealloc_S1_t.v (commit 337e6a94485, sha256 0388a364a67d; internal record) for realloc(NULL, n) (segment S5, RGtop's seg_npre), which was relocated from the fuzz_state unit's lib/A/FSRealloc_S1_t.v (commit ddc081c1a03, sha256 93e81e179b96; internal record), a port of the cgif_rgb unit's lib/YF6t.v. *)
+(* Modified by Theorem Labs, 2026-10: relocated from fuzz_preset; module paths changed and every image numeral moved by symbol + offset to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125). *)
+(* Modified by Theorem Labs, 2026-10-29: copied from the preset unit's lib/A/FSRealloc_S1_t.v (sha256 0388a364a67d; internal record) for realloc(NULL, n) (segment S5, RGtop's seg_npre), which was relocated from the fuzz_state unit's lib/A/FSRealloc_S1_t.v (sha256 93e81e179b96; internal record), a port of the cgif_rgb unit's lib/YF6t.v. *)
 (* fuzz_reply.asan image A, realloc(NULL, n) (segment S5, RGtop's seg_npre). segA: the machine walk from A/RGcfS5_u.v's
    seed (a0 = 0) at __wrap_realloc 0x53df0 (`j 0x541ec` -> __interceptor_realloc 0x541ec, frame 0x7f0 + 0x70) to
    Allocator::Allocate's entry 0x31bd8 (at_PA states PAST_topN of A/RGcfS5_pa.v).
    Path: 0x5422c `jal 0xb4d8` -> internal_allocator 0x5f704 (cut by tfib_ialloc_spec; returns to 0x54230); with a0 a
    literal, the PointerIsMine probe 0x54230-0x5424c needs no pins, and the run reads the map word at the literal 0xa72c8
    (A/RGcfS5_r.v R_IMN); the LONG trace branch (GetMallocContextSize 0x5bb78 `auipc a0, 0x4b; lw a0, 0x244(a0)` reads
-   malloc_context_size at 0xa6dbc, the REG0 seed cell = A/AF0m.v:98 `z4 (ANum 0xa6dbc) 0x1e`, `bltu a1, a0` 0x542f0
+   malloc_context_size at 0xa6dbc, the REG0 seed cell = A/AF0m.v:99 `z4 (ANum 0xa6dbc) 0x1e`, `bltu a1, a0` 0x542f0
    taken) to `jal 0x2096c` 0x54324 (GetCurrentPc 0x74c90; pc0 = 0x54328) and `jal 0x7808` 0x54380 (UnwindImpl 0x5bb88,
    cut by tfib_unwind_spec; returns to 0x54384); `jal -0x21e34` 0x54394 -> asan_realloc 0x32560 (`beqz a0` 0x32570
    taken -> 0x325b8 .. `jal Allocate` 0x325d4) -> 0x31bd8. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

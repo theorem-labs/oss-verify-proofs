@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumE.v, with its module paths and module names changed; 1015 of its 1127 lines of code are new or changed and 1803 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (#102 asan, 1be0f53d / unstripped twin bff8519b): PIECE 3 of the walk of
    ex_value (A 0x832a4), ev_string: 0x834cc-0x83550, 0x83cb0-0x83cb4 and the report arms 0x83e90-0x83ea0,
    0x83ebc-0x83ec8, 0x8400c-0x84014 (48 instructions), from P_KIND at EV_STR through `jal ex_string`, v->type and
@@ -13,18 +14,18 @@
    by the engine (YCbn tok_load), never visited: their shadow tests are discharged from prhex_tree's range_addressable
    (v, v + 16) and the real stack's zero shadow ZSB_x (q + 24, q + 32). ev_string = ev_string_of_vn ev_str_vn;
    ev_disp = ev_disp_of ev_string (S8aWord's ev_word).
-   Base and conventions: as lib/A/Prog/S8aWord.v (#102: the S8a of record commit
-   6d4ad7fbfc10, moved from b8ea5a686a5 by alreloc c4338d099cfb8025 plus hand fixes, docs/S8A102-RELOC-AUDIT.md;
+   Base and conventions: as lib/A/Prog/S8aWord.v (#102: the S8a of record,
+   moved by alreloc c4338d099cfb8025 plus hand fixes, docs/S8A102-RELOC-AUDIT.md;
    re-fit: ledger cells ea_most / ea_own, fpre's frm_zero at the ex_string call from ev_fx; the call kit ev_call_st /
    ev_rod / ev_chain / ev_mid_rt is S8aWord's; call rule YCbqGcallW's aj_call_xWF_d). Addresses: the call sites
    0x834d0 (-> ex_string 0x84034) and 0x83528 (-> wrapper_strcmp) are the listing's PCall slots, checked on the twin
    (S8aWord.v header).
-   RE-PROVED (2026-10-29): the ev_string / ev_disp of commit 9d7dd411769 are WITHDRAWN
+   RE-PROVED (2026-10-29): the ev_string / ev_disp are WITHDRAWN
    (the unit owner): ev_string took HROM ("no in_rom byte is owned-static or errno"), FALSE at the instance (the owned
    statics (66280, 8) and (118364, 21) lie inside in_rom on the old-pin images A and B), and ev_disp took HROM
    through ev_string and the then-false WORDX through ev_word. HROM is DELETED: the strcmp call is the read-only rule
-   YGcallMxmn.aj_strcmp_at_xrom at the row's xrom text (SCMP, stated as pieces 7 + 8 state it, S8aItemsTop.v at
-   commit f2bdcc4ec76), whose read-only premise arodata_okP over the call's view is a
+   YGcallMxmn.aj_strcmp_at_xrom at the row's xrom text (SCMP, stated as pieces 7 + 8 state it, S8aItemsTop.v),
+   whose read-only premise arodata_okP over the call's view is a
    fact of the walk's STATE: S8aWord.ev_rod at the call's memory (fpre's entry arodata_okP, kept by the journal's image
    clause). On #102 the kit and the engine read ONE arodata_okP (PresetRodata.v 4eb7e95e7e93; PRH_Base re-exports
    it, YGcallMxmn b47cf7942c3d Requires it), so the old copy conversion ev_aro_mxmn is gone. No premise about the
@@ -35,7 +36,7 @@
    SECTION HYPOTHESES: LAWS (AR_laws_x), STRX (tex_string_specX), SCMP (the strcmp row, xrom form), HSHD, HAM8 (each
    with its discharge route at its text), WORDX and TS (S8aWord.v's, for ev_word in ev_disp; LIT is deleted).
    The small byte / view helpers vn_byte_eq .. vn_str_eq, vn_br_eq_t / _f are COPIED from lane E's S8aNumE.v
-   (da73e1570f8, not Required: it does not build on this base). ev_mid_av is S8aDisp's ev_mid_frame with a view premise.
+   (not Required: it does not build on this base). ev_mid_av is S8aDisp's ev_mid_frame with a view premise.
    Every conclusion is srealizes through SRr. No released plain or UBSan file is Required, no lemma of one cited.
    NUMERALS (rule 7): EV_* offsets (LENGTH: pc - 0x832a4 on the bff8519b listing); 34 (WORD: the quote); 4 (WORD:
    PJ_STRING); 8, 16, 24, 32, 36, 40, 56 (LENGTH: word, struct ex / tree node fields); 0 / 1 (WORD: NULL, the differs
@@ -130,7 +131,7 @@ Hypothesis STRX : forall fx1, tex_string_specX (fx := fx1) (PI := PIA) (L := A_p
    (YGcallMx.astrcmp_realizes_x), whose rom_view premise needed the false HROM. *)
 Hypothesis SCMP : forall fx1 : YK11.FPState, YGcallMxmn.astrcmp_realizes_xrom (fx := fx1) SEGS B ARx
   (@pa_relro_lo _ A_prog_listing PA) (@pa_relro_hi _ A_prog_listing PA) (SIGMA AS___wrap_strcmp).
-(* STAND-IN, discharged at the preset instance by block_amem_range8_cf (the cf layer writer, 6c9f248bed97 YGcfBlockRange.v:46;
+(* STAND-IN, discharged at the preset instance by block_amem_range8_cf (the cf layer writer, YGcfBlockRange.v:46;
    ablocks = the blocks' sptr_addr form): strcmp's amem_range8 for v->str and in->scratch. A law of ARx's live blocks,
    no image fact. *)
 Hypothesis HAM8 : forall ly S Hp W mem md p n k, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= k <= n ->
@@ -273,7 +274,7 @@ assert (Hwd' : wdest_ok (PA := PA) B (STK_ex_string (PI := PIA)) ly S W regsc me
   intros z Hz. destruct (W3' z Hz) as (Hzw & Hzo & _). split; [exact Hzw|]. split; [exact Hzo|].
   rewrite ES1. unfold ea_len in *. lia. }
 assert (Hi1 : 0 <= Z.of_nat i1 < Z.of_nat (length (ea_x a))) by lia.
-(* PRH_Base.fpre's two conjuncts past the read-only view (walkkit old-pin be60d536d2af): ex_string's entry sp is the
+(* PRH_Base.fpre's two conjuncts past the read-only view (walkkit old-pin): ex_string's entry sp is the
    body's S1, 64 or more below the stack's top (S1 <= sp0 - 256 and fpre's sp0 + 64 <= ly_stk_hi at the activation);
    its ra is the jal's return pc, a listing literal below the ceiling's least value *)
 assert (HSPc : spZ regsc + 64 <= ly_stk_hi ly).
@@ -480,7 +481,7 @@ Definition ev_str_vn_stmt : Prop :=
   SRr SEGS W (CFG fx' regs EV_SRET mem md) (TO_EXIT a).
 
 (* ======== the v <> 0 tail: small byte / view lemmas ======== *)
-(* COPIED from lane E's S8aNumE.v eve_byte_eq (da73e1570f8) *)
+(* COPIED from lane E's S8aNumE.v eve_byte_eq *)
 Lemma vn_byte_eq : forall v (n k : nat), (k < n)%nat -> (n <= 8)%nat ->
   Z_to_bv 8 (YG0f.le_byte v n k) = byte_of_word (Z_to_bv 64 v) (Z.of_nat k).
 Proof.
@@ -492,7 +493,7 @@ rewrite !Z.shiftr_spec by lia. rewrite !Z.testbit_mod_pow2 by lia.
 replace (jj + 8 * Z.of_nat k <? 8 * Z.of_nat n) with true by (symmetry; apply Z.ltb_lt; nia).
 replace (jj + 8 * Z.of_nat k <? 64) with true by (symmetry; apply Z.ltb_lt; nia). reflexivity.
 Qed.
-(* COPIED from lane E's S8aNumE.v eve_chunk_val (da73e1570f8), at SEGS *)
+(* COPIED from lane E's S8aNumE.v eve_chunk_val, at SEGS *)
 Lemma vn_chunk_val : forall E m base off (w : N) e v, (w <= 8)%N -> sv_denot E e = Z_to_bv 64 v ->
   val_mem SEGS m (base + off) (N.to_nat w) v -> YP09.chunk_ok SEGS E m base (YP09.mkChunk off (CVal w e)).
 Proof.
@@ -501,7 +502,7 @@ exists (byte_of_word (sv_denot E e) i). split; [reflexivity|].
 pose proof (Hv (Z.to_nat i) ltac:(lia)) as H. rewrite Z2Nat.id in H by lia. rewrite H.
 f_equal. rewrite He. replace i with (Z.of_nat (Z.to_nat i)) at 2 by lia. apply vn_byte_eq; lia.
 Qed.
-(* COPIED from lane E's S8aNumE.v eve_val_of_chunk (da73e1570f8), at SEGS *)
+(* COPIED from lane E's S8aNumE.v eve_val_of_chunk, at SEGS *)
 Lemma vn_val_of_chunk : forall E m base off (w : N) e, (w <= 8)%N ->
   YP09.chunk_ok SEGS E m base (YP09.mkChunk off (CVal w e)) ->
   val_mem SEGS m (base + off) (N.to_nat w) (bv_unsigned (sv_denot E e)).
@@ -512,7 +513,7 @@ cbn [YP09.cbyte YP09.c_val YP09.c_off] in Hb, Hm. injection Hb as <-. rewrite Hm
 pose proof (vn_byte_eq (bv_unsigned (sv_denot E e)) (N.to_nat w) k Hk ltac:(lia)) as Hb.
 rewrite Z_to_bv_bv_unsigned in Hb. symmetry. exact Hb.
 Qed.
-(* COPIED from lane E's S8aNumE.v evE_chunk_of_st (da73e1570f8); its float state fxc (a class instance) makes the
+(* COPIED from lane E's S8aNumE.v evE_chunk_of_st; its float state fxc (a class instance) makes the
    machine state's float state generic *)
 Lemma vn_chunk_of_st : forall (fxc : YK11.FPState) E ss (ms : machine_state) (W : world SEGS) i r jj off (w : N) e,
   st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
@@ -543,7 +544,7 @@ pose proof (proj1 (Forall_forall _ _) Hch _ (nth_error_In _ jj Hc)) as Hck.
 cbn [ms_mem restrict] in Hck |- *.
 exact (vn_val_of_chunk E _ _ off w e Hw Hck).
 Qed.
-(* COPIED from lane E's S8aNumE.v evE_frame_aview (da73e1570f8) *)
+(* COPIED from lane E's S8aNumE.v evE_frame_aview *)
 Lemma vn_frame_aview : forall E rs (W : world SEGS) m m' z,
   frame_of E rs (rdW W m) (rdW W m') -> 0 <= z < 2 ^ 64 -> ~ YP09.in_wrange E rs z ->
   aview SEGS (w_H W) m' z = aview SEGS (w_H W) m z.
@@ -551,7 +552,7 @@ Proof.
 intros E rs W m m' z HF Hz Hn. unfold aview, mbyte.
 rewrite (HF (Z_to_bv 64 z)); [reflexivity|]. rewrite unsigned_lit_small by lia. exact Hn.
 Qed.
-(* COPIED from lane E's S8aNumE.v eve_garr8_aview, eve_first_byte, eve_src_ok, eve_str_eq (da73e1570f8), at SEGS *)
+(* COPIED from lane E's S8aNumE.v eve_garr8_aview, eve_first_byte, eve_src_ok, eve_str_eq, at SEGS *)
 Lemma vn_garr8_aview : forall (H : word -> bool) m p l j, garr8 SEGS (mrestrict H m) p l -> (j < length l)%nat ->
   aview SEGS H m (p + Z.of_nat j) = Some (nth j l 0).
 Proof.
@@ -594,7 +595,7 @@ Proof.
     rewrite (vn_garr8_aview H m p1 (l1 ++ [0]) _ G1), (vn_garr8_aview H m p2 (l1 ++ [0]) _ G2)
       by (rewrite length_app; cbn; lia). reflexivity.
 Qed.
-(* COPIED from lane E's S8aNumE.v evE_br_eq_t / evE_br_eq_f (da73e1570f8): a call's result tested against 0 *)
+(* COPIED from lane E's S8aNumE.v evE_br_eq_t / evE_br_eq_f: a call's result tested against 0 *)
 Lemma vn_br_eq_t : forall E n (w : word), ew E n = w ->
   branch_taken BC_EQ (sv_denot E (SOff n 0)) (sv_denot E (SLit 0)) = true -> w = w64 0.
 Proof.

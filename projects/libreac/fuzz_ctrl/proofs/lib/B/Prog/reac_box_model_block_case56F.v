@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 959 of its 973 lines of code are new or changed and 234 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -325,7 +326,7 @@ Section c56F_S.
       - exact (acl_addr_sub mc (A + 35) 37 (A + k) 16 AWB ltac:(c56_lia) ltac:(c56_lia) ltac:(c56_lia)).
       - apply c56_app_win. c56_lia.
       - right. unfold RT_HI; c56_lia.
-      (* the regions of the call, in name_field_contract_F's order (40a1a45d985) *)
+      (* the regions of the call, in name_field_contract_F's order *)
       - exact RBY.
       - eapply rng_sub; [exact RIMG | unfold IMG_LO, IMG_HI; lia | unfold IMG_LO, IMG_HI; lia].
       - eapply rng_sub; [exact RWIN | c56_lia | c56_lia].

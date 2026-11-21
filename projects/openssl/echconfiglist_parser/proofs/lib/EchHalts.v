@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the walk is stated over run_segments under the mmap-base, channel-reader and launch premises; realizes_must_exit takes the robustness premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib.Logic Require Import Classical_Prop.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType StackLayout Fs State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics StackLayout Fs State Run.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Scfg ShapeAlg Spec.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RomStable.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -133,7 +135,7 @@ Theorem realizes_must_exit : forall S c T,
   realizes segs c T -> exits_in S T -> m_halted (cfg_model c) = None ->
   must_exit_in_at_cfg the_scfg segs S c.
 Proof.
-  intros S c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros S c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros HS Hnone.
   - destruct Hnode as [Hfwd Hbwd].
     apply must_exit_in_at_cfg_running.
@@ -185,11 +187,19 @@ End WithSegs.
 Section Halts.
 Context {SC : StepCfg}.
 
+(* The walk against the run's segment list [run_segments segs ..] (the binary's segments and the
+   vDSO pair) from [init_config (run_segments ..) ..], as the statement runs the binary; the
+   launch facts are premises [halts_of_realizes_spec] proves from [Run.valid_input] and
+   [Run.valid_entry]. *)
 Definition full_stmt (segs : list Segment) (pc : N) (ph : PhdrInfo) (lim : Z) : Prop :=
   forall sp brk mbase rnd inp,
     valid_sp sp -> valid_brk segs brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    realizes segs (init_config segs pc ph sp brk mbase rnd lim inp) (spec (in_argv inp) (in_fs inp)).
+    valid_mmap_base mbase ->
+    in_channel_reader inp = true ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+    realizes (run_segments segs inp sp mbase)
+      (init_config (run_segments segs inp sp mbase) pc ph sp brk mbase rnd lim inp) (spec (in_argv inp) (in_fs inp)).
 
 Lemma init_config_not_halted : forall segs pc ph sp brk mbase rnd lim inp,
   m_halted (cfg_model (init_config segs pc ph sp brk mbase rnd lim inp)) = None.
@@ -202,12 +212,14 @@ Proof.
   intros segs pc ph lim Hfull [sp brk mbase rnd] inp Hen Hvalid _.
   cbn [must_exit_in_scfg].
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
+  pose proof (valid_input_channel_reader _ Hvalid) as Hrd.
+  pose proof (valid_input_launch _ Hvalid) as Hvl.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-  destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
+  destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
   destruct Hvalid as (Hargv & Henvp & Hfs & _).
-  apply (@must_exit_forced_only segs SC).
-  apply (realizes_must_exit segs codes02 _ (spec (in_argv inp) (in_fs inp))).
-  - exact (Hfull sp brk mbase rnd inp Hsp Hbrk Hfit Hargv Henvp Hfs).
+  apply (@must_exit_forced_only (run_segments segs inp sp mbase) SC).
+  apply (realizes_must_exit (run_segments segs inp sp mbase) codes02 _ (spec (in_argv inp) (in_fs inp))).
+  - exact (Hfull sp brk mbase rnd inp Hsp Hbrk Hfit Hargv Henvp Hfs Hmb Hrd Hvl Hlau).
   - apply exits_in_spec02.
   - apply init_config_not_halted.
 Qed.

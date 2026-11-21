@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (interp_eff's load leaf answers MachineUnmodeled for a read that meets the vvar page, and interp_eff_equiv takes that case). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -37,7 +38,7 @@ match t with
 | ELoad n a k =>
 match ov_read_bytes mi_loaded_segments m a (width_bytes n) with
 | Some bs => interp_eff (k (bv_extract 0 n (le_bytes_to_word bs))) m
-| None => MachineFault
+| None => if range_meets_vvar mi_loaded_segments a (width_bytes n) then MachineUnmodeled else MachineFault
 end
 | EStore n a v k =>
 if store_ok mi_loaded_segments m a (width_bytes n)
@@ -50,7 +51,7 @@ RiscvSemantics.interp_eff mi_loaded_segments t m = interp_eff t m.
 Proof.
 unfold RiscvSemantics.interp_eff.
 induction t; intros m; cbn [interp_eff interp_eff_accesses drop_access_report]; try reflexivity.
-- destruct (ov_read_bytes _ m a (width_bytes n)) as [bs|]; [|reflexivity].
+- destruct (ov_read_bytes _ m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar mi_loaded_segments a (width_bytes n)); reflexivity].
 rewrite <- H. destruct (interp_eff_accesses _ _ m) as [[v acc]| |]; reflexivity.
 - destruct (store_ok _ m a (width_bytes n)); [|reflexivity].
 rewrite <- IHt. destruct (interp_eff_accesses _ _ _) as [[v' acc]| |]; reflexivity.

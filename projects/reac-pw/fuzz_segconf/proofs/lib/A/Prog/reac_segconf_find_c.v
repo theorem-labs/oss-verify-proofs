@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YC7z.v, with its module paths and module names changed; 18 of its 41 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_ignore_file_c.v; 14 of its 44 lines of code are new or changed and 11 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_find (reac_segconf.c:517-525; fuzz_segconf.asan 0x894ec, 168 bytes, 42 instructions; frame 32
    bytes, no side-stack frame): the contract of the ASan build's code, in plugin-hostd/fuzz_command's lib/A/Prog
    form (afn_pre at the entry, SRr of apost_base at the return).
@@ -22,7 +23,7 @@
    footprint is []. No abort site (provenance/evidence/image-tables/program.asan.tsv line 24).
    NAME PREMISE: sa_str (string, NUL, and the slack to the next 8-byte boundary), not sa_strz. strcmp's own loop
    reads string + NUL only, but row 17's RtString.astrcmp_realizes asks atail_vis of BOTH strings (fuzz_command
-   lib/A/Rt/RtString.v:108-120 and lib/A/Rt/RtDefs.v:54-55 at origin/ossv/recipes 501c0d516c69), so the walk
+   lib/A/Rt/RtString.v:108-120 and lib/A/Rt/RtDefs.v:54-55), so the walk
    needs the slack of the name; the slack of seg[i].name lies inside the block (16-byte field, 356-byte entry).
    It also asks 0 <= length + 1 < 2 ^ 32 of each range (aread_ok, RtDefs.v:35-36): the last conjunct.
    ASAN FACTS ADDED over the plain contract:
@@ -39,7 +40,7 @@
      YG0f.v:303-304), so the plain apart premises are not restated.
    - arodata_okP segs RLO RHI B rd, RLO RHI the read-only window, contract parameters after A and STK (the image-A
      owner's decision, 2026-10-30): row 17 asks rt_rom_view, which AR does not give and which fuzz_command
-     derives from arodata_okP (lib/A/Prog/CmdRecImg.v:51-54 at 501c0d516c69). It is not part of query_pre: it
+     derives from arodata_okP (lib/A/Prog/CmdRecImg.v:51-54). It is not part of query_pre: it
      is about the image, not the query's objects.
    - no side-stack frame and no printf: apost_base, EV_reac_segconf_find = 0, post tail sa_noalloc.
    - sa_kept segs W mem W' mem' regs STK (fun _ => False) in the post: every byte outside the stack window reads
@@ -58,8 +59,8 @@
    IMAGE-INDEPENDENT: no image module is Required; A_reac_segconf_find, STK_reac_segconf_find, RLO, RHI and every
    image cell are parameters (or fields of B).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); row 17 is in the accepted v1,
-   5e0b8a44fdc; at e45889d6935a strcmp is that file's DECISION 2, option (b)):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; row 17 is in the accepted v1,;
+    strcmp is that file's DECISION 2, option (b)):
      RtString.astrcmp_realizes (row 17), at the strcmp trampoline (image A 0x43a14, interceptor 0x43fe8).
    They are NOT premises of this contract: the statement does not mention them. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

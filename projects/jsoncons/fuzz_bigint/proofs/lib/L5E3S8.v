@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells are read in the launch's layout (auxv_cells with the CONFIG_RSEQ flag's fact) and that fact is passed to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -278,7 +279,7 @@ Proof.
   assert (R12_10: getr R12 (reg 10) = Z_to_bv 64 u12_10) by (unfold u12_10, U; symmetry; apply lit_of_word). clearbody u12_10.
   pose proof ES12 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M12 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
+  pose proof (auxv_cells M12 av uid rnd hw S_18 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
   unshelve epose proof (e3p1b_conc fx11 R12 M12 (S - 896) (A + 128) u12_10 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx13 & R13 & M13 & MS13 & K13 & R13_2 & R13_9 & R13_10 & R13_11 & FR13 & GR13).
   { (* [comment removed for export] *) pr. }
@@ -429,14 +430,14 @@ Proof.
     exact GR13.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG13 FR13 MS13. try clear STAT13. try clear K12.
   try clear c12_Sm840. try clear c12_Sm848. try clear c12_Sm856. try clear c12_Sm864. try clear c12_Sm872. try clear c12_Sm776. try clear c12_Sm784. try clear c12_Sm792. try clear c12_Sm800. try clear c12_Sm472. try clear c12_Sm480. try clear c12_Sm488. try clear c12_Sm496. try clear c12_Sm504. try clear c12_Sm512. try clear c12_Sm520. try clear c12_Sm528. try clear c12_Sm536. try clear c12_Sm544. try clear c12_Sm552. try clear c12_Sm560. try clear c12_Sm568. try clear c12_Sm424. try clear c12_Sm432. try clear c12_Sm360. try clear c12_Sm368. try clear c12_Sm376. try clear c12_Sm56. try clear c12_Sm64. try clear c12_Sm72. try clear c12_Sm80. try clear c12_Sm88. try clear c12_Sm96. try clear c12_Sm104. try clear c12_Sm112. try clear c12_Sm120. try clear c12_Sm128. try clear c12_Sm136. try clear c12_Sm144. try clear c12_Sm152. try clear c12_Sm8. try clear c12_Sm16. try clear c12_Sm696w1. try clear c12_Sm664w1. try clear c12_Sm640. try clear c12_Sm648. try clear c12_Sm632w1. try clear c12_Sm608. try clear c12_Sm616. try clear c12_Sm600w1. try clear c12_Sm464w1. try clear c12_Sm408w1. try clear c12_Sm280w1. try clear c12_Sm248w1. try clear c12_Sm216w1. try clear c12_Sm192. try clear c12_Sm200. try clear c12_Sm184w1. try clear c12_Sm160. try clear c12_Sm168. try clear c12_Sm48w1. try clear c12_Om128z8. try clear c12_Om80z12. try clear c12_Sm880. try clear c12_Sm888. try clear c12_Sm896. try clear c12_Op0. try clear c12_Op8. try clear c12_Fp24. try clear c12_Fp32. try clear c12_Fp40. try clear c12_Fp48. try clear c12_Fp56. try clear c12_Fp64w1. try clear c12_Fp65w1. try clear c12_Fp16w4. try clear c12_Fp8. try clear c12_Fp0. try clear c12_Om8. try clear c12_Om40. try clear c12_Om48. try clear c12_Om56. try clear c12_Om64. try clear c12_Om68w4. try clear c12_Om16. try clear c12_Om120. try clear c12_Om24. try clear c12_Om32. try clear c12_Om88. try clear c12_Om104. try clear c12_Om112. try clear c12_Om96. try clear R12_2. try clear R12_3. try clear R12_4. try clear R12_8. try clear R12_9. try clear R12_18. try clear R12_19. try clear R12_20. try clear R12_10. try clear DEF12. try clear HH12. try clear HQ12. try clear ES12. try clear DEFref_12. try clear DEFA_12. try clear DEFd1_12. try clear DEFd2_12. try clear DEFd3_12. try clear DEFd4_12.
   (* [comment removed for export] *)
   pose proof ES13 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M13 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
-  unshelve epose proof (e3r1_conc fx13 R13 M13 (S - 896) (A + 128) av canary uid rnd hw w856 w864 w872 w784 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
+  pose proof (auxv_cells M13 av uid rnd hw S_18 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
+  unshelve epose proof (e3r1_conc X_r fx13 R13 M13 (S - 896) (A + 128) av canary uid rnd hw w856 w864 w872 w784 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx14 & R14 & M14 & MS14 & K14 & R14_1 & R14_2 & R14_8 & R14_9 & R14_10 & R14_11 & R14_18 & R14_19 & FR14 & GR14).
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -471,20 +472,6 @@ Proof.
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) first [exact c13_Om16 | cellfix c13_Om16]. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -638,7 +625,7 @@ Proof.
     exact GR14.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG14 FR14 MS14. try clear STAT14. try clear K13.
   try clear c13_Sm840. try clear c13_Sm848. try clear c13_Sm856. try clear c13_Sm864. try clear c13_Sm872. try clear c13_Sm776. try clear c13_Sm784. try clear c13_Sm792. try clear c13_Sm800. try clear c13_Sm472. try clear c13_Sm480. try clear c13_Sm488. try clear c13_Sm496. try clear c13_Sm504. try clear c13_Sm512. try clear c13_Sm520. try clear c13_Sm528. try clear c13_Sm536. try clear c13_Sm544. try clear c13_Sm552. try clear c13_Sm560. try clear c13_Sm568. try clear c13_Sm424. try clear c13_Sm432. try clear c13_Sm360. try clear c13_Sm368. try clear c13_Sm376. try clear c13_Sm56. try clear c13_Sm64. try clear c13_Sm72. try clear c13_Sm80. try clear c13_Sm88. try clear c13_Sm96. try clear c13_Sm104. try clear c13_Sm112. try clear c13_Sm120. try clear c13_Sm128. try clear c13_Sm136. try clear c13_Sm144. try clear c13_Sm152. try clear c13_Sm8. try clear c13_Sm16. try clear c13_Sm696w1. try clear c13_Sm664w1. try clear c13_Sm640. try clear c13_Sm648. try clear c13_Sm632w1. try clear c13_Sm608. try clear c13_Sm616. try clear c13_Sm600w1. try clear c13_Sm464w1. try clear c13_Sm408w1. try clear c13_Sm280w1. try clear c13_Sm248w1. try clear c13_Sm216w1. try clear c13_Sm192. try clear c13_Sm200. try clear c13_Sm184w1. try clear c13_Sm160. try clear c13_Sm168. try clear c13_Sm48w1. try clear c13_Om128z8. try clear c13_Om80z12. try clear c13_Sm880. try clear c13_Sm888. try clear c13_Sm896. try clear c13_Op0. try clear c13_Op8. try clear c13_Fp24. try clear c13_Fp32. try clear c13_Fp40. try clear c13_Fp48. try clear c13_Fp56. try clear c13_Fp64w1. try clear c13_Fp65w1. try clear c13_Fp16w4. try clear c13_Fp8. try clear c13_Fp0. try clear c13_Om8. try clear c13_Om40. try clear c13_Om48. try clear c13_Om56. try clear c13_Om64. try clear c13_Om68w4. try clear c13_Om16. try clear c13_Om120. try clear c13_Om24. try clear c13_Om32. try clear c13_Om88. try clear c13_Om104. try clear c13_Om112. try clear c13_Om96. try clear R13_2. try clear R13_3. try clear R13_4. try clear R13_8. try clear R13_9. try clear R13_10. try clear R13_18. try clear R13_19. try clear R13_20. try clear DEF13. try clear HH13. try clear HQ13. try clear ES13. try clear DEFref_13. try clear DEFA_13. try clear DEFd1_13. try clear DEFd2_13. try clear DEFd3_13. try clear DEFd4_13.
   eapply (seg9 fx14 R0 R R14 M M14 model model12 K LB1 cr gd fl S av uid rnd canary hw d1 d2 d3 d4 w856 w864 w872 w784 w488 w504 w512 w520 w528 w536 w544 w552 w560 w568 fb696 fb664 fb632 fb600 fb464 fb408 fb280 fb248 fb216 fb184 fb48 A ref msg HK0 H02 H03 H04 A16 SLO SHI STOP AVTOP LBWF CR144 CR48 CR66 Hr_fb696 Hb_fb696 Hr_fb664 Hb_fb664 Hr_fb632 Hb_fb632 Hr_fb600 Hb_fb600 Hr_fb464 Hb_fb464 Hr_fb408 Hb_fb408 Hr_fb280 Hb_fb280 Hr_fb248 Hb_fb248 Hr_fb216 Hb_fb216 Hr_fb184 Hb_fb184 Hr_fb48 Hb_fb48 Ww856 Ww864 Ww872 Ww784 Ww488 Ww504 Ww512 Ww520 Ww528 Ww536 Ww544 Ww552 Ww560 Ww568 R14_1 R14_2 R14_3 R14_4 R14_8 R14_9 R14_10 R14_11 R14_18 R14_19 R14_20 c14_Sm840 c14_Sm848 c14_Sm856 c14_Sm864 c14_Sm872 c14_Sm776 c14_Sm784 c14_Sm792 c14_Sm800 c14_Sm472 c14_Sm480 c14_Sm488 c14_Sm496 c14_Sm504 c14_Sm512 c14_Sm520 c14_Sm528 c14_Sm536 c14_Sm544 c14_Sm552 c14_Sm560 c14_Sm568 c14_Sm424 c14_Sm432 c14_Sm360 c14_Sm368 c14_Sm376 c14_Sm56 c14_Sm64 c14_Sm72 c14_Sm80 c14_Sm88 c14_Sm96 c14_Sm104 c14_Sm112 c14_Sm120 c14_Sm128 c14_Sm136 c14_Sm144 c14_Sm152 c14_Sm8 c14_Sm16 c14_Sm696w1 c14_Sm664w1 c14_Sm640 c14_Sm648 c14_Sm632w1 c14_Sm608 c14_Sm616 c14_Sm600w1 c14_Sm464w1 c14_Sm408w1 c14_Sm280w1 c14_Sm248w1 c14_Sm216w1 c14_Sm192 c14_Sm200 c14_Sm184w1 c14_Sm160 c14_Sm168 c14_Sm48w1 c14_Om128z8 c14_Om80z12 c14_Sm880 c14_Sm888 c14_Sm896 c14_Op0 c14_Op8 c14_Fp24 c14_Fp32 c14_Fp40 c14_Fp48 c14_Fp56 c14_Fp64w1 c14_Fp65w1 c14_Fp16w4 c14_Fp8 c14_Fp0 c14_Om8 c14_Om40 c14_Om48 c14_Om56 c14_Om64 c14_Om68w4 c14_Om16 c14_Om120 c14_Om24 c14_Om32 c14_Om88 c14_Om104 c14_Om112 c14_Om96 ES14 DEF14 DEFref_14 DEFA_14 DEFd1_14 DEFd2_14 DEFd3_14 DEFd4_14 BR_ref BR_A BR_d1 BR_d2 BR_d3 BR_d4 AP_ref_A AP_ref_d1 AP_ref_d2 AP_ref_d3 AP_ref_d4 AP_A_d1 AP_A_d2 AP_A_d3 AP_A_d4 AP_d1_d2 AP_d1_d3 AP_d1_d4 AP_d2_d3 AP_d2_d4 AP_d3_d4 FRSH_ref FRSH_A HH14 MOK12 MBV12 HQ14 KE).

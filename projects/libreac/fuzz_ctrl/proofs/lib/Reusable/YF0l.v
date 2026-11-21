@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YF0l.v (origin/ossv/recipes c8557374ad2e), with its module paths changed; its code addresses moved to the same functions and offsets of fuzz_ctrl's asan-ubsan image (sha256 12136677c5cf...), pc_malloc_ra0 / pc_free_ra0 recomputed as the return of the GetCurrentPc call on the Unwind branch of the malloc / free interceptor, the rule that gives cgif's values, and pc_stack_malloc keyed by class id from the symbols __asan_stack_malloc_<cid> of that image (classes 0, 1, 2, 6; cgif has 1, 2). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YF0l.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed; its code addresses moved to the same functions and offsets of fuzz_ctrl's asan-ubsan image (sha256 12136677c5cf...), pc_malloc_ra0 / pc_free_ra0 recomputed as the return of the GetCurrentPc call on the Unwind branch of the malloc / free interceptor, the rule that gives cgif's values, and pc_stack_malloc keyed by class id from the symbols __asan_stack_malloc_<cid> of that image (classes 0, 1, 2, 6; cgif has 1, 2). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG0f.

@@ -4,8 +4,8 @@ Proves no function (kind: measurement). Image B (asan-ubsan) only: image A calls
 on_announce takes class 4). The method is ../class5's (run.sh, class5cmp.py, checkrep.py), generalized here to class 3.
 
 Pin: fuzz_transport.asan-ubsan 41113a03c82fde82 (unstripped twin e217cb0a84f1e181), the value this worktree's
-projects/libdiginet/fuzz_transport/harness.yaml pins. Chosen donor: plugin-hostd/fuzz_command at origin/ossv/recipes
-781f46bc05cd (the class-5 donor and ref), asan-ubsan bbe55d24d096 / 658cefbe806b, files lib/B/Rt/RtSM3T.v (the walk
+projects/libdiginet/fuzz_transport/harness.yaml pins. Chosen donor: plugin-hostd/fuzz_command
+ (the class-5 donor and ref), asan-ubsan bbe55d24d096 / 658cefbe806b, files lib/B/Rt/RtSM3T.v (the walk
 tables) and lib/B/Rt/RtSM3.v (the contract `cmd_stack_malloc3_contract : forall B, AR_laws tfibsegs B -> CmdBSyms B ->
 astack_malloc_realizes tfibsegs B 3`, and its `_x` form over fs_iface).
 
@@ -24,21 +24,21 @@ donor's 9 ranges paired and compared, PASS; control self PASS with 0 values move
 
 ## Rule 24: lookup, compare, choice
 
-RULE24-LOOKUP.txt holds the lookup: one path-scoped git grep per unit on origin/ossv/recipes 9b0ac6f0e678, for the
+RULE24-LOOKUP.txt holds the lookup: one path-scoped git grep per unit, for the
 statement `astack_malloc_realizes <segs> <B> 3` (and `_x`), then for `stack_malloc_?3` in every released unit. Six units
 state this unit's class-3 contract on their asan-ubsan image; every other class-3 walk on recipes states another
 framework's predicate (stack_malloc_contract RTA 3, N5_stack_malloc3, ...), so it is not a donor of this hypothesis.
-Each donor is read at its release ref (the last commit before the move 48907dc7e8ca, where proofs/<unit>/lib exists and
+Each donor is read at its release ref (the last commit before the move, where proofs/<unit>/lib exists and
 projects/<unit>/harness.yaml pins the image); each image's sha256 was checked against that pin and its twin proved.
 
 | donor | ref | asan-ubsan pin | walk files | ranges | walked words that differ (pc-relative) per range | sum | whole functions |
 |---|---|---|---|---|---|---|---|
-| **plugin-hostd/fuzz_command** | 781f46bc05cd | bbe55d24d096 | B/Rt/RtSM3T.v, RtSM3.v | 9, PASS | 7, 0, 5, 0, 0, 2, 0, 18, 4 | **36** | 430 |
-| omx-clap-core/fuzz_preset | 4cda83dac850 | d663f82d7f48 | AU/FCimgB.v, FCm3r.v, FCm3s.v | 9, PASS | 9, 0, 5, 0, 0, 3, 0, 14, 9 | 40 | 278 |
-| libreac/fuzz_disco | b5cf457a8820 | cee6f04ad3d4 | Y/Rt/StackMalloc3Tbl.v, StackMalloc3.v | 9, PASS | 8, 0, 2, 0, 0, 3, 0, 18, 9 | 40 | 273 |
-| libreac/fuzz_boxreg | ee71d1fd3fcf | 7620eb05e0ad | B/Rt/StackMalloc3Tbl.v, StackMalloc3.v | 9, PASS | 9, 0, 2, 0, 0, 3, 0, 18, 9 | 41 | 435 |
-| libreac/fuzz_identity | cffeac4df63e | baf1a4d065e0 | B/Rt/StackMalloc3Tbl.v, StackMalloc3.v | 9, PASS | 9, 0, 2, 0, 0, 3, 0, 18, 9 | 41 | 395 |
-| omx-clap-core/fuzz_state | d0e2eea9a341 | 5ac5ce0954f8 | B/FCimg.v, FCm3r.v, FCm3s.v | 9, PASS | 9, 0, 5, 0, 0, 3, 0, 18, 9 | 44 | 288 |
+| **plugin-hostd/fuzz_command** | | bbe55d24d096 | B/Rt/RtSM3T.v, RtSM3.v | 9, PASS | 7, 0, 5, 0, 0, 2, 0, 18, 4 | **36** | 430 |
+| omx-clap-core/fuzz_preset | | d663f82d7f48 | AU/FCimgB.v, FCm3r.v, FCm3s.v | 9, PASS | 9, 0, 5, 0, 0, 3, 0, 14, 9 | 40 | 278 |
+| libreac/fuzz_disco | | cee6f04ad3d4 | Y/Rt/StackMalloc3Tbl.v, StackMalloc3.v | 9, PASS | 8, 0, 2, 0, 0, 3, 0, 18, 9 | 40 | 273 |
+| libreac/fuzz_boxreg | | 7620eb05e0ad | B/Rt/StackMalloc3Tbl.v, StackMalloc3.v | 9, PASS | 9, 0, 2, 0, 0, 3, 0, 18, 9 | 41 | 435 |
+| libreac/fuzz_identity | | baf1a4d065e0 | B/Rt/StackMalloc3Tbl.v, StackMalloc3.v | 9, PASS | 9, 0, 2, 0, 0, 3, 0, 18, 9 | 41 | 395 |
+| omx-clap-core/fuzz_state | | 5ac5ce0954f8 | B/FCimg.v, FCm3r.v, FCm3s.v | 9, PASS | 9, 0, 5, 0, 0, 3, 0, 18, 9 | 44 | 288 |
 
 The ranges, in order: `__asan_stack_malloc_3` (107 words), RegisterCommonFlags + 0x358 (2), `__interceptor___tls_get_addr`
 (31), `__tls_get_addr` (9), GetCurrentThread (8), AsanTSDGet (6), `__pthread_getspecific` (7), DTLS_on_tls_get_addr (140),

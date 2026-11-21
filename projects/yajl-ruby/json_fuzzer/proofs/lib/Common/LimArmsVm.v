@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the pending SIGPIPE in sigmask delivery, mprotect's vDSO/vvar gate, and brk's charge as brk_grow_bytes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -35,13 +36,16 @@ Lemma sigmask_deliver_model_sl : forall new m,
 Proof.
   intros new m. unfold sigmask_deliver_model.
   change (m_sigabrt_pending (sl L m)) with (m_sigabrt_pending m).
-  destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; reflexivity.
+  change (m_sigpipe_pending (sl L m)) with (m_sigpipe_pending m).
+  destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; [reflexivity |].
+  destruct (m_sigpipe_pending m && negb (sigpipe_blocked new))%bool; reflexivity.
 Qed.
 
 Lemma sigmask_deliver_model_mlim : forall new m, mlim (sigmask_deliver_model new m) = mlim m.
 Proof.
   intros new m. unfold sigmask_deliver_model.
-  destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; reflexivity.
+  destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; [reflexivity |].
+  destruct (m_sigpipe_pending m && negb (sigpipe_blocked new))%bool; reflexivity.
 Qed.
 
 Lemma fr_rt_sigprocmask : forall how nset oset ss i m,
@@ -94,6 +98,13 @@ Proof.
   frE.
   - (* [comment removed for export] *)
     unfold mprotect_budget_refused_b in HM. sl_norm_in HM. rew_bools_in HM.
+    (* 08b1429: [mprotect_budget_refused_b] opens with the vDSO/vvar gate
+       ([Sys/Mm/Mprotect.v]); this branch sits under the spec's own pass of it. *)
+    cbn [negb] in HM.
+    try match type of HM with
+    | context [region_free ?Y ?a ?n] =>
+        destruct (region_free Y a n) eqn:HVD; cbn [negb] in *; [| exfalso; congruence]
+    end.
     apply negb_false_iff in HM.
     split; intros _; [apply mprotect_budget_ok_mono; [exact HL | exact HM] | exact HM].
   - fr_inv. reflexivity.
@@ -105,9 +116,13 @@ Qed.
 Lemma brk_budget_ok_mono : forall m r,
   L <= mlim m -> brk_budget_ok (sl L m) r = true -> brk_budget_ok m r = true.
 Proof.
-  intros m r HL H. unfold brk_budget_ok in *. sl_norm_in H.
+  intros m r HL H. unfold brk_budget_ok in *. cbv zeta in *.
+  (* LPS 08b1429: brk now charges [brk_grow_bytes h r], which reads only [vm_brk];
+     [sl] changes only [vm_limit] *)
   change (vm_backing_used (sl L m)) with (vm_backing_used m) in H.
-  cbv zeta. apply Z.leb_le in H. apply Z.leb_le. unfold mlim in HL. lia.
+  change (brk_grow_bytes (m_vmmaps (sl L m)) r) with (brk_grow_bytes (m_vmmaps m) r) in H.
+  change (vm_limit (m_vmmaps (sl L m))) with L in H.
+  apply Z.leb_le in H. apply Z.leb_le. unfold mlim in HL. lia.
 Qed.
 
 Lemma vm_forget_range_sl : forall lo hi m,

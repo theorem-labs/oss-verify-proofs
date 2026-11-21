@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_crt1_braid: the braid relation that both callees of image B's LLVMFuzzerTestOneInput
    segment crt1 take, derived from what the decode leaf left:
 
@@ -10,7 +11,7 @@
    clauses of llvm_b_st_5cc that reac_decode's contract (lib/B/Prog/reac_decode_cg.v) left.  check_braid's own
    premise `braid_map` is the same relation at decode's reader, so the exit lane's call site uses this file too.
 
-   PORT of the old footprint-era record on a working branch at 3ee4cb94cb5:
+   PORT of the old footprint-era record on a working branch:
    proofs/libreac/fuzz_decode/lib/B/Prog/afd_down_scan.v:1872 ads_braid_pos, :1887 ads_braid_len, :1890
    ads_braid_nth, :1921 ads_braid_map (the same statement over decode's blk_data / mrd instead of cgif's
    garr8 / aview).  No new proof idea; the index algebra is that file's. *)

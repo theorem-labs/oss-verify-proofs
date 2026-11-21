@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_up: the `up` segment of the image-A walk of libreac/fuzz_decode's
    LLVMFuzzerTestOneInput: offsets +0x748 .. +0x868 of the audited listing lib/A/Prog/DecodeList.v, i.e. the
    premise `llvm_a_up_stmt` of lib/A/Prog/LLVMFuzzerTestOneInput_segs.v's dec_llvmf_holds_of_segs.
@@ -101,7 +102,7 @@ Ltac upB_cs :=
 Ltac upB_in := repeat first [ apply in_eq | apply in_cons ].
 
 (* The value of register r in the machine state of a symbolic state HS: its symbolic value, computed, then tac
-   (LLVMFuzzerTestOneInput_seg_entry.v:430 reg_at, with the st_ok_pi case added). Stage D's form; the lane's
+   (LLVMFuzzerTestOneInput_seg_entry.v:431 reg_at, with the st_ok_pi case added). Stage D's form; the lane's
    own three-argument up_reg above is ReadName.v:408 rn_reg. *)
 Ltac upD_reg HS r v H tac :=
   lazymatch type of HS with
@@ -214,7 +215,7 @@ Qed.
 
 Section up.
 Context {rc : YM05.RunCeil}.
-(* The Section of lib/A/Prog/LLVMFuzzerTestOneInput_segs.v:168-183, variable for variable, so that
+(* The Section of lib/A/Prog/LLVMFuzzerTestOneInput_segs.v:169-184, variable for variable, so that
    llvm_a_up_stmt can be stated here at the same arguments. *)
 Variable asink_syms : Type.
 Variable tfib_K : asink_syms.
@@ -227,7 +228,7 @@ Variable MT : ameter_ops.
 Variable XL : Z -> Z.
 Variables RLO RHI : Z.
 Local Notation segs := decodesegs0.
-(* The slot pre of lib/A/Prog/LLVMFuzzerTestOneInput_segs.v:246 at this Section's arguments. *)
+(* The slot pre of lib/A/Prog/LLVMFuzzerTestOneInput_segs.v:247 at this Section's arguments. *)
 Local Notation up_base cx :=
   (dec_a_base asink_syms tfib_K asink_none ameta_inv arodata_okS RA_LLVMF A_EMPTY B MT XL RLO RHI cx).
 
@@ -322,7 +323,7 @@ Ltac up_md_row HC ly := let H := fresh "Hrow" in pose proof (HC ly) as H;
   repeat match type of H with _ /\ _ => let A := fresh "Hrow" in destruct H as [A H] end; eassumption.
 
 (* An 8-byte constant cell of B reads its value at any state AR holds of (am_const, YG0n.v:211):
-   lib/B/Prog/LLVMFuzzerTestOneInput_segX_up_rom.v up_const_val (a Theorem Labs lane 569efeb43b0), copied. *)
+   lib/B/Prog/LLVMFuzzerTestOneInput_segX_up_rom.v up_const_val (a Theorem Labs lane), copied. *)
 Lemma up_const_val : forall ly S (W : world segs) mem md a e,
   AR segs B ly S W mem md -> In (c8 (ANum a) e) (as_const B ly) ->
   val_mem segs (mrestrict (w_H W) mem) a 8 (aeval B ly e).
@@ -680,7 +681,7 @@ Proof.
   unfold wview, DMem.mrd, DMem.wa. rewrite Hb. split; [discriminate|eauto].
 Qed.
 
-(* What the segment reads of the slot pre, in ONE place: dec_lib_pre_x (LLVMFuzzerTestOneInput_cg.v:102-116)
+(* What the segment reads of the slot pre, in ONE place: dec_lib_pre_x (LLVMFuzzerTestOneInput_cg.v:103-117)
    is destructed here and nowhere else, so a change of its conjuncts touches only this proof. Its conjuncts, in
    the order of that text: afn_pre (whose first conjunct is AR), raZ, a0, a1, the payload's block, its length,
    its bytes, frames S = [], the event room, the live room, then the sink / fd / fs / meta / meter / rounding
@@ -991,9 +992,9 @@ Definition up_trace_stmt : Prop :=
     exists ch, chain_pre ly' (aview segs (w_H W') mem') regsT ch /\
                In (call_trace0 (pc_malloc_ra0 (as_code B)) regsT ch) (as_universe B).
 
-(* From a working branch 1a9fb3f284b, proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_up.v lines 890-992,
+(* From a working branch, proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_up.v lines 891-993,
    inside Section g right after Definition up_trace_stmt. *)
-(* The two fields of dec_lib_pre_x (LLVMFuzzerTestOneInput_cg.v:102-116) the call trace reads: the caller's afn_pre
+(* The two fields of dec_lib_pre_x (LLVMFuzzerTestOneInput_cg.v:103-117) the call trace reads: the caller's afn_pre
    with the empty chain (its first conjunct, :104) and the return address RA_LLVMF (its second conjunct, :105). *)
 Lemma up_tr_base : forall cx : dctx, up_base cx ->
   @afn_pre rc segs B DEC_LLVMF_STK (d_ly cx) (d_S cx) (d_W cx) (d_regs cx) (d_mem cx) (d_md cx) [] /\
@@ -1042,7 +1043,7 @@ Proof.
   (* up_geom: d_sp0 - 240 <= d_sp1 <= d_sp0 - 224. *)
   destruct HG as ([HG1 HG2] & _ (* d_sp1 mod 32 = 0 *) & _ (* 4096 <= d_F *) & _ (* d_F mod 32 = 0 *)).
   (* The frame record below d_sp0 at the call: the first two entries (8, 1) and (16, 8) of dec_a_saved_at
-     (LLVMFuzzerTestOneInput_segs.v:95-97), i.e. the entry's ra and s0. *)
+     (LLVMFuzzerTestOneInput_segs.v:96-98), i.e. the entry's ra and s0. *)
   unfold dec_a_saved, dec_a_saved_at in HSV.
   apply Forall_cons_iff in HSV as [S1 HSV]. apply Forall_cons_iff in HSV as [S8 _]. cbn [fst snd] in S1, S8.
   assert (E1 : bv_unsigned (YK11.getr (d_regs cx) (Z_to_bv 5 1)) = raZ (d_regs cx)).
@@ -1983,7 +1984,7 @@ Qed.
 (* ---------------------------------------------------------------- *)
 
 (* d_n's range, the payload's length and its block, from dec_a_base. The clauses are found by their types
-   (LLVMFuzzerTestOneInput_cg.v:102-116: `(n = 0 /\ p = A_EMPTY) \/ (0 < n < 2 ^ 26 /\ In (p, n) (ablocks B ly S))`
+   (LLVMFuzzerTestOneInput_cg.v:103-117: `(n = 0 /\ p = A_EMPTY) \/ (0 < n < 2 ^ 26 /\ In (p, n) (ablocks B ly S))`
    and `n = Z.of_nat (length pl)`), never by their position. *)
 Lemma upB_base : forall cx : dctx, up_base cx ->
   0 <= d_n cx < 2 ^ 26 /\ d_n cx = Z.of_nat (length (d_pl cx)) /\
@@ -2605,7 +2606,7 @@ Proof.
   apply Z.leb_le in Hc. split; [exact Ha | split; [exact Hb | exact Hc]].
 Qed.
 
-(* lia here runs with the euclidean division equations off (lib/A/Prog/YC4b.v:24), so a mod fact is proved
+(* lia here runs with the euclidean division equations off (lib/A/Prog/YC4b.v:25), so a mod fact is proved
    by divisibility, never by lia. *)
 Lemma upD_mod16_of_mod32 : forall x : Z, x mod 32 = 0 -> x mod 16 = 0.
 Proof.
@@ -2614,7 +2615,7 @@ Proof.
 Qed.
 
 (* The two fields of dec_lib_pre_x this stage reads, taken by their shape, never by position
-   (LLVMFuzzerTestOneInput_cg.v:102-116: the payload disjunct and n = length pl). *)
+   (LLVMFuzzerTestOneInput_cg.v:103-117: the payload disjunct and n = length pl). *)
 Lemma upD_base_facts : forall cx : dctx,
   up_base cx ->
   ((d_n cx = 0 /\ d_p cx = A_EMPTY) \/

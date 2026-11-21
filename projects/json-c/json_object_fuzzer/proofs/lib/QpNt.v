@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the jo_get_string_null_A_stmt proofs name jo_preA's conjunct). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -437,7 +438,7 @@ Notation HEAPAx := (HEAPA A4L HIx).
 
 Theorem get_string_null_A : jo_get_string_null_A_stmt HIx AGET_STRING 48.
 Proof.
-unfold jo_get_string_null_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP' & RA) K.
+unfold jo_get_string_null_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP' & RA) K.
 subst tp.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 unfold AGET_STRING in *. word_range sp SPR. unfold_consts.
@@ -1195,7 +1196,7 @@ Notation HEAPAx := (HEAPA A4L HIx).
 
 Theorem get_string_null_A : jo_get_string_null_A_stmt HIx AGET_STRING 48.
 Proof.
-unfold jo_get_string_null_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP' & RA) K.
+unfold jo_get_string_null_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP' & RA) K.
 subst tp.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 unfold AGET_STRING in *. word_range sp SPR. unfold_consts.

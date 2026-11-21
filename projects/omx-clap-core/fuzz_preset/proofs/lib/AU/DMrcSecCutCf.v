@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMrcSecCutCf.v (commit ce1a656b52b7, file sha256 a3bf7a351db6) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 32 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecCutCf.v (commit 3d8ad2aeb77e, H4 cf instance set (reply-rccf); file sha256 dd916a5921b8) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 32 image addresses moved by code-verified function pairs (33 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); 3 data addresses the tool read as sizes, by the same value MAPS prediction, and 1 pcs named in comments; 1 hand maps (the internal file resolve-rccf.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecCutCf.v at commit 2c35faeeaec, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (33 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMrcSecCutCf.v (file sha256 a3bf7a351db6) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 32 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecCutCf.v (H4 cf instance set (reply-rccf); file sha256 dd916a5921b8) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 32 image addresses moved by code-verified function pairs (33 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); 3 data addresses the tool read as sizes, by the same value MAPS prediction, and 1 pcs named in comments; 1 hand maps (the internal file resolve-rccf.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecCutCf.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (33 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4): H4's secondary CUT-READ field DMrcSecReads.rc_sec_cut_t at cgif's
    image, at the cf layer's cut relation YGcfInstDrainR.ARXr_cf.
    rule 24: proves function __asan::QuarantineCallback::Recycle (0x348fc; RChunk secondary cut / map reads) at cgif's cf relation,
    instance of H4's own transports; checker: git grep rc_sec_cut|rc_sec_mapr|rc_reads|rchunk_ok = 0 statements.
 
    WHAT.  [rc_sec_cut_of_cf]: for every B with TfibSyms B, every IOK with YGcfInstBase.IOK_ok B IOK (the instance
-   object is the binary's allocator object, the premise rc_fh_cut_facts_cf takes, YGcfInstRcPrim.v:1095) and every
+   object is the binary's allocator object, the premise rc_fh_cut_facts_cf takes, YGcfInstRcPrim.v:1096) and every
    Hp, rc_sec_cut_t B (ARXr_cf B IOK Hp): at the secondary arm's call, the instance object, the TSD slot, the image's
    constant cells and the whole cut record DMrcSecFc.sec_cut.
    [rc_sec_cut_nf_of_cf]: the same at the flag-free field DMrcSecNf.rc_sec_cut_nf_t (rcc_pre_sec, rcc_pre_x without
@@ -28,7 +29,7 @@
    - the image's constant cells are amr_const with TfibSyms' ts_const (as DMrcFhCf.cell_lit / cell_sym);
    - the stack facts come from rcc_pre_sec at KSTACK_CF = 2048 >= YFeu.KSTACK = 512;
    - the instance object is IOK_ok at the relation's IOK conjunct.
-   The cgif-only size bounds (the map length's and the user size's) are not part of sec_cut (DMrcSecFc.v:9-11), so
+   The cgif-only size bounds (the map length's and the user size's) are not part of sec_cut (DMrcSecFc.v:10-12), so
    none is derived here. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

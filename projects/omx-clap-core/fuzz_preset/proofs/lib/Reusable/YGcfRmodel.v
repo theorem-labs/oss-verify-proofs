@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRmodel.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRmodel.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the model obligations of
    c-asan's realloc composition.
-   The obligations are a Theorem Labs lane's RGtop.rmodel_ok itself (RGtop.v:218, the c5 form; RGtop.v is a by-path copy of
-   cgif lib/RGtop.v@e8a7dd66acf2). Its section closes over the variables its body uses, in their declaration order: U mt ft AOX rpre
+   The obligations are a Theorem Labs lane's RGtop.rmodel_ok itself (RGtop.v:219, the c5 form; RGtop.v is a by-path copy of
+   cgif lib/RGtop.v). Its section closes over the variables its body uses, in their declaration order: U mt ft AOX rpre
    nmax lmax rU rpreA rpreD. gflag is YG0d.gflag, as in RGtop.
-   The instance: U := rU := admits (as_universe B) (the P'' trace premise, YG01.v:158; a Theorem Labs lane 22:05Z), mt := malloc_cf,
+   The instance: U := rU := admits (as_universe B) (the P'' trace premise, YG01.v:159; a Theorem Labs lane 22:05Z), mt := malloc_cf,
    ft := free_cf, nmax := cf_malloc_max, lmax := LIVE_MAX, AOX := cgif's aowned (YG0n.v:236-242) or the live
    error-buffer extent xs_cf (YG0ncf.v:103). The two U conclusions (U tr S1 after the entry step, q <> PNull ->
-   U tr S2 after the inner malloc) follow from the entry premise rU tr S by admits_keep (YG01.v:224): free_cf PNull
+   U tr S2 after the inner malloc) follow from the entry premise rU tr S by admits_keep (YG01.v:225): free_cf PNull
    keeps the depot (cfr_null_state), and malloc_cf keeps it or appends tr (YGcfAmx.v dep_malloc_cf_apath).
    rpre cannot be True: the inner malloc's post (the new block live, the old blocks kept, the new base fresh)
    is malloc_post_cf, which holds only from a Wf_cf state with the three input-driven room facts (ROOM_cf,

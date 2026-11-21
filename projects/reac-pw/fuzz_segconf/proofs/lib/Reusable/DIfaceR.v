@@ -1,6 +1,7 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DIfaceR.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DIfaceR.v (c-asan, frozen), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The raw-frame obligations of the frame-generic Deallocate walk, split out of DGif0.DIface.
 
    DIface's callee contracts (QuarantineCache::Enqueue, Quarantine::Drain and, inside the drain, QuarantineCallback::

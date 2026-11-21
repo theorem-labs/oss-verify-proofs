@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the larger auxiliary vector and its CONFIG_RSEQ entries). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -328,7 +329,7 @@ Definition diamond_joinx_all (nx : nat) (joinpc : Z) (rs : list nat) (R : nat) (
 (* [comment removed for export] *)
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of 0 A)   (* an error PAYLOAD only; any admissible flag serves *)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>
@@ -684,7 +685,7 @@ Definition cr_fail (l : list (nat * acs)) (code : Z) (p : plan) (cs : acs) := CR
 (* [comment removed for export] *)
 Definition collect_all (col : acs -> plan -> list (nat * acs) -> colres) (k : plan) (css : list acs) (acc : list (nat * acs)) : colres :=
   match css with
-  | [] => cr_fail acc 3 k (init_acs_of A)
+  | [] => cr_fail acc 3 k (init_acs_of 0 A)   (* an error PAYLOAD only; any admissible flag serves *)
   | _ => fold_left (fun r cs => match r with CR acc1 None => col cs k acc1 | err => err end) css (cr_ok acc)
   end.
 

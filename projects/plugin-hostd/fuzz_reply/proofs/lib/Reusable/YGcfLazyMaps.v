@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfLazyMaps.v, sha256 8cdb215fc4ca482760c284c79908d4becd947b566a4c4d2db4f1bf3fac97dac7 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,12 +6,13 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: ALedger_cf's alc_lazy_in_maps (YG0ncf.v), every noaccess or lazy address is mapped:
    its init witness and its keep lemmas over the model steps that touch vm_maps, vm_noaccess or m_vm_lazy
    (mmap_model, noaccess_model, with_mmap_backing, grant_md's two arms, munmap_model). Why (Main 2026-10-30,
    a Theorem Labs lane's RepF4Append 7th finding): nothing else in ARcf relates m_vm_lazy / vm_noaccess to vm_maps, so
    commit_expose's premise (no page of a fresh eager grant in m_vm_lazy) was unprovable at the Realloc walk.
-   Reuse check (rule 24, LazyInMapsReuse): no layer, kit (7bb12afd3646) or LPS lemma states the lazy half; the
+   Reuse check (rule 24, LazyInMapsReuse): no layer, kit or LPS lemma states the lazy half; the
    noaccess half exists only as an assumed cs_ok field (YA0e.v:214 co_nasub). No function is proved here.
    Theorem Labs, 2026-10-30 (a Theorem Labs lane): the definition and its model-level keep lemmas moved to YKlazy.v, which
    Requires only YK* model files so that YA*'s start-up arms can call them; re-exported here. The two grant_md

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cjson/cjson_read_fuzzer/lib/RL/I/IImgP.v for this unit: its address tables keep some of cjson's keys and add this unit's own, each at an address of this unit's plain image (lib/Img0.v); the definitions P_* are renamed N_* and psegs is renamed rsegs; the notations KV and KV3 are no longer Local; the Lia, Nia and Nra cache settings are removed; and the imports name this unit's modules. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/CJ/RL/I/IImgP.v, with its module paths, addresses and numbers changed; 102 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.Reloc Require Import RStep.
@@ -14,8 +15,8 @@ Open Scope Z_scope.
 Notation KV a b := (a, b) (only parsing).
 Notation KV3 a b c := (a, b, c) (only parsing).
 (* fuzz_rate's map from the CJ key space to its plain image: the union of libreac/fuzz_disco's printf entries
-   (disco lib/CJ/RL/I/IImgP.v at hub 25e3d17bdb50) and reac-pw/fuzz_role's soft-float entries (role
-   lib/CJ/RL/I/IImgP.v at b8e5097052e7: the rounding table 0x1145c, __extendsftf2 0x200dc, __floatditf 0x7f000900,
+   (disco lib/CJ/RL/I/IImgP.v) and reac-pw/fuzz_role's soft-float entries (role
+   lib/CJ/RL/I/IImgP.v: the rounding table 0x1145c, __extendsftf2 0x200dc, __floatditf 0x7f000900,
    the intervals of __cmptf2 / __getf2 and __subtf3 / __addtf3 / __fe_getround / __fe_raise_inexact), each value
    moved to fuzz_rate's image by symbol + offset, code reference or bytes. Entries no closure file names are left
    out. *)

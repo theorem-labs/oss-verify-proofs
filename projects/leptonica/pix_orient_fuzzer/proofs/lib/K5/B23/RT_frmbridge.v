@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of impl_realizes_f, passed on to impl_realizes, with impl_realizes_f's recorded proof replaced by a plain proof; ARTM_PMfd_reader gives that premise at the fd frame PMfd). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -34,10 +35,26 @@ Theorem impl_realizes_f : forall {X : Type} (chans : list Z) (t : itree node (ex
     (T : X -> TSet) ms c,
   mat_stable PM ->
   (forall mo fd, PM mo -> In fd chans -> fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd))) ->
+  (* LPS 08b1429: a nonempty writev needs the channel's reader, as in [impl_realizes] *)
+  (forall mo, PM mo -> m_channel_reader mo = true) ->
   tok chans t -> AST segtop A (frmW (eq ms)) PM c -> impl segs (at_node segs) t (epost Q) ms ->
   (forall x ms' c', Q x ms' -> AST segtop A (frmW (eq ms')) PM c' -> realizes segs c' (T x)) ->
   realizes segs c (TT t T).
 Proof using Hwx Hsegs Hrom.
-ltac2:(KReplay.run1 (kr_t_RT_frmbridge ()) ["Bridge"] "p'0h03ms'h11xh21Hh32moh43ms0h51Eh62H1h72H2h82HFh93Hmoh:2_Hh;2c'h<2msh=1rh>1Ah?2F0h@2H0hA3HFDhB2HKhC3HPMhD2HQhE2HchF3Hc'hG3HimhH4HtokhI2PMhJ1QhK1ThL1XhM3_H0hN3_H1hO1chP5chanshQ2fdhR1ti001ai011ep;1p;2p;3p;5p;7p;6p;:p;4p;8p;Cp200R0p100A\p4p710p8P0g00BRR1p60651111001p8P0g00CSR2p4p710p8P0g00DJR3p4p7511110p8P0g008kR4p4p741110p8P0g00EKR5p4p741110p8P0g00FFR6p4p710p8g00G=j1ETg00G]R7j1?Tg0077j2LTg00HXj2ITg00I8j1^Tg00J4j3RTg00JKj1QTg00Jmj1KTg001Vj18Tg002;j1JTg00Kaj2HTg00LGj2GTg00M?j1FTg00N7j2]Tg00NYj3Cj2[TP2j3UTg00O3j1=j29Tg00Olj5<Tg00Paj1PTP6j2>j41TP4j7OTg00QZj3ATg00RXj12Tg00SNj3@Tg00TEj26Tg00:TR4j20Tg0018j6MTg00U9l:BTP1j8NTg00V5j1;Tg00W0j2:Tg00@Hj4DTP5l:STg000\j6TTP3lC\Tg00Wkj2ZTg00X`j1VTg00YSj2WTg003<j1XTg009aj1YTg004UR3f0R5'[p=4f2R1f1R6'Z%V5'Wp=5%X5#Yp=3AC365p=7g00ZOR2#Eg00ZmR8%?6'L1I22#Eg00[eR9p-0R:[f4R;P:\3[f5R:g00\[[g00]SR<%^;f7R=P6O1f;R>9R26g00^HR?#Qf3R@#Kg006R#8#8#8#8#8#8#J/H1RA'G%FA,]?3C[[^Q2^39f:R2f9R?f8RA3Up,6segtopRBPA%4;#=P=P@D<P8p,4segsRC%PCRDf<RE#?P21>E=P:FOf=RFP>P1P6O2PBf>RG%41#=PFP6D<PEP;O19AC1[[^;<^03]1P4f6RH#2RI9@B>%4=RJA5>IH'9P2PIO116>H'0'0%3AP1%2A9@BF%42%2?RI=5G?'9PFPIO116G?'0'0P4%4>f?RI%22RK;52'9PGPKO116I2'0%3EP5%4FfARK%2E;5E'9P4fBRL%2F;5FRM,7G%3MPL%2GO1fCRM/6G'0f@RN#3[P5fDRO%2I;5I,7NfERP%2N;5N#3PP%2KO1fFRQ/6K'0P4PQ%2LO1fGRR/6L%3OP5fHRS%2OO1fJ/6PP3fK%2Q;5Q%35RTX<3P:PRPHEMWNWMP6P5O2n2001000000120000000W2W8W5P6P5O2n2001000000120000000W2P6P5O2n2001000000120000000W2W:P6P5O2n2001000000120000000%3=PCPBp,3Hwxp,5HsegsPIPGPFPEP>PEP6P5O2/0TX03X1IRRP?PAP=PHP:P;PBPE%4ARU#=PUP>P>P=P@%4?/95P41726%36RU17>1P517E@%3;R>P6W:W2P6P5O2n2001000000120000000W@X43PEP5O1P5W9X39M:BP8PCPD%?IRVPFPKPEP6P5C1/0TX03X=V1>IRPAP8PDPVPF1>I2PAP1P5GNP7PNPLPFP6P5C1/0TPMPNP6P5O2/0TX03X1MR7P1P6C1[^03P5PKPE%;KP5C1/0TP4PLPF%;LP6C1PUPMP7%;MP1C1P5POPI%;OP@C1g00_@PQPMP6P5O2/0TX03X1Q%;QP:C1eX7>W6P6P5O2n2001000000120000000W2X03PMPG1:M6P5C1/0TP4POPI1:O1P6C1PUPPPLP6P5O2/0TX03X1P1:P@P1C1P5PQPK1:Q;P@C1PMPHP:O2%3:RQP6P5CDPSPPP6P5O2/0TX03X1S1:SHP:C1eX7>W6P6P5O2n2001000000120000000W2X03X1KP5O1n10110100020010100X=VM:SPFP1P6O2/0UP4PGP@P1O2%31PBPK%4@PNP1D<PIP:O19AC@[P5PNP:P;O2PBPO%4HPMP:D<P2PAP=PHP1PBPPPJ%=JPOPOPHP517A517?6PUP5P3P?PTX43P@P6P5ETCDW5X43PPP5O1P5W9X39M:BO5WFX8QWDP6P5O2n2001000000120000000W2X;<X03X1IMC\b?WBWGWEWHWAWCWOX<3WKWJWIW>WRWPXL0o"). Qed.
+  intros X chans t A PM Q T ms c HPM HFD HRD Htok Hc Him HK.
+  assert (F0 : frm0 (ms_fcsr ms)).
+  { destruct Hc as (_ & [E HF] & _ & _). rewrite E. exact HF. }
+  apply (impl_realizes segs segtop Hwx Hsegs chans t A PM (fun x ms' => Q x ms' /\ frm0 (ms_fcsr ms')) T ms c HPM HFD HRD Htok).
+  - eapply AST_conseq; [exact Hc | | intros mo Hmo; exact Hmo]. intros ms0 [H _]. exact H.
+  - eapply impl_mono; [exact (impl_frm (at_node segs) t (epost Q) ms Him F0)|].
+    intros [|x] ms' [H1 H2]; cbn [epost] in *; [exact I | exact (conj H1 H2)].
+  - intros x ms' c' [HQ HF] Hc'. apply (HK x ms' c' HQ).
+    eapply AST_conseq; [exact Hc' | | intros mo Hmo; exact Hmo]. intros ms0 E. split; [exact E | subst ms0; exact HF].
+Qed.
 
 End Bridge.
+
+(* LPS 08b1429: the channel-reader premise of [impl_realizes_f] at the callers' fd frame: the third
+   conjunct of [PMfd]. The recorded proofs of I_fwrite and X_exit pass it. *)
+Lemma ARTM_PMfd_reader : forall RT Σ F0 fs0 mo, ARTM RT Σ mo /\ PMfd F0 fs0 mo -> m_channel_reader mo = true.
+Proof. intros RT Σ F0 fs0 mo (_ & _ & _ & H). exact H. Qed.

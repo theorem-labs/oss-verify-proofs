@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported as in fuzz_bigint's copy: added vie_parts, restated as0_tgt_stmt over run_segments with launch and valid_input_either premises, wrote out as0_tgt_of_run plainly with kernel build and execfn arguments, and reproved via SRomStable.srun_init; the launch input takes its SIGPIPE disposition as a variable sdf. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -13,28 +14,56 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import Js0DrvL
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AsanAcct HeapIfaceA IcptIfaceA LibIfaceAJ HeapIfaceAJx AsanInitK Ja0DefsK Ja0MainPhaseA
 PmLayoutA PmStaticsA PmSpecsAX PmSpecsAa PmAHarnessStmts PmAStaticsTop PmAImgGap PmALibOk PmAClose.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require PropExec.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Common.Cfg Require SRomStable.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
 Ltac2 tcn__UbjsonPmAsanTop () := ([""; "Corelib.Init.Datatypes."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.EquivalenceDefinition.Equivalence."; "LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets."; "LinuxProcessSemantics.LinuxProcessSem.Fs."; "LinuxProcessSemantics.LinuxProcessSem.MemImageType."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.StackLayout."; "LinuxProcessSemantics.LinuxProcessSem.State."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanInitK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.BigintSpec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIfaceA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIfaceAJx.HAJ."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.IcptIfaceA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ja0DefsK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ja0MainPhaseA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PmAHarnessStmts.PMHAS."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PmAImgGap.PMAGAP."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PmALibOk.PMALO."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PmLayoutA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PmSpecsAa.PMA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PmStaticsA.PMSTA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.UbjsonPmAsanTop.FPX_1."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.UbjsonPmFinal."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Asan.M."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Plain.M."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0BUDGET"; "0C"; "1bool"; "1list"; "2Z"; "0HIR"; "0IL"; "0L"; "4lim_source"; "4lim_target"; "3strong_universal_error_free_T_scfg_budgets_abort"; "5Fs"; "5valid_fs"; "6mkImage"; "7SpuriousCfg"; "7entry_stack_fits"]; ["7init_config"; "7valid_argv"; "7valid_brk"; "7valid_envp"; "7valid_hwcap"; "7valid_id"; "7valid_sp"; "8EntryDraw"; "9InputStream"; "9NetQueue"; ":LIMIT"; ":inp"; ";spec"; "<asan_iface"; "<asan_layout"; "<asan_run"]; ["<asan_statics_cells"; "=asan_ext_ok"; "=asan_iface_okR"; ">aicpt_ok"; ">icpt_layout"; "?APH0"; "?ASEGS0"; "@dla_ok_stmt"; "@drv_consts_stmt"; "@drv_main_stmt"; "@ext_ok_stmt"; "@free_null_stmt"; "@gap_ok_stmt"; "@h4e_stmt"; "@icpt_ok_stmt"; "@inst_ok_stmt"]; ["@usage_stmt"; "ALay"; "Brt_img_gap"; "Charness_depsA"; "DAADDR_A"; "DADDR_A"; "EEXT"; "Elayout"; "FTopLSA"; "Gsrealizes"; "Has0_tgt_stmt"; "Hopen_leavesA"; "IScfgP_cfg0"; "Icfg0"; "Jinit_pc"; "Jloaded_segments"]; ["Jphdrs"; "Kinit_pc"; "Kloaded_segments"; "Kphdrs"; "Lle"; "Lpow"; "Lsub"; "0abrt"; "0ar"; "0argv"; "0brk0"; "0envp"; "0fs"; "0gid"; "0groups"; "0hw"]; ["0mbase"; "0net"; "0nofile"; "0rdraw"; "0scfg"; "0sigmask"; "0sp"; "0stdin"; "Mbv"; "0uid"; "0urnd"]]).
 Section FPX_1.
 #[local] Existing Instance PropExec.fx0.
+Lemma vie_parts : forall inp, valid_input_either inp ->
+valid_argv (in_argv inp) /\ valid_envp (in_envp inp) /\ valid_fs (in_fs inp)
+/\ valid_creds inp /\ valid_hwcap (in_hwcap inp) /\ in_va_size inp = Sv48
+/\ in_channel_reader inp = true /\ in_sigpipe_terminal inp = false.
+Proof.
+intros inp H. red in H.
+repeat match goal with G : _ /\ _ |- _ => destruct G end.
+repeat match goal with |- _ /\ _ => split end; assumption.
+Qed.
 Definition as0_tgt_stmt (scfg : SpuriousCfg) : Prop :=
 forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
 valid_sp sp -> valid_brk Asan.M.loaded_segments brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
-valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp -> valid_hwcap (in_hwcap inp) ->
-in_va_size inp = Sv48 ->
-srealizes Asan.M.loaded_segments scfg
-(init_config Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs
-sp brk mbase rdraw target_alloc_limit inp)
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp -> valid_launch inp ->
+valid_input_either inp ->
+srealizes (run_segments Asan.M.loaded_segments inp sp mbase) scfg
+(init_config (run_segments Asan.M.loaded_segments inp sp mbase) Asan.M.init_pc Asan.M.phdrs sp brk mbase rdraw target_alloc_limit inp)
 (spec (in_argv inp) (in_fs inp)).
-Lemma as0_tgt_of_run : ltac2:(TCodec.tc2 tcn__UbjsonPmAsanTop "RK'>'RHyR0%211'G'3y8%611%311%411&;'H%719'I'2&FrA%211&B&Q6%2214&Ar?%211&C%113&?rEr@%332=1&Er>%211&Dr=%211&<rB%211'QIrJ&@&QN&Q5rIrHrGrF&J&KrDrCr<r;r:r9%7=M65CQ8LQ2IF4321%@9Q6?>=<;:91&L%12Q08%E4Q9D31p0G1p0K1p0O1p0Q31p0Q81p0Q;1p0Q?1p0QC1pUFQJ1pT@QH1pU<R41pU6R51pU4QL1pTNQN1pU0R81pTLR91pUDR:1pU@R31pTJR51pTHR71pTDR81pU8R>1pU2R@1pTFRA1pU>RB1&QJr2%211p041pU:RJ1").
+Lemma as0_tgt_of_run : forall scfg,
+(forall sp brk0 mbase (rdraw : EntryDraw) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word)
+(net : NetQueue) (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (kb : KernelBuild) (execfn : list byte) (sdf : bool),
+valid_sp sp -> valid_brk ASEGS0 brk0 -> valid_mmap_base mbase -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd kb execfn sdf) ->
+valid_launch (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd kb execfn sdf) ->
+valid_id uid -> valid_hwcap hw -> valid_fs fs ->
+srealizes ASEGS0 scfg (init_config ASEGS0 Asan.M.init_pc APH0 sp brk0 mbase rdraw AsanInitK.LIMIT
+(AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd kb execfn sdf))
+(spec argv fs)) ->
+as0_tgt_stmt scfg.
 Proof.
-intros scfg RUN sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hva Hve Hvfs Hcreds Hhw Hsv.
-destruct Hcreds as [Hu _].
-exact (RUN sp brk mbase rdraw (in_argv inp) (in_envp inp) (in_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp)
-(in_net inp) (in_nofile inp) (in_sigmask inp) (in_abort_terminal inp) (in_urandom inp) Hsp Hbrk Hva Hve Hfit Hu Hhw Hvfs).
+intros scfg RUN sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hlau Hvl Hvi.
+apply (SRomStable.srun_init scfg Asan.M.loaded_segments inp sp mbase _ _ _ _ _ _ eq_refl).
+destruct (vie_parts inp Hvi) as (Hva & Hve & Hvfs & Hcreds & Hhw & Hsv & Hchrd & Hspt).
+pose proof (valid_input_either_recorded_kernel inp Hvi) as Hker. clear Hvi.
+destruct inp as [argv envp fs0 stdin0 uid gid groups net nofile sigmask hw abt va urnd tmp kb exfn chrd spd spt].
+cbn [in_argv in_envp in_uid in_hwcap in_va_size in_fs in_image_fs in_tmp in_kernel
+in_channel_reader in_sigpipe_default in_sigpipe_terminal] in *.
+subst va chrd spt.
+destruct Hcreds as [Hu _]. cbn [in_uid] in Hu.
+rewrite Hker in Hlau, Hvl |- *.
+exact (RUN sp brk mbase rdraw argv envp (fs_seed_tmp fs0 tmp)
+stdin0 uid gid hw groups net nofile sigmask abt urnd kb exfn spd
+Hsp Hbrk Hmb Hva Hve Hfit Hlau Hvl Hu Hhw Hvfs).
 Qed.
 Theorem ubjson_pm_asan_final_abort : ltac2:(TCodec.tc2 tcn__UbjsonPmAsanTop "A&QJ&QM%211&:&8&9(=&R2&R1&R3%43321&QO&QN&R0%83321%<5>;:51p0>1").
 Proof.
@@ -45,10 +74,12 @@ drv_lib_layout_top0 (LIB0_of_packages packages_src) (fun sp _ => PMSXC.top_lsx) 
 intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid _.
 pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & Hcreds & _ & _ & Hhw & _).
-specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
-specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds Hhw Hsv48).
+destruct Hens as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [Hafit Halau]]]].
+assert (Hvl : valid_launch inp) by (red in Hvalid; tauto).
+pose proof (valid_input_either_of_valid_input_abort inp Hvalid) as Hvi.
+destruct (vie_parts inp Hvi) as (Hargv & Henvp & Hfs & Hcreds & _ & _ & Hrd & _).
+specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hrd).
+specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Halau Hvl Hvi).
 unfold ShippedBudgets.lim_source, ShippedBudgets.lim_target.
 split; [| split].
 - eapply srealizes_error_free_unkilled; [exact SRC | apply kill_free_spec].
@@ -64,10 +95,10 @@ intros L C IL BUDGET B1 B2 LY PKG H1 H1n H2 H3 H3e HG H5 H6 H7 H8.
 assert (ILY : as0_icpt_layout IL) by exact (proj1 H6).
 pose proof (@PMALO.lib_ok ScfgP_cfg0 L C IL LY ILY PKG) as H4.
 apply ubjson_pm_asan_final_abort. apply as0_tgt_of_run.
-intros sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs.
-exact (as0_realizes_spec_run cfg0 eq_refl eq_refl L C IL (PMHAS.Lay L) (fun _ => PMSTA.TopLSA Asan.M.loaded_segments PMA.AD PMA.AAD)
-PMA.EXT BUDGET B1 B2 H1 H1n H2 H3 H3e HG H4 H5 H6 H7 H8 PMSTT.lsx_atexit
-sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs).
+intros sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt urnd kb execfn sdf Hsp Hbrk Hmb Hva Hve Hfit Hlau Hvl Huid Hhw Hvfs.
+eapply (as0_realizes_spec_run cfg0 eq_refl eq_refl L C IL (PMHAS.Lay L) (fun _ => PMSTA.TopLSA Asan.M.loaded_segments PMA.AD PMA.AAD)
+PMA.EXT BUDGET B1 B2 H1 H1n H2 H3 H3e HG H4 H5 H6 H7 H8 PMSTT.lsx_atexit);
+first [eassumption | reflexivity].
 Qed.
 Definition open_leavesA (L : asan_layout) (ar : asan_run) (HI : asan_iface) : Prop :=
 @PMA.locale_ctor_spec ScfgP_cfg0 L ar HI /\ @PMA.locale_dtor_spec ScfgP_cfg0 L ar HI /\ @PMA.push_mi_spec ScfgP_cfg0 L ar HI

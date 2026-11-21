@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* The plain-image walk of the harness body LLVMFuzzerTestOneInput (projects/reac-repacer/fuzz_wire/source/
    fuzz_wire.c:253-282), 0x12d78, 360 bytes, against LLVMFuzzerTestOneInput_c.v's LLVMFuzzerTestOneInput_sr_contract.
-   New. Templates (no function ported): reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput.v (6874bc78b1f; the
+   New. Templates (no function ported): reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput.v (the
    skeleton g_pre / g_above / g_run / blk_keep / norm_stk / lf_callee_cases / lf_rw_cells_frame), libreac/fuzz_decode's
-   released fd_glue.v / fd_entry.v / fd_exit.v (25e3d17bdb5; the allocator calls at the harness entry: g_malloc, g_free,
+   released fd_glue.v / fd_entry.v / fd_exit.v (the allocator calls at the harness entry: g_malloc, g_free,
    and g_run whose segments may write into a block the walk allocated, lf_mine), this unit's check_copy.v / cc_segs.v.
    `size < 1 || size >= FUZZ_INPUT_MAX` is LLVMFuzzerTestOneInput_early.v's llvm_early. The rest is split at each SR
    call, the straight-line segments are evt proofs bridged to SR by g_run (or llvm_run where no byte is written):

@@ -2,7 +2,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): asan-ubsan twin of lib/A/Stdio/PFreadITbl.v
-   (a working branch d340d6cc759, a Theorem Labs lane), ported from that file: the same table and the same three
+   (a working branch, a Theorem Labs lane), ported from that file: the same table and the same three
    run lemmas; Requires lib.A.A<n> -> lib.Reusable.Y<n> (AB1v AE34 AF0l AF0m AF0x AE2y) and A<n>. -> Y<n>.
    qualified names. Every pc RE-DERIVED on the asan-ubsan image by symbol + offset (pyelftools + capstone).
 
@@ -34,9 +34,10 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      PStdioImgB.PFREAD_U = fread+0 (musl), by name                                              [0x8ee5c]
 
    CROSS-CHECK (owner's order, template only, nothing imported): the walk fread_walkA
-   (I_freadw.v:38 (sha256 25add494ffa2; internal record), a working branch f2159272960) starts at the same 0x415d0 and
+   (I_freadw.v:38 (sha256 25add494ffa2; internal record), a working branch) starts at the same 0x415d0 and
    stops at 0x8ed28; its interior pcs 0x435ac / 0x435b8 / 0x436d4 / 0x436ec / 0x43610 all lie in the
    range this table adds. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPost.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamPost.table); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPost.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamPost.table); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
 (* Step 3 of the evt -> SRr seam at musl vfprintf: GXA's post read as the harness's post, every
    piece of it except the final assembly (GxSeam does that).
 
@@ -15,7 +15,7 @@
 
    Two facts about fm.asan's four segments (tfibsegs) are checked by vm_compute: a writable segment
    is readable (so a writable byte is a byte the harness can read), and every segment lies in
-   [0x10000, 0x5f7000) (0x5f7000 = sym 0x35000 = GXA's GLOBALS_TOP on A_img, RT_IImgA.v:73). *)
+   [0x10000, 0x5f7000) (0x5f7000 = sym 0x35000 = GXA's GLOBALS_TOP on A_img, RT_IImgA.v:74). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

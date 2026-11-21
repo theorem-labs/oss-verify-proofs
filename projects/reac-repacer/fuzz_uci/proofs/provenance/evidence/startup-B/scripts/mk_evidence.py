@@ -88,7 +88,7 @@ SCRIPTS = [
 ]
 
 # cited tools: name, the lane copy whose bytes are hashed, candidate (commit, tree path) homes searched for those bytes.
-# SET: = the extracted start-up set of commit dbb5a97ad14 ($FT, set by the lane env file), so no lane directory name is
+# SET: = the extracted start-up set ($FT, set by the lane env file), so no lane directory name is
 # written here
 CITED = [
     ('af0m.py', 'SET:frozen/af0m.py.frozen-238598b380f1'),

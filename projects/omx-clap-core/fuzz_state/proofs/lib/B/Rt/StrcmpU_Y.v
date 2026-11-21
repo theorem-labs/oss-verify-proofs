@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for omx-clap-core/fuzz_state's ASan build (image B, fuzz_state.asan-ubsan sha256
    5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204): the s2 range check of ___interceptor_strcmp
    (0x42d68 -> 0x42db8, lib/B/Rt/StrcmpChkY.scy_check_srr) restated over FSupoison.ARU for any set U of user-poisoned heads, for
-   StrcmpU.v's fs_strcmp_U. Ported from image A's lib/A/Rt/StrcmpU_Y.v (a working branch fb15d0ff844): module
+   StrcmpU.v's fs_strcmp_U. Ported from image A's lib/A/Rt/StrcmpU_Y.v (a working branch): module
    paths lib/A -> lib/B for the image modules (AB1v AE34 AF0l AF0m AF0x AB1w AE20 AE2y -> YB1v YE34 YF0l YF0m YF0x YB1w
-   YE20 YE2y, lib/A/Rt -> lib/B/Rt) and the image-B literals of a Theorem Labs lane's relocation (lib/B/Rt/StrcmpChkY.v 65fd0095f15:
+   YE20 YE2y, lib/A/Rt -> lib/B/Rt) and the image-B literals of a Theorem Labs lane's relocation (lib/B/Rt/StrcmpChkY.v:
    1284712 -> 1285992, 347480 -> 347592); FSupoison and FSuwalk are image-independent and stay lib/A's (lib/B's files
-   load the same). StrcmpChkY.scy_check_srr takes AR over the memory of the config it runs (StrcmpChkY.v:246), which is false at
+   load the same). StrcmpChkY.scy_check_srr takes AR over the memory of the config it runs (StrcmpChkY.v:247), which is false at
    U <> [] (FSupoison.block_granule0 gives shadow 0 on a live block's user granule, upoisoned 0xf7). This is its
-   Section f (StrcmpChkY.v:241-2433) with HAR -> ARU (a Theorem Labs lane, 2026-10-29T09:53Z: an fs-local copy, the relocated file
+   Section f (StrcmpChkY.v:242-2434) with HAR -> ARU (a Theorem Labs lane, 2026-10-29T09:53Z: an fs-local copy, the relocated file
    unchanged): basics reads ARm on unpoison U mem, ent_ro moves the rodata cells to mem (FSuwalk.region_ok_unp), and
    finishR builds AR on unpoison U mem' (the check writes only [sp - 72, sp), above kHighMemBeg, off U's shadow bytes)
    and then ARU (FSuwalk.ARU_intro). POSTr keeps ARU in place of AR. Every other line is the relocated text verbatim;

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, mremap's move cuts the source range out of the mapping list (maps_subtract) in place of removing its entry. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Sys.SyscallTable.
@@ -201,19 +202,21 @@ unfold vm_backed_maps. cbn [vm_maps vm_noaccess vm_limit].
 set (KL := maps_subtract (m_vm_lazy m) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
 set (KP := List.filter (page_outside_range (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n))
 (m_vm_materialized m)) in *.
-set (R0 := map_remove (vm_maps (m_vmmaps m)) old) in *.
+(* 08b1429 Sys/Mm/Mremap.v: [mremap_maps_next] and [mremap_move_charge] cut the source range
+   with [maps_subtract].  The cut is
+   [maps_subtract_all _ [(old, old_n)]], so [disj_bnd_msa] carries the bound and the
+   disjointness from [dst] over from the uncut maps. *)
+set (R0 := maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
 set (NA := vm_noaccess (m_vmmaps m)) in *.
 pose proof (wrange dst) as Wd. pose proof (wrange new_n) as Wn.
-assert (HR0b : forall a sz, In (a, sz) R0 -> bv_unsigned a + bv_unsigned sz <= two_pow_64).
-{ intros a sz Hin. apply Hb. unfold R0, map_remove in Hin. apply filter_In in Hin. exact (proj1 Hin). }
-assert (HR0f : region_free R0 dst new_n = true).
-{ apply region_free_intro. intros a sz Hin. apply (region_free_In (vm_maps (m_vmmaps m)) dst new_n a sz).
-- exact (region_free_app_l' _ _ _ _ Hfree).
-- unfold R0, map_remove in Hin. apply filter_In in Hin. exact (proj1 Hin). }
-assert (HP : disj_bnd (bv_unsigned dst) (bv_unsigned dst + bv_unsigned new_n) (maps_subtract_all R0 NA)).
-{ apply disj_bnd_msa. intros a sz Hin. split; [exact (HR0b a sz Hin)|].
-pose proof (region_free_In R0 dst new_n a sz HR0f Hin) as Hov. unfold iv_overlap in Hov.
+assert (HP0 : disj_bnd (bv_unsigned dst) (bv_unsigned dst + bv_unsigned new_n) R0).
+{ change R0 with (maps_subtract_all (vm_maps (m_vmmaps m)) [(old, old_n)]).
+apply disj_bnd_msa. intros a sz Hin. split; [exact (Hb a sz Hin)|].
+pose proof (region_free_In (vm_maps (m_vmmaps m)) dst new_n a sz (region_free_app_l' _ _ _ _ Hfree) Hin) as Hov.
+unfold iv_overlap in Hov.
 apply andb_false_iff in Hov. destruct Hov as [Hov|Hov]; apply Z.ltb_ge in Hov; lia. }
+assert (HP : disj_bnd (bv_unsigned dst) (bv_unsigned dst + bv_unsigned new_n) (maps_subtract_all R0 NA)).
+{ apply disj_bnd_msa. exact HP0. }
 assert (HS : live_bytes (maps_subtract_all (maps_subtract_all R0 NA)
 (maps_subtract KL (bv_unsigned dst) (bv_unsigned dst + bv_unsigned new_n)))
 = live_bytes (maps_subtract_all (maps_subtract_all R0 NA) KL)).

@@ -1,6 +1,6 @@
 (* G4 IMAGE B: ex_seg_T (lib/B/FMW_ex_base.v) from the five token sub-segments of lib/B/FMW_ex_tok_base.v: the loop at
    TK_LH by strong induction on |text| - j (re-entry per iteration, as FMW_plain.v pl_loop). Twin of image A's
-   lib/A/FMW_ex_tok.v (06d82004dc3). UBSan guards refuted on the way (B5 table, trap 0x8194c): 0x816a0 (tok_t0,
+   lib/A/FMW_ex_tok.v. UBSan guards refuted on the way (B5 table, trap 0x8194c): 0x816a0 (tok_t0,
    tok_n), 0x81734 0x8175c 0x81780 0x817c4 (tok_lh), 0x81838 (tok_e). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

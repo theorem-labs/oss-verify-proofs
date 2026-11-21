@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef); ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -8,14 +9,18 @@
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* LPS 75d69e00: the definitions are stated explicitly (they were zQ-encoded).  The section is
+   over the ProcInput [inp] (argcN / envp_ptr / wrap_mem now take it, see ArgvEnv.v); the
+   binary-specific constants are the ones Rocq decoded from the previous zQ text, unchanged.
+   New: the auxv layer gains the 75d69e00 kernel's entries (AT_SYSINFO_EHDR, AT_CLKTCK, AT_BASE,
+   AT_FLAGS, AT_ENTRY, AT_GID/EGID, AT_EXECFN) and the CONFIG_RSEQ pair [J_rseq]; the AT_RANDOM
+   pointer reads the rseq flag. *)
 
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From OSSVerify.boost_json.fuzz_parse.images Require Import Plain.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import StartupTac ArgvEnv RefLayout.
-Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib4Init9Datatypes04list03nat37Corelib7Numbers7BinNumsi34Npos35stdpp9bitvectorbdefinitionsk32bv79OSSVerify6Proofsaboost_jsonafuzz_parse3libeRefStartupDefs4FPX1~~~~~~m5h0after_last_slash3h5LinuxProcessSemanticsfLinuxProcessSembStackLayoutrffat_random_bytesrf9ed_random37Corelib5Lists7ListDefhh13nth79OSSVerify6Proofsaboost_jsonafuzz_parse3libeRefStartupDefs4Defs~~~~~~hif2rbk37Z_to_bv46Stdlib6ZArith6BinInt1Zho53subk3bbv_unsignedho53add06lengthho53mulho56of_nat69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7ArgvEnv~~~~~~ht25argcN69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7CatExec~~~~~~ih5ccat_argv_ptr03nilhif4pn_w69OSSVerify6Proofsaboost_jsonafuzz_parse3libeRefStartupDefs~~~~~~imccprogname_offrfdat_random_ptr06option3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsit5h0word_to_le_bytesih56wbytes04Nonehif6auxv_whif6envp_whifaprogname_whif6argc_whif6argv_whif8aux_basehif5rnd_w69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7ZStores~~~~~~jnc5zeros04conshif6D_tlsAhif6D_tlsBhif3rbn3h5LinuxProcessSemanticsfLinuxProcessSem6BvBaseju0dbytes_le_to_Zhifccanary_byteshif8canary_whif5D_cxxhif4D_fdhif6D_libchif5D_ssphif5D_tls37Corelib4Init5Logickm92eqhh16firstnhh15skipnrf9EntryDraw" s.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
@@ -29,72 +34,186 @@ Fixpoint after_last_slash (s : list byte) (i acc : nat) : nat :=
   | [] => acc
   | b :: s' => after_last_slash s' (S i) (if bv_eqb b (Z_to_bv 8 47) then S i else acc)
   end.
-Definition progname_off : ltac2:(zQ "40!h8!he!jc!m0>1s@1$0@1$3@1$2#8$1") := ltac2:(zQ "40!h8!jc!qb!m0\1s@1$0@1$3@1$1#8@3$2^1N0N0").
+Definition progname_off : list byte -> nat := fun s => after_last_slash s 0 0.
 
 End FPX1.
 
 Section Defs.
   Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.          (* [comment removed for export] *)
-  Variable rnd : ltac2:(zQ "10!kp6$0").    (* [comment removed for export] *)
+  Variable rnd : EntryDraw.    (* [comment removed for export] *)
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
 
   (* [comment removed for export] *)
-  Definition rb : ltac2:(zQ "30!h8!jc!m0@1$0@1$2@1$1#8") := ltac2:(zQ "20!v3!hg5@1$0@1$1?3rnd").
-  Definition rbn : ltac2:(zQ "30!he!jc!m0>1i$0@1$2@1$1#8") := ltac2:(zQ "60!jc!he!hi8!hn5!hnb!m0\1i$1@4$2@1$5@1$0#8^1$3@2$4@1$0#8Z").
+  Definition rb : list byte := at_random_bytes (ed_random rnd).
+  Definition rbn : nat -> byte := fun i => nth i rb (Z_to_bv 8 0).
 
   (* [comment removed for export] *)
-  Definition aux_base : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "40!jc!hpd!hnb!hq4@2$2@1$0#k0@2$1@2$3@1$0#k0?3sp0+hn0").
+  Definition aux_base : word := Z_to_bv 64 (bv_unsigned sp0 - 368).
   (* [comment removed for export] *)
-  Definition argv_w : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "40!jc!hr2!hnb!hq4@2$2@1$0#k0@2$1@2$3@1$0#k0?3sp0+8").
-  Definition envp_w : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "90!jc!hr2!hr9!h8!hs1!hs8!hnb!m0!hq4@2$6@1$0#k0@2$1@2$1@2$8@1$0#k0?3sp0+h0@2$4+8@1$5@2$2@1$3@1$7@1$0#8?2av").
-  Definition auxv_w : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "90!jc!hr2!hr9!h8!hs1!hs8!m0!hnb!hq4@2$7@1$0#k0@2$1@2$1@2$1@2$8@1$0#k0?3sp0+h8@2$4+8@1$5@2$2@1$3@1$6@1$0#8?2av@2$4+8@1$5@2$2@1$3@1$6@1$0#8?2ev").
-  Definition argc_w : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "10!igc@1$0?2av").
+  Definition argv_w : word := Z_to_bv 64 (bv_unsigned sp0 + 8).
+  Definition envp_w : word := Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)).
+  Definition auxv_w : word :=
+    Z_to_bv 64 (bv_unsigned sp0 + 24 + 8 * Z.of_nat (length av) + 8 * Z.of_nat (length ev)).
+  Definition argc_w : word := argcN inp.
   (* [comment removed for export] *)
-  Definition pn_w : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "10!ikf@4$0?3sp0?2av?2evN0").
-  Definition progname_w : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "b0!jc!m0!h8!ilf!hi8!im4!iqd!hr2!hs8!hnb!hq4@2$9@1$0#k0@2$7@2$a@1$0#k0$5@1$8@1$6@4$4@1$2@1$1@1$0#8N0?2av@1$3@1$1@1$0#8").
+  Definition pn_w : word := cat_argv_ptr (ed_top rnd) av ev (in_execfn inp) 0.
+  Definition progname_w : word :=
+    Z_to_bv 64 (bv_unsigned pn_w + Z.of_nat (progname_off (nth 0 av []))).
   (* [comment removed for export] *)
-  Definition rnd_w : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "10!ird@3$0?3sp0?2av?2ev").
+  Definition rnd_w : word := at_random_ptr sp0 (kb_rseq (in_kernel inp)) av ev.
 
   (* [comment removed for export] *)
-  Definition D_libc : ltac2:(zQ "30!jc!m0!isd>0@1$1@1$0#k0@1$2@1$1@1$0#8") := ltac2:(zQ "a0!jc!hnb!jgc!ji1!m0!jib!jj1!jjb!im4!jk5@3$3@3$3@3$3@3$3@3$3@3$3\0@1$4@1$0#k0@1$5@1$4@1$0#8@2$1@1$0#k0+hgrlu8@2$2N8$7@2$1@1$0#k0+hirpl0@2$2N8$6@2$1@1$0#k0+hirpr0@2$2N8?2hw@2$1@1$0#k0+hirpn8@2$2N8@2$1@1$0#k0+hgg0@2$1@1$0#k0+hirpk0@2$2N8$8@2$1@1$0#k0+hirpj8@2$2N8$9").      (* [comment removed for export] *)
+  Definition D_libc : word -> option byte :=
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (fun _ : word => None)
+      (Z_to_bv 64 1095144) (word_to_le_bytes 8 envp_w))            (* 0x10b5e8 *)
+      (Z_to_bv 64 1227088) (word_to_le_bytes 8 auxv_w))            (* 0x12b950 *)
+      (Z_to_bv 64 1227184) (word_to_le_bytes 8 hw))                (* 0x12b9b0 *)
+      (Z_to_bv 64 1227128) (word_to_le_bytes 8 (Z_to_bv 64 4096))) (* 0x12b978 *)
+      (Z_to_bv 64 1227072) (word_to_le_bytes 8 pn_w))              (* 0x12b940 *)
+      (Z_to_bv 64 1227064) (word_to_le_bytes 8 progname_w).        (* 0x12b938 *)
 
   (* [comment removed for export] *)
-  Definition J_lsm : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1J~0~0") := ltac2:(zQ "a0!jc!hnb!jgc!ji1!hpd!hq4!m0!isd!jl3!jld\1J>0@1$6@1$0#k0@1$7@1$6@1$0#8@3$3@3$3@3$3@3$3@3$3@3$3@3$3@3$3^1@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+8@2$2N8@2$1@1$0#k0Z@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+h0@2$2N8@2$1@1$0#k0Z@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+h8@2$2N8@2$1@1$0#k0Z@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+i0@2$2N8@2$1@1$0#k0Z@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+i8@2$2N8@2$1@1$0#k0+tqglc@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+j0@2$2N8$9@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+j8@2$2N8$8@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+k0@2$2N8@2$1@1$0#k0+knjt0").
+  Definition J_lsm : (word -> option byte) -> word -> option byte := fun J =>
+    wbytes (wbytes (wbytes (wbytes
+    (wbytes (wbytes (wbytes (wbytes J
+      (Z_to_bv 64 (bv_unsigned sp0 - 8)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 16)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 24)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 32)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 40)) (word_to_le_bytes 8 (Z_to_bv 64 893020)))  (* 0xda05c *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 48)) (word_to_le_bytes 8 argv_w))
+      (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 argc_w))
+      (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 291792)).  (* 0x473d0 *)
+
+  (* LPS 08b1429: with CONFIG_RSEQ the kernel adds AT_RSEQ_FEATURE_SIZE (27) = 28 and
+     AT_RSEQ_ALIGN (28) = 32, which __init_libc copies into aux[27], aux[28]. *)
+  Definition J_rseq (J : word -> option byte) : word -> option byte :=
+    if kb_rseq (in_kernel inp)
+    then wbytes (wbytes J
+           (Z_to_bv 64 (bv_unsigned sp0 - 152)) (word_to_le_bytes 8 (Z_to_bv 64 28)))
+           (Z_to_bv 64 (bv_unsigned sp0 - 144)) (word_to_le_bytes 8 (Z_to_bv 64 32))
+    else J.
 
   (* [comment removed for export] *)
-  Definition J_aux : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>2Jf~0~0") := ltac2:(zQ "b0!jc!hnb!ji1!jgc!hpd!hq4!m0!isd!jm7!jn3!jr6\2Jf>0@1$6@1$0#k0@1$7@1$6@1$0#8@3$2@3$2@3$2@3$2@3$2@3$2@3$2@3$2@3$2@3$2^1$8@1$aNhj0@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+hl8@2$3N8@2$1@1$0#k0+hggk0@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+hl0@2$3N8@2$1@1$0#k0+j8@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+hk8@2$3N8@2$1@1$0#k0+a@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+v0@2$3N8?2hw@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+hk0@2$3N8@2$1@1$0#k0+hgg0@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+hh8@2$3N8?3uid@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+hh0@2$3N8?3uid@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+r8@2$3N8@2$1@1$0#k0Z@2$1@1$0#k0@2$4@2$5@1$0#k0?3sp0+q8@2$3N8$9").                  (* [comment removed for export] *)
+  Definition J_aux (Jf : word -> option byte) : word -> option byte :=
+    J_rseq
+    (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+    (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+      (wbytes Jf aux_base (zeros 304))
+      (Z_to_bv 64 (bv_unsigned sp0 - 104))                                        (* aux[33] AT_SYSINFO_EHDR *)
+        (word_to_le_bytes 8 (la_sysinfo_ehdr (launch_auxv inp sp0 mbase))))
+      (Z_to_bv 64 (bv_unsigned sp0 - 240)) (word_to_le_bytes 8 hw))              (* aux[16] AT_HWCAP *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 320)) (word_to_le_bytes 8 (Z_to_bv 64 4096))) (* aux[6] AT_PAGESZ *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 232)) (word_to_le_bytes 8 (Z_to_bv 64 100))) (* aux[17] AT_CLKTCK *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 344)) (word_to_le_bytes 8 (Z_to_bv 64 65600))) (* aux[3] AT_PHDR 0x10040 *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 336)) (word_to_le_bytes 8 (Z_to_bv 64 56)))   (* aux[4] AT_PHENT *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 328)) (word_to_le_bytes 8 (Z_to_bv 64 10)))   (* aux[5] AT_PHNUM *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 312)) (word_to_le_bytes 8 (Z_to_bv 64 0)))    (* aux[7] AT_BASE *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 304)) (word_to_le_bytes 8 (Z_to_bv 64 0)))    (* aux[8] AT_FLAGS *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 296)) (word_to_le_bytes 8 entry))            (* aux[9] AT_ENTRY *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 uid))              (* aux[11] AT_UID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 uid))              (* aux[12] AT_EUID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 264)) (word_to_le_bytes 8 (in_gid inp)))     (* aux[13] AT_GID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 256)) (word_to_le_bytes 8 (in_gid inp)))     (* aux[14] AT_EGID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 184)) (word_to_le_bytes 8 (Z_to_bv 64 0)))    (* aux[23] AT_SECURE *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w))            (* aux[25] AT_RANDOM *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 120))                                        (* aux[31] AT_EXECFN *)
+        (word_to_le_bytes 8 (at_execfn_ptr (ed_top rnd) (in_execfn inp)))).
 
   (* [comment removed for export] *)
-  Definition D_tlsA : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1D~0~0") := ltac2:(zQ "80!jc!hnb!ji1!jgc!m0!jrf!ilf!isd\1D>0@1$4@1$0#k0@1$7@1$4@1$0#8@3$2@3$2@3$2@3$2@3$2@3$2@3$2@3$2@3$2@3$2^1@2$1@1$0#k0+hirmu0@2$3N8@2$1@1$0#k0Z@2$1@1$0#k0+hirmv0@2$3N8@2$1@1$0#k0Z@2$1@1$0#k0+hirmu8@2$3N8@2$1@1$0#k0+8@2$1@1$0#k0+hirpm0@2$3N8@2$1@1$0#k0+u0@2$1@1$0#k0+hirpm8@2$3N8@2$1@1$0#k0+8@2$1@1$0#k0+hgrms8@2$3N8@2$1@1$0#k0Z@2$1@1$0#k0+hgrmr0@2$3N8@2$1@1$0#k0+hgrms8@2$1@1$0#k0+hgrlv0@2$3N8@2$1@1$0#k0+hgrlv0@2$1@1$0#k0+hirpk8@3$5@1$4@1$0#8@2$1@1$0#8+1@1$6@1$4@1$0#8@2$1@1$0#k0+hgrmh8@2$3N4@2$1@1$0#k0+2").        (* [comment removed for export] *)
+  Definition D_tlsA : (word -> option byte) -> word -> option byte := fun D =>
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes D
+      (Z_to_bv 64 1226464) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 1226480) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 1226472) (word_to_le_bytes 8 (Z_to_bv 64 8)))
+      (Z_to_bv 64 1227104) (word_to_le_bytes 8 (Z_to_bv 64 224)))
+      (Z_to_bv 64 1227112) (word_to_le_bytes 8 (Z_to_bv 64 8)))
+      (Z_to_bv 64 1095368) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 1095344) (word_to_le_bytes 8 (Z_to_bv 64 1095368)))
+      (Z_to_bv 64 1095152) (word_to_le_bytes 8 (Z_to_bv 64 1095152)))
+      (Z_to_bv 64 1227080) [Z_to_bv 8 1])
+      (Z_to_bv 64 1095192) (word_to_le_bytes 4 (Z_to_bv 64 2)).
 
-  Definition D_tlsB : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>3tid@1$1@1$0#k0>1D~0~0") := ltac2:(zQ "61!jc!hnb!jgc!ji1!m0!isd&@2$2N8@2$1@1$0#k0+hgrlv0\3tid@1$4@1$0#k0\1D>0@1$4@1$0#k0@1$5@1$4@1$0#8@3$3@3$3@3$3@3$3@3$3@3$3^1@2$1@1$0#k0+hgrmh0@2$2N4^2@2$1@1$0#k0+hgrmo8@2$2N8@2$1@1$0#k0+hirpo0@2$1@1$0#k0+hgrmm8@2$2N8@2$1@1$0#k0+hgrmm8@2$1@1$0#k0+hgrlv8~0@2$1@1$0#k0+hgrmg0~0@2$1@1$0#k0+hgrmg8@2$2N8@2$1@1$0#k0Z").        (* [comment removed for export] *)
+  Definition D_tlsB : word -> (word -> option byte) -> word -> option byte := fun tid D =>
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes D
+      (Z_to_bv 64 1095184) (word_to_le_bytes 4 tid))
+      (Z_to_bv 64 1095304) (word_to_le_bytes 8 (Z_to_bv 64 1227136)))
+      (Z_to_bv 64 1095272) (word_to_le_bytes 8 (Z_to_bv 64 1095272)))
+      (Z_to_bv 64 1095160) (word_to_le_bytes 8 (Z_to_bv 64 1095152)))
+      (Z_to_bv 64 1095168) (word_to_le_bytes 8 (Z_to_bv 64 1095152)))
+      (Z_to_bv 64 1095176) (word_to_le_bytes 8 (Z_to_bv 64 0)).
 
-  Definition D_tls : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>3tid@1$1@1$0#k0>1D~0~0") := ltac2:(zQ "50!jc!m0!isd!js5!jsf\3tid@1$1@1$0#k0\1D>0@1$1@1$0#k0@1$2@1$1@1$0#8@2$4^2@1$3^1").
+  Definition D_tls : word -> (word -> option byte) -> word -> option byte := fun tid D =>
+    D_tlsB tid (D_tlsA D).
 
   (* [comment removed for export] *)
-  Definition J_tls : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1J~0>2ra@1$1@1$0#k0>2s0@1$1@1$0#k0>2s1@1$1@1$0#k0>2s2@1$1@1$0#k0>2s3@1$1@1$0#k0>2s4@1$1@1$0#k0>2s5@1$1@1$0#k0~0") := ltac2:(zQ "80!jc!m0!jgc!ji1!hpd!hnb!hq4!isd\1J>0@1$1@1$0#k0@1$7@1$1@1$0#8\2ra@1$1@1$0#k0\2s0@1$1@1$0#k0\2s1@1$1@1$0#k0\2s2@1$1@1$0#k0\2s3@1$1@1$0#k0\2s4@1$1@1$0#k0\2s5@1$1@1$0#k0@3$3@3$3@3$3@3$3@3$3@3$3@3$3^8@2$5@1$0#k0@2$4@2$6@1$0#k0?3sp0+hq8@2$2N8^7@2$5@1$0#k0@2$4@2$6@1$0#k0?3sp0+hr0@2$2N8^6@2$5@1$0#k0@2$4@2$6@1$0#k0?3sp0+hr8@2$2N8^5@2$5@1$0#k0@2$4@2$6@1$0#k0?3sp0+hs0@2$2N8^4@2$5@1$0#k0@2$4@2$6@1$0#k0?3sp0+hs8@2$2N8^3@2$5@1$0#k0@2$4@2$6@1$0#k0?3sp0+ht0@2$2N8^2@2$5@1$0#k0@2$4@2$6@1$0#k0?3sp0+ht8@2$2N8^1").
+  Definition J_tls : (word -> option byte) -> word -> word -> word -> word -> word -> word -> word -> word -> option byte :=
+    fun J ra s0 s1 s2 s3 s4 s5 =>
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes J
+      (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 ra))
+      (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 s0))
+      (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1))
+      (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 s2))
+      (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 s3))
+      (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 s4))
+      (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 s5).
 
   (* [comment removed for export] *)
-  Definition canary_bytes : ltac2:(zQ "30!h8!jc!m0@1$0@1$2@1$1#8") := ltac2:(zQ "60!jc!m0!jrf!jt9!ilf!hnb@3$2@1$1@1$0#8@1$3N0@3$2@1$1@1$0#8@2$5@1$0#8Z@3$2@1$1@1$0#8@1$3N2@3$2@1$1@1$0#8@1$3N3@3$2@1$1@1$0#8@1$3N4@3$2@1$1@1$0#8@1$3N5@3$2@1$1@1$0#8@1$3N6@3$2@1$1@1$0#8@1$3N7@1$4@1$1@1$0#8").
-  Definition canary_w : ltac2:(zQ "20!jc!m0@1$1@1$0#k0") := ltac2:(zQ "40!jc!kgf!ki0!hnb@2$3@1$0#k0@1$1$2").
-  Definition D_ssp : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1D~0~0") := ltac2:(zQ "a0!jc!m0!jrf!jt9!hnb!ji1!ilf!isd!jgc!kj0\1D>0@1$1@1$0#k0@1$7@1$1@1$0#8@3$5@3$5@3$5@3$5^1@2$4@1$0#k0+hirmv8@3$2@1$1@1$0#8@1$3N0@3$2@1$1@1$0#8@1$3N1@3$2@1$1@1$0#8@1$3N2@3$2@1$1@1$0#8@1$3N3@1$6@1$1@1$0#8@2$4@1$0#k0+hirmvc@3$2@1$1@1$0#8@1$3N4@3$2@1$1@1$0#8@1$3N5@3$2@1$1@1$0#8@1$3N6@3$2@1$1@1$0#8@1$3N7@1$6@1$1@1$0#8@2$4@1$0#k0+hirmv9@3$2@1$1@1$0#8@2$4@1$0#8Z@1$6@1$1@1$0#8@2$4@1$0#k0+hgrmq8@2$8N8$9").       (* [comment removed for export] *)
+  Definition canary_bytes : list byte := [rbn 0; Z_to_bv 8 0; rbn 2; rbn 3; rbn 4; rbn 5; rbn 6; rbn 7].
+  Definition canary_w : word := Z_to_bv 64 (bytes_le_to_Z canary_bytes).
+  Definition D_ssp : (word -> option byte) -> word -> option byte := fun D =>
+    wbytes (wbytes (wbytes (wbytes D
+      (Z_to_bv 64 1226488) [rbn 0; rbn 1; rbn 2; rbn 3])
+      (Z_to_bv 64 1226492) [rbn 4; rbn 5; rbn 6; rbn 7])
+      (Z_to_bv 64 1226489) [Z_to_bv 8 0])
+      (Z_to_bv 64 1095336) (word_to_le_bytes 8 canary_w).
 
   (* [comment removed for export] *)
-  Definition D_fd : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1D~0~0") := ltac2:(zQ "70!jc!m0!hnb!jrf!ilf!isd!ji1\1D>0@1$1@1$0#k0@1$5@1$1@1$0#8@3$6^1@2$2@1$0#k0+vprr0@3$3@1$1@1$0#8@2$2@1$0#8+1@1$4@1$1@1$0#8").
+  Definition D_fd : (word -> option byte) -> word -> option byte := fun D =>
+    wbytes D (Z_to_bv 64 1022896) [Z_to_bv 8 1].
 
   (* [comment removed for export] *)
-  Definition D_cxx : ltac2:(zQ "31!jc!m0!isd&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1D~0~0") := ltac2:(zQ "60!jc!hnb!jgc!ji1!m0!isd\1D>0@1$4@1$0#k0@1$5@1$4@1$0#8@3$3@3$3@3$3@3$3@3$3@3$3^1@2$1@1$0#k0+hgpuu8@2$2N4@2$1@1$0#k0+1@2$1@1$0#k0+hgpsm0@2$2N4@2$1@1$0#k0Z@2$1@1$0#k0+hgpuu8@2$2N4@2$1@1$0#k0+2@2$1@1$0#k0+hgpsm4@2$2N4@2$1@1$0#k0+1@2$1@1$0#k0+hgpuu8@2$2N4@2$1@1$0#k0+3@2$1@1$0#k0+hgpsm8@2$2N4@2$1@1$0#k0+2").     (* [comment removed for export] *)
+  Definition D_cxx : (word -> option byte) -> word -> option byte := fun D =>
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes D
+      (Z_to_bv 64 1089256) (word_to_le_bytes 4 (Z_to_bv 64 1)))
+      (Z_to_bv 64 1088608) (word_to_le_bytes 4 (Z_to_bv 64 0)))
+      (Z_to_bv 64 1089256) (word_to_le_bytes 4 (Z_to_bv 64 2)))
+      (Z_to_bv 64 1088612) (word_to_le_bytes 4 (Z_to_bv 64 1)))
+      (Z_to_bv 64 1089256) (word_to_le_bytes 4 (Z_to_bv 64 3)))
+      (Z_to_bv 64 1088616) (word_to_le_bytes 4 (Z_to_bv 64 2)).
 
   (* [comment removed for export] *)
-  Definition D_main : ltac2:(zQ "30!jc!m0!isd>3tid@1$1@1$0#k0>0@1$1@1$0#k0@1$2@1$1@1$0#8") := ltac2:(zQ "70!jc!kjc!kk5!kkd!kl7!km0!m0\3tid@1$6@1$0#k0@1$1@1$2@1$4@2$5^1$3").
+  Definition D_main : word -> word -> option byte := fun tid => D_cxx (D_fd (D_ssp (D_tls tid D_libc))).
 
-  Lemma firstn4_rb : ltac2:(zQ "90!jc!m0!jrf!jt9!h8!ilf!knd!ko3!hn5@3$6@1$4@1$1@1$0#8@3$7@1$1@1$0#8N4$8@3$2@1$1@1$0#8@1$3N0@3$2@1$1@1$0#8@1$3N1@3$2@1$1@1$0#8@1$3N2@3$2@1$1@1$0#8@1$3N3@1$5@1$1@1$0#8").
+  Lemma firstn4_rb : firstn 4 rb = [rbn 0; rbn 1; rbn 2; rbn 3].
   Proof. reflexivity. Qed.
-  Lemma firstn4_skipn4_rb : ltac2:(zQ "a0!jc!m0!jrf!jt9!h8!ilf!knd!ko3!kod!hn5@3$6@1$4@1$1@1$0#8@3$7@1$1@1$0#8N4@3$8@1$1@1$0#8N4$9@3$2@1$1@1$0#8@1$3N4@3$2@1$1@1$0#8@1$3N5@3$2@1$1@1$0#8@1$3N6@3$2@1$1@1$0#8@1$3N7@1$5@1$1@1$0#8").
+  Lemma firstn4_skipn4_rb : firstn 4 (skipn 4 rb) = [rbn 4; rbn 5; rbn 6; rbn 7].
   Proof. reflexivity. Qed.
+
+  (* LPS 08b1429: [J_rseq] is an [if] on [kb_rseq]; the window fact, and a read away from its
+     two slots [sp0 - 152, sp0 - 136), hold in both layouts. *)
+  Lemma wfJ_J_rseq : forall J, wfJ sp0 J -> wfJ sp0 (J_rseq J).
+  Proof.
+    intros J HJ. unfold J_rseq.
+    destruct (kb_rseq (in_kernel inp)); [repeat apply wfJ_wbytes |]; exact HJ.
+  Qed.
+
+  Lemma rdn_J_rseq_out : forall segs J (za : Z) n,
+    (152 <= bv_unsigned sp0)%Z -> (0 <= za)%Z -> (za + Z.of_nat n < 2^64)%Z ->
+    (za + Z.of_nat n <= bv_unsigned sp0 - 152 \/ bv_unsigned sp0 - 136 <= za)%Z ->
+    rdn segs (J_rseq J) (Z_to_bv 64 za) n = rdn segs J (Z_to_bv 64 za) n.
+  Proof.
+    intros segs J za n H152 H0 Hn Hd. pose proof (u64_range sp0) as Hsp.
+    unfold J_rseq. destruct (kb_rseq (in_kernel inp)); [|reflexivity].
+    rewrite !rdn_wbytes_out_Z; [reflexivity | ..];
+      rewrite ?length_N_to_le_bytes; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia.
+  Qed.
 
 End Defs.
 (* [comment removed for export] *)

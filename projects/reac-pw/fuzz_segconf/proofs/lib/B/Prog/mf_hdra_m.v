@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 107 of its 132 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3), segment S_MF_HDRA (HDR 0x864f4 -> HFIND 0x865c0 or
    TAIL 0x86820): the statements at the segment's own points and how they chain to m_file_m.v's S_MF_HDRA. Statement
    text and logic only; each point's walk is in lib/B/Prog/mf_hdra_<k>.v. A walk lane of the image-B m_file-family owner's G2B.
-   The image-B counterpart of the image-A m_file-family lane's lib/A/Prog/m_file_s_hdra_m.v (commit 88d61b26fa90),
+   The image-B counterpart of the image-A m_file-family lane's lib/A/Prog/m_file_s_hdra_m.v,
    with image B's points: image B calls strip and ieq, so the points are the calls' returns, not image A's strip
    loops.
 

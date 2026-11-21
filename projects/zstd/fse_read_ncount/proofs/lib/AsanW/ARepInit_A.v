@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: APKN, imported from MainEntry). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import ExecF.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree AsanCtrl AsanEmbed AsanHandoff.
-From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import MainExport MainFactsAsan.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import MainExport MainFactsAsan MainEntry.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AsanW Require Import AImg ABase ALayout ARep AHeapP AQConst ARepQ ARepInit_kit.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import RunDraw.
 Import ListNotations.
@@ -44,7 +45,7 @@ Local Ltac aobj_close :=
 unfold aobj, sclr, iclr, KLS, AIMG_LO, AIMG_HI;
 split; [rewrite Z.mul_comm; apply Z_mod_mult|]; split; [lia|]; split; [lia|]; split; lia.
 #[using="Type"] Theorem alayout_ok_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)),
-Forall (pfact_ok V) asan_pure_facts -> (length U <= Z.to_nat AUMAX)%nat ->
+Forall (pfact_ok V) APKN -> (length U <= Z.to_nat AUMAX)%nat ->
 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
 alayout_ok (mkALayout (LV V) w U).
 Proof.
@@ -144,7 +145,7 @@ split; [lia|]. split; [apply Z_mod_mult|]. split; lia.
 - exact HU.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 #[using="Type"] Theorem awf_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)),
-Forall (pfact_ok V) asan_pure_facts -> (length U <= Z.to_nat AUMAX)%nat ->
+Forall (pfact_ok V) APKN -> (length U <= Z.to_nat AUMAX)%nat ->
 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
 awf (mkALayout (LV V) w U) (ST0 V) X0.
 Proof.

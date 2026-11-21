@@ -2,22 +2,23 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    relay_finish, a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)),
-   after lib/A/W_relay_finish_h.v (a working branch a3987bff22c: its loop rf_loop and its tail rf_tail), in the
-   form of the B walks lib/B/W_check_bounded.v (a working branch 7e062bb9b9c) and lib/B/W_gse_loop.v
-   (a working branch bb5ed8a0689). *)
+   after lib/A/W_relay_finish_h.v (a working branch: its loop rf_loop and its tail rf_tail), in the
+   form of the B walks lib/B/W_check_bounded.v (a working branch) and lib/B/W_gse_loop.v
+   (a working branch). *)
 (* Modified by Theorem Labs, 2026-10: the room `_x` form (a Theorem Labs lane, RoomRFB): the walk is pb_relay_finish_x,
    stated over any allocator relation ARx with its laws as W_contract_x.v rf_spec_x (Section c below: PST / ARx / hl /
    LAWS / HP0 / BLKN, the callees' and the allocator rules' `_x` twins, PSTR / PSTC), and it threads rf_spec_x's room
    round: the budget rp_RM RP (each round: the free's 1, then gestures_end's charge) and the count premise
    cnt_ok_pk RP rf_pk (rf_pk = 5) to the free (cnt_ok) and to gestures_end (gse_pk = 4); the round's room bound follows
    rf_room's `- cap` threading (the round frees the old g_out block).  The room argument is lib/A/W_relay_finish_h.v's
-   (a working branch 9e4f84a8fb9), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
-   (a working branch dfa1a225350).
+   (a working branch), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
+   (a working branch).
    B's relay_finish sets no frame pointer and calls no __asan_stack_malloc, so A's fake-frame seat, its set_fs step and rp_RPF across the seat do not apply.
    pb_relay_finish keeps its statement, byte-identical, and its Section hypotheses (the same terms in the same order;
    HPLAIN / HWSEG write rf_cells as rf_cells RG GTU GL): it is re-derived from pb_relay_finish_x at ARx := ARi0,
    PST := [], RP := RP_AR (Section cAR); pb_relay_finish_fr / _fr_tfib are unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_relay_finish.v, with its module paths and module names changed; 2648 of its 2780 lines of code are new or changed and 4211 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Step-2 re-fit for the free / realloc re-hiding move (row AL4 + its HULL row, the table, the internal file OWNERS.tsv),
    written against lib/A/PRH_FnAlloc.v blob 5f50b300eb2c and the keep twins (YGcallRkKeep, YGcfInstReallocKKeep). The text is the
    primed tfuzz_realloc_specX (SRr' segs RZ_cf, post fpostmR at
@@ -40,9 +41,9 @@
    (lib/A/PRH_FnAlloc.v blob 4d8aeba047e5, lib/A/PRH_Base.v blob ef7c8ca98529, lib/A/PRH_Refute.v blob
    23f7a37f01c9), which carries this row from the P'' universe set re-fit of this file (first landed on the AL
    acceptance base). Ported from the V1 walk of image B (blob a061a8383eb0)
-   (commit 459129c18903; image B 3b5e1a09, 0x85a54, 106 slots, frame 32) to the
-   whole-program listing of B' (lib/B/Listing_prog.v, PI_prog_B of lib/B/PAImg_prog.v, both from
-   commit d42e123915ae: object atoms numbered by name).
+   (image B 3b5e1a09, 0x85a54, 106 slots, frame 32) to the
+   whole-program listing of B' (lib/B/Listing_prog.v, PI_prog_B of lib/B/PAImg_prog.v, both:
+   object atoms numbered by name).
    Two parts. PART 1 (the prep, up to the pure engine runs and the statics each arm leaves) names no kit text: every
    program-statics fact is stated over the listing's objects, or for ANY list PST of program statics that holds the
    written objects' bytes. PART 2 (Section w, "THE TEXT STAGE") binds PST := prh_pst once (rb_pst_obj, from B''s
@@ -264,8 +265,8 @@ rewrite Z.add_0_r, (rb_zc live) by lia. cbn [zalu_raw]. apply rb_zc. lia.
 Qed.
 
 (* ---- the listing's objects the walk names, BY NAME. The numbers are the positions of the names in the "objects"
-   list of B in tools/preset-listing/pins/pins102.json (commit 5472bf2e7a82), the pin file
-   d42e123915ae's listings were emitted with; each address B_prog_obj gives them is the symbol's in the B' symbol
+   list of B in tools/preset-listing/pins/pins102.json, the pin file
+   a commit's listings were emitted with; each address B_prog_obj gives them is the symbol's in the B' symbol
    table (record: the AL4 prep's objects list). Nowhere else in this file is an object
    named by its number. A_OBJ 0 / A_OBJ 12 inside got_regionP / bcell_regionP are the engine's pins (YC1fP PALib). *)
 Definition O_g_count : nat := A_OBJ 7.
@@ -659,7 +660,7 @@ Lemma rb_statics_refused : forall pk mo,
 Proof. intros [] []; vm_compute; repeat split; reflexivity. Qed.
 
 (* ==== THE TEXT STAGE ====
-   the kit's text tfuzz_realloc_specX in the post-implication form with THE OUTCOME conjuncts (the kit's cut 7cdbb61b5fa0,
+   the kit's text tfuzz_realloc_specX in the post-implication form with THE OUTCOME conjuncts (the kit's cut,
    lib/A/PRH_FnAlloc.v blob 4d8aeba047e5 :412-516, the FAMILY and THE OUTCOME blocks of its header; callee texts
    tfuzz_malloc_specX :270 and town_specX :568, prh_alloc_post :220; PRH_Base.v blob ef7c8ca98529; PRH_Refute.v blob
    23f7a37f01c9; S1Ledger.v blob 8cf15eeb6311) at image B''s PrhImg prh_img_B
@@ -955,7 +956,7 @@ Variable B : asyms.
 (* the allocator relation of the S1 walks (YGcallcf.v): the cf layer's ARcf with the error-buffer extents placed *)
 #[local] Notation ARcfx := (fun ly S Hp (W : world SEGS) mem md => ARcf SEGS B ly S Hp W mem md /\ xs_placed_cf ly S).
 (* ---- Section hypotheses: callee texts and named stand-ins only ---- *)
-(* callee text: own (the kit's town_specX, the kit's 4b batch d6318e886fd9 PRH_FnAlloc.v blob 95e26ff95e63 :529, unchanged by
+(* callee text: own (the kit's town_specX, the kit's 4b batch PRH_FnAlloc.v blob 95e26ff95e63 :529, unchanged by
    the batch; B' 0x85dbc, the row of own at image B'; owner a Theorem Labs lane) *)
 Hypothesis OWN : town_specX (L := B_prog_listing) (PA := PA) B ARcfx SK.
 (* callee text: fuzz_malloc (the tfuzz_malloc_specX in the post-implication form with THE OUTCOME conjunct, the 4b
@@ -965,7 +966,7 @@ Hypothesis MALLOC : tfuzz_malloc_specX (L := B_prog_listing) (PA := PA) B ARcfx 
 (* callee text: __asan_unpoison_memory_region at the second allocator (YGcfHp.v) *)
 Hypothesis AUNPOISON : aunpoison_realizes_cf SEGS B.
 (* callee text: the realloc wrapper, the cgif layer's primed _k row with the memnorm keep
-   (lib/Reusable/YGcfInstReallocKKeep.v, commit 4f9d7e8b76e5; the
+   (lib/Reusable/YGcfInstReallocKKeep.v; the
    amreal' RZ_cf walk, the re-hiding leaf realloc_leaf_cf_rh_keep, the entry room ROOM_cf_k (RK_realloc + k) and the
    entry headroom cf_hull_adm). YGcallRkKeep.aj_realloc_x_cfR_keep takes it as it
    stands, so no Let lifts it here *)

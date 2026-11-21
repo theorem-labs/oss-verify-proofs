@@ -1,7 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseK.v at afaa3cb55c1d; for reac-pw/fuzz_rate:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseK.v; for reac-pw/fuzz_rate:
    module paths and names are rate's, the pcs are image A's of fuzz_rate.asan, the next-child back edge 0x84728 beqz
    is taken to L2 (its not-taken side refuted), T is 0x847d0 and the answers are Rate.spa_rate_value's. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseK.v at f7246d55e8c3 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseK.v for image B
    (fuzz_rate.asan-ubsan); the image is lib/AU/Img0.v's and the vocabulary lib/AU/RtPgParseBaseB.v's, the pcs are
    image B's, the next-child step leaves the empty key slot in a1 (L2_at's register 11), the ret -1 leaves run
    0x84ba0 li a0,-1, and the base's pre_frm / pre_ret replace this file's copies. *)

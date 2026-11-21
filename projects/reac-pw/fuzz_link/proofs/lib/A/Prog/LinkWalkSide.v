@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img at fuzz_command's ASan image end 0x606000; ajournal no longer keeps footprint (FP) bytes in the image or at or above alloc_ceiling (fp_spares FP a also requires ~ inFP FP a, and the clause for bytes at or above alloc_ceiling outside [sp0 - STK, sp0) requires ~ inFP FP a), awr_byte (and awr_ok) take the start state's side-stack frames as a new parameter and also admit footprint writes to the program's statics as_prog_static in the image, to the caller's stack above sp0 and to those caller frames (awr_prog_or_caller), acall_kept_of_journal, region_kept_stack_sub, awr_byte_present and aj_intrin_at take the matching premises, ajournal_sub_wide composes a callee whose footprint lies in what the caller may write, awr_byte_present_prog and aj_intrin_at_prog take prog_rw for stores to the statics, AR_errno_present gives the errno cell's value from errno_rom, and astack_rd/astack_pres (stack bytes readable/present from sp to the stack top) give a frame chain for any s0 but an aligned sp + 8 (chain_pre_any, achain_any) and carry across an ajournal (astack_rd_journal, astack_pres_journal). *)
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/Reusable/YCbq.v, with its module paths and module names changed; 1154 of its 1305 lines of code are new or changed and 3194 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_link, image A: THE SIDE-STACK KIT of the image-A walks. The journal steps a walk of one of link's own
    functions takes at its side-stack calls (frame_alloc_<c>, frame_release_<c>, meta_fill_<v>) and at the inline
    release of a frame of class <= 7, all over the caller's program-global journal `ajournal_gx G XO OUT` of
@@ -28,7 +29,7 @@
    - ajournal_gx_flag_write: the journal after a store of 0 to the flag byte of the frame at the head of own (the
      inline release, YG0d.v astack_free_law), with the other written bytes ones the journal admits.
    - aj_gx_stack_free_at (c): frame_release_<c> over astack_free_realizes, the ajournal_gx form of
-     Reusable/StackFreeJournal.v:166 aj_stack_free_at.
+     Reusable/StackFreeJournal.v:167 aj_stack_free_at.
    - aj_gx_set_shadow_at (e): meta_fill_<v> over aset_shadow_realizes, destination in an own side frame's shadow.
    - ajw_kept_call / aframe_shadow_kept_call: a byte the journal lets a callee write, and the shadow of a byte of a
      side frame of Sc, keep their values across a runtime call that gives acall_kept and the raw clause (a), (b).
@@ -334,7 +335,7 @@ apply (ajournal_gx_after_write_st G XO OUT STK sp0 FP ly S W0 mem md ((cid, pos)
 - apply (qtight_ext Sc); [reflexivity | reflexivity | reflexivity | exact HQT].
 Qed.
 
-(* The donor-journal step of frame_release_<c>: Reusable/StackFreeJournal.v:166 aj_stack_free_at with the model laws
+(* The donor-journal step of frame_release_<c>: Reusable/StackFreeJournal.v:167 aj_stack_free_at with the model laws
    derived from the journal's AR, and the post also giving the contract's same_but_materialized. *)
 Lemma aj_stack_free_atM : forall pc cid, astack_free_realizes segs B pc cid -> 0 <= cid ->
   forall W regsT memT STK sp0 FP ly S W0 mem md own' lyc Sc mdc k pos n (o : Z) raw,
@@ -421,7 +422,7 @@ split.
 split; [exact HP|]. split; [exact Heff|]. split; [exact Hfr|]. split; [exact Hpres2 | exact Hsame].
 Qed.
 
-(* (c) FRAME_RELEASE_<c> ON THE JOURNAL: aj_stack_free_atM (Reusable/StackFreeJournal.v:166 aj_stack_free_at) over
+(* (c) FRAME_RELEASE_<c> ON THE JOURNAL: aj_stack_free_atM (Reusable/StackFreeJournal.v:167 aj_stack_free_at) over
    ajournal_gx. The
    frame is the head of own; the journal comes back at own' and stack_free_state cid pos Sc. The call's window is
    stated from its sp, as link_ajkit.v's lifts do. The last clause (presence above the allocator's ceiling) is what
@@ -561,7 +562,7 @@ Qed.
 
 (* A byte of a side frame the journal's owner took (In (cid, pos) own), or of that frame's shadow, is a byte the
    journal lets a run or a callee write: awr_byte's in_frames (YCbq.v:343-346), and it lies below the allocator's
-   ceiling, so outside the out-cell window [sp0, sp0 + XO). The per-byte obligation of awr_ok_x (W_journalG.v:259)
+   ceiling, so outside the out-cell window [sp0, sp0 + XO). The per-byte obligation of awr_ok_x (W_journalG.v:260)
    and link_amem.v ajw for the frame's own stores and for its inline shadow poisoning. *)
 Lemma aj_gx_awr_frame : forall G XO OUT STK sp0 FP ly S W0 mem md own lyc Sc W memc mdc k cid pos a,
   ajournal_gx segs B G XO OUT STK sp0 FP ly S W0 mem md own lyc Sc W memc mdc k ->

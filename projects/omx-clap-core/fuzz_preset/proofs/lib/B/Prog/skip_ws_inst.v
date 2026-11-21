@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset skip_ws, image B' (asan-ubsan, the #102 pin d663f82d7f48, unstripped twin c90d4fa54d43):
-   skip_ws_mn.skip_ws_holds (lib/B/Prog/skip_ws_mn.v) at the image instance. No new walk. RELOCATED from
-   origin/cold/h-verbs-1-skip-union ad1c5072e3e7 (blob 2bba6542fdb6); the text holds no image numeral, so the proof is
+   skip_ws_mn.skip_ws_holds (lib/B/Prog/skip_ws_mn.v) at the image instance. No new walk. RELOCATED
+    (blob 2bba6542fdb6); the text holds no image numeral, so the proof is
    unchanged: every value comes from the #102 tree's record files. Added: the Check / Print / Print Assumptions block.
    B := YD2l.TfibB (the generated record of image B', lib/Reusable/YD2l.v blob 95803a8b9493 on this tree), ARx := YG0ncf.ARcf
    (cp := CfParams_preset) rsegs TfibB (h-mani-a8's second allocator instance), HL := cf_head CfParams_preset. The

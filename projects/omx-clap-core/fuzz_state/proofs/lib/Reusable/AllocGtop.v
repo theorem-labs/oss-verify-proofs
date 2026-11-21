@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/ErrnoGcf.v applied by 3-way (base commit 5034424e29db, theirs e8a7dd66acf2; preset-side hunks kept), module paths changed. *)
+(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/ErrnoGcf.v applied by 3-way (base, theirs; preset-side hunks kept), module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/ErrnoGcf.v, with its module paths changed; 14 of its 47 lines of code are new or changed and 123 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/AllocGtop.v @ 57e82b93d43 (a working branch: the fs install head of record, to be byte-checked against the ~20:30Z installed sha), module paths changed only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/AllocGtop.v (a working branch: the fs install head of record, to be byte-checked against the ~20:30Z installed sha), module paths changed only. *)
 (* The whole Allocate contract (AllocG.aalloc_realizes, every size n < nmax) from its two cases: the primary sizes
    (AllocG.aalloc_prim_realizes, n <= 64512) and the secondary sizes ([aalloc_sec_realizes], 64513 <= n).
 

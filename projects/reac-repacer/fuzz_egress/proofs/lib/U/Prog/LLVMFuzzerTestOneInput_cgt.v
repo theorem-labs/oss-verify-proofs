@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; module path, the name egress_slot_cg_frame, LLVM_K from check_inject, and
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v;
+   module path, the name egress_slot_cg_frame, LLVM_K from check_inject, and
    Section L's callees those of this unit's lib/U/Prog/LLVMFuzzerTestOneInput_link.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The UBSan image's cut-free slot contract, as libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v.
    Section L is the cf twin of lib/U/Prog/LLVMFuzzerTestOneInput_link.v: malloc at the agree room from the kit's
    malloc_contract_cf and the allocator's limit law (malloc_ag_of_cf), free from free_contract_cf, check_restamp,

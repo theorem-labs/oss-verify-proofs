@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the proofs follow a failed load's new vvar-page test, range_meets_vvar, and fetch_failure's new vDSO-text test). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -19,7 +20,7 @@ Proof.
   intros segs t. induction t as [c | c | c | c | c | c | n a k IH | n a v k IH]; intros m r H; cbn [interp_eff_accesses] in H;
     try discriminate H.
   - injection H as <-. cbn. apply mem_grows_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate H].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep| | ] eqn:E; try discriminate H.
     injection H as <-. cbn. exact (IH _ m rep E).
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate H].
@@ -55,7 +56,9 @@ Proof.
   { destruct (decode_exec_accesses segs st w) as [rep| | ] eqn:E; try discriminate H. injection H as <-.
     exact (decode_exec_accesses_grows segs st w rep E). }
   destruct (fetch_failure segs (ms_mem st) (ms_pc st)) as [st1| | ] eqn:E; try discriminate H.
-  exfalso. unfold fetch_failure in E. destruct (negb _); [discriminate E|]. destruct (_ : bool) in E; discriminate E.
+  exfalso. unfold fetch_failure in E.
+  (* the revision's [fetch_failure] tests the vDSO text first; no arm is MachineOk *)
+  repeat match type of E with context [if ?b then _ else _] => destruct b end; discriminate E.
 Qed.
 
 Theorem msteps_mem_grows : forall segs ms ms', msteps segs ms ms' -> mem_grows (ms_mem ms) (ms_mem ms').

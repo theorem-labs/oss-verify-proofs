@@ -1,8 +1,9 @@
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/CLdepot.v@1470d2b40a0e; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/CLdepot.v; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: P'' trace premise: the released contract YFl0.tfib_depot_spec admits a trace by `admits (as_universe B) tr S` (YG01.v:157), so this file states it the same way; an In-form caller converts with admits_fix (YG01.v:184). *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: P'' trace premise: the released contract YFl0.tfib_depot_spec admits a trace by `admits (as_universe B) tr S` (YG01.v:158), so this file states it the same way; an In-form caller converts with admits_fix (YG01.v:185). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The depot callee's contract over a generic allocator relation [ARX], image-free.
 
    The interfaces' depot fields (AGif0n.if_depot for Allocate, DGif0.di_depot for Deallocate) state

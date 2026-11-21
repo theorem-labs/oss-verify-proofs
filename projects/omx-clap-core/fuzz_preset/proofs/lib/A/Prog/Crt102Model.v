@@ -10,10 +10,10 @@
    INPUTS OF RECORD (taken BY PATH):
    - pins: A' asan 1be0f53d96cb9d6c (unstripped twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin
      c90d4fa54d43160b). No fact here depends on either image.
-   - base: its first commit 3971724b617 (= commit
-     c52965a03881 (the #102 pins) + the contract texts at 3438f3406f33 + the engine whole set at
-     459129c18903; then 0c9201c7d87d / d8962d407fde, which re-take the contract texts by path
-     from 00b50c5745fb: lib/A/PRH_FnCheck.v 6f6bc83d7420, PRH_FnPj.v 5798c50485c7, PRH_FnWriter.v
+   - base: its first (=
+      (the #102 pins) + the contract texts + the engine whole set;
+     then, which re-take the contract texts by path:
+     lib/A/PRH_FnCheck.v 6f6bc83d7420, PRH_FnPj.v 5798c50485c7, PRH_FnWriter.v
      6a0afeb80142, PRH_FnTx.v c798df739d78; lib/A/PRH_Base.v stays 016934fdc1af). The model definitions this file
      reads (ck_*, LIVE_*, RQ_*, RQA_*, RQW, FR_*, LIVE_pj_set, LIVE_pj_string, prhPj_set_trace, LIVE_pj_write,
      prhWriter_put1 / putN / k, LIVE_tx) are byte-identical in 37d8e4d0072e and 6f6bc83d7420 (and in the PRH_FnPj /
@@ -31,7 +31,7 @@
    its definitions (MOD_KEY, MOD_VAL, copy_set, wcalls, ncap, arrz, HEAD), PresetReqAtNoMiss for tblk / capf. No lemma of a
    released proof of a FUNCTION (lib/Prog/<fn>*.v, lib/U) is cited: the rewrite's model facts (cm_at, cm_set_*,
    cm_crt_wlen, cm_set_depth) are written new after lib/Prog/check_round_trip_m.v's statements, and the writer-run
-   facts (cm_dbl_ge .. cm_gcalls_le, cm_wput, cm_wput_fail) after commit 841830f5dcb
+   facts (cm_dbl_ge .. cm_gcalls_le, cm_wput, cm_wput_fail) after
    lib/A/Prog/H5RttS1.v's (rt1_dbl_ge .. rt1_wfail), neither Required.
 
    NUMERALS (no ADDRESS literal occurs in this file):
@@ -1357,7 +1357,7 @@ destruct (cm_in_wlen_crt x t Hin) as (_ & L & _). unfold PRH_FnWriter.prhWriter_
 Qed.
 
 (* ---- the side conditions of pj_write's event supply (the kit lemma PRH_Supply.prhWriter_pjw_evs_w_evs,
-   commit 5d79c60634b, blob 392e316eeb02: `cf_head = PresetReqAt.HEAD -> 0 <= cnt < 2 ^ 64 ->
+    blob 392e316eeb02: `cf_head = PresetReqAt.HEAD -> 0 <= cnt < 2 ^ 64 ->
    (forall j, (j < PresetReqAt.wcalls t p)%nat -> (cnt + Z.of_nat j) mod 2 ^ 64 <> fail) ->
    prhWriter_pjw_evs [] cnt fail (wdpieces t p) = PresetReqAt.w_evs t p`), at fail = SIZE_MAXZ. The supply itself is
    that lemma's, not restated here ---- *)

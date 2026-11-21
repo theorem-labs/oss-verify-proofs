@@ -23,16 +23,17 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths, module names and numbers changed; 536 of its 623 lines of code are new or changed and 4966 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B4 of reac_segconf_parse_file's
    walk (DONE 0x89114 -> the return 0x891c4), the theorem pf_seg_B4_holds : S_B4 B of lib/B/Prog/pf_pieces.v
-   (the image-B piece statements at 80a6c9c97a8b; S_B4 := forall f0, H_DONE (fx := f0) B). The B4 segment lane of the image-B G3 walk owner, 2026-10-30.
+   (the image-B piece statements; S_B4 := forall f0, H_DONE (fx := f0) B). The B4 segment lane of the image-B G3 walk owner, 2026-10-30.
    proves function reac_segconf_parse_file (segment B4; reuse search and CONFIRM:
    the rule-24 lookup record, the rule-24 checker 2026-10-30T16:55:47Z; reuse verdict none).
    ADAPTED from the image-A G3 walk owner's image-A lane, on a working branch (lib/A/Prog/pf_a4_k.v, whose two journal lemmas
    lib/B/Prog/pf_seg_B4_k.v carries; its walk had not landed) in the form of the image-A G3 walk owner's segment A2
    (lib/A/Prog/pf_a2.v: seeds from the cut, the plain run to a runtime call, the call by its journal lemma) and of the
-   released epilogue of plugin-hostd/fuzz_command lib/A/Prog/check_round_trip.v crt_epi (origin/ossv/recipes
-   501c0d516c69: the retired magic, __asan_stack_free_5, the reload of the 13 saved registers, ret), re-derived on
+   released epilogue of plugin-hostd/fuzz_command lib/A/Prog/check_round_trip.v crt_epi (
+   the retired magic, __asan_stack_free_5, the reload of the 13 saved registers, ret), re-derived on
    image B's code. No UBSan trap site lies in this segment (the `unimp` 0x891c8 is in B4's cover only and no walk
    reaches it).
 

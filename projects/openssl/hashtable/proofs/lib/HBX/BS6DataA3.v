@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded states are renumbered and carry the new launch facts and sizes; the stack window is the launch's). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Uint63 PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType Run.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.openssl.hashtable.lib.Common.FX Require Import W64 ITrie F
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore AsanInit CxPlan HBPlanImage HBAtable BC2A3Lit.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.Br Require Import BrEnv BrMem BrRev BrClass BrRevS BrDress BrTrans BrGen.
 From OSSVerify.Proofs.openssl.hashtable.lib.HBX Require Import BS6Pcs.
+From OSSVerify.Proofs.openssl.hashtable.lib Require PlanRegen BC1HS.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
@@ -17,9 +19,17 @@ Definition IM : fimage := odflt [] (mk_fimage HASEGS).
 Definition code : itrie finstr := odflt iempty (build_code HASEGS s6_pcs).
 Definition START : CAP.acs := c2a3_hs10.
 Definition TT0 : ttab_e := [(2%uint63, CAP.eaddz CAP.e_spw (-8388608)); (4%uint63, AX2.ELit 0)].
+(* LPS c0dd863a: the stack region's writable part is the window that START's own KWr fact on the entry's
+   stack pointer gives (8 MiB less the launch block's bound, in whole pages: AsanInit.stack_window_ok); its
+   offset from the pointer, read here *)
+Definition STK_K : Z :=
+  match List.find (fun K => match K with AX2.KWr (AX2.SA b _) (AX2.ELit _) => AX2.expr_eqb b CAP.e_spw | _ => false end) (CAP.kn START) with
+  | Some (AX2.KWr (AX2.SA _ k) _) => k
+  | _ => 0
+  end.
 Definition shapes0 : list rshape :=
   [(0%uint63, 0x10000%uint63, 0xbfb000%uint63, 0%uint63, None);
-   (2%uint63, 0%uint63, 8388608%uint63, 4%uint63, Some PKUnk);
+   (2%uint63, of_Z (8388608 + STK_K), 8388608%uint63, 4%uint63, Some PKUnk);
    (4%uint63, 2147459072%uint63, 2149021184%uint63, 12%uint63, Some PKZero)].   (* [comment removed for export] *)
 Definition classes0 : list (int * rclass) := [(0%uint63, RCHull); (2%uint63, RCTop); (4%uint63, RCSpan)].
 (* [comment removed for export] *)
@@ -42,13 +52,15 @@ Definition rootgen := fold_left root_step (CAP.a_maps START) (TT0, shapes0, clas
 Definition TG : int := 26%uint63.
 Definition TSB : int := 27%uint63.
 Definition SBe : AX2.expr :=
+  PlanRegen.esh BC1HS.C1_F (
   AX2.EAlu Instr.ALU_ADD (AX2.EAlu Instr.ALU_ADD (AX2.EMd Instr.M_MUL (AX2.ELit 4096) (AX2.EVar 235))
-                                                  (AX2.EMd Instr.M_MUL (AX2.ELit (-4096)) (AX2.EVar 236))) (AX2.ELit 65536).
+                                                  (AX2.EMd Instr.M_MUL (AX2.ELit (-4096)) (AX2.EVar 236))) (AX2.ELit 65536)).
 (* [comment removed for export] *)
 Definition TTOP : int := 29%uint63.
 Definition Te : AX2.expr :=
+  PlanRegen.esh BC1HS.C1_F (
   AX2.EAlu Instr.ALU_ADD (AX2.EMd Instr.M_MUL (AX2.ELit 32768) (AX2.EVar 0))
-    (AX2.EAlu Instr.ALU_ADD (AX2.EMd Instr.M_MUL (AX2.ELit 4096) (AX2.EVar 10)) (AX2.EMd Instr.M_MUL (AX2.ELit 4096) (AX2.EVar 433))).
+    (AX2.EAlu Instr.ALU_ADD (AX2.EMd Instr.M_MUL (AX2.ELit 4096) (AX2.EVar 10)) (AX2.EMd Instr.M_MUL (AX2.ELit 4096) (AX2.EVar 433)))).
 Definition TT1 : ttab_e := (let '(tab, _, _, _, _, _) := rootgen in tab ++ [(TSB, SBe); (TTOP, Te)]).
 Definition shapes : list rshape := (let '(_, shs, _, _, _, _) := rootgen in
    filter (fun s : rshape => negb (sh_tag s =? TG)%uint63) shs ++ [(TSB, 0%uint63, 137438957568%uint63, 12%uint63, None)]).

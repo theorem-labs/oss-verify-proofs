@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack window the hand-off guarantees starts 0x5D0000 bytes (STACK_SPAN) below the start's stack pointer instead of 8 MiB, and the hand-off glue takes the table's bounds on the vDSO tail of the reserved list; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_init_mem.v, lines 1090, 1199-1201, 1211-1213, 1307. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
@@ -1098,7 +1099,7 @@ Proof.
 Qed.
 
 Lemma rim_shadow : hs_shadow_ok A ch = true -> sp0 mod 16 = 0 ->
-  stk bsegs m (sp0 - 0x800000) (uE E (eTop ch)) ->
+  stk bsegs m (sp0 - STACK_SPAN) (uE E (eTop ch)) ->
   shadow_rep (lay Σ0) m.
 Proof.
   intros H Hsp16 HSTKWIN. pose proof (rim_know A nx0 LIMIT SINV argH FS0 E ch R FULL model HC) as HK. unfold hs_shadow_ok in H.
@@ -1207,6 +1208,9 @@ Hypothesis argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsign
 Hypothesis Hsegtop : img_hi A = SEGTOP_A.
 Hypothesis Hshoff : shadow_off A = SHB.
 Hypothesis Hlim : LIMIT = VMLIMIT.
+(* the vDSO tail's count and byte bounds at this target's table (RT_init.ri_artm) *)
+Hypothesis Hnresx : (n_resx A <= 2)%nat.
+Hypothesis Hresxb : resx_bytes A <= 81920.
 Variables (E : env) (ch : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
 Hypothesis HC : APS.cs_ok bsegs A nx0 LIMIT SINV argH FS0 E ch R FULL model.
 Hypothesis HT : hs_rt_ok A ch = true.
@@ -1216,7 +1220,9 @@ Hypothesis HT : hs_rt_ok A ch = true.
 #[local] Notation m := (mH FULL model (rtA_allow (sigma0 A E ch model))).
 #[local] Notation sp0 := (bv_unsigned (vm_init_sp (m_vmmaps model))).
 
-Hypothesis HSTKWIN : forall top, top mod 4096 = 0 -> top < sp0 - 0xa0 + 4096 -> stk bsegs m (sp0 - 0x800000) top.
+(* LPS 727298f3: the stack window the hand-off guarantees starts [STACK_SPAN]
+   below the start's sp, not 8 MiB below it (RT_iface.STACK_SPAN). *)
+Hypothesis HSTKWIN : forall top, top mod 4096 = 0 -> top < sp0 - 0xa0 + 4096 -> stk bsegs m (sp0 - STACK_SPAN) top.
 Hypothesis HDEPZ : forall h1 b, lit_of (eH1 ch) = Some h1 -> 0 <= b < 2 ^ 20 -> b <> bkt h1 -> rw_cells bsegs m (d_tab + 4 * b) [zw4 0].
 
 Lemma ri_tests : hs_lay_ok ch = true /\ hs_consts_ok ch = true /\ hs_zero_ok ch = true /\ hs_primsh_ok A ch = true
@@ -1310,7 +1316,7 @@ Proof.
   pose proof ri_tests as (T1 & _).
   split; [exact ri_HA'|]. split; [exact (ri_awf A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1)|].
   split; [exact (ri_minv A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 Hlim)|].
-  split; [exact (ri_artm A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 Hlim)|].
+  split; [exact (ri_artm A nx0 LIMIT SINV argH FS0 E ch R FULL model HC T1 Hlim Hnresx Hresxb)|].
   split; [reflexivity|]. split; [exact ri_art|]. exact (ri_sig A nx0 LIMIT SINV argH FS0 E ch R FULL model HC).
 Qed.
 

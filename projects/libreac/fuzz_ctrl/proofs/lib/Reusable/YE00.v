@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE00.v, with its module paths changed; asink_syms has the field ak_owned (the sink's own static cells), aenv_addr is those cells and the 8-byte ofl head, aenv_core names the four cells astdio_env reads and the frame lemmas frame over aenv_core, and astdio_env no longer states the path, mode, "rwa" and trailer strings: asink_strs states them, only for a harness that writes a file (astdio_env_trailer becomes asink_strs_trailer). *)
-(* Modified by Theorem Labs, 2026-10: taken by path for libreac/fuzz_ctrl from proofs/libreac/fuzz_grant/lib/Reusable/YE00.v (a working branch 2d4a68692f3, a Theorem Labs lane's shared sink form 4d244de18f0), module paths only; the file states no address. *)
+(* Modified by Theorem Labs, 2026-10: taken by path for libreac/fuzz_ctrl from proofs/libreac/fuzz_grant/lib/Reusable/YE00.v (a working branch, a Theorem Labs lane's shared sink form), module paths only; the file states no address. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE00.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed os_kept, os_kept_refl, os_kept_sbm, os_kept_with_fds, os_kept_with_fs). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State.
@@ -59,11 +60,18 @@ intros f a. split.
 Qed.
 Definition os_kept (md md' : Model) : Prop :=
 m_io md' = m_io md /\ m_pipes md' = m_pipes md /\
+(* ProcState gained four fields after [procst_statpins] at the revision
+   (75d69e00 State.v:4555/4608/4651/4701: sigpipe_pending, channel_reader, sigpipe_action,
+   sigpipe_terminal).  They are taken from [md], NOT from [md'], so this relation is
+   STRENGTHENED, never weakened: "the OS state is kept except the stat pins" still means
+   exactly one field may move. *)
 m_proc md' = mkProcState (procst_halted (m_proc md)) (procst_tid (m_proc md)) (procst_creds (m_proc md)) (procst_setsid_succeeded (m_proc md))
 (procst_sigmask (m_proc md)) (procst_children (m_proc md)) (procst_utsname (m_proc md)) (procst_sigaltstack_installed (m_proc md))
-(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md').
+(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md')
+(procst_sigpipe_pending (m_proc md)) (procst_channel_reader (m_proc md)) (procst_sigpipe_action (m_proc md))
+(procst_sigpipe_terminal (m_proc md)).
 Lemma os_kept_refl : forall md, os_kept md md.
-Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. repeat split; reflexivity. Qed.
+Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp chr spa spt] li tm]. repeat split; reflexivity. Qed.
 Lemma os_kept_trans : forall m1 m2 m3, os_kept m1 m2 -> os_kept m2 m3 -> os_kept m1 m3.
 Proof.
 intros m1 m2 m3 (A1 & A2 & A3) (B1 & B2 & B3). split; [rewrite B1; exact A1|]. split; [rewrite B2; exact A2|].
@@ -72,12 +80,12 @@ Qed.
 Lemma os_kept_sbm : forall m m', same_but_materialized m m' -> os_kept m m'.
 Proof.
 intros m m' Hs. pose proof (same_but_materialized_frame m m' Hs) as (_ & _ & _ & Hio & _ & Hproc & _ & _ & _ & Hpipes & _).
-split; [exact Hio|]. split; [exact Hpipes|]. unfold m_statpins. rewrite Hproc. destruct m as [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity.
+split; [exact Hio|]. split; [exact Hpipes|]. unfold m_statpins. rewrite Hproc. destruct m as [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp chr spa spt] li tm]. reflexivity.
 Qed.
 Lemma os_kept_with_fds : forall fds m, os_kept m (with_fds fds m).
-Proof. intros fds [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. repeat split; reflexivity. Qed.
+Proof. intros fds [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp chr spa spt] li tm]. repeat split; reflexivity. Qed.
 Lemma os_kept_with_fs : forall fs' m, os_kept m (with_fs fs' m).
-Proof. intros fs' m. rewrite with_fs_os_upd. destruct m as [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. repeat split; reflexivity. Qed.
+Proof. intros fs' m. rewrite with_fs_os_upd. destruct m as [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp chr spa spt] li tm]. repeat split; reflexivity. Qed.
 Section b.
 Variable segs : list Segment.
 Variable K : asink_syms.

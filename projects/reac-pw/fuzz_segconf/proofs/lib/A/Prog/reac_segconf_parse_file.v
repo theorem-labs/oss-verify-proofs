@@ -10,6 +10,7 @@
    cmd_prog_unowned (CmdRecImg.v), all over IMG : cmd_img_facts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_exact.v, with its module paths and module names changed; 20 of its 39 lines of code are new or changed and 65 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/trim.v, with its module paths and module names changed; 76 of its 98 lines of code are new or changed and 17 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the walk of reac_segconf_parse_file (0x87a78, 4908 bytes,
    1227 instructions; reac_segconf.c:120-296) against its contract lib/A/Prog/reac_segconf_parse_file_c.v, from its
    15 segment theorems pf_a<k>_holds : S_A<k> B (lib/A/Prog/pf_a1.v .. pf_a12.v; the statements are
@@ -17,7 +18,7 @@
    G3 walk owner, 2026-10-30.
    proves function reac_segconf_parse_file (reuse search: origin/main, origin/ossv/recipes, origin/ossv/candidates,
    origin/release/pau-projects-recipes, the unreleased proof delivery, cold/* heads, image-A address 0x87a78 /
-   the released-proof index's query for reac_segconf_parse_file): the unit's internal record, commit dfb49d6ad789,
+   the released-proof index's query for reac_segconf_parse_file): the unit's internal record,
    path records/segp/g3-lookup.md, CONFIRM by the rule-24 check
    2026-10-30T15:42:08Z; reuse verdict none: written new.
    THE SECTION HYPOTHESES are exactly the union of the Section hypotheses the 15 segment theorems keep in their
@@ -66,7 +67,7 @@ Context {PI : PAImg seg_listing}.
 Section e.
 Variable B : asyms.
 
-(* the wrappers (the interceptor owner's RtSeg rows at 80d098bd1905, the RtString / RtFormat rows of its interface) *)
+(* the wrappers (the interceptor owner's RtSeg rows, the RtString / RtFormat rows of its interface) *)
 Hypothesis ASTRCHR : forall fx0 : YK11.FPState,
   @RtSeg.astrchr_realizes fx0 rc SEGS B (SIG SS___interceptor_trampoline_strchr).              (* A5, A7, A9 *)
 Hypothesis ANCASE : forall fx0 : YK11.FPState,

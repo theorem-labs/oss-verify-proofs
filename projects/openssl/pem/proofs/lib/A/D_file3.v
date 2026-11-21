@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -69,13 +70,16 @@ Hypothesis LIB_loc : fp_local LIB_FP LIB.
 Hypothesis IO_img : forall x, in_ranges IO_FP x -> client_static x /\ ~ drv_cell x /\ outside LIB_FP x.
 Hypothesis XENV_img : forall x, in_ranges XENV_FP x -> client_static x /\ ~ drv_cell x /\ outside IO_FP x /\ outside LIB_FP x.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage in *; lia.
+Local Ltac ul := pose proof STACK_WOK_val; unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage in *; lia.
 
 (* [comment removed for export] *)
 Definition FCTX (Σ : rts RT) (so : stdout_st) (usp buf cap : Z) (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
   ART RT Σ m /\ mem_inv asegs m /\ CLX OUT_rep ERR_rep XENV LIB so m /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7
-  /\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  (* The [stk] floor and the headroom conjunct both follow MAINCTX in to the
+     write-certified sub-window; FCTX is reached from MAINCTX and can carry no more
+     than MAINCTX gives it. *)
+  /\ stk asegs m (rt_sp0 RT Σ - STACK_WOK) (usp - 80)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
   /\ In (buf, cap) (rt_live RT Σ) /\ rt_frames RT Σ = [] /\ usp + 16 <= USTACK_TOP.
 (* [comment removed for export] *)
 
@@ -94,7 +98,7 @@ Proof using AF AF_DRV FRE EXC OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
     F fc m HF Hcode Hso T c HA Hk.
   destruct HF as (ART0 & MI0 & CLX0 & FR0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & UT0).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   apply (FRE Σ (PMfd fds0 fs) (Z_to_bv 64 0x1f2d90) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 code)
            (Z_to_bv 64 buf) (Z_to_bv 64 buf) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m buf cap lo);
@@ -147,7 +151,7 @@ Proof using AF AF_DRV FRE FWR EXC OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_i
   pose proof HF as (ART0 & MI0 & CLX0 & FR0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & UT0).
   pose proof CLX0 as (_ & ERR0 & _).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   intros T c HA Hk.
   replace (evw 2 (map bv_unsigned s)) with (evw 2 (map bv_unsigned s) ++ evw 1 (so_buf stdout_init))

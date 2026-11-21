@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Rt/IntrinCpySetA.v -- image A (asan) of libreac/fuzz_ctrl: the core's memory-intrinsic contract
    Reusable.YG0d.aintrin_realizes at A's RAW __asan_memcpy entry 0x52028 (OCpy) and __asan_memset entry 0x524c4
    (OSet), stated with exactly the terms of the binders AMEMCPY / AMEMSET of
-   lib/A/Prog/C_reac_box_model_block.v pb_reac_box_model_block_stmt (:189-190 at 4f23eb39c50):
+   lib/A/Prog/C_reac_box_model_block.v pb_reac_box_model_block_stmt (:189-190):
      (AMEMSET : aintrin_realizes SEGS B OSet (SIGMA GS___asan_memset))
      (AMEMCPY : aintrin_realizes SEGS B OCpy (SIGMA GS___asan_memcpy))
    with SEGS := AB1v.tfibsegs and SIGMA := @pa_sigma _ ctrl_listing CtrlImg.PI_ctrl (that file's Section d
@@ -20,7 +21,7 @@
    SIGMA GS___asan_memset to 0x524c4 (CtrlImg.v:87 pa_sigma := ctrl_sigma; CtrlAddr.v ctrl_sigma), which are
    A.AB1w.tfib_A_asan_memcpy / tfib_A_asan_memset and the ELF symbols __asan_memcpy / __asan_memset of the pinned
    fuzz_ctrl.asan.  The core's interceptor lemmas A/AD1o.v ocpy_of_icpt / oset_of_icpt are stated at
-   pc_wrap_memcpy / pc_wrap_memset = 0x52024 / 0x52020 (A/AF0l.v:14), the trampolines, so they do not fit.
+   pc_wrap_memcpy / pc_wrap_memset = 0x52024 / 0x52020 (A/AF0l.v:15), the trampolines, so they do not fit.
 
    No lib/B file is in the closure: the Requires below name lib/Reusable and lib/A modules only. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.

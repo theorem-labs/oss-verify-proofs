@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from lib/B/YE7f.v of this unit (asan-ubsan), as proofs/libreac/fuzz_disco/lib/Y/Rt/StrnlenMusl.v (a working branch a58fbc98b07) does on disco: musl strnlen over lib/Rt/MemchrDef.v's general memchr wrapper contract (amemchr_realizesM at lo / hi = 0x10350 / 0x10370) instead of amemchr0, so the NUL may sit anywhere below n or be absent (result n); the whole of [x, x+n) is read and present. The twin of lib/A/Rt/StrnlenMusl.v. *)
+(* Modified by Theorem Labs, 2026-10: from lib/B/YE7f.v of this unit (asan-ubsan), as proofs/libreac/fuzz_disco/lib/Y/Rt/StrnlenMusl.v (a working branch) does on disco: musl strnlen over lib/Rt/MemchrDef.v's general memchr wrapper contract (amemchr_realizesM at lo / hi = 0x10350 / 0x10370) instead of amemchr0, so the NUL may sit anywhere below n or be absent (result n); the whole of [x, x+n) is read and present. The twin of lib/A/Rt/StrnlenMusl.v. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE7f.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Made generic in place over YE2y.v's icpt_laws_x (any allocator invariant ARx; ghost head set Hpx threaded
-   unchanged), hunk for hunk as image A's twin lib/A/Rt/StrnlenMusl.v was (commit 6e43e5f7379): each walk lemma is stated
+   unchanged), hunk for hunk as image A's twin lib/A/Rt/StrnlenMusl.v was: each walk lemma is stated
    over ARx (<name>_x, and POSTr_x / POSTC_x for the section posts); every theorem or lemma that took AR_laws keeps its
    statement byte for byte (its post definition too) and is re-proved from its _x at ARx := AR_x B
    (YE2y.icpt_laws_x_AR), in a section named <section>A. The memchr wrapper contract over ARx is lib/B/Rt/Memchr_x.v's

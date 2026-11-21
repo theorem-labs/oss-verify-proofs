@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new lemma mo_mat_rdr: a materialization step keeps the channel reader, which the revision's writev reads). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -27,6 +28,10 @@ Ltac2 gd_tbl_A_main_inv () : Init.string Init.list := ["Corelib.Init.Datatypes.c
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Notation drv_static := ARtDrv.drv_static.
+
+(* The revision's writev reads [m_channel_reader]; it lives in [m_proc], which [mo_mat] keeps. *)
+Lemma mo_mat_rdr : forall mo mo', mo_mat mo mo' -> m_channel_reader mo' = m_channel_reader mo.
+Proof. unfold mo_mat, m_channel_reader; intros mo mo' H; intuition congruence. Qed.
 
 (* [comment removed for export] *)
 Definition drv_compl : list ivl := ltac2:(CDefT.buildp (gd_tbl_A_main_inv ()) "(0.(1.$2.$2.)(3.$2.$2.=+?:360.)(0.(1.$2.$2.)(3.$2.$2.+?:400.+?:460.)(0.(1.$2.$2.)(3.$2.$2.+?:780.+106390.)(0.(1.$2.$2.)(3.$2.$2.+106391.+62<050.)(0.(1.$2.$2.)(3.$2.$2.+63<080.+63<084.)(0.(1.$2.$2.)(3.$2.$2.+63<0:0.+63<180.)(0.(1.$2.$2.)(3.$2.$2.+63<9><.+63<9?0.)(0.(1.$2.$2.)(3.$2.$2.+63<:38.+63<:40.)(0.(1.$2.$2.)(3.$2.$2.+63<:88.+63<::4.)(0.(1.$2.$2.)(3.$2.$2.+63<:;0.+63<:<0.)(0.(1.$2.$2.)(3.$2.$2.+65<=50.+65<=58.)(0.(1.$2.$2.)(3.$2.$2.+65=:;0.(4.+2.+40.))(5.(1.$2.$2.))))))))))))))")

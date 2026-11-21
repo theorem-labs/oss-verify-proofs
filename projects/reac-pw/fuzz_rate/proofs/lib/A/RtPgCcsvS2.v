@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/Reusable/YCbq.v at 7379c28ff70f; aj_bcmp_at restated
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/Reusable/YCbq.v; aj_bcmp_at restated
    as c2_bcmp_at at the bcmp wrapper's image-A entry 0x421a8 with the callee's same_but_materialized kept in its post,
    and the image-A walk of check_csv's tail added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address is measured on its unstripped twin
    sha256 0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3): segment S2 of the walk of check_csv

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: the UBSan image's cg slot contract from the cf harness contract (llvm_g_of_sr_cf),
-   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_gcg.v (25e3d17bdb5) with its module paths
-   changed, as reac-repacer/fuzz_uci's (ddb6d58bbed): the proof uses only the kit and this unit's
+   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_gcg.v with its module paths
+   changed, as reac-repacer/fuzz_uci: the proof uses only the kit and this unit's
    lib/U/Prog/LLVMFuzzerTestOneInput_c / _g / _cfb. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

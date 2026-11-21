@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YKlazy.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: lazy_in_maps_cf (ALedger_cf's alc_lazy_in_maps, YG0ncf.v) and its keep lemmas at the
    MODEL level: this file Requires only YK* / YM05 / YZ00 model files, so the start-up arms of YA02 / YA07 / YA08 /
    YA09 can call it (YGcfLazyMaps.v Requires YG0j / YG0b, which Require YA05 / YA08 / YA09: an import cycle there).
-   Moved verbatim from YGcfLazyMaps.v (359900b9176): the definition, lim_cov_app / lim_cov_cons and the keeps for
+   Moved verbatim from YGcfLazyMaps.v: the definition, lim_cov_app / lim_cov_cons and the keeps for
    init, mmap, noaccess, add_lazy, backing, lim_mmap_range, noreserve, munmap; YGcfLazyMaps.v re-exports this file.
    Re-proved from YG0j.v:20-42 under the same statements: cov_app, cov_subtract_out, cov_lazy_interior_out.
    New: keeps for YK13.mprotect_model and YK02.brk_model, lim_noaccess_range (prot-0 twin of lim_mmap_range), and
@@ -134,6 +135,59 @@ Qed.
 
 (* munmap_model (YK0v.v:86) drops every mapping based at addr and subtracts [addr, addr + n) from both lists;
    it keeps the field when every mapping based at addr ends inside [addr, addr + n). *)
+(* Theorem Labs, 2026-11-06 (LPS 75d69e0079f9): munmap_model's vm_maps component became
+   maps_subtract, so the munmap keep below has to carry a covered point from a list to that
+   list's subtraction.  YK0g.maps_subtract_sem would do it but wants ivs_wf of vm_maps, which
+   lazy_in_maps_munmap_cf does not have and cannot gain without moving twelve positional call
+   sites.  It is not needed: iv_wf would only buy the right remnant's Z_to_bv round trip, and
+   there x bounds both of its components on its own. *)
+Lemma lim_cov_range : forall l x, YK0g.ivs_wf l -> YK0g.covered l x = true -> 0 <= x < 2 ^ 64.
+Proof.
+intros l x W C. unfold YK0g.covered in C. apply existsb_exists in C as (c & Hc & Hi). cbv beta in Hi.
+pose proof (W c Hc) as Hw. unfold YK0g.iv_wf in Hw. pose proof (YK0g.B_range c) as Hb.
+unfold YK0g.in_iv, YK0g.in_rng in Hi. apply andb_true_iff in Hi as [H1 H2].
+apply Z.leb_le in H1. apply Z.ltb_lt in H2. lia.
+Qed.
+
+Lemma lim_cov_subtract_keep : forall l lo hi x, 0 <= x < 2 ^ 64 ->
+YK0g.in_rng lo hi x = false -> YK0g.covered l x = true ->
+YK0g.covered (maps_subtract l lo hi) x = true.
+Proof.
+intros l lo hi x Hx HO. induction l as [|c l IH].
+- intros C. discriminate C.
+- intros C. destruct c as [a sz]. rewrite lim_cov_cons in C. cbn [maps_subtract].
+  rewrite lim_cov_app. apply orb_true_iff.
+  apply orb_true_iff in C as [C|C]; [left|right; exact (IH C)].
+  unfold YK0g.in_iv, YK0g.in_rng, YK0g.B, YK0g.S in C. cbn [fst snd] in C.
+  apply andb_true_iff in C as [C1 C2]. apply Z.leb_le in C1. apply Z.ltb_lt in C2.
+  pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 sz) as Rs.
+  unfold bv_modulus in Ra, Rs.
+  unfold YK0g.in_rng in HO. apply andb_false_iff in HO as [O|O];
+    [apply Z.leb_gt in O | apply Z.ltb_ge in O].
+  + (* x < lo: the left remnant keeps x *)
+    assert (EL : (bv_unsigned a <? lo)%Z = true) by (apply Z.ltb_lt; lia).
+    assert (RT : bv_unsigned (Z_to_bv 64 (Z.min (bv_unsigned sz) (lo - bv_unsigned a)))
+                 = Z.min (bv_unsigned sz) (lo - bv_unsigned a)) by (apply YK0g.fg_lit; lia).
+    unfold YK0g.covered. apply existsb_exists.
+    exists (a, Z_to_bv 64 (Z.min (bv_unsigned sz) (lo - bv_unsigned a))).
+    split; [unfold iv_subtract; cbv zeta; rewrite EL; apply in_or_app; left; left; reflexivity|].
+    cbv beta. unfold YK0g.in_iv, YK0g.in_rng, YK0g.B, YK0g.S. cbn [fst snd]. rewrite RT.
+    apply andb_true_iff. split; [apply Z.leb_le; lia | apply Z.ltb_lt; lia].
+  + (* hi <= x: the right remnant keeps x *)
+    assert (ER : (hi <? bv_unsigned a + bv_unsigned sz)%Z = true) by (apply Z.ltb_lt; lia).
+    assert (RB : bv_unsigned (Z_to_bv 64 (Z.max (bv_unsigned a) hi))
+                 = Z.max (bv_unsigned a) hi) by (apply YK0g.fg_lit; lia).
+    assert (RS : bv_unsigned (Z_to_bv 64 (bv_unsigned a + bv_unsigned sz - Z.max (bv_unsigned a) hi))
+                 = bv_unsigned a + bv_unsigned sz - Z.max (bv_unsigned a) hi)
+      by (apply YK0g.fg_lit; lia).
+    unfold YK0g.covered. apply existsb_exists.
+    exists (Z_to_bv 64 (Z.max (bv_unsigned a) hi),
+            Z_to_bv 64 (bv_unsigned a + bv_unsigned sz - Z.max (bv_unsigned a) hi)).
+    split; [unfold iv_subtract; cbv zeta; rewrite ER; apply in_or_app; right; left; reflexivity|].
+    cbv beta. unfold YK0g.in_iv, YK0g.in_rng, YK0g.B, YK0g.S. cbn [fst snd]. rewrite RB, RS.
+    apply andb_true_iff. split; [apply Z.leb_le; lia | apply Z.ltb_lt; lia].
+Qed.
+
 Lemma lazy_in_maps_munmap_cf : forall addr n md, lazy_in_maps_cf md ->
 YK0g.ivs_wf (vm_noaccess (m_vmmaps md)) -> YK0g.ivs_wf (m_vm_lazy md) ->
 (forall c, In c (vm_maps (m_vmmaps md)) -> fst c = addr -> bv_unsigned (snd c) <= bv_unsigned n) ->
@@ -143,7 +197,8 @@ intros addr n md H Wn Wl Hlen x Hx.
 assert (Hlh : bv_unsigned addr <= bv_unsigned addr + bv_unsigned n) by (pose proof (bv_unsigned_in_range 64 n); lia).
 change (YK0g.covered (maps_subtract (vm_noaccess (m_vmmaps md)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)
   ++ maps_subtract (m_vm_lazy md) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)) x = true) in Hx.
-change (YK0g.covered (map_remove (vm_maps (m_vmmaps md)) addr) x = true).
+change (YK0g.covered (maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned addr)
+  (bv_unsigned addr + bv_unsigned n)) x = true).
 rewrite lim_cov_app, (proj2 (proj2 (YK0g.maps_subtract_sem _ _ _ Wn Hlh))),
   (proj2 (proj2 (YK0g.maps_subtract_sem _ _ _ Wl Hlh))) in Hx.
 assert (OUT : YK0g.in_rng (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n) x = false).
@@ -152,14 +207,11 @@ assert (OUT : YK0g.in_rng (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n) 
 assert (IN : YK0g.covered (vm_noaccess (m_vmmaps md) ++ m_vm_lazy md) x = true).
 { rewrite lim_cov_app. apply orb_true_iff in Hx as [Hx|Hx]; apply andb_true_iff in Hx as [Hx _]; rewrite Hx;
   [reflexivity | apply orb_true_r]. }
-pose proof (H x IN) as HM. unfold YK0g.covered in HM |- *. apply existsb_exists in HM as (c & Hc & Hi). cbv beta in Hi.
-apply existsb_exists. exists c. split; [|exact Hi].
-unfold map_remove. apply filter_In. split; [exact Hc|]. cbv beta.
-destruct (bv_eqb (fst c) addr) eqn:E; [|reflexivity]. exfalso.
-apply bv_eqb_eq in E. pose proof (Hlen c Hc E) as Hl.
-unfold YK0g.in_iv, YK0g.in_rng, YK0g.B, YK0g.S in Hi, OUT. rewrite E in Hi.
-apply andb_true_iff in Hi as [H1 H2]. apply Z.leb_le in H1. apply Z.ltb_lt in H2.
-apply andb_false_iff in OUT as [O|O]; [apply Z.leb_gt in O | apply Z.ltb_ge in O]; lia.
+(* Hlen is no longer used: with maps_subtract an entry based at addr is cut rather than
+   dropped, so x being outside [addr, addr + n) is the whole argument.  The hypothesis stays
+   in the statement so that none of the twelve call sites moves. *)
+apply lim_cov_subtract_keep; [ | exact OUT | exact (H x IN) ].
+exact (lim_cov_range _ x (YK0g.ivs_wf_app _ _ Wn Wl) IN).
 Qed.
 
 (* ---- New keeps (the kit owner's measured gaps, 2026-10-30). ---- *)
@@ -223,39 +275,8 @@ apply H. rewrite lim_cov_app in Hx |- *. apply orb_true_iff in Hx as [Hx|Hx].
 - rewrite Hx. apply orb_true_r.
 Qed.
 
-(* brk_model (YK02.v:163 = Mmap.v with_brk_next): a grow conses brk_grants onto vm_maps; a shrink to r below the
-   break b subtracts [r, b) from vm_maps and only the page-rounded brk_unmaps from the noaccess and lazy lists.
-   So it keeps the field when no noaccess or lazy address lies in [r, b) (vacuous for every r >= b). *)
-Lemma lazy_in_maps_brk_cf : forall req r md, lazy_in_maps_cf md ->
-YK0g.ivs_wf (vm_maps (m_vmmaps md)) -> YK0g.ivs_wf (vm_noaccess (m_vmmaps md)) -> YK0g.ivs_wf (m_vm_lazy md) ->
-(forall x, bv_unsigned r <= x < bv_unsigned (vm_brk (m_vmmaps md)) ->
-  YK0g.covered (vm_noaccess (m_vmmaps md) ++ m_vm_lazy md) x = false) ->
-lazy_in_maps_cf (YK02.brk_model req r md).
-Proof.
-intros req r md H Wm Wn Wl Hsh x Hx.
-assert (Ev : m_vmmaps (YK02.brk_model req r md) = brk_model_next (m_vmmaps md) req r).
-{ unfold YK02.brk_model, with_brk_next. cbv zeta. rewrite lim_forget_ranges_vmmaps. reflexivity. }
-assert (El : YK0g.covered (m_vm_lazy (YK02.brk_model req r md)) x = true -> YK0g.covered (m_vm_lazy md) x = true).
-{ intros Hl. unfold YK02.brk_model, with_brk_next in Hl. cbv zeta in Hl.
-  exact (lim_forget_ranges_lazy _ (with_vmmaps (brk_model_next (m_vmmaps md) req r) md) x Wl Hl). }
-rewrite Ev in Hx |- *. rewrite lim_cov_app in Hx. apply orb_true_iff in Hx.
-assert (IN : YK0g.covered (vm_noaccess (m_vmmaps md) ++ m_vm_lazy md) x = true).
-{ rewrite lim_cov_app. destruct Hx as [Hx|Hx].
-  - change (YK0g.covered (maps_subtract_ranges (vm_noaccess (m_vmmaps md)) (brk_unmaps r (vm_brk (m_vmmaps md)))) x
-      = true) in Hx.
-    rewrite (lim_subtract_ranges_sub _ _ x Wn Hx). reflexivity.
-  - rewrite (El Hx). apply orb_true_r. }
-change (YK0g.covered (brk_maps_next (m_vmmaps md) req r) x = true). unfold brk_maps_next.
-match goal with |- context [if ?c then _ else _] => destruct c eqn:E end.
-- apply andb_true_iff in E as [_ E]. apply Z.ltb_lt in E.
-  assert (Hle : bv_unsigned r <= bv_unsigned (vm_brk (m_vmmaps md))) by lia.
-  assert (NR : ~ (bv_unsigned r <= x < bv_unsigned (vm_brk (m_vmmaps md))))
-    by (intros Hr; rewrite (Hsh x Hr) in IN; discriminate IN).
-  rewrite (cov_subtract_out _ _ _ x Wm Hle NR). exact (H x IN).
-- rewrite lim_cov_app, (H x IN). apply orb_true_r.
-Qed.
 
-(* ---- Equation forms of YA09's post records (the kit owner, 2026-10-30 07:12Z; YA09 / YA0e lines below at 359900b9176). Each
+(* ---- Equation forms of YA09's post records (the kit owner, 2026-10-30 07:12Z; YA09 / YA0e lines below). Each
    takes the record's own field equations as hypotheses (a YA* function in a field is a bool parameter), so YA09's
    builders can call it. YA0e.v:36 in_ivs z l is YK0g.covered l z by conversion: these apply to in_ivs goals. ---- *)
 

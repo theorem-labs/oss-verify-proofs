@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/D_tr1.v, lines 49-50, 79. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -46,8 +47,8 @@ Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, F
 Definition TPRE (Σ : rts RT) (usp buf cap cp L pp plen : Z) (c0b : byte) (payload : list byte)
     (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
   ART RT Σ m /\ mem_inv bsegs m /\ CLX OUT_rep ERR_rep XENV LIB stdout_init m /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7
-  /\ stk bsegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ <= usp + 48 /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  /\ stk bsegs m (rt_sp0 RT Σ - STACK_SPAN) (usp - 80)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ <= usp + 48 /\ 0x7fff80000000 <= rt_sp0 RT Σ
   /\ rt_live RT Σ = [(buf, cap)] /\ rt_frames RT Σ = [] /\ CREDIT_DRV - 37 * cap <= rt_credit RT Σ /\ cap <= 67108864
   /\ buf <= cp /\ cp + 1 <= buf + cap /\ (0 < L -> bytes_at bsegs m cp [c0b]) /\ 0 <= L < 32768
   /\ buf <= pp /\ pp + plen <= buf + cap /\ bytes_at bsegs m pp payload /\ plen = Z.of_nat (length payload) /\ plen < 2^26
@@ -76,7 +77,7 @@ Proof using AF AF_DRV MAL MCP OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
   destruct (xenv_open XENV XENV_FP XENV_loc m XE0) as [CORE0 AEX0].
   destruct (xl_libc XENV_loc m CORE0) as (cdt & thr & sec & tm1 & LCH0).
   pose proof (tr_calls_range L c0b) as TCR.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   assert (B16' : (usp - 80) mod 16 = 0) by (apply Z.mod_divide; [lia|]; apply Z.mod_divide in B16; [| lia]; destruct B16 as (q & ->); exists (q - 5); lia).
   assert (CSEG : SEGTOP_A <= cp \/ cp + 1 <= 0x10000) by (destruct PR3; [right| left]; lia).

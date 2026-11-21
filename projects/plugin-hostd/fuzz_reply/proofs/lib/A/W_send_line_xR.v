@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_contract_x.v; 43 of its 131 lines of code are new or changed and 1924 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The two send_line contract texts of lib/A/W_contract_x.v (sl_post_x :671, sl_spec_x :689) at a world relation R.
    R is a Section variable right after ARx, and the SAME R is used in the post journal (W_journal_x.ajournal_gx_xR) and
    in the step relation (YA0nH.SRrG SEGS R). The instance for the re-hiding allocator calls is R := wle' SEGS RZ_cf
@@ -72,7 +73,7 @@ Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable MMAX : Z.
 Variable RG : rep_globals.
-(* W_contract_x.v:671 sl_post_x at R: the journal conjunct ajournal_gx_x -> ajournal_gx_xR R; every other conjunct verbatim *)
+(* W_contract_x.v:672 sl_post_x at R: the journal conjunct ajournal_gx_x -> ajournal_gx_xR R; every other conjunct verbatim *)
 Definition sl_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (c : ctl) (O : list byte) (mx no cap out : Z) (Bl : list byte) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
@@ -86,9 +87,9 @@ rp_RM RP S' kr /\
  Permutation (ablocks B ly' S') (aout_blks (sl_cap c mx no cap (Z.of_nat (length Bl))) out' ++ rest)) /\
 aout_at B RG ly' S' W' mem' (sl_ctl c (Z.of_nat (length Bl))) (sl_O c O Bl) mx
   (sl_no c no (Z.of_nat (length Bl))) (sl_cap c mx no cap (Z.of_nat (length Bl))) out' /\
-(* an OFF send leaves g_out's block as it was (W_contract_x.v:684-686) *)
+(* an OFF send leaves g_out's block as it was (W_contract_x.v:685-687) *)
 (sl_live c (Z.of_nat (length Bl)) = false -> out' = out).
-(* W_contract_x.v:689 sl_spec_x at R: SRr SEGS -> SRrG SEGS R and the post sl_post_xR; every premise verbatim *)
+(* W_contract_x.v:690 sl_spec_x at R: SRr SEGS -> SRrG SEGS R and the post sl_post_xR; every premise verbatim *)
 Definition sl_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch c O mx no cap out line Bl,
 afn_pre_x SEGS B ARx SL_STK ly S Hp W regs mem md ch ->
@@ -97,7 +98,7 @@ aout_at B RG ly S W mem c O mx no cap out ->
 rom_view SEGS W mem ->
 garr8 SEGS (arm W mem) line (bzs Bl) -> 0 <= line -> line + Z.of_nat (length Bl) < 2 ^ 63 ->
 sl_line_ok_x B ARx ly S out line (Z.of_nat (length Bl)) ->
-(* the line is no byte of G_SL (W_contract_x.v:697-698) *)
+(* the line is no byte of G_SL (W_contract_x.v:698-699) *)
 (forall a, line <= a < line + Z.of_nat (length Bl) -> ~ inG (G_SL B RG) a) ->
 sl_maxr c mx no cap (Z.of_nat (length Bl)) < MMAX ->
 blocks_bytes S + tr_peak (sl_tr c mx no cap (Z.of_nat (length Bl))) <= LIVE_MAX ->

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: made from YZ02: libtasn1's harness contract (B.LibP) in place of cgif_rgb_fuzzer's GIF library, theorem names and module names. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the entry's launch premise in place of entry_stack_fits. *)
 (* libtasn1's plain build realizes the driver's shape SPEC: cgif_rgb_fuzzer's YZ02 with libtasn1's
    harness contract (OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.B.LibP) in place of cgif's GIF library. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -26,24 +27,24 @@ Let API1 : AllocAPI src2_msyms := src2_API AMH1 MSH1 NTF1.
 Let LIB1 : lib_contract_all src2_msyms API1 YL0o.LIBPC YL0o.RA_LIB YL0o.EMPTY LIB_STACK_RGB := tasn1_lib_plain API1.
 Lemma tasn1_plain_realizes_rc : forall sp brk mbase rnd lim inp,
 valid_sp sp -> valid_brk src2segs brk -> valid_mmap_base mbase ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (SRC_LIM_MIN <= lim)%Z ->
 YN05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 realizes src2segs (init_config src2segs Plain.M.init_pc Plain.M.phdrs sp brk mbase rnd lim inp) (SPEC inp).
 Proof.
-intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim Hceil.
-exact (src2_realizes_spec API1 (MRx_AllocExtra src2_msyms) LIB1 driver_obligations_proved sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim Hceil).
+intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim Hceil.
+exact (src2_realizes_spec API1 (MRx_AllocExtra src2_msyms) LIB1 driver_obligations_proved sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim Hceil).
 Qed.
 End a.
 Lemma valid_sp_window36 : forall sp, valid_sp sp -> (sp_window_lo <= bv_unsigned sp <= sp_window_hi)%Z.
 Proof. intros sp (H1 & H2 & _). split; assumption. Qed.
 Theorem tasn1_plain_realizes : forall sp brk mbase rnd lim inp,
 valid_sp sp -> valid_brk src2segs brk -> valid_mmap_base mbase ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (SRC_LIM_MIN <= lim)%Z ->
 realizes src2segs (init_config src2segs Plain.M.init_pc Plain.M.phdrs sp brk mbase rnd lim inp) (SPEC inp).
 Proof.
-intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim.
+intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim.
 exact (@tasn1_plain_realizes_rc (YN05.RunCeilOf (bv_unsigned sp) (valid_sp_window36 sp Hsp))
-sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim (YN05.ceil_of_top_run _)).
+sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim (YN05.ceil_of_top_run _)).
 Qed.

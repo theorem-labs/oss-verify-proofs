@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyLSBDrainPre.v, with its module paths and module names changed; 631 of its 771 lines of code are new or changed and 546 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The PEAK-form rows of the three top_x rules whose sum-form room conjunct is false at reachable states, and their
    proofs at LS v3.  proves no function (kind: invariant lemma).
-   top_x (W_LLVMFuzzerTestOneInput_top_x.v at the TOP head 3d17f490d56) states LS_drain_pre and LS_rm_rr_pre at this
+   top_x (W_LLVMFuzzerTestOneInput_top_x.v at the TOP head) states LS_drain_pre and LS_rm_rr_pre at this
    file's former TX_ texts, and gone_base's GN_LS_rig is its former TX_GN_LS_rig: each is the old sum-form row with
    every `blocks_bytes S + tr_alloc X` as `blocks_bytes S + tr_peak X` (ReplyTrPeak.v:120) and the premises the
    proof needs added LAST.  ReplyLSI.v states all three at top_x's text (lsi_LS_drain_pre / lsi_LS_rm_rr_pre /
@@ -11,8 +12,8 @@
    meter conjuncts are ReplyLSI.v's (from its fr_SEC).  The cap conjuncts need OM := OUT_MAX4
    (ReplyLS3eCap.ls3e_cap_lt_MMAX).
 
-   THE ADDED PREMISES, each with the arm site that holds it where the rule is applied (integ = riplug 5dfdaedea77;
-   gone = 6a2e02357a4; W_rep.v is the same text in both):
+   THE ADDED PREMISES, each with the arm site that holds it where the rule is applied (integ = riplug;
+   gone =; W_rep.v is the same text in both):
    (1) LS_drain_pre (lib/A/W_LLVMFuzzerTestOneInput_drain_x.v dc_stB :2618, the rule applied at :2741):
        `0 <= t < OPS_MAX`              - Ht, dc_regs' clause (drain_x.v:1740), destructed from HR at :2629;
        `|re_U (nth j ..)| <= APARTIAL` - HEOK :2683 (aentry_ok of entry j from HREL's Forall, :2675), W_rep.v:125;
@@ -30,7 +31,7 @@
                                          reached through the arm's lf_base (HB :1633).
    (3) gone_base's GN_LS_rig (this file's former TX_GN_LS_rig, which W8 adopted; lib/A/W_LLVMFuzzerTestOneInput_gone_p3.v gp3_rig_c1 :908, the rule
        applied at :995):
-       `gn_op cx t m`                   - HOP :914 (GRG's clause, lib/A/W_LLVMFuzzerTestOneInput_gone_base.v:676; its parts lm_O m = [] and
+       `gn_op cx t m`                   - HOP :914 (GRG's clause, lib/A/W_LLVMFuzzerTestOneInput_gone_base.v:677; its parts lm_O m = [] and
                                          0 <= t < OPS_MAX are what R1 reads);
        `Forall (|re_U| <= APARTIAL) (lm_es m)` - HREL :924, arelay_at W_rep.v:162 -> aentry_ok :125 (lib/A/W_LLVMFuzzerTestOneInput_gone_p3.v
                                          :1345-1347 already reads this clause);

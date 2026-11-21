@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 398 of its 443 lines of code are new or changed and 469 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): row F_B of the walk of check_reject_clean_starved against the kit's
    text tcheck_reject_clean_starved_specX, the segment F (+728, B' 0x823b8 .. 0x823c0): `mv a0, s7` then `jal
    fuzz_free`, whose return site 0x823c0 is R's entry (CrsKitBp.crs_pc_R_ret_B). The closing lemma crs_seg_F_B proves
@@ -10,16 +11,16 @@
    lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). DONOR (reuse): the A' segment file lib/A/Prog/CrsSeg_F.v
-   blob fc0a631f4b9f (a working branch aee0692b20cc), carried lemma for lemma with the kit's `_B` names and B''s
+   blob fc0a631f4b9f (a working branch), carried lemma for lemma with the kit's `_B` names and B''s
    instance; every number re-derived at B' (below), none shifted from A'.
    INPUTS.
-   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml).
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (a Theorem Labs lane's listings v3);
      entry 0x820e0 = slot 645 (B_entry_check_reject_clean_starved); F is slots 827 / 828.
    - Image record lib/B/PRH_ImgB.v (prh_img_B); the kit text tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob
      9ecd8eb167c6, lib/A/PRH_Base.v blob fdb45545469b (its fpre ends
      with frm_zero (fp_csr fx), supplied at the call from crs_base_B's frm_zero (fp_csr fxk)), through the B' kit
-     lib/B/Prog/CrsKitBp.v blob 451cf8792b39 (a working branch ffc32040d322); the callee: fuzz_free (NULL) through
+     lib/B/Prog/CrsKitBp.v blob 451cf8792b39 (a working branch); the callee: fuzz_free (NULL) through
      the walk's shared interim lib/B/Prog/CrsFree0Bp.v blob bf7db21783ca (crs_free0_B = tfuzz_free_specX at p = 0, at B'),
      called at most = cb_most C and own = 0, the boundary ledger's two cells (crs_core_B's `LEDGER .. ran3 (cb_most C)
      0`), which its post keeps. The segment environment TE at B' is lib/B/Prog/PRW_WalkEnvB.v (the one B'

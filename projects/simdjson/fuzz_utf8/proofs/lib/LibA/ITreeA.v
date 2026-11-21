@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: node_soundA gains nsA_rob (each node's system call is the same over the run's larger read-only backing, RomBase.sys_rob), which the walk passes to SpinAlg.srz_node; instruction steps give it through sys_rob_instr. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,7 +10,8 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Lib Require Import PropExec MState Mem Exec ITree.
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.LibA Require Import AcctCore ExecF.
-From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.AS Require ShapeAlg SpinAlg.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.AS Require ShapeAlg SpinAlg RomBase.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import Exc.
 Open Scope bv_scope.
@@ -136,7 +138,12 @@ Record node_soundA : Prop := {
   (* [comment removed for export] *)
   nsA_progress : forall n RNG A ms mo mo_, at_node n RNG ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
       footprint_ok (m_vm_lazy mo) A RNG -> mrel A mo mo_ -> ainv (m_vm_lazy mo) A NMAX mo_ ->
-      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo')
+      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo');
+  (* LPS 727298f3: the node's system call reads no byte the run's read-only backing adds
+     ([RomBase.sys_rob], which [SpinAlg.srz_node] asks; [RomStable.srun_init] lifts a walk
+     over the binary's segments to the run's segment list). *)
+  nsA_rob : forall n RNG A ms mo mo_, at_node n RNG ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
+      mrel A mo mo_ -> RomBase.sys_rob segs (mkCfg ms mo_)
 }.
 
 (* [comment removed for export] *)
@@ -281,6 +288,9 @@ Proof.
     match goal with H : mi_account_step segs ms mo = MachineOk _ |- _ => rewrite Ha in H; inversion H; subst; auto end.
 Qed.
 
+Lemma cstep_pending : forall ms mo ms' mo', cstep segs (ms, mo) (ms', mo') -> ms_svc_pending ms = None.
+Proof. intros ms mo ms' mo' (_ & Hs & _). cbn in Hs. exact Hs. Qed.
+
 Lemma csteps_srealizes : forall ms mo ms' mo' T,
   csteps segs (ms, mo) (ms', mo') ->
   SpinAlg.srealizes segs (mkCfg ms' mo') T -> SpinAlg.srealizes segs (mkCfg ms mo) T.
@@ -289,7 +299,8 @@ Proof.
   remember (ms, mo) as c eqn:Ec. remember (ms', mo') as c' eqn:Ec'.
   revert ms mo ms' mo' Ec Ec'. induction CS as [c|c c1 c2 ST CS IH]; intros ms mo ms' mo' -> E2 Hs.
   - inversion E2; subst. exact Hs.
-  - destruct c1 as [ms1 mo1]. eapply SpinAlg.srz_silent1; [apply cstep_node_ok; exact ST|].
+  - destruct c1 as [ms1 mo1]. eapply SpinAlg.srz_silent1;
+      [apply cstep_node_ok; exact ST | exact (RomBase.sys_rob_instr segs (mkCfg ms mo) (cstep_pending _ _ _ _ ST)) |].
     eapply IH; eauto.
 Qed.
 
@@ -426,11 +437,11 @@ Section NodeCase.
     - destruct (nsA_sound NS n RNG A ms1 mo mo1_ rsp mo' evs Hat Hh Hinv NSF FOK MR INV1 Hst) as (_ & _ & mo_' & Hss & _).
       eapply SpinAlg.srz_conseq; [| apply node_shape_eq].
       apply (SpinAlg.srz_node segs c1 succ s_evs s_nx s_T (exist _ (mkCfg (nret ms1 rsp) mo_', evs) Hss)
-               succ_node_ok succ_srealizes).
+               succ_node_ok (nsA_rob NS n RNG A ms1 mo mo1_ Hat Hh Hinv NSF MR) succ_srealizes).
     - destruct (nsA_exit NS n RNG A ms1 mo mo1_ code mo' Hat Hh Hinv NSF MR Hex) as (_ & mo_' & Hss & _).
       eapply SpinAlg.srz_conseq; [| apply node_shape_eq].
       apply (SpinAlg.srz_node segs c1 succ s_evs s_nx s_T (exist _ (mkCfg ms1 mo_', [ExitEv code (m_fs mo')]) Hss)
-               succ_node_ok succ_srealizes).
+               succ_node_ok (nsA_rob NS n RNG A ms1 mo mo1_ Hat Hh Hinv NSF MR) succ_srealizes).
   Qed.
 End NodeCase.
 

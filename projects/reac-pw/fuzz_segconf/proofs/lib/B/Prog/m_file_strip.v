@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,6 +37,7 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 260 of its 303 lines of code are new or changed and 410 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, twin 80e82127e8ca; 0x86140): the ONE shared strip call
    step of the image-B m_file segment walks, stated over lib/B/Prog/m_file_m.v's cut predicates, in the continuation
    form of lib/B/Prog/m_file_iq.v's mf_ieq_call. Image A has no counterpart (clang inlines strip into m_file there).
@@ -48,7 +49,7 @@
    KEYA); the image-B m_file cut map section 3), from the state at strip's entry (the `jal` executed: pc = BASE + AF_strip, ra =
    BASE + ret, a0 = s1 + osc, a1 = s1 + oec, two distinct 8-aligned frame cells in [s1 + 160, s1 + 216), sp = s1),
    the cell osc holding p + a and the cell oec holding p + b, a <= b <= |rest|: strip_contract (lib/B/Prog/strip_c.v,
-   written by the image-B contracts lane, accepted 75d9c51ac6cb) at SegInstB.STK_strip over the bytes l = zb (slice a b rest) of the text
+   written by the image-B contracts lane, accepted) at SegInstB.STK_strip over the bytes l = zb (slice a b rest) of the text
    left. strip's post is apost_base (no side-stack frame, no allocator entry, EV_strip = 0), so the walk goes on at
    BASE + ret at the SAME FP state, with the cell osc holding p + a + strip_lead (slice a b rest) and the cell oec
    holding p + b - strip_trail (slice a b rest) (strip_c.v's strip_mid: the bytes between are h_strip of the slice),
@@ -64,7 +65,7 @@
    s1 + 216 <= sp0 - 104); the bytes (sa_bytes, sa_addr, sa_loc's heap arm, 0 < s0) from mf_loop's sa_str / sa_addr
    of the text left and m_file_pre's text block (m_file_sd.v's mf_txt_heap_now); apart from the cells by
    mf_heap_below_stack (every heap byte lies below s1 - 2 * ESTACK).
-   THE KEEP: m_file_k.v's mf_keep_callx (84ea19e46fcc) with E = the two cells, inside mf_cfp's
+   THE KEEP: m_file_k.v's mf_keep_callx with E = the two cells, inside mf_cfp's
    per-line scratch cells [s1 + 160, s1 + 216); the mconf block below the allocator's ceiling keeps its model
    (mf_mconf_keep).
    IMAGE B: s1 = (sp0 - 320) & -32, STK_m_file = 8,592, STK_strip = 16 (SegInstB.v).

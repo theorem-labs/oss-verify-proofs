@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: fully qualified module paths. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -19,7 +20,7 @@ Open Scope Z_scope.
 Section WithSegs.
 Variable segs : list Segment. Context {bmK : BMode}.
 
-Lemma cat_msteps_cj : forall a b, CatSim.msteps segs a b -> ExecS8.msteps segs a b.
+Lemma cat_msteps_cj : forall a b, S8.CatSim.msteps segs a b -> ExecS8.msteps segs a b.
 Proof.
   intros a b H. induction H as [ms | ms ms1 ms2 Hsvc Hstep Hms IH].
   - apply ExecS8.msteps_refl.

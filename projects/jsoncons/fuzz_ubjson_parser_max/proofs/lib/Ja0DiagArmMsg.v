@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: unfolded Section SE encoded lemmas regions_fwA and exitm_of_kn into plain lemmas, renamed variable p0 to auxvp, dropped using-annotations from the MS/MO lemmas and arm theorems, and narrowed the stack window in site_MS/site_MO; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DiagArmMsg.v, 26 lines within its lines 52-535. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -43,15 +44,11 @@ Proof. vm_compute. reflexivity. Qed.
 Section FwKeep.
 Variable sp0 : word.
 Hypothesis Hsp : 0x7fff80000000 <= bv_unsigned sp0 <= 2 ^ 47.
-Section SE.
-Local Abbreviation SEC_T_regions_fwA := (forall vals ebs so, let E := Env (vals_ev vals) ebs in
+#[using="Hsp"] Lemma regions_fwA : forall vals ebs so, let E := Env (vals_ev vals) ebs in
 vals_ev vals 0 = sp0 -> - 2 ^ 22 <= so <= 0 ->
-regions_ok ASEGS 0 so 2320 [] [] [] IMG_FW_A IMG_RW_A E (fun a => ~ Wfw (bv_unsigned sp0 + so) a) (fun a => bv_unsigned sp0 + so - 2320 <= a < bv_unsigned sp0 + so)) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_regions_fwA) 0%nat 0%nat).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_regions_fwA) 1%nat 0%nat).
-Variable so : ltac:(sec_ty2 constr:(SEC_T_regions_fwA) 2%nat 0%nat).
-Lemma regions_fwA : ltac:(sec_stmt2 constr:(SEC_T_regions_fwA) 3%nat 0%nat).
-Proof using Hsp vals ebs so.
+regions_ok ASEGS 0 so 2320 [] [] [] IMG_FW_A IMG_RW_A E (fun a => ~ Wfw (bv_unsigned sp0 + so) a) (fun a => bv_unsigned sp0 + so - 2320 <= a < bv_unsigned sp0 + so).
+Proof.
+intros vals ebs so.
 intros E P0 Hso.
 pose proof Hsp as Hsp'.
 constructor; cbn [ev E]; rewrite ?P0.
@@ -69,7 +66,6 @@ intros Mx d m Hd Hm.
 apply (store_ok_window ASEGS Mx (Z_to_bv 64 0x65d350) (Z_to_bv 64 d) 65536%nat m 0x65d350 0x66d350);
 first [exact (wseg_stage) | reflexivity | lia | (rewrite u_small by lia; lia)].
 Qed.
-End SE.
 End FwKeep.
 Section FPX_0. Context {fx : PropExec.FPState}.
 Definition rMS := Eval vm_compute in runA scr0 (SS 0x125988 srGLA [] (knGA 0 5) 71).
@@ -136,7 +132,7 @@ Variable M0 : word -> option byte.
 Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
 Variable fs0 : Fs.Fs.
 Variable fdata : list byte.
-Variables p0 p1 can : word.
+Variables auxvp p1 can : word.
 Variable LK0 : list fframe.
 Variable A0 : list (Z * Z).
 Variable CAP : Z.
@@ -148,14 +144,10 @@ Hypothesis HLEN : Z.of_nat (length fdata) < CAP.
 #[local] Notation ENVG := (ENVA fdata).
 #[local] Notation rom := (seg_rom ASEGS).
 #[local] Notation KX := (t_exit (exit_code 2) fs0).
-Section SE.
-Local Abbreviation SEC_T_exitm_of_kn := (forall vals (MV : word -> option byte) kn, know_ok ASEGS (ENVG vals) MV kn -> forallb (fun K => existsb (kentry_eqb K) kn) XKNM = true -> stderrM6 MV ->
-exitMA (bv_unsigned (vals_ev vals 4)) MV /\ stdoutPA MV /\ (forall i, 65536 <= i < 1261568 -> MV (Z_to_bv 64 i) = None)) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_exitm_of_kn) 0%nat 0%nat).
-Variable MV : ltac:(sec_ty2 constr:(SEC_T_exitm_of_kn) 1%nat 0%nat).
-Variable kn : ltac:(sec_ty2 constr:(SEC_T_exitm_of_kn) 2%nat 0%nat).
-Lemma exitm_of_kn : ltac:(sec_stmt2 constr:(SEC_T_exitm_of_kn) 3%nat 0%nat).
-Proof using sp0 Hsp CAP HCAP vals MV kn.
+#[using="sp0 Hsp CAP HCAP"] Lemma exitm_of_kn : forall vals (MV : word -> option byte) kn, know_ok ASEGS (ENVG vals) MV kn -> forallb (fun K => existsb (kentry_eqb K) kn) XKNM = true -> stderrM6 MV ->
+exitMA (bv_unsigned (vals_ev vals 4)) MV /\ stdoutPA MV /\ (forall i, 65536 <= i < 1261568 -> MV (Z_to_bv 64 i) = None).
+Proof.
+intros vals MV kn.
 intros HK HB ((S1 & S2 & S3 & S4) & S5 & S6).
 rewrite forallb_forall in HB.
 assert (KB : forall K, In K XKNM -> existsb (kentry_eqb K) kn = true) by (intros K HKin; exact (HB K HKin)).
@@ -199,7 +191,6 @@ split; [exact (ICo 1273704 8%nat (word_to_le_bytes 8 (Z_to_bv 64 0)) ltac:(img_r
 exact (ICo 1273664 8%nat (word_to_le_bytes 8 (Z_to_bv 64 0)) ltac:(img_rd) eq_refl).
 - exact (kimg_clear (ENVG vals) MV kn 65536 1261568 HK (KB (KImg 65536 1261568) ltac:(unfold XKNM; cbn [In map XC9_CELLS app fst snd]; tauto))).
 Qed.
-End SE.
 #[using="scfg L C IL HIok Hsp DL fdata CAP HCAP"] Lemma stderr6_call : forall LB LK cr A M (model : Model) LB' LK' cr' A' M' (model' : Model),
 dinvA LB LK cr A M model -> dinvA LB' LK' cr' A' M' model' ->
 (forall lo hi a, In (lo, hi) IMG_CLIENT_A -> lo <= a < hi -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
@@ -211,11 +202,11 @@ rewrite (vis_low scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ a D) by lia.
 rewrite (vis_low scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ a D') by lia.
 apply (FR 0x136d58 0x137640); [unfold IMG_CLIENT_A; cbn [In]; tauto | lia].
 Qed.
-#[using="Type"] Lemma knMS1_eq : keep_fwA MSO knMS = knMS1. Proof. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma srMS3_eq : sr_after_call_j srMS2 (map ridx c_kept) 103 = srMS3. Proof. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma knMS3_eq : keep_allocA MSO 4096 [] [] knMS2 = knMS3. Proof. vm_compute. reflexivity. Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex CAP HCAP"] Lemma exit_MS : forall (fxq : PropExec.FPState) vals R M (model : Model) A,
-length vals = 135%nat -> hdr_valsA sp0 p0 p1 can vals ->
+Lemma knMS1_eq : keep_fwA MSO knMS = knMS1.  Proof. vm_compute. reflexivity. Qed.
+Lemma srMS3_eq : sr_after_call_j srMS2 (map ridx c_kept) 103 = srMS3.  Proof. vm_compute. reflexivity. Qed.
+Lemma knMS3_eq : keep_allocA MSO 4096 [] [] knMS2 = knMS3.  Proof. vm_compute. reflexivity. Qed.
+Lemma exit_MS : forall (fxq : PropExec.FPState) vals R M (model : Model) A,
+length vals = 135%nat -> hdr_valsA sp0 auxvp p1 can vals ->
 regs_ok (ENVG vals) srMS3 R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knMS3 ->
 dinvA [] LK0 crC A M model -> m_fs model = fs0 ->
 stderrM6 (mrestrict (ahid A model) M) ->
@@ -246,8 +237,8 @@ assert (G10r : getr R0 10%bv = Z_to_bv 64 2) by (regv HR0 (10%bv : reg); reflexi
 unfold exit_code. rewrite <- Q2.
 exact (exit_run_m scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hex M0 [] LK0 crC A M model0 R0 S 2 _ XP ltac:(lia) G2r G4r G10r SOP).
 Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex M0_def HCAP"] Lemma tail_MS : forall (fxq : PropExec.FPState) vals R M (model : Model) A (A1 : Z),
-length vals = 103%nat -> hdr_valsA sp0 p0 p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 ->
+Lemma tail_MS : forall (fxq : PropExec.FPState) vals R M (model : Model) A (A1 : Z),
+length vals = 103%nat -> hdr_valsA sp0 auxvp p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 ->
 regs_ok (ENVG vals) srMS1 R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knMS1 ->
 dinvA [(A1, CAP)] LK0 crC A M model -> m_fs model = fs0 ->
 stderrM6 (mrestrict (ahid A model) M) ->
@@ -291,8 +282,8 @@ apply (exit_MS fxq vals' R' M' model' A' HL').
 + exact Q2'.
 + exact SE'.
 Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdgm M0_def HCAP"] Lemma site_MS : forall (fxq : PropExec.FPState) vals R M (model : Model) A (A1 : Z),
-length vals = 71%nat -> hdr_valsA sp0 p0 p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 ->
+Lemma site_MS : forall (fxq : PropExec.FPState) vals R M (model : Model) A (A1 : Z),
+length vals = 71%nat -> hdr_valsA sp0 auxvp p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 ->
 regs_ok (ENVG vals) srMS R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knMS ->
 dinvA [(A1, CAP)] LK0 crC A M model -> m_fds model = fds0 -> m_fs model = fs0 ->
 srealizes ASEGS scfg (mkCfg (@mkst fxq R (Z_to_bv 64 0x62a3c) M rom) model) (t_die msg_short fs0).
@@ -313,7 +304,7 @@ assert (G13r : getr R 13%bv = Z_to_bv 64 1273408) by (regv HR (13%bv : reg); ref
 assert (CANc : rdn ASEGS MV (Z_to_bv 64 6876608) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))).
 { rewrite Z_to_bv_bv_unsigned, <- P3. exact (kword_lit sp0 _ MV _ 6876608 8%nat (EVar 3) HK ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(cbn; lia)). }
 pose proof (kimg_clear _ MV _ 1273408 1273648 HK ltac:(vm_compute; reflexivity)) as SEIMG.
-assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+assert (WIN : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV _ a n HK HW P0 Ha Hn d k Hd Hk)).
 unfold t_die.
 apply (@fwrite1_run fxq scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hdgm M0 [(A1, CAP)] LK0 crC A M model R S (bv_unsigned can) msg_short KX DI
@@ -349,11 +340,11 @@ intros i Hi. apply FRV; [lia|]. unfold Wfw, S. clear - Hsp' B1 B2 Hi. lia. }
 split; [exact SEM|].
 split; [exact (ICe 1273640 8%nat (word_to_le_bytes 8 (Z_to_bv 64 1273408)) ltac:(img_rd) eq_refl) | exact (ICe 1273548 4%nat (word_to_le_bytes 4 (Z_to_bv 64 4294967295)) ltac:(img_rd) eq_refl)].
 Qed.
-#[using="Type"] Lemma knMO1_eq : keep_fwA MSO knMO = knMO1. Proof. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma srMO3_eq : sr_after_call_j srMO2 (map ridx c_kept) 105 = srMO3. Proof. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma knMO3_eq : keep_allocA MSO 4096 [] [] knMO2 = knMO3. Proof. vm_compute. reflexivity. Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex CAP HCAP"] Lemma exit_MO : forall (fxq : PropExec.FPState) vals R M (model : Model) A,
-length vals = 137%nat -> hdr_valsA sp0 p0 p1 can vals ->
+Lemma knMO1_eq : keep_fwA MSO knMO = knMO1.  Proof. vm_compute. reflexivity. Qed.
+Lemma srMO3_eq : sr_after_call_j srMO2 (map ridx c_kept) 105 = srMO3.  Proof. vm_compute. reflexivity. Qed.
+Lemma knMO3_eq : keep_allocA MSO 4096 [] [] knMO2 = knMO3.  Proof. vm_compute. reflexivity. Qed.
+Lemma exit_MO : forall (fxq : PropExec.FPState) vals R M (model : Model) A,
+length vals = 137%nat -> hdr_valsA sp0 auxvp p1 can vals ->
 regs_ok (ENVG vals) srMO3 R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knMO3 ->
 dinvA [] LK0 crC A M model -> m_fs model = fs0 ->
 stderrM6 (mrestrict (ahid A model) M) ->
@@ -384,8 +375,8 @@ assert (G10r : getr R0 10%bv = Z_to_bv 64 2) by (regv HR0 (10%bv : reg); reflexi
 unfold exit_code. rewrite <- Q2.
 exact (exit_run_m scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hex M0 [] LK0 crC A M model0 R0 S 2 _ XP ltac:(lia) G2r G4r G10r SOP).
 Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex M0_def HCAP"] Lemma tail_MO : forall (fxq : PropExec.FPState) vals R M (model : Model) A (A1 : Z),
-length vals = 105%nat -> hdr_valsA sp0 p0 p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 ->
+Lemma tail_MO : forall (fxq : PropExec.FPState) vals R M (model : Model) A (A1 : Z),
+length vals = 105%nat -> hdr_valsA sp0 auxvp p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 ->
 regs_ok (ENVG vals) srMO1 R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knMO1 ->
 dinvA [(A1, CAP)] LK0 crC A M model -> m_fs model = fs0 ->
 stderrM6 (mrestrict (ahid A model) M) ->
@@ -429,8 +420,8 @@ apply (exit_MO fxq vals' R' M' model' A' HL').
 + exact Q2'.
 + exact SE'.
 Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdgm M0_def HCAP"] Lemma site_MO : forall (fxq : PropExec.FPState) vals R M (model : Model) A (A1 : Z),
-length vals = 73%nat -> hdr_valsA sp0 p0 p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 ->
+Lemma site_MO : forall (fxq : PropExec.FPState) vals R M (model : Model) A (A1 : Z),
+length vals = 73%nat -> hdr_valsA sp0 auxvp p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 ->
 regs_ok (ENVG vals) srMO R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knMO ->
 dinvA [(A1, CAP)] LK0 crC A M model -> m_fds model = fds0 -> m_fs model = fs0 ->
 srealizes ASEGS scfg (mkCfg (@mkst fxq R (Z_to_bv 64 0x62a3c) M rom) model) (t_die msg_overrun fs0).
@@ -451,7 +442,7 @@ assert (G13r : getr R 13%bv = Z_to_bv 64 1273408) by (regv HR (13%bv : reg); ref
 assert (CANc : rdn ASEGS MV (Z_to_bv 64 6876608) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))).
 { rewrite Z_to_bv_bv_unsigned, <- P3. exact (kword_lit sp0 _ MV _ 6876608 8%nat (EVar 3) HK ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(cbn; lia)). }
 pose proof (kimg_clear _ MV _ 1273408 1273648 HK ltac:(vm_compute; reflexivity)) as SEIMG.
-assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+assert (WIN : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV _ a n HK HW P0 Ha Hn d k Hd Hk)).
 unfold t_die.
 apply (@fwrite2_run fxq scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hdgm M0 [(A1, CAP)] LK0 crC A M model R S (bv_unsigned can) msg_overrun KX DI
@@ -487,7 +478,7 @@ intros i Hi. apply FRV; [lia|]. unfold Wfw, S. clear - Hsp' B1 B2 Hi. lia. }
 split; [exact SEM|].
 split; [exact (ICe 1273640 8%nat (word_to_le_bytes 8 (Z_to_bv 64 1273408)) ltac:(img_rd) eq_refl) | exact (ICe 1273548 4%nat (word_to_le_bytes 4 (Z_to_bv 64 4294967295)) ltac:(img_rd) eq_refl)].
 Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdgm M0_def HCAP"] Theorem short_armA : (length fdata < 6)%nat -> close_kgA scfg ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC (t_die msg_short fs0).
+Theorem short_armA : (length fdata < 6)%nat -> close_kgA scfg ar HI sp0 fs0 fdata auxvp p1 can M0 LK0 A0 CAP crC (t_die msg_short fs0).
 Proof.
 intros Hs. unfold close_kgA. intros vals R M model A A1 HL HV P48 P70 HR HK HC DI HINC G1 G2.
 pose proof HV as (P0 & _). pose proof Hsp as Hsp'.
@@ -498,8 +489,8 @@ assert (EM : M1 = M) by (apply FunctionalExtensionality.functional_extensionalit
 destruct (sbm_fds _ _ SBM) as (F1 & F2). rewrite G1 in F1. rewrite G2 in F2.
 exact (site_MS fx vals R0 M model0 A A1 HL HV P48 HR0 HK0 DI0 F1 F2).
 Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdgm M0_def HCAP HLEN"] Theorem overrun_armA : (6 <= length fdata)%nat -> Z.of_nat (length fdata) < 6 + CFGA fdata ->
-close_kgA scfg ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC (t_die msg_overrun fs0).
+Theorem overrun_armA : (6 <= length fdata)%nat -> Z.of_nat (length fdata) < 6 + CFGA fdata ->
+close_kgA scfg ar HI sp0 fs0 fdata auxvp p1 can M0 LK0 A0 CAP crC (t_die msg_overrun fs0).
 Proof.
 intros Hge Hov. unfold close_kgA. intros vals R M model A A1 HL HV P48 P70 HR HK HC DI HINC G1 G2.
 pose proof Hsp as Hsp'.
@@ -507,7 +498,7 @@ destruct (inv_block1 scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ _ _ DI (or_int
 specialize (HK 6 67108863 ltac:(lia)).
 set (vals1 := vals ++ [Z_to_bv 64 (B0A fdata); Z_to_bv 64 (B1A fdata)]).
 assert (HL1 : length vals1 = 73%nat) by (subst vals1; rewrite length_app, HL; reflexivity).
-assert (YV : hdr_valsA sp0 p0 p1 can vals1) by (subst vals1; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL; lia); exact HV).
+assert (YV : hdr_valsA sp0 auxvp p1 can vals1) by (subst vals1; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL; lia); exact HV).
 pose proof YV as (Y0 & _).
 assert (Y48 : vals_ev vals1 48 = Z_to_bv 64 A1) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P48).
 assert (Y70 : vals_ev vals1 70 = Z_to_bv 64 (Z.of_nat (length fdata))) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).

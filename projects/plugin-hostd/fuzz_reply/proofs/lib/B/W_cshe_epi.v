@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the shared base of the image-B (fuzz_reply.asan-ubsan) walk of check_shape_ends: its
-   cut points, its frame's saved slots, and the epilogue 0x8592c -> ret, after lib/A/W_check_shape_ends.v (a working branch
-   2c323c71eb6) cshe_saved / cshe_epi_m / cshe_epi, a NEW walk over lib/B/W_listing.v (B's body is not A's: B's frame is
+   cut points, its frame's saved slots, and the epilogue 0x8592c -> ret, after lib/A/W_check_shape_ends.v (a working branch)
+   cshe_saved / cshe_epi_m / cshe_epi, a NEW walk over lib/B/W_listing.v (B's body is not A's: B's frame is
    112 bytes where A's is 144, B saves ra and s0..s10 where A also saves s11, and B CALLS list_drop where A inlines free and
    __asan_memmove; VERDICT.md (sha256 810ca1df9ca9; internal record)). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_shape_ends at 0x85770 (B; 0x853b0 in A), 0x2ec bytes.  The cut points the pieces of this walk meet at:
      entry      0x85770 (+0x0)      prologue: addi sp,sp,-112; ra at 104, s0..s10 at 96..16
      loop 1     0x85814 (+0xa4)     the counting loop (has_prefix per record), back-edge bnez s8 at 0x85880
@@ -351,7 +352,7 @@ Qed.
              ldrop_spec_x B PST ARx MT RP G' (BASE + AF_fr_list_drop)
              (at the CALLER's G, ldrop_post_x's journal keeps no byte of G, and cshe_spec_x puts HA+64..HA+96 in G,
              so asrc_at could not cross a drop (BCsheL2); this is the Section form of B's pb_list_drop,
-             a working branch 436074f627e lib/B/W_list_drop.v:561-572; the walk uses
+             a working branch lib/B/W_list_drop.v:562-573; the walk uses
              G' := [(HA + 80, 16)] and lifts the journal with ajournal_gx_G_mono_x)
      HP : hp_spec_x B PST ARx (BASE + AF_fr_has_prefix)
      HGR : gx_ok SEGS B cshe_ro_B          HGRR : gx_rt B cshe_ro_B
@@ -400,7 +401,7 @@ val_mem SEGS (mrestrict (w_H W') mem') (VAL A_g_gone) 1 gone /\
   Permutation (ablocks B ly' S') rest) /\
 frames S' = frames S /\
 mo_le MT S S' (hl_n H0 * mo_free MT) /\
-(* errno's view is the entry's (W3's cshe_post at a working branch 7ef745aee81: a Theorem Labs lane's ARM_gone needs it) *)
+(* errno's view is the entry's (W3's cshe_post at a working branch: a Theorem Labs lane's ARM_gone needs it) *)
 (forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
 (* the room round: the caller's room budget past the call (cshe_post_x's last conjunct) *)
 rp_RM RP S' kr.

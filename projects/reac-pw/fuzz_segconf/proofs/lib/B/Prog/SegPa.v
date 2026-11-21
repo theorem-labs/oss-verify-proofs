@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v, the PAListing/PAImg classes over fuzz_command's listing: module paths, csym and cmd_listing, A_LIM 1024, the image's end 0x606000; the second listing (PAImg2) cut. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdPa.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym, cmd_listing -> seg_listing (cmd_tpi, cmd_tw, PL_cmd -> seg_tpi, seg_tw, PL_seg); the image's end 0x606000 -> YG0f.kImgEnd (0x601000). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdPa.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym, cmd_listing -> seg_listing (cmd_tpi, cmd_tw, PL_cmd -> seg_tpi, seg_tw, PL_seg); the image's end 0x606000 -> YG0f.kImgEnd (0x601000). *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/SegPa.v for fuzz_segconf.asan-ubsan: module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

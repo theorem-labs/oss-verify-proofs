@@ -5,7 +5,8 @@
    and amwf part of YD3j.AR_but_depot_grow's proof, with ALedger at the walk's layout instead of AR_but_depot (no
    exclusion list), and the sizes / placement of the secondary extents as premises. It names nothing of YFk0; YFk0 calls it
    once, for wz_facts' ledger on the growth arm of the first StackDepot Put. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YFk0g.v at 88154566652a (the same text at 2fceb489f4aa; donor image sha256 f834165f5002), with its module paths changed and B/YB1v imported for AU/AWalkFw0. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YFk0g.v (the same text; donor image sha256 f834165f5002), with its module paths changed and B/YB1v imported for AU/AWalkFw0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

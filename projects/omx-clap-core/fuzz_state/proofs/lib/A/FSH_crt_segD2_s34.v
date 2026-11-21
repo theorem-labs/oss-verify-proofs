@@ -5,13 +5,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names and addresses changed; 1881 of its 1980 lines of code are new or changed and 485 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segB2.v, with its module names changed; 283 of its 407 lines of code are new or changed and 1856 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip (fs.asan 0x81a9c, build A), WALK LANE D2, SEGMENT 34: from the boundary crt_INV_822ac (0x822ac,
    the return of fuzz_free (file)) over `mv a0, s2` and `jal pj_free` (0x822b0, a0 = s2 = F + 0x140 = &back) to the
    boundary crtD2_INV_35 (0x822b4, the return of pj_free (&back)).
 
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd19.v .. sd24.v)
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd19.v .. sd24.v)
    The function-level lookup is the one quoted in the lane head (internal path)
-   (checker a Theorem Labs lane, role check, CONFIRM). This file ports the CONTENT of d25a984c903's St19 step
+   (checker a Theorem Labs lane, role check, CONFIRM). This file ports the CONTENT of's St19 step
    (check_round_trip_sd19.v: pj_free frees back's tree D19, the holdings lose D19, the document's node and its tree are
    carried across the call untouched) into S0's ajournal / ARU / U form; it builds no bridge to the donor framework.
 
@@ -141,7 +142,7 @@ Qed.
 (* ================= a freeing call's footprint against crt's frame and the live blocks =================
    The footprint of a call that frees the blocks Dh is FR ++ ablocks_fp Dh ++ FS_PSTAT_FP, FR inside crt's class-3
    frame. A byte of another live block, a frame byte outside FR, and every shadow byte are off it. PORTED from a Theorem Labs lane's
-   lib/A/FSH_crt_segB2.v:644-705 on a working branch (crtB2_pstat_range, crtB2_off_fp, crtB2_frm_off_fp,
+   lib/A/FSH_crt_segB2.v:645-706 on a working branch (crtB2_pstat_range, crtB2_off_fp, crtB2_frm_off_fp,
    crtB2_fp_noshadow), renamed; the keeps below are its :742-814 in explicit-argument form. ---- *)
 Section kp. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable SK : YI16.sink_head.

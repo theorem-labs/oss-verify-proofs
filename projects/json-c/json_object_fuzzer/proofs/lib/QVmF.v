@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: obl_free_nn, obl_malloc_n6 and obl_free_n6 take it after alloc_ceiling <= lo (QZsi.hiA_bot of H6 for the n6 forms) and pass it to QZsi.hiA_malloc and QZsi.hiA_free). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Fs Specs Run.
@@ -36,7 +37,7 @@ Definition obl_free_nn : Prop := forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word) (u : uwd),
 HEAPAx A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -84,7 +85,7 @@ Variable HIx : heap_iface_A A4L.
 
 Lemma OBL_FREE_NN_ok : obl_free_nn HIx (fun _ => 0).
 Proof.
-unfold obl_free_nn. intros until u. intros HP HPIN ST CEIL LO AL TOP ERR TP A0 UPK BB BD K.
+unfold obl_free_nn. intros until u. intros HP HPIN ST CEIL HBT LO AL TOP ERR TP A0 UPK BB BD K.
 eapply (hiA_free A4L HIx); try eassumption.
 intros ms' m' md' A' r RS VM ST' PRES ERR' HP'.
 eapply K; try eassumption; [| lia].
@@ -104,7 +105,7 @@ Definition obl_malloc_n6 : Prop := forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (n lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -128,7 +129,7 @@ Definition obl_free_n6 : Prop := forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (p lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -162,10 +163,10 @@ Context {RC__ : Q6q3.RunConsts}.
 Variable H6 : QZsi.heap_iface_A A4L.
 Lemma OBL_MALLOC_N6_ok : obl_malloc_n6 H6 (fun _ => 0).
 Proof.
-unfold obl_malloc_n6. intros until u. intros HP ST LO LOS SPA HT ERR TP A0 N UW UWK BN BB BD BQ RQ K HGP.
+unfold obl_malloc_n6. intros until u. intros HP ST LO HBT LOS SPA HT ERR TP A0 N UW UWK BN BB BD BQ RQ K HGP.
 assert (GP : gp = Z_to_bv 64 (hl_gp A4L)) by exact HGP.
 eapply (QZsi.hiA_malloc A4L H6) with (B := B) (n := n) (u := u) (errv := errv) (lo := lo);
-[ exact HP | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0
+[ exact HP | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0
 | exact N | exact UW | exact UWK | exact BN | exact BB | exact BD | exact BQ | ].
 intros ms' m' c' A' r errv' RS VM ST' HPR ERR' Hr BLK HP'.
 eapply (K ms' m' c' A' r errv' RS VM ST' _ ERR' Hr BLK HP').
@@ -175,10 +176,10 @@ Unshelve. eapply (heap_pres_mono); [exact HPR|]. intros b Hb. rewrite app_assoc.
 Qed.
 Lemma OBL_FREE_N6_ok : obl_free_n6 H6 (fun _ => 0).
 Proof.
-unfold obl_free_n6. intros until u. intros HP HPIN ST LO LOS SPA HT ERR TP A0 UPK BD K HGP.
+unfold obl_free_n6. intros until u. intros HP HPIN ST LO HBT LOS SPA HT ERR TP A0 UPK BD K HGP.
 assert (GP : gp = Z_to_bv 64 (hl_gp A4L)) by exact HGP.
 eapply (QZsi.hiA_free A4L H6) with (B := B) (p := p) (u := u) (errv := errv) (lo := lo);
-[ exact HP | exact HPIN | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact UPK | exact BD | ].
+[ exact HP | exact HPIN | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact UPK | exact BD | ].
 intros ms' m' c' A' r RS VM ST' HPR ERR' HP'.
 eapply (K ms' m' c' A' r RS VM ST' _ ERR' HP').
 - lia.
@@ -235,7 +236,7 @@ Definition obl_free_nn : Prop := forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word) (u : uwd),
 HEAPAx A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -283,7 +284,7 @@ Variable HIx : heap_iface_A A4L.
 
 Lemma OBL_FREE_NN_ok : obl_free_nn HIx (fun _ => 0).
 Proof.
-unfold obl_free_nn. intros until u. intros HP HPIN ST CEIL LO AL TOP ERR TP A0 UPK BB BD K.
+unfold obl_free_nn. intros until u. intros HP HPIN ST CEIL HBT LO AL TOP ERR TP A0 UPK BB BD K.
 eapply (hiA_free A4L HIx); try eassumption.
 intros ms' m' md' A' r RS VM ST' PRES ERR' HP'.
 eapply K; try eassumption; [| lia].
@@ -303,7 +304,7 @@ Definition obl_malloc_n6 : Prop := forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (n lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -327,7 +328,7 @@ Definition obl_free_n6 : Prop := forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (p lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -361,10 +362,10 @@ Context {RC__ : Q6q3.RunConsts}.
 Variable H6 : QZsi.heap_iface_A A4L.
 Lemma OBL_MALLOC_N6_ok : obl_malloc_n6 H6 (fun _ => 0).
 Proof.
-unfold obl_malloc_n6. intros until u. intros HP ST LO LOS SPA HT ERR TP A0 N UW UWK BN BB BD BQ RQ K HGP.
+unfold obl_malloc_n6. intros until u. intros HP ST LO HBT LOS SPA HT ERR TP A0 N UW UWK BN BB BD BQ RQ K HGP.
 assert (GP : gp = Z_to_bv 64 (hl_gp A4L)) by exact HGP.
 eapply (QZsi.hiA_malloc A4L H6) with (B := B) (n := n) (u := u) (errv := errv) (lo := lo);
-[ exact HP | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0
+[ exact HP | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0
 | exact N | exact UW | exact UWK | exact BN | exact BB | exact BD | exact BQ | ].
 intros ms' m' c' A' r errv' RS VM ST' HPR ERR' Hr BLK HP'.
 eapply (K ms' m' c' A' r errv' RS VM ST' _ ERR' Hr BLK HP').
@@ -374,10 +375,10 @@ Unshelve. eapply (heap_pres_mono); [exact HPR|]. intros b Hb. rewrite app_assoc.
 Qed.
 Lemma OBL_FREE_N6_ok : obl_free_n6 H6 (fun _ => 0).
 Proof.
-unfold obl_free_n6. intros until u. intros HP HPIN ST LO LOS SPA HT ERR TP A0 UPK BD K HGP.
+unfold obl_free_n6. intros until u. intros HP HPIN ST LO HBT LOS SPA HT ERR TP A0 UPK BD K HGP.
 assert (GP : gp = Z_to_bv 64 (hl_gp A4L)) by exact HGP.
 eapply (QZsi.hiA_free A4L H6) with (B := B) (p := p) (u := u) (errv := errv) (lo := lo);
-[ exact HP | exact HPIN | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact UPK | exact BD | ].
+[ exact HP | exact HPIN | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact GP | exact A0 | exact UPK | exact BD | ].
 intros ms' m' c' A' r RS VM ST' HPR ERR' HP'.
 eapply (K ms' m' c' A' r RS VM ST' _ ERR' HP').
 - lia.

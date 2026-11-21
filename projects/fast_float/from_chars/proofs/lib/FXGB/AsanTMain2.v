@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the CONFIG_RSEQ flag of the start-up layer). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
@@ -18,14 +19,17 @@ Module AsanStartCert.
 From Stdlib Require Import ZArith List Bool.
 From OSSVerify.Proofs.fast_float.from_chars.lib.FXGB Require Import AsanStart AsanFinC.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-Lemma startup_ok_all : (startup_ok_c 176 4080 5 && startup_ok_c 4096 4176 67 && startup_ok_c 4192 4256 68)%bool = true.
+Lemma startup_ok_all : (startup_ok_c false 176 4080 5 && startup_ok_c true 176 4080 5 && startup_ok_c false 4096 4176 67 &&
+  startup_ok_c true 4096 4176 67 && startup_ok_c false 4192 4256 68 && startup_ok_c true 4192 4256 68)%bool = true.
 Proof. exact startup_ok_res. Qed.
-Lemma startup_ok_C : startup_ok_c 176 4080 5 = true.
-Proof. pose proof startup_ok_all as H. apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. exact H. Qed.
-Lemma startup_ok_A : startup_ok_c 4096 4176 67 = true.
-Proof. pose proof startup_ok_all as H. apply andb_prop in H as [H _]. apply andb_prop in H as [_ H]. exact H. Qed.
-Lemma startup_ok_B : startup_ok_c 4192 4256 68 = true.
-Proof. pose proof startup_ok_all as H. apply andb_prop in H as [_ H]. exact H. Qed.
+Ltac pick_ok := pose proof startup_ok_all as H; repeat (apply andb_prop in H as [H ?]); assumption.
+(* each band's certificate, at either CONFIG_RSEQ value *)
+Lemma startup_ok_C : forall r, startup_ok_c r 176 4080 5 = true.
+Proof. intros [|]; pick_ok. Qed.
+Lemma startup_ok_A : forall r, startup_ok_c r 4096 4176 67 = true.
+Proof. intros [|]; pick_ok. Qed.
+Lemma startup_ok_B : forall r, startup_ok_c r 4192 4256 68 = true.
+Proof. intros [|]; pick_ok. Qed.
 (* [comment removed for export] *)
 End AsanStartCert.
 
@@ -44,7 +48,13 @@ Local Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 (* [comment removed for export] *)
-Definition FINALS_ALL : list (sst * smodel) := FINALS_c 176 4080 5 ++ FINALS_c 4096 4176 67 ++ FINALS_c 4192 4256 68.
+Definition FINALS_ALL : list (sst * smodel) :=
+  (FINALS_c false 176 4080 5 ++ FINALS_c true 176 4080 5) ++ (FINALS_c false 4096 4176 67 ++ FINALS_c true 4096 4176 67) ++
+  (FINALS_c false 4192 4256 68 ++ FINALS_c true 4192 4256 68).
+
+(* the run's own flag selects its certificate; either one is in [FINALS_ALL] *)
+Lemma in_both : forall (r : bool) (F : sst * smodel) l1 l2, In F (if r then l2 else l1) -> In F (l1 ++ l2).
+Proof. intros [|] F l1 l2 H; apply in_or_app; [right | left]; exact H. Qed.
 
 Section All.
 Variable cfg : SpuriousCfg.
@@ -52,30 +62,36 @@ Hypothesis Hoff : sc_alloc cfg = false.
 Variables (sp brk0 mb : word) (draw : EntryDraw) (inp : ProcInput).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk ASEGS brk0.
-Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hid : valid_id (in_uid inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mb draw) inp.
 
-#[using="Hoff Hsp Hbrk Hfit Hva Hve Hid"] Theorem asan_startup : forall T,
+#[using="Hoff Hsp Hbrk Hva Hve Hid Hvl Hlau"] Theorem asan_startup : forall T,
   (forall S' M' E' ms' model', In (S', M') FINALS_ALL ->
-     DEN ASEGS LIM (model0 sp brk0 mb LIM inp) (m0 sp draw inp) E' S' M' ms' model' ->
+     DEN ASEGS LIM (model0 sp brk0 mb draw LIM inp) (m0 sp mb draw inp) E' S' M' ms' model' ->
      realizes_cfg ASEGS cfg (mkCfg ms' model') T) ->
   realizes_cfg ASEGS cfg (init_config ASEGS AsanUbsan.M.init_pc APH sp brk0 mb draw LIM inp) T.
-Proof. LiaFast.lf_pins (fun (Hoff Hsp Hbrk Hfit Hva Hve Hid : LiaFast.U) => LiaFast.u0).
-  intros T Hk. pose proof (ofs_b sp inp Hsp Hfit Hva Hve) as (O1 & O2 & O3 & O4 & O5).
+Proof.
+  intros T Hk. pose proof (ofs_b sp brk0 mb draw inp Hsp Hvl Hlau) as (O1 & O2 & O3 & O4 & O5).
   unfold FINALS_ALL in Hk.
   assert (Hq : OFS sp = 16 * (OFS sp / 16)) by (pose proof (Z.div_mod (OFS sp) 16 ltac:(lia)); lia).
+  assert (Hin : forall (l1 l2 l3 : list (sst * smodel)) F, In F (if kb_rseq (in_kernel inp) then l2 else l1) -> In F ((l1 ++ l2) ++ l3)).
+  { intros l1 l2 l3 F H. apply in_or_app. left. exact (in_both _ F l1 l2 H). }
   destruct (Z_le_gt_dec (OFS sp) 4080) as [Hc|Hc]; [|destruct (Z_le_gt_dec (OFS sp) 4176) as [Hc'|Hc']].
-  - apply (asan_startup_cls cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hfit Hva Hve Hid 176 4080 5 ltac:(clear - O4 Hc; lia) ltac:(clear; lia)
-             startup_ok_C T).
-    intros S' M' E' ms' model' Hin Hd. apply (Hk S' M' E' ms' model'); [|exact Hd]. apply in_or_app. left. exact Hin.
-  - apply (asan_startup_cls cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hfit Hva Hve Hid 4096 4176 67 ltac:(clear - O4 Hc Hc' Hq; lia) ltac:(clear; lia)
-             startup_ok_A T).
-    intros S' M' E' ms' model' Hin Hd. apply (Hk S' M' E' ms' model'); [|exact Hd]. apply in_or_app. right. apply in_or_app. left. exact Hin.
-  - apply (asan_startup_cls cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hfit Hva Hve Hid 4192 4256 68 ltac:(clear - O4 Hc Hc' Hq; lia) ltac:(clear; lia)
-             startup_ok_B T).
-    intros S' M' E' ms' model' Hin Hd. apply (Hk S' M' E' ms' model'); [|exact Hd]. apply in_or_app. right. apply in_or_app. right. exact Hin.
+  - apply (asan_startup_cls cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hva Hve Hid Hvl Hlau 176 4080 5
+             ltac:(unfold HCp; clear - O4 Hc; lia) ltac:(unfold Hxlop; clear; lia) (startup_ok_C _) T).
+    intros S' M' E' ms' model' Hm Hd. apply (Hk S' M' E' ms' model'); [|exact Hd]. apply Hin.
+    destruct (kb_rseq (in_kernel inp)); exact Hm.
+  - apply (asan_startup_cls cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hva Hve Hid Hvl Hlau 4096 4176 67
+             ltac:(unfold HCp; clear - O4 Hc Hc' Hq; lia) ltac:(unfold Hxlop; clear; lia) (startup_ok_A _) T).
+    intros S' M' E' ms' model' Hm Hd. apply (Hk S' M' E' ms' model'); [|exact Hd]. apply in_or_app. right. apply in_or_app. left.
+    apply in_both with (r := kb_rseq (in_kernel inp)). destruct (kb_rseq (in_kernel inp)); exact Hm.
+  - apply (asan_startup_cls cfg Hoff sp brk0 mb draw inp Hsp Hbrk Hva Hve Hid Hvl Hlau 4192 4256 68
+             ltac:(unfold HCp; clear - O4 Hc Hc' Hq; lia) ltac:(unfold Hxlop; clear; lia) (startup_ok_B _) T).
+    intros S' M' E' ms' model' Hm Hd. apply (Hk S' M' E' ms' model'); [|exact Hd]. apply in_or_app. right. apply in_or_app. right.
+    apply in_both with (r := kb_rseq (in_kernel inp)). destruct (kb_rseq (in_kernel inp)); exact Hm.
 Qed.
 End All.
 (* [comment removed for export] *)
@@ -112,8 +128,8 @@ From OSSVerify.Proofs.fast_float.from_chars.lib.FXGB Require Import AsanTbl Asan
 Import ListNotations.
 Local Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-Definition S1x : sst := fst (List.nth 0 FINC (S0c 176 4080 5, M0)).
-Definition M1x : smodel := snd (List.nth 0 FINC (S0c 176 4080 5, M0)).
+Definition S1x : sst := fst (List.nth 0 FINC (S0c false 176 4080 5, M0)).
+Definition M1x : smodel := snd (List.nth 0 FINC (S0c false 176 4080 5, M0)).
 (* [comment removed for export] *)
 Fixpoint bind_terms (tp ts : list (positive * Z)) (σ : tree lin) : tree lin :=
   match tp, ts with
@@ -183,7 +199,7 @@ Definition acopy0 (a : unit) : list srec := [].
 Definition MC : Type := @mchain Empty_set.
 
 (* [comment removed for export] *)
-Definition F0 : sst * smodel := List.nth 0 FINC (S0c 176 4080 5, M0).
+Definition F0 : sst * smodel := List.nth 0 FINC (S0c false 176 4080 5, M0).
 Definition S1 : sst := fst F0.
 Definition M1 : smodel := snd F0.
 Definition PV : lin := lvar 8.
@@ -319,7 +335,7 @@ Definition gen_rg (MT : smodel) (Fs : list (sst * smodel * tree lin * region)) (
   let base_ok := forallb (fun '(_, _, σ, RF) => lin_eqb (rg_base RF) (lsubst σ (rg_base R))) Fs in
   let '(c, fresh1) := gen_cont MT MT0 Fs (rg_cont R) fresh in
   (* [comment removed for export] *)
-  let is_win := match is_const (rg_size R) with Some 8388608 => lin_eqb (rg_base R) (laddc SP (-8388608)) | _ => false end in
+  let is_win := match is_const (rg_size R) with Some w => (Z.eqb w WIN && lin_eqb (rg_base R) (laddc SP (- WIN)))%bool | _ => false end in
   let kd := if is_win then RW else
             if forallb (fun '(_, _, σ, RF) => rz_extra_ok RF (RG (rg_base R) (rg_size R) (rg_kind R) c)) Fs then rg_kind R else RW in
   if base_ok then (RG (rg_base R) (rg_size R) kd c, fresh1) else

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* LLVMFuzzerTestOneInput_segX_cmp_st: the symbolic cut states of image B's LLVMFuzzerTestOneInput cmp segment
    (llvm_b_cmp_stmt, +0x6f0 .. +0x83c), built from the interface's frame invariant and the cut point's memory clauses
    (cm_mem, lib/B/Prog/LLVMFuzzerTestOneInput_segX_cmp_kit.v):
@@ -535,7 +536,7 @@ apply (@pa_entry_st_ok_full fx rc decodeb_listing PID E pc sr_atoms regs [cm_spi
     rewrite unsigned_lit_small by lia. rewrite Z.pow_0_r, Z.mod_1_r. lia.
 Qed.
 
-(* A region of a state the walk stopped in (lib/A/Prog/YC1g.v:67 st_ok_pi_region_nth, at image B's listing). *)
+(* A region of a state the walk stopped in (lib/A/Prog/YC1g.v:68 st_ok_pi_region_nth, at image B's listing). *)
 Lemma cm_region_nth : forall E ss ms i r,
   st_ok_pi SEGS VAL E ss ms -> nth_error (ss_mem ss) i = Some r -> region_ok SEGS E (ms_mem ms) r.
 Proof. intros E ss ms i r HS Hi. exact (st_ok_region_nth E (abs_ss VAL ss) ms i r HS ltac:(destruct ss; exact Hi)). Qed.

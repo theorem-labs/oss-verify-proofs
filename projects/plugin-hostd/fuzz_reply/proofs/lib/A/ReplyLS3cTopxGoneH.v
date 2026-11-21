@@ -11,7 +11,7 @@
      gn_pair_ok source is at slot k (fr_RINV's distinct fds, RI_fds_holds), so after relay_instance_gone slot k holds
      rig_post's source for entry j, which rig_rel's dr_rel leaves drained (pending list empty, offset 0).
    - RI_gone_read_sat: one state meets all of RI_gone_read's premises (and RI_gone_pairs's).
-   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts (bb9dae5d905, a1a3591c77c),
+   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts,
      which were false at the instance; machine-checked counter-instances, not proofs of the rows.
    Part 2 (over W_LLVMFuzzerTestOneInput_gone_base.v's own model): RI_gone_pairs_plug / RI_gone_read_plug restate
    part 1 at gone_base's GN_RI_pairs / GN_RI_read; then the step and end rows.
@@ -19,23 +19,24 @@
      check_no_loss and check_shape_ends left of what relay_instance_gone left there; when gone = 0, `at` is the
      entry's position in the stream relay_instance_gone sent (rg_acc_pos), which is the entries' drained lines and
      then their ended keys' end lines (rg_rel_dec, rg_strm).
-   - RI_gone_step_holds(_c): GN_RI_step of a working branch a39b599f92e (copied verbatim as
+   - RI_gone_step_holds(_c): GN_RI_step of a working branch (copied verbatim as
      GN_RI_step_d) at MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B / fr_LS3c B.  The LS-side
-     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v at b25d82fcf04); mo_ok is True at
+     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v); mo_ok is True at
      ameter_triv; the rest is RINV-side (rg_step_rinv_side).
-   - RI_gone_end_holds_q5(_c): GN_RI_end of a39b599f92e (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
-     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and a39b599f92e's gn_cnl_ok
+   - RI_gone_end_holds_q5(_c): GN_RI_end (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
+     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and's gn_cnl_ok
      does not carry `hl_cap (hs_held h) <= hl_cap H'` from which ReplyLS3cTopxGoneH.v's gxh_req5 derives it.
-   - GN_RI_step_r3 (Section rg3): the record of round 3 (aa34c06e82c): without re_U NUL-free the step row is false.
+   - GN_RI_step_r3 (Section rg3): the record of round 3: without re_U NUL-free the step row is false.
    Local helpers rg_lines_nz / rg_upds_in / rg_W_read_lines_nz state what a Theorem Labs lane's ReplyRINV_a12.v
    (lines_nul_free / upds_nul_free) states; they stay local. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV_gone.v; 138 of its 234 lines of code are new or changed and 2827 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* REQ5 ("no held capacity shrinks from m to mc", the gone-rule request (sha256 b345d98e85b2; internal record)) derived from GN_RI_end's own
    premises, over lib/A/W_LLVMFuzzerTestOneInput_gone_base.v's model, whose gn_cnl_ok carries the bound the program
-   keeps, `hl_cap (hs_held h) <= hl_cap H'` (W8's 2b1ed64e05b).  proves no function (kind: invariant lemma).
+   keeps, `hl_cap (hs_held h) <= hl_cap H'` (W8).  proves no function (kind: invariant lemma).
    - gxh_rig_held: relay_instance_gone keeps every held list from m to m1 (gn_after_rig's kept-slot clause for a
      slot it does not drain; for a drained slot, gn_pair_ok's slot and dr_rel's `hs_held h1 = hs_held h`,
-     W_contract.v:1267, through gn_rig_ok's rig_rel).  No fact beyond the rule's premises is needed.
+     W_contract.v:1268, through gn_rig_ok's rig_rel).  No fact beyond the rule's premises is needed.
    - gxh_run_held: gn_run never lowers a held capacity (gn_cnl_ok's eighth conjunct, and check_shape_ends'
      hl_cap H'' = hl_cap held).
    - gxh_req5: REQ5 at any loop point; gx7_*: the gone rows with no REQ5 premise. *)
@@ -105,8 +106,8 @@ Qed.
 
 (* ================================================================== m -> m1: relay_instance_gone keeps held lists *)
 (* a slot that holds a source in m holds one in m1 with the same held list: kept slots by gn_after_rig's clause
-   (6a2e02357a4 gone_base.v:434-435), drained slots by gn_pair_ok's slot (:418) and dr_rel's hs_held clause
-   (W_contract.v:1267) through gn_rig_ok's rig_rel (:450-451) *)
+   (gone_base.v:434-435), drained slots by gn_pair_ok's slot (:418) and dr_rel's hs_held clause
+   (W_contract.v:1268) through gn_rig_ok's rig_rel (:450-451) *)
 Lemma gxh_rig_held : forall cx t m hs qs c2 O2 cap2 out2 m1,
   fr_RINV cx t m -> gn_pairs m hs -> gn_after_rig cx m hs qs c2 O2 cap2 out2 m1 ->
   gn_rig_ok cx m hs qs c2 O2 cap2 ->

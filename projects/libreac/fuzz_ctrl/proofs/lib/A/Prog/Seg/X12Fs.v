@@ -5,11 +5,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its numbers changed; 891 of its 928 lines of code are new or changed and 359 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/X12.v; 113 of its 238 lines of code are new or changed and 803 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/X12.v a0b6ac9aa84d (the blob this tree had at release c5e779efe8c) (x12_a_evt :360-466); footprint
+   FACTS, PAU pau-libreac-v190. Source: Seg/X12.v a0b6ac9aa84d (the blob this tree had at release) (x12_a_evt :360-466); footprint
    forms of record: Seg/X12F.v blob 257dd19e2822.  Tools: lib/Lib/StepF.v, lib/Lib/ExecF.v, The Rocq Prover 9.2.
    Written by a Theorem Labs lane's glue lane (the split rule of a Theorem Labs lane with a Theorem Labs lane, 04:01Z: a split goes in a
    NEW file Seg/<S>Fs.v that only Requires <S>F.v and the sources).  rule 24: no function proved; mechanical cut of
@@ -36,7 +37,7 @@
       for one, is no fact of the cut layer).
    2. NO post stretch: the source run ENDS at the callee's own post (x12_a_evt's post is stated at the return pc
       0x82b20, read straight off memchr_wrap_post), so zero instructions run after the return; as A1F.v's a1_req_evt
-      split (A1F.v:249-254).  X12Fs.rng.tsv carries the callee_split row.
+      split (A1F.v:250-255).  X12Fs.rng.tsv carries the callee_split row.
    3. x12_a_evt_of_pre_post: x12_a_pre_F at RNG_all + the PLAIN callee contract memchr_wrap.memchr_wrap_holds
       (the in-tree theorem X12.v:416 applies) re-derive X12.x12_a_evt; the script after the call is X12.v:416-465,
       unchanged.  x12_a_evt_of_pre_post_verbatim pins it by constr_eq against the type of X12.x12_a_evt. *)

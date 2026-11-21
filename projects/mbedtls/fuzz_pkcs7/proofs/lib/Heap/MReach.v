@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a proof supplies the new premise of kcan_mprotect_ok that the range is clear of the vDSO reservation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -283,7 +284,10 @@ Proof.
     { unfold map_contains. apply existsb_exists. exists (went b nb). split; [exact A5|]. rewrite Ua, Un. unfold elo, ehi in B5, B6. rewrite B5.
       replace (bv_unsigned (fst (went b nb)) + bv_unsigned (snd (went b nb))) with (b + nb) by (symmetry; exact B6).
       rewrite (proj2 (Z.leb_le _ _)) by (unfold PGSZ in *; lia). rewrite (proj2 (Z.leb_le _ _)) by (unfold PGSZ in *; lia). reflexivity. }
-    ddestruct (kcan_mprotect_ok a mo N B ltac:(unfold PGSZ in *; lia) Hamod ltac:(unfold PGSZ in *; lia) Hcn Hcm Hlazy KR) as (mo' & ST & Emo' & KR' & Elz & Ehl).
+    assert (Hvd : region_free (vdso_reserved (m_kernel mo) (vdso_top h)) aw nw = true).
+    { apply (KL_vdso_free_core _ mo (went b nb) aw nw (kl_resv _ _ _ HKL) (kl_apart _ _ _ HKL) A5);
+        rewrite ?Ua, ?Un; unfold PGSZ in *; lia. }
+    ddestruct (kcan_mprotect_ok a mo N B ltac:(unfold PGSZ in *; lia) Hamod ltac:(unfold PGSZ in *; lia) Hcn Hcm Hlazy KR Hvd) as (mo' & ST & Emo' & KR' & Elz & Ehl).
     unfold ev_step.
     eapply reachT_mbind.
     { eapply (reachT_msys _ _ s mo _ _ (fun p mo1 => fst p = RgDone true /\ mo1 = mo')); [exact ST|].

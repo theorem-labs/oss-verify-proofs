@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the vDSO side goals closed): changed tfib_realizesX, halts_allowed_cgif_cgif_file_fuzzer_halts_both_closed. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -25,8 +26,13 @@ Theorem tfib_realizesX : forall sp brk mb rnd inp,
 Proof.
   intros sp brk mb rnd inp Hen Hinp.
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-  apply realizes_of_srealizes. exact (TFIB_T_closed sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+  (* 75d69e00 Run.v:3747-3755: [valid_entry_sv48] is FIVE conjuncts now, with
+     [entry_launch_ok_va Sv48 en inp] appended last; f1006fe8's was four.  A
+     four-name pattern would leave [Hfit] as a conjunction and the positional
+     [TFIB_T_closed … Hfit …] below would take the pair for the fits fact. *)
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
+  destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+  apply realizes_of_srealizes. exact (TFIB_T_closed sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
 Qed.
 
 Theorem halts_allowed_cgif_cgif_file_fuzzer_halts_both_closed :
@@ -37,4 +43,5 @@ Proof.
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=ff_lib_shape) inp). split.
   - exact (tfib_realizesX sp brk mb rnd inp Hen Hinp).
   - apply SPECX_shape_ok.
+  - RomStable.vdso_none.
 Qed.

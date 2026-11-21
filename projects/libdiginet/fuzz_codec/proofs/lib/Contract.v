@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v at bc49657c087a; module path, this image's values, LLVM_K from check_inject. *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v; module path, this image's values, LLVM_K from check_inject. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths and module names changed; 291 of its 310 lines of code are new or changed and 48 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refusal under a may-fail allocator: the event lemmas at every allocation mode); internal commit ids in comments replaced by public commits or removed. *)
+(* Copyright 2026 Theorem Labs *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -26,7 +27,8 @@ Proof.
   - econstructor; eassumption.
 Qed.
 
-Lemma evt_SR : forall segs ms (Q : machine_state -> Prop) md (P : config -> Prop),
+(* At every allocation mode: [SR] and [YK15.rz_msteps] are. *)
+Lemma evt_SR {AM : AllocMode} : forall segs ms (Q : machine_state -> Prop) md (P : config -> Prop),
   Exec.evt segs Q ms -> m_halted md = None -> m_vm_lazy md = [] ->
   (forall ms', Q ms' -> SR segs (mkCfg ms' md) P) -> SR segs (mkCfg ms md) P.
 Proof.
@@ -35,7 +37,7 @@ Proof.
   exact (K final HQ T HK).
 Qed.
 
-Lemma evt_SR_canon : forall segs ms (Q : machine_state -> Prop) md (P : config -> Prop),
+Lemma evt_SR_canon {AM : AllocMode} : forall segs ms (Q : machine_state -> Prop) md (P : config -> Prop),
   Exec.evt segs Q (RegisterBridge.canonical_register_state ms) -> m_halted md = None -> m_vm_lazy md = [] ->
   (forall ms', (exists can, Q can /\ Regs6ss.ms_eqv can ms') -> SR segs (mkCfg ms' md) P) ->
   SR segs (mkCfg ms md) P.
@@ -63,6 +65,9 @@ Definition pack_form : ResForm := {|
 
 Section Contracts.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
+(* 08b1429: the contracts and the allocator facts are stated over a record at any allocation mode (YO0d.AllocAPI
+   carries its mode); the may-fail chain reads them over ZAllocatorMF's record at MayFail. *)
+Context {AM : AllocMode}.
 Variable B : malloc_syms.
 Variable API : AllocAPI B.
 Context {SH : sink_head} {SK : sink_syms}.
@@ -341,16 +346,17 @@ Definition lib_contract_body (RZ : list Segment -> config -> TSet -> Prop)
        RZ segs c' (K l)) ->
     RZ segs (mkCfg (mkst regs (Z_to_bv 64 pc) mem (seg_rom segs)) md) (LIBK pl (m_fs md) K).
 
-Definition lib_contract_g (G R : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop) (j : nat)
-    (pc ra empty stk : Z) : Prop :=
-  lib_contract_body (fun s c T => @realizes s AcfgMode c T) G R GI j pc ra empty stk.
-
 End Contracts.
+
+Definition lib_contract_g {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}
+    (B : malloc_syms) (API : AllocAPI B) {SH : sink_head} {SK : sink_syms}
+    (G R : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop) (j : nat) (pc ra empty stk : Z) : Prop :=
+  @lib_contract_body fx rc LS AcfgMode B API SH SK (fun s c T => @realizes s AcfgMode c T) G R GI j pc ra empty stk.
 
 Definition lib_contract_gm {AM : AllocMode} {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}
     (B : malloc_syms) (API : AllocAPI B) {SH : sink_head} {SK : sink_syms}
     (G R : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop) (j : nat) (pc ra empty stk : Z) : Prop :=
-  @lib_contract_body fx rc LS B API SH SK (fun s c T => @realizes s AM c T) G R GI j pc ra empty stk.
+  @lib_contract_body fx rc LS AM B API SH SK (fun s c T => @realizes s AM c T) G R GI j pc ra empty stk.
 
 Lemma lib_contract_g_gm : forall {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}
     (B : malloc_syms) (API : AllocAPI B) {SH : sink_head} {SK : sink_syms} G R GI j pc ra empty stk,

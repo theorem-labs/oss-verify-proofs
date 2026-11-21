@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag: ag_seq_ok's continuation keeps ms_thp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -296,6 +297,7 @@ Section Seq.
     RepW A m0 ws (ms_mem s) -> WIN s -> 0 <= sqv < 256 ->
     (forall s1 (sq' : Z) (reset : bool), 1 <= sq' <= 256 ->
        RepW A m0 (reset_writes reset ++ ws) (ms_mem s1) -> WIN s1 -> ms_vm s1 = ms_vm s -> ms_lo s1 = ms_lo s -> ms_hi s1 = ms_hi s ->
+       ms_thp s1 = ms_thp s ->
        tsafe (K (Z_to_bv 64 sq') s1) P) ->
     tsafe ((x <- ag_seq (Z_to_bv 64 sqv) ;; K x) s) P.
   Proof.
@@ -315,9 +317,9 @@ Section Seq.
       eapply (ts_st_ctxrW A _ m0 _ 8 (CTX + 872)); [exact RW3 | exact HWIN | rewrite CTX_lock; lia | unfold CTX_END; rewrite CTX_lock; cbn; lia |].
       intros m4 RW4. change (bv_unsigned w0) with 0 in RW4. change (Z.of_nat 8) with 8 in RW4.
       apply ts_bind_ret.
-      apply (HK (upd s m4 (ms_vm s)) 1 true ltac:(lia)); [exact RW4 | exact HWIN | reflexivity | reflexivity | reflexivity].
+      apply (HK (upd s m4 (ms_vm s)) 1 true ltac:(lia)); [exact RW4 | exact HWIN | reflexivity | reflexivity | reflexivity | reflexivity].
     - apply ts_bind_ret. rewrite v_addi_Z.
-      apply (HK s (sqv + 1) false ltac:(lia)); [exact RW | exact HWIN | reflexivity | reflexivity | reflexivity].
+      apply (HK s (sqv + 1) false ltac:(lia)); [exact RW | exact HWIN | reflexivity | reflexivity | reflexivity | reflexivity].
   Qed.
 
   (* [comment removed for export] *)

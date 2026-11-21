@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's validity hypotheses; the process input's new fields; the start-up taken per CONFIG_RSEQ value; the SIGPIPE disposition). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,25 +27,31 @@ Open Scope Z_scope.
 
 
 Definition XLIB_STMT (LINV : (word -> option byte) -> Prop) : Prop :=
-  forall (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (FS0 : Fs.Fs),
+  forall (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (FS0 : Fs.Fs)
+    (apc : N) (mbase : word) (fs : Fs.Fs) (stdin : InputStream) (gid : word) (groups : list word) (net : NetQueue) (ur : InputStream) (kern : KernelBuild) (execfn : list byte) (nofile sigmask : word) (abt sdf : bool),
     valid_sp sp -> valid_argv argv -> valid_envp envp ->
     forall uid hw : word, entry_stack_fits sp argv envp ->
+    in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) = recorded_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf)) ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) ->
     forall SINV : env -> (word -> option byte) -> Prop,
-      (forall E M, SINV E M -> SINV0 APH sp rdraw brk0 argv envp uid hw E M) ->
-      (forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M') ->
+      (forall E M, SINV E M -> SINV0 APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M) ->
+      (forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SINV E M -> SINV E M') ->
       (forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M) ->
-      OBL_lib ASEGS ASAN NX0 AsanInit.LIMIT SINV (argH0 APH sp rdraw argv envp uid hw) LINV FS0 (ALN.summary_lib ASEGS LIBTAB_ASAN ASAN NX0).
+      OBL_lib ASEGS ASAN NX0 AsanInit.LIMIT SINV (argH0 sp rdraw argv envp kern execfn) LINV FS0 (ALN.summary_lib ASEGS LIBTAB_ASAN ASAN NX0).
 
 Definition XARG_STMT (LINV : (word -> option byte) -> Prop) : Prop :=
-  forall (fx : FPState) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (FS0 : Fs.Fs),
+  forall (fx : FPState) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (FS0 : Fs.Fs)
+    (apc : N) (mbase : word) (fs : Fs.Fs) (stdin : InputStream) (gid : word) (groups : list word) (net : NetQueue) (ur : InputStream) (kern : KernelBuild) (execfn : list byte) (nofile sigmask : word) (abt sdf : bool),
     valid_sp sp -> valid_argv argv -> valid_envp envp ->
     forall uid hw : word, entry_stack_fits sp argv envp ->
+    in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) = recorded_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf)) ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) ->
     forall SV : env -> (word -> option byte) -> Prop,
-      (forall E M, SV E M -> SINV0 APH sp rdraw brk0 argv envp uid hw E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []) ->
-      (forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SV E M -> SV E M') ->
+      (forall E M, SV E M -> SINV0 APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []) ->
+      (forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SV E M -> SV E M') ->
       (forall E E' M, env_agree NX0 E E' -> SV E M -> SV E' M) ->
-      ext_stmt ASEGS ASAN NX0 AsanInit.LIMIT (AN.xn ASEGS ASAN NX0) SV (argH0 APH sp rdraw argv envp uid hw) LINV FS0
-      /\ emit_stmt ASEGS ASAN NX0 AsanInit.LIMIT (AN.xe ASEGS ASAN NX0) SV (argH0 APH sp rdraw argv envp uid hw) LINV FS0.
+      ext_stmt ASEGS ASAN NX0 AsanInit.LIMIT (AN.xn ASEGS ASAN NX0) SV (argH0 sp rdraw argv envp kern execfn) LINV FS0
+      /\ emit_stmt ASEGS ASAN NX0 AsanInit.LIMIT (AN.xe ASEGS ASAN NX0) SV (argH0 sp rdraw argv envp kern execfn) LINV FS0.
 
 
 
@@ -73,7 +80,7 @@ Section MC.
   Variables uid gid : word.
   Variable hw : word.               
   Variables nofile sigmask : word.
-  Variable abt : bool.    
+  Variables abt sdf : bool.    
   Variable groups : list word.
   Variable net : NetQueue.
   Variable ur : InputStream.   
@@ -85,15 +92,23 @@ Section MC.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
   Hypothesis Hhw : valid_hwcap hw.   (* [comment removed for export] *)
+  Variable apc : N.
+  (* see AsanStartup.v:109-115 *)
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Hypothesis Hkernel : in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) = recorded_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf)).
+  Hypothesis Hlaunch : valid_launch (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf).
 
   #[local] Notation c := (content_of argv fs).
-  #[local] Notation SINV := (SINVm APH sp rdraw brk0 argv envp uid hw (content_of argv fs)).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
+  #[local] Notation SINV := (SINVm APH sp rdraw brk0 argv envp uid hw apc mbase fs stdin gid groups net ur kern execfn nofile sigmask abt sdf (content_of argv fs)).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kern execfn).
   #[local] Notation LIM := AsanInit.LIMIT.
 
   (* [comment removed for export] *)
-  Let argH_high := argH0_high APH sp rdraw argv envp uid hw Hsp Hva.
-  Let argH_agree := argH0_agree APH sp rdraw argv envp uid hw.
+  Let argH_high := argH0_high apc sp rdraw argv envp kern execfn Hsp Hva.
+  Let argH_agree := argH0_agree sp rdraw argv envp kern execfn.
   Let nx0_ge : APS.nx0_ok NX0 := Nat.le_refl NX0.   (* [comment removed for export] *)
   Let LINV_init := proj1 HLINV.
   Let LINV_frame := proj2 HLINV.
@@ -101,11 +116,11 @@ Section MC.
   Proof. intros. eapply SINVm_frame; eassumption. Qed.
   Lemma mc_SINV_agree : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
   Proof. intros. eapply SINVm_agree; eassumption. Qed.
-  Lemma mc_SINV_SINV0 : forall E M, SINV E M -> SINV0 APH sp rdraw brk0 argv envp uid hw E M.
+  Lemma mc_SINV_SINV0 : forall E M, SINV E M -> SINV0 APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M.
   Proof. intros E M H. eapply SINVm_SINV0. exact H. Qed.
   Lemma mc_argH_top : forall E M (a : word), SINV E M -> argH E a = true -> bv_unsigned (edenot E e_sp0) <= bv_unsigned a.   (* [comment removed for export] *)
-  Proof. intros E M a HS Ha. exact (argH0_top APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E M a (mc_SINV_SINV0 E M HS) Ha). Qed.
-  Lemma mc_SINV_SINV1 : forall E M, SINV E M -> SINV0 APH sp rdraw brk0 argv envp uid hw E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv [].
+  Proof. intros E M a HS Ha. exact (argH0_top APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn Hsp Hva Hve Hfit nofile sigmask abt sdf Hlau E M a (mc_SINV_SINV0 E M HS) Ha). Qed.
+  Lemma mc_SINV_SINV1 : forall E M, SINV E M -> SINV0 APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv [].
   Proof. intros E M (H0 & H1 & H2 & _). split; [exact H0|]. split; [exact H1 | exact H2]. Qed.
 
   (* [comment removed for export] *)
@@ -141,6 +156,8 @@ Section MC.
   Proof. intros fx. exact (AsanNodesMmB.node_sys_sound ASEGS ASAN NX0 LIM SINV argH LINV fs asan_res_len asan_hull_ok asan_shadow_ok argH_agree mc_argH_top nx0_ge mc_SINV_frame mc_SINV_agree LINV_frame asan_lfp_hull). Qed.
   Lemma mc_brk2_sound : forall {fx : FPState}, brk2_stmt ASEGS ASAN NX0 LIM SINV argH LINV fs.
   Proof. intros fx. exact (AsanNodesMmB.node_brk2_sound ASEGS ASAN NX0 LIM SINV argH LINV fs asan_in_hull asan_hull_ok asan_shadow_ok argH_high mc_argH_top mc_SINV_frame LINV_frame asan_lfp_hull). Qed.
+  Lemma mc_munmap2_sound : forall {fx : FPState}, munmap2_stmt ASEGS ASAN NX0 LIM SINV argH LINV fs.
+  Proof. intros fx. exact (AsanNodesMmB.node_munmap2_sound ASEGS ASAN NX0 LIM SINV argH LINV asan_res_len asan_hull_ok asan_shadow_ok argH_agree mc_argH_top nx0_ge mc_SINV_frame mc_SINV_agree LINV_frame asan_lfp_hull fs). Qed.   (* FS0 is last, as AsanStartup.v:164-182 *)
   Lemma mc_mmap2_sound : forall {fx : FPState}, mm2_stmt ASEGS ASAN NX0 LIM SINV argH LINV fs (node_mmap2 ASAN NX0 LIM).
   Proof. intros fx. exact (node_mmap2_sound_OBL ASEGS ASAN NX0 LIM SINV argH LINV fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok argH_high argH_agree mc_SINV_frame mc_SINV_agree mc_argH_top nx0_ge asan_res_chain LINV_frame asan_lfp_hull). Qed.
   Lemma mc_mmapin_sound : forall {fx : FPState} (hole : bool), mm3_stmt ASEGS ASAN NX0 LIM SINV argH LINV fs (node_mmapin ASAN LIM hole).
@@ -152,9 +169,9 @@ Section MC.
 
   (* [comment removed for export] *)
   Lemma mc_x_sound : forall {fx : FPState} x, x_stmt ASEGS ASAN NX0 LIM SINV argH LINV fs x.
-  Proof. intros fx. exact (XALL fx sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit SINV mc_SINV_SINV0 mc_SINV_frame mc_SINV_agree). Qed.
+  Proof. intros fx. exact (XALL fx sp rdraw brk0 argv envp fs apc mbase fs stdin gid groups net ur kern execfn nofile sigmask abt sdf Hsp Hva Hve uid hw Hfit Hkernel Hlaunch Hlau SINV mc_SINV_SINV0 mc_SINV_frame mc_SINV_agree). Qed.   (* XALL_STMT takes valid_launch, AsanStartup.v:56 *)
   Lemma mc_lib_sound : lib_stmt ASEGS ASAN NX0 LIM (XLm ASEGS ASAN NX0) SINV argH LINV fs.
-  Proof. exact (XLIB sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit SINV mc_SINV_SINV0 mc_SINV_frame mc_SINV_agree). Qed.
+  Proof. exact (XLIB sp rdraw brk0 argv envp fs apc mbase fs stdin gid groups net ur kern execfn nofile sigmask abt sdf Hsp Hva Hve uid hw Hfit Hkernel Hlau SINV mc_SINV_SINV0 mc_SINV_frame mc_SINV_agree). Qed.
 
   (* [comment removed for export] *)
   Lemma mc_segs_wr : AsanPlanSoundSums.APSX.segs_wr_ok ASEGS.
@@ -168,9 +185,12 @@ Section MC.
   Proof.
     intros fx T HT id args. unfold XNm.
     destruct (Nat.ltb id 10); [|destruct (Nat.ltb id 100); [|destruct (Nat.ltb id 110); [|destruct (Nat.eqb id 113); [|destruct (Nat.leb 200 id); [destruct (if Nat.eqb id 215 then true else Nat.leb id 205)|]]]]].
-    - exact (proj1 (XARG fx sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit SINV mc_SINV_SINV1 mc_SINV_frame mc_SINV_agree) id args).
-    - exact (io_ext_stmt_init ASEGS ASAN APH asan_in_hull asan_hull_ok asan_shadow_ok sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit
-               SINV mc_SINV_SINV0 mc_SINV_frame mc_SINV_agree LINV LINV_frame T (H_class_conv T SINV HT) id args).
+    - exact (proj1 (XARG fx sp rdraw brk0 argv envp fs apc mbase fs stdin gid groups net ur kern execfn nofile sigmask abt sdf Hsp Hva Hve uid hw Hfit Hkernel Hlau SINV mc_SINV_SINV1 mc_SINV_frame mc_SINV_agree) id args).
+    - (* LPS 727298f3: IOInit's section arity moved (Hfit is used, apc..abt precede SINV) *)
+      eapply io_ext_stmt_init;
+        first [ exact asan_in_hull | exact asan_hull_ok | exact asan_shadow_ok | exact asan_wx
+              | exact mc_SINV_SINV0 | exact mc_SINV_frame | exact mc_SINV_agree | exact LINV_frame
+              | exact (H_class_conv T SINV HT) | eassumption ].
     - exact (XRP fx NX0 LIM SINV argH argH_high argH_agree mc_argH_top nx0_ge mc_SINV_frame mc_SINV_agree fs id args).
     - exact (AsanNodesCanonSound.can_xn_sound ASEGS ASAN NX0 LIM SINV argH LINV fs args).   (* [comment removed for export] *)
     - exact (AsanNodesRJoinSound.xrj_xn_sound ASEGS ASAN NX0 LIM SINV argH LINV fs nx0_ge argH_agree mc_SINV_agree mc_segs_wr id args).   (* [comment removed for export] *)
@@ -179,13 +199,15 @@ Section MC.
   Qed.
 
   Lemma mc_xe_sound : forall {fx : FPState}, emit_stmt ASEGS ASAN NX0 LIM (XEm ASEGS ASAN NX0) SINV argH LINV fs.
-  Proof. intros fx. exact (proj2 (XARG fx sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit SINV mc_SINV_SINV1 mc_SINV_frame mc_SINV_agree)). Qed.
+  Proof. intros fx. exact (proj2 (XARG fx sp rdraw brk0 argv envp fs apc mbase fs stdin gid groups net ur kern execfn nofile sigmask abt sdf Hsp Hva Hve uid hw Hfit Hkernel Hlau SINV mc_SINV_SINV1 mc_SINV_frame mc_SINV_agree)). Qed.
 
   Lemma mc_xb_sound : forall {fx : FPState} T, H_class_prop T argv fs SINV -> ext2_stmt ASEGS ASAN NX0 LIM (XBm ASEGS NX0 T) SINV argH LINV fs.
   Proof.
     intros fx T HT.
-    exact (io_ext2_stmt_init ASEGS ASAN APH sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit
-             SINV mc_SINV_SINV0 mc_SINV_frame mc_SINV_agree LINV LINV_frame T (H_class_conv T SINV HT)).
+    eapply io_ext2_stmt_init;
+      first [ exact asan_in_hull | exact asan_hull_ok | exact asan_shadow_ok | exact asan_wx
+            | exact mc_SINV_SINV0 | exact mc_SINV_frame | exact mc_SINV_agree | exact LINV_frame
+            | exact (H_class_conv T SINV HT) | eassumption ].
   Qed.
 
   (* [comment removed for export] *)
@@ -220,14 +242,14 @@ Section MC.
     Variable IT0 : itab.
     Hypothesis IT0_ok : itab_sound ASEGS IT0.
     Variable HS_asan : nat -> option acs.
-    Variable startup_plan : plan.
-    Variable startup_shape : shape.
+    Variable startup_plan : Z -> plan.   (* LPS 727298f3: per CONFIG_RSEQ value (AsanStartup) *)
+    Variable startup_shape : Z -> shape.   (* LPS 727298f3: per CONFIG_RSEQ value (AsanStartup) *)
     Variables KC0 BFUEL FUEL : nat.
     Variable TT0 : nat -> option (acs * plan * shape).   (* [comment removed for export] *)
-    Hypothesis startup_cert :
-      check ASEGS IT0 ASAN NX0 LIM (RPN.xn ASEGS ASAN NX0 RPN.RP_ASAN) XE0 XB0 XL0 HS_asan HL0 TT0 KC0 BFUEL FUEL None asan_init startup_plan = COk startup_shape.
+    Hypothesis startup_cert : forall r, 0 <= r <= 1 ->
+      check ASEGS IT0 ASAN NX0 LIM (RPN.xn ASEGS ASAN NX0 RPN.RP_ASAN) XE0 XB0 XL0 HS_asan HL0 TT0 KC0 BFUEL FUEL None (asan_init_r r) (startup_plan r) = COk (startup_shape r).
     Hypothesis TT0_ok : AP.tails_ok0 ASEGS IT0 ASAN NX0 LIM TT0 KC0.   (* [comment removed for export] *)
-    Hypothesis startup_all_holes : all_holes startup_shape = true.
+    Hypothesis startup_all_holes : forall r, all_holes (startup_shape r) = true.
     Hypothesis HSA_noblob : forall h ch, HS_asan h = Some ch -> acs_noblob ch = true.   (* [comment removed for export] *)
     (* [comment removed for export] *)
     Variables KCm BFUELm FUELm : nat.
@@ -241,15 +263,11 @@ Section MC.
       mtree_ok KCm BFUELm FUELm ITm TTm 0 0 (HSA HS_asan h) (root_class i) (TREE h i) = true.
 
     Theorem asan_realizes_spec_closed :
-      srealizes ASEGS (init_config ASEGS ImgA.M.init_pc APH sp brk0 mbase rdraw LIM
-                                   (AsanInit.inp argv envp fs stdin uid gid hw groups net ur nofile sigmask abt))
+      srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw LIM
+                                   (AsanInit.inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf))
                 (spec argv fs).
     Proof.
-      exact (asan_realizes_spec LINV HLINV XALL XRP sp rdraw brk0 mbase argv envp fs stdin uid gid hw nofile sigmask abt groups net ur Hsp Hbrk Hva Hve Hfit Huid Hhw
-               IT0 IT0_ok HS_asan startup_plan startup_shape KC0 BFUEL FUEL TT0 startup_cert TT0_ok startup_all_holes HSA_noblob
-               KCm BFUELm FUELm ITm TTm ITm_ok TTm_ok
-               (@mc_sys_sound) (@mc_brk2_sound) (@mc_mmap2_sound) (@mc_mmapin_sound) (@mc_mprotect2_sound) (@mc_exit_sound) (@mc_x_sound)
-               (@mc_xn_sound) (@mc_xe_sound) (@mc_xb_sound) mc_lib_sound mc_VF TREE TREES).
+      exact (asan_realizes_spec LINV HLINV XALL XRP sp rdraw brk0 mbase argv envp fs stdin uid gid hw nofile sigmask abt sdf groups net ur Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw apc Hapc kern execfn Hkernel Hlaunch Hlau IT0 IT0_ok HS_asan startup_plan startup_shape KC0 BFUEL FUEL TT0 startup_cert TT0_ok startup_all_holes HSA_noblob KCm BFUELm FUELm ITm TTm ITm_ok TTm_ok (@mc_sys_sound) (@mc_brk2_sound) (@mc_munmap2_sound) (@mc_mmap2_sound) (@mc_mmapin_sound) (@mc_mprotect2_sound) (@mc_exit_sound) (@mc_x_sound) (@mc_xn_sound) (@mc_xe_sound) (@mc_xb_sound) mc_lib_sound mc_VF TREE TREES).
     Qed.
   End Closed.
 End MC.

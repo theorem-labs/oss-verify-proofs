@@ -6,12 +6,12 @@
    CtrlIdentityPollBlock.v on origin/cold/pg-prog): YC80x / YC1fPx's mixed runner over YCbqG's ajournal_x (the frame and
    the static g_live), __asan_unpoison_memory_region by YGcallPx's aj_unpoison_x, the tail jump to the free wrapper by
    YGcallx's aj_free_x_ct at o = 0, the ledger by S1Ledger's prh_ledger_disown.
-   KIT 342c852ff9b6 (K0's old-pin text fix): the m-form post (fpostm) is paid by h-hpreset-7's carrier
+   KIT (K0's old-pin text fix): the m-form post (fpostm) is paid by h-hpreset-7's carrier
    m |-> (memnorm mem -> memnorm m) through the runner segments (YC1fPx's paj_run_x_m_inv) and across the two calls by
    the texts' own keeps (YGcallMxmn's aj_unpoison_x_m, aj_free_x_ct_m); the run position by h-pre-b1's
    PresetRoomPosKeep (room_pos_keep_free / room_pos_keep_bulk_free at the tail call, room_pos_keep_eq on p = 0); the
    ccnt24 arms by S1Ccnt24.v's prh_ccnt24_free (the free's block equation; the internal file CCNT24-FREE.md).
-   #102 (this line, A' images, the kit of record walkkit-next decff67d721f): the ledger carries g_most / g_own_ran_out
+   #102 (this line, A' images, the kit of record walkkit-next): the ledger carries g_most / g_own_ran_out
    (prh_ledger .. most own); the walk keeps both cells off its writes (KSV) and passes them through
    prh_glob_final_le and prh_ledger_disown (the S1Ledger.v 8cf15eeb6311).
    The body (A's listing): p = 0 returns; else unpoison (p - 16, 16), the two ASan checks of the head (folded: the

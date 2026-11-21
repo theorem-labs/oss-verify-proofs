@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (init_ledger's reservations with the launch's vDSO/vvar pair; the vDSO reservation premise of ai_malloc and ai_free, which now keep vm_mmap_base). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -22,7 +23,10 @@ Definition grantable (vm : VmMaps) (a : word) : Prop :=
 Record init_ledger (h : VmMaps) : Prop := {
   il_maps : vm_maps h = [];
   il_noaccess : vm_noaccess h = [];
-  il_reserved : vm_reserved h = segments_reserved al_segs;
+  (** the image's reservations, then the launch's extra ones
+      ([State.init_reserved] appends the vDSO/vvar pair at 08b1429) *)
+  il_reserved : exists rx : list (word * word), vm_reserved h = segments_reserved al_segs ++ rx /\
+                  (length rx <= 2)%nat /\ live_bytes rx <= 0x14000;
   il_start_brk : vm_start_brk h = vm_brk h;
   il_brk : valid_brk al_segs (vm_brk h);
   il_sp : valid_sp (vm_init_sp h)
@@ -70,6 +74,7 @@ Class AllocBase := {
 
   ai_malloc : forall (fx : FPState) A m md regs (n : Z) (ret sp0 : word) argv envp (S : TSet),
       ainv A m (m_vmmaps md) -> md_pure md ->
+      incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       al_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 n -> 0 <= n < 2^61 ->
       getr regs 1 = ret -> al_ret_ok ret -> getr regs 4 = al_gp ->
@@ -92,11 +97,13 @@ Class AllocBase := {
           (forall a, m a <> None -> bv_unsigned a < al_image_hi \/ owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           realizes al_segs (mkCfg (mkst regs' ret m' al_rom) (with_vmmaps vm' md)) S) ->
       realizes al_segs (mkCfg (mkst regs al_malloc_pc m al_rom) md) S;
 
   ai_free : forall (fx : FPState) A m md regs (p ret sp0 : word) argv envp (S : TSet),
       ainv A m (m_vmmaps md) -> md_pure md ->
+      incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       al_env sp0 argv envp m ->
       getr regs 10 = p -> (p = Z_to_bv 64 0 \/ exists n, live A p = Some n) ->
       getr regs 1 = ret -> al_ret_ok ret -> getr regs 4 = al_gp ->
@@ -116,6 +123,7 @@ Class AllocBase := {
           (forall a, m a <> None -> owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           vm_live_bytes vm' <= vm_live_bytes (m_vmmaps md) ->
           realizes al_segs (mkCfg (mkst regs' ret m' al_rom) (with_vmmaps vm' md)) S) ->
       realizes al_segs (mkCfg (mkst regs al_free_pc m al_rom) md) S

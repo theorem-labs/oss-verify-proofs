@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new initial stack layout). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -50,8 +51,15 @@ Definition argtab_of (A : atable) : argtab :=
 (* [comment removed for export] *)
 
 Definition LMAX : Z := 131071.   (* [comment removed for export] *)
-(* [comment removed for export] *)
-Definition TOPNUL : Z := 2 ^ 47 - 17.
+(* 2^47 - 9, not 2^47 - 17: TOPNUL bounds the address of a string and of its NUL, and #38 moved
+   the strings to the TOP of the stack VMA.  ed_top is page-aligned and may be 2^47 itself
+   (75d69e00 Run.v:3610-3615); the image ends CHEAD | pad | strings | 8 (StackLayout.v:450-460),
+   so the last string byte sits at ed_top - 9 and 2^47 - 17 is a pre-#38 constant that excludes
+   reachable addresses.  The 17 and AsanNodesArgSound's Lay ceiling of TOP + 16 were one pair and
+   they move together to 9 and TOP + 8: str_facts_ok needs exactly STR i + LEN i <= TOPNUL, which
+   Lay now gives exactly.  LOOSENING a KRange upper bound WEAKENS the known-range fact, so no
+   consumer of str_facts or srl_facts is given anything it did not already have. *)
+Definition TOPNUL : Z := 2 ^ 47 - 9.
 Definition STRLO : Z := 0x7fff80000000 + 176.   (* [comment removed for export] *)
 
 Definition arg_idx (args : list expr) : option nat :=

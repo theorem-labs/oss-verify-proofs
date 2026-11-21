@@ -5,7 +5,7 @@
    bcmp interceptor (__wrap_bcmp 0x42d2c -> ___interceptor_bcmp 0x44438, whose REAL, musl bcmp 0x9b1b4, is one jump to
    __wrap_memcmp: the bcmp walk contains the memcmp walk) over the engine's generic ARx (YCbqG.v) with the ghost list
    hps fixed, plus the memnorm keep. The texts: c-omx-alloc's YGcallCmp.amemcmp_realizes_xm (lib/Reusable/YGcallCmp.v,
-   taken by path from origin/cold/c-omx-alloc-memcmp 21532034015b, blob 0a6009776f2c) and YGcallMxmn.abcmp_realizes_xm.
+   taken by path, blob 0a6009776f2c) and YGcallMxmn.abcmp_realizes_xm.
    The kind of restatement as c-libc-stdio's snprintf chain (route (a)): preset's own Qed walks in the old AR form are
    the donors, A/AE2z.v (memcmp, Sections f / g and mc_icpt_realizes, :157-710) and A/AE2s.v (bcmp, :152-710); their
    symbolic runs (Section d outside f / g) are reused by Import, unchanged. The two shadow checks they call are
@@ -30,14 +30,14 @@
    The rows: pr_memcmp_xm_A (YGcallCmp.amemcmp_realizes_xm at 0x42d28) and pr_bcmp_xm_A (YGcallMxmn.abcmp_realizes_xm
    at 0x42d2c), for every ARx with AR_laws_x and every B with TfibSyms B; pr_memcmp_xm_A_pc / pr_bcmp_xm_A_pc at the
    record's pcs (pc_wrap_memcmp / pc_wrap_bcmp (as_code B)).
-   The helpers prk_memnorm_keep_win / prk_rodata_ok_cc are lane RowsCpy's (Reusable/PRowKit.v, A/PRowKitA.v), merged
-   from 532cf8bd849e.
+   The helpers prk_memnorm_keep_win / prk_rodata_ok_cc are lane RowsCpy's (Reusable/PRowKit.v, A/PRowKitA.v), merged.
+   
    rule 24: proves function memcmp / bcmp interceptors (fuzz_preset, image A) po_memcmp_cf / po_bcmp_cf (kind:
    restatement over ARx + memnorm keep of preset's AE2z / AE2s walk; CONFIRM the internal file bcmpcpy-CONFIRM.md).
    Image numerals: the donors', and the two entries 0x42d28 / 0x42d2c (AF0l.v Tfib_code).
-   #102 A' (c-libc-stdio rows102-cmp): this file is origin/cold/c-libc-stdio-rows-cmp 2d9da94a5737's lib/A/PRowCmp.v
+   #102 A' (c-libc-stdio rows102-cmp): this file is a commit's lib/A/PRowCmp.v
    (blob 77c98832a230), relocated A (asan d83eb25d, twin f0d2e8d4) -> A' (asan 1be0f53d96cb, twin bff8519bbe3e) by the
-   frozen alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9), --assume-source: 28 numerals moved by symbol +
+   frozen alreloc c4338d099cfb8025, --assume-source: 28 numerals moved by symbol +
    offset, each the same symbol + offset on both twins: __wrap_memcmp 0x42c94 -> 0x42d28 (also its decimal 273556 ->
    273704), __wrap_bcmp 0x42c98 -> 0x42d2c, ___interceptor_memcmp 0x442e8 -> 0x4437c, ___interceptor_bcmp 0x443a4 ->
    0x44438, musl bcmp 0x9ac78 -> 0x9b1b4, the return addresses ___interceptor_memcmp+0x5c 279364 -> 279512 and
@@ -55,6 +55,7 @@
    kMidMemEnd, real_memcpy, real_memset, the .got slot of common_flags_dont_use, common_flags_dont_use+0xf8 (8 bytes,
    0x0101010101010101) and real_memcmp / real_bcmp: on both twins the same symbol + offset, and the same pinned values
    in the old and the #102 AE2y / AE2z / AE2s. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

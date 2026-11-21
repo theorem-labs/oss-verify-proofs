@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: free_cf takes Quarantine::Put's size test (a chunk above the
    quarantine's max_size is recycled at once, not enqueued). Evidence: the internal file BIG-ARM.md section 4. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the MODEL.
    cgif's map_more_user (YG00.v:279-295) closes the class-full case with a VACUOUS mcheck at :285, so a full
    class is "impossible". On preset a class DOES fill on accepted input (class 17 maps 3,584 MiB = kFreeArrayOffset,
    measured). This file replaces that one check by the arm the binary runs, in cgif's vocabulary, ported from
    msgpack-c's released refusal (proofs/msgpack-c/unpack_pack_fuzzer/lib/Spec/AsanCtrl.v:284, exh_report :363-371,
-   release ref b6a0088adc): report, flag the class, return NULL; no IFail.
+   release ref): report, flag the class, return NULL; no IFail.
    cgif's YG00.v is NOT edited; class 24 keeps cgif's vacuous arm, by calling cgif's own functions.
    No address: the image pcs come from the class CfImg (YGcfNames.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -28,7 +29,7 @@ Local Open Scope am_scope.
 (*     hole at offset EXH_HOLE with length 0. A zero-length hole at a negative    *)
 (*     offset is inert everywhere cgif reads holes: prim_hole_at (YG0n.v:289-290) *)
 (*     asks in_zr a (base + off, 0), always false; cut_ok (YG0n.v:291-295) does   *)
-(*     not read holes; areq_ok's hole conditions (YG01.v:19, :23-24) hold because *)
+(*     not read holes; areq_ok's hole conditions (YG01.v:20, :24-25) hold because *)
 (*     fst h + snd h = -1 <= off for every real offset off >= 0. cgif's own       *)
 (*     del_hole / add_hole (YG00.v:257-260) do the toggling, and no cgif call     *)
 (*     site can touch the sentinel: map_more_user deletes at rg_mapped_user >= 0  *)
@@ -56,7 +57,7 @@ set_region c (mkRegion (rg_mapped_user r) (rg_alloc_user r) (rg_mapped_fa r) (rg
 (*     A real secondary has sm_size = needed_size n >= 64513; the two control      *)
 (*     entries carry a NEGATIVE sm_size, so they can never be confused with one,    *)
 (*     and their sm_live is ALWAYS false, which is what keeps cgif's wf_sec intact: *)
-(*     ws_arr_live (YG01.v:304-305) makes membership of st_sec_arr equivalent to    *)
+(*     ws_arr_live (YG01.v:305-306) makes membership of st_sec_arr equivalent to    *)
 (*     `sm_live = true`, so a control entry with sm_live = false is outside that    *)
 (*     equivalence and needs no exemption. ws_arr_chunks (:303) is likewise         *)
 (*     untouched, since no chunk points at a control entry, and ws_lens (:308) holds *)
@@ -118,7 +119,7 @@ Context {ci : CfImg}.
 (* The runtime's MmapOrDie: a refused map ends the process, so the model spins.
    msgpack's emb_realloc does the same (AsanCtrl.v:336-349, aundef_ USpin at :341).
    It TICKS, like cgif's own secondary mmap (YG0j.v:374), so that the lower bounds
-   `length (st_secs s) + cc <= st_nev s` (YG01.v:331, :344) survive the two control
+   `length (st_secs s) + cc <= st_nev s` (YG01.v:332, :345) survive the two control
    entries this instance appends. *)
 Definition errb_map_cf (want : Z) : M unit :=
 let ncap := round_up want kPage in

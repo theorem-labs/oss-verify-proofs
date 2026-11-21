@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YF0m.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to reac-pw/fuzz_rate's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: regenerated for reac-pw/fuzz_rate image B by af0m.py f8201f503394 from fuzz_rate.asan-ubsan and its 50 collected hand-off states; base: cgif_file_fuzzer's YF0m.v (c8557374ad2e) through port_core 1e42da8952ec's asan-ubsan stage-out, with Tfib_owned_static relocated by object; the walk read list cells (the twin of image A's) appended with --reads *)
+(* Modified by Theorem Labs, 2026-10: regenerated for reac-pw/fuzz_rate image B by af0m.py f8201f503394 from fuzz_rate.asan-ubsan and its 50 collected hand-off states; base: cgif_file_fuzzer's YF0m.v (theorem-labs/oss-verify-proofs@6b32741d849a) through port_core 1e42da8952ec's asan-ubsan stage-out, with Tfib_owned_static relocated by object; the walk read list cells (the twin of image A's) appended with --reads *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_rate.asan-ubsan (reac-pw/fuzz_rate asan-ubsan) sha256 c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; unstripped twin sha256 a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1 *)
 (* owned read-only static bytes pinned as const cells from the image: 1541 bytes in 253 cells, from 64 ranges of Tfib_owned_static; counted from this file's own tables *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.

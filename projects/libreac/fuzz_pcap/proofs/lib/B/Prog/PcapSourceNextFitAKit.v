@@ -41,7 +41,7 @@
    - The 4 bytes lie in a frame of the caller's state (`In (cid, pos) (frames Sc)`: pcap_source_next's ph is in its
      class-0 side-stack frame), they read b0..b3 (garr8), and their shadow marks them usable (range_addressable).
      Frames lie in [4096, alloc_ceiling) (YCbq frames_bounds), so p >= 4096 (no null) and p + 4 < 2 ^ 47 (no wrap).
-     The pre also states, in lib/A/Stdio/PFreadISpec.v's form (:67 at d83ca9847f8), that the bytes are apart from
+     The pre also states, in lib/A/Stdio/PFreadISpec.v's form (:67), that the bytes are apart from
      every byte the call writes, the function's own frame [sp - 16, sp) (R1, a Theorem Labs lane).
    - The post: a0 = the sign-extended 32-bit value rd_u32_val of the bytes; the callee-saved registers and sp are kept;
      the call returns to ra; the world is the same; the 4 bytes still read b0..b3, and every byte outside the
@@ -58,7 +58,7 @@
      frames_bounds (Reusable/YCbq.v:447):
        0x81c60 `beq a0,-1`: decide_eq2 (YP0e.v:914): p's range is disjoint from 2 ^ 64 - 1, not taken;
        0x81c84 `bltu a0+3,2`: decide_ltu2 (YP0e.v:922, itv_lt :893): [p + 3, ...] lies above 2, not taken.
-     Template: the released v1.8 UBSan proof lib/U/Prog/rd_u32.v (origin/ossv/recipes c8557374ad2e), where
+     Template: the released v1.8 UBSan proof lib/U/Prog/rd_u32.v, where
      bytes_at_bound at :19 gives a0 + 4 <= 2 ^ 64 and the two `if_false` at :31 take the same two guards' false arms.
    - The four ASan checks (0x81c58, 0x81c78, 0x81c9c, 0x81cb0 `bnez` of the shadow byte of p, p + 1, p + 2, p + 3)
      are decided inside the same run: each shadow `lb` becomes a token (Reusable/YCbn.v:173 tok_load), and each `bnez`
@@ -69,6 +69,7 @@
      are not reached. Template: lib/A/Prog/PcapSourceClose.v cl_entry / shent_ps_ok (the same entry form, at 8
      bytes). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/RdU32.v, with its module paths, module names and numbers changed; 71 of its 100 lines of code are new or changed and 580 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pcap_source_next (fuzz_pcap.asan-ubsan 0x815b8) on the ASan+UBSan build of libreac v1.9.0: the two image-free
    facts the fit phase (lib/B/Prog/PcapSourceNextFitA.v, entry predicate lib/B/Prog/PcapSourceNextFitADefs.v) needs
    on the VLAN-tagged arm, stated so that neither names the image.
@@ -98,7 +99,7 @@
      garr8_aview_kept :62 and garr8_sub_x :97, over lib/Reusable/YI00.v garr8_app :55. No further text is new.
    - fa_U_vid: lib/Reusable/YI04.v U_atom :225, U_lit :235 and U_and_lit :239; lib/Reusable/YP0e.v U_SAlu :184 and
      zcanon_id :163; lib/Reusable/YO0b.v lor_add_high' :21 for the final `or`.
-   - fa_land_3840 is lib/B/Prog/RdU32.v:178 land_65280 (a lemma of this unit) with the mask's width
+   - fa_land_3840 is lib/B/Prog/RdU32.v:179 land_65280 (a lemma of this unit) with the mask's width
      changed from 8 bits to 4, because the fit path masks with 0xf00 and rd_u32 masks with 0xff00; RdU32.v itself
      is not Required, since it carries this image's symbol table and this file must stay image-free. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
@@ -115,7 +116,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* The mask 0xf00 of `and a2,a2,a4` (0x81ac8): the port of lib/B/Prog/RdU32.v:175 at 4 mask bits. *)
+(* The mask 0xf00 of `and a2,a2,a4` (0x81ac8): the port of lib/B/Prog/RdU32.v:176 at 4 mask bits. *)
 Lemma fa_land_3840 : forall x, 0 <= x -> Z.land x 3840 = 2 ^ 8 * ((x / 2 ^ 8) mod 2 ^ 4).
 Proof.
 intros x Hx. apply Z.bits_inj'. intros n Hn. rewrite Z.land_spec.

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_model_block_glue.v, with its module paths and module names changed; 694 of its 807 lines of code are new or changed and 2299 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/ctrl_lay_block_gctx.v, with its module names changed; 1075 of its 1173 lines of code are new or changed and 709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/ctrl_lay_block_gR23.v, with its module paths and module names changed; 288 of its 337 lines of code are new or changed and 1124 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block (0x86104) on fuzz_ctrl's ASan+UBSan build, image B (libreac v1.9.0): the call of
    reac_box_model_block at 0x865d8 inside region R2 of the cgif glue pb_ctrl_lay_block (a Theorem Labs lane, hand
    a Theorem Labs lane; consumer a Theorem Labs lane).  rule 24: no function proved here.
@@ -11,7 +12,7 @@
    state lay_Dbox (ctrl_lay_block_gR23.v) under the call's own premises lay_args, the callee contract TMB
    (C_reac_box_model_block.treac_box_model_block_spec, a Theorem Labs lane) is applied at the call with p := md,
    b := ly_bb (ly_k fr), o := fr1 + 32 (fr1 the call's class-1 frame), and its post gives the box-return descriptor
-   lay_D3 (ctrl_lay_block_gD3.v).  Image A's lay_box (written on a working branch, after 9861af6cbb5;
+   lay_D3 (ctrl_lay_block_gD3.v).  Image A's lay_box (written on a working branch, after;
    at head lib/A/Prog/C_ctrl_lay_block_glue.v:1444-1659) is the model; the byte / view / kept helpers are a Theorem Labs lane's
    (ctrl_lay_block_gR23.v Section Data), the shared lemmas gbase's and gctx's.
 

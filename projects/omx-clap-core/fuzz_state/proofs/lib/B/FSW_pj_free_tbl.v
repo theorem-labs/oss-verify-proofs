@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the table pattern of proofs/omx-clap-core/fuzz_state/lib/A/AB1k.v (RELOC's port of
    proofs/cgif/cgif_file_fuzzer/lib/A/AB1k.v), as in lib/A/FSW_pj_free_tbl.v and lib/B/FSW_parse_string_tbl.v, for
    pj_free's text range on image B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane (a Theorem Labs lane), image B (fs.asan-ubsan): the decode table of pj_free's own text, for the
    walk's symbolic runs (lib/B FSW_K.v fsw_run_AJU / fsw_run_to_AJU and their tok twins take `table_ok tfibsegs tbl`).
    The range is RELOC-B's B/YB1w.v:463 names: tfib_A_pj_free = 0x83674 .. tfib_E_pj_free = 0x83894, 544 bytes.
@@ -12,7 +13,7 @@
    instruction it executes is a table entry. Its calls (pj_free 0x83760, fuzz_free 0x837a0 / 0x837d4 / 0x837ec /
    0x83808, __asan_memset 0x83818, the eight __asan_report_load8 calls 0x83860 .. 0x83890) leave the range; a run stops
    at the callee's entry, and the call step takes over there. rule 24: no function proved (a decode table).
-   Base: the fs core of a working branch cb01f65c0f3 (image B's YB1v / YB1w names). *)
+   Base: the fs core of a working branch (image B's YB1v / YB1w names). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

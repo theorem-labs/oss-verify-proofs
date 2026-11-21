@@ -21,6 +21,7 @@
    The two callees are taken per slot, at G = gn_Gs j (base :493); each call's journal is lifted to G_fr with
    ajournal_gx_G_mono and spliced into the arm's with ajournal_gx_sub, and every fact of the arm's state outside
    slot k and `at` is carried across it by gp5_xport; the model is rebuilt by gp5_sep_step / gp5_rebuild. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -58,7 +59,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* ---- the bytes of the relay's table: entry i's 4-byte fd field (W_LLVMFuzzerTestOneInput_drain.v:104-163,
+(* ---- the bytes of the relay's table: entry i's 4-byte fd field (W_LLVMFuzzerTestOneInput_drain.v:105-164,
    copied with dr_ -> gp5_ so this phase imports no other phase's file) ---- *)
 Lemma gp5_eb_len : forall e, length (re_pad1 e) = 4%nat -> length (re_pad2 e) = 4%nat ->
   length (entry_bytes e) = 56%nat.
@@ -231,8 +232,8 @@ Proof. reflexivity. Qed.
 
 (* ---- what the other lanes owe, and the model obligations this phase reads ---- *)
 Variable MMAX : Z.
-(* W3's check_no_loss and check_shape_ends: W_contract.v cnl_spec (:1968) and cshe_spec (:1812) on the W8 lane head
-   a3c72093c22, verbatim and G-generic (lf_arm_gone's CNL / CSHE; _remove.v:408 takes check_no_loss the same way),
+(* W3's check_no_loss and check_shape_ends: W_contract.v cnl_spec (:1968) and cshe_spec (:1812) on the W8 lane head,
+   verbatim and G-generic (lf_arm_gone's CNL / CSHE; _remove.v:408 takes check_no_loss the same way),
    each call taking them at its own G, the 32 bytes of slot j's two lists (base gn_Gs; gp5_gx_Gs / gp5_rt_Gs) *)
 Hypothesis CNL : forall G, gx_ok segs B G -> gx_rt B G -> cnl_spec B MT G MMAX (BASE + AF_fr_check_no_loss).
 Hypothesis CSHE : forall G, gx_ok segs B G -> gx_rt B G -> cshe_spec B MT G (BASE + AF_fr_check_shape_ends).
@@ -633,7 +634,7 @@ Proof. vm_compute. reflexivity. Qed.
 (* a present byte is visible *)
 Lemma gp5_pres_view : forall H (m : word -> option byte) a, apresent H m a -> aview segs H m a <> None.
 Proof. intros H m a (Hh & b & Hb). unfold aview, mbyte, mrestrict. rewrite Hh, Hb. cbn. discriminate. Qed.
-(* cnl_spec's last premise (W_contract.v:2076): the stack is readable from the callee's sp = F up to ly_top.  Below
+(* cnl_spec's last premise (W_contract.v:2077): the stack is readable from the callee's sp = F up to ly_top.  Below
    the entry's sp it is the arm's own frame, present by the journal's frame clause; from the entry's sp up the
    journal keeps the entry's view (its high-memory clause), which lf_base's STKR (_cut.v:172-177) says is readable *)
 Lemma gp5_stkr : forall cx fpos ly3 S3 (W : world segs) mem md k,
@@ -2774,7 +2775,7 @@ Proof.
     - apply (gp5_ra_fake cx FF W mem _ _ HFR HFF8); lia.
     - apply (shadow_hull_vis_of_frame segs B LAWS ly S3 W mem mdc 1 fpos _ _ HARc Hfin);
         [fold FF; lia | change (fs_frame_bytes 1) with 128; fold FF; lia | lia].
-    (* where P lives (cshe_spec's P-home premise, W_contract.v:1917-1918): its FRAME disjunct.  PF = FF + 32 is
+    (* where P lives (cshe_spec's P-home premise, W_contract.v:1918-1919): its FRAME disjunct.  PF = FF + 32 is
        prefix[48] in the 128-byte fake frame of class 1 the arm seated, a frame of S, and PLEN + 9 <= 48 (gn_prefix_at),
        so [PF, PF + PLEN + 8) lies inside it; its shadow facts are the two premises above (gp5_ra_fake from the arm's
        unpoison stores, shadow_hull_vis_of_frame) *)

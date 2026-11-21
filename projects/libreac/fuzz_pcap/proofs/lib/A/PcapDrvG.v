@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: new file for libreac/fuzz_pcap's ASan driver (porter ruling 3): the bridge from
-   the program contract's journal (lib/A/Prog/PcapEntry.v:69 tfib_lib_post_x, W_journal.v:213 ajournal_gx at the
+   the program contract's journal (lib/A/Prog/PcapEntry.v:70 tfib_lib_post_x, W_journal.v:214 ajournal_gx at the
    harness globals G_HARNESS = [(0x5d3f40, 8); (0x5d3f60, 8)], PcapEntry.v:36) to what the driver reads off cgif's
    journal (donor lib/A/AD1r.v:657, YCbq.ajournal), and pcap's ONE side condition: every byte the driver reads or
    keeps across the program call lies outside G_HARNESS.
 
-   The bridge is W_journal.v:360 ajournal_gx_inner (fuzz_reply's, copied by path into fuzz_pcap by a Theorem Labs lane) at
+   The bridge is W_journal.v:361 ajournal_gx_inner (fuzz_reply's, copied by path into fuzz_pcap by a Theorem Labs lane) at
    XO = 0, OUT = []: the callee's journal holds from a start memory memS that agrees with the caller's memory on
-   every byte outside G. At ossv/recipes 25e3d17bdb50 (2026-10-29), a Theorem Labs lane's ACfn_cf bridge had not landed; this is pcap's own, in the
+   every byte outside G. At (2026-10-29), a Theorem Labs lane's ACfn_cf bridge had not landed; this is pcap's own, in the
    same form, and is replaced by a citation when it lands.
 
    The side condition is stated over the hull [DRV_G_LO, DRV_G_HI) = [0x5d3f40, 0x5d3f80) of the two globals and

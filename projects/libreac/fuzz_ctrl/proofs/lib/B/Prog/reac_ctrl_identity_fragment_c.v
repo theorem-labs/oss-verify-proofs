@@ -179,7 +179,7 @@ Qed.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 (* Route (C) (a Theorem Labs lane 09:20Z; form 09:38Z, amended 09:58Z / 10:33Z): the narrowed twins of the two contracts above.
-   Twin of image A's reac_ctrl_identity_fragment _on (a Theorem Labs lane 4777545c654). The callees' statements
+   Twin of image A's reac_ctrl_identity_fragment _on (a Theorem Labs lane). The callees' statements
    are the leaves B.Prog.asan_memcpy_c_on (asan_memcpy_shadow_R) and B.Prog.bcmp_wrap_c_on (bcmp_wrap_shadow_R). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.ShadowRwOn B.Prog.asan_memcpy_c_on B.Prog.bcmp_wrap_c_on.
 

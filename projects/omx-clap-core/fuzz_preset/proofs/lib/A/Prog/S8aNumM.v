@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 asan 1be0f53d, twin bff8519b), ex_value piece 5 (ev_number), lane M:
    ev_mid across the piece's own writes. Proves S8aNumCut.v's ev_mid_keep_stmt and ev_mid_cur_stmt as ev_mid_keep and
    ev_mid_cur, generic over {L} {PA} as stated. No machine walk: every conjunct of ev_mid (S8aIface.v:172-189) other

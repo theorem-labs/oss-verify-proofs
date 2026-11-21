@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a stack-floor fact handed to the allocator-ceiling premise of art_client_write is passed through lia, since the floor is now measured by STACK_SPAN. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
@@ -64,7 +65,7 @@ Proof using AF RC RC2 FDO MST RIP AF_IC AF_SHW DCC AF_NP.
   destruct PO as (x5 & x6 & x7 & x16 & x17 & x28 & x29 & x30 & x31 & j8 & j7 & m1 & -> & MU1 & WM1 & MI1 & ST1 & FR1 & SB1 & V1 & IOS1 & TPC1 & SSP' & LB1).
   apply evt_done.
   assert (ART1 : ART RT Σ m1).
-  { apply (art_client_write RT AF Σ m m1 lo ART0 LOW); [| exact WM1]. intros a Ha. apply MU1. cbn [outside].
+  { apply (art_client_write RT AF Σ m m1 lo ART0 ltac:(lia)); [| exact WM1]. intros a Ha. apply MU1. cbn [outside].
     split; [intros Hr; apply Ha; left; ul|]. split; [intros Hr; apply Ha; right; right; right; left; exists fO, kO; rewrite <- EFSZ; split; [exact INF| lia]|].
     split; [| exact I]. intros Hr. apply Ha. right; left. apply client_static_intro. lia. }
   assert (AG1 : forall P : Z -> Prop, (forall x, P x -> (x < lo \/ q <= x) /\ ~ (OS <= x < OS + 288) /\ ~ (0x6b6e78 <= x < 0x6b6e80)) -> agree_on P m m1).
@@ -105,7 +106,7 @@ Proof using AF RC RC2 FDO MST RIP AF_IC AF_SHW DCC AF_NP.
   destruct PO3 as (z0 & z1 & z2 & c1 & c2 & c3 & c4 & c5 & c6 & c7 & z3 & z4 & z5 & z6 & F3 & fc3 & pb3 & pp3 & ep3 & dum3 & m3 & -> & MU3 & WM3 & MI3 & FRM3 & FOK3 & ST3 & SSP3 & OSF3 & PI3 & TPC3 & LB3).
   apply evt_done.
   assert (ART3 : ART RT Σ2 m3).
-  { apply (art_client_write RT AF Σ2 m2 m3 lo ART2 ltac:(rewrite SP2; exact LOW)); [| exact WM3]. intros a Ha. apply MU3. rewrite LV2, FRS2 in Ha. cbn [outside].
+  { apply (art_client_write RT AF Σ2 m2 m3 lo ART2 ltac:(rewrite SP2; lia)); [| exact WM3]. intros a Ha. apply MU3. rewrite LV2, FRS2 in Ha. cbn [outside].
     split; [intros Hr; apply Ha; left; ul|]. split; [intros Hr; apply Ha; right; right; right; left; exists fO, kO; rewrite <- EFSZ; split; [exact INF| lia]|].
     split; [| exact I]. intros Hr. apply Ha. right; left. apply client_static_intro. lia. }
   assert (OSW3 : OSXW m3 OS 0x1008 0 (fill_after fill)) by (rewrite FOK; exists pb3, pp3, ep3, dum3, j148, j284; split; [exact OSF3| exact PI3]).

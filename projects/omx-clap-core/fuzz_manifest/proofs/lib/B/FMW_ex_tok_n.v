@@ -8,11 +8,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_e.v, with its numbers changed; 225 of its 286 lines of code are new or changed and 244 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_lha.v; 151 of its 203 lines of code are new or changed and 234 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_n.v, with its module paths, module names, addresses and numbers changed; 105 of its 198 lines of code are new or changed and 110 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4 IMAGE B: tk_seg_N (lib/B/FMW_ex_tok_base.v): TK_N 0x817a4 .. j + 1 and the loop test of fuzz_manifest.c:103
    (B listing lines 332-336): s8 = j + 1, a0 = s2 + s8, s10 = s10 - 1, a1 = F+0x50 = len; bgeu a1, a0 back to TK_LH
    0x81730 at j + 1, or out through 0x817b8 -> 0x818d4 (t0 = ':') -> 0x81678 (a1 = F+0x40 = text + close) -> 0x81690
    (s7 = a1 - a6 + 1, s5 = a6 + s7) to the guard 0x816a0 `bgeu ~text, s7` and EX_L 0x813c0 at close + 1 (the token is
-   absent). Twin of image A's lib/A/FMW_ex_tok_n.v (06d82004dc3); no byte of text is read, no call.
+   absent). Twin of image A's lib/A/FMW_ex_tok_n.v; no byte of text is read, no call.
    UBSan guard on this path: 0x816a0 (B5 table #40, K1n: bgeu not taken -> j trap 0x8194c), refuted by
    text + close + 1 < 2^64. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

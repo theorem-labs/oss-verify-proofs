@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACep.v at c8557374ad2e, with its module paths changed (AB1v's tfibsegs is A/AWalkFw0.v's), the Requires of YI0n, YI0s (line 11) and A/ACei (line 16) dropped because no name of theirs is used, A_asan_memset (line 29) relocated to libreac/fuzz_knock's asan image (cgif 0x51a78 = __asan_memset+0x0 is knock's 0x504b8), and line 199 (A_asan_memcpy, cgif 0x515dc = __asan_memcpy) left out: knock's image has no __asan_memcpy. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACep.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed (AB1v's tfibsegs is A/AWalkFw0.v's), the Requires of YI0n, YI0s (line 11) and A/ACei (line 16) dropped because no name of theirs is used, A_asan_memset (line 29) relocated to libreac/fuzz_knock's asan image (cgif 0x51a78 = __asan_memset+0x0 is knock's 0x504b8), and line 199 (A_asan_memcpy, cgif 0x515dc = __asan_memcpy) left out: knock's image has no __asan_memcpy. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/ACep.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to reac-pw/fuzz_pin's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

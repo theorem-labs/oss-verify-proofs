@@ -10,11 +10,12 @@
    cmd_prog_unowned (CmdRecImg.v), all over IMG : cmd_img_facts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_exact.v, with its module paths and module names changed; 20 of its 39 lines of code are new or changed and 65 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/trim.v, with its module paths and module names changed; 44 of its 65 lines of code are new or changed and 18 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The chaining of the walk of cross_check on reac-pw/fuzz_segconf's ASan+UBSan IMAGE B
    (fuzz_segconf.asan-ubsan, pin c3796c0b38f3; 0x897cc, 696 bytes, 174 instructions): the three segments of
    cross_check_d.v, chained, and the contract lib/B/Prog/cross_check_c.v at image B's values (the theorem is in
-   cross_check.v). ADAPTED from the image-A G3 walk owner's image-A lib/A/Prog/cross_check_a.v
-   (commit 130284ff40f1): the induction is the same, the numbers are image B's.
+   cross_check.v). ADAPTED from the image-A G3 walk owner's image-A lib/A/Prog/cross_check_a.v:
+   the induction is the same, the numbers are image B's.
 
      cross_check_s1.v  cc_s1  the entry 0x897cc-0x89870 (the two entry UBSan traps and the inline check of
                               c->n), to the loop head or to the epilogue
@@ -25,7 +26,7 @@
      cross_check_r.v          the premises of the two refuse call sites (rule 1j-bis) and what survives a call
 
    The loop is closed by induction on the passes left (cc_loop), as chain_words_a.v's cw_loop does for the
-   member loop of chain_words (origin/ossv/recipes 501c0d516c69). Every pass calls refuse, whose post is
+   member loop of chain_words. Every pass calls refuse, whose post is
    apost_baseF, so the next pass is taken at every FP state that has rounding mode 0: PaFx.fxrel_frm0 carries
    frm0 across the call and PaFx.srr_apost_baseF_lift carries the post back to the entry's FP state. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

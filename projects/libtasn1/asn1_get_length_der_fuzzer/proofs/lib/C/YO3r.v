@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: hex addresses and numbers for the binaries of libtasn1/asn1_get_length_der_fuzzer, and module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries, and the empty writev node proves RomBase.sys_rob for the three-part node_ok of YK15. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -16,6 +17,7 @@ From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import
 YQ0j YQ0c YQ0b YQ03 YQ0i YQ0h YQ09 YQ04 YQ05.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YO3v YH04 YO3q.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YN05.
+From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import RomBase RomWritev.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -142,19 +144,34 @@ realizes segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) mem rom
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
 intros regs pc mem rom model fd ch b0 T Hh Hlz Hno Hfdc H32 Hfd Hcnt Hb0 Hl0 Hiok Hok0 Hc.
-eapply (rz_ret_only_copyins_silent segs regs pc mem rom model [(getr regs 11, 16%nat)]
-(Z_to_bv 64 0) model T Hh Hlz); [|exact Hh|exact Hlz|exact Hc].
-intros eff. rewrite (chk66 segs) by exact Hno. rewrite Hfd, H32.
-destruct Hfdc as [Hlk Hch].
+(* the check is the same closed form at every larger backing: the two words it reads are read
+   in full at the node *)
+assert (Hk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only_copyins [(getr regs 11, 16%nat)] eff (Z_to_bv 64 0) model []).
+{ intros rom' Hr eff.
+assert (Hx : mem_ext (ms_read_byte (pend_at regs pc mem rom)) (ms_read_byte (pend_at regs pc mem rom')))
+by exact (mem_ext_read_byte_wrom (pend_at regs pc mem rom) rom' Hr).
+assert (Hb0' : ms_read_u64 (pend_at regs pc mem rom') (getr regs 11) = Some b0)
+by (rewrite <- read_u64_ms in Hb0 |- *; exact (wv_read_u64_ext _ _ _ _ Hx Hb0)).
+assert (Hl0' : ms_read_u64 (pend_at regs pc mem rom') (Z_to_bv 64 (bv_unsigned (getr regs 11) + 8)) = Some (Z_to_bv 64 0))
+by (rewrite <- read_u64_ms in Hl0 |- *; exact (wv_read_u64_ext _ _ _ _ Hx Hl0)).
+rewrite (chk66 segs) by exact Hno. rewrite Hfd, H32.
+destruct Hfdc as [Hlk [Hch _]].
 unfold check_writev. cbn [in_mem sys_input]. rewrite Hlk, Hch, Hcnt.
 change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
 unfold import_iovecs, import_iovecs_accesses. rewrite bv_eqb_refl, Hiok. cbn [negb].
-rewrite (read_iovec_entry_of (pend_at regs pc mem rom) (getr regs 11) b0 (Z_to_bv 64 0) Hb0 Hl0)
+rewrite (read_iovec_entry_of (pend_at regs pc mem rom') (getr regs 11) b0 (Z_to_bv 64 0) Hb0' Hl0')
 by (change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia).
 change (Z.min (bv_unsigned (Z_to_bv 64 0)) MAX_RW_COUNT) with 0%Z. rewrite Hok0. cbn [negb].
 cbv zeta.
 replace (iovs_total (cap_iovecs [(b0, Z_to_bv 64 0)]) =? 0)%Z with true by reflexivity.
-reflexivity.
+rewrite (iovec_entry_accesses_of _ _ _ _ Hb0' Hl0').
+reflexivity. }
+eapply (rz_ret_only_copyins_silent segs regs pc mem rom model [(getr regs 11, 16%nat)]
+(Z_to_bv 64 0) model T Hh Hlz); [| |exact Hh|exact Hlz|exact Hc].
+- apply (sys_rob_pend segs). intros r Hr eff. rewrite (Hk r Hr eff), (Hk rom (rom_ext_refl _) eff). reflexivity.
+- exact (Hk rom (rom_ext_refl _)).
 Qed.
 Lemma skeleton_forget_win : forall rs i lo hi, skeleton (forget_win rs i lo hi) = skeleton rs.
 Proof.

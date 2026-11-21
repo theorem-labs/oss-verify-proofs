@@ -1,9 +1,9 @@
 (* Image root: the original libreac v1.9.0 set: the pinned fuzz_pcap.asan image
    (sha256 b7a91d9b1fb0017d...) and fuzz_pcap.asan-ubsan (sha256 9e66f771f22af67a...), unstripped twins
-   of both; statements of record ed6b6b7b0ab. *)
+   of both; statements of record. *)
 (* libreac/fuzz_pcap v1.9.0, BOTH ASan images: the deadness of the allocator's environment refusals, stated once, so that
    no walk re-derives it. Every statement is over the SHAPE of the refused request, as cgif_file_fuzzer's
-   lib/YG0k.v:11-14 (origin/ossv/recipes c8557374ad2e) writes it: krefusable q = KMapUser | KMapFreeArray | KMmapSec, the
+   lib/YG0k.v:11-14 (theorem-labs/oss-verify-proofs@6b32741d849a) writes it: krefusable q = KMapUser | KMapFreeArray | KMmapSec, the
    three kernel requests of the allocator model (Reusable/YG00.v:98-105) whose refused answer leads to PNull (malloc) or
    to a spin (free). No statement names a program counter; the pcs below are comments, measured on both images.
 
@@ -17,7 +17,7 @@
    half is image-free: on a path whose kernel answers are all grants, malloc is not PNull and free does not reach its
    spin (YG0d.v model_laws ml_malloc_ns / ml_free, atok, YG0d.v:185-207 amreal_SRr04).
 
-   The two statement families, and the premise that kills a refusal in each (theories/Shapes.v at ed6b6b7b0ab):
+   The two statement families, and the premise that kills a refusal in each (theories/Shapes.v):
    - agrees (asan_agrees / asan_ubsan_agrees, Statements.v:103-118: agrees_in Env.alloc_forced_only Budgets.Asan.lim_source
      Budgets.Asan.lim_target): the sanitizer run has no budget exemption (Shapes.v:117-127); its limit is
      Budgets.Asan.lim_target = 2^39 (Shapes.v:68-70), cgif's ASAN_VM_LMIN / ASAN_VM_LIMIT (YG0n.v:283-284, YG08.v:156
@@ -132,7 +132,7 @@ Definition kreq_place (base : Z) (q : kreq) (md : Model) : Prop :=
     kreq_addr base q + kreq_n q <= alloc_top (m_vmmaps md) /\
     region_free (vm_reserved (m_vmmaps md)) (Z_to_bv 64 (kreq_addr base q)) (Z_to_bv 64 (kreq_n q)) = true /\
     map_contains (vm_maps (m_vmmaps md)) (Z_to_bv 64 (kreq_addr base q)) (Z_to_bv 64 (kreq_n q)) = true
-  else exists a, grant_ok_na_pin md a (kreq_n q) = true.
+  else exists a, grant_ok_na_pin (Z_to_bv 64 0) md a (kreq_n q) = true.
 
 (* lps's budget gate for this request (the negation of the clause of lps Mmap.v mmap_budget_refused_b it reaches). *)
 Definition kreq_budget_ok (base : Z) (q : kreq) (md : Model) : bool :=
@@ -143,7 +143,7 @@ Definition kreq_budget_ok (base : Z) (q : kreq) (md : Model) : bool :=
 (* A granted answer: the fixed address itself, or a hint-placed address with a free range. Either is below alloc_top,
    so it is never an encoded errno (lps State.v alloc_top_room). *)
 Definition kreq_granted (base : Z) (q : kreq) (md : Model) (a : word) : Prop :=
-  if kreq_fixed q then a = Z_to_bv 64 (kreq_addr base q) else grant_ok_na_pin md a (kreq_n q) = true.
+  if kreq_fixed q then a = Z_to_bv 64 (kreq_addr base q) else grant_ok_na_pin (Z_to_bv 64 0) md a (kreq_n q) = true.
 
 Definition kreq_grant_md (q : kreq) (md : Model) (a : word) : Model :=
   grant_md (negb (kreq_fixed q)) (Z_to_bv 64 (kreq_flags q)) a (Z_to_bv 64 (kreq_n q)) md.
@@ -221,7 +221,7 @@ Lemma kreq_dead_of_node : forall cfg base q regs pc mem rom md (I : Type) (nx : 
   (forall i, exists a, kreq_granted base q md a /\ nx i = kreq_grant_cfg q regs pc mem rom md a) ->
   kreq_dead cfg base q regs pc mem rom md.
 Proof.
-  intros cfg base q regs pc mem rom md I nx Hle [_ Hc] Hnx e st Hs.
+  intros cfg base q regs pc mem rom md I nx Hle [_ [Hc _]] Hnx e st Hs.
   pose proof (sstep_cfg_mono segs cfg Env.alloc_forced_only _ _ _ Hle Hs) as Hs'.
   destruct (Hc e st Hs') as (i & -> & ->). split; [reflexivity|].
   destruct (Hnx i) as (a & Ha & E). exists a. split; [exact Ha | rewrite E; reflexivity].
@@ -288,11 +288,17 @@ Proof.
       (conj Hrf Hmc) Hs) as [[HAI' HW'] Hb].
     split; [exact Hb|]. intros a ->. split; [exact HAI' | exact HW'].
   - destruct Hp as (a0 & Ha0).
-    assert (C : forall a, grant_ok_na_pin md a (page_round_up_Z (kreq_len q)) = true ->
+    assert (C : forall a, grant_ok_na_pin (Z_to_bv 64 0) md a (page_round_up_Z (kreq_len q)) = true ->
       (AI segs Hh A (grant_md true (Z_to_bv 64 KMAP_ANON) a (Z_to_bv 64 (page_round_up_Z (kreq_len q))) md) /\
        MWF (grant_md true (Z_to_bv 64 KMAP_ANON) a (Z_to_bv 64 (page_round_up_Z (kreq_len q))) md)) /\
       mmap_noreserve_backed_ok (Z_to_bv 64 KMAP_ANON) md (page_round_up_Z (kreq_len q)) = true).
-    { intros a Ha. unfold grant_ok_na_pin in Ha.
+    { intros a Ha.
+      (* LPS 727298f3: [grant_ok_na_pin] is the model's placement test at the call's hint (NULL for the secondary
+         map, kreq_ecall's register 10 = kreq_addr = 0); its old four-conjunct body is YK13.grant_ok_na_pin_b. *)
+      pose proof (page_round_up_Z_bounds (kreq_len q) ltac:(lia)) as PR0. unfold page_size in PR0.
+      apply (YK13.grant_ok_na_pin_facts (Z_to_bv 64 0) md a (page_round_up_Z (kreq_len q)) ltac:(lia)
+        (YG0b.page_round_up_Z_mod (kreq_len q))) in Ha.
+      unfold YK13.grant_ok_na_pin_b in Ha.
       apply andb_prop in Ha as [Ha Hrf]. apply andb_prop in Ha as [Ha Hce]. apply andb_prop in Ha as [Hal _].
       apply Z.eqb_eq in Hal. apply Z.leb_le in Hce.
       exact (commit_AI segs Hh A md true (Z_to_bv 64 KMAP_ANON) a (kreq_len q) HAI HW ltac:(vm_compute; reflexivity)

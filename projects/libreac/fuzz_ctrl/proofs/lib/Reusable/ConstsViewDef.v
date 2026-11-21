@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE39.v (mconsts_view, mconsts_of_rom_view, mconsts_view_keep) as consts_view, consts_view_of_rom_view, consts_view_keep, with the constant range as two parameters lo, hi in place of cgif_file's fixed range, over lib/Reusable only so both builds of libreac/fuzz_disco share it; module paths. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/Rt/ConstsViewDef.v, with its module paths changed; 2 of its 23 lines of code are new or changed and 2 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco lib/Rt/ConstsViewDef.v at 3b8a77d146c to libreac/fuzz_ctrl lib/Reusable; module paths only, the file names no address. *)
+(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco lib/Rt/ConstsViewDef.v to libreac/fuzz_ctrl lib/Reusable; module paths only, the file names no address. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

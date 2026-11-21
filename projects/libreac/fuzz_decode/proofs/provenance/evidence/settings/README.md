@@ -5,17 +5,17 @@ This README replaces the slice MANIFEST.md (2026-10-31); the file list and sha25
 The files (the file list with the sha256 of every file is in `provenance/evidence/MANIFEST.md`):
 
 - `TACTIC-SETTINGS.md`: every tactic-level setting of the lib (ESCAPES 1229, UNMEASURED 4, KERNEL 0) from one run of
-  global_settings.py over all 2673 .v files of lib/ at 3f64815aead2
+  global_settings.py over all 2673 .v files of lib/
 - `mk_settings_record.py`: writes TACTIC-SETTINGS.md from that run's stdout; reproduce:
-  `mk_settings_record.py RUN_OUTPUT proofs/libreac/fuzz_decode/lib 3f64815aead2 > TACTIC-SETTINGS.md`
+  `mk_settings_record.py RUN_OUTPUT proofs/libreac/fuzz_decode/lib > TACTIC-SETTINGS.md`
 
 The run used global_settings release r2, whose script is byte-identical to v10 (sha256
 439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242; the release's SHA256SUMS verified, 22 OK); r2 changes
 only the release wrapper. Tactic-level settings change proof search, not what the kernel checks: they are recorded, not
 made Local and not rebuilt. No proof file changes.
 
-Delta against the released base: the same script over all 2673 .v files of lib/ at the released prover commit
-5607400a019c (the series base) prints the same SUMMARY (ESCAPES 1229; PLAIN 4735; UNMEASURED 4; KERNEL 0; TACTIC 5154,
+Delta against the released base: the same script over all 2673 .v files of lib/ at the released prover
+ (the series base) prints the same SUMMARY (ESCAPES 1229; PLAIN 4735; UNMEASURED 4; KERNEL 0; TACTIC 5154,
 OPTION 814; HINTS 227), and its 6195 reported rows (file, line, class, text) are identical to the head run's: ESCAPES
 1229 at base and at head, delta 0. The series adds no setting. By class (TACTIC-SETTINGS.md, 'ESCAPES, by setting'):
 `Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=` 1100 rows in 453 files, `Ltac numconst ::=` 92,

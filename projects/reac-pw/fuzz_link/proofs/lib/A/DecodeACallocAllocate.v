@@ -1,6 +1,6 @@
 (* libreac/fuzz_decode image A (fuzz_decode.asan), composition row H_CALLOC_ALLOCATE: the Allocator::Allocate contract the
    calloc walk consumes (lib/A/DecodeCalloc.v decode_aalloc_A), from a Theorem Labs lane's CLOSED primary-size Allocate relocated onto
-   this image (lib/A/AGtopcgifC.v and its Require closure, from a working branch 95e6f1d72b6; provenance in
+   this image (lib/A/AGtopcgifC.v and its Require closure, from a working branch; provenance in
    provenance/alloc-reloc/A/).  Only the record-generic lemma is kept here, over any B with PcapSyms B and the record's
    depot hash; reac-pw/fuzz_link applies it in lib/A/LinkACalloc.v.
 

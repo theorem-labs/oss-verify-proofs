@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a string argument's end plus 9 (was its end plus slack plus 16) is at most 2^47, what the launch's entry block gives for an argv string (the NUL that ends execfn and the 8-byte slot come after it, below ed_top <= 2^47). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -367,7 +368,7 @@ Definition so_diag_str_stmt (fmt : Z) (msg : list byte -> list byte) : Prop :=
     a0 = Z_to_bv 64 ASTDERR -> a1 = Z_to_bv 64 fmt ->
     bytes_at asegs m (bv_unsigned a2) (s ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) s ->
     ((- (bv_unsigned a2 + zlength s + 1)) mod 8 <= zlength slack) -> (zlength s <= 2^20) ->
-    (bv_unsigned sp <= bv_unsigned a2) -> (bv_unsigned a2 + zlength s + 1 + zlength slack + 16 <= 2^47) ->
+    (bv_unsigned sp <= bv_unsigned a2) -> (bv_unsigned a2 + zlength s + 1 + 9 <= 2^47) ->
     stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo + AFPRINTF_STACK <= bv_unsigned sp ->
     (bv_unsigned sp + 64 <= 2^47 - 1) ->
     assp_cells m canary -> mem_inv asegs m -> frm0 fc ->

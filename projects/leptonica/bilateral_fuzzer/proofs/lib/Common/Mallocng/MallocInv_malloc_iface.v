@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proofs and definitions restated for the model's changed definitions). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -113,7 +114,7 @@ Definition malloc_noroom (sp0 : word) (argv envp : list (list byte)) (cb : list 
   (* [comment removed for export] *)
   aslot_noroom sp0 argv envp cb A s \/
   (* [comment removed for export] *)
-  (MMAP_THRESHOLD <= n /\ forall a, mmap_grant_ok MMrw (ms_vm s) a (page_round_up_Z (n + 20)) = false) \/
+  (MMAP_THRESHOLD <= n /\ exists thp, forall a, mmap_grant_ok MMrw thp (ms_vm s) a (page_round_up_Z (n + 20)) = false) \/
   (* [comment removed for export] *)
   (MMAP_THRESHOLD <= n /\ exists A1 s1, II sp0 argv envp cb [] A1 s1 /\ FR A s A1 s1 /\
       (forall b sz, In (b, sz) (vm_maps (ms_vm s)) -> In (b, sz) (vm_maps (ms_vm s1))) /\

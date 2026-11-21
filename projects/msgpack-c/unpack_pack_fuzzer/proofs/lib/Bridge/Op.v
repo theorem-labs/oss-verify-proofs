@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap's stack window tied at the launch's floor below sp; stk0_sp_bound's bound restated against it, the same address). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -1500,7 +1501,7 @@ Definition ties (W : wit) (ws : list window) : Prop :=
 
   /\ (forall w, In w ws -> w_kind w = K_STACK -> w_len w = 0 -> w_lo w < ZC_BAND -> w = zc_win (w_zc W)) /\ In (zc_win (w_zc W)) ws
 
-  /\ (forall w, In w ws -> w_kind w = K_STACK -> w_lo w < ZC_BASE -> w_lo w = ATOP + 4096)
+  /\ (forall w, In w ws -> w_kind w = K_STACK -> w_lo w < ZC_BASE -> w_lo w = ATOP + 2244095)
 
   /\ c24inv W ws /\ ghost_apart ws
 
@@ -2526,8 +2527,12 @@ Proof.
   - exfalso. destruct (LB_fsh_facts W aw LB m mo b HW Vb) as (X1 & X2 & X3 & _). unfold user_band, fsh_iv in UB. cbn [fst] in UB. lia.
 Qed.
 
+(* The bound on sp is absolute, ATOP + 8388448 (sp0 - 160): 6144353 above the window at the launch's floor
+   ATOP + 2244095, as it was 8384352 above the released window ATOP + 4096 ([stk0_sp_bound_same_address]). *)
+Lemma stk0_sp_bound_same_address : (ATOP + 2244095 + 6144353 = ATOP + 4096 + 8384352)%Z.
+Proof. lia. Qed.
 Lemma stk0_sp_bound : forall W ws w L RNG st LBa (m : amem) sp, ties W ws -> In w ws -> w_kind w = K_STACK -> w_lo w < ZC_BASE ->
-  AHEAP AI L RNG st LBa m -> sp - w_lo w <= 8384352 -> sp <= al_top L.
+  AHEAP AI L RNG st LBa m -> sp - w_lo w <= 6144353 -> sp <= al_top L.
 Proof.
   intros W ws w L RNG st LBa m sp (_ & _ & _ & _ & _ & _ & _ & T8 & _) Hw K P AH D. rewrite (T8 w Hw K P) in D.
   destruct (AI_layout AI _ _ _ _ _ AH) as (S1 & _ & S2 & S3 & _). lia.
@@ -4031,7 +4036,7 @@ Definition ties (W : wit) (ws : list window) : Prop :=
 
   /\ (forall w, In w ws -> w_kind w = K_STACK -> w_len w = 0 -> w_lo w < ZC_BAND -> w = zc_win (w_zc W)) /\ In (zc_win (w_zc W)) ws
 
-  /\ (forall w, In w ws -> w_kind w = K_STACK -> w_lo w < ZC_BASE -> w_lo w = ATOP + 4096)
+  /\ (forall w, In w ws -> w_kind w = K_STACK -> w_lo w < ZC_BASE -> w_lo w = ATOP + 2244095)
 
   /\ c24inv W ws /\ ghost_apart ws
 
@@ -5057,8 +5062,12 @@ Proof.
   - exfalso. destruct (LB_fsh_facts W aw LB m mo b HW Vb) as (X1 & X2 & X3 & _). unfold user_band, fsh_iv in UB. cbn [fst] in UB. lia.
 Qed.
 
+(* The bound on sp is absolute, ATOP + 8388448 (sp0 - 160): 6144353 above the window at the launch's floor
+   ATOP + 2244095, as it was 8384352 above the released window ATOP + 4096 ([stk0_sp_bound_same_address]). *)
+Lemma stk0_sp_bound_same_address : (ATOP + 2244095 + 6144353 = ATOP + 4096 + 8384352)%Z.
+Proof. lia. Qed.
 Lemma stk0_sp_bound : forall W ws w L RNG st LBa (m : amem) sp, ties W ws -> In w ws -> w_kind w = K_STACK -> w_lo w < ZC_BASE ->
-  AHEAP AI L RNG st LBa m -> sp - w_lo w <= 8384352 -> sp <= al_top L.
+  AHEAP AI L RNG st LBa m -> sp - w_lo w <= 6144353 -> sp <= al_top L.
 Proof.
   intros W ws w L RNG st LBa m sp (_ & _ & _ & _ & _ & _ & _ & T8 & _) Hw K P AH D. rewrite (T8 w Hw K P) in D.
   destruct (AI_layout AI _ _ _ _ _ AH) as (S1 & _ & S2 & S3 & _). lia.

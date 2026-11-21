@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset (asan image A), the driver's per-call loop over preset's SECOND
    allocator instance (a Theorem Labs lane's ARcf). STATEMENTS ONLY: the proof is lib/A/PresetD1rAPf.v. Nothing here proves a
    function (rule 24: composition / driver layer of a port).
@@ -35,15 +36,15 @@
    (8) The interface's frame names ablocks_cf / afn_pre_cf / ajournal_cf are its abbreviations of YCbqG.v's journal
        layer at ARx := ARcf, so they are no parameters here; the loop's proof reads the content it uses through the
        three links of lib/A/PresetD1rAl.v, which it proves by unfolding.
-   (9) The leaf shapes are lane CwSites' (lib/A/PresetD1sitesA.v at a working branch 19737933b33,
+   (9) The leaf shapes are lane CwSites' (lib/A/PresetD1sitesA.v at a working branch,
        copied byte for byte into this branch): free_site_cf, free_null_site_cf (over the same non-primary room
        iface_room_np), printf_first_cf, printf_next_cf and exit_leaf_cf, over ARcf at Hp = [].
-   (10) NEW, memnorm (the interface's header item (8), a working branch 446222ec0601): the harness call needs
+   (10) NEW, memnorm (the interface's header item (8), a working branch): the harness call needs
        YAkMemnorm.memnorm tfibsegs over the call configuration's FULL overlay, and its post keeps it. The loop takes it
        at its head (= the first harness call) as a premise of loop_L_cf_A, and carries it to each later call through
        the slot's post, the printf leaf's keep (CwSites), and the named premise H_memnorm_drv_A: AD1r's three runner
        segments between two calls (vp_run, br_run, l2_run) with memnorm at both ends. Owner of H_memnorm_drv_A:
-       a Theorem Labs lane's closer YSRrMemnorm.SRr_msteps_inv (a working branch 60aa137eff2) with srr_inv_laws_memnorm.
+       a Theorem Labs lane's closer YSRrMemnorm.SRr_msteps_inv (a working branch) with srr_inv_laws_memnorm.
    (11) NEW, the live real stack (the interface's header item (13), #102; a Theorem Labs lane's ruling 09:23Z): the slot pre's
        last conjunct is a Theorem Labs lane's YGcallStackUp.astack_up_x tfibsegs ly W (spZ regs) mem, UNGUARDED. The loop
        takes its part above the entry sp as an INVARIANT, a premise of loop_L_cf_A: astack_up_x at usp, every byte of
@@ -122,19 +123,25 @@ Variable xst : nat -> (word -> bool) -> (word -> option byte) -> Prop.
 Variable NR : ProcInput -> Prop.
 Variable sm : list Z -> Z * Z.
 Variable iface_room_np : astate -> Prop.
-#[local] Notation ELV sp a0 p inp xw xd := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* YP08.E0 is TOP-anchored and launch-indexed at 727298f3 (the entry draw's top, the run's kb_rseq flag, the execfn),
+   so the loop statement carries the draw and the launch premises as the core's AD1w.loop_L_x does *)
+#[local] Notation ELV sp rnd a0 p inp xw xd :=
+(YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 
 (* ---------------------------------------------------------------------- *)
 (* 1. The loop body: lib/A/AD1w.v:208 loop_L_x with changes (1)-(3), (5)-(7) of the header. *)
 Definition loop_L_cf_A : Prop :=
 forall (fx : YK11.FPState), YK0o.frm_zero (@YK11.fp_csr fx) ->
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (E : YP0m.env)
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (E : YP0m.env)
 (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb pq : sptr) (cap q : Z)
-(j r : nat) (fs : Fs) (cnt ran : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+(j r : nat) (fs : Fs) (cnt ran : Z) (rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
+valid_fs (in_fs inp) ->
 NR inp ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data ->
-(forall k, (k < K_M1)%nat -> ew E k = ew (ELV sp a0 p inp xw xd) k) -> ed E 2 = data ->
+(forall k, (k < K_M1)%nat -> ew E k = ew (ELV sp rnd a0 p inp xw xd) k) -> ed E 2 = data ->
 bv_unsigned (ew E A_BUF) = sptr_addr B ly pb -> bv_unsigned (ew E A_LEN) = dlen data ->
 bv_unsigned (ew E 161) = sptr_addr B ly pb + 2 + config_len data ->
 bv_unsigned (ew E 162) = payload_len data -> bv_unsigned (ew E 163) = (if payload_len data =? 0 then A_EMPTY_tfa else q) ->
@@ -163,7 +170,9 @@ PCA.PINV (aview tfibsegs (w_H W) (ms_mem ms)) cnt ran ->
 YAkMemnorm.memnorm tfibsegs (ms_mem ms) ->
 (* header item (11): the live real stack above the entry sp, the loop's invariant *)
 YGcallStackUp.astack_up_x tfibsegs ly W (bv_unsigned sp) (ms_mem ms) ->
-((forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) /\ m_fs md = fs /\ Fs.fs_sorted fs = true) ->
+(* the donor's MDI; its LAST conjunct, as the core's AD1w.MDI at LPS 727298f3: the channel reader [fdchan] asks for *)
+((forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) /\ m_fs md = fs /\ Fs.fs_sorted fs = true /\
+  m_channel_reader md = true) ->
 srealizes tfibsegs (mkCfg ms md) (loop_tgt (LS := LS) (payload data) (calls data) j r fs).
 
 (* ---------------------------------------------------------------------- *)

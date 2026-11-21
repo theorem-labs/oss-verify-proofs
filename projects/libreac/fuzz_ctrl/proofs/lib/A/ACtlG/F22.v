@@ -44,7 +44,7 @@
    which are Qed-closed there and take their Section arguments explicitly here.  They are NOT kit helpers and
    are not copied: one writer (this lane) owns both files.
 
-   ROUTE (C), L3 switch (a working branch 1899bed1aee): ctl_from's premise is now
+   ROUTE (C), L3 switch (a working branch): ctl_from's premise is now
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3.  ENTRY: only the cells (HAC) are read; the tail run is Seg/F22Fon.v's twin
    f22_tail_F_on (Seg/F22F.v's f22_tail_F only handed its universal `shadow_rw m` on to the record verifier, whose
    route (C) contract _contract_F_on drops it; both LANDED), so no region proof is needed (consumer row F22.v:192,315
@@ -54,7 +54,7 @@
 
    SECTION HYPOTHESES: ONE, and it is ACtl.v's own.
    - LAWS: the core's AR law record (YCbq.v:207), ACtl.v:185's own.
-   THE KIT IS CITED, NOT RESTATED: on the newer glue base a working branch 46eb24cd4b3
+   THE KIT IS CITED, NOT RESTATED: on the newer glue base a working branch
    lib/A/ACtlG/Kit.v (blob 7e164a09a73) BUILDS, so this file's three placeholders are deleted and
    A.ACtlG.Kit.kit_wx / kit_segs_low / kit_frac_move are cited.  NO OTHER HYPOTHESIS IS LEFT.
 
@@ -62,7 +62,7 @@
    frame-route identifier in any statement, getr / mkst / seg_rom / cfg_at qualified).
 
    BUILD STATE (honest): as F21.v's header says - a working branch, interim core
-   5da74c9c931 (zero stand-ins) over glue base 46eb24cd4b3, Tk/AW and a Theorem Labs lane's ProgWorld files by path; the same
+   (zero stand-ins) over glue base, Tk/AW and a Theorem Labs lane's ProgWorld files by path; the same
    406-file closure, none substituted.
    No Axiom, no Parameter, no unproved step. *)
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: grant_ok_na_pin's hint argument with positive page-aligned length premises, the mmap nodes' place_declined_b premise, the mprotect node's vDSO premise, and brk's charge of the page-rounded growth (brk_grow_bytes). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -113,20 +114,23 @@ Lemma grant_below_alloc_top : forall hint m a nZ,
   grant_ok hint m a nZ = true -> bv_unsigned a + nZ <= alloc_top (m_vmmaps m).
 Proof. intros hint m a nZ Hg. destruct (grant_ok_unpack _ _ _ _ Hg) as (_ & _ & H & _). exact H. Qed.
 
-Lemma grant_na_disjoint_of_In : forall m a nZ (b s : word),
-  0 <= nZ < 2 ^ 64 ->
-  grant_ok_na_pin m a nZ = true ->
+(* LPS 727298f3: [grant_ok_na_pin] takes the mmap hint first and is the address Linux
+   picks for it ([linux_place_is]); its unpacking needs a positive page-aligned length. *)
+Lemma grant_na_disjoint_of_In : forall hint m a nZ (b s : word),
+  0 < nZ < 2 ^ 64 -> nZ mod page_size = 0 ->
+  grant_ok_na_pin hint m a nZ = true ->
   In (b, s) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) ->
   bv_unsigned a + nZ <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned a.
 Proof.
-  intros m a nZ b s HnZ Hg Hin.
-  destruct (grant_ok_na_pin_unpack _ _ _ Hg) as (_ & _ & _ & Hrf).
+  intros hint m a nZ b s HnZ Hm Hg Hin.
+  destruct (grant_ok_na_pin_unpack _ _ _ _ (proj1 HnZ) Hm Hg) as (_ & _ & _ & Hrf).
   pose proof (region_free_In _ _ _ b s Hrf Hin) as H. rewrite u_small in H by lia. exact H.
 Qed.
 
-Lemma grant_na_below_alloc_top : forall m a nZ,
-  grant_ok_na_pin m a nZ = true -> bv_unsigned a + nZ <= alloc_top (m_vmmaps m).
-Proof. intros m a nZ Hg. destruct (grant_ok_na_pin_unpack _ _ _ Hg) as (_ & _ & H & _). exact H. Qed.
+Lemma grant_na_below_alloc_top : forall hint m a nZ,
+  0 < nZ -> nZ mod page_size = 0 ->
+  grant_ok_na_pin hint m a nZ = true -> bv_unsigned a + nZ <= alloc_top (m_vmmaps m).
+Proof. intros hint m a nZ Hn Hm Hg. destruct (grant_ok_na_pin_unpack _ _ _ _ Hn Hm Hg) as (_ & _ & H & _). exact H. Qed.
 
 (* [comment removed for export] *)
 Lemma kfacts_grant : forall segs vals ebs M (a : word) nZ,
@@ -167,6 +171,7 @@ Variable segs : list Segment.
   edenot E (sr_get sr 11) = Z_to_bv 64 len -> 0 < len < 2 ^ 64 ->
   edenot E (sr_get sr 12) = Z_to_bv 64 3 -> edenot E (sr_get sr 13) = Z_to_bv 64 34 ->
   edenot E (sr_get sr 14) = Z_to_bv 64 (-1) -> edenot E (sr_get sr 15) = Z_to_bv 64 0 ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr R 10) nZ = false ->
   (exists a, grant_ok (getr R 10) model a nZ = true) ->
   dsj_claims E (fun a => grant_ok (getr R 10) model a nZ = true) nZ ds ->
   (forall (a : word) R2,
@@ -183,11 +188,12 @@ Variable segs : list Segment.
   realizes segs (mkCfg (mkst R (Z_to_bv 64 pc) M rom) model) KB.
 Proof.
   intros vals ebs sr R M rom model kn pc w len ds KB E nZ n ia HR HK Hsr Hkn Hds HF HE Hpc0 Hpc4 Hh Hlazy
-         H17 H11 Hlen H12 H13 H14 H15 Hex Hdsj HKB.
+         H17 H11 Hlen H12 H13 H14 H15 Hdecl Hex Hdsj HKB.
   assert (HnZ : 0 < nZ /\ nZ < len + 4096) by (unfold nZ; pose proof (page_round_up_Z_bounds len ltac:(lia)); unfold page_size in *; lia).
   eapply (rz_mmap_anon segs R (Z_to_bv 64 pc) M rom model w len KB HF HE Hh Hlazy);
     try (eapply getr_of_sr; [exact HR|]; eassumption).
   - exact Hlen.
+  - exact Hdecl.
   - exact Hex.
   - intros a Ha. rewrite pc_lit_add4 by lia.
     destruct (grant_ok_unpack _ _ _ _ Ha) as (Hal & Hpos & Htop & Hrf & Hbud).
@@ -239,10 +245,11 @@ Qed.
   edenot E (sr_get sr 11) = Z_to_bv 64 len -> 0 < len < 2 ^ 64 ->
   edenot E (sr_get sr 12) = Z_to_bv 64 0 -> edenot E (sr_get sr 13) = Z_to_bv 64 34 ->
   edenot E (sr_get sr 14) = Z_to_bv 64 (-1) -> edenot E (sr_get sr 15) = Z_to_bv 64 0 ->
-  (exists a, grant_ok_na_pin model a nZ = true) ->
-  dsj_claims E (fun a => grant_ok_na_pin model a nZ = true) nZ ds ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr R 10) nZ = false ->
+  (exists a, grant_ok_na_pin (getr R 10) model a nZ = true) ->
+  dsj_claims E (fun a => grant_ok_na_pin (getr R 10) model a nZ = true) nZ ds ->
   (forall (a : word) R2,
-     grant_ok_na_pin model a nZ = true ->
+     grant_ok_na_pin (getr R 10) model a nZ = true ->
      let E' := Env (vals_ev (vals ++ [a])) ebs in
      regs_ok E' (sr_upd sr (ridx 10) (EVar ia)) R2 ->
      know_ok segs E' (unfill a n M)
@@ -254,14 +261,16 @@ Qed.
   realizes segs (mkCfg (mkst R (Z_to_bv 64 pc) M rom) model) KB.
 Proof.
   intros vals ebs sr R M rom model kn pc w len ds KB E nZ n ia HR HK Hsr Hkn Hds HF HE Hpc0 Hpc4 Hh Hlazy
-         H17 H11 Hlen H12 H13 H14 H15 Hex Hdsj HKB.
+         H17 H11 Hlen H12 H13 H14 H15 Hdecl Hex Hdsj HKB.
   assert (HnZ : 0 < nZ /\ nZ < len + 4096) by (unfold nZ; pose proof (page_round_up_Z_bounds len ltac:(lia)); unfold page_size in *; lia).
+  assert (Hnmod : nZ mod page_size = 0) by (unfold nZ, page_round_up_Z; apply Z_mod_mult).
   eapply (rz_mmap_noaccess segs R (Z_to_bv 64 pc) M rom model w len KB HF HE Hh Hlazy);
     try (eapply getr_of_sr; [exact HR|]; eassumption).
   - exact Hlen.
+  - exact Hdecl.
   - exact Hex.
   - intros a Ha. rewrite pc_lit_add4 by lia.
-    destruct (grant_ok_na_pin_unpack _ _ _ Ha) as (Hal & Hpos & Htop & Hrf).
+    destruct (grant_ok_na_pin_unpack _ _ _ _ (proj1 HnZ) Hnmod Ha) as (Hal & Hpos & Htop & Hrf).
     pose proof (alloc_top_room (m_vmmaps model)) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
     pose proof (u64_range a) as Har.
     assert (Hev : edenot (Env (vals_ev (vals ++ [a])) ebs) (EVar ia) = a).
@@ -307,6 +316,8 @@ Qed.
   edenot E (sr_get sr 11) = Z_to_bv 64 len -> 0 < len ->
   (bv_unsigned addr + nZ < two_pow_64)%Z ->
   edenot E (sr_get sr 12) = Z_to_bv 64 3 ->
+  (* LPS 727298f3: mprotect's vDSO gate *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   (forall R1, mprotect_budget_ok model addr n = false ->
@@ -321,7 +332,7 @@ Qed.
   realizes segs (mkCfg (mkst R (Z_to_bv 64 pc) M rom) model) (t_if_adm (mprotect_budget_ok model addr n) KA KB).
 Proof.
   intros vals ebs sr R M rom model kn pc w addr eb eo len KA KB E nZ n HR HK HF HE Hpc0 Hpc4 Hh Hlazy
-         H17 H10 Hea Hal H11 Hlen Hnw H12 Hna Hma HKA HKB.
+         H17 H10 Hea Hal H11 Hlen Hnw H12 Hvd Hna Hma HKA HKB.
   assert (HnZ : 0 < nZ /\ nZ < len + 4096) by (unfold nZ; pose proof (page_round_up_Z_bounds len ltac:(lia)); unfold page_size in *; lia).
   pose proof (u64_range addr) as Har. unfold two_pow_64 in Hnw.
   assert (Hun : bv_unsigned n = nZ) by (unfold n; apply u_small; lia).
@@ -330,6 +341,7 @@ Proof.
   - exact Hal.
   - exact Hlen.
   - unfold two_pow_64. lia.
+  - exact Hvd.
   - exact Hna.
   - exact Hma.
   - intros Hbud. rewrite pc_lit_add4 by lia. apply HKA; [exact Hbud | |exact HK].
@@ -602,7 +614,7 @@ Proof.
   intros d m h b Hbal Hdal Hd Hb0 Hnw Hadm.
   pose proof (u64_range b) as Hbr.
   assert (Hureq : bv_unsigned (Z_to_bv 64 (bv_unsigned b + d)) = (bv_unsigned b + d)%Z) by (apply u64_lit; lia).
-  unfold brk_grow_adm, Mmap.brk_grow_ok, Mmap.brk_budget_ok in Hadm. fold h b in Hadm. rewrite Hureq in Hadm.
+  unfold brk_grow_adm, Mmap.brk_grow_ok, Mmap.brk_budget_ok, Mmap.brk_grow_bytes in Hadm. fold h b in Hadm. rewrite Hureq in Hadm.
   rewrite (proj2 (Z.ltb_lt 0 _) Hb0), (proj2 (Z.ltb_lt (bv_unsigned b) _)) in Hadm by lia. cbn [andb] in Hadm.
   rewrite (page_round_up_Z_aligned (bv_unsigned b)) in Hadm by (first [lia | exact Hbal]).
   rewrite (page_round_up_Z_aligned (bv_unsigned b + d)) in Hadm
@@ -612,8 +624,8 @@ Proof.
   apply Z.leb_le in Htop. apply Z.leb_le in Hlive.
   replace (Z_to_bv 64 (bv_unsigned b)) with b in Hrf by (symmetry; apply Z_to_bv_u_eq'; reflexivity).
   replace (bv_unsigned b + d + page_size - bv_unsigned b)%Z with (d + page_size)%Z in Hrf by lia.
-  replace (bv_unsigned (Z_to_bv 64 (bv_unsigned b + d) - b)) with d in Hlive.
-  2:{ rewrite bv_sub_unsigned, Hureq. rewrite bv_wrap_small by (unfold bv_modulus; lia). lia. }
+  (* LPS 727298f3: the budget charges the page-rounded growth, [Z.max 0 (hi - lo)] = d here *)
+  replace (Z.max 0 (bv_unsigned b + d - bv_unsigned b))%Z with d in Hlive by lia.
   repeat split; assumption.
 Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window fact is the launch's, 1500 whole pages below the stack pointer, not 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -48,7 +49,7 @@ Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEP
 (* [comment removed for export] *)
 Definition knRE0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144000)) 6144000;
    KRange (EVar 2) 0x7fff80000000 0x800000400000;
    KWr (SA (ELit 0) 0x2d8000) 0x36000;
    KImg 0x10000 0x2d9330; KImg 0x2d9331 0x2d9379; KImg 0x2e9379 0x2ebe88; KImg 0x30bf60 0x30bf80; KImg 0x2ebebc 0x2ebf08; KImg 0x2ebf10 0x2ebf28; KImg 0x2ebf30 0x2ebf48; KImg 0x2ebf58 0x2ebf68; KImg 0x2ebf70 0x30bf60; KImg 0x30bfa0 0x30c1d8; KImg 0x30c1e9 0x30c1f0; KImg 0x30c1f8 0x30c200; KImg 0x30c210 0x30c218; KImg 0x30c220 0x30c250; KImg 0x30c258 0x30c260; KImg 0x30c2b0 0x30c410; KImg 0x30c418 0x30c590; KImg 0x30c598 0x30c5f0; KImg 0x30c5f1 0x30c5f8; KImg 0x30c600 0x30e000;   

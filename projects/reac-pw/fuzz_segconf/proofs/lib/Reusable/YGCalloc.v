@@ -4,6 +4,7 @@
    proofs/cgif/cgif_file_fuzzer/lib/YCbq.v) and lib/Reusable/YCbp.v:28-35 amalloc04_rule_triv (copied from
    proofs/cgif/cgif_file_fuzzer/lib/YCbp.v), at the calloc contract of lib/Reusable/YGCalloc.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/Reusable/YCbpCalloc.v; 108 of its 127 lines of code are new or changed and 117 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The runtime contract of the ASan interceptor of calloc, as a THIN CALLER WALK over the runtime's
    Allocator::Allocate contract, in the core form of cgif_file_fuzzer's malloc contract and malloc CALL RULE
    (Reusable/YG0d.v:253-260 amalloc_realizes over :243-252 malloc_leaf and :225-233 acall_pre;
@@ -15,7 +16,7 @@
    contract is new.  It is written once and unit-generically: the malloc tree, the call precondition, the
    realization relation, the leaves, the trace universe, the stack-buffer predicate, the journal, the kept-frame
    predicate and the meter are Section Variables, as c-asan's realloc kit abstracts its own
-   (proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v on origin/cold/c-asan-realloc-primary c6ef6b691bf: segs, B, U,
+   (proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v: segs, B, U,
    mt, cpre, rpre, areal, rleaf, mleaf), so a second unit instantiates the same text at its own model.
    [*_cgif] below instantiates what can be instantiated from this unit's lib/Reusable today: YG00.malloc,
    YG0d.acall_pre, YG0d.amreal, YG0d.malloc_leaf.
@@ -57,7 +58,7 @@
    premise (n < MALLOC_MAX = 2 ^ 28, far below 2 ^ 40) keeps calloc's walk clear of it.
 
    ---------------------------------------------------------------------------------------------------------------
-   Each conjunct against the machine code of libreac/fuzz_decode (ORIGINAL binaries, FACTS f0e6eb38667;
+   Each conjunct against the machine code of libreac/fuzz_decode (ORIGINAL binaries, FACTS;
    fuzz_decode.asan and
    .asan-ubsan, read with capstone).  Image A = fuzz_decode.asan, image B = fuzz_decode.asan-ubsan.
 
@@ -105,7 +106,7 @@
    unit's call precondition carries, as it does for malloc.
 
    Released templates this is ported from (rule 24; what is taken from each):
-   - tcpreplay/fuzz_services lib/aleaf/A1IcptCalloc.v (origin/main e966c513ee6): the interceptor's split into a
+   - tcpreplay/fuzz_services lib/aleaf/A1IcptCalloc.v: the interceptor's split into a
      prefix to the entry and a suffix after it (:401 calloc_prefix_T, :444 calloc_suffix_T) and the stack-trace pc
      at entry + 0x3c / the return at entry + 0x144 - decode's interceptor is the same 368-byte, 92-instruction
      function;
@@ -117,7 +118,7 @@
    - openssl/bndiv lib/A/R_asan_calloc.v:120-122 calloc_A_spec: the premises on the two arguments
      (`0 <= k < 2^64`, `0 <= sz < 2^64`, a bound on the product), which this file states as
      `0 <= nm`, `0 <= sz` and `nm * sz < MALLOC_MAX`;
-   - cgif_rgb_fuzzer lib/ReallocP.v (origin/cold/c-asan-realloc-primary c6ef6b691bf): the Section-variable shape
+   - cgif_rgb_fuzzer lib/ReallocP.v: the Section-variable shape
      and the P-suffix naming;
    - cgif_file_fuzzer lib/YC5d.v:56-70 amalloc04_rule: the call-rule shape of [acalloc04_rule], conjunct for
      conjunct, with n = nm * sz and the zero conjunct added. *)
@@ -174,7 +175,7 @@ Variable areal : forall R : Type, itree astate R -> world segs -> config -> (R -
 Variable aleaf : alayout -> astate -> world segs -> bvmap 5 word -> (word -> option byte) -> Model ->
 Z -> sptr * astate -> world segs -> config -> Prop.
 (* The parameters of c-asan's frame-generic Allocate statement (lib/Reusable/YGAlloc.v, this unit's by-path copy
-   of proofs/cgif/cgif_file_fuzzer/lib/AllocG.v at the frozen origin/cold/c-asan-realloc-c5 95e6f1d72b6), in its order:
+   of proofs/cgif/cgif_file_fuzzer/lib/AllocG.v at the frozen), in its order:
    the allocator relation over the instance, the addresses the allocator owns, the premise on state and size, the
    size and live-byte bounds, the extra post on the state, and the allocator's out-of-memory byte.  cgif's
    instantiation is ARX inst := (inst = the image's instance /\ AR), AOX := aowned B, rpre := aregime /\ qmeter,

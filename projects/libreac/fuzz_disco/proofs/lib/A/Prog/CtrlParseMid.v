@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_grant. *)
-(* Modified by Theorem Labs, 2026-10: relocated to libreac/fuzz_disco (from fuzz_grant's lib/A/Prog/CtrlParseMid.v, a working branch 603e40683a4; the same code at other addresses): the walk takes fuzz_disco's context, whose contract names no caller frame for f and o, and carries pz_kept in place of acall_kept. *)
+(* Modified by Theorem Labs, 2026-10: relocated to libreac/fuzz_disco (from fuzz_grant's lib/A/Prog/CtrlParseMid.v, a working branch; the same code at other addresses): the walk takes fuzz_disco's context, whose contract names no caller frame for f and o, and carries pz_kept in place of acall_kept. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, the walk from cut A (0x8741c, the side-stack frame seated) to cut M (0x874e8): the
    frame's header and shadow, then the memset of the out struct. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.

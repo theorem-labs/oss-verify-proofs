@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap's declined-placement gate, clear of the vDSO pages; strncpy_from_user below TASK_SIZE). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -91,10 +92,12 @@ Section Openat.
   Lemma gg_openat_toolong : forall mode Q bs K,
     rdn segs mem (getr regs 11) 4096 = Some bs -> ~ In (Z_to_bv 8 0) bs ->
     GG segs mode Q K (mkCfg (post (errno_ret ENAMETOOLONG)) model) ->
+    (* LPS 08b1429: [strncpy_from_user]'s range test (FileSim.read_cstr_toolong_of_rdn) *)
+    (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z ->
     GG segs mode Q K (mkCfg (mkst regs pc mem (seg_rom segs)) model).
   Proof.
-    intros mode Q bs K Hrd Hnz Hc. cbv beta delta [post] in *.
-    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hrd) as Hp.
+    intros mode Q bs K Hrd Hnz Hc Htask. cbv beta delta [post] in *.
+    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Htask Hrd) as Hp.
     eapply gg_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
     eapply gg_ret_only_copyins_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
     intros eff. rewrite (openat_check_head segs regs pc mem model H17 H10 Hfl), Hp. apply check_copyins_after_ret_only.
@@ -289,15 +292,16 @@ Lemma gg_mmap_anon_nogrant : forall mode Q regs (pc : word) mem model w (len : Z
   getr regs 11 = Z_to_bv 64 len -> (0 < len < 2 ^ 64)%Z ->
   getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = Z_to_bv 64 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) (page_round_up_Z len) = false ->
   (forall a, grant_ok (getr regs 10) model a (page_round_up_Z len) = false) ->
   (forall e, In e mmap_errnos ->
      GG segs mode Q KA (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem (seg_rom segs)) model)) ->
   GG segs mode Q KA (mkCfg (mkst regs pc mem (seg_rom segs)) model).
 Proof.
-  intros [|] Q regs pc mem model w len KA HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hng HA.
-  - apply gg_of_rz. apply (rz_mmap_anon_nogrant segs regs pc mem model w len KA HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hng).
+  intros [|] Q regs pc mem model w len KA HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hdecl Hng HA.
+  - apply gg_of_rz. apply (rz_mmap_anon_nogrant segs regs pc mem model w len KA HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hdecl Hng).
     intros e He. exact (HA e He).
-  - eapply gg_reach; [exact (ex_mmap_anon_enomem segs regs pc mem model w len HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15)
+  - eapply gg_reach; [exact (ex_mmap_anon_enomem segs regs pc mem model w len HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hdecl)
                      | apply HA; apply ENOMEM_in_mmap_errnos].
 Qed.
 
@@ -313,6 +317,7 @@ Lemma gg_mmap_noaccess : forall mode Q regs (pc : word) mem model w (len : Z) KA
   getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
   let n := page_round_up_Z len in
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) n = false ->
   (exists a, grant_ok_na (getr regs 10) model a n = true) ->
   (mode = true -> forall e, In e mmap_errnos ->
      realizes segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem (seg_rom segs)) model) KA) ->
@@ -322,10 +327,10 @@ Lemma gg_mmap_noaccess : forall mode Q regs (pc : word) mem model w (len : Z) KA
                              (noaccess_model a (Z_to_bv 64 n) model))) ->
   GG segs mode Q (t_alt2 KA KB) (mkCfg (mkst regs pc mem (seg_rom segs)) model).
 Proof.
-  intros [|] Q regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Hex HA HB.
-  - apply gg_of_rz. exact (rz_mmap_noaccess segs regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hex (HA eq_refl) HB).
+  intros [|] Q regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Hdecl Hex HA HB.
+  - apply gg_of_rz. exact (rz_mmap_noaccess segs regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hdecl Hex (HA eq_refl) HB).
   - destruct Hex as [a Ha]. eapply gg_reach; [| exact (HB a Ha)].
-    exact (ex_mmap_noaccess segs regs pc mem model w len a HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Ha).
+    exact (ex_mmap_noaccess segs regs pc mem model w len a HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hdecl Ha).
 Qed.
 
 (* [comment removed for export] *)
@@ -337,6 +342,7 @@ Lemma gg_mmap_noaccess_err : forall mode Q regs (pc : word) mem model w (len : Z
   getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
   let n := page_round_up_Z len in
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) n = false ->
   (exists a, grant_ok_na (getr regs 10) model a n = true) ->
   (forall e, In e mmap_errnos ->
      GG segs mode Q KA (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem (seg_rom segs)) model)) ->
@@ -346,8 +352,8 @@ Lemma gg_mmap_noaccess_err : forall mode Q regs (pc : word) mem model w (len : Z
                          (noaccess_model a (Z_to_bv 64 n) model)) KB) ->
   GG segs mode Q (t_alt2 KA KB) (mkCfg (mkst regs pc mem (seg_rom segs)) model).
 Proof.
-  intros [|] Q regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Hex HA HB.
-  - apply gg_of_rz. exact (rz_mmap_noaccess segs regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hex
+  intros [|] Q regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Hdecl Hex HA HB.
+  - apply gg_of_rz. exact (rz_mmap_noaccess segs regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hdecl Hex
                              (fun e He => HA e He) (HB eq_refl)).
   - eapply gg_reach; [| exact (HA ENOMEM ENOMEM_in_mmap_errnos)].
     set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
@@ -357,8 +363,12 @@ Proof.
       rewrite H11, H12, H13, H14, H15. repeat split; try reflexivity.
       intro Hc. apply (f_equal bv_unsigned) in Hc. rewrite u64_lit in Hc by lia.
       change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hc. lia. }
+    assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len).
+    { unfold ms. rewrite ms_gpr_epend1, H11. apply u64_lit. lia. }
+    assert (H0 : ms_gpr ms 0 = getr regs 10) by (unfold ms; rewrite ms_gpr_epend0; reflexivity).
     pose proof (mmap_noaccess_check segs ms (getr regs 17) model (mkEffectU (errno_ret ENOMEM) [] [] [] [] [])
-                  ltac:(rewrite H17; apply u64_lit; lia) Hargs) as Hchk.
+                  ltac:(rewrite H17; apply u64_lit; lia) Hargs
+                  ltac:(rewrite H0, Hu1; exact Hdecl)) as Hchk.
     cbv zeta iota beta in Hchk. rewrite (errno_ret_in_intro _ _ ENOMEM_in_mmap_errnos) in Hchk.
     unfold ms in Hchk. rewrite <- (adv_ret_epend regs pc mem (seg_rom segs) (getr regs 17)).
     eapply reach_ecall_check; [exact Hh | exact Hlazy | exact HF | exact HE | exact Hchk | exact Hh | exact Hlazy].
@@ -409,6 +419,7 @@ Lemma gg_mprotect : forall mode Q regs (pc : word) mem model w (addr : word) (le
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   getr regs 12 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   mprotect_budget_ok model addr n = true ->
@@ -418,10 +429,10 @@ Lemma gg_mprotect : forall mode Q regs (pc : word) mem model w (addr : word) (le
                            (mprotect_model addr n model)) ->
   GG segs mode Q (t_alt2 KA KB) (mkCfg (mkst regs pc mem (seg_rom segs)) model).
 Proof.
-  intros [|] Q regs pc mem model w addr len KA KB HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 n Hna Hma Hbud HA HB.
-  - apply gg_of_rz. exact (rz_mprotect segs regs pc mem model w addr len KA KB HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 Hna Hma Hbud (HA eq_refl) HB).
+  intros [|] Q regs pc mem model w addr len KA KB HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 n Hvd Hna Hma Hbud HA HB.
+  - apply gg_of_rz. exact (rz_mprotect segs regs pc mem model w addr len KA KB HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 Hvd Hna Hma Hbud (HA eq_refl) HB).
   - eapply gg_reach; [| exact HB].
-    exact (ex_mprotect segs regs pc mem model w addr len HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 Hna Hma Hbud).
+    exact (ex_mprotect segs regs pc mem model w addr len HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 Hvd Hna Hma Hbud).
 Qed.
 
 (* [comment removed for export] *)
@@ -434,6 +445,7 @@ Lemma gg_mprotect_blocked : forall mode Q regs (pc : word) mem model w (addr : w
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   getr regs 12 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   mprotect_budget_ok model addr n = false ->
@@ -441,9 +453,9 @@ Lemma gg_mprotect_blocked : forall mode Q regs (pc : word) mem model w (addr : w
      GG segs mode Q KA (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem (seg_rom segs)) model)) ->
   GG segs mode Q KA (mkCfg (mkst regs pc mem (seg_rom segs)) model).
 Proof.
-  intros mode Q regs pc mem model w addr len KA HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 n Hna Hma Hbud HA.
+  intros mode Q regs pc mem model w addr len KA HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 n Hvd Hna Hma Hbud HA.
   destruct mode.
-  - apply gg_of_rz. apply (rz_mprotect_blocked segs regs pc mem model w addr len KA HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 Hna Hma Hbud).
+  - apply gg_of_rz. apply (rz_mprotect_blocked segs regs pc mem model w addr len KA HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 Hvd Hna Hma Hbud).
     intros e He. exact (HA e He).
   - eapply gg_reach; [| exact (HA ENOMEM ENOMEM_in_mprotect_errnos)].
     set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
@@ -451,7 +463,7 @@ Proof.
     pose proof (mprotect_check segs ms (getr regs 17) model (mkEffectU (errno_ret ENOMEM) [] [] [] [] []) addr len Hno
                   ltac:(unfold ms; rewrite ms_gpr_epend0; exact H10) Hal
                   ltac:(unfold ms; rewrite ms_gpr_epend1; exact H11) Hlen Hnw
-                  ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12) Hna Hma) as Hchk.
+                  ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12) Hvd Hna Hma) as Hchk.
     cbv zeta iota beta in Hchk. rewrite (errno_ret_in_intro _ _ ENOMEM_in_mprotect_errnos) in Hchk.
     unfold ms in Hchk. rewrite <- (adv_ret_epend regs pc mem (seg_rom segs) (getr regs 17)).
     eapply reach_ecall_check; [exact Hh | exact Hlazy | exact HF | exact HE | exact Hchk | exact Hh | exact Hlazy].

@@ -1,5 +1,5 @@
-(* Port of omx-clap-core/fuzz_manifest lib/B/Prog/rng_asan.v (a working branch 07c251d9c8d): namespace and the image range changed;
-   relocated from fuzz_pcap (a working branch 0ce4d3317ea) to fuzz_ctrl: namespace only. *)
+(* Port of omx-clap-core/fuzz_manifest lib/B/Prog/rng_asan.v (a working branch): namespace and the image range changed;
+   relocated from fuzz_pcap (a working branch) to fuzz_ctrl: namespace only. *)
 (* Footprint ranges for the ASan runs of this image (form (D), RECIPE.md step 1 (a working note, not in this delivery)).
    IMG_LO / IMG_LEN: the page-rounded LOAD range of the image (fuzz_ctrl.asan-ubsan PT_LOAD segments 0x10000 ..
    0x5fdf30, rounded up to 0x5fe000 = ASAN_GT, the first address above the image).

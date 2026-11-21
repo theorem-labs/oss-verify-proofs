@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102L6ADefs.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): the SYMBOLIC STATE of segment L6x of
    LLVMFuzzerTestOneInput, the exit lane (listing +0x1c4 .. the `ret` at +0x2c4, no call), for the lane proof in
@@ -14,7 +15,7 @@
    release/pau-projects-recipes + the internal lemma index / `proof-index LLVMFuzzerTestOneInput` exit=0, output
    the lane's index output, the internal file idx-llvm-newpin.txt; checker R24CheckLLVMF CONFIRM; NEW walk on the #102 pins).
    This file: definitions of that segment only.
-   PORTED FROM (by path, image-free shape): lib/B/Prog/EntS7DefsB.v of a working branch c3e54cc5ad62
+   PORTED FROM (by path, image-free shape): lib/B/Prog/EntS7DefsB.v of a working branch
    (image B, old pin), with this image's register map and frame.
 
    WHAT THE LANE'S CODE DOES (listing slots 113 .. 177, the lane's scratch the internal file llvmf-A.s):

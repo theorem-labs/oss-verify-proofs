@@ -1,7 +1,7 @@
 (* sup_resp's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, part 0: the snprintf text of "resp %d" and
    the read-only bytes kept across a step with an empty footprint.
 
-   The B twin of the A walk's part 0 (a working branch 3b9b122549f, lib/A/Prog/sup_resp_s0.v): module paths
+   The B twin of the A walk's part 0 (a working branch, lib/A/Prog/sup_resp_s0.v): module paths
    and the format at 0x21d40 (CmdRo.v RO_lit_21d40). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

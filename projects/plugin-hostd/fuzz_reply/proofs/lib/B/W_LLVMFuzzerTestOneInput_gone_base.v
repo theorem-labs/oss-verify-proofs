@@ -1,13 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: KF-COUNT F3: gn_runc, gn_cst, the GN_RI_* / GC1 / GT0 cost bound (A 6151e80) *)
+(* Modified by Theorem Labs, 2026-10-30: KF-COUNT F3: gn_runc, gn_cst, the GN_RI_* / GC1 / GT0 cost bound (A) *)
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B
    (fuzz_reply.asan-ubsan 0x849a0-0x849d0, 0x84a9c-0x84cb4, 0x84da4-0x84dac, 0x84e30-0x84e38; fuzz_reply.c:633-655 and
-   :718-720), the image-B twin of lib/A/W_LLVMFuzzerTestOneInput_gone_base.v (a working branch
-   32b23a20c3e), over the cut invariants of lib/B/W_LLVMFuzzerTestOneInput_cut.v (a working branch
-   9409d4da51f, merged with a working branch 990666444ab).  Every address, register, frame slot and object below is
+   :718-720), the image-B twin of lib/A/W_LLVMFuzzerTestOneInput_gone_base.v (a working branch),
+   over the cut invariants of lib/B/W_LLVMFuzzerTestOneInput_cut.v (a working branch,
+   merged with a working branch).  Every address, register, frame slot and object below is
    read from B's own objdump (of the pinned binary fuzz_reply.asan-ubsan, the pinned image
-   sha256 10ffb5f9202ae2bd...), guided by the old-stack B walk's header (a working branch e29b582ba724,
+   sha256 10ffb5f9202ae2bd...), guided by the old-stack B walk's header (a working branch,
    lib/B/Prog/SlotPass5.v:1-35), never by offset arithmetic from A.
    THE ARM'S BASE: the pieces every phase of the arm shares.  The phases are proved in
    W_LLVMFuzzerTestOneInput_gone_p<n>.v and composed into lf_arm_gone (= _cut's ARM_gone, :754) in
@@ -29,14 +29,15 @@
    - Frame slots the arm writes: F+16, F+24, F+88, F+112 (p5's auipc spill 0x5d8b78, g_nsrc - 424), F+144,
      F+192 .. F+207 (reads[4]), F+208 (at); none is a slot of the cut's aframe_at.
    - UBSan trap edges (all to 0x850fc): 0x849ac `bgeu s7,a2` in p0; 0x84bd0 / 0x84be0 / 0x84be4 / 0x84bec in p5.
-   - The callee texts: relay_reads is the cut's RRDS; snprintf W_sites.v:308 asnprintf_realizes; relay_instance_gone
+   - The callee texts: relay_reads is the cut's RRDS; snprintf W_sites.v:309 asnprintf_realizes; relay_instance_gone
      W_contract.v rig_spec / rg_place; check_no_loss_read and check_shape_done are WALKED INLINE in p4 / p6 (callee
      walked inline: the kit posts cnlr_spec / csd_spec are aleaf_post, which lacks the outside-frame-kept clause, so
      errno's view, which amodel_at's aout_at reads, is not carried; a Theorem Labs lane's ruling 14:1xZ); check_no_loss and
      check_shape_ends are the KIT's cnl_spec (W_contract.v Section w3n) and cshe_spec (Section w3e) at
-     a working branch 990666444ab, cited per slot in GN_CNL / GN_CSHE below.  cnl_spec's last premise (the stack
+     a working branch, cited per slot in GN_CNL / GN_CSHE below.  cnl_spec's last premise (the stack
      readable from sp up to ly_top) comes from the cut's STKR (gn_stkr below); cshe_spec's PF premise is taken by its
      fake-frame disjunct at 0x84c24. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -175,7 +176,7 @@ end
 end.
 
 (* check_no_loss (CNL) and check_shape_ends (CSHE): the kit's texts, W_contract.v Section w3n cnl_spec and Section w3e
-   cshe_spec (a working branch 990666444ab); no local copy (GN_CNL / GN_CSHE below cite them per slot). *)
+   cshe_spec (a working branch); no local copy (GN_CNL / GN_CSHE below cite them per slot). *)
 
 Section g.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
@@ -250,8 +251,8 @@ Proof.
 Qed.
 
 (* A callee's afn_pre at sp = F (the cut's frame), from the cut's journal and the saved registers the prologue
-   stored: B's latch twin lt_afn_pre_at (a working branch ee519e5e2f5,
-   lib/B/W_LLVMFuzzerTestOneInput_latch.v:625-698), with the saved-register clause of aframe_at in place of the whole
+   stored: B's latch twin lt_afn_pre_at (a working branch,
+   lib/B/W_LLVMFuzzerTestOneInput_latch.v:626-699), with the saved-register clause of aframe_at in place of the whole
    frame, so that every call of the arm (relay_reads, relay_instance_gone, check_no_loss, check_shape_ends) names one
    lemma. *)
 Lemma gn_afn_pre : forall cx ly3 S3 fpos k (W : world segs) mem md regs STK1,
@@ -462,8 +463,8 @@ Definition gn_rig_ok (cx : lfcx) (m : lmod) (hs : list (hsrc * nat)) (qs : list 
   length qs = length (lm_es m) /\
   Forall gn_entry_model (map fst qs) /\ NoDup (map re_fd (map fst qs)).
 (* check_no_loss's functional half, as cnl_post leaves the source; the last two conjuncts are cnl_post's last two (the
-   held list's capacity never shrinks, and its EXACT capacity law: W_contract.v:2093-2097, the twin of A's
-   W_contract.v:2082-2086) *)
+   held list's capacity never shrinks, and its EXACT capacity law: W_contract.v:2094-2098, the twin of A's
+   W_contract.v:2083-2087) *)
 Definition gn_cnl_ok (h h' : hsrc) (E' H' : hlist) : Prop :=
   h' = set_exp_held h E' H' /\
   hl_recs E' = [] /\ hl_v E' = hl_v (hs_expected h) /\ hl_cap E' = hl_cap (hs_expected h) /\
@@ -570,7 +571,7 @@ Definition GN_CELLS_ERRNO : Prop := forall a, inG gn_cells a -> ~ (as_errno B <=
 Definition GN_ROM_PIN : Prop :=
   forall a, in_rom segs a -> Exists (in_zr a) (as_owned_static B) -> rom_pinned segs B a.
 (* A's GN_SEP_REQ (ablocks_sep's clause over the allocator's range of a block): on B the cut's ablocks_sep already
-   states it over req_size (a987841a18c), so it is PROVED here, not taken *)
+   states it over req_size, so it is PROVED here, not taken *)
 Definition GN_SEP_REQ : Prop :=
   forall cx m ly S, ablocks_sep B fr_FP cx m ly S ->
   forall b, In b (model_blks m) ->
@@ -661,10 +662,10 @@ Definition GN_RI_end : Prop :=
      Permutation (ablocks B lyx Sx) (input_blks cx ++ model_blks mc ++ rest)) ->
   A = Z.of_nat (length (lm_O mc)) /\ RINV cx (t + 1) mc /\ LS cx (t + 1) mc lyx Sx.
 (* relay_instance_gone's budget, read off LS: rig_spec's three room premises (the room round's C3 peak form; the sum
-   form and the g_capout premises are gone from rig_spec).  The text is A's (3d17f490d56, f5d40188e29), which is
-   s5-r1d's adopted TX_GN_LS_rig token for token (A: commit 1318828167d, lib/A/ReplyLS3Peak.v:171, with LS for LSx), so
+   form and the g_capout premises are gone from rig_spec).  The text is A, which is
+   s5-r1d's adopted TX_GN_LS_rig token for token (A: lib/A/ReplyLS3Peak.v:171, with LS for LSx), so
    top_x plugs it by exact:
-   - gn_op is this file's (:379), whose body A's ReplyLS3cTopxGoneF.gn_op copies (A: ReplyLS3cTopxGoneF.v:65);
+   - gn_op is this file's (:379), whose body A's ReplyLS3cTopxGoneF.gn_op copies (A: ReplyLS3cTopxGoneF.v:66);
    - the g_capout clause is A's ReplyLS3eCap.ent_capout_ok0 (A: ReplyLS3eCap.v:134) at the entry's world and memory,
      written out: that file Requires the AR arms, which this one must not.  It is the cut's CAPOUT clause
      (_cut.v:301-302), the last conjunct of the entry's pre;
@@ -687,7 +688,7 @@ Definition GN_LS_rig : Prop := forall cx t m ly S hs,
   lm_cap m < MMAX /\
   blocks_bytes S + tr_peak tr + 4 * Z.max (lm_cap m) (tr_max tr) <= LIVE_MAX.
 (* ---- the count rules (the room round).  Each callee call asks `cnt_ok_pk RP pk (ablocks B ly S)` at its own state;
-   the LS state's count bound is LS_cnt's, at the arm's peak gn_pk (A: a Theorem Labs lane's pk_gone, commit ba8e99b5bd2,
+   the LS state's count bound is LS_cnt's, at the arm's peak gn_pk (A: a Theorem Labs lane's pk_gone,
    lib/A/ReplyLScnt.v:476, at the instance).  The walk's block relation (gn_tie) makes a call's live blocks the input,
    the model's blocks at the call and the LS state's rest, so what a call needs beyond LS_cnt is a fact of the MODEL
    alone: the model's count at the call plus the callee's premise peak stays under the LS state's model count plus
@@ -697,7 +698,7 @@ Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
    (the room kit's W_contract_x.v rig_pk at its rig_tr) and check_no_loss's (cnl_pk of the slot's two lists).  They are
    PARAMETERS here, not W_contract_x's names: this file is AR-side and must not Require the _x kit (that kit's global
    zify flag reaches every file that Requires it, and breaks lia in the AR phases).  The _x arm passes W_contract_x's
-   names; check_shape_ends' peak is the constant 0 (A: cshe_pk, W_contract_x.v:348), written out *)
+   names; check_shape_ends' peak is the constant 0 (A: cshe_pk, W_contract_x.v:349), written out *)
 Variable gn_rig_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Variable gn_cnl_pk : hsrc -> (Z -> bool) -> nat.
 (* relay_instance_gone is called at the LS state itself (GRG holds LS at the call's state), so its premise peak

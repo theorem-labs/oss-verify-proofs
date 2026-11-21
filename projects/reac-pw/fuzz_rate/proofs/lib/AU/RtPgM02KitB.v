@@ -1,25 +1,25 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v, RPgM02KeyI.v and RPgM02KeyV.v
-   at 595d8c5dd1b5 (the value language of the value entry's address and of a `lw`, the expect_value cases, the
+   (the value language of the value entry's address and of a `lw`, the expect_value cases, the
    shadow entry over the value entry, the value dispatch, the Int arm and the value tail),
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v at 7e8cf15c304a (the Float arm: the size test, the `flw` and
-   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v at 22306b8175e6 (the pairs of the scan across a
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v (the Float arm: the size test, the `flw` and
+   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v (the pairs of the scan across a
    key) for reac-pw/fuzz_rate image A: role's pcs become rate's, the shadow base is rate's s2 (atom 18), role's Role
    answers become Rate.expect_value / Rate.rate_of_pairs, role's value tail (a bound test and check_role) becomes
    rate's check_rate on the hz cell, the out cell is R+0x158, the `flw` is stepped by YA0n.SRr_step, and the key
    compare (the spills, the strcmp wrapper, the mismatch exit to O) is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v at 1d255703e887 (its two check
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v (its two check
    walks ch_mal / ch_abs and the cut lemma ch_cut_T, with the call-in-the-middle pattern they take from
    lib/A/RPgCheckStr.v) for reac-pw/fuzz_rate image A: role's pcs become rate's (ABS 0x82b7c, MAL 0x82c9c, the
    join A 0x82ca8), the one-byte role cell becomes rate's four-byte hz cell holding 0x5a5a5a5a, the register the
    cell's address lives in moves from role's s6 to rate's s5 (atom 21), the two real-frame cells the absent arm
    reloads are rate's R+0x78 (F) and R+0x58 (the flags byte) instead of role's R+0x28 and R+0x80, and the join's
    cut is rs_cut_A, which carries the flags byte where role's rs_cut_T carried the first block. *)
-(* Modified by Theorem Labs, 2026-10: the shared parts of proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v at
-   48d3cf0d8e40 (the model facts, the value language of a `lw`, the value entry's facts, the interfaces of the
+(* Modified by Theorem Labs, 2026-10: the shared parts of proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v
+    (the model facts, the value language of a `lw`, the value entry's facts, the interfaces of the
    pieces and their chain, the transport of a cut across the half's runs and calls) and of
-   proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Chk.v at 5e00caea0758 (ch_L, ch_K, ch_far, ch_garr8_kept, ch_cut_A) for
+   proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Chk.v (ch_L, ch_K, ch_far, ch_garr8_kept, ch_cut_A) for
    image B (fuzz_rate.asan-ubsan): the cuts are lib/AU/RtPgSegB.v's (rs_ -> rsb_); rsb_L_chk's registers are s0, s1,
    s3, s4, s5 and its cells R+0x178, R+0x10, R+0x50 and the six header cells; the join's cut carries s10 = the
    answer's code, s6 = the mask and s7 = the flags byte (image A: s8, s6 = F, s10 = the flags byte); the hz cell is
@@ -27,6 +27,7 @@
    pod_nearest's out cell R+0x198; the shadow base is s4 (atom 20); the value entry's interfaces carry the registers
    image B's readers use (a7 = &ent[0] + 4, s8 = 104 v, a4 = pp) and the cells R+0x170 (the code) and R+0x138
    (0x4018). The mulhu form of &ent[v] is image A's only and is dropped. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate, image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded code bytes are the pin's): the

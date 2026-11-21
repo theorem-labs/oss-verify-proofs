@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (FpsU's tail certificates okA_0, okA_1, okA_2, okA_4 and okA_3 checked at every residue 0 to 3 of the printed string's address mod 4, not only at 0: in the launch's image at LPS 727298f3 argv[0] has any alignment). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -47,7 +48,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma okA_0 : ltac2:(tb__ "0|0|
-S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S5S0A1A3A8Ln;S8S4S0S13S9U0U10A2A4A3S6A3").
+S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S3S0Z1S3S0Z2S3S0Z3S5S0A1A3A3A3A3A8Ln;S8S4S0S13S9U0U10A2A4A3S6A3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 End FpsU_a0.
 
@@ -68,8 +69,8 @@ Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Code OSSVerify.Proofs.ti
 Import ListNotations.
 Open Scope Z_scope.
 
-Lemma okA_1 : ltac2:(tb__ "0|1|
-S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S5S0A1A3A8Ln;S8S4S0S13S9U10M0G0A2A4A3S6A3").
+Lemma okA_1 : ltac2:(tb__ "0|0|
+S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S3S0Z1S3S0Z2S3S0Z3S5S0A1A3A3A3A3A8Ln;S8S4S0S13S9U10U10A2A4A3S6A3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 End FpsU_a1.
 
@@ -91,7 +92,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma okA_2 : ltac2:(tb__ "0|0|
-S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S5S0A1A3A8Ln;S8S4S0S13S9U20U10A2A4A3S6A3").
+S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S3S0Z1S3S0Z2S3S0Z3S5S0A1A3A3A3A3A8Ln;S8S4S0S13S9U20U10A2A4A3S6A3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 End FpsU_a2.
 
@@ -113,7 +114,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma okA_4 : ltac2:(tb__ "0|0|
-S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S5S0A1A3A8Ln;S8S4S0S13S9U40U1A2A4A3S6A3").
+S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S3S0Z1S3S0Z2S3S0Z3S5S0A1A3A3A3A3A8Ln;S8S4S0S13S9U40U1A2A4A3S6A3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 End FpsU_a4.
 
@@ -135,7 +136,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma okA_3 : ltac2:(tb__ "0|0|
-S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S5S0A1A3A8Ln;S8S4S0S13S9U30U10A2A4A3S6A3").
+S7S2S11S0S0SfSaR1S1A2S0SbR2R1S1A3Lr;ScSdR1S12ZeR1A2S0SeZ7R2R1S10S1A5Lr;S3S0Z0S3S0Z1S3S0Z2S3S0Z3S5S0A1A3A3A3A3A8Ln;S8S4S0S13S9U30U10A2A4A3S6A3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 End FpsU_a3.
 

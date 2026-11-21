@@ -3,14 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image range set to libreac/fuzz_boxreg's own (Reusable/YImgTop.v IMG_LO, IMG_TOP). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YCbq.v, with its module paths and module names changed; 76 of its 127 lines of code are new or changed and 2911 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, twin 80e82127e8ca): the journal step of a call of the
    memchr wrapper (0x43ac8, SIGMA SS___interceptor_trampoline_memchr), for m_file's two sites 0x864fc (']', HDRA) and
-   0x86624 ('=', KEYA). The image-B port of the image-A m_file-family lane's lib/A/Prog/m_file_memchr.v (commit
-   88d61b26fa90; A's names, statements and proofs, its two memchr sites 0x862d4 / 0x86344 at image A): the Require
+   0x86624 ('=', KEYA). The image-B port of the image-A m_file-family lane's lib/A/Prog/m_file_memchr.v (
+   A's names, statements and proofs, its two memchr sites 0x862d4 / 0x86344 at image A): the Require
    lines name image B's kit copies (lib.B YA0n YG0f YG0n YG0d YCbq), image B's lib/B/Rt/MemchrDef.v and
    ConstsViewDef.v and lib/B/Prog/SegPgBase.v, and SegInstA becomes SegInstB; nothing else differs. Shared file of
    the image-B m_file-family owner's G2B (owner's decision 18:3xZ: FRONT / HDRA / KEYA use it), written by one of its walk lanes.
-   The wrapper's contract (interface row 20, the image-B m_file segment table's DECIDED row: the image-A owner 17:14Z, the image-A wrapper lane's interface 25b16290849f)
+   The wrapper's contract (interface row 20, the image-B m_file segment table's DECIDED row: the image-A owner 17:14Z, the image-A wrapper lane's interface)
    is lib/B/Rt/MemchrDef.v's amemchr_realizesM at musl memchr's constant window SegInstB.memchr_loA .. memchr_hiA
    (0x10350 .. 0x10370: musl memchr at twin 0x9aaa4 reads lo = 0x10350 and lo + 24 = 0x10368, SegInstB.v
    memchr_code / memchr_win_img); amemchr_realizes (rom_view) and amemchr_realizesM (consts_view lo hi) are the one

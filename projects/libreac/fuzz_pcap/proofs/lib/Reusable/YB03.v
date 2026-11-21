@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance, MEASURED: this is pass 1's own asan-ubsan join state (JSDUMP -> hsform.py js), unchanged -- pass1.md (sha256 ec4529da9277; internal record), delivered as AB03.v (sha256 6ff2e3dc1fbf; internal record).  Nothing is filled; codeptr c0ce606ed1fa (startup-set 2026-10-29): 0 findings / 0 stale on every file, with 20 declarations carrying their measured reasons in declarations-20.sh (sha256 880286aef98b; internal record); AB1m / YB1m UNMEASURED (no address literal; BFUEL is %nat); logs final20.txt (sha256 b2b70d12a063; internal record) / final20.no-b1m.txt (sha256 be056cbfc3b7; internal record) (a Theorem Labs lane); an independent run by a second lane agrees (asan-ubsan.declared.out (sha256 9949145995f3; internal record)).  The earlier `codeptr.py: 0 FINDINGS` here was made with codeptr 32adc9be054c, which reported 0 on a file it never measured. *)
-(* gated: a Theorem Labs lane PASS A+B at c061542723f / 731386609e0 *)
-(* Before commit 5098883da0b3 (2026-10-29) brought YF0l and YB13 into this tree, the asan-ubsan files built ONLY in a union that also included a working branch 27d40cfe97f76cd158308a2aef684e7e509db360: lib/Reusable/YF0m.v Requires YF0l and lib/Reusable/YD2i.v Requires YB13, both of them core files of that branch. *)
+(* gated: a Theorem Labs lane PASS A+B *)
+(* Before (2026-10-29) brought YF0l and YB13 into this tree, the asan-ubsan files built ONLY in a union that also included a working branch: lib/Reusable/YF0m.v Requires YF0l and lib/Reusable/YD2i.v Requires YB13, both of them core files of that branch. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool.

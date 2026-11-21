@@ -1,10 +1,10 @@
 (* Footprint ranges for the ASan runs of this image (form (D), RECIPE.md step 1 (a working note, not in this delivery)).
    IMG_LO / IMG_LEN: the page-rounded LOAD range of the image (fuzz_ctrl.asan PT_LOAD segments 0x10000 .. 0x5fd0f0,
-   rounded up to 0x5fe000). Relocated from fuzz_pcap (a working branch 0ce4d3317ea): namespace only.
+   rounded up to 0x5fe000). Relocated from fuzz_pcap (a working branch): namespace only.
    IMG_LO and IMG_HI are ImgBounds.v's (Require Export below); IMG_LEN is the notation IMG_HI - IMG_LO.
    [sh_lo p, sh_lo p + sh_len p n): the shadow bytes of the n bytes at p, widened to whole aligned 8-byte shadow
    words: from the word that holds shadow_addr p to the end of the word that holds shadow_addr (p + n - 1); empty
-   when n = 0. The runtime's range check loads whole aligned 8-byte shadow words (omx-clap-core/fuzz_manifest lib/A/Prog/asan_memset.v qc_word; ported from a working branch 07c251d9c8d, namespace and IMG_LEN only),
+   when n = 0. The runtime's range check loads whole aligned 8-byte shadow words (omx-clap-core/fuzz_manifest lib/A/Prog/asan_memset.v qc_word; ported from a working branch, namespace and IMG_LEN only),
    so a callee contract needs the widened range. An aligned 8-byte word lies in one 4096-byte page, so the widened
    range touches the same pages as the exact one. It is correct for an unaligned range too. *)
 From Stdlib Require Import ZArith Lia.

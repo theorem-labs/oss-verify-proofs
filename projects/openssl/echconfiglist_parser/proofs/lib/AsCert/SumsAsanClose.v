@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: Section AsanNodes is generic in the Leaf class of the srealizes walks its node statements state. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec S
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AsanPopFree AsanPlanSoundSums.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsCert Require Import SumsAsanSpecs AsanIStrncpy AsanPopFreeAsan AsPlanImages.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -44,6 +46,7 @@ Proof. exact asan_popfree_spec. Qed.
 (* [comment removed for export] *)
 
 Section AsanNodes.
+Context {LF : Leaf}.
 Variable nx0 : nat.
 Variable LIMIT : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
@@ -54,6 +57,8 @@ Hypothesis E_SP0 : AP.expr_vars_lt nx0 AP.e_sp0_early = true.                   
 Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
+(* LPS c0dd863a: [APS.cs_ok_agree]'s transport of [co_ehdr] *)
+Hypothesis EHDR_lt : AP.V_EHDR_below nx0.
 Variable FS0 : Fs.Fs.
 
 #[local] Notation XSTMT := (APS.x_stmt ASEGS ASAN_H nx0 LIMIT SINV argH FS0).

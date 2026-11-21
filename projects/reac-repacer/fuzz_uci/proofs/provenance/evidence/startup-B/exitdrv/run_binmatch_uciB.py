@@ -6,7 +6,7 @@ startdecode/tools/run_binmatch_decode.py: only binmatch's module globals are reb
   NEW (pinned)  fuzz_uci.asan-ubsan ($UCIB_UB)
                 sha256 a1b86e424adde6f65d345459822690a6c21e9e606446b91b4ad25e9f3ef6e7fc
   NEW (twin)    result/unstripped/fuzz_uci/fuzz_uci.asan-ubsan sha256 8d07ffcf5948... (names only)
-  OTHER         cgif donor clone (25e3d17bdb50) projects/cgif/bin/cgif_file_fuzzer/cgif_file_fuzzer.asan-ubsan
+  OTHER         cgif donor clone projects/cgif/bin/cgif_file_fuzzer/cgif_file_fuzzer.asan-ubsan
                 sha256 1c29845fe6058de6e1dbf3f6ec6abd566ea612d76b65ea5435d7ff77c63e08ef
 TARGET / TARGET_FILES only label rows (kind); they do not change a match (a9's labels, unchanged).
 Usage: run_binmatch_uciB.py --other cgif --builds asan-ubsan      (output: $UCIB_EXITWORK/binmatch/)

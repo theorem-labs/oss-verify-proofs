@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the ser_specA_al proof names it and passes it to ser_appendA). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -74,7 +75,7 @@ Hypothesis SNP_LU : isnprintf_lu_stmt PFRT PFLO.
 
 Lemma ser_intA_16 : ser_specA_al HIx 16 ASER_INT Sint.
 Proof.
-unfold ser_specA_al, ser_specA. intros until errv. intros D32 HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold ser_specA_al, ser_specA. intros until errv. intros D32 HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (cty & v & junk & EREST & Hcty & NODE). unfold jhdr_cells in NODE. cbn [app] in NODE.
 subst a0 a1 a2 a3 tp REST.
 cbn [app jtx] in JTX. rewrite Z.eqb_refl in JTX. injection JTX as <- _.
@@ -115,6 +116,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - D32; Z.div_mod_to_equations; lia.
 1: lia.
@@ -287,7 +289,7 @@ assert (SRC4 : bytes_at asegs m4 (Fr + 32) o).
 { replace (o ++ Z_to_bv 8 0 :: slack) with (o ++ (Z_to_bv 8 0 :: slack)) in STR4 by reflexivity. apply bytes_at_app in STR4. exact (proj1 STR4). }
 destruct (sbuf_shadow_word m4 sh FSHa) as [_ FSHb4].
 evt_done5.
-eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap 20 LO HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := o) (e := 0);
+eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap 20 LO HBT HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := o) (e := 0);
 [ exact INV4 | exact SRC4 | reflexivity | fold len; lia | lia
 | right; left; exists Fr, 1; split; [left; reflexivity | rewrite fr_size_1; fold len; lia]
 | intros Hk; apply unpoisoned_sbuf; [exact HFal | lia | unfold A_SB; fold sh; exact FSHb4 | fold len; lia]

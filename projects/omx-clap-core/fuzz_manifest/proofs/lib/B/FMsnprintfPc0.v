@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfPc0.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfPc0.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* musl printf_core (fm.asan 0x8f278) for fm's seven snprintf formats: the imports the walks share. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Export YZ00.
 From Stdlib Require Export ZArith NArith List Lia Bool.

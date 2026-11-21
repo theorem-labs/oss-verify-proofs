@@ -1,0 +1,118 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+URL=https://gitlab.com/gnutls/libtasn1.git
+COMMIT=2b2065b2383aebe138c7d0f7b5646369e5f56ec3
+
+
+
+
+BUILD_IMAGE=builder
+
+
+
+
+
+
+
+
+. /work/tools/ossfuzz/recipes.sh
+
+build_lib() {
+  oft_build_autotools
+  oft_build_harness "fuzz/asn1_get_length_der_fuzzer.c"
+  oft_seal_getenv
+  oft_seal_mkstemp
+  oft_seal_getpid
+}
+LIB_ARCHIVE="lib/liboft.a"
+LIB_CFLAGS=""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+build_lib() {
+  local stage saved_srcdir e version=4.21.0.10-2b20
+  case "${COMMIT:?}" in
+    2b2065b2*) ;;
+    *) echo "oft: the .tarball-version constant $version is for 2b2065b2, but COMMIT=$COMMIT; re-derive it (git describe --abbrev=4 --match='v*', then git-version-gen's rendering)" >&2; return 1 ;;
+  esac
+  [ ! -e "${SRCDIR:?}/.tarball-version" ] \
+    || { echo "oft: $SRCDIR/.tarball-version exists upstream now; this block would silently override it" >&2; return 1; }
+  grep -qF 'git-version-gen .tarball-version' "$SRCDIR/configure.ac" \
+    || { echo "oft: configure.ac no longer derives the version through git-version-gen .tarball-version; re-read the mechanism" >&2; return 1; }
+  stage=$(mktemp -d)
+  for e in "$SRCDIR"/* "$SRCDIR"/.[!.]* "$SRCDIR"/..?*; do
+    [ -e "$e" ] || [ -L "$e" ] || continue
+    case "${e##*/}" in .git) continue ;; esac
+    cp -a "$e" "$stage/"
+  done
+  [ ! -e "$stage/.git" ] || { echo "oft: $stage/.git exists; the stage did not exclude it" >&2; return 1; }
+  printf '%s\n' "$version" > "$stage/.tarball-version"
+  [ "$(cat "$stage/.tarball-version")" = "$version" ] \
+    || { echo "oft: $stage/.tarball-version was not written" >&2; return 1; }
+  saved_srcdir="$SRCDIR"
+  SRCDIR="$stage"
+  oft_build_autotools
+  SRCDIR="$saved_srcdir"
+  grep -qxF "# define ASN1_VERSION \"$version\"" "$BUILDDIR/src/lib/includes/libtasn1.h" \
+    || { echo "oft: lib/includes/libtasn1.h does not carry the pinned version:" >&2
+         grep -n 'ASN1_VERSION "' "$BUILDDIR/src/lib/includes/libtasn1.h" >&2 || echo "oft: (no lib/includes/libtasn1.h at all)" >&2
+         return 1; }
+  oft_build_harness "fuzz/asn1_get_length_der_fuzzer.c"
+  oft_seal_getenv
+  oft_seal_mkstemp
+  oft_seal_getpid
+}
+

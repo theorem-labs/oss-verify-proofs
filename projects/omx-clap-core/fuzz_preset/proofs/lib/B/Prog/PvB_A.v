@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the generic part of proofs/cgif/cgif_file_fuzzer/lib/A/ACjr.v (equal, after the mapping, to the generic part of lib/YC4c.v) for libreac/fuzz_disco's program walk, over fuzz_disco's listing; mres_range states fuzz_disco.asan's image range as YImgTop's IMG_LO and IMG_TOP in place of cgif's literals; cgif's PC_INIT, lzw_MR, lzw_tabs and the kept_ctx/kept_ctx_m tactics of cgif's 72-byte LZW context block are left out; module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Prog/DiscoACjr.v, with its module paths changed; 136 of its 271 lines of code are new or changed and 109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/PRW_StepKit.v, with its module paths and module names changed; 1086 of its 1137 lines of code are new or changed and 220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset image B (asan-ubsan), parse_value 0x8637c: segment A, the ENTRY, B 0x8637c .. 0x86484,
    over the ONE image-B program listing (lib/B/Listing_prog.v) with the PA-listing engine on YCbqG's ajournal_x.
    From the entry state (pv_pre) to the cut C1 (PvB_Defs.v pv_at_C1, back from `jal skip_ws`).
@@ -120,7 +121,7 @@ Ltac pva_keep P rlit z := exact (pva_getr_lit _ _ rlit z eq_refl (P z ltac:(unfo
    YM05.alloc_ceiling`): a listing slot's pc is below the run's allocation ceiling. The slot's word is fetched from an
    image segment (pa_cert, pa_tbl_ok), so the pc is in_img, so below kLowMemEnd (pa_segs_low), which is below
    CEIL_MIN <= YM05.alloc_ceiling (YM05.alloc_ceiling_value). Statement and proof are PvB_NC.v pnc_slot_lt_ceil's
-   (a copy of PRW_StepKit.pa_slot_lt_ceil, lib/A/Prog/PRW_StepKit.v:235;
+   (a copy of PRW_StepKit.pa_slot_lt_ceil, lib/A/Prog/PRW_StepKit.v:236;
    neither file is in this file's Require closure). ---- *)
 Section pc. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {L : ptable asym} {PL : PAListing L} {PI : PAImg L}.

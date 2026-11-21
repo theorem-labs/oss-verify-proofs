@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL hint of the mmap call, for the place_declined_b premise). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
 
@@ -67,6 +68,8 @@ Proof using FDO MST Hn Hcr HA GN.
   - intros P. split; [reflexivity|]. split; [reflexivity|]. split; [rewrite rt_maps_sg; apply Permutation_refl|].
     rewrite rt_eager_sg. destruct HN as [X|X]; rewrite X in R2; lia.
   - intros ms HP. pose proof HP as (m1 & _ & _ & _ & (t0' & t1' & t2' & a6' & t3' & t4' & t5' & t6' & m' & -> & _)).
+    split; [reflexivity|].
+    (* 727298f3 (#146): a0, the mmap hint, is NULL on this call. *)
     split; [reflexivity|].
     split; [transitivity (Z_to_bv 64 (roundup4k (sa_msz (needed2 n)))); [reflexivity | rewrite E2; reflexivity]|].
     split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].

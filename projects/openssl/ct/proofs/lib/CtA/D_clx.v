@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-level stack floor STACK_WOK, the zero stack the entry state holds below sp0). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -370,7 +371,7 @@ Ltac exit_E :=
       first [ match goal with HA : ART RT S _, AF : art_facts RT |- _ => exact (af_credit_nonneg RT AF S _ HA) end
             | unfold CREDIT_DRV, FUZZ_COST in *; lia ]
   | |- _ + RT_STACK + 0x1000 <= bv_unsigned (Z_to_bv 64 _) =>
-      rewrite unsigned_lit by (unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia); unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia
+      rewrite unsigned_lit by (unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK in *; lia); unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK in *; lia
   | |- ?LL ?mm =>      (* [comment removed for export] *)
       match goal with H : CLX _ _ _ LL _ mm |- _ => exact (proj1 (proj2 (proj2 (proj2 H)))) end
   end.

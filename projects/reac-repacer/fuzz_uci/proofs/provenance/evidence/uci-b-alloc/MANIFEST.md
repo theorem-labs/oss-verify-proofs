@@ -5,8 +5,8 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | path | role | sha256 |
 |---|---|---|
 | `ACCEPTANCES.tsv` | every kit-reported row and target with its named measurement and settled verdict | `9f9fd5ac1d9f405d1978165eb1de9b25dd041df3bc413e2ff675ba74c1c31574` |
-| `INTERCEPTORS.md` | interceptor / __asan_* inventory of the uci, egress and wire B images | `9ff29eea6e0814d775bae00fd3cea1cfd6d39275e01f289754d1af47217bd4c2` |
-| `RECORD.md` | the record: theorems, build, Print Assumptions, bytecmp method, results, controls, limits | `b1f71106ff5aebae375dc56353f27740d96fbb96f741324e5ce346c51ed8931c` |
+| `INTERCEPTORS.md` | interceptor / __asan_* inventory of the uci, egress and wire B images | `5bfcff6ec3bcdd7f742c77915cbf86bc92db9ab8fc4e260a979cdc69debda51f` |
+| `RECORD.md` | the record: theorems, build, Print Assumptions, bytecmp method, results, controls, limits | `ac1e449de4d06891c63f76f5bbc33be952df13ef4c7a6a32e742003991915a00` |
 | `REVIEW.md` | the fresh reviewer's audit of the acceptances | `d989138af3e779dec9070e1a6765640018d7f2dd10fe743cb7ac921c5623ee04` |
 | `closure-uci-grant.out` | by-name closure comparison | `04591f837c5fcb09e6b021b2b1f5a3d820675d7770c5358f1b1572ba3243f9ec` |
 | `closure-uci-identity.out` | by-name closure comparison | `2becfd5a75ab2c840323a7b74c6bad35ec1233e596a552d4939e4d23303165c5` |
@@ -22,7 +22,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `ctl-settle-debruijn-planted.tsv` | control run (identity-B known-equal or planted change) | `447feb98a65e9f5a35537d2904a355e9a0a4acad33262dccb49e0d6f5a889417` |
 | `ctl-settle-debruijn-untouched.tsv` | control run (identity-B known-equal or planted change) | `d6e982c42a6e135cc5a158495bb030bfe1c77951f724c34be7e2eb676c6fa6ce` |
 | `dupcheck.tsv` | names with more than one symbol-table entry, checked by address | `4c5f838ebeb006f85cb41bcf32aaa8acd1954cb99d70f2868828665b0b30a33e` |
-| `earlier/va88c2822a0f2/RECORD.md` | earlier run (previous tool version a88c2822a0f2): the record of its version directory | `63d45239b82c07c4604b7c1cb46836cdcaccc454c510e94523ee3b3b442baad2` |
+| `earlier/va88c2822a0f2/RECORD.md` | earlier run (previous tool version a88c2822a0f2): the record of its version directory | `4cba86bb5eb6eec91ec48f15e758669d4160839a72e25d1d1b373d42ac6ba4bd` |
 | `earlier/va88c2822a0f2/cietable.out` | earlier run (previous tool version a88c2822a0f2): parseCIE jump table read entry by entry | `06262d8912cfaecbd1a5a321c15dca29f10b028e56d240aef430ac4982dce871` |
 | `earlier/va88c2822a0f2/closure-uci-grant.out` | earlier run (previous tool version a88c2822a0f2): by-name closure comparison | `21eae65f8d05ca3f633af1aa66adb4e259c3ea7a7c5f5b9384375b2e9f1de6e5` |
 | `earlier/va88c2822a0f2/closure-uci-identity.out` | earlier run (previous tool version a88c2822a0f2): by-name closure comparison | `090c3d3644aee032c24151fdbb5ed6dc15e0be842dde862e71bdfad1b7f26de3` |
@@ -68,7 +68,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `earlier/va88c2822a0f2/roots.tsv` | earlier run (previous tool version a88c2822a0f2): root-pair bytecmp verdicts | `13bcb030391c3b9b8a78d9df57b0af2317074568a62fa0bf4a3f22724ffe8862` |
 | `earlier/va88c2822a0f2/run.sh` | earlier run (previous tool version a88c2822a0f2): reruns the measurements of its directory | `e361eafd58ba2547ae464393541a9a0883441bf1f7648f320e49c56887614508` |
 | `earlier/va88c2822a0f2/tools.sha256` | earlier run (previous tool version a88c2822a0f2): sha256 of every script run | `4ac8a20973d60b137790c4690d393d174f595bfc93a05804d92333f4fbd2fd47` |
-| `earlier/va88c2822a0f2/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `5d14d3cb6df755c0e4640d3b97e9a9f1e5a6c1a2fe86e845b9b6cbc6ba36d7a1` |
+| `earlier/va88c2822a0f2/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `fad3188900e3c8bbcd2dab7213ee6c46c05799dc3780f447434e5cd5b000676d` |
 | `earlier/va88c2822a0f2/tools/bytecmp-1480ca2faea0.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` |
 | `earlier/va88c2822a0f2/tools/cietable.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `c82414f4b6d78d45d1fc214f8634985143635cdc03e512a7b4f7bee102eaa845` |
 | `earlier/va88c2822a0f2/tools/closure.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` |
@@ -121,7 +121,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `earlier/va88c2822a0f2/v7daa0e2a03d9/pairtable-tmalloc-grant.out` | earlier run (previous tool version a88c2822a0f2): per-function table of a paircl pairing | `89ff11c850e742b737672f8c890f704f538133f285f3d0c52b288438650bc5f6` |
 | `earlier/va88c2822a0f2/v7daa0e2a03d9/roots.tsv` | earlier run (previous tool version a88c2822a0f2): root-pair bytecmp verdicts | `13bcb030391c3b9b8a78d9df57b0af2317074568a62fa0bf4a3f22724ffe8862` |
 | `earlier/va88c2822a0f2/v7daa0e2a03d9/tools.sha256` | earlier run (previous tool version a88c2822a0f2): sha256 of every script run | `f379a22eb9c68829430af40db0d450a62ab2407517171f534da3a054b4d818dc` |
-| `earlier/va88c2822a0f2/v7daa0e2a03d9/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `73e44a87c4ab83b2b80cab652fa597a592cb762bb671176a219412c5ab91b08d` |
+| `earlier/va88c2822a0f2/v7daa0e2a03d9/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `d1590114258e7837b545a781158ee03a2242f508a4fa2d6f8bc30b6661f50ff3` |
 | `earlier/va88c2822a0f2/v7daa0e2a03d9/tools/bytecmp-7daa0e2a03d9.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `d8c4befbf6953ed5c4870ceb64e716095cc5b223d9b02f04b0f8c178ed702820` |
 | `earlier/va88c2822a0f2/v7daa0e2a03d9/tools/cietable.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `c82414f4b6d78d45d1fc214f8634985143635cdc03e512a7b4f7bee102eaa845` |
 | `earlier/va88c2822a0f2/v7daa0e2a03d9/tools/closure.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` |
@@ -171,7 +171,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `earlier/va88c2822a0f2/v9cbc3553c09e/pairtable-tmalloc-grant.out` | earlier run (previous tool version a88c2822a0f2): per-function table of a paircl pairing | `99c561dafc09cfd8db9203c738919791ae2a79d6d0b92bd143afefdfc39067a7` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/roots.tsv` | earlier run (previous tool version a88c2822a0f2): root-pair bytecmp verdicts | `13bcb030391c3b9b8a78d9df57b0af2317074568a62fa0bf4a3f22724ffe8862` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools.sha256` | earlier run (previous tool version a88c2822a0f2): sha256 of every script run | `46aa89abf9ccc01f3d67d282a6dbf49515d606a4767b4c5f46a70b00f900174a` |
-| `earlier/va88c2822a0f2/v9cbc3553c09e/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `9e6044358d6b16ca6040b73a684f2894db1a3d149a2873b06dbd27361c3bf2eb` |
+| `earlier/va88c2822a0f2/v9cbc3553c09e/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `0f00dfd74bb8aaee7e19c49b81654e4d45c8e581d6c92a9543aab17e92a717ee` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools/bytecmp-1480ca2faea0.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools/cietable.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `c82414f4b6d78d45d1fc214f8634985143635cdc03e512a7b4f7bee102eaa845` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools/closure.py` | earlier run (previous tool version a88c2822a0f2): measurement script (copied; tools.sha256 names it) | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` |
@@ -191,7 +191,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `inventory/summary-uci.out` | inventory summary of one image | `b16c9d652f4258773c737e26b511c8f3c29138903246dccd48eb94eda16b8ea2` |
 | `inventory/summary-wire.out` | inventory summary of one image | `471756ba345c4b543a9d9a6da969fb1f6ebc2bdb4b22f157eaa2288df905afc8` |
 | `inventory/tools.sha256` | sha256 of every script run | `6903a0268a98e269c92b0e1704426734af540d8ed497f71a41747ebf67445da2` |
-| `inventory/tools/DIFFS.md` | each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `ef1e0e53915f4d23f66b7513d3d869b9e4555de25b781b76a696a9159bf6fe4c` |
+| `inventory/tools/DIFFS.md` | each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `54ecd258c615e2cee7563065ad8ccee1f21fc4442ac98d1332307e6e27769e0c` |
 | `inventory/tools/bytecmp-1480ca2faea0.py` | measurement script (copied; tools.sha256 names it) | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` |
 | `inventory/tools/drvcmp.py` | measurement script (copied; tools.sha256 names it) | `1b13206c79dd0721a7dfdefa2ab6cff9c2d5d2666920e46e449065ffaa56dd79` |
 | `inventory/tools/inventory.py` | measurement script (copied; tools.sha256 names it) | `c4e5592ab63d5d584fce9e0e188faa1e6c384fa51b544481492b87cbc02cfc64` |
@@ -205,7 +205,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `inventory/v9cbc3553c09e/summary-uci.out` | earlier run (previous tool version 9cbc3553c09e): inventory summary of one image | `b16c9d652f4258773c737e26b511c8f3c29138903246dccd48eb94eda16b8ea2` |
 | `inventory/v9cbc3553c09e/summary-wire.out` | earlier run (previous tool version 9cbc3553c09e): inventory summary of one image | `471756ba345c4b543a9d9a6da969fb1f6ebc2bdb4b22f157eaa2288df905afc8` |
 | `inventory/v9cbc3553c09e/tools.sha256` | earlier run (previous tool version 9cbc3553c09e): sha256 of every script run | `e81d9609f4fd8be4a2e29f89610e280c5e9d3634909e8a6dd851c6313dee5c37` |
-| `inventory/v9cbc3553c09e/tools/DIFFS.md` | earlier run (previous tool version 9cbc3553c09e): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `d3e3b7c870db85a4f2a3dbbffeaefbfc219aafd257c28676b9083d52778554bb` |
+| `inventory/v9cbc3553c09e/tools/DIFFS.md` | earlier run (previous tool version 9cbc3553c09e): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `cd0fcaaa13dc994428bbe081c423d78418f5ee0daf9978c409b4723e02551d59` |
 | `inventory/v9cbc3553c09e/tools/bytecmp-1480ca2faea0.py` | earlier run (previous tool version 9cbc3553c09e): measurement script (copied; tools.sha256 names it) | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` |
 | `inventory/v9cbc3553c09e/tools/drvcmp.py` | earlier run (previous tool version 9cbc3553c09e): measurement script (copied; tools.sha256 names it) | `a4c8056e896a102b67e1c872ae0b0da02ac08c4387e02dd939594202d735e2d8` |
 | `inventory/v9cbc3553c09e/tools/inventory.py` | earlier run (previous tool version 9cbc3553c09e): measurement script (copied; tools.sha256 names it) | `c4e5592ab63d5d584fce9e0e188faa1e6c384fa51b544481492b87cbc02cfc64` |
@@ -225,7 +225,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `run.sh` | reruns every measurement of the record | `e0f138ce417473b03e3dd0173df69486c85e4d98a9919549ecb19aed9b783dbc` |
 | `settle.tsv` | per-target settlement output | `92dcf5ddce8e2f8febd5dab9c5027f560812822cf1e301436501c0b61c9e3bc9` |
 | `tools.sha256` | sha256 of every script run | `066e40ed6319d5cbfeffb925de8421e6c23634aa871088ec5262a92f001673a7` |
-| `tools/DIFFS.md` | each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `c4bc091a12198a4e3e9f393806d11b40b417e8eaa9981ee21a8402d28e877ad7` |
+| `tools/DIFFS.md` | each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `d7d646b61ae9e1ea1e18b706cbf337fe554459c89ee96f548f242966c1f324ba` |
 | `tools/bytecmp-1480ca2faea0.py` | measurement script (copied; tools.sha256 names it) | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` |
 | `tools/closure_strict2.py` | measurement script (copied; tools.sha256 names it) | `21028c256d69b6802aaa3f86f5d4e170dc836a37e8389bf84926aa212372634a` |
 | `tools/drvcmp.py` | measurement script (copied; tools.sha256 names it) | `89ca4b797ed737e4cfef64016d74febd46965baf758b175b446928f0f212e5c4` |

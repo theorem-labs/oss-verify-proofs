@@ -1,6 +1,6 @@
 # rt-strs: text kept out of this directory
 
-The files below are kept verbatim in an internal record, commit d257b0747438. Each row cites the file as: commit, path
+The files below are kept verbatim in an internal record. Each row cites the file as: commit, path
 inside the record, sha256.
 
 ## Text before the scrub
@@ -12,5 +12,7 @@ kept in the internal record.
 
 | file | record (text before the scrub) |
 | --- | --- |
-| A-cells.tsv | commit d257b0747438, path rt-strs/A-cells.tsv, sha256 29db40ab016d2fc83a9a2b1c4a9998255eae6702543495b8b77634ec33a2c9a7 |
-| B-cells.tsv | commit d257b0747438, path rt-strs/B-cells.tsv, sha256 f4957433ae4d875cf7524f9e694092c06d660d0a7e060ecab291eac0a2b7b137 |
+| A-cells.tsv |, path rt-strs/A-cells.tsv, sha256 29db40ab016d2fc83a9a2b1c4a9998255eae6702543495b8b77634ec33a2c9a7 |
+| B-cells.tsv |, path rt-strs/B-cells.tsv, sha256 f4957433ae4d875cf7524f9e694092c06d660d0a7e060ecab291eac0a2b7b137 |
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

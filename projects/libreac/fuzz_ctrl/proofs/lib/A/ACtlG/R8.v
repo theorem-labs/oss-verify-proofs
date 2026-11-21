@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v, with its module names changed; 426 of its 465 lines of code are new or changed and 927 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R8.v -- GLUE for stage seg_R8 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:678).
    Written by a Theorem Labs lane (piece W2a); single writer.  rule 24: no function proved (stage glue
    of a walk; proves no function, kind: segment lemma).
@@ -44,7 +45,7 @@
    G4  the lift: ProgBridge.fevt_of_evtF, then YA0nR.SRr_fsteps (its continuation keeps the fsteps run, which
        ProgWorld.ajournal_of_fsteps takes).
    G5  the exit cut at the run's end map R and memory m' (munch [(phi, phi + n_b); (sp - 2224, sp)] mem3 m'):
-         journal  ProgWorld.ajournal_of_fsteps (PROVED, a Theorem Labs lane's ProgWorld head 26edf006f53 on this branch),
+         journal  ProgWorld.ajournal_of_fsteps (PROVED, a Theorem Labs lane's ProgWorld head on this branch),
                   every written byte awr_byte: the callee window by the stack case (it lies in
                   [c_sp - LLVMF_STK, c_sp)), the block by in_tmp_block (phi, n_b) is in the cut's ablocks and NOT an
                   entry block: the Permutation would list it twice, against AR_blocks_law's pairwise separation;
@@ -63,7 +64,7 @@
    SECTION HYPOTHESES (exact text below)
    - LAWS: the core's AR law record (YCbq.v:207), as A5.v.  ACtl.v has it (ACtl.v:183).
    No other.  The seven shared memory helpers are the PROVED lemmas of lib/A/ACtlG/KitMem.v (a Theorem Labs lane, on this
-   branch by path from a working branch 4a56e997c0f, blob 19bfb2e48a9), cited by name:
+   branch by path from a working branch, blob 19bfb2e48a9), cited by name:
    kitmem_in_img, kitmem_ro_img, kitmem_own6, kitmem_stk_of_present, kitmem_addr_munch, kitmem_spill_munch,
    kitmem_frac_munch.
    CITED BY NAME (proved on this branch): Seg/R8F_on.r8_evt_F_on, asan_memcpyF_on.asan_memcpy_holds_F_on,

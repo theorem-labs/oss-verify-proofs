@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (asan_realizes_spec takes the mmap base check, the launch, the channel reader and the entry-launch check, and passes them to the restated boot theorem). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -20,9 +21,9 @@ Proof. reflexivity. Qed.
 (* [comment removed for export] *)
 Lemma asan_realizes_spec : asan_realizes_spec_stmt.
 Proof.
-  intros sp brk0 mbase rdraw inp Vsp Vbrk Va Ve Vfit Vuid Vab Vva Vhw.
+  intros sp brk0 mbase rdraw inp Vsp Vbrk Va Ve Vfit Vuid Vab Vva Vhw Vmb Vvl Vrd Vlau.
   rewrite HSEGS_ASEGS, <- AsanBoot.APH_is_phdrs, <- LIMIT_is_target.
-  apply (AsanBoot.asan_boot_entry_inp sp brk0 mbase rdraw inp Vsp Vbrk Va Ve Vfit Vuid Vab Vva
+  apply (AsanBoot.asan_boot_entry_inp sp brk0 mbase rdraw inp Vsp Vbrk Vmb Va Ve Vuid Vvl Vrd Vlau
            (fun _ _ => Spec.spec (in_argv inp) (in_fs inp))).
   - intros; reflexivity.
   - intros E fs'. apply SpecExits.spec_has_nil.

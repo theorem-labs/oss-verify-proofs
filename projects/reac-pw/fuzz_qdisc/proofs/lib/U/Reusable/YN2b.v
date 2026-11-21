@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2b.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map); munmap's ENOMEM answer; the vvar/vDSO pair in the reserved ledger). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -34,10 +35,12 @@ region_of A r1 = Some rg1 -> region_of A r2 = Some rg2 -> rg_live rg1 = true -> 
 reg_lo rg1 < rg_len rg1 -> reg_lo rg2 < rg_len rg2 ->
 ranges_disjoint (ly_reg L r1 + reg_lo rg1, rg_len rg1 - reg_lo rg1)
 (ly_reg L r2 + reg_lo rg2, rg_len rg2 - reg_lo rg2);
-lx_in : forall e, In e (vm_maps (m_vmmaps md)) ->
+(* 08b1429: every entry lies in a live region, and the entries' bytes are bounded by the live bytes, only when
+   no refusal is injected; under a may-fail mode a refused munmap leaves a leaked map (YN03.ledger_ok). *)
+lx_in : @amf AM = false -> forall e, In e (vm_maps (m_vmmaps md)) ->
 exists r rg, region_of A r = Some rg /\ rg_live rg = true /\
 ly_reg L r <= iv_lo e /\ iv_lo e + iv_len e <= ly_reg L r + rg_len rg;
-lx_lb : State.live_bytes (vm_maps (m_vmmaps md)) <= live_bytes A;
+lx_lb : @amf AM = false -> State.live_bytes (vm_maps (m_vmmaps md)) <= live_bytes A;
 lx_noacc : forall e, In e (vm_noaccess (m_vmmaps md)) ->
 exists E, In E (vm_maps (m_vmmaps md)) /\ iv_lo E <= iv_lo e /\ iv_lo e + iv_len e <= iv_lo E + iv_len E /\
 (forall r rg, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg = RkMap -> 0 < rg_len rg ->
@@ -80,7 +83,7 @@ intros L L' A md X EL. split.
 - apply X.
 - apply X.
 - intros r1 r2 rg1 rg2 Hne H1 H2 L1 L2 N1 N2. rewrite (EL r1 rg1 H1), (EL r2 rg2 H2). exact (lx_regs _ _ _ X r1 r2 rg1 rg2 Hne H1 H2 L1 L2 N1 N2).
-- intros e He. destruct (lx_in _ _ _ X e He) as (r & rg & Hr & Hl & H1 & H2).
+- intros Eaf e He. destruct (lx_in _ _ _ X Eaf e He) as (r & rg & Hr & Hl & H1 & H2).
 exists r, rg. rewrite (EL r rg Hr). auto.
 - apply X.
 - intros e He. destruct (lx_noacc _ _ _ X e He) as (E & HE & H1 & H2 & HR).
@@ -167,7 +170,22 @@ assert (Hlen : 0 < rg_len rg).
 assert (Ebase : bv_unsigned (Z_to_bv 64 (ly_reg L r)) = ly_reg L r).
 { rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia. }
 assert (VM : vm_maps (m_vmmaps (munmap_model (Z_to_bv 64 (ly_reg L r)) (Z_to_bv 64 (rg_len rg)) md))
-= map_remove (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ly_reg L r))) by reflexivity.
+= map_remove (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ly_reg L r))).
+{ (* 08b1429: munmap_model cuts with maps_subtract; on an exact mapping disjoint from the others
+     that is map_remove (YK0v.maps_subtract_exact, the model's MmapSim helper). *)
+transitivity (maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (Z_to_bv 64 (ly_reg L r)))
+(bv_unsigned (Z_to_bv 64 (ly_reg L r)) + bv_unsigned (Z_to_bv 64 (rg_len rg)))); [reflexivity|].
+apply maps_subtract_exact.
+- rewrite Elen. exact Hlen.
+- intros b s Hbs. exact (proj1 (lx_maps _ _ _ X _ Hbs)).
+- intros b s Hbs Eb. subst b.
+destruct (lx_disj _ _ _ X _ _ Hbs Hin) as [E|D]; [injection E as ->; reflexivity|].
+exfalso. unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D.
+pose proof (proj1 (lx_maps _ _ _ X _ Hbs)) as Hs. unfold iv_len in Hs. cbn [snd] in Hs.
+rewrite Elen in D. lia.
+- intros b s Hbs Hne.
+destruct (lx_disj _ _ _ X _ _ Hbs Hin) as [E|D]; [injection E as -> _; exfalso; exact (Hne eq_refl)|].
+unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D. rewrite Elen in D. lia. }
 split; rewrite ?VM.
 - intros r2 rg2 x Hr2 Hl2 Hx. rewrite HA' in Hr2.
 destruct (Nat.eqb_spec r2 r) as [->|Hne]; [injection Hr2 as <-; discriminate|].
@@ -187,8 +205,8 @@ exact (lx_disj _ _ _ X e1 e2 H1 H2).
 destruct (Nat.eqb_spec r1 r) as [->|N1]; [injection H1 as <-; discriminate|].
 destruct (Nat.eqb_spec r2 r) as [->|N2]; [injection H2 as <-; discriminate|].
 exact (lx_regs _ _ _ X r1 r2 rg1 rg2 Hne H1 H2 L1 L2 M1 M2).
-- intros e He. apply In_map_remove in He as [He Hne].
-destruct (lx_in _ _ _ X e He) as (r2 & rg2 & Hr2 & Hl2 & G1 & G2).
+- intros Eaf e He. apply In_map_remove in He as [He Hne].
+destruct (lx_in _ _ _ X Eaf e He) as (r2 & rg2 & Hr2 & Hl2 & G1 & G2).
 destruct (Nat.eq_dec r2 r) as [->|Hne2].
 +
 rewrite Hr in Hr2. injection Hr2 as <-.
@@ -196,8 +214,8 @@ destruct (lx_disj _ _ _ X e _ He Hin) as [-> | D]; [exfalso; apply Hne; reflexiv
 exfalso. unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D. rewrite Ebase, Elen in D.
 destruct (lx_maps _ _ _ X e He) as [P _]. unfold iv_lo, iv_len in *. lia.
 + exists r2, rg2. rewrite HA'. rewrite (proj2 (Nat.eqb_neq _ _) Hne2). auto.
-- rewrite (live_bytes_kill A A' r rg Hr Hl HA').
-pose proof (live_bytes_map_remove _ _ _ Hin) as LB. rewrite Elen in LB. pose proof (lx_lb _ _ _ X). lia.
+- intros Eaf. rewrite (live_bytes_kill A A' r rg Hr Hl HA').
+pose proof (live_bytes_map_remove _ _ _ Hin) as LB. rewrite Elen in LB. pose proof (lx_lb _ _ _ X Eaf). lia.
 -
 intros e He. rewrite munmap_model_noaccess, Ebase, Elen in He.
 destruct (In_maps_subtract_sub _ _ _ _ Hhi He) as (e0 & He0 & S1 & S2).
@@ -208,6 +226,57 @@ pose proof (HR r rg Hr Hl Hk Hlen) as D. destruct (lx_maps _ _ _ X E HE) as [P _
 unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in D. rewrite Efst, Ebase in D. lia.
 + split; [lia|]. split; [lia|]. intros r2 rg2 Hr2 Hl2 Hk2 Hp2. rewrite HA' in Hr2.
 destruct (Nat.eqb_spec r2 r) as [->|Hne2]; [injection Hr2 as <-; discriminate|]. exact (HR r2 rg2 Hr2 Hl2 Hk2 Hp2).
+Qed.
+(* 08b1429: the leaked map.  Under a may-fail mode munmap may answer -ENOMEM and musl's free ignores the
+   answer, so region [r] dies in the allocator state while the model keeps its map.  The entry-to-region
+   fields are void there ([amf = true]); the others hold because the live regions only shrink. *)
+Lemma ledger_x_kill_leak : forall L A A' md r rg,
+ledger_x L A md -> @amf AM = true ->
+region_of A r = Some rg ->
+(forall k, region_of A' k = if Nat.eqb k r then Some (mkRegion RkMap (rg_len rg) [] false) else region_of A k) ->
+ledger_x L A' md.
+Proof.
+intros L A A' md r rg X Ea Hr HA'.
+assert (LIVE : forall k rgk, region_of A' k = Some rgk -> rg_live rgk = true -> region_of A k = Some rgk).
+{ intros k rgk Hk Hl. rewrite HA' in Hk. destruct (Nat.eqb k r); [injection Hk as <-; discriminate | exact Hk]. }
+split.
+- intros r2 rg2 x Hr2 Hl2 Hx. exact (lx_cov _ _ _ X r2 rg2 x (LIVE r2 rg2 Hr2 Hl2) Hl2 Hx).
+- exact (lx_maps _ _ _ X).
+- exact (lx_disj _ _ _ X).
+- intros r1 r2 rg1 rg2 Hne H1 H2 L1 L2 M1 M2.
+exact (lx_regs _ _ _ X r1 r2 rg1 rg2 Hne (LIVE r1 rg1 H1 L1) (LIVE r2 rg2 H2 L2) L1 L2 M1 M2).
+- intros Ef. rewrite Ea in Ef. discriminate Ef.
+- intros Ef. rewrite Ea in Ef. discriminate Ef.
+- intros e He. destruct (lx_noacc _ _ _ X e He) as (E & HE & G1 & G2 & HR).
+exists E. split; [exact HE|]. split; [exact G1|]. split; [exact G2|].
+intros r2 rg2 Hr2 Hl2 Hk2 Hp2. exact (HR r2 rg2 (LIVE r2 rg2 Hr2 Hl2) Hl2 Hk2 Hp2).
+Qed.
+Lemma ledger_ok_kill_leak : forall L A A' md r rg,
+ledger_ok B L A md -> @amf AM = true ->
+st_brk A' = st_brk A ->
+(forall k, region_of A' k = if Nat.eqb k r then Some (mkRegion RkMap (rg_len rg) [] false) else region_of A k) ->
+ledger_ok B L A' md.
+Proof.
+intros L A A' md r rg G Ea EB HA'.
+assert (LIVE : forall k rgk, region_of A' k = Some rgk -> rg_live rgk = true -> region_of A k = Some rgk).
+{ intros k rgk Hk Hl. rewrite HA' in Hk. destruct (Nat.eqb k r); [injection Hk as <-; discriminate | exact Hk]. }
+split.
+- exact (lg_reserved _ _ _ _ G).
+- exact (lg_limit _ _ _ _ G).
+- exact (lg_rclim _ _ _ _ G).
+- intros k rgk Hk Hl. exact (lg_maps _ _ _ _ G k rgk (LIVE k rgk Hk Hl) Hl).
+- intros k rgk off Hk Hl. exact (lg_noaccess _ _ _ _ G k rgk off (LIVE k rgk Hk Hl) Hl).
+- exact (lg_brk0 _ _ _ _ G).
+- rewrite EB. exact (lg_brk _ _ _ _ G).
+- intros k rgk Hk Hl. exact (lg_placed _ _ _ _ G k rgk (LIVE k rgk Hk Hl) Hl).
+- intros Ef. rewrite Ea in Ef. discriminate Ef.
+- intros Ef. rewrite Ea in Ef. discriminate Ef.
+- intros Ef. rewrite Ea in Ef. discriminate Ef.
+- exact (lg_ceil _ _ _ _ G).
+- exact (lg_vdso _ _ _ _ G).
+- intros k rgk Hk Hl. exact (lg_rfree _ _ _ _ G k rgk (LIVE k rgk Hk Hl) Hl).
+- exact (lg_vdso_lo _ _ _ _ G).
+- exact (lg_brk0_hi _ _ _ _ G).
 Qed.
 Lemma rsv_ok_sub : forall A A', rsv_ok A -> (forall f, In f (frames A') -> In f (frames A)) -> rsv_ok A'.
 Proof. intros A A' H Hs g am i fr Hin Hk. apply (H g am i fr); [apply Hs; exact Hin | exact Hk]. Qed.
@@ -235,8 +304,8 @@ intros L md E EN. split; rewrite ?E, ?EN.
 - intros e [].
 - intros e1 e2 [].
 - intros r1 r2 rg1 rg2 _ H1. unfold region_of in H1. cbn in H1. destruct r1; discriminate.
-- intros e [].
-- cbn. lia.
+- intros _ e [].
+- intros _. cbn. lia.
 - intros e [].
 Qed.
 Lemma rsv_ok_init : rsv_ok init_state.

@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldRt.v (a working branch 9a4a1740d9e, re-synced
-   to a working branch a48c4068c6e, whose text is the same at 1d23ced37fd: A adds RT_used_of_AR from
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldRt.v (a working branch, re-synced
+   to a working branch, whose text is the same: A adds RT_used_of_AR from
    lib/A/ProgWorldRtShadow.v and Requires YK11 YM05 YK04 YO09 from lib.Reusable; B takes both): the
    same lemmas, statements and proof steps with the image-B modules (A.AsanRT / A.Img0 / A.ACtlK / A.ACtlCut /
    A.ProgWorld / A.ProgWorld_Fs / A.ProgWorldRtShadow / A.Prog.asan_stack_malloc_c -> B.*, A.AF0m / A.AB1v / A.AE2k /
@@ -13,7 +13,7 @@
    byte range (pwrt_cell_zl) is left to unification with its row in lib.Reusable.YF0m.Tfib_const_abs (`_`) where A
    writes the image-A literal; (3) the four REAL slots take their address and value from the goal (that is, from
    B.AsanRT.RT_REALS) in one step where A writes four literal bullets.  No image-B number is written here.
-   Then to a working branch fec8db0a380: pwrt_abs / pwrt_sym decide const-table membership by
+   Then to a working branch: pwrt_abs / pwrt_sym decide const-table membership by
    lib/Reusable/YConstIn.v's in_const_tbl (Required as A does), as A.  Because of (2), pwrt_abs first fills a row
    value left to unification from the table's row at that address and width (pwrt_row_val, one vm_compute of
    List.find); in_const_tbl, which refuses a row with an evar, then checks the whole row.  A has no such step: it
@@ -63,7 +63,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Mem.
 Import ListNotations.
 Local Open Scope Z_scope.
 
-(* The journal's sink_head is the core's own instance, as lib.Reusable.YCfn resolves it (Reusable/YE2k.v:45). *)
+(* The journal's sink_head is the core's own instance, as lib.Reusable.YCfn resolves it (Reusable/YE2k.v:46). *)
 #[local] Existing Instance lib.Reusable.YE2k.tfib_sink_head.
 
 Notation segs := lib.Reusable.YB1v.tfibsegs (only parsing).

@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the steps of a program walk through a runtime entry whose contract is art_post (lib/A/Rt/RtDefs.v) and whose writes leave the errno cell, after PaArt.v's aj_art_at and cgif_file_fuzzer's aj_intrin_atS: aj_art_own_at, for an entry that writes bytes the caller's journal may write (its side-stack frame, its footprint, a block made in the call), is the sup_resp walk's lemma (an earlier version of lib/A/Prog/sup_resp_s0.v); aj_art_blk_at, for an entry that writes inside one live heap block, and awrite_ok_of_block, the entry's write premise on a range of such a block, are the sup_host_setting walk's lemmas hs5_art_wr_at and hs6_wr_block (lib/A/Prog/sup_host_setting_s5.v and sup_host_setting_s6.v), stated over any segments and symbols. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaArtOwn.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaArtOwn.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/PaArtOwn.v, with its module paths changed; 21 of its 71 lines of code are new or changed and 81 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3): the journal step of a call of a runtime entry whose
    contract is RtDefs.v's art_post with no cells (E = fun _ => False), for S_MF_FRONT's calls of the strchr
-   (0x86380) and strlen (0x863a8) wrappers. It is PaArt.v:76 aj_art_at at Eb = fun _ => False, without its Section
-   hypothesis errno_low : api_env SEGS B (PaArt.v:75): no hypothesis of the FRONT pieces gives api_env (only
+   (0x86380) and strlen (0x863a8) wrappers. It is PaArt.v:77 aj_art_at at Eb = fun _ => False, without its Section
+   hypothesis errno_low : api_env SEGS B (PaArt.v:76): no hypothesis of the FRONT pieces gives api_env (only
    SegPaLib.v's PALib does, pal_env), and an entry that writes nothing outside its scratch window does not need it.
    The step is YCbq.v's ajournal_after_write (Section a0: AR_laws and the image below kLowMemEnd only), as image A's
    lib/A/Prog/m_file_memchr.v aj_memchr_at (a working branch) steps its memchr call. A walk lane

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 755 of its 825 lines of code are new or changed and 444 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): the KIT of the walk of check_reject_clean_starved against the kit's
    text tcheck_reject_clean_starved_specX. This file STATES the walk at B': the stage record, the text's pre and post,
    the boundary pcs, the stage invariants, the register sets and one continuation predicate per segment entry. The
@@ -9,14 +10,14 @@
    runs of `proof-index check_reject_clean_starved`, CONFIRMED by the checker LookupCheckCrcsAp. At that search
    origin/ossv/recipes had no lib/A or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only,
    and no released asan Proof.v existed for check_reject_clean_starved.
-   DONOR (rule 24, reuse): the A' kit lib/A/Prog/CrsKitAp.v blob 3c2dbff7608c (a working branch commit
-   99a2cf39788b, kit v3.2). Its design is carried over NAME FOR NAME with a `_B` suffix: Sections d / f over B / ARx /
+   DONOR (rule 24, reuse): the A' kit lib/A/Prog/CrsKitAp.v blob 3c2dbff7608c (a working branch,
+   kit v3.2). Its design is carried over NAME FOR NAME with a `_B` suffix: Sections d / f over B / ARx /
    LAWS, the stage record (fields `cb_*` here), crs_pre / crs_post, crs_cfg / crs_regsat, the saved-slot, frame, slot,
    live, data and tree invariants, crs_from_<SEG>, CrsKeep, and the kit lemmas. Every pc, slot, instruction word,
    register list and invariant below is RE-DERIVED at B': measured on the B' listing of record and on the unstripped
    twin, never shifted from an A' number.
    INPUTS.
-   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml);
      unstripped twin reports/preset-harness/bound-fix/9e1283d1/unstripped/fuzz_preset/fuzz_preset.asan-ubsan, ELF
      sha256 c90d4fa54d43160baf62e5aa387211a798dddbad13d2619d85acbf37aee0c175 (the ELF PRH_ImgB.v was generated from).
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (a Theorem Labs lane's listings v3,
@@ -25,7 +26,7 @@
    - Image record lib/B/PRH_ImgB.v blob 3216eca68342 (prh_img_B).
    - The kit text: tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob 9ecd8eb167c6, with lib/A/PRH_Base.v blob
       fdb45545469b: the kit's texts, whose whole lib/A/PRH_*.v set and
-     lib/Spec/*.v set are on this branch by path. The spec text itself is CHARACTER FOR CHARACTER the decff67d721f text
+     lib/Spec/*.v set are on this branch by path. The spec text itself is CHARACTER FOR CHARACTER the text
      the A' kit proves (blob 4cb899514e6c); what f97c changed under it is listed below.
    WHAT f97c CHANGED UNDER THE DONOR'S PREDICATES (every A' predicate whose B' twin had to follow):
    - fpre (PRH_Base.v) gained `frm_zero (@YK11.fp_csr fx)` as its last conjunct (FRM0-ENTRY: callers supply the
@@ -410,7 +411,7 @@ Definition crs_evs_at_X3_B (C : crsC_B) : list PresetReqAt.hev := crs_evs_at_H3_
 Definition crs_evs_at_F_B (C : crsC_B) : list PresetReqAt.hev := crs_evs_B C.
 Definition crs_evs_at_R_B (C : crsC_B) : list PresetReqAt.hev := crs_evs_B C.
 
-(* ---- the text's premises (tcheck_reject_clean_starved_specX on the kit's cut 7cdbb61b5fa0, PRH_FnCheck.v:1066-1145), same
+(* ---- the text's premises (tcheck_reject_clean_starved_specX on the kit's cut, PRH_FnCheck.v:1066-1145), same
    order and spelling; CTX0 is the text's own parameter (the run-word list DW is gone), and the run's strtod model is
    KEYED: ReaderRes.jr_strtod where rp_sm stood, no binder. fpre carries the entry rounding mode since FRM0-ENTRY,
    and the text keeps ck_frm0: both are here, as the text has them. ---- *)

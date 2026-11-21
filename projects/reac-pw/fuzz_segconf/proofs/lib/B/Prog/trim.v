@@ -11,14 +11,15 @@
    plain proof lib/Prog/rec_canonical.v, copied so that the walk stands on RecFacts alone. The walk's hypotheses are
    the statement's AMALLOC4 and TL (CmdPaLib.v: the malloc trampoline is the rule's entry, the GOT shadow cell). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_canonical.v, with its module paths and module names changed; 100 of its 222 lines of code are new or changed and 2241 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim (reac_segconf.c:51-59, static) on the ASan+UBSan image B of reac-pw/fuzz_segconf (fuzz_segconf.asan-ubsan,
    pin c3796c0b38f3; entry BASE + AF_trim = 0x89640, 324 bytes, 81 instructions; frame 32 bytes, no side-stack frame):
    the walk, trim_walk : trim_contract SEGS B (BASE + AF_trim) STK_trim RLO_A RHI_A, the image-A owner's contract
-   lib/B/Prog/trim_c.v (G3 FINAL 6f783602b5e3, the unit owner's B copy) at image B's numbers: STK_trim, RLO_A, RHI_A from
-   the image-B harness owner's lib/B/Prog/SegInstB.v (1f771e2f2066), the entry the listing term BASE + AF_trim. ADAPTED for the image-B G3 walk owner's
-   image-B trim walk lane from the image-A G3 walk owner's image-A walk (commit 07dedd5b93c6: lib/A/Prog/trim_k.v,
-    trim_t.v, trim_tr.v, trim_s.v) and the unit owner's UBSan walk lib/U/Prog/trim.v (commit
-   523c6a205596), re-derived on image B's code (the neutral excerpt
+   lib/B/Prog/trim_c.v (G3 FINAL, the unit owner's B copy) at image B's numbers: STK_trim, RLO_A, RHI_A from
+   the image-B harness owner's lib/B/Prog/SegInstB.v, the entry the listing term BASE + AF_trim. ADAPTED for the image-B G3 walk owner's
+   image-B trim walk lane from the image-A G3 walk owner's image-A walk (lib/A/Prog/trim_k.v,
+    trim_t.v, trim_tr.v, trim_s.v) and the unit owner's UBSan walk lib/U/Prog/trim.v,
+   re-derived on image B's code (the neutral excerpt
    trim.fuzz_segconf.asan-ubsan.s, listing lib/B/Prog/SegList.v AF_trim = 0x4880).
    The pieces (each re-seeds a symbolic state at its cut and runs the token executor over the listing):
      trim.v    ENTRY 0x89640 .. 0x8967c (16 insns): the frame and its four slots, s1 = the shadow base (through the GOT
@@ -62,7 +63,7 @@ From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Prog Require Import
 PaTable PaSym PaStep PaRun PaShadow PaJournal SegSyms SegList SegPa SegPaLib PaCall PaDenot.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Prog Require Import PaLibG PaLibF PaLibH PaSB PaCallRun.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Rt Require Import RtDefs.
-(* interface row 16's carrier (the image-B wrapper-layer owner, 5b814360ea8f): RtString.astrlen_realizes *)
+(* interface row 16's carrier (the image-B wrapper-layer owner): RtString.astrlen_realizes *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Rt Require RtString.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Prog Require Import PaArt.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Spec Require SegModel.

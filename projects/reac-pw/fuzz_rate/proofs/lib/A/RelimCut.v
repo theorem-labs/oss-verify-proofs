@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/RelimCut.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_rate. Image-independent: the kit module Reusable/YM09.v Requires it. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/RelimCut.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_rate. Image-independent: the kit module Reusable/YM09.v Requires it. *)
 (* A budget refusal at a larger memory limit is a budget refusal at a smaller one. So when the run at the smaller
    limit is never refused, the run at the larger limit never reaches a refused configuration: it is cut-free in the
    sense of lib/Reusable/YK15.v, whose [realizes] has a cut at a refused configuration. This is what lets the plain
@@ -57,17 +57,18 @@ Proof.
   replace (m_vmmaps (relim L m)) with (relimV L (m_vmmaps m)) by reflexivity.
   replace (mremap_source_b (relimV L (m_vmmaps m))) with (mremap_source_b (m_vmmaps m)) by reflexivity.
   replace (mremap_backing_uniform_b (relim L m)) with (mremap_backing_uniform_b m) by reflexivity.
+  (* 08b1429: the grow reads ONE gate, chosen by the room test, which the limit does not touch *)
+  replace (mremap_inplace_room_b (relim L m)) with (mremap_inplace_room_b m) by reflexivity.
   repeat match goal with
          | H : context [if ?c then _ else _] |- _ => destruct c; try discriminate
          end.
-  apply negb_true_iff in H. apply negb_true_iff.
-  apply andb_false_iff in H. apply andb_false_iff.
-  destruct H as [H | H].
-  - left. destruct (mremap_final_budget_b (relim L m) _ _ _ _) eqn:E; [|reflexivity].
+  - apply negb_true_iff in H. apply negb_true_iff.
+    destruct (mremap_final_budget_b (relim L m) _ _ _ _) eqn:E; [|reflexivity].
     assert (mremap_final_budget_b m o (Z_to_bv 64 (page_round_up_Z (bv_unsigned os))) o
               (Z_to_bv 64 (page_round_up_Z (bv_unsigned ns))) = true)
       by (eapply mremap_final_budget_b_mono; eauto). congruence.
-  - right. unfold mremap_move_budget_b in H |- *. rewrite mremap_move_charge_relim, rr_m_vmmaps, rr_vm_limit.
+  - apply negb_true_iff in H. apply negb_true_iff.
+    unfold mremap_move_budget_b in H |- *. rewrite mremap_move_charge_relim, rr_m_vmmaps, rr_vm_limit.
     rewrite HM in H. apply Z.leb_gt in H. apply Z.leb_gt. lia.
 Qed.
 
@@ -103,6 +104,9 @@ Lemma alloc_refused_relim : forall i m, vm_limit (m_vmmaps m) = L0 ->
 Proof.
   intros i m HM H. unfold alloc_budget_refused_b in *.
   destruct (bv_unsigned (in_sysno i) =? 214); [exact (brk_refused_relim _ _ HM H)|].
+  (* 08b1429: munmap (215) joined the alloc family, and no munmap is a grant the budget refuses
+     (munmap_budget_refused_b is false; its ENOMEM is the injected refusal, not the budget) *)
+  destruct (bv_unsigned (in_sysno i) =? 215); [unfold munmap_budget_refused_b in H; discriminate|].
   destruct (bv_unsigned (in_sysno i) =? 216); [exact (mremap_refused_relim _ _ _ _ _ HM H)|].
   destruct (bv_unsigned (in_sysno i) =? 222); [exact (mmap_refused_relim _ _ _ _ _ _ _ HM H)|].
   destruct (bv_unsigned (in_sysno i) =? 226); [exact (mprotect_refused_relim _ _ _ _ HM H)|].
@@ -113,8 +117,29 @@ Lemma budget_refused_relim : forall segs ms m, MOK L0 m -> MV_OK m ->
   budget_refused_at segs (mkCfg ms m) -> budget_refused_at segs (mkCfg ms (relim L m)).
 Proof.
   intros segs ms m HM MV (Hh & H). unfold MOK in HM. split; [cbn; rewrite relim_halted; exact Hh|].
-  destruct H as [(Hp & report & Est & Emat) | (x8 & Hp & [Hr | (eff & m' & evs & Hsp & Hh' & Emat)])].
-  - left. split; [exact Hp|]. exists report. split; [exact Est|]. exact (materialize_none_relim _ _ HM Emat).
+  destruct H as [(Hp & [(report & Est & Emat) | (Hacc & fn & n & eff & m' & evs & Hfn & Hno & Hsp & Hef & Hh' & Emat)])
+                | (x8 & Hp & [Hr | (eff & m' & evs & Hsp & Hh' & Emat)])].
+  - left. split; [exact Hp|]. left. exists report. split; [exact Est|].
+    exact (materialize_none_relim _ _ HM Emat).
+  - (* 08b1429: the instruction branch also carries the vDSO call's materialisation refusal. The call's
+       syscall is no allocation (vdso_alloc_false), so the smaller limit runs it to the same effect, and the
+       materialisation that failed still fails. *)
+    left. split; [exact Hp|]. right.
+    cbn [cfg_ms cfg_model] in Hacc |- *.
+    (* the account step reads the machine, not the model, on the unmodeled arm *)
+    unfold mi_account_step in Hacc |- *.
+    destruct (step_accesses segs ms) as [report| |] eqn:Est;
+      [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate Hacc
+      | discriminate Hacc | ].
+    split; [reflexivity|].
+    destruct (syscall_spec_dir L0 L HLE false _ m HM ltac:(first [exact (vdso_alloc_false segs ms (relim L m) fn n Hno)
+                                | exact (vdso_alloc_false ms (relim L m) fn n Hno)]) (fun _ => MV) _ Hsp)
+      as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+    destruct R as (-> & -> & -> & HM0).
+    exists fn, n, eff, (relim L m'), evs.
+    split; [exact Hfn|]. split; [exact Hno|]. split; [exact Hsp0|]. split; [exact Hef|].
+    split; [rewrite relim_halted; exact Hh'|].
+    exact (materialize_none_relim _ _ HM0 Emat).
   - right. exists x8. split; [exact Hp|]. left. exact (alloc_refused_relim _ _ HM Hr).
   - right. exists x8. split; [exact Hp|]. cbn [cfg_ms cfg_model] in *.
     destruct (alloc_budget_refused_b (sys_input segs ms x8) (relim L m)) eqn:G; [left; reflexivity|].
@@ -127,16 +152,22 @@ Proof.
 Qed.
 End r.
 
-(* The plain run at the larger limit is cut-free when the run at the smaller limit is never refused. *)
+(* The plain run at the larger limit is cut-free when the run at the smaller limit is never refused.
+   LPS 08b1429: the run reads [run_segments s inp sp mbase] from [init_config (run_segments ..) ..],
+   and that is where [YQ02.INV_init] holds, so this is stated over the RUN's segments.  The walks
+   stay over the binary's own segments; [YM08] takes this side run-level and lifts only the target
+   by [RomStableK.cut_free_run_init]. *)
 Theorem cut_free_of_relim : forall s pc ph sp brk0 mbase rnd (Ls Lbig : Z) inp,
   Ls <= Lbig ->
   ~ run_scfg_budget_refused ACFG (mkImage s pc ph) Ls (mkEntry sp brk0 mbase rnd) inp ->
-  cut_free s (init_config s pc ph sp brk0 mbase rnd Lbig inp).
+  cut_free (run_segments s inp sp mbase)
+    (init_config (run_segments s inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp).
 Proof.
   intros s pc ph sp brk0 mbase rnd Ls Lbig inp HLE NB tr c' Hst Hb.
   pose proof (INV_init ACFG (mkImage s pc ph) Lbig Ls (mkEntry sp brk0 mbase rnd) inp NB) as HI. cbn in HI.
-  destruct (star_down s ACFG Lbig Ls HLE _ tr c' Hst HI) as [_ (HM & HW & NR)].
+  destruct (star_down (run_segments s inp sp mbase) ACFG Lbig Ls HLE _ tr c' Hst HI)
+    as [_ (HM & HW & NR)].
   destruct c' as [ms m]. cbn [cfg_model] in HM, HW.
-  apply (not_reaches_here s ACFG _ NR).
-  exact (budget_refused_relim Lbig Ls HLE s ms m HM (MV_OK_wf m HW) Hb).
+  apply (not_reaches_here (run_segments s inp sp mbase) ACFG _ NR).
+  exact (budget_refused_relim Lbig Ls HLE (run_segments s inp sp mbase) ms m HM (MV_OK_wf m HW) Hb).
 Qed.

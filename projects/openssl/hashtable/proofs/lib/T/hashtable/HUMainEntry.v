@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the entry state is the launch's ([main_entry] over the process input, the mmap base and the entry point): the stack image is [entry_stack_image] in the launch's window, the auxv has the new layout's pairs and its CONFIG_RSEQ tail ([kn_tail]), and argv's strings sit at the top of the block). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -24,13 +25,13 @@ Import ConeCfg.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
-Lemma D_main_none : forall sp0 av ev hw rdraw tid (i : Z),
-  valid_argv av -> (0x7fff80000000 <= bv_unsigned sp0)%Z -> (bv_unsigned sp0 <= 0x800000000000)%Z ->
+Lemma D_main_none : forall inp sp0 rdraw tid (i : Z),
+  valid_argv (in_argv inp) -> (0x7fff80000000 <= bv_unsigned sp0)%Z -> (bv_unsigned sp0 <= 0x800000000000)%Z ->
   D_main_missb i 1 = true ->
-  D_main sp0 av ev hw rdraw tid (Z_to_bv 64 i) = None.
+  D_main inp sp0 rdraw tid (Z_to_bv 64 i) = None.
 Proof.
-  intros sp0 av ev hw rdraw tid i Hva Hlo Hhi Hb.
-  pose proof (u64_range tid) as Ht. pose proof (u64_range hw) as Hh.
+  intros inp sp0 rdraw tid i Hva Hlo Hhi Hb.
+  pose proof (u64_range tid) as Ht. pose proof (u64_range (in_hwcap inp)) as Hh.
   unfold D_main_missb, D_main_cells in Hb. cbn [forallb] in Hb.
   repeat match goal with
          | H : (_ && _)%bool = true |- _ => apply andb_true_iff in H; destruct H as [? ?]
@@ -54,10 +55,10 @@ Qed.
 Ltac dm_side := rewrite ?length_N_to_le_bytes, ?len_guard_lo, ?len_guard_hi, ?len_canary8;
                 cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; rewrite ?u_small by (cbn; lia); cbn; lia.
 
-Lemma D_main_canary_at : forall sp0 av ev hw rdraw tid (i : Z), (0 <= i < 8)%Z ->
-  D_main sp0 av ev hw rdraw tid (Z_to_bv 64 (0x331ad8 + i)) = Some (nth (Z.to_nat i) (canary8 rdraw) (Z_to_bv 8 0)).
+Lemma D_main_canary_at : forall inp sp0 rdraw tid (i : Z), (0 <= i < 8)%Z ->
+  D_main inp sp0 rdraw tid (Z_to_bv 64 (0x331ad8 + i)) = Some (nth (Z.to_nat i) (canary8 rdraw) (Z_to_bv 8 0)).
 Proof.
-  intros sp0 av ev hw rdraw tid i Hi. pose proof (len_canary8 rdraw) as L8.
+  intros inp sp0 rdraw tid i Hi. pose proof (len_canary8 rdraw) as L8.
   unfold D_main, D_fd, D_ssp.
   rewrite MemSplit.wbytes_outside by dm_side.
   rewrite MemSplit.wbytes_inside by dm_side.
@@ -77,10 +78,10 @@ Proof.
   destruct Hc as [->|[->|[->|[->|[->|[->|[->| ->]]]]]]]; reflexivity.
 Qed.
 
-Lemma D_main_guard_at : forall sp0 av ev hw rdraw tid (i : Z), (0 <= i < 8)%Z ->
-  D_main sp0 av ev hw rdraw tid (Z_to_bv 64 (0x351b28 + i)) = Some (nth (Z.to_nat i) (canary8 rdraw) (Z_to_bv 8 0)).
+Lemma D_main_guard_at : forall inp sp0 rdraw tid (i : Z), (0 <= i < 8)%Z ->
+  D_main inp sp0 rdraw tid (Z_to_bv 64 (0x351b28 + i)) = Some (nth (Z.to_nat i) (canary8 rdraw) (Z_to_bv 8 0)).
 Proof.
-  intros sp0 av ev hw rdraw tid i Hi.
+  intros inp sp0 rdraw tid i Hi.
   pose proof (len_canary8 rdraw) as L8. pose proof (len_guard_lo rdraw) as L4. pose proof (len_guard_hi rdraw) as L4'.
   rewrite canary8_nth by lia.
   unfold D_main, D_fd, D_ssp.
@@ -169,15 +170,17 @@ Section MainEntryProofs.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Hfits : entry_stack_fits sp0 av envv.   (* [comment removed for export] *)
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 av envv uid hw rdraw tid regs mem.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 av envv uid hw rdraw tid regs mem.
 
-  Let E := E0 sp0 a0s path envv rdraw tid regs.
+  Let E := E0 sp0 a0s path envv rdraw tid regs inp.
 
   Lemma sp_lo : (0x7fff80000000 <= bv_unsigned sp0)%Z. Proof. exact (proj1 Hvsp). Qed.
   Lemma sp_hi : (bv_unsigned sp0 <= 0x800000000000)%Z. Proof. exact (proj1 (proj2 Hvsp)). Qed.
   Lemma sp_al : (bv_unsigned sp0 mod 16 = 0)%Z. Proof. exact (proj2 (proj2 Hvsp)). Qed.
 
-  Lemma ev_vals : forall n, ev E n = nth n ([sp0; p0 sp0 a0s path envv; p1 sp0 a0s path envv; auxvp sp0 a0s path envv; rnd sp0 a0s path envv; tid] ++ junk_vals regs) (Z_to_bv 64 0).
+  Lemma ev_vals : forall n, ev E n = nth n ([sp0; p0 a0s path envv rdraw inp; p1 a0s path envv rdraw inp; auxvp sp0 a0s path envv; rnd sp0 a0s path envv inp; tid] ++ junk_vals regs) (Z_to_bv 64 0).
   Proof. intros n. reflexivity. Qed.
 
   Lemma length_junk_vals : length (junk_vals regs) = 32%nat.
@@ -185,7 +188,7 @@ Section MainEntryProofs.
 
   Lemma ev_junk : forall i, (i < 32)%nat -> ev E (6 + i) = getr regs (Z_to_bv 5 (Z.of_nat i)).
   Proof.
-    intros i Hi. rewrite ev_vals. change (6 + i)%nat with (length [sp0; p0 sp0 a0s path envv; p1 sp0 a0s path envv; auxvp sp0 a0s path envv; rnd sp0 a0s path envv; tid] + i)%nat.
+    intros i Hi. rewrite ev_vals. change (6 + i)%nat with (length [sp0; p0 a0s path envv rdraw inp; p1 a0s path envv rdraw inp; auxvp sp0 a0s path envv; rnd sp0 a0s path envv inp; tid] + i)%nat.
     rewrite app_nth2_plus.
     unfold junk_vals. rewrite (nth_map_seq (fun i => getr regs (Z_to_bv 5 (Z.of_nat i)))) by exact Hi. reflexivity.
   Qed.
@@ -213,27 +216,29 @@ Section MainRegs.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 av envv uid hw rdraw tid regs mem.
-  Let E := E0 sp0 a0s path envv rdraw tid regs.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 av envv uid hw rdraw tid regs mem.
+  Let E := E0 sp0 a0s path envv rdraw tid regs inp.
 
   Ltac reg_case :=
     cbn [nth sr_main all_regs];
-          first [ rewrite (spx_val sp0 a0s path envv rdraw tid regs)
+          first [ rewrite (spx_val sp0 a0s path envv rdraw tid regs inp)
                 | lazymatch goal with |- _ = edenot _ (EVar ?n) =>
                     change (edenot E (EVar n)) with (ev E n);
-                    first [ rewrite (ev_junk sp0 a0s path envv rdraw tid regs (n - 6)) by lia; reflexivity | idtac ]
+                    first [ rewrite (ev_junk sp0 a0s path envv rdraw tid regs inp (n - 6)) by lia; reflexivity | idtac ]
                   | |- _ => cbn [edenot] end ];
           first [ reflexivity
-                | exact (me_ra _ _ _ _ _ _ _ _ _ ME) | exact (me_gp _ _ _ _ _ _ _ _ _ ME) | exact (me_tp _ _ _ _ _ _ _ _ _ ME)
-                | exact (me_s2 _ _ _ _ _ _ _ _ _ ME)
-                | rewrite (me_sp _ _ _ _ _ _ _ _ _ ME); apply bv_eq; rewrite !u_small by lia; lia
-                | rewrite (me_s0 _ _ _ _ _ _ _ _ _ ME); reflexivity
-                | rewrite (me_a1 _ _ _ _ _ _ _ _ _ ME); reflexivity
-                | rewrite (me_a2 _ _ _ _ _ _ _ _ _ ME); f_equal; subst av; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Pos.mul Z.mul Pos.add]; lia
-                | rewrite (me_s3 _ _ _ _ _ _ _ _ _ ME); f_equal; subst av; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Pos.mul Z.mul Pos.add]; lia
-                | rewrite (me_s1 _ _ _ _ _ _ _ _ _ ME); unfold argcN, len_word; reflexivity
-                | rewrite (me_a0 _ _ _ _ _ _ _ _ _ ME); unfold argcN, len_word; reflexivity
-                | apply (me_szero _ _ _ _ _ _ _ _ _ ME); cbn; tauto
+                | exact (me_ra _ _ _ _ _ _ _ _ _ _ _ _ ME) | exact (me_gp _ _ _ _ _ _ _ _ _ _ _ _ ME) | exact (me_tp _ _ _ _ _ _ _ _ _ _ _ _ ME)
+                | exact (me_s2 _ _ _ _ _ _ _ _ _ _ _ _ ME)
+                | rewrite (me_sp _ _ _ _ _ _ _ _ _ _ _ _ ME); apply bv_eq; rewrite !u_small by lia; lia
+                | rewrite (me_s0 _ _ _ _ _ _ _ _ _ _ _ _ ME); reflexivity
+                | rewrite (me_a1 _ _ _ _ _ _ _ _ _ _ _ _ ME); reflexivity
+                | rewrite (me_a2 _ _ _ _ _ _ _ _ _ _ _ _ ME); f_equal; subst av; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Pos.mul Z.mul Pos.add]; lia
+                | rewrite (me_s3 _ _ _ _ _ _ _ _ _ _ _ _ ME); f_equal; subst av; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Pos.mul Z.mul Pos.add]; lia
+                | rewrite (me_s1 _ _ _ _ _ _ _ _ _ _ _ _ ME); unfold argcN, len_word; reflexivity
+                | rewrite (me_a0 _ _ _ _ _ _ _ _ _ _ _ _ ME); unfold argcN, len_word; reflexivity
+                | apply (me_szero _ _ _ _ _ _ _ _ _ _ _ _ ME); cbn; tauto
                 | idtac ].
 
   Theorem main_regs_ok : regs_ok E sr_main regs.
@@ -260,123 +265,197 @@ Section KnowProofs.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Hfits : entry_stack_fits sp0 av envv.   (* [comment removed for export] *)
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 av envv uid hw rdraw tid regs mem.
-  Let E := E0 sp0 a0s path envv rdraw tid regs.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 av envv uid hw rdraw tid regs mem.
+  Let E := E0 sp0 a0s path envv rdraw tid regs inp.
 
   Lemma kp_lo : (0x7fff80000000 <= bv_unsigned sp0)%Z. Proof. exact (proj1 Hvsp). Qed.
   Lemma kp_hi : (bv_unsigned sp0 <= 0x800000000000)%Z. Proof. exact (proj1 (proj2 Hvsp)). Qed.
   Lemma kp_al : (bv_unsigned sp0 mod 16 = 0)%Z. Proof. exact (proj2 (proj2 Hvsp)). Qed.
   Lemma ke0 : ev E 0 = sp0. Proof. reflexivity. Qed.
-  Lemma ke1 : ev E 1 = p0 sp0 a0s path envv. Proof. reflexivity. Qed.
-  Lemma ke2 : ev E 2 = p1 sp0 a0s path envv. Proof. reflexivity. Qed.
+  Lemma ke1 : ev E 1 = p0 a0s path envv rdraw inp. Proof. reflexivity. Qed.
+  Lemma ke2 : ev E 2 = p1 a0s path envv rdraw inp. Proof. reflexivity. Qed.
   Lemma ke3 : ev E 3 = auxvp sp0 a0s path envv. Proof. reflexivity. Qed.
-  Lemma ke4 : ev E 4 = rnd sp0 a0s path envv. Proof. reflexivity. Qed.
+  Lemma ke4 : ev E 4 = rnd sp0 a0s path envv inp. Proof. reflexivity. Qed.
   Lemma ke5 : ev E 5 = tid. Proof. reflexivity. Qed.
   Lemma keb2 : eb E 2 = rnd16 rdraw. Proof. reflexivity. Qed.
   Lemma keb3 : eb E 3 = canary8 rdraw. Proof. reflexivity. Qed.
 
   (* [comment removed for export] *)
-  Lemma bsb_top : (bv_unsigned sp0 + Z.of_nat (length (build_stack_bytes RPH sp0 av envv uid hw rdraw)) <= 0x800000000000)%Z.
-  Proof.
-    pose proof (build_stack_bytes_within_span RPH sp0 av envv uid hw rdraw) as Hs.
-    unfold entry_stack_fits, sp_window_hi in Hfits. lia.
+  (* 08b1429: the block runs from sp0 to the stack VMA's end ([length_entry_stack_image_launch]),
+     and that end is at most the Sv48 stack top ([valid_stack_top_va]). *)
+  Lemma bsb_top : (bv_unsigned sp0 + Z.of_nat (length (entry_stack_image inp mbase RPH entry sp0 rdraw)) <= 0x800000000000)%Z.
+  Proof using All.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva). assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    pose proof (length_entry_stack_image_launch Sv48 inp mbase RPH entry sp0 brk rdraw Hlau) as HL.
+    pose proof Hlau as Hlau2. cbn [entry_launch_ok_va] in Hlau2. destruct Hlau2 as ((_ & Htop & _) & _).
+    assert (Hv : (va_stack_top Sv48 <= 0x800000000000)%Z) by (unfold Z.le; vm_compute; discriminate).
+    lia.
   Qed.
 
   Lemma know_stack : know_ok RSEGS E mem kn_stack.
-  Proof.
+  Proof using All.
     pose proof kp_lo as Hlo. pose proof kp_hi as Hhi. pose proof kp_al as Hal.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva). assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
     unfold kn_stack, know_ok.
     repeat apply Forall_cons; try apply Forall_nil; cbn [kentry_ok a_base a_off edenot]; rewrite ?ke0, ?ke1, ?ke2;
       unfold flat, estart; cbn [a_base a_off edenot]; rewrite ?ke0.
     - split; [lia | exact Hal].
     - lia.
     - split; [lia|]. intros d m Hd Hm.
-      apply (main_entry_store_ok_win sp0 av envv uid hw rdraw tid regs mem ME); rewrite u_small by lia; unfold stack_max_size; lia.
+      apply (main_entry_store_ok_win inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME);
+        rewrite u_small by lia; unfold wok_lo, stack_window_reach, stack_max_size; lia.
     - split; [lia|]. split; [lia|].
       unfold adenot. cbn [a_base a_off edenot]. rewrite ke0. unfold v_addi. rewrite Z.add_0_r, Z_to_bv_bv_unsigned.
-      rewrite (main_entry_rdn_above sp0 av envv uid hw rdraw tid regs mem ME) by lia.
-      pose proof (read_argc_w RSEGS RPH sp0 av envv uid hw rdraw Hva) as Hr. unfold wmem in Hr.
-      rewrite (Hr Hve) by (unfold sp_window_hi; lia).
+      rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by lia.
+      assert (Hr : rdn RSEGS (wrap_mem inp mbase RPH entry sp0 rdraw) sp0 8 = Some (word_le8 (argcN inp)))
+        by (eapply (read_argc_w RSEGS Sv48 inp mbase RPH entry sp0 brk rdraw); try eassumption; unfold sp_window_hi; lia).
+      rewrite Hr. unfold argcN. rewrite Eav.
       rewrite n_to_le_8_spec. reflexivity.
     - split; [lia|]. split; [lia|].
       unfold adenot. cbn [a_base a_off edenot]. rewrite ke0. unfold v_addi.
-      rewrite (main_entry_rdn_above sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
-      pose proof (read_argv_ptr_w RSEGS RPH sp0 av envv uid hw rdraw Hva Hve ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) 0%nat ltac:(subst av; cbn; lia)) as Hr.
-      unfold wmem in Hr. rewrite w_add_nat in Hr. change (Z.of_nat (8 + 8 * 0)) with 8%Z in Hr.
-      rewrite Hr. rewrite n_to_le_8_spec. reflexivity.
+      rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
+      assert (Hr : rdn RSEGS (wrap_mem inp mbase RPH entry sp0 rdraw) (sp0 + nat_to_word (8 + 8 * 0)) 8
+                   = Some (word_le8 (cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0)))
+        by (eapply (read_argv_ptr_w RSEGS Sv48 inp mbase RPH entry sp0 brk rdraw); try eassumption;
+            first [unfold sp_window_lo; lia | unfold sp_window_hi; lia | rewrite Eav; subst av; cbn; lia]).
+      rewrite w_add_nat in Hr. change (Z.of_nat (8 + 8 * 0)) with 8%Z in Hr.
+      rewrite Hr. rewrite n_to_le_8_spec. unfold p0. rewrite Eav, Eev. reflexivity.
     - split; [lia|]. split; [lia|].
       unfold adenot. cbn [a_base a_off edenot]. rewrite ke0. unfold v_addi.
-      rewrite (main_entry_rdn_above sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
-      pose proof (read_argv_ptr_w RSEGS RPH sp0 av envv uid hw rdraw Hva Hve ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) 1%nat ltac:(subst av; cbn; lia)) as Hr.
-      unfold wmem in Hr. rewrite w_add_nat in Hr. change (Z.of_nat (8 + 8 * 1)) with 16%Z in Hr.
-      rewrite Hr. rewrite n_to_le_8_spec. reflexivity.
+      rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
+      assert (Hr : rdn RSEGS (wrap_mem inp mbase RPH entry sp0 rdraw) (sp0 + nat_to_word (8 + 8 * 1)) 8
+                   = Some (word_le8 (cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 1)))
+        by (eapply (read_argv_ptr_w RSEGS Sv48 inp mbase RPH entry sp0 brk rdraw); try eassumption;
+            first [unfold sp_window_lo; lia | unfold sp_window_hi; lia | rewrite Eav; subst av; cbn; lia]).
+      rewrite w_add_nat in Hr. change (Z.of_nat (8 + 8 * 1)) with 16%Z in Hr.
+      rewrite Hr. rewrite n_to_le_8_spec. unfold p1. rewrite Eav, Eev. reflexivity.
     - split; [lia|]. split; [lia|].
       unfold adenot. cbn [a_base a_off edenot]. rewrite ke0. unfold v_addi.
-      rewrite (main_entry_rdn_above sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
-      pose proof (read_argv_null RSEGS RPH sp0 rdraw av envv uid hw Hva Hve ltac:(unfold sp_window_hi; lia)) as Hr.
-      rewrite w_add_nat in Hr. subst av. change (Z.of_nat (8 + 8 * length [a0s; path])) with 24%Z in Hr.
-      rewrite <- (rdn_wmem_stack RSEGS RPH sp0 [a0s; path] envv uid hw rdraw) in Hr by (try rewrite u_small by lia; lia).
-      unfold wmem in Hr. rewrite n_to_le_8_spec in Hr. exact Hr.
+      rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
+      assert (Hr : rdn RSEGS (stack_to_mem sp0 (entry_stack_image inp mbase RPH entry sp0 rdraw))
+                     (sp0 + nat_to_word (8 + 8 * length (in_argv inp))) 8 = Some (word_le8 (Z_to_bv 64 0)))
+        by (eapply (read_argv_null RSEGS Sv48 inp mbase RPH entry sp0 brk rdraw); try eassumption;
+            first [unfold sp_window_lo; lia | unfold sp_window_hi; lia]).
+      rewrite w_add_nat in Hr. rewrite Eav in Hr. subst av. change (Z.of_nat (8 + 8 * length [a0s; path])) with 24%Z in Hr.
+      rewrite <- (rdn_wrap_stack_above RSEGS inp mbase RPH entry sp0 rdraw) in Hr by (try rewrite u_small by lia; lia). rewrite n_to_le_8_spec in Hr. exact Hr.
   Qed.
 
   Lemma auxvp_eq : auxvp sp0 a0s path envv = Z_to_bv 64 (bv_unsigned sp0 + Z.of_nat (auxv_off av envv)).
-  Proof. unfold auxvp, auxv_w, auxv_off. subst av. cbn [length]. f_equal. lia. Qed.
+  Proof. unfold auxvp, auxv_off. subst av. cbn [length]. f_equal. lia. Qed.
 
   Lemma auxvp_u : bv_unsigned (auxvp sp0 a0s path envv) = (bv_unsigned sp0 + Z.of_nat (auxv_off av envv))%Z
-    /\ (Z.of_nat (auxv_off av envv) + 160 + 16 <= Z.of_nat (length (build_stack_bytes RPH sp0 av envv uid hw rdraw)))%Z.
-  Proof.
+    /\ (Z.of_nat (auxv_off av envv) + 432 + 16 <= Z.of_nat (length (entry_stack_image inp mbase RPH entry sp0 rdraw)))%Z.
+  Proof using All.
     pose proof kp_lo. pose proof kp_hi.
-    pose proof (auxv_off_bound RPH sp0 rdraw av envv uid hw) as Hb.
-    pose proof (lay_bsb_len RPH sp0 rdraw av envv uid hw Hva Hve) as Hl.
-    rewrite auxvp_eq. rewrite u_small by lia. lia.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva). assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    assert (Hb : (auxv_off (in_argv inp) (in_envp inp) + auxv_size (kb_rseq (in_kernel inp)) + 16
+                  <= length (entry_stack_image inp mbase RPH entry sp0 rdraw))%nat)
+      by (eapply auxv_off_bound; first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | exact RSEGS | exact RPH | exact entry | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]).
+    assert (Hs : (432 <= auxv_size (kb_rseq (in_kernel inp)))%nat)
+      by (unfold auxv_size, auxv_count; destruct (kb_rseq (in_kernel inp)); lia).
+    destruct Hve as [Hle _].
+    rewrite Eav, Eev in Hb. rewrite auxvp_eq. unfold auxv_off in *. subst av. cbn [length] in *. rewrite u_small by lia. lia.
   Qed.
 
-  Lemma rnd_u : (bv_unsigned sp0 <= bv_unsigned (rnd sp0 a0s path envv))%Z
-    /\ (bv_unsigned (rnd sp0 a0s path envv) + 16 <= bv_unsigned sp0 + Z.of_nat (length (build_stack_bytes RPH sp0 av envv uid hw rdraw)))%Z
-    /\ (bv_unsigned (rnd sp0 a0s path envv) mod 8 = 0)%Z
+  Lemma rnd_u : (bv_unsigned sp0 <= bv_unsigned (rnd sp0 a0s path envv inp))%Z
+    /\ (bv_unsigned (rnd sp0 a0s path envv inp) + 16 <= bv_unsigned sp0 + Z.of_nat (length (entry_stack_image inp mbase RPH entry sp0 rdraw)))%Z
+    /\ (bv_unsigned (rnd sp0 a0s path envv inp) mod 8 = 0)%Z
     /\ (forall j n, (j + n <= 16)%nat ->
-          rdn RSEGS (stack_to_mem sp0 (entry_stack_image RPH sp0 av envv uid hw rdraw))
-              (Z_to_bv 64 (bv_unsigned (rnd sp0 a0s path envv) + Z.of_nat j)) n = Some (firstn n (skipn j (rnd16 rdraw)))).
-  Proof.
+          rdn RSEGS (stack_to_mem sp0 (entry_stack_image inp mbase RPH entry sp0 rdraw))
+              (Z_to_bv 64 (bv_unsigned (rnd sp0 a0s path envv inp) + Z.of_nat j)) n = Some (firstn n (skipn j (rnd16 rdraw)))).
+  Proof using All.
     pose proof kp_lo as HLO. pose proof kp_hi as HHI.
-    pose proof (lay_bsb_len RPH sp0 rdraw av envv uid hw Hva Hve) as Hl.
-    destruct (rnd_facts RSEGS RPH sp0 rdraw av envv uid hw Hva Hve ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) kp_al)
-      as (A & B & C & D & F).
-    unfold rnd, rnd16. subst av. repeat split; try assumption; try lia.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva). assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    pose proof (rnd_facts RSEGS Sv48 inp mbase RPH entry sp0 brk rdraw) as RF.
+    repeat (specialize (RF ltac:(first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]))).
+    destruct RF as (A & B & C & D & F).
+    unfold rnd, rnd16. try change [a0s; path] with av. rewrite <- Eav, <- Eev. repeat split; try assumption; try lia.
   Qed.
 
-  Lemma auxv_word_at : forall j, (j < 20)%nat ->
-    rdn RSEGS mem (Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat j)) 8
-    = Some (word_to_le_bytes 8 (nth j (auxv_words RPH (rnd sp0 a0s path envv) uid hw) (Z_to_bv 64 0))).
-  Proof.
-    intros j Hj. pose proof kp_lo as HLO. pose proof kp_hi as HHI.
+  (* 08b1429: AT_BASE's value word (pair 16 of [StackLayout.auxv_entries], before the rseq branch)
+     is 0 in every launch *)
+  Lemma auxv_base_zero :
+    rdn RSEGS mem (Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat 33)) 8
+    = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
+  Proof using All.
+    pose proof kp_lo as HLO. pose proof kp_hi as HHI.
     destruct auxvp_u as [Hu Hb]. pose proof bsb_top as Htop.
-    rewrite (main_entry_rdn_above sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
-    pose proof (rdn_wmem_stack RSEGS RPH sp0 av envv uid hw rdraw) as Hw. unfold wmem in Hw.
-    rewrite Hw by (rewrite u_small by lia; lia).
-    replace (Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat j))
-      with (sp0 + nat_to_word (auxv_off av envv + 8 * j)) by (rewrite w_add_nat; f_equal; lia).
-    rewrite (read_auxv_word RSEGS RPH sp0 rdraw av envv uid hw Hva Hve ltac:(unfold sp_window_hi; lia) j Hj).
-    rewrite n_to_le_8_spec. unfold rnd. reflexivity.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva). assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
+    rewrite (rdn_wrap_stack_above RSEGS inp mbase RPH entry sp0 rdraw) by (rewrite u_small by lia; lia).
+    replace (Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat 33))
+      with (sp0 + nat_to_word (auxv_off (in_argv inp) (in_envp inp) + 8 * 33)) by (rewrite w_add_nat; rewrite Eav, Eev; f_equal; lia).
+    erewrite (read_auxv_word RSEGS Sv48 inp mbase RPH entry sp0 brk rdraw);
+      [ | first [ unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | exact RSEGS | exact RPH | exact entry | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)] .. ].
+    rewrite n_to_le_8_spec.
+    unfold auxv_words, auxv_entries. cbn [flat_map app fst snd nth]. reflexivity.
   Qed.
 
-  Ltac kw_auxv j :=
+  (* LPS 727298f3: word [j] of the auxv, anywhere in the vector of this launch's length *)
+  Lemma auxv_word_gen : forall j, (j < 2 * auxv_count (kb_rseq (in_kernel inp)))%nat ->
+    rdn RSEGS mem (Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat j)) 8
+    = Some (word_to_le_bytes 8
+              (nth j (auxv_words (launch_auxv inp sp0 mbase) RPH entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+                        (at_random_ptr sp0 (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))
+                        (at_execfn_ptr (ed_top rdraw) (in_execfn inp)))
+                 (Z_to_bv 64 0))).
+  Proof using All.
+    intros j Hj. pose proof kp_lo as HLO. pose proof kp_hi as HHI.
+    destruct auxvp_u as [Hu _]. pose proof bsb_top as Htop.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva). assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    assert (Hb : (auxv_off (in_argv inp) (in_envp inp) + auxv_size (kb_rseq (in_kernel inp)) + 16
+                  <= length (entry_stack_image inp mbase RPH entry sp0 rdraw))%nat)
+      by (eapply auxv_off_bound; first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | exact RSEGS | exact RPH | exact entry | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]).
+    assert (Hs : (8 * j + 8 <= auxv_size (kb_rseq (in_kernel inp)))%nat) by (unfold auxv_size; lia).
+    rewrite Eav, Eev in Hb.
+    rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
+    rewrite (rdn_wrap_stack_above RSEGS inp mbase RPH entry sp0 rdraw) by (rewrite u_small by lia; lia).
+    replace (Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat j))
+      with (sp0 + nat_to_word (auxv_off (in_argv inp) (in_envp inp) + 8 * j)) by (rewrite w_add_nat; rewrite Eav, Eev; f_equal; lia).
+    erewrite (read_auxv_word RSEGS Sv48 inp mbase RPH entry sp0 brk rdraw);
+      [ | first [ exact Hj | exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | exact RSEGS | exact RPH | exact entry | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)] .. ].
+    rewrite n_to_le_8_spec. reflexivity.
+  Qed.
+
+  (* the 26 pairs before the CONFIG_RSEQ branch *)
+  Lemma auxv_word_at : forall j, (j < 52)%nat ->
+    rdn RSEGS mem (Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat j)) 8
+    = Some (word_to_le_bytes 8
+              (nth j (auxv_words (launch_auxv inp sp0 mbase) RPH entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+                        (at_random_ptr sp0 (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))
+                        (at_execfn_ptr (ed_top rdraw) (in_execfn inp)))
+                 (Z_to_bv 64 0))).
+  Proof using All.
+    intros j Hj. apply auxv_word_gen. unfold auxv_count. destruct (kb_rseq (in_kernel inp)); lia.
+  Qed.
+
+  Ltac kw_auxv :=
     split; [lia|]; split; [lia|];
-    unfold adenot; cbn [a_base a_off edenot]; rewrite ke3; unfold v_addi;
+    unfold adenot; cbn [a_base a_off edenot]; rewrite ?ke3; unfold v_addi;
     lazymatch goal with |- rdn _ _ (Z_to_bv 64 (?u + ?k)) 8 = _ =>
-      replace k with (8 * Z.of_nat j)%Z by reflexivity end;
-    rewrite (auxv_word_at j) by lia; unfold auxv_words; cbn [nth]; try reflexivity.
+      let j := eval vm_compute in (Z.to_nat (k / 8)) in
+      replace k with (8 * Z.of_nat j)%Z by reflexivity;
+      rewrite (auxv_word_at j) by lia end;
+    unfold auxv_words, auxv_entries; cbn [flat_map app fst snd nth];
+    first [ reflexivity | rewrite ?ke4; unfold rnd; match goal with Ha : in_argv inp = _, He : in_envp inp = _ |- _ => rewrite Ha, He end; reflexivity ].
 
   (* [comment removed for export] *)
   Lemma rnd_word_at : forall k, (k < 2)%nat ->
-    rdn RSEGS mem (Z_to_bv 64 (bv_unsigned (rnd sp0 a0s path envv) + 8 * Z.of_nat k)) 8
+    rdn RSEGS mem (Z_to_bv 64 (bv_unsigned (rnd sp0 a0s path envv inp) + 8 * Z.of_nat k)) 8
     = Some (word_to_le_bytes 8 (nth k [rndw0 rdraw; rndw1 rdraw] (Z_to_bv 64 0))).
   Proof.
     intros k Hk. pose proof kp_lo as HLO. pose proof kp_hi as HHI. pose proof bsb_top as Htop.
     destruct rnd_u as (Hr1 & Hr2 & Hr3 & Hr4).
-    rewrite (main_entry_rdn_above sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
-    pose proof (rdn_wmem_stack RSEGS RPH sp0 av envv uid hw rdraw) as Hw. unfold wmem in Hw.
-    rewrite Hw by (rewrite u_small by lia; lia).
+    rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; lia).
+    rewrite (rdn_wrap_stack_above RSEGS inp mbase RPH entry sp0 rdraw) by (rewrite u_small by lia; lia).
     pose proof (len_rnd16 rdraw) as L16.
     replace (8 * Z.of_nat k)%Z with (Z.of_nat (8 * k)) by lia.
     rewrite (Hr4 (8 * k)%nat 8%nat) by lia.
@@ -387,37 +466,59 @@ Section KnowProofs.
   Qed.
 
   Lemma know_auxv : know_ok RSEGS E mem kn_auxv.
-  Proof.
+  Proof using All.
     pose proof kp_lo as Hlo. pose proof kp_hi as Hhi. pose proof kp_al as Hal. pose proof bsb_top as Htop.
     destruct auxvp_u as [Hau Hab]. destruct rnd_u as (Hr1 & Hr2 & Hr3 & Hr4).
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & _).
     unfold kn_auxv, know_ok.
     repeat apply Forall_cons; try apply Forall_nil; cbn [kentry_ok a_base a_off edenot];
       rewrite ?ke0, ?ke3, ?ke4, ?keb2; unfold flat, estart, elenZ; cbn [a_base a_off edenot]; rewrite ?ke0, ?ke3, ?ke4, ?keb2;
       try rewrite Hau; try lia.
-    - (* [comment removed for export] *) split; [lia|].
+    1: { split; [lia|].
       destruct (proj1 (Z.mod_divide (bv_unsigned sp0) 16 ltac:(lia)) Hal) as [q Hq].
       replace (bv_unsigned sp0 + Z.of_nat (auxv_off av envv))%Z with ((2 * q + 5 + Z.of_nat (length envv)) * 8)%Z
         by (unfold auxv_off; subst av; cbn [length]; lia).
-      apply Z_mod_mult.
-    - kw_auxv 0%nat. - kw_auxv 1%nat. - kw_auxv 2%nat. - kw_auxv 3%nat. - kw_auxv 4%nat. - kw_auxv 5%nat.
-    - kw_auxv 6%nat. - kw_auxv 8%nat. - kw_auxv 9%nat. - kw_auxv 10%nat.
-    - kw_auxv 12%nat. - kw_auxv 14%nat. - kw_auxv 15%nat. - kw_auxv 16%nat. - kw_auxv 17%nat.
-    - kw_auxv 18%nat. - kw_auxv 19%nat.
-    - (* [comment removed for export] *)
+      apply Z_mod_mult. }
+    all: lazymatch goal with |- (_ <= _)%nat /\ _ => kw_auxv | _ => idtac end.
+    (* [comment removed for export] *)
       pose proof (len_rnd16 rdraw) as L16.
       rewrite u_small by lia. split; [lia|]. split; [rewrite L16; reflexivity|]. intros i Hi.
-      assert (Hr : rdn RSEGS mem (rnd sp0 a0s path envv) 16 = Some (rnd16 rdraw)).
-      { rewrite (main_entry_rdn_above sp0 av envv uid hw rdraw tid regs mem ME) by lia.
-        pose proof (rdn_wmem_stack RSEGS RPH sp0 av envv uid hw rdraw) as Hw. unfold wmem in Hw.
-        rewrite Hw by lia.
+      assert (Hr : rdn RSEGS mem (rnd sp0 a0s path envv inp) 16 = Some (rnd16 rdraw)).
+      { rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by lia.
+        rewrite (rdn_wrap_stack_above RSEGS inp mbase RPH entry sp0 rdraw) by lia.
         pose proof (Hr4 0%nat 16%nat ltac:(lia)) as H16. rewrite Z.add_0_r, Z_to_bv_bv_unsigned in H16.
         rewrite H16. f_equal; cbn [skipn]; try reflexivity; apply firstn_all2; rewrite L16; lia. }
-      pose proof (rdn_pointwise_inv RSEGS mem 16 (rnd sp0 a0s path envv) _
+      pose proof (rdn_pointwise_inv RSEGS mem 16 (rnd sp0 a0s path envv inp) _
                     ltac:(intros j Hj; apply seg_rom_high; rewrite u_small by lia; lia)
                     ltac:(lia) Hr (Z.to_nat i) ltac:(lia)) as Hp.
       rewrite Z2Nat.id in Hp by lia.
-      replace (bv_unsigned (rnd sp0 a0s path envv) + 0 + i)%Z with (bv_unsigned (rnd sp0 a0s path envv) + i)%Z by lia.
+      replace (bv_unsigned (rnd sp0 a0s path envv inp) + 0 + i)%Z with (bv_unsigned (rnd sp0 a0s path envv inp) + i)%Z by lia.
       exact Hp.
+  Qed.
+
+  (* LPS 727298f3: the words from pair 26 on, in the launch's own CONFIG_RSEQ case *)
+  Lemma main_know_tail : know_ok RSEGS E mem (kn_tail (kb_rseq (in_kernel inp))).
+  Proof using All.
+    pose proof kp_lo as Hlo. pose proof kp_hi as Hhi. pose proof bsb_top as Htop.
+    destruct auxvp_u as [Hau _].
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva). assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    assert (Hb : (auxv_off (in_argv inp) (in_envp inp) + auxv_size (kb_rseq (in_kernel inp)) + 16
+                  <= length (entry_stack_image inp mbase RPH entry sp0 rdraw))%nat)
+      by (eapply auxv_off_bound; first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | exact RSEGS | exact RPH | exact entry | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]).
+    rewrite Eav, Eev in Hb.
+    unfold kn_tail, know_ok.
+    destruct (kb_rseq (in_kernel inp)) eqn:Hr; try rewrite Hr in Hb;
+      first [change (auxv_size true) with 464%nat in Hb | change (auxv_size false) with 432%nat in Hb]; cbn [app];
+    repeat apply Forall_cons; try apply Forall_nil; cbn [kentry_ok a_base a_off edenot];
+      rewrite ?ke0, ?ke3; unfold flat, estart; cbn [a_base a_off edenot]; rewrite ?ke0, ?ke3; try rewrite Hau; try lia.
+    all: split; [lia|]; split; [lia|];
+      unfold adenot; cbn [a_base a_off edenot]; rewrite ?ke3; unfold v_addi;
+      lazymatch goal with |- rdn _ _ (Z_to_bv 64 (?u + ?k)) 8 = _ =>
+        let j := eval vm_compute in (Z.to_nat (k / 8)) in
+        replace k with (8 * Z.of_nat j)%Z by reflexivity;
+        rewrite (auxv_word_gen j) by (rewrite Hr; unfold auxv_count; simpl; lia) end;
+      unfold auxv_words, auxv_entries, launch_auxv; cbn [la_rseq]; rewrite Hr; cbn [flat_map app fst snd nth]; reflexivity.
   Qed.
 
   Lemma wseg_data : wseg_ok RSEGS (Z_to_bv 64 0x31e000) 0x36000 = true.
@@ -450,8 +551,9 @@ Section KnowProofs.
     { unfold D_main_missb in Hb. apply andb_true_iff in Hb as [Hb _]. apply andb_true_iff in Hb as [_ Hb].
       apply Z.leb_le in Hb. exact Hb. }
     cbn [kentry_ok]. split; [lia|]. split; [lia|]. intros i Hi.
-    rewrite (main_entry_mem_data sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia).
-    apply (D_main_none sp0 av envv hw rdraw tid i Hva); [lia | lia |].
+    rewrite (main_entry_mem_data inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia).
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & _).
+    apply (D_main_none inp sp0 rdraw tid i ltac:(rewrite Eav; exact Hva)); [lia | lia |].
     apply (missb_sub lo (Z.to_nat (hi - lo))); [exact Hb | lia | rewrite Z2Nat.id by lia; lia].
   Qed.
 
@@ -462,7 +564,7 @@ Section KnowProofs.
     unfold adenot; cbn [a_base a_off edenot]; unfold v_addi; rewrite u_small by lia; rewrite Z.add_0_l.
   Ltac kw_data L :=
     kw_pre;
-    rewrite (main_entry_rdn_data sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia);
+    rewrite (main_entry_rdn_data inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia);
     rewrite (L RSEGS); try reflexivity.
   Ltac kw_mem L := kw_pre; rewrite (L RSEGS); try reflexivity.
 
@@ -475,13 +577,13 @@ Section KnowProofs.
     pose proof (len_canary8 rdraw) as L8;
     rewrite (u_small 8) by lia; rewrite ?Z.add_0_l;
     split; [lia|]; split; [rewrite L8; reflexivity|]; intros i Hi;
-    rewrite (main_entry_mem_data sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia);
+    rewrite (main_entry_mem_data inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia);
     exact (L i Hi).
 
   (* [comment removed for export] *)
   Ltac kw_peel := kw_pre;
-    rewrite (main_entry_rdn_data sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia);
-    pose proof (u64_range tid); pose proof (u64_range hw);
+    rewrite (main_entry_rdn_data inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia);
+    pose proof (u64_range tid); pose proof (u64_range (in_hwcap inp));
     unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc;
     repeat (rewrite rdn_wbytes_out by (rewrite ?length_N_to_le_bytes, ?len_guard_lo, ?len_guard_hi, ?len_canary8; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; unorm; lia)).
   Ltac kw_cell := kw_peel; apply rdn_wbytes_hit8; unorm; lia.
@@ -489,9 +591,21 @@ Section KnowProofs.
     let H := fresh in pose proof (rdn_wbytes_hit RSEGS (word_to_le_bytes 4 v)) as H;
     rewrite length_N_to_le_bytes in H; apply H; unorm; lia.
 
+  Lemma D_main_auxv_ME : forall segs,
+    rdn segs (D_main inp sp0 rdraw tid) (Z_to_bv 64 0x351d80) 8 = Some (word_to_le_bytes 8 (auxvp sp0 a0s path envv)).
+  Proof using All.
+    intros segs.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & _).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva).
+    assert (Ea : auxvp sp0 a0s path envv = auxv_w inp sp0) by (unfold auxvp, auxv_w; rewrite Eav, Eev; reflexivity).
+    rewrite Ea. eapply D_main_auxv; exact Hva'.
+  Qed.
+
   Lemma know_image : know_ok RSEGS E mem kn_image.
-  Proof.
+  Proof using All.
     pose proof kp_lo as Hlo. pose proof kp_hi as Hhi. pose proof (u64_range tid) as Ht.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & _).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva).
     unfold kn_image, know_ok.
     repeat apply Forall_cons; try apply Forall_nil;
       try kimg;
@@ -503,66 +617,69 @@ Section KnowProofs.
     - (* [comment removed for export] *) kw_cell.
     - (* [comment removed for export] *) kw_cell.
     - (* [comment removed for export] *) kw_cell.
-    - kw_data (D_main_self sp0 av envv hw rdraw tid).
+    - kw_data (D_main_self inp sp0 rdraw tid).
     - (* [comment removed for export] *) kw_cell.
     - (* [comment removed for export] *) kw_cell.
     - (* [comment removed for export] *) kw_cell.
-    - kw_mem (main_entry_tid sp0 av envv uid hw rdraw tid Hlo regs mem ME).
+    - kw_mem (main_entry_tid inp mbase entry sp0 av envv uid hw rdraw tid Hva Hlo Hhi regs mem ME).
     - (* [comment removed for export] *) kw_cell4 (Z_to_bv 64 2).
     - (* [comment removed for export] *) kw_cell.
     - (* [comment removed for export] *) kw_cell.
-    - (* [comment removed for export] *) kblob3 (D_main_canary_at sp0 av envv hw rdraw tid).
+    - (* [comment removed for export] *) kblob3 (D_main_canary_at inp sp0 rdraw tid).
     - (* [comment removed for export] *) kw_cell.
     - (* [comment removed for export] *) kw_cell.
-    - (* [comment removed for export] *) kblob3 (D_main_guard_at sp0 av envv hw rdraw tid).
-    - kw_data (D_main_auxv sp0 av envv hw rdraw tid Hva).
+    - (* [comment removed for export] *) kblob3 (D_main_guard_at inp sp0 rdraw tid).
+    - kw_data (D_main_auxv_ME).
     - (* [comment removed for export] *) kw_cell.
     - (* [comment removed for export] *) kw_cell.
-    - kw_data (D_main_pagesize sp0 av envv hw rdraw tid Hva).
+    - kw_data (D_main_pagesize inp sp0 rdraw tid Hva').
     - (* [comment removed for export] *) kw_peel.
       let H := fresh in pose proof (rdn_wbytes_hit RSEGS [Z_to_bv 8 1]) as H; cbn [length] in H; apply H; unorm; lia.
     - (* [comment removed for export] *) lia.
   Qed.
 
   Theorem main_know_ok : know_ok RSEGS E mem kn_main.
-  Proof.
+  Proof using All.
     unfold kn_main, know_ok.
     apply Forall_app; split; [apply know_stack|].
     apply Forall_app; split; [apply know_auxv | apply know_image].
   Qed.
 
   (* [comment removed for export] *)
-  Lemma argv_str_end_le : forall k, (k < length av)%nat ->
-    (bv_unsigned (cat_argv_ptr sp0 av envv k) + Z.of_nat (length (nth k av [])) + 1
-     <= bv_unsigned sp0 + Z.of_nat (length (build_stack_bytes RPH sp0 av envv uid hw rdraw)))%Z.
-  Proof.
-    intros k Hk. pose proof kp_lo. pose proof kp_hi.
-    rewrite (u_cat_argv_ptr sp0 av envv Hva Hve ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) k Hk).
-    destruct (bsb_byte_k RPH sp0 av envv k uid hw rdraw Hk) as (pre & post & Ebsb & Hpre).
-    rewrite Ebsb. rewrite !length_app. cbn [length]. lia.
-  Qed.
-
-  (* [comment removed for export] *)
   Lemma main_str : forall k, (k < 2)%nat ->
-    rdn RSEGS mem (cat_argv_ptr sp0 av envv k) (length (nth k av []) + 1) = Some (nth k av [] ++ [Z_to_bv 8 0])
-    /\ (bv_unsigned sp0 <= bv_unsigned (cat_argv_ptr sp0 av envv k))%Z
-    /\ (bv_unsigned (cat_argv_ptr sp0 av envv k) <= bv_unsigned sp0 + 2107576)%Z
+    rdn RSEGS mem (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k) (length (nth k av []) + 1) = Some (nth k av [] ++ [Z_to_bv 8 0])
+    /\ (bv_unsigned sp0 <= bv_unsigned (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k))%Z
+    /\ (bv_unsigned (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k) <= bv_unsigned sp0 + 2107576)%Z
     /\ (Z.of_nat (length (nth k av [])) <= 131071)%Z
-    /\ (bv_unsigned (cat_argv_ptr sp0 av envv k) + Z.of_nat (length (nth k av [])) + 1 <= 0x800000000000)%Z.
-  Proof.
+    /\ (bv_unsigned (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k) + Z.of_nat (length (nth k av [])) + 1 <= 0x800000000000)%Z.
+  Proof using All.
     intros k Hk. pose proof kp_lo as Hlo. pose proof kp_hi as Hhi. pose proof bsb_top as Htop.
-    pose proof (lay_bsb_nw RPH sp0 rdraw av envv uid hw Hva Hve ltac:(unfold sp_window_hi; lia)) as Hnw.
-    assert (Hk' : (k < length av)%nat) by (subst av; cbn; lia).
-    destruct (argv_ptr_bounds_at sp0 av envv Hva Hve ltac:(unfold sp_window_hi; lia) k Hk') as [B1 B2].
-    pose proof (u_cat_argv_ptr sp0 av envv Hva Hve ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) k Hk') as Hu.
-    pose proof (struct_av_bound av envv Hva Hve) as Hsb.
-    pose proof (total_arg_bytes_firstn_le k av) as Hf.
-    pose proof (argv_str_len av Hva k Hk') as Hlen.
-    pose proof (argv_str_end_le k Hk') as Hend.
+    destruct (main_entry_inp inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) as (Eav & Eev & Euid & Ehw & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva). assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    assert (Ec : cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k
+                 = cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) k) by (rewrite Eav, Eev; reflexivity).
+    assert (El : nth k av [] = nth k (in_argv inp) []) by (rewrite Eav; reflexivity).
+    rewrite Ec, El.
+    assert (Hk' : (k < length (in_argv inp))%nat) by (rewrite Eav; subst av; cbn; lia).
+    destruct (SeqExec.argv_ptr_bounds Sv48 inp mbase sp0 brk rdraw k Hlau Hk') as [B1 B2].
+    assert (Hu : bv_unsigned (cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) k)
+                 = (bv_unsigned sp0
+                    + Z.of_nat (cat_string_off (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw)
+                                  (in_argv inp) (in_envp inp) (in_execfn inp)
+                                + total_arg_bytes_nat (firstn k (in_argv inp))))%Z)
+      by (eapply u_cat_argv_ptr; first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | exact RSEGS | exact RPH | exact entry | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]).
+    assert (Hsb : (cat_string_off (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp)
+                    + total_arg_bytes_nat (in_argv inp) + total_arg_bytes_nat (in_envp inp)
+                    <= length (entry_stack_image inp mbase RPH entry sp0 rdraw))%nat)
+      by (eapply struct_av_bound; first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | exact RSEGS | exact RPH | exact entry | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]).
+    assert (Hl : (Z.of_nat (length (entry_stack_image inp mbase RPH entry sp0 rdraw)) <= 2101782)%Z)
+      by (eapply lay_bsb_len; first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact kp_al | exact RSEGS | exact RPH | exact entry | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]).
+    pose proof (total_arg_bytes_firstn_within (in_argv inp) k Hk') as Hw.
+    pose proof (valid_argv_str_len (in_argv inp) k Hva' Hk') as Hlen.
     repeat split.
-    - rewrite (main_entry_rdn_above sp0 av envv uid hw rdraw tid regs mem ME) by lia.
-      pose proof (rdn_wmem_stack RSEGS RPH sp0 av envv uid hw rdraw) as Hw. unfold wmem in Hw. rewrite Hw by lia.
-      apply read_argv_cstr_k; [exact Hk' | exact Hnw].
+    - rewrite (main_entry_rdn_above inp mbase entry sp0 av envv uid hw rdraw tid regs mem ME) by lia.
+      rewrite (rdn_wrap_stack_above RSEGS inp mbase RPH entry sp0 rdraw) by lia.
+      exact (read_argv_cstr_k Sv48 RSEGS inp mbase RPH entry sp0 brk rdraw k Hlau Hk').
     - exact B1.
     - lia.
     - exact Hlen.
@@ -571,24 +688,19 @@ Section KnowProofs.
   (* [comment removed for export] *)
   Lemma main_entry_hi : exists s : Z,
     (bv_unsigned sp0 + 192 <= s < 2 ^ 47 - 32)%Z /\ (s mod 8 = 0)%Z /\ mem (Z_to_bv 64 s) = Some (Z_to_bv 8 0).
-  Proof.
+  Proof using All.
     pose proof kp_lo as Hlo. pose proof kp_hi as Hhi. pose proof kp_al as Hal. pose proof bsb_top as Htop.
     destruct auxvp_u as [Hau Hab].
     assert (Hoff : Z.of_nat (auxv_off av envv) = (40 + 8 * Z.of_nat (length envv))%Z) by (unfold auxv_off; subst av; cbn [length]; lia).
-    assert (Hfit : (bv_unsigned sp0 + 192 + 8 * Z.of_nat (length envv) + 33 <= 2 ^ 47)%Z).
-    { unfold entry_stack_fits, entry_stack_span, sp_window_hi, StackLayout.auxv_size in Hfits. subst av.
-      assert (Ht : total_arg_bytes [a0s; path] = (Z.of_nat (length a0s) + 1 + (Z.of_nat (length path) + 1 + 0))%Z) by reflexivity.
-      rewrite Ht in Hfits. cbn [length] in Hfits.
-      pose proof (total_arg_bytes_nonneg envv). lia. }
-    pose proof (auxv_word_at 19%nat ltac:(lia)) as Hw.
-    change (nth 19 (auxv_words RPH (rnd sp0 a0s path envv) uid hw) (Z_to_bv 64 0)) with (Z_to_bv 64 0) in Hw.
-    set (a := Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat 19)) in Hw.
-    assert (Ua : bv_unsigned a = (bv_unsigned sp0 + 192 + 8 * Z.of_nat (length envv))%Z) by (unfold a; rewrite u_small by lia; lia).
+    (* 08b1429: the zero word is AT_BASE's value, 264 bytes into the auxv (pair 16, before the rseq branch) *)
+    pose proof auxv_base_zero as Hw.
+    set (a := Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat 33)) in Hw.
+    assert (Ua : bv_unsigned a = (bv_unsigned sp0 + 304 + 8 * Z.of_nat (length envv))%Z) by (unfold a; rewrite u_small by lia; lia).
     pose proof (rdn_pointwise_inv RSEGS mem 8 a _
                   ltac:(intros j Hj; apply seg_rom_high; rewrite u_small by lia; lia) ltac:(lia) Hw 0%nat ltac:(lia)) as Hp.
     exists (bv_unsigned a). rewrite Ua. split; [lia|]. split.
     - destruct (proj1 (Z.mod_divide (bv_unsigned sp0) 16 ltac:(lia)) Hal) as [q Hq].
-      replace (bv_unsigned sp0 + 192 + 8 * Z.of_nat (length envv))%Z with ((2 * q + 24 + Z.of_nat (length envv)) * 8)%Z by lia.
+      replace (bv_unsigned sp0 + 304 + 8 * Z.of_nat (length envv))%Z with ((2 * q + 38 + Z.of_nat (length envv)) * 8)%Z by lia.
       apply Z_mod_mult.
     - rewrite <- Ua. replace (bv_unsigned a) with (bv_unsigned a + Z.of_nat 0)%Z by (cbn; lia). rewrite Hp. reflexivity.
   Qed.

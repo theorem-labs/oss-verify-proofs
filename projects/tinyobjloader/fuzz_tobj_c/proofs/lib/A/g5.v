@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the apartness of the argument region from the main entry's objects over the new argument layout, its strings ending at the exec file name's address, launch variable 13, and the main entry's auxv object at the joined start-up exit's 432 bytes; main's argument objects at the hand-off ending nine bytes past that address, vENDL; written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -243,10 +244,18 @@ Proof.
   - exists (obj_subst [(i, SLit z)] o). split; [apply in_map; exact Hin|]. rewrite (E o). exact Hr.
 Qed.
 
-Lemma rng_aux : ltac2:(tb__ "0|4|
-SbS2bS7A1S21Q40M0A1S4fR3A1S49R4R2A2S8S5S3aS5S3aS5S3aS4P1A1S5S3bS4P2A1S3Z3A1M1A3A3S5S3bS4P3A1G1A3A3S3Z18A1A3S3Z0A1S3Za0A1R4ScA5S2S25S23S1aS31S0S0S9R6R1A2M2A3S20G0R4A2M3A2S1bG3S33S0S0G2A3A2A2A1To;F_;F_;Fa;Fcs;Frho;").
+(* LPS 727298f3: the main entry's auxv object is the joined start-up exit's (A/Start7States.v [K18]:
+   the launch's auxv split at 432 bytes, the CONFIG_RSEQ tail dropped); was 160 bytes.  Written as
+   plain text. *)
+Lemma rng_aux : forall (rho : valuation) (cs : list cell) (a : bv 64),
+  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e3.StartArgF.arg_layout rho ->
+  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e2.StartALib.ARGF rho a ->
+  let o : sobj := mkObj (SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_ADD (SVar 1%positive) (SAlu ALU_SLL (SVar 2%positive) (SLit 3)))
+                                                 (SAlu ALU_SLL (SVar 3%positive) (SLit 3))) (SLit 24))
+                        (SLit 0) (SLit 432) cs DUnknown in
+  ~ (fst (obj_range rho o) <= bv_unsigned a /\ bv_unsigned a < snd (obj_range rho o)).
 Proof.
-  intros rho cs a HAL Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4). pose proof Ha as [HaLo HaHi]. cbv zeta.
+  intros rho cs a HAL Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4 & A6 & A7 & A8). pose proof Ha as [HaLo HaHi]. cbv zeta.
   unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi fst snd eval]. rewrite !soff_lit_small by lia.
   pose proof (urange (rw rho 1%positive)) as U1. pose proof (urange (rw rho 2%positive)) as U2. pose proof (urange (rw rho 3%positive)) as U3. pose proof (urange (rw rho 5%positive)) as U5.
   assert (S2 : bv_unsigned (alu64 ALU_SLL (rw rho 2%positive) (Z_to_bv 64 3)) = 8 * bv_unsigned (rw rho 2%positive)) by (apply U_sll3; lia).
@@ -296,8 +305,11 @@ S4cS17S16Vrho;A1S18VS;A1A3").
 Hypothesis H1 : ltac2:(tb__ "0|1|
 S23S1aZ7fff80000000S20Q40SaVrho;P1A2A2M0A2S1aG0S1eZ2Z2fA2A2A2").
 Hypothesis HAL : arg_layout rho.
-Hypothesis H6 : ltac2:(tb__ "0|2|
-S23S1aS1cS1cS20Q40M0SaVrho;P4A2A2S20G0SaVrho;P5A2A2A2Z1A2S20G0SaVrho;P6A2A2M1A2S1aS1cG1Z10A2S1eZ2Z2fA2A2A2").
+(* LPS 727298f3: argv[0]'s string ends at or below the exec file name's address (launch variable 13),
+   nine bytes or more below the stack's end (was: below the random bytes at variable 6, which now
+   lie below argv[0]).  Written as plain text. *)
+Hypothesis H6 : bv_unsigned (rw rho 4%positive) + bv_unsigned (rw rho 5%positive) + 1 <= bv_unsigned (rw rho 13%positive)
+  /\ bv_unsigned (rw rho 13%positive) + 9 <= 2 ^ 47.
 
 Variable qlo : Z.
 Hypothesis Hqlo : 0x800bd000 <= qlo <= kHighMemBeg.
@@ -355,8 +367,11 @@ Proof. clear. subst L. destruct v; vm_compute; eexists; reflexivity. Qed.
 Lemma nth17 : ltac2:(tb__ "0|2|
 S24S2aS2A1S3cS2VL;U11A3S2eS2S8S5S3aS5S3aS4P1M0A1S5S3bS4P2A1S3Z3A1M1A3A3S3Z10A1A3S3Z0A1S5S3aS5S3bS4P3A1G1A3S3Z8A1A3S36S7A1S10G0A1A5A2A3").
 Proof. clear. subst L. destruct v; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma nth18 : ltac2:(tb__ "0|2|
-S26S2bS7A1M0G0S24S2aS2A1S3cS2VL;U12A3S2eS2S8S5S3aS5S3aS5S3aS4P1A1S5S3bS4P2A1S3Z3A1M1A3A3S5S3bS4P3A1G1A3A3S3Z18A1A3S3Z0A1S3Za0A1R1ScA5A2A3Lcs;A2").
+(* LPS 727298f3: the auxv object is the joined start-up exit's, 432 bytes (was 160).  Written as plain text. *)
+Lemma nth18 : exists cs : list cell,
+  nth_error L 18%nat = Some (mkObj (SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_ADD (SVar 1%positive) (SAlu ALU_SLL (SVar 2%positive) (SLit 3)))
+                                                           (SAlu ALU_SLL (SVar 3%positive) (SLit 3))) (SLit 24))
+                                   (SLit 0) (SLit 432) cs DUnknown).
 Proof. clear. subst L. destruct v; vm_compute; eexists; reflexivity. Qed.
 Lemma nth19 : ltac2:(tb__ "0|0|
 S24S2aS2A1S3cS2VL;U13A3S2eS2S8S4P4A1S3Z0A1S5S3aS4P5A1S3Z1A1A3S36S7A1S10P2A1A5A2A3").
@@ -374,7 +389,7 @@ Proof. clear. subst L. destruct v; vm_compute; eexists; reflexivity. Qed.
 Lemma main_apart_argf : ltac2:(tb__ "0|0|
 S21Q40A1S49Vrho;R1A2S25S41Vrho;VL;R2A3A1F_;Fa;").
 Proof.
-  intros a Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4). pose proof Ha as [HaLo HaHi]. pose proof (urange a) as Ua.
+  intros a Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4 & A6 & A7 & A8). pose proof Ha as [HaLo HaHi]. pose proof (urange a) as Ua.
   assert (HX1 : ARG_LIM <= bv_unsigned a) by (unfold ARG_LIM; lia).
   apply (objs_far_except_sound rho GMe skipA L a apart_argf_b HX1).
   { intros e sz He. apply (HGargf e sz He). pose proof (urange (rw rho 2%positive)). pose proof (urange (rw rho 3%positive)). pose proof (urange (rw rho 5%positive)). destruct H6 as [H6a H6b]. destruct HaHi; lia. }
@@ -422,7 +437,10 @@ S0S7ScSdA2M0S1ScSdP2SeZ2A1A4S2G0A1A3").
 
 Definition vA1L : sv := ltac2:(tb__ "0|0|
 S11S26S11S26S10P4A1S10P5A1A3SeZ1A1A3").
-Definition vENDL : sv := SAlu ALU_ADD (SVar 6) (SLit 16).
+(* LPS 727298f3: main's argument objects end nine bytes past the exec file name's address (launch
+   variable 13: the name's bytes or its NUL, then the 8-byte slot; StartArgBytes.v [END9]); was the
+   random bytes' end, the old image end. *)
+Definition vENDL : sv := SAlu ALU_ADD (SVar 13) (SLit 9).
 Definition vL3L : sv := SAlu ALU_SUB vENDL vA1L.
 Definition vL2L : sv := SAlu ALU_SUB vENDL (SVar 4).
 Definition vALL : sv := SAlu ALU_SUB vENDL (SVar 1).

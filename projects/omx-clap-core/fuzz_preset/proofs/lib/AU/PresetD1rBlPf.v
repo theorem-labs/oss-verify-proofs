@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset (asan-ubsan image B), the PROOFS of the three link statements of
    lib/AU/PresetD1rBl.v at the program interface's frame names (lib/AU/PresetCfnB.v section 5): ablocks_cf,
    afn_pre_cf and ajournal_cf are ABBREVIATIONS of a Theorem Labs lane's lib/Reusable/YCbqG.v forms (the journal of record,
@@ -33,8 +34,8 @@ Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 
 (* The seven ledger cells of the journal's PST are PresetCfnB.v's ledger_img (both name the generated PrhImg of image B',
-   whose fields are computed here). #102: the kit's prh_pst (PRH_Base.v:448-451, f97c8b2f046b) gains g_most and
-   g_own_ran_out, and the interface's ledger_img (PresetCfnB.v:306-309) gains the same two cells. *)
+   whose fields are computed here). #102: the kit's prh_pst (PRH_Base.v:448-451) gains g_most and
+   g_own_ran_out, and the interface's ledger_img (PresetCfnB.v:307-310) gains the same two cells. *)
 Lemma prh_pst_ledger_img_B : forall a, Exists (in_zr a) (@PRH_Base.prh_pst PCB.preset_prh_img) -> PCB.ledger_img a.
 Proof.
 intros a Hx. apply Exists_exists in Hx as ([lo n] & Hin & Hz). unfold in_zr in Hz. cbn [fst snd] in Hz.

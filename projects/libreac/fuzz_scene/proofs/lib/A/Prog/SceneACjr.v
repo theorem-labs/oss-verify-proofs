@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the generic part of proofs/cgif/cgif_file_fuzzer/lib/A/ACjr.v (equal, after the mapping, to the generic part of lib/YC4c.v) for libreac/fuzz_scene's program walk, over fuzz_scene's listing; mres_range states fuzz_scene.asan's image end 0x5f9000 (6262784) in place of cgif's 0x5fb000; cgif's PC_INIT, lzw_MR, lzw_tabs and the kept_ctx/kept_ctx_m tactics of cgif's 72-byte LZW context block are left out; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantACjr.v (a working branch acae397d926) for libreac/fuzz_scene's program walk; the module path and the listing's names changed. mres_range states fuzz_scene.asan (sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026)'s image end 0x5f9000 (6262784). *)
+(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantACjr.v (a working branch) for libreac/fuzz_scene's program walk; the module path and the listing's names changed. mres_range states fuzz_scene.asan (sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026)'s image end 0x5f9000 (6262784). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: al_add_growA, al_add_storeA, array_list_add_A_cps and array_list_shrink_A_cps take it after alloc_ceiling <= lo, and the calls of al_add_storeA and al_add_growA discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -61,7 +62,7 @@ al_tail asegs m r size' (length ps) junk ->
 Z.of_nat (length ps) + 1 <= size' -> (1 <= size' /\ 8 * size' < 2^64) ->
 ((size' = size /\ r = arr /\ Z.of_nat (length ps) + 1 < size /\ bB B0 <= bB B) \/ (size' = 2 * size /\ size <= Z.of_nat (length ps) + 1 /\ bB B0 - al_add_costB <= bB B)) ->
 0 <= d < 2^64 ->
-stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -96 ->
+stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -96 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 add_frameA m ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -76,7 +77,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (a / 8 + 2147450882)) x25 x26 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0xa0924) fc None m (seg_rom asegs)).
 Proof.
-intros until errv. intros HP HDR ARR JK ROOM Hsz CASES Hd ST LO LOS SPA HT FR ERR RA VM0 HPR BD K.
+intros until errv. intros HP HDR ARR JK ROOM Hsz CASES Hd ST LO HBT LOS SPA HT FR ERR RA VM0 HPR BD K.
 unfold al_hdr in HDR. unfold al_tail in JK. unfold add_frameA in FR.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -155,7 +156,7 @@ u64arr asegs m arr (wl ps) ->
 al_tail asegs m arr size (length ps) junk ->
 Z.of_nat (length ps) <= size -> (1 <= size /\ 8 * size < 2^64) -> size <= Z.of_nat (length ps) + 1 -> Z.of_nat (length ps) + 1 < 2^28 ->
 0 <= d < 2^64 ->
-stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -96 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 add_frameA m ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -170,7 +171,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (a / 8 + 2147450882)) s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0xa08b4) fc None m (seg_rom asegs)).
 Proof.
-intros until errv. intros HP HDR ARR JK Hlen Hsz GROWS Hlen28 Hd ST LO LOS SPA HT FR ERR RA VM0 HPR BB BD K.
+intros until errv. intros HP HDR ARR JK Hlen Hsz GROWS Hlen28 Hd ST LO HBT LOS SPA HT FR ERR RA VM0 HPR BB BD K.
 unfold al_hdr in HDR. unfold add_frameA in FR.
 unfold_consts. unfold al_add_costB in BB. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -280,7 +281,7 @@ replace (size * 2) with (2 * size) in * by lia.
 match goal with |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
 evt_done5.
 eapply (al_add_storeA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m3 md2 A2 _ r (2 * size) (junk ++ junk') e2);
-first [exact ST2 | exact SPA | exact HT | exact RA | exact K | idtac].
+first [exact ST2 | exact SPA | first [assumption | lia] | exact HT | exact RA | exact K | idtac].
 all: lazymatch goal with
 | |- HEAPA _ _ _ _ _ _ _ _ _ =>
 eapply (heapA_client_frame A4L HIx); [exact HP2' | eapply (frame_writes_okA A4L HIx _ _ _ _ _ _ _ _ _ HP2' MU); solve_frameW_withA HP2' | exact WM | exact MI]
@@ -305,7 +306,7 @@ forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (A : ASA A4L HIx) (
 HEAPAx A ((a, AL_SZ) :: (arr, 8 * size) :: LB) LM FRS B0 m0 md0 ->
 alist asegs A4F m0 [(a, AL_SZ); (arr, 8 * size)] a ps -> Z.of_nat (length ps) + 1 < 2^28 ->
 0 <= d < 2^64 ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] ->
 bv_unsigned ra mod 2 = 0 ->
@@ -316,7 +317,7 @@ AJ5 A4L HIx A T md0
 (MS (mkR ra sp gp (Z_to_bv 64 A_TP) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 array_list_add_A_entry) fc None m0 (seg_rom asegs)).
 Proof.
-intros until errv. intros HP AL Hlen28 Hd ST LO LOS SPA HT ERR RA A0 A1 BB BD K.
+intros until errv. intros HP AL Hlen28 Hd ST LO HBT LOS SPA HT ERR RA A0 A1 BB BD K.
 destruct (alist_openx asegs A4F m0 a arr size ps AL) as (junk & HDR & ARR & JK & Hlen & Hsz).
 unfold al_hdr in HDR.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO, array_list_add_A_entry in *. word_range sp SPR.
@@ -359,7 +360,7 @@ destruct (Z.lt_ge_cases (Z.of_nat (length ps) + 1) size) as [LT|GE].
 if_truex.
 evt_done5.
 eapply (al_add_storeA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m1 md0 A B0 arr size junk errv);
-first [exact HP1 | exact ARR | exact JK | exact ST | exact SPA | exact HT | exact RA | exact K | exact HPR1
+first [exact HP1 | exact ARR | exact JK | exact ST | exact SPA | first [assumption | lia] | exact HT | exact RA | exact K | exact HPR1
 | apply model_vm_only_refl | idtac].
 all: lazymatch goal with
 | |- al_hdr _ _ _ _ _ _ _ => unfold al_hdr; assumption
@@ -374,7 +375,7 @@ specialize (BB GE).
 if_falsex.
 evt_done5.
 eapply (al_add_growA _ _ _ _ _ _ _ _ _ _ _ _ m1 md0 A junk errv);
-first [exact HP1 | exact ARR | exact JK | exact ST | exact SPA | exact HT | exact RA | exact K | exact HPR1
+first [exact HP1 | exact ARR | exact JK | exact ST | exact SPA | first [assumption | lia] | exact HT | exact RA | exact K | exact HPR1
 | apply model_vm_only_refl | idtac].
 all: lazymatch goal with
 | |- al_hdr _ _ _ _ _ _ _ => unfold al_hdr; assumption
@@ -550,7 +551,7 @@ Lemma array_list_shrink_A_cps :
 forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (A : ASA A4L HIx) (errv : word),
 HEAPAx A ((a, AL_SZ) :: (arr, 8 * size) :: LB) LM FRS B0 m0 md0 ->
 alist asegs A4F m0 [(a, AL_SZ); (arr, 8 * size)] a ps -> Z.of_nat (length ps) < 2^28 ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 48 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 48 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] ->
 bv_unsigned ra mod 2 = 0 ->
@@ -561,7 +562,7 @@ AJ5 A4L HIx A T md0
 (MS (mkR ra sp gp (Z_to_bv 64 A_TP) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 array_list_shrink_A_entry) fc None m0 (seg_rom asegs)).
 Proof.
-intros until errv. intros HP AL Hlen28 ST LO LOS SPA HT ERR RA A0 A1 BB BD K.
+intros until errv. intros HP AL Hlen28 ST LO HBT LOS SPA HT ERR RA A0 A1 BB BD K.
 destruct (alist_openx asegs A4F m0 a arr size ps AL) as (junk & HDR & ARR & JK & Hlen & Hsz).
 unfold al_hdr in HDR.
 unfold_consts. unfold al_shrink_costB in BB. unfold A_SB, A_TP, A_ERRNO, array_list_shrink_A_entry in *. word_range sp SPR.
@@ -920,7 +921,7 @@ al_tail asegs m r size' (length ps) junk ->
 Z.of_nat (length ps) + 1 <= size' -> (1 <= size' /\ 8 * size' < 2^64) ->
 ((size' = size /\ r = arr /\ Z.of_nat (length ps) + 1 < size /\ bB B0 <= bB B) \/ (size' = 2 * size /\ size <= Z.of_nat (length ps) + 1 /\ bB B0 - al_add_costB <= bB B)) ->
 0 <= d < 2^64 ->
-stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -96 ->
+stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -96 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 add_frameA m ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -935,7 +936,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (a / 8 + 2147450882)) x25 x26 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0xa28d8) fc None m (seg_rom asegs)).
 Proof.
-intros until errv. intros HP HDR ARR JK ROOM Hsz CASES Hd ST LO LOS SPA HT FR ERR RA VM0 HPR BD K.
+intros until errv. intros HP HDR ARR JK ROOM Hsz CASES Hd ST LO HBT LOS SPA HT FR ERR RA VM0 HPR BD K.
 unfold al_hdr in HDR. unfold al_tail in JK. unfold add_frameA in FR.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -1014,7 +1015,7 @@ u64arr asegs m arr (wl ps) ->
 al_tail asegs m arr size (length ps) junk ->
 Z.of_nat (length ps) <= size -> (1 <= size /\ 8 * size < 2^64) -> size <= Z.of_nat (length ps) + 1 -> Z.of_nat (length ps) + 1 < 2^28 ->
 0 <= d < 2^64 ->
-stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -96 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 add_frameA m ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -1029,7 +1030,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (a / 8 + 2147450882)) s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0xa2868) fc None m (seg_rom asegs)).
 Proof.
-intros until errv. intros HP HDR ARR JK Hlen Hsz GROWS Hlen28 Hd ST LO LOS SPA HT FR ERR RA VM0 HPR BB BD K.
+intros until errv. intros HP HDR ARR JK Hlen Hsz GROWS Hlen28 Hd ST LO HBT LOS SPA HT FR ERR RA VM0 HPR BB BD K.
 unfold al_hdr in HDR. unfold add_frameA in FR.
 unfold_consts. unfold al_add_costB in BB. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -1139,7 +1140,7 @@ replace (size * 2) with (2 * size) in * by lia.
 match goal with |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
 evt_done5.
 eapply (al_add_storeA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m3 md2 A2 _ r (2 * size) (junk ++ junk') e2);
-first [exact ST2 | exact SPA | exact HT | exact RA | exact K | idtac].
+first [exact ST2 | exact SPA | first [assumption | lia] | exact HT | exact RA | exact K | idtac].
 all: lazymatch goal with
 | |- HEAPA _ _ _ _ _ _ _ _ _ =>
 eapply (heapA_client_frame A4L HIx); [exact HP2' | eapply (frame_writes_okA A4L HIx _ _ _ _ _ _ _ _ _ HP2' MU); solve_frameW_withA HP2' | exact WM | exact MI]
@@ -1164,7 +1165,7 @@ forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (A : ASA A4L HIx) (
 HEAPAx A ((a, AL_SZ) :: (arr, 8 * size) :: LB) LM FRS B0 m0 md0 ->
 alist asegs A4F m0 [(a, AL_SZ); (arr, 8 * size)] a ps -> Z.of_nat (length ps) + 1 < 2^28 ->
 0 <= d < 2^64 ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] ->
 bv_unsigned ra mod 2 = 0 ->
@@ -1175,7 +1176,7 @@ AJ5 A4L HIx A T md0
 (MS (mkR ra sp gp (Z_to_bv 64 A_TP) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 array_list_add_A_entry) fc None m0 (seg_rom asegs)).
 Proof.
-intros until errv. intros HP AL Hlen28 Hd ST LO LOS SPA HT ERR RA A0 A1 BB BD K.
+intros until errv. intros HP AL Hlen28 Hd ST LO HBT LOS SPA HT ERR RA A0 A1 BB BD K.
 destruct (alist_openx asegs A4F m0 a arr size ps AL) as (junk & HDR & ARR & JK & Hlen & Hsz).
 unfold al_hdr in HDR.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO, array_list_add_A_entry in *. word_range sp SPR.
@@ -1218,7 +1219,7 @@ destruct (Z.lt_ge_cases (Z.of_nat (length ps) + 1) size) as [LT|GE].
 if_truex.
 evt_done5.
 eapply (al_add_storeA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m1 md0 A B0 arr size junk errv);
-first [exact HP1 | exact ARR | exact JK | exact ST | exact SPA | exact HT | exact RA | exact K | exact HPR1
+first [exact HP1 | exact ARR | exact JK | exact ST | exact SPA | first [assumption | lia] | exact HT | exact RA | exact K | exact HPR1
 | apply model_vm_only_refl | idtac].
 all: lazymatch goal with
 | |- al_hdr _ _ _ _ _ _ _ => unfold al_hdr; assumption
@@ -1233,7 +1234,7 @@ specialize (BB GE).
 if_falsex.
 evt_done5.
 eapply (al_add_growA _ _ _ _ _ _ _ _ _ _ _ _ m1 md0 A junk errv);
-first [exact HP1 | exact ARR | exact JK | exact ST | exact SPA | exact HT | exact RA | exact K | exact HPR1
+first [exact HP1 | exact ARR | exact JK | exact ST | exact SPA | first [assumption | lia] | exact HT | exact RA | exact K | exact HPR1
 | apply model_vm_only_refl | idtac].
 all: lazymatch goal with
 | |- al_hdr _ _ _ _ _ _ _ => unfold al_hdr; assumption
@@ -1291,7 +1292,7 @@ Lemma array_list_shrink_A_cps :
 forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (A : ASA A4L HIx) (errv : word),
 HEAPAx A ((a, AL_SZ) :: (arr, 8 * size) :: LB) LM FRS B0 m0 md0 ->
 alist asegs A4F m0 [(a, AL_SZ); (arr, 8 * size)] a ps -> Z.of_nat (length ps) < 2^28 ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 48 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 48 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] ->
 bv_unsigned ra mod 2 = 0 ->
@@ -1302,7 +1303,7 @@ AJ5 A4L HIx A T md0
 (MS (mkR ra sp gp (Z_to_bv 64 A_TP) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 array_list_shrink_A_entry) fc None m0 (seg_rom asegs)).
 Proof.
-intros until errv. intros HP AL Hlen28 ST LO LOS SPA HT ERR RA A0 A1 BB BD K.
+intros until errv. intros HP AL Hlen28 ST LO HBT LOS SPA HT ERR RA A0 A1 BB BD K.
 destruct (alist_openx asegs A4F m0 a arr size ps AL) as (junk & HDR & ARR & JK & Hlen & Hsz).
 unfold al_hdr in HDR.
 unfold_consts. unfold al_shrink_costB in BB. unfold A_SB, A_TP, A_ERRNO, array_list_shrink_A_entry in *. word_range sp SPR.

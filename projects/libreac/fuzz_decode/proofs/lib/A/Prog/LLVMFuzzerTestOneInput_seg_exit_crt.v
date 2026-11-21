@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry segment of the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput, with proof steps adapted from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlStampHeadamp.v (pb_reac_ctrl_stamp_headamp's prologue and its class-0 stack malloc, a working branch), proofs/libreac/fuzz_grant/lib/A/Prog/GrantACja.v (land_m32, denot_and_m32, sp1_facts), proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v (val_mem_of_rd32, rdword_of_val_mem, val_mem_moved), lib/Reusable/YCbq.v (call_effect_journal) and lib/A/Prog/YC85.v (aj_stack_malloc_atS); module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_entry.v, with its module names changed; 406 of its 502 lines of code are new or changed and 485 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_exit_crt: the piece ex_crt_stmt of the exit segment of the image-A walk of
    libreac/fuzz_decode's LLVMFuzzerTestOneInput (lib/A/Prog/LLVMFuzzerTestOneInput_seg_exit_cuts.v).
 
@@ -18,8 +19,8 @@
    (or [] when sp0 is within 16 bytes of the stack top); the room facts from dec_a_base; the meter from mo_ok at
    dec_rest_86c. The post: acall_kept with no written range keeps every byte the next pieces read.
 
-   Proof steps follow lib/A/Prog/LLVMFuzzerTestOneInput_seg_entry.v (a Theorem Labs lane's, 4d4ce59e5f2: the entry sstate, reg_at,
-   garr8_kept / rdword_kept, the call and the dec_a_core build) and libreac/fuzz_boxreg's ReadName.v (1d92330b7ad). *)
+   Proof steps follow lib/A/Prog/LLVMFuzzerTestOneInput_seg_entry.v (a Theorem Labs lane: the entry sstate, reg_at,
+   garr8_kept / rdword_kept, the call and the dec_a_core build) and libreac/fuzz_boxreg's ReadName.v. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

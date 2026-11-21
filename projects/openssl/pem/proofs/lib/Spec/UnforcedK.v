@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's vDSO draw and reservation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -59,6 +60,29 @@ Proof.
   rewrite IH. destruct (negb (iv_overlap lo n a s)); reflexivity.
 Qed.
 
+(* At the revision the vDSO/vvar pair is reserved just below [vdso_top]
+   (<= [alloc_top]), inside the window the gap search scans; [KL] bounds it
+   ([kl_resv_top]: at most two entries, at most 20 pages), so it costs the
+   search a bounded weight. *)
+Lemma gap_weight_app : forall nZ l1 l2, gap_weight nZ (l1 ++ l2) = gap_weight nZ l1 + gap_weight nZ l2.
+Proof. intros nZ l1 l2. induction l1 as [|[b s] l1 IH]; cbn; [reflexivity| rewrite IH; lia]. Qed.
+
+Lemma small_weight : forall nZ (V : list (word * word)), 0 <= nZ ->
+  (length V <= 2)%nat -> live_bytes V <= 20 * 4096 ->
+  gap_weight nZ V <= 2 * (nZ + 4095) + 20 * 4096.
+Proof.
+  intros nZ V HnZ Hl Hb. rewrite gap_weight_sizes.
+  assert (Z.of_nat (length V) <= 2) by lia. nia.
+Qed.
+
+Lemma region_free_In_iv : forall l lo n a s, region_free l lo n = true -> In (a, s) l -> iv_overlap lo n a s = false.
+Proof.
+  induction l as [|[b t] l IH]; intros lo n a s H Hin; [destruct Hin|]. cbn in H.
+  apply andb_prop in H as [H1 H]. destruct Hin as [E|Hin].
+  - injection E as <- <-. apply negb_true_iff in H1. exact H1.
+  - exact (IH _ _ _ _ H Hin).
+Qed.
+
 (* [comment removed for export] *)
 Lemma gk_gap : forall {CE : Ceiling} L pbrk mo nZ,
   KL L pbrk mo -> GK (m_vmmaps mo) -> vm_live_bytes (m_vmmaps mo) <= KLIM ->
@@ -78,7 +102,26 @@ Proof.
   pose proof (live_bytes_nonneg (vm_maps h)) as HLV. fold LV in HLV.
   ceil_bounds.
   (* [comment removed for export] *)
-  assert (HW : F + nZ + gap_weight nZ (vm_maps h) <= alloc_top h).
+  destruct (kl_resv_top _ _ _ HK) as (V & HVl & HVb & HVr). fold h F in HVr.
+  pose proof (small_weight nZ V ltac:(lia) HVl HVb) as HWV.
+  (* The revision's [vm_gap_available_iff] requires the gap at or above
+     [task_unmapped_base] (the mmap region's floor), not merely above the break, so the
+     scan floor becomes [task_unmapped_base].  It is a page-aligned constant well under
+     2^38, and [alloc_ceiling >= 0x7fff7f800000], so it costs the slack only a bounded
+     constant on top of the weight the break floor already fit. *)
+  assert (HTUB : 0 < task_unmapped_base <= 2 ^ 38)
+    by (unfold task_unmapped_base, page_round_up_Z, page_size; lia).
+  (* The floor is the MAXIMUM of the two, not [task_unmapped_base] alone: the scan has to
+     clear BOTH the break (the reserved entries sit below it, which is what the
+     region_free arm below reads out of [HgF]) and the mmap floor (what the revision's
+     [vm_gap_available_iff] demands).  Nothing in [KL] orders [F] against
+     [task_unmapped_base], so taking either one alone drops a bound that is needed. *)
+  assert (HFal : Z.max F task_unmapped_base mod page_size = 0).
+  { destruct (Z.max_spec F task_unmapped_base) as [[_ E]|[_ E]]; rewrite E;
+      [first [reflexivity | vm_compute; reflexivity
+             | unfold task_unmapped_base, page_round_up_Z, page_size; apply Z_mod_mult]
+      | rewrite page_size_eq; exact S2]. }
+  assert (HW : Z.max F task_unmapped_base + nZ + gap_weight nZ (vm_maps h) + (2 * (nZ + 4095) + 20 * 4096) <= alloc_top h).
   { rewrite gap_weight_sizes. fold N LV. rewrite Htop.
     assert (HNn : 0 <= N) by (unfold N; lia).
     unfold PGSZ, KLIM, SMALLREQ in *.
@@ -96,20 +139,31 @@ Proof.
       assert (E3 : (LV + nZ) * (LV + nZ) <= 2^30 * 2^30) by (apply Z.mul_le_mono_nonneg; lia).
       set (P := N * nZ) in *. set (Q := LV * nZ) in *. set (SQ := (LV + nZ) * (LV + nZ)) in *.
       lia. }
-  destruct (gap_exists (vm_maps h) nZ F (alloc_top h) ltac:(lia) ltac:(unfold PGSZ in *; lia)
-              ltac:(rewrite Htop; lia) ltac:(rewrite page_size_eq; exact S2) HW)
+  assert (HW' : Z.max F task_unmapped_base + nZ + gap_weight nZ (V ++ vm_maps h) <= alloc_top h) by (rewrite gap_weight_app; lia).
+  destruct (gap_exists (V ++ vm_maps h) nZ (Z.max F task_unmapped_base) (alloc_top h) ltac:(lia) ltac:(lia)
+              ltac:(rewrite Htop; lia) HFal HW')
     as (g & Hgal & HgF & Hgtop & Hgfree).
+  rewrite region_free_app_iff in Hgfree. apply andb_prop in Hgfree as [HgV Hgfree].
   (* [comment removed for export] *)
   apply (proj2 (vm_gap_available_iff h nZ)). exists (Z_to_bv 64 g).
   split; [|split; [|split]].
   - rewrite u64_lit' by lia. exact Hgal.
+  (* kl_resv_top gained the [exists V] and the scan now floors at
+     [Z.max F task_unmapped_base]: [HgF] delivers BOTH [task_unmapped_base <= g] (the
+     bound the revision's [vm_gap_available_iff] demands, discharged here) and [F <= g]
+     (which the region_free arm below needs against [kl_resv_top]'s [ehi e <= F]).  The
+     previous arm guessed [lia] could reach the mmap bound from a break-floored scan; it
+     cannot, because a gap above the break may still sit below the mmap floor. *)
   - rewrite u64_lit' by lia. lia.
   - rewrite u64_lit' by lia. exact Hgtop.
   - rewrite region_free_app_iff, Hgfree, Bool.andb_true_r.
     apply region_free_intro. intros a sz Hin.
-    pose proof (kl_resv_top _ _ _ HK (a, sz) Hin) as Hr. fold h F in Hr. unfold ehi in Hr. cbn [fst snd] in Hr.
-    unfold iv_overlap. rewrite u64_lit' by lia.
-    apply andb_false_iff. left. apply Z.ltb_ge. lia.
+    destruct (HVr (a, sz) Hin) as [Hr|Hv].
+    + unfold ehi in Hr. cbn [fst snd] in Hr.
+      unfold iv_overlap. rewrite u64_lit' by lia.
+      apply andb_false_iff. left. apply Z.ltb_ge. lia.
+    + (* the vDSO pair: the gap was searched clear of it *)
+      exact (region_free_In_iv _ _ _ _ _ HgV Hv).
 Qed.
 
 (* [comment removed for export] *)

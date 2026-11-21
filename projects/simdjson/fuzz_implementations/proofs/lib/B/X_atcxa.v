@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floor handed to the frame lemma is measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB, and the lemma's 8 MiB premise is derived from it by lia. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -321,7 +322,7 @@ Proof using AF AF_IXIT AF_CTR.
   exists m'. split; [rewrite ESP; do 15 eexists; reflexivity|].
   split.
   { split; [| split; [exact MI| split; [exact WM| exact ST']]].
-    apply (AF_CTR Σ m m' lo ART0 LOW); [| exact CTR'| exact WM].
+    apply (AF_CTR Σ m m' lo ART0 ltac:(clear - LOW; lia)); [| exact CTR'| exact WM].
     intros a Hna Hnc. apply MU. cbn [outside fst snd]. aex_lits. unfold LSAN_CTR in *.
     split; [| split; [| split; [| split; [lia| exact I]]]].
     -   destruct (Z_lt_le_dec (bv_unsigned a) lo); [ul|].

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE p4 (lib/B/W_LLVMFuzzerTestOneInput_gone.v's GP4): GC1 q -> GT0, 0x84b5c -> 0x84b78, the
    check_no_loss_read loop of fuzz_reply.c:643-645 `for (k...) if (reads[k]) check_no_loss_read(&g_s[k])`, the
-   image-B twin of lib/A/W_LLVMFuzzerTestOneInput_gone_p4.v (a working branch 32b23a20c3e), read
+   image-B twin of lib/A/W_LLVMFuzzerTestOneInput_gone_p4.v (a working branch), read
    from B's objdump:
      0x84b5c  lw   a0,0(s5)           reads[q] (s5 = F + 192 + 4q)
      0x84b60  beqz a0,84b6c
@@ -14,11 +14,12 @@
    not) and gp4_tail (0x84b6c -> 0x84b5c or 0x84b78).  Its post keeps every byte outside check_no_loss_read's
    16-byte frame below s1 (gp4_keep); gp4_c1_t0 carries GC1's facts to GT0 with it (the arm's transport kit
    W_LLVMFuzzerTestOneInput_gone_tk.v).
-   CALLEE WALKED INLINE: the kit post cnlr_spec (lib/B/W_contract.v:484) is aleaf_post, which lacks the
+   CALLEE WALKED INLINE: the kit post cnlr_spec (lib/B/W_contract.v:485) is aleaf_post, which lacks the
    outside-frame-kept clause, so errno's view, which amodel_at's aout_at reads, is not carried (a Theorem Labs lane's ruling
    14:1xZ).  check_no_loss_read is therefore walked again here with the post in aleafx_post form (gp4c_cnlr): the
    walk and its entry state are lib/B/W_check_no_loss_read.v's (cnlr_entry and pb_check_no_loss_read, copied with
    the gp4c_ prefix so this file imports no other walk's file), plus the kept clause of A's p4 Section gp4c. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

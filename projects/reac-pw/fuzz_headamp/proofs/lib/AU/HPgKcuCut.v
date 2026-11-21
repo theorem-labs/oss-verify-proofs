@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgKcCut.v at f9c9fcf89aea; the same split of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgKcCut.v; the same split of
    the piece "the key and the channel" for image B: B's pcs, B's registers and B's three sub-cuts (B reads the
    sign and the first digit inside its digits loop, so its DG cut does not know that a digit is next and its DOT
    cut also covers the case of no digit). *)

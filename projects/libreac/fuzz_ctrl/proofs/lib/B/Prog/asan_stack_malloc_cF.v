@@ -3,14 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 722 of its 760 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_blockF.v, with its module paths and module names changed; 9 of its 45 lines of code are new or changed and 724 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/asan_stack_malloc_cF.v -- image B's FOOTPRINT contract of __asan_stack_malloc_<c>, STATEMENT ONLY
    (route (C) wave, a Theorem Labs lane 11:50Z; writer a Theorem Labs lane). Before this file the only generic text was the local copy
-   in lib/B/Prog/reac_ctrl_parseF.v:48-80, whose comment (:35-47) says the unit's own is to be published; this is it.
+   in lib/B/Prog/reac_ctrl_parseF.v:49-81, whose comment (:35-47) says the unit's own is to be published; this is it.
 
-   TEXT: fs_shadow_area and asan_stack_malloc_contract_F are reac_ctrl_parseF.v:48-80 save one qualified name (a Theorem Labs lane's
-   NARROW form, a working branch 062bf770c5b fuzz_knock lib/A/Prog/asan_stack_malloc_F.v:694-721,
+   TEXT: fs_shadow_area and asan_stack_malloc_contract_F are reac_ctrl_parseF.v:49-81 save one qualified name (a Theorem Labs lane's
+   NARROW form, a working branch fuzz_knock lib/A/Prog/asan_stack_malloc_F.v:694-721,
    with image B's names). reac_ctrl_parseF.v and every other local copy (reac_box_catalogue_matchF.v (not in this delivery),
-   ctrl_lay_blockF.v (not in this delivery), reac_box_model_blockF.v:82, reac_ctrl_identity_replyF.v (not in this delivery)) stay unchanged apart from comment text until the wave-end deletion review.
+   ctrl_lay_blockF.v (not in this delivery), reac_box_model_blockF.v:83, reac_ctrl_identity_replyF.v (not in this delivery)) stay unchanged apart from comment text until the wave-end deletion review.
    Names the text binds: IMG_LO / IMG_HI of lib/B/Prog/ImgBounds.v (the values parseF.v's text gets from
    reac_ctrl_parse_c.v's IMG_LO and its own IMG_HI), the footprint, rng and evtF of lib/Lib/ExecF.v, and the rest
    of asan_stack_malloc_c.v (fs_B, fs_M, fs_frame, fs_hint, fs_flag, fs_place, FS_SIZE, CF, asan_tls_cells,

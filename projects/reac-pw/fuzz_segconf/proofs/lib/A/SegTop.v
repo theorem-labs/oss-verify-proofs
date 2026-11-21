@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: made from libreac/fuzz_grant's lib/A/GrantTop.v (the separate composition) for plugin-hostd/fuzz_command's ASan build: C2 of lib/A/CmdTFIBLib.v with the start-up certificate's instances of lib/A/CmdStartInst.v and the program contract from lib/A/Prog/CmdLibX.v, and the two statements from it through lib/A/AsanTop.v. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/CmdTop.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; Cmd*/cmd_* -> Seg*/seg_* (CmdTFIBLib -> SegTFIBLib, AsanTop -> SegAsanTop, CmdLibX -> SegLibX, CmdShape -> SegShape, CmdB -> SegB, CMD_RLO / CMD_RHI -> SEG_RLO / SEG_RHI, GI_cmdA -> GI_segA); the start-up certificate's class instances (lib/A/CmdStartInst.v) are not taken: the core's de-classed AD1q takes the generated start-up directly (SegTFIBLib.v); HLTOI is segconf's LLVMFuzzerTestOneInput_contract (contracts FINAL 6f783602b5e3) at lib/A/Prog/SegInstA.v's image-A terms, and its image premise is discharged in SegLibX.v by lib/A/Prog/SegHimgA.v; the agreement also takes SegAsanTop's plain side (plain_slot_ag, CPp, plain_segs). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/CmdTop.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; Cmd*/cmd_* -> Seg*/seg_* (CmdTFIBLib -> SegTFIBLib, AsanTop -> SegAsanTop, CmdLibX -> SegLibX, CmdShape -> SegShape, CmdB -> SegB, CMD_RLO / CMD_RHI -> SEG_RLO / SEG_RHI, GI_cmdA -> GI_segA); the start-up certificate's class instances (lib/A/CmdStartInst.v) are not taken: the core's de-classed AD1q takes the generated start-up directly (SegTFIBLib.v); HLTOI is segconf's LLVMFuzzerTestOneInput_contract (contracts FINAL) at lib/A/Prog/SegInstA.v's image-A terms, and its image premise is discharged in SegLibX.v by lib/A/Prog/SegHimgA.v; the agreement also takes SegAsanTop's plain side (plain_slot_ag, CPp, plain_segs). *)
 (* The closing file of plugin-hostd/fuzz_command's ASan build (image A): the two statements
    `Statements.asan_agrees` and `Statements.asan_halts` from named parts only.
 
@@ -53,8 +53,8 @@ Section asan.
    lib/A/Rt/RtDtorExit.v gives the instance. *)
 Context {DE : DtorExit}.
 
-(* HLTOI: the contract of the program's entry function (lib/A/Prog/LLVMFuzzerTestOneInput_c.v at contracts FINAL
-   6f783602b5e3), at the ASan image's sink head, the segments tfibsegs, the pinned allocator record SegB and the
+(* HLTOI: the contract of the program's entry function (lib/A/Prog/LLVMFuzzerTestOneInput_c.v at contracts FINAL),
+   at the ASan image's sink head, the segments tfibsegs, the pinned allocator record SegB and the
    trivial meter, at SegInstA's image-A terms, at every run ceiling and float state (SegProgClosed.v's seg_ltoi_all). *)
 Hypothesis HLTOI : forall (rc : YM05.RunCeil) (fx0 : YK11.FPState),
   @LLVMFuzzerTestOneInput_c.LLVMFuzzerTestOneInput_contract fx0 rc AE2k.tfib_sink_head tfibsegs AD2l.SegB ameter_triv
@@ -78,8 +78,8 @@ Proof. exact (SegTFIBLib.seg_TFIB_T_of_lib seg_lib_all). Qed.
    SegAsanTop's plain side (lib/A/SegAsanTop.v). *)
 Theorem seg_asan_halts_of_parts : Statements.asan_halts.
 Proof. exact (SegAsanTop.seg_asan_halts_of_tfib seg_TFIB_T_of_parts). Qed.
-(* the agreement: SegAsanTop's plain side (the plain tree's lib/AgreeSeg.v plain_slot_ag at
-   cfdd99183965, a cut record and the plain segment lemmas at it) and C2 *)
+(* the agreement: SegAsanTop's plain side (the plain tree's lib/AgreeSeg.v plain_slot_ag,
+   a cut record and the plain segment lemmas at it) and C2 *)
 Definition seg_asan_agrees_of_parts :=
   fun psa cpp ps => SegAsanTop.seg_asan_agrees_of_tfib psa cpp ps seg_TFIB_T_of_parts.
 End asan.

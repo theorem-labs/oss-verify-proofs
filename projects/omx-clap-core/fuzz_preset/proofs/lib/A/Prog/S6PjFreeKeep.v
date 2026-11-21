@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_free_keep.v, with its module paths and module names changed; 157 of its 344 lines of code are new or changed and 116 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S6 (WalkS6): WHAT A CALL KEEPS in pj_free's walk (lib/A/Prog/S6PjFree.v), the facts the
    loop and tail segments carry across a callee (the recursive pj_free, fuzz_free, the memset row) from the callee's
    journal (YCbqG.v ajournal_x, own = []) and the allocator laws at the return state. Image A's twins of image B's
-   lib/B/Prog/pj_free_keep.v (h-rw-man-5, blob ddbee7f36fee at origin/cold/h-rw-man-5-b-pjfree-rb ab365ca51d3), over A's
+   lib/B/Prog/pj_free_keep.v (h-rw-man-5, blob ddbee7f36fee), over A's
    cuts: A's frame has no spill slots and no gap below the saves (the callee window starts at sp0 - 96), carries s11
    and the memory invariant Pm, and v's place has three cases (v < alloc_ceiling <= the caller window).
    - pfk_vnode: v's node facts (pf_vnode) at the return state;

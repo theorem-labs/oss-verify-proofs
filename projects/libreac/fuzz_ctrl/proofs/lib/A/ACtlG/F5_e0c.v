@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its module paths and module names changed; 197 of its 212 lines of code are new or changed and 544 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F5_e0c.v -- GLUE for stage seg_F5_e0c of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:755).  Written by a Theorem Labs lane; single writer.
    rule 24: no function proved (kind: segment lemma -- one glue stage of the entry walk).
@@ -69,9 +70,9 @@
      are copied verbatim from ACtl.v:167-194 and vanish at End Section (unused here).
    NO OTHER SECTION HYPOTHESIS: the file has no TEMP hypothesis left.
    CITED BY NAME, NOT HYPOTHESES: the neighbour stage A.ACtlG.F5_e10.glue_seg_F5_e10 (ACtl.v:574, Qed at
-   F5_e10.v blob c3cee14887c, commit e970e657ceb); the shared lemmas A.ACtlG.F5_e10.f5g_keep / f5g_pf_keep /
+   F5_e10.v blob c3cee14887c); the shared lemmas A.ACtlG.F5_e10.f5g_keep / f5g_pf_keep /
    f5g_rgv and A.ACtlG.F5_df0.f5g_frac_base / f5g_bounds / f5g_frac_keep / f5g_ctl_rt_C_keep / f5g_journal
-   (F5_df0.v blob ebef2f09a2a, commit dfda47419cd); the run A.Prog.Seg.F5F.seg_F5_e0c_run_F (F5F.v:218, blob
+   (F5_df0.v blob ebef2f09a2a); the run A.Prog.Seg.F5F.seg_F5_e0c_run_F (F5F.v:218, blob
    336a376f81d on the base), instantiated at ctrl's FPState A.Reusable.YK11.mkFP lib.Reusable.YK11.fp_regs
    lib.Reusable.YK11.fp_csr (glue-pattern.md section 6); the model facts A.Prog.Seg.F5.f5_id / f5_app_ivl /
    f5_q64_keep / f5_u32_keep; Reusable.YA0nR.SRr_xregs_eqv / SRr_fevt_hid; A.ProgBridge.cfg_at_MS /
@@ -101,7 +102,7 @@
    (both shadow parts by A.ShadowRwOnK.fl_shadow_rw_on).  No VIS0 / OWNED_RO / AR_VIS0 / AR_OWNED_RO hypothesis
    and no stage-level ctlrt_of_AR.  The run's contract takes no mem_inv premise.
 
-   BUILD STATE: type-check with cb build --fresh (BASE 23b918fe0c2e) on a working branch 1899bed1aee merged with
+   BUILD STATE: type-check with cb build --fresh (BASE) on a working branch merged with
    a working branch; the lane report names the build log, the .vo mtime and Print Assumptions of
    glue_seg_F5_e0c (Rocq primitives and functional_extensionality_dep only).  No Axiom, no Parameter, no Admitted,
    no admit. *)
@@ -155,7 +156,7 @@ Local Notation C_A81ea8_at := (ACtlCutP.C_A81ea8_at B).
 Local Notation C_A81ec0_at := (ACtlCutP.C_A81ec0_at B).
 
 (* The neighbour stage 0x81ea8 -> 0x81ec0 is A.ACtlG.F5_e10.glue_seg_F5_e10 (ACtl.v:574), Qed at
-   lib/A/ACtlG/F5_e10.v blob c3cee14887c (commit e970e657ceb); it is cited by name in the proof below. *)
+   lib/A/ACtlG/F5_e10.v blob c3cee14887c; it is cited by name in the proof below. *)
 
 (* ---------------------------------------------------------------------------------------------------------
    The stage. *)

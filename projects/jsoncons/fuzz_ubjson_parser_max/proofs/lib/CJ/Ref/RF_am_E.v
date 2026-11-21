@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the auxv walk of the malloc secret setup is proved once for any pair list (aux_cur, raux_post, raux_walk at this binary's loop addresses) and ram_entry uses it instead of the fixed 10-pair walk, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Ref/RF_am_E.v, lines 40, 98-227, 248, 257-258, 291-307. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -67,6 +68,131 @@ intros i Hi. destruct (Z.lt_ge_cases i (Z.of_nat (cells_size cs1))).
 + apply X1. lia.
 + replace (A + i) with (A + Z.of_nat (cells_size cs1) + (i - Z.of_nat (cells_size cs1))) by lia. apply X2. lia.
 Qed.
+Definition aux_cur (pre : list (Z * Z)) (b0 : list byte) : list byte :=
+if existsb (fun p => fst p =? 25) pre then le8 (wz secret_val) else b0.
+Lemma aux_cur_25 : forall pre v b0, aux_cur (pre ++ [(25, v)]) b0 = le8 (wz secret_val).
+Proof.
+intros pre v b0. unfold aux_cur. rewrite existsb_app.
+replace (existsb (fun p : Z * Z => fst p =? 25) [(25, v)]) with true by reflexivity.
+rewrite Bool.orb_true_r. reflexivity.
+Qed.
+Lemma aux_cur_skip : forall pre k v b0, k <> 25 -> aux_cur (pre ++ [(k, v)]) b0 = aux_cur pre b0.
+Proof.
+intros pre k v b0 Hk. unfold aux_cur. rewrite existsb_app.
+replace (existsb (fun p : Z * Z => fst p =? 25) [(k, v)]) with false
+by (symmetry; cbn [existsb fst]; rewrite Bool.orb_false_r; apply Z.eqb_neq; exact Hk).
+rewrite Bool.orb_false_r. reflexivity.
+Qed.
+Lemma aux_cur_last : forall L b0 r, last_assoc 25 L = Some r -> aux_cur L b0 = le8 (wz secret_val).
+Proof.
+intros L b0 r H. apply last_assoc_In in H. unfold aux_cur.
+replace (existsb (fun p : Z * Z => fst p =? 25) L) with true; [reflexivity|].
+symmetry. apply existsb_exists. exists (25, r). split; [exact H| reflexivity].
+Qed.
+Local Ltac aux_br :=
+lazymatch goal with |- context [bv_eqb ?x ?y] =>
+first [ replace (bv_eqb x y) with true
+by (symmetry; unfold bv_eqb; apply Z.eqb_eq; rewrite ?wz_unsigned, ?unsigned_lit by lia; lia)
+| replace (bv_eqb x y) with false
+by (symmetry; unfold bv_eqb; apply Z.eqb_neq; rewrite ?wz_unsigned, ?unsigned_lit by lia; lia) ]
+end;
+try change (negb true) with false; try change (negb false) with true; cbv iota.
+Definition raux_post (sp gp tp s2 s3 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+(av : Z) (L : list (Z * Z)) (b0 : list byte) (m0 : word -> option byte) : machine_state -> Prop :=
+fun ms' => exists x1 t0 t1 t2 s1 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 m',
+ms' = MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 950000) s1 (wz av) a1 a2 a3 a4 a5 a6 a7
+s2 s3 (Z_to_bv 64 25) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x9b4e0) fc None m' (seg_rom rsegs)
+/\ munch [(bv_unsigned sp + -64, bv_unsigned sp + -64 + 8)]%Z m0 m' /\ wmono rsegs m0 m' /\ mem_inv rsegs m'
+/\ rw_cells rsegs m' (bv_unsigned sp + -64) [CB 8 (aux_cur L b0)].
+Lemma raux_walk : forall (sp gp tp s2 s3 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+(av rnd : Z) (L : list (Z * Z)) (b0 : list byte) (m0 : word -> option byte),
+rw_cells rsegs m0 RAUXV_CELL [C8 (wz av)] ->
+bytes_at rsegs m0 av (u64s (map wz (flat_pairs L ++ [0; 0]))) ->
+bytes_at rsegs m0 (rnd + 8) (le8 (wz secret_val)) ->
+Forall (fun p => fst p <> 0) L -> Forall (fun p => fst p = 25 -> snd p = rnd) L ->
+Forall (fun p => 0 <= fst p < 2^64 /\ 0 <= snd p < 2^64) L ->
+RAUXV_CELL + 8 <= bv_unsigned sp + -64 -> bv_unsigned sp <= av -> av + 16 * (Z.of_nat (length L) + 1) <= 2^64 ->
+bv_unsigned sp <= rnd + 8 -> rnd + 16 <= 2^64 -> 64 <= bv_unsigned sp ->
+forall post pre (m : word -> option byte) (x1 t0 t1 t2 s1 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word),
+L = pre ++ post -> bv_unsigned s1 = 16 * Z.of_nat (length pre) ->
+munch [(bv_unsigned sp + -64, bv_unsigned sp + -64 + 8)]%Z m0 m -> wmono rsegs m0 m -> mem_inv rsegs m ->
+rw_cells rsegs m (bv_unsigned sp + -64) [CB 8 (aux_cur pre b0)] ->
+evt rsegs (raux_post sp gp tp s2 s3 s5 s6 s7 s8 s9 s10 s11 F fc av L b0 m0)
+(MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -64)) gp tp t0 t1 t2 (Z_to_bv 64 950000) s1 (wz av) a1 a2 a3 a4 a5 a6 a7
+s2 s3 (Z_to_bv 64 25) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x9b4d0) fc None m (seg_rom rsegs)).
+Proof.
+intros sp gp tp s2 s3 s5 s6 s7 s8 s9 s10 s11 F fc av rnd L b0 m0 AVC AVL RND NZ R25 RNG HC HAV HAVH HR HRH HSP.
+pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
+unfold RAUXV_CELL in HC, AVC.
+assert (WZAV : bv_unsigned (wz av) = av) by (apply wz_unsigned; lia).
+induction post as [|[k v] post IH]; intros pre m x1 t0 t1 t2 s1 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 EL HS1 MU WM MI FR.
+-
+rewrite app_nil_r in EL. subst L.
+assert (AVLm : bytes_at rsegs m av (u64s (map wz (flat_pairs pre ++ [0; 0]))))
+by (eapply bytes_at_transport; [exact AVL| exact MU| cbn [disjoint_from]; split; [lia| exact I]]).
+st1.
+pose proof (ru64s_read m av _ (2 * Z.of_nat (length pre)) (wz 0) (wa (av + 8 * (2 * Z.of_nat (length pre))))
+AVLm (flat_pairs_nth_end pre) ltac:(lia) eq_refl) as RD.
+st1. clear RD.
+st1. aux_br.
+st1. aux_br.
+apply evt_done. unfold raux_post. do 17 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. exact FR.
+- assert (IN : In (k, v) L) by (rewrite EL; apply in_or_app; right; left; reflexivity).
+pose proof (proj1 (Forall_forall _ _) NZ _ IN) as NZk.
+pose proof (proj1 (Forall_forall _ _) R25 _ IN) as R25k.
+pose proof (proj1 (Forall_forall _ _) RNG _ IN) as RNGk.
+cbn [fst snd] in NZk, R25k, RNGk.
+assert (LL : Z.of_nat (length L) = Z.of_nat (length pre) + 1 + Z.of_nat (length post))
+by (rewrite EL, length_app; cbn [length]; lia).
+assert (AVLm : bytes_at rsegs m av (u64s (map wz (flat_pairs L ++ [0; 0]))))
+by (eapply bytes_at_transport; [exact AVL| exact MU| cbn [disjoint_from]; split; [lia| exact I]]).
+assert (AVCm : rw_cells rsegs m 0xe7ef8 [C8 (wz av)])
+by (eapply rw_cells_transport; [exact AVC| exact MU| exact WM| cbn [disjoint_from cells_size csize]; split; [lia| exact I]]).
+assert (RNDm : bytes_at rsegs m (rnd + 8) (le8 (wz secret_val)))
+by (eapply bytes_at_transport; [exact RND| exact MU| cbn [disjoint_from]; split; [lia| exact I]]).
+st1.
+pose proof (ru64s_read m av _ (2 * Z.of_nat (length pre)) (wz k) (wa (av + 8 * (2 * Z.of_nat (length pre))))
+AVLm (flat_pairs_nth_key L pre k v post EL) ltac:(lia) eq_refl) as RD.
+st1. clear RD.
+st1.
+destruct (Z.eq_dec k 25) as [K25|K25].
++
+subst k. specialize (R25k eq_refl). subst v.
+aux_br.
+pose proof (ru64s_read m av _ (2 * Z.of_nat (length pre) + 1) (wz rnd) (wa (av + 8 * (2 * Z.of_nat (length pre) + 1)))
+AVLm (flat_pairs_nth_val L pre 25 rnd post EL) ltac:(lia) eq_refl) as RD.
+st1. clear RD. st1. st1. st1. st1.
+call rmemcpy_callZ3.
+1:{ exact RNDm. } 1:{ reflexivity. } 1:{ exact FR. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. }
+1:{ lazymatch goal with H : mem_inv rsegs ?mX |- mem_inv rsegs ?mX => exact H end. }
+lazymatch goal with H : rw_cells rsegs _ (bv_unsigned sp + -64) [CB _ (le8 (wz secret_val))] |- _ => rename H into DST end.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mY _) =>
+assert (AVCy : rw_cells rsegs mY 0xe7ef8 [C8 (wz av)])
+by (eapply rw_cells_transport; [exact AVC| exact MU| exact WM| cbn [disjoint_from cells_size csize]; split; [lia| exact I]])
+end.
+st1. st1.
+eapply (IH (pre ++ [(25, rnd)])).
+* rewrite <- app_assoc. exact EL.
+* rewrite length_app. cbn [length]. first [rewrite unsigned_lit by lia; lia | rewrite wz_unsigned by lia; lia | lia].
+* exact MU.
+* exact WM.
+* lazymatch goal with H : mem_inv rsegs ?mX |- mem_inv rsegs ?mX => exact H end.
+* rewrite aux_cur_25. exact DST.
++
+aux_br.
+st1. aux_br.
+st1.
+eapply (IH (pre ++ [(k, v)])).
+* rewrite <- app_assoc. exact EL.
+* rewrite length_app. cbn [length]. first [rewrite unsigned_lit by lia; lia | rewrite wz_unsigned by lia; lia | lia].
+* exact MU.
+* exact WM.
+* exact MI.
+* rewrite (aux_cur_skip pre k v b0 K25). exact FR.
+Qed.
 Definition ram_entry_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
 (lo : Z) (st : mstate) (m : word -> option byte) : machine_state -> Prop :=
 fun ms' => exists x1 t0 t1 t2 s1x s4x a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 m' junk,
@@ -124,7 +250,8 @@ pose proof MR as (WF & (C1 & _) & (_ & _ & PGS & G4 & G5 & _) & _). unfold ctx_h
 pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp); (RCTX, RCTX + 16)]%Z m) as MU.
 pose proof (wmono_refl rsegs m) as WM. unfold RCTX in MU.
 pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp)]%Z m) as MUh.
-destruct AUX as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & AVC & AVL & RND & AB & BAV & AVH & BR & RH & X3 & X4 & X5 & XHW & X6 & X11 & X12 & X23 & XR).
+destruct AUX as (av & L & rnd & AVC & AVL & RND & (AB & BAV & AVH & BR & RH & XR) & NZ & LA & R25 & RNG).
+pose proof (conj AVC (conj AVL RND)) as AUX0.
 unfold RAUXV_CELL in AVC.
 st1. carve_frame 64%nat ST. st1. st1. st1. st1. st1. st1.
 st1. st1. st1. st1. st1. st1.
@@ -141,26 +268,6 @@ unfold am_init_st. rewrite I1. cbn [Z.eqb Pos.eqb].
 eapply rmrep_transport_high; [exact MR| exact MUh| exact WM|]. intros l h [E|[]]; inversion E; subst; pose_ceil; lia. }
 rewrite I0. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
 st1. st1. st1. st1. st1. st1. st1. st1. st1.
-Ltac skip_iter i key HB :=
-let RD := fresh "RD" in
-st1;
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-pose proof (ru64s_read mX _ _ i (wz key) (wa (_ + 8 * i)) HB eq_refl ltac:(lia) eq_refl) as RD end;
-st1; try clear RD;
-st1; change (bv_eqb (wz key) (Z_to_bv 64 25)) with false; cbv iota;
-st1; change (negb (bv_eqb (wz key) (Z_to_bv 64 0))) with true; cbv iota;
-st1.
-skip_iter 0 3 AVL.
-skip_iter 2 4 AVL. skip_iter 4 5 AVL. skip_iter 6 16 AVL. skip_iter 8 6 AVL.
-skip_iter 10 11 AVL. skip_iter 12 12 AVL. skip_iter 14 23 AVL.
-st1.
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-pose proof (ru64s_read mX _ _ 16 (wz 25) (wa (_ + 8 * 16)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
-st1. try clear RD.
-st1. change (bv_eqb (wz 25) (Z_to_bv 64 25)) with true. cbv iota.
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-pose proof (ru64s_read mX _ _ 17 (wz rnd) (wa (_ + 8 * 17)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
-st1. try clear RD. st1. st1. st1.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
 lazymatch type of FR with rw_cells _ _ _ (?c1 :: ?rest) =>
 destruct (rrw_cells_app_split mX _ [c1] rest FR) as [FRm FRc];
@@ -169,18 +276,23 @@ replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) in FRc b
 apply (rw_cells_merge rsegs mX _ [] [c1] []) in FRm; cbn [cells_size csize Nat.add cells_bytes cbytes app] in FRm;
 rewrite app_nil_r in FRm; clear FR
 end end.
-st1.
-call rmemcpy_callZ3.
-1:{ exact RND. } 1:{ reflexivity. } 1:{ exact FRm. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. }
-1:{ lazymatch goal with H : mem_inv rsegs ?mX |- mem_inv rsegs ?mX => exact H end. }
-lazymatch goal with H : rw_cells rsegs ?mX (bv_unsigned sp + -64) [CB _ (le8 (wz secret_val))] |- _ => rename H into DST end.
-st1. st1.
-st1.
+destruct AUX0 as (AVC0 & AVL0 & RND0).
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-pose proof (ru64s_read mX _ _ 18 (wz 0) (wa (_ + 8 * 18)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
-st1. try clear RD.
-st1. change (bv_eqb (wz 0) (Z_to_bv 64 25)) with false. cbv iota.
-st1. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
+assert (AVCx : rw_cells rsegs mX RAUXV_CELL [C8 (wz av)])
+by (eapply rw_cells_transport; [exact AVC0| exact MUh| exact WM| cbn [disjoint_from cells_size csize]; split; [unfold RAUXV_CELL; lia| exact I]]);
+assert (AVLx : bytes_at rsegs mX av (u64s (map wz (flat_pairs L ++ [0; 0]))))
+by (eapply bytes_at_transport; [exact AVL0| exact MUh| cbn [disjoint_from]; split; [lia| exact I]]);
+assert (RNDx : bytes_at rsegs mX (rnd + 8) (le8 (wz secret_val)))
+by (eapply bytes_at_transport; [exact RND0| exact MUh| cbn [disjoint_from]; split; [lia| exact I]]);
+lazymatch type of FRm with rw_cells _ _ _ [CB _ ?bz] =>
+eapply evt_cut;
+[ eapply (raux_walk sp gp tp _ _ _ _ _ _ _ _ _ F fc av rnd L bz mX AVCx AVLx RNDx NZ R25 RNG
+ltac:(unfold RAUXV_CELL; lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) L []);
+[ reflexivity | first [reflexivity | vm_compute; reflexivity] | apply munch_refl | apply wmono_refl | assumption | exact FRm ]
+| post_call rsegs mX ]
+end end.
+lazymatch goal with H : rw_cells rsegs _ (bv_unsigned sp + -64) [CB _ (aux_cur _ _)] |- _ => rename H into DST end.
+rewrite (aux_cur_last L _ rnd LA) in DST.
 lazymatch type of DST with rw_cells _ ?mX _ _ =>
 assert (DST8 : rw_cells rsegs mX (bv_unsigned sp + -64) [C8 (wz secret_val)])
 by (destruct DST as [[_ B] W]; cbn [cells_bytes cbytes app] in B; rewrite app_nil_r in B;

@@ -16,13 +16,13 @@ Files directly under provenance/evidence/ (in no slice): `address-cell-labels.md
 | `gen_ro_redzones.py` | `55074e3279be2a0748835393a48e79bd8e10fde22dfd225f0f468f421caacb3d` |
 | `generators-README.md` | `0af51d880fc8fd904ed224971ff745769c727ccde98e9e5a807102b072c7a38f` |
 | `label_test.py` | `e2ac866124b94159f5b0182e1aa940b5c9e1e6d1d0f52cb9eab0769ee66018e9` |
-| `memchr-address-check.md` | `0a7a0ccf7dc1c23d430e8cf8bb3e57e0984c0bfb1bacbf7ef1528cfd51d3ab48` |
-| `notice-claims.md` | `08dc7b008a11c2da675aed3068aec2c2b4f745bf630ea98f3416ff64385991eb` |
+| `memchr-address-check.md` | `b0af638c0a0fd1d097e932924967cbd1e5764e25c0d1a2bb97d8433cf857ff96` |
+| `notice-claims.md` | `b005497569984a16eb7ecda9fcc68674f39166bff680ec142e40e16111bf1c97` |
 | `notice-claims.tsv` | `7a4d1cfff1cb967e7ee4d4d2d5e30860a9cb6f0e8d17efde56c1e652e7905c1c` |
 | `notice_claims.py` | `f3a13fdd0cdb6ddea7d7d57bf51775d6491f6df311b96ad2f265082b66ebeae2` |
 | `notice_fix.py` | `74dd96b358a3b9aa49a944c524ad4a4e1f52a07df66ac30a5297a982cda93391` |
 | `port_core-rerun-A.md` | `b6f359916ca741f67117491e553f69b7c01fad095cf75e5b5890350c1f78d70e` |
-| `port_core-rerun-B.md` | `17e6b8aeea0fa289ac9fb1c7c82b772316afb328672f88d1dd1d4ac3d4128576` |
+| `port_core-rerun-B.md` | `86599c5dd6e1b0a959a566c52bb9cd752b895613152ec55d2e711d8a042bfd77` |
 | `symoff-A.md` | `173d1d82441645d9de650f256acac864bb1796a8466030e03e8c35002b6732d2` |
 | `tfib-mislabelled-cells.md` | `eb0ed00559cd8dfd7c9917cef31c1922a370061884933c5e64bd7ebf57c33572` |
 | `untime-removed.tsv` | `fd39646a35f32a9b2c49b31dc17ff593e9d9a2d4251b8aa82b574e1fe3b41c2f` |

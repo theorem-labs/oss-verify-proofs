@@ -11,7 +11,7 @@
    H_ALLOC_FREE, H_RT_MEMCPY, H_TRACES_B, H_DRIVER (and their _U twins), so after End they are functions of those
    premises; their Print Assumptions shows axioms only, not those premises. The closed Statements.* come from the
    AD2o assembly, not from these conditional parts. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/AuditKnockClose.v at origin/ossv/recipes 6ebe35ba632;
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/AuditKnockClose.v;
    taken for reac-pw/fuzz_pin image A: Print Assumptions of the two closed statements only. On fuzz_pin each print of a
    closed top takes 6 to 7 minutes (measured on a build machine: ASAN_T_closed 360 s, pin_asan_agrees_closed 410 s,
    pin_asan_halts_closed 358 s), so the file prints the two statements, whose dependency closure holds ASAN_T_closed,
@@ -19,6 +19,7 @@
    program contract's proof (AD2o.pin_lib_x_of). The conditional parts print in their own files (lib/A/PinAsanTop.v,
    lib/A/PinClose.v). About shows that no Section argument is left on the closed theorems. Names knock_* -> pin_*,
    module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.A Require AD2o.
 Check AD2o.pin_asan_agrees_closed.
 Print Assumptions AD2o.pin_asan_agrees_closed.

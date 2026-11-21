@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseLB.v at afaa3cb55c1d; module paths, file
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseLB.v; module paths, file
    and plain-lemma names, pcs and comments changed to reac-pw/fuzz_rate's reac_rate_prop_parse on image A; the back
    edge is rate's 0x84728 beqz -> L2 (the taken side is the path to L2, the j side is refuted); lb_same_io_wvb
    replaced by RtPgParseBase.v's same_io_wvb. *)

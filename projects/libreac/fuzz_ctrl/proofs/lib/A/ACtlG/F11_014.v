@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v; 654 of its 695 lines of code are new or changed and 925 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F11_014.v -- GLUE for stage seg_F11_014 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:776).  Written by a Theorem Labs lane; single writer.  rule 24: no
    function proved (stage glue of a walk).  Pattern: glue-pattern.md (a working note, not in this delivery),
@@ -22,7 +23,7 @@
    NO LIFT IS CITED.  This stage cites no <f>_SRr_at and no <f>_SRr_at_hid: the segment's _F run covers the whole
    segment INCLUDING the call and discharges the callee's footprint contract itself, so the caller obligations are
    the run's own premises, paid below, and the whole run is lifted ONCE with Reusable.YA0nR.SRr_fevt_hid at
-   RNG := A.ProgBridge.RNG_W (w_H W3).  ROUTE (C) (a working branch 1899bed1aee): the run is
+   RNG := A.ProgBridge.RNG_W (w_H W3).  ROUTE (C) (a working branch): the run is
    A.Prog.Seg.F11Fon.f11_014_evt_F_on, this lane's twin of a Theorem Labs lane's Seg/F11F.v f11_014_evt_F WITHOUT its
    `shadow_rw m` premise (Seg/F11F.v unchanged apart from comment text); it cuts the call through the narrowed
    reac_identity_ingestF.reac_identity_ingest_F_holds_on.  The cut now carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3.
@@ -74,8 +75,8 @@
    ACtl.v:172 do).  getr / seg_rom / fp_regs / fp_csr / FPState are the CORE's lib/Reusable/YK11; cfg_at is
    Reusable.YG0d.cfg_at.
 
-   BUILD STATE: type-check on a working branch 1899bed1aee (interim core 5da74c9c931, no stand-in) plus the four callee _on files
-   taken by path from a working branch 36bfd511da3.  No Axiom, no Parameter, no unproved step. *)
+   BUILD STATE: type-check on a working branch (interim core, no stand-in) plus the four callee _on files
+   taken by path from a working branch.  No Axiom, no Parameter, no unproved step. *)
 
 From Coq Require Import ZArith List Lia Permutation Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

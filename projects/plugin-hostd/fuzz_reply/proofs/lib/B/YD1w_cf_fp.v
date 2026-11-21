@@ -1,5 +1,5 @@
-(* Made by a Theorem Labs lane (2026-10-29, a Theorem Labs lane's DRIVER_CF_B) as the image-B twin of lib/A/AD1w_cf_fp.v
-   (commit 46f1762ad5a): the same text over lib/B's W_journal and lib/B's YCbqG (the copy A2's
+(* Made by a Theorem Labs lane (2026-10-29, a Theorem Labs lane's DRIVER_CF_B) as the image-B twin of lib/A/AD1w_cf_fp.v:
+   the same text over lib/B's W_journal and lib/B's YCbqG (the copy A2's
    YD1w_cf moves to under a Theorem Labs lane's 21:41Z amendment); module paths changed, no image numeral. *)
 (* Footprint weakening for the cf journal (Reusable/YCbqG.v ajournal_x): a journal over a footprint FP is a journal
    over any larger footprint FP'.  The bridge from W8's program contract to the cf driver interface needs it once:

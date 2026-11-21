@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -437,7 +438,7 @@ Proof using AF RTF ANN.
     destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
     cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2. rewrite (ret_pc_even 0x9d148) in Hc2' by lia.
     cbn [app] in LV1. replace (16 * size + 16 * 1) with (16 * (size + 1)) in LV1 by lia.
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (INA1 : In (A, 16 * (size + 1)) (rt_live RT Σ1)) by (rewrite LV1; apply in_or_app; left; apply ann_block_vis).
     pose proof (af_live_range RT AF Σ1 m2 A (16 * (size + 1)) ART2 INA1) as (_ & A2 & _).
     assert (INF1 : In (f, kf) (rt_frames RT Σ1)) by (rewrite FRS1; exact INF).
@@ -623,7 +624,7 @@ Proof using AF RTF ANN.
     destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
     cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2. rewrite (ret_pc_even 0x9d254) in Hc2' by lia.
     replace (usp + -112 + 40) with (usp + -72) in PRES2 by lia.
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (INN1 : In (NEW, 16 * cap') (rt_live RT Σ1)) by (rewrite LV1; left; reflexivity).
     pose proof (af_live_range RT AF Σ1 m2 NEW (16 * cap') ART2 INN1) as (_ & N1 & _).
     assert (INF1 : In (f, kf) (rt_frames RT Σ1)) by (rewrite FRS1; exact INF).
@@ -710,7 +711,7 @@ Proof using AF RTF ANN.
     destruct (ASTA_unpack_f RT Σ2 _ _ c6 Hc6 FC6) as (ms6 & (r6 & m6 & RS6 & (ART6 & MI6 & WM6 & ST6) & PRES6 & VC6 & SB6 & BY6) & FRM6 & Hc6'). clear Hc6.
     destruct RS6 as (w0 & w1 & w2 & g1 & g2 & g3 & g4 & g5 & g6 & g7 & w3 & w4 & w5 & w6 & F6 & fc6 & ->).
     cbn [ms_fcsr] in FRM6. rewrite EU2 in ST6, PRES6. rewrite (ret_pc_even 0x9d294) in Hc6' by lia.
-    assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW1).
+    assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2; exact LOW1).
     assert (INF2 : In (f, kf) (rt_frames RT Σ2)) by (rewrite FRS2; exact INF1).
     assert (FP6 : fp_client RT Σ1 lo [(usp + -112, usp + -112 + 40); (V, V + 24); (NEW, NEW + 16 * cap)]).
     { constructor; [left; cbn [fst snd]; ul|]. constructor; [right; right; exists f, kf; cbn [fst snd]; split; [exact INF1| lia]|].
@@ -779,7 +780,7 @@ Proof using AF RTF ANN.
           exact (MID Σ3 m8 c8 v8 y0 y1 y2 z1 z2 z3 z4 z5 z6 z7 y3 y4 y5 y6 F8 fc8 FRM8 LV3' FRS3 SP3 CR3 ART8 MI8 ST8 PRES8 Hc8'). }
 
     intros Σ3 m8 c8 r8 y0 y1 y2 z1 z2 z3 z4 z5 z6 z7 y3 y4 y5 y6 F8 fc8 FRM8 LV3 FRS3 SP3 CR3 ART8 MI8 ST8 PRES8 Hc8.
-    assert (LOW3 : rt_sp0 RT Σ3 - STACK_WIN <= lo) by (rewrite SP3; exact LOW2).
+    assert (LOW3 : rt_sp0 RT Σ3 - STACK_SPAN <= lo) by (rewrite SP3; exact LOW2).
     assert (INF3 : In (f, kf) (rt_frames RT Σ3)) by (rewrite FRS3; exact INF2).
     assert (INN3 : In (NEW, 16 * (cap + 1)) (rt_live RT Σ3)) by (rewrite LV3; apply in_or_app; left; apply ann_block_vis).
     assert (SUB3 : forall e, In e L0 -> In e (rt_live RT Σ3)) by (intros e He; rewrite LV3; apply in_or_app; right; exact He).

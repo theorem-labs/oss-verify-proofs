@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write file arms' fault and place continuation, SIGPIPE on a dead reader for write, writev, pwrite64, sendto and sendmsg, and the fits arms of set_robust_list 99, clock_getres 114 and pwritev2 287). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -88,7 +89,30 @@ Proof. intros i m. unfold read_spec. pr. Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_64 : forall i m, PR i m (write_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
-Proof. intros i m. unfold write_spec. pr. Qed.
+Proof.
+  intros i m. unfold write_spec.
+  (* LPS 08b1429: the file arms take a fault/place continuation; unfold it so pr sees the sets *)
+  try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_file_tail. try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_extend.
+  try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_keep. pr.
+  (* the continuation [s] came out of the fault or place argument of [write_file_tail]:
+     compute it from its equation, then the goal is a [PR] of a concrete program *)
+  all: try (match goal with E : _ = Some ?s |- PR _ _ (?s _) =>
+         repeat (cbv beta iota zeta in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_extend in E; try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_write_fault in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_fault_extend in E; try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_keep in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_write_place in E;
+                 match type of E with
+                 | Some _ = Some _ => injection E as <-
+                 | None = Some _ => discriminate E
+                 | context [match ?x with _ => _ end] => destruct x eqn:?
+                 | context [if ?b then _ else _] => destruct b eqn:?
+                 end); pr end).
+  (* LPS 08b1429: a write to a dead reader raises SIGPIPE ([raise_sigpipe]),
+     which rebuilds only the process state, so [fits] is unchanged *)
+  all: try (intros HF; unfold raise_sigpipe;
+            repeat match goal with |- context [if ?b then _ else _] => destruct b end;
+            exact HF).
+Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_65 : forall i m, PR i m (readv_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
@@ -96,7 +120,26 @@ Proof. intros i m. unfold readv_spec. pr. Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_66 : forall i m, PR i m (writev_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
-Proof. intros i m. unfold writev_spec. pr. Qed.
+Proof.
+  intros i m. unfold writev_spec.
+  (* LPS 08b1429: the file arms take a fault/place continuation; unfold it so pr sees the sets *)
+  try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_file_tail. try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_extend.
+  try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_keep. pr.
+  all: try (match goal with E : _ = Some ?s |- PR _ _ (?s _) =>
+         repeat (cbv beta iota zeta in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_extend in E; try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_write_fault in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_fault_extend in E; try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_keep in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_write_place in E;
+                 match type of E with
+                 | Some _ = Some _ => injection E as <-
+                 | None = Some _ => discriminate E
+                 | context [match ?x with _ => _ end] => destruct x eqn:?
+                 | context [if ?b then _ else _] => destruct b eqn:?
+                 end); pr end).
+  all: try (intros HF; unfold raise_sigpipe;
+            repeat match goal with |- context [if ?b then _ else _] => destruct b end;
+            exact HF).
+Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_67 : forall i m, PR i m (pread64_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3)).
@@ -104,7 +147,29 @@ Proof. intros i m. unfold pread64_spec. pr. Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_68 : forall i m, PR i m (pwrite64_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3)).
-Proof. intros i m. unfold pwrite64_spec. pr. Qed.
+Proof.
+  intros i m. unfold pwrite64_spec.
+  try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_file_tail. try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_extend.
+  try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_keep. pr.
+  (* the continuation [s] came out of the fault or place argument of [write_file_tail]:
+     compute it from its equation, then the goal is a [PR] of a concrete program *)
+  all: try (match goal with E : _ = Some ?s |- PR _ _ (?s _) =>
+         repeat (cbv beta iota zeta in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_extend in E; try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_write_fault in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_fault_extend in E; try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_keep in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_write_place in E;
+                 match type of E with
+                 | Some _ = Some _ => injection E as <-
+                 | None = Some _ => discriminate E
+                 | context [match ?x with _ => _ end] => destruct x eqn:?
+                 | context [if ?b then _ else _] => destruct b eqn:?
+                 end); pr end).
+  (* LPS 08b1429: a write to a dead reader raises SIGPIPE ([raise_sigpipe]),
+     which rebuilds only the process state, so [fits] is unchanged *)
+  all: try (intros HF; unfold raise_sigpipe;
+            repeat match goal with |- context [if ?b then _ else _] => destruct b end;
+            exact HF).
+Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_72 : forall i m, PR i m (pselect6_spec (nfds32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5)).
@@ -288,7 +353,12 @@ Proof. intros i m. unfold getpeername_spec. pr. Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_206 : forall i m, PR i m (sendto_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5)).
-Proof. intros i m. unfold sendto_spec. pr. Qed.
+Proof.
+  intros i m. unfold sendto_spec. pr.
+  all: try (intros HF; unfold raise_sigpipe;
+            repeat match goal with |- context [if ?b then _ else _] => destruct b end;
+            exact HF).
+Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_207 : forall i m, PR i m (recvfrom_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
@@ -308,7 +378,12 @@ Proof. intros i m. unfold shutdown_spec. pr. Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_211 : forall i m, PR i m (sendmsg_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
-Proof. intros i m. unfold sendmsg_spec. pr. Qed.
+Proof.
+  intros i m. unfold sendmsg_spec. pr.
+  all: try (intros HF; unfold raise_sigpipe;
+            repeat match goal with |- context [if ?b then _ else _] => destruct b end;
+            exact HF).
+Qed.
 
 (* [comment removed for export] *)
 Lemma pr_arm_212 : forall i m, PR i m (recvmsg_spec (fd32 (in_arg i 0)) (in_arg i 2)).
@@ -343,6 +418,38 @@ Lemma pr_arm_439 : forall i m, PR i m (faccessat2_spec (fd32 (in_arg i 0)) (in_a
 Proof. intros i m. unfold faccessat2_spec. pr. Qed.
 
 Definition arm_fits (a : SpecArm) : Prop := forall i m, PR i m (sa_spec a).
+
+(* LPS 08b1429: checked_table gained set_robust_list (99), clock_getres (114), pwritev2 (287) *)
+Lemma pr_arm_99 : forall i m, PR i m (set_robust_list_spec (in_arg i 1)).
+Proof. intros i m. unfold set_robust_list_spec. pr. Qed.
+
+Lemma pr_arm_114 : forall i m, PR i m (clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1)).
+Proof. intros i m. unfold clock_getres_spec. pr. Qed.
+
+Lemma pr_arm_287 : forall i m, PR i m (pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5))).
+Proof.
+  intros i m. unfold pwritev2_spec.
+  try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_file_tail. try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_extend.
+  try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_keep. pr.
+  (* the continuation [s] came out of the fault or place argument of [write_file_tail]:
+     compute it from its equation, then the goal is a [PR] of a concrete program *)
+  all: try (match goal with E : _ = Some ?s |- PR _ _ (?s _) =>
+         repeat (cbv beta iota zeta in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_extend in E; try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_write_fault in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_fault_extend in E; try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.write_fault_keep in E;
+                 try unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.anon_write_place in E;
+                 match type of E with
+                 | Some _ = Some _ => injection E as <-
+                 | None = Some _ => discriminate E
+                 | context [match ?x with _ => _ end] => destruct x eqn:?
+                 | context [if ?b then _ else _] => destruct b eqn:?
+                 end); pr end).
+  (* LPS 08b1429: a write to a dead reader raises SIGPIPE ([raise_sigpipe]),
+     which rebuilds only the process state, so [fits] is unchanged *)
+  all: try (intros HF; unfold raise_sigpipe;
+            repeat match goal with |- context [if ?b then _ else _] => destruct b end;
+            exact HF).
+Qed.
 
 Lemma PR_eta {A} : forall i m (c : SyscallInput -> Sys A),
   PR i m (c i) -> PR i m (fun i0 => c i0 i0).
@@ -505,12 +612,20 @@ Proof.
     exact (pr_arm_98 i m). }
   (* [comment removed for export] *)
   apply Forall_cons.
+  { intros i m. cbn [sa_spec]. apply (PR_eta i m (fun i => set_robust_list_spec (in_arg i 1))); cbv beta.
+    exact (pr_arm_99 i m). }
+  (* [comment removed for export] *)
+  apply Forall_cons.
   { intros i m. cbn [sa_spec]. apply (PR_eta i m (fun i => nanosleep_spec (in_arg i 0) (in_arg i 1))); cbv beta.
     exact (pr_arm_101 i m). }
   (* [comment removed for export] *)
   apply Forall_cons.
   { intros i m. cbn [sa_spec]. apply (PR_eta i m (fun i => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1))); cbv beta.
     exact (pr_arm_113 i m). }
+  (* [comment removed for export] *)
+  apply Forall_cons.
+  { intros i m. cbn [sa_spec]. apply (PR_eta i m (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1))); cbv beta.
+    exact (pr_arm_114 i m). }
   (* [comment removed for export] *)
   apply Forall_cons.
   { intros i m. cbn [sa_spec]. apply (PR_eta i m (fun i => sched_setscheduler_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))); cbv beta.
@@ -711,6 +826,10 @@ Proof.
   apply Forall_cons.
   { intros i m. cbn [sa_spec]. apply (PR_eta i m (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))); cbv beta.
     exact (pr_arm_278 i m). }
+  (* [comment removed for export] *)
+  apply Forall_cons.
+  { intros i m. cbn [sa_spec]. apply (PR_eta i m (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)))); cbv beta.
+    exact (pr_arm_287 i m). }
   (* [comment removed for export] *)
   apply Forall_cons.
   { intros i m. cbn [sa_spec]. apply (PR_eta i m (fun i => clone3_spec (in_arg i 0) (in_arg i 1))); cbv beta.

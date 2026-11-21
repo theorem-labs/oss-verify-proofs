@@ -3,11 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v, with its module paths and module names changed; 486 of its 581 lines of code are new or changed and 1278 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_comp.v (a working branch
-   1a5dc5b2e7c): same lemma names, statements and proofs; imports point at lib/B's image files and walk kit (YB1v, YB1w,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_comp.v (a working branch):
+   same lemma names, statements and proofs; imports point at lib/B's image files and walk kit (YB1v, YB1w,
    FSH_Base, FSPstat, FSW_K, FSW_ret, FSW_K3, FSH_Fn_writer); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen
    stay lib/A's. lib/B has no FSW_writer_kit: its two lemmas this file uses (fs_heads_uswap, uswap_new_head) are copied
-   below, statements and proofs verbatim, from lib/A/FSW_writer_kit.v at 1a5dc5b2e7c (they are image-agnostic: no
+   below, statements and proofs verbatim, from lib/A/FSW_writer_kit.v (they are image-agnostic: no
    segment, address or frame in them); zz_eq_dec is Reusable/YI04.v's.
    rule 24: proves no function (kind: segment lemma) - the container arms of write_value B. *)
 (*   fs WRITER, write_value's CONTAINER arms (fs.asan-ubsan 0x84010, preset_file.c:525-575), the COMPOSITION half:
@@ -26,7 +26,7 @@
    request size, so a list of live blocks carries no repeat and splits at a live block in one way only);
    lib/Reusable/YI04.v inFP_app. Copied (lib/B has no donor module): fs_heads_uswap / uswap_new_head, lib/A/FSW_writer_kit.v.
    Templated, cited and not imported: zzwv_split_uniq follows FSW_pj_write.v
-   pjw_f_split_uniq (a working branch b6c5b22a453 :1534-1546), and zzwv_put1_inv0's grow arm the
+   pjw_f_split_uniq (a working branch :1534-1546), and zzwv_put1_inv0's grow arm the
    same file's pjw_m_newcap_pos (:721-727), for which WriterRet.newcap_pos is the imported donor.
 
    Where a statement differs from the form first asked for, it is because that form is false or because it
@@ -57,9 +57,10 @@
      repeat, which is what makes the block either the old buffer or a tmp block).
    - wv_wkeep_mono RAISES the window's start: wkeep's clause runs over [s, ot), so the low start is the strong
      one and `sp <= sp' -> wkeep .. sp .. -> wkeep .. sp' ..` is the direction that holds.
-   LOOKUP RULE record: the 42 names A defines here are A's lookup (lib/A/ZZwv_comp.v's header at 1a5dc5b2e7c, the same
+   LOOKUP RULE record: the 42 names A defines here are A's lookup (lib/A/ZZwv_comp.v's header, the same
    names); this twin defines no name of its own beyond them except the two lib/A/FSW_writer_kit.v copies above. *)
 (* Modified by Theorem Labs, 2026-10-29: lib/B now has FSW_writer_kit.v (a Theorem Labs lane): fs_heads_uswap and uswap_new_head are Required from it (same statements); the copies described above are removed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -131,8 +132,8 @@ Proof.
 Qed.
 
 (* an element whose image overlaps itself sits at one place only in a list whose images are pairwise R-related
-   (template, cited and not imported: FSW_pj_write.v pjw_f_split_uniq, a working branch
-   b6c5b22a453 :1534-1546, there for heads; here through a map, for live blocks) *)
+   (template, cited and not imported: FSW_pj_write.v pjw_f_split_uniq, a working branch:
+   1534-1546, there for heads; here through a map, for live blocks) *)
 Lemma zzwv_split_uniq : forall {X Y : Type} (f : X -> Y) (R : Y -> Y -> Prop) (x : X) (l1 l2 l3 l4 : list X),
   pairwise R (map f (l1 ++ x :: l2)) -> ~ R (f x) (f x) -> l1 ++ x :: l2 = l3 ++ x :: l4 -> l1 = l3 /\ l2 = l4.
 Proof.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102L6AFlag.v, with its module paths and module names changed; 324 of its 494 lines of code are new or changed and 85 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S5b, image A' (asan 1be0f53d96cb, the #102 pin): parse_value's SHARED EPILOGUE (rows 225..265)
    with a memory invariant P carried across the run. Lane PV-arms-LC (worker a Theorem Labs lane); the P twin of the epilogue
    step (lib/A/VrdEpi.v vrd_epi_holds, lib/A/VrdEpiA.v vrd_epi_step), at the lead's 15:59Z ruling (vrd_epi_step_P is
@@ -38,11 +39,11 @@
    SECTION HYPOTHESES: those of VrdEpi.v's Section c, verbatim (LAWS, ASFX, FFLX, FPRES, SFX), and of YGcallSx.v's
    Sections x / e that aj_flag_store_x reads. P is a binder of each statement, abstract in every proof.
 
-   SET: the kit's cut 7cdbb61b5fa0 (a working branch) with a Theorem Labs lane's value-side interface
-   a working branch e942c5680fa7 (VrdNum.v 636d54d20156, VrdEpi.v 38bfc716a234); engine on the cut:
+   SET: the kit's cut (a working branch) with a Theorem Labs lane's value-side interface
+   a working branch (VrdNum.v 636d54d20156, VrdEpi.v 38bfc716a234); engine on the cut:
    YGcallSx.v cbe8592c72da, YCbqG.v 219748197d6b, YCbqGwild.v 0c63874858e4, YC80x.v 14f84f225e8f (SRr_msteps_inv),
    YSRrMemnorm.v 5ffa8525936b, YAkMemnorm.v 96c72061b4d4. History: first proved on image A
-   (a working branch 52a6304ca913, blob e7b3eeaca63b) over YGcallSx.v 17d7d2cdbcd1.
+   (a working branch, blob e7b3eeaca63b) over YGcallSx.v 17d7d2cdbcd1.
 
    NUMERALS: those of vrd_epi_holds (8, 56, 64, 104, 512, 4096, 2 ^ 64: LENGTH; atom indices 3, 4, 8, 18, 21, 24,
    26, 32..45: DERIVED). No ADDRESS: the entry is A_prog_sigma AS_parse_value + VrdEpi.VE_EPI. *)

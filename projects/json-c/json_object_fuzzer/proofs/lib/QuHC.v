@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap placement by the model's linux_place_is in grant_ok; the place_declined_b premise on tmw_mmap, and mmap_grant_refusable over the hint; munmap_model by the model's mmap_fixed_destroyed_next). *)
 
 From Stdlib Require NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Fs.ReadWrite.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Import EdAlloc.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QU8l Qg4E QqRD QybZ Qqcs Qmth QlUm QKJt.
@@ -220,17 +222,7 @@ Definition zfill (a n : word) (m : word -> option byte) : word -> option byte :=
 zmem m a n.
 
 Definition munmap_model (addr n : word) (m : Model) : Model :=
-with_mmap_destroyed addr n
-(mkVmMapsFull (vm_reserved (m_vmmaps m))
-(map_remove (vm_maps (m_vmmaps m)) addr)
-(maps_subtract (vm_noaccess (m_vmmaps m))
-(bv_unsigned addr)
-(bv_unsigned addr + bv_unsigned n))
-(vm_start_brk (m_vmmaps m))
-(vm_brk (m_vmmaps m))
-(vm_limit (m_vmmaps m))
-(vm_mmap_base (m_vmmaps m))
-(vm_init_sp (m_vmmaps m))) m.
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
 
 Definition mmap_model (a n : word) (m : Model) : Model :=
 with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
@@ -246,10 +238,11 @@ Definition page_round_up (len : word) : word :=
 Z_to_bv 64 (page_round_up_Z (bv_unsigned len)).
 
 Definition grant_ok (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-(bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
-&& (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
-&& region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
-&& (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
+  && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
+  && (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
 
 Lemma munmap_model_halted : forall addr n m, m_halted (munmap_model addr n m) = m_halted m.
 Proof. reflexivity. Qed.
@@ -372,7 +365,9 @@ Inductive tmw : machine_state -> Model -> list (list byte) -> word
 ms_svc_pending ms = Some x8 ->
 bv_unsigned x8 = 222%Z ->
 mmap_args_ok ms ->
-mmap_grant_refusable (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
+mmap_grant_refusable (ms_gpr ms 0) (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
+place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+(page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
 (forall e, In e mmap_errnos ->
 twm (advance_past_svc (set_gpr0 ms (errno_ret e))) model bf cf) ->
 (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->

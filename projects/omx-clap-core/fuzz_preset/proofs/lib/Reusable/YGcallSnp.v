@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10-31 (the world relation R): aj_snprintf_at_xromR is the call-site rule over a
    journal at a reflexive and transitive world relation R (binders first; the call keeps the world, so no law of R is
    read); aj_snprintf_at_xrom keeps its statement and is the instance at wle. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the snprintf RUNTIME ROW and its CALL-SITE RULE, GENERIC over the allocator invariant ARx
    of YCbqG.v (Section Variables segs B PST ARx rlo rhi), beside YGcallMx.v's strcmp / strlen rows. No allocator
    instance, no image class, no address and no ledger is named here. TEXT FOR ANNOUNCEMENT (c-omx-alloc, owner ruling
@@ -11,19 +12,19 @@
    ARx := ARcf segs B (YGcallSnpCk.v asnprintf_cf_of_xrom, which needs the read-only bridge named there).
 
    1. THE TEXT asnprintf_realizes_xrom rlo rhi FF K gc gv img_lo img_hi cr pc = port-fm's shared snprintf top over
-      ecall_pre_x: FMsnprintfSharedCf.v:32-67 sh_asnprintf_realizes_cf (origin/cold/port-fm-rtprintf-param
-      0ddf65fd8cc, here by path; header line 1) with
-      - ecall_pre_cf segs B -> ecall_pre_x segs B ARx (FCiface.v:42-48; = ecall_pre_cf at ARx := ARcf segs B),
+      ecall_pre_x: FMsnprintfSharedCf.v:32-67 sh_asnprintf_realizes_cf (
+      here by path; header line 1) with
+      - ecall_pre_cf segs B -> ecall_pre_x segs B ARx (FCiface.v:43-49; = ecall_pre_cf at ARx := ARcf segs B),
       - ARcf segs B -> ARx in the post, the ghost set Hp threaded UNCHANGED (snprintf allocates nothing and moves no
         poison window: a Theorem Labs lane's measurement, the internal file preset-snprintf-U.md sections 3.2 and 4),
       - the per-call rom_view -> arodata_okP segs rlo rhi B (aview segs (w_H W) mem): the _xro form of
-        h-pre-b3's ExvB_StrcmpRo.v:59 / ExwB_StrlenRo.v (origin/cold/h-pre-b3-exword-b 2038bfaedb4e; c-libc-stdio's
+        h-pre-b3's ExvB_StrcmpRo.v:59 / ExwB_StrlenRo.v (c-libc-stdio's
         ruling 11:46Z: rom_view does not follow from ARcf + arodata_okP at image B),
       - the post gains the memnorm KEEP (YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem') as its LAST
         conjunct (the m-form; YGcallMxmn.v's convention, over YAkMemnorm, not YAjMemnorm).
-      Everything else is the shared top's text as it stands: the destination's amem_range d (w + 8) (port-fm
-      00daeaf3796, "the destination's 8-byte slack": musl vfprintf's pf_rng asks app_mem (D + i + 7)), the format
-      family FF (preset: a8's FF_preset, pieces literal / %c / %04x, CfSnprintfPreset.v:33-41), the stack window K,
+      Everything else is the shared top's text as it stands: the destination's amem_range d (w + 8) (port-fm,
+      "the destination's 8-byte slack": musl vfprintf's pf_rng asks app_mem (D + i + 7)), the format
+      family FF (preset: a8's FF_preset, pieces literal / %c / %04x, CfSnprintfPreset.v:34-42), the stack window K,
       the stack-protector cells gc -> gv -> cval, the image range [img_lo, img_hi) the destination avoids, the
       read-only ranges cr (consts_view), the argument words va_words (a3..a7, then xs on the caller's stack), the
       written part w = sn_len (n - 1) T, the entry rounding mode 0. The post: the float state fx' keeps every f
@@ -34,19 +35,19 @@
       YGcallMxmn.v (c-omx-alloc 2026-10-29): _xro = the arodata_okP form, _xrom = the arodata_okP form with the keep.
       Hull: the text bounds no block's tail. The one "+ 8" is amem_range's application-memory slack past the
       destination (a range bound, not a granule past an aligned block).
-   0. in_roP / arodata_okP: NOT defined here. They are the leaf lib/Spec/PresetRodata.v (blob 4eb7e95e7e93, by path
-      from commit 1bba49fd7ac5), Required, so the text's read-only premise is
+   0. in_roP / arodata_okP: NOT defined here. They are the leaf lib/Spec/PresetRodata.v (blob 4eb7e95e7e93, by path),
+      Required, so the text's read-only premise is
       PresetRodata.arodata_okP: one home (the lib/Spec/PresetRodataCheck.v checks the re-exporters with constr_eq).
       The leaf is LiaTwx2-free but NOT override-free (a Theorem Labs lane's measured probe, 2026-10-29: `Print Ltac lia` after
       Requiring the leaf alone prints the YM05 / YM03 body, "Redefined by: YM05 YM03"), and this file already carries
       that override, so the leaf buys one home only, not a stock lia.
-   2. THE RULE aj_snprintf_at_xrom (Section l): aj_strcmp_at_x's derivation (YGcallMx.v:506-566) at this text. The call's
+   2. THE RULE aj_snprintf_at_xrom (Section l): aj_strcmp_at_x's derivation (YGcallMx.v:507-567) at this text. The call's
       ecall_pre_x is proved inline from the journal as YCbq.v:1913 ecall_pre_at proves cgif's; the destination's
-      dest_ok from awr_byte (awr_byte_present_x, YGcallMx.v:193) and the window disjointness; the journal is kept at the
-      call's state by ajournal_x_after_write (YCbqG.v:393) over the destination and the window K, with the float
-      state existential as in apost_base_xF (YCbqG.v:224-231). The keep is the LAST conclusion conjunct in
+      dest_ok from awr_byte (awr_byte_present_x, YGcallMx.v:194) and the window disjointness; the journal is kept at the
+      call's state by ajournal_x_after_write (YCbqG.v:394) over the destination and the window K, with the float
+      state existential as in apost_base_xF (YCbqG.v:225-232). The keep is the LAST conclusion conjunct in
       IMPLICATION form (YAkMemnorm.memnorm segs memT -> YAkMemnorm.memnorm segs mem2), with no memnorm premise.
-   3. asnprintf_realizes_xrom_conj (Section cj): YGcallMx.v:574-612's shape (a text at ARx holds at ARx /\ P).
+   3. asnprintf_realizes_xrom_conj (Section cj): YGcallMx.v:575-613's shape (a text at ARx holds at ARx /\ P).
 
    This file's Require closure holds no lib/Lib file and no LiaTwx2 `Ltac lia ::=` (it Requires neither PRH_Base, nor
    YAjMemnorm, nor any lib/Lib file; lib/Spec/PresetRodata.v Requires only Stdlib, BvBase / MemImageType and YK11 /
@@ -90,7 +91,7 @@ Local Abbreviation AJ := (ajournal_x (SK := SK) segs B PST ARx).
 
 (* ---------------------------------------------------------------------------- *)
 (* 1. The text.                                                                   *)
-(* port-fm's FMsnprintfSharedCf.v:32-67 (0ddf65fd8cc) over ecall_pre_x / ARx; Hp unchanged through the call; the
+(* port-fm's FMsnprintfSharedCf.v:32-67 over ecall_pre_x / ARx; Hp unchanged through the call; the
    read-only premise arodata_okP (the _xro form); the memnorm keep as the last post conjunct. *)
 Definition asnprintf_realizes_xrom (FF : fmt_fam) (K gc gv img_lo img_hi : Z) (cr : list (Z * Z)) (pc : Z) : Prop :=
 forall ly S Hp W regs mem md d n f (xs ws T : list Z) cval,
@@ -277,7 +278,7 @@ split; [exact HP|]. split; [exact Hres|]. split; [exact Hbytes|]. split; [exact 
 split; [exact Hpres2 | exact Hmn].
 Qed.
 
-(* aj_strcmp_at_x's shape (YGcallMx.v:506) at the snprintf text: a0 = d (the destination, every written byte one the
+(* aj_strcmp_at_x's shape (YGcallMx.v:507) at the snprintf text: a0 = d (the destination, every written byte one the
    journal may write), a1 = n, a2 = f (the format, with the argument words ws), the call's stack window K inside the
    journal's budget; the call returns a0 = |T| with the destination holding sn_bytes (n - 1) T, keeps the journal at
    the call's state, writes only the destination and its window K, leaves a float state fx' that keeps every f
@@ -324,7 +325,7 @@ End l.
 End snp.
 
 (* ---------------------------------------------------------------------------- *)
-(* 3. The text at ARx holds at ARx /\ P for any P on (ly, S): the call keeps ly and S (YGcallMx.v:571-612's shape).  *)
+(* 3. The text at ARx holds at ARx /\ P for any P on (ly, S): the call keeps ly and S (YGcallMx.v:572-613's shape).  *)
 Section cj. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable segs : list Segment.
 Variable B : asyms.

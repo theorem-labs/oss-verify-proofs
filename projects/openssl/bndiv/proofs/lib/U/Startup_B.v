@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (auxv20 is replaced by auxvP, the new auxv layout with the cache-geometry, signal-stack, entry, gid and execfn entries and the CONFIG_RSEQ pairs when set; auxvP_auxv_words restated over the launch input); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -151,14 +152,35 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition auxv20 (rnd uid hw : word) : list word :=
-  [Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
-   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; z64;
-   Z_to_bv 64 25; rnd; z64; z64].
+(* The auxv words [StackLayout.auxv_entries] lays for this image (PHDR 0x10040, PHENT 56, PHNUM 10), in order;
+   the two AT_RSEQ_* pairs are present when the kernel build has CONFIG_RSEQ. *)
+Definition auxvP (rseq : bool) (ehdr l1is l1ig l1ds l1dg l2s l2g l3s l3g msz hw entry uid gid rnd efn : word)
+  : list word :=
+  [Z_to_bv 64 33; ehdr; Z_to_bv 64 40; l1is; Z_to_bv 64 41; l1ig; Z_to_bv 64 42; l1ds; Z_to_bv 64 43; l1dg;
+   Z_to_bv 64 44; l2s; Z_to_bv 64 45; l2g; Z_to_bv 64 46; l3s; Z_to_bv 64 47; l3g; Z_to_bv 64 51; msz;
+   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 17; Z_to_bv 64 100;
+   Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
+   Z_to_bv 64 7; z64; Z_to_bv 64 8; z64; Z_to_bv 64 9; entry;
+   Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 13; gid; Z_to_bv 64 14; gid;
+   Z_to_bv 64 23; z64; Z_to_bv 64 25; rnd; Z_to_bv 64 31; efn]
+  ++ (if rseq then [Z_to_bv 64 27; Z_to_bv 64 28; Z_to_bv 64 28; Z_to_bv 64 32] else [])
+  ++ [z64; z64].
 
-Lemma auxv20_auxv_words : forall sp argv envp uid hw,
-  auxv_words Ubsan.M.phdrs sp argv envp uid hw = auxv20 (Z_to_bv 64 (rnd_addr sp argv envp)) uid hw.
-Proof. reflexivity. Qed.
+Lemma auxvP_auxv_words : forall inp mbase entry sp draw,
+  auxv_words inp mbase Ubsan.M.phdrs entry sp draw
+  = auxvP (kb_rseq (in_kernel inp))
+      (la_sysinfo_ehdr (launch_auxv inp sp mbase))
+      (cw_l1i_size (la_cache (launch_auxv inp sp mbase))) (cw_l1i_geom (la_cache (launch_auxv inp sp mbase)))
+      (cw_l1d_size (la_cache (launch_auxv inp sp mbase))) (cw_l1d_geom (la_cache (launch_auxv inp sp mbase)))
+      (cw_l2_size (la_cache (launch_auxv inp sp mbase))) (cw_l2_geom (la_cache (launch_auxv inp sp mbase)))
+      (cw_l3_size (la_cache (launch_auxv inp sp mbase))) (cw_l3_geom (la_cache (launch_auxv inp sp mbase)))
+      (la_minsigstksz (launch_auxv inp sp mbase)) (in_hwcap inp) entry (in_uid inp) (in_gid inp)
+      (Z_to_bv 64 (rnd_addr inp sp)) (Z_to_bv 64 (execfn_addr inp draw)).
+Proof.
+  intros. unfold auxv_words, auxv_entries, auxvP.
+  change (la_rseq (launch_auxv inp sp mbase)) with (kb_rseq (in_kernel inp)).
+  destruct (kb_rseq (in_kernel inp)); reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma envp_count_loop : forall (ws : list word) (Q : machine_state -> Prop)

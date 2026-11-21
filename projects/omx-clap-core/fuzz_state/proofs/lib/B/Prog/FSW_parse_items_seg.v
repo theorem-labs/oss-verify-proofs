@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) the MEASURED SEGMENTS of parse_items' member path on image B,
-   in the form of the A walk's lib/A/FSW_parse_items_seg.v (a working branch 4480a5df1ae): every
+   in the form of the A walk's lib/A/FSW_parse_items_seg.v (a working branch): every
    segment starts at a state the walk builds from a call's resume (FSW_ret.fss_retT, its write windows narrowed to what
    the segment writes, the kit's builders FSW_parse_items_kit.v) and runs, with the engine, straight to the next call
    stop or to the `ret`, raising NO obligation. B CALLS skip_ws where A inlines the white-space loops, so B's segments
@@ -32,6 +32,7 @@
    23 = the slots. MEASURED on image B with the engine (vm_compute), 2026-10-29, scratch
    (internal path) (deleted).
    rule 24: no function is proved in this file. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

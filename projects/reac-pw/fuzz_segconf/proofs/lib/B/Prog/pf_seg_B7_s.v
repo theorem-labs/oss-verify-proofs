@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 408 of its 431 lines of code are new or changed and 495 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a9_s1_k.v, with its module paths and module names changed; 231 of its 293 lines of code are new or changed and 369 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the five PROGRAM call sites of segment
    B7 of reac_segconf_parse_file's walk (the header branch, HDR 0x883b4 -> TAIL / SEG, and the cuts HREF, REFTL, CLR;
    the B7 segment lane of the image-B G3 walk owner, 2026-10-30). VERIFY rule 1j-bis: one closed lemma per call site, showing that the
@@ -17,7 +18,7 @@
      trim (lib/B/Prog/trim_c.v): b7_trim_call, from b7_trim_site_ok:
          b7_trim_site_884e8    a0 = s7 + 1 = lp + 1, the string slice 1 ci (pf_tline s o)
          b7_trim_site_8878c    a0 = s3 + 7 = body + 7, the string skipn 7 body
-   ADAPTED from the image-A G3 walk owner's image-A A7 segment lane lib/A/Prog/pf_a7_s.v (commit 980fbe9c6015): the
+   ADAPTED from the image-A G3 walk owner's image-A A7 segment lane lib/A/Prog/pf_a7_s.v: the
    shared rules (b7_refuse_site_ok, b7_trim_site_ok and the facts they use) are A's text over image B's pf_pieces.v;
    the site lemmas are image B's sites (B has three refuse sites where A has four: plan section 7, "B7 differs in
    its joins"). Where each premise comes from: pf_a7_s.v's head comment holds word for word (buf is F + 0x40,

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the call chain `gch` taken from proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v's `rt_ch`, with fuzz_grant's module paths, for the phases of libreac/fuzz_grant's entry function LLVMFuzzerTestOneInput; the rest of the file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntryDefs.v, with its module paths changed; 277 of its 342 lines of code are new or changed and 295 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* lib/B twin of lib/A/Prog/PcapEntryDefs.v for fuzz_pcap.asan-ubsan (a Theorem Labs lane 21:57Z convention: same path, file,
    definition and lemma names under ...lib.B). The walk of fuzz_pcap's entry function LLVMFuzzerTestOneInput (0x80818,
@@ -63,7 +64,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Stdio Require Import PSource PSour
    (their own imports include lib/Lib): every use below is fully qualified. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Prog Require pcap_source_struct_next.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Prog.Slot Require PWalk.
-(* The journal with program-global ranges (W_journal.v, by path from fuzz_reply's working branch 6328acea202). *)
+(* The journal with program-global ranges (W_journal.v, by path from fuzz_reply's working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require Import W_journalG.
 (* cgif's trivial meter, the one the closing side instantiates (donor AD1q.v:50 LIBX with XL0 XL0). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YCbp.
@@ -306,7 +307,7 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma PE_trap_listed : nth_error pcap_listing (Z.to_nat (PE_TRAP / 4)) = Some (PW 0xc0001073).
 Proof. vm_compute. reflexivity. Qed.
 
-(* The walks (a Theorem Labs lane's stage list, slot_lscps.v (sha256 15a609daf420; internal record) at 6954866e3be, at this image's pcs; M is new, and the rd32 cuts
+(* The walks (a Theorem Labs lane's stage list, slot_lscps.v (sha256 15a609daf420; internal record), at this image's pcs; M is new, and the rd32 cuts
    PP_KRI, PP_KO, PP_KT1, PP_KT2, PP_KWL split Walk and W):
      entry   the first slot: ENTRY (size < 2^26) or EARLY, no instruction
      E       PP_entry -> __asan_stack_malloc_1 0x80888 -> guards 0x80954, 0x80994, 0x809a4 -> malloc 0x809b4 -> PP_K1

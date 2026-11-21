@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgCSpec.v at 0de5d668c87 (rl_post and rl_pre, its lines 124-148, as pw_post and pw_pre, word for word); the contract pod_write_ent_specX, its constants and the two bridge lemmas are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweSpec.v at d75b4b9c245; module paths fuzz_rate -> fuzz_role and nothing else (the contract text is image-independent). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgCSpec.v (rl_post and rl_pre, its lines 124-148, as pw_post and pw_pre, word for word); the contract pod_write_ent_specX, its constants and the two bridge lemmas are new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweSpec.v; module paths fuzz_rate -> fuzz_role and nothing else (the contract text is image-independent). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan-level contract of pod_write_ent(pp, e) (fuzz/pod.h:200-206, with pod_put :175-182, pod_pad :184-188,
    pod_put32 :190-193). Only the asan-ubsan builds keep this function out of line (the asan builds inline it), so this
    is a contract of image B. IMAGE-INDEPENDENT: no image module is Required; segs, the symbol record B, the meter MT and

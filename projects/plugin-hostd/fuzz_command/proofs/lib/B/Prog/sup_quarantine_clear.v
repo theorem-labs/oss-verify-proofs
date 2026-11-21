@@ -5,8 +5,9 @@
    fuzz_command.asan-ubsan): the theorem `tsup_quarantine_clear_holds` for the statement
    lib/B/Prog/sup_quarantine_clear_c.v, from the entry (the prologue and the call of record), the middle segments
    (sup_quarantine_clear_m.v) and the tail (sup_quarantine_clear_t.v), in the form of
-   lib/A/Prog/sup_quarantine_clear.v and _s3.v (the A walk, a working branch f2402580166), re-derived on
+   lib/A/Prog/sup_quarantine_clear.v and _s3.v (the A walk, a working branch), re-derived on
    B's code. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* sup_quarantine_clear on B (recorder.c:411-417; entry BASE + AF_sup_quarantine_clear = 0x8bdb0, 22 instructions;
    capstone on the .symtab entry of fuzz_command.asan-ubsan): 0x8bdb0 .. 0x8bdc8: addi sp,sp,-32; sd ra,24(sp);

@@ -38,7 +38,7 @@ size-role slot list).
 
 ## The inputs are the inputs of record
 
-- Trees: `git archive` extracts of c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib (`$DONOR`) and repository tree (git
+- Trees: `git archive` extracts:proofs/cgif/cgif_file_fuzzer/lib (`$DONOR`) and repository tree (git
   tree 1c3596a429a4; internal record):proofs/plugin-hostd/fuzz_command/lib (`$OURS`). `scripts/verify_tree.py` hashed
   each extracted file as a git blob and compared it with `git ls-tree -r` of the same ref: donor 2468 of 2468 blob-equal,
   ours 4881 of 4881, 0 missing, 0 extra, 0 .v files with a CR byte. The tool read the same .v files as the record: src
@@ -147,7 +147,7 @@ starts or ends, the donor's, and the FUNCs of our twin spelled as the label itse
   0x430b8..0x43124 B) and `__asan_unregister_elf_globals` (0x430d8..0x43140 A, 0x43124..0x4318c B). `__asan_register_globals`
   (0x41c84..0x42aa0 A, 0x41cd0..0x42aec B) and `__asan_unregister_globals` are covered by the rows before them,
   tfib_*_asan_register_globals_impl_RegisterGlobal_loop and tfib_*_asan_unregister_globals_impl. The donor's table
-  (c8557374ad2e lib/A/AB1w.v:68-71) has the same layout: its `tfib_A_asan_register_globals` is 0x3f82c, the start of
+  (lib/A/AB1w.v:68-71) has the same layout: its `tfib_A_asan_register_globals` is 0x3f82c, the start of
   `__asan_register_elf_globals` in cgif.A.twin. The label is the donor's short name for the ELF-globals entry point,
   and our values name the same function in our image. The label is imprecise. The value is not wrong, and no proof
   reads the cell.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nprog_read's case split on the fd-table entry covers the new kinds of entry, and nstep_mm_progress passes mmap_safe_noreserve its new kernel-build argument). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs Progress.
@@ -30,7 +31,7 @@ destruct (syscall_spec_witness (pure_input 214 [Z_to_bv 64 req]) mo) as [eff mo'
 dispatch_pure check_syscall_brk. auto.
 + exfalso. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hr. revert Hr.
 dispatch_pure check_syscall_brk. apply check_brk_not_unmodeled.
-- pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ Hsafe) as Hnr.
+- pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ _ Hsafe) as Hnr.
 pose proof (receptive (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
 Z_to_bv 64 (-1); Z_to_bv 64 0]) mo) as Hr.
 destruct (syscall_spec_witness _ mo) as [eff mo' evs|] eqn:W.
@@ -110,7 +111,7 @@ match fd_lookup (m_fds mo) (Z_to_bv 64 fd) with
 end -> nprog sel (NRead fd buf cnt) mo.
 Proof.
 intros sel fd buf cnt mo Hfd. apply nprog_of_nstep; [exact I|].
-destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| ]|] eqn:E; try contradiction.
+destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| |sq sw sv|ex|dgf|ani anf]|] eqn:E; try contradiction.
 - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction].
 eexists _, _, []. cbn [nstep]. rewrite E, Hfs. split; [reflexivity|]. split; reflexivity.
 - exists (efferr EISDIR), mo, []. cbn [nstep]. rewrite E. auto.

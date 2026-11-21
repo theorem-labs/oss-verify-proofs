@@ -5,10 +5,10 @@
    field 0x83f7c-0x83f8c (the report 0x840ac is not taken); ld a0,16(a1); jal free 0x83f94 (AFREE when the entry has
    a buffer, cap > 0; AFREEN, s->buf = NULL, cap = 0) -> RRC i 0x83f98.
 
-   rule 24: proves function relay_remove MATCH hop 3 (kind: segment lemma of the W6 walk, PORTED from 2ad36763b22
+   rule 24: proves function relay_remove MATCH hop 3 (kind: segment lemma of the W6 walk, PORTED from
    relay_remove_p_c_free.v rrf_hop_proved; lookup + CONFIRM in context).
 
-   Where each part comes from (the retired lane form: commit 2ad36763b22, lib/A/Prog/relay_remove_p_c_free.v):
+   Where each part comes from (the retired lane form: lib/A/Prog/relay_remove_p_c_free.v):
    - rmf_buf_cell: the lane's rrf_buf_cell (:70-100: the buffer pointer at offset 16 of the cleared slot), restated
      over garr8 (the lane's rw_cells / rrf_ec_bytes are not needed: W6's entry_cleared is the lane's rrf_ec).
    - the case split in rr_m_free: the lane's rrf_call (:227: cap = 0 /\ buf = 0 -> free (NULL); cap > 0 -> the
@@ -37,6 +37,7 @@
    conjunct).  The room round: the free is applied at kr := rxkr cx with RRF's rp_RM RP S1 (1 + rxkr cx) and
    cnt_ok RP (ablocks B ly1 S1) (the hop only loads and checks shadow before the jal, so RRF's state is the call's);
    the rule's post rp_RM RP S2 (rxkr cx) is RRC's last conjunct. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

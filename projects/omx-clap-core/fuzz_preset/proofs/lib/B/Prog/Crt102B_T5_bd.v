@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 527 of its 583 lines of code are new or changed and 458 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* On the Step-1 contract texts (the re-hiding move): row T5's boundaries at the re-hiding
    contract: the journals (AJ / AJW) at R := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf, the
    stretch statements CT5_ATL3 / CT5_ATC / CT5_AT_L1 / CT5_AT_L2 / CT5_L0_STMT at YA0nH.SRr' SEGS RZ_cf. Names and
@@ -239,7 +240,7 @@ Hypothesis HLED0 : prh_ledger B ly S Hp W mem Lam peak cnt SIZE_MAXZ ran most 0.
 (* the text's own request bound (PRH_FnCheck.v tcheck_round_trip_specX): every ledger request is within g_most *)
 Hypothesis HRQA : RQA_crt t <= most.
 (* the read-only string "modifiedAt" the at-search compares with: the text's own `kept_img B a_mod_at 11` at the
-   instance's a_mod_at := CRT_MOD_AT_B (Crt102Img.v:1024) *)
+   instance's a_mod_at := CRT_MOD_AT_B (Crt102Img.v:1025) *)
 Hypothesis HKMA : @kept_img _ B_prog_listing PA B (@CRT_MOD_AT_B _ PA) (Z.of_nat (length ck_MOD_AT) + 1).
 (* NAMED HYPOTHESES BOK (asyms_ok B; owner image B's start-up record) and IMGVIS (the image's shadow is
    visible in every ARx state; owner the instance owner, img_shadow_vis_cf), as row T7's Crt102B_T7_tree.v takes them for its

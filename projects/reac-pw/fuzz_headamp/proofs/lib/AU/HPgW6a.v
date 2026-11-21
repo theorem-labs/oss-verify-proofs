@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6a.v at 80bf14ccf11 (its w6_disp,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6a.v (its w6_disp,
    w6_tail_J, w6_case_gen and w6_cases: the two piece lemmas of ent_build's dispatch and of its cases 2 and 3,
    chained from block statements) for reac-pw/fuzz_headamp's image B: the piece statements are lib/AU/HPgSeg.v's
    hsu_piece_W6a_disp_stmt and hsu_piece_W6a_cases_stmt at image B's record, the block statements are

@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of sup_reply_code (plugin-hostd/fuzz_command, 0x89d6c, 20 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (pb_cmpPixel, a leaf that ends in a tail jump to a runtime entry) and A/ACh2.v (the step through a call and back). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_reply_code.v, with its module paths and module names changed; 481 of its 543 lines of code are new or changed and 226 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_role_file.v; 476 of its 585 lines of code are new or changed and 434 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan walk of reac_segconf_ignore_file (reac-pw/fuzz_segconf image A, BASE + AF_reac_segconf_ignore_file =
    0x89750, 38 instructions), in the form of plugin-hostd/fuzz_command's released lib/A/Prog/check_refusal.v and
-   check_refusal_s1.v (origin/ossv/recipes 501c0d516c69): one symbolic run over the listing (SegPaLib's paj_run /
+   check_refusal_s1.v: one symbolic run over the listing (SegPaLib's paj_run /
    paj_branch / paj_ret_at), the call of reac_segconf_find through PaCall's cl_callS with that function's
    contract as a Section hypothesis, and after the call the record of the entry it returned, added to the
    symbolic state with st_ok_pi_add_region so the two instrumented checks pass and their error paths

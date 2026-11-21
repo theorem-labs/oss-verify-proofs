@@ -9,15 +9,15 @@
    (1) every allocator predicate is over preset's SECOND allocator instance (h-mani-a8's ARcf, lib/Reusable/YG0ncf.v),
        never cgif's AR. The per-function frame names afn_pre_cf / ajournal_cf / apost_base_cf / ablocks_cf are
        ABBREVIATIONS (section 4, a Theorem Labs lane's plan): lib/Reusable/YCbqG.v's afn_pre_x / ajournal_x / apost_base_x
-       (the journal of record, blob 83da015952be, from the engine fold origin/cold/c-omx-alloc-preset-s1
-       63997a07aa64) at ARx := ARcf segs B and PST := K0's prh_pst (the seven
+       (the journal of record, blob 83da015952be, from the engine fold)
+       at ARx := ARcf segs B and PST := K0's prh_pst (the seven
        harness statics), and cgif's ablocks (lib/Reusable/YG0d.v:433), never cgif's YCbq afn_pre / ajournal. The
        float post cites YCbqG's fregs_kept_x;
    (2) cgif's event room `st_nev S + EV_LIB <= EV_MAX` is gone, with no allowance in its place: a8's LIB_ROOM over the
        live-state credit abudget_cf and the ceiling CF_MAX holds at every allowance m <= 2 ^ 36 from the pre's own
        instance invariant (lib_room_of_wf, section 3). The allocator's room is two STATE conjuncts (section 3b), never a count
-       of allocator steps: iface_room_at, the premises of c-frame-alloc's P8 (lib/Spec/PresetP8.v preset_room,
-       origin/cold/c-frame-alloc-p8 4ec915e66b6) at the harness entry, from which every consumer allocation of the
+       of allocator steps: iface_room_at, the premises of c-frame-alloc's P8 (lib/Spec/PresetP8.v preset_room)
+       at the harness entry, from which every consumer allocation of the
        model run (PresetRun.hruns) finds a free slot of its primary class (iface_room_at_entry, below), so a
        primary malloc_cf there returns NULL only on an environment refusal (preset_no_refusal, P8's no_null_preset,
        under the walk's named premise run_allocs_follow); and
@@ -29,7 +29,7 @@
    (3) cgif's sink family (asink_none, ameta_inv, the free fd, the sink token footprint) and its write callback are
        dropped: preset's entry function opens no file and has no function pointer (its only jalr are the switch
        jumps of tx_value and write_value);
-   (4) NEW: PINV, the cross-call invariant that replaces cgif's FINV (lib/Reusable/YD1u.v:67-70): the alloc.c ledger
+   (4) NEW: PINV, the cross-call invariant that replaces cgif's FINV (lib/Reusable/YD1u.v:68-71): the alloc.c ledger
        at rest and the musl stdio cells, with its frame lemmas and its bridge to K0's alloc.c ledger (PRH_Base
        prh_ledger at an empty block list, both directions). g_ran_out is ONE byte in both images (the compiler
        shrinks `static int g_ran_out`; a Theorem Labs lane's note, the internal file RANOUT-WIDTH.md), so PINV reads one byte;
@@ -55,8 +55,8 @@
        it), and the post gives it on the return configuration's full overlay mem'. memnorm is seeded at main (both images, proved:
        A/AjMemnormMainA.v, B lib/Reusable/YjMemnormMainB.v), kept across calls (PRH_Base.fpostm), and kept across
        runner segments: callers supply it through the named premise H_memnorm_drv_B, PROVED by PresetD1rBmn's
-       H_memnorm_drv_B_holds (YSRrMemnorm.srr_inv_laws_memnorm_k, over YC80x.SRr_msteps_inv). The at-main seeds conclude over FULL, `YAjMemnorm.memnorm TSEGS FULL` (a working branch
-       53164b435dc): A/AjMemnormMainA.v tfib_memnorm_at_main (blob 70373baab984) and lib/Reusable/YjMemnormMainB.v
+       H_memnorm_drv_B_holds (YSRrMemnorm.srr_inv_laws_memnorm_k, over YC80x.SRr_msteps_inv). The at-main seeds conclude over FULL, `YAjMemnorm.memnorm TSEGS FULL` (a working branch):
+       A/AjMemnormMainA.v tfib_memnorm_at_main (blob 70373baab984) and lib/Reusable/YjMemnormMainB.v
        tfib_memnorm_at_main_B (blob 89990de73a3b). They conclude YAjMemnorm.memnorm; the one conversion at that seam is
        YAkMemnormJ.memnorm_kit_j (lib/Reusable/YAkMemnormJ.v, blob f6dbdc03064b; the two bodies are convertible, its
        proof is `exact`), which only a leaf may Require.
@@ -99,7 +99,7 @@
        PRH_FnEx.tsame_specX (PRH_FnEx.v:375) is a DIFFERENT statement; do not read one for the other. It is the top of
        the chain round_trip_text -> check_round_trip -> LLVMFuzzerTestOneInput, each text with the same conjunct
        appended last (PRH_FnCheck.v tround_trip_text_specX, tcheck_round_trip_specX); evidence that it is met at the
-       real call state given check_round_trip's entry fact: the check_round_trip walks prove it by YGcallStackUp.astack_up_at_xwR at Crt102Arms.v:1102-1109 and Crt102B_RRT.v:1096-1101. Appended,
+       real call state given check_round_trip's entry fact: the check_round_trip walks prove it by YGcallStackUp.astack_up_at_xwR at Crt102Arms.v:1103-1110 and Crt102B_RRT.v:1097-1102. Appended,
        so a positional destruct of the pre that ends in `_` is unchanged. The DRIVER gives it at every slot call from its
        invariant astack_up_x at usp (lib/AU/PresetD1rBPf.v calls_loop_cf, premise :417, conjunct :461-462); the invariant's
        root at main is lib/AU/PresetD1pBPfC.v:62 H_stackup_main_B_holds (Qed, by StackUpMainB.stack_up_main_W1_B).
@@ -131,6 +131,7 @@
    PROVISIONAL (harness re-pin): every literal of section 1 except RA_LLVMF, the estimates of section 2, and the
    callee contracts of section 6 depend on preset's harness code, which is being changed at six NULL sites;
    regenerate them on the new pins. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -152,7 +153,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B Require PRH_ImgB.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_FnAlloc PRH_FnPj PRH_FnCheck.
 Require OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.ZTraceSpec.
 (* The journal layer (the engine fold's YCbqG), the instance's room and free-history files (h-mani-a8), and P8's model
-   and room theorem (lib/Spec, by path from origin/cold/c-frame-alloc-p8 4ec915e66b6). All used qualified. *)
+   and room theorem (lib/Spec, by path). All used qualified. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YCbqG YG00cf YGcfRoom YGcfFrees.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PresetRoom PresetReqAt PresetRun PresetRunQ PresetSite17.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PresetP8.
@@ -170,7 +171,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B Require Img0.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YAkMemnorm.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YCbqGwild.
 (* the per-LIB-call wild budget K_LLVMF := 140 is a Theorem Labs lane's, in the image-free engine leaf YCbqGwild.v (here at
-   a working branch 5dfea14535d2's blob 134630095988; the batch kit's head carries c-omx-alloc-univwiden's
+   a working branch's blob 134630095988; the batch kit's head carries c-omx-alloc-univwiden's
    aa0b10a819fa, the same K_LLVMF), cited; its witnesses (lib/A/WildRoomInstA.v wild_room_init_A / wild_room_run_fits_A,
    lib/AU/WildRoomInstB.v the _B twins) apply by conversion at the concrete TfibB only. On the batch kit's head the per-call
    need is proved: prh_wk and WildBudget.lib_wild_budget (<= K_LLVMF) *)
@@ -179,10 +180,10 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcallMxmn.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcallStackUp.
 (* the slot's world relation (section 5, header item (14)): YA0nH.wle' at YGcfRehidePost.RZ_cf; used qualified *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YA0nH YGcfRehidePost.
-(* IMPLICIT-INSTANCE GUARD (c-omx-hpreset 22:57Z; template fuzz_state S0 bffd3c8f802, lib/A/FSH_Harness.v:27-32 and
-   FSH_Gen.v:28-49). Every walk of image B imports this harness contract. Reusable/YE2k.v:37 `#[export] Instance tfib_sink_head`
-   carries image B's musl ofl_head (YE2k's A_ofl_head: 0x5fe888, YE2k.v:30 at origin/cold/h-mani-a4-preset-relocB
-   6e96e6221c3a), and the cgif harness library files this unit keeps Import it; Reusable/
+(* IMPLICIT-INSTANCE GUARD (c-omx-hpreset 22:57Z; template fuzz_state S0, lib/A/FSH_Harness.v:27-32 and
+   FSH_Gen.v:28-49). Every walk of image B imports this harness contract. Reusable/YE2k.v:38 `#[export] Instance tfib_sink_head`
+   carries image B's musl ofl_head (YE2k's A_ofl_head: 0x5fe888, YE2k.v:31),
+   and the cgif harness library files this unit keeps Import it; Reusable/
    YI5b.v:12 `#[global] Instance src0_sink_head` carries the PLAIN build's. A site that leaves SK to inference would
    get one of them: the wrong image, green and vacuous. Both are removed here, #[global] so the removal holds
    wherever this file is loaded; the two files are Required only to name the instances. Caveat: an explicit
@@ -228,10 +229,10 @@ Local Open Scope Z_scope.
       is its first 8 bytes (1 for g_ran_out and g_own_ran_out, their __asan_global records' size; their accesses are
       lbu / sb). RA_LLVMF MOVED with the driver block (old 0x81448 / 0x814cc).
       GENERATED NAMES, never retyped where a generated file has one. The seven harness statics come from the
-      generated PrhImg (lib/B/PRH_ImgB.v prh_img_B 3216eca68342, commit 1bba49fd7ac5;
+      generated PrhImg (lib/B/PRH_ImgB.v prh_img_B 3216eca68342;
       generator provenance/gen_prh_img.py 6f17b81ee32316bf) through preset_prh_img. The entry function and its
       sixteen callees are the listing class's pa_sigma (section 4): a Theorem Labs lane's re-emitted listing
-      (origin/cold/h-verbs-1-listing-pins102 d42e123915ae, lib/B/PAImg_prog.v 4392ab2c09ba (lemmas B_entry_<name>)) gives their values at
+      (lib/B/PAImg_prog.v 4392ab2c09ba (lemmas B_entry_<name>)) gives their values at
       PA := PI_prog_B. RA_LLVMF, A_EMPTY and the four stdio cells have no generated name on the #102 pins: they are
       typed constants, each with its source on its line. *)
 Definition RA_LLVMF : Z := 0x815c8. (* MEASURED, no generated name: twin c90d4fa5, target_run's jal at 0x815c4 *)
@@ -250,7 +251,7 @@ Definition A_OFL_LOCK : Z := 0x5fee20. (* MEASURED, no generated name: twin c90d
 Definition A_OFL_HEAD : Z := 0x5fee28. (* MEASURED, no generated name: twin c90d4fa5, symbol ofl_head *)
 (* the sink head YCbqG's journal reads under fp_spares: this image's ofl_head, passed explicitly (sections 4 and 6) *)
 Definition preset_sink_head : YI16.sink_head := {| YI16.sk_ofl_head := A_OFL_HEAD |}.
-(* THE SEAM (#102, section 4): this interface is stated over tfibsegs (lib/Reusable/YB1v.v:14, AsanUbsan.M.loaded_segments). The
+(* THE SEAM (#102, section 4): this interface is stated over tfibsegs (lib/Reusable/YB1v.v:15, AsanUbsan.M.loaded_segments). The
    listing class's instance PI_prog_B (lib/B/PAImg_prog.v) has pa_segs := Img0.rsegs, and Img0.rsegs is the same
    AsanUbsan.M.loaded_segments (lib/B/Img0.v), so `@pa_segs rc L PI_prog_B = tfibsegs` holds BY CONVERSION (eq_refl) on any
    facts tree; the half that does not import the image is checked here. *)
@@ -312,7 +313,7 @@ Definition SIZE_MAX : Z := 2 ^ 64 - 1.
 Definition LCNT : Z := 2 ^ 32. (* DECIDED: section 2's row *)
 
 (* ---------------------------------------------------------------------- *)
-(* 3. PINV: the cross-call invariant (NEW; it replaces cgif's FINV, lib/Reusable/YD1u.v:67-70).
+(* 3. PINV: the cross-call invariant (NEW; it replaces cgif's FINV, lib/Reusable/YD1u.v:68-71).
       cgif's harness opens and closes a file per call, so FINV held the sink's metadata and the stdio cells. Preset's
       harness opens no file; what survives the driver's 1-4 calls is the alloc.c ledger, which between two calls is
       at rest: g_live = 0 (the harness frees every block it took), g_fail_at = SIZE_MAX (every starved check
@@ -482,7 +483,7 @@ split; [apply val_mem_of_aview; exact HR|].
 split; [exact Hm|]. split; [exact Ho|].
 unfold SIZE_MAX. lia.
 Qed.
-(* g_most and g_own_ran_out: since the ledger-field sweep (kit walkkit-next 663c569f0c1a) prh_ledger carries the two
+(* g_most and g_own_ran_out: since the ledger-field sweep (kit walkkit-next) prh_ledger carries the two
    #102 cells as fields (PRH_Base.prh_ledger_most / prh_ledger_own), so ledger_rest's two cell conjuncts follow from
    the ledger itself; no premise. *)
 Lemma pinv_ledger_of_prh_ledger_nil : forall (B : asyms) ly S Hp (W : world (@YC4aP.pa_segs rc L PA)) mem peak cnt ran most own,
@@ -523,7 +524,7 @@ Lemma iface_univ_closure_sub {ci : CfImg} : forall (B : asyms) (CTX CTX' : list 
 Proof. intros B CTX CTX' Hi H. exact (@PRH_Base.prh_univ_closure_sub preset_prh_img B ci CTX CTX' Hi H). Qed.
 
 (* LIB_ROOM m holds at EVERY state of the instance and every allowance m <= 2 ^ 36, from its state invariant alone:
-   a8's global budget bound (lib/Reusable/YG08cf.v:306 abudget_room_cf). A caller takes WfP_cf from ARcf (inside
+   a8's global budget bound (lib/Reusable/YG08cf.v:307 abudget_room_cf). A caller takes WfP_cf from ARcf (inside
    afn_pre_cf) and qloose from qtight (acall_pre_cf carries it), so neither the pre nor the post carries an allowance
    on abudget_cf (header item (12)). *)
 Lemma lib_room_of_wf : forall (cp : CfParams) U pp cc bb s m, @WfP_cf cp U pp cc bb s -> qloose s -> cf_hull_ok s -> 0 <= m <= 2 ^ 36 ->
@@ -705,7 +706,7 @@ exact (PresetP8.no_null_preset sm x os i (YGcfRoom.room_of_cf S) H0 n (chunk_cla
 Qed.
 
 (* The NON-primary room's laws, PROVISIONAL, owner h-mani-a8: they follow from its state-restored form room_live_cf
-   (lib/Reusable/YGcfRoomLive.v:1206), with the driver's live set of at most 3 blocks. One text for every
+   (lib/Reusable/YGcfRoomLive.v:1207), with the driver's live set of at most 3 blocks. One text for every
    lane (shape fixed by the parent 04:53Z): the start state, one driver malloc_cf / free_cf step, and the room of
    the driver's two frees after the last call (a8's per-free charge, YGcfRoomFree.v). *)
 Definition iface_room_np_init (NP : astate -> Prop) : Prop := NP YG00.init_state.
@@ -754,7 +755,7 @@ Context {ci : CfImg}.
 Variable sm : list Z -> Z * Z.
 (* PROVISIONAL: the NON-primary room of the instance (secondary count, error buffer, batch-class map: what a8's
    ROOM_cf_k measures, lib/Reusable/YGcfRoomKeep.v:26-28), in a form that holds at every call boundary. Owner
-   a Theorem Labs lane (room_live_cf, lib/Reusable/YGcfRoomLive.v:1206); its laws are iface_room_np_init /
+   a Theorem Labs lane (room_live_cf, lib/Reusable/YGcfRoomLive.v:1207); its laws are iface_room_np_init /
    iface_room_np_step / iface_room_np_tail (section 3b). *)
 Variable iface_room_np : astate -> Prop.
 Variable B : asyms.
@@ -900,7 +901,7 @@ YAkMemnorm.memnorm segs mem /\
    mem` as its last premise at its call state (fuzz_preset.c new:832), and nothing else gives it there: afn_pre_cf
    gives only this function's window [sp - LLVMF_STK, sp), and no AR_laws_x field reads a real-stack byte
    (YGcallStackUp.v's header). MET AT THE REAL CALL STATE of round_trip_text given check_round_trip's entry fact:
-   the check_round_trip walks, YGcallStackUp.astack_up_at_xwR at Crt102Arms.v:1102-1109 and Crt102B_RRT.v:1096-1101 (first by a witness at commit 5208cc4f6eb0, rtt_up_at_call_A /
+   the check_round_trip walks, YGcallStackUp.astack_up_at_xwR at Crt102Arms.v:1103-1110 and Crt102B_RRT.v:1097-1102 (first by a witness, rtt_up_at_call_A /
    rtt_up_at_call_B; rc=0, Print Assumptions primitives only; control C2 without the entry fact FAILS on both
    images). NOT GUARDED (PRH_FnEx.tsame_specX's guarded twin is a different statement). Its root at main's
    entry is lib/AU/PresetD1pBPfC.v:62 H_stackup_main_B_holds (Qed, by StackUpMainB.stack_up_main_W1_B). *)
@@ -1036,16 +1037,16 @@ SRr segs W (cfg_at segs pc regs mem md)
 (apost_base_cfF segs B (fi_stk F) (fi_fp F regs mem ly S) regs ly S Hp W mem md (fi_post F regs ly S Hp W mem md)).
 
 (* THE MEMNORM-KEEPING FRAME CALL (the internal file llvm-iface-need.md section 5): the engine's YGcallMxmn.astack_malloc_realizes_xm
-   (origin/cold/c-omx-alloc-preset-s1b 459129c18903, blob 2b01e06e3fc4: FCiface's astack_malloc_realizes_x with the
+   (blob 2b01e06e3fc4: FCiface's astack_malloc_realizes_x with the
    keep (memnorm segs mem -> memnorm segs mem') as the last post conjunct) at ARx := ARcf, so not a second copy. By
    conversion it is LlvmWalk's Ent102CutsA.ec_stack_malloc_cfm (ecall_pre_cf is ecall_pre_x at ARcf, FCapiCf.v's
    header). The interface's post keeps memnorm, and the cf form constrains mem' only through aview, so without the
    keep the post is not payable after the frame call.
-   THE SUPPLIER is per image and per class: h-hpreset-7's frame-class lane (origin/cold/h-hpreset-7-frameclass
-   d05d97a36005) proves stack_malloc0_contract_xm for cid 0 and stack_malloc1_contract_xm for cid 1, in
+   THE SUPPLIER is per image and per class: h-hpreset-7's frame-class lane
+    proves stack_malloc0_contract_xm for cid 0 and stack_malloc1_contract_xm for cid 1, in
    lib/A/FCm01xm.v (:24, :32) and its twin lib/AU/FCm01xm.v (:25, :33), at ARx := ARcf through h-mani-a8's
    FCifaceCf.fs_iface_ARcf. The capacity premise `count_cid cid (frames S) < fs_frames cid` is NOT in the contract:
-   every caller discharges it at its own entry state (YGcallSx.aj_stack_malloc_at_x, lib/Reusable/YGcallSx.v:158,
+   every caller discharges it at its own entry state (YGcallSx.aj_stack_malloc_at_x, lib/Reusable/YGcallSx.v:159,
    premise :164), because no contract states `a0 <> 0`. On #102 the frame-class walk is expected to carry over by
    relocation (h-rw-pre-4 is confirming it per symbol). *)
 Definition astack_malloc_realizes_cfm (sg : list Segment) (B : asyms) (cid : Z) : Prop :=

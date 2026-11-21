@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/A/RPgCheck.v (ck_entry, the code table ck_tbl / ck_wx / ck_segs_low) and
-   lib/A/RPgCheckStr.v (rl_cstr_kept) at 77f59d02b01 for the MATCH HALF of reac-pw/fuzz_role's image-A segment M02:
+   lib/A/RPgCheckStr.v (rl_cstr_kept) for the MATCH HALF of reac-pw/fuzz_role's image-A segment M02:
    the half's code table, the entry state of a run that starts at one of its cuts (the registers, the real frame at
    s1 and the role cell as regions), the stack facts of lib/A/RPgSeg.v's rs_pre, the seam between RPgSeg's rs_core and
    lib/A/RPgCSpec.v's callee contracts (rl_pre before a call, rl_post after it), and the strings and cells the callees
    read, carried from the segment's start to a cut (rl_cstr_kept with two worlds and the half's write set). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role, image A (fuzz_role.asan, pinned sha256
    614cffc0864cc31d9d1ced61322c4efd567b64bc89fe09a227a05b5126e0debb; every address measured on the unstripped twin
    6da77bafc5c050954dd89149e1e55a24064c2211e3cbd351822d1c0a20900ad6, the same loaded bytes): the vocabulary the
    walk of M02's match half shares. Statement text and shared lemmas only; no segment is walked here.
 
-   WHAT THE MATCH HALF IS. M02 is role_check_contract (lib/A/RPgCSpec.v:398) at image A's record
+   WHAT THE MATCH HALF IS. M02 is role_check_contract (lib/A/RPgCSpec.v:399) at image A's record
    RPgImgA.role_himg_A: from C3 0x820c4 to C4 0x82478. Its scan half (C3 -> E 0x8212c -> O 0x821bc / I 0x821e0,
    the two expect_role loops) is walked elsewhere; this half begins at the four pcs the scan leaves:
 

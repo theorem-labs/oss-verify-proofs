@@ -28,12 +28,13 @@
    s10, at PP_KWL it is s6 - 16 (pe_measW, pe_measL).
 
    Rule 24 (task text of a Theorem Labs lane): a search of the proof index for LLVMFuzzerTestOneInput (index v5 built
-   2026-10-28T21:58:24Z, rebuilt 23:22:17Z, recipes 566eb6ffa5d) rc=0; the 30 named files are all in other units, and no
+   2026-10-28T21:58:24Z, rebuilt 23:22:17Z, recipes) rc=0; the 30 named files are all in other units, and no
    row names libreac/fuzz_pcap; the working-branch search found no Qed walk of it on any asan-ubsan image. CONFIRM (a Theorem Labs lane
    23:47Z): the released fuzz_pcap harness walks (lib/U/Prog/Slot/USegE.v etc.) are for the v1.8 UBSAN image (343
    instructions, 176-byte frame) against this pin's 530 instructions with a 256-byte frame and ASan instrumentation, so
-   this is a new proof. The released end-loop lemma lib/U/Prog/Slot/USegW.v:61 ubs_W_loop (origin/ossv/recipes
-   c8557374ad2e) is the template for the guard decisions (:98, :105-109). *)
+   this is a new proof. The released end-loop lemma lib/U/Prog/Slot/USegW.v:61 ubs_W_loop
+    is the template for the guard decisions (:98, :105-109). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

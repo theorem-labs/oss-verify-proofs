@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (OUT_munmap admits munmap's injected errno answers and rebuilds the maps with mmap_fixed_destroyed_next; OUT_mmap places by linux_place; char_mmap takes the place_declined_b premise on its two search arms; char_mprotect takes the vDSO-reserve region_free premise; OUT_mremap_ok and OUT_mremap_inh cover mremap's TASK_SIZE answer; mm_progress, mm_sound and mm_complete follow; mm_rob added: RomBase.sys_rob at each node, by RomBase.sys_rob_memfree; imports RomBase). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Lib Require Import PropExec MState Mem Exec ITree Nodes RelSpec RelSpecMremap NodesM.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Br Require Import StateGlue.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import Fcfg.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require RomBase.
 From Stdlib Require Import Classical_Prop.
 Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -194,14 +196,15 @@ Qed.
 Lemma OUT_brk_inh : forall req mo, exists o, OUT_brk req mo o.
 Proof. intros req mo. eexists. exists (vm_brk (m_vmmaps mo)). split; [apply brk_r_ok_same | reflexivity]. Qed.
 
+(** At 08b1429 the exact unmap may also answer the injected -ENOMEM
+    ([Mmap.munmap_spec]), and the kept arm rebuilds the maps with
+    [Mmap.mmap_fixed_destroyed_next]. *)
 Definition OUT_munmap (addr len : word) (mo : Model) (o : outcome SyscallEffect) : Prop :=
   let h := m_vmmaps mo in
   let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
-  o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
-         (with_mmap_destroyed addr n
-            (mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) addr)
-               (maps_subtract (vm_noaccess h) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo) [].
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) mo [])
+  \/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
+            (with_mmap_destroyed addr n (mmap_fixed_destroyed_next h addr n) mo) [].
 
 Lemma char_munmap : forall addr len mo i o,
   iP2 215 addr len i ->
@@ -216,7 +219,7 @@ Qed.
 
 Lemma OUT_munmap_ok : forall addr len mo o, mo_ok mo -> OUT_munmap addr len mo o ->
   exists eff mo', o = Ok eff mo' [] /\ mo_ok mo' /\ vm_agree mo mo'.
-Proof. intros addr len mo o Hmo ->. ok_out Hmo. Qed.
+Proof. intros addr len mo o Hmo [(e & _ & ->) | ->]; ok_out Hmo. Qed.
 
 Definition OUT_mmap (addr len prot flags : word) (mo : Model) (o : outcome SyscallEffect) : Prop :=
   let h := m_vmmaps mo in
@@ -224,8 +227,7 @@ Definition OUT_mmap (addr len prot flags : word) (mo : Model) (o : outcome Sysca
   let n := Z_to_bv 64 nZ in
   (mmap_rw_shape prot flags /\
      (mmap_err_out mo o
-      \/ exists a, ((bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                    /\ region_free (vm_reserved h ++ vm_maps h) a n = true
+      \/ exists a, (linux_place h (kb_thp (m_kernel mo)) addr nZ (bv_unsigned a)
                     /\ mmap_noreserve_backed_ok flags mo nZ = true)
                    /\ o = Ok (mkEffect a [] [(a, n)])
                             (with_mmap_backing flags a n
@@ -233,8 +235,7 @@ Definition OUT_mmap (addr len prot flags : word) (mo : Model) (o : outcome Sysca
                                               (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo)) []))
   \/ (mmap_none_shape prot flags /\
      (mmap_err_out mo o
-      \/ exists a, ((bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                    /\ region_free (vm_reserved h ++ vm_maps h) a n = true)
+      \/ exists a, linux_place h (kb_thp (m_kernel mo)) addr nZ (bv_unsigned a)
                    /\ o = Ok (mkEffectU a [] [] [(a, n)] [] [])
                             (with_mmap_backing flags a n
                               (with_vmmaps (mkVmMapsFull (vm_reserved h) ((a, n) :: vm_maps h) ((a, n) :: vm_noaccess h)
@@ -261,17 +262,22 @@ Lemma char_mmap : forall addr len prot flags mo i o,
   iP6 222 addr len prot flags (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i ->
   w_is0 len = false -> mmap_anon_b flags = true ->
   (mmap_rw_shape prot flags \/ mmap_none_shape prot flags \/ mmap_fixed_shape addr len prot flags (m_vmmaps mo)) ->
+  (* LPS #144/#146, arm-conditional as everywhere else: the two SEARCH arms are
+     guarded by the decline, [mmap_fixed_shape] is not. *)
+  (mmap_rw_shape prot flags \/ mmap_none_shape prot flags ->
+   place_declined_b (m_kernel mo) (m_vmmaps mo) addr
+     (page_round_up_Z (bv_unsigned len)) = false) ->
   (syscall_spec i mo o <-> OUT_mmap addr len prot flags mo o).
 Proof.
-  intros addr len prot flags mo i o (Hno & H0 & H1 & H2 & H3 & H4 & H5) Hlen Han Hsh.
+  intros addr len prot flags mo i o (Hno & H0 & H1 & H2 & H3 & H4 & H5) Hlen Han Hsh Hdecl.
   rewrite (syscall_spec_222 i mo o Hno), H0, H1, H2, H3, H4, H5. unfold OUT_mmap.
   destruct Hsh as [Hrw | [Hnone | Hfx]].
-  - rewrite (mmap_rw_outcome addr len prot flags (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo o eq_refl Han Hlen Hrw). split.
+  - rewrite (mmap_rw_outcome addr len prot flags (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo o eq_refl Han Hlen Hrw (Hdecl (or_introl Hrw))). split.
     + intros H. left. split; [exact Hrw | exact H].
     + intros [[_ H] | [[Hn _] | [Hf _]]]; [exact H | |].
       * exfalso. exact (shapes_exclusive_1 _ _ Hrw Hn).
       * exfalso. exact (shapes_exclusive_2 _ _ _ _ _ Hrw Hf).
-  - pose proof Hnone as [Hm Hn]. rewrite (mmap_noaccess_outcome addr len prot flags (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo o eq_refl Han Hlen Hm Hn). split.
+  - pose proof Hnone as [Hm Hn]. rewrite (mmap_noaccess_outcome addr len prot flags (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo o eq_refl Han Hlen Hm Hn (Hdecl (or_intror Hnone))). split.
     + intros H. right; left. split; [exact Hnone | exact H].
     + intros [[Hr _] | [[_ H] | [Hf _]]]; [| exact H |].
       * exfalso. exact (shapes_exclusive_1 _ _ Hr Hnone).
@@ -313,11 +319,12 @@ Lemma char_mprotect : forall addr len prot mo i o,
   iP3 226 addr len prot i ->
   mprotect_grows_conflict_b prot = false -> bv_unsigned addr mod page_size = 0 -> w_is0 len = false ->
   bv_unsigned addr + page_round_up_Z (bv_unsigned len) < two_pow_64 -> mprotect_modeled_b prot = true ->
+  region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true ->
   map_contains (vm_noaccess (m_vmmaps mo)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true ->
   map_contains (vm_maps (m_vmmaps mo)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true ->
   (syscall_spec i mo o <-> OUT_mprotect addr len prot mo o).
 Proof.
-  intros addr len prot mo i o (Hno & H0 & H1 & H2) G1 G2 G3 G4 G5 G6 G7.
+  intros addr len prot mo i o (Hno & H0 & H1 & H2) G1 G2 G3 G4 G5 G8 G6 G7.
   rewrite (syscall_spec_226 i mo o Hno), H0, H1, H2. apply mprotect_expose_outcome; assumption.
 Qed.
 
@@ -349,15 +356,17 @@ Lemma OUT_mremap_ok : forall old osz nsz mo o, mo_ok mo -> OUT_mremap old osz ns
   exists eff mo', o = Ok eff mo' [] /\ mo_ok mo' /\ vm_agree mo mo'.
 Proof.
   intros old osz nsz mo o Hmo H. unfold OUT_mremap, mremap_out in H. cbv zeta in H.
-  destruct H as [[_ ->] | [_ [(e & _ & ->) | [[_ ->] | [(_ & _ & ->) | (_ & dst & _ & ->)]]]]]; ok_out Hmo.
+  destruct H as [[_ ->] | [_ [[_ ->] | [_ [(e & _ & ->) | [[_ ->] | [(_ & _ & ->) | (_ & _ & dst & _ & ->)]]]]]]]; ok_out Hmo.
 Qed.
 
 Lemma OUT_mremap_inh : forall old osz nsz mo, exists o, OUT_mremap old osz nsz mo o.
 Proof.
   intros old osz nsz mo. unfold OUT_mremap, mremap_out. cbv zeta.
+  destruct (Z_lt_le_dec TASK_SIZE (page_round_up_Z (bv_unsigned nsz))) as [TS|TS];
+    [eexists; left; split; [exact TS | reflexivity]|].
   destruct (Z.eq_dec (page_round_up_Z (bv_unsigned osz)) (page_round_up_Z (bv_unsigned nsz))) as [E|NE].
-  - eexists. left. split; [exact E | reflexivity].
-  - eexists. right. split; [exact NE|]. left. exists ENOMEM. split; [left; reflexivity | reflexivity].
+  - eexists. right. split; [exact TS|]. left. split; [exact E | reflexivity].
+  - eexists. right. split; [exact TS|]. right. split; [exact NE|]. left. exists ENOMEM. split; [left; reflexivity | reflexivity].
 Qed.
 
 Lemma iP_pure_brk : forall req, iP1 214 (Z_to_bv 64 req) (pure_input 214 [Z_to_bv 64 req]).
@@ -395,7 +404,7 @@ Proof.
     + intros; eapply OUT_brk_ok; eassumption.
     + apply iP_pure_brk.
     + apply OUT_brk_inh.
-  - destruct Hs as (Hlen & Hnr & Han & Hsh).
+  - destruct Hs as (Hlen & Hnr & Han & Hsh & Hdecl).
     eapply (one_progress mo (OUT_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) mo)
               (iP6 222 (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 (-1)) (Z_to_bv 64 0))).
     + intros; apply char_mmap; assumption.
@@ -407,8 +416,8 @@ Proof.
     + intros; apply char_munmap; assumption.
     + intros; eapply OUT_munmap_ok; eassumption.
     + apply iP_pure_munmap.
-    + eexists. reflexivity.
-  - destruct Hs as (H1 & H2 & H3 & H4 & H5 & H6 & H7).
+    + eexists. right. reflexivity.
+  - destruct Hs as (H1 & H2 & H3 & H4 & H5 & H8 & H6 & H7).
     eapply (one_progress mo (OUT_mprotect (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) mo)
               (iP3 226 (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot))).
     + intros; apply char_mprotect; assumption.
@@ -439,7 +448,7 @@ Proof.
     + sys_iP.
     + apply iP_pure_brk.
     + apply iP1_id.
-  - destruct Hat as (Hsvc & A0 & A1 & A2 & A3 & A4 & A5). destruct Hs as (Hlen & Hnr & Han & Hsh).
+  - destruct Hat as (Hsvc & A0 & A1 & A2 & A3 & A4 & A5). destruct Hs as (Hlen & Hnr & Han & Hsh & Hdecl).
     eapply (one_sound segs mo (OUT_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) mo)
               (iP6 222 (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 (-1)) (Z_to_bv 64 0)));
       try exact Hst.
@@ -460,7 +469,7 @@ Proof.
     + sys_iP.
     + apply iP_pure_munmap.
     + apply iP2_id.
-  - destruct Hat as (Hsvc & A0 & A1 & A2). destruct Hs as (H1 & H2 & H3 & H4 & H5 & H6 & H7).
+  - destruct Hat as (Hsvc & A0 & A1 & A2). destruct Hs as (H1 & H2 & H3 & H4 & H5 & H8 & H6 & H7).
     eapply (one_sound segs mo (OUT_mprotect (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) mo)
               (iP3 226 (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot))); try exact Hst.
     + intros; apply char_mprotect; assumption.
@@ -496,7 +505,7 @@ Proof.
     + sys_iP.
     + apply iP_pure_brk.
     + apply iP1_id.
-  - destruct Hat as (Hsvc & A0 & A1 & A2 & A3 & A4 & A5). destruct Hs as (Hlen & Hnr & Han & Hsh).
+  - destruct Hat as (Hsvc & A0 & A1 & A2 & A3 & A4 & A5). destruct Hs as (Hlen & Hnr & Han & Hsh & Hdecl).
     eapply (one_complete segs mo (OUT_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) mo)
               (iP6 222 (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 (-1)) (Z_to_bv 64 0)));
       try exact Hst.
@@ -515,7 +524,7 @@ Proof.
     + sys_iP.
     + apply iP_pure_munmap.
     + apply iP2_id.
-  - destruct Hat as (Hsvc & A0 & A1 & A2). destruct Hs as (H1 & H2 & H3 & H4 & H5 & H6 & H7).
+  - destruct Hat as (Hsvc & A0 & A1 & A2). destruct Hs as (H1 & H2 & H3 & H4 & H5 & H8 & H6 & H7).
     eapply (one_complete segs mo (OUT_mprotect (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) mo)
               (iP3 226 (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot))); try exact Hst.
     + intros; apply char_mprotect; assumption.
@@ -533,6 +542,17 @@ Proof.
     + sys_iP.
     + apply iP_pure_mremap.
     + apply iP4_id.
+Qed.
+
+(** LPS 727298f3: every node here is brk, mmap, munmap, mprotect or mremap, whose
+    specification reads no memory ([RomBase.memfree]): the same answers over a larger
+    read-only backing, for [TreeBridge]'s [Nrob]. *)
+Theorem mm_rob : forall n ms mo,
+  at_node segs n ms -> nsafe n mo -> mo_ok mo -> RomBase.sys_rob segs (mkCfg ms mo).
+Proof.
+  intros n ms mo Hat Hs _; destruct n; cbn [nsafe] in Hs; try contradiction; cbn [at_node] in Hat;
+    (eapply (RomBase.sys_rob_memfree segs ms mo); [exact (proj1 Hat) |]);
+    rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; lia); RomBase.memfree_lit.
 Qed.
 
 End PerNode.

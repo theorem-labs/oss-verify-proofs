@@ -1,16 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_add (op 0) of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput,
-   image B (lib/B/W_LLVMFuzzerTestOneInput_cut.v:952, `forall cx t W c, lf_base cx -> INV_A 0 cx t W c ->
-   SRr segs W c (INV_K cx t)`), the image-B twin of lib/A/W_LLVMFuzzerTestOneInput_add.v (a working branch
-   bf23ee285da), in the form of the cut's worked dispatch lf_seg_jt.  The arm is 0x84780-0x84788
+   image B (lib/B/W_LLVMFuzzerTestOneInput_cut.v:953, `forall cx t W c, lf_base cx -> INV_A 0 cx t W c ->
+   SRr segs W c (INV_K cx t)`), the image-B twin of lib/A/W_LLVMFuzzerTestOneInput_add.v (a working branch),
+   in the form of the cut's worked dispatch lf_seg_jt.  The arm is 0x84780-0x84788
    (fuzz_reply.asan-ubsan objdump; fuzz_reply.c:700):
      0x84780  sd   t1,144(s1)     in.n := n - (k + 1) into the frame slot F+144
      0x84784  jal  op_add         op_add() at sp = F; it returns to 0x84788
      0x84788  j    0x84804        the latch K
    s4 (in.p := p + k + 1) is the dispatch's (lregs_D), callee-saved across op_add.  The arm has no UBSan trap site
    (the cut's table).  B's numbers were cross-checked against the same-image old-framework walk of op 0,
-   a working branch 89040c52421 lib/B/Prog/SlotPass0.v (a0_call / a0_join).
+   a working branch lib/B/Prog/SlotPass0.v (a0_call / a0_join).
    The proof: one run from the arm's entry to op_add's entry (the store's only byte window is F+144), op_add through
    lib/B/W_op_add.v's oa_spec_g at op_add's OWN globals ad_G = [(g_s, 384); (g_nfd, 4)] ++ RA_G (never G_fr, which
    holds errno), its journal lifted to G_fr (ajournal_gx_G_mono) and composed into the cut's (ajournal_gx_sub, the
@@ -32,6 +32,7 @@
      RI_add_* / LS_add_* - the arm's model obligations over _cut's RINV / LS (lib/A's text).
    lib/B has no latch file at this base, so the transport kit lib/A's arm read from
    lib/A/W_LLVMFuzzerTestOneInput_latch.v (its lt_ lemmas) is restated here at image B's names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -252,8 +253,8 @@ Proof.
   intros j Hj. apply HK. lia.
 Qed.
 (* W_op_add.v's AR oa_call_keep / _blk / _hi (the base lib/B/W_op_add.v's Section c), restated here as in
-   lib/B/W_LLVMFuzzerTestOneInput_pro.v (a working branch 440127ba6d5): W2's W_op_add.v of record
-   (a working branch 11fb7104fb5) states those three names over ARx, so this AR walk keeps their AR texts and
+   lib/B/W_LLVMFuzzerTestOneInput_pro.v (a working branch): W2's W_op_add.v of record
+   (a working branch) states those three names over ARx, so this AR walk keeps their AR texts and
    proofs under ad_ names *)
 Lemma ad_oa_call_keep : forall G' STK sp0 FP ly0 S0 (W0 : world segs) m0 md0 ly1 S1 (W1 : world segs) m1 md1 k,
 ajournal_gx segs B G' 0 [] STK sp0 FP ly0 S0 W0 m0 md0 [] ly1 S1 W1 m1 md1 k -> ~ YI16.sink_open_fp FP ->

@@ -22,8 +22,12 @@
     biases from the input, then xnn_create_convolution2d_nhwc_qs8 with three
     fuzzed float scales; the returned status is ignored and the operator is
     never set up, run or deleted; xnn_deinitialize.  The harness makes no check
-    of its own beyond not crashing, so a statement about it says only that the
-    code it calls never crashes, hangs or trips a sanitizer.
+    of its own beyond not crashing.  Its halts statements say only that the code
+    it calls never crashes, hangs or trips a sanitizer.  Its agreement
+    statements say only that the code never crashes or trips a sanitizer, and
+    allow a run that never ends.  Its bound statements say only how often its
+    builds may disagree.  Its decidability statements say only that some program
+    decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

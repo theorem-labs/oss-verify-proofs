@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cjson/cjson_read_fuzzer/lib/RL/I/IImgA.v for this unit: its address tables keep some of cjson's keys and add this unit's own, each at an address of this unit's asan image (lib/A/Img0.v); the definitions A_* are renamed N_* and asegs is renamed rsegs; the notations KV and KV3 are no longer Local; and the imports name this unit's modules. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/CJ/RL/I/IImgA.v, with its module paths and addresses changed; 10 of its 26 lines of code are new or changed and 141 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/IImgP.v at ca77675ebeb; the same keys mapped to the addresses of the ASan image A (fuzz_role.asan, lib/A/Img0.v). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/IImgA.v at b2957340e99a; the same keys mapped to the addresses of reac-pw/fuzz_rate's ASan image A (fuzz_rate.asan, lib/A/Img0.v). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/CJ/RL/I/IImgA.v at b089f28d962e, with the address constants of proofs/reac-pw/fuzz_rate/lib/A/RtPgNearC.v at b089f28d962e; the same keys mapped to the addresses of reac-pw/fuzz_rate's ASan image B (fuzz_rate.asan-ubsan, lib/AU/Img0.v), and pod_nearest's entry, .got slot and shadow-offset cell are image B's. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/IImgP.v; the same keys mapped to the addresses of the ASan image A (fuzz_role.asan, lib/A/Img0.v). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/IImgA.v; the same keys mapped to the addresses of reac-pw/fuzz_rate's ASan image A (fuzz_rate.asan, lib/A/Img0.v). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/CJ/RL/I/IImgA.v, with the address constants of proofs/reac-pw/fuzz_rate/lib/A/RtPgNearC.v; the same keys mapped to the addresses of reac-pw/fuzz_rate's ASan image B (fuzz_rate.asan-ubsan, lib/AU/Img0.v), and pod_nearest's entry, .got slot and shadow-offset cell are image B's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (** Every address of reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan, pinned sha256
     c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; unstripped twin
     a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1) that the image-B walk of pod_nearest

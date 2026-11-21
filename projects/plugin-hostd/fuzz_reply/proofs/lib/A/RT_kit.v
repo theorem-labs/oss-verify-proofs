@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: the generic half of the bridge from a Bz body walk (lib/A/Bz, relocated onto
    fuzz_reply.asan) to the W_sites.v runtime site contracts, for every runtime lane of fuzz_reply. *)
 (* Modified by Theorem Labs, 2026-10: the comments of fr_rt_rest and FrRtCells corrected: the generated AF0m.v (sha256 007c9a7eb8b9; internal record) holds all 14 cells of fr_rt_rest, and RT_kit_cells_x.FrRtCells_of_syms / FrRtCells_x_of_syms discharge FrRtCells / FrRtCells_x (comments only). *)
-(* Ported from: a working branch 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v:90-750
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v:90-750
    (a Theorem Labs lane's bridge, itself from a Theorem Labs lane's FMbz_bridge / FMbz_str and a Theorem Labs lane's MemNorm / RegisterBridge).
    Changes (R1Str, 2026-10-29):
    - fuzz_state.asan -> fuzz_reply.asan: Img0.rsegs is lib/A/Img0.v (the ASan segments, NOT lib/Img0.v, which is the
@@ -162,7 +163,7 @@ Definition fr_tl_cells (m : word -> option byte) : Prop :=
    .got 0x9e538 = 0xa6d99 (replace_intrin_cached) and 0xa6d99 = 1, and for strrchr (R2) common_flags + 0xfd =
    0x137ce5 (intercept_strchr) = 1 and REAL(strrchr) 0x9f710 = 0x96e8c.  The values are start-up state; the
    generated AF0m's Tfib_const (AF0m.v sha256 007c9a7eb8b9; internal record) holds all 14 cells: 13 are rows (REAL(strlen) 0x9f6e8 at
-   AF0m.v:444; REAL(strrchr) 0x9f710 at AF0m.v:447, row index 405 of Tfib_const_abs), and 0x137ce5 is byte 5 of the
+   AF0m.v:445; REAL(strrchr) 0x9f710 at AF0m.v:448, row index 405 of Tfib_const_abs), and 0x137ce5 is byte 5 of the
    row 0x137ce0 = 0x0101010101010101.  So FrRtCells is dischargeable: RT_kit_cells_x.FrRtCells_of_syms gives it from
    AR_laws and TfibSyms (RT_kit_cells_x.FrRtCells_x_of_syms gives FrRtCells_x from rt_laws and TfibSyms); the twins
    in RT_*_x.v carry no cell premise. *)

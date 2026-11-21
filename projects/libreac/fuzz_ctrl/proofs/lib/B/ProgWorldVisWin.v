@@ -5,9 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 2867 of its 3071 lines of code are new or changed and 2908 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW1.v, with its module names changed; 70 of its 100 lines of code are new or changed and 3041 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldVisWin.v (a working branch
-   26edf006f53, byte-identical to a Theorem Labs lane's copy on a working branch 5c587a76cbc; re-synced to
-   a working branch 1d23ced37fd = a working branch b3abb4ad52d, where A drops its two copied _stmt
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldVisWin.v (a working branch,
+   byte-identical to a Theorem Labs lane's copy on a working branch; re-synced to
+   a working branch = a working branch, where A drops its two copied _stmt
    Definitions, Requires A.ProgWorld and states `A.ProgWorld.win_vis_stmt B` / `A.ProgWorld.win_sh_vis_stmt B`,
    which this twin already did).  What differs from A:
    - the two statements are lib.B.ProgWorld's own, `lib.B.ProgWorld.win_vis_stmt B` /
@@ -17,7 +17,7 @@
    - YP09, which also exists as lib/B/Reusable/YP09.v, is Required by its CORE path (`From ...fuzz_ctrl.lib.Reusable
      Require YP09`, fix_require6.py, as lib/B/ProgWorld.v on the base), where A writes `Require ... Reusable.YP09`.
    - module names: A.ProgBridge -> lib.B.ProgBridge, A.Prog.rng_asan -> lib.B.Prog.rng_asan, A.AsanRT ->
-     lib.B.AsanRT, A.AB1v -> lib.Reusable.YB1v (tfibsegs = AsanUbsan.M.loaded_segments, YB1v.v:12).
+     lib.B.AsanRT, A.AB1v -> lib.Reusable.YB1v (tfibsegs = AsanUbsan.M.loaded_segments, YB1v.v:13).
    NO image-A number is carried over.  Every constant in the proofs is the core's or image-independent:
      0x7fff8000  = lib.B.AsanRT.ASAN_K (B/AsanRT.v:8) = lib.Reusable.YG0f.SHADOW_OFF (YG0f.v:12), the ASan shadow
                    offset, the same in both images;
@@ -32,6 +32,7 @@
                    are page-aligned (layout_ok lo_top, YG0f.v:322-324), so the aligned cover stays inside the
                    stack's shadow.
    img_vis (V2) is not stated in ProgWorld.v: lib.B.ProgBridge.img_vis_W proves it for every world. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YK04 Reusable.YA0n.

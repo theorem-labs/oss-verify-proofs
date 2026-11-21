@@ -4,8 +4,9 @@
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedSetupA), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v. *)
 (* Modified by Theorem Labs, 2026-10: the head-amp table layout and the contract and walk of reac_headamp_tx_effective on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySchedSetupA.v, with shent_of_block_at from lib/A/Prog/HeadampTxEffective.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntrySchedSetupA.v,
-   ported from a working branch 7c8c67da870 (blob 43b5541d37a): image B's own slots (0x81944 .. 0x819bc and
+   ported from a working branch (blob 43b5541d37a): image B's own slots (0x81944 .. 0x819bc and
    0x81a04 .. 0x81a1c), its registers (s3 the frame's shadow, s7 the bytes left, s4 the table reloaded from slot
    152, s5 and s8 the scene's base and width, s11 the cursor, s2 the bytes left less two), the input cursor in
    slot 48 and the shadow offset LOADED from slot 144 before each check (so the walk's shadow base is

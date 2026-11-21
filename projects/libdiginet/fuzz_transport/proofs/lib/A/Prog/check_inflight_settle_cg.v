@@ -46,7 +46,7 @@
    journal's facts: tw_at at csw_view of the call memory (the same world Bw), diginet_session_deadline_m Bw (g_now Bw)
    = Some d (from the model premise), asan_cells (transport_cells rows 1-2), and g_s's payload [0x5df9c0,
    0x5df9c0 + 18264) addressable: trans_cis_cells B, the record's zero shadow of those 2283 whole granules (the
-   Tfib_zero_shadow row (0x5df9c0, 0x5e4118 - 0x5df9c0), lib/A/AF0m.v:3105), read at the call state through
+   Tfib_zero_shadow row (0x5df9c0, 0x5e4118 - 0x5df9c0), lib/A/AF0m.v:3106), read at the call state through
    DgnTransportCg.v decode_zshadow_rd. No runtime entry is called.
    Stack: 32 bytes of its own and the ESTACK window of the leaf call below sp - 32: CIS_STK.
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """consumer_classify.py GRANT_A KNOCK_A FILE... -- for each lib/A FILE, the difference between fuzz_grant's released text
-(GRANT_A = proofs/libreac/fuzz_grant/lib/A at 4f87de75d67) and libreac/fuzz_knock's released text (KNOCK_A = its lib/A at
-88154566652a), with knock reduced to depot_has_trace = true exactly as depot_classify.py does, comments removed, module
+(GRANT_A = proofs/libreac/fuzz_grant/lib/A) and libreac/fuzz_knock's released text (KNOCK_A = its lib/A),
+with knock reduced to depot_has_trace = true exactly as depot_classify.py does, comments removed, module
 paths / record names mapped, and every numeral replaced by NUM (the two cores are relocated onto different images, so
 addresses differ by construction). The residue is what knock's consumer changes beyond the depot switch and the image.
 Prints per file: switch constructs in knock's text, residue token count (punctuation-only residue counted apart), and

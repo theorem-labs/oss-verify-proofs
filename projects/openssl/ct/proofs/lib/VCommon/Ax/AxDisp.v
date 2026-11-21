@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VCommon proof library over the revised model). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -25,6 +26,8 @@ Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis KT_agree : forall ρ ρ' o, (forall x, entry_var x = true -> ρ' x = ρ x) -> KT ρ' o = KT ρ o.
 Hypothesis Hlow : segs_low segs.
+(* NEW, following AxSysMmapS's and AxSysNorep's Main sections. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
 Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
@@ -43,8 +46,8 @@ Proof.
   - destruct (Z.eq_dec x8 222) as [->|N222].
     + destruct (null_shape A) as [sh|] eqn:Esh.
       * destruct (sys_fresh A) eqn:Efr; [|discriminate Hs].
-        exact (sys_mmap_null_sound segs LIM fs0 Hlow cfg Hcfg2 KT KT_agree A l Hpc H17 (sys_fresh_spec A Efr) Hs HS).
-      * exact (sys_mmap_noreplace_sound segs LIM fs0 Hlow cfg Hcfg2 KT A l Hpc H17 Hs HS).
+        exact (sys_mmap_null_sound segs LIM fs0 Hlow Hnk cfg Hcfg2 KT KT_agree A l Hpc H17 (sys_fresh_spec A Efr) Hs HS).
+      * exact (sys_mmap_noreplace_sound segs LIM fs0 Hlow Hnk cfg Hcfg2 KT A l Hpc H17 Hs HS).
     + exfalso. destruct x8 as [|p|p]; try discriminate Hs;
         repeat (destruct p as [p|p|]; try discriminate Hs; try (exfalso; lia)).
 Qed.
@@ -57,13 +60,17 @@ Proof.
     destruct (xlit (aget (a_regs A) 17%uint63)) as [x8|] eqn:H17; [|discriminate Hs].
     destruct (Z.eq_dec x8 222) as [->|N222].
     + destruct (sys_fix_rw LIM A) as [l2|] eqn:E2.
+      (* sys_fix_rw_sound and sys_fix_sh_sound do NOT take Hnk: section discharge gives
+         it only to the lemmas that use it, and in AxSysFixS3 that is the none arm.
+         Measured both ways: with Hnk here, a farm round reports it
+         where an AST is expected. *)
       * injection Hs as <-. exact (sys_fix_rw_sound segs cfg Hcfg2 LIM fs0 KT Hlow A l2 Hpc H17 E2 HS).
       * destruct (sys_fix_sh LIM A) as [l3|] eqn:E3.
         -- injection Hs as <-. exact (sys_fix_sh_sound segs cfg Hcfg2 LIM fs0 KT Hlow A l3 Hpc H17 E3 HS).
-        -- exact (sys_fix_none_sound segs cfg Hcfg2 LIM fs0 KT Hlow A l Hpc H17 Hs HS).
-    + destruct (Z.eq_dec x8 215) as [->|N215]; [exact (sys_munmap2_sound segs cfg LIM fs0 KT Hlow A l Hpc H17 Hs HS)|].
+        -- exact (sys_fix_none_sound segs cfg Hcfg2 LIM fs0 KT Hlow Hnk A l Hpc H17 Hs HS).
+    + destruct (Z.eq_dec x8 215) as [->|N215]; [exact (sys_munmap2_sound segs cfg Hcfg2 LIM fs0 KT Hlow Hnk A l Hpc H17 Hs HS)|].
       destruct (Z.eq_dec x8 226) as [->|N226]; [exact (sys_mprotect2_sound segs cfg Hcfg2 LIM fs0 KT Hlow A l Hpc H17 Hs HS)|].
-      destruct (Z.eq_dec x8 214) as [->|N214]; [exact (sys_brk2_sound segs cfg Hcfg2 LIM fs0 KT Hlow A l Hpc H17 Hs HS)|].
+      destruct (Z.eq_dec x8 214) as [->|N214]; [exact (sys_brk2_sound segs cfg Hcfg2 LIM fs0 KT Hlow Hnk A l Hpc H17 Hs HS)|].
       exfalso. destruct x8 as [|p|p]; try discriminate Hs;
         repeat (destruct p as [p|p|]; try discriminate Hs; try (exfalso; lia)).
 Qed.

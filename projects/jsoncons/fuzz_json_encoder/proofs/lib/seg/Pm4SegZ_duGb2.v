@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed ex1, kn0; added ex1_reached_end; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/seg/Pm8SegZ_duGb2.v, lines 25, 82-83. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -25,7 +26,7 @@ Definition kn0 : list kentry := [KRange (EVar 2) 140735332552704 140737488355328
    KWr (SA (EVar 2) (-16)) (ELit 16);
    KUnk (SA (EVar 2) (-16)) (ELit 16);
    KImg 65536 1449984;
-   KRange (EVar 33) 140735332552704 140737488355311;
+   KRange (EVar 33) 140735332552704 140737488355318;
    KRange (EVar 34) 67 73;
    KDisj (SA (EVar 2) (-16)) (ELit 16) (SA (EVar 33) 0) (EAlu Instr.ALU_ADD (EVar 34) (ELit 1));
    KWr (SA (ELit 0) (1463368)) (ELit 4);
@@ -83,8 +84,8 @@ Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.S
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
 (* [comment removed for export] *)
-Definition ex1 : list SGA.aitem * (Z * sym_state) :=
-  (([SGA.AStep (SR.SBlock [1317396; 1317396])], (93, SS 1317396 [ELit 0; ELit 1315408; EAlu Instr.ALU_ADD (EVar 2) (ELit 672); EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; EVar 41; EVar 42; EVar 8; EVar 40; EVar 40; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 43; EVar 44; EVar 45; EVar 46; EVar 47; EVar 48; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := ELit 0; a_off := 1463368 |} 4 (ELit 5); KWord {| a_base := ELit 0; a_off := 1463464 |} 8 (ELit 0); KWord {| a_base := ELit 0; a_off := 1463456 |} 8 (ELit 7071720); KWord {| a_base := ELit 0; a_off := 1463424 |} 8 (ELit 0); KWord {| a_base := ELit 0; a_off := 1463408 |} 8 (ELit 0); KWord {| a_base := ELit 0; a_off := 1463400 |} 8 (ELit 0); KRange (EVar 2) 140735332552704 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -16 |} (ELit 16); KUnk {| a_base := EVar 2; a_off := -16 |} (ELit 16); KImg 65536 1449984; KRange (EVar 33) 140735332552704 140737488355311; KRange (EVar 34) 67 73; KDisj {| a_base := EVar 2; a_off := -16 |} (ELit 16) {| a_base := EVar 33; a_off := 0 |} (EAlu Instr.ALU_ADD (EVar 34) (ELit 1)); KWr {| a_base := ELit 0; a_off := 1463368 |} (ELit 4); KWr {| a_base := ELit 0; a_off := 1463400 |} (ELit 8); KWr {| a_base := ELit 0; a_off := 1463408 |} (ELit 8); KWr {| a_base := ELit 0; a_off := 1463424 |} (ELit 8); KWr {| a_base := ELit 0; a_off := 1463456 |} (ELit 8); KWr {| a_base := ELit 0; a_off := 1463464 |} (ELit 8); KWord {| a_base := ELit 0; a_off := 7069712 |} 8 (EVar 40); KWord {| a_base := EVar 2; a_off := 40 |} 8 (EVar 40); KWord {| a_base := EVar 2; a_off := 104 |} 8 (ELit 1352672); KWord {| a_base := EVar 2; a_off := 96 |} 8 (ELit 1463368); KWord {| a_base := EVar 2; a_off := 88 |} 8 (EAlu Instr.ALU_ADD (EVar 34) (ELit 14)); KWord {| a_base := EVar 2; a_off := 80 |} 8 (ELit 7069712); KWord {| a_base := EVar 2; a_off := 72 |} 8 (ELit 1); KWord {| a_base := EVar 2; a_off := 64 |} 8 (ELit 7071720); KWord {| a_base := EVar 2; a_off := 56 |} 8 (ELit 0); KWord {| a_base := EVar 2; a_off := 48 |} 8 (EVar 22); KWord {| a_base := EVar 2; a_off := 416 |} 8 (EVar 40); KWord {| a_base := EVar 2; a_off := 472 |} 8 (ELit 461084); KWord {| a_base := EVar 2; a_off := 464 |} 8 (ELit 91831); KWord {| a_base := EVar 2; a_off := 456 |} 8 (ELit 1463368); KWord {| a_base := EVar 2; a_off := 448 |} 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit 544)); KWord {| a_base := EVar 2; a_off := 440 |} 8 (EVar 19); KWord {| a_base := EVar 2; a_off := 432 |} 8 (EVar 20); KWord {| a_base := EVar 2; a_off := 424 |} 8 (EVar 21); KWord {| a_base := EVar 2; a_off := 536 |} 8 (ELit 721508); KWord {| a_base := EVar 2; a_off := 528 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := 520 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := 512 |} 8 (EVar 18); KWord {| a_base := EVar 2; a_off := 664 |} 8 (ELit 1315404); KWord {| a_base := EVar 2; a_off := 656 |} 8 (EVar 41); KWord {| a_base := EVar 2; a_off := 648 |} 8 (EVar 42); KWord {| a_base := EVar 2; a_off := 640 |} 8 (EVar 43); KWord {| a_base := EVar 2; a_off := 632 |} 8 (EVar 44); KWord {| a_base := EVar 2; a_off := 624 |} 8 (EVar 45); KWord {| a_base := EVar 2; a_off := 616 |} 8 (EVar 46); KWord {| a_base := EVar 2; a_off := 608 |} 8 (EVar 47); KWord {| a_base := EVar 2; a_off := 600 |} 8 (EVar 48)] 140))).
+Definition ex1 := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).

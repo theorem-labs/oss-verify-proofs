@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ranges are the launch's (co_res_in)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -286,7 +287,7 @@ Proof.
   - left. pose proof (RES_cover x Hx) as Hin. unfold CXS.in_ivs in Hin. apply existsb_exists in Hin as (r & Hr & Hz).
     apply andb_prop in Hz as [Hz1 Hz2]. apply Z.leb_le in Hz1. apply Z.ltb_lt in Hz2.
     exists r. split.
-    + apply in_or_app. left. rewrite (CXS.co_res _ _ _ _ _ _ _ _ _ _ _ _ HCS). exact Hr.
+    + apply in_or_app. left. exact (CXS.co_res_in _ _ _ _ _ _ _ _ _ _ _ _ HCS r Hr).
     + unfold e_hi, e_sz, e_lo. lia.
   - right. exact Hx.
   - left. destruct Hx as (p & _ & Hp & _ & _ & Hxp). exists p. split; [apply in_or_app; right; exact (nth_error_In _ _ Hp) | exact Hxp].

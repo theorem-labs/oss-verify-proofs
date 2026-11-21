@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (am_take_eq)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -30,7 +31,6 @@ Section CANSEC1. Context {rc : runConstT}.
 Lemma am_take_eq {R} st (k : mstate -> optr -> M R) bail q :
   c_avail_meta (ctx st) = Some q ->
   am_take st k bail = k (am_took st q (c_avail_meta_count (ctx st) - 1)) (Some q).
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_am_D ()) ["CANSEC1"] "p'0h01Rh14bailh21kh31qh42sth51Hh61ch71oh81ri001mi011xp;1p;2p;3p;5p;6p;4g0000R0p4p70g000eR1p4p710p8p200R2g001CR3p4p710p8P2g0025R4p4p710p8P3j10Tg002mj13Tg003aj16Tg004^j21Tg005@j35Tg005Zj1?Tg006<j2<Tg0077j2;Tg0082j2:Tg008gj12Tg009jj18Tg00:Hj24Tg00:ej29Tg00;jj2ETg00<ij2DTg00=aj3CTg00>Zj1>Tg00?Oj5=Tg00@Fj37Tg00A@j2@TP1j6ATP4j4BTg00AZR4f3R1#0\0\4R3f2R5#0R6g00BSR7%31#6f0R8,17R9550P0f1R:,17R;f6R<#0g00CHP7f7#0P8f5R=g00Cj%?7R>1<>8';W8g00Dag00EX,::,17%28g00FR#8R>'4/98'EW6/D<5C8P9O2g00G7g00GlR9P<g00HJ#>f4R<V9D=n10110100021010000P<%3=#2/4>97=51175O235X70%0=R0P1%3<R9#2/4>97<:P;O2R;'@%69P8EAP=P<P1P5CB=50;eW5X37X16X23X44X02P<P1P5P:P8O5W3W1W2W4X02o"). Qed.
+Proof. intros H. unfold am_take. rewrite H. reflexivity. Qed.
 
 End CANSEC1.

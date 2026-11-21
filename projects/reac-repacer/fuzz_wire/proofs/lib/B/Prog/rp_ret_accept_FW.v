@@ -1,14 +1,14 @@
 (* The footprint walk of reac-repacer/fuzz_wire's rp_ret_accept in image B, against the frozen
    lib/B/Prog/rp_ret_accept_F_c.v rp_ret_accept_contract_F (= wire_rp_ret_accept_holds_stmt). The script is
-   libreac/fuzz_decode's released lib/B/Prog/reac_frame_is_reac_F_nosh.v reac_frame_is_reac_holds_F_nosh (recipes
-   commit 48907dc7e8ca) with its first two tests turned round: reac_frame_is_reac tests f == NULL first (returning 0)
+   libreac/fuzz_decode's released lib/B/Prog/reac_frame_is_reac_F_nosh.v reac_frame_is_reac_holds_F_nosh (recipes)
+   with its first two tests turned round: reac_frame_is_reac tests f == NULL first (returning 0)
    and n < 14 second, rp_ret_accept tests n < 14 first (returning 0) and then TRAPS on f == NULL, so the walk splits on
    n < 14 only and steps over the null check with `if_false` from the premise `bv_unsigned a0 <> 0`, which holds under
    `14 <= n`. From the load of f[12] on, the two codes are one instruction for one instruction, except that
    rp_ret_accept computes its result in a0 directly (`seqz a0, a0`; `mv a0, zero`) where reac_frame_is_reac goes
    through a2, so its two return paths take one step fewer. The GOT word and the cell are image B's (624760 = 0x98878
    and 657400 = 0xa07f8); the post names every temporary register, as the frozen contract states it. The form of the
-   file is reac-repacer/fuzz_uci's lib/B/Prog/rp_hot_clamp_FW.v (recipes commit 0295462466b2): StepF's step, one rng
+   file is reac-repacer/fuzz_uci's lib/B/Prog/rp_hot_clamp_FW.v (recipes): StepF's step, one rng
    fact per access, the shadow loads read from the `addressable` premise. *)
 (* rp_ret_accept of fuzz_wire.asan-ubsan (objdump of record sha256 440b9550f4f5; entry 0x80ee0, 0xa4 bytes):
      0x80ee0 `addi sp, sp, -0x10`, 0x80ee4 `sd ra, 8(sp)`;

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AD2iExhErrb.v, with its module paths changed; 14 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 (* Theorem Labs, 2026-10-30: the A' start-up witness for the cf layer's two machine-cell fields at main
    entry, where the driver converts AR to ARcf (lib/A/PresetD1pAPf.v: W = AD2i.W1 .., ly = AD1g.ly0 ch E model,
    mem = FULL). Proves no function (start-up facts).
@@ -28,7 +29,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.omx_clap_core.fuzz_preset.images Require Import Asan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11 YK00 YK04 YA0i YA0n YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB13 AB01 AF0m.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB13 AB01r AF0m.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0f YG0v YG0n YM05 YGcfNames YGcfCellsInit.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require AD1g AD2i CfImgA.
 Import ListNotations.
@@ -42,7 +43,7 @@ Open Scope Z_scope.
 
 (* the two ranges, checked in all 50 hand-off states *)
 Definition CELLS_A : list (aexp * Z) := [(ANum OBJ, 56); (ASp kRegionInfoOff, 4096)].
-Lemma hs_cells_A : forallb (fun ch => forallb (AD1g.xzero ch) CELLS_A) HS_tfib_list = true.
+Lemma hs_cells_A : forallb (fun ch => forallb (AD1g.xzero ch) CELLS_A) HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Lemma exh_off_A : 0 <= XO /\ XO + 128 * 31 < 4096.
@@ -56,17 +57,36 @@ Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TSEGS TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* LPS 727298f3: the start-up invariant is abstract, as in the core sections (A/AD2i.v, A/AD1g.v),
+   with the stack-top fact the drivers read; the hidden stack bytes read the input's fields. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
+Let ARGH : forall E0 (a : word), argH E0 a = true -> TOP <= bv_unsigned a.
+Proof.
+  intros E0 a H. unshelve eapply (YA02.argH0_high sp rdraw argv envp
+    (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+    (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp)
+    (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)); try exact H; try exact Hva; try exact Hsp; try exact 0%N.
+Qed.
 Context {rc : YM05.RunCeil}.
+(* the core sections' lemmas, applied through those of their binders in Section order (A/AD2i.v,
+   A/AD1g.v) that this section has *)
+Ltac instS H := try specialize (H fx); try specialize (H B); try specialize (H HB); try specialize (H sp);
+try specialize (H rdraw); try specialize (H brk); try specialize (H inp); try specialize (H Hsp); try specialize (H Hva);
+try specialize (H h); try specialize (H ch); try specialize (H E); try specialize (H R); try specialize (H FULL);
+try specialize (H model); try specialize (H Hch); try specialize (H SINV); try specialize (H SINV_sp0);
+try specialize (H HC); try specialize (H rc).
 Hypothesis H1_8 : forall a : Z, YG0f.in_band_rw a ->
   AD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 a) = AD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 (a - a mod 8)).
 #[local] Notation W1 := (AD2i.W1 sp rdraw inp Hsp Hva ch E model H1_8).
@@ -77,7 +97,7 @@ Lemma rd_ext_W : forall W' : world TSEGS, wle W1 W' ->
 Proof.
 intros W' L. rewrite AD1g.rd_aview. apply aview_ext.
 - exact (ho_H_off TSEGS TFIB TOP argH tfib_in_hull (YA02.top_ok0 sp Hsp) tfib_hull_ok
-    (YA02.argH0_high TPH sp rdraw argv envp uid hw Hsp Hva) E ch model).
+    ARGH E ch model).
 - intros a Ha. exact (AD2i.H1_sub sp rdraw inp ch E model a (L a Ha)).
 Qed.
 
@@ -86,10 +106,10 @@ Theorem main_cells_zero_A : forall W' : world TSEGS, wle W1 W' ->
   range_zero B ly (aview TSEGS (w_H W') FULL) (ANum OBJ, 56).
 Proof.
 intros W' L.
-pose proof (proj1 (forallb_forall _ _) hs_cells_A ch (HS_tfib_In h ch Hch)) as K.
+pose proof (proj1 (forallb_forall _ _) hs_cells_A ch (HS_tfib_r_In _ h ch Hch)) as K.
 unfold CELLS_A in K. cbn [forallb] in K. apply andb_prop in K as [KO K]. apply andb_prop in K as [KR _].
 pose proof (rd_ext_W W' L) as X.
-split; apply (range_zero_ext B ly _ _ _ X); apply (AD1g.xzero_sound B HB sp rdraw brk inp h ch E R FULL model Hch HC);
+split; apply (range_zero_ext B ly _ _ _ X); apply ltac:(let L := fresh in pose proof (@AD1g.xzero_sound) as L; instS L; exact L);
   assumption.
 Qed.
 

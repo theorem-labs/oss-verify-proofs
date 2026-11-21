@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN06.v, with its module paths, addresses and numbers changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger with the vvar/vDSO pair; munmap's refusal under a may-fail allocator). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -674,6 +675,9 @@ split; rewrite ?ER, ?EL, ?EN; try apply LG.
 - intros k rg0 off Hk0. rewrite ER in Hk0. exact (lg_noaccess _ _ _ _ LG k rg0 off Hk0).
 - rewrite K2. exact (lg_brk _ _ _ _ LG).
 - intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_placed _ _ _ _ LG k rg0 Hk0).
+(* lg_rfree also quantifies over region_of A', so it needs the same bullet as lg_maps;
+   the other four new fields are closed by the `try apply LG` above. *)
+- intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_rfree _ _ _ _ LG k rg0 Hk0).
 Qed.
 Lemma ledger_f : ledger_ok B1 L Af mdf /\ ledger_x L Af mdf /\
 m_halted mdf = None /\ m_vm_lazy mdf = [] /\ m_vm_materialized mdf = [] /\ (exists vm', mdf = with_vmmaps vm' md).
@@ -774,6 +778,63 @@ mbyte src0segs memf (ptr_addr L q + i) = mbyte src0segs mem (ptr_addr L q + i)) 
 (forall x, scratch B1 regs x -> writable_at src0segs memf x) ->
 free_leaf B1 (MRx B1) L A regs mem md p (fr_n fr) (tt, Af) (mkCfg (mkst regsf (getr regs 1) memf (seg_rom src0segs)) md').
 Proof. intros ->. apply leaf_final. Qed.
+(* 08b1429: the refused munmap (may-fail).  musl's free ignores munmap's answer, so the allocator state is
+   [Af] (the group's region dead) while the model keeps the map: a leaked map (YN2b.ledger_ok_kill_leak,
+   ledger_x_kill_leak). *)
+Lemma ledger_leak : @amf AM = true -> ledger_ok B1 L Af md /\ ledger_x L Af md.
+Proof.
+intros Ea. pose proof kreg as KR.
+pose proof (MRx_ledger_x _ _ _ _ _ (MX L A regs mem md g am idx fr a ka rg HC)) as LXA.
+pose proof ledger_ok_A' as LGA'. destruct NR as [NR1 (K1 & K2 & _)].
+assert (LXA' : ledger_x L A' md) by (eapply ledger_x_same_regions; [exact LXA | exact K1 | reflexivity | reflexivity]).
+unfold Af in *. destruct mi as [[k l]|]; [| split; assumption].
+destruct KR as (rgk & Hr' & HrA & Hkd & Hl & Hlen & Hl0 & Hnth & HAf & _). rewrite Hnth.
+split.
+- apply (ledger_ok_kill_leak B1 L A' _ md k rgk LGA' Ea); [reflexivity | exact HAf].
+- exact (ledger_x_kill_leak L A' _ md k rgk LXA' Ea Hr' HAf).
+Qed.
+Lemma MRx_leak memf : @amf AM = true -> memrep B1 L Af memf -> statics_ok B1 memf -> MRx B1 L Af memf md.
+Proof.
+intros Ea MR ST. pose proof (Af_same) as (Em & Ear & Esh & Eav & Ebrk & Eini & Elen & Eimg & Efr & Eub & Etl).
+pose proof (ledger_leak Ea) as (LG & LX). destruct (mc_md _ _ _ _ _ M) as (Hh & Hlz & Hmat).
+pose proof WFf as W. pose proof layout_f as LF.
+pose proof PRE as (MXA & _ & HB & _).
+apply MRx_intro.
+- apply MRc_intro; try assumption.
++ exact (mc_syms _ _ _ _ _ M).
++ apply (bounded_of_WF Af W); rewrite ?Ear, ?Esh; apply HB.
++ exact (mc_ctx _ _ _ _ _ M).
++ exact (mc_sec _ _ _ _ _ M).
++ apply tail_geom_of_WF; assumption.
+- exact LX.
+- intros q a0 i f Hinf Hkf. rewrite Efr in Hinf.
+destruct (ntrel_frames A1 A' NR ND_A1 ND_A' q a0 i f Hinf) as (a1 & Hin1 & SS).
+destruct (shape2 L A regs mem md g am idx fr a ka rg HC) as [SE Hnone].
+destruct (frames_upd A g am am1 idx q a1 i f Mg' SE Hnone Hin1) as (a2 & Hin2 & Hst).
+unfold reserved_of. rewrite (same_shape_stride _ _ SS), <- Hst. exact (MRx_rsv _ _ _ _ _ MXA q a2 i f Hin2 Hkf).
+- intros Hne. rewrite Eav, Elen. apply (MRx_ama _ _ _ _ _ MXA). rewrite <- Ear. exact Hne.
+-
+apply (span_ok_same_metas A'); [| exact Em]. apply (ntrel_span_ok A1 A' NR).
+unfold A1. apply (span_ok_upd_same3 A g am); [exact (MRx_span _ _ _ _ _ MXA) | exact Mg' | reflexivity | reflexivity | reflexivity].
+Qed.
+Lemma leaf_final_leak regsf memf : @amf AM = true ->
+memrep B1 L Af memf -> statics_ok B1 memf -> regs_preserved regs regsf ->
+(forall x, (alloc_ceiling <= x < 2 ^ 64 \/ in_img B1 x) -> ~ owned B1 L A x -> ~ scratch B1 regs x -> ~ (P <= x < P + fr_n fr) ->
+mbyte src0segs memf x = mbyte src0segs mem x /\ (writable_at src0segs mem x <-> writable_at src0segs memf x)) ->
+(forall q n i, In (q, n) (user_blocks A) -> In (q, n) (user_blocks Af) -> 0 <= i < n ->
+mbyte src0segs memf (ptr_addr L q + i) = mbyte src0segs mem (ptr_addr L q + i)) ->
+(forall x, scratch B1 regs x -> writable_at src0segs memf x) ->
+free_leaf B1 (MRx B1) L A regs mem md p (fr_n fr) (tt, Af) (mkCfg (mkst regsf (getr regs 1) memf (seg_rom src0segs)) md).
+Proof.
+intros Ea MR ST RP FR BL SW. pose proof (Af_same) as (Em & Ear & Esh & Eav & Ebrk & Eini & Elen & Eimg & Efr & Eub & Etl).
+pose proof WFf as W. pose proof PRE as (MXA & _ & HB & _). destruct (mc_md _ _ _ _ _ M) as (_ & Hlz & Hmat).
+exists L, regsf, memf, md. split; [reflexivity|]. split.
+- split; [apply MRx_leak; assumption|]. split; [exact W|]. split; [apply (bounded_of_WF Af W); rewrite ?Ear, ?Esh; apply HB|].
+split; [apply layout_le_refl|]. split; [intros; reflexivity|]. split; [exact RP|].
+split; [exists (m_vmmaps md); apply with_vmmaps_self; assumption|].
+split; [intros x Hx NO _ NS NE; apply FR; assumption|]. split; [exact BL | exact SW].
+- cbn [snd]. rewrite Eub, blocks_A'. exact blocks_A1.
+Qed.
 Lemma foot_facts x : in_foot Af x -> 4096 <= x < alloc_ceiling /\ ~ (ERRNO <= x < ERRNO + 4) /\ ~ (SP - 8192 <= x < SP).
 Proof.
 intros Hx. pose proof (foot_low x Hx) as LOW. pose proof SPf as (S1 & _). pose proof (proj1 alloc_ceiling_val) as HCV.
@@ -908,12 +969,12 @@ pose proof SPf as (S1 & S2 & S3). pose proof (proj1 alloc_ceiling_val) as HCV. p
 pose proof NP as (MREP & STAT & _). pose proof ledger_f as (_ & _ & Hhf & Hlzf & Hmatf & _).
 pose proof kreg as KR. pose proof footprint_f as FF. pose proof WFf as Wf. pose proof EERR' as EE.
 pose proof foot_facts as FOOT. pose proof static_facts as STF. pose proof survivor_not_E as SNE. pose proof anyblock_off_img as ABO.
-pose proof unch as UNCH. pose proof leaf_final' as LEAF. pose proof memrep_final as MF. pose proof view_regs as VR.
+pose proof unch as UNCH. pose proof leaf_final' as LEAF. pose proof leaf_final_leak as LEAK. pose proof memrep_final as MF. pose proof view_regs as VR.
 pose proof (mc_layout _ _ _ _ _ M) as (_ & _ & PWA & _).
 assert (Eb : base = ly_reg L k) by (unfold base; rewrite Hmi; reflexivity).
 assert (El : len = l) by (unfold len; rewrite Hmi; reflexivity).
 assert (Emdf : mdf = munmap_model (w64 (ly_reg L k)) (page_round_up (w64 l)) md) by (unfold mdf; rewrite Hmi; reflexivity).
-unfold lenz in HS. unfold Af in *. rewrite Hmi in HS, KR, FF, Wf, FOOT, SNE, LEAF, MF. rewrite Hmi.
+unfold lenz in HS. unfold Af in *. rewrite Hmi in HS, KR, FF, Wf, FOOT, SNE, LEAF, LEAK, MF. rewrite Hmi.
 destruct KR as (rgk & Hr' & HrA & Hkd & Hl & Hlen & Hl0 & Hnth & HAf & Hno & EPR & B5 & B6 & B7 & B8 & B9).
 rewrite Hnth in *. set (A3 := set_regions _ A') in *.
 assert (XA : forall n, (n < 60)%nat -> ew (EV (xva regs2 base len err)) n = Z_to_bv 64 (xvf v n)).
@@ -938,7 +999,64 @@ eapply (knode_munmap src0segs regs3 (Z_to_bv 64 MUNMAP_ECALL) mem3 (seg_rom src0
 [exact Hh | exact Hlz | exact E17 | rewrite E10, Ebase; unfold page_size; exact B7
 | rewrite E11; intros E0; apply (f_equal bv_unsigned) in E0; rewrite Elen' in E0; change (bv_unsigned (Z_to_bv 64 0)) with 0 in E0; lia
 | rewrite E10, E11, Ebase, Elen', EPRZ; unfold TASK_SIZE; pose proof (proj1 alloc_ceiling_val); lia
-| rewrite E10, E11, EPR; apply map_has_In; exact B8 |].
+| rewrite E10, E11, EPR; apply map_has_In; exact B8 | |].
+1:{
+(* 08b1429: the refused munmap (may-fail): the map stays, free runs its tail with a0 = -12 (musl's free saves
+   and restores errno around the call), the model is [md] and the allocator state [Af]: a leaked map. *)
+intros Ea e He. unfold munmap_err_nx. apply mreal_IRet.
+assert (Ee : errno_ret e = Z_to_bv 64 (2 ^ 64 - 12)) by (destruct He as [<-|[]]; unfold errno_ret; apply bv_eq; reflexivity).
+pose proof (st_ok_resume_sv src0segs (EV (xva regs2 base len err)) SST1 regs3 mem3 (SLit (2 ^ 64 - 12)) (errno_ret e)
+  Hregs3 Hmem3 HG3 ltac:(rewrite Ee; reflexivity)) as HS4.
+change (resume SST1 (SLit (2 ^ 64 - 12)) (ss_mem SST1) (ss_facts SST1)) with ss_post_err in HS4. rewrite Hpc1 in HS4.
+eapply SR_bind; [exact (free_tail2e_run _ _ md HS4 Hh Hlz)|].
+clear HS HS3 Hmem3 HG3 Hregs3 HS4.
+intros c5 (ms5 & -> & HS5 & HF5). unfold ss_post_err in HF5. rewrite resume_ss_mem in HF5. rewrite Hsm1 in HF5.
+destruct SST2e_shape as (Hpc2 & Hrv2 & Hview2 & Hsm2).
+destruct (VR _ _ _ HS5 Hview2 XA) as (RP5 & ERA & V1).
+eapply (SR_free_ret (EV (xva regs2 base len err)) SST2e ms5 md); [exact HS5 | exact Hrv2 | exact Hpc2 | exact V1 | rewrite ERA; exact Hret | exact Hh | exact Hlz |].
+rewrite ERA.
+assert (RAW : forall x, 0 <= x < 2 ^ 64 -> ~ (ERRNO <= x < ERRNO + 4) -> ~ (SP - 8192 <= x < SP) ->
+ms_mem ms5 (Z_to_bv 64 x) = mem2 (Z_to_bv 64 x)).
+{ intros x Hx N1 N2. pose proof ETPv as ET. assert (ET4 : xvf v 4 = 199872) by exact ETPv.
+transitivity (mem3 (Z_to_bv 64 x)).
+- apply HF5. rewrite lit64_small by lia. intros (r & Hir & Hxr).
+destruct Hir as [<-|[<-|[<-|Hv]]]; cbn [r_base r_wlo r_whi reg_lock reg_errno] in Hxr.
++ cbn [base_val] in Hxr. lia.
++ rewrite (base_val_EV _ XRA') in Hxr. unfold xva in Hxr. cbn [Nat.eqb Nat.leb Nat.ltb andb aTP] in Hxr. rewrite ?ET, ?ET4 in Hxr. lia.
++ rewrite (base_val_EV _ XRA') in Hxr. unfold xva in Hxr. cbn [Nat.eqb Nat.leb Nat.ltb andb aSP] in Hxr. change (xvf v aSP) with SP in Hxr. lia.
++ destruct (In_vml_mem _ Hv) as (vv & _ & ->). cbn [r_base r_wlo r_whi vml_region] in Hxr. lia.
+- apply HF3. rewrite lit64_small by lia. intros (r & Hir & Hxr). unfold after_mem in Hir.
+destruct Hir as [<-|[<-|[<-|Hv]]]; cbn [r_base r_wlo r_whi reg_lock reg_errno reg_stk_after] in Hxr.
++ cbn [base_val] in Hxr. lia.
++ rewrite (base_val_EV _ XRA') in Hxr. unfold xva in Hxr. cbn [Nat.eqb Nat.leb Nat.ltb andb aTP] in Hxr. rewrite ?ET, ?ET4 in Hxr. lia.
++ rewrite (base_val_EV _ XRA') in Hxr. unfold xva in Hxr. cbn [Nat.eqb Nat.leb Nat.ltb andb aSP] in Hxr. change (xvf v aSP) with SP in Hxr. lia.
++ destruct (In_vml_mem _ Hv) as (vv & _ & ->). cbn [r_base r_wlo r_whi vml_region] in Hxr. lia. }
+pose proof (st_ok_mem_ok _ _ _ _ HS5) as (_ & ROK & _). rewrite Hsm2 in ROK. cbn [app] in ROK.
+apply Forall_cons_iff in ROK as [_ ROK]. apply Forall_cons_iff in ROK as [Rerr ROK]. apply Forall_cons_iff in ROK as [Rstk _].
+destruct Rerr as (_ & _ & Werr & _). destruct Rstk as (_ & _ & Wstk & _).
+cbn [r_base r_wlo r_whi] in Werr, Wstk. rewrite (base_val_EV _ XRA') in Werr. rewrite (base_val_EV _ XRA') in Wstk.
+unfold xva in Werr, Wstk. cbn [Nat.eqb Nat.leb Nat.ltb andb aTP] in Werr. cbn [Nat.eqb Nat.leb Nat.ltb andb aSP] in Wstk.
+assert (ET4 : xvf v 4 = 199872) by exact ETPv. rewrite ?ETPv, ?ET4 in Werr. change (xvf v aSP) with SP in Wstk.
+apply LEAK; [exact Ea | | | exact RP5 | | |].
+- apply MF. intros x Hx HFx. destruct (FOOT x HFx) as (F1 & F2 & F3). apply RAW; assumption.
+- apply (statics_ok_ext B1 mem2 (ms_mem ms5) STAT). intros x Hs. destruct (STF x Hs) as (F1 & F2 & F3).
+apply same_byte_views. apply RAW; [lia | exact F2 | exact F3].
+- intros x Hhi NO NS NE.
+assert (Hx : 0 <= x < 2 ^ 64) by (destruct Hhi as [Hhi|Hhi]; [lia | apply B1_img_range in Hhi; lia]).
+assert (N1 : ~ (ERRNO <= x < ERRNO + 4)) by (intros W; apply NS; right; change (errno_addr B1) with ERRNO; lia).
+assert (N2 : ~ (SP - 8192 <= x < SP)) by (intros W; apply NS; left; unfold ALLOC_STACK; change (spZ regs) with SP; lia).
+destruct (UNCH x Hx ltac:(intros O; apply NO; left; exact O) NE N2) as [E1 W1].
+destruct (same_byte_views mem2 (ms_mem ms5) x (RAW x Hx N1 N2)) as [E2 W2]. rewrite E2, E1. tauto.
+- intros q n i Hq Hqf Hi.
+destruct (blocks_facts B1 L A mem md q n i M Hq Hi) as (_ & Hlo & Hhi & HNO).
+assert (N1 : ~ (ERRNO <= ptr_addr L q + i < ERRNO + 4)).
+{ intros W. apply (ABO q n (ptr_addr L q + i) Hq ltac:(lia)). apply B1_errno_img. change (errno_addr B1) with ERRNO. lia. }
+assert (N2 : ~ (SP - 8192 <= ptr_addr L q + i < SP)) by lia.
+destruct (UNCH (ptr_addr L q + i) ltac:(lia) ltac:(intros O; apply HNO; left; exact O) (SNE q n i Hqf Hi) N2) as [E1 _].
+destruct (same_byte_views mem2 (ms_mem ms5) _ (RAW (ptr_addr L q + i) ltac:(lia) N1 N2)) as [E2 _]. rewrite E2, E1. reflexivity.
+- intros x [Hs|Hs].
++ unfold ALLOC_STACK in Hs. change (spZ regs) with SP in Hs. replace x with (SP + (x - SP)) by lia. apply Wstk. lia.
++ change (errno_addr B1) with ERRNO in Hs. replace x with (199872 + (x - 199872)) by lia. apply Werr. lia. }
 unfold munmap_nx. rewrite E10, E11, EPR. cbn beta.
 change (munmap_model (w64 (ly_reg L k)) (w64 (rg_len rgk)) md) with (md_kill L md k rgk).
 assert (Emdf' : mdf = md_kill L md k rgk) by (rewrite Emdf, EPR; reflexivity). rewrite <- Emdf'.

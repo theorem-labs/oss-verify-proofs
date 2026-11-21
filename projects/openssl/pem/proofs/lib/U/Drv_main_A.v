@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the input's kernel build and exec file name; the start-up facts stated over the launch's ProcInput; the larger auxiliary vector and its CONFIG_RSEQ entries; the write-certified stack window); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -107,85 +108,31 @@ Proof. intros e E H1 H2. Z.div_mod_to_equations. lia. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Pieces.
-  Variables (sp : word) (argv envp : list (list byte)) (uid : word) (m : mem).
+  Variables (sp : word) (inp : ProcInput) (mbase : word) (m : mem).
   Notation usp := (bv_unsigned sp).
-  Hypothesis IMG : bytes_at usegs m usp (build_stack_bytes pph sp argv envp uid run_hw run_draw).
+  (* LPS 08b1429: the entry stack is [entry_stack_image]; the launch places its strings below the
+     stack top ([InitMem.launch_hsp]) *)
+  Hypothesis IMGH : bytes_at usegs m usp (entry_stack_image inp mbase pph PENTRY sp run_draw)
+                    /\ (usp + InitMem.head_size inp <= bv_unsigned (ed_top run_draw) - 8 - InitMem.str_len inp)%Z.
 
   Lemma stack_pieces :
-    bytes_at usegs m usp (le8 (Z_to_bv 64 (argc argv))) /\
-    bytes_at usegs m (usp + 8) (u64s (argv_ptrs sp argv envp ++ [Z_to_bv 64 0])) /\
-    bytes_at usegs m (usp + 8 * (argc argv + 2)) (u64s (envp_ptrs sp argv envp ++ [Z_to_bv 64 0])) /\
-    bytes_at usegs m (usp + 8 * (argc argv + envc envp + 3)) (u64s (auxv_words pph sp argv envp uid run_hw)) /\
-    bytes_at usegs m (str_base sp argv envp) (flatten_strings argv) /\
-    bytes_at usegs m (env_base sp argv envp) (flatten_strings envp) /\
-    bytes_at usegs m (rnd_addr sp argv envp) (at_random_bytes run_rnd).
-  Proof.
-    pose proof IMG as B. rewrite build_stack_bytes_eq in B.
-    unfold raw_bytes in B. remember (auxv_words pph sp argv envp uid run_hw) as AW eqn:EAW. cbn [u64s app] in B.
-    rewrite u64s_app in B. cbn [u64s app] in B. rewrite u64s_app in B. cbn [u64s app] in B.
-    repeat rewrite <- app_assoc in B. cbn [app] in B.
-    pose proof (raw_len_nonneg pph sp argv envp uid run_hw run_draw) as RN.
-    pose proof (flatten_strings_length argv) as L1. pose proof (flatten_strings_length envp) as L2.
-    apply bytes_at_app in B. destruct B as [B0 B]. rewrite length_le8 in B.
-    apply bytes_at_app in B. destruct B as [B1 B]. rewrite u64s_length in B. unfold argv_ptrs in B. rewrite map_length, str_ptrs_length in B.
-    apply bytes_at_app in B. destruct B as [B2 B]. rewrite length_le8 in B.
-    apply bytes_at_app in B. destruct B as [B3 B]. rewrite u64s_length in B. unfold envp_ptrs in B. rewrite map_length, str_ptrs_length in B.
-    apply bytes_at_app in B. destruct B as [B4 B]. rewrite length_le8 in B.
-    apply bytes_at_app in B. destruct B as [B5 B]. rewrite u64s_length in B. replace (length AW) with 20%nat in B by (subst AW; reflexivity).
-    apply bytes_at_app in B. destruct B as [B6 B].
-    apply bytes_at_app in B. destruct B as [B7 B].
-    apply bytes_at_app in B. destruct B as [B8 B]. rewrite repeat_length in B.
-    repeat match goal with |- _ /\ _ => split end.
-    - exact B0.
-    - rewrite u64s_app. cbn [u64s]. rewrite app_nil_r. apply (proj2 (bytes_at_app usegs m _ _ _)). split; [exact B1|].
-      rewrite u64s_length. unfold argv_ptrs at 1. rewrite map_length, str_ptrs_length.
-      replace (usp + 8 + Z.of_nat (8 * length argv))%Z with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv))%Z by lia. exact B2.
-    - rewrite u64s_app. cbn [u64s]. rewrite app_nil_r. apply (proj2 (bytes_at_app usegs m _ _ _)). split.
-      + replace (usp + 8 * (argc argv + 2))%Z with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8)%Z by (unfold argc; lia). exact B3.
-      + rewrite u64s_length. unfold envp_ptrs at 1. rewrite map_length, str_ptrs_length.
-        replace (usp + 8 * (argc argv + 2) + Z.of_nat (8 * length envp))%Z
-          with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp))%Z by (unfold argc; lia). exact B4.
-    - replace (usp + 8 * (argc argv + envc envp + 3))%Z
-        with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8)%Z by (unfold argc, envc; lia). exact B5.
-    - replace (str_base sp argv envp) with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8 + Z.of_nat (8 * 20))%Z
-        by (unfold str_base, struct_size, argc, envc; lia). exact B6.
-    - replace (env_base sp argv envp) with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8 + Z.of_nat (8 * 20) + Z.of_nat (length (flatten_strings argv)))%Z
-        by (unfold env_base, str_base, struct_size, argc, envc; lia). exact B7.
-    - replace (rnd_addr sp argv envp) with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8 + Z.of_nat (8 * 20)
-                             + Z.of_nat (length (flatten_strings argv)) + Z.of_nat (length (flatten_strings envp)) + Z.of_nat (Z.to_nat (pad_len argv envp)))%Z
-        by (unfold rnd_addr, raw_len, struct_size, argc, envc; lia). exact B.
-  Qed.
+    bytes_at usegs m usp (le8 (Z_to_bv 64 (argc inp))) /\
+    bytes_at usegs m (usp + 8) (u64s (argv_ptrs inp run_draw ++ [Z_to_bv 64 0])) /\
+    bytes_at usegs m (usp + 8 * (argc inp + 2)) (u64s (envp_ptrs inp run_draw ++ [Z_to_bv 64 0])) /\
+    bytes_at usegs m (usp + 8 * (argc inp + envc inp + 3)) (u64s (auxv_words inp mbase pph PENTRY sp run_draw)) /\
+    bytes_at usegs m (str_base inp run_draw) (flatten_strings (in_argv inp)) /\
+    bytes_at usegs m (env_base inp run_draw) (flatten_strings (in_envp inp)) /\
+    bytes_at usegs m (rnd_addr inp sp) (at_random_bytes (ed_random run_draw)).
+  Proof. exact (image_pieces usegs inp mbase pph PENTRY sp run_draw (proj2 IMGH) m (proj1 IMGH)). Qed.
 
   (* [comment removed for export] *)
-  Lemma argv_cstring : forall i s, nth_error argv i = Some s -> usp mod 8 = 0 ->
-    exists p slack, nth_error (argv_ptrs sp argv envp) i = Some (Z_to_bv 64 p) /\ str_base sp argv envp <= p /\
-      p + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= usp + Z.of_nat (length (build_stack_bytes pph sp argv envp uid run_hw run_draw)) /\
+  Lemma argv_cstring : forall i s, nth_error (in_argv inp) i = Some s -> usp mod 8 = 0 ->
+    exists p slack, nth_error (argv_ptrs inp run_draw) i = Some (Z_to_bv 64 p) /\ str_base inp run_draw <= p /\
+      p + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= usp + Z.of_nat (length (entry_stack_image inp mbase pph PENTRY sp run_draw)) /\
       bytes_at usegs m p (s ++ Z_to_bv 8 0 :: slack) /\
       (- (p + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack).
   Proof.
-    intros i s Hn AL. destruct (str_ptrs_nth argv (str_base sp argv envp) i s Hn) as (off & Hp & Ho & Ht & Hf).
-    pose proof (raw_len_nonneg pph sp argv envp uid run_hw run_draw) as RN. pose proof (build_stack_bytes_length pph sp argv envp uid run_hw run_draw) as BL.
-    pose proof (flatten_strings_length argv) as L1. pose proof (flatten_strings_length envp) as L2.
-    set (p := str_base sp argv envp + off).
-    set (e := p + Z.of_nat (length s) + 1).
-    set (k := (- e) mod 8).
-    assert (HK : 0 <= k < 8) by (subst k; apply Z.mod_pos_bound; lia).
-    assert (OFF : usp <= p /\ e + k <= usp + Z.of_nat (length (build_stack_bytes pph sp argv envp uid run_hw run_draw))).
-    { subst p e k. unfold str_base, struct_size, raw_len in *. split; [lia|].
-      rewrite BL. apply ceil8_le.
-      - unfold pad_len, raw_len, struct_size. Z.div_mod_to_equations. lia.
-      - unfold raw_len, struct_size. lia. }
-    exists p, (firstn (Z.to_nat k) (skipn (Z.to_nat (e - usp)) (build_stack_bytes pph sp argv envp uid run_hw run_draw))).
-    split; [unfold argv_ptrs; rewrite nth_error_map, Hp; reflexivity|]. split; [subst p; lia|].
-    assert (LS : length (firstn (Z.to_nat k) (skipn (Z.to_nat (e - usp)) (build_stack_bytes pph sp argv envp uid run_hw run_draw))) = Z.to_nat k).
-    { rewrite length_firstn, length_skipn. lia. }
-    rewrite LS. split; [lia|]. split; [| lia].
-    destruct stack_pieces as (_ & _ & _ & _ & B6 & _).
-    pose proof (bytes_at_slice usegs pph sp argv envp uid run_hw run_draw m (str_base sp argv envp) (flatten_strings argv) (Z.to_nat off) (length s + 1) B6 ltac:(lia)) as BS.
-    rewrite Hf in BS. replace (str_base sp argv envp + Z.of_nat (Z.to_nat off)) with p in BS by (subst p; lia).
-    pose proof (bytes_at_slice usegs pph sp argv envp uid run_hw run_draw m usp (build_stack_bytes pph sp argv envp uid run_hw run_draw) (Z.to_nat (e - usp)) (Z.to_nat k) IMG ltac:(lia)) as BK.
-    replace (usp + Z.of_nat (Z.to_nat (e - usp))) with (p + Z.of_nat (length (s ++ [Z_to_bv 8 0]))) in BK by (rewrite length_app; cbn [length]; subst e; lia).
-    pose proof (proj2 (bytes_at_app usegs m p _ _) (conj BS BK)) as BB. rewrite <- app_assoc in BB. cbn [app] in BB. exact BB.
+    intros i s Hn _. exact (image_argv_string usegs inp mbase pph PENTRY sp run_draw (proj2 IMGH) m (proj1 IMGH) i s Hn).
   Qed.
 End Pieces.
 
@@ -300,21 +247,66 @@ Proof.
   end; lia.
 Qed.
 
+
+(* LPS 08b1429: the whole auxv, as [StackLayout.auxv_entries] writes it, is what
+   [MallocTree.auxv_list] names: 24 fixed pairs, AT_RANDOM, AT_EXECFN, the two rseq pairs when
+   [la_rseq] is set, then AT_NULL.  musl's [getauxval(AT_RANDOM)] walks it to the terminator,
+   which is why the rseq pairs have to be in the list and not in an unconstrained tail. *)
+Lemma auxv_words_prefix : forall inp mbase ph entry sp draw,
+  exists V ex, auxv_words inp mbase ph entry sp draw
+               = auxv_list V (rnd_addr inp sp) ex (la_rseq (launch_auxv inp sp mbase)).
+Proof.
+  intros inp mbase ph entry sp draw. set (la := launch_auxv inp sp mbase). set (c := la_cache la).
+  exists (mkAuxv (bv_unsigned (la_sysinfo_ehdr la))
+           (bv_unsigned (cw_l1i_size c))
+           (bv_unsigned (cw_l1i_geom c))
+           (bv_unsigned (cw_l1d_size c))
+           (bv_unsigned (cw_l1d_geom c))
+           (bv_unsigned (cw_l2_size c))
+           (bv_unsigned (cw_l2_geom c))
+           (bv_unsigned (cw_l3_size c))
+           (bv_unsigned (cw_l3_geom c))
+           (bv_unsigned (la_minsigstksz la))
+           (bv_unsigned (in_hwcap inp))
+           (4096)
+           (100)
+           (Z.of_N (ph_addr ph))
+           (Z.of_N (ph_ent ph))
+           (Z.of_N (ph_num ph))
+           (0)
+           (0)
+           (bv_unsigned entry)
+           (bv_unsigned (in_uid inp))
+           (bv_unsigned (in_uid inp))
+           (bv_unsigned (in_gid inp))
+           (bv_unsigned (in_gid inp))
+           (0)).
+  eexists. unfold auxv_words, auxv_entries, auxv_list. fold la. fold c.
+  (* the two rseq pairs are in the vector exactly when [la_rseq] is set *)
+  destruct (la_rseq la);
+    cbn [flat_map fst snd app map ax_sysinfo ax_l1i ax_l1ig ax_l1d ax_l1dg ax_l2 ax_l2g ax_l3 ax_l3g ax_minsig ax_hwcap
+         ax_pagesz ax_clktck ax_phdr ax_phent ax_phnum ax_base ax_flags ax_entry ax_uid ax_euid ax_gid ax_egid ax_secure];
+    (* the model writes the keys as named constants; they are the same literals *)
+    cbv [AT_NULL AT_PHDR AT_PHENT AT_PHNUM AT_PAGESZ AT_BASE AT_FLAGS AT_ENTRY AT_UID AT_EUID AT_GID AT_EGID AT_HWCAP AT_CLKTCK AT_SECURE AT_RANDOM AT_EXECFN AT_RSEQ_FEATURE_SIZE AT_RSEQ_ALIGN AT_SYSINFO_EHDR AT_L1I_CACHESIZE AT_L1I_CACHEGEOMETRY AT_L1D_CACHESIZE AT_L1D_CACHEGEOMETRY AT_L2_CACHESIZE AT_L2_CACHEGEOMETRY AT_L3_CACHESIZE AT_L3_CACHEGEOMETRY AT_MINSIGSTKSZ];
+    unfold MallocRep.wz; rewrite !Z_to_bv_bv_unsigned; reflexivity.
+Qed.
+
 Section WithCeiling1. Context {CE__ : Ceiling} {RN__ : RunRnd}.
 Section InitFacts.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid : word) (m : mem).
+  Variables (sp0 : word) (inp : ProcInput) (mbase : word) (m : mem).
   Hypothesis NONE : forall a : word, (0x2c0000 <= bv_unsigned a < 0x353000)%Z -> outside (crt_written) (bv_unsigned a) -> m a = None.
   Hypothesis LIBC1 : rw_cells usegs m 0x350bf8 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C4 (Z_to_bv 64 0)].
-  Hypothesis LIBC2 : rw_cells usegs m 0x350c00 [C8 (Z_to_bv 64 (auxv_addr sp0 argv envp)); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 224); C8 (Z_to_bv 64 8); C8 (Z_to_bv 64 0);
+  Hypothesis LIBC2 : rw_cells usegs m 0x350c00 [C8 (Z_to_bv 64 (auxv_addr inp sp0)); C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 224); C8 (Z_to_bv 64 8); C8 (Z_to_bv 64 0);
                                      C8 (Z_to_bv 64 4096); CB 48 (repeat (Z_to_bv 8 0) 48)].
   Hypothesis GOTG : rw_cells usegs m 0x31c468 [C8 (Z_to_bv 64 0x3509a8)].
   Hypothesis GUARD : rw_cells usegs m 0x3509a8 [C8 rr_guard].
   Hypothesis MI : mem_inv usegs m.
-  Hypothesis IMG : bytes_at usegs m (bv_unsigned sp0) (build_stack_bytes pph sp0 argv envp uid run_hw run_draw).
+  Hypothesis IMGH : bytes_at usegs m (bv_unsigned sp0) (entry_stack_image inp mbase pph PENTRY sp0 run_draw)
+                    /\ (bv_unsigned sp0 + InitMem.head_size inp <= bv_unsigned (ed_top run_draw) - 8 - InitMem.str_len inp)%Z.
   Hypothesis SPLO : sp_window_lo <= bv_unsigned sp0.
   Hypothesis CEIL : ceil_ok sp0.     (* [comment removed for export] *)
 
-  Lemma heap_init : RHEAP (ps_init (reservedZ usegs)) [] m /\ rw_cells usegs m RAUXV_CELL [C8 (Z_to_bv 64 (auxv_addr sp0 argv envp))].
+  Lemma heap_init : RHEAP (ps_init (reservedZ usegs)) [] m /\ rw_cells usegs m RAUXV_CELL [C8 (Z_to_bv 64 (auxv_addr inp sp0))].
   Proof.
     apply RMalloc_ifaceP.RHEAP_init_proof; [| exact LIBC1| exact LIBC2| exact GOTG| exact GUARD| exact MI].
     intros a Ha. apply NONE; [lia|]. unfold crt_written. cbn. lia.
@@ -323,23 +315,29 @@ Section InitFacts.
   (* [comment removed for export] *)
   Lemma rauxv_ok_init : rauxv_ok m (bv_unsigned sp0).
   Proof.
-    destruct (stack_pieces sp0 argv envp uid m IMG) as (_ & _ & _ & AUXW & _ & _ & RND).
-    pose proof (build_stack_bytes_length pph sp0 argv envp uid run_hw run_draw) as BL. pose proof (raw_len_nonneg pph sp0 argv envp uid run_hw run_draw) as RLN.
-    pose proof (bytes_at_bound _ _ _ _ IMG) as IB. unfold sp_window_lo in SPLO.
-    pose proof (bv_unsigned_in_range 64 uid) as RU. unfold bv_modulus in RU. cbn in RU.
-    pose proof (bv_unsigned_in_range 64 run_hw) as RH. unfold bv_modulus in RH. cbn in RH.
-    exists (auxv_addr sp0 argv envp), (Z.of_N (ph_addr pph)), (Z.of_N (ph_ent pph)), (Z.of_N (ph_num pph)), (bv_unsigned run_hw), 4096,
-           (bv_unsigned uid), (bv_unsigned uid), 0, (rnd_addr sp0 argv envp).
+    destruct (stack_pieces sp0 inp mbase m IMGH) as (_ & _ & _ & AUXW & _ & _ & RND).
+    destruct (auxv_words_prefix inp mbase pph PENTRY sp0 run_draw) as (V & ex & EW).
+    rewrite EW in AUXW.
+    pose proof (proj2 IMGH) as HSP. unfold sp_window_lo in SPLO.
+    pose proof (head_size_eq inp mbase pph PENTRY sp0 run_draw) as HE.
+    rewrite (length_auxv_words inp mbase pph PENTRY sp0 run_draw) in HE.
+    pose proof (u64_range (ed_top run_draw)) as TR.
+    assert (AC : (2 * auxv_count (kb_rseq (in_kernel inp)) >= 54)%nat) by (unfold auxv_count; destruct (kb_rseq _); lia).
+    exists (auxv_addr inp sp0), V, (rnd_addr inp sp0), ex, (la_rseq (launch_auxv inp sp0 mbase)).
     split; [apply (proj2 heap_init)|].
-    split. { unfold auxv_addr. replace (auxv_list _ _ _ _ _ _ _ _ _) with (auxv_words pph sp0 argv envp uid run_hw); [exact AUXW|].
-             unfold auxv_list, auxv_words, MallocRep.wz. cbn [map]. rewrite !(Z_to_bv_bv_unsigned uid), !(Z_to_bv_bv_unsigned run_hw). reflexivity. }
+    split; [exact AUXW|].
     split. { (* [comment removed for export] *)
              rewrite at_random_bytes_split in RND. apply bytes_at_app in RND.
              destruct RND as [_ R]. exact R. }
     unfold ceil_ok in CEIL.
-    unfold auxv_addr, rnd_addr, raw_len, struct_size, argc, envc, sp_window_lo, stack_max_size in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
-    pose proof (flatten_strings_length argv). pose proof (flatten_strings_length envp).
-    repeat split; try lia; cbn; lia.
+    unfold auxv_addr, rnd_addr, sp_window_lo, stack_max_size, InitMem.str_len, auxv_vec_bytes in *;
+      try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
+    pose proof (Nat2Z.is_nonneg (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+    unfold argc, envc in *.
+    (* LPS 08b1429: the vector's length is [auxv_count (kb_rseq ...)]; the witness's flag
+       [la_rseq (launch_auxv inp sp mbase)] is that same flag, so align them before counting. *)
+    change (la_rseq (launch_auxv inp sp0 mbase)) with (kb_rseq (in_kernel inp)).
+    destruct (kb_rseq (in_kernel inp)); unfold auxv_count in *; cbn iota in *; repeat split; lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -431,18 +429,18 @@ Ltac open_at_main AM :=
 Section WithCeiling2. Context {CE__ : Ceiling} {RN__ : RunRnd}.
 Theorem main_to_P1_proof : forall C : cli_sig, main_to_P1_stmt C.
 Proof.
-  unfold main_to_P1_stmt. intros C CLI0AT sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS ARGC2 AM.
+  unfold main_to_P1_stmt. intros C CLI0AT sp0 inp mbase ms VSP CEIL VARGV VENVP FITS HSP ARGC2 AM.
   pose proof AM as AM0.
-  open_at_main AM. subst ms.
-  pose proof (CLI0AT _ _ _ _ _ _ _ _ _ _ _ AM0) as CL0. clear AM0.
+  open_at_main AM. subst ms. unfold STK_DEPTH in ST.
+  pose proof (CLI0AT _ _ _ _ _ _ _ _ _ _ AM0) as CL0. clear AM0.
   exists t. split; [exact Ht|].
   pose proof (bv_unsigned_in_range 64 sp0) as RSP. unfold bv_modulus in RSP. cbn in RSP.
   destruct VSP as (SPLO & SPHI & SP16). unfold sp_window_lo, sp_window_hi in SPLO, SPHI.
-  assert (HC2 : argc argv = 2) by (unfold argc; lia).
+  assert (HC2 : argc inp = 2) by (unfold argc; lia).
   clear SEF WR INA INI GOT0 GOT3 GIN GD DS ENVC HW G2 SI MT TDb.
   destruct SOF as (sflags & smode & stail & bufb & SOF1 & SOF2 & SOF3 & SOF4 & SOF5 & SOF6).
   unfold file_cells in SOF1. cbn [so_active so_first so_lbf_nl so_buf stdout_init zlength length Z.of_nat Z.add] in SOF1.
-  pose proof (munch_refl [(bv_unsigned sp0 - 8388608, bv_unsigned sp0 + -48)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
+  pose proof (munch_refl [(bv_unsigned sp0 - 6144513, bv_unsigned sp0 + -48)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
   rewrite HC2.
   carve_frame 80%nat ST.
   zidle_beginZ (bv_unsigned sp0) 128%Z MUz WMz.
@@ -453,8 +451,8 @@ Proof.
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mf _) =>
     assert (NONE' : forall a : word, (0x2c0000 <= bv_unsigned a < 0x353000)%Z -> outside crt_written (bv_unsigned a) -> mf a = None)
       by (intros a Ha Ho; rewrite (MU a) by (cbn [outside]; lia); apply NONE; [exact Ha| exact Ho]);
-    destruct (heap_init sp0 argv envp mf NONE' LCa LCb GG GU MI) as [HEAP AUXC];
-    pose proof (rauxv_ok_init sp0 argv envp uid mf NONE' LCa LCb GG GU MI IMG ltac:(unfold sp_window_lo; lia) CEIL) as RAUX;
+    destruct (heap_init sp0 inp mf NONE' LCa LCb GG GU MI) as [HEAP AUXC];
+    pose proof (rauxv_ok_init sp0 inp mbase mf NONE' LCa LCb GG GU MI (conj IMG HSP) ltac:(unfold sp_window_lo; lia) CEIL) as RAUX;
     pose proof (stderr_wfile0_init mf NONE') as SWF;
     pose proof (malloc_impl_init mf NONE') as MIMPL;
     pose proof (free_impl_init mf NONE') as FIMPL;
@@ -474,7 +472,7 @@ Proof.
   split.
   { unfold BASE, LO, ESTAT, RGOT_LLVMINIT. split; [exact ST|]. split; [exact MI|].
     split. { split_spine; first [hyp_by_addr | exact STDIN0]. }
-    split; [exact RAUX|]. split; [split; [exact GG| exact GU]|]. split; [| exact IMG].
+    split; [exact RAUX|]. split; [split; [exact GG| exact GU]|]. split; [| exact (conj IMG HSP)].
     unfold lx_statics. split_spine; [exact GSE | exact SEP | exact GDF | exact MIMPL | exact GFR | exact FIMPL |].
     (* [comment removed for export] *)
     intros a Ha. apply NONE'; unfold cimg_addr, RMallocRep.RGOT_SSP in Ha; [lia| cbn [outside crt_written]; lia]. }
@@ -486,7 +484,7 @@ Proof.
   split; [| exact AX0].   (* [comment removed for export] *)
   (* [comment removed for export] *)
   eapply (cli0_stable C); [exact CL0|]. intros a Ha Hw.
-  assert (HO : outside [(bv_unsigned sp0 - 8388608, bv_unsigned sp0 + -48)]%Z a).
+  assert (HO : outside [(bv_unsigned sp0 - 6144513, bv_unsigned sp0 + -48)]%Z a).
   { unfold LXW_CLIENT, LXW_BASEINIT, LXW_LIBCRYPTO, LXW_PSELF, LXW_PKEYS, LXW_MREPL, LXW_DKEY in Hw. cbn in Hw. cbn [outside]. lia. }
   split; [apply MU; unfold wa; rewrite unsigned_lit by lia; exact HO| intros Hv; apply WM; exact Hv].
 Qed.
@@ -501,30 +499,35 @@ Section Usage.
 
   Theorem main_usage_proof : main_usage_stmt.
   Proof.
-    unfold main_usage_stmt. intros sp0 argv envp uid ms VSP CEIL VARGV VENVP FITS ARGCN AM.
-    open_at_main AM. subst ms.
+    unfold main_usage_stmt. intros sp0 inp mbase ms VSP CEIL VARGV VENVP FITS HSP ARGCN AM.
+    open_at_main AM. subst ms. unfold STK_DEPTH in ST.
     pose proof (bv_unsigned_in_range 64 sp0) as RSP. unfold bv_modulus in RSP. cbn in RSP.
     destruct VSP as (SPLO & SPHI & SP16). unfold sp_window_lo, sp_window_hi in SPLO, SPHI.
+    (* LPS 08b1429: [argv_cstring] now states its bounds with [launch_string_bytes] while
+       [HSP] still spells them [InitMem.str_len]/[InitMem.head_size]; the two are convertible
+       but opaque to [lia], and the frame's disjointness check needs them in one spelling,
+       so put HSP into the unfolded form before the first framing step. *)
+    unfold InitMem.str_len, InitMem.head_size in HSP.
     destruct VARGV as (VA1 & VA2 & VA3 & VA4 & VA5).
-    assert (HCR : 0 <= argc argv <= 1024 /\ argc argv <> 2) by (unfold argc; lia).
+    assert (HCR : 0 <= argc inp <= 1024 /\ argc inp <> 2) by (unfold argc; lia).
     (* [comment removed for export] *)
-    assert (Harg0 : exists arg0 rest, argv = arg0 :: rest).
-    { destruct argv as [|a r]; [cbn in VA1; lia | exists a, r; reflexivity]. }
+    assert (Harg0 : exists arg0 rest, in_argv inp = arg0 :: rest).
+    { destruct (in_argv inp) as [|a r]; [cbn in VA1; lia | exists a, r; reflexivity]. }
     destruct Harg0 as (arg0 & rest & EARGV).
-    assert (Hnth : nth_error argv 0 = Some arg0) by (rewrite EARGV; reflexivity).
-    destruct (argv_cstring sp0 argv envp uid m IMG 0 arg0 Hnth ltac:(clear - SP16; Z.div_mod_to_equations; lia))
+    assert (Hnth : nth_error (in_argv inp) 0 = Some arg0) by (rewrite EARGV; reflexivity).
+    destruct (argv_cstring sp0 inp mbase m (conj IMG HSP) 0 arg0 Hnth ltac:(clear - SP16; Z.div_mod_to_equations; lia))
       as (p & slack & HP & PLO & PHI & STR0 & SLK).
     rewrite HP0 in HP. assert (EW : Z_to_bv 64 P0 = Z_to_bv 64 p) by congruence. clear HP.
-    pose proof (raw_len_nonneg pph sp0 argv envp uid run_hw run_draw) as RLN. pose proof (build_stack_bytes_length pph sp0 argv envp uid run_hw run_draw) as BSL.
-    pose proof (bytes_at_bound _ _ _ _ IMG) as IMB. unfold str_base, struct_size, argc, envc in PLO.
+    pose proof (image_length inp mbase pph PENTRY sp0 run_draw HSP) as BSL. pose proof (u64_range (ed_top run_draw)) as TOPR.
+    pose proof (bytes_at_bound _ _ _ _ IMG) as IMB. unfold str_base, InitMem.str_len in PLO.
     pose proof (proj1 (Forall_forall _ _) VA4 arg0 (nth_error_In _ _ Hnth)) as NONUL0. cbn beta in NONUL0.
     pose proof (proj1 (Forall_forall _ _) VA3 arg0 (nth_error_In _ _ Hnth)) as LEN0. cbn beta in LEN0.
     (* [comment removed for export] *)
-    destruct (stack_pieces sp0 argv envp uid m IMG) as (_ & ARGV & _).
+    destruct (stack_pieces sp0 inp mbase m (conj IMG HSP)) as (_ & ARGV & _).
     destruct SOF as (sflags & smode & stail & bufb & SOF1 & SOF2 & SOF3 & SOF4 & SOF5 & SOF6).
     unfold file_cells in SOF1. cbn [so_active so_first so_lbf_nl so_buf stdout_init zlength length Z.of_nat Z.add] in SOF1.
     clear SEF WR INA INI GOT0 GOT3 GIN GD DS ENVC HW G2 SI MT TDb.
-    pose proof (munch_refl [(bv_unsigned sp0 - 8388608, bv_unsigned sp0 + -48)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
+    pose proof (munch_refl [(bv_unsigned sp0 - 6144513, bv_unsigned sp0 + -48)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
     unfold implM at 1.
     eapply (implM_evt usegs). 2:{ intros ms' H; exact H. } cbv beta.
     carve_frame 80%nat ST.
@@ -543,22 +546,26 @@ Section Usage.
         by (intros a Ha Ho; rewrite (MU a) by (cbn [outside]; lia); apply NONE; [exact Ha| exact Ho]);
       pose proof (stderr_wfile_init mf NONE') as SWF; pose proof (base_inited_init mf NONE') as BI0; pose proof (base_inited0_init mf NONE') as BIB;
       (* [comment removed for export] *)
-      destruct (axstat_init_lit mf NONE') as (INCB0 & AXC0 & AXA0);
+      (* LPS 08b1429: [axstat_init_lit] now also discharges the section's stack-image
+         hypothesis, so it takes [sp0 inp mbase m NONE IMGH]. *)
+      destruct (axstat_init_lit sp0 inp mbase mf NONE' (conj IMG HSP))
+        as (INCB0 & AXC0 & AXA0);
       pose proof (dso_init_lit mf NONE') as DSO0;
       destruct (stdin_init mf NONE') as (ij0 & ij1 & ij2 & ij3 & ij4 & SINC); clear NONE NONE'
     end.
     apply evt_done.
     (* [comment removed for export] *)
-    change (io_diag io (DUsage (nth 0 (argv_Z argv) []))) with (s_diag (St:=PState) (DUsage (nth 0 (argv_Z argv) []))).
-    replace (nth 0 (argv_Z argv) []) with (map bv_unsigned arg0) by (rewrite EARGV; reflexivity).
+    change (io_diag io (DUsage (nth 0 (argv_Z (in_argv inp)) []))) with (s_diag (St:=PState) (DUsage (nth 0 (argv_Z (in_argv inp)) []))).
+    replace (nth 0 (argv_Z (in_argv inp)) []) with (map bv_unsigned arg0) by (rewrite EARGV; reflexivity).
     assert (ESP112 : bv_unsigned (Z_to_bv 64 (bv_unsigned sp0 + -128)) = bv_unsigned sp0 + -128) by (apply unsigned_lit; lia).
     eapply implM_bind.
-    { eapply (FPR (DUsage (map bv_unsigned arg0))) with (lo := bv_unsigned sp0 - 8388608) (canary := rr_guard);
+    { eapply (FPR (DUsage (map bv_unsigned arg0))) with (lo := bv_unsigned sp0 - 6144513) (canary := rr_guard);
         [ exact FWE | exact FLS | exact SWF | reflexivity | 
         | rewrite ESP112; exact ST | rewrite ESP112; unfold FPRINTF_DEPTH; lia | unfold GLOBALS_TOP; lia | rewrite ESP112; lia
         | split; [exact GG | exact GU] | exact MI | vm_compute; reflexivity ].
       rewrite ?ESP112. cbn [diag_args]. split; [reflexivity|]. exists slack.
-      rewrite unsigned_lit by lia. rewrite zb_map_unsigned. unfold zlength. rewrite length_map.
+      rewrite unsigned_lit by lia.
+      rewrite zb_map_unsigned. unfold zlength. rewrite length_map.
       split; [exact STR0|]. split; [apply map_unsigned_pos; exact NONUL0|]. split; [exact SLK|].
       split; [lia|]. split; [right; lia| unfold GLOBALS_TOP; lia]. }
     cbv beta. intros [] st' ms' PO.
@@ -575,7 +582,7 @@ Section Usage.
     destruct SWF1 as (eflags & emode & ee & ewend & etail & SEF1 & _).
     destruct SSP1 as [GG1 GU1]. unfold got_ssp, ssp_guard in GG1, GU1.
     unfold at_exit.
-    do 31 eexists. exists Ft, fc', m2, (bv_unsigned sp0 - 8388608), t. do 4 eexists. exists rr_guard. do 4 eexists. exists false.   (* [comment removed for export] *)
+    do 31 eexists. exists Ft, fc', m2, (bv_unsigned sp0 - 6144513), t. do 4 eexists. exists rr_guard. do 4 eexists. exists false.   (* [comment removed for export] *)
     split. { cbv delta [mkR]. reflexivity. }
     assert (ESP : bv_unsigned (Z_to_bv 64 (bv_unsigned sp0 + -48)) = bv_unsigned sp0 + -48) by (apply unsigned_lit; lia).
     rewrite !ESP.

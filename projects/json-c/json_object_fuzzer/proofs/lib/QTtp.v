@@ -1,10 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at each node of the loop walk slbwP, sys_rob_instr at its silent steps; the loop's exit witness a QRjH.star_rob path, as Q1lV.srealizes). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQIi QdTb QHWH Q1lV Qcrs QUcd QCUT QwAs Qc6I Qsn5 QNqr QeDS.
+(* LPS 727298f3: the read-only backing of the walks ([RomBase.sys_rob] at each node, a loop's exit a
+   [QRjH.star_rob] path), as [Q1lV.srealizes] *)
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QRjH.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -24,6 +29,7 @@ Inductive slbwP (V : config -> Prop) (T : TSet) : Prop -> config -> Prop :=
 | slbwP_exit : forall (P : Prop) c, srealizes segs c T -> slbwP V T P c
 | slbwP_node : forall (P : Prop) c (I : Type) (nx : I -> config) (k : I -> option Prop),
 node_ok segs c I (fun _ => []) nx ->
+RomBase.sys_rob segs c ->
 (forall i Q, k i = Some Q -> slbwP V T Q (nx i)) ->
 (forall i, k i = None -> V (nx i)) ->
 (P -> exists i Q, k i = Some Q /\ Q) ->
@@ -31,24 +37,23 @@ slbwP V T P c.
 
 Lemma slbwP_slbody : forall V T P c, slbwP V T P c -> slbody segs V T c.
 Proof.
-intros V T P c H; induction H as [P c Hr | P c I nx k Hnode Hk IHk HV Hw].
+intros V T P c H; induction H as [P c Hr | P c I nx k Hnode Hrob Hk IHk HV Hw].
 - apply slb_exit. exact Hr.
-- apply (slb_node segs V T c I nx (fun i => match k i with Some _ => true | None => false end) Hnode).
+- apply (slb_node segs V T c I nx (fun i => match k i with Some _ => true | None => false end) Hnode Hrob).
 + intros i Hi. destruct (k i) as [q|] eqn:E; [| discriminate Hi]. eapply IHk. exact E.
 + intros i Hi. destruct (k i) as [q|] eqn:E; [discriminate Hi |]. apply HV. exact E.
 Qed.
 
 Lemma slbwP_witness : forall V T P c, slbwP V T P c -> P ->
-exists c_e, star_cfg segs (alloc_only_cfg false) c [] c_e /\ srealizes segs c_e T.
+exists c_e, QRjH.star_rob segs c c_e /\ srealizes segs c_e T.
 Proof.
-intros V T P c H; induction H as [P c Hr | P c I nx k Hnode Hk IHk HV Hw]; intros Hp.
-- exists c. split; [apply star_cfg_refl | exact Hr].
+intros V T P c H; induction H as [P c Hr | P c I nx k Hnode Hrob Hk IHk HV Hw]; intros Hp.
+- exists c. split; [apply QRjH.srob_refl | exact Hr].
 - destruct (Hw Hp) as (i & Q & Hi & HQ).
 destruct (IHk i Q Hi HQ) as (c_e & Hs & He).
 exists c_e. split; [| exact He].
 destruct Hnode as [Hcomp _].
-change ([] : list event) with ([] ++ [] : list event).
-eapply star_cfg_step; [apply (Hcomp i) | exact Hs].
+eapply QRjH.srob_step; [apply (Hcomp i) | exact Hrob | exact Hs].
 Qed.
 
 Theorem srz_loop_wP : forall (V : config -> Prop) (T : TSet) c,
@@ -62,33 +67,34 @@ Qed.
 
 Lemma slbwP_imp : forall V T (P P' : Prop) c, (P' -> P) -> slbwP V T P c -> slbwP V T P' c.
 Proof.
-intros V T P P' c HPP H. destruct H as [P c Hr | P c I nx k Hnode Hk HV Hw].
+intros V T P P' c HPP H. destruct H as [P c Hr | P c I nx k Hnode Hrob Hk HV Hw].
 - apply slbwP_exit. exact Hr.
-- apply (slbwP_node V T P' c I nx k Hnode Hk HV). intros HP'. exact (Hw (HPP HP')).
+- apply (slbwP_node V T P' c I nx k Hnode Hrob Hk HV). intros HP'. exact (Hw (HPP HP')).
 Qed.
 
 Lemma slbwP_nclosedT : forall V T (P : Prop) c (I : Type) (nx : I -> config) (Q : I -> Prop),
-node_ok segs c I (fun _ => []) nx -> (forall i, slbwP V T (Q i) (nx i)) -> (P -> exists i, Q i) -> slbwP V T P c.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c ->
+(forall i, slbwP V T (Q i) (nx i)) -> (P -> exists i, Q i) -> slbwP V T P c.
 Proof.
-intros V T P c I nx Q Hnode Hc Hw.
-apply (slbwP_node V T P c I nx (fun i => Some (Q i)) Hnode).
+intros V T P c I nx Q Hnode Hrob Hc Hw.
+apply (slbwP_node V T P c I nx (fun i => Some (Q i)) Hnode Hrob).
 - intros i Q0 HQ0. injection HQ0 as <-. apply Hc.
 - intros i H. discriminate H.
 - intros HP. destruct (Hw HP) as [i Hi]. exists i, (Q i). split; [reflexivity| exact Hi].
 Qed.
 
 Lemma slbwP_nclosed : forall V T (P : Prop) c (I : Type) (nx : I -> config) (i0 : I),
-node_ok segs c I (fun _ => []) nx -> (forall i, slbwP V T P (nx i)) -> slbwP V T P c.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c -> (forall i, slbwP V T P (nx i)) -> slbwP V T P c.
 Proof.
-intros V T P c I nx i0 Hnode Hc.
-apply (slbwP_nclosedT V T P c I nx (fun _ => P) Hnode Hc). intros HP. exists i0. exact HP.
+intros V T P c I nx i0 Hnode Hrob Hc.
+apply (slbwP_nclosedT V T P c I nx (fun _ => P) Hnode Hrob Hc). intros HP. exists i0. exact HP.
 Qed.
 
 Lemma slbwP_back1 : forall V T (P : Prop) c c', ~ P ->
-node_ok segs c unit (fun _ => []) (fun _ => c') -> V c' -> slbwP V T P c.
+node_ok segs c unit (fun _ => []) (fun _ => c') -> RomBase.sys_rob segs c -> V c' -> slbwP V T P c.
 Proof.
-intros V T P c c' HnP Hn HV.
-apply (slbwP_node V T P c unit (fun _ => c') (fun _ => None) Hn).
+intros V T P c c' HnP Hn Hrob HV.
+apply (slbwP_node V T P c unit (fun _ => c') (fun _ => None) Hn Hrob).
 - intros [] q Hq. discriminate Hq.
 - intros [] _. exact HV.
 - intros HP. exfalso. exact (HnP HP).
@@ -102,13 +108,14 @@ Definition JLP (VV : config -> machine_state -> Prop) (T : TSet) (X : TSet) : co
 slbwP (Vof L VV) T (X []).
 
 Lemma jlp_nclosed : forall VV T X c (I : Type) (nx : I -> config) (i0 : I),
-node_ok segs c I (fun _ => []) nx -> (forall i, JLP VV T X (nx i)) -> JLP VV T X c.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c -> (forall i, JLP VV T X (nx i)) -> JLP VV T X c.
 Proof. intros VV T X. apply slbwP_nclosed. Qed.
 
 Lemma jlp_silent_closed : forall VV T X, silent_closed L segs (JLP VV T X).
 Proof.
-intros VV T X ms mo ms' mo' Hnode _ _ _ _ HJ.
-apply (jlp_nclosed VV T X (mkCfg ms mo) unit (fun _ => mkCfg ms' mo') tt Hnode). intros []. exact HJ.
+intros VV T X ms mo ms' mo' Hnode Hsvc _ _ _ _ HJ.
+apply (jlp_nclosed VV T X (mkCfg ms mo) unit (fun _ => mkCfg ms' mo') tt Hnode
+  (RomBase.sys_rob_instr segs (mkCfg ms mo) Hsvc)). intros []. exact HJ.
 Qed.
 
 Lemma jlp_conseq : forall VV T X X' c, t_eq X X' -> JLP VV T X c -> JLP VV T X' c.
@@ -122,9 +129,10 @@ Lemma vjP_back1 : forall (VV : config -> machine_state -> Prop) T X c msv msv',
 Proof.
 intros VV T X c msv msv' HnX Hst HVV ms mo (Hv & Hd & HI & Hh & Hhid).
 rewrite <- Hv in Hst.
-destruct (mstep_view L segs Hwx Hsegs mo ms msv' HI Hh Hst) as (ms1 & mo1 & _ & Hss & Hdet & Hv1 & Hd1 & Hhid1 & _).
+destruct (mstep_view L segs Hwx Hsegs mo ms msv' HI Hh Hst) as (ms1 & mo1 & _ & Hss & Hdet & Hv1 & Hd1 & Hhid1 & Hsvc).
 apply (slbwP_back1 (Vof L VV) T (X []) (mkCfg ms mo) (mkCfg ms1 mo1) HnX).
 - split; [intros []; exact Hss|]. intros e st Hst'. exists tt. exact (Hdet e st Hst').
+- exact (RomBase.sys_rob_instr segs (mkCfg ms mo) Hsvc).
 - exists c, msv'. split; [exact HVV|]. cbn [cfg_ms cfg_model].
 pose proof (drift_frame L _ _ Hd1) as (_ & _ & Hh1 & _).
 repeat split.

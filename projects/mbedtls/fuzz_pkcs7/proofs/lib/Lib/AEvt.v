@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a silent step of aevt also carries sys_rob, the third conjunct of node_ok; imports RomBase). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common Require Import SimInv ExitSim.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require Import RomBase.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import Shape PropExec MState Mem Exec.
 
 Import ListNotations.
@@ -16,20 +18,24 @@ Open Scope bv_scope.
 Section WithSegs.
 Variable segs : list Segment.
 
+(* LPS revision (run_segments): a silent step also carries [RomBase.sys_rob] — the step's system
+   call, if any, answers the same over a larger read-only backing — because [aevt_realizes]
+   builds a [Shape.node_ok] from it, and node_ok carries that conjunct for the run_segments lift. *)
 Inductive aevt (Q : config -> Prop) : config -> Prop :=
 | aevt_now : forall c, Q c -> aevt Q c
 | aevt_step : forall c,
     (exists c', sstep segs c [] (SNext c')) ->
     (forall e st, sstep segs c e st -> e = [] /\ st <> SError) ->
     (forall e c', sstep segs c e (SNext c') -> aevt Q c') ->
+    sys_rob segs c ->
     aevt Q c.
 
 #[using="Type"] Lemma aevt_bind : forall (P Q : config -> Prop) c,
   aevt P c -> (forall c', P c' -> aevt Q c') -> aevt Q c.
 Proof.
-  intros P Q c H K. induction H as [c HP | c Hprog Hsil Hk IH].
+  intros P Q c H K. induction H as [c HP | c Hprog Hsil Hk IH Hrob].
   - apply K, HP.
-  - apply aevt_step; [exact Hprog | exact Hsil |].
+  - apply aevt_step; [exact Hprog | exact Hsil | | exact Hrob].
     intros e c' Hs. apply IH with e. exact Hs.
 Qed.
 
@@ -46,16 +52,17 @@ Proof. intros; subst; assumption. Qed.
 #[using="Type"] Lemma aevt_realizes : forall Q c T,
   aevt Q c -> (forall c', Q c' -> realizes segs c' T) -> realizes segs c T.
 Proof.
-  intros Q c T H K. induction H as [c HP | c Hprog Hsil Hk IH].
+  intros Q c T H K. induction H as [c HP | c Hprog Hsil Hk IH Hrob].
   - apply K, HP.
   - destruct Hprog as [c0 Hc0].
     set (I := { c' : config | sstep segs c [] (SNext c') }).
     assert (Hnode : node_ok segs c I (fun _ => []) (fun i => proj1_sig i)).
-    { split.
+    { split; [|split].
       - intros [c' Hc']. exact Hc'.
       - intros e st Hs. destruct (Hsil e st Hs) as [-> Hne].
         destruct st as [c'|]; [|congruence].
-        exists (exist _ c' Hs). split; reflexivity. }
+        exists (exist _ c' Hs). split; reflexivity.
+      - exact Hrob. }
     assert (HT : forall i : I, realizes segs (proj1_sig i) T).
     { intros [c' Hc']. cbn. apply (IH [] c' Hc'). }
     apply (rz_conseq segs c (t_alt (fun i : I => t_emit [] T))).
@@ -85,6 +92,7 @@ Proof.
     split; [reflexivity|congruence].
   - intros e c' Hs. destruct (sstep_instr_inv segs ms model ms' e (SNext c') Hlazy Hsvc Hstep Hs) as [_ E].
     inversion E; subst. exact Hc.
+  - apply sys_rob_instr. exact Hsvc.
 Qed.
 
 #[using="Type"] Lemma aevt_msteps : forall Q ms ms' model,

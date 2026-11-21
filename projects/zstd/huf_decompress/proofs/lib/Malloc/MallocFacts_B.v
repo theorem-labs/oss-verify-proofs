@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (areas_init_ext)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -186,8 +187,7 @@ Definition areas_init (st : mstate) : Prop :=
 
 Lemma areas_init_ext st st' : s_areas st' = s_areas st -> c_init_done (ctx st') = c_init_done (ctx st) ->
   areas_init st -> areas_init st'.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocFacts_B ()) ["CANSEC2"] "h02Hah12sth23st'h32EAh42EIh51Hh61ah72arh81gh91zp;4p;6p;1p;3p;2p-1R0p10000R1p4p710p8P0P1p4p7210p8P0p1000Kp5p710p8P0g000gR0p4p7210R1p8g001;R2p4p70R3p10020p4p710R4p8P3p1002NR5p4p710R6p8P3P5p4p7210R5p8P3g002gR7p4p710R8p8P3P7p4p741110R9p8P3p1003@p4p73110p8P3P0p4p710R:p8P3P1p8P3P0p4p73110R3p8p1003Rp4p70R;g004GR<p4p710p8P;P9p8P;P1p8P;P3p8P4P6p8P4P5p8p1004cp4p70R5p1005Xp4p7210p8P5P8p8P5P:p8P5p10064p4p710p8g006Pj4?Tg006nj6>Tg007Oj4:Tg007cj11Tg008[j30Tg0095j13Tg009ij12Tg00:ej19Tg00;ij18TP7j47Tg00<Kj25Tg00<mj16TP<j6=Tg00=Kj6<TP0j6;TP2g00=iR0f3R<f2R7f1R5f0R:E;p=4g00>`R8P2g00?YR4g00@7R6g00@PR3g00@nR;C?R1P4P6g00AGP3P;g00AeE>R;P0C:R6%1:%1530%35#2%37#2503%9<R4%80R9P6P2P1P;P0C7R;P5f5R1#1C4150:30P3f7R=#3#2g00BC#6903:X93P6f6R3#1P6P;P<P:C41507509X86P:%1=R=P1E=P6P;P7P=C41505509f4R9P<P7P:O3b0%33#2P9E<W0X70X62P4eW5W4W3X28X18P5P:O2X28W1o"). Qed.
+Proof. intros EA EI H a ar Ha. rewrite EI. rewrite EA in Ha. exact (H a ar Ha). Qed.
 
 Record CINV (st : mstate) (LB : list block) : Prop := mkCI {
   ci_links : ci_links_t st;

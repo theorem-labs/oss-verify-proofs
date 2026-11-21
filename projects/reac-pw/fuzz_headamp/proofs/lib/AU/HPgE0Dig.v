@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at a529a88a618 (pa_i_memset_at, as
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (pa_i_memset_at, as
    hbp_i_memset_at; pa_i_bv5_cases, pa_i_cs, pa_i_pres and pa_i_mod16_sub, as hbp_i_*; pa_int7's route, one engine state
-   up to each call and a fresh one after it) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v at a529a88a618
+   up to each call and a fresh one after it) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
    (pa_piece_int7, as hbp_piece_int7) for reac-pw/fuzz_headamp's image B: the block walked new against image B's own
    instructions (the scope stores of e, __asan_memset of e's body, the two header words, the out-of-line pod_write_ent
    under PweSpec.pod_write_ent_specX, the restores of the loop's three values), the cut states of lib/AU/HPgSeg.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgPropInt.v; 148 of its 204 lines of code are new or changed and 905 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Dig.v at 97ea9c9eafa (r7_dig, dga_kept,
-   dga_not_shr) and proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Odd.v at 97ea9c9eafa (oa_pc_len, oa_at_get as dg_pc_len,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Dig.v (r7_dig, dga_kept,
+   dga_not_shr) and proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Odd.v (oa_pc_len, oa_at_get as dg_pc_len,
    dg_at_get); restated for image B: HPgE0Def.e0_dig_stmt from e0_cut_DIG to HPgSeg.hsu_cut_G at headamp_himg_B /
    headamp_bld_B, image B's registers, R-cells, frame of class 4 and its write ranges hi_w1, and the allocator laws
    from the kernel theorem AR_laws_ok in place of a Section hypothesis. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; addresses measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): lib/AU/HPgE0Def.v

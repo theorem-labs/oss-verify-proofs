@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwFrame3.v at cold/port-fm-int b6bc009d623, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
-(* lib/A/Prog/TwFrame3.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), re-run over the
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwFrame3.v, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
+(* lib/A/Prog/TwFrame3.v (RtStr's port, unchanged), re-run over the
    local-shadow TW_ASAN, twoway post and memchr wrapper contract (FMss_TwAsan.v, FMss_twoway_strstr_c.v,
    FMss_memchr_wrap_c.v).  Changed lines: the imports, MCW's type and its unfold, and the memchr call's shadow
    premise (shvis_sub of the haystack's, as the line above it does for addressable). *)

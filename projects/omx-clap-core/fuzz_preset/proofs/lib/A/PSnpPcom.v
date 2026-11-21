@@ -8,7 +8,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Prog/pj_write.v, with its module paths and module names changed; 496 of its 536 lines of code are new or changed and 709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/ReaderKB.v, with its module paths and module names changed; 211 of its 235 lines of code are new or changed and 512 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/FMrt_lift.v, with its module paths and module names changed; 318 of its 372 lines of code are new or changed and 181 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/RT_pf_shU.v (a working branch 7e395de08f5) to libreac/fuzz_boxreg.asan: module paths changed; 3 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); re-pointed Requires: FMupoison -> lib.A.Rt, FMsnprintfPf -> lib.A.Rt, FMsnprintfShared -> lib.A.Rt, FMsnprintfSx -> lib.A.Rt; name TfibSyms -> BoxregSyms (1x; boxreg's lib/A/AF0m.v record); hand edits: fm's `Require Import FMH_Base` dropped (RT_pf_shU uses none of its names; SnprintfFmh.v header, ruling). *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/RT_pf_shU.v (a working branch) to libreac/fuzz_boxreg.asan: module paths changed; 3 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); re-pointed Requires: FMupoison -> lib.A.Rt, FMsnprintfPf -> lib.A.Rt, FMsnprintfShared -> lib.A.Rt, FMsnprintfSx -> lib.A.Rt; name TfibSyms -> BoxregSyms (1x; boxreg's lib/A/AF0m.v record); hand edits: fm's `Require Import FMH_Base` dropped (RT_pf_shU uses none of its names; SnprintfFmh.v header, ruling). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/RT_pf_shU.v, with its module paths and module names changed; 82 of its 395 lines of code are new or changed and 59 lines of the source are left out. *)
 (* ASan's printf_common at fuzz_manifest.asan in the shared contracts' form: sh_apcommon_realizesUz (FMsnprintfSx.v)
    for printf_common's family RT_pf_sh.FF_pcom, from the relocated Bz walk (RT_pf_bz.v pcom_call). The grammar part
@@ -22,6 +22,7 @@
    Post side: the walk changes only [sp - PCOM_DEPTH, sp) inside the contract's window [sp - K, sp); ARU is kept by
    FMupoison.ARU_frame, as FMrt_lift.rt_post_roU_win keeps it. *)
 (* Modified by Theorem Labs, 2026-10: a restatement for fuzz_preset image A (route (a) P2, PcomLookupCheck CONFIRM) of omx-clap-core/fuzz_manifest lib/A/RT_pf_shU.v (file sha256 04e1bb900849; donor not released): pcom_shz becomes pcom_shz_x, sh_apcommon_realizes_xz (PSnpSx.v) over the engine's ARx with the ghost list Hp passed through unchanged, for the widened family FF_pcom_x TFIB_IMG_END (PSnpPfFam.v: literals, %c, %04x, %s, %.*s; PSnpPcGram.v pcomx_pre), at preset A's printf_common 0x4560c (PSnpPcTbl.v). U sites: ecall_preU -> ecall_pre_x (a flat conjunction), ARU -> ARx, ARU_frame / al_stack -> the AR_laws_x fields alx_frame / alx_stack, stk_kHighMemBeg -> stk_bounds_x, am_layout -> alx_layout_ok, ARm's cells (m2s_of_ARm with ARU_mem_low and the agree step) -> PSnpRtPre.m2s_of_x over alx_const_cells, rom_eq_of_views -> PSnpBzClean.rom_eq_of_consts; ck_args_fm -> ck_args_pre with the %c / %04x arms; pf_fm_pc_of left out (the family already states pf_pcom_piece). The walk is the relocated Bz closure under lib/A/PSnpBz (alreloc). CROSS-CHECK TEMPLATE ONLY, not used: I_pchead.v:80 (sha256 28c86c9624b9; internal record) (Bk framework, no %04x arm, no bridge into sh_apcommon_realizes_xz, stopped 10-28 19:27Z); its head / setup / scan / end / dint / dstr segments at rebuilt A name the same pcs as PSnpBz (0x4560c, 0x45720, 0x4574c, 0x45b3c) and the same S_FLAGS register value 86766. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -249,7 +250,7 @@ Section s. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop.
 (* the AR_laws_x fields this file uses (YCbqG.v), each under its field's name, and the engine lemma stk_bounds_x's
-   statement (7792959a2abb YCbqG.v:308; preset's instance passes `YCbqG.stk_bounds_x tfibsegs B ARx LAWS`) *)
+   statement (YCbqG.v:309; preset's instance passes `YCbqG.stk_bounds_x tfibsegs B ARx LAWS`) *)
 Hypothesis alx_frame : ARx_frame_law tfibsegs B ARx.
 Hypothesis alx_stack : ARx_stack_law tfibsegs B ARx.
 Hypothesis alx_layout_ok : ARx_layout_ok_law tfibsegs ARx.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43),
    parse_value 0x8637c: the walk AT THE INSTANCE. Segments A (PvB_A.v pvA_holds), D (PvB_D.v
    pvD_holds), N (PvB_N.v pvN_seg), X (PvB_X.v pvX_holds) and the composition (PvB_Top.v pvTop_compose, the record
@@ -15,7 +16,7 @@
    pvI_fs_hi, PvB_ImgFacts.pvi_litcs). fx0, rc, SK stay parameters. Every image premise is re-witnessed at B' by
    vm_compute over the closed record (image bounds YImgTop.IMG_LO_B / IMG_TOP_B, never image A's).
    What stays a Section hypothesis here is a callee's text, each with its owner: TLIT / TPSTR / FMALLOC (the literal /
-   literal / parse_string / fuzz_malloc texts at the batch kit's tip 240b06ed4fd4, at ARcfx); parse_items' text is the PREMISE
+   literal / parse_string / fuzz_malloc texts at the batch kit's tip, at ARcfx); parse_items' text is the PREMISE
    at ARcfx); parse_items' text is the PREMISE of pvInst_step_PV at one depth (the pair's step, closed by lib/A/VrdUnit.v);
    ASM0 (frame class 0's contract in the engine's m-form at ARcf, YGcallMxmn.astack_malloc_realizes_xm, lifted here to ARcfx by
    astack_malloc_realizes_xm_conj) and CPY (__asan_memcpy's row in the m-form at ARcf, YGcallMxmn.aintrin_realizes_xm,
@@ -25,7 +26,7 @@
    lib/B/Prog/strtod_row.v strtod_row_B (765c9aac6416) with strtod_row_sat.v (d7092e38f1c7) strtod_sat_tp_B /
    strtod_sat_errno_B / strtod_sat_owned_B.
    Rule 24: proves no function (kind: instance discharge). Numerals: 0, 10, 12, 64 are LENGTH / class numbers of the
-   hypothesis texts; 169 is the index of the strtod guard's GOT cell in B' YF0m.v Tfib_const_abs (YF0m.v:202 = 33 +
+   hypothesis texts; 169 is the index of the strtod guard's GOT cell in B' YF0m.v Tfib_const_abs (YF0m.v:203 = 33 +
    169); no address is written (every image value is computed by vm_compute on the closed record). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -115,7 +116,7 @@ Context {SK : YI16.sink_head}.
 #[local] Abbreviation ARIX := (fun ly S Hp (W : world SEGS) mem md =>
   YG0ncf.ARcf (cp := CP) rsegs TB ly S Hp W mem md /\ YG0ncf.xs_placed_cf ly S).
 
-(* ---- (a) the KEPT hypotheses: callee texts, the kit's at the batch kit's tip 240b06ed4fd4
+(* ---- (a) the KEPT hypotheses: callee texts, the kit's at the batch kit's tip
    (PRH_FnReader.v 9f0031c87f00, PRH_FnParse.v ed236011cf99, PRH_FnAlloc.v 4d8aeba047e5) and the engine's
    YGcallMxmn.v rows ---- *)
 (* the kit's literal text (lib/A/PRH_FnReader.v tliteral_specX; PvB_D.v TLIT); owner: literal's walk *)
@@ -311,7 +312,7 @@ Qed.
 Lemma pvI_errno : as_errno TB = STRTOD_ERRNO_B.
 Proof. apply Z.eqb_eq. vm_compute. reflexivity. Qed.
 
-(* IMG_GOTC: the strtod guard's GOT word is a const cell of TfibB: B' YF0m.v Tfib_const_abs index 169 (YF0m.v:202) *)
+(* IMG_GOTC: the strtod guard's GOT word is a const cell of TfibB: B' YF0m.v Tfib_const_abs index 169 (YF0m.v:203) *)
 Lemma pvI_gotc : forall ly, In (z8 (ANum STRTOD_GOT_GUARD_B) STRTOD_GUARD_B) (as_const TB ly).
 Proof.
 intros ly. change (as_const TB ly) with (YF0m.Tfib_const ly). unfold YF0m.Tfib_const.

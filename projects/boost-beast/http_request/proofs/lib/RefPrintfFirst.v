@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -137,6 +138,7 @@ Section First.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd1 : fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev []).
 
@@ -224,6 +226,7 @@ Section First.
     - (* [comment removed for export] *) change (bv_unsigned (Z_to_bv 64 732456)) with 732456%Z. krd_solve HK.
     - (* [comment removed for export] *) krd_solve HK.
     - exact Hfd1.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - exact HKnil.
@@ -261,6 +264,7 @@ Section Plain.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd1 : fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   (* [comment removed for export] *)
   Record p1H (regs : bvmap 5 word) (mem : word -> option byte) (sp : word) (can : Z) : Prop := P1H {
@@ -358,7 +362,7 @@ Section Plain.
     intros regs mem sp can K PH HKnil HCONT.
     pose proof (p1_regs_ok regs mem sp can PH) as HR. pose proof (p1_know_ok regs mem sp can PH) as HK.
     destruct PH. pose proof (u64_range sp) as Hsp.
-    apply (p1_sound sp model Hh Hlazy Hfd1 (p1_vals regs sp can) regs mem K);
+    apply (p1_sound sp model Hh Hlazy Hfd1 Hrdr (p1_vals regs sp can) regs mem K);
       [ unfold p1_vals; rewrite length_app, junk_vals_length; reflexivity | reflexivity | exact HR | exact HK | exact HKnil |].
     clear HR HK. intros Rj R' M' HR HK FM.
     set (vals' := p1_vals regs sp can ++ junk_vals Rj) in *.

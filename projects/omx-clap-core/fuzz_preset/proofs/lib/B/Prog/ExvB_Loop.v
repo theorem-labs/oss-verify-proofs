@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL (the items loop, B 0x83a60 = exv_pc 0x534):
    the COMPOSITION of the loop's pieces (ExvB_Loop_Stmt.v's cuts) into ExvB_Top.v's seg_loop, by induction on
    m >= exv_len E - ip (each pass moves the cursor past the nested value and the ','); at n = 0 the cut is vacuous

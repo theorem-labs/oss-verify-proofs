@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX. Old-pin kit 4f18c75d4900: carries EXB's memnorm keep (exv_rm's second half,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX. Old-pin kit: carries EXB's memnorm keep (exv_rm's second half,
    exvl_P (e_mem E)) across the runs to KIT_RUNs's memnorm premise at LK. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL piece A1, the KID FETCH: exvl_A1 proves
    CUT_CLm n m (B 0x83a60 = exv_pc 0x534) from CUT_LK n m (B 0x83b1c = exv_pc 0x5f0), both at every float state,

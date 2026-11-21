@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane, a Theorem Labs lane's dr_sa_align row): dr_assemble loses the premise dr_sa_align; the kit's dr_spec states SA mod 8 = 0 (W_drain_cx.v FINDING 1, closed). *)
 (* Modified by Theorem Labs, 2026-10: the assembly of the image-B (fuzz_reply.asan-ubsan) ASan+UBSan walk of
    fuzz_reply's drain, 0x83278 .. 0x841fc (993 instructions), from its segment theorems as lib/B/W_drain_cx.v
-   fixes them; the lib/B twin of lib/A/W_drain.v (a working branch d2db3bb89ba).
+   fixes them; the lib/B twin of lib/A/W_drain.v (a working branch).
      dr_spec at A_drainP = dr_all dr_pro
                              (dr_outer dr_top (dr_feeds dr_feed) dr_drop
                                 (dr_lines dr_linea (dr_gs_of gs_scan gs_add gs_free) dr_next dr_rest)
@@ -12,6 +12,7 @@
    exactly one segment theorem; the Section header below is lib/B/W_drain_cx.v's, verbatim.
    B's prologue traps at 0x832b8 unless the entry address SA is 8-aligned; the kit's dr_spec states it (W7's A
    text, twinned by the kit), so the composition is A's (FINDING 1 of W_drain_cx.v's header, closed). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

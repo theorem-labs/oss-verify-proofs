@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillB3Topcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 d486901e37cd) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillB3Topcf.v (cf refill round 3; file sha256 d486901e37cd) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane W, ReallocPrimary.CfW; a Theorem Labs lane cf layer, refill half 1).  rule 24: no function proved
    (kind: composition of the B3 entry and the B3 top).
 
@@ -10,7 +11,7 @@
    under the unit facts TS (TfibSyms B) and HIOK (the walk's [inst] is A_ALLOCATOR at cgif) and one named Prop
    (the result cells are a Theorem Labs lane's refill_cells_keep_gen_cf, MnRefillB3cf.HCELLS; the image rows they read are
    ARmcf's amc_cells_owned; the budget is the layer's abudget_cf with the primary shadow, YGcfAbudget):
-   - refill_B3_classfull_cf (MnRefillSeamcf.v:104): the class-full report arm (a Theorem Labs lane's report walk).
+   - refill_B3_classfull_cf (MnRefillSeamcf.v:105): the class-full report arm (a Theorem Labs lane's report walk).
    NON-VACUITY of the Section-free premises: TS holds at cgif's B (YF0m's TfibSyms instance); HIOK holds with
    IOK := fun i => i = A_ALLOCATOR. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.

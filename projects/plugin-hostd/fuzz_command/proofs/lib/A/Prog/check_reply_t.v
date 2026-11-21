@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the facts a segment of check_reply's walk (fuzz_command.asan, 0x86d78) reads at
    a mid-walk state, carried from the entry bundle `cr_cx` and the mid-walk invariant `cr_mid` of
    lib/A/Prog/check_reply_m.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v
-   (c8557374ad2e: the facts a cgif_close segment reads at a call, from the entry facts and the journal).
+   (the facts a cgif_close segment reads at a call, from the entry facts and the journal).
 
    The journal of cr_mid has the footprint [], so it keeps: every byte above the entry's sp (the harness's words
    w->w and w->n), every byte of a block live at the entry and now (the reply, the answer, the recorded strings and
@@ -13,6 +13,7 @@
    invariant AR at the current state gives the shadow of the stack window, of g_rec and of the literals, the
    runtime's cells, and the bytes after a block's last byte up to the end of its 8-byte word (CmdRecImg's
    cmd_heap_tail_vis); the runtime's read-only view is CmdRecImg's cmd_rom_view_on. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

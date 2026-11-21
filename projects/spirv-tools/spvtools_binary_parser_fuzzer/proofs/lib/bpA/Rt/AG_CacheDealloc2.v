@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant's new entries_nonzero conjunct; the reserved ledger now holds the launch's vDSO/vvar pair: the kernel invariant's launch-pair half carried over). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -79,9 +80,9 @@ Section CDModel.
 
   Theorem amodelx_after_cd : AMODELX s2 mo'.
   Proof.
-    destruct AMX as [[AIL [ASV ABU]] AK]. pose proof B as (B1 & B2 & ERB & EFA & B5 & B6 & B7 & M1 & M2 & M3 & M4 & M5 & M6).
+    destruct AMX as [[AIL [ASV ABU]] [AK AKR]]. pose proof B as (B1 & B2 & ERB & EFA & B5 & B6 & B7 & M1 & M2 & M3 & M4 & M5 & M6).
     assert (NUM := conj B1 (conj B2 (conj ERB (conj EFA (conj B5 (conj B6 (conj B7 M5))))))).
-    destruct AIL as (IL1 & IL2 & IL3 & NOV & NW & NWA).
+    destruct AIL as (IL1 & IL2 & IL3 & NOV & NW & NWA & NZ).
     pose proof AK as (K1 & K2 & K3 & K4a & K4b & K4c & K5a & K5b & K5c & K6a & K6b & K7 & K8a & K8b & K8c & K9 & K10 & K11).
     set (subF := fun X : list (word * word) => if mfa <? mfa' then maps_subtract X (FA s c + mfa) (FA s c + mfa') else X).
     assert (ELs : L' = subF (a_L s)) by (rewrite EL; subst subF; reflexivity).
@@ -119,7 +120,7 @@ Section CDModel.
         - cbn [mp_base mp_size] in Hx. split; [apply SUBfa; [exact NWA| exact LT| clear - Hx; lia]| apply SUBfa; [exact LNW| exact LT| clear - Hx; lia]]. }
       split.
       { intros sc x Hsc Hx. apply SUBf; [exact LNW| exact (IL3 sc x Hsc Hx)]. }
-      split; [exact NOV|]. split; [exact NW|]. apply NWF. exact NWA.
+      split; [exact NOV|]. split; [exact NW|]. split; [apply NWF; exact NWA| exact NZ].
     -
       unfold ashadow_visible. change (a_st s2) with st'. change (a_S s2) with S'. rewrite Fsec. destruct ASV as [V1 V2]. split.
       + intros c0 x Hc0 Hx. rewrite (ERB2 c0) in Hx. apply SMONO. apply (V1 c0 x Hc0).
@@ -153,7 +154,9 @@ Section CDModel.
         clear - W1. lia. }
       unfold page_size in *. clear - AB1 H0 H1 PT EAG NUM K0. unfold h. lia.
     -
-      unfold akernel. unfold hsec in K10 |- *. fold h'. rewrite VMR, VML, VMT, VMM, ENs. change (a_thr s2) with (a_thr s). change (a_ctx s2) with (a_ctx s). rewrite Esb, Epa.
+      (* LPS 727298f3: [akernel_resx] carries over: the step keeps the ledger and the two bases. *)
+      unfold akernel. split; [| exact (akernel_resx_same s s2 mo mo' Esb Epa VMR AKR)].
+      unfold hsec in K10 |- *. fold h'. rewrite VMR, VML, VMT, VMM, ENs. change (a_thr s2) with (a_thr s). change (a_ctx s2) with (a_ctx s). rewrite Esb, Epa.
       change (a_fsb s2) with (a_fsb s). change (a_Zr s2) with (a_Zr s). change (a_L s2) with L'. change (a_st s2) with st'. rewrite Fsec. rewrite ELs.
       split; [exact K1|]. split; [exact K2|]. split; [exact K3|].
       split; [intros a n c0 Hc0 Ha Hn; rewrite (ERB2 c0) in Ha, Hn; exact (K4a a n c0 Hc0 Ha Hn)|].

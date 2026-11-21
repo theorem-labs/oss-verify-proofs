@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list run_segments; the vDSO run state; the vDSO clause of budget_refused_at). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad MemImageType RiscvSemantics Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad MemImageType RiscvSemantics Specs Run Vdso.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import SyscallTable.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common.LimBridge Require Import LimDefs LimFrame LimInv.
@@ -102,6 +103,20 @@ Proof.
   exfalso. apply Hq. split; [exact Hh |]. right. exists x8. split; [exact Hp |]. left. exact E.
 Qed.
 
+(* The vDSO numbers carry no budget reader, so the gate is closed at every one. *)
+Lemma vdso_gate : forall ms fn n m,
+  vdso_fn_sysno fn = Some n -> alloc_budget_refused_b (sys_input segs ms (Z_to_bv 64 n)) m = false.
+Proof. intros ms [] n m H; cbn in H; try discriminate H; injection H as <-; reflexivity. Qed.
+
+(* An unmodeled instruction is unmodeled whatever the model. *)
+Lemma mi_unmod_any : forall ms m m',
+  mi_account_step segs ms m = MachineUnmodeled -> mi_account_step segs ms m' = MachineUnmodeled.
+Proof.
+  intros ms m m' H. unfold mi_account_step in *.
+  destruct (step_accesses segs ms) as [report | |]; [| discriminate H | reflexivity].
+  destruct (materialize_model_accesses m _); discriminate H.
+Qed.
+
 (* [comment removed for export] *)
 Lemma sstep_cfg_up_next : forall L c evs c1,
   Inv (cfg_model c) ->
@@ -125,6 +140,25 @@ Proof.
       rewrite (m_relim_same L m1); [reflexivity |].
       rewrite (materialize_limit _ _ _ Em). reflexivity.
     + cbn [cfg_model]. reflexivity.
+  - (* vDSO call *)
+    match goal with Hn : vdso_fn_sysno ?f = Some ?k |- _ => pose proof (vdso_gate ms f k (m_relim L m) Hn) as Hg end.
+    match goal with Hs : syscall_spec _ (m_relim L m) (Ok ?e ?mm ?ev) |- _ =>
+      pose proof (spec_up L _ m _ HI Hle Hs Hg) as HU; cbn [o_relim] in HU;
+      pose proof (sff_limit FF _ _ _ _ _ Hs) as HL1 end.
+    rewrite m_limit_relim in HL1.
+    match goal with Hm : materialize_model_accesses ?mm _ = Some ?m2 |- _ =>
+      pose proof (materialize_limit _ _ _ Hm) as HL2;
+      assert (Hm' : materialize_model_accesses (m_relim L mm) (syscall_effect_accesses eff) = Some m2)
+        by (rewrite (m_relim_same L mm HL1); exact Hm);
+      pose proof (materialize_relim_up L (m_limit m) mm _ _ Hm' Hle) as Hup end.
+    exists (mkCfg (vdso_post segs ms m (vdso_frame segs) eff) (with_vdso_bump (m_relim (m_limit m) model''))).
+    split; [| split].
+    + eapply sstep_cfg_vdso_call; [assumption | assumption | eapply mi_unmod_any; eassumption
+        | eassumption | eassumption | exact HU | assumption | assumption | exact Hup].
+    + try unfold c_relim. cbn [cfg_ms cfg_model]. apply (f_equal2 mkCfg); [reflexivity |].
+      transitivity (with_vdso_bump (m_relim L model'')); [| reflexivity].
+      rewrite (m_relim_same L model''); [reflexivity |]. rewrite HL2. exact HL1.
+    + reflexivity.
   - (* [comment removed for export] *)
     match goal with Hh : m_halted (m_relim L m) = None, Hp : ms_svc_pending ms = Some ?x |- _ =>
       pose proof (quiet_gate ms (m_relim L m) x Hh Hp Hq) as Hg end.
@@ -185,13 +219,25 @@ Proof.
     unfold mi_account_step in *.
     destruct (step_accesses segs ms) as [report | |] eqn:Est; try discriminate.
     + destruct (materialize_model_accesses (m_relim L m) (@accessed_ranges _ report)) as [m1 |] eqn:Em; try discriminate.
-      exfalso. apply Hq. split; [assumption |]. left. split; [assumption |]. exists report. split; [exact Est | exact Em].
+      exfalso. apply Hq. split; [assumption |]. left. split; [assumption |]. left. exists report. split; [exact Est | exact Em].
     + exists []. apply sstep_cfg_instr_fault; [assumption | assumption |]. unfold mi_account_step. rewrite Est. reflexivity.
   - (* [comment removed for export] *)
     unfold mi_account_step in *.
     destruct (step_accesses segs ms) as [report | |] eqn:Est; try discriminate.
     + destruct (materialize_model_accesses (m_relim L m) (@accessed_ranges _ report)); discriminate.
-    + exists []. apply sstep_cfg_instr_unmodeled; [assumption | assumption |]. unfold mi_account_step. rewrite Est. reflexivity.
+    + exists []. apply sstep_cfg_instr_unmodeled; [assumption | assumption | | assumption]. unfold mi_account_step. rewrite Est. reflexivity.
+  - (* vDSO materialization fault: excluded by quiet *)
+    exfalso. apply Hq. split; [assumption |]. left. split; [assumption |]. right. split; [assumption |].
+    do 5 eexists. repeat (split; [eassumption |]). eassumption.
+  - (* vDSO unmodeled *)
+    exists []. eapply sstep_cfg_vdso_unmodeled; [assumption | assumption | eapply mi_unmod_any; eassumption | eassumption |].
+    match goal with H : vdso_call_unmodeled _ _ _ _ |- _ => rename H into HuU end.
+    destruct HuU as [Hu0 | [(k & Hk & Hs) | (k & e & mm & ev & Hk & Hs & He)]].
+    + left. exact Hu0.
+    + right. left. exists k. split; [exact Hk |].
+      exact (spec_up L _ m _ HI Hle Hs (vdso_gate ms _ k _ Hk)).
+    + right. right. exists k, e, (m_relim (m_limit m) mm), ev. split; [exact Hk |]. split; [| exact He].
+      exact (spec_up L _ m _ HI Hle Hs (vdso_gate ms _ k _ Hk)).
   - (* [comment removed for export] *)
     exfalso. apply Hq. split; [assumption |]. right. eexists. split; [eassumption |]. right.
     eexists _, _, _. split; [eassumption | split; eassumption].
@@ -218,8 +264,20 @@ Proof.
     destruct (step_accesses segs ms) as [report | |] eqn:Est; try discriminate.
     destruct (materialize_model_accesses m (@accessed_ranges _ report)) as [m1 |] eqn:Em; try discriminate.
     destruct (materialize_relim_down L m _ _ Em) as [Hn | Hs].
-    + exfalso. apply Hq. split; [assumption |]. left. split; [assumption |]. exists report. split; [exact Est | exact Hn].
+    + exfalso. apply Hq. split; [assumption |]. left. split; [assumption |]. left. exists report. split; [exact Est | exact Hn].
     + eexists _, _. apply sstep_cfg_instr; [assumption | assumption |]. unfold mi_account_step. rewrite Est, Hs. reflexivity.
+  - (* vDSO call *)
+    match goal with Hn : vdso_fn_sysno ?f = Some ?k |- _ => pose proof (vdso_gate ms f k (m_relim L m) Hn) as Hg end.
+    match goal with Hs : syscall_spec _ m (Ok ?e ?mm ?ev) |- _ =>
+      pose proof (spec_down L _ m _ HI Hle Hs Hg) as HD; cbn [o_relim] in HD end.
+    match goal with Hm : materialize_model_accesses ?mm _ = Some ?m2 |- _ =>
+      destruct (materialize_relim_down L mm _ _ Hm) as [Hn | Hs2] end.
+    + exfalso. apply Hq. split; [assumption |]. left. split; [assumption |]. right.
+      split; [eapply mi_unmod_any; eassumption |].
+      eexists _, _, _, _, _. split; [eassumption |]. split; [eassumption |]. split; [exact HD |].
+      split; [assumption |]. split; [assumption | exact Hn].
+    + eexists _, _. eapply sstep_cfg_vdso_call; [assumption | assumption | eapply mi_unmod_any; eassumption
+        | eassumption | eassumption | exact HD | assumption | assumption | exact Hs2].
   - (* [comment removed for export] *)
     match goal with Hh : m_halted m = None, Hp : ms_svc_pending ms = Some ?x |- _ =>
       pose proof (quiet_gate ms (m_relim L m) x Hh Hp Hq) as Hg end.
@@ -268,6 +326,8 @@ Proof.
     exact (inv_materialize _ _ _ Em HI).
   - match goal with Hs : syscall_spec _ m (Ok _ ?mm _), Hm : materialize_model_accesses ?mm _ = Some _ |- _ =>
       exact (inv_materialize _ _ _ Hm (sff_inv FF _ _ _ _ _ Hs HI)) end.
+  - match goal with Hs : syscall_spec _ m (Ok _ ?mm _), Hm : materialize_model_accesses ?mm _ = Some _ |- _ =>
+      exact (inv_materialize _ _ _ Hm (sff_inv FF _ _ _ _ _ Hs HI)) end.
   - match goal with Hs : syscall_spec _ m (Ok _ _ _) |- _ => exact (sff_inv FF _ _ _ _ _ Hs HI) end.
   - match goal with Hs : syscall_spec _ m (Ok _ _ _) |- _ => exact (sff_inv FF _ _ _ _ _ Hs HI) end.
 Qed.
@@ -309,11 +369,13 @@ Theorem must_exit_in_scfg_lower_limit : forall (FF : spec_frame_facts) cfg S img
 Proof.
   intros FF cfg S [segs pc ph] L L' [sp brk0 mb rnd] inp Hle H Hnr.
   cbn [must_exit_in_scfg run_scfg_budget_refused] in *.
-  rewrite (init_config_relim segs pc ph sp brk0 mb rnd L L' inp).
-  apply (must_exit_in_at_cfg_lower_limit FF segs cfg S _ H L).
+  (* LPS 08b1429: the run's configuration is over [run_segments segs inp sp mb], not [segs] *)
+  set (vsegs := run_segments segs inp sp mb) in *.
+  rewrite (init_config_relim vsegs pc ph sp brk0 mb rnd L L' inp).
+  apply (must_exit_in_at_cfg_lower_limit FF vsegs cfg S _ H L).
   - unfold Inv. cbn. constructor.
   - cbn. exact Hle.
-  - rewrite <- (init_config_relim segs pc ph sp brk0 mb rnd L L' inp). exact Hnr.
+  - rewrite <- (init_config_relim vsegs pc ph sp brk0 mb rnd L L' inp). exact Hnr.
 Qed.
 
 Theorem halts_allowed_lower_limit : forall (FF : spec_frame_facts) cfg S img L L',

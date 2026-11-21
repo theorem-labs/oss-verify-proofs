@@ -11,7 +11,7 @@
    named and 0 name(s) holding it`; __asan::Allocator::Reallocate: 0 named, 32 by address on other units; named cold
    branches r24/1029/cold-search.md (725 refs) and b-check.md; second-agent checker a Theorem Labs lane: CONFIRM).
 
-   TEMPLATE: fs's PROVED image-A S1 (a working branch ce07ca45bca, lib/A/FSRealloc_S1*.v, itself the port
+   TEMPLATE: fs's PROVED image-A S1 (a working branch, lib/A/FSRealloc_S1*.v, itself the port
    of cgif_rgb_fuzzer's released YF6s / YF6t / YF6u / YF6r / YF6q / YF6v / YF77 / YF69).  fs's A and B bodies are
    byte-identical modulo pc-relative fields, so this file and its helpers FSRealloc_S1_tbl / _u / _r / _pa / _t / _f are
    A's text with image B's modules (lib/B/Yxxx for lib/A/Axxx), B's addresses and B's instance names (FS_AREALLOC_PC_B /
@@ -25,14 +25,15 @@
    CLOSURE: no lib/A file that names an image or holds a per-image address is Required (lib/A/FSupoison.v is image-free;
    the instance comes from lib/B/FSRealloc_inst.v).
 
-   The theorem: fs_seg_pre : TfibSyms B -> FS_seg_pre B Up, RGtop's seg_pre at fs's image-B instance over a Theorem Labs lane's c5
-   (2bd8ae006ef).  Allocate's alloc_pre asks `ly_bot ly < spZ regsA` at spZ regsA = spZ regs - FS_RFRAME; c5's
+   The theorem: fs_seg_pre : TfibSyms B -> FS_seg_pre B Up, RGtop's seg_pre at fs's image-B instance over a Theorem Labs lane's c5.
+   Allocate's alloc_pre asks `ly_bot ly < spZ regsA` at spZ regsA = spZ regs - FS_RFRAME; c5's
    realloc_pre gives `ly_bot ly + RSTACK < spZ regs`, RSTACK := FS_RFRAME at fs.  c5's seg_pre also states the frame on
    the raw memory beside the aview frame; pa_leaf (FSRealloc_S1_pa.v) carries it from the walk's raw frame (AGm).
    Every error / CHECK branch of the prefix is decided untaken by the symbolic walk (FSRealloc_S1_t.segA).  No Axiom,
    no Admitted. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10-29: the image-B twin of lib/A/FSRealloc_S1.v (a working branch ce07ca45bca): image B's modules (lib/B/Yxxx for lib/A/Axxx) and fuzz_state.asan-ubsan's addresses (a Theorem Labs lane's realloc-thin/fs-addr-map.tsv, capstone-checked). *)
+(* Modified by Theorem Labs, 2026-10-29: the image-B twin of lib/A/FSRealloc_S1.v (a working branch): image B's modules (lib/B/Yxxx for lib/A/Axxx) and fuzz_state.asan-ubsan's addresses (a Theorem Labs lane's realloc-thin/fs-addr-map.tsv, capstone-checked). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -81,7 +82,7 @@ Let sp0 : Z := bv_unsigned (getr regs 2).
 (* the allocator's reading of memory: fs's ARU reads the user-poisoned shadow bytes as 0 *)
 Local Notation memu := (FSupoison.unpoison Up mem).
 (* acall_pre (YG0d.v:225) with AR over the unpoisoned reading and every other fact over the machine's memory: what
-   realloc_pre (ReallocG.v:108) at FS_ARX gives; the same shape as acall_pre, so the donor's destruct patterns apply *)
+   realloc_pre (ReallocG.v:109) at FS_ARX gives; the same shape as acall_pre, so the donor's destruct patterns apply *)
 Hypothesis PRE : AR tfibsegs B ly S W memu md /\ aregime S /\
 YK0s.ret_ok (getr regs 1) /\
 spZ regs mod 16 = 0 /\ ly_stk_lo ly + ASTACK <= spZ regs /\ ly_bot ly < spZ regs /\ spZ regs <= ly_stk_hi ly /\

@@ -5,10 +5,10 @@
    seg_sign, ev_val, ev_cur, ev_sign, ev_lb_nil, ev_60, ev_5c, ev_block and their list and sign helpers) moved to
    image A (fuzz_uci.asan): footprint runs (lib/Lib/ExecF.v evtF, lib/Lib/StepF.v step) instead of evt, this image's
    addresses (UciCvIface.v CV_AT offsets +0x06c .. +0x128) and registers, and the two ASan load checks of each loop
-   in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v at origin/ossv/recipes 88154566652a (cl1_F;
+   in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v (cl1_F;
    crt_sh1F, takeF and crt_lits copied as cv_sh1F, takeF and cv_lits, module paths changed to reac_repacer.fuzz_uci). *)
 (* Modified by Theorem Labs, 2026-10: the straight-line segments of reac-repacer/fuzz_uci's check_value in image A, in the form
-   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (origin/ossv/recipes 88154566652a:
+   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (
    crt_seg1_F .. crt_seg9_F, Z_to_le_bytes_to_Z, crt_le8_of_bytes, crt_c8s, crt_rw_c8s, crt_frame_words, crt_regs,
    crt_usub, crt_shift, crt_w, crt_finF, crt_memF, crt_pc) and of its lib/A/Prog/ReacDecodeLib.v rd_all. *)
 (* Modified by Theorem Labs, 2026-10: the helpers and tactics of reac-repacer/fuzz_uci's lib/A/Prog/UciCvSegs.v
@@ -19,6 +19,7 @@
    module paths reac_repacer.fuzz_wire). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/A/Prog/check_copy_cgW_segs.v, with its module paths and numbers changed; 288 of its 360 lines of code are new or changed and 451 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/B/Prog/WireCdsBSegs.v, with its module paths, addresses and numbers changed; 392 of its 456 lines of code are new or changed and 296 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WireCdsSegs: the straight-line runs of check_downstream (fuzz_wire.asan 0x801fc = wire_sigma WS_check_downstream,
    81 words), as footprint (ExecF.evtF) runs:
      cds_pro_F   the entry .. the call of rp_ds_accept (`jal` at +0xd4, return address +0xd8 = CDS_RET): the frame

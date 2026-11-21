@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/RTxIcpt.v, with its module paths changed; 14 of its 64 lines of code are new or changed and 1 line of the source is left out. *)
-(* The image-B twin of lib/A/RTxIcpt.v (a working branch 6b4f6082575), with B names:
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B twin of lib/A/RTxIcpt.v (a working branch), with B names:
    the one-record bridge between the runtime law record Rt/RTx.v rt_laws (image B's runtime twins RT_<entry>_x.v use
    it) and the interceptor law record YE2y.v icpt_laws_x (image B's interceptor walks YE2* / YE6* / YE7* /
    Rt/Memchr_x / Rt/MemchrChk_x / Rt/Strnlen* / Rt/Bcmp use it).

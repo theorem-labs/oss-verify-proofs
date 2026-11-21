@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the standard model's new channel-reader field passed on). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -84,8 +85,8 @@ Theorem target_class_sound : forall (bfuel fuel : nat) (nlo nhi : Z) (p : plan) 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x32904) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros bfuel fuel nlo nhi p s HC HS H0 Hz HLIB sp0 gm area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_ok sp0 gm area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & can & He & Hcan & CS).
+  intros bfuel fuel nlo nhi p s HC HS H0 Hz HLIB sp0 gm area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_ok sp0 gm area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & can & He & Hcan & CS).
   eapply rz_conseq.
   - exact (check_sound_all HLIB NX0 fuel bfuel p (cs_T nlo nhi) s HC _ R M _ CS).
   - rewrite (npos_class nlo nhi content H0 Hz Hn) in HS.
@@ -106,8 +107,8 @@ Theorem target_class_sound_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : Z) (
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x32904) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS H0 Hz HLIB sp0 B area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & can & He & Hcan & CS).
+  intros k bfuel fuel nlo nhi p s HC HS H0 Hz HLIB sp0 B area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & can & He & Hcan & CS).
   eapply rz_conseq.
   - exact (check_sound_all HLIB NX0k fuel bfuel p (cs_Tk k nlo nhi) s HC _ R M _ CS).
   - rewrite (npos_class nlo nhi content H0 Hz Hn) in HS.

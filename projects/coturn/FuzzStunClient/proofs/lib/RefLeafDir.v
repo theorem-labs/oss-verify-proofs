@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section and ref_dir_path take the launch input, entry point, uid and hwcap of the 12-argument main_entry, the thread-id bound and the stderr writes' channel reader, and the out-of-memory branch takes the auxv base. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -35,45 +36,65 @@ Lemma teq_pilot_dir : forall A O K : TSet,
   t_eq (t_alt2 A (t_alt2 (t_alt2 O (t_alt2 O (t_alt2 O K))) (t_alt2 O K))) (t_alt2 A (t_alt2 O K)).
 Proof. intros A O K tr. unfold t_alt2. tauto. Qed.
 
+(* [main_entry] (RefStartup.v:65) takes 12 arguments: the launch's own input, the mmap base and
+   the entry point lay out the stack block, and the uid/hwcap the consumers quantify over are its
+   fields.  The consumers under this file take it the same way (RefDirFront.v:81-85,
+   RefDirMid.v:122-127, RefDirTail.v:70-73, RefOpenFailBranch.v:57-60), and [open_err_branch]
+   takes [rdraw] and [inp].  [Hrdr0] is RefDirMid's own section hypothesis, which [dir_brk] and
+   [dir_mmap] rest on. *)
 Section LeafDir.
   Context {AMB : Amb}.
   Context {AL : AllocLim}.
   (* [comment removed for export] *)
+  (* Stated exactly as RefOpenFailBranch.cannot_open_branch (RefOpenFailBranch.v:76-85), which
+     RefMain passes for it: since LPS 08b1429 the branch takes the tid bound and the channel
+     reader. *)
   Hypothesis cannot_open_branch : forall (sp0 : word) (a0s : list byte) (envv : list (list byte)) (rdraw : EntryDraw) (tid : word)
-      (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream),
+      (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream)
+      (inp : ProcInput) (entry uid hw : word),
     valid_argv [a0s; dot_path] -> valid_envp envv -> valid_sp sp0 ->
-    main_entry sp0 [a0s; dot_path] envv rdraw tid regs0 mem0 ->
-    open_err_branch sp0 a0s dot_path envv tid mem0 brk mbase fs0 stdin0 (t_die (msg_cannot_open dot_path) fs0).
+    (0 < bv_unsigned tid < 2 ^ 22)%Z ->
+    main_entry inp mbase entry sp0 [a0s; dot_path] envv uid hw rdraw tid regs0 mem0 ->
+    a_channel_reader = true ->
+    open_err_branch sp0 a0s dot_path envv rdraw tid mem0 brk mbase fs0 stdin0 inp (t_die (msg_cannot_open dot_path) fs0).
 
 (* [comment removed for export] *)
 Lemma ref_dir_path : forall (sp0 : word) (a0s : list byte) (envv : list (list byte)) (rdraw : EntryDraw) (tid : word)
-    (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream),
+    (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream)
+    (inp : ProcInput) (entry uid hw : word),
   valid_argv [a0s; dot_path] -> valid_envp envv -> valid_sp sp0 -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
-  main_entry sp0 [a0s; dot_path] envv rdraw tid regs0 mem0 -> valid_brk RSEGS brk ->
+  main_entry inp mbase entry sp0 [a0s; dot_path] envv uid hw rdraw tid regs0 mem0 ->
+  a_channel_reader = true ->
+  valid_brk RSEGS brk ->
   realizes RSEGS (mkCfg (mkst regs0 (0x139e0 : word) mem0 (seg_rom RSEGS))
                           (with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputC [a0s; dot_path] envv fs0 stdin0))))
              (t_alt2 (t_die (msg_cannot_open dot_path) fs0) (t_opened_dir dot_path fs0)).
 Proof.
-  intros sp0 a0s envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk.
+  (* Section lemmas are applied by [eapply] and [eassumption], never by a positional list: a
+     section lemma is generalised over the section variables it depends on, which is neither its
+     header nor a closure over its text (e.g. [dir_tail] takes [Hva]).  Every such variable is in
+     context under its own name. *)
+  intros sp0 a0s envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 inp entry uid hw
+         Hva Hve Hvsp Htid ME Hrdr0 Hbrk.
   set (K := t_die (msg_read_error dot_path) fs0).
-  assert (AM : after_malloc_dir sp0 a0s envv tid mem0 fs0 stdin0 K).
-  { apply (dir_read sp0 a0s envv tid mem0 fs0 stdin0 Hvsp Htid). intros R' M' VM' P. subst K.
+  assert (AM : after_malloc_dir sp0 a0s envv rdraw tid mem0 mbase fs0 stdin0 inp K).
+  { eapply dir_read; try eassumption.
+    intros R' M' VM' P. subst K.
     change fs0 with (m_fs (modelDir tid fs0 stdin0 VM')).
-    apply (dir_tail sp0 a0s envv rdraw tid regs0 mem0 Hva Hve Hvsp ME R' M' (modelDir tid fs0 stdin0 VM') eq_refl eq_refl eq_refl P). }
+    eapply dir_tail; try eassumption; try reflexivity. }
   eapply rz_conseq; [ | apply teq_pilot_dir ].
   replace (0x139e0 : word) with (Z_to_bv 64 0x139e0) by (apply bv_eq; reflexivity).
   change (with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputC [a0s; dot_path] envv fs0 stdin0)))
     with (model0 sp0 a0s dot_path envv tid brk mbase fs0 stdin0).
-  apply (dir_seg1 sp0 a0s envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME).
-  - apply (cannot_open_branch sp0 a0s envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp ME).
-  - unfold dir_seg2_kont. intros vals R M HL P0 P1 P2 P5 HR HK HA.
-    change (modelD1 sp0 tid brk mbase fs0 stdin0) with (model1g sp0 tid brk mbase fs0 stdin0 FdDir).
-    apply (oom_seg2 sp0 a0s dot_path envv tid mem0 brk mbase fs0 stdin0 Hvsp Hbrk ltac:(cbn; lia) FdDir
-             (t_alt2 (t_die msg_oom fs0) K)
-             (t_alt2 (t_die msg_oom fs0) (t_alt2 (t_die msg_oom fs0) K))
-             vals R M
-             (dir_brk sp0 a0s envv rdraw tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk K AM)
-             (dir_mmap sp0 a0s envv rdraw tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk K AM)
-             HL P0 P1 P2 P5 HR HK HA).
+  (* [dir_seg1] leaves its two continuations: the openat error branch, then [dir_seg2_kont]. *)
+  eapply dir_seg1; try eassumption.
+  1: eapply cannot_open_branch; eassumption.
+  (* [oom_seg2] asks the auxv base [vals_ev vals 3 = auxvp ..] since LPS 08b1429/75d69e00;
+     [dir_seg2_kont] hands it over as [P3] (RefDirFront.v:97-98). *)
+  unfold dir_seg2_kont. intros vals R M HL P0 P1 P2 P5 P3 HR HK HA.
+  change (modelD1 sp0 tid brk mbase fs0 stdin0) with (model1g sp0 tid brk mbase fs0 stdin0 FdDir).
+  eapply oom_seg2; try eassumption; try (cbn; lia).
+  1: eapply dir_brk; eassumption.
+  eapply dir_mmap; eassumption.
 Qed.
 End LeafDir.

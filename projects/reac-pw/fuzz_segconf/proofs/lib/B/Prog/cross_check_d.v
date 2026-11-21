@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 133 of its 156 lines of code are new or changed and 495 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The shared vocabulary of the walk of cross_check on IMAGE B (reac-pw/fuzz_segconf, fuzz_segconf.asan-ubsan,
    pin c3796c0b38f3; 0x897cc, 696 bytes, 174 instructions, real frame 128 bytes, no side-stack frame of its own).
-   ADAPTED from the image-A G3 walk owner's image-A lib/A/Prog/cross_check_d.v (commit 130284ff40f1): the
+   ADAPTED from the image-A G3 walk owner's image-A lib/A/Prog/cross_check_d.v: the
    same records, cut predicates and segment statements, re-derived on image B's machine code -- the cut offsets,
    the register map of INV_LOOP and the spill slots are image B's and differ from image A's. Requires are the
    image-B kit copies (lib.B) and lib.B.Prog, as every B file does.

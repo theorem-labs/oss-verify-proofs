@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a section variable rz, the run's CONFIG_RSEQ flag, which the summaries do not read, passed to x_stmt in the statements of node_x_sound_XIMemset, node_x_sound_XMemset, node_x_sound_XIMemcpy, node_x_sound_XMemcpy, node_x_sound_XMemIsZero, node_x_sound_XIStrncpy and node_x_sound_XPopFree). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -601,6 +602,10 @@ Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(** the run's CONFIG_RSEQ flag as 0 or 1 ([APC.rseq_z]); [x_stmt] carries it
+    because [node_x]'s XPnScan and XLayout arms read the auxv's size.  None of
+    the summary nodes below reads it. *)
+Variable rz : Z.
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
 
@@ -1565,31 +1570,31 @@ Proof.
 Qed.
 
 Theorem node_x_sound_XIMemset :
-  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIMemset.
+  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XIMemset.
 Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 Theorem node_x_sound_XMemset :
-  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemset.
+  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XMemset.
 Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 Theorem node_x_sound_XIMemcpy :
-  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIMemcpy.
+  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XIMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 Theorem node_x_sound_XMemcpy :
-  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemcpy.
+  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 Theorem node_x_sound_XMemIsZero :
-  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemIsZero.
+  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XMemIsZero.
 Proof. intros SUM args. exact (summary_miz_sound SUM). Qed.
 
 Theorem node_x_sound_XIStrncpy :
-  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIStrncpy.
+  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XIStrncpy.
 Proof. intros SUM args. exact (summary_istrncpy_sound SUM). Qed.
 
 Theorem node_x_sound_XPopFree :
-  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XPopFree.
+  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XPopFree.
 Proof. intros SUM args. exact (summary_popfree_sound SUM args). Qed.
 
 End Sound.

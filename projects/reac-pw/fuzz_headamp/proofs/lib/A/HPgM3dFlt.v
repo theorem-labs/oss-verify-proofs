@@ -1,24 +1,25 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/A/RPgCheck.v (ck_entry, the code table ck_tbl / ck_wx / ck_segs_low) and
-   lib/A/RPgCheckStr.v (rl_cstr_kept) at 77f59d02b01 for the MATCH HALF of reac-pw/fuzz_role's image-A segment M02:
+   lib/A/RPgCheckStr.v (rl_cstr_kept) for the MATCH HALF of reac-pw/fuzz_role's image-A segment M02:
    the half's code table, the entry state of a run that starts at one of its cuts (the registers, the real frame at
    s1 and the role cell as regions), the stack facts of lib/A/RPgSeg.v's rs_pre, the seam between RPgSeg's rs_core and
    lib/A/RPgCSpec.v's callee contracts (rl_pre before a call, rl_post after it), and the strings and cells the callees
    read, carried from the segment's start to a cut (rl_cstr_kept with two worlds and the half's write set). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 7e8cf15c304 (m2_core_step and
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_core_step and
    the shape of m2_core_call: a cut's journal-and-frame part across a run of the engine and across a call) and
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v at 7e8cf15c304 (m2f_cut / m2f_exit_mal: a cut's facts carried to a
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v (m2f_cut / m2f_exit_mal: a cut's facts carried to a
    state of the arm, every byte outside the arm's write zone and every callee-saved register kept) for
    reac-pw/fuzz_headamp image A: the cut texts are lib/A/HPgSegM.v's hq_cut_RFA and lib/A/HPgM3dBase.v's hv_cut_FA /
    hv_cut_TAIL, the write zone is HPgM3dBase's hv_wz, s4 is not kept (the arm computes the value in it) and the
    float state is related to the cut's by every register but f8 and f10. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, the same loaded bytes except .note.gnu.build-id): THE FLOAT ARM of M03's
    piece value_nearest in the walk of LLVMFuzzerTestOneInput (0x80bc0), from lib/A/HPgM3dBase.v's cut FA 0x83430 to
    lib/A/HPgSegM.v's cut RFA 0x83454 or HPgM3dBase's cut TAIL 0x83534: hvl_flt_A : hv_piece_flt_stmt.
-   proves function LLVMFuzzerTestOneInput (reuse search: at ossv/recipes 2d2ff01bb6f2, read by the released-proof
+   proves function LLVMFuzzerTestOneInput (reuse search:, read by the released-proof
    index v5 built 2026-10-30T13:16:21Z, no released proof of these pieces; the lookup record is in the PR body).
 
    THE CODE: the inlined pod_float + pod_nearest(f, 0, 255) of cell_value (pod.h:118-120, 152-171,

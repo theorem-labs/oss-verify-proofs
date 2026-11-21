@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0n.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YP0n.v, with its module paths and module names changed; 967 of its 1043 lines of code are new or changed and 1914 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b): the SHARED
    CONTRACT of the re-walk of check_no_overread (cno, entry B_prog_slot AS_check_no_overread = slot 201, B' 0x819f0, 312
    instructions) against the kit's text tcheck_no_overread_specX. Lane CnoB102r (a Theorem Labs lane, #102 plan
    the internal file PLAN-cno-caw-102.md sections 5.0 / 5.2). The twin of image A''s lib/A/Prog/Cno102A_Base.v (lane CnoA102r,
-   a working branch a64053d93f63, blob 2847f513b75f): the same names with cnb_ for cn_, the same shapes, B''s
+   a working branch, blob 2847f513b75f): the same names with cnb_ for cn_, the same shapes, B''s
    offsets, registers and slots. This file STATES; Cno102B_Ro.v (the step kit), Cno102B_R4.v (CB4-CB6),
    Cno102B_Rpn.v (the three parse_noting steps), Cno102B_R7.v (CB7) and Cno102B_F.v (CB8) prove segments over it,
    Cno102B_Img.v witnesses cnb_img at the instance; the CB0-CB3 / CB9 lanes and the top compose.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   INPUTS (the kit CUT a working branch 7cdbb61b5fa0, merged forward whole; every path but this lane's
+   INPUTS (the kit CUT a working branch, merged forward whole; every path but this lane's
    files is the cut's blob):
      the kit texts (one set): lib/A/PRH_Base.v, lib/A/PRH_FnCheck.v c40cf3fdcd2a (ck_cno_copies :264-266,
      ck_cno_evs :268-281, tparse_noting_specX :596-, tcheck_no_overread_specX :738-823, tpadded_specX :954-), lib/A/PRH_FnAlloc.v
@@ -77,7 +78,7 @@
    tsame_specX's `S' = S` carries cnb_prog across CB7's two same calls. CB8 adds cnb_fevs: the accepted trees' pj_free
    (at the reader's OWN block lists, ordered against pj_frees by cnb_fo, which the reading's text gives: K0-PJF-TIE is
    closed) and the copies' free.
-   THE CUT'S TEXT (7cdbb61b5fa0) ADDS: no DW (prh_univ_closure B CTX0, K0-DW-SPLIT); THE WILD BUDGET, the entry room
+   THE CUT'S TEXT ADDS: no DW (prh_univ_closure B CTX0, K0-DW-SPLIT); THE WILD BUDGET, the entry room
    wild_room [] (prh_wk F_check_no_overread) and the budgeted post fpostFbm (wbudget [] 6), so every cut's journal is
    the budgeted ajournal_xw at the spent budget (cnb_J's wk); THE COPIES' OUTCOME, the post's clause that retires the
    caller-discharged K0-CNO-COPY: own' = 0 at a consumer run of the three copies, carried as cnb_cdead where a copy was
@@ -180,7 +181,7 @@ Record cnb_img : Prop := {
   cnbi_own : VAL (A_OBJ 13) = pi_g_own_ran_out;
   cnbi_hi : VAL (A_HI 9) + 320 = VAL (A_OBJ 13);
   (* the program statics are writable data, not read-only bytes: what carries arodata_okP across a call by the
-     journal (CawA102's WA4 finding, Caw102A_Base.v 3e9f97debfb cwi_pst_rw; Cno102A_Base.v 8b8e1011d865 cni_pst_rw) *)
+     journal (CawA102's WA4 finding, Caw102A_Base.v cwi_pst_rw; Cno102A_Base.v cni_pst_rw) *)
   cnbi_pst_rw : forall a, Exists (in_zr a) prh_pst -> ~ in_roP SEGS (@pa_relro_lo _ _ PA) (@pa_relro_hi _ _ PA) a;
   (* a program static is a SEGMENT byte, so a load of it reads a value whatever the memory holds there
      (Cno102A_Base.v's cni_pst_seg, CnoA9's finding) *)
@@ -327,8 +328,8 @@ split.
 - intros S' U. exact (PresetHullBudget.hull_budget_app S S' [cnb_hmal x] rest H U).
 Qed.
 
-(* ---- tcheck_no_overread_specX's premises at one record (PRH_FnCheck.v c40cf3fdcd2a :738-777, the kit cut
-   7cdbb61b5fa0), verbatim ---- *)
+(* ---- tcheck_no_overread_specX's premises at one record (PRH_FnCheck.v c40cf3fdcd2a :738-777, the kit cut),
+   verbatim ---- *)
 Definition cnb_pre (CTX0 : list (list Z)) (D : cnb_in) : Prop :=
   let size := cnb_size D in
   fpre B ARx STK (bi_ly D) (bi_S D) (bi_Hp D) (bi_W D) (bi_regs D) (bi_mem D) (bi_md D) (bi_ch D) /\

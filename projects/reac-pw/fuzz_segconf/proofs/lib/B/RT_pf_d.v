@@ -9,7 +9,7 @@
    The seam arms of Pd are fm's lib/A/FMpfArmPdSeam.v (seam_text_arm_pd / seam_pargs_arm_pd / seam_bytes_arm_pd,
    with the seam-side control seam_pd_control); the printf_common-side control is lib/A/FMpfArmPdCtl.v.
    New file; nothing else is edited. *)
-(* Modified by Theorem Labs, 2026-10: the proof is RT_pf_sh.v pcom_pcx_arm_ps (6c733891261 :141-147) with the step at
+(* Modified by Theorem Labs, 2026-10: the proof is RT_pf_sh.v pcom_pcx_arm_ps (141-147) with the step at
    %d in place of %s, the %d step as in the shared libc stdio proofs'
    proofs/omx-clap-core/fuzz_preset/lib/A/PSnpPcGram.v (its %c case) and
    proofs/libreac/fuzz_disco/lib/A/Prog/pf_bridge.v pcx_cargs_ok (its Pd case). *)

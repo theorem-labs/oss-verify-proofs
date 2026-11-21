@@ -24,7 +24,7 @@ Definition FF_got_cflags : Z := 0xa3200.
 Definition FF_cflags : Z := 0x13e2e8.
 Definition FF_got_shadow : Z := 0xa3210.
 Definition FF_SB : Z := 0x7fff8000.
-(* cgif's sink-file strings; fuzz_command's harness opens no file *)
+(* cgif's sink-file strings; reac-pw/fuzz_segconf's harness (source/fuzz_segconf.c, source/catalogue.c) opens no file *)
 Definition A_RWA : Z := 0.
 Definition A_WB : Z := 0.
 Definition A_TRAILER : Z := 0.

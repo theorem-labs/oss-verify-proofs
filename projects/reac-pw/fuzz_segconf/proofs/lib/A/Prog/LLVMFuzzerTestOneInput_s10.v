@@ -8,15 +8,16 @@
    (s8 >> 3) + s7), a plain run through the 88 shadow stores to the branch on ntok < 3, and the cut facts (cw_pc)
    read back from the symbolic state at the cut. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s1.v, with its module paths and module names changed; 272 of its 383 lines of code are new or changed and 455 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): segment S00 of the walk of
    the test harness's entry function LLVMFuzzerTestOneInput (0x84d34), file group _s10: from the entry to the
    cut K84eb8 (0x84eb8), the statement lt_seg_S00_stmt of LLVMFuzzerTestOneInput_defs.v.
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; checker (fresh, read-only): CONFIRM; none: written new)
 
-   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/chain_words_s1.v (origin/ossv/recipes 501c0d516c69, the class-3
+   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/chain_words_s1.v (the class-3
    side-stack frame: a run to the call, aj_stack_malloc_atS, a re-seat that keeps the stack regions and adds the
    frame and its shadow, a plain run through the shadow stores) with the entry of fuzz_command's
    lib/A/Prog/LLVMFuzzerTestOneInput_s10.v (lt_base unpacked, the size test refuted by n < 2 ^ 26, the

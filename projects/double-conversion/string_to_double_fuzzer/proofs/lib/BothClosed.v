@@ -1,8 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (imports the model's State and Run). *)
 (* [comment removed for export] *)
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
+From LinuxProcessSemantics.LinuxProcessSem Require Import State Run.
 From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import ImgP ImgB ImgSame LibIface LibIfaceB LxLib LbLibBClosed RefMain RefMainClosed
   BothTop BothObls RefLim.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.

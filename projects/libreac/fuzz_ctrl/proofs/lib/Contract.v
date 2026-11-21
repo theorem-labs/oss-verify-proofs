@@ -59,6 +59,8 @@ Definition pack_form : ResForm := {|
 Section Contracts.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
 Variable B : malloc_syms.
+(* The allocation mode of the API: a site with no mode in scope resolves it to [AcfgMode]. *)
+Context {AM : AllocMode}.
 Variable API : AllocAPI B.
 Context {SH : sink_head} {SK : sink_syms}.
 Let segs := ms_segs B.
@@ -345,10 +347,10 @@ End Contracts.
 Definition lib_contract_gm {AM : AllocMode} {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}
     (B : malloc_syms) (API : AllocAPI B) {SH : sink_head} {SK : sink_syms}
     (G R : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop) (j : nat) (pc ra empty stk : Z) : Prop :=
-  @lib_contract_body fx rc LS B API SH SK (fun s c T => @realizes s AM c T) G R GI j pc ra empty stk.
+  @lib_contract_body fx rc LS B AM API SH SK (fun s c T => @realizes s AM c T) G R GI j pc ra empty stk.
 
 Lemma lib_contract_g_gm : forall {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}
     (B : malloc_syms) (API : AllocAPI B) {SH : sink_head} {SK : sink_syms} G R GI j pc ra empty stk,
-  @lib_contract_g fx rc LS B API SH SK G R GI j pc ra empty stk =
+  @lib_contract_g fx rc LS B AcfgMode API SH SK G R GI j pc ra empty stk =
   @lib_contract_gm AcfgMode fx rc LS B API SH SK G R GI j pc ra empty stk.
 Proof. reflexivity. Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of nmodel, proved from the frame lemmas). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -118,8 +119,11 @@ Proof. intros M M' H a He. apply H. unfold AsVocab.in_errno. unfold errw in He. 
 
 Lemma nmodel_of_vm : forall mdl mdl', AsVocab.same_except_vm mdl mdl' -> m_halted mdl' = None -> nmodel mdl mdl'.
 Proof.
-  intros mdl mdl' H Hh. destruct (AsVocab.same_except_vm_frame mdl mdl' H) as (F1 & F2 & F3 & _).
-  unfold nmodel. repeat split; assumption.
+  intros mdl mdl' H Hh. destruct (AsVocab.same_except_vm_frame mdl mdl' H) as (F1 & F2 & F3 & _ & _ & Fp & _).
+  unfold nmodel. repeat split; try assumption.
+  (* [co_rdr]: same_except_vm_frame's SIXTH component is [m_proc mdl' = m_proc mdl]
+     (AsVocab.v:1746-1748), and [m_channel_reader] is a projection of it. *)
+  unfold m_channel_reader. rewrite Fp. reflexivity.
 Qed.
 
 
@@ -309,8 +313,13 @@ Qed.
 Lemma nmodel_of_mat : forall mdl mdl', m_halted mdl = None -> same_but_materialized mdl mdl' -> nmodel mdl mdl'.
 Proof.
   intros mdl mdl' Hh H.
-  pose proof (same_but_materialized_frame mdl mdl' H) as (_ & _ & _ & _ & _ & _ & _ & _ & Hfds & _ & _ & Hfs & Hhalt & _).
-  unfold nmodel. rewrite Hhalt. repeat split; assumption.
+  pose proof (same_but_materialized_frame mdl mdl' H) as (_ & _ & _ & _ & _ & Hproc & _ & _ & Hfds & _ & _ & Hfs & Hhalt & _).
+  unfold nmodel. rewrite Hhalt. repeat split; try assumption.
+  (* [co_rdr] via the frame's sixth component: [m_channel_reader] is a projection of
+     [m_proc] (AzAPS.v:413-415, after State.v:4912-4913), which [same_but_materialized]
+     leaves alone.  Same derivation as APS.rdr_sbm (AzAPS.v:416-420), inlined here so this
+     file needs no new module path. *)
+  unfold m_channel_reader. rewrite Hproc. reflexivity.
 Qed.
 
 Lemma fcount_hfcount : forall k FF, AsVocab.fcount k FF <= hfcount (AsVocab.FS k) (map AzBridgeH.wfr FF).

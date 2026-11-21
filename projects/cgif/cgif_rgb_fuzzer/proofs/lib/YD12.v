@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the mmap base, break and entry draw with valid_launch and the launch premise entry_launch_ok_va; E0 takes the entry draw's top, the run's CONFIG_RSEQ flag and the execfn string, and runs_main_tfa the entry draw's top and the execfn string; slot 6's bound is proved from the new layout's ew6 equation; the short, overrun and post_P leaves and tra_hdr carry valid_launch and the launch premise; the launch's channel-reader flag, which fdchan asks for at the revision, carried beside the fd table into tail_at). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -29,22 +30,30 @@ Hypothesis ARL : AR_laws trasegs B.
 Hypothesis SHORT : short_leaf_tfa B.
 Hypothesis OVERRUN : overrun_leaf_tfa B.
 Hypothesis POSTP : post_P_tfa B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv [a0; p].
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hvfs : valid_fs (in_fs inp).
+Hypothesis Hvl : valid_launch inp.
+(* #38: the entry layout is keyed on the run's draw, so the launch premise is
+   threaded alongside the valid_* group, in the position the ported tfa
+   interfaces take it (YD0h.v:31-54). *)
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
 Hypothesis RUNIV : forall data, fs_lookup (in_fs inp) p = Some data -> rrfc_universe B (payload_len data).
-#[local] Notation EL := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation EL := (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Let HWXi : wx_segs_nowrap trasegs := Hwx_tfa.
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YQ0a.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
-unfold z_rand in *. rewrite u64_lit by lia. lia.
+rewrite <- Hargv.
+(* rewrite ... by eassumption rather than a positional application: the Section t
+   discharge order is not something we can check locally. *)
+rewrite YQ0a.ew6 with (mbase := mbase) (brk := brk) by eassumption.
+pose proof (YQ0a.hs_eq inp). pose proof (YQ0a.aux_size inp).
+unfold z_rand. lia.
 Qed.
 Lemma short_run : forall E (W : world trasegs) ms md,
 st_ok trasegs E (add_cond S_HDR cond_SH) (restrict (w_H W) ms) ->
@@ -90,14 +99,14 @@ bv_unsigned (ew E 0) = usp ->
 st_ok trasegs E ss (restrict (w_H W) ms') ->
 frame_of E rs (ms_mem ms) (ms_mem ms') -> frame_of E rs (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
 bv_unsigned (ew E A_BUF) = sptr_addr B ly pb -> bv_unsigned (ew E A_LEN) = dlen data ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) (with_vm_backing (m_vm_lazy md) mat md) -> AR trasegs B ly S W (ms_mem ms) md -> top_ok usp ly ->
 blocks S = [(pb, cap)] -> dev S <= 64 -> 65536 <= cap <= 2 ^ 26 -> dlen data < cap ->
 blk (w_H W) (ms_mem ms) (sptr_addr B ly pb) (dlen data) data ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> drv_minv S cap (dlen data) ->
-tail_at B ss E sp inp a0 p data W ms' (with_vm_backing (m_vm_lazy md) mat md) ly S pb cap.
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true -> drv_minv S cap (dlen data) ->
+tail_at B ss E sp inp rnd a0 p data W ms' (with_vm_backing (m_vm_lazy md) mat md) ly S pb cap.
 Proof.
-intros ss rs E W ms md ly S pb cap data ms' mat Hok Hwbs (c1 & c2 & rest & Hm) E0' HS HF HFr E41 E42 HR HAI HAR HTOP Hbl Hnev Hcap HLc HBLK Hfs Hfds Hminv.
+intros ss rs E W ms md ly S pb cap data ms' mat Hok Hwbs (c1 & c2 & rest & Hm) E0' HS HF HFr E41 E42 HR HAI HAR HTOP Hbl Hnev Hcap HLc HBLK Hfs Hfds Hcr Hminv.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (top_ok_ceil _ _ HTOP) as HCT.
 pose proof (YN05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 assert (Hin : In (sptr_addr B ly pb, cap) (ablocks B ly S)) by (unfold ablocks; rewrite Hbl; left; reflexivity).
@@ -118,21 +127,22 @@ split; [exact HAI|]. split.
 rewrite E0'. intros a Ha. exact (apresent_some' _ _ _ (Hwin a Ha)). }
 split; [exact HTOP|]. split; [exact Hbl|]. split; [exact Hnev|]. split; [exact Hcap|]. split; [unfold dlen; lia|]. split.
 { unfold dlen. apply (blk_of_frame_r _ _ _ _ _ (sptr_addr B ly pb) (Z.of_nat (length data)) data usp HFr Hok E0' Ulo); [intros a Ha; apply NIMG; lia | lia | lia | exact HBLK]. }
-split; [rewrite wvb_fs'; exact Hfs |]. split; [rewrite wvb_fds'; exact Hfds | exact Hminv].
+split; [rewrite wvb_fs'; exact Hfs |]. split; [rewrite wvb_fds'; exact Hfds |].
+split; [rewrite YK05.wvb_channel_reader; exact Hcr | exact Hminv].
 Qed.
 Theorem tra_hdr_at : forall ws (W : world trasegs) ms md ly S data (pb : sptr) cap,
 fs_lookup (in_fs inp) p = Some data -> dlen data < cap ->
 st_ok trasegs (havoc EL K_M1 ws) S_HDR (restrict (w_H W) ms) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly S W (ms_mem ms) md -> top_ok usp ly ->
 blocks S = [(pb, cap)] -> sptr_addr B ly pb = bv_unsigned (ew (havoc EL K_M1 ws) A_BUF) ->
 bv_unsigned (ew (havoc EL K_M1 ws) A_LEN) = dlen data -> 65536 <= cap <= 2 ^ 26 -> dev S <= 64 ->
 drv_minv S cap (dlen data) ->
 YQ04.bytes_at (mrestrict (w_H W) (ms_mem ms)) (sptr_addr B ly pb) data ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true ->
 srealizes trasegs (mkCfg ms md) (POST data (in_fs inp)).
 Proof.
-intros ws W ms md ly S data pb cap Hlk HLc HS HR HAI HAR HTOP Hbl Hpb H42 Hcap Hnev Hminv Hbytes Hfs Hfds.
+intros ws W ms md ly S data pb cap Hlk HLc HS HR HAI HAR HTOP Hbl Hpb H42 Hcap Hnev Hminv Hbytes Hfs Hfds Hcr.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (top_ok_ceil _ _ HTOP) as HCT.
 pose proof (YN05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (ER := havoc EL K_M1 ws) in *.
@@ -154,9 +164,9 @@ assert (HS1 : st_ok trasegs ER (add_cond S_HDR cond_SH) (restrict (w_H W) ms)).
 rewrite branch_geu_U, U_SLit, U_SOff, H42, Z.add_0_r, !zcanon_id by (unfold M64; lia). apply Bool.negb_true_iff. apply Z.ltb_ge. lia. }
 apply (SRr_srealizes trasegs W (mkCfg ms md) _ _ (short_run ER W ms md HS1) HAI).
 intros W0 c' _ HAI' (-> & ms' & mat & -> & HS' & HF & HFr). cbn [cfg_model] in HAI'.
-apply (SHORT sp inp xw xd ws W ms' _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk ltac:(unfold dlen; lia)).
+apply (SHORT sp inp mbase brk rnd xw xd ws W ms' _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk ltac:(unfold dlen; lia)).
 apply (tail_after S_SHORT (ss_mem S_HDR) ER W ms md ly S pb cap data ms' mat S_HDR_win_ok wbs_SHORT ltac:(do 3 eexists; reflexivity)
-E0' HS' HF HFr (eq_sym Hpb) H42 HR HAI' HAR HTOP Hbl Hnev Hcap ltac:(unfold dlen; lia) HBLK Hfs Hfds Hminv).
+E0' HS' HF HFr (eq_sym Hpb) H42 HR HAI' HAR HTOP Hbl Hnev Hcap ltac:(unfold dlen; lia) HBLK Hfs Hfds Hcr Hminv).
 -
 assert (Hltb : (Z.of_nat (length data) <? 6) = false) by (apply Z.ltb_ge; lia). rewrite Hltb.
 destruct (list_len2 data ltac:(lia)) as (d0 & d1 & rest & Ed).
@@ -201,8 +211,8 @@ exfalso. apply (NIMG (Z.max (sptr_addr B ly pb) 0x10000)); [lia|]. apply in_img_
 apply (SRr_srealizes trasegs W (mkCfg ms md) _ _ (h1_run E' W ms md HS3) HAI).
 intros W0 c' _ HAI' (-> & ms' & mat & -> & HS4 & HF & HFr). cbn [cfg_model] in HAI'.
 pose proof (tail_after S_H1 (ss_mem S_H6) E' W ms md ly S pb cap data ms' mat S_H6_win_ok wbs_H1 ltac:(do 3 eexists; reflexivity)
-E'0 HS4 HF HFr E'41 E'42 HR HAI' HAR HTOP Hbl Hnev Hcap ltac:(unfold dlen; lia) HBLK Hfs Hfds Hminv)
-as (_ & _ & _ & HR4 & _ & HAR4 & _ & _ & _ & _ & _ & HBLK4 & Hfs4 & Hfds4 & _).
+E'0 HS4 HF HFr E'41 E'42 HR HAI' HAR HTOP Hbl Hnev Hcap ltac:(unfold dlen; lia) HBLK Hfs Hfds Hcr Hminv)
+as (_ & _ & _ & HR4 & _ & HAR4 & _ & _ & _ & _ & _ & HBLK4 & Hfs4 & Hfds4 & Hcr4 & _).
 set (md4 := with_vm_backing (m_vm_lazy md) mat md) in *.
 assert (UC6 : U E' sv_cl6 = config_len data + 6).
 { transitivity (config_len (d0 :: d1 :: rest) + 6); [exact (U_cl6 E' d0 d1 rest Hd) | rewrite <- Ed; reflexivity]. }
@@ -214,25 +224,25 @@ assert (HS5 : st_ok trasegs E' (add_cond S_H1 cond_OV) (restrict (w_H W) ms')).
 { apply (st_ok_add_cond trasegs E' S_H1 _ BC_LTU (SOff A_LEN 0) sv_cl6 HS4). rewrite branch_ltu_U, UC6, U42. apply Z.ltb_lt. lia. }
 apply (SRr_srealizes trasegs W (mkCfg ms' md4) _ _ (ovr_run E' W ms' md4 HS5) HAI').
 intros W1 c1 _ HAI5 (-> & ms5 & mat5 & -> & HS6 & HF5 & HFr5). cbn [cfg_model] in HAI5.
-apply (OVERRUN sp inp xw xd ws W ms5 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk ltac:(unfold dlen; lia)).
+apply (OVERRUN sp inp mbase brk rnd xw xd ws W ms5 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk ltac:(unfold dlen; lia)).
 apply (tail_after S_OVR (ss_mem S_H6) E' W ms' md4 ly S pb cap data ms5 mat5 S_H6_win_ok wbs_OVR ltac:(do 3 eexists; reflexivity)
-E'0 HS6 HF5 HFr5 E'41 E'42 HR4 HAI5 HAR4 HTOP Hbl Hnev Hcap ltac:(unfold dlen; lia) HBLK4 Hfs4 Hfds4 Hminv).
+E'0 HS6 HF5 HFr5 E'41 E'42 HR4 HAI5 HAR4 HTOP Hbl Hnev Hcap ltac:(unfold dlen; lia) HBLK4 Hfs4 Hfds4 Hcr4 Hminv).
 +
 assert (Hokb : (Z.of_nat (length data) <? 6 + config_len data) = false) by (apply Z.ltb_ge; exact Hok). rewrite Hokb.
 assert (HS5 : st_ok trasegs E' (add_cond S_H1 cond_OK) (restrict (w_H W) ms')).
 { apply (st_ok_add_cond trasegs E' S_H1 _ BC_GEU (SOff A_LEN 0) sv_cl6 HS4). rewrite branch_geu_U, UC6, U42. apply Bool.negb_true_iff. apply Z.ltb_ge. lia. }
 apply (SRr_srealizes trasegs W (mkCfg ms' md4) _ _ (p_run E' W ms' md4 HS5) HAI').
 intros W1 c1 _ HAI5 (-> & ms5 & mat5 & -> & HS6 & HF5 & HFr5). cbn [cfg_model] in HAI5.
-apply (POSTP sp inp xw xd ws W ms5 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk (RUNIV data Hlk) ltac:(unfold dlen; lia)).
+apply (POSTP sp inp mbase brk rnd xw xd ws W ms5 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk (RUNIV data Hlk) ltac:(unfold dlen; lia)).
 apply (tail_after S_P (ss_mem S_H6) E' W ms' md4 ly S pb cap data ms5 mat5 S_H6_win_ok wbs_P ltac:(do 3 eexists; reflexivity)
-E'0 HS6 HF5 HFr5 E'41 E'42 HR4 HAI5 HAR4 HTOP Hbl Hnev Hcap ltac:(unfold dlen; lia) HBLK4 Hfs4 Hfds4 Hminv).
+E'0 HS6 HF5 HFr5 E'41 E'42 HR4 HAI5 HAR4 HTOP Hbl Hnev Hcap ltac:(unfold dlen; lia) HBLK4 Hfs4 Hfds4 Hcr4 Hminv).
 Qed.
 End e.
 Theorem tra_hdr (B : asyms) (HB : TraSyms B) (ARL : AR_laws trasegs B)
 (SHORT : short_leaf_tfa B) (OVERRUN : overrun_leaf_tfa B) (POSTP : post_P_tfa B) : hdr_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk HRU HLc HS HR HAI HAR HTOP Hbl Hpb H42 Hcap Hnev Hminv Hbytes Hfs Hfds.
-exact (tra_hdr_at B HB ARL SHORT OVERRUN POSTP sp inp xw xd a0 p Hargv Hsp Hva Hve Hvfs ltac:(intros d Hd; rewrite Hlk in Hd; injection Hd as <-; exact HRU) ws W ms md ly S data pb cap
-Hlk HLc HS HR HAI HAR HTOP Hbl Hpb H42 Hcap Hnev Hminv Hbytes Hfs Hfds).
+intros sp inp mbase brk rnd xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk HRU HLc HS HR HAI HAR HTOP Hbl Hpb H42 Hcap Hnev Hminv Hbytes Hfs Hfds Hcr.
+exact (tra_hdr_at B HB ARL SHORT OVERRUN POSTP sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hva Hve Hvfs Hvl Hlau ltac:(intros d Hd; rewrite Hlk in Hd; injection Hd as <-; exact HRU) ws W ms md ly S data pb cap
+Hlk HLc HS HR HAI HAR HTOP Hbl Hpb H42 Hcap Hnev Hminv Hbytes Hfs Hfds Hcr).
 Qed.
 End c.

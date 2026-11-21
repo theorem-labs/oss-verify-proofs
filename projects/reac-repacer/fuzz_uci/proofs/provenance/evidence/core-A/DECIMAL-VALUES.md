@@ -1,8 +1,8 @@
 # DECIMAL-VALUES-uci - by-value check of reac-repacer/fuzz_uci's relocated image-A core
 
 role: check. rule 24: no function proved. Read-only: no file of the worktree was changed, nothing was staged or
-committed. The tree read is a clean checkout of commit
-`276afc86670b4ccfb478d7c75992f412bd227d74` (`git status` empty),
+committed. The tree read is a clean checkout
+ (`git status` empty),
 lib = `proofs/reac-repacer/fuzz_uci/lib`. The method is libreac/fuzz_decode's
 (its DECIMAL-VALUES.md and its script `decval.py`, sha256 `43527d3edbc2`), adapted in `decval.py` here.
 
@@ -276,7 +276,7 @@ All of these are rows that moved and were twin-checked in stage 2.
 
 ```sh
 # inputs (read-only)
-git -C <checkout> rev-parse HEAD     # 276afc86670b4ccfb478d7c75992f412bd227d74
+git -C <checkout> rev-parse HEAD     #
 git -C <checkout> status --short     # (empty)
 sha256sum "$P/bin/fuzz_uci/fuzz_uci.asan"         # 6ea017c24525e694...
 sha256sum "$PG/bin/fuzz_grant/fuzz_grant.asan"    # c2c7559b29bdf39c...

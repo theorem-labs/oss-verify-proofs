@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch model's channel reader as a premise of the passage to the ASan invariant, which now carries it, LPS 08b1429; the argument region's strings ending at the exec file name's address, launch variable 13, so its lemmas take agreement below 14, the region taking the nine bytes from that address, the name or its NUL and the 8-byte slot; musl malloc's interface state per CONFIG_RSEQ, its auxv object read from the launch's; written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -176,10 +177,31 @@ SfS9Z0A1S9Z624514A1S9Z624518A1S1ScA1S10A5").
 Definition O_vml : sobj := ltac2:(tb__ "0|0|
 SfS9Z0A1S9Z645dd8A1S9Z645de8A1S1ScA1S12A5").
 
-Definition aux_svs_M : list sv := ltac2:(tb__ "0|1|
-S0SaS9Z3A1S0SaS9S39S40S3cA1A1A1S0SaS9Z4A1S0SaS9S39S41S3cA1A1A1S0SaS9Z5A1S0SaS9S39S42S3cA1A1A1S0SaS9Z10A1S0SaS34S0SaS9Z6A1S0SaS9Z1000A1S0SaS9ZbA1S0SaS1eS0SaS9ZcA1S0SaS1eS0SaS9Z17A1S0SaS9Z0A1M0S0SaS9Z19A1S0SaS18S0SaG0S0SaG0S1SaA1A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3").
-Definition O_auxv : sobj := ltac2:(tb__ "0|1|
-SfS1bS9Z0M0A1S9Za0A1S48G0S2fA2S10A5").
+(* LPS 727298f3: the auxv object is the launch's, per CONFIG_RSEQ [r] (27 pairs, 29 with CONFIG_RSEQ,
+   AT_NULL last; Lib/InitState.v [aux_svs]).  Its bounds and cells are read from the launch state's auxv
+   object ([Init.S0_A r], object 3), each launch variable musl's malloc reads renamed to this
+   interface's ([V_RAND] -> [vRND], [V_UID] -> [vUID], [V_HWCAP] -> [vHWCAP]) and the cells of the other
+   launch variables (AT_GID/AT_EGID, AT_SYSINFO_EHDR, AT_EXECFN), which malloc never reads, left out:
+   mallocng's first malloc walks the keys to AT_NULL for AT_RANDOM's value.  Was: ten pairs, 160 bytes. *)
+Definition aux_val_M (v : sv) : option sv :=
+  match v with
+  | SLit z => Some (SLit z)
+  | SVar i =>
+      if Pos.eqb i V_RAND then Some vRND
+      else if Pos.eqb i V_UID then Some vUID
+      else if Pos.eqb i V_HWCAP then Some vHWCAP
+      else None
+  | _ => None
+  end.
+Definition aux_dummy : sobj := mkObj (SLit 0) (SLit 0) (SLit 0) [] DUnknown.
+Definition aux_obj0 (r : bool) : sobj := nth 3 (ss_objs (S0_A r)) aux_dummy.
+Definition aux_cells_M (r : bool) : list cell :=
+  flat_map (fun c => match aux_val_M (c_val c) with
+                     | Some v => [mkCell (c_off c) (c_width c) v]
+                     | None => []
+                     end) (ob_cells (aux_obj0 r)).
+Definition O_auxv (r : bool) : sobj :=
+  mkObj vAUXV (ob_lo (aux_obj0 r)) (ob_hi (aux_obj0 r)) (aux_cells_M r) DUnknown.
 
 Definition O_rand : sobj := ltac2:(tb__ "0|2|
 SfS18S9Z0A1M0S9Z10A1S0ScS11G0Z8M1S35A3S0ScS11S9G1A1G1S36A3S1ScA1A3A3S10A5").
@@ -188,8 +210,9 @@ SfS9Z0A1S9Zf20d8A1M0S9Zf20daA1S0ScS11G0Z1M1S9G1A1M2A3S0ScS11S9Zf20d9A1G1G2A3S1Sc
 Definition O_real : sobj := ltac2:(tb__ "0|0|
 SfS9Z0A1S9Ze9ac8A1S9Ze9af8A1S1ScA1S12A5").
 
-Definition objs_M : list sobj := ltac2:(tb__ "0|0|
-S0SeS2aS0SeS24S0SeS25S0SeS20S0SeS26S0SeS29S0SeS22S0SeS2bS0SeS21S0SeS27S0SeS23S0SeS28S0SeS43S0SeS44S1SeA1A3A3A3A3A3A3A3A3A3A3A3A3A3A3").
+Definition objs_M (r : bool) : list sobj :=
+  [O_stk; O_mctx; O_nlk; O_auxp; O_pgsz; O_ssp; O_errno; O_vml; O_auxv r; O_rand; O_flg; O_real;
+   OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Code.O_got; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Code.O_rtc].
 
 Definition facts_M : list sprop := ltac2:(tb__ "0|8|
 S0SbS13PaZ4A2S0SbSdS9Z7fff7fff0000A1S19A2S0SbSdS19S9S38Z2M0Z2fA2M1A1M2A2S0SbS13P10Z3M3A2S0SbSdS9Z7fff80000000A1M4S1bA2S0SbSdS1bS9S3aG1S38G0Z16A2A2A1M5A2S0SbSdS1cS19Z40A2S1bA2S0SbS13P11G3A2S0SbSdG4S18A2S0SbSdS18G5A2S0SbSdS1cS19Z140A2S18A2S0SbS13P34Z6M6A2S0SbS13P35G6A2S0SbSdS1cS1aZ200A2S19A2S0SbSdS19S14S3fS1aS1dA3M7A2S0SbSdS1aS18A2S0SbSdS1cS18Z10A2G7A2S0SbSdS1dS9S38G0Z28A2A1A2S0SbSdS9Z7fff7f000000A1S1aA2S0SbSdS1aS9S38G0Z30A2A1A2S0SbSdG7G2A2S1SbA1A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3").
@@ -202,13 +225,11 @@ S47VS;S2eS9S45A1A3").
 Definition regs_M : list sv := ltac2:(tb__ "0|1|
 S4cS4bS0S5S2SaA2M0S3S2SaU3S9Z10800A1A4S0G0S3S2SaU4S9Z6245b8A1A4S0G0S3S2SaUaS9Z28A1A4S1G0A1A3A3A3A2").
 
-Definition Pre_M_S : sstate := ltac2:(tb__ "0|0|
-S16S31S33S4aS15S7SaA1S32S30S49S8A9").
-Definition Pre_M : axst := axM Pre_M_S.
+Definition Pre_M_S (r : bool) : sstate := mkSS malloc_entry regs_M pre_fregs FcsrFrm0 None (objs_M r) facts_M NF false.
+Definition Pre_M (r : bool) : axst := axM (Pre_M_S r).
 
-Lemma Pre_M_wf : ltac2:(tb__ "0|0|
-S3eS3dS4S17S2dA1S6A3S3dS4S46S2cA1S6A3A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma Pre_M_wf : forall r : bool, swf (Pre_M_S r) = true /\ axwf (Pre_M r) = true.
+Proof. intros [|]; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 End MuslMallocIface.
 
 (* [comment removed for export] *)
@@ -217,7 +238,7 @@ Module StartALib.
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "eq"; "and"; "not"; "iff"; "or"; "ex"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ImageFacts"; "segsA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "valuation"; "sobj"; "sv"; "eval"; "rw"; "ss_lenient"; "ob_base"; "ss_next"; "obj_range"; "ss_objs"; "SLit"; "rm"; "agree_below"; "mkObj"; "ranges_disjoint"; "ss_pc"; "sstate"; "DZero"; "mem_match"; "ob_hi"; "ob_lo"; "obj_holds"; "outside_all"; "pairwise_disjoint"; "rl"; "ss_facts"; "cell"; "holds"; "ob_cells"; "ob_dflt"; "sprop"; "sv_eqb"; "@Corelib.Init.Datatypes"; "list"; "nil"; "cons"; "bool"; "true"; "prod"; "false"; "option"; "app"; "Some"; "pair"; "andb"; "nat"; "orb"; "fst"; "negb"; "snd"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "leafA"; "ax_S"; "axst"; "mkLeafA"; "sym_runA"; "mkAX"; "ax_X"; "la_state"; "ax_base"; "ax_setS"; "axwf"; "@Stdlib.ZArith.BinInt.Z"; "add"; "le"; "lt"; "leb"; "ge"; "modulo"; "mul"; "pow"; "sub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SoundA"; "SPA"; "jpredA"; "LQA"; "stableA"; "ok_frameA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e2.StartALib"; "RMH"; "agree_vars"; "ARGF"; "SHB"; "axA"; "cfg1_okA"; "eblk_clear_b"; "obj_clear_e"; "objs_clear_e"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "RsCut"; "RsSymJump"; "set_objs"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "m_vm_lazy"; "m_vmmaps"; "page_size"; "m_vm_materialized"; "vm_backing_used"; "vm_noaccess"; "vm_limit"; "vm_maps"; "event"; "page_in_ranges"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "triple"; "etriple"; "assn"; "w_cfg"; "triple1"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e2.StartALib.Rebase"; "rebase_obj"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.BackingAlgebra"; "ivs_wf"; "covered"; "@Stdlib.Lists.List"; "In"; "existsb"; "forallb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.Glue3"; "set_rm"; "same_but_objs"; "@Stdlib.PArith.BinPos.Pos"; "lt"; "le"; "leb"; "@Corelib.Lists.ListDef"; "Forall"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "cfg_model"; "config"; "mkCfg"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartLib"; "lit_of"; "Kx"; "high_clear_b"; "img_clear_b"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCFG"; "forallb_lazy"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymHeap"; "S_ret_lit"; "enomem_ret"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.CFGA"; "leaf_matches1A"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.KxA"; "KxA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysStep"; "unmap_range"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "rho_set_rw"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymFrame"; "in_ranges"; "rho_absorb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Restrict"; "restrict"; "wx_segs_nowrap"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "MI";
-"headroom"; "hid"; "paid"; "virt"; "vmd"; "vms"].
+"headroom"; "hid"; "paid"; "virt"; "vmd"; "vms"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "m_channel_reader"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 From Stdlib Require Import ZArith NArith List Bool PArith Lia.
 From Stdlib Require Import Logic.FunctionalExtensionality.
@@ -277,18 +298,18 @@ S62S0S6S96R1S2aS3aQ40A1A1A2S67R1A1A3Fmd;").
 Proof. intros md. unfold paid, unpaid. cbn. lia. Qed.
 
 Lemma MI_nil : ltac2:(tb__ "0|3|
-S29S8aA1S62S92R2A1S0S29S2eS3aQ40A1M0G0A2M1A1S63R2A1S2aG1A1A3S0S29G0A1S66R3A1S2aG0A1M2A3S48S67R4A1S69S64R4A1A1A2S74S6aS64R5A1A1A1S74S68S64R6A1A1A1S93R8R7G2A3F_;F_;F_;F_;F_;F_;Fmd;Fsegs;").
+S29S8aA1S62S92R2A1S0S29S2eS3aQ40A1M0G0A2M1A1S63R2A1S2aG1A1A3S0S29G0A1S66R3A1S2aG0A1M2A3S48S67R4A1S69S64R4A1A1A2S74S6aS64R5A1A1A1S74S68S64R6A1A1A1S0S2cS9aR7A1S2dA3S93R9R8G2A3F_;F_;F_;F_;F_;F_;F_;Fmd;Fsegs;").
 Proof. intros segs md. apply MI_intro_nolazy. Qed.
 
 Theorem SP_SPA : ltac2:(tb__ "0|3|
-S62S6S19S9S6dS0S29S2eS3aQ40A1M0G0A2M1A1S63R5A1S2aG1A1A3S0S29G0A1S66R6A1S2aG0A1M2A3S48S67R7A1R6A2S48R7S69S64R8A1A1A2S74S6aS64R9A1A1A1S74S68S64RaA1A1A1S90S8S83RbA1R9R8R7A5S50S8S8bRcRbA2S59RaA1R9G2R8A6F_;F_;F_;F_;F_;F_;F_;Fw;Frho;FS;FB;Fm;").
+S62S6S19S9S6dS0S29S2eS3aQ40A1M0G0A2M1A1S63R5A1S2aG1A1A3S0S29G0A1S66R6A1S2aG0A1M2A3S48S67R7A1R6A2S48R7S69S64R8A1A1A2S74S6aS64R9A1A1A1S74S68S64RaA1A1A1S0S2cS9aRbA1S2dA3S90S8S83RcA1RaR9R8A5S50S8S8bRdRcA2S59RbA1RaG2R9A6F_;F_;F_;F_;F_;F_;F_;F_;Fw;Frho;FS;FB;Fm;").
 Proof.
-  intros m B S rho [tr [ms md]] Hl Hm HuB HB Hw1 Hw2 [Hsm HK]. cbn in HK. unfold liftK, Kx in HK. destruct HK as [-> ->].
+  intros m B S rho [tr [ms md]] Hl Hm HuB HB Hw1 Hw2 Hrd [Hsm HK]. cbn in HK. unfold liftK, Kx in HK. destruct HK as [-> ->].
   assert (Hu : vm_backing_used m <= vm_limit (m_vmmaps m)) by lia.
   split; [|split; [reflexivity|split; [reflexivity| cbn; rewrite paid_nil; exact HuB]]].
   split; [|split; [|split; [|split]]].
   - cbn. rewrite (virt_nolazy [] ([], mkCfg ms m) Hl Hm). exact Hsm.
-  - cbn. apply MI_nil; [apply wx_segs_nowrap_A | assumption | assumption | assumption | assumption | assumption].
+  - cbn. apply MI_nil; [apply wx_segs_nowrap_A | assumption | assumption | assumption | assumption | assumption | assumption].
   - reflexivity.
   - unfold shadow_ok. cbn. constructor.
   - cbn. intros a Ha. rewrite (hid_nolazy m [] Hl) in Ha. discriminate.
@@ -477,18 +498,26 @@ Proof.
   - intros (rho' & Hag & [Hsm Hk]). exists (mkLeafA E RsCut), rho'. split; [left; reflexivity|]. split; [exact Hag|split; assumption].
 Qed.
 
-Definition ARGF (rho : valuation) (a : word) : Prop := ltac2:(tb__ "0|3|
-S1S48S47S3bQ40M0SdVrho;P1A2A2Z10A2M1S3bG0Va;A2M2A2S4S49G2S47G1S4dZ8S3bG0SdVrho;P2A2A2A2A2A2S1S48S47S47S3bG0SdVrho;P4A2A2S3bG0SdVrho;P5A2A2A2Z1A2G2A2S49G2S3bG0SdVrho;P6A2A2A2A2A2A2").
+(* LPS 727298f3: the strings argv[1..] and envp lie between argv[0]'s NUL and the exec file name,
+   whose address is launch variable 13 (Lib/InitState.v [V_EXECFN]); the random bytes at variable 6
+   now lie below the strings.  The region takes the nine bytes from the name's address too: the
+   name's bytes or its NUL, then the 8-byte slot, all below the stack's end (InitState's
+   [execfn_nums]); main's argument objects end there (g5.v [vENDL]).  Written as plain text. *)
+Definition ARGF (rho : valuation) (a : word) : Prop :=
+  bv_unsigned (rw rho 1%positive) + 16 <= bv_unsigned a
+  /\ (bv_unsigned a < bv_unsigned (rw rho 1%positive) + 16 + 8 * bv_unsigned (rw rho 2%positive)
+      \/ (bv_unsigned (rw rho 4%positive) + bv_unsigned (rw rho 5%positive) + 1 <= bv_unsigned a
+          /\ bv_unsigned a < bv_unsigned (rw rho 13%positive) + 9)).
 Definition RMH (rho rho' : valuation) : Prop := ltac2:(tb__ "0|0|
 S3aQ40A1S57Vrho;R1A2S0S30S3aQ8A1A1S14Vrho';R2A2S14Vrho;R2A2A3F_;Fa;").
-Lemma ARGF_ext : ltac2:(tb__ "0|1|
-S9S9S3aQ40A1M0S7S7bR1P7A2S0G0SdR4R2A2SdR5R2A2A3F_;Fi;S3S57R3R2A2S57R4R2A2A2F_;Fa;Frho';Frho;").
+Lemma ARGF_ext : forall (rho rho' : valuation) (a : word),
+  (forall i : positive, (i < 14)%positive -> rw rho' i = rw rho i) -> (ARGF rho' a <-> ARGF rho a).
 Proof. intros rho rho' a E. unfold ARGF. rewrite !E by lia. tauto. Qed.
 Lemma RMH_refl : ltac2:(tb__ "0|0|
 S9S55R1R1A2Frho;").
 Proof. intros rho a _. reflexivity. Qed.
-Lemma RMH_trans : ltac2:(tb__ "0|0|
-S9S9S9S55R3R2A2S7S7bR1P7A2S0S3aQ40A1SdR5R2A2SdR6R2A2A3F_;Fi;S55R4R3A2S55R6R4A2F_;F_;F_;Frho'';Frho';Frho;").
+Lemma RMH_trans : forall rho rho' rho'' : valuation,
+  RMH rho rho' -> (forall i : positive, (i < 14)%positive -> rw rho' i = rw rho i) -> RMH rho' rho'' -> RMH rho rho''.
 Proof. intros rho rho' rho'' H1 E H2 a Ha. rewrite (H2 a) by (apply (proj2 (ARGF_ext rho rho' a E)); exact Ha). apply H1. exact Ha. Qed.
 Lemma RMH_below : ltac2:(tb__ "0|0|
 S7S9S9S9S55R3R2A2S15R5R3R2A3S55R5R3A2F_;F_;Frho'';Frho';Frho;Fn;").

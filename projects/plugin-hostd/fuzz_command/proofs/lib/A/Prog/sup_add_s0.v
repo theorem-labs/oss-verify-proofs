@@ -17,10 +17,11 @@
    cmd_prog_unowned and cmd_rom_view_on at IMG, so no record fact is a Section hypothesis (the walk hypotheses keep
    cgif's names; the record facts are lemmas of lib/A/Prog/CmdRecFacts.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply.v, with its module paths and module names changed; 205 of its 230 lines of code are new or changed and 127 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of sup_add on the ASan build of plugin-hostd/fuzz_command: the shared vocabulary of its stages.
 
    The walk proves `tsup_add_spec` (lib/A/Prog/sup_add_c.v) in the form of cgif_file_fuzzer's cgif_close walk
-   (lib/A/ACh1.v..ACh8.v, AChc.v at c8557374ad2e): stage lemmas from one program point to the next, each from a
+   (lib/A/ACh1.v..ACh8.v, AChc.v): stage lemmas from one program point to the next, each from a
    machine-level mid-state predicate at a label to the call's post-condition, and one assembly lemma
    (lib/A/Prog/sup_add.v). This file holds only definitions: the entry bundle, the post-condition the walk proves,
    the mid-state predicates and the stage statements.

@@ -6,6 +6,7 @@
    (lib/B/W_cshe_l2.v) and loop 3 (lib/B/W_cshe_l3.v) take cshe_l2_in / cshe_l3_in to cshe_out_B; this file takes
    cshe_out_B through the epilogue 0x8592c (cshe_epi_m_B) to whatever the caller's post asks of the run, which is the
    form the kit's cshe_post has. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -56,7 +57,7 @@ Context {PI : PAImg fr_prog_listing}.
 
 Section c.
 Variable B : asyms.
-(* ARx conversion (route (b); A's lib/A/W_check_shape_ends.v on a working branch 4f281bf9308): the walk is
+(* ARx conversion (route (b); A's lib/A/W_check_shape_ends.v on a working branch): the walk is
    stated over a generic allocator relation ARx with its laws (YCbqG.AR_laws_x), the placement PST and the room record
    RP; HP0 (every ghost list is []), IMGC (the image's cover), BLKN (a block's size is >= 0), FRMF (the fake frames'
    alignment, W_frame_x.v) and HPST (the image is off PST) are the facts the generic relation does not carry by itself.

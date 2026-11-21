@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v, with its module paths and module names changed; 906 of its 1036 lines of code are new or changed and 2626 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSH_crt_site.v, with its module paths and module names changed; 504 of its 605 lines of code are new or changed and 935 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip (fs.asan-ubsan 0x81b9c, build B), WALK LANE D2: segments 34-39, from the boundary crt_INV_822ac
    (the return of fuzz_free (file), 0x82408 on B) to crt_INV_T (the return of free (same), 0x824b4, the tail's entry;
    the tail crt_tail is PROVED from crt_INV_T in lib/B/FSH_crt_segD.v). The B twin of the lane's KIT.
 
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 6cf61486dca lib/A/FSH_crt_segD2.v)
-   Port source: a working branch 6cf61486dca proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2.v (746 lines,
-   on base v20), itself PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD2.v)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2.v (746 lines,
+   on base v20), itself PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/
    check_round_trip_stdefs.v:549-611 (the stage cuts St19..St24), sd19.v .. sd24.v (the six free steps) and
    sdglue.v:612 crt_keep_blk / :659 crt_spared_blk; the checker's CONFIRM on that hit is quoted in the lane head
    (internal path). Same Definition / Lemma names and statement shapes
@@ -20,7 +21,7 @@
    read-only image at any walk state, which the segment files take from there and do not copy) and
    lib/B/FSH_crt_segD.v (the boundary states and the s34 / s35 / s36 runs). A new file: no licence lines.
 
-   The port RESTATES the d25a984c903 stages in S0's form: `crt_from ss_next INV_next -> crt_from ss_cur INV_cur` over
+   The port RESTATES the stages in S0's form: `crt_from ss_next INV_next -> crt_from ss_cur INV_cur` over
    ajournal / ARU / U (FSH_crt_base.v); each stage's CONTENT (which block each call frees, which bytes it keeps, why
    the fake frame and the real stack survive it) is re-derived against S0's contracts.
 
@@ -360,7 +361,7 @@ destruct (crtD2_F_facts cx ly3 S3 U3 W3 mem3 md3 k HJ HARU Hfr) as (_ & _ & Hcei
 pose proof HB as (HPRE & _). pose proof (fsw_sp B _ _ _ _ _ _ _ _ _ (proj1 HPRE)) as (Hal16 & Hceil0 & H47 & HS0).
 (* lia treats alloc_ceiling as opaque: its range is YM05's own fact *)
 pose proof (@alloc_ceiling_value rc) as (HCr & _).
-(* base v27 (A c6275044faa): the window as the base's computed numeral crt_STK, never a literal *)
+(* base v27 (A): the window as the base's computed numeral crt_STK, never a literal *)
 pose proof crt_STK_eq as HSTKv; unfold crt_STK in HSTKv.
 pose proof (fsw_realign_facts (spZ (c_regs cx) - 192) ltac:(lia) ltac:(rewrite Zminus_mod, Hal16; reflexivity))
   as (F1 & F2 & F3).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base; the model's channel reader as a premise of the writes; recorded proofs re-encoded or written as text where the change reaches them). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -38,12 +39,20 @@ Section Branch.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 rdraw [a0s; path] envv a_uid a_hwcap tid regs0 mem0.
+    (* LPS 75d69e00: [main_entry] takes the run's whole ProcInput and the mmap base
+     in place of (argv, envp, uid, hwcap).  [mkProcInputC] (Amb.v:42) is the very
+     input this Section's own conclusion runs -- [in_argv]/[in_envp]/[in_uid]/
+     [in_hwcap] of it reduce to exactly the four the old spelling named -- so
+     naming it here is the same statement, not a narrower one. *)
+  Local Notation INP := (mkProcInputC [a0s; path] envv fs0 stdin0) (only parsing).
+  Hypothesis ME : main_entry sp0 rdraw INP mbase tid regs0 mem0.
+  (* LPS 727298f3: the launch's channel reader ([Run.valid_input]); the writes below need it *)
+  Hypothesis Hrdr : a_channel_reader = true.
 
   Theorem open_err_branch_cannot_open :
-    U1RFront.open_err_branch sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 (t_die (msg_cannot_open path) fs0).
+    U1RFront.open_err_branch sp0 a0s path envv tid rdraw mem0 brk mbase fs0 stdin0 (t_die (msg_cannot_open path) fs0).
 Proof.
-ltac2:(KReplay.run1 (kr_t_U1OpenFailBranch ()) ["FXALL"; "Branch"] "h02HKh13HK'h22HLh32HRh46Haboveh52Heh61Mh72P0h82P1h92P2h:3P38h;2P5h<1Rh=1eh>4valsh?1xp;1p;2p;3p;4p;7p;Op;>g0000j13Tg000Uj16Tg0013j17Tg001Vj1<Tg0026j1STg002[j2OTg003Gj1ETg003ij3@Tg004@j2>Tg004`j10Tg005?j31Tg005Yj24Tg006Lj1RTg007Dj4QTg008;j4NTg0092j35Tg009gj1HTg00:Ej3DTg00:hj1BTg00;^j1ATg00<Vj3?Tg00=Nj3CTg00>Mj48Tg00?Lj29Tg00@6j2FTg00@Rj2GTg00@lj3=Tg00Adj7ITg00Bbj1JTg00CWj2KTg00D^lOLTg00Eej1MTg00Fdj2:Tg00GYl>PTf0R0#0#0p=;%00#0#0#0p=2g00HZR1g00I8#3R2#3#3R3#3#3#3#6R4#7R5#<%S2R2#6R6/O5%63#7#ER3\5f3R7g00I]5@1g00J_1>57g00K>R1#0R8#0R9#0#;R:#0#2#2#2#2#2#2#2#2R;#031f4/41p,3sp0R1515f5R</4;f6R=#R51514=8P1p,3a0sR=p,4pathR8p,4envvR>CQ515f7R?/49P1P=P8P>CN515f8R9/4:p,3tidR:515f9R@95=8g00K]%32#Hg00LY5D6#B%A;3?;C9g00M5R;f:R695=8P9g00NTR2C819411940'Ff;R4f1RAO1p,4mem0RBPAO1513[^?5P;f<R595=8R3P6P2g00OPRCPAg00PLRDg00PlRE'GA=;2C=1DEdFIP;P3P6PCC8p,2fxRCp,3AMBR3P1P=P8P>P:p,5rdrawp,5regs0PBp,3brkR;p,5mbaseREp,3fs0RDp,6stdin0R2p,2ULRF#Jp,3Hvap,3Hvep,4Hvspp,2MEf>RGf=P5P41KG6P@P9P?P<P7P0PAMOLb1W4W0W3W;W9W8W:W7W2W5W6W<W>W=PCP3PFP1P=P8P>P:PBP;PEPDP2%M8/:DM>Peo"). Qed.
+ltac2:(KReplay.run1 (kr_t_U1OpenFailBranch ()) ["FXALL"; "Branch"] "p%0p'0p%1p'1p%2p'2p%3p'3p%4p'4p%5p'5p%6p'6p%7p'7p%8p'8p%9p'9p%:p':p%;p';p%<p'<p%=p'=p%>p'>p%?p'?p%@p'@p%Ap'Ap%Bp'Bp%Cp'Cp%Dp'Dp%Ep'Ep%Fp'Fp%Gp'Gp%Hp'Hp%Ip'Ip%Jp'Jp%Kp'Kp%Lp'Lp%Mp'Mp%Np'Np%Op'Op%Pp'Pp%Qp'Qp%Rp'Rp%Sp'Sp%Tp'Tp%Up'Up%Vp'Vp%Wp'Wp%Xp'Xp%Yp'Yp%Zp'Zp%[p'[p%\p'\p%]p']p%^p'^p%_p'_p%`p'`p%ap'ap%bp'bp%cp'cp%dp'dp%ep'ep%fp'fp%gp'gp%hp'hp%ip'ip%jp'jp%kp'kp%lp'lp%mp'mp%np'np%op'op%pp'pp%qp'qp%rp'rp%sp'sp%tp'tp%up'up%vp'vp%wp'wp%xp'xp%yp'yp%zp'zp%{p'{p%|p'|p%}p'}p%~p'~g00HZg001Vg0013g000Ug0000g0000g0000g0000g0000g0000g00I8O1O1O1S02O1O1O1O1S01O1S00O1g002[g000Ug0026g0000g00I8O1O1S04O1S03Q00O2Q00g003Gg0013g000UQ02O1O1O1S05pB1000g003ig00HZf3g00I]O3g005?g00J_g004@Q00f3O2g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g004`g00K>O1O1S08O1O1O1S07O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1O1S06O1O3g005?Q00g005Yf4g00K>O2p,3sp0O3g005?Q00g005Yf5Q06O2g006Lf6O1O3g005?Q00g005Yf6g004`g00K>O1O2g007Dp,3AMBp,3a0sp,4pathp,4envvp,5rdrawO5O3g005?Q00g005Yf7Q08O2g008;p,3AMBp,3a0sp,4pathp,4envvp,5rdrawO5O3g005?Q00g005Yf8Q07O2p,3tidO3g00=Ng0092p,3a0sp,4pathf9O3g00<Vg00K]g00:hg00:EQ03g009gg0000Q04O1O1g00LYO3O1g00;^Q06O1O3f8O3g00>Mg00M5g0092p,3a0sp,4pathf:O3f8g00NTO4Q00g00@6g00?LQ01p,3sp0O2g00?LQ01f0O2O2g005?Q05f;f1O1p,4mem0f1O1O3pB1000i001xpB1100g00Adg00M5g0092p,3a0sp,4pathf<O3f:g00NTg00OPf1g00@Rg00PLg00PlO2g005?g00PLg00@lg00M5g00NTg00OPO3g00PlO3dO7g00>Mg00M5g0092p,3a0sp,4pathf<O3f:g00OPO4g00D^p,2fxp,3AMBp,3sp0p,3a0sp,4pathp,4envvp,3tidp,5rdrawp,5regs0p,4mem0p,3brkp,5mbasep,3fs0p,6stdin0g00Bbp,2ULO1p,3Hvap,3Hvep,4Hvspp,2MEp,4Hrdrf>f=f<f;g00CWf>f:O2f9f8f7f5f3f0f1OPi003HK'pB2100i006HabovepB0100i002HKpB0100i002HRpB0100i002P5pB0100i002P2pB0100i002P1pB0100i003P38pB0100i002P0pB0100i002HLpB0100i002HepB0100i001MpB0100i001RpB0100i004valspB0100i001epB0100g00GYp,2fxp,3AMBp,2ULp,3sp0p,3a0sp,4pathp,4envvp,3tidp,5rdrawp,4mem0p,3brkp,5mbasep,3fs0p,6stdin0g00Fdg00Eep,4pathO1p,3fs0O2O?eo"). Qed.
 End Branch.
 
 End FXALL.

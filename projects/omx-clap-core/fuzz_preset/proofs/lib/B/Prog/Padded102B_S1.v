@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 479 of its 545 lines of code are new or changed and 448 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30): S1 of the walk of padded - the entry seat,
    the prologue (B' 0x830a8-0x830cc), the raw malloc wrapper's call (0x830d0, Listing_prog.v 8bcc2c9e7809 :1680
    PCall AS___wrap_malloc) through YGcallMxmnKeep.v aj_malloc_x_m_keep at the cf instance (the call's memnorm keep is
@@ -67,7 +68,7 @@ Open Scope Z_scope.
 
 (* ======== S1 at the walk's room instance ========
    The interface above is generic in the class PrhRoomLive (the kit's spelling). S1 makes an allocator call, and the keep
-   of room_live_cf across malloc_cf (YGcfRoomLive.v:1433 RL_malloc_step) is the allocator-model owner's, so S1 is stated at
+   of room_live_cf across malloc_cf (YGcfRoomLive.v:1434 RL_malloc_step) is the allocator-model owner's, so S1 is stated at
    RL := prh_room_live_a8 (PRH_Base.v:272, the instance every walk takes; PRH_Base.v's header) - the rows stay generic. *)
 Section s1. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg}.
 Context {SK : YI16.sink_head}.
@@ -91,7 +92,7 @@ Let LAWS : AR_laws_x SEGS B ARc (@cf_head CP) := AR_laws_x_xs (cp := CP) SEGS B 
 Hypothesis AMALLOC : YGcfMallocComposeKeep.amalloc_realizes_cf_keep (cp := CP) SEGS B.
 
 (* the write permission of the prologue's five stores: the one window is the stack region [-48, 0) of the entry sp
-   (FuzzStrdupB.v:234 sd_awr, at the frame 48) *)
+   (FuzzStrdupB.v:235 sd_awr, at the frame 48) *)
 Ltac pd_awr rg HU :=
 lazymatch goal with |- awr_ok ?Ex ?rs ?stk ?sp0' ?fp ?b0 ?bc ?ly' ?own' =>
 let rs' := eval vm_compute in rs in change (awr_ok Ex rs' stk sp0' fp b0 bc ly' own') end;
@@ -105,10 +106,10 @@ rewrite ?ew_havoc_old by (cbv; lia); rewrite HU; lia
 | apply awr_ok_nil ].
 
 (* ======== S1 (mine): the entry seat, the prologue, the wrapper call, the run to PD_TEST ======== *)
-(* the entry environment: the machine registers, no extra atom (FuzzStrdupB.v:70 SD_EI) *)
+(* the entry environment: the machine registers, no extra atom (FuzzStrdupB.v:71 SD_EI) *)
 Definition pd_E0 (regs : bvmap 5 word) : env := @Eimg _ B_prog_listing PA (Ereg regs []).
 
-(* the entry seat: one stack region with the write window [-48, 0), a1 = size bounded (FuzzStrdupB.v:288 sd_entry,
+(* the entry seat: one stack region with the write window [-48, 0), a1 = size bounded (FuzzStrdupB.v:289 sd_entry,
    at the frame 48 and with the size fact) *)
 Lemma pd_entry : forall STK ly S Hp W regs mem md ch,
   afn_pre_x SEGS B ARc STK ly S Hp W regs mem md ch -> 48 <= STK ->
@@ -165,7 +166,7 @@ Let AMALLOCx := YGcallMxmnKeep.amalloc_realizes_x_xs_keep SEGS B AMALLOC.
    pdh_img_vis, verbatim at ARx := ARc): img_shadow_vis_cf (lib/Reusable/YGcfAmx2.v), NOT derivable from
    ARcf. S1 needs it only to move the source window's src_rd across the wrapper call (the shadow of the source is
    re-derived at the new allocator state, as the call keeps no shadow byte). Its other hypothesis pdh_zs_al is NOT a
-   premise: S1 derives it from the entry's ARcf (YG0f.v asyms_ok aso_zshadow, amc_syms), FuzzStrdupB.v:471's way. ---- *)
+   premise: S1 derives it from the entry's ARcf (YG0f.v asyms_ok aso_zshadow, amc_syms), FuzzStrdupB.v:472's way. ---- *)
 Hypothesis pd1_img_band : 0 <= @pa_lo _ B_prog_listing PA /\ @pa_hi _ B_prog_listing PA <= 2 ^ 47.
 Hypothesis pd1_img_vis : forall ly S Hp W mem md a, ARc ly S Hp W mem md -> @pa_lo _ B_prog_listing PA <= a < @pa_hi _ B_prog_listing PA ->
   aview SEGS (w_H W) mem (shadow_addr a) <> None.

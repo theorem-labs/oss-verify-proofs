@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-zone3-B of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply; merger ReallocPrimary.CfW, lane W).
    rule 24: no function proved (kind: image rows; closed computations at reply's image B, fuzz_reply.asan-ubsan, pin
@@ -8,16 +9,16 @@
    Hypotheses; const_cells_CZS (cgif AGif5.v:336) has ports for cgif, fuzz_preset and fuzz_state and none for reply;
    zone3_intro is reply's own B/YF0x.v:66.
 
-   Statement text of record: the cf layer's YGcfInstSec.v on a working branch 8aea1d52068 (ZONE3 :377,
-   CONST_KEEP_S :383, snull_junk :740, CONST_NOT_JUNK :748, AREAS_DISJ :752), the same text as at 4c2fd365d8e (:365-366,
+   Statement text of record: the cf layer's YGcfInstSec.v on a working branch (ZONE3 :377,
+   CONST_KEEP_S :383, snull_junk :740, CONST_NOT_JUNK :748, AREAS_DISJ :752), the same text as (:365-366,
    :371-376, :717-721, :725-727, :729).  Each Lemma below states the layer's Hypothesis VERBATIM at reply's instances:
-   the image class ImgBase.AImg at AImg_reply (B/AGif2reply.v:24), the secondary class ImgBaseAGS.AImgS at
+   the image class ImgBase.AImg at AImg_reply (B/AGif2reply.v:25), the secondary class ImgBaseAGS.AImgS at
    AImgS_reply (B/AGif4reply.v:27) and the cf parameters at CfParams_reply (A/CfParamsReply.v, the one record of both
    images).  In the three
    facts that name the layer's Section variable B, B and its symbol hypothesis TS : im_syms B are the lemma's first two
    arguments; ZONE3 does not name B, so zone3_B takes neither.  The layer's
-   Definition snull_junk is not in reply's tree, so const_not_junk_B states its body unfolded (YGcfInstSec.v:740-744 at
-   8aea1d52068), with the layer's B as the lemma's B.  A consumer closes the layer's row with `exact` once the layer is
+   Definition snull_junk is not in reply's tree, so const_not_junk_B states its body unfolded (YGcfInstSec.v:739-743),
+   with the layer's B as the lemma's B.  A consumer closes the layer's row with `exact` once the layer is
    on reply.  No Definition of the layer is copied here.
    - ZONE3 (ims_zone3 = zone3 at AImgS_reply): reply's own zone3_intro.
    - AREAS_DISJ: the eleven areas of asyms_areas at image B.  TfibSyms pins seven of the addresses; the other four
@@ -31,9 +32,9 @@
      that miss the instance's junk windows and the out-of-memory byte (by computation), the symbolic cells are in the
      thread, ctx and D objects or at fixed image addresses, and the thread object misses the image and the shadow
      (layout_ok, img_cover).  The by_size_log word lies in [inst + 296, inst + 408) (bsl_bounds, the layer's own lemma,
-     YGcfInstSec.v at 8aea1d52068, with its msv_facts, restated over reply's ImgBaseAGS, which has the same text).
+     YGcfInstSec.v, with its msv_facts, restated over reply's ImgBaseAGS, which has the same text).
    - The one name check of REPLY-IMG-ROWS.md:74 (sha256 a33a582e3ffd; internal record) for this row: CONST_KEEP_S and the layer's dep_keep_img
-     (YGcfInstDepot.v:154) are NOT the same text: dep_keep_img keeps CLdepot.depot_mem_ok as well, over any KEEP set,
+     (YGcfInstDepot.v:155) are NOT the same text: dep_keep_img keeps CLdepot.depot_mem_ok as well, over any KEEP set,
      with NoDup / incl premises on the depot list and no mutex-pad premise.  So CONST_KEEP_S is stated here on its own. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -79,7 +80,7 @@ intros ps a e H. unfold in_pieces in H. apply existsb_exists in H as (p & Hp & H
 apply andb_prop in Hb as [H1 H2]. apply Z.leb_le in H1. apply Z.leb_le in H2. exists p. auto.
 Qed.
 
-(* the layer's pw_ij (YGcfInstSec.v at 8aea1d52068), over YG0f.pairwise *)
+(* the layer's pw_ij (YGcfInstSec.v), over YG0f.pairwise *)
 Lemma pw_ij {X : Type} (R : X -> X -> Prop) : forall l i j x y, pairwise R l ->
   nth_error l i = Some x -> nth_error l (i + S j) = Some y -> R x y.
 Proof.
@@ -114,7 +115,7 @@ Qed.
 Section rows. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* ================================================================================================================ *)
-(* ZONE3 (YGcfInstSec.v:377-378 at 8aea1d52068): ims_zone3 is zone3 at AImgS_reply, im_img_cover is img_cover.      *)
+(* ZONE3 (YGcfInstSec.v:376-377): ims_zone3 is zone3 at AImgS_reply, im_img_cover is img_cover.      *)
 Lemma zone3_B : forall ly x sz, @im_img_cover AImg_reply ly -> 0 <= sz -> in_app x sz -> zdisjoint (x, sz) (ly_img ly) ->
   ims_zone3 (AImgS := AImgS_reply) x sz.
 Proof. intros ly x sz C Hsz A D. exact (zone3_intro ly x sz C Hsz A D). Qed.
@@ -258,7 +259,7 @@ Qed.
 (* ================================================================================================================ *)
 (* CONST_NOT_JUNK (YGcfInstSec.v:748-750), snull_junk (:740-744) unfolded.                                          *)
 
-(* The layer's msv_facts and bsl_bounds (YGcfInstSec.v at 8aea1d52068), over reply's ImgBaseAGS (the same text). *)
+(* The layer's msv_facts and bsl_bounds (YGcfInstSec.v), over reply's ImgBaseAGS (the same text). *)
 Lemma msv_facts : forall n, 64513 <= n < 2 ^ 30 ->
   73728 <= ImgBaseAGS.MSv n <= 262147 * 4096 /\ ImgBaseAGS.MSv n mod 4096 = 0 /\ n + 4096 <= ImgBaseAGS.MSv n.
 Proof.

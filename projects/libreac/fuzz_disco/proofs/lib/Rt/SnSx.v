@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSx.v (a working branch 3e35620c52e), with its module paths changed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSx.v (a working branch), with its module paths changed. *)
 (* Image-neutral companion of the frozen shared text (FMsnprintfShared.v): nothing here names an image, so every unit
    relocates it once.
    - ff_stable64: ff_stable with the memory change asked only at 64-bit addresses (a reader reads Z_to_bv 64 a, so at an
@@ -207,7 +207,7 @@ getr regs' 10 = w64 (Z.of_nat (length T)) /\
 ~ (spZ regs - K <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
 (* the vfprintf interceptor / musl vfprintf with GXA's four premises (a Theorem Labs lane's text, a working branch
-   1eccd2160c1 lib/A/FMgxaSeamDef.v, verbatim, with a fifth, GXA (5), added; this file is its one definition) *)
+   lib/A/FMgxaSeamDef.v, verbatim, with a fifth, GXA (5), added; this file is its one definition) *)
 Definition sh_avfprintf_icpt_realizesUx
     (FF : fmt_fam) (K gc gv img_lo img_hi : Z) (cr : list (Z * Z)) (snw pc : Z) : Prop :=
 forall ly S (U : list (Z * Z)) W regs mem md fp f ap bp cp s0 n0 (ws T : list Z) cval,

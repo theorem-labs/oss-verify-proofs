@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO's mappings and steps): changed interp_eff0_grows, fetch_failure_not_ok. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -29,7 +30,8 @@ Proof.
 induction t as [c0| | | | | |n a k IH|n a v k IH]; intros m c1 m' H; cbn [interp_eff0] in H;
 try discriminate.
 - injection H as <- <-. apply mem_grows_refl.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate]. eapply IH. exact H.
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+[|destruct (range_meets_vvar segs a (width_bytes n)); discriminate]. eapply IH. exact H.
 - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
 eapply mem_grows_trans; [apply write_to_mem_grows|]. eapply IH. exact H.
 Qed.
@@ -46,7 +48,10 @@ Qed.
 Lemma fetch_failure_not_ok : forall m a st', fetch_failure segs m a = MachineOk st' -> False.
 Proof.
 intros m a st' H. unfold fetch_failure in H.
-destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
+(* 08b1429: a vDSO-text pc is declined (MachineUnmodeled) before the alignment test *)
+repeat match type of H with
+| context [if ?b then _ else _] => destruct b
+end; discriminate.
 Qed.
 Lemma step_mem_grows : forall st st',
 RiscvSemantics.step segs st = MachineOk st' -> mem_grows (ms_mem st) (ms_mem st').

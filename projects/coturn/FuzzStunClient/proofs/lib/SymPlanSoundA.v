@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the reserved ledger is the image's entries and at most two small vDSO entries (vres_ok), and cs_ok and std_model carry the channel reader (co_rdr, stdm_rdr). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -115,8 +116,16 @@ Definition smap_ok (E : env) (maps : list (word * word)) (m : smap) : Prop :=
   if sm_exact m then In (edenot E (sm_base m), edenot E (sm_len m)) maps
   else exists lo sz, In (lo, sz) maps /\ bv_unsigned lo <= a /\ a + L <= bv_unsigned lo + bv_unsigned sz.
 
+(* LPS 08b1429: the launch's reserved ledger is [init_reserved], the image's entries followed by
+   the vdso/vvar pair ([State.vdso_reserved]: none or two entries, each at most 16 pages). The
+   engine is generic over the segment list, so it states the shape it uses rather than the
+   launch's constructor: the image's entries, then at most two small entries. *)
+Definition vres_ok (rs : list (word * word)) : Prop :=
+  exists vx, rs = segments_reserved RSEGS ++ vx
+             /\ (Forall (fun p => bv_unsigned (snd p) <= 2 ^ 30) vx /\ (length vx <= 2)%nat).
+
 Record vm_ok (E : env) (ms : list smap) (nmaps live : Z) (VM : VmMaps) : Prop := VM_OK {
-  vo_res   : vm_reserved VM = segments_reserved RSEGS;
+  vo_res   : vres_ok (vm_reserved VM);
   vo_maps  : Forall (smap_ok E (vm_maps VM)) ms;
   vo_len   : Z.of_nat (length (vm_maps VM)) <= nmaps;
   vo_live  : vm_live_bytes VM <= live;
@@ -138,7 +147,10 @@ Record cs_ok (E : env) (cs : cstate) (R : bvmap 5 word) (M : word -> option byte
   co_mat  : m_vm_materialized model = [];
   co_fds  : m_fds model = fds_std;
   co_vm   : vm_ok E (c_maps cs) (c_nmaps cs) (c_live cs) (m_vmmaps model);
-  co_slots : slots_ok RSEGS E M (c_slots cs)                       (* [comment removed for export] *)
+  co_slots : slots_ok RSEGS E M (c_slots cs);                      (* [comment removed for export] *)
+  (* LPS 08b1429/75d69e00: a write to a channel needs the model's reader present
+     (RefStdioWrite.ref_stdio_write). Last so existing destruct patterns keep their names. *)
+  co_rdr : m_channel_reader model = true
 }.
 
 Definition cfg_of (R : bvmap 5 word) (p : Z) (M : word -> option byte) (model : Model) : config :=
@@ -150,12 +162,16 @@ Record std_model (VM : VmMaps) (model : Model) : Prop := STD_MODEL {
   stdm_vm   : m_vmmaps model = VM;
   stdm_halt : m_halted model = None;
   stdm_lazy : m_vm_lazy model = [];
-  stdm_mat  : m_vm_materialized model = []
+  stdm_mat  : m_vm_materialized model = [];
+  stdm_rdr  : m_channel_reader model = true   (* LPS 08b1429: feeds [cs_ok]'s [co_rdr] *)
 }.
 
+(* LPS 08b1429: an Amb model's reader is the Amb's [a_channel_reader]; the top discharges it
+   (Amb.v:49 then Run.valid_input_channel_reader, [c0dd863a:theories/LinuxProcessSem/Run.v:5018]). *)
 Lemma std_model_mk {AMB : Amb} : forall VM stdin0 fs0 tid rlim,
+  a_channel_reader = true ->
   std_model VM (mkModelC fds_std VM stdin0 fs0 None tid rlim).
-Proof. intros. constructor; reflexivity. Qed.
+Proof. intros VM stdin0 fs0 tid rlim Hr. constructor; first [reflexivity | exact Hr]. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -67,7 +68,18 @@ Section AllocSec.
   Hypothesis NW : ltac2:(zQ "30!mg7!mh3!mlb@1$2@1$1@1$0?2mo"). Hypothesis NWA : ltac2:(zQ "30!mg7!mmd!mlb@1$2@1$1@1$0?2mo").
   Hypothesis NOV : ltac2:(zQ "30!mg7!mh3!mnc@1$2@1$1@1$0?2mo").
   Hypothesis BUD : ltac2:(zQ "90!l3!mo9!hr1!mg7!mp6!mu1!muf!mve!jg5@2$8@2$0@2$0@2$0@2$0@1$5?2mo@2$2@1$6?1S$1?3msz@2$2@2$0@2$7?3msz+ogg0+2$1+iggg0@1$4@1$3?2mo").
-  Hypothesis GAP : ltac2:(zQ "h60!ik9!ng4!j5!mg7!iqf!j0!nga!nh0!nh7!nhe!jr9!h9!ni5!mo9!nj2!mh3!nk1!li7!l3!jg5!jh9!jga@2$a@1$1@1$0#k0\1g@1$1@1$0#k0@2$2@3$5$b@2$h5@2$4@1$0#k0^1$dZ@2$2@2$h4Z@2$4@1$0#k0^1@2$2@2$h3@2$h2@2$4@1$0#k0^1?3msz@1$c@1$3?2mo@3$5$7@3$e@3$6@2$8@1$1@1$0#k0@1$1@1$0#k0@1$h0@1$3?2mo@1$f@1$3?2mo^1@1$h1?3msz$9").
+  (* LPS revision repair (75d69e00, checker 2c6b6db8).  GAP written out as explicit text (rule 11,
+     never re-encoded), with the disjunct the revision added to Bs/SecLazy.v's sr_mmap_kernel_MS
+     and to LazyNodes.v:503-505's sreach_mmap_kernel_lazy, exactly as As//Bs AS_LargeAlloc.v,
+     AS_CombinedLarge.v and AS_AllocSec1.v now carry it.  alloc_sec_head, which this file applies,
+     demands it; g is GAP's own witness, so it cannot be discharged here and must
+     come from above.  It terminates: Spec/GapGrid.v's gap_exists_place PROVES the placement from
+     Checks.Placement.linux_place_exists, and Spec/KLink.v's BUD_gap packages it.
+     FAITHFULNESS CONTROL (rule 22c): `About GAP` on the encoded original here reads this text
+     minus the last conjunct, character for character, and identically on both sides. *)
+  Hypothesis GAP : exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + msz <= alloc_top (m_vmmaps mo)
+                                    /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) g (wz msz) = true
+                                    /\ (bv_unsigned g + msz <= mmap_top (m_vmmaps mo) \/ task_unmapped_base <= bv_unsigned g).
   (* [comment removed for export] *)
   Hypothesis IMGR : ltac2:(zQ "e0!ik9!iqf!nh0!nhe!j5!j0!mg7!nk1!nl0!jhe!nlb!jg5!jh9!ng4>1x@1$d@1$0#k0>0@2$4@2$b$8@2$1@1$0#k0^1@2$c@2$1@1$0#k0^1$9@3$5$2@2$a^2@1$7@1$6?2mo$3").
   Hypothesis SHLAND : ltac2:(zQ "e0!ik9!iqf!nh0!nhe!j5!j0!mg7!mh3!jqf!nm9!nlb!jg5!jh9!ng4>1x@1$d@1$0#k0>0@2$4@2$b$9@2$1@1$0#k0^1@2$c@2$1@1$0#k0^1$8@3$5$2@2$a^2@1$7@1$6?2mo$3").

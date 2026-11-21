@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of plugin-hostd's relay_event, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (runtime call sites) and lib/A/ACh2.v with lib/YC85.v cl_callS (the
    internal call), over W_journal.v's ajournal_gx. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* relay_event(line) at 0x826e4, 20 instructions: under g_lock (pthread_mutex_lock, a PCall), send_line(line,
    strlen(line) + 1) (strlen a PCall to the interceptor; send_line an internal call, its spec SL composed into this
    journal with ajournal_gx_G_mono and ajournal_gx_sub), then the unlock as a tail call (PTail) from the entry sp.
@@ -14,7 +15,7 @@
    HLPST (g_lock is outside the generic journal's PST).
    pb_relay_event keeps its statement and is its corollary at
    ARi0, PST = [] (Section cAR).
-   Section c, in the room texts of 475b8a2b569, takes RP (the allocator room record) after MT; pb_relay_event_x takes re_spec_x's room premises (kr, RM at
+   Section c, in the room texts, takes RP (the allocator room record) after MT; pb_relay_event_x takes re_spec_x's room premises (kr, RM at
    S with the send's charge plus kr, the counts at peak 1) and hands them to send_line unchanged (same S, same
    charge: re_len e is send_line's length), and its post's RM at S' is send_line's.
    The AR corollary discharges them
@@ -607,7 +608,7 @@ eapply (SRrG_bind SEGS R R_trans).
     AOUT1 ROM3 GAR1 ltac:(pose proof (HBOUT line ltac:(lia)); lia)
     ltac:(rewrite HLB; unfold re_len; pose proof (HBOUT line ltac:(lia)); lia)
     ltac:(right; left; exists q, m; split; [exact Hq | split; [exact Hqo | split; [exact Hql | rewrite HLB; unfold re_len; lia]]])
-    (* W7's new premise (a working branch 14d97d478bb): the line is no byte of G_SL.  It lies in the live
+    (* W7's new premise (a working branch): the line is no byte of G_SL.  It lies in the live
        block q, and a heap byte is not an image byte, while every G_SL byte is one. *)
     ltac:(intros a Ha Hin; rewrite HLB in Ha; unfold re_len in Ha;
           exact (HBNI a ltac:(clear - Ha Hql HINB; lia) (proj1 (HG a (HSLG a Hin)))))

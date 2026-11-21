@@ -17,7 +17,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.ubsan (sha256
-   27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts 8f3e7e1a07f1):
+   27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts):
      parse_noting FUNC LOCAL 0x13a38 size 120: addi sp, sp, -0x30; jal fuzz_alloc_live; jal pj_parse;
      jal fuzz_alloc_ran_out; beqz a0, 0x13a90; jal check_reject_clean; mv a0, s2; ret.
    (The same 30 instructions as the plain build's; the old store to *ran_out and its UBSan alignment trap are gone.)

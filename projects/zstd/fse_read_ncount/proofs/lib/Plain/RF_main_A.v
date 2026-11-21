@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (build_stack_bytes' new arguments (launch auxv, entry pc, stack top, exec name, gid) in IMGB under a launch context (launchT); IMGB_len and IMGB_top re-proved for a block running to the stack top; main_to_test and main_usage follow the new stack facts (rauxv_ok_init, argv_cstring, layout_bounds, argv_ptrs at L_TOP), the zero-mapped stack below sp now 6,144,513 bytes deep (im_stack_depth), not 8,388,608; #[using] lists of IMGB_len, IMGB_top, main_to_test and main_usage updated; 2 recorded proofs replaced by written proofs (IMGB_len, main_to_test)). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -19,7 +20,7 @@ Open Scope Z_scope.
 Open Scope mspec_scope.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 Ltac rpc := apply ret_pc_even; [lia| reflexivity].
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {lx : launchT}.
 #[using="Type"] Lemma stderr_file0_wfile : forall m, stderr_file0 m -> stderr_wfile m.
 Proof.
 intros m H. exists (Z_to_bv 64 5), (wz 0), 0, 0, (repeat (Z_to_bv 8 0) 80). split; [exact H|]. vm_compute. reflexivity.
@@ -33,24 +34,24 @@ Hypothesis HT : 0 < TID < 4194304.
 Notation usp0 := (bv_unsigned sp0).
 Notation gpv := (Z_to_bv 64 0x10800).
 Notation tpv := (Z_to_bv 64 RATP).
-Notation IMGB := (build_stack_bytes pph sp0 argv envp uid hw draw).
+  Notation IMGB := (build_stack_bytes L_LA pph (Z_to_bv 64 (Z.of_N p_init_pc)) sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw).
 Notation LO' := (LO sp0).
 Definition BASE (mm : mem) : Prop :=
 stk psegs mm LO' (usp0 + -128) /\ mem_inv psegs mm /\ RSTAT TID mm /\ rauxv_ok mm usp0 /\ bytes_at psegs mm usp0 IMGB
 /\ stderr_file0 mm /\ stdout_file mm stdout_init /\ trun_cells0 mm.
-#[using="rc VSP VARGV VENVP"] Lemma IMGB_len : usp0 + Z.of_nat (length IMGB) <= 2^64.
+  (* 08b1429: the block runs from sp0 to the stack VMA's end L_TOP. *)
+  #[using="rc VSP VARGV VENVP lx"] Lemma IMGB_len : usp0 + Z.of_nat (length IMGB) <= 2^64.
 Proof.
-destruct VSP as ((A & B & C) & _ & _). unfold sp_window_lo, sp_window_hi in *.
-pose proof (build_stack_bytes_length pph sp0 argv envp uid hw draw). pose proof (raw_len_nonneg argv envp).
-destruct VARGV as (A1 & A2 & _). destruct VENVP as (E1 & E2 & _). unfold raw_len, struct_size, argc, envc in *. Local Ltac2 Set LiaHints.tbl := fun () => "0010=4699407760.2100000DS1B1H2H02A12A22E12E2".
-lia.
+    pose proof (build_stack_bytes_length_top L_LA pph (Z_to_bv 64 (Z.of_N p_init_pc)) sp0 L_TOP argv envp L_EXECFN
+                  uid L_GID hw draw (dvalid_padok _ _ _ VSP)) as BL.
+    destruct VSP as (_ & _ & _ & _ & _ & TOPHI).
+    destruct VARGV as (A1 & A2 & _). destruct VENVP as (E1 & E2 & _). lia.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="rc VSP"] Lemma IMGB_top : usp0 + Z.of_nat (length IMGB) <= 2^47.
+  #[using="rc VSP lx"] Lemma IMGB_top : usp0 + Z.of_nat (length IMGB) <= 2^47.
 Proof.
-destruct VSP as (_ & _ & FIT). unfold entry_stack_fits, entry_stack_span, sp_window_hi in FIT.
-change (Z.of_nat auxv_size) with 160 in FIT.
-pose proof (build_stack_bytes_length pph sp0 argv envp uid hw draw) as BL. pose proof (raw_len_nonneg argv envp).
-unfold raw_len, struct_size, argc, envc in *. Local Ltac2 Set LiaHints.tbl := fun () => "0010>42614262010.1500000:S3FIT2BL1H".
+    pose proof (build_stack_bytes_length_top L_LA pph (Z_to_bv 64 (Z.of_N p_init_pc)) sp0 L_TOP argv envp L_EXECFN
+                  uid L_GID hw draw (dvalid_padok _ _ _ VSP)) as BL.
+    destruct VSP as (_ & _ & _ & _ & _ & TOPHI). Local Ltac2 Set LiaHints.tbl := fun () => "0010>42614262010.1500000:S3FIT2BL1H".
 lia.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 #[using="Type"] Lemma BASE_heap_pres : forall LB m m', BASE m -> rheap_pres LB (usp0 + -128) m m' ->
@@ -147,9 +148,9 @@ Hypothesis SWF : stdio_write_flush_stmt.
 Notation usp0 := (bv_unsigned sp0).
 Notation gpv := (Z_to_bv 64 0x10800).
 Notation tpv := (Z_to_bv 64 RATP).
-Notation IMGB := (build_stack_bytes pph sp0 argv envp uid hw draw).
+  Notation IMGB := (build_stack_bytes L_LA pph (Z_to_bv 64 (Z.of_N p_init_pc)) sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw).
 Notation LO' := (LO sp0).
-#[using="VSP HSEC VARGV VENVP"] Lemma main_to_test : forall (ms : machine_state) (Q : machine_state -> Prop),
+  #[using="VSP HSEC VARGV VENVP lx"] Lemma main_to_test : forall (ms : machine_state) (Q : machine_state -> Prop),
 pat_main sp0 argv envp uid hw draw CAN ms ->
 (forall (TID : Z) (t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (mm : mem) (j8 : list byte),
 0 < TID < 4194304 ->
@@ -167,22 +168,23 @@ destruct AM as (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 &
 pose proof (sp_facts sp0 argv envp VSP) as SF. pose proof (IMGB_len sp0 argv envp uid hw draw VSP VARGV VENVP) as IL. unfold LO in *.
 pose proof (bytes_at_bound _ _ _ _ IMG) as IMGBD.
 pose proof (heap_init sp0 argv envp m NONE LIBC1 LIBC2 GOTG GUARD MI) as [HP0i AUXC].
-pose proof (rauxv_ok_init sp0 argv envp uid hw draw m NONE LIBC1 LIBC2 GOTG GUARD MI IMG HSEC (proj1 (proj2 VSP))) as AI.
+    assert (AI : rauxv_ok m usp0).
+    { pose proof VSP as ((SPLO & _ & _) & HATOP & _ & PADOK & _ & TOPHI).
+      eapply (rauxv_ok_init sp0 argv envp uid hw draw m); eassumption. }
 pose proof (trun_cells0_init m NONE) as TR0.
 pose proof (rstatx0_init m NONE) as [DSO0 AXS0].
 pose proof (stderr_file0_init m NONE) as SE.
 pose proof (stage_init m NONE) as STG0.
 clear TLS MTLS SYSI PROG HWCAP ENV DSS GOT0 GOTM G38 G50 IA INI IMGW HP0 NONE.
-Local Ltac2 Set LiaHints.tbl := fun () => "0070>12526735165.8612530648637.8816800608486.7516800608486.8417850432503.8422708542307.8546849286404.8400000700F00G00H00L00P00TS2SF2HaS2SF2Ha7PSTAGERSSS2SFS2HaS2SF".
-replace (usp0 - 8388608) with (usp0 + -8388608) in ST by lia.
+    unfold im_stack_depth in ST. replace (usp0 - 6144513) with (usp0 + -6144513) in ST by lia.
 unfold PMAIN, PSTAGE2_RET in *.
-eapply (main_prologue sp0 argv envp VSP); [unfold LO; replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST| exact MI|].
+    eapply (main_prologue sp0 argv envp VSP); [unfold LO; replace (usp0 - 6144513) with (usp0 + -6144513) by lia; exact ST| exact MI|].
 intros j8 m1 FR ST1 MU WM MI1. unfold LO in ST1.
 pose proof (magree_of_munch psegs _ _ _ MU WM) as AG.
 assert (OUT : forall a, (a < usp0 - 128 \/ usp0 - 48 <= a) -> (fun a0 : Z => outside [(usp0 - 128, usp0 - 48)] a0) a) by (intros a Ha; cbn; lia).
 apply (K t t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 m1 j8 HT).
 - exact FR.
-- split; [unfold LO; replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST1|]. split; [exact MI1|].
+    - split; [unfold LO; replace (usp0 - 6144513) with (usp0 + -6144513) by lia; exact ST1|]. split; [exact MI1|].
 split. { eapply (RSTAT_agree t _ _ _ AG); [intros a Ha; apply OUT; unfold rstat_addr in Ha; lia|].
 unfold RSTAT. split; [exact TD|]. split; [exact EXL|]. split; [exact GF|]. split; [exact FA|]. split; [exact FIN|]. split; [exact GCX|].
 split; [exact OFL|]. split; [exact SIN|]. split; [exact SOU|]. split; [exact SEU|]. split; [exact G28|]. split; [exact GD0|]. split; [exact DSO0| exact AXS0]. }
@@ -211,7 +213,7 @@ apply (K TID); [exact HT|].
 unfold P1, PMAIN, PSTAGE2_RET. do 20 eexists. exists (Z_to_bv 32 0), mm, j8. split; [reflexivity|].
 split; [exact FR|]. split; [exact BA|]. split; [exact HP|]. split; [exact ERR|]. split; [vm_compute; reflexivity| exact SJ].
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="VSP HSEC VARGV VENVP FPR FWX SWF"] Lemma main_usage : forall ms, pat_main sp0 argv envp uid hw draw CAN ms -> Z.of_nat (length argv) <> 2 ->
+  #[using="VSP HSEC VARGV VENVP FPR FWX SWF lx"] Lemma main_usage : forall ms, pat_main sp0 argv envp uid hw draw CAN ms -> Z.of_nat (length argv) <> 2 ->
 implM psegs (main_model Prog.io raw_malloc raw_free PREAD_STAGE Prog.alloc_init Prog.run Prog.alloc_count (argv_Z argv))
 (ps_init (reservedZ psegs) ATOP) (fun code s' ms' => pat_exit code s' ms') ms.
 Proof.
@@ -228,20 +230,22 @@ pose proof RS as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & G28 & GD0 & _).
 destruct VARGV as (ARGC & _ & ARGLEN & NONUL & _).
 Local Ltac2 Set LiaHints.tbl := fun () => "00J0?11410905828.74 15034496672.74 16075584458.74 16800608486.10324361825921.74 25546104465.74 25573673715.75 30709266035.74 31036321035.74 4427527645.103 49364486404.10352799084368.74 53598248976.10053712225440.74 5452366560.105 56323174152.74 57614170466.10357614170466.10459102833272.74 59323410545.75 59670567639.74 66026193812.10066026193812.74 66136628136.18 6667549001.105 9939727347.62  00000100200800900=00>00F00M00S00T00X00n00o01=01D01H01L01S01T01a01l02002402@02D02JSSS4ARGCSS2SFSS4P0HI1HS5A0LENS4SLK0SS2SFS2SF2IL4ARGC4P0LO4P0HISS2SF4ARGC4P0LOS2SF2HaS2SFS2HaS2SF2HaSS5HARGC2SF2K0S4ARGC4P0LOS2SFS2SFS2SF1H2H02H4S2HaS4ARGC".
 destruct argv as [|arg0 argv'] eqn:EARGV; [cbn in ARGC; lia|]. rewrite <- EARGV in *.
-destruct (argv_cstring sp0 argv envp uid hw draw mm IMG 0 arg0 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-as (p0 & slack0 & HP0 & P0LO & P0HI & STR0 & SLK0). unfold str_base, struct_size, argc, envc in P0LO.
-destruct (stack_pieces sp0 argv envp uid hw draw mm IMG) as (_ & ARGVP & _).
+    destruct (argv_cstring sp0 argv envp uid hw draw mm IMG (dvalid_padok _ _ _ VSP) 0 arg0 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
+      as (p0 & slack0 & HP0 & P0LO & P0HI & STR0 & SLK0).
+    pose proof (layout_bounds L_LA sp0 L_TOP argv envp L_EXECFN (dvalid_padok _ _ _ VSP)) as (LBS & _).
+    pose proof (Nat2Z.is_nonneg (block_head_size (la_rseq L_LA) argv envp)). unfold hsz in LBS.
+    destruct (stack_pieces sp0 argv envp uid hw draw mm IMG (dvalid_padok _ _ _ VSP)) as (_ & ARGVP & _).
 assert (A0NN : ~ In (Z_to_bv 8 0) arg0) by (rewrite EARGV in NONUL; inversion NONUL; assumption).
 assert (A0LEN : Z.of_nat (length arg0) <= 131071) by (rewrite EARGV in ARGLEN; inversion ARGLEN; assumption).
 unfold argc, PMAIN, PSTAGE2_RET. zstep. if_cases K0; zify_cond K0; try (exfalso; lia). clear K0.
 zstep. zstep. zstep.
-pose proof (u64ro_read psegs mm (usp0 + 8) (argv_ptrs sp0 argv envp ++ [Z_to_bv 64 0]) 0 (Z_to_bv 64 p0) (Z_to_bv 64 (usp0 + 8))
+    pose proof (u64ro_read psegs mm (usp0 + 8) (argv_ptrs L_TOP argv envp L_EXECFN ++ [Z_to_bv 64 0]) 0 (Z_to_bv 64 p0) (Z_to_bv 64 (usp0 + 8))
 ARGVP ltac:(rewrite nth_error_app1 by (rewrite argv_ptrs_length, EARGV; cbn; lia); exact HP0) ltac:(lia) ltac:(unfold wa; f_equal; lia)) as RD.
 zstep. clear RD. zstep. zstep. zstep.
 apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM psegs tm (ps_init (reservedZ psegs) ATOP) (fun code s' ms' => pat_exit code s' ms') msx) end.
 eapply implM_bind.
-{ eapply (FPR (DUsage (nth 0 (argv_Z argv) []))) with (lo := usp0 - 8388608) (canary := CAN);
+    { eapply (FPR (DUsage (nth 0 (argv_Z argv) []))) with (lo := usp0 - 6144513) (canary := CAN);
 [exact FWX| exact SWF| apply stderr_file0_wfile; exact SE| reflexivity| | rewrite unsigned_lit by lia; exact ST
 | rewrite unsigned_lit by lia; unfold FPRINTF_DEPTH; lia| unfold GLOBALS_TOP; lia| rewrite unsigned_lit by lia; lia
 | apply (RHEAP_ssp _ _ _ HP)| exact MI| vm_compute; reflexivity].
@@ -256,16 +260,16 @@ destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 &
 rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
 replace (ret_pc (Z_to_bv 64 0x13220)) with (Z_to_bv 64 0x13220) by (symmetry; rpc).
 pose proof (magree_of_munch psegs _ _ _ MUc WMc) as AG.
-assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x1e908 <= a < 0x1e908 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x1e908, 0x1e908 + 232)] a0) a).
+assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x1e908 <= a < 0x1e908 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x1e908, 0x1e908 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
-assert (OUT2 : forall a, (0x10000 <= a < 0x50000 /\ ~ (0x1e908 <= a < 0x1e908 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x1e908, 0x1e908 + 232)] a0) a).
+assert (OUT2 : forall a, (0x10000 <= a < 0x50000 /\ ~ (0x1e908 <= a < 0x1e908 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x1e908, 0x1e908 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
 apply implM_ret. unfold MFRAME, PMAIN, PSTAGE2_RET in FR.
 apply (rw_cells_magree psegs _ _ _ _ _ AG) in FR; [| intros a Ha; apply OUT; cbn in Ha; lia].
 zstep.
 eapply (main_return sp0 argv envp TID VSP HT 2 (ps_init (reservedZ psegs) ATOP) []).
 - unfold MFRAME, PMAIN, PSTAGE2_RET. exact FR.
-- unfold LO. replace (usp0 - 8388608) with (usp0 + -8388608) in ST2 by lia. exact ST2 || exact ST2.
+    - unfold LO. replace (usp0 - 6144513) with (usp0 + -6144513) in ST2 by lia. exact ST2 || exact ST2.
 - eapply (RSTAT_agree TID _ _ _ AG); [intros a Ha; apply OUT2; unfold rstat_addr in Ha; lia| exact RS].
 - eapply RMalloc_ifaceP.RHEAP_frame_proof; [exact HP| exact MUc| exact WMc|].
 constructor; [left; cbn [fst snd]; atop_facts; lia|]. constructor; [| constructor].

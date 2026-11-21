@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstHit.v (a working branch 3295f3a9fd5f, file sha256 cd3a2ae3a033), lane M's field round 3 on the cf layer of record d0377850faab (round6f), as A11's 3b8046b1e79 / c1f4f4bb81cb; module paths changed only: 70 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstHit.v (a working branch, file sha256 cd3a2ae3a033), lane M's field round 3 on the cf layer of record (round6f), as A11; module paths changed only: 70 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    The cf twin of cgif/cgif_file_fuzzer lib/AGif1.v (file sha256 8fca682385b3; donor not released) and cgif/cgif_file_fuzzer lib/AGif1k.v (file sha256 48748393de25; donor not released) (with AGif1mE.v's
    ae_depot): the hit interfaces AGif0n.AIface / AGif0n.AIfaceK and ErrnoG.AIfaceE at the call-site relation
@@ -43,9 +44,9 @@ Local Open Scope am_scope.
 
 Section d.
 Variable B : asyms.
-(* The post of the depot callee (AGif1.dpost_cgif, AGif1.v:35-38, over the unit's segments): the answer is the model's,
+(* The post of the depot callee (AGif1.dpost_cgif, AGif1.v:36-39, over the unit's segments): the answer is the model's,
    and the depot's memory facts after the put and the constant cells hold at the memory the callee returns.  It is
-   CLdepot.dpost_x (CLdepot.v:88-91) at im_segs, the post the generic depot field CLdepot.depot_field gives. *)
+   CLdepot.dpost_x (CLdepot.v:89-92) at im_segs, the post the generic depot field CLdepot.depot_field gives. *)
 Definition dpost_cf : Z -> alayout -> astate -> world im_segs -> list Z -> Z -> (word -> option byte) -> Prop :=
   CLdepot.dpost_x im_segs B.
 End d.

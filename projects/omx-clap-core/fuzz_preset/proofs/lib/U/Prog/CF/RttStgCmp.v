@@ -87,7 +87,7 @@ Qed.
 
 
 (* round_trip_text of the #102 ubsan twin 27566683 (CF form), stage stg_cmp_st (RttBase.v) at 0x153b8, rendered() done;
-   the mirror of lib/Prog/RttStgCmp.v (plain, cold/h-rw-kno-6-p102-T3 49eed5dd012) at the ubsan pcs (plain + 0x5ac).
+   the mirror of lib/Prog/RttStgCmp.v (plain) at the ubsan pcs (plain + 0x5ac).
    RttRunsB.rtt_segF (lib/U/Prog, the U twin): lw failed (0 by text_rec), ld want, lbu g_own_ran_out,
    fuzz_alloc_ran_out; a nonzero flag byte goes to the ran-out arm stg_oom_st (0x153e4); both bytes 0 go on to 0x15420,
    where RttRunsB.rtt_seg4 runs the NULL text test, strcmp, strlen and jal parse_noting(text, len, &back).  CF

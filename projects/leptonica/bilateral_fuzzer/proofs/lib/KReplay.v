@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (recorded load-miss branches rebuilt for the run's vDSO and vvar pages, with the recorded eq_ind motives that read them; hooks that let a file give a recorded lemma application a premise the lemma has since gained). *)
 (* [comment removed for export] *)
 From Ltac2 Require Import Ltac2 Constr.
 From Ltac2 Require Pstring.
+From LinuxProcessSemantics.LinuxProcessSem Require RiscvSemantics.
 Import Constr.Unsafe.
 
 (* [comment removed for export] *)
@@ -353,6 +355,138 @@ Ltac2 kr_hole (ph : (evar * constr) list ref option) (c : constr) : constr :=
     end
   end.
 
+(* Rebuild recorded load-miss branches with the current vvar classification: every load
+   step of the model now answers a missing read with [if range_meets_vvar .. then
+   MachineUnmodeled else MachineFault], where the recorded terms have [MachineFault].
+   The generated terms, including reduced interpreter fixpoints, still go through the
+   kernel at Qed. *)
+(* [brs] (two branches, the second [MachineFault ty]) of a match on a read of [n] bytes at [a]:
+   the second becomes [if range_meets_vvar segs a n then MachineUnmodeled ty else MachineFault ty],
+   built as a match on bool rather than a quoted [fun (A : Type) ..] applied to [ty] (a quoted
+   [Type] gets a fresh universe that no constraint ties to [ty]'s). *)
+Ltac2 kr_vv_miss (segs : constr) (a : constr) (n : constr) (brs : constr array) : unit :=
+  if Int.equal (Array.length brs) 2 then
+    match kind (Array.get brs 1) with
+    | App fault tys =>
+      if Bool.and (Constr.equal fault '@RiscvSemantics.MachineFault) (Int.equal (Array.length tys) 1) then
+        let miss := make (App '@RiscvSemantics.range_meets_vvar [| segs; a; n |]) in
+        let ty := Array.get tys 0 in
+        match kind 'bool with
+        | Ind bi _ =>
+          let ret := make (Lambda (Binder.unsafe_make None Binder.Relevant 'bool)
+            (make (App '@RiscvSemantics.machine_result [| liftn 1 1 ty |]))) in
+          let unm := make (App '@RiscvSemantics.MachineUnmodeled [| ty |]) in
+          Array.set brs 1 (make (Case (case bi) (ret, Binder.Relevant) NoInvert miss
+            [| unm; Array.get brs 1 |]))
+        | _ => ()
+        end
+      else ()
+    | _ => ()
+    end
+  else ().
+
+Ltac2 kr_update_load_miss (scr : constr) (brs : constr array) : unit :=
+  match kind scr with
+  | App f args =>
+    if Bool.and (Constr.equal f '@RiscvSemantics.ov_read_bytes) (Int.equal (Array.length args) 4) then
+      kr_vv_miss (Array.get args 0) (Array.get args 2) (Array.get args 3) brs
+    else ()
+  | _ => ()
+  end.
+
+(* a branch that is just [MachineFault ty]: kept in place rather than behind a placeholder, so
+   that [kr_eq_ind_fix] below sees it when a recorded motive matches on the read's result *)
+Ltac2 kr_is_fault (b : constr) : bool :=
+  match kind b with
+  | App f a => Bool.and (Constr.equal f '@RiscvSemantics.MachineFault) (Int.equal (Array.length a) 1)
+  | _ => false
+  end.
+
+(* an application's head and all its arguments, nested applications flattened *)
+Ltac2 rec kr_flat (f : constr) (a : constr array) : constr * constr array :=
+  match kind f with
+  | App g b => kr_flat g (Array.append b a)
+  | _ => (f, a)
+  end.
+
+(* A recorded [eq_ind]/[eq_ind_r] whose motive abstracts the read itself ([fun o => .. match o with
+   .. | None => MachineFault end ..]): rebuild the motive's matches on [o] the same way, with the
+   read's address and size taken from the rewritten side. *)
+Ltac2 rec kr_vv_under (d : int) (segs : constr) (a : constr) (n : constr) (c : constr) : constr :=
+  let go := kr_vv_under d segs a n in
+  match kind c with
+  | Case ci rt iv scr brs =>
+    let scr := go scr in
+    let brs := Array.map go brs in
+    (match kind scr with
+     | Rel k => if Int.equal k (Int.add d 1) then
+                  kr_vv_miss (liftn (Int.add d 1) 1 segs) (liftn (Int.add d 1) 1 a) (liftn (Int.add d 1) 1 n) brs
+                else ()
+     | _ => ()
+     end);
+    make (Case ci rt iv scr brs)
+  | App f args => make (App (go f) (Array.map go args))
+  | Lambda b body => make (Lambda b (kr_vv_under (Int.add d 1) segs a n body))
+  | LetIn b v body => make (LetIn b (go v) (kr_vv_under (Int.add d 1) segs a n body))
+  | Cast x k t => make (Cast (go x) k t)
+  | _ => c
+  end.
+
+Ltac2 kr_eq_ind_fix (f : constr) (args : constr array) : constr array :=
+  if Int.equal (Array.length args) 6 then
+    if Bool.or (Constr.equal f '@eq_ind_r) (Constr.equal f '@eq_ind) then
+      let rd (c : constr) :=
+        match kind c with
+        | App g ga => if Bool.and (Constr.equal g '@RiscvSemantics.ov_read_bytes) (Int.equal (Array.length ga) 4)
+                      then Some ga else None
+        | _ => None
+        end in
+      let side := match rd (Array.get args 1) with Some ga => Some ga | None => rd (Array.get args 4) end in
+      match side with
+      | Some ga =>
+        match kind (Array.get args 2) with
+        | Lambda b body =>
+          let body := kr_vv_under 0 (Array.get ga 0) (Array.get ga 2) (Array.get ga 3) body in
+          Array.init 6 (fun i => if Int.equal i 2 then make (Lambda b body) else Array.get args i)
+        | _ => args
+        end
+      | None => args
+      end
+    else args
+  else args.
+
+(* A recorded application of a lemma that has since gained a premise: [kr_app_fix f args] may
+   return [args] with that premise's proof inserted.  Unchanged by default; a file whose recorded
+   proofs need it sets it locally.  The result still goes through the kernel at Qed. *)
+Ltac2 mutable kr_app_fix (f : constr) (args : constr array) : constr array := args.
+
+Ltac2 kr_ref (n : string) : constr option :=
+  match Ident.of_string n with
+  | Some i => match Env.get [i] with Some r => Some (Env.instantiate r) | None => None end
+  | None => None
+  end.
+
+(* [impl_realizes_f]'s channel-reader premise (after [HFD], argument 16 of 21): every recorded use
+   has [HPM := ASTA_PM_mat_stable RT AF Σ F0 fs0], so the premise is [ASTA_PM_reader RT Σ F0 fs0]. *)
+Ltac2 kr_add_reader (f : constr) (args : constr array) : constr array :=
+  if Int.equal (Array.length args) 20 then
+    match (kr_ref "impl_realizes_f", kr_ref "ASTA_PM_mat_stable", kr_ref "ASTA_PM_reader") with
+    | (Some irf, Some pms, Some rdr) =>
+      if Constr.equal f irf then
+        match kind (Array.get args 14) with
+        | App g ga =>
+          if Bool.and (Constr.equal g pms) (Int.equal (Array.length ga) 5) then
+            let hrd := make (App rdr [| Array.get ga 0; Array.get ga 2; Array.get ga 3; Array.get ga 4 |]) in
+            Array.init 21 (fun i => if Int.lt i 16 then Array.get args i
+                                    else if Int.equal i 16 then hrd else Array.get args (Int.sub i 1))
+          else args
+        | _ => args
+        end
+      else args
+    | _ => args
+    end
+  else args.
+
 (* [comment removed for export] *)
 Ltac2 kr_case (ph : (evar * constr) list ref option) (n2 : ident option array array) (s : string) (p : int) (st : constr list) : constr * constr list * int :=
   let prop := 'Prop in
@@ -382,17 +516,29 @@ Ltac2 kr_case (ph : (evar * constr) list ref option) (n2 : ident option array ar
        let selfty := if Int.equal npm 0 then indc else make (App indc pms) in
        let pbody := if Int.equal pflag 48 then pbody else kr_hole ph pbody in
        let retc := kr_wrap n2 s pa nidx prop (make (Lambda (kr_ann n2 s (Int.add pa (Int.mul 3 nidx)) selfty) pbody)) in
-       let brs := Array.make nbr prop in
+       (* the branches as recorded, then the vvar rebuild, then the placeholders: a branch the
+          rebuild changed is kept in place (a placeholder would be filled with the old body) *)
+       let raw := Array.make nbr prop in
+       let hol := Array.make nbr false in
+       let wq := Array.make nbr 0 in
+       let wk := Array.make nbr 0 in
        let rec rbr (j : int) (q : int) (l : constr list) : int :=
          match l with
          | [] => q
          | bd :: l =>
            let nk := Int.sub (sgi s q) 48 in
-           let bd := if Int.equal (sgi s (Int.add q 1)) 48 then bd else kr_hole ph bd in
-           Array.set brs j (kr_wrap n2 s (Int.add q 2) nk prop bd);
+           Array.set hol j (Bool.neg (Int.equal (sgi s (Int.add q 1)) 48));
+           Array.set raw j bd; Array.set wq j (Int.add q 2); Array.set wk j nk;
            rbr (Int.add j 1) (Int.add q (Int.add 2 (Int.mul 3 nk))) l
          end in
        let q := rbr 0 (Int.add prp 4) brl in
+       let orig := Array.copy raw in
+       kr_update_load_miss scr raw;
+       let brs := Array.mapi (fun j b =>
+         let b := if Array.get hol j then
+                    (if Bool.and (Constr.equal b (Array.get orig j)) (Bool.neg (kr_is_fault b)) then kr_hole ph b else b)
+                  else b in
+         kr_wrap n2 s (Array.get wq j) (Array.get wk j) prop b) raw in
        (make (Case (case ind) (retc, rp) NoInvert scr brs), st, q)
      | [] => kr_fail "KReplay: stack underflow"
      end)
@@ -450,8 +596,16 @@ Ltac2 decode_ph (ph : (evar * constr) list ref option) (tab : string) (secs : id
   let si := sgi in
   let ag := Array.get in
   let as_ := Array.set in
-  let sb := substnl in
-  let mk := make in
+  (* a shared application is recorded once over placeholders and instantiated by substitution:
+     the fixes [mk] applies are applied again to the instantiated application, whose arguments
+     (the read, the lemma's premises) only then are known *)
+  let sb l n c :=
+    let r := substnl l n c in
+    match kind r with
+    | App f a => let (g, b) := kr_flat f a in make (App g (kr_eq_ind_fix g (kr_app_fix g b)))
+    | _ => r
+    end in
+  let mk k := match k with App f a => make (App f (kr_eq_ind_fix f (kr_app_fix f a))) | _ => make k end in
   let bm := Binder.unsafe_make in
   let rl := Binder.Relevant in
   let dummy := make (Rel 1) in

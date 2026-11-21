@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the main-entry memory facts are split once more, the start state's layout facts being appended after the recorded ones. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -122,7 +123,7 @@ Proof.
   destruct H0 as (ALO & ARNG & [X [AR BL]] & HFK).
   split; [exact ALO|]. split; [exact ARNG|]. split; [| exact HFK]. exists X. split; [| exact BL].
   apply AREP_k_strong; [exact AR|].
-  pose proof HM as (_ & _ & PIN & HMF & HPF & _). apply Forall_app in HMF as [HMF HMW]. apply Forall_app in HPF as [HPF _].
+  pose proof HM as (_ & _ & PIN & HMF & HPF & _). apply Forall_app in HMF as [HMF HMW]. apply Forall_app in HMW as [HMW _]. apply Forall_app in HPF as [HPF _].
   assert (HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP).
   { destruct PIN as (_ & _ & _ & USP & _). rewrite USP. exact HA. }
   unfold LDRV. exact (adepotk_init V w UDRV m HMF HMW HPF UDRV_len4 UDRV_tracesW HAT UDRV_lenW).

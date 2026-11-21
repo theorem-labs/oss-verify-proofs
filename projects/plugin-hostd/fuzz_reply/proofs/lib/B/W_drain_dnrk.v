@@ -4,11 +4,11 @@
    DROP / NEXT / REST and their shared memchr join (lib/B/W_drain_join.v, W_drain_next.v, W_drain_rest.v) need over
    lib/B/W_drain_cx.v's cut predicates.  Proves no function (kind: segment lemma).
    COPIED, with the prefix dtk_ renamed dnk_ and nothing else changed:
-     dnk_low .. dnk_garr8_kept  from a working branch c0a3958f203
+     dnk_low .. dnk_garr8_kept  from a working branch
                                 lib/B/W_drain_topb_bk.v:101-478 (the TOP tail lane's bookkeeping, itself ported from
                                 lib/A/W_drain_epi.v; not yet on the drain base, so copied, not imported);
      dnk_nth_le_bytes, dnk_garr8_le, dnk_le_garr8, dnk_le8_bytes, dnk_le4_bytes, dnk_writable_view
-                                from lib/B/W_gse_tail.v:65-185 (its gt_ lemmas), on the drain base.
+                                from lib/B/W_gse_tail.v:66-186 (its gt_ lemmas), on the drain base.
    NEW here: dnk_entry_len, the entry field readers dnk_entry_skip / dnk_entry_buf / dnk_entry_used, and
    dnk_DMEM_call (DMEM survives a call whose writes all lie in its scratch below drain's frame: memchr's, at the
    memchr join 0x83990).
@@ -16,6 +16,7 @@
    (W_drain_cx_x.v's Section c header, plus HP0), with the suffix _x: the image-B twins of lib/A/W_drain_epi.v's
    Section cx (dend_*_x of DR_x slice B), where these lemmas came from; the journals are at W_contract_x.v's
    DRAIN_STK_x.  Section c is unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -55,7 +56,7 @@ Open Scope Z_scope.
 #[local] Notation dadrF := (RelayRunT.addr YO0i.sptr).
 #[local] Notation dnret := (RelayRunT.nret YO0i.sptr).
 
-(* lib/B/W_gse_tail.v:65-72 gt_nth_le_bytes *)
+(* lib/B/W_gse_tail.v:66-73 gt_nth_le_bytes *)
 Lemma dnk_nth_le_bytes : forall n z k, (k < n)%nat ->
   nth k (Z_to_le_bytes n z) (Z_to_bv 8 0) = Z_to_bv 8 (Z.shiftr z (8 * Z.of_nat k)).
 Proof.
@@ -77,7 +78,7 @@ Context {PI : PAImg fr_prog_listing}.
 Notation le8 := OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Lib.Mem.le8.
 Notation le4 := OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Lib.Mem.le4.
 
-(* lib/B/W_gse_tail.v:105-185: gt_garr8_le, gt_le_garr8, gt_le8_bytes, gt_le4_bytes, gt_writable_view *)
+(* lib/B/W_gse_tail.v:106-186: gt_garr8_le, gt_le_garr8, gt_le8_bytes, gt_le4_bytes, gt_writable_view *)
 Lemma dnk_garr8_le : forall m a n z, garr8 SEGS m a (bzs (Z_to_le_bytes n z)) -> 0 <= z < 2 ^ (8 * Z.of_nat n) ->
   val_mem SEGS m a n z.
 Proof.

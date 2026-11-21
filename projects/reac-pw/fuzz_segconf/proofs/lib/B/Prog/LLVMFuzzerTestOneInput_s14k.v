@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: lemmas the segments of LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command) share: the live bytes the recorder owns, the payload bytes and the stack kept along the walk's journal, the events and meter left (non-negative; each callee's meter at most its events times one unit), the joined size of a message's words (words_acc_need copied from fuzz_command's plain lib/Prog/SlotRec.v); in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh7.v and ACh8.v (the keep lemmas of cgif_close's segments). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s01.v, with its module paths and module names changed; 709 of its 809 lines of code are new or changed and 276 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the kit of the walk
    of the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0), segment S04 (K85110 f -> K85210 f,
    0x85110 .. 0x8520c), LLVMFuzzerTestOneInput_s14.v.
@@ -15,10 +16,10 @@
    - The walk's own points: the image facts carried to a later reader (image A's S00 walk's s10_lt_img_kept, the
      facts from IMGF's fields; the stack guard's .got word re-read from AR at the new state by
      SegRecCells.seg_rec_cells), the facts of a point after one allocator call (image A's S01 / S02 kit
-     LLVMFuzzerTestOneInput_s12k.v lk_after_alloc / lt_malloc_at, image A's S01 / S02 commit 119b28fad68f, with
+     LLVMFuzzerTestOneInput_s12k.v lk_after_alloc / lt_malloc_at, image A's S01 / S02, with
      image B's frame: the shadow base at 200(s1), SH(FR) at 184(s1)), the memchr wrapper's call step
      (MemchrDef.amemchr_realizesM through PaArt.aj_art_at, as fuzz_command's lib/B/Prog/LLVMFuzzerTestOneInput_s41.v
-     aw_strnlen_loc, origin/ossv/recipes 3abc3740de97; its constants window from IMGF's cif_snl_rom and
+     aw_strnlen_loc; its constants window from IMGF's cif_snl_rom and
      SegRecBase.seg_snl_unowned), and the three inner cut points of S04.
    Statement text and proofs only about the walk's own points: no other function of the binary is proved here. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

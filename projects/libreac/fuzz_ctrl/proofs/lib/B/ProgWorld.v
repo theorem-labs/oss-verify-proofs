@@ -1,21 +1,21 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorld.v (a working branch 26edf006f53,
-   re-synced to a working branch a48c4068c6e: SK as a Section variable of Fsteps / FsOfAstack / FstepsProofs,
-   sections 14-18; then to 1d23ced37fd: ctl_gshadow_of_AR_stmt amended, ctl_global_shadow_of_AR_stmt added,
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorld.v (a working branch,
+   re-synced to a working branch: SK as a Section variable of Fsteps / FsOfAstack / FstepsProofs,
+   sections 14-18; then to: ctl_gshadow_of_AR_stmt amended, ctl_global_shadow_of_AR_stmt added,
    ctl_frame_above_img_stmt premise-free with its proof moved to ProgWorld_Fs.v): the same definition / lemma names,
    Sections and proofs; lib.A.<X> -> lib.B.<X>, the core files
    A.AB1v / AE2k / ACfn / AF0m -> lib.Reusable.YB1v / YE2k / YCfn / YF0m; Section 0 restated with image B's
    (fuzz_ctrl.asan-ubsan) constants (REAL_USED from the B symtab), as_tsd_TSD's TSD restated (0x5fd9f8, B symtab);
    comments that cite image addresses cite image B's; the doubled lib/Lib modules named lib.Lib.X.  No statement
-   differs from A's except by these module paths and those two constants.  Then to a working branch fec8db0a380
+   differs from A's except by these module paths and those two constants.  Then to a working branch
    (names only, no proof step changed): Z_to_bv_bv_unsigned (12 uses) and length_Z_to_le_bytes (1) written
    stdpp.bitvector.definitions.Z_to_bv_bv_unsigned / LinuxProcessSemantics.LinuxProcessSem.BvBase.length_Z_to_le_bytes,
    as A writes them -- in each case the constant `About` names at that use in this file (Locate / About probe, a Theorem Labs
    lane), so the doubled lib/Reusable/YK0h.v and lib/B/Reusable/YK0h.v copies of length_Z_to_le_bytes and the
    MState copies of Z_to_bv_bv_unsigned cannot be read in; Lib.ExecF Required as `From ...lib.Lib Require ExecF MState`,
-   as A.  Then to a working branch 45b254caa11: the ANNOUNCED STATEMENT CHANGE of ctl_kept_cls (its high-memory
+   as A.  Then to a working branch: the ANNOUNCED STATEMENT CHANGE of ctl_kept_cls (its high-memory
    class reads the run ceiling lib.Reusable.YM05.alloc_ceiling, not YK06's constant; Section 13) and the announced
    addition 19, ctl_const_vis_of_AR_stmt in Section ConstVis (statement only), with image B's row in its comment.
-   Written by a Theorem Labs lane (a Theorem Labs lane; the 45b254caa11 mirror by a Theorem Labs lane); one writer. *)
+   Written by a Theorem Labs lane (a Theorem Labs lane; the mirror by a Theorem Labs lane); one writer. *)
 (* lib/B/ProgWorld.v -- fuzz_ctrl image B (libreac v1.9.0, asan-ubsan): the cgif-world side of the callee lifts and of
    the runtime-cell hand-over.  Twin of a Theorem Labs lane's lib/A/ProgWorld.v: only Section 0 (image constants), the module paths, as_tsd_TSD's TSD constant
    and the image-specific comments differ.
@@ -46,36 +46,36 @@
    are written lib.Reusable.<file> / B.<file>.
 
    RT_used (two Theorem Labs lanes 23:05Z: the union of RT conjuncts the lifted runs' proofs CONSUME, directly or through a
-   callee contract's premise; widened 02:10Z on the auditor a Theorem Labs lane's finding: F30F.v (a version not in this delivery; from a working branch e0a98c6447f),
-   lib/A/Prog/Seg/R6F.v (at head lib/A/Prog/Seg/R6F.v:98-100) and lib/A/Prog/Seg/R9F.v (at head lib/A/Prog/Seg/R9F.v:178) (both written on a working branch b31dc485b96) pass a callee the fp premise (RcAsanFP.v:48-56), which expands through
+   callee contract's premise; widened 02:10Z on the auditor a Theorem Labs lane's finding: F30F.v (a version not in this delivery; from a working branch),
+   lib/A/Prog/Seg/R6F.v (at head lib/A/Prog/Seg/R6F.v:99-101) and lib/A/Prog/Seg/R9F.v (at head lib/A/Prog/Seg/R9F.v:179) (both written on a working branch) pass a callee the fp premise (RcAsanFP.v:48-56), which expands through
    asan_tls_cells (asan_stack_malloc_c.v:38-51) and the TP word to opt / uw / fs cells; measurement rt-reads.md:22 (a working note, not in this delivery)).
    Sources in the core's world (cgif line numbers; the planning core keeps them) and, for image A, its v1.9 bytes (85
    cells, 54 image-initialised MATCH, 31 runtime-written MATCH by their init stores: rt-cells-v190.md (a working note, not in this delivery), a Theorem Labs lane;
    image B's cells are the same families over lib/B/AsanRT.v, not re-measured here).  The AF0m.v line numbers in the
    table are image A's file (lib/A/AF0m.v); image B's rows are the same rows of lib/Reusable/YF0m.v (a Theorem Labs lane's
-   generated file of record, 8db247c6f3e), whose line numbers are not restated here:
+   generated file of record), whose line numbers are not restated here:
      family / cells       consumed by the runs                      source in the core's world
-     asan_cells (17)      yes (premise of every run; CELL_K,        am_const YG0n.v:210 over AF0m.v:79-85,87,95,96,111,
+     asan_cells (17)      yes (premise of every run; CELL_K,        am_const YG0n.v:210 over AF0m.v:80-86,87,95,96,111,
                           GOT_CELL_K, UAR, GOT_UAR by value)        174-178,185; AR_const_law YG0d.v:463-466
      shadow_rw            yes (premise; only own frame / block /   ahs_pres YG0n.v:441-445 EXCLUDES in_vis0, am_client :220;
                           global shadow loaded)                     vis0 shadow = hypothesis AR_states_vis0_shadow. OBLIGATION
                                                                     (two Theorem Labs lanes): start-up = a Theorem Labs lane's presence rows (KRWLAZY = present, a Theorem Labs lane 04:21Z; one extra interval open in 10/50 states, certificate side); step = Reusable/ShadowPresent.v (amalloc04 / afree04 / astack posts lack a presence clause, a Theorem Labs lane)
-     asan_opt_cells (4)   yes (GOT_VERBOSITY, VERBOSITY via fp)     am_const AF0m.v:71,100,173,184
-     asan_cf_cells (8)    yes (GOT_CF, CF+137 / +254 / +255)        am_const AF0m.v:34,38,40,45,47,60-62,67,172
-     asan_uw_cells (5)    yes (TSD_KEY_INITED, TSD_KEY, TP-88,      am_const AF0m.v:88,89,92,132; symbolic :25
+     asan_opt_cells (4)   yes (GOT_VERBOSITY, VERBOSITY via fp)     am_const AF0m.v:72,100,173,184
+     asan_cf_cells (8)    yes (GOT_CF, CF+137 / +254 / +255)        am_const AF0m.v:35,38,40,45,47,60-62,67,172
+     asan_uw_cells (5)    yes (TSD_KEY_INITED, TSD_KEY, TP-88,      am_const AF0m.v:89,89,92,132; symbolic :25
                           TSDMAIN via fp)                           (`c8 (ATp (-88)) (ATsd 0)`, `c8 (ATsd 0) (AC 0)`) +
                                                                     am_tsd YG0n.v:222
-     asan_fs_cells (6)    yes (TLS_INDEX, DTLS_TPOFF, TP-8, TP+40,  am_const AF0m.v:101,115,116,133,135; symbolic :25-26;
+     asan_fs_cells (6)    yes (TLS_INDEX, DTLS_TPOFF, TP-8, TP+40,  am_const AF0m.v:102,115,116,133,135; symbolic :25-26;
                           TP word, TP+8 via fp)                     am_layout YG0n.v:208 for the FS / DB side conditions
-     REAL_USED (4 slots)  yes (BCMP, MEMCMP, MEMCHR, TLS_GET_ADDR)  am_const AF0m.v:102-105 (stated REAL rows)
+     REAL_USED (4 slots)  yes (BCMP, MEMCMP, MEMCHR, TLS_GET_ADDR)  am_const AF0m.v:103-106 (stated REAL rows)
      asan_im_cells, asan_exit_cells, the other 35 REAL slots: consumed by no run nor callee premise (rt-reads.md (a working note, not in this delivery):
      no address literal nor name in 177 blobs; F34F, a stopped twin, only transports), so no as_const row is needed.
    CONSUMERS: the lifts' premises are produced from AR directly: asan_cells / shadow_rw / ro_agree by ctlrt_of_AR (as
    ACtlCut.ctl_rt), asan_tls_cells by ctl_tls_of_AR, the fp premise by ctl_fp_of_AR, asan_cf_cells / REAL_USED (the bcmp
    wrapper's aCL cells) by am_const as in rt_of_core.  ctl_RT / rt_of_core keep a Theorem Labs lane's 22:41Z glue text; its
-   pilot (ACtlG/A5.v:70 (written on a working branch 8d0116e86e0)) does not use it yet.
-   am_const states ctrl's rows only under the bundle law CtrlTSyms B (lib/Reusable/YF0m.v:2985, ts_const :3001; image
-   A: A/AF0m.v:293, :308); the donor walk assumes only TfibLib B (A/ACfj.v:98), and no donor lemma links them for a
+   pilot (ACtlG/A5.v:70 (written on a working branch)) does not use it yet.
+   am_const states ctrl's rows only under the bundle law CtrlTSyms B (lib/Reusable/YF0m.v:2986, ts_const :3001; image
+   A: A/AF0m.v:294, :309); the donor walk assumes only TfibLib B (A/ACfj.v:98), and no donor lemma links them for a
    generic B (the composition fixes B := CtrlB, CtrlB_syms AD2l.v:72), so rt_of_core and ctlrt_of_AR take CtrlTSyms B. *)
 
 From Stdlib Require Import ZArith List Lia.
@@ -92,7 +92,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.rng_asan B.Prog.CtrlB
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.AsanRT B.Img0.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Mem Frame.
 Local Open Scope Z_scope.
-(* The journal's sink_head is the core's own instance, as lib.Reusable.YCfn resolves it (Reusable/YE2k.v:45);
+(* The journal's sink_head is the core's own instance, as lib.Reusable.YCfn resolves it (Reusable/YE2k.v:46);
    lib.Reusable.YE2k is only Required here, so its export instance is named explicitly. *)
 #[local] Existing Instance lib.Reusable.YE2k.tfib_sink_head.
 
@@ -194,7 +194,7 @@ Variables RLO RHI : Z.
 Variable FP : list (Z * Z).
 
 (* Proof plan: AR at the cut is ajournal's first conjunct (YCbq.v:352); asan_cf_cells and the REAL_USED slots from
-   am_const (YG0n.v:210) under CtrlTSyms (YF0m.v:3001 ts_const) through the aview -> mrd bridge (w_Hoff); asan_cells and
+   am_const (YG0n.v:210) under CtrlTSyms (YF0m.v:3002 ts_const) through the aview -> mrd bridge (w_Hoff); asan_cells and
    shadow_rw from ctl_rt. *)
 Definition rt_of_core_stmt : Prop :=
   lib.Reusable.YF0m.CtrlTSyms B -> lib.Reusable.YG0d.AR_laws segs B ->
@@ -223,7 +223,7 @@ Definition ctl_tls_of_AR_stmt : Prop :=
 (* The fp premise of every callee that calls __asan_stack_malloc_c (RcAsanFP.v:48-56; consumers F30F.v:247 / :350,
    R6F.v:97-99, R9F.v:174, and the lifts of the fake-stack callees), from AR: asan_tls_cells by ctl_tls_of_AR's rows
    with DT = TP+32, TS = ly_tsd, C = ly_C, T = ly_T, DB = ly_D, k = 0; the TP word = ly_F (symbolic row `c8 (ATp 0)
-   (AF 0)`, YF0m.v:25); fs_place from am_areas (AF 0, kFakeStackSize) (YG0n.v:136); FS+88 = kStackSizeLog = 20 and
+   (AF 0)`, YF0m.v:26); fs_place from am_areas (AF 0, kFakeStackSize) (YG0n.v:136); FS+88 = kStackSizeLog = 20 and
    FS+96 = 0 from am_cells over fs_cells (YG0n.v:100-102); fp_cls (the hint word and flags of each class) from am_cells
    and am_flags (YG0n.v:152-154).  The window and disjointness premises are the caller's. *)
 Definition ctl_fp_of_AR_stmt : Prop :=
@@ -305,16 +305,16 @@ End Fsteps.
    conclusion has exactly the ProgLift shape `range_visible (w_H W) lo len`, and for a shadow word cover
    `n = 0 \/ range_visible (w_H W) (sh_al8_lo p) (sh_al8_hi p n - sh_al8_lo p)` (rng_asan.v:80-81).  The other
    premise forms of the lifts (RT_LO..RT_HI, CELL_K 8, GOT_CELL_K 8, an exact shadow range `(p / 8 + ASAN_K)
-   ((p + n - 1) / 8 - p / 8 + 1)`) are sub-ranges of these, by ProgBridge.range_visible_sub (4034df3a2b8); image and RT
+   ((p + n - 1) / 8 - p / 8 + 1)`) are sub-ranges of these, by ProgBridge.range_visible_sub; image and RT
    visibility are ProgBridge.img_vis_W / rt_vis_W, discharged inside the lifts.  So only the run-dependent ranges are
    stated here: win_vis / win_sh_vis (V1), heap_vis (V3), heap_sh_vis (V4), frame_vis (V5), glob_sh_vis (V6), all PROVED by
-   a Theorem Labs lane (a working branch 25e7c792306, ProgWorldVis{Win,Heap,Frame}.v; Required by consumers, not here). *)
+   a Theorem Labs lane (a working branch, ProgWorldVis{Win,Heap,Frame}.v; Required by consumers, not here). *)
 Section Visible.
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil}.
 Variable B : lib.Reusable.YG0f.asyms.
 
 (* img_vis (V2, a Theorem Labs lane's image condition): NOT stated here.  It is a Theorem Labs lane's ProgBridge.img_vis_W
-   (a working branch 7b850582d6a): `forall W : world rsegs, range_visible (w_H W) ImgBounds.IMG_LO
+   (a working branch): `forall W : world rsegs, range_visible (w_H W) ImgBounds.IMG_LO
    (ImgBounds.IMG_HI - ImgBounds.IMG_LO)`, from w_Hoff and rsegs tiling the hull [0x10000, 0x5fe000); no top-pre
    conjunct and no wle argument are needed.  Consumers cite img_vis_W directly. *)
 
@@ -393,7 +393,7 @@ End Visible.
    walk's Section hypothesis HRO (A/ACfj.v:119) and its instance tfib_HRO (A/ACfi.v:52-53, proof `exact (H a Ha)`).
    ctl_base carries `arodata_okS segs B RLO RHI` (YCfn.v:41); the PA layer reads `arodata_okP SEGS rlo rhi B`
    (APostBase, aliased in lib/B/Prog/CtrlBase.v).  The bodies are the same; the PA range must lie inside [RLO, RHI).
-   NOTE (image B): the PA layer sets [pa_relro_lo, pa_relro_hi) := [0x9f168, 0xa15e8) (lib/B/Prog/CtrlImg.v:100-101,
+   NOTE (image B): the PA layer sets [pa_relro_lo, pa_relro_hi) := [0x9f168, 0xa15e8) (lib/B/Prog/CtrlImg.v:101-102,
    the GNU_RELRO span) while the core's [RLO, RHI) is [0x9f1a0, 0xa15e8) (lib/B/ACtlK.v:17: .data.rel.ro's start to
    the GNU_RELRO filesz end), so the instance at (pa_relro_lo, pa_relro_hi) does NOT follow: RLO <= pa_relro_lo fails,
    [0x9f168, 0x9f1a0) (.init_array / .fini_array / .preinit_array) lies below RLO. *)
@@ -413,7 +413,7 @@ End ArodataP.
    7. The fake-stack call and its release (a Theorem Labs lane 23:22Z; names a Theorem Labs lane 23:28Z: ctl_fs_of_astack with the
    size class as an argument).  The core's world speaks of frame_addr / flag_addr / ly_F; ctrl's stretches speak of
    fs_frame / fs_flag / fs_hint over the side stack FS (asan_stack_malloc_c.v:26-31).  FS := ly_F ly (the TLS word at
-   as_tp B holds it: YF0m.v:25 `c8 (ATp 0) (AF 0)`), j := pos.  Draft and gaps: fs-of-astack.md (a working note, not in this delivery) (G1: the
+   as_tp B holds it: YF0m.v:26 `c8 (ATp 0) (AF 0)`), j := pos.  Draft and gaps: fs-of-astack.md (a working note, not in this delivery) (G1: the
    stretch after the call is re-based at the return memory, since the core's posts are view-level; G2 / G3: two
    stretches must be restated; G4: aa_stack_malloc covers only classes 1 and 2, cgif lib/YG0d.v:535).  Image A has one such
    stretch (reac_ctrl_parseF.v, class 1); the split points a Theorem Labs lane found are image B's. *)
@@ -434,7 +434,7 @@ Definition ctl_fs_geom_stmt : Prop :=
     (forall a, B.AsanRT.shadow_addr a = lib.Reusable.YG0f.shadow_addr a).
 
 (* G4, named gap (a Theorem Labs lane 00:48Z): the stack-malloc contract for ctrl's four classes.  The planning core's API record
-   covers only classes 1 and 2 (cgif lib/YG0d.v:535, cgif's form); a Theorem Labs lane's core post-pass takes, from a working branch f7bc5928423, the
+   covers only classes 1 and 2 (cgif lib/YG0d.v:535, cgif's form); a Theorem Labs lane's core post-pass takes, from a working branch, the
    YG0d.v:536 line (`pc_stack_malloc (as_code B) cid <> 0 -> astack_malloc_realizes segs B cid`) with ctrl's image-B
    map 0 / 1 / 2 / 6 = 0x3d6f4 / 0x3d868 / 0x3d9f8 / 0x3db94 (lib/B/Prog/asan_stack_malloc_c.v (at head lib/B/Prog/asan_stack_malloc_c.v:8-11),
    ASAN_STACK_MALLOC_<cid>); then this follows from aa_stack_malloc. *)
@@ -557,11 +557,11 @@ End FsOfAstack.
    ctl_post_<runtime callee>; call sites callsite-premises-B.md (a working note, not in this delivery)).
    Each premise list is the core contract's post, piece by piece: aintrin_realizes OSet / OCpy (YG0d.v:318-336),
    amemchr0_realizes (:384-401), abcmp_realizes (:353-372), aset_shadow_realizes (
-   lib/Reusable/SetShadowDef.v (at head lib/Reusable/SetShadowDef.v:20-31; from a working branch cb6eddd4032); also in this unit's core).  The posts are VIEW-level (aview),
+   lib/Reusable/SetShadowDef.v (at head lib/Reusable/SetShadowDef.v:21-32; from a working branch); also in this unit's core).  The posts are VIEW-level (aview),
    so the raw `munch WR m1 m2` / `wmono m1 m2` the stretches state today are NOT derivable (a hidden byte, or a byte
    equal to the rom byte, may change): the conclusions are their visible forms munch_vis / wmono_vis, and the
    stretch after the call is re-based to read them (a Theorem Labs lane 23:53Z allows re-based copies; G1 (fs-of-astack.md (a working note, not in this delivery))).
-   strcmp: astrcmp_realizes (a working branch 04d425a4ce3 lib/Reusable/AStrcmpDef.v; also in the
+   strcmp: astrcmp_realizes (a working branch lib/Reusable/AStrcmpDef.v; also in the
    core) has abcmp_realizes' post shape (2 * ESTACK window, apresent clause), so ctl_post_strcmp needs no Require. *)
 Section RtPost.
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil}.
@@ -716,7 +716,7 @@ Definition ctl_post_set_shadow_stmt : Prop :=
     wmono_vis (lib.Reusable.YA0n.w_H W) mem mem' /\
     lib.Lib.Step.rw_cells B.Img0.rsegs mem' q (lib.Lib.Cells.CB (Z.to_nat n) (repeat (Z_to_bv 8 v) (Z.to_nat n)) :: nil).
 
-(* Proofs of the three statements above (group post, a Theorem Labs lane, commit 2fef5c2d5c2; type-check only). *)
+(* Proofs of the three statements above (group post, a Theorem Labs lane; type-check only). *)
 Lemma rw_cells_CB_of_present : forall (m : word -> option byte) (d : Z) (k : nat) (bs : list byte),
   length bs = k -> 0 <= d -> d + Z.of_nat k <= 2 ^ 64 ->
   (forall i : nat, (i < k)%nat -> lib.Lib.Mem.mrd B.Img0.rsegs m (Z_to_bv 64 (d + Z.of_nat i)) = nth_error bs i) ->
@@ -805,7 +805,7 @@ Qed.
 End RtPost.
 
 (* ---------------------------------------------------------------------------------------------------------
-   ADDITIONS after the interface freeze at c03ce1627b6 (announced by two Theorem Labs lanes 02:36Z; earlier lines unchanged). *)
+   ADDITIONS after the interface freeze (announced by two Theorem Labs lanes 02:36Z; earlier lines unchanged). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.MemNorm.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require ExecF MState.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YK1b YI04.
@@ -815,7 +815,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.MemNormF.
    runs on normalize m (where MemNorm.mem_inv_normalize gives mem_inv, so _F / plain contracts keep mem_inv in their
    premises and posts, and Q may state mem_inv of the normalized final memory); this wrapper carries the result back
    to the real memory: ms_rel (registers, pc, ...), bytes / wr / munch / wmono facts, and ro_agree of the real final
-   memory (never mem_inv).  Glue-level only.  Proof: MemNormF.evtF_normalize_ro (from a working branch 5dbd293c250) (
+   memory (never mem_inv).  Glue-level only.  Proof: MemNormF.evtF_normalize_ro (from a working branch) (
    MemNormF.v (at head lib/B/MemNormF.v:148-152)) + MemNorm.bytes_at_rel :369, wr_at_rel :380, munch_rel :394, wmono_rel :402,
    ro_agree_of_mem_rel :73, mem_rel_normalize :67. *)
 Definition rebase_ro_normalize_stmt : Prop :=
@@ -896,8 +896,8 @@ Definition ctl_stack_shadow_of_AR_stmt : Prop :=
     B.AsanRT.addressable m lo len.
 End BlkShadow.
 (* 11. The thread pointer of the bundle is ctrl's TP (announced addition, a Theorem Labs lane 03:2xZ): turns afn_pre's
-   `getr regs 4 = w64 (as_tp B)` into fp's TP = AsanRT.RT_TP.  CtrlTSyms' ts_tp (YF0m.v:2987) gives TFIB_TP =
-   0x5dc650 (YF0m.v:12; = B.AsanRT.RT_TP = builtin_tls 0x5dc588 + 0xc8, the B symtab). *)
+   `getr regs 4 = w64 (as_tp B)` into fp's TP = AsanRT.RT_TP.  CtrlTSyms' ts_tp (YF0m.v:2988) gives TFIB_TP =
+   0x5dc650 (YF0m.v:13; = B.AsanRT.RT_TP = builtin_tls 0x5dc588 + 0xc8, the B symtab). *)
 Lemma as_tp_RT_TP : forall B : lib.Reusable.YG0f.asyms,
   lib.Reusable.YF0m.CtrlTSyms B -> lib.Reusable.YG0f.as_tp B = B.AsanRT.RT_TP.
 Proof. intros B HTS. rewrite (lib.Reusable.YF0m.ts_tp _ HTS). reflexivity. Qed.
@@ -913,7 +913,7 @@ Definition RT_used_of_AR_stmt : Prop :=
     lib.Reusable.YG0n.AR segs B ly S W m md -> RT_used m.
 End RtUsed.
 (* 13. Shared helpers of the ctl_post_<callee> conversions (K0-K3; decision a Theorem Labs lane 03:3xZ: shared interface, several
-   lanes need them; texts = a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_identity_replyPost.v (not in this delivery) (1df58ed9045), image B's own
+   lanes need them; texts = a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_identity_replyPost.v (not in this delivery), image B's own
    names; that file came from ctl-post-callees.md section 0.3 (a working note, not in this delivery)).  The A twin lib/A/ProgWorld.v states the same.
    K0 is the class set acall_kept / tcj_kept / ajournal keep (kept_class of Section RtPost is the earlier malloc / free
    form, without the global ~ E).  The hint word and flag bytes of the side stack are NOT kept classes: they come from AR
@@ -987,7 +987,7 @@ Proof.
 Qed.
 End CtlPostCallees.
 
-(* Proofs of Section Fsteps (group steps, a Theorem Labs lane, commit bf110153c56; type-check only).
+(* Proofs of Section Fsteps (group steps, a Theorem Labs lane; type-check only).
    Machine side without functional_extensionality (YK04R.fsteps_restrict depends on it). *)
 (* ---- machine side: a footprint run whose footprint avoids H grows memory and keeps every H byte ---- *)
 Section StepKeeps.
@@ -1002,7 +1002,8 @@ Proof.
   induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
     intros m c mf' rs Hi Hrs x Hx; cbn [interp_eff_accesses] in Hi; try discriminate.
   - injection Hi as <- <- <-. reflexivity.
-  - destruct (ov_read_bytes sg m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes sg m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar sg a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses sg (k (bv_extract 0 n (le_bytes_to_word bs))) m)
       as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
     cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
@@ -1044,6 +1045,7 @@ Proof.
   destruct (fetch_tail_any sg (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (pws_decode_keeps ms w ms' rs Hs Hrs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at sg (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps sg (ms_pc ms) || fetch_byte_traps sg (ms_pc ms + 1)
     || match fetch_half_any sg (ms_mem ms) (ms_pc ms) with
@@ -1137,7 +1139,7 @@ Variable B : lib.Reusable.YG0f.asyms.
 
 (* (i) a global's PARTIAL granule: a shadow const row of value k (0 < k < 8) at shadow_addr g makes the first k bytes
    of the granule at g addressable.  Image B's rows of record are a Theorem Labs lane's generated Tfib_const_shadow
-   (e56483f863b, lib/Reusable/YF0m.v:2166-2952; image A: lib/A/AF0m.v 2167-2953, = global-shadow-rows-A.v.txt (a working note, not in this delivery)). *)
+   (lib/Reusable/YF0m.v:2167-2953; image A: lib/A/AF0m.v 2167-2953, = global-shadow-rows-A.v.txt (a working note, not in this delivery)). *)
 Definition ctl_gshadow_of_AR_stmt : Prop :=
   lib.Reusable.YF0m.CtrlTSyms B -> lib.Reusable.YG0d.AR_laws segs B ->
   forall ly S (W : lib.Reusable.YA0n.world segs) (m : word -> option byte) md g k lo len,
@@ -1160,11 +1162,11 @@ Definition fp_tls_owned_stmt : Prop :=
     lib.Reusable.YG0n.aowned B ly S a.
 
 (* (i') a WHOLE global body [g, g + n) (announced addition, a Theorem Labs lane 05:4xZ for a Theorem Labs lane's KIND_NAME / QMARK glues): the full
-   granules from a zero-shadow range of the bundle (a Theorem Labs lane's record Tfib_zero_shadow, image B: e56483f863b
-   lib/Reusable/YF0m.v:2954, is the fine list: it keeps each global's full granules and excludes its partial granule and
+   granules from a zero-shadow range of the bundle (a Theorem Labs lane's record Tfib_zero_shadow, image B:
+   lib/Reusable/YF0m.v:2955, is the fine list: it keeps each global's full granules and excludes its partial granule and
    redzone, e.g. image B's KIND_NAME [0x9f580, 0x9f5f0) (asan-ubsan symtab: KIND_NAME at 0x9f580, 0xa0 bytes with its
-   redzone; the redzone (0x9f5f0, 0x30) is owned static, YF0m.v:2978) lies in (0x21aa0, 0x9f5f0 - 0x21aa0), YF0m.v:2962),
-   the partial last granule from its shadow const row (a Theorem Labs lane's Tfib_const_shadow, YF0m.v:2166+).  Proof =
+   redzone; the redzone (0x9f5f0, 0x30) is owned static, YF0m.v:2979) lies in (0x21aa0, 0x9f5f0 - 0x21aa0), YF0m.v:2963),
+   the partial last granule from its shadow const row (a Theorem Labs lane's Tfib_const_shadow, YF0m.v:2167+).  Proof =
    ctl_zshadow_of_AR on [g, g + 8 * (n / 8)) + ctl_gshadow_of_AR on the last granule. *)
 Definition ctl_global_shadow_of_AR_stmt : Prop :=
   lib.Reusable.YF0m.CtrlTSyms B -> lib.Reusable.YG0d.AR_laws segs B ->
@@ -1216,7 +1218,7 @@ Qed.
    (ProgWorld_Fs.pw_F_above) and below the shadow bands, C+152 / T+48 / DB+24 in the owned extents ly_C / ly_T / ly_D,
    apart from (ly_F, kFakeStackSize) by layout_ok lo_disj and in application memory.
    Image B's TSD: 0x5fd9f8 = __pthread_tsd_main + 0 (libreac-v190/asan-ubsan/fuzz_ctrl.nm.txt, a 0x400-byte .bss
-   object) = lib/Reusable/YF0m.v:12 TFIB_TSD = B.AsanRT.RT_TSDMAIN (image A: 0x5fcbb8, the same symbol in fuzz_ctrl.asan). *)
+   object) = lib/Reusable/YF0m.v:13 TFIB_TSD = B.AsanRT.RT_TSDMAIN (image A: 0x5fcbb8, the same symbol in fuzz_ctrl.asan). *)
 Lemma as_tsd_TSD : forall B : lib.Reusable.YG0f.asyms,
   lib.Reusable.YF0m.CtrlTSyms B -> lib.Reusable.YG0f.as_tsd B = 0x5fd9f8.
 Proof. intros B HTS. rewrite (lib.Reusable.YF0m.ts_tsd _ HTS). reflexivity. Qed.
@@ -1263,7 +1265,7 @@ Definition ctl_block_apart_fs_stmt : Prop :=
 End BlockApartFs.
 
 (* 18. A live fake frame lies above the image (announced addition; final form three Theorem Labs lanes 05:39Z: ONE
-   premise-free statement for every class, the `6 <= cid` premise of a48c4068c6e dropped).  frame_addr ly cid pos =
+   premise-free statement for every class, the `6 <= cid` premise dropped).  frame_addr ly cid pos =
    ly_F ly + kFakeFramesOff + cid * 2^20 + pos * fs_frame_bytes cid (YG0f.v:39-40, :340) >= ly_F ly, because
    0 <= cid <= 10 and 0 <= pos (AR's Wf: wf_fakestack / wfs_live, YG01.v:313); and ASAN_GT = 0x5fe000 <= ly_F ly from AR
    (lib/B/ProgWorld_Fs.v pw_F_above: lo_disj keeps (ly_F, kFakeStackSize) apart from ly_img, and ALedger's al_img puts
@@ -1283,9 +1285,9 @@ End FrameAbove.
 
 (* 19. A byte of a const row is visible and readable with its value (announced addition, two Theorem Labs lanes 08:05Z /
    08:1xZ; consumers: seg_R18's shadow-word cover of the box catalogue's last row, whose redzone shadow byte 0x8000c05b
-   is the const row `z1 (ANum 0x8000c05b) 0xf9` (YF0m.v:2385; image B's BOX_CATALOGUE 0x9f620 + 0xcb8, B symtab),
+   is the const row `z1 (ANum 0x8000c05b) 0xf9` (YF0m.v:2386; image B's BOX_CATALOGUE 0x9f620 + 0xcb8, B symtab),
    a Theorem Labs lane's P12, and any shadow-word cover crossing a
-   global redzone).  The core gives it: AR's am_const at as_const B ly = Tfib_const ly (CtrlTSyms' ts_const, YF0m.v:3001)
+   global redzone).  The core gives it: AR's am_const at as_const B ly = Tfib_const ly (CtrlTSyms' ts_const, YF0m.v:3002)
    makes every row hold over the view (lib/B/ProgWorld_Fs.v pw_row); a byte the view reads is visible (a hidden byte
    lies in no segment, w_Hoff: lib/B/ProgWorldVisFrame.v vis_of_aview); and pw_z1_row gives the byte in mrd form.
    Proof: a Theorem Labs lane, in lib/A/ProgWorldShadow.v (image A), from pw_z1_row + vis_of_aview. *)

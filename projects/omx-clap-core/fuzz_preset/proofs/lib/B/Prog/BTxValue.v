@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths, module names and numbers changed; 5113 of its 5220 lines of code are new or changed and 407 lines of the source are left out. *)
-(* INT102-READY on the kit's cut 7cdbb61b5fa0 (it replaces the record walk ef6206ba4c8a of
-   a working branch f854a0d93453; the cut carries int102's copy 391e9ae7b481): the same walk re-fitted to the batch kit's
-   texts, a working branch cdde0ed15730 (lib/A/PRH_FnTx.v 88468bf162d8, lib/A/PRH_Base.v
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* INT102-READY on the kit's cut (it replaces the record walk ef6206ba4c8a of
+   a working branch; the cut carries int102's copy 391e9ae7b481): the same walk re-fitted to the batch kit's
+   texts, a working branch (lib/A/PRH_FnTx.v 88468bf162d8, lib/A/PRH_Base.v
    966b522cc722, lib/Reusable/YCbqGwild.v aa0b10a819fa; at the cut PRH_FnTx.v 88468bf162d8, PRH_Base.v ef7c8ca98529,
    YCbqGwild.v 0c63874858e4), as the tx_line PREP (BTxLine.v 60600612cede) did. What the batch changed, and what this
    file does about it (each change forced by the batch text; every lemma name kept):
@@ -43,9 +44,9 @@
    the ledger's own, the run premise GUARDED by f0 = 0, ONE fpostWm post naming the outcome prhtx_out (DONE / FAILED AT
    ENTRY / REFUSED, no abort arm) and the position `exists j hist', ..`), at PI := prh_img_B: tx_value_B_holds (every
    depth bound, by induction on the bound; the recursion through the text one level down). RELOCATED from the old-pin
-   walk by alreloc (d1f716c44f9d, relocation only), then RE-FITTED to the #102 texts after lib/B/Prog/BTxLine.v's
+   walk by alreloc (relocation only), then RE-FITTED to the #102 texts after lib/B/Prog/BTxLine.v's
    re-fit. The B twin of S10's lib/A/Prog/S10TxValue.v
-   (origin/cold/h-hpreset-7-walk-S10: d356ed78f634 the entry and leaf arms, 37251f6b9a5 the loop segments), over the
+   (origin/cold/h-hpreset-7-walk-S10: the entry and leaf arms, the loop segments), over the
    same engine: YC1fPx's memory-invariant runner paj_run_x_inv over YCbqG's ajournal_x (caller-window form,
    YCbqGcallW.v ajournal_x_init_W) at the memnorm keep (YSRrMemnorm), the strlen wrapper through YGcallMxmn.v
    aj_strlen_at_xrom. GLUE (no local copy): lib/A/Prog/Tx102Glue.v - the no-abort call / tail-call rules s10_call_WbmR /
@@ -59,7 +60,7 @@
    named, 4 UNRELEASED cold/* file(s), 0 UNRELEASED hit(s) on live working heads`; the released hits are the plain /
    UBSan contract texts and models (other images), the unreleased ones TX_VALUE contract programs (lib/A, lib/AZ, lib/B
    old binary, lib/Prog/CF) - none a walk at B'. Rule-24 check CONFIRM (checker BTxValueB.TxvR24B102, 20:40Z): no Qed
-   proof of tx_value at image B' exists other than this lane's relocated walk d1f716c44f9d, which this file re-fits.
+   proof of tx_value at image B' exists other than this lane's relocated walk, which this file re-fits.
    The census-1 cold/* + release/* sweep 20:28Z (15893 refs, 26854 blobs) found the positive control (tx_value_B_holds
    with 0x85440) only on this lane's branches.
    IMAGE B', measured with elfdis on the unstripped twin c90d4fa54d43 of d663f82d (tx_value at 0x85440, 1152 bytes)
@@ -159,7 +160,7 @@ Definition tv_jt_chunks_B : list YP09.chunk :=
 Lemma TV_PC_val_B : B_prog_base + TV_PC_B = B_prog_sigma AS_tx_value.
 Proof. vm_compute. reflexivity. Qed.
 
-(* ---- DELETE when S10TxValGlue lands: B-local copy of S10TxValue.v (walk-S10 d356ed78f634) generic helpers
+(* ---- DELETE when S10TxValGlue lands: B-local copy of S10TxValue.v (walk-S10) generic helpers
    (the pure model s10v_wsep / s10v_tvp_wv / s10v_zsum; the node's fields and facts; the checker soundness; the frame
    and view lemmas; the number arm's string facts). tv_keep takes the frame size as an argument (A's fixes 176). ---- *)
 Lemma s10v_wsep : forall (p : bool), concat ([[58]] ++ (if p then [[32]] else [])) = concat [WriterValue.wsep p].
@@ -304,7 +305,7 @@ Ltac tv_savef HR0 Usp EG sp0 od k r :=
   lazymatch goal with |- val_mem _ _ ?a _ _ => replace a with (sp0 + od) by (unfold TV_FRAME_B; lia) end;
   exact V.
 
-(* DELETE when S10TxValGlue lands: B-local copy of S10TxValue.v (walk-S10 7623a0781f8) image-free open-arm pieces
+(* DELETE when S10TxValGlue lands: B-local copy of S10TxValue.v (walk-S10) image-free open-arm pieces
    (tvA_go / tvO_go / tv_close, tvp_arr / tvp_obj, the item extraction tv_items_nth / tv_mems_nth) *)
 (* ---- the open arm's pieces (TxModel.tvp of an array / object), named ---- *)
 Fixpoint tvA_go (p : bool) (d : Z) (i : nat) (l : list PjTree.jv) : list (list Z) :=
@@ -392,7 +393,7 @@ destruct H as (x & k & D1 & D2 & E & Hx & Hc & HP & HR). destruct i as [|i].
   split; [exact H1|]. split; [exact H2|]. split; [subst D; right; apply in_or_app; right; exact H3|].
   split; [exact H4|]. subst D. intros y Hy. right. apply in_or_app. right. exact (H5 y Hy).
 Qed.
-(* DELETE when S10TxValGlue lands: B-local copy of S10TxValue.v (walk-S10 339382e2cb0) image-free item model
+(* DELETE when S10TxValGlue lands: B-local copy of S10TxValue.v (walk-S10) image-free item model
    (tvI_key / tvI_go and their lemmas, tv_firstn_S, tv_aregs13) *)
 (* ---- one item model for both brackets: an array item has no key, an object member its key ---- *)
 Definition tvI_key (p : bool) (ko : option (list Z)) : list (list Z) :=
@@ -611,7 +612,7 @@ Qed.
 Section f.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
-(* the allocator laws at hl = cf_head (AR_laws_x of the P'' engine set as the kit's cut 7cdbb61b5fa0 carries it: 25 fields,
+(* the allocator laws at hl = cf_head (AR_laws_x of the P'' engine set as the kit's cut carries it: 25 fields,
    YCbqG.v 219748197d6b) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 (* MARKED STAND-IN (owner a Theorem Labs lane, the unit's image binding of B: PALib's fields). Taken at PI_prog_B, the whole-program
@@ -631,7 +632,7 @@ Hypothesis ASx : YGcallMxmn.astrlen_realizes_xrom SEGS B ARx RLO RHI (SIGMA AS__
 Let HBgot := pal_got_shadow (PI := PA) B PAL.
 Let HBcell := pal_cell (PI := PA) B PAL.
 
-(* ---- DELETE when S10TxValGlue lands: B-local copy of S10TxValue.v (walk-S10 d356ed78f634) generic helpers (the part
+(* ---- DELETE when S10TxValGlue lands: B-local copy of S10TxValue.v (walk-S10) generic helpers (the part
    over the Section's hypotheses) ---- *)
 (* the node's home (the Tx part's prhtx_home: a harness block of Lam, or one fake frame of S) is client memory, away from the
    image and the shadow band *)
@@ -1919,7 +1920,7 @@ end.
 Qed.
 
 
-(* ==== THE LEAF ARMS END TO END (B twin of S10TxValue.v at walk-S10 7623a0781f8 / f1eb5e26dfc: the transfers, the tree
+(* ==== THE LEAF ARMS END TO END (B twin of S10TxValue.v at walk-S10: the transfers, the tree
    lemmas, the text's binders and premises, tv_qt, tv_facts_at, tv_tail_put / tv_tail_string, tv_node_facts, tv_lit_src,
    tv_main_lit / tv_main_num / tv_main_str), at image B: frame 192, prh_img_B, the B run lemmas. The image-generic part
    (the transfers and the tree lemmas, tv_not_fp .. tv_foot_low, tv_buf_inFP, tv_garr8_prefix) is a B-local copy:
@@ -2884,7 +2885,7 @@ apply (tv_tail_string E' ss' ms' mdc kj 192 str k s HS' Hrv HJ' Hms Hsp HP R1 R3
 - exact HMN.
 Qed.
 
-(* ==== THE OPEN ARM'S MACHINERY at image B (B twin of S10TxValue.v 7623a0781f8: tv_saved / tv_spill at B's frame
+(* ==== THE OPEN ARM'S MACHINERY at image B (B twin of S10TxValue.v: tv_saved / tv_spill at B's frame
    layout, tv_frame_keep, tv_live, tv_home_keep, tv_live_after, tv_cf, tv_call_core at o = -192, tv_kont, tv_callregs,
    tv_put_call / tv_line_call / tv_str_call / tv_val_call). B's frame is 192 bytes and its loop spills sit at other
    offsets than A's (tv_spill); everything else is A's text with B's constants ==== *)
@@ -3575,7 +3576,7 @@ split.
   + intros x Hx. unfold in_app, SHADOW_OFF, kLowShadowBeg, kHighMemBeg in *. lia.
 Qed.
 
-(* ==== THE OPEN ARM's LOOP STATES at image B, from concrete facts (B twin of S10TxValue.v 339382e2cb0's ss_M / ss_B
+(* ==== THE OPEN ARM's LOOP STATES at image B, from concrete facts (B twin of S10TxValue.v's ss_M / ss_B
    entries; B's frame layout, B's registers, and the facts UBSan's pointer checks need) ==== *)
 Lemma tv_regs_ok_set : forall E sr rg (r : bv 5) e, regs_ok E sr rg -> bv_eqb r 0 = false ->
   getr rg r = sv_denot E e -> regs_ok E (sr_set sr r e) rg.
@@ -4006,7 +4007,7 @@ Qed.
 
 
 
-(* ==== THE CLOSING TAIL CALL and the live-state helpers (B twin of S10TxValue.v 339382e2cb0: tv_post_trans,
+(* ==== THE CLOSING TAIL CALL and the live-state helpers (B twin of S10TxValue.v: tv_post_trans,
    tv_apresent_av, tv_apresent_of_aview, tv_live_present, tv_achain_re, tv_tail_close, tv_live_same, tv_lit_src_at,
    tv_fields_now) at frame 192 ==== *)
 (* ==== THE CLOSING TAIL CALL from a live state ==== *)
@@ -4401,7 +4402,7 @@ split.
   + intros x Hx. unfold in_app, SHADOW_OFF, kLowShadowBeg, kHighMemBeg in *. lia.
 Qed.
 
-(* ==== THE LOOP's helpers at image B (B twin of S10TxValue.v 37251f6b9a5: tv_SEG, tv_kont_seg, tv_mregs_ok,
+(* ==== THE LOOP's helpers at image B (B twin of S10TxValue.v: tv_SEG, tv_kont_seg, tv_mregs_ok,
    tv_lregs_sym, tv_lregs_step, tv_bregs_sym, tv_bregs_pres, tv_reg_off, tv_lam_low, tv_t_high; B's loop registers
    s5 = 56 i, s8 = 8 i, s10 = i and B's frame of 192) ==== *)
 (* a call's continuation to the loop segment at offset pc, after the pieces P, at item i *)
@@ -4994,7 +4995,7 @@ exists [[TV_CLOSE]]. rewrite <- (tvo_split NIT) by lia. rewrite skipn_all. cbn [
 reflexivity.
 Qed.
 
-(* ---- the i-th item at a live state (B twin of S10TxValue.v 37251f6b9a5 tv_item_now) ---- *)
+(* ---- the i-th item at a live state (B twin of S10TxValue.v tv_item_now) ---- *)
 Lemma tv_item_now : forall i lyc Sc Hpc Wc memc mdc kj b P, (i < NIT)%nat -> tv_liveR WR lyc Sc Hpc Wc memc mdc kj b P ->
   exists Dx, PRH_Reader.pj_nodeR SEGS (rdW Wc memc) (prh_lin Lam) (kids + 56 * Z.of_nat i)
       (snd (nth i its (None, PjTree.JNull))) Dx /\

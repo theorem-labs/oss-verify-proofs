@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the walk of chain_words (0x8da84, 298 instructions) on the ASan+UBSan build
    of plugin-hostd/fuzz_command, in cgif_file_fuzzer's walk style: tchain_words_spec (lib/B/Prog/chain_words_c.v,
-   statements a working branch f490061c104) from the six segments (chain_words_s1.v .. chain_words_s6.v), the
+   statements a working branch) from the six segments (chain_words_s1.v .. chain_words_s6.v), the
    transport of the caller's objects (chain_words_j.v) and the assembly (chain_words_a.v), over the interface
-   chain_words_d.v. The B twin of lib/A/Prog/chain_words.v (A walk a working branch 5e2cdad423e);
+   chain_words_d.v. The B twin of lib/A/Prog/chain_words.v (A walk a working branch);
    A's chain_words_exact.v is gone, because the B statement already states the returned block's size exactly
    (chain_words_c.v:159, n = |x| + 1).
 
    The Section hypotheses are the statement's callee contracts and runtime rules (chain_words_c.v:106-116) and
    the per-binary record facts with the names of a Theorem Labs lane's RULING-STMT.md section 1; the facts the walk names
    (cw_prog_unownedP, cw_ro_imgP, cw_ro_of_rodP) are CmdRecFacts lemmas over IMG. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00 YG0q.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

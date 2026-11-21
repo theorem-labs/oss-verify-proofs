@@ -39,7 +39,8 @@
    assume layout_ok and AFek's sstates carry DF_fixed (NB, SB >= 4096, n_uniq_ids >= 1), false at the first Put, so
    the seeds, the loop state and the frame invariant are rebuilt here; AFem's hash_loop is ported. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_knock/lib/A/AD3k.v, with its module paths and module names changed; 177 of its 203 lines of code are new or changed and 847 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YA0pM.v (commit 5ad50e61fc6a, file sha256 4b9cef4634a9) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YA0pM.v (file sha256 4b9cef4634a9) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The runners a secondary recycle walk calls (SRr_run_sh_gen,
    SRr_run_to_sh_gen, SRr_ret_at and the tactics srr_run_sh / srr_run_to_sh), each twinned so the continuation keeps
    the materialized-page fact instead of `forall mat'`:

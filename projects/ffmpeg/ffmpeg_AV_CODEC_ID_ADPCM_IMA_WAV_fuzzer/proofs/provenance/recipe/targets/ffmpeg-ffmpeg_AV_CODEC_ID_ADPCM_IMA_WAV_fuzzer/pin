@@ -1,0 +1,109 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+URL=https://github.com/FFmpeg/FFmpeg
+COMMIT=bbd37149e4b1bd9730a70f06b72d1c1f9b95bc0f
+
+
+
+
+BUILD_IMAGE=builder
+
+
+
+
+
+
+
+
+. /work/tools/ossfuzz/recipes.sh
+
+build_lib() {
+  oft_build_autotools
+  oft_build_harness "tools/target_enc_fuzzer.c"
+  oft_seal_getenv
+  oft_seal_mkstemp
+  oft_seal_getpid
+}
+LIB_ARCHIVE="lib/liboft.a"
+LIB_CFLAGS=""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FF_CONFIG=main
+FF_HARNESS=tools/target_enc_fuzzer.c
+FF_DEFINES="-DFFMPEG_ENCODER=adpcm_ima_wav"
+FF_LIBS="libavcodec/libavcodec.a libavutil/libavutil.a libswresample/libswresample.a"
+build_lib() {
+  local s="$BUILDDIR/src" cfg
+  oft_copy_src
+  if [ "$FF_CONFIG" = main ]; then
+    cfg="--enable-gpl --enable-nonfree"
+    cfg="$cfg --disable-libdrm --disable-muxers --disable-protocols --disable-demuxer=rtp,rtsp,sdp"
+    cfg="$cfg --disable-devices --enable-demuxers"
+  else
+    cfg="--enable-gpl --disable-libdrm --disable-muxers --disable-protocols"
+    cfg="$cfg --disable-devices --disable-encoders --disable-filters --disable-parsers"
+    cfg="$cfg --disable-decoders --disable-hwaccels --disable-bsfs --disable-vaapi --disable-vdpau"
+    cfg="$cfg --disable-v4l2_m2m --disable-cuda_llvm --enable-demuxers --disable-demuxer=rtp,rtsp,sdp"
+  fi
+
+  ( cd "$s" \
+    && ./configure --enable-cross-compile --target-os=linux --arch=riscv64 \
+         --cc="$CC" --cxx="$(oft_cxx)" --ar="$CHOST-ar" --nm="$CHOST-nm" \
+         --ranlib="$CHOST-ranlib" --strip="$CHOST-strip" --pkg-config=pkg-config \
+         --host-cc=/usr/bin/cc --extra-cflags="$CFLAGS" --extra-cxxflags="$(oft_cxxflags)" \
+         --prefix="${OFT_PREFIX:?build.sh sets the flavour-independent install prefix}" \
+         --pkg-config-flags=--static --enable-ossfuzz --optflags=-O1 \
+         --disable-shared --disable-doc --disable-programs --disable-asm $cfg \
+    && make -j"$(oft_jobs)" $FF_LIBS ) || { echo "oft: ffmpeg: configure or library build failed" >&2; return 1; }
+  oft_merge_archives
+
+  oft_build_harness "$FF_HARNESS" $FF_DEFINES
+  oft_seal_getenv
+  oft_seal_mkstemp
+  oft_seal_getpid
+}
+

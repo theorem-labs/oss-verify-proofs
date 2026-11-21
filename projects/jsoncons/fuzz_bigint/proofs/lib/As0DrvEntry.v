@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the zero window is 6144513 bytes, was 8388608, the auxv base is its own slot of the main environment (auxvp, slot 5) in place of argv[0]'s pointer minus 160, the auxv is the launch's 27 or 29 pairs (LibIface.auxv_launch) in place of the old ten-pair list, and argv[0]'s string base (STR0) is a parameter, since it carries the arch_align_stack pad. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -9,6 +10,8 @@ From OSSVerify.jsoncons.fuzz_bigint.images Require Import Asan.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import AsanAcct.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import
   PropExec CatExec CatSim StoreOk ShapeAlg SpinAlg AsanAcctShape SymExec2 SymExec2Sound SymRun SymDrive SymDriveX HeapIface HeapIfaceA As0DrvKitA.
+(* [auxv_atA] is stated in [LibIface.auxv_launch]'s terms, qualified *)
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require LibIface.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
@@ -26,7 +29,10 @@ Definition sr_mainA : list expr :=
 
 Definition kn_mainA : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   (* The zero window is [StoreOk.stack_window_depth] = 6144513 deep
+      ([AsanPlanCoreK.v:3839-3857]), not 8388608: at 727298f3 the launch
+      zero-fills less.  [Bo0DrvEntry.v] carries the twin. *)
+   KWr (SA (EVar 0) (-6144513)) (6144513);
    KWord (SA (EVar 0) 0) 8 (ELit 2); KWord (SA (EVar 0) 8) 8 (EVar 1); KWord (SA (EVar 0) 16) 8 (EVar 2);
    KImg 0x10000 0xd7000; KImg 0x610190 0x610c38;          (* [comment removed for export] *)
    KImg 0xd9fa0 0xda090; KImg 0xda090 0xda178; KImg 0xda178 0xda480;   (* [comment removed for export] *)
@@ -34,7 +40,12 @@ Definition kn_mainA : list kentry :=
    (* [comment removed for export] *)
    KWord (SA (ELit 0) 0x610c40) 8 (ELit 0x610c40); KWord (SA (ELit 0) 0x610c60) 4 (EVar 4); KRange (EVar 4) 1 4194303;
    KWord (SA (ELit 0) 0x610cf8) 8 (EVar 3); KWord (SA (ELit 0) 0x610cd8) 8 (ELit 0x630fd0);
-   KWord (SA (ELit 0) 0x630fa0) 8 (EAlu ALU_ADD (EVar 1) (ELit (-160)));
+   (* The auxv base is its own environment slot, [EVar 5], as [Src0MainEntry.v:98]
+      holds [auxvp] in slot 3 of its environment.  At 727298f3 [p0] is [STR0]
+      and the auxv base is [usp + 8*argc + 8*envc + 24]
+      ([As0DrvEntryK.v:1081 val_auxp]); no constant offset from [p0] is the
+      auxv base. *)
+   KWord (SA (ELit 0) 0x630fa0) 8 (EVar 5);
    KImg 0xd9f40 0xd9f78; KImg 0x630fd0 0x631000;
    (* [comment removed for export] *)
    KWord (SA (ELit 0) 6492024) 4 (ELit 0); KWord (SA (ELit 0) 6492059) 1 (ELit 0); KWord (SA (ELit 0) 6491496) 8 (ELit 6491504); KWord (SA (ELit 0) 6491488) 4 (ELit 1);
@@ -45,18 +56,23 @@ Definition XC9_CELLS : list (Z * nat * Z) :=
   [(6492024, 4%nat, 0); (6492059, 1%nat, 0); (6491496, 8%nat, 6491504); (6491488, 4%nat, 1); (6491512, 8%nat, 775184); (6491768, 8%nat, 513096); (6491484, 4%nat, 0); (6491504, 8%nat, 0);
    (6493184, 8%nat, 0); (6491480, 1%nat, 0)].
 
-(* [comment removed for export] *)
-Definition auxv_listA (uidz rnd hwz : Z) : list Z := [3; 0x10040; 4; 56; 5; 11; 16; hwz; 6; 4096; 11; uidz; 12; uidz; 23; 0; 25; rnd; 0; 0].
-Definition auxv_atA (sp p0 : word) (M0 : word -> option byte) : Prop :=
-  exists uidz rnd hwz : Z,
-    (forall j, (j < 20)%nat ->
-       rdn ASEGS M0 (Z_to_bv 64 (bv_unsigned p0 - 160 + 8 * Z.of_nat j)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (nth j (auxv_listA uidz rnd hwz) 0))))
+(* The auxiliary vector at [auxvp] (the value of [libc.auxv], slot 5 of
+   [vals_mainA]), as the LPS 727298f3 launch writes it: [LibIface.auxv_vec],
+   27 pairs or 29 under CONFIG_RSEQ, the shape [LibIface.auxv_launch] asks of
+   [__auxv], with this image's program headers (0x10040, 56, 11).  Proved at
+   the main entry by [As0DrvEntryInst.as0_main_auxv]. *)
+Definition auxv_atA (sp auxvp : word) (M0 : word -> option byte) : Prop :=
+  exists (uidz rnd hwz : Z) (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (entry gid ae : word),
+    Z.of_N (ph_addr ph) = 0x10040 /\ Z.of_N (ph_ent ph) = 56 /\ Z.of_N (ph_num ph) = 11
+    /\ bv_unsigned auxvp + 16 * Z.of_nat (StackLayout.auxv_count (StackLayout.la_rseq la)) <= 2 ^ 47
+    /\ (forall j, (j < 2 * StackLayout.auxv_count (StackLayout.la_rseq la))%nat ->
+          LibIface.cellz ASEGS M0 (bv_unsigned auxvp + 8 * Z.of_nat j) 8 (nth j (LibIface.auxv_vec la ph entry gid ae uidz rnd hwz) 0))
     /\ 0 <= uidz < 2 ^ 32 /\ 0 <= hwz < 2 ^ 64 /\ bv_unsigned sp <= rnd /\ rnd + 16 <= 2 ^ 64
-    /\ bv_unsigned sp + 160 <= bv_unsigned p0 <= 2 ^ 47 /\ bv_unsigned p0 mod 8 = 0.
+    /\ bv_unsigned sp + 16 <= bv_unsigned auxvp /\ bv_unsigned auxvp mod 8 = 0.
 
 Definition NX_MAIN : nat := 38.
-Definition vals_mainA (sp p0 p1 can tid : word) (R : bvmap 5 word) : list word := [sp; p0; p1; can; tid; Z_to_bv 64 0] ++ junk_vals R.
-Definition env_mainA (sp p0 p1 can tid : word) (R : bvmap 5 word) : env := Env (vals_ev (vals_mainA sp p0 p1 can tid R)) (blobs_ev []).
+Definition vals_mainA (sp p0 p1 can tid auxvp : word) (R : bvmap 5 word) : list word := [sp; p0; p1; can; tid; auxvp] ++ junk_vals R.
+Definition env_mainA (sp p0 p1 can tid auxvp : word) (R : bvmap 5 word) : env := Env (vals_ev (vals_mainA sp p0 p1 can tid auxvp R)) (blobs_ev []).
 
 Definition all_regsA : list reg := [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13; 14; 15; 16; 17; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27; 28; 29; 30; 31]%bv.
 Lemma nth_all_regsA : forall n, (n < 32)%nat -> nth n all_regsA 0%bv = Z_to_bv 5 (Z.of_nat n).
@@ -75,7 +91,13 @@ Qed.
 
 Section FPX_1. Context {fx : PropExec.FPState}.
 Section Pack.
-  Variables (sp : word) (envc L0 : Z).
+  (* [STR0] is a PARAMETER, not a value: at 727298f3 the string base is
+     [usp + cat_string_off rseq sp top argv envp execfn], which carries the
+     [arch_align_stack] pad and so is NOT a function of [envc]/[L0].  This
+     Section is deliberately the numeric layer [main_regs_okA]/[main_know_okA]
+     are proved in, so the launch (rseq, ed_top, argv, envp, execfn) stays out
+     of it and the caller instantiates [STR0]. *)
+  Variables (sp : word) (envc L0 STR0 : Z).
   Variable R : bvmap 5 word.
   Variable MV : word -> option byte.
   #[local] Notation usp := (bv_unsigned sp).
@@ -88,9 +110,11 @@ Section Pack.
     getr R (Z_to_bv 5 r) = Z_to_bv 64 v.
   Hypothesis WORDS :
     rdn ASEGS MV (Z_to_bv 64 usp) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 2))
-    /\ rdn ASEGS MV (Z_to_bv 64 (usp + 8)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (usp + 8 * envc + 200)))
-    /\ rdn ASEGS MV (Z_to_bv 64 (usp + 16)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (usp + 8 * envc + L0 + 201))).
-  Hypothesis WINDOW : forall d (m : nat), 0 <= d -> d + Z.of_nat m <= 8388608 -> store_ok ASEGS MV (Z_to_bv 64 (usp - 8388608 + d)) m = true.
+    /\ rdn ASEGS MV (Z_to_bv 64 (usp + 8)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 STR0))
+    /\ rdn ASEGS MV (Z_to_bv 64 (usp + 16)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (STR0 + L0 + 1))).
+  (* [StoreOk.stack_window_depth], not the literal 8388608 -- [ent_window] is
+     stated in those terms at [As0DrvEntryK.v:673-674]. *)
+  Hypothesis WINDOW : forall d (m : nat), 0 <= d -> d + Z.of_nat m <= stack_window_depth -> store_ok ASEGS MV (Z_to_bv 64 (usp - stack_window_depth + d)) m = true.
   Variable can : word.
   Hypothesis GUARD : rdn ASEGS MV (Z_to_bv 64 0x630d48) 8 = Some (word_to_le_bytes 8 can).
   Hypothesis IMG : forall lo hi i, In (lo, hi) [(0x10000, 0xd7858); (0xd7874, 0xda480); (0x60018a, 0x610c38); (0x630fd0, 0x631000)] -> lo <= i < hi -> MV (Z_to_bv 64 i) = None.
@@ -102,19 +126,27 @@ Section Pack.
     /\ rdn ASEGS MV (Z_to_bv 64 0x610c60) 4 = Some (word_to_le_bytes 4 tid)
     /\ rdn ASEGS MV (Z_to_bv 64 0x610cf8) 8 = Some (word_to_le_bytes 8 can)
     /\ rdn ASEGS MV (Z_to_bv 64 0x610cd8) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x630fd0))
-    /\ rdn ASEGS MV (Z_to_bv 64 0x630fa0) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (usp + 8 * envc + 40))).
+    (* The auxv base, spelled as [ent_libcells] spells it
+       ([As0DrvEntryK.v:1091-1096]): [usp + 8*argc + 8*envc + 24].  This path has
+       [argv = [a0s; path]], so [argc = 2] and [8*2 + 24 = 40]: the address
+       [usp + 8*envc + 40], spelled in [argc].  The caller bridges the two
+       spellings by [lia]. *)
+    /\ rdn ASEGS MV (Z_to_bv 64 0x630fa0) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (usp + 8 * 2 + 8 * envc + 24))).
 
   (* [comment removed for export] *)
   Hypothesis XCW : Forall (fun c : Z * nat * Z => rdn ASEGS MV (Z_to_bv 64 (fst (fst c))) (snd (fst c)) = Some (word_to_le_bytes (snd (fst c)) (Z_to_bv 64 (snd c)))) XC9_CELLS.
 
-  Let p0 : word := Z_to_bv 64 (usp + 8 * envc + 200).
-  Let p1 : word := Z_to_bv 64 (usp + 8 * envc + L0 + 201).
-  Let ES : env := env_mainA sp p0 p1 can tid R.
+  Let p0 : word := Z_to_bv 64 STR0.
+  Let p1 : word := Z_to_bv 64 (STR0 + L0 + 1).
+  (* The auxv base at [argc = 2], spelled as the callers ([As0DrvEntryInst.v],
+     [As0MainPhaseA.v]) spell it; [LIBW]'s last cell is the same address. *)
+  Let auxvp : word := Z_to_bv 64 (usp + 8 * envc + 40).
+  Let ES : env := env_mainA sp p0 p1 can tid auxvp R.
 
   Lemma ev_junkA : forall i, (i < 32)%nat -> ev ES (6 + i) = getr R (Z_to_bv 5 (Z.of_nat i)).
   Proof.
     intros i Hi. unfold ES, env_mainA, vals_mainA. cbn [ev]. unfold vals_ev.
-    change (6 + i)%nat with (length [sp; p0; p1; can; tid; Z_to_bv 64 0] + i)%nat. rewrite app_nth2_plus. unfold junk_vals.
+    change (6 + i)%nat with (length [sp; p0; p1; can; tid; auxvp] + i)%nat. rewrite app_nth2_plus. unfold junk_vals.
     rewrite (nth_map_seq (fun i => getr R (Z_to_bv 5 (Z.of_nat i)))) by exact Hi. reflexivity.
   Qed.
 
@@ -155,7 +187,11 @@ Section Pack.
     unfold kn_mainA, know_ok. repeat (apply Forall_cons); [ .. | apply Forall_nil]; cbn [kentry_ok].
     - split; [lia | exact S2].
     - cbn [edenot]. change (ev ES 0) with sp. lia.
-    - split; [apply FL; lia|]. intros d m Hd Hm. rewrite estart_sp. replace (usp + -8388608 + d) with (usp - 8388608 + d) by ring. apply WINDOW; assumption.
+    (* [WINDOW] is stated in [stack_window_depth], as [ent_window] is, and the
+       entry above carries the same 6144513. *)
+    - split; [apply FL; lia|]. intros d m Hd Hm. rewrite estart_sp.
+      assert (SWD : stack_window_depth = 6144513) by (vm_compute; reflexivity). rewrite SWD in WINDOW.
+      replace (usp + -6144513 + d) with (usp - 6144513 + d) by ring. apply WINDOW; assumption.
     - split; [lia|]. split; [apply FL; lia|]. rewrite (adenot_flat ES (SA (EVar 0) 0) 8 ltac:(apply FL; lia)), estart_sp, Z.add_0_r. exact W0.
     - split; [lia|]. split; [apply FL; lia|]. rewrite (adenot_flat ES (SA (EVar 0) 8) 8 ltac:(apply FL; lia)), estart_sp. exact W8.
     - split; [lia|]. split; [apply FL; lia|]. rewrite (adenot_flat ES (SA (EVar 0) 16) 8 ltac:(apply FL; lia)), estart_sp. exact W16.
@@ -171,10 +207,11 @@ Section Pack.
     - cbn [edenot]. change (ev ES 4) with tid. lia.
     - split; [lia|]. split; [apply FLIT; lia|]. rewrite ALIT by lia. exact L3.
     - split; [lia|]. split; [apply FLIT; lia|]. rewrite ALIT by lia. exact L4.
+    (* The auxv cell: [KWord (SA (ELit 0) 0x630fa0) 8 (EVar 5)], and slot 5 of
+       [ES] is [auxvp], which is [LIBW]'s value for that cell. *)
     - split; [lia|]. split; [apply FLIT; lia|]. rewrite ALIT by lia.
-      replace (edenot ES (EAlu ALU_ADD (EVar 1) (ELit (-160)))) with (Z_to_bv 64 (usp + 8 * envc + 40)); [exact L5|].
-      cbn [edenot]. change (ev ES 1) with p0. rewrite alu_add. unfold v_add, p0. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod.
-      rewrite <- Z.add_mod by lia. f_equal. lia.
+      cbn [edenot]. change (ev ES 5) with auxvp. unfold auxvp.
+      replace (usp + 8 * envc + 40) with (usp + 8 * 2 + 8 * envc + 24) by ring. exact L5.
     - split; [lia|]. split; [lia|]. intros i Hi. apply (IMG 0xd7874 0xda480); [right; left; reflexivity | lia].
     - split; [lia|]. split; [lia|]. intros i Hi. apply (IMG 0x630fd0 0x631000); [right; right; right; left; reflexivity | lia].
     - split; [lia|]. split; [apply FLIT; lia|]. rewrite ALIT by lia. exact (XC 0%nat _ eq_refl).

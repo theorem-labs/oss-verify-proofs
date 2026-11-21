@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: IMAGE B (fs.asan-ubsan) walk of parse_value 0x82fcc, stage lemmas. HEADER: see
    FSW_parse_value_holds.v (the composition into parse_value_spec k, the rule-24 line, the reuse search, the port
    sources, every pc walked and every report site). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -36,7 +37,7 @@ Ltac pv_cs := unfold acallee_saved; lazymatch goal with |- context [bv_unsigned 
   let z := eval vm_compute in (bv_unsigned q) in change (bv_unsigned q) with z end; lia.
 
 (* ================= pure facts ================= *)
-(* ported from image A's walk (a working branch c4ac4207dc3 lib/A/FSH_parse_value.v pv_grant), with
+(* ported from image A's walk (a working branch lib/A/FSH_parse_value.v pv_grant), with
    lib/A/FSH_Fn_entry.v's fs_fake_granted inlined (no lib/A entry file is loaded here): the class-0 fake frame is
    granted, at most FRL_parse_value k = 2 + k <= 4 frames are live at the call *)
 Lemma pv_count_le : forall cid (l : list (Z * Z)), count_cid cid l <= Z.of_nat (length l).
@@ -63,7 +64,7 @@ Definition pv_ss1 : sstate := Eval vm_compute in fst (sym_run_toN tfibsegs pv_tb
 
 (* ---- the symbolic state at the return address r of __asan_stack_malloc_<cid> in a re-aligned fake-frame caller whose
    journal top sp0 may lie ABOVE its s0 value s (a raised window: parse_value writes pj_parse's struct pj_in above its
-   own sp). Ported verbatim from image A's walk (c4ac4207dc3 lib/A/FSH_parse_value.v pv_resume_regions / pv_resume_ss /
+   own sp). Ported verbatim from image A's walk (lib/A/FSH_parse_value.v pv_resume_regions / pv_resume_ss /
    pv_resume_sm, itself a Theorem Labs lane's crcs_resume_sm with the journal top sp0 and the s0 value s separated). ---- *)
 Definition pv_resume_regions (lo hi : Z) (cs : list YP09.chunk) (nsl : nat) (slo shi : Z) (nF : nat) (eflag : sv)
   (cid : Z) : list YP09.region :=
@@ -423,7 +424,7 @@ Qed.
 
 End W.
 
-(* ---- glue tactics of the walk (ported from image A's walk, c4ac4207dc3 lib/A/FSH_parse_value.v: pv_bv, pv_fact,
+(* ---- glue tactics of the walk (ported from image A's walk, lib/A/FSH_parse_value.v: pv_bv, pv_fact,
    pv_disj, pv_norm, pv_addreg, pv_reg, pv_region, pv_ewo) ---- *)
 Ltac pv_bv := repeat match goal with |- context [bv_unsigned (Z_to_bv 64 ?v)] =>
   rewrite (unsigned_lit_small v) by (unfold SHADOW_OFF in *; lia) end.
@@ -1198,7 +1199,7 @@ Qed.
 End PS1.
 
 (* ================= segment 4: the epilogue 0x8329c (string arm) / 0x8327c (object arm) -> `ret` 0x8333c ==========
-   Ported from image A's walk (c4ac4207dc3 lib/A/FSH_parse_value.v pe_st / pe_ok / pe_extra / pv_epi, A 0x83318 ->
+   Ported from image A's walk (lib/A/FSH_parse_value.v pe_st / pe_ok / pe_extra / pv_epi, A 0x83318 ->
    0x833b8), on B's registers: B keeps F's shadow address in s11 (atom 27; A: s8). The state: F (atom 26, also s2
    through SOff 26 0), F's shadow (atom 27), the flag byte (atom 46, the address the word at F + 56 holds), and the 13
    saved words at s0 (atom 8, read only). MEASURED (vm_compute over pv_tbl): [object arm only: `j` 0x8327c -> 0x83298,

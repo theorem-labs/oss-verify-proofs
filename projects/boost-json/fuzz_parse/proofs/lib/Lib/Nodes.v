@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text. *)
 (* [comment removed for export] *)
 
 
@@ -10,7 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import PropExec MState Mem Exec ITree.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshf2bv3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsk1dmachine_statek17ms_regs3h5LinuxProcessSemantics5Riscv3Semp27reg_get37Corelib4Init9Datatypesre4list37Corelib4Init5Logictd1Itd2eq3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypeva7Segment3h5LinuxProcessSemanticsfLinuxProcessSem3Runhj99sys_input3h5LinuxProcessSemanticsfLinuxProcessSem5Statehn26in_arg79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5Nodes~~~~~~hqa4areghf2BVhf4BvWfre4prod79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib3Mem~~~~~~ig13le8re3appre3fstre3snd36Stdlib5Lists4Listil48flat_mapig12wahfbbv_unsigned01Zhn2cSyscallInputre4Nonehn27mkInputhf7Z_to_bvre6optionhqa4nodere4consre4Somere3nilhqaapure_inputtd3andk1ems_svc_pendingre6lengthk16ms_mem46Stdlib6ZArith6BinInt1Zjh22lejh26of_natig18bytes_atjh22ltjh23powtd2ork16ms_rom79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib8PropExec~~~~~~jm17seg_romtd2extd3not37Corelib4Init5Peanojr62le4h5LinuxProcessSemanticsfLinuxProcessSem3Sys4Uapijt09O_CLOEXECjt0bO_LARGEFILEig15wr_athqabiovec_bytesil47Forall2il42Inil46concatjh23addjh25ldiff79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5ITree~~~~~~km04respre3nathn27MemCopyhn29mkEffectUhn29errno_rethqa4eff0hn25Modelhn27FdEntryhn25m_fdshn28alloc_fdhn29fd_inserthn29fd_lookuphn28with_fds5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Fs4Openli6dopenat_errnoshqa6efferrhn25eventtd5Falsere4bool3h5LinuxProcessSemanticsfLinuxProcessSem2Fslod4path3h5LinuxProcessSemanticsfLinuxProcessSem5Monadls02Okhj9h4spurious_refusal_cfg3h5LinuxProcessSemanticsfLinuxProcessSem5Specsmgdcsyscall_spechqaanode_input69OSSVerify6Proofsaboost_jsonafuzz_parse3lib4Scfg~~~~~~ml98the_scfg37Corelib5Lists7ListDefmpc3map3h5LinuxProcessSemanticsfLinuxProcessSem6BvBasemra8len_wordlod9fs_lookuphn25EBADFhn26ENOENThn26FdFilehn27WriteEvhn24m_fshqabopen_resultlod9file_readlod8path_eqbhn26EISDIRhn2cENAMETOOLONGhn26ENOTTYhn25FdDirhn29SockStatehn29fd_removehn25m_tidhn28path_maxhn28with_tid5h5LinuxProcessSemanticsfLinuxProcessSem3Sys6Kernel4Forkns2h0PID_MAX_ENVELOPE4h5LinuxProcessSemanticsfLinuxProcessSem3Sys7Uaccessogfh0delivered_writesjt08dot_path46Stdlib5Arith8PeanoNat3Natom43lebhf6bv_addhn2bwith_haltedhf6bv_andhn29FdChannelhn27FdFileWhn29m_vm_lazyhn26VmMapsre3orbhn27vm_mapsre5falsere4negbre4truehn27map_hashn2fpage_round_up_Zhn29page_sizehn2bregion_freehn2atwo_pow_64hn2bvm_reserved4h5LinuxProcessSemanticsfLinuxProcessSem3Sys7Syscallpl45w_is0jh23eqbjh23lebjh26modulohn2cmap_containsre4andbhn2bvm_noaccess5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Mm8Mprotectpsfh9mprotect_grows_conflict_bpsfh2mprotect_modeled_bhn29alloc_top5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Mm4Mmapqk9h5mmap_fixed_noaccess_bqk9emmap_modeled_bqk9fmmap_noaccess_bqk9h1mmap_plain_anon_btd4Truehn28m_vmmapshqabmmap_safe_bhqafmprotect_safe_bhqadmunmap_safe_b" s.
+Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshf2bv3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsk1dmachine_statek17ms_regs3h5LinuxProcessSemantics5Riscv3Semp27reg_get37Corelib4Init9Datatypesre4list37Corelib4Init5Logictd1Itd2eq3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypeva7Segment3h5LinuxProcessSemanticsfLinuxProcessSem3Runhj99sys_input3h5LinuxProcessSemanticsfLinuxProcessSem5Statehn26in_arg79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5Nodes~~~~~~hqa4areghf2BVhf4BvWfre4prod79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib3Mem~~~~~~ig13le8re3appre3fstre3snd36Stdlib5Lists4Listil48flat_mapig12wahfbbv_unsigned01Zhn2cSyscallInputre4Nonehn27mkInputhf7Z_to_bvre6optionhqa4nodere4consre4Somere3nilhqaapure_inputtd3andk1ems_svc_pendingre6lengthk16ms_mem46Stdlib6ZArith6BinInt1Zjh22lejh26of_natig18bytes_atjh22ltjh23powtd2ork16ms_rom79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib8PropExec~~~~~~jm17seg_romtd2extd3not37Corelib4Init5Peanojr62le4h5LinuxProcessSemanticsfLinuxProcessSem3Sys4Uapijt09O_CLOEXECjt0bO_LARGEFILEig15wr_athqabiovec_bytesil47Forall2il42Inil46concatjh23addjh25ldiff79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5ITree~~~~~~km04respre3nathn27MemCopyhn29mkEffectUhn29errno_rethqa4eff0hn25Modelhn27FdEntryhn25m_fdshn28alloc_fdhn29fd_inserthn29fd_lookuphn28with_fds5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Fs4Openli6dopenat_errnoshqa6efferrhn25eventtd5Falsere4bool3h5LinuxProcessSemanticsfLinuxProcessSem2Fslod4path~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~lod9fs_lookuphn25EBADFhn26ENOENThn26FdFilehn27WriteEvhn24m_fshqabopen_resultlod9file_readlod8path_eqbhn26EISDIRhn2cENAMETOOLONGhn26ENOTTYhn25FdDirhn29SockStatehn29fd_removehn25m_tidhn28path_maxhn28with_tid5h5LinuxProcessSemanticsfLinuxProcessSem3Sys6Kernel4Forkns2h0PID_MAX_ENVELOPE4h5LinuxProcessSemanticsfLinuxProcessSem3Sys7Uaccessogfh0delivered_writesjt08dot_path46Stdlib5Arith8PeanoNat3Natom43lebhf6bv_addhn2bwith_haltedhf6bv_andhn29FdChannelhn27FdFileWhn29m_vm_lazyhn26VmMapsre3orbhn27vm_mapsre5falsere4negbre4truehn27map_hashn2fpage_round_up_Zhn29page_sizehn2bregion_freehn2atwo_pow_64hn2bvm_reserved4h5LinuxProcessSemanticsfLinuxProcessSem3Sys7Syscallpl45w_is0jh23eqbjh23lebjh26modulohn2cmap_containsre4andbhn2bvm_noaccess5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Mm8Mprotectpsfh9mprotect_grows_conflict_bpsfh2mprotect_modeled_bhn29alloc_top5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Mm4Mmapqk9h5mmap_fixed_noaccess_bqk9emmap_modeled_bqk9fmmap_noaccess_bqk9h1mmap_plain_anon_btd4Truehn28m_vmmapshqabmmap_safe_bhqafmprotect_safe_bhqadmunmap_safe_b" s.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -120,7 +121,64 @@ Definition open_result : ltac2:(zQ "30!kt7!ku0!kpc>2mo$0>3ent$1>3eff$2>3mo'$0P")
 (* [comment removed for export] *)
 Section NStep.
 Context {SC : StepCfg}.
-Definition nstep : ltac2:(zQ "50!kt7!t6!ln5!kpc!irf>1n$4>2mo$0>3eff$3>3mo'$0>3evs@1$1$2P") := ltac2:(zQ "k33!h9!v5!jc!iu9!t6!ln5!io7!ir6!kpc!kt7!lne!it5!iqc!ioa!lo6!lmb!ku0!jr0!lr8!lue!lv4!mjb!kub!ksf!mkb!mp0!jg0!hva!irf!jk6!mr3!mu9!mv5!ng2!ngb!nh5!nhf!lgd!nia!lha!nj2!kk6!jj0!in9!kq4!jqb!nk1!nke!nla!nm4!nn4!nne!kqa!no7!lg0!np4!nq1!kr5!nqa!nr6!nva!ok3!ol8!onf!jia!jkc!oo6&@2$hb@1$2@1$0#k0@1$2@1$0#k0&@1$b~0&\1p$h2\6offset@1$2@1$0#k0$a\1n$hc\2mo$9\3eff$8\3mo'$9\3evs@1$4$5Mhc\1n$hcP^5\2fd$6\2bs@1$4@1$2@1$0#8@2$3@3$1$8^5@1$h7@2$c@1$0#k0@1$ia@2$ha@1$2@1$0#8^1@2$3@3$1$9^4^6@3$1@1$4$5^3@4$he@1$2@1$0#8$5@1$i4@2$c@1$0#k0^2^1\2fd$6\4bufs@1$4@1$4@1$2@1$0#8@2$3@3$1$8^5@1$h7@2$c@1$0#k0@1$ia@2$ha@1$2@1$0#8@2$i9@1$2@1$0#8^1@2$3@3$1$9^4^6@3$1@1$4$5^3@4$he@1$2@1$0#8$5@1$i4@2$c@1$0#k0^2@2$i9@1$2@1$0#8^1\4path@1$4@1$2@1$0#8@2$3@3$1@1$4$5^2@1$b$5Me\0$eP@2$jf$ja@2$ha@1$2@1$0#8^1@2$3@3$1$8^4@1$f$j1@3$1$9^3^5M4\4path@1$4@1$2@1$0#8P^1@2$3@3$1$8^4@1$f$i2@3$1$9^3^5\1b@1$2@1$0#8\1l@1$4@1$2@1$0#8Me\0$eP@2$if^3$je@4$i8^7$j3^6^5M7\1x@1$7@1$4@1$2@1$0#8P@2$i0@1$i6^7^3\1l@1$4@1$2@1$0#8@4$i8^8@2$i3^4@2$c@1$0#k0Z^7^6@2$3@3$1$8^6@1$f$i2@3$1$9^5^7\2fd$6\3buf$6\5count$6@2$3@3$1@1$4$5^4@1$b$5M7\1x@1$7$h0P@2$i5@1$h6^7@2$c@1$0#k0^3\1f$h0Mh0\1f$h0P^1\4chan@1$2@1$0#k0$a\1p$h2\3off@1$2@1$0#k0M7\1x@1$7@1$4@1$2@1$0#8P@2$i0@1$i6^a^2\4data@1$4@1$2@1$0#8=2bs@1$4@1$2@1$0#8@3$ie^1^2@2$c@1$0#k0^5@2$3@3$1$8^b@6$j9@2$hf@1$2@1$0#8^1@2$jd@2$c@1$0#k0^7^1~1~1@1$b$j4@1$b@2$hb@1$2@1$0#k0$ic@3$1$9^a@2$i7@3$j6@1$h6^c@2$c@1$0#k0^8@2$i3^4@3$k2@1$0#k0^3@2$hf@1$2@1$0#8^1^c$a~2~2~2@2$3@3$1$8^7@1$f$j0@3$1$9^6^8\2sk$j5$a\2id@1$2@1$0#k0\6writer$e$a\2rd$e\2wr$e$a$a@2$3@3$1$8^6@1$f$i1@3$1$9^5^7\2fd$6@2$3@3$1@1$4$5^2@1$b$5@2$3@2$3@2$k0+3^1@2$hd^1@2$k1+2+i0M7\1x@1$7$h0P@2$i5@1$h6^5@2$c@1$0#k0^1\1f$h0@2$3@3$1$8^5@1$h7@2$c@1$0#k0Z@3$1$9^4@2$i7@2$j7@1$h6^6@2$c@1$0#k0^2^6@2$3@3$1$8^4@1$f$i1@3$1$9^3^5\2fd$6\3req$6@2$3@3$1@1$4$5^3@1$b$5@2$3@3$1$8^5@1$f$j2@3$1$9^4^6@2$3@3$1@1$4$5^1@1$b$5@2$id@1$2@1$0#k0\1t@1$2@1$0#k0@2$3@3$1$8^4@1$h7^1M7\1x@1$7@1$2@1$0#k0P@1$j8^5\2t0@1$2@1$0#k0@2$3@3$1@1$2@1$0#k0^2^1@3$1$9^4^6@2$3@2$3@2$hdZ@2$ib@1$0#k0^1@2$hd@2$ib@1$0#k0^1$jc@3$1$9^3@2$jb^1^5\4code$6$a\3req$6@2$3@3$1@1$4$5^2@1$b$5M7\1x@1$7$dP@1$h8^6\1i$d@2$3@3$h5^1^6@4$h3$8^5^4^3@1$h1@4$h4@1$h9?2SC^1^6^5$a\4addr$6\3len$6\4prot$6\5flags$6@2$3@3$1@1$4$5^5@1$b$5M7\1x@1$7$dP@1$h8^9\1i$d@2$3@3$h5^1^9@4$h3$8^8^7^6@1$h1@4$h4@1$h9?2SC^1^9^8$a\4addr$6\3len$6@2$3@3$1@1$4$5^3@1$b$5M7\1x@1$7$dP@1$h8^7\1i$d@2$3@3$h5^1^7@4$h3$8^6^5^4@1$h1@4$h4@1$h9?2SC^1^7^6$a\4addr$6\3len$6\4prot$6@2$3@3$1@1$4$5^4@1$b$5M7\1x@1$7$dP@1$h8^8\1i$d@2$3@3$h5^1^8@4$h3$8^7^6^5@1$h1@4$h4@1$h9?2SC^1^8^7$a").
+Definition nstep (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list event) : Prop :=
+  match n with
+  | NWrite fd bs =>
+      eff = eff0 (Z_to_bv 64 (Z.of_nat (length bs))) /\ mo' = mo /\
+      evs = map (WriteEv (Z_to_bv 64 fd)) bs
+  | NWritev fd bufs =>
+      eff = eff0 (Z_to_bv 64 (Z.of_nat (length (concat bufs)))) /\ mo' = mo /\
+      evs = map (WriteEv (Z_to_bv 64 fd)) (concat bufs)
+  | NOpen path =>
+      evs = [] /\
+      if (path_max <=? length path)%nat then eff = efferr ENAMETOOLONG /\ mo' = mo
+      else match path with
+           | [] => eff = efferr ENOENT /\ mo' = mo
+           | _ => if path_eqb path dot_path then open_result mo FdDir eff mo'
+                  else match fs_lookup (m_fs mo) path with
+                       | None => eff = efferr ENOENT /\ mo' = mo
+                       | Some _ => open_result mo (FdFile path (Z_to_bv 64 0)) eff mo'
+                       end
+           end
+  | NRead fd buf count =>
+      evs = [] /\
+      match fd_lookup (m_fds mo) (Z_to_bv 64 fd) with
+      | None => eff = efferr EBADF /\ mo' = mo
+      | Some FdDir => eff = efferr EISDIR /\ mo' = mo
+      | Some (FdFile p off) =>
+          match fs_lookup (m_fs mo) p with
+          | None => False
+          | Some data =>
+              let bs := file_read data off (Z_to_bv 64 count) in
+              eff = mkEffect (len_word bs) (delivered_writes (Z_to_bv 64 buf) bs) [] /\
+              mo' = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word bs)%bv)) mo
+          end
+      | Some (FdChannel _) | Some (FdFileW _ _) | Some (FdSocket _) | Some (FdPipe _ _)
+      | Some (FdFileA _ _) | Some (FdFileRW _ _) | Some (FdDevNull _ _)   (* [comment removed for export] *)
+      | Some (FdStream _ _ _) | Some (FdEventfd _) | Some (FdDgram _) | Some (FdAnon _ _) | Some FdUrandom => False   (* [comment removed for export] *)
+      end
+  | NClose fd =>
+      evs = [] /\ 3 <= fd < 2^32 /\   (* [comment removed for export] *)
+      match fd_lookup (m_fds mo) (Z_to_bv 64 fd) with
+      | None => eff = efferr EBADF /\ mo' = mo
+      | Some _ => eff = eff0 (Z_to_bv 64 0) /\ mo' = with_fds (fd_remove (m_fds mo) (Z_to_bv 64 fd)) mo
+      end
+  | NIoctl fd req => evs = [] /\ eff = efferr ENOTTY /\ mo' = mo
+  | NSetTid =>
+      evs = [] /\ exists t, eff = eff0 t /\
+      match m_tid mo with
+      | Some t0 => t = t0 /\ mo' = mo
+      | None => 0 < bv_unsigned t < PID_MAX_ENVELOPE /\ mo' = with_tid t mo
+      end
+  | NExit _ => False
+  | NBrk _ | NMmap _ _ _ _ | NMunmap _ _ | NMprotect _ _ _ =>
+      (* [comment removed for export] *)
+      evs = [] /\
+      match node_input n with
+      | Some i => syscall_spec i mo (Ok eff mo' evs) /\ ~ spurious_refusal_cfg the_scfg i mo eff
+      | None => False
+      end
+  end.
 End NStep.
 
 Definition nexit : ltac2:(zQ "40!kt7!h9!irf!jc>1n$2>2mo$0>4code@1$3@1$1#k0>3mo'$0P") := ltac2:(zQ "c0!io7!lne!h9!jc!t6!kt7!irf!v5!iqc!iu9!oof!ope\1n$6\2mo$5\4code@1$3@1$2#k0\3mo'$5M6\1n$6P^4\2fd$0\2bs@1$4@1$3@1$2#8$1\2fd$0\4bufs@1$4@1$4@1$3@1$2#8$1\4path@1$4@1$3@1$2#8$1\2fd$0\3buf$0\5count$0$1\2fd$0$1\2fd$0\3req$0$1$1\1c$0@2$9@3$7@1$3@1$2#k0^3@3$b@1$2#k0@2$8@1$2#k0^1@2$8@1$2#k0+vf@3$7$5^2@2$a^3^4\3req$0$1\4addr$0\3len$0\4prot$0\5flags$0$1\4addr$0\3len$0$1\4addr$0\3len$0\4prot$0$1").

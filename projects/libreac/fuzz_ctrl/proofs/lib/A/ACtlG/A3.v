@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R7tail.v; 1150 of its 1202 lines of code are new or changed and 1180 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R7.v, with its module names changed; 329 of its 397 lines of code are new or changed and 1134 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/P1_70.v, with its module names and addresses changed; 226 of its 260 lines of code are new or changed and 363 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/A3.v -- GLUE for stage seg_A3 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:651,
    `Hypothesis seg_A3 : forall POST, CF POST C_A810e4 -> CF POST C_A80f88`).  Written by a Theorem Labs lane's glue lane
    (piece W0/W1); single writer.  The pattern is
@@ -21,9 +22,9 @@
    the 68 single-byte shadow stores at S(fr) .. S(fr) + 67, s9 = S(fr) + 68) and the call of meta_fill_f8
    (__asan_set_shadow_f8, 0x55008) at 0x810e0 that fills S(fr) + 68 .. S(fr) + 254 with 0xf8.
 
-   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z
-   from e966c513ee6, ossv/recipes@a8831f7c5c), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
-   donor is cgif/cgif_file_fuzzer at origin/ossv/recipes c8557374ad2e; its walk lifts no outside-proved run, so this
+   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z,
+   ossv/recipes), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
+   donor is cgif/cgif_file_fuzzer; its walk lifts no outside-proved run, so this
    glue has no donor counterpart.  Its pieces are the donor's SRr (YA0n) and ajournal (YCbq), a Theorem Labs lane's kit and
    bridge (Reusable/YA0nR.v SRr_xregs_eqv / SRr_fsteps; A/ProgBridge.v cfg_at_MS, tfibsegs_rsegs, RNG_W,
    rng_of_visible, img_vis_W, rng_bytes_RNG_W, fp_avoids_RNG_W), a Theorem Labs lane's ProgWorld (ajournal_of_fsteps,
@@ -99,8 +100,8 @@
    Export of a project module); no statement here names a frame-route identifier.  The twin modules this file names
    (YK11 YK1b YM05 YO09) are loaded by absolute Require lines and written through the fully qualified aliases CK11 /
    CK1b / CM05 / CO09; lib/Lib's modules and lib/A/Tk/UL's through absolute aliases; ctrl's YK11 (the run's)
-   through AK11.  Frame-route files of record in the closure (through Seg/A3F.v), blobs at the glue worktree HEAD
-   f32c86d5c0b: Seg/A3F.v 0c88255b8c0, Seg/A3.v 0d4714ea12b, SlotInv.v 4cf85db229a, SlotModel.v 04dc7903221,
+   through AK11.  Frame-route files of record in the closure (through Seg/A3F.v), blobs at the glue worktree HEAD:
+   Seg/A3F.v 0c88255b8c0, Seg/A3.v 0d4714ea12b, SlotInv.v 4cf85db229a, SlotModel.v 04dc7903221,
    Seg/Tac_slot.v de02ff45188, Seg/Tac_fs.v 8bd492a660d, AsanRT.v b67d26f8ec7 (mcs 30), AsanRTInv.v 2a8602e8526,
    Contract.v fa6fd478d9a, FrameAPI.v f6ffefa9bb4, MemNorm.v cb518fc0304, MemNormF.v 9e5ea0ff243; the callee files
    asan_set_shadow_c.v 7153a91e7cc, asan_set_shadow_cF.v 2400425d11d, asan_set_shadowF.v 96806d7fcf8, memset.v

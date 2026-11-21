@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the layout node takes the table (node_layout A), whose CONFIG_RSEQ layout it reads. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -123,7 +124,7 @@ Definition node_x (x : xnode) (args : list expr) (cs : acs) : option acs :=
   | XMemIsZero => summary_miz A nx0 cs
   | XEnvScan => node_envscan A cs
   | XPnScan => node_pnscan A nx0 cs
-  | XLayout => node_layout cs args
+  | XLayout => node_layout A cs args
   | XIStrncpy => summary_istrncpy A nx0 cs
   | XPopFree => summary_popfree A nx0 cs args
   | XSniff => summary_sniff segs A nx0 cs

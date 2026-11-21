@@ -7,9 +7,9 @@
    output reuse-F17.txt): glue_seg_F17: 0 named, 0 by address, 0 related,
    0 released, the delivered package 0; declared only on this branch (a working branch). seg_F17: 0 released, the delivered package 0; its hits are the
    stage hypothesis (ACtl.v) and source lemma (Seg/F17.v, image B twin) this file builds on.  Written new.
-   At ossv/recipes c5e779efe8c (2026-10-31), glue_seg_F17 and seg_F17 are defined only in this unit (glue_seg_F17 in
-   this file; seg_F17 at the stage hypotheses lib/A/ACtl.v:799 and lib/B/ACtl.v:576, the source lemma lib/A/Prog/Seg/F17.v:2007 and
-   image B's lib/B/ACtlW4c.v:4940).
+   At (2026-10-31), glue_seg_F17 and seg_F17 are defined only in this unit (glue_seg_F17 in
+   this file; seg_F17 at the stage hypotheses lib/A/ACtl.v:799 and lib/B/ACtl.v:577, the source lemma lib/A/Prog/Seg/F17.v:2008 and
+   image B's lib/B/ACtlW4c.v:4941).
 
    WHAT IT PROVES
      glue_seg_F17 : forall POST (j : nat),
@@ -17,7 +17,7 @@
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
    seg_F17.  The ENTRY is C_A8229c_at at turn j (the conclusion), the EXIT is C_A822a0_at at the same turn (the
    premise).  Segment F17 is ONE instruction (plan section 2.3 row 62 (a working note, not in this delivery), silent-bridge; a Theorem Labs lane's v1.9 proof
-   Seg/F17.v seg_F17 :2007-2111 at d65d18383b1, blob f83ca6832224, on this branch through a working branch of a Theorem Labs lane):
+   Seg/F17.v seg_F17 :2007-2111, blob f83ca6832224, on this branch through a working branch of a Theorem Labs lane):
      0x8229c  bltz a0,82bf4   NOT taken: the entry body carries a0 = v0 with 0 <= v0 < 2 ^ 63 (the
                               reac_identity_ingest result); the fall-through is 0x822a0.
    The branch writes no register and no memory and makes no data access.  The exit body C_A822a0_at
@@ -47,7 +47,7 @@
        exit cut is applied at the ENTRY map regs3: journal by ajournal_exec with the empty write set (the model is
        materialized); frames, frame law and k bound unchanged (own6 and kmax 14 + 2 j + 1 on both cuts); body: the
        17 entry conjuncts other than the a0 one, unchanged; the cut's runtime fact A.ACtlRtC.ctl_rt_C B ly3 S3 mem3
-       (ACtlCut.ctl_from's form since the route (C) shell, a working branch 1899bed1aee) unchanged: the exit cut is applied at
+       (ACtlCut.ctl_from's form since the route (C) shell, a working branch) unchanged: the exit cut is applied at
        the entry's own layout ly3, state S3 and memory mem3, so the entry's fact is the exit's.
 
    SECTION HYPOTHESES.  The Section is the pattern's template (glue-pattern.md section 2) over ACtl.v's Section Ctl
@@ -66,7 +66,7 @@
 
    CLOSURE: every Require below is qualified (no Import / Export of a project module); no statement here names a
    frame-route identifier.  Measured (every `Require` followed under OSSVerify.Proofs.libreac.fuzz_ctrl from
-   this file over the branch tree, base tip 46eb24cd4b3): 394 files; ACtl.v and AD2l.v are not in it; of the
+   this file over the branch tree, base tip): 394 files; ACtl.v and AD2l.v are not in it; of the
    workspace-patched core files only A/AE2k.v is (Required here for the sink head); no lib/AZ/AsanW, no W6, no
    SegCF / *_cfw / Cf* file; its lib/AZ files are AZ/LibA/AcctCore.v (through Lib/ExecF.v) and
    AZ/Spec/{AsanCtrl,AsanCtrlProps,STree}.v (through Contract.v).  Frame-route files, each the blob of record:
@@ -75,7 +75,7 @@
    PContract.v a0c4b1b2aa5, AsanLift.v e92b008d733, KindBGlue.v 35e845dad50, Prog/RcAsanFP.v 4ec9fa6fbdb,
    Prog/RcAsanFPLib.v e1f4a4f0b5a, Prog/RcAsanRT.v 706993599b7, Tk/AW/SmLeaf.v f05c2c200c9, Tk/AW/SmLib.v
    dd0c46281d3, Seg/Tac_slot.v de02ff45188, Seg/Tac_fs.v 8bd492a660d, Seg/Tac_fsfree.v d76d2012bf8, Seg/F18.v
-   e414ca1bb71, Seg/Tac_f17b.v 8a2efdcdf10, Seg/F17.v f83ca683222 (the source, d65d18383b1), and this lane's
+   e414ca1bb71, Seg/Tac_f17b.v 8a2efdcdf10, Seg/F17.v f83ca683222 (the source), and this lane's
    Prog/Seg/F17Fs.v (the run and its source tie; the Seg/ and frame-route part of the closure comes in through the
    tie's Require of Seg/F17.v).
 
@@ -87,7 +87,7 @@
      grep -nE '(^|[^.A-Za-z_])(Reusable\.)?(YI04|YI16|YK11|YK1b|YM05|YO09)\.' lib/A/ACtlG/F17.v   -- no hit.
 
    BUILD STATE: TYPE-CHECK WITH WORKSPACE STAND-INS (provisional): gbuild.sh, workspace (internal path) on a build machine,
-   FACTS ed6b6b7b0ab + PAU pau-libreac-v190, the planning core's port_core_refused_<hex> names patched in the
+   FACTS + PAU pau-libreac-v190, the planning core's port_core_refused_<hex> names patched in the
    workspace only (this closure reaches A/AE2k.v of those files, not AD2l.v).  The file states no axioms or
    parameters and leaves no proof open.  Print Assumptions glue_seg_F17: the Rocq primitives (PrimInt63,
    PrimString, PrimArray) and functional_extensionality_dep (from SRr_fevt); PF.f17_bltz_F and seg_F17_src: the

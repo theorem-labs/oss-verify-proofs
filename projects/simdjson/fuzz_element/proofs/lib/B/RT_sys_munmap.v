@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: munmap cuts the map list with maps_subtract instead of map_remove, with new lemmas that carry the ledger invariants across the cut (the surviving pieces stay apart from the vDSO pair), and the channel-reader argument is supplied; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_sys_munmap.v, 162 lines within its lines 34-364. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -31,17 +32,140 @@ Proof.
   apply Forall_forall. intros y Hy. apply filter_In in Hy as [Hy _]. exact (proj1 (Forall_forall _ _) Hx y Hy).
 Qed.
 
-Lemma zcount_map_remove : forall (l : list (word * word)) (a : word),
-  (length (map_remove l a) + length (List.filter vpos l) <= length l + length (List.filter vpos (map_remove l a)))%nat.
+(* At LPS 08b1429 munmap rebuilds [vm_maps] with [maps_subtract] ([mmap_fixed_destroyed_next]),
+   not [map_remove]; these facts carry the ledger invariants across that cut. *)
+Lemma FOP_app_intro : forall {X} (R : X -> X -> Prop) l1 l2,
+  ForallOrdPairs R l1 -> ForallOrdPairs R l2 -> (forall x y, In x l1 -> In y l2 -> R x y) -> ForallOrdPairs R (l1 ++ l2).
 Proof.
-  intros l a. unfold map_remove. induction l as [|e l IH]; [cbn; lia|]. cbn [List.filter].
-  destruct (negb (bv_eqb (fst e) a)) eqn:Eb; destruct (vpos e) eqn:Ev; cbn [List.filter length]; rewrite ?Ev; cbn [length]; lia.
+  intros X R l1. induction l1 as [|p l1 IH]; intros l2 H1 H2 H12; [exact H2|].
+  inversion H1 as [|? ? Hf Hl]; subst. cbn [app]. constructor.
+  - apply Forall_app. split; [exact Hf|]. apply Forall_forall. intros q Hq. apply H12; [left; reflexivity | exact Hq].
+  - apply IH; [exact Hl | exact H2 |]. intros x y Hx Hy. apply H12; [right; exact Hx | exact Hy].
 Qed.
 
-Lemma zbound_map_remove : forall (l : list (word * word)) (a : word),
+Lemma FOP_iv_subtract : forall (a sz : word) lo hi, iv_wf (a, sz) -> lo <= hi ->
+  ForallOrdPairs iv_apart (iv_subtract a sz lo hi).
+Proof.
+  intros a sz lo hi Hwf Hlh. unfold iv_wf, B, S in Hwf. cbn [fst snd] in Hwf.
+  pose proof (u64_range a) as Ra. pose proof (u64_range sz) as Rs. unfold iv_subtract. cbv zeta.
+  destruct (Z.ltb_spec (bv_unsigned a) lo); destruct (Z.ltb_spec hi (bv_unsigned a + bv_unsigned sz)); cbn [app].
+  all: repeat first [apply FOP_nil | apply FOP_cons | apply Forall_nil | apply Forall_cons].
+  all: unfold iv_apart; cbn [fst snd]; rewrite !unsigned_lit by lia; lia.
+Qed.
+
+Lemma FOP_maps_subtract : forall l lo hi, ForallOrdPairs iv_apart l -> ivs_wf l -> lo <= hi ->
+  ForallOrdPairs iv_apart (maps_subtract l lo hi).
+Proof.
+  induction l as [|[a sz] l IH]; intros lo hi Hs Hwf Hlh; [constructor|].
+  apply ivs_wf_cons_inv in Hwf as [Ha Hl]. inversion Hs as [|p' l' Hf Htl]; subst.
+  cbn [maps_subtract]. apply FOP_app_intro; [apply FOP_iv_subtract; assumption | apply IH; assumption |].
+  intros p q Hp Hq.
+  destruct (iv_subtract_pieces' a sz lo hi p Ha Hp) as (P1 & P2 & _).
+  destruct (maps_subtract_pieces' l lo hi q Hl Hq) as (r & Hr & Q1 & Q2 & _).
+  pose proof (proj1 (Forall_forall _ _) Hf r Hr) as D. unfold iv_apart in *. cbn [fst snd] in *. lia.
+Qed.
+
+(* Cutting out an exact mapping [(a, n)] removes it and keeps every positive interval apart from it. *)
+Lemma filter_vpos_munmap_cut : forall l (a n : word), ivs_wf l -> 0 < bv_unsigned n ->
+  (forall e, In e l -> vpos e = true -> e = (a, n) \/ iv_apart e (a, n)) ->
+  List.filter vpos (maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)) = map_remove (List.filter vpos l) a.
+Proof.
+  intros l. induction l as [|[b s] l IH]; intros a n Wl Hn Hcond; [reflexivity|].
+  apply ivs_wf_cons_inv in Wl as [Wb Wl'].
+  cbn [maps_subtract]. rewrite filter_app. rewrite (IH a n Wl' Hn (fun e He => Hcond e (or_intror He))).
+  pose proof (u64_range a) as Ra. pose proof (u64_range b) as Rb. pose proof (u64_range s) as Rs.
+  cbn [List.filter]. destruct (vpos (b, s)) eqn:Ev.
+  - assert (Hs : 0 < bv_unsigned s) by (unfold vpos in Ev; cbn [snd] in Ev; apply Z.ltb_lt; exact Ev).
+    destruct (Hcond (b, s) (or_introl eq_refl) Ev) as [E|D].
+    + injection E as Eb Es. subst b s.
+      unfold iv_subtract. cbv zeta.
+      rewrite (proj2 (Z.ltb_ge (bv_unsigned a) (bv_unsigned a))) by lia.
+      rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned a + bv_unsigned n))) by lia.
+      cbn [app List.filter]. unfold map_remove. cbn [List.filter fst]. rewrite bv_eqb_refl. reflexivity.
+    + unfold iv_apart in D. cbn [fst snd] in D.
+      assert (Hsub : iv_subtract b s (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = [(b, s)]).
+      { unfold iv_subtract. cbv zeta. destruct D as [D|D].
+        - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned a))) by lia.
+          rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+          rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+        - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) (bv_unsigned a))) by lia.
+          rewrite (proj2 (Z.ltb_lt (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+          rewrite Z.max_l by lia.
+          replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+          rewrite !Z_to_bv_bv_unsigned. reflexivity. }
+      assert (Hne : bv_eqb b a = false).
+      { destruct (bv_eqb b a) eqn:Eb; [|reflexivity]. exfalso. apply bv_eqb_eq in Eb. subst b. lia. }
+      rewrite Hsub. cbn [List.filter]. rewrite Ev. cbn [app].
+      unfold map_remove. cbn [List.filter fst]. rewrite Hne. reflexivity.
+  - assert (HL : forall q, In q (iv_subtract b s (bv_unsigned a) (bv_unsigned a + bv_unsigned n)) -> vpos q = false).
+    { intros q Hq. destruct (iv_subtract_pieces' b s _ _ q Wb Hq) as (Q1 & Q2 & _).
+      unfold vpos in Ev |- *. cbn [snd] in Ev. apply Z.ltb_ge in Ev. apply Z.ltb_ge. lia. }
+    assert (Hnil : forall L : list (word * word), (forall q, In q L -> vpos q = false) -> List.filter vpos L = []).
+    { intros L. induction L as [|q L IHL]; intros HL0; [reflexivity|]. cbn [List.filter].
+      rewrite (HL0 q (or_introl eq_refl)). apply IHL. intros q' Hq'. apply HL0. right. exact Hq'. }
+    rewrite (Hnil _ HL). reflexivity.
+Qed.
+
+(* No cut makes a zero-size piece out of a positive interval. *)
+Lemma zcount_iv_subtract : forall (a sz : word) lo hi, lo <= hi ->
+  (length (iv_subtract a sz lo hi) + (if vpos (a, sz) then 1 else 0) <= 1 + length (List.filter vpos (iv_subtract a sz lo hi)))%nat.
+Proof.
+  intros a sz lo hi Hlh. pose proof (u64_range a) as Ra. pose proof (u64_range sz) as Rs.
+  assert (Hv : forall (b : word) z, 0 < z < 2^64 -> vpos (b, Z_to_bv 64 z) = true)
+    by (intros b z Hz; unfold vpos; cbn [snd]; rewrite unsigned_lit by lia; apply Z.ltb_lt; lia).
+  unfold iv_subtract. cbv zeta. destruct (vpos (a, sz)) eqn:Ev.
+  - assert (Hs : 0 < bv_unsigned sz) by (unfold vpos in Ev; cbn [snd] in Ev; apply Z.ltb_lt; exact Ev).
+    destruct (Z.ltb_spec (bv_unsigned a) lo); destruct (Z.ltb_spec hi (bv_unsigned a + bv_unsigned sz)); cbn [app List.filter];
+      rewrite ?(Hv a (Z.min (bv_unsigned sz) (lo - bv_unsigned a))) by lia;
+      rewrite ?(Hv (Z_to_bv 64 (Z.max (bv_unsigned a) hi)) (bv_unsigned a + bv_unsigned sz - Z.max (bv_unsigned a) hi)) by lia;
+      cbn [length]; lia.
+  - assert (Hs : bv_unsigned sz <= 0) by (unfold vpos in Ev; cbn [snd] in Ev; apply Z.ltb_ge; exact Ev).
+    destruct (Z.ltb_spec (bv_unsigned a) lo); destruct (Z.ltb_spec hi (bv_unsigned a + bv_unsigned sz)); cbn [app List.filter];
+      repeat match goal with |- context [vpos ?q] => destruct (vpos q) end; cbn [length]; lia.
+Qed.
+
+(* The arithmetic of [zcount_maps_subtract] over plain nats, and the length of a filtered cons:
+   the step below is closed by [exact] (conversion), not by [lia] over the list lengths, whose
+   atoms need not be syntactically equal at 727298f3 ([maps_subtract] is the model's); the sum
+   is regrouped by [Nat.add_shuffle1] and bounded by [Nat.add_le_mono], with no [lia]. *)
+Lemma zc_arith : forall x1 x2 x3 x4 x5 x6 c (b : bool),
+  c = ((if b then 1 else 0) + x3)%nat ->
+  (x1 + (if b then 1 else 0) <= 1 + x5)%nat -> (x2 + x3 <= x4 + x6)%nat ->
+  (x1 + x2 + c <= Datatypes.S x4 + (x5 + x6))%nat.
+Proof.
+  intros x1 x2 x3 x4 x5 x6 c b -> H1 H2.
+  rewrite (Nat.add_shuffle1 x1 x2 (if b then 1 else 0)%nat x3).
+  change (Datatypes.S x4) with (1 + x4)%nat. rewrite (Nat.add_shuffle1 1%nat x4 x5 x6).
+  exact (Nat.add_le_mono _ _ _ _ H1 H2).
+Qed.
+
+Lemma cons_filter_len : forall (x : word * word) l,
+  length (List.filter vpos (x :: l)) = ((if vpos x then 1 else 0) + length (List.filter vpos l))%nat.
+Proof. intros x l. cbn [List.filter]. destruct (vpos x); reflexivity. Qed.
+
+Lemma zcount_maps_subtract : forall l lo hi, lo <= hi ->
+  (length (maps_subtract l lo hi) + length (List.filter vpos l) <= length l + length (List.filter vpos (maps_subtract l lo hi)))%nat.
+Proof.
+  induction l as [|[a sz] l IH]; intros lo hi Hlh; [cbn; lia|].
+  pose proof (IH lo hi Hlh) as H2. pose proof (zcount_iv_subtract a sz lo hi Hlh) as H1. clear IH.
+  (* only the two lengths of the cut are rewritten: a bare [rewrite !List.length_app] also opens
+     [iv_subtract] (its body is an append) and the sum no longer has [zc_arith]'s shape *)
+  assert (E1 : length (maps_subtract ((a, sz) :: l) lo hi)
+               = (length (iv_subtract a sz lo hi) + length (maps_subtract l lo hi))%nat).
+  { change (maps_subtract ((a, sz) :: l) lo hi) with (iv_subtract a sz lo hi ++ maps_subtract l lo hi).
+    apply List.length_app. }
+  assert (E2 : length (List.filter vpos (maps_subtract ((a, sz) :: l) lo hi))
+               = (length (List.filter vpos (iv_subtract a sz lo hi)) + length (List.filter vpos (maps_subtract l lo hi)))%nat).
+  { change (maps_subtract ((a, sz) :: l) lo hi) with (iv_subtract a sz lo hi ++ maps_subtract l lo hi).
+    rewrite List.filter_app. apply List.length_app. }
+  rewrite E1, E2.
+  exact (zc_arith _ _ _ _ _ _ _ _ (cons_filter_len (a, sz) l) H1 H2).
+Qed.
+
+Lemma zbound_maps_subtract : forall l lo hi, lo <= hi ->
   Z.of_nat (length l) <= Z.of_nat (length (List.filter vpos l)) + 1 ->
-  Z.of_nat (length (map_remove l a)) <= Z.of_nat (length (List.filter vpos (map_remove l a))) + 1.
-Proof. intros l a H. pose proof (zcount_map_remove l a) as C. lia. Qed.
+  Z.of_nat (length (maps_subtract l lo hi)) <= Z.of_nat (length (List.filter vpos (maps_subtract l lo hi))) + 1.
+Proof. intros l lo hi Hlh H. pose proof (zcount_maps_subtract l lo hi Hlh) as C. lia. Qed.
 
 Lemma FOP_perm : forall {X} (R : X -> X -> Prop), (forall x y, R x y -> R y x) ->
   forall l l', Permutation l l' -> ForallOrdPairs R l -> ForallOrdPairs R l'.
@@ -109,33 +233,35 @@ Proof.
   intros mo a n Hwf Hsep Hin Hpos Hnc. pose proof Hwf as (Wm & Wn & Wl & _). pose proof (u64_range n) as Rn.
   remember (bv_unsigned a) as lo eqn:Elo. remember (lo + bv_unsigned n) as hi eqn:Ehi.
   assert (Hlh : lo <= hi) by lia.
-  assert (Wr : ivs_wf (map_remove (vm_maps (m_vmmaps mo)) a)) by (apply ivs_wf_filter; exact Wm).
-  assert (Wm' : ivs_wf (vm_maps (m_vmmaps (mdl_munmap mo a n)))) by (rewrite mdl_munmap_vmmaps; exact Wr).
+  destruct (maps_subtract_sem (vm_maps (m_vmmaps mo)) lo hi Wm Hlh) as (Wr & Sm & _).
+  assert (Wm' : ivs_wf (vm_maps (m_vmmaps (mdl_munmap mo a n)))).
+  { rewrite mdl_munmap_vmmaps. cbn [vm_maps]. rewrite <- Elo, <- Ehi. exact Wr. }
   rewrite (eager_used_sem' _ Wm'), (eager_used_sem' _ Wm). rewrite mdl_munmap_vmmaps, mdl_munmap_lazy.
-  cbn [vm_maps vm_noaccess]. rewrite <- Elo, <- Ehi.
+  cbn [vm_maps vm_noaccess]. rewrite <- Elo, <- Ehi. rewrite Sm. cbv beta.
   set (l := vm_maps (m_vmmaps mo)) in *.
   set (Q := fun x => negb (covered (vm_noaccess (m_vmmaps mo) ++ m_vm_lazy mo) x)).
-
-  assert (E1 : sum_count (fun x => negb (covered (maps_subtract (vm_noaccess (m_vmmaps mo)) lo hi
-                                                   ++ maps_subtract (m_vm_lazy mo) lo hi) x)) (map_remove l a)
-               = sum_count Q (map_remove l a)).
-  { apply sum_count_ext_on. intros p Hp x Hx. apply filter_In in Hp as [Hp Hb]. apply negb_true_iff in Hb.
-    assert (Hne : p <> (a, n)) by (intros ->; cbn [fst] in Hb; rewrite bv_eqb_refl in Hb; discriminate).
-    destruct (FOP_In_apart _ _ _ _ Hsep Hp Hin Hne) as [D|D]; unfold iv_apart in D; cbn [fst snd] in D;
-      unfold B, S in Hx; rewrite <- Elo in D.
-    all: assert (Hout : x < lo \/ hi <= x) by lia.
-    all: assert (Hr : in_rng lo hi x = false) by (unfold in_rng; apply andb_false_iff;
-                                                  destruct Hout; [left; apply Z.leb_gt; lia | right; apply Z.ltb_ge; lia]).
-    all: unfold Q; rewrite !covered_app, (covered_subtract _ lo hi x Wn Hlh), (covered_subtract _ lo hi x Wl Hlh), Hr.
-    all: cbn [negb]; rewrite !andb_true_r; reflexivity. }
-  rewrite E1. rewrite (sum_count_partition Q (fun p => bv_eqb (fst p) a) l). fold (map_remove l a).
-  replace (List.filter (fun p => negb (bv_eqb (fst p) a)) l) with (map_remove l a) by reflexivity.
-
-  assert (Hin' : In (a, n) (List.filter (fun p => bv_eqb (fst p) a) l)) by (apply filter_In; split; [exact Hin| apply bv_eqb_refl]).
-  pose proof (sum_count_In_ge Q _ _ Hin') as Hge.
-  assert (Hn : iv_count Q (a, n) = bv_unsigned n).
-  { unfold iv_count, B, S. cbn [fst snd]. rewrite zcount_true by (intros x Hx; rewrite Z2Nat.id in Hx by lia; unfold Q;
-      rewrite (Hnc x ltac:(lia)); reflexivity). apply Z2Nat.id. lia. }
+  (* The cut leaves exactly the bytes of [l] outside [lo, hi); inside, the target [(a, n)] alone gives [n]. *)
+  match goal with |- sum_count ?P l + _ <= _ =>
+    assert (E1 : sum_count P l = sum_count (fun x => Q x && negb (in_rng lo hi x)) l) end.
+  { apply sum_count_ext. intros x. unfold Q. cbv beta.
+    rewrite !covered_app, (covered_subtract _ lo hi x Wn Hlh), (covered_subtract _ lo hi x Wl Hlh).
+    destruct (covered (vm_noaccess (m_vmmaps mo)) x), (covered (m_vm_lazy mo) x), (in_rng lo hi x); reflexivity. }
+  rewrite E1.
+  assert (Hsplit : sum_count Q l
+                   = sum_count (fun x => Q x && in_rng lo hi x) l + sum_count (fun x => Q x && negb (in_rng lo hi x)) l).
+  { assert (G : forall (P R : Z -> bool) l0,
+             sum_count P l0 = sum_count (fun x => P x && R x) l0 + sum_count (fun x => P x && negb (R x)) l0).
+    { intros P R l0. induction l0 as [|q l0 IH]; cbn [sum_count]; [lia|]. unfold iv_count.
+      rewrite (zcount_and_split P R). lia. }
+    exact (G Q (in_rng lo hi) l). }
+  rewrite Hsplit.
+  assert (Hn : iv_count (fun x => Q x && in_rng lo hi x) (a, n) = bv_unsigned n).
+  { unfold iv_count, B, S. cbn [fst snd].
+    rewrite zcount_true by (intros x Hx; rewrite Z2Nat.id in Hx by lia; cbv beta; unfold Q; cbv beta;
+      rewrite (Hnc x ltac:(lia)); cbn [negb andb]; unfold in_rng;
+      rewrite (proj2 (Z.leb_le lo x)) by lia; rewrite (proj2 (Z.ltb_lt x hi)) by lia; reflexivity).
+    apply Z2Nat.id. lia. }
+  pose proof (sum_count_In_ge (fun x => Q x && in_rng lo hi x) l (a, n) Hin) as Hge.
   lia.
 Qed.
 
@@ -143,15 +269,13 @@ Lemma lazy_in_maps_munmap' : forall mo (a n : word), model_ivs_wf mo -> lazy_in_
   ForallOrdPairs iv_apart (vm_maps (m_vmmaps mo)) -> In (a, n) (vm_maps (m_vmmaps mo)) -> 0 < bv_unsigned n ->
   lazy_in_maps (mdl_munmap mo a n).
 Proof.
-  intros mo a n (_ & _ & Wl & _) H Hsep Hin Hpos iv Hiv Hsz. rewrite mdl_munmap_lazy in Hiv. rewrite mdl_munmap_vmmaps. cbn [vm_maps].
+  intros mo a n (Wm & _ & Wl & _) H Hsep Hin Hpos iv Hiv Hsz. rewrite mdl_munmap_lazy in Hiv. rewrite mdl_munmap_vmmaps. cbn [vm_maps].
   destruct (maps_subtract_pieces' _ _ _ iv Wl Hiv) as (r & Hr & P1 & P2 & P3).
-  destruct (H r Hr ltac:(lia)) as (e & He & E1 & E2). exists e. split; [|lia].
-  unfold map_remove. apply filter_In. split; [exact He|].
-  destruct (bv_eqb (fst e) a) eqn:Eb; [|reflexivity]. exfalso. apply bv_eqb_eq in Eb.
-  destruct (FOP_In_apart _ _ _ _ Hsep He Hin) as [D|D].
-  - intros ->. cbn [fst snd] in *. lia.
-  - unfold iv_apart in D. rewrite Eb in D, E1, E2. cbn [fst snd] in D. lia.
-  - unfold iv_apart in D. rewrite Eb in D, E1, E2. cbn [fst snd] in D. lia.
+  destruct (H r Hr ltac:(lia)) as (e & He & E1 & E2).
+  destruct (maps_subtract_contains' _ (bv_unsigned a) (bv_unsigned a + bv_unsigned n) e
+              (bv_unsigned (fst iv)) (bv_unsigned (fst iv) + bv_unsigned (snd iv)) Wm He
+              ltac:(lia) ltac:(lia) ltac:(lia) P3) as (e' & He' & F1 & F2).
+  exists e'. split; [exact He'| lia].
 Qed.
 
 Theorem munmap_ok : munmap_node.
@@ -185,6 +309,13 @@ Proof.
       unfold rt_maps in HsepR. pose proof (FOP_app_cross _ _ _ HsepR _ q Hsm Hq) as D.
       unfold in_iv, in_rng, B, S in Hqx. apply andb_prop in Hqx as [Q1 Q2]. apply Z.leb_le in Q1. apply Z.ltb_lt in Q2.
       unfold iv_apart in D. cbn [fst snd] in D. lia. }
+    assert (Hcut : forall e, In e (vm_maps (m_vmmaps mo)) -> vpos e = true ->
+                   e = (Z_to_bv 64 mb, Z_to_bv 64 len) \/ iv_apart e (Z_to_bv 64 mb, Z_to_bv 64 len)).
+    { intros [b s] He _. destruct (bv_eqb b (Z_to_bv 64 mb) && bv_eqb s (Z_to_bv 64 len)) eqn:E.
+      - apply andb_true_iff in E as [E1 E2]. apply bv_eqb_eq in E1. apply bv_eqb_eq in E2. subst b s. left. reflexivity.
+      - right. assert (Hne : (b, s) <> (Z_to_bv 64 mb, Z_to_bv 64 len))
+          by (intros Eq; injection Eq as -> ->; rewrite !bv_eqb_refl in E; cbn in E; discriminate E).
+        destruct (FOP_In_apart _ _ _ _ Hsep He Hin Hne) as [D|D]; [exact D| exact (iv_apart_sym _ _ D)]. }
     split; [exact Hwf|].
     split.
     { unfold map_has. apply existsb_exists. exists (Z_to_bv 64 mb, Z_to_bv 64 len). split; [exact Hin|].
@@ -198,16 +329,23 @@ Proof.
     split.
     +
       split.
-      { rewrite mdl_munmap_vmmaps. cbn [vm_maps]. rewrite filter_map_remove.
+      { rewrite mdl_munmap_vmmaps. cbn [vm_maps].
+        rewrite (filter_vpos_munmap_cut _ (Z_to_bv 64 mb) (Z_to_bv 64 len) (proj1 Hwf) ltac:(rewrite Eul; lia) Hcut).
         exact (Permutation_trans (Permutation_map_remove _ _ _ Hperm) (Permutation_sym Hperm')). }
-      split; [rewrite mdl_munmap_vmmaps; cbn [vm_reserved]; exact Eres|].
+      (* the unmap only SHRINKS [vm_maps] entrywise ([maps_subtract]) and leaves
+         [vm_reserved] alone, so every surviving piece inherits its original entry's
+         apartness from the vDSO tail. *)
+      split; [rewrite mdl_munmap_vmmaps; cbn [vm_reserved vm_maps];
+              apply (artm_res_sub _ (vm_maps (m_vmmaps mo)) _ Eres);
+              intros q Hq; destruct (maps_subtract_pieces' _ _ _ q (proj1 Hwf) Hq) as (r & Hr & Q1 & Q2 & _);
+              exists r; split; [exact Hr | split; [exact Q1 | exact Q2]]|].
       split; [rewrite mdl_munmap_vmmaps; cbn [vm_limit]; exact Elim|].
       split.
       { pose proof (eager_munmap_exact mo _ _ Hwf Hsep Hin ltac:(rewrite Eul; lia) Hnc) as Hle. rewrite Eul in Hle. lia. }
       pose proof Hwf as (Wm & Wn & Wl & _).
       split; [apply model_ivs_wf_munmap; exact Hwf|].
       split; [exact (lazy_in_maps_munmap' mo _ _ Hwf Hlz Hsep Hin ltac:(rewrite Eul; lia))|].
-      split; [rewrite mdl_munmap_vmmaps; cbn [vm_maps]; apply FOP_filter; exact Hsep|].
+      split; [rewrite mdl_munmap_vmmaps; cbn [vm_maps]; apply FOP_maps_subtract; [exact Hsep| exact Wm| rewrite Eua, Eul; lia]|].
       split; [rewrite mdl_munmap_vmmaps; cbn [vm_init_sp]; rewrite EL; exact Hisp|].
       split.
       { intros z Hz. rewrite EL. apply Hcf. rewrite mdl_munmap_vmmaps, mdl_munmap_lazy in Hz.
@@ -221,10 +359,10 @@ Proof.
         - intros x Hx. pose proof (Hnc x ltac:(rewrite Eua, Eul; lia)) as C. rewrite covered_app in C.
           apply orb_false_iff in C as [_ C]. exact C. }
 
-      split; [unfold maps_zbound; rewrite mdl_munmap_vmmaps; cbn [vm_maps]; exact (zbound_map_remove _ _ Hzb)|].
+      split; [unfold maps_zbound; rewrite mdl_munmap_vmmaps; cbn [vm_maps]; apply zbound_maps_subtract; [rewrite Eua, Eul; lia| exact Hzb]|].
 
       apply NodesA_madv.noaccess_pos_munmap; [exact Hwf| exact Hnp].
-    + apply (HPMc mo); [apply mdl_munmap_fds| apply mdl_munmap_fs| exact HPc].
+    + apply (HPMc mo); [apply mdl_munmap_fds| apply mdl_munmap_fs| apply mdl_munmap_rd| exact HPc].
 Qed.
 
 End GWIN.

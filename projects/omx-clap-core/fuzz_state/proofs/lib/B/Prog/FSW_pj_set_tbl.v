@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/Prog/FSW_pj_set_tbl.v (a working branch
-   f9ccbd8f565 = a working branch 6fcf9aa5a9b, blob aa73062501), the probe in the form of lib/B/FSW_parse_string_tbl.v.
+   = a working branch, blob aa73062501), the probe in the form of lib/B/FSW_parse_string_tbl.v.
    Every image value is read from image B: the range is B/YB1w.v:466 (tfib_A_pj_set = 0x83adc .. tfib_E_pj_set = 0x83ca8),
    A_pj_set is B/FSH_Base.v:61. *)
 (* The decode table of pj_set in fs.asan-ubsan (image B, tfibsegs of B/YB1v.v), built over its YB1w range

@@ -2,8 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE37.v (origin/ossv/recipes
-   c8557374ad2e, 246 lines), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE37.v (
+   theorem-labs/oss-verify-proofs@6b32741d849a, 246 lines), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to
    libreac/fuzz_pcap's ASan build by port_core.py (de2176d86061; symbol gate
    39e67a7eb166 PASS).  This is the return realizer of the second atexit handler of the exit walk, X2_PC.
    STATEMENT PC (re-derived from the unstripped twin fuzz_pcap.asan (sha256 36da3052c383) .symtab, not from the
@@ -11,24 +11,25 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    uses it.  The walk leaves no other pc of its own: it runs tbl_x213 (lib/A/AE3m.v) from X2_PC and stops at
    SR_jalr (SOff 1 0), the return to the caller's ra.
    TAKEN FROM (never hand-written from the donor's text):
-   - the four asan_globals descriptors of x2_rodata's (0x9e100, 256) region: lib/A/AF0m.v:187-218 (M-DESC rows,
+   - the four asan_globals descriptors of x2_rodata's (0x9e100, 256) region: lib/A/AF0m.v:188-219 (M-DESC rows,
      a Theorem Labs lane's generator); the section is 0x9e100..0x9e200 by lib/A/AB1w.v's tfib_asan_globals_lo/hi.  cgif has THREE
-     descriptors (donor AE37.v:34-39, 0xa2870, 192 bytes); fuzz_pcap has FOUR (g0 .str "<fuzz-input>" 0x20d00+0xd,
+     descriptors (donor AE37.v:35-40, 0xa2870, 192 bytes); fuzz_pcap has FOUR (g0 .str "<fuzz-input>" 0x20d00+0xd,
      g1 .str "rb" 0x20d40+3, g2 g_file_len .bss 0x5d3f40+8, g3 g_file .bss 0x5d3f60+8), so the region is 256 bytes
      and carries one descriptor block more; the per-descriptor offsets read are the donor's (0, 8, 16, 32, 40, 48,
      56 -- the name pointer at 24 is not read).
-   - the (globals_lo, globals_hi) pair the dtor loads: AF0m.v:113-114 z8 0x9a4a8 = 0x9e100, z8 0x9a4b0 = 0x9e200
-     (donor AE37.v:32 is 0x9ec28, which fuzz_pcap does not map; MEASURED: 0x9a4a8 is the only 16 bytes in
+   - the (globals_lo, globals_hi) pair the dtor loads: AF0m.v:114-115 z8 0x9a4a8 = 0x9e100, z8 0x9a4b0 = 0x9e200
+     (donor AE37.v:33 is 0x9ec28, which fuzz_pcap does not map; MEASURED: 0x9a4a8 is the only 16 bytes in
      [0x99000, 0x9f000) holding that pair).
-   - every shadow byte of x2_shw / x2_shw_const: AF0m.v:300-345 (Tfib_const_shadow) and AF0m.v:348
+   - every shadow byte of x2_shw / x2_shw_const: AF0m.v:301-346 (Tfib_const_shadow) and AF0m.v:349
      (Tfib_zero_shadow).  The windows are the four globals' shadow plus the descriptor array's:
      0x7fffc1a0..a4, 0x7fffc1a8..ac, 0x800b27e8..ec, 0x800b27ec..f0 and 0x8000bc20..0x8000bc40 (0x20 granules, the
      donor's array is 0xc0 long = 0x18), exactly lib/A/AE23.v:35-42's XW2.  Three of their first bytes
      (0x7fffc1a0, 0x800b27e8, 0x800b27ec) are ZERO shadow, not constant cells, so they come from Tfib_zero_shadow
      rows 0, 3 and 4 -- the donor has one such byte, fuzz_pcap has three (its g2/g3 are 8-byte .bss globals with no
      partial granule).
-   - cellr 0x9e200 (___asan_globals_registered = 1) AF0m.v:115, cellr 0x9f170 (__asan mu_for_globals = 0)
-     AF0m.v:220, which lib/A/AD1j.v:80 passes in as MU0. *)
+   - cellr 0x9e200 (___asan_globals_registered = 1) AF0m.v:116, cellr 0x9f170 (__asan mu_for_globals = 0)
+     AF0m.v:221, which lib/A/AD1j.v:80 passes in as MU0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -176,9 +177,9 @@ apply andb_prop in Hc as [Hc _]. apply andb_prop in Hc as [Hc _]. apply Z.eqb_eq
 pose proof (tfib_const_lookup B TB ly S H mem a 1 _ HM HL) as Hv.
 specialize (Hv 0%nat ltac:(lia)). rewrite Z.add_0_r in Hv. eexists. exact Hv.
 Qed.
-(* The donor has ONE zero-shadow byte in its windows (AE37.v:148-157, the first granule of .str "<fuzz-input>");
+(* The donor has ONE zero-shadow byte in its windows (AE37.v:149-158, the first granule of .str "<fuzz-input>");
    fuzz_pcap has THREE: the data granule of each of g0, g2 and g3.  Each comes from the Tfib_zero_shadow row
-   (AF0m.v:348) that covers it: row 0 (0x10000, 0x20d08 - 0x10000) at index 8608, row 3
+   (AF0m.v:349) that covers it: row 0 (0x10000, 0x20d08 - 0x10000) at index 8608, row 3
    (0x9e200, 0x5d3f48 - 0x9e200) at index 682920, row 4 (0x5d3f60, 0x5d3f68 - 0x5d3f60) at index 0. *)
 Lemma shbyte0_present : forall ly S (H : word -> bool) mem,
 ARm B ly S (aview tfibsegs H mem) -> exists b, mbyte tfibsegs (mrestrict H mem) (symaddr ((Symbols.Asan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z) = Some b.

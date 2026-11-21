@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the first stretch of the inlined words_of of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86760 .. 0x867b4: strnlen of the message, the three mallocs stored at 120/128/136(sp) and their NULL tests reloaded from the frame), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s41.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (a call and back, the caller's facts carried past it) and A/ACh6.v (a segment from one point of the function to the next, the next point's statement a premise). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_s41.v, with its module paths, module names and numbers changed; 2758 of its 2894 lines of code are new or changed and 886 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the walk of
    segments S11 (0x85868 .. 0x85980: the probe loop, the "nosuch0" pair, checks 24 and 25, the UBSan trap branches
    0x858c0 / 0x858c8, calloc(cap + 1, 18)) and S12 (0x85984 .. 0x85990: calloc(cap + 1, 20)) of the test harness's
@@ -27,14 +28,14 @@
    ADOPTED from the image-A twin (the image-A G1 walk owner's S11 / S12 walk, image A's LLVMFuzzerTestOneInput_s20*.v
    as built on its VM, 2026-10-30 18:2x-18:3xZ; image A's registers, slots and pcs renamed to image B's by
    PLAN-asanubsan-main section 11): s20_L0 / s20_L3 and their seeds (its piece s20e), s20_L1 and the snprintf call
-   step (its s20c), the calloc walk kit, s20_L5 / s20_S12 (its s20f, itself image A's S01 / S02 kit, commit
-   119b28fad68f), the seed / chunk / call-step lemmas of s20_L2 / s20_L4 (its s20d; image B's two
-   proofs are new); the shadow-byte reader s20[ab]_zs_ok is image A's S00 walk's (image A's S00 commit
-   52ff1753c784). Image B only: the two UBSan trap branches of H i -> A i, decided inside the run by the seed's atom
+   step (its s20c), the calloc walk kit, s20_L5 / s20_S12 (its s20f, itself image A's S01 / S02 kit),
+   the seed / chunk / call-step lemmas of s20_L2 / s20_L4 (its s20d; image B's two
+   proofs are new); the shadow-byte reader s20[ab]_zs_ok is image A's S00 walk's (image A's S00).
+   Image B only: the two UBSan trap branches of H i -> A i, decided inside the run by the seed's atom
    ranges (B-DELTA section 2.2 way (a)): 0x858c0 `beq s4,s6` with s4 = i in [0, 31] (i < m->n <= 32, s20_mconf_n)
    and s6 = 32; 0x858c8 `bltu a0,s2` with a0 = ~M from 208(s1) in [2 ^ 63, 2 ^ 64 - 1] (lt_hblk's sa_addr: M + 9236
    <= 2 ^ 63) and s2 = 256 i in [0, 7936]. The stack-protector cells of lt_img at a later point (the .got word gotwA
-   is runtime-owned in the regenerated listing, the image-B listing owner's commit ec20d5d4e1df) are re-read from AR at that point by
+   is runtime-owned in the regenerated listing, the image-B listing owner) are re-read from AR at that point by
    SegRecCells.seg_rec_cells, under the Section hypothesis HSY : YF0m.SegBSyms B (the S04 walk's k14_img_kept). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation String.

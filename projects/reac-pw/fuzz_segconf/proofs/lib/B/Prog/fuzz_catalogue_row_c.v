@@ -47,13 +47,14 @@
    IMAGE-INDEPENDENT: no image module is Required; A_fuzz_catalogue_row, STK_fuzz_catalogue_row, RLO, RHI and cat
    are parameters.
    The WALK takes these runtime entries as Section hypotheses:
-     RtString.astrlen_realizes, the interceptor lane's interface row 16 (in the accepted v1, 5e0b8a44fdc; at
-     e45889d6935a strlen is DECISION 2, option (b), of provenance/evidence/interceptors/INTERFACE-A-interceptors.md
-     (commit 7068323e2626)), at the strlen trampoline (image A 0x43a0c, interceptor 0x43abc);
+     RtString.astrlen_realizes, the interceptor lane's interface row 16 (in the accepted v1;
+      strlen is DECISION 2, option (b), of provenance/evidence/interceptors/INTERFACE-A-interceptors.md),
+     at the strlen trampoline (image A 0x43a0c, interceptor 0x43abc);
      the kit's abcmp_realizes (the image-A owner's frame; lib/Reusable/YG0d.v:361), at the bcmp trampoline (image A
      0x43a38, interceptor 0x46e80).
    They are NOT premises of this contract: the statement does not mention them. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/fuzz_catalogue_row_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

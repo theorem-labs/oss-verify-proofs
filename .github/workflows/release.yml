@@ -16,8 +16,9 @@
 # publishing check.  This workflow publishes it only if
 #   - the tag is v<release> or v<release>-src, for the release that
 #     release.yaml at the tag describes;
-#   - the tagged commit is on main and the publishing check passed exactly that
-#     commit (its check run, below);
+#   - the tagged commit is on main, and the publishing check passed exactly
+#     that commit (its check run, below) or a code owner approved exactly that
+#     commit in a pull request merged into main (below);
 #   - the draft holds exactly the files the facts attach to this tag, each
 #     with the SHA-256 the facts pin, and still does just before it is
 #     published (a GPL or LGPL binary archive never ships without its source
@@ -35,6 +36,13 @@
 # made by a GitHub App: ossv-publish/checked by the publishing workflow and,
 # until the gate's publish path retires, ossv-gate/publish by the gate, both
 # with the OSS Verify App 5447700.  The newest check run of the two decides.
+#
+# A release can also come through a public pull request that a person
+# approves.  The tagged commit is then the head of a pull request that was
+# merged into main, and a code owner of release.yaml approved that pull request
+# at exactly that commit.  The owners are those that .github/CODEOWNERS on main
+# names for release.yaml: that file names the release that the tag publishes,
+# and every release changes it.
 #
 # Once every release the facts attach a file to is published, it runs the
 # weekly sweep on the fuzz targets of the projects that this release (v<release>
@@ -60,6 +68,7 @@ jobs:
     permissions:
       contents: write   # to publish the tag's release, or create it when it attaches no file: nothing else is written
       checks: read      # to read the publishing check's check run on the tagged commit
+      pull-requests: read  # to read the pull request whose head is the tagged commit, and its reviews
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
@@ -85,6 +94,8 @@ jobs:
           PUBLISH_APP_ID: "5447700"
           GATE_CHECK: ossv-gate/publish
           GATE_APP_ID: "5447700"
+          # A code owner's approval counts when .github/CODEOWNERS on main names that person as an owner of this file.
+          OWNED_PATH: release.yaml
         run: |
           set -euo pipefail
           # The check run is the evidence, not a run of this repository's workflows: pr.yml's and release-check.yml's
@@ -96,6 +107,57 @@ jobs:
             identical|behind) ;;
             *) echo "::error::$GITHUB_SHA is not on main ($on_main): tag a commit of main"; exit 1 ;;
           esac
+          # The other evidence: the tagged commit is the head of a pull request that was merged into main, and a code
+          # owner of OWNED_PATH approved that pull request at exactly that commit.  An approval at an earlier head
+          # approved another tree, so it does not count.  The owners are those that .github/CODEOWNERS on main gives
+          # the path by GitHub's rule: the last line whose pattern matches the path decides.  Only a user counts: this
+          # job's token cannot read the members of a team.  A failed call fails the step, since no answer is no pass.
+          prs="$(gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls?per_page=100" \
+                   --jq '.[] | select(.merged_at != null and .base.ref == "main" and .head.sha == env.GITHUB_SHA)
+                         | .number')" || {
+            echo "::error::could not list the pull requests of $GITHUB_SHA: no answer is no pass; re-run this workflow"; exit 1; }
+          : > "$RUNNER_TEMP/approvals.tsv"
+          for pr in $prs; do
+            PR="$pr" gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/reviews?per_page=100" \
+              --jq '.[] | select(.state == "APPROVED" and .commit_id == env.GITHUB_SHA)
+                    | [env.PR, (.id | tostring), .user.login] | @tsv' >> "$RUNNER_TEMP/approvals.tsv" || {
+              echo "::error::could not list the reviews of pull request #$pr: no answer is no pass; re-run this workflow"; exit 1; }
+          done
+          if [ -s "$RUNNER_TEMP/approvals.tsv" ]; then
+            gh api -H "Accept: application/vnd.github.raw" \
+              "repos/$GITHUB_REPOSITORY/contents/.github/CODEOWNERS?ref=main" > "$RUNNER_TEMP/CODEOWNERS" || {
+              echo "::error::could not read .github/CODEOWNERS on main: no answer is no pass; re-run this workflow"; exit 1; }
+            # The owners of OWNED_PATH, a file at the top of the tree, one login per line.  A pattern is a path from the
+            # top of the tree, so a leading / changes nothing here; ** spans folders, and * and ? match within a name;
+            # a pattern that ends in / names a folder.  CODEOWNERS has no [ ] range, no escape and no ! (GitHub's
+            # "About code owners").  A line with no owner leaves the path with none.
+            python - "$RUNNER_TEMP/CODEOWNERS" > "$RUNNER_TEMP/owners.txt" <<'EOF'
+          import os, re, sys
+          path = os.environ["OWNED_PATH"]
+          assert "/" not in path, "OWNED_PATH must be a file at the top of the tree"
+          owners = []
+          with open(sys.argv[1], encoding="utf-8") as f:
+              for line in f:
+                  words = re.sub(r"(^|\s)#.*", "", line).split()
+                  if not words:
+                      continue
+                  pattern = words[0].lstrip("/")
+                  while pattern.startswith("**/"):
+                      pattern = pattern[3:]
+                  rx = "".join("[^/]*" if c == "*" else "[^/]" if c == "?" else re.escape(c) for c in pattern)
+                  if pattern and re.fullmatch(rx, path):
+                      owners = words[1:]
+          print("".join(o[1:] + "\n" for o in owners if o.startswith("@") and "/" not in o), end="")
+          EOF
+            while IFS=$'\t' read -r pr id login; do
+              if grep -qixF -- "$login" "$RUNNER_TEMP/owners.txt"; then
+                echo "pull request #$pr was merged into main with $GITHUB_SHA as its head, and $login, a code owner of $OWNED_PATH on main, approved it at that commit (review $id): the approval is the evidence, and no check run is read"
+                exit 0
+              fi
+              echo "$login approved pull request #$pr at $GITHUB_SHA (review $id), but is no code owner of $OWNED_PATH on main (its owners: $(paste -sd ' ' "$RUNNER_TEMP/owners.txt"))"
+            done < "$RUNNER_TEMP/approvals.tsv"
+          fi
+          echo "no code owner of $OWNED_PATH approved a pull request merged into main at $GITHUB_SHA, its head: a check run must pass $GITHUB_SHA"
           # An empty PUBLISH_APP_ID trusts no publishing App, and one that is no App id is refused: either fails closed.
           unset_note=
           if [ -z "$PUBLISH_APP_ID" ]; then

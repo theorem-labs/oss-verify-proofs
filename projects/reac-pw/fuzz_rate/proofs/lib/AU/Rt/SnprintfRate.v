@@ -2,7 +2,7 @@
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14): the snprintf wrapper's contract at
    reac_rate_drivable_csv's call (lib/AU/Rt/SnprintfRateDef.v rate_snprintf_sd_realizes), from the port of fuzz_disco's
    released ASan snprintf walk. New file, in the form of fuzz_disco's lib/A/FMsnprintfDiscoR1.v (the instance at the
-   unit's pieces) and lib/A/FMsnprintfDiscoSnp.v (the instance at the unit's call) at origin/ossv/recipes 2d2ff01bb6f2.
+   unit's pieces) and lib/A/FMsnprintfDiscoSnp.v (the instance at the unit's call).
    Rule 24: no function is proved here beyond the ported walk; this file instantiates it.
    - rate's pieces pf_rate_piece = %s and %d (the format "%s%d" parses to [Ps; Pd]), each with its four arms, taken by
      path: %s FMgxaSeamPf.v seam_*_arm_ps and RT_pf_sh.v pcom_pcx_arm_ps; %d FMpfArmPdSeam.v seam_*_arm_pd and
@@ -17,7 +17,7 @@
      of the separator's NUL word lies in the image too), the destination facts over the written part from those over
      the cell's 16 bytes. The text the walk prints is sep ++ PfFacts.pf_dec v = SnprintfRateDef.snp_text sep v
      (pf_dec and RateCsv.csv_dec have the same body: pf_dec_csv). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Rt/SnprintfRate.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the records RecAsanVfA -> RecAsanVfBR (image B's twin); the comment above restated for image B. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Rt/SnprintfRate.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the records RecAsanVfA -> RecAsanVfBR (image B's twin); the comment above restated for image B. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

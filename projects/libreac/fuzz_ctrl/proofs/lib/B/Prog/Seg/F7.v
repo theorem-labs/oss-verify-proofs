@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 554 of its 593 lines of code are new or changed and 357 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F7 of LLVMFuzzerTestOneInput, image B (the asan-ubsan build of libreac v1.9.0), range 0x8215c-0x82170
    (slot-plan-asan-ubsan section 2 row F7, call KN@0x82170): the check of the second parse result against the carried
    kind, and the first reac_ctrl_kind_name call. The image-B port of lib/A/Prog/Seg/F7.v.
@@ -19,7 +20,7 @@
    a0 = kind_name_addr v. The callee writes only its stack window W = [sp-16, sp); FRA moves across that write by
    the local lemma sl_win_run (W lies in [HIGHMEM_BEG, sp), disjoint from the frame by fra_frame at
    K = REAC_CTRL_KIND_NAME_FRAME), then to the end model by Tac_slot.sl_fra_move.
-   Both cuts are the OFFICIAL Inv_B8215c_at / Inv_B82174_at of lib/B/Prog/SlotInv.v (adopt 7, a working branch 5d00119968):
+   Both cuts are the OFFICIAL Inv_B8215c_at / Inv_B82174_at of lib/B/Prog/SlotInv.v (adopt 7, a working branch):
    seg_F7 is S_F7 of the image-B segment forms. FRA gives what the cut text leaves out: sp <= APPMEM_END (sp <= A <=
    S < APPMEM_END), the frame in app memory above GT (fra_app) and apart from the callee window (fra_frame), and
    Phi's live block (Phi, a_size len) below stklo <= sp - FN_STACK (a_laws_blocks, fra_win). Every conjunct the cuts
@@ -227,7 +228,7 @@ Qed.
 
 (* ---- The turn's two frame records keep fixed lengths (model): the fragment record t_FG j 72 bytes (fg_next keeps
    72 in every class) and the identity record t_ID j 38 bytes (every ingest keeps 38, RcIdentModel.ING_length).
-   Copied from prover a Theorem Labs lane's lib/B/Prog/Seg/F20.v (a working branch 81dc3c31079, its rl_ lemmas, renamed f7_), which this
+   Copied from prover a Theorem Labs lane's lib/B/Prog/Seg/F20.v (a working branch, its rl_ lemmas, renamed f7_), which this
    file does not import, except that f7_FG_length closes with the extra lemma f7_g_len where F20 unfolds t_g and applies fr50_length. REC0's transport across the call needs both records inside the frame body. ---- *)
 Lemma f7_g_len : forall inp j, length (t_g inp j) = 50%nat.
 Proof. intros inp j. unfold t_g. apply fr50_length. Qed.

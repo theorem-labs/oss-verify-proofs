@@ -23,11 +23,12 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 224 of its 281 lines of code are new or changed and 4996 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B5 of reac_segconf_parse_file,
    the piece Q3 -> R3 of lib/B/Prog/pf_seg_B5_d.v (the B5 segment lane of the image-B G3 walk owner, piece prover: a sub-lane, 2026-10-30).
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-B walk; the function's rule-24 record
    is the rule-24 lookup record).
-   ADAPTED from the image-A G3 walk owner's image-A piece lib/A/Prog/pf_a5_r3.v a5_q3_ok (commit 003b9dc874eb)
+   ADAPTED from the image-A G3 walk owner's image-A piece lib/A/Prog/pf_a5_r3.v a5_q3_ok
    and the unit owner's UBSan piece lib/U/Prog/pf_p2.v (the lineno++ check), re-derived on image B's code: B's lineno is
    s8 -> s6 (A: s10), the increment carries the UBSan trap T05, and B loads meta_fill_00's first argument from the
    spill slot 0xd8 (A: s3 = SH + 8), so the seed carries a read-only region on s1 (x9) whose chunk at 0xd8 is

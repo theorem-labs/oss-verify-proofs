@@ -1,6 +1,6 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3..., twin 80e82127e8ca...): the one
    image-B instantiation of the parameters of segconf's ASan-level function contracts (lib/B/Prog/<F>_c.v). The twin
-   of the image-A owner's file lib/A/Prog/SegInstA.v (image A's close commit d4b8027d8dcd): every
+   of the image-A owner's file lib/A/Prog/SegInstA.v (image A's close): every
    Definition and Lemma name is SegInstA's, the `A` in names like A_<F>_A, RLO_A, longlA and seg_litA_fz included, so
    that a walk moves from image A to image B by its Require lines only (the image-B owner's decision, 2026-10-30 17:20Z).
    Every value is image B's, measured on B's pin / twin and tied by its check lemma to B's listing (lib/B/Prog
@@ -359,14 +359,14 @@ Proof. vm_compute. repeat split; reflexivity. Qed.
    and call pc below is image B's (neutral excerpts inst/dis/*.s from B's listing
    de127d52fa40; summary inst/stk_scan.txt); a jal to an errpath_* entry, to the abort pair or a trap instruction
    is on an error arm, which does not return and which the walks show is not reached. Runtime windows (fuzz_command
-   lib/A/Rt at origin/ossv/recipes 501c0d516c69, the texts the image-A wrapper owner's interface ports): strlen ESTACK
+   lib/A/Rt, the texts the image-A wrapper owner's interface ports): strlen ESTACK
    (RtString.v:80-90), strcmp / strspn 2 * ESTACK (RtString.v:108-154), bcmp 2 * ESTACK (kit YG0d.v
    abcmp_realizes), __asan_stack_malloc_<c> ESTACK (kit YG0d.v astack_malloc_realizes), __asan_stack_free_5
    ESTACK (RtStack.v:77-92), __asan_set_shadow_<v> ESTACK (RtShadow.v:27-38), __asan_memcpy / __asan_memset
    ESTACK (kit YG0d.v aintrin_realizes, its ecall_pre), memchr ESTACK, the snprintf and vsnprintf wrappers
    3 * ESTACK in refuse's and reac_segconf_parse_file's form (fuzz_command's callers' convention, answer_c.v:56-59
    and check_reply_c.v:83-89; RtFormat.v:31) and 2 * ESTACK in m_refuse's and m_file's form (row 4's
-   asnprintf_realizes window). The NEW rows' windows are image B's lib/B/Rt/RtSeg.v (the image-B wrapper owner's commit 04f2b48cff08):
+   asnprintf_realizes window). The NEW rows' windows are image B's lib/B/Rt/RtSeg.v (the image-B wrapper owner):
    strchr 2 * ESTACK (row 6, :72-88), strncasecmp 2 * ESTACK (row 7, :93-111), strstr 2 * ESTACK (row 8,
    :114-137), isalnum ESTACK (row 9, :142-150), strcasecmp 2 * ESTACK (row 10, :153-171), strrchr 2 * ESTACK
    (row 11, :174-189), strncpy 2 * ESTACK (row 12, :194-221), strtol with a NULL end pointer 3 * ESTACK (row 3,

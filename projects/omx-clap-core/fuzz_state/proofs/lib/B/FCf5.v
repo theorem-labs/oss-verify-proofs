@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the core's memset entry is named tfib_A_memset, following S0's AB1w regeneration by name (834df0ca5d9), which dropped the musl_ infix; same value 0x98e24. *)
+(* Modified by Theorem Labs, 2026-10: the core's memset entry is named tfib_A_memset, following S0's AB1w regeneration by name, which dropped the musl_ infix; same value 0x98e24. *)
 (* Theorem Labs, 2026-10: __asan_set_shadow_f5 of omx-clap-core/fuzz_preset's ASan image, stated over the frame-area
    interface (a relation ARx with the poisoned-head set Hp). Ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF8u.v
    (set_shadow_gen and its f8 stub instance) into the cgif_file-based core's names: YF8r's musl memset run is the
@@ -13,10 +13,11 @@
    invariant is NOT cgif's AR (preset's ARcf, fuzz_state's ARU) and for classes with no released cgif walk. A unit
    whose invariant IS cgif's AR should take the released AR-form walk (cgif_file A/AF0s.v, AF0u.v and their kin,
    relocated) and, if it needs this shape, obtain it through FCiface.fs_iface_AR plus
-   FCiface.astack_malloc_realizes_of_x (FCiface.v:168-200, Qed) for the malloc contracts; for set_shadow the AR form is the _x
+   FCiface.astack_malloc_realizes_of_x (FCiface.v:169-201, Qed) for the malloc contracts; for set_shadow the AR form is the _x
    form at AR_nohp by definition (cgif_rgb YG0e.v:48 with AR). *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch b120217aa206) to omx-clap-core/fuzz_state's ASan image A as fuzz_state's __asan_set_shadow_f5 at 0x55030: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/FCf5.v at cb01f65c0f3: fuzz_state.asan-ubsan's __asan_set_shadow_f5 at 0x550a0. Changes: module paths (lib.A -> lib.B: AB1v -> YB1v, AB1w -> YB1w, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x, AE2y -> YE2y, AE3d -> YE3d, and A's FCimg / FCxA / FCm<k>r / FCm<k>s / FCf5 / FSH_Base -> their lib/B twins; the image-generic lib/A FSupoison, FSupoisonU, FSifaceU, SetShadowDefU and FSuwalk stay), nothing else; every image numeral is image B's, from lib/B/FCimg.v (generated from fuzz_state.asan-ubsan by gen_fcimg_fs_b.py) and lib/B/YF0m.v (TFIB_TP, TFIB_TSD, Tfib_const); the stub's target is YB1w's tfib_A_memset = 0x99340, MUSL memset (the plain name; the GOT chain 0x9fc30 -> 0xa1a90 -> 0x99340 that gen_fcimg_fs_b.py checks against the symtab memset), not the interceptor (tfib_A___interceptor_memset 0x5246c, tfib_A___wrap_memset 0x51d88). *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch) to omx-clap-core/fuzz_state's ASan image A as fuzz_state's __asan_set_shadow_f5 at 0x55030: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/FCf5.v: fuzz_state.asan-ubsan's __asan_set_shadow_f5 at 0x550a0. Changes: module paths (lib.A -> lib.B: AB1v -> YB1v, AB1w -> YB1w, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x, AE2y -> YE2y, AE3d -> YE3d, and A's FCimg / FCxA / FCm<k>r / FCm<k>s / FCf5 / FSH_Base -> their lib/B twins; the image-generic lib/A FSupoison, FSupoisonU, FSifaceU, SetShadowDefU and FSuwalk stay), nothing else; every image numeral is image B's, from lib/B/FCimg.v (generated from fuzz_state.asan-ubsan by gen_fcimg_fs_b.py) and lib/B/YF0m.v (TFIB_TP, TFIB_TSD, Tfib_const); the stub's target is YB1w's tfib_A_memset = 0x99340, MUSL memset (the plain name; the GOT chain 0x9fc30 -> 0xa1a90 -> 0x99340 that gen_fcimg_fs_b.py checks against the symtab memset), not the interceptor (tfib_A___interceptor_memset 0x5246c, tfib_A___wrap_memset 0x51d88). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

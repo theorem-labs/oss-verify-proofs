@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (activate_group_eq, dequeue_mid)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -27,8 +28,7 @@ Definition act_of (st : mstate) (a : aptr) : Z :=
 Lemma activate_group_eq {R} a st (k : mstate -> Z -> M R) bail :
   m_avail (get_meta_rec st a) = 0 ->
   activate_group a st k bail = k (act_st st a (act_of st a)) (Z.land (m_freed (get_meta_rec st a)) (act_of st a)).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocModel_B ()) ["CANSEC1"] "p'0h01rh11Rh21ai001ah34bailh41kh52sth61Hh71zi012a0i021ci031xp;1p;2p;3p;4p;5p;6p-1R0g0000R1p4p710p8P0P1p4p7210p8P0p1000Kp5p710p8p200R0g000gR2p4p710p8P0g001YR3p4p710p8P2j11Tg002Xj22Tg003Uj1=Tg004Mj35Tg004gj2LTg005Dj13Tg006<j14Tg0072j2BTg007Rj1@Tg007nj1?Tg008Lj4>TP1j59Tg008lj2:Tg009mj1<Tg00:gj20Tg00;Ej28Tg00;dj2;Tg00<`j27Tg00=\j36Tg00>Uj1KTg00?:j1JTg00?Xj1ITg00@Wj1ATg00ALj5CTg00BCj2DTg00B]j6ETP3j5FTg00C;j2GTg00D;j3HTg00E;R3g00F0R1g00FiR2f4R4#1[\1R5f3R6#1R7f2R8/26#=g00GGR9552P2P9f6R:#1g00Gef7R;#1f0R</L9P6f5R=g00HER>12=:R?#3R@g00I<RAP3P2%4?R?g00I^RB/B2RCPC%@CRDPBP2g00J<g00JZRB#?C>RE12:;#4D9,::#<R;P9n10110300021010000RF'018@F/;<'7W0;64124=RF#3R@PAP3P2%4FRFPCPCPDPEP?D9,:=#<RGP9n10110300021010000'0O2g00K?P2P:%KB#J#I#AP6V2DCn0110200020000P6%3<RBPAP3P2P?P;P9n10110300021010100R;'018B;/;<'7X0>=6=4PAP3P2PFPGP9n10110300021010100RG,0@O235X72%1=R@P810BG18BG/;<'7X0>=6461264R>#3RGPAP3P2%4>PCPCPDPEPFD9,:4#<P9n10110300021010100'0O2'D%=>P<EEP=P4P6P8f1R=DFP81G64R>9H6410G>O255@eW6X37X45X51X23X10P4P6P8P=P<O5W3W4W5W2X10o"). Qed.
+Proof. intros H. unfold activate_group, guard, act_of, act_st. rewrite H. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition deq_mid (h : lhead) (g : aptr) (st : mstate) : mstate :=
@@ -40,8 +40,7 @@ Definition deq_mid (h : lhead) (g : aptr) (st : mstate) : mstate :=
   else set_head h None st.
 Definition clr_links (r : meta) : meta := m_set_prev None (m_set_next None r).
 Lemma dequeue_mid : forall h g st, dequeue h g st = upd_meta g clr_links (deq_mid h g st).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocModel_B ()) ["CANSEC1"] "h01gh11hh22stp;3p;2g00L4j32Tg00=\j31Tg00BCj20Tg00M5g00E;g00F0R0f1R1g00Mmf2f072131,00W2W0W1o"). Qed.
+Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition pd_st (an : bool) (st1 : mstate) (sc : Z) : mstate :=

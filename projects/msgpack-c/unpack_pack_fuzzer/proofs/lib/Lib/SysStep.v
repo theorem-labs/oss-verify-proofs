@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nret_MSsvc_gen and nret_MSsvc: a system call's return clears the LR/SC reservation). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -38,12 +39,12 @@ Ltac step_ecall :=
 
 Lemma nret_MSsvc_gen : forall R F pc x8 fc rv m ro r ws zs us cs ci,
   nret (MSsvc R F pc x8 fc rv m ro) (mkEffectU r ws zs us cs ci)
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv (apply_writes (apply_copies m (apply_zeros (apply_unmaps m us) zs) cs) ws) ro.
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None (apply_writes (apply_copies m (apply_zeros (apply_unmaps m us) zs) cs) ws) ro.
 Proof. reflexivity. Qed.
 
 Lemma nret_MSsvc : forall R F pc x8 fc rv m ro r ws zs us ci,
   nret (MSsvc R F pc x8 fc rv m ro) (mkEffectU r ws zs us [] ci)
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
 Proof. reflexivity. Qed.
 
 Lemma mkR_set_a0 : forall x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 v,

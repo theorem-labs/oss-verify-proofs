@@ -39,7 +39,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import
 W_LLVMFuzzerTestOneInput_G W_LLVMFuzzerTestOneInput_latch.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_LLVMFuzzerTestOneInput_add.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AF0l AF0m.
-(* K0's caller-context tables (a working branch d7a13213c59, the generated tables' home; carried by path) *)
+(* K0's caller-context tables (a working branch, the generated tables' home; carried by path) *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import ACk0.
 (* AR_laws_x (YCbqG) at ARi0 (W_journal_x), the laws form W2's re-derived pb_op_add_g takes *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG.
@@ -296,7 +296,7 @@ Proof.
     + rewrite (@ts_owned B TS). intros Hex.
       exact (ad_apart_ok (rg_wake fr_globals + 4) 4 Tfib_owned_static ltac:(vm_compute; reflexivity) a Hex ltac:(lia)).
     + rewrite (@ts_errno B TS). cbn [fr_globals rg_wake] in Ha. unfold TFIB_ERRNO. lia.
-  (* HCTX_oa_malloc: op_add's malloc is K0's malloc row [0x84fdc] (W2's CTX split, 16113e32f61) *)
+  (* HCTX_oa_malloc: op_add's malloc is K0's malloc row [0x84fdc] (W2's CTX split) *)
   - assert (E : [BASE + AF_fr_op_add + 0xcc] = [0x84fdc]) by (vm_compute; reflexivity).
     rewrite E. unfold CTX_AMALLOC. vm_compute. repeat (first [left; reflexivity | right]).
   (* HCTXRA: op_add's call of relay_add is K0's realloc row [0x82a9c; 0x85018] (StartupTrace's ACk0.v) *)

@@ -2,13 +2,13 @@
    U form ((internal path) sections 0-3; lib/A/FSH_Gen.v fpreU / fpostU / wkeep, lib/B/FSH_Base.v's
    fs.asan-ubsan numerals and STK_f). rule 24: no function proved. STATEMENTS ONLY: one spec per function, no walk, no
    lemma.
-   THE B TWIN of lib/A/FSH_Fn_reader.v (S0 775382903c5, a Theorem Labs lane's accepted text, with the U argument of cstr_kept
-   that S0 4a924247f5f gave its pj_set / pj_string sites): the eleven specs carry A's text word for word, read over B's
+   THE B TWIN of lib/A/FSH_Fn_reader.v (S0, a Theorem Labs lane's accepted text, with the U argument of cstr_kept
+   that S0 gave its pj_set / pj_string sites): the eleven specs carry A's text word for word, read over B's
    names (every A_<f>, STK_<f>, FS_PSTAT_FP, fs_glob, fpreU, cstr_kept, fs_img_facts is a NAME S0 states per image:
    lib/B/FSH_Base.v, lib/B/FSH_Rt.v, lib/B/FSPstat.v), as lib/B/FSH_Fn_writer.v / FSH_Fn_alloc.v / FSH_Fn_crt.v do
    with their A twins; the image-free helpers below are A's text too, copied as those twins copy theirs, so that no A
    statement file is loaded here. pj_get_spec and pj_get_str_spec carry `cstr_kept B ly S U k kname` beside the
-   needle's cstr_ok, pre and post (R1 kept-buffer ruling), as A does since S0 74fdc1b88a8. Otherwise only the import
+   needle's cstr_ok, pre and post (R1 kept-buffer ruling), as A does since S0. Otherwise only the import
    lines, the comments' addresses (re-measured on B, below) and B's real structure differ. B's structure, MEASURED (capstone 5.0.7, see CALL RETURN ADDRESSES below):
      - skip_ws (pf.c:36-40) is OUT OF LINE in B (A_skip_ws 0x83598, 55 instructions, frame 16), where A inlines it into
        pj_parse, parse_value and parse_items. B calls it at pj_parse 0x82f94, parse_value 0x830d0 and parse_items
@@ -49,7 +49,7 @@
    put_utf8) needs a backslash in a string, and literal / parse_number (pf.c:289-292) need a value that is not a
    string or an object. FS_DOC_STRS excludes both.
 
-   THE STATICS IN FP (owner's 21:23Z form change; S0 7dd4849273a lib/A/FSPstat.v; B's slots: lib/B/FSPstat.v).
+   THE STATICS IN FP (owner's 21:23Z form change; S0 lib/A/FSPstat.v; B's slots: lib/B/FSPstat.v).
    ajournal's image clause spares inFP FP, and fuzz/alloc.c's statics (g_fail_at, g_live, g_peak, g_count) are
    FS_PSTAT_FP. Every function that writes them, directly or through a callee, states its post with its block footprint
    ++ FS_PSTAT_FP. These are the eight specs that allocate or free: parse_string (fuzz_malloc 0x85614), pj_string
@@ -66,7 +66,7 @@
    FP = []. The shared-kit FP clause (FP composition, RELOC's YCbq / YC85 port) is not stated here; walks that need it
    wait for that port.
 
-   FS_DOC_STRS (PROVED, not a hypothesis): lib/A/Prog/FSDocStrs.v FS_DOC_STRS (c3ed10a9332 on this branch), for every
+   FS_DOC_STRS (PROVED, not a hypothesis): lib/A/Prog/FSDocStrs.v FS_DOC_STRS (on this branch), for every
    body bs with bytes_ok bs: (i) STRUCTURE fs_doc_values (fs_doc (b64_enc bs)), every value of the document
    fs.c:237-248 builds is a string or an object; (ii) CHARACTERS fs_doc_strings (fs_doc (b64_enc bs)), every key and
    string is plain_bytes (no byte below 0x20, no 0x22, no 0x5c). The narrow forms of pj_parse,
@@ -139,12 +139,12 @@
    premise (owner's ruling 2026-10-29 05:05Z via a Theorem Labs lane: that premise is unsatisfiable in a reachable state, and
    here it only fed allocator calls' CTX clauses, which now rest on C5's universe-or-budget disjunct).
 
-   Ported from: lib/A/FSH_Fn_reader.v at S0 a working branch 775382903c5 (at 4a924247f5f: cstr_kept takes U at
+   Ported from: lib/A/FSH_Fn_reader.v at S0 a working branch (cstr_kept takes U at
    pj_set / pj_string, mirrored here), whose own
-   ported from is: a Theorem Labs lane's lib/A/FMH_Fn.v (form, a working branch a1902517c68 via S0); S0
-   a working branch 0433af44ccd (names and numerals); fs released plain contracts
+   ported from is: a Theorem Labs lane's lib/A/FMH_Fn.v (form, a working branch via S0); S0
+   a working branch (names and numerals); fs released plain contracts
    lib/Prog/{pj_parse,parse_value,parse_items,
-   parse_string,pj_set,grow,pj_free,pj_get,pj_get_str,pj_string,pj_object}_c.v at c8557374ad2 (functional premises and
+   parse_string,pj_set,grow,pj_free,pj_get,pj_get_str,pj_string,pj_object}_c.v (functional premises and
    posts, NAMED: PjStruct.pj_node / pj_fd / pj_hdr / pj_slots_at / pj_zero / pj_cbytes, PjIn.pj_in_ok, ReaderRes.*,
    pj_set_c.set_trace); inputs a Theorem Labs lane's slice/reader5-posts.md (pj_free, pj_get, pj_get_str, pj_string, pj_object; the
    pobj proposal), (internal path) section 4 (parse_string plain-byte post, plain_run),
@@ -175,7 +175,7 @@ Fail Definition probe_SH : Reusable.YI14.sink_syms := _.
    fuzz_strdup for a string), 1. An EGrow carries its OLD request m: m = 0 is a fuzz_realloc of NULL, which tail-calls
    fuzz_malloc (MEASURED on fs.asan-ubsan: fuzz_realloc 0x82bc4 `beqz a0` at 0x82bdc -> 0x82c14 restores ra / s0 / s1 /
    s2 -> `j 0x82a58` = fuzz_malloc, no frame of its own), 1, and its room premise is the p = 0 arm of
-   fuzz_realloc_spec (FSH_Fn_alloc.v, paired with a working branch 4fa86c2ed0b); m <> 0 is a true
+   fuzz_realloc_spec (FSH_Fn_alloc.v, paired with a working branch); m <> 0 is a true
    reallocation, which ticks three times, 3. An EFree is one fuzz_free, 1. An EFail is a refusal inside failing()
    before any tick (EV_check_reject_clean_starved, FSH_Gen.v:82), charged the dearest call as an upper bound. The two
    last charges are DECISIONS, not measurements, taken so that no charge is weaker than the old uniform one. *)

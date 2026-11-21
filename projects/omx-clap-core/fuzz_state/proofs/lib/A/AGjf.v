@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjf.v (a working branch 86aa4177b94, file sha256 03c747e676d4) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 16 image addresses moved by code-verified function pairs (29 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjf.v (a working branch, file sha256 03c747e676d4) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 16 image addresses moved by code-verified function pairs (29 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: fs's depot invariant (FS-INSTANCE.md 1.3, L): the depot id bound reads `depot_ids_bound S _ (wf_depot ..)` (AGix's depot_inv form) in place of the NoDup / incl pair. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The post of the hit arm on the k path (0 <= n <= 48) for cgif_file: from AR of the state before the pop, the machine
    post at Allocate's ret (AGj6.at_RET) and Wf / qtight of the final state, AR of the final state (AR_final).  The twin
    of AGj1 (hit-g), ported from YFjf.v over the frame-generic geometry: sp0 is Allocate's entry sp, the stack window is

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the stack_malloc_full and TOKPARSE calls discharge it (jo_preA's conjunct for TOKPARSE)). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -143,6 +144,7 @@ all: rewrite ?unsigned_lit by lia.
 1: cbn [length]; lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA1; Z.div_mod_to_equations; lia.
 1: lia.
@@ -297,7 +299,7 @@ replace (str1 ++ Z_to_bv 8 0 :: rest1) with (str1 ++ Z_to_bv 8 0 :: rest1) in SB
 evt_done5.
 eapply TPA with (A := A3) (LBc := LB) (FRS := [(Fr, 3)]) (B := B) (sb := Fr + 64 + 1) (lo := lo) (str0 := str1) (slack := rest1) (errv := errv4) (u := UWpaid).
 - split; [exact HP3|]. rewrite unsigned_lit by lia.
-split; [exact ST3|]. split; [exact LO|]. split; [lia|]. split; [clear - SPA1; Z.div_mod_to_equations; lia|]. split; [lia|].
+split; [exact ST3|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [lia|]. split; [clear - SPA1; Z.div_mod_to_equations; lia|]. split; [lia|].
 split; [exact ERR4|]. split; [reflexivity | vm_compute; reflexivity].
 - rewrite unsigned_lit by lia. exact SPA1.
 - exact LML.

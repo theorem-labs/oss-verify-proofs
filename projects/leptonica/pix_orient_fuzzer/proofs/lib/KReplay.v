@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO; the recorded proofs' decoder reads a vvar miss as Unmodeled). *)
 (* [comment removed for export] *)
 From Ltac2 Require Import Ltac2 Constr.
 From Ltac2 Require Pstring.
+From LinuxProcessSemantics.LinuxProcessSem Require RiscvSemantics.
 Import Constr.Unsafe.
 
 (* [comment removed for export] *)
@@ -353,6 +355,47 @@ Ltac2 kr_hole (ph : (evar * constr) list ref option) (c : constr) : constr :=
     end
   end.
 
+(* Rebuild recorded load-miss branches with the current vvar classification.
+   The generated terms, including reduced interpreter fixpoints, still go
+   through the kernel at Qed; only the six callers with this encoding opt in.
+   The new branch is the model's own [if range_meets_vvar .. then MachineUnmodeled
+   else MachineFault] (RiscvSemantics.v, the load arm of [interp_eff]), built as a
+   match on [bool] whose return type is the recorded match's own: a [fun (A : Type) ..]
+   wrapper would bring a fresh universe that the kernel has no constraint for. *)
+Ltac2 mutable kr_vvar_load_miss : bool := false.
+Ltac2 kr_update_load_miss (retc : constr) (scr : constr) (brs : constr array) : unit :=
+  if kr_vvar_load_miss then
+    match kind scr with
+    | App f args =>
+      if Constr.equal f '@RiscvSemantics.ov_read_bytes then
+        if Int.equal (Array.length args) 4 then
+          if Int.equal (Array.length brs) 2 then
+            match kind (Array.get brs 1) with
+            | App fault tys =>
+              if Constr.equal fault '@RiscvSemantics.MachineFault then
+                if Int.equal (Array.length tys) 1 then
+                  match kind retc with
+                  | Lambda _ rty =>
+                    let miss := make (App '@RiscvSemantics.range_meets_vvar
+                      [| Array.get args 0; Array.get args 2; Array.get args 3 |]) in
+                    let bind := match kind 'bool with Ind i _ => i | _ => kr_fail "KReplay: bool" end in
+                    let unm := make (App '@RiscvSemantics.MachineUnmodeled tys) in
+                    let ret := make (Lambda (Binder.unsafe_make None Binder.Relevant 'bool) rty) in
+                    Array.set brs 1 (make (Case (case bind) (ret, Binder.Relevant) NoInvert miss
+                                             [| unm; Array.get brs 1 |]))
+                  | _ => ()
+                  end
+                else ()
+              else ()
+            | _ => ()
+            end
+          else ()
+        else ()
+      else ()
+    | _ => ()
+    end
+  else ().
+
 (* [comment removed for export] *)
 Ltac2 kr_case (ph : (evar * constr) list ref option) (n2 : ident option array array) (s : string) (p : int) (st : constr list) : constr * constr list * int :=
   let prop := 'Prop in
@@ -393,6 +436,7 @@ Ltac2 kr_case (ph : (evar * constr) list ref option) (n2 : ident option array ar
            rbr (Int.add j 1) (Int.add q (Int.add 2 (Int.mul 3 nk))) l
          end in
        let q := rbr 0 (Int.add prp 4) brl in
+       kr_update_load_miss retc scr brs;
        (make (Case (case ind) (retc, rp) NoInvert scr brs), st, q)
      | [] => kr_fail "KReplay: stack underflow"
      end)

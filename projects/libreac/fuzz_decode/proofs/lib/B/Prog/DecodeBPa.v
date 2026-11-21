@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v for libreac/fuzz_decode's program walk: one listing (decode_listing over dsym), fuzz_decode.asan's image range (lib/Reusable/YImgTop.v IMG_LO .. IMG_TOP) and the listing's 15 objects, and pa_xcalls in place of PAImg2, fixing the addresses of the program functions the listing calls; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch cb6eddd4032, proofs/libreac/fuzz_grant/lib/A/Prog/GrantPa.v) for libreac/fuzz_decode's
+(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch, proofs/libreac/fuzz_grant/lib/A/Prog/GrantPa.v) for libreac/fuzz_decode's
    program walk: module paths and the listing's names changed. *)
-(* Modified by Theorem Labs, 2026-10: image B's twin of this unit's lib/A/Prog/DecodePa.v, in the shape of proofs/libreac/fuzz_boxreg/lib/B/Prog/BoxBPa.v (a working branch 1d92330b7ad): the listing is fuzz_decode.asan-ubsan's decodeb_listing over dbsym (lib/B/Prog/DecodeBList.v, DecodeBSyms.v); pa_obj_img covers its 16 objects (lib/B/Prog/DecodeBAddr.v decodeb_nobj, one more than image A's 15); decodeb_xcalls names the same 11 program functions as image A, at image B's offsets; boxreg's removal of the YI5b / YI5c hints is left out, as in image A's file; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: image B's twin of this unit's lib/A/Prog/DecodePa.v, in the shape of proofs/libreac/fuzz_boxreg/lib/B/Prog/BoxBPa.v (a working branch): the listing is fuzz_decode.asan-ubsan's decodeb_listing over dbsym (lib/B/Prog/DecodeBList.v, DecodeBSyms.v); pa_obj_img covers its 16 objects (lib/B/Prog/DecodeBAddr.v decodeb_nobj, one more than image A's 15); decodeb_xcalls names the same 11 program functions as image A, at image B's offsets; boxreg's removal of the YI5b / YI5c hints is left out, as in image A's file; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

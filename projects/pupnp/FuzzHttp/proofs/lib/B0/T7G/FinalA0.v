@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's input, mmap base and entry draw; a walk node's RomBase.sys_rob, and TopA0's SRZ_run discharged by SpinAlg.srun_init). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -27,8 +28,8 @@ Open Scope Z_scope.
 
 Lemma srz_of_top : forall c T, Realize.realizes asegs c T -> SpinAlg.srealizes asegs c T.
 Proof.
-  intros c T H. induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (SpinAlg.srz_node asegs c I evs nx T i0 Hnode IH).
+  intros c T H. induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (SpinAlg.srz_node asegs c I evs nx T i0 Hnode Hrob IH).
   - exact (SpinAlg.srz_halt asegs c Hh).
   - exact (SpinAlg.srz_conseq asegs c T T' IH Heq).
 Qed.
@@ -54,7 +55,7 @@ Section FinalA0.
   Local Notation PZ_INIT := GluePZ.PZ_INIT.
 
   Hypothesis INST : forall (HC : HasCeiling) (HG : HasGuard) (V : nat -> Z) inp en ms mo,
-    valid_input inp -> valid_entry imgA0 en inp -> alloc_ceiling = LO (en_sp en) -> amain_at_V V en inp ms mo ->
+    valid_input inp -> valid_entry imgA0 en inp -> alloc_ceiling = bv_unsigned (en_sp en) - 8388608 -> amain_at_V V en inp ms mo ->
     exists (FI : fs_if) (AI : am_if FI),
       (forall lo hi, a0_static lo hi -> am_static FI AI lo hi)
       /\ am_contracts FI AI (JA FI AI)
@@ -69,7 +70,7 @@ Section FinalA0.
     { pose proof (valid_input_va_size _ VI) as Hsv48. destruct en as [sp brk mb dr]. rewrite (valid_entry_sv48 _ _ _ Hsv48) in VE. cbn [imgA0] in VE. cbn. exact (proj1 VE). }
     set (HC := CeilP.ceilP (en_sp en) VSP).
     set (HG := run_guard (Z_to_bv 64 (V 45%nat)) (Z_to_bv 64 0)).
-    assert (CEIL : @alloc_ceiling HC = LO (en_sp en)) by (unfold LO; exact (CeilP.ceilP_eq (en_sp en) VSP)).
+    assert (CEIL : @alloc_ceiling HC = bv_unsigned (en_sp en) - 8388608) by exact (CeilP.ceilP_eq (en_sp en) VSP).
     destruct (INST HC HG V inp en (cfg_ms c) (cfg_model c) VI VE CEIL AMV) as (FI & AI & AMS & AC & FZ & AINIT).
     destruct (IcptICS.ics_all HC) as (MCI & MSI & SNI & RDF & RDB & FWF & FWB & VPF & VPB & VFF & VFB & FPS & FP4 & FPB & DT).
     pose proof (@main_realizesA HC HG FI AI PZ (@H_MAIN_G HG V (en_sp en) (in_fs inp) (cfg_model c)) AMS AC MCI MSI SNI RDF RDB FWF FWB VPF VPB VFF VFB FPS FP4 FPB DT PZ_agree FZ
@@ -85,7 +86,7 @@ End FinalA0.
 Section Closed.
   Local Notation PZ := PZDef.PZ.
   Hypothesis INST : forall (HC : HasCeiling) (HG : HasGuard) (V : nat -> Z) inp en ms mo,
-    valid_input inp -> valid_entry imgA0 en inp -> alloc_ceiling = LO (en_sp en) -> amain_at_V V en inp ms mo ->
+    valid_input inp -> valid_entry imgA0 en inp -> alloc_ceiling = bv_unsigned (en_sp en) - 8388608 -> amain_at_V V en inp ms mo ->
     exists (FI : fs_if) (AI : am_if FI),
       (forall lo hi, a0_static lo hi -> am_static FI AI lo hi)
       /\ am_contracts FI AI (JA FI AI)
@@ -94,13 +95,16 @@ Section Closed.
 
   #[using="INST"] Theorem fuzzhttp_asan_error_free_final : strong_universal_error_free_T_scfg ACFG imgP0 imgA0.
   Proof.
-    refine (fuzzhttp_asan_error_free_of B0Handoff.H_MAIN_B0 RSVA (fun segs c T => SpinAlg.srealizes segs c T) _ _ _ _ _ (main_A0 INST)
+    refine (fuzzhttp_asan_error_free_of B0Handoff.H_MAIN_B0 RSVA (fun segs c T => SpinAlg.srealizes segs c T) _ _ _ _ _ _ (main_A0 INST)
               (shape_of_hmain B0Handoff.H_MAIN_B0 RSVA hmain_K_A0)).
     - intros segs c T T' H E. exact (SpinAlg.srz_conseq segs c T T' H E).
-    - intros segs c T H. induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
-        [exact (SpinAlg.srz_node segs c I evs nx T i0 Hnode IH)| exact (SpinAlg.srz_halt segs c Hh)| exact (SpinAlg.srz_conseq segs c T T' IH Heq)].
+    - intros segs c T H. induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
+        [exact (SpinAlg.srz_node segs c I evs nx T i0 Hnode Hrob IH)| exact (SpinAlg.srz_halt segs c Hh)| exact (SpinAlg.srz_conseq segs c T T' IH Heq)].
     - intros segs c T H tr. exact (SpinAlg.srealizes_obs_iff segs c T H tr).
     - intros segs c T H. exact (SpinAlg.srealizes_no_error segs c T H).
+    - (* TopA0's [SRZ_run]: the start-up walk lifts to the run's start *)
+      intros segs inp sp mb pc ph brk rnd lim T Hvi H.
+      exact (SpinAlg.srun_init segs inp sp mb pc ph brk rnd lim T Hvi H).
     - intros inp en VI VE Tm TN HM. exact (b0_handoff inp en VI VE Tm TN HM).
   Qed.
 End Closed.

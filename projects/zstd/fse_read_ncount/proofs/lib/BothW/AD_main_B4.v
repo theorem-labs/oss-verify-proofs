@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (amain_read_all re-proved for open_spec's TASK_SIZE bound on the argv[1] path, rewriting TASK_SIZE to its value in its range goals). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -133,12 +134,14 @@ zstep. clear RD. zstep. zstep. zstep.
 remember READ_FUEL as rf eqn:Erf. clear Erf.
 apply evtF_done.
 replace (map (Z_to_bv 8) arg1) with (nth 1 argv []) by (symmetry; apply zbytes_map_unsigned').
+assert (LENA1 : length (nth 1 argv []) = length arg1)
+  by (rewrite <- (length_map (Z_to_bv 8) arg1); f_equal; symmetry; apply zbytes_map_unsigned').
 eapply implMA_bind.
 { eapply implMA_msys.
 eapply (open_spec RNG) with (lo := LO) (errv := errv) (canary := canary);
 rewrite ?(unsigned_lit (usp + -128)) by lia; rewrite ?(unsigned_lit P1) by lia; rewrite ?errno_addr_ATP; unfold ATP; rewrite ?unsigned_lit by lia;
 first [ exact ST | exact STR1' | exact ERR | exact GSSP | exact GU | exact MI | reflexivity | exact A1NN | exact A1NOSL | exact RGimg | idtac ].
-all: unfold got_ssp, ssp_guard, zlength in *; rewrite ?length_map in RGa1;
+all: unfold got_ssp, ssp_guard, zlength in *; rewrite ?length_map in RGa1; rewrite ?length_map in *; rewrite ?LENA1; rewrite ?TASK_SIZE_val;
 first [ lia | eapply rng_sub'; [exact RGstk| lia] | eapply rng_sub'; [exact RGimg| lia] | eapply rng_sub'; [exact RGa1| lia] ]. }
 cbv beta. intros r s' RNG' ms' [-> [-> PO]].
 destruct PO as (u0 & u1 & u2 & b1' & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m1 & -> & MUc & WMc & MI1 & ST1 & ERR1 & _ & _ & _ & FDR).

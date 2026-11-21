@@ -1,4 +1,4 @@
-(* Image B twin of lib/A/RT_pf_vsn_body.v at d49bd1db505: module paths lib.A -> lib.B; 4 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* ___interceptor_vsnprintf at fuzz_reply.asan-ubsan entered at its BODY 0x46538 (PF_ICPT_VSNPRINTF), where
+(* Image B twin of lib/A/RT_pf_vsn_body.v: module paths lib.A -> lib.B; 4 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* ___interceptor_vsnprintf at fuzz_reply.asan-ubsan entered at its BODY 0x46538 (PF_ICPT_VSNPRINTF), where
    ___interceptor_snprintf calls it, jumping past the trampoline __wrap_vsnprintf 0x4222c (PF_WRAP_VSNPRINTF).
    RT_pf_stmt.v vsnprintf_icpt_stmt at the body, from the same statement at the trampoline (RT_pf_vsn.v proves that
    one; here it is the Section hypothesis VSNT).  No function is walked here:

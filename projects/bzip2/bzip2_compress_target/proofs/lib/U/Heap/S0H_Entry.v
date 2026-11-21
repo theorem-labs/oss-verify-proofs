@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair in the reserved ledger, the new auxv layout and both CONFIG_RSEQ layouts). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -593,25 +594,22 @@ Hypothesis SMh : m_halted MD = None.
 Hypothesis SMl : m_vm_lazy MD = [].
 Hypothesis GE : geo (mas =? 0) area gm.
 Hypothesis ATOP : atop_ok VM.   (* [comment removed for export] *)
+(* the vDSO/vvar pair of the run's kernel build is in the reserved ledger
+   ([State.init_reserved]); [check_mprotect]'s vDSO gate reads it *)
+Hypothesis SMvi : incl (vdso_reserved (m_kernel MD) (vdso_top VM)) (vm_reserved VM).
 
 Definition pbrk0 : Z := area + 4096.
 
 Lemma KL_L0 : KL (L0 (mas =? 0) area gm) pbrk0 MD.
 Proof.
   destruct TV as [TVr TVh TVa TVl TVp TVs TVlim].
+  destruct TVr as (RS1 & RS2 & RS3 & RS4).
   destruct GE as [GA GG GAR GAI GGR GD].
-  cps_destruct TX as (brk0 & mbase & VB & CASES).
+  cps_destruct TX as (brk0 & mbase & rs & VB & CASES).
   cps_destruct VB as (VB1 & VB2 & VB3). rewrite reserved_top_S0 in VB1, VB2. unfold brk_aslr_max in VB2. unfold page_size in VB3.
   bz_ceil.
   assert (WF : vmwf (vm_maps VM)).
   { split; [| apply seps_pwdisj; exact TVs]. intros e He. pose proof (proj1 (Forall_forall _ _) TVp e He) as [S1 S3]. unfold elo, ehi. lia. }
-  assert (RT : forall e, In e (vm_reserved VM) -> ehi e <= 0x66000).
-  { intros e He. rewrite TVr in He. unfold ehi.
-    assert (K : Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= 0x66000) (segments_reserved Ubsan.M.loaded_segments)).
-    { apply Forall_forall. intros x Hx. apply (in_map wwZ) in Hx. rewrite resv_S0 in Hx. unfold wwZ in Hx.
-      cbn in Hx. destruct x as [x1 x2]; cbn in Hx |- *.
-      destruct Hx as [E|[E|[E|[E|[]]]]]; injection E as E1 E2; lia. }
-    exact (proj1 (Forall_forall _ _) K e He). }
   destruct CASES as [(M0 & AR & BV & maps & na & EVM & MC)|(M1 & BV & a & AR & EVM)].
   - (* [comment removed for export] *)
     assert (Eb : (mas =? 0) = true) by (rewrite M0; reflexivity). rewrite Eb.
@@ -624,8 +622,11 @@ Proof.
     constructor; rewrite ?VMr, ?VMm, ?VMs, ?VMb; cbn [ld_resv ld_groups ld_metas ld_brkreg ld_brk L0].
     + exact SMh. + exact SMl.
     + rewrite <- VMm0. exact WF.
-    + rewrite TVr. symmetry. exact resv_S0.
-    + intros e He. pose proof (RT e He). lia.
+    + (* the ledger's entries are the segments, which stay reserved *)
+      rewrite <- resv_S0. intros x Hx. apply in_map_iff in Hx as (e & <- & He). apply in_map. exact (RS1 e He).
+    + (* no mapping meets a reserved entry *)
+      intros r Hr e He. rewrite <- VMm0 in He. pose proof (RS4 r Hr e He) as D. unfold edisj, elo, ehi. lia.
+    + rewrite ?SMv. exact SMvi.
     + rewrite U8. unfold PGSZ. bz_ceil. lia.
     + intros bb l [E|[]]. injection E as <- <-. unfold LEN_MAX, PGSZ. bz_ceil.
       rewrite (mmap_len_of_aligned 69632) by (try lia; reflexivity).
@@ -652,8 +653,11 @@ Proof.
     constructor; rewrite ?VMr, ?VMm, ?VMs, ?VMb; cbn [ld_resv ld_groups ld_metas ld_brkreg ld_brk L0].
     + exact SMh. + exact SMl.
     + rewrite <- VMm0. exact WF.
-    + rewrite TVr. symmetry. exact resv_S0.
-    + intros e He. pose proof (RT e He). lia.
+    + (* the ledger's entries are the segments, which stay reserved *)
+      rewrite <- resv_S0. intros x Hx. apply in_map_iff in Hx as (e & <- & He). apply in_map. exact (RS1 e He).
+    + (* no mapping meets a reserved entry *)
+      intros r Hr e He. rewrite <- VMm0 in He. pose proof (RS4 r Hr e He) as D. unfold edisj, elo, ehi. lia.
+    + rewrite ?SMv. exact SMvi.
     + unfold PGSZ. bz_ceil. lia.
     + intros bb l [E|[]]. injection E as <- <-. unfold LEN_MAX, PGSZ. bz_ceil.
       rewrite (mmap_len_of_aligned 69632) by (try lia; reflexivity).
@@ -1146,6 +1150,7 @@ Hypothesis SMv : m_vmmaps MD = VM.
 Hypothesis SMh : m_halted MD = None.
 Hypothesis SMl : m_vm_lazy MD = [].
 Hypothesis SMm : m_vm_materialized MD = [].
+Hypothesis SMvi : incl (vdso_reserved (m_kernel MD) (vdso_top VM)) (vm_reserved VM).
 
 Let b : bool := mas =? 0.
 Let st : mstate := st0 b area gm.
@@ -1153,13 +1158,13 @@ Definition s_entry : PState := mkPS (strip st) (area + 4096) (0, 0) tt.
 
 Lemma MB0 : (mas = 0 /\ brkv = area + 4096) \/ (mas = 1 /\ brkv = 2^64 - 1).
 Proof.
-  cps_destruct TX as (brk0 & mbase & VB & [(M0 & AR & BV & _)|(M1 & BV & a & AR & _)]); [left| right]; split; lia.
+  cps_destruct TX as (brk0 & mbase & rs & VB & [(M0 & AR & BV & _)|(M1 & BV & a & AR & _)]); [left| right]; split; lia.
 Qed.
 
 Lemma DISJM0 : b = false -> area + 4096 <= gm \/ gm + 69632 <= area - 4096.
 Proof.
   intros Hb. unfold b in Hb. destruct TV as [TVr TVh TVa TVl TVp TVs TVlim].
-  cps_destruct TX as (brk0 & mbase & VB & [(M0 & _)|(M1 & BV & a & AR & EVM)]); [rewrite M0 in Hb; discriminate|].
+  cps_destruct TX as (brk0 & mbase & rs & VB & [(M0 & _)|(M1 & BV & a & AR & EVM)]); [rewrite M0 in Hb; discriminate|].
   pose proof WLD0 as WW. destruct WW. 
   rewrite EVM in TVs. cbn in TVs. inversion TVs as [|p l HF HS E1]; subst.
   apply Forall_inv in HF. unfold iv_disjoint in HF. cbn [fst snd] in HF.
@@ -1185,7 +1190,7 @@ Proof.
     split; [| split; [| exact I]].
     + exists (L0 b area gm). split; [| split].
       * exists st, BL0, LS0. split; [reflexivity|]. split; [exact HINVL| reflexivity].
-      * cbn [ps_brk s_entry]. pose proof (KL_L0 sp0 gm area brkv mas VM MD TV TX SMv SMh SMl GE ATOP) as K. unfold pbrk0 in K. exact K.
+      * cbn [ps_brk s_entry]. pose proof (KL_L0 sp0 gm area brkv mas VM MD TV TX SMv SMh SMl GE ATOP SMvi) as K. unfold pbrk0 in K. exact K.
       * apply Permutation_refl.
     + cbn. constructor; [intros []| constructor].
 Qed.
@@ -1195,11 +1200,10 @@ Proof.
   destruct TV as [TVr TVh TVa TVl TVp TVs TVlim].
   unfold VMT. rewrite SMv. split; [rewrite TVlim; cbv [source_alloc_limit target_alloc_limit]; lia|]. split; [exact SMm|]. split.
   - apply Forall_app. split.
-    + rewrite TVr. apply Forall_forall. intros x Hx. apply (in_map wwZ) in Hx. rewrite resv_S0 in Hx. unfold wwZ in Hx. cbn in Hx.
-      destruct x as [x1 x2]; cbn in Hx. cbn [fst snd]. destruct Hx as [E|[E|[E|[E|[]]]]]; injection E as E1 E2; rewrite <- E1, <- E2; lia.
+    + exact (proj1 (proj2 (proj2 TVr))).
     + apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) TVp e He) as X. cbn beta in X. lia.
-  - rewrite length_app. assert (length (vm_reserved VM) = 4%nat); [| lia].
-    rewrite TVr. rewrite <- (length_map wwZ), resv_S0. reflexivity.
+  - rewrite length_app. assert (length (vm_reserved VM) <= 6)%nat; [| lia].
+    pose proof (proj1 (proj2 TVr)) as HL. rewrite <- (length_map wwZ (segments_reserved Ubsan.M.loaded_segments)), resv_S0 in HL. cbn in HL. lia.
 Qed.
 
 Lemma TIGHT_entry : S0_tightP s_entry (LB0 gm) MD.
@@ -1234,10 +1238,15 @@ Qed.
 Lemma AUX_entry : rauxv_ok M sp0.
 Proof.
   pose proof ACSP as AC.
-  cps_destruct AX as (av & rnd & C0 & C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 & C9 & C10 & C11 & CS & B1 & B2 & B3 & B4).
+  cps_destruct AX as (av & rnd & C0 & CA & CS & B1 & B2 & B3 & B4).
   exists av, 0, 0, 0, 0, 0, 0, 0, rnd. split; [| split; [| split]].
   - apply rw_C8_cell; [exact C0| apply wr_img; unfold RAUXV_CELL; lia].
-  - unfold auxv_keys, le8, wz. repeat match goal with |- _ /\ _ => split end; (eapply bytes_at_cell; [eassumption| lia| lia]).
+  - (* LPS 08b1429: the 08b auxv, both CONFIG_RSEQ layouts ([S0TargetPre.auxv_cells]) *)
+    unfold auxv_cells in CA. unfold auxv_keys, le8, wz.
+    repeat match goal with H : cell _ _ _ _ /\ _ |- _ => destruct H end.
+    repeat match goal with |- _ /\ _ => split end; try (eapply bytes_at_cell; [eassumption| lia| lia]).
+    match goal with H : _ \/ _ |- _ => destruct H as [(T1 & T2 & T3) | T1] end;
+      [left; repeat split | right]; (eapply bytes_at_cell; [eassumption| lia| lia]).
   - unfold le8, wz. eapply bytes_at_cell; [exact CS| lia| lia].
   - lia.
 Qed.
@@ -1252,11 +1261,12 @@ Theorem S0_entry0w : forall (sp0 gm area brkv mas tid hw : Z) (M : word -> optio
   world0 area gm brkv mas tid hw M -> 0x7fff80000000 <= sp0 <= 0x800000000000 ->
   target_vm gm area VM -> target_vmx sp0 gm area brkv mas VM -> auxv0 sp0 M -> atop_ok VM ->
   m_vmmaps MD = VM -> m_halted MD = None -> m_vm_lazy MD = [] -> m_vm_materialized MD = [] ->
+  incl (vdso_reserved (m_kernel MD) (vdso_top VM)) (vm_reserved VM) ->
   exists (s : ai_AS S0_alloc) (pb : bid),
     ai_inv S0_alloc s [(pb, gm + 32, 65536)] M MD /\ at_tight S0_tight s [(pb, gm + 32, 65536)] MD /\ ai_aux S0_alloc M sp0.
 Proof.
-  intros sp0 gm area brkv mas tid hw M VM MD W SP TV TX AX AT SMv SMh SMl SMm.
-  exists (s_entry gm area mas), pb0. exact (S0_entry0 sp0 gm area brkv mas tid hw M VM MD W SP TV TX AX AT SMv SMh SMl SMm).
+  intros sp0 gm area brkv mas tid hw M VM MD W SP TV TX AX AT SMv SMh SMl SMm SMvi.
+  exists (s_entry gm area mas), pb0. exact (S0_entry0 sp0 gm area brkv mas tid hw M VM MD W SP TV TX AX AT SMv SMh SMl SMm SMvi).
 Qed.
 
 (* [comment removed for export] *)
@@ -1270,14 +1280,15 @@ Theorem S0_entry_facts0 : forall (sp0 gm area brkv mas tid hw : Z) (content : li
   target_pre sp0 gm area brkv mas tid hw content R M -> target_vm gm area VM -> target_vmx sp0 gm area brkv mas VM ->
   auxv0 sp0 M -> atop_ok VM ->
   m_vmmaps MD = VM -> m_halted MD = None -> m_vm_lazy MD = [] -> m_vm_materialized MD = [] ->
+  incl (vdso_reserved (m_kernel MD) (vdso_top VM)) (vm_reserved VM) ->
   exists (s : ai_AS S0_alloc) (LB : list ablock) (pb : bid) (bufN B : Z),
     ai_inv S0_alloc s LB M MD /\ In (pb, gm + 32, bufN) LB /\ Z.of_nat (length content) <= bufN /\ ai_aux S0_alloc M B /\ sp0 <= B /\
     (forall n, 0 < n < 2 ^ 26 -> ai_sys_ok S0_alloc s LB n MD) /\
     ac_c21 S0_cover C21_none s LB /\ (exists K0, ac_vm S0_cover K0 s MD /\ (80 <= K0)%nat).
 Proof.
-  intros sp0 gm area brkv mas tid hw content R M VM MD TP TV TX AX AT SMv SMh SMl SMm.
+  intros sp0 gm area brkv mas tid hw content R M VM MD TP TV TX AX AT SMv SMh SMl SMm SMvi.
   pose proof (tp_len _ _ _ _ _ _ _ _ _ _ TP) as LEN. pose proof (tp_sp0 _ _ _ _ _ _ _ _ _ _ TP) as SP.
-  cps_destruct (S0_entry0 sp0 gm area brkv mas tid hw M VM MD (tp_world _ _ _ _ _ _ _ _ _ _ TP) (proj1 SP) TV TX AX AT SMv SMh SMl SMm) as (H1 & H2 & H3).
+  cps_destruct (S0_entry0 sp0 gm area brkv mas tid hw M VM MD (tp_world _ _ _ _ _ _ _ _ _ _ TP) (proj1 SP) TV TX AX AT SMv SMh SMl SMm SMvi) as (H1 & H2 & H3).
   exists (s_entry gm area mas), (LB0 gm), pb0, 65536, sp0.
   split; [exact H1|]. split; [left; reflexivity|]. split; [lia|]. split; [exact H3|]. split; [lia|].
   split; [intros n Hn; apply (at_sys S0_tight H1 H2); unfold MAX_REQ; lia|].

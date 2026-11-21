@@ -5,10 +5,10 @@
 (* Modified by Theorem Labs, 2026-10: relocated to fm.asan (module paths, addresses, code table over 0x458a0); entered at 0x45a18 (the size >= res + 1 path); icpt_rodata_okU copied from FMpfsU.v. *)
 (* Modified by Theorem Labs, 2026-10: restated over the engine's generic ARx with the ghost list Hp fixed (route (a),
    c-omx-hpreset 10:51Z) and re-pinned at preset image A (fuzz_preset.asan d83eb25d; symbols from its unstripped twin
-   f0d2e8d4), from origin/cold/port-fm-rtprintf-param 7e395de08f5 proofs/omx-clap-core/fuzz_manifest/lib/A/
+   f0d2e8d4), proofs/omx-clap-core/fuzz_manifest/lib/A/
    FMsnprintfGwrc.v. ARx changes: Section f takes B, ARx and the laws it uses as hypotheses named after their
    AR_laws_x fields (alx_frame, alx_stack, alx_const_cells) plus stk_bounds_x (the exact statement of the engine
-   lemma YCbqG.stk_bounds_x, 7792959a2abb YCbqG.v:308, which needs the whole AR_laws_x record; the instance passes
+   lemma YCbqG.stk_bounds_x, YCbqG.v:309, which needs the whole AR_laws_x record; the instance passes
    `YCbqG.stk_bounds_x segs B ARx LAWS`), the ghost list Hpl : list Z for U (named Hpl because the Section already
    has Hp : 0 <= p), HAR : ARx ..; POSTr's post is ARx ..;
    icpt_rodata_okU -> icpt_rodata_ok_x (PSnpRodata.rodata_ok_lx; ro_low / ro_region_low dropped, now unused);
@@ -41,8 +41,9 @@
      __asan_region_is_poisoned + 0x174 (ra, decimal)   0x55388 = 349064   0x5540c = 349196
      (tbl_icpt comment) ___interceptor_vfprintf / ___interceptor_fprintf   0x460d4 / 0x464a0   0x46158 / 0x46524
    icpt_rodata_ok_x cites lib/AU/PSnpRodata.v (SnpxRoots), YE2y.icpt_rodata (B's values). *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpGwrc.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpGwrc.v.reloc.tsv. Comment numerals are as written. *)
 (* Modified by Theorem Labs, 2026-10: the Zify flag reset below is Local (global_settings v10 439f8e3bd463: ESCAPES 0). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -509,7 +510,7 @@ Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option 
 Hypothesis alx_frame : ARx_frame_law tfibsegs B ARx.
 Hypothesis alx_stack : ARx_stack_law tfibsegs B ARx.
 Hypothesis alx_const_cells : ARx_const_cells_law tfibsegs B ARx.
-(* the stack bound: the exact statement of the engine lemma YCbqG.stk_bounds_x (7792959a2abb YCbqG.v:308, from field
+(* the stack bound: the exact statement of the engine lemma YCbqG.stk_bounds_x (YCbqG.v:309, from field
    18 alx_layout_ok); the instance passes `YCbqG.stk_bounds_x segs B ARx LAWS` *)
 Hypothesis stk_bounds_x : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
   kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd.

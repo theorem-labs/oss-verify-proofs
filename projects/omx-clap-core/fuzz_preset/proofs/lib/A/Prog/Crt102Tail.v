@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1132 of its 1198 lines of code are new or changed and 712 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move; the wle' contract, the internal file WLE-CONTRACT.md):
    every journal of this file is at RZW := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf (ajournal_xR / ajournal_xwR) and every
    stretch statement concludes YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf (crt102_tail, ct_J_call, ct_at_Z, ct_at_F).
@@ -8,7 +9,7 @@
    pays it from crt_pos's run position with the Section hypothesis HOS4 : (length rp_os <= 4)%nat (the text's own
    premise) through Crt102HullPos.hull_budget_nil_of_room_pos. The inline release and __asan_set_shadow_f5 cross by
    the engine's R rules YGcallSx.aj_flag_store_xR and YGcallMxmn.aj_set_shadow_at_xmR. *)
-(* base: commit 2fdcfd7be069 (post-landing line). kb round (brief
+(* base: (post-landing line). kb round (brief
    the internal file wild-budget-kb-reshape.md): crt_at_J's live state is at kb =
    prh_wk F_check_round_trip, its journal at a budget WS with wbudget [] (prh_wk F_check_round_trip) WS; the tail's
    calls (pj_free, __asan_set_shadow_f5, the inline release) store no wild trace, so the journal stays at WS to the
@@ -19,27 +20,27 @@
    `crt_at_J .. -> SRr SEGS Wc (crt_cfg fxk CRT_J_OFF rg memc mdc) QF`, the lemma every arm of the body ends in.
    STATUS: crt102_tail is Qed. Its r = 1 arm is dead (crt_at_J states r = 0); its r = 0 arm closes from crt_at_J's
    ordered free list for copy (the former open goal FREEPERM). Every piece is its own Qed lemma
-   (ct_J_call, ct_r0_end, ct_at_Z, ct_at_F, ct_qt_keep and the helpers). On the earlier base ba4ced0dbea, whose QT
-   carried no exact position, crt102_tail was Qed (commit 090d18ff610, pins102 rc=0).
+   (ct_J_call, ct_r0_end, ct_at_Z, ct_at_F, ct_qt_keep and the helpers). On the earlier base, whose QT
+   carried no exact position, crt102_tail was Qed (pins102 rc=0).
 
    INPUTS OF RECORD (by path):
    - pins: A' asan 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin c90d4fa54d43160b);
      this file is image A' only.
-   - base commit 813a63b6cfb3: lib/A/Prog/Crt102Glue.v 5f20c5d5048f (QT = the text's post:
+   - base: lib/A/Prog/Crt102Glue.v 5f20c5d5048f (QT = the text's post:
      g_most / g_own_ran_out inside prh_ledger, r = 0, the exact end position; crt_side = the ledger at `ranc most ownc`
      without a position; crt_at_J states r = 0, and its r = 0 arm carries crt_pos Sc crt_evs_J (with prh_cons_from) and
      the tree copy holds, crt_tree_J, with its block sizes against tblk UP TO PERMUTATION and its ORDERED free list
      Fc, map (snd + cf_head) Fc = fo crt_tree_J), Crt102Img.v 176eec830b61,
      Crt102Model.v b493cf5e85a2, S10Env.v d8ca1dd59ead, S1Ledger.v 8cf15eeb6311; the contract texts and Spec BY PATH at
-     the kit tip of record, commit 3ac20a5c9e30: PRH_FnPj.v dc0d0aa79c0f (tpj_free_specX over pj_foR: a
+     the kit tip of record: PRH_FnPj.v dc0d0aa79c0f (tpj_free_specX over pj_foR: a
      position-free class-24 entry premise for v <> 0, prh_head_wide, the ledger with its g_most / g_own_ran_out cells,
      and the position TRANSFER in its post), PRH_PjOrder.v e5917626b82b, PRH_FnCheck.v 0844ed8c0608, PRH_Base.v
      ee2f5cd7ed35; Spec PresetReqAt.v 43c958024221, PresetRun.v 5ac818ab1fe6, PresetFreeFo.v 50bc9df2f2de (fo / tblk
-     are multiset facts only: the model gives no tree-shaped order); the files relocated to the #102 pins, by path from
-     commit f67018a892ba.
+     are multiset facts only: the model gives no tree-shaped order); the files relocated to the #102 pins, by path.
+     
    - listing read: the internal file crt.A.s (A 0x82bb0 .. 0x82cdc); segment cut:
      DESIGN.md (sha256 d05697dd088c; internal record) (cuts J, Z, Q; Z at +0x348 per Crt102Img).
-   - engine: the whole set of the base (at commit bb085d091bbe: YCbqG / YCbqGcall / YCbqGcallW / YGcallSx / YC80x /
+   - engine: the whole set of the base (YCbqG / YCbqGcall / YCbqGcallW / YGcallSx / YC80x /
      YC1fPx / YGcallMxmn b47cf7942c3d / YSRrMemnorm).
    - rule 24: no walk of check_round_trip exists on the #102 pins outside this one - the cold/* sweep of record on
      census-1 with a positive control (RULE24.md (sha256 96ef6f3404f0; internal record): 14976 cold refs + 4 released, CONTROL OK, LAST
@@ -89,7 +90,7 @@
    (Crt102Top), which this file does not reach.
 
    ELABORATION (Set Printing All over crt102_tail's goal and ct_J_call / ct_at_Z / ct_at_F / ct_r0_end / ct_F_entry /
-   ct_Z_entry, at f8b33cb68f8): QF and crt_at_J take `fx` (the contract's entry float state, passed by name);
+   ct_Z_entry): QF and crt_at_J take `fx` (the contract's entry float state, passed by name);
    `fregs_kept_x fx fxk`, `frm_zero (fp_csr fxk)`, `mkst fxk` and `st_ok_pi .. fxk` take the arms' `fxk` as meant;
    ajournal_x, crt_saved, crt_frame, crt_bregs and crt_cfg take no float state. PASS: no class-implicit FPState
    resolved to the wrong one.
@@ -273,9 +274,9 @@ cbn [pairwise app] in H. destruct H as [Hz Hl]. destruct H1 as [<- | H1].
 Qed.
 
 (* ======================================================================================================== *)
-(* __asan_set_shadow_f5 WITH THE MEMNORM KEEP: the engine's YGcallMxmn.aset_shadow_realizes_xm (the contract, FCiface.v:69
-   plus the keep) and YGcallMxmn.aj_set_shadow_at_xm (the call rule, YGcallSx.v:146 plus the keep), engine of record
-   at commit bb085d091bbe, YGcallMxmn.v b47cf7942c3d. This file carried both as local copies until base d48dc1e7b240
+(* __asan_set_shadow_f5 WITH THE MEMNORM KEEP: the engine's YGcallMxmn.aset_shadow_realizes_xm (the contract, FCiface.v:70
+   plus the keep) and YGcallMxmn.aj_set_shadow_at_xm (the call rule, YGcallSx.v:147 plus the keep), engine of record
+   at YGcallMxmn.v b47cf7942c3d. This file carried both as local copies until base
    (Crt102Tail.v a901d1bca110); the definition and the rule's statement are word-for-word the engine's (MN is
    YAkMemnorm), and the one difference was the rule's errno premise, which the copy had narrowed to api_env's errno
    conjunct; citing the engine takes its `api_env segs B` premise (ENV below). *)
@@ -1426,8 +1427,8 @@ assert (KONT : forall F,
   split; [exact HQ0 | exact (HEND S2 HTR)]. }
 pose proof (crt_at_J_r0 HJA) as Hr00.
 destruct HR as [(Hr1 & _) | (Hr0 & _ & _ & _ & HPOS & HN & HM & (Fc & HFOc & HFc) & Hd)].
-- (* r = 1: DEAD. crt_at_J states r = 0 (the text's r = 1 arm is dead under its entry premise prh_cons_from, kit tip
-     dc6ee977244a), so the tail never sees an r = 1 state *)
+- (* r = 1: DEAD. crt_at_J states r = 0 (the text's r = 1 arm is dead under its entry premise prh_cons_from, kit tip),
+     so the tail never sees an r = 1 state *)
   exfalso. rewrite Hr00 in Hr1. discriminate Hr1.
 - (* r = 0: the class-24 bound comes from crt_pos's position (PresetRoomCounts.counts_of_room_pos_rl); copy's order list is
      crt_at_J's ORDERED free list Fc (its requests ARE fo crt_tree_J, in order), so pj_free's own events are the

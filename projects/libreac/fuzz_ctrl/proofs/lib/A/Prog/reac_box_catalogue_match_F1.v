@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 164 of its 188 lines of code are new or changed and 224 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_catalogue_match.v (source commit d69f7c708f6, proved on FACTS ed6b6b7b0ab) by the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_catalogue_match.v (source, proved on FACTS) by the
    same script over lib/Lib/StepF; image fuzz_ctrl v1.9.0 asan, ELF fuzz_ctrl.debug sha256
    78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd; route (a) of 22:20Z; for the cgif-form walk
    C_reac_box_catalogue_match.v only.
 
    Stretch S1 of the walk: the SILENT run from the entry 0x84498 to the __asan_stack_malloc_2 call at 0x84504, in the
-   state the `jal` sees before it executes. The source run lemma is cm_entry (reac_box_catalogue_match.v:918), whose
+   state the `jal` sees before it executes. The source run lemma is cm_entry (reac_box_catalogue_match.v:919), whose
    script runs THROUGH that call (it applies the section hypothesis HSM, asan_stack_malloc_2_contract, with evt_cut
    after the 28th step). This file re-runs its first 27 steps -- the same tactics, a new lemma boundary at the call:
    cm_entry_F stops at the `jal` and hands the state to the post predicate cmS1K, which states the facts the script
@@ -42,7 +43,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
 Import ListNotations.
 Open Scope Z_scope.
 (* The store hook the scripts below use (StepF's store_done calls it): also transport rd_mono across a store. Text of
-   lib/A/Prog/MemMono.v (at head lib/A/Prog/MemMono.v:207-217, global there; a Local version from a working branch 8bac67328ab), Local here. *)
+   lib/A/Prog/MemMono.v (at head lib/A/Prog/MemMono.v:207-217, global there; a Local version from a working branch), Local here. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -65,7 +66,7 @@ Module CM := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.reac_box_catalogue_ma
    MatchF1's binders and premises with `SR : shadow_rw m` narrowed to `SR_on : shadow_rw_on R m`
    (R = reac_box_catalogue_match_shadow_R f len S FS, a Theorem Labs lane's, reac_box_catalogue_match_c.v); cm_entry_F_on is
    cm_entry_F's script with one changed step: the shadow fact of the reached memory is
-   ShadowRwOnT.shadow_rw_on_mem_mono at R. CA and cmSAVES are the source run's (reac_box_catalogue_match.v:230, 291,
+   ShadowRwOnT.shadow_rw_on_mem_mono at R. CA and cmSAVES are the source run's (reac_box_catalogue_match.v:231, 291,
    the same text as Section MatchF1's); CA's two bounds are re-derived in the script by CA_facts' / cm_CA_lo's
    proofs. The old statements below are corollaries of these (Section MatchF1). *)
 Section MatchF1On.
@@ -194,7 +195,7 @@ Hypothesis SR : shadow_rw m.
 Hypothesis HHM : HIGHMEM_BEG <= S - 9136.
 Hypothesis HAE : S <= APPMEM_END.
 
-(* reac_box_catalogue_match.v:230, 232, 337: the aligned frame pointer and its two bounds, verbatim. *)
+(* reac_box_catalogue_match.v:231, 232, 337: the aligned frame pointer and its two bounds, verbatim. *)
 Definition CA : Z := (S - 128) / 32 * 32.
 
 Lemma CA_facts : CA mod 32 = 0 /\ S - 160 <= CA <= S - 128.
@@ -203,7 +204,7 @@ Proof. unfold CA. Z.div_mod_to_equations. lia. Qed.
 Lemma cm_CA_lo : S - 144 <= CA <= S - 128.
 Proof. unfold CA. pose proof S16 as H16. Z.div_mod_to_equations. lia. Qed.
 
-(* reac_box_catalogue_match.v:291: the 12 callee-saved registers stored at [S-96, S), s10..ra ascending. *)
+(* reac_box_catalogue_match.v:292: the 12 callee-saved registers stored at [S-96, S), s10..ra ascending. *)
 Definition cmSAVES : list cell :=
   [C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra].
 

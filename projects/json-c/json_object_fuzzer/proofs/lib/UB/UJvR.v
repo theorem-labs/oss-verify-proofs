@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window from the model's stack_window_depth in knRE0 in place of the 8 MiB bound). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State.
@@ -266,7 +267,7 @@ Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEP
 
 Definition knRE0 : list kentry :=
 [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-KWr (SA (EVar 0) (-8388608)) 8388608;
+KWr (SA (EVar 0) (-6144513)) 6144513;   (* LPS 08b1429: RefReadBase.stack_writable's window *)
 KRange (EVar 2) 0x7fff80000000 0x800000400000;
 KWr (SA (ELit 0) 0x66000) 0x33000;
 KImg 0x10000 0x66f30; KImg 0x66f31 0x66f79;  KImg 0x76f79 0x77b30; KImg 0x97c08 0x97c18;

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, stack_writableZ spans 6144513 bytes below sp, was 8388608, target_vm's ledger is the launch's (ResLaunch.res_launch), and seps_In2 is added for the maps_subtract ledgers. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -14,6 +15,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From OSSVerify.skcms.iccprofile_info.images Require Import Ubsan.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Fs.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require ResLaunch.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require Import
   PropExec CatExec StoreOk Frame MallocDefs UbEnframeBase UbWorld ShapeAlg Spec.
 From Stdlib Require Import Zify.
@@ -36,8 +38,8 @@ Definition hdr_paylen (content : list byte) : Z := Z.of_nat (length content) - 6
 
 (* [comment removed for export] *)
 Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop :=
-  forall d m, 0 <= d -> d + Z.of_nat m <= 8388608 ->
-    store_ok RSEGS M (Z_to_bv 64 (sp0 - 8388608 + d)) m = true.
+  forall d m, 0 <= d -> d + Z.of_nat m <= 6144513 ->
+    store_ok RSEGS M (Z_to_bv 64 (sp0 - 6144513 + d)) m = true.
 
 Record target_pre (sp0 gm area brkv mas tid sec cnr : Z) (content : list byte)
        (R : bvmap 5 word) (M : word -> option byte) : Prop := TARGET_PRE {
@@ -79,9 +81,26 @@ Inductive seps : list (word * word) -> Prop :=
 | seps_nil : seps []
 | seps_cons : forall p l, Forall (iv_disjoint p) l -> seps l -> seps (p :: l).
 
+(** Two entries of a pairwise-apart ledger are the same entry or are apart.
+    The Ubsan twin of [Info/RefTargetPre.v]'s copy, and needed for the same
+    reason: under LPS #38 the ledgers are [maps_subtract], and
+    [MmapSim.maps_subtract_exact]'s uniqueness and apartness side conditions are
+    exactly this lemma.  [map_has] cannot serve -- it is a boolean [existsb],
+    existence and not uniqueness. *)
+Lemma seps_In2 : forall l p q, seps l -> In p l -> In q l -> p = q \/ iv_disjoint p q.
+Proof.
+  intros l p q Hs. induction Hs as [|r l Hf Hs IH]; intros Hp Hq; [destruct Hp|].
+  destruct Hp as [<-|Hp]; destruct Hq as [<-|Hq].
+  - left. reflexivity.
+  - right. exact (proj1 (Forall_forall _ _) Hf _ Hq).
+  - right. unfold iv_disjoint in *. destruct (proj1 (Forall_forall _ _) Hf _ Hp) as [H|H];
+      [right | left]; exact H.
+  - exact (IH Hp Hq).
+Qed.
+
 (* [comment removed for export] *)
 Record target_vm (sp0 gm area : Z) (VM : VmMaps) : Prop := TARGET_VM {
-  tv_res   : vm_reserved VM = segments_reserved RSEGS;
+  tv_res   : ResLaunch.res_launch (segments_reserved RSEGS) VM;   (* LPS 727298f3: image entries ++ vdso/vvar pair *)
   tv_sp    : vm_init_sp VM = Z_to_bv 64 sp0;                              (* [comment removed for export] *)
   tv_has   : In (Z_to_bv 64 gm, Z_to_bv 64 69632) (vm_maps VM);
   tv_area  : exists lo sz, In (lo, sz) (vm_maps VM)

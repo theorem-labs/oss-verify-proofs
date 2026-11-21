@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -141,10 +142,20 @@ Proof using AF AF_DRV FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV
   pose proof (proj1 (Forall_forall _ _) VA4 arg0 (nth_error_In _ _ Ha0)) as NZ0.
   pose proof (proj1 (Forall_forall _ _) VA3 arg0 (nth_error_In _ _ Ha0)) as LN0. cbv beta in NZ0, LN0.
   pose proof (af_sp0_range RT AF Σ m HART) as SP0R. unfold SEGTOP_A, STACK_WIN, USTACK_TOP in *.
+  (* STACK_WOK is left folded on purpose: [lo] below is defined from it, and this equation
+     is what lets [lia] relate the two floors without unfolding StoreOk's constant, whose
+     name is not in scope here. *)
+  pose proof STACK_WOK_val as WOKV.
   destruct HSIG as (LV & FRS & CR & USP0 & SPW).
   pose proof (AF_DRV Σ m HART) as (SC0 & _).
   pose proof (u64arr_bound bsegs m ap ptrs ARR) as ARB.
-  set (lo := rt_sp0 RT Σ - 8388608) in *.
+  (* OLD: set (lo := rt_sp0 RT Σ - 8388608) in *.    (8388608 IS STACK_WIN, the mapping floor)
+     NEW: [usage_walk] is instantiated at the floor the hypotheses actually supply.  START
+     and MAINCTX now carry [stk] from [rt_sp0 - STACK_WOK] and the headroom conjunct
+     [rt_sp0 - STACK_WOK + 0x100000 <= usp] from the same floor, so [usage_walk]'s
+     [stk bsegs m lo usp] and [lo + 0x100000 <= usp] premises are discharged literally,
+     and [SEGTOP_A <= lo] is easier than before because the floor ROSE. *)
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   rewrite (nth0_argv_Z argvb arg0 Ha0).
   replace (evw 2 (msg_usage (map bv_unsigned arg0))) with (evw 2 (fp_msg (FPusage (bv_unsigned p0) arg0)) ++ evw 1 (so_buf stdout_init))
     by (cbn [fp_msg so_buf stdout_init]; rewrite app_nil_r; reflexivity).

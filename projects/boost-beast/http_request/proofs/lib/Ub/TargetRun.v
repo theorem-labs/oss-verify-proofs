@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Ref0Gc. (* [comment removed for export] *)
@@ -901,7 +902,7 @@ Section TR.
           - eapply stk_stk_ok; [exact (ti_stk _ TI) | unfold TR_STACK; rewrite u_small by lia; lia | rewrite u_small by lia; lia | lia | lia].
           - apply mem_inv_ro_none. exact (ti_inv _ TI). }
         unfold W. cbn [map].
-        apply (printf0_first mo Hh Hlazy (Hfd1 mo MP) regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx PH K0).
+        apply (printf0_first mo Hh Hlazy (Hfd1 mo MP) (hx_krel_rdr HS HX _ _ KR) regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx PH K0).
         intros regs' mem' PP. destruct PP. rewrite u_small in P_frame by lia.
         assert (RS : forall rr, In rr [(Z_to_bv 64 (bv_unsigned sp - 80 - 1232), 1232); (Z_to_bv 64 0x84e38, 232); (Z_to_bv 64 0xb7048, 1)] -> tr_region rr).
         { intros rr Hr. pf_region Hr. }

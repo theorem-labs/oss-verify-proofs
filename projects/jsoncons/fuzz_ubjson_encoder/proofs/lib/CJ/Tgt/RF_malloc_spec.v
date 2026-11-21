@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs replaced by tactic proofs. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -19,12 +20,14 @@ Context {RUNp : RunP}.
 
 Theorem rmalloc_spec : rmalloc_stmt.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_malloc_spec ()) ["CEIL_WRAP_1"] "p;1p;2p;4p;6g0000j17Tg001Cj16Tg002cj10Tg004Aj21Tg005\j15Tg007<j12Tg008Tj43Tg009mj64Tp,4RUNpR0%70g00;O%60%00P0g00<d,10%50%20C3E4o"). Qed.
+  exact (rmalloc_spec_proof ras_pre2 as_inv2 ralloc_slot_spec ras_pre2_intro (rbig_spec ram_pre ralloc_meta_spec ramp_big)).
+Qed.
 
 (* [comment removed for export] *)
 Theorem rmalloc_spec_fit : rmalloc_stmt_fit.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_malloc_spec ()) ["CEIL_WRAP_1"] "p;1p;2p;4p;6g0000j17Tg001Cj16Tg002cj10Tg004Aj21Tg005\j15Tg007<j12Tg008Tj43Tg00>=j64Tp,4RUNpR0%70g00;O%60%00P0g00<d,10%50%20C3E4o"). Qed.
+  exact (rmalloc_spec_fit_proof ras_pre2 as_inv2 ralloc_slot_spec ras_pre2_intro (rbig_spec ram_pre ralloc_meta_spec ramp_big)).
+Qed.
 End CEIL_WRAP_1.
 
 

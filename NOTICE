@@ -10,6 +10,13 @@ License 2.0) and LICENSES/anthropic-proofs-LICENSE-MIT (MIT), and the notices
 that came with the proofs are LICENSES/anthropic-proofs-NOTICE; the build record
 of each such proof names these three files.
 
+The proof files that come from coq-community/huffman keep the licence of that
+project, the GNU Lesser General Public License 2.1 or later
+(LGPL-2.1-or-later). tools/oft/third-party-proofs.yaml lists each of these
+files. Their licence text, a copy of the LICENSE file of coq-community/huffman,
+comes into this repository with the files, as
+LICENSES/coq-community-huffman-LICENSE.
+
 Files under projects/*/*/source/ are copies of fuzz targets exactly as they were
 built. Each copy keeps its upstream licence, which its harness.yaml names, or
 gives as NOASSERTION where it is not recorded yet. Where a harness has no
@@ -31,5 +38,13 @@ binaries, verbatim, under LICENSES/<component>/. No harness.yaml records the
 combined licence of its binaries yet; the build record of each proof lists the
 components and their licences. A binary under a GPL or LGPL licence is attached
 only together with its complete corresponding source.
+
+The classifiers and the originals that a harness publishes are under the
+licences of the code that they are built from, as its builds are. An original
+is a build of the same recipe without the patches, so it links what its build
+links. A classifier is a static program of this repository that links the C
+library and the compiler's runtime libraries. A classifier or an original
+under a GPL or LGPL licence is attached only together with its complete
+corresponding source.
 
 This project is not affiliated with or endorsed by Google or the OSS-Fuzz project.

@@ -1,8 +1,8 @@
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, 0x86140): the inner cuts of segment S_MF_KMOD
    (KMODEL 0x86840 -> KIGN 0x86968 or KDONE 0x86c1c; the image-B m_file segment table section 8, the image-B m_file cut map
    section 4), in the form of lib/B/Prog/m_file_m.v's cut statements. Statement text only. A walk lane of
-   the image-B m_file-family owner's G2B. The image-B twin of the image-A m_file-family lane's lib/A/Prog/m_file_s_kmod_m.v (commit
-   c1e1a58468c5): image B calls fold (no inline loop), so its inner cuts are the call returns.
+   the image-B m_file-family owner's G2B. The image-B twin of the image-A m_file-family lane's lib/A/Prog/m_file_s_kmod_m.v:
+   image B calls fold (no inline loop), so its inner cuts are the call returns.
 
    What the piece does (the neutral listing of m_file in image B lines 450-483, 692-696, 735-738, 886):
      0x86840 a0 = 208(s1) = k, a2 = "model" (0x21220, listing object 19), a1 = s5 = kl; 0x86850 jal ieq

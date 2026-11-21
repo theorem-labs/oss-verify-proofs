@@ -5,10 +5,10 @@
    seg_sign, ev_val, ev_cur, ev_sign, ev_lb_nil, ev_60, ev_5c, ev_block and their list and sign helpers) moved to
    image A (fuzz_uci.asan): footprint runs (lib/Lib/ExecF.v evtF, lib/Lib/StepF.v step) instead of evt, this image's
    addresses (UciCvIface.v CV_AT offsets +0x06c .. +0x128) and registers, and the two ASan load checks of each loop
-   in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v at origin/ossv/recipes 88154566652a (cl1_F;
+   in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v (cl1_F;
    crt_sh1F, takeF and crt_lits copied as cv_sh1F, takeF and cv_lits, module paths changed to reac_repacer.fuzz_uci). *)
 (* Modified by Theorem Labs, 2026-10: the straight-line segments of reac-repacer/fuzz_uci's check_value in image A, in the form
-   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (origin/ossv/recipes 88154566652a:
+   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (
    crt_seg1_F .. crt_seg9_F, Z_to_le_bytes_to_Z, crt_le8_of_bytes, crt_c8s, crt_rw_c8s, crt_frame_words, crt_regs,
    crt_usub, crt_shift, crt_w, crt_finF, crt_memF, crt_pc) and of its lib/A/Prog/ReacDecodeLib.v rd_all. *)
 (* Modified by Theorem Labs, 2026-10: the helpers and tactics of reac-repacer/fuzz_uci's lib/A/Prog/UciCvSegs.v
@@ -18,6 +18,7 @@
    sh_at, and the steps of the ASan load check cv_ck1_F), renamed cc_* and moved to fuzz_wire's check_copy (image A,
    module paths reac_repacer.fuzz_wire). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/A/Prog/check_copy_cgW_segs.v, with its module paths and numbers changed; 123 of its 189 lines of code are new or changed and 457 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WireCmSeg1: the first footprint run of the image-B walk of reac-repacer/fuzz_wire's check_meter
    (fuzz_wire.asan-ubsan 0x8016c = wire_sigma WS_check_meter), lib/B/Prog/WireCmIface.v cm_seg1_stmt: the entry ->
    the `jal __asan_stack_malloc_0` at 0x801d8 (ra = CM_RET_SM = 0x801dc), stepped by lib/Lib/StepF.v:
@@ -26,11 +27,11 @@
      0x801b4 / 0x801b8 `auipc`, 0x801bc `ld a2` (the GOT word GOT_UAR), 0x801c0 `ld a1` (the GOT word GOT_CELL_K),
      0x801c4 `lw a2, 0(a2)` (UAR, 1 sign-extended), 0x801c8 `ld s8, 0(a1)` (the shadow offset in CELL_K);
      0x801cc `mv s3, a0`, 0x801d0 `beqz a2` (not taken: a2 = 1), 0x801d4 `li a0, 64`, 0x801d8 `jal`.
-   The form and the frame-word helpers are reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v cv_seg1_F (recipes commit
-   0295462466b2): carve_frame, the 128 carved bytes read as 16 words, the GOT and cell bytes read through cv_rd_all.
-   The realign `andi sp, sp, -32` is reac-repacer/fuzz_uci's lib/B/Prog/UciCcKit.v ucc_land_m32 (recipes commit
-   0295462466b2); the cell split is reac-repacer/fuzz_wire's lib/Prog/check_read.v rw_cells_app (recipes commit
-   4029ae11bb5e). The slot word at cm_sp1 sp + 24 is the frame's word at offset 24 when sp mod 32 = 0 and at offset 8
+   The form and the frame-word helpers are reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v cv_seg1_F (recipes):
+   carve_frame, the 128 carved bytes read as 16 words, the GOT and cell bytes read through cv_rd_all.
+   The realign `andi sp, sp, -32` is reac-repacer/fuzz_uci's lib/B/Prog/UciCcKit.v ucc_land_m32 (recipes);
+   the cell split is reac-repacer/fuzz_wire's lib/Prog/check_read.v rw_cells_app (recipes).
+   The slot word at cm_sp1 sp + 24 is the frame's word at offset 24 when sp mod 32 = 0 and at offset 8
    when sp mod 32 = 16; the twelve saves are the frame's last twelve words, at sp - 96. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with the kept registers, a0's returned value and the return address read across the library's copies of the register read by conversion instead of rewriting, and mfacts' new channel-reader conjunct (mf_reader) proved from the call's start state. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import base decidable list gmap.
@@ -27,6 +28,18 @@ Arguments Z_to_bv : simpl never.
 
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Lib Require Import CeilLia.
 Unset Nia Cache. Unset Nra Cache.
+(* [rw_reg H], [H : f R x = v] or [H : h (f R x) = v]: [rewrite H] where the goal may spell the register
+   read [f R x] (and the function [h] over it) with another of the library's copies ([getr], [ret_pc]:
+   the callee lemma's), which [rewrite] does not match: that spelling is first changed into [H]'s, the
+   copies meeting by conversion *)
+Ltac rw_reg H :=
+  first [ rewrite H
+        | match type of H with ?f ?R ?x = _ =>
+            match goal with |- context [?g R ?y] => change (g R y) with (f R x); rewrite H end
+          end
+        | match type of H with ?h (?f ?R ?x) = _ =>
+            match goal with |- context [?k (?g R ?y)] => change (k (g R y)) with (h (f R x)); rewrite H end
+          end ].
 Section CEIL.
 Context {CLG : OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Malloc.Ceiling.ceiling}.
 Variable Cw : client_world.
@@ -530,8 +543,8 @@ Proof.
     + apply r5_eqb_spec in Q0. subst x. rewrite getr_x0. change (getr st X0) with (rf_get (s_rf st) X0).
       rewrite (so_x0 _ _ _ _ _ _ HS'). rewrite den_VL. reflexivity.
     + assert (N0 : x <> X0) by (intros ->; rewrite r5_eqb_refl in Q0; discriminate).
-      pose proof (gp_regs _ _ _ _ _ _ _ _ _ GP (reg_of_r5 x) (kept_or_clobbered x N0 N10 CP)) as K. rewrite K.
-        rewrite (cg_regs CG x).
+      pose proof (gp_regs _ _ _ _ _ _ _ _ _ GP (reg_of_r5 x) (kept_or_clobbered x N0 N10 CP)) as K. etransitivity; [exact K|].
+        etransitivity; [exact (cg_regs CG x)|].
         symmetry. apply den_E'. destruct SVB_parts as (SVB & _). exact (rf_allb_get _ _ _ SVB x).
 Qed.
 
@@ -966,7 +979,12 @@ Lemma MP' : MP mo'.
 Proof. exact (MP_vm mo mo' (gp_va _ _ _ _ _ _ _ _ _ GP) HMP). Qed.
 
 Lemma mfacts' : mfacts mo'.
-Proof. destruct (gp_mo _ _ _ _ _ _ _ _ _ GP) as (H1 & H2 & _). split; assumption. Qed.
+Proof.
+  destruct (gp_mo _ _ _ _ _ _ _ _ _ GP) as (H1 & H2 & _).
+  pose proof (gp_va _ _ _ _ _ _ _ _ _ GP) as (VM & _).
+  pose proof (mf_reader _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS))) as RD.
+  split; [assumption | assumption | rewrite VM; exact RD].
+Qed.
 
 Lemma minv' : forall a b, M' a = Some b -> forall seg, find_segment rsegs (bv_unsigned a) 1 = Some seg -> seg_writable seg = true.
 Proof.
@@ -1891,8 +1909,8 @@ Proof.
     { intros a X. rewrite OPS_fp1 in X |- *. unfold heap_fp in X |- *. rewrite DECN in X. rewrite (cg_decode CG). exact X. }
     destruct (post_N E st ms mo ALLOC_STACK r ksp hargs0 wnl off r1 n md A nw rest s LBf LB HS HPB HMP CG R' M' mo' LBf errv' GP ERR' PU' Fv Gv HF
                 (Fv_of_15 _ _ _) st4 H4 (VL wzero) (VL md :: VL wones :: VL nw :: rest) (fun b H => H)
-                ltac:(rewrite den_VL, Ha0; reflexivity) HH FP) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
+                ltac:(rewrite den_VL; symmetry; exact Ha0) HH FP) as [ST MP'].
+    rw_reg (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
   -
     intros R' M' mo' s' errv' p Ab junk GP MPATH MTR Ha0 ERR' RNG CELLS EXP RH' KR'. apply RHEAP_split in RH' as [RC' PU'].
     destruct RNG as (Apos & A16 & Nn & AC' & AI).
@@ -1921,7 +1939,7 @@ Proof.
                 (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X10) BLK_LO BLK_HI stB Ab nZ junk
                 eq_refl HB SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                 ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
+    rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
 Qed.
 
 Theorem aligned_alloc_sound : forall IMG_HI pc, to_Z IMG_HI = RIMG_HI -> to_Z pc = RALIGNED16_SYM ->
@@ -1984,8 +2002,8 @@ Proof.
     { intros a X. rewrite OPS_fp1 in X |- *. unfold heap_fp in X |- *. rewrite DECN in X. rewrite (cg_decode CG). exact X. }
     destruct (post_N E st ms mo ALIGNED_STACK r ksp hargs0 wnl off r1 n md A nw rest s LBf LB HS HPB HMP CG R' M' mo' LBf errv' GP ERR' PU' Fv Gv HF
                 (Fv_of_15 _ _ _) st4 H4 (VL wzero) (VL md :: VL wones :: VL nw :: rest) (fun b H => H)
-                ltac:(rewrite den_VL, Ha0; reflexivity) HH FP) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
+                ltac:(rewrite den_VL; symmetry; exact Ha0) HH FP) as [ST MP'].
+    rw_reg (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
   -
     intros R' M' mo' s' errv' p Ab junk GP MPATH MTR Ha0 ERR' RNG CELLS EXP RH' KR'. apply RHEAP_split in RH' as [RC' PU'].
     destruct RNG as (Apos & A16 & Nn & AC' & AI).
@@ -2015,12 +2033,12 @@ Proof.
                   (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X11) BLK_LO (wsub IMG_LO wone) stB1 Ab nZ junk
                   eq_refl HB1 SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                   ltac:(change (w2Z BLK_LO) with 4096; change (w2Z (wsub IMG_LO wone)) with 65535; lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-      rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
+      rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
     + destruct (post_B E st ms mo ALIGNED_STACK r ksp hargs0 wnl off r1 n md A nw rest s LBf LB HS HPB HMP CG R' M' mo' LBf errv' GP (fun b H => H) ERR' PU' Fv Gv HF
                   (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X11) (wlit IMG_HI) BLK_HI stB2 Ab nZ junk
                   eq_refl HB2 SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                   ltac:(rewrite wlit_ok, HIMG; change (w2Z BLK_HI) with (2 ^ 47 - 1); unfold RIMG_HI in *; lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-      rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_intror (or_introl eq_refl))) _ _ _ (EXT E st Fv Gv) MP' ST).
+      rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_intror (or_introl eq_refl))) _ _ _ (EXT E st Fv Gv) MP' ST).
 Qed.
 
 Theorem free_sound : forall pc, to_Z pc = RFREE_SYM ->
@@ -2067,7 +2085,10 @@ Proof.
                      (PropExec.getr (ms_regs ms) 21%bv) (PropExec.getr (ms_regs ms) 22%bv) (PropExec.getr (ms_regs ms) 23%bv) (PropExec.getr (ms_regs ms) 24%bv)
                      (PropExec.getr (ms_regs ms) 25%bv) (PropExec.getr (ms_regs ms) 26%bv) (PropExec.getr (ms_regs ms) 27%bv) (PropExec.getr (ms_regs ms) 28%bv)
                      (PropExec.getr (ms_regs ms) 29%bv) (PropExec.getr (ms_regs ms) 30%bv) (PropExec.getr (ms_regs ms) 31%bv)).
-      rewrite (cg_ra CG), (cg_ra_r CG).
+      (* the goal's register file is rfree_null_spec's, spelled with its copy of getr: folded into R' by conversion,
+         so that only the pc below is rewritten *)
+      match goal with |- context [MS ?regs _ _ _ _ _ _] => change regs with R' end.
+      rw_reg (cg_ra CG). rw_reg (cg_ra_r CG).
       set (Fv := Fv_of R' errv (PropExec.getr R' 10%bv)). set (Gv := Gv_of []).
       assert (HF : forall x i, clob_pos x = Some i -> Fv (Z.of_nat i) = PropExec.getr R' (reg_of_r5 x)) by (intros; apply Fv_of_clob; assumption).
       assert (GP : gpost (ms_regs ms) (ms_mem ms) mo LBf (bv_unsigned (ev E STACK_ID) + loZ r1) (bv_unsigned (ev E STACK_ID) + keyZ ksp) R' (ms_mem ms) mo).
@@ -2242,7 +2263,7 @@ Proof.
                 r0 kf rf lenf p Af nf av _ l1 l2 _ Hr0 E4 Hkf K0 K1 FOK INf eq_refl eq_refl
                 ltac:(intros b Hb Nb; apply In_lb_remove; auto) ltac:(intros b Hb; apply In_lb_remove in Hb; exact (proj2 Hb))
                 WS PROV DEC' SVa AWH (Fv_of_16 _ _ _) eq_refl) as [ST MP'].
-    rewrite (cg_ra_r CG). refine (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' _).
+    rw_reg (cg_ra_r CG). refine (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' _).
     refine (st_ok_fields rsegs OPS _ _ _ _ _ _ _ _ _ _ _ _ _ ST); subst st4; cbn [s_pc s_rf s_ff s_resv s_regs s_facts s_ops s_priv s_next setr set_ops setregs set_next alloc_post_mk]; try reflexivity.
 Qed.
 
@@ -2403,7 +2424,7 @@ Proof.
                 (Fv_of_15 _ _ _) st4 H4 (VL md :: aB :: VL nw :: rest) aB (getr st X10) BLK_LO BLK_HI stB' Ab nZ junk
                 eq_refl HB SVn SVaB eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                 ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HKB _ _ _ (EXT E st Fv Gv) MP' ST).
+    rw_reg (cg_ra_r CG). exact (HKB _ _ _ (EXT E st Fv Gv) MP' ST).
 Qed.
 
 Theorem malloc1_sound : forall pc, to_Z pc = RMALLOC_SYM ->
@@ -2532,7 +2553,7 @@ Proof.
                   (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X11) BLK_LO BLK_HI stB Ab nZ junk
                   eq_refl HB SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                   ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-      rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
+      rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
   -
     destruct (negb (weqb o wzero) || PrimInt63.eqb kf 0 || PrimInt63.eqb kf STACK_ID) eqn:C; [discriminate|].
     apply orb_false_iff in C as [C K1]. apply orb_false_iff in C as [O0 K0]. apply negb_false_iff in O0. apply weqb_eq in O0. subst o.
@@ -2641,7 +2662,7 @@ Proof.
                   ltac:(intros b Hb Nb; apply In_lb_remove; auto) ltac:(intros b Hb; apply In_lb_remove in Hb; exact (proj2 Hb))
                   WS PROV DEC' eq_refl SVn eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                   ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW AWH Ha0 eq_refl) as [ST MP'].
-      rewrite (cg_ra_r CG). refine (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' _).
+      rw_reg (cg_ra_r CG). refine (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' _).
       refine (st_ok_fields rsegs OPS _ _ _ _ _ _ _ _ _ _ _ _ _ ST); subst st4; cbn [s_pc s_rf s_ff s_resv s_regs s_facts s_ops s_priv s_next setr set_ops setregs set_next addfact alloc_post_mk fst snd]; try reflexivity.
 Qed.
 
@@ -2704,8 +2725,8 @@ Proof.
     { intros a X. rewrite OPS_fp1 in X |- *. unfold heap_fp in X |- *. rewrite DECN in X. rewrite (cg_decode CG). exact X. }
     destruct (post_N E st ms mo ALIGNED_STACK r ksp hargs0 wnl off r1 n md A nw rest s LBf LB HS HPB HMP CG R' M' mo' LBf errv' GP ERR' PU' Fv Gv HF
                 (Fv_of_15 _ _ _) st4 H4 (VL wzero) (VL md :: VL wones :: VL nw :: rest) (fun b H => H)
-                ltac:(rewrite den_VL, Ha0; reflexivity) HH FP) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
+                ltac:(rewrite den_VL; symmetry; exact Ha0) HH FP) as [ST MP'].
+    rw_reg (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
   -
     intros R' M' mo' s' errv' p Ab junk GP MPATH MTR Ha0 ERR' RNG CELLS EXP RH' KR'. apply RHEAP_split in RH' as [RC' PU'].
     destruct RNG as (Apos & A16 & Nn & AC' & AI).
@@ -2734,7 +2755,7 @@ Proof.
                 (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X11) BLK_LO BLK_HI stB Ab nZ junk
                 eq_refl HB SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI in *; lia)
                 ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
+    rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
 Qed.
 
 Lemma has_block_window_sound : forall E fs k n rest, facts_hold E fs ->
@@ -3321,8 +3342,8 @@ Proof.
     + apply r5_eqb_spec in Q0. subst x. rewrite getr_x0. change (getr st X0) with (rf_get (s_rf st) X0).
       rewrite (so_x0 _ _ _ _ _ _ HS'). rewrite den_VL. reflexivity.
     + assert (N0 : x <> X0) by (intros ->; rewrite r5_eqb_refl in Q0; discriminate).
-      pose proof (gp_regs _ _ _ _ _ _ _ _ _ GP (reg_of_r5 x) (kept_or_clobbered x N0 N10 CP)) as K. rewrite K.
-        rewrite (cg_regs CG x).
+      pose proof (gp_regs _ _ _ _ _ _ _ _ _ GP (reg_of_r5 x) (kept_or_clobbered x N0 N10 CP)) as K. etransitivity; [exact K|].
+        etransitivity; [exact (cg_regs CG x)|].
         symmetry. apply den_E'. destruct SVB_parts as (SVB & _). exact (rf_allb_get _ _ _ SVB x).
 Qed.
 
@@ -3757,7 +3778,12 @@ Lemma MP' : MP mo'.
 Proof. exact (MP_vm mo mo' (gp_va _ _ _ _ _ _ _ _ _ GP) HMP). Qed.
 
 Lemma mfacts' : mfacts mo'.
-Proof. destruct (gp_mo _ _ _ _ _ _ _ _ _ GP) as (H1 & H2 & _). split; assumption. Qed.
+Proof.
+  destruct (gp_mo _ _ _ _ _ _ _ _ _ GP) as (H1 & H2 & _).
+  pose proof (gp_va _ _ _ _ _ _ _ _ _ GP) as (VM & _).
+  pose proof (mf_reader _ (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS))) as RD.
+  split; [assumption | assumption | rewrite VM; exact RD].
+Qed.
 
 Lemma minv' : forall a b, M' a = Some b -> forall seg, find_segment rsegs (bv_unsigned a) 1 = Some seg -> seg_writable seg = true.
 Proof.
@@ -4682,8 +4708,8 @@ Proof.
     { intros a X. rewrite OPS_fp1 in X |- *. unfold heap_fp in X |- *. rewrite DECN in X. rewrite (cg_decode CG). exact X. }
     destruct (post_N E st ms mo ALLOC_STACK r ksp hargs0 wnl off r1 n md A nw rest s LBf LB HS HPB HMP CG R' M' mo' LBf errv' GP ERR' PU' Fv Gv HF
                 (Fv_of_15 _ _ _) st4 H4 (VL wzero) (VL md :: VL wones :: VL nw :: rest) (fun b H => H)
-                ltac:(rewrite den_VL, Ha0; reflexivity) HH FP) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
+                ltac:(rewrite den_VL; symmetry; exact Ha0) HH FP) as [ST MP'].
+    rw_reg (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
   -
     intros R' M' mo' s' errv' p Ab junk GP MPATH MTR Ha0 ERR' RNG CELLS EXP RH' KR'. apply RHEAP_split in RH' as [RC' PU'].
     destruct RNG as (Apos & A16 & Nn & AC' & AI).
@@ -4712,7 +4738,7 @@ Proof.
                 (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X10) BLK_LO BLK_HI stB Ab nZ junk
                 eq_refl HB SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                 ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
+    rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
 Qed.
 
 Theorem aligned_alloc_sound : forall IMG_HI pc, to_Z IMG_HI = RIMG_HI -> to_Z pc = RALIGNED16_SYM ->
@@ -4775,8 +4801,8 @@ Proof.
     { intros a X. rewrite OPS_fp1 in X |- *. unfold heap_fp in X |- *. rewrite DECN in X. rewrite (cg_decode CG). exact X. }
     destruct (post_N E st ms mo ALIGNED_STACK r ksp hargs0 wnl off r1 n md A nw rest s LBf LB HS HPB HMP CG R' M' mo' LBf errv' GP ERR' PU' Fv Gv HF
                 (Fv_of_15 _ _ _) st4 H4 (VL wzero) (VL md :: VL wones :: VL nw :: rest) (fun b H => H)
-                ltac:(rewrite den_VL, Ha0; reflexivity) HH FP) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
+                ltac:(rewrite den_VL; symmetry; exact Ha0) HH FP) as [ST MP'].
+    rw_reg (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
   -
     intros R' M' mo' s' errv' p Ab junk GP MPATH MTR Ha0 ERR' RNG CELLS EXP RH' KR'. apply RHEAP_split in RH' as [RC' PU'].
     destruct RNG as (Apos & A16 & Nn & AC' & AI).
@@ -4806,12 +4832,12 @@ Proof.
                   (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X11) BLK_LO (wsub IMG_LO wone) stB1 Ab nZ junk
                   eq_refl HB1 SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                   ltac:(change (w2Z BLK_LO) with 4096; change (w2Z (wsub IMG_LO wone)) with 65535; lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-      rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
+      rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
     + destruct (post_B E st ms mo ALIGNED_STACK r ksp hargs0 wnl off r1 n md A nw rest s LBf LB HS HPB HMP CG R' M' mo' LBf errv' GP (fun b H => H) ERR' PU' Fv Gv HF
                   (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X11) (wlit IMG_HI) BLK_HI stB2 Ab nZ junk
                   eq_refl HB2 SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                   ltac:(rewrite wlit_ok, HIMG; change (w2Z BLK_HI) with (2 ^ 47 - 1); unfold RIMG_HI in *; lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-      rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_intror (or_introl eq_refl))) _ _ _ (EXT E st Fv Gv) MP' ST).
+      rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_intror (or_introl eq_refl))) _ _ _ (EXT E st Fv Gv) MP' ST).
 Qed.
 
 Theorem free_sound : forall pc, to_Z pc = RFREE_SYM ->
@@ -4858,7 +4884,10 @@ Proof.
                      (PropExec.getr (ms_regs ms) 21%bv) (PropExec.getr (ms_regs ms) 22%bv) (PropExec.getr (ms_regs ms) 23%bv) (PropExec.getr (ms_regs ms) 24%bv)
                      (PropExec.getr (ms_regs ms) 25%bv) (PropExec.getr (ms_regs ms) 26%bv) (PropExec.getr (ms_regs ms) 27%bv) (PropExec.getr (ms_regs ms) 28%bv)
                      (PropExec.getr (ms_regs ms) 29%bv) (PropExec.getr (ms_regs ms) 30%bv) (PropExec.getr (ms_regs ms) 31%bv)).
-      rewrite (cg_ra CG), (cg_ra_r CG).
+      (* the goal's register file is rfree_null_spec's, spelled with its copy of getr: folded into R' by conversion,
+         so that only the pc below is rewritten *)
+      match goal with |- context [MS ?regs _ _ _ _ _ _] => change regs with R' end.
+      rw_reg (cg_ra CG). rw_reg (cg_ra_r CG).
       set (Fv := Fv_of R' errv (PropExec.getr R' 10%bv)). set (Gv := Gv_of []).
       assert (HF : forall x i, clob_pos x = Some i -> Fv (Z.of_nat i) = PropExec.getr R' (reg_of_r5 x)) by (intros; apply Fv_of_clob; assumption).
       assert (GP : gpost (ms_regs ms) (ms_mem ms) mo LBf (bv_unsigned (ev E STACK_ID) + loZ r1) (bv_unsigned (ev E STACK_ID) + keyZ ksp) R' (ms_mem ms) mo).
@@ -5033,7 +5062,7 @@ Proof.
                 r0 kf rf lenf p Af nf av _ l1 l2 _ Hr0 E4 Hkf K0 K1 FOK INf eq_refl eq_refl
                 ltac:(intros b Hb Nb; apply In_lb_remove; auto) ltac:(intros b Hb; apply In_lb_remove in Hb; exact (proj2 Hb))
                 WS PROV DEC' SVa AWH (Fv_of_16 _ _ _) eq_refl) as [ST MP'].
-    rewrite (cg_ra_r CG). refine (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' _).
+    rw_reg (cg_ra_r CG). refine (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' _).
     refine (st_ok_fields rsegs OPS _ _ _ _ _ _ _ _ _ _ _ _ _ ST); subst st4; cbn [s_pc s_rf s_ff s_resv s_regs s_facts s_ops s_priv s_next setr set_ops setregs set_next alloc_post_mk]; try reflexivity.
 Qed.
 
@@ -5194,7 +5223,7 @@ Proof.
                 (Fv_of_15 _ _ _) st4 H4 (VL md :: aB :: VL nw :: rest) aB (getr st X10) BLK_LO BLK_HI stB' Ab nZ junk
                 eq_refl HB SVn SVaB eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                 ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HKB _ _ _ (EXT E st Fv Gv) MP' ST).
+    rw_reg (cg_ra_r CG). exact (HKB _ _ _ (EXT E st Fv Gv) MP' ST).
 Qed.
 
 Theorem malloc1_sound : forall pc, to_Z pc = RMALLOC_SYM ->
@@ -5323,7 +5352,7 @@ Proof.
                   (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X11) BLK_LO BLK_HI stB Ab nZ junk
                   eq_refl HB SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                   ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-      rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
+      rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
   -
     destruct (negb (weqb o wzero) || PrimInt63.eqb kf 0 || PrimInt63.eqb kf STACK_ID) eqn:C; [discriminate|].
     apply orb_false_iff in C as [C K1]. apply orb_false_iff in C as [O0 K0]. apply negb_false_iff in O0. apply weqb_eq in O0. subst o.
@@ -5432,7 +5461,7 @@ Proof.
                   ltac:(intros b Hb Nb; apply In_lb_remove; auto) ltac:(intros b Hb; apply In_lb_remove in Hb; exact (proj2 Hb))
                   WS PROV DEC' eq_refl SVn eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI; lia)
                   ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW AWH Ha0 eq_refl) as [ST MP'].
-      rewrite (cg_ra_r CG). refine (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' _).
+      rw_reg (cg_ra_r CG). refine (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' _).
       refine (st_ok_fields rsegs OPS _ _ _ _ _ _ _ _ _ _ _ _ _ ST); subst st4; cbn [s_pc s_rf s_ff s_resv s_regs s_facts s_ops s_priv s_next setr set_ops setregs set_next addfact alloc_post_mk fst snd]; try reflexivity.
 Qed.
 
@@ -5495,8 +5524,8 @@ Proof.
     { intros a X. rewrite OPS_fp1 in X |- *. unfold heap_fp in X |- *. rewrite DECN in X. rewrite (cg_decode CG). exact X. }
     destruct (post_N E st ms mo ALIGNED_STACK r ksp hargs0 wnl off r1 n md A nw rest s LBf LB HS HPB HMP CG R' M' mo' LBf errv' GP ERR' PU' Fv Gv HF
                 (Fv_of_15 _ _ _) st4 H4 (VL wzero) (VL md :: VL wones :: VL nw :: rest) (fun b H => H)
-                ltac:(rewrite den_VL, Ha0; reflexivity) HH FP) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
+                ltac:(rewrite den_VL; symmetry; exact Ha0) HH FP) as [ST MP'].
+    rw_reg (cg_ra_r CG). exact (HK _ (or_introl eq_refl) _ _ _ (EXT E st Fv Gv) MP' ST).
   -
     intros R' M' mo' s' errv' p Ab junk GP MPATH MTR Ha0 ERR' RNG CELLS EXP RH' KR'. apply RHEAP_split in RH' as [RC' PU'].
     destruct RNG as (Apos & A16 & Nn & AC' & AI).
@@ -5525,7 +5554,7 @@ Proof.
                 (Fv_of_15 _ _ _) st4 H4 (VL md :: VL wones :: VL nw :: rest) (VL wones) (getr st X11) BLK_LO BLK_HI stB Ab nZ junk
                 eq_refl HB SVn eq_refl eq_refl (Fv_of_16 _ _ _) GJ CELLS B4096 AC' A16 ltac:(unfold RIMG_LO, RIMG_HI in *; lia)
                 ltac:(change (w2Z BLK_LO) with 4096; change (w2Z BLK_HI) with (2 ^ 47 - 1); lia) NEW (fun b H => H) AWH Ha0) as [ST MP'].
-    rewrite (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
+    rw_reg (cg_ra_r CG). exact (HK _ (or_intror (or_introl eq_refl)) _ _ _ (EXT E st Fv Gv) MP' ST).
 Qed.
 
 Lemma has_block_window_sound : forall E fs k n rest, facts_hold E fs ->

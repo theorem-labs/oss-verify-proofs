@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/A/CfFreeBranchWitPreset.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, DeallocNmaxA): free_cf's two branches (its size test, Quarantine::Put) at preset's
    OWN instance, CfParams_preset (A/CfParamsPreset.v:93-98, cf_malloc_max = 2 ^ 28 + 2 ^ 27) and CfImg_A: the generic
    witnesses of Reusable/YGcfFreeBranchWit.v instantiated, each with its equation closed by reflexivity.

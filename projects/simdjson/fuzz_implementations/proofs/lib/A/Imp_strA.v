@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -49,7 +50,7 @@ Definition str_kont (Σ : rts RT) (K : config -> Prop) (lo O q R D L : Z) (m0 : 
 Lemma str_tailA : forall (Σ : rts RT) (K : config -> Prop) (len lo O q R D L fO : Z) (kO : nat) (dlen : nat) (dbs junk j8 : list byte) (m0 m : mem)
     (cra gp cs0 cs1 cs2 cs3 cs4 cs5 s6 s7 s8 s9 s10 s11 : word) (fc : bv 32)
     (xra xt0 xt1 xt2 xa3 xa4 xa5 xa6 xa7 xs0 xs1 xs2 xs3 xs5 xt3 xt4 xt5 xt6 : word) (F : bvmap 5 word),
-  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   fO <= R -> R + 24 <= fO + fs_size kO - 8 -> R mod 8 = 0 -> (R + 24 <= O \/ O + 264 <= R) ->
   0 <= L -> L <= PJ_OUTMAX len -> 0 <= len <= SJ_PADMAX -> 0 < D -> L <= Z.of_nat dlen -> D + Z.of_nat dlen <= lo -> (D + Z.of_nat dlen <= R \/ R + 24 <= D) ->
   ((exists p k, In (p, k) (rt_live RT Σ) /\ p <= D /\ D + Z.of_nat dlen <= p + k) \/ (fO <= D /\ D + Z.of_nat dlen <= fO + fs_size kO - 8)) ->

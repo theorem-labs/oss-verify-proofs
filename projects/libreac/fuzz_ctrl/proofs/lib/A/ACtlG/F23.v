@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 540 of its 622 lines of code are new or changed and 2475 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F20.v, with its module paths, module names and numbers changed; 322 of its 378 lines of code are new or changed and 566 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/B7Cuts.v; 572 of its 625 lines of code are new or changed and 325 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F23.v -- GLUE for stage seg_F23 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    `Hypothesis seg_F23`).  Written by a Theorem Labs lane; single writer.  The
    pattern is glue-pattern.md (a working note, not in this delivery), the worked example lib/A/ACtlG/A5.v.
@@ -27,10 +28,10 @@
    constr_eq-checked): the same statement with asan_memcpy_contract_F -> asan_memcpy_contract_F_on, `shadow_rw m`
    narrowed to `shadow_rw_on (f23_evt_Fs_shadow_R fr Sf) m` and the post's `shadow_rw m'` replaced by the forall-P
    transport.  Its contract premise is discharged by the PROVED closed theorem
-   A.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on (a Theorem Labs lane 83ab88c3325, by path), at lo := c_sp cx - 32768 (the
+   A.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on (a Theorem Labs lane, by path), at lo := c_sp cx - 32768 (the
    journal's stack window).
 
-   ROUTE (C) (a working branch 1899bed1aee; recipe L3-recipe.md section 2 (a working note, not in this delivery)): the
+   ROUTE (C) (a working branch; recipe L3-recipe.md section 2 (a working note, not in this delivery)): the
    entry carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3, destructed as (Hac & Hcut & Himg & Hro).  The run's shadow region
    f23_evt_Fs_shadow_R fr (Sfr fr) comes from the union of the two regions: the two frame shadow stores
    [Sfr fr + 16, Sfr fr + 18) and the copy's destination words over [fr + 128, fr + 140) lie in the owned class-6
@@ -87,7 +88,7 @@
      from a Theorem Labs lane's PROVED, premise-free A.ProgWorld_Fs.ctl_frame_above_img at cid = 6.)
    - (none for PORTSC's shadow: TFIB_ZSH_21180, TFIB_ZSH_211A0 and TFIB_CSH_PORTSC, carried by the first draft as
      Section hypotheses, are now local Qed lemmas over the RECORD lib/A/AF0m.v the glue base carries (blob
-     44930bfd861 = a working branch e56483f863b): AF0m.v:2956 Tfib_zero_shadow rows
+     44930bfd861 = a working branch): AF0m.v:2957 Tfib_zero_shadow rows
      (0x21180, 0x21188 - 0x21180) and (0x211a0, 0x211e0 - 0x211a0); :2176-2178 Tfib_const_shadow rows
      z1 0x7fffc231 0x4, z1 0x7fffc232 0xf9, z1 0x7fffc233 0xf9; proved by in_cons / in_eq and in_or_app.)
    STAND-IN VALUES: none read (no planning-core zero-shadow row, no Tfib_const_abs / owned_static /
@@ -108,7 +109,7 @@
 
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are qualified everywhere.
 
-   BUILD STATE: type-checked with cb build on a build machine (workspace (internal path)) on a working branch 1899bed1aee;
+   BUILD STATE: type-checked with cb build on a build machine (workspace (internal path)) on a working branch;
    the build of record is the lane's cbrec run (report).  Section hypotheses: LAWS and TFIB_SYMS only.  No Axiom, no
    Parameter, no Admitted, no admit. *)
 
@@ -336,7 +337,7 @@ Qed.
 
 (* A byte a const row of the bundle names (CtrlTSyms' ts_const: as_const B ly = Tfib_const ly) is read by the view
    at every AR state, so it is not hidden (AR's am_const, ProgWorldVisFrame.vis_of_aview).  The extraction is
-   a Theorem Labs lane's ctl_gshadow_of_AR's (ProgWorldShadow.v, first drafted as ctl_gshadow_of_AR_fixed at 1888d8b45bf). *)
+   a Theorem Labs lane's ctl_gshadow_of_AR's (ProgWorldShadow.v, first drafted as ctl_gshadow_of_AR_fixed). *)
 Lemma f23g_const_vis : forall {fx : OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YK11.FPState}
     {rc : OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YM05.RunCeil}
     (B : Reusable.YG0f.asyms) ly S (W : Reusable.YA0n.world segs) m md s k,
@@ -409,17 +410,17 @@ Proof.
 Qed.
 
 (* RECORD AF0m rows, the shadow of PORTSC's 64-byte hull [0x21180, 0x211c0).  The glue base carries a Theorem Labs lane's RECORD
-   lib/A/AF0m.v (blob 44930bfd861 (the blob this tree had at release c5e779efe8c) = a working branch e56483f863b), so each row is a proved
+   lib/A/AF0m.v (blob 44930bfd861 (the blob this tree had at release) = a working branch), so each row is a proved
    fact about its definitions (the first draft carried them as Section hypotheses; the planning core's zero-shadow
    row 4 (0x20ec0, 0xa4380 - 0x20ec0) was a stand-in, a Theorem Labs lane 05:52Z). *)
-(* AF0m.v:2956, Tfib_zero_shadow's second row: the granule 0x21180 (PORTSC's first 8 bytes) has zero shadow. *)
+(* AF0m.v:2957, Tfib_zero_shadow's second row: the granule 0x21180 (PORTSC's first 8 bytes) has zero shadow. *)
 Lemma TFIB_ZSH_21180 : In (0x21180, 0x21188 - 0x21180) A.AF0m.Tfib_zero_shadow.
 Proof. unfold A.AF0m.Tfib_zero_shadow. apply in_cons. apply in_eq. Qed.
-(* AF0m.v:2956, Tfib_zero_shadow's third row: the granules 0x211a0 .. 0x211df have zero shadow. *)
+(* AF0m.v:2957, Tfib_zero_shadow's third row: the granules 0x211a0 .. 0x211df have zero shadow. *)
 Lemma TFIB_ZSH_211A0 : In (0x211a0, 0x211e0 - 0x211a0) A.AF0m.Tfib_zero_shadow.
 Proof. unfold A.AF0m.Tfib_zero_shadow. do 2 apply in_cons. apply in_eq. Qed.
-(* AF0m.v:2176-2178, rows 8 / 9 / 10 of Tfib_const_shadow (Tfib_const = Tfib_const_sym ++ Tfib_const_abs ++
-   Tfib_const_shadow, AF0m.v:2954): PORTSC's partial granule 0x21188 (4 bytes addressable) and its redzone granules
+(* AF0m.v:2177-2179, rows 8 / 9 / 10 of Tfib_const_shadow (Tfib_const = Tfib_const_sym ++ Tfib_const_abs ++
+   Tfib_const_shadow, AF0m.v:2955): PORTSC's partial granule 0x21188 (4 bytes addressable) and its redzone granules
    0x21190 / 0x21198 (0xf9). *)
 Lemma TFIB_CSH_PORTSC : forall ly,
   In (Reusable.YG0f.z1 (Reusable.YG0f.ANum 0x7fffc231) 0x4) (A.AF0m.Tfib_const ly) /\

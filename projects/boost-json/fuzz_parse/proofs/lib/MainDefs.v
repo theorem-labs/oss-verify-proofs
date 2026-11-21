@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader, the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -203,15 +204,21 @@ Record heap_extra (HS : hsr) : Prop := HEX {
   (* [comment removed for export] *)
   hx_krel_vm : forall s mo mo', hs_KREL HS s mo ->
       m_halted mo' = m_halted mo -> m_vm_lazy mo' = m_vm_lazy mo ->
-      m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo -> hs_KREL HS s mo';
+      m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo ->
+      (* LPS 727298f3 port: the kernel relation reads [m_kernel] (the vDSO pair) and will
+         carry the launch's channel reader; neither is moved by any step *)
+      m_kernel mo' = m_kernel mo -> m_channel_reader mo' = m_channel_reader mo -> hs_KREL HS s mo';
   (* [comment removed for export] *)
   hx_statics : forall s LB m, hs_RHEAP HS s LB m ->
       rdn RSEGS m (Z_to_bv 64 0x12b94b) 1 = Some [Z_to_bv 8 0]
       /\ rdn RSEGS m (Z_to_bv 64 0xf8770) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x12b6f8))
-      /\ exists can, canary_ok m can }.
+      /\ exists can, canary_ok m can;
+  (* LPS 727298f3 port: a write to a channel without a reader is SIGPIPE; the kernel
+     relation carries the launch's reader, which no step writes *)
+  hx_krel_rdr : forall s mo, hs_KREL HS s mo -> m_channel_reader mo = true }.
 
 Lemma hx_krel_fds : ltac2:(zQ "b0!mn8!h8!iq3!jc!mo3!kg8!moe!mta!mu8!luf!m4>2HS$8>0@1$7^1>1s$9>2mo$5>1f@1$1@2$2@1$a@1$3#k0$4>0@3$0^5^3^2@3$0^6^4@2$6^2^3").
-Proof. intros HS HX s mo f K. eapply (hx_krel_vm HS HX); [exact K | | | |]; destruct mo; reflexivity. Qed.
+Proof. intros HS HX s mo f K. eapply (hx_krel_vm HS HX); [exact K | | | | | |]; destruct mo; reflexivity. Qed.
 End FPX2.
 
 (* [comment removed for export] *)
@@ -226,7 +233,8 @@ Section HeapM.
     hm_mpres_laws : HeapMF_iface.MPRES_laws HM;
     hm_krel_vm : forall s mo mo', HeapMF_iface.hs_KREL HM s mo ->
         m_halted mo' = m_halted mo -> m_vm_lazy mo' = m_vm_lazy mo ->
-        m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo -> HeapMF_iface.hs_KREL HM s mo';
+        m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo ->
+        m_kernel mo' = m_kernel mo -> m_channel_reader mo' = m_channel_reader mo -> HeapMF_iface.hs_KREL HM s mo';
     hm_statics : forall s LB m, HeapMF_iface.hs_RHEAP HM s LB m ->
         rdn RSEGS m (Z_to_bv 64 0x12b94b) 1 = Some [Z_to_bv 8 0]
         /\ rdn RSEGS m (Z_to_bv 64 0xf8770) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x12b6f8))
@@ -237,7 +245,9 @@ Section HeapM.
     hm_blocks_nodup : HeapMF_iface.RHEAP_blocks_nodup HM;
     hm_perm    : HeapMF_iface.RHEAP_perm HM;
     hm_rauxv_frame : HeapMF_iface.rauxv_frame HM;
-    hm_lb_remove : HeapMF_iface.lb_remove_laws HM }.
+    hm_lb_remove : HeapMF_iface.lb_remove_laws HM;
+    (* LPS 727298f3: the launch's channel reader, which the kernel relation carries *)
+    hm_krel_rdr : forall s mo, HeapMF_iface.hs_KREL HM s mo -> m_channel_reader mo = true }.
 
   Definition handover : ltac2:(zQ "20!nj1!mu8>2HS$1>2HM$0P") := ltac2:(zQ "h30!h8!hna!lp8!nj8!luf!hof!k3!kg8!nj1!njf!nka!nl6!nm6!mn8!nn5!no1!np1!mu8!nq0\2HS$h1\2HM$8@2$1>1s$4>2LB@1$0$2>1m$3>0@4$e^5^3^2^1@4$a^5^4^3^2@2$1>1s$4>2mo$7>0@3$d^4^2^1@3$9^4^3^2@2$1>1m$3>1B$6>0@3$h0^4^2^1@3$c^4^3^2>1p$h2>2LB@1$0$2@3$5@1$0$2@3$f^4^2^1@3$b^3^2^1").
 End HeapM.
@@ -253,6 +263,33 @@ End FPX3.
 Section MainStmt.
   Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Context {HCEIL : HeapCeil}.
-  Definition main_realizes_stmt : ltac2:(zQ "20!nj1!mu8>2HS$1>2HM$0P") := ltac2:(zQ "ic0!jc!m4!nu5!p0!nv0!hpa!hna!k3!nvb!ojf!io4!hp5!ip7!jq0!ho1!on4!oo0!jt1!op5!oq3!or1!ov1!nq8!kj7!pj4!nj1!pn9!prb!ps3!pt6!kk0!kk8!mn8!nn5!np1!mu8!lp8!qhd!koa!kt6!luf!qib!ve!o6\2HS$i3\2HM$h9>3sp0@1$1@1$0#k0>3tid@1$1@1$0#k0>3brk@1$1@1$0#k0>5mbase@1$1@1$0#k0>3rnd$h5>3lim$7>3inp$h6>4regs@2$h7@1$0#5@1$1@1$0#k0>3mem>0@1$1@1$0#k0@1$e@1$1@1$0#8>3ps0$i8>1B$7>0@1$h4^b>0@3$h0^c@1$2^6@1$4^6>0@1$h2@1$2^7>0@1$h3@1$4^8>0@1$f@1$8^9>0@2$6@2$5Z@2$3@1$0#k0^f@2$5@2$3@1$0#k0^f@2$c+2+h6>0@2$b@2$ia@1$ha?5HCEIL+ogggg0@2$3@1$0#k0^h1>0@8$i5@1$h8^c^h2@1$2^c@1$4^c^e^h1^b^a>0@4$i1^h5^a@1$d$i4^b>0@3$i0^h6^b@6$9^h3^h2^h1^h4^f^e>0@3$i2^h7^d^b>0@2$6@2$b@2$3@1$0#k0^h6^c@2$5^c@2$c+2+k0>0@4$hc?2fx?5HCEIL^h9^h8>0@1$hb@1$hd?2fx@4$i7$a$i6@2$h1@5$he?2fx^h2@2$ib@1$0#k0+knjt0^h1@1$hf$a@6$9^h8^h7^h6^h9^h4^h3@2$i9@1$2^h3@1$8^h3").
+  (* LPS 75d69e00: main_entry is over the ProcInput (RefStartup.v, as boost-beast restated it):
+     OLD  main_entry sp0 (in_argv inp) (in_envp inp) rnd tid regs mem
+     NEW  @main_entry (amb_of inp) inp mbase (Z_to_bv 64 291460) sp0 rnd tid regs mem
+     (291460 = 0x47284, the binary entry, as in ref_startup). The rest is the decoded old text. *)
+  (* LPS 727298f3: three launch facts the main phase reads, each given by the run's
+     [Run.valid_input] / [Run.valid_entry] at the top: [valid_launch] and the entry's
+     [entry_launch_ok_va] (the argument strings' placement, MainOpen's [path_facts]), and
+     the channel reader (the write of the usage and error messages). *)
+  Definition main_realizes_stmt : (hsr -> HeapMF_iface.hmf -> Prop) :=
+    (fun (HS : hsr) (HM : HeapMF_iface.hmf) => forall (sp0 tid brk mbase : word) (rnd : EntryDraw) (lim : Z) (inp : ProcInput) (regs : bvmap 5 word) (mem : word ->
+      option byte) (ps0 : PState) (B : Z), valid_sp sp0 ->
+      entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+      valid_argv (in_argv inp) ->
+      valid_envp (in_envp inp) ->
+      valid_fs (in_fs inp) ->
+      0 < bv_unsigned tid < 2 ^ 22 ->
+      hceil + 8388608 <= bv_unsigned sp0 ->
+      @main_entry (amb_of inp) inp mbase (Z_to_bv 64 291460) sp0 rnd tid regs mem ->
+      valid_launch inp ->
+      entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) inp ->
+      in_channel_reader inp = true ->
+      hs_RHEAP HS ps0 [] mem ->
+      hs_KREL HS ps0 (model0 tid brk mbase sp0 lim inp) ->
+      hs_rauxv_ok HS mem B ->
+      bv_unsigned sp0 <= B < 2 ^ 64 ->
+      target_run_stmt HS HM ->
+      frm0 fp_csr ->
+      realizes RSEGS {| cfg_ms := mkst regs (Z_to_bv 64 291792) mem (seg_rom RSEGS); cfg_model := model0 tid brk mbase sp0 lim inp |} (spec (in_argv inp) (in_fs inp))).
 End MainStmt.
 (* [comment removed for export] *)

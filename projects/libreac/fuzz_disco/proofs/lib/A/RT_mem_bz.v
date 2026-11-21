@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths changed; 142 of its 194 lines of code are new or changed and 691 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* GXA's memcpy and memset call contracts need the musl bodies' walks in the relocated Bz tree's words: I_amemcpy.v's
    memcpy_stmt (musl memcpy, 0x99770) and F_memset.v's memset_callZ_stmt (musl memset, 0x99b74).  The bodies are proved
    in lib/Lib's words by the relocated Theorem Labs lane walks lib/A/Prog/memcpy.v (memcpy_holds), memcpy_same.v
    (memcpy_same_holds) and memset.v (memset_holds); this file moves them across, exactly as the donor does.
 
    This file proves no new function.  Every lemma is copied, with only the module path changed, from
-   a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib:
+   a working branch proofs/omx-clap-core/fuzz_state/lib:
      lib/A/BzBridge.v:40-63      seg_tops_below, rsegs_below_task, find_segment_below, seg_addr_below
      lib/A/BzCallBridge.v:17-147 msteps_bz .. rw_cells_CB0_ours, memset_callZ_of_contract (:109)
      lib/A/Prog/asan_memcpy.v:36-108  msteps_to_bz, evt_to_bz, bytes_at_same, mc_post, mc_proof (:87)

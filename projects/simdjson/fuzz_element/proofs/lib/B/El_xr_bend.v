@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the throw path's run is checked at both CONFIG_RSEQ values, from a start state that holds the auxv walk's keys for each. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -18,6 +19,6 @@ Definition el_hcs_bend : list hcellA := [(8, 8%nat, HVopq); (16, 8%nat, HVopq); 
 Definition el_xr_bend : xregs_exit := [(18%nat, EVar 57); (19%nat, EVar 56); (20%nat, EVar 55); (21%nat, EVar 49); (24%nat, EVar 24); (25%nat, EVar 25); (26%nat, EVar 26); (27%nat, EVar 27)].
 Definition el_xk_bend : xstack_exit := [(136, ELit 0xb27c4); (128, EVar 59); (120, EVar 58)].
 
-Lemma xr_bend_ok : forall uw : bool,
-  exit_okA 144 el_xr_bend el_xk_bend (xautoXA 144 el_IT_bend XS_END_A XSA_FUEL XSA_K (xs_ss0A 144 el_hcs_bend 0xb8614 uw)) = true.
-Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma xr_bend_ok : forall uw b : bool,
+  exit_okA 144 el_xr_bend el_xk_bend (xautoXA 144 el_IT_bend XS_END_A XSA_FUEL XSA_K (xs_ss0A 144 el_hcs_bend 0xb8614 uw b)) = true.
+Proof. intros [|] [|]; vm_cast_no_check (eq_refl true). Qed.

@@ -9,13 +9,13 @@
    hypothesis seg_F7.  Segment F7 is 0x81f64 -> 0x81f7c (Seg/F7.v:1-12): two compares not taken, the two
    parse-record loads, and the FIRST reac_ctrl_kind_name call at 0x81f78.
 
-   ROUTE (C) (L3 switch onto a working branch 1899bed1aee; L3 brief L3-brief.md (a working note, not in this delivery),
+   ROUTE (C) (L3 switch onto a working branch; L3 brief L3-brief.md (a working note, not in this delivery),
    recipe a Theorem Labs lane's L3-recipe.md (a working note, not in this delivery)).  The cut carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 in place of ctl_rt mem3.
    The segment's footprint run is the route (C) twin lib/A/Prog/Seg/F7Fon.v f7_evt_F_on (this lane's beside-file;
    a Theorem Labs lane's F7F.v (not in this delivery) unchanged): the callee premise is reac_ctrl_kind_name_contract_F_on, the run has no
    shadow_rw premise, and the run SPANS the call.  So this file
      - SUPPLIES that premise with the callee's closed theorem A.Prog.reac_ctrl_kind_nameF.reac_ctrl_kind_name_holds_F_on
-       (a Theorem Labs lane 330e60af39d, LANDED, a Theorem Labs lane SIGNED 12:04Z), and
+       (a Theorem Labs lane, LANDED, a Theorem Labs lane SIGNED 12:04Z), and
      - lifts the WHOLE run ONCE with Reusable.YA0nR.SRr_fevt_hid at RNG := A.ProgBridge.RNG_W (w_H W3).
    There is NO split at the call and THIS STAGE CITES NO LIFT: an <f>_SRr_at starts at the callee entry and
    takes the callee contract as its own premise, so citing it to discharge that premise would be circular.
@@ -65,9 +65,9 @@
    path by a Module alias (CK11, CM05, ...).  Nothing writes a bare mkst / getr / seg_rom / cfg_at: check
    `grep -nE '(^|[^.A-Za-z_])(mkst|getr|seg_rom|cfg_at)\b' lib/A/ACtlG/F7.v` -- comments only.
 
-   BUILD STATE: type-check on a working branch 1899bed1aee (glue-base line + a Theorem Labs lane's interim core, no stand-in in the
+   BUILD STATE: type-check on a working branch (glue-base line + a Theorem Labs lane's interim core, no stand-in in the
    closure), with the kind_name _on statement / proof files taken by path (reac_ctrl_kind_name_c.v from
-   a Theorem Labs lane's 10bfa2d8569, reac_ctrl_kind_nameF.v from a Theorem Labs lane's 330e60af39d).  Every step is proved:
+   a Theorem Labs lane, reac_ctrl_kind_nameF.v from a Theorem Labs lane).  Every step is proved:
    no unproved step and no assumed constant. *)
 
 From Stdlib Require Import ZArith List Lia Permutation Bool.
@@ -614,7 +614,7 @@ Proof.
 Qed.
 
 (* A hit of find_segment names a segment of the list that contains the range (the LPS fact ctrl's
-   lib/A/Prog/CtrlPaLib.v:28-37 restates as find_segment_hit; restated here so that the PA layer stays out
+   lib/A/Prog/CtrlPaLib.v:29-38 restates as find_segment_hit; restated here so that the PA layer stays out
    of this file's closure). *)
 Lemma kn_find_seg : forall (sgs : list Segment) (a n : Z) sg,
   find_segment sgs a n = Some sg ->
@@ -702,7 +702,7 @@ Qed.
    PRESENT in m, which does not decide w_H W, so they do not give it.  It comes from the core's AR law instead:
    AR_zshadow_law (YG0d.v:435-438) at the bundle's zero-shadow range (0x21aa0, 0x9e7d0 - 0x21aa0), an entry of
    as_zero_shadow B = A.AF0m.Tfib_zero_shadow (CtrlTSyms' ts_zsh; the record fine list of a Theorem Labs lane's start-up
-   files, AF0m.v:2955-2964, which keeps KIND_NAME's 14 full granules and excludes its redzone at 0x9e7d0): each of
+   files, AF0m.v:2956-2965, which keeps KIND_NAME's 14 full granules and excludes its redzone at 0x9e7d0): each of
    those shadow bytes reads Some 0 through the view, and a byte the view reads is visible
    (A.ProgWorldVisFrame.vis_of_aview).  ProgWorld's glob_sh_vis does not apply: it asks for the 64-byte hull
    [0x9e740, 0x9e800), which ends past the range's end 0x9e7d0. *)

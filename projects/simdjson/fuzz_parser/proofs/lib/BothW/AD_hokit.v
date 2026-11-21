@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the case splits over the main-entry fact kinds cover the new defined-span fact (MDefS). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -106,7 +107,7 @@ Qed.
 Lemma sc_ok_fact : forall V (m : mem) l A sc, Forall (mfact_ok bsegs V m) l -> existsb (sc_factb A sc) l = true -> rw_cells bsegs m A [sc_cell V sc].
 Proof.
   intros V m l A [w e] HF H.
-  apply existsb_exists in H as (f & Hf & E). destruct f as [a w' v| | | | | | | | |]; try discriminate. destruct a as [z| | | | |]; try discriminate.
+  apply existsb_exists in H as (f & Hf & E). destruct f as [a w' v| | | | | | | | | |]; try discriminate. destruct a as [z| | | | |]; try discriminate.
   cbn [sc_factb fst snd] in E. apply andb_prop in E as [E E3]. apply andb_prop in E as [E1 E2].
   apply Z.eqb_eq in E1. apply Nat.eqb_eq in E2. apply zexp_eqb_eq in E3. subst.
   exact (proj1 (Forall_forall _ _) HF _ Hf).
@@ -119,14 +120,14 @@ Qed.
 Lemma sc_ok_zero : forall V (m : mem) l A sc, Forall (mfact_ok bsegs V m) l -> sc_zerob l A sc = true -> rw_cells bsegs m A [sc_cell V sc].
 Proof.
   intros V m l A [w e] HF H. unfold sc_zerob in H. cbn [fst snd] in H. destruct e as [z| | | | |]; try discriminate. destruct z; try discriminate.
-  apply existsb_exists in H as (f & Hf & E). destruct f as [|a n| | | | | | | |]; try discriminate. destruct a as [z| | | | |]; try discriminate.
+  apply existsb_exists in H as (f & Hf & E). destruct f as [|a n| | | | | | | | |]; try discriminate. destruct a as [z| | | | |]; try discriminate.
   apply andb_prop in E as [E1 E2]. apply Z.leb_le in E1. apply Z.leb_le in E2. unfold sc_size in E2. cbn [fst] in E2.
   unfold sc_cell. cbn [fst snd zv]. eapply zeroc_sub; [exact (proj1 (Forall_forall _ _) HF _ Hf) | exact E1 | exact E2].
 Qed.
 Lemma sc_ok_recut : forall V (m : mem) l A sc, Forall (mfact_ok bsegs V m) l -> sc_recutb l A sc = true -> rw_cells bsegs m A [sc_cell V sc].
 Proof.
   intros V m l A [w e] HF H. unfold sc_recutb in H. cbn [fst snd] in H. destruct e as [z| | | | |]; try discriminate.
-  apply existsb_exists in H as (f & Hf & E). destruct f as [a w' v| | | | | | | | |]; try discriminate.
+  apply existsb_exists in H as (f & Hf & E). destruct f as [a w' v| | | | | | | | | |]; try discriminate.
   destruct a as [a| | | | |]; try discriminate. destruct v as [v| | | | |]; try discriminate.
   destruct ((a <=? A) && (A + sc_size (w, ZLit z) <=? a + Z.of_nat (csize (cellw w' 0)))) eqn:E0; [|discriminate]. rename E into E3.
   apply andb_prop in E0 as [E1 E2]. apply Z.leb_le in E1. apply Z.leb_le in E2.

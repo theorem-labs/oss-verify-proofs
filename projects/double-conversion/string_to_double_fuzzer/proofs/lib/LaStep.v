@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failing store-conditional, which the model now loads and stores back, is not modelled). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia.
@@ -910,8 +911,8 @@ Definition exec_instr (U : uenv) (st : astate) (i : instr) (sz : Z) : sres :=
                 | Some st1 => SNext (set_pc (wr st1 (regn rd) (alit 0)) npc)
                 | None => SFail pc R_AMO
                 end
-              else SNext (set_pc (wr (set_resv st None) (regn rd) (alit 1)) npc)
-          | None => SNext (set_pc (wr (set_resv st None) (regn rd) (alit 1)) npc)
+              else SFail pc R_AMO   (* a failing sc loads and stores back at 08b1429 (Riscv/Sem.v): not modelled here *)
+          | None => SFail pc R_AMO
           end
       | _ => SFail pc R_AMO
       end

@@ -1,10 +1,10 @@
 (* crtB_walk: the toolkit of the cgif-form walk of check_round_trip (image B of libreac/fuzz_decode): one footprint
    run carried into cgif's SRr, landing in a cgif-shaped configuration.  Twin of lib/A/Prog/crtA_walk.v
-   (a working branch 7a7510b6213), at image B; the pieces of the walk and the close onto
+   (a working branch), at image B; the pieces of the walk and the close onto
    lib/B/Prog/check_round_trip_cg.v use it.
 
    FORM (the porter's ruling, 2026-10-29 01:54Z): the function's own code runs as decode's footprint runs
-   (lib/B/Prog/crtB_segs.v and the loop lane's file, ported from a working branch dc455613c81), each
+   (lib/B/Prog/crtB_segs.v and the loop lane's file, ported from a working branch), each
    carried into SRr after the state transport of lib/Lib/CrtBridge.v; the journal is re-established across each
    run by lib/Reusable/YCbq.v:636 ajournal_exec; each call is cut by its callee contract.
    Difference from the crtA twin: the bridge LeafCgKit.v:101 bridge_evtF_stmt is NOT a Section hypothesis here; it

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vm_roomS_place_available added: the room's gap answers Linux's placement at any hint; vm_roomS_rw_not_refusable, vm_roomS_none_not_refusable and their two corollaries written as plain text over the request's hint). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -140,21 +141,39 @@ Proof.
   exists a. split; [exact Hal|]. split; [exact Hpos|]. split; [exact Htop|]. unfold mmap_n in Hfree. exact Hfree.
 Qed.
 
-Theorem vm_roomS_rw_not_refusable : ltac2:(tb__ "0|2|
-SdS0S25Q40M0A1M1G1S18R4R3A2S2Z0S26G0R3A2A2S1S1eR4A1R5A2S8S27S39R4A1S2aA3S8S27S3aR5R8S1eR6A1A3S2aA3F_;F_;F_;F_;Fflags;Flen;FX;Fmd;").
+(* LPS 08b1429: refusability is asked of Linux's placement at the hint ([vm_place_available]); the
+   room's gap lies in Linux's bottom-up window, so it answers for every hint. *)
+Lemma vm_roomS_place_available : forall md X len hint (a : word),
+  vm_roomS md X -> 0 < bv_unsigned len ->
+  bv_unsigned a mod page_size = 0 -> 2 ^ 45 <= bv_unsigned a -> bv_unsigned a + mmap_nZ len <= WTOP ->
+  region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (mmap_n len) = true ->
+  vm_place_available (m_vmmaps md) (kb_thp (m_kernel md)) hint (mmap_nZ len) = true.
 Proof.
-  intros md X len flags HR Hlen HX Hnr.
-  destruct (vm_roomS_place md X len HR Hlen HX) as (a & _ & _ & _ & _ & _ & _ & _ & Hpl & Hpln).
-  pose proof (Hpl (Z_to_bv 64 0) flags Hnr) as P. unfold mmap_grant_refusable.
-  rewrite (vm_gap_available_of_place_noneS _ _ _ _ (Hpln (Z_to_bv 64 0))). destruct P as (_ & _ & _ & _ & Hb). rewrite Hb. reflexivity.
+  intros md X len hint a HR Hlen Hal Hlo Hhi Hfree. pose proof HR as (_ & _ & _ & _ & HT).
+  pose proof WTOP_facts as (W1 & W2 & W3).
+  destruct (mmap_nZ_page_len len Hlen) as [Hnpos Hnal]. unfold PG in Hnpos, Hnal.
+  apply (vm_place_available_of_gap _ _ _ _ a); [lia | exact Hnal | exact Hal | unfold task_unmapped_base; lia | lia | exact Hfree].
 Qed.
 
-Theorem vm_roomS_none_not_refusable : ltac2:(tb__ "0|1|
-SdS0S25Q40M0A1S18R3R2A2S2Z0S26G0R2A2A2S1S1eR3A1R4A2S8S27S3bR6S1eR4A1A2S2aA3F_;F_;F_;Flen;FX;Fmd;").
+Theorem vm_roomS_rw_not_refusable : forall md X len flags hint,
+  vm_roomS md X -> 0 < bv_unsigned len -> mmap_nZ len <= X -> mmap_noreserve_b flags = false ->
+  mmap_grant_refusable flags hint md (mmap_nZ len) = false.
 Proof.
-  intros md X len HR Hlen HX.
-  destruct (vm_roomS_place md X len HR Hlen HX) as (a & _ & _ & _ & _ & _ & _ & _ & _ & Hpln).
-  unfold mmap_reserve_refusable. rewrite (vm_gap_available_of_place_noneS _ _ _ _ (Hpln (Z_to_bv 64 0))). reflexivity.
+  intros md X len flags hint HR Hlen HX Hnr.
+  destruct (vm_roomS_place md X len HR Hlen HX) as (a & Hal & _ & Hlo & Hhi & _ & Hfree & _ & Hpl & _).
+  pose proof (Hpl (Z_to_bv 64 0) flags Hnr) as P. unfold mmap_grant_refusable.
+  rewrite (vm_roomS_place_available md X len hint a HR Hlen Hal Hlo Hhi Hfree).
+  destruct P as (_ & _ & _ & _ & Hb). rewrite Hb. reflexivity.
+Qed.
+
+Theorem vm_roomS_none_not_refusable : forall md X len hint,
+  vm_roomS md X -> 0 < bv_unsigned len -> mmap_nZ len <= X ->
+  mmap_reserve_refusable hint md (mmap_nZ len) = false.
+Proof.
+  intros md X len hint HR Hlen HX.
+  destruct (vm_roomS_place md X len HR Hlen HX) as (a & Hal & _ & Hlo & Hhi & _ & Hfree & _).
+  unfold mmap_reserve_refusable. rewrite (vm_roomS_place_available md X len hint a HR Hlen Hal Hlo Hhi Hfree).
+  reflexivity.
 Qed.
 
 Theorem vm_roomS_mprotect : ltac2:(tb__ "0|1|
@@ -169,13 +188,15 @@ Proof.
   destruct HR' as (H0' & _ & HP' & _). lia.
 Qed.
 
-Corollary vm_roomS_rw_refused_False : ltac2:(tb__ "0|2|
-SdS0S25Q40M0A1M1G1S18R4R3A2S2Z0S26G0R3A2A2S1S1eR4A1R5A2S8S27S39R4A1S2aA3S8S27S3aR5R8S1eR6A1A3S2bA3SaF_;F_;F_;F_;F_;Fflags;Flen;FX;Fmd;").
-Proof. intros md X len flags HR Hl HX Hnr Hrf. rewrite (vm_roomS_rw_not_refusable md X len flags HR Hl HX Hnr) in Hrf. discriminate. Qed.
+Corollary vm_roomS_rw_refused_False : forall md X len flags hint,
+  vm_roomS md X -> 0 < bv_unsigned len -> mmap_nZ len <= X -> mmap_noreserve_b flags = false ->
+  mmap_grant_refusable flags hint md (mmap_nZ len) = true -> False.
+Proof. intros md X len flags hint HR Hl HX Hnr Hrf. rewrite (vm_roomS_rw_not_refusable md X len flags hint HR Hl HX Hnr) in Hrf. discriminate. Qed.
 
-Corollary vm_roomS_none_refused_False : ltac2:(tb__ "0|1|
-SdS0S25Q40M0A1S18R3R2A2S2Z0S26G0R2A2A2S1S1eR3A1R4A2S8S27S3bR6S1eR4A1A2S2bA3SaF_;F_;F_;F_;Flen;FX;Fmd;").
-Proof. intros md X len HR Hl HX Hrf. rewrite (vm_roomS_none_not_refusable md X len HR Hl HX) in Hrf. discriminate. Qed.
+Corollary vm_roomS_none_refused_False : forall md X len hint,
+  vm_roomS md X -> 0 < bv_unsigned len -> mmap_nZ len <= X ->
+  mmap_reserve_refusable hint md (mmap_nZ len) = true -> False.
+Proof. intros md X len hint HR Hl HX Hrf. rewrite (vm_roomS_none_not_refusable md X len hint HR Hl HX) in Hrf. discriminate. Qed.
 
 Corollary vm_roomS_mprotect_refused_False : ltac2:(tb__ "0|1|
 SdS0S25Q40A1M0G0S18R4R3A2S8S27S3eR5R3R2A3S2aA3SaF_;F_;Fn;Faddr;FX;Fmd;").

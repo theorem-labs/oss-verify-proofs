@@ -8,7 +8,8 @@
    between the two readings of memory by FSupoisonAllocMp4.st_ok_real. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
 (* Modified by Theorem Labs, 2026-10: new file; it proves malloc_missgU, malloc_misskU and malloc_primU over FSupoison.ARU for any user-poisoned head list UP. *)
-(* Modified by Theorem Labs, 2026-10: image-B port (fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d) of lib/A/FSupoisonAllocMm.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), the kit is lib/B/FSupoisonAllocR / Rf / Rt, every statement is over B's tfibsegs (lib/B/YB1v.v); the entry, return, refill and refill-return pcs are named (PC_WRAP_MALLOC, PC_MALLOC_RA0, PC_REFILL, RA_REFILL); the read-write window lemmas are the donors' own (YFim / YFin rw_writable, aview_rw_some), not restated. *)
+(* Modified by Theorem Labs, 2026-10: image-B port (fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d) of lib/A/FSupoisonAllocMm.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), the kit is lib/B/FSupoisonAllocR / Rf / Rt, every statement is over B's tfibsegs (lib/B/YB1v.v); the entry, return, refill and refill-return pcs are named (PC_WRAP_MALLOC, PC_MALLOC_RA0, PC_REFILL, RA_REFILL); the read-write window lemmas are the donors' own (YFim / YFin rw_writable, aview_rw_some), not restated. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -514,7 +515,7 @@ Lemma Hcnt' : 1 <= cnt' <= 16.
 Proof. exact (@YFiy.Hcnt' _ W' ly regs0 (FSP.unpoison UP memR) n cl cnt' v' kz Hv2' Hsp DPOST' Hkz1 Nrange B S' l off HARm'u CI Hcache' Hcl_class Hcnt_def' Hoff_def'). Qed.
 
 (* The new chunk and its shadow are off UP: the chunk is high application memory, and its shadow bytes read 250. *)
-(* Port-from: lib/B/FSupoisonAllocMp2.v:183-201 (OKv / OKS of malloc_hitgU), at the state the refill left. *)
+(* Port-from: lib/B/FSupoisonAllocMp2.v:184-202 (OKv / OKS of malloc_hitgU), at the state the refill left. *)
 Lemma OKv' : forall a, YFis.Kv ly cl v' <= a < YFis.Kv ly cl v' + csz -> AllocR.offU UP a.
 Proof.
 intros a Ha. pose proof (@YFis.derived_ranges _ ly regs0 memR n cl cnt' v' kz Hcl Hv' Hcnt' Hv2' LY IMG DPOST' Hkz1 Nrange) as DR.

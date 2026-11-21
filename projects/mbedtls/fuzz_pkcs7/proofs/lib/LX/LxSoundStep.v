@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (interp_load and the two AMO load lemmas answer MachineUnmodeled, not MachineFault, for an unanswered load whose range meets the vvar pages). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -1180,11 +1181,14 @@ Section StepSound.
         + eapply finish_rd_ok; [exact HI| exact Hpc| exact Hlen| | exact Hst]. rewrite (kind_expr_den _ k a b HO Hk); reflexivity.
         + eapply finish_rd_ok; [exact HI| exact Hpc| exact Hlen| | exact Hst]. rewrite (kind_expr_den _ k a b HO Hk); reflexivity.
     Qed.
+    (* LPS ca39bcd: a load the image does not answer is [MachineUnmodeled] when the range meets
+       the vvar pages (rocq-linux-process-semantics@75d69e00:theories/LinuxProcessSem/RiscvSemantics.v:1017-1018);
+       the only consumer (do_load below) reads the [Some] arm. *)
     Lemma interp_load : forall msz sx (addr : word) (rd : bv 5) (c : core) mm,
       interp_eff_accesses segs (load_val msz sx addr (fun v => EDone (rset rd v c))) mm =
       match ov_read_bytes segs mm addr (N.to_nat (msize_N msz)) with
       | Some bs => MachineOk (@mkAccessReport _ (rset rd (ld_val (msize_N msz) sx bs) c, mm) [(addr, N.to_nat (msize_N msz))])
-      | None => MachineFault
+      | None => if range_meets_vvar segs addr (N.to_nat (msize_N msz)) then MachineUnmodeled else MachineFault
       end.
     Proof.
       intros msz sx addr rd c mm. destruct msz; cbn -[ov_read_bytes rset ld_val le_bytes_to_word bv_extract sext zext];
@@ -1319,6 +1323,8 @@ Section StepSound.
         end.
     Proof. intros szw op wd aq rl rd rs1 rs2 [R Fr p f rv] H. cbn in H. subst rv. destruct wd; reflexivity. Qed.
 
+    (* LPS ca39bcd: the AMO's load leaf, like [interp_load], answers [MachineUnmodeled] on a range
+       meeting the vvar pages (75d69e00:RiscvSemantics.v:1006-1018); only the [Some] arm is consumed. *)
     Lemma interp_amo32 : forall (a : word) rd (f : bv 32 -> bv 32) (c : core) mm,
       interp_eff_accesses segs (ELoad 32 a (fun old => EStore 32 a (f old) (EDone (rset rd (sext 64 old) c)))) mm =
       match ov_read_bytes segs mm a 4 with
@@ -1326,7 +1332,7 @@ Section StepSound.
           if store_ok segs mm a 4
           then MachineOk (@mkAccessReport _ (rset rd (sext 64 old) c, write_to_mem mm a (Z_to_le_bytes 4 (bv_unsigned (f old)))) [(a, 4%nat); (a, 4%nat)])
           else MachineFault
-      | None => MachineFault
+      | None => if range_meets_vvar segs a 4 then MachineUnmodeled else MachineFault
       end.
     Proof.
       intros a rd f c mm. cbn -[ov_read_bytes rset sext store_ok write_to_mem Z_to_le_bytes bv_unsigned bv_extract le_bytes_to_word].
@@ -1340,7 +1346,7 @@ Section StepSound.
           if store_ok segs mm a 8
           then MachineOk (@mkAccessReport _ (rset rd old c, write_to_mem mm a (Z_to_le_bytes 8 (bv_unsigned (f old)))) [(a, 8%nat); (a, 8%nat)])
           else MachineFault
-      | None => MachineFault
+      | None => if range_meets_vvar segs a 8 then MachineUnmodeled else MachineFault
       end.
     Proof.
       intros a rd f c mm. cbn -[ov_read_bytes rset store_ok write_to_mem Z_to_le_bytes bv_unsigned bv_extract le_bytes_to_word].

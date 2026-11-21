@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file for fuzz_ctrl image A (asan); owner a Theorem Labs lane. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlGlobs.v -- fuzz_ctrl image A (libreac v1.9.0, ASan build): the registered-globals list GLOBS_A of the top
-   composition lib/A/ACtl.v (Section Ctl, :317-321 at a working branch bb5910bdb23) and its two
+   composition lib/A/ACtl.v (Section Ctl, :317-321 at a working branch) and its two
    premises, proved as closed lemmas.
    proves no function (kind: start-up facts) -- image-A registered-globals facts; no function is walked.
 
@@ -20,7 +21,7 @@
      proof-index globs_marked / GLOBS_A_MARKED / NAME_GLOB / ctl_global_shadow_of_AR / ctl_gshadow_of_AR has 0
      released hits and no fuzz_ctrl-A proof on any working-branch ref; ProgWorldShadow's ctl_global_shadow_of_AR /
      ctl_gshadow_of_AR conclude AsanRT.addressable, not block_shadow, so globs_marked does not follow from them.
-   - template (same unit, image B): lib/B/ProgBridgeData.v at a working branch 51de8d2c1ffe: its
+   - template (same unit, image B): lib/B/ProgBridgeData.v at a working branch: its
      bd_cell_sh / bd_cell_sh_eq / bd_le_byte_small (:146-185), bd_sh_val_ok / bd_glob_marked_ok /
      bd_globs_marked_ok (:398-414), bd_row_glob_ok / bd_rows_glob_ok (:452-460), bd_sh_val (:870) and
      ctrl_ro_globs_marked (:907), with B's generated tables (lib/Reusable/YF0m.v) replaced by image A's (A.AF0m:
@@ -29,7 +30,7 @@
 
    THE LIST (generated, never typed): lib/A/ctrl_globs_A.py (sha256 221418630ee6e5c2991798589f9ede097358bb0b287032d9950479f9daaf8b8a)
    decodes AsanRT.v's RT_AGLOB_Z (the asan_globals bytes the core carries at RT_AGLOB = 0xa4380, RT_AGLOB_LEN = 3648;
-   AsanRT.v blob b67d26f8ec71 (the blob this tree had at release c5e779efe8c) on bb5910bdb23) as 57 '<8Q' descriptors and prints (beg, size) = fields 0 and 1.  Its
+   AsanRT.v blob b67d26f8ec71 (the blob this tree had at release)) as 57 '<8Q' descriptors and prints (beg, size) = fields 0 and 1.  Its
    self-test runs every invocation (6 known-answer cases: 57 descriptors / 3648 bytes, entries 0 / 51 / 54 / 55 / 56,
    and EMPTY, TRUNCATED and two MUTATED tables rejected; exit 2 if any moves).  Command, from lib/:
      python3 A/ctrl_globs_A.py A/AsanRT.v fuzz_ctrl.nm.txt (a working note, not in this delivery)
@@ -45,7 +46,7 @@
        (__asan_register_elf_globals, rt_3 in the excerpt);
      0x40898: returns if a1 = a2 or [a0] <> 0; else a2 := (a2 - a1) >> 6, call 0x3f4b0 (__asan_register_globals)
        with (a1, a2), then [a0] := 1.
-   The core's start-up cells give the operands: Tfib_const_abs (AF0m.v:113-115) pins [0xa0748] = 0xa4380 (= RT_AGLOB,
+   The core's start-up cells give the operands: Tfib_const_abs (AF0m.v:114-116) pins [0xa0748] = 0xa4380 (= RT_AGLOB,
    __start_asan_globals), [0xa0750] = 0xa51c0 (= RT_AGLOB + RT_AGLOB_LEN, __stop_asan_globals) and the flag
    [0xa51c0] = 1 (registration done), so the count is 3648 >> 6 = 57: entries 0 .. 56, entry 54 among them.  The
    record's shadow agrees: Tfib_zero_shadow's range (0x21aa0, 0x9e7d0 - 0x21aa0) ends at KIND_NAME's end, and its

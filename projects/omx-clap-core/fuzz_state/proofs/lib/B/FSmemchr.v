@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths, module names, addresses and numbers changed; 144 of its 230 lines of code are new or changed and 657 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs.asan-ubsan's (image B) memchr interceptor (PC_memchr 0x426dc), its runtime contract in S0's ARU form:
    amemchr_realizesU, the FsRt field lib/B/FSH_Rt.v:115 fr_memchr.
-   rule 24: no function proved. A PORT of image A's closed proof lib/A/FSmemchr.v (a working branch
-   0bc79e8d0f8, a Theorem Labs lane) onto image B; it composes existing pieces:
-   - the B Bz body walk: a working branch 51f06361767 lib/B/Bz/A/I_memchrw.v imemchr_spec (from
+   rule 24: no function proved. A PORT of image A's closed proof lib/A/FSmemchr.v (a working branch,
+   a Theorem Labs lane) onto image B; it composes existing pieces:
+   - the B Bz body walk: a working branch lib/B/Bz/A/I_memchrw.v imemchr_spec (from
      __interceptor_memchr 0x43ea0 to the return), with its section hypotheses RIP = lib/B/Bz/A/R_isPoisoned.v rip_proof
      and MCH = lib/B/FSsl.v mch_proof (the plain memchr 0x98e40 through REAL(memchr), slot 0xa1950);
-   - the trampoline: __wrap_memchr 0x426dc is one `j 0x43ea0`, 51f06361767 lib/B/Bz/A/I_tramp.v:26 tramp_memchr;
+   - the trampoline: __wrap_memchr 0x426dc is one `j 0x43ea0`, lib/B/Bz/A/I_tramp.v:26 tramp_memchr;
    - the bridge and the transport: lib/B/FSstrlen.v (post_of_walk, walk_cells, chk_norm, stk_norm_high, bz_transport) over
      lib/B/FSbz_bridge.v / lib/B/FSbz_str.v;
    - the statements: S0 lib/A/FSH_Gen.v amemchr_realizesU (with `amem_range x (n + 8)`) / amemchr_realizes_of_U at B's

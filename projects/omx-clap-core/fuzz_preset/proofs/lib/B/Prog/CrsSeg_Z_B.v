@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1234 of its 1307 lines of code are new or changed and 441 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* CR-Z_B (a Theorem Labs lane's row Z on image B', the #102 pins, asan-ubsan): check_reject_clean_starved's segment Z,
    B' 0x824c0 (+992) .. 0x824fc / 0x823c0 / ABORT, stated against the B' kit CrsKitBp.v. The walk (offsets from the
    entry, each 4 * a slot of the B' listing, slots 893 .. 907; measured: crs_slots_B, and nth_error B_prog_listing
@@ -24,19 +25,19 @@
    The closing lemma crs_seg_Z_B takes the callee texts at the B' instance (with the interim crs_free0_B), the kit's
    CrsKeep_B, HB_took, HW_exact (crs_wexact_B), the named premise crs_cnt24_Z_B, and the continuations crs_from_R_B /
    crs_from_H3_B, in the order of the A' file.
-   DONOR (rule 24, reuse): this lane's own A' proof lib/A/Prog/CrsSeg_Z.v blob c92575e08ec8 (a working branch
-   0162eba40b5e), carried name for name with the B' kit's `_B` names; every image number RE-COMPUTED at B' by vm_compute
+   DONOR (rule 24, reuse): this lane's own A' proof lib/A/Prog/CrsSeg_Z.v blob c92575e08ec8 (a working branch),
+   carried name for name with the B' kit's `_B` names; every image number RE-COMPUTED at B' by vm_compute
    (BASE 530124, CRS_PC_Z_B 3572, STK 27312, CRS_RO_B 6152892, the free's return site the third of pi_ret_sites
    RT_fuzz_free = [533224; 533440; 533732]), never shifted from A'.
    rule 24: proves function check_reject_clean_starved on image B' (reuse search: `proof-index check_reject_clean_starved 0x82160`, the internal file
    index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved).
-   Inputs: pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   Inputs: pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml);
    listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (entry 0x820e0 = slot 645);
-   image record lib/B/PRH_ImgB.v blob 3216eca68342; the kit tip of record f97c8b2f046b by path: PRH_FnCheck.v blob
+   image record lib/B/PRH_ImgB.v blob 3216eca68342; the kit tip of record by path: PRH_FnCheck.v blob
    9ecd8eb167c6, PRH_FnAlloc.v 740f4d11d144, PRH_FnWriter.v 2b497bc72172, PRH_Base.v fdb45545469b, PRH_Supply.v
    d6e52752685a; kit lib/B/Prog/CrsKitBp.v blob 451cf8792b39, CrsWexBp.v 0aa31ee7944a (crs_wexact_B), CrsFree0Bp.v
-   bf7db21783ca (crs_free0_B), S1ImgB.v daf4603f76f1 (a working branch fb124cd27931). *)
+   bf7db21783ca (crs_free0_B), S1ImgB.v daf4603f76f1 (a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.

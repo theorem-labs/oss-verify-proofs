@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/As/AllocWalkKit.v, with its module paths and module names changed; 353 of its 387 lines of code are new or changed and 128 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Tk/AW/SmLeaf.v, with its module paths, module names and addresses changed; 313 of its 517 lines of code are new or changed and 183 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/asan_stack_mallocF_kit.v -- fuzz_ctrl image B (asan-ubsan): the class-independent part of the footprint
    (ExecF) walk of __asan_stack_malloc_{0,1,2}: lib/Lib cell helpers, the cells and footprint of the TLS callees, the
    callee walks (musl __tls_get_addr, TryAsanInitFromRtl, AsanTSDGet, GetCurrentThread, DTLS_on_tls_get_addr, the
    __tls_get_addr interceptor, MemToShadow) and shadow_stk_on.  The class files asan_stack_malloc_{0,1,2}F.v use it.
    rule 24: no function proved for the first time.  These walks are proved at the footprint level in fuzz_grant.
 
-   DONOR.  a working branch dac1040b24ec, proofs/libreac/fuzz_grant/lib/B/Prog/asan_stack_mallocF.v
+   DONOR.  a working branch, proofs/libreac/fuzz_grant/lib/B/Prog/asan_stack_mallocF.v
    lines 53-165 (imports, cell helpers, flag_readF) and 202-662 (leafF_cells .. m2sF_spec), the donor's own port of
-   fuzz_pcap 78bd0706625 / fuzz_knock 9f8d2659177 (its header, lines 12-41).  The text is the donor's with these
+   fuzz_pcap / fuzz_knock (its header, lines 12-41).  The text is the donor's with these
    changes only:
    - the namespace fuzz_grant -> fuzz_ctrl;
    - the imports: the donor's asan_stack_mallocF_c (grant's canonical statement, the home of grant's IMG_HI) is not

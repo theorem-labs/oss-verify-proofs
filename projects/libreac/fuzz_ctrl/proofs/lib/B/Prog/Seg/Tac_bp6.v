@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v; 245 of its 338 lines of code are new or changed and 918 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_f9.v; 50 of its 186 lines of code are new or changed and 202 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ENT transport a Theorem Labs lane's seg_P6 needs for the reac_ctrl_identity_reply call at 0x81d7c (v1.9.0; which writes
    its own stack window, the class-1 bytes of the side stack for frames and the shadow bytes of its window): a
    renamed copy
-   of f9_ent_Wy / f9_ent_W of a Theorem Labs lane's lib/B/Prog/Seg/Tac_f9.v (a working branch 19225626266), which seg_F9
+   of f9_ent_Wy / f9_ent_W of a Theorem Labs lane's lib/B/Prog/Seg/Tac_f9.v (a working branch), which seg_F9
    uses for the same call at 0x82170, with the frame-location pattern updated to the side arm's FSREC conjunct.
    (Tac_f9's f9_fr_cl is not copied: it predates FSREC; Tac_bp.bp_fra serves instead.)
    bp6_ent_W is Tac_slot's ent_store with three more allowed address classes: the shadow of the slot window below

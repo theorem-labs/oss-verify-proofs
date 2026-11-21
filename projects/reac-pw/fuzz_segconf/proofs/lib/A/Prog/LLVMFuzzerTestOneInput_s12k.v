@@ -4,19 +4,20 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC5d.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YC5d.v, with its module paths changed; 13 of its 41 lines of code are new or changed and 88 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Rt/RtSegCalloc.v, with its module paths and module names changed; 572 of its 603 lines of code are new or changed and 10 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of file group _s12 of the
    test harness's entry function LLVMFuzzerTestOneInput (segments S01 and S02, LLVMFuzzerTestOneInput_s12.v), and
    the calloc call step every calloc site of the harness walk takes.
 
    - acalloc04_sub: the walk form of the interceptor-layer owner's row-13 rule RtSegCalloc.aseg_calloc04_rule (pc_calloc cstk)
-     (commit 755e9278f8ff, lib/A/Rt/RtSegCalloc.v, with its m * n <= YGCalloc.PRIM_MAX premise),
-     beside PaCall.v's amalloc04_sub (PaCall.v:136-171): the inner journal opened by ajournal_sub_init at window
+     (lib/A/Rt/RtSegCalloc.v, with its m * n <= YGCalloc.PRIM_MAX premise),
+     beside PaCall.v's amalloc04_sub (PaCall.v:137-172): the inner journal opened by ajournal_sub_init at window
      cstk and joined by ajournal_sub_tok, the rule's post plus that inner journal. Generic in segs; _s20
      (calloc(cap + 1, 18) and calloc(cap + 1, 20)) reuses it.
    - lt_malloc_at / lt_calloc_at: one allocator call of the harness from a point where lt_core holds (sp = s1 = S1,
      the frame, the image facts, the blocks, the budget), to the call's return with lt_core at k + 1, one block more
      (newest first), the budget charged one event, the stack above S1 kept; in the form of fuzz_command's
-     lib/A/Prog/LLVMFuzzerTestOneInput_s41.v aw_malloc_loc (origin/ossv/recipes 501c0d516c69). lk_core_run carries
+     lib/A/Prog/LLVMFuzzerTestOneInput_s41.v aw_malloc_loc. lk_core_run carries
      lt_core across a run that writes only s1 slots below 176(s1).
    - S01's symbolic state at K84eb8 (ss_s1, its seed lemma s1_seed), the values its run computes (cap, nfiles), the
      header bytes of the model (s1_model) and the readers of a run's final state (s1_kept, s1_slot).
@@ -193,7 +194,7 @@ End g.
 End c.
 
 (* ============================== lists, words, registers ============================== *)
-(* blocks_bytes is the sum of the live blocks' sizes (fuzz_command lib/A/Prog/LLVMFuzzerTestOneInput_defs.v:218-229) *)
+(* blocks_bytes is the sum of the live blocks' sizes (fuzz_command lib/A/Prog/LLVMFuzzerTestOneInput_defs.v:219-230) *)
 Fixpoint lk_bsum (bl : list (Z * Z)) : Z := match bl with [] => 0 | b :: l => snd b + lk_bsum l end.
 Lemma lk_bsum_app : forall l1 l2, lk_bsum (l1 ++ l2) = lk_bsum l1 + lk_bsum l2.
 Proof. induction l1 as [|b l IH]; intros l2; cbn [lk_bsum app]; [reflexivity | rewrite IH; ring]. Qed.

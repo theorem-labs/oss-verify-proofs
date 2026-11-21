@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed legP. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -556,9 +557,9 @@ destruct (node_writev_file2_lazy tfibsegs (w_H W) (w_A W) regs1 (Z_to_bv 64 (ss_
 -
 unfold writev_copyins. apply ranges_avoid_app; apply (ranges_avoid_of_elems W); intros a m Hin.
 + rewrite Q12, Q11 in Hin. replace (iovcnt32 (Z_to_bv 64 2)) with (Z_to_bv 64 2 : word) in Hin by reflexivity.
-destruct (import_iovecs_accesses_in _ (Z_to_bv 64 (sp0 - 136)) a (Z_to_bv 64 2) m ltac:(rewrite unsigned_lit_small by lia; lia) ltac:(rewrite !unsigned_lit_small by lia; lia) Hin) as [-> [i [Hi Hb]]].
-rewrite !unsigned_lit_small in Hi, Hb by lia.
-apply (range_avoids_of_vis W a 16 (sp0 - 136) (sp0 - 104) VIOV); cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in *; lia.
+destruct (import_iovecs_accesses_in _ (Z_to_bv 64 (sp0 - 136)) a (Z_to_bv 64 2) m ltac:(rewrite unsigned_lit_small by lia; lia) ltac:(rewrite !unsigned_lit_small by lia; lia) Hin) as [i [Hi [Hlo Hhi]]].
+rewrite !unsigned_lit_small in Hi, Hlo, Hhi by lia.
+apply (range_avoids_of_vis W a m (sp0 - 136) (sp0 - 104) VIOV); cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in *; lia.
 + destruct (iov_prefix_accesses_in _ _ _ _ Hin) as [len [Hil Hm]].
 destruct Hil as [Heq | [Heq | []]]; injection Heq as E1 E2; subst a len.
 * rewrite word_to_nat_len in Hm by lia. apply (range_avoids_of_vis W _ m (f + 240) (f + 240 + Z.of_nat (length P)) VB0); rewrite ?unsigned_lit_small by lia; lia.

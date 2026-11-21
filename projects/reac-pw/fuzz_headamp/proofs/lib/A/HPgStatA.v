@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStatA.v at f4e7a1bbea0f for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStatA.v for reac-pw/fuzz_headamp
    image A: module paths changed, rsa_ renamed to hsa_, RPgHarn.rh_static_law to HPgHarn.hq_static_law, role_himg_A to
    headamp_himg_A, rl_cstr / rl_ro_cells to hd_cstr / hd_ro_cells, the read-only range 0x9a120 .. 0x9b528 to headamp's
    0x9bc80 .. 0x9d068; headamp's hd_cstr asks amem_range over len + 8 and the string's tail granule readable

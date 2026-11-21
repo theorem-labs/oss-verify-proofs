@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnqG.v (a working branch af0289e23fe2, file sha256 443f3508e1dd), lane F1 of the generic cf instance layer (round 3); module paths changed only: 67 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnqG.v (a working branch, file sha256 443f3508e1dd), lane F1 of the generic cf instance layer (round 3); module paths changed only: 67 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
    The cf instance's MODEL fields of the frame-generic Enqueue interface (cgif/cgif_file_fuzzer lib/EnqGbase.v
    (file sha256 21597ef008ab; donor not released), taken by path, byte-identical: EnqIfaceRoom :153, EnqIfaceHit :193), at
@@ -12,7 +13,7 @@
    rule 24: no function proved (kind: interface-instance discharge, model fields only).
    - [enq_nmax_cf]: ir_nmax / ih_nmax (enq_pre_cf's guard conjunct, and 0 <= ck_req from chunk_ok_cf);
    - [rmaxd_ok_cf]: ih_rmaxd_ok at RMAXD := kFreeArrayOffset;
-   - [enq_rmax_cf]: ih_rmax (from enq_pre_cf's batch_room_cf, YG00cf.v:349-350);
+   - [enq_rmax_cf]: ih_rmax (from enq_pre_cf's batch_room_cf, YG00cf.v:350-351);
    - [Shit_cf], [enq_inited_cf], [enq_hit_eq_cf], [ih_shape_cf]: the hit arm's end state (YFf2.S''s text) and its
      step equation (YFg5.enqueue_hit_eq's script), the cache's initialization from Wf_cf (wrc_cache);
    - Main's instance checks: [enq_nmax_strict_ok] (ENQ_NMAX_STRICT <= 2 ^ 30, B2's window) and the
@@ -51,7 +52,7 @@ Local Open Scope am_scope.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* 1. Main's instance checks that read no relation.                                                                 *)
 
-(* RMAXD's window at the cf instance (EnqGbase.v:201 ih_rmaxd_ok at RMAXD := kFreeArrayOffset). *)
+(* RMAXD's window at the cf instance (EnqGbase.v:202 ih_rmaxd_ok at RMAXD := kFreeArrayOffset). *)
 Lemma rmaxd_ok_cf : 2 ^ 31 <= kFreeArrayOffset <= kFreeArrayOffset.
 Proof. unfold kFreeArrayOffset. lia. Qed.
 

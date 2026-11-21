@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_pro_x.v, with its module names changed; 94 of its 149 lines of code are new or changed and 3014 lines of the source are left out. *)
-(* top_x's LS_pro (W_LLVMFuzzerTestOneInput_top_x.v:342 at integ bb9dae5d905) at W8Entry-2's decision (a)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* top_x's LS_pro (W_LLVMFuzzerTestOneInput_top_x.v:343 at integ) at W8Entry-2's decision (a)
    (a Theorem Labs lane 04:21Z): inside its `exists T0 rest0` it also takes the cut's own count bound
    `ReplyCnt.xcnt_ok B (c_S cx) (c_ly cx) (input_blks cx) T0 cap out` and HFH0
    `fr_hblks (c_W cx) (c_mem cx) = (if T0 =? 0 then [] else [(T0, ATABLE)]) ++ aout_blks cap out`, both of which SEG_PRO
@@ -10,7 +11,7 @@
    - The bridge: every primary request's class is in 1 .. 30 (in_cls_range, for ANY size: needed0 >= 8 and a primary
      request has needed0 <= 2^16, and class_id maps 1 .. 2^16 into 1 .. 30, checked by computation), so the classes
      xcnt_ok leaves out count nothing, and xcnt_ok -> xcnt_pre (ReplyLS3c.v:255) with no block fact.
-   - topx_LS_pro_xok_px: top_x's LS_pro text (W_LLVMFuzzerTestOneInput_top_x.v:413-425 at the TOP head 3d17f490d56,
+   - topx_LS_pro_xok_px: top_x's LS_pro text (W_LLVMFuzzerTestOneInput_top_x.v:414-426 at the TOP head,
      this file's former TX_LS_pro_xok, which top_x adopted) at LSx := txp_LSx B OM (= fr_LS3cp /\ fr_OUT /\ fr_ENT),
      TfibB := B, MT a Variable (KF-COUNT), fr_live_pre := ACfn_cf.fr_live_pre; ReplyLSI.v lsi_LS_pro adds fr_CAP and
      fr_SEC. *)

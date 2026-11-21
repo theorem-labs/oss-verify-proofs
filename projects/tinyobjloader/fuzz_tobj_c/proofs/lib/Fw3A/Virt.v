@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ASan malloc invariant MI carries the run's channel reader, LPS 08b1429, read by the new MI_rdr and kept by MI_after; unmodeledA_not covers unmodeled_at's new vDSO-call arm). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
-#[local] Ltac2 tbs__ () := ["@Corelib.Init.Datatypes"; "list"; "prod"; "option"; "nat"; "bool"; "pair"; "length"; "None"; "Some"; "andb"; "app"; "true"; "false"; "negb"; "nil"; "orb"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "with_vm_backing"; "m_vm_lazy"; "m_halted"; "m_vmmaps"; "page_mem"; "m_vm_materialized"; "page_size"; "event"; "page_base_of"; "page_in_ranges"; "vm_backing_used"; "vm_limit"; "accesses_pages"; "page_base"; "VmMaps"; "access_pages_acc"; "m_clock"; "m_conn_ix"; "m_creds"; "m_fd"; "m_fds"; "m_fs"; "m_fsys"; "m_io"; "m_lim"; "m_net"; "m_nofile"; "m_pipes"; "m_proc"; "m_rlimit_core"; "m_stdin"; "m_tid"; "m_time"; "page_insert"; "vm_maps"; "Creds"; "FdEntry"; "FdState"; "FsState"; "InputStream"; "IoState"; "LimState"; "NetQueue"; "PipeBuf"; "ProcState"; "TimeState"; "materialize_accesses"; "materialize_model_accesses"; "newly_materialized_pages"; "@Corelib.Init.Logic"; "eq"; "and"; "ex"; "iff"; "not"; "or"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_mem"; "MachineOk"; "machine_result"; "ms_svc_pending"; "step"; "ms_fcsr"; "ms_fregs"; "ms_gpr"; "ms_pc"; "ms_reg"; "ms_regs"; "ms_resv"; "ms_rom"; "find_segment"; "@Stdlib.Lists.List"; "In"; "NoDup"; "filter"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "vms"; "hid"; "vmd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt.WithImage"; "MI"; "mat_equiv"; "paid"; "unpaid"; "headroom"; "lazy_clear"; "lazy_in_maps"; "tp_in_maps"; "virt"; "@Stdlib.ZArith.BinInt.Z"; "add"; "le"; "of_nat"; "lt"; "mul"; "modulo"; "sub"; "pow"; "@Corelib.Numbers.BinNums"; "Z"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "mkCfg"; "config"; "mi_account_step"; "SError"; "cfg_model"; "cfg_ms"; "sstep"; "unmodeled_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt.WithImage.Accounting"; "md_after"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "wstep"; "model_idle"; "w_cfg"; "w_tr"; "@Corelib.Init.Nat"; "add"; "@Corelib.Init.Peano"; "lt"; "le"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "@LinuxProcessSemantics.Riscv.Prelude"; "bvmap"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.BackingAlgebra"; "model_ivs_wf"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Restrict"; "wx_segs_nowrap"; "H_off_segments"; "ranges_avoid"; "restrict"; "woff"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt.WithImage.Sim"; "hid_same"; "@LinuxProcessSemantics.LinuxProcessSem.Fs"; "Fs"].
+#[local] Ltac2 tbs__ () := ["@Corelib.Init.Datatypes"; "list"; "prod"; "option"; "nat"; "bool"; "pair"; "length"; "None"; "Some"; "andb"; "app"; "true"; "false"; "negb"; "nil"; "orb"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "with_vm_backing"; "m_vm_lazy"; "m_halted"; "m_vmmaps"; "page_mem"; "m_vm_materialized"; "page_size"; "event"; "page_base_of"; "page_in_ranges"; "vm_backing_used"; "vm_limit"; "accesses_pages"; "page_base"; "VmMaps"; "access_pages_acc"; "m_clock"; "m_conn_ix"; "m_creds"; "m_fd"; "m_fds"; "m_fs"; "m_fsys"; "m_io"; "m_lim"; "m_net"; "m_nofile"; "m_pipes"; "m_proc"; "m_rlimit_core"; "m_stdin"; "m_tid"; "m_time"; "page_insert"; "vm_maps"; "Creds"; "FdEntry"; "FdState"; "FsState"; "InputStream"; "IoState"; "LimState"; "NetQueue"; "PipeBuf"; "ProcState"; "TimeState"; "materialize_accesses"; "materialize_model_accesses"; "newly_materialized_pages"; "@Corelib.Init.Logic"; "eq"; "and"; "ex"; "iff"; "not"; "or"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_mem"; "MachineOk"; "machine_result"; "ms_svc_pending"; "step"; "ms_fcsr"; "ms_fregs"; "ms_gpr"; "ms_pc"; "ms_reg"; "ms_regs"; "ms_resv"; "ms_rom"; "find_segment"; "@Stdlib.Lists.List"; "In"; "NoDup"; "filter"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "vms"; "hid"; "vmd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt.WithImage"; "MI"; "mat_equiv"; "paid"; "unpaid"; "headroom"; "lazy_clear"; "lazy_in_maps"; "tp_in_maps"; "virt"; "@Stdlib.ZArith.BinInt.Z"; "add"; "le"; "of_nat"; "lt"; "mul"; "modulo"; "sub"; "pow"; "@Corelib.Numbers.BinNums"; "Z"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "mkCfg"; "config"; "mi_account_step"; "SError"; "cfg_model"; "cfg_ms"; "sstep"; "unmodeled_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt.WithImage.Accounting"; "md_after"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "wstep"; "model_idle"; "w_cfg"; "w_tr"; "@Corelib.Init.Nat"; "add"; "@Corelib.Init.Peano"; "lt"; "le"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "@LinuxProcessSemantics.Riscv.Prelude"; "bvmap"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.BackingAlgebra"; "model_ivs_wf"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Restrict"; "wx_segs_nowrap"; "H_off_segments"; "ranges_avoid"; "restrict"; "woff"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt.WithImage.Sim"; "hid_same"; "@LinuxProcessSemantics.LinuxProcessSem.Fs"; "Fs"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "m_channel_reader"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -284,7 +285,7 @@ Definition tp_in_maps (md : Model) (tp : list word) : Prop := ltac2:(tb__ "0|4|
 S10Q40M0A1M1S59G1R1Vtp;A3S45S44S70S6dS11G0R2A2M2S19A2Z0A3S46G1G1S46G1G1S45S59S1G1G1A2S5G1G1R2R1A4S35S16Vmd;A1A1A3S45S69G2S11G0R4A2M3A2S69S68G3S19A2S68G2S11G0R1A2A2A2A2A2Ls;A2Lb;A2A2F_;Fp;").
 
 Definition MI (md : Model) (tp : list word) : Prop := ltac2:(tb__ "0|2|
-S45S85Vsegs;A1S45S5aS10Q40A1M0Vtp;A2S45S5aG0S18Vmd;A1M1A2S45G0S59G0R1G1A3S59G0R2Vtp;A3F_;Fp;S45S69S61Vmd;Vtp;A2S1eS16Vmd;A1A1A2S45S64S14Vmd;A1A1S45S84Vmd;A1S45S65Vmd;A1S66Vmd;Vtp;A2A2A2A2A2A2A2A2A2").
+S45S85Vsegs;A1S45S5aS10Q40A1M0Vtp;A2S45S5aG0S18Vmd;A1M1A2S45G0S59G0R1G1A3S59G0R2Vtp;A3F_;Fp;S45S69S61Vmd;Vtp;A2S1eS16Vmd;A1A1A2S45S64S14Vmd;A1A1S45S84Vmd;A1S45S65Vmd;A1S45S66Vmd;Vtp;A2S44S4S8cVmd;A1SbA3A2A2A2A2A2A2A2A2A2").
 
 Lemma MI_wx : ltac2:(tb__ "0|0|
 S12S0S10Q40A1A1S5fR2R1A2S85Vsegs;A1F_;Ftp;Fmd;").
@@ -311,7 +312,12 @@ Proof. intros md tp H. exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (p
 
 Lemma MI_tp_in_maps : ltac2:(tb__ "0|0|
 S12S0S10Q40A1A1S5fR2R1A2S66R3R2A2F_;Ftp;Fmd;").
-Proof. intros md tp H. exact (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 H)))))))). Qed.
+Proof. intros md tp H. exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 H))))))))). Qed.
+
+(* LPS 08b1429: the run's channel reader rides in [MI] ([Run.valid_input_either] pins it at launch and no
+   step writes it); a nonempty writev needs it ([writev_spec]'s SIGPIPE arm). *)
+Lemma MI_rdr : forall md tp, MI md tp -> m_channel_reader md = true.
+Proof. intros md tp H. exact (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 H))))))))). Qed.
 
 Lemma MI_lazy_clear : ltac2:(tb__ "0|0|
 S12S0S10Q40A1A1S5fR2R1A2S64S14R3A1A1F_;Ftp;Fmd;").
@@ -447,7 +453,7 @@ Qed.
 
 Lemma MI_after : MI md_after tp.
 Proof using HMI Hav.
-  pose proof paid_after as HP. destruct HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  pose proof paid_after as HP. destruct HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   unfold MI, md_after in *. unfold lz, mat in HP |- *.
   rewrite m_vm_materialized_with_vm_backing, m_vmmaps_with_vm_backing, m_vm_lazy_with_vm_backing.
   split; [exact HW|]. split; [exact HT|]. split.
@@ -455,7 +461,7 @@ Proof using HMI Hav.
     intros p Hp Hm. destruct (new_spec p Hp) as (_ & _ & Hf). apply page_mem_false in Hf. exact (Hf Hm). }
   split.
   { intros p Hp. apply in_app_or in Hp as [Hp|Hp]; [exact (proj1 (new_spec p Hp)) | exact (Hsub p Hp)]. }
-  split; [rewrite HP; exact Hpaid |]. split; [exact Hlc|]. split; [exact Hivs |]. split; [exact Hlm | exact Htm].
+  split; [rewrite HP; exact Hpaid |]. split; [exact Hlc|]. split; [exact Hivs |]. split; [exact Hlm | split; [exact Htm | exact Hrd]].
 Qed.
 
 Lemma mat_equiv_after : ltac2:(tb__ "0|0|
@@ -558,8 +564,11 @@ Qed.
 Lemma unmodeledA_not : ltac2:(tb__ "0|1|
 S4aS12S0S10Q40A1M0A1S4aS5fR3R2A2S44S2G0A1S4eR5A1S7G0A1A3S44S4dS4aA1S4fVsegs;S5cR5R4R6A3A2S4cS4aR3A2A3S48S78Vsegs;S71R7R6A2A2A1F_;F_;F_;Fmsv';Ftp;Fmd;Fms;").
 Proof.
-  intros ms md tp msv' HMI Hp Hs [_ [[_ Hu] | [x8 [Hp' _]]]]; cbn in *; [|congruence].
-  destruct (stepA_sim md tp ms msv' HMI Hs) as (ms' & md' & Hacc & _). rewrite Hacc in Hu. discriminate.
+  (* LPS 08b1429: [unmodeled_at] has three arms; the new middle one (a vDSO call the
+     model does not describe) carries the same [mi_account_step = MachineUnmodeled]
+     that [stepA_sim] contradicts. *)
+  intros ms md tp msv' HMI Hp Hs [_ [[_ [Hu _]] | [[_ [Hu _]] | [x8 [Hp' _]]]]]; cbn in *; [| |congruence].
+  all: destruct (stepA_sim md tp ms msv' HMI Hs) as (ms' & md' & Hacc & _); rewrite Hacc in Hu; discriminate.
 Qed.
 
 End Sim.

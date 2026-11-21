@@ -1,7 +1,7 @@
 (* lib/B/ACtlW2b.v -- stage glue of image B's (asan-ubsan) cgif-form walk of fuzz_ctrl's LLVMFuzzerTestOneInput,
    piece W2b: the last eight cuts of the 7-pass round trip loop_rt (cut-table-B.tsv rows 20-27
    (a working note, not in this delivery): B81914_at b .. B81ac0_at b).  The loop itself (turn_rt,
-   loop_rt, vac_B816ec) is the top's, lib/B/ACtl.v:767-788, :790-797, :319-325.  Written by a Theorem Labs lane (subagent of a Theorem Labs lane) by brief
+   loop_rt, vac_B816ec) is the top's, lib/B/ACtl.v:768-789, :791-798, :320-326.  Written by a Theorem Labs lane (subagent of a Theorem Labs lane) by brief
    bwalk-piece.md (a working note, not in this delivery).  Single writer.  rule 24: no function proved (stage glue
    of a walk; drafting).
 
@@ -11,24 +11,24 @@
    Closes here: w2_gt_img_top (two equal literals) and every stage lemma seg_R15 .. seg_R21_a5c (Qed modulo this
    Section's named hypotheses, each with its owner).
    Each stage lemma carries the NAME AND STATEMENT of lib/B/ACtl.v's
-   stage hypothesis (seg_R15 .. seg_R21_a5c, ACtl.v:429-453), so the top cites it directly.
+   stage hypothesis (seg_R15 .. seg_R21_a5c, ACtl.v:430-454), so the top cites it directly.
 
    THE LATCH.  The round trip's latch (S_R21's 0x81ac4 `addiw s6,s6,1; li a0,7; bne s6,a0`) goes back to B816ec_at at
    turn S b while b < 6; at b = 6 the walk leaves through the tail (strcmp 0x81c54, set_shadow_f8 0x81ca4) to
    B81c58 / B81ca8 (S_R21) or B81c58 / B81c60 (S_R21_a5c).  As ctrl's seg_R21 / seg_R21_a5c (Seg/R21.v:661 / :1206)
    and the top's hypotheses, the latch stages take the head at S b unconditionally; at b = 6 the premise is unused,
-   and the top supplies the head at turn 7 by vac_B816ec (ACtl.v:319-325).
+   and the top supplies the head at turn 7 by vac_B816ec (ACtl.v:320-326).
 
-   RUNS W2b NEEDS (source lemma at 3803efccea0 -> a Theorem Labs lane's `_F` name, bF-brief.md:36-43 (a working note, not in this delivery); bseg-runs.md:108-123 (a working note, not in this delivery)):
+   RUNS W2b NEEDS (source lemma -> a Theorem Labs lane's `_F` name, bF-brief.md:36-43 (a working note, not in this delivery); bseg-runs.md:108-123 (a working note, not in this delivery)):
      S_R15     r15_evt R15.v:80 (0x81914 -> free entry, a0 = 0)              -> R15F.r15_evt_F (R15F.v:42)
      S_R16     r16_loop_ind R16.v:84 + r16_evt R16.v:150                     -> R16F.r16_evt_F (R16F.v:119-135: ONE
                                                                                run from 0x8194c at turn i, the
                                                                                32-turn loop included, to the free
                                                                                entry 0x534b4; compare r16_evt_of_F
                                                                                :177)
-     S_R17     r17_evt R17.v:60 (reac_ports_parse @0x819cc)                 -> R17F.r17_pre_F (R17F.v:36; no post:
+     S_R17     r17_evt R17.v:60 (reac_ports_parse @0x819cc)                 -> R17F.r17_pre_F (R17F.v:37; no post:
                                                                                return = cut)
-     S_R18     r18_evt R18.v:115 (declaration_of @0x81a4c)                  -> R18F.r18_pre_F (R18F.v:227; no post:
+     S_R18     r18_evt R18.v:115 (declaration_of @0x81a4c)                  -> R18F.r18_pre_F (R18F.v:228; no post:
                                                                                return = cut)
      S_R19     r19_evt_n R19.v:93 / r19_evt R19.v:157 (bcmp @0x81a64)       -> R19F.r19_pre_F (R19F.v:39; one stretch
                                                                                for both runs)
@@ -54,7 +54,7 @@
                ASF8 text of RTPOST-SHARED-B.txt (a working note, not in this delivery)).  Owner a Theorem Labs lane; the top discharges it with
                B.Rt.SetShadow.ctrl_set_shadow_f8P.
      H_strcmp  Reusable.AStrcmpDef.astrcmp_realizes segs B B_strcmp_tramp_entry   the shared SRr-form strcmp contract
-               (a Theorem Labs lane, 23:53Z: a working branch 04d425a4ce3, lib/Reusable/AStrcmpDef.v; one Definition for the
+               (a Theorem Labs lane, 23:53Z: a working branch, lib/Reusable/AStrcmpDef.v; one Definition for the
                trampoline __wrap_strcmp, 0x42aa0 in B, and the interceptor; shaped like abcmp_realizes: ecall_pre,
                the 2 * ESTACK window, a0 = x, a1 = y, str_meet W mem x y k c1 c2, src_ok / amem_range /
                range_addressable / shadow_hull_vis on both k + 1 byte strings; post a0 = w64 (strcmp_res c1 c2), AR,
@@ -64,8 +64,8 @@
      ctl_post_set_shadow   ProgWorld's raw-memory conversion after the world-form set_shadow_f8 post at S_R21
                (visible-only mrd form, a Theorem Labs lane 00:42Z; the walk's callee window, RTPOST-SHARED-B.txt (a working note, not in this delivery)).
    PROVED MEMBERS, Lemmas of this Section with the shared text as statement and a cited proof (RTPOST-SHARED-B.txt (a working note, not in this delivery)'s
-   SWAP OWED list, a working branch 3131914eb3ca):
-     img_vis_W            B.ProgBridge.img_vis_W (ProgBridge.v:121): the image range [0x10000, 0x5fe000) is visible
+   SWAP OWED list, a working branch):
+     img_vis_W            B.ProgBridge.img_vis_W (ProgBridge.v:122): the image range [0x10000, 0x5fe000) is visible
                in every world.  Cited where a W2b callee asks an image range: reac_ports_parse (S_R17: `ExecF.rng RNG
                GOT_CELL_K 8 /\ ExecF.rng RNG CELL_K 8`, reac_ports_parse_c.v:70).
      ctl_post_bcmp / ctl_post_strcmp   B.ProgWorld.ctl_post_bcmp / ctl_post_strcmp (ProgWorld.v:660 / :661): the
@@ -73,7 +73,7 @@
      ctl_post_acall_kept  B.ProgWorld.ctl_post_acall_kept (ProgWorld.v:681): from acall_kept the raw mrd read is kept
                at a visible address of a kept class.  Used after B.ACtlW2a.w2_free_81a9c at S_R15 / S_R16 / S_R20,
                with E = the freed block and [slo, shi) = [sp - ASTACK, sp).
-     WIN_SH_VIS           B.ProgWorldVisWin.win_sh_vis (ProgWorldVisWin.v:69): the stack window's shadow word cover
+     WIN_SH_VIS           B.ProgWorldVisWin.win_sh_vis (ProgWorldVisWin.v:70): the stack window's shadow word cover
                is visible (S_R18).
      from W2a  (B.ACtlW2a): the free-site lemma w2_free_81a9c and w2_phi_not_entry.  W2b states the W2a Section
                hypotheses it needs with W2a's texts: AFREE4, HMOK, HPCF and LAWS go to those lemmas as arguments,
@@ -114,15 +114,15 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Mem Frame Cells Step.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YCbq Reusable.YB1v Reusable.YB1w.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.ACtlCut B.ACtlCutP B.ACtlW2a.
 (* set_shadow_f8's contract WITH presence preservation (a Theorem Labs lane's additive lib/Reusable/SetShadowDefP.v; the shared
-   ASF8 text of RTPOST-SHARED-B.txt (a working note, not in this delivery) at 5826fdf4d4d). *)
+   ASF8 text of RTPOST-SHARED-B.txt (a working note, not in this delivery)). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.SetShadowDefP.
 (* a Theorem Labs lane's footprint runs of S_R15 .. S_R21_a5c (lib/B/Prog/Seg/<File>F.v), Required QUALIFIED, never Imported
-   (porter 23:38Z rule (1)); W2c (R17F-R21F) landed type-check only at a working branch 75ee2d4f9f5.
+   (porter 23:38Z rule (1)); W2c (R17F-R21F) landed type-check only at a working branch.
    Their closure includes lib/B/Contract.v; no statement of this file names it except the one bridge lemma below
    (porter 23:40Z). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.Seg Require R15F R16F R17F R18F R19F R20F R21F.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Contract Reusable.YImgTop.
-(* strcmp's shared contract (a working branch 04d425a4ce3). *)
+(* strcmp's shared contract (a working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.AStrcmpDef.
 (* The stage proofs' machinery, Required qualified and used in proofs only (no statement of this file names it):
    the kit lift (YA0nR.SRr_fevt_hid / SRr_xregs_eqv over YK04R.fsteps), B's bridge lemmas (ProgBridge:
@@ -139,7 +139,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require SlotModel reac_ports_
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require RcAsanFPLib bcmp_wrap_c strcmp_wrap_c declaration_of_c.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require rng_asan.
 (* declaration_of's closed route-(C) footprint contract (S_R18's call 0x81a4c): a Theorem Labs lane's corollary
-   declaration_of_F_holds_closed_on (74be6b218f4, on a working branch 5c9971a4a2b7), cited at S_R18. *)
+   declaration_of_F_holds_closed_on (on a working branch), cited at S_R18. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require declaration_of_F_closed sh_word_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require ShadowRwOn ShadowRwOnT.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.Seg Require RtmB RHelp R16 R18 R21 R21Fs.
@@ -325,7 +325,7 @@ Local Notation own6 := B.ACtlCut.own6.
    literal) and its shared SRr-form contract (owner a Theorem Labs lane; the core's abcmp_realizes shape, YG0d.v:353). *)
 Variable B_bcmp_tramp_entry : Z.
 (* Discharged by the TOP (owner a Theorem Labs lane) by reflexivity when it instantiates the Variable with that constant; no
-   YTramp.v (not in this delivery) exists on adc9b58a03c (a Theorem Labs lane ruling 06:2xZ). *)
+   YTramp.v (not in this delivery) exists (a Theorem Labs lane ruling 06:2xZ). *)
 Hypothesis B_bcmp_tramp_at : B_bcmp_tramp_entry = B.Prog.bcmp_wrap_c.BCMP_WRAP.
 Hypothesis H_bcmp : Reusable.YG0d.abcmp_realizes segs B B_bcmp_tramp_entry.
 (* set_shadow WITH presence preservation (added 08:02Z; a Theorem Labs lane's additive lib/Reusable/SetShadowDefP.v: the
@@ -337,14 +337,14 @@ Hypothesis ASF8 : Reusable.SetShadowDefP.aset_shadow_realizesP segs B 0x55144 0x
    a Variable until the core names it (B's __wrap_strcmp 0x42aa0). *)
 Variable B_strcmp_tramp_entry : Z.
 (* Discharged by the TOP (owner a Theorem Labs lane) by reflexivity when it instantiates the Variable with that constant; no
-   YTramp.v (not in this delivery) exists on adc9b58a03c (a Theorem Labs lane ruling 06:2xZ). *)
+   YTramp.v (not in this delivery) exists (a Theorem Labs lane ruling 06:2xZ). *)
 Hypothesis B_strcmp_tramp_at : B_strcmp_tramp_entry = B.Prog.strcmp_wrap_c.STRCMP_WRAP.
 Hypothesis H_strcmp : Reusable.AStrcmpDef.astrcmp_realizes segs B B_strcmp_tramp_entry.
 
 (* RtPost members this file uses, pasted token for token from the ONE shared text (a Theorem Labs lane's
-   working branch 981c1faff75 lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery); the B twins of a Theorem Labs lane's lib/A/ProgWorld.v
-   at c03ce1627b6).  Do not edit here: change the shared text and re-paste.  The members that file's SWAP OWED list
-   (15:40Z, a working branch 3131914eb3ca) names PROVED are Lemmas here, each with the shared text as its statement and the
+   working branch lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery); the B twins of a Theorem Labs lane's lib/A/ProgWorld.v).
+   Do not edit here: change the shared text and re-paste.  The members that file's SWAP OWED list
+   (15:40Z, a working branch) names PROVED are Lemmas here, each with the shared text as its statement and the
    cited proof (ctl_post_bcmp, ctl_post_strcmp, ctl_post_acall_kept, img_vis_W, WIN_SH_VIS); the rest stay pasted
    Section hypotheses. *)
 Local Notation munch_vis H WR m m' :=
@@ -359,7 +359,7 @@ Local Notation rt_post_frame W mem mem' WR :=
    (forall a, Reusable.YG0n.apresent (Reusable.YA0n.w_H W) mem a ->
       Reusable.YG0n.apresent (Reusable.YA0n.w_H W) mem' a)).
 
-(* ctl_post_bcmp: lib/A/ProgWorld.v at c03ce1627b6 :617-622, ctl_post_window_stmt at K = 2 * ESTACK.  PROVED: B.ProgWorld.ctl_post_bcmp
+(* ctl_post_bcmp: lib/A/ProgWorld.v :617-622, ctl_post_window_stmt at K = 2 * ESTACK.  PROVED: B.ProgWorld.ctl_post_bcmp
    (lib/B/ProgWorld.v:660). *)
 Lemma ctl_post_bcmp :
   forall (W : Reusable.YA0n.world segs) (mem mem' : word -> option byte) (sp : Z),
@@ -368,7 +368,7 @@ Lemma ctl_post_bcmp :
     wmono_vis (Reusable.YA0n.w_H W) mem mem'.
 Proof. exact B.ProgWorld.ctl_post_bcmp. Qed.
 
-(* ctl_post_strcmp: lib/A/ProgWorld.v at c03ce1627b6 :617-623, ctl_post_window_stmt at K = 2 * ESTACK.  PROVED: B.ProgWorld.ctl_post_strcmp
+(* ctl_post_strcmp: lib/A/ProgWorld.v :617-623, ctl_post_window_stmt at K = 2 * ESTACK.  PROVED: B.ProgWorld.ctl_post_strcmp
    (lib/B/ProgWorld.v:661). *)
 Lemma ctl_post_strcmp :
   forall (W : Reusable.YA0n.world segs) (mem mem' : word -> option byte) (sp : Z),
@@ -377,7 +377,7 @@ Lemma ctl_post_strcmp :
     wmono_vis (Reusable.YA0n.w_H W) mem mem'.
 Proof. exact B.ProgWorld.ctl_post_strcmp. Qed.
 
-(* ctl_post_set_shadow: lib/A/ProgWorld.v at c03ce1627b6 :678-686 (stated on A; rw_cells open) PLUS THE WALK'S CALLEE WINDOW: the binder sp and
+(* ctl_post_set_shadow: lib/A/ProgWorld.v :678-686 (stated on A; rw_cells open) PLUS THE WALK'S CALLEE WINDOW: the binder sp and
    the second interval (sp - ESTACK, sp) of WR, in rt_post_frame and in munch_vis, are a Theorem Labs lane's agreement 2,
    not lib/A/ProgWorld.v's text. *)
 Hypothesis ctl_post_set_shadow :
@@ -390,7 +390,7 @@ Hypothesis ctl_post_set_shadow :
     wmono_vis (Reusable.YA0n.w_H W) mem mem' /\
     lib.Lib.Step.rw_cells B.Img0.rsegs mem' q (lib.Lib.Cells.CB (Z.to_nat n) (repeat (Z_to_bv 8 v) (Z.to_nat n)) :: nil).
 
-(* kept_class / ctl_post_acall_kept: lib/A/ProgWorld.v at c03ce1627b6 :638-655.  PROVED: B.ProgWorld.ctl_post_acall_kept (lib/B/ProgWorld.v:681,
+(* kept_class / ctl_post_acall_kept: lib/A/ProgWorld.v :638-655.  PROVED: B.ProgWorld.ctl_post_acall_kept (lib/B/ProgWorld.v:681,
    kept_class :669 as a Definition).  The ceiling is YM05's RunCeil field
    alloc_ceiling, as acall_kept (Reusable/YCbq.v:826) uses it; lyc / Sc are Reusable.YG0f.alayout /
    Reusable.YG00.astate (lib/A/ProgWorld.v's kept_class binders; untyped in lib/A/ProgWorld.v's lemma, fixed there by acall_kept).  At an
@@ -416,7 +416,7 @@ Proof. exact B.ProgWorld.ctl_post_acall_kept. Qed.
 
 (* img_vis_W: the walk's image-visibility bridge name; the shape the stage files already share (lib/B/ACtlW1.v,
    ACtlW3a.v, ACtlW4a-c.v), with the bounds by the core's names Reusable.YImgTop.IMG_LO (0x10000) / IMG_TOP (0x5fe000),
-   never the literals (porter 23:40Z; a Theorem Labs lane 2026-10-29).  PROVED: B.ProgBridge.img_vis_W (lib/B/ProgBridge.v:121),
+   never the literals (porter 23:40Z; a Theorem Labs lane 2026-10-29).  PROVED: B.ProgBridge.img_vis_W (lib/B/ProgBridge.v:122),
    whose statement is range_visible (w_H W) ImgBounds.IMG_LO (ImgBounds.IMG_HI - ImgBounds.IMG_LO) over world rsegs
    (rsegs = tfibsegs by ProgBridge.tfibsegs_rsegs, reflexivity). *)
 Lemma img_vis_W : forall W : Reusable.YA0n.world segs,
@@ -432,7 +432,7 @@ Qed.
 
 (* ---- Image-B data facts T10 / V6 (added 04:31Z by a Theorem Labs lane, the text's one writer; drafted by a Theorem Labs lane).
    OWNER: a Theorem Labs lane, who proves both in lib/B/ProgBridgeData.v by vm_compute over a Theorem Labs lane's REGENERATED
-   as_owned_static B / CtrlBB tables (a working branch 8db247c6f3e), never the planning core's.
+   as_owned_static B / CtrlBB tables (a working branch), never the planning core's.
    Users: seg_R7 / seg_R8 / seg_R13 (W2), W4e / W4f where RBE's facts cross a malloc / free / memcpy.
    T10: the catalogue's read-only data is neither a static owned extent nor the errno cell, so ctl_post_acall_kept's
    image arm keeps it across an allocator call.
@@ -485,20 +485,20 @@ Hypothesis ctl_cat_shadow_vis : forall ly S (W : Reusable.YA0n.world segs) mem m
 
 (* The stack window's 8-aligned shadow word cover is visible (S_R18: declaration_of_contract_F's sh_word_rng over
    [sp - DECLARATION_OF_K, sp)).  Statement B.ProgWorld.win_sh_vis_stmt (ProgWorld.v:324).  PROVED:
-   B.ProgWorldVisWin.win_sh_vis (lib/B/ProgWorldVisWin.v:69, a Theorem Labs lane). *)
+   B.ProgWorldVisWin.win_sh_vis (lib/B/ProgWorldVisWin.v:70, a Theorem Labs lane). *)
 Lemma WIN_SH_VIS : B.ProgWorld.win_sh_vis_stmt B.
 Proof. exact (B.ProgWorldVisWin.win_sh_vis B). Qed.
 
 (* The core's AR laws (donor A/ACf2.v:47 `Hypothesis LAWS : AR_laws tfibsegs B`; the same text as lib/B/ACtlW2a.v,
    ACtlW3a.v, ACtlW4e1.v, ACtlW4g.v): al_blocks / al_frames / al_shadow / al_client_img for the visibility of the cut
    ranges a run touches, and YCbq's ajournal_exec / sep_block_frame / frames_bounds; supplied by the core's
-   YG0q.AR_laws_ok (lib/B/ACtlAll.v:303).  Accepted as a top obligation by the walk owner (a Theorem Labs lane 04:24Z). *)
+   YG0q.AR_laws_ok (lib/B/ACtlAll.v:304).  Accepted as a top obligation by the walk owner (a Theorem Labs lane 04:24Z). *)
 Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 
 (* ctl_rt_C, route (C) (11:15Z): every successor cut's ctl_rt_C comes from the PROVED
    B.ProgWorldCtlRtC.ctl_rt_C_of_AR, applied with the two facts below and the current view's arodata_okP, which
    APostBase.arodata_ok_journalP carries from ctl_base's arodata_okS across the journal.  TFIB_SYMS: token for token
-   as lib/B/ACtl.v (owner a Theorem Labs lane; the top supplies it).  RELRO_IMG: token for token as lib/B/ACtl.v:152.  RO_OFL: the sink head's
+   as lib/B/ACtl.v (owner a Theorem Labs lane; the top supplies it).  RELRO_IMG: token for token as lib/B/ACtl.v:153.  RO_OFL: the sink head's
    offset-list head lies above the read-only span (owner: the TOP, by computation at SK := Reusable.YE2k.tfib_sink_head;
    image-A twin lib/A/Prog/ACj1.v:179 states it as the instance RO over the PA layer's segs and relro bounds; walk owner a Theorem Labs lane's ruling 06:47Z, text token for token as lib/B/ACtlW2a.v:272). *)
 Hypothesis TFIB_SYMS : Reusable.YF0m.CtrlTSyms B.
@@ -523,7 +523,7 @@ Hypothesis HMOK : forall S m, Reusable.YC5d.mo_ok MT S m.
 Hypothesis HPCF : Reusable.YG0f.pc_wrap_free (Reusable.YG0f.as_code B) = Reusable.YB1w.tfib_A_free.
 
 (* The frame-pointer chain and the call trace at an allocator call: lib/B/ACtlW2a.v's CHAIN_OF_CUT (:316-334), same
-   name and text (its lib/Lib names written lib.Lib.X, porter rule (b)); the top's CHAIN_OF_CUT (lib/B/ACtl.v:367)
+   name and text (its lib/Lib names written lib.Lib.X, porter rule (b)); the top's CHAIN_OF_CUT (lib/B/ACtl.v:368)
    discharges it. *)
 Hypothesis CHAIN_OF_CUT : forall (cx : ctlcx) own ly3 S3 W3 mem3 md3 k (regsT : bvmap 5 word) (pc0 ra : Z),
   CBASE cx ->
@@ -547,9 +547,9 @@ Hypothesis CHAIN_OF_CUT : forall (cx : ctlcx) own ly3 S3 W3 mem3 md3 k (regsT : 
 
 (* ---------------------------------------------------------------------------------------------------------
    3. a Theorem Labs lane's `_F` runs: cited from their modules (Required above), never restated (porter 23:38Z).  Statements
-   (all proved; R15F and R16F at a working branch efac84ed592, R17F-R21F at
-   a working branch 75ee2d4f9f5): R15F.r15_evt_F (R15F.v:42), R16F.r16_evt_F (R16F.v:119),
-   R17F.r17_pre_F (R17F.v:36), R18F.r18_pre_F (R18F.v:66), R19F.r19_pre_F (R19F.v:39; the one pre-call
+   (all proved; R15F and R16F at a working branch, R17F-R21F at
+   a working branch): R15F.r15_evt_F (R15F.v:42), R16F.r16_evt_F (R16F.v:119),
+   R17F.r17_pre_F (R17F.v:37), R18F.r18_pre_F (R18F.v:67), R19F.r19_pre_F (R19F.v:39; the one pre-call
    stretch of r19_evt_n and r19_evt), R20F.r20_evt_F (R20F.v:53), R21F.r21_a5c_next_F (:65) / r21_a5c_last_F (:89) /
    r21_latch_next_F (:112) / r21_latch_last_F (:146) / r21_p1_pre_F (:269) / r21_tail_pre_F (:342).  No `_post_F`
    exists in W2c: each exit cut IS the callee's return pc. *)
@@ -1271,7 +1271,7 @@ Proof.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------
-   4. One lemma per cut, NAMED AND STATED AS lib/B/ACtl.v's stage hypothesis (ACtl.v:429-453, seg_R15 ..
+   4. One lemma per cut, NAMED AND STATED AS lib/B/ACtl.v's stage hypothesis (ACtl.v:430-454, seg_R15 ..
    seg_R21_a5c), proved for every SK and FP (the top instantiates SK := Reusable.YE2k.tfib_sink_head, FP := []). *)
 
 (* B81914_at b (Inv_B81914_at SIv:1896) -> B81aa0_at b.  S_R15 (Slot.v:89; seg_R15 R15.v:456), b = 5 after the
@@ -1481,7 +1481,7 @@ Proof.
 Qed.
 
 (* B819a8_at b (Inv_B819a8_at SIv:1916) -> B819d0_at b.  S_R17 (Slot.v:93; seg_R17 R17.v:149), b = 0.
-   R17F.r17_pre_F (R17F.v:36; 0x819a8 -> reac_ports_parse entry, ra = 0x819d0; source R17.v:60: s1 = A, a0 = mr
+   R17F.r17_pre_F (R17F.v:37; 0x819a8 -> reac_ports_parse entry, ra = 0x819d0; source R17.v:60: s1 = A, a0 = mr
    (a0v regs mrow, the catalogue match result), s4 = phi (RFb rgv 20 phi), A + 448 <= 2^64 (FRAC), phi + 50 <= 2^64
    (al_blocks),
    bytes_at (A + 272) (le8 mrow) (RBE spill 272), bytes_at (A + 120) (le8 q) with q = fr + 2528 (spill 120), the 20
@@ -1897,7 +1897,7 @@ Proof.
 Qed.
 
 (* B819d0_at b (Inv_B819d0_at SIv:1927) -> B81a50_at b.  S_R18 (Slot.v:95; seg_R18 R18.v:259), b = 0.
-   R18F.r18_pre_F_on (R18F.v:114; 0x819d0 -> declaration_of entry, ra = 0x81a50; AC.GT rewritten by w2_gt_img_top;
+   R18F.r18_pre_F_on (R18F.v:115; 0x819d0 -> declaration_of entry, ra = 0x81a50; AC.GT rewritten by w2_gt_img_top;
    source R18.v:115: s1 = A, s10 = ASAN_K (FRAC rgv
    26), a0 = 0 (a0v regs 0: the guard 0x819d0 `beqz a0`, abort jump 0x819d4 refuted), the spill reads [A + 32] = 0
    (RBE spill 32 0: TRAP row 7 0x819e0 refuted), [A + 24] = mrow + 16 and [A + 16] = mrow + 20 (spills 24 / 16), [A +
@@ -3330,7 +3330,7 @@ Proof.
                 first [ apply Vstk; lia | apply Vfr; lia | apply Vimg; lia
                       | apply VCs; unfold B.AsanRT.ASAN_K in Ha |- *; clear - Ha Hmr0 Hmr1;
                         Z.div_mod_to_equations; lia ] ]).
-    (* a Theorem Labs lane's weakened form (d91a1b23270): the rows read only on the h <> 0 arm, under the implication *)
+    (* a Theorem Labs lane's weakened form: the rows read only on the h <> 0 arm, under the implication *)
     all: try (intros _; split; [|split];
               (rewrite ?Z.shiftr_div_pow2 by lia; try change (2 ^ 3) with 8;
                apply B.ProgBridge.rng_of_visible, w2b_rv;

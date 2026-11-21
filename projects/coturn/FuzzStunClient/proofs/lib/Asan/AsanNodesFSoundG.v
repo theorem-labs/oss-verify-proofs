@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -139,6 +140,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -467,7 +469,7 @@ Definition Tst (b : bool) : Prop := b = true.
 Ltac hideT := repeat match goal with H : ?b = true |- _ => change (b = true) with (Tst b) in H end.
 (* [comment removed for export] *)
 Definition Hid (P : Prop) : Prop := P.
-#[using="SEGS_wx SEGS_in_hull HULL_ok SEGS_wr argH_high argH_agree SINV_frame SINV_agree nx0_ge7 FCA SHADOW_ok"] Theorem node_F_sound : node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (FN.node_F SEGS A nx0 P).
+#[using="SEGS_wx SEGS_in_hull HULL_ok SEGS_wr argH_high argH_agree SINV_frame SINV_agree nx0_ge7 FCA SHADOW_ok"] Theorem node_F_sound : node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (FN.node_F SEGS A nx0 P).
 Proof.
   intros cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -1084,6 +1086,7 @@ End Sound.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Table.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -1104,7 +1107,7 @@ Variable P : FAParams.
 Hypothesis FCA : F_contract_asan SEGS P.
 Hypothesis SHADOW_ok : shadow_ok A.
 
-#[using="SEGS_wx SEGS_in_hull HULL_ok SEGS_wr argH_high argH_agree SINV_frame SINV_agree nx0_ge7 FCA SHADOW_ok"] Theorem fn_xn_sound : ext_stmt SEGS A nx0 LIMIT (FN.xn SEGS A nx0 P) SINV argH FS0.
+#[using="SEGS_wx SEGS_in_hull HULL_ok SEGS_wr argH_high argH_agree SINV_frame SINV_agree nx0_ge7 FCA SHADOW_ok"] Theorem fn_xn_sound : ext_stmt SEGS A nx0 LIMIT (FN.xn SEGS A nx0 P) SINV argH FS0 sfl.
 Proof.
   intros id args. unfold FN.xn.
   do 102 (destruct id as [|id]; [intros cs cs' E R FULL model T _ _ H; discriminate H|]).

@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff f6bfd4d6ab5 f6038f3d481
-   of lib/A/W_gesture_model.v applied by three-way merge onto lane W4's ARx text (a working branch
-   0d0105eaf4d) at B's names: pb_gesture_model_x states gm_spec_x at RP (gm_rm_down drops the unused budget on the
+(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff
+   of lib/A/W_gesture_model.v applied by three-way merge onto lane W4's ARx text (a working branch)
+   at B's names: pb_gesture_model_x states gm_spec_x at RP (gm_rm_down drops the unused budget on the
    early-return arms) and passes the room premises to GMSCAN_X. The AR statements (Section r) are W4's, unchanged. *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (asan-ubsan) walk of fuzz_reply's gesture_model at 0x86048, lane
    W4: the entry and the composition, in the form of lib/A/W_gesture_model.v (A's proved composition, 0x85b9c) and the
@@ -11,6 +11,7 @@
    lib/A/W_gesture_model.v at B's names: GMSCAN_X's meter and room texts take the line; the three early returns name no
    gesture and are charged 0 (gmm_cost_none). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_gesture_model.v; 15 of its 114 lines of code are new or changed and 1320 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Satisfiability at the real image B of the R contract texts (W_contract_xR_g6.v), at R := wle' SEGS RZ_cf: each
    lemma derives the R form from the existing strict walk, under that walk's own Section hypotheses. The import block
    is the walk file's (W_gesture_model.v), so each hypothesis reads as there. *)

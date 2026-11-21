@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_model.v (a working branch
-   83638d8ab68), same lemma names; only the code addresses in the comments are B's (measured with capstone over the
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_model.v (a working branch),
+   same lemma names; only the code addresses in the comments are B's (measured with capstone over the
    unstripped twin of fs.asan-ubsan, sha256 b1566a1c..., whose bytes 0x8164c .. 0x81b5c equal the pinned image's).
    rule 24: proves no function (kind: segment lemma; check_as_written, B 0x8164c, CONFIRM by a Theorem Labs lane). *)
 (* The pure model facts the check_as_written walk needs about fs's released base64 model

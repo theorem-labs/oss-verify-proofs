@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Ported to libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AB14.v at c8557374ad2: module paths renamed; image value re-derived by symbol + offset from fuzz_knock.asan (sha256 61768cf4..): tfib_imemcpy_entry 0x638ec -> 0x6232c = __sanitizer_internal_memcpy+0x0 (= A/AB12 x_imemcpy); its 9 words (Reusable/YE21 W_e2430..W_e2450, cgif-address names) are at 0x6232c in the knock image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported to libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AB14.v at theorem-labs/oss-verify-proofs@6b32741d849a: module paths renamed; image value re-derived by symbol + offset from fuzz_knock.asan (sha256 61768cf4..): tfib_imemcpy_entry 0x638ec -> 0x6232c = __sanitizer_internal_memcpy+0x0 (= A/AB12 x_imemcpy); its 9 words (Reusable/YE21 W_e2430..W_e2450, cgif-address names) are at 0x6232c in the knock image. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

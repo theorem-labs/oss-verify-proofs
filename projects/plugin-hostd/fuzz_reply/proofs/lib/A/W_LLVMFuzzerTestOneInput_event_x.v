@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of the event arm of fuzz_reply's LLVMFuzzerTestOneInput
-   (lib/A/W_LLVMFuzzerTestOneInput_event.v, a Theorem Labs lane's lf_arm_event adapted to W8's cut at c3d5cbd2c52, Qed at
-   a working branch 5632cc43ae4) to the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v (a Theorem Labs lane's
+   (lib/A/W_LLVMFuzzerTestOneInput_event.v, a Theorem Labs lane's lf_arm_event adapted to W8's cut, Qed at
+   a working branch) to the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v (a Theorem Labs lane's
    route (b), step 7). lf_arm_event_x is exactly cut_x's Section w hypothesis ARM_event. Neither _event.v nor cut_x is
    edited.
    - The Section header is cut_x's Section w header (B .. RINV, with PST / ARx / hl / LAWS / HP0 / HG / LSx). The
@@ -79,7 +80,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 Section evx.
-(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:192-235) *)
+(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:193-236) *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.
@@ -97,7 +98,7 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx hl.
-(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x at 0c4d57d9bf1;
+(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x;
    fuzz_reply calls no poison routine): the driver reads the post's Hp' = [] from the journal's ARx through it *)
 Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis HG : gx_ok segs B G_fr.
@@ -107,20 +108,20 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 (* ---------------------------------------------------------------- the event arm's own hypotheses *)
-(* the request bound of the allocator's live-state rules (W_journal.v:697, the instance's cf_malloc_max) *)
+(* the request bound of the allocator's live-state rules (W_journal.v:698, the instance's cf_malloc_max) *)
 Variable MMAX : Z.
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (a), (d)): the allocator rules' and relay_event's room record RP, at
    RM := the cut's NP (the cf instance: rp_RM := fun S _ => room_live_cf S = NP, so RP_NP is iff_refl) *)
 Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
-(* the allocator instance, W_kit.v:356 PALib @ 5180fc7d18d: SIGMA WS_malloc / WS_free are its wrappers *)
+(* the allocator instance, W_kit.v:356 PALib: SIGMA WS_malloc / WS_free are its wrappers *)
 Hypothesis TL : PALib B.
-(* _cut.v's two shared facts (W_LLVMFuzzerTestOneInput_cut.v:309 glob_wr_law, :214 errno_law; _G.v c_glob_wr proves the
+(* _cut.v's two shared facts (W_LLVMFuzzerTestOneInput_cut.v:310 glob_wr_law, :214 errno_law; _G.v c_glob_wr proves the
    first for G_fr_c) *)
 Hypothesis GWR : glob_wr_law G_fr.
 (* _cut.v's errno_law over ARx: cut_x's errno_law_x *)
 Hypothesis ERRL : errno_law_x B ARx.
-(* .rodata is outside G_fr, the allocator's statics, errno and the sink's overflow head: W_journal.v:376 rom_out, the
+(* .rodata is outside G_fr, the allocator's statics, errno and the sink's overflow head: W_journal.v:377 rom_out, the
    text W_xrf.v:191 XRF_ROM_OUT takes (_G.v c_rom_apart proves its G_fr conjunct) *)
 Hypothesis ET_ROM_OUT : rom_out segs B G_fr.
 (* G_fr facts, proved for G_fr_c in W_LLVMFuzzerTestOneInput_G.v: the lock and send_line's G (c_HGlock, c_HG_SL) *)
@@ -154,7 +155,7 @@ Local Notation et_GO_GL := (W_LLVMFuzzerTestOneInput_event.et_GO_GL XM_LIB XN_LI
 (* malloc (0x84acc) and free (0x84b1c): W_journal_x.v's caller-context rules, each at its own K0 table (lib/A/ACk0.v) *)
 Hypothesis AMALLOC : amalloc_cf_rule_c_x segs B PST ARx MT MMAX RP CTX_AMALLOC.
 Hypothesis AFREE : afree_cf_rule_c_x segs B PST ARx MT RP CTX_AFREE.
-(* __asan_memcpy (0x84ae0): W_sites_x.v:126 aintrin_realizes_x *)
+(* __asan_memcpy (0x84ae0): W_sites_x.v:127 aintrin_realizes_x *)
 Hypothesis AMEMCPY : aintrin_realizes_x segs B ARx OCpy (SIGMA WS_asan_memcpy).
 (* strnlen (0x84ac0). OWED (kit has no twin): _event.v:79 et_strnlen_spec (the StrnlenDef text, at lo / hi =
    0x10350 / 0x10370) in the kit's form - ecall_pre -> FCiface.ecall_pre_x, AR -> ARx, Hp after S, the post's ARx at
@@ -176,9 +177,9 @@ ARx ly S Hp W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
 Hypothesis ASTRNLEN : et_strnlen_spec_x 0x10350 0x10370 (SIGMA WS_strnlen).
-(* relay_event (0x84b0c): W_contract_x.v:810 re_spec_x at relay_event's own G (_event.v's et_GRE) *)
+(* relay_event (0x84b0c): W_contract_x.v:811 re_spec_x at relay_event's own G (_event.v's et_GRE) *)
 Hypothesis RE : re_spec_x (PI := PB_fr) B PST ARx MT RP MMAX et_GRE fr_RG (BASE + AF_fr_relay_event).
-(* check_shape_event (0x84b14): W_contract_x.v:539 cse_spec_x *)
+(* check_shape_event (0x84b14): W_contract_x.v:540 cse_spec_x *)
 Hypothesis CSE : cse_spec_x (PI := PB_fr) B PST ARx (BASE + AF_fr_check_shape_event).
 (* ---- forced by the generic relation and the placement PST ---- *)
 (* OWED: kit _x twin of al_blocks' last conjunct (AR's 0 <= n < MALLOC_MAX, YG0d.v:441; ARx_blocks_law has no size
@@ -218,7 +219,7 @@ Hypothesis LS_event_free : forall cx t m ly S (S1 S2 : astate) e,
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
   mo_le MT S1 S2 (sl_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (re_len e)) ->
   mo_ok MT S2 (mo_free MT).
-(* s5-r1d's text (fr_LS3c_event_step_p, commit 6d19e580568, lib/A/ReplyLS3cArms.v:91), LS -> LSx: the three states
+(* s5-r1d's text (fr_LS3c_event_step_p, lib/A/ReplyLS3cArms.v:92), LS -> LSx: the three states
    are tied to the calls' posts - S1 by the malloc rule's ablocks equation, S1 / S2 by relay_event's (send_line's)
    aout Permutations, S3 by the free's split with the event's block removed *)
 Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout) e v out' (ly1 ly2 : alayout) q,
@@ -235,7 +236,7 @@ Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (ev_step cx m e v out') ly3 S3.
 (* the live counts at the arm's entry leave room for its peak (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), CORRECTION 2; the row
-   fr_LS3cp_cnt_event, commit ba8e99b5bd2, lib/A/ReplyLScnt.v:265, with its peak pk_event e P = [P (re_len e)] + 2 and
+   fr_LS3cp_cnt_event, lib/A/ReplyLScnt.v:265, with its peak pk_event e P = [P (re_len e)] + 2 and
    its guards, msz_ok inline): malloc (re_len e) at the entry's counts, relay_event's count premise (re_pk = 2) at the
    entry's blocks plus the event's, free at relay_event's post (g_out replaced: at most one block more).  Stated over
    the room record's count fields; at the cf instance they are ReplyCnt's Psec / P24 / Lsec / L24 / Pcls / LPRIM *)
@@ -2614,7 +2615,7 @@ Proof.
   split; [exact SV144 | exact Hk2].
 Qed.
 
-(* the arm at R: cut_x Section wR's ARM_event_R (W_LLVMFuzzerTestOneInput_cut_x.v:463), lf_base_x / INV_A_xR / INV_K_xR *)
+(* the arm at R: cut_x Section wR's ARM_event_R (W_LLVMFuzzerTestOneInput_cut_x.v:464), lf_base_x / INV_A_xR / INV_K_xR *)
 Theorem lf_arm_event_xR : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_xR B NP G_fr fr_FP PST ARx LSx RINV R 7 cx Hp t W c ->
@@ -2642,7 +2643,7 @@ Lemma ev_aftok_new_block0 : forall STK sp0 FP ly S W0 mem md own lyc Sc (W : wor
   AR0 ly2 S2 W2 mem2 md2 -> ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)] -> 0 <= n ->
   aftok FP (ablocks B ly S) (res, n).
 Proof. exact (ev_aftok_new_block0R (@wle segs)). Qed.
-(* W_journal.v:399 ajournal_gx_rom_view at AJ0: ajournal_gx_rom_view0R at wle *)
+(* W_journal.v:400 ajournal_gx_rom_view at AJ0: ajournal_gx_rom_view0R at wle *)
 Lemma ajournal_gx_rom_view0 : forall G XO OUT STK sp0 FP ly S (W : world segs) mem md own ly' S' (W' : world segs)
     mem' md' k,
   AJ0 G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->
@@ -2731,10 +2732,10 @@ End evx.
 
 (* ---------------------------------------------------------------- THE CHECK
    In cut_x's scope (its Section w header and this piece's hypotheses): lf_arm_event_x's type is cut_x's Section w
-   hypothesis ARM_event (W_LLVMFuzzerTestOneInput_cut_x.v:559), restated and closed by `exact`, and it fills that slot
+   hypothesis ARM_event (W_LLVMFuzzerTestOneInput_cut_x.v:560), restated and closed by `exact`, and it fills that slot
    of cut_x's composition lf_contract_of_segments_x. *)
 Section chk.
-(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:192-235) *)
+(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:193-236) *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.
@@ -2752,7 +2753,7 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx hl.
-(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x at 0c4d57d9bf1;
+(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x;
    fuzz_reply calls no poison routine): the driver reads the post's Hp' = [] from the journal's ARx through it *)
 Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis HG : gx_ok segs B G_fr.
@@ -2762,20 +2763,20 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 (* ---------------------------------------------------------------- the event arm's own hypotheses *)
-(* the request bound of the allocator's live-state rules (W_journal.v:697, the instance's cf_malloc_max) *)
+(* the request bound of the allocator's live-state rules (W_journal.v:698, the instance's cf_malloc_max) *)
 Variable MMAX : Z.
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (a), (d)): the allocator rules' and relay_event's room record RP, at
    RM := the cut's NP (the cf instance: rp_RM := fun S _ => room_live_cf S = NP, so RP_NP is iff_refl) *)
 Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
-(* the allocator instance, W_kit.v:356 PALib @ 5180fc7d18d: SIGMA WS_malloc / WS_free are its wrappers *)
+(* the allocator instance, W_kit.v:356 PALib: SIGMA WS_malloc / WS_free are its wrappers *)
 Hypothesis TL : PALib B.
-(* _cut.v's two shared facts (W_LLVMFuzzerTestOneInput_cut.v:309 glob_wr_law, :214 errno_law; _G.v c_glob_wr proves the
+(* _cut.v's two shared facts (W_LLVMFuzzerTestOneInput_cut.v:310 glob_wr_law, :214 errno_law; _G.v c_glob_wr proves the
    first for G_fr_c) *)
 Hypothesis GWR : glob_wr_law G_fr.
 (* _cut.v's errno_law over ARx: cut_x's errno_law_x *)
 Hypothesis ERRL : errno_law_x B ARx.
-(* .rodata is outside G_fr, the allocator's statics, errno and the sink's overflow head: W_journal.v:376 rom_out, the
+(* .rodata is outside G_fr, the allocator's statics, errno and the sink's overflow head: W_journal.v:377 rom_out, the
    text W_xrf.v:191 XRF_ROM_OUT takes (_G.v c_rom_apart proves its G_fr conjunct) *)
 Hypothesis ET_ROM_OUT : rom_out segs B G_fr.
 (* G_fr facts, proved for G_fr_c in W_LLVMFuzzerTestOneInput_G.v: the lock and send_line's G (c_HGlock, c_HG_SL) *)
@@ -2809,15 +2810,15 @@ Local Notation et_GO_GL := (W_LLVMFuzzerTestOneInput_event.et_GO_GL XM_LIB XN_LI
 (* malloc (0x84acc) and free (0x84b1c): W_journal_x.v's caller-context rules, each at its own K0 table (lib/A/ACk0.v) *)
 Hypothesis AMALLOC : amalloc_cf_rule_c_x segs B PST ARx MT MMAX RP CTX_AMALLOC.
 Hypothesis AFREE : afree_cf_rule_c_x segs B PST ARx MT RP CTX_AFREE.
-(* __asan_memcpy (0x84ae0): W_sites_x.v:126 aintrin_realizes_x *)
+(* __asan_memcpy (0x84ae0): W_sites_x.v:127 aintrin_realizes_x *)
 Hypothesis AMEMCPY : aintrin_realizes_x segs B ARx OCpy (SIGMA WS_asan_memcpy).
 (* strnlen (0x84ac0). OWED (kit has no twin): _event.v:79 et_strnlen_spec (the StrnlenDef text, at lo / hi =
    0x10350 / 0x10370) in the kit's form - ecall_pre -> FCiface.ecall_pre_x, AR -> ARx, Hp after S, the post's ARx at
    the pre's Hp (as W_sites_x.aintrin_realizes_x) *)
 Hypothesis ASTRNLEN : et_strnlen_spec_x B ARx 0x10350 0x10370 (SIGMA WS_strnlen).
-(* relay_event (0x84b0c): W_contract_x.v:810 re_spec_x at relay_event's own G (_event.v's et_GRE) *)
+(* relay_event (0x84b0c): W_contract_x.v:811 re_spec_x at relay_event's own G (_event.v's et_GRE) *)
 Hypothesis RE : re_spec_x (PI := PB_fr) B PST ARx MT RP MMAX et_GRE fr_RG (BASE + AF_fr_relay_event).
-(* check_shape_event (0x84b14): W_contract_x.v:539 cse_spec_x *)
+(* check_shape_event (0x84b14): W_contract_x.v:540 cse_spec_x *)
 Hypothesis CSE : cse_spec_x (PI := PB_fr) B PST ARx (BASE + AF_fr_check_shape_event).
 (* ---- forced by the generic relation and the placement PST ---- *)
 (* OWED: kit _x twin of al_blocks' last conjunct (AR's 0 <= n < MALLOC_MAX, YG0d.v:441; ARx_blocks_law has no size
@@ -2856,7 +2857,7 @@ Hypothesis LS_event_free : forall cx t m ly S (S1 S2 : astate) e,
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
   mo_le MT S1 S2 (sl_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (re_len e)) ->
   mo_ok MT S2 (mo_free MT).
-(* s5-r1d's text (fr_LS3c_event_step_p, commit 6d19e580568, lib/A/ReplyLS3cArms.v:91), LS -> LSx: the three states
+(* s5-r1d's text (fr_LS3c_event_step_p, lib/A/ReplyLS3cArms.v:92), LS -> LSx: the three states
    are tied to the calls' posts - S1 by the malloc rule's ablocks equation, S1 / S2 by relay_event's (send_line's)
    aout Permutations, S3 by the free's split with the event's block removed *)
 Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout) e v out' (ly1 ly2 : alayout) q,
@@ -2873,7 +2874,7 @@ Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (ev_step cx m e v out') ly3 S3.
 (* the live counts at the arm's entry leave room for its peak (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), CORRECTION 2; the row
-   fr_LS3cp_cnt_event, commit ba8e99b5bd2, lib/A/ReplyLScnt.v:265, with its peak pk_event e P = [P (re_len e)] + 2 and
+   fr_LS3cp_cnt_event, lib/A/ReplyLScnt.v:265, with its peak pk_event e P = [P (re_len e)] + 2 and
    its guards, msz_ok inline): malloc (re_len e) at the entry's counts, relay_event's count premise (re_pk = 2) at the
    entry's blocks plus the event's, free at relay_event's post (g_out replaced: at most one block more).  Stated over
    the room record's count fields; at the cf instance they are ReplyCnt's Psec / P24 / Lsec / L24 / Pcls / LPRIM *)
@@ -2908,7 +2909,7 @@ Definition event_x_slot :=
   lf_contract_of_segments_x B MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv LIBROOM NP G_fr fr_FP PST ARx
     LAWS HG LSx RINV SEG_PRO SEG_HEAD ARM_add ARM_write ARM_drain ARM_close ARM_remove ARM_gone ARM_eintr
     ARM_event_check ARM_sendmax ARM_default SEG_LATCH SEG_EXIT.
-(* route R: lf_arm_event_xR's type is cut_x's Section wR hypothesis ARM_event_R (W_LLVMFuzzerTestOneInput_cut_x.v:463),
+(* route R: lf_arm_event_xR's type is cut_x's Section wR hypothesis ARM_event_R (W_LLVMFuzzerTestOneInput_cut_x.v:464),
    restated and closed by `exact`, and it fills that slot of cut_x's composition lf_contract_of_segments_xR.  The twin's
    arguments: the strict lemma's, without its AMALLOC / AFREE / RE, then R R_refl R_trans WLE_R RO RO_ARx
    AMALLOC_R AFREE_R RE_R. *)

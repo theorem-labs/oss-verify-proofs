@@ -1,3 +1,4 @@
+// Modified by Theorem Labs, 2026-11-14: ignore SIGPIPE, as libarchive's own bsdtar and bsdcpio do.
 // Copyright 2016 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +14,7 @@
 // limitations under the License.
 //
 ////////////////////////////////////////////////////////////////////////////////
+#include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <vector>
@@ -21,6 +23,11 @@
 #include "archive_entry.h"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+  struct sigaction sa;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = SIG_IGN;
+  sigaction(SIGPIPE, &sa, NULL);
   struct archive *a = archive_read_new();
 
   archive_read_support_filter_all(a);

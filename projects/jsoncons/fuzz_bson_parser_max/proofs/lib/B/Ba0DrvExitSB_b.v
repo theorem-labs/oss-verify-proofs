@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed exit_preSB, exit_run_2SB, exit_run_3SB and 1 more. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -109,7 +110,7 @@ Section Exit.
       (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
     dinvA LB LK cr A M model
     /\ usp - 0x1000 <= S /\ S <= usp /\ S mod 16 = 0
-    /\ (forall a n, usp - 0x800000 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
+    /\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
     /\ L5Defs.L5.img_clear (mrestrict (ahid A model) M) 0x10000 0x139000
     /\ exitSB tid (mrestrict (ahid A model) M).
 
@@ -288,6 +289,7 @@ Proof.
   - exact MI2.
   - rewrite (sbm_halted_eq model model2 SBM2). exact HALT.
   - rewrite (proj1 (sbm_fds model model2 SBM2)). exact FD1.
+  - rewrite (sbm_rdrA _ _ SBM2). exact (di_rdr _ _ _ _ _ _ _ _ _ _ DI).
   - split; [exact Q17 | split; [exact Q10 | split; [exact Q11 | split; [exact Q12 | split; [exact Q9 | split; [exact Q18 | split; [exact Q22 | exact Q19]]]]]]].
   - rewrite RS2. split; [lia | split; [lia | split; [right; reflexivity | ]]].
     split; [exact C136 | ].
@@ -534,6 +536,7 @@ Proof.
   - exact MI2.
   - rewrite (sbm_halted_eq model model2 SBM2). exact HALT.
   - rewrite (proj1 (sbm_fds model model2 SBM2)). exact FD1.
+  - rewrite (sbm_rdrA _ _ SBM2). exact (di_rdr _ _ _ _ _ _ _ _ _ _ DI).
   - split; [exact Q17 | split; [exact Q10 | split; [exact Q11 | split; [exact Q12 | split; [exact Q9 | split; [exact Q18 | split; [exact Q22 | exact Q19]]]]]]].
   - rewrite RS2. split; [lia | split; [lia | split; [right; reflexivity | ]]].
     split; [exact C136 | ].
@@ -782,6 +785,7 @@ Proof.
   - exact MI2.
   - rewrite (sbm_halted_eq model model2 SBM2). exact HALT.
   - rewrite (proj1 (sbm_fds model model2 SBM2)). exact FD1.
+  - rewrite (sbm_rdrA _ _ SBM2). exact (di_rdr _ _ _ _ _ _ _ _ _ _ DI).
   - split; [exact Q17 | split; [exact Q10 | split; [exact Q11 | split; [exact Q12 | split; [exact Q9 | split; [exact Q18 | split; [exact Q22 | exact Q19]]]]]]].
   - rewrite RS2. split; [lia | split; [lia | split; [right; reflexivity | ]]].
     split; [exact C136 | ].

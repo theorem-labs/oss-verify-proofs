@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -107,14 +108,19 @@ From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Impo
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Drv Require Import U1Start U1CxxLink.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
 
-Lemma main_entry_pins_sx : forall sp0 rdraw av ev uid hw tid regs mem,
+(* LPS 75d69e00: [U1Start.main_entry] is (sp0 rdraw inp mbase tid regs mem) --
+   argv/envp/uid/hwcap are [inp]'s fields now and the mmap base joined them --
+   and [U1CxxLink.D_main1_pins] follows [D_main1] to (inp sp0 tid rdraw).  The
+   proof is unchanged below: [me_mem]'s record has the same shape, one field
+   fewer to skip. *)
+Lemma main_entry_pins_sx : forall sp0 rdraw inp mbase tid regs mem,
   (0x7fff80000000 <= bv_unsigned sp0)%Z ->
-  main_entry sp0 rdraw av ev uid hw tid regs mem -> pins D_RD mem.
+  main_entry sp0 rdraw inp mbase tid regs mem -> pins D_RD mem.
 Proof.
-  intros sp0 rdraw av ev uid hw tid regs mem Hsp ME.
-  destruct (me_mem _ _ _ _ _ _ _ _ _ ME) as (J & HJ & ->).
+  intros sp0 rdraw inp mbase tid regs mem Hsp ME.
+  destruct (me_mem _ _ _ _ _ _ _ ME) as (J & HJ & ->).
   intros y b Hy Hl. unfold cmem.
-  pose proof (D_main1_pins sp0 av ev hw tid rdraw y b Hy Hl) as P.
+  pose proof (D_main1_pins inp sp0 tid rdraw y b Hy Hl) as P.
   assert (Hylt : (y < 0x124000)%Z).
   {
     destruct (Z.lt_ge_cases y 0x124000) as [L|G]; [exact L|]. exfalso.

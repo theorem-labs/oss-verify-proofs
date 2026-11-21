@@ -4,10 +4,10 @@
    lib/Prog/seg_spec.v, SegABase's readers (image B's copy lib/B/Prog/SegABase.v), and the footprints M_FILE_FP
    (lib/B/Prog/m_file_c.v) and m_refuse_W (lib/B/Prog/m_refuse_c.v). The HDRB walk (m_find; found: the gen test and
    m_refuse; new: n < 32, memset, memcpy; full: overflow++ and m_refuse) uses them.
-   ADAPTED from image A's lib/A/Prog/m_file_s_hdrb_1.v (the image-A m_file-family lane, commit
-   d8beabc2758c): the lemma text is image A's word for word (it names no image number); only this comment and the
+   ADAPTED from image A's lib/A/Prog/m_file_s_hdrb_1.v (the image-A m_file-family lane):
+   the lemma text is image A's word for word (it names no image number); only this comment and the
    Require lines differ (image B's kit copies lib/B/YA0n, YG0f, YG0n, YG0d, YCbq and image B's lib/B/Prog files).
-   SOURCES of the copied lemmas (as image A's file): the segconf porter's files at commit 2cff17c0d0ee:
+   SOURCES of the copied lemmas (as image A's file): the segconf porter's files:
    - "mfu" = proofs/reac-pw/fuzz_segconf/lib/Prog/mfu_facts.v (build-independent model facts);
    - "mfp" = proofs/reac-pw/fuzz_segconf/lib/Prog/mfp_mconf.v (byte-list encoding lemmas; only its list-level
      lemmas are copied, none of its memory-level bytes_at / mconf_atp lemmas).

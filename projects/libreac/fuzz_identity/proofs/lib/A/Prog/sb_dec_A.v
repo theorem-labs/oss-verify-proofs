@@ -7,6 +7,7 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/YC8w.v:289-290 [Apache-2.0 OR MIT], for libreac/fuzz_identity's ASan build
    (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACai.v:156-159. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment A of sb_dec's ASan walk (fuzz_identity.asan 0x83494 .. 0x835f4): seg_sbd_A of sb_dec_inv.v.
    The prologue and the use-after-return flag load (plain run to the call at 0x834f8), __asan_stack_malloc_0
    (YC85 aj_stack_malloc_atS), the frame header, the frame's shadow and the digit loop (plain runs, split at the
@@ -33,7 +34,7 @@ PaRun PaShadow PaJournal IdentSyms IdentList IdentPa IdentPaLib IdentBase.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import IdentFrame YC85 YC81 YC4b YC45 YC1g YC1h.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import IdentCJ.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Prog Require sb_dec_c.
-(* The plain proof of sb_dec (released, origin/ossv/recipes c8557374ad2e): sbd_q, sbd_r, sbd_swrap, used as
+(* The plain proof of sb_dec (released): sbd_q, sbd_r, sbd_swrap, used as
    they are; referred to by its full path (lib.A.Prog.sb_dec has the same short name). *)
 Require OSSVerify.Proofs.libreac.fuzz_identity.lib.Prog.sb_dec.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import sb_dec sb_dec_inv.

@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the join segment of pins_set's ASan walk, after cgif_file_fuzzer's cgif_close
    walk (proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v, a segment's seed and straight run, and lib/A/ACh2.v, the step
-   into a call, at c8557374ad2e) over fuzz_command's recorder. *)
+   into a call) over fuzz_command's recorder. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* `ps_join`: from record()'s join to the first call of xstrdup. At PS_RET_RCF (the spill arm, after rec_calls_free)
    the code is one jump to PS_JOIN. From PS_JOIN the run loads the shadow byte of the slot c (marked usable, so the

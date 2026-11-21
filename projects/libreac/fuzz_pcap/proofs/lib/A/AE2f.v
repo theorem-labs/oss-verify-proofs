@@ -3,7 +3,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE2f.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* Known global setting, released donor text (cgif c8557374ad2e A/AE2f.v:28): `Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).` is NOT Local; importers that need lia over div/mod reset it locally. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Known global setting, released donor text (cgif A/AE2f.v:29): `Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).` is NOT Local; importers that need lia over div/mod reset it locally. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.

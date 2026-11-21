@@ -3,11 +3,11 @@
      image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
        sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
      source run: lib/B/Prog/Seg/F38.v (not in this delivery) seg_F38 (its three sl_run runs).
-       F38.v (an earlier version, blob fea2ecee7e4ebf8726114535df6769d708c588b4, not in this delivery) is from a working branch 3803efccea0.  The frame-loop
+       F38.v (an earlier version, blob fea2ecee7e4ebf8726114535df6769d708c588b4, not in this delivery) is from a working branch.  The frame-loop
        latch 0x82d1c-0x82d28 calls nothing, stores nothing and reads no memory at all (registers a0, a3 only), so
        there is no _pre_F / _post_F split and the twin takes no rng premise;
-     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
      compare: seg_F38_run re-derives the run the segment proof feeds to Tac_slot.sl_run_lib, from seg_F38_F at
        RNG := RNG_all (evtF_evt; there is no rng premise to discharge).  The segment proof states its three arms
        in the UL engine and lifts them with SmLib.ul_entry; the lib.Lib form below is the one

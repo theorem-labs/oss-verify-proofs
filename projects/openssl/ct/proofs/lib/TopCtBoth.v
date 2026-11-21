@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the run's entry stack; named per-field kernel facts in place of a whole-kernel hypothesis). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit FinInput Classifier.
@@ -55,6 +56,10 @@ Notation imgBct := (mkImage AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc Asan
 
 
 Section OpenObligations.
+(* The two kernel fields the ASan start-up witness reads (the auxv's cache words and
+   AT_MINSIGSTKSZ) come from the model's own per-field accessors, Run.valid_input_cache_words
+   and Run.valid_input_min_sigframe_size.  rseq, aslr, guard, rnd_bits and thp are NOT read
+   as fixed values. *)
 (* [comment removed for export] *)
 Let PMA : posix_memalign_init_contract RTA := RT_closed.rta_posix_memalign_closed.
 
@@ -87,7 +92,11 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma side_both_ct : side_canon_off ncfg Tc imgBct target_alloc_limit.
-Proof. intros en inp He Hi. exact (target_canon_B_main main_both_ct en inp He Hi). Qed.
+Proof.
+  intros en inp He Hi.
+  exact (target_canon_B_main main_both_ct en inp He Hi
+           (valid_input_cache_words inp Hi) (valid_input_min_sigframe_size inp (in_hwcap inp) Hi)).
+Qed.
 
 (* [comment removed for export] *)
 Theorem base_ct_both :

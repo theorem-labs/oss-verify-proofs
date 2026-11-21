@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -90,7 +91,7 @@ Theorem el_front : forall (Σ0 : rts RT) (K : config -> Prop)
   rt_frames RT Σ0 = [] -> (forall p n, In (p, n) (rt_live RT Σ0) -> 0 < n) ->
   Z.of_nat (length (rt_live RT Σ0)) + FUZZ_LIVE <= LIVE_MAX -> FUZZ_COST <= rt_credit RT Σ0 ->
   el_libA m0 -> io_ssp m0 -> libc_nl m0 -> ART RT Σ0 m0 -> mem_inv asegs m0 ->
-  stk asegs m0 lo (bv_unsigned sp) -> rt_sp0 RT Σ0 - STACK_WIN <= lo -> lo + FUZZ_STACK <= bv_unsigned sp ->
+  stk asegs m0 lo (bv_unsigned sp) -> rt_sp0 RT Σ0 - STACK_SPAN <= lo -> lo + FUZZ_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= rt_sp0 RT Σ0 -> frm0 fc ->
   (forall X, lf_usp X = bv_unsigned sp -> lf_lo X = lo -> lfA_ok X -> cutS RT PMc Σ0 m0 X d bs ra gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 K) ->
   aevt RT PMc Σ0 K (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_fuzz m0).

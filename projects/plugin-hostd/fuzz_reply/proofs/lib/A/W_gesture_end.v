@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's gesture_end, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites), lib/A/ACh2.v (an internal call) and lib/A/ACbk.v
    (entry and return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* gesture_end(held) at 0x857d8 (relay.c:125) measures the held key with the strlen interceptor, sends it with
    send_line (an internal call), then sends " end\0" (.str.4, 5 bytes) with a tail call to send_line.
    Functional content: lib/Prog/gesture_end_b_c.v:42-119, the controller's stream after the two sends, stated with
@@ -140,7 +141,7 @@ Hypothesis SL : sl_spec_x B PST ARx MT RP MMAX RG (BASE + AF_fr_send_line).
 Hypothesis HEND5I : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 -> in_img SEGS a.
 (* " end\0" is addressable with a visible shadow hull in every ARx state (W_shadow_pin.v ashp over ARx: W_contract_x.v
    ashp_x; at the instance W_shadow_pin_fr.v ashp_end5_5_fr).  The literal arm of W7's sl_line_ok asks exactly this
-   (a working branch 6db0a9327b4); the zero-shadow claim it replaces was false (partial granule, shadow 5 at
+   (a working branch); the zero-shadow claim it replaces was false (partial granule, shadow 5 at
    0x7fffc1e0). *)
 Hypothesis HEND5S : ashp_x ARx (VAL A_lit_end5) 5.
 (* No read-only byte is a program static (W_journal_x.v ajournal_gx_rom_view_x's premise, verbatim), and no byte of
@@ -246,8 +247,8 @@ Qed.
 Hypothesis HOUTLO : forall r, In r (aout_fp B RG 0 0) -> 0 <= fst r /\ snd r <= 0x5fb000.
 (* " end\0" is none of the bytes send_line may change *)
 (* HEND5G holds for EXACTLY [VAL A_lit_end5, VAL A_lit_end5 + 5) = [0x20f00, 0x20f05) on both images and MUST NOT BE
-   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch
-   5fab70f4113; ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
+   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch;
+   ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
    (0x20f05, 0x1b) - the literal's two redzones - end and start exactly at its edges.  One byte more on either side,
    or rounding the range to 8 bytes or an aligned word, makes that clause FALSE. *)
 Hypothesis HEND5G : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 ->
@@ -775,16 +776,16 @@ Hypothesis SL : sl_spec B MT MMAX RG (BASE + AF_fr_send_line).
 (* " end\0" lies in the image (true: .rodata) *)
 Hypothesis HEND5I : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 -> in_img SEGS a.
 (* " end\0" is addressable with a visible shadow hull in every AR state (W_shadow_pin.v ashp; at the instance
-   W_shadow_pin_fr.v ashp_end5_5_fr).  The literal arm of W7's sl_line_ok asks exactly this (a working branch
-   6db0a9327b4); the zero-shadow claim it replaces was false (partial granule, shadow 5 at 0x7fffc1e0). *)
+   W_shadow_pin_fr.v ashp_end5_5_fr).  The literal arm of W7's sl_line_ok asks exactly this (a working branch);
+   the zero-shadow claim it replaces was false (partial granule, shadow 5 at 0x7fffc1e0). *)
 Hypothesis HEND5S : ashp B (VAL A_lit_end5) 5.
 Hypothesis MTL : ameter_laws MT.
 (* the controller's cells lie in the image, below every stack *)
 Hypothesis HOUTLO : forall r, In r (aout_fp B RG 0 0) -> 0 <= fst r /\ snd r <= 0x5fb000.
 (* " end\0" is none of the bytes send_line may change *)
 (* HEND5G holds for EXACTLY [VAL A_lit_end5, VAL A_lit_end5 + 5) = [0x20f00, 0x20f05) on both images and MUST NOT BE
-   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch
-   5fab70f4113; ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
+   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch;
+   ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
    (0x20f05, 0x1b) - the literal's two redzones - end and start exactly at its edges.  One byte more on either side,
    or rounding the range to 8 bytes or an aligned word, makes that clause FALSE. *)
 Hypothesis HEND5G : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 ->

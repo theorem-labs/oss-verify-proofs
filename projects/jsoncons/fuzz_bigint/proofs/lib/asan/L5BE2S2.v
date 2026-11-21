@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv lies at least 16 bytes above the stack top (ar_sptop ar + 16 <= av), and the auxv fact is the launch's vector (L5USA.auxv_okA) in place of the ten-pair auxv20A. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -121,7 +122,7 @@ Lemma e2_s2 :
     forall (RNDR : 0 <= rnd < 2 ^ 64),
     forall (CANR : 0 <= canary < 2 ^ 64),
     forall (HWR : 0 <= hw < 2 ^ 64),
-    forall (AVS : ar_sptop ar <= av),
+    forall (AVS : ar_sptop ar + 16 <= av),
     forall (HH : ri_inv HI LB (L5DSA.ff_e2 FF Sp F1 F3) LKt cr A M (vml_of model)),
     forall (AM : amodel_ok A model),
     forall (HK : K []),
@@ -237,7 +238,7 @@ Lemma e2_s2 :
     forall (FL1 : fl = true -> L5.u8_at RSEGS M8 6363186 0),
     forall (FL3 : fl = true -> L5.u8_at RSEGS M8 6363188 0),
     forall (FL5 : fl = true -> L5.u8_at RSEGS M8 6363190 0),
-    forall (AUXV : forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M8 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)),
+    forall (AUXV : L5USA.auxv_okA M8 av uid rnd hw),
     forall (FRD : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M8 (Sp - 216 + 8 * Z.of_nat j) (nth j [L5DSA.U R0 27; L5DSA.U R0 26; L5DSA.U R0 25; L5DSA.RETIRE_MAGIC; F1; F1 / 8 + SB; F1 + 32; nz bo; nz xo; F1; Sp - 112; Sp; L5DSA.DIV_RET_O] 0)),
     forall (FRO : forall j : nat, (j < 10)%nat -> L5.u64_at RSEGS M8 (Sp - 80 + 8 * Z.of_nat j) (nth j [L5DSA.U R0 24; L5DSA.U R0 23; L5DSA.U R0 22; L5DSA.U R0 21; L5DSA.U R0 20; L5DSA.U R0 19; L5DSA.U R0 18; Sp + 16; L5DSA.U R0 8; 584500] 0)),
     forall (IC1 : L5.img_clear M8 65536 884736),

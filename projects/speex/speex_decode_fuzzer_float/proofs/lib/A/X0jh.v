@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ast_writev0 proves RomBase.sys_rob for its writev node, through RomWritev). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0mc X0mx X0k2 X0k5.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1d7 X1cx X1cy X1cm X1cq X1d0 X1cl X1d9 X1da X1d1 X1d4.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Common.Cfg Require RomBase RomWritev.
 Import ListNotations.
 Import X1cq.Exc.
 Open Scope Z_scope.
@@ -124,8 +126,29 @@ apply (import_iovecs_bytes_in iovs bufs); [exact Hin| exact HlenT| lia | unfold 
 assert (Htotal : iovs_total iovs = 0).
 { rewrite (iovs_total_ok _ _ _ Hok), Hnb. reflexivity. }
 set (CA := import_iovecs_accesses (in_mem i) (areg ms 11) (iovcnt32 (Z_to_bv 64 (Z.of_nat (length iovs))))).
+  (* LPS 08b1429: the iovec array reads the same over a larger backing, and the outcome reads only
+     its accesses ([RomWritev.import_iovecs_ext], [import_iovecs_accesses_ext]) *)
+  assert (Hrob : RomBase.sys_rob segs (mkCfg ms mo)).
+  { intros r x8 Hr Hs o. cbn [cfg_ms cfg_model] in *. rewrite Hsvc in Hs. injection Hs as <-.
+    set (i' := sys_input segs (RomBase.wrom ms r) (Z_to_bv 64 66)).
+    assert (Hx : RomBase.mem_ext (in_mem i) (in_mem i'))
+      by (subst i i'; rewrite !in_mem_si; apply RomBase.mem_ext_read_byte_wrom; exact Hr).
+    assert (Hsp' : forall o', syscall_spec i' mo o' <->
+              writev_spec (Z_to_bv 64 fd) (areg ms 11) (Z_to_bv 64 (Z.of_nat (length iovs))) i' mo o').
+    { intros o'. subst i'. rewrite syscall_spec_66 by reflexivity. rewrite in_a0_si, in_a1_si, in_a2_si.
+      change (areg (RomBase.wrom ms r) 10) with (areg ms 10).
+      change (areg (RomBase.wrom ms r) 11) with (areg ms 11).
+      change (areg (RomBase.wrom ms r) 12) with (areg ms 12).
+      rewrite Ha0, Ha2, Hleq. rewrite fd32_id by (rewrite unsigned_lit; destruct Hfd; lia). reflexivity. }
+    pose proof (RomWritev.import_iovecs_ext _ _ _ _ _ Hx Himp) as Himp'.
+    pose proof (RomWritev.import_iovecs_accesses_ext _ _ _ _ _ Hx Himp) as Hca.
+    fold i' i.
+    rewrite Hsp', Hsp.
+    rewrite (writev_chan_zero_outcome _ _ _ i' mo o (Z_to_bv 64 fd) iovs Hfdl Hw Himp' Htotal).
+    rewrite (writev_chan_zero_outcome _ _ _ i mo o (Z_to_bv 64 fd) iovs Hfdl Hw Himp Htotal).
+    rewrite Hca. reflexivity. }
 exists (Z_to_bv 64 66), (with_copyins CA (mkEffect (Z_to_bv 64 0) [] [])), mo.
-split; [exact Hsvc|]. split.
+  split; [exact Hsvc|]. split; [exact Hrob|]. split.
 { intros o. change (sys_input segs ms (Z_to_bv 64 66)) with i. rewrite Hsp. exact (writev_chan_zero_outcome _ _ _ i mo o (Z_to_bv 64 fd) iovs Hfdl Hw Himp Htotal). }
 split; [apply vm_same_refl|]. split; [apply io_eff_copyins, io_eff_mkEffect|].
 split.

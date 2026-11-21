@@ -8,17 +8,18 @@
    lib/A/Prog/CmdRecBase.v, CmdRecRo.v and CmdRecImg.v, under the walk hypotheses
    (with cgif's names). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_shape_of.v, with its module paths and module names changed; 383 of its 481 lines of code are new or changed and 220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan, pin sha256 48c5355bdacb...): the walk kit of fuzz_catalogue_row
    (0x8a038 = BASE + AF_fuzz_catalogue_row, 200 bytes, 50 instructions, frame 64 bytes, no side-stack frame;
    catalogue.c:29-35), in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the entry, SRr of apost_base at
    the return), against lib/A/Prog/fuzz_catalogue_row_c.v's fuzz_catalogue_row_contract.
-   rule 24 (reuse): adapted proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v at commit b4e9443a2b9c
+   rule 24 (reuse): adapted proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v
    (pin_pb_rowX: the same code, 43 of 50 words equal, the 7 others pc-relative): its loop invariant
    row_of sb = row_from i sb, its row arithmetic (row_addr cat (S i) = row_addr cat i + 296, the shadow pointer
    + 37) and its call-site premises, restated over fuzz_command's Pa engine in the shape of fuzz_command's
-   rec_shape_of walk (lib/A/Prog/rec_shape_of_k.v / _s.v / .v at origin/ossv/recipes 501c0d516c69: one statement
+   rec_shape_of walk (lib/A/Prog/rec_shape_of_k.v / _s.v / .v: one statement
    per program point of the loop, each segment seeded from concrete registers); plain template the plain / image-B owner's
-   lib/Prog/fuzz_catalogue_row.v (440d61eaa8c8).
+   lib/Prog/fuzz_catalogue_row.v.
 
    THE CODE (dis/fuzz_catalogue_row.fuzz_segconf.asan.s):
      0x8a038-0x8a058  addi sp,sp,-64; ra, s0..s6 saved at sp+56 .. sp+0
@@ -459,13 +460,13 @@ Qed.
 
 (* ------------------------------------------------------------------------------------------------
    The statements of the walk's program points *)
-(* the contract's premises (fuzz_catalogue_row_c.v:77-85) at image A's numbers *)
+(* the contract's premises (fuzz_catalogue_row_c.v:78-86) at image A's numbers *)
 Definition fcr_cx ly S (W : world SEGS) (regs : bvmap 5 word) mem md ch (p n : Z) (sb : list byte) : Prop :=
 afn_pre SEGS B STK_fuzz_catalogue_row ly S W regs mem md ch /\ arodata_okP SEGS RLO_A RHI_A B (rdW W mem) /\
 getr regs 10 = w64 p /\ 0 <= p < 2 ^ 64 /\ getr regs 11 = w64 n /\ 0 <= n < 2 ^ 64 /\ n = Z.of_nat (length sb) /\
 sa_bytes (rdW W mem) p sb /\ sa_addr (rdW W mem) p n /\ sa_loc SEGS B ly S p n /\
 sa_cat SEGS B (rdW W mem) catA.
-(* the contract's post (fuzz_catalogue_row_c.v:86-91) *)
+(* the contract's post (fuzz_catalogue_row_c.v:87-92) *)
 Definition fcr_Q ly S (W : world SEGS) (regs : bvmap 5 word) mem (sb : list byte) :
 alayout -> astate -> world SEGS -> bvmap 5 word -> (word -> option byte) -> Model -> Prop :=
 fun ly' S' W' regs' mem' md' =>

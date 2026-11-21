@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (lib_statics_inited's resolved vdso_func cell holds hvdso, the vDSO's clock_gettime entry, not 0, so the library state from lib_statics_inited on, and ECHL, take the heap-ceiling record HCEIL). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -238,9 +239,13 @@ Inductive libst : Type := Fresh | Inited (i : lib_inited).
 Definition lib_fresh : libst := Fresh.
 Definition is_fresh (st : libst) : bool := match st with Fresh => true | Inited _ => false end.
 
+(* The resolved [vdso_func] cell holds the run constant [hvdso] (HeapCeil.v), so the library
+   state from here on, and [ECHL], take the heap-ceiling record. *)
+Context {HCEIL : HeapCeil}.
+
 Definition lib_statics_inited (m : mem) (i : lib_inited) : Prop :=
      IMPL_mem m
-  /\ rw_cells asegs m A_vdso_func [C8 (wz (if li_vdso_done i then 0 else P_cgt_init))]
+  /\ rw_cells asegs m A_vdso_func [C8 (wz (if li_vdso_done i then hvdso else P_cgt_init))]
   /\ rw_cells asegs m A_mem_inited [C1 (b8 1)]
   /\ CTX_statics m (li_ctx i)
   /\ ERR_statics m (li_chain i)
@@ -497,7 +502,7 @@ Definition acost (H : asr) (N : Z) : Z := as_Cm H ACOST_BYTES + as_Cf H ACOST_BY
 Definition atr_ok (H : asr) : Prop :=
   Forall (fun r : Z * list Z => trace_ok (as_TR H) (fst r) (snd r)) LIB_TRACES.
 
-Definition ECHL : alib :=
+Definition ECHL {HCEIL : HeapCeil} : alib :=
   {| al_st := libst ;
      al_fresh := Fresh ;
      al_is_fresh := is_fresh ;

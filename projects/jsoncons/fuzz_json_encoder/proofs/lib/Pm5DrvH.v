@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed dg_dot_of, drv_dirA. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -144,8 +145,15 @@ Section DrvH.
       apply (nolazy_of_inv scfg L ar C IL HI HIok sp0 Hsp DL _ _ _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ _ _ _ _ DIa)); [lia|].
       intros k Hk. right. left. lia.
     - rewrite F1. reflexivity.
-    - split; [cbn; lia|]. split; [cbn; intros [E0|[]]; apply (f_equal bv_unsigned) in E0; vm_compute in E0; lia|].
-      regv HRa (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2. exact Sr'.
+    - split; [cbn; lia|]. split; [cbn; intros [E0|[]]; apply (f_equal bv_unsigned) in E0; vm_compute in E0; lia|]. split.
+      { regv HRa (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2. exact Sr'. }
+      regv HRa (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2.
+      (* Two [dot_path]s are in scope (as Pm6DrvH notes): the goal carries the model's
+         [Uapi.dot_path] (DrvNodesLazyK states [rz_openat_dot_lz] without this unit's Spec),
+         while a bare [dot_path] here names [Spec.dot_path], so a [change] of that matches
+         nothing and [lia] sees an unbounded length. Both are the one-byte path. *)
+      change (Z.of_nat (length Uapi.dot_path)) with 1%Z.
+      unfold TASK_SIZE. pose proof (proj2 P1lo). lia.
     - (* [comment removed for export] *)
       intros e He. rewrite v_addi_pc4 by lia. change (0x157490 + 4)%Z with 0x157494%Z.
       lazymatch type of HRa with regs_ok _ ?sr ?Rc =>
@@ -170,7 +178,7 @@ Section DrvH.
       rewrite F1. change (alloc_fd fds0) with (Z_to_bv 64 3).
       set (model1 := with_fds (fd_insert fds0 (Z_to_bv 64 3) FdDir) modela).
       assert (DI1 : dinvA [] LK0 cr0 A0 Ma model1).
-      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ modela model1 DIa); [apply with_fds_vm|].
+      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ modela model1 DIa); [apply with_fds_vm| |apply with_fds_rdr].
         unfold model1. rewrite with_fds_halted'. exact (di_halt _ _ _ _ _ _ _ _ _ _ DIa). }
       assert (HK1 : know_ok ASEGS (ENV0 vals) (mrestrict (ahid A0 model1) Ma) knA) by exact HKa.
       assert (G1 : m_fds model1 = fds1d) by (unfold model1; apply with_fds_fds).
@@ -296,7 +304,7 @@ Theorem dg_dot_of : forall scfg (L : asan_layout) (C : asan_statics_cells) (IL :
 Proof.
   intros scfg L C IL Lay LSt B0 DLL HBUD DG_OPENERR DG_READERR.
   unfold dg_dot_stmt, drv_main_on.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   subst path.
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
   assert (Hal : bv_unsigned sp mod 16 = 0) by (destruct Hvsp as (_ & _ & H3); exact H3).
@@ -308,7 +316,7 @@ Proof.
   assert (PTH : drv_pathA sp M0 p1 dot_path) by (constructor; try assumption; cbn; lia).
   change (Z.of_nat (length dot_path)) with 1 in PLO.
   subst cr0.
-  (* [comment removed for export] *)
+
   assert (Hcr : acredit_ok L (8192, B0) 65536).
   { destruct (dlla_credit_pos Lay L DLL 0 ltac:(lia)) as [CP1 CP2].
     pose proof (HBUD 0 ltac:(lia)) as (HB1 & HB2).

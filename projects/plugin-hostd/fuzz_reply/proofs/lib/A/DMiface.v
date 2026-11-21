@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMiface.v (commit 6fdbdd538bcf, the narrowed dmem_q signed by a9 + H4's additive rcc_pre_sec / rcc_pre_sec_of_x; file sha256 243d212277bc) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 6 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMiface.v (the narrowed dmem_q signed by a9 + H4's additive rcc_pre_sec / rcc_pre_sec_of_x; file sha256 243d212277bc) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 6 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The names the real-merge drain proof (DMdrain.v) reads the allocator relation by.
 
    The drain proof is over an opaque allocator relation [ARX inst] and owned set [AOX] (DMspec.v), and over
@@ -68,7 +69,7 @@ Definition bobj (ly : alayout) (b : batch) (a : Z) : Prop :=
 ly_space ly + b_self b <= a < ly_space ly + b_self b + kBatchBytes.
 (* The quarantine's words outside the batch objects: the mutex word (inst + o_quar + 152 .. 156) and the global
    header (+ 160 .. 192), the thread cache's header (T + t_qc .. + 32). Bytes + 156 .. 160 are outside it: cgif's ARm
-   keeps const cells there (YF0m.v:211-212; h-w6-2 03:14Z), as the released window YFgj.WINF does. *)
+   keeps const cells there (YF0m.v:212-213; h-w6-2 03:14Z), as the released window YFgj.WINF does. *)
 Definition qhdr (inst : Z) (ly : alayout) (a : Z) : Prop :=
 (inst + o_quar + 152 <= a < inst + o_quar + 156) \/ (inst + o_quar + 160 <= a < inst + o_quar + 192) \/
 (ly_T ly + t_qc <= a < ly_T ly + t_qc + 32).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a section variable rz, the plan's CONFIG_RSEQ flag, which these summaries do not read, passed to x_stmt in XSTMT). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.zstd.fse_read_ncount.images Require Import Asan.
@@ -31,6 +32,8 @@ Proof. exact asan_popfree_spec. Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* the plan's CONFIG_RSEQ flag ([APS.rz]); these summaries do not read it *)
+Variable rz : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> AP.CEIL <= bv_unsigned a.
@@ -38,7 +41,7 @@ Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a =
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
-#[local] Notation XSTMT := (APS.x_stmt ASEGS AP.ASAN nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt ASEGS AP.ASAN nx0 LIMIT rz SINV argH FS0).
 #[using="argH_high argH_agree SINV_frame SINV_agree"] Theorem asan_node_x_sound_XIMemset : XSTMT AP.XIMemset.
 Proof. eapply APSX.node_x_sound_XIMemset; try eassumption; try apply asan_segs_wr; try apply asan_wx; try apply asan_in_hull;
 try apply asan_res_len; try apply asan_hull_ok. apply asan_fill_spec_imemset. Qed.

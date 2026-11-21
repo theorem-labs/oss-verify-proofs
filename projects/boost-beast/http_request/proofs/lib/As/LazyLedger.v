@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -564,6 +565,124 @@ Proof.
   pose proof (rem_bounds e C). destruct (negb (bv_eqb (fst e) a)); cbn [eagerZ]; lia.
 Qed.
 
+(* 75d69e00: a successful munmap now CUTS the range out of the ledger
+   ([Mmap.mmap_fixed_destroyed_next], which MmapSim.munmap_model applies) instead of
+   removing the whole entry based at [a].  On a ledger with no overlap that holds
+   (a, n), the cut is [map_remove] less the zero-size entries based at a + n, which
+   carry no byte.  Ported from the boost-json/fuzz_parse donor (lib/LazyLedger.v),
+   which crossed the same revision; nothing below replaces the old map_remove text,
+   which stays beside it unchanged. *)
+Definition nz_at (z : Z) (e : word * word) : bool :=
+  negb ((bv_unsigned (snd e) =? 0) && (bv_unsigned (fst e) =? z)).
+
+Definition ms_cond (a n : word) (e : word * word) : Prop :=
+  (fst e = a /\ (snd e = n \/ bv_unsigned (snd e) = 0))
+  \/ (fst e <> a /\ (hi e <= lo (a, n) \/ hi (a, n) <= lo e)).
+
+Lemma ll_iv_subtract_outside : forall (b s : word) l h,
+  0 < bv_unsigned s -> l < h ->
+  (bv_unsigned b + bv_unsigned s <= l \/ h <= bv_unsigned b) ->
+  iv_subtract b s l h = [(b, s)].
+Proof.
+  intros b s l h Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) l)) by lia.
+    rewrite (proj2 (Z.ltb_ge h (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) l)) by lia.
+    rewrite (proj2 (Z.ltb_lt h (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma iv_subtract_entry : forall (a n b s : word),
+  0 < bv_unsigned n -> ms_cond a n (b, s) ->
+  iv_subtract b s (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = if negb (bv_eqb b a) && nz_at (bv_unsigned a + bv_unsigned n) (b, s) then [(b, s)] else [].
+Proof.
+  intros a n b s Hn Hc. unfold ms_cond, lo, hi in Hc. cbn [fst snd] in Hc.
+  pose proof (bv_unsigned_in_range _ a) as Ra. pose proof (bv_unsigned_in_range _ b) as Rb.
+  pose proof (bv_unsigned_in_range _ s) as Rs.
+  destruct Hc as [(-> & Hs) | (Hne & Hd)].
+  - assert (E : bv_eqb a a = true) by (unfold bv_eqb; apply Z.eqb_refl). rewrite E. cbn [negb andb].
+    unfold iv_subtract. cbv zeta. rewrite Z.ltb_irrefl.
+    destruct Hs as [-> | Hs].
+    + rewrite Z.ltb_irrefl. reflexivity.
+    + rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned a + bv_unsigned s))) by lia. reflexivity.
+  - assert (Hu : bv_unsigned b <> bv_unsigned a) by (intros Hu; apply Hne; apply bv_eq; exact Hu).
+    assert (E : bv_eqb b a = false) by (unfold bv_eqb; apply Z.eqb_neq; exact Hu). rewrite E. cbn [negb andb].
+    unfold nz_at. cbn [fst snd].
+    destruct (Z.eqb_spec (bv_unsigned s) 0) as [S0|S0]; cbn [andb negb].
+    + destruct (Z.eqb_spec (bv_unsigned b) (bv_unsigned a + bv_unsigned n)) as [BE|BE]; cbn [negb].
+      * unfold iv_subtract. cbv zeta.
+        rewrite (proj2 (Z.ltb_ge (bv_unsigned b) (bv_unsigned a))) by lia.
+        rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+        reflexivity.
+      * unfold iv_subtract. cbv zeta.
+        destruct Hd as [Hd|Hd].
+        -- rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned a))) by lia.
+           rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+           rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+        -- rewrite (proj2 (Z.ltb_ge (bv_unsigned b) (bv_unsigned a))) by lia.
+           rewrite (proj2 (Z.ltb_lt (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+           rewrite Z.max_l by lia.
+           replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+           rewrite !Z_to_bv_bv_unsigned. reflexivity.
+    + apply ll_iv_subtract_outside; [lia | lia | lia].
+Qed.
+
+Lemma maps_subtract_rm_nz_gen : forall X (a n : word),
+  0 < bv_unsigned n -> (forall e, In e X -> ms_cond a n e) ->
+  maps_subtract X (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = List.filter (nz_at (bv_unsigned a + bv_unsigned n)) (map_remove X a).
+Proof.
+  induction X as [|[b s] X IH]; intros a n Hn HC; [reflexivity|].
+  cbn [maps_subtract].
+  rewrite (iv_subtract_entry a n b s Hn (HC _ (or_introl eq_refl))).
+  rewrite (IH a n Hn (fun e He => HC e (or_intror He))).
+  unfold map_remove. cbn [List.filter fst].
+  destruct (negb (bv_eqb b a)); cbn [andb List.filter app];
+    destruct (nz_at (bv_unsigned a + bv_unsigned n) (b, s)); reflexivity.
+Qed.
+
+Lemma ll_nooverlap_In : forall X e e',
+  nooverlap X -> In e X -> In e' X -> e = e' \/ hi e <= lo e' \/ hi e' <= lo e.
+Proof.
+  induction X as [|x X IH]; intros e e' H He He'; [destruct He|].
+  destruct H as [H1 H2]. destruct He as [<-|He], He' as [<-|He'].
+  - left; reflexivity.
+  - right. destruct (H1 _ He') as [D|D]; [left|right]; exact D.
+  - right. destruct (H1 _ He) as [D|D]; [right|left]; exact D.
+  - exact (IH _ _ H2 He He').
+Qed.
+
+Lemma maps_subtract_rm_nz : forall X (a n : word),
+  0 < bv_unsigned n -> nooverlap X -> In (a, n) X ->
+  maps_subtract X (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = List.filter (nz_at (bv_unsigned a + bv_unsigned n)) (map_remove X a).
+Proof.
+  intros X a n Hn Hno Hin. apply maps_subtract_rm_nz_gen; [exact Hn|].
+  intros [b s] He. unfold ms_cond. cbn [fst snd].
+  pose proof (bv_unsigned_in_range _ s) as Rs.
+  destruct (ll_nooverlap_In X (b, s) (a, n) Hno He Hin) as [E | D].
+  - injection E as -> ->. left. split; [reflexivity | left; reflexivity].
+  - destruct (Z.eq_dec (bv_unsigned b) (bv_unsigned a)) as [Eu | Hu].
+    + assert (Eb : b = a) by (apply bv_eq; exact Eu). subst b.
+      left. split; [reflexivity|]. right. unfold lo, hi in D. cbn [fst snd] in D. lia.
+    + right. split; [intros Eb; apply Hu; rewrite Eb; reflexivity|]. destruct D as [D|D]; [left|right]; exact D.
+Qed.
+
+Lemma eagerZ_filter_le : forall f X C, eagerZ (List.filter f X) C <= eagerZ X C.
+Proof.
+  intros f X. induction X as [|e X IH]; intros C; cbn [List.filter eagerZ]; [lia|].
+  pose proof (rem_bounds e C) as RB. pose proof (IH C) as IC.
+  destruct (f e); cbn [eagerZ]; lia.
+Qed.
+
+Lemma entries_nowrap_filter : forall f X, entries_nowrap X -> entries_nowrap (List.filter f X).
+Proof. intros f X H p Hp. apply filter_In in Hp. apply H. exact (proj1 Hp). Qed.
+
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -783,7 +902,12 @@ Lemma commit_model_nonvm : forall flags addr n na m,
   /\ m_lim (commit_model flags addr n na m) = m_lim m
   /\ m_time (commit_model flags addr n na m) = m_time m.
 Proof.
-  ltac2:(KReplay.run [|constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xH); constr:(@Corelib.Init.Datatypes.bool); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.Model); constr:(@kc__8); constr:(@Corelib.Init.Logic.and); constr:(@Corelib.Init.Logic.eq); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.FdState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_fd); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.ModelOps.commit_model); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.IoState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_io); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.FsState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_fsys); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.ProcState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_proc); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.LimState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_lim); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.TimeState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_time); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.VmState); constr:(@kc__9); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.mkModelOf); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.VmMaps); constr:(@Corelib.Init.Datatypes.list); constr:(@Corelib.Init.Datatypes.prod); constr:(@LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.mmap_noreserve_b); constr:(@kc__4); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.with_vm_backing); constr:(@Corelib.Init.Datatypes.app); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.lazy_interior); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vm_lazy); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.maps_subtract); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.with_vmmaps); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.ModelOps.commit_vmmaps); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.mkVmState); constr:(@stdpp.bitvector.definitions.bv_unsigned); constr:(@Stdlib.ZArith.BinInt.Z.add); constr:(@Stdlib.Lists.List.filter); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.page_outside_range); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vm_materialized); constr:(@Corelib.Init.Logic.conj); constr:(@Corelib.Init.Logic.eq_refl)|] [|@m; @m_time; @m_lim; @m_proc; @m_fsys; @m_io; @v; @b; @tm; @lim; @proc; @fs; @io; @mat; @lazy; @maps; @vmst_materialized; @vmst_lazy; @vmst_maps; @m_vm; @fd; @m_fd; @na; @n; @addr; @flags|] "#%l#=#g###L#N#P#R#T#I#%#(#'#&#$#;#:#*#)#D#E#V#<#0#Z#`#+#e#d#c#h#b#j#i#_#9#Y#C#A#@#6#5#4#3#[#\#,#1#]#/#8#W#F#H#G#J#M#O#Q#S#U#B#m#l#X#a#k#^#K#f#g5#U&#V%#W$#X$#Y$#Z$#[$#\$#]$#^%#_'#`*#a$#b$#c&#d(#e&#f%+S5+#+#+#+#+#US6#US7#2KLMJC%#%C#I$#&&&C#D$#')'C#E$#(,(C#F$#)/)C#G$#*2*C#H$#$&#$*#$.#$2#$6#j#$S$#.QKLMJNC2S8S9S:S;#%#%%#I$#&&&(#D$#')'+#E$#(,(.#F$#)/)1#G$#*2*4#H$#$&#$*#$.#$2#$6#k#%H#k#&G#k#'F#k#(E#k#)D#j#*S%#VS<s#;s#;US(#US(s#=US=OVS)S&O3S>S*Q.S?#RKLMJUS+#XS,#S&OPVS-#%/#4s#GS&4s#HOVS.$#WS/&%#VS0&$0)WS1s#L$#1&#+/#WS262#0%1$#&nS##$##S$C#%###'%#%5#I$#&&&8#D$#')';#E$#(,(>#F$#)/)A#G$#*2*s#$#H$#$&#$*#$.#$2#$6#j#+S##3S*QR.S'#KLMJNUS+#XS,#OPS3VS-#%%##I#S'&%#D#K''#E#L()#F#M)+#G#J*-#H#N$%#$(#$+#$.#,IS',DK,EL,FM,GJ,HN-/-$#-2-&#-5-(#-8-*#-;-,#VS)OP/?4s$2PVS.s#I#WS/%s#J#VS0s#K$0s#$WS1s$6$#1&#s#&/#WS2s#\,#0%1$#&%#%s#/#I$#&&&s#2#D$#')'s#5#E$#(,(s#8#F$#)/)s#;#G$#*2*s#>#H$#$&#$*#$.#$2#$6#m#s#'#%?#I#:&A#D#9's###E#8(s#%#F#7)s#'#G#6*s#)#H#5$%#$(#$+#$.#$1#m#s#9#XS@s#Z5#Cl#+s$+S##3QRK.SA#LMJNC2OPS3SB#%#%%#I$#&&&(#D$#')'+#E$#(,(.#F$#)/)1#G$#*2*4#H$#$&#$*#$.#$2#$6#m#=#j#,H#j#-G#j#.F#j#/E#j#0D#j#1s$M#j#2s$O#j#3S4#W#JNCj#4s$Q#j#5s$S#j#6S4#WSCs$W#Cj#7S%#j#8I#[#RKLMJNCj#%H#j#&G#j#'F#j#(E#j#)D#j#7S%#j#9I#WSDs%%#Cj#$S$#j#:S##j#;s%A#j#<s%B#j#=s%C##"). Qed.
+  intros flags addr n na m.
+  unfold commit_model, with_mmap_replacement, with_mmap_backing, vm_forget_range.
+  destruct (mmap_noreserve_b flags); [unfold vm_add_lazy|];
+    destruct m as [fd vm io fs proc lim tm]; destruct vm;
+    repeat split; reflexivity.
+Qed.
 
 Lemma cuts_commit : forall flags addr n na m x,
   entries_nowrap (vm_noaccess (m_vmmaps m)) -> entries_nowrap (m_vm_lazy m) ->
@@ -869,6 +993,84 @@ Lemma eager_used_munmap_le : forall a n m,
   eager_used (munmap_modelL a n m) + rem (a, n) (cuts m) <= eager_used m.
 Proof.
   ltac2:(KReplay.run [|constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xH); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.Model); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.entries_nowrap); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_maps); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_noaccess); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vm_lazy); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.nooverlap); constr:(@Stdlib.Lists.List.In); constr:(@Corelib.Init.Datatypes.prod); constr:(@Corelib.Init.Datatypes.pair); constr:(@Corelib.Init.Logic.eq_ind_r); constr:(@Corelib.Numbers.BinNums.Z); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.eagerZ); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.ModelOps.munmap_modelL); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.ModelOps.cuts); constr:(@Stdlib.ZArith.BinInt.Z.le); constr:(@Stdlib.ZArith.BinInt.Z.add); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.rem); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyRestrict.eager_used); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.VmMaps); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.ModelOps.munmap_vmmaps); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.map_remove); constr:(@Corelib.Init.Datatypes.list); constr:(@Corelib.Init.Datatypes.list_ind); constr:(@Stdlib.Lists.List.filter); constr:(@Corelib.Init.Datatypes.negb); constr:(@LinuxProcessSemantics.Riscv.Prelude.bv_eqb); constr:(@Corelib.Init.Datatypes.fst); constr:(@Corelib.Init.Datatypes.nil); constr:(@kc__5); constr:(@Corelib.Init.Logic.False); constr:(@Corelib.Init.Datatypes.cons); constr:(@kc__3); constr:(@Corelib.Init.Logic.eq); constr:(@Corelib.Init.Logic.or); constr:(@Corelib.Init.Datatypes.bool); constr:(@Corelib.Init.Logic.eq_sym); constr:(@Stdlib.ZArith.BinInt.Z.eqb); constr:(@stdpp.bitvector.definitions.bv_unsigned); constr:(@Corelib.Init.Datatypes.true); constr:(@Stdlib.ZArith.BinInt.Z.eqb_refl); constr:(@Corelib.Init.Logic.eq_ind); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.eagerZ_map_remove_le); constr:(@Stdlib.micromega.ZMicromega.ZArithProof); constr:(@Stdlib.micromega.VarMap.Branch); constr:(@Stdlib.micromega.VarMap.Elt); constr:(@Stdlib.micromega.VarMap.t); constr:(@Stdlib.micromega.Tauto.IMPL); constr:(@Stdlib.micromega.RingMicromega.Formula); constr:(@Stdlib.micromega.Tauto.eKind); constr:(@Corelib.Init.Datatypes.unit); constr:(@Stdlib.micromega.Tauto.isProp); constr:(@Stdlib.micromega.Tauto.A); constr:(@Stdlib.micromega.RingMicromega.Build_Formula); constr:(@Stdlib.micromega.EnvRing.PEX); constr:(@Stdlib.micromega.RingMicromega.OpLe); constr:(@Corelib.Numbers.BinNums.xI); constr:(@Corelib.Init.Datatypes.tt); constr:(@Corelib.Init.Datatypes.None); constr:(@Stdlib.micromega.EnvRing.PEadd); constr:(@Stdlib.micromega.Tauto.BFormula); constr:(@Stdlib.micromega.ZMicromega.ZTautoChecker_sound); constr:(@Corelib.Init.Logic.eq_refl); constr:(@Stdlib.micromega.ZMicromega.ZTautoChecker); constr:(@Stdlib.micromega.VarMap.find); constr:(@Corelib.Numbers.BinNums.Z0); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.rem_bounds); constr:(@Corelib.Init.Logic.and); constr:(@Corelib.Init.Datatypes.snd); constr:(@kc__4); constr:(@Stdlib.micromega.VarMap.Empty); constr:(@Stdlib.micromega.ZMicromega.RatProof); constr:(@Stdlib.micromega.RingMicromega.PsatzAdd); constr:(@Stdlib.micromega.RingMicromega.PsatzIn); constr:(@Corelib.Init.Datatypes.S); constr:(@Corelib.Init.Datatypes.O); constr:(@Stdlib.micromega.ZMicromega.DoneProof); constr:(@Stdlib.micromega.Tauto.AND); constr:(@Stdlib.micromega.EnvRing.PEc); constr:(@Stdlib.micromega.Tauto.X); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.eagerZ_cuts_ext_on); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.lo); constr:(@Stdlib.ZArith.BinInt.Z.lt); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.hi); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.map_remove_In); constr:(@Corelib.Init.Logic.not); constr:(@kc__2); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.zcovb); constr:(@Corelib.Init.Datatypes.app); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.maps_subtract); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.lo_nonneg); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.lo_hi); constr:(@Corelib.Init.Datatypes.orb); constr:(@Corelib.Init.Datatypes.andb); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.zinb); constr:(@Corelib.Init.Datatypes.false); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.zinb_false); constr:(@Corelib.Init.Logic.or_intror); constr:(@Stdlib.micromega.Tauto.OR); constr:(@Stdlib.micromega.RingMicromega.OpLt); constr:(@Stdlib.Bool.Bool.andb_true_r); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.zcovb_maps_subtract); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.zcovb_app); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.ModelOps.munmap_modelL_lazy); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.ModelOps.munmap_modelL_vmmaps); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.ModelOps.eager_used_cuts); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.entries_nowrap_map_remove)|] [|@z; @v; @p; @Hin; @l; @e; @b; @__ff; @__varmap; @__wit; @__x1; @__x2; @__x3; @__arith; @Hle; @H; @__x4; @__p1; @IH; @X; @x; @h; @He; @Hdisj; @e'; @E; @H1; @e1; @a; @H2; @__p2; @__p3; @Hd; @Hx; @Hne; @Hxr'; @Hxr; @H0; @HL; @HNA; @HX; @m; @n|] "#/R#L$`#^##$)#v#$$*$(#&#%#2#,#)#'#*#1#3#(#L#-#0#+#.#/$0#5#4$.#z#;#q#6$V#7#f$8#=#?#C#:#<#B#@#R#~#|$F$M#>#]#i#o#p#w$;$A$B$?#j#9#8#F#E#H#G#D$X#J#I$Z$[$\$]$_$`#P#O#[#x#{#}$%$'$/$1$3$6$7$4$9$=$>$C$E$<$K$Q$R$W#K#A$^$G$a#S#b#t#u$H#Z$J#_#c#\$N#V#l$:#U#d#a#m$,$+$&#r#k$I#W#Y$L$S#X#n#y$O$T#Q$##s#T#`$-$2$D$P$U$Y#e#g#h$$$5$@U$/%$0&$1%$2$$3&$4$$5%$6%$7'$8%$9$$:$$;%$<$$=%$>$$?&$@'$A*#S)$B+$C&$D&$E%$F$$G$$H$$I%$J$$K&$L%$M&$N%$O$$P'$Q)$R$$S&$T%$U&$V*$W&$X&$Y*$Z$$[&$\%$]%$^%$_%DS=D#D#D#D#D#US]#US^#-D0#G#-G;#G#?KG#-J0#<#VS_..+//NS#-O0#'&%#HPNS#-#0#2%)$#+88S'P2N1$#*D#ON#$#j#$C#-S#0#2S#)$#HS'PN-#0#2%)$#*#0##Dj#$C#P.PN0D)#)*#6-N0#)#:#&#j#%S4#Q6P)#6#='j#$C#USDs#,+s#9s#9MS''s#.#D@s#;s#;D3s#=#S(.#j#&s#2#9s#3#G2S')$#+s#Bs#BS%M1#%*%#)G'#$#k#'/#j#(2#USEs#='s#>s#4#9s#?/$)#.*#,)'0#$#j##S0#VSF#Dj#'*#'s#G3D3s#U;S).#j#&s#J#9s#K#G2M)$#+s#Zs#ZS(S%1#%*%#)G'#$#k#'.#8s#TKG's#U)#+s#bs#bS)S($s#WJ#'s#X$K%$#@s#fs#fO3s#h#S&.#3s#js#0Q.#j#&s#_#9s#`#J8s#aO#nF#$##s#8(#%###$2S()$#+s#qs#qS&S)1#%*%#1O')J(*$##&#j##5#$s#mO*+s#zs#zQS&3s#|s#BL.#3s#~s#DR.#j#&s#s#9s#t#S#8s#uD#nF#$##s#L(#%###$2S&)$#+s$)s$)LQ1#%*%#1D')S#(*$##&#j#)s$$#As$2QVS`##USa$XSGF$S.#3s$6QQ$FS.#m#%#.D+s$9s$9RL3s$;s#]S,.#j#&s$0#9s$1#N8s$2'#nF#$##s#e)#%###$2Q)$#1+$*$#)N&*%##%#j#*F#WSbS#Ls##QS#L)#s#%##@USES>USDS>RCKRCJEC$G#UScCUSdCICS=USeS=IC#4C%S-#5'IEEH#S*USfEICs$`JC)#JC$(4C$S-#5-IEEH#S*7.IEEH)(#VSg/HSFS.VShDK$F#S.m$%#WSiCS5GXSjDK$#l#+*)#l#,98#l#->=#j#.C#j#/C#j#0C##DK*GK*KJ#$#k##&#k#.C#k#/C#k#0C#2L)P#+s$vs$vS,R1#%3s$ys$?S+.#j#&s$n#9s$o#P)#*XD*(#Gl#15-#l#2s#9s#6#.S.8s$us#Zs#_nF#$##s$L$#%###s#`)#s#^*#s#\*s#]s#Z#$#m#*#3s%-LLZS?FS.s#D$#Dl#3s#Us#V#@s%/s%/s#o3s%1#Q.#j#&s%&s#p9s%'#O8s%(s#t#nF#$##s$[&#%###$2S))$#1s#x$*$#)O&*%##%#m#1#6s%2s#~s#l#S#Dj#3s$$#U#Dj##s$<#'s%6s$/JUJD)30*#/##.VSkNs#~1Ns$##S5#WSHs%Js%JNAs%L##&#/&#@s%Ns%NP3s%P#R.#3s%Rs$tS1.#j#&s%G#9s%H#S'8s%IM#nF#$##s$|D#%###$2R)$#+s%Ys%YS+S,1#%*%#1M')S'(*$##&#j#*F#RCOUSlCEC$K#EC#Gs#sICs%k4Cs#iS-#5s#sIEEH#S*JCs#ls#qJCs#t&4C$S-#5s#wIEEH#S*7s#xIEEH's#r#l#+#s#ls#fl#,,s#{#l#-s$%s$$#j#.C#j#/C#j#0C#j#4C##s#eJ*s#fJ*GO#$#k##&#k#.C#k#/C#k#0C#k#4C#)s#+s#(YDs##s#&#s#$Jl#1.%#8s%tS's#c)#s#k*#s#i1S's#m*#s#m#%#m#)#USISJUSI#TC#TC%TCSJWSKC$#WSKC&#VSm#Sn8S>#s$EVSoCS54C#S-s$>5s$BIEEH#S*ZS@s$CIEEHNKs$DIEEH$#4Cs$=S-s#25s$FIEEH#S*JCs$Ds#44Cs$@S-#5s$IIEEH#S*7s$JIEEH&s$D#7s$KIEEH)s$E#l#+#s$?s$9l#,s#;s$N#l#-1s$S#j#.C#j#/C#j#0C#j#4C#j#5S$##S5K/#O#s$;O*OS##s$<#k##%#k##'#k#.C#k#/C#k#0C#k#4C#k#5S$#WSHs&Ts&TMAs&V##s#X#[D#s#Xs#Ys#[s#8KJl#13'#*s$;s$@##s#4m#%#XSps#Zs#4#Dl#*s#kF#l#3s#us#o#l#6s#zs#w#j#'s#|#U#Dj##s%\#Fs%^s%]s%Is$$#D3s&es&+S&.#j#&s&Z#8s&[JK9s&\$#2S%)$#1s%g$*$#)(&#$#m#.#j#'s%m#j#6s%p#j#7s&<#j#)s&g#ZSLs&hs&.s&$#DGl#(s&Ws&?#+s&vs&vPN1#s&X*s&E###s&Ym#'#)s&Is&g-P0#Q#M's&sG#&K##G(K:G#/%#-M0#XSq#S(JG's&|J$@s'-s'-J$s'.#S(=#/&#-S%0#'s''O#$s'4s&,S)=#/%#,s&&OHS&S)S(2#,#O$F&#j##(#@s'=s'=S#$s'>#S&=#-S)0#'s'6N#$s'Cs$SL=#-QP#RL-L;#?LBs'>$#,#S';DHS,RL?#Bs'C%#,#S'$F(#j#%S4#?QAs'URAs'VL*$#L&%#P3S,R;#Bs'N#D,#S'$F3#j#(s''#USrs&'&s&(#S5#USss%I&s%J(s%K#$#-R;#,#M?R,#M>%#-S,;#As'nS1As'oS+*$#L&%#?S,L#'%Bs'g%#,#S%$FD#j#*F#As'xS,*,#L5-#,#ML5/%,#M>%#,4S%,0S%>$#$F#Dj#*F#M7-M.#C@#,6S%>D#$F*#j#*F#Cs##(M@>S%.#C1#>#D$F1#j#*F#MKGD$F#S2#JG:GK/$#=#k##'##KD:DG/$#=#MJKG$F#S2k##%#/*#MOJK$F#S2k##.#j##&#j##$Dj##0#WStKGDYSA2+&$#j#8C#j#9C#j#(C#k#8C/k#9C#k#(C##s#CS%:S%s#B/$#-S+0#<D+s(Xs(XS9SM's(M#G's(NRK(S,+s(\s(\S:S/&##%#(%&S,#$#$s(VS,(%$#%(#k#:-#k#'/#k#;2#j#(s(2#<s'~+s(js(jSMSN's(_#s($'s(`Ls(%j##S0+VSF#Dj#:%#j#''#j#;*#+s(rs(rS/S9's(g#G's(hS,K(S++s(vs(vS6S:&##%#(%&S+#$#$s(pS+(%$#%(#k#:-#k#'/#k#;s#,#<s($'s(ws#)s$z8s(xOJ's(yS+#'s(zDS#(P&G#$#(G&P#$#%&#k##*#k#<s)'#<O/$#(S3+s)7s)7S7SB&##%#(%&S3#$#$s)1S3(%$#%(#j##-#<S#'s)6DP(M##:&M#:#%%#k##(#k#<s)=#<P$s)?MS9's)@S9S'%$#(S/+s)Os)OS8S;&##%#(%&S/#$#$s)IS/(%$#%(#j##-#$s)MS%S/<S(+s)[s)[SOSP's)P#S)'s)QKS&(J+s)_s)_SQSR&##%#(%&J#$#$s)YJ(%$#%(#k#:-#k#'/#k#;2#&2#s#@#(4##s#D$s)cG6%$#%'#k#6*#j#)s)g#<S%+s)us)uSPSS's)j#S('s)kS&S)(Q+s)ys)ySRSO&##%#(%&Q#$#$s)sQ(%$#%(#k#:-#k#'/#k#;2#$s)yS)2%#2(S&##?&S&#?#$s*#S&s#2%$#%'#j##*#WST32DWST72#j#=(#U#Dj##0#VN=D%<9UJN's*/s#:Q's*0RL+s*=s*=SUSV&##s$B#(%##s$?$s*6S,'%$#%'#k#:+#k#'-#UDK4Cs(SS-s(M5s(UIEEH#S*4Cs(SS-s'C5s(WIEEH#S*Ns(XIEEH%#Ns(YIEEH$s&tNs(ZIEEH'#7s([IEEH%s(U#l#+#s(Os(Il#,s'Ks(^#l#-s(ds(c#j#.C#j#/C#j#0C#j#4C#j#5S$##DG#KJ%$##GK#JO%#S#%%#k##'#k#.C#k#/C#k#0C#k#4C#k#5S$#+s*es*eSuSU$s*ZS+#($&%ZD%s$M$#s$RJl#15(#l#6s#&s#(#l#6s#4s#(#l#3s#7s#6#j#'s#p#U#Dj##s#X#Fs#Js#Ys#As#<#S'j#6s#L#[S?s*gS(s#^#S:DMj#3s#y#U#Dj##s$-#'s*kS/M+s*xs*xSSS8$s*mS(#'s*n$S%%$#(S6&s#f#$#(s#h&S6#$#$s*vS6s#k%$#%(#j##,#'s*zDQ#s&cs$]#s$\s&f%$#k##&#k#<s+##(S<##s$/&S<#s$/#$s+(S<s$3%$#%'#k#>*#j#?s+,#'s+-DS&#s$6s$l#s$ks$9%$#k##&#k#<s+2#VDS7J&S7#s$##(S7##s$'%%#US&N's+:SvL(S;##s#h&S;#s#h#$s+?S;s#l%$#%'#k#:*#k#'s#r#+s+Ps+PSVSQ's+E#LVGDNj#@$#k#@%)Ns)aIEEHs#hs#j7s)bIEEH#s)\s#fl#+#s)Vs)Pl#,s(Rs)e#l#-s)ks)j#j#.C#j#/C#j#0C#j#4C#j#5S$#%s#ds#ek###s#`k#.C#k#/C#k#0C#k#4C#k#5S$#$s+ZS8s#_&S8(S8ZD%$s#`s#_#Jl#1.'#l#6:9#l#6s#)?#l#3s#0s#+#j#>s#2#[SCs+cs$rs#9#S&DS#j#=s$I#U#Dj##s#W#WS(ODKj#'s$\#U#Dj##s#Z#Fs#\s#[s#P'#Pj#:s#_#U#Dj##s%0#Fs%2s%1s%%s#c#Oj#As%4#j#>s%6#V#GDj##s%@#j##s%O#YSAs%Ps%Os%C#Kj#:s%[#j#'s%^#j#;s%`#j#6s%b#j#7s+P#j#?s+{#\SLs+|s%~s%u#DLQNl#(s&5s+S#(S)+s,/s,/S3S1&##%#(%&S)#$#$s,)S)(%$#%(#+s,8s,8SNS3&###S)(%:S)#/%#&s&2#s%%#(s&4##s$~$s,6Qs&6%$#%'#j###S0(L&s&M#$#ECs)EGs*XEC#Js*ZDs*UIC#4C#S-s*R5s*ZIEEH#S*ZS@s*[IEEHS#Ks*\IEEH$#4Cs*ZS-'5s*^IEEH#S*4Cs*XSWs*\5s*`IEEH#S*Ks*aIEEHs(|#ZS@s*bIEEHP7s*cIEEH$s*]#7s*dIEEH(s*^#7s*eIEEH+s*_#l#+#s*Ys*Sl#,3s*h#l#-s)+s*m#j#.C#j#/C#j#0C#j#5S$#j#BS$#j#CS$#/s')J:KJ/N#k###S'k##s$l#k##'#k#.C#k#/C#k#0C#k#5S$#k#BS$#k#CS$##s&mR:Rs&o]DS0$#s&rs&tRJGQl#12&#j#Ds#-#U#Dj##s#8#(s&|&L#$#$s,mLs'#%$#(s&g&R#$#$s,rRs&j%$#j###S0ECs)}Ks+4EC#Gs)~4Cs+,SWs#95s+4IEEH#S*Ks+5IEEHs#8#4Cs#<S-s+55s+7IEEH#S*Ks+8IEEHs%As)S7s+9IEEH#s+3s#57s+:IEEH%s+4#7s+;IEEH(s+5#l#+#s+/s+)l#,-s+>#l#-s)]s+C#j#.C#j#/C#j#0C#j#5S$#j#BS$#j#CS$#/Js'_/s%?Nk###S'k##s'c#k##&#k#.C#k#/C#k#0C#k#5S$#k#BS$#k#CS$#(S1:S+#+s-Fs-FSBS6&###S+(%&S1]DS0(%$S+#S#GRl#16+#j#Ds'J#U#Dj##s#0#-S:0#'s-FD#@s-Ss-SG$s-T#S7=##s)4S3:S3s)3/$#k#E#S0k#F'#k#:+#j#)s-P#-S/0#'s-Ss'G#@s-`s-`<$s-a#SB=##s'-S1:S1s',/$#Ss-fS<UG#j#E%#j#F)#j#:-#]SCs-_s'S1#S+DS(S%Lj#Ds'h#U#Dj##s#N#Fs#Ps#Os#MB#Dj#3s#T#U#Dj##s$1#Fs$6s$2s$0s#\#Gl#GGs$9#l#Ds$Js$@#j#Hs($#=s(%m#$#XDs(js(hS%#l#3s(.s(+#XSGFs(VS2#$FS2s(W;s(*,#S(?S+,#S(>%#C&s,LC%s,M>$#$F&#j#*F#.S2C*#>D#$F+#j#*F#>0D$F.#j#*F#SFs(mCs(oS.USXs(p6Fs(q&%$#Cs(sS.USXs(t6Fs(u,%$#ZS?FS22#s(iDl#3>=#[SYs)2s),s(~MS&GD6Fs(ms(g$s({#[SYs)6s).s)$MQGD6Fs(ts(p$s)##Bs.4s)%s)#,#MWSZs)'s)%M6Fs)$s({&$#Bs.8s)<s):,#MWSZs)>s)<M6Fs);s)/&$#l#>s)Es)B#l#Is)Is)G#;s)cBs.?#s)V,#P;s)eBs.B#s)U,#P$F&#m#*#HRLQ?#WSwRLQ6s-{s)\s)V&$#-&WS[RLQ6S4s)ps)d%$#,s,wP2*,#P$F%#m#'#j#Fs)x#j#:s){#V#GDj##s*$#j##s*1#YSAs*2s*0s*)#Dl#:s*;s*6#j#Es*?#j#:s*E#j#8C#j#)s.\#XSxs.7s.Js.U#6Cs.7s.5s*Ns*M#0s.B)#s.X*#s*T##s.Nm#'#WS[PNS#6S4s.Hs.@$s._#OS#VS\S#O6Cs.Ts.L%$#Os.dGs.Lj#%S4#WSys.ZPOG0m#$#6S4s.R&#s.i-VS\s.k#6Cs.hs.a+*#j#'s.n#j#;s.t#j#Js.x#j#Ks.{#j#Ls/##j#MSz#j#Ns/(#j#@s/)##"). Qed.
+
+(* 75d69e00: the revision's own munmap ledger builder.  [munmap_vmmapsD] is
+   definitionally [Mmap.mmap_fixed_destroyed_next] at this revision, so
+   [LazyNodes.munmap_model_eqD] below is [reflexivity] and witnesses the match.
+   The [map_remove]-based [munmap_vmmaps]/[munmap_modelL]/[eager_used_munmap_le]
+   above are kept beside these, unchanged and still proved. *)
+Definition munmap_vmmapsD (h : VmMaps) (a n : word) : VmMaps :=
+  mkVmMapsFull (vm_reserved h) (maps_subtract (vm_maps h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
+    (maps_subtract (vm_noaccess h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
+    (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
+
+Definition munmap_modelD (a n : word) (m : Model) : Model :=
+  with_mmap_destroyed a n (munmap_vmmapsD (m_vmmaps m) a n) m.
+
+Lemma munmap_modelD_vmmaps : forall a n m, m_vmmaps (munmap_modelD a n m) = munmap_vmmapsD (m_vmmaps m) a n.
+Proof. intros. unfold munmap_modelD, with_mmap_destroyed. rewrite m_vmmaps_vm_forget_range. apply m_vmmaps_with_vmmaps. Qed.
+
+Lemma munmap_modelD_lazy : forall a n m,
+  m_vm_lazy (munmap_modelD a n m)
+  = maps_subtract (m_vm_lazy m) (bv_unsigned a) (bv_unsigned a + bv_unsigned n).
+Proof. intros. unfold munmap_modelD, with_mmap_destroyed. rewrite m_vm_lazy_vm_forget_range, m_vm_lazy_with_vmmaps. reflexivity. Qed.
+
+Lemma munmap_modelD_materialized : forall a n m,
+  m_vm_materialized (munmap_modelD a n m)
+  = List.filter (page_outside_range (bv_unsigned a) (bv_unsigned a + bv_unsigned n)) (m_vm_materialized m).
+Proof. intros. unfold munmap_modelD, with_mmap_destroyed. rewrite m_vm_materialized_vm_forget_range, m_vm_materialized_with_vmmaps. reflexivity. Qed.
+
+Lemma munmap_modelD_nonvm : forall a n m,
+  m_fd (munmap_modelD a n m) = m_fd m
+  /\ m_io (munmap_modelD a n m) = m_io m
+  /\ m_fsys (munmap_modelD a n m) = m_fsys m
+  /\ m_proc (munmap_modelD a n m) = m_proc m
+  /\ m_lim (munmap_modelD a n m) = m_lim m
+  /\ m_time (munmap_modelD a n m) = m_time m.
+Proof. intros a n [fd [maps lazy mat] io fs proc lim tm]. cbn. repeat split; reflexivity. Qed.
+
+(* 75d69e00: the [map_remove] shape of this bound is NOT recoverable - a zero-size
+   entry based at exactly a + n survives [map_remove] and is dropped by
+   [maps_subtract], and no ledger invariant forbids it.  It is not needed: the cut
+   ledger is [map_remove] under a FILTER, and [eagerZ_filter_le] only ever loses
+   bytes, so the inequality goes through with no entries-nonzero premise. *)
+Lemma eager_used_munmap_leD : forall a n m,
+  entries_nowrap (vm_maps (m_vmmaps m)) ->
+  entries_nowrap (vm_noaccess (m_vmmaps m)) -> entries_nowrap (m_vm_lazy m) ->
+  nooverlap (vm_maps (m_vmmaps m)) -> In (a, n) (vm_maps (m_vmmaps m)) -> 0 < bv_unsigned n ->
+  eager_used (munmap_modelD a n m) + rem (a, n) (cuts m) <= eager_used m.
+Proof.
+  intros a n m HX HNA HL Hdisj Hin Hn.
+  pose proof (maps_subtract_rm_nz _ a n Hn Hdisj Hin) as EQ.
+  rewrite (eager_used_cuts (munmap_modelD a n m))
+    by (rewrite munmap_modelD_vmmaps; cbn [vm_maps munmap_vmmapsD]; rewrite EQ;
+        apply entries_nowrap_filter; apply entries_nowrap_map_remove; exact HX).
+  rewrite (eager_used_cuts m HX), munmap_modelD_vmmaps. cbn [vm_maps munmap_vmmapsD]. rewrite EQ.
+  eapply Z.le_trans; [apply Z.add_le_mono_r; apply eagerZ_filter_le|].
+  rewrite (eagerZ_cuts_ext_on (map_remove (vm_maps (m_vmmaps m)) a) (cuts m) (cuts (munmap_modelD a n m))).
+  2:{ intros e x He Hx. apply map_remove_In in He. destruct He as [He Hne].
+      unfold cuts. rewrite munmap_modelD_vmmaps, munmap_modelD_lazy. cbn [vm_noaccess munmap_vmmapsD].
+      pose proof (lo_nonneg (a, n)) as H0. pose proof (lo_hi (a, n)) as H1. unfold lo, hi in H0, H1. cbn [fst snd] in H0, H1.
+      rewrite !zcovb_app, !zcovb_maps_subtract by assumption.
+      replace (zinb (bv_unsigned a) (bv_unsigned a + bv_unsigned n) x) with false.
+      2:{ symmetry. apply zinb_false. intros Hxr.
+          assert (Hd : hi e <= lo (a, n) \/ hi (a, n) <= lo e \/ e = (a, n)).
+          { clear - Hdisj He Hin. induction (vm_maps (m_vmmaps m)) as [|e1 X IH]; [destruct He|].
+            destruct Hdisj as [H1 H2]. destruct He as [<- | He], Hin as [E | Hin].
+            - right; right; exact E.
+            - pose proof (H1 _ Hin); lia.
+            - subst e1. pose proof (H1 _ He); lia.
+            - exact (IH H2 Hin He). }
+          assert (Hxr' : lo (a, n) <= x < hi (a, n)) by exact Hxr.
+          destruct Hd as [Hd | [Hd | Hd]]; [lia | lia | subst e; cbn in Hne; exact (Hne eq_refl)]. }
+      rewrite !andb_true_r. reflexivity. }
+  unfold map_remove. clear - Hin. induction (vm_maps (m_vmmaps m)) as [|e X IH]; [destruct Hin|].
+  cbn [List.filter eagerZ]. destruct Hin as [-> | Hin].
+  - cbn [fst]. replace (bv_eqb a a) with true by (unfold bv_eqb; symmetry; apply Z.eqb_refl). cbn [negb].
+    pose proof (eagerZ_map_remove_le X a (cuts m)) as Hle. unfold map_remove in Hle. lia.
+  - specialize (IH Hin). pose proof (rem_bounds e (cuts m)).
+    destruct (negb (bv_eqb (fst e) a)); cbn [eagerZ]; lia.
+Qed.
 
 (* [comment removed for export] *)
 Lemma mprotect_model_next_commit : forall m addr n,

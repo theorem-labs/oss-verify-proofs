@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Comment-stripped code compare of a merge against the integration it merged into.
 
-The merge dad326edc436 of the comment, citation and evidence work done after the re-pin into the integration
-3439a53faa11 must not move one token of proof code.  This reads every .v file of both trees, removes the
+The merge of the comment, citation and evidence work done after the re-pin into the integration
+must not move one token of proof code.  This reads every .v file of both trees, removes the
 Rocq comments (nested (* *), with "..." strings and the escape '"' honoured), drops what a removed comment
 leaves behind (trailing blanks, then the lines that are now empty), and compares the two byte strings.
 

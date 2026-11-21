@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjg.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: Htr is areq_ok S (KDepot tr), the depot walk's trace-length premise, instead of In tr (as_universe B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/AFjg.v, with its module names changed; 618 of its 748 lines of code are new or changed and 280 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Malloc PRIMARY hit-k walk (n <= 48) under ARU, any UP: threads lib/A/AFil.v (malloc_hitk) over AFjg.v (D1w, tail_inner, hitk_inner), AFjb.v (D1W_ok, LEAF_ok), AFjf.v (AR_transport, AR_final, LEAF_final), AFje.v (SEED_ok), AFjc.v (junk_values, KPRES, SKPRES, PB250, shadow250), AFi1.v (SS0K, REG0K), AFj6.v (zone facts), with lib/A/FSupoison.v, FSupoisonU.v, FSupoisonAllocR.v and FSupoisonAllocMp1.v. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* The trace premises follow S0 946ad86dc9f: Htr is areq_ok S (KDepot tr) in section e (as AFjb / AFjg) and tr_admit (as_universe B) S tr in malloc_hitkU (as AFil); hitk_innerU gets the trace length (tr_admit_len). *)
+(* The trace premises follow S0: Htr is areq_ok S (KDepot tr) in section e (as AFjb / AFjg) and tr_admit (as_universe B) S tr in malloc_hitkU (as AFil); hitk_innerU gets the trace length (tr_admit_len). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

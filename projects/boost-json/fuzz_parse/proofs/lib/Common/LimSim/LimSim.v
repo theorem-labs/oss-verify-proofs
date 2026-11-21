@@ -1,14 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the launch's channel reader. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Syscall.
-Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "3h5LinuxProcessSemanticsfLinuxProcessSem5State06VmMaps37Corelib7Numbers7BinNumsj61Z0cmkVmMapsFull06vm_brk0avm_init_sp07vm_maps0cvm_mmap_base0bvm_noaccess0bvm_reserved0cvm_start_brk07VmState09mkVmState09vmst_lazy09vmst_maps0h1vmst_materialized89OSSVerify6Proofsaboost_jsonafuzz_parse3lib6Common6LimSim6LimSim~~~~~~v26relimV05Model04m_fd06m_fsys04m_io05m_lim06m_proc06m_time04m_vm09mkModelOfv26relimS3h5LinuxProcessSemanticsfLinuxProcessSem3Runhoe6confighoe9cfg_modelhoe6cfg_mshoe5mkCfgv25relim37Corelib4Init5Logichuc2eq08m_vmmaps08vm_limit0fvm_backing_used08m_halted37Corelib4Init9Datatypesij56optionj64Npos35stdpp9bitvectorbdefinitionsile2bv08m_killed04m_fs3h5LinuxProcessSemanticsfLinuxProcessSem2Fsip12Fsij54listij54Someij54prod0h4materialize_accessesij53nat46Stdlib6ZArith6BinInt1Ziv82leij54Nonehuc3not0hamaterialize_model_accesseshuc3andhuc2ex3h5LinuxProcessSemanticsfLinuxProcessSem5Monadjkf4emitij54boolij54unit0cSyscallInput05event99OSSVerify6Proofsaboost_jsonafuzz_parse3lib6Common6LimSim6LimSim3Dir~~~~~~jqa3DIRjqa3MOKjkf6modifyjkf5inputjkf5sysnojkf3argjkf7get_fds07FdEntry05m_fds07m_pipes07PipeBuf09m_vm_lazy0h1m_vm_materialized07m_stdin0bInputStream09m_urandom05m_net08NetQueue09m_conn_ix05m_tid0h2m_setsid_succeeded0em_has_children0h7m_sigaltstack_installed09m_sigmask0h1m_sigabrt_pending0h0m_abort_terminal09m_utsname0am_statpinsip14path0dm_rlimit_core08m_nofile07m_clock07m_creds05Creds07FdState07IoState07FsState09ProcState08LimState09TimeState09alloc_top0evm_backed_maps" s.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
@@ -19,29 +18,41 @@ Open Scope sys_scope.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition relimV : ltac2:(zQ "20!ie!kf>1L$1>1h$0$0") := ltac2:(zQ "a0!kf!ie!l3!m1!m9!n5!ne!oc!p9!q6\1L$0\1h$1@8$2@1$8^1@1$5^1@1$7^1@1$9^1@1$3^1^2@1$6^1@1$4^1").
-Definition relimS : ltac2:(zQ "20!r4!kf>1L$1>1v$0$0") := ltac2:(zQ "70!kf!r4!rd!s8!t3!te!hj9\1L$0\1v$1@3$2@2$6^2@1$4^1@1$3^1@1$5^1").
-Definition relim : ltac2:(zQ "20!hk2!kf>1L$1>1m$0$0") := ltac2:(zQ "b0!kf!hk2!hk9!hkf!hl7!hld!hm4!hmc!hn4!hna!ho5\1L$0\1m$1@7$9@1$2^1@2$a^2@1$8^1@1$4^1@1$3^1@1$6^1@1$5^1@1$7^1").
-Definition relim_cfg : ltac2:(zQ "20!hra!kf>1L$1>1c$0$0") := ltac2:(zQ "60!kf!hs4!ht1!hra!htb!hu4\1L$0\1c$3@2$4@1$2^1@2$5^2@1$1^1").
+Definition relimV (L : Z) (h : VmMaps) : VmMaps :=
+  mkVmMapsFull (vm_reserved h) (vm_maps h) (vm_noaccess h) (vm_start_brk h) (vm_brk h) L
+               (vm_mmap_base h) (vm_init_sp h).
+Definition relimS (L : Z) (v : VmState) : VmState :=
+  mkVmState (relimV L (vmst_maps v)) (vmst_lazy v) (vmst_materialized v)
+    (vmst_kernel v) (vmst_vdso v).
+Definition relim (L : Z) (m : Model) : Model :=
+  mkModelOf (m_fd m) (relimS L (m_vm m)) (m_io m) (m_fsys m) (m_proc m) (m_lim m) (m_time m).
+Definition relim_cfg (L : Z) (c : config) : config := mkCfg (cfg_ms c) (relim L (cfg_model c)).
 
-Lemma relim_limit : ltac2:(zQ "60!kf!ig0!hk2!ig6!ih0!hu4>1L$0>1m$2@3$1$0@1$4@1$3@2$5^2^1^2").
+Lemma relim_limit : forall L m, vm_limit (m_vmmaps (relim L m)) = L.
+Proof. reflexivity. Qed.
+Lemma relim_id : forall m, relim (vm_limit (m_vmmaps m)) m = m.
+Proof. intros [fd [[r mp na sb b l mb isp] lz mt] io fsys pr li ti]; reflexivity. Qed.
+Lemma relim_relim : forall L L' m, relim L (relim L' m) = relim L m.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
-Lemma relim_vm_backing_used : ltac2:(zQ "50!kf!iha!ig0!hk2!hu4>1L$0>1m$3@3$2$0@1$1@2$4^2^1@1$1^1").
+Lemma relim_vm_backing_used : forall L m, vm_backing_used (relim L m) = vm_backing_used m.
 Proof. reflexivity. Qed.
-Lemma relim_halted : ltac2:(zQ "80!iib!ikd!ig0!il7!kf!hk2!hu4!inb>1L$4>1m$5@3$2@1$1@1$7@1$3#k0@1$0@2$6^2^1@1$0^1").
+Lemma relim_halted : forall L m, m_halted (relim L m) = m_halted m.
 Proof. reflexivity. Qed.
-Lemma relim_killed : ltac2:(zQ "80!io1!ikd!ig0!il7!kf!hk2!hu4!inb>1L$4>1m$5@3$2@1$1@1$7@1$3#k0@1$0@2$6^2^1@1$0^1").
+Lemma relim_killed : forall L m, m_killed (relim L m) = m_killed m.
 Proof. reflexivity. Qed.
-Lemma relim_fs : ltac2:(zQ "60!iob!ig0!kf!irc!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1").
+Lemma relim_fs : forall L m, m_fs (relim L m) = m_fs m.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma materialize_accesses_mono : ltac2:(zQ "b0!il7!inb!is2!kf!isa!ikd!it2!ig0!ita!iv1!jh0>4lazy@1$2@2$6@1$1@1$0#k0@1$1@1$0#k0>3mat@1$2@1$1@1$0#k0>4used$3>1L$3>2L0$3>3acc@1$2@2$6@1$1@1$0#k0$9>5pages@1$2@1$1@1$0#k0>0@2$a^4^3>0@3$7@1$5@1$2@1$1@1$0#k0@5$8^8^7^6^5^3@2$4@1$2@1$1@1$0#k0^2@3$7@1$5@1$2@1$1@1$0#k0@5$8^9^8^7^5^4@2$4@1$2@1$1@1$0#k0^3").
+Lemma materialize_accesses_mono : forall lazy mat used L L0 acc pages,
+  L <= L0 ->
+  materialize_accesses lazy mat used L acc = Some pages ->
+  materialize_accesses lazy mat used L0 acc = Some pages.
 Proof.
   intros lazy mat used L L0 acc pages HLE. unfold materialize_accesses.
   destruct (newly_materialized_pages lazy mat acc) as [|p ps]; [intros H; exact H|].
@@ -49,7 +60,10 @@ Proof.
   destruct (Z.leb_spec (used + Z.of_nat (length (p :: ps)) * page_size) L0); [exact H | lia].
 Qed.
 
-Lemma materialize_accesses_down : ltac2:(zQ "c0!il7!inb!is2!ikd!ig0!kf!ita!isa!it2!jh6!iv1!jhe>4lazy@1$2@2$8@1$1@1$0#k0@1$1@1$0#k0>3mat@1$2@1$1@1$0#k0>4used$5>1L$5>2L0$5>3acc@1$2@2$8@1$1@1$0#k0$a>5pages@1$2@1$1@1$0#k0>0@3$4@1$3@1$2@1$1@1$0#k0@5$6^7^6^5^3^2@2$7@1$2@1$1@1$0#k0^1>0@1$b@3$4@1$3@1$2@1$1@1$0#k0@5$6^8^7^6^5^3@1$9@1$2@1$1@1$0#k0@3$4@1$3@1$2@1$1@1$0#k0@5$6^9^8^7^6^4@2$7@1$2@1$1@1$0#k0^3").
+Lemma materialize_accesses_down : forall lazy mat used L L0 acc pages,
+  materialize_accesses lazy mat used L0 acc = Some pages ->
+  materialize_accesses lazy mat used L acc <> None ->
+  materialize_accesses lazy mat used L acc = Some pages.
 Proof.
   intros lazy mat used L L0 acc pages. unfold materialize_accesses.
   destruct (newly_materialized_pages lazy mat acc) as [|p ps]; [intros H _; exact H|].
@@ -57,7 +71,10 @@ Proof.
   destruct (Z.leb (used + Z.of_nat (length (p :: ps)) * page_size) L); [intros H _; exact H | intros _ H; exfalso; apply H; reflexivity].
 Qed.
 
-Lemma materialize_relim_up : ltac2:(zQ "h10!hk2!ig0!isa!ikd!ji5!hu4!is2!iv1!it2!jk2!jk9!il7!kf!ig6!ih0!jh0!inb>1L$c>1m$0>3acc@1$6@2$8@1$h0@1$b#k0$7>2m1$0>0@2$f^4@1$e@1$d^3>0@3$1@1$3$0@2$4@2$5^5^4^3@2$2$0^2@2$a$0\2m0$0@2$9@3$1@1$3$0@2$4^6^5@2$2$0^1@3$1$0^4@2$5^7^1").
+Lemma materialize_relim_up : forall L m acc m1,
+  L <= vm_limit (m_vmmaps m) ->
+  materialize_model_accesses (relim L m) acc = Some m1 ->
+  exists m0, materialize_model_accesses m acc = Some m0 /\ m1 = relim L m0.
 Proof.
   intros L m acc m1 HLE. unfold materialize_model_accesses.
   change (m_vm_lazy (relim L m)) with (m_vm_lazy m). change (m_vm_materialized (relim L m)) with (m_vm_materialized m).
@@ -67,7 +84,10 @@ Proof.
   eexists; split; [reflexivity|]. destruct m as [fd [h lz mt] io fsys pr li ti]; reflexivity.
 Qed.
 
-Lemma materialize_relim_down : ltac2:(zQ "e0!hk2!ikd!ig0!ji5!hu4!isa!jh6!is2!iv1!it2!jhe!il7!kf!inb>1L$c>1m$0>3acc@1$7@2$9@1$d@1$b#k0$8>2m0$0>0@3$2@1$1$0@2$3^3^2@2$5$0^1>0@1$a@3$2@1$1$0@2$3@2$4^5^4^3@1$6$0@3$2@1$1$0@2$3@2$4^6^5^4@2$5$0@2$4^6^3").
+Lemma materialize_relim_down : forall L m acc m0,
+  materialize_model_accesses m acc = Some m0 ->
+  materialize_model_accesses (relim L m) acc <> None ->
+  materialize_model_accesses (relim L m) acc = Some (relim L m0).
 Proof.
   intros L m acc m0. unfold materialize_model_accesses.
   change (m_vm_lazy (relim L m)) with (m_vm_lazy m). change (m_vm_materialized (relim L m)) with (m_vm_materialized m).
@@ -81,7 +101,8 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma materialize_limit : ltac2:(zQ "d0!hk2!ig0!ig6!ih0!isa!is2!iv1!ikd!it2!il7!kf!ji5!inb>1m$0>3acc@1$5@2$8@1$c@1$9#k0$6>2m0$0>0@3$1@1$7$0@2$b^3^2@2$4$0^1@3$1$a@1$3@1$2^2@1$3@1$2^4").
+Lemma materialize_limit : forall m acc m0,
+  materialize_model_accesses m acc = Some m0 -> vm_limit (m_vmmaps m0) = vm_limit (m_vmmaps m).
 Proof.
   intros m acc m0 H. destruct (materialize_model_accesses_frame m acc m0 H) as (_ & E & _). rewrite E. reflexivity.
 Qed.
@@ -93,7 +114,7 @@ Qed.
 Section Dir.
 Variable L0 L : Z.          (* [comment removed for export] *)
 
-Definition MOK : ltac2:(zQ "10!hk2>1m$0P") := ltac2:(zQ "50!ig0!kf!hk2!ig6!ih0\1m$2@3$0$1@1$4@1$3^1?2L0").
+Definition MOK (m : Model) : Prop := vm_limit (m_vmmaps m) = L0.
 
 Definition orel {A} (o : outcome A) (o0 : outcome A) : Prop :=
   match o, o0 with
@@ -121,10 +142,11 @@ Qed.
 Lemma dir_unmodeled {A} : forall (d : bool) (i : SyscallInput) (m : Model), DIR d i m (@unmodeled A) (@unmodeled A).
 Proof. intros d i m; destruct d; cbn; intros o ->; eexists; split; [reflexivity| exact I | reflexivity | exact I]. Qed.
 
-Lemma dir_emit : ltac2:(zQ "90!jnd!jo5!is2!jod!hk2!jp5!jq3!jv5!jvc>1d$1>1i$5>1m$4>1e@1$2$6>0@1$8^2@6$7$3^5^4^3@1$0^2@1$0^2").
+Lemma dir_emit : forall (d : bool) (i : SyscallInput) (m : Model) e, MOK m -> DIR d i m (emit e) (emit e).
 Proof. intros d i m e HM; destruct d; cbn; intros o ->; eexists; split; [reflexivity| |reflexivity|]; apply orel_refl_ok; exact HM. Qed.
 
-Lemma dir_modify : ltac2:(zQ "90!hk2!kg3!hu4!jo5!jod!ig0!jp5!jv5!jvc>1d$3>1i$6>1m$0>1f>1x$0$0>2f'>1x$0$0>0@3$5$0@1^2@2$2?1L^3@2$2?1L@1^1^3>0@1$8@1^2^4@6$7$4^7^6^5@1$1^4@1$1^3").
+Lemma dir_modify : forall (d : bool) (i : SyscallInput) (m : Model) f f',
+  f (relim L m) = relim L (f' m) -> MOK (f' m) -> DIR d i m (modify f) (modify f').
 Proof.
   intros d i m f f' E HM; destruct d; cbn; intros o ->; eexists; split; [reflexivity| |reflexivity|]; rewrite E; apply orel_refl_ok; exact HM.
 Qed.
@@ -139,13 +161,13 @@ Qed.
 Lemma dir_choose_same {A} : forall (d : bool) (i : SyscallInput) (m : Model) (P : A -> Prop), MOK m -> DIR d i m (choose P) (choose P).
 Proof. intros d i m P HM. apply dir_choose; [destruct d; intros x H; exact H | exact HM]. Qed.
 
-Lemma dir_input : ltac2:(zQ "60!kgd!jp5!jo5!hk2!jv5!jvc>1d$2>1i$1>1m$3>0@1$5^1@6$4$1^4^3^2$0$0").
+Lemma dir_input : forall (d : bool) (i : SyscallInput) (m : Model), MOK m -> DIR d i m input input.
 Proof. intros d i m HM; destruct d; cbn; intros o ->; eexists; split; [reflexivity| |reflexivity|]; apply orel_refl_ok; exact HM. Qed.
-Lemma dir_sysno : ltac2:(zQ "80!kh6!jo5!il7!hk2!jp5!jv5!jvc!inb>1d$1>1i$4>1m$3>0@1$6^1@6$5@1$7@1$2#k0^4^3^2$0$0").
+Lemma dir_sysno : forall (d : bool) (i : SyscallInput) (m : Model), MOK m -> DIR d i m sysno sysno.
 Proof. intros d i m HM; destruct d; cbn; intros o ->; eexists; split; [reflexivity| |reflexivity|]; apply orel_refl_ok; exact HM. Qed.
-Lemma dir_arg : ltac2:(zQ "90!khf!jo5!iv1!il7!hk2!jp5!jv5!jvc!inb>1d$1>1i$5>1m$4>1k$2>0@1$7^2@6$6@1$8@1$3#k0^5^4^3@1$0^2@1$0^2").
+Lemma dir_arg : forall (d : bool) (i : SyscallInput) (m : Model) k, MOK m -> DIR d i m (arg k) (arg k).
 Proof. intros d i m k HM; destruct d; cbn; intros o ->; eexists; split; [reflexivity| |reflexivity|]; apply orel_refl_ok; exact HM. Qed.
-Lemma dir_get_fds : ltac2:(zQ "b0!ki6!jo5!is2!it2!il7!kj1!hk2!jp5!jv5!jvc!inb>1d$1>1i$7>1m$6>0@1$9^1@6$8@1$2@2$3@1$a@1$4#k0$5^4^3^2$0$0").
+Lemma dir_get_fds : forall (d : bool) (i : SyscallInput) (m : Model), MOK m -> DIR d i m get_fds get_fds.
 Proof. intros d i m HM; destruct d; cbn; intros o ->; eexists; split; [reflexivity| |reflexivity|]; apply orel_refl_ok; exact HM. Qed.
 
 (* [comment removed for export] *)
@@ -202,6 +224,23 @@ Proof.
   - apply bind_get_model in Ho. destruct (Hk _ Ho) as (o0 & H & R). exists o0. split; [apply bind_get_model; exact H | exact R].
 Qed.
 
+Lemma bind_get_vmmaps {A} (k : VmMaps -> Sys A) : forall i m o, bind get_vmmaps k i m o <-> k (m_vmmaps m) i m o.
+Proof.
+  intros i m o. unfold bind, get_vmmaps. destruct o as [x m2 evs|]; split.
+  - intros (x0 & m1 & evs1 & evs2 & H1 & H2 & H3). injection H1 as -> -> ->. cbn in H3. subst evs. exact H2.
+  - intros H. exists (m_vmmaps m), m, [], evs. split; [reflexivity|]. split; [exact H | reflexivity].
+  - intros [H | (x0 & m1 & evs1 & H1 & H2)]; [discriminate|]. injection H1 as -> -> ->. exact H2.
+  - intros H. right. exists (m_vmmaps m), m, []. split; [reflexivity | exact H].
+Qed.
+
+Lemma dir_bind_get_vmmaps {B} : forall (d : bool) (i : SyscallInput) (m : Model) (k k' : VmMaps -> Sys B),
+  DIR d i m (k (relimV L (m_vmmaps m))) (k' (m_vmmaps m)) -> DIR d i m (bind get_vmmaps k) (bind get_vmmaps k').
+Proof.
+  intros d i m k k' Hk; destruct d; cbn in Hk |- *; intros o Ho.
+  - apply bind_get_vmmaps in Ho. destruct (Hk _ Ho) as (o0 & H & R). exists o0. split; [apply bind_get_vmmaps; exact H | exact R].
+  - apply bind_get_vmmaps in Ho. destruct (Hk _ Ho) as (o0 & H & R). exists o0. split; [apply bind_get_vmmaps; exact H | exact R].
+Qed.
+
 (* [comment removed for export] *)
 Lemma dir_bind_reader {A B} : forall (d : bool) (i : SyscallInput) (m : Model) (c c' : Sys A) (v v' : SyscallInput -> Model -> A) (k k' : A -> Sys B),
   (forall i0 m0 o, c i0 m0 o <-> o = Ok (v i0 m0) m0 []) ->
@@ -232,6 +271,9 @@ Proof. intros. apply (dir_bind_reader d i m (arg n) (arg n) (fun i0 _ => in_arg 
 Lemma dir_bind_get_fds {B} : forall (d : bool) (i : SyscallInput) (m : Model) (k k' : list (word * FdEntry) -> Sys B),
   DIR d i m (k (m_fds m)) (k' (m_fds m)) -> DIR d i m (bind get_fds k) (bind get_fds k').
 Proof. intros. apply (dir_bind_reader d i m get_fds get_fds (fun _ m0 => m_fds m0) (fun _ m0 => m_fds m0)); [intros; unfold get_fds; reflexivity | intros; unfold get_fds; reflexivity | exact H]. Qed.
+Lemma dir_bind_get_model' {B} : forall (d : bool) (i : SyscallInput) (m : Model) (k k' : Model -> Sys B),
+  DIR d i m (k (relim L m)) (k' m) -> DIR d i m (bind get_model k) (bind get_model k').
+Proof. intros. apply (dir_bind_reader d i m get_model get_model (fun _ m0 => m0) (fun _ m0 => m0)); [intros; unfold get_model; reflexivity | intros; unfold get_model; reflexivity | exact H]. Qed.
 Lemma dir_bind_get_vmmaps' {B} : forall (d : bool) (i : SyscallInput) (m : Model) (k k' : VmMaps -> Sys B),
   DIR d i m (k (relimV L (m_vmmaps m))) (k' (m_vmmaps m)) -> DIR d i m (bind get_vmmaps k) (bind get_vmmaps k').
 Proof. intros. apply (dir_bind_reader d i m get_vmmaps get_vmmaps (fun _ m0 => m_vmmaps m0) (fun _ m0 => m_vmmaps m0)); [intros; unfold get_vmmaps; reflexivity | intros; unfold get_vmmaps; reflexivity | exact H]. Qed.
@@ -294,53 +336,65 @@ End Dir.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma rr_m_fds : ltac2:(zQ "a0!kja!is2!it2!ig0!il7!kf!kj1!hk2!hu4!inb>1L$5>1m$7@3$3@1$1@2$2@1$9@1$4#k0$6@1$0@2$8^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_pipes : ltac2:(zQ "a0!kk1!is2!it2!ig0!il7!kf!hk2!kka!hu4!inb>1L$5>1m$6@3$3@1$1@2$2@1$9@1$4#k0$7@1$0@2$8^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_vm_lazy : ltac2:(zQ "90!il7!kl3!inb!is2!it2!ig0!kf!hk2!hu4>1L$6>1m$7@3$5@1$3@2$4@1$2@1$0#k0@1$2@1$0#k0@1$1@2$8^2^1@1$1^1"). Proof. reflexivity. Qed.
-Lemma rr_m_vm_materialized : ltac2:(zQ "80!kle!is2!ig0!il7!kf!hk2!hu4!inb>1L$4>1m$5@3$2@1$1@1$7@1$3#k0@1$0@2$6^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_stdin : ltac2:(zQ "60!kn2!ig0!kf!knb!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_urandom : ltac2:(zQ "60!ko8!ig0!kf!knb!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_net : ltac2:(zQ "60!kp3!ig0!kf!hk2!kpa!hu4>1L$2>1m$3@3$1$4@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_conn_ix : ltac2:(zQ "70!kq4!ig0!il7!kf!hk2!hu4!inb>1L$3>1m$4@3$1@1$6@1$2#k0@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_fs : ltac2:(zQ "60!iob!ig0!kf!irc!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_halted : ltac2:(zQ "80!iib!ikd!ig0!il7!kf!hk2!hu4!inb>1L$4>1m$5@3$2@1$1@1$7@1$3#k0@1$0@2$6^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_tid : ltac2:(zQ "80!kqf!ikd!ig0!il7!kf!hk2!hu4!inb>1L$4>1m$5@3$2@1$1@1$7@1$3#k0@1$0@2$6^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_setsid_succeeded : ltac2:(zQ "60!kr6!jo5!ig0!kf!hk2!hu4>1L$3>1m$4@3$2$1@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_has_children : ltac2:(zQ "60!ksb!jo5!ig0!kf!hk2!hu4>1L$3>1m$4@3$2$1@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_sigaltstack_installed : ltac2:(zQ "60!ktb!jo5!ig0!kf!hk2!hu4>1L$3>1m$4@3$2$1@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_sigmask : ltac2:(zQ "70!kv5!ig0!il7!kf!hk2!hu4!inb>1L$3>1m$4@3$1@1$6@1$2#k0@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_killed : ltac2:(zQ "80!io1!ikd!ig0!il7!kf!hk2!hu4!inb>1L$4>1m$5@3$2@1$1@1$7@1$3#k0@1$0@2$6^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_sigabrt_pending : ltac2:(zQ "60!lg0!jo5!ig0!kf!hk2!hu4>1L$3>1m$4@3$2$1@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_abort_terminal : ltac2:(zQ "60!lh4!jo5!ig0!kf!hk2!hu4>1L$3>1m$4@3$2$1@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_utsname : ltac2:(zQ "90!li7!is2!ikd!ig0!il7!kf!hk2!hu4!inb>1L$5>1m$6@3$3@1$2@1$1@1$8@1$4#8@1$0@2$7^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_statpins : ltac2:(zQ "a0!is2!lj2!it2!ig0!il7!kf!lje!hk2!hu4!inb>1L$5>1m$7@3$3@1$0@2$2$6@1$0@1$9@1$4#8@1$1@2$8^2^1@1$1^1"). Proof. reflexivity. Qed.
-Lemma rr_m_rlimit_core : ltac2:(zQ "90!lk6!is2!ikd!ig0!il7!kf!hk2!hu4!inb>1L$5>1m$6@3$3@1$2@1$1@1$8@1$4#8@1$0@2$7^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_nofile : ltac2:(zQ "70!ll5!ig0!il7!kf!hk2!hu4!inb>1L$3>1m$4@3$1@1$6@1$2#k0@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_clock : ltac2:(zQ "70!llf!ig0!il7!kf!hk2!hu4!inb>1L$3>1m$4@3$1@1$6@1$2#k0@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_creds : ltac2:(zQ "60!lm8!ig0!kf!ln1!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_fd : ltac2:(zQ "60!hk9!ig0!kf!ln8!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_io : ltac2:(zQ "60!hl7!ig0!kf!lo1!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_fsys : ltac2:(zQ "60!hkf!ig0!kf!loa!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_proc : ltac2:(zQ "60!hm4!ig0!kf!hk2!lp3!hu4>1L$2>1m$3@3$1$4@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_lim : ltac2:(zQ "60!hld!ig0!kf!lpe!hk2!hu4>1L$2>1m$4@3$1$3@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_time : ltac2:(zQ "60!hmc!ig0!kf!hk2!lq8!hu4>1L$2>1m$3@3$1$4@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_vmmaps : ltac2:(zQ "70!ig6!ig0!kf!hk2!ie!hu4!hj9>1L$2>1m$3@3$1$4@1$0@2$5^2^1@2$6^2@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_m_vm : ltac2:(zQ "70!hn4!ig0!kf!hk2!r4!hu4!ho5>1L$2>1m$3@3$1$4@1$0@2$5^2^1@2$6^2@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_vmst_maps : ltac2:(zQ "70!t3!ig0!kf!ie!r4!ho5!hj9>1L$2>1v$4@3$1$3@1$0@2$5^2^1@2$6^2@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_vmst_lazy : ltac2:(zQ "90!il7!s8!inb!is2!it2!ig0!kf!r4!ho5>1L$6>1v$7@3$5@1$3@2$4@1$2@1$0#k0@1$2@1$0#k0@1$1@2$8^2^1@1$1^1"). Proof. reflexivity. Qed.
-Lemma rr_vmst_materialized : ltac2:(zQ "80!te!is2!ig0!il7!kf!r4!ho5!inb>1L$4>1v$5@3$2@1$1@1$7@1$3#k0@1$0@2$6^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_reserved : ltac2:(zQ "90!il7!p9!inb!is2!it2!ig0!kf!ie!hj9>1L$6>1h$7@3$5@1$3@2$4@1$2@1$0#k0@1$2@1$0#k0@1$1@2$8^2^1@1$1^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_maps : ltac2:(zQ "90!il7!n5!inb!is2!it2!ig0!kf!ie!hj9>1L$6>1h$7@3$5@1$3@2$4@1$2@1$0#k0@1$2@1$0#k0@1$1@2$8^2^1@1$1^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_noaccess : ltac2:(zQ "90!il7!oc!inb!is2!it2!ig0!kf!ie!hj9>1L$6>1h$7@3$5@1$3@2$4@1$2@1$0#k0@1$2@1$0#k0@1$1@2$8^2^1@1$1^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_start_brk : ltac2:(zQ "70!q6!ig0!il7!kf!ie!hj9!inb>1L$3>1h$4@3$1@1$6@1$2#k0@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_brk : ltac2:(zQ "70!m1!ig0!il7!kf!ie!hj9!inb>1L$3>1h$4@3$1@1$6@1$2#k0@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_mmap_base : ltac2:(zQ "70!ne!ig0!il7!kf!ie!hj9!inb>1L$3>1h$4@3$1@1$6@1$2#k0@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_init_sp : ltac2:(zQ "70!m9!ig0!il7!kf!ie!hj9!inb>1L$3>1h$4@3$1@1$6@1$2#k0@1$0@2$5^2^1@1$0^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_limit : ltac2:(zQ "50!kf!ig0!ie!ih0!hj9>1L$0>1h$2@3$1$0@1$3@2$4^2^1^2"). Proof. reflexivity. Qed.
-Lemma rr_alloc_top : ltac2:(zQ "50!kf!lr3!ig0!ie!hj9>1L$0>1h$3@3$2$0@1$1@2$4^2^1@1$1^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_backed_maps : ltac2:(zQ "90!il7!lre!inb!is2!it2!ig0!kf!ie!hj9>1L$6>1h$7@3$5@1$3@2$4@1$2@1$0#k0@1$2@1$0#k0@1$1@2$8^2^1@1$1^1"). Proof. reflexivity. Qed.
-Lemma rr_vm_backing_used : ltac2:(zQ "50!kf!iha!ig0!hk2!hu4>1L$0>1m$3@3$2$0@1$1@2$4^2^1@1$1^1"). Proof. reflexivity. Qed.
+Lemma rr_m_fds : forall L m, m_fds (relim L m) = m_fds m. Proof. reflexivity. Qed.
+Lemma rr_m_pipes : forall L m, m_pipes (relim L m) = m_pipes m. Proof. reflexivity. Qed.
+Lemma rr_m_vm_lazy : forall L m, m_vm_lazy (relim L m) = m_vm_lazy m. Proof. reflexivity. Qed.
+Lemma rr_m_vm_materialized : forall L m, m_vm_materialized (relim L m) = m_vm_materialized m. Proof. reflexivity. Qed.
+Lemma rr_m_stdin : forall L m, m_stdin (relim L m) = m_stdin m. Proof. reflexivity. Qed.
+Lemma rr_m_urandom : forall L m, m_urandom (relim L m) = m_urandom m. Proof. reflexivity. Qed.
+Lemma rr_m_net : forall L m, m_net (relim L m) = m_net m. Proof. reflexivity. Qed.
+Lemma rr_m_conn_ix : forall L m, m_conn_ix (relim L m) = m_conn_ix m. Proof. reflexivity. Qed.
+Lemma rr_m_fs : forall L m, m_fs (relim L m) = m_fs m. Proof. reflexivity. Qed.
+Lemma rr_m_halted : forall L m, m_halted (relim L m) = m_halted m. Proof. reflexivity. Qed.
+Lemma rr_m_tid : forall L m, m_tid (relim L m) = m_tid m. Proof. reflexivity. Qed.
+Lemma rr_m_setsid_succeeded : forall L m, m_setsid_succeeded (relim L m) = m_setsid_succeeded m. Proof. reflexivity. Qed.
+Lemma rr_m_has_children : forall L m, m_has_children (relim L m) = m_has_children m. Proof. reflexivity. Qed.
+Lemma rr_m_sigaltstack_installed : forall L m, m_sigaltstack_installed (relim L m) = m_sigaltstack_installed m. Proof. reflexivity. Qed.
+Lemma rr_m_sigmask : forall L m, m_sigmask (relim L m) = m_sigmask m. Proof. reflexivity. Qed.
+Lemma rr_m_killed : forall L m, m_killed (relim L m) = m_killed m. Proof. reflexivity. Qed.
+Lemma rr_m_sigabrt_pending : forall L m, m_sigabrt_pending (relim L m) = m_sigabrt_pending m. Proof. reflexivity. Qed.
+Lemma rr_m_abort_terminal : forall L m, m_abort_terminal (relim L m) = m_abort_terminal m. Proof. reflexivity. Qed.
+Lemma rr_m_utsname : forall L m, m_utsname (relim L m) = m_utsname m. Proof. reflexivity. Qed.
+Lemma rr_m_statpins : forall L m, m_statpins (relim L m) = m_statpins m. Proof. reflexivity. Qed.
+Lemma rr_m_rlimit_core : forall L m, m_rlimit_core (relim L m) = m_rlimit_core m. Proof. reflexivity. Qed.
+Lemma rr_m_nofile : forall L m, m_nofile (relim L m) = m_nofile m. Proof. reflexivity. Qed.
+Lemma rr_m_clock : forall L m, m_clock (relim L m) = m_clock m. Proof. reflexivity. Qed.
+Lemma rr_m_creds : forall L m, m_creds (relim L m) = m_creds m. Proof. reflexivity. Qed.
+Lemma rr_m_fd : forall L m, m_fd (relim L m) = m_fd m. Proof. reflexivity. Qed.
+Lemma rr_m_io : forall L m, m_io (relim L m) = m_io m. Proof. reflexivity. Qed.
+Lemma rr_m_fsys : forall L m, m_fsys (relim L m) = m_fsys m. Proof. reflexivity. Qed.
+Lemma rr_m_proc : forall L m, m_proc (relim L m) = m_proc m. Proof. reflexivity. Qed.
+Lemma rr_m_lim : forall L m, m_lim (relim L m) = m_lim m. Proof. reflexivity. Qed.
+Lemma rr_m_time : forall L m, m_time (relim L m) = m_time m. Proof. reflexivity. Qed.
+Lemma rr_m_vmmaps : forall L m, m_vmmaps (relim L m) = relimV L (m_vmmaps m). Proof. reflexivity. Qed.
+Lemma rr_m_vm : forall L m, m_vm (relim L m) = relimS L (m_vm m). Proof. reflexivity. Qed.
+Lemma rr_vmst_maps : forall L v, vmst_maps (relimS L v) = relimV L (vmst_maps v). Proof. reflexivity. Qed.
+Lemma rr_vmst_lazy : forall L v, vmst_lazy (relimS L v) = vmst_lazy v. Proof. reflexivity. Qed.
+Lemma rr_vmst_materialized : forall L v, vmst_materialized (relimS L v) = vmst_materialized v. Proof. reflexivity. Qed.
+Lemma rr_vm_reserved : forall L h, vm_reserved (relimV L h) = vm_reserved h. Proof. reflexivity. Qed.
+Lemma rr_vm_maps : forall L h, vm_maps (relimV L h) = vm_maps h. Proof. reflexivity. Qed.
+Lemma rr_vm_noaccess : forall L h, vm_noaccess (relimV L h) = vm_noaccess h. Proof. reflexivity. Qed.
+Lemma rr_vm_start_brk : forall L h, vm_start_brk (relimV L h) = vm_start_brk h. Proof. reflexivity. Qed.
+Lemma rr_vm_brk : forall L h, vm_brk (relimV L h) = vm_brk h. Proof. reflexivity. Qed.
+Lemma rr_vm_mmap_base : forall L h, vm_mmap_base (relimV L h) = vm_mmap_base h. Proof. reflexivity. Qed.
+Lemma rr_vm_init_sp : forall L h, vm_init_sp (relimV L h) = vm_init_sp h. Proof. reflexivity. Qed.
+Lemma rr_vm_limit : forall L h, vm_limit (relimV L h) = L. Proof. reflexivity. Qed.
+Lemma rr_alloc_top : forall L h, alloc_top (relimV L h) = alloc_top h. Proof. reflexivity. Qed.
+Lemma rr_vm_backed_maps : forall L h, vm_backed_maps (relimV L h) = vm_backed_maps h. Proof. reflexivity. Qed.
+Lemma rr_vm_backing_used : forall L m, vm_backing_used (relim L m) = vm_backing_used m. Proof. reflexivity. Qed.
+Lemma rr_m_kernel : forall L m, m_kernel (relim L m) = m_kernel m. Proof. reflexivity. Qed.
+Lemma rr_m_vdso : forall L m, m_vdso (relim L m) = m_vdso m. Proof. reflexivity. Qed.
+Lemma rr_vmst_kernel : forall L v, vmst_kernel (relimS L v) = vmst_kernel v. Proof. reflexivity. Qed.
+Lemma rr_vmst_vdso : forall L v, vmst_vdso (relimS L v) = vmst_vdso v. Proof. reflexivity. Qed.
+Lemma rr_m_sigpipe_pending : forall L m, m_sigpipe_pending (relim L m) = m_sigpipe_pending m. Proof. reflexivity. Qed.
+Lemma rr_m_channel_reader : forall L m, m_channel_reader (relim L m) = m_channel_reader m. Proof. reflexivity. Qed.
+Lemma rr_m_sigpipe_action : forall L m, m_sigpipe_action (relim L m) = m_sigpipe_action m. Proof. reflexivity. Qed.
+Lemma rr_m_sigpipe_default : forall L m, m_sigpipe_default (relim L m) = m_sigpipe_default m. Proof. reflexivity. Qed.
+Lemma rr_m_sigpipe_terminal : forall L m, m_sigpipe_terminal (relim L m) = m_sigpipe_terminal m. Proof. reflexivity. Qed.
+Lemma rr_mmap_top : forall L h, mmap_top (relimV L h) = mmap_top h. Proof. reflexivity. Qed.
+Lemma rr_vdso_top : forall L h, vdso_top (relimV L h) = vdso_top h. Proof. reflexivity. Qed.
 #[export] Hint Rewrite rr_m_fds rr_m_pipes rr_m_vm_lazy rr_m_vm_materialized rr_m_stdin rr_m_urandom rr_m_net rr_m_conn_ix rr_m_fs rr_m_halted rr_m_tid rr_m_setsid_succeeded rr_m_has_children rr_m_sigaltstack_installed rr_m_sigmask rr_m_killed rr_m_sigabrt_pending rr_m_abort_terminal rr_m_utsname rr_m_statpins rr_m_rlimit_core rr_m_nofile rr_m_clock rr_m_creds rr_m_fd rr_m_io rr_m_fsys rr_m_proc rr_m_lim rr_m_time rr_m_vmmaps rr_m_vm rr_vmst_maps rr_vmst_lazy rr_vmst_materialized rr_vm_reserved rr_vm_maps rr_vm_noaccess rr_vm_start_brk rr_vm_brk rr_vm_mmap_base rr_vm_init_sp rr_vm_limit rr_alloc_top rr_vm_backed_maps rr_vm_backing_used : relim_rw.
+#[export] Hint Rewrite rr_m_kernel rr_m_vdso rr_vmst_kernel rr_vmst_vdso rr_m_sigpipe_pending rr_m_channel_reader rr_m_sigpipe_action rr_m_sigpipe_default rr_m_sigpipe_terminal rr_mmap_top rr_vdso_top : relim_rw.
 
 From Ltac2 Require Import Ltac2.
 Set Default Proof Mode "Classic".
@@ -368,7 +422,9 @@ Ltac red_proj_in_goal :=
     procst_setsid_succeeded procst_sigmask procst_children procst_utsname procst_sigaltstack_installed procst_killed procst_sigabrt_pending
     procst_abort_terminal procst_statpins limst_core limst_nofile timest_clock m_fd m_vm m_io m_fsys m_proc m_lim m_time
     m_fds m_pipes m_vmmaps m_vm_lazy m_vm_materialized m_stdin m_urandom m_net m_conn_ix m_fs m_halted m_tid m_setsid_succeeded m_has_children
-    m_sigaltstack_installed m_sigmask m_killed m_sigabrt_pending m_abort_terminal m_utsname m_statpins m_rlimit_core m_nofile m_clock m_creds].
+    m_sigaltstack_installed m_sigmask m_killed m_sigabrt_pending m_abort_terminal m_utsname m_statpins m_rlimit_core m_nofile m_clock m_creds
+    vmst_kernel vmst_vdso procst_sigpipe_pending procst_channel_reader procst_sigpipe_action procst_sigpipe_terminal
+    m_kernel m_vdso m_sigpipe_pending m_channel_reader m_sigpipe_action m_sigpipe_default m_sigpipe_terminal].
 Ltac red_proj_in H :=
   lazy beta iota zeta delta [relim relimS relimV
     vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp fdst_table fdst_pipes vmst_maps vmst_lazy vmst_materialized
@@ -376,7 +432,9 @@ Ltac red_proj_in H :=
     procst_setsid_succeeded procst_sigmask procst_children procst_utsname procst_sigaltstack_installed procst_killed procst_sigabrt_pending
     procst_abort_terminal procst_statpins limst_core limst_nofile timest_clock m_fd m_vm m_io m_fsys m_proc m_lim m_time
     m_fds m_pipes m_vmmaps m_vm_lazy m_vm_materialized m_stdin m_urandom m_net m_conn_ix m_fs m_halted m_tid m_setsid_succeeded m_has_children
-    m_sigaltstack_installed m_sigmask m_killed m_sigabrt_pending m_abort_terminal m_utsname m_statpins m_rlimit_core m_nofile m_clock m_creds] in H.
+    m_sigaltstack_installed m_sigmask m_killed m_sigabrt_pending m_abort_terminal m_utsname m_statpins m_rlimit_core m_nofile m_clock m_creds
+    vmst_kernel vmst_vdso procst_sigpipe_pending procst_channel_reader procst_sigpipe_action procst_sigpipe_terminal
+    m_kernel m_vdso m_sigpipe_pending m_channel_reader m_sigpipe_action m_sigpipe_default m_sigpipe_terminal] in H.
 
 (* [comment removed for export] *)
 Ltac rw_proj :=
@@ -464,4 +522,3 @@ Ltac sim_step :=
 Ltac sim := repeat sim_step.
 (* [comment removed for export] *)
 Ltac sim_arm m HM := unfold MOK in HM; lazy beta zeta; sim.
-(* [comment removed for export] *)

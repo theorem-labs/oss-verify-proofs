@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_ok_malloc_fp destructures rauxv_ok's new witnesses (the launch's auxv)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -126,7 +127,7 @@ Qed.
 Proof.
   intros MR0 MR2 AUX PE CLO SB. eapply rauxv_ok_pres; [exact AUX| exact PE| |].
   - intros a Ha Hfp. destruct (rmalloc_fp_cases st st2 lo sp m0 m2 a MR0 MR2 Hfp); [lia|].
-    ddestruct AUX as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). rceilb. lia.
+    ddestruct AUX as (av & la & ph & ent & uid & gid & hw & xfn & rnd & _ & _ & _ & HH). rceilb. lia.
   - intros a Ha Hfp. unfold RAUXV_CELL, RLIBC in Ha.
     destruct (rmalloc_fp_image st st2 lo sp m0 m2 a MR0 MR2 Hfp CLO ltac:(lia)) as [X|X]; unfold RCTX in X; lia.
 Qed.

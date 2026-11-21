@@ -2,7 +2,7 @@
 
 ## The lines this recipe covers
 
-Lines 15-81 of lib/CJ/RL/GX/G_sn_write.v at commit dde52d349c2c34a82325f0f2f2d973bf87d8c2b4 (blob be06aa84865f3e65e0783142a2d033fb82083ce7,
+Lines 15-81 of lib/CJ/RL/GX/G_sn_write.v (blob be06aa84865f3e65e0783142a2d033fb82083ce7,
 sha256 c976b481495db121496314988bc76f734ae0497bd0c3add37644e8812d31d0c4): the Definition of sn_write_prog, from its `Definition` line to the line that ends
 with `.`, that is the `PNode` and `PJ_<op>` lines of the tree. As a file (the 67 lines and a final newline) they have
 sha256 21e98fc51a7d23f5a657364735e32e5a2c5e2486be06cadf84ceafe7d78c1dea.
@@ -44,7 +44,7 @@ The file's Requires name no image: its Section takes `Context {IMG : RImg}`. The
 | deny list (ptree_emit.py --deny): internal names, one per line; private, not published | $DENY | bcdc797a74b48a2a76d955655628e1c61c538beb30226e15895b2c59a90d5763 |
 
 $PINS holds plain/, ubsan/, asan/ and asan-ubsan/, each with the image and its twin. $UNIT is the unit root
-projects/plugin-hostd/fuzz_command/proofs at dde52d349c2c. The deny list changes no output byte: it only makes the
+projects/plugin-hostd/fuzz_command/proofs. The deny list changes no output byte: it only makes the
 generator refuse an argument or an output that holds one of its strings.
 
 ## fuzz_command.plain (the unit's pin)

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainG2.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 9564bfd9c706) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainG2.v (Quarantine::Drain walk set; file sha256 9564bfd9c706) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the CELL facts Drain's entry shell asks - the two caches' header
    words, the mutex word, the two Quarantine constants - read off DMiface.qview's qv_cells / qv_const
-   (DMiface.v:81-85) instead of cgif's allocator relation.  The extraction is the released seed's (YFev.v:64-128:
+   (DMiface.v:82-86) instead of cgif's allocator relation.  The extraction is the released seed's (YFev.v:64-128:
    rootT_vals / rootG_vals / mutex_vals / const_vals), with the cells taken straight from YG0n.quar_cells, so it
    holds at any instance whose qview holds.  DMdrainE takes these as its hypotheses VQT / VQG / VQW / VMAX / VMIN.
    rule 24: no function proved (kind: cell extraction; the lane's reuse search is LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record),

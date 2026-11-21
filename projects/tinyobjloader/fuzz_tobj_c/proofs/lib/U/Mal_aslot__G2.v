@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the post's MInvIR built with the vDSO fact, taken as a section hypothesis). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -955,6 +956,8 @@ Qed.
 
 Section Reab.
 Variables (tr : list event) (md : Model) (msF : machine_state) (rhoF : valuation).
+(* LPS 727298f3: the vdso/vvar pair is in the reserved ledger; the post's malloc invariant carries it. *)
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S55Sf6Q40A1S6Sf6Q8A1A1F_;VmW;S27Vrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -1612,7 +1615,7 @@ S55S5dSf8Q40S28VrhoF;S2aVSF;ZaA2A2A2S116Vtam;A1A3").
 
 Theorem post_ok : ltac2:(tb__ "0|0|
 S162Sd5Sd8Vrho;S158Sd5S147S156VX;VU;S15cVs;VL;A2VKc;A7S4S3S152A1S15eVtr;S15fVmsF;Vmd;A2A4A5").
-Proof using EIm EmW Erd Evm Ewok HI HI' HKc HMI HR' HSF_cs HSF_fcsr HSF_fregs HSF_match HSF_objs HSF_pc HSF_resv HXr HXr' HagF Hbnc Hbnc_val Hbytes Hdelta Hdepth HdsC HdsF_ent HdsF_sem HdsF_vars Hent_hold Hg' Hgd Hhd Hheads' Hidx Hidx' Hlocs Hm_ctz Hm_sct Hmaskv Hreq Hreq_rho Hrom Hsc Hsc' Hsc_rho HsmF Hsm_pre Hsp Hsp_high Hspanv Hstride' Hta Htam Hu' Hub' bv0 bv1 rv0 rv1.
+Proof using bv0 bv1 EIm EmW Erd Evm Ewok HagF Hbnc Hbnc_val Hbytes Hdelta Hdepth HdsC HdsF_ent HdsF_sem HdsF_vars Hent_hold Hg' Hgd Hhd Hheads' HI HI' Hidx Hidx' HKc Hlocs Hm_ctz Hm_sct Hmaskv HMI HR' Hreq Hreq_rho Hrom Hsc Hsc' Hsc_rho HSF_cs HSF_fcsr HSF_fregs HSF_match HSF_objs HSF_pc HSF_resv Hsm_pre HsmF Hsp Hsp_high Hspanv Hstride' Hta Htam Hu' Hub' Hvd HXr HXr' rv0 rv1.
   exists (L_as_ok IEC_U), (JL_as_ok segsU C_U X U (mkMA s L) Kc), rho'.
   split; [right; left; reflexivity|].
   split; [exact agree_vals_rho'|].
@@ -1623,7 +1626,7 @@ Proof using EIm EmW Erd Evm Ewok HI HI' HKc HMI HR' HSF_cs HSF_fcsr HSF_fregs HS
   { cbn [rw rho']. unfold V_RES, rw'. reflexivity. }
   rewrite EI.
   exists (mkMA s' L), g, am'. cbn [ma_s ma_L].
-  split. { unfold MInvIR. cbn [rm rho']. rewrite <- HR', <- Evm. exact minvI'. }
+  split. { minvir_split. cbn [rm rho']. rewrite <- HR', <- Evm. exact minvI'. }
   split; [exact HXr'|]. split; [apply layout_extends_refl|]. split; [exact Hg'|]. split; [exact Hu'|]. split; [exact Hsc'|].
   split; [exact Hstride'|]. split; [exact Hidx'|]. split; [exact Hheads'|]. split; [exact Hub'|].
   split.
@@ -1637,7 +1640,7 @@ Qed.
 
 Theorem post_okH : ltac2:(tb__ "0|0|
 S17dVX;VU;S15cVs;VL;A2VKc;Vrho;S4S3S152A1S15eVtr;S15fVmsF;Vmd;A2A4A6").
-Proof using EIm EmW Erd Evm Ewok HI HI' HKc HMI HR' HSF_cs HSF_fcsr HSF_fregs HSF_match HSF_objs HSF_pc HSF_resv HXr HXr' HagF Hbnc Hbnc_val Hbytes Hdelta Hdepth HdsC HdsF_ent HdsF_sem HdsF_vars Hent_hold Hg' Hgd Hhd Hheads' Hidx Hidx' Hlocs Hm_ctz Hm_sct Hmaskv Hreq Hreq_rho Hrom Hsc Hsc' Hsc_rho HsmF Hsm_pre Hsp Hsp_high Hspanv Hstride' Hta Htam Hu' Hub' bv0 bv1 rv0 rv1.
+Proof using bv0 bv1 EIm EmW Erd Evm Ewok HagF Hbnc Hbnc_val Hbytes Hdelta Hdepth HdsC HdsF_ent HdsF_sem HdsF_vars Hent_hold Hg' Hgd Hhd Hheads' HI HI' Hidx Hidx' HKc Hlocs Hm_ctz Hm_sct Hmaskv HMI HR' Hreq Hreq_rho Hrom Hsc Hsc' Hsc_rho HSF_cs HSF_fcsr HSF_fregs HSF_match HSF_objs HSF_pc HSF_resv Hsm_pre HsmF Hsp Hsp_high Hspanv Hstride' Hta Htam Hu' Hub' Hvd HXr HXr' rv0 rv1.
   split; [|exact post_ok]. exists (lowbit tam), s'. split; [cbn [ma_s]; rewrite Hsc_rho; exact Hta|].
   pose proof (lowbit_range tam Htam). lia.
 Qed.

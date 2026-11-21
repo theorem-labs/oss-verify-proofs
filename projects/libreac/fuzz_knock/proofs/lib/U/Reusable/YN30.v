@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN30.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed Zify). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -16,7 +17,10 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable.R Require Import Cfg.
 Section f. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+(* The allocation mode: these facts hold for the ledger of either mode. *)
+Context {AM : AllocMode}.
 Lemma loc_addr_padd_ L p d : loc_addr L (LMem (padd p d)) = ptr_addr L p + d.
 Proof. destruct p; cbn. unfold ptr_addr. cbn. lia. Qed.
 Lemma ptr_addr_padd_ L p d : ptr_addr L (padd p d) = ptr_addr L p + d.

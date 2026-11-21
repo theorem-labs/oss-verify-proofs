@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Ported by Theorem Labs, 2026-10-29: ajournal_fp_nil and srz_enter only, from cgif_file_fuzzer lib/A/ACfh.v (origin/ossv/recipes) to libreac fuzz_identity image A; module paths rebased, proofs unchanged. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -46,7 +47,7 @@ End d.
    if the lemma's type and the binder's text agree. *)
 Section binder_check.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
-(* lib/A/Prog/LLVMFuzzerTestOneInput.v:327-329 AJ_FP_NIL and :335-338 SRZ_ENTER (also LLVMFuzzerTestOneInput_L.v:386-388
+(* lib/A/Prog/LLVMFuzzerTestOneInput.v:328-330 AJ_FP_NIL and :335-338 SRZ_ENTER (also LLVMFuzzerTestOneInput_L.v:387-389
    AJ_FP_NIL), Section a/b/c: Context {fx} {rc} {SK}, SEGS := @pa_segs _ ident_listing PI, Variable B. SEGS is a
    term of type list Segment, so the check is at any SEGS. *)
 Variable SEGS : list Segment.
@@ -58,7 +59,7 @@ Check (srz_enter SEGS : forall (W : world SEGS) (c : config) (T : TSet),
 AI SEGS (w_H W) (w_A W) (cfg_model c) ->
 SRr SEGS W c (fun W' c' => AI SEGS (w_H W') (w_A W') (cfg_model c') -> srealizes SEGS c' T) ->
 srealizes SEGS c T).
-(* lib/A/Prog/IdentEntryLink.v:689-691 AJ_FP_NIL, Section L: SKA := ident_asan_sink_head (IdentEntryLink.v:68,
+(* lib/A/Prog/IdentEntryLink.v:690-692 AJ_FP_NIL, Section L: SKA := ident_asan_sink_head (IdentEntryLink.v:68,
    {| YI16.sk_ofl_head := 0x5f8648 |}), SEGS := @pa_segs _ ident_listing (@PI_ident rc), Variable IdentB. *)
 #[local] Abbreviation SKA := ({| YI16.sk_ofl_head := 0x5f8648 |} : YI16.sink_head).
 Check (ajournal_fp_nil (SK := SKA) SEGS B : forall STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,

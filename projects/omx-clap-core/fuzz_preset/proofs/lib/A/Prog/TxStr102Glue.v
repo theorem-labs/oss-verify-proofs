@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1285 of its 1379 lines of code are new or changed and 684 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, the #102 IMAGE-GENERIC GLUE of the tx_string walk (fuzz_preset.c merged :408-430, body instruction-equal
    to the base's :374-396), shared by image A' and image B'.
    OWNER: h-rw-pre-5 (lane TxStrBp), branch cold/h-rw-pre-5-r102-txstrB; announced blob: to be named when it lands
    (pins102). THE SHARED HOME (K0 / S10's owner h-hpreset-7, 2026-10-29 19:36Z): S10's own #102 move cites this file and
    BTxValueB's lib/A/Prog/Tx102Glue.v (the text state), not the reverse. It is the #102 form of S10's old-pin
-   lib/A/Prog/S10TxStrGlue.v (blob 472f01fdb977, cold/h-hpreset-7-walk-S10 b2764049d6cd), with S10's lemma names (the
+   lib/A/Prog/S10TxStrGlue.v (blob 472f01fdb977), with S10's lemma names (the
    ts_ family) wherever a statement keeps its shape; it Requires NO S10 file: the text state is Tx102Glue's tx_state /
    tx_pos, and S10's image- and text-agnostic segment environment (S10Env.v d8ca1dd59ead) is inlined below.
    WHY A RE-WALK, NOT A RE-FIT: the #102 tx texts change the state the walk carries, not only its spelling: prhtx_rec
@@ -15,7 +16,7 @@
    had the fabortW abort arm that ended the walk. So every call site continues on every outcome, and the live state
    carries the buffer, failed, own and the appended prefix.
    THE BATCH KIT, NOW THE RE-HIDE MOVE'S TEXTS (PRH_FnTx.v 7cf918708def; history: first fitted as a prep over the
-   batch kit's cdde0ed15730, then on the kit's cut 7cdbb61b5fa0 at PRH_FnTx.v 88468bf162d8, superseding bff94397b16a;
+   batch kit, then on the kit's cut at PRH_FnTx.v 88468bf162d8, superseding bff94397b16a;
    every lemma name kept, the lead's approval 2026-10-30). Against the texts now: (1) DW gone: Context TXPUT is
    ttx_put_specX .. CTX0 (:414); (2) ts_pre: prh_univ_closure B CTX0 (:671) and the guarded room `f0 = 0 -> wild_room
    (as_universe B) [] k (st_depot S)` and consumer window `f0 = 0 -> prh_cons_from rp_sm rp_x rp_os rp_i k`, k the
@@ -26,11 +27,11 @@
    by ajournal_xw_unbase0R, calls s10_call_WbmR with the callee's room and window (Tx102Glue.v tx_room_window /
    tx_cons_window), folds by tx_state_fold_wR / tx_budget_fold; R twins ts_liveR, ts_live_runR/_sameR, ts_str_keep_wR.
    prhtx_trace is STATE-FREE in the batch (inU, no S): unchanged here (tx_state's trace is memory-only).
-   SRC-CEIL RETIRED (on the cut 7cdbb61b5fa0, the internal file MIGRATION.md, section 4): the Context {K0_SRC_CEIL} is DELETED. The cut's
+   SRC-CEIL RETIRED (on the cut, the internal file MIGRATION.md, section 4): the Context {K0_SRC_CEIL} is DELETED. The cut's
    src_rd states `p + len <= alloc_ceiling` (no `+ 8`), and ts_src_byte takes that bound from the string's own
    prhtx_bvis granule bound (PRH_FnTx.v :271), as BTxValue did; ts_src_byte loses that one implicit argument.
-   THE PRE-CUT TEXTS: lib/A/PRH_FnTx.v a52a78336898 and lib/A/PRH_Base.v fdb45545469b of walkkit-next f97c8b2f046b
-   (ttx_string_specX / ttx_put_specX: decff67d721f's word for word). What #102 changed, and what this file does:
+   THE PRE-CUT TEXTS: lib/A/PRH_FnTx.v a52a78336898 and lib/A/PRH_Base.v fdb45545469b of walkkit-next
+   (ttx_string_specX / ttx_put_specX: a commit's word for word). What #102 changed, and what this file does:
    - the record has `int failed` at t + 24 (prhtx_rec's f; 28 bytes): the source of every put is disjoint from
      [t, t + 28);
    - NO ABORT ARM: tx_put's post is ONE fpostWm naming its outcome (DONE / FAILED AT ENTRY / REFUSED), and every arm
@@ -519,7 +520,7 @@ Context {ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 #[local] Notation AJR R := (ajournal_xR (SK := SK) SEGS B PST ARx R).
 #[local] Notation RCF := (YA0nH.wle' SEGS YGcfRehidePost.RZ_cf).
 #[local] Notation SRRCF := (YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf).
-(* ---- the allocator laws at the cf instance's head (25 fields, YCbqG.v:330-356; 16 at YCbqG 83da015952be) ---- *)
+(* ---- the allocator laws at the cf instance's head (25 fields, YCbqG.v:331-357; 16 at YCbqG 83da015952be) ---- *)
 Context {LAWS : AR_laws_x SEGS B ARx cf_head}.
 (* MARKED STAND-IN (owner a Theorem Labs lane, the unit's image binding of B: PALib's fields, pal_got_uar and its disjointness included) *)
 Context {PAL : PALib (L := L) (PI := PA) B}.
@@ -777,7 +778,7 @@ Definition ts_liveR (R : world SEGS -> world SEGS -> Prop)
   F = frame_addr lyc 0 pos /\
   ts_mem Wc memc F (flag_addr lyc 0 pos).
 (* ts_live keeps its OWN body, with ts_liveR beside it as the copy over R. It was kept for walks that took a ts_live
-   hypothesis apart; no file does now (BTxStep.v:289 / BTxString.v:287 liveb and ATxStep.v:298 livea are @ts_liveR
+   hypothesis apart; no file does now (BTxStep.v:290 / BTxString.v:288 liveb and ATxStep.v:298 livea are @ts_liveR
    at WR). ts_live_R_wle below is the guard that the two bodies cannot drift. *)
 Definition ts_live (lyc : alayout) (Sc : astate) (Hpc : list Z) (Wc : world SEGS) (memc : word -> option byte)
   (mdc : Model) (kj pos F b cap f own : Z) (ks add pre : list Z) : Prop :=

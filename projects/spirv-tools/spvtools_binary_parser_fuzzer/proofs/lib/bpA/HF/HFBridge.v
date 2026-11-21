@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node; recorded proofs written as text where the node premise changed their terms). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -28,7 +29,14 @@ ltac2:(KReplay.run1 (kr_t_HFBridge ()) ["Bridge"] "h01Hh11Th22T'p;2g0046j20Tg005
   Theorem srealizes_bridge : forall c T,
     @SpinAlg.srealizes segs Scfg.hunspell_scfg c T -> SRealizes.srealizes segs c T.
 Proof.
-ltac2:(KReplay.run1 (kr_t_HFBridge ()) ["Bridge"] "h01ch11Th21Hh32IHh41ih55Hconth63Heqh72Hhh85Hnodeh91Ih:2T'h;3evsh<2i0h=2nxp;4p;3p;1p;6p;5p;9p;2g005jp4p741110R0g006iR1p4p73110p8P0g007cR2p606311000R3p8P3p1008fp4p73110p8g009[j41Tg00:Zj32Tg000mj14Tg0000j63TP2j5CTP1l9<Tg00;Tj10Tg00<9j15Tg00<Wj16Tg00=:j17Tg00=\j18Tg00>Rj19Tg00?Ij1:Tg00?kj3BTg00@Ej1ATg00@^j3@Tg0046j2=Tg00AXj3>Tg00BXj6?Tg00CRl9;Tg001MR1g0050R2p,4segsR3g0038R4f1R5f0R6C1P3P4A2356X12X01g002B#4\6P1\5f2R7P2[f3R8P3P4f5R9f4R:P8P7E3P3P4P:P6O1R;P8P6O1C1^49f6R<P9P6O1=23;]4P3f8R;f7R=P<P9P:P8P;P=P<P9P7DCP6M9<W3W5W8W<W1W=W;X90X01g00DS#0#0#0#0#0#0#5#6R0#7%86#9%:03B#AA@356W7X01P3P4P7P5C1A23871=87P3P9P:P8P5A>:86E?W6W3W2X:2X12X01P7P5P6M9;W2W1W0o"). Qed.
+  (* LPS 08b1429: text in place of the recorded proof; both [srz_node]s now carry the same
+     [RomBase.sys_rob] premise, passed through. *)
+  intros c T H.
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (SRealizes.srz_node segs c I evs nx T i0 (node_ok_bridge c I evs nx Hnode) Hrob IH).
+  - exact (SRealizes.srz_halt segs c Hh).
+  - exact (SRealizes.srz_conseq segs c T T' IH (t_eq_bridge T T' Heq)).
+Qed.
 
 End Bridge.
 

@@ -1,13 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the mmap decline premise (place_declined_b), the launch's channel reader. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
-From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
-Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshfbbv_unsigned37Corelib4Init5Logicka3and3h5LinuxProcessSemanticsfLinuxProcessSem5Statem4atwo_pow_6446Stdlib6ZArith6BinInt1Zpf2lepf2lthf2bv01Zka2eqm49errno_retpf3sub37Corelib4Init9Datatypesu04listu06optionu04Someu03natm4eread_bytes_aux37Corelib4Init5Peanohi62le37Corelib5Lists7ListDefhk06firstnm4eread_bytes_map3h5LinuxProcessSemanticsfLinuxProcessSem6BvBasehn2bword_to_natu06lengthpf6of_natm4h2readable_bytes_auxm4ereadable_bytesu04prodm4dgather_iovecsm4dgather_prefixm4aiovs_totalm4fpage_round_up_Zm46in_argka3iff3h5LinuxProcessSemanticsfLinuxProcessSem5Monadije7outcome3h5LinuxProcessSemanticsfLinuxProcessSem5Specsin7csyscall_specm45Modelm4dSyscallEffectm4cSyscallInputm48in_sysno5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Fs5Ioctliu7aioctl_spec4h5LinuxProcessSemanticsfLinuxProcessSem3Sys7Syscalljia5cmd32jia4fd325h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Fs4Openjmfbopenat_specjmfaclose_spec5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Fs9ReadWritejs09read_specjs0bwritev_spec5h5LinuxProcessSemanticsfLinuxProcessSem3Sys6Kernel4Forkkh5h4set_tid_address_spec5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Mm4Mmapkm68brk_speckm6bmunmap_speckm69mmap_spec5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Mm8Mprotectks2dmprotect_specu03nilm47FdEntrym45m_fdsije2Okm47MemCopym45eventm49fd_lookupm49fd_removem49mkEffectUm48with_fdshf7Z_to_bv3h5LinuxProcessSemanticsfLinuxProcessSem2Fsln44pathu04boolm45FdDirm49SockStateu04truem46ENOTTYiu7h0tty_only_request69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7RelSpec~~~~~~lu79nodevnullu04Noneka2exm45m_tidm48with_tidkh5h0PID_MAX_ENVELOPEm48m_vmmapsm46vm_brkkm68brk_r_okkm6abrk_unmapskm69brk_zeroskm6dwith_brk_nextm47vm_mapspf3addu04consu05falseu04pairm49TASK_SIZEm47map_hasm4amap_removem4dmaps_subtractm4cmkVmMapsFullm49page_sizem4avm_init_spm48vm_limitm4cvm_mmap_basem4bvm_noaccessm4bvm_reservedm4cvm_start_brkkm6h3with_mmap_destroyedjia5w_is0pf6modulokm6bmmap_errnos36Stdlib5Lists4Listnqd2Inm46ENOMEMlu7cmmap_err_outu03appka2orm46VmMapsm49alloc_topm4bregion_freem4bwith_vmmapskm6bmmap_anon_bkm6emmap_modeled_bkm6h8mmap_noreserve_backed_okkm6h2mmap_off_aligned_bkm6h1with_mmap_backingkm6fmmap_noaccess_bm4cmap_containskm6h9mmap_fixed_destroyed_nextkm6h5mmap_fixed_noaccess_bkm6h5with_mmap_replacementks2fmprotect_errnoslu7h0mprotect_err_outks2h2mprotect_budget_okks2h9mprotect_grows_conflict_bks2h3mprotect_model_nextks2h2mprotect_modeled_bm46EISDIRm4aaccess_okbhn28len_wordm46FdFileln49file_readln49fs_lookupm49fd_insertm47in_wmemm44m_fsm4erw_count_clamp4h5LinuxProcessSemanticsfLinuxProcessSem3Sys7Uaccesspv9h0delivered_writeshf6bv_addm4h3cstr_access_len_auxm46in_memm48path_maxije9Unmodeledm4beff_copyinsm4cwith_copyinsije3Sysjiaerecord_copyinslu7dafter_copyinsm48alloc_fdjmfdopenat_errnosjmfh0open_result_speclu78open_reslu78open_outjmfh2modeled_open_flagsjmfh0openat_body_speclu7aopen_readsjia7err_retm4bCstrTooLongm4cENAMETOOLONGm4bcstr_resultm49read_cstrm46CstrOkm46ENOENTka3not5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Fs5Nameirq7epath_has_slashjmfh0openat_read_specjmfepath_is_dirrefm4ecap_iovecs_auxm4acap_iovecspv9crw_bytes_maxije4bindije9get_modelije5inputjs08iovcnt32m49FdChannelm45ImpOkm4dimport_iovecsm4h6import_iovecs_accessesm4aiov_import4h5LinuxProcessSemanticsfLinuxProcessSem3Sys4Uapisr8aAT_FDCWD32jmfh2open_ignored_flagspf5ldiff" s.   (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
@@ -19,14 +17,17 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for expor
 Lemma bv_eqb_refl : forall {n : N} (a : bv n), bv_eqb a a = true.
 Proof. intros n a. apply bv_eqb_eq. reflexivity. Qed.
 
-Lemma word_unsigned_range : ltac2:(zQ "70!h9!jc!le!p2!r7!rc!s1>1w@1$6@1$0#k0@2$2@2$4Z@2$1@1$0#k0^1@2$5@2$1@1$0#k0^1$3").
+Lemma word_unsigned_range : forall (w : word),
+  (0 <= bv_unsigned w < two_pow_64)%Z.
 Proof.
   intros w. pose proof (bv_unsigned_in_range _ w) as H.
   unfold two_pow_64. unfold bv_modulus in H.
   change (Z.of_N 64) with 64%Z in H. exact H.
 Qed.
 
-Lemma errno_ret_unsigned : ltac2:(zQ "80!s6!r7!s9!h9!se!p2!ta!jc>1e$0>0@2$1+1^1>0@2$1^2+vvf@3$2$0@2$7@1$3#k0@1$4^3@2$6$5^3").
+Lemma errno_ret_unsigned : forall e,
+  (1 <= e)%Z -> (e <= 4095)%Z ->
+  bv_unsigned (errno_ret e) = (two_pow_64 - e)%Z.
 Proof.
   intros e H1 H2. unfold errno_ret, two_pow_64.
   rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus.
@@ -35,10 +36,33 @@ Proof.
   rewrite Z_mod_plus_full. apply Z.mod_small. lia.
 Qed.
 
-(* [comment removed for export] *)
+Lemma errno_ret_error_b : forall e,
+  (1 <= e)%Z -> (e <= 4095)%Z -> addr_is_error_b (errno_ret e) = true.
+Proof.
+  intros e H1 H2. unfold addr_is_error_b.
+  rewrite (errno_ret_unsigned e H1 H2). unfold two_pow_64.
+  apply Z.ltb_lt. lia.
+Qed.
 
 (* [comment removed for export] *)
-Lemma read_bytes_aux_prefix : ltac2:(zQ "a0!h9!s1!v8!vf!hg8!hgf!s9!hh5!hja!hl7>1k$5>1n$5>2mp>0@1$1@1$0#k0@1$3@1$1@1$0#8>1a@1$1@1$0#k0>1w@1$2@1$1@1$0#8>0@2$8^5^4>0@3$6@1$3@1$2@1$1@1$0#8@3$7^4^3^5@2$4@1$2@1$1@1$0#8^2@3$6@1$3@1$2@1$1@1$0#8@3$7^5^4^7@2$4@1$2@1$1@1$0#8@3$9@1$1@1$0#8^7^3").
+Definition errnos_ok (es : list Z) : bool :=
+  forallb (fun e => (1 <=? e)%Z && (e <=? 4095)%Z) es.
+
+Lemma errnos_ok_range : forall es e,
+  errnos_ok es = true -> In e es -> (1 <= e)%Z /\ (e <= 4095)%Z.
+Proof.
+  induction es as [|x es IH]; intros e Hok HIn; [destruct HIn|].
+  cbn in Hok. apply andb_true_iff in Hok as [Hx Hok].
+  apply andb_true_iff in Hx as [H1 H2].
+  destruct HIn as [-> | HIn];
+    [ split; apply Z.leb_le; assumption
+    | apply IH; assumption ].
+Qed.
+
+(* [comment removed for export] *)
+Lemma read_bytes_aux_prefix : forall k n mp a w,
+  (k <= n)%nat -> read_bytes_aux mp a n = Some w ->
+  read_bytes_aux mp a k = Some (firstn k w).
 Proof.
   induction k as [|k IH]; intros n mp a w Hk Hw; [reflexivity|].
   destruct n as [|n]; [lia|].
@@ -48,7 +72,9 @@ Proof.
   cbn. rewrite Hb. rewrite (IH n mp (a + 1) r ltac:(lia) Hr). reflexivity.
 Qed.
 
-Lemma read_bytes_map_prefix : ltac2:(zQ "b0!h9!s1!v8!vf!hg8!s9!hm1!jc!hl7!hq1!r7>2mp>0@1$1@1$0#k0@1$3@1$1@1$0#8>1a@1$1@1$0#k0>3len@1$1@1$0#k0>1k@1$1@1$0#k0>1w@1$2@1$1@1$0#8>0@2$a@2$7@1$0#k0^2@2$7@1$0#k0^3>0@3$5@1$3@1$2@1$1@1$0#8@3$6^6^5^4@2$4@1$2@1$1@1$0#8^2@3$5@1$3@1$2@1$1@1$0#8@3$6^7^6^4@2$4@1$2@1$1@1$0#8@3$8@1$1@1$0#8@1$9^4^3").
+Lemma read_bytes_map_prefix : forall mp a len k w,
+  (bv_unsigned k <= bv_unsigned len)%Z -> read_bytes_map mp a len = Some w ->
+  read_bytes_map mp a k = Some (firstn (word_to_nat k) w).
 Proof.
   intros mp a len k w Hk Hw. rewrite read_bytes_map_eq in *.
   unfold word_to_nat in *.
@@ -56,7 +82,8 @@ Proof.
     [lia | assumption].
 Qed.
 
-Lemma read_bytes_aux_length : ltac2:(zQ "90!h9!s1!v8!hgf!vf!s9!hg8!hr0!hh5>2mp>0@1$1@1$0#k0@1$4@1$1@1$0#8>1k$3>1a@1$1@1$0#k0>1w@1$2@1$1@1$0#8>0@3$5@1$4@1$2@1$1@1$0#8@3$8^4^2^3@2$6@1$2@1$1@1$0#8^1@3$5$3@2$7@1$1@1$0#8^2^4").
+Lemma read_bytes_aux_length : forall mp k a w,
+  read_bytes_aux mp a k = Some w -> length w = k.
 Proof.
   intros mp k; induction k as [|k IH]; intros a w Hw; cbn in Hw.
   - inversion Hw. reflexivity.
@@ -65,7 +92,8 @@ Proof.
     inversion Hw; subst. cbn. now rewrite (IH _ _ Hr).
 Qed.
 
-Lemma read_bytes_map_length : ltac2:(zQ "b0!h9!s1!v8!vf!s9!hg8!hr0!s6!hm1!hr9!jc>2mp>0@1$1@1$0#k0@1$3@1$1@1$0#8>1a@1$1@1$0#k0>3len@1$1@1$0#k0>1w@1$2@1$1@1$0#8>0@3$4@1$3@1$2@1$1@1$0#8@3$8^4^3^2@2$5@1$2@1$1@1$0#8^1@3$4$7@1$9@2$6@1$1@1$0#8^2@2$a@1$0#k0^3").
+Lemma read_bytes_map_length : forall mp a len w,
+  read_bytes_map mp a len = Some w -> Z.of_nat (length w) = bv_unsigned len.
 Proof.
   intros mp a len w Hw. rewrite read_bytes_map_eq in Hw.
   unfold word_to_nat in Hw.
@@ -73,7 +101,8 @@ Proof.
   pose proof (word_unsigned_range len). lia.
 Qed.
 
-Lemma readable_bytes_aux_full : ltac2:(zQ "90!h9!s1!v8!vf!s9!hg8!hgf!hh5!hs2>2mp>0@1$1@1$0#k0@1$3@1$1@1$0#8>1k$6>1a@1$1@1$0#k0>1w@1$2@1$1@1$0#8>0@3$4@1$3@1$2@1$1@1$0#8@3$7^4^2^3@2$5@1$2@1$1@1$0#8^1@3$4@1$2@1$1@1$0#8@3$8^5^3^4^2").
+Lemma readable_bytes_aux_full : forall mp k a w,
+  read_bytes_aux mp a k = Some w -> readable_bytes_aux mp a k = w.
 Proof.
   intros mp k; induction k as [|k IH]; intros a w Hw; cbn in *.
   - now inversion Hw.
@@ -82,7 +111,8 @@ Proof.
     inversion Hw; subst. now rewrite (IH _ _ Hr).
 Qed.
 
-Lemma readable_bytes_full : ltac2:(zQ "80!h9!s1!v8!vf!s9!hg8!hm1!ht8>2mp>0@1$1@1$0#k0@1$3@1$1@1$0#8>1a@1$1@1$0#k0>3len@1$1@1$0#k0>1w@1$2@1$1@1$0#8>0@3$4@1$3@1$2@1$1@1$0#8@3$6^4^3^2@2$5@1$2@1$1@1$0#8^1@3$4@1$2@1$1@1$0#8@3$7^5^4^3^2").
+Lemma readable_bytes_full : forall mp a len w,
+  read_bytes_map mp a len = Some w -> readable_bytes mp a len = w.
 Proof.
   intros. rewrite read_bytes_map_eq in *. rewrite readable_bytes_eq.
   now apply readable_bytes_aux_full.
@@ -98,8 +128,25 @@ Proof.
   unfold two_pow_64 in Hl. lia.
 Qed.
 
+Lemma firstn_length_le_Z : forall {A} (l : list A) r,
+  (0 <= r)%Z -> (r <= Z.of_nat (length l))%Z ->
+  Z.of_nat (length (firstn (Z.to_nat r) l)) = r.
+Proof.
+  intros A l r H0 Hle. rewrite firstn_length_le; lia.
+Qed.
+
+Lemma len_word_firstn_ret : forall (ret : word) {A} (l : list A),
+  (0 <= bv_unsigned ret <= Z.of_nat (length l))%Z ->
+  len_word (firstn (Z.to_nat (bv_unsigned ret)) l) = ret.
+Proof.
+  intros ret A l H. unfold len_word.
+  rewrite (firstn_length_le_Z l (bv_unsigned ret)) by lia.
+  apply Z_to_bv_bv_unsigned.
+Qed.
+
 (* [comment removed for export] *)
-Lemma gather_prefix_full : ltac2:(zQ "90!h9!s1!v8!vf!s9!hg8!hu9!hv0!ig0>2mp>0@1$1@1$0#k0@1$3@1$1@1$0#8>4iovs@1$2@2$6@1$1@1$0#k0@1$1@1$0#k0>2bs@1$2@1$1@1$0#8>0@3$4@1$3@1$2@1$1@1$0#8@2$7^3^2@2$5@1$2@1$1@1$0#8^1@3$4@1$2@1$1@1$0#8@2$8^4^3^2").
+Lemma gather_prefix_full : forall mp iovs bs,
+  gather_iovecs mp iovs = Some bs -> gather_prefix mp iovs = bs.
 Proof.
   induction iovs as [|[base len] r IH]; intros bs Hg; cbn in *.
   - now inversion Hg.
@@ -111,7 +158,8 @@ Proof.
     now rewrite (IH _ eq_refl).
 Qed.
 
-Lemma gather_iovecs_length : ltac2:(zQ "c0!h9!s1!v8!vf!s9!hg8!hr0!hu9!s6!hv0!ih0!hr9>2mp>0@1$1@1$0#k0@1$3@1$1@1$0#8>4iovs@1$2@2$7@1$1@1$0#k0@1$1@1$0#k0>2bs@1$2@1$1@1$0#8>0@3$4@1$3@1$2@1$1@1$0#8@2$9^3^2@2$5@1$2@1$1@1$0#8^1@3$4$8@1$b@2$6@1$1@1$0#8^2@1$a^3").
+Lemma gather_iovecs_length : forall mp iovs bs,
+  gather_iovecs mp iovs = Some bs -> Z.of_nat (length bs) = iovs_total iovs.
 Proof.
   induction iovs as [|[base len] r IH]; intros bs Hg; cbn in *.
   - now inversion Hg.
@@ -122,14 +170,16 @@ Proof.
     rewrite (read_bytes_map_length _ _ _ _ Hw), (IH _ eq_refl). reflexivity.
 Qed.
 
-Lemma page_round_up_Z_nonneg : ltac2:(zQ "30!r7!s6!ihd>1z$1>0@2$0Z^1@2$0Z@1$2^2").
+Lemma page_round_up_Z_nonneg : forall z,
+  (0 <= z)%Z -> (0 <= page_round_up_Z z)%Z.
 Proof.
   intros z Hz. unfold page_round_up_Z, page_size.
   apply Z.mul_nonneg_nonneg; [|lia].
   apply Z.div_pos; lia.
 Qed.
 
-Lemma page_round_up_Z_mono : ltac2:(zQ "30!s6!ihd!r7>1a$0>1b$0>0@2$2^2^1@2$2@1$1^3@1$1^2").
+Lemma page_round_up_Z_mono : forall a b,
+  (a <= b)%Z -> (page_round_up_Z a <= page_round_up_Z b)%Z.
 Proof.
   intros a b H. unfold page_round_up_Z, page_size.
   apply Z.mul_le_mono_nonneg_r; [lia|].
@@ -194,39 +244,68 @@ Ltac inv_sys :=
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+Definition out_det (eff : SyscallEffect) (m' : Model) (evs : list event)
+    (o : outcome SyscallEffect) : Prop :=
+  o = Ok eff m' evs.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma syscall_spec_29 : ltac2:(zQ "f0!iif!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!itc!jhc!jle!jm7!jc>1i$9>1m$7>1o@1$5$8>0@3$1$4@2$e@1$3#k0@1$a^3+hd@2$2@3$6^4^3^2@5$b@1$d@2$0^4N0@1$c@2$0^4N1^4^3^2").
+Lemma syscall_spec_29 : forall i m o,
+  bv_unsigned (in_sysno i) = 29%Z ->
+  syscall_spec i m o <-> ioctl_spec (fd32 (in_arg i 0)) (cmd32 (in_arg i 1)) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_56 : ltac2:(zQ "e0!iif!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!itc!jq3!jm7!jc>1i$9>1m$7>1o@1$5$8>0@3$1$4@2$d@1$3#k0@1$a^3+j8@2$2@3$6^4^3^2@6$b@1$c@2$0^4N0@2$0^4N1@2$0^4N2^4^3^2").
+Lemma syscall_spec_56 : forall i m o,
+  bv_unsigned (in_sysno i) = 56%Z ->
+  syscall_spec i m o <-> openat_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_57 : ltac2:(zQ "e0!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!iif!itc!jr2!jm7!jc>1i$8>1m$6>1o@1$4$7>0@3$0$3@2$d@1$2#k0@1$a^3+j9@2$1@3$5^4^3^2@4$b@1$c@2$9^4N0^4^3^2").
+Lemma syscall_spec_57 : forall i m o,
+  bv_unsigned (in_sysno i) = 57%Z ->
+  syscall_spec i m o <-> close_spec (fd32 (in_arg i 0)) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_63 : ltac2:(zQ "e0!iif!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!itc!jv9!jm7!jc>1i$9>1m$7>1o@1$5$8>0@3$1$4@2$d@1$3#k0@1$a^3+jf@2$2@3$6^4^3^2@6$b@1$c@2$0^4N0@2$0^4N1@2$0^4N2^4^3^2").
+Lemma syscall_spec_63 : forall i m o,
+  bv_unsigned (in_sysno i) = 63%Z ->
+  syscall_spec i m o <-> read_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_66 : ltac2:(zQ "e0!iif!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!itc!kg6!jm7!jc>1i$9>1m$7>1o@1$5$8>0@3$1$4@2$d@1$3#k0@1$a^3+k2@2$2@3$6^4^3^2@6$b@1$c@2$0^4N0@2$0^4N1@2$0^4N2^4^3^2").
+Lemma syscall_spec_64 : forall i m o,
+  bv_unsigned (in_sysno i) = 64%Z ->
+  syscall_spec i m o <-> write_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_96 : ltac2:(zQ "c0!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!itc!kkd!jc>1i$8>1m$6>1o@1$4$7>0@3$0$3@2$b@1$2#k0@1$9^3+m0@2$1@3$5^4^3^2@3$a^4^3^2").
+Lemma syscall_spec_66 : forall i m o,
+  bv_unsigned (in_sysno i) = 66%Z ->
+  syscall_spec i m o <-> writev_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_214 : ltac2:(zQ "d0!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!iif!itc!kpa!jc>1i$8>1m$6>1o@1$4$7>0@3$0$3@2$c@1$2#k0@1$a^3+t6@2$1@3$5^4^3^2@4$b@2$9^4N0^4^3^2").
+Lemma syscall_spec_96 : forall i m o,
+  bv_unsigned (in_sysno i) = 96%Z ->
+  syscall_spec i m o <-> set_tid_address_spec i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_215 : ltac2:(zQ "d0!iif!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!itc!kq6!jc>1i$9>1m$7>1o@1$5$8>0@3$1$4@2$c@1$3#k0@1$a^3+t7@2$2@3$6^4^3^2@5$b@2$0^4N0@2$0^4N1^4^3^2").
+Lemma syscall_spec_214 : forall i m o,
+  bv_unsigned (in_sysno i) = 214%Z ->
+  syscall_spec i m o <-> brk_spec (in_arg i 0) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_222 : ltac2:(zQ "d0!iif!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!itc!kr5!jc>1i$9>1m$7>1o@1$5$8>0@3$1$4@2$c@1$3#k0@1$a^3+te@2$2@3$6^4^3^2@9$b@2$0^4N0@2$0^4N1@2$0^4N2@2$0^4N3@2$0^4N4@2$0^4N5^4^3^2").
+Lemma syscall_spec_215 : forall i m o,
+  bv_unsigned (in_sysno i) = 215%Z ->
+  syscall_spec i m o <-> munmap_spec (in_arg i 0) (in_arg i 1) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
-Lemma syscall_spec_226 : ltac2:(zQ "d0!iif!s9!ij8!h9!s6!imc!iq5!ir5!ird!isd!itc!kva!jc>1i$9>1m$7>1o@1$5$8>0@3$1$4@2$c@1$3#k0@1$a^3+u2@2$2@3$6^4^3^2@6$b@2$0^4N0@2$0^4N1@2$0^4N2^4^3^2").
+Lemma syscall_spec_222 : forall i m o,
+  bv_unsigned (in_sysno i) = 222%Z ->
+  syscall_spec i m o <->
+  mmap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5) i m o.
+Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
+
+Lemma syscall_spec_226 : forall i m o,
+  bv_unsigned (in_sysno i) = 226%Z ->
+  syscall_spec i m o <-> mprotect_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) i m o.
 Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -235,22 +314,30 @@ Proof. intros i m o E; unfold syscall_spec, dispatch; rewrite E; reflexivity. Qe
 
 (* [comment removed for export] *)
 
-Lemma close_outcome : ltac2:(zQ "h92!h9!s1!lgb!hu9!lh1!ird!s9!imc!lhb!hg8!v8!hgf!vf!ij8!li3!li9!ir5!isd!lj3!ljb!lk7!ll3!llf!jr2!lma&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>2fd@1$1@1$0#k0>1i$h1>1m$h0>1e$4>1o@1$7$5>0@3$6@1$c$4@2$h3@1$8^3^5@2$9$4^2@2$d@4$h7^6^5^4^2@3$6@1$7$5^2@4$e$5@6$h5@2$h8@1$0#k0Z@1$2@2$3@1$1@1$0#k0@1$a@1$1@1$0#8~1~1@1$2$f@1$2@2$3@1$1@1$0#k0$b@2$h6@2$h4@1$8^4^6^4@1$2$h2").
+Lemma close_outcome : forall fd i m e o,
+  fd_lookup (m_fds m) fd = Some e ->
+  close_spec fd i m o <->
+  o = Ok (mkEffect (Z_to_bv 64 0) [] []) (with_fds (fd_remove (m_fds m) fd) m) [].
 Proof.
   intros fd i m e o Hlk. unfold close_spec. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hlk in *; inv_sys. reflexivity.
-  - intros ->. neexists 4. split; [reflexivity|]. rewrite Hlk.
-    split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+  - intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hlk.
+    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition nodevnull : ltac2:(zQ "10!lh1>1e$0$0") := ltac2:(zQ "71!h9!s1!lpf!lh1!lq7!lqe!lr6&\1p$2\6offset@1$1@1$0#k0^3\1e$3M3\1e$3$3^1\4chan@1$1@1$0#k0^2~0~0~0~0^1\2sk$6^2\2id@1$1@1$0#k0\6writer$4^3\2rd$4\2wr$4^3$5").
+Definition nodevnull (e : FdEntry) : FdEntry :=
+  match e with FdUrandom => FdDir | _ => e end.
 
-Lemma ioctl_tty_outcome : ltac2:(zQ "hc2!h9!s1!lgb!hu9!s9!lh1!ird!imc!hg8!lq7!v8!hgf!vf!ls2!ij8!li3!ls9!li9!ir5!isd!se!lj3!ljb!lhb!ll3!jhc!lt2!mi1&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>2fd@1$1@1$0#k0>3req@1$1@1$0#k0>1i$h3>1m$h2>1e$5>1o@1$7$6>0@3$4@1$c$5@2$h6@1$h7^3^6@2$8$5@1$hb^2>0@3$4$9@1$ha^6$d@2$e@5$h9^8^7^6^5^3@3$4@1$7$6^3@4$f$6@6$h8@1$h4$h0@1$2@2$3@1$1@1$0#k0@1$a@1$1@1$0#8~1~1@1$2$h1@1$2@2$3@1$1@1$0#k0$b^5@1$2$h5").
+Lemma ioctl_tty_outcome : forall fd req i m e o,
+  fd_lookup (m_fds m) fd = Some (nodevnull e) ->
+  tty_only_request req = true ->
+  ioctl_spec fd req i m o <->
+  o = Ok (mkEffect (errno_ret ENOTTY) [] []) m [].
 Proof.
   intros fd req i m e0 o Hlk Hreq. set (e := nodevnull e0) in *.
   assert (ND : e <> FdUrandom) by (subst e; destruct e0; cbn; congruence).
@@ -258,101 +345,206 @@ Proof.
   unfold ioctl_spec. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hlk in *;
-      destruct e; try (exfalso; eapply ND; reflexivity); rewrite ?Hreq in *; inv_sys; reflexivity.
-  - intros ->. neexists 4. split; [reflexivity|]. rewrite Hlk.
-    split; [|reflexivity]. destruct e; try (exfalso; eapply ND; reflexivity); rewrite ?Hreq; reflexivity.
+      destruct e; try (exfalso; apply ND; reflexivity); rewrite ?Hreq in *; inv_sys; reflexivity.
+  - intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hlk.
+    split; [|reflexivity]. destruct e; try (exfalso; apply ND; reflexivity); rewrite ?Hreq; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 
-Lemma set_tid_fresh_outcome : ltac2:(zQ "ha2!h9!s1!lgb!hu9!ird!le!s9!imc!rc!jc!mie!v8!hgf!vf!mj5!ij8!li3!li9!ir5!isd!lj3!mja!ll3!mk2!mkd!kkd&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1i$h3>1m$h2>1o@1$7$4>0@3$6@1$d@1$1@1$0#k0@1$h5^2@1$a@1$1@1$0#k0@2$f@3$h9^4^3^2@2$e@1$1@1$0#k0\1t@1$1@1$0#k0@2$5@2$5@2$8Z@2$9@1$0#k0^1@2$8@2$9@1$0#k0^1$h8@3$6@1$7$4^3@4$h0$4@6$h6^1@1$2@2$3@1$1@1$0#k0@1$b@1$1@1$0#8~1~1@1$2$h1@1$2@2$3@1$1@1$0#k0$c@2$h7^1^4@1$2$h4").
+Lemma set_tid_fresh_outcome : forall i m o,
+  m_tid m = None ->
+  set_tid_address_spec i m o <->
+  exists t, (0 < bv_unsigned t < PID_MAX_ENVELOPE)%Z
+            /\ o = Ok (mkEffect t [] []) (with_tid t m) [].
 Proof.
   intros i m o Htid. unfold set_tid_address_spec. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Htid in *; inv_sys.
     eexists; split; [split; eassumption|reflexivity].
-  - (intros nd_i1; ndestruct nd_i1 as (t & Ht & ->)). neexists 4. split; [reflexivity|]. rewrite Htid.
-    split; [|reflexivity]. neexists 4. split; [exists t; split; [exact Ht|reflexivity]|].
-    split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+  - intros (t & Ht & ->). eexists _, _, _, _. split; [reflexivity|]. rewrite Htid.
+    split; [|reflexivity]. eexists _, _, _, _. split; [exists t; split; [exact Ht|reflexivity]|].
+    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 
-Lemma brk_outcome : ltac2:(zQ "hb0!h9!s1!lgb!ird!hu9!s9!imc!mm2!mmd!lq7!v8!hgf!ls2!le!mj5!ij8!li3!li9!ir5!isd!lj3!ll3!mn6!kpa!mo2!mp0!mpd>3req@1$1@1$0#k0>1i$h3>1m$h2>1o@1$6$3@2$f@4$h7^4^3^2^1@2$e@1$1@1$0#k0\1r@1$1@1$0#k0@2$d@3$5$9@3$h6^3^5^1$c@3$5@1$6$3^2@4$h0$3@6$h5^1@1$2@2$4@1$1@1$0#k0@1$a@1$1@1$0#8@3$h9^5^1@1$8@1$7^3@2$h8^1@1$8@1$7^3@1$2$h1@1$2@2$4@1$1@1$0#k0$b@3$ha^3^5^1@1$2$h4").
+Lemma brk_outcome : forall req i m o,
+  brk_spec req i m o <->
+  exists r, brk_r_ok m req r = true
+            /\ o = Ok (mkEffectU r [] (brk_zeros req r (vm_brk (m_vmmaps m)))
+                                   (brk_unmaps r (vm_brk (m_vmmaps m))) [] [])
+                      (with_brk_next m req r) [].
 Proof.
   intros req i m o. unfold brk_spec. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     eexists; split; [eassumption|reflexivity].
-  - (intros nd_i2; ndestruct nd_i2 as (r & Hr & ->)). neexists 4. split; [reflexivity|].
-    split; [|reflexivity]. neexists 4. split; [exists r; split; [exact Hr|reflexivity]|].
-    split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+  - intros (r & Hr & ->). eexists _, _, _, _. split; [reflexivity|].
+    split; [|reflexivity]. eexists _, _, _, _. split; [exists r; split; [exact Hr|reflexivity]|].
+    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Lemma munmap_exact_outcome : ltac2:(zQ "ie2!h9!s1!mm2!jc!lgb!hu9!s9!ird!lq7!imc!ihd!mqe!mr8!lma!mre!ms5!v8!hgf!msd!ls2!ij8!s6!li3!li9!ir5!isd!mt4!lj3!mu0!mua!mv7!ll3!ng7!nh6!mmd!ni2!nif!nja!nk9!nl7!nm5!kq6!nn4!noc!r7!np5&@2$5@1$1@1$0#k0@1$1@1$0#k0&@1$4~0>4addr@1$1@1$0#k0>3len@1$1@1$0#k0>1i$h9>1m$h8>1o@1$9$7>0@3$6$h5@2$id@2$3@1$0#k0^5$i1Z>0@3$6$8@1$ib^5$f>0@2$ic@2$c@2$3@1$0#k0^7@1$a@2$3@1$0#k0^6$ha=1n@1$1@1$0#k0@2$d@1$0#k0@1$a@2$3@1$0#k0^7>0@3$6$8@3$hc@1$b@1$2^6^9^1$h3@2$h4@5$i9^a^9^8^7^6@3$6@1$9$7^6@4$h6$7@6$hf@2$d@1$0#k0Z@1$4@2$5@1$1@1$0#k0@1$h0@1$1@1$0#8~1@3$e~0@4$h2@1$1@1$0#k0@1$1@1$0#k0^a^2~1@1$4$h7@1$4@2$5@1$1@1$0#k0$h1@4$ia^a^2@8$i0@1$i7@1$2^7@2$hd@1$b@1$2^7^a@3$he@1$i6@1$2^7@2$3@1$0#k0^a@2$c@2$3@1$0#k0^a@2$3@1$0#k0^2@1$i8@1$2^7@1$i2@1$2^7@1$i4@1$2^7@1$i5@1$2^7@1$i3@1$2^7^7@1$4$hb").
+Lemma munmap_exact_outcome : forall addr len i m o,
+  (bv_unsigned addr mod page_size = 0)%Z ->
+  w_is0 len = false ->
+  (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <= TASK_SIZE)%Z ->
+  let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
+  map_has (vm_maps (m_vmmaps m)) addr n = true ->
+  munmap_spec addr len i m o <->
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+  \/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
+         (with_mmap_destroyed addr n
+            (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) [].
 Proof.
   intros addr len i m o Hal Hlen Hnw. cbv zeta. intros Hhas. unfold munmap_spec.
   rewrite (proj2 (Z.eqb_eq _ _) Hal), Hlen. cbn [negb orb].
   rewrite (proj2 (Z.ltb_ge _ _) Hnw). sys_unfold.
   split.
-  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys. reflexivity.
-  - intros ->. neexists 4. split; [reflexivity|]. rewrite Hhas.
-    split; [|reflexivity]. neexists 4. split; [reflexivity|].
-    split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys;
+      solve [ left; eexists; split; [eassumption|reflexivity] | right; reflexivity ].
+  - intros [(e & He & ->) | ->].
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. left. eexists _, _, _, _.
+      split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. right. eexists _, _, _, _. split; [reflexivity|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition mmap_err_out : ltac2:(zQ "30!imc!ir5!ird>1m$1>1o@1$0$2P") := ltac2:(zQ "h42!h9!s1!lgb!hu9!s6!ird!imc!v8!hgf!le!s9!mj5!li3!li9!ir5!se!lj3!ll3!npe!ns0&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0\1m$e\1o@1$6$5@2$b$4\1e$4@2$9@3$h3$4^1$h2@3$a@1$6$5^2@4$c$5@6$h1@1$f^1@1$2@2$3@1$1@1$0#k0@1$7@1$1@1$0#8~1~1@1$2$d@1$2@2$3@1$1@1$0#k0$8^3@1$2$h0").
+Definition mmap_err_out (m : Model) (o : outcome SyscallEffect) : Prop :=
+  exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [].
 
-Lemma mmap_err_out_enomem : ltac2:(zQ "h22!h9!s1!lgb!hu9!ird!imc!v8!hgf!s9!ij8!li3!ns6!li9!ir5!se!lj3!ll3!nsf&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1m$d>1o@1$5$4@2$9@2$h1^2^1@3$8@1$5$4^1@4$a$4@6$h0@1$e$b@1$2@2$3@1$1@1$0#k0@1$6@1$1@1$0#8~1~1@1$2$c@1$2@2$3@1$1@1$0#k0$7^2@1$2$f").
+Lemma mmap_err_out_enomem : forall m o,
+  mmap_err_out m o <-> o = Ok (mkEffect (errno_ret ENOMEM) [] []) m [].
 Proof.
   intros m o. unfold mmap_err_out, mmap_errnos. split.
-  - (intros nd_i3; ndestruct nd_i3 as (e & [<- | []] & ->)). reflexivity.
+  - intros (e & [<- | []] & ->). reflexivity.
   - intros ->. exists ENOMEM. split; [left; reflexivity | reflexivity].
 Qed.
 
 (* [comment removed for export] *)
-Lemma mmap_rw_outcome : ltac2:(zQ "j83!h9!s1!s9!hu9!lq7!lgb!ls2!le!jc!ird!mre!msd!s6!imc!mqe!nl7!ntf!ms5!v8!hgf!mj5!ij8!nu5!li3!li9!ir5!isd!nua!nv3!lj3!mm2!ll3!ng7!ihd!nh6!nvf!mmd!ni2!nif!nja!nk9!nm5!ogd!ohb!oia!ojc!ol9!kr5!on0!noc!nsf!mr8!r7!rc!np5!lma&@2$3@1$1@1$0#k0@1$1@1$0#k0&@4$b@1$1@1$0#k0@1$1@1$0#k0^1^2&@1$5~0>4addr@1$1@1$0#k0>3len@1$1@1$0#k0>4prot@1$1@1$0#k0>5flags@1$1@1$0#k0>2fd@1$1@1$0#k0>3off@1$1@1$0#k0>1i$ha>1m$h9>1o@1$d$9>0@3$2$4@1$ie^4$6>0@3$2$4@1$ib^7$6>0@3$2$4@1$j1^a$h1>0@3$2$4@3$ic^a^9^7$6=1h$hb@1$he^6=2nZ$c@1$i1@2$8@1$0#k0^d=1n@1$1@1$0#k0@2$j7@1$0#k0^1@2$h5@9$if^h0^f^e^d^c^b^a^9^8@2$h6@2$j2^9^8@2$h4@1$1@1$0#k0\1a@1$1@1$0#k0@2$7@2$7@3$2$c@2$j6@2$8@1$0#k0^1$i2Z@2$7@2$j5Z@2$8@1$0#k0^1@2$7@2$j4@2$j3@2$8@1$0#k0^1^3@1$hc^4@2$7@3$2$4@3$i3@3$h0~0@1$f^4@1$e^4^1^2$6@3$2$4@3$id^e^a^3$6@3$2@1$d$9^9@4$h7$9@6$hf^1@1$5@2$3@1$1@1$0#k0@1$h2@1$1@1$0#8@3$a~0~1~2~2@1$5$h8@1$5@2$3@1$1@1$0#k0$h3@4$j0^e^1^2@2$ia@8$i0@1$f^4@3$a~0~1@1$e^4@1$i8^4@1$i9^4@1$i4^4@1$i6^4@1$i7^4@1$i5^4^a@1$5$hd").
+Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
+  mmap_off_aligned_b off = true ->
+  mmap_anon_b flags = true ->
+  w_is0 len = false ->
+  mmap_modeled_b prot flags off = true ->
+  (* LPS 727298f3: [mmap_spec] tests [place_declined_b] outside the [alt], so the
+     equivalence below holds only off the decline. *)
+  place_declined_b (m_kernel m) (m_vmmaps m) addr
+    (page_round_up_Z (bv_unsigned len)) = false ->
+  let h := m_vmmaps m in
+  let nZ := page_round_up_Z (bv_unsigned len) in
+  let n := Z_to_bv 64 nZ in
+  mmap_spec addr len prot flags fd off i m o <->
+  mmap_err_out m o
+  \/ exists a, (linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
+                /\ mmap_noreserve_backed_ok flags m nZ = true)
+               /\ o = Ok (mkEffect a [] [(a, n)])
+                        (with_mmap_backing flags a n
+                          (with_vmmaps
+                            (mkVmMapsFull (vm_reserved h) ((a, n) :: vm_maps h)
+                               (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h)
+                               (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod. cbv zeta. unfold mmap_spec.
-  rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb]. unfold mmap_err_out. sys_unfold.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hdecl. cbv zeta. unfold mmap_spec.
+  rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb].
+  eapply iff_trans; [apply bind_get_model|]. cbv beta zeta. rewrite Hdecl.
+  unfold mmap_err_out. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
     + right. eexists; split; [|reflexivity]. repeat split; assumption.
   - intros [(e & He & ->) | (a & Ha & ->)].
-    + left. neexists 4. split; [exists e; split; [exact He|reflexivity]|].
+    + left. exists e, m, [], []. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. neexists 4; (split; [reflexivity|]); (split; [|reflexivity]).
-      neexists 4. split; [exists a; split; [exact Ha|reflexivity]|].
-      split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+    + right. exists a, m, [], [].
+      split; [exists a; split; [exact Ha | reflexivity]|].
+      split; [| reflexivity].
+      eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
-Lemma mmap_noaccess_outcome : ltac2:(zQ "j83!h9!s1!hu9!s9!lq7!lgb!ls2!le!jc!mre!msd!ird!ms5!s6!imc!mqe!nl7!ntf!v8!hgf!mj5!ij8!nu5!li3!li9!ir5!isd!nua!nv3!lj3!mm2!ll3!ng7!ihd!nh6!nvf!mmd!ni2!nif!nja!nk9!nm5!ogd!ohb!oia!oo6!ol9!kr5!on0!noc!nsf!mr8!r7!rc!np5!lma&@2$2@1$1@1$0#k0@1$1@1$0#k0&@1$5~0&@4$a@1$1@1$0#k0@1$1@1$0#k0^1^2>4addr@1$1@1$0#k0>3len@1$1@1$0#k0>4prot@1$1@1$0#k0>5flags@1$1@1$0#k0>2fd@1$1@1$0#k0>3off@1$1@1$0#k0>1i$ha>1m$h9>1o@1$e$b>0@3$3$4@1$ie^4$6>0@3$3$4@1$ib^7$6>0@3$3$4@1$j1^a$c>0@3$3$4@3$ic^a^9^7$c>0@3$3$4@3$id^b^a^8$6=1h$hb@1$he^7=2nZ$d@1$i1@2$8@1$0#k0^e=1n@1$1@1$0#k0@2$j7@1$0#k0^1@2$h5@9$if^h1^h0^f^e^d^c^b^a^9@2$h6@2$j2^a^9@2$h4@1$1@1$0#k0\1a@1$1@1$0#k0@2$7@2$7@3$3$d@2$j6@2$8@1$0#k0^1$i2Z@2$7@2$j5Z@2$8@1$0#k0^1@2$7@2$j4@2$j3@2$8@1$0#k0^1^3@1$hc^4@3$3$4@3$i3@3$h1~0@1$h0^4@1$f^4^1^2$6@3$3@1$e$b^a@4$h7$b@6$hf^1@1$5@2$2@1$1@1$0#k0@1$h2@1$1@1$0#8~1@3$9~0~2~1@1$5$h8@1$5@2$2@1$1@1$0#k0$h3@4$j0^f^1^2@2$ia@8$i0@1$h0^4@3$9~0~2@1$f^4@3$9~0~2@1$i8^4@1$i9^4@1$i4^4@1$i6^4@1$i7^4@1$i5^4^b@1$5$hd").
+Lemma mmap_noaccess_outcome : forall addr len prot flags fd off i m o,
+  mmap_off_aligned_b off = true ->
+  mmap_anon_b flags = true ->
+  w_is0 len = false ->
+  mmap_modeled_b prot flags off = false ->
+  mmap_noaccess_b prot flags off = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr
+    (page_round_up_Z (bv_unsigned len)) = false ->
+  let h := m_vmmaps m in
+  let nZ := page_round_up_Z (bv_unsigned len) in
+  let n := Z_to_bv 64 nZ in
+  mmap_spec addr len prot flags fd off i m o <->
+  mmap_err_out m o
+  \/ exists a, linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
+               /\ o = Ok (mkEffectU a [] [] [(a, n)] [] [])
+                        (with_mmap_backing flags a n
+                          (with_vmmaps
+                            (mkVmMapsFull (vm_reserved h) ((a, n) :: vm_maps h)
+                               ((a, n) :: vm_noaccess h) (vm_start_brk h) (vm_brk h)
+                               (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hna. cbv zeta. unfold mmap_spec.
-  rewrite Hoff, Hanon, Hlen, Hmod, Hna. cbn [negb]. unfold mmap_err_out. sys_unfold.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hna Hdecl. cbv zeta. unfold mmap_spec.
+  rewrite Hoff, Hanon, Hlen, Hmod, Hna. cbn [negb].
+  eapply iff_trans; [apply bind_get_model|]. cbv beta zeta. rewrite Hdecl.
+  unfold mmap_err_out. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
-    + right. eexists; split; [|reflexivity]. repeat split; assumption.
+    + right. eexists; split; [|reflexivity]. assumption.
   - intros [(e & He & ->) | (a & Ha & ->)].
-    + left. neexists 4. split; [exists e; split; [exact He|reflexivity]|].
+    + left. exists e, m, [], []. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. neexists 4; (split; [reflexivity|]); (split; [|reflexivity]).
-      neexists 4. split; [exists a; split; [exact Ha|reflexivity]|].
-      split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+    + right. exists a, m, [], [].
+      split; [exists a; split; [exact Ha | reflexivity]|].
+      split; [| reflexivity].
+      eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
 Qed.
 
+(* LPS 727298f3: a NULL hint is never declined -- [place_declined_b]'s first
+   conjunct is [negb (hint_address hint =? 0)], false by computation at 0.
+   Copied from the 727298f3 port of bzip2/bzip2_compress_target (its lib/RefNodes.v). *)
+Lemma place_declined_b_null : forall kb h nZ,
+  place_declined_b kb h (Z_to_bv 64 0) nZ = false.
+Proof. intros kb h nZ. reflexivity. Qed.
+
 (* [comment removed for export] *)
-Lemma mmap_fixed_noaccess_outcome : ltac2:(zQ "jf5!h9!s1!lgb!hu9!s9!lq7!jc!ls2!s6!ird!mre!ms5!msd!imc!v8!hgf!nu5!li3!li9!lj3!ll3!mqe!nl7!mr8!le!mj5!ij8!ir5!isd!nua!nv3!se!mm2!op9!mv7!ng7!ihd!nh6!nvf!mmd!ni2!nif!nja!nk9!nm5!ogd!ohb!npe!oq8!os6!oia!oo6!ol9!kr5!nn4!ou0!noc!nsf!ns0!r7!rc!np5!lma&@2$3@1$1@1$0#k0@1$e@1$1@1$0#8&@1$2~0&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~2&@4$c@1$1@1$0#k0@1$1@1$0#k0^h7^6>4addr@1$1@1$0#k0>3len@1$1@1$0#k0>4prot@1$1@1$0#k0>5flags@1$1@1$0#k0>2fd@1$1@1$0#k0>3off@1$1@1$0#k0>1i$hc>1m$hb>1o@1$d$9>0@3$4$5@1$j4^4$7>0@3$4$5@1$ie^7$7>0@3$4$5@1$j8^a$b>0@3$4$5@3$j2^a^9^7$b>0@3$4$5@3$j3^b^a^8$b>0@3$4$5@3$j1^c^b^9$7=1h$hd@1$i0^8=2nZ$8@1$i4@2$6@1$0#k0^f=1n@1$1@1$0#k0@2$je@1$0#k0^1>0@2$jb@2$h7@2$6@1$0#k0^h2^2@1$he^3>0@3$4$8@2$jd@2$6@1$0#k0^h3$i5Z>0@2$jcZ@2$6@1$0#k0^h4>0@3$4$5@3$i6@1$h6^6^h5^4$7>0@3$4$5@3$i1@1$h5^7^h6^5$7@2$ha@9$j5^h7^h6^h5^h4^h3^h2^h1^h0^f@2$h0@2$j9^h0^f@2$h0@3$4@1$d$9^f@4$h1$9@6$h4^h7~1~3@3$a~2~4~3@1$2$h2@1$2@2$3@1$1@1$0#k0$f@4$j7^h4^h7^6@2$id@8$i3@1$h6^8@1$h5^8@3$a~2~4@3$i2@1$ib^8@2$6@1$0#k0^h7@2$h7@2$6@1$0#k0^h7@2$6@1$0#k0^6@1$ic^8@1$i7^8@1$i9^8@1$ia^8@1$i8^8^h0@1$2$h3@2$h9$8\1e$8@2$h8@3$ja$8^1$if@3$4@1$d$9^h0@4$h1$9@6$h4@1$hf^1~1~3@3$a~2@4$c@1$1@1$0#k0@1$1@1$0#k0^h8^7~3@1$2$h2@1$2@2$3@1$1@1$0#k0$f@4$j6^h8^7@3$j0^9^h8^7^h1@1$2$h3").
+Lemma mmap_fixed_noaccess_outcome : forall addr len prot flags fd off i m o,
+  mmap_off_aligned_b off = true ->
+  mmap_anon_b flags = true ->
+  w_is0 len = false ->
+  mmap_modeled_b prot flags off = false ->
+  mmap_noaccess_b prot flags off = false ->
+  mmap_fixed_noaccess_b prot flags off = true ->
+  let h := m_vmmaps m in
+  let nZ := page_round_up_Z (bv_unsigned len) in
+  let n := Z_to_bv 64 nZ in
+  (bv_unsigned addr + nZ <= alloc_top h)%Z ->
+  (bv_unsigned addr mod page_size = 0)%Z ->
+  (0 < bv_unsigned addr)%Z ->
+  region_free (vm_reserved h) addr n = true ->
+  map_contains (vm_maps h) addr n = true ->
+  mmap_spec addr len prot flags fd off i m o <->
+  mmap_err_out m o
+  \/ o = Ok (mkEffectU addr [] [] [(addr, n)] [] [])
+         (with_mmap_replacement flags addr n
+           (with_vmmaps (mkVmMapsFull (vm_reserved h) (vm_maps h)
+              ((addr, n) :: maps_subtract (vm_noaccess h)
+                              (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
+              (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h)
+              (vm_init_sp h)) m)) []
+  \/ (exists e, In e mmap_errnos
+       /\ o = Ok (mkEffectU (errno_ret e) [] [] [(addr, n)] [] [])
+                 (with_mmap_destroyed addr n (mmap_fixed_destroyed_next h addr n) m) []).
 Proof.
   intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hna Hfx. cbv zeta.
   intros Hce Hal Hpos Hrf Hmc.
@@ -370,93 +562,133 @@ Proof.
     + right; left. reflexivity.
     + right; right. eexists; split; [eassumption|reflexivity].
   - intros [(e & He & ->) | [-> | (e & He & ->)]].
-    + left. neexists 4. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
-    + right; left. neexists 4. repeat split; reflexivity.
-    + right; right. neexists 4. split; [exists e; split; [exact He|reflexivity]|].
-      split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+    + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+    + right; left. eexists _, _, _, _. repeat split; reflexivity.
+    + right; right. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition mprotect_err_out : ltac2:(zQ "30!imc!ir5!ird>1m$1>1o@1$0$2P") := ltac2:(zQ "h42!h9!s1!lgb!hu9!s6!ird!imc!v8!hgf!le!s9!mj5!li3!li9!ir5!se!lj3!ll3!ova!ns0&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0\1m$e\1o@1$6$5@2$b$4\1e$4@2$9@3$h3$4^1$h2@3$a@1$6$5^2@4$c$5@6$h1@1$f^1@1$2@2$3@1$1@1$0#k0@1$7@1$1@1$0#8~1~1@1$2$d@1$2@2$3@1$1@1$0#k0$8^3@1$2$h0").
+Definition mprotect_err_out (m : Model) (o : outcome SyscallEffect) : Prop :=
+  exists e, In e mprotect_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [].
 
-Lemma mprotect_err_out_enomem : ltac2:(zQ "h22!h9!s1!lgb!hu9!ird!imc!v8!hgf!s9!ij8!li3!ns6!li9!ir5!se!lj3!ll3!pgd&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1m$d>1o@1$5$4@2$9@2$h1^2^1@3$8@1$5$4^1@4$a$4@6$h0@1$e$b@1$2@2$3@1$1@1$0#k0@1$6@1$1@1$0#8~1~1@1$2$c@1$2@2$3@1$1@1$0#k0$7^2@1$2$f").
+Lemma mprotect_err_out_enomem : forall m o,
+  mprotect_err_out m o <-> o = Ok (mkEffect (errno_ret ENOMEM) [] []) m [].
 Proof.
   intros m o. unfold mprotect_err_out, mprotect_errnos. split.
-  - (intros nd_i4; ndestruct nd_i4 as (e & [<- | []] & ->)). reflexivity.
+  - intros (e & [<- | []] & ->). reflexivity.
   - intros ->. exists ENOMEM. split; [left; reflexivity | reflexivity].
 Qed.
 
-Lemma mprotect_expose_outcome : ltac2:(zQ "ic2!h9!s1!s9!lq7!lgb!hu9!ls2!jc!ird!ms5!imc!op9!ihd!lma!mre!v8!hgf!msd!le!ij8!nu5!s6!li3!li9!ir5!isd!nua!lj3!mm2!ll3!nh6!p2!mqe!nk9!pi2!pj9!pl7!pmf!kva!noc!pgd!mr8!rc!np5&@2$5@1$1@1$0#k0@1$1@1$0#k0&@1$4~0>4addr@1$1@1$0#k0>3len@1$1@1$0#k0>4prot@1$1@1$0#k0>1i$h9>1m$h8>1o@1$a$8>0@3$2$3@1$i3^4$9>0@3$2$h5@2$ib@2$7@1$0#k0^7$heZ>0@3$2$3@1$i7^7$9>0@2$ia@2$i9@2$7@1$0#k0^9@1$c@2$7@1$0#k0^8$hf>0@3$2$3@1$i5^8$6=1h$ha@1$hc^7=1n@1$1@1$0#k0@2$d@1$0#k0@1$c@2$7@1$0#k0^b>0@3$2$3@3$b@1$i1^2^d^1$6>0@3$2$3@3$b@1$i0^3^e^2$6@2$h3@6$i6^f^e^d^c^b^a@2$h4@2$i8^b^a@2$h2@3$2$3@3$i2^b^f^3$6@3$2@1$a$8^a@4$h6$8@6$hd@2$d@1$0#k0Z@1$4@2$5@1$1@1$0#k0@1$f@1$1@1$0#8@3$e~0@4$h1@1$1@1$0#k0@1$1@1$0#k0^f^3~1~1@1$4$h7@1$4@2$5@1$1@1$0#k0$h0@3$i4^b^f^3@1$4$hb").
+Lemma mprotect_expose_outcome : forall addr len prot i m o,
+  mprotect_grows_conflict_b prot = false ->
+  (bv_unsigned addr mod page_size = 0)%Z ->
+  w_is0 len = false ->
+  (bv_unsigned addr + page_round_up_Z (bv_unsigned len) < two_pow_64)%Z ->
+  mprotect_modeled_b prot = true ->
+  let h := m_vmmaps m in
+  let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
+  (* the revision's vDSO/vvar gate ([Mprotect.mprotect_spec]): a range that
+     meets the pair is [unmodeled] *)
+  region_free (vdso_reserved (m_kernel m) (vdso_top h)) addr n = true ->
+  map_contains (vm_noaccess h) addr n = true ->
+  map_contains (vm_maps h) addr n = true ->
+  mprotect_spec addr len prot i m o <->
+  mprotect_err_out m o
+  \/ (mprotect_budget_ok m addr n = true
+      /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model_next m addr n) []).
 Proof.
-  intros addr len prot i m o Hgc Hal Hlen Hnw Hmod. cbv zeta. intros Hna Hma.
+  intros addr len prot i m o Hgc Hal Hlen Hnw Hmod. cbv zeta. intros Hvd Hna Hma.
   unfold mprotect_spec.
   rewrite Hgc, (proj2 (Z.eqb_eq _ _) Hal), Hlen, (proj2 (Z.leb_gt _ _) Hnw), Hmod. cbn [negb].
   unfold mprotect_err_out. sys_unfold.
   split.
-  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hna, Hma in *; cbn [andb] in *; inv_sys.
+  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hvd, Hna, Hma in *; cbn [negb andb] in *; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
     + right. split; [assumption|reflexivity].
-  - intros [(e & He & ->) | (Hb & ->)]; neexists 4; (split; [reflexivity|]);
-      rewrite Hna, Hma; cbn [andb]; (split; [|reflexivity]).
-    + left. neexists 4. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
-    + right. neexists 4. split; [exists tt; split; [exact Hb|reflexivity]|].
-      split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+  - intros [(e & He & ->) | (Hb & ->)]; eexists _, _, _, _; (split; [reflexivity|]);
+      rewrite Hvd; cbn [negb]; rewrite Hna, Hma; cbn [andb]; (split; [|reflexivity]).
+    + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+    + right. eexists _, _, _, _. split; [exists tt; split; [exact Hb|reflexivity]|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Lemma read_dir_outcome : ltac2:(zQ "hd2!h9!s1!lgb!hu9!s9!ird!imc!lh1!hg8!lq7!v8!hgf!vf!ls2!ij8!li3!po6!lqe!li9!ir5!isd!pof!se!lj3!ljb!lhb!ll3!jv9!jc&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>2fd@1$1@1$0#k0>3buf@1$1@1$0#k0>5count@1$1@1$0#k0>1i$h4>1m$h3>1o@1$6$5>0@3$4@1$c$7@2$h8@1$h9^2^6@2$8$7$h1>0@3$4$9@2$h5^6@2$hc@1$0#k0^5$d@2$e@6$hb^8^7^6^5^4^3@3$4@1$6$5^3@4$f$5@6$ha@1$h6$h0@1$2@2$3@1$1@1$0#k0@1$a@1$1@1$0#8~1~1@1$2$h2@1$2@2$3@1$1@1$0#k0$b^4@1$2$h7").
+Lemma read_dir_outcome : forall fd buf count i m o,
+  fd_lookup (m_fds m) fd = Some FdDir ->
+  access_okb buf (bv_unsigned count) = true ->
+  read_spec fd buf count i m o <->
+  o = Ok (mkEffect (errno_ret EISDIR) [] []) m [].
 Proof.
   intros fd buf count i m o Hlk Hacc. unfold read_spec. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hlk, ?Hacc in *; cbn [negb] in *; inv_sys.
     reflexivity.
-  - intros ->. neexists 4. split; [reflexivity|]. split; [|reflexivity].
-    neexists 4. split; [reflexivity|]. rewrite Hlk, Hacc. cbn [negb]. split; reflexivity.
+  - intros ->. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
+    eexists _, _, _, _. split; [reflexivity|]. rewrite Hlk, Hacc. cbn [negb]. split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
-Lemma read_file_outcome : ltac2:(zQ "i82!h9!s1!v8!lgb!s9!hg8!vf!hu9!ppc!ird!imc!lh1!pq8!lhb!lq7!hgf!ls2!ij8!pr1!pre!lpf!li3!li9!ir5!isd!pof!lj3!psb!ljb!pt7!pu1!ll3!hm1!pu8!llf!jv9!qid!lma!qk2!jc&@2$7@1$1@1$0#k0@1$1@1$0#k0&@1$3~0>2fd@1$1@1$0#k0>3buf@1$1@1$0#k0>5count@1$1@1$0#k0>1i$h8>1m$h7>1o@1$a$9>1p$h4>3off@1$1@1$0#k0>4data@1$2@1$1@1$0#8>1w@1$2@1$1@1$0#8>0@3$4@1$6$b@2$hc@1$d^6^a@2$5$b@2$c^4^3>0@3$4$e@2$h9^a@2$i7@1$0#k0^9$h0>0@3$4@1$6@1$2@1$1@1$0#8@2$h3@1$he^8^6@2$5@1$2@1$1@1$0#8^4=2bs@1$2@1$1@1$0#8@3$h2^5^6@2$i5@1$0#k0@1$i1^b>0@3$4@1$6@1$2@1$1@1$0#8@3$i0@1$hd^b^d@2$8@1$1@1$0#8^1@2$5@1$2@1$1@1$0#8^5@2$h1@6$i3^f^e^d^c^b^a@3$4@1$a$9^a@4$h5$9@6$hf@2$8@1$1@1$0#8^2@2$i4^e^2~1~1@1$3$h6@1$3@2$7@1$1@1$0#k0$f@2$i2@3$hb@1$d^b^f@2$c^9@3$i6@1$0#k0^8@2$8@1$1@1$0#8^2^b@1$3$ha").
+Lemma read_file_outcome : forall fd buf count i m o p off data w,
+  fd_lookup (m_fds m) fd = Some (FdFile p off) ->
+  access_okb buf (bv_unsigned count) = true ->
+  fs_lookup (m_fs m) p = Some data ->
+  let bs := file_read data off (Z_to_bv 64 (rw_count_clamp count)) in
+  read_bytes_map (in_wmem i) buf (len_word bs) = Some w ->
+  read_spec fd buf count i m o <->
+  o = Ok (mkEffect (len_word bs) (delivered_writes buf bs) [])
+         (with_fds (fd_insert (m_fds m) fd (FdFile p (off + len_word bs))) m) [].
 Proof.
   intros fd buf count i m o p off data w Hlk Hacc Hfs. cbv zeta. intros Hw.
   unfold read_spec. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hlk, Hacc in *; cbn [negb] in *;
       rewrite Hfs in *; cbv zeta in *; rewrite Hw in *; inv_sys; reflexivity.
-  - intros ->. neexists 4. split; [reflexivity|]. split; [|reflexivity].
-    neexists 4. split; [reflexivity|]. rewrite Hlk, Hacc. cbn [negb].
+  - intros ->. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
+    eexists _, _, _, _. split; [reflexivity|]. rewrite Hlk, Hacc. cbn [negb].
     rewrite Hfs. cbv zeta. rewrite Hw.
-    split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition open_reads : ltac2:(zQ "60!h9!s1!v8!hgf!hu9!isd>1i$5>5pathp@1$1@1$0#k0@1$2@2$4@1$1@1$0#k0$3") := ltac2:(zQ "b0!h9!s1!hgf!hu9!mre!lgb!msd!isd!qkb!qm2!qmb\1i$7\5pathp@1$1@1$0#k0@3$4@2$3@1$1@1$0#k0$2@4$6@1$1@1$0#k0$2^1@3$8@1$9^2^1$a@1$5@2$3@1$1@1$0#k0$2").
+Definition open_reads (i : SyscallInput) (pathp : word) : list (word * nat) :=
+  [(pathp, cstr_access_len_aux (in_mem i) pathp path_max)].
 
 (* [comment removed for export] *)
-Definition after_copyins : ltac2:(zQ "70!imc!ird!v8!hgf!hu9!h9!s1>1R@1$2@2$4@1$6@1$5#k0$3>4body>0@1$0$1P>1o@1$0$1P") := ltac2:(zQ "h10!ird!imc!v8!hgf!hu9!h9!s1!ntf!le!s9!mj5!li3!qn6!ir5!qo3!lj3!qp1\1R@1$2@2$4@1$6@1$5#k0$3\4body>0@1$1$0P\1o@1$1$0M1\1o@1$1$0P^1\3eff$0\2m'$d\3evs@1$2$f@2$a$0\4core$0@2$8@1^6@4$b$0^1^3^2@3$9$0^4@2$h0@3$7@2$4@1$6@1$5#k0$3^7@1$e^1^1@1^2@1$c$0").
+Definition after_copyins (R : list (word * nat)) (body : outcome SyscallEffect -> Prop)
+    (o : outcome SyscallEffect) : Prop :=
+  match o with
+  | Ok eff m' evs => exists core, body (Ok core m' evs)
+                                  /\ eff = with_copyins (R ++ eff_copyins core) core
+  | Unmodeled => body Unmodeled
+  end.
 
-Lemma record_copyins_iff : ltac2:(zQ "d0!ird!v8!hgf!hu9!ij8!h9!qq0!imc!ir5!isd!qq7!qr9!s1>1R@1$1@2$3@1$c@1$5#k0$2>4spec@1$6$0>1i$9>1m$8>1o@1$7$0@2$4@5$a^5^4^3^2^1@3$b^5@2^4^3^2^1").
+Lemma record_copyins_iff : forall R (spec : Sys SyscallEffect) i m o,
+  record_copyins R spec i m o <-> after_copyins R (spec i m) o.
 Proof.
   intros R spec i m o. unfold record_copyins, after_copyins, bind, pure.
   destruct o as [eff m' evs|]; split.
-  - (intros nd_i5; ndestruct nd_i5 as (core & m1 & evs1 & evs2 & Hc & Hp & ->)). apply Ok_inj in Hp as (-> & -> & ->).
+  - intros (core & m1 & evs1 & evs2 & Hc & Hp & ->). apply Ok_inj in Hp as (-> & -> & ->).
     exists core. rewrite app_nil_r. auto.
-  - (intros nd_i6; ndestruct nd_i6 as (core & Hc & ->)). nexists core, m', evs, []. rewrite app_nil_r. auto.
+  - intros (core & Hc & ->). exists core, m', evs, []. rewrite app_nil_r. auto.
   - intros [H | (core & m1 & evs1 & _ & Hp)]; [exact H|]. exfalso. exact (Unmodeled_Ok _ _ _ Hp).
   - intros H. left. exact H.
 Qed.
 
 (* [comment removed for export] *)
-Lemma after_copyins_det : ltac2:(zQ "h14!h9!s1!lgb!hu9!ird!imc!v8!hgf!s9!ij8!li3!li9!ll3!ir5!lj3!qp1!qr9&@2$3@1$1@1$0#k0@1$6@1$1@1$0#8&@1$2~0&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~2>1R@1$6@2$3@1$1@1$0#k0$7>4body>1x@1$5$4P>1r@1$1@1$0#k0>2m0$d>4evs0@1$6$e>0>1o@1$5$4@2$9@1^5^1@3$8@1$5$4^1@4$a$4@6$c^4~1~3~3@1$2$b@1$2@2$3@1$1@1$0#k0$7^3^2>1o@1$5$4@2$9@3$h0^7^6^1@3$8@1$5$4^1@4$a$4@2$f^7@6$c^5~1~3~3@1$2$b@1$2@2$3@1$1@1$0#k0$7^4^3").
+Lemma after_copyins_det : forall R body r m0 evs0,
+  (forall o, body o <-> o = Ok (mkEffect r [] []) m0 evs0) ->
+  forall o, after_copyins R body o <-> o = Ok (with_copyins R (mkEffect r [] [])) m0 evs0.
 Proof.
   intros R body r m0 evs0 Hb o. unfold after_copyins. destruct o as [eff m' evs|]; split.
-  - (intros nd_i7; ndestruct nd_i7 as (core & Hc & ->)). apply Hb in Hc. apply Ok_inj in Hc as (-> & -> & ->).
+  - intros (core & Hc & ->). apply Hb in Hc. apply Ok_inj in Hc as (-> & -> & ->).
     cbn [eff_copyins]. rewrite app_nil_r. reflexivity.
   - intros H. apply Ok_inj in H as (-> & -> & ->). exists (mkEffect r [] []).
     split; [apply Hb; reflexivity|]. cbn [eff_copyins]. rewrite app_nil_r. reflexivity.
@@ -465,12 +697,22 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Definition open_res : ltac2:(zQ "50!ir5!h9!imc!ird!s1>1m$0>2mk>0@1$4@1$1#k0$0>1o@1$2$3P") := ltac2:(zQ "hb4!h9!s1!lgb!hu9!ird!lhb!s9!s6!imc!qsa!v8!hgf!le!li3!lh1!li9!ir5!lj3!ll3!mie!vf!mj5!nu5!se!ljb!qt5!ns0&@2$3@1$1@1$0#k0@1$a@1$1@1$0#8&@1$2~0&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~2\1m$h0\2mk>0@1$1@1$0#k0$h0\1o@1$8$4@2$h6@2$h5$7\1e$7@2$c@3$ha$7^1$h9@3$6@1$8$4^2@4$d$4@6$h2@1$h7^1~1~3~3@1$2$f@1$2@2$3@1$1@1$0#k0$b^4@1$2$h1@2$c@3$6@1$h4$e@2$h8@1$5^3@1$9@1$5^3@1$h3$e@3$6@1$8$4^1@4$d$4@6$h2@1$9@1$5^3~1~3~3@1$2$f@1$2@2$3@1$1@1$0#k0$b@1^2@1$9@1$5^3@1$2$h1").
+Definition open_res (m : Model) (mk : word -> Model) (o : outcome SyscallEffect) : Prop :=
+  (exists e, In e openat_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+  \/ (fd_lookup (m_fds m) (alloc_fd (m_fds m)) = None
+      /\ o = Ok (mkEffect (alloc_fd (m_fds m)) [] []) (mk (alloc_fd (m_fds m))) []).
 
 (* [comment removed for export] *)
-Definition open_out : ltac2:(zQ "80!h9!ir5!s1!v8!hgf!hu9!imc!ird>1R@1$3@2$5@1$2@1$0#k0$4>1m$1>2mk>0@1$2@1$0#k0$1>1o@1$6$7P") := ltac2:(zQ "hc4!h9!s1!lgb!hu9!ird!lhb!v8!hgf!s9!s6!imc!qsa!le!li3!lh1!li9!ir5!lj3!ll3!qp1!mie!vf!mj5!nu5!se!ljb!qt5!ns0&@2$3@1$1@1$0#k0@1$6@1$1@1$0#8&@1$2~0&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~2\1R@1$6@2$3@1$1@1$0#k0$7\1m$h0\2mk>0@1$1@1$0#k0$h0\1o@1$a$4@2$h7@2$h6$9\1e$9@2$c@3$hb$9^1$ha@3$8@1$a$4^2@4$d$4@2$h3^5@6$h2@1$h8^1~1~3~3@1$2$f@1$2@2$3@1$1@1$0#k0$7^4@1$2$h1@2$c@3$8@1$h5$e@2$h9@1$5^3@1$b@1$5^3@1$h4$e@3$8@1$a$4^1@4$d$4@2$h3^4@6$h2@1$b@1$5^3~1~3~3@1$2$f@1$2@2$3@1$1@1$0#k0$7@1^2@1$b@1$5^3@1$2$h1").
+Definition open_out (R : list (word * nat)) (m : Model) (mk : word -> Model)
+    (o : outcome SyscallEffect) : Prop :=
+  (exists e, In e openat_errnos
+             /\ o = Ok (with_copyins R (mkEffect (errno_ret e) [] [])) m [])
+  \/ (fd_lookup (m_fds m) (alloc_fd (m_fds m)) = None
+      /\ o = Ok (with_copyins R (mkEffect (alloc_fd (m_fds m)) [] []))
+                (mk (alloc_fd (m_fds m))) []).
 
-Lemma open_result_outcome : ltac2:(zQ "90!ir5!h9!s1!ij8!imc!ird!isd!qu6!qvb>1m$0>2mk>0@1$2@1$1#k0>0$0$0>1i$6>1o@1$4$5@2$3@5$7^4^3^2^4^1@3$8^4\2fd@1$2@1$1#k0@2^4^1^5^1").
+Lemma open_result_outcome : forall m (mk : word -> Model -> Model) i o,
+  open_result_spec m mk i m o <-> open_res m (fun fd => mk fd m) o.
 Proof.
   intros m mk i o. unfold open_result_spec, open_res. sys_unfold.
   split.
@@ -478,15 +720,17 @@ Proof.
     + left. eexists; split; [eassumption|reflexivity].
     + right. split; [assumption|reflexivity].
   - intros [(e & He & ->) | (Hfree & ->)].
-    + left. neexists 4. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
-    + right. neexists 4. split; [eexists; split; [split; [exact Hfree|reflexivity]|reflexivity]|].
-      split; [|reflexivity]. neexists 4. repeat split; reflexivity.
+    + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+    + right. eexists _, _, _, _. split; [eexists; split; [split; [exact Hfree|reflexivity]|reflexivity]|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
-Lemma after_copyins_open : ltac2:(zQ "c0!imc!ird!ij8!h9!ir5!s1!v8!hgf!hu9!qr9!rg7!qvb>1R@1$6@2$8@1$5@1$3#k0$7>4body>1x@1$0$1P>1m$4>2mk>0@1$5@1$3#k0$4>0>1o@1$0$1@2$2@1^4^1@3$b^3^2^1>1o@1$0$1@2$2@3$9^6^5^1@4$a^6^4^3^1").
+Lemma after_copyins_open : forall R body m mk,
+  (forall o, body o <-> open_res m mk o) ->
+  forall o, after_copyins R body o <-> open_out R m mk o.
 Proof.
   intros R body m mk Hb o. unfold after_copyins, open_out. destruct o as [eff m' evs|]; split.
-  - (intros nd_i8; ndestruct nd_i8 as (core & Hc & ->)). apply Hb in Hc.
+  - intros (core & Hc & ->). apply Hb in Hc.
     destruct Hc as [(e & He & Hc) | (Hfree & Hc)]; apply Ok_inj in Hc as (-> & -> & ->);
       cbn [eff_copyins]; rewrite app_nil_r.
     + left. exists e. auto.
@@ -501,60 +745,72 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma openat_spec_body : ltac2:(zQ "f0!h9!s1!lq7!ls2!s9!ij8!imc!ir5!ird!isd!rh3!ria!jq3!qr9!rjf>5dirfd@1$1@1$0#k0>5pathp@1$1@1$0#k0>5flags@1$1@1$0#k0>1i$9>1m$7>1o@1$6$8>0@3$4$2@1$a^4$3@2$5@6$c^7^6^5^4^3^2@3$d@2$e^4^6@7$b^4^3^7^6^5^4^3^2").
+Lemma openat_spec_body : forall dirfd pathp flags i m o,
+  modeled_open_flags flags = true ->
+  openat_spec dirfd pathp flags i m o <->
+  after_copyins (open_reads i pathp) (openat_body_spec i m dirfd pathp flags i m) o.
 Proof.
   intros dirfd pathp flags i m o Hfl. unfold openat_spec.
   transitivity (record_copyins (open_reads i pathp) (openat_core_spec dirfd pathp flags) i m o).
   { unfold bind, input, open_reads. destruct o as [eff m' evs|]; split.
-    - (intros nd_i9; ndestruct nd_i9 as (i0 & m1 & evs1 & evs2 & Hi & Hk & ->)). apply Ok_inj in Hi as (-> & -> & ->). exact Hk.
-    - intros Hk. nexists i, m, [], evs. split; [reflexivity|]. split; [exact Hk|reflexivity].
+    - intros (i0 & m1 & evs1 & evs2 & Hi & Hk & ->). apply Ok_inj in Hi as (-> & -> & ->). exact Hk.
+    - intros Hk. exists i, m, [], evs. split; [reflexivity|]. split; [exact Hk|reflexivity].
     - intros [H | (i0 & m1 & evs1 & Hi & Hk)]; [exfalso; exact (Unmodeled_Ok _ _ _ H)|].
       apply Ok_inj in Hi as (-> & -> & ->). exact Hk.
-    - intros Hk. right. nexists i, m, []. split; [reflexivity|exact Hk]. }
+    - intros Hk. right. exists i, m, []. split; [reflexivity|exact Hk]. }
   rewrite record_copyins_iff.
   assert (Hcore : forall o', openat_core_spec dirfd pathp flags i m o' <->
                             openat_body_spec i m dirfd pathp flags i m o').
   { intros o'. unfold openat_core_spec. rewrite Hfl. cbn [negb].
     unfold bind, input, get_model. destruct o' as [eff m' evs|]; split.
-    - (intros nd_i10; ndestruct nd_i10 as (i0 & m1 & evs1 & evs2 & Hi & (m0 & m2 & evs3 & evs4 & Hm & Hb & ->) & ->)).
+    - intros (i0 & m1 & evs1 & evs2 & Hi & (m0 & m2 & evs3 & evs4 & Hm & Hb & ->) & ->).
       apply Ok_inj in Hi as (-> & -> & ->). apply Ok_inj in Hm as (-> & -> & ->). exact Hb.
-    - intros Hb. nexists i, m, [], evs. split; [reflexivity|]. split; [|reflexivity].
-      nexists m, m, [], evs. split; [reflexivity|]. split; [exact Hb|reflexivity].
+    - intros Hb. exists i, m, [], evs. split; [reflexivity|]. split; [|reflexivity].
+      exists m, m, [], evs. split; [reflexivity|]. split; [exact Hb|reflexivity].
     - intros [H | (i0 & m1 & evs1 & Hi & [H | (m0 & m2 & evs2 & Hm & Hb)])];
         [exfalso; exact (Unmodeled_Ok _ _ _ H)| exfalso; exact (Unmodeled_Ok _ _ _ H)|].
       apply Ok_inj in Hi as (-> & -> & ->). apply Ok_inj in Hm as (-> & -> & ->). exact Hb.
-    - intros Hb. right. nexists i, m, []. split; [reflexivity|]. right.
-      nexists m, m, []. split; [reflexivity|exact Hb]. }
+    - intros Hb. right. exists i, m, []. split; [reflexivity|]. right.
+      exists m, m, []. split; [reflexivity|exact Hb]. }
   unfold after_copyins. destruct o as [eff m' evs|]; [|apply Hcore].
-  split; (intros nd_i11; ndestruct nd_i11 as (core & Hc & ->)); exists core; (split; [apply Hcore; exact Hc|reflexivity]).
+  split; intros (core & Hc & ->); exists core; (split; [apply Hcore; exact Hc|reflexivity]).
 Qed.
 
 (* [comment removed for export] *)
-Lemma err_ret_outcome : ltac2:(zQ "h32!h9!s1!lgb!hu9!ird!imc!v8!hgf!s9!ij8!s6!li3!li9!ir5!isd!se!lj3!ll3!rkd&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1e$a>1i$e>1m$d>1o@1$5$4@2$9@4$h2^4^3^2^1@3$8@1$5$4^1@4$b$4@6$h1@1$f^4@1$2@2$3@1$1@1$0#k0@1$6@1$1@1$0#8~1~1@1$2$c@1$2@2$3@1$1@1$0#k0$7^2@1$2$h0").
+Lemma err_ret_outcome : forall e i m o,
+  err_ret e i m o <-> o = Ok (mkEffect (errno_ret e) [] []) m [].
 Proof. intros. unfold err_ret, ret_only, pure. reflexivity. Qed.
 
 Section Openat.
   Variables (dirfd pathp flags : word) (i : SyscallInput) (m : Model).
-  Hypothesis Hfl : ltac2:(zQ "40!lq7!ls2!s9!rh3@3$2$0@1$3?5flags$1").
+  Hypothesis Hfl : modeled_open_flags flags = true.
 
   (* [comment removed for export] *)
-  Lemma openat_toolong_outcome : ltac2:(zQ "h72!h9!s1!lgb!hu9!ird!s9!imc!v8!hgf!ij8!li3!rl8!rm6!li9!rn5!se!lj3!qm2!ll3!ro3!qp1!jq3!rjf&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1o@1$6$4>0@3$5$e@2$h3@1$h1?1i?5pathp$b@2$9@6$h5?5dirfd?5pathp?5flags?1i?1m^2@3$5@1$6$4^2@4$a$4@2$h4@2$h6?1i?5pathp@6$h2@1$f$c@1$2@2$3@1$1@1$0#k0@1$7@1$1@1$0#8~1~1@1$2$d@1$2@2$3@1$1@1$0#k0$8?1m@1$2$h0").
+  Lemma openat_toolong_outcome : forall o,
+    read_cstr (in_mem i) pathp = CstrTooLong ->
+    openat_spec dirfd pathp flags i m o <->
+    o = Ok (with_copyins (open_reads i pathp) (mkEffect (errno_ret ENAMETOOLONG) [] [])) m [].
   Proof.
     intros o Hp. rewrite (openat_spec_body _ _ _ _ _ _ Hfl). apply after_copyins_det.
     intros o'. unfold openat_body_spec. rewrite Hp. apply err_ret_outcome.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma openat_empty_outcome : ltac2:(zQ "h72!h9!s1!lgb!hu9!ird!s9!imc!v8!hgf!ij8!li3!rof!rp8!li9!rn5!se!lj3!qm2!ll3!ro3!qp1!jq3!rjf&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1o@1$6$4>0@3$5$e@2$h3@1$h1?1i?5pathp@1$b@1$2@1$1@1$0#8@2$9@6$h5?5dirfd?5pathp?5flags?1i?1m^2@3$5@1$6$4^2@4$a$4@2$h4@2$h6?1i?5pathp@6$h2@1$f$c@1$2@2$3@1$1@1$0#k0@1$7@1$1@1$0#8~1~1@1$2$d@1$2@2$3@1$1@1$0#k0$8?1m@1$2$h0").
+  Lemma openat_empty_outcome : forall o,
+    read_cstr (in_mem i) pathp = CstrOk [] ->
+    openat_spec dirfd pathp flags i m o <->
+    o = Ok (with_copyins (open_reads i pathp) (mkEffect (errno_ret ENOENT) [] [])) m [].
   Proof.
     intros o Hp. rewrite (openat_spec_body _ _ _ _ _ _ Hfl). apply after_copyins_det.
     intros o'. unfold openat_body_spec. rewrite Hp. cbn [path_eqb]. apply err_ret_outcome.
   Qed.
 
-  Hypothesis Hdir : ltac2:(zQ "40!s9!h9!su9!s1@3$0@1$3@1$1#k0?5dirfd$2").
-  Hypothesis Hrd : ltac2:(zQ "60!s9!h9!s6!sv7!tge!jc@3$0$2@2$4@2$5@1$1#k0?5flags$3Z").
+  Hypothesis Hdir : dirfd = AT_FDCWD32.
+  Hypothesis Hrd : Z.ldiff (bv_unsigned flags) open_ignored_flags = 0%Z.
 
-  Lemma openat_body_resolved : ltac2:(zQ "h20!s9!h9!s1!v8!lq7!ms5!lgb!ij8!rq1!imc!rof!ird!rn5!qm2!ro3!rtc!ria!rue>1p@1$3@1$2@1$1#8>1o@1$9$b>0@3$0$c@2$e@1$d?1i?5pathp@1$a^2>0@1$8@3$0@1$3@1$2@1$1#8^3@1$6@1$2@1$1#8>0@3$0$4@1$f^4$5@2$7@8$h0?1i?1m?5dirfd?5pathp?5flags?1i?1m^4@5$h1^5?1m?1i?1m^4").
+  Lemma openat_body_resolved : forall p o,
+    read_cstr (in_mem i) pathp = CstrOk p -> p <> [] -> path_has_slash p = false ->
+    openat_body_spec i m dirfd pathp flags i m o <-> openat_read_spec p m i m o.
   Proof.
     intros p o Hp Hne Hsl. unfold openat_body_spec. rewrite Hp.
     replace (path_eqb p []) with false by (destruct p; [congruence|reflexivity]).
@@ -563,7 +819,12 @@ Section Openat.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma openat_absent_outcome : ltac2:(zQ "i02!h9!s1!lgb!s9!v8!hu9!ird!lq7!ms5!imc!mie!hgf!vf!ij8!rq1!pre!li3!rof!rp8!li9!rn5!se!lj3!qm2!pu1!ll3!ro3!qp1!rtc!jq3!sg3!rjf&@2$5@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1p@1$4@1$1@1$0#8>1o@1$9$6>0@3$3$h4@2$ha@1$h7?1i?5pathp@1$h1^2>0@1$e@3$3@1$4@1$1@1$0#8^3@1$2@1$1@1$0#8>0@3$3$7@1$hc^4$8>0@3$3$7@1$he^5$8>0@3$3@1$c@1$4@1$1@1$0#8@2$f@1$h8?1m^6@1$a@1$4@1$1@1$0#8@2$d@6$hd?5dirfd?5pathp?5flags?1i?1m^6@3$3@1$9$6^6@4$h0$6@2$hb@2$hf?1i?5pathp@6$h9@1$h5$h2@1$2@2$5@1$1@1$0#k0@1$4@1$1@1$0#8~1~1@1$2$h3@1$2@2$5@1$1@1$0#k0$b?1m@1$2$h6").
+  Lemma openat_absent_outcome : forall p o,
+    read_cstr (in_mem i) pathp = CstrOk p -> p <> [] -> path_has_slash p = false ->
+    path_is_dirref p = false ->
+    fs_lookup (m_fs m) p = None ->
+    openat_spec dirfd pathp flags i m o <->
+    o = Ok (with_copyins (open_reads i pathp) (mkEffect (errno_ret ENOENT) [] [])) m [].
   Proof.
     intros p o Hp Hne Hsl Hnd Hfs. rewrite (openat_spec_body _ _ _ _ _ _ Hfl). apply after_copyins_det.
     intros o'. rewrite (openat_body_resolved p o' Hp Hne Hsl). unfold openat_read_spec.
@@ -571,7 +832,10 @@ Section Openat.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma openat_dot_outcome : ltac2:(zQ "h50!s9!h9!s1!lq7!v8!ls2!ij8!imc!rof!lqe!ird!rn5!psb!qm2!lhb!ro3!llf!jq3!sg3!rg7!rjf>1p@1$4@1$2@1$1#8>1o@1$7$a>0@3$0$b@2$f@1$d?1i?5pathp@1$8^2>0@3$0$3@1$h2^3$5@2$6@6$h1?5dirfd?5pathp?5flags?1i?1m^3@4$h3@2$h4?1i?5pathp?1m\2fd@1$2@1$1#k0@2$h0@3$c@1$e?1m^1$9?1m^3").
+  Lemma openat_dot_outcome : forall p o,
+    read_cstr (in_mem i) pathp = CstrOk p -> path_is_dirref p = true ->
+    openat_spec dirfd pathp flags i m o <->
+    open_out (open_reads i pathp) m (fun fd => with_fds (fd_insert (m_fds m) fd FdDir) m) o.
   Proof.
     intros p o Hp Hdr. rewrite (openat_spec_body _ _ _ _ _ _ Hfl). apply after_copyins_open.
     assert (Hne : p <> []).
@@ -581,7 +845,13 @@ Section Openat.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma openat_file_outcome : ltac2:(zQ "hd0!h9!s1!v8!s9!lq7!ms5!hg8!lgb!vf!ij8!rq1!pre!imc!rof!pq8!ird!rn5!psb!qm2!lhb!pu1!ro3!llf!rtc!jq3!sg3!rg7!rjf!lma>1p@1$2@1$1@1$0#8>1d@1$2@1$1@1$0#8>1o@1$c$f>0@3$3$h0@2$h5@1$h2?1i?5pathp@1$d^3>0@1$a@3$3@1$2@1$1@1$0#8^4@1$7@1$1@1$0#8>0@3$3$4@1$h7^5$5>0@3$3$4@1$h9^6$5>0@3$3@1$8@1$2@1$1@1$0#8@2$b@1$h4?1m^7@2$6@1$2@1$1@1$0#8^6@2$9@6$h8?5dirfd?5pathp?5flags?1i?1m^6@4$ha@2$hb?1i?5pathp?1m\2fd@1$1@1$0#k0@2$h6@3$h1@1$h3?1m^1@2$e^9@2$hc@1$0#k0Z?1m^6").
+  Lemma openat_file_outcome : forall p d o,
+    read_cstr (in_mem i) pathp = CstrOk p -> p <> [] -> path_has_slash p = false ->
+    path_is_dirref p = false ->
+    fs_lookup (m_fs m) p = Some d ->
+    openat_spec dirfd pathp flags i m o <->
+    open_out (open_reads i pathp) m
+      (fun fd => with_fds (fd_insert (m_fds m) fd (FdFile p (Z_to_bv 64 0))) m) o.
   Proof.
     intros p d o Hp Hne Hsl Hnd Hfs. rewrite (openat_spec_body _ _ _ _ _ _ Hfl). apply after_copyins_open.
     intros o'. rewrite (openat_body_resolved p o' Hp Hne Hsl). unfold openat_read_spec.
@@ -593,38 +863,123 @@ End Openat.
 
 (* [comment removed for export] *)
 
-Lemma cap_iovecs_aux_id : ltac2:(zQ "92!h9!s1!v8!hu9!s9!s6!sh5!ih0!r7&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>4iovs~1>4left$5>0@2$8@1$7^2^1@3$4~1@2$6^3^2^3").
+Lemma cap_iovecs_aux_id : forall iovs left,
+  (iovs_total iovs <= left)%Z -> cap_iovecs_aux iovs left = iovs.
 Proof.
   induction iovs as [|[b n] r IH]; intros left H; [reflexivity|].
   cbn [cap_iovecs_aux]. cbn [iovs_total] in H. pose proof (iovs_total_nonneg r).
   rewrite Z.min_r by lia. rewrite Z_to_bv_bv_unsigned, IH by lia. reflexivity.
 Qed.
 
-Lemma cap_iovecs_id_rw : ltac2:(zQ "92!h9!s1!v8!hu9!s9!si6!ih0!sj3!r7&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>4iovs~1>0@2$8@1$6^1$7@3$4~1@1$5^2^2").
+Lemma cap_iovecs_id_rw : forall iovs,
+  (iovs_total iovs <= rw_bytes_max)%Z -> cap_iovecs iovs = iovs.
 Proof.
   intros iovs H. unfold cap_iovecs. apply cap_iovecs_aux_id.
   unfold MAX_RW_COUNT. unfold rw_bytes_max in H. lia.
 Qed.
 
-(* [comment removed for export] *)
-Lemma bind_input_get_model : ltac2:(zQ "90!ir5!ird!isd!sk3!ij8!qq0!skb!sl8!imc>1k>0$2>0$0@1$5$1>1i$2>1m$0>1o@1$8$1@2$4@7$3$2$1$7\2i0$2@4$3$0$1$6\2m0$0@2^6^2^1^3^2^1@5^4^3^2^3^2^1").
+Lemma gather_prefix_total0 : forall mp iovs,
+  iovs_total iovs = 0%Z -> gather_prefix mp iovs = [].
 Proof.
-  intros k i m o. unfold bind, input, get_model. destruct o as [eff m' evs|]; split.
-  - (intros nd_i12; ndestruct nd_i12 as (i0 & m1 & e1 & e2 & Hi & (m0 & m2 & e3 & e4 & Hm & Hk & ->) & ->)).
-    apply Ok_inj in Hi as (-> & -> & ->). apply Ok_inj in Hm as (-> & -> & ->). exact Hk.
-  - intros Hk. nexists i, m, [], evs. split; [reflexivity|]. split; [|reflexivity].
-    nexists m, m, [], evs. split; [reflexivity|]. split; [exact Hk|reflexivity].
-  - intros [H | (i0 & m1 & e1 & Hi & [H | (m0 & m2 & e2 & Hm & Hk)])];
-      [exfalso; exact (Unmodeled_Ok _ _ _ H) | exfalso; exact (Unmodeled_Ok _ _ _ H) |].
-    apply Ok_inj in Hi as (-> & -> & ->). apply Ok_inj in Hm as (-> & -> & ->). exact Hk.
-  - intros Hk. right. nexists i, m, []. split; [reflexivity|]. right.
-    nexists m, m, []. split; [reflexivity| exact Hk].
+  intros mp iovs; induction iovs as [|[b n] r IH]; intros H; [reflexivity|].
+  cbn [iovs_total] in H. pose proof (iovs_total_nonneg r). pose proof (word_unsigned_range n).
+  assert (Hn : bv_unsigned n = 0%Z) by lia.
+  cbn [gather_prefix]. rewrite readable_bytes_eq. unfold word_to_nat. rewrite Hn.
+  cbn [Z.to_nat readable_bytes_aux length Z.of_nat Z.eqb app]. apply IH. lia.
 Qed.
 
 (* [comment removed for export] *)
+Lemma bind_input_get_model : forall (k : SyscallInput -> Model -> Sys SyscallEffect) i m o,
+  (bind input (fun i0 => bind get_model (fun m0 => k i0 m0))) i m o <-> k i m i m o.
+Proof.
+  intros k i m o. unfold bind, input, get_model. destruct o as [eff m' evs|]; split.
+  - intros (i0 & m1 & e1 & e2 & Hi & (m0 & m2 & e3 & e4 & Hm & Hk & ->) & ->).
+    apply Ok_inj in Hi as (-> & -> & ->). apply Ok_inj in Hm as (-> & -> & ->). exact Hk.
+  - intros Hk. exists i, m, [], evs. split; [reflexivity|]. split; [|reflexivity].
+    exists m, m, [], evs. split; [reflexivity|]. split; [exact Hk|reflexivity].
+  - intros [H | (i0 & m1 & e1 & Hi & [H | (m0 & m2 & e2 & Hm & Hk)])];
+      [exfalso; exact (Unmodeled_Ok _ _ _ H) | exfalso; exact (Unmodeled_Ok _ _ _ H) |].
+    apply Ok_inj in Hi as (-> & -> & ->). apply Ok_inj in Hm as (-> & -> & ->). exact Hk.
+  - intros Hk. right. exists i, m, []. split; [reflexivity|]. right.
+    exists m, m, []. split; [reflexivity| exact Hk].
+Qed.
 
 (* [comment removed for export] *)
-Lemma writev_chan_zero_outcome : ltac2:(zQ "i42!h9!s1!lgb!hu9!s9!ird!v8!imc!lh1!qm2!sm1!hg8!lq7!ms5!hgf!vf!ij8!s6!li3!smd!sn9!li9!ir5!isd!lj3!ljb!so1!sp1!sqb!ih0!lhb!ll3!qp1!kg6!noc!lma&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>2fd@1$1@1$0#k0>3iov@1$1@1$0#k0>6iovcnt@1$1@1$0#k0>1i$h7>1m$h6>1o@1$7$5>2ch@1$1@1$0#k0>4iovs@1$6~0>0@3$4@1$f$8@2$h9@1$he^4^8@2$b$8@1$h3^2>0@3$4$c@1$i2^3$d>0@3$4$hc@3$ha@1$9^7^9@1$a^8@1$h4^3>0@3$4$h1@1$hd^4Z@2$h0@6$i1^c^b^a^9^8^7@3$4@1$7$5^7@4$h2$5@2$i0@3$hb@1$9^9^b@1$a^a@6$hf@2$i3@1$0#k0Z@1$2@2$3@1$1@1$0#k0@1$6@1$1@1$0#8~1~1@1$2$h5@1$2@2$3@1$1@1$0#k0$e^8@1$2$h8").
+Lemma writev_chan_outcome : forall fd iov iovcnt i m o ch iovs bs,
+  fd_lookup (m_fds m) fd = Some (FdChannel ch) ->
+  w_is0 ch = false ->
+  import_iovecs (in_mem i) iov (iovcnt32 iovcnt) = ImpOk iovs ->
+  (iovs_total iovs <= rw_bytes_max)%Z ->
+  gather_iovecs (in_mem i) iovs = Some bs ->
+  (1 <= Z.of_nat (length bs))%Z ->
+  (* the reader-present launch ([Run.valid_input] pins it): the revision's
+     reader-gone arm ([sigpipe_write]) does not fire *)
+  m_channel_reader m = true ->
+  let CA := import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt) in
+  writev_spec fd iov iovcnt i m o <->
+  exists k, (1 <= k <= length bs)%nat /\
+    o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
+           m (map (WriteEv ch) (firstn k bs)).
+Proof.
+  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1 Hrd.
+  cbv zeta.
+  pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
+  pose proof (cap_iovecs_id_rw iovs Htot) as Hcap.
+  assert (Herrk : forall k, (k <= length bs)%nat ->
+            addr_is_error_b (len_word (firstn k bs)) = false).
+  { intros k Hk. unfold addr_is_error_b, two_pow_64. apply Z.ltb_ge.
+    rewrite len_word_unsigned by (rewrite firstn_length_le by lia; unfold two_pow_64;
+                                   unfold rw_bytes_max in Htot; lia).
+    rewrite firstn_length_le by lia. unfold rw_bytes_max in Htot. lia. }
+  unfold writev_spec. rewrite bind_input_get_model. rewrite Hfd, Hch. cbv iota.
+  transitivity
+    (record_copyins (import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt))
+       (ds <- choose (fun ds : list byte =>
+                       (1 <= Z.of_nat (length ds))%Z
+                       /\ (Z.of_nat (length ds) < two_pow_64)%Z
+                       /\ addr_is_error_b (len_word ds) = false
+                       /\ ds = firstn (length ds) bs) ;;
+        emit (map (WriteEv ch) ds) ;;
+        record_copyins (iov_prefix_accesses (cap_iovecs iovs) (length ds))
+          (ret_only (len_word ds)))%sys i m o).
+  { rewrite Himp. cbv zeta. unfold writev_gathered.
+    rewrite Hcap, (gather_prefix_full _ _ _ Hg).
+    replace (iovs_total iovs =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia).
+    rewrite Hrd. cbn [negb].
+    replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
+    replace (addr_is_error_b (len_word bs)) with false
+      by (symmetry; rewrite <- (firstn_all bs); rewrite (Herrk (length bs)) by lia; reflexivity).
+    reflexivity. }
+  rewrite Hcap. sys_unfold.
+  split.
+  - destruct o as [x m' evs|]; intros H; inv_sys.
+    match goal with Hds : ?ds = firstn (length ?ds) bs |- _ =>
+      exists (length ds); rewrite <- Hds;
+      assert (Hk : (length ds <= length bs)%nat)
+        by (rewrite Hds; rewrite length_firstn; apply Nat.le_min_r)
+    end.
+    split; [lia|]. rewrite !app_nil_r. unfold len_word. reflexivity.
+  - intros (k & Hk & ->).
+    assert (Hlk : length (firstn k bs) = k) by (apply firstn_length_le; lia).
+    eexists _, _, _, _. split.
+    + eexists _, _, _, _. split.
+      * exists (firstn k bs). split; [|reflexivity].
+        rewrite Hlk. split; [lia|]. split; [unfold two_pow_64, rw_bytes_max in *; lia|].
+        split; [apply Herrk; lia|reflexivity].
+      * split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
+        eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
+    + rewrite Hlk, !app_nil_r. unfold len_word. rewrite Hlk. split; reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+Lemma writev_chan_zero_outcome : forall fd iov iovcnt i m o ch iovs,
+  fd_lookup (m_fds m) fd = Some (FdChannel ch) ->
+  w_is0 ch = false ->
+  import_iovecs (in_mem i) iov (iovcnt32 iovcnt) = ImpOk iovs ->
+  iovs_total iovs = 0%Z ->
+  writev_spec fd iov iovcnt i m o <->
+  o = Ok (with_copyins (import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt))
+                       (mkEffect (Z_to_bv 64 0) [] [])) m [].
 Proof.
   intros fd iov iovcnt i m o ch iovs Hfd Hch Himp Htot.
   assert (Hcap : cap_iovecs iovs = iovs) by (apply cap_iovecs_id_rw; unfold rw_bytes_max; lia).
@@ -635,4 +990,3 @@ Proof.
   { rewrite Himp. cbv zeta. rewrite Hcap, Htot. cbn [Z.eqb]. reflexivity. }
   rewrite record_copyins_iff. apply after_copyins_det. intros o'. unfold ret_only, pure. reflexivity.
 Qed.
-(* [comment removed for export] *)

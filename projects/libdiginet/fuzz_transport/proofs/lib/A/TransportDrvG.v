@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* The G side of libdiginet/fuzz_transport's image-A driver: libreac/fuzz_pcap's lib/A/PcapDrvG.v (origin/ossv/recipes
-   198234fa4d3) reduced to its G content. It holds the bridge from the program call's journal (A/AD1w.v lib_site_x:
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The G side of libdiginet/fuzz_transport's image-A driver: libreac/fuzz_pcap's lib/A/PcapDrvG.v
+    reduced to its G content. It holds the bridge from the program call's journal (A/AD1w.v lib_site_x:
    W_journalG.v's ajournal_gx at the harness globals' hull DRV_G of A/AD2f.v, XO = 0, OUT = []) to what the driver reads
    off its journal (YCbq.ajournal from a start memory memS that agrees with the caller's memory outside the hull), and
    the one side condition: every byte the driver reads or keeps across the call lies outside the hull

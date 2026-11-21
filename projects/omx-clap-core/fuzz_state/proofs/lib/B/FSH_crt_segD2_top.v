@@ -4,11 +4,11 @@
    fuzz_free (file); A 0x822ac) and the tail takes over at crt_INV_T (0x824b4 on B, the return of free (same); A
    0x82354), where lib/B/FSH_crt_segD.v's crt_tail is already proved.
 
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 6cf61486dca lib/A/FSH_crt_segD2_top.v)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 1ab57ca7ad7) - RT : CrtRt B
-   (not FsRt) (a working branch 1ab57ca7ad7).
-   Port source: a working branch 6cf61486dca proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_top.v, itself
-   PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_chain.v
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD2_top.v)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - RT : CrtRt B
+   (not FsRt) (a working branch).
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_top.v, itself
+   PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_chain.v
    (`st_chain`, its St19..St24 part). Same names and statements as the A file; the B content is in the six segment
    files and the kit lib/B/FSH_crt_segD2.v. Imports: lib.A.X -> lib.B.X where lib/B/X.v exists (AB1v -> YB1v,
    AB1w -> YB1w, AE2k -> YE2k); SetShadowDefU, FSupoison, FSupoisonU, FSH_YC20 and FSH_Gen stay lib/A's. A's import of

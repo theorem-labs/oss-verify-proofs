@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_lv2_worker_set (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, entry BASE + AF_sup_lv2_worker_set = 0x8c0cc, 28 instructions, 112 bytes): it proves
-   a Theorem Labs lane's `tsup_lv2_worker_set_spec` (lib/B/Prog/sup_lv2_worker_set_c.v; statement from a Theorem Labs lane f490061c104, over
-   a Theorem Labs lane c022a2f6a88) in the form of cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic
+   a Theorem Labs lane's `tsup_lv2_worker_set_spec` (lib/B/Prog/sup_lv2_worker_set_c.v; statement from a Theorem Labs lane, over
+   a Theorem Labs lane) in the form of cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic
    executor over the position-abstract listing up to each call (the plain runs of lib/B/Prog/PaCallRun.v, no shadow
    access in the function), the callee contracts of record, arg_s and rec_shape_of (taken at the entry's FP state,
    which these apost_base callees keep) through cl_callS_wide / cl_callS_na (lib/B/Prog/PaNoChain.v), and answer's
@@ -12,10 +12,10 @@
    apost_baseF. The frame chains (pass 5, no astack_pres): s0 = worker (a heap pointer) at the four program calls,
    achain_low; at the tail jump s0 and sp are the entry's, afn_pre's chain moved by achain_kept / achain_ly_top.
    It is the B re-walk of the A walk
-   lib/A/Prog/sup_lv2_worker_set.v + _s0 .. _s3 (a working branch 5c647899d9f), whose rec_shape_of call,
+   lib/A/Prog/sup_lv2_worker_set.v + _s0 .. _s3 (a working branch), whose rec_shape_of call,
    tail call of answer and post assembly (sup_lv2_worker_set_s2.v slw_D2 / slw_D3) it follows; B calls record and
    arg_s where A inlines them, so A's segments A, B and s3 become one contract step each. The Generation-N B walk
-   lib/B/Prog/sup_lv2_worker_set.v on a working branch 543f2c3645b (template only, not ported) cuts the same
+   lib/B/Prog/sup_lv2_worker_set.v on a working branch (template only, not ported) cuts the same
    code at the same return addresses.
 
    B code (MEASURED from the pinned fuzz_command.asan-ubsan with pyelftools and capstone, symbol-keyed; a Theorem Labs lane's
@@ -29,13 +29,14 @@
    (record 4, arg_s 5, answer 5 trap sites, rec_shape_of 2 inline checks), refuted in their own walks, whose
    contracts this walk uses. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_lv2_worker_set.v, with its module paths, module names and numbers changed; 671 of its 776 lines of code are new or changed and 999 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan+UBSan walk of socket_send (plugin-hostd/fuzz_command, image fuzz_command.asan-ubsan, entry
    BASE + AF_socket_send = 0x8cdb4): it proves `tsocket_send_spec` (lib/B/Prog/socket_send_c.v) in the form of
    cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic executor over the position-abstract
    listing up to each call, the runtime's rules at the runtime calls, the callee contract xmalloc_c at the call of
    xmalloc (through cl_callS), the return through `paj_ret_at`, and apost_base at the end.
 
-   It is the B re-walk of the A walk lib/A/Prog/socket_send.v (a working branch 8fcc9317a00), at
+   It is the B re-walk of the A walk lib/A/Prog/socket_send.v (a working branch), at
    B's addresses (a Theorem Labs lane's gen/dis/socket_send.s, 38 instructions, 0x8cdb4 .. 0x8ce48):
    - prologue (48-byte frame, ra s0 s1 s2 s3 saved); `mv s0,a2`; g_rec by auipc/addi (listing object 44);
      `lw a0,920(s3)`, `addiw a2,a0,1`, then the UBSan trap branch `blt a2,a0` (0x8cde0 -> unimp 0x8ce48);
@@ -55,7 +56,7 @@
    recb_fresh_disj_perm_m, recb_not_new_perm_m, recb_awr_new_block_perm_m) and what a callee with an empty footprint
    keeps (recb_call_keeps_m).
 
-   Statement: a Theorem Labs lane's lib/B/Prog/socket_send_c.v at a working branch fc8bcbd8b42 (pass 5: no astack_pres premise; the
+   Statement: a Theorem Labs lane's lib/B/Prog/socket_send_c.v at a working branch (pass 5: no astack_pres premise; the
    callee and runtime contracts taken at every FP state, the walk applies them at its fx). Facts a Theorem Labs lane states only
    at the pinned image are Section hypotheses under the names of a Theorem Labs lane's lemmas (cmd_palib, cmd_sig_prog_PB,
    cmd_img_facts_tfib) and PRW : prog_rw; the program statics' image facts come from CmdRecRest.cmd_prog_img;

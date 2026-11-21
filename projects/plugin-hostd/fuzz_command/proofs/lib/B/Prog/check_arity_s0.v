@@ -1,6 +1,6 @@
 (* Bridge from the released plain model of check_arity (lib/Prog/check_arity_c.v: parsed_rows, row_find, and
    img_str of lib/Prog/check_reply_c.v) to the ASan+UBSan image's read-only bytes (lib/B/Prog/CmdRo.v).
-   B twin of lib/A/Prog/check_arity_s0.v (a working branch 9c6410fb32e): pure relocation, every
+   B twin of lib/A/Prog/check_arity_s0.v (a working branch): pure relocation, every
    name literal of image B is image A's + 0x40 with the same bytes (internal path, arityB-prep.md
    section 2c). No code is walked here, so no UBSan trap site is in this file's range.
 

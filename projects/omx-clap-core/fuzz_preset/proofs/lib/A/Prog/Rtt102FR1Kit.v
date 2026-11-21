@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Loop_kitQ.v, with its module paths and module names changed; 613 of its 653 lines of code are new or changed and 156 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, the IMAGE-GENERIC KIT of lane RttFR1 (WalkRtt102 for the text owner) for round_trip_text's stretches over the
    cut layer Rtt102Cut.v, generic over the listing, its image and the PrhImg instance ({L} {PL} {PA} {PI}): image A'
    instantiates it in Rtt102R1A.v / Rtt102FA.v (with Rtt102FR1KitA.v's concrete steps), image B' in its own files.
    rule 24: proves no function (kind: segment lemma helpers); the function-level lookup is the brief's
    (proof-index round_trip_text EXIT=0, no released ASan proof).
    CONTENTS.
-   pure helpers: fr_rdword_of_val_mem (YCem.v:101), fr_fpchain_keep / fr_unwind_eq (H5RttS4.v, the H2H5 walk head
-     1934271f1f40), fr_aview_of_apresent, fr_pairwise_app / fr_pairwise_in_map.
+   pure helpers: fr_rdword_of_val_mem (YCem.v:101), fr_fpchain_keep / fr_unwind_eq (H5RttS4.v, the H2H5 walk head),
+     fr_aview_of_apresent, fr_pairwise_app / fr_pairwise_in_map.
    Section k (generic):
-   2. fr_call_at: a call of a program text from a concrete state (YCbqGcall.v:107 aj_call_x_sp without its symbolic-state
+   2. fr_call_at: a call of a program text from a concrete state (YCbqGcall.v:108 aj_call_x_sp without its symbolic-state
       premise, proof transcribed).
    3. (fr_free_null_at, free (NULL) at the free wrapper, is DELETED at the batch kit's cut: its one consumer, the r = 1 stretch R1,
       went with RT_R1, and no file uses it.)
@@ -187,7 +188,7 @@ Hypothesis RTT_FP : @pi_fp PI F_round_trip_text = true.
 (* round_trip_text's stack budget covers its own frame and realignment (A': 27392, by computation) *)
 Hypothesis STKR_frame : 192 <= STKR.
 
-(* ---- 2. a call of a program text from a concrete state (YCbqGcall.v:107 aj_call_x_sp, transcribed), at RZW: the
+(* ---- 2. a call of a program text from a concrete state (YCbqGcall.v:108 aj_call_x_sp, transcribed), at RZW: the
    callee concludes SRr' with its journal at RZW (apost_base_xR) ---- *)
 Lemma fr_call_at : forall W regs memc STK0 sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k STK1 FP1 (o : Z) raw ch1 pc
   (Q : alayout -> astate -> list Z -> world SEGS -> bvmap 5 word -> (word -> option byte) -> Model -> Prop),

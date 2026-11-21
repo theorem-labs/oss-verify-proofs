@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_oomconst.v (commit 4d286b2e618d, file sha256 df4e454263ea) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_oomconst.v (file sha256 df4e454263ea) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-oomconst-B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the constant-cell table of reply's image B,
    fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
 
-   oom_const_img : oom_const_t, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:312-314 (Definition) / :316 (Hypothesis)
-   @ 90854e46e5c, over its Section's Variable B under TS : im_syms B.  Reply does not carry YGcfInstMiss.v nor
+   oom_const_img : oom_const_t, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:312-314 (Definition) / :316 (Hypothesis),
+   over its Section's Variable B under TS : im_syms B.  Reply does not carry YGcfInstMiss.v nor
    YGcfInstBase.v, so the Lemma states the body of oom_const_t VERBATIM at a B with image B's symbol facts (im_syms of
    AImg_cgif, B/AGif2cgif.v:24, which is YF0m.TfibSyms), with the premise ly_img_ok B ly unfolded; ly_img_ok is
-   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 @ 90854e46e5c (= @ e73dee6cc107):
+   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 (=):
    ly_img_ok B ly := layout_ok ly /\ ly_tsd ly = as_tsd B /\
                      Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B).
    Proof at image B: the SYM cells of Tfib_const_sym (B/YF0m.v:32-37) at AT / AC / AD lie in the owned extents

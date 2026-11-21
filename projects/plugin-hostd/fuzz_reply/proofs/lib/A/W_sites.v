@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contracts of fuzz_reply's ASan program walks that the donor's
    runtime vocabulary (Reusable/YG0d.v, from proofs/cgif/cgif_file_fuzzer/lib/YG0d.v) does not name, in its shape. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Each `*_realizes pc` below is the contract of one runtime entry at its code address pc, stated in the shape of
    YG0d.v's aintrin_realizes / abcmp_realizes / astrnlen_realizes and of W_contract.v's astrlen_realizes:
    - pre: `ecall_pre` (the allocator state, a code return address, the stack and gp/tp), the scratch the entry may
@@ -18,7 +19,7 @@
    The runtime lanes prove these; a walk takes the ones it calls as Section hypotheses at `SIGMA WS_<entry>`.
    Not here, by ruling: the donor's own closed forms (amalloc, afree, aintrin OCpy/OSet, abcmp, amemchr0,
    astrnlen, astack_malloc_realizes at any class, YG0d.v:266-432), which the relocated core proves; strlen
-   (W_contract.v:223 astrlen_realizes); memchr and strnlen in general, whose texts are shared (memchr:
+   (W_contract.v:224 astrlen_realizes); memchr and strnlen in general, whose texts are shared (memchr:
    lib/Rt/MemchrDef.v amemchr_realizesM; strnlen: a Theorem Labs lane's StrnlenDef); and every entry that allocates
    (malloc, realloc, free, strndup), which goes on the allocator parameter of GUIDE section 3.1.
    Stack: libc entries called directly (pthread_mutex_lock/unlock, __errno_location) use ESTACK below sp, the
@@ -184,8 +185,8 @@ SRr SEGS W (cfg_at SEGS pc regs mem md)
 (* ---- __asan_memmove (an ASan intrinsic). ----
    YG0d.v's aintrin_realizes OCpy without its disjointness conjunct: the ranges may overlap, and each byte of the
    destination gets the source byte as it was at entry.  n = 0 is allowed.  The rom_view and the 8-byte ranges are
-   the premises of pcap's Bz walk (a working branch, Bz/A/I_amemmovew.v:409-415: its range checks take
-   region_in_mem x n, Bz/A/I_consts.v:20, only when n > 0), of which this form is to be the relocated instance. *)
+   the premises of pcap's Bz walk (a working branch, Bz/A/I_amemmovew.v:410-416: its range checks take
+   region_in_mem x n, Bz/A/I_consts.v:21, only when n > 0), of which this form is to be the relocated instance. *)
 Definition amemmove_realizes (pc : Z) : Prop :=
 forall ly S W regs mem md d x n,
 ecall_pre SEGS B ly S W regs mem md ->
@@ -215,13 +216,13 @@ SRr SEGS W (cfg_at SEGS pc regs mem md)
 (aentry_post ESTACK ly S W regs mem md (fun _ => False) (fun regs' _ => getr regs' 10 = w64 d)).
 
 (* The length bound of the Bz-derived forms: `n <= 2 ^ 40` on astrncmp, `kx + 1 <= 2 ^ 40` on astrcmp and
-   `k < 2 ^ 40` on astrrchr, each right after the form's size premise (the Bz range check rng_ok, Bz/A/I_qck.v:27,
+   `k < 2 ^ 40` on astrrchr, each right after the form's size premise (the Bz range check rng_ok, Bz/A/I_qck.v:28,
    I_consts.v:27).  DO NOT TIGHTEN IT: the measured worst case at the inputs the statement covers (EvBound) is
    list_drop's memmove (inlined at 7 sites), (n - i - 1) * 16 up to 536,870,896 = 2^29 - 16 (under amemmove's
    n < 2^32); a bound of 2^24 or 2^16 would break it. *)
 
 (* ---- snprintf (an interceptor), general in its format: a Theorem Labs lane's statement. ----
-   The statement is plugin-hostd/fuzz_command's (a working branch b273dd49dab, lib/A/Rt/RtFormat.v:72-90), with its
+   The statement is plugin-hostd/fuzz_command's (a working branch, lib/A/Rt/RtFormat.v:72-90), with its
    helper definitions (lib/A/Rt/RtDefs.v) copied below under the same names, at fuzz_reply's addresses: the walk of
    the entry is written once, against that statement, and relocated.  On fuzz_reply.asan the chain is
    ___interceptor_snprintf -> ___interceptor_vsnprintf (printf_common, then musl's vsnprintf -> vfprintf ->
@@ -312,7 +313,7 @@ astr_at W mem f (printf_facts_c.pf_bytes fmt) ->
 printf_facts_c.pf_parse fmt = Some ps ->
 (* The four premises from `ps = ..` to `PF_GLOBALS_TOP <= d` NARROW the contract (a Theorem Labs lane's ruling, SNP-ROUTE.md
    section 7.5; the location premises on the same ground, 2026-10-30), in the text of a working branch
-   8f558767590a lib/A/RT_pf_snp_srr.v asnprintf_realizes_xn, so that its proof plugs this contract by exact:
+   lib/A/RT_pf_snp_srr.v asnprintf_realizes_xn, so that its proof plugs this contract by exact:
    - the pieces are reply's one format "%s %d ";
    - (M1) the format lies in the image's read-only data below the GOT word: 65536 <= f, f + |fmt| + 1 <= FR_GOT_GUARD;
    - (M3) the %s string (the first argument, a3 = getr regs 13, its bytes by apf_arg_ok's astr_at) likewise, with the
@@ -339,7 +340,7 @@ apf_args_ok (3 * ESTACK) W regs mem d n
 [getr regs 13; getr regs 14; getr regs 15; getr regs 16; getr regs 17] args ->
 awrite_ok (3 * ESTACK) ly S W regs mem d n ->
 (* seven bytes past the buffer in application memory: the shared snprintf route's final text (a Theorem Labs lane's
-   working branch 3e35620c52e, sh_asnprintf_realizes(U)) asks amem_range d (sn_len (n - 1) T + 8), and
+   working branch, sh_asnprintf_realizes(U)) asks amem_range d (sn_len (n - 1) T + 8), and
    sn_len (n - 1) T + 8 can reach n + 7; amem_range is NUMERIC (YG0d.v:329), so amem_range d n above does NOT give it
    near a memory boundary.  Do not tidy this back to n: the bridge from fm's instance needs it (amem_range_le). *)
 amem_range d (n + 7) ->

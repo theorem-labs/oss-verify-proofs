@@ -5,11 +5,11 @@ three files; only the file list and two patches differ from core-A.
 
 ## Donor
 
-fuzz_grant's RELEASED files at recipes 4f87de75d67 (PR #401; the three blobs are the same at 25e3d17bdb50, core-A's
+fuzz_grant's RELEASED files at recipes (PR #401; the three blobs are the same, core-A's
 donor commit): lib/A/Rt/AF0r.v (the code table, the symbolic runs, the probe loop; CID 1, FS_ENTRY 0x3cf18),
 lib/A/Rt/AF0s.v (tfib_stack_malloc_at and the corollary stack_malloc1_contract, line 513) and lib/Reusable/YF0v.v
 (own_free_frame / own_free_frame_shadow, which AF0s.v uses). The released-proof lookup found no fuzz_uci class-1
-contract (released or in flight), so the grant-A proof is ported. `mkdon-sm1.sh 4f87de75d67` normalises the donor by
+contract (released or in flight), so the grant-A proof is ported. `mkdon-sm1.sh` normalises the donor by
 core-A's rule (lib/Reusable/* -> root).
 
 ## Bodies first

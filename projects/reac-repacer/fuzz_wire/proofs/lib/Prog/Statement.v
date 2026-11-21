@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/Statement.v (6874bc78b1f) at fuzz_wire's module
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/Statement.v at fuzz_wire's module
    paths and plain image values: the allocator and sink addresses of lib/FrameAPI.v, malloc 0x14484, free 0x14344,
    guard 0x4e4e0 and its GOT slot 0x1cef0; LLVM_K unfolds through check_copy's CC_STACK. *)
 From Stdlib Require Import ZArith List Lia.

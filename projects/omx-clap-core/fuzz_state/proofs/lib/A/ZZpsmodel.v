@@ -33,14 +33,14 @@
    uswap and bswap themselves are unchanged.
 
    Templates (case structure only; every proof here is written fresh): a Theorem Labs lane's ZZwv_comp.v:351-421
-   (wv_bswap_trans / wv_uswap_trans, a working branch b28b3e2d1bd) and a Theorem Labs lane's
+   (wv_bswap_trans / wv_uswap_trans, a working branch) and a Theorem Labs lane's
    FSW_pj_write.v:2571-2755 (pjw_c_wev_split, pjw_c_split_uniq, pjw_c_bswap_comp, pjw_c_uswap_comp,
-   a working branch f5d78102c21). Released lemmas reused by name: FSW_writer_model.spieces_plain,
+   a working branch). Released lemmas reused by name: FSW_writer_model.spieces_plain,
    WriterRet.put1_cap, WriterRet.put1_failed, WriterApp.putN_cons / putN_nil, YG0d.al_blocks through
    YG0q.AR_laws_ok, YCbq.req_size_pos.
    Rule 24 (2026-10-29, git grep -n -w -E 'psm_[a-z0-9_]+' -- 'proofs/*', each ref's own exit code, output to a
-   file): origin/main f4cc67298b7, origin/ossv/recipes e5e7eba2cc0, origin/ossv/candidates ee89628c997,
-   origin/release/pau-projects-recipes b6a0088adcb have NO hit for any name defined here; the only psm_ names
+   file):,
+   have NO hit for any name defined here; the only psm_ names
    there are psm_sm / psm_facts / psm_grows / psm_in / psm_out (boost-beast, glaze), unrelated.
    Sink probes (Fail Definition probe_SK / probe_SH at top level) compiled in this file at commit time and were
    removed before it, as the lane asks. *)

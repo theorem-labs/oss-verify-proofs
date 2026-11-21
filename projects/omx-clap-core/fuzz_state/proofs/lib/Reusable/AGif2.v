@@ -1,7 +1,8 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/AGif2.v @ 95e6f1d72b6 (a Theorem Labs lane, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/AGif2.v (a Theorem Labs lane, frozen), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The VIEW of the secondary path of the frame-generic Allocate walk (n >= 64513): the machine facts the
    secondary seed (AGi9.SREG0 / AGi9.S0) reads, at the machine level, over the allocator instance [inst].
 

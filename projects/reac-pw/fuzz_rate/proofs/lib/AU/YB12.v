@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: emitted for reac-pw/fuzz_rate image B by atable.py e88affcf0526 from fuzz_rate.asan-ubsan and its unstripped twin, from proofs/cgif/cgif_file_fuzzer/lib/YB12.v at c8557374ad2e: TFIB_TEXT_N over this image's own .text, img_lo / img_hi cited from lib/Reusable/YImgTop.v; module paths changed *)
+(* Modified by Theorem Labs, 2026-10: emitted for reac-pw/fuzz_rate image B by atable.py e88affcf0526 from fuzz_rate.asan-ubsan and its unstripped twin, from proofs/cgif/cgif_file_fuzzer/lib/YB12.v at theorem-labs/oss-verify-proofs@6b32741d849a: TFIB_TEXT_N over this image's own .text, img_lo / img_hi cited from lib/Reusable/YImgTop.v; module paths changed *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_rate.asan-ubsan (reac-pw/fuzz_rate asan-ubsan) sha256 c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; unstripped twin sha256 a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1 *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MG_T_node and MG_T_store written out in plain text with a new last premise ASys.placed_at at the grant size, the old encodings kept as ZZ_MG_T_node_old and ZZ_MG_T_store_old, with faithful lemmas proving them equal to the statements without that premise; MG_ROOM_e added, room for a 64 KiB grant). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -150,23 +151,76 @@ Section G.
 (* [comment removed for export] *).
   Proof. intros u f nb bl mo a w [K _] RF W16 CE x Hx. unfold CSh in Hx. exact (G_apart AL0 AL0_GOT64 AL0_GSB64 _ _ _ _ _ _ HU HF _ u f nb bl mo a w K RF W16 CE x Hx). Qed.
 
-  Lemma MG_T_node : ltac2:(CDefT.buildp (gd_tbl_AInstMallocG ()) "Pu,(1:.$4.)Pf,(1:.$4.)Pnb,(20.$21.)Pbl,(20.$21.)Pmo,$0.Pa,(16.&40.)P,(2:.Vh,R6.R5.R4.R3.)P,(2.R7.R6.R5.R4.R3.)P,(9.$21.(2;.(23.&40.R3.)+1000.)=)P,(27.=(23.&40.R4.))P,(22.(24.(23.&40.R5.)(?.+2.+14.))(25.VhAR,))P,(9.$4.(:.(14.(15.(16.&40.)(16.&40.))(;.(<.R7.))(13.(<.R7.)))R6.(=.&40.(?.+2.+14.)))$10.)(8.(2.R<.R;.(14.$21.R:.(2<.$21.(23.&40.R7.)(2=.$21.)))R9.(2>.+22.R7.(?.+2.+14.)R8.))(2?.(1?.VhAR,$1>.Vh,Vc,R<.R;.(14.$21.R:.(2<.$21.(23.&40.R7.)(2=.$21.)))R9.)(23.&40.R7.)(?.+2.+14.)))")
-(* [comment removed for export] *).
+  (* LPS #38: preserve the encoded statement and certify its explicit restatement. *)
+  Definition ZZ_MG_T_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstMallocG ()) "Pu,(1:.$4.)Pf,(1:.$4.)Pnb,(20.$21.)Pbl,(20.$21.)Pmo,$0.Pa,(16.&40.)P,(2:.Vh,R6.R5.R4.R3.)P,(2.R7.R6.R5.R4.R3.)P,(9.$21.(2;.(23.&40.R3.)+1000.)=)P,(27.=(23.&40.R4.))P,(22.(24.(23.&40.R5.)(?.+2.+14.))(25.VhAR,))P,(9.$4.(:.(14.(15.(16.&40.)(16.&40.))(;.(<.R7.))(13.(<.R7.)))R6.(=.&40.(?.+2.+14.)))$10.)(8.(2.R<.R;.(14.$21.R:.(2<.$21.(23.&40.R7.)(2=.$21.)))R9.(2>.+22.R7.(?.+2.+14.)R8.))(2?.(1?.VhAR,$1>.Vh,Vc,R<.R;.(14.$21.R:.(2<.$21.(23.&40.R7.)(2=.$21.)))R9.)(23.&40.R7.)(?.+2.+14.)))").
+
+  Lemma ZZ_MG_T_node_faithful : ZZ_MG_T_node_old =
+    (forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+       Gnh h u f nb bl ->
+       KhF u f nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 20 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+       KhF u f (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+       /\ crange (CSh AL0 h c u f (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+
+  Lemma MG_T_node :
+    forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+      Gnh h u f nb bl ->
+      KhF u f nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      KhF u f (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (CSh AL0 h c u f (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20).
   Proof.
-    intros u f nb bl mo a G [K FR] AAL A0 ACE RF.
-    eapply (G_T_node AL0) in K; [| gfacts ..]. destruct K as [K' C'].
+    intros u f nb bl mo a G [K FR] AAL A0 ACE RF FL.
+    eapply (G_T_node AL0) in K; [| gfacts .. | exact FL]. destruct K as [K' C'].
     split; [| exact C']. split; [exact K'|]. eapply mo_frame_trans; [exact FR| apply mo_frame_anon_grant].
   Qed.
-  Lemma MG_T_store : ltac2:(CDefT.buildp (gd_tbl_AInstMallocG ()) "Pu,(1:.$4.)Pf,(1:.$4.)Pnb,(20.$21.)Pbl,(20.$21.)Pmo,$0.Pa,(16.&40.)P,(30.Vh,R6.R5.R4.R3.)P,(2.R7.R6.R5.R4.R3.)P,(9.$21.(2;.(23.&40.R3.)+1000.)=)P,(27.=(23.&40.R4.))P,(22.(24.(23.&40.R5.)(?.+2.+17.))(25.VhAR,))P,(9.$4.(:.(14.(15.(16.&40.)(16.&40.))(;.(<.R7.))(13.(<.R7.)))R6.(=.&40.(?.+2.+17.)))$10.)(8.(2.R<.R;.R:.(14.$21.R9.(2<.$21.(23.&40.R7.)(2=.$21.)))(2>.+4022.R7.(?.+2.+17.)R8.))(2?.(1?.VhAR,$1>.Vh,Vc,R<.R;.R:.(14.$21.R9.(2<.$21.(23.&40.R7.)(2=.$21.))))(23.&40.R7.)(?.+2.+17.)))")
-(* [comment removed for export] *).
+  (* LPS #38: preserve the encoded statement and certify its explicit restatement. *)
+  Definition ZZ_MG_T_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstMallocG ()) "Pu,(1:.$4.)Pf,(1:.$4.)Pnb,(20.$21.)Pbl,(20.$21.)Pmo,$0.Pa,(16.&40.)P,(30.Vh,R6.R5.R4.R3.)P,(2.R7.R6.R5.R4.R3.)P,(9.$21.(2;.(23.&40.R3.)+1000.)=)P,(27.=(23.&40.R4.))P,(22.(24.(23.&40.R5.)(?.+2.+17.))(25.VhAR,))P,(9.$4.(:.(14.(15.(16.&40.)(16.&40.))(;.(<.R7.))(13.(<.R7.)))R6.(=.&40.(?.+2.+17.)))$10.)(8.(2.R<.R;.R:.(14.$21.R9.(2<.$21.(23.&40.R7.)(2=.$21.)))(2>.+4022.R7.(?.+2.+17.)R8.))(2?.(1?.VhAR,$1>.Vh,Vc,R<.R;.R:.(14.$21.R9.(2<.$21.(23.&40.R7.)(2=.$21.))))(23.&40.R7.)(?.+2.+17.)))").
+
+  Lemma ZZ_MG_T_store_faithful : ZZ_MG_T_store_old =
+    (forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+       Gsh h u f nb bl ->
+       KhF u f nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 23 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+       KhF u f nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+       /\ crange (CSh AL0 h c u f nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+
+  Lemma MG_T_store :
+    forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+      Gsh h u f nb bl ->
+      KhF u f nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      KhF u f nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (CSh AL0 h c u f nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23).
   Proof.
-    intros u f nb bl mo a G [K FR] AAL A0 ACE RF.
-    eapply (G_T_store AL0) in K; [| gfacts ..]. destruct K as [K' C'].
+    intros u f nb bl mo a G [K FR] AAL A0 ACE RF FL.
+    eapply (G_T_store AL0) in K; [| gfacts .. | exact FL]. destruct K as [K' C'].
     split; [| exact C']. split; [exact K'|]. eapply mo_frame_trans; [exact FR| apply mo_frame_anon_grant].
   Qed.
   Lemma MG_ROOM_n : ltac2:(CDefT.buildp (gd_tbl_AInstMallocG ()) "Pu,(1:.$4.)Pf,(1:.$4.)Pnb,(20.$21.)Pbl,(20.$21.)Pmo,$0.P,(2:.Vh,R5.R4.R3.R2.)P,(2.R6.R5.R4.R3.R2.)(31.(16.&40.)La,(16.&40.)(32.VhAR,+22.(?.+2.+14.)R4.R1.))")
 (* [comment removed for export] *).
   Proof. intros u f nb bl mo G [K _]. eapply (G_ROOM_n AL0) in K; [exact K| gfacts ..]. Qed.
+  (* LPS #38: the emb-sized sibling of [MG_ROOM_n]; see [AInstDepot.D_ROOM_e].
+     Explicit text rather than a blob because it is an ADDITION, so there is no
+     old statement to be faithful to. *)
+  Lemma MG_ROOM_e : forall u f nb bl mo, Gnh h u f nb bl -> KhF u f nb bl mo -> exists a, anon_grantable 0x22 0x10000 mo a.
+  Proof. intros u f nb bl mo G [K _]. eapply (G_ROOM_e AL0) in K; [exact K| gfacts ..]. Qed.
   Lemma MG_ROOM_s : ltac2:(CDefT.buildp (gd_tbl_AInstMallocG ()) "Pu,(1:.$4.)Pf,(1:.$4.)Pnb,(20.$21.)Pbl,(20.$21.)Pmo,$0.P,(30.Vh,R5.R4.R3.R2.)P,(2.R6.R5.R4.R3.R2.)(31.(16.&40.)La,(16.&40.)(32.VhAR,+4022.(?.+2.+17.)R4.R1.))")
 (* [comment removed for export] *).
   Proof. intros u f nb bl mo G [K _]. eapply (G_ROOM_s AL0) in K; [exact K| gfacts ..]. Qed.

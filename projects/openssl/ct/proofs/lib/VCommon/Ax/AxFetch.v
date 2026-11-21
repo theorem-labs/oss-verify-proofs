@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the step relation's new vDSO arms). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -207,6 +208,17 @@ Proof.
       try (match goal with H1 : ms_svc_pending ms = Some _ |- _ => rewrite Hsvc in H1; discriminate H1 end).
     + exists tt. match goal with H2 : mi_account_step _ _ _ = _ |- _ => rewrite Hst in H2; injection H2 as <- <- end.
       split; reflexivity.
+    + match goal with H2 : mi_account_step _ _ _ = _ |- _ => rewrite Hst in H2; discriminate H2 end.
+    + match goal with H2 : mi_account_step _ _ _ = _ |- _ => rewrite Hst in H2; discriminate H2 end.
+    (* Run.sstep_cfg went from 8 constructors to 11 in the retarget window
+       (f1006fe8 -> 08b1429, byte-unchanged 08b1429 -> 75d69e00), gaining
+       sstep_cfg_vdso_call, sstep_cfg_vdso_materialization_fault and
+       sstep_cfg_vdso_unmodeled.  All three carry ms_svc_pending ms = None, so the
+       svc_pending `try` above does not reach them, and all three require
+       mi_account_step segs ms model = MachineUnmodeled, which Hst contradicts.
+       Three explicit bullets in the shape of the two above: if the arm count moves
+       again, Qed fails loudly with remaining open goals rather than silently. *)
+    + match goal with H2 : mi_account_step _ _ _ = _ |- _ => rewrite Hst in H2; discriminate H2 end.
     + match goal with H2 : mi_account_step _ _ _ = _ |- _ => rewrite Hst in H2; discriminate H2 end.
     + match goal with H2 : mi_account_step _ _ _ = _ |- _ => rewrite Hst in H2; discriminate H2 end.
 Qed.

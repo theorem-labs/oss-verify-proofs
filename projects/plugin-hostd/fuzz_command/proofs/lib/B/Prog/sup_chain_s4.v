@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-10: the TAIL segment of sup_chain's walk on plugin-hostd/fuzz_command's ASan+UBSan
    build (fuzz_command.asan-ubsan), from the loop exit BASE + SCB_LEXIT = 0x8c444 to the return 0x8c558, against the
    interface lib/B/Prog/sup_chain_d.v (scb_lctx, scb_inv) and the helpers lib/B/Prog/sup_chain_aux.v. Statement from
-   a Theorem Labs lane 707acd856cb (lib/B/Prog/sup_chain_c.v, tsup_chain_spec). The block bookkeeping of the post is the pure lemma
+   a Theorem Labs lane (lib/B/Prog/sup_chain_c.v, tsup_chain_spec). The block bookkeeping of the post is the pure lemma
    scb4_final_blocks; the release segment 0x8c47c .. 0x8c558 is scb4_rel; scb_tail composes the four calls with both.
 
    The code: ld s2,8(s1) (the slot); arg_s(slot, list) 0x8c450; free(list) 0x8c458; rec_shape_of("chain", 5)
    0x8c468; answer(slot, shape, 1) 0x8c478 with this call's class-1 frame still live; then the inline release
    0x8c47c .. 0x8c4e4 (the magic 0x45e0360e at F, f5 at the frame's 16 shadow bytes, the flag byte through the word
    at F + 120), the epilogue (the saved registers back, sp := s0 - 192 + 192) and `ret`. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -93,7 +94,7 @@ Proof.
 intros a k l Hk HF Hin. rewrite Forall_forall in HF. specialize (HF _ Hin).
 unfold iv_apart in HF. cbn [fst snd] in HF. clear Hin. lia.
 Qed.
-(* a block answer frees: the recorder's block whose start is the old answer (answer_code.v:152-156) *)
+(* a block answer frees: the recorder's block whose start is the old answer (answer_code.v:153-157) *)
 Lemma scb4_in_filter : forall (old : Z) (l : list (Z * Z)) x,
 In x (filter (fun pn : Z * Z => fst pn =? old) l) -> In x l.
 Proof.
@@ -324,14 +325,14 @@ Variable B : asyms.
 Variable MT : ameter_ops.
 #[local] Notation RLO := CMD_RLO.
 #[local] Notation RHI := CMD_RHI.
-(* the statement's Section hypotheses this segment uses (lib/B/Prog/sup_chain_c.v, a Theorem Labs lane 707acd856cb) *)
+(* the statement's Section hypotheses this segment uses (lib/B/Prog/sup_chain_c.v, a Theorem Labs lane) *)
 Hypothesis TARG_S : forall fx0 : YK11.FPState, @targ_s_spec fx0 rc SK PI B MT.
 Hypothesis TREC_SHAPE_OF : forall fx0 : YK11.FPState, @trec_shape_of_spec fx0 rc SK PI B MT.
 Hypothesis TANSWER : forall fx0 : YK11.FPState, @tanswer_spec fx0 rc SK PI B MT.
 Hypothesis AFREE_LAW : astack_free_law SEGS B.
 Hypothesis AFREE4 : forall fx0 : YK11.FPState, @afree04_rule fx0 rc SK SEGS B MT.
 Hypothesis VOBJS : cmd_val_objs.
-(* the walk's hypotheses (a Theorem Labs lane convention, model lib/B/Prog/sup_reset.v:302-337) *)
+(* the walk's hypotheses (a Theorem Labs lane convention, model lib/B/Prog/sup_reset.v:303-338) *)
 Hypothesis HB : CmdBSyms B.
 Hypothesis MTL : ameter_laws MT.
 Hypothesis MTLF : ameter_fs_laws MT.
@@ -371,7 +372,7 @@ split; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi base_val]; rew
 Qed.
 
 (* ---------- the recorder's state survives writes outside g_rec, record.spill and its own blocks ----------
-   (lib/B/Prog/answer_code.v:305-429, :441-469, verbatim) *)
+   (lib/B/Prog/answer_code.v:306-430, :442-470, verbatim) *)
 Lemma aval_mem8_eq : forall rd a v1 v2, aval_mem rd a 8 v1 -> aval_mem rd a 8 v2 ->
 0 <= v1 < 2 ^ 64 -> 0 <= v2 < 2 ^ 64 -> v1 = v2.
 Proof.

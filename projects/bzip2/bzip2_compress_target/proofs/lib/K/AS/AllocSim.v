@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (brk grants over the rounded page range). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -273,7 +274,9 @@ Qed.
 Lemma brk_grants_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-  brk_grants req r old = [(old, r - old)].
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
 Proof.
   intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
   assert (E1 : w_is0 req = false)
@@ -355,6 +358,22 @@ Proof.
   pose proof (Z.div_mod (z + 4096 - 1) 4096 ltac:(lia)) as Hdiv.
   pose proof (Z.mod_pos_bound (z + 4096 - 1) 4096 ltac:(lia)) as Hmod.
   lia.
+Qed.
+
+(* At the revision [brk_grants] grants the rounded page range; when both
+   breaks are page aligned that is the raw byte range. *)
+Lemma brk_grants_grow_al : forall req r old,
+  req <> Z_to_bv 64 0 ->
+  (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
+  (bv_unsigned old mod page_size = 0)%Z -> (bv_unsigned r mod page_size = 0)%Z ->
+  brk_grants req r old = [(old, r - old)].
+Proof.
+  intros req r old Hreq Hold Hlt Ho Hr.
+  rewrite (brk_grants_grow req r old Hreq Hold Hlt).
+  rewrite (page_round_up_Z_aligned (bv_unsigned old)) by (first [lia | exact Ho]).
+  rewrite (page_round_up_Z_aligned (bv_unsigned r)) by (first [lia | exact Hr]).
+  unfold brk_page_range. rewrite (proj2 (Z.ltb_lt _ _) Hlt).
+  rewrite Z_to_bv_bv_unsigned. f_equal.
 Qed.
 
 (* [comment removed for export] *)

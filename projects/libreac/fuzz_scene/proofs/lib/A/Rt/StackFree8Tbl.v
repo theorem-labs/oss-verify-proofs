@@ -5,6 +5,7 @@
    Tbl / walk split of a working branch's lib/A/Rt/StackMalloc4Tbl.v. This file holds every address and constant of that
    image; the walk over these names is lib/Reusable/StackFree8.v, which holds no address and is shared with the
    asan-ubsan image (its twin table is lib/AU/Rt/StackFree8Tbl.v). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 
 (*   Every value below is MEASURED from the pinned image projects/libreac/bin/fuzz_scene/fuzz_scene.asan
    (sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026, 579368 bytes, = harness.yaml's pin) with
@@ -12,7 +13,7 @@
    (facts.py, rerun before this file was committed):
      __asan_stack_free_8                     = 0x3f588, 80 bytes, 20 four-byte words   (PC_STACK_FREE_8)
      the jal at 0x3f5b4 (word #11) targets    0x3f5d8 = __asan::MemToShadow (the static copy, 1 of 5)
-       (= a Theorem Labs lane's PC_MEM_TO_SHADOW, lib/A/Rt/StackMalloc8Tbl.v:62; CID8 and PC_POISON_SHADOW come from there too)
+       (= a Theorem Labs lane's PC_MEM_TO_SHADOW, lib/A/Rt/StackMalloc8Tbl.v:63; CID8 and PC_POISON_SHADOW come from there too)
        and its return pc is                   0x3f5b8                                   (MTS_RET)
      the tail j at 0x3f5d4 (word #19) targets 0x55bb8 = __asan::PoisonShadow(ul,ul,uc)   (PC_POISON_SHADOW)
      word #0  0xfe010113 addi sp,sp,-0x20  -> the walk's stack window SF_WIN 32

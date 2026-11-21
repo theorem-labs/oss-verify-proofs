@@ -47,8 +47,9 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U Require Import SlotAgreeP3.
    live bytes by LIM_AG = 2 ^ 39 (lib/U/Prog/SlotFitAg.v live3c_fit: the ubsan run does not fit under SRC_LIM_MIN).
    Turning that room into room_cf_pack3 needs LIM_AG <= vm_limit of the run (U AllocPack3Ag.room_cf_of_ag), and
    U AgreeZlib.zlib_limit gives only SRC_LIM_MIN = 2 ^ 34 at every run ceiling. So the frame's allocator is not a fact
-   about every rc, and the U CF frame_facts takes the run ceiling it speaks about: the slot's own, the one the
-   agreement top (lib/AgreeRoomP3.ubsan_agrees_room_of_slots_p3) hands over together with limlaw_at LIM_AG. The plain
+   about every rc, and the U CF frame_facts takes the run ceiling it speaks about: the slot's own, the one an
+   agreement top hands over together with limlaw_at LIM_AG (the agreement-in-room lemma that did so,
+   ubsan_agrees_room_of_slots_p3, was removed at LPS 727298f3 because it is false there). The plain
    twin needs no such premise because there RM_ag's bound is SRC_LIM_MIN itself. *)
 
 Lemma cf_frame_allocator_src0 (rc : RunCeil) (fx : FPState)

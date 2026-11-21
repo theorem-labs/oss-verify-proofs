@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: tfib_drv_main_B_holds, the driver walk of fuzz_preset's ASan image (lib/AU/PresetD1pB.v),
    from the composition lib/AU/PresetD1pBPf.v (tfib_drv_main_B_of_leaves) and the leaf THEOREMS their owners pushed,
    cited by name (parent's order 2026-10-29 05:5xZ: a pushed theorem is cited, never kept as a hypothesis).
@@ -14,22 +15,22 @@
    THE LIVE REAL STACK (#102; the interface's header item (13)): the prefix leaves and the loop carry the stack above
    usp from main's entry to each harness call (lane StackDrv); at main it is PresetD1pB.H_stackup_main_B, PROVED here
    (H_stackup_main_B_holds) by the start-up lane's stack_up_main_W1_B (lib/AU/Prog/StackUpMainB.v, over the kit's argH0,
-   a working branch 87cf0d0d06f6).
+   a working branch).
    THE ALLOCATOR SWITCH'S START-UP PREMISES (cf layer field rounds 2-3; lib/AU/PresetD1pB.v section 4): the two image
    rows H_errb_rows_B / H_pf_rows_B are PROVED here (H_errb_rows_B_holds / H_pf_rows_B_holds) from the image's rows
    at CfImg_B (lib/A/CfIalApartPreset.v); the three start-up rows H_start_lazy_B / H_start_cells_B / H_start_pf_B are
    PROVED here (H_start_lazy_B_holds / H_start_cells_B_holds / H_start_pf_B_holds) from the B start-up table
    (lib/Reusable/YB01.v) and CfImg_B (lib/AU/CfImgB.v) by lib/AU/PresetStartRowsB.v; tfib_drv_main_B_holds carries none.
    CITED (lane, branch sha, file):
-     CwPreA  a working branch  f26d81679efe  lib/AU/PresetD1preBPf.v   (the nine pre-loop sites and leaves)
-     CwSites a working branch c5750d597271  lib/AU/PresetD1sitesBPf.v (free_site, free_null_site, exit_leaf)
+     CwPreA  a working branch  lib/AU/PresetD1preBPf.v   (the nine pre-loop sites and leaves)
+     CwSites a working branch  lib/AU/PresetD1sitesBPf.v (free_site, free_null_site, exit_leaf)
      CwLoopA a working branch (this branch)  lib/AU/PresetD1rBPf.v (loop_L_x_B on the memnorm interface;
                                                         led_L closed by vm_compute on the ledger-cut YD2j)
-     CwRunqm a working branch f43397621393  lib/AU/PresetD2eBPf.v     (runqm_cf_B; the proof moved byte for
+     CwRunqm a working branch  lib/AU/PresetD2eBPf.v     (runqm_cf_B; the proof moved byte for
                                                         byte out of lib/AU/PresetD2eB.v on a working branch)
-     CwRunqA a working branch 8608f6e0e524  lib/AU/PresetD2runQBPf.v (run_Q), PresetD2runBPfQ.v (post_P),
+     CwRunqA a working branch  lib/AU/PresetD2runQBPf.v (run_Q), PresetD2runBPfQ.v (post_P),
                                                         PresetD2runBPfH.v (hdr), PresetD2runBPfM.v (file_arm, dir_arm)
-     CwPinvA a working branch f50b650085f0  lib/AU/PresetPinvBPf.v (handoff, finv_run / _site / _icpt),
+     CwPinvA a working branch  lib/AU/PresetPinvBPf.v (handoff, finv_run / _site / _icpt),
                                                         lib/AU/PresetPinvB2aPf.v (arm_argv2)
      MnPrefix a working branch             lib/AU/PresetD2runBRd0mnPf.v (rd0_dir, rd0_file: the memnorm
                                                         twin of WalkMain's lib/AU/PresetD2runBRd0Pf.v, a Theorem Labs lane) *)
@@ -61,7 +62,7 @@ Section stackup.
 #[local] Existing Instance YK11.fx0.
 Theorem H_stackup_main_B_holds : PresetD1pB.H_stackup_main_B.
 Proof.
-intros rc sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM H1_8 ly Hal Htop a Ha.
+intros rc sp rdraw brk mbase inp Hsp Hva Hve Hfit Hlau h ch E R FULL model SINV SINV_sp0 Hch HC HE HM H1_8 ly Hal Htop a Ha.
 eapply StackUpMainB.stack_up_main_W1_B; eassumption.
 Qed.
 End stackup.

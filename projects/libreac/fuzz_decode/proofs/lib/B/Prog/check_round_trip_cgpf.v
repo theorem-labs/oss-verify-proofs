@@ -1,15 +1,15 @@
 (* check_round_trip_cgpf: the close of the cgif-form walk of check_round_trip, image B (fuzz_decode.asan-ubsan,
    original pin), onto the fixed statement lib/B/Prog/check_round_trip_cg.v dec_check_round_trip_cg_holds_stmt
-   (frozen at a working branch 53b4b22c7c2, merged).
+   (frozen at a working branch, merged).
 
    The five pieces of lib/B/Prog/crtB_cuts.v compose by crtB_holds_of_cuts, at RO_RD := DEC_RO_RD, the statement's
    read set.  The pieces (all theorems; their lanes' branches merged, never rebased):
-     crtB_entry        lib/B/Prog/crtB_w_entry.v  (CRT_ENTRY .. CRT_RET_CALLOC; a Theorem Labs lane, merged 878750f14bc)
+     crtB_entry        lib/B/Prog/crtB_w_entry.v  (CRT_ENTRY .. CRT_RET_CALLOC; a Theorem Labs lane, merged)
      crtB_setup        lib/B/Prog/crtB_w_setup.v  (CRT_RET_CALLOC .. CRT_LOOP_IN)
-     crtB_loop         lib/B/Prog/crtB_loop.v     (CRT_LOOP_IN .. CRT_LOOP_OUT; a Theorem Labs lane, merged 7c8d5076f53)
-     crtB_encbcmp      lib/B/Prog/crtB_encbcmp.v  (CRT_LOOP_OUT .. CRT_RET_BCMP, at DEC_RO_RD; lane EncBcmp, merged
-                       2a389df9ac1; leaves of record 39c43113162)
-     crtB_tail         lib/B/Prog/crtB_tail.v     (CRT_RET_BCMP .. dec_crt_post; lane CrtTail, merged 342aea58c22)
+     crtB_loop         lib/B/Prog/crtB_loop.v     (CRT_LOOP_IN .. CRT_LOOP_OUT; a Theorem Labs lane, merged)
+     crtB_encbcmp      lib/B/Prog/crtB_encbcmp.v  (CRT_LOOP_OUT .. CRT_RET_BCMP, at DEC_RO_RD; lane EncBcmp, merged;
+                       leaves of record)
+     crtB_tail         lib/B/Prog/crtB_tail.v     (CRT_RET_BCMP .. dec_crt_post; lane CrtTail, merged)
    dec_check_round_trip_cg_holds has no premise beyond the statement's own. *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

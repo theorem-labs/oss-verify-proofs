@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cjson/cjson_read_fuzzer/lib/RL/G/ProgAt3.v, with its module paths, module names and numbers changed; 588 of its 649 lines of code are new or changed and 7120 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/CJ/RL/GX/G_vfprintf_snf.v, with its module paths and module names changed; 16 of its 47 lines of code are new or changed and 618 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/GXA/VfprintfCall.v at 2d2ff01bb6f2; module paths changed (the same text as proofs/plugin-hostd/fuzz_reply/lib/CJ/RL/GXA/VfprintfCall.v at 2d2ff01bb6f2, module paths aside). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/GXA/VfprintfCall.v; module paths changed (the same text as proofs/plugin-hostd/fuzz_reply/lib/CJ/RL/GXA/VfprintfCall.v, module paths aside). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GX Require Import Printf_model G_printf_core_common G_vfprintf_snf.

@@ -1,8 +1,8 @@
 (* What the format-generic chain asks of the seam's families: pf_family (FMsnprintfShared.v:92) and pf_family_ro
    (FMgxaSeamDef.v:60) keep under a memory change inside the regions rs outside the shadow, asked at 64-bit addresses
    only, and they keep when the regions shrink (ff_mono, FMsnprintfShared.v:107).
-   The stable64 statements are the body of RtPrintf.Param's ff_stable64 (FMsnprintfSx.v:21,
-   cold/port-fm-rtprintf-param 1ad8495e209) with FF substituted; this branch does not carry that file, and a consumer
+   The stable64 statements are the body of RtPrintf.Param's ff_stable64 (FMsnprintfSx.v:21)
+   with FF substituted; this branch does not carry that file, and a consumer
    closes `ff_stable64 (pf_family PK)` with `exact`.
    Every read the family makes through rd is
    - a format byte or its NUL, in [f, f + |fmt| + 1), which fmt_at keeps disjoint from rs;
@@ -10,7 +10,7 @@
    - a shadow byte of one of those, read by range_addressable or shadow_hull_vis.  amem_range puts the byte below
      kHighMemEnd, so its shadow lies in [SHADOW_OFF, kHighMemBeg), where the change premise leaves rd alone.
    All other conjuncts do not mention rd or rs. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (the snprintf root, keep step G3) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFF.v at origin/cold/port-fm-rtprintf-param 3e35620c52e: module paths fuzz_manifest -> fuzz_preset, FMsnprintfShared / FMsnprintfPf -> lib/Reusable PSnpShared / PSnpSx (ff_stable64) / PSnpPfFam / FMsnprintfPf, FMgxaSeamDef -> lib/A/PSnpSeamDef, FMupoison not imported (nothing used); appended: the same two statements for h-mani-a8's put_string family with its bounds as parameters (PSnpPfFam.FF_preset_x), FF_preset_x_stable64 and FF_preset_x_mono, which the four roots take as STAB / MONO. No numeral. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (the snprintf root, keep step G3) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFF.v: module paths fuzz_manifest -> fuzz_preset, FMsnprintfShared / FMsnprintfPf -> lib/Reusable PSnpShared / PSnpSx (ff_stable64) / PSnpPfFam / FMsnprintfPf, FMgxaSeamDef -> lib/A/PSnpSeamDef, FMupoison not imported (nothing used); appended: the same two statements for h-mani-a8's put_string family with its bounds as parameters (PSnpPfFam.FF_preset_x), FF_preset_x_stable64 and FF_preset_x_mono, which the four roots take as STAB / MONO. No numeral. *)
 (* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpSeamFF.v: lib/A/PSnpSeamDef -> lib/AU/PSnpSeamDef; nothing else (no numeral). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

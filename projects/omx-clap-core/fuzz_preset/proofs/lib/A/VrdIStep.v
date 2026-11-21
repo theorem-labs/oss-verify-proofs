@@ -14,9 +14,9 @@
    tvrd_ikey_a (rows 108..209) is proved by a Theorem Labs lane's PI-key lane in lib/A/VrdIKey.v and tvrd_ival_a (rows
    210..279) by the Ival walk; both statements stay in VrdIElem.v.
 
-   A'LEDGER (a Theorem Labs lane, 2026-10-29), against the kit text a working branch 3ac20a5c9e30
+   A'LEDGER (a Theorem Labs lane, 2026-10-29), against the kit text a working branch
    (PRH_FnParse.v blob 94232293d483, PRH_FnReader.v blob fb7b12dfa169, PRH_Base.v blob ee2f5cd7ed35, PRH_FnAlloc.v
-   blob 95e26ff95e63) and A2Ipro's VrdIElem.v (707e244ec40): every prh_ledger takes g_most / g_own_ran_out (most own
+   blob 95e26ff95e63) and A2Ipro's VrdIElem.v: every prh_ledger takes g_most / g_own_ran_out (most own
    after ran, most0 own0 after ran0 in the two-ledger helpers); rd_ledger_move takes most and the WHOLE call's
    all-granted trace G (vrd_imodel / vrd_iexit_a: prhPi_gtrace at the entry cursor); vi_lm_comp / vi_grow_swap_step
    state a step's oks over its requests and most and its peak with the refusal peak over its own granted trace gtg,
@@ -30,7 +30,7 @@
    and the thirteen callee-saved words the prologue wrote are CHUNKS of that region over FRESH ATOMS 32..44, whose
    values the environment binds to the ENTRY registers (vi_extras). That is what makes the epilogue's reloads
    denote the entry registers again, which is exactly aregs_preserved. Atoms 32..44 are below A_TEXT = 240, so they
-   are free (YP0b.v:13-14). No shadow entry: the epilogue makes no instrumented access, so SH = [].
+   are free (YP0b.v:14-15). No shadow entry: the epilogue makes no instrumented access, so SH = [].
    Numerals: 144 (LENGTH, parse_items' frame), the slot offsets 136 / 128 / ... / 40 (DERIVED: the listing's
    `ld` offsets 0x88 .. 0x28), the atom indices 32..44 (DERIVED: the engine's numbering). No ADDRESS literal. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -121,7 +121,7 @@ Definition vi_ss (k : nat) : sstate :=
 Lemma vi_base : BASE = A_prog_base.
 Proof. reflexivity. Qed.
 
-(* fpre's fourth conjunct at row 281's `jal grow` (kit 04388d628fb on: raZ regs < YM05.alloc_ceiling, PRH_Base.v:407):
+(* fpre's fourth conjunct at row 281's `jal grow` (kit on: raZ regs < YM05.alloc_ceiling, PRH_Base.v:407):
    the return pc, listing slot A_IGROWRET_SLOT, is below the run's allocation ceiling - PRW_StepKit's ONE copy
    (pa_slot_lt_ceil_b), in a CLOSED goal. NEVER discharge it inside the call proof: there its vm_compute ran away
    (40 min, 60 GB RSS, killed; the S3 walk, 2026-10-29) *)
@@ -399,7 +399,7 @@ Proof.
   - exact (ajxR_wild HJ).
 Qed.
 
-(* THE GENERIC FORM (A2Ipro's tvrd_iexit_aG, VrdIElem.v at 707e244ec40; a Theorem Labs lane's generic-invariant rule, 12:19Z):
+(* THE GENERIC FORM (A2Ipro's tvrd_iexit_aG, VrdIElem.v; a Theorem Labs lane's generic-invariant rule, 12:19Z):
    the epilogue carries any memory invariant Pm with its laws srr_inv_laws by YC1fPx's runner twin paj_run_x_inv, and
    the return leaves the memory as the run left it. vi_iexit_ok below is its corollary at Pm := fun _ => True.
    THE KIT'S CUT: the position's journal is at the budget ie_CW E (VrdIElem.vrd_ijrn); the run is stated at the empty
@@ -532,7 +532,7 @@ Qed.
    - H_HL: the harness-block shadow law's head length is cf_head (AR_laws_x field 14; at the cf instance YGcallcf's
      builder concludes at cf_head, so this is an identity there; VrdArm.v carries the same);
    - H_zsal: the image's zero-shadow ranges are granule-aligned (asyms_ok's aso_zshadow, which ARcf's amc_syms gives);
-   - H_imgvis: the image's shadow is mapped at every state (a Theorem Labs lane's img_shadow_vis_cf, YGcfAmx2.v:47, over ARx);
+   - H_imgvis: the image's shadow is mapped at every state (a Theorem Labs lane's img_shadow_vis_cf, YGcfAmx2.v:48, over ARx);
    - H_pst_ro: alloc.c's statics are not read-only (S1ImgA.v pst_not_ro_A at prh_img_A). ==== *)
 Hypothesis H_HL : HL = cf_head.
 Hypothesis H_zsal : Forall (fun r => fst r mod 8 = 0 /\ snd r mod 8 = 0) (as_zero_shadow B).
@@ -549,7 +549,7 @@ Proof.
   apply prh_mbyte_of_aview. exact (HA k Hk).
 Qed.
 
-(* the hull of a sub-range (FuzzStrdup.v:113 sd_hull_sub, cgif YCbq.v:1945, restated) *)
+(* the hull of a sub-range (FuzzStrdup.v:114 sd_hull_sub, cgif YCbq.v:1945, restated) *)
 Lemma vrd_hull_sub : forall (rd : reader) p m d n, shadow_hull_vis rd p m -> p <= d -> d + n <= p + m -> 0 < n ->
   shadow_hull_vis rd d n.
 Proof.
@@ -560,7 +560,7 @@ Proof.
   pose proof (R8 _ _ M1). pose proof (R8 _ _ M2). lia.
 Qed.
 
-(* the hull of a range 64 bytes inside the image is the shadow of image bytes (FuzzStrdup.v:123 sd_hull_img) *)
+(* the hull of a range 64 bytes inside the image is the shadow of image bytes (FuzzStrdup.v:124 sd_hull_img) *)
 Lemma vrd_hull_img : forall a n s, 0 < n -> IMG_LO + 64 <= a -> a + n + 64 <= IMG_TOP ->
   shadow_addr a / 8 * 8 <= s < shadow_addr (a + n - 1) / 8 * 8 + 8 ->
   s = shadow_addr (8 * (s - SHADOW_OFF)) /\ IMG_LO <= 8 * (s - SHADOW_OFF) < IMG_TOP.
@@ -864,7 +864,7 @@ Proof.
   - exfalso. lia.
 Qed.
 
-(* the hull of a range inside an application range misses that range (FuzzStrdup.v:99 sd_hull_out) *)
+(* the hull of a range inside an application range misses that range (FuzzStrdup.v:100 sd_hull_out) *)
 Lemma vrd_hull_out : forall p len x n s, in_app p len -> p + len <= alloc_ceiling -> p <= x -> 0 < n -> x + n <= p + len ->
   shadow_addr x / 8 * 8 <= s < shadow_addr (x + n - 1) / 8 * 8 + 8 -> ~ (p <= s < p + len).
 Proof.

@@ -1,6 +1,6 @@
 (* fuzz_preset lib/B, parse_string on image B' (asan-ubsan sha256 d663f82d7f48): THE WALK, composed from its stretches.
    THE TEXT (a working branch): the KIT TEXT tparse_string_specX of the announced the kit cut
-   7cdbb61b5fa0 (owner 06:11Z; PRH_FnReader.v blob f1ae32e3b2cd :517-681) itself: POST-IMPLICATION, the cursor set CW (prh_cw_ok, the wild room
+   (owner 06:11Z; PRH_FnReader.v blob f1ae32e3b2cd :517-681) itself: POST-IMPLICATION, the cursor set CW (prh_cw_ok, the wild room
    at entry), the post m-form and BUDGETED (fpostWbm .. (wbudget CW 0) ..). The change from the earlier
    statement DRAFT_tparse_string_specX (PS_Draft.v, deleted) was a RESTATEMENT, NOT a conversion: the kit's refused arm adds the
    outcome-exclusion conjunct (:622-629) and counts ((cnt + 1) mod 2 ^ 64) (:633-635); the walk proves both
@@ -10,7 +10,7 @@
    (PALib over PI_prog_B), the statics' placement PST_ok, the image facts ZSA / IMGV (PSB_Src.v; IMGV at image B's own
    bounds), the kit's prh_head_wide HW, the four callees' kit texts (tfuzz_malloc_specX / tfuzz_free_specX, thex4_specX /
    tput_utf8_specX). The cursor free's admission needs the depot's NoDup: AR_laws_x FIELD 25 alx_depot_nodup
-   (a Theorem Labs lane, a working branch b4ca247aad5d: YCbqG.v 219748197d6b, YCbqGwild.v 0c63874858e4, YGcallcf.v
+   (a Theorem Labs lane, a working branch: YCbqG.v 219748197d6b, YCbqGwild.v 0c63874858e4, YGcallcf.v
    8645fa6a514f, taken by path), read off LAWS; the former named premise DEPOT is GONE. NO per-record premise: the
    post-implication form needs no agreement.
    GENERIC P (a Theorem Labs lane 12:18Z / 12:22Z): every stretch is proved over an abstract memory invariant P
@@ -88,7 +88,7 @@ assert (SC : psb_seg_scanP B ARx SK CTX CW P) by (eapply psb_scan_holdsP; eassum
 eapply psb_entry_holdsP; eassumption.
 Qed.
 
-(* THE FUNCTION PROOF: the KIT TEXT (the kit cut 7cdbb61b5fa0) at image B' *)
+(* THE FUNCTION PROOF: the KIT TEXT (the kit cut) at image B' *)
 Theorem parse_string_holds_B : forall CTX CW,
   tparse_string_specX (PI := PSB_PrhImg) (L := B_prog_listing) (PA := PSB_PAImg) B ARx SK CTX CW.
 Proof.

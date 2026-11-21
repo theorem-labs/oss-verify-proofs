@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """By-value check of reac-repacer/fuzz_wire's relocated image-B core files.
 
-Image A's check of record (reac-repacer/fuzz_uci's decval.py (sha256 d631969e632d) is not in the published tree; a later version, with its host paths read from the environment, is reac-repacer/fuzz_uci's released provenance/evidence/core-A/decval.py at recipes commit 0295462466b2; itself libreac/fuzz_decode's
+Image A's check of record (reac-repacer/fuzz_uci's decval.py (sha256 d631969e632d) is not in the published tree; a later version, with its host paths read from the environment, is reac-repacer/fuzz_uci's released provenance/evidence/core-A/decval.py at recipes; itself libreac/fuzz_decode's
 decval) with only the inputs changed for image B; the decision tree per numeral is unchanged:
 
   target image  fuzz_wire.asan-ubsan  (sha256 af4534831a45; symbols from the unstripped twin 51eb4bef2425, bytes from

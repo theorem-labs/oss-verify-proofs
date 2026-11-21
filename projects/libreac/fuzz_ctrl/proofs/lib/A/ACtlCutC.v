@@ -1,5 +1,5 @@
 (* lib/A/ACtlCutC.v -- route (C) (a Theorem Labs lane DECISION 09:20Z): the LEMMAS of the stage-variable cut form.
-   ONE WRITER: a Theorem Labs lane.  A working branch on a Theorem Labs lane's announced glue base 29ddfc3ea99.  FROZEN NAMES
+   ONE WRITER: a Theorem Labs lane.  A working branch on a Theorem Labs lane's announced glue base.  FROZEN NAMES
    (a Theorem Labs lane 09:20Z): ctl_rt_C_of_ctl_rt, cut_shadow_at_cut here; cut_shadow, img_shadow, ctl_rt_C in lib/A/ACtlRtC.v
    (below ACtlCut, a Theorem Labs lane 09:37Z); shadow_rw_on and shadow_rw_on_of_shadow_rw in the leaf lib/A/ShadowRwOn.v
    (a Theorem Labs lane 09:23Z).  Both moved text-unchanged.  rule 24: no function proved (bridge lemmas over the core's world
@@ -258,7 +258,7 @@ Proof.
   exact (img_shadow_of_AR TS LAWS ly3 S3 W3 mem3 md3 (proj1 HJ)).
 Qed.
 
-(* ---- 8. Image A's analogue of a Theorem Labs lane's B lemma (lib/B/ProgBridgeData.v (a version not in this delivery; written on a working branch 3c8b6fdc8a8), same name, same
+(* ---- 8. Image A's analogue of a Theorem Labs lane's B lemma (lib/B/ProgBridgeData.v (a version not in this delivery; written on a working branch), same name, same
    vm_compute coverage method): CtrlRo's img_shadow_vis premise (CtrlRo.v:44-46), from img_shadow_cover, so A's
    ro_hull users and stages carrying IMG_SHADOW_VIS can discharge it. ---- *)
 Lemma ctrl_img_shadow_vis : A.AF0m.CtrlTSyms B -> lib.Reusable.YG0d.AR_laws segs B ->

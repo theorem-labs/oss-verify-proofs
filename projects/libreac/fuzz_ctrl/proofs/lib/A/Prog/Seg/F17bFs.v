@@ -5,18 +5,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v, with its module paths, module names and addresses changed; 1175 of its 1288 lines of code are new or changed and 1596 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F17b.v, with its module paths, module names, addresses and numbers changed; 1262 of its 1375 lines of code are new or changed and 1175 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F17.v blob 2530d1eeed7 (the blob this tree had at release c5e779efe8c) at db985828094 (a working branch,
-   the F17.v of record, two Theorem Labs lanes 06:28Z; the same text as d65d18383b1's blob f83ca6832224 but for the renames
+   FACTS, PAU pau-libreac-v190. Source: Seg/F17.v blob 2530d1eeed7 (the blob this tree had at release) (a working branch,
+   the F17.v of record, two Theorem Labs lanes 06:28Z; the same text as's blob f83ca6832224 but for the renames
    to_exit_8233c -> to_exit_823e8, to_exit_821c4 -> to_exit_822a0 and comments, same line numbers), seg_F17b
-   (:1383-2005), its inline run (:1400-1699); Seg/Tac_f17b.v blob 8a2efdcdf106 (the blob this tree had at release c5e779efe8c) (f17_mc :188); Seg/F17F.v (an earlier version, blob d417b8f2c573, not in this delivery)
+   (:1383-2005), its inline run (:1400-1699); Seg/Tac_f17b.v blob 8a2efdcdf106 (the blob this tree had at release) (f17_mc :188); Seg/F17F.v (an earlier version, blob d417b8f2c573, not in this delivery)
    (a Theorem Labs lane's split stretches of F17.f17_tail, used unchanged).
-   Callee: lib/A/Prog/asan_memcpy_cF.v 3ae84ac9bb40 (the blob this tree had at release c5e779efe8c) (asan_memcpy_contract_F), proved by lib/A/Prog/asan_memcpyF.v (an earlier version, blob 31ace5ece389, not in this delivery)
-   (asan_memcpy_holds_F). MemNorm route: lib/A/MemNormF.v 9e5ea0ff243d (the blob this tree had at release c5e779efe8c) (evtF_normalize_ro).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   Callee: lib/A/Prog/asan_memcpy_cF.v 3ae84ac9bb40 (the blob this tree had at release) (asan_memcpy_contract_F), proved by lib/A/Prog/asan_memcpyF.v (an earlier version, blob 31ace5ece389, not in this delivery)
+   (asan_memcpy_holds_F). MemNorm route: lib/A/MemNormF.v 9e5ea0ff243d (the blob this tree had at release) (evtF_normalize_ro).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare:
    - f17_mc_of_F re-derives Tac_f17b.f17_mc at ExecF.RNG_all from f17_mc_F with the footprint contract discharged by
      asan_memcpy_holds_F (the plain contract premise of f17_mc is kept in its place and used by nothing);
@@ -25,13 +26,13 @@
      named run lemma for 0x822a0 -> 0x823e8 (seg_F17b applies Tac_slot.sl_run to it inline, :1400), so there is no
      F17.<r> for a constr_eq pin.  seg_F17b_run_of_F re-derives the UL Exec.evt form of the same run (the form
      sl_run takes) from seg_F17b_run_F at ExecF.RNG_all, with the plain memcpy contract in the place of the source's
-     Hypothesis HMC (F17.v:486).
+     Hypothesis HMC (F17.v:487).
    - THE PIN of the extracted run is the SOURCE TIE seg_F17b_src (auditor a Theorem Labs lane's condition, via a Theorem Labs lane
      04:52Z): its statement is `type of F17.seg_F17b` (taken by ltac, so it cannot drift), proved by F17.seg_F17b's own
      script (Seg/F17.v of record, :1386-1426 and :1700-2000, verbatim but for the section arguments the moved
      lemmas now take explicitly) with the inline run (:1427-1699) discharged from PF.seg_F17b_run_of_F.
    Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. rule 24: no function proved. *)
-(* THE RUN (F17.v:1400-1699, seg_F17b's argument K of sl_run, taken verbatim but for the substitutions below).
+(* THE RUN (F17.v:1401-1700, seg_F17b's argument K of sl_run, taken verbatim but for the substitutions below).
    0x822a0 `ld a0,232(s1)`, `or a0,a0,s4`, `bnez a0,0x823e4` (the length / sum guard); on its fall-through the nine
    instrumented record-byte checks 0x822ac .. 0x823c4 (each a load of the metadata byte (X >> 3) + ASAN_K of a record
    byte X and a compare, then the byte test); every failed test branches to the join 0x823e4 `ld s9,176(s1)` and lands at
@@ -39,7 +40,7 @@
    gg[27 .. 27 + gg[26]) into the frame object first.sroa.7 = fr + 2880 by `jal __asan_memcpy` (0x823d4), the two
    spill stores [A+104] = 1, [A+112] = gg[26] and the join's load.
    SUBSTITUTIONS against the source's K (each the source's own value at that point):
-     flen g j := L, t_g (g_in g) j := G (as F10F does), AC.aspZ regs := spz (getr regs 2 = Z_to_bv 64 spz, F17.v:1454),
+     flen g j := L, t_g (g_in g) j := G (as F10F does), AC.aspZ regs := spz (getr regs 2 = Z_to_bv 64 spz, F17.v:1455),
      Sem.reg_get := getr (A.Reusable.YK11.getr regs r = Sem.reg_get regs r for r <> 0, by its definition),
      fp_regs / fp_csr := the binders F / fc (a strengthening, as F17F.v's stretches do),
      the callee stack window's low end AC.aspZ regs - FN_STACK := the binder lo with f17_tail's own three premises
@@ -736,7 +737,7 @@ Qed.
 
 (* The UL engine's Exec.evt form of the same run (the premise Tac_slot.sl_run takes, as seg_F17b states it inline),
    from seg_F17b_run_F at ExecF.RNG_all, with a Theorem Labs lane's asan_memcpy_holds_F for the footprint contract; the plain
-   contract premise stands where the source's Hypothesis HMC (F17.v:486) stands and is used by nothing.  Every
+   contract premise stands where the source's Hypothesis HMC (F17.v:487) stands and is used by nothing.  Every
    rng premise of seg_F17b_run_F is bounded by the run's own premises, so no `_of_F_bounded` form is needed. *)
 Lemma seg_F17b_run_of_F : ACPY.asan_memcpy_contract ->
   forall (regs F : bvmap 5 word) (fc : bv 32) (mem : word -> option byte)
@@ -1185,7 +1186,7 @@ Qed.
 End PF.
 
 (* ---- THE SOURCE TIE (the pin of the extracted run, see the header): F17.seg_F17b's statement, proved by
-   seg_F17b's own script (Seg/F17.v :1386-1426 and :1700-2000 at d65d18383b1) with its inline run discharged from
+   seg_F17b's own script (Seg/F17.v :1386-1426 and :1700-2000) with its inline run discharged from
    PF.seg_F17b_run_of_F.  Section Src restates F17.v's Section F17 (:475-486); after it closes, seg_F17b_src0 takes
    the same arguments as F17.seg_F17b, and seg_F17b_src is stated as `type of F17.seg_F17b`.  The moved section
    lemmas of F17.v (fra_spill, f17_blk_out, f17_cp_fra, ent_store1, fra_store1, to_exit_823e8) take their section

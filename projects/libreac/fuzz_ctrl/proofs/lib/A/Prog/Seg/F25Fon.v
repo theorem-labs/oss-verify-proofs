@@ -5,17 +5,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module names changed; 544 of its 583 lines of code are new or changed and 357 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F25.v; 59 of its 220 lines of code are new or changed and 422 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F25Fon.v -- route (C) twin of Seg/F25F.v's (not in this delivery) f25_evt_F (a Theorem Labs lane 12:52Z twin rule: an ADDITIVE
    beside-file; Seg/F25F.v (not in this delivery) stays byte-identical).  Writer: a Theorem Labs lane, for glue stage seg_F25.
    proves no function (kind: segment lemma).
 
-   BASE: Seg/F25F.v (not in this delivery) at a Theorem Labs lane's fold a working branch 4bae33fdf54 (blob ee74bb6ffb9), not the
+   BASE: Seg/F25F.v (not in this delivery) at a Theorem Labs lane's fold a working branch (blob ee74bb6ffb9), not the
    blob 60ad0f4dc03 of a working branch: the two differ only in the fold's full qualification of the twin-library lemmas
    (A.Tk.UL.MState / Mem / Frame), which this file keeps.
 
    THE CHANGE, and only it: f25_evt_F's premise `shadow_rw m` is REMOVED, and its callee premise
-   reac_ports_unknown_contract_F becomes reac_ports_unknown_contract_F_on (LANDED.md (a working note, not in this delivery): a Theorem Labs lane d4f70537e6f, proof
-   a Theorem Labs lane 4038362e590 reac_ports_unknown_F_holds_on).  Why removed, not narrowed: the run 0x825d4 -> 0x825f4 STORES one shadow
+   reac_ports_unknown_contract_F becomes reac_ports_unknown_contract_F_on (LANDED.md (a working note, not in this delivery): a Theorem Labs lane, proof
+   a Theorem Labs lane reac_ports_unknown_F_holds_on).  Why removed, not narrowed: the run 0x825d4 -> 0x825f4 STORES one shadow
    byte (0x825dc, sb to S(fr) + 20), which it justifies from its own premise `wr_at rsegs m (sfr + 20) 1`, and READS
    no shadow byte; its only use of `shadow_rw m` in f25_evt_F was to carry it to the memory after the two stores
    (f25_shadow_keep) and feed the callee's premise there, which the _on contract drops.  The post is unchanged. *)

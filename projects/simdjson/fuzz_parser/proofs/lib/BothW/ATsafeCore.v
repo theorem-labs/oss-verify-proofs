@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fd-entry case split covers the four new entry kinds. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -139,7 +140,7 @@ Proof.
     destruct path; [destruct H as [_ ->]; left; reflexivity|].
     match type of H with (if ?c then _ else _) => destruct c; [apply (OR _ H)|] end.
     destruct (fs_lookup _ _); [apply (OR _ H)| destruct H as [_ ->]; left; reflexivity].
-  - destruct H as [_ H]. destruct (fd_lookup _ _) as [[ch|p off|p1 off1|p2 off2|p3 off3| |sk|pid pw|rd wr| ]|]; try contradiction;
+  - destruct H as [_ H]. destruct (fd_lookup _ _) as [[ch|p off|p1 off1|p2 off2|p3 off3| |sk|pid pw|rd wr| |sid sd st|ctx|fam|aid af]|]; try contradiction;
       try (destruct H as [_ ->]; left; reflexivity).
     destruct (fs_lookup _ _); [|contradiction]. destruct H as [_ ->]. right; left; eexists; reflexivity.
   - destruct H as (_ & _ & H). destruct (fd_lookup _ _); destruct H as [_ ->]; [right; left; eexists; reflexivity| left; reflexivity].

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the contract of musl's fmemopen inside libreac/fuzz_pcap (libreac v1.9.0,
    ASan build), stated in cgif_file_fuzzer's vocabulary.
 
@@ -13,7 +14,7 @@
    re-measured here). Both addresses are parameters of the contract (pc, ra), as in cgif's
    afopen_spec, so one statement serves both images.
 
-   At ossv/recipes 25e3d17bdb50 (2026-10-29), NO DONOR existed for this function (rule 24: a Theorem Labs lane's runtime-donors.md (sha256 77e6fad19fb7; internal record) rows 3-4 and section
+   At (2026-10-29), NO DONOR existed for this function (rule 24: a Theorem Labs lane's runtime-donors.md (sha256 77e6fad19fb7; internal record) rows 3-4 and section
    6). The step content comes from this worker's own plain proof lib/Prog/fmemopen_c.v and the
    layout model lib/Prog/StdioModel.v; the names come from the cgif donor listed at the end.
 
@@ -49,12 +50,12 @@
             since 0x8e8dc lies after the only errno store at 0x8e8d8). This branch is REAL CODE
             and the walk must step it - but it is REFUTED there, not stated in the post.
    CHOICE (a Theorem Labs lane's ruling of 21:49Z; it reverses the earlier
-   two-arm post of d9a18ea6247): the post states the SUCCESS arm only, and rfmemopen_contract
+   two-arm post): the post states the SUCCESS arm only, and rfmemopen_contract
    takes the allocator's grant rule as a HYPOTHESIS - cgif's amalloc04_rule (YC5d.v:56-74), the
    contract of the malloc callee at the trampoline 0x52bd8 - whose post gives 4096 <= res
    (YC5d.v:72). The walk therefore refutes the 0x8e910 branch from that bound. REASON: a
    disjunct in a callee's POST cannot be refuted by its caller, so a two-arm post made the
-   interceptor's success-only afmemopen_spec (a working branch e66390898ef)
+   interceptor's success-only afmemopen_spec (a working branch)
    unprovable. THE SUCCESS-ONLY FORM IS BY PROOF, NOT BY ASSUMPTION (a Theorem Labs lane's 00:28Z ruling: allowed
    if and only if the spec carries the room premises and cites the grant lemma). The room premises
    are in rfmemopen_pre: st_nev S + 1 <= EV_MAX, blocks_bytes S + SRC_FILE_BLOCK <= LIVE_MAX and
@@ -63,8 +64,8 @@
    rfmemopen_contract. allocator_may_return_null = 1 on every pcap image does not reopen the arm:
    ASAN_OPTIONS is never read on these images (the GOT word at 0x99870 = 1, a Theorem Labs lane's
    measurement on the original v1.9.0 asan pin), and the refusal paths are proved DEAD under the
-   statements' premises by a Theorem Labs lane's lib/Reusable/YRefuse.v (a working branch
-   3af7ae3448a; arefuse_primary_dead_agrees / _halts, arefuse_ceiling_dead), which is what
+   statements' premises by a Theorem Labs lane's lib/Reusable/YRefuse.v (a working branch;
+   arefuse_primary_dead_agrees / _halts, arefuse_ceiling_dead), which is what
    discharges amalloc04_rule at composition time. This file cites them and does not re-derive them.
 
    NO SPLIT ON THE LENGTH.
@@ -101,12 +102,12 @@
    THE ROOM PREMISES, in cgif's form, from the allocator contract this walk calls at 0x8e908
    (amalloc04_rule, YC5d.v:56-74): 0 <= n < MALLOC_MAX holds for 1304 by YG00.v:38 and needs no
    premise; blocks_bytes S + SRC_FILE_BLOCK <= LIVE_MAX and st_nev S + 1 <= EV_MAX (the form of
-   YE01.v:216, which implies amalloc04_rule's st_nev Sc < EV_MAX); mo_ok MT S (mo_malloc MT
+   YE01.v:217, which implies amalloc04_rule's st_nev Sc < EV_MAX); mo_ok MT S (mo_malloc MT
    SRC_FILE_BLOCK) (the form of YC7x.v:88). They are dischargeable from pcap's constants
    (a Theorem Labs lane: largest request 2^26, live bytes 2.0e8). The refusal branches inside the
    allocator are the ported runtime walk's business, not this file's.
 
-   THE FOOTPRINT is [YI16.sink_token], as cgif's afopen_spec (YE01.v:221). It must contain the
+   THE FOOTPRINT is [YI16.sink_token], as cgif's afopen_spec (YE01.v:222). It must contain the
    token: ajournal keeps every image byte outside the owned statics and errno (YCbq.v:360-361)
    unless fp_spares fails, and fp_spares (YCbq.v:86) frees the open-file list head AOFL_HEAD only
    for a footprint that contains address 0 (YI16.v:70 sink_open_fp). The fresh block needs no
@@ -121,7 +122,7 @@
    the frame is popped (16 + __ofl_lock 16). UNVERIFIED as a whole-reach bound until the strchr
    interceptor's own callees are followed on pcap's image.
 
-   NOT IN THE STATEMENT, for the proof: the source analogue of cgif's asink_img_laws (YE01.v:27-40),
+   NOT IN THE STATEMENT, for the proof: the source analogue of cgif's asink_img_laws (YE01.v:28-41),
    in particular as_ofl_head K = AOFL_HEAD and the interceptor cells; the allocator contract at the
    malloc trampoline 0x52bd8 (cgif's amalloc04_rule, or the ported runtime's contract that admits
    a 0 result), aintrin_realizes (OSet) at the memset trampoline 0x5150c; a pcap strchr walk in the form
@@ -135,7 +136,7 @@
    LIVE_MAX, kUnwindMax). The statement does not use the image end, the shadow of the image, or
    the fake-stack floor.
 
-   DONOR VOCABULARY (origin/ossv/recipes c8557374ad2e, proofs/cgif/cgif_file_fuzzer/lib/):
+   DONOR VOCABULARY (proofs/cgif/cgif_file_fuzzer/lib/):
      afn_pre YCbq.v:334-341, ajournal YCbq.v:348-370, spine YCbq.v:220, achain YCbq.v:216-219;
      apost_base YC20.v:90-96 (arodata_okP YC20.v:46-48 is NO LONGER used: PSource.v pins the bytes);
      ameter_ops / mo_ok / mo_le / mo_malloc YC5d.v:16-20, amalloc04_rule YC5d.v:56-74;
@@ -149,8 +150,8 @@
      the CTX parameter and the per-context row A/ACeb.v:29, :39 (form of YC7x.v:72-75);
      the [pc0] row YCbo.v:221-223 (call_trace_in);
      the pre / post split as named Definitions A/ACfn.v:33-59;
-     the success arm's shape (4096 <= res, ablocks ++ [(res, FILE_BLOCK)]) YE01.v:209-228 afopen_spec.
-   PREDICATE (a Theorem Labs lane, a working branch 58a865eec30, lib/A/Stdio/PSource.v):
+     the success arm's shape (4096 <= res, ablocks ++ [(res, FILE_BLOCK)]) YE01.v:210-229 afopen_spec.
+   PREDICATE (a Theorem Labs lane, a working branch, lib/A/Stdio/PSource.v):
      SRC_FILE_BLOCK :49, asource_syms / as_mode :79-94, asource_unbuffered :261-262,
      asource_none :240-241.
    The cgif core arrives relocated under lib/Reusable; until then this file does not build, and
@@ -201,12 +202,12 @@ Local Notation rd W mem := (mrestrict (w_H W) mem).
    which AR does not pin (YG0n.v:490; mbyte reads mem before rom, YP09.v:18). Without them
    strchr("rb", '+') could return non-NULL and fmemopen would skip `flags = 8` (a Theorem Labs lane,
    00:04Z-00:12Z). The premise is the DONOR'S form (a Theorem Labs lane, 00:23Z, after
-   a Theorem Labs lane's reading of cgif c8557374ad2e): the body of the core's narrow mconsts_view
+   a Theorem Labs lane's reading of cgif): the body of the core's narrow mconsts_view
    (A/AE39.v:28), stated over segs with the window as parameters. pcap's instance is
    [0x10350, 0x10370) = AE39.v's MC_LO / MC_HI (mc_bounds), the constants 0x10350 / 0x10368 that
-   strchr reads. The donor's program site derives it from its image-region fact (A/AD1k.v:266
+   strchr reads. The donor's program site derives it from its image-region fact (A/AD1k.v:267
    mconsts_of_IMG, applied at AD1l.v:124) and moves it across calls with mconsts_view_keep
-   (AE39.v:42). This replaces rom_view (eaba5a32fed), which is not derivable from fopen's roimg. *)
+   (AE39.v:42). This replaces rom_view, which is not derivable from fopen's roimg. *)
 Definition rfmemopen_pre (ra mc_lo mc_hi : Z) (regs : bvmap 5 word) (ly : alayout) (S : astate)
     (W : world segs) (mem : word -> option byte) (md : Model) (ch : list (Z * Z * Z))
     (b n : Z) (C : list Z) : Prop :=
@@ -246,7 +247,7 @@ Definition rfmemopen_post (b : Z) (C : list Z) (ly : alayout) (S : astate) (md :
        gives fds_rel / fs_rel (YI16.v:51-54, through aos_step YCbq.v:34-39), which PERMIT a change
        of the sink fd and path, so the equality has to be stated here or no caller can have it.
        Asked for by the fmemopen interceptor walk, whose tail call takes md' from this post alone
-       (afmemopen_spec's obligation at PFmemopenISpec.v:103). *)
+       (afmemopen_spec's obligation at PFmemopenISpec.v:104). *)
     m_fds md' = m_fds md /\ m_fs md' = m_fs md.
 
 Definition rfmemopen_contract (pc ra mc_lo mc_hi : Z) : Prop :=

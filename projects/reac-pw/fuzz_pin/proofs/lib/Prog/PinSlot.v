@@ -1,6 +1,6 @@
 (* The slot of reac-pw/fuzz_pin LLVMFuzzerTestOneInput (plain build) from its segment lemmas, and plain_halts from
    the frame. Adapted from libreac/fuzz_ctrl's released Prog/Seg/Slot.v (Section Bridge and Bundle) and
-   Prog/Seg/SlotLink.v (Section Link) (origin/ossv/recipes 25e3d17bdb50):
+   Prog/Seg/SlotLink.v (Section Link):
    - the n >= 2^26 run (early_evt): 0x12cac `addi sp,sp,-64`, the six saves ra, s0 .. s4 (0x12cb0 .. 0x12cc4),
      0x12cc8 `srli a2,a1,26`, 0x12ccc `bnez a2` taken to 0x12dec: `mv a0,zero`, the six restores, `addi sp,sp,64`,
      `ret`; outside GV (n < 2^26), so the slot runs it as one evt from ENTRY to ra (slot_early);

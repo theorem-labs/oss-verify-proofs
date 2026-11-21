@@ -14,7 +14,7 @@
    | 0x42748 | 0x81010113 | addi sp,sp,-2032 (___interceptor_strcmp) | 0x41eb4 0x81010113 (funcmatch `same`) |
    | 0x42744 | 0x00008067 | ret (__sanitizer_weak_hook_strcmp)       | 0x41eb0 0x00008067                    |
 *)
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/StrcmpDef.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/StrcmpDef.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/StrcmpDef.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,6 @@
 (* lib/A/ACtlG/X1.v -- GLUE for stage seg_X1 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    W5 tail).  Written by a Theorem Labs lane; single writer.  rule 24: no function proved (stage glue of a walk;
-   At ossv/recipes c5e779efe8c (2026-10-31), no released proof of this unit's LLVMFuzzerTestOneInput outside this unit).
+   At (2026-10-31), no released proof of this unit's LLVMFuzzerTestOneInput outside this unit).
 
    WHAT IT PROVES
      glue_seg_X1 : forall POST, CF POST C_A82b20 -> CF POST C_Jrel -> CF POST C_A82b04
@@ -15,7 +15,7 @@
 
    THE MEMCHR CALL IS A SPLIT SITE (two Theorem Labs lanes 04:01Z rule, case (b): X12F.memchr_wrap_F is proved only at
    ExecF.RNG_all, X12F.memchr_wrap_F_all).  The stretch to the call is Seg/X12Fs.v x12_a_pre_Fs (this lane's split
-   file of record, a working branch f3d1972c303); at the wrapper's entry 0x42974 the walk applies the memchr
+   file of record, a working branch); at the wrapper's entry 0x42974 the walk applies the memchr
    SITE RULE AMEMCHR_SITE (plan Appendix B), whose continuation at the return address is the exit cut C_A82b20.
    WHY NOT THE CORE'S OWN RULE: the planning core's PROVED memchr0_icpt_contractM (lib/A/AE6x.v:475, in the form of
    A/AE39.v:46 amemchr0_realizesM) requires k + 8 <= n; with n = 17 it covers only a NUL index k <= 9, and ctrl's NUL
@@ -42,7 +42,7 @@
    SECTION HYPOTHESES
    - RELRO_IMG, LAWS: ACtl.v's own (Section Ctl), mirrored.
    - AMEMCHR_SITE: the memchr site rule at 0x42974 with c := 0, n := 17 (plan Appendix B line "memchr(p+3, 0, 17)").
-     TEXT transcribed from a Theorem Labs lane's amemchr_realizesM (a working branch 3b8a77d146c,
+     TEXT transcribed from a Theorem Labs lane's amemchr_realizesM (a working branch,
      proofs/libreac/fuzz_disco/lib/Rt/MemchrDef.v:36-51, blob of that file at that commit) into the ctrl core's own
      words (YG0d ecall_pre / src_ok / amem_range / shadow_hull_vis / first_byte / aregs_preserved / raZ / ESTACK, YG0v
      range_addressable, YG0n aview / apresent, YK04 same_but_materialized); its consts_view segs lo hi is the text
@@ -241,7 +241,7 @@ Variable REAC_CTRL_IDENTITY_REPLY_K : Z.
 Variable REAC_CTRL_PARSE_BC : Z.
 
 (* The memchr site rule at ctrl A's wrapper entry 0x42974, c := 0, n := 17: a Theorem Labs lane's amemchr_realizesM
-   (a working branch 3b8a77d146c, fuzz_disco's lib/Rt/MemchrDef.v:36-51) in the ctrl core's words; consts_view = the text of
+   (a working branch, fuzz_disco's lib/Rt/MemchrDef.v:36-51) in the ctrl core's words; consts_view = the text of
    the core's A.AE39.mconsts_view at [MC_LO, MC_HI) = [0x10350, 0x10370).  Owner a Theorem Labs lane; see the header. *)
 Hypothesis AMEMCHR_SITE : forall ly S (W : RA0n.world segs) (regs : bvmap 5 word) (mem : word -> option byte) md x,
   RG0d.ecall_pre segs B ly S W regs mem md ->

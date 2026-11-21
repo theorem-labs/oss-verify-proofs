@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan) of lib/A/FMW_hp_model.v at a working branch 433b7106168: has_prefixed (G2), the pure steps of
+(* B twin (fm.asan-ubsan) of lib/A/FMW_hp_model.v at a working branch: has_prefixed (G2), the pure steps of
    the loop invariant. No image numeral; the only change is the Require of lib.B FMH_Rt (FMH_Rt is per-image by
    its Requires, row B4b). INV a: no token starts at an index j whose location would start before a (fm's plain proof
    lib/Prog/has_prefixed.v hp_loop :146). The runtime answers (FMH_Rt.v occ_at, first_occ, no_occ, strn_eq) meet

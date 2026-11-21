@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes the encoded StepTac lemma statements into plain Rocq, drops the TCodec name table, and restates and reproves bsb_bound over valid_launch via new lemmas block_head_size_le, launch_sp_le_top and launch_top_minus_sp; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/StepTac.v, 98 lines within its lines 432-926. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -9,8 +10,6 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__StepTac () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.BvBase."; "LinuxProcessSemantics.LinuxProcessSem.MemImageType."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.StackLayout."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StepTac.WithFP33."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1O"; "1S"; "1bool"; "1cons"; "1false"; "1length"; "1list"; "1nat"; "1nil"; "1true"; "2and"; "2eq"; "2not"; "3Z"; "4nat_to_word"; "5PhdrInfo"]; ["5Segment"; "5seg_base"; "5seg_size"; "6range_avoids_ro_segs"; "7valid_argv"; "7valid_envp"; "8EntryDraw"; "8build_stack_bytes"; "9c_eq"; "9v_add"; "9v_addi"; "9v_sub"; ":ro_segs_below"; ";add"; ";le"; ";lt"]; [";ltb"; ";of_N"; ";of_nat"; ";opp"; ";pow"; ";sub"; "0a"; "0addr"; "0b"; "0d"; "0data_base"; "0e"; "0hw"; "0imm"; "0m"; "0n"]; ["0ph"; "0rnd"; "0s0"; "0s1"; "0segs"; "0sp"; "<Z_to_bv"; "<bv"; "<bv_add"; "<bv_unsigned"; "0uid"; "0x"; "0y"; "0z"]]).
 Section WithFP1.
 Context {fx : FPState}.
 End WithFP1.
@@ -356,25 +355,34 @@ chain_step;
 | step_simpl ].
 Section WithFP20.
 Context {fx : FPState}.
-Lemma u_Z2bv : ltac2:(TCodec.tc2 tcn__StepTac "G'=&Nzr1%3221&Or2&Q4+2+R0%3221%6251';&QIyR0&QFr3%2231%5241%73C13p091p0A1pSLF1").
+Lemma u_Z2bv : forall z, (0 <= z)%Z -> (z < 2^64)%Z ->
+bv_unsigned (Z_to_bv 64 z) = z.
 Proof.
 intros z Hlo Hhi. rewrite Z_to_bv_unsigned.
 unfold bv_wrap, bv_modulus. apply Z.mod_small. split; [exact Hlo|].
 exact Hhi.
 Qed.
-Lemma v_addi_m1 : ltac2:(TCodec.tc2 tcn__StepTac "F'QGyR0%211&N+1&QIr1%2261%5241';&Jr2-1%3221&QF&Q5%;2?5%221=%42A1%:3A61p0<1pSHC1").
+Lemma v_addi_m1 : forall x, (1 <= bv_unsigned x)%Z ->
+v_addi x (-1) = Z_to_bv 64 (bv_unsigned x - 1).
 Proof. intros x H1. apply (v_addi_m x 1); lia. Qed.
-Lemma v_addi_m16 : ltac2:(TCodec.tc2 tcn__StepTac "F'QGyR0%211&N+@&QIr1%2261%5241';&Jr2-@%3221&QF&Q5%;2?5%221=%42A1%:3A61p0<1pSHC1").
+Lemma v_addi_m16 : forall x, (16 <= bv_unsigned x)%Z ->
+v_addi x (-16) = Z_to_bv 64 (bv_unsigned x - 16).
 Proof. intros x H16. apply (v_addi_m x 16); lia. Qed.
-Lemma v_addi_m32 : ltac2:(TCodec.tc2 tcn__StepTac "F'QGyR0%211&N+Q0&QIr1%2261%5241';&Jr2-Q0%3221&QF&Q5%;2?5%221=%42A1%:3A61p0<1pSHC1").
+Lemma v_addi_m32 : forall x, (32 <= bv_unsigned x)%Z ->
+v_addi x (-32) = Z_to_bv 64 (bv_unsigned x - 32).
 Proof. intros x H32. apply (v_addi_m x 32); lia. Qed.
-Lemma v_addi_m48 : ltac2:(TCodec.tc2 tcn__StepTac "F'QGyR0%211&N+Q@&QIr1%2261%5241';&Jr2-Q@%3221&QF&Q5%;2?5%221=%42A1%:3A61p0<1pSHC1").
+Lemma v_addi_m48 : forall x, (48 <= bv_unsigned x)%Z ->
+v_addi x (-48) = Z_to_bv 64 (bv_unsigned x - 48).
 Proof. intros x H48. apply (v_addi_m x 48); lia. Qed.
-Lemma v_addi_m64 : ltac2:(TCodec.tc2 tcn__StepTac "F'QGyR0%211&N+R0&QIr1%2261%5241';&Jr2-R0%3221&QF&Q5%;2?5%221=%42A1%:3A61p0<1pSHC1").
+Lemma v_addi_m64 : forall x, (64 <= bv_unsigned x)%Z ->
+v_addi x (-64) = Z_to_bv 64 (bv_unsigned x - 64).
 Proof. intros x H64. apply (v_addi_m x 64); lia. Qed.
-Lemma v_addi_m80 : ltac2:(TCodec.tc2 tcn__StepTac "F'QGyR0%211&N+R@&QIr1%2261%5241';&Jr2-R@%3221&QF&Q5%;2?5%221=%42A1%:3A61p0<1pSHC1").
+Lemma v_addi_m80 : forall x, (80 <= bv_unsigned x)%Z ->
+v_addi x (-80) = Z_to_bv 64 (bv_unsigned x - 80).
 Proof. intros x H80. apply (v_addi_m x 80); lia. Qed.
-Lemma v_addi_nneg_t : ltac2:(TCodec.tc2 tcn__StepTac "Q1'QGyR0%211'=&Nzr1%3221&O&M&QIr3%22;1r2%5221&Q4+2+R0%3221%;251';&Jr4%221<&QF%?2H3%A21?%32J1%83J51p0:1p0G1pRLL1pSHN1").
+Lemma v_addi_nneg_t : forall x imm, (0 <= imm)%Z ->
+(bv_unsigned x + imm < 2^64)%Z ->
+v_addi x imm = Z_to_bv 64 (bv_unsigned x + imm).
 Proof. intros x imm _ _. reflexivity. Qed.
 End WithFP20.
 Ltac u_norm := repeat rewrite u_Z2bv by lia.
@@ -571,99 +579,164 @@ let Hx := fresh "Hx" in
 intros x Hx; revert Hx; imm_norm; u_norm; intros Hx ].
 Section WithFP33.
 Context {fx : FPState}.
-Lemma byte_nz_u : ltac2:(TCodec.tc2 tcn__StepTac "C'QGy8%211&<';r1&QFz%2271%53741%711'=&QIr2%22=1%;3418%=11p071pRB@1").
+Lemma byte_nz_u : forall b : byte, b <> Z_to_bv 8 0 -> (bv_unsigned b <> 0)%Z.
 Proof.
 intros b Hb Hc. apply Hb. apply bv_eq. rewrite Hc. reflexivity.
 Qed.
-Lemma u_zext8 : ltac2:(TCodec.tc2 tcn__StepTac ">'QGy8%211';'=&QIyR0&QFr1%4281%3241%6251%93813pRB;1").
+Lemma u_zext8 : forall b : byte,
+bv_unsigned (Z_to_bv 64 (bv_unsigned b)) = bv_unsigned b.
 Proof.
 intro b. apply u_Z2bv; pose proof (u8_range b); lia.
 Qed.
-Lemma zext8_byte : ltac2:(TCodec.tc2 tcn__StepTac ">'QGy8%211';&QF&QIyR0r1%3271%5231%5241%72:1%93:15pRB;1").
+Lemma zext8_byte : forall b : byte,
+Z_to_bv 8 (bv_unsigned (Z_to_bv 64 (bv_unsigned b))) = b.
 Proof.
 intro b. apply bv_eq.
 rewrite Z_to_bv_unsigned, u_zext8.
 apply bv_wrap_small. pose proof (u8_range b).
 change (bv_modulus 8) with 256%Z. lia.
 Qed.
-Lemma byte_neq_lit_u : ltac2:(TCodec.tc2 tcn__StepTac "N'QGy8%211'=':&Nzr1%3221&O+X0%2241%8241&<';r3&QFr2%22A1%53A41%711&QIr4%22F1%:3E19%<11p061p0?1pSLI1pRBK1").
+Lemma byte_neq_lit_u : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
+b <> Z_to_bv 8 z -> (bv_unsigned b <> z)%Z.
 Proof.
 intros b z Hz Hb Hc. apply Hb. apply bv_eq.
 rewrite Hc, Z_to_bv_unsigned. unfold bv_wrap.
 rewrite Z.mod_small; [reflexivity |].
 change (bv_modulus 8) with 256%Z. lia.
 Qed.
-Lemma c_eq_zext_lit_false : ltac2:(TCodec.tc2 tcn__StepTac "Q4'QGy8%211'=':&Nzr1%3221&O+X0%2241%8241&<';r3&QFr2%22A1%53A41%711'2&HyR0&QIr4%22I1%;241%<25=%7221(4%A3:21p0<1p0E1pSLO1pRBQ11").
+Lemma c_eq_zext_lit_false : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
+b <> Z_to_bv 8 z ->
+c_eq (Z_to_bv 64 (bv_unsigned b)) (Z_to_bv 64 z) = false.
 Proof.
 intros b z Hz Hb. unfold c_eq, bv_eqb. apply Z.eqb_neq.
 rewrite u_zext8, u_Z2bv by lia.
 exact (byte_neq_lit_u b z Hz Hb).
 Qed.
-Lemma u_ntw : ltac2:(TCodec.tc2 tcn__StepTac "F'7&O&Q2r1%211&Q4+2+R0%3221%8251';'=&QIyR0&>r2%211%5241%@13%93821p0;1pS0E1").
+Lemma u_ntw : forall n : nat, (Z.of_nat n < 2^64)%Z ->
+bv_unsigned (nat_to_word n) = Z.of_nat n.
 Proof. intros n Hn. unfold nat_to_word. apply u_Z2bv; lia. Qed.
-Lemma word_add_nat : ltac2:(TCodec.tc2 tcn__StepTac "F'QGyR0%211'7';&QHr2&>r1%211%53941&QF&M&QI%12=8&Q2%118%5231%72A1%?3A91pS0A1pR>C1").
+Lemma word_add_nat : forall (a : word) (n : nat),
+a + nat_to_word n = Z_to_bv 64 (bv_unsigned a + Z.of_nat n).
 Proof.
 intros a n. apply bv_eq. unfold nat_to_word.
 rewrite bv_add_unsigned, !Z_to_bv_unsigned, bv_wrap_add_idemp_r.
 reflexivity.
 Qed.
-Lemma word_add_nat_0 : ltac2:(TCodec.tc2 tcn__StepTac "<'QGyR0%211';&QHr1&>(0%211%53841%73815pSH91").
+Lemma word_add_nat_0 : forall x : word, x + nat_to_word 0 = x.
 Proof.
 intro x. apply bv_eq. rewrite word_add_nat.
 rewrite u_Z2bv by (pose proof (u64_range x); lia). lia.
 Qed.
-Lemma word_add_nat_1 : ltac2:(TCodec.tc2 tcn__StepTac "E'QGyR0%211'7';&J&QHr2&>r1%211%53:41+1%8221(1%116%811%;3@:1%>3@51pRN@1pR>B1").
+Lemma word_add_nat_1 : forall (a : word) (m : nat),
+v_addi (a + nat_to_word m) 1 = a + nat_to_word (S m).
 Proof.
 intros a m. rewrite !word_add_nat. unfold v_addi. apply bv_eq.
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod.
 rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
-Lemma word_add_nat_m1 : ltac2:(TCodec.tc2 tcn__StepTac "E'QGyR0%211'7';&J&QHr2&>(1r1%211%411%73<61-1%:221%816%;3@:1%>3@31pRN@1pR>B1").
+Lemma word_add_nat_m1 : forall (a : word) (m : nat),
+v_addi (a + nat_to_word (S m)) (-1) = a + nat_to_word m.
 Proof.
 intros a m. rewrite !word_add_nat. unfold v_addi. apply bv_eq.
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod.
 rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
-Lemma v_add_comm : ltac2:(TCodec.tc2 tcn__StepTac "='QGyR0%211';&Ir2r1%3221&QH%13834%73831pSJ91pSH:1").
+Lemma v_add_comm : forall x y : word, v_add x y = y + x.
 Proof.
 intros x y. apply bv_eq.
 change (v_add x y) with (x + y).
 rewrite !bv_add_unsigned. f_equal. lia.
 Qed.
-Lemma v_add_wrap : ltac2:(TCodec.tc2 tcn__StepTac "N'QGyR0%211&N&Q4+2+R0%3221&M&QIr2%22:1r1%42<1%6231%<281';&Ir3%2219&QF&Q5%=2E4%?21<%321A%52H1%:3H71p0<1pSJJ1pSHK1").
+Lemma v_add_wrap : forall x y : word,
+(2^64 <= bv_unsigned x + bv_unsigned y)%Z ->
+v_add x y = Z_to_bv 64 (bv_unsigned x + bv_unsigned y - 2^64).
 Proof.
 intros x y Hw. unfold v_add. apply bv_eq.
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod.
 rewrite <- (Z.mod_add (bv_unsigned x + bv_unsigned y - 2^64) 1 (2^64)) by lia.
 f_equal. lia.
 Qed.
-Lemma v_sub_0_neg : ltac2:(TCodec.tc2 tcn__StepTac "A'QGyR0%211';&K&QFz%2261r1%5221&Q3&QI%12;4%311%92=1%<3=61pSJ>1").
+Lemma v_sub_0_neg : forall y : word,
+v_sub (Z_to_bv 64 0) y = Z_to_bv 64 (- bv_unsigned y).
 Proof.
 intro y. unfold v_sub.
 change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
 f_equal.
 Qed.
-Lemma u_neg_small : ltac2:(TCodec.tc2 tcn__StepTac "K'=&Ozr1%3221&Nr2&Q4+2+R0%3221%6251';&QIyR0&QF&Q3r3%211%4251%7261&Q5%12<5%;3G31p0=1p0E1pSLJ1").
+Lemma u_neg_small : forall z : Z, (0 < z)%Z -> (z <= 2^64)%Z ->
+bv_unsigned (Z_to_bv 64 (- z)) = (2^64 - z)%Z.
 Proof.
 intros z Hz0 Hz. rewrite Z_to_bv_unsigned, bv_wrap64_mod.
 replace (- z)%Z with ((2^64 - z) + (-1) * 2^64)%Z by lia.
 rewrite Z.mod_add by lia.
 apply Z.mod_small. lia.
 Qed.
-Lemma v_addi_neg_S : ltac2:(TCodec.tc2 tcn__StepTac "F'7';'QGyR0%211&J&QF&Q3&Q2(1r1%211%411%611%82;1+1%;221%917%;11%=2@1%C3@41pRDE1").
+Lemma v_addi_neg_S : forall d : nat,
+v_addi (Z_to_bv 64 (- Z.of_nat (S d))) 1 = Z_to_bv 64 (- Z.of_nat d).
 Proof.
 intro d. unfold v_addi. apply bv_eq.
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod.
 rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
-Lemma bsb_bound : ltac2:(TCodec.tc2 tcn__StepTac "Q7'?'QGyR0%211'6y8%511%311%411'F&Dr5%211&E%113&N&Q2&5&Gr9r8r7r6r4r3%776543>21%92D1%;11+RT[`0%>221p0@1p0C1pS4G1pRJN1pSFO1pRHK1pR>L1pS<Q21pS2Q61").
+Lemma block_head_size_le : forall rseq argv envp,
+(Z.of_nat (block_head_size rseq argv envp)
+<= 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 512)%Z.
 Proof.
-intros ph sp a e uid hw rnd Hva Hve.
-pose proof (build_stack_bytes_within_span ph sp a e uid hw rnd).
-pose proof (entry_stack_span_bound a e Hva Hve).
-unfold entry_stack_span_max in *. lia.
+intros rseq argv envp.
+unfold block_head_size, block_items, auxv_size, auxv_count.
+pose proof (Nat.mod_upper_bound
+(length argv + length envp + 3) 2 ltac:(lia)).
+destruct rseq; lia.
 Qed.
-Lemma range_avoids_two : ltac2:(TCodec.tc2 tcn__StepTac "Q7'@'=';'2&Q0r2&M&Q1&Ar4%211%411&B%114%711%9241%<2;1(4%@3?21r3%@215%C3B14&C(3r6r5(8%11K%53L31%63M51%831E;(9%N3M21p0<1p0@1pS0Q21pR>Q31pS8Q51pS6Q61").
+Lemma launch_sp_le_top : forall inp (top sp : word),
+valid_launch_sp top inp sp ->
+(bv_unsigned sp <= bv_unsigned top)%Z.
+Proof.
+intros inp top sp [_ [_ Hhi]].
+unfold launch_sp_hi, align_down16 in Hhi.
+pose proof (Nat2Z.is_nonneg
+(launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+pose proof (Nat2Z.is_nonneg
+(block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+pose proof (Z.mod_pos_bound
+(bv_unsigned top - 8
+- Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+(in_execfn inp))) 16 ltac:(lia)).
+lia.
+Qed.
+Lemma launch_top_minus_sp : forall inp (top sp : word),
+valid_launch inp ->
+valid_launch_sp top inp sp ->
+(bv_unsigned top - bv_unsigned sp <= 2101782)%Z.
+Proof.
+intros inp top sp [_ Hb] [_ [Hlo _]].
+unfold launch_bytes, e2big_limit in Hb.
+unfold launch_sp_lo, align_down16 in Hlo.
+pose proof (block_head_size_le (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp)).
+pose proof (Z.mod_pos_bound
+(bv_unsigned top - 8
+- Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+(in_execfn inp))
+- 4095) 16 ltac:(lia)).
+lia.
+Qed.
+Lemma bsb_bound : forall v inp mbase ph entry (sp brk : word) draw,
+valid_launch inp ->
+entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+(Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+<= 2101782)%Z.
+Proof.
+intros v inp mbase ph entry sp brk draw Hvl Hlau.
+rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw
+Hlau).
+destruct Hlau as (_ & Hsp & _).
+exact (launch_top_minus_sp inp (ed_top draw) sp Hvl Hsp).
+Qed.
+Lemma range_avoids_two : forall (s0 s1 : Segment) (a n : Z),
+Z.ltb a (Z.of_N (seg_base s0) + Z.of_N (seg_size s0)) = false ->
+Z.ltb a (Z.of_N (seg_base s1) + Z.of_N (seg_size s1)) = false ->
+range_avoids_ro_segs [s0; s1] a n = true.
 Proof.
 intros s0 s1 a n H0 H1. unfold range_avoids_ro_segs. cbn [forallb].
 rewrite H0, H1. rewrite !andb_false_r. cbn [negb]. rewrite !orb_true_r.
@@ -674,7 +747,10 @@ forallb (fun seg =>
 seg_writable seg
 || Z.leb (Z.of_N (seg_base seg) + Z.of_N (seg_size seg)) data_base)
 segs.
-Lemma range_avoids_ro_above : ltac2:(TCodec.tc2 tcn__StepTac "H'6'@%211'=';'2&Lr4r3%3221(9%73621&N%1265&Cr6%23198%=3<17p051p081pS0A1pR@B1pRFC1pS:E1").
+Lemma range_avoids_ro_above : forall (segs : list Segment) (data_base addr n : Z),
+ro_segs_below segs data_base = true ->
+(data_base <= addr)%Z ->
+range_avoids_ro_segs segs addr n = true.
 Proof.
 intros segs data_base addr n Hbelow Haddr.
 unfold ro_segs_below in Hbelow. unfold range_avoids_ro_segs.

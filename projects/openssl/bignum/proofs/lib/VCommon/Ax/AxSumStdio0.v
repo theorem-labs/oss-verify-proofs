@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TASK_SIZE gates and the CONFIG_RSEQ flag). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -16,8 +16,12 @@ From OSSVerify.Proofs.openssl.bignum.lib.VCommon Require Import
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.BootWitness Require Import BootDefs BootStep.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Cli Require Import CliSpecG.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import ExTrie.
-From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import AxLazy AxLin AxRel AxVal AxBytes AxMem AxZZ AxBg AxState AxStep AxSys AxJoinSound AxEntryRel AxEntryAg AsanWLazy AsanWAcc AsanWBase AsanWSys AsanWWritev AxSysNode AxSum.
+(* `AsanWEb AsanWEbLoad` ADDED, same reason as AxSumRip2's and AxSumAmc's: the sign
+   block below is this file's first use of AUX_OFF and the names do not travel
+   through AxSumStr's Require on the next line.  Import closure only. *)
+From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import AxLazy AxLin AxRel AxVal AxBytes AxMem AxZZ AxBg AxState AxStep AxSys AxJoinSound AxEntryRel AxEntryAg AsanWLazy AsanWAcc AsanWBase AsanWEb AsanWEbLoad AsanWSys AsanWWritev AxSysNode AxSum.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import AxModelRel AxFd AxSysSound AxSumLibc AxSumStr AxSumMem AxSumStdio.
+From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Cfg Require RomWritev.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -65,7 +69,7 @@ Definition sum_stdio0 (segs : list Segment) (A : AST) : option (list AST) :=
   let s := a_facts A in
   let regs := a_regs A in
   match xlit (aget regs 17%uint63), xlit (aget regs 10%uint63), aget regs 11%uint63, xlit (aget regs 12%uint63), find_entry (a_mem A) with
-  | Some a7, Some fd, XS ts o, Some cnt, Some ph =>
+  | Some a7, Some fd, XS ts o, Some cnt, Some (r, ph) =>
       if (a7 =? 66) &&& (fd =? 2) &&& (cnt =? 1) &&& teqb ts sp_terms &&& (- 8388608 <=? wS o) &&& (wS o + 16 <=? 0)
          &&& atop_is_sp (a_model A) &&& pc_ok (npc A) &&& words_ok_f segs (wZ (a_pc A)) [(0, 0x73)] then
         match ent_words segs s (a_mem A) (XS ts o) 0 with
@@ -101,7 +105,7 @@ Proof.
   destruct (xlit (aget (a_regs A) 10%uint63)) as [fd|] eqn:E10; [|discriminate].
   destruct (aget (a_regs A) 11%uint63) as [| ts o | | | |] eqn:E11; try discriminate.
   destruct (xlit (aget (a_regs A) 12%uint63)) as [cnt|] eqn:E12; [|discriminate].
-  destruct (find_entry (a_mem A)) as [ph|] eqn:Efe; [|discriminate].
+  destruct (find_entry (a_mem A)) as [[r ph]|] eqn:Efe; [|discriminate].
   destruct (a7 =? 66) eqn:Ea7; [|discriminate]. apply Z.eqb_eq in Ea7. subst a7.
   destruct (fd =? 2) eqn:Efd; [|discriminate]. apply Z.eqb_eq in Efd. subst fd.
   destruct (cnt =? 1) eqn:Ecnt; [|discriminate]. apply Z.eqb_eq in Ecnt. subst cnt.
@@ -117,9 +121,18 @@ Proof.
   destruct (wZ w =? 0) eqn:Ew0; [|discriminate]. apply Z.eqb_eq in Ew0.
   destruct (rbetween 2 (a_facts A) (wS ob, tb) 0 140737488355328) eqn:Erb; [|discriminate]. injection Hs as <-.
   pose proof HR as [Hpc Hal0 Hsvc Hregs Hres Hrom Hmem Hmod Hh [Hb Hl] Hsat Hhs Hcov Hcomp Hnaok]. cbn [cfg_ms cfg_model] in *.
-  destruct (eb_of_R segs ρ (a_mem A) (ms_mem ms) ph Hmem Efe) as [nR Heb]. pose proof (eb_rel_facts ph ρ _ _ _ Heb) as HF.
-  pose proof (eb_layout ρ HF) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & _ & Hs2). unfold sp_window_lo, sp_window_hi in Hs1, Hs2.
+  destruct (eb_of_R segs ρ (a_mem A) (ms_mem ms) r ph Hmem Efe) as [nR Heb]. pose proof (eb_rel_facts r ph ρ _ _ _ Heb) as HF.
+  pose proof (eb_layout r ρ HF) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & _ & Hs2). unfold sp_window_lo, sp_window_hi in Hs1, Hs2.
   pose proof (atop_is_sp_sound segs fs0 ρ _ _ Hmod Eat) as Hatop.
+  (* Hu below needs `0 <= iovp < 2^64` for iovp = sp_val ρ + wS o, and Hs2 is the
+     only upper bound on sp_val, carrying AUX_OFF r and ρ v_g with no sign from
+     eb_layout: "Cannot find witness" at :124 chars 82-85
+     (measured on the farm).  Atom sign, not unfold; ph is in scope from the
+     eb_of_R two lines up. *)
+  assert (HA0 : 0 <= AUX_OFF r) by (unfold AUX_OFF; lia).
+  assert (Hg0 : 0 <= ρ v_g).
+  { pose proof (facts_g r ph ρ HF). pose proof (facts_par r ph ρ HF).
+    pose proof (Z.mod_pos_bound (ρ v_argc + ρ v_envc + 1) 2 ltac:(lia)). lia. }
   set (iovp := sp_val ρ + wS o) in *.
   assert (Hu : bv_unsigned (Z_to_bv 64 iovp) = iovp) by (apply u_wz; unfold iovp; lia).
   assert (Hv : xv_val ρ (XS sp_terms o) (Z_to_bv 64 iovp)).
@@ -131,13 +144,15 @@ Proof.
   cbn [xv_val] in Hvn0. rewrite Ew0 in Hvn0.
   pose proof (rbetween_sound ρ _ 2 _ _ _ Hsat Erb) as Hbr.
   assert (Hbv : bv_unsigned b0 = leval ρ (wS ob, tb)) by (apply (addr_form_val' ρ vb b0 tb ob 140737488355328 Hvb0 Ea Hbr); unfold FastWord.two64; lia).
-
   assert (G : forall (r : reg) (k : int) (z : Z), ri r = k -> xlit (aget (a_regs A) k) = Some z -> rg ms r = Z_to_bv 64 z).
-  { intros r k z Hk E. apply word_lit_w. exact (reg_lit ρ _ ms r k z Hregs Hk E). }
+  (* Sixth and last rseq shadowing: `intros r k z` clashes with the flag Efe bound
+     at :104 -- ":147 chars 11-12, r is already used".
+     The `forall (r : reg)` above is legal, a binder in a TYPE may shadow; only the
+     intro clashes.  Swept to end of file: this is the only one. *)
+  { intros r0 k z Hk E. apply word_lit_w. exact (reg_lit ρ _ ms r0 k z Hregs Hk E). }
   assert (H17 : bv_unsigned (rg ms (Z_to_bv 5 17)) = 66) by exact (reg_lit ρ _ ms (Z_to_bv 5 17) 17%uint63 66 Hregs eq_refl E17).
   assert (H11 : rg ms 11%bv = Z_to_bv 64 iovp).
   { apply word_lit_w. change 11%uint63 with (ri 11%bv) in E11. rewrite <- Hu. pose proof (Hregs 11%bv) as X. rewrite E11 in X. cbn [xv_val] in *. lia. }
-
   assert (Hf : fetch_word segs (ms_pc_val ms) = Some (Z_to_bv 32 0x73)).
   { rewrite Hpc. pose proof (words_get segs _ _ 0 0x73 HW ltac:(left; reflexivity) ltac:(split; [discriminate | reflexivity])) as X.
     rewrite Z.add_0_r in X. exact X. }
@@ -166,8 +181,50 @@ Proof.
     - cbn [iov_bufs_ok]. unfold TASK_SIZE. split; [lia | exact I].
     - rewrite Hu. apply (no_lazy_above segs fs0 ρ _ model _ _ Hmod). rewrite Hatop. unfold iovp. lia.
     - cbn [iov_nl]. split; [|exact I]. intros p z _ Hz. lia. }
+  (* LPS 08b1429: the zero-total writev reads the same over a larger backing *)
+  assert (Htot0 : iovs_total ents = 0) by (cbn [ents iovs_total]; lia).
+  assert (Hrob := RomWritev.writev_rob_zero segs (latch ms) model (rg ms (Z_to_bv 5 17)) ents
+                    (Z_to_bv 64 iovp) (Z_to_bv 64 (Z.of_nat (length ents))) eq_refl H17
+                    ltac:(rewrite lg1; exact H11)
+                    (* The FILE decides this, not taste.  :169 is the same call and
+                       it WORKS: `rewrite lg2. exact (G 12%bv 12%uint63 1 eq_refl
+                       E12).`  What makes it work is `exact`, which fixes the
+                       application's expected type and so elaborates `eq_refl` at
+                       `ri 12%bv = 12%uint63`.  In a REWRITE position there is no
+                       expected type, so eq_refl defaults to `ri 12 = ri 12` and the
+                       slot rejects it -- the :188 error.  Respelling the register as
+                       `Z_to_bv 5 12` made it elaborate but changed the term G
+                       PRODUCES, so the rewrite then found no `rg ms 12%bv` in the
+                       goal: the two spellings swapped places rather than reconciled
+                       (:197 chars 26-81).  The cure
+                       that reconciles them is to keep `12%bv`, so the produced term
+                       still matches the goal, and supply the premise with the type
+                       ASCRIPTION that `exact` was supplying at :169. *)
+                    (* Third attempt, and the first two told us what the site needs.
+                       `eq_refl` bare failed (:188) and `(eq_refl : ri 12%bv =
+                       12%uint63)` failed too (:202 chars 61-68, which is that very
+                       eq_refl): an ASCRIPTION is
+                       still elaborated by unifying `?x = ?x` against the two sides,
+                       so it buys nothing that the slot's own expected type did not
+                       already give.  What :169 has and both attempts lacked is
+                       `exact`, which type-CHECKS the whole application by conversion
+                       rather than unifying a hole.  So reproduce :169's structure
+                       literally: build the equation with `assert ... by exact`, then
+                       rewrite with the resulting hypothesis, whose statement is in
+                       the `12%bv` spelling the goal already uses. *)
+                    ltac:(let H12 := fresh "H12eq" in
+                          assert (H12 : rg ms 12%bv = Z_to_bv 64 1) by exact (G 12%bv 12%uint63 1 eq_refl E12);
+                          rewrite lg2, H12; reflexivity)
+                    ltac:(apply (import_iovecs_of_array segs (latch ms) ents (Z_to_bv 64 iovp));
+                          [ exact Hrom
+                          | cbn [ents length]; lia
+                          | rewrite Hu; cbn [ents length]; unfold TASK_SIZE, iovp; lia
+                          | cbn [ents iov_array]; rewrite Hu; repeat split; first [exact Hrb0 | exact Hrn0 | lia]
+                          | cbn [ents iov_bufs_ok]; unfold TASK_SIZE; split; [lia | exact I] ])
+                    ltac:(unfold cap_iovecs; apply cap_iovecs_id; rewrite Htot0; unfold MAX_RW_COUNT; lia)
+                    Htot0).
   apply (rzc_latch segs cfg ms model _ _ Hh Hsvc Hf AsanWSw.E_88).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o') Hh eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o') Hh eq_refl Hrob).
   - rewrite Hchk. apply check_ret_only_copyins_no_unmodeled.
   - intros eff m' evs Hc. rewrite Hchk in Hc. apply check_ret_only_copyins_ok_iff in Hc as (_ & -> & ->). split; [reflexivity | exact Hh].
   - exists (with_copyins CA (mkEffect (Z_to_bv 64 0) [] [])), model. split.

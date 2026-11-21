@@ -1,4 +1,4 @@
-(* lib/A/Prog/TwSetup_c.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), stated over the
+(* lib/A/Prog/TwSetup_c.v (RtStr's port, unchanged), stated over the
    local-shadow TW_ASAN and twoway contract (FMss_TwAsan.v, FMss_twoway_strstr_c.v); only the imports differ. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

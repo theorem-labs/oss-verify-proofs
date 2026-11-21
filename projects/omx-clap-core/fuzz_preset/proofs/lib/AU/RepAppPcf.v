@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/RepAppPcf.v (commit 3cae605a900a, file sha256 ae2ed0808e4b) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 30 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 1 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/RepAppPcf.v (file sha256 ae2ed0808e4b) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 30 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 1 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, slice F4 of a Theorem Labs lane's class-full report walk): the RELATION POST of
    __asan::AppendToErrorMessageBuffer (0x54bec) in the case with no (re)map: the buffer is mapped and has room
    (size + len <= cap), the walk writes only its 0x60-byte frame, the 56-byte errbuf object and the buffer's tail
@@ -455,7 +456,7 @@ Lemma post_remap : forall lk Hp ly S S1 W regs mem md (s : list Z) (a : Z) (mat 
   st_secs S1 = map cfx_retire (st_secs S) ++ [mkSec ncap ERRB_CAP_TAG false] ->
   wle W W' -> w_A W' = w_A W ->
   (forall x : word, ~ (a <= bv_unsigned x < a + ncap) -> w_H W' x = w_H W x) ->
-  YK13.grant_ok_na_pin md (w64 a) ncap = true -> 0 < a -> a + ncap < 2 ^ 64 ->
+  YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) ncap = true -> 0 < a -> a + ncap < 2 ^ 64 ->
   regs_preserved regs regs' ->
   (forall x : word, ~ (spZ regs - APP_STK <= bv_unsigned x < spZ regs) ->
      ~ (C_ERRBUF <= bv_unsigned x < C_ERRBUF + 56) -> ~ (a <= bv_unsigned x < a + ncap) ->
@@ -494,7 +495,7 @@ assert (GR1 : secs_errb_grow (st_secs S) (st_secs S1))
 assert (GR2 : secs_errb_grow (st_secs S1) (st_secs (st_setsize (errb_size_cf S + Z.of_nat (length s)) S1))).
 { apply (YGcfSecsStep.secs_errb_set_grow_ret _ S1 _ (st_setsize_eq _ S1)); [rewrite (RepRelcf.rr_size_map S S1 _ ES1)|]; lia. }
 assert (Ha64 : 0 <= a < 2 ^ 64) by lia.
-assert (G' : YK13.grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) (w64 a)
+assert (G' : YK13.grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) (w64 a)
                (page_round_up_Z (errb_size_cf S + Z.of_nat (length s))) = true) by exact GRANT.
 destruct (RepRelcf.errb_grant_facts B Hp ly S W (held_mem lk mem) md mat a
             (page_round_up_Z (errb_size_cf S + Z.of_nat (length s))) AR XM G' Ha64 ltac:(lia) ltac:(lia))
@@ -715,7 +716,7 @@ Lemma post_first : forall lk Hp ly S S1 W regs mem md (s : list Z) (a : Z) (mat 
   st_secs S1 = map cfx_retire (st_secs S) ++ [mkSec ncap ERRB_CAP_TAG false] ->
   wle W W' -> w_A W' = w_A W ->
   (forall x : word, ~ (a <= bv_unsigned x < a + ncap) -> w_H W' x = w_H W x) ->
-  YK13.grant_ok_na_pin md (w64 a) ncap = true -> 0 < a -> a + ncap < 2 ^ 64 ->
+  YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) ncap = true -> 0 < a -> a + ncap < 2 ^ 64 ->
   regs_preserved regs regs' ->
   (forall x : word, ~ (spZ regs - APP_STK <= bv_unsigned x < spZ regs) ->
      ~ (C_ERRBUF <= bv_unsigned x < C_ERRBUF + 56) -> ~ (a <= bv_unsigned x < a + ncap) ->
@@ -755,7 +756,7 @@ assert (GR1 : secs_errb_grow (st_secs S) (st_secs S1)) by exact (RepRelcf.rr_sec
 assert (GR2 : secs_errb_grow (st_secs S1) (st_secs (st_setsize (Z.of_nat (length s)) S1))).
 { apply (YGcfSecsStep.secs_errb_set_grow_ret _ S1 _ (st_setsize_eq _ S1)); [rewrite (RepRelcf.rr_size_map S S1 _ ES1)|]; lia. }
 assert (Ha64 : 0 <= a < 2 ^ 64) by lia.
-assert (G' : YK13.grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) (w64 a)
+assert (G' : YK13.grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) (w64 a)
                (page_round_up_Z 65536) = true) by exact GRANT.
 destruct (RepRelcf.errb_grant_facts B Hp ly S W (held_mem lk mem) md mat a (page_round_up_Z 65536)
             AR XM G' Ha64 ltac:(lia) ltac:(lia)) as (GA & GAPP & GCE & GFA).

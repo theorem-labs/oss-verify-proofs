@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The VIEW of the secondary path of the frame-generic Allocate walk (n >= 64513): the machine facts the
    secondary seed (AGi9.SREG0 / AGi9.S0) reads, at the machine level, over the allocator instance [inst].
 
@@ -148,7 +149,7 @@ Lemma sv_cjunk_word : forall a, inst + o_comb_stats <= a -> a + 8 <= inst + o_co
 exists w, val_mem im_segs (mrestrict (w_H W) mem0) a 8 w.
 Proof using All. sv. intros a H1 H2. apply sv_word_of_present. intros k Hk. apply SCP. lia. Qed.
 
-(* The junk values AGjw / AGjx need as the seed's atoms (taken at lib/AU/AGioMB.v:165, lib/A/AGioM.v:169 and lib/AU/AGif5.v:1126): the thread's stats words (T + 2784, 2800, 2808,
+(* The junk values AGjw / AGjx need as the seed's atoms (taken at lib/AU/AGioMB.v:166, lib/A/AGioM.v:170 and lib/AU/AGif5.v:1126): the thread's stats words (T + 2784, 2800, 2808,
    2816, 2872, 2880, 2904), the combined stats words (inst + o_comb_stats + 16, + 24), the instance's secondary
    stats words (inst + o_sec_stats, + 16, + 24) and the by_size_log cell [bsl]. *)
 Lemma sv_junk_values : forall bsl, inst + o_sec_stats + 32 <= bsl -> bsl + 8 <= inst + o_sec_mutex ->

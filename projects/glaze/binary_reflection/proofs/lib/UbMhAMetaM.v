@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader and the vDSO reservation inclusion carried through the allocator meta step). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -327,6 +328,9 @@ Section AMC. (* [comment removed for export] *)
     Hypothesis Tfs : m_fs mdlT = m_fs mdl.
     Hypothesis Tfds : m_fds mdlT = m_fds mdl.
     Hypothesis Tlim : vm_limit (m_vmmaps mdlT) = vm_limit (m_vmmaps mdl).
+    (* [m_channel_reader] rides with the group above; see UbMhUnmap.with_vmmaps_rdr. *)
+    Hypothesis Trdr : m_channel_reader mdlT = m_channel_reader mdl.
+    Hypothesis Tvdso : incl (vdso_reserved (m_kernel mdlT) (vdso_top (m_vmmaps mdlT))) (vm_reserved (m_vmmaps mdlT)).
     (* [comment removed for export] *)
     Hypothesis TW : forall a, 0 <= a < 2 ^ 64 -> MT (Z_to_bv 64 a) <> M (Z_to_bv 64 a) -> (sp - AMSTK <= a < sp) \/ ctxV a \/ NB a \/ (A_ERRNO <= a < A_ERRNO + 4).
     (* [comment removed for export] *)
@@ -456,7 +460,7 @@ Section AMC. (* [comment removed for export] *)
       (p <= a < p + 8) \/ (p + 16 <= a < p + 20) \/ (ctx_avail_meta <= a < ctx_avail_meta + 16) \/ (p + 24 <= a < p + 40).
 
     Theorem am_tail : kat RSEGS (mkCfg (mkst rT (0x66e80%bv : word) MT rom) mdlT) Q.
-    Proof using TStack Hp_maps HRX HRL HRS HLG' HWI' HWR' Hbrk' Hshacc' Hsh' Hcur' HRnew HRold HRsub HRgrp Hcnt Hp_groups Hp_areas Hp_img Hp TacR Tcb Tsh Tac TDef TPage TKeep NBreg NBfacts HeT TED TE TW Tlim Tfds Tfs Tmat Tlz Th COVT KT T21 T18 T19 T9 T2 Hac0 Hfl bigT NB eT cb' sh' acT brk' regions' p HQ Hsp Hra H2 HCNT HREP HWF sp regs mdl M X L st RN. clear - TStack Hp_maps HRX HRL HRS HLG' HWI' HWR' Hbrk' Hshacc' Hsh' Hcur' HRnew HRold HRsub HRgrp Hcnt Hp_groups Hp_areas Hp_img Hp TacR Tcb Tsh Tac TDef TPage TKeep NBreg NBfacts HeT TED TE TW Tlim Tfds Tfs Tmat Tlz Th COVT KT T21 T18 T19 T9 T2 Hac0 Hfl bigT NB eT cb' sh' acT brk' regions' p HQ Hsp Hra H2 HCNT HREP HWF sp regs mdl M X L st RN.
+    Proof using TStack Hp_maps HRX HRL HRS HLG' HWI' HWR' Hbrk' Hshacc' Hsh' Hcur' HRnew HRold HRsub HRgrp Hcnt Hp_groups Hp_areas Hp_img Hp TacR Tcb Tsh Tac TDef TPage TKeep NBreg NBfacts HeT TED TE TW Tvdso Trdr Tlim Tfds Tfs Tmat Tlz Th COVT KT T21 T18 T19 T9 T2 Hac0 Hfl bigT NB eT cb' sh' acT brk' regions' p HQ Hsp Hra H2 HCNT HREP HWF sp regs mdl M X L st RN. clear - TStack Hp_maps HRX HRL HRS HLG' HWI' HWR' Hbrk' Hshacc' Hsh' Hcur' HRnew HRold HRsub HRgrp Hcnt Hp_groups Hp_areas Hp_img Hp TacR Tcb Tsh Tac TDef TPage TKeep NBreg NBfacts HeT TED TE TW Tvdso Trdr Tlim Tfds Tfs Tmat Tlz Th COVT KT T21 T18 T19 T9 T2 Hac0 Hfl bigT NB eT cb' sh' acT brk' regions' p HQ Hsp Hra H2 HCNT HREP HWF sp regs mdl M X L st RN.
       destruct Hp as (P0 & P1 & P2). pose proof Hsp as [S1 S2]. pose proof (UbMhAMetaS.can_rng st L HWF) as CANR.
       pose proof (wc_secret st (WF_ctx st L HWF)) as SECR. pose proof Hp_img as PI. unfold img_free in PI.
       destruct T_run as (rf & Mf & RUN & E10 & Kf & EMf).
@@ -709,7 +713,8 @@ Section AMC. (* [comment removed for export] *)
       exists (set_errno stN eT), M', mdlT, r', (p + 24).
       split; [reflexivity|].
       split; [exact WF'|]. split; [exact REP'|]. split; [apply (LEDGERX_same stN); [reflexivity | reflexivity | exact HLG']|].
-      split; [exact Th|]. split; [exact Tlz|]. split; [exact Tmat|]. split; [exact Tfs|]. split; [exact Tfds|]. split; [exact Tlim|].
+      split; [exact Th|]. split; [exact Tlz|]. split; [exact Tmat|]. split; [exact Tfs|]. split; [exact Tfds|].
+      split; [exact Trdr|]. split; [exact Tvdso|]. split; [exact Tlim|].
       split; [reflexivity|].
       split; [apply (proj2 (UbMhAMetaN.e_metaU st p regions' brk' (acT - 1) sh' cb' Hp (p + 24))); right; exists 0; split; [unfold NSLOTS; lia | unfold meta_addr, AREA_HDR, META_SZ; lia]|].
       split; [cbn [s_meta UbMhAMetaN.st']; replace (p + 24) with (meta_addr p 0) by (unfold meta_addr, AREA_HDR, META_SZ; lia); apply (UbMhAMetaN.n_meta_page st p Hp 0); unfold NSLOTS; lia|].
@@ -815,6 +820,7 @@ Section AMC. (* [comment removed for export] *)
   Hypothesis Hh : m_halted mdl = None.
   Hypothesis Hlz : m_vm_lazy mdl = [].
   Hypothesis Hmat : m_vm_materialized mdl = [].
+  Hypothesis HVDSO : incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
   Hypothesis HCNT : s_flist st = [] -> c_avail_cnt (s_ctx st) = 0 -> Z.of_nat (length (s_areas st)) + 1 <= AREAMAX.
   Hypothesis HLEN : Z.of_nat (length X) + Z.of_nat (length (s_regions st)) <= 246.
   Hypothesis HBUD : XSUM X + RSUM (s_regions st) + 2 ^ 24 <= vm_limit (m_vmmaps mdl).
@@ -839,19 +845,23 @@ Section AMC. (* [comment removed for export] *)
     let st1 := fst st regions' brk' cur' ac' sh' cb' in
     WF st1 L -> REP st1 Mpre -> LEDGERX st1 X (m_vmmaps mdl') -> errno_write Mpre M' 12 ->
     m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] ->
-    m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl -> vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) ->
+    m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+    m_channel_reader mdl' = m_channel_reader mdl ->
+    incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
+    vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) ->
     am_regions st st1 X ->
     getr regs' 10 = Z_to_bv 64 0 -> getr regs' 2 = getr regs 2 -> keeps_but AM_CLOB regs regs' ->
     (forall a, 0 <= a < 2 ^ 64 -> M' (Z_to_bv 64 a) <> M (Z_to_bv 64 a) -> am_changed st1 sp a) ->
     defined M' (sp - AMSTK) sp ->
     am_fail st L X sp regs M mdl rom (mkCfg (mkst regs' (getr regs 1) M' rom) mdl').
   Proof using.
-    intros regions' brk' cur' ac' sh' cb' Mpre M' mdl' regs' st1 W1 R1 LG1 EW X1 X2 X3 X4 X5 X6 AR A10 A2 KB FR DF.
+    intros regions' brk' cur' ac' sh' cb' Mpre M' mdl' regs' st1 W1 R1 LG1 EW X1 X2 X3 X4 X5 XR XV X6 AR A10 A2 KB FR DF.
     exists (set_errno st1 12), M', mdl', regs'.
     split; [reflexivity|].
     split; [apply WF_set_errno; [exact W1 | lia]|]. split; [exact (REP_set_errno st1 L Mpre M' 12 W1 R1 EW)|].
     split; [apply (LEDGERX_same st1); [reflexivity | reflexivity | exact LG1]|].
-    split; [exact X1|]. split; [exact X2|]. split; [exact X3|]. split; [exact X4|]. split; [exact X5|]. split; [exact X6|].
+    split; [exact X1|]. split; [exact X2|]. split; [exact X3|]. split; [exact X4|]. split; [exact X5|].
+    split; [exact XR|]. split; [exact XV|]. split; [exact X6|].
     split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [repeat (split; [reflexivity|]); intros x Ux; exact Ux|].
     split; [exact AR|].
@@ -933,7 +943,7 @@ Section AMC. (* [comment removed for export] *)
     #[local] Notation dst := (d_st st true).
 
     Lemma arm_MM : forall b, kfx b (mkCfg (mkst rM (0x682e8%bv : word) Mm rom) mdl).
-    Proof using MmD MmS MmG MmB MmW COVM KM R4 R21 R18 R8 R19 R1 R20 R9 R15 R14 R13 R12 R11 R10 R2 bigM Hac Hac0 Hfl Hfail Hok DEF Hsp Hra H2 HBUD HLEN HCNT Hmat Hlz Hh XOK HLG HREP HWF HL bi sp regs M X L st RN.
+    Proof using MmD MmS MmG MmB MmW COVM KM R4 R21 R18 R8 R19 R1 R20 R9 R15 R14 R13 R12 R11 R10 R2 bigM Hac Hac0 Hfl Hfail Hok DEF Hsp Hra H2 HBUD HLEN HCNT HVDSO Hmat Hlz Hh XOK HLG HREP HWF HL bi sp regs M X L st RN.
       intros b.
       pose proof Hsp' as [S1 S2]. ceil.
       pose proof (HCNT Hfl Hac0) as Hcnt.
@@ -960,8 +970,10 @@ Section AMC. (* [comment removed for export] *)
         intros x Hx. rewrite u_Z2bv in Hx by lia. pose proof (u64_range x) as Xr. rewrite <- (Z_to_bv_u_eq' x (bv_unsigned x) eq_refl). apply AG. lia. }
       (* [comment removed for export] *)
       assert (PR : page_round_up_Z N = N) by (apply page_round_up_Z_aligned; first [lia | exact N2]).
-      destruct (ledgerx_grant_na st L X mdl HWF HLG XOK N ltac:(lia) HLEN) as (a0 & GR0 & _).
-      apply (kfx_mmap_na RSEGS F HL bi b rN (0x683ac%bv : word) Mm2 rom mdl W_68358 N Hh Hlz F_68358 E_68358 Q17 Q11 ltac:(lia) Q12 Q13 Q14 Q15);
+      destruct (ledgerx_grant_na st L X mdl HWF HLG XOK (Z_to_bv 64 0) N ltac:(lia)
+                  ltac:(unfold page_size; exact N2) HLEN) as (a0 & GR0 & _).
+      apply (kfx_mmap_na RSEGS F HL bi b rN (0x683ac%bv : word) Mm2 rom mdl W_68358 N (Z_to_bv 64 0) Hh Hlz F_68358 E_68358 Q17 Q11 ltac:(lia) Q12 Q13 Q14 Q15 Q10
+               (place_declined_b_null _ _ _));
         rewrite ?PR; [exists a0; exact GR0 | |].
       { (* [comment removed for export] *)
         unfold mmna_fail. rewrite errno_ret_ENOMEM. replace (v_addi (0x683ac%bv : word) 4) with (0x683b0%bv : word) by (apply bv_eq; reflexivity).
@@ -1050,7 +1062,10 @@ Section AMC. (* [comment removed for export] *)
             destruct (MpreW a ltac:(ceil; unfold HEAPLO in *; lia) NE); [ceil; lia | unfold ctx_brk, CTX in *; lia].
         - apply (d_ledger st X (m_vmmaps mdl) HLG true); try reflexivity. intros E; discriminate E.
         - apply errno_write_intro.
-        - exact Hh. - exact Hlz. - exact Hmat. - reflexivity. - reflexivity. - reflexivity.
+        - exact Hh. - exact Hlz. - exact Hmat. - reflexivity. - reflexivity.
+        - (* m_channel_reader: the model is [mdl] on this arm *) reflexivity.
+        - exact HVDSO.
+        - reflexivity.
         - split; [cbn [s_regions fst]; lia|]. split; [cbn [s_regions fst]; lia|]. cbn [s_regions fst]. intros r Hr. left. exists r. split; [exact Hr | split; reflexivity].
         - exact Z10.
         - rewrite Z2, H2. reflexivity.
@@ -1069,9 +1084,13 @@ Section AMC. (* [comment removed for export] *)
       (* [comment removed for export] *)
       intros a GR. unfold mmna_grant. rewrite PR.
       replace (v_addi (0x683ac%bv : word) 4) with (0x683b0%bv : word) by (apply bv_eq; reflexivity).
-      pose proof GR as GR'. unfold grant_ok_na_pin in GR'. rewrite !Bool.andb_true_iff in GR'. destruct GR' as [[[GA1 GA2] GA3] GA4].
-      apply Z.eqb_eq in GA1. apply Z.ltb_lt in GA2. apply Z.leb_le in GA3. unfold page_size in GA1.
-      pose proof (grant_range_hz (m_vmmaps mdl) _ a (Z_to_bv 64 N) (lx_top st X _ HLG) ltac:(rewrite <- (lx_res st X _ HLG); exact GA4)
+      (* 75d69e00: [grant_ok_na_pin] is Linux's placement test, not an [andb]
+         chain, so the four facts come from [RefNodes.grant_ok_na_pin_unpack]
+         (which is [Placement.linux_place_is_admissible]) in the same order. *)
+      destruct (RefNodes.grant_ok_na_pin_unpack _ mdl a N ltac:(lia) ltac:(unfold page_size; exact N2) GR)
+        as (GA1 & GA2 & GA3 & GA4).
+      unfold page_size in GA1.
+      pose proof (grant_range_hz (m_vmmaps mdl) _ a (Z_to_bv 64 N) (lx_top st X _ HLG) (ledgerx_prefix_free st X _ _ _ HLG GA4)
                     ltac:(rewrite u_Z2bv by lia; lia) GA1 ltac:(rewrite u_Z2bv by lia; exact N2) ltac:(rewrite u_Z2bv by lia; exact GA3)) as [HZ HI].
       rewrite u_Z2bv in HZ, HI by lia.
       set (p0 := bv_unsigned a) in *.
@@ -1087,6 +1106,7 @@ Section AMC. (* [comment removed for export] *)
       pose (h1 := mkVmMapsFull (vm_reserved (m_vmmaps mdl)) ((Z_to_bv 64 p0, Z_to_bv 64 N) :: vm_maps (m_vmmaps mdl)) ((Z_to_bv 64 p0, Z_to_bv 64 N) :: vm_noaccess (m_vmmaps mdl))
                  (vm_start_brk (m_vmmaps mdl)) (vm_brk (m_vmmaps mdl)) (vm_limit (m_vmmaps mdl)) (vm_mmap_base (m_vmmaps mdl)) (vm_init_sp (m_vmmaps mdl))).
       pose proof (with_vmmaps_facts h1 mdl) as MF. change (with_vmmaps h1 mdl) with mdl1 in MF. destruct MF as (MF1 & MF2 & MF3 & MF4 & MF5 & MF6).
+      pose proof (with_vmmaps_rdr h1 mdl) as MFR. change (with_vmmaps h1 mdl) with mdl1 in MFR.
       (* [comment removed for export] *)
       assert (Mm3out : forall y, 0 <= y < 2 ^ 64 -> ~ (p0 <= y < p0 + N) -> Mm3 (Z_to_bv 64 y) = Mm2 (Z_to_bv 64 y)).
       { intros y Hy OUT. unfold Mm3. apply unfill_outZ; lia. }
@@ -1157,6 +1177,14 @@ Section AMC. (* [comment removed for export] *)
                ltac:(rewrite MF2; exact Hh) ltac:(rewrite MF3; exact Hlz) F_683b0 E_683b0 V17 V10
                ltac:(unfold page_size; rewrite u_Z2bv by lia; exact AL4) V11 ltac:(lia)
                ltac:(rewrite pru_4096, u_Z2bv by lia; unfold two_pow_64; lia) V12).
+      { rewrite pru_4096.
+        change (region_free (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl)))
+                  (Z_to_bv 64 (p0 + 4096)) (Z_to_bv 64 4096) = true).
+        apply RefNodes.region_free_intro. intros ba sz Hin.
+        assert (Hin' : In (ba, sz) (vm_reserved (m_vmmaps mdl) ++ vm_maps (m_vmmaps mdl))).
+        { apply in_or_app. left. apply HVDSO. exact Hin. }
+        pose proof (RefNodes.region_free_In _ _ _ ba sz HRF Hin') as HD.
+        rewrite !u_Z2bv in HD |- * by lia. destruct HD; lia. }
       { rewrite pru_4096, MF1. unfold h1. cbn [vm_noaccess]. apply map_contains_head; rewrite !u_Z2bv by lia; lia. }
       { rewrite pru_4096, MF1. unfold h1. cbn [vm_maps]. apply map_contains_head; rewrite !u_Z2bv by lia; lia. }
       { apply mprotect_budget_ok_intro; [rewrite MF3; exact Hlz | rewrite MF4; exact Hmat |].
@@ -1252,9 +1280,12 @@ Section AMC. (* [comment removed for export] *)
             pose proof (AP _ K2) as D. cbn in D. unfold g_map_end in Ha.
             destruct (decide (Mpre (Z_to_bv 64 a1) = M (Z_to_bv 64 a1))) as [E|NE]; [exact E|]. exfalso.
             destruct (MpreW a1 ltac:(ceil; unfold HEAPLO in *; lia) NE) as [W|[W|W]]; [ceil; lia | unfold ctx_brk, ctx_avail_meta_area_count, ctx_avail_meta_areas, CTX in *; lia | lia].
-        - apply (v_ledger st L X (m_vmmaps mdl) HWF HLG Hcnt Hac p0 HP0 true); rewrite ?MF1; try reflexivity. intros E; discriminate E.
+        - apply (v_ledger st L X (m_vmmaps mdl) HWF HLG Hcnt Hac p0 HP0 HRF true); rewrite ?MF1; try reflexivity. intros E; discriminate E.
         - apply errno_write_intro.
-        - rewrite MF2; exact Hh. - rewrite MF3; exact Hlz. - rewrite MF4; exact Hmat. - exact MF5. - exact MF6. - rewrite MF1; reflexivity.
+        - rewrite MF2; exact Hh. - rewrite MF3; exact Hlz. - rewrite MF4; exact Hmat. - exact MF5. - exact MF6.
+        - (* m_channel_reader through [with_vmmaps] *) exact MFR.
+        - eapply vdso_included_same; [reflexivity|reflexivity|reflexivity|reflexivity|exact HVDSO].
+        - rewrite MF1; reflexivity.
         - split; [cbn [s_regions fst]; rewrite (v_RSUM st p0); lia|]. split; [cbn [s_regions fst]; rewrite (v_len st p0); lia|].
           cbn [s_regions fst]. exact (v_new_apart_X st L X _ HWF HLG XOK Hcnt Hac p0 HP0 HRF).
         - exact Z10.
@@ -1282,6 +1313,7 @@ Section AMC. (* [comment removed for export] *)
                  (maps_subtract (vm_noaccess (m_vmmaps mdl1)) (bv_unsigned (Z_to_bv 64 (p0 + 4096))) (bv_unsigned (Z_to_bv 64 (p0 + 4096)) + bv_unsigned (Z_to_bv 64 4096)))
                  (vm_start_brk (m_vmmaps mdl1)) (vm_brk (m_vmmaps mdl1)) (vm_limit (m_vmmaps mdl1)) (vm_mmap_base (m_vmmaps mdl1)) (vm_init_sp (m_vmmaps mdl1))).
       pose proof (with_vmmaps_facts h2 mdl1) as MG. change (with_vmmaps h2 mdl1) with mdl2 in MG. destruct MG as (MG1 & MG2 & MG3 & MG4 & MG5 & MG6).
+      pose proof (with_vmmaps_rdr h2 mdl1) as MGR. change (with_vmmaps h2 mdl1) with mdl2 in MGR.
       (* [comment removed for export] *)
       assert (RA6 : rdn RSEGS Mm6 (Z_to_bv 64 (sp - 64 - 8)) 8%nat = Some (word_to_le_bytes 8 (getr rQ 1))).
       { unfold Mm6, Mm5, mp_frame. rewrite rdn_zfill_outZ by (cbn; lia). apply rdn_wbytes_hit8. zsimp; lia. }
@@ -1313,6 +1345,9 @@ Section AMC. (* [comment removed for export] *)
       - rewrite forallb_app, COVM. reflexivity.
       - rewrite MG2, MF2; exact Hh. - rewrite MG3, MF3; exact Hlz. - rewrite MG4, MF4; exact Hmat. - rewrite MG5, MF5; reflexivity. - rewrite MG6, MF6; reflexivity.
       - rewrite MG1. unfold h2. cbn [vm_limit]. rewrite MF1. reflexivity.
+      - (* Trdr: two [with_vmmaps] steps, neither of which touches [m_proc] *)
+        rewrite MGR, MFR. reflexivity.
+      - eapply vdso_included_same; [reflexivity|reflexivity|reflexivity|reflexivity|exact HVDSO].
       - intros x Hx NE. destruct (M6W x Hx NE) as [W|[W|W]]; [left; exact W | right; left; exact W | right; right; left; exact W].
       - (* [comment removed for export] *) pose proof (rc_errno st M (rp_statics st M HREP)) as C.
         eapply cell_agree; [unfold A_ERRNO, TPV; lia | unfold A_ERRNO, TPV; cbn; lia | | exact C]. intros y Hr Hy. cbn in Hy.
@@ -1399,7 +1434,7 @@ Section AMC. (* [comment removed for export] *)
     Lemma arm_C4d : forall b r1, getr r1 2 = Z_to_bv 64 (sp - 64) -> getr r1 19 = Z_to_bv 64 MLOCK -> getr r1 8 = Z_to_bv 64 4096 ->
       getr r1 18 = Z_to_bv 64 A_CANARY -> keeps_but clobI regs r1 ->
       kfx b (mkCfg (mkst r1 (0x66d1c%bv : word) M1 rom) mdl).
-    Proof using HBD gd Hac Hac0 Hfl Hfail Hok DEF H4 Hsp Hra H2 HBUD HLEN HCNT Hmat Hlz Hh XOK HLG HREP HWF HL bi X L RN.
+    Proof using HBD gd Hac Hac0 Hfl Hfail Hok DEF H4 Hsp Hra H2 HBUD HLEN HCNT HVDSO Hmat Hlz Hh XOK HLG HREP HWF HL bi X L RN.
       intros b r1 G2 G19 G8 G18 K1. pose proof Hsp' as [S1 S2]. ceil.
       pose proof (HCNT Hfl Hac0) as Hcnt. pose proof (UbMhAMetaR.c4_sh_rng st L HWF Hcnt Hac 0) as [SH1 SH2].
       pose proof (UbMhAMetaS.M1_REP st L X M regs sp HWF HREP Hsp) as REP1. pose proof (rp_ctx st M1 REP1) as RC1.
@@ -1444,7 +1479,7 @@ Section AMC. (* [comment removed for export] *)
       getr r1 2 = Z_to_bv 64 (sp - 64) -> getr r1 19 = Z_to_bv 64 MLOCK -> getr r1 8 = Z_to_bv 64 4096 ->
       getr r1 18 = Z_to_bv 64 A_CANARY -> keeps_but clobI regs r1 ->
       kfx bo (mkCfg (mkst r1 (0x66d1c%bv : word) M1 rom) mdl).
-    Proof using HBL gk bk b0 Hac Hac0 Hfl Hfail Hok DEF H4 Hsp Hra H2 HBUD HLEN HCNT Hmat Hlz Hh XOK HLG HREP HWF HL X L RN.
+    Proof using HBL gk bk b0 Hac Hac0 Hfl Hfail Hok DEF H4 Hsp Hra H2 HBUD HLEN HCNT HVDSO Hmat Hlz Hh XOK HLG HREP HWF HL X L RN.
       intros bo r1 Hside G2 G19 G8 G18 K1. pose proof Hsp' as [S1 S2]. ceil.
       pose proof (HCNT Hfl Hac0) as Hcnt. pose proof (UbMhAMetaR.c4_sh_rng st L HWF Hcnt Hac 0) as [SH1 SH2].
       pose proof (UbMhAMetaS.M1_REP st L X M regs sp HWF HREP Hsp) as REP1. pose proof (rp_ctx st M1 REP1) as RC1.
@@ -1504,6 +1539,8 @@ Section AMC. (* [comment removed for export] *)
         set (mdl1 := with_vmmaps (brk_grow_vm (m_vmmaps mdl) 4096) mdl).
         pose proof (with_vmmaps_facts (brk_grow_vm (m_vmmaps mdl) 4096) mdl) as MF. change (with_vmmaps (brk_grow_vm (m_vmmaps mdl) 4096) mdl) with mdl1 in MF.
         destruct MF as (MF1 & MF2 & MF3 & MF4 & MF5 & MF6).
+        pose proof (with_vmmaps_rdr (brk_grow_vm (m_vmmaps mdl) 4096) mdl) as MFR.
+        change (with_vmmaps (brk_grow_vm (m_vmmaps mdl) 4096) mdl) with mdl1 in MFR.
         eapply (kfx_msteps RSEGS F HL); [rewrite MF2; exact Hh | rewrite MF3; exact Hlz | exact RUN3 |].
         set (M3 := wbytes (wbytes M2 (Z_to_bv 64 ctx_brk) (word_to_le_bytes 8 (Z_to_bv 64 (bk + 4096)))) (Z_to_bv 64 ctx_avail_meta_area_count) (word_to_le_bytes 8 (Z_to_bv 64 1))).
         assert (HRF : region_free (vm_reserved (m_vmmaps mdl) ++ vm_maps (m_vmmaps mdl)) (Z_to_bv 64 bk) (Z_to_bv 64 4096) = true).
@@ -1529,6 +1566,8 @@ Section AMC. (* [comment removed for export] *)
         + eapply UbMhAMetaS.keeps_join; [exact K1|]. eapply UbMhAMetaS.keeps_join; [exact KB|]. eapply UbMhAMetaS.keeps_join; [apply keeps_but_upd; [apply keeps_but_refl | left; reflexivity] | exact KT0].
         + reflexivity.
         + rewrite MF2; exact Hh. + rewrite MF3; exact Hlz. + rewrite MF4; exact Hmat. + exact MF5. + exact MF6. + rewrite MF1; reflexivity.
+        + (* Trdr: one [brk_grow_vm] step through [with_vmmaps] *) exact MFR.
+        + eapply vdso_included_same; [reflexivity|reflexivity|reflexivity|reflexivity|exact HVDSO].
         + intros x Hx NE. destruct (M3W x Hx NE) as [W|[W|W]]; [left; exact W | right; left; exact W | right; right; left; exact W].
         + (* [comment removed for export] *) pose proof (rc_errno st M (rp_statics st M HREP)) as C. pose proof (UbMhAMetaR.c3_b_facts st L X _ HWF HLG b0 bk gk HBL) as BF.
           eapply cell_agree; [unfold A_ERRNO, TPV; lia | unfold A_ERRNO, TPV; cbn; lia | | exact C]. intros y Hr Hy. cbn in Hy.
@@ -1569,7 +1608,7 @@ Section AMC. (* [comment removed for export] *)
         + pose proof (UbMhAMetaR.c3_t_wf_img st L X _ HWF HLG b0 bk gk HBL) as WI.
           unfold UbMhAMetaR.c3_st, UbMhAMetaR.c3_p in WI. replace (1 - 1) with 0 by lia. exact WI.
         + rewrite MF1. unfold brk_grow_vm. rewrite ?EB. rewrite (u_Z2bv bk) by lia.
-          pose proof (UbMhAMetaR.c3_t_ledger st L X _ HWF HLG b0 bk gk HBL Hce) as LG.
+          pose proof (UbMhAMetaR.c3_t_ledger st L X _ HWF HLG b0 bk gk HBL Hce HRF) as LG.
           unfold UbMhAMetaR.c3_st, UbMhAMetaR.c3_vm, UbMhAMetaR.c3_p in LG. rewrite ?EB in LG. replace (1 - 1) with 0 by lia. exact LG.
         + rewrite (UbMhAMetaR.c3_RSUM st bk). lia.
         + rewrite (UbMhAMetaR.c3_len st bk). lia.

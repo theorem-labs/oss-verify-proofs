@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (run_init_config and the premises of side_ok_of_srealizes and side_ok_of_srealizes_eq over the run's segments with the vDSO pair (vsegs); side_ok_of_tree_ok gains a segs_top segs <= 0x10000000 premise and passes the launch's channel-reader fact to run_of_tree; imports PropExec, MState, Frame, Exec, ITree, Nodes, RegsEquiv, FP and InitMem). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import PropExec MState Frame Exec Cfg ITree Nodes RegsEquiv FP.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib Require Import TopLevel.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require SpinAlg ShapeAlg.
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import PropExec MState Frame Exec ITree Nodes RegsEquiv FP InitMem.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -28,10 +30,10 @@ Definition side_ok (segs : list Segment) (pc : N) (ph : PhdrInfo) (lim : Z) (T :
 (* [comment removed for export] *)
 Lemma run_init_config : forall segs pc ph lim en inp,
   run_scfg ACFG (mkImage segs pc ph) lim en inp =
-  {| bh_traces := obs_trace_cfg segs ACFG (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp);
-     bh_errors := reaches_error_cfg segs ACFG (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp);
-     bh_all_errors := all_traces_error_cfg segs ACFG (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp);
-     bh_unmodeled := reaches_unmodeled_cfg segs ACFG (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) |}.
+  {| bh_traces := obs_trace_cfg (vsegs segs en inp) ACFG (init_config (vsegs segs en inp) pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp);
+     bh_errors := reaches_error_cfg (vsegs segs en inp) ACFG (init_config (vsegs segs en inp) pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp);
+     bh_all_errors := all_traces_error_cfg (vsegs segs en inp) ACFG (init_config (vsegs segs en inp) pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp);
+     bh_unmodeled := reaches_unmodeled_cfg (vsegs segs en inp) ACFG (init_config (vsegs segs en inp) pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) |}.
 Proof. intros segs pc ph lim [sp brk mb rnd] inp. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -48,11 +50,12 @@ Proof. intros R segs lim t inp en tr H. exact (tree_traces_no_kill _ _ _ H). Qed
 
 Lemma side_ok_of_tree_ok : forall {R : Type} segs pc ph lim (t : prog_tree R) (Q : R -> machine_state -> Prop),
   tree_ok segs pc ph lim t Q ->
+  (segs_top segs <= 0x10000000)%Z ->
   side_ok segs pc ph lim (fun inp en => tree_traces (t inp en) (mo0 segs lim en inp)).
 Proof.
-  intros R segs pc ph lim t Q HT en inp Hv Hi.
+  intros R segs pc ph lim t Q HT Htop en inp Hv Hi.
   destruct (HT en inp Hv Hi) as (Himpl & Hleaves & Hsafe).
-  destruct (run_of_tree segs pc ph lim (t inp en) Q en inp Hv (valid_input_either_va_size _ Hi) Himpl Hleaves Hsafe) as (Htr & Herr & _).
+  destruct (run_of_tree segs pc ph lim (t inp en) Q en inp Hv (valid_input_either_va_size _ Hi) (valid_input_either_reader _ Hi) Htop Himpl Hleaves Hsafe) as (Htr & Herr & _).
   split; [exact Htr| exact Herr].
 Qed.
 
@@ -62,7 +65,7 @@ Qed.
 
 Lemma side_ok_of_srealizes : forall segs pc ph lim (T : tfam),
   (forall en inp, valid_entry (mkImage segs pc ph) en inp -> valid_input_either inp ->
-      SpinAlg.srealizes segs (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) (T inp en)) ->
+      SpinAlg.srealizes (vsegs segs en inp) (init_config (vsegs segs en inp) pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) (T inp en)) ->
   side_ok segs pc ph lim T.
 Proof.
   intros segs pc ph lim T H en inp Hv Hi. specialize (H en inp Hv Hi).
@@ -74,7 +77,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma side_ok_of_srealizes_eq : forall segs pc ph lim (T T' : tfam),
   (forall en inp, valid_entry (mkImage segs pc ph) en inp -> valid_input_either inp ->
-      SpinAlg.srealizes segs (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) (T' inp en)
+      SpinAlg.srealizes (vsegs segs en inp) (init_config (vsegs segs en inp) pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) (T' inp en)
       /\ ShapeAlg.t_eq (T' inp en) (T inp en)) ->
   side_ok segs pc ph lim T.
 Proof.

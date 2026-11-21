@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO reservation in the reserved ledger: res_low, res_hull and res_in_hull proved from co_resx and co_mres, and the ledger length bound raised to 6 + n_resx; this run's hand-off state per CONFIG_RSEQ value, HS_1 at rseq_z rb for the section's flag rb, with the knowledge lemmas applied at the flag). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -55,8 +56,10 @@ Section MainA.
   Lemma HULL_ok : APS.hull_ok AT_A.
   Proof. unfold APS.hull_ok. cbn. unfold KHI. repeat split; reflexivity || lia. Qed.
 
+  (* The run's CONFIG_RSEQ flag: the hand-off state is per flag value. *)
+  Variable rb : bool.
   Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-  Hypothesis CS : APS.cs_ok ASEGS AT_A LIMIT_S SINV argH ISP_S FS0 E HS_1 R FULL model.
+  Hypothesis CS : APS.cs_ok ASEGS AT_A LIMIT_S SINV argH ISP_S FS0 E (HS_1 (rseq_z rb)) R FULL model.
   (* [comment removed for export] *)
   Hypothesis HCEIL : page_floor (alloc_top (m_vmmaps model)) = GlzConst.RunCeil.CEIL.
   #[local] Notation h := (m_vmmaps model).
@@ -68,7 +71,7 @@ Section MainA.
   Definition w6 : word := Z_to_bv 64 (4096 * uv 227).
   Definition n6 : word := Z_to_bv 64 0x2000011000.
   (* [comment removed for export] *)
-  Definition aa0 : list (Z * Z) := (APS.pagedown (AsVocab.SB + GlzConst.RunCeil.CEIL / 8), AsVocab.SB + 2 ^ 44) :: APS.allowA AT_A E HS_1.
+  Definition aa0 : list (Z * Z) := (APS.pagedown (AsVocab.SB + GlzConst.RunCeil.CEIL / 8), AsVocab.SB + 2 ^ 44) :: APS.allowA AT_A E (HS_1 (rseq_z rb)).
   Definition hv : bvars :=
     BVARS (uv 227) (uv 229) (uv 246) (uv 247) (uv 248) (uv 330) (uv 397) (uv 517) (uv 518)
           (u (edenot E e_ttop)) 16198938965714074894 3 aa0
@@ -77,17 +80,17 @@ Section MainA.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  Lemma rng : forall i lo hi, In (KRange (EVar i) lo hi) (kn HS_1) -> lo <= uv i <= hi.
+  Lemma rng : forall i lo hi, In (KRange (EVar i) lo hi) (kn (HS_1 (rseq_z rb))) -> lo <= uv i <= hi.
   Proof. intros i lo hi HK. exact (AsAinvMainLib.krange_bounds CS _ _ _ HK). Qed.
-  Lemma R227 : 4295491576 <= uv 227 <= 34326181871. Proof. exact (rng _ _ _ K1.rng_v227). Qed.
-  Lemma R229 : 1 <= uv 229 <= 16. Proof. exact (rng _ _ _ K1.rng_v229). Qed.
-  Lemma R246 : 1629 <= uv 246 <= 34359734272. Proof. exact (rng _ _ _ K1.rng_v246). Qed.
-  Lemma R247 : 1 <= uv 247 <= 34359736319. Proof. exact (rng _ _ _ K1.rng_v247). Qed.
-  Lemma R248 : 1629 <= uv 248 <= 34359736304. Proof. exact (rng _ _ _ K1.rng_v248). Qed.
-  Lemma R330 : 1 <= uv 330 <= 34359736319. Proof. exact (rng _ _ _ K1.rng_v330). Qed.
-  Lemma R397 : 1629 <= uv 397 <= 34359733495. Proof. exact (rng _ _ _ K1.rng_v397). Qed.
-  Lemma R517 : 1629 <= uv 517 <= 34359736064. Proof. exact (rng _ _ _ K1.rng_v517). Qed.
-  Lemma R518 : 1629 <= uv 518 <= 34359734272. Proof. exact (rng _ _ _ K1.rng_v518). Qed.
+  Lemma R227 : 4295491576 <= uv 227 <= 34326181871. Proof. exact (rng _ _ _ (K1.rng_v227 rb)). Qed.
+  Lemma R229 : 1 <= uv 229 <= 16. Proof. exact (rng _ _ _ (K1.rng_v229 rb)). Qed.
+  Lemma R246 : 1629 <= uv 246 <= 34359734272. Proof. exact (rng _ _ _ (K1.rng_v246 rb)). Qed.
+  Lemma R247 : 1 <= uv 247 <= 34359736319. Proof. exact (rng _ _ _ (K1.rng_v247 rb)). Qed.
+  Lemma R248 : 1629 <= uv 248 <= 34359736304. Proof. exact (rng _ _ _ (K1.rng_v248 rb)). Qed.
+  Lemma R330 : 1 <= uv 330 <= 34359736319. Proof. exact (rng _ _ _ (K1.rng_v330 rb)). Qed.
+  Lemma R397 : 1629 <= uv 397 <= 34359733495. Proof. exact (rng _ _ _ (K1.rng_v397 rb)). Qed.
+  Lemma R517 : 1629 <= uv 517 <= 34359736064. Proof. exact (rng _ _ _ (K1.rng_v517 rb)). Qed.
+  Lemma R518 : 1629 <= uv 518 <= 34359734272. Proof. exact (rng _ _ _ (K1.rng_v518 rb)). Qed.
 
   (* [comment removed for export] *)
   Lemma u_page : forall i, uv i <= 2 ^ 51 -> u (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar i))) = 4096 * uv i.
@@ -106,15 +109,15 @@ Section MainA.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition grant_am (i : nat) (n : Z) (k : mkind) : amap := AM (EMd Instr.M_MUL (ELit 4096) (EVar i)) (ELit n) k.
-  Lemma In_maps : forall m, In m (a_maps HS_1) -> is_fog m = false -> In (APS.amap_den E m) (vm_maps h).
-  Proof. intros m Hm Hf. exact (APS.maps_match_In E (a_maps HS_1) (vm_maps h) m (APS.co_maps _ _ _ _ _ _ _ _ _ _ _ _ CS) Hm Hf). Qed.
+  Lemma In_maps : forall m, In m (a_maps (HS_1 (rseq_z rb))) -> is_fog m = false -> In (APS.amap_den E m) (vm_maps h).
+  Proof. intros m Hm Hf. exact (APS.maps_match_In E (a_maps (HS_1 (rseq_z rb))) (vm_maps h) m (APS.co_maps _ _ _ _ _ _ _ _ _ _ _ _ CS) Hm Hf). Qed.
   Lemma bounds_of : forall (iv : word * word), In iv (vm_maps h) ->
     0 < u (snd iv) /\ u (fst iv) mod 4096 = 0 /\ u (snd iv) mod 4096 = 0 /\ 0 < u (fst iv) /\ u (fst iv) + u (snd iv) <= alloc_top h
     /\ (u (fst iv) + u (snd iv) <= img_lo AT_A \/ img_hi AT_A <= u (fst iv)).
   Proof. intros iv Hin. pose proof (APS.co_bounds _ _ _ _ _ _ _ _ _ _ _ _ CS) as B. rewrite Forall_forall in B. exact (B iv Hin). Qed.
 
   (* [comment removed for export] *)
-  Lemma grant_facts : forall i n k, In (grant_am i n k) (a_maps HS_1) -> is_tok_kind k = false -> uv i <= 2 ^ 51 -> 0 <= n < 2 ^ 64 ->
+  Lemma grant_facts : forall i n k, In (grant_am i n k) (a_maps (HS_1 (rseq_z rb))) -> is_tok_kind k = false -> uv i <= 2 ^ 51 -> 0 <= n < 2 ^ 64 ->
     In (Z_to_bv 64 (4096 * uv i), Z_to_bv 64 n) (vm_maps h)
     /\ 0 < n /\ 0 < 4096 * uv i /\ 4096 * uv i + n <= GlzConst.RunCeil.CEIL /\ (4096 * uv i + n <= 0x10000 \/ 0x65d000 <= 4096 * uv i).
   Proof.
@@ -136,18 +139,18 @@ Section MainA.
 
   Definition gfacts (g n : Z) : Prop :=
     In (Z_to_bv 64 g, Z_to_bv 64 n) (vm_maps h) /\ 0 < n /\ 0 < g /\ g + n <= GlzConst.RunCeil.CEIL /\ (g + n <= 0x10000 \/ 0x65d000 <= g).
-  Lemma G227 : gfacts (4096 * uv 227) 0x2000011000. Proof. apply (grant_facts 227 _ KMIXED); [vm_compute; tauto | reflexivity | pose proof R227; lia | lia]. Qed.
-  Lemma G246 : gfacts (4096 * uv 246) (2 ^ 23).     Proof. apply (grant_facts 246 _ KNONELAZY); [vm_compute; tauto | reflexivity | pose proof R246; lia | lia]. Qed.
-  Lemma G247 : gfacts (4096 * uv 247) PG.           Proof. apply (grant_facts 247 _ KRW); [vm_compute; tauto | reflexivity | pose proof R247; lia | unfold PG; lia]. Qed.
-  Lemma G248 : gfacts (4096 * uv 248) 0x10000.      Proof. apply (grant_facts 248 _ KRW); [vm_compute; tauto | reflexivity | pose proof R248; lia | lia]. Qed.
-  Lemma G330 : gfacts (4096 * uv 330) PG.           Proof. apply (grant_facts 330 _ KRW); [vm_compute; tauto | reflexivity | pose proof R330; lia | unfold PG; lia]. Qed.
-  Lemma G397 : gfacts (4096 * uv 397) FAKE_SIZE.    Proof. apply (grant_facts 397 _ KRW); [vm_compute; tauto | reflexivity | pose proof R397; lia | unfold FAKE_SIZE; lia]. Qed.
-  Lemma G517 : gfacts (4096 * uv 517) (2 ^ 20).     Proof. apply (grant_facts 517 _ KRW); [vm_compute; tauto | reflexivity | pose proof R517; lia | lia]. Qed.
-  Lemma G518 : gfacts (4096 * uv 518) (2 ^ 23).     Proof. apply (grant_facts 518 _ KRWLAZY); [vm_compute; tauto | reflexivity | pose proof R518; lia | lia]. Qed.
+  Lemma G227 : gfacts (4096 * uv 227) 0x2000011000. Proof. apply (grant_facts 227 _ KMIXED); [destruct rb; vm_compute; tauto | reflexivity | pose proof R227; lia | lia]. Qed.
+  Lemma G246 : gfacts (4096 * uv 246) (2 ^ 23).     Proof. apply (grant_facts 246 _ KNONELAZY); [destruct rb; vm_compute; tauto | reflexivity | pose proof R246; lia | lia]. Qed.
+  Lemma G247 : gfacts (4096 * uv 247) PG.           Proof. apply (grant_facts 247 _ KRW); [destruct rb; vm_compute; tauto | reflexivity | pose proof R247; lia | unfold PG; lia]. Qed.
+  Lemma G248 : gfacts (4096 * uv 248) 0x10000.      Proof. apply (grant_facts 248 _ KRW); [destruct rb; vm_compute; tauto | reflexivity | pose proof R248; lia | lia]. Qed.
+  Lemma G330 : gfacts (4096 * uv 330) PG.           Proof. apply (grant_facts 330 _ KRW); [destruct rb; vm_compute; tauto | reflexivity | pose proof R330; lia | unfold PG; lia]. Qed.
+  Lemma G397 : gfacts (4096 * uv 397) FAKE_SIZE.    Proof. apply (grant_facts 397 _ KRW); [destruct rb; vm_compute; tauto | reflexivity | pose proof R397; lia | unfold FAKE_SIZE; lia]. Qed.
+  Lemma G517 : gfacts (4096 * uv 517) (2 ^ 20).     Proof. apply (grant_facts 517 _ KRW); [destruct rb; vm_compute; tauto | reflexivity | pose proof R517; lia | lia]. Qed.
+  Lemma G518 : gfacts (4096 * uv 518) (2 ^ 23).     Proof. apply (grant_facts 518 _ KRWLAZY); [destruct rb; vm_compute; tauto | reflexivity | pose proof R518; lia | lia]. Qed.
 
   (* [comment removed for export] *)
   Lemma disj_pages : forall i n j m,
-    In (KDisj (SA (EMd Instr.M_MUL (ELit 4096) (EVar i)) 0) (ELit n) (SA (EMd Instr.M_MUL (ELit 4096) (EVar j)) 0) (ELit m)) (kn HS_1) ->
+    In (KDisj (SA (EMd Instr.M_MUL (ELit 4096) (EVar i)) 0) (ELit n) (SA (EMd Instr.M_MUL (ELit 4096) (EVar j)) 0) (ELit m)) (kn (HS_1 (rseq_z rb))) ->
     uv i <= 2 ^ 51 -> uv j <= 2 ^ 51 -> 0 <= n < 2 ^ 64 -> 0 <= m < 2 ^ 64 ->
     apart (4096 * uv i) n (4096 * uv j) m.
   Proof.
@@ -155,7 +158,7 @@ Section MainA.
     rewrite !estart_page, !elenZ_lit in D by assumption. unfold apart. lia.
   Qed.
   Lemma disj_page_lit : forall i n b m,
-    In (KDisj (SA (EMd Instr.M_MUL (ELit 4096) (EVar i)) 0) (ELit n) (SA (ELit 0) b) (ELit m)) (kn HS_1) ->
+    In (KDisj (SA (EMd Instr.M_MUL (ELit 4096) (EVar i)) 0) (ELit n) (SA (ELit 0) b) (ELit m)) (kn (HS_1 (rseq_z rb))) ->
     uv i <= 2 ^ 51 -> 0 <= n < 2 ^ 64 -> 0 <= m < 2 ^ 64 ->
     apart (4096 * uv i) n b m.
   Proof.
@@ -187,7 +190,7 @@ Section MainA.
     assert (U0 : forall i, 0 <= uv i) by (intros i; unfold uv; pose proof (u64_range (ev E i)); lia).
     revert Hm Hh Hr. generalize m. intros m0 Hm.
     (* [comment removed for export] *)
-    let L := eval vm_compute in (a_maps HS_1) in change (a_maps HS_1) with L in Hm.
+    rewrite (HS_1_maps_rz rb) in Hm. let L := eval vm_compute in (a_maps (HS_1 0)) in change (a_maps (HS_1 0)) with L in Hm.
     cbn [In] in Hm.
     repeat match type of Hm with _ \/ _ => destruct Hm as [Hm | Hm] | False => destruct Hm end;
       subst m0; cbn [am_kind lazy_host]; intros Hh Hr; try discriminate Hh;
@@ -210,7 +213,7 @@ Section MainA.
   Proof.
     intros a Ha Hl. destruct Hl as [_ Hl].   (* [comment removed for export] *)
     pose proof (APS.co_etok _ _ _ _ _ _ _ _ _ _ _ _ CS) as ET. rewrite Forall_forall in ET.
-    destruct (ET am_RI ltac:(vm_compute; tauto) eq_refl) as (_ & _ & X).
+    destruct (ET am_RI ltac:(destruct rb; vm_compute; tauto) eq_refl) as (_ & _ & X).
     destruct den_RI as [D1 D2]. pose proof R227. pose proof R229. unfold SPB, KSPACE, PG in *. cbn [hv b_g6 b_w6] in *.
     destruct (X (Z_to_bv 64 a) ltac:(rewrite u64_lit by lia; lia)) as [_ NL]. rewrite NL in Hl. discriminate Hl.
   Qed.
@@ -226,9 +229,9 @@ Section MainA.
   Proof.
     intros a Hl Ha Hb. pose proof ceil_rng. pose proof (lazy_hosts (Z_to_bv 64 a) (proj2 Hl)) as X. cbn zeta in X. rewrite u64_lit in X by lia.
     pose proof (proj2 (proj2 (proj2 (proj2 G227)))) as O6. pose proof (proj2 (proj2 (proj2 (proj2 G246)))) as O8. pose proof (proj2 (proj2 (proj2 (proj2 G518)))) as O22.
-    pose proof (offband _ _ (disj_page_lit 227 _ _ _ K1.disj_g6_band ltac:(pose proof R227; lia) ltac:(lia) ltac:(lia))) as B6.
-    pose proof (offband _ _ (disj_page_lit 246 _ _ _ K1.disj_g8_band ltac:(pose proof R246; lia) ltac:(lia) ltac:(lia))) as B8.
-    pose proof (offband _ _ (disj_page_lit 518 _ _ _ K1.disj_g22_band ltac:(pose proof R518; lia) ltac:(lia) ltac:(lia))) as B22.
+    pose proof (offband _ _ (disj_page_lit 227 _ _ _ (K1.disj_g6_band rb) ltac:(pose proof R227; lia) ltac:(lia) ltac:(lia))) as B6.
+    pose proof (offband _ _ (disj_page_lit 246 _ _ _ (K1.disj_g8_band rb) ltac:(pose proof R246; lia) ltac:(lia) ltac:(lia))) as B8.
+    pose proof (offband _ _ (disj_page_lit 518 _ _ _ (K1.disj_g22_band rb) ltac:(pose proof R518; lia) ltac:(lia) ltac:(lia))) as B22.
     unfold in_band, shmaps, AS_LO, AS_HEAPLO, AS_GAPLO, AS_GAPHI in *. lia.
   Qed.
 
@@ -263,7 +266,7 @@ Section MainA.
   Proof. intros z. unfold APS.pagedown. Z.div_mod_to_equations. lia. Qed.
   Lemma pageup_ge : forall z, z <= APS.pageup z /\ APS.pageup z mod 4096 = 0 /\ APS.pageup z < z + 4096.
   Proof. intros z. unfold APS.pageup. Z.div_mod_to_equations. lia. Qed.
-  Lemma allow_vis : forall p, In p (a_vis HS_1) ->
+  Lemma allow_vis : forall p, In p (a_vis (HS_1 (rseq_z rb))) ->
     In (APS.pagedown (APS.uE E (fst p)), APS.pageup (APS.uE E (fst p) + APS.uE E (snd p))) aa0
     /\ In (APS.pagedown (APS.sh_lo AT_A E p), APS.pageup (APS.sh_hi AT_A E p)) aa0.
   Proof.
@@ -284,13 +287,13 @@ Section MainA.
       apply (range_allowed_iv aa0 (APS.pagedown (AsVocab.SB + GlzConst.RunCeil.CEIL / 8)) (AsVocab.SB + 2 ^ 44)); [left; reflexivity | exact P2 | reflexivity | unfold sh_lo; exact P1 | lia | |];
         unfold AsVocab.SB in *; clear -CR P1 P3; Z.div_mod_to_equations; lia.
     - (* [comment removed for export] *)
-      destruct (allow_vis (ELit 65536, ELit 6606848) ltac:(vm_compute; tauto)) as [_ HI].
+      destruct (allow_vis (ELit 65536, ELit 6606848) ltac:(destruct rb; vm_compute; tauto)) as [_ HI].
       unfold APS.sh_lo, APS.sh_hi, APS.uE in HI. cbn [fst snd edenot shadow_off AT_A] in HI. rewrite !u64_lit in HI by lia.
       pose proof (pagedown_le (2147450880 + 65536 / 8)) as (P1 & P2 & P3). pose proof (pageup_ge (2147450880 + (65536 + 6606848) / 8)) as (Q1 & Q2 & Q3).
       eapply range_allowed_iv; [exact HI | exact P2 | exact Q2 | unfold sh_lo, AsVocab.SB; exact P1 | | |];
         unfold APS.pageup, APS.pagedown, AsVocab.sh_hi, AsVocab.SB; Z.div_mod_to_equations; lia.
     - (* [comment removed for export] *)
-      destruct (allow_vis (EMd Instr.M_MUL (ELit 4096) (EVar 397), ELit 11571200) ltac:(vm_compute; tauto)) as [_ HI].
+      destruct (allow_vis (EMd Instr.M_MUL (ELit 4096) (EVar 397), ELit 11571200) ltac:(destruct rb; vm_compute; tauto)) as [_ HI].
       unfold APS.sh_lo, APS.sh_hi, APS.uE in HI. cbn [fst snd shadow_off AT_A] in HI. rewrite (u_page 397) in HI by lia. cbn [edenot] in HI. rewrite !u64_lit in HI by lia.
       pose proof (pagedown_le (2147450880 + 4096 * uv 397 / 8)) as (P1 & P2 & P3). pose proof (pageup_ge (2147450880 + (4096 * uv 397 + 11571200) / 8)) as (Q1 & Q2 & Q3).
       eapply range_allowed_iv; [exact HI | exact P2 | exact Q2 | unfold sh_lo, AsVocab.SB; exact P1 | | |];
@@ -298,7 +301,7 @@ Section MainA.
   Qed.
   Lemma AST0 : range_allowed aa0 (4096 * uv 518) (4096 * uv 518 + 2 ^ 23).
   Proof.
-    pose proof R518 as RS. destruct (allow_vis (EMd Instr.M_MUL (ELit 4096) (EVar 518), ELit 8388608) ltac:(vm_compute; tauto)) as [HI _].
+    pose proof R518 as RS. destruct (allow_vis (EMd Instr.M_MUL (ELit 4096) (EVar 518), ELit 8388608) ltac:(destruct rb; vm_compute; tauto)) as [HI _].
     unfold APS.uE in HI. cbn [fst snd] in HI. rewrite (u_page 518) in HI by lia. cbn [edenot] in HI. rewrite !u64_lit in HI by lia.
     pose proof (pagedown_le (4096 * uv 518)) as (P1 & P2 & P3). pose proof (pageup_ge (4096 * uv 518 + 8388608)) as (Q1 & Q2 & Q3).
     eapply range_allowed_iv; [exact HI | exact P2 | exact Q2 | exact P1 | exact Q1 | clear -P1 P3 RS; lia | clear -Q3 RS; lia].
@@ -308,7 +311,7 @@ Section MainA.
   Lemma ALIGN : (4096 * (uv 227 + uv 229)) mod 2 ^ 16 = 0.
   Proof.
     pose proof R227 as X227. pose proof R229 as X229.
-    pose proof (AsAinvMainLib.krange_bounds CS _ _ _ K1.align_w6) as KR. cbn [edenot] in KR.
+    pose proof (AsAinvMainLib.krange_bounds CS _ _ _ (K1.align_w6 rb)) as KR. cbn [edenot] in KR.
     change (Z_to_bv 64 65535) with (Z_to_bv 64 (2 ^ 16 - 1)) in KR. rewrite (and_lowmask_val _ 16) in KR by lia.
     rewrite !u_add64, !u_mul64, !u_lit64a in KR. change (u (ev E 229)) with (uv 229) in KR. change (u (ev E 227)) with (uv 227) in KR.
     replace ((-4096) mod 2 ^ 64) with (2 ^ 64 - 4096) in KR by reflexivity.
@@ -341,33 +344,33 @@ Section MainA.
     pose proof R397 as X397. pose proof R517 as X517. pose proof R518 as X518. pose proof R330 as X330.
     unfold vars_ok. cbn [b_g6 b_w6 b_g8 b_g9 b_g10 b_g12 b_g16 b_g21 b_g22 b_hash b_sz b_aa b_maps0 b_lazy hv].
     Ltac dj H i j := first [ apply (disj_pages i _ j _ H); unfold FAKE_SIZE, PG; lia | apply apart_sym; apply (disj_pages j _ i _ H); unfold FAKE_SIZE, PG; lia ].
-    split; [exact (rng_ok_of _ _ G227 (disj_page_lit 227 _ _ _ K1.disj_g6_band ltac:(lia) ltac:(lia) ltac:(lia)))|].
-    split; [exact (rng_ok_of _ _ G246 (disj_page_lit 246 _ _ _ K1.disj_g8_band ltac:(lia) ltac:(lia) ltac:(lia)))|].
-    split; [exact (rng_ok_of _ _ G397 (disj_page_lit 397 _ _ _ K1.disj_g16_band ltac:(lia) ltac:(unfold FAKE_SIZE; lia) ltac:(lia)))|].
-    split; [exact (rng_ok_of _ _ G247 (disj_page_lit 247 _ _ _ K1.disj_g9_band ltac:(lia) ltac:(unfold PG; lia) ltac:(lia)))|].
-    split; [exact (rng_ok_of _ _ G517 (disj_page_lit 517 _ _ _ K1.disj_g21_band ltac:(lia) ltac:(lia) ltac:(lia)))|].
-    split; [exact (rng_ok_of _ _ G518 (disj_page_lit 518 _ _ _ K1.disj_g22_band ltac:(lia) ltac:(lia) ltac:(lia)))|].
-    split; [exact (rng_ok_of _ _ G248 (disj_page_lit 248 _ _ _ K1.disj_g10_band ltac:(lia) ltac:(lia) ltac:(lia)))|].
+    split; [exact (rng_ok_of _ _ G227 (disj_page_lit 227 _ _ _ (K1.disj_g6_band rb) ltac:(lia) ltac:(lia) ltac:(lia)))|].
+    split; [exact (rng_ok_of _ _ G246 (disj_page_lit 246 _ _ _ (K1.disj_g8_band rb) ltac:(lia) ltac:(lia) ltac:(lia)))|].
+    split; [exact (rng_ok_of _ _ G397 (disj_page_lit 397 _ _ _ (K1.disj_g16_band rb) ltac:(lia) ltac:(unfold FAKE_SIZE; lia) ltac:(lia)))|].
+    split; [exact (rng_ok_of _ _ G247 (disj_page_lit 247 _ _ _ (K1.disj_g9_band rb) ltac:(lia) ltac:(unfold PG; lia) ltac:(lia)))|].
+    split; [exact (rng_ok_of _ _ G517 (disj_page_lit 517 _ _ _ (K1.disj_g21_band rb) ltac:(lia) ltac:(lia) ltac:(lia)))|].
+    split; [exact (rng_ok_of _ _ G518 (disj_page_lit 518 _ _ _ (K1.disj_g22_band rb) ltac:(lia) ltac:(lia) ltac:(lia)))|].
+    split; [exact (rng_ok_of _ _ G248 (disj_page_lit 248 _ _ _ (K1.disj_g10_band rb) ltac:(lia) ltac:(lia) ltac:(lia)))|].
     (* [comment removed for export] *)
-    split; [dj K1.disj_g21_g22 517%nat 518%nat|]. split; [dj K1.disj_g16_g22 397%nat 518%nat|]. split; [dj K1.disj_g10_g22 248%nat 518%nat|].
-    split; [dj K1.disj_g9_g22 247%nat 518%nat|]. split; [dj K1.disj_g8_g22 246%nat 518%nat|]. split; [dj K1.disj_g6_g22 227%nat 518%nat|].
-    split; [dj K1.disj_g16_g21 397%nat 517%nat|]. split; [dj K1.disj_g10_g21 248%nat 517%nat|]. split; [dj K1.disj_g9_g21 247%nat 517%nat|].
-    split; [dj K1.disj_g8_g21 246%nat 517%nat|]. split; [dj K1.disj_g6_g21 227%nat 517%nat|].
-    split; [dj K1.disj_g10_g16 248%nat 397%nat|]. split; [dj K1.disj_g9_g16 247%nat 397%nat|]. split; [dj K1.disj_g8_g16 246%nat 397%nat|].
-    split; [dj K1.disj_g6_g16 227%nat 397%nat|].
-    split; [dj K1.disj_g9_g10 247%nat 248%nat|]. split; [dj K1.disj_g8_g10 246%nat 248%nat|]. split; [dj K1.disj_g6_g10 227%nat 248%nat|].
-    split; [dj K1.disj_g8_g9 246%nat 247%nat|]. split; [dj K1.disj_g6_g9 227%nat 247%nat|].
-    split; [dj K1.disj_g6_g8 227%nat 246%nat|].
+    split; [dj (K1.disj_g21_g22 rb) 517%nat 518%nat|]. split; [dj (K1.disj_g16_g22 rb) 397%nat 518%nat|]. split; [dj (K1.disj_g10_g22 rb) 248%nat 518%nat|].
+    split; [dj (K1.disj_g9_g22 rb) 247%nat 518%nat|]. split; [dj (K1.disj_g8_g22 rb) 246%nat 518%nat|]. split; [dj (K1.disj_g6_g22 rb) 227%nat 518%nat|].
+    split; [dj (K1.disj_g16_g21 rb) 397%nat 517%nat|]. split; [dj (K1.disj_g10_g21 rb) 248%nat 517%nat|]. split; [dj (K1.disj_g9_g21 rb) 247%nat 517%nat|].
+    split; [dj (K1.disj_g8_g21 rb) 246%nat 517%nat|]. split; [dj (K1.disj_g6_g21 rb) 227%nat 517%nat|].
+    split; [dj (K1.disj_g10_g16 rb) 248%nat 397%nat|]. split; [dj (K1.disj_g9_g16 rb) 247%nat 397%nat|]. split; [dj (K1.disj_g8_g16 rb) 246%nat 397%nat|].
+    split; [dj (K1.disj_g6_g16 rb) 227%nat 397%nat|].
+    split; [dj (K1.disj_g9_g10 rb) 247%nat 248%nat|]. split; [dj (K1.disj_g8_g10 rb) 246%nat 248%nat|]. split; [dj (K1.disj_g6_g10 rb) 227%nat 248%nat|].
+    split; [dj (K1.disj_g8_g9 rb) 246%nat 247%nat|]. split; [dj (K1.disj_g6_g9 rb) 227%nat 247%nat|].
+    split; [dj (K1.disj_g6_g8 rb) 227%nat 246%nat|].
     split; [unfold SPB; cbn [hv b_g6 b_w6]; exact ALIGN|]. split; [exact X229|].
     split; [exact LZ_off|]. split; [exact LZ_band|]. split; [exact RI_not_lazy|].
     split; [exact maps0_off6|]. split; [exact maps0_pos|].
     split; [lia|]. split; [lia|].
     split; [exact AW0|]. split; [exact ASHC0|]. split; [exact AST0|].
     (* [comment removed for export] *)
-    split; [exact (rng_ok_of _ _ G330 (disj_page_lit 330 _ _ _ K1.disj_g12_band ltac:(lia) ltac:(unfold PG; lia) ltac:(lia)))|].
-    split; [dj K1.disj_g6_g12 227%nat 330%nat|]. split; [dj K1.disj_g8_g12 246%nat 330%nat|]. split; [dj K1.disj_g12_g16 397%nat 330%nat|].
-    split; [dj K1.disj_g9_g12 247%nat 330%nat|]. split; [dj K1.disj_g12_g21 517%nat 330%nat|]. split; [dj K1.disj_g12_g22 518%nat 330%nat|].
-    dj K1.disj_g10_g12 248%nat 330%nat.
+    split; [exact (rng_ok_of _ _ G330 (disj_page_lit 330 _ _ _ (K1.disj_g12_band rb) ltac:(lia) ltac:(unfold PG; lia) ltac:(lia)))|].
+    split; [dj (K1.disj_g6_g12 rb) 227%nat 330%nat|]. split; [dj (K1.disj_g8_g12 rb) 246%nat 330%nat|]. split; [dj (K1.disj_g12_g16 rb) 397%nat 330%nat|].
+    split; [dj (K1.disj_g9_g12 rb) 247%nat 330%nat|]. split; [dj (K1.disj_g12_g21 rb) 517%nat 330%nat|]. split; [dj (K1.disj_g12_g22 rb) 518%nat 330%nat|].
+    dj (K1.disj_g10_g12 rb) 248%nat 330%nat.
   Qed.
 
   (* [comment removed for export] *)
@@ -409,7 +412,7 @@ Section MainA.
   Proof. exact (APS.co_limit _ _ _ _ _ _ _ _ _ _ _ _ CS). Qed.
 
   (* [comment removed for export] *)
-  Lemma aa0_bytes : A_bytes aa0 <= 2 ^ 44 - GlzConst.RunCeil.CEIL / 8 + 4096 + a_abytes HS_1.
+  Lemma aa0_bytes : A_bytes aa0 <= 2 ^ 44 - GlzConst.RunCeil.CEIL / 8 + 4096 + a_abytes (HS_1 (rseq_z rb)).
   Proof.
     unfold aa0. cbn [A_bytes fst snd]. pose proof (APS.co_abytes _ _ _ _ _ _ _ _ _ _ _ _ CS) as AB.
     pose proof (pagedown_le (AsVocab.SB + GlzConst.RunCeil.CEIL / 8)) as (P1 & P2 & P3). pose proof ceil_rng. unfold AsVocab.SB in *.
@@ -417,16 +420,16 @@ Section MainA.
   Qed.
   Lemma B_minv : MInv aa0 model.
   Proof.
-    unfold aa0. change (?x :: APS.allowA AT_A E HS_1) with ([x] ++ APS.allowA AT_A E HS_1).
+    unfold aa0. change (?x :: APS.allowA AT_A E (HS_1 (rseq_z rb))) with ([x] ++ APS.allowA AT_A E (HS_1 (rseq_z rb))).
     apply APS.MInv_app; [exact (APS.co_minv _ _ _ _ _ _ _ _ _ _ _ _ CS)|].
-    change ([?x] ++ APS.allowA AT_A E HS_1) with aa0. pose proof aa0_bytes as AB. pose proof (APS.co_eager _ _ _ _ _ _ _ _ _ _ _ _ CS) as EG.
-    pose proof L_limit as LL. pose proof ceil_rng as CR. assert (EA : a_eager HS_1 = 16515072 /\ a_abytes HS_1 = 59290624) by (vm_compute; split; reflexivity).
+    change ([?x] ++ APS.allowA AT_A E (HS_1 (rseq_z rb))) with aa0. pose proof aa0_bytes as AB. pose proof (APS.co_eager _ _ _ _ _ _ _ _ _ _ _ _ CS) as EG.
+    pose proof L_limit as LL. pose proof ceil_rng as CR. assert (EA : a_eager (HS_1 (rseq_z rb)) = 16515072 /\ a_abytes (HS_1 (rseq_z rb)) = 59290624) by (destruct rb; vm_compute; split; reflexivity).
     destruct EA as [E1 E2]. rewrite E1 in EG. rewrite E2 in AB. pose proof kbase_lmin as KL. unfold KBASE, ROOMSLACK in KL. clear -AB EG CR LL KL. Z.div_mod_to_equations. lia.   (* [comment removed for export] *)
   Qed.
   Lemma B_kbase : eager_used model + A_bytes aa0 <= KBASE.
   Proof.
     pose proof aa0_bytes as AB. pose proof (APS.co_eager _ _ _ _ _ _ _ _ _ _ _ _ CS) as EG. pose proof ceil_rng as CR.
-    assert (EA : a_eager HS_1 = 16515072 /\ a_abytes HS_1 = 59290624) by (vm_compute; split; reflexivity).
+    assert (EA : a_eager (HS_1 (rseq_z rb)) = 16515072 /\ a_abytes (HS_1 (rseq_z rb)) = 59290624) by (destruct rb; vm_compute; split; reflexivity).
     destruct EA as [E1 E2]. rewrite E1 in EG. rewrite E2 in AB. unfold KBASE. clear -AB EG CR. Z.div_mod_to_equations. lia.
   Qed.
 
@@ -437,7 +440,7 @@ Section MainA.
   Proof.
     intros z Hz.
     pose proof (APS.co_kinds _ _ _ _ _ _ _ _ _ _ _ _ CS) as KD. rewrite Forall_forall in KD.
-    assert (GO : forall m lo n, In m (a_maps HS_1) -> am_kind m = KRWLAZY -> APS.amap_den E m = (Z_to_bv 64 lo, Z_to_bv 64 n) ->
+    assert (GO : forall m lo n, In m (a_maps (HS_1 (rseq_z rb))) -> am_kind m = KRWLAZY -> APS.amap_den E m = (Z_to_bv 64 lo, Z_to_bv 64 n) ->
                  0 <= lo -> lo + n < 2 ^ 64 -> lo <= z < lo + n -> FULL (Z_to_bv 64 z) <> None).
     { intros m lo n Hm Hk Hd Hlo Hhi Hzz.
       apply (APS.co_mdef _ _ _ _ _ _ _ _ _ _ _ _ CS (Z_to_bv 64 z)).
@@ -447,23 +450,23 @@ Section MainA.
       - pose proof (f_equal fst Hd) as Hb. pose proof (f_equal snd Hd) as Hn'. unfold APS.amap_den in Hb, Hn'. cbn [fst snd] in Hb, Hn'.
         destruct (KD m Hm Hk (Z_to_bv 64 z)) as [NA _]; [| exact NA]. rewrite Hb, Hn'. rewrite !u64_lit by lia. exact Hzz. }
     unfold shmaps, AS_LO, AS_GAPLO, AS_GAPHI, AS_HEAPLO in Hz. destruct Hz as [Hz | Hz].
-    - apply (GO am_losh 2147446784 268435456); [vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia].
-    - apply (GO am_hish 2201439137792 15392894357504); [vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia].
+    - apply (GO am_losh 2147446784 268435456); [destruct rb; vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia].
+    - apply (GO am_hish 2201439137792 15392894357504); [destruct rb; vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia].
   Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[local] Notation Mr := (APS.Mr AT_A argH E HS_1 model FULL).
-  Lemma KN1 : know_ok ASEGS E Mr (kn HS_1).
+  #[local] Notation Mr := (APS.Mr AT_A argH E (HS_1 (rseq_z rb)) model FULL).
+  Lemma KN1 : know_ok ASEGS E Mr (kn (HS_1 (rseq_z rb))).
   Proof. exact (AsAinvMainLib.KN CS). Qed.
   Lemma IMG_le : AP.img_lo AT_A <= AP.img_hi AT_A. Proof. cbn. lia. Qed.
 
   (* [comment removed for export] *)
   Lemma cellN_full : forall a n v, cellN ASEGS Mr a n v -> cellZ ASEGS FULL a n v.
-  Proof. intros a n v C. unfold cellZ, cellN in *. exact (AsAinvMainLib.rdn_full SEGS_in_hull HULL_ok argH_high E HS_1 FULL model _ _ _ C). Qed.
+  Proof. intros a n v C. unfold cellZ, cellN in *. exact (AsAinvMainLib.rdn_full SEGS_in_hull HULL_ok argH_high E (HS_1 (rseq_z rb)) FULL model _ _ _ C). Qed.
   Lemma present_full : forall a : word, Mr a <> None -> FULL a <> None /\ store_ok ASEGS FULL a 1%nat = true.
   Proof.
-    intros a Ha. destruct (APS.Mr AT_A argH E HS_1 model FULL a) as [b|] eqn:Eb; [| exfalso; exact (Ha eq_refl)].
+    intros a Ha. destruct (APS.Mr AT_A argH E (HS_1 (rseq_z rb)) model FULL a) as [b|] eqn:Eb; [| exfalso; exact (Ha eq_refl)].
     pose proof (AsAinvMainLib.Mr_some a b Eb) as F.
     split; [rewrite F; discriminate | apply store_ok1_some; rewrite F; discriminate].
   Qed.
@@ -477,42 +480,42 @@ Section MainA.
   Proof. intros i Hi. unfold APS.uE, RS.vpg. exact (u_page i Hi). Qed.
 
   (* [comment removed for export] *)
-  Lemma CZ0 : forall a n v, (1 <= n <= 8)%nat -> RS.cell_z (kn HS_1) (ELit 0) a n v = true -> cellZ ASEGS FULL a n v.
-  Proof. intros a n v Hn H. pose proof (RS.cell_z_sound E Mr (kn HS_1) (ELit 0) a n v KN1 Hn H) as C. rewrite RS.estart_lit in C. exact (cellN_full _ _ _ C). Qed.
-  Lemma CZP : forall i o n v, uv i <= 2 ^ 51 -> (1 <= n <= 8)%nat -> RS.cell_z (kn HS_1) (RS.vpg i) o n v = true -> cellZ ASEGS FULL (4096 * uv i + o) n v.
-  Proof. intros i o n v Hi Hn H. pose proof (RS.cell_z_sound E Mr (kn HS_1) (RS.vpg i) o n v KN1 Hn H) as C. unfold RS.vpg in C. rewrite (estart_page i o Hi) in C. exact (cellN_full _ _ _ C). Qed.
-  Lemma CE0 : forall a n e, (1 <= n <= 8)%nat -> RS.cell_e (kn HS_1) (ELit 0) a n e = true -> cellZ ASEGS FULL a n (u (edenot E e)).
-  Proof. intros a n e Hn H. pose proof (RS.cell_e_sound E Mr (kn HS_1) (ELit 0) a n e KN1 Hn H) as C. rewrite RS.estart_lit in C. exact (cellN_full _ _ _ C). Qed.
-  Lemma CEP : forall i o n e, uv i <= 2 ^ 51 -> (1 <= n <= 8)%nat -> RS.cell_e (kn HS_1) (RS.vpg i) o n e = true -> cellZ ASEGS FULL (4096 * uv i + o) n (u (edenot E e)).
-  Proof. intros i o n e Hi Hn H. pose proof (RS.cell_e_sound E Mr (kn HS_1) (RS.vpg i) o n e KN1 Hn H) as C. unfold RS.vpg in C. rewrite (estart_page i o Hi) in C. exact (cellN_full _ _ _ C). Qed.
-  Lemma ZF0 : forall lo hi, RS.zfill_x (kn HS_1) (ELit 0) lo hi = true -> fillZ ASEGS FULL lo hi 0.
+  Lemma CZ0 : forall a n v, (1 <= n <= 8)%nat -> RS.cell_z (kn (HS_1 (rseq_z rb))) (ELit 0) a n v = true -> cellZ ASEGS FULL a n v.
+  Proof. intros a n v Hn H. pose proof (RS.cell_z_sound E Mr (kn (HS_1 (rseq_z rb))) (ELit 0) a n v KN1 Hn H) as C. rewrite RS.estart_lit in C. exact (cellN_full _ _ _ C). Qed.
+  Lemma CZP : forall i o n v, uv i <= 2 ^ 51 -> (1 <= n <= 8)%nat -> RS.cell_z (kn (HS_1 (rseq_z rb))) (RS.vpg i) o n v = true -> cellZ ASEGS FULL (4096 * uv i + o) n v.
+  Proof. intros i o n v Hi Hn H. pose proof (RS.cell_z_sound E Mr (kn (HS_1 (rseq_z rb))) (RS.vpg i) o n v KN1 Hn H) as C. unfold RS.vpg in C. rewrite (estart_page i o Hi) in C. exact (cellN_full _ _ _ C). Qed.
+  Lemma CE0 : forall a n e, (1 <= n <= 8)%nat -> RS.cell_e (kn (HS_1 (rseq_z rb))) (ELit 0) a n e = true -> cellZ ASEGS FULL a n (u (edenot E e)).
+  Proof. intros a n e Hn H. pose proof (RS.cell_e_sound E Mr (kn (HS_1 (rseq_z rb))) (ELit 0) a n e KN1 Hn H) as C. rewrite RS.estart_lit in C. exact (cellN_full _ _ _ C). Qed.
+  Lemma CEP : forall i o n e, uv i <= 2 ^ 51 -> (1 <= n <= 8)%nat -> RS.cell_e (kn (HS_1 (rseq_z rb))) (RS.vpg i) o n e = true -> cellZ ASEGS FULL (4096 * uv i + o) n (u (edenot E e)).
+  Proof. intros i o n e Hi Hn H. pose proof (RS.cell_e_sound E Mr (kn (HS_1 (rseq_z rb))) (RS.vpg i) o n e KN1 Hn H) as C. unfold RS.vpg in C. rewrite (estart_page i o Hi) in C. exact (cellN_full _ _ _ C). Qed.
+  Lemma ZF0 : forall lo hi, RS.zfill_x (kn (HS_1 (rseq_z rb))) (ELit 0) lo hi = true -> fillZ ASEGS FULL lo hi 0.
   Proof.
-    intros lo hi H i Hi. pose proof (RS.zfill_x_sound E Mr (kn HS_1) (ELit 0) lo hi KN1 H i) as C.
+    intros lo hi H i Hi. pose proof (RS.zfill_x_sound E Mr (kn (HS_1 (rseq_z rb))) (ELit 0) lo hi KN1 H i) as C.
     unfold APS.uE in C. cbn [edenot] in C. rewrite u64_lit in C by lia. exact (cellN_full _ _ _ (C ltac:(lia))).
   Qed.
-  Lemma ZFP : forall j lo hi, uv j <= 2 ^ 51 -> RS.zfill_x (kn HS_1) (RS.vpg j) lo hi = true -> fillZ ASEGS FULL (4096 * uv j + lo) (4096 * uv j + hi) 0.
+  Lemma ZFP : forall j lo hi, uv j <= 2 ^ 51 -> RS.zfill_x (kn (HS_1 (rseq_z rb))) (RS.vpg j) lo hi = true -> fillZ ASEGS FULL (4096 * uv j + lo) (4096 * uv j + hi) 0.
   Proof.
-    intros j lo hi Hj H i Hi. pose proof (RS.zfill_x_sound E Mr (kn HS_1) (RS.vpg j) lo hi KN1 H i) as C. rewrite (u_vpg j Hj) in C.
+    intros j lo hi Hj H i Hi. pose proof (RS.zfill_x_sound E Mr (kn (HS_1 (rseq_z rb))) (RS.vpg j) lo hi KN1 H i) as C. rewrite (u_vpg j Hj) in C.
     exact (cellN_full _ _ _ (C ltac:(lia))).
   Qed.
-  Lemma ZFS : forall lo hi, RS.zfill_x (kn HS_1) RS.e_SPB lo hi = true -> fillZ ASEGS FULL (SPB hv + lo) (SPB hv + hi) 0.
+  Lemma ZFS : forall lo hi, RS.zfill_x (kn (HS_1 (rseq_z rb))) RS.e_SPB lo hi = true -> fillZ ASEGS FULL (SPB hv + lo) (SPB hv + hi) 0.
   Proof.
-    intros lo hi H i Hi. pose proof (RS.zfill_x_sound E Mr (kn HS_1) RS.e_SPB lo hi KN1 H i) as C. rewrite u_spb in C.
+    intros lo hi H i Hi. pose proof (RS.zfill_x_sound E Mr (kn (HS_1 (rseq_z rb))) RS.e_SPB lo hi KN1 H i) as C. rewrite u_spb in C.
     exact (cellN_full _ _ _ (C ltac:(lia))).
   Qed.
-  Lemma WWP : forall j lo hi, uv j <= 2 ^ 51 -> lo < hi -> RS.wwin_x AT_A (kn HS_1) (RS.vpg j) lo hi = true ->
+  Lemma WWP : forall j lo hi, uv j <= 2 ^ 51 -> lo < hi -> RS.wwin_x AT_A (kn (HS_1 (rseq_z rb))) (RS.vpg j) lo hi = true ->
     writableZ ASEGS FULL (4096 * uv j + lo) (4096 * uv j + hi).
   Proof.
-    intros j lo hi Hj Hlt H i Hi. destruct (RS.wwin_x_sound AT_A SEGS_in_hull HULL_ok IMG_le E Mr (kn HS_1) (RS.vpg j) lo hi KN1 Hlt H i ltac:(rewrite (u_vpg j Hj); lia)) as [D _].
+    intros j lo hi Hj Hlt H i Hi. destruct (RS.wwin_x_sound AT_A SEGS_in_hull HULL_ok IMG_le E Mr (kn (HS_1 (rseq_z rb))) (RS.vpg j) lo hi KN1 Hlt H i ltac:(rewrite (u_vpg j Hj); lia)) as [D _].
     exact (present_full _ D).
   Qed.
-  Lemma WWS : forall lo hi, lo < hi -> RS.wwin_x AT_A (kn HS_1) RS.e_SPB lo hi = true -> writableZ ASEGS FULL (SPB hv + lo) (SPB hv + hi).
+  Lemma WWS : forall lo hi, lo < hi -> RS.wwin_x AT_A (kn (HS_1 (rseq_z rb))) RS.e_SPB lo hi = true -> writableZ ASEGS FULL (SPB hv + lo) (SPB hv + hi).
   Proof.
-    intros lo hi Hlt H i Hi. destruct (RS.wwin_x_sound AT_A SEGS_in_hull HULL_ok IMG_le E Mr (kn HS_1) RS.e_SPB lo hi KN1 Hlt H i ltac:(rewrite u_spb; lia)) as [D _].
+    intros lo hi Hlt H i Hi. destruct (RS.wwin_x_sound AT_A SEGS_in_hull HULL_ok IMG_le E Mr (kn (HS_1 (rseq_z rb))) RS.e_SPB lo hi KN1 Hlt H i ltac:(rewrite u_spb; lia)) as [D _].
     exact (present_full _ D).
   Qed.
-  Lemma KI : forall lo hi, RS.kimg_in (kn HS_1) lo hi = true -> forall a n, lo <= a -> a + Z.of_nat n <= hi -> cellZ ASEGS FULL a n 0.
-  Proof. intros lo hi H a n H1 H2. exact (cellN_full _ _ _ (RS.kimg_in_sound E Mr (kn HS_1) lo hi KN1 H a n H1 H2)). Qed.
+  Lemma KI : forall lo hi, RS.kimg_in (kn (HS_1 (rseq_z rb))) lo hi = true -> forall a n, lo <= a -> a + Z.of_nat n <= hi -> cellZ ASEGS FULL a n 0.
+  Proof. intros lo hi H a n H1 H2. exact (cellN_full _ _ _ (RS.kimg_in_sound E Mr (kn (HS_1 (rseq_z rb))) lo hi KN1 H a n H1 H2)). Qed.
 
   (* [comment removed for export] *)
   Definition CONSTS_CV : list (Z * nat * RS.cval) := [
@@ -633,10 +636,10 @@ Section MainA.
       cbn [edenot]. rewrite u_add64. rewrite US. rewrite u64_lit by lia. unfold SPB. cbn [b_g6 b_w6 hv]. rewrite Z.mod_small by lia. reflexivity. }
     rewrite ERI. reflexivity.
   Qed.
-  Lemma CONSTS : forallb (RS.const_x (kn HS_1)) CONSTS_CV = true ->
+  Lemma CONSTS : forallb (RS.const_x (kn (HS_1 (rseq_z rb)))) CONSTS_CV = true ->
     cells_hold ASEGS FULL (asan_consts (4096 * uv 227) (SPB hv) (4096 * uv 246) (4096 * uv 248)).
   Proof.
-    intros H. unfold cells_hold. rewrite <- CONSTS_CV_den. pose proof (RS.consts_x_sound E Mr (kn HS_1) CONSTS_CV KN1 H) as F.
+    intros H. unfold cells_hold. rewrite <- CONSTS_CV_den. pose proof (RS.consts_x_sound E Mr (kn (HS_1 (rseq_z rb))) CONSTS_CV KN1 H) as F.
     rewrite Forall_forall in F |- *. intros c Hc. exact (cellN_full _ _ _ (F c Hc)).
   Qed.
 
@@ -648,8 +651,8 @@ Section MainA.
   Proof. intros lo lo' hi hi' b C -> ->. exact C. Qed.
   Lemma writableZ_at : forall lo lo' hi hi', writableZ ASEGS FULL lo hi -> lo = lo' -> hi = hi' -> writableZ ASEGS FULL lo' hi'.
   Proof. intros lo lo' hi hi' C -> ->. exact C. Qed.
-  Lemma R0 : 4294901760 <= uv 0 <= 4294967295. Proof. exact (rng _ _ _ K1.rng_v0). Qed.
-  Lemma R10 : 0 <= uv 10 <= 8. Proof. exact (rng _ _ _ K1.rng_v10). Qed.
+  Lemma R0 : 4294901760 <= uv 0 <= 4294967295. Proof. exact (rng _ _ _ (K1.rng_v0 rb)). Qed.
+  Lemma R10 : 0 <= uv 10 <= 8. Proof. exact (rng _ _ _ (K1.rng_v10 rb)). Qed.
   Lemma TOPv : u (edenot E e_ttop) = 32768 * uv 0 + 4096 * uv 10.
   Proof.
     pose proof R0 as X0. pose proof R10 as X10. unfold e_ttop. cbn [edenot]. rewrite u_add64, !u_mul64, !u64_lit by lia.
@@ -665,7 +668,10 @@ Section MainA.
   Qed.
   Definition B1 : Z := 982286.   (* [comment removed for export] *)
 
-  Ltac chk := vm_compute; reflexivity.
+  (* The checker goals read [kn (HS_1 (rseq_z rb))]; the hand-off state is a table lookup per
+     flag value ([AsStartupTabs.HM]), so the flag is split first: [vm_compute] on the stuck
+     [HM (rseq_z rb)] would read back both tables. *)
+  Ltac chk := destruct rb; vm_compute; reflexivity.
   Theorem main_facts_1 : main_facts (asan_bt hv) FULL model.
   Proof.
     pose proof R227 as X227. pose proof R229 as X229. pose proof R246 as X246. pose proof R247 as X247. pose proof R248 as X248.
@@ -773,7 +779,7 @@ Section MainA.
     pose proof (APS.co_kinds _ _ _ _ _ _ _ _ _ _ _ _ CS) as KD. rewrite Forall_forall in KD.
     unfold AsKSys10.AsKSys5.shpage_boot. change (bt_maps0 (asan_bt hv)) with (remove1 (w6, n6) (vm_maps h)). change (bt_lazy0 (asan_bt hv)) with (m_vm_lazy model).
     change (bt_noacc0 (asan_bt hv)) with (vm_noaccess h). change (bt_reserved (asan_bt hv)) with (vm_reserved h).
-    assert (GO : forall m lo len, In m (a_maps HS_1) -> am_kind m = KRWLAZY -> APS.amap_den E m = (Z_to_bv 64 lo, Z_to_bv 64 len) ->
+    assert (GO : forall m lo len, In m (a_maps (HS_1 (rseq_z rb))) -> am_kind m = KRWLAZY -> APS.amap_den E m = (Z_to_bv 64 lo, Z_to_bv 64 len) ->
                  0 <= lo -> lo + len < 2 ^ 64 -> lo <= pb -> pb + n <= lo + len ->
                  (exists b m0 : word, In (b, m0) (remove1 (w6, n6) (vm_maps h)) /\ u b <= pb /\ pb + n <= u b + u m0)
                  /\ (forall a, pb <= a < pb + n -> pg_in_ivz (m_vm_lazy model) a /\ ~ in_ivz (vm_noaccess h) a)).
@@ -790,21 +796,40 @@ Section MainA.
     assert (MAIN : (exists b m0 : word, In (b, m0) (remove1 (w6, n6) (vm_maps h)) /\ u b <= pb /\ pb + n <= u b + u m0)
                    /\ (forall a, pb <= a < pb + n -> pg_in_ivz (m_vm_lazy model) a /\ ~ in_ivz (vm_noaccess h) a)).
     { unfold AsVocab.AS_LO, AsVocab.AS_GAPLO, AsVocab.AS_GAPHI, AsVocab.AS_HEAPLO in Hr. destruct Hr as [[H1 H2] | [H1 H2]].
-      - apply (GO am_losh 2147446784 268435456); [vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia].
-      - apply (GO am_hish 2201439137792 15392894357504); [vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia]. }
+      - apply (GO am_losh 2147446784 268435456); [destruct rb; vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia].
+      - apply (GO am_hish 2201439137792 15392894357504); [destruct rb; vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia]. }
     destruct MAIN as [M1 M2]. split; [exact M1|]. split; [exact M2|].
-    rewrite (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ CS).
+    (* LPS 08b1429: [shpage_boot]'s third conjunct is now a disjunction, so the
+       ledger splits: the image prefix keeps the [AS_LO] bound, and the vDSO
+       tail takes the second arm from [resx_entry_ok]'s [KHI] clause.  [KHI] is
+       not in scope here, so this goes through [APS.resx_above_heap]. *)
+    destruct (APS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ CS) as (rx & Hrx & Hrxok & _ & _). rewrite Hrx.
     assert (RS : forallb (fun iv : word * word => u (fst iv) + u (snd iv) <=? AsVocab.AS_LO) (segments_reserved ASEGS) = true) by (vm_compute; reflexivity).
-    intros iv Hin. apply Z.leb_le. exact (proj1 (forallb_forall _ _) RS iv Hin).
+    intros iv Hin. apply in_app_or in Hin. destruct Hin as [Hin | Hin].
+    - left. apply Z.leb_le. exact (proj1 (forallb_forall _ _) RS iv Hin).
+    - right. unfold AsVocab.AS_HEAPLO.
+      exact (APS.resx_above_heap _ iv (proj1 (Forall_forall _ _) Hrxok iv Hin)).
   Qed.
 
   (* [comment removed for export] *)
   Theorem boot_low_main : AsKSys7b.res_low (asan_bt hv) /\ AsKSys8.noacc0_sub (asan_bt hv).
   Proof.
     split.
-    - unfold AsKSys7b.res_low. change (bt_reserved (asan_bt hv)) with (vm_reserved h). rewrite (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ CS).
-      assert (RS : forallb (fun iv : word * word => u (fst iv) + u (snd iv) <=? AsVocab.AS_LO) (segments_reserved ASEGS) = true) by (vm_compute; reflexivity).
-      intros iv Hin. apply Z.leb_le. exact (proj1 (forallb_forall _ _) RS iv Hin).
+    (* LPS 08b1429: [res_low] is now "disjoint from the ASan slot space", which
+       is exactly what [co_mres] says about every [vm_reserved] entry, the vDSO
+       pair included.  [G227]'s first component is [In (w6,n6) (vm_maps h)] --
+       the slot space is a tracked mapping -- so no [vm_compute] over the image
+       prefix is needed any more: ONE argument covers both halves of the ledger.
+       CAPTURE NOTE: this body now reaches [co_mres] and [G227] and no longer
+       reaches [forallb_forall]; re-check those two if this proof is edited. *)
+    - unfold AsKSys7b.res_low. change (bt_reserved (asan_bt hv)) with (vm_reserved h).
+      intros iv Hin. pose proof R227. destruct G227 as (I6 & _).
+      pose proof (proj1 (Forall_forall _ _)
+                    (proj1 (Forall_forall _ _) (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ _ CS) (w6, n6) I6)
+                    iv Hin) as D.
+      unfold APS.iv_disjoint, w6, n6 in D. cbn [fst snd] in D. rewrite !u64_lit in D by lia.
+      cbn [bt_resv6 bt_resv6_len asan_bt hv b_g6].
+      destruct D as [D|D]; [right; right; lia | right; left; lia].
     - unfold AsKSys8.noacc0_sub. change (bt_noacc0 (asan_bt hv)) with (vm_noaccess h). change (bt_maps0 (asan_bt hv)) with (remove1 (w6, n6) (vm_maps h)).
       intros a (b & m & Hin & Hr).
       assert (T : APS.in_ivs a (vm_noaccess h) = true) by (apply APS.in_ivs_true; exists (b, m); exact (conj Hin Hr)).
@@ -824,7 +849,7 @@ Section MainA.
     apply In_remove1; [exact I0|]. intros EE. pose proof (f_equal (fun p : word * word => u (snd p)) EE) as E1. cbn [snd] in E1.
     unfold n6 in E1. rewrite !u64_lit in E1 by lia. exact (NE E1).
   Qed.
-  Lemma in_maps0_lit : forall m lo len a, In m (a_maps HS_1) -> is_fog m = false -> APS.amap_den E m = (Z_to_bv 64 lo, Z_to_bv 64 len) ->
+  Lemma in_maps0_lit : forall m lo len a, In m (a_maps (HS_1 (rseq_z rb))) -> is_fog m = false -> APS.amap_den E m = (Z_to_bv 64 lo, Z_to_bv 64 len) ->
     len <> 0x2000011000 -> 0 <= lo -> 0 < len -> lo + len < 2 ^ 64 -> lo <= a < lo + len -> in_ivz (remove1 (w6, n6) (vm_maps h)) a.
   Proof.
     intros m lo len a Hm Hf Hd NE L0 L1 L2 Ha. exists (Z_to_bv 64 lo), (Z_to_bv 64 len). split; [| rewrite !u64_lit by lia; exact Ha].
@@ -852,11 +877,17 @@ Section MainA.
     - (* [comment removed for export] *) unfold AsKSys10.AsKSys9.band_cov. change (bt_maps0 (asan_bt hv)) with (remove1 (w6, n6) (vm_maps h)).
       intros a Ha. unfold in_band, AS_LO, AS_HEAPLO in Ha.
       destruct (Z_lt_ge_dec a 2415882240) as [LO | X1]; [| destruct (Z_lt_ge_dec a 2201439137792) as [GAP | HI]].
-      + apply (in_maps0_lit am_losh 2147446784 268435456 a); [vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia | lia].
-      + apply (in_maps0_lit am_gap 2415882240 2199023255552 a); [vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia | lia].
-      + apply (in_maps0_lit am_hish 2201439137792 15392894357504 a); [vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia | lia].
-    - (* [comment removed for export] *) unfold AsKSys10.AsKSys9.res_hull. change (bt_reserved (asan_bt hv)) with (vm_reserved h). rewrite (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ CS).
-      intros a n Hn H64 Hrf. cbn [bt_ia asan_bt ia_img_lo ia_img_hi asan_addrs].
+      + apply (in_maps0_lit am_losh 2147446784 268435456 a); [destruct rb; vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia | lia].
+      + apply (in_maps0_lit am_gap 2415882240 2199023255552 a); [destruct rb; vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia | lia].
+      + apply (in_maps0_lit am_hish 2201439137792 15392894357504 a); [destruct rb; vm_compute; tauto | reflexivity | reflexivity | lia | lia | lia | lia | lia].
+    - (* LPS 08b1429: [res_hull] is NOT false over the appended ledger --
+         [region_free] is ANTITONE in its list, so [region_free (segs ++ rx)]
+         implies [region_free segs] and the hypothesis only gets stronger.  One
+         [region_free_app] split, and the existing argument is untouched. *)
+      unfold AsKSys10.AsKSys9.res_hull. change (bt_reserved (asan_bt hv)) with (vm_reserved h).
+      destruct (APS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ CS) as (rx & Hrx & _ & _ & _).
+      intros a n Hn H64 Hrf. rewrite Hrx, RefNodes.region_free_app in Hrf. apply andb_true_iff in Hrf as [Hrf _].
+      cbn [bt_ia asan_bt ia_img_lo ia_img_hi asan_addrs].
       destruct (Z_le_gt_dec (u a + u n) 0x10000) as [L|G1]; [left; exact L|]. destruct (Z_le_gt_dec 0x65d000 (u a)) as [R'|G2]; [right; exact R'|]. exfalso.
       set (z := Z.max (u a) 0x10000).
       assert (Hz1 : img_lo AT_A <= z < img_hi AT_A) by (cbn [img_lo img_hi AT_A]; unfold z; lia).
@@ -878,11 +909,21 @@ Section MainA.
   Qed.
   Theorem res_in_hull_main : AsKSys10.AsAinvBootF3.res_in_hull (asan_bt hv).
   Proof.
-    unfold AsKSys10.AsAinvBootF3.res_in_hull. change (bt_reserved (asan_bt hv)) with (vm_reserved h). rewrite (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ CS).
-    cbn [bt_ia asan_bt ia_img_lo ia_img_hi asan_addrs].
-    assert (RS : forallb (fun iv : word * word => (0x10000 <=? u (fst iv)) && (u (fst iv) + u (snd iv) <=? 0x65d000)) (segments_reserved ASEGS) = true) by (vm_compute; reflexivity).
-    intros iv Hin. pose proof (proj1 (forallb_forall _ _) RS iv Hin) as X. apply andb_true_iff in X. destruct X as [X1 X2].
-    apply Z.leb_le in X1. apply Z.leb_le in X2. split; assumption.
+    (* LPS 08b1429: [res_in_hull]'s arms 2 and 3 say the interval misses the
+       ptr8 array, which [co_mres] gives for every [vm_reserved] entry because
+       [G246]'s first component is [In (ptr8 array) (vm_maps h)].  As with
+       [res_low], one argument now covers the image prefix and the vDSO tail.
+       CAPTURE NOTE: this body reaches [co_mres] and [G246]; it no longer
+       reaches [forallb_forall] or [andb_true_iff]. *)
+    unfold AsKSys10.AsAinvBootF3.res_in_hull. change (bt_reserved (asan_bt hv)) with (vm_reserved h).
+    cbn [bt_ia asan_bt ia_img_lo ia_img_hi asan_addrs bt_ptrarr hv b_g8].
+    intros iv Hin. pose proof R246. destruct G246 as (I8 & _).
+    pose proof (proj1 (Forall_forall _ _)
+                  (proj1 (Forall_forall _ _) (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ _ CS)
+                         (Z_to_bv 64 (4096 * uv 246), Z_to_bv 64 (2 ^ 23)) I8)
+                  iv Hin) as D.
+    unfold APS.iv_disjoint in D. cbn [fst snd] in D. rewrite !u64_lit in D by lia.
+    destruct D as [D|D]; [right; right; lia | right; left; lia].
   Qed.
   Lemma seps_remove1_seps : forall l x, APS.seps l -> APS.seps (remove1 x l).
   Proof.
@@ -927,10 +968,22 @@ Section MainA.
     destruct L_perm as (w & n & _ & UN & PM).
     pose proof (Permutation_length PM) as PL. cbn [length] in PL.
     pose proof (APS.maps_match_length E _ _ (APS.co_maps _ _ _ _ _ _ _ _ _ _ _ _ CS)) as ML.
-    assert (A18 : (length (a_maps HS_1) <= 24)%nat) by (apply Nat.leb_le; vm_compute; reflexivity).
-    assert (R4 : (length (vm_reserved h) <= 6)%nat) by (rewrite (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ CS); apply Nat.leb_le; vm_compute; reflexivity).
+    assert (A18 : (length (a_maps (HS_1 (rseq_z rb))) <= 24)%nat) by (apply Nat.leb_le; destruct rb; vm_compute; reflexivity).
+    (* LPS 08b1429: the ledger is [segments_reserved ASEGS ++ rx], so the bound
+       is the image prefix's length (produced by [vm_compute], NOT asserted)
+       plus [n_resx = 2].  It is EIGHT, not six; the old 6 counted the prefix
+       alone.  If [BOOTCNT] does not absorb 8 this is a finding, not a place to
+       patch -- see the .msg. *)
+    assert (R4 : (length (vm_reserved h) <= 6 + APS.n_resx)%nat).
+    { destruct (APS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ CS) as (rx & Hrx & _ & Hrxn & _).
+      assert (LS : (length (segments_reserved ASEGS) <= 6)%nat) by (apply Nat.leb_le; vm_compute; reflexivity).
+      rewrite Hrx, length_app. lia. }
+    (* [APS.n_resx] stays SYMBOLIC in the statement so the bound follows the
+       donor if it ever changes; unfolded here only so the downstream [lia]
+       sees a closed number.  The 6 is produced by [vm_compute], never asserted. *)
+    unfold APS.n_resx in R4.
     pose proof (APS.co_totsz _ _ _ _ _ _ _ _ _ _ _ _ CS) as TS. rewrite sum_sizes_gw in TS.
-    assert (AT : a_totsz HS_1 <= 17730000000000) by (apply Z.leb_le; vm_compute; reflexivity).
+    assert (AT : a_totsz (HS_1 (rseq_z rb)) <= 17730000000000) by (apply Z.leb_le; destruct rb; vm_compute; reflexivity).
     rewrite AsKSys10.AsKSys11.gw_sizes_app in TS |- *. rewrite (gw_sizes_perm _ _ PM) in TS. cbn [BackingAlgebra.AsanPlacement.gw_sizes snd] in TS. rewrite UN in TS.
     rewrite length_app. unfold AsKSys10.AsKSys11.BOOTCNT, AsKSys10.AsKSys11.BOOTSZ. split; lia.
   Qed.

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are
    restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_pin image A from
-   proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632, with its module paths
+   proofs/libreac/fuzz_knock/lib/A/APgLib.v, with its module paths
    changed: lines 59-75 (the sink-head guard and the read-only pair), 123-124
    (knock_lib_contract_x_all), 246-248 (XL0) and 315-371 (the bridge to ACfn's form) are taken in pin's
    names; knock's lines 77-122 (its own copy of the contract text) are NOT taken, because pin's contract
@@ -33,6 +33,7 @@
      harness makes none, so lib/A/ACfm.v's EV_LIB (knock's value, kept by the relocation) is too small for
      pin; the contract is stated at pin's own budget and bridged to lib/A/ACfn.v's larger one by
      PPgCSpec.pin_lib_contract_x_ev_mono. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only cgif_file_fuzzer lib/YG0d.v's amemchr0_realizes, restated for the memchr wrapper of libreac/fuzz_ctrl with any byte c in a1, any n below 2^32, and a found or not-found result; module paths. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco lib/Rt/MemchrDef.v at 3b8a77d146c to libreac/fuzz_ctrl lib/Reusable; module paths only, the file names no address. *)
+(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco lib/Rt/MemchrDef.v to libreac/fuzz_ctrl lib/Reusable; module paths only, the file names no address. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

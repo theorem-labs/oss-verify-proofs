@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainV1.v (commit ce1a656b52b7, file sha256 28623dbd12b7) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 4 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 12 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainV1.v (commit fe876300d09, Quarantine::Drain walk set; file sha256 d38434acc2a7) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 12 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainV1.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (16 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainV1.v (file sha256 28623dbd12b7) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 4 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 12 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainV1.v (Quarantine::Drain walk set; file sha256 d38434acc2a7) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 12 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainV1.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (16 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane a prior worker drain-merge, for WalkB1's lane B1): the MERGE arm's first half - from
    Quarantine::Drain's entry at 0x342b8 to Recycle's call of DoRecycle at 0x345c8, on the arm where the quarantine
    is over kQuarantineMax and Recycle's merge test holds, so Recycle calls MergeBatches (DMsegD.at_MB, the second
-   outcome of DMsegD.postDm) before the dequeue loop.  The twin of DMdrainV0.nomerge_to_call (DMdrainV0.v:75-81, the
+   outcome of DMsegD.postDm) before the dequeue loop.  The twin of DMdrainV0.nomerge_to_call (DMdrainV0.v:76-82, the
    no-merge arm, moved there from DMdrainU2.v; same post);
-   its post is the shared recycle tail's input DMdrainU9.recyc_cut_in (DMdrainU9.v:48-95).
-   The statements [merge_to_call_t] and [deq_pre_merge_t] were fixed first (c394e337102); [merge_to_call] and
+   its post is the shared recycle tail's input DMdrainU9.recyc_cut_in (DMdrainU9.v:49-96).
+   The statements [merge_to_call_t] and [deq_pre_merge_t] were fixed first; [merge_to_call] and
    [deq_pre_merge] prove them.
    Chain: DMdrainG4.entry_free_hyps -> DMdrainT1.drain_entry_run -> DMsegD.at_MB -> DMmergeL.mb_ok (H1, MergeBatches
    to its return at 0x34504) -> DMseg_rjL.segR (0x34504 -> the loop head 0x34558, at_RJL; or straight to
@@ -304,8 +305,8 @@ Hypothesis TB : TfibSyms B.
 Hypothesis QV : di_qview_t B ARX L24 QB.
 Hypothesis QBB : forall X, QB X -> qc_bytes (st_qglobal X) <= 2 ^ 30 /\ qc_bytes (st_qthread X) <= 2 ^ 29.
 
-(* DMdrainV0.nomerge_to_call's text (DMdrainV0.v:75-81) with the branch condition [= true]; the post
-   is the shared recycle tail's input DMdrainU9.recyc_cut_in (DMdrainU9.v:48-95). *)
+(* DMdrainV0.nomerge_to_call's text (DMdrainV0.v:76-82) with the branch condition [= true]; the post
+   is the shared recycle tail's input DMdrainU9.recyc_cut_in (DMdrainU9.v:49-96). *)
 Definition merge_to_call_t : Prop := forall inst ly X W regs mem md mat,
 drain_pre_cf B ARX L24 QB inst ly X W regs mem md ->
 kQuarantineMax < YFgj.LBv (st_qglobal X) (st_qthread X) ->

@@ -1,6 +1,6 @@
 # G3: codeptr on the image B start-up files (gate record)
 
-Proves no function (kind: measurement). Re-run 2026-10-30 on the series base b1afc3e80791 (`run.sh g3`).
+Proves no function (kind: measurement). Re-run 2026-10-30 on the series base (`run.sh g3`).
 
 ## Tool
 - codeptr.py, the codeptr of record: sha256 `12348302dfd2e419748bc3ad20e67b246d21b576c9c6d7887a33854785e146dd`,
@@ -18,15 +18,15 @@ Proves no function (kind: measurement). Re-run 2026-10-30 on the series base b1a
   section table). The twin is read only for names (`--names`).
 - `$CGIF_B` = cgif_file_fuzzer.asan-ubsan, the cgif pin of the same build, sha256
   `1c29845fe6058de6e1dbf3f6ec6abd566ea612d76b65ea5435d7ff77c63e08ef`; `$CGIF_NM` = its recovered names (nm text),
-  `tools/startup/syms/cgif_file_fuzzer.asan-ubsan.nm` at commit b351f103e888, sha256
+  `tools/startup/syms/cgif_file_fuzzer.asan-ubsan.nm`, sha256
   `5b5f81784ea1ed5e8d35ab9bd5b01277536c10addbe4b545ca3f223045c95a75`.
-- `$CLIB` = cgif's released lib at c8557374ad2e (`proofs/cgif/cgif_file_fuzzer/lib`); every checked file has its donor
+- `$CLIB` = cgif's released lib (`proofs/cgif/cgif_file_fuzzer/lib`); every checked file has its donor
   file there (`--stale-dir`), so each line names its paired donor file.
 - `$LIB/Reusable/<F>.v` = the base's `proofs/libreac/fuzz_disco/lib/Reusable/<F>.v`.
 
 ## Control of record first (known answers)
 `bash codeptr-controls.sh "$STARTUP_SET/startup-set-2026-10-30d.tsv" <root holding cgif's lib and pins>`, the script
-`tools/startup/codeptr-controls.sh` at commit b351f103e888 (sha256
+`tools/startup/codeptr-controls.sh` (sha256
 `25c012a65b96fe16406ee979efb146b6bd266770739bbedfc3b57f5fd54e3c03`), through the same set: rc 0.
 - MUST FIND, image A, cgif's own unrelocated files against fuzz_scene's images: AD1k 22, AD2i 6, AD2j 107 FINDINGS;
   image B: YD1k 22, YD2i 6, YD2j 107 FINDINGS; each line names its paired donor file.

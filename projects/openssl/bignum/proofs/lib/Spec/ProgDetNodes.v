@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the four new descriptor kinds, and the place_declined_b conjunct of nsafe's mmap arm). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -79,7 +80,11 @@ Lemma nprog_read : forall sel fd buf cnt mo,
   end -> nprog sel (NRead fd buf cnt) mo.
 Proof.
   intros sel fd buf cnt mo Hfd. apply nprog_of_nstep; [exact I|].
-  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| ]|] eqn:E; try contradiction.
+  (* LPS: [State.FdEntry] grew from 10 to 14 constructors (FdStream, FdEventfd,
+     FdDgram, FdAnon); the premise sends each of the four to [False]. *)
+  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd))
+    as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| |stid stsd stst|evctx|dgfam|anid anaf]|] eqn:E;
+    try contradiction.
   - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction].
     eexists _, _, []. cbn [nstep]. rewrite E, Hfs. split; [reflexivity|]. split; reflexivity.
   - exists (efferr EISDIR), mo, []. cbn [nstep]. rewrite E. auto.
@@ -170,7 +175,7 @@ Proof.
   destruct Hst as ((Hs & _) & Hst & _).
   assert (Hn' : match n with NBrk _ | NMunmap _ _ | NMprotect _ _ _ => True
              | NMmap _ _ _ flags => mmap_noreserve_b (Z_to_bv 64 flags) = false | _ => False end).
-  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact Hs. }
+  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact (proj1 Hs). }
   destruct (nstep_mm_vm_only n mo rsp mo' evs Hn' Hst) as ((Hfd & Hfs & _) & -> & _). auto.
 Qed.
 

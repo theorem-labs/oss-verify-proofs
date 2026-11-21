@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), REQUEST ADMISSIBILITY.
-   cgif's areq_ok (YG01.v:14-36) is the only thing in the atok layer this instance has to change, and it has to
+   cgif's areq_ok (YG01.v:15-37) is the only thing in the atok layer this instance has to change, and it has to
    change for two reasons, both of them forced by a unit's measured numbers:
      1. KMmapSec's arm demands `len = sec_map_size n` for a secondary request n < MALLOC_MAX. The instance also
         maps the 64 KiB error-message buffer on the first class-full report, and 65,536 is NOT a sec_map_size
@@ -9,7 +10,7 @@
      2. MALLOC_MAX = 2 ^ 28 is below fuzz_reply's largest request, 2 ^ 29.
    areq_ok_cf therefore widens that ONE arm: a secondary of a cf-admissible size, or any page-aligned map up to
    cf_nob, which is what the placement lemma bounds anyway. Every other arm is cgif's, verbatim.
-   atok_cf is cgif's atok (YG01.v:49-55) over areq_ok_cf, with its lemma family copied. atok_cf_of_atok shows
+   atok_cf is cgif's atok (YG01.v:50-56) over areq_ok_cf, with its lemma family copied. atok_cf_of_atok shows
    the cf layer is WEAKER, so nothing cgif admits is lost.
    cgif's YG01.v is NOT edited. No address. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

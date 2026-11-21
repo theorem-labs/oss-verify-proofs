@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/HaltsSpecX.v (via fuzz_grant's lib/A/HaltsSpecG.v, cold/port-grant 0bed23e5b69, and fuzz_scene's lib/A/HaltsSpecS.v, cold/h-small-a3-sceport e624b1e2c9a) for fuzz_knock: the library shape is the one of knock's released agreement, AgreeShape.ag_shape ZTraceSpec.checksum_shape (= AgreeKnock.ag_sil_shape; each call returns 0 and writes nothing, LIBK pl fs K = K (LL 0 fs [])), so cgif's lemmas for its file-writing shape are replaced by the one-line case; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/HaltsSpecK.v at origin/ossv/recipes 6ebe35ba632; taken for reac-pw/fuzz_pin image A: pin's agreement shape is the same AgreeShape.ag_shape ZTraceSpec.checksum_shape (lib/AgreePin.v's AGS; pin's ZTraceSpec.v and AgreeShape.v are knock's up to module paths), module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/HaltsSpecX.v (via fuzz_grant's lib/A/HaltsSpecG.v, and fuzz_scene's lib/A/HaltsSpecS.v) for fuzz_knock: the library shape is the one of knock's released agreement, AgreeShape.ag_shape ZTraceSpec.checksum_shape (= AgreeKnock.ag_sil_shape; each call returns 0 and writes nothing, LIBK pl fs K = K (LL 0 fs [])), so cgif's lemmas for its file-writing shape are replaced by the one-line case; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/HaltsSpecK.v; taken for reac-pw/fuzz_pin image A: pin's agreement shape is the same AgreeShape.ag_shape ZTraceSpec.checksum_shape (lib/AgreePin.v's AGS; pin's ZTraceSpec.v and AgreeShape.v are knock's up to module paths), module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs Run.
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require Import YK11 YK15 YO0i YO0f YM02 YM05 YO05 YO09 YO06.

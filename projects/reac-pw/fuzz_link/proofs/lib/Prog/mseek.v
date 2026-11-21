@@ -1,7 +1,7 @@
 (* mseek (musl src/stdio/fmemopen.c; plain 0x19658, 156 bytes), PLAIN build: the walk of
    `mseek_set_contract` (lib/Prog/mseek_c.v) at whence = SEEK_SET with 0 <= off <= c->size.
 
-   The walk is the one of libreac/fuzz_pcap lib/Prog/mseek.v (ossv/recipes 4b6f0df50aa); the code of
+   The walk is the one of libreac/fuzz_pcap lib/Prog/mseek.v; the code of
    mseek is the same in both images (ident_wide.py libreac/fuzz_pcap plain mseek: IDENTICAL). Only the
    addresses (entry 0x19658, the GOT slot 0x208d8 holding the guard address 0x95878) and the arm differ:
    at whence = 0 the base is the 0 the function stores at +0x34, the bound checks +0x50 and +0x5c pass,

@@ -8,6 +8,7 @@
    lib/B/W_gsadd_b.v gs_addb (GAR -> DLN: strndup, e->nheld = nheld + 1, e->held[nheld] = copy), image A's
    split of lib/A/W_gsadd_scratch.v / W_gsaddb.v (a working branch).  The Section header is
    lib/B/W_drain_gs.v's (= lib/B/W_drain_cx.v's), verbatim. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -125,7 +126,7 @@ End a.
    twin statement gs_add_stmt_x over lib/B/W_drain_cx_x.v's Section variables (B PST ARx MT RP MMAX RG), from
    lib/B/W_gsadd_a.v's gs_adda_x (GA_x -> DLN_x / GAR_x: realloc #2) and lib/B/W_gsadd_b.v's gs_addb_x (GAR_x -> DLN_x:
    strndup), the B split of lib/A/W_gsadd_scratch.v's gs_adda_x and lib/A/W_gsaddb.v's gs_addb_x
-   (a working branch 50623273289, where W_drain_gs.v's dr_gs_of_x takes gs_adda_x (gs_addb_x ..)).
+   (a working branch, where W_drain_gs.v's dr_gs_of_x takes gs_adda_x (gs_addb_x ..)).
    The Section takes the union of the two halves' Section items, in lib/B/W_drain_cx_x.v's order and text.
    Everything above this line is unchanged. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG.
@@ -154,9 +155,9 @@ Variable RP : roomp.
 Variable MMAX : Z.
 Variable RG : rep_globals.
 Context {hl : Z}.
-(* lib/B/W_drain_cx_x.v:154 *)
+(* lib/B/W_drain_cx_x.v:155 *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
-(* lib/B/W_drain_cx_x.v:156-216, the ones the two halves take *)
+(* lib/B/W_drain_cx_x.v:157-217, the ones the two halves take *)
 Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
@@ -180,7 +181,7 @@ Hypothesis HSM : 0x10000 <= rg_send_max RG /\ rg_send_max RG + 8 <= IMG_TOP.
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis BLKN : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
 Hypothesis PSTR : forall a, in_rom SEGS a -> ~ Exists (in_zr a) PST.
-(* lib/B/W_drain_cx_x.v:219-226: the two allocator rules the arm calls and their call-site facts *)
+(* lib/B/W_drain_cx_x.v:220-227: the two allocator rules the arm calls and their call-site facts *)
 Variables CTX_R CTX_S : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis ASTRNDUP : astrndup_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_S (SIGMA WS_strndup).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-phase stack floor, the section hypothesis STKLO and drv_premises' dp_STKLO, is sp0 - 6144512, the window the revision's launch maps). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -64,7 +65,7 @@ Section Top.
   Hypothesis SPlo : 0x7fff80000000 <= bv_unsigned sp0.       (* [comment removed for export] *)
   Hypothesis SPhi : bv_unsigned sp0 <= 0x800000000000.       (* [comment removed for export] *)
   Hypothesis SPal : bv_unsigned sp0 mod 16 = 0.
-  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 8388608.
+  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 6144512.
   Variables (fs0 : Fs) (can : word) (tid : Z) (wp0 rp0 wp1 rp1 : word) (TOP STKHI V0 : Z).
   Hypothesis HTOPlo : bv_unsigned sp0 - 48 <= TOP.
   Hypothesis HSTKHI : bv_unsigned sp0 <= STKHI.
@@ -149,7 +150,7 @@ Record drv_premises (sp0 : word) (fs0 : Fs) : Type := MKDP {
   dp_HMEMCPY : arl_memcpy_i dp_R = 0x67844;                                  (* [comment removed for export] *)
   dp_HTP : arl_tp dp_R = 0x639690;                                           (* [comment removed for export] *)
   dp_HIMGCS : forall h, A_unreg_globals.img_cs (arl_AL dp_R) (hcs asegs dp_R dp_HIA h);   (* [comment removed for export] *)
-  dp_STKLO : arl_stklo dp_R = bv_unsigned sp0 - 8388608;                    (* [comment removed for export] *)
+  dp_STKLO : arl_stklo dp_R = bv_unsigned sp0 - 6144512;                    (* [comment removed for export] *)
   dp_SI : sinv (arl_L dp_R);                                                 (* [comment removed for export] *)
   dp_SIFP : forall a, ~ outside (si_fp dp_SI) a -> 0x638ca0 <= a < 0x638d80; (* [comment removed for export] *)
   dp_PHI : Z -> Z;                                                           (* [comment removed for export] *)

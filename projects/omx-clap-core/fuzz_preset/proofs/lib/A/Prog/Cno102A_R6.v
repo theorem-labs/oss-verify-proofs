@@ -4,12 +4,13 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0n.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YP0n.v, with its module paths and module names changed; 967 of its 1043 lines of code are new or changed and 1914 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_Base.v, with its module names changed; 472 of its 536 lines of code are new or changed and 979 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c): segments CA6 / CA7 / CA8 (Read1-3, the GUARD parts)
    of the re-walk of check_no_overread (cno) against the text tcheck_no_overread_specX, by a Theorem Labs lane (sub-lane
    of another lane, under a Theorem Labs session; plan, the internal file PLAN-cno-caw-102.md 5.1 rows CA6-CA8). Each segment ends at the parse_noting
    call state (cn_ex_pn1 / pn2 / pn3) or at the next cut; the parse_noting step itself closes after the kit's Batch 2.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   INPUTS (by path, at the kit cut 7cdbb61b5fa0, a working branch): the contract lib/A/Prog/Cno102A_Base.v
+   INPUTS (by path, at the kit cut, a working branch): the contract lib/A/Prog/Cno102A_Base.v
    blob ba76a7bc31c9 (the cuts carry cn_prog D E S over the events since entry, the grants o1 / o2 / o0 last, ran =
    cn_ranz (read2 / read3 / cmp) or cn_ro .. = false (pn2 / pn3), the structs against the model, cn_rd / cn_rds2 /
    cn_rds3, their free-order ties cn_fo, the spent wild budget as cn_base's last argument, cn_cdead in the refused-copy
@@ -19,14 +20,14 @@
    e5917626b82b (pj_foR); lib/Spec/PresetRun.v 5ac818ab1fe6 (ranout _ _ None = false); the step kit
    lib/A/Prog/Cno102A_Ro.v re-fit to the cut (cn_ro_call keeps S, wk and carries cn_mid at own and the three cn_fo
    across fuzz_alloc_ran_out; cn_hs_* / cn_base_mat); listing lib/A/Listing_prog.v 7ed1529926bd.
-   Re-fit of f193cb34d038 (Base f1b6bdaed87b) to f97c: the ran-out call keeps S, so each exit carries the cut's cn_prog;
+   Re-fit (Base f1b6bdaed87b) to f97c: the ran-out call keeps S, so each exit carries the cut's cn_prog;
    g_ran_out after the call decides the model's ranout of the readings made (r6_ranz1 / r6_ranz2: a skipped reading's
    grant None never runs out); a reading skipped after a ran-out one adds no event (r6_revs2_skip / r6_revs3_skip) and
    leaves its struct zero (r6_rds2_skip / r6_rds3_skip); these helpers are the B' twin's (Cno102B_R4.v cac511967efd,
    r4_ for r6_). The statements of cn_read2_seg / cn_read3_seg take the cuts' new grants o1 / o1 o2; no other change.
-   Base 1ffd0a7bddd: read2's skip arm (own0 <> 0) states st1 = None (CA6 chooses it), and CN_FREE's refused-copy arm
+   Base: read2's skip arm (own0 <> 0) states st1 = None (CA6 chooses it), and CN_FREE's refused-copy arm
    (ownl <> 0) carries cn_prog over the copies' events and three zero structs (CA7's free exit: read2's skip arm).
-   RE-FIT TO THE KIT CUT 7cdbb61b5fa0 (contract lib/A/Prog/Cno102A_Base.v blob ba76a7bc31c9; the step kit
+   RE-FIT TO THE KIT CUT (contract lib/A/Prog/Cno102A_Base.v blob ba76a7bc31c9; the step kit
    Cno102A_Ro.v re-fit to the cut): cn_pre has no run-word list DW and is read by name (cn_pre_ran); cn_base takes the
    spent wild budget wk last, kept by every hand step and by fuzz_alloc_ran_out (cn_ro_call), and raised by
    cn_base_mono where a reading is skipped (read1 0 -> read2 2, read2 2 -> read3 4 / free 6, read3 4 -> cmp 6); the
@@ -136,7 +137,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 Variable CTX0 : list (list Z).
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 Hypothesis IMG : cn_img B.
-(* The kit's text (PRH_FnAlloc.v 4d8aeba047e5 :175-183, the cut 7cdbb61b5fa0), for any float state *)
+(* The kit's text (PRH_FnAlloc.v 4d8aeba047e5 :175-183, the cut), for any float state *)
 Hypothesis HRO : forall fz : YK11.FPState,
   @tfuzz_alloc_ran_out_specX fz rc cp prh_img_A RL A_prog_listing PA B ARx SK.
 

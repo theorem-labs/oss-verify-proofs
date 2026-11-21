@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (AHK_magree passes minvA_by_fields its new premise that the channel-reader flag is unchanged; PSL_side_numerics counts the placement slack from task_unmapped_base). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -249,7 +250,7 @@ Proof.
              | eapply KVM_frame; [exact Fvm | exact Flz | exact Hkvm]
              | rewrite Fh; exact Kh
              | rewrite Fvm; exact Klim
-             | eapply minvA_by_fields; [exact Ffds | exact Ffs | exact Ftid | rewrite Fvm; reflexivity | exact Kmi] ].
+             | eapply minvA_by_fields; [exact Ffds | exact Ffs | exact Ftid | rewrite Fvm; reflexivity | destruct Hag as [? ->]; reflexivity | exact Kmi] ].
 Qed.
 
 (* [comment removed for export] *)
@@ -366,8 +367,8 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma PSL_side_numerics : forall SZ CNT, SZ <= 2^46 -> 0 <= CNT <= 256 ->
-  4096 + NMAXA + (SZ + CNT * (NMAXA + 4095)) + FOGW + ADYN + OPSLACK <= alloc_ceiling.
-Proof. intros SZ CNT HS HC. pose proof alloc_ceiling_range. unfold FOGW, ADYN, OPSLACK in *. unfold NMAXA in *. clear -H HS HC. nia. Qed.
+  Mmap.task_unmapped_base + NMAXA + (SZ + CNT * (NMAXA + 4095)) + FOGW + ADYN + OPSLACK <= alloc_ceiling.
+Proof. intros SZ CNT HS HC. pose proof alloc_ceiling_range. unfold Mmap.task_unmapped_base, FOGW, ADYN, OPSLACK in *. unfold NMAXA in *. clear -H HS HC. nia. Qed.
 
 (* [comment removed for export] *)
 Theorem AHK_psl : forall s LB LF m mo, AHK s LB LF m mo -> nbig LB <= 8000 -> PSL OPSLACK (m_vmmaps mo).

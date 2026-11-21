@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the main sections take AsanInit's LPS 727298f3 launch (the input, mmap base, entry point, kernel build, exec file name and SIGPIPE disposition), and the IO hook (XBm) takes the table. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -207,16 +208,29 @@ Section Main.
   Variable uid : word.
   Variable hw : word.           (* [comment removed for export] *)
   Variable c : list byte.
+  Variable apc : N.
+  Variable mbase : word.
+  Variable fs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variable urnd : InputStream.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Context {sigpipe_default : bool}.   (* AsanInit's: the launch's SIGPIPE disposition at entry *)
 
   (* [comment removed for export] *)
   Definition SINVm (E : env) (M : word -> option byte) : Prop :=
-    SINV0 ph sp rdraw brk0 argv envp uid hw E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []
+    SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default) E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []
     /\ forall j, eb E (8 + j)%nat = chunk j c.
 
-  Lemma SINVm_SINV0 : forall E M, SINVm E M -> SINV0 ph sp rdraw brk0 argv envp uid hw E M.
+  Lemma SINVm_SINV0 : forall E M, SINVm E M -> SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default) E M.
   Proof. intros E M [H _]. exact H. Qed.
 
-  Lemma SINVm_frame : forall E M M', (forall a, argH0 ph sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINVm E M -> SINVm E M'.
+  Lemma SINVm_frame : forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SINVm E M -> SINVm E M'.
   Proof. intros E M M' Hf (H0 & H1 & H2 & H3). split; [eapply SINV0_frame; eassumption | auto]. Qed.
 
   Lemma SINVm_agree : forall E E' M, env_agree NX0 E E' -> SINVm E M -> SINVm E' M.
@@ -225,7 +239,7 @@ Section Main.
     rewrite <- Heb. auto.
   Qed.
 
-  Lemma SINVm_reblob : forall E M, SINV0 ph sp rdraw brk0 argv envp uid hw E M -> SINVm (reblob E argv c) M.
+  Lemma SINVm_reblob : forall E M, SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default) E M -> SINVm (reblob E argv c) M.
   Proof.
     intros E M [Hev HM]. split; [split; [exact Hev | exact HM]|].
     split; [reflexivity|]. split; [reflexivity|]. intros j. cbn [reblob eb].
@@ -235,7 +249,7 @@ Section Main.
 
   Lemma hid_reblob : forall E cs model,
     forallb pair_bf (a_vis cs) = true ->
-    hid A (argH0 ph sp rdraw argv envp uid hw) (reblob E argv c) cs model = hid A (argH0 ph sp rdraw argv envp uid hw) E cs model.
+    hid A (argH0 sp rdraw argv envp kern execfn) (reblob E argv c) cs model = hid A (argH0 sp rdraw argv envp kern execfn) E cs model.
   Proof.
     intros E cs model Hv. apply functional_extensionality. intros a. unfold hid, vis, APS.in_allow.
     rewrite (in_vis_evsame E (reblob E argv c) (reblob_evsame E argv c) cs _ Hv).
@@ -244,15 +258,15 @@ Section Main.
 
   Theorem cs_ok_reblob : forall LIMIT FS0 E cs R FULL model,
     acs_noblob cs = true ->
-    cs_ok segs A LIMIT (SINV0 ph sp rdraw brk0 argv envp uid hw) (argH0 ph sp rdraw argv envp uid hw) FS0 E cs R FULL model ->
-    cs_ok segs A LIMIT SINVm (argH0 ph sp rdraw argv envp uid hw) FS0 (reblob E argv c) cs R FULL model.
+    cs_ok segs A LIMIT (SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default)) (argH0 sp rdraw argv envp kern execfn) FS0 E cs R FULL model ->
+    cs_ok segs A LIMIT SINVm (argH0 sp rdraw argv envp kern execfn) FS0 (reblob E argv c) cs R FULL model.
   Proof.
     intros LIMIT FS0 E cs R FULL model Hnb HC.
     unfold acs_noblob in Hnb.
     apply andb_prop in Hnb as [Hnb Hfd]. apply andb_prop in Hnb as [Hnb Hbrk]. apply andb_prop in Hnb as [Hnb Hgh].
     apply andb_prop in Hnb as [Hnb Hvis]. apply andb_prop in Hnb as [Hnb Hmaps]. apply andb_prop in Hnb as [Hregs Hkn].
     pose proof (reblob_evsame E argv c) as HS. set (E' := reblob E argv c) in *.
-    destruct HC as [f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 fH f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26].
+    destruct HC as [f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 fH f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 frdr].
     constructor.
     - eapply regs_ok_evsame; [exact HS | exact Hregs | exact f1].
     - exact f2.
@@ -285,6 +299,7 @@ Section Main.
     - rewrite (allowA_evsame E E' HS A cs Hvis Hgh). exact f24.
     - unfold E'. rewrite (hid_reblob E cs model Hvis). intros a H1 H2 H3 H4 H5. rewrite (in_ghost_evsame E (reblob E argv c) (reblob_evsame E argv c) cs _ Hgh) in H5. exact (f25 a H1 H2 H3 H4 H5).
     - apply SINVm_reblob. exact f26.
+    - exact frdr.
   Qed.
 End Main.
 
@@ -471,9 +486,9 @@ Section Hooks.
   Variables (segs : list Segment) (A : atable) (nx0 : nat) (RP : RPN.rptab) (T : ION.iotab).
   Definition XNm (id : nat) (args : list expr) (cs : acs) : option acs :=
     if (id <? 10)%nat then AN.xn segs A nx0 id args cs
-    else if (id <? 25)%nat then ION.xn segs T id args cs
+    else if (id <? 25)%nat then ION.xn segs T A id args cs
     else if (id <? 40)%nat then YN.xn segs A id args cs                (* [comment removed for export] *)
-    else if (id <? 100)%nat then ION.xn segs T id args cs
+    else if (id <? 100)%nat then ION.xn segs T A id args cs
     else if (id =? 105)%nat then SLN.xn segs nx0 (SLN.sltab_of A) id args cs   (* [comment removed for export] *)
     else if (id =? 106)%nat then SLN.xn segs nx0 (SLN.sltab_of A) id args cs   (* [comment removed for export] *)
     else if (id <? 110)%nat then RPN.xn segs nx0 RP id args cs
@@ -482,7 +497,7 @@ Section Hooks.
     else if ((id =? 120) || (id =? 121))%nat then GN.xn nx0 id args cs   (* [comment removed for export] *)
     else XLN.xn (XLN.abi_of A) segs A nx0 id args cs.   (* [comment removed for export] *)
   Definition XEm (id : nat) (args : list expr) (cs : acs) : option (Z * list spiece * acs) := AN.xe segs A nx0 id args cs.
-  Definition XBm (id : nat) (args : list expr) (cs : acs) : option (acs * acs) := ION.xb segs nx0 T id args cs.
+  Definition XBm (id : nat) (args : list expr) (cs : acs) : option (acs * acs) := ION.xb segs nx0 T A id args cs.
 End Hooks.
 (* [comment removed for export] *)
 Definition HS_none (h : nat) : option acs := None.
@@ -544,6 +559,20 @@ Section ClassSound.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Variable apc : N.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variable urnd : InputStream.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Context {sigpipe_default : bool}.   (* AsanInit's: the launch's SIGPIPE disposition at entry *)
+  (** see [AsanInit.pinned_kernel]: [recorded_kernel]'s eight fields; CONFIG_RSEQ free *)
+  Hypothesis Hkernel : in_kernel (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default))
+    = pinned_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default))).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default)).
 
   Let argc := Z.of_nat (length argv).
   Let L0 := Z.of_nat (length (nth 0 argv [])).
@@ -554,7 +583,14 @@ Section ClassSound.
   Lemma L0_range' : 0 <= L0 <= 131071.
   Proof. unfold L0. pose proof (valid_argv_str_len argv 0 Hva ltac:(destruct Hva as [Hl _]; lia)). lia. Qed.
   Lemma L1_range' : 0 <= L1 <= 131071.
-  Proof. exact (L1_range ph sp rdraw argv envp uid hw Hva). Qed.
+  (* proved in place, as [AsanInit.L1_range] is: it needs only [argv] and [Hva], both of
+     which this section has, so no change in [AsanInit.L1_range]'s inferred [Proof using]
+     set can shift an argument position here. *)
+  Proof.
+    unfold L1. destruct (Nat.lt_ge_cases 1 (length argv)) as [Hl|Hl].
+    - pose proof (valid_argv_str_len argv 1 Hva Hl). lia.
+    - rewrite nth_overflow by lia. cbn. lia.
+  Qed.
   Lemma qlook_range : 0 <= qlook argv fs <= 4.
   Proof.
     pose proof (qlook_cases argv fs) as Q. destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q; lia).
@@ -593,13 +629,17 @@ Section ClassSound.
   Qed.
 
   Theorem facts_of_class_sound : forall segs C E M,
-    in_class C argv fs = true -> (forall n, (n < 8)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    in_class C argv fs = true -> (forall n, (n < 8)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp uid kern execfn) n) ->
     know_ok segs E M (facts_of_class C).
-  Proof.
+  Proof using All.
     intros segs C E M HC Hev.
-    pose proof (uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (_ & _ & UA & _ & UL0 & _).
-    pose proof (uE0_L1 ph sp rdraw brk0 argv envp uid hw Hva) as UL1.
-    assert (HV : forall n, (n < 8)%nat -> uE E (EVar n) = uE (E0 ph sp rdraw brk0 argv envp uid hw) (EVar n)).
+    (* [uE0]'s proof in AsanInit uses [entry_stack_fits], so its hypotheses include [Hfit],
+       this section's own. *)
+    pose proof (uE0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn Hsp Hva Hve Hfit Hlau) as (_ & _ & UA & _ & UL0 & _).
+    (* [uE0_L1] takes the entry pc first: its type is
+         N -> forall sp rdraw brk0 argv envp uid kern execfn, valid_argv argv -> ... *)
+    pose proof (uE0_L1 apc sp rdraw brk0 argv envp uid kern execfn Hva) as UL1.
+    assert (HV : forall n, (n < 8)%nat -> uE E (EVar n) = uE (E0 sp rdraw brk0 argv envp uid kern execfn) (EVar n)).
     { intros n Hn. unfold uE. cbn [edenot]. rewrite (Hev n Hn). reflexivity. }
     pose proof argc_range as HA. pose proof L0_range' as HL0. pose proof L1_range' as HL1.
     pose proof (cbounds_sound C QArgc argv fs HC (qval_bounds QArgc)) as BA.

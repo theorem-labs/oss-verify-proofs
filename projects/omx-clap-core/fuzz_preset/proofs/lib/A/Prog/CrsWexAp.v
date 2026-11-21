@@ -3,18 +3,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 671 of its 740 lines of code are new or changed and 859 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/CrsKitAp.v; 15 of its 55 lines of code are new or changed and 700 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/CrsBoundAp.v, with its module paths and module names changed; 64 of its 98 lines of code are new or changed and 21 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): ONE SHARED INTERIM PREMISE of the walk of check_reject_clean_starved, the
    pj_write text at crcs's four pj_write calls, with the call's exact position advance in the kit's terms. Requires
-   the frozen kit lib/A/Prog/CrsKitAp.v (cold/h-w6u-rep-crsa2-v3 df14c8cd3eb9) only.
+   the frozen kit lib/A/Prog/CrsKitAp.v only.
    rule 24: proves function check_reject_clean_starved (reuse search: `proof-index
    check_reject_clean_starved 0x82160`, the internal file index-crcs-Aprime.out, and an internal record of that
    lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). Written new. This file proves nothing: it STATES.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
    - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (listings v3).
-   - K0 texts (K0's #102 kit tip of record cold/h-hpreset-7-walkkit-next decff67d721f, by path on kit v3):
+   - K0 texts (K0's #102 kit tip of record, by path on kit v3):
      tpj_write_specX in lib/A/PRH_FnWriter.v blob 2b497bc72172 (:654-703), the ledger prh_ledger .. ran most own of
      lib/A/PRH_Base.v blob 3004a98fe2d9, tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob 4cb899514e6c.
    WHY AN INTERIM. decff's tpj_write_specX is in the event form (entry premise prh_run_at .. (prhWriter_pjw_evs [] ..),

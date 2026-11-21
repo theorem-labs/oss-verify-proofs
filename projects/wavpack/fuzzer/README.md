@@ -11,7 +11,7 @@ Opens the input as a WavPack stream (tags, wrapper, DSD-as-PCM, OPEN_NO_CHECKSUM
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
 
 ## What the harness checks
-The harness makes no check of its own beyond not crashing, so a statement about it says only that the code it calls never crashes, hangs or trips a sanitizer.
+The harness makes no check of its own beyond not crashing. Its halts statements say only that the code it calls never crashes, hangs or trips a sanitizer. Its agreement statements say only that the code never crashes or trips a sanitizer, and allow a run that never ends. Its bound statements say only how often its builds may disagree. Its decidability statements say only that some program decides where its builds agree.
 
 The harness turns some inputs away by returning a value other than 0 or -1, which the driver reports as status 78, so its halts statements allow 78 as well:
 - An input WavpackOpenFileInputEx64 cannot open as a WavPack stream is returned 1 ([lines 148-153](source/fuzzer.cc#L148-L153)).

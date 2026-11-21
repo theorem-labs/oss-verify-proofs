@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger counts the launch's reserved pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector bitvector.tactics.
@@ -69,8 +70,8 @@ Hypothesis Hcode : code_ok segs code.
 Hypothesis Halloc : sc_alloc cfg = false.
 Variable R0 : list (word * word).
 Variable Rb Rc Lim : Z.
-Hypothesis HRb : live_bytes R0 <= Rb.
-Hypothesis HRc : Z.of_nat (length R0) <= Rc.
+Hypothesis HRb : res_cost R0 <= Rb.
+Hypothesis HRc : Z.of_nat (res_count R0) <= Rc.
 Variable keep : list int.
 Variable mem0 : word -> option byte.
 Variable XI : (int -> word) -> Model -> Prop.

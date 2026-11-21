@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO, walks lifted to the run's segments): changed Safe_init_within_budget, check_mmap_limit, checked_table_preserves_limit and 1 more. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -48,7 +49,7 @@ Lemma check_mmap_limit : forall addr len prot flags fd off eff m m' evs,
   check_mmap addr len prot flags fd off eff m = CheckOk m' evs ->
   vm_limit (m_vmmaps m') = vm_limit (m_vmmaps m).
 Proof.
-  intros addr len prot flags fd off eff m m' evs H. unfold check_mmap in H. cbv zeta in H. lim_arm H.
+  intros addr len prot flags fd off eff m m' evs H. unfold check_mmap, check_mmap_fixed_overflow in H. cbv zeta in H. lim_arm H.
 Qed.
 
 Lemma check_mremap_limit : forall old old_size new_size flags eff m m' evs,
@@ -149,6 +150,9 @@ Proof.
     | erewrite check_epoll_create1_frame by eassumption; reflexivity
     | erewrite check_epoll_ctl_frame by eassumption; reflexivity
     | erewrite check_epoll_pwait_frame by eassumption; reflexivity
+    | erewrite check_pwritev2_frame by eassumption; reflexivity
+    | erewrite check_set_robust_list_frame by eassumption; reflexivity
+    | erewrite check_clock_getres_frame by eassumption; reflexivity
     | fail 1 "VmLimitFrame: no case for this dispatcher arm (give it a *_frame lemma or a *_limit one)" ].
 Qed.
 
@@ -196,6 +200,10 @@ Proof.
   - match goal with Ha : mi_account_step _ _ _ = MachineOk _ |- _ =>
       destruct (mi_account_step_model_frame _ _ _ _ _ Ha) as (_ & Hvm & _) end.
     rewrite Hvm. reflexivity.
+  - rewrite m_vmmaps_with_vdso_bump.
+    match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ =>
+      rewrite (materialize_preserves_limit _ _ _ Hm) end.
+    eapply syscall_spec_preserves_limit; eassumption.
   - match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ =>
       rewrite (materialize_preserves_limit _ _ _ Hm) end.
     eapply syscall_spec_preserves_limit; eassumption.
@@ -287,7 +295,11 @@ Lemma Safe_init_big : forall scfg segs pc ph sp brk0 mbase rnd lim inp,
   nbr_limit <= lim -> Safe segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp).
 Proof. intros. left. rewrite init_config_limit. assumption. Qed.
 
+(* [run_scfg_budget_refused] runs over [run_segments segs inp sp mbase] at
+   the revision (the image's segments plus the vDSO pages), so the budget
+   premise speaks about that configuration. *)
 Lemma Safe_init_within_budget : forall scfg segs pc ph sp brk0 mbase rnd lim inp,
   ~ run_scfg_budget_refused scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp ->
-  Safe segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp).
+  Safe (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp).
 Proof. intros scfg segs pc ph sp brk0 mbase rnd lim inp H. right. exact H. Qed.

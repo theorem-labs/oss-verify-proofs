@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's ENOMEM answer (refusal_b_215, acfg_family_off_215) and its place among the allocation-marked syscalls; the model's three vDSO step cases in the sstep_cfg inversions; sstep_cfg_sys_inv). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -38,7 +39,7 @@ Lemma alloc_no_b_false (n : Z)
   -> ~ In n alloc_mark_sysnos.
 Proof.
   intros Hnb Hmark.
-  destruct Hmark as [E | [E | [E | [E | []]]]]; subst n; discriminate Hnb.
+  destruct Hmark as [E | [E | [E | [E | [E | []]]]]]; subst n; discriminate Hnb.
 Qed.
 Lemma acfg_nonspurious_no (segs : list Segment) (ms : machine_state) (x8 : word) (n : Z)
     (m : Model) (eff : SyscallEffect)
@@ -51,18 +52,23 @@ Lemma acfg_family_off_of_in (i : SyscallInput)
   -> injected_family_off ACFG i = true.
 Proof.
   intros Hmark. unfold injected_family_off.
-  destruct Hmark as [E | [E | [E | [E | []]]]]; rewrite <- E; reflexivity.
+  destruct Hmark as [E | [E | [E | [E | [E | []]]]]]; rewrite <- E; reflexivity.
+Qed.
+Lemma acfg_family_off_215 : forall i, bv_unsigned (in_sysno i) = 215%Z -> injected_family_off ACFG i = true.
+Proof.
+  intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
+  unfold alloc_mark_sysnos. simpl. repeat (first [left; reflexivity | right]).
 Qed.
 
 Lemma acfg_family_off_222 (i : SyscallInput)
   : bv_unsigned (in_sysno i) = 222%Z -> injected_family_off ACFG i = true.
-Proof. intros Hsys. apply acfg_family_off_of_in. rewrite Hsys. now right; right; left. Qed.
+Proof. intros Hsys. apply acfg_family_off_of_in. rewrite Hsys. now right; right; right; left. Qed.
 Lemma acfg_family_off_226 (i : SyscallInput)
   : bv_unsigned (in_sysno i) = 226%Z -> injected_family_off ACFG i = true.
-Proof. intros Hsys. apply acfg_family_off_of_in. rewrite Hsys. now right; right; right; left. Qed.
+Proof. intros Hsys. apply acfg_family_off_of_in. rewrite Hsys. now right; right; right; right; left. Qed.
 Lemma acfg_family_off_216 (i : SyscallInput)
   : bv_unsigned (in_sysno i) = 216%Z -> injected_family_off ACFG i = true.
-Proof. intros Hsys. apply acfg_family_off_of_in. rewrite Hsys. now right; left. Qed.
+Proof. intros Hsys. apply acfg_family_off_of_in. rewrite Hsys. now right; right; left. Qed.
 Lemma acfg_family_off_214 (i : SyscallInput)
   : bv_unsigned (in_sysno i) = 214%Z -> injected_family_off ACFG i = true.
 Proof. intros Hsys. apply acfg_family_off_of_in. rewrite Hsys. now left. Qed.
@@ -79,6 +85,12 @@ Proof. intros Hsys. unfold refusal_b. now rewrite Hsys. Qed.
 Lemma refusal_b_214 (i : SyscallInput) (m : Model) (r : word)
   : bv_unsigned (in_sysno i) = 214%Z -> refusal_b i m r = brk_refusal_b m (in_arg i 0) r.
 Proof. intros Hsys. unfold refusal_b. now rewrite Hsys. Qed.
+Lemma refusal_b_215 : forall i m r, bv_unsigned (in_sysno i) = 215%Z ->
+  refusal_b i m r = ret_in_errnos munmap_errnos r.
+Proof.
+  intros i m r; cbv beta zeta delta [refusal_b].
+  generalize (bv_unsigned (in_sysno i)); intros ? ->; exact eq_refl.
+Qed.
 Lemma ret_in_errnos_ENOMEM (r : word)
   : ret_in_errnos [ENOMEM] r = bv_eqb r (errno_ret ENOMEM).
 Proof. exact (orb_false_r (bv_eqb r (errno_ret ENOMEM))). Qed.
@@ -87,6 +99,8 @@ Proof.
   intros es e Hin. unfold ret_in_errnos. apply existsb_exists. exists e. split; [exact Hin|].
   apply bv_eqb_eq. reflexivity.
 Qed.
+Lemma ret_in_errnos_ENOMEM_zero : ret_in_errnos [ENOMEM] (Z_to_bv 64 0) = false.
+Proof. reflexivity. Qed.
 
 Lemma refusal_spurious_of_grant (cfg : SpuriousCfg) (i : SyscallInput) (m : Model)
     (eff eff' : SyscallEffect) (m' : Model) (evs' : list event)
@@ -214,6 +228,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
 Qed.
 Lemma transparent_family_on (ms : machine_state) (model : Model) (x8 : word)
   : ms_svc_pending ms = Some x8
@@ -224,6 +241,9 @@ Proof.
   pose proof (fun e => spurious_refusal_family_on ACFG (sys_input segs ms x8) model e Hfam) as Hok.
   remember (mkCfg ms model) as c eqn:Ec. intros Hstep. revert Ec.
   destruct Hstep as [ms0 m0 ms1 m1 Hh Hp Hst | ms0 m0 Hh Hp Hst | ms0 m0 Hh Hp Hst
+    | ms0 m0 fn n e m1 m2 tr Hh Hp Hst Hfn Hvn Hs Hef Hm Hmat
+    | ms0 m0 fn n e m1 tr Hh Hp Hst Hfn Hvn Hs Hef Hm Hmat
+    | ms0 m0 fn Hh Hp Hst Hfn Hun
     | ms0 m0 y e m1 m2 tr Hh Hp Hs Hm Hmat | ms0 m0 y e m1 tr Hh Hp Hs Hm Hmat
     | ms0 m0 y e m1 tr k Hh Hp Hs Hm Hk | ms0 m0 y e m1 tr k Hh Hp Hs Hk | ms0 m0 y Hh Hp Hs];
     intros Ec; injection Ec as -> ->; rewrite Hsvc in Hp; try discriminate Hp; injection Hp as <-.
@@ -334,6 +354,40 @@ Lemma inv_no_reaches_error_cfg (Inv : config -> Prop)
 Proof.
   intros c Hc (tr & c' & evs & Hrun & Herr).
   exact (Hnoerr c' evs (star_cfg_inv Inv Hstep c tr c' Hc Hrun) Herr).
+Qed.
+Lemma sstep_cfg_sys_inv : forall ms model x8 evs st,
+  ms_svc_pending ms = Some x8 ->
+  sstep_cfg segs cfg (mkCfg ms model) evs st ->
+  let i := sys_input segs ms x8 in
+  (exists eff model' evs0,
+      syscall_spec i model (Ok eff model' evs0)
+      /\ ~ spurious_refusal_cfg cfg i model eff
+      /\ m_halted model' = None
+      /\ match materialize_model_accesses model' (syscall_effect_accesses eff) with
+         | Some model'' => evs = evs0 /\ st = SNext (mkCfg (advance_past_svc (apply_effect ms eff)) model'')
+         | None => evs = [] /\ st = SError
+         end)
+  \/ (exists eff model' evs0 code',
+      syscall_spec i model (Ok eff model' evs0)
+      /\ m_halted model' = Some code' /\ m_killed model' = None
+      /\ evs = evs0 ++ [ExitEv code' (m_fs model')] /\ st = SNext (mkCfg ms model'))
+  \/ (exists eff model' evs0 sig,
+      syscall_spec i model (Ok eff model' evs0)
+      /\ m_killed model' = Some sig
+      /\ evs = evs0 ++ [KillEv sig (m_fs model')] /\ st = SNext (mkCfg ms model'))
+  \/ (syscall_spec i model Unmodeled /\ evs = [] /\ st = SError).
+Proof.
+  intros ms model x8 evs st Hsvc Hss. cbv zeta.
+  inversion Hss; subst;
+    try match goal with H : ms_svc_pending ms = None |- _ => rewrite Hsvc in H; discriminate H end;
+    match goal with H : ms_svc_pending ms = Some ?x |- _ => rewrite Hsvc in H; injection H as <- end.
+  - left. eexists _, _, _. repeat (split; [eassumption|]).
+    match goal with H : materialize_model_accesses _ _ = Some _ |- _ => rewrite H end. split; reflexivity.
+  - left. eexists _, _, _. repeat (split; [eassumption|]).
+    match goal with H : materialize_model_accesses _ _ = None |- _ => rewrite H end. split; reflexivity.
+  - right; left. eexists _, _, _, _. repeat (split; [eassumption|]). split; reflexivity.
+  - right; right; left. eexists _, _, _, _. repeat (split; [eassumption|]). split; reflexivity.
+  - right; right; right. split; [assumption|]. split; reflexivity.
 Qed.
 
 End Star.

@@ -4,8 +4,8 @@
    read-only string table it names lives). The image-generic half
    (wrappers, string premises, runtime contract shapes, source constants) is lib/A/FSH_Gen.v, stated once for both builds;
    lib/B/FSH_Base.v holds the same names over fs.asan-ubsan. Definitions only (rule 24: no function proved).
-   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Base.v (a working branch e48bf3cce32, with the
-   FMH_* text of 706affbdbe6, 3e0aa997be6, 137702429de, a1902517c68); donor proofs/cgif/cgif_file_fuzzer/lib.
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Base.v (a working branch, with the
+   FMH_* text); donor proofs/cgif/cgif_file_fuzzer/lib.
    Every numeral is MEASURED from the unstripped twin
    (internal path) (its PT_LOAD contents equal the pinned
    fs.asan's, sha256 64b53ff8..., except 25 bytes at 0x10028..0x102cb: the ELF header's e_shoff / e_shnum / e_shstrndx and
@@ -35,7 +35,7 @@ Definition FS_RLO : Z := 0x9f190.
 Definition FS_RHI : Z := 0xa03e8.
 
 (* ---- fs.asan: the 41 target functions (the T: rows of FsBinMatch.data/fs-functions.asan.tsv), each sym <name> ---- *)
-(* fuzz_state.c (LLVMFuzzerTestOneInput is FS_LLVMF above: the name A_LLVMF is the core's, A/ACfn.v:20) *)
+(* fuzz_state.c (LLVMFuzzerTestOneInput is FS_LLVMF above: the name A_LLVMF is the core's, A/ACfn.v:21) *)
 Definition A_check_no_overread : Z := 0x811c8.
 Definition A_check_bounded_alloc : Z := 0x81560.
 Definition A_check_as_written : Z := 0x81590.
@@ -112,8 +112,8 @@ Definition FS_GOT_canary : Z := 0xa0378.
 Definition FS_canary : Z := 0x5faf70.
 (* the ASan shadow-offset cell: sym __asan_shadow_memory_dynamic_address 0xa7f38 (8 bytes) and the one .got word equal
    to it, 0x9f6f0 (unstripped twin, pyelftools), in the relocated core's names (lib/A/AB1w.v:594, :605). FsShadowSyms is
-   the one named shadow-cell hypothesis of fs's runtime walks, text of a working branch 3210d71ee38
-   lib/A/FSstrlen.v:586-588. It is discharged by lib/A/ACeg.v's TfibLib (tl_got_shadow, tl_shadow_cell; A_GOT_shadow
+   the one named shadow-cell hypothesis of fs's runtime walks, text of a working branch
+   lib/A/FSstrlen.v:587-589. It is discharged by lib/A/ACeg.v's TfibLib (tl_got_shadow, tl_shadow_cell; A_GOT_shadow
    0x9f6f0, A_shadow_glob 0xa7f38) once lib/A/ACej.v builds. The two numerals are image A's, so it is here and not in
    FSH_Gen.v; lib/B/FSH_Base.v states B's. *)
 Definition FsShadowSyms (B : asyms) : Prop :=
@@ -249,7 +249,7 @@ Definition STK_check_round_trip : Z :=
   Z.max PROBE_check_round_trip (FRAME_check_round_trip + zmaxl [STK_RT_FAKE; STK_RT_STR; STK_RT_BCMP; STK_RT_ALLOC;
     STK_RT_INTRIN; STK_preset_base64_encode; STK_preset_base64_decode; STK_pj_object; STK_pj_string; STK_pj_set;
     STK_pj_write; STK_pj_parse; STK_pj_get; STK_pj_get_str; STK_fuzz_free; STK_pj_free 2]).
-(* <= the shared core's LLVMF_STK = 32768 (A/ACfn.v:25) *)
+(* <= the shared core's LLVMF_STK = 32768 (A/ACfn.v:26) *)
 Definition STK_LLVMF : Z :=
   Z.max PROBE_LLVMF (FRAME_LLVMF + zmaxl [STK_RT_FAKE; STK_RT_STR; STK_RT_ALLOC; STK_RT_INTRIN; STK_check_no_overread;
     STK_fuzz_alloc; STK_preset_base64_decode; STK_check_bounded_alloc; STK_check_as_written; STK_check_round_trip;

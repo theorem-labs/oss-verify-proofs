@@ -199,7 +199,7 @@ Definition frame_allocator_cf {rc : RunCeil} {fx : FPState} (B : malloc_syms) (A
   (forall L A mem md a, aa_MR API L A mem md -> in_globals frame_RELRO a -> ~ owned B L A a).
 
 (* frame_ubsan (U/FrameAPI.v) without its last conjunct, and that conjunct (the slot's obligation). frame_ubsan's
-   ms_debruijn_len B = 132 (7c15abed81: static_owned covers [ms_debruijn B - 108, ms_debruijn B + max 32 len)) is
+   ms_debruijn_len B = 132 (static_owned covers [ms_debruijn B - 108, ms_debruijn B + max 32 len)) is
    placed just before frame_allocator, so the positions of the earlier conjuncts stay as they were. *)
 Definition frame_facts (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B) (LS : lib_shape)
     (SH : sink_head) (SK : sink_syms) (ra empty : Z) : Prop :=

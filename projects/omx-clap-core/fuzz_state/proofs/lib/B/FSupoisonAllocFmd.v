@@ -19,7 +19,8 @@
    byte classes: application memory, the image's shadow, the freed block's shadow).
    The trace premise is afree_realizesU's (In ... (as_universe B) \/ st_nev S < EV_MAX), turned into tr_admit by
    tr_admit_call; the depot call takes its length (tr_admit_len), as the donor AFg2.v / AFfz.v do. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFmd.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: pc_free_ra0 Tfib_code, pc_wrap_free Tfib_code, A_Enqueue, A_StackDepotPut, PC_PUT_DRAIN_RA, PC_PUT_ENQ_RA. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFmd.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: pc_free_ra0 Tfib_code, pc_wrap_free Tfib_code, A_Enqueue, A_StackDepotPut, PC_PUT_DRAIN_RA, PC_PUT_ENQ_RA. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

@@ -5,9 +5,9 @@
    to the return of fuzz_free (file) at 0x82404 (0x82408, crt_INV_822ac, published in lib/B/FSH_crt_base.v), with the
    class-3 fake frame live (own = [(3, pos)]).
 
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 82a1d1bf3a6 lib/A/FSH_crt_segD1.v)
-   Port source: a working branch 82a1d1bf3a6 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1.v, itself
-   PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD1.v)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1.v, itself
+   PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/
    check_round_trip_stdefs.v St17 :521 / St18 :535 and check_round_trip_sd16.v crt16_runB :541 / crt16_runA :392, with
    check_round_trip_sd17.v and check_round_trip_sd18.v for the two fuzz_free steps (the checker's CONFIRM for this walk
    is on the lane head (internal path), role check, 2026-10-29

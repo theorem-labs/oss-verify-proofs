@@ -39,6 +39,7 @@
 (* Modified by Theorem Labs, 2026-10: Section f's vm_frame / asource_at_frame (a copy of lib/B/Prog/PcapSourceClose.v's,
    over an implicit segs) deleted; their uses name lib/A/Prog/PcapSourceCloseSpec.v's vm_frame_segs /
    asource_at_frame_segs. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -61,7 +62,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib.B.Prog Require Import PcapSyms PcapL
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require Import PcapBase YC4b YC81.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.B.Prog Require Import YC1g YC1h YC85 PcapFrame.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Stdio Require Import PSource PSourceMeta PFreadISpec.
-(* The shared statement and its image-free constants (NxCore-2's Spec, 607d702cbb4): Required directly, so the
+(* The shared statement and its image-free constants (NxCore-2's Spec): Required directly, so the
    alias AN below does not depend on what lib/B's Defs Require-Exports. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require PcapSourceNextSpec.
 (* The stream predicates read only their footprint: the segs-generic vm_frame_segs / asource_at_frame_segs of

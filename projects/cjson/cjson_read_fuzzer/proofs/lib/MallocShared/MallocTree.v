@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: auxv_list is built from the launch's StackLayout.auxv_entries (with the CONFIG_RSEQ pairs and AT_EXECFN), with two lemmas on its length. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require StackLayout.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require Import Tac Image ZBridge SysStep SFModel ITree Nodes Decode Arr.
 
@@ -91,8 +93,19 @@ Definition ptr_rel (p : optr) (r : option bptr) : Prop :=
   end.
 
 (* [comment removed for export] *)
-Definition auxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* The auxv words of a launch, in the model's order (StackLayout.auxv_entries: type, value, type,
+   value, ...): 26 pairs, then two CONFIG_RSEQ pairs when [la_rseq la], then AT_NULL.  AT_RANDOM is
+   pair 24 (words 48, 49), AT_EXECFN pair 25 (words 50, 51). *)
+Definition auxv_list (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (ent uid gid hw rnd xfn : word) : list word :=
+  flat_map (fun e => [fst e; snd e]) (StackLayout.auxv_entries la ph ent uid gid hw rnd xfn).
+
+Lemma length_auxv_list : forall la ph ent uid gid hw rnd xfn,
+  length (auxv_list la ph ent uid gid hw rnd xfn) = (2 * StackLayout.auxv_count (StackLayout.la_rseq la))%nat.
+Proof. intros [ehdr c msz [|]] ph ent uid gid hw rnd xfn; reflexivity. Qed.
+
+Lemma length_auxv_list_le : forall la ph ent uid gid hw rnd xfn,
+  (length (auxv_list la ph ent uid gid hw rnd xfn) <= 58)%nat.
+Proof. intros. rewrite length_auxv_list. unfold StackLayout.auxv_count. destruct (StackLayout.la_rseq la); lia. Qed.
 
 Lemma Forall_disjoint_from : forall (P : Z * Z -> Prop) W a n,
   Forall P W -> (forall lo hi, P (lo, hi) -> a + n <= lo \/ hi <= a) -> disjoint_from W a n.

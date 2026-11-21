@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_string_seg_ep.v, with its module paths and module names changed; 1144 of its 1229 lines of code are new or changed and 275 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S6: a Theorem Labs lane's program walk of pj_string (46 instructions) over the ONE image-A program
    listing (lib/A/Listing_prog.v v4, a Theorem Labs lane), generic in the image facts (Context PAImg A_prog_listing) and in the
    allocator relation ARx (LAWS : AR_laws_x .. cf_head), concluding the text tpj_string_specX from the memset row and
@@ -13,13 +14,13 @@
    `jal fuzz_strdup`, where ps_tail takes over: the call (YCbqGcallW.v aj_call_xW), v's node at the return state by
    its place (a harness block, another block, a caller's fake frame), a fresh seat at +0x60 (ss_ps3), the str store
    and the epilogue (YC80xf_inv.v paj_run_xf_inv: v may be in a caller's fake frame), the ret (paj_ret_at), the post.
-   Texts: the kit's cut 7cdbb61b5fa0 (lib/A/PRH_FnPj.v 5aca5cbe2cfb, PRH_FnAlloc.v 4d8aeba047e5, PRH_Base.v
+   Texts: the kit's cut (lib/A/PRH_FnPj.v 5aca5cbe2cfb, PRH_FnAlloc.v 4d8aeba047e5, PRH_Base.v
    ef7c8ca98529, PRH_Reader.v 4266e709561a). History: re-fitted 2026-10-29 from the old-pin kit preset-tree-at-2026-10-29T13-54-32Z.tsv (sha256 14e543909afe; internal record) onto the
    #102 kit, then onto the batch and the cut: the ledger's most / own threaded, fpre's frm_zero passed to fuzz_strdup, fuzz_strdup's
    post-implication position arms applied at pj_string's own run, kept_img's per-instance pa_hi bound in pal_lit).
    Engine on the cut: YGcallMxmn.v 3c08bbab8292, YC80x.v 14f84f225e8f, YC1fPx.v 7814b594066f, YSRrMemnorm.v
    5ffa8525936b, YCbqGcallW.v fb6aa11676a2, YC80xf_inv.v 082f0c430210; PRW_StepKit.v 0df3991c13f4; listing
-   Listing_prog.v 7ed1529926bd, PAImg_prog.v 505a51ff7d08 (first proved with a Theorem Labs lane's set s1b 459129c18903 over listing
+   Listing_prog.v 7ed1529926bd, PAImg_prog.v 505a51ff7d08 (first proved with a Theorem Labs lane's set s1b over listing
    v4).
    Image-free pieces: lib/A/Prog/PjStringCommon.v (one copy with image B: pjs_bytes, pjs_hdr, pjs_node_str, pjs_fd0,
    the pjs1_ and pjs2_ lemmas), S6PjCommon.v. A's own: ps_vplace, ps_vheads, ps_cstr_kept, pjs0_lit_ok_A (A's twin of image B's
@@ -83,8 +84,8 @@ Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Variable SK : YI16.sink_head.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
-(* The kit's tpj_string_specX (PRH_FnPj.v 5aca5cbe2cfb at the kit's cut; first written against an earlier batch commit
-   62dc819e58ff, and at the cut the live bound holds only under cnt <> fail: the run's strtod model keyed to ReaderRes.jr_strtod, DW dropped, the consumer-allocation entry premise
+(* The kit's tpj_string_specX (PRH_FnPj.v 5aca5cbe2cfb at the kit's cut; first written against an earlier batch,
+   and at the cut the live bound holds only under cnt <> fail: the run's strtod model keyed to ReaderRes.jr_strtod, DW dropped, the consumer-allocation entry premise
    prh_cons_from, the dead refusal arm (cnt <> fail -> a <> 0) of DEAD-PJSTRING) with fpostWm .. Q =
    fpostW .. (fQmn mem Q) generalised to fpostW .. (fun .. => Q .. /\ (P mem -> P mem')): equal to the text by
    conversion at P := YAkMemnorm.memnorm segs (tpj_string_specX_of_P below) *)
@@ -189,7 +190,7 @@ Hypothesis PAB : @pa_lo _ _ PA = IMG_LO.
 (* the callees: the memset row with its memnorm keep (a Theorem Labs lane's YGcallMxmn.v aintrin_realizes_xm) and the text of
    fuzz_strdup (PRH_FnAlloc.v, m-form) *)
 Hypothesis AIM : aintrin_realizes_xm SEGS B ARx OSet (SIGMA AS___asan_memset).
-(* fuzz_strdup's text (the kit, PRH_FnAlloc.v 4d8aeba047e5 on the kit's cut 7cdbb61b5fa0: post-implication position
+(* fuzz_strdup's text (the kit, PRH_FnAlloc.v 4d8aeba047e5 on the kit's cut: post-implication position
    arms and the outcome conjunct under the run hypothesis; the hull budget for its one event at entry, which ps_tail
    pays from pj_string's run position, and the hull use in its post) *)
 Hypothesis STRDUP : tfuzz_strdup_specX (cp := CP) (PI := prh_img_A) (PA := PA) B ARx SK.
@@ -214,7 +215,7 @@ Hypothesis pal_lit :
   (forall a, PS_LIT < a < PS_LIT + 8 -> seg_rom SEGS (Z_to_bv 64 a) <> None) /\
   (forall ly, In (z1 (ANum (shadow_addr PS_LIT)) 1) (as_const B ly)).
 (* kit fact, a STATE claim on every allocator state (not a layout claim): the image's shadow map is visible; the kit's
-   shadow facts give it, as image B's pjs_g_lit_of_kit (lib/B/Prog/pj_string_top.v:101). Split off the old pal_lit
+   shadow facts give it, as image B's pjs_g_lit_of_kit (lib/B/Prog/pj_string_top.v:102). Split off the old pal_lit
    unchanged. *)
 Hypothesis pal_lit_sh :
   forall ly S Hp W mem md a, ARx ly S Hp W mem md -> IMG_LO <= a < IMG_TOP ->
@@ -423,7 +424,7 @@ destruct HAT as [(a0 & k0 & Hin0 & Ha0 & Hk0) | [(b & m & Hin1 & Hnl & Hb & Hm) 
 Qed.
 
 (* the "" literal at the call: an image string under route (a), A's twin of image B's pjs0_lit_ok
-   (lib/B/Prog/pj_string_seg_ent.v:245-292), over the image fact pal_lit (the one byte read) and the kit fact
+   (lib/B/Prog/pj_string_seg_ent.v:246-293), over the image fact pal_lit (the one byte read) and the kit fact
    pal_lit_sh *)
 Lemma pjs0_lit_ok_A : forall ly S Hp W m md Lam, ARx ly S Hp W m md ->
   arodata_okP SEGS (@pa_relro_lo _ _ PA) (@pa_relro_hi _ _ PA) B (aview SEGS (w_H W) m) ->

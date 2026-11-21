@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30 (G-BRA, B top_x row 21 RA_x): the B top's RA_x at its cf instance.
 
-   fr_relay_add_x is the B top's RA_x (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:220, with the room record RP after MT as
+   fr_relay_add_x is the B top's RA_x (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:221, with the room record RP after MT as
    the room kit's ra_spec_g_x states it, lib/B/W_contract_x.v Section w5g) at B := TfibB, PST := [], ARx := ARX_ra
    (top_x.v:154-155's ARX, the same body), RG := fr_globals, CTX := YCk0.CTX_AREALLOC, from lib/B/W_relay_add_x.v's
    pb_relay_add_x.  Its Section hypotheses are top_x's own texts (TL, TLF, MLAW, FFL, HRO, ALOCK, AUNLOCK, the realloc
@@ -12,6 +12,7 @@
    lib/B/W_wake_x.v pb_wake_x, the placement facts by lib/B/W_relay_add_cut.v Section fr / W_wake_x.v wk_hv8_fr, and
    the image facts by computation at TfibB.  It holds at any meter MT with MLAW and MO_FR (top_x's meter Variable). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_relay_add_fr_x.v, with its module paths and module names changed; 178 of its 229 lines of code are new or changed and 120 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* ReplyBTop's row OA_R (op_add's contract at route R, at the top's instance) as a lemma.
    btr_OA_R's statement is the row's Context type in ReplyBTop, for every rc and fx.  Its proof instantiates the proved
    route-R walk W_op_add.pb_op_add_g_xR at the instance (PI := PB_fr, B := TfibB, PST := [], ARx := top_x's ARX,

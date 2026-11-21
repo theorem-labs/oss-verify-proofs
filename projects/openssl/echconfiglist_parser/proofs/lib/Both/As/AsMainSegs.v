@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the blocks of Section Blocks walk the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing, through drv_run_lf_rt under the run's driver laws asan_driver_laws_run, since main reaches the target, which calls time() and so reads the vDSO; aseg_X_bin, in Section BinX, is aseg_X over the binary's own segments under the binary's driver laws, for the usage tail of Both/As/AsMainTails.v). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -18,6 +19,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Amb
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import MState Exec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsCXXHeap AsDriverLaws RefExitBase AsDrvRun
   AsDrvDefs AsTRSegs AsMainWalk_defs.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail.
 (* [comment removed for export] *)
 Import ListNotations.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
@@ -74,19 +76,26 @@ Lemma acovI : log_covered regL (s_log (fst (fst rI))) = true. Proof. vm_compute.
 Lemma acovX : log_covered regL (s_log (fst (fst rX))) = true. Proof. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
+(* The walk is over the run's segment list from the configuration with that list's read-only
+   backing ([arz]; [drv_run_lf_rt], Both/As/AsDrvRun.v); the symbolic run, the knowledge and the
+   memory facts stay the binary's. *)
 Ltac run_segM scr pc sr kn nx r c E M R :=
   lazymatch goal with
-  | HVx : AsIface.as_VIS ?Hh ?sx ?msFx = _, DLx : asan_driver_laws ?Hh |- @realizes _ _ (mkCfg ?msFx ?mox) _ =>
-    eapply (drv_run_lf Hh DLx sx FUELM STOPSAM scr pc sr kn nx (fst (fst r)) (snd (fst r)) (snd r)
+  | HVx : AsIface.as_VIS ?Hh ?sx ?msFx = _, DLx : asan_driver_laws_run _ _ _ _ ?Hh |- @realizes _ _ (RomBase.cwrom (mkCfg ?msFx ?mox) _) _ =>
+    eapply (drv_run_lf_rt Hh DLx sx FUELM STOPSAM scr pc sr kn nx (fst (fst r)) (snd (fst r)) (snd r)
               (fst (fst c)) (snd (fst c)) (snd c) E M R msFx mox);
     [ vm_cast_no_check (@eq_refl _ r) | vm_cast_no_check (@eq_refl _ c) | | | | scs_nil | | | ]
   end.
 
 Section Blocks.
   Context {HCEIL : HeapCeil}.
+  (* main's blocks lie on its path to the target, which calls time() and so reads and enters the
+     vDSO: their walks are over the run's segment list, under the run's driver laws *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Hypothesis HH : asan_rt_hyps H.
-  Hypothesis DL : asan_driver_laws H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
   Variable sp0 : word.
   Hypothesis Hvsp : valid_sp sp0.
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
@@ -173,9 +182,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1eedac) mem' rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         an_regs regs' pp A 0 0x10000 ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eed74) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A K (R2 & R4 & R8 & R18 & R20) R10 HA R21 Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -218,9 +227,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1a8728) mem' rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         aread_call_regs regs' pp A len cap (Z.min (cap - len) 65536) ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eedac) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap K (((R2 & R4 & R8 & R18 & R20) & R22) & R19 & R21 & R23) Hlen Hcap Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -262,9 +271,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1a8728) mem' rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         aread_call_regs regs' pp A len cap (Z.min (cap - len) 65536) ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eedec) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap K (((R2 & R4 & R8 & R18 & R20) & R22) & R19 & R21 & R9) Hlen Hcap Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -312,9 +321,9 @@ Section Blocks.
         getr regs' 10 = Z_to_bv 64 (A + len) -> getr regs' 11 = Z_to_bv 64 0xbccf50 -> getr regs' 12 = Z_to_bv 64 n ->
         getr regs' 19 = Z_to_bv 64 len -> getr regs' 21 = Z_to_bv 64 cap -> getr regs' 23 = Z_to_bv 64 n ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eee08) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap n K (((R2 & R4 & R8 & R18 & R20) & R22) & R9 & R10 & R19 & R21) Hn Hlen HA HAl Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -346,9 +355,9 @@ Section Blocks.
         getr regs' 22 = Z_to_bv 64 0xbccf50 ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
         rdn RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 136)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x1eee20)) ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eee08) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap K (((R2 & R4 & R8 & R18 & R20) & R22) & R9 & R10 & R19 & R21) Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -378,9 +387,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1eef50) mem' rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         abase_regs regs' pp -> getr regs' 9 = Z_to_bv 64 A ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eee08) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap K (((R2 & R4 & R8 & R18 & R20) & R22) & R9 & R10 & R19 & R21) Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -410,9 +419,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1eedac) mem' rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         an_regs regs' pp A (len + n) cap -> getr regs' 9 = Z_to_bv 64 A ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eeda0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap n K (((R2 & R4 & R8 & R18 & R20) & R22) & R9 & R19 & R21 & R23) Hl Hn Hln Hcap Hne Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -441,9 +450,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1eedb4) mem' rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         ag_regs regs' pp A cap ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eeda0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap n K (((R2 & R4 & R8 & R18 & R20) & R22) & R9 & R19 & R21 & R23) Hl Hn Hcap Heq Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -471,9 +480,9 @@ Section Blocks.
         albase_regs regs' pp -> getr regs' 1 = Z_to_bv 64 0x1eedc8 -> getr regs' 9 = Z_to_bv 64 A -> getr regs' 10 = Z_to_bv 64 (2 * len) ->
         getr regs' 19 = Z_to_bv 64 len -> getr regs' 21 = Z_to_bv 64 (2 * len) -> getr regs' 23 = Z_to_bv 64 A ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eedb4) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len K (((R2 & R4 & R8 & R18 & R20) & R22) & R9 & R19 & R21 & R23) Hlen Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -501,9 +510,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1eef6c) mem' rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         abase_regs regs' pp -> getr regs' 9 = Z_to_bv 64 A ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eedb4) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len K (((R2 & R4 & R8 & R18 & R20) & R22) & R9 & R19 & R21 & R23) Hlen Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -538,9 +547,9 @@ Section Blocks.
         getr regs' 10 = Z_to_bv 64 A2 -> getr regs' 11 = Z_to_bv 64 A -> getr regs' 12 = Z_to_bv 64 len ->
         getr regs' 19 = Z_to_bv 64 len -> getr regs' 21 = Z_to_bv 64 cap -> getr regs' 23 = Z_to_bv 64 A ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eedc8) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap A2 K ((R2 & R4 & R8 & R18 & R20) & R22) R10 R19 R21 R9 R23 HA2 Hlen Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -570,9 +579,9 @@ Section Blocks.
         albase_regs regs' pp -> getr regs' 1 = Z_to_bv 64 0x1eedec -> getr regs' 9 = Z_to_bv 64 A2 ->
         getr regs' 10 = Z_to_bv 64 A -> getr regs' 19 = Z_to_bv 64 len -> getr regs' 21 = Z_to_bv 64 cap ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eede4) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap A2 K ((R2 & R4 & R8 & R18 & R20) & R22) R9 R19 R21 R23 Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -600,9 +609,9 @@ Section Blocks.
         getr regs' 1 = Z_to_bv 64 0x1eef20 -> getr regs' 9 = Z_to_bv 64 A -> getr regs' 10 = Z_to_bv 64 A ->
         (forall r : reg, In r [18; 19; 20; 21; 22; 23; 24; 25; 26; 27]%list -> getr regs' r = getr regs r) ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eef18) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A status K R2 R4 R8 R9 Hstk Hro Hrel HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -637,9 +646,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x55e55c) mem rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         getr regs' 2 = Z_to_bv 64 (bv_unsigned sp0 - 48) -> getr regs' 4 = Z_to_bv 64 0xbe1c90 -> getr regs' 10 = status ->
         getr regs' 1 = Z_to_bv 64 0x55de50 ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eef20) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem status K R2 R4 R8 Hstk Hro Hrel [MF MS] HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -725,9 +734,9 @@ Section Blocks.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1eeedc) mem' rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         abase_regs regs' pp -> getr regs' 9 = Z_to_bv 64 A ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x56aac0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A len cap K (R1 & R2 & R4 & R8 & R9 & R10 & R18 & R19 & R20 & R21) Hlen Hstk Hro Hrel Hra HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -755,9 +764,9 @@ Section Blocks.
         getr regs' 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr regs' 4 = Z_to_bv 64 0xbe1c90 -> getr regs' 8 = Z_to_bv 64 2 ->
         getr regs' 20 = Z_to_bv 64 3 -> getr regs' 9 = Z_to_bv 64 A ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x56aac0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A cap data K (R1 & R2 & R4 & R8 & R9 & R10 & R18 & R19 & R20 & R21) Hl6 Hov HA0 HAh Hdisj HB Hstk Hro Hrel Hra HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (hdr_cfg_range data) as Hcr.
@@ -802,9 +811,9 @@ Section Blocks.
         atr_call_regs regs' A (Z.of_nat (length data)) (hdr_cfg data) (bv_swrap 8 (hdr_b data 1)) ->
         (forall r : reg, In r [22; 23; 24; 25; 26; 27]%list -> getr regs' r = getr regs r) ->
         frame_mod mem mem' (regL_w sp0) -> stk_ok RSEGS mem' (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x56aac0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem pp A cap data K (R1 & R2 & R4 & R8 & R9 & R10 & R18 & R19 & R20 & R21) Hok HA0 HAh HB Hstk Hro Hrel Hra HK HV HAK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (hdr_cfg_range data) as Hcr.
@@ -856,3 +865,68 @@ Section Blocks.
         [fin_reg HR' (22:reg) | fin_reg HR' (23:reg) | fin_reg HR' (24:reg) | fin_reg HR' (25:reg) | fin_reg HR' (26:reg) | fin_reg HR' (27:reg)].
   Qed.
 End Blocks.
+
+(* The binary's own block run ([drv_run_lf] over asegs from asegs's backing), for aseg_X_bin. *)
+Ltac run_segM_bin scr pc sr kn nx r c E M R :=
+  lazymatch goal with
+  | HVx : AsIface.as_VIS ?Hh ?sx ?msFx = _, DLx : asan_driver_laws ?Hh |- @realizes _ _ (mkCfg ?msFx ?mox) _ =>
+    eapply (drv_run_lf Hh DLx sx FUELM STOPSAM scr pc sr kn nx (fst (fst r)) (snd (fst r)) (snd r)
+              (fst (fst c)) (snd (fst c)) (snd c) E M R msFx mox);
+    [ vm_cast_no_check (@eq_refl _ r) | vm_cast_no_check (@eq_refl _ c) | | | | scs_nil | | | ]
+  end.
+
+(* aseg_X over the binary's own segments under the binary's driver laws: the exit block of the
+   usage tail (Both/As/AsMainTails.v), a branch that never calls time() and so stays over asegs.
+   The statement and proof are Section Blocks's aseg_X before the run's segment list. *)
+Section BinX.
+  Context {HCEIL : HeapCeil}.
+  Variable H : asr.
+  Hypothesis DL : asan_driver_laws H.
+  Variable sp0 : word.
+  Hypothesis Hvsp : valid_sp sp0.
+  Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
+  Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
+  Let rom := seg_rom asegs.
+
+  (* Section Blocks's unset_v and fin_reg, which end with that section *)
+  Ltac unset_v_bin := repeat match goal with w := MV _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => subst w end.
+  Ltac fin_reg_bin HR' r :=
+    unset_v_bin; regv HR' r; cbn [edenot ev MENV mvals vals_ev nth app v_sp0 v_tid v_pp v_A v_len v_cap v_A2 v_n v_b8 v_b9 v_b10 v_b11 v_b0 v_b1];
+    first [ reflexivity | assumption
+          | rewrite ev_junk by lia; first [assumption | symmetry; assumption | reflexivity]
+          | ed_lin idtac; unorm; first [reflexivity | f_equal; lia | apply bv_eq; rewrite !Z_to_bv_unsigned, !bv_wrap64_mod; f_equal; lia] ].
+
+  Lemma aseg_X_bin : forall s msF mo regs mem (status : word) K,
+    getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr regs 4 = Z_to_bv 64 0xbe1c90 -> getr regs 8 = status ->
+    stk_ok RSEGS mem (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK -> aro_none mem -> arelro_none mem -> amframe sp0 mem ->
+    (forall regs' msF' mo',
+        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x55e55c) mem rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
+        getr regs' 2 = Z_to_bv 64 (bv_unsigned sp0 - 48) -> getr regs' 4 = Z_to_bv 64 0xbe1c90 -> getr regs' 10 = status ->
+        getr regs' 1 = Z_to_bv 64 0x55de50 ->
+        realizes asegs (mkCfg msF' mo') K) ->
+    as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eef20) mem rom -> as_AKREL H s (mkCfg msF mo) ->
+    realizes asegs (mkCfg msF mo) K.
+  Proof.
+    intros s msF mo regs mem status K R2 R4 R8 Hstk Hro Hrel [MF MS] HK HV HAK.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    destruct (MS 0%nat ltac:(lia)) as [w0 W0]. destruct (MS 1%nat ltac:(lia)) as [w1 W1]. destruct (MS 2%nat ltac:(lia)) as [w2 W2].
+    destruct (MS 3%nat ltac:(lia)) as [w3 W3]. destruct (MS 4%nat ltac:(lia)) as [w4 W4]. destruct (MS 5%nat ltac:(lia)) as [w5 W5].
+    destruct (MS 6%nat ltac:(lia)) as [w6 W6]. destruct (MS 7%nat ltac:(lia)) as [w7 W7].
+    cbn [Z.of_nat Pos.of_succ_nat Pos.succ Z.mul Pos.mul Z.add] in W0, W1, W2, W3, W4, W5, W6, W7.
+    set (v := MV sp0 (Z_to_bv 64 0) (getr regs 18) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) w0 w1 w2 w3 w4 w5 w6 w7).
+    assert (HR : regs_ok (MENV v regs) srX0 regs) by (subst v; prove_regs_ok).
+    assert (HKn : know_ok RSEGS (MENV v regs) mem knX).
+    { unfold knX. apply (proj2 (know_ok_app RSEGS _ _ _ _)). split; [| apply (aknL_ok sp0 Hvsp); subst v; try assumption; reflexivity].
+      repeat (apply Forall_cons); [ .. | apply Forall_nil ].
+      all: lazymatch goal with |- kentry_ok _ _ _ (KWord (SA (EVar 0) ?k) 8 ?e) =>
+             eapply (kword_intro RSEGS _ mem (EVar 0) sp0 k 8 e); [reflexivity | subst v; reflexivity | lia | lia | lia | lia |];
+             first [ replace (bv_unsigned sp0 + k)%Z with (bv_unsigned sp0 - (- k))%Z by lia; cbn [Z.opp Pos.succ]; assumption
+                   | match goal with W : rdn _ _ (Z_to_bv 64 ?a) 8 = Some (word_to_le_bytes 8 ?w) |- rdn _ _ (Z_to_bv 64 ?b) 8 = Some (word_to_le_bytes 8 ?w) =>
+                       replace b with a by lia; exact W end ]
+           end. }
+    run_segM_bin noscr 0x1eef20%Z srX0 knX 46%nat rX caX (MENV v regs) mem regs; [exact HR | exact HKn | scs_nil | exact HV | exact HAK |].
+    intros R' M' msF' mo' HR' HK' EQM LF HV' HA' SB'. change (s_pc (fst (fst rX))) with 0x55e55c%Z in HV'. change (s_regs (fst (fst rX))) with srX in HR'.
+    cbn [mem_denot] in EQM. subst M'.
+    apply (HK _ _ _ HV' HA' SB'); [fin_reg_bin HR' (2:reg) | fin_reg_bin HR' (4:reg) | fin_reg_bin HR' (10:reg) | fin_reg_bin HR' (1:reg)].
+  Qed.
+End BinX.

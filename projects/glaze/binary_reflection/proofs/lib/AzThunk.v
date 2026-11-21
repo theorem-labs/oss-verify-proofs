@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nmodel's channel-reader conjunct in the transitivity and frame lemmas). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -32,7 +33,8 @@ Hypothesis RZ_silent1 : GPS.RZ_SILENT1 SEGS RZ.
 #[local] Notation cfg := (fun fx R p M mdl => mkCfg (mkstF fx R (Z_to_bv 64 p) M (seg_rom SEGS)) mdl).
 
 Lemma nmodel_trans : forall m1 m2 m3, nmodel m1 m2 -> nmodel m2 m3 -> nmodel m1 m3.
-Proof. intros m1 m2 m3 (A1 & A2 & A3) (B1 & B2 & B3). split; [exact B1|]. split; [rewrite B2; exact A2 | rewrite B3; exact A3]. Qed.
+Proof. intros m1 m2 m3 (A1 & A2 & A3 & A4) (B1 & B2 & B3 & B4). split; [exact B1|]. split; [rewrite B2; exact A2|].
+  split; [rewrite B3; exact A3 | rewrite B4; exact A4]. Qed.
 
 (* [comment removed for export] *)
 Lemma h_thunk_step : forall thunk body fx R M mdl L LF B C K T,
@@ -66,9 +68,12 @@ Proof.
     change (unrestrict H M (mkstF fx R (Z_to_bv 64 body) (mrestrict H M) (seg_rom SEGS))) with
            (mkstF fx R (Z_to_bv 64 body) (munrestrict H M (mrestrict H M)) (seg_rom SEGS)).
     rewrite munrestrict_mrestrict.
-    pose proof (same_but_materialized_frame mdl mdl' Hsame) as (_ & _ & _ & _ & _ & _ & _ & _ & Hfds & _ & _ & Hfs & Hhalt & _).
+    pose proof (same_but_materialized_frame mdl mdl' Hsame) as (_ & _ & _ & _ & _ & Hproc & _ & _ & Hfds & _ & _ & Hfs & Hhalt & _).
     apply Hk.
-    + unfold nmodel. rewrite Hhalt. repeat split; assumption.
+    + unfold nmodel. rewrite Hhalt. repeat split; try assumption.
+      (* [co_rdr]: sixth frame component, [m_proc mdl' = m_proc mdl]; [m_channel_reader]
+         is a projection of it (AzAPS.v:413-420). *)
+      unfold m_channel_reader. rewrite Hproc. reflexivity.
     + exact (Hmat mdl' Hminv' Hsame).
 Qed.
 

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bFacts.v at 25d4b718638e for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; the frame's shadow patterns are over lib/A/RtPgMem.v rtm_sh (56 granules) in place of RPgMem.rm_sh (52); the image ranges are rate's PT_LOADs; w7_at_cell reads the cell at q_R e + o (lib/A/RtPgBase.v rt_renv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bFacts.v for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; the frame's shadow patterns are over lib/A/RtPgMem.v rtm_sh (56 granules) in place of RPgMem.rm_sh (52); the image ranges are rate's PT_LOADs; w7_at_cell reads the cell at q_R e + o (lib/A/RtPgBase.v rt_renv). *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; addresses measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3): the facts the assembly of the walk of

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: cw_strcmp_at is the text of proofs/libreac/fuzz_identity/lib/A/Prog/
-   reac_box_catalogue_defect.v:180-245 (aj_strcmp_at, origin/ossv/recipes 4b6f0df50aa7) in the form of
+   reac_box_catalogue_defect.v:180-245 (aj_strcmp_at) in the form of
    lib/Reusable/YCbq.v's aj_bcmp_at, with the result stated as the wrapper's value and moved to libdiginet/fuzz_codec's
    ASan build (image A); cw_cs_k / cw_cs_k_spec are that file's catd_k / catd_k_spec over list Z. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The call of the strcmp wrapper (image A: the 4-byte jump at 0x422d4) from a walk of codec's own code.
    - cw_strcmp_at: the wrapper's contract (lib/A/Rt/StrcmpDef.v astrcmp_realizes) at the walk's journal, with sp at
      offset o of the journal's sp0: the premises the wrapper asks for (the k + 1 compared bytes of both strings

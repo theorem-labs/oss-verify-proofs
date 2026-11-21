@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cg.v, with its module paths and module names changed; 60 of its 130 lines of code are new or changed and 615 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The crash-free twin of lt_glue.v: g_run_cf and g_check_cf, the lemmas g_run and g_check with SRcf B in place
    of SR (ms_segs B), over libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v
-   (25e3d17bdb50) llvm_run_norm_cf. *)
+   llvm_run_norm_cf. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

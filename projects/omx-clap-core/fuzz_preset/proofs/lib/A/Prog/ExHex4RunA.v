@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset image A' (#102 pin asan 1be0f53d96cb, facts 8f3e7e1a07f1), ex_hex4
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset image A' (#102 pin asan 1be0f53d96cb, facts), ex_hex4
    (fuzz_preset.c :136-155; A_prog_sigma AS_ex_hex4 = A 0x84688, 55 instructions, 220 bytes) in the achain-free RUN
    FORM that ex_string's A' walk takes as its Section hypothesis for ex_hex4:
      ex_hex4_run_A : texhex4_runA SK B PST ARx (A_prog_sigma AS_ex_hex4)        (lib/A/Prog/ExsA_Callee.v)
    over any allocator relation ARx with AR_laws_x (YCbqG.v) and the two image facts of A that PALib states at
    PI_prog_A (pal_got_shadow / pal_cell, YC1fP.v): EXH_HGOT / EXH_HCELL.
    rule 24: proves function ex_hex4 (reuse search: see the brief)
-   PORTED from lib/B/Prog/ExHex4RunB.v (image B', asan-ubsan d663f82d7f48, a Theorem Labs lane's proved walk, on the cut
-   7cdbb61b5fa0): the same plan (journal-free helpers, the invariant runners exh_run / exh_run_to over YC80x's
+   PORTED from lib/B/Prog/ExHex4RunB.v (image B', asan-ubsan d663f82d7f48, a Theorem Labs lane's proved walk, on the cut):
+   the same plan (journal-free helpers, the invariant runners exh_run / exh_run_to over YC80x's
    srr_inv_laws, the entry / turn / final / failret segment lemmas, the loop induction exh_loopP, exh_mainP and the
    run form with the memnorm keep), re-pointed at A' code and the whole-range table A_prog_tbl of A_prog_listing /
    PI_prog_A. WHAT CHANGED against the donor:
@@ -104,7 +105,7 @@ mkSS (EXH_PC + 0x9c) exh_fregs [exh_stkL; exh_outR] None
 Definition ss_exh_q : sstate :=
 mkSS (EXH_PC + 0xb8) sr_atoms [exh_stkL] None (mkFacts [(2%nat, EXH_SPF)] [] []).
 
-(* ---- journal-free helpers (h-verbs-1's hex4_x.v / hex4_xs.v, d83df2ff2fa4, renamed exh_) ---- *)
+(* ---- journal-free helpers (h-verbs-1's hex4_x.v / hex4_xs.v, renamed exh_) ---- *)
 Fixpoint exh_hacc (v : Z) (l : list Z) : option Z :=
 match l with
 | [] => Some v
@@ -216,7 +217,7 @@ getr regs 14 = w64 SHADOW_OFF /\ getr regs 15 = w64 (4 - i) /\ getr regs 16 = w6
 
 (* ---- YCbqG's table runners SRr_run_tok_AJx / SRr_run_to_tok_AJx carrying a memory invariant Pinv (YC80x
    srr_inv_laws; the run step is YC80x.SRr_msteps_inv). The shape of h-verbs-1's hex4_mn.v Section tw
-   (d83df2ff2fa4, blob a0acac4a3e17), with its msteps_keeps hypothesis replaced by srr_inv_laws. ---- *)
+   (blob a0acac4a3e17), with its msteps_keeps hypothesis replaced by srr_inv_laws. ---- *)
 Section tw. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable SK : YI16.sink_head.
 Variable segs : list Segment.
@@ -314,7 +315,7 @@ eapply exh_chain; [exact Hms | exact Hlen | destruct r; [exact HS' | destruct Hr
 Qed.
 End tw.
 
-(* ---- the walk (h-verbs-1's hex4 walk, hex4_x.v / hex4_mn.v at d83df2ff2fa4, re-pointed at ex_hex4: its loop head
+(* ---- the walk (h-verbs-1's hex4 walk, hex4_x.v / hex4_mn.v, re-pointed at ex_hex4: its loop head
    is EXH_PC + 0x28, its digit tests are `bgeu c - 58, -10` / `bltu 5, c - 97` / `bltu 5, c - 65` with a `bltz` after
    the two letter subtractions, its accumulator step is `add`, and a0 / a2 carry the cursor) ---- *)
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

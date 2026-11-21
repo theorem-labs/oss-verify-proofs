@@ -1,14 +1,14 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v at 527e8d2097d9,
-   proofs/reac-pw/fuzz_role/lib/A/RPgW6aTail.v at e261793226b4 and proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v at
-   616508a91de2 for reac-pw/fuzz_rate's image A: module paths changed; their helpers (the register and chunk readers
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v at
+   proofs/reac-pw/fuzz_role/lib/A/RPgW6aTail.v and proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v
+    for reac-pw/fuzz_rate's image A: module paths changed; their helpers (the register and chunk readers
    of a run's last state, the leaf of a run, the call of __asan_memcpy) are restated over rate's kit (RtPgSteps'
    rts_post / rts_intrin_seq / rts_post_seq, RtPgMem's rtm_bytes) for a new block lemma, rate's case 9. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC9.v at 32f84792c2a6; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC9.v; for image B
    (fuzz_rate.asan-ubsan): every pc, register, real-frame cell and data address is image B's; the pod object is e62
    at F + 0x210 in the class-4 frame for locals (1024 bytes); the head's run also decides the two UBSan
    pointer-overflow tests 0x81aac and 0x81ac8 from its atom ranges; the tail moves the cursor and what is left into
    s10 and t1 and reloads s2; the kit is RtPgStepsB / RtPgMemB and the statement is RtPgW6bBaseB's w6bb_c9_stmt. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6bC9B.v at a191d52e2a9a for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6bC9B.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths changed (lib/AU/Img0.rsegs, lib/A/RPgBase and
    RPgCSpec, lib/AU/RPgSteps.v rl_ and lib/AU/RPgMem.v rm_ names); every pc, real-frame cell and data address is
    role B's: the head reads &e62 from [R+0x158], &e62.body from [R+0x110] (once, into a2, for both pointer-overflow

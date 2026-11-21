@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main phase's start over the launch bundle D_Manqc.main_launch of the launch input mkProcInputC, the models with the run's vDSO draw, the main-entry words p0C/p1C, and the openat path's end below TASK_SIZE), as bzip2/bzip2_compress_target's main phase was. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -153,7 +154,8 @@ Section Pilot.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv rdraw tid regs0 mem0.
+  Local Notation inp0 := (@mkProcInputC AMB [a0s; path] envv fs0 stdin0) (only parsing).
+  Hypothesis ME : main_launch inp0 mbase sp0 brk rdraw tid regs0 mem0.
   Hypothesis Hbrk : valid_brk RSEGS brk.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
@@ -173,11 +175,14 @@ Section Pilot.
      (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))].
   (* [comment removed for export] *)
   Definition model0 : Model :=
-    with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputC [a0s; path] envv fs0 stdin0)).
+    with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rdraw))
+      (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputC [a0s; path] envv fs0 stdin0))).
   (* [comment removed for export] *)
   Definition fds1g (fd3 : FdEntry) : list (word * FdEntry) := fd_insert fds0 (Z_to_bv 64 3) fd3.
   Definition model1g (fd3 : FdEntry) : Model :=
-    mkModelC (fds1g fd3) (mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk LIM mbase sp0) stdin0 fs0 None (Some tid) None.
+    (* the run's vDSO draw, as [model0]'s; [Amb.mkModelC] alone installs [vdso_draw_keep] *)
+    with_vdso (Vdso.vdso_run_init (ed_vdso rdraw))
+      (mkModelC (fds1g fd3) (mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp0 a_kernel) [] [] brk brk LIM mbase sp0) stdin0 fs0 None (Some tid) None).
   Definition fds1 : list (word * FdEntry) := fds1g (FdFile path (Z_to_bv 64 0)).
   Definition model1 : Model := model1g (FdFile path (Z_to_bv 64 0)).
 
@@ -188,7 +193,7 @@ Section Pilot.
   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
-  Lemma m1_vmmaps : forall fd3, m_vmmaps (model1g fd3) = mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk LIM mbase sp0.
+  Lemma m1_vmmaps : forall fd3, m_vmmaps (model1g fd3) = mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp0 a_kernel) [] [] brk brk LIM mbase sp0.
   Proof. intros. reflexivity. Qed.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -246,7 +251,7 @@ Section Pilot.
     forall e vals R M,
       In e openat_errnos ->
       length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 38 = errno_ret e ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0C a0s path envv rdraw -> vals_ev vals 2 = p1C a0s path envv rdraw ->
       vals_ev vals 5 = tid ->
       regs_ok (ENV vals) (sr_upd srA (ridx 10) (EVar 38)) R -> know_ok RSEGS (ENV vals) M knA ->
       (forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->
@@ -256,7 +261,7 @@ Section Pilot.
   Definition after_open_g (fd3 : FdEntry) (KB : TSet) : Prop :=
     forall vals R M,
       length vals = 38%nat -> vals_ev vals 0 = sp0 ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv -> vals_ev vals 5 = tid ->
+      vals_ev vals 1 = p0C a0s path envv rdraw -> vals_ev vals 2 = p1C a0s path envv rdraw -> vals_ev vals 5 = tid ->
       regs_ok (ENV vals) srB R -> know_ok RSEGS (ENV vals) M knB -> above_sp0 M -> PX M ->
       realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x22fc4) M (seg_rom RSEGS)) (model1g fd3)) KB.
   Definition after_open_branch (KB : TSet) : Prop := after_open_g (FdFile path (Z_to_bv 64 0)) KB.
@@ -283,7 +288,7 @@ Section Pilot.
   #[using="PX_frame Hplen Hvsp"] Lemma main_segB_g : forall fd3 KB vals R M,
     after_open_g fd3 KB ->
     length vals = 38%nat -> vals_ev vals 0 = sp0 ->
-    vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv -> vals_ev vals 5 = tid ->
+    vals_ev vals 1 = p0C a0s path envv rdraw -> vals_ev vals 2 = p1C a0s path envv rdraw -> vals_ev vals 5 = tid ->
     regs_ok (ENV vals) srB0 R -> know_ok RSEGS (ENV vals) M knA -> above_sp0 M -> PX M ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x2b77c) M (seg_rom RSEGS)) (model1g fd3)) KB.
   Proof.
@@ -303,25 +308,30 @@ Section Pilot.
     intros KA KB HKA HKB.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
-    pose proof (main_regs_ok sp0 a0s path envv rdraw tid regs0 mem0 Hvsp Htid ME) as HR.
-    pose proof (main_know_ok sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp Htid ME) as HK.
-    change (E0 sp0 a0s path envv rdraw tid regs0) with (ENV (vals0 sp0 a0s path envv tid regs0)) in HR, HK.
-    set (vals := vals0 sp0 a0s path envv tid regs0) in *.
+    pose proof ME as (Hvl & Hlau & ME').
+    pose proof (main_regs_ok inp0 mbase (0x17a18 : word) sp0 brk a0s path rdraw tid regs0 mem0 eq_refl Hva Hve Hvl Hlau Hvsp Htid ME') as HR.
+    pose proof (main_know_ok inp0 mbase (0x17a18 : word) sp0 brk a0s path rdraw tid regs0 mem0 eq_refl Hva Hve Hvl Hlau Hvsp Htid ME') as HK.
+    change (E0 inp0 sp0 a0s path rdraw tid regs0) with (ENV (vals0 inp0 sp0 rdraw tid regs0)) in HR, HK.
+    set (vals := vals0 inp0 sp0 rdraw tid regs0) in *.
     assert (HL : length vals = 38%nat) by (subst vals; unfold vals0; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0 sp0 a0s path envv) by reflexivity.
-    assert (P2 : vals_ev vals 2 = p1 sp0 a0s path envv) by reflexivity.
+    assert (P1 : vals_ev vals 1 = p0C a0s path envv rdraw) by reflexivity.
+    assert (P2 : vals_ev vals 2 = p1C a0s path envv rdraw) by reflexivity.
     assert (P5t : vals_ev vals 5 = tid) by reflexivity.
-    destruct (main_str sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
-    cbn [nth] in Sr, Slo, Shi, Slen.
+    destruct (main_str inp0 mbase (0x17a18 : word) sp0 brk a0s path rdraw tid regs0 mem0 eq_refl Hva Hve Hvl Hlau Hvsp Htid ME' 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
+    (* LPS 727298f3: the path's end lies below TASK_SIZE (openat's [path_at]), from the launch's stack top *)
+    pose proof (argv_ptr_fits inp0 mbase sp0 brk rdraw 1%nat Hlau ltac:(cbn; lia)) as Sfit.
+    change (cat_argv_ptr (ed_top rdraw) (in_argv inp0) (in_envp inp0) (in_execfn inp0) 1)
+      with (p1C a0s path envv rdraw) in Sr, Slo, Shi, Sfit.
+    change (nth 1 (in_argv inp0) []) with path in Sr, Slen, Sfit.
     clearbody vals.
     (* [comment removed for export] *)
     run_block_keep scr0 38%nat.
     (* [comment removed for export] *)
-    assert (Sr' : rdn RSEGS M (p1 sp0 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
-    { rewrite EQM. unfold p1. rewrite (rdn_mem_denot_above RSEGS (ENV vals) mem0 _ 0%nat 0x63000);
+    assert (Sr' : rdn RSEGS M (p1C a0s path envv rdraw) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
+    { rewrite EQM. rewrite (rdn_mem_denot_above RSEGS (ENV vals) mem0 _ 0%nat 0x63000);
         [exact Sr | vm_compute; reflexivity | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia | lia
-        | pose proof (u64_range (cat_argv_ptr sp0 [a0s; path] envv 1)); lia]. }
+        | pose proof (u64_range (p1C a0s path envv rdraw)); lia]. }
     (* [comment removed for export] *)
     eapply (rz_openat_file RSEGS _ _ _ model0 ECALLW); try apply is_ecall_ECALLW.
     - vm_compute. reflexivity.
@@ -332,7 +342,8 @@ Section Pilot.
     - regv HR (12 : reg). vm_compute. reflexivity.
     - (* [comment removed for export] *) rewrite m0_fds. rewrite alloc_fd_fds0. apply fd_lookup_fds0_3.
     - (* [comment removed for export] *) split; [exact Hplen|]. split; [apply path_nonul|].
-      regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. exact Sr'.
+      regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2.
+      split; [unfold TASK_SIZE; lia | exact Sr'].
     - exact Hpne.
     - exact Hpnd.
     - exact (proj2 path_noslash).

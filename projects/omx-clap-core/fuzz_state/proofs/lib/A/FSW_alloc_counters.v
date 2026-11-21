@@ -17,12 +17,12 @@
    uar flag, A_EMPTY or rodata shadow cell is read.
    port-from:
    - control flow: fs's released plain proofs lib/Prog/fuzz_alloc_live.v / _peak.v / _peak_reset.v / _fail.v (contracts
-     lib/Prog/fuzz_alloc_*_c.v, c8557374ad2e): straight-line steps, a0 / the static as the plain contract says, every
+     lib/Prog/fuzz_alloc_*_c.v): straight-line steps, a0 / the static as the plain contract says, every
      other register unchanged, return to ra. The ASan build has the same instructions at its own addresses.
    - concrete stepping: cgif_file lib/A/AE2x.v:83-115 (fw_mid3): SRr_step over the step_* lemmas, each fed a fetch fact
      and a decode fact, the restrict / unrestrict of mkst, same_but_materialized chained; the store's munrestrict /
      wbytes bookkeeping from cgif_file lib/A/AFep.v:87-125.
-   - the return post: FSW_K.v:448-461 (fsw_ret): ajournal_materialize of the journal, AR_laws_ok, fs_segs_low, fs_wx.
+   - the return post: FSW_K.v:449-462 (fsw_ret): ajournal_materialize of the journal, AR_laws_ok, fs_segs_low, fs_wx.
    No rename. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

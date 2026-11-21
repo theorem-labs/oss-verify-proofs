@@ -3,7 +3,7 @@
    f[eo], f[eo + 1]); cm_pre runs 0x8026c .. 0x802c0 (n < 14 to 0x80318; else the f[12], f[13] tests that set
    s9 := 12 / 16) and hands over to cm_tail. Each byte load is behind its shadow check (lib/B/AsanCells.v
    addressable, the k = 0 / k <> 0 cases), each UBSan wrap check falls through (f + 20 < 2^64). Proof idioms from
-   reac-repacer/fuzz_uci lib/B/Prog/UciCvBSegs.v (recipes commit 0295462466b2) and lib/B/Prog/AsanKAProof.v. *)
+   reac-repacer/fuzz_uci lib/B/Prog/UciCvBSegs.v (recipes) and lib/B/Prog/AsanKAProof.v. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Sem Fpu.

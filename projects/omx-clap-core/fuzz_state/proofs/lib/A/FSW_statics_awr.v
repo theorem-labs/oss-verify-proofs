@@ -1,4 +1,4 @@
-(* awr_ok over the entry regions of FSW_statics' fss0TS: kit rule R2 (FSW_K.v:31-33), once, for every fs walk that
+(* awr_ok over the entry regions of FSW_statics' fss0TS: kit rule R2 (FSW_K.v:32-34), once, for every fs walk that
    starts at fsw_entryTS and so carries the four writable static regions of alloc.c (g_count, g_fail_at, g_live,
    g_peak).
 

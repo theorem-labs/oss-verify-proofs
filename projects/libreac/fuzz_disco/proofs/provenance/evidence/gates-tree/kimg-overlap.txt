@@ -10,12 +10,12 @@
 #       ('HS_tfib_41_kn', 'KWord', '0x17afa0', 4, '0x17afa0', 0, 2, [('0x17afa0', '0x4d27e0')])
 #       states: 50, aliases 0, duplicate states 0
 #       KImg ranges: 139, findings 0
-b1afc3e80791ebe54b1034a568112da851f005f0:proofs/libreac/fuzz_disco/lib/A/AB01.v  overlapping write bytes 0  contradicting bytes 0
+:proofs/libreac/fuzz_disco/lib/A/AB01.v  overlapping write bytes 0  contradicting bytes 0
     states: 50, aliases 0, duplicate states 0
     KImg ranges: 139, findings 0
-b1afc3e80791ebe54b1034a568112da851f005f0:proofs/libreac/fuzz_disco/lib/A/AB03.v  overlapping write bytes 0  contradicting bytes 0
+:proofs/libreac/fuzz_disco/lib/A/AB03.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
     KImg ranges: 66, findings 0
-b1afc3e80791ebe54b1034a568112da851f005f0:proofs/libreac/fuzz_disco/lib/A/AD2j.v  overlapping write bytes 0  contradicting bytes 0
+:proofs/libreac/fuzz_disco/lib/A/AD2j.v  overlapping write bytes 0  contradicting bytes 0
     states: 0, aliases 0, duplicate states 0
     regions: 80, broken 0 (no donor control given)

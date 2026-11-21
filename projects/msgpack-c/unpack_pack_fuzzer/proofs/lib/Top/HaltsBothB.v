@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (both_rz takes the launch's whole ProcInput apart, passes the launch, channel-reader and CONFIG_RSEQ facts MainEntryBoth.both_main_boot asks, and lifts the walk to the run's segment list by RomStable.srun_init; it passes MainBoth.MAIN the library node of the certificates for the start state with CONFIG_RSEQ, G0Both.G0R, beside G0Both.G0). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -10,7 +11,7 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common Require Import Sha
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib Require Import TopLevel.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue Require Import DrvShape.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Top Require Import HaltsLib HaltsKitB.
-From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require MainEntryBoth SpinAlg.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require MainEntryBoth SpinAlg RomStable AsanPlanCore.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.BothW Require BImg.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA Require RzBridge.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueAsmB.Run Require MainBoth G0Both.
@@ -28,21 +29,26 @@ Definition BOTH : Image := mkImage bsegs b_init_pc b_phdrs.
 (* [comment removed for export] *)
 Theorem both_rz : forall sp brk0 mb rnd inp,
   valid_input inp -> valid_entry (mkImage bsegs b_init_pc b_phdrs) (mkEntry sp brk0 mb rnd) inp ->
-  realizes bsegs (init_config bsegs b_init_pc b_phdrs sp brk0 mb rnd target_alloc_limit inp) (K inp).
+  realizes (run_segments bsegs inp sp mb)
+    (init_config (run_segments bsegs inp sp mb) b_init_pc b_phdrs sp brk0 mb rnd target_alloc_limit inp) (K inp).
 Proof.
   intros sp brk0 mbase rdraw inp Hi0 Hv.
   pose proof (valid_input_either_of_valid_input _ Hi0) as Hi.
   assert (MAINA : forall ms mo, MainEntryBoth.bmain_at (mkEntry sp brk0 mbase rdraw) inp ms mo ->
                                 SpinAlg.srealizes bsegs (mkCfg ms mo) (K inp)).
-  { intros ms mo Hat. apply RzBridge.RzBridge.srealizes_bridge. exact (MainBoth.MAIN G0Both.G0 (mkEntry sp brk0 mbase rdraw) inp Hv Hi ms mo Hat). }
-  rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in Hv.
-  destruct Hv as (Hsp & Hbrk & Hmb & Hfit).
-  pose proof Hi as (Hva & Hve & Hfs & _ & [Huid Hgid] & Hnof & Hsigm & Hhw & Hvasz & _).
-  destruct inp as [argv envp fs stdin uid gid groups net nof sigm hw abt vasz urnd tmpf].
-  cbn in Hfit, Hva, Hve, Hfs, Huid, Hgid, Hhw, Hvasz. subst vasz.
+  { intros ms mo Hat. apply RzBridge.RzBridge.srealizes_bridge. exact (MainBoth.MAIN G0Both.G0 G0Both.G0R (mkEntry sp brk0 mbase rdraw) inp Hv Hi ms mo Hat). }
   apply RzBridge.RzBridge.realizes_of_srealizes_bridge.
-  exact (MainEntryBoth.both_main_boot sp brk0 mbase rdraw argv envp fs stdin uid gid groups net nof sigm hw abt urnd tmpf
-           Hsp Hbrk Hva Hve Hfit Huid Hhw _ (K_nil _) MAINA).
+  (* LPS 727298f3 (run_segments, from 75d69e00): the walk is over the image's own segments *)
+  apply RomStable.srun_init; [reflexivity|].
+  pose proof Hi as (Hva & Hve & Hfs & _ & _ & [Huid Hgid] & Hnof & Hsigm & Hhw & Hvasz & _ & Hlaunch & Hrdr & _).
+  apply (proj1 (valid_entry_sv48 _ _ _ Hvasz)) in Hv.
+  destruct Hv as (Hsp & Hbrk & Hmb & Hfit & Hlau).
+  destruct inp as [argv envp fs stdin uid gid groups net nof sigm hw abt vasz urnd tmpf kb execfn chrdr sigdef sigterm].
+  cbn in Hfit, Hva, Hve, Hfs, Huid, Hgid, Hhw, Hvasz. subst vasz.
+  (* both_main_boot takes the section hypotheses its proof uses: each from the context, the main-entry
+     states' justification by computation, the trace family's empty trace by K_nil *)
+  eapply (MainEntryBoth.both_main_boot sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nof sigm abt urnd tmpf kb execfn chrdr sigdef sigterm);
+    first [exact (MainEntryBoth.main_justified _ (AsanPlanCore.APC.rseq_z_range (kb_rseq kb))) | exact (K_nil _) | eassumption].
 Qed.
 
 Lemma lim_source_le_target : ShippedBudgets.lim_source <= target_alloc_limit.

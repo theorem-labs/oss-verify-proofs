@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fixed-point drive runs over the launch's reserved ledger ([vm_reserved], with the vDSO/vvar pair) and gives the driver the pair's frame fact; the ledger's cost and count bounds come from [res_bounds_vm]). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63.
@@ -43,7 +44,7 @@ Section FI.
     rho_of sp0 mb B (bv_unsigned can) sec tdz err R (Z_to_bv 64 0) (Z_to_bv 64 0).
   (* [comment removed for export] *)
   Definition FiInv : int -> (int -> word) -> fstate -> fledger -> machine_state -> Model -> Prop :=
-    DInvX ConeCfg.CFG RSEGS IMH (segments_reserved RSEGS) LIM RTgt KEEP M (XI_frame fi_m) []
+    DInvX ConeCfg.CFG RSEGS IMH (vm_reserved VM) LIM RTgt KEEP M (XI_frame fi_m) []
           (ms_fregs fi_ms) (ms_fcsr fi_ms) (seg_rom RSEGS) (fun x => bv_unsigned sp0 <= bv_unsigned x).
 
   (* [comment removed for export] *)
@@ -51,11 +52,11 @@ Section FI.
     fr_rho0  : fi_rho mb B sec tdz err 0%uint63 = Z_to_bv 64 0;
     fr_buf   : buf = bv_unsigned B + (if k =? 0 then 32 else offk k);
     fr_facts : Forall (hholds RSEGS (fi_rho mb B sec tdz err) fi_ms) (hfacts_all k);      (* [comment removed for export] *)
-    fr_res   : vm_reserved VM = segments_reserved RSEGS;
+    fr_res   : res_vm VM;
     fr_lim   : LIM <= vm_limit VM;                 (* [comment removed for export] *)
     fr_isp   : vm_init_sp VM = sp0;
     fr_exact : vm_exact VM sp0 mb bw B (hnb k);
-    fr_li    : ledger_inv (segments_reserved RSEGS) LIM 2 (hnb k + 8192) VM;
+    fr_li    : ledger_inv (vm_reserved VM) LIM 2 (hnb k + 8192) VM;
     fr_tid   : 0 < tdz < 2 ^ 22;
     fr_err   : 0 <= err < 2 ^ 32          (* [comment removed for export] *)
   }.
@@ -86,7 +87,7 @@ Section FI.
     assert (Hnbr : 0 < hnb k < 2 ^ 62).
     { unfold hnb. destruct (Z.eqb_spec k 0); [lia|]. assert (Hk1 : 1 <= k <= 10) by (unfold KS in Hk; cbn [In] in Hk; lia).
       pose proof (capk_bounds k Hk1). unfold nbk. lia. }
-    destruct res_bounds as (_ & _ & Hcov).
+    destruct (res_bounds_vm VM Vres) as (_ & _ & Hcov).
     pose proof (li_sp_lo _ _ _ _ _ Hli) as Hsplo. rewrite Visp in Hsplo. unfold sp_window_lo in Hsplo.
     pose proof (u64_range mb) as Um. pose proof (u64_range sp0) as Us. pose proof (u64_range B) as Ub.
     assert (Hmbtop : bv_unsigned mb + 8192 <= bv_unsigned sp0 - 8388608).
@@ -100,7 +101,7 @@ Section FI.
     unfold FiInv.
     change M with (ms_mem fi_ms) at 1.
     change (seg_rom RSEGS) with (ms_rom fi_ms).
-    apply (dinvx_root ConeCfg.CFG RSEGS IMH (segments_reserved RSEGS) LIM (XI_frame fi_m) []
+    apply (dinvx_root ConeCfg.CFG RSEGS IMH (vm_reserved VM) LIM (XI_frame fi_m) []
              (hfacts k) (ioz PC_TARGET) (ioz 0x10000) (ioz 0x354000) (ioz (hnb k)) (Some PKUnk) 200%uint63 rho fi_ms fi_m sp0 mb B (hnb k) KEEP HRn H0).
     - reflexivity.
     - reflexivity.
@@ -113,7 +114,7 @@ Section FI.
     - reflexivity.
     - split; reflexivity.
     - exact Hli.
-    - exact Vres.
+    - reflexivity.
     - exact Visp.
     - exact Xm.
     - exact Xn.
@@ -138,9 +139,12 @@ Section FI.
          realizes_cfg ConeCfg.CFG RSEGS (mkCfg ms' m') T) ->
     realizes_cfg ConeCfg.CFG RSEGS (mkCfg fi_ms fi_m) T.
   Proof.
-    intros fuel T HK. destruct fi_root as (mb & bw & B & sec & tdz & err & HR & HDI). destruct res_bounds as (HRb & HRc & _).
-    apply (drive_universalX ConeCfg.CFG RSEGS IMH CODE CODE_ok eq_refl (segments_reserved RSEGS) RB RC LIM HRb HRc
-             RTgt KEEP M (XI_frame fi_m) [] (XI_frame_rho fi_m []) (XI_frame_vm fi_m) XS (xask_b5 IMH CODE)
+    intros fuel T HK. destruct fi_root as (mb & bw & B & sec & tdz & err & HR & HDI). destruct (res_bounds_vm VM (fr_res _ _ _ _ _ _ HR)) as (HRb0 & HRc0 & _).
+    assert (HRb : res_cost (vm_reserved VM) <= RB) by (pose proof (res_cost_le (vm_reserved VM)); lia).
+    assert (HRc : Z.of_nat (res_count (vm_reserved VM)) <= RC) by (pose proof (res_count_le (vm_reserved VM)); lia).
+    apply (drive_universalX ConeCfg.CFG RSEGS IMH CODE CODE_ok eq_refl (vm_reserved VM) RB RC LIM HRb HRc
+             RTgt KEEP M (XI_frame fi_m) [] (XI_frame_rho fi_m []) (XI_frame_vm fi_m)
+             (XI_frame_vdso fi_m (vm_reserved VM) (res_vm_vdso_incl VM _ (fr_res _ _ _ _ _ _ HR))) XS (xask_b5 IMH CODE)
              (fun n rho F L ms m res (H : XS F L n = Some res) => ltac:(discriminate H))
              (ms_fregs fi_ms) (ms_fcsr fi_ms) (seg_rom RSEGS) (fun x => bv_unsigned sp0 <= bv_unsigned x)
              (ioz BP) 20%nat ltac:(lia) fuel 200%uint63 (fi_rho mb B sec tdz err) (F0 k) (L0 k) fi_ms fi_m T HDI).
@@ -158,9 +162,12 @@ Section FI.
       /\ dext 200%uint63 (fi_rho mb B sec tdz err) fi_m n' rho' m'
       /\ (r = SEcall -> RiscvSemantics.step RSEGS ms' = MachineOk (ms_pend ms')).
   Proof.
-    intros fuel. destruct fi_root as (mb & bw & B & sec & tdz & err & HR & HDI). destruct res_bounds as (HRb & HRc & _).
-    destruct (drive_existentialX ConeCfg.CFG RSEGS IMH CODE CODE_ok eq_refl (segments_reserved RSEGS) RB RC LIM HRb HRc
-             RTgt KEEP M (XI_frame fi_m) [] (XI_frame_rho fi_m []) (XI_frame_vm fi_m) XS (xask_b5 IMH CODE)
+    intros fuel. destruct fi_root as (mb & bw & B & sec & tdz & err & HR & HDI). destruct (res_bounds_vm VM (fr_res _ _ _ _ _ _ HR)) as (HRb0 & HRc0 & _).
+    assert (HRb : res_cost (vm_reserved VM) <= RB) by (pose proof (res_cost_le (vm_reserved VM)); lia).
+    assert (HRc : Z.of_nat (res_count (vm_reserved VM)) <= RC) by (pose proof (res_count_le (vm_reserved VM)); lia).
+    destruct (drive_existentialX ConeCfg.CFG RSEGS IMH CODE CODE_ok eq_refl (vm_reserved VM) RB RC LIM HRb HRc
+             RTgt KEEP M (XI_frame fi_m) [] (XI_frame_rho fi_m []) (XI_frame_vm fi_m)
+             (XI_frame_vdso fi_m (vm_reserved VM) (res_vm_vdso_incl VM _ (fr_res _ _ _ _ _ _ HR))) XS (xask_b5 IMH CODE)
              (fun n rho F L ms m res (H : XS F L n = Some res) => ltac:(discriminate H))
              (ms_fregs fi_ms) (ms_fcsr fi_ms) (seg_rom RSEGS) (fun x => bv_unsigned sp0 <= bv_unsigned x)
              (ioz BP) 20%nat ltac:(lia) fuel 200%uint63 (fi_rho mb B sec tdz err) (F0 k) (L0 k) fi_ms fi_m HDI)

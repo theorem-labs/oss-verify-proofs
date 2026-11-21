@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (side_asan passes the kernel's auxv cache words and AT_MINSIGSTKSZ through valid_input_cache_words and valid_input_min_sigframe_size, with a comment on which kernel fields are read). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit FinInput Classifier.
@@ -25,6 +26,11 @@ Notation imgP := (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)
 Notation imgA := (mkImage Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs) (only parsing).
 
 Section Debt.
+  (* The two kernel fields the ASan start-up witness reads (the auxv's cache words and
+     AT_MINSIGSTKSZ) come from the model's own per-field accessors, Run.valid_input_cache_words
+     and Run.valid_input_min_sigframe_size.  rseq, aslr, guard, rnd_bits and thp are NOT read
+     as fixed values. *)
+
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Let INIT : init_cps RTA (LIBA RTA) := HxaClosed.init_cps_RTA.
@@ -41,7 +47,11 @@ Section Debt.
 
   (* [comment removed for export] *)
   Lemma side_asan : side_canon_off ncfg Tc imgA target_alloc_limit.
-  Proof. intros en inp He Hi. exact (target_canon_A_main main_asan en inp He Hi). Qed.
+  Proof.
+    intros en inp He Hi.
+    exact (target_canon_A_main main_asan en inp He Hi
+             (valid_input_cache_words inp Hi) (valid_input_min_sigframe_size inp (in_hwcap inp) Hi)).
+  Qed.
 
   (* [comment removed for export] *)
   Theorem base_bndiv_asan :

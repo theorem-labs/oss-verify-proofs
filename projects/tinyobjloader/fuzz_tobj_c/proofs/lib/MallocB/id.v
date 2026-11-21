@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VM state record's two new fields, the kernel build and the vDSO, in two rewrites; KD_place's address also at or above the model's task_unmapped_base, the floor of Linux's bottom-up window, from depot_place_lo, written as plain text; KD_reserved stated as the image's entries followed by the vDSO/vvar pair, written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -1243,8 +1244,10 @@ Proof.
   unfold budget_boundD in V2. cbn [aa_V aa_Km aa_Kf aa_depot aa_ptr_committed AK bumpKf with_depot] in V2. lia.
 Qed.
 
-Lemma KD_reserved : ltac2:(tb__ "0|1|
-S32S49S7S2aQ40A1M0A1S7S1cA1S1bS2dR5R4R3R2R1A5S2S7SaG0G0A2A1S1eS1aR2A1A1S70Vsegs;A1A3F_;Fmd;Ftr;Ftp;Frho;FG;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]).
+   Statement written as plain text. *)
+Lemma KD_reserved : forall (G : DG) (rho : valuation) (tp : list word) (tr : list event) (md : Model),
+  KD G rho tp tr md -> exists V, vm_reserved (m_vmmaps md) = segments_reserved segs ++ V /\ vdso_pair_ok V.
 Proof. intros G rho tp tr md ((_ & _ & _ & _ & HM & _) & _). destruct HM as (_ & _ & _ & _ & _ & _ & _ & L1 & _). exact L1. Qed.
 
 Lemma KD_noacc : ltac2:(tb__ "0|5|
@@ -1426,7 +1429,7 @@ Proof.
     + unfold G_fblk. cbn [dNB dFB]. rewrite length_app. cbn [length]. lia.
     + unfold G_fblk. cbn [dNB dFB]. rewrite length_app. cbn [length]. lia.
   - unfold vm_add_lazy. rewrite with_vm_backing_with_vm. apply HKc.
-    replace (with_vmmaps h' md) with (with_vm (mkVmState h' (m_vm_lazy md) (m_vm_materialized md)) md) by (destruct md; reflexivity).
+    replace (with_vmmaps h' md) with (with_vm (mkVmState h' (m_vm_lazy md) (m_vm_materialized md) (m_kernel md) (m_vdso md)) md) by (destruct md; reflexivity).
     apply HKc. exact HK.
   - destruct HL as [HL HNN]. split; [unfold G_fblk; cbn [dFP dFB]; rewrite !length_app; cbn [length]; lia|].
     intros b Hb. unfold G_fblk in Hb |- *. cbn [dFP dFB] in Hb |- *. rewrite length_app in Hb. cbn [length] in Hb.
@@ -1450,7 +1453,7 @@ Proof.
       destruct (in_dblocks_app G bn [bv_unsigned a] [] Hbn) as [X|X]; [left; exact X | right]. cbn in X. destruct X as [X|[]]. symmetry. exact X.
     + unfold G_nblk. cbn [dNB dFB]. rewrite length_app. cbn [length]. lia.
     + unfold G_nblk. cbn [dNB dFB]. rewrite length_app. cbn [length]. lia.
-  - replace (with_vmmaps h' md) with (with_vm (mkVmState h' (m_vm_lazy md) (m_vm_materialized md)) md) by (destruct md; reflexivity).
+  - replace (with_vmmaps h' md) with (with_vm (mkVmState h' (m_vm_lazy md) (m_vm_materialized md) (m_kernel md) (m_vdso md)) md) by (destruct md; reflexivity).
     apply HKc. exact HK.
   - unfold dfp_ok, G_nblk. cbn [dFP dFB]. exact HL.
 Qed.
@@ -1473,15 +1476,20 @@ Proof.
   - apply KD_trans_ins; assumption.
 Qed.
 
-Lemma KD_place : ltac2:(tb__ "0|2|
-S32S49S7S2aQ40M0A1M1A1S7S1cA1S1bS0S2dR6R5R4R3R2A5S5cVsegs;R7R6R3R5A5S12S40R8A1S55A2S4S2S0R4S50A3S2S0R4S51A3A2S5G1G1S71S2bG0Z0A2R7S2bG0R6A2R1A4La;A2F_;F_;F_;F_;FL;Fmd;Ftr;Ftp;Frho;FG;").
+(* LPS 727298f3: the address is also at or above the model's [task_unmapped_base] (SegD_laws2's
+   [kd2_place]), from [depot_place_lo].  Decoded from this file's [tbs__] table, the conjunct
+   added; written as plain text. *)
+Lemma KD_place : forall (G : DG) (rho : valuation) (tp : list (bv 64)) (tr : list event) (md : Model) (L : Z),
+  KD G rho tp tr md -> depot_inv segs G rho md tp -> dN G <= DNMAX -> (L = NBSZ \/ L = FBSZ) ->
+  exists a : bv 64, mmap_place_ok_none (Z_to_bv 64 0) md (Z_to_bv 64 L) a
+                    /\ LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= bv_unsigned a.
 Proof.
   intros G rho tp tr md L ((HG & _ & _ & _ & HM & _) & _) [DM _] HDN HL.
   cbn [aa_geom AK bumpKf with_depot] in HG.
   destruct HM as (_ & _ & _ & V4 & V5 & V6 & V7 & _ & _ & _ & L4 & _).
   pose proof (dm_map1_len _ _ DM) as [_ M2]. pose proof (dm_fb_len _ _ DM) as [[_ F2] _].
   pose proof (dm_N _ _ DM) as [[N1 _] _]. pose proof (dm_F _ _ DM) as (F0 & _ & F32 & _).
-  apply (depot_place (AK G) md L).
+  apply (depot_place_lo (AK G) md L).
   - exact L4.
   - cbn [aa_V AK bumpKf with_depot]. cbn [aa_V aa_Km aa_Kf AK bumpKf with_depot] in V4, V5, V6. unfold budget_ok_free in HB.
     pose proof (VCAP_limit_free (aa_V A0) (aa_Km A0) (aa_Kf A0) ltac:(lia) HKm0 HKf0 HB) as VC. lia.

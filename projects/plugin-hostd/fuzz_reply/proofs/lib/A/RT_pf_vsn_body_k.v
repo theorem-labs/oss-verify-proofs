@@ -1,4 +1,4 @@
-(* Copy of lib/A/RT_pf_vsn_body.v:11-57 at d49bd1db505 (sha256 94d3a16c2833; internal record), retargeted to RT_pf_stmt_k.v's keep-fx
+(* Copy of lib/A/RT_pf_vsn_body.v:11-57 (sha256 94d3a16c2833; internal record), retargeted to RT_pf_stmt_k.v's keep-fx
    statements.
    ___interceptor_vsnprintf at fuzz_reply.asan entered at its BODY 0x464e0
    (PF_ICPT_VSNPRINTF), where ___interceptor_snprintf calls it, jumping past the trampoline __wrap_vsnprintf 0x421d4

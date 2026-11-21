@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for lane W of a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply; first draft by
    ReplyEnqReloc): reply's MALLOC INSTANCE at image A (fuzz_reply.asan, pin 42c58610e125), its Allocate part.
    rule 24: no function proved (kind: statement text; the cf layer's Allocate top at reply's image over reply's Allocate
@@ -8,7 +9,7 @@
    Export: Allocate's bridge premise aalloc_realizes_cf_em at can_fill 1 and the call-site relation
    ARXq_cf TfibB IOK_reply (IOK_reply := fun i => i = as_inst TfibB), at every FPState and RunCeil: the premise of WalkB2's
    malloc body top (YGcfMallocCompose.amalloc_realizes_cf_of_body route, ReplyMallocBodyUnitA), which gives
-   ReplyAllocTargets.amalloc_target_reply.  Route: YGcfMallocComposeE.aalloc_realizes_cf_em_of_m (YGcfMallocComposeE.v:130)
+   ReplyAllocTargets.amalloc_target_reply.  Route: YGcfMallocComposeE.aalloc_realizes_cf_em_of_m (YGcfMallocComposeE.v:131)
    over YGcfInstWalkSigreply.aalloc_realizes_cf_reply (YGcfInstAllocTop.aalloc_realizes_cf_em_m_cf with WS :=
    walksig_cf_reply: reply's Allocate arms + the interface instances, the image premises from reply's unit facts, HDEP
    from the depot rows).
@@ -59,8 +60,8 @@ Qed.
 
 End r.
 
-(* At every FPState and RunCeil: the premise WalkB2's malloc body top takes, in its text (ReplyMallocA.v:113 at commit
-   805bb3b51c39); IOK_reply's body and tfibsegs = im_segs at AImg_reply. *)
+(* At every FPState and RunCeil: the premise WalkB2's malloc body top takes, in its text (ReplyMallocA.v:113);
+   IOK_reply's body and tfibsegs = im_segs at AImg_reply. *)
 Theorem aalloc_realizes_cf_em_reply_all :
   forall (fx : YK11.FPState) (rc : YM05.RunCeil),
     aalloc_realizes_cf_em (fx := fx) tfibsegs TfibB cf_malloc_max 8 1 1

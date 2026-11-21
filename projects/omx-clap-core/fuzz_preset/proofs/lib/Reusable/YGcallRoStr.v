@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (c-omx-alloc, engine owner): A STRING IN THE IMAGE'S READ-ONLY BYTES IS A VALID C STRING AT
    EVERY ARx STATE (h-walk-identity's request: the state half of its S8a stand-in LIT). rule 24: proves no function
    (kind: engine lemma + decision procedure). Image-free: no address, no image number.
 
    THE LEMMA, ro_cstr_x, generic in segs, B and ARx under LAWS : AR_laws_x. Its conclusion is the cstr_ok
-   (lib/A/PRH_Base.v:975-981 at commit decff67d721f) unfolded, conjunct for conjunct, with
+   (lib/A/PRH_Base.v:975-981) unfolded, conjunct for conjunct, with
    cstr (PRH_Base.v:956-957) unfolded in place and rdW W mem written out as mrestrict (w_H W) mem. The engine does not
    Require the kit, so the kit's names do not appear; the kit states its corollary as below and proves it from ro_cstr_x by destruct and lia (the kit's lane adds it after
    cstr_ok, inside PRH_Base's Section c):
@@ -21,9 +22,9 @@
      the bytes premise) gives the view at every read-only byte that is neither an owned static nor errno; the image
      premise puts every byte of the string there and says the image holds l ++ [0]. The bytes after the NUL up to the
      end of its granule are in an image segment, so the view is never None there (mbyte falls back to the image).
-     AR_laws_x (YCbqG.v:170-189) gives no read-only byte off the cells as_const lists, so the bytes need arodata_okP.
-   - The shadow (range_addressable, shadow_hull_vis): FIELD 16 alx_const_cells (YCbqG.v:139-141; every cell of
-     as_const B ly holds) and field 12 alx_zshadow (YCbqG.v:105-108; as_zero_shadow B reads 0). The image premise
+     AR_laws_x (YCbqG.v:171-190) gives no read-only byte off the cells as_const lists, so the bytes need arodata_okP.
+   - The shadow (range_addressable, shadow_hull_vis): FIELD 16 alx_const_cells (YCbqG.v:140-142; every cell of
+     as_const B ly holds) and field 12 alx_zshadow (YCbqG.v:106-109; as_zero_shadow B reads 0). The image premise
      names, for every shadow byte the two predicates read, a value the image's const cells or zero-shadow ranges FIX
      (ro_sh_fixed), with saddr_ok for the string's own bytes.
    - The address conjuncts (4096 <= p, the ceiling, the length, amem_range8): numerals of the image premise; the
@@ -39,8 +40,8 @@
    `ro_str_check_ok segs cells zs owned errno B p l` to it and to the instance's ts_owned / ts_errno / ts_zsh
    (AF0m.v / YF0m.v TfibSyms) and a proof that `cells` is in as_const B ly at every ly (from ts_const).
 
-   REUSE (checked, 2026-10-29). c-libc-stdio's ro_clean_check (lib/Reusable/YGcfStrRo.v:53-79, decided per image as
-   romA_check, lib/A/PSstrRo.v:43-44 at this file's base, and romB_check, lib/AU/PSstrRo.v) decides the COMPLEMENT:
+   REUSE (checked, 2026-10-29). c-libc-stdio's ro_clean_check (lib/Reusable/YGcfStrRo.v:54-80, decided per image as
+   romA_check, lib/A/PSstrRo.v:44-45 at this file's base, and romB_check, lib/AU/PSstrRo.v) decides the COMPLEMENT:
    every OWNED byte of a read-only segment is a const cell holding its image byte. A string here is off the owned
    statics by premise, so that check gives none of its bytes, and arodata_okP alone gives them; ro_clean_check is not
    needed and not copied.

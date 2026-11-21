@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the initial model's fd table and file system are read through TopLevel.mo0_fds and mo0_fs. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -132,8 +133,8 @@ Proof.
   pose proof (tsafe_resolves _ _ _ t' t Hres mo HPn0) as HPn.
   pose proof (leaves_unreachable_m_resolves _ _ t' t Hres mo Hl0) as Hl.
   assert (Hargv : Forall (fun a => zlength a < 2^32) (argv_Z (in_argv inp))) by (apply argv_Z_short; exact (proj1 Hvi)).
-  assert (Hfd : m_fds mo = fds_std) by (unfold mo, TopLevel.mo0; rewrite m_fds_init_model; reflexivity).
-  assert (Hfs : m_fs mo = in_fs inp) by (unfold mo, TopLevel.mo0; rewrite m_fs_init_model; reflexivity).
+  assert (Hfd : m_fds mo = fds_std) by (unfold mo; rewrite TopLevel.mo0_fds, m_fds_init_model; reflexivity).
+  assert (Hfs : m_fs mo = in_fs inp) by (unfold mo; rewrite TopLevel.mo0_fs, m_fs_init_model; reflexivity).
   split.
   - intros (full & Hfull & Hp).
     apply ttrace_split in Hfull. destruct Hfull as [Hx|(r & mo' & Hpath)]; [|exfalso; exact (Hl _ _ _ Hpath)].

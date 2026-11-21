@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag as the plan's RSEQ section variable, passed to init_acs_of). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -31,6 +32,11 @@ Variable segs : list Segment.
 Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.     (* [comment removed for export] *)
+(* The run's CONFIG_RSEQ flag, as the plan's [r] parameter.  A Section
+   variable rather than an explicit binder because this Section encloses
+   [check_all]: Coq discharges it only onto definitions that actually read
+   it, so nothing layout-independent changes arity.  It stays FREE. *)
+Variable RSEQ : Z.
 Variable LIMIT : Z.     (* [comment removed for export] *)
 Variable ISP : expr.    (* [comment removed for export] *)
 
@@ -167,7 +173,7 @@ Variable bfuel : nat.              (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of RSEQ A)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-repacer/fuzz_wire's asan image by atable.py (sha256 42e18a7eef50, not in the published tree) from fuzz_wire.asan and its unstripped twin: image fields from the program headers, code fields as symbol + offset, TFIB_TEXT_N from the .text section size, stops_more the image's 13 self-loops; proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v at c8557374ad2e gives the text only. *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-repacer/fuzz_wire's asan image by atable.py (sha256 42e18a7eef50, not in the published tree) from fuzz_wire.asan and its unstripped twin: image fields from the program headers, code fields as symbol + offset, TFIB_TEXT_N from the .text section size, stops_more the image's 13 self-loops; proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v at theorem-labs/oss-verify-proofs@6b32741d849a gives the text only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_wire.asan (reac-repacer/fuzz_wire asan) sha256 2f8f8697cd4f99bd15999cce4963a6fcc39b308444bd58e2bf526ec7c1ad5fa1; unstripped twin sha256 d2f662a229626fd402f1018631498190e800834bad837fa4027204b79088b128 *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

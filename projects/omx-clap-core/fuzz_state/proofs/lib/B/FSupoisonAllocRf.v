@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/AFkn.v, with its module paths and module names changed; 337 of its 2264 lines of code are new or changed and 122 lines of the source are left out. *)
 (* Threads UP through the donor refill walk: lib/A/AFkn.v (Section g: refill_B3U and its leaves) and lib/A/AFkm.v (LEAF_GU over AR_transportG, section a0). *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* The depot_ids_boundG abbreviation follows that lemma's arguments in S0 946ad86dc9f (AFkm: its depot_inv proof no longer uses Hmf and Hmu). *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocRf.v at c78cdbc32e3: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v); the mmap ecall pc is PC_MMAP_ECALL, by name from lib/B/YB1w.v. *)
+(* The depot_ids_boundG abbreviation follows that lemma's arguments in S0 (AFkm: its depot_inv proof no longer uses Hmf and Hmu). *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocRf.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v); the mmap ecall pc is PC_MMAP_ECALL, by name from lib/B/YB1w.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

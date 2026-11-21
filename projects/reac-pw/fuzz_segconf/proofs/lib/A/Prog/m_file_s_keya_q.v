@@ -4,9 +4,10 @@
    [Apache-2.0]; projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-366 [Apache-2.0 OR MIT], for libreac/fuzz_identity's
    asan-ubsan build (lib/B). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/LLVMFuzzerTestOneInput_seg_K_hand_def.v, with its module paths and module names changed; 679 of its 738 lines of code are new or changed and 1104 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A), segment S_MF_KEYA: the quotes and low.i in scope, J4 0x865f0 .. KDISP
    0x86684 (m_file_s_keya_d.v ka_j4 : MF_KDISP_stmt n -> KA_J4_stmt n), in the form of plugin-hostd/fuzz_command's
-   lib/A/Prog walks (origin/ossv/recipes 501c0d516c69): a token run with read-only regions over the two inline
+   lib/A/Prog walks: a token run with read-only regions over the two inline
    checks to 0x8665c (KA_M, this file's own statement), then a plain run with low.i's shadow bytes writable
    (check_reply_s1.v:397-416) over the eight stores to KDISP.
      0x865f0  sub a0,s7,s5; li a1,2; blt a0,a1 -> 0x86658          vl < 2: no quote test

@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1114 of its 1252 lines of code are new or changed and 873 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F34.v, with its module paths and module names changed; 702 of its 781 lines of code are new or changed and 1173 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F34.v, with its module paths and module names changed; 768 of its 850 lines of code are new or changed and 699 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F30.v -- GLUE for stage seg_F30 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
-   `Hypothesis seg_F30`, :836 (at head; :648 at a working branch 524d38bbd10, ACtl.v blob 84ef756918c)).  Written by
+   `Hypothesis seg_F30`, :836 (at head; :648 at a working branch, ACtl.v blob 84ef756918c)).  Written by
    a Theorem Labs lane, one writer.  Pattern: glue-pattern.md (a working note, not in this delivery)
    (G1-G5; section 4 for a run that writes memory; section 8, last bullet: a cgif-form callee walk is cited in its
    caller-journal form at its entry).  rule 24: no function proved (stage glue of a walk).
@@ -22,7 +23,7 @@
    THE RUNS (a Theorem Labs lane's _F line, on the glue base):
      A.Prog.Seg.F30F.f30_stores_F     (Seg/F30F.v:65-94)  0x8275c -> 0x82794, writes [S(fr)+56, S(fr)+67) and
                                                           [fr+528, fr+532), sets a0..a4;
-     A.Prog.Seg.F30Fs.f30_evt_call_pre_Fs (Seg/F30Fs.v:210-219)  the jal: 0x82794 -> 0x831b8 with ra = 0x82798,
+     A.Prog.Seg.F30Fs.f30_evt_call_pre_Fs (Seg/F30Fs.v:211-220)  the jal: 0x82794 -> 0x831b8 with ra = 0x82798,
                                                           premise-free (the narrowed split of F30.F30Call.f30_evt_call);
    both lifted at RNG := ProgBridge.RNG_W (w_H W3), the first with YA0nR.SRr_fevt_hid, the second with SRr_fevt.
    THE CALLEE: reac_ctrl_classify_box_frame (0x831b8) through a Theorem Labs lane's cgif-form spec
@@ -48,12 +49,12 @@
        ACtlG/F29.v's transfer relation ktr: stores (ktr_of_munch) then callee (ktr_of_eq below), composed.
 
    SECTION HYPOTHESES (exact text below)
-   - RELRO_IMG, LAWS: ACtl.v's own (ACtl.v:192, :210 at 8ee48574229), same text, same order.
+   - RELRO_IMG, LAWS: ACtl.v's own (ACtl.v:192, :210), same text, same order.
    - CLS : treac_ctrl_classify_box_frame_spec (SK := A.AE2k.tfib_sink_head) B RLO RHI.  Owner a Theorem Labs lane.  PROVED as
      pb_reac_ctrl_classify_box_frame (lib/A/Prog/reac_ctrl_classify_box_frame_glue.v, Qed at
-     a working branch 77e96750edc) under its own Section hypotheses RELRO_IMG, LAWS, TPARSE (a Theorem Labs lane's
+     a working branch) under its own Section hypotheses RELRO_IMG, LAWS, TPARSE (a Theorem Labs lane's
      treac_ctrl_parse_spec) and RT_AR (at that branch; TSYMS here); discharged where the walk is composed (ACtl.v's owner a Theorem Labs lane).
-   - TFIB_SYMS : A.AF0m.CtrlTSyms B, ACtl.v's own hypothesis (Section Ctl, ACtl.v:225 at 8ee48574229), same text
+   - TFIB_SYMS : A.AF0m.CtrlTSyms B, ACtl.v's own hypothesis (Section Ctl, ACtl.v:225), same text
      and the same place in the order; it is ctl_rt_C_of_AR's first premise.
    - route (C) (L3 recipe, a Theorem Labs lane): VIS0 / OWNED_RO (A.ProgWorld.AR_states_vis0_shadow / AR_states_owned_ro) are
      GONE.  The exit cut's ctl_rt_C is a Theorem Labs lane's PROVED A.ProgWorldCtlRtC.ctl_rt_C_of_AR (lib/A/ProgWorldCtlRtC.v:37),
@@ -77,9 +78,9 @@
    THE RUNS USED: only F30F.f30_stores_F and the premise-free F30Fs.f30_evt_call_pre_Fs; no `_post_F` / `_post_Fs` is
    consumed (the callee returns straight to the exit cut), so a Theorem Labs lane's spec meets the call with its own post.
 
-   BUILD STATE: 'type-check on 5da74c9c931, closure reaches no stand-in'.  Built on the stand-in-free glue
-   base a working branch 121bf608343 (a Theorem Labs lane's 29ddfc3ea99: interim core 5da74c9c931 + Batch3 + a Theorem Labs lane's
-   ProgWorld files) by `cb build` of a fresh clone (packed BASE 23b918fe0c2e, a build machine, no port_core_refused
+   BUILD STATE: 'type-check, closure reaches no stand-in'.  Built on the stand-in-free glue
+   base a working branch (a Theorem Labs lane: interim core + Batch3 + a Theorem Labs lane's
+   ProgWorld files) by `cb build` of a fresh clone (packed BASE, a build machine, no port_core_refused
    substitution), the target's .vo and .glob deleted before the launch; logs (internal path)
    and their .prov (compile line, .vo mtime, make's failure list).  Batch3's FRAC trailer
    word at the exit cut comes through ACtlG/F29.v's kt_frac: ktr's frame-byte clause, kept across the stores
@@ -424,7 +425,7 @@ Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 (* ACtl.v's own TFIB_SYMS (Section Ctl, ACtl.v:193), ctl_rt_C_of_AR's first premise; same text, same place in the
    order. *)
 Hypothesis TFIB_SYMS : A.AF0m.CtrlTSyms B.
-(* The callee's cgif-form spec (a Theorem Labs lane; proved as pb_reac_ctrl_classify_box_frame at 77e96750edc). *)
+(* The callee's cgif-form spec (a Theorem Labs lane; proved as pb_reac_ctrl_classify_box_frame). *)
 Hypothesis CLS : CLSM.treac_ctrl_classify_box_frame_spec (SK := A.AE2k.tfib_sink_head) B RLO RHI.
 (* route (C): VIS0 / OWNED_RO and the Local Notation ctlrt_of_AR are GONE: the exit cut's ctl_rt_C comes from a Theorem Labs lane's
    PROVED A.ProgWorldCtlRtC.ctl_rt_C_of_AR (lib/A/ProgWorldCtlRtC.v:37), which needs neither. *)

@@ -1,8 +1,8 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGwrcT.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 17 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AB1w->YB1w, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x; zify flag override made Local; YImgTop zify_pre_hook added after the last Require. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGwrcT.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 17 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AB1w->YB1w, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x; zify flag override made Local; YImgTop zify_pre_hook added after the last Require. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copy of proofs/cgif/cgif_file_fuzzer/lib/A/AE2b.v (a working branch 3e35620c52e) (fwr_check_srr) re-instanced at the vsnprintf interceptor's WRITE_RANGE check (RC_ENTRY 0x44ea0 -> RC_END 0x44ef8; the shadow loads at 0x44ee8/0x44eec), over code table tbl_vsn (tbl_icpt plus 0x44dfc..0x45114), with x19 = size >= n (slow path `bnez s3`) and x10 = res kept, stated over a Theorem Labs lane's ARU (any U); theorem vsn_wr_check_srrU. *)
+(* Modified by Theorem Labs, 2026-10: copy of proofs/cgif/cgif_file_fuzzer/lib/A/AE2b.v (a working branch) (fwr_check_srr) re-instanced at the vsnprintf interceptor's WRITE_RANGE check (RC_ENTRY 0x44ea0 -> RC_END 0x44ef8; the shadow loads at 0x44ee8/0x44eec), over code table tbl_vsn (tbl_icpt plus 0x44dfc..0x45114), with x19 = size >= n (slow path `bnez s3`) and x10 = res kept, stated over a Theorem Labs lane's ARU (any U); theorem vsn_wr_check_srrU. *)
 (* Modified by Theorem Labs, 2026-10: relocated to fm.asan (module paths, addresses, code table over 0x458a0); entered at 0x45a18 (the size >= res + 1 path); icpt_rodata_okU copied from FMpfsU.v. *)
 (* Modified by Theorem Labs, 2026-10: copy of FMsnprintfGwrc.v (its Section f: the WRITE_RANGE check walk and theorem
    vsn_wr_check_srrU) entered at 0x45944, the size < res + 1 path of fm.asan's __interceptor_vsnprintf (s1 = size, the
@@ -10,6 +10,7 @@
    inverted (bltu a1, s1 to the slow path, falling into 0x45954 where 0x45a24's bgeu goes), so each path's first run
    (MEASURED: stops at the bltu, BC_LTU (~s2) s1) and its second run (MEASURED: from the not-taken side it reaches
    FMsnprintfGwrc's state r1_*_e1 / r2*_e1) are new and every later run is FMsnprintfGwrc's; theorem vsn_wr_check_srrUT. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

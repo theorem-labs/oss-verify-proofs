@@ -6,8 +6,9 @@
    453-455, 470-475, 477-486, 489-491, 502-505, 511-514, 1255-1258. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_rel.v, with its module paths, module names and numbers changed; 848 of its 931 lines of code are new or changed and 1841 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_hp_kit.v; 42 of its 75 lines of code are new or changed and 898 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExDecl, IMAGE B: a live heap block is visible to the end of the 8-byte word holding its last byte. B twin of
-   lib/A/FMW_ex_decl_d5_kit.v (06d82004dc3), unchanged but for the Requires (lib.A AB1v -> lib.ReusableB YB1v, FMH_Base
+   lib/A/FMW_ex_decl_d5_kit.v, unchanged but for the Requires (lib.A AB1v -> lib.ReusableB YB1v, FMH_Base
    from lib.B); A's file copies G6/G5's walk kit (a Theorem Labs lane's lib/A/FMW_kit.v:113-168, block_word_tail_vis with
    fmw_word_end_le and fmw_extent_mod8) under d5k_ names; FMW_ex_decl_d5_kits.v uses it to carry C strings across the
    program call plain (FMW_ex_decl_d5.v). *)

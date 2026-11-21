@@ -1,4 +1,4 @@
-(* the image-B port of lib/A/Prog/reac_segconf_role_lem.v (commit 3e8a17ad1bc0): the same
+(* the image-B port of lib/A/Prog/reac_segconf_role_lem.v: the same
    text over image B's copies (lib.B.YG0f, lib.B.Prog.SegABase); nothing in it depends on the image.
    reac_segconf_role on fuzz_segconf image B: the facts of its walk that do not depend on the image, the listing
    or the contract's wording: the two fields of c->seg[i] it loads (role at + 0x10, role_set at + 0x14) as a

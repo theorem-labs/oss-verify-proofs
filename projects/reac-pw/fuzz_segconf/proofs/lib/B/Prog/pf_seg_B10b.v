@@ -24,6 +24,7 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 135 of its 172 lines of code are new or changed and 5016 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B10b_r.v, with its module paths and module names changed; 16 of its 45 lines of code are new or changed and 143 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): segment B10b of
    reac_segconf_parse_file's walk, S_B10b_holds : S_B10b B (lib/B/Prog/pf_pieces.v: HA_TAIL n -> H_INTENT n,
    INTENT 0x888e4 -> TAIL 0x88600). The B10b segment lane of the image-B G3 walk owner, 2026-10-30.
@@ -31,7 +32,7 @@
    the rule-24 lookup record, the rule-24 checker 2026-10-30T16:55:47Z; verdict none released;
    ADAPTED from the image-A G3 walk owner's image-A segment walk A10b (a working branch's lib/A/Prog/pf_a10b_k.v,
    pf_a10b_f.v, pf_a10b_j.v, pf_a10b_b2.v, pf_a10b_b3.v) and the unit owner's UBSan piece walks (a working branch's
-    lib/U/Prog/pf_p6.v; another working branch's pfC_facts.v), re-derived on image B's code; closed against G3 FINAL at 6f783602b5e3).
+    lib/U/Prog/pf_p6.v; another working branch's pfC_facts.v), re-derived on image B's code; closed against G3 FINAL).
 
    THE SEGMENT (89 instructions; PLAN-pf-asanubsan.md section 5.2 row B10b: 89 / 2 checks / 1 trap):
      0x888e4 .. 0x8895c (31) + arms 0x88980-0x88984, 0x88a48-0x88a4c, 0x88c80-0x88c84, 0x88d68 (7)

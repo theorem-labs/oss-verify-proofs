@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzAdapt.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the donor's owned-byte count in the header comment recomputed for this image. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzAdapt.v; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the donor's owned-byte count in the header comment recomputed for this image. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/RtBzAdapt.v of this library by derive_y.py b7b132fb12a7: module paths lib.A -> lib.AU, the image module Asan -> AsanUbsan and Img0 -> Img0U, addresses moved from fuzz_headamp's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/RtBzAdapt.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 (* The adapter between THIS tree's runtime contracts (lib/A/Rt/RtDefs.v: ecall_pre_stk, aread_ok, awrite_ok,
    astr_at, atail_vis, aguard_ok, rt_rom_view) and the premises the relocated bridge asks for (lib/A/Rt/RtBzHBase.v
@@ -7,7 +7,7 @@
 
    What each piece closes (of the gaps measured between the relocated bridge and our contracts):
    - G1, the pre vocabulary: ecall_pre_k's `alloc_ceiling <= ly_stk_lo ly` is a layout fact of every AR
-     (YG0f.v:339 lo_stk_ceil), so our ecall_pre_stk gives the bridge's ecall_pre_k (pre_k_of_stk). The strings of
+     (YG0f.v:340 lo_stk_ceil), so our ecall_pre_stk gives the bridge's ecall_pre_k (pre_k_of_stk). The strings of
      our contracts are astr_at + aread_ok + atail_vis, which give the walks' bytes_at, their slack after the
      terminator (G4), and their separation from the callee's stack window.
    - G2, rom_viewO: our contracts carry rt_rom_view, which is rom_viewN; the owned read-only bytes of this image

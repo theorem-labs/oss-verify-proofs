@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): reac_segconf_parse_file, segment B3 of
    the walk (the B3 segment lane of the image-B G3 walk owner, 2026-10-30). The PURE facts the segment needs: no PAImg, no symbolic
    executor, no machine state. ADAPTED (a copy, module paths to image B's kit) from the image-A G3 walk owner's image-A file
-   lib/A/Prog/pf_a3_f.v (commit 0ce74e7a4f39, the image-A A3 segment lane), whose lemmas are image-independent:
+   lib/A/Prog/pf_a3_f.v (the image-A A3 segment lane), whose lemmas are image-independent:
    1. the format "%s" and what snprintf(dst, 96, "%s", L) stores (b3f_F_s, b3f_reading);
    2. a C string read through a byte-valued reader has byte range and no NUL (b3f_str_range, b3f_str_pos);
    3. the gen field read out of the record encoding (b3f_rconf_gen_val);

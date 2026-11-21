@@ -12,8 +12,9 @@
    invariant is NOT cgif's AR (preset's ARcf, fuzz_state's ARU) and for classes with no released cgif walk. A unit
    whose invariant IS cgif's AR should take the released AR-form walk (cgif_file A/AF0s.v, AF0u.v and their kin,
    relocated) and, if it needs this shape, obtain it through FCiface.fs_iface_AR plus
-   FCiface.astack_malloc_realizes_of_x (FCiface.v:168-200, Qed), which yields the same fact. *)
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/FCm0s.v at cb01f65c0f3: the class-0 frame-area contract of fuzz_state.asan-ubsan's __asan_stack_malloc_0 at 0x3d4f4. Changes: module paths (lib.A -> lib.B: AB1v -> YB1v, AB1w -> YB1w, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x, AE2y -> YE2y, AE3d -> YE3d, and A's FCimg / FCxA / FCm<k>r / FCm<k>s / FCf5 / FSH_Base -> their lib/B twins; the image-generic lib/A FSupoison, FSupoisonU, FSifaceU, SetShadowDefU and FSuwalk stay), nothing else; every image numeral is image B's, from lib/B/FCimg.v (generated from fuzz_state.asan-ubsan by gen_fcimg_fs_b.py) and lib/B/YF0m.v (TFIB_TP, TFIB_TSD, Tfib_const). *)
+   FCiface.astack_malloc_realizes_of_x (FCiface.v:169-201, Qed), which yields the same fact. *)
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/FCm0s.v: the class-0 frame-area contract of fuzz_state.asan-ubsan's __asan_stack_malloc_0 at 0x3d4f4. Changes: module paths (lib.A -> lib.B: AB1v -> YB1v, AB1w -> YB1w, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x, AE2y -> YE2y, AE3d -> YE3d, and A's FCimg / FCxA / FCm<k>r / FCm<k>s / FCf5 / FSH_Base -> their lib/B twins; the image-generic lib/A FSupoison, FSupoisonU, FSifaceU, SetShadowDefU and FSuwalk stay), nothing else; every image numeral is image B's, from lib/B/FCimg.v (generated from fuzz_state.asan-ubsan by gen_fcimg_fs_b.py) and lib/B/YF0m.v (TFIB_TP, TFIB_TSD, Tfib_const). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

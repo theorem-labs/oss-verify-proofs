@@ -133,7 +133,7 @@ cel-go	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 cert-manager	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 cfengine	c++	available	-	1	1	no	4	0	15	15	0	0	0	0	0
 cffi	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
-cgif	c	available	-	3	3	no	12	0	45	30	15	0	0	0	0
+cgif	c	available	-	3	3	no	12	0	45	26	19	0	0	0	0
 cglib	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 chardet	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 charset_normalizer	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
@@ -167,7 +167,7 @@ containerd	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 coreutils	c++	no-harness	none-at-commit	0	0	no	0	0	0	0	0	0	0	0	0
 cosign	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 cosmos-sdk	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
-coturn	c	available	-	2	2	no	8	0	14	11	3	0	0	0	0
+coturn	c	available	-	2	2	no	8	0	14	7	7	0	0	0	0
 coveragepy	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 cpp-httplib	c++	available	-	5	3	no	12	0	45	45	0	0	0	0	0
 cppcheck	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
@@ -266,7 +266,7 @@ fastify	javascript	language-pending	javascript	0	0	no	0	0	0	0	0	0	0	0	0
 fastjson	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 fastjson2	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 feign	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
-ffmpeg	c++	available	-	1130	420	no	1680	0	2940	2884	0	56	0	0	0
+ffmpeg	c++	available	-	1130	420	no	1680	0	2940	2883	1	56	0	0	0
 ffms2	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
 fftw3	c++	held	held	0	0	no	0	0	0	0	0	0	0	0	0
 file	c++	available	-	3	1	no	4	0	7	7	0	0	0	0	0
@@ -344,7 +344,7 @@ gitea	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 github_scarecrow	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 gitoxide	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
 gitpython	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
-glaze	c++	available	-	23	1	no	4	0	13	10	3	0	0	0	0
+glaze	c++	available	-	23	1	no	4	0	13	6	7	0	0	0	0
 glib	c++	available	-	32	1	no	4	0	13	13	0	0	0	0	0
 globaleaks-whistleblowing-software	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 glog	c++	available	-	1	1	no	4	0	13	13	0	0	0	0	0
@@ -562,7 +562,7 @@ json-simple	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 json-smart-v2	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 json2avro	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 json5format	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
-jsoncons	c++	available	-	18	18	no	72	0	234	183	51	0	0	0	0
+jsoncons	c++	available	-	18	18	no	72	0	234	174	60	0	0	0	0
 jsoncpp	c++	available	-	2	1	no	4	0	13	13	0	0	0	0	0
 jsonnet	c++	available	-	3	3	no	12	0	21	21	0	0	0	0	0
 jsonp-api	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
@@ -617,7 +617,7 @@ lcms	c++	available	-	16	1	no	4	0	13	13	0	0	0	0	0
 leptonica	c++	available	-	45	37	no	148	0	481	448	33	0	0	0	0
 leveldb	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
 libaom	c++	available	-	2	2	no	8	0	14	14	0	0	0	0	0
-libarchive	c++	available	-	21	21	no	84	0	273	268	0	5	0	0	0
+libarchive	c++	available	-	21	21	no	84	0	273	45	0	0	0	228	0
 libass	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
 libavc	c++	available	-	5	5	no	20	0	69	69	0	0	0	0	0
 libavif	c++	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
@@ -657,7 +657,7 @@ libmodbus	c	needs-model	features	0	0	no	0	0	0	0	0	0	0	0	0
 libmpeg2	c++	available	-	1	1	no	4	0	15	15	0	0	0	0	0
 libnfs	c	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
 liboqs	c	available	-	4	4	no	16	0	54	54	0	0	0	0	0
-libpcap	c++	available	-	3	3	no	12	0	39	28	11	0	0	0	0
+libpcap	c++	available	-	3	3	no	12	0	39	26	13	0	0	0	0
 libpg_query	c	available	-	3	3	no	12	0	21	21	0	0	0	0	0
 libphonenumber	c++	available	-	4	4	no	16	0	28	28	0	0	0	0	0
 libplist	c++	available	-	4	4	no	16	0	58	58	0	0	0	0	0
@@ -687,7 +687,7 @@ libsrtp	c++	available	-	1	1	no	4	0	13	13	0	0	0	0	0
 libssh	c	not-yet-built	setup-fails	0	0	no	0	0	0	0	0	0	0	0	0
 libssh2	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
 libstdcpp	c++	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
-libtasn1	c++	available	-	9	9	no	36	0	129	129	0	0	0	0	0
+libtasn1	c++	available	-	9	9	no	36	0	129	126	3	0	0	0	0
 libteken	c++	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
 libtheora	c++	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
 libtiff	c++	available	-	4	4	no	16	0	28	28	0	0	0	0	0
@@ -748,7 +748,7 @@ magic-enum	c++	available	-	1	1	no	4	0	13	13	0	0	0	0	0
 magic-modules	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 mako	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 mandelbulber	c++	no-harness	none-at-commit	0	0	no	0	0	0	0	0	0	0	0	0
-mapserver	c++	available	-	4	4	no	16	0	28	28	0	0	0	0	0
+mapserver	c++	available	-	4	4	no	16	0	28	14	0	0	0	14	0
 mariadb	c++	held	licence-conflict	0	0	no	0	0	0	0	0	0	0	0	0
 mariadb-connector-j	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 markdown-it-py	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
@@ -757,7 +757,7 @@ matio	c++	available	-	6	6	no	24	0	42	42	0	0	0	0	0
 matplotlib	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 maven	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 maven-model	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
-mbedtls	c++	available	-	20	1	no	4	0	15	9	6	0	0	0	0
+mbedtls	c++	available	-	20	1	no	4	0	15	5	10	0	0	0	0
 mccabe	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 md4c	c	available	-	1	1	no	4	0	15	15	0	0	0	0	0
 mdbook-i18n-helpers	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
@@ -892,7 +892,7 @@ opensips	c	available	-	4	1	no	4	0	13	13	0	0	0	0	0
 opensk	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
 openslide	c	no-harness	none-at-commit	0	0	no	0	0	0	0	0	0	0	0	0
 openssh	c++	available	-	9	9	no	36	0	117	103	0	0	0	14	0
-openssl	c++	available	-	186	34	no	136	0	442	359	62	0	0	21	0
+openssl	c++	available	-	186	34	no	136	0	442	338	83	0	0	21	0
 opentelemetry	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 opentelemetry-go	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 opentelemetry-go-contrib	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
@@ -1135,7 +1135,7 @@ simdjson	c++	available	-	14	13	no	52	0	179	143	30	2	0	4	0
 simdutf	c++	available	-	8	1	no	4	0	13	13	0	0	0	0	0
 simplejson	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 six	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
-skcms	c++	available	-	3	3	no	12	0	39	30	9	0	0	0	0
+skcms	c++	available	-	3	3	no	12	0	39	26	13	0	0	0	0
 sketches-core	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 skia	c++	available	-	49	2	no	8	0	26	26	0	0	0	0	0
 skipper	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
@@ -1161,7 +1161,7 @@ spicy	c++	available	-	10	1	no	4	0	15	15	0	0	0	0	0
 spidermonkey	c++	excluded	duplicate	0	0	no	0	0	0	0	0	0	0	0	0
 spidermonkey-ufi	c++	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
 spirv-cross	c++	available	-	1	1	no	4	0	13	13	0	0	0	0	0
-spirv-tools	c++	available	-	7	4	no	16	0	46	36	10	0	0	0	0
+spirv-tools	c++	available	-	7	4	no	16	0	46	33	13	0	0	0	0
 spotify-json	c++	available	-	1	1	no	4	0	13	13	0	0	0	0	0
 spring-amqp	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 spring-boot	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
@@ -1258,7 +1258,7 @@ tor	c++	available	-	16	16	no	64	0	112	112	0	0	0	0	0
 tpm2	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
 tpm2-tss	c++	not-yet-built	setup-fails	0	0	no	0	0	0	0	0	0	0	0	0
 tqdm	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
-trafficserver	c++	available	-	9	8	no	32	0	56	56	0	0	0	0	0
+trafficserver	c++	available	-	9	8	no	32	0	56	49	0	0	0	7	0
 tremor	c++	available	-	3	2	no	8	0	28	28	0	0	0	0	0
 trust-dns	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
 tslib	javascript	language-pending	javascript	0	0	no	0	0	0	0	0	0	0	0	0
@@ -1376,12 +1376,12 @@ zip	c	available	-	2	2	no	8	0	28	28	0	0	0	0	0
 zip-rs	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
 zip4j	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 zipp	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
-zlib	c++	available	-	11	10	no	40	0	146	144	2	0	0	0	0
+zlib	c++	available	-	11	10	no	40	0	384	275	109	0	0	0	0
 zlib-ng	c++	available	-	7	6	no	24	0	78	78	0	0	0	0	0
 znc	c++	held	held	0	0	no	0	0	0	0	0	0	0	0	0
 zookeeper	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 zopfli	c++	held	held	0	0	no	0	0	0	0	0	0	0	0	0
-zstd	c++	available	-	21	14	no	56	0	184	165	19	0	0	0	0
+zstd	c++	available	-	21	14	no	56	0	184	162	22	0	0	0	0
 zstd-safe	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
 zt-zip	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 zxc	c	held	held	0	0	no	0	0	0	0	0	0	0	0	0

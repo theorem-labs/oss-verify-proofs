@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvR, which gained the vDSO conjunct, taken apart by minvr_dest; MInvR_mem keeps that conjunct). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -241,7 +242,7 @@ Lemma blocks_bases_differ : ltac2:(tb__ "0|3|
 S7dS1S51S33S33S33S33Sb0Vsegs;VC;R7R6R5A5S77S38S33S33A2M0S3bS33S33R5R4A4M1S7fR8A1A3S77G0S3bS33S33R4R3A4S7fR9A1A3S2fS2bG0S3bS33S33R7R6A4G1A3A1S8dZ0M2R7A2S8dG2R6A2S2fS2bS33RaR8A3A1F_;F_;F_;F_;F_;F_;Fn2;Fb2;Fn1;Fb1;Fmd;Frho;FAi;").
 Proof using .
   intros Ai rho md b1 n1 b2 n2 HM H1 H2 Hne Hn1 Hn2.
-  unfold MInvR in HM.
+  minvr_dest HM.
   destruct (pairwise_in2 _ _ _ _ (minv_blocks_pairwise C Ai _ _ _ HM) H1 H2) as [X|[X|X]];
     [exact (fun _ => Hne X) | |]; unfold MallocInv.ranges_disjoint in X; cbn [fst snd] in X; lia.
 Qed.
@@ -490,10 +491,10 @@ Hypothesis ML : malloc_laws.
 
 Ltac clear_sec := try clear FB; try clear P0f; try clear rho0; try clear Kc; try clear NP.
 
-Lemma MInvR_mem : ltac2:(tb__ "0|1|
-S7dS1S1S51S51S2cSb0Vsegs;VC;R5R4R2A5S2cS63R5A1S5cR5A1A2A2S33S2cS8eZ0R1A2S8dR1S90Z2Z40A2A2A2S2eS80VC;R8R2A3Se8R2A1A2S2bS3aS9dQ8A1A1SaR7S9fQ40R3A2M0A2SaR8G0A2A3F_;F_;Fa;S2bS53S54R3A1S54R4A1A3S2cSb0Vsegs;VC;R8R6R4A5S2cS63R8A1S5cR8A1A2A2F_;F_;F_;Fmd';Fmd;Frho';Frho;FAi;").
+Lemma MInvR_mem : ltac2:(tb__ "0|0|
+S7dS1S1S51S51S2cSb0Vsegs;VC;R5R4R2A5S2cS63R5A1S5cR5A1A2A2S33S2cS8eZ0R1A2S8dR1S90Z2Z40A2A2A2S2eS80VC;R8R2A3Se8R2A1A2S2bS3aS9dQ8A1A1SaR7S9fQ40R3A2A2SaR8S9fQ40R3A2A2A3F_;F_;Fa;S2bS51R3R4A3S2cSb0Vsegs;VC;R8R6R4A5S2cS63R8A1S5cR8A1A2A2F_;F_;F_;Fmd';Fmd;Frho';Frho;FAi;").
 Proof using ML.
-  clear_sec. intros Ai rho rho' md md' [HM Hi] Hm Hvm. split; [|exact Hi]. unfold MInvR in *. rewrite Hvm.
+  clear_sec. intros Ai rho rho' md md' [HM Hi] Hm Hvm. subst md'. split; [|exact Hi]. destruct HM as [HM VD0]. split; [|exact VD0].
   eapply (ml_frame ML); [exact HM| |reflexivity|reflexivity|reflexivity|reflexivity|reflexivity|reflexivity|exact (proj1 Hi)].
   intros a Ha Ho. unfold rd_of, wok_of. rewrite (Hm a Ha ltac:(unfold static_range; tauto)). split; reflexivity.
 Qed.
@@ -706,7 +707,7 @@ Proof using ML TR_callP TR_ex TR_facts TR_pre.
       { subst n. f_equal. symmetry. apply (proj1 Hag1). reflexivity. }
       assert (Hnrho : bv_unsigned (eval rho (wsub_get s 12)) = n) by (subst n; rewrite rw_call'; reflexivity).
       assert (HinNew : In (p, n) (ma_blocks A')) by (rewrite HbA'; apply in_or_app; right; left; reflexivity).
-      pose proof HM' as HMi'. unfold MInvR in HMi'.
+      pose proof HM' as HMi'. minvr_dest HMi'.
       pose proof (minv_block_geom C A' _ _ _ p n HMi' HinNew) as (G0 & _ & G2 & G3 & G4).
       unfold PGSZ, UNIT, IB in G2, G3. pose proof (topL_range (ma_L A')) as TR3.
       pose proof (init_kept_top _ _ Hinit) as TK. unfold top_kept in TK.
@@ -864,7 +865,7 @@ Proof using ML TR_callP TR_ex TR_facts TR_pre.
         assert (0 <= n) by (subst n; apply Z.mul_nonneg_nonneg; lia).
         pose proof (Z.mod_le n M64v ltac:(lia) ltac:(unfold M64v; lia)). lia. }
       assert (HinNew : In (p, n) (ma_blocks A')) by (rewrite HbA'; apply in_or_app; right; left; reflexivity).
-      pose proof HM' as HMi'. unfold MInvR in HMi'.
+      pose proof HM' as HMi'. minvr_dest HMi'.
       pose proof (minv_block_geom C A' _ _ _ p n HMi' HinNew) as (G0 & _ & G2 & G3 & G4).
       unfold PGSZ, UNIT, IB in G2, G3. pose proof (topL_range (ma_L A')) as TR3.
       pose proof (init_kept_top _ _ Hinit) as TK. unfold top_kept in TK.
@@ -954,7 +955,7 @@ Proof using ML TR_callP TR_ex TR_facts TR_pre.
         assert (0 <= n) by (subst n; apply Z.mul_nonneg_nonneg; lia).
         pose proof (Z.mod_le n M64v ltac:(lia) ltac:(unfold M64v; lia)). lia. }
       assert (HinNew : In (p, n) (ma_blocks A')) by (rewrite HbA'; apply in_or_app; right; left; reflexivity).
-      pose proof HM' as HMi'. unfold MInvR in HMi'.
+      pose proof HM' as HMi'. minvr_dest HMi'.
       pose proof (minv_block_geom C A' _ _ _ p n HMi' HinNew) as (G0 & _ & G2 & G3 & G4).
       unfold PGSZ, UNIT, IB in G2, G3. pose proof (topL_range (ma_L A')) as TR3.
       pose proof (init_kept_top _ _ Hinit) as TK. unfold top_kept in TK.
@@ -1172,7 +1173,7 @@ S36S38S0S0A2M0A1S7dS1S36S52A1S51G0S64R6R5R4R3R2A5S77G0R2R7A3S59R6R3A2S8cS5S7R7A1
 Proof using .
   intros tv Ai rho tr md [d sz] (Hav & Hk & [HM _] & HP & (HN & HD & HZ) & HK & HP0) Hin Hnz.
   destruct (proj1 (Forall_forall _ _) HN _ Hin Hnz) as (Hpos & Hb & _). unfold tvv in Hb, Hpos. cbn [fst snd] in Hb, Hpos.
-  unfold MInvR in HM.
+  minvr_dest HM.
   pose proof (minv_block_geom C Ai _ _ _ _ _ HM Hb) as (G0 & _ & G2 & G3 & _).
   pose proof (topL_range (ma_L Ai)) as TRg. unfold PGSZ, UNIT, IB in *.
   pose proof (bv_urange (eval rho d)) as R1. pose proof (bv_urange (eval rho sz)) as R2.
@@ -1989,7 +1990,7 @@ Proof using HnextPre ML SUMT TR_callP TR_ex TR_facts TR_pre.
         assert (Hnz : tnz rhoL (vd, vsz)).
         { intros Hz. pose proof (proj1 (Forall_forall _ _) HZc _ Hvn (fun H => H Hz)) as Z0. unfold tvv in Z0. cbn [fst snd] in Z0. fold n' in Z0. lia. }
         destruct (proj1 (Forall_forall _ _) HNc _ Hvn Hnz) as (Npos & HinN & HninF). unfold tvv in HinN, HninF. cbn [fst snd] in HinN, HninF. fold p n' in HinN. fold p n' in HninF.
-        pose proof (MI1 _ _ _ _ HM') as HMr. unfold MInvR in HMr.
+        pose proof (MI1 _ _ _ _ HM') as HMr. minvr_dest HMr.
         pose proof (minv_block_geom C A' _ _ _ p n' HMr HinN) as (G0 & _ & G2 & G3 & G4).
         unfold PGSZ, UNIT, IB in G2, G3. pose proof (topL_range (ma_L A')) as TR3.
         pose proof (TPI_top _ _ (proj2 (proj2 HM'))) as TK. rewrite (T0_callee _ _ _ _ _ _ _ Hav Hchk) in TK.

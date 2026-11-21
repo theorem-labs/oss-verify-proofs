@@ -1,11 +1,11 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/StrncmpView.v at origin/ossv/recipes f26f9fbd8777; module paths changed; arodata_okP is taken from pin's lib/A/PPgBase.v (the same text as boxreg's lib/A/Prog/BoxBase.v), not from BoxBase; no numeral; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_pin/lib/A/Rt/StrncmpView.v at 90722657971; module paths changed to reac-pw/fuzz_headamp; arodata_okP is taken from this unit's lib/A/HPgBase.v (the same text as pin's lib/A/PPgBase.v), not from PPgBase; no numeral; the comments are the donor's, verbatim, and name the donor images' addresses. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/StrncmpView.v; module paths changed; arodata_okP is taken from pin's lib/A/PPgBase.v (the same text as boxreg's lib/A/Prog/BoxBase.v), not from BoxBase; no numeral; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_pin/lib/A/Rt/StrncmpView.v; module paths changed to reac-pw/fuzz_headamp; arodata_okP is taken from this unit's lib/A/HPgBase.v (the same text as pin's lib/A/PPgBase.v), not from PPgBase; no numeral; the comments are the donor's, verbatim, and name the donor images' addresses. *)
 (* The comments in this file are libreac/fuzz_boxreg's lib/A/Rt/StrncmpView.v, through reac-pw/fuzz_pin's lib/A/Rt/StrncmpView.v, unchanged apart from names and this unit's image and values. libreac/fuzz_boxreg, build asan: the two read-only premises of lib/A/Rt/StrncmpDef.v `astrncmp_realizes`
    (fm_rom_viewN, fm_rom_viewO; StrncmpDef.v:68-76) from facts a caller has at its call. Rule 24: no function is
    proved here; image-generic (segs, B are parameters).
    - fm_rom_viewN_of_arodata: from arodata_okP segs rlo rhi B (aview segs (w_H W) mem) (lib/A/Prog/BoxBase.v:20),
      which every caller spec carries (ReacBoxregDeclare.v:127, Check.v:122) and every ajournal keeps
-     (arodata_ok_journalP). in_roP segs rlo rhi a is in_rom segs a (YG0d.v:380, the bytes of every segment without
+     (arodata_ok_journalP). in_roP segs rlo rhi a is in_rom segs a (YG0d.v:381, the bytes of every segment without
      write permission: text, .rodata, .eh_frame, .eh_frame_hdr) OR rlo <= a < rhi (RELRO); the left disjunct is in_rom
      word for word,
      so arodata_okP covers every byte fm_rom_viewN asks for and no extra premise is needed (RELRO bytes are covered as

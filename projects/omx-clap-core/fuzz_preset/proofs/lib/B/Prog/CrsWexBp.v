@@ -3,18 +3,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 755 of its 825 lines of code are new or changed and 444 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrsKitBp.v; 14 of its 45 lines of code are new or changed and 794 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrsFree0Bp.v; 67 of its 102 lines of code are new or changed and 10 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): ONE SHARED INTERIM PREMISE of the walk of
    check_reject_clean_starved, the kit's pj_write text at crcs's four pj_write calls, with the call's exact position
    advance in the kit's terms. Requires the kit lib/B/Prog/CrsKitBp.v only.
-   DONOR (rule 24, reuse): the A' interim lib/A/Prog/CrsWexAp.v blob 0ee29d46ef9f (a working branch
-   3adfdcc651aa, kit v4: the `cnt < 2 ^ 62` premise included), restated at the B' instance. The statement is
+   DONOR (rule 24, reuse): the A' interim lib/A/Prog/CrsWexAp.v blob 0ee29d46ef9f (a working branch,
+   kit v4: the `cnt < 2 ^ 62` premise included), restated at the B' instance. The statement is
    image-free except for the instance: same shape, same premise order and spelling, with the kit's `_B` names.
    rule 24: proves no function (kind: one interim premise of the crcs walk; reuse search: `proof-index check_reject_clean_starved
    0x82160`, the internal file index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that
    search origin/ossv/recipes had no lib/A or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released
    asan Proof.v existed for check_reject_clean_starved). This file proves nothing: it STATES.
    INPUTS.
-   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml);
      unstripped twin ELF sha256 c90d4fa54d43160baf62e5aa387211a798dddbad13d2619d85acbf37aee0c175.
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (listings v3); image
      record lib/B/PRH_ImgB.v blob 3216eca68342.
@@ -90,7 +91,7 @@ Section f.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
 
-(* ONE pj_write call of crcs: tpj_write_specX (PRH_FnWriter.v on the kit's cut 7cdbb61b5fa0, :773-850) at the call's
+(* ONE pj_write call of crcs: tpj_write_specX (PRH_FnWriter.v on the kit's cut, :773-850) at the call's
    arguments - the model run C's (the strtod model keyed: ReaderRes.jr_strtod), the entry position cb_rp_i C + length
    evs0, most := cb_most C, own := 0, v := cb_doc C, t := cb_t C, D := cb_D C, pretty, g_fail_at by inj, ran = 0,
    n := DOC_D - with the text's post (DEAD-PJWRITE's prh_granted included) and the exact advance by evs under

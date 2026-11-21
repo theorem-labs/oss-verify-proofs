@@ -1062,7 +1062,7 @@ Print Assumptions rl_u32_block3.
    it, not the token runner: the token layer's cells_safe_b would ask the shadow of the shadow row, which is not
    addressable. What the block needs instead is the right to write there, and the kit's journal already grants it:
    awr_byte's in_frames case covers [shadow_addr F, shadow_addr F + fs_frame_bytes cid / 8) for a frame the walk
-   owns (YCbq.v:348-351), and the frames law gives those bytes present (YG0d.v:463-465). *)
+   owns (YCbq.v:348-351), and the frames law gives those bytes present (YG0d.v:464-466). *)
 
 Section fsh. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.

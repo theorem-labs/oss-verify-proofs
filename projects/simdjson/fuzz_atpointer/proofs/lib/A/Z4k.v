@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -271,7 +272,7 @@ Lemma find_loop : forall (k : nat) (Σ : rts RT) PMc (T : TSet) (usp lo P pk nk 
   fdfs_only PMc -> mat_stable PMc -> tp = Z_to_bv 64 0x646eb0 ->
   Forall (fun c => 0 <= c < 256) l -> 4 <= zlength l < 2^26 -> 0 < P ->
   In (pk, nk) (rt_live RT Σ) -> pk <= P -> P + zlength l <= pk + nk ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + ATPA_FIND_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 -> ART RT Σ m0 ->
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + ATPA_FIND_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 -> ART RT Σ m0 ->
   (forall c', ASTA RT Σ PMc (fun ms => exists m', ret_st rac (Z_to_bv 64 usp) gp tp s0c s1c s2c s3c s4c s5c s6 s7 s8 s9 s10 s11 (Z_to_bv 64 (find_resA l)) m' ms
                   /\ rt_after_f RT Σ usp lo m0 m' /\ rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) usp [] m0 m') c' /\ cfrm0 c' -> realizes asegs c' T) ->
   forall (j : Z) (t0 t1 t2 a2 a3 a4 a5 a6 a7 s3 t3 t4 t5 t6 rax : word) F fc (m1 : mem) (c1 : config),

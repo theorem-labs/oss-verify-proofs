@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mprotect check). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -188,6 +189,7 @@ Section Tools.
     WIN s -> 0 < u len -> u addr mod 4096 = 0 ->
     u addr + page_round_up_Z (u len) <= alloc_top (ms_vm s) ->
     map_contains (vm_maps (ms_vm s)) addr (page_round_up len) = true ->
+    region_free (vm_reserved (ms_vm s)) addr (page_round_up len) = true ->
     map_contains (vm_noaccess (ms_vm s)) addr (page_round_up len) = true ->
     ((W <> WOk \/ mprot_ok_vm (ms_vm s) addr (page_round_up len) = false) ->
        tsall W (K MAP_FAILED (upd s (errno_mem (ms_mem s) ENOMEM) (ms_vm s))) P) ->
@@ -195,9 +197,9 @@ Section Tools.
      tsall W (K (Z_to_bv 64 0) (upd s (zfill addr (page_round_up len) (ms_mem s)) (vm_unprotect addr (page_round_up len) (ms_vm s)))) P) ->
     tsall W ((x <- sys_mprotect_rw addr len ;; K x) s) P.
   Proof.
-    intros addr len s K P HWn Hlen Hal Hce Hmc Hna Hf Hok. unfold mbind, sys_mprotect_rw. unfold page_size.
+    intros addr len s K P HWn Hlen Hal Hce Hmc Hrs Hna Hf Hok. unfold mbind, sys_mprotect_rw. unfold page_size.
     rewrite (proj2 (Z.ltb_lt 0 (u len))) by lia. rewrite Hal. rewrite (proj2 (Z.leb_le _ _)) by exact Hce.
-    rewrite Hmc, Hna. cbn - [tsall].
+    rewrite Hmc, Hrs, Hna. cbn - [tsall].
     apply tw_sys_mprotect_node.
     - intros HW'. apply (proj1 (tsall_tbind_assoc _ _ _ _ _)). cbn - [tsall].
       pose proof (tw_set_errno ENOMEM s (fun _ s' => K MAP_FAILED s') P HWn) as X. unfold mbind in X. apply X. exact (Hf HW').
@@ -208,6 +210,7 @@ Section Tools.
     WIN s -> 0 < u len -> u addr mod 4096 = 0 ->
     u addr + page_round_up_Z (u len) <= alloc_top (ms_vm s) ->
     map_contains (vm_maps (ms_vm s)) addr (page_round_up len) = true ->
+    region_free (vm_reserved (ms_vm s)) addr (page_round_up len) = true ->
     map_contains (vm_noaccess (ms_vm s)) addr (page_round_up len) = true ->
     (mprot_ok_vm (ms_vm s) addr (page_round_up len) = false ->
        tsall W (K MAP_FAILED (upd s (errno_mem (ms_mem s) ENOMEM) (ms_vm s))) P) ->
@@ -215,9 +218,9 @@ Section Tools.
      tsall W (K (Z_to_bv 64 0) (upd s (zfill addr (page_round_up len) (ms_mem s)) (vm_unprotect addr (page_round_up len) (ms_vm s)))) P) ->
     tsall W ((x <- sys_mprotect_rw addr len ;; K x) s) P.
   Proof.
-    intros addr len s K P HWn Hlen Hal Hce Hmc Hna Hf Hok. unfold mbind, sys_mprotect_rw. unfold page_size.
+    intros addr len s K P HWn Hlen Hal Hce Hmc Hrs Hna Hf Hok. unfold mbind, sys_mprotect_rw. unfold page_size.
     rewrite (proj2 (Z.ltb_lt 0 (u len))) by lia. rewrite Hal. rewrite (proj2 (Z.leb_le _ _)) by exact Hce.
-    rewrite Hmc, Hna. cbn - [tsall].
+    rewrite Hmc, Hrs, Hna. cbn - [tsall].
     apply tw_mprot04.
     - intros HW'. apply (proj1 (tsall_tbind_assoc _ _ _ _ _)). cbn - [tsall].
       pose proof (tw_set_errno ENOMEM s (fun _ s' => K MAP_FAILED s') P HWn) as X. unfold mbind in X. apply X. exact (Hf HW').
@@ -530,6 +533,7 @@ Section Tail.
     eapply tw_sys_mprotect_none;
       [exact HWIN | rewrite PZ_u; lia | rewrite uZ by lia; exact R1 | rewrite pruZ_PZ, uZ, Vtop by lia; lia
       | rewrite pru_PZ; apply (map_contains_sub _ _ _ _ _ R3); rewrite !uZ by lia; lia
+      | rewrite pru_PZ; apply (res_ok_contains _ _ _ Vres); apply (map_contains_sub _ _ _ _ _ R3); rewrite !uZ by lia; lia
       | rewrite pru_PZ; apply (map_contains_sub _ _ _ _ _ R4); rewrite !uZ by lia; lia | |].
     - (* [comment removed for export] *)
       intros HWf. cbv beta. change (is0 MAP_FAILED) with false. cbv iota.

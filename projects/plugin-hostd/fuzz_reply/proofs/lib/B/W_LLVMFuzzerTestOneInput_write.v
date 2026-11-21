@@ -3,10 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ARM_write of the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    LLVMFuzzerTestOneInput - the jump table's arm 1 (fuzz_reply.c:704-708), from the arm's entry 0x84724 to the latch
    0x84804.  lf_arm_write is EXACTLY lib/B/W_LLVMFuzzerTestOneInput_cut.v's Section hypothesis ARM_write (:750,
-   frozen at a987841a18c), in the form of that file's worked dispatch lf_seg_jt (entry state from the cut's facts,
+   frozen), in the form of that file's worked dispatch lf_seg_jt (entry state from the cut's facts,
    paj_run_tok, psrr_branch_tok, the next cut re-established).
    A NEW WALK over B's own bytes (the objdump of the pinned asan-ubsan ELF, sha256 10ffb5f9...): the structure and the
-   statement layer are lib/A/W_LLVMFuzzerTestOneInput_write.v's (a working branch 3ccac58d123), and every
+   statement layer are lib/A/W_LLVMFuzzerTestOneInput_write.v's (a working branch), and every
    run step is re-derived on B with B's registers (_cut.v difference (4): s1 = F, s11 = SB, s7 = 1, s4 = the input
    cursor, t1 = the bytes left, s5 = the picked source, s9 = t), B's frame (difference (3): no `full` flag; lcut's
    flag-pointer conjunct at FF + 120) and B's globals (fr_globals_b).
@@ -36,7 +36,7 @@
                                                          runner decides the edge
      0x847f0 bnez (s5 & 7)  trap_align8                  (s5 = g_s + 96 si, g_s = 0x5d8e60)
    Atom 23 (s7) gets no fact at the entry, so the runner stops at both PTR_INC edges and the lemma closes them.
-   The callee is W2's pb_list_push_g (lib/B/W_list_push.v:3960) at list_push's own G (the 16 bytes of
+   The callee is W2's pb_list_push_g (lib/B/W_list_push.v:3961) at list_push's own G (the 16 bytes of
    g_s[si].pending) with MMAX = WR_MMAX = 2^30 - 2^20 (HMMAX: wr_HMMAX), `LA mod 8 = 0` by wr_LA8, gx_rt by HERRS and
    c_HAP (image B's A_OBJ 0 / A_OBJ 30); its journal is lifted with ajournal_gx_G_mono and composed with W_journal's
    ajournal_gx_sub.  The read-only view is carried across the call by wr_rom_call: an owned read-only byte by
@@ -54,6 +54,7 @@
            HERRS and ROM_ERR are LEMMAS here (c_HERRS / c_ROM_ERR of W_LLVMFuzzerTestOneInput_G.v);
      RI_write_* and LS_write_* - the arm's open model obligations (the donor's text).
    No `gx_rt B G_fr` is stated (G_fr holds errno). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -170,8 +171,8 @@ Hypothesis MLAW : ameter_laws MT.
 Hypothesis ARE : arealloc_cf_rule segs B MT WR_MMAX (SIGMA WS_realloc).
 Hypothesis AMA : amalloc_cf_rule segs B MT WR_MMAX.
 Hypothesis AMEMCPY : aintrin_realizes segs B OCpy (SIGMA WS_asan_memcpy).
-(* list_push's AR contract at its own G.  The B W_op_add / W_list_push of record (commit 11fb7104fb5,
-   lib/B/W_list_push.v:2361) proves pb_list_push_g only under the ARi0 laws (its premise LX0) and the K0 caller
+(* list_push's AR contract at its own G.  The B W_op_add / W_list_push of record (
+   lib/B/W_list_push.v:2362) proves pb_list_push_g only under the ARi0 laws (its premise LX0) and the K0 caller
    tables, so this AR walk takes the contract's text, W_contract.v lp_spec_g, as its hypothesis in place of the
    call pb_list_push_g B LAWS TL MT MLAW WR_MMAX wr_HMMAX ARE AMA AMEMCPY. *)
 Hypothesis LP_AR : lp_spec_g B MT WR_MMAX (BASE + AF_fr_list_push).
@@ -272,8 +273,8 @@ Hypothesis LS_write_room : forall cx t m si h ly S,
   (lp_grow (hs_pending h) = true -> lp_vbytes (hs_pending h) < WR_MMAX) /\
   blocks_bytes S + (if lp_grow (hs_pending h) then lp_vbytes (hs_pending h) else 0) + (wr_n cx m + 1) <= LIVE_MAX /\
   mo_ok MT S (lp_cost MT (hs_pending h) (wr_n cx m)).
-(* the push rule at W8Add's PROPOSED text (lib/A/ReplyLS.v atop_LS_write_push_prop, a working branch
-   f57b3e2d0ca), in this Section's form (B, MT), as on image A: list_push's post facts about the pushed list l' (B's kit
+(* the push rule at W8Add's PROPOSED text (lib/A/ReplyLS.v atop_LS_write_push_prop, a working branch),
+   in this Section's form (B, MT), as on image A: list_push's post facts about the pushed list l' (B's kit
    lp_post: the record, the capacity, the address kept when it does not grow, the blocks' change) in place of the
    published `mo_le MT S S' cost` alone, which left l' and S' free *)
 Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
@@ -645,7 +646,7 @@ Qed.
 
 (* ------------------------------------------------------------------ the store-transport kit
    (the twin of lib/A/W_LLVMFuzzerTestOneInput_latch.v's Section kit and transport lemmas, ported to image B
-   (a working branch d9fcdfb3dd1's text, wk_ for lt_): a run whose only store lies above
+   (a working branch's text, wk_ for lt_): a run whose only store lies above
    alloc_ceiling + 8 keeps every byte the cut invariant reads outside the frame) *)
 Definition WR_CEIL8 : Z := alloc_ceiling + 8.
 Definition wk_fp_low (fp : list (Z * Z)) : Prop := Forall (fun r => 0 <= fst r /\ snd r <= WR_CEIL8) fp.

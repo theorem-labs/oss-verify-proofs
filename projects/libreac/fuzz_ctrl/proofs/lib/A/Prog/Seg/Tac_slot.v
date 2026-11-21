@@ -91,7 +91,7 @@ Proof.
   split; [exact Happ|]. exists b. split; [|exact Hok]. exact (eq_trans Hmb Hb).
 Qed.
 
-(* n_b = 52 + 36 u (2 <= u <= 40) when n_b <> 0 (SlotModel.rt_n, RcEmit.em_wok): the statement of a_rtn_u in R7.v (a version not in this delivery; from a working branch 2110b4694a4),
+(* n_b = 52 + 36 u (2 <= u <= 40) when n_b <> 0 (SlotModel.rt_n, RcEmit.em_wok): the statement of a_rtn_u in R7.v (a version not in this delivery; from a working branch),
    proved here from em_wok itself. *)
 Lemma a_rtn_u : forall inp b, rt_n inp b <> 0 -> exists u, rt_n inp b = 52 + 36 * u /\ 2 <= u <= 40.
 Proof.
@@ -226,7 +226,7 @@ Qed.
    a spill store): the tp word is in the low image [0, 6283264), and the class-6 flag byte and the slot's last
    word are inside the FakeStack, which a_laws_fs_place puts entirely below stklo (FS + FS_SIZE <= stklo). So it
    is enough that W misses the low image and every app byte below stklo outside the frame body. The statement of
-   image B's fsrec_munch_lo (104b31454e); it replaces the A segments' local copies r3_fsrec / r4_fsrec. *)
+   image B's fsrec_munch_lo; it replaces the A segments' local copies r3_fsrec / r4_fsrec. *)
 Lemma fsrec_munch_lo : forall hb mem mem' md W fr, FSREC fr mem ->
   AC.aa_AH AC.ASYMS AsanRTInv.RT (APIf rc) hb mem md -> Frame.munch W mem mem' ->
   (forall x, 0 <= x < 6283264 -> Frame.outside W x) ->
@@ -269,7 +269,7 @@ Qed.
    class-6 flag byte and the slot's last word lie inside [FS, FS + FS_SIZE), which a_laws_fs_place puts at or
    below stklo. It is the form a callee run takes, whose write set is its own stack window [sp - K, sp) at or
    above stklo (fra_win) plus, at most, bytes of the frame body. Push 7 (item 14): a Theorem Labs lane's lemma
-   (a working branch 68a2d55a6ce) verbatim; its statement is image B's fsrec_munch_lo (50d7381041f).
+   (a working branch) verbatim; its statement is image B's fsrec_munch_lo.
    It does not change the taclift lemmas: sl_fr_cl, sl_win_run and Seg/Tac_b5.v's sl_stk_run keep the premise
    `FSREC fr mem -> FSREC fr mem'` (the canonical image-A form, which a run that writes FakeStack bytes of other
    classes can also give); a caller that has B's below-stklo premise gets it in one step by fra_fsrec_stklo. *)
@@ -1658,7 +1658,7 @@ Qed.
    byte unowned before and after. That shadow byte is not app memory, so it is not touched; it is below
    HIGHMEM_BEG <= stklo, so below the callee window; it is above the image, so it is not errno or the
    out-of-memory flag. So a_call_post's frame clause keeps it. H' is any post heap (the allocator calls' append
-   order too). The general form of the out[] step of R7.v's seg_R7_malloc (a working branch 2110b4694a4). *)
+   order too). The general form of the out[] step of R7.v's seg_R7_malloc (a working branch). *)
 Lemma outa_call : forall g fr hb H' regs mem md regs' mem' md' touched K,
   FRA B APIf ra g fr hb regs mem md ->
   AC.a_call_post AC.ASYMS AsanRTInv.RT
@@ -1747,7 +1747,7 @@ Definition ent_class_fact (g : ghost) : Prop :=
 
 (* ENT at the entry cut: every conjunct is a fact of the entry state about itself, except #14, which is the slot's
    named premise ENTRY_CLASS: the entry heap's per-class bound, owed by the driver (a Theorem Labs lane's
-   drv_slot_class_entry_stmt) until a Theorem Labs lane puts it in alib_pre (48004cf7bfc's alib_pre has no class premise; it
+   drv_slot_class_entry_stmt) until a Theorem Labs lane puts it in alib_pre (a commit's alib_pre has no class premise; it
    gives only a_live_bytes H <= 5 * 2 ^ 30). It lives in this one-lemma section so that no other lemma (in
    particular no tauto proof) can capture it: only ent_entry and ent_class_entry take it. *)
 Section EntryClass.
@@ -1783,7 +1783,7 @@ Proof. intros g c HI. exact (ENTRY_CLASS g c HI). Qed.
 End EntryClass.
 
 (* ---- ENT's batch-2 conjunct, with one named transport each (names agreed with the image-B lane, a2:
-   a working branch d2c4b19fac8 calls the predicate ent_shd) ---- it is frame batch 2 item 9 of alib_post
+   a working branch calls the predicate ent_shd) ---- it is frame batch 2 item 9 of alib_post
    (lib/A/FrameAPI.v:92-93), verbatim and LAST in ENT. Each lemma is that conjunct of the ENT its transport
    builds, so a segment can cite the one fact it needs without unpacking ENT. The per-class conjunct (#14) comes
    in the next round, with BE. *)
@@ -1994,7 +1994,7 @@ Qed.
    the rest kept by fl_bytes (their addresses are outside W) and wmono (errno).
    It is the one copy of the rebuild: Seg/Tac_b5.v's sl_stk_run and sl_win_run below are wrappers of it, and it
    subsumes the per-segment copies (a Theorem Labs lane's b3_fr_cl, a Theorem Labs lane's xfr_run). A caller holding rd_mono
-   instead of the window fact gets it with MemMono.stk_mono (a Theorem Labs lane 7d20a68642a moved the generic memory
+   instead of the window fact gets it with MemMono.stk_mono (a Theorem Labs lane moved the generic memory
    lemmas there, text unchanged, so the Tac chain does not depend on model_block's function proof); one holding the
    "outside W or readable" form gets it with Frame.stk_transport. *)
 Lemma sl_fr_cl : forall g fr hb regs regs' mem mem' md W,

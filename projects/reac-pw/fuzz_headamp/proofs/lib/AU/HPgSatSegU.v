@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSatSeg.v at dd9ff534326, the image-B twin
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSatSeg.v, the image-B twin
    (fuzz_headamp.asan-ubsan): image B's segments read from lib/AU/Img0U.v; the statement hd_seg_static and the
    image-free helpers (rng_apartb, all_apartb, ranges_chk, cut_cells, cut_regs and their lemmas) are HPgSatSeg.v's,
    used by name; the three checkers HPgSatSeg.v states over image A's segments (strs_chk, at_chk, cut_chk) are

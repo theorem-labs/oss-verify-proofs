@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (deJ_vdso added, the vDSO fact of the loop's entry MInvR; reJ written as plain text with that fact as a class premise; JGi_sys takes the unchanged kernel build and keeps the fact by vdso_ok_vm; MInvR taken apart by minvr_dest and built by minvr_split). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
-#[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "eq"; "and"; "ex"; "not"; "iff"; "or"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sv"; "valuation"; "sprop"; "sstate"; "holds"; "rw"; "ss_next"; "eval"; "rm"; "sobj"; "rl"; "sprop_eqb"; "SVar"; "sprop_below"; "SLit"; "SPUle"; "agree_below"; "ss_facts"; "ss_lenient"; "swf"; "ext_low"; "obj_range"; "ranges_disjoint"; "soff"; "@Corelib.Init.Datatypes"; "list"; "prod"; "bool"; "true"; "option"; "andb"; "Some"; "nat"; "nil"; "fst"; "snd"; "negb"; "pair"; "false"; "None"; "length"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "Z_to_bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "jpred"; "stableJ"; "ok_frameJ"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "VmMaps"; "m_vmmaps"; "m_vm_materialized"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA"; "MInv"; "ma_L"; "@Corelib.Lists.ListDef"; "Forall"; "map"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "pow"; "leb"; "lt"; "mul"; "modulo"; "of_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "etriple"; "triple"; "world"; "assn"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop.WithSegs.Bracket"; "tv_eval_eq"; "snapJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop.WithSegs.Tracked"; "tv_geo"; "robjs_missT"; "has_top_facts"; "F_top_hi"; "F_top_lo"; "robjs_missT_statics"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "leaf"; "lf_state"; "sym_run"; "@Stdlib.Lists.List"; "forallb"; "In"; "existsb"; "nth_error"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "JGi"; "tvv"; "tnz"; "tv_below"; "T_ok"; "aceil"; "inited"; "robj_stack"; "robj_tracked"; "tvd"; "tvin"; "tvz"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "sv_has_rl"; "rho_set_rl"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "V_TOP"; "rd_of"; "wok_of"; "tp_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCFG"; "add_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop"; "CAP"; "ALIGNED"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.Glue3"; "diffs_ok"; "state_diff"; "set_rm"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "mc_img_hi"; "mc_img_lo"; "topL"; "wz"; "@Corelib.Init.Peano"; "lt"; "@LinuxProcessSemantics.LinuxProcessSem.BvBase"; "len_word"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "agree_vals"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvPristine"; "robj_img_misses"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvStatics"; "a_got"; "a_guard"; "a_nl"; "statics_disjoint"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "IB"; "UNIT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine"; "reads"; "@Stdlib.PArith.BinPos.Pos"; "le"; "lt"].
+#[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "eq"; "and"; "ex"; "not"; "iff"; "or"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sv"; "valuation"; "sprop"; "sstate"; "holds"; "rw"; "ss_next"; "eval"; "rm"; "sobj"; "rl"; "sprop_eqb"; "SVar"; "sprop_below"; "SLit"; "SPUle"; "agree_below"; "ss_facts"; "ss_lenient"; "swf"; "ext_low"; "obj_range"; "ranges_disjoint"; "soff"; "@Corelib.Init.Datatypes"; "list"; "prod"; "bool"; "true"; "option"; "andb"; "Some"; "nat"; "nil"; "fst"; "snd"; "negb"; "pair"; "false"; "None"; "length"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "Z_to_bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "jpred"; "stableJ"; "ok_frameJ"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "VmMaps"; "m_vmmaps"; "m_vm_materialized"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA"; "MInv"; "ma_L"; "@Corelib.Lists.ListDef"; "Forall"; "map"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "pow"; "leb"; "lt"; "mul"; "modulo"; "of_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "etriple"; "triple"; "world"; "assn"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop.WithSegs.Bracket"; "tv_eval_eq"; "snapJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop.WithSegs.Tracked"; "tv_geo"; "robjs_missT"; "has_top_facts"; "F_top_hi"; "F_top_lo"; "robjs_missT_statics"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "leaf"; "lf_state"; "sym_run"; "@Stdlib.Lists.List"; "forallb"; "In"; "existsb"; "nth_error"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "JGi"; "tvv"; "tnz"; "tv_below"; "T_ok"; "aceil"; "inited"; "robj_stack"; "robj_tracked"; "tvd"; "tvin"; "tvz"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "sv_has_rl"; "rho_set_rl"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "V_TOP"; "rd_of"; "wok_of"; "tp_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCFG"; "add_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop"; "CAP"; "ALIGNED"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.Glue3"; "diffs_ok"; "state_diff"; "set_rm"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "mc_img_hi"; "mc_img_lo"; "topL"; "wz"; "@Corelib.Init.Peano"; "lt"; "@LinuxProcessSemantics.LinuxProcessSem.BvBase"; "len_word"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "agree_vals"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvPristine"; "robj_img_misses"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvStatics"; "a_got"; "a_guard"; "a_nl"; "statics_disjoint"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "IB"; "UNIT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine"; "reads"; "@Stdlib.PArith.BinPos.Pos"; "le"; "lt"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "KernelBuild"; "m_kernel"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 From Stdlib Require Import ZArith NArith List Bool PArith Lia.
 From stdpp Require Import bitvector.
@@ -32,16 +33,16 @@ Variables Kc Kc' : list event -> Model -> Prop.
 Variable rho0 : valuation.
 Variable P0f : valuation -> Prop.
 
-Lemma JGi_sys : ltac2:(tb__ "0|4|
-S2fS1eS1fS6S6A2A1S3cS7S7S1eS38A1M0G0S37S37S83VNP;R9A2S0S20S5fRaR9A2S21A3S2fS84R1RcA2S0S30Q40A1M1SbR9R2A2SbRaR2A2A3F_;Fi;S2fS0S1eS30Q8A1M2A1S10R9R1A2S10RaR1A2A3Fl;S0G1S22G2A1F_;SeR9A1SeRaA1A3S0S39S3aR6A1S3aR7A1A3VKc;RaR8A2VKc';RaR8A2F_;S5cVsegs;VC;VNP;VKc;Vrho0;VP0f;S26S1fS2eS2eA2A1M3RfReRdRbR9AcS5cVsegs;VC;VNP;VKc';Vrho0;VP0f;G3R10RfRdRbR9AcF_;F_;F_;F_;F_;F_;F_;F_;Fmd';Fmd;Ftr';Ftr;Frho';Frho;FAi;Ftv;Fn;").
+Lemma JGi_sys : ltac2:(tb__ "0|0|
+S2fS1eS1fS6S6A2A1S3cS7S7S1eS38A1S1eS38A1S37S37S83VNP;R9A2S0S20S5fRaR9A2S21A3S2fS84R1RcA2S0S30Q40A1SbR9R2A2SbRaR2A2A3F_;Fi;S2fS0S1eS30Q8A1A1S10R9R1A2S10RaR1A2A3Fl;S0S30Q40A1S22S30Q8A1A1F_;SeR9A1SeRaA1A3S0S39S3aR6A1S3aR7A1A3S0S85S86R7A1S86R8A1A3VKc;RbR9A2VKc';RbR9A2F_;S5cVsegs;VC;VNP;VKc;Vrho0;VP0f;S26S1fS2eS2eA2A1R10RfReRcRaAcS5cVsegs;VC;VNP;VKc';Vrho0;VP0f;S26S1fS2eS2eA2A1R11R10ReRcRaAcF_;F_;F_;F_;F_;F_;F_;F_;F_;Fmd';Fmd;Ftr';Ftr;Frho';Frho;FAi;Ftv;Fn;").
 Proof using .
-  intros n tv Ai rho rho' tr tr' md md' Hle Hb Hw Hl Hm Hvm HK (Hav & Hk & [HM Hi] & HP & (HN & HD & HZ) & HKF & HP0).
+  intros n tv Ai rho rho' tr tr' md md' Hle Hb Hw Hl Hm Hvm Hkb HK (Hav & Hk & [HM Hi] & HP & (HN & HD & HZ) & HKF & HP0).
   assert (Hag : agree_below n rho rho').
   { split; [intros i Hi'; symmetry; exact (Hw i Hi')|]. split; [intros l; symmetry; exact (Hl l) | intros a; rewrite Hm; reflexivity]. }
   pose proof (agree_below_vals _ _ _ Hag) as Hav'.
   split; [|split; [exact (HK Hk)|split; [split; [|exact Hi]|split; [exact HP|split; [split; [|split]|split; [|exact HP0]]]]]].
   - eapply agree_vals_trans; [exact Hav|]. eapply agree_vals_le; [exact Hle | exact Hav'].
-  - unfold MInvR in *. rewrite Hm, Hvm. exact HM.
+  - destruct HM as [HM VD0]. split; [rewrite Hm, Hvm; exact HM | exact (vdso_ok_vm md md' Hkb Hvm VD0)].
   - eapply tvin_agree; [exact Hav' | exact Hb | exact HN].
   - eapply tvd_agree; [exact Hav' | exact Hb | exact HD].
   - eapply tvz_agree; [exact Hav' | exact Hb | exact HZ].
@@ -221,7 +222,7 @@ Proof using .
   intros tv Ai rho tr md (Hav & Hk & [HM _] & HP & (HN & HD & HZ) & HKF & HP0) t Ht. split.
   - intros Hz. exact (proj1 (Forall_forall _ _) HZ t Ht (fun H => H Hz)).
   - intros Hnz. destruct (proj1 (Forall_forall _ _) HN t Ht Hnz) as (Tpos & Tin & _).
-    unfold MInvR in HM. rewrite (surjective_pairing (tvv rho t)) in Tin.
+    minvr_dest HM. rewrite (surjective_pairing (tvv rho t)) in Tin.
     pose proof (minv_block_geom C Ai _ _ _ _ _ HM Tin) as (G0 & _ & G2 & G3 & G4). exact G4.
 Qed.
 
@@ -336,10 +337,19 @@ Lemma deJ : ltac2:(tb__ "0|1|
 S1eS38A1M0S37OF_;F_;S7S1eS1fS6S6A2A1S3cS37OFx0;Fx;S3cS7G0S37S5cVsegs;VC;VNP;R8R7VP0f;S26S1fS2eS2eA2A1R6R4R3R2R1AcR6R5R2A2VP0f;R5A1S1S4eR9R8R6S3aR4A1S3bR4A1A5RbR5R4A2A2F_;F_;F_;Fmd;Ftr;Frho;FAi;FD;Ftv;Frho0;FKc;").
 Proof using P0f_top.
   intros Kc rho0 tv D Ai rho tr md (Hav & Hk & [HM [Hi HT]] & HP & HN & HKF & HP0) HD HPr.
-  split; [|exact Hk]. exists Ai, md. unfold MInvR in HM. split; [exact HM|].
+  split; [|exact Hk]. exists Ai, md. minvr_dest HM. split; [exact HM|].
   split; [split; [exact Hi|]; rewrite (TPI_top _ _ _ HT); unfold T0; rewrite (P0f_top _ HP0); reflexivity|].
   split; [exact HN|]. split; [exact HPr|].
   split; [reflexivity|]. split; [reflexivity|exact HD].
+Qed.
+
+(* The vDSO fact of the loop's entry model, from its [JGi]'s [MInvR]: what a driver's lifted loop K
+   starts from (see [reJ]). *)
+Lemma deJ_vdso : forall (Kc : list event -> Model -> Prop) (rho0 : valuation) (tv : list (sv * sv)) (Ai : MA)
+  (rho : valuation) (tr : list event) (md : Model),
+  JGi segs C NP Kc rho0 P0f [] tv Ai rho tr md -> vdso_ok md.
+Proof using .
+  intros Kc rho0 tv Ai rho tr md (Hav & Hk & [HM _] & _). exact (proj2 HM).
 Qed.
 
 Lemma snapJ_transport : ltac2:(tb__ "0|2|
@@ -360,14 +370,22 @@ Qed.
 Hypothesis P0f_tp : ltac2:(tb__ "0|0|
 S7VP0f;R1A1S6dVC;R2A2F_;Fr;").
 
-Lemma reJ : ltac2:(tb__ "0|4|
-S1eS38A1M0S37OFx0;Fx;S1eS1fS6S6A2A1S3cS37OF_;F_;S7S39S1eS30Q40A1A1M1G0S37S4eR7R6R5R4R3A5S0S39S3aR2A1M2R5A3S0G1S3bR3A1M3R5A3S3cS37S37S0S39S3aR1A1G2A3S0G1S3bR2A1G3A3ReR5R4A2RfR6R4A2F_;F_;F_;Fm';Fm;FA;RcR6R5A2S2S3cS3cS1S5cVsegs;VC;VNP;ReRbVP0f;S26S1fS2eS2eA2A1RdR1RbR8R7AcRcR1R7A2A2LAi;A2F_;F_;F_;F_;F_;Fmd;Ftr;Fmat;Fvm;Frho;FD;Ftv;FKc';").
+(* LPS 727298f3: the loop model's [vdso_ok] is a class premise: the drivers' lifted loop K carries it,
+   proved after each step of the loop by [vdso_ok_frame] (no loop step writes the kernel build, the
+   reserved ledger or the mappings), and [deJ_vdso] gives it on entry. *)
+Lemma reJ : forall (Kc' : list event -> Model -> Prop) (tv : list (sv * sv)) (D : MA -> Model -> Prop)
+  (rho : valuation) (vm : VmMaps) (mat : list word) (tr : list event) (md : Model) {Hvd : vdso_ok md},
+  snapJ tv D rho vm mat -> m_vmmaps md = vm -> m_vm_materialized md = mat ->
+  (forall (A : MA) (m m' : Model), m_vmmaps m' = m_vmmaps m -> m_vm_materialized m' = m_vm_materialized m ->
+     D A m -> D A m') ->
+  Kc' tr md ->
+  exists Ai : MA, JGi segs C NP Kc' rho P0f [] tv Ai rho tr md /\ D Ai md.
 Proof using P0f_tp P0f_top.
-  intros Kc' tv D rho vm mat tr md (Ai & md0 & HM & [Hi HT] & HN & HP0 & Hvm & Hmat & HDD) Hvm' Hmat' HDf Hk.
+  intros Kc' tv D rho vm mat tr md Hvd (Ai & md0 & HM & [Hi HT] & HN & HP0 & Hvm & Hmat & HDD) Hvm' Hmat' HDf Hk.
   exists Ai. split; [|apply (HDf Ai md0 md); [congruence|congruence|exact HDD]].
   split; [apply agree_vals_refl|]. split; [exact Hk|].
   split; [split; [|split; [exact Hi | split; [exact (P0f_tp _ HP0) | unfold T0; rewrite (P0f_top _ HP0); exact HT]]]|].
-  - unfold MInvR. rewrite Hvm'. exact HM.
+  - minvr_split. rewrite Hvm'. exact HM.
   - split; [intros b Hb; destruct Hb|]. split; [exact HN|]. split; [intros a _ _; reflexivity | exact HP0].
 Qed.
 End Bracket.

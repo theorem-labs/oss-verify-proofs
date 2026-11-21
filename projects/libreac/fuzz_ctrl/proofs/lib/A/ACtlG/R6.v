@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v; 871 of its 911 lines of code are new or changed and 805 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R6.v -- GLUE for stage seg_R6 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:672).  Written by a Theorem Labs lane (piece W2a); single writer.
    rule 24: no function proved (stage glue of a walk; proves no function, kind: segment lemma).
@@ -49,7 +50,7 @@
 
    SECTION HYPOTHESES (exact text at the declarations below)
    - RELRO_IMG, LAWS, TFIB_SYMS: ACtl.v's own Section hypotheses (ACtl.v:179, :183, :191), same text.
-   - RELRO_CAT: ACtl.v's own Section hypothesis (Batch3, glue base d36efc6152d; ACtl.v:205), same text:
+   - RELRO_CAT: ACtl.v's own Section hypothesis (Batch3, glue base; ACtl.v:205), same text:
      RLO <= SlotModel.CAT /\ SlotModel.CAT + SlotModel.CAT_N * SlotModel.CAT_ROW <= RHI.  The pointwise form this
      stage reads (every catalogue byte in [RLO, RHI)) is the local lemma r6_relro_cat (CAT_N * CAT_ROW = 3256).
    - GLOBS_A (Variable) and NAME_GLOB: the registered-globals list the build_as spec takes (ACtl.v:319, same text;
@@ -77,7 +78,7 @@
    (the six Reusable twins and the lib/Lib twins of lib/A/Bz); no Import / Export of a project module; no
    statement names a frame-route identifier.
    START-UP TABLE VALUES READ: AF0m's Tfib_owned_static and TFIB_ERRNO (TFIB_SYMS ts_owned / ts_errno) for the
-   box / catalogue / name byte reads; checked against the record AF0m (e56483f863b): no overlap, errno the same.
+   box / catalogue / name byte reads; checked against the record AF0m: no overlap, errno the same.
    CAVEAT (zero-shadow row, a Theorem Labs lane 05:4xZ): NOT applicable: this stage reads no image byte's shadow (the
    spec's image premises are byte values only: round_trip.box, the catalogue row, the row name). *)
 
@@ -448,7 +449,7 @@ Qed.
 
 (* ---- image bytes the build_as spec reads (round_trip.box, the catalogue rows, the row names): checked by
    vm_compute against the image's segments, the bundle's owned-static list and errno word (AF0m's Tfib_owned_static
-   / TFIB_ERRNO through TFIB_SYMS ts_owned / ts_errno; the record AF0m e56483f863b's list measured: no overlap) ---- *)
+   / TFIB_ERRNO through TFIB_SYMS ts_owned / ts_errno; the record AF0m's list measured: no overlap) ---- *)
 Definition r6_seg_ro_b (x : Z) : bool :=
   existsb (fun s => negb (seg_writable s) && (Z.of_N (seg_base s) <=? x) &&
                     (x <? Z.of_N (seg_base s) + Z.of_N (seg_size s))) segs.
@@ -631,7 +632,7 @@ Hypothesis NAME_GLOB : forall i, 0 <= i < 11 -> OSSVerify.Proofs.libreac.fuzz_ct
 Hypothesis TBUILD : A.Prog.C_reac_ctrl_build_as.treac_ctrl_build_as_spec (SK := A.AE2k.tfib_sink_head) B GLOBS_A 0x848ac RLO RHI.
 
 (* The shadow of a live heap block from AR (ProgWorld.v :849): ctl_block_shadow_of_AR_stmt is no longer open:
-   a Theorem Labs lane's PROVED A.ProgWorldShadow.ctl_block_shadow_of_AR (on the glue base since 29ddfc3ea99), named locally. *)
+   a Theorem Labs lane's PROVED A.ProgWorldShadow.ctl_block_shadow_of_AR (on the glue base), named locally. *)
 Let BLOCK_SHADOW : PW.ctl_block_shadow_of_AR_stmt B := A.ProgWorldShadow.ctl_block_shadow_of_AR B.
 
 (* ---------------------------------------------------------------------------------------------------------

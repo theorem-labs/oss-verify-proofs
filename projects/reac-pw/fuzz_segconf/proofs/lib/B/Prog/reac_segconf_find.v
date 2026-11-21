@@ -16,13 +16,14 @@
      0x89fb4 and 0x89fec (a + 56i < a, b + 56i < b unsigned) and 0x8a064, 0x8a068 (~(a[i].args) < 8k, ~(b[i].args) < 8k)
      are refuted at the branch from the values of their operands. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 527 of its 679 lines of code are new or changed and 1440 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of reac_segconf_find on fuzz_segconf image B (fuzz_segconf.asan-ubsan, entry BASE +
    AF_reac_segconf_find = 0x89a84, 61 instructions, a 64-byte frame) against reac_segconf_find_contract
    (lib/B/Prog/reac_segconf_find_c.v, image B's copy of the FINAL contract text).
-   ADAPTED: the image-B port of lib/A/Prog/reac_segconf_find.v (commit 561c4bddbbdf, which
+   ADAPTED: the image-B port of lib/A/Prog/reac_segconf_find.v (which
    carries that walk's step plan plan-reac_segconf_find.md (image A's walk record), not its Rocq text); the loop's cut, the
-   UBSan trap branches and the wrapper call follow plugin-hostd/fuzz_command's image-B lib/B/Prog/rec_calls_equal.v
-   (origin/ossv/recipes 501c0d516c69). Step plan: the unit record's Bwalks-G45-plans/plan-reac_segconf_find.md.
+   UBSan trap branches and the wrapper call follow plugin-hostd/fuzz_command's image-B lib/B/Prog/rec_calls_equal.v.
+   Step plan: the unit record's Bwalks-G45-plans/plan-reac_segconf_find.md.
 
    The symbolic executor runs over the position-abstract listing (lib/B/Prog/SegList.v). The one instrumented
    check (the 4-byte load of c->n at c + 0x2c80, 0x89ad8 .. 0x89ae4) is discharged as the run's shadow obligation

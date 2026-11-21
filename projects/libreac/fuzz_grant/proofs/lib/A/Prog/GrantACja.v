@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the generic part of proofs/cgif/cgif_file_fuzzer/lib/A/ACja.v for libreac/fuzz_grant's program walk, over fuzz_grant's listing. Image objects follow fuzz_grant.asan: the GOT word of the shadow-base cell is object 1 (atom 242), the GOT word of the side-stack flag is object 0 (atom 241), the shadow-base cell is object 32 (atom 273) and the side-stack flag cell is object 33 (atom 274), so img_factsF and img_hull_factsF give E240 E241 E242 E273 E274 and Hob241 Hob242 Hob273 Hob274, keptFL keeps those four regions, and aconstsF rewrites with PALib's pal_got_shadow, pal_cell and GrantFrame's palf_got_uar. awrFL, keptFL, fs_roF and fs_rwF keep the walks' atoms for the own side-stack frame (516), its shadow (529), the realigned stack (60) and the stack (2), for any frame class; stack bounds compute the walk's own STK constant; cgif's case for its 40-byte FRAME block (atom 11) is left out, and awrFL_with/keptFL_with take a tactic for a walk's own head regions. Module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -29,7 +30,7 @@ Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(fa
 Open Scope bv_scope.
 Open Scope Z_scope.
 (* Not Local on purpose: an extension point. lib/A/Prog/CheckGroupaWalk.v (which imports this file) calls `evalE AG`
-   and needs this redefinition; with `Local` its proof breaks at CheckGroupaWalk.v:631 (a Theorem Labs build of 96c83811859). *)
+   and needs this redefinition; with `Local` its proof breaks at CheckGroupaWalk.v:631 (a Theorem Labs build). *)
 Ltac evalE AG ::=
 cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia;
 repeat match goal with H : ew ?Ex ?n = Z_to_bv 64 _ |- context [ew ?Ex ?n] => rewrite H end;

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: reac-repacer/fuzz_wire's check_width in the caller-journal form of reac-repacer/fuzz_uci's lib/A/Prog/check_clamp_cg.v and check_value_cg.v (the form of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v, origin/ossv/recipes 88154566652a), at this unit's core names and image A. *)
+(* Modified by Theorem Labs: reac-repacer/fuzz_wire's check_width in the caller-journal form of reac-repacer/fuzz_uci's lib/A/Prog/check_clamp_cg.v and check_value_cg.v (the form of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v), at this unit's core names and image A. *)
 (* check_width_cg: the ASan walk contract of check_width (fuzz_wire.asan 0x80708 = wire_sigma WS_check_width), as
    STATEMENTS only (no proof).
 

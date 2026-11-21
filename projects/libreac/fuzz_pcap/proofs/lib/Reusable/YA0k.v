@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA0k.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed writev_file_chk_canon, node_writev_file_lazy; added writev_file_rob). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -14,6 +15,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Prelude.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require Import Namei Open ReadWrite.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YK16 YK0n YK11 YK0i YK0h YK14 YK0v YK0p YK02 YK15 YK18.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YP0n YK04 YA0i YA0m.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import RomBase RomWritev.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -85,6 +87,35 @@ assert (Herr : addr_is_error_b (len_word bs) = false).
 { unfold addr_is_error_b. apply Z.ltb_ge. rewrite len_word_unsigned; unfold two_pow_64; lia. }
 rewrite Herr. unfold writev_copyins. rewrite ?E32. reflexivity.
 Qed.
+(* LPS 08b1429: a file writev node is robust to a larger backing (its reads succeed: the
+   closed form above is the same over every larger view, copy-in record included). *)
+Lemma writev_file_rob : forall regs pc mem rom model fd p off data iovs bs,
+bv_unsigned (getr regs 17) = 66%Z ->
+fd_lookup (m_fds model) fd = Some (FdFileW p off) -> fd32 fd = fd -> getr regs 10 = fd ->
+w_is0 (iovcnt32 (getr regs 12)) = false ->
+(bv_unsigned (getr regs 12) <= IOV_MAX)%Z ->
+copy_iovecs_aux (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11)
+(word_to_nat (iovcnt32 (getr regs 12))) = ImpOk iovs ->
+access_okb (getr regs 11) (16 * bv_unsigned (getr regs 12)) = true ->
+iovs_access_okb iovs = true ->
+gather_iovecs (ms_read_byte (pend_at regs pc mem rom)) iovs = Some bs ->
+(iovs_total iovs <= MAX_RW_COUNT)%Z ->
+(1 <= length bs)%nat ->
+fs_lookup (m_fs model) p = Some data ->
+(bv_unsigned off + iovs_total iovs <= 2 ^ 63 - 1)%Z ->
+(bv_unsigned off <= Z.of_nat (length data) + rw_bytes_max)%Z ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model).
+Proof.
+intros regs pc mem rom model fd p off data iovs bs Hno Hlk H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb Hfs Hpos Hgap.
+apply (rob_pend segs). intros rom' Hr eff.
+pose proof (pend_mem_ext regs pc mem rom rom' Hr) as Hx.
+rewrite (writev_file_chk_canon regs pc mem rom' model fd p off data iovs bs Hno Hlk H32 Hfd Hcnt Hmax
+(copy_iovecs_aux_ext _ _ _ _ _ Hx Himp) Hiok Hbok (gather_iovecs_ext _ _ _ _ Hx Hg) Htot Hnb Hfs Hpos Hgap eff).
+rewrite (writev_file_chk_canon regs pc mem rom model fd p off data iovs bs Hno Hlk H32 Hfd Hcnt Hmax
+Himp Hiok Hbok Hg Htot Hnb Hfs Hpos Hgap eff).
+rewrite (writev_copyins_ext regs pc mem rom rom' iovs bs (length bs) Hr Hcnt Hmax Himp Hiok Hbok Hg Htot).
+reflexivity.
+Qed.
 Lemma node_writev_file_lazy : forall regs pc mem rom model fd p off data iovs bs,
 AI segs H A model ->
 bv_unsigned (getr regs 17) = 66%Z ->
@@ -115,6 +146,7 @@ apply (node_ret_only_copyins_lazy segs H A regs pc mem rom model accs (len_word 
 - subst m'. rewrite with_fds_halted, with_fs_halted. exact (AI_halted segs H A model HAI).
 - subst m'. apply ledgers_with_fds_fs.
 - exact Hav.
+- exact (writev_file_rob regs pc mem rom model fd p off data iovs bs Hno Hlk H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb Hfs Hpos Hgap).
 Qed.
 Lemma node_writev_file2_lazy : forall regs pc mem rom model fd p off data (b0 l0 b1 l1 : word) bs0 bs1,
 AI segs H A model ->

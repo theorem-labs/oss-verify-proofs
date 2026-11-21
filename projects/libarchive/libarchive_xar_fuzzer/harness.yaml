@@ -3,8 +3,12 @@ project: libarchive
 harness: libarchive_xar_fuzzer
 rocq: OSSVerify.libarchive.libarchive_xar_fuzzer
 origin: upstream
-summary: Reads the input as a XAR archive (+ all filters); per entry calls pathname(_w), size, mtime,
-  mode, filetype, uid, gid and drains archive_read_data. Every return value is discarded.
+summary: Reads the input as a XAR archive (+ all filters). It returns early if archive_read_new returns
+  NULL or archive_read_open does not return ARCHIVE_OK. While archive_read_next_header returns ARCHIVE_OK,
+  it calls pathname(_w), size, mtime, mode, filetype, uid and gid, then reads the data while archive_read_data
+  returns more than 0. It drops every other result and the data read. If allocating its data buffer throws
+  std::bad_alloc, it frees the archive and returns 0. Each call first ignores SIGPIPE, as bsdtar and bsdcpio
+  do.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -13,7 +17,7 @@ source:
     repository: https://github.com/libarchive/libarchive
     commit: 3670ecf7c59a6b12fe93e6255bbe4a1f3420edf8
     path: contrib/oss-fuzz/libarchive_xar_fuzzer.cc
-  modified: false
+  modified: true
   licence: BSD-2-Clause
 library:
   repository: https://github.com/libarchive/libarchive
@@ -26,11 +30,15 @@ modifications:
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
 - libFuzzer's dictionary libarchive_xar_fuzzer.dict and the options in libarchive_xar_fuzzer.options are not
   used.
+- 'The harness source is modified: source/libarchive_xar_fuzzer.cc is libarchive 3670ecf7''s contrib/oss-fuzz/libarchive_xar_fuzzer.cc
+  with two Theorem Labs changes. On std::bad_alloc it frees any open archive and returns 0; the original
+  aborts. It ignores SIGPIPE, as bsdtar and bsdcpio do, so a write to a filter program that stopped reading
+  fails with EPIPE instead of killing the run.'
 builds:
   plain:
     file: libarchive_xar_fuzzer.plain
-    bytes: 3946264
-    sha256: 36e020476d2f4b2c666d772aae7dcaa70c4336ab314bb3b4d18138c53ea0e30b
+    bytes: 3946560
+    sha256: 9ef204ebdc09f653dd5d75b4874b75435fbd2a55db70fa1b72f654ea02ea3f0f
     segments:
     - 1
     - 1
@@ -75,8 +83,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   ubsan:
     file: libarchive_xar_fuzzer.ubsan
-    bytes: 3963176
-    sha256: 51b1ce0b617fd727a8a3e2d2e3a0ff5e3dedbc6bba6fa55c7115adbd68895cdf
+    bytes: 3963480
+    sha256: b49d5e966738a0201459a7f682016addecabdf3c362425f5a075d29cba0434d9
     segments:
     - 1
     - 1
@@ -121,8 +129,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan:
     file: libarchive_xar_fuzzer.asan
-    bytes: 4644344
-    sha256: 11d2848aa3d275969610b4fc298af5dc732765b0871eaf81c9abd91a8471b5f7
+    bytes: 4645416
+    sha256: 97e979eb4fe6aa9dbf6f990b0632146714c1bda867f2fbc92a1d63067dbcaa55
     segments:
     - 1
     - 1
@@ -170,8 +178,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan-ubsan:
     file: libarchive_xar_fuzzer.asan-ubsan
-    bytes: 4656952
-    sha256: 96782171b44d6c76b88286c2fbebac0e66b4fac02b316af283894d363c6246c0
+    bytes: 4657992
+    sha256: e2c332d166e295d93a1103c9d7533624e6b8dc94a87c81ec7c1d218ab12a9bac
     segments:
     - 1
     - 1
@@ -219,6 +227,11 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
 licence: NOASSERTION
 checks: []
+model_gap:
+- nonblocking-io
+- resource-limits
+- signal-handlers
+- threads
 statements:
   asan_agrees:
     kind: agreement
@@ -228,17 +241,8 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: witnessed-false
-    witness:
-      build: plain
-      input_hex: 00000000000078617221001c00010000000000000000000000000000000000000000
-      refused:
-        call: mmap
-        position: 6
-        bytes: 16384
-      outcome: abort
-      after: uncaught-bad-alloc
-      runner: qemu-riscv64 10.0.11
+    status: model-gap
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -247,17 +251,8 @@ statements:
     reading: may-fail
     budgets: standard
     abort: signal
-    status: witnessed-false
-    witness:
-      build: plain
-      input_hex: 00000000000078617221001c00010000000000000000000000000000000000000000
-      refused:
-        call: mmap
-        position: 6
-        bytes: 16384
-      outcome: abort
-      after: uncaught-bad-alloc
-      runner: qemu-riscv64 10.0.11
+    status: model-gap
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -266,17 +261,8 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: witnessed-false
-    witness:
-      build: plain
-      input_hex: 00000000000078617221001c00010000000000000000000000000000000000000000
-      refused:
-        call: mmap
-        position: 6
-        bytes: 16384
-      outcome: abort
-      after: uncaught-bad-alloc
-      runner: qemu-riscv64 10.0.11
+    status: model-gap
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -286,7 +272,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts_may_fail:
     kind: halts
     builds:
@@ -294,17 +281,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: witnessed-false
-    witness:
-      build: plain
-      input_hex: 00000000000078617221001c00010000000000000000000000000000000000000000
-      refused:
-        call: mmap
-        position: 6
-        bytes: 16384
-      outcome: abort
-      after: uncaught-bad-alloc
-      runner: qemu-riscv64 10.0.11
+    status: model-gap
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -314,7 +292,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -324,7 +303,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts_may_fail:
     kind: halts
     builds:
@@ -332,17 +312,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: witnessed-false
-    witness:
-      build: ubsan
-      input_hex: 00000000000078617221001c00010000000000000000000000000000000000000000
-      refused:
-        call: mmap
-        position: 6
-        bytes: 16384
-      outcome: abort
-      after: uncaught-bad-alloc
-      runner: qemu-riscv64 10.0.11
+    status: model-gap
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -352,4 +323,5 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2

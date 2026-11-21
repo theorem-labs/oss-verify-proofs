@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/ErrnoG.v, with its module paths and module names changed; 53 of its 98 lines of code are new or changed and 365 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DeallocG.v @ 2bd8ae006ef (c-asan, cold/c-asan-realloc-c5; byte-identical at c-asan's buildable snapshot 478a815d97c, cold/snap-c-asan-realloc-c5-20261029T0805), module paths changed only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DeallocG.v (c-asan, cold/c-asan-realloc-c5; byte-identical at c-asan's buildable snapshot, cold/snap-c-asan-realloc-c5-20261029T0805), module paths changed only. *)
 (* The frame-generic contract of __asan::Allocator::Deallocate.
 
    The run starts at Deallocate's first instruction [pcD] and ends at the [ret] that comes back to Deallocate's

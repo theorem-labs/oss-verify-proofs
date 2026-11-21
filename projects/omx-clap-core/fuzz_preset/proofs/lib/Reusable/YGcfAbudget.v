@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfAbudget.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfAbudget.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfAbudget.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfAbudget.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the cf budget's step lemmas (the ledger restatement, Main's decisions of record
    2026-10-30). ARcf's ledger conjunct is the raw `A_bytes (w_A W) <= abudget_cf S` at every state; abudget_cf
    (YG0ncf.v) counts prim_committed / 8 and the unit's hull term cf_hull (YGcfNames.v: preset sec_hulls_cf, cgif's
@@ -33,7 +34,7 @@ Local Open Scope Z_scope.
    allowance form). A NEW cf-only constant:
    cgif's VM_HEAD (YG0n.v:542, 2 ^ 30) is unchanged. It must hold one call's grants (the errbuf remap, at most
    2 * cf_nob; the class-24 user map and its shadow; the free-array growths; any other map), which
-   ERRB_ROOM (YG00cf.v:107) does not bound against vm_limit. *)
+   ERRB_ROOM (YG00cf.v:108) does not bound against vm_limit. *)
 Definition CF_HEAD : Z := 2 ^ 33.
 
 Lemma CF_HEAD_val : CF_HEAD = 8589934592.
@@ -73,7 +74,7 @@ Section U. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : Cf
 
 (* ---------------------------------------------------------------------------- *)
 (* 3. The primary grants (item 3). prim_committed sums rg_mapped_user + rg_mapped_fa over the regions        *)
-(*    (YG01.v:218-219); a grant updates one region (set_region, YG00.v:215) by one map of 262144 bytes, so *)
+(*    (YG01.v:219-220); a grant updates one region (set_region, YG00.v:215) by one map of 262144 bytes, so *)
 (*    abudget_cf rises by the map and its exact shadow 262144 / 8 = 32768.                                 *)
 Lemma prim_fold_lupd : forall (rs : list region) i r0 r',
 nth_error rs i = Some r0 ->
@@ -257,7 +258,7 @@ rewrite EW. lia.
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* 5. The eager part at the errbuf exits (item 2, form (A)). errb_map_cf (YG00cf.v:120-127) maps the new  *)
+(* 5. The eager part at the errbuf exits (item 2, form (A)). errb_map_cf (YG00cf.v:121-128) maps the new  *)
 (*    buffer and then the walk unmaps the old one (a Theorem Labs lane's RepF4Append order); eager_used moves    *)
 (*    by + esec [new] - esec [old] (eager_used_remap, from eager_used_mmap_model / eager_used_munmap,      *)
 (*    YG0j.v:103 / :124), and eager_cf by the same two terms (eager_cf_swap), so alc_eager_x is kept       *)

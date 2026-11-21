@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require As0Gc.
@@ -276,7 +277,8 @@ Section Loop.
     ari_fs   : m_fs mo = fs0;
     ari_fd3  : fd_lookup (m_fds mo) (Z_to_bv 64 3) = Some (FdFile path (Z_to_bv 64 len));
     ari_fd1  : fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1));
-    ari_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) }.
+    ari_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2));
+    ari_rdr  : m_channel_reader mo = true }.
 
   Record AMInv (len n cap A : Z) (s : as_St H) (p : bptr) (regs : bvmap 5 word) (mem : word -> option byte) (mo : Model) : Prop := AMI {
     ami_regs : am_regs sp0 regs ppw A len cap n;
@@ -291,7 +293,8 @@ Section Loop.
     ami_fs   : m_fs mo = fs0;
     ami_fd3  : fd_lookup (m_fds mo) (Z_to_bv 64 3) = Some (FdFile path (Z_to_bv 64 (len + n)));
     ami_fd1  : fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1));
-    ami_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) }.
+    ami_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2));
+    ami_rdr  : m_channel_reader mo = true }.
 
   Record ACInv (cap A : Z) (s : as_St H) (p : bptr) (regs : bvmap 5 word) (mem : word -> option byte) (mo : Model) : Prop := ACI {
     aci_r1 : getr regs 1 = Z_to_bv 64 0x17baac;  aci_r2 : getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 144);
@@ -311,7 +314,8 @@ Section Loop.
     aci_fs   : m_fs mo = fs0;
     aci_fd3  : exists e3, fd_lookup (m_fds mo) (Z_to_bv 64 3) = Some e3;
     aci_fd1  : fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1));
-    aci_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) }.
+    aci_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2));
+    aci_rdr  : m_channel_reader mo = true }.
 
   Record AXInv (cap A : Z) (s : as_St H) (p : bptr) (regs : bvmap 5 word) (mem : word -> option byte) (mo : Model) : Prop := AXI {
     axi_r1 : getr regs 1 = Z_to_bv 64 0x17baac;  axi_r2 : getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 144);
@@ -330,7 +334,8 @@ Section Loop.
     axi_ra   : rdn RSEGS mem (Z_to_bv 64 (bv_unsigned sp0 - 136)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0xe88a8));
     axi_fs   : m_fs mo = fs0;
     axi_fd1  : fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1));
-    axi_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) }.
+    axi_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2));
+    axi_rdr  : m_channel_reader mo = true }.
 
   Lemma blk_range : forall s p A cap m, as_RHEAP H s [(p, A, cap)] m -> ablock_range H A cap.
   Proof. intros s p A cap m RH. exact (ah_blocks H HH _ _ _ (p, A, cap) RH ltac:(left; reflexivity)). Qed.
@@ -407,7 +412,7 @@ Section Loop.
        ACInv cap A s p regs' mem' mo' -> realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) K.
   Proof.
-    intros s msF mo regs mem p A len cap K HV HA [RC [Hlen Hld] Hcap HPOW RH [junk HCB] AD HDATA ST Hfs Hfd3 Hfd1 Hfd2] KMORE KEOF.
+    intros s msF mo regs mem p A len cap K HV HA [RC [Hlen Hld] Hcap HPOW RH [junk HCB] AD HDATA ST Hfs Hfd3 Hfd1 Hfd2 Hrd] KMORE KEOF.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo. pose proof aceil_lo as HCL. acb.
     set (cnt := Z.min (cap - len) 65536) in RC.
     destruct RC as (R1 & R2 & R4 & R8 & R9 & R10 & R11 & R12 & R18 & R19 & R20 & R21 & R22).
@@ -421,7 +426,7 @@ Section Loop.
       | rewrite R2, u_small by lia; exact (mst_stk_spm _ ST) | lia | rewrite R2, u_small by lia; unfold AREAD_STACK; lia
       | exact (mst_inv _ ST) | exact (mst_ac _ ST) | exact Hfd3 | rewrite Hfs; exact Hdata | ].
     cbv zeta. fold bs. rewrite R2, !u_small by lia.
-    intros regs1 mem1 msF1 mo1 HV1 HA1 KEPT1 Q10 MU1 WM1 INV1 STK1 AC1 RD1 FS1 FDS1.
+    intros regs1 mem1 msF1 mo1 HV1 HA1 KEPT1 Q10 MU1 WM1 INV1 STK1 AC1 RD1 FS1 FDS1 RDR1.
     assert (ST1 : mstatics mem1).
     { eapply (mstatics_munch mem mem1 _ [] ST MU1 WM1); [| exact INV1 | exact STK1 | exact AC1].
       constructor; [right; right; left; reflexivity | constructor; [left; cbn [fst snd]; unfold AREAD_STACK; lia | constructor]]. }
@@ -455,6 +460,7 @@ Section Loop.
       intros regs2 mem2 msF2 mo2 HV2 HA2 SB2 T1 T2 T4 T8 T9 T10 T17 T18 T19 T20 T21 T22 FM2 STK2 RA2.
       destruct (blk_frameL s p A cap mem1 mem2 junk (Z.to_nat len) _ RH1 FM2 CB1 AD1 HDATA1 ltac:(lia)) as (RH2 & CB2 & AD2 & HDATA2).
       apply (KEOF Elen regs2 mem2 msF2 mo2 HV2 HA2). split; try assumption.
+      all: try (rewrite (same_but_materialized_reader _ _ SB2), RDR1; exact Hrd).
       + rewrite <- Elen. exact T19.
       + lia.
       + unfold MAX_INPUT. lia.
@@ -554,6 +560,7 @@ Section Loop.
       + destruct (adl_mpres H DL _ _ MP3) as (_ & E & _). rewrite E, (same_but_materialized_fds _ _ SB2), FDS1, fd_lookup_insert_eq, Elw, Z_to_bv_add64. reflexivity.
       + destruct (adl_mpres H DL _ _ MP3) as (_ & E & _). rewrite E, (same_but_materialized_fds _ _ SB2), FDS1, fd_lookup_insert_neq; [exact Hfd1 | intros E'; apply (f_equal bv_unsigned) in E'; discriminate].
       + destruct (adl_mpres H DL _ _ MP3) as (_ & E & _). rewrite E, (same_but_materialized_fds _ _ SB2), FDS1, fd_lookup_insert_neq; [exact Hfd2 | intros E'; apply (f_equal bv_unsigned) in E'; discriminate].
+      + rewrite (adl_rdr H DL _ _ MP3), (same_but_materialized_reader _ _ SB2), RDR1. exact Hrd.
   Qed.
 
   Lemma aerrno_rw : forall m regs, getr regs 4 = Z_to_bv 64 ATP -> exists e : word, rw_cells asegs m (bv_unsigned (getr regs 4) + -164) [C4 e].
@@ -584,12 +591,13 @@ Section Loop.
     realizes asegs (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem p A cap K HV HA CI HK.
-    destruct CI as [R1 R2 R4 R8 R9 R10 R17 R18 R19 R20 R21 R22 Hcap Hlen HPOW RH HCB AD HDATA ST Hra Hfs [e3 He3] Hfd1 Hfd2].
+    destruct CI as [R1 R2 R4 R8 R9 R10 R17 R18 R19 R20 R21 R22 Hcap Hlen HPOW RH HCB AD HDATA ST Hra Hfs [e3 He3] Hfd1 Hfd2 Hrd].
     eapply (drv_close H DL s msF regs (Z_to_bv 64 0x176134) mem mo ECALLW (Z_to_bv 64 3) e3 K AECALL2 is_ecall_ECALLW HV HA R17 R10);
       [ rewrite u_small by lia; lia | exact He3 |].
     intros msF' HV' HA'. rewrite HAgentLib.v_addi_lit in HV' by lia. change (0x176134 + 4)%Z with 0x176138%Z in HV'.
     apply (HK _ msF' _ HV' HA'). split; try assumption;
       try (rewrite getr_other by (intros E; apply (f_equal bv_unsigned) in E; discriminate); assumption).
+    all: try exact Hrd.
     - apply getr_same. intros E; apply (f_equal bv_unsigned) in E; discriminate.
     - rewrite with_fds_fds, fd_lookup_remove_neq; [exact Hfd1 | intros E; apply (f_equal bv_unsigned) in E; discriminate].
     - rewrite with_fds_fds, fd_lookup_remove_neq; [exact Hfd2 | intros E; apply (f_equal bv_unsigned) in E; discriminate].
@@ -602,7 +610,7 @@ Section Loop.
        ARInv (len + n) cap A s p regs' mem' mo' -> realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) K.
   Proof.
-    intros s msF mo regs mem p A len n cap K HV HA [MR Hlen Hcap HPOW RH [junk HCB] AD HDATA ST Hfs Hfd3 Hfd1 Hfd2] Hne HK.
+    intros s msF mo regs mem p A len n cap K HV HA [MR Hlen Hcap HPOW RH [junk HCB] AD HDATA ST Hfs Hfd3 Hfd1 Hfd2 Hrd] Hne HK.
     pose proof SPlo. pose proof SPhi. pose proof Elo. acb.
     pose proof (blk_range _ _ _ _ _ RH) as (B1 & B2 & B3 & B4 & B5 & B6 & B7).
     eapply (aseg_Ma H DL sp0 Hvsp s msF mo regs mem ppw A len cap n K MR); [lia | lia | lia | lia | exact Hne
@@ -623,6 +631,7 @@ Section Loop.
     - rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1). exact Hfd3.
     - rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1). exact Hfd1.
     - rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ SB2), (same_but_materialized_reader _ _ SB1). exact Hrd.
   Qed.
 
   Record ARfInv (A : Z) (s : as_St H) (p : bptr) (regs : bvmap 5 word) (mem : word -> option byte) (mo : Model) : Prop := ARFI {
@@ -632,7 +641,8 @@ Section Loop.
     arf_st   : mstatics mem;
     arf_fs   : m_fs mo = fs0;
     arf_fd1  : fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1));
-    arf_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) }.
+    arf_fd2  : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2));
+    arf_rdr  : m_channel_reader mo = true }.
 
   Lemma m_refuse : forall s msF mo regs mem p (A len n cap : Z) K,
     as_VIS H s msF = mkst regs (Z_to_bv 64 0xe882c) mem rom -> as_AKREL H s (mkCfg msF mo) ->
@@ -641,7 +651,7 @@ Section Loop.
        ARfInv A s p regs' mem' mo' -> realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) K.
   Proof.
-    intros s msF mo regs mem p A len n cap K HV HA [MR Hlen Hcap HPOW RH [junk HCB] AD HDATA ST Hfs Hfd3 Hfd1 Hfd2] Hcapeq Hbig HK.
+    intros s msF mo regs mem p A len n cap K HV HA [MR Hlen Hcap HPOW RH [junk HCB] AD HDATA ST Hfs Hfd3 Hfd1 Hfd2 Hrd] Hcapeq Hbig HK.
     pose proof SPlo. pose proof SPhi. pose proof Elo. acb. unfold MAX_INPUT in Hbig.
     pose proof (blk_range _ _ _ _ _ RH) as (B1 & B2 & B3 & B4 & B5 & B6 & B7).
     eapply (aseg_Mb H DL sp0 Hvsp s msF mo regs mem ppw A len cap n K MR); [lia | lia | lia | exact Hcapeq
@@ -661,6 +671,7 @@ Section Loop.
     - rewrite (same_but_materialized_fs _ _ SB2), (same_but_materialized_fs _ _ SB1). exact Hfs.
     - rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1). exact Hfd1.
     - rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ SB2), (same_but_materialized_reader _ _ SB1). exact Hrd.
   Qed.
 
   Lemma m_grow : forall s msF mo regs mem p (A len n cap : Z) K,
@@ -670,7 +681,7 @@ Section Loop.
        ARInv cap (2 * cap) A' s' p' regs' mem' mo' -> realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) K.
   Proof.
-    intros s msF mo regs mem p A len n cap K HV HA [MR Hlen Hcap [k (Hk & HPOW & HAL)] RH [junk HCB] AD HDATA ST Hfs Hfd3 Hfd1 Hfd2] Hcapeq Hsmall HK.
+    intros s msF mo regs mem p A len n cap K HV HA [MR Hlen Hcap [k (Hk & HPOW & HAL)] RH [junk HCB] AD HDATA ST Hfs Hfd3 Hfd1 Hfd2 Hrd] Hcapeq Hsmall HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo. pose proof aceil_lo as HCL. acb. unfold MAX_INPUT in Hsmall.
     pose proof (blk_range _ _ _ _ _ RH) as (B1 & B2 & B3 & B4 & B5 & B6 & B7). unfold AIMG_TOP in B4.
     assert (Hk10 : k < 10).
@@ -869,6 +880,9 @@ Section Loop.
     - rewrite EFDS. exact Hfd3.
     - rewrite EFDS. exact Hfd1.
     - rewrite EFDS. exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ SBH), (adl_rdr H DL _ _ MPG), (same_but_materialized_reader _ _ SBF),
+        (adl_rdr H DL _ _ MPE), (same_but_materialized_reader _ _ SBD), (adl_rdr H DL _ _ MPC),
+        (same_but_materialized_reader _ _ SBB), (same_but_materialized_reader _ _ SBA). exact Hrd.
   Qed.
 
   Lemma loop_sound : forall (n : nat) len cap A s p regs mem msF mo K,

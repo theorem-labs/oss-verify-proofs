@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BMKN; imports MainEntryAsan, where they live). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import MainEntryAsan.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import Tac Image Mem Cells Frame.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.LibA Require Import ExecF Shadow.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import MainExport MainFactsAsan.
@@ -14,7 +16,7 @@ Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Section CANSEC1. Context {rc : runConstT}.
-Lemma harness_invA_init : forall V m, Forall (mfact_ok bsegs V m) both_mem_facts -> harness_invA m.
+Lemma harness_invA_init : forall V m, Forall (mfact_ok bsegs V m) BMKN -> harness_invA m.
 Proof.
   intros V m HM. split.
   - unfold APDCTX. aimg V m HM 0x602380 [C8 (Z_to_bv 64 0)] H. exact H.

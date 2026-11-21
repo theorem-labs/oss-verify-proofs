@@ -1,7 +1,7 @@
 (* G4.ExHead.HeadModel, IMAGE B: the scan head's model facts (pure), used by the head walk (FMW_ex_head*.v):
    ManifestModel's head / ci_eqb / zl_eqb / scan / prefix_lc, FMH_Rt's strn_eq,
    FMW_ex_base's ex_scan / cx_res. Reuses lib/Prog/expected_m.v (scan_step, scan_end, firstn_noz, nth_skipn0).
-   Image A's lib/A/FMW_ex_head_m.v (06d82004dc3) restated over B's base; the model is image-independent. B's tail tests
+   Image A's lib/A/FMW_ex_head_m.v restated over B's base; the model is image-independent. B's tail tests
    the ex_space class with `bgeu a1, s3` (s3 = 5) where A has bltu: hd_m_space covers both. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

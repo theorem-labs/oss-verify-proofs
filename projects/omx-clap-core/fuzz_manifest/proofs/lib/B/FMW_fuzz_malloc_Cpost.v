@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_malloc_Cpost.v (a working branch 7a6aa01e779), relocated by
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_malloc_Cpost.v (a working branch), relocated by
    b_reloc.py (mal; revcheck report (internal path)): no image numeral, same proof. *)
 (* fuzz_malloc, the close of its granted path: from the final state's facts (the journal read with the user-poisoned
    head as the allocator made it, the head holding n, the statics) to fuzz_malloc_spec's second disjunct (fmm_post2). *)

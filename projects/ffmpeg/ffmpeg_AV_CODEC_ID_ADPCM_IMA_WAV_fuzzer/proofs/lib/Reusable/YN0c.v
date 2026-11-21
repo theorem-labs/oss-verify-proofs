@@ -3,10 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0c.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YN0c.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed, and its addresses and numbers named by Reusable/YAddr.v, which holds this fuzz target's plain binary's values; musl's vmlock, which this binary's __vm_wait reads and zlib's binary does not link, added to the static memory the proofs track, and the proofs extended to it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (lg_reserved with the vvar/vDSO pair (vdso_reserved_len, vdso_reserved_bytes); direct mmap grants from Linux's placement; auxv_pre_ext over the auxv per CONFIG_RSEQ). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import
 YO0i YO0f YO0g YO0x YO0z YO0y YO0d.
@@ -268,6 +270,29 @@ Proof.
 assert (H : (ivs_bytes (segments_reserved src0segs) <=? 2 ^ 30) = true) by (vm_compute; reflexivity).
 apply Z.leb_le. exact H.
 Qed.
+(* 08b1429: [lg_reserved]'s right-hand side gained the vvar/vDSO pair (YN03.v's [lg_reserved]),
+   so every site that bounds the LENGTH or the BYTES of [vm_reserved] now has a second summand.
+   The model gives both: [State.v:6540-6545] makes the list [] or exactly two intervals, and
+   [State.v:3844-3847] has [vdso_len kb = (vdso_vvar_pages + vdso_text_pages kb) * page_size]
+   with [5 * page_size <= vdso_len kb <= 20 * page_size].  Stated over the FUNCTION rather than
+   over the literal 2, per the model's own instruction at Common/AsanPlanCore.v:123-125.
+   Nothing here is tightened: this tree's consumers are [region_free_exists28_std], whose
+   ceilings are 2^16 entries and 2^36 bytes against 8 + MG_SLOTS and 2^30 + MG_LIVE, so the
+   pair's 2 entries and 81920 bytes fit with room to spare. *)
+Lemma vdso_reserved_len : forall kb top, (length (vdso_reserved kb top) <= 2)%nat.
+Proof.
+intros kb top. unfold vdso_reserved. cbv zeta.
+destruct (_ <? _)%Z; cbn [length]; lia.
+Qed.
+Lemma vdso_reserved_bytes : forall kb top, ivs_bytes (vdso_reserved kb top) <= 20 * page_size.
+Proof.
+intros kb top. pose proof (vdso_len_bounds kb) as HB.
+pose proof (vdso_text_pages_pos kb) as HP. pose proof (vdso_text_pages_le kb) as HL.
+unfold vdso_reserved. cbv zeta.
+destruct (_ <? _)%Z; cbn [ivs_bytes snd]; [unfold page_size; lia|].
+rewrite !u64_of_Z by (unfold page_size, vdso_vvar_pages in *; lia).
+unfold vdso_len, page_size, vdso_vvar_pages in *. lia.
+Qed.
 Lemma live_bytes_nonneg : forall A, WF A -> 0 <= live_bytes A.
 Proof.
 intros A HW. destruct (inv_areas HW) as (_ & _ & _ & _ & _ & _ & _ & _ & Hnn).
@@ -290,19 +315,24 @@ pose proof (mc_ledger _ _ _ _ _ M) as G. pose proof (MRx_ledger_x _ _ _ _ _ MX) 
 unfold req_len in Hpos, Hlive, Hreq. unfold MG_LIVE, MG_SLOTS, MG_REQ in *.
 pose proof (live_bytes_nonneg A (mc_wf _ _ _ _ _ M)) as Hlb.
 destruct src0_reserved_small as [RS RL]. pose proof src0_reserved_bytes as RB.
-destruct (region_free_exists28_std (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
+destruct (region_free_exists28_fallback_std (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4 & Ha5).
 - lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with src0segs. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G). change (ms_segs B) with src0segs.
-rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX). lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
-pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
-assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *. lia. }
-reflexivity.
+- rewrite length_app. rewrite (lg_reserved _ _ _ _ G), length_app.
+pose proof (lg_count _ _ _ _ G).
+pose proof (vdso_reserved_len (m_kernel md) (vdso_top (m_vmmaps md))).
+change (ms_segs B) with src0segs. lia.
+- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G), ivs_bytes_app. change (ms_segs B) with src0segs.
+pose proof (vdso_reserved_bytes (m_kernel md) (vdso_top (m_vmmaps md))).
+rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX). unfold page_size in *. lia.
+- pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
+assert (Hnal : page_round len mod page_size = 0) by (unfold page_round, PGSZ, page_size; apply Z_mod_mult).
+destruct (Placement.linux_place_exists (m_vmmaps md) (kb_thp (m_kernel md)) (Z_to_bv 64 0) (page_round len) Hpos Hnal) as (z & Hz).
+{ exists (bv_unsigned a). right. unfold gap_fits. rewrite Z_to_bv_bv_unsigned. repeat split; try assumption; lia. }
+pose proof (Placement.linux_place_admissible _ _ _ _ _ Hpos Hnal Hz) as (Hal & Hlo & Hhi & Hfree).
+assert (Hz64 : 0 <= z < 2 ^ 64) by (pose proof (alloc_top_lt (m_vmmaps md)) as Htop64; unfold two_pow_64 in Htop64; lia).
+exists (Z_to_bv 64 z). apply grant_ok_intro; [exact Hpos|exact Hnal| |].
++ apply (proj2 (Placement.linux_place_is_iff _ _ _ _ _ Hpos Hnal)). rewrite Z_to_bv64_small by exact Hz64. exact Hz.
++ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *. lia.
 Qed.
 Lemma in_wrange_list : forall E rs x,
 in_wrange E rs x ->
@@ -392,8 +422,11 @@ Lemma auxv_pre_ext : forall sec lo m m',
 (forall x, ms_libc B + 8 <= x < ms_libc B + 16 -> mbyte (ms_segs B) m' x = mbyte (ms_segs B) m x) ->
 auxv_pre B sec lo m -> auxv_pre B sec lo m'.
 Proof.
-intros sec lo m m' Hhi Hlibc (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat split; try assumption.
+intros sec lo m m' Hhi Hlibc (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+pose proof (auxv_types_len_ge rs) as Hlen.
+(* AUXV_RAND_K is unfolded after [exists], so that the goal's copy (inside [auxv_pre]) is a
+   numeral too and [lia] does not meet it as an unbounded atom. *)
+exists rs, av, ar. unfold AUXV_RAND_K in *. repeat split; try assumption.
 - intros k Hk. rewrite Hlibc by lia. apply H1. exact Hk.
 - intros k Hk j Hj. rewrite Hhi by lia. apply H2; assumption.
 - intros k Hk. rewrite Hhi by lia. apply H3. exact Hk.
@@ -645,7 +678,7 @@ getr regs6 19 = Z_to_bv 64 (n + 20) -> getr regs6 20 = a -> (forall r, 21 <= bv_
 (forall x, 0 <= x < 2 ^ 64 -> ~ scratch B regs x -> ~ (ms_ctx B <= x < ms_ctx B + CTX_SIZE) -> ~ in_nonmap_region L3 A3 x ->
 ~ (bv_unsigned a <= x < bv_unsigned a + dlen n) -> mem6 (Z_to_bv 64 x) = mem (Z_to_bv 64 x)) ->
 mreal src0segs (mkCfg (mkst regs6 (Z_to_bv 64 RA_AM) mem6 (seg_rom src0segs)) md3)
-(IAsk (KMunmap (YN2c.r0 A) (n + IB + UNIT)) A3 (fun _ => IRet (None, dm_kill A A3)))
+(IAsk (KMunmap (YN2c.r0 A) (n + IB + UNIT)) A3 (fun z => if negb (z =? 0) then IRet (None, dm_kill A A3) else IRet (None, A3)))
 (fun r c' => malloc_post [] U0 A n r -> malloc_leaf B (MRx B) L A regs mem md n r c').
 Proof.
 intros L A regs mem md n a L3 A3 regs6 mem6 md3 PRE Hn Hrange sp GR MID3 LE3 FR3 UB3 HI3 EU3 HB3 HA3 VM3

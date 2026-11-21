@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """cmpkit-sm1.py KITDIR OUTDIR: re-run this slice's 13 function pairs (BYTECMP.md, fuzz_grant.asan vs fuzz_uci.asan)
-on the comparison kit 4bbd3a74be89 (tools/cmpkit/4bbd3a74be89 at commit 3c3e62ee278), with its controls.
+on the comparison kit 4bbd3a74be89 (tools/cmpkit/4bbd3a74be89), with its controls.
 
 KITDIR must hold exactly the kit's seven pinned files and its SHA256SUMS (sha256(SHA256SUMS)[:12] = 4bbd3a74be89); this
 script lives outside it and adds no compare: every verdict is the kit's strictcmp2 (tcmp per function pair).

@@ -214,8 +214,8 @@ Proof.
   assert (HK : Forall (cell_holds B ly (aview decodesegs0 (w_H W) mem)) (as_const B ly))
     by (eapply am_const; exact HM).
   (* The first seventeen rows of dec_crt_cells are the runtime cells AsanCells.asan_cells reads; the rows after
-     them (the .got pointer words, the table words and their shadow granules, the divide-by-36 word: statement
-     774ffa170e8) are for other program walks, and this lemma does not need them. *)
+     them (the .got pointer words, the table words and their shadow granules, the divide-by-36 word: statement)
+     are for other program walks, and this lemma does not need them. *)
   destruct (HC ly) as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 & C9 & C10 & C11 & C12 & C13 & C14 & C15 & C16 & C17 & _).
   unfold AsanCells.asan_cells.
   split; [exact (crt_z8 ly _ mem AsanCells.CELL_K AsanCells.ASAN_K Hoff HK C1 ltac:(crt_seg) ltac:(crt_top))|].

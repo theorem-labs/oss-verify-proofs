@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO/vvar pair in the reserved ledger: kl_resv_top's above-the-brk case, kl_metas_resv and kl_vdso; kl_resv as a prefix of the model's reserved ledger, with kl_resv_in). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -44,8 +45,15 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
   kl_minv : minv mo;
   kl_halt : m_halted mo = None;
   kl_wf : vmwf (vm_maps (m_vmmaps mo));
-  kl_resv : ld_resv L = map wwZ (vm_reserved (m_vmmaps mo));
-  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+  (* LPS 727298f3: the ledger's reserved list is a prefix of the model's reserved ledger, whose
+     tail is the launch's vDSO/vvar pair ([State.init_reserved] = reserved ++ vdso_reserved ..) *)
+  kl_resv : exists t, map wwZ (vm_reserved (m_vmmaps mo)) = ld_resv L ++ t;
+  (* LPS 727298f3: [init_model]'s reserved ledger is [reserved ++ vdso_reserved ..]
+     (State.v [init_reserved]), and the vDSO/vvar pair sits under the mmap base, far above
+     the brk start; so an entry is below the brk start OR four pages above it. *)
+  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) ->
+      ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+      \/ bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e;
   kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))
@@ -86,7 +94,22 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
   (* [comment removed for export] *)
   kl_mat : m_vm_materialized mo = [];
   (* [comment removed for export] *)
-  kl_pages : forall e, In e (vm_maps (m_vmmaps mo)) -> elo e mod PGSZ = 0 /\ ehi e mod PGSZ = 0 }.
+  kl_pages : forall e, In e (vm_maps (m_vmmaps mo)) -> elo e mod PGSZ = 0 /\ ehi e mod PGSZ = 0;
+  (* LPS 727298f3: [check_mprotect] declines a range that meets the vDSO/vvar pair, so a
+     meta page must miss it.  Two halves, as in cjson/cjson_read_fuzzer's Spec/KInv2.v:
+     a meta block misses the reserved ledger (the grant's own
+     [region_free (vm_reserved ++ vm_maps)] check, as [kl_groups_resv] for a group), and the
+     pair is part of that ledger ([State.init_reserved]; no node changes it,
+     [Lib/Nodes.nstep_vdso]). *)
+  kl_metas_resv : forall b l k, In (b, l, k) (ld_metas L) ->
+      forall e, In e (vm_reserved (m_vmmaps mo)) -> b + mmap_len l <= elo e \/ ehi e <= b;
+  kl_vdso : forall e, In e (vdso_of mo) -> In e (vm_reserved (m_vmmaps mo)) }.
+
+(* every entry of the ledger's reserved list is an entry of the model's reserved ledger *)
+Lemma kl_resv_in : forall L pbrk mo x, KL L pbrk mo -> In x (ld_resv L) -> In x (map wwZ (vm_reserved (m_vmmaps mo))).
+Proof.
+  intros L pbrk mo x HK Hx. destruct (kl_resv _ _ _ HK) as [t Et]. rewrite Et. apply in_or_app. left. exact Hx.
+Qed.
 
 (* [comment removed for export] *)
 Definition frame_ok (G : PState -> Model -> Prop) : Prop :=

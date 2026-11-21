@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap's v1.9.0 ASan build. *)
 (* Modified by Theorem Labs, 2026-10: relocated to reac-repacer/fuzz_wire's asan build: addresses and numbers moved by symbol to its asan image; module paths changed; the image end read from TFIB_IMG_END (PcapImgEnd dropped); the symbol record PcapSyms renamed WireSyms. *)
-(* Declaration: the structure follows proofs/cgif/cgif_file_fuzzer/lib/A/AE6l.v .. A/AE6s.v (origin/ossv/recipes c8557374ad2e); its image-symbol record TfibSyms is renamed WireSyms, and every numeral is pcap's own, measured on the v1.9.0 asan pin. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Declaration: the structure follows proofs/cgif/cgif_file_fuzzer/lib/A/AE6l.v .. A/AE6s.v; its image-symbol record TfibSyms is renamed WireSyms, and every numeral is pcap's own, measured on the v1.9.0 asan pin. *)
 (* The paths of the walk of __asan_memmove (0x51310): one lemma per shape of the quick shadow check of
    each range (t = g1 - g0 in 0..8 granules for n <= 64) and one per half of the
    __asan_region_is_poisoned path (n > 64, low and high memory), for the source phase (entry -> 0x513a4)

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif1.v at 95e6f1d72b6 (sha256 973e433a72c9) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), with its module paths changed only (it states no image numeral; image B's own copy because its Require closure reaches image modules); later the model labels became the model's tags (202260 -> 3, 449860 -> 12). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif1.v (sha256 973e433a72c9) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), with its module paths changed only (it states no image numeral; image B's own copy because its Require closure reaches image modules); later the model labels became the model's tags (202260 -> 3, 449860 -> 12). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file instance of the hit-g interface AGif0n.AIface: ARX = ARX_cgif (inst = TFIB_INST /\ AR), AOX = aowned,
    rpre = aregime /\ qmeter, mt = malloc, lpost = qtight, and the depot post dpost_cgif.  The fields come from the
    released route: the view from AGiy (YFiy), the shape from YFi3, the depot callee and the owned set from AGix (YFix),

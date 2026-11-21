@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TRB table records the vDSO pair: n_resx 2 and p_resx 20). *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK0a.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations. Import APC.
 Open Scope Z_scope.
 Definition TRB : atable :=
-{| img_lo := 0x10000; img_hi := 0x600000; n_res := 4; shadow_off := 0x7fff8000;
+{| img_lo := 0x10000; img_hi := 0x600000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
 a_entry := 0x30828; rw_lo := 0xa4000; rw_len := 0x55c000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
 x_imemset := 0x64748; x_imemcpy := 0x646cc; x_memset := 0x9c980; x_memcpy := 0x9c57c; x_memiszero := 0x64c78;
 x_istrncpy := 0x64b74; x_sealed := 0x1184d; x_popfree := 0x36e20;

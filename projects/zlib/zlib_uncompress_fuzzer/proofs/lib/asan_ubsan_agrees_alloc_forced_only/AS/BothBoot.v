@@ -1,0 +1,189 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.zlib.zlib_uncompress_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.World Require Import Tgt_zlib_uncompress_fuzzer_both.
+From OSSVerify.Proofs.zlib.zlib_uncompress_fuzzer.lib.asan_ubsan_agrees_alloc_forced_only.AS Require Import
+  PropExec ShapeAlg SpinAlg AgentLib AsanAcct AsanAcctImages AxSymExec3 AxSymExec3Sound AxSymRun3
+  AsanPlanCore AsanPlan AsanPlanSound AsanPlanSound2 BothPlanImages AsanInit
+  AsanNodesIface AsanNodesMmA AsanNodesMmB SumsBothClose AsanNodesStartX AsanNodesStartXBoth AsanNodesWJoin BothStartup
+  StartupPlanBoth StartupHSBoth BothStartupCert BothStartupCertB BothStartupCertC BothStartupCertD
+  StartupPlan2Both StartupHS2Both BothStartupCert2 AsanRenum StartupHSBoth727.
+Unset Lia Cache.
+Import ListNotations.
+Import AX2. Import AX2S. Import AP. Import APS.
+Open Scope Z_scope.
+
+Fixpoint holes_only (s : shape) : bool :=
+  match s with
+  | SHole _ => true
+  | SCase _ _ a b => holes_only a && holes_only b
+  | SAlt2 a b => holes_only a && holes_only b
+  | _ => false
+  end.
+
+Section Boot.
+  Variable sp : word.
+  Variable rdraw : EntryDraw.
+  Variable brk0 mbase : word.
+  Variable argv envp : list (list byte).
+  Variable fs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variables uid gid : word.
+  Variable hw : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nof sigm : word.
+  Variable abt : bool.
+  Variable urnd : InputStream.
+  Variable lim : Z.
+  Hypothesis Hlim : AsanInit.LIMIT <= lim.
+  Variable kb : KernelBuild.
+  Variable efn : list byte.
+  Variable sigdef : bool.
+  Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hbrk : valid_brk BSEGS brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hva : valid_argv argv.
+  Hypothesis Hve : valid_envp envp.
+  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Huid : valid_id uid.
+  Hypothesis Hhw : valid_hwcap hw.
+  #[local] Notation APC := Tgt_zlib_uncompress_fuzzer_both.M.init_pc.
+  #[local] Notation INP := (AsanInit.inp argv envp fs stdin uid gid hw groups net nof sigm abt urnd kb efn sigdef).
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+
+  #[local] Notation SINV := (SINV0 BPH APC sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nof sigm abt urnd kb efn sigdef).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kb efn).
+  #[local] Notation E0a := (AsanInit.E0 sp rdraw brk0 mbase argv envp uid gid hw kb efn).
+  #[local] Notation LIM := AsanInit.LIMIT.
+  #[local] Notation RZK := (rseq_z (kb_rseq kb)).
+
+  Variable H : env -> Fs.Fs -> TSet.
+  Hypothesis H_agree : forall E E' fs', env_agree NX0 E E' -> H E fs' = H E' fs'.
+  Hypothesis H_nil : forall E fs', H E fs' [].
+  (* the run reads ASEGS ++ VSEGS (Run.run_segments; VSEGS = the vDSO pair) *)
+  Variable VSEGS : list Segment.
+  Hypothesis VSEGS_nx : Forall (fun s => seg_executable s = false) VSEGS.
+  Hypothesis VSEGS_res : segments_reserved VSEGS = [].
+  (* the main body takes the per-rseq hand-off states *)
+  Hypothesis MAIN : holes_stmt BSEGS VSEGS BOTH LIM (HS727_2 RZK) SINV argH (fun _ => H) fs.
+
+  Let AH := argH0_high APC sp rdraw argv envp Hsp Hva kb efn.
+  Let AH2 := argH0_high2 BPH APC sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net Hsp Hva Hve Hfit
+               nof sigm abt urnd kb efn sigdef Hlau.
+  Let AA := argH0_agree sp rdraw argv envp kb efn.
+  Let SF := SINV0_frame BPH APC sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nof sigm abt urnd kb efn sigdef.
+  Let SA := SINV0_agree BPH APC sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nof sigm abt urnd kb efn sigdef.
+
+  Definition HH (h : nat) (E : env) (fs' : Fs.Fs) : TSet := H E fs'.
+  Lemma HH_agree : forall h E E' fs', env_agree NX0 E E' -> HH h E fs' = HH h E' fs'.
+  Proof. intros. unfold HH. apply H_agree. assumption. Qed.
+  Lemma HH_nil : forall h E fs', HH h E fs' [].
+  Proof. intros. unfold HH. apply H_nil. Qed.
+
+  Lemma sd_allH : forall E fs' s, holes_only s = true -> t_eq (sd HH t_nil E fs' s) (H E fs').
+  Proof.
+    assert (ID : forall X Y Z : TSet, Z [] -> t_eq X Z -> t_eq Y Z -> t_eq (t_alt2 X Y) Z).
+    { intros X Y Z HZ HX HY tr. unfold t_alt2. specialize (HX tr). specialize (HY tr). tauto. }
+    intros E fs' s. induction s as [| |fd ps s IH|a IHa b IHb|e mid a IHa b IHb|h|]; cbn [holes_only sd]; intros Hs; try discriminate.
+    - apply andb_prop in Hs as [Ha Hb]. apply ID; [apply H_nil | exact (IHa Ha) | exact (IHb Hb)].
+    - apply andb_prop in Hs as [Ha Hb]. destruct (_ <=? _); [exact (IHa Ha) | exact (IHb Hb)].
+    - unfold HH. apply t_eq_refl.
+  Qed.
+
+  Section Seg.
+    Variable nx : nat.
+    Hypothesis Hnx : (NX0 <= nx)%nat.
+    Lemma env_agree_nx : forall E E', env_agree nx E E' -> env_agree NX0 E E'.
+    Proof. intros E E' [Hag Hb]. split; [|exact Hb]. intros n Hn. apply Hag. lia. Qed.
+    Let AAn : forall E E' (a : word), env_agree nx E E' -> argH E a = argH E' a :=
+      fun E E' a Hag => AA E E' a (env_agree_nx E E' Hag).
+    Let SAn : forall E E' M, env_agree nx E E' -> SINV E M -> SINV E' M :=
+      fun E E' M Hag => SA E E' M (env_agree_nx E E' Hag).
+
+    Lemma seg_sound : forall (IT : itab) (IT_ok : itab_sound BSEGS IT) (HSn : nat -> option acs) (FUEL BFUEL KC : nat)
+                             (p : plan) (start : acs) (shp : shape),
+      holes_stmt BSEGS VSEGS BOTH LIM HSn SINV argH HH fs ->
+      check BSEGS IT BOTH nx LIM RZK (XNS BSEGS BOTH nx LIM) XE0 XB0 HSn KC BFUEL FUEL None start p = COk shp ->
+      holes_only shp = true ->
+      forall E R FULL model, cs_ok BSEGS BOTH LIM SINV argH fs E start R FULL model ->
+        srealizes (BSEGS ++ VSEGS) (cfg_of (BSEGS ++ VSEGS) R (pc start) FULL model) (H E (m_fs model)).
+    Proof.
+      intros IT IT_ok HSn FUEL BFUEL KC p start shp HSOUND CERT Hshp E R FULL model HC.
+      pose proof (check_sound BSEGS VSEGS VSEGS_nx IT IT_ok BOTH nx Hnx LIM RZK HSn (XNS BSEGS BOTH nx LIM) XE0 XB0
+                both_wx both_in_hull both_hull_ok both_shadow_ok SINV argH AH AAn SF SAn
+                HH (fun h E1 E2 fs' Hag => HH_agree h E1 E2 fs' (env_agree_nx E1 E2 Hag)) HH_nil fs KC
+                (AsanNodesMmB.node_sys_sound BSEGS VSEGS VSEGS_nx BOTH nx LIM SINV argH fs both_res_len both_hull_ok both_shadow_ok AH2 AAn SF SAn)
+                (AsanNodesMmB.node_brk2_sound BSEGS VSEGS VSEGS_nx BOTH nx LIM SINV argH fs both_in_hull both_res_len both_hull_ok both_shadow_ok AH AH2 SF)
+                (node_mmap2_sound_OBL BSEGS VSEGS VSEGS_nx BOTH nx LIM SINV argH fs both_in_hull both_res_len both_res_hull both_hull_ok both_shadow_ok both_hull_cov AH AH2 AAn SF SAn)
+                (node_mmapin_sound_OBL BSEGS VSEGS VSEGS_nx BOTH nx LIM SINV argH fs both_in_hull both_res_len both_res_hull both_hull_ok both_shadow_ok both_hull_cov AH AH2 AAn SF SAn)
+                (node_mprotect2_sound_OBL BSEGS VSEGS VSEGS_nx BOTH nx LIM SINV argH fs both_in_hull both_res_len both_res_hull both_hull_ok both_shadow_ok both_hull_cov AH AH2 AAn SF SAn)
+                (AsanNodesMmB.node_exit_sound BSEGS VSEGS VSEGS_nx BOTH LIM SINV argH fs)
+                (both_node_x_sound_all sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit mbase fs stdin APC gid groups net kb
+                   nof sigm abt urnd efn sigdef Hlaunch Hlau SINV (fun E M HH0 => HH0) SF nx Hnx SAn VSEGS VSEGS_nx)
+                (node_join_sound BSEGS VSEGS BOTH nx LIM SINV argH fs)
+                (XNS_sound BSEGS VSEGS BOTH nx LIM SINV argH fs AAn SAn both_in_hull both_hull_ok both_shadow_ok AH AH2) (XE0_sound _ _ _ _ _ _ _ _) (XB0_sound _ _ _ _ _ _ _ _)
+                HSOUND FUEL BFUEL None p start shp CERT
+                E R FULL model t_nil HC I eq_refl) as R0.
+      eapply srz_conseq; [exact R0 | apply sd_allH; exact Hshp].
+    Qed.
+
+    Lemma seg_holes : forall (HSp : nat -> option acs) (h0 : nat) (start : acs),
+      (forall h ch, HSp h = Some ch -> h = h0 /\ ch = start) ->
+      (forall E R FULL model, cs_ok BSEGS BOTH LIM SINV argH fs E start R FULL model ->
+         srealizes (BSEGS ++ VSEGS) (cfg_of (BSEGS ++ VSEGS) R (pc start) FULL model) (H E (m_fs model))) ->
+      holes_stmt BSEGS VSEGS BOTH LIM HSp SINV argH HH fs.
+    Proof.
+      intros HSp h0 start Hone Hseg h ch Hh E R FULL model HC. destruct (Hone h ch Hh) as [-> ->]. unfold HH. exact (Hseg E R FULL model HC).
+    Qed.
+  End Seg.
+
+  (* a one-entry hand-off table *)
+  Lemma one_entry : forall (h0 : nat) (st : acs) h ch,
+    (if Nat.eqb h h0 then Some st else None) = Some ch -> h = h0 /\ ch = st.
+  Proof. intros h0 st h ch Hh. destruct (Nat.eqb_spec h h0) as [->|]; [injection Hh as <-; split; reflexivity | discriminate Hh]. Qed.
+
+  Lemma S2_sound : holes_stmt BSEGS VSEGS BOTH LIM (HS727D RZK) SINV argH HH fs.
+  Proof.
+    apply (seg_holes (HS727D RZK) 0%nat (HS727D_0 RZK)); [intros h ch Hh; exact (one_entry 0 _ h ch Hh)|].
+    apply (seg_sound NXS2 NXS2_ge IT2 IT2_ok (HS727_2 RZK) FUEL BFUEL KC0 (plan727 RZK startup2_plan_both) (HS727D_0 RZK) (startup2_shape RZK));
+      [| exact (startup2_cert (kb_rseq kb)) | destruct (kb_rseq kb); vm_compute; reflexivity].
+    intros h ch Hh E R FULL model HC. unfold HH. exact (MAIN h ch Hh E R FULL model HC).
+  Qed.
+  Lemma D_sound : holes_stmt BSEGS VSEGS BOTH LIM (HS727C RZK) SINV argH HH fs.
+  Proof.
+    apply (seg_holes (HS727C RZK) 12%nat (HS727C_12 RZK)); [intros h ch Hh; exact (one_entry 12 _ h ch Hh)|].
+    apply (seg_sound NXD NXD_ge ITD ITD_ok (HS727D RZK) FUEL BFUEL KC0 (plan727 RZK startup_plan_both_segC) (HS727C_12 RZK) startup_shapeD);
+      [exact S2_sound | exact (startup_certD (kb_rseq kb)) | reflexivity].
+  Qed.
+  Lemma C_sound : holes_stmt BSEGS VSEGS BOTH LIM (HS727B RZK) SINV argH HH fs.
+  Proof.
+    apply (seg_holes (HS727B RZK) 11%nat (HS727B_11 RZK)); [intros h ch Hh; exact (one_entry 11 _ h ch Hh)|].
+    apply (seg_sound NXC NXC_ge ITC ITC_ok (HS727C RZK) FUEL BFUEL KC0 (plan727 RZK startup_plan_both_segB) (HS727B_11 RZK) (startup_shapeC RZK));
+      [exact D_sound | exact (startup_certC (kb_rseq kb)) | destruct (kb_rseq kb); vm_compute; reflexivity].
+  Qed.
+  Lemma B_sound : holes_stmt BSEGS VSEGS BOTH LIM (HS727A RZK) SINV argH HH fs.
+  Proof.
+    apply (seg_holes (HS727A RZK) 10%nat (HS727A_10 RZK)); [intros h ch Hh; exact (one_entry 10 _ h ch Hh)|].
+    apply (seg_sound NXB NXB_ge ITB ITB_ok (HS727B RZK) FUEL BFUEL KC0 (plan727 RZK startup_plan_both_segA) (HS727A_10 RZK) startup_shapeB);
+      [exact C_sound | exact (startup_certB (kb_rseq kb)) | reflexivity].
+  Qed.
+
+  Theorem both_boot_shape :
+    srealizes (BSEGS ++ VSEGS) (init_config (BSEGS ++ VSEGS) APC BPH sp brk0 mbase rdraw lim INP) (sd HH t_nil E0a fs startup_shape).
+  Proof.
+    exact (both_startup sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nof sigm abt urnd lim Hlim kb efn sigdef
+             Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hlaunch Hlau
+             IT0 IT0_ok (HS727A RZK) (plan727 RZK startup_plan_both) startup_shape KC0 BFUEL FUEL (startup_cert (kb_rseq kb)) VSEGS VSEGS_nx VSEGS_res
+             HH HH_agree HH_nil B_sound).
+  Qed.
+
+  Theorem both_boot :
+    srealizes (BSEGS ++ VSEGS) (init_config (BSEGS ++ VSEGS) APC BPH sp brk0 mbase rdraw lim INP) (H E0a fs).
+  Proof. eapply srz_conseq; [exact both_boot_shape | apply sd_allH; reflexivity]. Qed.
+End Boot.

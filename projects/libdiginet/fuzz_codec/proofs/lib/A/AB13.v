@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB13.v at origin/ossv/recipes c8557374ad2e, with its module paths changed to libdiginet/fuzz_codec's library and every image numeral recomputed from fuzz_codec.asan by the rule the donor's own numeral follows (the rule reproduces cgif's released text on cgif's image: the control). The image numerals are fuzz_codec.asan's four PT_LOAD pages (their bases, sizes and byte counts), its writable window 0x9d000..0x5fb000 and TFIB_BSS = (0xa2dc0, 0x5fb000), the start of the image's zero suffix (cgif's 0xa2930 by the same rule) up to img_hi. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB13.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed to libdiginet/fuzz_codec's library and every image numeral recomputed from fuzz_codec.asan by the rule the donor's own numeral follows (the rule reproduces cgif's released text on cgif's image: the control). The image numerals are fuzz_codec.asan's four PT_LOAD pages (their bases, sizes and byte counts), its writable window 0x9d000..0x5fb000 and TFIB_BSS = (0xa2dc0, 0x5fb000), the start of the image's zero suffix (cgif's 0xa2930 by the same rule) up to img_hi. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_codec.asan (libdiginet/fuzz_codec asan) sha256 7d470194ffdbde8b30a9810840f8e81d620ba1c555d510c475daeff37548a422; unstripped twin sha256 b28356da1a6547814e3a3c56e2d9e065e4f5b45715ccb5a236942cda3471fe1d *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

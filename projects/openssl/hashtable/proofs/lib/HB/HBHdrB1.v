@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it; the plans are renumbered to the new numbering). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -27,21 +28,22 @@ Section HdrB1.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
   Let argv1 := nth 1 argv [].
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   #[local] Notation PIECE := (piece SV argH ISP fs).
   #[local] Notation FXHOLE := (fx_hole SV argH ISP fs).
-  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw c.
+  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw L c.
   #[local] Notation CHK1 := (ha1_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV1 SVF SVA).
 
   (* [comment removed for export] *)
@@ -77,7 +79,7 @@ Section HdrB1.
     Variable T : ION.iotab. Variables lo hi : Z. Variable lit : list Z.
     Hypothesis HO : ION.io_open T = ION.OFile lo hi. Hypothesis HB : ION.io_blob T = JB. Hypothesis HF : lo <= flen c <= hi. Hypothesis HH : ION.hdr_ok T c.
     Variable IT : itab. Hypothesis IT_ok : itab_sound HASEGS IT. Variable s : shape.
-    Hypothesis Hcert : CAP.check HASEGS IT HAT NX0 AsanInit.LIMIT (ha3_XN T) ha3_XE (ha3_XB T) C6B1_HS 0 true false true 400000 3000 None c3b1_hs98 c6_top1 = COk s.
+    Hypothesis Hcert : CAP.check HASEGS IT HAT NX0 AsanInit.LIMIT (ha3_XN T) ha3_XE (ha3_XB T) C6B1_HS 0 true false true 400000 3000 None c3b1_hs98 (HBReg.mplan c6_top1) = COk s.
     Hypothesis Hshape : s = hdr_shape1 lit.
     Lemma class_piece_b1 : PIECE c3b1_hs98 (fun _ fs' => T_hdr lit argv1 fs').
     Proof.
@@ -96,7 +98,7 @@ Section HdrB1.
         intros E0 M0 HS j _. rewrite HB, CxOfAps.chunk_eq. exact (proj2 (proj2 (proj2 HS)) j). }
       pose proof (ha3_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV1 SVF SVA T HCL
                     C6B1_HS HOLES6 HOLES6_agree HOLES6_nil HOLES6_mod c6_holes_b1 IT IT_ok 0%nat true 3000%nat 400000%nat
-                    c6_top1 c3b1_hs98 s Hcert E R FULL m HC) as RZ.
+                    (HBReg.mplan c6_top1) c3b1_hs98 s Hcert E R FULL m HC) as RZ.
       rewrite Hshape in RZ. eapply crz_conseq; [exact RZ|].
       destruct (vals1_b1 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E FULL (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC)) as [U7 B2].
       exact (hdr_eval1 E (m_fs m) argv1 lit U7 B2).

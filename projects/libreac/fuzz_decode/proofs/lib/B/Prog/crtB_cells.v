@@ -1,5 +1,5 @@
 (* crtB_cells: the runtime cells of lib/B/AsanCells.v from cgif's allocator invariant, for the cgif-form walk of
-   check_round_trip (lib/B/Prog/check_round_trip_cg.v; twin of lib/A/Prog/crtA_cells.v, a working branch ae1529ccb00).
+   check_round_trip (lib/B/Prog/check_round_trip_cg.v; twin of lib/A/Prog/crtA_cells.v, a working branch).
    dec_crt_cells (check_round_trip_cg.v:109-127) puts the 17 cells of asan_cells (AsanCells.v:55-65) in the constant
    cells of the asyms record B. AR (lib/Reusable/YG0n.v:490) gives ARm, whose am_const (YG0n.v:211) says every
    constant cell holds under the reader aview (YG0n.v:18). Every cell lies in one loaded segment of decodesegsB0
@@ -214,7 +214,7 @@ Proof.
   destruct HAR as [HM _].
   assert (HK : Forall (cell_holds B ly (aview decodesegsB0 (w_H W) mem)) (as_const B ly))
     by (eapply am_const; exact HM).
-  (* dec_crt_cells has more rows than the 17 asan_cells needs (30 at 774ffa170e8); no positional destruct: split it
+  (* dec_crt_cells has more rows than the 17 asan_cells needs (30); no positional destruct: split it
      into hypotheses and take each row by type. *)
   pose proof (HC ly) as HCly. decompose [and] HCly. clear HCly.
   unfold BCells.asan_cells.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, stack_writable is the launch's window stack_window_depth (6144513 bytes, was 8388608) with its literal forms, and vm_pre's ledger is the launch's init_reserved over the kernel build (Amb). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -101,9 +102,24 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* LPS 08b1429: the launch guarantees writable only [MemSplit.wok_lo sp0, sp0), i.e.
+   [StoreOk.stack_window_depth] = stack_max_size - stack_window_reach (= 6144513,
+   [StoreOk.stack_window_depth_val]) bytes below sp0, not 8 MiB (RefMainEntry.v:158); RefW65x's
+   plan knowledge carries only this window. *)
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= stack_window_depth)%Z ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - stack_window_depth + d)) m = true.
+
+(* The window at its value, for the symbolic plans whose knowledge lists carry literals. *)
+Lemma stack_writable_lit : forall M sp0, stack_writable M sp0 ->
+  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 6144513)%Z ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144513 + d)) m = true.
+Proof. intros M sp0 H. unfold stack_writable in H. rewrite stack_window_depth_val in H. exact H. Qed.
+Lemma stack_writable_of_lit : forall M sp0,
+  (forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 6144513)%Z ->
+     store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144513 + d)) m = true) ->
+  stack_writable M sp0.
+Proof. intros M sp0 H. unfold stack_writable. rewrite stack_window_depth_val. exact H. Qed.
 
 (* [comment removed for export] *)
 Definition group_writable (M : word -> option byte) (gm : word) : Prop :=
@@ -207,8 +223,10 @@ Definition model_post {AMB : Amb} (VM : VmMaps) (stdin0 : InputStream) (fs0 : Fs
   mkModelC fds_std VM stdin0 fs0 None (Some tid) None.
 
 (* [comment removed for export] *)
-Definition vm_pre (VM : VmMaps) (sp0 mb gm : word) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+(* LPS 08b1429: the launch's reserved ledger is [init_reserved] (the image's entries plus the
+   vdso/vvar pair at [launch_vdso_top (vm_mmap_base VM) sp0]), built from the Amb's kernel build. *)
+Definition vm_pre {AMB : Amb} (VM : VmMaps) (sp0 mb gm : word) : Prop :=
+  vm_reserved VM = init_reserved (segments_reserved RSEGS) (vm_mmap_base VM) sp0 a_kernel
   /\ vm_init_sp VM = sp0   (* [comment removed for export] *)
   /\ vm_limit VM = target_alloc_limit
   /\ map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true
@@ -277,7 +295,7 @@ Definition sr_RE : list expr :=
 (* [comment removed for export] *)
 Definition kn_RE_base : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;   (* LPS 08b1429: the launch's window, see stack_writable *)
    KAlign (EVar 3) 4096; KRange (EVar 3) 0x58000 (0x800000000000 - 8388608 - 69632);
    KWr (SA (EVar 3) 0) 69632;
    KDisj (SA (EVar 0) (-8388608)) 8388608 (SA (EVar 3) 0) 69632;
@@ -353,7 +371,7 @@ Section EntrySym.
     - split; [lia | exact (proj2 Hsp)].
     - lia.
     - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 0) with sp0.
-      replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia. apply Hst; lia.
+      replace (bv_unsigned sp0 + -6144513 + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia. apply (stack_writable_lit _ _ Hst); lia.
     - split; [lia | exact (proj2 (proj2 Hgm))].
     - lia.
     - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 3) with gm.

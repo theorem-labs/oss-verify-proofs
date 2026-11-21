@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v at 77f59d02b01 (the call in the middle of a walk: the run
+(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v (the call in the middle of a walk: the run
    to the jal, the callee's contract through SRr_bind, a fresh entry state at the return pc; L_ANS_cs as tl_L4_cs and
    ch_L_cs) for the MATCH HALF of reac-pw/fuzz_role's image-A segment M02: the tail and the two checks, proved
    against lib/A/RPgSeg.v's rs_piece_W11b_tail_stmt and rs_piece_W11b_checks_stmt on lib/A/Img0.v rsegs. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v, with its module paths, module names, addresses and numbers changed; 283 of its 388 lines of code are new or changed and 852 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW14Tail.v and the parts of
-   proofs/reac-pw/fuzz_rate/lib/A/RtPgW14Base.v it uses, at 2d46ab19875e, for image B (fuzz_rate.asan-ubsan): image B's
+   proofs/reac-pw/fuzz_rate/lib/A/RtPgW14Base.v it uses, for image B (fuzz_rate.asan-ubsan): image B's
    pcs, callee entries, tables and literals; C4 reads s3 (not s4) and the real-frame cells R+0x10 / 0x18 / 0x60 / 0x148 /
    0x168 / 0x178; the frame for locals is a class-4 frame whose shadow at C4 is rsb_PB (88 bytes); the two u64 tables'
    zone moves into image B's first writable segment; the M02 layer is lib/AU/RtPgM02BaseB.v's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded code bytes are the pin's). Proves no

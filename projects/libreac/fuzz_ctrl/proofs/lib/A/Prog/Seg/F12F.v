@@ -4,14 +4,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 3124 of its 3235 lines of code are new or changed and 900 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F4.v, with its module paths, module names and addresses changed; 1186 of its 1253 lines of code are new or changed and 3168 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F12.v blob a5148873612a (the same blob at the union
-   6a74d5929d2, at the base fdd2ed9f9d7 of a Theorem Labs lane's working branch and at the glue base eb89fed7fac).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), lib/A/MemNormF.v 9e5ea0ff243d (the blob this tree had at release c5e779efe8c);
-   the callee's footprint contract lib/A/Prog/asan_memcpy_cF.v 3ae84ac9bb40 (the blob this tree had at release c5e779efe8c) and its proof
+   FACTS, PAU pau-libreac-v190. Source: Seg/F12.v blob a5148873612a (the same blob at the union,
+   at the base of a Theorem Labs lane's working branch and at the glue base).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), lib/A/MemNormF.v 9e5ea0ff243d (the blob this tree had at release);
+   the callee's footprint contract lib/A/Prog/asan_memcpy_cF.v 3ae84ac9bb40 (the blob this tree had at release) and its proof
    lib/A/Prog/asan_memcpyF.v (an earlier version, blob 31ace5ece389, not in this delivery) (asan_memcpy_holds_F, a Theorem Labs lane).
    Written by a Theorem Labs lane (one writer), on the brief of a Theorem Labs lane's segment-F spec
    (segF-v19-spec.md (a working note, not in this delivery)); mechanical re-run, route (a) (lead 22:15Z); input to the ported
@@ -113,7 +114,7 @@ Module MNF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.MemNormF.
    `OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.<module>.<name>`: this is an F-side (footprint) file, and its
    engine family is lib/Lib (its statements, ExecF and StepF bind it).  The source Seg/F12.v binds the A.Tk.UL copies;
    that is the one allowed difference, the Seg engine split (a Theorem Labs lane 08:56Z; Locate-table DEFECT rule).  Written short,
-   they bound the A/Bz/Lib twins here (glue base 29ddfc3ea99 / a1debf82953, int base 739628fd500), which is neither
+   they bound the A/Bz/Lib twins here (glue base, int base), which is neither
    side. *)
 
 (* The run keeps the memory of its ten stores explicit (the write chain), as F12.v does with Step's hook
@@ -1147,14 +1148,14 @@ Qed.
      arguments (D = fr + 336, S = fragb fr, N = 72).  Both lie in the frame's 392 shadow bytes [Sfr fr, Sfr fr + 392)
      (FRAME_SHADOW, the region the plain F12 run reads).
    - The callee premise asan_memcpy_contract_F becomes a Theorem Labs lane's asan_memcpy_contract_F_on
-     (lib/A/Prog/asan_memcpy_cF_on.v 95a5333de98 (the blob this tree had at release c5e779efe8c), from a working branch 83ab88c3325; proof
+     (lib/A/Prog/asan_memcpy_cF_on.v 95a5333de98 (the blob this tree had at release), from a working branch; proof
      asan_memcpyF_on.asan_memcpy_holds_F_on).
    - The post's `shadow_rw mem'` becomes `forall P, shadow_rw_on P mem -> shadow_rw_on P mem'`: across the ten stores by
      F12.f12_shadow_rw_write_on, across the normalize by ShadowRwOnT.shadow_rw_on_normalize, across the call by the
      callee's post, and back by ShadowRwOnT.shadow_rw_on_of_rel.
    The script is f12_run_F's, with those three changes and the store permission of the nine metadata bytes read from
    R's first part (F12.f12_shadow_stk_on) instead of from the whole frame shadow. ---- *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ShadowRwOn ShadowRwOnT.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require asan_memcpy_c_on asan_memcpy_cF_on.
 Module SRW := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.ShadowRwOn.

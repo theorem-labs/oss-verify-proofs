@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsni0.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 6 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsni0.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 6 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: a new walk of fm.asan's __interceptor_vsnprintf 0x458a0; the entry-state tactics
@@ -8,6 +8,7 @@
    vsni_rodata_chk, RUNTO, RUN, AC, SAVED, epi_chunks, ss_epi, epi_e, r_epi, stk_chunks, st_ok_head, den_atom, bvu5,
    ra_xfer, hull_xfer, EOK_havoc_lt, ro_low, saved_range); it reaches no file that fixes fm's stack bands
    (FMsnprintfImg / Gk0 / Gt0 in place of I / GI / Gk / Gt, no FMH_Rt). FMsnprintfGvsni.v re-exports it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fm's snprintf glue, the vsnprintf interceptor level, window-free part: the image cells the walk reads, the runner,
    the epilogue state and its run, and the general facts of FMsnprintfGvsni.v's walk. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.

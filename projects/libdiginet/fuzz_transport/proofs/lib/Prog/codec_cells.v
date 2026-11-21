@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/Prog/codec_cells.v at d8e4e696562a3ec070d61f99e264ce9d80f5a5bd to fuzz_transport's images; the RELRO block [RELRO_BASE, RELRO_BASE + RELRO_LEN) is fuzz_transport's whole .data.rel.ro, Prog/T/TContract.v's values *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/Prog/codec_cells.v to fuzz_transport's images; the RELRO block [RELRO_BASE, RELRO_BASE + RELRO_LEN) is fuzz_transport's whole .data.rel.ro, Prog/T/TContract.v's values *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Lib Require Import PropExec MState Mem Cells Exec Step Frame.

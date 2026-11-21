@@ -1,6 +1,6 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldVisFrame.v (a working branch
-   26edf006f53, byte-identical to a Theorem Labs lane's copy on a working branch 5c587a76cbc; re-synced to
-   a working branch 1d23ced37fd = a working branch b3abb4ad52d, where A drops its two copied _stmt
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldVisFrame.v (a working branch,
+   byte-identical to a Theorem Labs lane's copy on a working branch; re-synced to
+   a working branch = a working branch, where A drops its two copied _stmt
    Definitions, Requires A.ProgWorld and states `A.ProgWorld.frame_vis_stmt B` / `A.ProgWorld.glob_sh_vis_stmt B`,
    which this twin already did).  What differs from A:
    - the two statements are lib.B.ProgWorld's own, `lib.B.ProgWorld.frame_vis_stmt B` /

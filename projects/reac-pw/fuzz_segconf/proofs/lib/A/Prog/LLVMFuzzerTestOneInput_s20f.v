@@ -4,19 +4,20 @@
 (* Modified by Theorem Labs, 2026-10: the first stretch of the inlined words_of of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86760 .. 0x867b4: strnlen of the message, the three mallocs stored at 120/128/136(sp) and their NULL tests reloaded from the frame), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s41.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (a call and back, the caller's facts carried past it) and A/ACh6.v (a segment from one point of the function to the next, the next point's statement a premise). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_s41.v, with its module paths, module names and numbers changed; 2758 of its 2894 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/LLVMFuzzerTestOneInput_s20.v, with its module paths, module names and numbers changed; 165 of its 685 lines of code are new or changed and 2374 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): file group _s20, piece f:
    the two calloc steps of the test harness's entry function LLVMFuzzerTestOneInput (0x84d34),
      s20_L5  : NZ (0x857a8) -> K857bc   ld s2,40(s1); addi s3,s2,1; li a1,18; mv a0,s3; jal calloc   (SegList.v:718-722)
      s20_S12 : K857bc (0x857bc) -> K857cc   mv s8,a0; li a1,20; mv a0,s3; jal calloc            (SegList.v:723-726)
    against the statements of LLVMFuzzerTestOneInput_s20.v / _s20k.v / _defs.v exactly.
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; output pasted verbatim in
    the walk's shared brief; checker (fresh, read-only): CONFIRM; none: written new)
 
    COPIED (not Required: one file group never depends on another file group's file): _s12's kit
-   proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s12k.v at commit 734c2dd5a567
+   proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s12k.v
    (file sha256 17b5161969267f5a), lines 48-100 (acalloc04_sub, the walk form of RtSegCalloc.aseg_calloc04_rule,
    verbatim) and lines 102-445 (lk_* -> s20f_*, lt_calloc_at -> s20f_calloc_at), in this file's Section; the one
    change: s20f_after_alloc / s20f_calloc_at also give the bytes of every old block of another size kept (calloc's
@@ -56,7 +57,7 @@ Open Scope bv_scope.
 Local Open Scope Z_scope.
 
 (* ============================== the calloc rule's walk form (generic in segs) ============================== *)
-(* verbatim from commit 734c2dd5a567 LLVMFuzzerTestOneInput_s12k.v:48-100 *)
+(* verbatim from LLVMFuzzerTestOneInput_s12k.v:49-101 *)
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.
 Section g.

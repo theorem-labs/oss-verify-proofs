@@ -3,17 +3,18 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the CLOSED walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput in the ASAN-UBSAN
    build (lib/AU).  Rule 24: this file proves no function.  It is a composition of proved lemmas only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* This file's theorem is  scene_llvmf_closed : scene_llvmf_stmt B A_LLVMF RA_LLVMF EV_LIB LIVE_LIB LLVMF_STK A_EMPTY
 
    proved in a Section h that repeats every Variable, Context and Hypothesis line of the Section h of the statement
-   of record (lib/AU/P_LLVMFuzzerTestOneInput.v, a working branch c0ad992d3c8) word for word, as that
+   of record (lib/AU/P_LLVMFuzzerTestOneInput.v, a working branch) word for word, as that
    file's header asks ("the walk `scene_llvmf : scene_llvmf_stmt`, proved in Section h under its hypotheses").  So,
    outside the Section, the theorem's only premises are hypotheses of the statement's own Section h: the 29 that the
    seven segments use.  The other five (HRA_LLVMF, HA_EMPTY, HRO_PL, FFL, HB_C_PL) no segment lemma takes, so Rocq
    does not make them premises when the Section closes.
 
-   THE PROOF.  lib/AU/P_LLVMFuzzerTestOneInput_Top.v (a working branch 96638cf4b1c) proves
+   THE PROOF.  lib/AU/P_LLVMFuzzerTestOneInput_Top.v (a working branch) proves
    `scene_llvmf` from seven Section hypotheses HS0 .. HS6, the segment statements of
    lib/AU/P_LLVMFuzzerTestOneInput_seg.v at Top's sink head `top_sink_head` and Top's walk `scene_walk_asan_ubsan`.
    Each `au_plug_Sx` below discharges HSx with the proved segment lemma, applied to Section h hypotheses, to
@@ -21,13 +22,13 @@
    for S2's HWKev only, to the bridge `s2_hwkev_of_hev`.  The segments' own sink heads and walks are the same
    record values as Top's (0x5f7190; the same eleven walk fields), so the kernel converts between them.
 
-     S0 a working branch   8b9208d286e  P_LLVMFuzzerTestOneInput_S0.llvmf_S0
-     S1 a working branch   0daa1a51ade  P_LLVMFuzzerTestOneInput_S1.llvmf_S1
-     S2 a working branch   729b9b9d254  P_LLVMFuzzerTestOneInput_S2.seg_S2
-     S3 a working branch   67cd72b99e4  P_LLVMFuzzerTestOneInput_S3.scene_seg_S3_turn_au
-     S4 a working branch   3dfbc0d1cf5  P_LLVMFuzzerTestOneInput_S4.scene_seg_S4_au
-     S5 a working branch   2691a72bbce  P_LLVMFuzzerTestOneInput_S5.seg_S5_au
-     S6 a working branch   8af5cd1029c  P_LLVMFuzzerTestOneInput_S6.llvmf_S6
+     S0 a working branch  P_LLVMFuzzerTestOneInput_S0.llvmf_S0
+     S1 a working branch  P_LLVMFuzzerTestOneInput_S1.llvmf_S1
+     S2 a working branch  P_LLVMFuzzerTestOneInput_S2.seg_S2
+     S3 a working branch  P_LLVMFuzzerTestOneInput_S3.scene_seg_S3_turn_au
+     S4 a working branch  P_LLVMFuzzerTestOneInput_S4.scene_seg_S4_au
+     S5 a working branch  P_LLVMFuzzerTestOneInput_S5.seg_S5_au
+     S6 a working branch  P_LLVMFuzzerTestOneInput_S6.llvmf_S6
 
    SINK HEADS (gate 6h).  No sink head is found by instance search here.  The statement's head
    `scene_sink_head` (statement :165) is named in every Section h row that takes one (RO, BSS, SSB, SSM, TCHECKX),
@@ -96,7 +97,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation RLO := (@pa_relro_lo _ scene_listing PI_scene).
 #[local] Notation RHI := (@pa_relro_hi _ scene_listing PI_scene).
 
-(* ==== the statement's Section h (statement :180-306 at c0ad992d3c8): every Variable, Context and Hypothesis line
+(* ==== the statement's Section h (statement :180-306): every Variable, Context and Hypothesis line
    word for word, its comments left out.  Its two Definitions TT_SHCELLS / PL_SHCELLS and the walk statement
    scene_llvmf_stmt are the statement's own constants and are not restated. ==== *)
 Section h.

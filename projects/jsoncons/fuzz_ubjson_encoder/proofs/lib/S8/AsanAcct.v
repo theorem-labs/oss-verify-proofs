@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vDSO. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -417,7 +417,7 @@ Proof.
     apply ranges_avoid_nil.
   -
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -498,12 +498,16 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
                | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
                | None => false end); discriminate.
 Qed.
+
+(** From a PLAIN step on the restricted
+    state to the access-reporting step on the full state. *)
 
 Theorem step_restrict_sound : forall ms msr',
   RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
@@ -555,6 +559,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
   exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
   unfold fetch_failure in Hf.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -1074,7 +1079,7 @@ Proof.
     + intros e st Hss. exists tt.
       exact (sstep_instr_det ms model _ _ e st Hsvc Hacc Hss).
   - right. split; [exact Hon|]. split; [exact Hh|]. left. split; [exact Hsvc|].
-    exists rep. split; [exact Hsa | exact Hnone].
+    left. exists rep. split; [exact Hsa | exact Hnone].
 Qed.
 
 Lemma step_hclean : forall ms ms',
@@ -1108,7 +1113,7 @@ Hypothesis P_silent1 : forall c c',
   ms_svc_pending (cfg_ms c) = None ->
   node_ok c unit (fun _ => []) (fun _ => c') -> P c' -> P c.
 
-Hypothesis P_leaf : bm_on = true -> forall c c', budget_refused_at segs c -> P c' -> P c.
+Hypothesis P_leaf : bm_on = true -> forall c c', ms_svc_pending (cfg_ms c) = None -> budget_refused_at segs c -> P c' -> P c.
 
 Theorem rz_step_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -1123,7 +1128,7 @@ Proof.
   destruct (node_instr_restricted A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs)
     as [(model' & Hinv' & Hsame & _ & _ & Hnode) | [Hon Hb]].
   - exact (P_silent1 (mkCfg ms model) _ Hsvc Hnode (Hk model' Hinv' Hsame)).
-  - exact (P_leaf Hon (mkCfg ms model) _ Hb (Hk model Hinv (same_but_materialized_refl model))).
+  - exact (P_leaf Hon (mkCfg ms model) _ Hsvc Hb (Hk model Hinv (same_but_materialized_refl model))).
 Qed.
 
 Theorem rz_msteps_restricted : forall A msr0 msr',
@@ -1144,7 +1149,7 @@ Proof.
   - rewrite restrict_svc_pending in Hsvc.
     destruct (node_instr_restricted A ms msr1 model Hcov Hwf Hinv Hh Hsvc Hstep)
       as [(model1 & Hinv1 & Hsame1 & Hcl1 & _ & Hnode) | [Hon Hb]].
-    2:{ exact (P_leaf Hon (mkCfg ms model) _ Hb (Hk model Hinv (same_but_materialized_refl model))). }
+    2:{ exact (P_leaf Hon (mkCfg ms model) _ Hsvc Hb (Hk model Hinv (same_but_materialized_refl model))). }
     apply (P_silent1 (mkCfg ms model) _ Hsvc Hnode).
     pose proof (same_but_materialized_frame model model1 Hsame1) as Hfr.
     apply (IH (unrestrict H (ms_mem ms) msr1) model1).

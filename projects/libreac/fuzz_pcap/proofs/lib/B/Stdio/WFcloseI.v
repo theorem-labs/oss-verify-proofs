@@ -1,26 +1,27 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): fclose at the ASAN-UBSAN interceptor entry on
    libreac/fuzz_pcap's v1.9.0 asan-ubsan image, for the fmemopen READ stream: PFclose.v's
    afclose_source_spec at IC_ENTRY_U = __interceptor_trampoline_fclose 0x4161c (lib/B/Stdio/PStdioImgB.v).
 
    This is the asan-ubsan twin of a Theorem Labs lane's own proved ASan walk lib/A/Stdio/WFcloseI.v
-   (a working branch c5c211d4244, theorem afclose_source_spec_icpt): the STRUCTURE is ported from
+   (a working branch, theorem afclose_source_spec_icpt): the STRUCTURE is ported from
    that file, every ADDRESS is measured on this image, and no released proof was read for the structure
-   (rule 24 lookup, CONFIRMED: at ossv/recipes 25e3d17bdb50 (2026-10-29), no released proof stated fclose on ANY pcap ASan image; pcap's released
+   (rule 24 lookup, CONFIRMED: (2026-10-29), no released proof stated fclose on ANY pcap ASan image; pcap's released
    hits were the PLAIN lib/Prog and UBSAN lib/U/Prog images only, output
    fclose.out (sha256 e903a25b7bc1; internal record)). The released PLAIN files were read for
    facts and pcs only, never imported, and no PLAIN-model file is imported here.
 
    NOTHING IS RE-WALKED HERE. The interceptor's two machine walks are the asan-ubsan twins in
-   lib/Reusable/YE2e.v (the au twin of lib/A/AE2e.v, on a working branch 529392df4fe):
+   lib/Reusable/YE2e.v (the au twin of lib/A/AE2e.v, on a working branch):
      iclose_front   0x4161c -> 0x467f0 ___interceptor_fclose (frame 96), TryAsanInitFromRtl (0x598e4),
                     the AddrHashMap metadata pair (0x47b7c acquire / 0x4839c release), up to `jalr a1`
                     at 0x46884, i.e. the pc IC_REAL = 0x8e0e0 (musl fclose) with ra = IC_RET = 0x46888;
      iclose_tail    0x46888 -> `ret` at 0x46938, on the path s3 = 0 (no metadata entry for f).
    This file composes them with musl fclose's contract, taken as the ONE callee hypothesis
-   pcapu_afclose_source_spec_musl, in the interface a Theorem Labs lane ruled with a working branch c625af6eaa9
+   pcapu_afclose_source_spec_musl, in the interface a Theorem Labs lane ruled with a working branch
    (PFclose.v's afclose_source_spec_stk / PFCLOSE_MUSL_STK):
      afclose_source_spec_stk SK tfibsegs B pcap_KS PFCLOSE_MUSL_STK PFCLOSE_MUSL_U 0x8e184 0x8e18c rlo rhi.
    The two free return addresses are the SAME at both entries: the frees happen inside musl fclose
@@ -94,32 +95,32 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      pcapu_afclose_source_spec_musl musl fclose's contract at 0x8e0e0 (proved by the theorem of this name in
                                     lib/B/Stdio/WFclose.v).
    The symbol record is pcap_KS of lib/B/Stdio/PSourceK.v (a Theorem Labs lane's asan-ubsan instance KS_U, auditor
-   PASSED 18/18, on a working branch b4439851fa3) -- NOT lib/A/Stdio/PSourceK.v, whose pcap_KS
+   PASSED 18/18, on a working branch) -- NOT lib/A/Stdio/PSourceK.v, whose pcap_KS
    is the ASan one.
 
    SOURCE OF EVERY CONSTANT NOT MEASURED HERE:
      PFCLOSE_STK 16528, PFCLOSE_MUSL_STK 16432, afclose_source_spec(_stk), asource_at, asrc_meta_inv
-       a working branch c625af6eaa9 (lib/A/Stdio/PFclose.v, PSource.v, PSourceMeta.v) -- the
+       a working branch (lib/A/Stdio/PFclose.v, PSource.v, PSourceMeta.v) -- the
        image-generic statement files, used for their statement Definitions only;
-     pcap_KS (KS_U)  a working branch b4439851fa3 (lib/B/Stdio/PSourceK.v);
-     IC_ENTRY_U 0x4161c  a working branch b4439851fa3 (lib/B/Stdio/PStdioImgB.v, the one home of the
+     pcap_KS (KS_U)  a working branch (lib/B/Stdio/PSourceK.v);
+     IC_ENTRY_U 0x4161c  a working branch (lib/B/Stdio/PStdioImgB.v, the one home of the
        asan-ubsan stdio pcs); it is YE2e's IC_ENTRY, by reflexivity (wfi_ic_entry_u below);
      IC_REAL / IC_RET / IC_FRAME / IC_STK / ic_cells / SAVEDC / KEPTC / KEPTT / iclose_front /
      iclose_tail, tfibsegs = AsanUbsan.M.loaded_segments, Tfib_const / PcapSyms, img_ro_chunks
-       a working branch 83eefd767e6 (lib/Reusable/YE2e.v, YB1v.v, YF0m.v, YE3i.v, YE2y.v,
-       YE2h.v, YF0x.v, YCeg.v). That sha MERGES a working branch 6927e0d899c, so the
-       generated set (YF0m / YB1v / YB1k / YD2j / YB01 / YB03 / YB05 / YB12 / YB1h / YD2i) is 6927e0d899c's
-       text byte for byte and 6927e0d899c is an ancestor of 83eefd767e6: the union names 83eefd767e6 alone for the au
+       a working branch (lib/Reusable/YE2e.v, YB1v.v, YF0m.v, YE3i.v, YE2y.v,
+       YE2h.v, YF0x.v, YCeg.v). That sha MERGES a working branch, so the
+       generated set (YF0m / YB1v / YB1k / YD2j / YB01 / YB03 / YB05 / YB12 / YB1h / YD2i) is
+       text byte for byte and is an ancestor: the union names alone for the au
        layer. It also carries the image-end fix in YF0x's unfold lists and YE3i rebuilt from the pin
        (IMG_RO_HI 0x2ee90, the 14-chunk complement of YF0m's owned rows).
 
    THE BUILD TREE, by EXACT pushed sha, never "or newer". A LOCAL union, never pushed, of
-     this file's own working branch   (the branch that added this file, at 71d854e21c6)
-     a working branch 83eefd767e6   (merges a working branch 6927e0d899c; it is 529392df4fe,
+     this file's own working branch   (the branch that added this file)
+     a working branch   (merges a working branch; it is a commit,
                                               on which this file was first proved, plus the five
                                               repairs YE3n / YE2v / YFfg / YFkz / YFkm)
-     a working branch    595c3188fe3
-     a working branch    b4439851fa3   (lib/B/Stdio/PSourceK.v, PStdioImgB.v; d6edf2117df
+     a working branch
+     a working branch   (lib/B/Stdio/PSourceK.v, PStdioImgB.v;
                                               is its ancestor)
    Every member is BUILD TREE ONLY: none is merged into this branch. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
@@ -243,7 +244,7 @@ Definition WFI_JOIN  : Z := (symaddr (Symbols.AsanUbsan.s_fclose + 0xac)%Z).
 
 (* musl fclose's entry: PStdioImgB.v's PFCLOSE_MUSL_U, the one home of the asan-ubsan stdio pcs, as
    the hypothesis below names it, so that hypothesis is a Theorem Labs lane's theorem verbatim
-   (a working branch 698f66b40c5). It is the word KS_U's icell list pins at the GOT slot
+   (a working branch). It is the word KS_U's icell list pins at the GOT slot
    0x9b4c0 (PSourceK.v's PCAP_REAL_FCLOSE) and the pc YE2e's front hands over to (IC_REAL); the
    statement's entry IC_ENTRY_U is the pc YE2e's front starts at (IC_ENTRY). *)
 Lemma wfi_musl_entry_u : PFCLOSE_MUSL_U = PCAP_REAL_FCLOSE.
@@ -310,7 +311,7 @@ Qed.
 
 (* ---------------------------------------------------------------------------------------------- *)
 (* 2. The stream predicate across a change that keeps its bytes. Copied from a Theorem Labs lane's  *)
-(*    lib/A/Stdio/WFflush.v (a working branch ad383186b6f): vm_fr, head_env_addr, env_tr,           *)
+(*    lib/A/Stdio/WFflush.v (a working branch): vm_fr, head_env_addr, env_tr,           *)
 (*    asource_at_tr. None of them needs the stream's image laws.                                    *)
 (* ---------------------------------------------------------------------------------------------- *)
 Section T.

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bBlkE.v at 4ae09a76d9d; its block E2 walked
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bBlkE.v; its block E2 walked
    again on fuzz_headamp.asan-ubsan's own code (&e62 arrives in s4, the reloads are a3 := R+0x110, s7 := R+0x148 and
    t1 := s5), the post HPgCaseB.cb_post, the statement HPgW7bBase.hw7b_E2_stmt, RPgMem.rm_ -> HPgMem.hm_,
    w7_ / e2_ -> hw7b_, module paths. *)

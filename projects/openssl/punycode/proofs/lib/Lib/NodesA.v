@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ast_node1 requires the syscall robustness premise, discharged at the close, ioctl, write and open nodes; open_char takes the path below TASK_SIZE, from the new open_at_below; cstr_access_len_le follows the per-byte access_ok check). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
 From OSSVerify.Proofs.openssl.punycode.lib.Common Require Import CfgStep CatSim ExitSim ShapeAlg AsanAcct AsanAcctShape.
 From OSSVerify.Proofs.openssl.punycode.lib.Lib Require Import PropExec MState Mem Exec ITree Nodes Decode RzCPS.
+From OSSVerify.Proofs.openssl.punycode.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
@@ -136,18 +138,20 @@ Lemma ast_node1 : forall A Pm PM K KM,
   mat_stable KM ->
   (forall ms mo, AST segtop A Pm PM (mkCfg ms mo) ->
      exists x8 eff mdl, ms_svc_pending ms = Some x8
+       /\ RomBase.sys_rob segs (mkCfg ms mo)   (* LPS 08b1429: the node reads the same over a larger backing *)
        /\ (forall r, syscall_spec (sys_input segs ms x8) mo r <-> r = Ok eff mdl [])
        /\ vm_same mo mdl /\ io_eff eff /\ ranges_avoid (HID A mo) (syscall_effect_accesses eff)
        /\ K (nretA (restrict (HID A mo) ms) eff) /\ KM mdl) ->
   cps segs (AST segtop A Pm PM) (AST segtop A K KM).
 Proof using Hwx Hsegs.
   intros A Pm PM K KM HKM Hnode T [ms mo] Hc Hk.
-  destruct (Hnode ms mo Hc) as (x8 & eff & mdl & Hsvc & Hchar & Hvm & Hio & Hav & HK & HKMm).
+  destruct (Hnode ms mo Hc) as (x8 & eff & mdl & Hsvc & Hrob & Hchar & Hvm & Hio & Hav & HK & HKMm).
   (* [comment removed for export] *)
   destruct (ast_node_core1 segs segtop A Pm PM K KM ms mo x8 eff mdl Hc Hsvc Hchar Hvm Hio Hav HK HKMm HKM) as (nx & Hnd & Hnx).
   apply (rz_silent1 segs _ (nx tt) T).
   + destruct Hnd as [H1 H2]. split; [intros []; exact (H1 tt)|].
     intros e st Hs. destruct (H2 e st Hs) as ([] & -> & ->). exists tt. split; reflexivity.
+  + exact Hrob.
   + exact (Hk _ Hnx).
 Qed.
 
@@ -166,7 +170,7 @@ Proof using Hwx Hsegs.
   rewrite restrict_svc in Hsvc. rewrite restrict_areg in Ha0.
   destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [e|] eqn:Hl; [|congruence].
   exists (Z_to_bv 64 57), (eff0 (Z_to_bv 64 0)), (with_fds (fd_remove (m_fds mo) (Z_to_bv 64 fd)) mo).
-  split; [exact Hsvc|]. split.
+  split; [exact Hsvc|]. split; [eapply RomBase.sys_rob_memfree; [exact Hsvc | exact RomBase.memfree_57]|]. split.
   { intros r. rewrite syscall_spec_57 by reflexivity. rewrite in_a0_si, Ha0.
     rewrite fd32_id by (rewrite unsigned_lit; lia). apply (close_outcome _ _ _ _ _ Hl). }
   split; [apply vm_same_with_fds|]. split; [apply io_eff_mkEffect|]. split; [apply ranges_avoid_nil'|].
@@ -187,7 +191,7 @@ Proof using Hwx Hsegs.
   destruct (Hm _ HPm) as (Hsvc & Ha0 & Ha1 & HK). destruct (HM _ HPM) as ([ch Hl] & HKMm).
   rewrite restrict_svc in Hsvc. rewrite restrict_areg in Ha0, Ha1.
   exists (Z_to_bv 64 29), (efferr ENOTTY), mo.
-  split; [exact Hsvc|]. split.
+  split; [exact Hsvc|]. split; [exact (ioctl_tty_rob_any segs ms mo Hsvc Ha1)|]. split.
   { intros r. rewrite syscall_spec_29 by reflexivity. rewrite in_a0_si, in_a1_si, Ha0, Ha1.
     rewrite fd32_id by (rewrite unsigned_lit; lia).
     apply (ioctl_tty_outcome _ _ _ _ _ _ Hl); [discriminate|]. vm_compute. reflexivity. }
@@ -218,7 +222,7 @@ Proof using Hwx Hsegs.
   { unfold len_word. rewrite unsigned_lit; lia. }
   exists (Z_to_bv 64 63), (mkEffect (len_word bs) (delivered_writes (Z_to_bv 64 buf) bs) []),
     (with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word bs)%bv)) mo).
-  split; [exact Hsvc|]. split.
+  split; [exact Hsvc|]. split; [eapply RomBase.sys_rob_memfree; [exact Hsvc | exact RomBase.memfree_63]|]. split.
   { intros r. rewrite syscall_spec_63 by reflexivity. rewrite in_a0_si, in_a1_si, in_a2_si, Ha0, Ha1, Ha2.
     rewrite fd32_id by (rewrite unsigned_lit; lia).
     assert (Hacc : access_okb (Z_to_bv 64 buf) (bv_unsigned (Z_to_bv 64 count)) = true) by (apply access_okb_wr; unfold TASK_SIZE; lia).
@@ -250,7 +254,7 @@ Proof using Hwx Hsegs.
   destruct (Hm _ HPm) as (Hsvc & Ha0 & Ha1 & Ha2 & HK). destruct (HM _ HPM) as (Hlk & HKMm).
   rewrite restrict_svc in Hsvc. rewrite restrict_areg in Ha0, Ha1, Ha2.
   exists (Z_to_bv 64 63), (efferr EISDIR), mo.
-  split; [exact Hsvc|]. split.
+  split; [exact Hsvc|]. split; [eapply RomBase.sys_rob_memfree; [exact Hsvc | exact RomBase.memfree_63]|]. split.
   { intros r. rewrite syscall_spec_63 by reflexivity. rewrite in_a0_si, in_a1_si, in_a2_si, Ha0, Ha1, Ha2.
     rewrite fd32_id by (rewrite unsigned_lit; lia).
     assert (Hacc : access_okb (Z_to_bv 64 buf) (bv_unsigned (Z_to_bv 64 count)) = true) by (apply access_okb_wr; unfold TASK_SIZE; lia).
@@ -277,22 +281,29 @@ Definition open_at (path : list byte) (ms : machine_state) : Prop :=
   ms_svc_pending ms = Some (Z_to_bv 64 56) /\ areg ms 10 = Z_to_bv 64 (-100) /\
   Z.ldiff (bv_unsigned (areg ms 12)) open_ignored_flags = 0 /\ ~ In (Z_to_bv 8 0) path /\
   path_has_slash path = false /\ path_eqb path dotdot_path = false /\
-  ms_rom ms = seg_rom segs /\ bytes_at segs (ms_mem ms) (bv_unsigned (areg ms 11)) (path ++ [Z_to_bv 8 0]).
+  ms_rom ms = seg_rom segs /\
+  bytes_at segs (ms_mem ms) (bv_unsigned (areg ms 11)) (path ++ [Z_to_bv 8 0]).
 
 Lemma cstr_access_len_le : forall str mp a fuel, bytes_in mp a (str ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) str ->
   (cstr_access_len_aux mp (wa a) fuel <= S (length str))%nat.
 Proof.
   induction str as [|b str IH]; intros mp a fuel Hin Hnz; destruct fuel as [|fuel]; cbn [cstr_access_len_aux]; try lia.
-  - cbn [app] in Hin. apply bytes_in_cons in Hin as [Hb _]. rewrite Hb. rewrite bv_eqb_refl. cbn. lia.
-  - cbn [app] in Hin. apply bytes_in_cons in Hin as [Hb Hin]. rewrite Hb.
+  - destruct (negb (access_okb (wa a) 1)); [lia|].
+    cbn [app] in Hin. apply bytes_in_cons in Hin as [Hb _]. rewrite Hb. rewrite bv_eqb_refl. cbn. lia.
+  - destruct (negb (access_okb (wa a) 1)); [lia|].
+    cbn [app] in Hin. apply bytes_in_cons in Hin as [Hb Hin]. rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
     rewrite Hne. rewrite wa_succ. cbn [length]. specialize (IH mp (a + 1) fuel Hin (fun H => Hnz (or_intror H))). lia.
 Qed.
 
 (* [comment removed for export] *)
+(* At the revision [read_cstr_aux] refuses a byte at or above TASK_SIZE, so the
+   characterisation needs the path below it; the AST callers take it from the
+   hidden set ([HID] hides every address at or above 2^47). *)
 Lemma open_char : forall ms mo path,
   open_at path ms ->
+  bv_unsigned (areg ms 11) + Z.of_nat (length path) + 1 <= 0x800000000000 ->
   let i := sys_input segs ms (Z_to_bv 64 56) in
   let R := open_reads i (areg ms 11) in
   match open_ent path (m_fs mo) with
@@ -301,7 +312,7 @@ Lemma open_char : forall ms mo path,
   | Some ent => forall r, syscall_spec i mo r <-> open_out R mo (fun fd => with_fds (fd_insert (m_fds mo) fd ent) mo) r
   end.
 Proof.
-  intros ms mo path (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hp). cbv zeta.
+  intros ms mo path (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hp) Hbnd. cbv zeta.
   pose proof (bytes_at_in _ _ _ _ Hrom Hp) as Hin.
   set (i := sys_input segs ms (Z_to_bv 64 56)).
   assert (Hmf : modeled_open_flags (areg ms 12) = true) by (apply modeled_open_flags_rd; exact Hfl).
@@ -314,11 +325,13 @@ Proof.
   - replace (path_max <=? length path)%nat with true by (symmetry; apply Nat.leb_le; lia).
     exists ENAMETOOLONG. split; [unfold ENAMETOOLONG; lia|]. intros r. rewrite Hsp.
     apply (openat_toolong_outcome _ _ _ _ _ Hmf).
-    unfold read_cstr. rewrite Hmem. apply (read_cstr_aux_toolong_bytes_in path_max path); [exact Hlong|exact Hnz|].
+    unfold read_cstr. rewrite Hmem. apply (read_cstr_aux_toolong_bytes_in path_max path);
+      [exact Hlong|exact Hnz| unfold TASK_SIZE; apply Nat2Z.inj_le in Hlong; lia |].
     apply bytes_in_app in Hin as [Hin _]. exact Hin.
   - replace (path_max <=? length path)%nat with false by (symmetry; apply Nat.leb_gt; lia).
     assert (Hc : read_cstr (in_mem i) (wa (bv_unsigned (areg ms 11))) = CstrOk path).
-    { unfold read_cstr. rewrite Hmem. apply (read_cstr_aux_bytes_in path path_max); [lia|exact Hnz|exact Hin]. }
+    { unfold read_cstr. rewrite Hmem. apply (read_cstr_aux_bytes_in path path_max);
+        [lia|exact Hnz| unfold TASK_SIZE; lia |exact Hin]. }
     destruct path as [|c path'].
     + exists ENOENT. split; [unfold ENOENT; lia|]. intros r. rewrite Hsp. apply (openat_empty_outcome _ _ _ _ _ Hmf _ Hc).
     + destruct (path_eqb (c :: path') dot_path) eqn:Hdot.
@@ -355,7 +368,20 @@ Lemma open_at_transfer : forall (H : word -> bool) ms path, H_off_segments segs 
 Proof.
   intros H ms path HH (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hp).
   rewrite restrict_mem, restrict_areg in Hp. destruct (bytes_at_restrict segs H HH _ _ _ Hp) as [Hp' Hvis].
-  split; [|exact Hvis]. exact (conj Hsvc (conj Ha0 (conj Hfl (conj Hnz (conj Hsl (conj Hdd (conj Hrom Hp'))))))).
+  split; [|exact Hvis].
+  exact (conj Hsvc (conj Ha0 (conj Hfl (conj Hnz (conj Hsl (conj Hdd (conj Hrom Hp'))))))).
+Qed.
+
+(* the path's last byte is visible, so it lies below 2^47 ([HID]) *)
+Lemma open_at_below : forall A mo ms path, open_at path ms ->
+  (forall i, (i < length (path ++ [Z_to_bv 8 0]))%nat -> HID A mo (wa (bv_unsigned (areg ms 11) + Z.of_nat i)) = false) ->
+  bv_unsigned (areg ms 11) + Z.of_nat (length path) + 1 <= 0x800000000000.
+Proof.
+  intros A mo ms path (_ & _ & _ & _ & _ & _ & _ & Hb0 & Hb1 & _) Hvis.
+  rewrite length_app in Hb1. cbn [length] in Hb1.
+  pose proof (Hvis (length path) ltac:(rewrite length_app; cbn [length]; lia)) as Hv.
+  unfold HID in Hv. apply orb_false_iff in Hv as [_ Hv]. apply Z.leb_gt in Hv.
+  rewrite wa_unsigned in Hv by lia. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -369,7 +395,7 @@ Proof using Hwx Hsegs.
   pose proof (AST_off A Pm PM _ Hc) as HH. pose proof Hc as (Hmc & HPm & HPM & _). cbn [cfg_ms cfg_model] in *.
   destruct (Hm _ HPm) as (Hat & HK). destruct (HM _ HPM) as (Hfs & HKMm).
   destruct (open_at_transfer _ ms path HH Hat) as [Hat' Hvis].
-  pose proof (open_char ms mo path Hat') as Hch. cbv zeta in Hch. rewrite Hfs, Hcl in Hch.
+  pose proof (open_char ms mo path Hat' (open_at_below A mo ms path Hat' Hvis)) as Hch. cbv zeta in Hch. rewrite Hfs, Hcl in Hch.
   destruct Hch as (e & He & Hchar).
   set (R := open_reads (sys_input segs ms (Z_to_bv 64 56)) (areg ms 11)) in *.
   destruct (ast_node_core segs segtop A Pm PM unit (fun _ => []) (fun _ => Ke e) (fun _ => KMe) ms mo (Z_to_bv 64 56)
@@ -388,6 +414,8 @@ Proof using Hwx Hsegs.
   - apply (rz_silent1 segs _ (nx tt) T).
     + destruct Hnd as [H1 H2]. split; [intros []; exact (H1 tt)|].
       intros ev st Hs. destruct (H2 ev st Hs) as ([] & -> & ->). exists tt. split; reflexivity.
+    + pose proof Hat' as (Hsv & _ & _ & Hnz0 & _ & _ & Hrom0 & Hp0).
+      exact (open_rob_gen segs ms mo path Hsv Hnz0 Hrom0 (open_at_below A mo ms path Hat' Hvis) Hp0).
     + apply Hk. exists e. split; [exact He| exact (Hnx tt)].
 Qed.
 
@@ -406,7 +434,7 @@ Proof using Hwx Hsegs.
   pose proof (AST_off A Pm PM _ Hc) as HH. pose proof Hc as (Hmc & HPm & HPM & _). cbn [cfg_ms cfg_model] in *.
   destruct (Hm _ HPm) as (Hat & HKe & HKo). destruct (HM _ HPM) as (Hfs & HKMem & Hfree & HKMom).
   destruct (open_at_transfer _ ms path HH Hat) as [Hat' Hvis].
-  pose proof (open_char ms mo path Hat') as Hch. cbv zeta in Hch. rewrite Hfs, Hcl in Hch.
+  pose proof (open_char ms mo path Hat' (open_at_below A mo ms path Hat' Hvis)) as Hch. cbv zeta in Hch. rewrite Hfs, Hcl in Hch.
   set (R := open_reads (sys_input segs ms (Z_to_bv 64 56)) (areg ms 11)) in *.
   set (fdw := alloc_fd (m_fds mo)) in *.
   set (I := ({e : Z | In e openat_errnos} + unit)%type).
@@ -434,7 +462,9 @@ Proof using Hwx Hsegs.
     assert (R2 : realizes segs (nx (inr tt)) T2) by (apply Hk2; exists fdw; exact (Hnx (inr tt))).
     pose proof (realizes_nonempty segs _ _ R1) as N1. pose proof (realizes_nonempty segs _ _ R2) as N2.
     eapply rz_conseq.
-    + apply (rz_node segs _ I (fun _ => []) nx (fun i => match i with inl _ => T1 | inr _ => T2 end) (inr tt) Hnd).
+    + apply (rz_node segs _ I (fun _ => []) nx (fun i => match i with inl _ => T1 | inr _ => T2 end) (inr tt) Hnd
+             ltac:(pose proof Hat' as (Hsv & _ & _ & Hnz0 & _ & _ & Hrom0 & Hp0);
+                   exact (open_rob_gen segs ms mo path Hsv Hnz0 Hrom0 (open_at_below A mo ms path Hat' Hvis) Hp0))).
       intros [[e He]|[]].
       * apply Hk1. exists e. split; [exact He| exact (Hnx (inl _))].
       * exact R2.

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths, addresses and numbers changed; 43 of its 79 lines of code are new or changed and 30 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot contract of LLVMFuzzerTestOneInput (fuzz/fuzz_transport.c:1124-1218) in the plain image, the form the
    frame consumes (FrameAPI.v frame_plain: lib_contract_g with G = frame_G, R = frame_RELRO, GI), and the contract
    its walk proves (the SR form with the world and the model premise). *)
@@ -72,7 +73,7 @@ Definition llvm_ls_laws : Prop :=
   (forall b n, lib_room b n -> llvm_room b) /\
   (forall n b, lib_delta n b = b).
 
-(* The slot (the kit's lib_contract_g, Contract.v:320): entered at LLVM_ENTRY with a0 = data, a1 = size and the
+(* The slot (the kit's lib_contract_g, Contract.v:321): entered at LLVM_ENTRY with a0 = data, a1 = size and the
    payload in a user block (lib_pre_x), GI, the RELRO tables as in the image, read-only memory intact, and a stack of
    stk >= LLVM_K bytes; it returns to ra with lib_post_g: the allocator invariant, a0 = 0, the callee-saved
    registers, every user block and its bytes but the payload's kept, memory outside frame_G (the world), the

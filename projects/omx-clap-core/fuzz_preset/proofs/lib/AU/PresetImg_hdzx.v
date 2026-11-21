@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_hdzx.v (commit 4d286b2e618d, file sha256 bd7ed09eb2d4) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 7 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_hdzx.v (file sha256 bd7ed09eb2d4) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 7 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, row img-hdzx-B of a Theorem Labs lane's internal file REPLY-IMG-ROWS.md, for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image row; a closed computation at reply's image B, fuzz_reply.asan-ubsan).
 
-   HDZX is the cf layer's Hypothesis of YGcfInstHit.v:154-155 (commit ee95275bccb, Section b):
+   HDZX is the cf layer's Hypothesis of YGcfInstHit.v:155-156 (Section b):
      forall ly' a, layout_ok ly' -> im_img_cover ly' -> ag_dzone ly' a ->
        ~ (as_inst B <= a < as_inst B + 3632) /\ ~ (as_ialloc_lo B <= a < as_ialloc_hi B) /\
        ~ (as_ialloc_flag B <= a < as_ialloc_flag B + 2).
@@ -15,7 +16,7 @@
    AGImg_cgif (whose ag_dzone is AGis.DZONE), for a B with the image's symbol facts. A consumer closes the layer's
    HDZX with `exact (hdzx_B B TS)` once the layer is on reply. Same stem as the A twin, hdzx_A (a prior worker).
 
-   The proof is cgif's HDZX_cgif (YGcfInstHitcgif.v:78 @ ee95275bccb) at this image, with image B's OWN numerals,
+   The proof is cgif's HDZX_cgif (YGcfInstHitcgif.v:78) at this image, with image B's OWN numerals,
    read from B/YF0m.v and B/AGis.v, none carried over from cgif:
      instance object   TFIB_INST     0xa8098,   [0xa8098, 0xa8098 + 3632)
      internal allocator TFIB_IAL_LO/HI [0xac900, 0x128870)
@@ -43,7 +44,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require ImgBaseAG. 
 Open Scope Z_scope.
 
 (* Two distinct static extents of a layout are disjoint: layout_ok's lo_disj, read at two positions. cgif's
-   pairwise_nth_c / static_disj_c (YGcfInstHitcgif.v:41-53 @ ee95275bccb) are local to that file, so they are
+   pairwise_nth_c / static_disj_c (YGcfInstHitcgif.v:41-53) are local to that file, so they are
    repeated here, not imported. *)
 Lemma pairwise_nth_r {X : Type} (R : X -> X -> Prop) : forall l i j x y, pairwise R l ->
   nth_error l i = Some x -> nth_error l j = Some y -> (i < j)%nat -> R x y.
@@ -62,7 +63,7 @@ Lemma static_disj_r : forall ly, layout_ok ly -> forall i j x y, nth_error (stat
   nth_error (static_extents ly) j = Some y -> (i < j)%nat -> zdisjoint x y.
 Proof. intros ly LO i j x y Hi Hj Lt. exact (pairwise_nth_r zdisjoint _ i j x y (lo_disj _ LO) Hi Hj Lt). Qed.
 
-(* HDZX at image B (YGcfInstHit.v:154-155 @ ee95275bccb). *)
+(* HDZX at image B (YGcfInstHit.v:155-156). *)
 Lemma hdzx_B : forall B, @im_syms AImg_cgif B ->
   forall ly' a, layout_ok ly' -> @im_img_cover AImg_cgif ly' ->
   @ImgBaseAG.ag_dzone AImg_cgif AGif0cgif.AGImg_cgif ly' a ->

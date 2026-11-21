@@ -80,7 +80,7 @@ Definition reac_ctrl_kind_name_contract_F : Prop :=
    entry it loads, (KIND_NAME + 8 * a0) / 8 + ASAN_K, one of the 14 shadow bytes of [KIND_NAME, KIND_NAME + 112); that
    byte comes from the premise addressable m KIND_NAME 112 (rt_shadow_rd; AsanRT.addr_byte), not from shadow_rw:
    neither proof uses the premise, that is, reac_ctrl_kind_name_holds_on (in reac_ctrl_kind_name.v) and
-   reac_ctrl_kind_name_holds_F_on (in reac_ctrl_kind_nameF.v, a Theorem Labs lane's file, on its branch at 330e60af39d).
+   reac_ctrl_kind_name_holds_F_on (in reac_ctrl_kind_nameF.v, a Theorem Labs lane's file, on its branch).
    Stores: the run stores only its frame [sp - 16, sp), outside the shadow (the premise forall x, ...
    in_shadow x -> outside [...] x): no shadow byte. No post names shadow_rw m', so nothing else changes. The old
    statements above stay byte-identical; each follows from its _on twin in one line. *)

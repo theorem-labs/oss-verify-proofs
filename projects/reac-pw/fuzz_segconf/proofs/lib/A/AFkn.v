@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFkn.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build; the depot_ids_boundG abbreviation follows that lemma's new arguments (its depot_inv proof no longer uses Hmf and Hmu). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AFkn.v (donor image sha256 c0661b96b5bd), with its module paths changed, names CmdBSyms -> SegBSyms and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair and vDSO steps). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -706,14 +707,20 @@ vm_maps (m_vmmaps (grant_md false FL50 a n md)) = vm_maps (m_vmmaps md) /\
 vm_reserved (m_vmmaps (grant_md false FL50 a n md)) = vm_reserved (m_vmmaps md) /\
 vm_limit (m_vmmaps (grant_md false FL50 a n md)) = vm_limit (m_vmmaps md) /\
 vm_mmap_base (m_vmmaps (grant_md false FL50 a n md)) = vm_mmap_base (m_vmmaps md) /\
-vm_init_sp (m_vmmaps (grant_md false FL50 a n md)) = vm_init_sp (m_vmmaps md).
+vm_init_sp (m_vmmaps (grant_md false FL50 a n md)) = vm_init_sp (m_vmmaps md) /\
+vdso_reserved (m_kernel (grant_md false FL50 a n md))
+  (vdso_top (m_vmmaps (grant_md false FL50 a n md)))
+= vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)).
 Proof. clear. intros a n md. unfold grant_md, fixedin_ok_model, fixedin_ok_vmmaps, with_mmap_replacement, with_mmap_backing. rewrite nores50. cbn. destruct md as [fd [maps lazy mat] io fs pr lim tm]. cbn. destruct maps; cbn. repeat split; reflexivity. Qed.
 Lemma grant_hole_shape : forall (a n : word) md,
 vm_maps (m_vmmaps (grant_md true FL50 a n md)) = (a, n) :: vm_maps (m_vmmaps md) /\
 vm_reserved (m_vmmaps (grant_md true FL50 a n md)) = vm_reserved (m_vmmaps md) /\
 vm_limit (m_vmmaps (grant_md true FL50 a n md)) = vm_limit (m_vmmaps md) /\
 vm_mmap_base (m_vmmaps (grant_md true FL50 a n md)) = vm_mmap_base (m_vmmaps md) /\
-vm_init_sp (m_vmmaps (grant_md true FL50 a n md)) = vm_init_sp (m_vmmaps md).
+vm_init_sp (m_vmmaps (grant_md true FL50 a n md)) = vm_init_sp (m_vmmaps md) /\
+vdso_reserved (m_kernel (grant_md true FL50 a n md))
+  (vdso_top (m_vmmaps (grant_md true FL50 a n md)))
+= vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)).
 Proof. clear. intros a n md. unfold grant_md, with_mmap_backing, mmap_model. rewrite nores50. destruct md as [fd [maps lazy mat] io fs pr lim tm]. cbn. destruct maps; cbn. repeat split; reflexivity. Qed.
 Lemma ROOM3 : rg_mapped_user (reg S c) + kUserMapSize <= kUserMapSize * EV_MAX /\
 (st_nev S <= EV_MAX \/ rg_alloc_user (reg S c) <= class_size c * (65536 - 10240)).
@@ -1160,10 +1167,10 @@ pose proof (YG0h.prim_boundsF (as_universe B) pp 0 0 ly (St1 xg) c LY WP HcR HFA
 assert (PB6 : region_base ly c <= fadr) by (rewrite <- (K3F_addr xg); unfold YG0h.addrF; clear - PB5; unfold kFreeArrayOffset in *; zlia).
 pose proof (COV_prim (holeF xg) fadr mdN MWN ltac:(clear - PB2 PB6; zlia) ltac:(clear - PB3 PB4; zlia)) as COV.
 unfold holeF in *. destruct (in_dec zz_eq_dec (kFreeArrayOffset + mf, kFreeArrayMapSize) (HO1 xg)) as [Hin|Hnin].
-- pose proof (grant_hole_shape (w64 fadr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP).
+- pose proof (grant_hole_shape (w64 fadr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP & VDSOR).
 apply (ALedger_fa_granted_hole tfibsegs (as_universe B) pp 0 0 ly (St1 xg) mdN _ c LY WP HcR L RES LIM ISP PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) HFA ltac:(unfold YG0h.offF; rewrite reg_S1; unfold rg1; cbn; exact Hin)); [|exact EG].
 rewrite K3F_addr. unfold wiv. cbn [fst snd]. exact VM.
-- pose proof (grant_piece_shape (w64 fadr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP).
+- pose proof (grant_piece_shape (w64 fadr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP & VDSOR).
 apply (ALedger_fa_granted_piece tfibsegs (as_universe B) pp 0 0 ly (St1 xg) mdN _ c WP HcR L RES LIM ISP PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offF; rewrite reg_S1; unfold rg1; cbn; exact Hnin) VM EG).
 Qed.
 Lemma WfP_SUp : mu < tot -> mu + kUserMapSize <= kFreeArrayOffset -> WfP (as_universe B) 0 0 0 SUp.
@@ -1196,10 +1203,10 @@ pose proof (YG0h.prim_bounds (as_universe B) 1 0 0 ly S c LY W1P HcR) as (PB1 & 
 assert (PB6 : region_base ly c <= adr) by (rewrite <- K3U_addr; unfold YG0h.addrU; clear - PB5; zlia).
 pose proof (COV_prim holeU adr mdN MWN ltac:(clear - PB2 PB6; zlia) ltac:(clear - PB3 PB4; unfold kFreeArrayOffset, kFreeArrayMax, kPrimResvSize in *; zlia)) as COV.
 unfold holeU in *. destruct (in_dec zz_eq_dec (mu, kUserMapSize) hol) as [Hin|Hnin].
-- pose proof (grant_hole_shape (w64 adr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP).
+- pose proof (grant_hole_shape (w64 adr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP & VDSOR).
 apply (ALedger_user_granted_hole tfibsegs (as_universe B) 1 0 0 ly S mdN _ c LY W1P HcR L RES LIM ISP PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offU; rewrite reg_S; cbn; exact Hin)); [|exact EG].
 rewrite K3U_addr. unfold wiv. cbn [fst snd]. exact VM.
-- pose proof (grant_piece_shape (w64 adr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP).
+- pose proof (grant_piece_shape (w64 adr) (w64 kUserMapSize) mdN) as (VM & RES & LIM & MMB & ISP & VDSOR).
 apply (ALedger_user_granted_piece tfibsegs (as_universe B) 1 0 0 ly S mdN _ c W1P HcR L RES LIM ISP PL COV (YG0g.naf_grant_md _ _ mdN _ _ MWN) ltac:(unfold YG0h.offU; rewrite reg_S; cbn; exact Hnin) VM EG).
 Qed.
 Lemma slack_at : forall md (Wx : world tfibsegs) k, ALedger tfibsegs ly S md0 -> vm_limit (m_vmmaps md) = vm_limit (m_vmmaps md0) ->

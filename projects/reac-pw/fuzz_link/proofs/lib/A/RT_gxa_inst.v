@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_gxa_inst.v (a working branch 3e35620c52e); changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfA.N_img_asan_vf/N_sym_asan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanA.N_img_asan/N_sym_asan, numerals 0x41308 -> 0x429f8 and 0x8ede0 -> 0x95fac. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_gxa_inst.v (a working branch); changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfA.N_img_asan_vf/N_sym_asan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanA.N_img_asan/N_sym_asan, numerals 0x41308 -> 0x429f8 and 0x8ede0 -> 0x95fac. *)
 (* GXA's two top theorems, instantiated on the pinned fuzz_manifest.asan.
 
    lib/CJ/RL/GXA holds the format-general ASan printf core, proved and Qed over an abstract image

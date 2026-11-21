@@ -1,12 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch values as a launchT section, with InitMem imported first). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Fpu Sem.
+(* LPS 727298f3: launchT (the launch values) lives in InitMem; imported first so later imports keep their names *)
+From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import InitMem.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import Tac Image ZBridge SysStep ITree Nodes Decode Arr FP MonadX.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Common Require Import DrvAgree Startup_kit STRW_tac F_fmt_fp_lib Printf_fmts.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Plain Require Import PImg F_syscalls StdioFiles Startup Exit F_printf_iface Stdio_iface Stdio_kit.
@@ -20,7 +23,7 @@ Open Scope Z_scope.
 Open Scope mspec_scope.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {lx : launchT}.
 Section Main.
   Hypothesis MALLOC : rmalloc_stmt.
   Hypothesis FREE : rfree_stmt.

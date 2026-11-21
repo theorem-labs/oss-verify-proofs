@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif1k.v (a working branch ced28ed2383, file sha256 48748393de25) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif1k.v (a working branch, file sha256 48748393de25) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10-29: the instance universe is fs's U := fun tr S => tr_admit (as_universe B) S tr (a Theorem Labs lane's UA, the S1a shape), by a Theorem Labs lane's fix list (FS-INSTANCE.md section 1.4, kind L); the proof text is unchanged. *)
 (* Modified by Theorem Labs, 2026-10-29: the trace premises at fs's forms, as image A's agA (a Theorem Labs lane's AG-PROGRESS.md): depot callees take areq_ok S (KDepot tr) (YFl0.tfib_depot_spec), malloc posts and instances take tr_admit (as_universe B) S tr, reached by tr_admit_len where a depot call needs areq_ok. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file instance of the k path's interface AGif0n.AIfaceK (0 <= n <= 48, redzone 16): the k twins of
    AGif1.post_cgif and AGif1.owned_cgif.  The post comes from AGjf's AR_transport (the k twin of AGj1's, YFj1) at the
    post-tick state, over the k walk's post at_RETkw (AGj6.at_RET without its fill-byte clause, which AR_transport does not

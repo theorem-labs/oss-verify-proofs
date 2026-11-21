@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc's ASan harness walk (LLVMFuzzerTestOneInput 0x7e68c,
    fuzz_qdisc.asan sha256 980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
-   proofs/libreac/fuzz_knock/lib/A/APgMain4.v at origin/ossv/recipes 6ebe35ba632 (the call through a callee contract with
+   proofs/libreac/fuzz_knock/lib/A/APgMain4.v (the call through a callee contract with
    SRr_bind, the destructuring of its post, reseatK as reseatQ, rt_region_kept_eq and the kept-region cases), with the
    back edge and exit of knock's lib/A/APgMain6.v at the same revision (the atoms moved to the loop head's slots, the facts
    on the reused slot dropped with st_ok_facts_incl3, ra_join_win to ss_L / ss_X, rt_hand), its module paths changed and
@@ -54,6 +54,7 @@
    Section hypotheses: MTL : ameter_laws MT (mle_station over the two posts' meters), TL : TfibLib B, LAWS : AR_laws
    tfibsegs B, SLOTS : qdisc_slots_specX tfibsegs B MT A_QD_SLOTS A_QD_MAGIC and CHECK : qdisc_check_specX tfibsegs B MT
    A_QD_CHECK A_QD_MAGIC (the two callee contracts, lib/A/QPgCSpec.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

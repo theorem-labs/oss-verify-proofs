@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (8 recorded proofs replaced by computation, vm_compute (pieces_usage_concat, pieces_pct_d_0, pieces_pct_d_m120 and 5 more)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool String Ascii.
@@ -190,26 +191,18 @@ Definition msg_new_handler : list Z := str "DissectQueryMallocFuzzer: out of mem
 (* [comment removed for export] *)
 Example pieces_usage_concat :
   concat (pieces_usage (str "prog")) = str "usage: prog INPUT" ++ [10].
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio ()) [] "p;1p;2p;8p;3p-1R0p10000R1p4p710p8P0P1p4p7210p8P0p1000Mp4p7210p8p1000kp4p710p1001ap4p710p8g002aj1ATg003Aj11Tg003fj10Tg004Kj16Tg004ij1>Tg005Ij2<Tg005cj82Tg006Bj1:Tg0075j1;Tg0081j2@Tg008Lj25Tg008mj3?Tg009Jj3=Tg009dj38Tf0R0#1#6p=9g00:DR1f1R2#6;80p=3f2R3A8120581p=7f4f31520,53'5'5p=4%A1R3g00:bR2#1R0#1#0R4#1#0R5#1%04R4#1R6#1%00R0#0R7#0#0#1%17R7#1#9R8%07#9%02R2#0R7#0#0#0#6R9%04#0#6%06%10#1#1#1%17R7#0#0#1%17#1#0%12#0R2#0#0#0%12#0R7#1%07%>1,32R2'3'3'3'3'39789'3'337,3537'3'3'3'<g00;GR5P5P5P5g00;gR9P9P9P5G2R8P5P9P5P5P9P9P9P5G2R7P9P9P9P9P5P9P9P5G2R0P9P9P9P5P5P9P9P5G2R6g00<GR4D4#:#;,@1P9P5P9P5P9P9P9P5G2P9P9P5P5P9P9P9P5G2P9P5P5P5P5P9P9P5G2P6P9P5P9P5P5P9P9P5G2P5P9P5P9P9P9P5P5G2P5P5P5P5P5P9P5P5G2R:P8P7P0P6P:P9P5P5P9P5P5P9P5G2P5P9P9P9P5P5P9P5G2P5P5P5P5P9P5P9P5G2P9P5P9P5P9P5P9P5G2P5P5P9P5P9P5P9P5G2/54D4D4D4D4#:=?125=3do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example pieces_pct_d_0 : concat (pieces_pct_d 0) = str "0" ++ [10].
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio ()) [] "p;1p;3p;2p;8g002aj1=Tg003Aj13Tg003fj10Tg004Kj12Tg004ij1<Tg009dj31Tg005Ij2:Tg00<hj15Tg0081j26Tg005cj87Tg008Lj24Tg006Bj18Tg008mj39Tg009Jj3;Tg00:DR0#=R1g00:bR2#3#0#0#0#0#2%02#3#0#2%<0510R2510':g00=d#5,60g00;GR3P3P3P3g00;gR4P4P3P3G7g00<G'4#8=9025;1do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example pieces_pct_d_m120 : concat (pieces_pct_d (-120)) = str "-120" ++ [10].
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio ()) [] "p;1p;3p;2p;8g002aj1>Tg003fj10Tg003Aj11Tg004Kj12Tg004ij1=Tg009dj33Tg005Ij2:Tg00>Bj19Tg00<hj18Tg0081j27Tg005cj84Tg008Lj25Tg006Bj16Tg008mj3<Tg009Jj3;Tg00:DR0#>R1g00:bR2#0#1R3#1#0#1#2%12R2#0#0R4#0R5#1#2%14#0#2%05#2%03#2%=0530R3530530530530':%12#1#0#0#0#9#8,70g00;gR2g00;GR5P2P2P5P2P5P5G4P2P5P5P5P2P2P5P5G4P5P2P5P5P2P2P5P5G4P5P5P5P5P2P2P5P5G4g00<G'5'5'5'5#6=<035;1do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example after_last_nl_ex1 : after_last_nl (str "ab" ++ [10] ++ str "cd") = 3.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio ()) [] "p;1p;2p;8p;3g003Aj12Tg004Kj16Tg005Ij2;Tg005cj80Tg008Lj21Tg006Bj15Tg003fj13Tg004ij1:Tg009dj39Tg008mj34Tg00>`j17Tg009Jj38Tg00:DR0g00:bR1#2#6R2';g00;gR3g00;GR4P4P4P4P3P3P4G0P4P3P4P4P4P3P3P4G0g00<GR5'1'1#5%31#2#3#6%:0590P3P3P4P4P4P3P3P4G0P4P4P3P4P4P3P3P4G0/15'1#5540540#7=802do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example after_last_nl_ex2 : after_last_nl (str "abc") = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio ()) [] "p;2p;8p;1p;3g005Ij25Tg005cj81Tg008Lj20Tg006Bj12Tg00>`j14Tg009Jj33Tg00:DR0g00=dR1'5g00;gR2g00;GR3P3P3P3P2P2P3G1P3P2P3P3P3P2P2P3G1P2P2P3P3P3P2P2P3G1g00<G'0'0'0#2#4=301do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example iov_advance_ex1 : iov_advance [[1;2;3];[4;5]] 3 = [[];[4;5]].
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio ()) [] "p;1p;3p;2g002aj15Tg004ij13Tg003fj12Tg004Kj11Tg003Aj14Tg009dj30Tg005Ij28Tg00?]j27Tg009Jj36Tg00:DR0#5R1#5R2%30R3g00:bR4#2R5#2#1%45#1=003500%31501R6501R7'8%14%15%44#1R4=003500500=016/74=627do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example iov_advance_ex2 : iov_advance [[1;2;3];[4;5]] 4 = [[5]].
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio ()) [] "p;1p;3p;2g002aj15Tg003fj13Tg003Aj12Tg004Kj11Tg004ij14Tg009dj30Tg005Ij28Tg00?]j27Tg009Jj36Tg00:DR0#5R1#5R2g00:bR3#3R4#2#1%40R5500R6%41R7501R8'8%13%14%23#1=005500500%34#1R4=006=017501/74=628do"). Qed.
+Proof. vm_compute. reflexivity. Qed.
 Example iov_advance_ex3 : iov_advance [[];[4;5]] 1 = [[5]].
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio ()) [] "p;1p;3p;2g002aj14Tg003fj12Tg003Aj17Tg004Kj11Tg004ij13Tg009dj30Tg005Ij28Tg00?]j26Tg009Jj35Tg00:DR0#4R1#4R2g00:bR3#2R4#7#1%30R5500R6%31R7501R8'8%24#1=006=0179015%13'6=528do"). Qed.
+Proof. vm_compute. reflexivity. Qed.

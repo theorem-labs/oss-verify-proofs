@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v; 306 of its 411 lines of code are new or changed and 489 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The entry half of LS v3: fr_ENT, the conjunct that keeps the call's REST the entry's rest, its twin of every
    rule, and the exit's LS_exit_end CONCLUDING fr_surv.  proves no function (kind: invariant lemma).
 
@@ -20,7 +21,7 @@
    no existential to open.  Its hypothesis is also what the exit text already hands over: the exit's own
    `Permutation (ablocks B ly3 S3) (input ++ model_blks m ++ rest)` premise.
 
-   fr_hblks is W_LLVMFuzzerTestOneInput_cut.v:166's, the definition the exit text (lib/A/W_LLVMFuzzerTestOneInput_exit_x.v fr_surv / fr_hblks_kept /
+   fr_hblks is W_LLVMFuzzerTestOneInput_cut.v:167's, the definition the exit text (lib/A/W_LLVMFuzzerTestOneInput_exit_x.v fr_surv / fr_hblks_kept /
    HHB3) and ACfn_cf.v's fr_surv use.  Note W_LLVMFuzzerTestOneInput_cut.v ablocks_sep: its
    first clause is fr_LS3's existential rest, its second ("a model block is fresh or inside the entry's footprint")
    is fr_surv's third clause in footprint form - over req_size ranges, so it does not give the block equality that
@@ -333,7 +334,7 @@ Qed.
 
 (* ================================================================== the first head (the prologue) *)
 (* NAMED HYPOTHESIS HFH0: the entry's harness blocks are the table g_src names and g_out's buffer, the same three
-   reads fr_hblks makes (_cut.v:163-167 at bb9dae5d905).  SEG_PRO holds it where it reads T0, cap and out out of
+   reads fr_hblks makes (_cut.v:163-167).  SEG_PRO holds it where it reads T0, cap and out out of
    the entry's memory to build this premise; fr_LS3c_pro (ReplyLS3c.v:260-267) keeps only the blocks. *)
 Lemma fr_ENT_pro : forall cx q T' pj c O cap out ly S T0 rest0,
   Permutation (ablocks B (c_ly cx) (c_S cx))
@@ -357,7 +358,7 @@ Proof.
 Qed.
 
 (* ================================================================== the gone arm's end *)
-(* 6a2e02357a4 GN_RI_end's premises, in gx6_end_LS3c's order (lib/A/ReplyLS3cTopxGoneF.v:140-163); fr_ENT needs only
+(* GN_RI_end's premises, in gx6_end_LS3c's order (lib/A/ReplyLS3cTopxGoneF.v:141-164); fr_ENT needs only
    the block relation and fr_LS3's rest, so RINV, gn_op, the per-entry premise, REQ1-REQ3, gn_pairs, gn_after_rig,
    gn_rig_ok, gn_run, mo_le and REQ5 are taken and not read. *)
 Lemma fr_ENT_gone_end : forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A (lyx : alayout) (Sx : astate) cst,
@@ -398,7 +399,7 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Variable G_fr : list (Z * Z).
 Variable fr_FP : bvmap 5 word -> alayout -> astate -> world segs -> (word -> option byte) -> list (Z * Z).
-(* LS_exit_end at LS := fr_LS3c /\ fr_OUT /\ fr_ENT: the ARx text of exit_x.v:158-167 (integ bb9dae5d905) with row
+(* LS_exit_end at LS := fr_LS3c /\ fr_OUT /\ fr_ENT: the ARx text of exit_x.v:158-167 (integ) with row
    B1c's ONE added premise `cap = gse_cap (lx_rf_run ..)`, NP dropped (ROOM-TEXTS.md:218-219 sha256 767baa12f13c; internal record), and fr_surv now a
    CONCLUSION.  Its two added premises are the walk's own facts, each at the site that holds it in
    lx_end_of_ffexit_x (integ lib/A/W_LLVMFuzzerTestOneInput_exit_x.v):
@@ -409,7 +410,7 @@ Variable fr_FP : bvmap 5 word -> alayout -> astate -> world segs -> (word -> opt
        at :4811-4812.
      HND - the return's blocks without duplicates.  The walk has ARx there (HAR2 at :4803, from
        ajournal_gx_AR_x on the journal premise), and NoDup (ablocks B ly S) is AR's standard law
-       (W_LLVMFuzzerTestOneInput_add.v:277 ad_nodup); HHB2 at :4802-4805 is proved from exactly that and BLKN,
+       (W_LLVMFuzzerTestOneInput_add.v:278 ad_nodup); HHB2 at :4802-4805 is proved from exactly that and BLKN,
        and EB at :4810 carries it across stack_free_state.
    ROUTE R (a Theorem Labs lane, 2026-10-31): the rule is stated at any world relation R, its journal premise at
    ajournal_gx_xR .. R (W_journal_x.v): LS_exit_end3e_xR, for lib/A/W_LLVMFuzzerTestOneInput_exit_x.v's LS_exit_end_R (Section exitR).  The proof reads
@@ -480,7 +481,7 @@ Proof.
         | pose proof (proj1 (count_occ_In zzdec rest b) Hio) as Hz]; lia.
 Qed.
 
-(* the strict rule (lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:183's LS_exit_end, through ReplyLSI.v lsi_LS_exit_end): LS_exit_end3e_xR at R := wle *)
+(* the strict rule (lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:184's LS_exit_end, through ReplyLSI.v lsi_LS_exit_end): LS_exit_end3e_xR at R := wle *)
 Lemma LS_exit_end3e : forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem' md' fpos k' C cap out,
   fr_LS3c B cx t m ly3 S3 -> fr_OUT OM cx t m ly3 S3 -> fr_ENT cx m ly3 S3 ->
   Permutation (ablocks B ly3 S3) (input_blks cx ++ model_blks m ++ rest) ->

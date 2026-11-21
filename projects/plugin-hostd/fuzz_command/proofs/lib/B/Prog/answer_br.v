@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the BODY segment of answer's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan, 0x8ab6c .. 0x8aca4 / 0x8ab98), the B re-walk of lib/A/Prog/answer_br.v
-   (a working branch d28426fbb96): `auipc/addi s11 = g_rec`, `lw a0,0(s11)` (g_rec.refuse) and the refusal
+   (a working branch): `auipc/addi s11 = g_rec`, `lw a0,0(s11)` (g_rec.refuse) and the refusal
    branch `beqz a0` at 0x8ab78.
    Refused (a0 <> 0): `lw a3,4(s11)` (g_rec.code), a2 = "resp %d" (0x21d40), a1 = 4096, a0 = buf (s5 = frame + 32),
    `jal snprintf` at 0x8ab90 under the SHARED snprintf contract (lib/B/Rt/RtFormat.v asnprintf_realizes; the step
@@ -14,8 +14,9 @@
    changes branch, mix_call, the store of g_rec.state, the UBSan trap site 0x8abac and the loop setup to HEAD.
    The refusal branch has no report or trap edge; this segment's only edges are the two arms. The frame above the
    image is a Theorem Labs lane's lib/B/Rt/RtPFDog.v pa_frame_above_img and the realignment's arithmetic CmdSnText.v's
-   snt_sp1_facts; the snprintf destination's band premise (`+ 8`, a Theorem Labs lane fc8bcbd8b42) is answer_snp.v's, from the
+   snt_sp1_facts; the snprintf destination's band premise (`+ 8`, a Theorem Labs lane) is answer_snp.v's, from the
    room the class-7 frame leaves after buf's 4096 bytes. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -823,7 +824,7 @@ psrr_branch_tok RUN BR HS SHOK br_Bspan.
         exact (br_sext32_mod (br_E regs1 R) 34 (r_code R) (br_ew34 regs1 R) HRCD).
       + exact (RecAns.resp_text (r_code R)).
       + cbn. exact I.
-      + (* fr_lit_ok (a Theorem Labs lane 0934cb146c3, recipe E.0.4): "resp %d" at 0x21d40 in the image below the GOT word, nonempty,
+      + (* fr_lit_ok (a Theorem Labs lane, recipe E.0.4): "resp %d" at 0x21d40 in the image below the GOT word, nonempty,
            no %s argument *)
         vm_compute; reflexivity.
     - lia.

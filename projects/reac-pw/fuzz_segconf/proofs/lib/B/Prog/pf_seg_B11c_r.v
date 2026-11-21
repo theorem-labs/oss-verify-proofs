@@ -2,9 +2,9 @@
    refuse call site of segment B11c of reac_segconf_parse_file's walk (jal 0x892f8 at 0x88bec), as one closed
    lemma: the state at the call supplies every premise refuse_contract (lib/B/Prog/refuse_c.v) asks besides
    afn_pre. The B11c segment lane of the image-B G3 walk owner, 2026-10-30. proves no function (kind: call-site lemma).
-   ADAPTED from the image-A G3 walk owner's image-A refuse site rule lib/A/Prog/pf_a7_s.v (commit
-   ebe0b30cca65: a7_refuse_site_ok, a7_va_ok, a7_apart, a7_room_ev) and the A11b facts lib/A/Prog/pf_a11b_f.v
-   (commit 95f85b0d718c: pf_lit_badmodel, pf_badmodel_fmt, pf_badmodel_kinds), re-derived
+   ADAPTED from the image-A G3 walk owner's image-A refuse site rule lib/A/Prog/pf_a7_s.v (
+   a7_refuse_site_ok, a7_va_ok, a7_apart, a7_room_ev) and the A11b facts lib/A/Prog/pf_a11b_f.v
+   (pf_lit_badmodel, pf_badmodel_fmt, pf_badmodel_kinds), re-derived
    for image B's site and its three string arguments, all in the class-5 frame F:
      a0 = c (slot 0xc8, 0x88bd8), a1 = s6 = lineno = ln + 1 (0x88bdc), a2 = F_badmodel's literal 0x21880 (.str.20,
      0x88bd0 auipc / 0x88bd4 addi), a3 = slot 0x40 = cur_name F + 0x20 (0x88be0), a4 = slot 0x70 = val in buf

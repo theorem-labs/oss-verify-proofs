@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v for fuzz_preset: the plain side is fuzz_preset's proved realization (A/PresetPlainRz.v, built as its lib/AgreePresetH.v and lib/Theorems.v build the plain side of the ubsan agreement, at checksum_shape), TFIB_T takes the statement's plain no-refusal premise (PresetTFIB.v), module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* fuzz_preset's ASan agreement from the ASan side TFIB_T (PresetTFIB.v), in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v: shape_strong_equiv_efs_relim (Reusable/YM09.v) over the plain build's
    proved realization of SPECX at 2^34 (A/PresetPlainRz.v preset_plain_rz: lib/AgreeTop.v plain_rz_of_contracts_R
@@ -41,12 +42,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     presetsegs0 Asan.M.init_pc Asan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=checksum_shape) inp) (SPECX (LS:=checksum_shape) inp) inp
     asan_lim_source_le SWB HP
-    (TFIB sp' brk' mb' rnd' inp (mkEntry sp brk mb rnd) Hsp' Hbrk' Hmb' Hfit' Hinp SWB) (t_eq_refl _)).
+    (TFIB sp' brk' mb' rnd' inp (mkEntry sp brk mb rnd) Hsp' Hbrk' Hmb' Hfit' Hinp Hlau' SWB) (t_eq_refl _)).
 Qed.
 End a.

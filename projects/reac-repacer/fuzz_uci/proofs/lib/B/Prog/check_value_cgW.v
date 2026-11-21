@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v (origin/ossv/recipes 88154566652a) for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
+(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths and module names changed; 1106 of its 1229 lines of code are new or changed and 398 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_value_cgW: uci_check_value_cg (uci_sigma US_check_value) at image B (fuzz_uci.asan-ubsan, check_value at
    0x7f6b0) from the callee contracts the statement names, proving the frozen statement lib/B/Prog/check_value_cg.v
    uci_check_value_cg_holds_stmt. The image-B twin of lib/A/Prog/check_value_cgW.v, in the walk style and with the
    leaf kit of fuzz_decode's image B (proofs/libreac/fuzz_decode/lib/B/Prog/crtB_*.v, LeafCg{Kit,Facts,Glue}.v at
-   recipes commit 88154566652a): footprint runs carried into SRr, an inner journal over the call's stack window, each
+   recipes): footprint runs carried into SRr, an inner journal over the call's stack window, each
    call cut by its callee contract.
 
    The walk (offsets from the entry; lib/B/Prog/UciCvBIface.v names the cut points):

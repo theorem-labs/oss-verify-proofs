@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s6.v, with its module paths and module names changed; 112 of its 340 lines of code are new or changed and 534 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the kit of
    the walk of the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0), segment S21 (K85ec8 0x85ec8 ..
    0x85fc4) and the return (0x85fc8); the segment lemmas are in LLVMFuzzerTestOneInput_s25.v.
 
-   The image-B twin of image A's lib/A/Prog/LLVMFuzzerTestOneInput_s25k.v (image A's S21 / ret commit 187a26673c08):
+   The image-B twin of image A's lib/A/Prog/LLVMFuzzerTestOneInput_s25k.v (image A's S21 / ret):
    the same lemmas, with image B's modules (the 44 B-kit modules from lib.B, lib.B.Prog, lib.B.Rt, SegInstB) and
    image B's frame (352 bytes, so S1 = (SP0 - 352) & ~31 is 352 or 368 below SP0).
 
    (1) The journal step of the shadow-fill entry meta_fill_f5 (the runtime's __asan_set_shadow_f5, image B 0x58b70):
    the two lemmas ajournal_after_write_stk and aj_set_shadow_atS, copied verbatim from plugin-hostd/fuzz_command's
-   lib/A/Prog/chain_words_s6.v:204-401 (origin/ossv/recipes 501c0d516c69; its B twin lib/B/Prog/chain_words_s6.v:
-   211-408 at 3abc3740de97 has the same text), whose release segconf's harness repeats (METHOD.md section 5.7);
+   lib/A/Prog/chain_words_s6.v:204-401 (its B twin lib/B/Prog/chain_words_s6.v:
+   211-408 has the same text), whose release segconf's harness repeats (METHOD.md section 5.7);
    segconf's kit has no PaRt.v, so chain_words' local copy is taken.
    (2) The image facts lt_img across the release: lt_img reads only image bytes (its sa_img ranges, in_roP's
    segments, the read-only window RLO_A .. RHI_A and SegInstB's gotwA 0xa3e98 / guardA 0x5ff838 / longlA 0x5dee40),

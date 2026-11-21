@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACfh.v (srz_enter, the journal over a token list), ACk2.v (the file system a closed journal keeps), ACfj.v (tfib_lib_x) and ACfi.v (tfib_lib_x_all) for libreac/fuzz_grant: module paths, GrantB, the library shape grant_shape, and the entry function's phase machine of lib/A/Prog/GrantEntryDefs.v in place of cgif's. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantLibX.v's grant_HTR (a working branch af735a950e2 :184-208): the proof of GrantBContracts.v's IMG_LLVMF_TRACES for the abstract B, with image B's addresses, image B's trace universe lib/B/YCej.v, and each fact about B that image A reads off its concrete record GrantB as a named premise. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantLibX.v's grant_HTR (a working branch :184-208): the proof of GrantBContracts.v's IMG_LLVMF_TRACES for the abstract B, with image B's addresses, image B's trace universe lib/B/YCej.v, and each fact about B that image A reads off its concrete record GrantB as a named premise. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* GrantBContracts.v's IMG_LLVMF_TRACES (the image fact of hyps_LLVMFuzzerTestOneInput): the call traces of the six
    malloc / free wrapper calls of LLVMFuzzerTestOneInput are in the trace universe of B.
 
@@ -16,8 +17,8 @@
    and, because the contract's BASE is the image instance's pa_val A_TEXT (a fact of PI, not of B):
      grant_val_text          pa_val A_TEXT = grant_text           A: the contract states grant_text itself
                                                                   (lib/A/Prog/GrantAddr.v grant_text)
-   img_llvmf_traces_grant discharges the last one at image B's instance PI_grant (GrantImg.v:152, pa_val := grant_val,
-   grant_val A_TEXT = grant_text by GrantImg.v:34).
+   img_llvmf_traces_grant discharges the last one at image B's instance PI_grant (GrantImg.v:153, pa_val := grant_val,
+   grant_val A_TEXT = grant_text by GrantImg.v:35).
 
    Image B's numbers, from bin/libreac/asan-ubsan/fuzz_grant.{objdump,nm}.txt:
      LLVMFuzzerTestOneInput = 0x80a3c = grant_text (GrantAddr.v:12; nm :2160, objdump :83911), AF_ = 0 (GrantList.v:11)

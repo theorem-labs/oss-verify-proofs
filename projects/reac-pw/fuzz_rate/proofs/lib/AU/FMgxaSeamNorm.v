@@ -1,9 +1,9 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNorm.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 17 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamNorm.table); GXA symbol keys kept (0x1029e, 0x22e18); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamNorm.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv); the word test dz_shadow drops every shadow-band byte outside the carved hulls (shb a), not only the band words that meet ly_vis0, because rate's world record has no w_H8 field: FMgxaSeamReady.v word_vis then reads a band word's visibility off the carved hull that holds it (dz_shadow_range, seam_drop_word and vis0_word_pres_cjnormv re-proved for the new test; no statement changes). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNorm.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 17 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamNorm.table); GXA symbol keys kept (0x1029e, 0x22e18); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamNorm.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv); the word test dz_shadow drops every shadow-band byte outside the carved hulls (shb a), not only the band words that meet ly_vis0, because rate's world record has no w_H8 field: FMgxaSeamReady.v word_vis then reads a band word's visibility off the carved hull that holds it (dz_shadow_range, seam_drop_word and vis0_word_pres_cjnormv re-proved for the new test; no statement changes). *)
 (* The NORMALIZATION layer of the GXA seam at musl vfprintf.
 
-   GXA's statement (lib/CJ/RL/GXA/VfprintfCall.v:22 vfprintf_guarded_stmt) asks `mem_inv img_segs m`
-   (VfprintfCall.v:37) of the store it runs on.  For the harness's store m = cjstore (w_H W) mem that
+   GXA's statement (lib/CJ/RL/GXA/VfprintfCall.v:23 vfprintf_guarded_stmt) asks `mem_inv img_segs m`
+   (VfprintfCall.v:38) of the store it runs on.  For the harness's store m = cjstore (w_H W) mem that
    is not derivable (FMgxaSeamInv.v).  So the seam runs GXA on the NORMALIZED store
      cjnorm H mem := MemNorm.normalize_cj tfibsegs (cjstore H mem)        (lib/MemNorm.v:534)
    which drops every stored byte at a read-only address and every stored byte above TASK_SIZE outside
@@ -38,7 +38,7 @@
    The guard's readiness hypothesis FMgxaSeamGuard.seam_calls_ready is not transferred: its
    consumers state it at the normalized store (vf_ready_cjnorm takes it at cjnorm H mem,
    vf_ready_cjnormv at cjnormv ly R H mem). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeamNorm.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeamNorm.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeamNorm.v keeps its donor's comment text) is kept as lib/A/FMgxaSeamNorm.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeamNorm.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeamNorm.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeamNorm.v keeps its donor's comment text) is kept as lib/A/FMgxaSeamNorm.v writes it. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -107,7 +107,7 @@ Module GPF := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU.FMgxaSeamPf.
 Lemma wx_apart_tfib : MN.wx_apart tfibsegs = true.
 Proof. vm_compute. reflexivity. Qed.
 
-(* every read-only segment lies in [0x10000, 0x9f000) (YE3h.v:1353 tfib_rom_low gives the top) *)
+(* every read-only segment lies in [0x10000, 0x9f000) (YE3h.v:1354 tfib_rom_low gives the top) *)
 Lemma tfib_ro_range : forall x : word, CJM.ro_addr tfibsegs x = true -> 0x10000 <= bv_unsigned x < 0x9b000.
 Proof.
 assert (F : forallb (fun seg => seg_writable seg ||
@@ -229,7 +229,7 @@ Qed.
 Lemma cj_kept_high : forall lo hi, @GXI.GLOBALS_TOP N_img_asan_vf <= lo -> hi <= TASK_SIZE -> cj_kept lo hi.
 Proof. intros lo hi H1 H2. rewrite globals_top_A in H1. apply cj_kept_off_ro; lia. Qed.
 
-(* GXA's destination: below the image or at or above GLOBALS_TOP (VfprintfCall.v:42) *)
+(* GXA's destination: below the image or at or above GLOBALS_TOP (VfprintfCall.v:43) *)
 Lemma cj_kept_dest : forall D n, 0 <= D -> D + n <= TASK_SIZE ->
   (D + n <= 65536 \/ @GXI.GLOBALS_TOP N_img_asan_vf <= D) -> cj_kept D (D + n).
 Proof. intros D n H0 H1 H2. rewrite globals_top_A in H2. apply cj_kept_off_ro; lia. Qed.
@@ -279,7 +279,7 @@ intros H mem lo hi K (H1 & H2 & H3). split; [exact H1|]. split; [exact H2|]. int
 rewrite wview_cjnorm, mrd_cjnorm_keep by exact (K a Ha). exact (H3 a Ha).
 Qed.
 
-(* ---- GXA's premises, one by one (VfprintfCall.v:29-38) ---- *)
+(* ---- GXA's premises, one by one (VfprintfCall.v:30-39) ---- *)
 Lemma snf_file_size : forall bufp CK, CJC.cells_size (@GVX.snf_file N_img_asan_vf bufp CK) = 232%nat.
 Proof. reflexivity. Qed.
 
@@ -494,7 +494,7 @@ Qed.
 
 Section Run. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* the premise in the shape GXA delivers (VfprintfCall.v:44, with the ambient FP state), the
+(* the premise in the shape GXA delivers (VfprintfCall.v:45, with the ambient FP state), the
    conclusion in the shape FMgxa_bridge.srr_of_gxa_evt consumes *)
 Theorem evt_from_norm : forall (W : world tfibsegs) (pc : Z) regs mem (Q : machine_state -> Prop),
   MN.ro_agree tfibsegs (cjstore (w_H W) mem) ->
@@ -629,7 +629,7 @@ Qed.
 End View.
 
 (* ---- GXA's post at the harness's final state ---- *)
-(* the post GXA's guarded statement delivers (VfprintfCall.v:43, GX's vfprintf_snf_post at
+(* the post GXA's guarded statement delivers (VfprintfCall.v:44, GX's vfprintf_snf_post at
    lib/CJ/RL/GX/G_vfprintf_snf.v:203), at the store m the harness's run started from, without
    mem_inv: mem_inv comes back only if m had it (mem_inv_from_norm) *)
 Definition vf_post_store (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word)
@@ -724,7 +724,7 @@ Section V. Context {rc : YM05.RunCeil}.
 (* a is in the shadow region between the application's two halves *)
 Definition shb (a : Z) : bool := andb (AF.LOWMEM_END <=? a) (a <? AF.HIGHMEM_BEG).
 
-(* a is in the aligned shadow hull of the range r (the span of shadow_hull_vis, YG0d.v:310-311) *)
+(* a is in the aligned shadow hull of the range r (the span of shadow_hull_vis, YG0d.v:311-312) *)
 Definition hullb (a : Z) (r : Z * Z) : bool :=
   andb (shadow_addr (fst r) / 8 * 8 <=? a) (a <? shadow_addr (fst r + snd r - 1) / 8 * 8 + 8).
 
@@ -879,7 +879,7 @@ intros ly R H mem lo hi K (H1 & H2 & H3). split; [exact H1|]. split; [exact H2|]
 rewrite wview_cjnormv, mrd_cjnormv_keep by exact (K a Ha). exact (H3 a Ha).
 Qed.
 
-(* ---- GXA's premises (VfprintfCall.v:29-38): cjnorm's statements, the data ranges in app memory ---- *)
+(* ---- GXA's premises (VfprintfCall.v:30-39): cjnorm's statements, the data ranges in app memory ---- *)
 Lemma file_cjnormv : forall ly R H mem Fp bufp CK, @GXI.GLOBALS_TOP N_img_asan_vf <= Fp -> Fp + 232 <= TASK_SIZE ->
   AF.app_ivl Fp (Fp + 232) ->
   CJS.rw_cells tfibsegs (cjstore H mem) Fp (GVX.snf_file bufp CK) ->
@@ -1492,8 +1492,8 @@ Qed.
 (* 8. Step 3: vis0_word_pres at cjnormv                                                     *)
 (* ===================================================================================== *)
 
-(* every vis0 zone (YG0f.v:303-306) lies in [0, 2^47) for a layout_ok ly; for the 64 KiB context-map
-   zone, layout_ok bounds only (ly_C, 256) (YG0f.v:296), which is enough *)
+(* every vis0 zone (YG0f.v:304-307) lies in [0, 2^47) for a layout_ok ly; for the 64 KiB context-map
+   zone, layout_ok bounds only (ly_C, 256) (YG0f.v:297), which is enough *)
 Lemma vis0_zone_bounds : forall ly z, layout_ok ly -> In z (vis0_zones ly) -> 0 <= fst z /\ fst z + snd z <= 2 ^ 47.
 Proof.
 intros ly z LO Hz. pose proof ASAN_CEIL_range as [C1 _].

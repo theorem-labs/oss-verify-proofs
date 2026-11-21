@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (kind_eqb_eq follows the entry kind KEntry's new rseq flag: its binder list and the comparison's conjuncts each grow by one). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -59,9 +60,23 @@ Qed.
 
 Lemma kind_eqb_eq (k1 k2 : rkind) : kind_eqb k1 k2 = true -> k1 = k2.
 Proof.
-  destruct k1 as [| | |w1 i1|p1], k2 as [| | |w2 i2|p2]; cbn [kind_eqb]; intros H; try discriminate; try reflexivity.
+  (* READ FROM THE DEFINITION, not guessed from the error.  AxJoin.v:52 now has
+       | KEntry r1 p1, KEntry r2 p2 =>
+           Bool.eqb r1 r2 &&& (ph_addr p1 =? ph_addr p2)%N
+                          &&& (ph_ent  p1 =? ph_ent  p2)%N
+                          &&& (ph_num  p1 =? ph_num  p2)%N
+     -- KEntry carries a BOOL as well as the PhdrInfo, and the comparison is FOUR
+     conjuncts.  The old pattern `[| | |w1 i1|p1]` gives the last constructor ONE
+     binder, so `p1` was bound to the bool and the PhdrInfo was auto-named: that is
+     why the farm's error read `(if eqb p1 p2 then (ph_addr ph =? ph_addr ph0)%N
+     else false) = true` with `ph`/`ph0` names that appear nowhere in this file.
+     `&&&` is the lazy and, which is where the `if` comes from.  So this is the
+     grown-field shape and not a tactic problem: the binder list and the conjunct
+     count both move, from one and three to two and four. *)
+  destruct k1 as [| | |w1 i1|r1 p1], k2 as [| | |w2 i2|r2 p2]; cbn [kind_eqb]; intros H; try discriminate; try reflexivity.
   - apply land_true in H as [H1 H2]. apply Bool.eqb_prop in H1. apply Nat.eqb_eq in H2. subst. reflexivity.
-  - apply land_true in H as [H H3]. apply land_true in H as [H1 H2]. apply N.eqb_eq in H1. apply N.eqb_eq in H2. apply N.eqb_eq in H3.
+  - apply land_true in H as [H H4]. apply land_true in H as [H H3]. apply land_true in H as [H1 H2].
+    apply Bool.eqb_prop in H1. apply N.eqb_eq in H2. apply N.eqb_eq in H3. apply N.eqb_eq in H4.
     destruct p1, p2. cbn in *. subst. reflexivity.
 Qed.
 

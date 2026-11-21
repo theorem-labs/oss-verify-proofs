@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the argument block read from the launch input ProcInput through Run.entry_stack_image and entry_launch_ok_va). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -15,21 +16,24 @@ Section Scaffold.
 
   (* [comment removed for export] *)
   Variable segs : list Segment.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
 
   (* [comment removed for export] *)
   Variable ph : PhdrInfo.
+  Variable entry : word.
 
-  Variable sp : word.
-  Variable av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Variable sp brk : word.
 
   (* [comment removed for export] *)
-  Variable rnd : EntryDraw.
+  Variable draw : EntryDraw.
 
   (* [comment removed for export] *)
-  Hypothesis Hva : valid_argv av.
-  Hypothesis Hve : valid_envp ev.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp brk mbase draw) inp.
   Hypothesis Hsp_lo : (sp_window_lo <= bv_unsigned sp)%Z.
   Hypothesis Hsp_hi : (bv_unsigned sp <= sp_window_hi)%Z.
 
@@ -46,11 +50,11 @@ Section Scaffold.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  Definition argcN : word := len_word av.
+  Definition argcN : word := len_word (in_argv inp).
 
-  Lemma u_argcN : bv_unsigned argcN = Z.of_nat (length av).
+  Lemma u_argcN : bv_unsigned argcN = Z.of_nat (length (in_argv inp)).
   Proof.
-    pose proof (valid_argv_len av Hva).
+    pose proof (valid_argv_len (in_argv inp) Hva).
     unfold argcN, len_word. apply u_Z2bv; lia.
   Qed.
 
@@ -59,9 +63,11 @@ Section Scaffold.
   (* [comment removed for export] *)
 
   Lemma bsb_nw :
-    (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z.
+    (bv_unsigned sp
+     + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw)) < 2^64)%Z.
   Proof.
-    pose proof (bsb_bound ph sp av ev uid hw rnd Hva Hve). pose proof sp_hi_num. lia.
+    pose proof (bsb_bound v inp mbase ph entry sp brk draw Hvl Hlau).
+    pose proof sp_hi_num. lia.
   Qed.
 
   (* [comment removed for export] *)

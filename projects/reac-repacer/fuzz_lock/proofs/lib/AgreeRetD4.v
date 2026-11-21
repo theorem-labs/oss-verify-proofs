@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs: the twin of lib/AgreeTop.v plain_rz_of_contracts_R and of the plain half of lib/AgreeFrame.v ubsan_agrees_of_slots (no licence line) for a return value of the fuzz target of 0 or -1 *)
-(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/AgreeTop.v and lib/AgreeFrame.v at 901d1549395.
+(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/AgreeTop.v and lib/AgreeFrame.v.
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.AgreeRetD4. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -38,8 +38,8 @@ Theorem plain_rz_of_contracts_R_q : forall (LS : lib_shape) rt RI G R GI f,
 Proof.
   intros LS rt RI G R GI f HR01 ARMS HDRV HG HR GIL GI0 HC [sp brk0 mbase rnd] inp Hentry Hinput.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
-  set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp)).
+  destruct Hentry as [Hsp [Hbrk [Hmb [Hfits Hlau]]]].
+  set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp) Budgets.Standard.lim_source).
   destruct (HC rc) as [API [AX LX]].
   change (realizes zsegs (init_config zsegs Plain.M.init_pc Plain.M.phdrs
     sp brk0 mbase rnd Budgets.Standard.lim_source inp) (SPECX_q (LS:=LS) rt inp)).
@@ -48,9 +48,10 @@ Proof.
     (fun mem H => GI0 mem (G_img_mono src0segs G YL0k.src0_G mem HG H))
     (lib_contract_x_R_all_r_mono src0_msyms API rt RI G YL0k.src0_G R YL0k.src0_R GI f LIBPC RA_LIB EMPTY LIB_STACK HG HR LX)
     HR01 ARMS HDRV sp brk0 mbase rnd
-    Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hinput).
+    Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hlau Hinput).
   - apply SRC_LIM_MIN_le_source.
   - unfold rc. apply ceil_of_top_run.
+  - reflexivity.
 Qed.
 
 (* the plain half of AgreeFrame.v ubsan_agrees_of_slots: from Prog/FrameRet.v lib_contract_gr rt at every call *)

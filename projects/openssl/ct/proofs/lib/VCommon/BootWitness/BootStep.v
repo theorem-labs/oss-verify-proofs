@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -373,13 +374,18 @@ Lemma step_Load_fault : forall ms w isz sz sg rd rs1 (imm : bv 12),
   fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
   decode_any w = Some (Load sz sg rd rs1 imm, isz) ->
   rdn segs (ms_mem ms) (rg ms rs1 + sext 64 imm) (msz_n sz) = None ->
+  (* 08b1429: a miss on the vvar page is MachineUnmodeled, not a fault *)
+  range_meets_vvar segs (rg ms rs1 + sext 64 imm) (msz_n sz) = false ->
   RiscvSemantics.step segs ms = MachineFault.
 Proof.
-  intros ms w isz sz sg rd rs1 imm Hfetch Hecall Hdecode Hread.
+  intros ms w isz sz sg rd rs1 imm Hfetch Hecall Hdecode Hread Hvv.
   boot_pipeline Hfetch Hecall Hdecode.
-  unfold rg in Hread.
+  unfold rg in Hread, Hvv.
   destruct sz; destruct sg; cbv beta iota delta [msz_n] in *;
-    rewrite ov_rdn, Hread; reflexivity.
+    rewrite ov_rdn, Hread;
+    (match goal with |- context [range_meets_vvar ?s ?a ?n] =>
+       replace (range_meets_vvar s a n) with false by (symmetry; exact Hvv) end);
+    reflexivity.
 Qed.
 
 Lemma step_Store_fault : forall ms w isz sz rs1 rs2 (imm : bv 12),
@@ -432,21 +438,6 @@ Proof.
   destruct wd; cbv beta iota delta [amo_n sc_bytes] in *;
     rewrite Hok; cbv beta iota;
     destruct (is_x0 rd); cbv beta iota; reflexivity.
-Qed.
-
-Lemma step_Sc_fail : forall ms w isz wd aq rl rd rs1 rs2,
-  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
-  decode_any w = Some (Sc wd aq rl rd rs1 rs2, isz) ->
-  amo_aligned wd (rg ms rs1) = true ->
-  sc_ok (ms_resv ms) (rg ms rs1) = false ->
-  RiscvSemantics.step segs ms =
-  MachineOk (setx ms rd w1 (ms_pc_val ms + Z_to_bv 64 isz) None (ms_mem ms)).
-Proof.
-  intros ms w isz wd aq rl rd rs1 rs2 Hfetch Hecall Hdecode Hal Hres.
-  boot_pipeline Hfetch Hecall Hdecode.
-  unfold rg, sc_ok in Hal, Hres. unfold setx, rg. rewrite Hal. cbv beta iota delta [negb].
-  rewrite Hres. cbv beta iota.
-  destruct (is_x0 rd); cbv beta iota; reflexivity.
 Qed.
 
 (* [comment removed for export] *)

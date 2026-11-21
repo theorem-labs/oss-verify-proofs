@@ -2,7 +2,7 @@
    zero, -8`, `sb a0, 4(s8)`, `j` to the shared epilogue at row 225) with a memory invariant P carried across the run.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma / runner invariant twin).
    WHAT: vrd_ref_join_P, VrdNum.vrd_ref_join (lib/A/VrdNum.v) with the generic binder P : (word -> option byte) -> Prop,
-   its laws srr_inv_laws segs P (YSRrMemnorm.v, a working branch a7b940285d0, blob 8bf0942a10ca), P of the
+   its laws srr_inv_laws segs P (YSRrMemnorm.v, a working branch, blob 8bf0942a10ca), P of the
    memory at entry and P of the memory at the join as a conjunct of the continuation. ONE copy (a Theorem Labs lane's ruling,
    2026-10-29): every arm that reaches row 326 cites it (number, container, string, literal). Its instance is the
    memnorm keep from parse_value's entry memory: P := fun m => YAkMemnorm.memnorm segs mem0 -> YAkMemnorm.memnorm segs m,
@@ -45,7 +45,7 @@ Hypothesis LAWS : AR_laws_x segs B ARx HL.
 
 (* rows 326..328 with P: the state at the join, the arm's own result carried through the one shadow byte they write,
    and P of the join memory. The join state's journal is at the empty budget (the number arm stores no wild trace),
-   which every cursor set's wbudget CW 0 admits (VrdNum.vrd_epi_a at the kit's cut 7cdbb61b5fa0) *)
+   which every cursor set's wbudget CW 0 admits (VrdNum.vrd_epi_a at the kit's cut) *)
 Lemma vrd_ref_join_P : forall (P : (word -> option byte) -> Prop), srr_inv_laws segs P ->
   forall d CW e q v ly0 S0 Hp0 W0 regs0 mem0 md0 pos rv RQ W c,
   vrd_sh_frame ARx RQ ->

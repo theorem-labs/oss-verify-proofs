@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE-FREE part of lib/A/W_journal.v (itself a remapped copy of
-   proofs/plugin-hostd/fuzz_reply/lib/A/W_journal.v, a working branch 6328acea202, blob ecd9547e32f; see
+   proofs/plugin-hostd/fuzz_reply/lib/A/W_journal.v, a working branch, blob ecd9547e32f; see
    W_journal.v's header for the renames). Split out under a Theorem Labs lane's standing statement / walk rule after
    a Theorem Labs lane's measurement (donor controls clean): W_journal.v Requires PcapSyms / PcapPa / PcapPaLib for its
    Section g (paj_run_x / paj_run_to_x at the listing), and PcapPa Requires PcapList, the ASan program listing, so every
@@ -12,6 +12,7 @@
    SRr_run_to_pi_tok_AJX), which takes the symbol type and listing as Variables. Requires only lib/Reusable and the
    image-free kit (PaTable, PaSym, PaRun, PaShadow, PaJournal). lib/B Requires THIS file. W_journal.v keeps Section g
    and Requires Export this file, so lib/A users see no change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

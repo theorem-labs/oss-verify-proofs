@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Spec/StrFun.v; 322 of its 359 lines of code are new or changed and 427 lines of the source are left out. *)
-(* crtB_segs: port of a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/B/Prog/crt_segs_F.v
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* crtB_segs: port of a working branch:proofs/libreac/fuzz_decode/lib/B/Prog/crt_segs_F.v
    (crt_seg1_F .. crt_seg8_F there) and of the first 24 steps of
-   a working branch b04a1406048:proofs/libreac/fuzz_decode/lib/B/Prog/crt_loopF.v crt_loop_holds_F
+   a working branch:proofs/libreac/fuzz_decode/lib/B/Prog/crt_loopF.v crt_loop_holds_F
    (+0xac .. +0x10c), the footprint (ExecF.evtF) runs of the straight-line segments of check_round_trip in image B
    (fuzz_decode.asan-ubsan, original pin: entry 0x80d54, frame 160; the donor's addresses are the original image's).
-   Twin of lib/A/Prog/crtA_segs.v (a working branch ae1529ccb00): the same numbering
+   Twin of lib/A/Prog/crtA_segs.v (a working branch): the same numbering
    crt_seg1_F .. crt_seg9_F; image B's seg4 joins the donor's crt_seg3c_regs_F and the loop constants, so that it
    ends at CRT_LOOP_IN (+0x10c), where the donor's crt_outer_F starts.
    The addresses are re-based on the listing: every pc in a statement is a name of lib/B/Prog/crtB_iface.v.
@@ -29,7 +30,7 @@ Open Scope Z_scope.
 
 (* ---- helpers ---- *)
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/B/Spec/StrFun.v (via
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/B/Spec/StrFun.v (via
    lib/A/Prog/crtA_segs.v; that file does not exist on this branch). *)
 Lemma Z_to_le_bytes_to_Z : forall bs : list byte, Z_to_le_bytes (length bs) (bytes_le_to_Z bs) = bs.
 Proof.
@@ -94,7 +95,7 @@ Proof.
   intros m A bs H. apply (crt_rw_c8s rsegs m A 20 bs) in H. cbn [crt_c8s] in H. do 20 eexists. exact H.
 Qed.
 
-(* As lib/A/Prog/crtA_segs.v:99-103 (the A donor's crt_segs.v:61-65): bv_signed of a small non-negative literal. *)
+(* As lib/A/Prog/crtA_segs.v:100-104 (the A donor's crt_segs.v:61-65): bv_signed of a small non-negative literal. *)
 Lemma crt_signed_lit : forall z, 0 <= z < 2^63 -> bv_signed (Z_to_bv 64 z) = z.
 Proof.
   intros z Hz. rewrite zb_signed, unsigned_lit by lia. destruct (Z.ltb_spec0 z (2^63)); lia.

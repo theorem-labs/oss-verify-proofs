@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4.v at a1ee3c81405 (cgif_file_fuzzer's lib/A/AF0s.v for class 4) as the walk of stack_malloc_3 at 0x3d400 of libreac/fuzz_identity: class-3 frame constants (2048 frames of 512 bytes, 64 shadow bytes, hint at +24, flags at +0x8000, frames at +0x309000), fuzz_identity's image numbers, the image end through TFIB_IMG_END and YImgTop; module names. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4.v (cgif_file_fuzzer's lib/A/AF0s.v for class 4) as the walk of stack_malloc_3 at 0x3d400 of libreac/fuzz_identity: class-3 frame constants (2048 frames of 512 bytes, 64 shadow bytes, hint at +24, flags at +0x8000, frames at +0x309000), fuzz_identity's image numbers, the image end through TFIB_IMG_END and YImgTop; module names. *)
 (* Modified by Theorem Labs, 2026-10: taken from libreac/fuzz_disco for libreac/fuzz_identity: module names, TfibSyms; hex addresses for fuzz_identity.asan (each by function symbol + offset or image read-back; __asan_stack_malloc_3 code identical to disco's); YImgTop names are notations here, so they are no longer unfolded. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

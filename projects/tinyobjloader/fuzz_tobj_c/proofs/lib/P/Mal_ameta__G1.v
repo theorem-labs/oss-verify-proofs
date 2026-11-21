@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact as a section hypothesis for the post's MInvIR, which minvir_split builds and minvir_dest takes apart; the auxv walk per CONFIG_RSEQ (27 or 29 pairs from the launch's auxv object): the init chain's segments get twins for the flag's other value, the auxv object is read from the launch's view, and Pre_entry, Pre_am and am_expect are written out as plain text). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -111,11 +112,24 @@ Definition AM_P : am_consts :=
 Definition AM_U : am_consts :=
   AMC 0x20c24 0x20ec8 0x20d50 0x20d68 0x20d8c 0x21ea0 0x21ef8 0x20dd0 0x20e3c 0x202a8 0x5a3c8 0x5a358 0x28d50.
 
+(* LPS 727298f3: the launch's auxv depends on CONFIG_RSEQ ([kb_rseq], free at the launch): 27 pairs, or 29.
+   mallocng's first alloc_meta walks it to AT_NULL ([get_random_secret]) in [AE_init]'s run, and the
+   auxv object rides along, as a frame object, through the init chain's four next segments.  So each of
+   these five has a twin for the flag's other value: [AE_init] .. [AC_init_G_err] are the runs without
+   CONFIG_RSEQ, [AE_init1] .. [AC_init_G_err1] those with it ([ae_init r] .. [ac_init_G_err r] pick one). *)
 Inductive am_seg :=
-| AE_init | AE_head1 | AE_head2 | AE_head3 | AE_avail | AE_area | AE_nobrk | AE_brk
-| AC_init_q | AC_init_g_ok | AC_init_g_fail | AC_init_G_hint | AC_init_G_err | AC_brk_ok | AC_brk_fail
+| AE_init | AE_init1 | AE_head1 | AE_head2 | AE_head3 | AE_avail | AE_area | AE_nobrk | AE_brk
+| AC_init_q | AC_init_g_ok | AC_init_g_fail | AC_init_G_hint | AC_init_G_err
+| AC_init_q1 | AC_init_g_ok1 | AC_init_g_fail1 | AC_init_G_hint1 | AC_init_G_err1 | AC_brk_ok | AC_brk_fail
 | A78_area | A78_area_ok | A78_area_fail | A78_res | A78_res_fail | A78_res_ok | A78_res_ok_ok | A78_res_ok_fail
 | A2e4_first | A2e4_next.
+
+Definition ae_init (r : bool) : am_seg := if r then AE_init1 else AE_init.
+Definition ac_init_q (r : bool) : am_seg := if r then AC_init_q1 else AC_init_q.
+Definition ac_init_g_ok (r : bool) : am_seg := if r then AC_init_g_ok1 else AC_init_g_ok.
+Definition ac_init_g_fail (r : bool) : am_seg := if r then AC_init_g_fail1 else AC_init_g_fail.
+Definition ac_init_G_hint (r : bool) : am_seg := if r then AC_init_G_hint1 else AC_init_G_hint.
+Definition ac_init_G_err (r : bool) : am_seg := if r then AC_init_G_err1 else AC_init_G_err.
 
 Definition AM_NEXT : positive := 300%positive.
 Definition AM_FUEL : nat := 2000%nat.
@@ -152,15 +166,25 @@ S25S1dSf5Vc;A1A1S1dZ3a0A1M0S1dZ3a8A1SbS1fS21G0Z8Vb;A3S10S1fA1A3S26A5").
 Definition common_objs (fc : list cell) (secret : sv) (initd : Z) : list sobj := ltac2:(tb__ "0|0|
 SbS1eSe5Vfc;A1SbS1eSdbSbS1eSdcSbS1eSd9SbS1eSe0SbS1eSdaSbS1eSe4Vsecret;Vinitd;A2S10S1eA1A3A3A3A3A3A3A3").
 
-Definition auxv_keys : list Z := ltac2:(tb__ "0|0|
-SbS0Z3SbS0Z4SbS0Z5SbS0Z10SbS0Z6SbS0ZbSbS0ZcSbS0Z17SbS0Z19SbS0Z0S10S0A1A3A3A3A3A3A3A3A3A3A3").
-Fixpoint key_cells (i : nat) (ks : list Z) : list cell :=
-  match ks with [] => [] | k :: t => mkCell (SLit (16 * Z.of_nat i)) 8 (SLit k) :: key_cells (S i) t end.
-
-Fixpoint val_cells (i : nat) (ks : list Z) : list cell :=
-  match ks with [] => [] | _ :: t => mkCell (SLit (16 * Z.of_nat i + 8)) 8 (if Nat.eqb i 8 then v 171 else v (Pos.of_nat (190 + i))) :: val_cells (S i) t end.
-Definition O_auxv : sobj := ltac2:(tb__ "0|1|
-S25Sc6PaaA1S1dZ0A1S1dZa0A1S12S1fSe6U0M0Sd2A2Se7G0Sd2A2A3S26A5").
+(* LPS 727298f3: the auxv object per CONFIG_RSEQ [r], from the launch's auxv view in Malloc/ContractI.v:
+   [AM_AUXV_N r] pairs (27, or 29 with CONFIG_RSEQ), each key the literal [nth j (am_auxv_keys r) 0] at
+   16 j, AT_RANDOM (25) at pair [AM_AUXV_RIDX r], AT_NULL last; [AM_AUXV_BYTES r] bytes.  The walk reads
+   every key and AT_RANDOM's value: that value is [v 171] (the random bytes' address); every other value
+   is a variable of its own, [v (AUXV_VB + j)].  [AUXV_VB] is 232, the first variable above the cut
+   states' registers ([cut_regs 200]: 200 .. 231) and below [AM_NEXT]: 29 values end at 260.
+   Was: ten pairs, 160 bytes, the values [v (190 + j)]. *)
+Definition AUXV_VB : nat := 232%nat.
+Definition aux_val (r : bool) (j : nat) : sv :=
+  if Nat.eqb j (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI.AM_AUXV_RIDX r) then v 171
+  else v (Pos.of_nat (AUXV_VB + j)).
+Definition am_auxv_cs (r : bool) : list (Z * nat * sv) :=
+  map (fun j => (16 * Z.of_nat j, 8%nat, SLit (nth j (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI.am_auxv_keys r) 0)))
+      (seq 0 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI.AM_AUXV_N r)) ++
+  map (fun j => (16 * Z.of_nat j + 8, 8%nat, aux_val r j))
+      (seq 0 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI.AM_AUXV_N r)).
+Definition O_auxv (r : bool) : sobj :=
+  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Glue.carved (v 170) 0
+    (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI.AM_AUXV_BYTES r) (am_auxv_cs r).
 Definition O_rand : sobj := ltac2:(tb__ "0|2|
 S25Sc6PabA1S1dZ8M0A1M1S1dZ10A1SbS1fS21G1G0Sc6PacA1A3S10S1fA1A3S26A5").
 
@@ -214,8 +238,46 @@ SbS20S29S1dZ1000A1S24Vp;A1M0A2SbS20S29G0S1dS110A1A2SbS20S2fVp;ZcA2S10S20A1A3A3A3
 Definition entryS (objs : list sobj) (facts : list sprop) : sstate := ltac2:(tb__ "0|0|
 S38S119Vc;A1S61S5cS33S17S23A1Vobjs;S12S20S12S20Vfacts;SceA3Sd0A3SeeS15A9").
 
-Definition Pre_entry (x : am_seg) : sstate := ltac2:(tb__ "0|20|
-SeaS2bLx;Vx;Sc7S12S1eSccS10S1fA1M0Sc6PafA1M1Z0M2A3SbS1eSc8S1dG2A1M3Sc6Pb0M4A1M5G3G3Sc6Pb8A1M6G3G3Sc6Pb1A1M7A8SbS1eScaG3A1SbS1eSd8SbS1eSe3S10S1eA1M8A3A3A3A3A3S12S20Sd6PaaZ3M9A2Sd6PabG9A2A3A2Sc7S12S1eSccG0G1Z1A3MaSbS1eSc8Sc6Pb2MbA1McG5Sc6Pb5MdA1MeSc6Pb7MfA1M10G6Sc6Pb9A1M11Sc6PbaA1M12G7A8M13SbS1eScaSc6PbbM14A1A1M15SbS1eScdGcGcA2G8A3A3A3A3Sc9GbG9A2M16A2Sc7S12S1eGaSbS1eG13SbS1eG15SbS1eScdSc6Pb3M17A1M18G18A2SbS1eSddG8A3A3A3A3A3S12S20G16S12S20Sc9G17G9A2M19ScfGbG17A2M1aA3A3A2Sc7S12S1eGaSbS1eG13SbS1eG15SbS1eScdSc6Pb4M1bA1G18A2SbS1eSdeSbS1eSe1G8A3A3A3A3A3A3S12S20G16S12S20G19S12S20Sc9G1bG9A2S12S20G1aS12S20ScfGbG1bA2ScfG17G1bA2A3A3A3A3A3A2Sc7S12S1eGaSbS1eSc8G3G5GeG10G6G11G12G7A8SbS1eG15SbS1eSe2G8A3A3A3A3S12S20Sc9G4G9A2SbS20Sd5GdA1SbS20S29GeS1dZ1000A1A2S10S20A1M1cA3A3A3A2Sc7S12S1eGaSbS1eSc8G3G5G3G10G6G11G12G7A8SbS1eG15G8A3M1dA3A3SbS20Sd5GfA1G1cA3A2Sc7S12S1eGaSbS1eSc8G3G5G3G3G6G11G12G7A8M1eSbS1eScaS1dS102A1A1G8A3A3A3G1cA2Sc7S12S1eGaSbS1eG1eG1dA3A3Sc9G14ZcA2A2M1fG1fG1fG1fG1fG1fG1fG1fG1fG1fG1fG1fG1fG1fG1fG1fG1fG1fXeax19").
+(* LPS 727298f3: written out as plain text (was an encoded term); [AE_init1] is [AE_init] with the
+   CONFIG_RSEQ auxv ([Pre_init r]). *)
+Definition Pre_init (r : bool) : sstate :=
+  entryS (common_objs [] (v 175) 0 ++
+          [O_ctxB (SLit 0) (v 176) (SLit 0) (SLit 0) (v 184) (SLit 0) (SLit 0) (v 177); O_brk (SLit 0); O_auxv r; O_rand])
+         (ptr_factsH 170 3 ++ ptr_factsH 171 3).
+Definition Pre_entry (x : am_seg) : sstate :=
+  match x with
+  | AE_init => Pre_init false
+  | AE_init1 => Pre_init true
+  | AE_head1 =>
+      entryS (common_objs [] (v 175) 1 ++
+              [O_ctxB (v 178) (v 176) (v 181) (v 183) (v 184) (v 185) (v 186) (v 177); O_brk (v 187); O_m (v 178) (v 178)])
+             (ptr_facts 178 3)
+  | AE_head2 =>
+      entryS (common_objs [] (v 175) 1 ++
+              [O_ctxB (v 178) (v 176) (v 181) (v 183) (v 184) (v 185) (v 186) (v 177); O_brk (v 187); O_m (v 179) (v 179); O_n2])
+             (ptr_facts 178 3 ++ ptr_facts 179 3 ++ ne_facts 178 179)
+  | AE_head3 =>
+      entryS (common_objs [] (v 175) 1 ++
+              [O_ctxB (v 178) (v 176) (v 181) (v 183) (v 184) (v 185) (v 186) (v 177); O_brk (v 187); O_m (v 180) (v 179);
+               O_nprev; O_pnext])
+             (ptr_facts 178 3 ++ ptr_facts 179 3 ++ ptr_facts 180 3 ++ ne_facts 178 179 ++ ne_facts 178 180 ++ ne_facts 179 180)
+  | AE_avail =>
+      entryS (common_objs [] (v 175) 1 ++
+              [O_ctxB (SLit 0) (v 176) (v 181) (v 183) (v 184) (v 185) (v 186) (v 177); O_brk (v 187); O_q])
+             (ptr_facts 176 3 ++ [nz_fact 181; SPUle (v 181) (SLit 4096)])
+  | AE_area =>
+      entryS (common_objs [] (v 175) 1 ++
+              [O_ctxB (SLit 0) (v 176) (SLit 0) (v 183) (v 184) (v 185) (v 186) (v 177); O_brk (v 187)])
+             [nz_fact 183]
+  | AE_nobrk =>
+      entryS (common_objs [] (v 175) 1 ++
+              [O_ctxB (SLit 0) (v 176) (SLit 0) (SLit 0) (v 184) (v 185) (v 186) (v 177); O_brk (SLit M64)])
+             []
+  | _ =>
+      entryS (common_objs [] (v 175) 1 ++
+              [O_ctxB (SLit 0) (v 176) (SLit 0) (SLit 0) (v 184) (v 185) (v 186) (v 177); O_brk (v 187)])
+             (ptr_facts 187 12)
+  end.
 
 Definition cut_base_regs : list (nat * sv) := ltac2:(tb__ "0|1|
 SbS16S14S23A2M0S11S14S23U1S24PccA1A4SbG0S11S14S23U14S24PdcA1A4SbG0S11S14S23U2S36S19cS24PaA1S1dN40A1A3A4SbG0S11S14S23U12Sc6PadA1A4SbG0S11S14S23U13S1dSf5Vc;A1A1A4S10G0A1A3A3A3A3A3").
@@ -250,15 +312,64 @@ Definition Pre_78a : sstate := ltac2:(tb__ "0|2|
 S107Vc;S24Pb7M0A1M1S24PbbA1S12S20S10ePb1ZcA2SbS20S10dG0A1SbS20S29G1S1dS8fZ2Z28A2A1A2S10S20A1A3A3A3A4").
 Definition Pre_78r : sstate := ltac2:(tb__ "0|0|
 S107Vc;S1dZ0A1S1dS102A1S11fA4").
-Definition Pre_am (x : am_seg) : sstate := ltac2:(tb__ "0|11|
-SeaS2bLx;Vx;SfeVc;Vx;A2M0G0G0G0G0G0G0G0Sf4S184SfeVc;S112A2A1S11eP12cM1A1M2A2M3SffS184G3A1M4A1M5G4S2bSf4R1S10cR1P12dA2A2TL;SffS184G5A1M6A1Sf0G6S1afA2SffS184SfeVc;S111A2A1M7A1G7S2bSf4R1S10cR1G1A2A2TL;S187Sf0S184S187A1M8Z0M9A2Sf0G8S1afA2S188Sf0S184S188A1MaS1afA2Sf4GaG2A2MbSf0S184GbA1McG9A2Sf0GcS1afA2S106Vc;S24PbaMdA1MeS10S1eA1MfSbS20S2eS19bSe8GdA1S1dG9A1A3S10S20A1M10A3A4S106Vc;GeSbS1eS105GfA3SbS20S10dGdA1SbS20S2fGdZ3A2SbS20S29GeS1dS8fZ2Z2fA2A1A2SbS20S29S1dZ1000A1GeA2G10A3A3A3A3A4Xeax19").
+(* LPS 727298f3: written out as plain text (was an encoded term); the init chain's twins start from
+   [AE_init1]'s leaf. *)
+Definition Pre_am (x : am_seg) : sstate :=
+  match x with
+  | AE_init | AE_init1 | AE_head1 | AE_head2 | AE_head3 | AE_avail | AE_area | AE_nobrk | AE_brk => Pre_entry c x
+  | AC_init_q => after_fresh (leaf1 (Pre_entry c AE_init)) (page_facts 300)
+  | AC_init_g_ok => after_keep (leaf1 (after_fresh (leaf1 (Pre_entry c AE_init)) (page_facts 300)))
+  | AC_init_g_fail =>
+      let L := leaf1 (after_fresh (leaf1 (Pre_entry c AE_init)) (page_facts 300)) in after_fresh L (ne_req L 301)
+  | AC_init_G_hint => after_keep (leaf1 (after_keep (leaf1 (after_fresh (leaf1 (Pre_entry c AE_init)) (page_facts 300)))))
+  | AC_init_G_err => after_lit (leaf1 (after_keep (leaf1 (after_fresh (leaf1 (Pre_entry c AE_init)) (page_facts 300))))) enomem_ret
+  | AC_init_q1 => after_fresh (leaf1 (Pre_entry c AE_init1)) (page_facts 300)
+  | AC_init_g_ok1 => after_keep (leaf1 (after_fresh (leaf1 (Pre_entry c AE_init1)) (page_facts 300)))
+  | AC_init_g_fail1 =>
+      let L := leaf1 (after_fresh (leaf1 (Pre_entry c AE_init1)) (page_facts 300)) in after_fresh L (ne_req L 301)
+  | AC_init_G_hint1 => after_keep (leaf1 (after_keep (leaf1 (after_fresh (leaf1 (Pre_entry c AE_init1)) (page_facts 300)))))
+  | AC_init_G_err1 => after_lit (leaf1 (after_keep (leaf1 (after_fresh (leaf1 (Pre_entry c AE_init1)) (page_facts 300))))) enomem_ret
+  | AC_brk_ok => after_keep (leaf1 (Pre_entry c AE_brk))
+  | AC_brk_fail => let L := leaf1 (Pre_entry c AE_brk) in after_fresh L (ne_req L 300)
+  | A78_area => Pre_78a
+  | A78_area_ok => after_lit (leaf1 Pre_78a) 0
+  | A78_area_fail => after_lit (leaf1 Pre_78a) enomem_ret
+  | A78_res => Pre_78r
+  | A78_res_fail => after_lit (leaf1 Pre_78r) enomem_ret
+  | A78_res_ok => after_fresh (leaf1 Pre_78r) (page_facts 300)
+  | A78_res_ok_ok => after_lit (leaf1 (after_fresh (leaf1 Pre_78r) (page_facts 300))) 0
+  | A78_res_ok_fail => after_lit (leaf1 (after_fresh (leaf1 Pre_78r) (page_facts 300))) enomem_ret
+  | A2e4_first => Pre_c2e4 c (SVar 186) [] [SPBranch BC_EQ (v 186) (SLit 0)]
+  | A2e4_next =>
+      Pre_c2e4 c (SVar 186) [O_tail] [nz_fact 186; SPAlign 186 3; SPUle (SVar 186) (SLit (2 ^ 47)); SPUle (SLit 4096) (SVar 186)]
+  end.
 
 Definition reg_is_lit (S : sstate) (r : nat) (z : Z) : bool := ltac2:(tb__ "0|3|
 ScS23A1SdLx;S138S23S4aVS;A1Vr;A3S23S23SdLs;R1S0S90R1Vz;A2Ln;S1S15Li;S19eS23S23S15Lb;La;M0Lop;M1G1S1a2G0Lop;M2G2SdS3S23S15La;Lw;Lsgn;S1S23S0S15Lk;Li;Ll;X23x8Ls;S15Xcx2").
 
 Inductive am_stop := StEcall (pc : Z) (no : Z) | StCut (pc : Z) | StRet.
-Definition am_expect (x : am_seg) : am_stop := ltac2:(tb__ "0|5|
-SeaS186Lx;Vx;S185S117Vc;A1Zd6M0A2S183S183S183S183S189S101Vc;A1A1M1G1S185S116Vc;A1G0A2S185S115Vc;A1G0A2S185S11bVc;A1ZdeA2M2G1S189S100Vc;A1A1M3G3G3G1S185S11cVc;A1Ze2A2M4G3S183G2S183G4G3S183S183S183Xeax19").
+(* LPS 727298f3: written out as plain text (was an encoded term); each twin stops where its pair does. *)
+Definition am_expect (x : am_seg) : am_stop :=
+  match x with
+  | AE_init | AE_init1 => StEcall (am_brkq c) 214
+  | AE_head1 | AE_head2 | AE_head3 | AE_avail => StRet
+  | AE_area | AE_nobrk => StCut (am_c78 c)
+  | AE_brk => StEcall (am_brk2 c) 214
+  | AC_init_q | AC_init_q1 => StEcall (am_brk1 c) 214
+  | AC_init_g_ok | AC_init_g_ok1 => StEcall (am_mmap c) 222
+  | AC_init_g_fail | AC_init_g_fail1 => StCut (am_c78 c)
+  | AC_init_G_hint | AC_init_G_hint1 | AC_init_G_err | AC_init_G_err1 => StCut (am_c2e4 c)
+  | AC_brk_ok => StCut (am_c2e4 c)
+  | AC_brk_fail => StCut (am_c78 c)
+  | A78_area => StEcall (am_mprot c) 226
+  | A78_area_ok => StCut (am_c2e4 c)
+  | A78_area_fail => StRet
+  | A78_res => StEcall (am_mmap c) 222
+  | A78_res_fail => StRet
+  | A78_res_ok => StEcall (am_mprot c) 226
+  | A78_res_ok_ok => StCut (am_c2e4 c)
+  | A78_res_ok_fail | A2e4_first | A2e4_next => StRet
+  end.
 
 Definition am_leaf_ok (x : am_seg) (L : leaf) : bool := ltac2:(tb__ "0|2|
 S15aVL;A1S2bS186SdLx;S18eVx;A1S0S0S159SdLx;M0S15cVL;A1M1S1aS90S35R3A1R2A2S18fR3U11R1A3A2S15S15S15S15S15S15X159x7Lno;Lpc;S0G0G1S15S90S35R2A1R1A2S15S15S15S15S15X159x7Lpc;G0G1S15S15S15S15S90S35R1A1S11dVc;A1A2S15S15X159x7X186x3TS;").
@@ -2097,10 +2208,13 @@ SfS162A1S163OF_;F_;").
   Hypothesis HKc : Kc tr md.
   Hypothesis Evm : ltac2:(tb__ "0|0|
 S4S164Vvm;S165Vmd;A1A3").
+  (* LPS 727298f3: the vdso/vvar pair is in the reserved ledger ([OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok]); the
+     post's malloc invariant carries it. *)
+  Hypothesis Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md.
 
   Theorem post_ok_in posts : ltac2:(tb__ "0|0|
 S136S16S2bS193A2S11S2bS193S1a6S167A1S1a9S59S14aVX;VR;VU;S176Vs;VL;A2VKc;A7A4Vposts;A3S192S59S5bVrho;Vposts;S11SfS162A1S190Vtr;S191VmsF;Vmd;A2A4A5F_;").
-  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd Hinit HmH Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1.
+  Proof using bv0 bv1 EmW Erd Evm Ewok HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd HI Hinit HKc HmH HMI Hrom Hsm_pre HsmF Htop Htp Hvd HXr rv0 rv1.
     intros HINP.
     destruct SPEC as (HI2 & Hmemb & Hkey & Hraw & Hfr & Hux & Hub).
     exists (L_am_ok IEC_P), (JL_am_ok segsP C_P X R U (mkMA s L) Kc), rho'.
@@ -2108,7 +2222,7 @@ S136S16S2bS193A2S11S2bS193S1a6S167A1S1a9S59S14aVX;VR;VU;S176Vs;VL;A2VKc;A7A4Vpos
     cbn [w_tr w_cfg fst snd cfg_model].
     exists (mkMA sH L), mH. cbn [ma_s ma_L].
     split; [cbn [rw rho']; symmetry; exact U110|].
-    split; [unfold MInvIR; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
+    split; [minvir_split; cbn [rm rho']; rewrite <- Evm; exact minvI'|].
     split.
     {
       destruct sH_fields as (Fa & Fr & Fb & Fi & Fh & Fav & Fc & Fac & Fsh & Fah & Fat & Far & Fact & Fus & Fun & Fbo & Fsq & Fmc & Fmt).
@@ -2122,7 +2236,7 @@ S136S16S2bS193A2S11S2bS193S1a6S167A1S1a9S59S14aVX;VR;VU;S176Vs;VL;A2VKc;A7A4Vpos
   Qed.
   Theorem post_ok : ltac2:(tb__ "0|0|
 S192S59S5bVrho;S1a8S59S14aS167VX;VR;VU;S176Vs;VL;A2VKc;A8S11SfS162A1S190Vtr;S191VmsF;Vmd;A2A4A5").
-  Proof using EmW Erd Evm Ewok HI HKc HMI HXr HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd Hinit HmH Hrom HsmF Hsm_pre Htop Htp bv0 bv1 rv0 rv1. apply post_ok_in. right; left; reflexivity. Qed.
+  Proof using bv0 bv1 EmW Erd Evm Ewok HagF Hav Hav_rd Hev Hev_rd Hgd Hgd_rd Hhd HI Hinit HKc HmH HMI Hrom Hsm_pre HsmF Htop Htp Hvd HXr rv0 rv1. apply post_ok_in. right; left; reflexivity. Qed.
 End Head1.
 
 End InstX.
@@ -2133,7 +2247,7 @@ Proof.
   intros ok X R U [s L] Kc rho HOK m Hhd HmH Hinit. cbn [ma_s ma_L] in *.
   intros n HQ [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -2160,7 +2274,7 @@ Proof.
     assert (ELF : lf_state L0 = LF_H) by (unfold LF_H; rewrite EP; reflexivity). rewrite ELF in HsmF.
     apply HQ.
     exact (post_ok s L X R U rho HI HXr (rd_of segsP mW) (wok_of segsP mW) (m_vmmaps md) HMI gd evb avb Hgd Hev Hav
-             mW eq_refl eq_refl ms Hrom Hgd_rd Hev_rd Hav_rd Htp' tr md eq_refl Hsm Htop m Hhd HmH Hinit msF rhoF HagF HsmF Kc HKc eq_refl).
+             mW eq_refl eq_refl ms Hrom Hgd_rd Hev_rd Hav_rd Htp' tr md eq_refl Hsm Htop m Hhd HmH Hinit msF rhoF HagF HsmF Kc HKc eq_refl VD).
   -
     split; [exact ENTRY | split; reflexivity].
 Qed.
@@ -2171,7 +2285,7 @@ Proof.
   intros X R U [s L] Kc rho posts HINP m Hhd HmH Hinit. cbn [ma_s ma_L] in *.
   intros [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg fst snd cfg_model] in HJ.
   destruct HJ as (HMI & HXr & HKc & _ & Htp & Htop).
-  unfold MInvIR in HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
+  minvir_dest HMI. pose proof HMI as HMI0. unfold MInvI in HMI0.
   pose proof (mig_I HMI0) as HI. cbn [ma_s] in HI.
   pose proof (mig_statics HMI0) as HST. destruct HST as (_ & _ & _ & _ & _ & _ & _ & _ & (g0 & _ & Hg0)).
   set (mW := rm rho) in *.
@@ -2197,6 +2311,6 @@ Proof.
   destruct (Posts_am_P_shape AE_head1) as (L0 & EP & _). rewrite EP in HinL. destruct HinL as [<-|[]].
   assert (ELF : lf_state L0 = LF_H) by (unfold LF_H; rewrite EP; reflexivity). rewrite ELF in HsmF.
   exact (post_ok_in s L X R U rho HI HXr (rd_of segsP mW) (wok_of segsP mW) (m_vmmaps md) HMI gd evb avb Hgd Hev Hav
-             mW eq_refl eq_refl ms Hrom Hgd_rd Hev_rd Hav_rd Htp' tr md eq_refl Hsm Htop m Hhd HmH Hinit msF rhoF HagF HsmF Kc HKc eq_refl posts HINP).
+             mW eq_refl eq_refl ms Hrom Hgd_rd Hev_rd Hav_rd Htp' tr md eq_refl Hsm Htop m Hhd HmH Hinit msF rhoF HagF HsmF Kc HKc eq_refl VD posts HINP).
 Qed.
 End Mal_ameta_H1.

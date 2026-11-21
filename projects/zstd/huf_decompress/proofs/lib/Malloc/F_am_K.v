@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (meta_cells_meta0, am_carve_eq)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -34,8 +35,7 @@ Proof.
 ltac2:(KReplay.run1 (kr_t_F_am_K ()) ["CANSEC1"] "p;1p;2g005Wj11Tg006<j16Tg006Zj13Tg00;nj12Tg00<Nj10Tg008Wj15Tg00<mj24Tg00:k#1#1#1#6#3#2g00=G#0#0#0#0#5'4o"). Qed.
 
 Lemma meta_cells_meta0 st : meta_cells st meta0 = [C8 (wz 0); C8 (wz 0); C8 (wz 0); C4 (wz 0); C4 (wz 0); C8 (wz 0)].
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_am_K ()) ["CANSEC1"] "h02stp;1p;2p;3g00;nj17Tg00=fj16Tg00>^j12Tg00?Sj11Tg00@Hj15Tg00<mj23Tg00@hj34Tg00AHR0f1f0R134p=0g00B=R2%70g00;P#6R3#2R4%13R3%50,04,03'0,04,04'0'3X02P1O1W0o"). Qed.
+Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -54,7 +54,6 @@ Definition carve_st (st : mstate) (p : aptr) : mstate :=
 
 Lemma am_carve_eq {R} st p (k : mstate -> optr -> M R) bail :
   am_carve st p k bail = am_take (upd_ctx (fun c => set_avail_meta (Some (aadd p AREA_HDR)) (set_avail_meta_count NSLOTS c)) (carve_st st p)) k bail.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_am_K ()) ["CANSEC1"] "h01Rh14bailh21kh31ph42sth51cp;1p;2p;4p200R0g00C6R1p4p710p8P0g00ChR2p4p710p8P0p100D`p4p710p8P1j10Tg00EYj28Tg00FNj22Tg00G0j21Tg00H5j27Tg00I4j26Tg00Ioj23TP2j44Tg00<mj25Tg00B=R2g0000R1g003kf4R3#0R4[\2R5f3R6#0R7P3g00Jgg00K^,86,21g00LWf0R8'1'7W5f2R9,66'3f1R:P8C4,54X17X25X31X42X00P3P6P9P:P8O5W1W2W3W4X00o"). Qed.
+Proof. reflexivity. Qed.
 
 End CANSEC1.

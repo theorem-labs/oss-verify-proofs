@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vDSO; the model's fetch-failure and unmodeled answers. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -37,7 +38,7 @@ Fixpoint interp_eff0 (segs : list Segment) (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff0 segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -48,7 +49,7 @@ Fixpoint interp_eff0 (segs : list Segment) (t : eff) (m : word -> option byte)
 Lemma interp_eff_eq0 : forall segs t m, interp_eff segs t m = interp_eff0 segs t m.
 Proof.
   intros segs t. unfold interp_eff. induction t; intros m; cbn [interp_eff_accesses interp_eff0]; try reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
     rewrite <- H. unfold RiscvSemantics.drop_access_report.
     destruct (interp_eff_accesses segs _ m) as [[v acc]| |]; reflexivity.
   - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].

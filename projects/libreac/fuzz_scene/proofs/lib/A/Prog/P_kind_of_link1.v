@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_grant/proofs/lib/A/Prog/KindOfLink1.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* kind_of_link1 (fuzz_scene.asan 0x84778, 29 instructions): the contract of the ASan build's code and its walk.
    The function reads no memory and has no frame: it compares a0 with constants and returns Pau's
    KL1 of it (lib/Prog/RcKind.v:6) in a0.
-   Ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/KindOfLink1.v (at
-   d98082bd58b): the module paths and the listing's names changed, and RET takes PL_scene. lib/Prog/GrantModel
+   Ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/KindOfLink1.v:
+   the module paths and the listing's names changed, and RET takes PL_scene. lib/Prog/GrantModel
    is not imported (fuzz_scene has no GrantModel): the statement uses only RcKind.KL1, and the walk states
    GrantModel's signed64_small (lib/Prog/GrantModel.v:28 of fuzz_grant) here, with the same proof.
    Numbers: fuzz_scene.asan, sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026
-   (projects/libreac/fuzz_scene/harness.yaml at c8557374ad2e); symbols from the .symtab of
+   (projects/libreac/fuzz_scene/harness.yaml); symbols from the .symtab of
    unstripped/fuzz_scene/fuzz_scene.asan, whose bytes at 0x84778..0x847ec equal the pinned image's.
    - kind_of_link1 = 0x84778, st_size 116 = 29 instructions (no compressed instruction).
    - LLVMFuzzerTestOneInput = 0x82878 = the listing's base (SceneAddr.v scene_text), so

@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 1d255703e88 (m2_stack,
-   m2_pre_call, m2_core_step, m2_core_call) and proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v at 1d255703e88
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_stack,
+   m2_pre_call, m2_core_step, m2_core_call) and proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v
    (m2t_garr8_kept, the run-to-call / contract / return pattern of tl_s4 .. tl_s6) for reac-pw/fuzz_rate's image-A
    list segment M03: rate's cut vocabulary (lib/A/RtPgSeg.v, rt_ / q_ names); the seam is generic in the segment's
    write set and carries rt_cpost_g's O conjunct; the walk of C6 -> C7 (memset, reac_rate_drivable_csv, check_csv)
    is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgW14Csv.v, with its module paths and module names changed; 1191 of its 1275 lines of code are new or changed and 617 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v and RPgW5IntP.v at 164759458cd (one
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v and RPgW5IntP.v (one
    file); module paths changed, the w5_ / rs_ / rm_ / rl_ prefixes renamed (hw5_ / hsu_ / hm_ / hd_), the code walked
    anew on image B of fuzz_headamp (scope stores of e42, the runtime's memset on e42, the three words of e42, the call
    of the out-of-line pod_write_ent under PweSpec.pod_write_ent_specX, the tail and the scope-out stores), the
    AR_laws Section hypothesis replaced by the kernel theorem YG0q.AR_laws_ok. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): the Int-7 value pod of one

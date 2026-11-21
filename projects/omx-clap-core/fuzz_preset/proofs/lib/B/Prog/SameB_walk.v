@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the walk of same at image B' (asan-ubsan #102 pin d663f82d7f48, twin
    c90d4fa54d43): Section W (the walk's premises, each with its owner), Section E (one nesting level: the entry state,
-   the invariant, the segment lemmas, the item loop), then same_holds_B, the batch kit's tsame_specX (PRH_FnEx.v :353, cut
-   7cdbb61b5fa0) at PI_prog_B, by strong induction on the nesting. The image numbers, the
+   the invariant, the segment lemmas, the item loop), then same_holds_B, the batch kit's tsame_specX (PRH_FnEx.v :353, cut)
+   at PI_prog_B, by strong induction on the nesting. The image numbers, the
    computed segment states and the run tactics are lib/B/Prog/SameB_defs.v's; the header there gives the port, the
    segment structure and every UBSan / ASan check branch with how it is shown not taken. lib/B/Prog/SameB_final.v
    states it at the instance of record. *)
@@ -26,7 +27,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGca
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG0ncf YG0scf YGcfBlockRange.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YP0b YPsym YC4aP YImgTop.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfRoomKeep.
-(* c-omx-alloc's engine leaf (blob 136e8c774182, origin/cold/c-omx-alloc-preset-s1b f027ed1fab66): astack_up_x and
+(* c-omx-alloc's engine leaf (blob 136e8c774182): astack_up_x and
    astack_up_journal_x *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcallStackUp.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YC1fP YAkMemnorm.

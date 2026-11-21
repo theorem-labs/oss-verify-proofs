@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes cells_at_nth, rdn_cons1, msteps_vis_fx, ex_cell_vis and wsg_writable into plain statements, turns Section SE lemmas into #[using] lemmas, narrows the stack store window bound from 8388608 to 6144513, and adds sbm_rdrA/di_rdr proof steps in exit-run proofs; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvExit.v, 23 lines within its lines 28-838. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -26,7 +27,8 @@ Definition XC_CELLS_T : list (Z * Z * Z) :=
 [(6884656, 4, 0); (6884691, 1, 0); (6884128, 8, 6884136); (6884120, 4, 2); (6884144, 8, 1136392); (6884400, 8, 618204); (6884116, 4, 0); (6884136, 8, 0); (6886088, 8, 0); (1281648, 8, 1281416); (1281556, 4, 4294967295); (1281456, 8, 0); (1281472, 8, 0); (1281424, 8, 0); (1281432, 8, 0); (1281408, 8, 1281176); (1281168, 8, 1280936); (1281076, 4, 4294967295); (1280976, 8, 0); (1280992, 8, 0); (1280944, 8, 0); (1280952, 8, 0); (6746260, 1, 0); (6884152, 8, 1136392); (6884408, 8, 686244)].
 Definition cells_at (MV : word -> option byte) (l : list (Z * Z * Z)) : Prop :=
 Forall (fun c => rdn ASEGS MV (Z_to_bv 64 (fst (fst c))) (Z.to_nat (snd (fst c))) = Some (word_to_le_bytes (Z.to_nat (snd (fst c))) (Z_to_bv 64 (snd c)))) l.
-Lemma cells_at_nth : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "QG'S9yR0%211'9y8%511%311p051'6'<'A%2211%3212%511'7&QDr6r5%3221'@%A18&R;%13:65(2(;r4r3%34AA21r2%54BC21%72B1%<3;91%H1K%N11&QN&R8r8&S8%12Q5E&RB%11?%746531&G%62Q:A%2241%F2=1%K3=51p0@1p0N1pVHQ71pV4Q81pU:Q91pULQ61pUNQ81pR:Q?1").
+Lemma cells_at_nth : forall MV l (i : nat) a n v, cells_at MV l -> nth_error l i = Some (a, n, v) ->
+rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)).
 Proof. intros MV l i a n v HC Hn. exact (proj1 (Forall_forall _ _) HC (a, n, v) (nth_error_In _ _ Hn)). Qed.
 Definition exitA (tid : Z) (MV : word -> option byte) : Prop :=
 cells_at MV XC_CELLS
@@ -42,7 +44,8 @@ Definition exitB (tid : Z) (MV : word -> option byte) : Prop :=
 cells_at MV XC_CELLS_B
 /\ rdn ASEGS MV (Z_to_bv 64 6752792) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 tid)) /\ 1 <= tid <= 4194303
 /\ (forall i, 0x138ea0 <= i < 0x139380 -> MV (Z_to_bv 64 i) = None).
-Lemma rdn_cons1 : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "QJ'S9yR0%211'9y8%511%311p051'A'7'6%116&R=zr4%3221'@%>16&QN&R8r6&S8r5%22F1u1%746521(2(5(8%11H%33I@1%52D1%@3?71r7&R<+1%22@1%@2Q41%D4C51Hr3%>2M1%I3H31r8%F2Q::(1%11G%L4K431%D3Q:KQ1%F2Q51%Q13Q031p091p0C1p0Q51pUBQ:1pV4Q=1pU@QB1pU:Q@1pR:QB1").
+Lemma rdn_cons1 : forall (MV : word -> option byte) a b (n : nat) bs, 0 <= a ->
+rdn ASEGS MV (Z_to_bv 64 a) 1 = Some [b] -> rdn ASEGS MV (Z_to_bv 64 (a + 1)) n = Some bs -> rdn ASEGS MV (Z_to_bv 64 a) (Datatypes.S n) = Some (b :: bs).
 Proof.
 intros MV a b n bs Ha H1 H2. change (Datatypes.S n) with (1 + n)%nat. change (b :: bs) with ([b] ++ bs). apply (SeqExec.rdn_app ASEGS MV 1%nat n _ _ _ H1).
 replace (Z_to_bv 64 a + nat_to_word 1)%bv with (Z_to_bv 64 (a + 1)); [exact H2|].
@@ -51,7 +54,12 @@ Qed.
 Ltac img_rd := vm_compute; apply f_equal; repeat (apply f_equal2; [apply bv_eq; reflexivity|]); reflexivity.
 Lemma fetch_exitA : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "A'@'9'S9yQ0%211%411&F&R8&S8yR0+QReS<%3221%6251(2&R7%22;1%@3;41").
 Proof. vm_compute. reflexivity. Qed.
-Lemma msteps_vis_fx : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "RF'H'S9yR0%211'4p021'6'<'A%2211%411'QK&Q0y5%221;'9y8%@11%311p0@1'L&R0&Q8&R8r<r;r2%544321'Q<&QMr9r8&Q:r=r7%3221&QO%11>%95=8731r:r6r5r4%>543216%@3E61'Q9r?r1%3221&Q;%12@H'@rB%E21;%33Q31H'R5rD(Ir@%N51Q3Q2BF%321B%64Q651Np081p0=1p0@1pV2Q=1pR6Q?1%Q65Q2Q:LQ5N%;21K%>4Q>;1Kp041p0K1p0Q=1pU8QD1pV0QF1pR<QH1pV8R91pR@QO1pR4QK1pV6R<1pR>R21pUJR61pUHR71p2R91pQ6R?1pV:RE1").
+Lemma msteps_vis_fx : forall (scfg : SpuriousCfg) (H : word -> bool) (A : list (Z * Z)) (fx fx' : PropExec.FPState) R (pc : word) M R' (pc' : word) MV' (model : Model) T,
+lzinv ASEGS H A model ->
+msteps ASEGS (@mkst fx R pc (mrestrict H M) (seg_rom ASEGS)) (@mkst fx' R' pc' MV' (seg_rom ASEGS)) ->
+(forall M' (model' : Model), MInv A model' -> same_but_materialized model model' -> mrestrict H M' = MV' ->
+srealizes ASEGS scfg (mkCfg (@mkst fx' R' pc' M' (seg_rom ASEGS)) model') T) ->
+srealizes ASEGS scfg (mkCfg (@mkst fx R pc M (seg_rom ASEGS)) model) T.
 Proof.
 intros scfg H A fx fx' R pc M R' pc' MV' model T (HH & HL & HA & HM & Hh) MS KONT.
 apply (srz_msteps_restricted_T ASEGS scfg H HH asegs_wx A (@mkst fx R pc M (seg_rom ASEGS)) (@mkst fx' R' pc' MV' (seg_rom ASEGS)) model T HL HA HM Hh MS).
@@ -79,19 +87,10 @@ Variable M0 : word -> option byte.
 #[local] Notation dinvA := (dinv ar HI sp0 M0).
 #[local] Notation usp := (bv_unsigned sp0).
 #[local] Notation rom := (seg_rom ASEGS).
-Section SE.
-Local Abbreviation SEC_T_ex_cell_vis := (ltac2:(TCodec.tc2 tcn__Jb0DrvExit "R5'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L'QEvREvCvS5vQ3r9r8r7r6r5r4%;::987654321&R:%M2KL(;r3%24OO61r2%44Q0Q121&QH%83721'@%Q71J%M11&QN&R8&Q:&Q>%12FD%321F&S8%12Q7F&RB%11G%:49531(2&G%72Q=F%2251%42A1%C3A61p0E1p0O1pVHQJ1pV4QK1pU:QL1pV0Q?1pR4QA1p2QM1pUFQK1pQ<QM1pQ:R01")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 5%nat 0%nat).
-Variable a : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 6%nat 0%nat).
-Variable n : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 7%nat 0%nat).
-Variable v : ltac:(sec_ty2 constr:(SEC_T_ex_cell_vis) 8%nat 0%nat).
-Lemma ex_cell_vis : ltac:(sec_stmt2 constr:(SEC_T_ex_cell_vis) 9%nat 0%nat).
-Proof using scfg L C IL HIok Hsp DL Hex LB LK cr A M model a n v.
+#[using="scfg L C IL HIok Hsp DL Hex"] Lemma ex_cell_vis : forall LB LK cr A M (model : Model) a n v, dinvA LB LK cr A M model -> In (a, n, v) EX_CELLS ->
+rdn ASEGS (mrestrict (ahid A model) M) (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)).
+Proof.
+intros LB LK cr A M model a n v.
 intros D Hin.
 pose proof (di_inv _ _ _ _ _ _ _ _ _ _ D) as HH.
 destruct (aio_statics _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (_ & CS). rewrite (dla_segs _ _ _ _ DL) in CS.
@@ -102,7 +101,6 @@ assert (B : 0 <= a /\ a + Z.of_nat (Z.to_nat n) <= 0x693000).
 { unfold EX_CELLS in Hin. cbn [In] in Hin. repeat (destruct Hin as [Hin|Hin]; [injection Hin as <- <- <-; cbn; lia|]). destruct Hin. }
 rewrite (u64_lit a) by lia. apply (vis_low scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ _ D). lia.
 Qed.
-End SE.
 #[using="scfg L C IL HIok Hsp DL"] Lemma ax_cells_vis : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "Q>'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L'4'QEvREvCvS5vQ3r7r6r5r4r3r2%;::987654321&QI%1253&Q:&Q>%12:8%321:%6219p061p091pU>F1pV0H1pR4J1p2Q61pUFQ41pQ<Q61pQ:Q91").
 Proof.
 intros LB LK cr A M model ax D H. unfold atexit_cellsA in *. rewrite Forall_forall in *. intros c Hc.
@@ -111,18 +109,9 @@ rewrite rdn_mrestrict_eq; [exact H|].
 intros k Hk. unfold woff. unfold AXLO, AXHI in *.
 rewrite (u64_lit (fst (fst c))) by lia. apply (vis_low scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ _ D). lia.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_sh_writable := (ltac2:(TCodec.tc2 tcn__Jb0DrvExit "R3'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L'QEvREvCvS5vQ3r8r7r6r5r4r3%;::987654321'@'4&:&3&R>+Qoooaa<%2218&R<r2%22;1+Qoooai8%7221%9261+RPPSl^D%:21@+RPPSlc@%<271%>231%@261(=%D3C21&QJ&R8&Q:&Q>%12OM%321O%6451NMp081p0N1pV4QI1pU:QJ1pV0Q=1pR4Q?1p2QK1pUFQI1pQ<QK1pQ:QN1")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_sh_writable) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_sh_writable) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_sh_writable) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_sh_writable) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_sh_writable) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_sh_writable) 5%nat 0%nat).
-Variable a : ltac:(sec_ty2 constr:(SEC_T_sh_writable) 6%nat 0%nat).
-Variable n : ltac:(sec_ty2 constr:(SEC_T_sh_writable) 7%nat 0%nat).
-Lemma sh_writable : ltac:(sec_stmt2 constr:(SEC_T_sh_writable) 8%nat 0%nat).
-Proof using scfg L IL ICok ILY Hsp DL LB LK cr A M model a n.
+#[using="scfg L IL ICok ILY Hsp DL"] Lemma sh_writable : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "R3'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L'QEvREvCvS5vQ3r8r7r6r5r4r3%;::987654321'@'4&:&3&R>+Qoooaa<%2218&R<r2%22;1+Qoooai8%7221%9261+RPPSl^D%:21@+RPPSlc@%<271%>231%@261(=%D3C21&QJ&R8&Q:&Q>%12OM%321O%6451NMp081p0N1pV4QI1pU:QJ1pV0Q=1pR4Q?1p2QK1pUFQI1pQ<QK1pQ:QN1").
+Proof.
+intros LB LK cr A M model a n.
 intros D Hb.
 pose proof (di_inv _ _ _ _ _ _ _ _ _ _ D) as HH.
 apply L5Core.L5C.writable_of_defined; [|rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in Hb; lia | rewrite !orb_true_iff, !andb_true_iff, !Z.leb_le in Hb; lia].
@@ -148,8 +137,8 @@ unfold page_base, page_base_of. rewrite !u64_lit by lia. f_equal. unfold page_si
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false). }
 unfold mrestrict. rewrite VIS. exact DEF.
 Qed.
-End SE.
-#[using="sp0 Hsp M0"] Lemma wsg_writable : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "Q>'S9yR0%211'9y8%511%311p051'A'7'@'4&R6&R8&S8r2%22?1r1%63521(=%:3921&R=zr3%3221&R<r4&R@%115%4231&RA+2+QO%3221%=251&QJr6r5%;1<%44J321p061p0A1p0F1pV4Q21pU:Q41pR:Q61").
+#[using="sp0 Hsp M0"] Lemma wsg_writable : forall (MV : word -> option byte) a (n : nat), wseg_ok ASEGS (Z_to_bv 64 a) n = true -> 0 <= a -> a + Z.of_nat n <= 2 ^ 63 ->
+L5Defs.L5.writable ASEGS MV a (Z.of_nat n).
 Proof.
 intros MV a n W Ha Hn d k Hd Hk.
 apply (store_ok_window ASEGS MV (Z_to_bv 64 a) (Z_to_bv 64 (a + d)) n k a (a + Z.of_nat n)); first [exact W | reflexivity | lia | rewrite u64_lit by lia; lia].
@@ -157,35 +146,24 @@ Qed.
 Definition exit_pre (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : list (Z * Z)) (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
 let MV := mrestrict (ahid A model) M in
 dinvA LB LK cr A M model /\ usp - 4096 <= S /\ S <= usp /\ S mod 16 = 0
-/\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+/\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 /\ (forall i, 65536 <= i < 1269760 -> MV (Z_to_bv 64 i) = None)
 /\ exitA tid MV.
 Definition exit_preT (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : list (Z * Z)) (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
 let MV := mrestrict (ahid A model) M in
 dinvA LB LK cr A M model /\ usp - 4096 <= S /\ S <= usp /\ S mod 16 = 0
-/\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+/\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 /\ (forall i, 65536 <= i < 1269760 -> MV (Z_to_bv 64 i) = None)
 /\ exitT tid MV.
 Definition exit_preB (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : list (Z * Z)) (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
 let MV := mrestrict (ahid A model) M in
 dinvA LB LK cr A M model /\ usp - 4096 <= S /\ S <= usp /\ S mod 16 = 0
-/\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+/\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 /\ (forall i, 65536 <= i < 1269760 -> MV (Z_to_bv 64 i) = None)
 /\ exitB tid MV.
-Section SE.
-Local Abbreviation SEC_T_exit_run_0 := (ltac2:(TCodec.tc2 tcn__Jb0DrvExit "SC'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L&Q0y5%2219&QBr:r9r8r7r6r5r3r1%9887654321&Q:&Q>%1297%3219'?&R=zr4%3221&R?+X0%2241%8241'@&QL(S7+1(>%33N21%52I1&S8+QRclH%22Q;1%:3Q;41+2%:3Q518%<2Q11%72Q@Q1%?3Q@21+4%?3Q:1=%A2Q71+V^Rf0%=2QF1%E3QF31+:%E3Q@1C%G2Q>1%B2QKQ=%J3QK21&QG%12Q3Q>&QF%11QA'R5&R8vS4(I&QMvRKr=+QRejL%Q02R91r?&QO%11:%8576431r>%;221&R2r;%Q92RB1&O%116%5231%E4DC71p0G1p0J1p0M1p0Q31p0Q:1p0Q@1p0QL1tR:RHR61p0R;1pVFS71pV>S81pTDS91pR>RI1pV0RM1pR4RO1p2S;1pUFS91pQ<S;1pQ:S>1")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 5%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 6%nat 0%nat).
-Variable S : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 7%nat 0%nat).
-Variable st : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 8%nat 0%nat).
-Variable tid : ltac:(sec_ty2 constr:(SEC_T_exit_run_0) 9%nat 0%nat).
-Lemma exit_run_0 : ltac:(sec_stmt2 constr:(SEC_T_exit_run_0) 10%nat 0%nat).
-Proof using L C IL HIok ICok ILY Hsp DL Hex LB LK cr A M model R S st tid.
+#[using="L C IL HIok ICok ILY Hsp DL Hex"] Lemma exit_run_0 : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "SC'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L&Q0y5%2219&QBr:r9r8r7r6r5r3r1%9887654321&Q:&Q>%1297%3219'?&R=zr4%3221&R?+X0%2241%8241'@&QL(S7+1(>%33N21%52I1&S8+QRclH%22Q;1%:3Q;41+2%:3Q518%<2Q11%72Q@Q1%?3Q@21+4%?3Q:1=%A2Q71+V^Rf0%=2QF1%E3QF31+:%E3Q@1C%G2Q>1%B2QKQ=%J3QK21&QG%12Q3Q>&QF%11QA'R5&R8vS4(I&QMvRKr=+QRejL%Q02R91r?&QO%11:%8576431r>%;221&R2r;%Q92RB1&O%116%5231%E4DC71p0G1p0J1p0M1p0Q31p0Q:1p0Q@1p0QL1tR:RHR61p0R;1pVFS71pV>S81pTDS91pR>RI1pV0RM1pR4RO1p2S;1pUFS91pQ<S;1pQ:S>1").
+Proof.
+intros LB LK cr A M model R S st tid.
 intros (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst G1 G2 G4 G10 SO SOX.
 pose proof Hsp as Hsp'. destruct SO as (_ & _ & _ & SOwpos & SOwbase & SOlock & _). destruct SOX as (_ & _ & _ & SOrpos & SOrend).
 set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | _ => 0 end).
@@ -281,27 +259,15 @@ apply (rz_exit_at_lit_lz ASEGS scfg R1 (Z_to_bv 64 0x11546c) M' rom model' ECALL
 - eapply eq_trans; [exact (XKS 10%nat ltac:(unfold AS0DRVP_dpX.KS_dpX; cbn [In]; repeat first [left; reflexivity | right]))|]. exact G10.
 - exact Hst.
 Qed.
-End SE.
 Definition stdoutPA (MV : word -> option byte) : Prop :=
 rdn ASEGS MV (Z_to_bv 64 1281316) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 4294967295))
 /\ rdn ASEGS MV (Z_to_bv 64 1281216) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0))
 /\ rdn ASEGS MV (Z_to_bv 64 1281232) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0))
 /\ rdn ASEGS MV (Z_to_bv 64 1281184) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0))
 /\ rdn ASEGS MV (Z_to_bv 64 1281192) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
-Section SE.
-Local Abbreviation SEC_T_exit_run_e := (ltac2:(TCodec.tc2 tcn__Jb0DrvExit "S8'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L&Q0y5%2219&Q@r:r9r8r7r6r5r3r1%9887654321&Q:&Q>%1297%3219'?&R=zr4%3221&R?+X0%2241%8241'@&QL(S7+2(>%33N21%52I1&S8%12Q:J%93Q:31+4%93Q417%;2Q01+V^Rf0%72Q@1%?3Q@31+:%?3Q:1=%A2Q71%<2QEQ6%D3QE21&QC%11Q7'R5&R8vS4(I&QMvRKr;+QRejL%H2R11r=&QO%11:%8576431r<%;221&R2%Q02R9QL&O%115%4231%D4CB61p0F1p0I1p0O1p0Q61p0QA1tR:R=QK1p0R01pVFRL1pV>RM1pTDRN1pR>R>1pV0RB1pR4RD1p2S01pUFRN1pQ<S01pQ:S31")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 5%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 6%nat 0%nat).
-Variable S : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 7%nat 0%nat).
-Variable st : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 8%nat 0%nat).
-Variable tid : ltac:(sec_ty2 constr:(SEC_T_exit_run_e) 9%nat 0%nat).
-Lemma exit_run_e : ltac:(sec_stmt2 constr:(SEC_T_exit_run_e) 10%nat 0%nat).
-Proof using L C IL HIok ICok ILY Hsp DL Hex LB LK cr A M model R S st tid.
+#[using="L C IL HIok ICok ILY Hsp DL Hex"] Lemma exit_run_e : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "S8'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L&Q0y5%2219&Q@r:r9r8r7r6r5r3r1%9887654321&Q:&Q>%1297%3219'?&R=zr4%3221&R?+X0%2241%8241'@&QL(S7+2(>%33N21%52I1&S8%12Q:J%93Q:31+4%93Q417%;2Q01+V^Rf0%72Q@1%?3Q@31+:%?3Q:1=%A2Q71%<2QEQ6%D3QE21&QC%11Q7'R5&R8vS4(I&QMvRKr;+QRejL%H2R11r=&QO%11:%8576431r<%;221&R2%Q02R9QL&O%115%4231%D4CB61p0F1p0I1p0O1p0Q61p0QA1tR:R=QK1p0R01pVFRL1pV>RM1pTDRN1pR>R>1pV0RB1pR4RD1p2S01pUFRN1pQ<S01pQ:S31").
+Proof.
+intros LB LK cr A M model R S st tid.
 intros (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst G2 G4 G10 SOP.
 pose proof Hsp as Hsp'. destruct SOP as (SOlock & SOwpos & SOwbase & SOrpos & SOrend).
 set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | _ => 0 end).
@@ -397,22 +363,9 @@ apply (rz_exit_at_lit_lz ASEGS scfg R1 (Z_to_bv 64 0x11546c) M' rom model' ECALL
 - eapply eq_trans; [exact (XKS 10%nat ltac:(unfold AS0DRVP_dpXe.KS_dpXe; cbn [In]; repeat first [left; reflexivity | right]))|]. exact G10.
 - exact Hst.
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_exit_run_2 := (ltac2:(TCodec.tc2 tcn__Jb0DrvExit "TL'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L&Q0y5%2219&QBr;r:r9r8r7r6r4r2%9887654321&Q:&Q>%1297%3219'?&R=zr5%3221&R?+X0%2241%8241%827@&RA+2+R0%3221%92E1%?261'@&QL(S7+1(>%33Q521%52Q11&S8+QRclH%22QB1%:3QB41%93Q;@7%;2Q81%62QFQ8%>3QF21+4%>3Q@1<%@2Q>1+V^Rf0%<2QL1%D3QL31r<+:%E3QG1C%G231%B2R2QE%J3R221%R=1R0%R311&QN&R8+VbRh0%I2R91u8%544QK21(2&G%124H%32;1%Q73;51&QG%12Q6R3&QF%11R6'K%RD11&M&NrA%211%Q;2RKQ?%5221(J%113%C2:1%QG3:41'R5vS4(I&QMvRK+QRejL%QG2S71rC&QO%11Q3%756B431rB%:221&R1&R3&R4u1%211%42R71&R2r?%R62SF1&O%11<%5231%<271%J4QDI>1p0L1p0Q91p0Q<1p0Q?1p0QM1p0R41p0R;1p0R@1p0RL1p0S41tR:T0S>1p0SC1pUDT?1pVFT@1pV>TA1pTDTB1pR>T21pV0T61pR4T81p2TD1pUFTB1pQ<TD1pQ:TG1")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 5%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 6%nat 0%nat).
-Variable S : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 7%nat 0%nat).
-Variable st : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 8%nat 0%nat).
-Variable tid : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 9%nat 0%nat).
-Variable canz : ltac:(sec_ty2 constr:(SEC_T_exit_run_2) 10%nat 0%nat).
-Lemma exit_run_2 : ltac:(sec_stmt2 constr:(SEC_T_exit_run_2) 11%nat 0%nat).
-Proof using L C IL HIok ICok ILY Hsp DL Hex LB LK cr A M model R S st tid canz.
+#[using="L C IL HIok ICok ILY Hsp DL Hex"] Lemma exit_run_2 : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "TL'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L&Q0y5%2219&QBr;r:r9r8r7r6r4r2%9887654321&Q:&Q>%1297%3219'?&R=zr5%3221&R?+X0%2241%8241%827@&RA+2+R0%3221%92E1%?261'@&QL(S7+1(>%33Q521%52Q11&S8+QRclH%22QB1%:3QB41%93Q;@7%;2Q81%62QFQ8%>3QF21+4%>3Q@1<%@2Q>1+V^Rf0%<2QL1%D3QL31r<+:%E3QG1C%G231%B2R2QE%J3R221%R=1R0%R311&QN&R8+VbRh0%I2R91u8%544QK21(2&G%124H%32;1%Q73;51&QG%12Q6R3&QF%11R6'K%RD11&M&NrA%211%Q;2RKQ?%5221(J%113%C2:1%QG3:41'R5vS4(I&QMvRK+QRejL%QG2S71rC&QO%11Q3%756B431rB%:221&R1&R3&R4u1%211%42R71&R2r?%R62SF1&O%11<%5231%<271%J4QDI>1p0L1p0Q91p0Q<1p0Q?1p0QM1p0R41p0R;1p0R@1p0RL1p0S41tR:T0S>1p0SC1pUDT?1pVFT@1pV>TA1pTDTB1pR>T21pV0T61pR4T81p2TD1pUFTB1pQ<TD1pQ:TG1").
+Proof.
+intros LB LK cr A M model R S st tid canz.
 intros (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst Hcan G1 G2 G4 G10 CANc SO SOX FD1.
 pose proof Hsp as Hsp'. destruct SO as (_ & SObufsz & _ & SOwpos & SOwbase & SOlock & _ & FW & BW & BC). destruct SOX as (SOwrite & SOfd & SObuf & SOrpos & SOrend).
 set (V := fun n : nat => match n with 2%nat => S | 44%nat => tid | 40%nat => canz | _ => 0 end).
@@ -518,7 +471,7 @@ assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear
 assert (Hf : 0 <= 1281176 /\ (1281176 + 124 <= q \/ q + 32 + 16 <= 1281176 + 120) /\ 1281176 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
 assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
 { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN1 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
 unfold W. rewrite <- (app_nil_r (zero_lines 1%nat)).
 apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
@@ -528,6 +481,7 @@ apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(
 { exact MI1. }
 { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
 { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
+{ rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ D). }
 { unfold wv_regs. repeat split; assumption. }
 { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
 split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
@@ -554,7 +508,7 @@ assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n 
 apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
 apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
 intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN3 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
 assert (FW3 : forall a n, 1281176 <= a -> a + n <= 1281176 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).
@@ -612,7 +566,6 @@ apply (rz_exit_at_lit_lz ASEGS scfg R4 (Z_to_bv 64 0x11546c) M5 rom model5 ECALL
 - eapply eq_trans; [exact Dr10|]. cbn [VD]. rewrite Z_to_bv_bv_unsigned. exact G10.
 - exact Hst.
 Qed.
-End SE.
 #[using="L C IL HIok ICok ILY Hsp DL Hex"] Lemma exit_run_3 : ltac2:(TCodec.tc2 tcn__Jb0DrvExit "TL'6'<'A%2211%411&Q?%611&Q='S9yR0%211'9y8%511%311p051'L&Q0y5%2219&QBr;r:r9r8r7r6r4r2%9887654321&Q:&Q>%1297%3219'?&R=zr5%3221&R?+X0%2241%8241%827@&RA+2+R0%3221%92E1%?261'@&QL(S7+1(>%33Q521%52Q11&S8+QRclH%22QB1%:3QB41%93Q;@7%;2Q81%62QFQ8%>3QF21+4%>3Q@1<%@2Q>1+V^Rf0%<2QL1%D3QL31r<+:%E3QG1C%G231%B2R2QE%J3R221%R=1R0%R311&QN&R8+VbRh0%I2R91u8%544QK21(2&G%124H%32;1%Q73;51&QG%12Q>R3&QF%11R6'K%RD11&M&NrA%211%Q;2RKQ?%5221(J%113%C2:1%QG3:41'R5vS4(I&QMvRK+QRejL%QG2S71rC&QO%11Q3%756B431rB%:221&R1&R3&R4u2%211%42R71&R2r?%R62SF1&O%11<%5231%<271%J4QDI>1p0L1p0Q91p0Q<1p0Q?1p0QM1p0R41p0R;1p0R@1p0RL1p0S41tR:T0S>1p0SC1pUDT?1pVFT@1pV>TA1pTDTB1pR>T21pV0T61pR4T81p2TD1pUFTB1pQ<TD1pQ:TG1").
 Proof.
 intros LB LK cr A M model R S st tid canz (D & HS1 & HS2 & HS16 & WIN & IMGc & (XC & TIDC & HTr & DESC)) MV Hst Hcan G1 G2 G4 G10 CANc SO SOX FD1.
@@ -720,7 +673,7 @@ assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear
 assert (Hf : 0 <= 1281176 /\ (1281176 + 124 <= q \/ q + 32 + 16 <= 1281176 + 120) /\ 1281176 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
 assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
 { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN1 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
 unfold W. rewrite <- (app_nil_r (zero_lines 2%nat)).
 apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
@@ -730,6 +683,7 @@ apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(
 { exact MI1. }
 { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
 { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
+{ rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ D). }
 { unfold wv_regs. repeat split; assumption. }
 { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
 split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
@@ -756,7 +710,7 @@ assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n 
 apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
 apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
 intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN3 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
 assert (FW3 : forall a n, 1281176 <= a -> a + n <= 1281176 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).
@@ -921,7 +875,7 @@ assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear
 assert (Hf : 0 <= 1281176 /\ (1281176 + 124 <= q \/ q + 32 + 16 <= 1281176 + 120) /\ 1281176 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
 assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
 { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN1 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
 unfold W. rewrite <- (app_nil_r (zero_lines 3%nat)).
 apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
@@ -931,6 +885,7 @@ apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(
 { exact MI1. }
 { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
 { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
+{ rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ D). }
 { unfold wv_regs. repeat split; assumption. }
 { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
 split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
@@ -957,7 +912,7 @@ assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n 
 apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
 apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
 intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN3 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
 assert (FW3 : forall a n, 1281176 <= a -> a + n <= 1281176 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).
@@ -1220,7 +1175,7 @@ assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear
 assert (Hf : 0 <= 1281176 /\ (1281176 + 124 <= q \/ q + 32 + 16 <= 1281176 + 120) /\ 1281176 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
 assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
 { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN1 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
 unfold W. rewrite <- (app_nil_r (zero_lines 1%nat)).
 apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
@@ -1230,6 +1185,7 @@ apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(
 { exact MI1. }
 { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
 { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
+{ rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ D). }
 { unfold wv_regs. repeat split; assumption. }
 { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
 split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
@@ -1256,7 +1212,7 @@ assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n 
 apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
 apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
 intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN3 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
 assert (FW3 : forall a n, 1281176 <= a -> a + n <= 1281176 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).
@@ -1421,7 +1377,7 @@ assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear
 assert (Hf : 0 <= 1281176 /\ (1281176 + 124 <= q \/ q + 32 + 16 <= 1281176 + 120) /\ 1281176 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
 assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
 { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN1 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
 unfold W. rewrite <- (app_nil_r (zero_lines 2%nat)).
 apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
@@ -1431,6 +1387,7 @@ apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(
 { exact MI1. }
 { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
 { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
+{ rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ D). }
 { unfold wv_regs. repeat split; assumption. }
 { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
 split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
@@ -1457,7 +1414,7 @@ assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n 
 apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
 apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
 intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN3 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
 assert (FW3 : forall a n, 1281176 <= a -> a + n <= 1281176 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).
@@ -1622,7 +1579,7 @@ assert (Hq : 0 <= q /\ q <= q + 32 /\ q + 32 + 16 <= 2 ^ 47) by (unfold q; clear
 assert (Hf : 0 <= 1281176 /\ (1281176 + 124 <= q \/ q + 32 + 16 <= 1281176 + 120) /\ 1281176 + 124 < 2 ^ 63) by (unfold q; clear - Hsp' HS1 HS2; lia).
 assert (NLq : forall x, q <= x < q + 32 -> page_in_ranges (page_base_of x) (m_vm_lazy model) = false).
 { intros x Hx. apply (nl_pt scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ x D); unfold q in Hx; clear - Hsp' HS1 HS2 Hx; lia. }
-assert (WIN1 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN1 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV1 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (WIN a n); assumption).
 unfold W. rewrite <- (app_nil_r (zero_lines 3%nat)).
 apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(lia) q (q + 32) Hq Hf NLq (t_exit (Z_to_bv 64 st) (m_fs model)) (t_exit_has_nil _ _)
@@ -1632,6 +1589,7 @@ apply (wv_loop scfg (ahid A model) A HH (m_vm_lazy model) HL HA 1281176 1 ltac:(
 { exact MI1. }
 { rewrite (sbm_halted_eq _ _ SBM1). exact Hh. }
 { rewrite (sbm_fds' _ _ SBM1). exact FD1. }
+{ rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ D). }
 { unfold wv_regs. repeat split; assumption. }
 { rewrite VIS1. unfold wv_iov. split; [lia|]. split; [lia|]. split; [right; reflexivity|].
 split; [exact Xm136|]. split; [replace (q + 8) with (S - 128) by (unfold q; ring); exact Xm128|].
@@ -1658,7 +1616,7 @@ assert (cellS : forall off k (n : nat) bs, rdn ASEGS MV1 (Z_to_bv 64 (S - k)) n 
 apply Z.eqb_eq in Hb1. apply Z.leb_le in Hb2, Hb3. replace (S - 144 + off) with (S - k) by lia.
 apply (rdn_tr MV1 MV3 _ _ _ Hr); [clear - Hsp' HS1 HS2 Hb3; lia | clear - Hsp' HS1 HS2 Hb2; lia|].
 intros i Hi. apply FRV3; unfold q; clear - Hsp' HS1 HS2 Hb2 Hb3 Hi; lia. }
-assert (WIN3 : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
+assert (WIN3 : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (WIN1 a n); assumption).
 assert (FW3 : forall a n, 1281176 <= a -> a + n <= 1281176 + 232 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV3 (Z_to_bv 64 (a + d)) k = true)
 by (intros a n H1 H2 d k Hd Hk; apply (store_ok_mono ASEGS k MV1 MV3 _ GRV3); apply (store_ok_mono ASEGS k MV MV1 _ XGR); apply (FW a n); assumption).

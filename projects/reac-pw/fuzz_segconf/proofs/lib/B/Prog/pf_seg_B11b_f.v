@@ -1,6 +1,6 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the FUNCTIONAL facts of segment
    B11b's join loop (the B11b segment lane of the image-B G3 walk owner, 2026-10-30). proves no function (kind: list computations).
-   ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_a11b_f.v (commit b771066056fa, an
+   ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_a11b_f.v (an
    image-A segment lane): the same computations over pf_seg_B11b_d.v's pb11_J / pb11_kn (A's pf_J / pf_kn), the literal
    addresses checked against image B's map SegInstB.seg_litA_rc (.rodata does not move between A and B: "%s%s"
    0x21820, "|" 0x21840, "" 0x21860, F_badmodel 0x21880, the B excerpt's .str.17 / .str.18 / .str.19 at 0x88b98 /

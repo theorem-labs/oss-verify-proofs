@@ -1,6 +1,6 @@
 (* GXA's closed ASan printf-core theorems INSTANTIATED on the pinned fuzz_reply.asan.  R4Printf wrote this file and
    it was still compiling when the lane stopped; finished here in the shape a Theorem Labs lane's Gxa prover settled on
-   (a working branch efa2842e125, fm's RT_gxa_inst.v fm_vsnprintf_x_proof), with the image facts given as
+   (a working branch, fm's RT_gxa_inst.v fm_vsnprintf_x_proof), with the image facts given as
    EXPLICIT arguments in the declaration order rather than searched for by `first [...]` - the search is what did
    not finish (each candidate is tried against a goal whose type needs the symbol map evaluated).
 
@@ -64,7 +64,7 @@ Definition fr_vfprintf_guarded :=
 End S.
 
 (* GXA's UNGUARDED closed musl vfprintf at A_img, under a Theorem Labs lane's name and parameter order (fm's RT_gxa_inst.v:57
-   fm_vfprintf_snf_a_closed, a working branch 3242941dc96), so the relocated seam file
+   fm_vfprintf_snf_a_closed, a working branch), so the relocated seam file
    FMgxaSeamCall.v (seam_vfprintf_a) resolves it by path.  The image facts are fr_vfprintf_guarded's, given
    explicitly in the same order; G_vfprintf_snf_closed.v:108 and :117 close one Section Img and run the same
    tactic. *)

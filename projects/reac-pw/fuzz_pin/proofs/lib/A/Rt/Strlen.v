@@ -6,13 +6,14 @@
 (* Modified by Theorem Labs, 2026-11: copied from proofs/libreac/fuzz_identity/lib/A/Rt/Strlen.v, with its module paths changed. *)
 (* libreac/fuzz_identity, build asan: the strlen wrapper's contract, lib/A/Rt/StrlenDef.v astrlen_realizes at
    STRLEN_ENTRY = 0x4218c, from the shared strlen walk lib/A/FMstrlen.v strlen_icpt_srr: port-fm's walk
-   (origin/cold/port-fm-rtscan f8664b31b9c, cgif_file_fuzzer coordinates, SL_ENTRY 0x418f0) relocated to
+   (cgif_file_fuzzer coordinates, SL_ENTRY 0x418f0) relocated to
    fuzz_identity.asan (SL_ENTRY 0x4218c). The walk asks the contract's premises plus mconsts_view (the two musl
    constants at 0x10350 and 0x10368), which lib/A/Rt/WrapRoM.v derives from the contract's aro_unowned; the
    post-conditions are the same text. The proof names only the binders of the contract and finds each premise
    by its type, so it does not depend on the order of the premises. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/Strlen.v at origin/ossv/recipes 6ebe35ba632; module paths changed to reac-pw/fuzz_pin, its addresses moved to reac-pw/fuzz_pin's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/Strlen.v; module paths changed to reac-pw/fuzz_pin, its addresses moved to reac-pw/fuzz_pin's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

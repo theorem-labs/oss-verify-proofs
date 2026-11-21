@@ -6,10 +6,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_strkit.v, with its module paths and module names changed; 240 of its 267 lines of code are new or changed and 303 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head.v; 230 of its 274 lines of code are new or changed and 223 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_b.v, with its module paths, module names and numbers changed; 39 of its 255 lines of code are new or changed and 58 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4 IMAGE B: tk_seg_B (lib/B/FMW_ex_tok_base.v): expected's ex_token left boundary test (fuzz_manifest.c:109) at
    TK_B 0x817c8 .. 0x81830 of B's expected (listing lines 341-367): a0 = s1 - 1 = text + j - 1, the ASan check of its
    shadow byte, lb a0, -1(s1), then nine class branches: '.', c >= 128, '\\', '%', ':', '-', '_', a digit, a letter go
-   to TK_N 0x817a4 (no token at j); else fall to TK_E 0x81834. Twin of image A's lib/A/FMW_ex_tok_b.v (06d82004dc3):
+   to TK_N 0x817a4 (no token at j); else fall to TK_E 0x81834. Twin of image A's lib/A/FMW_ex_tok_b.v:
    B's instructions are A's 0x815dc .. 0x81644 with s1 for A's s7 (text + j).
    The run writes nothing and reads only s1, s9 and the byte text[j - 1]: its symbolic state keeps every register as
    its own atom (sr_atoms), s9 = extra atom 32 (the shadow base), the byte = extra atom 33 in a 1-byte region at

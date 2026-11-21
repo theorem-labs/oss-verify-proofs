@@ -5,17 +5,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its addresses and numbers changed; 528 of its 563 lines of code are new or changed and 361 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P7.v, with its module paths and module names changed; 28 of its 121 lines of code are new or changed and 470 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/P7F_on.v -- route (C): the region form of Seg/P7F.v's (not in this delivery) p7_evt_F, for the image-A glue stage
    seg_P7 (lib/A/ACtlG/P7.v).  Written by a Theorem Labs lane under a Theorem Labs lane's standing consent (12:55Z,
    relayed by a Theorem Labs lane) for beside-files <S>F_on.v; Seg/P7F.v itself (not in this delivery) is byte-identical.  rule 24: no function
    proved.
 
-   SOURCE.  Seg/P7F.v (not in this delivery) at a Theorem Labs lane's fold a working branch 4bae33fdf54 (blob 74cf5675377): the
+   SOURCE.  Seg/P7F.v (not in this delivery) at a Theorem Labs lane's fold a working branch (blob 74cf5675377): the
    lemma p7_evt_F, its statement and its proof, with exactly these changes:
    - the callee premise HFRAGF : reac_ctrl_identity_fragment_contract_F becomes
      HFRAGF_on : reac_ctrl_identity_fragment_contract_F_on (lib/A/Prog/reac_ctrl_identity_fragment_c.v, a Theorem Labs lane
-     4777545c654 blob 0359af7161a; proved closed by a Theorem Labs lane's
-     reac_ctrl_identity_fragment_F_on.reac_ctrl_identity_fragment_F_holds_on_closed, 6db4ffd630a);
+     blob 0359af7161a; proved closed by a Theorem Labs lane's
+     reac_ctrl_identity_fragment_F_on.reac_ctrl_identity_fragment_F_holds_on_closed);
    - the premise `shadow_rw m` is DROPPED (with its intro HSW, its normalized copy HSWn and their clear): the run
      reads and stores no shadow byte itself, and its one use was the callee's shadow premise.  The narrowed callee
      premise is shadow_rw_on (reac_ctrl_identity_fragment_shadow_R f fr len pa pp pn st g); its region starts with

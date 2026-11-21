@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv witnesses of rauxv_ok are read by their own pattern, and the arm bounds unfold GLOBALS_TOP and LX_FUZZ_STACK before lia). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -116,11 +117,39 @@ Section FZ.
     split; [exact (T1 LXS)|]. split; [exact LXF'|]. split; [exact (T2 SEW)|].
     split.
     { eapply rauxv_ok_frame; [exact AUX| exact MU| exact WM|]. eapply Forall_impl; [| exact FW]. intros [l h] Hiv. cbn [fst snd].
-      pose proof AUX as (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & AUXB & _).
+      (* rauxv_ok (MallocP/RMallocTree.v:321-328) binds FIVE witnesses -- av, axv, rnd,
+         execfn, r -- then rw_cells, two bytes_at, alloc_ceiling <= B, and B <= av.  The old
+         pattern had three, so its fourth and fifth [_] fell on execfn and r and tried to
+         clear variables the bytes_at conjunct still mentions: "This variable is used in
+         hypothesis AUXB".  AUXB is B <= av either way. *)
+      pose proof AUX as (? & ? & ? & ? & ? & _ & _ & _ & _ & AUXB & _).
+      (* LPS revision repair, MEASURED: the probe that stood here printed arm 2's goal
+         after the injection as
+             3052352 + 1 <= B /\ (3052352 + 1 <= 3195168 \/ 3195168 + 8 <= 3052352)
+         so the arm count was never the problem and the second disjunct is the true one.
+         What fails is the FIRST conjunct: `3052353 <= B` needs GLOBALS_TOP and
+         LX_FUZZ_STACK as numbers, and they are opaque Definitions, so lia has nothing to
+         work with.  The chain is already in the Section - LOG : GLOBALS_TOP <= lo,
+         LOSP : lo <= usp - LX_FUZZ_STACK, SPB : usp <= B - and this file's own idiom (the
+         `unfold LX_ERRNO, RATP, GLOBALS_TOP, flags_addr, LX_FLAGS in *` three lines below)
+         is to unfold them before the lia.  Both probes are removed with the repair. *)
       unfold RAUXV_CELL. destruct Hiv as [(H1 & H2)|[E|(b & Hb & H1 & H2)]]; cbn [fst snd] in *.
       - split; [lia|]. right. lia.
-      - injection E as -> ->. unfold LX_FLAGS. split; [lia|]. left. lia.
-      - pose proof (LH_block_range _ _ _ b HP ltac:(apply in_or_app; left; exact Hb)) as (_ & _ & _ & R4 & R5). split; [lia|]. lia. }
+      - injection E as -> ->. unfold LX_FLAGS, GLOBALS_TOP, LX_FUZZ_STACK in *.
+        split; [lia|]. left. lia.
+      (* ARM 3 NEEDS THE SAME UNFOLD AS ARM 2 AND DID NOT GET IT.  The round's first error
+         in this file is now :139 chars 120-123, i.e. the `lia` inside `split; [lia|]` on
+         THIS arm, not the `[lia|]` on arm 2 the predecessor repaired at :137.  The first
+         conjunct is the same `GLOBALS_TOP + 1 <= B`, and the same chain discharges it
+         (LOG : GLOBALS_TOP <= lo, LOSP : lo <= usp - LX_FUZZ_STACK, SPB : usp <= B), but
+         only once GLOBALS_TOP and LX_FUZZ_STACK are numbers: both are opaque Definitions,
+         so lia sees three unrelated atoms.  Arm 1 at :136 does not need it because its own
+         H1/H2 give the bound directly, which is why the repair looked complete after
+         an earlier build and was not.  R4/R5 from LH_block_range stay the
+         second conjunct's evidence and are untouched. *)
+      - pose proof (LH_block_range _ _ _ b HP ltac:(apply in_or_app; left; exact Hb)) as (_ & _ & _ & R4 & R5).
+        unfold LX_FLAGS, GLOBALS_TOP, LX_FUZZ_STACK in *.
+        split; [lia | lia]. }
     split.
     { exists errv. eapply rw_cells_agree; [exact AG| exact ERR|]. intros a Ha. cbn in Ha. apply OUT. right; left.
       unfold LX_ERRNO, RATP, GLOBALS_TOP, flags_addr, LX_FLAGS in *. lia. }

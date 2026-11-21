@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cjson/cjson_read_fuzzer/lib/A/F_vsnprintf.v, with its module paths and module names changed; 94 of its 114 lines of code are new or changed and 2120 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply.asan's snprintf interceptor chain: the STATEMENTS (evt level, GXA's form), at RT_IImgA.v's instance A_img.
 
    The chain (no musl snprintf frame in the ASan image; addresses and measurements in RT_pf_Tbl.v):
@@ -38,8 +39,8 @@
    HERE it is the NAMED premise snf_spill_ok (below), because this layer is CJ evt over the PLAIN BYTE MODEL
    (m : word -> option byte), where the slot predicate is forced to be GXA's own va_area (G_pop_arg.v:456), that
    being the premise of vsnprintf_x_stmt (G_vsnprintf.v:167).  A Theorem Labs lane's va_spill_words is the same fact one
-   layer up, over a reader rd = aview segs (w_H W) mem (FMsnprintfShared.v:36-39, reader at YG0f.v:265).
-   THE PAIRING, for the bridge owner (a Theorem Labs lane's FMgxa_bridge.v, a working branch efa2842e125 - the one place the
+   layer up, over a reader rd = aview segs (w_H W) mem (FMsnprintfShared.v:37-40, reader at YG0f.v:265).
+   THE PAIRING, for the bridge owner (a Theorem Labs lane's FMgxa_bridge.v, a working branch - the one place the
    two views meet):
      va_area m VA slots  <->  words_at rd (S - vs_off g) ws
      u64s slots          <->  ws = map (argZ regs) (map Z.of_nat (vs_regs g)) ++ xs  (a3..a7, then the caller's
@@ -50,7 +51,7 @@
    append of the two at VA + 8 * 5 = VA + PF_SPILL is the va_list area.  So nobody above the bridge owes a premise
    here; snf_spill_ok stays a named premise of snprintf_icpt_stmt only so that the seam is visible, and every
    caller discharges it with snf_spill_ok_all.  The ASan-side twin of the same fact, over the reader, is
-   FMsnprintfVa.v va_spill_words on a working branch 5724ded508c: ONE geometry across the units
+   FMsnprintfVa.v va_spill_words on a working branch: ONE geometry across the units
    (a Theorem Labs lane's asan_snprintf_spill), one text per model, no gap.
 
    What a caller supplies besides GXA's own premises: the runtime cells (RT_pf_bz.v sni_cells, vfi_cells),

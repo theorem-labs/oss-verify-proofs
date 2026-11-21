@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (STACK_SPAN as the guaranteed stack span in TCTX, TRET, TCTX_agree and TCTX_agree_nw). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0mx X0k2.
@@ -49,8 +50,8 @@ Definition TCTX (Σ : rts RT) (so : stdout_st) (f : Z) (usp buf cap plen d owned
 (c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 : word) (m : mem) : Prop :=
 ART RT Σ m /\ mem_inv bsegs m /\ CLX OUT_rep ERR_rep XENV1 LIB so m
 /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ tr_frame m (usp - 80) (Z_to_bv 64 0x96428) x0 x1 x2 x3 x4 x5 x6 x7
-/\ stk bsegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 160)
-/\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  /\ stk bsegs m (rt_sp0 RT Σ - STACK_SPAN) (usp - 160)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
 /\ rt_live RT Σ = tr_live plen owned buf cap /\ rt_frames RT Σ = []
 /\ plen = Z.of_nat (length payload) /\ plen < 2^26 /\ bytes_at bsegs m d payload
 /\ (plen = 0 -> d = TR_EMPTY /\ owned = 0) /\ (0 < plen -> d = owned) /\ 0 < cap /\ usp + 16 <= USTACK_TOP
@@ -89,8 +90,8 @@ ASTA RT Σ (PMfd fds0 fs)
 a1 a2 a3 a4 a5 a6 a7 x2 x3 x4 x5 x6 x7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0x96428) fc None m (seg_rom bsegs))) c
 /\ ART RT Σ m /\ mem_inv bsegs m /\ CLX OUT_rep ERR_rep XENV1 LIB so m
-/\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ stk bsegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-/\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+    /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ stk bsegs m (rt_sp0 RT Σ - STACK_SPAN) (usp - 80)
+    /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
 /\ rt_live RT Σ = [(buf, cap)] /\ rt_frames RT Σ = [] /\ usp + 16 <= USTACK_TOP
 /\ rw_cells bsegs m TR_INIT [C1 (Z_to_bv 8 0)].
 
@@ -122,7 +123,7 @@ Qed.
 
 Lemma TCTX_agree : forall Σ Σ' so so' f f' usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m m',
 TCTX RT OUT_rep ERR_rep XENV1 LIB Σ so f usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m ->
-ART RT Σ' m' -> mem_inv bsegs m' -> wmono bsegs m m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 160) ->
+  ART RT Σ' m' -> mem_inv bsegs m' -> wmono bsegs m m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_SPAN) (usp - 160) ->
 rt_sp0 RT Σ' = rt_sp0 RT Σ -> rt_live RT Σ' = rt_live RT Σ -> rt_frames RT Σ' = [] ->
 CLX OUT_rep ERR_rep XENV1 LIB so' m' ->
 agree_on (fun x => usp - 160 <= x < USTACK_TOP) m m' ->
@@ -148,7 +149,7 @@ Qed.
 
 Lemma TCTX_agree_nw : forall Σ Σ' so so' f f' usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m m',
 TCTX RT OUT_rep ERR_rep XENV1 LIB Σ so f usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m ->
-ART RT Σ' m' -> mem_inv bsegs m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 160) ->
+  ART RT Σ' m' -> mem_inv bsegs m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_SPAN) (usp - 160) ->
 rt_sp0 RT Σ' = rt_sp0 RT Σ -> rt_live RT Σ' = rt_live RT Σ -> rt_frames RT Σ' = [] ->
 CLX OUT_rep ERR_rep XENV1 LIB so' m' ->
 agree_on (fun x => usp - 160 <= x < USTACK_TOP) m m' ->
@@ -208,8 +209,8 @@ Definition TCTX (Σ : rts RT) (so : stdout_st) (f : Z) (usp buf cap plen d owned
 (c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 : word) (m : mem) : Prop :=
 ART RT Σ m /\ mem_inv asegs m /\ CLX OUT_rep ERR_rep XENV1 LIB so m
 /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ tr_frame m (usp - 80) (Z_to_bv 64 0x9633c) x0 x1 x2 x3 x4 x5 x6 x7
-/\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 160)
-/\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  /\ stk asegs m (rt_sp0 RT Σ - STACK_SPAN) (usp - 160)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
 /\ rt_live RT Σ = tr_live plen owned buf cap /\ rt_frames RT Σ = []
 /\ plen = Z.of_nat (length payload) /\ plen < 2^26 /\ bytes_at asegs m d payload
 /\ (plen = 0 -> d = TR_EMPTY /\ owned = 0) /\ (0 < plen -> d = owned) /\ 0 < cap /\ usp + 16 <= USTACK_TOP
@@ -248,8 +249,8 @@ ASTA RT Σ (PMfd fds0 fs)
 a1 a2 a3 a4 a5 a6 a7 x2 x3 x4 x5 x6 x7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0x9633c) fc None m (seg_rom asegs))) c
 /\ ART RT Σ m /\ mem_inv asegs m /\ CLX OUT_rep ERR_rep XENV1 LIB so m
-/\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-/\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+    /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ stk asegs m (rt_sp0 RT Σ - STACK_SPAN) (usp - 80)
+    /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
 /\ rt_live RT Σ = [(buf, cap)] /\ rt_frames RT Σ = [] /\ usp + 16 <= USTACK_TOP
 /\ rw_cells asegs m TR_INIT [C1 (Z_to_bv 8 0)].
 
@@ -281,7 +282,7 @@ Qed.
 
 Lemma TCTX_agree : forall Σ Σ' so so' f f' usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m m',
 TCTX RT OUT_rep ERR_rep XENV1 LIB Σ so f usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m ->
-ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 160) ->
+  ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' (rt_sp0 RT Σ - STACK_SPAN) (usp - 160) ->
 rt_sp0 RT Σ' = rt_sp0 RT Σ -> rt_live RT Σ' = rt_live RT Σ -> rt_frames RT Σ' = [] ->
 CLX OUT_rep ERR_rep XENV1 LIB so' m' ->
 agree_on (fun x => usp - 160 <= x < USTACK_TOP) m m' ->
@@ -307,7 +308,7 @@ Qed.
 
 Lemma TCTX_agree_nw : forall Σ Σ' so so' f f' usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m m',
 TCTX RT OUT_rep ERR_rep XENV1 LIB Σ so f usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m ->
-ART RT Σ' m' -> mem_inv asegs m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 160) ->
+  ART RT Σ' m' -> mem_inv asegs m' -> stk asegs m' (rt_sp0 RT Σ - STACK_SPAN) (usp - 160) ->
 rt_sp0 RT Σ' = rt_sp0 RT Σ -> rt_live RT Σ' = rt_live RT Σ -> rt_frames RT Σ' = [] ->
 CLX OUT_rep ERR_rep XENV1 LIB so' m' ->
 agree_on (fun x => usp - 160 <= x < USTACK_TOP) m m' ->

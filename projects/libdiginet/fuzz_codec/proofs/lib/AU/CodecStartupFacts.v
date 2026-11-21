@@ -3,17 +3,18 @@
 (* Modified by Theorem Labs, 2026-10: the start-up facts of libreac/fuzz_identity's ASan build (image A) that
    lib/A/Prog/IdentEntryLink.v (Section L) takes as the Hypotheses GM (:250), IV (:251), ZS_STEM (:340), ZS_NAME (:341),
    HUMM (:680) and HUMF (:683), each proved here with that Hypothesis's text as its conclusion. The checks and their
-   lemmas are ported from fuzz_grant's closer (d110b9a519a, proofs/libreac/fuzz_grant/lib/A/Prog/
-   GrantCloseChk.v:38-145 and GrantClose.v:200-287); the universe check is cgif's ACee.v:80 pattern (c8557374ad2e) in
+   lemmas are ported from fuzz_grant's closer (proofs/libreac/fuzz_grant/lib/A/Prog/
+   GrantCloseChk.v:38-145 and GrantClose.v:200-287); the universe check is cgif's ACee.v:80 pattern in
    the start-up AD2l.v's In_of_existsb form. One change in substance: the glob check is RELAXED (see glob_chk_relaxed). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/IdentStartupFacts.v
-   (origin/ossv/recipes 4b6f0df50aa7) for libdiginet/fuzz_codec's ASan + UBSan build (image B, fuzz_codec.asan-ubsan
+   for libdiginet/fuzz_codec's ASan + UBSan build (image B, fuzz_codec.asan-ubsan
    sha256 73109e32e77b...), as lib/A/CodecStartupFacts.v is for image A: module paths changed; the copied tables are
    fuzz_codec.asan-ubsan's; the facts are GM and IV over the 40 registered globals CODEC_GLOBS
    (lib/AU/Prog/CodecGlobs.v) and any segment list; identity's ZS_STEM / ZS_NAME (two of its tables) become one decision
    lemma codec_in_zs_of_b for any range, and its HUMM / HUMF (allocator traces) are dropped with their premises
    HUNIV / HRA0M / HRA0F, because fuzz_codec's harness calls no allocator. Added: a closed satisfiability lemma,
    codec_startup_sat, at the start state's shadow as the copied tables state it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The record: premises, not the core. Image B's start-up record is not on this branch, and the start-up file
    lib/AU/YF0m.v does not build here (it requires lib/AU/YF0l.v, which this branch does not carry). So, as
    fuzz_identity's file does, the facts are stated in a Section over `Variable CodecB : asyms` with one
@@ -21,15 +22,15 @@
      HZS    : as_zero_shadow CodecB = TFIB_ZERO_SHADOW_B                           (GM, IV, codec_in_zs_of_b)
      HCONST : forall ly, exists pre, as_const CodecB ly = pre ++ TFIB_CONST_SHADOW_B (GM, IV)
    HCONST asks only that the copied shadow cells are the tail of the record's const list, because the proofs read no
-   other const cell: YF0m.v:1203 has Tfib_const ly := Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow. No AR law
+   other const cell: YF0m.v:1204 has Tfib_const ly := Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow. No AR law
    is a premise: the zero-shadow ranges and the const cells are fields of AR's first conjunct ARm (am_zshadow,
    am_const: Reusable/YG0n.v), so LAWS (AR_laws) is not needed.
-   A record that is an instance of YF0m.v's TfibSyms meets both premises: HZS from ts_zsh (YF0m.v:1238) and the
-   copy's equality to Tfib_zero_shadow; HCONST from ts_const (YF0m.v:1234) with
+   A record that is an instance of YF0m.v's TfibSyms meets both premises: HZS from ts_zsh (YF0m.v:1239) and the
+   copy's equality to Tfib_zero_shadow; HCONST from ts_const (YF0m.v:1235) with
    pre := Tfib_const_sym ++ Tfib_const_abs and app_assoc.
    Sources of the copies (each body below is the source's text, line for line):
-     TFIB_ZERO_SHADOW_B  = Tfib_zero_shadow,  lib/AU/YF0m.v:1205
-     TFIB_CONST_SHADOW_B = Tfib_const_shadow, lib/AU/YF0m.v:715-1202 (488 one-byte cells)
+     TFIB_ZERO_SHADOW_B  = Tfib_zero_shadow,  lib/AU/YF0m.v:1206
+     TFIB_CONST_SHADOW_B = Tfib_const_shadow, lib/AU/YF0m.v:716-1203 (488 one-byte cells)
        (YF0m.v sha256 9d80323007d19ff26002fd29841df37459fb6f71b602a6f7ba16b45671539f4e, generated from
        fuzz_codec.asan-ubsan; the zero-shadow list is also lib/AU/YF0mImg.v's, which is on this branch).
    Measured against the image (a pyelftools read of fuzz_codec.asan-ubsan's asan_globals section): for each of the 40

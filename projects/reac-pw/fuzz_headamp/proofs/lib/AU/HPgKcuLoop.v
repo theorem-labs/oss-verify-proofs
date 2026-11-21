@@ -1,17 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v at 77f59d02b01 (the engine run from a fresh entry state and
+(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v (the engine run from a fresh entry state and
    its re-seat at a fixed pc) for the value dispatch and the Int arm of reac-pw/fuzz_role's image-A segment M02
    (0x82318 .. 0x823e0). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyI.v at 7e8cf15c304 (the run / branch
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyI.v (the run / branch
    / exit pattern of a value dispatch, the entry state re-seated once the value entry's address is formed) and
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v at 7e8cf15c304 (m2k_ent_type_slice, m2k_ent_size_slice,
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v (m2k_ent_type_slice, m2k_ent_size_slice,
    m2k_ent_word_slice) for reac-pw/fuzz_headamp image A: the m2i_ / m2k_ prefixes are renamed hvd_, every address
    is headamp's own, role's two arms and its MAL exit are replaced by headamp's Bool and Int arms with their five
    exits, and the cuts are lib/A/HPgSegM.v's and lib/A/HPgM3dBase.v's. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgM3dDisp.v, with its module names and addresses changed; 1442 of its 1596 lines of code are new or changed and 516 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgM3dDispU.v, with its module paths and module names changed; 830 of its 923 lines of code are new or changed and 1503 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgKcLoop.v at bba3a77011a0; the same two
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgKcLoop.v; the same two
    loop turns for image B. Image B's code differs from image A's at every instruction of this range: B tests the
    cursor after each step against the one's complement of the string's start (four UBSan trap branches here), B
    reads the sign and the first digit inside its digits loop (A reads them in a block of its own before it), B
@@ -20,6 +20,7 @@
    lemmas below are B's own; what is ported is the shape (a read-only region of one byte, an alias fact, one
    shadow entry, srr_branch_tok on each test, a post that keeps the journal and the registers outside the block's
    clobber list) and the model lemmas of read_channel. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address below is measured on the
    unstripped twin 1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, whose loaded sections are

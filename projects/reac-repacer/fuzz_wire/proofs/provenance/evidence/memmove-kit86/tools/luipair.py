@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""luipair.py -- the kit 86da41d3ef68 FAIL-OPEN #3 check (registry 91ef6306668): TWO lui values combined by
+"""luipair.py -- the kit 86da41d3ef68 FAIL-OPEN #3 check (registry): TWO lui values combined by
 add / sub / sh{1,2,3}add into ONE load / store / jalr / AMO base are not compared as an address by strictcmp3 (each lui
 is judged alone, so `lui; lui; add; ld` on two different objects can read EQUAL-mod-pcrel with exposure 0).
 

@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: off_img's image bounds cite fuzz_knock's image (YImgTop.IMG_LO, YImgTop.IMG_TOP = 0x5f3000, both knock ASan builds) in place of cgif's 0x10000 and 0x5fb000. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_headamp. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_headamp. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Reusable/YCbq.v, with its module paths and module names changed; 986 of its 1333 lines of code are new or changed and 2813 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the journal lemmas rdp_aj_write_U, rdp_ecall_preU_k and rdp_aj_roU of
-   proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_rd_pre_k.v (lines 494-584 at origin/ossv/recipes 09c6822d886), the
+   proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_rd_pre_k.v (lines 494-584), the
    frame law ARU_frame of lib/A/FMupoison.v (lines 166-187) and the post rt_post_roU of lib/A/FMH_Rt.v (lines 97-104)
    of the same tree, restated for a hole in the shadow of a real-stack frame in place of fuzz_manifest's user-poisoned
    heap granules; the chunk runners SRr_chain_tok_AJ / SRr_run_tok_AJ / SRr_run_to_tok_AJ / SRr_chain_AJ /
    SRr_run_AJ / SRr_run_to_AJ of lib/Reusable/YCbq.v (lines 2408-2546) restated with the journal over the unpoisoned
    memory. The rest is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgHole.v, with its module paths, module names and addresses changed; 27 of its 55 lines of code are new or changed and 1305 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; addresses measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, whose loaded sections are byte-equal to the pin's except .note.gnu.build-id):

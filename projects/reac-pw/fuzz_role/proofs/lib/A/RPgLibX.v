@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: role_ffl is proofs/libreac/fuzz_knock/lib/A/APgLib.v link_FFL at origin/ossv/recipes
-   6ebe35ba632 (in the form proofs/libreac/fuzz_decode/lib/A/DecodeARtStackMalloc.v dec_ffl states it, without the
+(* Modified by Theorem Labs, 2026-10: role_ffl is proofs/libreac/fuzz_knock/lib/A/APgLib.v link_FFL
+    (in the form proofs/libreac/fuzz_decode/lib/A/DecodeARtStackMalloc.v dec_ffl states it, without the
    unfold of YImgTop's notations), at reac-pw/fuzz_role's image A and its start-up record TfibB; the rest of the file
    is written new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image A (fuzz_role.asan, pinned sha256
    614cffc0864cc31d9d1ced61322c4efd567b64bc89fe09a227a05b5126e0debb; addresses from the unstripped twin
    6da77bafc5c050954dd89149e1e55a24064c2211e3cbd351822d1c0a20900ad6): lib/A/RPgLib.v's statement of the walk of

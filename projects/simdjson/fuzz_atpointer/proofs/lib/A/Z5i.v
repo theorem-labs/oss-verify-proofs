@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -65,7 +66,7 @@ Qed.
 
 Lemma fobj_pres_ex_stack : forall Σ Σ' live sp d n0 m m' a n, ART RT Σ m -> fobj RT Σ m a n ->
   rt_pres_ex live (rt_frames RT Σ) sp d n0 m m' -> (forall e, In e (rt_live RT Σ) -> In e live) -> rt_frames RT Σ' = rt_frames RT Σ ->
-  rt_sp0 RT Σ - STACK_WIN <= d -> fobj RT Σ' m' a n.
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= d -> fobj RT Σ' m' a n.
 Proof using AF.
   intros Σ Σ' live sp d n0 m m' a n HA FO PRES SUB FRS DLO.
   apply (fobj_agree RT AF Σ Σ' m m' a n HA FO FRS).
@@ -86,7 +87,7 @@ Proof using AF.
 Qed.
 
 Lemma fresh_apart_l : forall Σ1 m1 (l1 L : list (Z * Z)) p n usp a,
-  ART RT Σ1 m1 -> rt_live RT Σ1 = l1 ++ L -> In (p, n) l1 -> rt_sp0 RT Σ1 - STACK_WIN <= usp -> aclient L (rt_frames RT Σ1) usp a -> ~ (p <= a < p + n).
+  ART RT Σ1 m1 -> rt_live RT Σ1 = l1 ++ L -> In (p, n) l1 -> rt_sp0 RT Σ1 - STACK_WIN + STACK_GAP <= usp -> aclient L (rt_frames RT Σ1) usp a -> ~ (p <= a < p + n).
 Proof using AF.
   intros Σ1 m1 l1 L p n usp a ART1 LV INP LOW Ha Hr.
   assert (INP1 : In (p, n) (rt_live RT Σ1)) by (rewrite LV; apply in_or_app; left; exact INP).
@@ -104,7 +105,7 @@ Proof using AF.
     pose proof (af_fshadow_apart RT AF Σ1 m1 f k ART1 Hin) as (X & _). specialize (X p n INP1). lia.
 Qed.
 
-Lemma not_live_stack : forall Σ m x, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= x -> ~ in_live (rt_live RT Σ) x.
+Lemma not_live_stack : forall Σ m x, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= x -> ~ in_live (rt_live RT Σ) x.
 Proof using AF. intros Σ m x HA Hx (p & n & Hin & Hp). pose proof (af_live_range RT AF Σ m p n HA Hin). lia. Qed.
 
 Lemma not_live_frame : forall Σ m f k x, ART RT Σ m -> In (f, k) (rt_frames RT Σ) -> f <= x < f + fs_size k -> ~ in_live (rt_live RT Σ) x.

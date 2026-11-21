@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/AsanKAProof.v (origin/ossv/recipes 88154566652a) for reac-repacer/fuzz_uci's image A, with its module paths changed. *)
+(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/AsanKAProof.v for reac-repacer/fuzz_uci's image A, with its module paths changed. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes ZBridge.

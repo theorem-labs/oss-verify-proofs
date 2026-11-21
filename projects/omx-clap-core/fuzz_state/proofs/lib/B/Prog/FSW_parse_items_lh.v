@@ -2,8 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) the member loop's helper lemmas of parse_items on image B,
    under parse_items_spec k's entry premises (Section hypotheses, the A walk's list and order).
-   B-LOCAL PORT of the helper half of the A walk's lib/A/FSW_parse_items_loop.v (a working branch
-   4480a5df1ae, lines 196-745, a Theorem Labs lane) and of lib/A/FSW_parse_items_mem.v's frame lemmas (same commit), renamed
+   B-LOCAL PORT of the helper half of the A walk's lib/A/FSW_parse_items_loop.v (a working branch,
+   lines 196-745, a Theorem Labs lane) and of lib/A/FSW_parse_items_mem.v's frame lemmas (same commit), renamed
    pi_ -> pil_. Changes, all from image B's registers and frame (FSW_parse_items_seg.v, FSW_parse_items_loop.v):
      - the resume env's base atoms are 9 (s1 = q) and 19 (s3 = v), A's are 8 and 20 (pil_env_at, pil_awr_rgs,
        pil_treg_disj, pil_frameL_of, pil_csL_ok);
@@ -14,6 +14,7 @@
      - B calls skip_ws, so A's white-space conditions (pi_wsc, pi_conds_ws) are replaced by the one guard
        in->p < in->end (pil_conds_wsc0).
    rule 24: proves no function (kind: helper lemmas). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

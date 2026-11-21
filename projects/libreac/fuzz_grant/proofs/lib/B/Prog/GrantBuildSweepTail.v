@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the tail cut of reac_grant_build_sweep's walk on fuzz_grant's ASan build; it adapts the walk of a function with a side-stack frame of proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v and lib/A/AChd.v, and the caller-journal call of lib/YC20.v:311-365; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) port of lib/A/Prog/GrantBuildSweepTail.v at a working branch eacc832ec38a (blob 24db0f02dea, the blob the walk was ported from), which adapts the walk of a function with a side-stack frame of proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v and lib/A/AChd.v and the caller-journal call of lib/YC20.v:311-365. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) port of lib/A/Prog/GrantBuildSweepTail.v at a working branch (blob 24db0f02dea, the blob the walk was ported from), which adapts the walk of a function with a side-stack frame of proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v and lib/A/AChd.v and the caller-journal call of lib/YC20.v:311-365. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_grant_build_sweep (fuzz_grant.asan-ubsan 0x855fc) on image B: the tail's cut lemma (GrantBuildSweepLib.v,
    bs_tail_spec). From the instruction after the width loop (0x85890), with the 3 * width values in the frame's
    values buffer, through al's shadow check re-read through the slot at s1 + 48 (on z = false the slow path
@@ -234,8 +235,8 @@ SRr SEGS W (cfg_at SEGS (BASE + AF_reac_ctrl_build_grant_sweep) regs memc mdc)
 (P STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs s mx base w V vals).
 Lemma tbgs_spec_with_C : C.tb_reac_ctrl_build_grant_sweep_spec B -> tbgs_spec_with (C.tb_reac_ctrl_build_grant_sweep_post B).
 Proof. exact (fun H => H). Qed.
-(* The callee's post as image A states it (lib/A/Prog/CtrlBuildGrantSweepSpec.v tbgs_post, a working branch
-   eacc832ec38a), with tcj_kept's set of bytes the call may write guarded by bgs_ok: GrantBContracts.v's post states
+(* The callee's post as image A states it (lib/A/Prog/CtrlBuildGrantSweepSpec.v tbgs_post, a working branch),
+   with tcj_kept's set of bytes the call may write guarded by bgs_ok: GrantBContracts.v's post states
    the same text (C.tb_reac_ctrl_build_grant_sweep_post). *)
 Definition tbgs_post_g (STK sp0 : Z) (FP : list (Z * Z)) (ly : alayout) (S : astate)
 (W0 : world SEGS) (mem0 : word -> option byte) (md0 : Model) (own : list (Z * Z))

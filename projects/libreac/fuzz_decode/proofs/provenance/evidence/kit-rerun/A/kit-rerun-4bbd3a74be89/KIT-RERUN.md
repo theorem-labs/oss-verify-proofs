@@ -9,14 +9,14 @@ the kit and states what changed. It changes no .v file and no theorem; it is pro
 ## 1. Tools
 
 | what | sha256 (12) | where |
-| cmpkit (the kit id = first 12 of sha256(SHA256SUMS)) | 4bbd3a74be89 | hub HUB, commit 3c3e62ee2786af6133699ff6684d17d66adcb03c (BRANCH), tools/cmpkit/4bbd3a74be89/ |
+| cmpkit (the kit id = first 12 of sha256(SHA256SUMS)) | 4bbd3a74be89 | hub HUB, (BRANCH), tools/cmpkit/4bbd3a74be89/ |
 | strictcmp2.py (THE one compare: tcmp / tsame) | 16982e3ef42b | kit member |
 | drvcmp.py (loader; `twins`) | 4d70e90bc1fa | kit member |
 | bytecmp-1480ca2faea0.py (words / auipc dataflow / cmp) | 1480ca2faea0 | kit member |
 | repin_check-4c05cadaeba3.py (shared Img; used by drvcmp and by controls/negctl.py) | 4c05cadaeba3 | kit member |
 | repin_check e5487165abb8 (the OLD tool controls/negctl.py compares against) | e5487165abb8 | same BRANCH commit, tools/repin_check/e5487165abb8/repin_check.py |
 
-The kit was extracted into one directory holding exactly its seven files (`git -C <hub> archive 3c3e62ee2786 …`);
+The kit was extracted into one directory holding exactly its seven files (`git -C <hub> archive …`);
 `sha256sum -c SHA256SUMS` OK for all seven, and sha256(SHA256SUMS)[:12] = 4bbd3a74be89.
 controls/negctl.py loads the old repin_check from a fixed path, NEGCTL_ROOT/tools/
 repin_check/e5487165abb8/repin_check.py; that lane's worktree is gone, so the file was written there from the same
@@ -227,9 +227,9 @@ therefore cannot have mis-selected a copy for anything this record covers.
 
 FUNCPAIR NAME CHECK: unique 7 / duplicated 0 ()
 
-## 6. Every numeral the 47 released headers cite (hub 88154566652a)
+## 6. Every numeral the 47 released headers cite
 
-Scope: at commit 88154566652a (Merge pull request #412: Pau proofs (libreac/fuzz_decode)) 47 shipped .v files say
+Scope: (Merge pull request #412: Pau proofs (libreac/fuzz_decode)) 47 shipped .v files say
 `its N image addresses moved by code-verified function pairs (N port_addr_check 0767e70e074a MAPS predictions, each
 code one re-derived by funcpair.py; K code pcs the tool read as sizes, by funcpair.py)`, and some add `and C pcs
 named in comments`. The addresses themselves are the changed numerals of the file, with file:line, in the
@@ -286,7 +286,7 @@ the function start 0x31550 (moved to 0x318f0 / 0x318f4 / 0x318e4 / 0x3192c / 0x3
 three cgif globals 0xa0098 / 0xa3aa0 / 0xa2c18 (moved to 0x9abc0 / 0x9e5e0 / 0x9d758).
 
 One bookkeeping mismatch, prose only: AGif0cgif.v's header says 0 pcs named in comments while numdiff lists 3 (the
-line-57 globals). The prose fix that moved them (provenance/alloc-reloc/A/fix_prose.py, 1e58b7cb018) ran after the
+line-57 globals). The prose fix that moved them (provenance/alloc-reloc/A/fix_prose.py) ran after the
 header sentence was written. No term is affected.
 
 ## 7. Verdict

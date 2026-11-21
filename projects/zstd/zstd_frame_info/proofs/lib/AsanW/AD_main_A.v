@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (geoA restated for ALO inside the 6,144,513-byte stack window below sp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -95,7 +96,7 @@ Section A.
     bytes_at asegs mm (usp + 8) (u64s [wz P0]) /\ astring usp mm P0 arg0 slack0 RA0
     /\ (2 <= argc -> bytes_at asegs mm (usp + 16) (u64s [wz P1]) /\ astring usp mm P1 arg1 slack1 RA1).
 
-  #[using="USP16 USPLO USPHI"] Lemma geoA : ATOP <= LO /\ LO + 8388608 - 4096 = usp /\ KHIGH <= LO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
+  #[using="USP16 USPLO USPHI"] Lemma geoA : ATOP <= LO /\ LO + 6144512 = usp /\ KHIGH <= LO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
   Proof. clear BOT. unfold ALO, KHIGH in *. repeat split; lia. Qed.   (* [comment removed for export] *)
 
   #[using="VARGV"] Lemma argc_facts : 1 <= argc <= 1024.

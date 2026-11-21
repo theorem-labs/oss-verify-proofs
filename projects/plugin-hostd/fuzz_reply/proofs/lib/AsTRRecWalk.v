@@ -15,7 +15,7 @@
    loop runs while IsValidFrame(frame, top, bottom), frame mod 8 = 0 and size < max_depth; it reads pc1 = frame[-1],
    stops when pc1 < page size, records pc1 unless pc1 = pc, sets bottom = frame and moves to frame[-2]. A frame
    record is (fp, ra) with ra = the word at fp - 8 and the next frame the word at fp - 16, the convention of the
-   released chain (origin/ossv/recipes 754c3cdb4cc, boost-beast lib/As/AsChain.v achain: map snd CH is the return
+   released chain (boost-beast lib/As/AsChain.v achain: map snd CH is the return
    addresses). It differs from achain in where it ends: achain ends at cur <= aceil or cur mod 8 <> 0; wchain ends
    where UnwindFast's own test ends the walk (against the moving bottom, see AsTRWalkStop.v), which is what
    wchain_one below uses at a non-stack s0.

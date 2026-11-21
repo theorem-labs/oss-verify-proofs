@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sys_rob_instr for the silent steps). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common Require Import ShapeAlg ShapeAlgCfg.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState Mem Exec.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.LibA Require Import ExecA.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common.Cfg Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -470,7 +472,8 @@ Lemma rzA_step_disjoint_cfg : forall L ms mo ms' rs T,
 Proof.
   intros L ms mo ms' rs T Hh HL Hst Hrs Hc.
   destruct (sstep_disjoint L ms mo ms' rs Hh HL Hst Hrs) as [H1 H2].
-  eapply rz_silent1_cfg; [|exact Hc]. apply node1_cfg_of_sstep_instr; [exact (proj1 Hst)| exact H1| exact H2].
+  eapply rz_silent1_cfg; [| apply sys_rob_instr; exact (proj1 Hst) | exact Hc].
+  apply node1_cfg_of_sstep_instr; [exact (proj1 Hst)| exact H1| exact H2].
 Qed.
 
 Lemma rzA_evt_disjoint_cfg : forall L (Q : machine_state -> Prop) ms mo T,
@@ -496,6 +499,7 @@ Proof.
   - subst L. destruct (sstep_ok S N EB ms mo ms1 rs Hh HLI Hst Hrs) as (mo1 & Hag & HLI1 & Hh1 & Hss & Hinv).
     eapply rz_silent1_cfg.
     + apply node1_cfg_of_sstep_instr; [exact (proj1 Hst)| exact Hss| exact Hinv].
+    + apply sys_rob_instr. exact (proj1 Hst).
     + apply IH; [exact HQ| exact Hh1| exact HLI1| exact (magree_lazy _ _ Hag)|].
       intros ms' mo' HQ' Hag' HLI' Hh'. apply HK; auto. eapply magree_trans; eauto.
 Qed.

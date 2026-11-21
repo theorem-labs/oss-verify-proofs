@@ -1,10 +1,11 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact as a section hypothesis; TR_munmap gains the model's exact cut, maps_subtract equals map_remove; the frame K1 over MInvIm; the facts and the JIN and JOUT statements over Kvd, the caller's predicate with the vDSO fact; nt's contracts take only the frame condition of their world predicate). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "and"; "eq"; "not"; "ex"; "or"; "iff"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@Corelib.Init.Datatypes"; "list"; "pair"; "prod"; "bool"; "true"; "option"; "nat"; "cons"; "nil"; "Some"; "app"; "None"; "false"; "fst"; "snd"; "unit"; "negb"; "option_map"; "tt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "valuation"; "sv"; "sstate"; "rw"; "sobj"; "SVar"; "rm"; "SLit"; "ss_next"; "agree_below"; "smatch"; "sprop"; "SAlu"; "ss_objs"; "ss_pc"; "swf"; "ss_facts"; "eval"; "ob_base"; "ob_hi"; "ob_lo"; "mkSS"; "reg_sv"; "rl"; "SPBranch"; "SPUle"; "image_byte"; "obj_holds"; "obj_range"; "ss_lenient"; "SPNot"; "enc_bytes"; "mkVal"; "ranges_disjoint"; "ro_addr"; "rom_ok"; "ss_fcsr"; "ss_fregs"; "ss_regs"; "ss_resv"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "lt"; "sub"; "pow"; "of_nat"; "opp"; "modulo"; "lor"; "mul"; "to_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "sptr"; "region"; "ameta"; "astate"; "frame"; "st_init_done"; "fr_n"; "RkMap"; "rg_kind"; "rg_live"; "rkind"; "am_sc"; "rg_len"; "am_freed"; "am_maplen"; "am_mem"; "page_round"; "prid"; "am_next"; "am_prev"; "kreq"; "NEST_FUEL"; "nontrivial_free"; "AREA_HDR"; "FUser"; "METAS_PER_AREA"; "META_SIZE"; "am_avail"; "am_last"; "bit"; "fkind"; "fr_kind"; "free"; "ones"; "padd"; "st_areas"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "m_vmmaps"; "VmMaps"; "TASK_SIZE"; "map_has"; "page_size"; "vm_maps"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "Z_to_bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.ExampleMemcpy"; "segsP"; "NF"; "segsU"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_P"; "addr_of"; "mc_errno"; "mc_lock"; "mc_size_classes"; "mc_ctx"; "mc_tp"; "C_U"; "mc_replaced"; "mc_chk_guard"; "mc_chk_guard_got"; "mc_ctz_tab"; "mc_libc"; "mc_med_cnt_tab"; "mc_need_locks"; "mc_small_cnt_tab"; "topL"; "mc_img_hi"; "mc_img_lo"; "size_classes_bytes"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "assn"; "world"; "etriple"; "triple"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "ma_s"; "mkMA"; "MA"; "ma_L"; "ma_blocks"; "MInv"; "ma_owned"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "jpost"; "LQP"; "call_checkP"; "J_ofP"; "agree_vals"; "call_linkP"; "import_okP"; "import_post"; "state_vars_all"; "import_sub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "SP"; "jpred"; "stableJ"; "ok_frame"; "liftK"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G1.Mal_fslow_runs"; "fvar"; "FS_NEXT"; "reg"; "D_ret"; "O_lock"; "O_sct"; "F_win_facts"; "idx_of"; "O_errnoF"; "fs_cutsX"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Glue"; "rd_of"; "wok_of"; "wseg_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow.FP"; "C"; "E"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIfaceI"; "MInvI"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymFrame"; "wsub_get"; "rho_absorb"; "rho_sub"; "wsub"; "wsub_id_below"; "@Stdlib.Lists.List"; "In"; "forallb"; "tl";
 "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "U0"; "layout"; "frame_ptr"; "region_of"; "usedX"; "CTX_SIZE"; "ly_reg"; "active_hd"; "yields"; "MCell"; "VSec"; "frames"; "mcell"; "CTX_secret"; "LCtx"; "LMem"; "alloc_owned"; "image"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.BlockView"; "zP"; "rho1"; "@Corelib.Lists.ListDef"; "map"; "firstn"; "nth"; "seq"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_gpr"; "ms_mem"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "Pre_freeI"; "EC_P"; "J_free_preT"; "L_free"; "JL_free"; "V_DEPTH"; "mem_kept"; "vm_insensitive"; "MInvR"; "V_RES"; "ok_sideK"; "top_high"; "mem_kept_owned"; "alloc_static"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.FreeRelease"; "rs1"; "am1"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G1.Mal_fslow_I"; "n"; "rsv"; "slow_case"; "fixed7"; "h3_of"; "has_sct"; "wins"; "S1"; "zEnd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow_C.CallSite"; "x0"; "K1"; "errno_word"; "ret_facts"; "K0"; "nt_in_facts"; "nt_out_facts"; "unmap_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.Glue3"; "set_rm"; "with_mem"; "@LinuxProcessSemantics.Riscv.Instr"; "ALU_ADD"; "BC_EQ"; "instr"; "Ecall"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.NestTier"; "reach_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ZEval"; "toS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "leaf"; "sym_run"; "RsCut"; "instr_at"; "lf_state"; "mkLeaf"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow.Main"; "QF"; "okKs"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow_C"; "nt_out_facts"; "nt_in_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec"; "munmap_model"; "mmap_n"; "mmap_nZ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "rho_set_rw"; "ok_pframe"; "ok_pframeJ"; "smatch_pending"; "state_has_rl"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.ObjXform"; "xform"; "apply_xforms"; "XMerge"; "XRebase"; "XSplit"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_free__G1.Mal_free_slow"; "fs_ff"; "fs_ret_call"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G1.Mal_fslow_runs.RP"; "c"; "e"; "segs"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G2.Mal_fslow_CC"; "LN"; "V_LEN"; "PreN"; "hdrX"; "V_BASE"; "addOF"; "XcG"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow.DrvInst"; "KcD"; "XFd"; "XPd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow.DrvInstS"; "KcS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv"; "JLd_free"; "drvN"; "vm_room"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractNT"; "L_nt"; "NTE_P"; "NTE_U"; "Pre_nt"; "V_RES1"; "magree"; "xzomb"; "ne_entry"; "nt_stack"; "ne_ret"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractS"; "JLdS_free"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow"; "rsv32_stmt"; "JL_ntRY"; "JL_ntR"; "nt_contractR"; "nt_contractR_P"; "nt_contractR_d"; "nt_contractR_d_P"; "nt_contractR_ex";
-"nt_contractR_ex_P"; "nt_contractR_exd"; "nt_contractR_exd_P"; "J_free_drvST"; "J_nt_preR"; "J_nt_preRG"; "XFd"; "XPd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail"; "entails_fr"; "entails"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.KillMap"; "km_s'"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfFrame"; "ub_same"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfFree"; "corr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_free__G1.Mal_free_fast"; "ff_nontrivial_free"; "ff_ctx"; "ff_entry"; "ff_libc"; "ff_lockword"; "ff_sctab"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow_C.CallSite.T"; "R2"; "@Corelib.Init.Peano"; "lt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCFG"; "infer_sub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.CallocLib"; "inclb"; "ro_view"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.RoomS"; "vm_roomS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_free__G2.Mal_free_quickE"; "J_free_drvT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow.NTR"; "JL_ntR"; "JL_ntRY"; "J_nt_preR"; "J_nt_preRG"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysStep"; "unmap_range"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymHeap"; "S_ret_lit"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.ObjUnbase"; "unbase_obj_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "T_after"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.BlockViewIface"; "L_SIZECLASSES"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.FreeQuickModel"; "frame_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocFooter"; "reserved_of"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ObjBytes"; "release_mem"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Zones2"; "xraw"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G2.Mal_fslow_T"; "QF"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_get_meta"; "v"; "@Stdlib.PArith.BinPos.Pos"; "eqb"; "lt"; "ltb"].
+"nt_contractR_ex_P"; "nt_contractR_exd"; "nt_contractR_exd_P"; "J_free_drvST"; "J_nt_preR"; "J_nt_preRG"; "XFd"; "XPd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail"; "entails_fr"; "entails"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.KillMap"; "km_s'"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfFrame"; "ub_same"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfFree"; "corr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_free__G1.Mal_free_fast"; "ff_nontrivial_free"; "ff_ctx"; "ff_entry"; "ff_libc"; "ff_lockword"; "ff_sctab"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow_C.CallSite.T"; "R2"; "@Corelib.Init.Peano"; "lt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCFG"; "infer_sub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.CallocLib"; "inclb"; "ro_view"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.RoomS"; "vm_roomS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_free__G2.Mal_free_quickE"; "J_free_drvT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow.NTR"; "JL_ntR"; "JL_ntRY"; "J_nt_preR"; "J_nt_preRG"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysStep"; "unmap_range"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymHeap"; "S_ret_lit"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.ObjUnbase"; "unbase_obj_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "T_after"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.BlockViewIface"; "L_SIZECLASSES"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.FreeQuickModel"; "frame_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocFooter"; "reserved_of"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ObjBytes"; "release_mem"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Zones2"; "xraw"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G2.Mal_fslow_T"; "QF"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_get_meta"; "v"; "@Stdlib.PArith.BinPos.Pos"; "eqb"; "lt"; "ltb"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "map_remove"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "maps_subtract"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI"; "MInvIm"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "Kvd"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 Require Stdlib.ZArith.ZArith.
 Require Stdlib.NArith.NArith.
@@ -260,6 +261,7 @@ SafS0S1S8SaSaS1cS1cA2M0S1cA2M1A1SdbS1fG1S1fS9G0S1cS9S1cS1cS2dR1A1S2fR1A1A4S2eR1A
 
 Variables (s : astate) (L : layout) (g : sptr) (am : ameta) (i : Z) (fr : frame).
 Variables (Kc : list event -> Model -> Prop) (rhoE : valuation) (tr0 : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Variables (m1 : word -> option byte) (a : sptr) (k : Z).
 Hypothesis Hfr : ltac2:(tb__ "0|2|
 Sc4SaSaSaS4eS50A2M0S6A2M1S52A2S9G1S52S9G0S6S9S4eS50Vg;Vam;A4Vi;A4Vfr;A4Sd2Vs;A1A3").
@@ -441,15 +443,15 @@ Definition K0 : list event -> Model -> Prop := ltac2:(tb__ "0|1|
 S8S73A1M0S72S0VKc;R2R1A2S0S1G0R2Vtr0;A3S1S72R1Vmd;A3A2A2Lmdx;Ltr;").
 
 Definition K1 (A' : MA) (m4 : word -> option byte) : list event -> Model -> Prop := ltac2:(tb__ "0|0|
-S8S73A1S72S0VKc;R2R1A2SbeVC;S10S4eA1S13SaS4eS6A2A1Sc7VA';Sb9Vsegs;Vm4;A2SbaVsegs;Vm4;A2S74R1A1A8A2Lmdx;Ltr;").
+S8S73A1S72S0VKc;R2R1A2S178Vsegs;VC;S10S4eA1S13SaS4eS6A2A1Sc7VA';Vm4;R1A8A2Lmdx;Ltr;").
 
-Definition nt_in_facts (rho : valuation) (tr : list event) (mdx : Model) : Prop := ltac2:(tb__ "0|6|
-S0S1S6S81VL;Vg;A2S7aQ40M0S1eVrho;PcA2A2A3S0S1S6Vi;S7aG0S1eVrho;PdA2A2A3S0SbeVC;S10S4eA1M1S11SaS4eS6A2S9S4eS6Vg;Vi;A4A2Sc7VA1;Sb9Vsegs;S21Vrho;A1M2A2SbaVsegs;G2A2S74Vmdx;A1A8S0ScbG1Vs1;Vg;Sf3Vam;Vi;A2M3A4S0S2S1SaSdS4eA1M4G4A2S9G4G4S61G3A1S60G3A1A4S9G4G4S13S4eA1M5G5A4A3A1S2S1G4SceVs1;S59G3A1A2S11S4eVg;A2A3A1S2S1S6S5bG3A1Z0A3A1F_;F_;S0S43S10cZ40S7aG0S1eVrho;Se9A2A2A2N180A2S0S10bVs1;A1S0S1S6S7aG0S1eVrho;P18A2A2S86VC;A1A3S0VKc;Vtr;Vmdx;A2SefVA1;Vrho;A2A2A2A2A2A2A2A2A2A2").
+Definition nt_in_facts (rho : valuation) (tr : list event) (mdx : Model) : Prop := ltac2:(tb__ "0|0|
+S0S1S6S81VL;Vg;A2S7aQ40S1eVrho;PcA2A2A3S0S1S6Vi;S7aQ40S1eVrho;PdA2A2A3S0SbeVC;S10S4eA1S11SaS4eS6A2S9S4eS6Vg;Vi;A4A2Sc7VA1;Sb9Vsegs;S21Vrho;A1A2SbaVsegs;S21Vrho;A1A2S74Vmdx;A1A8S0ScbS10S4eA1Vs1;Vg;Sf3Vam;Vi;A2A4S0S2S1SaSdS4eA1SdS4eA1A2S9SdS4eA1SdS4eA1S61Sf3Vam;Vi;A2A1S60Sf3Vam;Vi;A2A1A4S9SdS4eA1SdS4eA1S13S4eA1S13S4eA1A4A3A1S2S1SdS4eA1SceVs1;S59Sf3Vam;Vi;A2A1A2S11S4eVg;A2A3A1S2S1S6S5bSf3Vam;Vi;A2A1Z0A3A1F_;F_;S0S43S10cZ40S7aQ40S1eVrho;Se9A2A2A2N180A2S0S10bVs1;A1S0S1S6S7aQ40S1eVrho;P18A2A2S86VC;A1A3S0S179VKc;Vtr;Vmdx;A3SefVA1;Vrho;A2A2A2A2A2A2A2A2A2A2").
 
 Variable XP : ltac2:(tb__ "0|0|
 S9aSdSaSeS4fA2A1OF_;F_;").
-Definition nt_out_facts (rho0 rho' : valuation) (tr : list event) (mdx : Model) : Prop := ltac2:(tb__ "0|6|
-S7aQ40M0S1eVrho';SedA2A2S6S7aG0S1eVrho';S13bA2A2S6S3S9aS9aS0SbeVC;S10S4eA1M1S13SaS4eS6A2A1Sc7R1Sb9Vsegs;S21Vrho';A1M2A2SbaVsegs;G2A2S74Vmdx;A1A8S0S1Sc8S9bR1A1VL;A3S0S156G1Vs1;S98R1A1M3A3S0S155Vs1;G3A2S0S10bG3A1S0S1SbS53G3A1ScA3S0S4S0S1S6R2Z0M4A3S0S1S6R3G4A3VXP;R1S13SaSeS4fA2M5A1A2A2A2S0S45G4R2A2S3SeSeS3S4fS4fS0S1SdS4fA1ScaS98R3A1R2A2S11S4fR1A2A3S0S1S58S56R1A1S55A3S0S1SbS57R1A1ScA3S0S1S6S5aR1A1S5eR4A1A3S0S1S6ScdS9bR3A1R2A2R5A3S0S4eS50ScbG1S98R5A1R2R1A4S45G4S5cR2A1A2S2S1SeS5fS5dR3A1A1R6A3A1F_;F_;Faq;Fq;VXP;R3S11G5S9SeS4fR2R1A4A2A2A2A2A2A2A2A2Lrg;A2Lkr;A2A2A2S0Sf0VC;VA1;R1S21Vrho0;A1G2A5VKc;Vtr;Vmdx;A2A2A2A2A2A2A2A2A2LA';A2Tlen;Tbase;").
+Definition nt_out_facts (rho0 rho' : valuation) (tr : list event) (mdx : Model) : Prop := ltac2:(tb__ "0|0|
+S7aQ40S1eVrho';SedA2A2S6S7aQ40S1eVrho';S13bA2A2S6S3S9aS9aS0SbeVC;S10S4eA1S13SaS4eS6A2A1Sc7R1Sb9Vsegs;S21Vrho';A1A2SbaVsegs;S21Vrho';A1A2S74Vmdx;A1A8S0S1Sc8S9bR1A1VL;A3S0S156S10S4eA1Vs1;S98R1A1A3S0S155Vs1;S98R1A1A2S0S10bS98R1A1A1S0S1SbS53S98R1A1A1ScA3S0S4S0S1S6R2Z0A3S0S1S6R3Z0A3VXP;R1S13SaSeS4fA2A1A2A2A2S0S45Z0R2A2S3SeSeS3S4fS4fS0S1SdS4fA1ScaS98R3A1R2A2S11S4fR1A2A3S0S1S58S56R1A1S55A3S0S1SbS57R1A1ScA3S0S1S6S5aR1A1S5eR4A1A3S0S1S6ScdS9bR3A1R2A2R5A3S0S4eS50ScbS10S4eA1S98R5A1R2R1A4S45Z0S5cR2A1A2S2S1SeS5fS5dR3A1A1R6A3A1F_;F_;Faq;Fq;VXP;R3S11SaSeS4fA2S9SeS4fR2R1A4A2A2A2A2A2A2A2A2Lrg;A2Lkr;A2A2A2S0Sf0VC;VA1;R1S21Vrho0;A1S21Vrho';A1A5S179VKc;Vtr;Vmdx;A3A2A2A2A2A2A2A2A2LA';A2Tlen;Tbase;").
 
 Definition ret_facts (A' : MA) (rho4 : valuation) : Prop := ltac2:(tb__ "0|4|
 S0S1Sc8S9bVA';A1VL;A3S0S10bS98VA';A1M0A1S0S1SbS53G0A1ScA3S0S3S8SaS6S6A2M1A1M2G2S3G2G2S0S1G2S9cVA;A1S12G1R2SfG1S9S6S6Sd9VL;Vam;Vi;Vfr;A4Sf4Vfr;A1A4R1A3A3A3S1G2S9cVA';A1S12G1R2R1A3A3A2Ll2;A2Ll1;A2S0S7S174R1S7eA2S1S7bQ40M3A1S1eVrho4;R2A2S1eVrhoE;R2A2A3F_;Fj;S0S7S1S8S7bQ8A1A1S32Vrho4;R1A2S32SdaVL;Vg;Vam;Vi;Vfr;S11aS105VrhoE;Vm1;A2P89S7cG3Sf5Vam;Vfr;A2A2A3A6R1A2A3Fl;SeaVsegs;VC;VA;VA';S21VrhoE;A1S21Vrho4;A1A6A2A2A2A2A2A2").
@@ -705,7 +707,7 @@ Qed.
 
 Theorem L_Xnt : ltac2:(tb__ "0|0|
 S1bS24Sb0SdaVL;Vg;Vam;Vi;Vfr;S11aS105VrhoE;Vm1;A2P89S7cQ40Sf5Vam;Vfr;A2A2A3A6R1A3VTR;SaaVsegs;S101VX_nt;SfdA1R2A4VQF;A2F_;Frho2;").
-Proof using CONT0 CONT1 ERRIMG ERRLK Ev_misc Ev_ok HCc HMI1 HORD HSD HSI HTP HTPv HtopE Harea Hfr Hkind HnC HpC Hrc JIN JOUT M1blk M1out M1sct N0_ent N0_eq N1_ent N1_eq NLW NT N_swf RA_ok RA_shape SCT TN_ok TN_stk TR_callP TR_inhP TR_pre WSEG X_nt_objs X_nt_shape X_nt_stk Xc_eq Xc_swf Xs_ok call_ok imp_res okK sA_regs.
+Proof using CONT0 CONT1 ERRIMG ERRLK Ev_misc Ev_ok HCc HMI1 HORD HSD HSI HTP HTPv HtopE Harea Hfr Hkind HnC HpC Hrc JIN JOUT M1blk M1out M1sct N0_ent N0_eq N1_ent N1_eq NLW NT N_swf RA_ok RA_shape SCT TN_ok TN_stk TR_callP TR_inhP TR_pre WSEG X_nt_objs X_nt_shape X_nt_stk Xc_eq Xc_swf Xs_ok call_ok imp_res okK sA_regs Hvd.
   intros rho2 Hag2. apply TR_inhP. intros w0 [Hsm0 HK0w]. destruct w0 as [tr [ms mdx]]. cbn [w_tr w_cfg fst snd cfg_model] in HK0w.
   destruct HK0w as (HKc & Etr & Emd). subst tr mdx.
   destruct (at_cut rho2 tr0 ms Hag2 Hsm0) as (HsmC & HMI2 & M2M1).
@@ -760,7 +762,7 @@ Proof using CONT0 CONT1 ERRIMG ERRLK Ev_misc Ev_ok HCc HMI1 HORD HSD HSI HTP HTP
     split. { unfold V_DEPTH. rewrite S15. cbn [rho3] in W1, W2 |- *. rewrite depth_shift by (cbn [rw]; clear - W1 W2; lia). cbn [rw]. clear - W1 W2. lia. }
     split; [exact (FreeRelease.R_reach s g am i fr FFx Hreach)|].
     split. { cbn [eval]. rewrite Hrw3 by reflexivity. pose proof F_rhoF_rw_low as RL. rewrite (RL 24%positive) by reflexivity. cbn [rw set_rm]. exact HTPv. }
-    split; [exact HKc' | exact (TOPC ms')].
+    split; [exact (conj HKc' Hvd) | exact (TOPC ms')].
   -
     intros Lf JL tr ms' mdx rhoL tr' ms'' md' HinL Hsm [HKc' [-> ->]] Hag1 HsmL HJL.
     destruct HinL as [EL|[]]. injection EL as <- <-.
@@ -824,8 +826,8 @@ Proof using CONT0 CONT1 ERRIMG ERRLK Ev_misc Ev_ok HCc HMI1 HORD HSD HSI HTP HTP
       split. { intros l. rewrite R4l. unfold rhoP. cbn [rho_patch rl]. rewrite <- (proj2 Hag' l). cbn [rho3 rl]. symmetry. apply AGl. }
       intros a0 Ha HcA HcA' NE NS. rewrite R4m.
       assert (HMI4 : MInv C A' (rd_of segs (rm rhoP)) (wok_of segs (rm rhoP)) (m_vmmaps mdw)) by (apply (proj2 (MInv_MInvI _ _ _ _ _)); split; [exact HMP | exact Hreach']).
-      assert (NO : ~ ma_owned C A a0) by (apply (client_addr_not_owned segs C HSI WSEG A (set_rm rhoE m1) md a0); [unfold MInvR; cbn [rm set_rm]; exact HMI1 | exact HcA]).
-      assert (NO' : ~ ma_owned C A' a0) by (apply (client_addr_not_owned segs C HSI WSEG A' rhoP mdw a0); [unfold MInvR; exact HMI4 | exact HcA']).
+      assert (NO : ~ ma_owned C A a0) by (apply (client_addr_not_owned segs C HSI WSEG A (set_rm rhoE m1) md a0); [cbn [rm set_rm]; exact HMI1 | exact HcA]).
+      assert (NO' : ~ ma_owned C A' a0) by (apply (client_addr_not_owned segs C HSI WSEG A' rhoP mdw a0); [exact HMI4 | exact HcA']).
       assert (NB : ~ (zP <= a0 < zP + n)).
       { destruct (FreeRelease.R_blocks s g am i fr HW FFx Hkind L) as (l1 & l2 & E1 & E2). change (addr_of L (frame_ptr am i fr)) with zP in E1. change (fr_n fr) with n in E1.
         assert (EB' : ma_blocks A' = l1 ++ l2).
@@ -882,7 +884,7 @@ Proof using CONT0 CONT1 ERRIMG ERRLK Ev_misc Ev_ok HCc HMI1 HORD HSD HSI HTP HTP
       destruct (N0_ent x0) as (HE & HID & S180 & S181).
       pose proof (entails_sound segs (N0 x0) (D_ret c e true) _ _ _ HE HsmN0) as Hsm4.
       set (rho4 := rho_sub rhoP (infer_sub NF (N0 x0) (D_ret c e true))) in Hsm4.
-      exists (SP segs (K1 A' (rm rho4)) (D_ret c e true) rho4). split; [split; [exact Hsm4 | split; [exact HKcL | exact HMP]]|].
+      exists (SP segs (K1 A' (rm rho4)) (D_ret c e true) rho4). split; [split; [exact Hsm4 | split; [exact (proj1 HKcL) | split; [exact HMP | exact (proj2 HKcL)]]]|].
       apply (CONT0 A' rho4).
       * apply RF0; [intros j Hj; unfold rho4; cbn [rho_sub rw]; rewrite (wsub_get_id _ NF j HID Hj); reflexivity | intros l; reflexivity | reflexivity].
       * unfold rho4. cbn [rho_sub rw]. rewrite S181. cbn [eval]. rewrite ELN. exact Hlen0.
@@ -929,7 +931,7 @@ Proof using CONT0 CONT1 ERRIMG ERRLK Ev_misc Ev_ok HCc HMI1 HORD HSD HSI HTP HTP
       destruct (N1_ent x0) as (HE & HID & S180 & S181 & S182).
       pose proof (entails_sound segs (N1 x0) (D_ret c e false) _ _ _ HE HsmN1) as Hsm4.
       set (rho4 := rho_sub rhoQ (infer_sub NF (N1 x0) (D_ret c e false))) in Hsm4.
-      exists (SP segs (K1 A' (rm rho4)) (D_ret c e false) rho4). split; [split; [exact Hsm4 | split; [exact HKcL | exact HMP]]|].
+      exists (SP segs (K1 A' (rm rho4)) (D_ret c e false) rho4). split; [split; [exact Hsm4 | split; [exact (proj1 HKcL) | split; [exact HMP | exact (proj2 HKcL)]]]|].
       apply (CONT1 A' rho4).
       * apply RF0; [intros j Hj; unfold rho4; cbn [rho_sub rw]; rewrite (wsub_get_id _ NF j HID Hj); cbn [eval]; apply RWQ; unfold NF in Hj; intros ->; clear - Hj; lia | intros l; reflexivity | reflexivity].
       * unfold unmap_facts. unfold rho4. cbn [rho_sub rw]. rewrite S180, S181. cbn [eval]. rewrite !RWQ by discriminate. rewrite EB, ELN.
@@ -970,10 +972,10 @@ Definition J_nt_preR (X : list sptr) (U : Z -> Z) (A : MA) (Kc : list event -> M
 S1bS8S73A1S72S7aQ40M0S1eR3PcA2A2S6S7aG0S1eR4PdA2A2S6S3S4eS4eS3S50S50S3S7bG0A1SdS7bQ8A1A1F_;M1G1S0S1S6S81S9bVA;A1M2R3A2R5A3S0SbeVC;VX;S11SaS4eS6A2S9S4eS6R3R4A4A2VU;VA;Sb9Vsegs;R1A2SbaVsegs;R1A2S74R6A1A8S0S13cG2VX;R1S21R8A1A4S0S13dVX;S98VA;A1M3A2S0ScbVX;G3R3R2A4S0S6S43Z0M4VU;R1A1A2Fc;S0S2S1SaSdS4eA1M5G5A2S9G5G5S61R2A1S60R2A1A4S9G5G5S13S4eA1M6G6A4A3A1S2S1G5SceG3S59R3A1A2S11S4eR4A2A3A1S2S1S6S5bR4A1G4A3A1F_;F_;S0S43S10cZ40S7aG0S1eR8Se9A2A2A2S49S13fU3A1A1A2S0S10bG3A1S0S1S6S7aG0S1eR8P18A2A2S86VC;A1A3S0VKc;R7R6A2SefVA;R8A2A2A2A2A2A2A2A2A2A2A2A2Lmv;A2Lam;A2Lg;A2Ti;Tga;Lmd;Ltr;Lrho;").
 Definition JL_ntR (X : list sptr) (U : Z -> Z) (A : MA) (Kc : list event -> Model -> Prop) : jpost := ltac2:(tb__ "0|7|
 S1bS1bS8S73A1S72S7aQ40M0S1eR3SedA2A2S6S7aG0S1eR4S13bA2A2S6S3S9aS9aS3S7bG0A1SdS7bQ8A1A1F_;M1G1S0SbeVC;VX;S13SaS4eS6A2A1VU;R2Sb9Vsegs;R1A2SbaVsegs;R1A2S74R5A1A8S0S13cS9bVA;A1M2VX;R1S21R7A1M3A4S0S13dVX;S98R2A1M4A2S0S1Sc8S9bR2A1G2A3S0S1SbS53G4A1ScA3S0S156VX;S98VA;A1M5G4A3S0S155G5G4A2S0S10bG4A1S0S4S0S1S6R3Z0M6A3S1S6R4G6A3A2S0S45G6R3A2S3SeSeS3S4fS4fS0S1SdS4fA1ScaS98R4A1R2A2S11S4fR1A2A3S0S1S58S56R1A1S55A3S0S1SbS57R1A1ScA3S0S1S6S5aR1A1S5eR5A1A3S0S1S6ScdS9bR4A1R2A2R6A3S4eS50ScbVX;S98R6A1R2R1A4S45G6S5cR2A1A2S2S1SeS5fS5dR3A1A1R6A3A1F_;F_;Fa;Fq;A2A2A2A2A2Lrg;A2Lk;A2A2A2S0Sf0VC;VA;R2S21R8A1G3A5VKc;R6R5A2A2A2A2A2A2A2A2A2A2A2Lmv';A2LA';A2Tlen;Tbase;Lmd;Ltr;Lrho';Lrho0;").
-Definition nt_contractR : Prop := ltac2:(tb__ "0|1|
-S95OF_;S8S4eA1S6S6F_;S9aS8S73A1S72OF_;F_;S1bSeeVsegs;R6R2A3S97Vsegs;R7Sa9Vsegs;S166R6R5R4R3A4S13aVe;A1R2A4Sa0Vsegs;S7eR2SfSaS1dS9fA2M0S9S1dS9fS137Ve;A1S164R6R5R4R3A4A4S10G0A1A3A4A4F_;Frho;FKc;FA;FU;FX;Fok;").
-Definition nt_contractR_ex : Prop := ltac2:(tb__ "0|1|
-S8S4eA1S6S6F_;S9aS8S73A1S72OF_;F_;S1bSebR2A1S96Vsegs;Sa9Vsegs;S166R6R5R4R3A4S13aVe;A1R2A4Sa0Vsegs;S7eR2SfSaS1dS9fA2M0S9S1dS9fS137Ve;A1S164R6R5R4R3A4A4S10G0A1A3A4A3F_;Frho;FKc;FA;FU;FX;").
+Definition nt_contractR : Prop := ltac2:(tb__ "0|0|
+S95OF_;S8S4eA1S6S6F_;S9aS8S73A1S72OF_;F_;S1bSadVsegs;R6R2A3S97Vsegs;R7Sa9Vsegs;S166R6R5R4R3A4S13aVe;A1R2A4Sa0Vsegs;S7eR2SfSaS1dS9fA2S9S1dS9fS137Ve;A1S164R6R5R4R3A4A4S10SaS1dS9fA2A1A3A4A4F_;Frho;FKc;FA;FU;FX;Fok;").
+Definition nt_contractR_ex : Prop := ltac2:(tb__ "0|0|
+S8S4eA1S6S6F_;S9aS8S73A1S72OF_;F_;S1bS96Vsegs;Sa9Vsegs;S166R5R4R3R2A4S13aVe;A1R1A4Sa0Vsegs;S7eR1SfSaS1dS9fA2S9S1dS9fS137Ve;A1S164R5R4R3R2A4A4S10SaS1dS9fA2A1A3A4A3Frho;FKc;FA;FU;FX;").
 
 Definition J_nt_preRG (g : sptr) (i : Z) (X : list sptr) (U : Z -> Z) (A : MA) (Kc : list event -> Model -> Prop) : jpred := ltac2:(tb__ "0|7|
 S1bS8S73A1S72S0S1S6S81S9bVA;A1M0Vg;A2S7aQ40M1S1eR3PcA2A2A3S0S1S6Vi;S7aG1S1eR3PdA2A2A3S3S50S50S3S7bG1A1SdS7bQ8A1A1F_;M2G2S0SbeVC;VX;S11SaS4eS6A2S9S4eS6Vg;Vi;A4A2VU;VA;Sb9Vsegs;R1A2SbaVsegs;R1A2S74R3A1A8S0S13cG0VX;R1S21R5A1A4S0S13dVX;S98VA;A1M3A2S0ScbVX;G3Vg;R2A4S0S6S43Z0M4VU;R1A1A2Fc;S0S2S1SaSdS4eA1M5G5A2S9G5G5S61R2A1S60R2A1A4S9G5G5S13S4eA1M6G6A4A3A1S2S1G5SceG3S59R3A1A2S11S4eVg;A2A3A1S2S1S6S5bR4A1G4A3A1F_;F_;S0S43S10cZ40S7aG1S1eR5Se9A2A2A2S49S13fU3A1A1A2S0S10bG3A1S0S1S6S7aG1S1eR5P18A2A2S86VC;A1A3S0VKc;R4R3A2SefVA;R5A2A2A2A2A2A2A2A2A2A2A2Lmv;A2Lam;A2A2A2Lmd;Ltr;Lrho;").
@@ -1092,8 +1094,12 @@ Hypothesis okK_of : ltac2:(tb__ "0|1|
 S8S73A1M0S72OF_;F_;G0S72R3R2R1A2VKc;R3R2A2F_;Fmdx;Ftr;VokK;R2A1F_;FK;").
 Hypothesis TR_callP : ltac2:(tb__ "0|3|
 SabSabS1dS1dSc2S8S1fA1M0S8SaS1dS9fA2M1A1S94S1bS1SdG0A1S152R7R6R5A3S11G0R4A2A3S1SbSa1R8R7R6R5SdbG1S1dS15S1dS9fA2R4A4A5ScA3S1bVTR;Sa9Vsegs;RbR9R1A4Sa0Vsegs;S23R9A1R1R6A4A2Frho1;S8S73A1M2SdfS72S25Vsegs;R7RdS9G2Se2R3Se3R2R1A2A4A4R10R8R4R2A3R10Sc1Sc0R9RcR4A3RdA2R5R3A3F_;F_;Fmdx;Fms;Ftr;S1dS9fG2SdfS72S1bG2SdfS72Sc4G1S9S1dS9fR9R8A4R10A3S25Vsegs;RfR15S9G2Se2R8Se3R7R6A2A4A4R18R10R9R7A3Sa3S23R16A1Sc1Sc0R11R14R9A3R15A2R7A3S25Vsegs;R8RdS9G2Se2R7Se3R6R5A2A4A4RdSc1Sc0R13R16RbA3R17A2R9R8R6A4S0Sa5R14RcR17R18R19RfRaA7S1bSa4R15RdR18R19R1aR1bR10R1RbA9VTR;Sa9Vsegs;Sa2R10Sc1Sc0R16R19ReA3R1aA2RcA3Sa6R1aS23R1bA1R11S23R1cA1R19A5R2A4R17A2F_;Frho';A2F_;F_;F_;F_;F_;F_;Fmd';Fms';Ftr';FrhoL;Fmdx;Fms;Ftr;FJL;FLf;VTR;Sa9Vsegs;ReRcR6A4R7A2F_;F_;F_;F_;F_;FrhoX;FQ';FPosts;FR;Fsb;FPre;FCl;FJp;FJ;").
-Hypothesis TR_munmap : ltac2:(tb__ "0|b|
-S8S73A1M0S72OF_;F_;M1G1S1dS1bS1SdS109A1S110Vsegs;S29R2A1A2S11S109S10aA2A3S1S1cS31R3Z11A2S22Zd7A1A3VokK;R6A1G0SdfS72S11dVsegs;R7R8S9G0Se2R3Se3R2R1A2A4A4RbR4R2A2S0S1S6S4aS7aQ40M2Se0R4U0M3A2M4A2M5S78A2Z0M6A3S0S2S1S7bG2A1Se0R4U1M7A2M8S7cG2G6A2A3A1S0S43S44G5S119G8A1A2S76A2S0S1SbS77S79S74R3A1A1G4S118G8A1M9A3ScA3S0S1fSc4S1fR1S28RbA1A3S3cS37RbR2A2S9S6S6S7aG2Se0R6G3A2A2MaS44GaS119Se0R6G7A2A1A2A4A2F_;Fo;RbR5S117R3G4G9A3A2A2A2A2A2A2F_;F_;Fmdx;Fms;Ftr;VTR;SaaVsegs;R8R6R5A4SaaVsegs;R7S169R6G6A2S105R5S168S21R5A1S2cR5S31R6ZaA2A2S118S2cR5S31R6ZbA2A2A1A3A2A4A2F_;F_;F_;F_;FrhoX;FS;FK';FK;").
+(* LPS 08b1429 (in 727298f3): one conjunct added after the [map_has] one, munmap's exact cut
+   ([maps_subtract ... = map_remove ...], as Fw3/SymHeap.v's [triple1_munmapJ] takes it); decoded with
+   this module's [tbs__] table (names it lacked appended at its end), the conjunct added and
+   re-encoded; nothing else changed. *)
+Hypothesis TR_munmap : ltac2:(tb__ "0|0|
+S8S73A1S72OF_;F_;S8S73A1S72OF_;F_;S1dS1bS1SdS109A1S110Vsegs;S29R2A1A2S11S109S10aA2A3S1S1cS31R3Z11A2S22Zd7A1A3VokK;R6A1S8S73A1SdfS72S11dVsegs;R7R8S9S8S73A1Se2R3Se3R2R1A2A4A4RbR4R2A2S0S1S6S4aS7aQ40Se0R4U0A2A2S78A2Z0A3S0S2S1S7bQ40A1Se0R4U1A2S7cQ40Z0A2A3A1S0S43S44S7aQ40Se0R4U0A2A2S119Se0R4U1A2A1A2S76A2S0S1SbS77S79S74R3A1A1Se0R4U0A2S118Se0R4U1A2A1A3ScA3S0S1S8SaS7bQ40A1S7bQ40A1A2A1S177S79S74R3A1A1S7aQ40Se0R4U0A2A2S44S7aQ40Se0R4U0A2A2S7aQ40S118Se0R4U1A2A1A2A2A3S176S79S74R3A1A1Se0R4U0A2A2A3S0S1fSc4S1fR1S28RbA1A3S3cS37RbR2A2S9S6S6S7aQ40Se0R6U0A2A2S44S7aQ40Se0R6U0A2A2S119Se0R6U1A2A1A2A4A2F_;Fo;RbR5S117R3Se0R4U0A2S118Se0R4U1A2A1A3A2A2A2A2A2A2A2F_;F_;Fmdx;Fms;Ftr;VTR;SaaVsegs;R8R6R5A4SaaVsegs;R7S169R6Z0A2S105R5S168S21R5A1S2cR5S31R6ZaA2A2S118S2cR5S31R6ZbA2A2A1A3A2A4A2F_;F_;F_;F_;FrhoX;FS;FK';FK;").
 
 Variables (Jp : jpred) (JLp : jpost).
 Hypothesis NT : ltac2:(tb__ "0|1|
@@ -1145,14 +1151,14 @@ Proof using HP12 HP13 Hslow JIN JLX_shift JOUT KcM MKPOST NT RSV TR_callP TR_inh
 Qed.
 
 Lemma JIN_R : ltac2:(tb__ "0|0|
-S1bS8S73A1S72S116Vsegs;VC;Vs;VL;Vg;Vam;Vi;VKc;R3R2R1AbS14eVsegs;VC;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2VKc;R4R3R2A9F_;Fmdx;Ftr;FrhoX;").
+S1bS8S73A1S72S116Vsegs;VC;Vs;VL;Vg;Vam;Vi;VKc;R3R2R1AbS14eVsegs;VC;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S179VKc;A1R4R3R2A9F_;Fmdx;Ftr;FrhoX;").
 Proof using .
   intros rhoX tr mdx (Hg & Hi & HM & Hu & Hring & Hd & Hr & Ht & HK & HT). unfold J_nt_preR.
   exists g, (am1 am i), (rm rhoX). split; [exact Hg|]. split; [rewrite <- Hi; exact HM|]. split; [apply magree_refl|]. split; [intros x []|].
   split; [exact Hu|]. split; [intros c0; unfold U0; clear; lia|]. split; [exact Hring|]. split; [replace (- nt_stack 3) with (-384) by reflexivity; exact Hd|]. split; [exact Hr|]. split; [exact Ht|]. split; [exact HK | exact HT].
 Qed.
 Lemma JIN_RG : ltac2:(tb__ "0|0|
-S1bS8S73A1S72S116Vsegs;VC;Vs;VL;Vg;Vam;Vi;VKc;R3R2R1AbS14fVsegs;VC;Vg;Vi;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2VKc;R4R3R2AbF_;Fmdx;Ftr;FrhoX;").
+S1bS8S73A1S72S116Vsegs;VC;Vs;VL;Vg;Vam;Vi;VKc;R3R2R1AbS14fVsegs;VC;Vg;Vi;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S179VKc;A1R4R3R2AbF_;Fmdx;Ftr;FrhoX;").
 Proof using .
   intros rhoX tr mdx (Hg & Hi & HM & Hu & Hring & Hd & Hr & Ht & HK & HT). unfold J_nt_preRG.
   split; [exact Hg|]. split; [exact Hi|]. exists (am1 am i), (rm rhoX). split; [exact HM|]. split; [apply magree_refl|]. split; [intros x []|].
@@ -1173,7 +1179,7 @@ S95OF_;S8S73A1S72OF_;F_;S11bVsegs;R2R1A3S11cVsegs;R3SaeR2A1A3F_;FK;Fok;").
 Proof using . intros ok K H rho0 tr ms md x8 Hk. exact (H tr ms md x8 Hk). Qed.
 
 Hypothesis JOUT_R : ltac2:(tb__ "0|0|
-S1bS1bS8S73A1S72S144Vsegs;VC;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2VKc;R4R3R2R1AaS115Vsegs;VC;Vs;VL;Vg;Vam;Vi;VKc;VXP;R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
+S1bS1bS8S73A1S72S144Vsegs;VC;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S179VKc;A1R4R3R2R1AaS115Vsegs;VC;Vs;VL;Vg;Vam;Vi;VKc;VXP;R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
 Theorem free_contract_slow : ltac2:(tb__ "0|0|
 S95OF_;SeeVsegs;R1VKc;A3S146S97Vsegs;R3Sa9Vsegs;Se6Vsegs;VC;S99Vs;VL;A2VKc;A4Se4VE;A1Vrho;A4S113A4F_;F_;Fok;").
 Proof using HP12 HP13 Hslow JLX_shift JOUT_R KcM MKPOST RSV XF0 XF1.
@@ -1188,13 +1194,13 @@ Proof using HP12 HP13 Hslow JLX_shift JOUT_R KcM MKPOST RSV XF0 XF1.
     - apply P.Mal_free__G2.Mal_free_quick2.stableJ_free_pre. }
   intros n Hg [tr [ms md]] (Lf & rhoE & HinL & Hag & Hsm' & HJ'). destruct HinL as [<-|[]]. cbn [lf_state] in Hsm'.
   refine (slow_main (triple segs ok) (okKs ok) _ _ (triple_skip segs ok) (triple_inhP ok) (@triple_seq segs ok) _ okK_of (call_soundP segs ok) _
-            (J_nt_preR segs C [] U0 A1 Kc) (JL_ntR segs C [] U0 A1 Kc) _ JIN_R JOUT_R rhoE Hag n Hg (tr, mkCfg ms md) (conj Hsm' HJ')).
+            (J_nt_preR segs C [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc)) (JL_ntR segs C [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc)) _ JIN_R JOUT_R rhoE Hag n Hg (tr, mkCfg ms md) (conj Hsm' HJ')).
   - intros P P' Q' H HT. eapply triple_conseq; [exact H | intros w Hw; exact Hw | exact HT].
   - intros P Q Q' H HT. eapply triple_conseq; [intros w Hw; exact Hw | exact H | exact HT].
   - intros K S fuel leaves rhoX Q' Hrun Hlen [HokK _] Hc. exact (run_tr segs ok fuel (fs_cutsX c) S leaves K rhoX Q' Hrun Hlen HokK Hc).
   - intros K K' S rhoX Hi H17 [HK1 HK2] HJ. apply triple1_triple.
     exact (triple1_munmapJ segs ok (liftK K) (liftK K') S rhoX (ok_frame_liftK segs ok K HK1) (ok_pframe_liftK ok K HK2) Hi H17 HJ).
-  - intros rho1. exact (NTC ok [] U0 A1 Kc rho1 HS).
+  - intros rho1. apply (NTC ok [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc) rho1). eapply ok_frame_imp; [| exact Hok]; intros tr0 md0 [H0 _]; exact H0.
 Qed.
 
 Lemma etriple_inhP : ltac2:(tb__ "0|0|
@@ -1209,16 +1215,16 @@ Proof using HP12 HP13 Hslow JLX_shift JOUT_R KcM MKPOST RSV XF0 XF1.
     as (Lf & rhoE & w1 & HinL & Hst & Hag & HSP). destruct HinL as [<-|[]]. cbn [lf_state] in HSP.
   assert (ET : etriple segs (SPJ segs (J_free_preT segs C A Kc) (S1 c) rhoE) QF).
   { refine (slow_main (etriple segs) (fun _ => True) (etriple_pre segs) _ (etriple_skip segs) etriple_inhP (@etriple_seq segs) _ (fun _ _ => I) (call_completeP segs) _
-              (J_nt_preR segs C [] U0 A1 Kc) (JL_ntR segs C [] U0 A1 Kc) _ JIN_R JOUT_R rhoE Hag).
+              (J_nt_preR segs C [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc)) (JL_ntR segs C [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc)) _ JIN_R JOUT_R rhoE Hag).
     - intros P Q Q' H HT. eapply etriple_conseq; [intros w Hw; exact Hw | exact H | exact HT].
     - intros K S fuel leaves rhoX Q' Hrun Hlen _ Hc. exact (erun_tr segs fuel (fs_cutsX c) S leaves K rhoX Q' Hrun Hlen Hc).
     - intros K K' S rhoX Hi H17 _ HJ. exact (etriple_munmapJ segs (liftK K) (liftK K') S rhoX Hi H17 HJ).
-    - intros rho1. exact (NTC [] U0 A1 Kc rho1 HVI). }
+    - intros rho1. exact (NTC [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc) rho1). }
   destruct (ET w1 HSP) as (w2 & Hst2 & HQ). exists w2. split; [eapply wsteps_trans; [exact Hst | exact Hst2] | exact HQ].
 Qed.
 
 Hypothesis JOUT_RY : ltac2:(tb__ "0|0|
-S1bS1bS8S73A1S72S143Vsegs;VC;Vg;Vi;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2VKc;R4R3R2R1AcS115Vsegs;VC;Vs;VL;Vg;Vam;Vi;VKc;VXP;R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
+S1bS1bS8S73A1S72S143Vsegs;VC;Vg;Vi;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S179VKc;A1R4R3R2R1AcS115Vsegs;VC;Vs;VL;Vg;Vam;Vi;VKc;VXP;R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
 Theorem free_drv_slow_ex : ltac2:(tb__ "0|0|
 SabS1bS8S73A1S72R4R3R2R1A3Se6Vsegs;VC;S99Vs;VL;A2VKc;R4R3R2A7F_;Fmd;Ftr;FrhoX;SacS7eR2A2S14cS96Vsegs;Sa9Vsegs;R4Se4VE;A1Vrho;A4S113A3F_;F_;F_;FJ;").
 Proof using HP12 HP13 Hslow JLX_shift JOUT_RY KcM MKPOST RSV XF0 XF1.
@@ -1227,11 +1233,11 @@ Proof using HP12 HP13 Hslow JLX_shift JOUT_RY KcM MKPOST RSV XF0 XF1.
     as (Lf & rhoE & w1 & HinL & Hst & Hag & HSP). destruct HinL as [<-|[]]. cbn [lf_state] in HSP.
   assert (ET : etriple segs (SPJ segs (J_free_preT segs C A Kc) (S1 c) rhoE) QF).
   { refine (slow_main (etriple segs) (fun _ => True) (etriple_pre segs) _ (etriple_skip segs) etriple_inhP (@etriple_seq segs) _ (fun _ _ => I) (call_completeP segs) _
-              (J_nt_preRG segs C g i [] U0 A1 Kc) (JL_ntRY segs C g i [] U0 A1 Kc) _ JIN_RG JOUT_RY rhoE Hag).
+              (J_nt_preRG segs C g i [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc)) (JL_ntRY segs C g i [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc)) _ JIN_RG JOUT_RY rhoE Hag).
     - intros P Q Q' H HT. eapply etriple_conseq; [intros w Hw; exact Hw | exact H | exact HT].
     - intros K S fuel leaves rhoX Q' Hrun Hlen _ Hc. exact (erun_tr segs fuel (fs_cutsX c) S leaves K rhoX Q' Hrun Hlen Hc).
     - intros K K' S rhoX Hi H17 _ HJ. exact (etriple_munmapJ segs (liftK K) (liftK K') S rhoX Hi H17 HJ).
-    - intros rho1. exact (NTC g i [] U0 A1 Kc rho1). }
+    - intros rho1. exact (NTC g i [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc) rho1). }
   destruct w1 as [tr1 [ms1 md1]]. destruct HSP as [Hsm1 HJ1].
   destruct (ET (tr1, mkCfg ms1 md1) (conj Hsm1 (HJimp _ _ _ HJ1))) as (w2 & Hst2 & HQ). exists w2. split; [eapply wsteps_trans; [exact Hst | exact Hst2] | exact HQ].
 Qed.
@@ -1248,13 +1254,13 @@ Proof using HP12 HP13 Hslow JLX_shift JOUT_RY KcM MKPOST RSV XF0 XF1.
     - exact HstJ. }
   intros n Hg [tr [ms md]] (Lf & rhoE & HinL & Hag & Hsm' & HJ'). destruct HinL as [<-|[]]. cbn [lf_state] in Hsm'.
   refine (slow_main (triple segs ok) (okKs ok) _ _ (triple_skip segs ok) (triple_inhP ok) (@triple_seq segs ok) _ okK_of (call_soundP segs ok) _
-            (J_nt_preRG segs C g i [] U0 A1 Kc) (JL_ntRY segs C g i [] U0 A1 Kc) _ JIN_RG JOUT_RY rhoE Hag n Hg (tr, mkCfg ms md) (conj Hsm' (HJimp _ _ _ HJ'))).
+            (J_nt_preRG segs C g i [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc)) (JL_ntRY segs C g i [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc)) _ JIN_RG JOUT_RY rhoE Hag n Hg (tr, mkCfg ms md) (conj Hsm' (HJimp _ _ _ HJ'))).
   - intros P P' Q' H HT. eapply triple_conseq; [exact H | intros w Hw; exact Hw | exact HT].
   - intros P Q Q' H HT. eapply triple_conseq; [intros w Hw; exact Hw | exact H | exact HT].
   - intros K S fuel leaves rhoX Q' Hrun Hlen [HokK _] Hc. exact (run_tr segs ok fuel (fs_cutsX c) S leaves K rhoX Q' Hrun Hlen HokK Hc).
   - intros K K' S rhoX Hi H17 [HK1 HK2] HJ. apply triple1_triple.
     exact (triple1_munmapJ segs ok (liftK K) (liftK K') S rhoX (ok_frame_liftK segs ok K HK1) (ok_pframe_liftK ok K HK2) Hi H17 HJ).
-  - intros rho1. apply (NTC ok g i [] U0 A1 Kc rho1 Hok).
+  - intros rho1. apply (NTC ok g i [] U0 A1 (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.Kvd Kc) rho1). eapply ok_frame_imp; [| exact Hok]; intros tr0 md0 [H0 _]; exact H0.
 Qed.
 End Main.
 
@@ -1286,7 +1292,7 @@ Proof using .
   assert (Erm : rm rho = rm rhoE) by (apply functional_extensionality; exact EM). rewrite Erm. repeat (split; [assumption|]). exact HKc.
 Qed.
 Lemma JOUT_Rt : ltac2:(tb__ "0|0|
-S1bS1bS8S73A1S72S144S7dS80S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2VKc;R4R3R2R1AaS115S7dS80Vs;VL;Vg;Vam;Vi;VKc;VXPt;R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
+S1bS1bS8S73A1S72S144S7dS80S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S179VKc;A1R4R3R2R1AaS115S7dS80Vs;VL;Vg;Vam;Vi;VKc;VXPt;R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
 Proof using .
   intros rho0 rho' tr mdx (A' & mv' & HM & Hmg & _ & HL' & Hini & Hcorr & Hub & Hreach & Hres & Hkept & HK). unfold P.Mal_fslow__G3.Mal_fslow_C.nt_out_facts.
   assert (Emv : mv' = rm rho') by (apply functional_extensionality; intros a0; exact (magree_nil _ _ _ Hmg a0)).
@@ -1369,7 +1375,7 @@ Proof using .
   assert (Erm : rm rho = rm rhoE) by (apply functional_extensionality; exact EM). rewrite Erm. repeat (split; [assumption|]). exact HKc.
 Qed.
 Lemma JOUT_RYd : ltac2:(tb__ "0|0|
-S1bS1bS8S73A1S72S143S7dS80Vg;Vi;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S130R4R3R2R1AcS115S7dS80Vs;VL;Vg;Vam;Vi;S130S132R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
+S1bS1bS8S73A1S72S143S7dS80Vg;Vi;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S179S130A1R4R3R2R1AcS115S7dS80Vs;VL;Vg;Vam;Vi;S130S132R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
 Proof using .
   intros rho0 rho' tr mdx (A' & mv' & HM & Hmg & _ & HL' & Hini & Hcorr & Hub & Hreach & (ktr & mres & HY & Hres) & Hkept & HK). unfold P.Mal_fslow__G3.Mal_fslow_C.nt_out_facts.
   assert (Emv : mv' = rm rho') by (apply functional_extensionality; intros a0; exact (magree_nil _ _ _ Hmg a0)).
@@ -1425,7 +1431,7 @@ Proof using .
   assert (Erm : rm rho = rm rhoE) by (apply functional_extensionality; exact EM). rewrite Erm. repeat (split; [assumption|]). exact HKc.
 Qed.
 Lemma JOUT_RYdS : ltac2:(tb__ "0|0|
-S1bS1bS8S73A1S72S143S7dS80Vg;Vi;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S133R4R3R2R1AcS115S7dS80Vs;VL;Vg;Vam;Vi;S133S151Vs;VL;Vg;Vam;Vi;A5R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
+S1bS1bS8S73A1S72S143S7dS80Vg;Vi;S10S4eA1Sc7S99Sf2Vs;Vg;Vam;Vi;A4VL;A2S179S133A1R4R3R2R1AcS115S7dS80Vs;VL;Vg;Vam;Vi;S133S151Vs;VL;Vg;Vam;Vi;A5R5R4R3R2AdF_;Fmdx;Ftr;Frho';Frho0;").
 Proof using .
   intros rho0 rho' tr mdx (A' & mv' & HM & Hmg & _ & HL' & Hini & Hcorr & Hub & Hreach & (ktr & mres & HY & Hres) & Hkept & HK). unfold P.Mal_fslow__G3.Mal_fslow_C.nt_out_facts.
   assert (Emv : mv' = rm rho') by (apply functional_extensionality; intros a0; exact (magree_nil _ _ _ Hmg a0)).
@@ -1449,7 +1455,7 @@ Theorem free_drv_slow_ex_P : ltac2:(tb__ "0|2|
 S9aS6S6S8S73A1S72OF_;F_;S1bS4eS50S6S52S14cS142S80A1SebR8A1Sf6S98RcA1R7R6R5R4A5S1S6S81S9bRdA1Sc9R7R6R5A3A2S7aQ40M0S1eR9PcA2A2A3S1S6S54R6A1S7aG0S1eRaPdA2A2A3S96S7dSa9S7dS163RfReRdRcA4Se4Se5A1RbA4Sa0S7dS7eRbSfSaS1dS9fA2M1S9S1dS9fSe7Se5A1S134S7dS80RfS46ReZ1A2RdRcA6A4S10G1A1A3A4A3F_;F_;F_;F_;F_;F_;Ffr;Fi;Fam;Fg;Frho;FKc;FX;Fk;FA;").
 Proof.
   intros [s L] Kc0 X Kc rho g am i fr NTC RSV HVI Hslow HP12 HP13 w0 Hw0. rename Kc0 into k.
-  pose proof Hw0 as [_ ((HMI & _) & HdrvN & Hk & _)]. pose proof (proj1 HMI) as HW. cbn [ma_s] in HW, Hslow.
+  pose proof Hw0 as [_ ((HMI & _) & HdrvN & Hk & _)]. pose proof (proj1 (proj1 HMI)) as HW. cbn [ma_s] in HW, Hslow.
   refine (free_drv_slow_ex s L g am i fr (KcD Kc X) rho (KcD_M Kc X HVI) Hslow HP12 HP13 RSV
             (XPd s L g am i) (XFd s L am i fr) (JLd_free segsP C_P (mkMA s L) (k - 1) X Kc)
             (XF0d s L g am i fr Hslow HW) (XF1d s L g am i fr Hslow HW) (MKPOSTd s L g am i fr Kc rho k X Hslow HP12 HP13 HdrvN Hk) (JLshift_d s L Kc rho k X)
@@ -1463,7 +1469,7 @@ Proof.
   intros ok [s L] Kc0 X Kc rho g am i fr NTC RSV HS Hslow HP12 HP13. rename Kc0 into k. cbn [ma_s ma_L].
   pose proof HS as (Hok & Hokp & HVI).
   apply triple_inh. intros w0 Hw0.
-  pose proof Hw0 as [_ ((HMI & _) & HdrvN & Hk & _)]. pose proof (proj1 HMI) as HW. cbn [ma_s] in HW, Hslow.
+  pose proof Hw0 as [_ ((HMI & _) & HdrvN & Hk & _)]. pose proof (proj1 (proj1 HMI)) as HW. cbn [ma_s] in HW, Hslow.
   refine (free_drv_slow_d s L g am i fr (KcS Kc X) rho (KcS_M Kc X HVI) Hslow HP12 HP13 RSV
             (XPd s L g am i) (XFd s L am i fr) (JLdS_free segsP C_P (mkMA s L) (k - 1) X Kc)
             (XF0d s L g am i fr Hslow HW) (XF1d s L g am i fr Hslow HW) (MKPOSTdS s L g am i fr Kc rho k X Hslow HP12 HP13 HdrvN Hk) (JLshift_dS s L Kc rho k X)

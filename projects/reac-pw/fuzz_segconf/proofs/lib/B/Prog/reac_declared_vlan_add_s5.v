@@ -16,8 +16,9 @@
      0x89fb4 and 0x89fec (a + 56i < a, b + 56i < b unsigned) and 0x8a064, 0x8a068 (~(a[i].args) < 8k, ~(b[i].args) < 8k)
      are refuted at the branch from the values of their operands. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_calls_equal.v, with its module paths and module names changed; 407 of its 479 lines of code are new or changed and 1520 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_add on fuzz_segconf.asan-ubsan (image B): segment 5 of the walk, the image-B port of the store
-   stretch of lib/A/Prog/reac_declared_vlan_add_s0.v (commit fcd2fa03dd27: vad_STc, vad_st_seed,
+   stretch of lib/A/Prog/reac_declared_vlan_add_s0.v (vad_STc, vad_st_seed,
    vad_store). Written for the image-B G4 + G5 walks.
    It walks the append exit from the strncpy call's return RSN 0x8a698 to the epilogue EPI 0x8a720:
    - RSN 0x8a698 .. ST 0x8a6d4 (seed vad_ss_sn): the spill reload, inline check 4 on the count cell, lw count,

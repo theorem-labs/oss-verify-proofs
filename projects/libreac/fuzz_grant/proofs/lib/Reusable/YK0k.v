@@ -2,12 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK0k.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed node_read0). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YK16 YK0n YK11 YK0i YK0h YK14 YK1c YK1i YK1d YK0v YK15.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable.R Require Import Cfg.
+From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -99,7 +101,8 @@ node_ok segs (mkCfg ms model) (RdIdx (m_stdin model) cnt)
 (fun i => rd_next ms model buf (proj1_sig i)).
 Proof.
 intros ms model buf cnt x8 w Hcnt Hh Hlazy Hfd Hsvc Hno Hg0 Hg1 Hg2 Hw Haok.
-apply node_ok_of_pnode; [eapply transparent_nonalloc_no; [exact Hsvc | exact Hno | reflexivity]|]. split.
+apply node_ok_of_pnode; [eapply transparent_nonalloc_no; [exact Hsvc | exact Hno | reflexivity]
+| exact (sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact memfree_63)) |]. split.
 -
 intros [bs Hadm]; cbn [proj1_sig].
 destruct Hadm as [(-> & Heof) | (Hlo & Hhi & Hpre)].

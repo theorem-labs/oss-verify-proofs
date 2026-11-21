@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rz_silent1 takes the RomBase.sys_rob_instr robustness premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Scfg CatSim ShapeAlg LazyRestrict LazyRestrictRun.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -26,7 +28,8 @@ Lemma rz_dsteps : forall c c' T,
   dsteps segs c c' -> realizes segs c' T -> realizes segs c T.
 Proof.
   intros c c' T H; induction H as [c | ms model ms' model' c3 Hh Hsvc Hacc H IH]; intros Hr; [exact Hr|].
-  eapply rz_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc] | apply IH; exact Hr].
+  eapply rz_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc]
+                     | apply RomBase.sys_rob_instr; exact Hsvc | apply IH; exact Hr].
 Qed.
 
 (* [comment removed for export] *)
@@ -38,7 +41,7 @@ Lemma rz_account_step : forall ms model ms' model' T,
   realizes segs (mkCfg ms model) T.
 Proof.
   intros ms model ms' model' T Hh Hsvc Hacc Hr.
-  eapply rz_silent1; [apply node_account; eassumption | exact Hr].
+  eapply rz_silent1; [apply node_account; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hr].
 Qed.
 
 Section WithLazy.

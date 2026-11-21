@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: grant_node's mmap call names its hint register a0 as NULL, which the model's place_declined_b decline of a hinted placement needs. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -67,7 +68,10 @@ Definition grant_node : Prop :=
   0 < len -> len mod 4096 = 0 -> len <= 2 ^ 32 -> rt_eager Σ + len <= 2 ^ 38 ->
   (forall P, lay (Σ' P) = lay Σ /\ aw (Σ' P) = aw Σ /\ Permutation (rt_maps (Σ' P)) ((Z_to_bv 64 P, Z_to_bv 64 len) :: rt_maps Σ)
      /\ rt_eager Σ + len <= rt_eager (Σ' P) /\ rt_eager (Σ' P) <= 2 ^ 38) ->
-  (forall ms, Pm ms -> ms_svc_pending ms = Some (Z_to_bv 64 222) /\ areg ms 11 = Z_to_bv 64 len
+  (* LPS 727298f3: a0 = NULL is part of the caller's obligation, because the model
+     answers [unmodeled] for a hint in the declined band, so the rule names its hint. *)
+  (forall ms, Pm ms -> ms_svc_pending ms = Some (Z_to_bv 64 222)
+      /\ areg ms 10 = Z_to_bv 64 0 /\ areg ms 11 = Z_to_bv 64 len
       /\ areg ms 12 = Z_to_bv 64 3 /\ areg ms 13 = Z_to_bv 64 34 /\ areg ms 15 = Z_to_bv 64 0
       /\ forall P, sgrant_ok Σ P len -> K P (nretA ms (mkEffect (Z_to_bv 64 P) [] [(Z_to_bv 64 P, Z_to_bv 64 len)]))) ->
   cps bsegs (ASTA RTA Σ PMc Pm) (fun c => exists P, sgrant_ok Σ P len /\ ASTA RTA (Σ' P) PMc (K P) c).

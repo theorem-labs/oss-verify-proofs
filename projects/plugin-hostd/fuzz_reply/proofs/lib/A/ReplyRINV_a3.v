@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fr_RINV, a concrete definition of the loop's relational invariant RINV of the
-   entry walk of fuzz_reply's LLVMFuzzerTestOneInput (lib/A/W_LLVMFuzzerTestOneInput_cut.v:534, the Section variable
+   entry walk of fuzz_reply's LLVMFuzzerTestOneInput (lib/A/W_LLVMFuzzerTestOneInput_cut.v:535, the Section variable
    `RINV : lfcx -> Z -> lmod -> Prop` that lcut carries at every cut point), and, below it, each model rule over RINV
    that a W8 segment takes as a Section hypothesis, restated with RINV := fr_RINV (the `_obl` definitions).  The last
    section proves the obligations that read fr_RINV alone or step only the cursor and the flags; the rest are open.
@@ -25,7 +25,7 @@
      A-proof keeps in LS (LS_write_room, LS_drain_pre); they are not here.
    - The cost counts the relay's unfinished line by its bytes, `length (re_U e)`, where SlotInv.v:56 counts
      `re_used e`: the two are equal under aentry_ok (W_rep.v:125), but the arms' rules see only the model, and W7's
-     drain fixes re_U, not re_used (dr_step_ok, W_LLVMFuzzerTestOneInput_drain.v:559).
+     drain fixes re_U, not re_used (dr_step_ok, W_LLVMFuzzerTestOneInput_drain.v:560).
    - The entries' model facts that aentry_ok (W_rep.v:120-135) states in memory and that RINV-only rules read
      (RI_pads, RI_pair, RI_rm_cnlr_eof, the exit's end matching) are fr_entry_ok.
    The `_obl` definitions are grouped by segment file, each with the rule's file:line.  Rules on atop's head (head,
@@ -36,19 +36,20 @@
    proves every rule of W_LLVMFuzzerTestOneInput_top.v (SEG_HEAD's, ARM_add's, the small arms') in the form that
    holds. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV.v, with its module names changed; 137 of its 221 lines of code are new or changed and 1107 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* plugin-hostd/fuzz_reply image A, TOPX group RI-a: five model rules of the entry loop's invariant RINV, proved at
-   RINV := fr_RINV (lib/A/ReplyRINV.v:227).  Each lemma concludes ReplyRINV.v's `_obl` text.  That text is token for
-   token the Section hypothesis of the same name in W_LLVMFuzzerTestOneInput_top_x.v (a working branch
-   bb9dae5d905) after the renaming RINV <-> fr_RINV, with the premises in the same order and no lf_base:
-     RI_write_skip_holds  : RI_write_skip_obl  (ReplyRINV.v:317, top_x.v:226; _write.v:182)
-     RI_write_push_holds  : RI_write_push_obl  (ReplyRINV.v:322, top_x.v:232; _write.v:188)
-     RI_event_step_holds  : RI_event_step_obl  (ReplyRINV.v:392, top_x.v:275; _event.v:1029 on event-c-omx-reader)
-     RI_drain_skip_holds  : RI_drain_skip_obl  (ReplyRINV.v:242, top_x.v:364; _drain.v:584)
-     RI_pair_holds        : RI_pair_obl        (ReplyRINV.v:283, top_x.v:384; _drain.v:642)
+   RINV := fr_RINV (lib/A/ReplyRINV.v:228).  Each lemma concludes ReplyRINV.v's `_obl` text.  That text is token for
+   token the Section hypothesis of the same name in W_LLVMFuzzerTestOneInput_top_x.v (a working branch)
+   after the renaming RINV <-> fr_RINV, with the premises in the same order and no lf_base:
+     RI_write_skip_holds  : RI_write_skip_obl  (ReplyRINV.v:318, top_x.v:226; _write.v:182)
+     RI_write_push_holds  : RI_write_push_obl  (ReplyRINV.v:323, top_x.v:232; _write.v:188)
+     RI_event_step_holds  : RI_event_step_obl  (ReplyRINV.v:393, top_x.v:275; _event.v:1029 on event-c-omx-reader)
+     RI_drain_skip_holds  : RI_drain_skip_obl  (ReplyRINV.v:243, top_x.v:364; _drain.v:584)
+     RI_pair_holds        : RI_pair_obl        (ReplyRINV.v:284, top_x.v:384; _drain.v:642)
    In four of the five rows every name resolves to the same constant in both texts (_cut.v, _write.v, _drain.v,
-   Prog/HarnessRep.v, RelayRep.v, ListRep.v, whose definitions are the same at atop 5ab58d26200 and integ
-   bb9dae5d905), so top_x's hypothesis is the `_holds` lemma itself.  The exception is
-   RI_event_step: in the `_obl`, ev_evt and ev_step are ReplyRINV.v's copies (ReplyRINV.v:330-345), and in top_x they
+   Prog/HarnessRep.v, RelayRep.v, ListRep.v, whose definitions are the same at atop and integ),
+   so top_x's hypothesis is the `_holds` lemma itself.  The exception is
+   RI_event_step: in the `_obl`, ev_evt and ev_step are ReplyRINV.v's copies (ReplyRINV.v:331-346), and in top_x they
    are W_LLVMFuzzerTestOneInput_event.v's (:998-1020).  The two have the same text, so RI_event_step_x below states
    top_x's text with _event.v's constants and follows from RI_event_step_holds by conversion.
    The Section below has ReplyRINV.v's Section rinv shape (the same Context and Variables), so each lemma generalizes
@@ -108,7 +109,7 @@ Open Scope Z_scope.
 
 Section rinv_a3.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-(* ReplyRINV.v Section rinv's variables (ReplyRINV.v:131-137); the five lemmas name none of them *)
+(* ReplyRINV.v Section rinv's variables (ReplyRINV.v:132-138); the five lemmas name none of them *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB : Z -> Z.

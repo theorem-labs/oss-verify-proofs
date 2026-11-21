@@ -1,6 +1,6 @@
 # Port of the strtol wrapper chain and musl strtol to fuzz_headamp.asan (image A)
 
-Donor: origin/ossv/recipes 2d2ff01bb6f, proofs/plugin-hostd/fuzz_command/lib/A (69 files of the 230-file closure of
+Donor:, proofs/plugin-hostd/fuzz_command/lib/A (69 files of the 230-file closure of
 RtLStrtol.v, I_strtolw.v, I_strtolfix.v, R_isPoisoned.v and strtol_wrap_sb.v that are not in this unit already).
 Not copied: lib/Reusable (this unit's kit), lib/Lib, lib/MemNorm.v, lib/BWorld.v, lib/Img0.v, lib/Prog/__intscan_c.v,
 lib/Spec/CType.v (this unit's own files; equal text apart from module paths, and __intscan_c.v apart from INTSCAN),
@@ -34,8 +34,8 @@ and the walks decode this image's bytes, so a wrong pc or target fails the build
 - RtDefs.v: written by hand (module paths only); RT_ROM_RANGES left out (see reloc.tsv footer).
 
 ## Donor choice
-Candidates for the shared Bz layer (lib/A/Bz): plugin-hostd/fuzz_command (2d2ff01bb6f) and reac-pw/fuzz_pin
-(at 90722657971, itself from libreac/fuzz_boxreg f26f9fbd8777). Comments stripped, numerals
+Candidates for the shared Bz layer (lib/A/Bz): plugin-hostd/fuzz_command and reac-pw/fuzz_pin
+(itself from libreac/fuzz_boxreg). Comments stripped, numerals
 masked: 37 files equal, 5 differ in numerals only (I_consts, R_isPoisoned, R_m2s, R_memiszero, R_small), 2 differ in
 structure: I_ikit.v (pin states the stack floor as YImgTop's IMG_TOP, the donor as the literal 0x5f7000) and
 Bz/Lib/ImageA.v (pin drops the unused bsegs). The fuzz_command files are kept (the rule-24 donor; I_init.v,

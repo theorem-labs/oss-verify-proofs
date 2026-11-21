@@ -5,8 +5,8 @@
    pjf_tail (the exit's three fuzz_free calls, the __asan_memset and the ret); pjf_null (v = 0, the `beqz a0` at
    0x836ac to the epilogue). Each kid call is pj_free at the level above (REC).
    The level induction starts at level 3, where the spec's premise k <= 2 is false, and runs down to level 0.
-   The lib/B twin of lib/A/FSW_pj_free_top.v (a working branch b6cf4f2e773), its text read over lib/B's names.
-   rule 24: the function's released plain proof exists (lib/Prog/pj_free.v @ c8557374ad2e); no released ASan-image
+   The lib/B twin of lib/A/FSW_pj_free_top.v (a working branch), its text read over lib/B's names.
+   rule 24: the function's released plain proof exists (lib/Prog/pj_free.v); no released ASan-image
    proof of any fs function exists (ossv proof index v5; a Theorem Labs lane: `pj_free B: CONFIRM`). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-10: added the slot with the float state at return left open (tfib_lib_contract_xP), cgif's exists-fx' form of it (tfib_lib_contract_xf, lib/YL0g.v:58-64) and the two lemmas that carry tfib_lib_contract_x and tfib_lib_contract_xf into it. *)
 (* Modified by Theorem Labs, 2026-10: the images module is image B's AsanUbsan; the donor's line Required image A's Asan (cgif lib/YCfn.v:11), which no name in this file uses (ACfn.v Requires Asan, its A twin). *)
 (* Modified by Theorem Labs, 2026-10: YC5d and YCbq are Required from lib/Reusable: the lib/B copies were the Reusable files' text under lib.B (so lib/B had a second ameter_ops type beside the statement's), and they are deleted. *)
-(* Modified by Theorem Labs, 2026-10: the slot takes the program-global ranges G (libreac/fuzz_pcap's G form, lib/A/Prog/PcapEntry.v:33,61,91 at origin/ossv/recipes 198234fa4d3): the callee's journal in tfib_lib_post_x is lib/A/W_journalG.v's ajournal_gx G 0 [] (the bytes of G may change across the call; XO = 0, no out cells), and tfib_lib_contract_x_all / tfib_lib_contract_xf_all take G before B. *)
-(* Relocated from proofs/libreac/fuzz_decode/lib/YCfn.v at 88154566652a by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-10: the slot takes the program-global ranges G (libreac/fuzz_pcap's G form, lib/A/Prog/PcapEntry.v:33,61,91): the callee's journal in tfib_lib_post_x is lib/A/W_journalG.v's ajournal_gx G 0 [] (the bytes of G may change across the call; XO = 0, no out cells), and tfib_lib_contract_x_all / tfib_lib_contract_xf_all take G before B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_decode/lib/YCfn.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): reac_segconf_parse_file's
-   contract from its 16 segment statements (lib/B/Prog/pf_pieces.v's pf_pieces_give_contract, the image-B piece statements at
-   80a6c9c97a8b), proved. The image-B composition lane of the image-B G3 walk owner, 2026-10-30.
-   ADAPTED from the image-A G3 walk owner's image-A composition lib/A/Prog/pf_compose.v (commit 48b245830d40,
+   contract from its 16 segment statements (lib/B/Prog/pf_pieces.v's pf_pieces_give_contract, the image-B piece statements),
+   proved. The image-B composition lane of the image-B G3 walk owner, 2026-10-30.
+   ADAPTED from the image-A G3 walk owner's image-A composition lib/A/Prog/pf_compose.v (
    the image-A composition lane): the same proof over B's cut set (B's new cuts HREF, REFTL, KREF, KREFM; A's RS3 has no B twin).
    The composition is logic over the cut statements only: the class-5 frame take (B1) and release (B4) and the lift
    of each exit cut taken at every FP state (HA_<CUT>, PaFx's srr_apost_baseF_lift) are inside the segments.

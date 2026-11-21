@@ -9,7 +9,8 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 575 of its 722 lines of code are new or changed and 1344 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/check_segments_s1.v (commit 4173a03b8db0).
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/check_segments_s1.v.
    The walk of check_segments on fuzz_segconf.asan-ubsan (image B, 0x86f58 = BASE + AF_check_segments, 104
    instructions, frame 80), part 1: the cut points, the entry stretch 0x86f58 .. 0x8703c and the exit
    0x8706c .. 0x8709c. Part 2 (check_segments.v) walks the loop 0x87040 .. 0x87068 through the strcmp wrapper and

@@ -9,6 +9,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib Require Import
   ZImage ZTraceSpec AllocSlots AllocRoom ZComplete ZAllocator Contract FrameAPI FrameSlotG SlotPack
   SlotAgree SlotAgreeV AgreeLim Agree AgreeTop AgreeZlib AgreeWalkP AgreePack.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import RomStableK.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.U Require SlotPack SlotAgreeV AgreeZlib AgreeWalkP AgreePack Agree.
 Import ListNotations.
 Open Scope Z_scope.
@@ -47,5 +48,5 @@ Proof.
   destruct (U.AgreePack.ubsan_crealizes_of_cgpg LIM_AG LS CS Gu GIu HCSu HLIM HGu GILu GI0u Hu en_s inp
     Budgets.Standard.lim_target Hs_e Hinput ltac:(apply Z.leb_le; vm_compute; reflexivity)) as [Ru Cu].
   exact (agree_frame Images.plain Budgets.Standard.lim_source en_p Images.ubsan Budgets.Standard.lim_target en_s inp
-    (SPECX (LS:=LS) inp) (SPECX (LS:=LS) inp) Rp Ru (t_eq_refl _) (budget_of_cf_run _ _ _ _ Cp) (U.Agree.budget_of_cf_run _ _ _ _ Cu)).
+    (SPECX (LS:=LS) inp) (SPECX (LS:=LS) inp) Rp Ru (t_eq_refl _) (budget_of_cf_run _ _ _ _ _ Rp Cp) (U.Agree.budget_of_cf_run _ _ _ _ _ Ru Cu)).
 Qed.

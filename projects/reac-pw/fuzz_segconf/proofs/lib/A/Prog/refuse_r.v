@@ -5,10 +5,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberR.v, with its module paths and module names changed; 59 of its 188 lines of code are new or changed and 87 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the release of refuse's class-0 side-stack frame (image A 0x88fc4-0x89000) and
    refuse's epilogue and return (0x89024-0x8905c) on reac-pw/fuzz_segconf's ASan image A (fuzz_segconf.asan,
-   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberR.v (n_release) at
-   origin/ossv/recipes 501c0d516c69, from refuse's canonical release state ss_rel (lib/A/Prog/refuse_e.v).
+   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberR.v (n_release),
+   from refuse's canonical release state ss_rel (lib/A/Prog/refuse_e.v).
    proves no function (kind: segment lemma; the release and return segment of refuse's walk).
    The image-A refuse walk, 2026-10-30. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

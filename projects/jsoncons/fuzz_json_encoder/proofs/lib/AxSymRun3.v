@@ -1,12 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed stk_ok_init, wrap_mem_none_low; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/AxSymRun3.v, lines 307-316, 374-395. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -18,11 +13,6 @@ Open Scope bv_scope.
 Import AX2.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import AX2S.
 Section FPX_1. Context {fx : FPState}.
-
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition vals_ev (vals : list word) : nat -> word :=
   fun n => nth n vals (Z_to_bv 64 0).
@@ -159,19 +149,18 @@ Proof.
       destruct Hk1 as (A & B & C). split; [|split; [exact B | exact C]].
       unfold flat, estart in *. rewrite <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1). exact A.
     + exact Hk1.
-    + (* [comment removed for export] *)
+    +
       apply andb_prop in HK as [H1 H2]. unfold elenZ, estart in *.
       rewrite <- (edenot_agree b E E' n (conj Hv Hb) H2), <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1).
       destruct Hk1 as [A B]. split; [|exact B].
       unfold flat, estart in *. rewrite <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1). exact A.
-    + (* [comment removed for export] *)
+    +
       apply andb_prop in HK as [H1 H2]. unfold elenZ, estart in *.
       rewrite <- (edenot_agree b E E' n (conj Hv Hb) H2), <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1).
       destruct Hk1 as [A B]. split; [|exact B].
       unfold flat, estart in *. rewrite <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1). exact A.
 Qed.
 
-(* [comment removed for export] *)
 Lemma vals_app_agree : forall vals extra ebs,
   env_agree (length vals) (Env (vals_ev vals) ebs) (Env (vals_ev (vals ++ extra)) ebs).
 Proof.
@@ -179,14 +168,9 @@ Proof.
   rewrite app_nth1 by exact Hn. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Section Run.
 Variable segs : list Segment.
 
-(* [comment removed for export] *)
 Lemma st_ok_entry : forall E base rom pc sr kn nx regs,
   regs_ok E sr regs -> know_ok segs E base kn ->
   st_ok segs E base rom (SS pc sr [] kn nx) (mkst regs (Z_to_bv 64 pc) base rom).
@@ -208,11 +192,9 @@ Proof.
   eapply sym_exec_ex; [exact Hex | exact Hsc | apply st_ok_entry; assumption].
 Qed.
 
-(* [comment removed for export] *)
 Lemma eagree_env_agree : forall b E E', eagree b E E' <-> env_agree b E E'.
 Proof. intros b E E'. unfold eagree, env_agree. tauto. Qed.
 
-(* [comment removed for export] *)
 Lemma st_okX_entry : forall E base rom pc sr kn nx regs,
   regs_ok E sr regs -> know_ok segs E base kn ->
   sr_vars_lt nx sr = true -> kn_vars_lt nx kn = true ->
@@ -224,7 +206,6 @@ Proof.
   - eapply know_ok_agree; [exact Ha | exact Hkn | exact HK].
 Qed.
 
-(* [comment removed for export] *)
 Theorem runTX_sound : forall t K fuel stops pc sr kn nx E base rom regs,
   itab_sound segs t ->
   regs_ok E sr regs -> know_ok segs E base kn ->
@@ -248,18 +229,15 @@ Proof.
   intros E'' Ha''. apply HALL. apply eagree_env_agree. exact Ha''.
 Qed.
 
-(* [comment removed for export] *)
 Theorem carry_after : forall E base log kn hints kn' scs hs',
   carry log kn hints = (kn', scs, hs') ->
   log_flat E log -> know_ok segs E base kn -> scs_denot segs base E scs ->
   know_ok segs E (mem_denot E base log) kn'.
 Proof. intros. eapply carry_sound; eauto. Qed.
 
-(* [comment removed for export] *)
 Lemma reg_val : forall E sr R (r : reg), regs_ok E sr R -> getr R r = edenot E (sr_get sr r).
 Proof. intros E sr R r HR. apply HR. Qed.
 
-(* [comment removed for export] *)
 Lemma regs_ok_set : forall E sr R (rd : reg) v e,
   regs_ok E sr R -> rd <> 0%bv -> edenot E e = v ->
   regs_ok E (sr_upd sr (ridx rd) e) (regupd R rd v).
@@ -273,11 +251,6 @@ Qed.
 
 End Run.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition sr_init : list expr :=
   [ELit 0; ELit 0; EVar 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0;
    ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0;
@@ -298,11 +271,6 @@ Proof.
     exfalso. lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition stk_ok (segs : list Segment) (mem : word -> option byte) (sp : word) (K : Z) : Prop :=
   forall (a : word) (n : nat),
     (bv_unsigned sp - K <= bv_unsigned a)%Z ->
@@ -337,12 +305,16 @@ Lemma stk_ok_mem_denot : forall segs E mem log sp K,
   stk_ok segs mem sp K -> stk_ok segs (mem_denot E mem log) sp K.
 Proof. intros. eapply stk_ok_grows; [eassumption | apply mem_denot_grows]. Qed.
 
-(* [comment removed for export] *)
-Lemma stk_ok_init : forall segs ph sp argv envp uid hw (rdraw : EntryDraw),
-  stk_ok segs (wrap_mem ph sp argv envp uid hw rdraw) sp stack_max_size.
+Lemma stk_ok_init : forall segs inp mbase ph entry (sp brk0 : word)
+    (rdraw : EntryDraw),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
+  stk_ok segs (wrap_mem inp mbase ph entry sp rdraw) sp stack_window_depth.
 Proof.
-  intros segs ph sp argv envp uid hw rdraw a n H1 H2.
-  apply store_ok_wrap_window; assumption.
+  intros segs inp mbase ph entry sp brk0 rdraw Hvl Hlau a n H1 H2.
+  unfold stack_window_depth in H1.
+  apply (store_ok_wrap_window_valid segs inp mbase ph entry sp brk0 a n rdraw
+           Hvl Hlau); lia.
 Qed.
 
 Lemma kwr_of_stk_ok : forall segs E mem (e : expr) (sp : word) K,
@@ -354,7 +326,6 @@ Proof.
   intros d m Hd Hm. apply Hs; rewrite u_small by lia; lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma kword_intro : forall segs E mem (e : expr) (a : word) off w (v : expr) (x : word),
   edenot E e = a -> edenot E v = x -> (1 <= w)%nat -> (w <= 8)%nat ->
   (0 <= bv_unsigned a + off)%Z -> (bv_unsigned a + off + Z.of_nat w <= 2 ^ 64)%Z ->
@@ -401,21 +372,29 @@ Proof.
   cbn [a_base a_off]. rewrite He, Hn, Hb. split; [lia|]. split; [reflexivity | exact Hz].
 Qed.
 
-(* [comment removed for export] *)
-Lemma wrap_mem_none_low : forall ph sp argv envp uid hw (rdraw : EntryDraw) (i : Z),
+Lemma wrap_mem_none_low :
+  forall v inp mbase ph entry (sp brk0 : word) (rdraw : EntryDraw) (i : Z),
+  entry_launch_ok_va v (mkEntry sp brk0 mbase rdraw) inp ->
   (0 <= i)%Z -> (i < bv_unsigned sp - stack_max_size)%Z ->
-  wrap_mem ph sp argv envp uid hw rdraw (Z_to_bv 64 i) = None.
+  wrap_mem inp mbase ph entry sp rdraw (Z_to_bv 64 i) = None.
 Proof.
-  intros ph sp argv envp uid hw rdraw i H0 Hi. unfold wrap_mem.
+  intros v inp mbase ph entry sp brk0 rdraw i Hlau H0 Hi. unfold wrap_mem.
   pose proof (u64_range sp) as Hsp.
-  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i) by (apply u_small; unfold stack_max_size in Hi; lia).
+  pose proof (launch_sp_le_ed_top v inp mbase sp brk0 rdraw Hlau) as Htop.
+  pose proof (Z.le_max_l (bv_unsigned (ed_top rdraw) - stack_max_size)
+                (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
+  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i)
+    by (apply u_small; unfold stack_max_size in Hi; lia).
   unfold stack_to_mem. rewrite Hu.
-  replace (Z.leb (bv_unsigned sp) i) with false by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
-  replace (Z.leb (bv_unsigned sp - stack_max_size) i) with false by (symmetry; apply Z.leb_gt; lia).
+  replace (Z.leb (bv_unsigned sp) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
+  replace (Z.leb (stack_window_lo (in_kernel inp) mbase rdraw) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_window_lo in *; lia).
   reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** Narrow loads of small values are the identity. *)
+
 Lemma ext_val_zx_id : forall n (v : word),
   (bv_unsigned v < 2 ^ (8 * Z.of_nat n))%Z -> ext_val false 0 n v = v.
 Proof.
@@ -482,12 +461,6 @@ Proof.
 Qed.
 End FPX_1.
 
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Ltac split_scs :=
   lazymatch goal with
   | |- scs_denot _ _ _ [] => constructor
@@ -496,7 +469,6 @@ Ltac split_scs :=
   | |- Forall _ (_ :: _) => constructor; [| split_scs]
   end.
 
-(* [comment removed for export] *)
 Ltac ground_mod :=
   repeat match goal with
   | |- context [ (?a mod ?b)%Z ] =>
@@ -514,7 +486,6 @@ Ltac sc_unfold :=
   cbn [a_base a_off edenot ev eb vals_ev nth];
   rewrite ?Z_to_bv_unsigned, ?bv_wrap64_mod; ground_mod.
 
-(* [comment removed for export] *)
 Ltac lit_u :=
   repeat match goal with
   | |- context [bv_unsigned (Z_to_bv 64 ?z)] =>
@@ -524,7 +495,6 @@ Ltac lit_u :=
       end
   end.
 
-(* [comment removed for export] *)
 Ltac sc_store :=
   match goal with
   | Hs : stk_ok _ _ _ _ |- store_ok _ _ (v_addi _ _) _ = true =>
@@ -541,7 +511,6 @@ Ltac sc_auto extra :=
         | match goal with |- _ /\ _ => repeat split; first [lia | sc_store | extra] end
         | idtac ].
 
-(* [comment removed for export] *)
 Ltac sym_run_tac segs fuel stops scr nx HR HK R' HR' Hlf Hms extra :=
   lazymatch type of HR with
   | regs_ok ?E ?sr ?regs =>

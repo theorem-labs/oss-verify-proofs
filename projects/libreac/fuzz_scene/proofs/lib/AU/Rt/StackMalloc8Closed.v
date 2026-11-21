@@ -12,10 +12,11 @@
      lib/AU/RT_mem_to_shadow.v's scene_mem_to_shadow (at M2S_ENTRY = 0x3f604) and lib/AU/RT_poison_shadow.v's
      scene_poison_shadow (at PS_ENTRY = 0x55be4). Both take AR_laws and TfibSyms B, so its premises are AR_laws,
      TfibSyms, the two fields and the 21 cells: facts about B's certificate.
-   The conclusion is the type the consumers take as the Hypothesis stack_malloc_8_sz (StackMalloc8Cuts.v:223-229),
-   written as the glue writes it (a working branch c1b5da89d39 lib/AU/G_Close.v:179-180:
+   The conclusion is the type the consumers take as the Hypothesis stack_malloc_8_sz (StackMalloc8Cuts.v:224-230),
+   written as the glue writes it (a working branch lib/AU/G_Close.v:179-180:
    `astack_malloc_sz_realizes SEGS B StackMalloc8Tbl.PC_STACK_MALLOC_8 StackMalloc8Tbl.CID8`); the glue's local
    abbreviation SEGS = pa_segs PI_scene = scene_segs = AsanUbsan.M.loaded_segments, which is tfibsegs (AU/YB1v.v:12). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,5 +1,5 @@
-(* omx-clap-core/fuzz_preset (image A's interface; the AU twin lib/AU/PresetCfnB.v has the same LIVE_LIB body, :275 at
-   d6318e886fd9, :270 on int102):
+(* omx-clap-core/fuzz_preset (image A's interface; the AU twin lib/AU/PresetCfnB.v has the same LIVE_LIB body, :275,
+   :270 on int102):
    THE HARNESS ENTRY'S LIVE BUDGET, row ENTRY-SUMS (h-pre-b2; statement owner c-omx-alloc, addition (a) of 00:23Z).
    Nothing here is a function's proof (rule 24); kind: model bound lemma.
 
@@ -8,13 +8,13 @@
    (PresetLiveBytes.entry_sum_closed):
      live_lib_fits    0 <= LIVE_LIB <= CLOSED_ROOM
      lcut_fits        every budget within LIVE_LIB is within CLOSED_ROOM: the walk's cut budgets ec_lcut
-                      (ec_lcut_ok, lib/A/Ent102CutsA.v:561 at d6318e886fd9: 0 <= ec_lcut E i <= LIVE_LIB) and its
+                      (ec_lcut_ok, lib/A/Ent102CutsA.v:561: 0 <= ec_lcut E i <= LIVE_LIB) and its
                       witness sat_lcut (lib/A/Ent102PaySat.v:358 sat_lraw_le, at most 9,823,176,288, check_round_trip's
                       LIVE_check_round_trip <= 9,017,853,504 inside it, :226)
-     live_lib_entry   the interface pre's conjunct lib/A/PresetCfnA.v:803 `blocks_bytes S + LIVE_LIB <= LIVE_MAX`
-                      from its own :801 iface_room_at (iface_room_pos_entry :566) and Wf_cf (PresetCfnA.v lines at
-                      d6318e886fd9; on int102 they are :803, :802 and :569).
-   The walk's own copy of the conjunct, Ent102CutsA.v:397 (its LIVE_LIB :90 is the same 3 * 2 ^ 32), is
+     live_lib_entry   the interface pre's conjunct lib/A/PresetCfnA.v:804 `blocks_bytes S + LIVE_LIB <= LIVE_MAX`
+                      from its own :801 iface_room_at (iface_room_pos_entry :566) and Wf_cf (PresetCfnA.v lines;
+                      on int102 they are :803, :802 and :569).
+   The walk's own copy of the conjunct, Ent102CutsA.v:398 (its LIVE_LIB :90 is the same 3 * 2 ^ 32), is
    entry_sum_closed at n := LIVE_LIB from ec_pre's :388 / :390 and live_lib_fits.
    A SEPARATE FILE so that lib/A/PresetEntrySums.v (the texts' arithmetic) does not Require the interface. *)
 From Stdlib Require Import ZArith List Lia.

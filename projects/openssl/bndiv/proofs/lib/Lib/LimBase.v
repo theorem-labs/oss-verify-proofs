@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (lim_step unfolds an option-valued continuation, such as write_file_tail's fault and place post-states, instead of destructing it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -138,6 +139,14 @@ Ltac lim_step :=
   | |- lim_blind (alt _ _) => apply lim_blind_alt
   | |- lim_blind get_fds => apply lim_blind_get_fds
   | |- lim_blind (modify _) => lim_modify
+  | |- lim_blind (match ?e with Some _ => _ | None => _ end) =>
+      (* 08b1429: write_file_tail takes its fault and place post-states as
+         [option (Sys _ -> Sys _)]; unfold the producer rather than destruct
+         the option into an opaque continuation. *)
+      first [ lazymatch type of e with
+              | option (_ -> _) => let h := head_of e in progress (unfold h; cbv beta iota zeta)
+              end
+            | deep_destruct e ]
   | |- lim_blind (match ?s with _ => _ end) => deep_destruct s
   | |- lim_blind (if ?s then _ else _) => deep_destruct s
   | |- lim_blind (fun i => ?c) => idtac

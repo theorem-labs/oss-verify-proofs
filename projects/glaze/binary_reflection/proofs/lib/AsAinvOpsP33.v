@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (check_mmap's new MAP_FIXED overflow arm, check_mmap_fixed_overflow, unfolded with it; RomBase.sys_rob as the third part of node_ok at the MAP_FIXED mmap node). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -62,7 +63,7 @@ Proof.
   assert (E1 : w_is0 (ms_gpr ms 1) = false).
   { (lazymatch goal with |- ?G => let G' := eval unfold w_is0 in G in change_no_check G' end). apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E.
     rewrite Hu1 in E. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E. lia. }
-  rewrite (mmap_check segs ms x8 model eff Hno). (lazymatch goal with |- ?G => let G' := eval unfold check_mmap in G in change_no_check G' end).
+  rewrite (mmap_check segs ms x8 model eff Hno). (lazymatch goal with |- ?G => let G' := eval unfold check_mmap, check_mmap_fixed_overflow in G in change_no_check G' end).
   rewrite E1, H2, H3, H5, H0, Hu1, mmap_off_aligned_b_0, (mmap_anon_b_of_core flags _ Hcore eq_refl), Gm, Gn, Gfn, Gfr. (lazymatch goal with |- ?G => let G' := eval cbn [negb] in G in change_no_check G' end). cbv beta iota zeta.
   rewrite (proj2 (Z.leb_gt _ _)) by ((lazymatch goal with |- ?G => let G' := eval unfold two_pow_64 in G in change_no_check G' end); lia).
   rewrite (proj2 (Z.leb_le _ _) Htop). (lazymatch goal with |- ?G => let G' := eval cbn [negb] in G in change_no_check G' end).
@@ -137,6 +138,7 @@ Section Fixfree.
       + rewrite vm_add_lazy_halted, mmap_model_halted. exact Hh.
       + rewrite mmap_model_halted. exact Hh.
     - intros []; reflexivity.
+    - exact (RomBase.sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_222)).
   Qed.
 
 

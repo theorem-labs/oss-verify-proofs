@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 881 of its 940 lines of code are new or changed and 392 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): SEGMENT E of the walk of check_reject_clean_starved against the text
    tcheck_reject_clean_starved_specX, row CR-E of the family's internal file PART7-ROWS.md (family lead a Theorem Labs lane).
    rule 24: proves function check_reject_clean_starved (reuse search: `proof-index
@@ -10,7 +11,7 @@
    or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan
    Proof.v existed for check_reject_clean_starved). Written new.
    INPUTS.
-   - Pin: A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin: A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
    - Listing: lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (listings v3, objects
      numbered by name). Entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved).
    - The text at the kit cut preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record): tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob c40cf3fdcd2a,
@@ -18,7 +19,7 @@
      ef7c8ca98529 (the ledger carries g_most and g_own_ran_out; fpre ends with frm_zero of the entry float state,
      supplied at fuzz_alloc_live's call from the entry's own fpre).
    - Kit: lib/A/Prog/CrsKitAp.v blob 4c07b375a294 (crcs port preset-tree-at-2026-10-30T06-59-32Z.tsv (sha256 09adbeae147a; internal record)): crs_pre had 31 conjuncts there and has
-     32 on this tree (the five after ck_frm0, CrsKitAp.v:405-411, are not used here), and crs_core states ran3 =
+     32 on this tree (the five after ck_frm0, CrsKitAp.v:406-412, are not used here), and crs_core states ran3 =
      c_ran C exactly (E refuses nothing: H1 is entered at the entry's g_ran_out).
    THE CLOSING LEMMA crs_seg_E: (forall p, crs_from_H1 .. (crs_with_fpos C p)) -> crs_from_E .. C, with the premises in
    the family lead's order: HX_* (what the engine rules need and B / ARx / LAWS do not give: the frame-area text
@@ -45,9 +46,9 @@
    s2 = a0 = frame_addr lyc 1 pos >= 4096 (ARx_frames_law in_app, YCbqG.frames_bounds_x). E has no report arm, no
    own check and no abort arm.
    ENGINE: the frame-area text, its call rule and memnorm_frame_of are lib/Reusable/YGcallMxmn.v's (blob b47cf7942c3d,
-   the engine set of record on kit v4, c-omx-alloc s1b 5695f128b4d8), cited by qualified name; the verbatim copies this
+   the engine set of record on kit v4, c-omx-alloc s1b), cited by qualified name; the verbatim copies this
    file carried while that file did not build on the base are gone.
-   S10 COPIES (helpers, statement and proof verbatim from origin/cold/h-hpreset-7-walk-s10 88b4aea723f, each named at
+   S10 COPIES (helpers, statement and proof verbatim, each named at
    its source): S10Env.v blob d8ca1dd59ead (te_img, ts_vm_present, ts_rdword_keep, ts_vm_av, ts_region_nth_c,
    ts_alias_shadow, te_close, ts_cs, ts_ap), S10TxString.v (tskeep, cs_tac), S10TxState.v (s10_aview_present); and
    YCem.v's rdword_of_val_mem (this tree, lib/Reusable/YCem.v:101; YCem Requires the tfib image files, so it is copied).
@@ -95,7 +96,7 @@ Open Scope Z_scope.
 Module MN := YAkMemnorm.
 
 (* ======================================================================================================== *)
-(* ---- S10 COPIES (origin/cold/h-hpreset-7-walk-s10 88b4aea723f), statement and proof verbatim ---- *)
+(* ---- S10 COPIES, statement and proof verbatim ---- *)
 
 (* YCem.v:101 rdword_of_val_mem *)
 Lemma ce_rdword_of_val_mem : forall {rc : YM05.RunCeil} segs H mem a v,

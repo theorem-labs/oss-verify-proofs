@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -38,11 +38,12 @@
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 530 of its 580 lines of code are new or changed and 403 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a11b_m1.v, with its module names changed; 325 of its 418 lines of code are new or changed and 487 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the STORE exit of segment A12 of reac_segconf_parse_file's
    walk (the ignore key, reac_segconf.c:271-280; lib/A/Prog/pf_pieces.v S_A12), as one closed lemma:
      [a12_store_blk] from 0x888bc (BASE + A12_ST) with s7 = b and the mid-walk invariant a12_I of
      lib/A/Prog/pf_a12_k.v, the walk reaches the cut PROV2 (0x889f0), whose continuation HA_PROV2 ends it.
-   The code (the unit's internal record, commit dfb49d6ad789,
+   The code (the unit's internal record,
    path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s,
    0x888bc .. 0x88908, 20 instructions):
      check #33 (store4 at cur + 0x18; slow block 0x88af4, error arm 0x88d60), `sw s7, 0x18(s4)` (cur->ignore = b),
@@ -58,7 +59,7 @@
    in the application range), the image range (SegPaLib.v's blk_off_imgP), the text (reader_pre's sa_disj));
    the image facts (literals, catalogue, read-only view, stack-protector cells) are image-range bytes, so
    neither VRO nor SSPX is needed.
-   a12st_hull_rng is lib/A/Prog/pf_a11b_m1.v's pfm_hull_rng (commit 921b452016cc), copied.
+   a12st_hull_rng is lib/A/Prog/pf_a11b_m1.v's pfm_hull_rng, copied.
 
    Section hypothesis (one):
      OBJ  SegObj.seg_val_objs (the auipc / addi pair's object atom A_OBJ 35 is seg_litA_rc F_s, the "%s" that
@@ -127,7 +128,7 @@ split; [split; [|exact Hn]|].
   apply HV; [lia | exact (Ht x Hx)].
 Qed.
 
-(* lib/A/Prog/pf_a11b_m1.v's pfm_hull_rng (commit 921b452016cc), copied: the shadow hull of a range
+(* lib/A/Prog/pf_a11b_m1.v's pfm_hull_rng, copied: the shadow hull of a range
    below 2 ^ 63 lies in [0, 2 ^ 64) *)
 Lemma a12st_hull_rng : forall q n s, 0 <= q -> q + n <= 2 ^ 63 -> 0 < n ->
   shadow_addr q / 8 * 8 <= s < shadow_addr (q + n - 1) / 8 * 8 + 8 -> 0 <= s < 2 ^ 64.

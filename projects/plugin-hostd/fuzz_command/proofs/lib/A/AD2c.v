@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2c.v, with its module paths changed, names TfibSyms -> CmdBSyms; post_P carries stk_top and frm0 (AD1v.v) to run_Q. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, merging libreac/fuzz_boxreg's port of its copy of this file: the hand-off state is the one of the run's own CONFIG_RSEQ flag (HS_tfib_r) and the computed checks run over both flags' states, the stack invariant is abstract, the entry stack is laid out from the stack VMA's end and the launch premises (valid_launch, entry_launch_ok_va, valid_input) are carried; this unit's own stk_top and frm0 premises are kept; the model's channel reader that fdchan asks for beside the descriptor, carried from the hand-off's cs_ok (its co_rdr field, proved at the launch). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -56,13 +57,23 @@ Variable B : asyms.
 Hypothesis HB : CmdBSyms B.
 Hypothesis ARL : AR_laws tfibsegs B.
 Hypothesis RUNQ : run_Q_tfa B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+(* Shape copied from the in-tree ported donor AD1v.v:121-127 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is DROPPED: implied by [entry_launch_ok_va]
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722); this section never carried it. *)
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 Hypothesis Hvfs : valid_fs (in_fs inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210). *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
@@ -92,8 +103,8 @@ frm0 ->
 srealizes tfibsegs (mkCfg ms md) (run_shape (payload data) (calls data) (in_fs inp)).
 Proof.
 intros ws W ms md ly S data pb cap Hlk Hok HT HTk HFRM.
-pose proof (tfib_to_P B ARL sp inp xw xd a0 p Hsp Hva Hve ws W ms md ly S data pb cap Hok HT) as [HSP E60].
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI).
+pose proof (tfib_to_P B ARL sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau ws W ms md ly S data pb cap Hok HT) as [HSP E60].
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI & Hcr).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (E' := edset (havoc EL K_M1 ws) 2 data) in *. set (buf := sptr_addr B ly pb) in *.
@@ -144,11 +155,15 @@ destruct c0; destruct (Z.lt_ge_cases a (usp - 128)).
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms2) (ss_mem sQ0)); [exact HM4 | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia].
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms2) (ss_mem sQ1)); [exact HM4 | left; reflexivity | exact E3_0 | lia | lia | cbn; lia].
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms2) (ss_mem sQ1)); [exact HM4 | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia]. }
-apply (RUNQ sp inp xw xd ws W ms2 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk ltac:(unfold dlen; lia));
+apply (RUNQ sp brk mbase inp xw xd ws W ms2 _ ly S a0 p data pb cap rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk ltac:(unfold dlen; lia));
 [| exact E60 | exact (stk_top_drv E3 _ _ _ usp HFr WOK ltac:(rewrite E3_0; lia) Ulo HTk) | exact HFRM].
 split; [exact HS4|]. split; [exact E3_41|]. split; [exact E3_42|]. split.
-{ eapply (runs_at_frame E3 (ss_facts (sQ c0 (Z.of_nat (calls data)))) (ss_mem (if c0 then ssP0 else ssP1)));
-[exact (st_ok_facts_ok tfibsegs E3 _ _ HS4) | | exact HFr | rewrite E3_0; lia | exact HR].
+(* [tail_at]'s [runs_at] conjunct is EXISTENTIAL at 75d69e00 (AD1w.v:69-70): the entry draw
+   is quantified there instead of becoming a fourteenth parameter.  This is a CONSTRUCTION
+   site, so the witness comes out of the consumed [HR] and goes straight back in. *)
+{ destruct HR as (rnd0 & HR0). exists rnd0.
+eapply (runs_at_frame E3 (ss_facts (sQ c0 (Z.of_nat (calls data)))) (ss_mem (if c0 then ssP0 else ssP1)));
+[exact (st_ok_facts_ok tfibsegs E3 _ _ HS4) | | exact HFr | rewrite E3_0; lia | exact HR0].
 unfold sQ, sQ1k, setreg_. cbn [ss_facts]. pose proof wbs_Q as [WQ0 WQ1]. destruct c0; [exact WQ0 | exact WQ1]. }
 split; [exact HAI2|]. split.
 { apply (AR_after_run B HB ARL ly S W E3 _ (ms_mem ms) (ms_mem ms2) md mat2 HAR WOK); [rewrite E3_0; exact Ulo | rewrite E3_0; exact HCT | exact HF |].
@@ -156,12 +171,15 @@ rewrite E3_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin a Ha)). }
 split; [exact HTOP|]. split; [exact Hbl|]. split; [exact Hnev|]. split; [exact Hcap|]. split; [unfold dlen; lia|]. split.
 { unfold dlen. apply (blk_of_frame_r _ _ _ _ _ buf (Z.of_nat (length data)) data usp HFr WOK E3_0 Ulo); [intros a Ha; apply NIMG; lia | lia | lia | exact HBLK]. }
 split; [rewrite wvb_fs'; exact Hfs |]. split; [rewrite wvb_fds'; exact Hfds |]. split; [exact Hminv|].
-exact (finv_run B ly S W (ms_mem ms) md (w_H W) E3 _ _ _ usp HAR HFr WOK E3_0 Ulo Uhi HTOP HFI).
+(* [tail_at]'s last conjunct, the channel reader [fdchan] asks for at LPS 727298f3:
+   the model only gained a backing ledger, which leaves the process state alone. *)
+split; [exact (finv_run B ly S W (ms_mem ms) md (w_H W) E3 _ _ _ usp HAR HFr WOK E3_0 Ulo Uhi HTOP HFI) | exact Hcr].
 Qed.
 End e.
 Theorem tfib_post_P (B : asyms) (HB : CmdBSyms B) (ARL : AR_laws tfibsegs B) (RUNQ : run_Q_tfa B) : post_P_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk Hok HT HTk HFRM.
-exact (tfib_post_P_at B HB ARL RUNQ sp inp xw xd a0 p Hargv Hsp Hva Hve Hvfs ws W ms md ly S data pb cap Hlk Hok HT HTk HFRM).
+intros sp brk mbase inp xw xd ws W ms md ly S a0 p data pb cap rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk Hok HT HTk HFRM.
+exact (tfib_post_P_at B HB ARL RUNQ sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau Hvi Hvfs ws W ms md ly S data pb cap Hlk Hok HT HTk HFRM).
 Qed.
 End d.

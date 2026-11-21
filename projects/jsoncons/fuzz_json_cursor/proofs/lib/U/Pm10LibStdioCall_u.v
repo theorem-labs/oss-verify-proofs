@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed stdio_call_sound, stdio_call_sound_fr. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -245,6 +246,8 @@ Theorem stdio_call_sound_fr :
   forall (vals : list word) (ebs : nat -> list byte) (sr : list expr) (kn : list kentry)
          (R : bvmap 5 word) (M : word -> option byte) (model : Model) (res : stdio_res)
          (pending extra : list byte) (K : TSet),
+  (* 08b1429: writev_spec reads [m_channel_reader] (recipes/channel-reader-premise.md) *)
+  m_channel_reader model = true ->
   let E := Env (vals_ev vals) ebs in
   regs_ok E sr R -> know_ok RSEGS E M kn ->
   stdio_call (length vals) sr kn = Some res ->
@@ -273,7 +276,7 @@ Theorem stdio_call_sound_fr :
   srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xac404) M (seg_rom RSEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-  intros vals ebs sr kn R M model res pending extra K E HR HK Hc.
+  intros vals ebs sr kn R M model res pending extra K Hrdr E HR HK Hc.
   cbv beta delta [stdio_call] in Hc. cbv zeta in Hc.
   destruct (nth 10 sr (ELit 0)) as [f| | | | | | |] eqn:H10; try discriminate.
   destruct (lit_even_ret (nth 1 sr (ELit 0))) as [ret|] eqn:Hret; [|discriminate].
@@ -383,6 +386,7 @@ Proof.
     rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. unfold two64 in Hcgv. rewrite Hcgv. reflexivity.
   - apply orb_prop in Hfd12 as [H|H]; apply Z.eqb_eq in H; subst fd; lia.
   - exact Hfdlk.
+  - exact Hrdr.
   - exact Hh.
   - exact Hlz.
   - lia.
@@ -468,6 +472,8 @@ Theorem stdio_call_sound :
   forall (vals : list word) (ebs : nat -> list byte) (sr : list expr) (kn : list kentry)
          (R : bvmap 5 word) (M : word -> option byte) (model : Model) (res : stdio_res)
          (pending extra : list byte) (K : TSet),
+  (* 08b1429: writev_spec reads [m_channel_reader] (recipes/channel-reader-premise.md) *)
+  m_channel_reader model = true ->
   let E := Env (vals_ev vals) ebs in
   regs_ok E sr R -> know_ok RSEGS E M kn ->
   stdio_call (length vals) sr kn = Some res ->
@@ -495,9 +501,9 @@ Theorem stdio_call_sound :
   srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xac404) M (seg_rom RSEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-  intros vals ebs sr kn R M model res pending extra K E HR HK Hc wb wp s l su
+  intros vals ebs sr kn R M model res pending extra K Hrdr E HR HK Hc wb wp s l su
          H1 H1' H2 H3 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 HCONT.
-  apply (stdio_call_sound_fr vals ebs sr kn R M model res pending extra K HR HK Hc); try assumption.
+  apply (stdio_call_sound_fr vals ebs sr kn R M model res pending extra K Hrdr HR HK Hc); try assumption.
   intros R' M' A B C. apply HCONT; assumption.
 Qed.
 

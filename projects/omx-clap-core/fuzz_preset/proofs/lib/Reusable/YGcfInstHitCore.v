@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstHitCore.v (a working branch 93127c74947, file sha256 ed0642a20598), the generic cf instance layer (cf miss tops, pre-P''); module paths changed only: 59 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstHitCore.v (a working branch, file sha256 ed0642a20598), the generic cf instance layer (cf miss tops, pre-P''); module paths changed only: 59 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    The model and memory facts behind the cf hit interfaces (YGcfInstHit.v), over the cf relation YG0ncf.ARcf at the
    unit's segments ImgBase.im_segs, generic over CfImg / CfParams / AImg / AGImg.  The cf twin of

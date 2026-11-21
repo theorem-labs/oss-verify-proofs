@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFk0.v (donor image sha256 1c29845fe605), with its module paths changed, names TfibSyms -> CtrlTSyms and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ccont, LED0, grantS_eq). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -877,7 +878,7 @@ Hypothesis Htr : In tr (as_universe B).
 Hypothesis D1 : tfib_depot_spec B.
 Hypothesis HBC : BCELLS.
 Hypothesis HDP : forall z m, DPOST z m <-> DPOSTS W3 z m.
-Hypothesis GOK : grant_ok_na_pin mdN (w64 mb) MSv = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 mb) MSv = true.
 Hypothesis LE3 : wle W W3.
 Hypothesis SUB3 : hsub (w_H W3) (w_H W).
 Hypothesis MON3 : forall x : word, w_H W x = false -> w_H W3 x = false.
@@ -955,7 +956,7 @@ Proof.
 intros z. pose proof (SF_parts false z) as (Rreg & _ & _ & _ & _ & _ & _ & _ & Rarr & Rres & _ & Rck & Rsecs & Rnev & Rregs).
 pose proof size_facts as (_ & _ & _ & _ & _ & _ & _ & Z8 & Z9 & _).
 assert (UMS : bv_unsigned (w64 MSv) = MSv) by (unfold w64; apply unsigned_lit_small; clear - Z8; unfold MALLOC_MAX in Z8; zlia).
-unfold md2. apply (YG0j.ALedger_anon tfibsegs (as_universe B) 0 0 0 ly S (SFS false z) mdN (w64 mb) (w64 MSv) (rS S) mb LY WF (am_placed _ _ _ _ MA) MWN LN).
+unfold md2. apply (YG0j.ALedger_anon tfibsegs (as_universe B) 0 0 0 ly S (SFS false z) mdN (w64 mb) (w64 MSv) (rS S) mb (hint:=Z_to_bv 64 0) LY WF (am_placed _ _ _ _ MA) MWN LN).
 - rewrite UMS. exact GOK.
 - exact Hev.
 - rewrite UMS. exact MSB.
@@ -1281,7 +1282,7 @@ pose proof VM2 as (VMa & VMr & VMl & VMb).
 apply (nodeV W3 md2 sV KV QLEAF (fun _ => True) c4 EQ HN HAI).
 - clear; intros m m' _ _; exact I.
 - rewrite EcM. exact MWV.
-- rewrite EcM. exact (al_reserved _ _ _ _ (LV 0)).
+- rewrite EcM. destruct (al_reserved _ _ _ _ (LV 0)) as (rx & Hrx & _ & _ & RQ & _). exists rx. split; [exact Hrx | exact RQ].
 - exact (al_img_env tfibsegs lyF (SFS false 0) _ lyF_ok (LV 0)).
 - rewrite EcM. exact (al_Q _ _ _ _ (LV 0)).
 -

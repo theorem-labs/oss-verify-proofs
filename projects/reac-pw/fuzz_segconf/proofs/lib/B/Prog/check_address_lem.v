@@ -1,8 +1,8 @@
-(* the image-B port of lib/A/Prog/check_address_lem.v (commit 254b4716bf4f): helper facts of
+(* the image-B port of lib/A/Prog/check_address_lem.v: helper facts of
    the walk of check_address on fuzz_segconf image B (lib/B/Prog/check_address.v). A text of SegModel read through a
    state's reader as the byte list the string wrappers' contracts take, and the strncmp wrapper's model value on two
    C strings as SegModel's strncmp. No image number appears here; only the Require lines differ from image A's
-   file: the kit copies YG0f YG0n and SegABase come from lib.B (commit 694f3575dda2). *)
+   file: the kit copies YG0f YG0n and SegABase come from lib.B. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

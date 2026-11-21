@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the channel-reader premise of writev). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -29,26 +30,36 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Section UCac.
-Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry], [brk]) instead of
+   argv/envp/uid/hwcap, as UDrvMain's Handoff and UOpenCert's Handoff2 sections do.
+   [Hfits] is kept so the statement is unchanged, now stated over the [av]/[ev] notations. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
+Variables sp0 brk : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp0.
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Hfits : entry_stack_fits sp0 av ev.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 Hypothesis Hargc2 : length av = 2%nat.
 Variable model : Model.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hl : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+Hypothesis Hrd2 : m_channel_reader model = true.
 
-Let E := E_main sp0 av ev tid (canary rdraw) regs.
+Let E := E_main inp sp0 (ed_top rdraw) tid (canary rdraw) regs.
 Local Notation a1s := (nth 1 av []).
+Local Notation p1 := (cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 1).
 
 #[using="Hsp"] Lemma SLc : 0x7fff80000000 <= bv_unsigned sp0. Proof. LiaFast.lf_pins (fun (Hsp : LiaFast.U) => LiaFast.u0). exact (sp0_lo sp0 Hsp). Qed.
 #[using="Hsp"] Lemma SHc : bv_unsigned sp0 <= 0x800000000000. Proof. LiaFast.lf_pins (fun (Hsp : LiaFast.U) => LiaFast.u0). exact (sp0_hi sp0 Hsp). Qed.
@@ -64,7 +75,7 @@ Qed.
   lden E' (laddc SP0 c) = Z_to_bv 64 (bv_unsigned sp0 + c).
 Proof. LiaFast.lf_pins (fun (Hargc2 : LiaFast.U) => LiaFast.u0). intros E' c HE Hc. rewrite lden_laddc. unfold SP0. rewrite lden_lvar, HE by lia. reflexivity. Qed.
 
-#[using="Hargc2"] Lemma E_P1' : E 4%positive = cat_argv_ptr sp0 av ev 1. Proof. LiaFast.lf_pins (fun (Hargc2 : LiaFast.U) => LiaFast.u0). exact (E_P1 sp0 av ev tid rdraw regs Hargc2). Qed.
+#[using="Hargc2"] Lemma E_P1' : E 4%positive = p1. Proof. LiaFast.lf_pins (fun (Hargc2 : LiaFast.U) => LiaFast.u0). exact (E_P1 inp sp0 tid rdraw regs Hargc2). Qed.
 
 (* [comment removed for export] *)
 #[using="Hsp Hargc2"] Lemma outside_split_main2 : forall E' rgs x, agree 200 E E' -> shape rgs = shape (s_rgs U4ac) ->
@@ -83,11 +94,11 @@ Proof. LiaFast.lf_pins (fun (Hsp Hargc2 : LiaFast.U) => LiaFast.u0).
   rsz_simpl; cbn [RGz rg_base rg_size]. rewrite (u_sp0c E' (-480) HE) by lia. lia.
 Qed.
 
-#[using="uid hw mem Hsp Hva Hve ME Hargc2"] Lemma window_outside2 : forall E' rgs x, agree 200 E E' -> shape rgs = shape (s_rgs U4ac) ->
+#[using="mbase entry brk mem Hsp Hva Hve Hvl Hlau ME Hargc2"] Lemma window_outside2 : forall E' rgs x, agree 200 E E' -> shape rgs = shape (s_rgs U4ac) ->
   bv_unsigned sp0 - 543 <= bv_unsigned x < bv_unsigned sp0 - 480 -> outside E' rgs x.
-Proof. LiaFast.lf_pins (fun (uid hw mem Hsp Hva Hve ME Hargc2 : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk mem Hsp Hva Hve Hvl Hlau ME Hargc2 : LiaFast.U) => LiaFast.u0).
   intros E' rgs x Ha Hs Hx. pose proof SLc. pose proof SHc.
-  pose proof (p1_bounds sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2) as (B1 & B2 & B3).
+  pose proof (p1_bounds inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2) as (B1 & B2 & B3).
   assert (HE : forall y, (y < 200)%positive -> E' y = E y) by (intros y Hy; symmetry; exact (Ha y Hy)).
   apply (outside_shape E' (s_rgs U4ac)); [exact Hs|].
   unfold outside. cbn [s_rgs U4ac].
@@ -111,15 +122,15 @@ Qed.
   (forall x, outside E (s_rgs P_main2) x -> ms_mem ms' x = mem x).
 Proof. LiaFast.lf_pins (fun (Hsp Hargc2 : LiaFast.U) => LiaFast.u0). intros E' S ms ms' Ha Hs Hfr Hmf x Hx. rewrite Hfr; [exact (Hmf x Hx)|]. exact (outside_split_main2 E' _ x Ha Hs Hx). Qed.
 
-#[using="uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2"] Theorem cant_Ca : forall E1 ms1, agree 200 E E1 -> sden PSEGS E1 U4ac ms1 -> ms_rom ms1 = seg_rom PSEGS ->
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 Hh Hl Hfd2 Hrd2"] Theorem cant_Ca : forall E1 ms1, agree 200 E E1 -> sden PSEGS E1 U4ac ms1 -> ms_rom ms1 = seg_rom PSEGS ->
   (forall x, outside E (s_rgs P_main2) x -> ms_mem ms1 x = mem x) ->
   (exists rest, length rest = (63 - length a1s)%nat /\ u8arr PSEGS (ms_mem ms1) (bv_unsigned sp0 - 543) (a1s ++ rest)) ->
   (Z.of_nat (length a1s) <= 63)%Z ->
   realizes PSEGS (mkCfg ms1 model) (t_emit (W 2 (PREc ++ a1s ++ SUFc)) (TEXIT model)).
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 Hh Hl Hfd2 Hrd2 : LiaFast.U) => LiaFast.u0).
   intros E1 ms1 Ha1 Hd1 Hrom1 Hmf1 (rest & Hlr & Hwin) HK63.
   pose proof SLc as SLc. pose proof SHc as SHc.
-  pose proof (p1_bounds sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2) as (B1 & B2 & B3).
+  pose proof (p1_bounds inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2) as (B1 & B2 & B3).
   set (K := length a1s) in *.
   pose proof (valid_argv_str_len av 1 Hva ltac:(lia)) as HKb. fold K in HKb.
   apply (rzc_fx_explore_frame PSEGS DCFG TBL_P IMG_P 4000 S2 U4ac LCac E1 ms1 model _ TBL_P_ok IMG_P_ok certCac Hd1 bases_U4ac Hh Hl).
@@ -214,6 +225,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaF
     + exact SSP.
     + exact F48.
     + exact Hfd2.
+    + exact Hrd2.
     + exact Hh.
     + exact Hl.
     + unfold TASK_SIZE. lia.
@@ -306,6 +318,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaF
       * exact SSP3.
       * exact G48.
       * exact Hfd2.
+      * exact Hrd2.
       * exact Hh.
       * exact Hl.
       * unfold TASK_SIZE. lia.
@@ -350,7 +363,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaF
         -- unfold SP0. rewrite lden_lvar, HE5 by lia. reflexivity.
         -- unfold T. rewrite lden_lvar, HE5 by lia. reflexivity.
         -- lia.
-        -- exact (exit_glob_of_MF2 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc2 (ms_mem ms5) MF6).
+        -- exact (exit_glob_of_MF2 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 (ms_mem ms5) MF6).
         -- exact Hh.
         -- exact Hl.
         -- vm_compute. reflexivity.
@@ -505,6 +518,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaF
       * exact SSP3.
       * exact G48.
       * exact Hfd2.
+      * exact Hrd2.
       * exact Hh.
       * exact Hl.
       * unfold TASK_SIZE. lia.
@@ -548,7 +562,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaF
         -- unfold SP0. rewrite lden_lvar, HE5 by lia. reflexivity.
         -- unfold T. rewrite lden_lvar, HE5 by lia. reflexivity.
         -- lia.
-        -- exact (exit_glob_of_MF2 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc2 (ms_mem ms5) MF6).
+        -- exact (exit_glob_of_MF2 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 (ms_mem ms5) MF6).
         -- exact Hh.
         -- exact Hl.
         -- vm_compute. reflexivity.

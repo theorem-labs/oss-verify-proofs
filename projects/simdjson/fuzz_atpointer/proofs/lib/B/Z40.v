@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib Require Import Ceiling RzCPS.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Sj Require Import Zpf SjTape Zpk.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Spec Require Import Prelim Stdio Zpb Z3o.
-From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import Z10d.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import Z2y PlanRegen Z10s Z10sr.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.A Require Import Shadow.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.B Require Import Layout Zks Zkt Zm2 RT_rep Zl3 Zls Zm7 Zm3
   Zm4 Zm5 Zm6 Zlj Zi8 Zi9 Zl6 Zki Zis Zip Zim
@@ -44,4 +45,4 @@ Theorem rta_stage2at : stage2at_cps RTA.
 Proof. exact (stage2at_closed RTA rta_art_facts rta_rtf rta_numa rta_numo rta_rootnum). Qed.
 
 Check (sj_lib_loc : fp_local LIB_FP sj_lib).
-Check (HS_lib_ok : forall h ch, HS_both h = Some ch -> hs_lib_ok ch = true).
+Check (HS_lib_ok : forall (b : bool) h ch, HS_both_r (AP.rseq_z b) h = Some ch -> hs_lib_ok ch = true).

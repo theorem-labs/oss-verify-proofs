@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the free gap is also stated above the grid floor, for Linux's bottom-up placement window). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -146,7 +147,9 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Theorem gap_exists : forall (h : VmMaps) (nZ : Z),
+(* The gap found lies at or above [grid_floor], which is above the model's
+   [task_unmapped_base]: the bottom-up window [Placement.linux_place_exists] searches. *)
+Theorem gap_exists_floor : forall (h : VmMaps) (nZ : Z),
   0 < nZ <= CBMAX -> nZ mod 4096 = 0 ->
   (forall e, In e (vm_reserved h ++ vm_maps h) -> elo e < ehi e /\ ehi e - elo e <= GRID_W) ->
   Z.of_nat (length (vm_reserved h)) <= GRID_RESV ->
@@ -154,7 +157,7 @@ Theorem gap_exists : forall (h : VmMaps) (nZ : Z),
   live_bytes (vm_maps h) <= GRID_W ->
   CEIL_MIN <= alloc_top h ->
   exists a : word,
-    bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top h
+    bv_unsigned a mod page_size = 0 /\ grid_floor <= bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top h
     /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
   intros h nZ HS Hal HE HR HJ HB HT.
@@ -177,7 +180,24 @@ Proof.
   assert (Ra : 0 <= a < 2^64) by (unfold grid_floor, CEIL_MIN in *; lia).
   assert (Ua : bv_unsigned (Z_to_bv 64 a) = a) by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
   assert (Un : bv_unsigned (Z_to_bv 64 nZ) = nZ) by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
-  exists (Z_to_bv 64 a). rewrite Ua. split; [unfold page_size; exact Ha|]. split; [lia|]. split; [lia|].
+  exists (Z_to_bv 64 a). rewrite Ua. split; [unfold page_size; exact Ha|]. split; [exact Hf|]. split; [lia|].
   apply region_free_introZ; intros e sz He.
   specialize (Hfree (e, sz) He). unfold elo, ehi in Hfree. cbn in Hfree. rewrite Ua, Un. lia.
+Qed.
+
+Theorem gap_exists : forall (h : VmMaps) (nZ : Z),
+  0 < nZ <= CBMAX -> nZ mod 4096 = 0 ->
+  (forall e, In e (vm_reserved h ++ vm_maps h) -> elo e < ehi e /\ ehi e - elo e <= GRID_W) ->
+  Z.of_nat (length (vm_reserved h)) <= GRID_RESV ->
+  Z.of_nat (length (vm_maps h)) < GRID_J ->
+  live_bytes (vm_maps h) <= GRID_W ->
+  CEIL_MIN <= alloc_top h ->
+  exists a : word,
+    bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top h
+    /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
+Proof.
+  intros h nZ HS Hal HE HR HJ HB HT.
+  destruct (gap_exists_floor h nZ HS Hal HE HR HJ HB HT) as (a & A1 & A2 & A3 & A4).
+  pose proof grid_floor_pos as FP.
+  exists a. split; [exact A1|]. split; [lia|]. split; [exact A3 | exact A4].
 Qed.

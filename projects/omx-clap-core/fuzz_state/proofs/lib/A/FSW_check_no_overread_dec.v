@@ -5,7 +5,7 @@
    All three calls decode the same C string c_db, so b64_dec (c_db cx) decides the arm of every call: None (each call
    allocates and frees inside, a0 = 0, *lenp keeps its value) or Some out (each buffer stays live, a0 = q <> 0,
    *lenp = length out). The refused arm of decode_spec_ff is dead: quiet gives g_fail_at = SIZE_MAX.
-   Template (text only): a Theorem Labs lane's crcs walk, a working branch 7f69688b4f6
+   Template (text only): a Theorem Labs lane's crcs walk, a working branch
    lib/A/FSH_check_reject_clean_starved.v (crcs_call / crcs_site / the decode site at 0x82630, crcs_roP_notFP,
    crcs_text_nf); the bespoke A proofs on a working branch were read for the stage facts only. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

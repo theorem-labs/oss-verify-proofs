@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair: atable's n_resx and p_resx (2 and 20 for ASAN and BOTH), resx_bytes charged in init_acs_of_with, gap_ok counting the n_resx intervals, and resx_clear, the ceiling of mmap_fixed_free's classic path below the pair; the auxv's size symbolic in the run's CONFIG_RSEQ flag r (rseq_z, rseq_z_range, AUXSZ, AUXSZ_of), so e_atrandom, e_str0, e_str1, e_argv1w, e_atrb, node_pnscan, node_layout, init_kn_with, atr_entry, atr_entry_zero, init_kn, init_kn_zero, init_acs_of, init_acs_of_zero, asan_init and both_init take r, with AT_RANDOM after the auxv and its gap V_G and the strings after the AT_RANDOM bytes and the pad (e_atrb_off added); the launch variables V_G and V_GID (AT_GID), NX0 = 13, and the auxv_rest facts; init_kn_with's stack window 6,144,513 bytes deep, not 8,388,608, and its pad bound 4110, not 280000). *)
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Run.
@@ -44,7 +45,38 @@ Definition V_L1 : nat := 7.
 Definition V_UID : nat := 8.
 Definition V_HW : nat := 9.
 Definition V_SP : nat := 10.
-Definition NX0 : nat := 11.
+(** [StackLayout.block_items argv envp mod 2]: the 8-byte gap [STACK_ROUND]
+    (fs/binfmt_elf.c, [create_elf_tables]) clears below the AT_RANDOM block so
+    that it lands 16-aligned.  No linear form over argc and envc can spell
+    "mod 2", so the gap is its own variable.  Appended at 11 rather than taking
+    the model's 9: this tree splits sp three ways (V_S1/V_S2/V_SP) and claims
+    AT_HWCAP (V_HW), so 9 and 10 are taken. *)
+Definition V_G : nat := 11.
+(** the launch's group id, the value of both AT_GID and AT_EGID ([StackLayout.auxv_entries]
+    writes [in_gid] into both pairs): musl's [__init_libc] compares aux[AT_GID] with aux[AT_EGID]
+    before it decides the secure mode, so the start state names one variable for both
+    (LPS 727298f3; as jsoncons/fuzz_bigint's and the zstd units' start states do).  Appended at the
+    old [NX0], so no launch index changes meaning. *)
+Definition V_GID : nat := 12.
+Definition NX0 : nat := 13.
+
+(** The auxv's size in bytes as a function of the run's CONFIG_RSEQ flag [r],
+    spelled 0 or 1 ([rseq_z]).  [StackLayout.auxv_size] is 29 entries of 16
+    bytes (464) with CONFIG_RSEQ and 27 entries (432) without it, so every
+    address above the auxv moves by [32 * r].
+
+    [r] is a Coq PARAMETER of the plan, not a plan variable: [NX0] does not
+    count it, and a certificate is checked at one literal value of [r], so the
+    expressions below stay in the executor's normal form. *)
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
+
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
+
+Definition AUXSZ (r : Z) : Z := 432 + 32 * r.
+
+Lemma AUXSZ_of : forall b, AUXSZ (rseq_z b) = Z.of_nat (StackLayout.auxv_size b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
 Definition e_sp0 : expr := mkAlu ALU_ADD (mkMd M_MUL (ELit 32768) (EVar V_S1)) (mkAlu ALU_ADD (mkMd M_MUL (ELit 16) (EVar V_S2)) (mkMd M_MUL (ELit 4096) (EVar V_SP))).
 
@@ -54,7 +86,37 @@ Definition PID_MAX : Z := 4194304.
 
 Record atable : Type := AT {
   img_lo : Z; img_hi : Z;
-  n_res : nat;
+  n_res : nat;                     (** intervals contributed by the IMAGE (= length (segments_reserved segs)) *)
+  (** the LAUNCH's extra reserved intervals: what [State.init_model] seeds
+      [vm_reserved] with besides the image's own reservations.  At Linux
+      v6.18.46, commit 1f99e9ab748f, arch/riscv/kernel/vdso.c
+      [arch_setup_additional_pages] takes the vvar pages and the vDSO text as
+      one unhinted [get_unmapped_area] span, which a top-down layout answers
+      from the gap just below [mm->mmap_base], so that pair is reserved ledger
+      the checker must stay clear of.  Both fields are UPPER bounds, so a table
+      may over-state them; 0 means the launch reserves nothing extra.
+      [p_resx] is counted in PAGES because the checker needs the byte figure to
+      be non-negative without a side condition.
+
+      THE TWO ARE NOT THE SAME KIND OF NUMBER, and a table that sets them must
+      know which is which.  [p_resx = 20] is FORCED: the model's own
+      [State.vdso_len_bounds] gives [5 * page_size <= vdso_len kb <= 20 *
+      page_size], and a build with a sixteen-page vDSO text reaches the top of
+      that.  [n_resx = 2] is only the number of intervals
+      [State.vdso_reserved] emits TODAY, the vvar pages and the text.  A launch
+      that reserves a third region makes it 3, and nothing here will say so:
+      read it off [length (vdso_reserved kb top)] rather than writing the
+      literal.  That length is 0 or 2 and never 1 — [State.vdso_reserved]
+      (State.v:6559-6564) answers [[]] when the base would fall below the first
+      page, and otherwise both intervals.  The empty case is a shape the
+      function is total on, not a launch the model describes.
+
+      Ported from LPS 727298f3 theories/Common/AsanPlanCore.v:105-133.  That is
+      NOT in the 75d69e00 -> 727298f3 window, so these fields landed in the
+      released -> 75d69e00 half and this tree simply had not carried them: #38
+      debt, not a head regression. *)
+  n_resx : nat;                    (** upper bound on the NUMBER of extra reserved intervals *)
+  p_resx : nat;                    (** upper bound on their total size, in pages *)
   shadow_off : Z;
   a_entry : Z;
   rw_lo : Z; rw_len : Z;
@@ -69,6 +131,12 @@ Record atable : Type := AT {
   x_envscan : Z; x_envscan_k : Z; x_pnscan : Z; x_pnscan_k : Z;
   stops_more : list Z
 }.
+
+(** the byte allowance of the launch's extra reserved intervals.  Counted from
+    [p_resx] so that it is non-negative by construction: the place that uses
+    it, the initial [a_totsz], would need a side condition on a plain [Z]
+    field. *)
+Definition resx_bytes (A : atable) : Z := Z.of_nat (p_resx A) * 4096.
 
 Section WithSegs.
 Variable segs : list Segment.
@@ -1587,7 +1655,10 @@ Proof. intros. bcfe. unfold kn_grant_filterB, kn_grant_filter. autorewrite with 
 #[local] Hint Rewrite kn_grant_filterB_eqf : bceq.
 
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-  let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
+  (* [n_resx A] counts the launch's extra reserved intervals: they sit in the
+     same ledger [AsanPlacement.free_gap_of_totals] measures, and its bound
+     charges [length (vm_reserved h ++ vm_maps h)] windows. *)
+  let cnt := Z.of_nat (n_res A + n_resx A + length (a_maps cs))%nat in
   Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
 
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
@@ -1702,10 +1773,18 @@ Definition mmap_fixed_grant (cs : acs) (ms0 : list amap) (b : expr) (off : Z) (n
   let cs1 := add_entry (with_maps0 cs ms0) (s_regs (a_ss cs)) k' (nxt cs) m nhi eager (a_ylo cs) in
   if visible then vis_add cs1 a ne (kmem ++ kn cs1) else Some cs1.
 
+(** THE CLASSIC PATH'S CEILING (LPS 727298f3 theories/Common/AsanPlanCore.v [resx_clear]): a
+    fixed-address range named by no hole token ends at or below [KHI] and below [a_ylo cs].  The
+    launch's vdso/vvar pair sits in the reserved ledger ([APS.co_res]) just below the mmap base,
+    above [KHI] ([APS.co_vtop]), and the old ceiling [CEIL] reaches it: a node admitting a range up
+    to [CEIL] would certify a grant over the pair.  As in the model, the [KHI] half is what this
+    path's soundness uses; a range above it takes the hole path, whose ceiling stays [CEIL]. *)
+Definition resx_clear (cs : acs) : Z := Z.min KHI (a_ylo cs).
+
 Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
   let k := kn cs in
   let a := reg cs 10 in
-  match fixed_args cs CEIL with
+  match fixed_args cs (resx_clear cs) with
   | Some (b, off, ne, nlo, nhi) =>
       if (no_fog (a_maps cs)
           && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
@@ -2631,14 +2710,25 @@ Definition kn_readable_x (k : list kentry) (rb : expr) (rk : Z) (ne : expr) : bo
 
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition e_str0 : expr := eaddz e_auxv 160.
-Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
+(** Linux's block, bottom to top ([StackLayout.build_stack_bytes]):
+      envp     = sp0 + 8*argc + 16          (argc, the argv pointers, their NULL)
+      auxv     = envp + 8*envc + 8          (the envp pointers and their NULL)
+      atrandom = auxv + AUXSZ r + 8*g       (the auxv, then [STACK_ROUND]'s gap)
+      str0     = atrandom + 16 + pad        (the sixteen random bytes, then the
+                                             [arch_align_stack] pad)
+    The strings are ABOVE the random bytes now, not below them, and [V_W] is the
+    pad rather than the string block's word count. *)
+Definition e_atrandom (r : Z) : expr := eadd (eaddz e_auxv (AUXSZ r)) (escale 8 (EVar V_G)).
+Definition e_str0 (r : Z) : expr := eadd (eaddz (e_atrandom r) 16) (EVar V_W).
+Definition e_str1 (r : Z) : expr := eadd (e_str0 r) (eaddz (EVar V_L0) 1).
 
+(** (e_atrandom r - 24 - AUXSZ r) / 8 as a linear form: the auxv size cancels
+    out of it, so it takes no [r] — it is sp/8 + argc + envc + g under both
+    layouts.  It WAS the same form with [V_W] in the gap's place. *)
 Definition e_atr8 : expr :=
-  eadd (eadd (escale 4096 (EVar V_S1)) (eadd (escale 2 (EVar V_S2)) (escale 512 (EVar V_SP)))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
+  eadd (eadd (escale 4096 (EVar V_S1)) (eadd (escale 2 (EVar V_S2)) (escale 512 (EVar V_SP)))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_G))).
 
-Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
+Definition e_argv1w (r : Z) : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) (e_str1 r).
 
 Definition node_envscan (cs : acs) : option acs :=
   let k := kn cs in
@@ -2646,11 +2736,11 @@ Definition node_envscan (cs : acs) : option acs :=
     Some (set_pc (set_reg (set_reg cs 9 (eadd (reg cs 9) (eadd (escale 8 (EVar V_ENVC)) (ELit 8)))) 10 (ELit 0)) (x_envscan_k A))
   else None.
 
-Definition node_pnscan (cs : acs) : option acs :=
+Definition node_pnscan (r : Z) (cs : acs) : option acs :=
   let k := kn cs in
   match reg_lit cs 10, reg_lit cs 12 with
   | Some p, Some 47 =>
-      if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz e_str0 1)
+      if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz (e_str0 r) 1)
           && kwritable k k (ELit 0) p 8 && Z.leb (img_lo A) p && Z.leb (p + 8) (img_hi A) && fresh_ok cs)%bool then
         let v := nxt cs in
         let k' := kn_havoc (kimg_cut k p 8) (ELit 0) p (ELit 8) in
@@ -2662,13 +2752,13 @@ Definition node_pnscan (cs : acs) : option acs :=
 
 Definition kw_argv1 (v : expr) : kentry := KWord (SA e_sp0 16) 8 v.
 
-Definition node_layout (cs : acs) (args : list expr) : option acs :=
+Definition node_layout (r : Z) (cs : acs) (args : list expr) : option acs :=
   let k := kn cs in
-  if negb (existsb (kentry_eqb (kw_argv1 e_argv1w)) k) then None else
-  let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) k in
+  if negb (existsb (kentry_eqb (kw_argv1 (e_argv1w r))) k) then None else
+  let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w r)) K)) k in
   match args with
   | [ELit 1] => match xlo k (EVar V_ARGC) with
-                | Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 e_str1 :: k')) else None
+                | Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 (e_str1 r) :: k')) else None
                 | None => None
                 end
   | [ELit 0] => match xhi k (EVar V_ARGC) with
@@ -3111,32 +3201,76 @@ Definition BRK_ASLR : Z := 0x80000000.
 Definition K_RND : nat := 25.
 
 Definition e_auxb : expr * Z := split_lit e_auxv.
-Definition e_atrb : expr * Z := split_lit e_atrandom.
+Definition e_atrb (r : Z) : expr * Z := split_lit (e_atrandom r).
+(** the literal half of the AT_RANDOM address: the auxv base's own 24 plus the
+    vector.  Stated at a LITERAL flag, because [split_lit] only computes once
+    [AUXSZ r] is a numeral.  It WAS 184, with a 160-byte auxv and no gap. *)
+Lemma e_atrb_off : forall b, snd (e_atrb (rseq_z b)) = 24 + AUXSZ (rseq_z b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 Definition auxw (i : Z) (ty : Z) (v : expr) : list kentry :=
   [KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty); KWord (SA (fst e_auxb) (snd e_auxb + 16 * i + 8)) 8 v].
 
-Definition init_kn_with (atr : kentry) (A : atable) : list kentry :=
+(** LPS 727298f3: musl's [__init_libc] loop reads EVERY pair's type word up to AT_NULL and stores
+    the value of each type below AUX_CNT, then compares aux[AT_GID] with aux[AT_EGID].  These are
+    the facts the launch gives for the pairs [init_kn_with]'s own list does not name: the values
+    the launch fixes (AT_CLKTCK, AT_BASE, AT_FLAGS, AT_ENTRY), AT_GID and AT_EGID ([V_GID]), the
+    CONFIG_RSEQ pair when [r = 1], the whole vector readable, and the type words of the pairs whose
+    value no plan variable denotes (ARCH_DLINFO's ten and AT_EXECFN).  Pair indices follow
+    [StackLayout.auxv_entries]; appended after the other facts so no earlier position moves. *)
+Definition auxv_rest (r : Z) (A : atable) : list kentry :=
+  auxw 12 17 (ELit 100) ++ auxw 16 7 (ELit 0) ++ auxw 17 8 (ELit 0) ++ auxw 18 9 (ELit (a_entry A))
+  ++ auxw 21 13 (EVar V_GID) ++ auxw 22 14 (EVar V_GID)
+  ++ (if Z.eqb r 1 then auxw 26 27 (ELit 28) ++ auxw 27 28 (ELit 32) else [])
+  ++ [KUnk (SA (fst e_auxb) (snd e_auxb)) (ELit (AUXSZ r));
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 0)) 8 (ELit 33); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 1)) 8 (ELit 40);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 2)) 8 (ELit 41); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 3)) 8 (ELit 42);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 4)) 8 (ELit 43); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 5)) 8 (ELit 44);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 6)) 8 (ELit 45); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 7)) 8 (ELit 46);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 8)) 8 (ELit 47); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 9)) 8 (ELit 51);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 25)) 8 (ELit 31)].
+
+(** The PAIR INDICES are [StackLayout.auxv_entries]' order: ARCH_DLINFO's ten
+    (AT_SYSINFO_EHDR, the eight cache words, AT_MINSIGSTKSZ) come first, because
+    [create_elf_tables] expands ARCH_DLINFO before its own entries.  So
+    AT_HWCAP is pair 10, AT_PAGESZ 11, AT_PHDR/AT_PHENT/AT_PHNUM 13/14/15,
+    AT_UID/AT_EUID 19/20, AT_SECURE 23, AT_RANDOM 24; AT_NULL is pair 26 without
+    CONFIG_RSEQ and pair 28 with it, i.e. [26 + 2 * r].  They WERE 0..9, when the
+    vector was ten pairs.
+
+    [KRange (EVar V_W) 0 4110]: [V_W] is now [StackLayout.block_pad_len] — the pad
+    [arch_align_stack] leaves, its draw in [0, 4095] plus the remainder its low-four-bit
+    mask leaves — not the string block's word count, which is why the bound falls from
+    280000 to 4110.  [KRange (EVar V_G) 0 1] is [STACK_ROUND]'s gap in words.
+    [KRange e_atr8 .. 0xFFFFFFFFFC5 - 4 * r]: [e_atr8] is [(at_random - 24 - AUXSZ r) / 8]
+    and the sixteen random bytes end at or below 2^47, so it is at most
+    (2^47 - 16 - 24 - AUXSZ r) / 8.  It WAS 0xFFFFFFFFFE7, with a 160-byte auxv and no gap. *)
+Definition init_kn_with (r : Z) (atr : kentry) (A : atable) : list kentry :=
   [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 255; KRange (EVar V_SP) 0 7;
-   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7;
+   KRange (eaddz (e_atrandom r) 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 (0xFFFFFFFFFC5 - 4 * r);
    KRange e_sp0 0x7fff80000000 0x7fffffffff40; KRange e_pd 0x7fff80000000 0x7ffffffff000;
    KRange (eadd (escale 4096 (EVar V_S1)) (eadd (escale 2 (EVar V_S2)) (escale 512 (EVar V_SP)))) 0xFFFF0000000 0xFFFFFFFFFE8;
    KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
-   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0 0x3FFFFF;
-   KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
-   KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
-   KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
+   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0 0x3FFFFF; KRange (EVar V_G) 0 1;
+   KRange (EVar V_W) 0 4110; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+   (* 6144513 is [StoreOk.stack_window_depth] = stack_max_size - stack_window_reach:
+      what the 8 MiB leaves below sp once the largest entry image is taken out, as
+      [Run.stack_window_lo] now counts it.  It WAS the whole 8388608, when the image
+      above sp was short enough that the window below it reached the full rlimit. *)
+   KWr (SA e_sp0 (-6144513)) (ELit 6144513); KZero (SA e_sp0 (-6144513)) (ELit 6144513);
+   KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 (e_str0 r); kw_argv1 (e_argv1w r)]
 
-  ++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 3 16 (EVar V_HW) ++ auxw 4 6 (ELit 4096)
-  ++ auxw 5 11 (EVar V_UID) ++ auxw 6 12 (EVar V_UID) ++ auxw 7 23 (ELit 0) ++ auxw 8 25 e_atrandom ++ auxw 9 0 (ELit 0)
+  ++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 10 16 (EVar V_HW) ++ auxw 11 6 (ELit 4096)
+  ++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 (e_atrandom r) ++ auxw (26 + 2 * r) 0 (ELit 0)
   ++ [atr;
-      KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
+      KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))]
+  ++ auxv_rest r A.
 
-Definition atr_entry : kentry := KBlob (SA (fst e_atrb) (snd e_atrb)) (ELit 16) K_RND.
-Definition atr_entry_zero : kentry := KZero (SA (fst e_atrb) (snd e_atrb)) (ELit 16).
+Definition atr_entry (r : Z) : kentry := KBlob (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16) K_RND.
+Definition atr_entry_zero (r : Z) : kentry := KZero (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16).
 
-Definition init_kn (A : atable) : list kentry := init_kn_with atr_entry A.
+Definition init_kn (r : Z) (A : atable) : list kentry := init_kn_with r (atr_entry r) A.
 
-Definition init_kn_zero (A : atable) : list kentry := init_kn_with atr_entry_zero A.
+Definition init_kn_zero (r : Z) (A : atable) : list kentry := init_kn_with r (atr_entry_zero r) A.
 
 Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
 
@@ -3144,14 +3278,28 @@ Definition e_stkwlen : expr := esub (ELit STK_WTOP) e_pd.
 Definition init_vis (A : atable) : list (expr * expr) :=
   [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (eaddz e_pd STK_OFF, e_stkwlen)].
 
+(** [a_totsz] must cover the WHOLE reserved ledger, the launch's extra
+    intervals included, because [APS.co_totsz] measures [vm_reserved ++
+    vm_maps] and [State.init_reserved] puts the vdso/vvar pair in
+    [vm_reserved].  [if_sizes] pins the image's share to [img_hi - img_lo]
+    EXACTLY, so without [resx_bytes A] the launch's own [co_totsz] is false by
+    [State.vdso_len_bounds]' strictly positive [vdso_len].
+
+    [a_ylo] is NOT moved here, unlike LPS 727298f3
+    theories/Common/AsanPlanCore.v:3954-3958, which seeds it at
+    [MBASE_MIN - resx_bytes A].  That seed exists upstream to give [co_split]'s
+    high mark a floor at or below every extra reservation's base, and this tree
+    has no [co_split]: its [reserved_free_above] brings the pair's own
+    [region_free] test as a premise instead.  Move it only together with that
+    floor argument. *)
 Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
-  ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis A) []
+  ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A + resx_bytes A) MBASE_MIN 0 (init_vis A) []
       (vis_cost (img_hi A - img_lo A) + vis_cost STK_WMAX) (escale 4096 (EVar V_BRK)) FdStd false.
-Definition init_acs_of (A : atable) : acs := init_acs_of_with (init_kn A) A.
-Definition init_acs_of_zero (A : atable) : acs := init_acs_of_with (init_kn_zero A) A.
+Definition init_acs_of (r : Z) (A : atable) : acs := init_acs_of_with (init_kn r A) A.
+Definition init_acs_of_zero (r : Z) (A : atable) : acs := init_acs_of_with (init_kn_zero r A) A.
 
 Definition ASAN : atable :=
-  {| img_lo := 0x10000; img_hi := 0x62f000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x62f000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x3ba84; rw_lo := 0xcd000; rw_len := 0x562000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x70060; x_imemcpy := 0x6ffe4; x_memset := 0xc78a4; x_memcpy := 0xc74a0; x_memiszero := 0x70590;
      x_istrncpy := 0x7048c; x_sealed := 0x11a60; x_popfree := 0x42134;
@@ -3161,10 +3309,10 @@ Definition ASAN : atable :=
 
 Definition ASAN_TEXT_LO : Z := 0x3ba84.
 Definition ASAN_TEXT_N : nat := 148565.
-Definition asan_init : acs := init_acs_of ASAN.
+Definition asan_init (r : Z) : acs := init_acs_of r ASAN.
 
 Definition BOTH : atable :=
-  {| img_lo := 0x10000; img_hi := 0x631000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x631000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x3c414; rw_lo := 0xcf000; rw_len := 0x562000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x709f0; x_imemcpy := 0x70974; x_memset := 0xc99c0; x_memcpy := 0xc95bc; x_memiszero := 0x70f20;
      x_istrncpy := 0x70e1c; x_sealed := 0x11a88; x_popfree := 0x42ac4;
@@ -3173,6 +3321,6 @@ Definition BOTH : atable :=
      stops_more := [0x40738; 0x41d5c; 0x6ca6c; 0x7af74; 0x7b104; 0x670b4; 0x670c8; 0x670dc]    |}.
 Definition BOTH_TEXT_LO : Z := 0x3c414.
 Definition BOTH_TEXT_N : nat := 150072.
-Definition both_init : acs := init_acs_of BOTH.
+Definition both_init (r : Z) : acs := init_acs_of r BOTH.
 
 End APC.

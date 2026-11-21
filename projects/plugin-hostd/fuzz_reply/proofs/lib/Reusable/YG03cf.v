@@ -1,11 +1,11 @@
-(* CARRIED from commit 67b1573c554b41c3694e495821c6dc8e452f7d63,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG03cf.v, sha256 a24dfc0f418c8243c3f8b4245751d728c4cd7a434c2779714c950bc836752578 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
    (lib.Spec -> fuzz_reply.lib.Spec). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: cache_dealloc_post_cf gains `st_cache_inited s' = true` (cache_dealloc
    starts with init_cache_if_needed, as cache_alloc_post_y3 already states); cache_dealloc_ok_cf proves it. recycle_post_cf
    gains `st_cache_inited s = true -> st_cache_inited s' = true` (recycle_chunk's primary arm is that cache_dealloc; its
@@ -26,6 +26,7 @@
    (drain_spec_cf below, met by maybe_drain_cf in YG03dcf.v) and the free theorem is stated for any drain that meets it; a
    recycled batch may be empty (MergeBatches' extracted ones), so RI_cf / RIx_cf keep only the upper bound on its items.
    The YG02 / YG06 / YG07 lemmas that free needs are re-proved here over WfR_cf. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From Stdlib Require Import Sorting.Permutation.

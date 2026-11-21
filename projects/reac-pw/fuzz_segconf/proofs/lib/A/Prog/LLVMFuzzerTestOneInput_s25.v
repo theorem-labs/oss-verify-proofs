@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s6.v, with its module paths, module names and numbers changed; 277 of its 374 lines of code are new or changed and 665 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): _s25 of the walk of the test
    harness's entry function LLVMFuzzerTestOneInput (0x84d34): segment S21, from the cut K85c44 (0x85c44) to the cut RET
    (0x85d40), and the return from RET to the function's post. The statements are lt_seg_S21_stmt and lt_seg_RET_stmt of
-   LLVMFuzzerTestOneInput_defs.v (commit 6888a1bad128).
+   LLVMFuzzerTestOneInput_defs.v.
 
    What the code does there (dis/LLVMFuzzerTestOneInput.fuzz_segconf.asan.s lines 966-1029): the frame-done word
    0x45e0360e into FR + 0 (0x85c4c); a6 = FR <> 0, so the side-stack branch (0x85c50); meta_fill_f5(s5 = SH(FR), 64)
@@ -14,7 +15,7 @@
    a6 = FR >= 4096.
 
    The walk (the form of plugin-hostd/fuzz_command's lib/A/Prog/chain_words_s6.v:491-835 and of its harness walk's
-   LLVMFuzzerTestOneInput_s90.v:404-452, origin/ossv/recipes 501c0d516c69): one symbolic run from K85c44 to the
+   LLVMFuzzerTestOneInput_s90.v:404-452): one symbolic run from K85c44 to the
    call of meta_fill_f5 (PaCallRun.v's SRr_run_pi_AJ_call), the call step aj_set_shadow_atS
    (LLVMFuzzerTestOneInput_s25k.v), a re-seat of the symbolic state over the call (PaLibH.v's jafter_call_keep_hi)
    with the three regions the release reads and writes, one run from the return of the fill to the ret under

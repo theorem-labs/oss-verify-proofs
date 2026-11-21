@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACfi.v:76-87 (link_FFL; a working branch c8557374ad2e,
-   released at ossv/recipes 053df5cc35b), with its module paths changed to libreac/fuzz_ctrl's image B (ASan-UBSan) core
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACfi.v:76-87 (link_FFL; a working branch,
+   released), with its module paths changed to libreac/fuzz_ctrl's image B (ASan-UBSan) core
    (lib/Reusable/YB1v.tfibsegs, lib/Reusable/YCeg.tfib_img_cover). The proof is the donor's, step for step.
    It needs NO syms hypothesis (a Theorem Labs lane's review, 2026-10-29 17:43Z), so the theorem is stated for every B.
    frame_flag_lawP is the core's (lib/Reusable/YCbq.v:799); fuzz_ctrl's image-B model_block / identity_reply glues carry
    it as the premise FFL. Written by a Theorem Labs lane (the unit's reviewer, 17:41Z). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

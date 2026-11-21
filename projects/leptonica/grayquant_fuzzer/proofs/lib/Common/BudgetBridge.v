@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO; the run's segments (RomBase.sys_rob)). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run RiscvSemantics MemImageType StackLayout.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -24,22 +25,26 @@ Qed.
 Theorem run_scfg_budget_bridge : ltac2:(TCodec.tc2 tcn__Common_BudgetBridge "Q3'H'D'5'G'Q1&Q8r4r3%3221&3&Or7r6r5r2%5543281%711'1&I&Nr8%251:9?>%352;9@?%5221%>54=;BA%@11%9231p0;1p0D1pRNI1pRJK1p@M1p>N1pRLQ01pRHQ21").
 Proof.
 intros cfg [segs pc ph] L1 L2 [sp brk0 mbase rnd] inp Hle Hnr.
-unfold run_scfg_budget_refused, run_scfg in *.
-set (c0 := init_config segs pc ph sp brk0 mbase rnd L1 inp) in *.
-assert (Hn : nref segs cfg c0).
+unfold run_scfg_budget_refused, run_scfg in *. cbv zeta in *.
+(* 08b1429 Run.v: run_scfg and run_scfg_budget_refused run over [run_segments segs inp sp mbase]
+   (the image plus the vDSO and vvar pages), not over [segs]. Every bridge lemma below is stated over
+   an arbitrary segment list, so it is used at that list. *)
+set (vsegs := run_segments segs inp sp mbase) in *.
+set (c0 := init_config vsegs pc ph sp brk0 mbase rnd L1 inp) in *.
+assert (Hn : nref vsegs cfg c0).
 { intros tr c Hst Hb. apply Hnr. exists tr, c. split; assumption. }
-pose proof (init_config_okl segs pc ph sp brk0 mbase rnd L1 L2 inp Hle) as Hl. fold c0 in Hl.
-rewrite (init_config_setlim segs pc ph sp brk0 mbase rnd L1 L2 inp). fold c0.
+pose proof (init_config_okl vsegs pc ph sp brk0 mbase rnd L1 L2 inp Hle) as Hl. fold c0 in Hl.
+rewrite (init_config_setlim vsegs pc ph sp brk0 mbase rnd L1 L2 inp). fold c0.
 split.
 - unfold behavior_equiv. cbn [bh_traces bh_errors bh_all_errors bh_unmodeled].
-split; [exact (traces_iff segs cfg L2 move_charge_le bounded_pres c0 Hn Hl)|].
-split; [exact (errors_iff segs cfg L2 move_charge_le bounded_pres c0 Hn Hl)|].
+split; [exact (traces_iff vsegs cfg L2 move_charge_le bounded_pres c0 Hn Hl)|].
+split; [exact (errors_iff vsegs cfg L2 move_charge_le bounded_pres c0 Hn Hl)|].
 split.
 + split.
-* intros H. exact (all_errors_fwd segs cfg L2 move_charge_le bounded_pres c0 H Hn Hl).
-* intros H. exact (all_errors_bwd segs cfg L2 move_charge_le bounded_pres _ H c0 eq_refl Hn Hl).
-+ exact (unmodeled_iff segs cfg L2 move_charge_le bounded_pres c0 Hn Hl).
-- intros (tr & c & Hst & Hb). exact (nref_lift segs cfg L2 move_charge_le bounded_pres c0 Hn Hl tr c Hst Hb).
+* intros H. exact (all_errors_fwd vsegs cfg L2 move_charge_le bounded_pres c0 H Hn Hl).
+* intros H. exact (all_errors_bwd vsegs cfg L2 move_charge_le bounded_pres _ H c0 eq_refl Hn Hl).
++ exact (unmodeled_iff vsegs cfg L2 move_charge_le bounded_pres c0 Hn Hl).
+- intros (tr & c & Hst & Hb). exact (nref_lift vsegs cfg L2 move_charge_le bounded_pres c0 Hn Hl tr c Hst Hb).
 Qed.
 Theorem run_budget_bridge : ltac2:(TCodec.tc2 tcn__Common_BudgetBridge "Q0'D'5'G'Q1&Q8r4r3%3221&3&Mr6r5r2%443271%611'1&I&Lr7%2419>=%3429?>%5221%=44;A@%?11%9231p0;1p0C1pRNH1pRJJ1p@L1p>M1pRLO1").
 Proof.

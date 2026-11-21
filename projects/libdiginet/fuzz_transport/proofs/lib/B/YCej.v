@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_transport's ASan build in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (origin/ossv/recipes 25e3d17bdb50); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_transport's ASan build in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (theorem-labs/oss-verify-proofs@6b32741d849a); module paths changed (cgif lib/X -> lib/Reusable/X). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/ACej.v, with its addresses changed; 12 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* YCej: the trace universe of fuzz_transport's start-up certificate, image B, in the form of proofs/cgif/cgif_file_fuzzer/lib/YCej.v
 (* Read from: fuzz_transport.asan-ubsan (libdiginet/fuzz_transport asan-ubsan) sha256 41113a03c82fde8282db830ab5f4fbe376e392a38d22670b8cb8c9f02969ece4; unstripped twin sha256 e217cb0a84f1e1810805155304b281a259ef83a85f50efcf0c65b40697bfa4dc *)
-   (commit 25e3d17bdb50) with the donor's module paths changed (lib/X -> lib/Reusable/X, fuzz_grant B's layout at
-   commit 4f87de75d67).
+   with the donor's module paths changed (lib/X -> lib/Reusable/X, fuzz_grant B's layout).
+   
    Image: the pinned bin/fuzz_transport/fuzz_transport.asan-ubsan of libdiginet,
    sha256 41113a03c82fde8282db830ab5f4fbe376e392a38d22670b8cb8c9f02969ece4 (the pin of harness.yaml); symbols from
    its unstripped twin unstripped/fuzz_transport/fuzz_transport.asan-ubsan, sha256
@@ -20,8 +21,8 @@
    (11 traces, from 8 call sites in 3 functions; stderr empty). TRACES_receive_override, the commented block
    before Tfib_universe, declares the four rows gen_traces cannot emit. The unit is reassembled by
    acej.py (sha256 5db4ca1babf0; internal record), fuzz_decode's, whose controls re-emit the
-   donor's released lib/YCej.v and lib/A/ACej.v (commit 25e3d17bdb50) byte for byte from their own data, and
-   fuzz_decode's lib/B/YCej.v (commit 7eb81ddb186), override block included, from its committed inputs.
+   donor's released lib/YCej.v and lib/A/ACej.v byte for byte from their own data, and
+   fuzz_decode's lib/B/YCej.v, override block included, from its committed inputs.
    Tfib_universe (15 rows) is closed under non-empty prefixes and equals the prefix closure of the traces of
    pautrlen/compose.py (start-up tool set, sha256 7bf620a82573) on this image.
    The ipc are the return addresses of the GetCurrentPc calls on the unwinding arm of

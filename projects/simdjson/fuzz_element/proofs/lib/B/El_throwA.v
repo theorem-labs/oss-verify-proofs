@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the throw path's run is checked at both CONFIG_RSEQ values and read at the one the auxv walk fact names, and the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -178,7 +179,7 @@ Section ThrowA.
   Hypothesis XK1 : In (FSZ - 16, es0) xk /\ xexp_ok es0 = true.
   Hypothesis XK2 : In (FSZ - 24, es1) xk /\ xexp_ok es1 = true.
   Hypothesis ITS : itab_sound bsegs IT.
-  Hypothesis RUN : forall uw : bool, exit_okA FSZ xr xk (xautoXA FSZ IT XS_END_A XSA_FUEL XSA_K (xs_ss0A FSZ hcs RA uw)) = true.
+  Hypothesis RUN : forall uw b : bool, exit_okA FSZ xr xk (xautoXA FSZ IT XS_END_A XSA_FUEL XSA_K (xs_ss0A FSZ hcs RA uw b)) = true.
 
   Variable Σ : rts RT.
   Variables (sp gp t0 t1 t2 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem).
@@ -192,7 +193,7 @@ Section ThrowA.
   Hypothesis RB : 0 < blk /\ blk mod 16 = 0 /\ blk + 144 <= rt_sp0 RT Σ - STACK_WIN /\ (blk + 144 <= 0x10000 \/ SEGTOP_A <= blk).
   Hypothesis ST : stk bsegs m lo (usp + FSZ).
   Hypothesis LO1 : 0x7fff7f800000 <= lo.
-  Hypothesis LO2 : rt_sp0 RT Σ - STACK_WIN <= lo.
+  Hypothesis LO2 : rt_sp0 RT Σ - STACK_SPAN <= lo.
   Hypothesis LO3 : lo + RT_STACK <= usp + XS_SPLO.
   Hypothesis SP1 : usp + FSZ + 0xb0 <= rt_sp0 RT Σ.
   Hypothesis SP2 : rt_sp0 RT Σ - (usp + XS_SPLO) <= NORET_DEPTH.
@@ -233,9 +234,9 @@ Section ThrowA.
     assert (HA' : ART (RTX RT WIN c) Σ m) by exact HA.
 
     destruct (xs_entryA (RTX RT WIN c) Σ FSZ hcs ws RA ltac:(lia) HCO HCN RAR sp gp t0 t1 t2 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m blk lo spx code uw
-                HB INB RB ST LO1 LO2 LO3 SP1 SP2 SP3 AL MI HA' (XROW Σ m HA) EHG UNW XD CAN AUX SPX HC) as (E & HCIX & EREG & E40 & EHC).
+                HB INB RB ST LO1 LO2 LO3 SP1 SP2 SP3 AL MI HA' (XROW Σ m HA) EHG UNW XD CAN AUX SPX HC) as (bw & E & HCIX & EREG & E40 & EHC).
 
-    destruct (exit_okA_some _ _ _ _ (RUN uw)) as (sf & HX & RUNu).
+    destruct (exit_okA_some _ _ _ _ (RUN uw bw)) as (sf & HX & RUNu).
     destruct (exit_checkA_sound FSZ xr xk sf RUNu) as (Hpc & Hlog & N10 & N8 & N1 & N2 & N3 & N4 & NXR & KE1 & KE2 & KU & KK).
     apply (xautoXA_sound RT WIN c PMc FDO MST Σ TLS XROW FSZ lo IT ITS fc XSA_FUEL XSA_K _ sf E m m _ HX HCIX K).
     intros E' base' ms' [HAG _] _ [Hnx HC'].

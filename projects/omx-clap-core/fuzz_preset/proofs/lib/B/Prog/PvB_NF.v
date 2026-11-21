@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B (asan-ubsan), parse_value 0x8637c, SEGMENT N (the number arm), sub-piece
    F of lib/B/Prog/PvB_NCut.v: C (0x86864) -> T (0x8688c), over h-verbs-1's ONE image-B program listing
    (lib/B/Listing_prog.v, PL_prog_B). It proves pnF_stmt (PvB_NCut.v).
@@ -8,7 +9,7 @@
    unpiped, index built 2026-10-29T04:26:29Z): "parse_value: 14 file(s) named for it, 35 file(s) use its address, 0
    related; in an earlier delivery 58 named for it and 794 name(s) that hold it, in 68 tree(s)"; second-agent CONFIRM
    (ParseValueLookupConfirm 04:21Z): no released srealizes-form proof of this program's parse_value; new proof
-   justified. Lane E's lib/B/Prog/PvB_NE.v (cold/h-pvn-e ecc4968f66f) is the model of the hand steps, of the write
+   justified. Lane E's lib/B/Prog/PvB_NE.v is the model of the hand steps, of the write
    separation and of the carry across a node store; image A's lib/A/Prog/S8aNumFT.v is the template of the tail.
 
    THE CODE (the neutral listing, the internal file parse_value.fuzz_preset.asan-ubsan.s; listing offset = B pc - 0x816cc):

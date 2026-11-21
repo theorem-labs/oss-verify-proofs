@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFju.v at 25e3d17bdb50 into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; the image bounds cited from lib/Reusable/YImgTop.v; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: st_depot S <> [] premises and case splits on st_depot, the NB / SB extents as KnBlockExt.nb_ext / sb_ext, the layout relation layout_grow, the StackDepot Put stated through AD3j, DPOST over the layout, world and model after the Put, depot_ok_mapped, the NB / SB apartness hypothesis Hmap_apart and the depot zone as KnBlockExt.DZONE_at. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFju.v at theorem-labs/oss-verify-proofs@6b32741d849a into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; the image bounds cited from lib/Reusable/YImgTop.v; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: st_depot S <> [] premises and case splits on st_depot, the NB / SB extents as KnBlockExt.nb_ext / sb_ext, the layout relation layout_grow, the StackDepot Put stated through AD3j, DPOST over the layout, world and model after the Put, depot_ok_mapped, the NB / SB apartness hypothesis Hmap_apart and the depot zone as KnBlockExt.DZONE_at. *)
 (* Modified by Theorem Labs, 2026-10: in const_cells_CZ the end of the fifth range is 644040 (0x9d3c8, the end of CZI's fifth range in fuzz_wire.asan), written in decimal (fuzz_knock.asan's: 635272). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFju.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; the definitions CZI and abs_cell_okS, the tactics zlia, numconst, off_by, addr_tac and ladder_arith, and the image-bound proof steps, which write the image bounds as numbers instead of YImgTop's, taken from proofs/libreac/fuzz_grant/lib/A/AFju.v at 25e3d17bdb50; Zify's Euclidean-division option is set locally. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFju.v (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; the definitions CZI and abs_cell_okS, the tactics zlia, numconst, off_by, addr_tac and ladder_arith, and the image-bound proof steps, which write the image bounds as numbers instead of YImgTop's, taken from proofs/libreac/fuzz_grant/lib/A/AFju.v; Zify's Euclidean-division option is set locally. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -765,7 +766,7 @@ bv_unsigned (getr regs 2) = sp0 - 2272 ->
 PBUFW Wy mem -> (forall a, sp0 - ASTACK <= a < sp0 -> apresent (w_H Wy) mem a) ->
 (forall x : word, ~ X (bv_unsigned x) -> mem x = mem0 x) ->
 (forall k, 1 <= k < 4 -> aview tfibsegs (w_H Wy) mem (TFIB_INST + o_sec_mutex + k) = Some 0) ->
-(* INTERIM: AFix.v:750's first_put_pre_of_AR discharges it from AR; it must not
+(* INTERIM: AFix.v:751's first_put_pre_of_AR discharges it from AR; it must not
    reach AF0w's final statement. Amendment 9 changes depot_first_put_pre's body only, not this text. *)
 (st_depot S = [] -> depot_first_put_pre depot_ok B Wy ly S mem md tr) ->
 SRr tfibsegs Wy (mkCfg (mkst regs (Z_to_bv 64 A_StackDepotPut) mem (seg_rom tfibsegs)) md)

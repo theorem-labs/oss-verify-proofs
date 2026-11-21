@@ -25,15 +25,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 135 of its 172 lines of code are new or changed and 5016 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B10b_r.v, with its module paths and module names changed; 16 of its 45 lines of code are new or changed and 143 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B10b.v, with its module names changed; 32 of its 60 lines of code are new or changed and 17 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B5 of reac_segconf_parse_file
    (the line driver, 116 instructions; the B5 segment lane of the image-B G3 walk owner, 2026-10-30): S_B5 = S_B5h /\ S_B5t of
-   lib/B/Prog/pf_pieces.v (the image-B piece-statement lane, 80a6c9c97a8b), proved from the eleven pieces below.
+   lib/B/Prog/pf_pieces.v (the image-B piece-statement lane), proved from the eleven pieces below.
    proves function reac_segconf_parse_file (segment B5; reuse search and CONFIRM:
    the rule-24 lookup record, the rule-24 checker 2026-10-30T16:55:47Z; verdict none released).
    ADAPTED from a working branch (the image-A G3 walk owner's image-A segment A5: pf_a5_k.v, pf_a5_d.v and its pieces
    pf_a5_h.v, pf_a5_r3.v, pf_a5_tl.v) + the unit owner's UBSan piece walk lib/U/Prog/pf_p2.v (the trap arithmetic),
-   re-derived on image B's code; closed against G3 FINAL at 6f783602b5e3 (contract lib/B/Prog/
-   reac_segconf_parse_file_c.v, the B-kit copies at 694f3575dda2).
+   re-derived on image B's code; closed against G3 FINAL (contract lib/B/Prog/
+   reac_segconf_parse_file_c.v, the B-kit copies).
 
    The head half S_B5h (HEAD 0x881f8 -> LONG 0x88258 / HDR 0x883b4 / KEY 0x883f8 / TAIL 0x88600), backwards from the
    exits through the internal points of pf_seg_B5_d.v:

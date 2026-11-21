@@ -5,10 +5,11 @@
    lib/A/Prog/rp_hot_clamp_F_c.v rp_hot_clamp_contract_F. It follows lib/Prog/rp_hot_clamp.v (the plain walk: one
    continuation-style lemma per field; its f_pf .. f_sv, model_split, f_mn_range, sx32_int and lts_lit / ltu_lit reused
    by name, its mcase / br / join tactics copied, join extended to the walk's invariant) in the footprint style of
-   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v and reac_decode_F.v (origin/ossv/recipes 88154566652a:
+   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v and reac_decode_F.v (
    StepF's step, one rng fact per access; rd_all, addr_four, lts_sm and the one-byte shadow window copied from that
    unit's ReacDecodeLib.v and reac_decode_F.v; rw_cells_app from lib/Prog/check_clamp.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/rp_hot_clamp_FW.v, with its module paths and numbers changed; 606 of its 675 lines of code are new or changed and 473 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rp_slot_read_F: the footprint walk of rp_slot_read in image B (fuzz_wire.asan-ubsan, entry 0x815ec, 0x250 bytes),
    against the frozen lib/B/Prog/rp_slot_read_F_c.v rp_slot_read_F_holds_stmt: the callee rp_slot_width is taken by
    its footprint contract rp_slot_width_contract_F (lib/B/Prog/rp_slot_width_F_c.v), the statement's premise.

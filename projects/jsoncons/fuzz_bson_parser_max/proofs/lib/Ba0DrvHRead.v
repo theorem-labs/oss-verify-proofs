@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed aread_dir_site; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DrvHRead.v, line 177. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -177,7 +178,7 @@ Section DrvReadDir.
       assert (Hh3 : m_halted model3 = None) by (rewrite (sbm_halted_eq _ _ SBM3); exact Hh1).
       assert (EH3 : ahid A model3 = H) by (rewrite (ahid_sbm A model1 model3 SBM3); exact EH1).
       assert (DI3 : dinvA LB LK cr A M3 model3).
-      { apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M M3 model model3 DI); [ | exact GRW | exact EV3 | exact MI3 | exact Hh3].
+      { apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M M3 model model3 DI); [ | exact GRW | exact EV3 | exact MI3 | exact Hh3 | rewrite (sbm_rdrA _ _ SBM3); exact (sbm_rdrA _ _ SBM1)].
         intros a Ha NC. apply FRM; [exact Ha | |]; intros Hr; apply NC; unfold CWA.
         - right. left. unfold s in Hr. lia.
         - right. right. exists 0x65fe10, 0x671828. split; [unfold IMG_W_A; cbn [In]; tauto | lia]. }

@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_classify_box_frameLib.v, with its module names and numbers changed; 4975 of its 5172 lines of code are new or changed and 792 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_ctrl_identity_replyRB.v, with its module paths, module names and numbers changed; 460 of its 504 lines of code are new or changed and 5128 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_finishF_on.v, with its module paths changed; 43 of its 67 lines of code are new or changed and 480 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/reac_ctrl_headamp_record_verify_F_on.v -- route (C) (a Theorem Labs lane 09:20Z; wave lead a Theorem Labs lane): the PROOFS of
    the `_on` statements in lib/B/Prog/reac_ctrl_headamp_record_verify_c_on.v. reac_ctrl_headamp_record_verify_c.v,
    reac_ctrl_headamp_record_verify.v (not in this delivery) and reac_ctrl_headamp_record_verify_F.v stay identical apart from comments; the run's Section
    BodyF (hentry_F and the lemmas under it) and the tactic rc_falseF of reac_ctrl_headamp_record_verify_F.v are reused.
    rule 24: no function proved here that is not already proved.
-   This is the image-B twin of image A's route (C) proofs (lib/A/Prog/reac_ctrl_headamp_record_verify_F.v at
-   36bfd511da3, :179-221 and :242-256): reac_ctrl_headamp_record_verify_holds_F_on is image B's accepted
+   This is the image-B twin of image A's route (C) proofs (lib/A/Prog/reac_ctrl_headamp_record_verify_F.v,
+   :179-221 and :242-256): reac_ctrl_headamp_record_verify_holds_F_on is image B's accepted
    reac_ctrl_headamp_record_verify_holds_F (reac_ctrl_headamp_record_verify_F.v:189-231) without HSW in its intros
    (:194; that script never uses HSW), and reac_ctrl_headamp_record_verify_contract_of_F_on is image B's
    reac_ctrl_headamp_record_verify_contract_of_F (:234-246) without HSW. Image A also re-proves its old holds_F from the

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -29,6 +30,17 @@ ltac2:(KReplay.run1z (kr_t_AG_CacheDealloc0 ()) [] "#$\{p'0h04__x1h17__arithh24_
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition cd_state : ltac2:(zQ "30!h9!hi2!ho4>2st$1>1c$0>1p$0>7drained$2$1") := ltac2:(zQ "50!ho4!h9!hi2!ht0!hte\2st$2\1c$1\1p$1\7drained$0@3$3M0\7drained$0$2^1@2$4^4^3^4^3^2").
+
+(* LPS revision repair (75d69e00, checker 2c6b6db8).  UNIVERSE ANCHOR for cd_state_eval's
+   replay below; TWIN of Bs/AG_CacheDealloc0.v's, carrying no address and no literal.
+   `KReplay.run1z` hands the decoded term to the kernel with `Std.exact_no_check`
+   (KReplay.v:627), so a replay can only CONSUME universe constraints already in the graph
+   and cannot add one.  The term applies `Nd.ex_elimF1`, a monomorphic `Lemma`, to `astate`,
+   whose level is `max(Set, PositiveMap.tree.u0)` through its `as_chunks : PositiveMap.t
+   chunk` field; that needs `PositiveMap.tree.u0 <= ex_elimF1.u0`.  Measured (scratch probe,
+   image 2c6b6db8): `Check (ex_elimF1 astate)` elaborates and prints exactly
+   `(* {} |= PositiveMap.tree.u0 <= ex_elimF1.u0 *)`, so no level moved. *)
+Definition u_anchor_ex_elimF1_astate := ex_elimF1 astate.
 
 Section CDState.
   Variables (st : astate) (XC XB : list Z) (c p : Z) (drained : bool).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, in the Plain and Ubsan kits: init_libc_spec walks the 27- or 29-pair auxiliary vector (auxvw, auxwalk per CONFIG_RSEQ value), at_main and startup_spec take the launch input and mb with valid_launch and entry_launch_ok_va for entry_stack_fits, the image is entry_stack_image, and main's stack floor is 6144512 bytes below sp (was 8388608), by the new wlo_facts; and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -44,6 +45,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Sys.Kernel Require Fork.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Spec Require StartupFacts.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib Require TopLevel.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Top Require EntryCeil.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require StoreOk.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 (* [comment removed for export] *)
@@ -224,6 +226,29 @@ Definition auxv20 (uid hw rnd : word) : list word :=
   [Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 11;
    Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; z64;
    Z_to_bv 64 25; rnd; z64; z64].
+
+(* The auxiliary vector of the revision as a word list, key then value:
+   [StackLayout.auxv_entries] flattened (27 pairs, 29 under CONFIG_RSEQ). *)
+Definition auxvw (la : LaunchAuxv) (entry uid gid hw rnd efn : word) : list word :=
+  flat_map (fun e => [fst e; snd e]) (auxv_entries la Plain.M.phdrs entry uid gid hw rnd efn).
+
+Lemma build_auxv_u64s : forall l : list (word * word),
+  build_auxv l = u64s (flat_map (fun e => [fst e; snd e]) l).
+Proof.
+  unfold build_auxv. induction l as [|[k v] l IH]; [reflexivity|].
+  cbn [flat_map fst snd app u64s]. rewrite !word_le8_le8, IH, <- app_assoc. reflexivity.
+Qed.
+
+Lemma auxv_bytes_auxvw : forall la entry uid gid hw rnd efn,
+  auxv_bytes la Plain.M.phdrs entry uid gid hw rnd efn = u64s (auxvw la entry uid gid hw rnd efn).
+Proof. intros. unfold auxv_bytes, auxvw. apply build_auxv_u64s. Qed.
+
+Lemma length_auxvw : forall la entry uid gid hw rnd efn,
+  length (auxvw la entry uid gid hw rnd efn) = (2 * auxv_count (la_rseq la))%nat.
+Proof. intros [? ? ? []] ? ? ? ? ? ?; reflexivity. Qed.
+
+Lemma auxv_count_le : forall rs, (auxv_count rs <= 29)%nat.
+Proof. intros []; cbn; lia. Qed.
 End WithCeil.
 
 
@@ -267,7 +292,7 @@ Section InitLibc.
   Context {St : Type} (set_tls : Z -> St -> St).
   Variables (ra sp gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
             (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z)
-            (E : Z) (eps : list word) (uid hw : word) (rnd : EntryDraw) (R : Z) (P : Z) (str : list byte)
+            (E : Z) (eps : list word) (la : LaunchAuxv) (entry uid gid hw efn : word) (rnd : EntryDraw) (R : Z) (P : Z) (str : list byte)
             (pn0 pnf0 hw0 env0 : word) (gjunk : list byte) (s : St).
   Notation W := [(bv_unsigned sp - 448, bv_unsigned sp); (ENVIRON, 0x339d0); (0x53aa8, 0x53ad8);
                  (GUARD, 0x53d10); (PROGNAME, 0x53d28); (LIBC, 0x53d60); (HWCAP, 0x53d98)]%Z.
@@ -297,7 +322,7 @@ Section InitLibc.
       /\ rw_cells ssegs m' GOT3 [C8 (Z_to_bv 64 ENVIRON); C8 (Z_to_bv 64 0x53d20); C8 (Z_to_bv 64 PROGNAME)]
       /\ rw_cells ssegs m' GOT_SSP [C8 (Z_to_bv 64 GUARD)]
       /\ rw_cells ssegs m' GOT_DYNAMIC [C8 z64]
-      /\ bytes_at ssegs m' E (u64s eps ++ le8 z64 ++ u64s (auxv20 uid hw (Z_to_bv 64 R)))
+      /\ bytes_at ssegs m' E (u64s eps ++ le8 z64 ++ u64s (auxvw la entry uid gid hw (Z_to_bv 64 R) efn))
       /\ bytes_at ssegs m' P (str ++ [Z_to_bv 8 0])
       /\ bytes_at ssegs m' R (at_random_lo rnd).
 
@@ -354,9 +379,18 @@ Section InitLibc.
         eapply (IH (j + 1)%Z); try eassumption; lia.
   Qed.
 
-  (* [comment removed for export] *)
-  Ltac scan_it AUXB vi ki :=
-    lstep; if_false; ldaux AUXB vi; lstep; lstep;
+  (* The auxv walk of musl's [__init_libc], [for (i=0; auxv[i]; i+=2) if (auxv[i]<AUX_CNT)
+     aux[auxv[i]] = auxv[i+1]], over the revision's 27/29 pairs.  Every branch is on a
+     literal key and [astep] decides it; every load is a word of the vector, read by
+     [ldaux] at the index the list [idxs] gives in program order (a key below 38 is
+     followed by a load of its value; keys 40-47 and 51 are skipped by musl). *)
+  Ltac at_load :=
+    lazymatch goal with |- evt ?segs _ (MS _ _ (Z_to_bv 64 ?pc) _ _ _ _) =>
+      let fw := eval vm_compute in (fetch_word segs (Z_to_bv 64 pc)) in
+      lazymatch fw with Some ?w =>
+      let d := eval vm_compute in (decode_any w) in
+      lazymatch d with Some (Load _ _ _ _ _, _) => idtac end end end.
+  Ltac aux_norm :=
     (try lazymatch goal with |- context [Z_to_bv 64 (bv_unsigned ?spv + -336 + ?c)] =>
       let off := eval vm_compute in (-336 + c)%Z in
       replace (Z_to_bv 64 (bv_unsigned spv + -336 + c)) with (Z_to_bv 64 (bv_unsigned spv + off)) by (f_equal; lia)
@@ -364,12 +398,16 @@ Section InitLibc.
     (try lazymatch goal with |- context [Z_to_bv 64 (?c + (bv_unsigned ?spv + -336))] =>
       let off := eval vm_compute in (c + -336)%Z in
       replace (Z_to_bv 64 (c + (bv_unsigned spv + -336))) with (Z_to_bv 64 (bv_unsigned spv + off)) by (f_equal; lia)
-    end);
-    lstep; lstep; ldaux AUXB ki; lstep; astep.
+    end).
+  Ltac auxwalk AUXB idxs :=
+    lazymatch idxs with
+    | ?i :: ?rest => tryif at_load then (ldaux AUXB i; auxwalk AUXB rest) else (aux_norm; astep; auxwalk AUXB idxs)
+    | nil => idtac
+    end.
 
   Definition init_libc_spec__stmt : Prop := forall tp a0 a1,
     stk ssegs m lo (bv_unsigned sp) ->
-    bytes_at ssegs m E (u64s eps ++ le8 z64 ++ u64s (auxv20 uid hw (Z_to_bv 64 R))) ->
+    bytes_at ssegs m E (u64s eps ++ le8 z64 ++ u64s (auxvw la entry uid gid hw (Z_to_bv 64 R) efn)) ->
     bytes_at ssegs m P (str ++ [Z_to_bv 8 0]) ->
     bytes_at ssegs m R (at_random_lo rnd) ->
     rw_cells ssegs m PROGNAME [C8 pn0; C8 pnf0] ->
@@ -397,7 +435,8 @@ Section InitLibc.
     unfold libc_cells, tll_cells in *.
     pose proof (munch_refl W m) as MU. pose proof (wmono_refl ssegs m) as WM.
     pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-    pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB. cbn [length auxv20] in EB.
+    pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8, length_auxvw in EB.
+    pose proof (auxv_count_le (la_rseq la)) as ACL.
     pose proof (bytes_at_bound _ _ _ _ STR) as PB. rewrite app_length in PB. cbn [length] in PB.
     pose proof (bytes_at_bound _ _ _ _ RND) as RB. rewrite length_at_random_lo in RB.
     unfold implM. iprefix.
@@ -422,61 +461,71 @@ Section InitLibc.
     pose proof ENV as AUXB. apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB].
     apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB]. rewrite u64s_length, length_le8 in AUXB.
     replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
-    ldaux AUXB 0%nat. lstep. if_false. lstep. lstep. lstep. lstep.
+    (* the vector's words, keys as literals and the three program-header values computed *)
+    unfold auxvw, auxv_entries in AUXB. cbv zeta in AUXB.
+    unfold AT_SYSINFO_EHDR, AT_L1I_CACHESIZE, AT_L1I_CACHEGEOMETRY, AT_L1D_CACHESIZE, AT_L1D_CACHEGEOMETRY,
+      AT_L2_CACHESIZE, AT_L2_CACHEGEOMETRY, AT_L3_CACHESIZE, AT_L3_CACHEGEOMETRY, AT_MINSIGSTKSZ, AT_HWCAP,
+      AT_PAGESZ, AT_CLKTCK, AT_PHDR, AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY, AT_UID, AT_EUID,
+      AT_GID, AT_EGID, AT_SECURE, AT_RANDOM, AT_EXECFN, AT_RSEQ_FEATURE_SIZE, AT_RSEQ_ALIGN, AT_NULL in AUXB.
+    let v := eval vm_compute in (Z.of_N (ph_addr Plain.M.phdrs)) in change (Z.of_N (ph_addr Plain.M.phdrs)) with v in AUXB.
+    let v := eval vm_compute in (Z.of_N (ph_ent Plain.M.phdrs)) in change (Z.of_N (ph_ent Plain.M.phdrs)) with v in AUXB.
+    let v := eval vm_compute in (Z.of_N (ph_num Plain.M.phdrs)) in change (Z.of_N (ph_num Plain.M.phdrs)) with v in AUXB.
+    (* CONFIG_RSEQ: the vector is 29 pairs (AT_NULL's key at word 56) or 27 (word 52) *)
+    destruct (la_rseq la); cbn [flat_map app fst snd] in AUXB;
+      [ auxwalk AUXB [0; 1; 2; 4; 6; 8; 10; 12; 14; 16; 18; 20; 21; 22; 23; 24; 25; 26; 27; 28; 29; 30; 31; 32; 33; 34;
+                      35; 36; 37; 38; 39; 40; 41; 42; 43; 44; 45; 46; 47; 48; 49; 50; 51; 52; 53; 54; 55; 56]%nat
+      | auxwalk AUXB [0; 1; 2; 4; 6; 8; 10; 12; 14; 16; 18; 20; 21; 22; 23; 24; 25; 26; 27; 28; 29; 30; 31; 32; 33; 34;
+                      35; 36; 37; 38; 39; 40; 41; 42; 43; 44; 45; 46; 47; 48; 49; 50; 51; 52]%nat ].
     (* [comment removed for export] *)
-    scan_it AUXB 1%nat 2%nat. scan_it AUXB 3%nat 4%nat. scan_it AUXB 5%nat 6%nat. scan_it AUXB 7%nat 8%nat.
-    scan_it AUXB 9%nat 10%nat. scan_it AUXB 11%nat 12%nat. scan_it AUXB 13%nat 14%nat. scan_it AUXB 15%nat 16%nat.
-    scan_it AUXB 17%nat 18%nat.
+    all: steps_to 0x17ca8%Z.
+    all: astep; if_cases K; zify_cond K; [|exfalso; lia]; clear K.
+    all: astep; if_cases K; zify_cond K; [|exfalso; lia]; clear K.
     (* [comment removed for export] *)
-    steps_to 0x17ca8%Z.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-    (* [comment removed for export] *)
-    steps_to 0x17ce8%Z.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+    all: steps_to 0x17ce8%Z.
+    all: lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
       call (pn_loop (length str) 1 mm mm); [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact STR | exact G2 | ] end.
-    rename POST into G2. try rename MI0 into MI.
+    all: rename POST into G2. all: try rename MI0 into MI.
     (* [comment removed for export] *)
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUXa AUX].
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUX3 AUXb].
-    cbn [cells_size csize Nat.add] in AUX3, AUXb. change (Z.of_nat 24) with 24%Z in *.
-    replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
-    lstep. lstep.
-    name_sp sp (-384)%Z.
-    icallM (init_tls_spec set_tls _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    all: apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. all: destruct AUX as [AUXa AUX].
+    all: apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. all: destruct AUX as [AUX3 AUXb].
+    all: cbn [cells_size csize Nat.add] in AUX3, AUXb. all: change (Z.of_nat 24) with 24%Z in *.
+    all: replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
+    all: lstep. all: lstep.
+    all: name_sp sp (-384)%Z.
+    all: icallM (init_tls_spec set_tls _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                lo (bv_unsigned sp + -336)%Z _ _ _ _ _ _ _ _ _ _ s).
     all: lazymatch goal with
          | |- forall _, _ => ipostT ssegs; unname_sp
          | |- _ => unname_sp; fastfirst (first [ noevar_assumption | hyp_by_addr | reflexivity | lia ])
          end.
     (* [comment removed for export] *)
-    repeat match goal with
+    all: repeat match goal with
            | H1 : rw_cells _ ?mm ?A ?cs, H2 : rw_cells _ ?mm ?A ?cs |- _ => clear H2
            end.
-    unfold tls_cells, libc_cells, tll_cells in *.
-    match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+    all: unfold tls_cells, libc_cells, tll_cells in *.
+    all: match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
     (* [comment removed for export] *)
-    lstep. lstep.
-    lazymatch goal with TB : tls_block_ok ?tb |- _ =>
+    all: lstep. all: lstep.
+    all: lazymatch goal with TB : tls_block_ok ?tb |- _ =>
       call_sp (init_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R tb rnd) end.
     all: lazymatch goal with
          | |- evt _ _ _ => idtac
          | |- tls_block_ok _ => assumption
          | |- ?g => fastfirst (first [ noevar_assumption | hyp_by_addr | reflexivity | lia ])
          end.
-    match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+    all: match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
     (* [comment removed for export] *)
-    do 3 lstep. if_false. lstep. lstep. lstep. if_false. lstep. lstep. if_true.
-    do 5 lstep.
-    join2 FRlo AUXa. join2 FRlo AUX3. join2 FRlo AUXb. join2 FRlo FRhi.
-    release_frame FRlo ST (bv_unsigned sp).
-    lstep.
-    apply evt_done. unfold init_libc_post.
-    lazymatch goal with TB : tls_block_ok ?tb, Ht : (0 < ?t < 4194304)%Z |- _ => exists tb, t end.
-    repeat (lazymatch goal with |- ex _ => eexists end).
-    split. { split; [assumption|]. split; [assumption|]. assumption. }
-    split. { cbv delta [mkR]. reflexivity. }
-    repeat match goal with |- _ /\ _ => split end; fastfirst (first [hyp_by_addr | assumption | lia]).
+    all: do 3 lstep. all: if_false. all: lstep. all: lstep. all: lstep. all: if_false. all: lstep. all: lstep. all: if_true.
+    all: do 5 lstep.
+    all: join2 FRlo AUXa. all: join2 FRlo AUX3. all: join2 FRlo AUXb. all: join2 FRlo FRhi.
+    all: release_frame FRlo ST (bv_unsigned sp).
+    all: lstep.
+    all: apply evt_done. all: unfold init_libc_post.
+    all: lazymatch goal with TB : tls_block_ok ?tb, Ht : (0 < ?t < 4194304)%Z |- _ => exists tb, t end.
+    all: repeat (lazymatch goal with |- ex _ => eexists end).
+    all: split; [split; [assumption|]; split; [assumption|]; assumption|].
+    all: split; [cbv delta [mkR]; reflexivity|].
+    all: repeat match goal with |- _ /\ _ => split end; fastfirst (first [hyp_by_addr | assumption | lia]).
   Qed.
   End Sz6.
   Lemma init_libc_spec : ltac:(let t := eval cbv delta [init_libc_spec__stmt] in init_libc_spec__stmt in exact t).
@@ -664,6 +713,18 @@ Definition auxv20 (uid hw rnd : word) : list word :=
   [Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 11;
    Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; z64;
    Z_to_bv 64 25; rnd; z64; z64].
+
+(* The revision's auxiliary vector as a word list, as in the Plain kit above. *)
+Definition auxvw (la : LaunchAuxv) (entry uid gid hw rnd efn : word) : list word :=
+  flat_map (fun e => [fst e; snd e]) (auxv_entries la Ubsan.M.phdrs entry uid gid hw rnd efn).
+
+Lemma auxv_bytes_auxvw : forall la entry uid gid hw rnd efn,
+  auxv_bytes la Ubsan.M.phdrs entry uid gid hw rnd efn = u64s (auxvw la entry uid gid hw rnd efn).
+Proof. intros. unfold auxv_bytes, auxvw. apply build_auxv_u64s. Qed.
+
+Lemma length_auxvw : forall la entry uid gid hw rnd efn,
+  length (auxvw la entry uid gid hw rnd efn) = (2 * auxv_count (la_rseq la))%nat.
+Proof. intros [? ? ? []] ? ? ? ? ? ?; reflexivity. Qed.
 End WithCeil.
 
 
@@ -707,7 +768,7 @@ Section InitLibc.
   Context {St : Type} (set_tls : Z -> St -> St).
   Variables (ra sp gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
             (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z)
-            (E : Z) (eps : list word) (uid hw : word) (rnd : EntryDraw) (R : Z) (P : Z) (str : list byte)
+            (E : Z) (eps : list word) (la : LaunchAuxv) (entry uid gid hw efn : word) (rnd : EntryDraw) (R : Z) (P : Z) (str : list byte)
             (pn0 pnf0 hw0 env0 : word) (gjunk : list byte) (s : St).
   Notation W := [(bv_unsigned sp - 448, bv_unsigned sp); (ENVIRON, 0x34190); (0x54268, 0x54298);
                  (GUARD, 0x544d0); (PROGNAME, 0x544e8); (LIBC, 0x54520); (HWCAP, 0x54558)]%Z.
@@ -737,7 +798,7 @@ Section InitLibc.
       /\ rw_cells usegs m' GOT3 [C8 (Z_to_bv 64 ENVIRON); C8 (Z_to_bv 64 0x544e0); C8 (Z_to_bv 64 PROGNAME)]
       /\ rw_cells usegs m' GOT_SSP [C8 (Z_to_bv 64 GUARD)]
       /\ rw_cells usegs m' GOT_DYNAMIC [C8 z64]
-      /\ bytes_at usegs m' E (u64s eps ++ le8 z64 ++ u64s (auxv20 uid hw (Z_to_bv 64 R)))
+      /\ bytes_at usegs m' E (u64s eps ++ le8 z64 ++ u64s (auxvw la entry uid gid hw (Z_to_bv 64 R) efn))
       /\ bytes_at usegs m' P (str ++ [Z_to_bv 8 0])
       /\ bytes_at usegs m' R (at_random_lo rnd).
 
@@ -794,9 +855,14 @@ Section InitLibc.
         eapply (IH (j + 1)%Z); try eassumption; lia.
   Qed.
 
-  (* [comment removed for export] *)
-  Ltac scan_it AUXB vi ki :=
-    lstep; if_false; ldaux AUXB vi; lstep; lstep;
+  (* The auxv walk of musl's [__init_libc], as in the Plain kit above. *)
+  Ltac at_load :=
+    lazymatch goal with |- evt ?segs _ (MS _ _ (Z_to_bv 64 ?pc) _ _ _ _) =>
+      let fw := eval vm_compute in (fetch_word segs (Z_to_bv 64 pc)) in
+      lazymatch fw with Some ?w =>
+      let d := eval vm_compute in (decode_any w) in
+      lazymatch d with Some (Load _ _ _ _ _, _) => idtac end end end.
+  Ltac aux_norm :=
     (try lazymatch goal with |- context [Z_to_bv 64 (bv_unsigned ?spv + -336 + ?c)] =>
       let off := eval vm_compute in (-336 + c)%Z in
       replace (Z_to_bv 64 (bv_unsigned spv + -336 + c)) with (Z_to_bv 64 (bv_unsigned spv + off)) by (f_equal; lia)
@@ -804,12 +870,16 @@ Section InitLibc.
     (try lazymatch goal with |- context [Z_to_bv 64 (?c + (bv_unsigned ?spv + -336))] =>
       let off := eval vm_compute in (c + -336)%Z in
       replace (Z_to_bv 64 (c + (bv_unsigned spv + -336))) with (Z_to_bv 64 (bv_unsigned spv + off)) by (f_equal; lia)
-    end);
-    lstep; lstep; ldaux AUXB ki; lstep; astep.
+    end).
+  Ltac auxwalk AUXB idxs :=
+    lazymatch idxs with
+    | ?i :: ?rest => tryif at_load then (ldaux AUXB i; auxwalk AUXB rest) else (aux_norm; astep; auxwalk AUXB idxs)
+    | nil => idtac
+    end.
 
   Definition init_libc_spec__stmt : Prop := forall tp a0 a1,
     stk usegs m lo (bv_unsigned sp) ->
-    bytes_at usegs m E (u64s eps ++ le8 z64 ++ u64s (auxv20 uid hw (Z_to_bv 64 R))) ->
+    bytes_at usegs m E (u64s eps ++ le8 z64 ++ u64s (auxvw la entry uid gid hw (Z_to_bv 64 R) efn)) ->
     bytes_at usegs m P (str ++ [Z_to_bv 8 0]) ->
     bytes_at usegs m R (at_random_lo rnd) ->
     rw_cells usegs m PROGNAME [C8 pn0; C8 pnf0] ->
@@ -837,7 +907,8 @@ Section InitLibc.
     unfold libc_cells, tll_cells in *.
     pose proof (munch_refl W m) as MU. pose proof (wmono_refl usegs m) as WM.
     pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-    pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB. cbn [length auxv20] in EB.
+    pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8, length_auxvw in EB.
+    pose proof (auxv_count_le (la_rseq la)) as ACL.
     pose proof (bytes_at_bound _ _ _ _ STR) as PB. rewrite app_length in PB. cbn [length] in PB.
     pose proof (bytes_at_bound _ _ _ _ RND) as RB. rewrite length_at_random_lo in RB.
     unfold implM. iprefix.
@@ -862,61 +933,69 @@ Section InitLibc.
     pose proof ENV as AUXB. apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB].
     apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB]. rewrite u64s_length, length_le8 in AUXB.
     replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
-    ldaux AUXB 0%nat. lstep. if_false. lstep. lstep. lstep. lstep.
+    unfold auxvw, auxv_entries in AUXB. cbv zeta in AUXB.
+    unfold AT_SYSINFO_EHDR, AT_L1I_CACHESIZE, AT_L1I_CACHEGEOMETRY, AT_L1D_CACHESIZE, AT_L1D_CACHEGEOMETRY,
+      AT_L2_CACHESIZE, AT_L2_CACHEGEOMETRY, AT_L3_CACHESIZE, AT_L3_CACHEGEOMETRY, AT_MINSIGSTKSZ, AT_HWCAP,
+      AT_PAGESZ, AT_CLKTCK, AT_PHDR, AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY, AT_UID, AT_EUID,
+      AT_GID, AT_EGID, AT_SECURE, AT_RANDOM, AT_EXECFN, AT_RSEQ_FEATURE_SIZE, AT_RSEQ_ALIGN, AT_NULL in AUXB.
+    let v := eval vm_compute in (Z.of_N (ph_addr Ubsan.M.phdrs)) in change (Z.of_N (ph_addr Ubsan.M.phdrs)) with v in AUXB.
+    let v := eval vm_compute in (Z.of_N (ph_ent Ubsan.M.phdrs)) in change (Z.of_N (ph_ent Ubsan.M.phdrs)) with v in AUXB.
+    let v := eval vm_compute in (Z.of_N (ph_num Ubsan.M.phdrs)) in change (Z.of_N (ph_num Ubsan.M.phdrs)) with v in AUXB.
+    destruct (la_rseq la); cbn [flat_map app fst snd] in AUXB;
+      [ auxwalk AUXB [0; 1; 2; 4; 6; 8; 10; 12; 14; 16; 18; 20; 21; 22; 23; 24; 25; 26; 27; 28; 29; 30; 31; 32; 33; 34;
+                      35; 36; 37; 38; 39; 40; 41; 42; 43; 44; 45; 46; 47; 48; 49; 50; 51; 52; 53; 54; 55; 56]%nat
+      | auxwalk AUXB [0; 1; 2; 4; 6; 8; 10; 12; 14; 16; 18; 20; 21; 22; 23; 24; 25; 26; 27; 28; 29; 30; 31; 32; 33; 34;
+                      35; 36; 37; 38; 39; 40; 41; 42; 43; 44; 45; 46; 47; 48; 49; 50; 51; 52]%nat ].
     (* [comment removed for export] *)
-    scan_it AUXB 1%nat 2%nat. scan_it AUXB 3%nat 4%nat. scan_it AUXB 5%nat 6%nat. scan_it AUXB 7%nat 8%nat.
-    scan_it AUXB 9%nat 10%nat. scan_it AUXB 11%nat 12%nat. scan_it AUXB 13%nat 14%nat. scan_it AUXB 15%nat 16%nat.
-    scan_it AUXB 17%nat 18%nat.
+    all: steps_to 0x18468%Z.
+    all: astep; if_cases K; zify_cond K; [|exfalso; lia]; clear K.
+    all: astep; if_cases K; zify_cond K; [|exfalso; lia]; clear K.
     (* [comment removed for export] *)
-    steps_to 0x18468%Z.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-    (* [comment removed for export] *)
-    steps_to 0x184a8%Z.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+    all: steps_to 0x184a8%Z.
+    all: lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
       call (pn_loop (length str) 1 mm mm); [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact STR | exact G2 | ] end.
-    rename POST into G2. try rename MI0 into MI.
+    all: rename POST into G2. all: try rename MI0 into MI.
     (* [comment removed for export] *)
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUXa AUX].
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUX3 AUXb].
-    cbn [cells_size csize Nat.add] in AUX3, AUXb. change (Z.of_nat 24) with 24%Z in *.
-    replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
-    lstep. lstep.
-    name_sp sp (-384)%Z.
-    icallM (init_tls_spec set_tls _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    all: apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. all: destruct AUX as [AUXa AUX].
+    all: apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. all: destruct AUX as [AUX3 AUXb].
+    all: cbn [cells_size csize Nat.add] in AUX3, AUXb. all: change (Z.of_nat 24) with 24%Z in *.
+    all: replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
+    all: lstep. all: lstep.
+    all: name_sp sp (-384)%Z.
+    all: icallM (init_tls_spec set_tls _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                lo (bv_unsigned sp + -336)%Z _ _ _ _ _ _ _ _ _ _ s).
     all: lazymatch goal with
          | |- forall _, _ => ipostT usegs; unname_sp
          | |- _ => unname_sp; fastfirst (first [ noevar_assumption | hyp_by_addr | reflexivity | lia ])
          end.
     (* [comment removed for export] *)
-    repeat match goal with
+    all: repeat match goal with
            | H1 : rw_cells _ ?mm ?A ?cs, H2 : rw_cells _ ?mm ?A ?cs |- _ => clear H2
            end.
-    unfold tls_cells, libc_cells, tll_cells in *.
-    match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+    all: unfold tls_cells, libc_cells, tll_cells in *.
+    all: match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
     (* [comment removed for export] *)
-    lstep. lstep.
-    lazymatch goal with TB : tls_block_ok_u ?tb |- _ =>
+    all: lstep. all: lstep.
+    all: lazymatch goal with TB : tls_block_ok_u ?tb |- _ =>
       call_sp (init_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R tb rnd) end.
     all: lazymatch goal with
          | |- evt _ _ _ => idtac
          | |- tls_block_ok_u _ => assumption
          | |- ?g => fastfirst (first [ noevar_assumption | hyp_by_addr | reflexivity | lia ])
          end.
-    match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+    all: match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
     (* [comment removed for export] *)
-    do 3 lstep. if_false. lstep. lstep. lstep. if_false. lstep. lstep. if_true.
-    do 5 lstep.
-    join2 FRlo AUXa. join2 FRlo AUX3. join2 FRlo AUXb. join2 FRlo FRhi.
-    release_frame FRlo ST (bv_unsigned sp).
-    lstep.
-    apply evt_done. unfold init_libc_post.
-    lazymatch goal with TB : tls_block_ok_u ?tb, Ht : (0 < ?t < 4194304)%Z |- _ => exists tb, t end.
-    repeat (lazymatch goal with |- ex _ => eexists end).
-    split. { split; [assumption|]. split; [assumption|]. assumption. }
-    split. { cbv delta [mkR]. reflexivity. }
-    repeat match goal with |- _ /\ _ => split end; fastfirst (first [hyp_by_addr | assumption | lia]).
+    all: do 3 lstep. all: if_false. all: lstep. all: lstep. all: lstep. all: if_false. all: lstep. all: lstep. all: if_true.
+    all: do 5 lstep.
+    all: join2 FRlo AUXa. all: join2 FRlo AUX3. all: join2 FRlo AUXb. all: join2 FRlo FRhi.
+    all: release_frame FRlo ST (bv_unsigned sp).
+    all: lstep.
+    all: apply evt_done. all: unfold init_libc_post.
+    all: lazymatch goal with TB : tls_block_ok_u ?tb, Ht : (0 < ?t < 4194304)%Z |- _ => exists tb, t end.
+    all: repeat (lazymatch goal with |- ex _ => eexists end).
+    all: split; [split; [assumption|]; split; [assumption|]; assumption|].
+    all: split; [cbv delta [mkR]; reflexivity|].
+    all: repeat match goal with |- _ /\ _ => split end; fastfirst (first [hyp_by_addr | assumption | lia]).
   Qed.
   End Sz6.
   Lemma init_libc_spec : ltac:(let t := eval cbv delta [init_libc_spec__stmt] in init_libc_spec__stmt in exact t).
@@ -960,8 +1039,21 @@ Notation RA_MAIN := 0x17f08%Z (only parsing).   (* [comment removed for export] 
 Section WithCeil.
 Context {CEILV : CEIL}.
 Section AtMain.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).   (* [comment removed for export] *)
+  (* PORTED to 75d69e00.  The deleted seven-tuple (sp0, argv, envp, uid, hw, rnd)
+     is replaced by [InitMem]'s [Section Layout] tuple (InitMem.v:369-371):
+     argv, envp, the exec file name and the credentials come off [inp], and the
+     image needs the mmap base and the entry pc as well
+     ([Run.entry_stack_image], Run.v:1344, feeding the twelve-argument
+     [StackLayout.build_stack_bytes] at StackLayout.v:483).  [uid] is dropped as
+     a binder because nothing below reads it; [hw] survives as a notation.
+     SECTION-ESCAPE: [at_main] is tree-local -- it occurs in no published
+     statement; [main_stmt] (this file, :4925) is its only escape and is
+     re-threaded with it. *)
+  Variables (inp : ProcInput) (mb : word) (entry : word) (sp0 : word) (rnd : EntryDraw).
   Notation usp0 := (bv_unsigned sp0).
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation hw := (in_hwcap inp).
 
   (* [comment removed for export] *)
   Definition crt_written : list (Z * Z) :=
@@ -978,12 +1070,12 @@ Section AtMain.
     fun ms' => exists (t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
                       (t P0 : Z) (pg : word) (m' : word -> option byte),
     ms' = MS (mkR (Z_to_bv 64 RA_MAIN) (Z_to_bv 64 (usp0 + -48)) (Z_to_bv 64 0x10800) tp
-                 t0 t1 t2 (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (argc argv))
-                 (Z_to_bv 64 (argc argv)) (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (envp_addr sp0 argv)) a3 a4 a5 a6 a7
+                 t0 t1 t2 (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (Z.of_nat (length argv)))
+                 (Z_to_bv 64 (Z.of_nat (length argv))) (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (envp_addr sp0 argv)) a3 a4 a5 a6 a7
                  (Z_to_bv 64 MAIN) (Z_to_bv 64 (envp_addr sp0 argv)) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
              bvmap_empty (Z_to_bv 64 MAIN) (Z_to_bv 32 0) None m' (seg_rom ssegs)
     /\ mem_inv ssegs m'
-    /\ stk ssegs m' (usp0 - 8388608) (usp0 + -48)
+    /\ stk ssegs m' (usp0 - 6144512) (usp0 + -48)
     (* [comment removed for export] *)
     /\ tls_block_ok (bv_unsigned tp - 200)
     (* [comment removed for export] *)
@@ -1036,9 +1128,9 @@ Section AtMain.
     /\ rw_cells ssegs m' 0x53d00 [C4 z64]
     /\ rw_cells ssegs m' 0x53ae0 [C1 (Z_to_bv 8 0); CB 3 (repeat (Z_to_bv 8 0) 3); C4 z64; C4 z64; CB 4 (repeat (Z_to_bv 8 0) 4); C8 z64]
     (* [comment removed for export] *)
-    /\ bytes_at ssegs m' usp0 (build_stack_bytes ph sp0 argv envp uid hw rnd)
-    /\ wr_at ssegs m' usp0 (Z.of_nat (length (build_stack_bytes ph sp0 argv envp uid hw rnd)))
-    /\ nth_error (argv_ptrs sp0 argv envp) 0 = Some (Z_to_bv 64 P0)
+    /\ bytes_at ssegs m' usp0 (entry_stack_image inp mb ph entry sp0 rnd)
+    /\ wr_at ssegs m' usp0 (Z.of_nat (length (entry_stack_image inp mb ph entry sp0 rnd)))
+    /\ nth_error (InitMem.argv_ptrs inp sp0 rnd) 0 = Some (Z_to_bv 64 P0)
     (* [comment removed for export] *)
     /\ (forall a : word, (0x22000 <= bv_unsigned a < 0x55000)%Z -> outside crt_written (bv_unsigned a) -> m' a = None)
     /\ (0 < t < 4194304)%Z
@@ -1052,74 +1144,146 @@ End AtMain.
 
 Section Proof.
   Context {St : Type} (set_tls : Z -> St -> St).
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).   (* [comment removed for export] *)
+  (* PORTED to 75d69e00.  The seven-tuple is replaced by [InitMem]'s [Section
+     Layout] tuple; [brk] is a binder only because [entry_launch_ok_va] is
+     stated over a whole [ExecEntry] (Run.v:3723), and nothing below reads it.
+     [entry_stack_fits] is REPLACED, not supplemented: at 75d69e00 it no longer
+     bounds the image, because the kernel's block can outrun [entry_stack_span]
+     (AmoStep__Musl.v:204-206, E2/Lib/PropExec.v:2431).  Both new premises are
+     conjuncts of what the published [valid_entry] / [valid_input] already give
+     at the only call site ([prog_impl_from_main], this file). *)
+  Variables (inp : ProcInput) (mb : word) (brk : word) (sp0 : word) (rnd : EntryDraw).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis VARGV : valid_argv argv.
-  Hypothesis VENVP : valid_envp envp.
-  Hypothesis FITS : entry_stack_fits sp0 argv envp.
+  Hypothesis VARGV : valid_argv (in_argv inp).
+  Hypothesis VENVP : valid_envp (in_envp inp).
+  Hypothesis VL : valid_launch inp.
+  Hypothesis LAUNCH : entry_launch_ok_va Sv48 (mkEntry sp0 brk mb rnd) inp.
   (* [comment removed for export] *)
   Hypothesis CLO : (alloc_ceiling <= bv_unsigned sp0 - 8388608)%Z.
   Notation usp0 := (bv_unsigned sp0).
-  Notation img := (build_stack_bytes ph sp0 argv envp uid hw rnd).
-  Notation esi := (entry_stack_image ph sp0 argv envp uid hw rnd).   (* [comment removed for export] *)
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  (* [init_ms] (E2/Lib/RegsEquiv.v:656) builds [wrap_mem]'s entry from the pc. *)
+  Notation entry := (Z_to_bv 64 (Z.of_N Plain.M.init_pc)).
+  (* THE IMAGE IS THE BLOCK at 75d69e00: [ed_slack] and [entry_slack] are
+     deleted (Run.v:1332, StackLayout.v:331), so [img] and [esi] -- which used
+     to differ by the slack the model drew above the block -- are now the same
+     list, and [bsb_le_esi] is an identity. *)
+  Notation img := (entry_stack_image inp mb ph entry sp0 rnd).
+  Notation esi := (entry_stack_image inp mb ph entry sp0 rnd).
 
+  (* PROVENANCE (rule 23c): Common/StepTac.v:849-858, whose unit this one does
+     not depend on.  [auxv_count] is [if rseq then 29 else 27]
+     (75d69e00:theories/LinuxProcessSem/StackLayout.v:276), so the flag is split
+     on rather than pinned and the bound holds for both branches. *)
+  Lemma block_head_size_le : forall rs a e,
+    (Z.of_nat (block_head_size rs a e)
+     <= 8 * Z.of_nat (length a) + 8 * Z.of_nat (length e) + 512)%Z.
+  Proof using Type.
+    intros rs a e. unfold block_head_size, block_items, auxv_size, auxv_count.
+    pose proof (Nat.mod_upper_bound (length a + length e + 3) 2 ltac:(lia)).
+    destruct rs; lia.
+  Qed.
+
+  (* PROVENANCE (rule 23c): Common/StepTac.v:860-889 ([launch_top_minus_sp] and
+     [bsb_bound]).  The old proof read the bound off [raw_len]'s closed form;
+     at 75d69e00 the image also carries the exec file name, which [valid_argv]
+     and [valid_envp] say nothing about, so the bound comes from
+     [valid_launch]'s total-launch-bytes conjunct and [valid_launch_sp]'s LOWER
+     bound instead.  This is a bound against a LITERAL, not against
+     [entry_stack_span], so it is rule 12b's SAFE shape. *)
   Lemma img_len_bound : (Z.of_nat (length img) <= 2500000)%Z.
-  Proof using CEILV VARGV VENVP. pin_using (fun (CEILV VARGV VENVP : unit) => tt). ceil_facts.
-    rewrite build_stack_bytes_length. destruct VARGV as (A1 & A2 & _). destruct VENVP as (E1 & E2 & _).
-    pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold raw_len, struct_size, argc, envc in *. lia.
+  Proof using CEILV LAUNCH VL. pin_using (fun (CEILV LAUNCH VL : unit) => tt). ceil_facts.
+    rewrite (length_entry_stack_image_launch Sv48 inp mb ph entry sp0 brk rnd LAUNCH).
+    pose proof LAUNCH as L'. destruct L' as (_ & (_ & Hlo & _) & _).
+    pose proof VL as VL'. destruct VL' as (_ & Hb).
+    unfold launch_bytes, e2big_limit in Hb.
+    unfold launch_sp_lo, align_down16 in Hlo.
+    pose proof (block_head_size_le (kb_rseq (in_kernel inp)) argv envp).
+    pose proof (Z.mod_pos_bound
+      (bv_unsigned (ed_top rnd) - 8
+       - Z.of_nat (launch_string_bytes argv envp (in_execfn inp)) - 4095) 16 ltac:(lia)).
+    lia.
   Qed.
 
   Lemma sp_facts : (stack_max_size <= usp0)%Z /\ (usp0 + Z.of_nat (length esi) <= 2^64)%Z /\
                    (usp0 mod 16 = 0)%Z /\ (0x7fff80000000 <= usp0 <= 0x800000000000)%Z /\
                    (usp0 + Z.of_nat (length img) <= 0x800000000000)%Z.
-  Proof using CEILV FITS VSP. pin_using (fun (CEILV FITS VSP : unit) => tt). ceil_facts.
-    destruct (entry_bounds ph sp0 argv envp uid hw rnd VSP FITS) as [A B].
-    pose proof (bsb_le_esi ph sp0 argv envp uid hw rnd) as C.
+  Proof using CEILV LAUNCH VSP. pin_using (fun (CEILV LAUNCH VSP : unit) => tt). ceil_facts.
+    destruct (entry_bounds inp mb ph entry sp0 rnd brk VSP LAUNCH) as [A B].
     destruct VSP as (L & H & M). unfold sp_window_lo, sp_window_hi, stack_max_size in *. lia.
+  Qed.
+
+  (* The revision's zero window [stack_window_lo, sp): its floor is at least
+     [sp - stack_max_size] and at most [sp + stack_window_reach - stack_max_size]
+     (Common/StoreOk.v, the copies of the model's theories/Common/StoreOk.v
+     [stack_window_lo_ge_sp] and [stack_window_lo_valid]). *)
+  Lemma wlo_facts :
+    (usp0 - 8388608 <= stack_window_lo (in_kernel inp) mb rnd <= usp0 - 6144513)%Z.
+  Proof using LAUNCH VL.
+    pose proof (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.StoreOk.stack_window_lo_ge_sp inp sp0 brk mb rnd LAUNCH) as A.
+    pose proof (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.StoreOk.stack_window_lo_valid inp sp0 brk mb rnd VL LAUNCH) as B.
+    unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.StoreOk.stack_window_reach, stack_max_size in *. lia.
   Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition startup_post (s : St) : unit -> St -> machine_state -> Prop :=
-    fun _ s' ms' => exists tp : word, s' = set_tls (bv_unsigned tp - 200)%Z s /\ at_main sp0 argv envp uid hw rnd tp ms'.
+    fun _ s' ms' => exists tp : word, s' = set_tls (bv_unsigned tp - 200)%Z s /\ at_main inp mb entry sp0 rnd tp ms'.
 
   Theorem startup_spec : forall s : St,
     implM ssegs (startup_model set_tls 0x339d0) s (startup_post s)
-          (init_ms ssegs Plain.M.init_pc ph sp0 rnd argv envp uid hw).
-  Proof using CLO FITS VARGV VENVP VSP. pin_using (fun (CLO FITS VARGV VENVP VSP : unit) => tt). ceil_facts.
+          (init_ms ssegs Plain.M.init_pc ph sp0 mb rnd inp).
+  (* PORTED to LPS 727298f3.  The memory is [InitMem]'s [Section Init] /
+     [Section Layout] image (InitMem.v:135-254, :369-725): its zero window is
+     [stack_window_lo, sp) ([wlo_facts]), so the stack floor handed to main is
+     [usp0 - 6144512] (E2/S3/GI.v [rc_lo]); the auxiliary vector is the
+     revision's 27/29-pair [auxv_bytes], read as [auxvw] words by
+     [init_libc_spec]. *)
+  Proof using CEILV CLO LAUNCH VARGV VENVP VL VSP. pin_using (fun (CEILV CLO LAUNCH VARGV VENVP VL VSP : unit) => tt). ceil_facts.
     intros s.
-    destruct sp_facts as (SPLO & IMGHI & SP16 & SPW & IMGTOP).
+    destruct sp_facts as (SPLO8 & IMGHI & SP16 & SPW & IMGTOP).
     pose proof img_len_bound as IL.
-    unfold init_ms, mkR_init. change (Z.of_N Plain.M.init_pc) with 0x139c4%Z.
-    set (m := wrap_mem ph sp0 argv envp uid hw rnd).
+    destruct wlo_facts as (WLO1 & WLO2).
+    assert (SPLO : (stack_window_lo (in_kernel inp) mb rnd <= usp0)%Z) by lia.
+    unfold init_ms, mkR_init.
+    set (m := wrap_mem inp mb ph entry sp0 rnd).
+    change (Z.of_N Plain.M.init_pc) with 0x139c4%Z.
     assert (NONE : forall a : word, (bv_unsigned a < 0x55000)%Z -> m a = None).
-    { intros a Ha. apply init_none. unfold stack_max_size. lia. }
-    pose proof (init_stk ssegs ph sp0 argv envp uid hw rnd SPLO) as ST. fold m in ST.
-    change stack_max_size with 8388608%Z in ST.
-    pose proof (init_mem_inv' ssegs ph sp0 argv envp uid hw rnd SPLO IMGHI ltac:(change (segs_top ssegs) with 0x55000%Z; unfold stack_max_size; lia)) as MI.
+    { intros a Ha. apply init_none; first [exact SPLO | lia]. }
+    pose proof (init_stk ssegs inp mb ph entry sp0 rnd SPLO) as ST0. fold m in ST0.
+    destruct (stk_split ssegs m _ (usp0 - 6144512)%Z usp0 ST0 ltac:(lia)) as [_ ST]. clear ST0.
+    pose proof (init_mem_inv' ssegs inp mb ph entry sp0 rnd SPLO IMGHI ltac:(change (segs_top ssegs) with 0x55000%Z; lia)) as MI.
     fold m in MI.
-    pose proof (init_block_bytes ssegs ph sp0 argv envp uid hw rnd SPLO IMGHI) as IMG. fold m in IMG.   (* [comment removed for export] *)
-    pose proof (init_wr ssegs ph sp0 argv envp uid hw rnd SPLO IMGHI) as WR. fold m in WR. rewrite <- (build_stack_bytes_length ph sp0 argv envp uid hw rnd) in WR.
-    destruct (init_pieces ssegs ph sp0 argv envp uid hw rnd SPLO IMGHI) as (ARGC & ARGV & ENVP & AUXW & _ & _ & RNDB). fold m in ARGC, ARGV, ENVP, AUXW, RNDB.
+    pose proof (init_stack_bytes ssegs inp mb ph entry sp0 rnd SPLO IMGHI) as IMG. fold m in IMG.
+    pose proof (init_stack_wr ssegs inp mb ph entry sp0 rnd SPLO IMGHI) as WR. fold m in WR.
+    (* the block spans sp..ed_top: InitMem's [SPAN], from the image's exact length under the launch *)
+    assert (SPAN : (usp0 + InitMem.struct_size inp + InitMem.str_len inp + 8 <= bv_unsigned (ed_top rnd))%Z).
+    { pose proof (length_entry_stack_image_launch Sv48 inp mb ph entry sp0 brk rnd LAUNCH) as HT.
+      pose proof (InitMem.build_stack_bytes_length inp mb ph entry sp0 rnd) as BL.
+      unfold InitMem.pad_len in BL. lia. }
+    destruct (init_pieces ssegs inp mb ph entry sp0 rnd SPAN SPLO IMGHI) as (ARGC & ARGV & ENVP & AUXW & RNDB & _ & _). fold m in ARGC, ARGV, ENVP, AUXW, RNDB.
+    rewrite auxv_bytes_auxvw in AUXW.
     (* [comment removed for export] *)
     destruct VARGV as (VA1 & VA2 & VA3 & VA4 & _).   (* [comment removed for export] *)
     assert (Harg0 : exists arg0, nth_error argv 0 = Some arg0).
     { destruct argv as [|a ?]; [cbn in VA1; lia | exists a; reflexivity]. }
     destruct Harg0 as [arg0 Harg0].
-    destruct (init_argv_string ssegs ph sp0 argv envp uid hw rnd SPLO IMGHI 0 arg0 Harg0) as (P0 & HP0 & P0LO & P0HI & STR).
+    destruct (init_argv_string ssegs inp mb ph entry sp0 rnd SPAN SPLO IMGHI 0 arg0 Harg0) as (P0 & HP0 & P0LO & P0HI & STR).
     fold m in STR.
     pose proof (proj1 (Forall_forall _ _) VA4 arg0 (nth_error_In _ _ Harg0)) as NONUL0. cbn beta in NONUL0.
     assert (NONUL : Forall (fun b : byte => bv_unsigned b <> 0%Z) arg0).
     { apply Forall_forall. intros b Hb E0. apply NONUL0. replace (Z_to_bv 8 0) with b; [exact Hb|]. apply bv_eq. rewrite E0. reflexivity. }
-    assert (EPS : Forall (fun w : word => bv_unsigned w <> 0%Z) (envp_ptrs sp0 argv envp)).
+    pose proof (raw_len_nonneg inp sp0 rnd) as RLN.
+    assert (EPS : Forall (fun w : word => bv_unsigned w <> 0%Z) (envp_ptrs inp sp0 rnd)).
     { apply Forall_forall. intros w Hw. destruct (In_nth_error _ _ Hw) as [i Hi].
-      pose proof (envp_ptr_bounds ph sp0 argv envp uid hw rnd IMGHI i w Hi).
-      pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold env_base, str_base, struct_size in *. lia. }
+      eapply envp_ptr_bounds in Hi; try eassumption.
+      unfold env_base, str_base in Hi. lia. }
     (* [comment removed for export] *)
-    assert (RND : bytes_at ssegs m (rnd_addr sp0 argv envp) (at_random_lo rnd)).   (* [comment removed for export] *)
+    assert (RND : bytes_at ssegs m (rnd_addr inp sp0) (at_random_lo rnd)).   (* [comment removed for export] *)
     { rewrite at_random_split in RNDB. apply bytes_at_app in RNDB. exact (proj1 RNDB). }
-    assert (RLO : (usp0 <= rnd_addr sp0 argv envp)%Z).
-    { pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold rnd_addr, raw_len. lia. }
+    assert (RLO : (usp0 <= rnd_addr inp sp0)%Z).
+    { unfold rnd_addr. lia. }
     (* [comment removed for export] *)
     rimg_chunk ssegs NONE m 0x53d18%Z [C8 z64; C8 z64] G2.
     rimg_chunk ssegs NONE m 0x53d90%Z [C8 z64] HW.
@@ -1138,11 +1302,11 @@ Section Proof.
     rimg_chunk ssegs NONE m 0x23940%Z [C1 (Z_to_bv 8 0)] INI.
     rimg_chunk ssegs NONE m 0x339d0%Z [CB 4096 (repeat (Z_to_bv 8 0) 4096)] ZT.
     unfold libc_cells, tll_cells in LC, MT.
-    assert (HC : argc argv = Z.of_nat (length argv)) by reflexivity.
-    assert (HE : envc envp = Z.of_nat (length envp)) by reflexivity.
+    assert (HC : argc inp = Z.of_nat (length argv)) by reflexivity.
+    assert (HE : envc inp = Z.of_nat (length envp)) by reflexivity.
     assert (P0GE : (usp0 + 184 <= P0)%Z).   (* [comment removed for export] *)
-    { pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold str_base, struct_size in P0LO. lia. }
-    pose proof (munch_refl [(usp0 - 8388608, usp0); (0x23940, 0x23941); (0x339c8, 0x339d0); (0x53aa8, 0x53ad8);
+    { unfold str_base in P0LO. lia. }
+    pose proof (munch_refl [(usp0 - 6144512, usp0); (0x23940, 0x23941); (0x339c8, 0x339d0); (0x53aa8, 0x53ad8);
                             (0x53d08, 0x53d10); (0x53d18, 0x53d60); (0x53d90, 0x53d98); (0x339d0, 0x349d0)]%Z m) as MU.
     pose proof (wmono_refl ssegs m) as WM.
     clearbody m.
@@ -1153,13 +1317,13 @@ Section Proof.
     do 7 lstep.
     (* [comment removed for export] *)
     pose proof (bytes_at_read ssegs m usp0 _ 0 4 ARGC ltac:(lia) ltac:(rewrite length_le8; lia)) as RD.
-    change (firstn 4 (skipn (Z.to_nat 0) (le8 (Z_to_bv 64 (argc argv))))) with (le4 (Z_to_bv 64 (argc argv))) in RD.
+    change (firstn 4 (skipn (Z.to_nat 0) (le8 (Z_to_bv 64 (argc inp))))) with (le4 (Z_to_bv 64 (argc inp))) in RD.
     let a := cur_mem_addr in replace (wa (usp0 + 0)) with a in RD by (unfold wa; rewrite Z.add_0_r; try reflexivity; symmetry; apply Z_to_bv_bv_unsigned).
     lstep. clear RD.
     replace (Z_to_bv 64 (Z.land usp0 18446744073709551600)) with sp0.
     2:{ change 18446744073709551600%Z with (2^64 - 2^4)%Z. rewrite land_align_down by lia.
         change (2^4)%Z with 16%Z. rewrite SP16, Z.sub_0_r. symmetry. apply Z_to_bv_bv_unsigned. }
-    replace (sx32 (Z_to_bv 64 (argc argv))) with (Z_to_bv 64 (argc argv)).
+    replace (sx32 (Z_to_bv 64 (argc inp))) with (Z_to_bv 64 (argc inp)).
     2:{ unfold sx32. f_equal. unfold argc. rewrite unsigned_lit by lia. symmetry. apply swrap32_small. lia. }
     steps_to 0x17e64%Z.
     (* [comment removed for export] *)
@@ -1169,23 +1333,26 @@ Section Proof.
     pose proof (rd_u64s_g ssegs _ (usp0 + 8) _ 0 _ (Z_to_bv 64 (usp0 + 8)) ARGV ltac:(rewrite nth_error_app1 by (rewrite argv_ptrs_length; lia); exact HP0) ltac:(unfold wa; f_equal; lia)) as RD.
     lstep. clear RD ARGV.
     do 3 lstep.
-    replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
-      by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
+    replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc inp) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
+      by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; unfold argc; lia).
     (* [comment removed for export] *)
     assert (ENV : bytes_at ssegs m1 (envp_addr sp0 argv)
-                    (u64s (envp_ptrs sp0 argv envp) ++ le8 z64 ++ u64s (auxv20 uid hw (Z_to_bv 64 (rnd_addr sp0 argv envp))))).
+                    (u64s (envp_ptrs inp sp0 rnd) ++ le8 z64
+                     ++ u64s (auxvw (launch_auxv inp sp0 mb) entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+                                    (Z_to_bv 64 (rnd_addr inp sp0)) (at_execfn_ptr (ed_top rnd) (in_execfn inp))))).
     { rewrite u64s_app in ENVP. cbn [u64s] in ENVP. rewrite app_nil_r in ENVP.
       apply bytes_at_app in ENVP. destruct ENVP as [E1 E2]. rewrite u64s_length, envp_ptrs_length in E2.
       unfold envp_addr. apply bytes_at_app. split; [exact E1|]. apply bytes_at_app. split.
       - rewrite u64s_length, envp_ptrs_length. exact E2.
       - rewrite u64s_length, envp_ptrs_length, length_le8.
-        replace (usp0 + 8 * (argc argv + 2) + Z.of_nat (8 * length envp) + Z.of_nat 8)%Z
-          with (usp0 + 8 * (argc argv + envc envp + 3))%Z by lia.
+        lazymatch goal with |- bytes_at _ _ ?A _ =>
+          replace A with (usp0 + 8 * (argc inp + envc inp + 3))%Z by (unfold argc, envc; lia) end.
         exact AUXW. }
     clear ENVP AUXW ARGC RNDB.
     lstep. name_sp sp0 (-32)%Z.
-    icallM (init_libc_spec set_tls _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (usp0 - 8388608)%Z
-              (envp_addr sp0 argv) (envp_ptrs sp0 argv envp) uid hw rnd (rnd_addr sp0 argv envp) P0 arg0 _ _ _ _ _ s).
+    icallM (init_libc_spec set_tls _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (usp0 - 6144512)%Z
+              (envp_addr sp0 argv) (envp_ptrs inp sp0 rnd) (launch_auxv inp sp0 mb) entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+              (at_execfn_ptr (ed_top rnd) (in_execfn inp)) rnd (rnd_addr inp sp0) P0 arg0 _ _ _ _ _ s).
     all: lazymatch goal with
          | |- forall _, _ => ipostT ssegs; unname_sp
          | |- Forall _ _ => first [exact EPS | exact NONUL]
@@ -1195,7 +1362,7 @@ Section Proof.
     repeat match goal with
            | H : bytes_at _ _ _ (u64s _ ++ _) |- _ => clear H
            | H : bytes_at _ _ P0 _ |- _ => clear H
-           | H : bytes_at _ _ (rnd_addr _ _ _) _ |- _ => clear H
+           | H : bytes_at _ _ (rnd_addr _ _) _ |- _ => clear H
            end.
     repeat match goal with H1 : rw_cells _ ?mm ?A ?cs, H2 : rw_cells _ ?mm ?A ?cs |- _ => clear H2 end.
     clear EPS NONUL NONUL0 VA2 VA3 VA4 RLO P0HI.
@@ -1203,7 +1370,7 @@ Section Proof.
     match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
     rewrite envp_ptrs_length in *.
     replace (envp_addr sp0 argv + 8 * (Z.of_nat (length envp) + 1))%Z with (auxv_addr sp0 argv envp) in *
-      by (unfold auxv_addr, envp_addr, envc; lia).
+      by (unfold auxv_addr, envp_addr; lia).
     (* [comment removed for export] *)
     steps_to 0x17ec0%Z. release_frame FR ST (bv_unsigned sp0). astep.
     (* [comment removed for export] *)
@@ -1216,8 +1383,8 @@ Section Proof.
     steps_to 0x17e60%Z. release_frame FR0 ST (usp0 + -48)%Z. astep.
     (* [comment removed for export] *)
     steps_to 0x13b10%Z.
-    replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
-      by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
+    replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc inp) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
+      by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; unfold argc; lia).
     (* [comment removed for export] *)
     unfold id in IMG, WR.
     lazymatch type of MU with munch ?W m ?mf =>
@@ -1317,8 +1484,14 @@ Notation RA_MAIN := 0x186c8%Z (only parsing).   (* [comment removed for export] 
 Section WithCeil.
 Context {CEILV : CEIL}.
 Section AtMain.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).   (* [comment removed for export] *)
+  (* PORTED to 75d69e00, identically to the Plain kit (this file, :962-977):
+     the tuple is [InitMem]'s [Section Layout] tuple (InitMem.v:369-371) and
+     argv, envp, the exec file name and the credentials come off [inp]. *)
+  Variables (inp : ProcInput) (mb : word) (entry : word) (sp0 : word) (rnd : EntryDraw).
   Notation usp0 := (bv_unsigned sp0).
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation hw := (in_hwcap inp).
 
   (* [comment removed for export] *)
   Definition crt_written : list (Z * Z) :=
@@ -1335,12 +1508,12 @@ Section AtMain.
     fun ms' => exists (t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
                       (t P0 : Z) (pg : word) (m' : word -> option byte),
     ms' = MS (mkR (Z_to_bv 64 RA_MAIN) (Z_to_bv 64 (usp0 + -48)) (Z_to_bv 64 0x10800) tp
-                 t0 t1 t2 (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (argc argv))
-                 (Z_to_bv 64 (argc argv)) (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (envp_addr sp0 argv)) a3 a4 a5 a6 a7
+                 t0 t1 t2 (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (Z.of_nat (length argv)))
+                 (Z_to_bv 64 (Z.of_nat (length argv))) (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (envp_addr sp0 argv)) a3 a4 a5 a6 a7
                  (Z_to_bv 64 MAIN) (Z_to_bv 64 (envp_addr sp0 argv)) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
              bvmap_empty (Z_to_bv 64 MAIN) (Z_to_bv 32 0) None m' (seg_rom usegs)
     /\ mem_inv usegs m'
-    /\ stk usegs m' (usp0 - 8388608) (usp0 + -48)
+    /\ stk usegs m' (usp0 - 6144512) (usp0 + -48)
     (* [comment removed for export] *)
     /\ tls_block_ok_u (bv_unsigned tp - 200)
     (* [comment removed for export] *)
@@ -1393,9 +1566,9 @@ Section AtMain.
     /\ rw_cells usegs m' 0x544c0 [C4 z64]
     /\ rw_cells usegs m' 0x542a0 [C1 (Z_to_bv 8 0); CB 3 (repeat (Z_to_bv 8 0) 3); C4 z64; C4 z64; CB 4 (repeat (Z_to_bv 8 0) 4); C8 z64]
     (* [comment removed for export] *)
-    /\ bytes_at usegs m' usp0 (build_stack_bytes ph sp0 argv envp uid hw rnd)
-    /\ wr_at usegs m' usp0 (Z.of_nat (length (build_stack_bytes ph sp0 argv envp uid hw rnd)))
-    /\ nth_error (argv_ptrs sp0 argv envp) 0 = Some (Z_to_bv 64 P0)
+    /\ bytes_at usegs m' usp0 (entry_stack_image inp mb ph entry sp0 rnd)
+    /\ wr_at usegs m' usp0 (Z.of_nat (length (entry_stack_image inp mb ph entry sp0 rnd)))
+    /\ nth_error (InitMem.argv_ptrs inp sp0 rnd) 0 = Some (Z_to_bv 64 P0)
     (* [comment removed for export] *)
     /\ (forall a : word, (0x22000 <= bv_unsigned a < 0x56000)%Z -> outside crt_written (bv_unsigned a) -> m' a = None)
     /\ (0 < t < 4194304)%Z
@@ -1409,74 +1582,121 @@ End AtMain.
 
 Section Proof.
   Context {St : Type} (set_tls : Z -> St -> St).
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).   (* [comment removed for export] *)
+  (* PORTED to 75d69e00, identically to the Plain kit (this file, :1066-1094). *)
+  Variables (inp : ProcInput) (mb : word) (brk : word) (sp0 : word) (rnd : EntryDraw).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis VARGV : valid_argv argv.
-  Hypothesis VENVP : valid_envp envp.
-  Hypothesis FITS : entry_stack_fits sp0 argv envp.
+  Hypothesis VARGV : valid_argv (in_argv inp).
+  Hypothesis VENVP : valid_envp (in_envp inp).
+  Hypothesis VL : valid_launch inp.
+  Hypothesis LAUNCH : entry_launch_ok_va Sv48 (mkEntry sp0 brk mb rnd) inp.
   (* [comment removed for export] *)
   Hypothesis CLO : (alloc_ceiling <= bv_unsigned sp0 - 8388608)%Z.
   Notation usp0 := (bv_unsigned sp0).
-  Notation img := (build_stack_bytes ph sp0 argv envp uid hw rnd).
-  Notation esi := (entry_stack_image ph sp0 argv envp uid hw rnd).   (* [comment removed for export] *)
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation entry := (Z_to_bv 64 (Z.of_N Ubsan.M.init_pc)).
+  (* THE IMAGE IS THE BLOCK at 75d69e00, so [img] and [esi] are one list. *)
+  Notation img := (entry_stack_image inp mb ph entry sp0 rnd).
+  Notation esi := (entry_stack_image inp mb ph entry sp0 rnd).
+
+  (* PROVENANCE (rule 23c): Common/StepTac.v:849-889, as in the Plain kit
+     (this file, :1096-1128).  A bound against a LITERAL, rule 12b's SAFE
+     shape, not against [entry_stack_span]. *)
+  Lemma block_head_size_le : forall rs a e,
+    (Z.of_nat (block_head_size rs a e)
+     <= 8 * Z.of_nat (length a) + 8 * Z.of_nat (length e) + 512)%Z.
+  Proof using Type.
+    intros rs a e. unfold block_head_size, block_items, auxv_size, auxv_count.
+    pose proof (Nat.mod_upper_bound (length a + length e + 3) 2 ltac:(lia)).
+    destruct rs; lia.
+  Qed.
 
   Lemma img_len_bound : (Z.of_nat (length img) <= 2500000)%Z.
-  Proof using CEILV VARGV VENVP. pin_using (fun (CEILV VARGV VENVP : unit) => tt). ceil_facts.
-    rewrite build_stack_bytes_length. destruct VARGV as (A1 & A2 & _). destruct VENVP as (E1 & E2 & _).
-    pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold raw_len, struct_size, argc, envc in *. lia.
+  Proof using CEILV LAUNCH VL. pin_using (fun (CEILV LAUNCH VL : unit) => tt). ceil_facts.
+    rewrite (length_entry_stack_image_launch Sv48 inp mb ph entry sp0 brk rnd LAUNCH).
+    pose proof LAUNCH as L'. destruct L' as (_ & (_ & Hlo & _) & _).
+    pose proof VL as VL'. destruct VL' as (_ & Hb).
+    unfold launch_bytes, e2big_limit in Hb.
+    unfold launch_sp_lo, align_down16 in Hlo.
+    pose proof (block_head_size_le (kb_rseq (in_kernel inp)) argv envp).
+    pose proof (Z.mod_pos_bound
+      (bv_unsigned (ed_top rnd) - 8
+       - Z.of_nat (launch_string_bytes argv envp (in_execfn inp)) - 4095) 16 ltac:(lia)).
+    lia.
   Qed.
 
   Lemma sp_facts : (stack_max_size <= usp0)%Z /\ (usp0 + Z.of_nat (length esi) <= 2^64)%Z /\
                    (usp0 mod 16 = 0)%Z /\ (0x7fff80000000 <= usp0 <= 0x800000000000)%Z /\
                    (usp0 + Z.of_nat (length img) <= 0x800000000000)%Z.
-  Proof using CEILV FITS VSP. pin_using (fun (CEILV FITS VSP : unit) => tt). ceil_facts.
-    destruct (entry_bounds ph sp0 argv envp uid hw rnd VSP FITS) as [A B].
-    pose proof (bsb_le_esi ph sp0 argv envp uid hw rnd) as C.
+  Proof using CEILV LAUNCH VSP. pin_using (fun (CEILV LAUNCH VSP : unit) => tt). ceil_facts.
+    destruct (entry_bounds inp mb ph entry sp0 rnd brk VSP LAUNCH) as [A B].
     destruct VSP as (L & H & M). unfold sp_window_lo, sp_window_hi, stack_max_size in *. lia.
+  Qed.
+
+  (* The revision's zero window, as in the Plain kit above. *)
+  Lemma wlo_facts :
+    (usp0 - 8388608 <= stack_window_lo (in_kernel inp) mb rnd <= usp0 - 6144513)%Z.
+  Proof using LAUNCH VL.
+    pose proof (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.StoreOk.stack_window_lo_ge_sp inp sp0 brk mb rnd LAUNCH) as A.
+    pose proof (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.StoreOk.stack_window_lo_valid inp sp0 brk mb rnd VL LAUNCH) as B.
+    unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.StoreOk.stack_window_reach, stack_max_size in *. lia.
   Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition startup_post (s : St) : unit -> St -> machine_state -> Prop :=
-    fun _ s' ms' => exists tp : word, s' = set_tls (bv_unsigned tp - 200)%Z s /\ at_main sp0 argv envp uid hw rnd tp ms'.
+    fun _ s' ms' => exists tp : word, s' = set_tls (bv_unsigned tp - 200)%Z s /\ at_main inp mb entry sp0 rnd tp ms'.
 
   Theorem startup_spec : forall s : St,
     implM usegs (startup_model set_tls 0x34190) s (startup_post s)
-          (init_ms usegs Ubsan.M.init_pc ph sp0 rnd argv envp uid hw).
-  Proof using CLO FITS VARGV VENVP VSP. pin_using (fun (CLO FITS VARGV VENVP VSP : unit) => tt). ceil_facts.
+          (init_ms usegs Ubsan.M.init_pc ph sp0 mb rnd inp).
+  (* PORTED to LPS 727298f3, as the Plain kit above: [InitMem]'s image, the
+     zero window [stack_window_lo, sp) with main's floor at [usp0 - 6144512],
+     and the revision's auxv read as [auxvw] words. *)
+  Proof using CEILV CLO LAUNCH VARGV VENVP VL VSP. pin_using (fun (CEILV CLO LAUNCH VARGV VENVP VL VSP : unit) => tt). ceil_facts.
     intros s.
-    destruct sp_facts as (SPLO & IMGHI & SP16 & SPW & IMGTOP).
+    destruct sp_facts as (SPLO8 & IMGHI & SP16 & SPW & IMGTOP).
     pose proof img_len_bound as IL.
-    unfold init_ms, mkR_init. change (Z.of_N Ubsan.M.init_pc) with 0x13a38%Z.
-    set (m := wrap_mem ph sp0 argv envp uid hw rnd).
+    destruct wlo_facts as (WLO1 & WLO2).
+    assert (SPLO : (stack_window_lo (in_kernel inp) mb rnd <= usp0)%Z) by lia.
+    unfold init_ms, mkR_init.
+    set (m := wrap_mem inp mb ph entry sp0 rnd).
+    change (Z.of_N Ubsan.M.init_pc) with 0x13a38%Z.
     assert (NONE : forall a : word, (bv_unsigned a < 0x56000)%Z -> m a = None).
-    { intros a Ha. apply init_none. unfold stack_max_size. lia. }
-    pose proof (init_stk usegs ph sp0 argv envp uid hw rnd SPLO) as ST. fold m in ST.
-    change stack_max_size with 8388608%Z in ST.
-    pose proof (init_mem_inv' usegs ph sp0 argv envp uid hw rnd SPLO IMGHI ltac:(change (segs_top usegs) with 0x56000%Z; unfold stack_max_size; lia)) as MI.
+    { intros a Ha. apply init_none; first [exact SPLO | lia]. }
+    pose proof (init_stk usegs inp mb ph entry sp0 rnd SPLO) as ST0. fold m in ST0.
+    destruct (stk_split usegs m _ (usp0 - 6144512)%Z usp0 ST0 ltac:(lia)) as [_ ST]. clear ST0.
+    pose proof (init_mem_inv' usegs inp mb ph entry sp0 rnd SPLO IMGHI ltac:(change (segs_top usegs) with 0x56000%Z; lia)) as MI.
     fold m in MI.
-    pose proof (init_block_bytes usegs ph sp0 argv envp uid hw rnd SPLO IMGHI) as IMG. fold m in IMG.   (* [comment removed for export] *)
-    pose proof (init_wr usegs ph sp0 argv envp uid hw rnd SPLO IMGHI) as WR. fold m in WR. rewrite <- (build_stack_bytes_length ph sp0 argv envp uid hw rnd) in WR.
-    destruct (init_pieces usegs ph sp0 argv envp uid hw rnd SPLO IMGHI) as (ARGC & ARGV & ENVP & AUXW & _ & _ & RNDB). fold m in ARGC, ARGV, ENVP, AUXW, RNDB.
+    pose proof (init_stack_bytes usegs inp mb ph entry sp0 rnd SPLO IMGHI) as IMG. fold m in IMG.
+    pose proof (init_stack_wr usegs inp mb ph entry sp0 rnd SPLO IMGHI) as WR. fold m in WR.
+    (* the block spans sp..ed_top: InitMem's [SPAN], from the image's exact length under the launch *)
+    assert (SPAN : (usp0 + InitMem.struct_size inp + InitMem.str_len inp + 8 <= bv_unsigned (ed_top rnd))%Z).
+    { pose proof (length_entry_stack_image_launch Sv48 inp mb ph entry sp0 brk rnd LAUNCH) as HT.
+      pose proof (InitMem.build_stack_bytes_length inp mb ph entry sp0 rnd) as BL.
+      unfold InitMem.pad_len in BL. lia. }
+    destruct (init_pieces usegs inp mb ph entry sp0 rnd SPAN SPLO IMGHI) as (ARGC & ARGV & ENVP & AUXW & RNDB & _ & _). fold m in ARGC, ARGV, ENVP, AUXW, RNDB.
+    rewrite auxv_bytes_auxvw in AUXW.
     (* [comment removed for export] *)
     destruct VARGV as (VA1 & VA2 & VA3 & VA4 & _).   (* [comment removed for export] *)
     assert (Harg0 : exists arg0, nth_error argv 0 = Some arg0).
     { destruct argv as [|a ?]; [cbn in VA1; lia | exists a; reflexivity]. }
     destruct Harg0 as [arg0 Harg0].
-    destruct (init_argv_string usegs ph sp0 argv envp uid hw rnd SPLO IMGHI 0 arg0 Harg0) as (P0 & HP0 & P0LO & P0HI & STR).
+    destruct (init_argv_string usegs inp mb ph entry sp0 rnd SPAN SPLO IMGHI 0 arg0 Harg0) as (P0 & HP0 & P0LO & P0HI & STR).
     fold m in STR.
     pose proof (proj1 (Forall_forall _ _) VA4 arg0 (nth_error_In _ _ Harg0)) as NONUL0. cbn beta in NONUL0.
     assert (NONUL : Forall (fun b : byte => bv_unsigned b <> 0%Z) arg0).
     { apply Forall_forall. intros b Hb E0. apply NONUL0. replace (Z_to_bv 8 0) with b; [exact Hb|]. apply bv_eq. rewrite E0. reflexivity. }
-    assert (EPS : Forall (fun w : word => bv_unsigned w <> 0%Z) (envp_ptrs sp0 argv envp)).
+    pose proof (raw_len_nonneg inp sp0 rnd) as RLN.
+    assert (EPS : Forall (fun w : word => bv_unsigned w <> 0%Z) (envp_ptrs inp sp0 rnd)).
     { apply Forall_forall. intros w Hw. destruct (In_nth_error _ _ Hw) as [i Hi].
-      pose proof (envp_ptr_bounds ph sp0 argv envp uid hw rnd IMGHI i w Hi).
-      pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold env_base, str_base, struct_size in *. lia. }
+      eapply envp_ptr_bounds in Hi; try eassumption.
+      unfold env_base, str_base in Hi. lia. }
     (* [comment removed for export] *)
-    assert (RND : bytes_at usegs m (rnd_addr sp0 argv envp) (at_random_lo rnd)).   (* [comment removed for export] *)
+    assert (RND : bytes_at usegs m (rnd_addr inp sp0) (at_random_lo rnd)).   (* [comment removed for export] *)
     { rewrite at_random_split in RNDB. apply bytes_at_app in RNDB. exact (proj1 RNDB). }
-    assert (RLO : (usp0 <= rnd_addr sp0 argv envp)%Z).
-    { pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold rnd_addr, raw_len. lia. }
+    assert (RLO : (usp0 <= rnd_addr inp sp0)%Z).
+    { unfold rnd_addr. lia. }
     (* [comment removed for export] *)
     rimg_chunk usegs NONE m 0x544d8%Z [C8 z64; C8 z64] G2.
     rimg_chunk usegs NONE m 0x54550%Z [C8 z64] HW.
@@ -1495,11 +1715,11 @@ Section Proof.
     rimg_chunk usegs NONE m 0x24100%Z [C1 (Z_to_bv 8 0)] INI.
     rimg_chunk usegs NONE m 0x34190%Z [CB 4096 (repeat (Z_to_bv 8 0) 4096)] ZT.
     unfold libc_cells, tll_cells in LC, MT.
-    assert (HC : argc argv = Z.of_nat (length argv)) by reflexivity.
-    assert (HE : envc envp = Z.of_nat (length envp)) by reflexivity.
+    assert (HC : argc inp = Z.of_nat (length argv)) by reflexivity.
+    assert (HE : envc inp = Z.of_nat (length envp)) by reflexivity.
     assert (P0GE : (usp0 + 184 <= P0)%Z).   (* [comment removed for export] *)
-    { pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold str_base, struct_size in P0LO. lia. }
-    pose proof (munch_refl [(usp0 - 8388608, usp0); (0x24100, 0x24101); (0x34188, 0x34190); (0x54268, 0x54298);
+    { unfold str_base in P0LO. lia. }
+    pose proof (munch_refl [(usp0 - 6144512, usp0); (0x24100, 0x24101); (0x34188, 0x34190); (0x54268, 0x54298);
                             (0x544c8, 0x544d0); (0x544d8, 0x54520); (0x54550, 0x54558); (0x34190, 0x35190)]%Z m) as MU.
     pose proof (wmono_refl usegs m) as WM.
     clearbody m.
@@ -1510,13 +1730,13 @@ Section Proof.
     do 7 lstep.
     (* [comment removed for export] *)
     pose proof (bytes_at_read usegs m usp0 _ 0 4 ARGC ltac:(lia) ltac:(rewrite length_le8; lia)) as RD.
-    change (firstn 4 (skipn (Z.to_nat 0) (le8 (Z_to_bv 64 (argc argv))))) with (le4 (Z_to_bv 64 (argc argv))) in RD.
+    change (firstn 4 (skipn (Z.to_nat 0) (le8 (Z_to_bv 64 (argc inp))))) with (le4 (Z_to_bv 64 (argc inp))) in RD.
     let a := cur_mem_addr in replace (wa (usp0 + 0)) with a in RD by (unfold wa; rewrite Z.add_0_r; try reflexivity; symmetry; apply Z_to_bv_bv_unsigned).
     lstep. clear RD.
     replace (Z_to_bv 64 (Z.land usp0 18446744073709551600)) with sp0.
     2:{ change 18446744073709551600%Z with (2^64 - 2^4)%Z. rewrite land_align_down by lia.
         change (2^4)%Z with 16%Z. rewrite SP16, Z.sub_0_r. symmetry. apply Z_to_bv_bv_unsigned. }
-    replace (sx32 (Z_to_bv 64 (argc argv))) with (Z_to_bv 64 (argc argv)).
+    replace (sx32 (Z_to_bv 64 (argc inp))) with (Z_to_bv 64 (argc inp)).
     2:{ unfold sx32. f_equal. unfold argc. rewrite unsigned_lit by lia. symmetry. apply swrap32_small. lia. }
     steps_to 0x18624%Z.
     (* [comment removed for export] *)
@@ -1526,23 +1746,26 @@ Section Proof.
     pose proof (rd_u64s_g usegs _ (usp0 + 8) _ 0 _ (Z_to_bv 64 (usp0 + 8)) ARGV ltac:(rewrite nth_error_app1 by (rewrite argv_ptrs_length; lia); exact HP0) ltac:(unfold wa; f_equal; lia)) as RD.
     lstep. clear RD ARGV.
     do 3 lstep.
-    replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
-      by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
+    replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc inp) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
+      by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; unfold argc; lia).
     (* [comment removed for export] *)
     assert (ENV : bytes_at usegs m1 (envp_addr sp0 argv)
-                    (u64s (envp_ptrs sp0 argv envp) ++ le8 z64 ++ u64s (auxv20 uid hw (Z_to_bv 64 (rnd_addr sp0 argv envp))))).
+                    (u64s (envp_ptrs inp sp0 rnd) ++ le8 z64
+                     ++ u64s (auxvw (launch_auxv inp sp0 mb) entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+                                    (Z_to_bv 64 (rnd_addr inp sp0)) (at_execfn_ptr (ed_top rnd) (in_execfn inp))))).
     { rewrite u64s_app in ENVP. cbn [u64s] in ENVP. rewrite app_nil_r in ENVP.
       apply bytes_at_app in ENVP. destruct ENVP as [E1 E2]. rewrite u64s_length, envp_ptrs_length in E2.
       unfold envp_addr. apply bytes_at_app. split; [exact E1|]. apply bytes_at_app. split.
       - rewrite u64s_length, envp_ptrs_length. exact E2.
       - rewrite u64s_length, envp_ptrs_length, length_le8.
-        replace (usp0 + 8 * (argc argv + 2) + Z.of_nat (8 * length envp) + Z.of_nat 8)%Z
-          with (usp0 + 8 * (argc argv + envc envp + 3))%Z by lia.
+        lazymatch goal with |- bytes_at _ _ ?A _ =>
+          replace A with (usp0 + 8 * (argc inp + envc inp + 3))%Z by (unfold argc, envc; lia) end.
         exact AUXW. }
     clear ENVP AUXW ARGC RNDB.
     lstep. name_sp sp0 (-32)%Z.
-    icallM (init_libc_spec set_tls _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (usp0 - 8388608)%Z
-              (envp_addr sp0 argv) (envp_ptrs sp0 argv envp) uid hw rnd (rnd_addr sp0 argv envp) P0 arg0 _ _ _ _ _ s).
+    icallM (init_libc_spec set_tls _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (usp0 - 6144512)%Z
+              (envp_addr sp0 argv) (envp_ptrs inp sp0 rnd) (launch_auxv inp sp0 mb) entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+              (at_execfn_ptr (ed_top rnd) (in_execfn inp)) rnd (rnd_addr inp sp0) P0 arg0 _ _ _ _ _ s).
     all: lazymatch goal with
          | |- forall _, _ => ipostT usegs; unname_sp
          | |- Forall _ _ => first [exact EPS | exact NONUL]
@@ -1552,7 +1775,7 @@ Section Proof.
     repeat match goal with
            | H : bytes_at _ _ _ (u64s _ ++ _) |- _ => clear H
            | H : bytes_at _ _ P0 _ |- _ => clear H
-           | H : bytes_at _ _ (rnd_addr _ _ _) _ |- _ => clear H
+           | H : bytes_at _ _ (rnd_addr _ _) _ |- _ => clear H
            end.
     repeat match goal with H1 : rw_cells _ ?mm ?A ?cs, H2 : rw_cells _ ?mm ?A ?cs |- _ => clear H2 end.
     clear EPS NONUL NONUL0 VA2 VA3 VA4 RLO P0HI.
@@ -1560,7 +1783,7 @@ Section Proof.
     match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
     rewrite envp_ptrs_length in *.
     replace (envp_addr sp0 argv + 8 * (Z.of_nat (length envp) + 1))%Z with (auxv_addr sp0 argv envp) in *
-      by (unfold auxv_addr, envp_addr, envc; lia).
+      by (unfold auxv_addr, envp_addr; lia).
     (* [comment removed for export] *)
     steps_to 0x18680%Z. release_frame FR ST (bv_unsigned sp0). astep.
     (* [comment removed for export] *)
@@ -1573,8 +1796,8 @@ Section Proof.
     steps_to 0x18620%Z. release_frame FR0 ST (usp0 + -48)%Z. astep.
     (* [comment removed for export] *)
     steps_to 0x13b84%Z.
-    replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
-      by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
+    replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc inp) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
+      by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; unfold argc; lia).
     (* [comment removed for export] *)
     unfold id in IMG, WR.
     lazymatch type of MU with munch ?W m ?mf =>
@@ -1852,7 +2075,7 @@ Section TargetRun.
     name_sp sp (-80)%Z.
     apply evt_done. unfold emit_d. eapply implM_post_evt.
     { eapply VPR.
-      { split; [exact G1|]. split; [rewrite Hsp; exact ST|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; lia|].
+      { split; [exact G1|]. split; [rewrite Hsp; exact ST|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; lia|].
         split; [unfold rc_spmain; lia|]. split; [exact MI|]. split; [reflexivity| aln]. }
       all: fastfirst (first [ noevar_assumption |reflexivity | exact Hv | exact FR2 | unfold rc_spmain; lia]). }
     intros [] s' ms' PO. unfold out_post in PO. destruct_exs PO. destruct PO as (-> & MI' & ST' & AG & G'). clear MI. rename MI' into MI.
@@ -1932,7 +2155,7 @@ Section TargetRun.
     { eapply (FUZZ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (set_cb R true));
         [ | exact SITES | reflexivity | reflexivity | exact SRC | exact HK | exact HD].
       unfold std_pre. change (rc_lo (set_cb R true)) with (rc_lo R). change (rc_spmain (set_cb R true)) with (rc_spmain R). change (rc_tp (set_cb R true)) with (rc_tp R).
-      split; [exact G1|]. split; [exact ST|]. split; [unfold rc_lo; lia|]. split; [unfold FUZZ_STACK; lia|].
+      split; [exact G1|]. split; [exact ST|]. split; [unfold rc_lo in *; lia|]. split; [unfold FUZZ_STACK; lia|].
       split; [unfold rc_spmain; lia|]. split; [exact MI|]. split; [reflexivity| aln]. }
     intros rc' s' ms' PO. unfold fuzz_post in PO. destruct_exs PO. destruct PO as (-> & MI1 & ST1 & AG1 & G1' & ->).
     clear MI G1. cbn [fst snd].
@@ -1956,7 +2179,7 @@ Section TargetRun.
     clear MU WM G1' FL ATXc BLT REG.
     lstep. lstep.
     apply evt_done. eapply (implM_bind ssegs).
-    { eapply (emit_printf_spec _ spi); [exact G2 | eassumption | unfold rc_lo; lia | unfold STDIO_STACK; lia | unfold rc_spmain; lia | eassumption | reflexivity | reflexivity | lia | aln]. }
+    { eapply (emit_printf_spec _ spi); [exact G2 | eassumption | unfold rc_lo in *; lia | unfold STDIO_STACK; lia | unfold rc_spmain; lia | eassumption | reflexivity | reflexivity | lia | aln]. }
     intros [] s'' ms'' PO. unfold out_post in PO. destruct_exs PO. destruct PO as (-> & MI3 & ST3 & AG3 & G3).
     cbn [fst snd].
     replace (ret_pc (Z_to_bv 64 0x13ebc)) with (Z_to_bv 64 0x13ebc) by (symmetry; apply ret_pc_even; [lia|reflexivity]).
@@ -1972,7 +2195,7 @@ Section TargetRun.
       split; [cbv delta [mkR]; reflexivity|]. split; [reflexivity|]. split; [exact MI3|]. split; [exact ST3|]. split; [exact AGall|exact G3].
     - lstep. if_true_by (nez_cond (Z.of_nat n) ltac:(lia)).
       apply evt_done. eapply (implM_mono ssegs).
-      + eapply IH; [lia | exact G3 | exact Hcb | exact ST3 | unfold rc_lo; lia | unfold FUZZ_STACK; lia | unfold STDIO_STACK; lia
+      + eapply IH; [lia | exact G3 | exact Hcb | exact ST3 | unfold rc_lo in *; lia | unfold FUZZ_STACK; lia | unfold STDIO_STACK; lia
                    | unfold rc_spmain; lia | exact MI3 | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | | exact HK | exact HD | aln | exact SITES].
         eapply agrees_bytes_at; [exact AG3 | eapply agrees_bytes_at; [exact AG2 | eapply agrees_bytes_at; [exact AG1 | exact SRC |] |] |]; intros a Ha; right; apply HK; exact Ha.
       + cbv beta. intros b2 s2' ms2 PO. unfold loop_post in *. destruct_exs PO. destruct PO as (-> & -> & MI4 & ST4 & AG4 & G4).
@@ -2026,7 +2249,7 @@ Section TargetRun.
     apply evt_done.
     eapply (implM_bind ssegs).
     { eapply (loop_spec k) with (bad := false);
-        [exact Hk | exact G | exact Hcb | rewrite Hsp; exact ST | unfold rc_lo; lia | unfold FUZZ_STACK; lia | unfold STDIO_STACK; lia
+        [exact Hk | exact G | exact Hcb | rewrite Hsp; exact ST | unfold rc_lo in *; lia | unfold FUZZ_STACK; lia | unfold STDIO_STACK; lia
         | unfold rc_spmain; lia | exact MI | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | exact SRC | exact HK | exact HD | aln | rewrite Hsp; exact SITES]. }
     intros bad' s' ms' PO. unfold loop_post in PO. destruct_exs PO. destruct PO as (-> & -> & MI1 & ST1 & AG1 & G1). clear MI.
     apply (keeps_rw_cells_stack _ _ _ _ _ _ AG1) in FR; [|lia].
@@ -2037,7 +2260,7 @@ Section TargetRun.
       name_sp sp (-80)%Z.
       apply evt_done. eapply (implM_bind ssegs).
       { eapply FREE with (C1 := []); [| reflexivity].
-        split; [exact G1|]. split; [rewrite Hsp; exact ST1|]. split; [unfold rc_lo; lia|]. split; [unfold FREE_STACK; lia|].
+        split; [exact G1|]. split; [rewrite Hsp; exact ST1|]. split; [unfold rc_lo in *; lia|]. split; [unfold FREE_STACK; lia|].
         split; [unfold rc_spmain; lia|]. split; [exact MI1|]. split; [reflexivity| aln]. }
       intros [] s'' ms'' PO. unfold free_post in PO. destruct_exs PO. destruct PO as (-> & MI2 & ST2 & AG2 & G2). clear MI1.
       cbn [app] in AG2, G2.
@@ -2509,7 +2732,7 @@ Section TargetRun.
     name_sp sp (-80)%Z.
     apply evt_done. unfold emit_d. eapply implM_post_evt.
     { eapply VPR.
-      { split; [exact G1|]. split; [rewrite Hsp; exact ST|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; lia|].
+      { split; [exact G1|]. split; [rewrite Hsp; exact ST|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; lia|].
         split; [unfold rc_spmain; lia|]. split; [exact MI|]. split; [reflexivity| aln]. }
       all: fastfirst (first [ noevar_assumption |reflexivity | exact Hv | exact FR2 | unfold rc_spmain; lia]). }
     intros [] s' ms' PO. unfold out_post in PO. destruct_exs PO. destruct PO as (-> & MI' & ST' & AG & G'). clear MI. rename MI' into MI.
@@ -2589,7 +2812,7 @@ Section TargetRun.
     { eapply (FUZZ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (set_cb R true));
         [ | exact SITES | reflexivity | reflexivity | exact SRC | exact HK | exact HD].
       unfold std_pre. change (rc_lo (set_cb R true)) with (rc_lo R). change (rc_spmain (set_cb R true)) with (rc_spmain R). change (rc_tp (set_cb R true)) with (rc_tp R).
-      split; [exact G1|]. split; [exact ST|]. split; [unfold rc_lo; lia|]. split; [unfold FUZZ_STACK; lia|].
+      split; [exact G1|]. split; [exact ST|]. split; [unfold rc_lo in *; lia|]. split; [unfold FUZZ_STACK; lia|].
       split; [unfold rc_spmain; lia|]. split; [exact MI|]. split; [reflexivity| aln]. }
     intros rc' s' ms' PO. unfold fuzz_post in PO. destruct_exs PO. destruct PO as (-> & MI1 & ST1 & AG1 & G1' & ->).
     clear MI G1. cbn [fst snd].
@@ -2613,7 +2836,7 @@ Section TargetRun.
     clear MU WM G1' FL ATXc BLT REG.
     lstep. lstep.
     apply evt_done. eapply (implM_bind usegs).
-    { eapply (emit_printf_spec _ spi); [exact G2 | eassumption | unfold rc_lo; lia | unfold STDIO_STACK; lia | unfold rc_spmain; lia | eassumption | reflexivity | reflexivity | lia | aln]. }
+    { eapply (emit_printf_spec _ spi); [exact G2 | eassumption | unfold rc_lo in *; lia | unfold STDIO_STACK; lia | unfold rc_spmain; lia | eassumption | reflexivity | reflexivity | lia | aln]. }
     intros [] s'' ms'' PO. unfold out_post in PO. destruct_exs PO. destruct PO as (-> & MI3 & ST3 & AG3 & G3).
     cbn [fst snd].
     replace (ret_pc (Z_to_bv 64 0x13f30)) with (Z_to_bv 64 0x13f30) by (symmetry; apply ret_pc_even; [lia|reflexivity]).
@@ -2629,7 +2852,7 @@ Section TargetRun.
       split; [cbv delta [mkR]; reflexivity|]. split; [reflexivity|]. split; [exact MI3|]. split; [exact ST3|]. split; [exact AGall|exact G3].
     - lstep. if_true_by (nez_cond (Z.of_nat n) ltac:(lia)).
       apply evt_done. eapply (implM_mono usegs).
-      + eapply IH; [lia | exact G3 | exact Hcb | exact ST3 | unfold rc_lo; lia | unfold FUZZ_STACK; lia | unfold STDIO_STACK; lia
+      + eapply IH; [lia | exact G3 | exact Hcb | exact ST3 | unfold rc_lo in *; lia | unfold FUZZ_STACK; lia | unfold STDIO_STACK; lia
                    | unfold rc_spmain; lia | exact MI3 | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | | exact HK | exact HD | aln | exact SITES].
         eapply agrees_bytes_at; [exact AG3 | eapply agrees_bytes_at; [exact AG2 | eapply agrees_bytes_at; [exact AG1 | exact SRC |] |] |]; intros a Ha; right; apply HK; exact Ha.
       + cbv beta. intros b2 s2' ms2 PO. unfold loop_post in *. destruct_exs PO. destruct PO as (-> & -> & MI4 & ST4 & AG4 & G4).
@@ -2683,7 +2906,7 @@ Section TargetRun.
     apply evt_done.
     eapply (implM_bind usegs).
     { eapply (loop_spec k) with (bad := false);
-        [exact Hk | exact G | exact Hcb | rewrite Hsp; exact ST | unfold rc_lo; lia | unfold FUZZ_STACK; lia | unfold STDIO_STACK; lia
+        [exact Hk | exact G | exact Hcb | rewrite Hsp; exact ST | unfold rc_lo in *; lia | unfold FUZZ_STACK; lia | unfold STDIO_STACK; lia
         | unfold rc_spmain; lia | exact MI | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | exact SRC | exact HK | exact HD | aln | rewrite Hsp; exact SITES]. }
     intros bad' s' ms' PO. unfold loop_post in PO. destruct_exs PO. destruct PO as (-> & -> & MI1 & ST1 & AG1 & G1). clear MI.
     apply (keeps_rw_cells_stack _ _ _ _ _ _ AG1) in FR; [|lia].
@@ -2694,7 +2917,7 @@ Section TargetRun.
       name_sp sp (-80)%Z.
       apply evt_done. eapply (implM_bind usegs).
       { eapply FREE with (C1 := []); [| reflexivity].
-        split; [exact G1|]. split; [rewrite Hsp; exact ST1|]. split; [unfold rc_lo; lia|]. split; [unfold FREE_STACK; lia|].
+        split; [exact G1|]. split; [rewrite Hsp; exact ST1|]. split; [unfold rc_lo in *; lia|]. split; [unfold FREE_STACK; lia|].
         split; [unfold rc_spmain; lia|]. split; [exact MI1|]. split; [reflexivity| aln]. }
       intros [] s'' ms'' PO. unfold free_post in PO. destruct_exs PO. destruct PO as (-> & MI2 & ST2 & AG2 & G2). clear MI1.
       cbn [app] in AG2, G2.
@@ -3114,7 +3337,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -3233,7 +3456,7 @@ Section NgnCtx.
     clear IFS T0.
     rename ST5 into ST5'.
     assert (G5' : GIo K R ps (CLc ++ pcap_blocks (pv bq alloc data eb sx ix) P Bq Ix') FB m5').
-    { eapply (GIo_pcap_frame K HFL SFL); [exact G5 | exact MU | exact WM |]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]. }
+    { eapply (GIo_pcap_frame K HFL SFL); [exact G5 | exact MU | exact WM |]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]. }
     assert (AG5' : agrees_on (fun a => client_keeps CLc (bv_unsigned sp) a /\ ~ (HA <= a < HA + 24) /\ ~ (DA <= a < DA + 8))%Z m m5').
     { eapply agrees_on_trans; [exact AG5|]. eapply agrees_on_weaken; [exact AGD|]. intros a [_ [_ Hn]]; cbn [outside]; lia. }
     lazymatch goal with |- context [mem_inv ssegs m5'] => idtac | _ => idtac end.
@@ -3284,7 +3507,7 @@ Section NgnCtx.
     cbn [set_bufdata pc_self pc_rfile pc_bufsize pc_bufalloc pc_buffer pc_swapped pc_version_major pc_version_minor pc_snapshot pc_linktype pc_linktype_ext pc_tstamp_precision pc_break_loop pc_errbuf pc_header pc_priv].
     assert (G6 : GIo K R ps (CLc ++ pcap_blocks (pv bq alloc data eb sx ix) P Bq Ix') FB m6).
     { eapply (GIo_pcap_frame K HFL SFL); [exact G5' | exact MU6 | exact WM6 |].
-      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, rc_spmain in *; lia|].
+      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, rc_spmain in *; lia|].
       apply Forall_cons; [| apply Forall_nil]. right. unfold iv_in_block, pcap_blocks. apply Exists_cons_tl, Exists_cons_hd. cbn [cb_addr cb_size fst snd pc_buffer pc_bufalloc F_ngnextA.pv]. lia. }
     apply evt_done. eapply (ngn_ret_1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m6 ps (pcap_blocks (pv bq alloc data eb sx ix) P Bq Ix')
                              (pv bq alloc (zfirstn doff data ++ d') eb sx ix) hdr'); [exact ST6 | exact FR5 | exact Hccs | exact MI6 | | exact RC' | exact RL'].
@@ -3418,7 +3641,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -3541,7 +3764,7 @@ Section NgnCtx.
     clear IFS T0.
     rename ST5 into ST5'.
     assert (G5' : GIo K R ps (CLc ++ pcap_blocks (pv bq alloc data eb sx ix) P Bq Ix') FB m5').
-    { eapply (GIo_pcap_frame K HFL SFL); [exact G5 | exact MU | exact WM |]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]. }
+    { eapply (GIo_pcap_frame K HFL SFL); [exact G5 | exact MU | exact WM |]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]. }
     assert (AG5' : agrees_on (fun a => client_keeps CLc (bv_unsigned sp) a /\ ~ (HA <= a < HA + 24) /\ ~ (DA <= a < DA + 8))%Z m m5').
     { eapply agrees_on_trans; [exact AG5|]. eapply agrees_on_weaken; [exact AGD|]. intros a [_ [_ Hn]]; cbn [outside]; lia. }
     lazymatch goal with |- context [mem_inv usegs m5'] => idtac | _ => idtac end.
@@ -3592,7 +3815,7 @@ Section NgnCtx.
     cbn [set_bufdata pc_self pc_rfile pc_bufsize pc_bufalloc pc_buffer pc_swapped pc_version_major pc_version_minor pc_snapshot pc_linktype pc_linktype_ext pc_tstamp_precision pc_break_loop pc_errbuf pc_header pc_priv].
     assert (G6 : GIo K R ps (CLc ++ pcap_blocks (pv bq alloc data eb sx ix) P Bq Ix') FB m6).
     { eapply (GIo_pcap_frame K HFL SFL); [exact G5' | exact MU6 | exact WM6 |].
-      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, rc_spmain in *; lia|].
+      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, rc_spmain in *; lia|].
       apply Forall_cons; [| apply Forall_nil]. right. unfold iv_in_block, pcap_blocks. apply Exists_cons_tl, Exists_cons_hd. cbn [cb_addr cb_size fst snd pc_buffer pc_bufalloc S3.F_ngnextA.TwB.pv]. lia. }
     apply evt_done. eapply (ngn_ret_1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m6 ps (pcap_blocks (pv bq alloc data eb sx ix) P Bq Ix')
                              (pv bq alloc (zfirstn doff data ++ d') eb sx ix) hdr'); [exact ST6 | exact FR5 | exact Hccs | exact MI6 | | exact RC' | exact RL'].
@@ -3805,7 +4028,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -4314,7 +4537,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -4926,7 +5149,10 @@ Section Compose.
     forall (en : ExecEntry) (inp : ProcInput) (tp : word) (s : St) (ms : machine_state),
       P0 s -> EN_OK en ->
       valid_entry (mkImage ssegs Plain.M.init_pc Plain.M.phdrs) en inp -> valid_input inp ->
-      at_main (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) tp ms ->   (* [comment removed for export] *)
+      (* PORTED to 75d69e00: [at_main]'s tuple is (inp, mb, entry, sp, rnd),
+         and [entry] is the pc [init_ms] builds [wrap_mem] from
+         (E2/Lib/RegsEquiv.v:656). *)
+      at_main inp (en_mmap_base en) (Z_to_bv 64 (Z.of_N Plain.M.init_pc)) (en_sp en) (en_draw en) tp ms ->
       implM ssegs (main en inp) (set_tls (bv_unsigned tp - 200) s)
             (fun code s' ms' => at_exit SX stdio_exit_frame code s' ms') ms.
   Hypothesis MAIN : main_stmt.
@@ -4951,15 +5177,20 @@ Section Compose.
     pose proof VE as VE'. pose proof VI as VI'.
     apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp VI)) in VE.   (* [comment removed for export] *)
     destruct en as [sp0 brk mb rnd].
-    destruct VE as (VSP & _ & _ & FITS). destruct VI as (VARGV & VENVP & _).
-    destruct inp as [argv envp fs sin uid gid groups net nofile sigmask hw abterm vasz]; cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap] in *.
-    unfold ms0. cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap].
+    (* [valid_entry_va] has FIVE conjuncts at 75d69e00 (Run.v:3733); the fifth,
+       [entry_launch_ok_va], replaces [entry_stack_fits] as the image's bound.
+       [valid_launch] is [valid_input]'s thirteenth conjunct (Run.v:4595).
+       [inp] is NOT destructed: the ported section carries it whole. *)
+    destruct VE as (VSP & _ & _ & _ & LAUNCH).
+    destruct VI as (VARGV & VENVP & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & VL & _).
+    cbn [en_sp en_draw en_mmap_base] in *.
+    unfold ms0. cbn [en_sp en_draw en_mmap_base].
     unfold prog_tree.
     eapply (impl_ebind _ _ _ _ _ _ (fun (_ : Empty_set * St) (_ : machine_state) => True)).
     2:{ intros [v ?] ms' _. destruct v. }
     unfold prog. unfold Monad.mbind at 1.
-    eapply (impl_ebind _ _ _ _ _ _ (fun (p : unit * St) ms' => startup_post set_tls sp0 argv envp uid hw rnd s0 (fst p) (snd p) ms')).
-    - pose proof (startup_spec set_tls sp0 argv envp uid hw rnd VSP VARGV VENVP FITS CLO s0) as SU.
+    eapply (impl_ebind _ _ _ _ _ _ (fun (p : unit * St) ms' => startup_post set_tls inp mb sp0 rnd s0 (fst p) (snd p) ms')).
+    - pose proof (startup_spec set_tls inp mb brk sp0 rnd VSP VARGV VENVP VL LAUNCH CLO s0) as SU.
       unfold implM in SU. eapply impl_epost_mono; [exact SU|]. intros [[] s'] ms' H. exact H.
     - intros [[] s] ms' SP. cbn [fst snd] in SP. unfold startup_post in SP. destruct SP as (tp & -> & AM).
       cbn [fst snd].
@@ -5041,7 +5272,8 @@ Section Compose.
     forall (en : ExecEntry) (inp : ProcInput) (tp : word) (s : St) (ms : machine_state),
       P0 s -> EN_OK en ->
       valid_entry (mkImage usegs Ubsan.M.init_pc Ubsan.M.phdrs) en inp -> valid_input inp ->
-      at_main (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) tp ms ->   (* [comment removed for export] *)
+      (* PORTED to 75d69e00, as the Plain kit (this file, :5040). *)
+      at_main inp (en_mmap_base en) (Z_to_bv 64 (Z.of_N Ubsan.M.init_pc)) (en_sp en) (en_draw en) tp ms ->
       implM usegs (main en inp) (set_tls (bv_unsigned tp - 200) s)
             (fun code s' ms' => at_exit SX stdio_exit_frame code s' ms') ms.
   Hypothesis MAIN : main_stmt.
@@ -5066,15 +5298,17 @@ Section Compose.
     pose proof VE as VE'. pose proof VI as VI'.
     apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp VI)) in VE.   (* [comment removed for export] *)
     destruct en as [sp0 brk mb rnd].
-    destruct VE as (VSP & _ & _ & FITS). destruct VI as (VARGV & VENVP & _).
-    destruct inp as [argv envp fs sin uid gid groups net nofile sigmask hw abterm vasz]; cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap] in *.
-    unfold ms0. cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap].
+    (* As the Plain kit (this file, :5064-5078). *)
+    destruct VE as (VSP & _ & _ & _ & LAUNCH).
+    destruct VI as (VARGV & VENVP & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & VL & _).
+    cbn [en_sp en_draw en_mmap_base] in *.
+    unfold ms0. cbn [en_sp en_draw en_mmap_base].
     unfold prog_tree.
     eapply (impl_ebind _ _ _ _ _ _ (fun (_ : Empty_set * St) (_ : machine_state) => True)).
     2:{ intros [v ?] ms' _. destruct v. }
     unfold prog. unfold Monad.mbind at 1.
-    eapply (impl_ebind _ _ _ _ _ _ (fun (p : unit * St) ms' => startup_post set_tls sp0 argv envp uid hw rnd s0 (fst p) (snd p) ms')).
-    - pose proof (startup_spec set_tls sp0 argv envp uid hw rnd VSP VARGV VENVP FITS CLO s0) as SU.
+    eapply (impl_ebind _ _ _ _ _ _ (fun (p : unit * St) ms' => startup_post set_tls inp mb sp0 rnd s0 (fst p) (snd p) ms')).
+    - pose proof (startup_spec set_tls inp mb brk sp0 rnd VSP VARGV VENVP VL LAUNCH CLO s0) as SU.
       unfold implM in SU. eapply impl_epost_mono; [exact SU|]. intros [[] s'] ms' H. exact H.
     - intros [[] s] ms' SP. cbn [fst snd] in SP. unfold startup_post in SP. destruct SP as (tp & -> & AM).
       cbn [fst snd].

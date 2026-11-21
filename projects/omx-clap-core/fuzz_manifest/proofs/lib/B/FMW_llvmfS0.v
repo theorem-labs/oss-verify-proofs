@@ -1,9 +1,9 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS0.v at a working branch 79d8c0f1b8f, RE-WALKED on B's
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS0.v at a working branch, RE-WALKED on B's
    instructions (B 0x8097c..0x809e0; A 0x8091c..0x8097c). Registers and frame as on A (addi sp, sp, -64; ra, s0..s6 at 56..0).
    B differs from A by: the GOT load at 0x809a8 (ld a1, 0x2f4(a1): FMW_kit.v's FMW_GOT_shadow 0x99c98), and ONE UBSan guard
    at 0x809b4 `beqz a0, 0x80ba0` (L+0x224, the `unimp` trap), proved NOT taken in lf_seg0 (size > 0: a0 = data >= 4096):
-   the trap arm of the branch split is refuted by B5's class lemma for it (lib/B/FMTrapB.v at a working branch
-   c89f3cdf72d; FM-B-TRAPS.md row 47, class K1, fmt_eq_not). Imports: lib.A AXxx -> lib.ReusableB YXxx (a Theorem Labs lane's REUSABLEB-LIST);
+   the trap arm of the branch split is refuted by B5's class lemma for it (lib/B/FMTrapB.v at a working branch;
+   FM-B-TRAPS.md row 47, class K1, fmt_eq_not). Imports: lib.A AXxx -> lib.ReusableB YXxx (a Theorem Labs lane's REUSABLEB-LIST);
    other lib.A -> lib.B; FMupoison stays lib.A. *)
 (* LLVMFuzzerTestOneInput 0x8097c, segment 0 (fuzz_manifest.c:295): the prologue (ra, s0..s6 saved, s1 := size,
    s5 := the shadow base), the guard data != NULL when size > 0, and k := size ? min (data[0], size - 1) : 0, up to

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -42,7 +43,7 @@ Definition inoroom (A : astate) (s : mstate) (k : Z) : Prop :=
   (k <= spare A -> refusal (ms_vm s)) /\
   (a_areas A = [] ->
      ~ (vm_backed_bytes (ms_vm s) + 4096 <= vm_limit (ms_vm s) /\
-        (0 < a_ctx A KAac \/ exists a, grant_ok_na_vm (ms_vm s) a 8192 = true))
+        (0 < a_ctx A KAac \/ forall thp, exists a, grant_ok_na_vm thp (Z_to_bv 64 0) (ms_vm s) a 8192 = true))
      \/ exists h2, am_delta (ms_vm s) h2 /\ refusal h2).
 
 Lemma inoroom_noroom : forall sp0 argv envp cb A s k, 0 <= k <= 4 -> inoroom A s k -> aslot_noroom sp0 argv envp cb A s.
@@ -406,9 +407,9 @@ Section TA.
           pose proof (amv_budget _ _ _ _ AM E0) as B. rewrite (nf_vm _ _ _ NF1) in B. lia. }
       intros NB. split; [intros Hk; exfalso; lia|].
       intros E0. left. intros [Hb Hor]. apply NB. right. rewrite (nf_vm _ _ _ NF1). split; [exact Hb|].
-      destruct Hor as [HK | (a & Ha)]; [left | right].
+      destruct Hor as [HK | Ha]; [left | right].
       - rewrite (tv_ctx _ _ _ TV KAac I ltac:(discriminate) ltac:(intros H; exact H)). exact HK.
-      - split; [rewrite E1; exact E0|]. exists a. exact Ha.
+      - split; [rewrite E1; exact E0|]. exact Ha.
     Qed.
   End AmFail.
 

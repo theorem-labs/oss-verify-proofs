@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_ok and its TwinB copy restated on A_MallocTree's auxv_list: 27 or 29 pairs by the CONFIG_RSEQ flag, a value list with AT_RANDOM at slot 24, and the size bound from StackLayout.auxv_size; their weaken and frame lemmas take the new witnesses). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -285,19 +286,26 @@ Proof.
   - intros b Hb. destruct c as [c|]; [|discriminate]. inversion Hb; subst. reflexivity.
 Qed.
 
+(** The reference twin of [A_MallocTree.auxv_ok]: same vector, [rsegs] and
+    [RAUXV_CELL].  The table is [StackLayout.auxv_entries] at LPS 75d69e00 --
+    [auxv_count r] = 27 or 29 pairs, AT_NULL last at pair [26 + 2 * r] -- not
+    the ten pairs at the OLD ordinals this definition carried. *)
 Definition rauxv_ok (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+  exists (r : bool) (av : Z) (vals : list Z) (rnd : Z),
     rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
-    /\ bytes_at rsegs m av (u64s (auxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+    /\ bytes_at rsegs m av (u64s (auxv_list r vals))
     /\ bytes_at rsegs m (rnd + 8) (le8 (wz ctx_secret))
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ length vals = length (auxv_tags r)
+    /\ nth 24%nat vals 0 = rnd
+    /\ Forall (fun v : Z => 0 <= v < 2^64) vals
+    /\ alloc_ceiling <= B /\ B <= av
+    /\ av + Z.of_nat (StackLayout.auxv_size r) <= 2^64
+    /\ B <= rnd + 8 /\ rnd + 16 <= 2^64 /\ 0 <= rnd < 2^64.
 
 Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> alloc_ceiling <= B' <= B -> rauxv_ok m B'.
 Proof.
-  intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  intros m B B' (r & av & vals & rnd & H) HB.
+  exists r, av, vals, rnd. repeat (split; [tauto|]). lia.
 Qed.
 
 Lemma rauxv_ok_frame : forall m m' B W,
@@ -305,8 +313,8 @@ Lemma rauxv_ok_frame : forall m m' B W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
   rauxv_ok m' B.
 Proof.
-  intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (r & av & vals & rnd & C & A1 & A2 & H) MU WM FW.
+  exists r, av, vals, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
@@ -722,19 +730,25 @@ Proof.
   - intros b Hb. destruct c as [c|]; [|discriminate]. inversion Hb; subst. reflexivity.
 Qed.
 
+(** The Ubsan-image twin of the [rauxv_ok] above, same vector.  The two are
+    namespaced, not shadowed: this one is [RMallocTree.TwinB.rauxv_ok] and a
+    consumer picks it by an explicit [Import RMallocTree.TwinB]. *)
 Definition rauxv_ok (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+  exists (r : bool) (av : Z) (vals : list Z) (rnd : Z),
     rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
-    /\ bytes_at rsegs m av (u64s (auxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+    /\ bytes_at rsegs m av (u64s (auxv_list r vals))
     /\ bytes_at rsegs m (rnd + 8) (le8 (wz ctx_secret))
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ length vals = length (auxv_tags r)
+    /\ nth 24%nat vals 0 = rnd
+    /\ Forall (fun v : Z => 0 <= v < 2^64) vals
+    /\ alloc_ceiling <= B /\ B <= av
+    /\ av + Z.of_nat (StackLayout.auxv_size r) <= 2^64
+    /\ B <= rnd + 8 /\ rnd + 16 <= 2^64 /\ 0 <= rnd < 2^64.
 
 Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> alloc_ceiling <= B' <= B -> rauxv_ok m B'.
 Proof.
-  intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  intros m B B' (r & av & vals & rnd & H) HB.
+  exists r, av, vals, rnd. repeat (split; [tauto|]). lia.
 Qed.
 
 Lemma rauxv_ok_frame : forall m m' B W,
@@ -742,8 +756,8 @@ Lemma rauxv_ok_frame : forall m m' B W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
   rauxv_ok m' B.
 Proof.
-  intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (r & av & vals & rnd & C & A1 & A2 & H) MU WM FW.
+  exists r, av, vals, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.

@@ -3,8 +3,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFkz.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the low-shadow band of the constant cells ends at 0x800b3000, as a Theorem Labs lane set it for omx-clap-core/fuzz_manifest (2c257ca7d7a): fuzz_pcap's constant shadow cells (A/AF0m.v Tfib_const_shadow) reach 0x800b27f0; the donor's 0x80050000 (relocated to 0x8004f718) is below them. *)
+(* Modified by Theorem Labs, 2026-10: the low-shadow band of the constant cells ends at 0x800b3000, as a Theorem Labs lane set it for omx-clap-core/fuzz_manifest: fuzz_pcap's constant shadow cells (A/AF0m.v Tfib_const_shadow) reach 0x800b27f0; the donor's 0x80050000 (relocated to 0x8004f718) is below them. *)
 (* Modified by Theorem Labs, 2026-10: the proofs that read the kFreeArrayOffset bounds of cfacts, batch_geom, user_vs_D, off_facts and hit_facts (which replaced 2 ^ 31, EV_MAX-free) unfold kFreeArrayOffset; no statement changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

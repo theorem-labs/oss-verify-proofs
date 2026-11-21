@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: zlib/zlib_uncompress_fuzzer/ubsan_ca_total
+fingerprint: 7573c3e39eac0383e716cd96a2ab3741009e8ec9db367dee4488d3f9f8845307

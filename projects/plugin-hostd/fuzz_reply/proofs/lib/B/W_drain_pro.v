@@ -6,10 +6,10 @@
    header).  Proves no function (kind: segment lemma).
    DONORS (structure only; every number below is read from image B's own code, lib/B/W_listing.v slots 973 ..
    1054, and from lib/B/W_drain_cx.v / W_contract.v / W_kit.v / W_rep.v):
-     1. lib/A/W_drain_pro.v of a working branch d15c44876c2 (commit 967069a33f7): the same segment in
+     1. lib/A/W_drain_pro.v of a working branch: the same segment in
         the same framework on image A (0x830dc .. 0x831f4): one entry state, the runner, the frame slots, the
         representations moved across the stores, the model at round 0.
-     2. A working branch af5710f6d79 lib/B/Prog/drain_p_entry_step.v: a B prologue walk of the same
+     2. A working branch lib/B/Prog/drain_p_entry_step.v: a B prologue walk of the same
         machine code in the old framework (rsegs / munch); it does not transport, read for the code's shape only.
 
    B's prologue (fuzz_reply.asan-ubsan, sha256 10ffb5f9..): addi sp,sp,-352; the 13 callee-saved registers at
@@ -24,6 +24,7 @@
    edge is refuted by lib/B/W_traps.v trap_align8 from DBASE's `dxSA cx mod 8 = 0`.  Every representation the
    outer loop's head carries lies below alloc_ceiling + 8 (a live block, the image band) and moves across the
    stores into the frame. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -855,7 +856,7 @@ End b.
 End a.
 
 (* ---- THE GENERIC WALK (an internal work row, the ARx drain walk DR_x; the image-B twin of lib/A/W_drain_pro.v's dr_pro_x,
-   a working branch 6412dbf523c): dr_pro_x : lib/B/W_drain_cx_x.v dr_pro_stmt_x, the same segment over any
+   a working branch): dr_pro_x : lib/B/W_drain_cx_x.v dr_pro_stmt_x, the same segment over any
    allocator relation ARx with its laws, at the room parameter RP, under W_drain_cx_x.v Section c's hypotheses.  The
    segment makes no call and reads no block shadow, so it needs no HP0: the entry's ghost list Hp is DBASE_x's and the
    journal keeps it (ajournal_gx_init_x).  The lemmas of Section c that read AR are restated here with the suffix _x

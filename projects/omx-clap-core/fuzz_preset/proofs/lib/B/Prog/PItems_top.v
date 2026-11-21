@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_head.v; 37 of its 70 lines of code are new or changed and 1273 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the TOP of parse_items' image-B walk (lane PItemsB, owner): the kit's record text
-   tparse_items_specX d CTX CTX0 DW (walk-S5b 5a205b573d4a, lib/A/PRH_FnParse.v blob 5bba1f6e0daa) from the segment steps, wired.
+   tparse_items_specX d CTX CTX0 DW (walk-S5b, lib/A/PRH_FnParse.v blob 5bba1f6e0daa) from the segment steps, wired.
    Each Section hypothesis below is ONE segment lane's step lemma, in exactly the shape that lane proves it over
    lib/B/Prog/PItems_pres.v's specs; this file proves only the wiring: the strong induction on the rest's length at
    the cut PI_O_BODY (PItemsValue's re-entry after a comma is at a strictly shorter rest), then the loop head, the
@@ -60,7 +61,7 @@ Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world pa_segs -> (word -> option byte) -> Model -> Prop.
 Variable SK : YI16.sink_head.
 Variable CTX0 : list (list Z).
-(* The batch kit (240b06ed4fd4): the cursor set of the texts and of every segment spec *)
+(* The batch kit: the cursor set of the texts and of every segment spec *)
 Variable CW : list (list Z).
 
 (* the two texts at nesting d, at every float state and every entry CTX: VrdUnit's PV / PI *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/WrapFreeReplyA.v at commit bdc582aa2c4 as lib/B/WrapFreeReplyB.v, with its module paths changed (lib.A to lib.B, except the image-free ADIfaceImgA and the one params file CfParamsReply; the image twins A<r> to Y<r>, CfImgA / CfImg_A to CfImgB / CfImg_B; the walk modules WrapFreeA<x> to WrapFreeB<x>, WrapAKit to WrapBKit, WrapFreeReplyA to WrapFreeReplyB; the three exported names wrap_free_call_reply_A, wrap_free_ret_reply_A_rh, wrap_free_walk_rh_reply_A to _B), and no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/WrapFreeReplyA.v as lib/B/WrapFreeReplyB.v, with its module paths changed (lib.A to lib.B, except the image-free ADIfaceImgA and the one params file CfParamsReply; the image twins A<r> to Y<r>, CfImgA / CfImg_A to CfImgB / CfImg_B; the walk modules WrapFreeA<x> to WrapFreeB<x>, WrapAKit to WrapBKit, WrapFreeReplyA to WrapFreeReplyB; the three exported names wrap_free_call_reply_A, wrap_free_ret_reply_A_rh, wrap_free_walk_rh_reply_A to _B), and no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane WFree; image B twin a Theorem Labs lane WFREE-B): AFREE_CF premise #13 at plugin-hostd/fuzz_reply
    image B (asan-ubsan, pin 10ffb5f9202a, unstripped twin 3389287e1d61): the free interceptor's call segment and its PRIMED
    return segment. rule 24: no released proof (RULE24-wrapfree.md sha256 a048293a91fe; internal record); the walk is lib/A's WrapFreeA*.v (A2's
@@ -10,12 +11,12 @@
    The instances (agreed with a Theorem Labs lane 18:21Z): segs := im_segs (AImg_reply, = tfibsegs), B := TfibB (YD2l.v),
    atpD := atp_cf (= 1, asan_free's FROM_MALLOC), ARX := YGcfInstBase.ARXq_cf TfibB (fun i => i = as_inst TfibB),
    K := K_reply (WrapFreeBK.v, A2's K_A relocated).
-   - wrap_free_call_reply_B: the type of field wf_call of YGcfMallocCompose.wrap_free_walk_cf (YGcfMallocCompose.v:492-500)
+   - wrap_free_call_reply_B: the type of field wf_call of YGcfMallocCompose.wrap_free_walk_cf (YGcfMallocCompose.v:493-501)
      at those instances, no extra premise.
-   - wrap_free_ret_reply_B_rh: field wf_ret's text (YGcfMallocCompose.v:502-515) at those instances with ONE change: the
-     Deallocate post free_dpost_cf (:511-512) is the primed YGcfRehidePost.dealloc_post_raw_rh (YGcfRehidePost.v:402).
-   The primed record wrap_free_walk_rh_reply_B (YGcfMallocComposeRh.wrap_free_walk_cf_rh, YGcfMallocComposeRh.v:90; the
-   three files cited are lib/B's at fu2-mp d4ca4d1e070a) is assembled from the two (a Theorem Labs lane's decision 2026-10-30); no
+   - wrap_free_ret_reply_B_rh: field wf_ret's text (YGcfMallocCompose.v:503-516) at those instances with ONE change: the
+     Deallocate post free_dpost_cf (:511-512) is the primed YGcfRehidePost.dealloc_post_raw_rh (YGcfRehidePost.v:403).
+   The primed record wrap_free_walk_rh_reply_B (YGcfMallocComposeRh.wrap_free_walk_cf_rh, YGcfMallocComposeRh.v:91; the
+   three files cited are lib/B's at fu2-mp) is assembled from the two (a Theorem Labs lane's decision 2026-10-30); no
    unprimed record or theorem is exported (the unprimed fit is a Check). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
@@ -103,7 +104,7 @@ Qed.
 Check (fun Hret => {| wf_call := wrap_free_call_reply_B; wf_ret := Hret |}
   : wrap_free_walk_cf im_segs TfibB atp_cf (ARXq_cf TfibB (fun i => i = as_inst TfibB)) K_reply).
 
-(* The primed walk record at fuzz_reply image B (YGcfMallocComposeRh.v:90; fields wfr_call :91, wfr_ret :100). *)
+(* The primed walk record at fuzz_reply image B (YGcfMallocComposeRh.v:91; fields wfr_call :91, wfr_ret :100). *)
 Theorem wrap_free_walk_rh_reply_B :
   wrap_free_walk_cf_rh im_segs TfibB atp_cf (ARXq_cf TfibB (fun i => i = as_inst TfibB)) K_reply.
 Proof.

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_add (op 0) of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput
-   (lib/A/W_LLVMFuzzerTestOneInput_cut.v:795), in the form of that file's worked dispatch lf_seg_jt and of the call
+   (lib/A/W_LLVMFuzzerTestOneInput_cut.v:796), in the form of that file's worked dispatch lf_seg_jt and of the call
    site of lib/A/W_LLVMFuzzerTestOneInput_latch.v.  The arm is 0x84420-0x8442c (fuzz_reply.c:700):
      0x84420  sd   t4,144(s1)     in.n := n - (k + 1) into the frame slot F+144
      0x84424  mv   s6,t3          in.p := p + k + 1
@@ -26,6 +26,7 @@
        one of AR's pinned const cells (rom_out's second conjunct), and the shadow of a range of ad_G is visible
        (W_source_reset.v's GSHV); every other conjunct of gx_prog B ad_G is proved here by vm_compute at PB_fr;
      RI_add_* / LS_add_* - the arm's model obligations over _cut's RINV / LS. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

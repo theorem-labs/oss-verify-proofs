@@ -5,17 +5,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 554 of its 593 lines of code are new or changed and 357 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F7.v; 14 of its 49 lines of code are new or changed and 558 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17; measured against this image only;
-   source runs: lib/B/Prog/Seg/F7.v f7_evt (:353) at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/F7.v f7_evt (:353) at a working branch
      (blob a2221dc0471df2aa6811536e6bde16cca9888dad);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
-   text start: f7_pre_F taken by path from dba073859bd lib/B/Prog/Seg/F7F.v and re-checked on this source;
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
+   text start: f7_pre_F taken by path from lib/B/Prog/Seg/F7F.v and re-checked on this source;
    split: f7_evt calls reac_ctrl_kind_name at 0x82170 (parent 23:50Z: split at EVERY call, never state a callee
-     contract locally).  f7_pre_F re-runs F7.v lines 386-393 (0x8215c -> the callee entry 0x83d98, ra = 0x82174);
+     contract locally).  f7_pre_F re-runs F7.v lines 387-394 (0x8215c -> the callee entry 0x83d98, ra = 0x82174);
      the callee's return pc 0x82174 IS the run's exit cut (Inv_B82174_at), so the post stretch is empty and no
      f7_post_F exists: the walk composes reac_ctrl_kind_name itself and lands on f7_evt's own Q.
    compare: no <run>_of_F (the source statement f7_evt runs through the callee; the split stretch is cited above). *)

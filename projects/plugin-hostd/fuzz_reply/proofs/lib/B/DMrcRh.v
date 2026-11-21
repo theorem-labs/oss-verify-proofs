@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRh.v (commit 3d8ad2aeb77e, H4 stage B (slack-indexed post relation; DMrcDefs / DGif1Geo split; re-hide head); file sha256 d3814de1376e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed; then rchunk_sec_rh re-fitted to the core's index-keyed dead_shadow_new by hand with a Theorem Labs lane's proof-only 2 hunks (+5 / -7) of a working branch c5011e28c6b, the text now equal to that commit's DMrcRh.v modulo the relocation. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcRh.v at commit 2c35faeeaec, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (5 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRh.v (H4 stage B (slack-indexed post relation; DMrcDefs / DGif1Geo split; re-hide head); file sha256 d3814de1376e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed; then rchunk_sec_rh re-fitted to the core's index-keyed dead_shadow_new by hand with a Theorem Labs lane's proof-only 2 hunks (+5 / -7) of a working branch, the text now equal to that commit's DMrcRh.v modulo the relocation. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcRh.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (5 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (F1 priming row R3, lane B1, slice H4; integrator a Theorem Labs lane): new file. rule 24: no function
    proved here (kind: F1 priming of an already proved walk, the secondary arm of __asan::QuarantineCallback::Recycle
    (0x33e88): lift to YA0nH.SRr' / YG0dH.amreal' and apply the core's re-hide step at the return).
@@ -366,7 +367,7 @@ assert (HS : forall a : word, YGcfRehidePost.rh_lo MAP <= bv_unsigned a < YGcfRe
 assert (SEC2 : nth_error (st_secs X2v) r = Some (mkSec (sm_len sm) (sm_size sm) false)).
 { unfold YFg8.X2v, YFg8.X2, YFg8.X1, YFf3.X1. cbn [st_secs set_sec_arr set_secs set_chunks].
   apply nth_error_lupd_same. exact (nth_error_lt _ _ _ Hsm). }
-(* the set at the core's index key (e987a9cee4c): slot r held the live entry sm at the entry state X (Hsm, LIVE from
+(* the set at the core's index key: slot r held the live entry sm at the entry state X (Hsm, LIVE from
    the cut's sc_ELEN) and holds the dead entry of the same length at X2v (SEC2) *)
 assert (DS : forall a, YGcfRehidePost.rh_lo MAP <= a < YGcfRehidePost.rh_hi MAP LEN -> YGcfRehidePost.dead_shadow_new ly X X2v a).
 { intros a Ha. exists r, (mkSec (sm_len sm) (sm_size sm) false), sm.

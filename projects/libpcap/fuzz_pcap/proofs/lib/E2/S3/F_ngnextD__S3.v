@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies the stack-floor hypothesis LO reads usp0 R - 6144512 <= lo, the floor 6144512 bytes below the entry sp (rc_lo at this revision), where it read usp0 R - 8388608 <= lo. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -494,7 +495,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -1171,7 +1172,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -1980,7 +1981,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -2371,7 +2372,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -2847,7 +2848,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -3454,7 +3455,7 @@ Section NgnCtx.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
   Variables (R : rctx) (CLc FB : list (cblock (hptr:=hptr))) (lo P HA DA Af : Z) (m : mem) (o : option hptr).
   Variables (self f : hptr) (bufsize : Z) (swapped : bool) (vmaj vmin snapshot linktype ltext prec brk : Z) (header : pkthdr).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.

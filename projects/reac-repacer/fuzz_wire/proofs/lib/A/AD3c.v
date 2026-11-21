@@ -33,21 +33,21 @@
    Amendment 1 added md_takes's positive size, the premises
    md_takes md (as_store B, 32) and kHighMemBeg <= ly_stk_lo ly, and the Section hypothesis mnr_stk_ge.
    The refused arm is excluded by premise (md_room): a real refusal reaches ReportMmapFailureAndDie (0x5f37c), which
-   spins at its self-loop 0x5f3ac (stops_more, AB12.v:19) when no report is in progress and calls Abort only inside one; neither is the normal exit.
+   spins at its self-loop 0x5f3ac (stops_more, AB12.v:20) when no report is in progress and calls Abort only inside one; neither is the normal exit.
 
    Where the amendment's premises come from at Put's call site (today's at-main kernel facts):
-   - md_takes md (as_store B, 32): (as_store B, 32) is one of asyms_areas (YG0f.v:255-258), each inside one of
-     as_owned_static (aso_cover, YG0f.v:262), each inside ly_img (am_static_img, YG0n.v:399); every byte of ly_img lies
+   - md_takes md (as_store B, 32): (as_store B, 32) is one of asyms_areas (YG0f.v:256-259), each inside one of
+     as_owned_static (aso_cover, YG0f.v:263), each inside ly_img (am_static_img, YG0n.v:399); every byte of ly_img lies
      in segments_reserved (al_imgcov, YG0n.v:615-616) = vm_reserved (al_reserved, YG0n.v:597); 32 > 0.
-   - kHighMemBeg <= ly_stk_lo ly: lo_top (YG0f.v:439-441), last conjunct.
+   - kHighMemBeg <= ly_stk_lo ly: lo_top (YG0f.v:440-442), last conjunct.
    - mnr_stk_ge (amendments 1-7; amendment 8 replaces mnr_stk by AD3d's MNR_STK = 104, so it is gone).
    - md_takes's new [0 < snd e]: the fixed sizes of ext_but_SB are positive constants; the stack extent by lo_top
-     (ly_stk_lo <= ly_bot < ly_top <= ly_stk_hi); ly_img by lo_img (YG0f.v:437); ly_extra by lo_extra
-     (YG0f.v:443-446); sec_extents by sec_map_size n = round_up (needed_size n) kPage + kPage (YG00.v:78);
+     (ly_stk_lo <= ly_bot < ly_top <= ly_stk_hi); ly_img by lo_img (YG0f.v:438); ly_extra by lo_extra
+     (YG0f.v:444-447); sec_extents by sec_map_size n = round_up (needed_size n) kPage + kPage (YG00.v:79);
      band_maps are positive constants.
    - amendment 7, eager_used md + A_bytes (w_A W) + kStoreBlockSize <= vm_limit (m_vmmaps md): the budget
-     allow_expose (YG0b.v:421-427) needs for P4's apresent over the full store block; at Put's call site it is S9's
-     headroom (8 MiB against the limit), kept along the walk by commit_AI (YG0b.v:286) and vm_backing_used_le
+     allow_expose (YG0b.v:422-428) needs for P4's apresent over the full store block; at Put's call site it is S9's
+     headroom (8 MiB against the limit), kept along the walk by commit_AI (YG0b.v:287) and vm_backing_used_le
      (YA09.v:90-94). S4's charge is + n once (AD3d's budget premise), so the term stays + kStoreBlockSize.
 
    AMENDMENT 8: S4 is consumed BY
@@ -57,14 +57,14 @@
    SRr_refusable_SRr, md_takes, md_room, MNR_PSC_GOT, MNR_PSC, MNR_CF_GOT, MNR_CF and mnr_cells are deleted: AD3d's
    are the same text (AD3d copied them from this file's earlier text). The stand-in tfib_mnr_spec and the Section variable
    mnr_stk (with mnr_stk_ge) are deleted: BIC_STK = 32 + MNR_STK = 136.
-   - Create's post: exposure as mnr_contract states it (allow_expose YG0b.v:421-427): w_A W' = (x, x + kStoreBlockSize)
+   - Create's post: exposure as mnr_contract states it (allow_expose YG0b.v:422-428): w_A W' = (x, x + kStoreBlockSize)
      :: w_A W and w_H W' = w_H W outside X; it replaces w_H W' = w_H W. Inside X, H is false by P4's apresent.
      P1-P6 and the cells are unchanged. Model post (note 6): exactly AD3d's model clauses (AD3d.v:191-202:
      same_io, md_takes md' X, take-preservation, and the NORESERVE model: exists mat, md' = with_vm_backing
      (m_vm_lazy NR) mat NR with NR = YK0x.mmap_model_noreserve x n md, m_vmmaps md' = m_vmmaps (mmap_model x n md),
      m_vm_lazy md' = (x, n) :: m_vm_lazy md, eager_used md' = eager_used md), carried through Create's own steps:
      Create's call and return wrap the model in with_vm_backing with its own lazy list, which keeps all four
-     (wvb_collapse YA0o.v:24, nr_wvb AD3d.v:439, m_vmmaps_wvb / m_vm_lazy_wvb YK04.v:782-785).
+     (wvb_collapse YA0o.v:25, nr_wvb AD3d.v:439, m_vmmaps_wvb / m_vm_lazy_wvb YK04.v:782-785).
    - Create's pre gains what mnr_contract asks that the pre did not give:
      YK0g.ivs_wf (vm_maps (m_vmmaps md)) (AD3d.v:168-172), ly_stk_hi ly <= kHighMemEnd (for the callee's
      sp <= kHighMemEnd, AD3d.v:174), Forall (md_takes md) mnr_cell_extents (AD3d.v:138, :176); and, for P2's in_app,
@@ -77,15 +77,15 @@
      . AD3d.v:174 kHighMemBeg <= sp' - 104: kHighMemBeg <= ly_stk_lo <= sp - BIC_STK = sp' - 104.
      . AD3d.v:174 sp' <= kHighMemEnd: sp' < sp <= ly_stk_hi <= kHighMemEnd.
      . TFIB_IMG_END <= sp' - 104 (not a premise of AD3d's mnr_contract): TFIB_IMG_END = 0x5f5000
-       (AF0x.v:27, YImgTop.v:9) < kHighMemBeg (YG0f.v:15) <= sp' - 104.
+       (AF0x.v:28, YImgTop.v:9) < kHighMemBeg (YG0f.v:16) <= sp' - 104.
    - Layout step: layout_le stays exactly today's; the first Put's growth is a new two-argument relation
      layout_grow with intro lemma ly_SB ly = 0 -> layout_grow ly (set_ly_SB ly sb). P6 is stated against the one
      placeholder layout_grow_kd / kd_grow_SB of that shape (the owner fixes the signature when a Theorem Labs lane answers); the
      first-use arm guard stays the cell data_ = 0 and ly_SB ly = 0.
    Discharge at Put's call site (each must also cross S7's nodes-map grant, which runs between Put's entry and here):
-   - YK0g.ivs_wf (vm_maps (m_vmmaps md)): amwf / MWF at Put's entry (YG0b.v:129, amwf_MWF YG0b.v:148); across S7's
-     grant by ivs_wf_cons (YK0g.v:140) for the granted interval [inference: S7's post must state it].
-   - ly_stk_hi ly <= kHighMemEnd: lo_top (YG0f.v:440), as for amendment 1's kHighMemBeg <= ly_stk_lo ly.
+   - YK0g.ivs_wf (vm_maps (m_vmmaps md)): amwf / MWF at Put's entry (YG0b.v:130, amwf_MWF YG0b.v:149); across S7's
+     grant by ivs_wf_cons (YK0g.v:141) for the granted interval [inference: S7's post must state it].
+   - ly_stk_hi ly <= kHighMemEnd: lo_top (YG0f.v:441), as for amendment 1's kHighMemBeg <= ly_stk_lo ly.
    - Forall (md_takes md) mnr_cell_extents: both cells, 0x987d8 and 0x132338, lie in [0x10000, 0x5f5000), which
      vm_reserved = segments_reserved tfibsegs covers without a gap (al_reserved YG0n.v:597; AFia.v:132-133); across
      S7's grant by its take-preservation.
@@ -99,6 +99,7 @@
    the vm_maps half (Forall_app) of mnr_contract's freshness over vm_reserved ++ vm_maps (tail_ok's Q5); the call's
    model is md up to with_vm_backing, which keeps m_vmmaps (wvb_vmmaps). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AD3c.v (donor image sha256 61768cf4739b), with its module paths changed, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -150,12 +151,12 @@ Proof.
 Qed.
 
 
-(* a Theorem Labs lane's helper, the same text as lib/Reusable/YG0f.v:97-99. *)
+(* a Theorem Labs lane's helper, the same text as lib/Reusable/YG0f.v:98-100. *)
 Definition set_ly_SB (ly : alayout) (sb : Z) : alayout :=
 ALayout (ly_prim ly) (ly_space ly) (ly_Q ly) (ly_T ly) (ly_C ly) (ly_F ly) (ly_NB ly) sb (ly_top ly)
 (ly_stk_lo ly) (ly_stk_hi ly) (ly_tsd ly) (ly_tr0 ly) (ly_extra ly) (ly_D ly) (ly_vis0 ly) (ly_img ly) (ly_sec ly).
 
-(* static_extents ly (YG0f.v:375-385) without the store block's own entry (ly_SB ly, kStoreBlockSize): the extents
+(* static_extents ly (YG0f.v:376-386) without the store block's own entry (ly_SB ly, kStoreBlockSize): the extents
    the new block must avoid. With ly_SB ly = 0 that entry is (0, kStoreBlockSize), which no layout fact places.
    amendment 5: the nodes map's entry is listed only once it is mapped (a Theorem Labs lane's sentinel ly_NB ly = 0). *)
 Definition ext_but_SB (ly : alayout) : list (Z * Z) := [(ly_prim ly, kPrimResvSize); (ly_Q ly, kPtrArrayResv); (ly_T ly, kThreadObjSize); (ly_F ly, kFakeStackSize)] ++ (if ly_NB ly =? 0 then [] else [(ly_NB ly, kNodesBlockSize)]) ++ [(ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly].

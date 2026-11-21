@@ -128,7 +128,7 @@ Definition pb_reac_ctrl_build_as_stmt : Prop :=
     (TEMIT : tctrl_emit_as_spec (SK := SK) B GLOBS (BASE + AF_ctrl_emit_as) RLO RHI)
     (* What the image holds. The switch table and the catalogue are REGISTERED GLOBALS, not whole-granule
        zero-shadow ranges: under a Theorem Labs lane's corrected zero-shadow list an `in_zs` fact over either is FALSE
-       (vacuity fix, as a Theorem Labs lane 8b1bb6bdd1e for ctrl_emit_as). Registered sizes, from the image's own
+       (vacuity fix, as a Theorem Labs lane for ctrl_emit_as). Registered sizes, from the image's own
        asan_globals table (57 entries at 0xa4380 of (internal path);
        a Theorem Labs lane aglob-redzones-A.txt rows 51 / 55 (a working note, not in this delivery), addresses = nm.txt (a working note, not in this delivery)):
          switch.table.reac_ctrl_build_as  beg 0x21980  size 56   (= SW_BYTES)        size_with_redzone 0x60

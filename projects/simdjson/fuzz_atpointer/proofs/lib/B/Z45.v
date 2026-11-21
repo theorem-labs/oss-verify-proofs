@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -80,7 +81,7 @@ Definition a_live (RT : rt_sig) (Σ : rts RT) (E : aenvA) : Prop :=
   In (ae_TAPE E, ae_NT E) (rt_live RT Σ) /\ In (ae_SBUF E, ae_NS E) (rt_live RT Σ)
   /\ (ae_p1 E = [] \/ In (ae_PB E, ae_NPB E) (rt_live RT Σ))
   /\ In (ae_fD E, ae_kD E) (rt_frames RT Σ)
-  /\ rt_sp0 RT Σ - STACK_WIN <= ae_lo E.
+  /\ rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= ae_lo E.
 
 Definition AINV_A (E : aenvA) (m : mem) : Prop :=
   bytes_at bsegs m (ae_TAPE E) (u64s (map (Z_to_bv 64) (ae_tws E)))
@@ -427,7 +428,7 @@ Qed.
 Lemma land7_mod : forall x, 0 <= x -> Z.land x 7 = x mod 8.
 Proof. intros x Hx. change 7 with (Z.ones 3). rewrite Z.land_ones by lia. reflexivity. Qed.
 
-Lemma shz_stack : forall RT (AF : art_facts RT) Σ m a n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= a -> a + n <= USTACK_TOP ->
+Lemma shz_stack : forall RT (AF : art_facts RT) Σ m a n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= a -> a + n <= USTACK_TOP ->
   a mod 8 = 0 -> n mod 8 = 0 -> 0 <= n -> shz m a n.
 Proof.
   intros RT AF Σ m a n HA LO HI A8 N8 N0. pose proof (af_sp0_win RT AF Σ m HA).

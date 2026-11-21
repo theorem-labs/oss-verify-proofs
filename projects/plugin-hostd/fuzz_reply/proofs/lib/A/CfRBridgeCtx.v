@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan, the cf allocator bridge (a Theorem Labs lane R, new file), part 1:
    the trace-universe premise of the cf realizes forms from the caller-context premise of the `_x` journal rules.
-   A journal rule (W_journal_x.v:1438 amalloc_cf_rule_c_x, :770 afree_cf_rule_c_x, :794 afree_null_cf_rule_c_x,
+   A journal rule (W_journal_x.v:1439 amalloc_cf_rule_c_x, :770 afree_cf_rule_c_x, :794 afree_null_cf_rule_c_x,
    :816 arealloc_cf_rule_c_x) gives `In (raZ regsT :: spine ch) CTX` at its own K0 table (A/ACk0.v CTX_AMALLOC /
    CTX_AFREE / CTX_AREALLOC); the cf realizes forms take `In (call_trace ly pc0 regs ch) (as_universe B)`
    (Reusable/YG0dcf.v:145 amalloc_realizes_cf, :167 afree_realizes_cf; YGcfRealloc's arealloc forms at
@@ -10,9 +11,9 @@
    interceptor's trace is the pc0 of K0's site table (ACk0.v:180-182), checked by computation, and K0's closure
    theorem (ACk0.v:196-201, kernel-checked by K0_CLOSED) gives the membership.
    The conclusions are stated through cf_tr_ok / cf_trace_ok, the layer's ONE name for the trace premise (TkSecLink,
-   commit d48cd401d143, YGcfInstBase.v Section b, same text and argument order): today's body is
+    YGcfInstBase.v Section b, same text and argument order): today's body is
    `In tr (as_universe B)`, the form this tree's cf rules take; the P'' round edits only cf_tr_ok's body to
-   `admits (as_universe B) tr S` (A7d a3e599d9f79e YG01.v:158) and closes these three by admits_fix with reply's
+   `admits (as_universe B) tr S` (A7d YG01.v:158) and closes these three by admits_fix with reply's
    universe_ok (as_universe TfibB): every trace here is FIXED (Tfib_universe, ACej.v:202-244).
    No function is proved (rule 24). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.

@@ -1,8 +1,8 @@
 (* Made by a Theorem Labs lane (2026-10-30, a Theorem Labs lane's DRIVER_CF_B) as the image-B twin of lib/A/ReplyDriverCf.v
-   (a Theorem Labs lane, commit 812d59abd29): the image-B DRIVER_CF plug for
+   (a Theorem Labs lane): the image-B DRIVER_CF plug for
    plugin-hostd/fuzz_reply.asan-ubsan, TFIB_B_T (lib/A/ReplyTFIB.v) from W8's ARx-generic entry composition at the cf
-   instance (lib/B/W_LLVMFuzzerTestOneInput_top_x.v fr_contract_top_x, W8Entry-2 / W8Add commit
-   72c6e75e6cc), through the B cf driver (lib/B/ReplyTFIBBcf.v, program slot lib/B/YD1w_cf.v fr_lib_contract_drvR at
+   instance (lib/B/W_LLVMFuzzerTestOneInput_top_x.v fr_contract_top_x, W8Entry-2 / W8Add),
+   through the B cf driver (lib/B/ReplyTFIBBcf.v, program slot lib/B/YD1w_cf.v fr_lib_contract_drvR at
    route R's relation wle' tfibsegs RZ_cf).
    A's text over lib/B's modules and _b names, with A's parameter record CfParams_reply (lib/A/CfParamsReply.v,
    the one record of both images: no field is an image address, as lib/B/W_LLVMFuzzerTestOneInput_top_x.v's ARX uses it) (CfImg_B, REPLYB_RO_LO / _HI, YCfn_cf's fr_live_pre_b /
@@ -226,9 +226,9 @@ End br.
    YG0dcfR.afree_realizes_cf_rh; the start-up covered range is closed inside lib/B/YD1pcf.v by YStkCov).
    ReplyTFIBBcf.v replyb_TFIB_B_T_of_cf_rl does the driver half.  The run count NS with its bound NRUN and per-call
    step bound XNMAX (MT_PRE's `NS S + XNMAX <= NRUN`,
-   NS_MO, XN_BND of lib/B/YD1mcf.v, a Theorem Labs lane ddf9cf4d2f7), its steps at the driver's own mallocs and frees
-   (nsec_malloc_cf / nsec_free_cf at NS) and the start budget NS_START at init_state (lib/B/YD2dcf.v, a Theorem Labs lane
-   458a2b5da2a) are premises here, passed through.  Field rounds 2 and 3 (a Theorem Labs lane b63468a7a39 / edd47df3c77 on A):
+   NS_MO, XN_BND of lib/B/YD1mcf.v, a Theorem Labs lane), its steps at the driver's own mallocs and frees
+   (nsec_malloc_cf / nsec_free_cf at NS) and the start budget NS_START at init_state (lib/B/YD2dcf.v, a Theorem Labs lane)
+   are premises here, passed through.  Field rounds 2 and 3 (a Theorem Labs lane on A):
    the conversion's two start witnesses (the two machine cells and Printf's two image cells, at the start-up hand-off)
    and the unit's image rows are plugged here (B/ReplyStartWitB.v start_cells_B / start_pf_B, B/ReplyImgRowsB.v
    exh_off_B / errb_obj_owned_B, a Theorem Labs lane's B/ReplyImg_pfrowsB.v errb_ial_apart_reply_B / pf_cells_owned_reply_B);
@@ -261,7 +261,7 @@ Theorem replyb_tfib_b_of_top_x : forall (MT : ameter_ops) (XM_LIB XN_LIB : Z -> 
        (G_fr_c TfibB) fr_FP_b [] (@W_LLVMFuzzerTestOneInput_top_x.ARX rc) (YA0nH.wle' tfibsegs (@YGcfRehidePost.RZ_cf rc))) ->
   (forall (rc : YM05.RunCeil), @amalloc_realizes_cf YK11.fx0 rc CfImg_B CfParams_reply tfibsegs TfibB) ->
   (* ROW T (route R): the free at the primed contract, ReplyAllocTargetsB.afree_target_replyB's text at fx0 (primed at
-     a Theorem Labs lane's 7c91d0cac15) *)
+     a Theorem Labs lane) *)
   (forall (rc : YM05.RunCeil), @YG0dcfR.afree_realizes_cf_rh YK11.fx0 rc CfImg_B CfParams_reply tfibsegs TfibB) ->
   (* field round 3 (part 3c: no memnorm): the hull admission is drv_pre's own conjunct, from the premise above, and
      drv_pre's RELRO bytes come from relro_ok_B and ReplyKeptAroStartB.arodata_ho_B *)
@@ -276,7 +276,7 @@ Proof.
     (ReplyImg_pfrowsB.pf_cells_owned_reply_B TfibB TfibB_syms) relro_ok_B ReplyKeptAroStartB.arodata_ho_B).
 Qed.
 (* the corollary at KF-COUNT's meter MT_sec nsec KMAX, with the per-call library budget XN for both XM_LIB and XN_LIB
-   and the run count NS := nsec at NRUN := KMAX, XNMAX := XN (A's reply_tfib_of_top_x_sec, a Theorem Labs lane 0d4f5b7d311): MT_PRE
+   and the run count NS := nsec at NRUN := KMAX, XNMAX := XN (A's reply_tfib_of_top_x_sec, a Theorem Labs lane): MT_PRE
    is MT_sec's own room, NS_MO its step, XN_BND `0 <= XN`; the count's steps at the driver's mallocs and frees and its
    start budget are premises (at the instance nsec := a Theorem Labs lane's nsec_cf, whose nsec_malloc_cf / nsec_free_cf prove them) *)
 Section sec.
@@ -298,7 +298,7 @@ Theorem replyb_tfib_b_of_top_x_sec : forall (nsec : astate -> Z) (KMAX XN : Z),
        (G_fr_c TfibB) fr_FP_b [] (@W_LLVMFuzzerTestOneInput_top_x.ARX rc) (YA0nH.wle' tfibsegs (@YGcfRehidePost.RZ_cf rc))) ->
   (forall (rc : YM05.RunCeil), @amalloc_realizes_cf YK11.fx0 rc CfImg_B CfParams_reply tfibsegs TfibB) ->
   (* ROW T (route R): the free at the primed contract, ReplyAllocTargetsB.afree_target_replyB's text at fx0 (primed at
-     a Theorem Labs lane's 7c91d0cac15) *)
+     a Theorem Labs lane) *)
   (forall (rc : YM05.RunCeil), @YG0dcfR.afree_realizes_cf_rh YK11.fx0 rc CfImg_B CfParams_reply tfibsegs TfibB) ->
   TFIB_B_T.
 Proof.

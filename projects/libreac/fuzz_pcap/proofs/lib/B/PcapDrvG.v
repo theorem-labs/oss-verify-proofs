@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: the asan-ubsan twin of a Theorem Labs lane's lib/A/PcapDrvG.v (a working branch
-   9700d736a50; commit 5bede1a6d6b; porter ruling 3), every hunk mirrored: the bridge from the program
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: the asan-ubsan twin of a Theorem Labs lane's lib/A/PcapDrvG.v (a working branch;
+   ; porter ruling 3), every hunk mirrored: the bridge from the program
    contract's journal (lib/A/Prog/PcapEntry.v tfib_lib_post_x, lib/A/W_journalG.v ajournal_gx at the asan-ubsan
    harness globals G_HARNESS_U = [(0x5d3e40, 8); (0x5d3e60, 8)], lib/B/Prog/PcapEntry.v) to what the driver reads
    off cgif's journal (donor lib/YD1r.v, YCbq.ajournal), and pcap's ONE side condition: every byte the driver

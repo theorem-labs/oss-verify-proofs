@@ -1,6 +1,7 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap's v1.9.0 ASan build.
 
    THE WALK of the memory-checking runtime's fread wrapper, from the trampoline 0x41580 through
@@ -8,8 +9,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    (lib/A/Stdio/PFreadISpec.v) UNCHANGED, taking this worker's musl contract `rfread_contract`
    (lib/A/Stdio/PFreadM.v) as a Section hypothesis at the REAL call.
 
-   SHAPE PORTED from cgif_file_fuzzer's ONE-walk fwrite interceptor proof at origin/ossv/recipes
-   c8557374ad2e: lib/A/AE26.v:178 `tfib_afwrite` (trampoline + interceptor + range check + epilogue in
+   SHAPE PORTED from cgif_file_fuzzer's ONE-walk fwrite interceptor proof:
+   lib/A/AE26.v:178 `tfib_afwrite` (trampoline + interceptor + range check + epilogue in
    one walk), lib/A/AE27.v:82 `tfib_afwrite_spec` (the journal rebuild), lib/A/AE2b.v `fwr_check_srr`
    (the check walk, ported in lib/A/Stdio/PFreadIChk.v). EVERY ADDRESS WAS RE-DERIVED on pcap's own
    image, never taken from a donor label.
@@ -59,12 +60,12 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      ReportGenericError). So no report path is left, and none is covered by a stack constant.
 
    THE COMPOSITION, `pcap_afread_spec` (2026-10-29), follows the donor's pattern
-   for a callee stated in the caller-journal form (cgif AC9u.v:313-345, origin/ossv/recipes
-   c8557374ad2e): the callee's contract is instantiated at the CALLER'S journal, and the frame record
+   for a callee stated in the caller-journal form (cgif AC9u.v:313-345):
+   the callee's contract is instantiated at the CALLER'S journal, and the frame record
    the callee sees is pushed with achain_push. aj_call_tok (lib/A/AjCallTok.v) does not fit this
-   call and is not used: its callee premise is the fresh-journal form (AjCallTok.v:39-44) and it
-   needs the symbolic sp atom to be the journal's sp0 (AjCallTok.v:34), while rfread_contract
-   extends the caller's journal (PFreadM.v:365-376, :421-427). The steps:
+   call and is not used: its callee premise is the fresh-journal form (AjCallTok.v:40-45) and it
+   needs the symbolic sp atom to be the journal's sp0 (AjCallTok.v:35), while rfread_contract
+   extends the caller's journal (PFreadM.v:366-377, :422-428). The steps:
      1. the entry state ssA (entry_st_ok_full, from fr_entry_facts) and the front run 0x41580 ->
         0x8ee5c by YCbq's SRr_run_to_AJ, which carries the caller's journal across the 2144-byte
         window the run writes;
@@ -79,20 +80,20 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    shadow_hull_vis exactly over (d, k) (PFreadIChk.v, Section f), and shadow_hull_vis
    (YG0d.v:310-311) already covers the 8-byte granule hull of the range.
    TAKEN FROM, per callee and lemma:
-     REAL fread             this worker's rfread_contract (PFreadM.v, a working branch 8e0ae3045e4);
+     REAL fread             this worker's rfread_contract (PFreadM.v, a working branch);
      the range check        cgif AE2b.v fwr_check_srr, through a Theorem Labs lane's relocation (PFreadIChk.v);
      mem_is_zero            AE2y.icpt_memisz (the relocated core, a working branch);
      TryAsanInitFromRtl     walked symbolically inside r_A (tbl_fr), no contract;
      memcpy                 none: the interceptor makes no memcpy call; musl's is inside RFR;
-     asource_at_frame_segs  a Theorem Labs lane, lib/A/Prog/PcapSourceCloseSpec.v:117 (the image-free statement file split
-                           out of PcapSourceClose.v; a working branch fac0ef2953a), over any segs;
+     asource_at_frame_segs  a Theorem Labs lane, lib/A/Prog/PcapSourceCloseSpec.v:118 (the image-free statement file split
+                           out of PcapSourceClose.v; a working branch), over any segs;
      rdword_of_val_mem      a Theorem Labs lane, lib/A/Prog/PcapFrame.v:115, the same ref;
      the journal lemmas     the relocated core, lib/Reusable/YCbq.v.
 
    WHAT THIS FILE TAKES ON TRUST, and from whom:
      RFR   `rfread_contract` at FR_REAL -- this worker's own statement, lib/A/Stdio/PFreadM.v.
      ASIL  `asource_img_laws SK segs B K` -- a Theorem Labs lane's record, lib/A/Stdio/PSourceMeta.v, carried
-           exactly as lib/A/Stdio/PFclose.v:91 carries it, discharged once at instantiation.
+           exactly as lib/A/Stdio/PFclose.v:92 carries it, discharged once at instantiation.
      LAWS / TB / the core's own rules -- the relocated cgif core.
    NO AddrHashMap / metadata premise is needed and none is taken: the interceptor reaches no metadata
    lookup. Every call it can make is listed above; TryAsanInitFromRtl reaches only AsanInitInternal
@@ -112,10 +113,10 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    So this walk DOES rest on E-PEND cell values, through AE2y's `icpt_rodata`, exactly as every other
    interceptor walk on this core does. Named here as the WIP core's push requires.
 
-   RULE 24. SEND BACK: hit is an archived Theorem Labs lane input, not a released proof at ossv/recipes 25e3d17bdb50 (2026-10-29); walk kept (route
+   RULE 24. SEND BACK: hit is an archived Theorem Labs lane input, not a released proof (2026-10-29); walk kept (route
    ruling 19:27Z). The lookup and both passes are recorded in
    pcapreadi-fread-icpt.txt (sha256 82d195c482ff; internal record). The hit is
-   a working branch f2159272960 (I_freadw.v (sha256 e2b8ec5651ce; internal record), fread_wrap.v (sha256 c77a1af38f33; internal record)
+   a working branch (I_freadw.v (sha256 e2b8ec5651ce; internal record), fread_wrap.v (sha256 c77a1af38f33; internal record)
    `fread_wrap_holds`), which walks the same path on the same image but states
    `fread_wrap_contract` in the SR / a_call_post / AsanAllocAPI vocabulary over a
    different Reusable tree, parameterised over five opaque predicates, and is unbuilt at v1.9.0. It
@@ -309,7 +310,7 @@ Variable B : asyms.
 Variable K : asource_syms.
 Hypothesis LAWS : AR_laws tfibsegs B.
 Hypothesis TB : PcapSyms B.
-(* a Theorem Labs lane's record (lib/A/Stdio/PSourceMeta.v), carried as lib/A/Stdio/PFclose.v:91 carries it:
+(* a Theorem Labs lane's record (lib/A/Stdio/PSourceMeta.v), carried as lib/A/Stdio/PFclose.v:92 carries it:
    discharged ONCE at instantiation, never per walk. *)
 Hypothesis ASIL : asource_img_laws SK tfibsegs B K.
 
@@ -317,8 +318,8 @@ Local Notation ajournal := (YCbq.ajournal tfibsegs B).
 Local Notation rread_k := PFreadM.rread_k.
 
 (* The stream predicate moves across a run that writes only outside the FILE block, the data buffer
-   and the stdio environment: a Theorem Labs lane's `asource_at_frame_segs` (lib/A/Prog/PcapSourceCloseSpec.v:117,
-   a working branch fac0ef2953a), which is stated over an arbitrary `segs`. *)
+   and the stdio environment: a Theorem Labs lane's `asource_at_frame_segs` (lib/A/Prog/PcapSourceCloseSpec.v:118,
+   a working branch), which is stated over an arbitrary `segs`. *)
 Local Notation asrc_kept := (PcapSourceCloseSpec.asource_at_frame_segs tfibsegs).
 
 (* s0 is the caller's sp: `addi s0,sp,2032` at 0x43520 after `addi sp,sp,-2032` at 0x43500. *)
@@ -352,8 +353,8 @@ split.
 intros a Ha. apply Hpres. rewrite HSTK in Hslo. rewrite HWIN in Ha. clear - Ha Hslo Hshi. lia.
 Qed.
 
-(* This worker's musl-level statement at the REAL call (lib/A/Stdio/PFreadM.v, a working branch
-   8e0ae3045e4). SK is passed explicitly: sink_head is a CLASS with a global instance for the PLAIN
+(* This worker's musl-level statement at the REAL call (lib/A/Stdio/PFreadM.v, a working branch).
+   SK is passed explicitly: sink_head is a CLASS with a global instance for the PLAIN
    image (lib/Reusable/YI5b.v:12), so an inferred SK would be the wrong head. *)
 Hypothesis RFR : PFreadM.rfread_contract (SK:=SK) tfibsegs B K FR_REAL.
 

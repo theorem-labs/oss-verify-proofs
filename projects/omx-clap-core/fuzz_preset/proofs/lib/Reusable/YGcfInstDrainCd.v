@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstDrainCd.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b: the MODEL side of F12, the
    step transport of the drain's cut relation across SizeClassAllocator64LocalCache::Deallocate's no-growth arm.
    rule 24: no function proved (kind: model-level facts of cache_dealloc's state step).
@@ -13,7 +14,7 @@
    the step does to the state, with no memory and no image in it.  [S'] is YFfh.XK_push c off (if the cache is full,
    of YFfh.XK_drain c X), which YFfh.cache_dealloc_eq_push / _eq_full give from cd_model's room clause (cf has no
    event term: cgif's YFez.HROOM, a room counted in events, is replaced by cd_model's
-   4 * fa_len (rg_free (reg S c)) <= rg_mapped_fa (reg S c) and the growth test, DMwalkIF.v:448-460).
+   4 * fa_len (rg_free (reg S c)) <= rg_mapped_fa (reg S c) and the growth test, DMwalkIF.v:449-461).
    What the fields of ARmcfR need: the chunks, the secondaries, the quarantine, the depot and the fake stack are
    untouched ([cdS_chunks] .. [cdS_depot]); only class [c]'s cache and free array change ([cd_reg_c], [cd_cache_c]),
    and every other class is untouched ([cd_reg_other], [cd_cache_other]); the derived sets the relation reads follow

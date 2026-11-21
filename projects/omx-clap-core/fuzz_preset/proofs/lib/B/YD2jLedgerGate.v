@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10-29: the image B' twin of lib/A/AD2jLedgerGate.v (blob cfd762260605 on
-   origin/cold/g-ph-verbs-p102-AD2jGate 2a5be4cd01e2). A PROVED gate that every region of the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-29: the image B' twin of lib/A/AD2jLedgerGate.v (blob cfd762260605).
+   A PROVED gate that every region of the
    memory-checking image B' (lib/Reusable/YD2j.v IMG_REGIONS) stays off the program's ledger cells: no byte
    of a ledger cell is in the extent [r_lo, r_hi) of any region, and every region is at an absolute address
    (r_base = None).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: grant_visible_of_hidden_mapped takes the mmap hint and a page-aligned length, and srz_mmap_rw_pin_d takes a zero hint in register 10 and states its grants at hint 0. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -17,19 +18,21 @@ Import ListNotations.
 Import AX2. Import AX2S.
 Open Scope Z_scope.
 
-(* [comment removed for export] *)
-Lemma grant_visible_of_hidden_mapped : forall (H : word -> bool) model (a : word) nZ,
+(* LPS 727298f3: [grant_ok_na_pin] takes the mmap hint first; a zero-length range is
+   visible outright, a positive page-aligned one is placed clear of every mapping. *)
+Lemma grant_visible_of_hidden_mapped : forall (H : word -> bool) hint model (a : word) nZ,
   (forall x : word, H x = true ->
      exists r, In r (vm_maps (m_vmmaps model)) /\ bv_unsigned (fst r) <= bv_unsigned x < bv_unsigned (fst r) + bv_unsigned (snd r)) ->
-  0 <= nZ -> grant_ok_na_pin model a nZ = true -> range_visible H a nZ.
+  0 <= nZ -> nZ mod page_size = 0 -> grant_ok_na_pin hint model a nZ = true -> range_visible H a nZ.
 Proof.
-  intros H model a nZ Hhid HnZ Hg x Hx.
-  destruct (grant_ok_na_pin_unpack _ _ _ Hg) as (_ & _ & Htop & Hrf).
+  intros H hint model a nZ Hhid HnZ Hm Hg x Hx.
+  destruct (Z.eq_dec nZ 0) as [E0|Hn0]; [subst nZ; lia|].
+  destruct (grant_ok_na_pin_unpack hint model a nZ ltac:(lia) Hm Hg) as (_ & _ & Htop & Hrf).
   pose proof (alloc_top_room (m_vmmaps model)) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
   destruct (H x) eqn:EH; [|reflexivity]. exfalso.
   destruct (Hhid x EH) as ([b s] & Hin & Hb). cbn [fst snd] in Hb.
   pose proof (u64_range a) as Ra.
-  pose proof (grant_na_disjoint_of_In model a nZ b s ltac:(lia) Hg ltac:(apply in_app_iff; right; exact Hin)) as Hd.
+  pose proof (grant_na_disjoint_of_In hint model a nZ b s ltac:(lia) Hm Hg ltac:(apply in_app_iff; right; exact Hin)) as Hd.
   lia.
 Qed.
 
@@ -56,12 +59,13 @@ Hypothesis HA : A_wf A.
   edenot E (sr_get sr 11) = Z_to_bv 64 len -> 0 < len < 2 ^ 64 ->
   edenot E (sr_get sr 12) = Z_to_bv 64 3 -> edenot E (sr_get sr 13) = Z_to_bv 64 34 ->
   edenot E (sr_get sr 14) = Z_to_bv 64 (-1) -> edenot E (sr_get sr 15) = Z_to_bv 64 0 ->
-  (exists a, grant_ok_na_pin model a nZ = true) ->
+  getr R 10 = Z_to_bv 64 0 ->
+  (exists a, grant_ok_na_pin (Z_to_bv 64 0) model a nZ = true) ->
   vm_backing_used model + nZ <= vm_limit (m_vmmaps model) ->
-  (forall a, grant_ok_na_pin model a nZ = true -> range_visible H a nZ) ->
-  dsj_claims E (fun a => grant_ok_na_pin model a nZ = true) nZ ds ->
+  (forall a, grant_ok_na_pin (Z_to_bv 64 0) model a nZ = true -> range_visible H a nZ) ->
+  dsj_claims E (fun a => grant_ok_na_pin (Z_to_bv 64 0) model a nZ = true) nZ ds ->
   (forall (a : word) R2,
-     grant_ok_na_pin model a nZ = true ->
+     grant_ok_na_pin (Z_to_bv 64 0) model a nZ = true ->
      let E' := Env (vals_ev (vals ++ [a])) ebs in
      regs_ok E' (sr_upd sr (ridx 10) (EVar ia)) R2 ->
      know_ok segs E' (mrestrict H (zfill a n M))
@@ -74,17 +78,19 @@ Hypothesis HA : A_wf A.
   srealizes segs (mkCfg (mkst R (Z_to_bv 64 pc) M rom) model) KB.
 Proof.
   intros vals ebs sr R M rom model kn pc w len ds KB E nZ n ia HR HK Hsr Hkn Hds HF HE Hpc0 Hpc4 Hh
-         H17 H11 Hlen H12 H13 H14 H15 Hex Hbud Hvis Hdsj HKB.
+         H17 H11 Hlen H12 H13 H14 H15 H10 Hex Hbud Hvis Hdsj HKB.
   assert (HnZ : 0 < nZ /\ nZ < len + 4096) by (unfold nZ; pose proof (page_round_up_Z_bounds len ltac:(lia)); unfold page_size in *; lia).
+  assert (Hnmod : nZ mod page_size = 0) by (unfold nZ, page_round_up_Z; apply Z_mod_mult).
   eapply (srz_mmap_rw_pin segs R (Z_to_bv 64 pc) M rom model w len (Z_to_bv 64 34) KB HF HE Hh);
     try (eapply getr_of_sr; [exact HR|]; eassumption).
   - exact Hlen.
   - reflexivity.
+  - exact H10.
   - exact Hex.
   - unfold mmap_noreserve_backed_ok. cbn. apply Z.leb_le. exact Hbud.
   - intros a Ha. rewrite pc_lit_add4 by lia.
     rewrite with_mmap_backing_eager by reflexivity.
-    destruct (grant_ok_na_pin_unpack _ _ _ Ha) as (Hal & Hpos & Htop & Hrf).
+    destruct (grant_ok_na_pin_unpack _ _ _ _ (proj1 HnZ) Hnmod Ha) as (Hal & Hpos & Htop & Hrf).
     pose proof (alloc_top_room (m_vmmaps model)) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
     pose proof (u64_range a) as Har.
     assert (Hev : edenot (Env (vals_ev (vals ++ [a])) ebs) (EVar ia) = a).

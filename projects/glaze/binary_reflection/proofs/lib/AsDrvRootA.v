@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the start-up obligations read inp, with the ELF entry apc and the mmap base; the CONFIG_RSEQ flag of the handoff states; valid_launch, the channel reader and entry_launch_ok_va taken from valid_input_core and valid_entry; A_root_f_gen lifted to the run's segment list by RomStable.run_init). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
 Require Stdlib.ZArith.ZArith Stdlib.Lists.List Stdlib.micromega.Lia Stdlib.Bool.Bool LinuxProcessSemantics.LinuxProcessSem.BvBase LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics LinuxProcessSemantics.LinuxProcessSem.MemImageType LinuxProcessSemantics.LinuxProcessSem.StackLayout LinuxProcessSemantics.LinuxProcessSem.Fs LinuxProcessSemantics.LinuxProcessSem.State LinuxProcessSemantics.LinuxProcessSem.Monad LinuxProcessSemantics.LinuxProcessSem.Specs LinuxProcessSemantics.LinuxProcessSem.Run LinuxProcessSemantics.Riscv.Prelude LinuxProcessSemantics.Riscv.Instr LinuxProcessSemantics.Riscv.Decode LinuxProcessSemantics.Riscv.DecodeC OSSVerify.Proofs.glaze.binary_reflection.lib.Common.PropExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CatExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.Hoare OSSVerify.Proofs.glaze.binary_reflection.lib.Mh32 OSSVerify.Proofs.glaze.binary_reflection.lib.Common.StoreOk OSSVerify.Proofs.glaze.binary_reflection.lib.Common.WalkTac OSSVerify.Proofs.glaze.binary_reflection.lib.AsVocab OSSVerify.Proofs.glaze.binary_reflection.lib.GlzConst OSSVerify.Proofs.glaze.binary_reflection.lib.MhK OSSVerify.Proofs.glaze.binary_reflection.lib.AsIface3 OSSVerify.Proofs.glaze.binary_reflection.lib.AsSetShIface OSSVerify.Proofs.glaze.binary_reflection.lib.AsRtLib OSSVerify.Proofs.glaze.binary_reflection.lib.AsContractsNB OSSVerify.Proofs.glaze.binary_reflection.lib.AsAinvDefs3 OSSVerify.Proofs.glaze.binary_reflection.lib.AsAinvEntry3 OSSVerify.Proofs.glaze.binary_reflection.lib.AsAinvFrame3b OSSVerify.Proofs.glaze.binary_reflection.lib.AsRtMuslMemset OSSVerify.Proofs.glaze.binary_reflection.lib.AsRtSetShadow OSSVerify.Proofs.glaze.binary_reflection.lib.AsIcptSetSh OSSVerify.glaze.binary_reflection.images.Asan.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Require OSSVerify.Proofs.glaze.binary_reflection.lib.Common.RomStable.
 Module AsIcptSetShI.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -180,9 +182,18 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)
-Definition main_obl (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (inp : ProcInput) (ch : AP.acs) : Prop :=
-  AsStartup.AsStartupSound.hole_obl_f ph sp rdraw brk0 (in_argv inp) (in_envp inp) (in_fs inp) (in_uid inp) (in_hwcap inp)
-                          (spec (in_argv inp) (in_fs inp)) ch.
+(* Old beside new.  [AsStartup.AsStartupSound]'s Section Startup moved onto
+   the whole [ProcInput] and gained the ELF entry [apc] and the mmap base
+   [mbase], so the discharged prefix of [hole_obl_f] moved with it:
+     hole_obl_f ph sp rdraw brk0 argv envp fs uid hw T ch
+  -> hole_obl_f ph apc sp rdraw brk0 mbase inp T ch
+   [argv envp fs uid hw] are gone from the prefix because they are now
+   projections of [inp] read inside AsSInit.  [hole_obl_f] is a Definition,
+   not a Section lemma, so its prefix is exactly the Section variables its
+   BODY mentions -- [ph apc sp rdraw brk0 mbase inp], through [SINV] and
+   [argH], and [T] -- and spelling it positionally is sound. *)
+Definition main_obl (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput) (ch : AP.acs) : Prop :=
+  AsStartup.AsStartupSound.hole_obl_f ph apc sp rdraw brk0 mbase inp (spec (in_argv inp) (in_fs inp)) ch.
 
 (* [comment removed for export] *)
 Definition WALK_ROWS {RC : run_ceil} (hv : AsAinvBoot3.bvars) : Prop :=
@@ -222,66 +233,141 @@ Proof.
   split; [exact FZN | exact FZE].
 Qed.
 
-Lemma MAIN_h : forall hs, hs = HS_1 \/ hs = HS_2 -> forall ph sp rdraw brk0 mb inp,
-  img_facts ASEGS AT_A ph -> valid_entry AIMG (mkEntry sp brk0 mb rdraw) inp -> valid_input_core inp -> main_obl ph sp rdraw brk0 inp hs.
+Lemma MAIN_h : forall ph (apc : N) sp rdraw brk0 mb inp hs,
+  hs = HS_1 (AP.rseq_z (kb_rseq (in_kernel inp))) \/ hs = HS_2 (AP.rseq_z (kb_rseq (in_kernel inp))) ->
+  img_facts ASEGS AT_A ph -> Z.of_N apc = AP.a_entry AT_A ->
+  valid_entry AIMG (mkEntry sp brk0 mb rdraw) inp -> valid_input_core inp ->
+  main_obl ph apc sp rdraw brk0 mb inp hs.
 Proof.
-  intros hs Hhs ph sp rdraw brk0 mb inp _ He Hc.
-  pose proof (proj1 (valid_entry_unfold _ _ _ _ _ _ _ _ Hc) He) as (Hsp & Hbrk & Hmb & Hfits).
-  pose proof Hc as (Hva & Hve & _).
+  intros ph apc sp rdraw brk0 mb inp hs Hhs _ Hapc He Hc.
+  pose proof (proj1 (valid_entry_unfold _ _ _ _ _ _ _ _ Hc) He) as (Hsp & Hbrk & Hmb & Hfits & Hlau).
+  (* Taken by ACCESSOR where one exists, by the ten-conjunct shape otherwise:
+     [valid_input_core] gained [valid_launch inp] and
+     [in_channel_reader inp = true] after [in_va_size inp = Sv48]
+     (Common/AsanAcctShape.v:2638-2675), the two clauses AsSInit's Section
+     now carries as [Hvl] and [Hrdr]. *)
+  pose proof Hc as (Hva & Hve & Hvfs & [Huid Hgid] & Hnof & Hsig & Hhw & _).
+  pose proof (valid_input_core_launch inp Hc) as Hvl.
+  pose proof (valid_input_core_channel_reader inp Hc) as Hrdr.
   unfold main_obl, AsStartup.AsStartupSound.hole_obl_f. intros E fx R M model HC Hfx.
-  exact (main_sound_A ph sp rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (in_fs inp) Hsp Hva Hve Hfits KCAP HKCAP (Z.le_refl _) EXT hs Hhs E fx R M model HC Hfx).
+  (* [main_sound_A] is a Section theorem of AsDrvMainA, whose Section moved
+     onto [inp] with everything else; its discharged argument list is
+     whatever its PROOF uses and no positional list for it can be checked
+     here.  So: unify the conclusion, let [exact HC] pin ph, apc, sp, rdraw,
+     brk0, mb and inp -- none of which the conclusion mentions -- and name
+     KCAP rather than counting to it.  [HKCAP], [Z.le_refl] and [EXT] are
+     the same three witnesses the old positional call passed. *)
+  eapply main_sound_A with (KCAP := KCAP).
+  all: try exact HC.
+  all: solve [ assumption | exact HKCAP | exact (Z.le_refl _) | exact EXT ].
 Qed.
-Lemma MAIN_1 : forall ph sp rdraw brk0 mb inp,
-  img_facts ASEGS AT_A ph -> valid_entry AIMG (mkEntry sp brk0 mb rdraw) inp -> valid_input_core inp -> main_obl ph sp rdraw brk0 inp AsStartupTabs.AsStartupHSc.HS_1.
-Proof. exact (MAIN_h HS_1 (or_introl eq_refl)). Qed.
-Lemma MAIN_2 : forall ph sp rdraw brk0 mb inp,
-  img_facts ASEGS AT_A ph -> valid_entry AIMG (mkEntry sp brk0 mb rdraw) inp -> valid_input_core inp -> main_obl ph sp rdraw brk0 inp AsStartupTabs.AsStartupHSc.HS_2.
-Proof. exact (MAIN_h HS_2 (or_intror eq_refl)). Qed.
+Lemma MAIN_1 : forall ph (apc : N) sp rdraw brk0 mb inp,
+  img_facts ASEGS AT_A ph -> Z.of_N apc = AP.a_entry AT_A ->
+  valid_entry AIMG (mkEntry sp brk0 mb rdraw) inp -> valid_input_core inp ->
+  main_obl ph apc sp rdraw brk0 mb inp (AsStartupTabs.AsStartupHSc.HS_1 (AP.rseq_z (kb_rseq (in_kernel inp)))).
+Proof. intros ph apc sp rdraw brk0 mb inp. exact (MAIN_h ph apc sp rdraw brk0 mb inp _ (or_introl eq_refl)). Qed.
+Lemma MAIN_2 : forall ph (apc : N) sp rdraw brk0 mb inp,
+  img_facts ASEGS AT_A ph -> Z.of_N apc = AP.a_entry AT_A ->
+  valid_entry AIMG (mkEntry sp brk0 mb rdraw) inp -> valid_input_core inp ->
+  main_obl ph apc sp rdraw brk0 mb inp (AsStartupTabs.AsStartupHSc.HS_2 (AP.rseq_z (kb_rseq (in_kernel inp)))).
+Proof. intros ph apc sp rdraw brk0 mb inp. exact (MAIN_h ph apc sp rdraw brk0 mb inp _ (or_intror eq_refl)). Qed.
 
 
 (* [comment removed for export] *)
 Section StartupAt.
-  Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream).
-  Variables (uid gid hw : word) (groups : list word) (net : NetQueue).
-  Hypotheses (IMG : img_facts ASEGS AT_A ph) (Hsp : valid_sp sp) (Hbrk : valid_brk ASEGS brk0) (Hva : valid_argv argv) (Hve : valid_envp envp).
-  Hypotheses (Hfit : entry_stack_fits sp argv envp) (Huid : valid_id uid) (Hhw : valid_hwcap hw).
+  (* The section header is AsStartup.v's Section StartupA header, with the
+     two clauses AsSInit's Section Init carries and AsStartup's does not
+     ([Hapc], [Hmb], [Hrdr]) added, because the lemmas applied below are
+     AsSInit's and not AsStartup's.  Old beside new:
+       ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net
+    -> ph apc sp rdraw brk0 mbase inp
+     The fourteen component variables are gone with [AsSInit.inp], the
+     function that used to BUILD a ProcInput out of them; [inp] is a Section
+     variable of AsSInit.Init now and the components are projections. *)
+  Variables (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word).
+  Variable inp : ProcInput.
+  (* The plan's free CONFIG_RSEQ flag, at THIS run's value.  [init_acs3] and
+     [asan_init_S] took an [r : Z] at this revision (AsStartupTabs.v:111-115)
+     and AsSInit's own [cs0] is [init_acs3 RS A] (AsSInit.v:610) with exactly
+     this [RS], so the control state the obligation below is about is
+     [asan_init_S RS] and not [asan_init_S]. *)
+  #[local] Notation RS := (AP.rseq_z (kb_rseq (in_kernel inp))) (only parsing).
+  Hypotheses (IMG : img_facts ASEGS AT_A ph) (Hapc : Z.of_N apc = AP.a_entry AT_A).
+  Hypotheses (Hsp : valid_sp sp) (Hbrk : valid_brk ASEGS brk0) (Hmb : valid_mmap_base mbase).
+  Hypotheses (Hva : valid_argv (in_argv inp)) (Hve : valid_envp (in_envp inp)).
+  Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+  Hypotheses (Huid : valid_id (in_uid inp)) (Hhw : valid_hwcap (in_hwcap inp)).
+  (* [Run.valid_input]'s last conjunct, AsSInit.v:111. *)
+  Hypothesis Hvl : valid_launch inp.
+  (* [valid_input_core]'s reader clause, AsSInit.v:117; it is what discharges
+     [cs_ok]'s [co_rdr] by conversion there. *)
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  (* [Run.valid_entry]'s fifth conjunct, AsSInit.v:120: it pins the stack
+     VMA's end and so the image's length. *)
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
   Variable T : TSet.
   Hypothesis T_nil : T [].
-  Hypothesis O1 : AsStartup.AsStartupSound.hole_obl_f ph sp rdraw brk0 argv envp fs uid hw T AsStartupTabs.AsStartupHSc.HS_1.
-  Hypothesis O2 : AsStartup.AsStartupSound.hole_obl_f ph sp rdraw brk0 argv envp fs uid hw T AsStartupTabs.AsStartupHSc.HS_2.
+  Hypothesis O1 : AsStartup.AsStartupSound.hole_obl_f ph apc sp rdraw brk0 mbase inp T (AsStartupTabs.AsStartupHSc.HS_1 (AP.rseq_z (kb_rseq (in_kernel inp)))).
+  Hypothesis O2 : AsStartup.AsStartupSound.hole_obl_f ph apc sp rdraw brk0 mbase inp T (AsStartupTabs.AsStartupHSc.HS_2 (AP.rseq_z (kb_rseq (in_kernel inp)))).
 
+  (* Old beside new.  The [apc] and the five input components this lemma
+     used to quantify over existed only to feed [AsSInit.inp]; [apc] moved
+     into the section because AsSInit's Section carries it, and the five are
+     fields of the section's [inp]:
+       forall LIM, LIMIT_S <= LIM -> forall nofile sigmask abort va urnd apc,
+         Z.of_N apc = a_entry AT_A ->
+         realizes ASEGS (init_config ASEGS apc ph sp brk0 mbase rdraw LIM
+                           (AsSInit.inp argv envp fs stdin uid gid hw groups
+                                        net nofile sigmask abort va urnd)) T
+    -> forall LIM, LIMIT_S <= LIM ->
+         realizes ASEGS (init_config ASEGS apc ph sp brk0 mbase rdraw LIM inp) T *)
   Lemma STARTUP_AT_w : forall LIM : Z, LIMIT_S <= LIM ->
-    forall (nofile sigmask : word) (abort : bool) (va : VaSize) (urnd : InputStream) (apc : N), Z.of_N apc = AP.a_entry AT_A ->
-    realizes ASEGS (init_config ASEGS apc ph sp brk0 mbase rdraw LIM (AsSInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask abort va urnd)) T.
+    realizes ASEGS (init_config ASEGS apc ph sp brk0 mbase rdraw LIM inp) T.
   Proof.
-    intros LIM HLIM nofile sigmask abort va urnd apc Hpc.
-    (* [comment removed for export] *)
-    assert (OB : AsStartup.AsStartupSound.hole_obl_f ph sp rdraw brk0 argv envp fs uid hw T asan_init_S)
-      by (exact (AsStartup.ob_init (SR_realizes ASEGS) ph sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit T T_nil O1 O2)).
-    rewrite (AsSInit.init_cfg_eqF_at ASEGS AT_A ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abort va urnd LIM apc Hpc).
-    change (AP.a_entry AT_A) with (AP.pc asan_init_S).
-    apply (OB (AsSInit.E0 ph sp rdraw brk0 argv envp uid hw) PropExec.fx0). 2: exact AzSymStepR.fx_ok_fx0.
-    exact (AsSInit.init_cs_ok_at ASEGS AT_A ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abort va urnd
-             IMG Hsp Hbrk Hva Hve Hfit Huid Hhw LIM HLIM).
+    intros LIM HLIM.
+    (* [AsStartup.ob_init] is a Section lemma of AsStartup's Section StartupA,
+       which moved onto [inp] too, so its argument list is given by a tactic
+       and only [RR] -- which the conclusion cannot determine, since
+       [shape_rel] is not a function type -- is named.  [red] exposes
+       [hole_obl_f]'s body so that [hole_oblR (SR_realizes ASEGS) ...] meets
+       it by conversion, exactly as the old [exact] relied on. *)
+    assert (OB : AsStartup.AsStartupSound.hole_obl_f ph apc sp rdraw brk0 mbase inp T (asan_init_S RS))
+      by (red; eapply AsStartup.ob_init with (RR := SR_realizes ASEGS); eassumption).
+    (* [A] is named because it does not occur in the equation's left-hand
+       side ([init_config] takes no atable), so the rewrite cannot infer it;
+       the remaining arguments are AsSInit's discharged hypotheses and are
+       left to [assumption]. *)
+    rewrite AsSInit.init_cfg_eqF_at with (A := AT_A) by assumption.
+    change (AP.a_entry AT_A) with (AP.pc (asan_init_S RS)).
+    apply (OB (AsSInit.E0 sp rdraw brk0 inp) PropExec.fx0). 2: exact AzSymStepR.fx_ok_fx0.
+    eapply AsSInit.init_cs_ok_at; eassumption.
   Qed.
 End StartupAt.
 
 (* [comment removed for export] *)
-Lemma STARTUP_AT : forall LIM : Z, LIMIT_S <= LIM -> forall ph sp rdraw brk0 mbase (inp : ProcInput),
-  img_facts ASEGS AT_A ph -> valid_sp sp -> valid_brk ASEGS brk0 ->
+(* Old beside new.  [apc] moved from a trailing quantifier to a leading one
+   because the obligations O1 and O2 now mention it; the three hypotheses
+   that were accepted and discarded ([valid_nofile], [valid_sigmask],
+   [in_va_size inp = Sv48]) are replaced by the three AsSInit's Section
+   actually asks for ([valid_mmap_base], [valid_launch],
+   [in_channel_reader inp = true]) plus [entry_launch_ok_va]. *)
+Lemma STARTUP_AT : forall LIM : Z, LIMIT_S <= LIM ->
+  forall ph (apc : N) sp rdraw brk0 mbase (inp : ProcInput),
+  img_facts ASEGS AT_A ph -> Z.of_N apc = AP.a_entry AT_A ->
+  valid_sp sp -> valid_brk ASEGS brk0 -> valid_mmap_base mbase ->
   valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
-  valid_id (in_uid inp) -> valid_hwcap (in_hwcap inp) -> valid_nofile (in_nofile inp) -> valid_sigmask inp -> in_va_size inp = Sv48 ->
+  valid_id (in_uid inp) -> valid_hwcap (in_hwcap inp) ->
+  valid_launch inp -> in_channel_reader inp = true ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
   forall T : TSet, T [] ->
-  AsStartup.AsStartupSound.hole_obl_f ph sp rdraw brk0 (in_argv inp) (in_envp inp) (in_fs inp) (in_uid inp) (in_hwcap inp) T AsStartupTabs.AsStartupHSc.HS_1 ->
-  AsStartup.AsStartupSound.hole_obl_f ph sp rdraw brk0 (in_argv inp) (in_envp inp) (in_fs inp) (in_uid inp) (in_hwcap inp) T AsStartupTabs.AsStartupHSc.HS_2 ->
-  forall apc : N, Z.of_N apc = AP.a_entry AT_A ->
+  AsStartup.AsStartupSound.hole_obl_f ph apc sp rdraw brk0 mbase inp T (AsStartupTabs.AsStartupHSc.HS_1 (AP.rseq_z (kb_rseq (in_kernel inp)))) ->
+  AsStartup.AsStartupSound.hole_obl_f ph apc sp rdraw brk0 mbase inp T (AsStartupTabs.AsStartupHSc.HS_2 (AP.rseq_z (kb_rseq (in_kernel inp)))) ->
   realizes ASEGS (init_config ASEGS apc ph sp brk0 mbase rdraw LIM inp) T.
 Proof.
-  intros LIM HLIM ph sp rdraw brk0 mbase inp IMG Hsp Hbrk Hva Hve Hfit Huid Hhw _ _ _ T T_nil O1 O2.
-  (* [comment removed for export] *)
-  exact (STARTUP_AT_w ph sp rdraw brk0 mbase (in_argv inp) (in_envp inp) (in_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
-           (in_groups inp) (in_net inp) IMG Hsp Hbrk Hva Hve Hfit Huid Hhw T T_nil O1 O2 LIM HLIM
-           (in_nofile inp) (in_sigmask inp) (in_abort_terminal inp) (in_va_size inp) (in_urandom inp)).
+  intros LIM HLIM ph apc sp rdraw brk0 mbase inp IMG Hapc Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hvl Hrdr Hlau T T_nil O1 O2.
+  (* [STARTUP_AT_w] is a Section lemma, so its discharged argument list is
+     whatever its proof uses and it is applied rather than spelled. *)
+  eapply STARTUP_AT_w; eassumption.
 Qed.
 
 (* [comment removed for export] *)
@@ -289,15 +375,44 @@ Theorem A_root_f_gen : forall LIM : Z, StoreOk.RunLim.LMIN <= LIM -> root_obliga
 Proof.
   intros LIM HLIM. unfold root_obligation_core_f, spec_of. cbn [img_segments img_init_pc img_phdrs AIMG].
   intros sp brk0 mb rnd inp He Hc.
-  pose proof (proj1 (valid_entry_unfold _ _ _ _ _ _ _ _ Hc) He) as (Hsp & Hbrk & Hmb & Hfits).
-  pose proof Hc as (Hva & Hve & Hvfs & [Huid Hgid] & Hnof & Hsig & Hhw & Hva48).
+  pose proof (proj1 (valid_entry_unfold _ _ _ _ _ _ _ _ Hc) He) as (Hsp & Hbrk & Hmb & Hfits & Hlau).
+  (* [valid_input_core] has TEN conjuncts (Common/AsanAcctShape.v:2638-2653):
+     the repair appended [valid_launch inp] and [in_channel_reader inp = true]
+     after [in_va_size inp = Sv48].  An eight-name positional pattern bound
+     [Hva48] to the three-way TAIL conjunction instead of the equation, which
+     is why the application below was ill-typed.  Taken by ACCESSOR now, the
+     shape AsanAcctShape.v:2655-2656 asks for "so that a caller never counts
+     conjuncts", and which no further insertion can move. *)
+  pose proof Hc as (Hva & Hve & Hvfs & [Huid Hgid] & Hnof & Hsig & Hhw & _).
+  pose proof (valid_input_core_launch inp Hc) as Hvl.
+  pose proof (valid_input_core_channel_reader inp Hc) as Hrdr.
   change Asan.M.loaded_segments with ASEGS in *.
   change Asan.M.phdrs with APH.
-  apply (STARTUP_AT LIM HLIM APH sp rnd brk0 mb inp asan_img_facts Hsp Hbrk Hva Hve Hfits Huid Hhw Hnof Hsig Hva48
-           (spec (in_argv inp) (in_fs inp)) (spec_has_nil (in_argv inp) (in_fs inp))).
-  - exact (MAIN_1 APH sp rnd brk0 mb inp asan_img_facts He Hc).
-  - exact (MAIN_2 APH sp rnd brk0 mb inp asan_img_facts He Hc).
+  (* [apc] is left to unification rather than named: the goal's own
+     [init_config] carries it, and [reflexivity] below is the same proof of
+     [Z.of_N apc = a_entry AT_A] the trailing quantifier used to take. *)
+  (* LPS 727298f3: the run reads [run_segments ASEGS ..] from [init_config (run_segments ..) ..];
+     the walk over the binary's own segments is lifted there (the image carries no vDSO text). *)
+  apply RomStable.run_init; [RomStable.vdso_none |].
+  apply (STARTUP_AT LIM HLIM).
+  - exact asan_img_facts.
   - reflexivity.
+  - exact Hsp.
+  - exact Hbrk.
+  - exact Hmb.
+  - exact Hva.
+  - exact Hve.
+  - exact Hfits.
+  - exact Huid.
+  - exact Hhw.
+  - exact Hvl.
+  - exact Hrdr.
+  - exact Hlau.
+  - exact (spec_has_nil (in_argv inp) (in_fs inp)).
+  (* [apc] is fixed by the goal: [eapply] meets it before the entry equation, which is the
+     same [reflexivity] as the second bullet; an [eq_refl] argument met it first. *)
+  - eapply (MAIN_1 APH _ sp rnd brk0 mb inp asan_img_facts); [reflexivity | exact He | exact Hc].
+  - eapply (MAIN_2 APH _ sp rnd brk0 mb inp asan_img_facts); [reflexivity | exact He | exact Hc].
 Qed.
 
 (* [comment removed for export] *)

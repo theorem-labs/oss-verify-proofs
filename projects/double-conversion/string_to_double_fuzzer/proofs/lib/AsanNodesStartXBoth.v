@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's validity hypotheses; the process input's new fields; the SIGPIPE disposition). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -38,15 +39,30 @@ Section BothInstance.
   Variable LINV : (word -> option byte) -> Prop.
   Hypothesis LINV_frame : forall M M' : word -> option byte,
     (forall a : word, in_lfp BOTHL (bv_unsigned a) = true -> M' a = M a) -> LINV M -> LINV M'.
+  Variable apc : N.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable ur : InputStream.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variables abt sdf : bool.
+
+  (* Twin of AsanNodesStartXAsan's launch hypotheses; see the note there.  GenericInit's :87-:89. *)
+  Hypothesis Hkernel : in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) = recorded_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf)).
+  Hypothesis Hlaunch : valid_launch (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf).
 
   Section AnySINV.
     (* [comment removed for export] *)
     Variable SINV : env -> (word -> option byte) -> Prop.
-    Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 BPH sp rdraw brk0 argv envp uid hw E M.
-    Hypothesis SINV_frame : forall E M M', (forall a, argH0 BPH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+    Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 BPH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M.
+    Hypothesis SINV_frame : forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
     Hypothesis SINV_agree : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
 
-    Theorem node_x_sound_XEnvScan_both_gen : x_stmt BSEGS BOTHL NX0 LIMIT SINV (argH0 BPH sp rdraw argv envp uid hw) LINV FS0 XEnvScan.
+    Theorem node_x_sound_XEnvScan_both_gen : x_stmt BSEGS BOTHL NX0 LIMIT SINV (argH0 sp rdraw argv envp kern execfn) LINV FS0 XEnvScan.
     Proof.
       eapply (init_x_sound_envscan BSEGS BOTHL BPH both_wx bothL_in_hull bothL_hull_ok
                 W_10b544 W_10b548 W_10b54c
@@ -54,10 +70,11 @@ Section BothInstance.
                 (fetch_lit _ _ _ _ eq_refl F_10b544) (fetch_lit _ _ _ _ eq_refl F_10b548) (fetch_lit _ _ _ _ eq_refl F_10b54c)
                 ltac:(repeat split; reflexivity)
                 D_10b544 D_10b548 D_10b54c
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame LINV LINV_frame).
+                apc sp rdraw brk0 mbase argv envp fs stdin FS0 uid gid hw groups net ur kern execfn nofile sigmask abt sdf
+                Hsp Hva Hve Hfit Hlaunch Hlau SINV SINV_SINV0 SINV_frame LINV LINV_frame).
     Qed.
 
-    Theorem node_x_sound_XPnScan_both_gen : x_stmt BSEGS BOTHL NX0 LIMIT SINV (argH0 BPH sp rdraw argv envp uid hw) LINV FS0 XPnScan.
+    Theorem node_x_sound_XPnScan_both_gen : x_stmt BSEGS BOTHL NX0 LIMIT SINV (argH0 sp rdraw argv envp kern execfn) LINV FS0 XPnScan.
     Proof.
       eapply (init_x_sound_pnscan BSEGS BOTHL BPH both_wx bothL_in_hull bothL_hull_ok
                 W_10b600 W_10b604 W_10b608 W_10b60c W_10b610
@@ -66,23 +83,24 @@ Section BothInstance.
                 (fetch_lit _ _ _ _ eq_refl F_10b60c) (fetch_lit _ _ _ _ eq_refl F_10b610)
                 ltac:(repeat split; reflexivity)
                 D_10b600 D_10b604 D_10b608 D_10b60c D_10b610
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame SINV_agree LINV LINV_frame).
+                apc sp rdraw brk0 mbase argv envp fs stdin FS0 uid gid hw groups net ur kern execfn nofile sigmask abt sdf
+                Hsp Hva Hve Hfit Hlau SINV SINV_SINV0 SINV_frame SINV_agree LINV LINV_frame).
     Qed.
 
-    Theorem node_x_sound_XLayout_both_gen : x_stmt BSEGS BOTHL NX0 LIMIT SINV (argH0 BPH sp rdraw argv envp uid hw) LINV FS0 XLayout.
+    Theorem node_x_sound_XLayout_both_gen : x_stmt BSEGS BOTHL NX0 LIMIT SINV (argH0 sp rdraw argv envp kern execfn) LINV FS0 XLayout.
     Proof. apply x_sound_layout. Qed.
   End AnySINV.
 
   (* [comment removed for export] *)
   Theorem node_x_sound_XEnvScan_both :
-    x_stmt BSEGS BOTHL NX0 LIMIT (SINV0 BPH sp rdraw brk0 argv envp uid hw) (argH0 BPH sp rdraw argv envp uid hw) LINV FS0 XEnvScan.
+    x_stmt BSEGS BOTHL NX0 LIMIT (SINV0 BPH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) (argH0 sp rdraw argv envp kern execfn) LINV FS0 XEnvScan.
   Proof. apply node_x_sound_XEnvScan_both_gen; [auto | apply SINV0_frame]. Qed.
 
   Theorem node_x_sound_XPnScan_both :
-    x_stmt BSEGS BOTHL NX0 LIMIT (SINV0 BPH sp rdraw brk0 argv envp uid hw) (argH0 BPH sp rdraw argv envp uid hw) LINV FS0 XPnScan.
+    x_stmt BSEGS BOTHL NX0 LIMIT (SINV0 BPH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) (argH0 sp rdraw argv envp kern execfn) LINV FS0 XPnScan.
   Proof. apply node_x_sound_XPnScan_both_gen; [auto | apply SINV0_frame | apply SINV0_agree]. Qed.
 
   Theorem node_x_sound_XLayout_both :
-    x_stmt BSEGS BOTHL NX0 LIMIT (SINV0 BPH sp rdraw brk0 argv envp uid hw) (argH0 BPH sp rdraw argv envp uid hw) LINV FS0 XLayout.
+    x_stmt BSEGS BOTHL NX0 LIMIT (SINV0 BPH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) (argH0 sp rdraw argv envp kern execfn) LINV FS0 XLayout.
   Proof. apply x_sound_layout. Qed.
 End BothInstance.

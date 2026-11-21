@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstDrainDq.v (commit ce1a656b52b7, file sha256 5baa64d7716d) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstDrainDq.v (file sha256 5baa64d7716d) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (): the bookkeeping field of
    H3's CacheDealloc contract, [DMwalkIF.drq_cd] at DRq := YGcfInstDrainR.DRq_cf B kQuarantineMax and RMAXD :=
    RMAXD_cf.  It says that a pending BATCH OBJECT meets CacheDealloc's model premises, and that the invariant
-   moves to the rest of the list at whichever state the model returns (DMwalkIF.cd_returns, b1-drain
-   215f6356933: the immediate IRet, or the granted answer of the free-array growth's KMapFreeArray).
+   moves to the rest of the list at whichever state the model returns (DMwalkIF.cd_returns, b1-drain:
+   the immediate IRet, or the granted answer of the free-array growth's KMapFreeArray).
    Both results come from ONE model lemma: YG03cf.cache_dealloc_ok_cf's [atok] post holds along every path the
    machine can follow, the granted arm included (YG01.atok's IAsk case takes every [aok] answer, and the only
    granted one is 1, YG00.v:606).
@@ -61,7 +62,7 @@ intros NMAXD S its zs (RX & _).
 pose proof (proj1 RX) as W.
 pose proof (wfr_classes _ _ _ _ _ W kBatchClass ltac:(unfold kBatchClass; lia)) as CL.
 unfold wf_class_cf in CL.
-(* the free array's elements are distinct multiples of class_size below the allocated part (YG06bcf.v:406) *)
+(* the free array's elements are distinct multiples of class_size below the allocated part (YG06bcf.v:407) *)
 pose proof (YG06bcf.fa_len_bound_cf _ _ _ _ _ _ CL ltac:(reflexivity)) as FB.
 pose proof (wrc_alloc _ _ _ _ _ _ CL) as A1.
 pose proof (mapped_bound_r_cf (as_universe B) 0 0 0 S kBatchClass W ltac:(unfold kBatchClass; lia)) as MB.

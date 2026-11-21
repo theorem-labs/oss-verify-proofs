@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap can be refused; the model's error returns; the mapping ledger's reserved ranges and mmap base). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -90,6 +91,13 @@ Section G.
       let EQ := fresh "EQsr" in
       assert (EQ : sr = sr') by (vm_compute; reflexivity);
       try rewrite EQ in HR; clear EQ end.
+  (* [find_kword kn a w]: the value expression of the [KWord (SA (ELit 0) a) w _] entry of a
+     normalised knowledge list (used for the errno cell after a refused call). *)
+  Ltac find_kword kn a w :=
+    lazymatch kn with
+    | KWord (SA (ELit 0) a) w ?v :: _ => v
+    | _ :: ?r => find_kword r a w
+    end.
 
   Ltac hdr_byte EV40 Pf off :=
     lazymatch type of EV40 with _ = ?B =>
@@ -112,8 +120,8 @@ Section G.
     (* [comment removed for export] *)
     pose (Mkeep := M).
     destruct ST as ((extra & HLx & HR & HK) & PRES & VS).
-    destruct VS as (Vres & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
-    change (nb_of 2) with 266240%Z in Vmaps, Vdisj.
+    pose proof VS as VS0. destruct VS as ((VXr & Vres & VXl & VXs) & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
+    change (nb_of 2) with 266240%Z in Vmaps, Vdisj, Vlive.
     unfold ENV_RD in HR, HK. set (vals := vals_RD sp0 p1 mb gm L B e can sec extra) in *.
     assert (HL : length vals = 40%nat) by (subst vals; unfold vals_RD; rewrite length_app; destruct extra; [discriminate|]; cbn [length tl] in HLx |- *; lia).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
@@ -154,15 +162,19 @@ Section G.
       + regv HR (13 : reg). reflexivity.
       + regv HR (14 : reg). apply bv_eq. vm_compute. reflexivity.
       + regv HR (15 : reg). reflexivity.
+      + (* #146: the placement hint is the literal NULL here. *)
+        regv HR (10 : reg). apply place_declined_b_null.
       + (* [comment removed for export] *)
         change (page_round_up_Z 524308) with 528384%Z.
-        apply grant_exists; [ | | | apply grant_budget_intro; [reflexivity | reflexivity |] | unfold init_sp_ok, sp_window_lo; cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; cbn [vm_init_sp]; rewrite ?Visp; lia ];
+        apply grant_exists; [ | | | | apply grant_budget_intro; [reflexivity | reflexivity |] | unfold init_sp_ok, sp_window_lo; cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; cbn [vm_init_sp]; rewrite ?Visp; lia ];
           cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; rewrite ?Vres, ?Vlim, ?Vmaps, ?rsegs_reserved.
         * lia.
+        * vm_compute; reflexivity.
         * apply Forall_app. split.
-          -- repeat constructor; cbn [snd]; rewrite u_small by lia; lia.
+          -- apply Forall_app. split; [repeat constructor; cbn [snd]; rewrite u_small by lia; lia
+             | eapply Forall_impl; [|exact VXs]; intros [? ?] [? ?]; cbn [snd] in *; lia].
           -- constructor; [cbn [snd]; rewrite u_small by lia; lia|]. eapply Forall_impl; [|exact Vsz]. intros [? ?]; cbn [snd]; lia.
-        * rewrite length_app. cbn [length]. lia.
+        * rewrite !length_app. cbn [length]. lia.
         * unfold vm_live_bytes. rewrite Vmaps, target_alloc_limit_val. cbn [live_bytes]. rewrite u_small by lia. lia.
       + (* [comment removed for export] *)
         intros err Herr. cbn [mmap_errnos In] in Herr. destruct Herr as [<-|[]]. subst E.
@@ -178,10 +190,10 @@ Section G.
         * exact PRES.
         * intros d m Hd Hm.
           lazymatch type of HK with know_ok _ ?E ?Mc ?kn =>
-            let i := kidx kn (is_kwr_cov (EVar 0) (-8388608)%Z 1%Z) in
-            pose proof (kwr_store_ok RSEGS E Mc kn i (EVar 0) (-8388608)%Z 8388608%Z (-8388608 + d)%Z m HK eq_refl ltac:(lia) ltac:(lia)) as ST end.
+            let i := kidx kn (is_kwr_cov (EVar 0) (-6144513)%Z 1%Z) in
+            pose proof (kwr_store_ok RSEGS E Mc kn i (EVar 0) (-6144513)%Z 6144513%Z (-6144513 + d)%Z m HK eq_refl ltac:(lia) ltac:(lia)) as ST end.
           unfold adenot, v_addi in ST. cbn [a_base a_off BA LA MBA edenot ev] in ST. rewrite P0 in ST.
-          replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + (-8388608 + d))%Z by lia. exact ST.
+          replace (bv_unsigned sp0 - 6144513 + d)%Z with (bv_unsigned sp0 + (-6144513 + d))%Z by lia. exact ST.
       + (* [comment removed for export] *)
         intros B' HG.
         change (page_round_up_Z 524308) with 528384%Z in HG |- *.
@@ -193,13 +205,13 @@ Section G.
         assert (GB1 : (0xe6000 <= bv_unsigned B')%Z).
         { (* [comment removed for export] *)
           pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 139264) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X1.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X1.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 204800) (Z_to_bv 64 499712) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X2.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X2.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 704512) (Z_to_bv 64 28672) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X3.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X3.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 733184) (Z_to_bv 64 208896) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X.
           rewrite !u_small in X1 by lia. rewrite !u_small in X2 by lia. rewrite !u_small in X3 by lia.
           rewrite !u_small in X by lia. pose proof (u64_range B'). lia. }
         assert (GB2 : (bv_unsigned B' + 528384 <= bv_unsigned B \/ bv_unsigned B + 266240 <= bv_unsigned B')%Z).
@@ -504,6 +516,47 @@ Section G.
         * lia.
         * change (page_round_up_Z 266240) with 266240%Z. rewrite task_size_val. lia.   (* [comment removed for export] *)
         * change (page_round_up_Z 266240) with 266240%Z. cbv [m_vmmaps mmap_model with_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]. cbn [vm_maps]. rewrite Vmaps. apply map_has_cons. apply map_has_head.
+        * (* the refused free (munmap_errnos): a0 = -ENOMEM, memory and knowledge unchanged, the old
+             buffer stays mapped; musl's free ignores the result and the same code runs on *)
+          intros err Herr. cbn [munmap_errnos In] in Herr. destruct Herr as [<-|[]].
+          rewrite v_addi_pc4 by lia. change (0x9aa50 + 4)%Z with 0x9aa54%Z.
+          lazymatch type of HR with regs_ok ?E _ _ =>
+            pose proof (regs_set_a0 E _ _ (errno_ret ENOMEM) (ELit (- 12)) HR eq_refl) as HR2 end.
+          clear HR. rename HR2 into HR.
+          save_know HK. run_block_keep scr0 137%nat. note_pres HKb EQM PRES.
+          unfold mmap_model, with_vmmaps.
+          cbv [m_vmmaps m_fd m_io m_fsys m_proc m_lim m_time m_vm m_vm_lazy m_vm_materialized vmst_maps vmst_lazy vmst_materialized
+               UbReadStage.modelG mkModelA]. cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
+          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _ _ _) _ _ _ _ _)) _ =>
+            change (realizes RSEGS (mkCfg (mkst Rc (Z_to_bv 64 0x32700) Mc (seg_rom RSEGS)) (modelG (held_of 3) V')) K) end.
+          norm_know HK.
+          lazymatch type of HK with know_ok _ _ _ ?knr =>
+          let ev6 := find_kword knr constr:(0xc4f74%Z) constr:(4%nat) in
+          unfold half_branch in HK1; apply (HK1 _ _ _ B' (edenot E (ev6)));
+          lazymatch type of HR with regs_ok _ ?srf _ =>
+          lazymatch type of HK with know_ok _ _ ?Mf ?knf =>
+            set (rvl := [EVar 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 40; ev6; EVar 7] ++ (EVar 8 :: tl srf));
+            assert (XB : forall k, gblobs content k = eb E ((fun k : nat => k) k)) by (intros; reflexivity);
+            split; [ exists (map (edenot E) srf); split; [rewrite length_map; reflexivity|];
+                     replace (ENV_RD sp0 p1 mb gm L B' (edenot E (ev6)) can sec (map (edenot E) srf) content)
+                        with (xenv E rvl (gblobs content));
+                     [ split; [ apply (regs_ok_xfer E rvl (fun k => k) _ XB srf (sr_HALF 3) _ HR); [reflexivity | reflexivity |]
+                              | apply (know_ok_xfer_entails RSEGS E rvl (fun k => k) _ Mf knf (kn_HALF 3) XB HK) ]
+                     | ]
+                   | split; [exact PRES |] ]
+          end end
+          end.
+          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. repeat (destruct Hi as [<-|Hi]; [reflexivity|]). destruct Hi.
+          -- match goal with |- Forall _ ?l => replace l with (@nil kentry) by (vm_compute; reflexivity) end. constructor.
+          -- unfold ENV_RD, xenv, vals_RD. f_equal. subst rvl. rewrite map_app. cbn [map app tl].
+             cbn [edenot ev]. subst E. cbn [ev]. rewrite P0, P1, P2, P3, P4, P40, P7, P8. reflexivity.
+          -- (* the refused free: the old buffer joins the retained mappings *)
+             apply (vm_stage_keep V _ sp0 mb B B' 2 3 266240 528384);
+               [reflexivity | reflexivity | lia | lia | lia | lia | exact VS0
+               | reflexivity | reflexivity | reflexivity | reflexivity | lia | ].
+             rewrite Vmaps. apply Forall_forall. intros [qb qs] Hq.
+             pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; exact Hq)) as X.
+             rewrite u_small in X by lia. cbn [fst snd]. lia.
         * change (page_round_up_Z 266240) with 266240%Z.
           rewrite v_addi_pc4 by lia. change (0x9aa50 + 4)%Z with 0x9aa54%Z.
           lazymatch type of HR with regs_ok ?E _ _ =>
@@ -527,7 +580,7 @@ Section G.
           unfold mmap_model, with_vmmaps.
           cbv [m_vmmaps m_fd m_io m_fsys m_proc m_lim m_time m_vm m_vm_lazy m_vm_materialized vmst_maps vmst_lazy vmst_materialized
                UbReadStage.modelG mkModelA]. cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
-          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _) _ _ _ _ _)) _ =>
+          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _ _ _) _ _ _ _ _)) _ =>
             change (realizes RSEGS (mkCfg (mkst Rc (Z_to_bv 64 0x32700) Mc (seg_rom RSEGS)) (modelG (held_of 3) V')) K) end.
           unfold half_branch in HK1. apply (HK1 _ _ _ B' (edenot E (EExt true 0 4 (EVar 6)))).
           lazymatch type of HR with regs_ok _ ?srf _ =>
@@ -542,29 +595,18 @@ Section G.
                      | ]
                    | split; [exact PRES |] ]
           end end.
-          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. destruct Hi as [<-|[]]. reflexivity.
+          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. repeat (destruct Hi as [<-|Hi]; [reflexivity|]). destruct Hi.
           -- match goal with |- Forall _ ?l => replace l with (@nil kentry) by (vm_compute; reflexivity) end. constructor.
           -- unfold ENV_RD, xenv, vals_RD. f_equal. subst rvl. rewrite map_app. cbn [map app tl].
              cbn [edenot ev]. subst E. cbn [ev]. rewrite P0, P1, P2, P3, P4, P40, P7, P8. reflexivity.
-          -- (* [comment removed for export] *)
-             unfold vm_stage. cbn [vm_reserved vm_init_sp vm_limit vm_maps]. split; [exact Vres|]. split; [exact Visp|]. split; [exact Vlim|].
-             rewrite Vmaps.
-             assert (Hbb : B' <> B) by (intros HH; rewrite HH in GB2; lia).
-             exists (map_remove rest B). split; [|split; [|split; [|split; [|split; [|split]]]]].
-             ++ change (nb_of 3) with 528384%Z. rewrite map_remove_skip by exact Hbb. rewrite map_remove_head. reflexivity.
-             ++ apply incl_Forall with (l1 := rest); [|exact Vsz]. unfold map_remove. apply incl_filter.
-             ++ pose proof (map_remove_length rest B). lia.
-             ++ pose proof (live_bytes_map_remove_le rest B). lia.
-             ++ destruct Vcont as (pc & Cin & C1 & C2). exists pc. split; [|split; assumption].
-                unfold map_remove. apply filter_In. split; [exact Cin|]. destruct pc as [cb cs]. cbn [fst snd] in C1, C2 |- *.
-                apply Bool.negb_true_iff. unfold bv_eqb. apply Z.eqb_neq. intros HH.
-                pose proof (proj1 (Forall_forall _ _) Vdisj _ Cin) as X. cbn [fst snd] in X.
-                pose proof (proj1 (Forall_forall _ _) Vsz _ Cin) as Y. cbn [snd] in Y. lia.
-             ++ apply Forall_forall. intros [qb qs] Hq. cbn [fst snd]. change (nb_of 3) with 528384%Z.
-                unfold map_remove in Hq. apply filter_In in Hq as [Hq _].
-                pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; right; exact Hq)) as X.
-                rewrite u_small in X by lia. lia.
-             ++ unfold map_remove. apply seps_filter. exact Vseps.
+          -- (* the cut: the ledger loses the old buffer *)
+             apply (vm_stage_cut V _ sp0 mb B B' 2 3 266240 528384);
+               [reflexivity | reflexivity | lia | lia | lia | lia | exact VS0
+               | reflexivity | reflexivity | reflexivity | reflexivity | lia | ].
+             rewrite Vmaps. apply Forall_forall. intros [qb qs] Hq.
+             pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; exact Hq)) as X.
+             rewrite u_small in X by lia. cbn [fst snd]. lia.
+
   Qed.
 End G.
 End FPW_1.
@@ -645,6 +687,13 @@ Section G.
       let EQ := fresh "EQsr" in
       assert (EQ : sr = sr') by (vm_compute; reflexivity);
       try rewrite EQ in HR; clear EQ end.
+  (* [find_kword kn a w]: the value expression of the [KWord (SA (ELit 0) a) w _] entry of a
+     normalised knowledge list (used for the errno cell after a refused call). *)
+  Ltac find_kword kn a w :=
+    lazymatch kn with
+    | KWord (SA (ELit 0) a) w ?v :: _ => v
+    | _ :: ?r => find_kword r a w
+    end.
 
   Ltac hdr_byte EV40 Pf off :=
     lazymatch type of EV40 with _ = ?B =>
@@ -667,8 +716,8 @@ Section G.
     (* [comment removed for export] *)
     pose (Mkeep := M).
     destruct ST as ((extra & HLx & HR & HK) & PRES & VS).
-    destruct VS as (Vres & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
-    change (nb_of 3) with 528384%Z in Vmaps, Vdisj.
+    pose proof VS as VS0. destruct VS as ((VXr & Vres & VXl & VXs) & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
+    change (nb_of 3) with 528384%Z in Vmaps, Vdisj, Vlive.
     unfold ENV_RD in HR, HK. set (vals := vals_RD sp0 p1 mb gm L B e can sec extra) in *.
     assert (HL : length vals = 40%nat) by (subst vals; unfold vals_RD; rewrite length_app; destruct extra; [discriminate|]; cbn [length tl] in HLx |- *; lia).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
@@ -709,15 +758,19 @@ Section G.
       + regv HR (13 : reg). reflexivity.
       + regv HR (14 : reg). apply bv_eq. vm_compute. reflexivity.
       + regv HR (15 : reg). reflexivity.
+      + (* #146: the placement hint is the literal NULL here. *)
+        regv HR (10 : reg). apply place_declined_b_null.
       + (* [comment removed for export] *)
         change (page_round_up_Z 1048596) with 1052672%Z.
-        apply grant_exists; [ | | | apply grant_budget_intro; [reflexivity | reflexivity |] | unfold init_sp_ok, sp_window_lo; cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; cbn [vm_init_sp]; rewrite ?Visp; lia ];
+        apply grant_exists; [ | | | | apply grant_budget_intro; [reflexivity | reflexivity |] | unfold init_sp_ok, sp_window_lo; cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; cbn [vm_init_sp]; rewrite ?Visp; lia ];
           cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; rewrite ?Vres, ?Vlim, ?Vmaps, ?rsegs_reserved.
         * lia.
+        * vm_compute; reflexivity.
         * apply Forall_app. split.
-          -- repeat constructor; cbn [snd]; rewrite u_small by lia; lia.
+          -- apply Forall_app. split; [repeat constructor; cbn [snd]; rewrite u_small by lia; lia
+             | eapply Forall_impl; [|exact VXs]; intros [? ?] [? ?]; cbn [snd] in *; lia].
           -- constructor; [cbn [snd]; rewrite u_small by lia; lia|]. eapply Forall_impl; [|exact Vsz]. intros [? ?]; cbn [snd]; lia.
-        * rewrite length_app. cbn [length]. lia.
+        * rewrite !length_app. cbn [length]. lia.
         * unfold vm_live_bytes. rewrite Vmaps, target_alloc_limit_val. cbn [live_bytes]. rewrite u_small by lia. lia.
       + (* [comment removed for export] *)
         intros err Herr. cbn [mmap_errnos In] in Herr. destruct Herr as [<-|[]]. subst E.
@@ -733,10 +786,10 @@ Section G.
         * exact PRES.
         * intros d m Hd Hm.
           lazymatch type of HK with know_ok _ ?E ?Mc ?kn =>
-            let i := kidx kn (is_kwr_cov (EVar 0) (-8388608)%Z 1%Z) in
-            pose proof (kwr_store_ok RSEGS E Mc kn i (EVar 0) (-8388608)%Z 8388608%Z (-8388608 + d)%Z m HK eq_refl ltac:(lia) ltac:(lia)) as ST end.
+            let i := kidx kn (is_kwr_cov (EVar 0) (-6144513)%Z 1%Z) in
+            pose proof (kwr_store_ok RSEGS E Mc kn i (EVar 0) (-6144513)%Z 6144513%Z (-6144513 + d)%Z m HK eq_refl ltac:(lia) ltac:(lia)) as ST end.
           unfold adenot, v_addi in ST. cbn [a_base a_off BA LA MBA edenot ev] in ST. rewrite P0 in ST.
-          replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + (-8388608 + d))%Z by lia. exact ST.
+          replace (bv_unsigned sp0 - 6144513 + d)%Z with (bv_unsigned sp0 + (-6144513 + d))%Z by lia. exact ST.
       + (* [comment removed for export] *)
         intros B' HG.
         change (page_round_up_Z 1048596) with 1052672%Z in HG |- *.
@@ -748,13 +801,13 @@ Section G.
         assert (GB1 : (0xe6000 <= bv_unsigned B')%Z).
         { (* [comment removed for export] *)
           pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 139264) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X1.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X1.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 204800) (Z_to_bv 64 499712) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X2.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X2.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 704512) (Z_to_bv 64 28672) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X3.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X3.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 733184) (Z_to_bv 64 208896) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X.
           rewrite !u_small in X1 by lia. rewrite !u_small in X2 by lia. rewrite !u_small in X3 by lia.
           rewrite !u_small in X by lia. pose proof (u64_range B'). lia. }
         assert (GB2 : (bv_unsigned B' + 1052672 <= bv_unsigned B \/ bv_unsigned B + 528384 <= bv_unsigned B')%Z).
@@ -1059,6 +1112,47 @@ Section G.
         * lia.
         * change (page_round_up_Z 528384) with 528384%Z. rewrite task_size_val. lia.   (* [comment removed for export] *)
         * change (page_round_up_Z 528384) with 528384%Z. cbv [m_vmmaps mmap_model with_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]. cbn [vm_maps]. rewrite Vmaps. apply map_has_cons. apply map_has_head.
+        * (* the refused free (munmap_errnos): a0 = -ENOMEM, memory and knowledge unchanged, the old
+             buffer stays mapped; musl's free ignores the result and the same code runs on *)
+          intros err Herr. cbn [munmap_errnos In] in Herr. destruct Herr as [<-|[]].
+          rewrite v_addi_pc4 by lia. change (0x9aa50 + 4)%Z with 0x9aa54%Z.
+          lazymatch type of HR with regs_ok ?E _ _ =>
+            pose proof (regs_set_a0 E _ _ (errno_ret ENOMEM) (ELit (- 12)) HR eq_refl) as HR2 end.
+          clear HR. rename HR2 into HR.
+          save_know HK. run_block_keep scr0 137%nat. note_pres HKb EQM PRES.
+          unfold mmap_model, with_vmmaps.
+          cbv [m_vmmaps m_fd m_io m_fsys m_proc m_lim m_time m_vm m_vm_lazy m_vm_materialized vmst_maps vmst_lazy vmst_materialized
+               UbReadStage.modelG mkModelA]. cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
+          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _ _ _) _ _ _ _ _)) _ =>
+            change (realizes RSEGS (mkCfg (mkst Rc (Z_to_bv 64 0x32700) Mc (seg_rom RSEGS)) (modelG (held_of 4) V')) K) end.
+          norm_know HK.
+          lazymatch type of HK with know_ok _ _ _ ?knr =>
+          let ev6 := find_kword knr constr:(0xc4f74%Z) constr:(4%nat) in
+          unfold half_branch in HK1; apply (HK1 _ _ _ B' (edenot E (ev6)));
+          lazymatch type of HR with regs_ok _ ?srf _ =>
+          lazymatch type of HK with know_ok _ _ ?Mf ?knf =>
+            set (rvl := [EVar 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 40; ev6; EVar 7] ++ (EVar 8 :: tl srf));
+            assert (XB : forall k, gblobs content k = eb E ((fun k : nat => k) k)) by (intros; reflexivity);
+            split; [ exists (map (edenot E) srf); split; [rewrite length_map; reflexivity|];
+                     replace (ENV_RD sp0 p1 mb gm L B' (edenot E (ev6)) can sec (map (edenot E) srf) content)
+                        with (xenv E rvl (gblobs content));
+                     [ split; [ apply (regs_ok_xfer E rvl (fun k => k) _ XB srf (sr_HALF 4) _ HR); [reflexivity | reflexivity |]
+                              | apply (know_ok_xfer_entails RSEGS E rvl (fun k => k) _ Mf knf (kn_HALF 4) XB HK) ]
+                     | ]
+                   | split; [exact PRES |] ]
+          end end
+          end.
+          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. repeat (destruct Hi as [<-|Hi]; [reflexivity|]). destruct Hi.
+          -- match goal with |- Forall _ ?l => replace l with (@nil kentry) by (vm_compute; reflexivity) end. constructor.
+          -- unfold ENV_RD, xenv, vals_RD. f_equal. subst rvl. rewrite map_app. cbn [map app tl].
+             cbn [edenot ev]. subst E. cbn [ev]. rewrite P0, P1, P2, P3, P4, P40, P7, P8. reflexivity.
+          -- (* the refused free: the old buffer joins the retained mappings *)
+             apply (vm_stage_keep V _ sp0 mb B B' 3 4 528384 1052672);
+               [reflexivity | reflexivity | lia | lia | lia | lia | exact VS0
+               | reflexivity | reflexivity | reflexivity | reflexivity | lia | ].
+             rewrite Vmaps. apply Forall_forall. intros [qb qs] Hq.
+             pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; exact Hq)) as X.
+             rewrite u_small in X by lia. cbn [fst snd]. lia.
         * change (page_round_up_Z 528384) with 528384%Z.
           rewrite v_addi_pc4 by lia. change (0x9aa50 + 4)%Z with 0x9aa54%Z.
           lazymatch type of HR with regs_ok ?E _ _ =>
@@ -1082,7 +1176,7 @@ Section G.
           unfold mmap_model, with_vmmaps.
           cbv [m_vmmaps m_fd m_io m_fsys m_proc m_lim m_time m_vm m_vm_lazy m_vm_materialized vmst_maps vmst_lazy vmst_materialized
                UbReadStage.modelG mkModelA]. cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
-          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _) _ _ _ _ _)) _ =>
+          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _ _ _) _ _ _ _ _)) _ =>
             change (realizes RSEGS (mkCfg (mkst Rc (Z_to_bv 64 0x32700) Mc (seg_rom RSEGS)) (modelG (held_of 4) V')) K) end.
           unfold half_branch in HK1. apply (HK1 _ _ _ B' (edenot E (EExt true 0 4 (EVar 6)))).
           lazymatch type of HR with regs_ok _ ?srf _ =>
@@ -1097,29 +1191,18 @@ Section G.
                      | ]
                    | split; [exact PRES |] ]
           end end.
-          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. destruct Hi as [<-|[]]. reflexivity.
+          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. repeat (destruct Hi as [<-|Hi]; [reflexivity|]). destruct Hi.
           -- match goal with |- Forall _ ?l => replace l with (@nil kentry) by (vm_compute; reflexivity) end. constructor.
           -- unfold ENV_RD, xenv, vals_RD. f_equal. subst rvl. rewrite map_app. cbn [map app tl].
              cbn [edenot ev]. subst E. cbn [ev]. rewrite P0, P1, P2, P3, P4, P40, P7, P8. reflexivity.
-          -- (* [comment removed for export] *)
-             unfold vm_stage. cbn [vm_reserved vm_init_sp vm_limit vm_maps]. split; [exact Vres|]. split; [exact Visp|]. split; [exact Vlim|].
-             rewrite Vmaps.
-             assert (Hbb : B' <> B) by (intros HH; rewrite HH in GB2; lia).
-             exists (map_remove rest B). split; [|split; [|split; [|split; [|split; [|split]]]]].
-             ++ change (nb_of 4) with 1052672%Z. rewrite map_remove_skip by exact Hbb. rewrite map_remove_head. reflexivity.
-             ++ apply incl_Forall with (l1 := rest); [|exact Vsz]. unfold map_remove. apply incl_filter.
-             ++ pose proof (map_remove_length rest B). lia.
-             ++ pose proof (live_bytes_map_remove_le rest B). lia.
-             ++ destruct Vcont as (pc & Cin & C1 & C2). exists pc. split; [|split; assumption].
-                unfold map_remove. apply filter_In. split; [exact Cin|]. destruct pc as [cb cs]. cbn [fst snd] in C1, C2 |- *.
-                apply Bool.negb_true_iff. unfold bv_eqb. apply Z.eqb_neq. intros HH.
-                pose proof (proj1 (Forall_forall _ _) Vdisj _ Cin) as X. cbn [fst snd] in X.
-                pose proof (proj1 (Forall_forall _ _) Vsz _ Cin) as Y. cbn [snd] in Y. lia.
-             ++ apply Forall_forall. intros [qb qs] Hq. cbn [fst snd]. change (nb_of 4) with 1052672%Z.
-                unfold map_remove in Hq. apply filter_In in Hq as [Hq _].
-                pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; right; exact Hq)) as X.
-                rewrite u_small in X by lia. lia.
-             ++ unfold map_remove. apply seps_filter. exact Vseps.
+          -- (* the cut: the ledger loses the old buffer *)
+             apply (vm_stage_cut V _ sp0 mb B B' 3 4 528384 1052672);
+               [reflexivity | reflexivity | lia | lia | lia | lia | exact VS0
+               | reflexivity | reflexivity | reflexivity | reflexivity | lia | ].
+             rewrite Vmaps. apply Forall_forall. intros [qb qs] Hq.
+             pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; exact Hq)) as X.
+             rewrite u_small in X by lia. cbn [fst snd]. lia.
+
   Qed.
 End G.
 End FPW_2.
@@ -1199,6 +1282,13 @@ Section G.
       let EQ := fresh "EQsr" in
       assert (EQ : sr = sr') by (vm_compute; reflexivity);
       try rewrite EQ in HR; clear EQ end.
+  (* [find_kword kn a w]: the value expression of the [KWord (SA (ELit 0) a) w _] entry of a
+     normalised knowledge list (used for the errno cell after a refused call). *)
+  Ltac find_kword kn a w :=
+    lazymatch kn with
+    | KWord (SA (ELit 0) a) w ?v :: _ => v
+    | _ :: ?r => find_kword r a w
+    end.
 
   Ltac hdr_byte EV40 Pf off :=
     lazymatch type of EV40 with _ = ?B =>
@@ -1221,8 +1311,8 @@ Section G.
     (* [comment removed for export] *)
     pose (Mkeep := M).
     destruct ST as ((extra & HLx & HR & HK) & PRES & VS).
-    destruct VS as (Vres & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
-    change (nb_of 1) with 135168%Z in Vmaps, Vdisj.
+    pose proof VS as VS0. destruct VS as ((VXr & Vres & VXl & VXs) & Visp & Vlim & rest & Vmaps & Vsz & Vlen & Vlive & Vcont & Vdisj & Vseps).
+    change (nb_of 1) with 135168%Z in Vmaps, Vdisj, Vlive.
     unfold ENV_RD in HR, HK. set (vals := vals_RD sp0 p1 mb gm L B e can sec extra) in *.
     assert (HL : length vals = 40%nat) by (subst vals; unfold vals_RD; rewrite length_app; destruct extra; [discriminate|]; cbn [length tl] in HLx |- *; lia).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
@@ -1263,15 +1353,19 @@ Section G.
       + regv HR (13 : reg). reflexivity.
       + regv HR (14 : reg). apply bv_eq. vm_compute. reflexivity.
       + regv HR (15 : reg). reflexivity.
+      + (* #146: the placement hint is the literal NULL here. *)
+        regv HR (10 : reg). apply place_declined_b_null.
       + (* [comment removed for export] *)
         change (page_round_up_Z 262164) with 266240%Z.
-        apply grant_exists; [ | | | apply grant_budget_intro; [reflexivity | reflexivity |] | unfold init_sp_ok, sp_window_lo; cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; cbn [vm_init_sp]; rewrite ?Visp; lia ];
+        apply grant_exists; [ | | | | apply grant_budget_intro; [reflexivity | reflexivity |] | unfold init_sp_ok, sp_window_lo; cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; cbn [vm_init_sp]; rewrite ?Visp; lia ];
           cbv [m_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]; rewrite ?Vres, ?Vlim, ?Vmaps, ?rsegs_reserved.
         * lia.
+        * vm_compute; reflexivity.
         * apply Forall_app. split.
-          -- repeat constructor; cbn [snd]; rewrite u_small by lia; lia.
+          -- apply Forall_app. split; [repeat constructor; cbn [snd]; rewrite u_small by lia; lia
+             | eapply Forall_impl; [|exact VXs]; intros [? ?] [? ?]; cbn [snd] in *; lia].
           -- constructor; [cbn [snd]; rewrite u_small by lia; lia|]. eapply Forall_impl; [|exact Vsz]. intros [? ?]; cbn [snd]; lia.
-        * rewrite length_app. cbn [length]. lia.
+        * rewrite !length_app. cbn [length]. lia.
         * unfold vm_live_bytes. rewrite Vmaps, target_alloc_limit_val. cbn [live_bytes]. rewrite u_small by lia. lia.
       + (* [comment removed for export] *)
         intros err Herr. cbn [mmap_errnos In] in Herr. destruct Herr as [<-|[]]. subst E.
@@ -1287,10 +1381,10 @@ Section G.
         * exact PRES.
         * intros d m Hd Hm.
           lazymatch type of HK with know_ok _ ?E ?Mc ?kn =>
-            let i := kidx kn (is_kwr_cov (EVar 0) (-8388608)%Z 1%Z) in
-            pose proof (kwr_store_ok RSEGS E Mc kn i (EVar 0) (-8388608)%Z 8388608%Z (-8388608 + d)%Z m HK eq_refl ltac:(lia) ltac:(lia)) as ST end.
+            let i := kidx kn (is_kwr_cov (EVar 0) (-6144513)%Z 1%Z) in
+            pose proof (kwr_store_ok RSEGS E Mc kn i (EVar 0) (-6144513)%Z 6144513%Z (-6144513 + d)%Z m HK eq_refl ltac:(lia) ltac:(lia)) as ST end.
           unfold adenot, v_addi in ST. cbn [a_base a_off BA LA MBA edenot ev] in ST. rewrite P0 in ST.
-          replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + (-8388608 + d))%Z by lia. exact ST.
+          replace (bv_unsigned sp0 - 6144513 + d)%Z with (bv_unsigned sp0 + (-6144513 + d))%Z by lia. exact ST.
       + (* [comment removed for export] *)
         intros B' HG.
         change (page_round_up_Z 262164) with 266240%Z in HG |- *.
@@ -1302,13 +1396,13 @@ Section G.
         assert (GB1 : (0xe6000 <= bv_unsigned B')%Z).
         { (* [comment removed for export] *)
           pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 139264) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X1.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X1.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 204800) (Z_to_bv 64 499712) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X2.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X2.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 704512) (Z_to_bv 64 28672) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X3.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X3.
           pose proof (region_free_In _ _ _ (Z_to_bv 64 733184) (Z_to_bv 64 208896) GF
-                        ltac:(apply in_or_app; left; cbn [In]; tauto)) as X.
+                        ltac:(apply in_or_app; left; apply in_or_app; left; cbn [In]; tauto)) as X.
           rewrite !u_small in X1 by lia. rewrite !u_small in X2 by lia. rewrite !u_small in X3 by lia.
           rewrite !u_small in X by lia. pose proof (u64_range B'). lia. }
         assert (GB2 : (bv_unsigned B' + 266240 <= bv_unsigned B \/ bv_unsigned B + 135168 <= bv_unsigned B')%Z).
@@ -1613,6 +1707,47 @@ Section G.
         * lia.
         * change (page_round_up_Z 135168) with 135168%Z. rewrite task_size_val. lia.   (* [comment removed for export] *)
         * change (page_round_up_Z 135168) with 135168%Z. cbv [m_vmmaps mmap_model with_vmmaps UbReadStage.modelG mkModelA m_vm vmst_maps]. cbn [vm_maps]. rewrite Vmaps. apply map_has_cons. apply map_has_head.
+        * (* the refused free (munmap_errnos): a0 = -ENOMEM, memory and knowledge unchanged, the old
+             buffer stays mapped; musl's free ignores the result and the same code runs on *)
+          intros err Herr. cbn [munmap_errnos In] in Herr. destruct Herr as [<-|[]].
+          rewrite v_addi_pc4 by lia. change (0x9aa50 + 4)%Z with 0x9aa54%Z.
+          lazymatch type of HR with regs_ok ?E _ _ =>
+            pose proof (regs_set_a0 E _ _ (errno_ret ENOMEM) (ELit (- 12)) HR eq_refl) as HR2 end.
+          clear HR. rename HR2 into HR.
+          save_know HK. run_block_keep scr0 137%nat. note_pres HKb EQM PRES.
+          unfold mmap_model, with_vmmaps.
+          cbv [m_vmmaps m_fd m_io m_fsys m_proc m_lim m_time m_vm m_vm_lazy m_vm_materialized vmst_maps vmst_lazy vmst_materialized
+               UbReadStage.modelG mkModelA]. cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
+          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _ _ _) _ _ _ _ _)) _ =>
+            change (realizes RSEGS (mkCfg (mkst Rc (Z_to_bv 64 0x32700) Mc (seg_rom RSEGS)) (modelG (held_of 2) V')) K) end.
+          norm_know HK.
+          lazymatch type of HK with know_ok _ _ _ ?knr =>
+          let ev6 := find_kword knr constr:(0xc4f74%Z) constr:(4%nat) in
+          unfold half_branch in HK1; apply (HK1 _ _ _ B' (edenot E (ev6)));
+          lazymatch type of HR with regs_ok _ ?srf _ =>
+          lazymatch type of HK with know_ok _ _ ?Mf ?knf =>
+            set (rvl := [EVar 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 40; ev6; EVar 7] ++ (EVar 8 :: tl srf));
+            assert (XB : forall k, gblobs content k = eb E ((fun k : nat => k) k)) by (intros; reflexivity);
+            split; [ exists (map (edenot E) srf); split; [rewrite length_map; reflexivity|];
+                     replace (ENV_RD sp0 p1 mb gm L B' (edenot E (ev6)) can sec (map (edenot E) srf) content)
+                        with (xenv E rvl (gblobs content));
+                     [ split; [ apply (regs_ok_xfer E rvl (fun k => k) _ XB srf (sr_HALF 2) _ HR); [reflexivity | reflexivity |]
+                              | apply (know_ok_xfer_entails RSEGS E rvl (fun k => k) _ Mf knf (kn_HALF 2) XB HK) ]
+                     | ]
+                   | split; [exact PRES |] ]
+          end end
+          end.
+          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. repeat (destruct Hi as [<-|Hi]; [reflexivity|]). destruct Hi.
+          -- match goal with |- Forall _ ?l => replace l with (@nil kentry) by (vm_compute; reflexivity) end. constructor.
+          -- unfold ENV_RD, xenv, vals_RD. f_equal. subst rvl. rewrite map_app. cbn [map app tl].
+             cbn [edenot ev]. subst E. cbn [ev]. rewrite P0, P1, P2, P3, P4, P40, P7, P8. reflexivity.
+          -- (* the refused free: the old buffer joins the retained mappings *)
+             apply (vm_stage_keep V _ sp0 mb B B' 1 2 135168 266240);
+               [reflexivity | reflexivity | lia | lia | lia | lia | exact VS0
+               | reflexivity | reflexivity | reflexivity | reflexivity | lia | ].
+             rewrite Vmaps. apply Forall_forall. intros [qb qs] Hq.
+             pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; exact Hq)) as X.
+             rewrite u_small in X by lia. cbn [fst snd]. lia.
         * change (page_round_up_Z 135168) with 135168%Z.
           rewrite v_addi_pc4 by lia. change (0x9aa50 + 4)%Z with 0x9aa54%Z.
           lazymatch type of HR with regs_ok ?E _ _ =>
@@ -1636,7 +1771,7 @@ Section G.
           unfold mmap_model, with_vmmaps.
           cbv [m_vmmaps m_fd m_io m_fsys m_proc m_lim m_time m_vm m_vm_lazy m_vm_materialized vmst_maps vmst_lazy vmst_materialized
                UbReadStage.modelG mkModelA]. cbn [vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
-          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _) _ _ _ _ _)) _ =>
+          lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) (mkModelOf _ (mkVmState ?V' _ _ _ _) _ _ _ _ _)) _ =>
             change (realizes RSEGS (mkCfg (mkst Rc (Z_to_bv 64 0x32700) Mc (seg_rom RSEGS)) (modelG (held_of 2) V')) K) end.
           unfold half_branch in HK1. apply (HK1 _ _ _ B' (edenot E (EExt true 0 4 (EVar 6)))).
           lazymatch type of HR with regs_ok _ ?srf _ =>
@@ -1651,29 +1786,18 @@ Section G.
                      | ]
                    | split; [exact PRES |] ]
           end end.
-          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. destruct Hi as [<-|[]]. reflexivity.
+          -- intros i Hi Hne. exfalso. apply Hne. vm_compute in Hi. cbv [In] in Hi. repeat (destruct Hi as [<-|Hi]; [reflexivity|]). destruct Hi.
           -- match goal with |- Forall _ ?l => replace l with (@nil kentry) by (vm_compute; reflexivity) end. constructor.
           -- unfold ENV_RD, xenv, vals_RD. f_equal. subst rvl. rewrite map_app. cbn [map app tl].
              cbn [edenot ev]. subst E. cbn [ev]. rewrite P0, P1, P2, P3, P4, P40, P7, P8. reflexivity.
-          -- (* [comment removed for export] *)
-             unfold vm_stage. cbn [vm_reserved vm_init_sp vm_limit vm_maps]. split; [exact Vres|]. split; [exact Visp|]. split; [exact Vlim|].
-             rewrite Vmaps.
-             assert (Hbb : B' <> B) by (intros HH; rewrite HH in GB2; lia).
-             exists (map_remove rest B). split; [|split; [|split; [|split; [|split; [|split]]]]].
-             ++ change (nb_of 2) with 266240%Z. rewrite map_remove_skip by exact Hbb. rewrite map_remove_head. reflexivity.
-             ++ apply incl_Forall with (l1 := rest); [|exact Vsz]. unfold map_remove. apply incl_filter.
-             ++ pose proof (map_remove_length rest B). lia.
-             ++ pose proof (live_bytes_map_remove_le rest B). lia.
-             ++ destruct Vcont as (pc & Cin & C1 & C2). exists pc. split; [|split; assumption].
-                unfold map_remove. apply filter_In. split; [exact Cin|]. destruct pc as [cb cs]. cbn [fst snd] in C1, C2 |- *.
-                apply Bool.negb_true_iff. unfold bv_eqb. apply Z.eqb_neq. intros HH.
-                pose proof (proj1 (Forall_forall _ _) Vdisj _ Cin) as X. cbn [fst snd] in X.
-                pose proof (proj1 (Forall_forall _ _) Vsz _ Cin) as Y. cbn [snd] in Y. lia.
-             ++ apply Forall_forall. intros [qb qs] Hq. cbn [fst snd]. change (nb_of 2) with 266240%Z.
-                unfold map_remove in Hq. apply filter_In in Hq as [Hq _].
-                pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; right; exact Hq)) as X.
-                rewrite u_small in X by lia. lia.
-             ++ unfold map_remove. apply seps_filter. exact Vseps.
+          -- (* the cut: the ledger loses the old buffer *)
+             apply (vm_stage_cut V _ sp0 mb B B' 1 2 135168 266240);
+               [reflexivity | reflexivity | lia | lia | lia | lia | exact VS0
+               | reflexivity | reflexivity | reflexivity | reflexivity | lia | ].
+             rewrite Vmaps. apply Forall_forall. intros [qb qs] Hq.
+             pose proof (region_free_In _ _ _ qb qs GF ltac:(apply in_or_app; right; exact Hq)) as X.
+             rewrite u_small in X by lia. cbn [fst snd]. lia.
+
   Qed.
 End G.
 

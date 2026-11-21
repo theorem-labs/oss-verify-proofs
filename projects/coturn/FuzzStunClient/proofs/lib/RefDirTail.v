@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section takes the launch input, mmap base, entry point, uid and hwcap of the 12-argument main_entry and the stderr write's channel reader, and the argument pointer follows the launch's string layout. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -64,24 +65,31 @@ Section DirTail.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; dot_path] envv rdraw tid regs0 mem0.
+  (* LPS 08b1429: the launch input, mmap base, entry point, uid/hwcap and the 12-argument
+     [main_entry] (as in RefMainEntryN). *)
+  Variable inp : ProcInput.
+  Variables mbase entry : word.
+  Variables uid hw : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; dot_path] envv uid hw rdraw tid regs0 mem0.
 
   Theorem dir_tail : forall (R : bvmap 5 word) (M : word -> option byte) (model : Model),
     m_halted model = None -> m_vm_lazy model = [] ->
     fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
-    dir_tail_pre sp0 (p1 sp0 a0s dot_path envv) (bv_unsigned tid) mem0 R M ->
+    m_channel_reader model = true ->   (* LPS 08b1429: the stderr write's channel reader *)
+    dir_tail_pre sp0 (p1 a0s dot_path envv rdraw inp) (bv_unsigned tid) mem0 R M ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13c0c) M (seg_rom RSEGS)) model)
                (t_die (msg_read_error dot_path) (m_fs model)).
   Proof.
-    intros R M model Hh Hlazy Hfd2 P.
+    intros R M model Hh Hlazy Hfd2 Hrdr P.
     destruct P as [Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htidr Mself [cn Mcanary] Mpagesz Habove].
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in SPlo, SPhi.
-    edestruct (main_strN sp0 [a0s; dot_path] envv rdraw tid regs0 mem0 Hva Hve Hvsp ME 1%nat) as (Sr & Slo & Shi & Slen & (t8 & Ht8) & Send);
-      [cbn; lia|].
+    edestruct main_strN with (k := 1%nat) (sp0 := sp0) (av := [a0s; dot_path]) (envv := envv) (rdraw := rdraw)
+      (tid := tid) (regs := regs0) (mem := mem0) (inp := inp) (mbase := mbase) (entry := entry) (uid := uid) (hw := hw)
+      as (Sr & Slo & Shi & Slen & (t8 & Ht8) & Send); try eassumption; try (cbn; lia).
     cbn [nth length Nat.add dot_path app] in Sr, Slo, Shi, Ht8.
-    set (pp := p1 sp0 a0s dot_path envv) in *.
-    change (cat_argv_ptr sp0 [a0s; dot_path] envv 1) with pp in Sr, Slo, Shi, Ht8.
+    set (pp := p1 a0s dot_path envv rdraw inp) in *.
+    change (cat_argv_ptr (ed_top rdraw) [a0s; dot_path] envv (in_execfn inp) 1) with pp in Sr, Slo, Shi, Ht8.
     change (Z.of_nat 1) with 1%Z in Ht8.
     pose proof (u64_range pp) as Hppr.
     assert (Hstr : rdn RSEGS M pp 2 = Some [Z_to_bv 8 46; Z_to_bv 8 0]).
@@ -89,7 +97,7 @@ Section DirTail.
     assert (Ht8' : rdn RSEGS M (Z_to_bv 64 (bv_unsigned pp + 1)) 8 = Some t8).
     { rewrite <- Ht8. apply rdn_agree. intros j Hj. apply Habove.
       rewrite (u_small (bv_unsigned pp + 1)) by lia. rewrite u_small by lia. lia. }
-    apply (ref_read_error_dot sp0 [] model Hvsp Hh Hlazy Hfd2 pp (bv_unsigned tid) cn R M
+    apply (ref_read_error_dot sp0 [] model Hvsp Hh Hlazy Hfd2 Hrdr pp (bv_unsigned tid) cn R M
              Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htidr Mself Mcanary
              Mpagesz Slo t8 ltac:(lia) Hstr Ht8').
   Qed.

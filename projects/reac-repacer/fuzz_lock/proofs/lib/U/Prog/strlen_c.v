@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/R_strlen.v, with its module paths changed; 4 of its 24 lines of code are new or changed and 164 lines of the source are left out. *)
-(* Modified by Theorem Labs: ported from libreac/fuzz_disco proofs/libreac/fuzz_disco/lib/U/Prog/strlen_c.v at 25e3d17bdb5059606131377a3722d585415ab5d6, donor pin sha256 56121de6ba4cff85e0fa262e9783f384e35fb8642d057f7a3a4290bcc245b22e, for reac-repacer/fuzz_lock: module paths and image addresses only, entry strlen 0x1f12c (donor) -> 0x1b5b0 (this image). *)
+(* Modified by Theorem Labs: ported from libreac/fuzz_disco proofs/libreac/fuzz_disco/lib/U/Prog/strlen_c.v, donor pin sha256 56121de6ba4cff85e0fa262e9783f384e35fb8642d057f7a3a4290bcc245b22e, for reac-repacer/fuzz_lock: module paths and image addresses only, entry strlen 0x1f12c (donor) -> 0x1b5b0 (this image). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Lib Require Import PropExec MState Mem Exec Frame Step Cells Arr Bytes.

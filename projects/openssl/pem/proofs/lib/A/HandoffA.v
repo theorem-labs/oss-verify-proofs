@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up facts stated over the launch's ProcInput; the write-certified stack window; the launch premises). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -27,18 +28,20 @@ Definition hs_start_ok (ch : acs) : bool :=
 Section Start.
 Context {XB : BlobEnv}.      (* [comment removed for export] *)
 Variables (A : atable) (LIMIT : Z) (fs : Fs).
-Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word).
+Variables (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput).
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hlaunch : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 Hypothesis SEGS_in_hull : forall a : word, APS.in_hull A (bv_unsigned a) = false -> find_segment asegs (bv_unsigned a) 1 = None.
 Hypothesis HULL_ok : APS.hull_ok A.
 Hypothesis Hsegtop : img_hi A = SEGTOP_A.
 Hypothesis Hseglo : img_lo A = SEGLO.
 
-#[local] Notation SINV := (SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 ph sp rdraw argv envp uid hw).
+#[local] Notation SINV := (SINV0 ph apc sp rdraw brk0 mbase inp).
+#[local] Notation argH := (argH0 sp rdraw inp).
+#[local] Notation argv := (in_argv inp).
 #[local] Notation usp := (bv_unsigned sp).
 
 Variables (E : env) (ch : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
@@ -60,7 +63,12 @@ Hypothesis Hsig : sigma0_ok RT CG Σ (usp - USP_OFF).
 Hypothesis HLIB : LIB m.
 
 Lemma hsa_argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ usp <= bv_unsigned a.
-Proof. intros E1 a H. exact (ha_argH_high ph sp rdraw argv envp uid hw Hsp Hva E1 a H). Qed.
+(* [argH0_high]'s first explicit argument is [segs] (AsanInit.v:812), and it occurs in
+   neither the conclusion nor the [argH0 ... = true] premise, so unification cannot find
+   it and [eapply] leaves a bare [list Segment] goal that [eassumption] cannot close --
+   measured with an [About] probe, which printed
+   "HSA_LEFT_A: (list Segment)".  Pass it. *)
+Proof. intros E1 a H. eapply (argH0_high asegs); eassumption. Qed.
 
 (* [comment removed for export] *)
 Lemma hsa_isp : sp_window_lo <= usp <= sp_window_hi.
@@ -89,12 +97,15 @@ Proof.
            Hallow Hawf Hminv Hartm Hfd' (usp - USP_OFF) (usp + 8) R1 R2 R4 R10 R11 Hart).
   - exact (hi_mem_inv asegs A LIMIT SINV argH usp fs SEGS_in_hull HULL_ok hsa_argH_high E ch R FULL model HC (rt_allow RT Σ) Hallow Hro).
   - exact (hi_clx A LIMIT SINV argH usp fs SEGS_in_hull HULL_ok hsa_argH_high E ch R FULL model HC (rt_allow RT Σ) Hallow Hsegtop Hseglo LIB HLIB Hclx).
-  - exact (hi_argv A LIMIT fs ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit SEGS_in_hull HULL_ok E ch R FULL model HC
-             (rt_allow RT Σ) Hallow Hargv).
+  - eapply hi_argv; eassumption.
   - pose proof (hi_stk asegs A LIMIT SINV argH usp fs SEGS_in_hull HULL_ok E ch R FULL model HC (rt_allow RT Σ) Hallow hsa_isp Hstk) as S.
-    rewrite hsa_sp0 in S. rewrite Hsp0. unfold STACK_WIN. exact S.
+    (* [exact] closes the gap by conversion: STACK_WOK delta-reduces to 8388608 - 2244095
+       and computes to the 6144513 that hi_stk states.  The old [unfold STACK_WIN] would
+       now fail, the constant no longer occurring in this goal. *)
+    rewrite hsa_sp0 in S. rewrite Hsp0. exact S.
   - exact Hsig.
-  - rewrite Hsp0. unfold STACK_WIN, USP_OFF in *. split; [exact U1|]. split; [lia|]. lia.
+  - rewrite Hsp0. assert (WOKV : STACK_WOK = 6144513) by reflexivity. unfold USP_OFF in *.
+    split; [exact U1|]. split; [lia|]. lia.
 Qed.
 
 (* [comment removed for export] *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: array_list_new2_A_cps and printbuf_reset_A take it after alloc_ceiling <= lo). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -50,7 +51,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (isz lo : Z) (errv : word),
 HEAPAx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 32 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 32 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -63,7 +64,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 array_list_new2_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until errv. intros HP ST LO LOS SPA HT ERR TP RA A0 A1 Hisz1 Hisz2 BB BD K.
+intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP RA A0 A1 Hisz1 Hisz2 BB BD K.
 unfold_consts. unfold al_new2_costB in BB. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -248,7 +249,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 (Q : machine_state -> Prop),
 HEAPAx A ((pb, PB_SZ) :: (buf, cap) :: LB) LM FRS B m md ->
 pbuf_core asegs m pb buf bpos cap content ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 16 -> bv_unsigned ra mod 2 = 0 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 16 -> bv_unsigned ra mod 2 = 0 ->
 (forall (a1' a2' a3' a4' : word) m',
 munch [(buf, buf + 1); (pb + 8, pb + 12); (bv_unsigned sp - 16, bv_unsigned sp)] m m' -> wmono asegs m m' -> mem_inv asegs m' ->
 pbuf_core asegs m' pb buf 0 cap ([Z_to_bv 8 0] ++ skipn 1 content) -> stk asegs m' lo (bv_unsigned sp) ->
@@ -257,7 +258,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 evt asegs Q (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 pb) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 printbuf_reset_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until Q. intros HP (Hbp & Hcap & Hlen & PBS & PBUF) ST LO LOS RA K.
+intros until Q. intros HP (Hbp & Hcap & Hlen & PBS & PBUF) ST LO HBT LOS RA K.
 unfold printbuf_reset_A_entry in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -374,7 +375,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (isz lo : Z) (errv : word),
 HEAPAx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 32 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 32 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -387,7 +388,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 array_list_new2_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until errv. intros HP ST LO LOS SPA HT ERR TP RA A0 A1 Hisz1 Hisz2 BB BD K.
+intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP RA A0 A1 Hisz1 Hisz2 BB BD K.
 unfold_consts. unfold al_new2_costB in BB. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -588,7 +589,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 (Q : machine_state -> Prop),
 HEAPAx A ((pb, PB_SZ) :: (buf, cap) :: LB) LM FRS B m md ->
 pbuf_core asegs m pb buf bpos cap content ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 16 -> bv_unsigned ra mod 2 = 0 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 16 -> bv_unsigned ra mod 2 = 0 ->
 (forall (a1' a2' a3' a4' : word) m',
 munch [(buf, buf + 1); (pb + 8, pb + 12); (bv_unsigned sp - 16, bv_unsigned sp)] m m' -> wmono asegs m m' -> mem_inv asegs m' ->
 pbuf_core asegs m' pb buf 0 cap ([Z_to_bv 8 0] ++ skipn 1 content) -> stk asegs m' lo (bv_unsigned sp) ->
@@ -597,7 +598,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 evt asegs Q (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 pb) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 printbuf_reset_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until Q. intros HP (Hbp & Hcap & Hlen & PBS & PBUF) ST LO LOS RA K.
+intros until Q. intros HP (Hbp & Hcap & Hlen & PBS & PBUF) ST LO HBT LOS RA K.
 unfold printbuf_reset_A_entry in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].

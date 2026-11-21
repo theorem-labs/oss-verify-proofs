@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Rests on memnorm only as EXB's exv_rm keep, carried across the runs (YC1fPx.v _inv runners, ExvB_Loop_exw.v's
-   exvl_P) into KIT_RUNs (old-pin kit 4f18c75d4900); not on tex_word_specX. *)
+   exvl_P) into KIT_RUNs (old-pin kit); not on tex_word_specX. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan), ex_value, segment CL, piece B1 (the item): the part AFTER
    the nested call, from its return site B 0x83c98 (exv_pc 0x76c) to the cut LS (B 0x83ca0, exv_pc 0x774) or to the exit
    CX (B 0x83fa8, exv_pc 0xa7c). ExvB_Loop_B1.v makes the call and closes the piece with these two lemmas.

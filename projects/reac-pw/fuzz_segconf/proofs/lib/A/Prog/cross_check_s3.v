@@ -1,11 +1,11 @@
 (* Segment 3 of the walk of cross_check on reac-pw/fuzz_segconf's ASan image A (fuzz_segconf.asan 0x89218): the
    epilogue, 0x89460 (CC_EPI = AF_cross_check + 0x248) to the return at 0x89498, in the form of
-   plugin-hostd/fuzz_command's lib/A/Prog/check_reply_s8.v and numberR.v (origin/ossv/recipes 501c0d516c69): a
+   plugin-hostd/fuzz_command's lib/A/Prog/check_reply_s8.v and numberR.v: a
    symbolic state is seeded at the cut from INV_EPI, one plain run (PaLibF.v paj_run_sh) walks the 15
    instructions, and paj_ret_at gives the return configuration, whose post is apost_base lifted to apost_baseF by
    PaFx.v apost_baseF_of_base (the epilogue changes no FP state).
 
-   The instructions walked (the unit's internal record, commit dfb49d6ad789,
+   The instructions walked (the unit's internal record,
    path records/segp/dis/cross_check.fuzz_segconf.asan.s lines 148-162), no branch, no call, no store and
    no inline check:
      0x89460 ld ra,0x78(sp)   0x89464 ld s0,0x70(sp)   0x89468 ld s1,0x68(sp)   0x8946c ld s2,0x60(sp)

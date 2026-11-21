@@ -1,23 +1,24 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v and AD2p.v at
-   c8557374ad2e. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
+   theorem-labs/oss-verify-proofs@6b32741d849a. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
    assembly): it instantiates KnockClose's asan Section at closed parts, so fuzz_knock's two ASan statements rest on no
    Section hypothesis. cgif's AD2o keeps three program-walk hypotheses that its AD2p discharges; knock's program contract
    (lib/A/APgLib.v knock_lib_x_all) takes none, so the closing is one file and there is no AD2p. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/AD2o.v at origin/ossv/recipes 6ebe35ba632; taken for
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/AD2o.v; taken for
    reac-pw/fuzz_pin image A: it instantiates lib/A/PinClose.v's asan Section (its 13 arguments, the trace tables of
    lib/A/ACej.v / ACejTfib.v in places 8-12); the program contract is lib/A/PPgLib.v's (pin_lib_contract_x_all_tfib over
    pin_lib_x_all, in the roles of APgLib's knock_ names), and its proof pin_lib_x is stated here, from the program walks'
    top lemmas with their wrapper, allocator and image hypotheses bound at pin's B (lib/A/PinWrapBinders.v), in the place
    knock's APgLib.v:305-312 proves knock_lib_x_all; the allocator parts are lib/A/PinAllocClose.v's; the shape equation
    pin_ag_sil_shape_eq is stated for image B; names knock_* -> pin_*, module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.reac_pw.fuzz_pin Require Statements.
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require Import YK11 YG00 YG01 YG0f YG0d YC5d YCbp YM05.
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YG0q YO09.
-From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.A Require AWalkFw0 AB01 AB12 AB1n ACej ACejTfib AD2l AD2m AD1k AD1o AD1l AD1j AD1q.
+From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.A Require AWalkFw0 AB01 AB01r AB12 AB1n ACej ACejTfib AD2l AD2m AD1k AD1o AD1l AD1j AD1q.
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.A Require AD1u ACeh AE2k.
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.A Require PPgLib PPgMain PPgParse PPgCat PPgRow PPgLeaf.
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.A Require PinAllocClose PinWrapBinders PinAsanTop PinClose.
@@ -38,7 +39,7 @@ Proof. reflexivity. Qed.
    the side stack for frames, the wrappers and the read-only objects' fact pin_ro_law (lib/A/PinWrapBinders.v), the
    sink's image laws (lib/A/AD1u.v tfib_AIL), the callees at their contracts (lib/A/PPgRow.v, PPgParse.v with
    PPgCat.v's reac_box_catalogue, PPgLeaf.v), the meter's laws (ameter_triv, lib/Reusable/YCbp.v) and XL0_HXL. The
-   allocator's malloc and free facts are premises here (fuzz_ctrl's form, origin/ossv/recipes 7097a4593001
+   allocator's malloc and free facts are premises here (fuzz_ctrl's form,
    proofs/libreac/fuzz_ctrl/lib/A/ACtl.v:1184-1185): pin_driver_TfibB passes the ones PinClose's H_DRIVER receives,
    and pin_lib_x passes lib/A/PinAllocClose.v's. *)
 Ltac pin_bind AM AF LEAF :=
@@ -86,7 +87,7 @@ Lemma pin_driver_TfibB : forall rc : YM05.RunCeil,
   (forall fx : YK11.FPState, @aintrin_realizes fx rc AWalkFw0.tfibsegs AD2l.TfibB OCpy (pc_wrap_memcpy (as_code AD2l.TfibB))) ->
   universe_ok (as_universe AD2l.TfibB) ->
   (forall t, In t ACejTfib.Tfib_drv_traces -> In t (as_universe AD2l.TfibB)) ->
-  PinClose.drv_mainA AB01.HS_tfib AB12.TFIB rc.
+  PinClose.drv_mainA AB01r.HS_tfib_r AB12.TFIB rc.
 Proof.
   intros rc AM AF AI _ _.
   exact (@AD1q.DRV_MAINX rc AD2l.TfibB AD2l.TfibB_syms (AM YK11.fx0) (AF YK11.fx0) (AI YK11.fx0)
@@ -107,11 +108,11 @@ Proof.
 Qed.
 
 (* PinClose's asan Section at its parts, in its order: HS_TBL / TFIB_TBL / H_STARTUP from the start-up certificate
-   (AB01.HS_tfib, AB12.TFIB, AB1n.tfib_startup_T1), B := AD2l.TfibB, the allocator parts from lib/A/PinAllocClose.v, the
+   (AB01r.HS_tfib_r, AB12.TFIB, AB1n.tfib_startup_T1), B := AD2l.TfibB, the allocator parts from lib/A/PinAllocClose.v, the
    trace tables of lib/A/ACej.v / ACejTfib.v with H_TRACES_B by reflexivity, and H_DRIVER from pin_driver_TfibB. *)
 Theorem ASAN_T_closed : PinAsanTop.ASAN_T.
 Proof.
-  exact (PinClose.ASAN_T_of_parts AB01.HS_tfib AB12.TFIB AB1n.tfib_startup_T1 AD2l.TfibB
+  exact (PinClose.ASAN_T_of_parts AB01r.HS_tfib_r AB12.TFIB AB1n.tfib_startup_T1 AD2l.TfibB
     PinAllocClose.pin_amalloc_closed PinAllocClose.pin_afree_closed PinAllocClose.pin_aicpy_closed
     ACej.Tfib_universe ACej.Tfib_universe_ok eq_refl ACejTfib.Tfib_drv_traces ACejTfib.Tfib_universe_drv
     pin_driver_TfibB).

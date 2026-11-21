@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: grant_vs_image reads the image's reservations as the prefix of the reserved ledger (lok_resv). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -34,7 +35,8 @@ Lemma grant_vs_image : forall mo (a : word) k, LOK asegs mo -> mmap_grant mo a k
   bv_unsigned a + k <= AIMG_LO \/ AIMG_HI <= bv_unsigned a.
 Proof.
   intros mo a k HO (AL & POS & CE & RF) Hk. rewrite region_free_app in RF. apply andb_true_iff in RF as [RF _].
-  rewrite (lok_resv _ _ HO), asegs_reserved_sec in RF. cbn [region_free] in RF. unfold iv_overlap in RF.
+  destruct (lok_resv _ _ HO) as (rx & Hrx & _). rewrite Hrx, region_free_app in RF. apply andb_true_iff in RF as [RF _].
+  rewrite asegs_reserved_sec in RF. cbn [region_free] in RF. unfold iv_overlap in RF.
   rewrite !unsigned_lit in RF by lia.
   repeat (apply andb_true_iff in RF as [?X RF]; apply negb_true_iff in X; apply andb_false_iff in X; destruct X as [X|X]; apply Z.ltb_ge in X);
   unfold AIMG_LO, AIMG_HI; lia.

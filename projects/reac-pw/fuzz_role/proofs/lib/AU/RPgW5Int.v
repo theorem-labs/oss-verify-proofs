@@ -1,14 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 1082 of its 1124 lines of code are new or changed and 284 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Int.v at a66696a9b1d1 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Int.v for the same unit's
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; image B keeps the Int-7 value pod in the frame
    object e42 (F + 0x180) and writes it with the out-of-line pod_write_ent (0x82404), where image A put the pod
    straight into the first block with four inlined pod_put32 calls, so the walk is four runs (the scope stores and
@@ -19,7 +19,7 @@
    R+0x90, R+0x160, R+0x168) are image B's; the chaining is lib/AU/RtPgStepsB.v's rtsb_post_seq / rtsb_intrin_seq /
    rtsb_pwe_seq; the prefixes w5_ / w5i_ become w5b_ / w5bi_, rtm_ becomes rtmb_. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgW5IntB.v, with its module paths, module names, addresses and numbers changed; 495 of its 1141 lines of code are new or changed and 478 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Int.v at a66696a9b1d1 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Int.v for the same unit's
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; image B keeps the Int-7 value pod in the frame
    object e42 (F + 0x180) and writes it with the out-of-line pod_write_ent (0x82404), where image A put the pod
    straight into the first block with four inlined pod_put32 calls, so the walk is four runs (the scope stores and
@@ -29,7 +29,7 @@
    shadow offset, t0 / t4 / a4 kept across the call in s2 / s6 / s8) and the real-frame cells (R+0x78, R+0x80,
    R+0x90, R+0x160, R+0x168) are image B's; the chaining is lib/AU/RtPgStepsB.v's rtsb_post_seq / rtsb_intrin_seq /
    rtsb_pwe_seq; the prefixes w5_ / w5i_ become w5b_ / w5bi_, rtm_ becomes rtmb_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW5IntB.v at 2ebedbb4253d for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW5IntB.v for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; role B's pcs
    (SELI 0x81b98 -> LATCH7 0x81d88, checked_memset 0x51608, pod_write_ent 0x82bac, return pcs 0x81bec / 0x81c0c), its
    real-frame cells (F + 0x18c in R+0x60, F + 0x180 in R+0x68, pp + 0x400c in R+0x78, first in R+0x138,
@@ -38,6 +38,7 @@
    s10 := -8 before the latch); the pod_write_ent site is lib/AU/RPgStepsU.v's rl_pwe_site_81c08 / rl_pwe_at; the kit
    names are lib/AU/RPgSteps.v's rl_, RPgMem.v's rm_ and RPgW5Kit.v's w5_; the prefixes w5b_ / w5bi_ become
    w5_ / w5i_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the core walk of the Int-7

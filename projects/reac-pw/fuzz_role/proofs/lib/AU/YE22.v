@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE22.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: by h-rw-pre-6, the .got canary cell (A_GOT_CANARY, V_GOT_CANARY) is row 209 of scene's generated Tfib_const_abs (AF0m / YF0m of cold/h-rw-pre-6-startgen-rec d756770719b), not cgif's row 193. *)
+(* Modified by Theorem Labs, 2026-10: by h-rw-pre-6, the .got canary cell (A_GOT_CANARY, V_GOT_CANARY) is row 209 of scene's generated Tfib_const_abs (AF0m / YF0m), not cgif's row 193. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AE22.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AE22.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AE22.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

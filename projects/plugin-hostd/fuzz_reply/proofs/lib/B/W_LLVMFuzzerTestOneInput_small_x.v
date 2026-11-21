@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of image B's four small arms of fuzz_reply's
-   LLVMFuzzerTestOneInput (lib/B/W_LLVMFuzzerTestOneInput_small.v, the AR proofs, Qed at
-   commit b48d2f61046; they build unchanged on this cut) to the cut invariants of
+   LLVMFuzzerTestOneInput (lib/B/W_LLVMFuzzerTestOneInput_small.v, the AR proofs, Qed;
+   they build unchanged on this cut) to the cut invariants of
    lib/B/W_LLVMFuzzerTestOneInput_cut_x.v (the generic allocator relation ARx).  Each theorem is exactly one of B
    cut_x's Section w hypotheses: lf_arm_close_x = ARM_close, lf_arm_eintr_x = ARM_eintr, lf_arm_sendmax_x =
    ARM_sendmax, lf_arm_default_x = ARM_default.  Neither _small.v nor cut_x is edited.  The template is image A's
@@ -66,7 +67,7 @@ Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 Section smx.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
-(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:200-244) ---- *)
+(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:201-245) ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.

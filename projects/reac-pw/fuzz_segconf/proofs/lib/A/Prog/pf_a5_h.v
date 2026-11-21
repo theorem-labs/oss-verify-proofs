@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,12 +37,13 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 532 of its 583 lines of code are new or changed and 402 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A: segment A5 of reac_segconf_parse_file, the pieces HEAD / R1 / R2 of
    lib/A/Prog/pf_a5_d.v (segment A5's proof, 2026-10-30).
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-A walk: segment A5's HEAD / R1 / R2
    pieces; the function's rule-24 record is
-   the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md).
-   The code (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   the unit's internal record, path records/segp/g3-lookup.md).
+   The code (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s):
      HEAD 0x87ddc addi a1,zero,0xa; mv a0,s9; 0x87de4 jal the strchr trampoline (return 0x87de8 = R1).
      R1   0x87de8 mv s5,a0; beqz a0,0x87e00.
@@ -53,7 +54,7 @@
    as trim_s.v's seed), a token run of the symbolic executor (SegPaLib.v paj_run_tok / paj_run_to_tok, the branch
    by psrr_branch_tok), the interceptor call through lib/A/Prog/PaArt.v aj_art_at (as trim_s.v's strlen call), and
    the next point's INV rebuilt with pf_a5_k.v's a5_move0 (a5h_step below). The functional facts are the plain
-   proof's (lib/Prog/pf_p2.v `head`, 04f2be60e018): strchr's answer is pf_line's end (a5h_break_first /
+   proof's (lib/Prog/pf_p2.v `head`): strchr's answer is pf_line's end (a5h_break_first /
    a5h_break_none over SegModel.break_nl), and pf_next by pfA_facts.v L_next_holds.
    Section hypotheses: ASTRCHR (the interceptor owner's row 6, RtSeg.astrchr_realizes at the listing's strchr
    trampoline), ASTRLEN (row 16, RtString.astrlen_realizes at the listing's strlen trampoline), TL (the listing's

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Sj_h_deldtor.v, lines 156, 214, 250. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -152,7 +153,7 @@ Definition deldtor_cps : Prop :=
   In (ia, nia) (rt_live RT Σ) -> In (oc, noc) (rt_live RT Σ) -> In (idx, nidx) (rt_live RT Σ) ->
   ia <> oc -> ia <> idx -> ia <> THIS -> oc <> idx -> oc <> THIS -> idx <> THIS -> 0 <= nia -> 0 <= noc -> 0 <= nidx ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 32 + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 32 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> unwind_ok ra s0 sp -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc e_deldtor m)))
@@ -210,7 +211,7 @@ Proof using AF DELA DEL1.
     assert (INT1 : In (THIS, 96) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [exact INT| cbn [fst]; lia]).
     assert (INO1 : In (oc, noc) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [exact INO| cbn [fst]; lia]).
     assert (INI1 : In (idx, nidx) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [exact INI| cbn [fst]; lia]).
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (FR2 : rw_cells asegs m2 (usp + -32) [CB 8 j; C8 s1; C8 s0; C8 ra]).
     { apply (rw_cells_agree_nw asegs m1 m2 _ _ FR1). apply (agree_of_pres _ _ _ _ _ _ PRES2). pres_tac. }
     assert (TH2 : rw_cells asegs m2 THIS (dl_cells vptr pre8 (Z_to_bv 64 idx) mid (Z_to_bv 64 oc) (Z_to_bv 64 0) rest)).
@@ -246,7 +247,7 @@ Proof using AF DELA DEL1.
       rewrite (ret_pc_even 0xdc680) in Hc4' by lia.
       assert (INT2 : In (THIS, 96) (rt_live RT Σ2)) by (rewrite LV2; apply live_remove_keep; [exact INT1| cbn [fst]; lia]).
       assert (INI2 : In (idx, nidx) (rt_live RT Σ2)) by (rewrite LV2; apply live_remove_keep; [exact INI1| cbn [fst]; lia]).
-      assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2, SP1; exact LOW).
+      assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2, SP1; exact LOW).
       assert (FR4 : rw_cells asegs m4 (usp + -32) [CB 8 j; C8 s1; C8 s0; C8 ra]).
       { apply (rw_cells_agree_nw asegs m3 m4 _ _ FR3). apply (agree_of_pres _ _ _ _ _ _ PRES4). pres_tac. }
       assert (TH4 : rw_cells asegs m4 THIS (dl_cells vptr pre8 (Z_to_bv 64 idx) mid (Z_to_bv 64 0) (Z_to_bv 64 0) rest)).

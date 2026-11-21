@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: arm 7 (op_event) of the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of
    fuzz_reply's LLVMFuzzerTestOneInput (0x84408): the segment ARM_event of lib/B/W_LLVMFuzzerTestOneInput_cut.v (:756,
-   frozen at 7d4f6d8955b), from the arm's entry 0x8496c (BASE + AF_arm_event 0x2628) to the latch 0x84804, as a cgif
+   frozen), from the arm's entry 0x8496c (BASE + AF_arm_event 0x2628) to the latch 0x84804, as a cgif
    segment walk (an SRr from one cut point's invariant to the next).  The closing theorem lf_arm_event_b has the type
    of the cut's Section hypothesis ARM_event.
    B's code (read from fuzz_reply.asan-ubsan with capstone 5.0.7, CS_MODE_RISCV64|CS_MODE_RISCVC; registers in the
@@ -26,19 +26,20 @@
      0x84da0  ld s8,96(s1); ld s9,88(s1); li s7,1; j 0x84804
    PORTED (structure, not statements): the arm's instruction runs, symbolic states, trap handling and case split
    from the old-framework image-B walk lib/B/Prog/SlotPass7.v (aop7_head / _mal / _cpy / _ev / _chk / _fr / _tl),
-   SlotPass7F.v and SlotPass7P.v (a working branch fc302b5d0678, last change 9f98f440c5f), with
+   SlotPass7F.v and SlotPass7P.v (a working branch, last change), with
    AsanDispEntry.v / AsanJT.v for the jump-table step (here the cut's proved lf_seg_jt); the W-side plumbing (the
    segment-1 seat, the tail's transport kit et_..., the call sites) from image A's twin
-   lib/A/W_LLVMFuzzerTestOneInput_event.v (a working branch deafdad8e53 for segment 1 and the tail
-   up to relay_event; a working branch 1172d6d9065 for et_nodup .. et_aout_errno,
+   lib/A/W_LLVMFuzzerTestOneInput_event.v (a working branch for segment 1 and the tail
+   up to relay_event; a working branch for et_nodup .. et_aout_errno,
    et_jt_of_rom and ev_tail from relay_event's return to the latch; read only), restated over B's cut (no `full`
    flag, B's registers s7 = q / s8 = slen / s9 = rest / s6 = len / s4 = cursor, B's pcs, the flag word and the F+88
    slot B's latch reloads); the B transport lemmas ek_... from
-   lib/B/W_LLVMFuzzerTestOneInput_latch.v (a working branch ee519e5e2f5, lt_...), and
-   lib/B/W_LLVMFuzzerTestOneInput_small.v (a working branch c87d41e35ac) for the B entry form.
+   lib/B/W_LLVMFuzzerTestOneInput_latch.v (a working branch, lt_...), and
+   lib/B/W_LLVMFuzzerTestOneInput_small.v (a working branch) for the B entry form.
    The five trap edges (_cut.v's table): 0x84978 / 0x84cf8 (PTR_INC) and 0x84d30 (NONNULL) are decided by the runner
    from the seat's atom facts; 0x84d2c (PTR_BLTU) by W_traps.v trap_ptr_bltu; 0x84d64 (PTR_NOT) by W_traps.v
    trap_ptr_wrap_not. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -70,7 +71,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_rep W_contr
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Rt Require Import StrnlenDef.
 (* RelocB's sink-instance guard (after the Import of YE2k): every sink argument is passed with @ or from the Context *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ReplyGuardB.
-(* sl_tr_peak_le_alloc: re_spec's byte peak premise from LS_event_relay's sum form (image A: commit 42f4743328b);
+(* sl_tr_peak_le_alloc: re_spec's byte peak premise from LS_event_relay's sum form (image A:);
    W_tr_peak comes with cand13's B kit *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require W_tr_peak.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_LLVMFuzzerTestOneInput_cut.
@@ -166,7 +167,7 @@ Hypothesis HG_carry : forall a, inG et_GL a -> inG G_fr a.
 Hypothesis HERR_AP : forall a, inG et_GL a -> ~ (as_errno B <= a < as_errno B + 4).
 
 (* ================================================================= the transport kit, part 1 (B, below CEIL8).
-   lib/B/W_LLVMFuzzerTestOneInput_latch.v's lt_... lemmas (ee519e5e2f5), verbatim but for the ek_ prefix: every
+   lib/B/W_LLVMFuzzerTestOneInput_latch.v's lt_... lemmas, verbatim but for the ek_ prefix: every
    byte the cut reads outside this function's own frame lies below alloc_ceiling + 8. *)
 Definition CEIL8 : Z := alloc_ceiling + 8.
 Definition ek_fp_low (fp : list (Z * Z)) : Prop := Forall (fun r => 0 <= fst r /\ snd r <= CEIL8) fp.
@@ -1490,8 +1491,8 @@ Hypothesis LS_event_malloc : forall cx t m ly S e,
   re_len e < MMAX /\ blocks_bytes S + re_len e <= LIVE_MAX /\ mo_ok MT S (mo_malloc MT (re_len e)).
 (* relay_event's room (re_spec's send_line premises), at the state after malloc: the stream is empty at the call
    (lregs_P1's lm_O m = []) and malloc's post adds the line's block (the malloc rule's ablocks equation); image A's
-   text (commit 88557c15170, C3), whose witness is a Theorem Labs lane's fr_LS_event_relay_r
-   (a working branch a8a8b593b2d, lib/A/ReplyLSEvent3.v:209) *)
+   text (C3), whose witness is a Theorem Labs lane's fr_LS_event_relay_r
+   (a working branch, lib/A/ReplyLSEvent3.v:210) *)
 Hypothesis LS_event_relay : forall cx t m ly S (S1 : astate) e (ly1 : alayout) q,
   LS cx t m ly S -> RINV cx t m -> ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
@@ -1813,7 +1814,7 @@ Proof.
   replace (a + Z.of_nat j) with (a + Z.of_nat j) by reflexivity. exact Hob.
 Qed.
 
-(* a callee's afn_pre at sp = F (lib/B/W_LLVMFuzzerTestOneInput_latch.v lt_afn_pre_at, ee519e5e2f5, verbatim but for
+(* a callee's afn_pre at sp = F (lib/B/W_LLVMFuzzerTestOneInput_latch.v lt_afn_pre_at, verbatim but for
    the name): the donor's afn_pre_at, whose achain is the entry's chain with this frame pushed, or the empty chain *)
 Lemma ek_afn_pre_at : forall cx ly3 S3 fpos k (W : world segs) mem md regs STK1,
   lf_base B MT XM_LIB RLO RHI fr_live_pre G_fr cx ->
@@ -2047,7 +2048,7 @@ Proof.
   destruct H32 as [H32 | H32]; rewrite H32; reflexivity.
 Qed.
 
-(* ---- the tail after relay_event (image A's twin, a working branch 1172d6d9065,
+(* ---- the tail after relay_event (image A's twin, a working branch,
    et_nodup .. et_aout_errno, verbatim but for B's names): the transport across relay_event, check_shape_event and
    free, the stream's errno rebuilt, the latch's entry state ---- *)
 (* the live blocks are pairwise distinct (W_gesture_end.v ablocks_nodup) *)
@@ -2270,7 +2271,7 @@ Proof.
 Qed.
 
 (* the jump table's 36 bytes are read-only image bytes: rom_view gives them (image A's twin's et_jt_of_rom,
-   a working branch 1172d6d9065, verbatim; B's fr_jtab 0x20e54) *)
+   a working branch, verbatim; B's fr_jtab 0x20e54) *)
 Definition et_jt_in_rom : bool :=
   forallb (fun a => existsb (fun sg => negb (seg_writable sg) && (Z.of_N (seg_base sg) <=? a) &&
     (a <? Z.of_N (seg_base sg) + Z.of_N (seg_size sg))) segs) (map (fun k => fr_jtab + Z.of_nat k) (seq 0 36)).

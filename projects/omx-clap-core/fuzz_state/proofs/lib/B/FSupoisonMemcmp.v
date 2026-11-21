@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSupoisonBcmp.v, with its module paths and module names changed; 6 of its 35 lines of code are new or changed and 616 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B (fs.asan-ubsan): FSupoisonU.amemcmp_realizesU at fs's memcmp entry, i.e. the donor's memcmp interceptor contract
    over ARU for ANY set U of user-poisoned ranges (POISON-U lane, a Theorem Labs lane). ARU (any-user-poison) form,
    published as the shared one; two Theorem Labs lanes hold the U = [] form at their own addresses.
-   PORT (image B): text of lib/A/FSupoisonMemcmp.v at a working branch cd7610bc4ed (a Theorem Labs lane); imports switched to the lib/B
+   PORT (image B): text of lib/A/FSupoisonMemcmp.v at a working branch (a Theorem Labs lane); imports switched to the lib/B
    twins (YB1v YE34 YF0l YF0m YF0x YB1w YE20 YE2y; YE2s YE2z YE3b YE6z YE70 = this branch's relocations of
    lib/A/AE2s / AE2z / AE3b / AE6z / AE70 to fs.asan-ubsan), FSupoisonIntrinR -> lib/B/FSupoisonAsanR (the same region
-   lemmas over image B, McpyB f32c92531db), the image-generic lib/A modules (FSupoison, FSupoisonU) kept.
+   lemmas over image B, McpyB), the image-generic lib/A modules (FSupoison, FSupoisonU) kept.
    The text below is the image-A file's, with its addresses replaced by image B's.
    Rule 24: no function proved from scratch; the walk is cgif_file_fuzzer's released A/AE2z.v, ported over ARU in
    lib/B/FSupoisonMemcmpW.v (over lib/B/YE2z.v / YE3b.v for the AR-free half and the musl memcmp leaf, and

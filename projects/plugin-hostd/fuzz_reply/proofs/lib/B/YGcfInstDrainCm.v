@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b: the MEMORY side of F12, the
    step transport of the drain's cut relation across SizeClassAllocator64LocalCache::Deallocate's no-growth arm.
    rule 24: no function proved (kind: relation-level facts about the walk's own frame).
 
-   The cf twin of YFez.cd_fin_ARm (YFez.v:769) over ARmcfR.  The memory premise is the walk's own frame, as lane B1
+   The cf twin of YFez.cd_fin_ARm (YFez.v:770) over ARmcfR.  The memory premise is the walk's own frame, as lane B1
    words F12: [cdwin], the twin of YFgk.WIN (YFgk.v:237-240) - the stack window below the entry sp, the cache's count
    word and new slot, the cache's stats word, and (only when the cache is full) the three region-info words and the
    free-array entries the drain writes; [MEQ] mem' = mem off it, [PRES] every byte of it is present after the call,
@@ -142,7 +143,7 @@ Definition okr (lo len : Z) : Prop := forall a, lo <= a < lo + len -> ok a.
 Hypothesis MEQ : forall x : word, ~ cdwin (bv_unsigned x) -> mem' x = mem x.
 Hypothesis PRES : forall a, cdwin a -> apresent (w_H W) mem' a.
 (* The image's constant cells at the call's memory.  cgif's transport takes exactly this as a hypothesis
-   (YFez.v:92 CONST'), because a const cell may sit anywhere the image puts it, including the thread object the call
+   (YFez.v:93 CONST'), because a const cell may sit anywhere the image puts it, including the thread object the call
    writes; the WALK discharges it from the unit's const table. *)
 Hypothesis CONST' : Forall (cell_holds B ly rd') (as_const B ly).
 (* The words the call writes, with their values (the twin of YFgk.at_RETK, YFgk.v:401-405): the cache's count, the new

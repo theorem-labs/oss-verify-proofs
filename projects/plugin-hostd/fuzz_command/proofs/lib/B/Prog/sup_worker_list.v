@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of sup_worker_list on plugin-hostd/fuzz_command.asan-ubsan (image B),
-   re-walked at B's addresses after the ASan walk lib/A/Prog/sup_worker_list.v (a working branch
-   80a82462f87), over a Theorem Labs lane's statements (lib/B/Prog/sup_worker_list_c.v, a Theorem Labs lane f490061c104), a Theorem Labs lane's record facts
+   re-walked at B's addresses after the ASan walk lib/A/Prog/sup_worker_list.v (a working branch),
+   over a Theorem Labs lane's statements (lib/B/Prog/sup_worker_list_c.v, a Theorem Labs lane), a Theorem Labs lane's record facts
    (lib/B/Prog/CmdRecRo.v, CmdRecRest.v) and FP-post kit (lib/B/Prog/PaFx.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* sup_worker_list (recorder.c:390-393, B entry 0x8bb2c, 17 instructions, one segment, no branch):
    the frame (ra, s0), record(8) (a call on B; A inlined it), rec_shape_of(0x21dc0 "worker_list", 11), the epilogue
@@ -68,7 +69,7 @@ Hypothesis TRECORD : forall fx0 : YK11.FPState, @trecord_spec fx0 rc SK PI B MT.
 Hypothesis TREC_SHAPE_OF : forall fx0 : YK11.FPState, @trec_shape_of_spec fx0 rc SK PI B MT.
 Hypothesis TANSWER : forall fx0 : YK11.FPState, @tanswer_spec fx0 rc SK PI B MT.
 Hypothesis VOBJS : cmd_val_objs (PI := PI).
-(* the walk's record facts, in a Theorem Labs lane's forms (713692f1e0c lib/B/Prog/CmdRec*.v): the allocator record and the meter's
+(* the walk's record facts, in a Theorem Labs lane's forms (lib/B/Prog/CmdRec*.v): the allocator record and the meter's
    laws; the call targets and the image facts, each as the statement of a Theorem Labs lane's lemma of that name with this walk's
    abstract PI / segments in place of the pinned image PB_cmd / tfibsegs (CmdRecRest.v cmd_sig_prog_PB, CmdRecImg.v
    cmd_img_facts_tfib), so the file that pins the image discharges each by exact; every per-binary fact the walk uses

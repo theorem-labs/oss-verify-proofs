@@ -15,11 +15,11 @@
    mh_find
    of the name (hda_hdr_find).
 
-   Restated, statements and proofs, from the plain / image-B owner's plain lib/Prog/mfp_facts.v at dec616e11c2f (blank_gt32 :13,
+   Restated, statements and proofs, from the plain / image-B owner's plain lib/Prog/mfp_facts.v (blank_gt32 :13,
    blank_mask :18, slice_slice :29, slice_nth :37, slice_length :43, mff_line_split :48, mf_line_nth :54,
    mf_line_firstn :59, memchr_some :78, memchr_none :89, memchr_idx :96, memchr_none_idx :106, all_blank :115,
    dropwhile_blank_idx :117, h_strip_idx :130, m_header_find :313, m_header_refuse :330) and lib/Prog/mfu_facts.v
-   at dec616e11c2f (break_nl_spec :17, mf_line_rest :282); that tree's files Require the plain integration, so
+   (break_nl_spec :17, mf_line_rest :282); that tree's files Require the plain integration, so
    they are copied here with an hda_ prefix (the brief's rule: copy a plain lemma, cite its line). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Spec Require Import SegModel.

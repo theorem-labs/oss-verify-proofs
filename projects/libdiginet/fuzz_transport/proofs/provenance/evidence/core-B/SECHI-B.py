@@ -10,10 +10,10 @@ e217cb0a84f1 and the pin 41113a03c82f of fuzz_transport.asan-ubsan), OUT (the di
 default the current directory).
 
 Trees (git refs in the hub HUB):
-  core    2d48500794db (this core's branch, run of record r14): lib/B/**.v and lib/Reusable/**.v
-  address a83315552115 (the image-B address-table branch, the run merged): lib/B/Prog/**.v (DgnTransportBAddr.v and kit)
+  core (this core's branch, run of record r14): lib/B/**.v and lib/Reusable/**.v
+  address (the image-B address-table branch, the run merged): lib/B/Prog/**.v (DgnTransportBAddr.v and kit)
           and lib/B/**.v, lib/Reusable/**.v again, to show the merge changed no cell
-  donor   88154566652a (ossv/recipes): proofs/libreac/fuzz_decode/lib/{B,Reusable}/ (the released donor lib)
+  donor (ossv/recipes): proofs/libreac/fuzz_decode/lib/{B,Reusable}/ (the released donor lib)
 
 ENUMERATED: every parameterless cell of type Z whose name ends in _hi / _lo (any case), outside comments:
   `Definition|Notation|Let N [: Z] := V.` and record fields `N := V;` / `N := V |}`.
@@ -42,9 +42,9 @@ COMMENTS: every comment block of B/YB1w.v (core), the two header lines of B/YB12
   comment-numbers-ok: each 0x number against the covered cells' values and the twin's section / PT_LOAD headers
   (and the DgnTransportBCg.v header's global counts against TRANS_RO_GLOBALS). A proposed comment's numbers are
   read from the twin by this script, never copied; the script checks the proposal the same way. Outputs:
-  SECHI-B.tsv (cells), SECHI-B.comments.tsv (comment blocks), B-sec-cells.patch (B/YB1w.v at 2d48500794db: comment
+  SECHI-B.tsv (cells), SECHI-B.comments.tsv (comment blocks), B-sec-cells.patch (B/YB1w.v: comment
   fixes and the 0-reader FALSE-cell deletions, paths relative to lib/ as provenance/evidence/core-B/B-*.patch),
-  B-addr-sec.diff (the lib/B/Prog kit at a83315552115: DgnTransportBAddr.v and DgnTransportBCg.v).
+  B-addr-sec.diff (the lib/B/Prog kit: DgnTransportBAddr.v and DgnTransportBCg.v).
 --control: the same classifier on planted cells (a _hi equal to the next section's sh_addr where sections are
   padded must show FALSE; the same planting where they abut must show MATCH-ABUTS) and exits non-zero on a miss.
 """

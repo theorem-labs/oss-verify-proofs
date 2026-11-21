@@ -5,12 +5,13 @@
    fuzz_command.asan-ubsan; lib/B/Prog/sup_pool_config.v, tsup_pool_config_holds) at the pinned image:
    lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head. The
    pattern of a Theorem Labs lane's PASS4-REFIT.md section F, as lib/B/Prog/SupResetClosed.v and lib/B/Prog/AnswerCodeClosed.v
-   close theirs, with a Theorem Labs lane's B CmdRecFacts (a working branch 707acd856cb): the image facts are
+   close theirs, with a Theorem Labs lane's B CmdRecFacts (a working branch): the image facts are
    CmdRecImg.cmd_img_facts_tfib; the statement's VOBJS is CmdRecRest.cmd_val_objs_PB and its AFREE_LAW (the side-stack
    free law, astack_free_law) is CmdRecRest.cmd_astack_free_law; the walk's call targets, runtime pcs and shadow
    cells, side-stack pcs and use-after-return cells, and frame flag law are CmdRecRest.cmd_sig_prog_PB, cmd_palib,
    cmd_palibf and cmd_frame_flag_law. What remains is the allocator record HB, the meter's laws MTL and MTLF, and the
    statement's callee and runtime contracts at every FP state. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

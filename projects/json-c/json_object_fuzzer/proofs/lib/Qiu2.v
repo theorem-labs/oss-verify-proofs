@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the realloc_nf_stmt proofs name it and pass it to s5_hiA_realloc_nf). *)
 
 From Stdlib Require ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -24,9 +25,9 @@ Section RC__1. Context {RC__ : Q6q3.RunConsts}.
 Theorem realloc_nf_of_v6 : forall (H6 : QZsi.heap_iface_A A4L), realloc_nf_stmt (hi5_of_v6 A4L H6).
 Proof.
 intros H6. unfold realloc_nf_stmt.
-intros until u. intros HP HIN BLK0 ST LO LOS SPA HT ERR TP A0 A1 N UW UWK BB BD K.
+intros until u. intros HP HIN BLK0 ST LO HBT LOS SPA HT ERR TP A0 A1 N UW UWK BB BD K.
 eapply (s5_hiA_realloc_nf A4L H6) with (p := p) (n0 := n0) (n := n) (u := u) (errv := errv) (lo := lo) (old := old) (junk0 := junk0);
-[ exact HP | exact HIN | exact BLK0 | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact A0 | exact A1 | exact N
+[ exact HP | exact HIN | exact BLK0 | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact A0 | exact A1 | exact N
 | exact UW | exact UWK | exact BB | exact BD | exact K ].
 Qed.
 End RC__1.
@@ -53,9 +54,9 @@ Section RC__1. Context {RC__ : Q6q3.RunConsts}.
 Theorem realloc_nf_of_v6 : forall (H6 : QZsi.heap_iface_A A4L), realloc_nf_stmt (hi5_of_v6 A4L H6).
 Proof.
 intros H6. unfold realloc_nf_stmt.
-intros until u. intros HP HIN BLK0 ST LO LOS SPA HT ERR TP A0 A1 N UW UWK BB BD K.
+intros until u. intros HP HIN BLK0 ST LO HBT LOS SPA HT ERR TP A0 A1 N UW UWK BB BD K.
 eapply (s5_hiA_realloc_nf A4L H6) with (p := p) (n0 := n0) (n := n) (u := u) (errv := errv) (lo := lo) (old := old) (junk0 := junk0);
-[ exact HP | exact HIN | exact BLK0 | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact A0 | exact A1 | exact N
+[ exact HP | exact HIN | exact BLK0 | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact A0 | exact A1 | exact N
 | exact UW | exact UWK | exact BB | exact BD | exact K ].
 Qed.
 End RC__1.

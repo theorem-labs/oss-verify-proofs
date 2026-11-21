@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFex.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: libreac/fuzz_grant's adaptation carried (commit a34918adcbd, via 03b974dd117 -> bd0315ce146: the line diff of fuzz_grant's own A/AFex.v, numerals masked, placed by provenance/core-reloc/B/pgcarry/pgcarry_b.py): the free-array bound is stated through kFreeArrayOffset, as this release's kernel (lib/Reusable/YG03, YG07, YG08, YG0q, YG0s) states it, in place of cgif's 2 ^ 31 text. *)
+(* Modified by Theorem Labs, 2026-10: libreac/fuzz_grant's adaptation carried (via ->: the line diff of fuzz_grant's own A/AFex.v, numerals masked, placed by provenance/core-reloc/B/pgcarry/pgcarry_b.py): the free-array bound is stated through kFreeArrayOffset, as this release's kernel (lib/Reusable/YG03, YG07, YG08, YG0q, YG0s) states it, in place of cgif's 2 ^ 31 text. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -4,6 +4,7 @@
    [Apache-2.0 OR MIT], for libreac/fuzz_identity's asan-ubsan build (lib/B). The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACes.v:251-253 [Apache-2.0]. The [Apache-2.0 OR MIT] text is used under
    Apache-2.0. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* +0x1910 .. +0x1988 (0x82084 .. 0x820fc) of LLVMFuzzerTestOneInput's build-B walk (fuzz_identity.asan-ubsan):
    the last piece of segment J, j_fits_stmt of lib/B/Prog/LLVMFuzzerTestOneInput_seg_J_pre.v. x19 = the
    display's length (0x82084), the two UBSan bound tests (0x8208c, 0x82090), the NUL of exp_dp (0x82098), the
@@ -196,7 +197,7 @@ asink_syms_T KS asink_none ameta_inv arodata_okS).
 asink_syms_T KS asink_none ameta_inv arodata_okS).
 Variable G : list (Z * Z).
 Context {RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi}.
-(* The contract's HRO (lib/B/Prog/LLVMFuzzerTestOneInput.v:189): memchr's read-only premise at 0x820b0. *)
+(* The contract's HRO (lib/B/Prog/LLVMFuzzerTestOneInput.v:190): memchr's read-only premise at 0x820b0. *)
 Hypothesis HRO : forall rdr, arodata_okS SEGS B RLO RHI rdr -> arodata_okP SEGS pa_relro_lo pa_relro_hi B rdr.
 
 (* The memchr wrapper (lib/B/Rt/MemchrDef.v amemchr_realizes) at a slot of a journal: the journal goes on

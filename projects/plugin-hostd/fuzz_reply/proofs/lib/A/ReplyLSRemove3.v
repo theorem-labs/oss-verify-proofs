@@ -2,17 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_drain (op 2) of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput over the
    GENERIC allocator relation ARx: the ARx conversion of lib/A/W_LLVMFuzzerTestOneInput_drain.v's lf_arm_drain.
-   The AR proof is a Theorem Labs lane's: a working branch 129f255c729 (dr_found_join / lf_arm_drain Qed on W8
-   base ec4dd616ed1: fresh rc=0 wall 604, Print Assumptions 13 Prim* + funext), adapted to the current cut on
-   a working branch cdc87da7be0 (b5 w8c rc=0).  lf_arm_drain_x's statement is the text of the
+   The AR proof is a Theorem Labs lane's: a working branch (dr_found_join / lf_arm_drain Qed on W8
+   base: fresh rc=0 wall 604, Print Assumptions 13 Prim* + funext), adapted to the current cut on
+   a working branch (b5 w8c rc=0).  lf_arm_drain_x's statement is the text of the
    Section hypothesis ARM_drain of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v Section w (:349), checked at the end
    (lf_arm_drain_x_check).
-   THE ROOM ROUND (a working branch, on meet 393c0b2cb2a): the cut's invariants take NP
+   THE ROOM ROUND (a working branch, on meet): the cut's invariants take NP
    (lcut_x's NP S after LSx; DLK carries it); DRAIN / CNL take the room record RP (RP_NP ties its rp_RM to NP) and
    their count premises cnt_ok_pk RP (dr_pk ..) / (cnl_pk ..), the first from LS_cnt at the cut, the second at the
    state the drain leaves through the two pure model rules DR_CNT_grow / DR_CNT_cnl; LS_drain_pre's conjunct 5 is
    the peak form (with the three premises s5-r1d's rows take); LS_cnl_pre / LS_drain_step are a Theorem Labs lane's
-   TX_LS_cnl_pre / TX_LS_drain_step (d0d75bf92db), whose premises dc_stB (dcB_out) and dc_stE export.
+   TX_LS_cnl_pre / TX_LS_drain_step, whose premises dc_stB (dcB_out) and dc_stE export.
    The method (W8Entry-2's add_x method): this file Requires _drain.v and CITES every item of it that reads no AR
    and no Section variable (the model notions, the symbolic states, the pure list / byte lemmas); every item that
    reads a Section variable but no AR is restated VERBATIM (same name, same proof, up to cut_x's LS -> LSx and the
@@ -46,9 +46,10 @@
    (paj_run_x_xG runs, SRrG_bind / SRrG_mono).  The strict lemmas and their proofs are unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_drain_x.v, with its module paths and module names changed; 475 of its 588 lines of code are new or changed and 6933 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLSDrain3.v, with its module names changed; 542 of its 649 lines of code are new or changed and 481 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* a Theorem Labs lane's FREE-PIECES row B1c (a Theorem Labs lane): the remove arm's LS rules at the instance LS := fr_LS B,
    RINV := fr_RINV, MT := ameter_triv, MMAX := WR_MMAX (lib/A/ReplyLS.v v2, lib/A/ReplyRINV.v), against the texts of
-   a working branch 30d91cacb63 lib/A/W_LLVMFuzzerTestOneInput_remove.v (every definition the
+   a working branch lib/A/W_LLVMFuzzerTestOneInput_remove.v (every definition the
    texts name is the worktree's: W_contract.v's rr_tr / tr_alloc / tr_max / cnl_room / sl_sends / dr_rel / rr_found
    and ReplyRINV.v's copies rm_at / rm_mk / rm_rr_ok / rm_cnl_ok / rm_cshe_ok are textually the arm head's; rm_rr_tr
    and the rm_*_cost meters are W_LLVMFuzzerTestOneInput_remove.v's own).
@@ -339,7 +340,7 @@ Proof.
   unfold rm3_kw in *. cbn [map fold_right]. rewrite IH, RelayCap.rc_length_bzs. lia.
 Qed.
 
-(* ---- check_no_loss's room (cnl_room, W_contract.v / arm head W_check_no_loss.v:89) from a fixed slack ---- *)
+(* ---- check_no_loss's room (cnl_room, W_contract.v / arm head W_check_no_loss.v:90) from a fixed slack ---- *)
 Definition rm3_V (cap : Z) : Z := if cap =? 0 then 0 else AREC * cap.
 Lemma rm3_tbytes_app : forall T T', tbytes (T ++ T') = tbytes T + tbytes T'.
 Proof. intros T T'. induction T as [|x T IH]; cbn [app tbytes fold_right]; unfold tbytes in *; cbn; lia. Qed.
@@ -536,7 +537,7 @@ Qed.
    are added, each one the arm holds at its check_no_loss call (rm_cnl, _remove.v:3380-3382):
    (P1) the model's blocks have nonnegative sizes at the arm's start: rr_blks_pos (_remove.v:2155, 0 < size, from
         amodel_at) at rm_rr's LS state (ly3, S3, _remove.v:2398), carried with the LS in rm_Q;
-   (P2) relay_remove moved only the model's blocks: rr_found's two Permutations over one rest (W_contract.v:1299-1303,
+   (P2) relay_remove moved only the model's blocks: rr_found's two Permutations over one rest (W_contract.v:1300-1304,
         rr_post :1284), which rm_rr already composes into the same-rest pair it passes rm_sep_step (_remove.v:2384,
         :2474, :2589), carried with the LS in rm_Q.
    The model in (P2) is rm_rr's (c2); the cnl call's model has rm_cev c2 ev1, which has the same blocks.
@@ -723,14 +724,14 @@ Qed.
 (* ================================================================== LS_rm_step (_remove.v:5460), PROPOSED text *)
 (* The published text ties S to S0 only by mo_le.  Added: (P2') the arm's four calls moved only the model's blocks,
    from the LS state's model m to the step's model (the composition of rr_found :1264-1268, cnl_post
-   W_check_no_loss.v:398-399, cshe_post W_check_shape_ends.v:176 and sr_post W_contract.v:419, each over one rest:
+   W_check_no_loss.v:399-400, cshe_post W_check_shape_ends.v:176 and sr_post W_contract.v:420, each over one rest:
    the pairs the arm passes rm_sep_step at _remove.v:2589, :3443, :4835, :5365; check_no_loss_read and
    check_shape_done are leaves that keep the blocks), carried with the LS in rm_Q.
    Hout is the one fact fr_LS v2 + fr_RINV lack: the stream buffer's growth over the operation is paid by the
    credit the operation releases (the removed entry's and source's blocks but the partial buffer, the queued and
    held bytes' credit, the vector slack and the input it consumes).  It fails for the relay's unfinished line:
    relay_remove's drain sends re_U (= hs_W, up to LINE_LIMIT bytes) and send_line doubles g_out for it, and PHI
-   (ReplyLS.v:102) carries no credit for those bytes. *)
+   (ReplyLS.v:103) carries no credit for those bytes. *)
 Lemma fr_LS_rm_step_p : forall cx t m ly0 S0 (ly : alayout) (S : astate)
     si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc ev5,
   fr_LS B cx t m ly0 S0 ->

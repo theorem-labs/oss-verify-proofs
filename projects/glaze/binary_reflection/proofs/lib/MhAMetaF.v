@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: preserved map/reserved separation through metadata failure paths. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -242,13 +243,14 @@ Section D.
     alloc_top vm' = alloc_top vm -> (dead = false -> vm_brk vm' = vm_brk vm /\ vm_start_brk vm' = vm_start_brk vm) ->
     LEDGERX d_st X vm'.
   Proof.
-    intros vm' E1 E2 E3 E4 E5. destruct HLG as [LM LN LB LR LT].
+    intros vm' E1 E2 E3 E4 E5. destruct HLG as [LM LN LB LR LT LMR].
     constructor; cbn [s_regions s_brk d_st fst]; rewrite ?E1, ?E2, ?E3, ?E4.
     - exact LM.
     - unfold noacc_of. cbn [s_brk s_regions d_st fst]. rewrite d_guard_noacc. exact LN.
     - unfold d_brk. destruct dead; [exact I|]. destruct (E5 eq_refl) as [E6 E7]. rewrite E6, E7. exact LB.
-    - exact LR.
+    - unfold reserved_layout. rewrite ?E3. exact LR.
     - exact LT.
+    - exact LMR.
   Qed.
 End D.
 
@@ -367,7 +369,7 @@ Section V.
     LEDGERX v_st X vm'.
   Proof.
     intros vm' E1 E2 E3 E4 E5. pose proof v_N_rng as (N1 & N2 & N3). destruct Hp0 as (P1 & P2 & P3). ceil; unfold HEAPLO in P2, P3.
-    destruct HLG as [LM LN LB LR LT]. constructor; cbn [s_regions s_brk v_st fst]; rewrite ?E1, ?E2, ?E3, ?E4; cbn [vm_maps vm_noaccess v_vm].
+    destruct HLG as [LM LN LB LR LT LMR]. constructor; cbn [s_regions s_brk v_st fst]; rewrite ?E1, ?E2, ?E3, ?E4; cbn [vm_maps vm_noaccess v_vm].
     - unfold v_regions. cbn [map]. replace (region_entry v_Rn) with (Z_to_bv 64 p0, Z_to_bv 64 N) by reflexivity.
       eapply Permutation_trans; [apply perm_skip; exact LM|]. apply Permutation_middle.
     - unfold noacc_of. cbn [s_brk s_regions v_st fst]. rewrite (d_guard_noacc st dead).
@@ -375,8 +377,10 @@ Section V.
       replace (noacc_of_region v_Rn) with [(Z_to_bv 64 p0, Z_to_bv 64 N)] by reflexivity.
       eapply Permutation_trans; [apply perm_skip; exact LN|]. unfold noacc_of. apply Permutation_middle.
     - unfold d_brk. destruct dead; [exact I|]. destruct (E5 eq_refl) as [E6 E7]. rewrite E6, E7. exact LB.
-    - exact LR.
+    - unfold reserved_layout. rewrite ?E3. exact LR.
     - exact LT.
+    - constructor; [|exact LMR]. cbn [fst snd].
+      rewrite region_free_app in HRF. apply andb_true_iff in HRF. exact (proj1 HRF).
   Qed.
 
   Lemma v_new_apart_X : forall r, In r v_regions -> (exists r0, In r0 (s_regions st) /\ rg_base r0 = rg_base r /\ rg_len r0 = rg_len r) \/

@@ -9,15 +9,15 @@
    explicit mkR r1 .. r31); the cut's configuration is Reusable.YG0d.cfg_at = mkCfg of lib/Lib's MS over the
    actual map (A/ProgBridge.v cfg_at_MS), and the two maps are only Regs6ss.xregs_eqv.  a Theorem Labs lane's kit now
    moves a WALK along that equivalence: Reusable.YA0nR.SRr_xregs_eqv (with SRr_xregs_iff and SRr_cfg_eqv), PROVED
-   at a working branch 5f2500c036a (lemmas in 6517e7b00a9, build 20261029T001125Z
+   at a working branch (lemmas, build 20261029T001125Z
    rc=0).  It replaces the four run-level helpers this file held before (kit_mstepsF_eqv, kit_evtF_eqv,
    kit_MS_of_eqv, kit_getr_eqv), which are deleted.
 
    WHICH HELPER SERVES WHICH GLUE STEP (glue-pattern.md section 3)
      kit_wx           G4  the kit's once-per-unit premise of Reusable.YA0nR.SRr_fevt / SRr_fevt_hid:
                           wx_segs_nowrap segs.  Proof: the planning core's Hwx_tfa (A/ACeg.v:61-62); the same proof
-                          type-checks as a Theorem Labs lane's ctrl_wx (lib/A/Prog/CtrlImg.v (at head lib/A/Prog/CtrlImg.v:42-43;
-                          from a working branch 94d4995b31f)).
+                          type-checks as a Theorem Labs lane's ctrl_wx (lib/A/Prog/CtrlImg.v (at head lib/A/Prog/CtrlImg.v:43-44;
+                          from a working branch)).
      kit_segs_low     G5  the image placement premise of Reusable.YCbq.ajournal_exec (and of every YCbq Section a0 /
                           d0 lemma: aj_intrin_at, aj_bcmp_at, ajournal_after_write).  Proof: the planning core's
                           tfib_segs_low (A/ACeg.v:63-72, = CtrlImg.v:44-52 ctrl_segs_low), with a last line that
@@ -32,7 +32,7 @@
      kit_ajournal_fp_nil    the FP lift of the journal at the exit (a Theorem Labs lane's request, 03:56Z): ACtl.v's
                           ajournal_fp_nil (the donor's A/ACfh.v:29-43 over the core's helpers), whose Section ACtl.v
                           declares above Section Ctl, so a glue file that ACtl.v Requires cannot cite it there.
-                          Statement and proof: a Theorem Labs lane's y3_ajournal_fp_nil (lib/A/ACtlG/Y3.v (a version not in this delivery; written on a working branch d1e2e4be924)),
+                          Statement and proof: a Theorem Labs lane's y3_ajournal_fp_nil (lib/A/ACtlG/Y3.v (a version not in this delivery; written on a working branch)),
                           same Section shape (fx rc, SK, B).
      kit_ev_llvmf_le        the walk's event bound meets the core's: A.ACtlK.EV_LLVMF <= A.ACfn.EV_LIB (526 <= 2000;
                           a Theorem Labs lane's request, 03:56Z), for the k <= EV_LIB conjunct of tfib_lib_post_x.
@@ -43,8 +43,8 @@
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are Reusable.YK11 / Reusable.YG0d-qualified everywhere.  Check:
      grep -nE '(^|[^.A-Za-z_])(mkst|getr|seg_rom|cfg_at)\b' lib/A/ACtlG/Kit.v   -- hits only inside comments.
 
-   BUILD STATE (honest): TYPECHECKS on the image-A PLANNING core 5a85b67a5d8 (TYPE-CHECK ONLY, values do not count):
-   cb build on the packed fuzz_ctrl base 362baf478bf5 (FACTS ed6b6b7b0ab), with the core's undefined
+   BUILD STATE (honest): TYPECHECKS on the image-A PLANNING core (TYPE-CHECK ONLY, values do not count):
+   cb build on the packed fuzz_ctrl base (FACTS), with the core's undefined
    port_core_refused_<hex> names replaced by the hex literal in the build workspace only (core errors, reported
    to the porter a Theorem Labs lane).  No Axiom, no Parameter, no Admitted, no admit. *)
 

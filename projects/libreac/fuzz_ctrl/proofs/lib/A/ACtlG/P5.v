@@ -16,8 +16,8 @@
        the spill base A and sp from FRAC, the stack window from the journal's astk_ok.
    G3  the walk is moved from the cut's register map regs3 to the run's canonical start map mkR_of regs3
        (lib.Reusable.YA0nR.SRr_xregs_eqv), after ProgBridge.cfg_at_MS.
-   G4  the lift.  The run is Seg/P5F.p5_evt_F_on (a Theorem Labs lane's route (C) twin of p5_evt_F, a working branch
-       e2736e27164), whose callee premise asan_memset_contract_F_on is discharged by the CLOSED theorem
+   G4  the lift.  The run is Seg/P5F.p5_evt_F_on (a Theorem Labs lane's route (C) twin of p5_evt_F, a working branch),
+       whose callee premise asan_memset_contract_F_on is discharged by the CLOSED theorem
        A.Prog.asan_memsetF_on.asan_memset_holds_F_on A.Prog.memset.memset_holds (never by an SRr_at).  The footprint
        is A.ProgBridge.RNG_W (w_H W3); each of its ten premises is a visibility fact of the walk's state
        (segment-F-premises-A.tsv rows 653-670):
@@ -48,7 +48,7 @@
        FRAC's last conjunct (a Theorem Labs lane), the fake-frame trailer word
        `q64 m (fr + 4088) (YG0f.flag_addr (c_ly cx) 6 (c_fpos cx))`, is one of the transported words: the run writes
        the frame only in [fr + 3040, fr + 3088), so [fr + 4088, fr + 4096) is outside every window of Wall (DJfrhi).
-       ctl_rt_C (route C, a working branch 1899bed1aee) moves with asan_cells_kept, and its two regions (cut_shadow B ly3 S3,
+       ctl_rt_C (route C, a working branch) moves with asan_cells_kept, and its two regions (cut_shadow B ly3 S3,
        img_shadow) with A.Prog.Seg.P5.p5_shadow_rw_on across the nine frame-shadow stores and
        A.ShadowRwOnT.shadow_rw_on_kept across the memset (the state ly3 S3 is unchanged), and the run's own ro_agree.
        The cut's shadow facts come from ctl_rt_C's cut_shadow, (F) disjunct (the owned class-6 frame's shadow
@@ -67,12 +67,12 @@
    CTL_STACK_SHADOW / CTL_GSHADOW this file carried before; the third replaces the temporary copy p5g_frame_GT):
      A.ProgWorldShadow.ctl_stack_shadow_of_AR : A.ProgWorld.ctl_stack_shadow_of_AR_stmt B   (ProgWorld.v:867-872)
      A.ProgWorldShadow.ctl_gshadow_of_AR      : A.ProgWorld.ctl_gshadow_of_AR_stmt B        (ProgWorld.v (at head lib/A/ProgWorld.v:1116-1123),
-                                a Theorem Labs lane's CORRECTED text, ctl_gshadow_of_AR_fixed (not in this delivery; written on a working branch 1888d8b45bf), with the image bound
+                                a Theorem Labs lane's CORRECTED text, ctl_gshadow_of_AR_fixed (not in this delivery; written on a working branch), with the image bound
                                 kImgLo <= g, g + k <= kImgEnd)
      A.ProgWorld_Fs.ctl_frame_above_img       : A.ProgWorld.ctl_frame_above_img_stmt B      (ProgWorld.v:1243-1247,
                                 premise-free: every live fake frame lies at or above 0x5fe000)
-   PROVED HERE: p5g_bc_row, ctrl's record row of .str.4.  The base's lib/A/AF0m.v is the record blob 44930bfd861 (the blob this tree had at release c5e779efe8c), so the
-   row is a theorem of the base; the proof is bc_row_record's (lib/A/ACtlG/P5RecRow.v at 1169f6edba1).
+   PROVED HERE: p5g_bc_row, ctrl's record row of .str.4.  The base's lib/A/AF0m.v is the record blob 44930bfd861 (the blob this tree had at release), so the
+   row is a theorem of the base; the proof is bc_row_record's (lib/A/ACtlG/P5RecRow.v).
    FROM THE SHARED KIT lib/A/ACtlG/Kit.v (Required qualified, never copied): Kit.kit_wx (G4) and
    Kit.kit_segs_low (G5).  kit_frac_move is not used: this run moves memory as well as registers, so FRAC is
    rebuilt conjunct by conjunct; kit_RNG0 is not used: this run has a real footprint.
@@ -81,7 +81,7 @@
    A.ProgWorldVisFrame.frame_vis, A.ProgWorldVisWin.win_vis / win_sh_vis; lib.Reusable.YCbq.frames_bounds /
    ajournal_exec; A.Prog.Seg.P5F.p5_evt_F_on; A.Prog.asan_memsetF_on.asan_memset_holds_F_on; A.Prog.memset.memset_holds.
 
-   STATEMENT: glue_seg_P5's type is ACtl.v:582 (blob a3c6b7b35017 on the glue base 29ddfc3ea99) character for
+   STATEMENT: glue_seg_P5's type is ACtl.v:582 (blob a3c6b7b35017 on the glue base) character for
    character, under ACtl.v's own CF / C_A81b90 / C_A81bd8 notations (ACtl.v:261-262, :298-299), so ACtl.v
    discharges seg_P5 with `glue_seg_P5 B MT XM_LIB RLO RHI REAC_CTRL_IDENTITY_REPLY_K REAC_CTRL_PARSE_BC LAWS
    TFIB_SYMS KREPLY KPARSE` (implicit fx / rc inferred; LS is not an argument, the stage does not use it) -- the
@@ -94,7 +94,7 @@
    that exist twice or more (YI04 YI16 YK11 YK1b YM05 YO09) are written `lib.Reusable.X.n` (the CORE copy)
    everywhere, per the porter's 04:24Z rule, and Required by their explicit path.
 
-   BUILD STATE: type-check on 5da74c9c931, closure reaches no stand-in (glue base 29ddfc3ea99; scripted
+   BUILD STATE: type-check, closure reaches no stand-in (glue base; scripted
    closure scan in the commit message): built from a `git archive` of the commit in a new `cb`-prepared workspace on
    a build machine, with no substitution of any kind.  Not a compile of record. *)
 
@@ -168,9 +168,9 @@ Qed.
 (* ctrl's RECORD row of .str.4 = REAC_CTRL_PARSE_BC = 0x21200 (7 bytes: the 6 0xff bytes the bcmp wrapper compares
    with and the NUL): `z1 (ANum 0x7fffc240) 0x7` in A.AF0m.Tfib_const_shadow (0x7fffc240 = shadow_addr 0x21200; the rows
    on both sides read 0xf9, its redzone).  A fact of the start-up table only, independent of B.  The glue base's
-   lib/A/AF0m.v is the record blob 44930bfd861 (the blob this tree had at release c5e779efe8c) (that of a working branch e56483f863b), so the
+   lib/A/AF0m.v is the record blob 44930bfd861 (the blob this tree had at release) (that of a working branch), so the
    row is a theorem here.  Proof taken by path from bc_row_record, lib/A/ACtlG/P5RecRow.v (not in this delivery) at
-   a working branch 1169f6edba1. *)
+   a working branch. *)
 Lemma p5g_bc_row : forall ly,
   In (lib.Reusable.YG0f.z1 (lib.Reusable.YG0f.ANum (lib.Reusable.YG0f.shadow_addr 0x21200)) 7) (A.AF0m.Tfib_const ly).
 Proof.

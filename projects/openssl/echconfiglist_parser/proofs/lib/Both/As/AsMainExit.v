@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the exit lemmas of Section Exit take the channel-reader premise the stdout flush needs, carried by the driver laws' reader law and same_but_materialized_reader; free_exit and refuse_exit are walks over the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing, under the run's driver-law record asan_driver_laws_run, and their exit and refusal tails, which never call time(), are walks over the binary's own segments taken whole through drv_lazy_whole_rt). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -18,6 +19,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Ce
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsCXXHeap AsDriverLaws AsStack0
   AsCall AsCallX RefExitBase AsPrintfFirst AsExitDefs AsExit AsTailExit AsRefused AsDrvTails AsSxKit
   AsDrvHeap AsDrvRun AsDrvMem AsDrvDefs AsTRSegs AsMainWalk_defs AsMainSegs AsMainPre AsMainLoop AsDrvCells ECH_Iface.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail.
 Import ListNotations.
 Import SymExec2.SX2. Import SymExec2Sound.SX2S.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
@@ -45,11 +47,15 @@ Proof. reflexivity. Qed.
 
 Section Exit.
   Context {HCEIL : HeapCeil}.
+  (* the run's tail ([RunTail.RunTail]): the exit lemmas are reached from main's walk, which is
+     over the run's segment list *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Variable L : alib.
   Hypothesis LOK : alib_ok L.
   Hypothesis HH : asan_rt_hyps H.
-  Hypothesis DL : asan_driver_laws H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
   Variables (sp0 : word) (tid can : Z).
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis HCE : hceil + 8388608 <= bv_unsigned sp0.
@@ -300,15 +306,17 @@ Section Exit.
     cells_ok mem (ax_atexit_cells ax2) -> mem (Z_to_bv 64 ACLEANUP) = None ->                 (* [comment removed for export] *)
     (ax2 = false -> mem (Z_to_bv 64 0xbdd420) = None /\ pending = []) ->                    (* [comment removed for export] *)
     fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
-    realizes asegs (mkCfg msF mo) (t_emit (W 1 pending) (t_exit (bv_and status (Z_to_bv 64 255)) (m_fs mo))).
+    (* the channel reader, for the flush of the pending stdout lines (Both/AsExit/AsExit.v:762) *)
+    m_channel_reader mo = true ->
+    arz (mkCfg msF mo) (t_emit (W 1 pending) (t_exit (bv_and status (Z_to_bv 64 255)) (m_fs mo))).
   Proof.
-    intros ax2 s msF mo regs mem p A cap status pending junk LBX HV HA R2 R4 R8 R9 Hst RH HInA HCB AD HCF XS OS ATX DGC PRE2 Hfd1. pose proof (u64_range status) as HstR.
+    intros ax2 s msF mo regs mem p A cap status pending junk LBX HV HA R2 R4 R8 R9 Hst RH HInA HCB AD HCF XS OS ATX DGC PRE2 Hfd1 Hrd1. pose proof (u64_range status) as HstR.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo. pose proof aceil_loX as HCL. acb.
     pose proof (ah_blocks H HH _ _ _ (p, A, cap) RH HInA) as BR. pose proof BR as (B1 & B2 & B3 & B4 & B5 & B6 & B7). cbn [blk_addr blk_size fst snd] in *.
     (* [comment removed for export] *)
     assert (STK0 : stk_ok RSEGS mem (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK).
     { eapply astk_stk_ok; [exact (xs_stk _ XS) | unfold MSTK; rewrite u_small by lia; lia | rewrite u_small by lia; lia | unfold MSTK; lia | lia]. }
-    eapply (aseg_I H DL sp0 Hvsp s msF mo regs mem (getr regs 18) A status _ R2 R4 R8 R9 STK0 (amem_inv_ro_none _ (xs_inv _ XS)) (xs_relro _ XS));
+    eapply (aseg_I H DLR sp0 Hvsp s msF mo regs mem (getr regs 18) A status _ R2 R4 R8 R9 STK0 (amem_inv_ro_none _ (xs_inv _ XS)) (xs_relro _ XS));
       [| exact HV | exact HA].
     intros regs1 mem1 msF1 mo1 HV1 HA1 SB1 Q2 Q4 Q8 Q1 Q9 Q10 KP FM1 STK1.
     pose proof (xstat_frameL _ _ XS FM1) as XS1. pose proof (ostate_frameL _ _ _ OS FM1) as OS1.
@@ -322,7 +330,7 @@ Section Exit.
     assert (STKlo : stk asegs mem1 lo (bv_unsigned sp0 - 128)).
     { destruct (xs_stk _ XS1) as (S1 & S2 & S3). split; [exact S1|]. split; [lia|]. intros a Ha. apply S3. lia. }
     change (Z_to_bv 64 0x1bf170) with (Z_to_bv 64 AFREE_STUB) in HV1.
-    eapply (afree_call H HH DL regs1 mem1 msF1 mo1 s LBX p A cap lo B' errv 0x1eef20 [] junk (shadow_of cap) _ HV1 HA1 Q1);
+    eapply (afree_call_rt H HH DLR regs1 mem1 msF1 mo1 s LBX p A cap lo B' errv 0x1eef20 [] junk (shadow_of cap) _ HV1 HA1 Q1);
       [ lia | reflexivity | exact Q4 | exact Q10 | exact RH1 | exact HInA | exact HCF
       | exact CB1 | exact (proj2 AD1) | apply shadow_of_length; lia
       | exact AUX1 | rewrite Q2, u_small by lia; lia
@@ -344,15 +352,16 @@ Section Exit.
     (* [comment removed for export] *)
     assert (STK2' : stk_ok RSEGS mem2 (Z_to_bv 64 (bv_unsigned sp0 - 128)) MSTK).
     { eapply astk_stk_ok; [exact (xs_stk _ XS2) | unfold MSTK; rewrite u_small by lia; lia | rewrite u_small by lia; lia | unfold MSTK; lia | lia]. }
-    eapply (aseg_X H DL sp0 Hvsp s2 msF2 mo2 regs2 mem2 status _ S2 S4 S8 STK2' (amem_inv_ro_none _ (xs_inv _ XS2)) (xs_relro _ XS2) (xs_frame _ XS2));
+    eapply (aseg_X H DLR sp0 Hvsp s2 msF2 mo2 regs2 mem2 status _ S2 S4 S8 STK2' (amem_inv_ro_none _ (xs_inv _ XS2)) (xs_relro _ XS2) (xs_frame _ XS2));
       [| exact HV2 | exact HA2].
     intros regs3 msF3 mo3 HV3 HA3 SB3 T2 T4 T10 T1.
     (* [comment removed for export] *)
     assert (EQ3 : m_fs mo3 = m_fs mo /\ m_fds mo3 = m_fds mo).
-    { pose proof (mo_tr _ _ _ (mo_sb _ _ SB1) (mo_tr _ _ _ (mo_mp H DL _ _ MP2) (mo_sb _ _ SB3))) as [E1 E2]. split; assumption. }
+    { pose proof (mo_tr _ _ _ (mo_sb _ _ SB1) (mo_tr _ _ _ (mo_mp H DLR _ _ MP2) (mo_sb _ _ SB3))) as [E1 E2]. split; assumption. }
     destruct EQ3 as [EFS EFDS]. rewrite <- EFS.
     (* [comment removed for export] *)
-    apply (drv_lazy H DL s2 msF3 mo3 regs3 _ mem2 _ HV3 HA3). intros Lz Sz Zr OK RS _.
+    (* the exit tail never calls time(): a whole walk over the binary's own segments *)
+    apply (drv_lazy_whole_rt H DLR s2 msF3 mo3 regs3 _ mem2 _ HV3 HA3). intros Lz Sz Zr OK RS.
     change (Z_to_bv 64 0x55e55c) with (Z_to_bv 64 AEXIT) in RS.
     destruct OS2 as [[-> ST0] | (k & Hk & STA & ->)].
     - (* [comment removed for export] *)
@@ -393,7 +402,9 @@ Section Exit.
           | exact F5 | eapply ax_flush_cells_of; split; eassumption | lia | rewrite zero_lines_length; lia
           | rewrite zero_lines_length; exact F14
           | exact T2 | exact T4 | exact T10
-          | rewrite EFDS; exact Hfd1 | exact OK | exact RS ].
+          | rewrite EFDS; exact Hfd1
+          | rewrite (same_but_materialized_reader _ _ SB3), (adlr_rdr _ _ _ _ H DLR _ _ MP2), (same_but_materialized_reader _ _ SB1); exact Hrd1
+          | exact OK | exact RS ].
   Qed.
 
   (* [comment removed for export] *)
@@ -402,15 +413,16 @@ Section Exit.
   Theorem refuse_exit : forall mem0 pp fs0 s msF mo regs mem p (A : Z),
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1eef6c) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     ARfInv H L sp0 pp tid can fs0 mem0 A s p regs mem mo ->
-    realizes asegs (mkCfg msF mo) (t_die msg_refused fs0).
+    arz (mkCfg msF mo) (t_die msg_refused fs0).
   Proof.
-    intros mem0 pp fs0 s msF mo regs mem p A HV HA [(R2 & R4 & R8 & R18 & R20) R9 [cap RH] ST EFS Hfd1 Hfd2]. rewrite <- EFS.
+    intros mem0 pp fs0 s msF mo regs mem p A HV HA [(R2 & R4 & R8 & R18 & R20) R9 [cap RH] ST EFS Hfd1 Hfd2 Hrd2]. rewrite <- EFS.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof SP16. pose proof Elo. pose proof aceil_loX as HCL. acb.
     destruct ST as [INV STK AC RELRO [G1 G2] CELLS OUT [TID Ht] [CAN Hc] RFS REG LIBP [OS1 OS2] [shi [SH0 Hshi]] ABOVE FR AUX].
     pose proof (fun c => cells_ok_In _ _ c OUT) as CO. pose proof (fun c => cells_ok_In _ _ c CELLS) as CE.
-    apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros Lz Sz Zr OK RS _.
+    (* the refusal tail never calls time(): a whole walk over the binary's own segments *)
+    apply (drv_lazy_whole_rt H DLR s msF mo regs _ mem _ HV HA). intros Lz Sz Zr OK RS.
     apply (as_refused Lz Sz Zr regs mem msF mo (Z_to_bv 64 (bv_unsigned sp0 - 128)) can tid (Z_to_bv 64 0) (Z_to_bv 64 0));
-      [| | exact R4 | exact OK | exact RS | exact Hfd2].
+      [| | exact R4 | exact OK | exact RS | exact Hfd2 | exact Hrd2].
     - (* [comment removed for export] *) split.
       + exact R2.
       + rewrite u_small by lia. rewrite <- Zminus_mod_idemp_l, SP16. reflexivity.

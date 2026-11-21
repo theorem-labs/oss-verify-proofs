@@ -12,7 +12,7 @@
 
    The loop is closed by induction on the passes left (cc_loop), as
    proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_a.v's cw_loop does for the member loop of
-   chain_words (origin/ossv/recipes 501c0d516c69). Every pass calls refuse, whose post is apost_baseF, so the
+   chain_words. Every pass calls refuse, whose post is apost_baseF, so the
    next pass is taken at every FP state that has rounding mode 0: PaFx.fxrel_frm0 carries frm0 across the call
    and PaFx.srr_apost_baseF_lift carries the post back to the entry's FP state. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

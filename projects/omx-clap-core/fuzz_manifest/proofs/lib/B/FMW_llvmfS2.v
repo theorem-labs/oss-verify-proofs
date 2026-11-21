@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS2.v at a working branch 79d8c0f1b8f, relocated A->B:
-   imports per a Theorem Labs lane's core rule (a working branch 305d8b1527f: lib.A AXxx -> lib.ReusableB YXxx when listed in its
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS2.v at a working branch, relocated A->B:
+   imports per a Theorem Labs lane's core rule (a working branch: lib.A AXxx -> lib.ReusableB YXxx when listed in its
    ReusableB list, other lib.A -> lib.B, FMupoison stays lib.A); every image numeral re-derived from B's listing
    (fuzz_manifest.objdump.txt / nm.txt of the asan-ubsan pin). *)
 (* LLVMFuzzerTestOneInput 0x8097c, segment 0x80a50 .. 0x80a6c (fuzz_manifest.c:302-304): tn > 4 MiB returns 0 early

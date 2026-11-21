@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TASK_SIZE bound on paths in read_cstr_of_rdn, read_cstr_toolong_of_rdn and their _aux forms; read_argv_cstr_k and read_argv_prefix_k over the launch values; write's buffer access check at every count: access_okb required by tfo_write_file and tfo_write_rec; file_write_append re-proved through file_extend; the five fout_* lemmas and spec_err_escape_equiv over the run's segments with the vDSO pair and the vDSO initial state; #[using] attributes dropped from 109 lemmas). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -22,23 +23,23 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma with_fds_fs : forall f m, m_fs (with_fds f m) = m_fs m.
+Lemma with_fds_fs : forall f m, m_fs (with_fds f m) = m_fs m.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fds_halted : forall f m, m_halted (with_fds f m) = m_halted m.
+Lemma with_fds_halted : forall f m, m_halted (with_fds f m) = m_halted m.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fds_fds : forall f m, m_fds (with_fds f m) = f.
+Lemma with_fds_fds : forall f m, m_fds (with_fds f m) = f.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fs_fs : forall f m, m_fs (with_fs f m) = f.
+Lemma with_fs_fs : forall f m, m_fs (with_fs f m) = f.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fs_halted : forall f m, m_halted (with_fs f m) = m_halted m.
+Lemma with_fs_halted : forall f m, m_halted (with_fs f m) = m_halted m.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fs_fds : forall f m, m_fds (with_fs f m) = m_fds m.
+Lemma with_fs_fds : forall f m, m_fds (with_fs f m) = m_fds m.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma adv_eff_ret : forall regs pc x8 mem rom r,
+Lemma adv_eff_ret : forall regs pc x8 mem rom r,
   advance_past_svc (apply_effect
     {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := Some x8;
        ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |} (mkEffect r [] []))
@@ -55,7 +56,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma adv_eff_ret_copyins : forall regs pc x8 mem rom r copyins,
+Lemma adv_eff_ret_copyins : forall regs pc x8 mem rom r copyins,
   advance_past_svc (apply_effect
     {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := Some x8;
        ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
@@ -71,17 +72,17 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma in_sysno_si : forall segs ms x8, in_sysno (sys_input segs ms x8) = x8.
+Lemma in_sysno_si : forall segs ms x8, in_sysno (sys_input segs ms x8) = x8.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_arg0_si : forall segs ms x8, in_arg (sys_input segs ms x8) 0 = ms_gpr ms 0.
+Lemma in_arg0_si : forall segs ms x8, in_arg (sys_input segs ms x8) 0 = ms_gpr ms 0.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_arg1_si : forall segs ms x8, in_arg (sys_input segs ms x8) 1 = ms_gpr ms 1.
+Lemma in_arg1_si : forall segs ms x8, in_arg (sys_input segs ms x8) 1 = ms_gpr ms 1.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_arg2_si : forall segs ms x8, in_arg (sys_input segs ms x8) 2 = ms_gpr ms 2.
+Lemma in_arg2_si : forall segs ms x8, in_arg (sys_input segs ms x8) 2 = ms_gpr ms 2.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_mem_si : forall segs ms x8, in_mem (sys_input segs ms x8) = ms_read_byte ms.
+Lemma in_mem_si : forall segs ms x8, in_mem (sys_input segs ms x8) = ms_read_byte ms.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_wmem_si : forall segs ms x8,
+Lemma in_wmem_si : forall segs ms x8,
   in_wmem (sys_input segs ms x8) = ms_writable_byte segs ms.
 Proof. reflexivity. Qed.
 
@@ -89,13 +90,13 @@ Proof. reflexivity. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma path_eqb_neq : forall p q, p <> q -> path_eqb p q = false.
+Lemma path_eqb_neq : forall p q, p <> q -> path_eqb p q = false.
 Proof.
   intros p q Hne. destruct (path_eqb p q) eqn:E; [|reflexivity].
   apply path_eqb_eq in E. congruence.
 Qed.
 
-#[using="Type"] Lemma fs_lookup_set_eq : forall fs p d, fs_lookup (fs_set fs p d) p = Some d.
+Lemma fs_lookup_set_eq : forall fs p d, fs_lookup (fs_set fs p d) p = Some d.
 Proof.
   induction fs as [|[q dq] fs IH]; intros p d; cbn.
   - rewrite path_eqb_refl. reflexivity.
@@ -106,7 +107,7 @@ Proof.
       * rewrite E. apply IH.
 Qed.
 
-#[using="Type"] Lemma fs_lookup_set_neq : forall fs p d q, q <> p ->
+Lemma fs_lookup_set_neq : forall fs p d q, q <> p ->
   fs_lookup (fs_set fs p d) q = fs_lookup fs q.
 Proof.
   induction fs as [|[r dr] fs IH]; intros p d q Hne; cbn.
@@ -119,13 +120,13 @@ Proof.
       * destruct (path_eqb q r); [reflexivity | apply IH; exact Hne].
 Qed.
 
-#[using="Type"] Lemma path_ltb_irrefl : forall p, path_ltb p p = false.
+Lemma path_ltb_irrefl : forall p, path_ltb p p = false.
 Proof.
   induction p as [|a p IH]; cbn; [reflexivity|].
   unfold bv_ltu. rewrite Z.ltb_irrefl, bv_eqb_refl, IH. reflexivity.
 Qed.
 
-#[using="Type"] Lemma fs_set_set : forall fs p d d', fs_set (fs_set fs p d) p d' = fs_set fs p d'.
+Lemma fs_set_set : forall fs p d d', fs_set (fs_set fs p d) p d' = fs_set fs p d'.
 Proof.
   induction fs as [|[q dq] fs IH]; intros p d d'; cbn.
   - rewrite path_ltb_irrefl, path_eqb_refl. reflexivity.
@@ -140,17 +141,17 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma fd_lookup_cons_eq : forall fds fd e, fd_lookup ((fd, e) :: fds) fd = Some e.
+Lemma fd_lookup_cons_eq : forall fds fd e, fd_lookup ((fd, e) :: fds) fd = Some e.
 Proof. intros. cbn. rewrite bv_eqb_refl. reflexivity. Qed.
 
-#[using="Type"] Lemma fd_lookup_cons_neq : forall fds k e fd, k <> fd ->
+Lemma fd_lookup_cons_neq : forall fds k e fd, k <> fd ->
   fd_lookup ((k, e) :: fds) fd = fd_lookup fds fd.
 Proof.
   intros fds k e fd Hne. cbn.
   rewrite (bv_eqb_neq k fd Hne). reflexivity.
 Qed.
 
-#[using="Type"] Lemma fd_lookup_cons_None : forall fds k e fd,
+Lemma fd_lookup_cons_None : forall fds k e fd,
   fd_lookup ((k, e) :: fds) fd = None -> k <> fd /\ fd_lookup fds fd = None.
 Proof.
   intros fds k e fd H. cbn in H.
@@ -159,7 +160,7 @@ Proof.
   intros ->. rewrite bv_eqb_refl in E. discriminate.
 Qed.
 
-#[using="Type"] Lemma fd_filter_id : forall fds fd,
+Lemma fd_filter_id : forall fds fd,
   fd_lookup fds fd = None ->
   List.filter (fun p => negb (bv_eqb (fst p) fd)) fds = fds.
 Proof.
@@ -169,14 +170,14 @@ Proof.
   rewrite IH by exact H. reflexivity.
 Qed.
 
-#[using="Type"] Lemma fd_insert_fresh : forall fds fd e,
+Lemma fd_insert_fresh : forall fds fd e,
   fd_lookup fds fd = None -> fd_insert fds fd e = (fd, e) :: fds.
 Proof.
   intros fds fd e H. unfold fd_insert. rewrite fd_filter_id by exact H.
   reflexivity.
 Qed.
 
-#[using="Type"] Lemma fd_lookup_filter_neq : forall fds fd fd', fd' <> fd ->
+Lemma fd_lookup_filter_neq : forall fds fd fd', fd' <> fd ->
   fd_lookup (List.filter (fun p => negb (bv_eqb (fst p) fd)) fds) fd' = fd_lookup fds fd'.
 Proof.
   induction fds as [|[k e] fds IH]; intros fd fd' Hne; [reflexivity|].
@@ -188,10 +189,10 @@ Proof.
   - cbn [negb fd_lookup]. destruct (bv_eqb k fd'); [reflexivity | apply IH; exact Hne].
 Qed.
 
-#[using="Type"] Lemma fd_lookup_insert_eq : forall fds fd e, fd_lookup (fd_insert fds fd e) fd = Some e.
+Lemma fd_lookup_insert_eq : forall fds fd e, fd_lookup (fd_insert fds fd e) fd = Some e.
 Proof. intros. unfold fd_insert. apply fd_lookup_cons_eq. Qed.
 
-#[using="Type"] Lemma fd_lookup_insert_neq : forall fds fd e fd', fd' <> fd ->
+Lemma fd_lookup_insert_neq : forall fds fd e fd', fd' <> fd ->
   fd_lookup (fd_insert fds fd e) fd' = fd_lookup fds fd'.
 Proof.
   intros fds fd e fd' Hne. unfold fd_insert.
@@ -199,16 +200,16 @@ Proof.
   apply fd_lookup_filter_neq. exact Hne.
 Qed.
 
-#[using="Type"] Lemma fd_lookup_remove_neq : forall fds fd fd', fd' <> fd ->
+Lemma fd_lookup_remove_neq : forall fds fd fd', fd' <> fd ->
   fd_lookup (fd_remove fds fd) fd' = fd_lookup fds fd'.
 Proof. intros. unfold fd_remove. apply fd_lookup_filter_neq. assumption. Qed.
 
-#[using="Type"] Lemma fd_lookup_some_none_neq : forall fds a b ea,
+Lemma fd_lookup_some_none_neq : forall fds a b ea,
   fd_lookup fds a = Some ea -> fd_lookup fds b = None -> a <> b.
 Proof. intros fds a b ea Ha Hb ->. congruence. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma free_fd_after_open : forall x y z fdin e,
+Lemma free_fd_after_open : forall x y z fdin e,
   exists w, fd_lookup (fd_insert
       [(Z_to_bv 64 0, x); (Z_to_bv 64 1, y); (Z_to_bv 64 2, z)] fdin e) w = None
     /\ (bv_unsigned w < 2 ^ 31)%Z.
@@ -225,7 +226,7 @@ Proof.
     + change (bv_unsigned (Z_to_bv 64 3)) with 3%Z. lia.
 Qed.
 
-#[using="Type"] Lemma filter_fd_cons_keep : forall {B} (fds : list (word * B)) k (e : B) fd,
+Lemma filter_fd_cons_keep : forall {B} (fds : list (word * B)) k (e : B) fd,
   k <> fd ->
   List.filter (fun p => negb (bv_eqb (fst p) fd)) ((k, e) :: fds)
   = (k, e) :: List.filter (fun p => negb (bv_eqb (fst p) fd)) fds.
@@ -234,7 +235,7 @@ Proof.
   rewrite (bv_eqb_neq k fd Hne). reflexivity.
 Qed.
 
-#[using="Type"] Lemma filter_fd_cons_drop : forall {B} (fds : list (word * B)) fd (e : B),
+Lemma filter_fd_cons_drop : forall {B} (fds : list (word * B)) fd (e : B),
   List.filter (fun p => negb (bv_eqb (fst p) fd)) ((fd, e) :: fds)
   = List.filter (fun p => negb (bv_eqb (fst p) fd)) fds.
 Proof.
@@ -245,7 +246,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma length_file_read : forall data off count,
+Lemma length_file_read : forall data off count,
   length (file_read data off count)
   = Nat.min (word_to_nat count) (length data - word_to_nat off)%nat.
 Proof.
@@ -253,7 +254,7 @@ Proof.
   rewrite length_firstn, length_skipn. reflexivity.
 Qed.
 
-#[using="Type"] Lemma file_read_nil : forall data off count,
+Lemma file_read_nil : forall data off count,
   (length data <= word_to_nat off)%nat -> file_read data off count = [].
 Proof.
   intros data off count H. rewrite file_read_unguarded.
@@ -261,10 +262,10 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma file_write_append : forall data off bs,
+Lemma file_write_append : forall data off bs,
   word_to_nat off = length data -> file_write data off bs = data ++ bs.
 Proof.
-  intros data off bs Hoff. unfold file_write.
+  intros data off bs Hoff. unfold file_write, file_extend.
   destruct bs as [|b bs]; [now rewrite app_nil_r|]. cbv zeta.
   rewrite Hoff, Nat.sub_diag. cbn [repeat]. rewrite app_nil_r.
   rewrite firstn_all.
@@ -272,7 +273,7 @@ Proof.
   rewrite app_nil_r. reflexivity.
 Qed.
 
-#[using="Type"] Lemma firstn_add {A} : forall (l : list A) n m,
+Lemma firstn_add {A} : forall (l : list A) n m,
   firstn (n + m) l = firstn n l ++ firstn m (skipn n l).
 Proof.
   induction l as [|x l IH]; intros n m.
@@ -282,7 +283,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma copy_step : forall data (off count : word),
+Lemma copy_step : forall data (off count : word),
   firstn (word_to_nat off) data ++ file_read data off count
   = firstn (word_to_nat off
             + Nat.min (word_to_nat count) (length data - word_to_nat off)) data.
@@ -307,18 +308,18 @@ Definition mrb (segs : list Segment) (mem : word -> option byte)
     : word -> option byte :=
   fun a => match mem a with Some b => Some b | None => seg_rom segs a end.
 
-#[using="Type"] Lemma ms_read_byte_mrb : forall segs regs pc mem,
+Lemma ms_read_byte_mrb : forall segs regs pc mem,
   ms_read_byte (mkst regs pc mem (seg_rom segs)) = mrb segs mem.
 Proof. reflexivity. Qed.
 
-#[using="Type"] Lemma ms_read_byte_rec_mrb : forall segs regs fr pc sv rv fc mem,
+Lemma ms_read_byte_rec_mrb : forall segs regs fr pc sv rv fc mem,
   ms_read_byte {| ms_regs := regs; ms_fregs := fr; ms_pc_val := pc; ms_svc_pending := sv;
                   ms_resv := rv; ms_fcsr := fc; ms_mem := mem; ms_rom := seg_rom segs |}
   = mrb segs mem.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma mrb_first : forall segs mem a n b rest,
+Lemma mrb_first : forall segs mem a n b rest,
   rdn segs mem a (S n) = Some (b :: rest) -> mrb segs mem a = Some b.
 Proof.
   intros segs mem a n b rest H. unfold mrb. cbn [rdn] in H.
@@ -329,7 +330,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma rdn_tail : forall segs mem a n b rest,
+Lemma rdn_tail : forall segs mem a n b rest,
   rdn segs mem a (S n) = Some (b :: rest) -> rdn segs mem (a + 1) n = Some rest.
 Proof.
   intros segs mem a n b rest H. cbn [rdn] in H.
@@ -339,18 +340,24 @@ Proof.
   injection H; intros; subst; reflexivity.
 Qed.
 
-#[using="Type"] Lemma read_cstr_aux_of_rdn : forall segs str fuel mem a,
+(* [comment removed for export] *)
+Lemma read_cstr_aux_of_rdn : forall segs str fuel mem a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (bv_unsigned a + Z.of_nat (length str) < TASK_SIZE)%Z ->
   rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux (mrb segs mem) a fuel = CstrOk str.
 Proof.
-  intros segs str; induction str as [|b str IH]; intros fuel mem a Hf Hnz Hr.
+  intros segs str; induction str as [|b str IH]; intros fuel mem a Hf Hnz Hlo Hr.
   - cbn [length] in *. destruct fuel as [|fuel]; [lia|].
     assert (Hb0 : mrb segs mem a = Some (Z_to_bv 8 0))
       by (apply (mrb_first segs mem a 0 (Z_to_bv 8 0) []); exact Hr).
-    cbn [read_cstr_aux]. rewrite Hb0. reflexivity.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one; apply Z.ltb_lt; lia).
+    rewrite Hb0. reflexivity.
   - cbn [length] in *. destruct fuel as [|fuel]; [lia|].
-    cbn [read_cstr_aux]. cbn [app] in Hr.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one; apply Z.ltb_lt; lia).
+    cbn [app] in Hr.
     assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
     assert (Hfirst : mrb segs mem a = Some b)
       by (apply (mrb_first segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
@@ -359,97 +366,128 @@ Proof.
                     = Some (str ++ [Z_to_bv 8 0]))
       by (apply (rdn_tail segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
           exact Hr).
+    assert (Hu1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+      by (apply bv_unsigned_succ_below_task_size; lia).
     rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
     rewrite (IH fuel mem (a + 1) ltac:(lia)
-               ltac:(intro; apply Hnz; right; assumption) Htail).
+               ltac:(intro; apply Hnz; right; assumption) ltac:(lia) Htail).
     reflexivity.
 Qed.
 
-#[using="Type"] Lemma read_cstr_of_rdn : forall segs mem a str,
+Lemma read_cstr_of_rdn : forall segs mem a str,
   (length str <= 4095)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (bv_unsigned a + Z.of_nat (length str) < TASK_SIZE)%Z ->
   rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
   read_cstr (mrb segs mem) a = CstrOk str.
 Proof.
-  intros segs mem a str Hlen Hnz Hr.
-  unfold read_cstr. apply read_cstr_aux_of_rdn; [|exact Hnz|exact Hr].
+  intros segs mem a str Hlen Hnz Hlo Hr.
+  unfold read_cstr. apply read_cstr_aux_of_rdn; [|exact Hnz|exact Hlo|exact Hr].
   change path_max with 4096%nat. lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma read_cstr_aux_toolong_of_rdn : forall segs fuel bs mem a,
+Lemma read_cstr_aux_toolong_of_rdn : forall segs fuel bs mem a,
   length bs = fuel -> ~ In (Z_to_bv 8 0) bs ->
+  (fuel <> 0%nat -> (bv_unsigned a + Z.of_nat fuel <= TASK_SIZE)%Z) ->
   rdn segs mem a fuel = Some bs ->
   read_cstr_aux (mrb segs mem) a fuel = CstrTooLong.
 Proof.
-  intros segs fuel; induction fuel as [|fuel IH]; intros bs mem a Hlen Hnz Hr;
+  intros segs fuel; induction fuel as [|fuel IH]; intros bs mem a Hlen Hnz Hlo Hr;
     [reflexivity|].
+  specialize (Hlo ltac:(lia)).
   destruct bs as [|b bs]; [cbn in Hlen; lia|].
-  cbn [read_cstr_aux].
+  rewrite read_cstr_aux_accepted
+    by (rewrite access_okb_one; apply Z.ltb_lt; lia).
   assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
   assert (Hfirst : mrb segs mem a = Some b)
     by (apply (mrb_first segs mem a fuel b bs); exact Hr).
   assert (Htail : rdn segs mem (a + 1) fuel = Some bs)
     by (apply (rdn_tail segs mem a fuel b bs); exact Hr).
+  assert (Hu1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+    by (apply bv_unsigned_succ_below_task_size; lia).
   rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
   rewrite (IH bs mem (a + 1) ltac:(cbn in Hlen; lia)
-             ltac:(intro; apply Hnz; right; assumption) Htail).
+             ltac:(intro; apply Hnz; right; assumption)
+             ltac:(intro; lia) Htail).
   reflexivity.
 Qed.
 
-#[using="Type"] Lemma read_cstr_toolong_of_rdn : forall segs mem a bs,
+Lemma read_cstr_toolong_of_rdn : forall segs mem a bs,
   length bs = 4096%nat -> ~ In (Z_to_bv 8 0) bs ->
+  (bv_unsigned a + 4096 <= TASK_SIZE)%Z ->
   rdn segs mem a 4096%nat = Some bs ->
   read_cstr (mrb segs mem) a = CstrTooLong.
 Proof.
-  intros segs mem a bs Hlen Hnz Hr.
+  intros segs mem a bs Hlen Hnz Hlo Hr.
   unfold read_cstr. change path_max with 4096%nat.
-  eapply read_cstr_aux_toolong_of_rdn; eauto.
+  eapply read_cstr_aux_toolong_of_rdn; [exact Hlen|exact Hnz| |exact Hr].
+  intros _. change (Z.of_nat 4096) with 4096%Z. lia.
 Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma read_argv_cstr_k : forall ph segs (sp : word) av ev k uid hw rnd,
-  (k < length av)%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-      (cat_argv_ptr sp av ev k) (length (nth k av []) + 1)
-  = Some (nth k av [] ++ [Z_to_bv 8 0]).
+Lemma read_argv_cstr_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k)
+      (length (nth k (in_argv inp) []) + 1)
+  = Some (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]).
 Proof.
-  intros ph segs sp av ev k uid hw rnd Hk Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    pre (nth k av [] ++ [Z_to_bv 8 0]) post (length (nth k av []) + 1)) as H.
+  intros v segs inp mbase ph entry sp brk draw k Hlaunch Hk.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) post
+    (length (nth k (in_argv inp) []) + 1)) as H.
   rewrite Hlen in H.
-  replace (cat_argv_ptr sp av ev k)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite nat_to_word_add_merge. reflexivity. }
   apply H; [exact E | | exact Hnw].
   rewrite length_app. cbn [length]. lia.
 Qed.
 
-#[using="Type"] Lemma read_argv_prefix_k : forall ph segs (sp : word) av ev k n uid hw rnd,
-  (k < length av)%nat -> (n <= length (nth k av []))%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-      (cat_argv_ptr sp av ev k) n
-  = Some (firstn n (nth k av [])).
+Lemma read_argv_prefix_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k n,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  (n <= length (nth k (in_argv inp) []))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k) n
+  = Some (firstn n (nth k (in_argv inp) [])).
 Proof.
-  intros ph segs sp av ev k n uid hw rnd Hk Hn Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    pre (firstn n (nth k av []))
-    ((skipn n (nth k av []) ++ [Z_to_bv 8 0]) ++ post) n) as H.
+  intros v segs inp mbase ph entry sp brk draw k n Hlaunch Hk Hn.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (firstn n (nth k (in_argv inp) []))
+    ((skipn n (nth k (in_argv inp) []) ++ [Z_to_bv 8 0]) ++ post) n) as H.
   rewrite Hlen in H.
-  replace (cat_argv_ptr sp av ev k)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite nat_to_word_add_merge. reflexivity. }
   apply H; [| |exact Hnw].
   - rewrite E. rewrite <- !app_assoc.
-    rewrite (app_assoc (firstn n (nth k av [])) (skipn n (nth k av []))).
+    rewrite (app_assoc (firstn n (nth k (in_argv inp) []))
+               (skipn n (nth k (in_argv inp) []))).
     rewrite firstn_skipn. reflexivity.
   - apply firstn_length_le. exact Hn.
 Qed.
@@ -494,7 +532,7 @@ Inductive to_fout : machine_state -> Model -> ((word * Fs.Fs) -> Prop) -> Prop :
     to_fout ms model U.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_msteps : forall ms ms' model U,
+Lemma tfo_msteps : forall ms ms' model U,
   msteps segs ms ms' -> to_fout ms' model U -> to_fout ms model U.
 Proof.
   intros ms ms' model U H; induction H; [auto|].
@@ -502,7 +540,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_equiv : forall ms model U V,
+Lemma tfo_equiv : forall ms model U V,
   to_fout ms model U ->
   (forall o, V o <-> U o) ->
   to_fout ms model V.
@@ -522,7 +560,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma to_fout_nonempty : forall ms model U,
+Lemma to_fout_nonempty : forall ms model U,
   to_fout ms model U -> exists o, U o.
 Proof.
   intros ms model U Hto.
@@ -539,7 +577,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma sstep_fsys_inv : forall ms model x8 evs st,
+Lemma sstep_fsys_inv : forall ms model x8 evs st,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
@@ -611,7 +649,7 @@ Qed.
 Definition fout_post (U : (word * Fs.Fs) -> Prop) : post :=
   fun tr o => exists out, U out /\ tr = fout_trace out /\ exits_with (fst out) tr o.
 
-#[using="Type"] Lemma to_fout_exec : forall ms model U,
+Lemma to_fout_exec : forall ms model U,
   to_fout ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -676,7 +714,7 @@ Proof.
       split; [cbn [app]; exact Heq | exact Hx].
 Qed.
 
-#[using="Type"] Lemma to_fout_star_only : forall ms model U,
+Lemma to_fout_star_only : forall ms model U,
   to_fout ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -689,7 +727,7 @@ Proof.
   exists out. split; [exact Hout |]. rewrite <- Heq. apply is_prefix_app.
 Qed.
 
-#[using="Type"] Lemma to_fout_star_admits : forall ms model U,
+Lemma to_fout_star_admits : forall ms model U,
   to_fout ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -743,7 +781,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma to_fout_progress : forall ms model U,
+Lemma to_fout_progress : forall ms model U,
   to_fout ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -784,7 +822,7 @@ Definition fon_path (c : config) : Prop :=
    /\ exists U, to_fout (cfg_ms c) (cfg_model c) U)
   \/ m_halted (cfg_model c) <> None.
 
-#[using="Type"] Lemma fon_path_step : forall c evs c',
+Lemma fon_path_step : forall c evs c',
   fon_path c -> sstep segs c evs (SNext c') -> fon_path c'.
 Proof.
   intros [ms model] evs [ms' model'] Hop Hss.
@@ -799,7 +837,7 @@ Proof.
   - exfalso. inversion Hss; subst; cbn in Hh; congruence.
 Qed.
 
-#[using="Type"] Lemma fon_path_no_error : forall c evs, fon_path c -> ~ sstep segs c evs SError.
+Lemma fon_path_no_error : forall c evs, fon_path c -> ~ sstep segs c evs SError.
 Proof.
   intros [ms model] evs Hop Hss.
   unfold fon_path in Hop; cbn in Hop.
@@ -809,11 +847,11 @@ Proof.
   - inversion Hss; subst; cbn in Hh; congruence.
 Qed.
 
-#[using="Type"] Lemma star_fon_path : forall c tr c',
+Lemma star_fon_path : forall c tr c',
   fon_path c -> star segs c tr c' -> fon_path c'.
 Proof. exact (star_inv segs fon_path fon_path_step). Qed.
 
-#[using="Type"] Lemma to_fout_no_error : forall ms model U,
+Lemma to_fout_no_error : forall ms model U,
   to_fout ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -828,7 +866,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma star_syscall_nil : forall ms model x8 eff model',
+Lemma star_syscall_nil : forall ms model x8 eff model',
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
   syscall_spec (sys_input segs ms x8) model (Ok eff model' []) ->
@@ -843,14 +881,14 @@ Proof.
   rewrite (materialize_model_accesses_no_lazy model' _ Hlazy). reflexivity.
 Qed.
 
-#[using="Type"] Lemma reaches_error_star : forall c tr c',
+Lemma reaches_error_star : forall c tr c',
   star segs c tr c' -> reaches_error segs c' -> reaches_error segs c.
 Proof.
   intros c tr c' Hstar (tr2 & c2 & evs & Hstar2 & Hss).
   exists (tr ++ tr2), c2, evs. split; [eapply star_trans; eauto | exact Hss].
 Qed.
 
-#[using="Type"] Lemma spec_err_error : forall ms model x8,
+Lemma spec_err_error : forall ms model x8,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
   syscall_spec (sys_input segs ms x8) model Unmodeled ->
@@ -861,7 +899,7 @@ Proof.
   eapply sstep_syscall_unmodeled; eassumption.
 Qed.
 
-#[using="Type"] Lemma msteps_spec_err_error : forall ms ms' model x8,
+Lemma msteps_spec_err_error : forall ms ms' model x8,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   msteps segs ms ms' ->
@@ -876,7 +914,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma spec_err_all_traces_error : forall ms model x8,
+Lemma spec_err_all_traces_error : forall ms model x8,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
   syscall_spec (sys_input segs ms x8) model Unmodeled ->
@@ -910,7 +948,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma msteps_spec_err_all_traces_error : forall ms ms' model x8,
+Lemma msteps_spec_err_all_traces_error : forall ms ms' model x8,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   msteps segs ms ms' ->
@@ -928,7 +966,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_exit_code : forall ms model x8 code,
+Lemma tfo_exit_code : forall ms model x8 code,
   ms_svc_pending ms = Some x8 ->
   is_exit_no x8 ->
   ms_gpr ms 0 = code ->
@@ -941,7 +979,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_sys_det : forall ms model x8 eff model' U,
+Lemma tfo_sys_det : forall ms model x8 eff model' U,
   ms_svc_pending ms = Some x8 ->
   syscall_spec (sys_input segs ms x8) model (Ok eff model' []) ->
   (forall eff2 m2 evs2,
@@ -974,7 +1012,7 @@ End WithSegs.
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma check_syscall_56 : forall segs ms x8 eff m,
+Lemma check_syscall_56 : forall segs ms x8 eff m,
   bv_unsigned x8 = 56%Z ->
   check_syscall (sys_input segs ms x8) eff m
   = check_openat (sys_input segs ms x8) (fd32 (ms_gpr ms 0)) (ms_gpr ms 1)
@@ -984,7 +1022,7 @@ Proof.
   unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity.
 Qed.
 
-#[using="Type"] Lemma check_syscall_57 : forall segs ms x8 eff m,
+Lemma check_syscall_57 : forall segs ms x8 eff m,
   bv_unsigned x8 = 57%Z ->
   check_syscall (sys_input segs ms x8) eff m
   = check_close (fd32 (ms_gpr ms 0)) eff m.
@@ -993,7 +1031,7 @@ Proof.
   unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity.
 Qed.
 
-#[using="Type"] Lemma check_syscall_63 : forall segs ms x8 eff m,
+Lemma check_syscall_63 : forall segs ms x8 eff m,
   bv_unsigned x8 = 63%Z ->
   check_syscall (sys_input segs ms x8) eff m
   = check_read (sys_input segs ms x8) (fd32 (ms_gpr ms 0)) (ms_gpr ms 1)
@@ -1003,7 +1041,7 @@ Proof.
   unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity.
 Qed.
 
-#[using="Type"] Lemma check_syscall_64 : forall segs ms x8 eff m,
+Lemma check_syscall_64 : forall segs ms x8 eff m,
   bv_unsigned x8 = 64%Z ->
   check_syscall (sys_input segs ms x8) eff m
   = check_write (sys_input segs ms x8) (fd32 (ms_gpr ms 0)) (ms_gpr ms 1)
@@ -1016,14 +1054,14 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma fd_not_error : forall fd : word,
+Lemma fd_not_error : forall fd : word,
   (bv_unsigned fd < 2 ^ 31)%Z -> addr_is_error_b fd = false.
 Proof.
   intros fd H. unfold addr_is_error_b, two_pow_64. apply Z.ltb_ge. lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma errno_ret_recover : forall e,
+Lemma errno_ret_recover : forall e,
   (1 <= e)%Z -> (e <= 4095)%Z ->
   (two_pow_64 - bv_unsigned (errno_ret e))%Z = e.
 Proof.
@@ -1031,14 +1069,14 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma ENOMEM_in_openat_errnos : In ENOMEM openat_errnos.
+Lemma ENOMEM_in_openat_errnos : In ENOMEM openat_errnos.
 Proof. left. reflexivity. Qed.
 
-#[using="Type"] Lemma openat_errno_range : forall e,
+Lemma openat_errno_range : forall e,
   In e openat_errnos -> (1 <= e)%Z /\ (e <= 4095)%Z.
 Proof. intros e HIn. exact (errnos_ok_range openat_errnos e eq_refl HIn). Qed.
 
-#[using="Type"] Lemma check_open_result_never_unmodeled : forall eff m mk,
+Lemma check_open_result_never_unmodeled : forall eff m mk,
   check_open_result eff m mk <> CheckUnmodeled.
 Proof.
   intros [ret ws zs us cs copyins] m mk.
@@ -1052,7 +1090,7 @@ Proof.
   destruct (bv_eqb ret (alloc_fd (m_fds m))); discriminate.
 Qed.
 
-#[using="Type"] Lemma check_open_result_ok_iff : forall eff m (mk : word -> Model) m' evs,
+Lemma check_open_result_ok_iff : forall eff m (mk : word -> Model) m' evs,
   check_open_result eff m mk = CheckOk m' evs <->
   ((exists e, In e openat_errnos /\ eff = mkEffect (errno_ret e) [] []
               /\ m' = m /\ evs = [])
@@ -1094,7 +1132,7 @@ Definition check_open_result_copyins (reads : list (word * nat))
     (eff : SyscallEffect) (m : Model) (mk : word -> Model) : check_result :=
   check_copyins reads eff (check_open_result (clear_copyins eff) m mk).
 
-#[using="Type"] Lemma effect_from_copyins_and_clear : forall eff reads core,
+Lemma effect_from_copyins_and_clear : forall eff reads core,
   eff_copyins eff = reads -> clear_copyins eff = core ->
   eff = with_copyins reads core.
 Proof.
@@ -1105,7 +1143,7 @@ Proof.
   inversion Hcore. reflexivity.
 Qed.
 
-#[using="Type"] Lemma check_open_result_copyins_never_unmodeled : forall reads eff m mk,
+Lemma check_open_result_copyins_never_unmodeled : forall reads eff m mk,
   check_open_result_copyins reads eff m mk <> CheckUnmodeled.
 Proof.
   intros reads eff m mk.
@@ -1114,7 +1152,7 @@ Proof.
     [apply check_open_result_never_unmodeled|discriminate].
 Qed.
 
-#[using="Type"] Lemma check_open_result_copyins_ok_iff :
+Lemma check_open_result_copyins_ok_iff :
   forall reads eff m (mk : word -> Model) m' evs,
   check_open_result_copyins reads eff m mk = CheckOk m' evs <->
   ((exists e, In e openat_errnos /\
@@ -1150,7 +1188,7 @@ Proof.
       congruence.
 Qed.
 
-#[using="Type"] Lemma check_copyins_after_ret_only : forall reads eff r m evs,
+Lemma check_copyins_after_ret_only : forall reads eff r m evs,
   Prelude.check_copyins_after reads eff
       (check_ret_only (clear_copyins eff) r m evs) =
   check_ret_only_copyins reads eff r m evs.
@@ -1165,7 +1203,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma openat_rd_check : forall segs ms x8 model p d,
+Lemma openat_rd_check : forall segs ms x8 model p d,
   bv_unsigned x8 = 56%Z ->
   ms_gpr ms 0 = AT_FDCWD ->
   read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrOk p ->
@@ -1205,7 +1243,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma openat_wr_check : forall segs ms x8 model p,
+Lemma openat_wr_check : forall segs ms x8 model p,
   bv_unsigned x8 = 56%Z ->
   ms_gpr ms 0 = AT_FDCWD ->
   read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrOk p ->
@@ -1249,7 +1287,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma openat_wr_isdir_check : forall segs ms x8 model p,
+Lemma openat_wr_isdir_check : forall segs ms x8 model p,
   bv_unsigned x8 = 56%Z ->
   ms_gpr ms 0 = AT_FDCWD ->
   read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrOk p ->
@@ -1282,7 +1320,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma openat_toolong_check : forall segs ms x8 model,
+Lemma openat_toolong_check : forall segs ms x8 model,
   bv_unsigned x8 = 56%Z ->
   modeled_open_flags (ms_gpr ms 2) = true ->
   read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrTooLong ->
@@ -1312,7 +1350,7 @@ Section OpenNodes.
 Variable segs : list Segment.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_core : forall ms model (mk : word -> Model) x8 reads
+Lemma tfo_open_core : forall ms model (mk : word -> Model) x8 reads
     (Te : Z -> (word * Fs.Fs) -> Prop) (Ts : word -> (word * Fs.Fs) -> Prop) U,
   ms_svc_pending ms = Some x8 ->
   m_halted model = None ->
@@ -1412,7 +1450,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma open_ok_fd : forall ms model (mk : word -> Model) x8 reads fd,
+Lemma open_ok_fd : forall ms model (mk : word -> Model) x8 reads fd,
   (forall eff, check_syscall (sys_input segs ms x8) eff model
                = check_open_result_copyins reads eff model mk) ->
   fd_lookup (m_fds model) fd = None -> fd = alloc_fd (m_fds model) ->
@@ -1425,7 +1463,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_openat_toolong : forall ms model x8 U,
+Lemma tfo_openat_toolong : forall ms model x8 U,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 56%Z ->
   modeled_open_flags (ms_gpr ms 2) = true ->
@@ -1457,7 +1495,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_openat_enoent : forall ms model x8 p U,
+Lemma tfo_openat_enoent : forall ms model x8 p U,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 56%Z ->
   ms_gpr ms 0 = AT_FDCWD ->
@@ -1511,7 +1549,7 @@ Qed.
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma tfo_read_file : forall ms model x8 p off data w U,
+Lemma tfo_read_file : forall ms model x8 p off data w U,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 63%Z ->
   fd_lookup (m_fds model) (ms_gpr ms 0) = Some (FdFile p off) ->
@@ -1612,12 +1650,14 @@ Qed.
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma tfo_write_file : forall ms model x8 p off data bs U,
+Lemma tfo_write_file : forall ms model x8 p off data bs U,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 64%Z ->
   fd_lookup (m_fds model) (ms_gpr ms 0) = Some (FdFileW p off) ->
   fd32 (ms_gpr ms 0) = ms_gpr ms 0 ->
   read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+  (* [comment removed for export] *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
   fs_lookup (m_fs model) p = Some data ->
   (* [comment removed for export] *)
@@ -1636,7 +1676,7 @@ Qed.
     U ->
   to_fout segs ms model U.
 Proof.
-  intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hcnt Hfs Hgap Hnz Hh Hlazy Hcont.
+  intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hok Hcnt Hfs Hgap Hnz Hh Hlazy Hcont.
   assert (Hrb : read_bytes_map (in_mem (sys_input segs ms x8))
                   (ms_gpr ms 1) (ms_gpr ms 2) = Some bs).
   { rewrite in_mem_si. exact Hrd. }
@@ -1650,6 +1690,7 @@ Proof.
     rewrite (check_syscall_64 segs ms x8 eff model Hno). unfold check_write.
     rewrite Hfd32, Hfd. cbv beta iota.
     rewrite (rw_range_in_range _ _ Hcnt). cbv beta iota zeta.
+    rewrite Hok. cbn [negb]. cbv beta iota.
     rewrite (write_source_of_rw _ _ _ Hcnt), (readable_bytes_full _ _ _ _ Hrb).
     pose proof (read_bytes_map_length _ _ _ _ Hrb) as Hlen.
     assert (Hret : len_word bs = ms_gpr ms 2).
@@ -1686,7 +1727,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_write_file_zero : forall ms model x8 p off data bs U,
+Lemma tfo_write_file_zero : forall ms model x8 p off data bs U,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 64%Z ->
   fd_lookup (m_fds model) (ms_gpr ms 0) = Some (FdFileW p off) ->
@@ -1722,6 +1763,7 @@ Proof.
     rewrite (check_syscall_64 segs ms x8 eff model Hno). unfold check_write.
     rewrite Hfd32, Hfd. cbv beta iota.
     rewrite (rw_range_in_range _ _ Hcnt). cbv beta iota zeta.
+    rewrite Hok. cbn [negb]. cbv beta iota.
     rewrite (write_source_of_rw _ _ _ Hcnt), (readable_bytes_full _ _ _ _ Hrb).
     pose proof (read_bytes_map_length _ _ _ _ Hrb) as Hlen.
     assert (Hret : len_word bs = ms_gpr ms 2).
@@ -1753,7 +1795,7 @@ Qed.
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma tfo_close : forall ms model x8 e U,
+Lemma tfo_close : forall ms model x8 e U,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 57%Z ->
   fd_lookup (m_fds model) (ms_gpr ms 0) = Some e ->
@@ -1799,14 +1841,14 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma record_gpr : forall regs fr pc sv rv fc mem rom k,
+Lemma record_gpr : forall regs fr pc sv rv fc mem rom k,
   ms_gpr {| ms_regs := regs; ms_fregs := fr; ms_pc_val := pc; ms_svc_pending := sv;
             ms_resv := rv; ms_fcsr := fc; ms_mem := mem; ms_rom := rom |} k
   = reg_get regs (Z_to_bv 5 (10 + Z.of_nat k)).
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_exit_rec : forall regs pc mem rom model code fsv,
+Lemma tfo_exit_rec : forall regs pc mem rom model code fsv,
   bv_unsigned (getr regs 17) = 93%Z ->
   reg_get regs 10 = code -> (bv_unsigned code < 256)%Z ->
   m_fs model = fsv ->
@@ -1825,7 +1867,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_read_rec : forall regs pc mem rom model fdv p off data buf cnt U,
+Lemma tfo_read_rec : forall regs pc mem rom model fdv p off data buf cnt U,
   bv_unsigned (getr regs 17) = 63%Z ->
   reg_get regs 10 = fdv -> reg_get regs 11 = buf -> reg_get regs 12 = cnt ->
   fd_lookup (m_fds model) fdv = Some (FdFile p off) ->
@@ -1877,7 +1919,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_write_rec : forall regs pc mem model fdv p off data bs buf cnt U,
+Lemma tfo_write_rec : forall regs pc mem model fdv p off data bs buf cnt U,
   bv_unsigned (getr regs 17) = 64%Z ->
   reg_get regs 10 = fdv -> reg_get regs 11 = buf -> reg_get regs 12 = cnt ->
   fd_lookup (m_fds model) fdv = Some (FdFileW p off) ->
@@ -1888,7 +1930,7 @@ Qed.
   (* [comment removed for export] *)
   negb (modeled_file_gap data off bs) = false ->
   (* [comment removed for export] *)
-  (access_okb buf (bv_unsigned cnt) = true \/ (0 < bv_unsigned cnt)%Z) ->
+  access_okb buf (bv_unsigned cnt) = true ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
   to_fout segs (mkst (regupd regs 10 cnt) (v_addi pc 4) mem (seg_rom segs))
@@ -1925,10 +1967,7 @@ Proof.
     + exact Hfs.
     + exact Hgap.
     + rewrite Hg2. exact Hz.
-    + destruct Hok as [Hfl | Hp].
-      * rewrite Hg1, Hg2. exact Hfl.
-      * (* [comment removed for export] *)
-        rewrite (w_is0_pos cnt Hp) in Hz. discriminate.
+    + rewrite Hg1, Hg2. exact Hok.
     + exact Hh.
     + exact Hlazy.
     + rewrite Hg0, Hg2. unfold ms.
@@ -1943,6 +1982,7 @@ Proof.
       rewrite read_bytes_map_read_byte.
       rewrite (ms_read_bytes_rdn segs ms) by reflexivity.
       exact Hrd.
+    + rewrite Hg1, Hg2. exact Hok.
     + rewrite Hg2. exact Hcnt.
     + exact Hfs.
     + exact Hgap.
@@ -1954,7 +1994,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_close_rec : forall regs pc mem rom model fdv e U,
+Lemma tfo_close_rec : forall regs pc mem rom model fdv e U,
   bv_unsigned (getr regs 17) = 57%Z ->
   reg_get regs 10 = fdv ->
   fd_lookup (m_fds model) fdv = Some e ->
@@ -1984,7 +2024,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_enoent_rec : forall regs pc mem model p U,
+Lemma tfo_open_enoent_rec : forall regs pc mem model p U,
   bv_unsigned (getr regs 17) = 56%Z ->
   reg_get regs 10 = AT_FDCWD -> reg_get regs 12 = Z_to_bv 64 0 ->
   read_cstr (mrb segs mem) (reg_get regs 11) = CstrOk p ->
@@ -2020,7 +2060,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_rd_rec : forall regs pc mem model p d
+Lemma tfo_open_rd_rec : forall regs pc mem model p d
     (Te : Z -> (word * Fs.Fs) -> Prop) (Ts : word -> (word * Fs.Fs) -> Prop) U,
   bv_unsigned (getr regs 17) = 56%Z ->
   reg_get regs 10 = AT_FDCWD -> reg_get regs 12 = Z_to_bv 64 0 ->
@@ -2078,7 +2118,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_wr_rec : forall regs pc mem model p
+Lemma tfo_open_wr_rec : forall regs pc mem model p
     (Te : Z -> (word * Fs.Fs) -> Prop) (Ts : word -> (word * Fs.Fs) -> Prop) U,
   bv_unsigned (getr regs 17) = 56%Z ->
   reg_get regs 10 = AT_FDCWD -> reg_get regs 12 = Z_to_bv 64 577 ->
@@ -2139,7 +2179,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_wr_isdir_rec : forall regs pc mem model p U,
+Lemma tfo_open_wr_isdir_rec : forall regs pc mem model p U,
   bv_unsigned (getr regs 17) = 56%Z ->
   reg_get regs 10 = AT_FDCWD -> reg_get regs 12 = Z_to_bv 64 577 ->
   read_cstr (mrb segs mem) (reg_get regs 11) = CstrOk p ->
@@ -2193,7 +2233,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_toolong_rec : forall regs pc mem model U,
+Lemma tfo_open_toolong_rec : forall regs pc mem model U,
   bv_unsigned (getr regs 17) = 56%Z ->
   modeled_open_flags (reg_get regs 12) = true ->
   read_cstr (mrb segs mem) (reg_get regs 11) = CstrTooLong ->
@@ -2229,43 +2269,52 @@ End OpenNodes.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma fout_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_fout segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-          (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
+Lemma fout_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (fout_post U).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto.
   cbn [omni_run]. unfold init_config.
-  exact (to_fout_exec segs _ _ U Hto eq_refl eq_refl).
+  exact (to_fout_exec (run_segments segs inp sp mb) _ _ U Hto eq_refl eq_refl).
 Qed.
 
-#[using="Type"] Lemma fout_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_fout segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-          (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+Lemma fout_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
     <-> exists o, U o /\ is_prefix tr (fout_trace o).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto tr.
   unfold init_config.
-  set (ms := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  assert (Hh : m_halted (init_model (segments_reserved segs) brk0 mb sp lim inp) = None)
-    by reflexivity.
-  assert (Hlazy : m_vm_lazy (init_model (segments_reserved segs) brk0 mb sp lim inp) = [])
-    by reflexivity.
+  set (ms := init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) in *.
+  set (m0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+               (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) in *.
+  assert (Hh : m_halted m0 = None) by reflexivity.
+  assert (Hlazy : m_vm_lazy m0 = []) by reflexivity.
   split.
   - intros (tr' & c & Hstar & Hp).
-    destruct (to_fout_star_only segs ms _ U Hto Hh Hlazy tr' c Hstar)
+    destruct (to_fout_star_only (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy tr' c Hstar)
       as (o & Ho & Hp').
     exists o. split; [exact Ho | eapply is_prefix_trans; eauto].
   - intros (o & Ho & Hp).
-    destruct (to_fout_star_admits segs ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
+    destruct (to_fout_star_admits (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy o Ho)
+      as [c Hstar].
     exists (fout_trace o), c. split; assumption.
 Qed.
 
-#[using="Type"] Lemma fout_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_fout segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-          (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
+Lemma fout_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto. apply exec_no_error.
   eapply exec_conseq; [exact (fout_omni_run segs pc ph sp brk0 mb rnd lim inp U Hto) |].
@@ -2273,14 +2322,18 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma fout_omni_strong_equiv :
+Lemma fout_omni_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp,
-  to_fout source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp) U ->
-  to_fout target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp) U ->
+  to_fout (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp
+          source_alloc_limit inp)) U ->
+  to_fout (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp
+          target_alloc_limit inp)) U ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
@@ -2303,14 +2356,18 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma fout_strong_equiv :
+Lemma fout_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim U inp,
-  to_fout source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) U ->
-  to_fout target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp alim inp) U ->
+  to_fout (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp
+          rlim inp)) U ->
+  to_fout (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp
+          alim inp)) U ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
@@ -2329,9 +2386,10 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma spec_err_escape_equiv :
+Lemma spec_err_escape_equiv :
   forall segs pc ph sp brk0 mb rnd lim inp (target : behavior),
-  all_traces_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  all_traces_error (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   Equivalence.equiv (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp) target.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp target Hall.

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the decline test place_declined_b of an mmap step computed from its NULL hint; the NULL-hint mmap witnesses are Linux's own address, place_ok_linux, written as plain text; lazy_null_rw_enode's grant taken at that address; the reserved ledger stated as the image's entries followed by the vDSO/vvar pair, vdso_pair_ok, written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -972,6 +973,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import
@@ -1026,8 +1028,8 @@ Hypothesis Hnxt : ltac2:(tb__ "0|0|
 S39SaS4VE;A1A1Vnxt;A2").
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S19S30VGl;S4VE;A1A2S1bA3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S15S14S10Q40A1M0G0A2A1S1fS1dVm;A1A1S2bS13A1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hband : ltac2:(tb__ "0|2|
 S2eS18S14S10Q40A1M0G0A2S1fS1dVm;A1M1A1S1eG1A1A3S2dS2cA3").
@@ -1046,8 +1048,8 @@ Lemma place_ok_none_of : ltac2:(tb__ "0|3|
 S10Q40M0A1M1S20G1G1S23S12G0Z0A2M2R4R3R2R1A5S22G2R4R3R2A4F_;Fa;Flen;Fmd;Fflags;").
 Proof. intros flags md len a (P1 & P2 & P3 & P4 & _). unfold mmap_place_ok_none. repeat split; assumption. Qed.
 
-Hypothesis Hwit : ltac2:(tb__ "0|2|
-S1S10Q40M0A1M1G1S22S12G0Z0A2Vm;Vn;R1A4La;A2").
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), where a granted NULL-hint mmap now goes; written as plain text. *)
+Hypothesis Hwit : (exists a : stdpp.bitvector.definitions.bv 64, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux m n a).
 
 Theorem lazy_null_rw_enode : ltac2:(tb__ "0|5|
 S9S15S10Q40M0A1M1A1S6S1cS2aS14S6S1cA2S16S6S1cR2R1A4VGl;A3S3S1G1G1S1G1G1S2S2aS14G1G1A2S16G1G1R2R1A4S1eS1dVm;A1M2A1A3S2S25S11G0R2A2M3S11G0SbR7R5A2A2M4A2S25S24G4R4A2S24G3S11G0R1A2A2A2A2A2Ls;A2Lb;A2S25S24S11G0SbR5R3A2A2R2A2S31VlenZ;A1A2A2F_;Fsz;Fe;S0S1cS11G0ScR3P1A2A2S11G0S21G2A1A2A3S34S13S29S13S28Vm;VB;A2VE;R4R3A5S35S1G1G1S2S22S12G0Z0A2Vm;Vn;R1A4S29S13S28S32VlenZ;Vm;R1A3VB;A2S33VE;VlenZ;Vnxt;A3Vrho_of;R6R1A2R5R2A6A2La;A2Lw;A3F_;F_;Ftp;Frho;").
@@ -1065,6 +1067,10 @@ Proof using All.
   rewrite R10 in G0. rewrite R11 in G1. rewrite R12 in G2. rewrite R13 in G3. rewrite R14 in G4. rewrite R15 in G5.
   cbn [eval] in G0, G1, G2, G3, G4, G5. fold n in G1.
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
+  (* LPS 727298f3: the hint a0 is NULL here (G0), so the decline test is false by computation. *)
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false)
+    by (rewrite G0; exact (place_declined_b_null _ _ _)).
   assert (Hlen : ms_gpr ms 1 <> Z_to_bv 64 0).
   { rewrite G1. intros X. apply (f_equal bv_unsigned) in X. rewrite Nv in X. change (bv_unsigned (Z_to_bv 64 0)) with 0 in X. lia. }
   assert (Hshape : mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true).
@@ -1074,13 +1080,21 @@ Proof using All.
     pose proof Hnl as Hnl'. apply Z.mod_divide in Hnl' as [q Hq]; [|lia]. rewrite Hq.
     replace (q * 4096 + 4096 - 1) with (4095 + q * 4096) by lia. rewrite Z.div_add by lia. change (4095 / 4096) with 0. lia. }
   assert (HnZ : mmap_n (ms_gpr ms 1) = n) by (unfold mmap_n; rewrite HnZ'; reflexivity).
-  destruct Hwit as [a Hwa].
+  destruct Hwit as (a & Hwa & Hlx).
   assert (Hpl : mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a).
   { rewrite G0, G1. destruct Hwa as (W1 & W2 & W3 & W4). unfold mmap_place_ok. rewrite Evm.
     split; [exact W1|]. split; [exact W2|]. split; [exact W3|]. split; [exact W4|].
     unfold mmap_noreserve_backed_ok. rewrite G3, (mmap_noreserve_b_16418 (Z_to_bv 64 16418) eq_refl). reflexivity. }
+  (* LPS 727298f3: the grant goes to Linux's own address ([Hwit], [place_ok_linux]), carried from [m]
+     to [md], whose maps and kernel are [m]'s ([KxA]: they differ only in what is materialized). *)
+  assert (Ekr : kb_thp (m_kernel md) = kb_thp (m_kernel m)).
+  { pose proof (f_equal (fun x => kb_thp (m_kernel x)) Hem) as Hk. cbv beta in Hk. unfold erase_mat in Hk.
+    first [ exact Hk | autorewrite with model in Hk; exact Hk | destruct md, m; cbn in Hk |- *; exact Hk ]. }
+  assert (Hlp : LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is
+                  (m_vmmaps md) (kb_thp (m_kernel md)) (ms_gpr ms 0) (mmap_nZ (ms_gpr ms 1)) a = true)
+    by (rewrite Evm, Ekr, G0, G1; exact Hlx).
   exists ([], mkCfg (after_sys_mem ms a (zero_range (ms_mem ms) a (mmap_n (ms_gpr ms 1)))) (mmap_rw_model (ms_gpr ms 3) md (ms_gpr ms 1) a)).
-  split; [exact (wstep_mmap_intro_okA segsA ms md _ Hh H222 Hlen Hshape [] a Hp Hpl)|].
+  split; [exact (wstep_mmap_intro_okA segsA ms md _ Hh H222 Hlen Hshape Hdecl [] a Hp Hpl Hlp)|].
   exists a.
   rewrite G0, G1 in Hpl.
   assert (HnZn : mmap_nZ n = lenZ) by (rewrite <- G1; exact HnZ').

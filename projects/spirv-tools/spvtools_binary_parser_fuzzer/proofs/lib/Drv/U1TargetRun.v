@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -99,7 +100,7 @@ Section Front.
     - cbn [kentry_ok]. evl. rewrite u_small by lia. split; [lia | exact (proj2 Hsp)].
     - cbn [kentry_ok]. evl. rewrite u_small by lia. lia.
     - cbn [kentry_ok a_base a_off]. unfold flat, estart. cbn [a_base a_off]. evl. rewrite u_small by lia.
-      split; [lia|]. intros d m Hd Hm. replace (sp0 + -8388608 + d) with (sp0 - 8388608 + d) by lia. apply Mstack; lia.
+      split; [lia|]. intros d m Hd Hm. replace (sp0 + -6144513 + d) with (sp0 - 8388608 + (d + 2244095)) by lia. apply Mstack; lia.
     - cbn [kentry_ok]. repeat split; [lia | lia | exact Mtext].
     - cbn [kentry_ok]. repeat split; [lia | lia | exact Mgap].
     - cbn [kentry_ok a_base a_off]. unfold flat, estart. cbn [a_base a_off edenot].

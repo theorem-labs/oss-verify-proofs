@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader and kernel carried through the read loop's invariants). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -90,6 +91,9 @@ Section Loop.
     re_cap : L < cap /\ (exists j, (j <= 10)%nat /\ cap = cap_of j);
     re_content : rdn RSEGS M (Z_to_bv 64 p) (length content) = Some content;
     re_fds : m_fds mo = fds_std;
+    (* 75d69e00: writev answers a byte count only with a reader at the far end
+       ([ReadWrite.writev_spec]); the bit is free, not derivable from [re_fds]. *)
+    re_rdr : m_channel_reader mo = true;
     re_fs : m_fs mo = fs0
   }.
 
@@ -114,10 +118,11 @@ Section Loop.
     0 <= len <= len' -> len' <= cap ->
     post_mem content M M' sp0 p len len' ->
     m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> m_halted mo' = m_halted mo ->
-    m_vm_materialized mo' = m_vm_materialized mo ->
+    m_vm_materialized mo' = m_vm_materialized mo -> m_kernel mo' = m_kernel mo ->
+    m_channel_reader mo' = m_channel_reader mo ->
     RMEM M' /\ RABS A M' mo'.
   Proof.
-    intros A M M' mo mo' p cap len len' RM RA Hin Hp Hpc Hl Hl' PM Hvm Hlz Hh Hmat.
+    intros A M M' mo mo' p cap len len' RM RA Hin Hp Hpc Hl Hl' PM Hvm Hlz Hh Hmat Hkn Hrd.
     pose proof HAC as Hcv. pose proof ac_bounds_lit as Hcb.
     apply (rstep_client MI sp0 tid p1 path Hsp Hp1 HAC A M M' mo mo' RM RA (proj2 (proj1 PM))); try assumption.
     intros a Hne. pose proof (u64_range a).
@@ -135,10 +140,13 @@ Section Loop.
     getr R 22 = Z_to_bv 64 0xf0249 ->
     RMEM M -> RABS A M (at_off path mo len) -> TIGHT A -> live MI A = [(p, cap_of j)] ->
     rdn RSEGS M (Z_to_bv 64 p) (Z.to_nat len) = Some (pref len content) -> m_fs mo = fs0 ->
+    (* 75d69e00: [rend] now carries the far end's reader bit, and [closed3] only
+       swaps the fd table, so the bit has to arrive with the model. *)
+    m_channel_reader mo = true ->
     post_regs R R' sp0 p L -> post_mem content M M' sp0 p len L ->
     srealizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 0x65938) M' (seg_rom RSEGS)) (closed3 mo)) KEND.
   Proof.
-    intros j p len A R M mo R' M' Hj Hlen HlenL HLc Q3 Q4 Q8 Q18 Q20 Q21 Q22 QM QA QT QL QC QFS (P2 & P9 & P19 & PK) PM.
+    intros j p len A R M mo R' M' Hj Hlen HlenL HLc Q3 Q4 Q8 Q18 Q20 Q21 Q22 QM QA QT QL QC QFS QRD (P2 & P9 & P19 & PK) PM.
     pose proof HAC as Hcv. pose proof (cap_of_range j Hj) as Hcap.
     destruct (buf_geom A M (at_off path mo len) p (cap_of j) QA QL ltac:(lia)) as (Hpimg & Hpce & Hpal).
     pose proof (ra_ainv _ _ _ _ QA) as AI.
@@ -155,6 +163,9 @@ Section Loop.
     - rewrite PK by reg_in. exact Q22.
     - split; [lia | exists j; split; [lia | reflexivity]].
     - eapply (content_at_buf content M M' sp0 p len); [lia | lia | lia | lia | exact QC | exact PM].
+    (* re_rdr needs NO bullet: 'constructor; try assumption' above already closes
+       it from QRD, because closed3 swaps only the fd table and assumption works
+       up to conversion.  The premise is what was missing, never a tactic. *)
     - reflexivity.
   Qed.
 
@@ -165,7 +176,10 @@ Section Loop.
   Proof.
     induction d as [|d IH]; intros j p len A R M mo Hjd RQ.
     all: pose proof HAC as Hcv; pose proof ac_bounds_lit as Hcb; pose proof (dm_consts _ _ _ _ DM) as [MSc BIGc NMAXc RBc SCg SCn SCp].
-    all: destruct RQ as [Q2 Q3 Q4 Q8 Q9 Q18 Q19 Q20 Q21 Q22 QM QA QT QL [Hlen HlenL] QC QFDS QFS].
+    (* QRD names [rst]'s new [rs_rdr]; it sits between [rs_fds] and [rs_fs], so the
+       pattern gains exactly one name in that position.  This is what [stage_end]'s
+       reader premise is discharged from by the [try eassumption] at :192. *)
+    all: destruct RQ as [Q2 Q3 Q4 Q8 Q9 Q18 Q19 Q20 Q21 Q22 QM QA QT QL [Hlen HlenL] QC QFDS QRD QFS].
     all: pose proof (cap_of_range j ltac:(lia)) as Hcap.
     all: destruct (buf_geom A M mo p (cap_of j) QA QL ltac:(lia)) as (Hpimg & Hpce & Hpal).
     all: pose proof (ra_ainv _ _ _ _ QA) as AI; pose proof (ra_mstd _ _ _ _ QA) as MS; destruct MS as [Hh Hlz Hmat Hceil].
@@ -252,7 +266,7 @@ Section Loop.
         pose proof (RBc (cap_of j) ltac:(lia)). pose proof (RBc (2 * cap_of j) ltac:(lia)).
         destruct (131052 <=? cap_of j); lia.
       +
-        intros A' R3 M3 mo3 nb AI3 TI3 MS3 FS3 FDS3 KEPT A10 Hnb LADD CP BG NEWT FR DEF.
+        intros A' R3 M3 mo3 nb AI3 TI3 MS3 FS3 FDS3 RD3 KEPT A10 Hnb LADD CP BG NEWT FR DEF.
         rewrite QL in LADD. destruct LADD as [LV3 Hfresh].
         assert (Hin3 : In (nb, 2 * cap_of j) (live MI A')) by (rewrite LV3; left; reflexivity).
         assert (Hin3p : In (p, cap_of j) (live MI A')) by (rewrite LV3; right; left; reflexivity).
@@ -302,7 +316,7 @@ Section Loop.
           eapply srz_msteps; [exact (ms_halt _ MS3) | exact (ms_lazy _ MS3) | exact MS5 |].
           set (M5 := wbytes M3 (Z_to_bv 64 nb) (pref (cap_of j) content)) in *.
           destruct (rstep_client MI sp0 tid p1 path Hsp Hp1 HAC A' M3 M5 mo3 mo3 RM3 RA3 ltac:(subst M5; apply wbytes_grows)) as [RM5 RA5];
-            [ | reflexivity | reflexivity | reflexivity | reflexivity | ].
+            [ | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | reflexivity | ].
           { intros a Hne. left. exists nb, (2 * cap_of j). split; [exact Hin3|]. pose proof (u64_range a).
             destruct (Classical_Prop.classic (nb <= bv_unsigned a < nb + 2 * cap_of j)) as [Hb|Hb]; [exact Hb|]. exfalso. apply Hne.
             subst M5. apply wbytes_outside; [|rewrite u64_lit by lia; pose proof (pref_length (cap_of j) content ltac:(lia)); lia].
@@ -343,7 +357,7 @@ Section Loop.
              apply (rm_stack _ _ _ _ _ RM5); lia.
           -- rewrite MSc. intros a Ha. unfold zwin in Ha. exact (high_not_owned MI A' M5 mo3 a AI5 ltac:(lia)).
           --
-             intros A7 R7 M7 mo7 AI7 TI7 MS7 FS7 FDS7 KEPT7 LDEL CP7 BG7 OWN7 FR7 DEF7.
+             intros A7 R7 M7 mo7 AI7 TI7 MS7 FS7 FDS7 RD7 KEPT7 LDEL CP7 BG7 OWN7 FR7 DEF7.
              rewrite MSc in FR7.
              destruct (rstep_alloc MI sp0 tid p1 path Hsp Hp1 HAC A' A7 M5 M7 mo3 mo7
                          (fun a => p <= a < p + cap_of j) (sp0 - 128 - 8192) (sp0 - 128) RM5 RA5 AI7 MS7 CP7 BG7) as (RM7 & RA7 & AG7).
@@ -391,6 +405,7 @@ Section Loop.
                     +++ unfold zwin in H. lia.
                     +++ exact (high_not_errno (bv_unsigned x) ltac:(lia) H).
                 --- rewrite FDS7, FDS3. reflexivity.
+                --- rewrite RD7, RD3. exact QRD.
                 --- rewrite FS7, FS3. exact QFS.
   Qed.
 End Loop.

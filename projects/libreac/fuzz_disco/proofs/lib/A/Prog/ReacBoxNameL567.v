@@ -10,7 +10,7 @@
    canon T = join_sp (words T), and the word lemmas below are the Words section of fuzz_command's own released
    plain proof lib/Prog/rec_canonical.v, copied so that the walk stands on RecFacts alone. The walk's hypotheses are
    the statement's AMALLOC4 and TL (CmdPaLib.v: the malloc trampoline is the rule's entry, the GOT shadow cell). *)
-(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/rec_canonical.v (a working branch 1d526f2e737) for
+(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/rec_canonical.v (a working branch) for
    fuzz_command.asan-ubsan (entry 0x897e8, 115 instructions). The malloc wrapper call and its null/abort edge are one
    program call of xmalloc here (0x89814, PCall CS_xmalloc), taken through cl_callS (PaCall.v) with the statement's
    HXMALLOC at the walk's own fx and HSIG (cmd_sig_prog, CmdObj.v: the call target); s0 holds len there, below
@@ -24,6 +24,7 @@
    walk refutes 0x89850 (text + i < text) at the branch, since text + i < 2^64. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_canonical.v, with its module paths and module names changed; 1605 of its 1733 lines of code are new or changed and 2250 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Prog/ReacBoxNameSeg5.v; 6808 of its 6947 lines of code are new or changed and 1594 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

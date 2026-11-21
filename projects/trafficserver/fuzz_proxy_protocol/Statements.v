@@ -19,10 +19,17 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  No summary of this harness is recorded yet; its
-    checks, if any, are listed below.  The harness makes no check of its own
-    beyond not crashing, so a statement about it says only that the code it
-    calls never crashes, hangs or trips a sanitizer.
+    WHAT THE HARNESS CHECKS.  Views the input (size_data from 8 to 1024 bytes)
+    in place as a swoc::TextView and passes it with a new ProxyProtocol to
+    proxy_protocol_parse, which parses a PROXY protocol v1 or v2 header when the
+    input begins with that version's preface and has at least 15 (v1) or 16 (v2)
+    bytes; it drops the returned length and the parsed fields. Before the call
+    it installs a new Diags object with DiagsPtr::set, and it deletes that
+    object after. It returns -1 for an input with size_data below 8 or above
+    1024.  The harness makes no check of its own beyond not crashing.  Its halts
+    statements say only that the code it calls never crashes, hangs or trips a
+    sanitizer.  Its agreement statements say only that the code never crashes or
+    trips a sanitizer, and allow a run that never ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

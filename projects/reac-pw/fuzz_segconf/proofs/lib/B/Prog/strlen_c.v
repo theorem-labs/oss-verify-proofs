@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_pin/lib/R_strlen.v; 4 of its 24 lines of code are new or changed and 164 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-pw/fuzz_pin/lib/Prog/strlen_c.v, with its module paths and addresses changed. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Prog/strlen_c.v: ported from cold/c-asan-rt-fmio-n affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/B/Prog/strlen_c.v, which equals the A->B relocation (asan-kit elfmap.py + remap.py) of lib/A/Prog/strlen_c.v at cold/port-fm-int 5d8d8a15571 modulo module paths; module paths for this tree. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Prog/strlen_c.v: ported from proofs/omx-clap-core/fuzz_manifest/lib/B/Prog/strlen_c.v, which equals the A->B relocation (asan-kit elfmap.py + remap.py) of lib/A/Prog/strlen_c.v modulo module paths; module paths for this tree. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Lib Require Import PropExec MState Mem Exec Frame Step Cells Arr Bytes.

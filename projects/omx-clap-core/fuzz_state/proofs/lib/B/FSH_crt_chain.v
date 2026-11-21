@@ -3,12 +3,12 @@
    encode loop; A0's |bs| = 0 arm goes straight to the join B 0x820a4) -> A23 seg 6 -> L7 (seg 7) -> A23 segs 8-9 ->
    B1 (segments 10-13) -> B2 (14-19) -> C1 (20-24) -> C2 (25-29, a Theorem Labs lane) -> D1 (30-33) -> D2 (34-39) -> the tail
    (crt_tail). Each lemma is applied to its lane's named Section hypotheses, which this Section lists once.
-   rule 24: proves no function (kind: composition of check_round_trip's segment lemmas, PORTED from be1fe777656)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 317e6575975 / c159ab19cb1 /
-   06a2ee3f7d8) - the room hypotheses HROOM / HROOM2 dropped: the lanes' lemmas on those shas (B2, D1, and C2 at
-   a Theorem Labs lane's 53c958d574c) take crt_room_D1_holds / crt_room_C2_holds themselves.
-   PORT SOURCE: a working branch be1fe777656 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_chain.v (blob
-   977e30cec3f; the first B twin was of 036d41a098c; the function-level line is crt-lane-head.md lines 6-21). Same
+   rule 24: proves no function (kind: composition of check_round_trip's segment lemmas, PORTED)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED /)
+   - the room hypotheses HROOM / HROOM2 dropped: the lanes' lemmas on those shas (B2, D1, and C2 at
+   a Theorem Labs lane) take crt_room_D1_holds / crt_room_C2_holds themselves.
+   PORT SOURCE: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_chain.v (blob
+   977e30cec3f; the first B twin was; the function-level line is crt-lane-head.md lines 6-21). Same
    Definition / Lemma names, statement shapes and Section hypotheses as the A file, over image B and the B lane lemmas:
    crtB0_seg10_11 (lib/B/FSH_crt_segB0.v), crtB_from_8209c / crtB_from_820a0 (lib/B/FSH_crt_segB.v), crtB2_from_8212c
    (lib/B/FSH_crt_segB2.v), crtC1_from (lib/B/FSH_crt_segC1.v), c2_chain (lib/B/FSH_crt_segC2.v), crtD1_main
@@ -28,18 +28,18 @@
      crt_INV_T (crt_ssT)              A 0x82354   B 0x824b4   (D2 -> tail, return of free (same); crtD2_main / crt_tail)
    Non-mechanical changes: the composition is A's (the B content is in the lane files); the Section hypotheses' types
    are A's with the lib/B module qualifiers written `lib.B.X.` (see the Section's comment).
-   EXTENSION, PORTED from a working branch 69f9837ef88 lib/A/FSH_crt_chain.v (rule 24: proves no function,
+   EXTENSION, PORTED from a working branch lib/A/FSH_crt_chain.v (rule 24: proves no function,
    kind: composition of check_round_trip's segment lemmas): the walk's middle, A23 segs 8-9 o L7 o A23 seg 6, over
    a23_seg89 / a23_seg6 / a23_stable7 (lib/B/FSH_crt_segA23.v) and crt_l7_seg (lib/B/FSH_crt_loop7.v, at R := crt_R7).
    Same names and statement shapes as A; the crt_ss_ret pcs are B's (lib/B/FSH_crt_segA23.v's A -> B table):
      crt_from_82028 / crt_INV_82028   A 0x82028   B 0x82180 ~ crt_cs1    (L7's exit, a23_seg89's entry; carries crt_R7)
      crt_from_81fb8 / crt_INV_81fb8   A 0x81fb8   B 0x8210c ~ crt_cs1    (L7's head = L7_HEAD, a23_seg6's exit)
      crt_from_81f58 / crt_INV_81f58   A 0x81f58   B 0x820a4 = crt_cs1e   (the join of both A0 exits; carries crt_R5)
-   rule 24: proves no function (kind: composition of check_round_trip's segment lemmas, PORTED from 1ab57ca7ad7) - the
-   runtime hypothesis is A's CrtRt form (a working branch 1ab57ca7ad7): the seven RT_* contracts and
-   `Let RT := Build_CrtRt ..` over lib/B/FSH_crt_base.v's Record CrtRt (B base a working branch
-   95b912432dc), in place of FsRt and RTS.
-   EXTENSION 2, PORTED from a working branch 1ab57ca7ad7 lib/A/FSH_crt_chain.v (rule 24: proves no function,
+   rule 24: proves no function (kind: composition of check_round_trip's segment lemmas, PORTED) - the
+   runtime hypothesis is A's CrtRt form (a working branch): the seven RT_* contracts and
+   `Let RT := Build_CrtRt ..` over lib/B/FSH_crt_base.v's Record CrtRt (B base a working branch),
+   in place of FsRt and RTS.
+   EXTENSION 2, PORTED from a working branch lib/A/FSH_crt_chain.v (rule 24: proves no function,
    kind: composition of check_round_trip's segment lemmas): L5 o A23 seg 6 over crt5_seg5 (lib/B/FSH_crt_loop5.v, at
    R := crt_R5, with a23_stable5), and the theorem check_round_trip_holds = crt_spec_of_base (lib/B/FSH_crt_base.v) o
    crtA_from_entry (lib/B/FSH_crt_segA.v) at both of its exits:
@@ -96,7 +96,7 @@ Hypothesis PJGS : lib.B.FSH_Fn_reader.pj_get_str_spec tfibsegs B.
 Hypothesis DECODE : lib.B.FSH_Fn_writer.decode_spec_ff B tfibsegs.
 Hypothesis FUZZ_FREE : lib.B.FSH_Fn_alloc.fuzz_free_spec tfibsegs B.
 (* the runtime contracts the walk calls: the seven fields of lib/B/FSH_crt_base.v's CrtRt (S0's lib/B FsRt fields at
-   segs := tfibsegs), not the whole FsRt (A's form at a working branch 1ab57ca7ad7). RT_STRLEN is also lane
+   segs := tfibsegs), not the whole FsRt (A's form at a working branch). RT_STRLEN is also lane
    C2's strlen contract (c2_chain); crt_tail's set_shadow premise comes from RT_SETSH alone (crt_setsh_of_rt). *)
 Hypothesis RT_STRLEN : FSH_Gen.astrlen_realizesU tfibsegs B lib.B.FSH_Base.PC_strlen.
 Hypothesis RT_STRCMP : FSH_Gen.astrcmp_realizesU tfibsegs B lib.B.FSH_Base.PC_strcmp.

@@ -13,6 +13,7 @@
    Lemmas taken from lib/B/W_drain_feed.v (the FEED stage, on the base; imported, not copied): df_dmem_rebuild's
    proof shape, df_aentry_okx_kept, df_pu_alist_kept, df_pu_aentry_kept, df_lp_rq_out, df_pu_nd, df_nd_fst,
    df_blk_wr, df_pu_gs, df_wr_img. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -364,7 +365,7 @@ rewrite Ev, Ec. rewrite Erecs, map_app in H24. rewrite <- !app_assoc in H24.
 pose proof (dd_nodup_mid _ _ (map fst pre) _ H24) as X. rewrite <- ?app_assoc in X. rewrite <- ?app_assoc. exact X.
 Qed.
 
-(* df_dmem_rebuild (lib/B/W_drain_feed.v:847) with the entry replaced as well *)
+(* df_dmem_rebuild (lib/B/W_drain_feed.v:848) with the entry replaced as well *)
 Lemma dd_dmem_close : forall cx ly S W m md k e h s out ev sent LB ly' S' W' m' md' k' e' h',
 DMEM B RG cx ly S W m md k e h s out ev sent LB ->
 ajournal_gx SEGS B (G_DR B RG) 0 [] DRAIN_STK (dsp0 cx) (dFP cx) (dxly cx) (dxS cx) (dxW cx) (dxmem cx)

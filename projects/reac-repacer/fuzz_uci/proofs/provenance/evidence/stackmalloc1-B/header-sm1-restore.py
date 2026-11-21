@@ -3,7 +3,7 @@
 requirement 7).
 
 Per file of this run:
-- Every INHERITED licence line is restored from grant's donor blob at the release commit (recipes 4f87de75d67): the
+- Every INHERITED licence line is restored from grant's donor blob at the release commit (recipes): the
   Copyright line, the SPDX line and every donor `Modified by` line, in the donor's order. Then ONLY the release scrub table is
   applied to them: a working-branch reference becomes `a working branch` (row R27). This puts back the donor's dates, and it
   undoes port_core's rename inside the inherited notice text (for example `TfibSyms renamed GrantSyms`).

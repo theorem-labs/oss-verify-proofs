@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's placement rule; the model's mremap). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad.
@@ -86,6 +87,8 @@ Proof.
   destruct (negb (bv_unsigned flags =? MREMAP_MAYMOVE)%Z) eqn:E1; [exact (Lun i m o H) |].
   destruct (negb (bv_unsigned old mod page_size =? 0)%Z) eqn:E2; [exact (Lerr _ i m o H) |].
   destruct (page_align_is0_b new_size) eqn:E3; [exact (Lerr _ i m o H) |].
+  (* LPS 08b1429: a page-aligned new length over TASK_SIZE is EINVAL first *)
+  destruct (TASK_SIZE <? page_round_up_Z (bv_unsigned new_size))%Z eqn:E3b; [exact (Lerr _ i m o H) |].
   destruct (page_align_is0_b old_size) eqn:E4; [exact (Lun i m o H) |].
   apply bind_get_model_iff' in H. apply bind_get_model_iff'. cbv zeta in *.
   rewrite source_b_relim, uniform_relim in *.
@@ -100,16 +103,31 @@ Proof.
   destruct (new_nZ <? old_nZ)%Z eqn:E7; [exact (Lmod _ _ i m o H) |].
   (* [comment removed for export] *)
   assert (E8 : (new_nZ <=? old_nZ)%Z = false) by (apply Z.leb_gt; apply Z.ltb_ge in E7; apply Z.eqb_neq in E6; lia).
-  rewrite E8 in HG0, HG1. apply negb_false_iff in HG0, HG1.
-  apply andb_true_iff in HG0, HG1. destruct HG0 as [HGi0 HGm0]. destruct HG1 as [HGi1 HGm1].
-  assert (Lmove : lrel L (dst <- choose (fun dst => mremap_fresh_b m old_nZ new_nZ old old_n dst new_n = true) ;;
-                          modify (fun _ => mremap_model_next m old old_n dst new_n) ;; pure (mremap_move_effect old old_n dst old_nZ new_nZ))
-                         (dst <- choose (fun dst => mremap_fresh_b (m_relim L m) old_nZ new_nZ old old_n dst new_n = true) ;;
-                          modify (fun _ => mremap_model_next (m_relim L m) old old_n dst new_n) ;; pure (mremap_move_effect old old_n dst old_nZ new_nZ))).
-  { apply lrel_bind; [apply lrel_choose_imp; intros dst Hd; exact (fresh_relim L m old old_size new_size dst HI E3 HGm1 Hd) | intros dst; apply Lmod]. }
-  assert (Egrow : mremap_inplace_grow_b (m_relim L m) old old_n new_n old_nZ new_nZ = mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ).
-  { unfold mremap_inplace_grow_b. cbv zeta. rewrite HGi0, HGi1. reflexivity. }
-  rewrite Egrow.
-  destruct (mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ) eqn:E9; [| exact (Lmove i m o H)].
-  destruct H as [H | H]; [left; exact (Lmod _ _ i m o H) | right; exact (Lmove i m o H)].
+  rewrite E8 in HG0, HG1.
+  (* LPS 08b1429: in place when there is room, refused only by the final budget; otherwise a
+     move to Linux's own address ([mremap_dst_ok]), refused by the move charge *)
+  assert (Eroom : mremap_inplace_room_b (m_relim L m) old old_n new_n old_nZ new_nZ
+                  = mremap_inplace_room_b m old old_n new_n old_nZ new_nZ) by reflexivity.
+  rewrite Eroom in HG1 |- *.
+  destruct (mremap_inplace_room_b m old old_n new_n old_nZ new_nZ) eqn:E9.
+  - apply negb_false_iff in HG1.
+    assert (Lin : lrel L (_ <- choose (fun _ : unit => mremap_final_budget_b m old old_n old new_n = true) ;;
+                          modify (fun _ => mremap_model_next m old old_n old new_n) ;;
+                          pure (mremap_inplace_effect old old_n new_n old_nZ new_nZ))
+                         (_ <- choose (fun _ : unit => mremap_final_budget_b (m_relim L m) old old_n old new_n = true) ;;
+                          modify (fun _ => mremap_model_next (m_relim L m) old old_n old new_n) ;;
+                          pure (mremap_inplace_effect old old_n new_n old_nZ new_nZ))).
+    { apply lrel_bind; [apply lrel_choose_imp; intros [] _; exact HG1 | intros []; apply Lmod]. }
+    exact (Lin i m o H).
+  - apply negb_false_iff in HG1.
+    assert (Lmove : lrel L (dst <- choose (fun dst => mremap_dst_ok m old_nZ new_nZ old old_n dst new_n) ;;
+                            modify (fun _ => mremap_model_next m old old_n dst new_n) ;;
+                            pure (mremap_move_effect old old_n dst old_nZ new_nZ))
+                           (dst <- choose (fun dst => mremap_dst_ok (m_relim L m) old_nZ new_nZ old old_n dst new_n) ;;
+                            modify (fun _ => mremap_model_next (m_relim L m) old old_n dst new_n) ;;
+                            pure (mremap_move_effect old old_n dst old_nZ new_nZ))).
+    { apply lrel_bind; [apply lrel_choose_imp; intros dst [Hp Hd]; split;
+                        [exact Hp | exact (fresh_relim L m old old_size new_size dst HI E3 HG1 Hd)]
+                       | intros dst; apply Lmod]. }
+    exact (Lmove i m o H).
 Qed.

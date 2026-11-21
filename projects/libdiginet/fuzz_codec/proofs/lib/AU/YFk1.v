@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/A/AFk1.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_scene/proofs/lib/A/AFk1.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to libdiginet/fuzz_codec's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AFk1.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AFk1.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pages; the reserved ledger with the vvar/vDSO pair). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -1063,7 +1064,7 @@ Proof. clearP. vm_compute. repeat split; reflexivity. Qed.
 Lemma nodeK : forall {RT : Type} (sN : astate) (K : Z -> itree astate RT) (Q : RT -> world tfibsegs -> config -> Prop) (base : sptr) (len8 : Z) (c1 : config),
 at_N Wy md1 X (PSR Wy SH4 (PDX Wy RX z)) S_K Wy c1 -> AI tfibsegs (w_H Wy) (w_A Wy) (cfg_model c1) ->
 amwf (cfg_model c1) ->
-vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ->
+vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ++ vdso_reserved (m_kernel (cfg_model c1)) (vdso_top (m_vmmaps (cfg_model c1))) ->
 (forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 (forall z, In z band_maps -> In (wiv z) (vm_maps (m_vmmaps (cfg_model c1)))) ->
 YM05.ceil_of_top (alloc_top (m_vmmaps (cfg_model c1))) ->

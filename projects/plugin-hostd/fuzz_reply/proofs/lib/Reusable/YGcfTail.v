@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfTail.v, sha256 4a18b8107e86b0e7adbf30308a5ccf933004acc074ca6c1263d86c51adcebbd3.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the ALLOCATION TAIL.
    A live block's bytes up to the end of its last 8-byte granule are VISIBLE (aview <> None). AR_blocks_law_cf
    gives presence only on [p, p + req_size m); the granule tail [p + req_size m, roundup8 (p + req_size m))

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the frame KH carries the run's channel reader, LPS 08b1429, written as plain text; KH_vmi and the two close steps carry that fact through). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -297,8 +298,9 @@ Local Notation HDR := (U.Drv_r__G1.Drv_r.HDR cx).
 Local Notation INVX := (U.Drv_r__G1.Drv_r.INVX cx).
 Local Notation UV := U.Drv_r__G1.Drv_r.UV.
 
-Definition KH : list event -> Model -> Prop := ltac2:(tb__ "0|1|
-ScS60A1M0S5fS1S0G0R2SfS60A1A3S1S0ScS13S2aQ40A1S61A2A1S64R1A1S7dA3S0S7fS65R1A1Vfs;A3A2A2Lmd;Ltr;").
+(* LPS 08b1429: the frame carries the run's channel reader (a nonempty writev needs it). *)
+Definition KH : list event -> Model -> Prop :=
+  fun tr md => tr = [] /\ m_fds md = std_fds /\ m_fs md = fs /\ m_channel_reader md = true.
 
 Lemma cannot_open_in_spec : ltac2:(tb__ "0|0|
 VSpecT;S6aVfs;S6bVargv1;A1A2A1").
@@ -306,7 +308,8 @@ Proof using Hargc Hmay. unfold SpecT, Spec. apply spec_cannot_open. exact Hargc.
 Lemma KH_tcons : K_tcons SpecT KH.
 Proof using . intros tr md (-> & _ & _). exists (die fs (msg_cannot_open argv1)). split; [exact cannot_open_in_spec | apply is_prefix_nil]. Qed.
 Lemma KH_vmi : vm_insensitive KH.
-Proof using . split; [intros tr md vm (A & B & D) | intros tr md lz mt (A & B & D)]; (split; [exact A|]; split; autorewrite with model; assumption). Qed.
+Proof using . split; [intros tr md vm (A & B & D & R) | intros tr md lz mt (A & B & D & R)];
+  (split; [exact A|]; split; [autorewrite with model; assumption|]; split; [autorewrite with model; assumption | exact R]). Qed.
 Lemma fds3_remove : ltac2:(tb__ "0|1|
 SaS0ScS13S2aQ40M0A1S61A2A1S63S5aVcx;R1A2S2cG0Z3A2A2S7dA3Foff;").
 Proof using . intros off. reflexivity. Qed.
@@ -344,7 +347,8 @@ Proof using HDfds.
       * intros l. reflexivity.
       * reflexivity.
       * unfold close_md'. autorewrite with model. reflexivity.
-      * intros (-> & Hf & Hs). split; [reflexivity|]. unfold close_md'. autorewrite with model. rewrite Hf. split; [apply fds3_remove | exact Hs].
+      * unfold close_md'. autorewrite with model. reflexivity.
+      * intros (-> & Hf & Hs & Hr). split; [reflexivity|]. unfold close_md'. autorewrite with model. rewrite Hf. split; [apply fds3_remove | split; [exact Hs | exact Hr]].
       * exact HJ.
     + unfold close_md'. apply HDfds. exact HD.
 Qed.
@@ -360,7 +364,8 @@ Proof using HDfds.
       * intros l. reflexivity.
       * reflexivity.
       * unfold close_md'. autorewrite with model. reflexivity.
-      * intros (-> & Hf & Hs). split; [reflexivity|]. unfold close_md'. autorewrite with model. rewrite Hf. split; [apply fds3_remove | exact Hs].
+      * unfold close_md'. autorewrite with model. reflexivity.
+      * intros (-> & Hf & Hs & Hr). split; [reflexivity|]. unfold close_md'. autorewrite with model. rewrite Hf. split; [apply fds3_remove | split; [exact Hs | exact Hr]].
       * exact HJ.
     + unfold close_md'. apply HDfds. exact HD.
 Qed.

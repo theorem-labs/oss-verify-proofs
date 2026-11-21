@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap's MAP_FIXED overflow arm and the m_channel_reader premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith Lia Bool List.
@@ -144,7 +145,7 @@ Proof.
   apply andb_prop in S1 as [S1 S3]. apply andb_prop in S1 as [S1 S2].
   apply negb_true_iff in S3, S4, S5.
   destruct (fix_gate_bools m addr len G) as (B1 & B2 & B3 & B4 & B5).
-  unfold check_mmap. rewrite S1, S2, B1, S3, S4, S5, S6. cbn [negb]. cbv zeta.
+  unfold check_mmap, check_mmap_fixed_overflow. rewrite S1, S2, B1, S3, S4, S5, S6. cbn [negb]. cbv zeta.
   fold (fix_nZ len). rewrite B2, B3, B4, B5. fold (fix_n len).
   rewrite (fg_res _ _ _ G), (fg_own _ _ _ G). cbn [andb]. reflexivity.
 Qed.
@@ -215,7 +216,7 @@ Proof.
   apply andb_prop in S1 as [S1 S3]. apply andb_prop in S1 as [S1 S2].
   apply negb_true_iff in S3, S4.
   destruct (fix_gate_bools m addr len G) as (B1 & B2 & B3 & B4 & B5).
-  unfold check_mmap. rewrite S1, S2, B1, S3, S4, S5. cbn [negb]. cbv zeta.
+  unfold check_mmap, check_mmap_fixed_overflow. rewrite S1, S2, B1, S3, S4, S5. cbn [negb]. cbv zeta.
   fold (fix_nZ len). rewrite B2, B3, B4, B5. fold (fix_n len).
   rewrite (fg_res _ _ _ G), (fg_own _ _ _ G). cbn [andb]. reflexivity.
 Qed.
@@ -317,6 +318,13 @@ Lemma repl_fds (flags a n : word) (m : Model) : m_fds (with_mmap_replacement fla
 Proof. unfold with_mmap_replacement, with_mmap_backing. destruct (mmap_noreserve_b flags); reflexivity. Qed.
 
 Lemma repl_fs (flags a n : word) (m : Model) : m_fs (with_mmap_replacement flags a n m) = m_fs m.
+Proof. unfold with_mmap_replacement, with_mmap_backing. destruct (mmap_noreserve_b flags); reflexivity. Qed.
+
+(* NEW beside repl_fs, for MR's new mr_rdr field (AxModelRel.v:100): with_mmap_backing
+   is an `if mmap_noreserve_b flags` (LPS@75d69e00 Sys/Mm/Mmap.v:760-761), so the
+   branch split is what reflexivity needs here, exactly as in the four lemmas around
+   it.  No Model field other than the ledger moves. *)
+Lemma repl_rdr (flags a n : word) (m : Model) : m_channel_reader (with_mmap_replacement flags a n m) = m_channel_reader m.
 Proof. unfold with_mmap_replacement, with_mmap_backing. destruct (mmap_noreserve_b flags); reflexivity. Qed.
 
 Lemma repl_halted (flags a n : word) (m : Model) : m_halted (with_mmap_replacement flags a n m) = m_halted m.

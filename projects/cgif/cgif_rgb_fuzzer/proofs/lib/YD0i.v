@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the entry-layout notation ELV takes the entry draw, and passes E0 its top, the run's CONFIG_RSEQ flag and the execfn string; the fd-2 site premises are the model's own fdchan, three conjuncts now, and the exit site takes the channel-reader flag beside its fd-1 lookup). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
-From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK11 YK15 YK18 YQ0k YN02 YQ0j YQ0b YQ0i YQ09 YQ0a YQ04 YO3p YO3v YK05 YA0i YA0l YA0e YG00 YG0a YG01 YG0m YG0h YG10 YG0u YG0d YC04 YL02 YB0z YF90 YD15 YD14 YD0f YD0l YD0g YD13 YD11 YD0h.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK11 YK0j YK15 YK18 YQ0k YN02 YQ0j YQ0b YQ0i YQ09 YQ0a YQ04 YO3p YO3v YK05 YA0i YA0l YA0e YG00 YG0a YG01 YG0m YG0h YG10 YG0u YG0d YC04 YL02 YB0z YF90 YD15 YD14 YD0f YD0l YD0g YD13 YD11 YD0h.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP07 YP01.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YG0n YG0o YG0p.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05.
@@ -27,7 +28,10 @@ Definition DIAG_STK : Z := 16384.
 Definition A_exit : Z := 0x91800.
 Section c. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
 Variable B : asyms.
-#[local] Notation ELV sp a0 p inp xw xd := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
+(* #38: YQ0a.E0 now takes (sp top rs av ev xf xw xd); the top is [ed_top rnd] and
+   the rseq flag comes from the run, never pinned. *)
+#[local] Notation ELV sp a0 p inp rnd xw xd :=
+  (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 Definition img_at (H : word -> bool) (m : word -> option byte) (lo hi : Z) : Prop :=
 forall a, lo <= a < hi -> aview trasegs H m a = option_map (fun b : byte => bv_unsigned b) (seg_rom trasegs (Z_to_bv 64 a)).
 Variable est : (word -> bool) -> (word -> option byte) -> Prop.
@@ -59,7 +63,7 @@ getr regs 10%bv = w64 p -> getr regs 11%bv = w64 len -> getr regs 12%bv = w64 1 
 Z.of_nat (length msg) = len -> 1 <= len <= 64 -> 0x10570 <= p -> p + len <= 0x20c3c -> (p + len <= 0x1cdaf \/ 0x1cdc4 <= p) ->
 (forall i, (i < length msg)%nat -> seg_rom trasegs (Z_to_bv 64 (p + Z.of_nat i)) = Some (nth i msg NUL)) ->
 mem_ok trasegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md ->
 AI trasegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md 1 T ->
 srealizes trasegs (cfg_at trasegs A_icpt_fwrite regs mem md) (wr ch_stderr msg T).
@@ -73,7 +77,7 @@ spZ regs + 128 <= s -> s + Z.of_nat (length str) + 1 < kHighMemEnd ->
 YQ04.bytes_at (mrestrict (w_H W) mem) s (str ++ [NUL]) ->
 (forall a, s + Z.of_nat (length str) < a < s + Z.of_nat (length str) - (s + Z.of_nat (length str)) mod 8 + 8 -> mrestrict (w_H W) mem (Z_to_bv 64 a) <> None) ->
 mem_ok trasegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md ->
 AI trasegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md (Z.of_nat (length lit1 + length str + length lit2)) T ->
 srealizes trasegs (cfg_at trasegs A_icpt_fprintf regs mem md) (wr ch_stderr (lit1 ++ str ++ lit2) T).
@@ -83,7 +87,7 @@ forall (ly : alayout) (S : astate) (W : world trasegs) (regs : bvmap 5 word) (me
 icpt_pre ly S W regs mem md ->
 getr regs 10%bv = w64 F_STDERR_LO -> getr regs 11%bv = w64 0x19736 -> getr regs 12%bv = w64 67108864 ->
 mem_ok trasegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md ->
 AI trasegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md (Z.of_nat (length msg_refused)) T ->
 srealizes trasegs (cfg_at trasegs A_icpt_fprintf regs mem md) (wr ch_stderr msg_refused T).
@@ -103,6 +107,7 @@ AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly S W mem md -> top_ok usp ly -> 
 est (w_H W) mem ->
 ((k = 0%nat /\ stdout_img (w_H W) mem) \/ ((1 <= k)%nat /\ xst k (w_H W) mem)) ->
 ((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ->
+((1 <= k)%nat -> m_channel_reader md = true) ->
 m_fs md = fs ->
 srealizes trasegs (mkCfg (mkst regs (w64 A_exit) mem (seg_rom trasegs)) md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 End c.

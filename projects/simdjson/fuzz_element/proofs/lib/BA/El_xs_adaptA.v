@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv facts are stated at the revision's auxv layout (one fact per word at bytes 16k and 16k + 8), and the start state of the throw path's symbolic run also holds, for the CONFIG_RSEQ value the auxv fact gives, the key of every pair up to and including AT_NULL and a readable span over the vector, since musl's static_dl_iterate_phdr walks the whole auxv; the stack floors handed to callees are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -10,6 +11,7 @@ From OSSVerify.Proofs.simdjson.fuzz_element.lib.A Require Import Layout RT_iface
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.AS Require Import PropExec CatExec CatSim AxSymExec3.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.P Require Import El_xs_stepG El_xs_soundG El_xs_full El_xs_core El_xs_sound.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.BA Require Import El_xs_coreA.
+From OSSVerify.Proofs.simdjson.fuzz_element.lib.A Require D_auxv.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AX2SG.
@@ -53,15 +55,42 @@ Definition el_xdataA (m : word -> option byte) : Prop :=
   rw_cells asegs m EL_XDATA_XA [C8 (Z_to_bv 64 0x1679d8); C8 (Z_to_bv 64 0x106ecc)] /\ rw_cells asegs m EL_XDATA2_XA [C8 (Z_to_bv 64 0xe9ccc); C8 (Z_to_bv 64 0xe9dd8)].
 Definition kn_xdataA : list kentry := map (fun p => KWord (SA (ELit 0) (fst p)) 8 (ELit (snd p))) el_xdata_wordsA.
 
-Definition el_auxv_words (x16 x6 x11 x12 x23 rnd : Z) : list word :=
-  map (Z_to_bv 64) [3; 0x10040; 4; 56; 5; 11; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
-
 Definition u64sA (ws : list word) : list byte := flat_map (fun w => word_to_le_bytes 8 w) ws.
+
+(* Auxv retabled to the revision's vector, read off
+   75d69e00:theories/LinuxProcessSem/StackLayout.v:229-266.  Pair k's KEY lies at
+   byte 16*k from the auxv pointer and its VALUE at 16*k + 8; the old block was
+   the ten COMPACTED pairs of the pre-revision vector, AT_PHDR first at offset 0.
+   The payloads are unchanged and only the indices moved:
+     AT_HWCAP  48/56   -> 160/168     AT_UID    80/88   -> 304/312
+     AT_PAGESZ 64/72   -> 176/184     AT_EUID   96/104  -> 320/328
+     AT_PHDR    0/8    -> 208/216     AT_SECURE 112/120 -> 368/376
+     AT_PHENT  16/24   -> 224/232     AT_RANDOM 128/136 -> 384/392
+     AT_PHNUM  32/40   -> 240/248
+   One fact per WORD rather than one contiguous run: the pairs this proof does not
+   name (0..9, 12, 16..18, 21, 22, 25) sit between the ones it does.
+   The old AT_NULL row (144/152) is not carried over as a literal row: AT_NULL sits at
+   pair 26 + 2*r with r the kernel's rseq flag.  The __cxa_throw path does walk the
+   whole vector (musl's static_dl_iterate_phdr reads every pair's key up to AT_NULL),
+   so the last conjunct, [D_auxv.el_auxv_walk], gives the keys of the other pairs and
+   AT_NULL for the CONFIG_RSEQ value it names, and a readable span over the vector. *)
+Definition el_auxv_word (m : word -> option byte) (a v : Z) : Prop :=
+  bytes_at asegs m a (word_to_le_bytes 8 (Z_to_bv 64 v)).
 Definition el_auxvA (sp : Z) (m : word -> option byte) : Prop :=
   exists av x16 x6 x11 x12 x23 rnd,
-    ro_cells asegs m EL_AUXVC_XA [C8 (Z_to_bv 64 av)] /\ bytes_at asegs m av (u64sA (el_auxv_words x16 x6 x11 x12 x23 rnd))
-    /\ sp <= av /\ av + 160 <= USTACK_TOP /\ av mod 8 = 0
-    /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64 /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    ro_cells asegs m EL_AUXVC_XA [C8 (Z_to_bv 64 av)]
+    /\ el_auxv_word m (av + 160) 16 /\ el_auxv_word m (av + 168) x16
+    /\ el_auxv_word m (av + 176) 6 /\ el_auxv_word m (av + 184) x6
+    /\ el_auxv_word m (av + 208) 3 /\ el_auxv_word m (av + 216) 0x10040
+    /\ el_auxv_word m (av + 224) 4 /\ el_auxv_word m (av + 232) 56
+    /\ el_auxv_word m (av + 240) 5 /\ el_auxv_word m (av + 248) 11
+    /\ el_auxv_word m (av + 304) 11 /\ el_auxv_word m (av + 312) x11
+    /\ el_auxv_word m (av + 320) 12 /\ el_auxv_word m (av + 328) x12
+    /\ el_auxv_word m (av + 368) 23 /\ el_auxv_word m (av + 376) x23
+    /\ el_auxv_word m (av + 384) 25 /\ el_auxv_word m (av + 392) rnd
+    /\ sp <= av /\ av + 400 <= USTACK_TOP /\ av mod 8 = 0
+    /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64 /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64
+    /\ OSSVerify.Proofs.simdjson.fuzz_element.lib.A.D_auxv.el_auxv_walk m av.
 
 Definition uw_bytesA (uw : bool) : list Z := if uw then [0; 1; 0; 1; 0; 1; 0; 0] else [0; 0; 0; 0; 0; 0; 0; 0].
 
@@ -88,7 +117,7 @@ Definition xs_WA : list wrange :=
   [(XSP, XS_SPLO, FSZ); (XBLK, 0, 144); (ELit 0, EL_EHG_XA, EL_EHG_XA + 12); (ELit 0, EL_UNW_XA, EL_UNW_XA + 8)].
 Definition xs_CWA : list wrange :=
   [(XBLK, 0, 144); (ELit 0, EL_EHG_XA, EL_EHG_XA + 12); (ELit 0, EL_UNW_XA, EL_UNW_XA + 8); (ELit 0, EL_XDATA_XA, EL_XDATA_XA + 16); (ELit 0, EL_XDATA2_XA, EL_XDATA2_XA + 16);
-   (ELit 0, EL_CANARY_XA, EL_CANARY_XA + 8); (ELit 0, EL_AUXVC_XA, EL_AUXVC_XA + 8); (XAUXV, 0, 160)].
+   (ELit 0, EL_CANARY_XA, EL_CANARY_XA + 8); (ELit 0, EL_AUXVC_XA, EL_AUXVC_XA + 8); (XAUXV, 0, 456)].
 
 Definition xs_regs0A (RA : Z) : list expr :=
   [ELit 0; ELit RA; XSP; EVar 3; ELit TPV_XA; EVar 5; EVar 6; EVar 7; EAlu ALU_ADD XBLK (ELit 128); EVar 9;
@@ -98,10 +127,10 @@ Definition xs_regs0A (RA : Z) : list expr :=
 Definition kn_geomA : list kentry :=
   [KRange XSP 0x700000000000 0x800000000000; KAlign XSP 16;
    KRange XBLK 16 0x7fffff800000; KAlign XBLK 16;
-   KRange XAUXV 0x700000000000 0x7fffffffff60; KAlign XAUXV 8;
+   KRange XAUXV 0x700000000000 0x7ffffffffe70; KAlign XAUXV 8;
    KDisj (SA XSP XS_SPLO) (ELit (- XS_SPLO + FSZ)) (SA XBLK 0) (ELit 144);
-   KDisj (SA XSP XS_SPLO) (ELit (- XS_SPLO + FSZ)) (SA XAUXV 0) (ELit 160);
-   KDisj (SA XBLK 0) (ELit 144) (SA XAUXV 0) (ELit 160);
+   KDisj (SA XSP XS_SPLO) (ELit (- XS_SPLO + FSZ)) (SA XAUXV 0) (ELit 456);
+   KDisj (SA XBLK 0) (ELit 144) (SA XAUXV 0) (ELit 456);
    KDisj (SA XBLK 0) (ELit 144) (SA (ELit 0) 0x10000) (ELit 0x6ba000)].
 Definition kn_wrA : list kentry :=
   [KWr (SA XSP XS_SPLO) (ELit (- XS_SPLO + FSZ)); KWr (SA XBLK 0) (ELit 144); KWr (SA (ELit 0) EL_EHG_XA) (ELit 12); KWr (SA (ELit 0) EL_UNW_XA) (ELit 8)].
@@ -114,20 +143,29 @@ Fixpoint kbytesA (a : Z) (bs : list Z) : list kentry :=
 Definition kn_unwA (uw : bool) : list kentry := kbytesA EL_UNW_XA (uw_bytesA uw).
 Definition kn_cellsA : list kentry :=
   [KWord (SA (ELit 0) EL_CANARY_XA) 8 (EVar 42); KWord (SA (ELit 0) EL_AUXVC_XA) 8 XAUXV].
+(* Rows at the revision's byte offsets 16*k / 16*k + 8; payloads unchanged.
+   No AT_NULL row: pair 26 + 2*r is rseq-dependent and may not be a literal. *)
 Definition kn_auxvA : list kentry :=
-  [KWord (SA XAUXV 0) 8 (ELit 3); KWord (SA XAUXV 8) 8 (ELit 0x10040);
-   KWord (SA XAUXV 16) 8 (ELit 4); KWord (SA XAUXV 24) 8 (ELit 56);
-   KWord (SA XAUXV 32) 8 (ELit 5); KWord (SA XAUXV 40) 8 (ELit 11);
-   KWord (SA XAUXV 48) 8 (ELit 16); KWord (SA XAUXV 56) 8 (EVar 43);
-   KWord (SA XAUXV 64) 8 (ELit 6); KWord (SA XAUXV 72) 8 (EVar 44);
-   KWord (SA XAUXV 80) 8 (ELit 11); KWord (SA XAUXV 88) 8 (EVar 45);
-   KWord (SA XAUXV 96) 8 (ELit 12); KWord (SA XAUXV 104) 8 (EVar 46);
-   KWord (SA XAUXV 112) 8 (ELit 23); KWord (SA XAUXV 120) 8 (EVar 47);
-   KWord (SA XAUXV 128) 8 (ELit 25); KWord (SA XAUXV 136) 8 (EVar 39);
-   KWord (SA XAUXV 144) 8 (ELit 0); KWord (SA XAUXV 152) 8 (ELit 0)].
-Definition xs_kn0A (hcs : list hcellA) (uw : bool) : list kentry :=
-  kn_geomA ++ kn_wrA ++ kn_imgA ++ kn_blkA ++ kn_ehgA ++ kn_unwA uw ++ kn_hcellsA 0 hcs ++ kn_xdataA ++ kn_cellsA ++ kn_auxvA ++ kn_xroA.
-Definition xs_ss0A (hcs : list hcellA) (RA : Z) (uw : bool) : sym_state := SS EL_CXA_THROW_XA (xs_regs0A RA) [] (xs_kn0A hcs uw) 200.
+  [KWord (SA XAUXV 160) 8 (ELit 16);  KWord (SA XAUXV 168) 8 (EVar 43);
+   KWord (SA XAUXV 176) 8 (ELit 6);   KWord (SA XAUXV 184) 8 (EVar 44);
+   KWord (SA XAUXV 208) 8 (ELit 3);   KWord (SA XAUXV 216) 8 (ELit 0x10040);
+   KWord (SA XAUXV 224) 8 (ELit 4);   KWord (SA XAUXV 232) 8 (ELit 56);
+   KWord (SA XAUXV 240) 8 (ELit 5);   KWord (SA XAUXV 248) 8 (ELit 11);
+   KWord (SA XAUXV 304) 8 (ELit 11);  KWord (SA XAUXV 312) 8 (EVar 45);
+   KWord (SA XAUXV 320) 8 (ELit 12);  KWord (SA XAUXV 328) 8 (EVar 46);
+   KWord (SA XAUXV 368) 8 (ELit 23);  KWord (SA XAUXV 376) 8 (EVar 47);
+   KWord (SA XAUXV 384) 8 (ELit 25);  KWord (SA XAUXV 392) 8 (EVar 39)].
+(* The rest of the vector for the unwinder's auxv walk, at the CONFIG_RSEQ value [b]: the keys
+   [D_auxv.el_auxv_keys b] and a [KUnk] over pair 0 .. AT_NULL's key, so each value word the
+   walk loads is read as a fresh variable. *)
+Fixpoint kn_keysA (ks : list (Z * Z)) : list kentry :=
+  match ks with [] => [] | (o, k) :: r => KWord (SA XAUXV o) 8 (ELit k) :: kn_keysA r end.
+Definition kn_walkA (b : bool) : list kentry :=
+  kn_keysA (OSSVerify.Proofs.simdjson.fuzz_element.lib.A.D_auxv.el_auxv_keys b)
+  ++ [KUnk (SA XAUXV 0) (ELit (OSSVerify.Proofs.simdjson.fuzz_element.lib.A.D_auxv.el_auxv_span b))].
+Definition xs_kn0A (hcs : list hcellA) (uw b : bool) : list kentry :=
+  kn_geomA ++ kn_wrA ++ kn_imgA ++ kn_blkA ++ kn_ehgA ++ kn_unwA uw ++ kn_hcellsA 0 hcs ++ kn_xdataA ++ kn_cellsA ++ kn_auxvA ++ kn_walkA b ++ kn_xroA.
+Definition xs_ss0A (hcs : list hcellA) (RA : Z) (uw b : bool) : sym_state := SS EL_CXA_THROW_XA (xs_regs0A RA) [] (xs_kn0A hcs uw b) 200.
 
 Definition xautoXA (IT : itab) := xautoA IT TPV_XA XS_SET_A XS_CPY_A XS_TLS_A XS_UNW_A XS_UNWREAL_A XS_FSD_A XS_FLD_A xs_WA xs_CWA kn_xroA XS_SPLO FSZ XS_ROTOP_A.
 End Frame.
@@ -464,6 +502,18 @@ Proof. intros. vm_compute. repeat split; reflexivity. Qed.
 Lemma know_ok_appA : forall E (m : mem) k1 k2, know_ok asegs E m k1 -> know_ok asegs E m k2 -> know_ok asegs E m (k1 ++ k2).
 Proof. intros. unfold know_ok. apply Forall_app. split; assumption. Qed.
 
+Lemma kn_keysA_ok : forall E (m : mem) av (ks : list (Z * Z)),
+  bv_unsigned (edenot E XAUXV) = av -> 0 <= av -> av + 456 <= 2^64 ->
+  Forall (fun p => 0 <= fst p <= 448) ks ->
+  Forall (fun p => OSSVerify.Proofs.simdjson.fuzz_element.lib.A.D_auxv.el_auxv_word m (av + fst p) (snd p)) ks ->
+  know_ok asegs E m (kn_keysA ks).
+Proof.
+  intros E m av ks UAV H0 H1 HB HF. induction ks as [|[o k] ks IH]; [constructor|].
+  apply Forall_cons_iff in HB as [B1 HB]. apply Forall_cons_iff in HF as [W HF]. cbn [fst snd] in B1, W.
+  cbn [kn_keysA]. constructor; [| exact (IH HB HF)].
+  apply kword_at; rewrite ?UAV; try lia. cbn [edenot]. exact W.
+Qed.
+
 Ltac ulA := unfold XS_SPLO, RT_STACK, STACK_WIN, USTACK_TOP, NORET_DEPTH, SEGTOP_A, EL_EHG_XA, EL_UNW_XA, EL_XDATA_XA, EL_XDATA2_XA, EL_CANARY_XA, EL_AUXVC_XA in *.
 
 Section EntryOK.
@@ -486,7 +536,7 @@ Section EntryOK.
 
   Hypothesis ST : stk asegs m lo (usp + FSZ).
   Hypothesis LO1 : 0x7fff7f800000 <= lo.
-  Hypothesis LO2 : rt_sp0 RT Σ - STACK_WIN <= lo.
+  Hypothesis LO2 : rt_sp0 RT Σ - STACK_SPAN <= lo.
   Hypothesis LO3 : lo + RT_STACK <= usp + XS_SPLO.
   Hypothesis SP1 : usp + FSZ + 0xb0 <= rt_sp0 RT Σ.
   Hypothesis SP2 : rt_sp0 RT Σ - (usp + XS_SPLO) <= NORET_DEPTH.
@@ -504,14 +554,20 @@ Section EntryOK.
   Hypothesis SPX : usp + FSZ <= spx.
   Hypothesis HC : hcells_okA m usp 0 hcs ws.
 
-  Theorem xs_entryA : exists E : env,
-    CIXA RT Σ (xs_WA FSZ) xs_CWA lo XS_SPLO FSZ fc E m m (xs_ss0A FSZ hcs RA uw) (MS R F (Z_to_bv 64 EL_CXA_THROW_XA) fc None m (seg_rom asegs))
+  (* the CONFIG_RSEQ value [b] is the one [el_auxvA]'s walk fact names: the start state's
+     knowledge of the auxv walk is read at it *)
+  Theorem xs_entryA : exists (b : bool) (E : env),
+    CIXA RT Σ (xs_WA FSZ) xs_CWA lo XS_SPLO FSZ fc E m m (xs_ss0A FSZ hcs RA uw b) (MS R F (Z_to_bv 64 EL_CXA_THROW_XA) fc None m (seg_rom asegs))
     /\ (forall k, (k < 32)%nat -> ev E k = reg_get R (Z_to_bv 5 (Z.of_nat k)))
     /\ ev E 40 = Z_to_bv 64 blk /\ (forall k, ev E (49 + k) = nth k ws (Z_to_bv 64 0)).
   Proof.
-    destruct AUX as (av & y16 & y6 & y11 & y12 & y23 & rnd & AC & AB & AV1 & AV2 & AV3 & R16 & R6 & R11 & R12 & R23 & RR).
+    destruct AUX as (av & y16 & y6 & y11 & y12 & y23 & rnd & AC
+                     & A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14 & A15 & A16 & A17 & A18
+                     & AV1 & AV2 & AV3 & R16 & R6 & R11 & R12 & R23 & RR & HW).
+    destruct HW as (bw & HWK & HWR & HW0 & HWT).
     destruct CAN as [canary CANc].
     destruct RB as (RB1 & RB2 & RB3 & RB4).
+    exists bw.
     exists (xs_E0A R blk av canary y16 y6 y11 y12 y23 rnd code ws).
     split; [| split; [intros k Hk; apply xs_E0A_regn; exact Hk| split; [reflexivity| apply xs_E0A_hc]]].
     split; [cbn; lia|].
@@ -564,7 +620,7 @@ Section EntryOK.
       destruct AC as [_ BA]. cbn [cells_bytes cbytes] in BA. rewrite app_nil_r in BA.
       unfold xs_kn0A.
       apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA;
-        [| apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA]]]]]]]]].
+        [| apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA; [| apply know_ok_appA]]]]]]]]]].
       -   unfold kn_geomA.
         unfold know_ok. repeat apply Forall_cons; [.. | apply Forall_nil]; cbn [kentry_ok]; unfold estart, elenZ; cbn [a_base a_off edenot XSP XBLK XAUXV];
           rewrite ?E2, ?E40, ?E41; rewrite ?unsigned_lit by (ulA; lia);
@@ -616,14 +672,22 @@ Section EntryOK.
       -   unfold kn_cellsA. constructor; [| constructor; [| constructor]]; apply kword_at; rewrite ?U0; try (ulA; lia); cbn [edenot XAUXV].
         + rewrite E42. exact BC.
         + rewrite E41. exact BA.
-      -   unfold kn_auxvA. unfold el_auxv_words, u64sA in AB. cbn [map flat_map] in AB. rewrite !app_nil_r in AB.
-        do 19 (let B1 := fresh "B1" in
-               apply Mem.bytes_at_app in AB as [B1 AB]; rewrite length_N_to_le_bytes in AB;
-               lazymatch type of AB with bytes_at _ _ (?x + ?y + ?z) _ => let w := eval cbv in (y + z) in replace (x + y + z) with (x + w) in AB by lia | _ => idtac end;
-               constructor; [apply kword_at; rewrite ?UAV; [lia| ulA; lia| ulA; lia| cbn [edenot];
-                 rewrite ?E43, ?E44, ?E45, ?E46, ?E47, ?E39; rewrite ?Z.add_0_r;
-                 lazymatch goal with |- bytes_at _ _ ?a _ => lazymatch type of B1 with bytes_at _ _ ?a' _ => replace a with a' by lia end end; exact B1 ] |]).
-        constructor; [| constructor]. apply kword_at; rewrite ?UAV; [lia| ulA; lia| ulA; lia|]. cbn [edenot]. exact AB.
+      -   unfold kn_auxvA. unfold el_auxv_word in A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18.
+        repeat (apply Forall_cons;
+                [apply kword_at; rewrite ?UAV; try (ulA; lia); try lia; cbn [edenot];
+                 rewrite ?E43, ?E44, ?E45, ?E46, ?E47, ?E39;
+                 first [exact A1| exact A2| exact A3| exact A4| exact A5| exact A6| exact A7| exact A8| exact A9
+                       | exact A10| exact A11| exact A12| exact A13| exact A14| exact A15| exact A16| exact A17| exact A18] |]);
+        apply Forall_nil.
+      -   unfold kn_walkA. apply know_ok_appA.
+        + apply (kn_keysA_ok E' m av); [exact UAV| exact HW0| ulA; lia| | exact HWK].
+          destruct bw; cbn [OSSVerify.Proofs.simdjson.fuzz_element.lib.A.D_auxv.el_auxv_keys app];
+            repeat apply Forall_cons; try apply Forall_nil; cbv beta; cbn [fst]; lia.
+        + constructor; [| constructor]. cbn [kentry_ok].
+          assert (SPN : 0 <= OSSVerify.Proofs.simdjson.fuzz_element.lib.A.D_auxv.el_auxv_span bw <= 456) by (destruct bw; cbn; lia).
+          rewrite (elenZ_lit' E' (OSSVerify.Proofs.simdjson.fuzz_element.lib.A.D_auxv.el_auxv_span bw)) by lia.
+          unfold flat, estart. cbn [a_base a_off]. rewrite UAV.
+          split; [ulA; repeat split; lia|]. intros i Hi. replace (av + 0 + i) with (av + i) by lia. exact (HWR i Hi).
       -   unfold kn_xroA. apply kn_lits_ok. unfold el_xroA in XRO. rewrite Forall_forall in XRO |- *.
         intros p Hp. split; [exact (XRO p Hp)|]. unfold el_xro_wordsA in Hp. cbn in Hp.
         repeat (destruct Hp as [<-|Hp]; [cbn; lia|]). destruct Hp. }

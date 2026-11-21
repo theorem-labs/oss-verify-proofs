@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v; 903 of its 1034 lines of code are new or changed and 2625 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The CALL-SITE PRECONDITION block of check_round_trip's ASan walk (build A), shared by every segment lane: what the
    boundary state and the caller's journal give a callee at each program call (its fpreU with crt's frame record on the
    chain, FRL_CRT_CALLEE, the room above sp), plus the read-only-image facts it needs. Moved VERBATIM
-   from a Theorem Labs lane's lib/A/FSH_crt_segC.v (a working branch 3f8853e2873, lines 127-368), names crtC_* -> crt_*, so
+   from a Theorem Labs lane's lib/A/FSH_crt_segC.v (a working branch, lines 127-368), names crtC_* -> crt_*, so
    lanes B1 / B2 / C1 / C2 / D1 / D2 import one copy (a Theorem Labs lane's request, 05:0xZ). Owner: a Theorem Labs lane (lane CRT).
    rule 24: proves no function (kind: call-site precondition lemmas of check_round_trip's walk, build A); the shape is
    the donor's afn_pre_at use (YCbq.afn_pre_at; cgif lib/A/AChf.v), see crt-lane-head.md for the function's search. *)
@@ -273,10 +274,10 @@ Qed.
 End p.
 
 (* ================= the generic call crossing, its helpers, the trap arms and the keeps =================
-   Moved VERBATIM (a Theorem Labs lane, 05:3xZ): a Theorem Labs lane's lib/A/FSH_crt_segC1.v at a working branch 66580485270
+   Moved VERBATIM (a Theorem Labs lane, 05:3xZ): a Theorem Labs lane's lib/A/FSH_crt_segC1.v at a working branch
    (lines 51-62, 67, 114-123, 142-150, 154-160, 162-431, prefix crtC1 renamed to crt), a Theorem Labs lane's FSH_crt_segC.v there
    (lines 710-726, crtC_no_trap renamed to crt_no_trap), and a Theorem Labs lane's lib/A/FSH_crt_segB.v at
-   a working branch e233fcb1d13 (lines 342-432, prefix crtB renamed to crt, in a Section with B).
+   a working branch (lines 342-432, prefix crtB renamed to crt, in a Section with B).
    crt_seg_call takes ANY callee post P (a fixed-U' post is
    the case P := fpostU ..); crt_seg_call_br first decides the `bnez a0` of a pj_* return. Both fix the slot chunks
    to crt_cs1, so they serve every call from 0x81f9c on. *)
@@ -708,7 +709,7 @@ Qed.
 End keep.
 
 (* ================= pj_set's `rd_sum Dold0 <= live` from an exact live equation (a Theorem Labs lane's text, renamed,
-   a working branch d00c16dd751) =================
+   a working branch) =================
    An object node's block list starts with its own arrays (PjStruct.pj_node, JObj arm), every block of a tree is a
    reader block with a positive request (FSH_Gen.fs_rblock), and g_live's other terms are >= 0. *)
 Lemma crt_rd_sum_app : forall l1 l2, rd_sum (l1 ++ l2) = rd_sum l1 + rd_sum l2.
@@ -774,7 +775,7 @@ rewrite ED, !crt_rd_sum_app. lia.
 Qed.
 End rdsum.
 
-(* moved VERBATIM from a Theorem Labs lane's lib/A/FSH_crt_segD2.v at a working branch aa2bcfdd59d, lines 768-960 *)
+(* moved VERBATIM from a Theorem Labs lane's lib/A/FSH_crt_segD2.v at a working branch, lines 768-960 *)
 (* ================= crt_seg_call_full: the call crossing of a segment whose run WRITES ITS OWN FRAME =================
    Owner decision (a Theorem Labs lane, 05:4xZ): `crt_seg_call` (lib/A/FSH_crt_site.v) runs from `crt_ss2 r0`, which carries
    only the saved words and the s1 slots. A segment that stores into its own frame or its frame's SHADOW - this
@@ -969,7 +970,7 @@ Qed.
 End full.
 
 (* ================= the read-only image at any state of the walk =================
-   a Theorem Labs lane's a23_rom (a working branch 14885a42e60 FSH_crt_segA23.v:264-292), renamed; lanes D2 (three
+   a Theorem Labs lane's a23_rom (a working branch FSH_crt_segA23.v:265-293), renamed; lanes D2 (three
    copies) and A23 used it, so it lives here once. ---- *)
 Section rom. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable SK : YI16.sink_head.
@@ -1005,7 +1006,7 @@ Qed.
 End rom.
 
 (* ================= the RUNTIME-call crossing (an interceptor thunk: strlen / strcmp, and any STK_RT_STR thunk) =================
-   Moved VERBATIM from a Theorem Labs lane's lib/A/FSH_crt_segA23.v at a working branch c2f01f092c5 (lines 60-68,
+   Moved VERBATIM from a Theorem Labs lane's lib/A/FSH_crt_segA23.v at a working branch (lines 60-68,
    258-322, 772-904), prefix a23 renamed to crt: crt_reg_atom, crt_gptp, crt_rt_frame, crt_rt_call (strlen) and
    crt_rt_call2 (strcmp). Their continuation carries the contract's own memory frame (aview kept outside the thunk's
    stack window) and presence growth, which is what lets a segment take its data facts across a runtime call. *)

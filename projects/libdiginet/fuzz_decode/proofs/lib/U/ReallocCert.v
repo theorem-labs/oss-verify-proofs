@@ -6,7 +6,7 @@ From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.U.Reusable Require Import
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.U Require Import ZAllocator Contract AllocCut AllocForm.
 Open Scope Z_scope.
 (* The image's realloc contracts, in the sbound form (zlib_realloc, used by the sbound FrameProof) and the pack
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/ReallocCert.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/ReallocCert.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
    form (zlib_realloc_pack, used by the pack FrameProof). This image has no realloc (ms_realloc = None): vacuous.
    An image with realloc proves the one its FrameProof uses from realloc_contract_form /
    realloc_null_contract_form (sbound) or pack_realloc_contract / pack_realloc_null_contract (pack). *)

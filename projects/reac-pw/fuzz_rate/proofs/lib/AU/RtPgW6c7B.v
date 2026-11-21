@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YFen.v, with its module paths and module names changed; 600 of its 644 lines of code are new or changed and 174 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c7.v at cb9cdc023f20; image B's code
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c7.v; image B's code
    (fuzz_rate.asan-ubsan): its pcs, registers and real-frame cells, the pod e62 (F + 0x210) of the class-4 frame for
    locals instead of e (F + 0xf0) of the class-3 one, the multiplier cell R + 0x0, and the UBSan trap branches
    0x81890, 0x81ed4 (decided by the engine from the facts) and 0x81f24 (split, the trap arm refuted). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): the block lemma w6cb_h7 of

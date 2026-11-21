@@ -18,10 +18,17 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  No summary of this harness is recorded yet; its
-    checks, if any, are listed below.  The harness makes no check of its own
-    beyond not crashing, so a statement about it says only that the code it
-    calls never crashes, hangs or trips a sanitizer.
+    WHAT THE HARNESS CHECKS.  Copies the input (Size from 10 to 5120 bytes) into
+    a buffer and parses it as an HTTP request line and headers with the built-in
+    httpd's http::server::RequestParser::parse, on a parser constructed with a
+    null Server, into a new http::server::Request; when parse returns true (a
+    complete request) it calls RequestParser::validate on that request. It drops
+    the parse position and validate's status, and returns -1 for an input with
+    Size below 10 or above 5120.  The harness makes no check of its own beyond
+    not crashing.  Its halts statements say only that the code it calls never
+    crashes, hangs or trips a sanitizer.  Its agreement statements say only that
+    the code never crashes or trips a sanitizer, and allow a run that never
+    ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

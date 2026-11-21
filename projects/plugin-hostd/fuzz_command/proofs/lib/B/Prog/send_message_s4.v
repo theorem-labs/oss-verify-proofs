@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/send_message_s4.v (the ASan walk,
-   a working branch 4f5a539710b, re-fitted d0af25245f3) to the ASan+UBSan build fuzz_command.asan-ubsan
+   a working branch, re-fitted) to the ASan+UBSan build fuzz_command.asan-ubsan
    (lib/B): B's program points (the same offsets from the entry 0x86bf8) and statements; the record facts and the
    call rules from a Theorem Labs lane's kit (lib/B/Prog/CmdRecRo.v, CmdRecImg.v, PaFx.v); a Theorem Labs lane's statement passes 4, 4b and 5
-   (a working branch f490061c104): verbs_receive's post is apost_baseF, so its call is PaFx.v's cl_callS_pgF and the rest
+   (a working branch): verbs_receive's post is apost_baseF, so its call is PaFx.v's cl_callS_pgF and the rest
    of the walk runs at the FP state it returns; no astack_pres. *)
 (* Modified by Theorem Labs, 2026-10: segment s4 of send_message's walk on plugin-hostd/fuzz_command's ASan+UBSan
    image (0x86d58 `mv a0,s5; jal verbs_receive` up to the return 0x86d60), ported from
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v at c8557374ad2e — the program-call step of
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v — the program-call step of
    cgif_close (A/ACh1.v:321-405: cl_callS over a callee's contract, the callee's premises discharged at the call
    state, the next point's statement discharged from the call's post) over fuzz_command's listing and
    send_message's segment interface (lib/B/Prog/send_message_k.v, send_message_l.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

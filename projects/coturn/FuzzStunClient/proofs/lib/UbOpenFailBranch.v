@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section and cannot_open_branch take the launch input, entry point, uid and hwcap of the 12-argument main_entry, the thread-id bound and the stderr write's channel reader. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -50,24 +51,39 @@ Section Branch.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv rdraw tid regs0 mem0.
+  (* LPS 08b1429: the launch input, entry point, uid/hwcap and the 12-argument [main_entry], and
+     the stderr write's channel reader (as in RefOpenFail / RefPilotOOM). *)
+  Variable inp : ProcInput.
+  Variable entry : word.
+  Variables uid hw : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Hypothesis Hrdr0 : a_channel_reader = true.
 
   Theorem open_err_branch_cannot_open :
-    UbPilotOOM.open_err_branch sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 (t_die (msg_cannot_open path) fs0).
+    UbPilotOOM.open_err_branch sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 inp (t_die (msg_cannot_open path) fs0).
   Proof.
     intros e vals R M He HL P0 P38 P1 P2 P5 HR HK Habove.
-    apply (UbOpenFail.ref_open_fail_errno sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp ME
-             e vals R M (openat_errnos_range e He) HL P0 P38 P2 HR HK Habove).
+    apply UbOpenFail.ref_open_fail_errno with (sp0 := sp0) (a0s := a0s) (path := path) (envv := envv) (rdraw := rdraw)
+      (tid := tid) (regs0 := regs0) (mem0 := mem0) (brk := brk) (mbase := mbase) (fs0 := fs0) (stdin0 := stdin0)
+      (lim := LIM) (inp := inp) (entry := entry) (uid := uid) (hw := hw) (e := e) (vals := vals) (R := R) (M := M);
+      try eassumption.
+    apply openat_errnos_range. exact He.
   Qed.
 End Branch.
 
 (* [comment removed for export] *)
 Corollary cannot_open_branch {AMB : Amb} : forall (sp0 : word) (a0s : list byte) (envv : list (list byte)) (rdraw : EntryDraw) (tid : word)
-    (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream),
+    (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream)
+    (inp : ProcInput) (entry uid hw : word),
   valid_argv [a0s; dot_path] -> valid_envp envv -> valid_sp sp0 ->
-  main_entry sp0 [a0s; dot_path] envv rdraw tid regs0 mem0 ->
-  open_err_branch sp0 a0s dot_path envv tid mem0 brk mbase fs0 stdin0 (t_die (msg_cannot_open dot_path) fs0).
+  (* LPS 08b1429: UbMainEntry's register/knowledge facts take the tid bound (its callers,
+     UbLeafDir and UbMain, hold it as [Htid]). *)
+  (0 < bv_unsigned tid < 2 ^ 22)%Z ->
+  main_entry inp mbase entry sp0 [a0s; dot_path] envv uid hw rdraw tid regs0 mem0 ->
+  a_channel_reader = true ->
+  open_err_branch sp0 a0s dot_path envv rdraw tid mem0 brk mbase fs0 stdin0 inp (t_die (msg_cannot_open dot_path) fs0).
 Proof.
-  intros sp0 a0s envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp ME.
-  exact (open_err_branch_cannot_open sp0 a0s dot_path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp ME).
+  intros sp0 a0s envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 inp entry uid hw Hva Hve Hvsp Htid ME Hrdr0.
+  apply open_err_branch_cannot_open with (regs0 := regs0) (inp := inp) (entry := entry) (uid := uid) (hw := hw);
+    assumption.
 Qed.

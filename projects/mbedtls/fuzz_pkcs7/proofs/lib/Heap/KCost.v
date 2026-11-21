@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the page-granular brk ledger, where a grow within one page records nothing; place_declined_b on the mmap outcomes; the vDSO gate on mprotect; munmap may refuse, and its cut is maps_subtract; the guard-page step through KInv.kapart). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -256,11 +257,32 @@ Proof.
   (* [comment removed for export] *)
   unfold with_brk_next. rewrite (brk_unmaps_nogrow (Z_to_bv 64 req) (vm_brk (m_vmmaps mo))) by (rewrite Ureq; lia). cbn [forget_vm_ranges].
   unfold emaps, ecost. rewrite (proj2 (Z.eqb_neq _ _) Hne).
-  eapply (kgrow_cons 1%nat (3 * PGSZ) mo _ (vm_brk (m_vmmaps mo)) (Z_to_bv 64 req - vm_brk (m_vmmaps mo))%bv (maps_subtract_ranges (vm_noaccess (m_vmmaps mo)) (brk_unmaps (Z_to_bv 64 req) (vm_brk (m_vmmaps mo)))) (Z_to_bv 64 req)); [lia| | | intros M; exact M].
-  - rewrite bv_sub_unsigned, Ureq, bv_wrap_small by (unfold bv_modulus; lia). lia.
-  - rewrite m_vmmaps_with_vmmaps. unfold brk_model_next, brk_maps_next, brk_grants, brk_is_grow.
+  (* the brk ledger is page-granular: a grow records [[PAGE_ALIGN(old), PAGE_ALIGN(req))],
+     which is empty when both round to the same page (Mmap.brk_grants) *)
+  assert (Hgr : brk_maps_next (m_vmmaps mo) (Z_to_bv 64 req) (Z_to_bv 64 req)
+                = brk_page_range (page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps mo))))
+                                 (page_round_up_Z req) ++ vm_maps (m_vmmaps mo)).
+  { unfold brk_maps_next, brk_grants, brk_is_grow.
     rewrite Ureq, E1. cbn [negb andb]. rewrite (proj2 (Z.ltb_ge req (bv_unsigned (vm_brk (m_vmmaps mo))))) by lia. rewrite andb_false_r.
-    rewrite (proj2 (Z.ltb_lt 0 _)) by lia. rewrite (proj2 (Z.ltb_lt _ req)) by lia. reflexivity.
+    rewrite (proj2 (Z.ltb_lt 0 _)) by lia. rewrite (proj2 (Z.ltb_lt _ req)) by lia. reflexivity. }
+  destruct (Z.ltb_spec (page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps mo)))) (page_round_up_Z req)) as [Hlt|Hge].
+  - (* one new page range, at most three pages long *)
+    assert (Hq : (req + 4096 - 1) / 4096 <= (bv_unsigned (vm_brk (m_vmmaps mo)) + 4096 - 1) / 4096 + 3).
+    { rewrite <- Z.div_add by lia. apply Z.div_le_mono; unfold PGSZ in Hc3; lia. }
+    assert (Hb3 : page_round_up_Z req - page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps mo))) <= 3 * PGSZ).
+    { unfold page_round_up_Z, page_size, PGSZ. lia. }
+    eapply (kgrow_cons 1%nat (3 * PGSZ) mo _
+              (Z_to_bv 64 (page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps mo)))))
+              (Z_to_bv 64 (page_round_up_Z req - page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps mo)))))
+              (maps_subtract_ranges (vm_noaccess (m_vmmaps mo)) (brk_unmaps (Z_to_bv 64 req) (vm_brk (m_vmmaps mo)))) (Z_to_bv 64 req)); [lia| | | intros M; exact M].
+    + rewrite unsigned_lit by (unfold PGSZ in Hb3; lia). exact Hb3.
+    + rewrite m_vmmaps_with_vmmaps. unfold brk_model_next. rewrite Hgr. unfold brk_page_range.
+      rewrite (proj2 (Z.ltb_lt _ _) Hlt). reflexivity.
+  - (* a same-page grow records nothing *)
+    apply kgrow_maps_eq;
+      try (unfold PGSZ; lia); try (intros M; exact M);
+      rewrite ?m_vmmaps_with_vmmaps; unfold brk_model_next; cbn [vm_maps vm_reserved vm_limit];
+      rewrite ?Hgr; unfold brk_page_range; rewrite ?(proj2 (Z.ltb_ge _ _) Hge); reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -274,12 +296,12 @@ Proof.
   cbn [in_arg pure_input in_args nth] in Hsp.
   assert (Ulen : bv_unsigned (Z_to_bv 64 len) = len) by (apply unsigned_lit; lia).
   destruct Hprot as [-> | ->].
-  - apply (proj1 (mmap_noaccess_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len Hlen) mmap_off0 mmap_anon_MAPF mmap_modeled_none mmap_noaccess_none)) in Hsp.
+  - apply (proj1 (mmap_noaccess_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len Hlen) mmap_off0 mmap_anon_MAPF mmap_modeled_none mmap_noaccess_none (place_declined_b_null _ _ _))) in Hsp.
     destruct Hsp as [(e & He & E)|(a & _ & E)]; apply Ok_inj in E as (E1 & Emo & _); subst mo'.
     + apply kg_same; [lia| reflexivity| reflexivity].
     + unfold with_mmap_backing. rewrite mmap_noreserve_MAPF. rewrite Ulen. fold (mmap_len len).
       eapply (kgrow_cons 1%nat (mmap_len len) mo _ a (Z_to_bv 64 (mmap_len len))); [lia| rewrite unsigned_lit by lia; lia| reflexivity| intros M; exact M].
-  - apply (proj1 (mmap_rw_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len Hlen) mmap_off0 mmap_anon_MAPF mmap_modeled_rw)) in Hsp.
+  - apply (proj1 (mmap_rw_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len Hlen) mmap_off0 mmap_anon_MAPF mmap_modeled_rw (place_declined_b_null _ _ _))) in Hsp.
     destruct Hsp as [(e & He & E)|(a & _ & E)]; apply Ok_inj in E as (E1 & Emo & _); subst mo'.
     + apply kg_same; [lia| reflexivity| reflexivity].
     + unfold with_mmap_backing. rewrite mmap_noreserve_MAPF. rewrite Ulen. fold (mmap_len len).
@@ -298,10 +320,16 @@ Proof.
   apply (proj1 (syscall_spec_226 _ _ _ ltac:(rewrite in_sysno_pure; apply unsigned_lit; lia))) in Hsp.
   cbn [in_arg pure_input in_args nth] in Hsp. fold aw nw in Hsp.
   assert (E4 : Z_to_bv 64 (page_round_up_Z (bv_unsigned nw)) = nw) by (rewrite Un; reflexivity).
+  (* the revision's vDSO gate: a range meeting the pair has no Ok answer *)
+  destruct (region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) aw nw) eqn:Hvd.
+  2:{ exfalso. pose proof (mprotect_vdso_blocked aw nw (Z_to_bv 64 3) _ mo _ ltac:(vm_compute; reflexivity)
+             ltac:(rewrite Ua; unfold page_size; exact Hal) ltac:(subst nw; apply w_is0_false; lia)
+             ltac:(rewrite Ua, Un; change (page_round_up_Z 4096) with 4096; unfold two_pow_64; lia)
+             ltac:(vm_compute; reflexivity) ltac:(rewrite E4; exact Hvd) Hsp) as Hu. discriminate Hu. }
   apply (proj1 (mprotect_expose_outcome aw nw (Z_to_bv 64 3) _ mo _ ltac:(vm_compute; reflexivity)
              ltac:(rewrite Ua; unfold page_size; exact Hal) ltac:(subst nw; apply w_is0_false; lia)
              ltac:(rewrite Ua, Un; change (page_round_up_Z 4096) with 4096; unfold two_pow_64; lia)
-             ltac:(vm_compute; reflexivity) ltac:(rewrite E4; exact Hna) ltac:(rewrite E4; exact Hma))) in Hsp.
+             ltac:(vm_compute; reflexivity) ltac:(rewrite E4; exact Hvd) ltac:(rewrite E4; exact Hna) ltac:(rewrite E4; exact Hma))) in Hsp.
   destruct Hsp as [(e & He & E)|(Hb & E)]; apply Ok_inj in E as (E1 & Emo & _); subst mo'.
   - apply kg_same; [lia| reflexivity| reflexivity].
   - apply kgrow_maps_eq; [lia| reflexivity| reflexivity| reflexivity| reflexivity].
@@ -324,8 +352,26 @@ Proof.
                 ltac:(rewrite Ua; unfold page_size; exact Hal) (w_is0_false len ltac:(lia))
                 ltac:(rewrite Ua, Ulen; fold (mmap_len len); exact Hts)) as X.
   cbv zeta in X. rewrite Ulen in X. fold (mmap_len len) in X. fold nw in X.
-  apply (proj1 (X Hhas)) in Hsp. clear X. apply Ok_inj in Hsp as (_ & Emo & _). subst mo'.
-  unfold with_mmap_destroyed. pose proof (kl_wf _ _ _ HK) as WF.
+  apply (proj1 (X Hhas)) in Hsp. clear X.
+  (* at the revision munmap may refuse (nothing changes), and its cut is
+     [maps_subtract], which on this ledger is the old [map_remove]
+     ([BB.MmapSim.maps_subtract_exact], the model's bridge) *)
+  destruct Hsp as [(e & He & Hsp) | Hsp]; apply Ok_inj in Hsp as (_ & Emo & _); subst mo'.
+  { apply kg_same; [lia| reflexivity| reflexivity]. }
+  assert (MSX : maps_subtract (vm_maps (m_vmmaps mo)) (bv_unsigned aw) (bv_unsigned aw + bv_unsigned nw)
+                = map_remove (vm_maps (m_vmmaps mo)) aw).
+  { pose proof (kl_wf _ _ _ HK) as [Wb Wp].
+    assert (Hin : In (aw, nw) (vm_maps (m_vmmaps mo))).
+    { unfold map_has in Hhas. apply existsb_exists in Hhas as ([b sz] & Hb & E). cbn [fst snd] in E.
+      apply andb_prop in E as [E1 E2]. apply bv_eqb_eq in E1. apply bv_eqb_eq in E2. subst b sz. exact Hb. }
+    apply OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB.MmapSim.maps_subtract_exact.
+    - pose proof (Wb _ Hin) as W. unfold elo, ehi in W. cbn [fst snd] in W. lia.
+    - intros b sz Hb. pose proof (Wb _ Hb) as W. unfold elo, ehi in W. cbn [fst snd] in W. lia.
+    - intros b sz Hb ->. destruct (pwdisj_In _ _ _ Wp Hb Hin) as [E|D]; [injection E; intros; congruence|].
+      exfalso. pose proof (Wb _ Hb) as W1. pose proof (Wb _ Hin) as W2. unfold edisj, elo, ehi in *. cbn [fst snd] in *. lia.
+    - intros b sz Hb Hne. destruct (pwdisj_In _ _ _ Wp Hb Hin) as [E|D]; [injection E as E1 _; exact (False_ind _ (Hne E1))|].
+      unfold edisj, elo, ehi in D. cbn [fst snd] in D. lia. }
+  unfold with_mmap_destroyed, mmap_fixed_destroyed_next. rewrite MSX. pose proof (kl_wf _ _ _ HK) as WF.
   constructor; unfold kmaps, vm_live_bytes; rewrite ?m_vmmaps_vm_forget_range, ?m_vmmaps_with_vmmaps; cbn [vm_reserved vm_maps vm_limit]; try lia; try reflexivity.
   - intros M. apply m_vm_materialized_vm_forget_range. exact M.
   - rewrite !length_app. pose proof (map_remove_length (vm_maps (m_vmmaps mo)) aw). lia.
@@ -425,7 +471,8 @@ Proof.
         -- lia.
         -- rewrite Ecur. exact S2.
         -- rewrite <- Kcl. lia.
-        -- apply region_free_above. intros e He. rewrite unsigned_lit by (unfold PGSZ in *; lia). rewrite Ecur. apply (kl_resv_top _ _ _ HK). exact He.
+        -- (* the guard pages lie in a tracked mapping, apart from the reserved ledger ([KInv.kapart]) *)
+           apply (kapart_free _ e0 _ _ (kl_apart _ _ _ HK) He0); rewrite !unsigned_lit by (unfold PGSZ in *; lia); unfold PGSZ in *; lia.
         -- exact He0.
         -- exact He0l.
         -- unfold PGSZ in *; lia.

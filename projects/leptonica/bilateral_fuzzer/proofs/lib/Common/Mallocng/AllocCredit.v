@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO and vvar pages). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -66,6 +67,7 @@ Class AllocCredit := {
   (* [comment removed for export] *)
   ai_malloc_p : forall (fx : FPState) A m md regs (n : Z) (ret sp0 : word) argv envp (S : TSet),
       ainv A m (m_vmmaps md) -> md_pure md ->
+      incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       al_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 n -> 0 <= n < 2^61 ->
       getr regs 1 = ret -> al_ret_ok ret -> getr regs 4 = al_gp ->
@@ -88,6 +90,7 @@ Class AllocCredit := {
           (forall a, m a <> None -> bv_unsigned a < al_image_hi \/ owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           (* [comment removed for export] *)
           (forall k p, aroomP A (m_vmmaps md) k p -> 1 <= k -> alloc_margin n + ROOM_CREDMAX <= p ->
                        aroomP A' vm' (k - 1) (p - alloc_cost n)) ->
@@ -96,6 +99,7 @@ Class AllocCredit := {
 
   ai_calloc_p : forall (fx : FPState) A m md regs (cnt sz : Z) (ret sp0 : word) argv envp (S : TSet),
       ainv A m (m_vmmaps md) -> md_pure md ->
+      incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       al_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 cnt -> getr regs 11 = Z_to_bv 64 sz ->
       0 <= cnt < 2^64 -> 0 <= sz < 2^64 -> 0 <= cnt * sz < 2^61 ->
@@ -120,6 +124,7 @@ Class AllocCredit := {
           (forall a, m a <> None -> bv_unsigned a < al_image_hi \/ owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           (* [comment removed for export] *)
           (forall k p, aroomP A (m_vmmaps md) k p -> 1 <= k -> alloc_margin (cnt * sz) + ROOM_CREDMAX <= p ->
                        aroomP A' vm' (k - 1) (p - alloc_cost (cnt * sz))) ->
@@ -131,6 +136,7 @@ Class AllocCredit := {
   (* [comment removed for export] *)
   ai_malloc_psure : forall (fx : FPState) A m md regs (n k p : Z) (ret sp0 : word) argv envp (S : TSet),
       ainv A m (m_vmmaps md) -> md_pure md ->
+      incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       al_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 n -> 0 <= n < 2^61 ->
       (* [comment removed for export] *)
@@ -154,12 +160,14 @@ Class AllocCredit := {
           (forall a, m a <> None -> bv_unsigned a < al_image_hi \/ owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           aroomP A' vm' (k - 1) (p - alloc_cost n) ->
           realizes al_segs (mkCfg (mkst regs' ret m' al_rom) (with_vmmaps vm' md)) S) ->
       realizes al_segs (mkCfg (mkst regs al_malloc_pc m al_rom) md) S;
 
   ai_calloc_psure : forall (fx : FPState) A m md regs (cnt sz k p : Z) (ret sp0 : word) argv envp (S : TSet),
       ainv A m (m_vmmaps md) -> md_pure md ->
+      incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       al_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 cnt -> getr regs 11 = Z_to_bv 64 sz ->
       0 <= cnt < 2^64 -> 0 <= sz < 2^64 -> 0 <= cnt * sz < 2^61 ->
@@ -185,6 +193,7 @@ Class AllocCredit := {
           (forall a, m a <> None -> bv_unsigned a < al_image_hi \/ owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           aroomP A' vm' (k - 1) (p - alloc_cost (cnt * sz)) ->
           realizes al_segs (mkCfg (mkst regs' ret m' al_rom) (with_vmmaps vm' md)) S) ->
       realizes al_segs (mkCfg (mkst regs al_calloc_pc m al_rom) md) S

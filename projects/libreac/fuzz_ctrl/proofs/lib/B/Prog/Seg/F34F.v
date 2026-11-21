@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1126 of its 1261 lines of code are new or changed and 876 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F34.v; 294 of its 560 lines of code are new or changed and 995 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint (ExecF.evtF) twins of the segment-F34 machine runs of lib/B/Prog/Seg/F34.v (fuzz_ctrl
    LLVMFuzzerTestOneInput, asan-ubsan image B). Bridge input for the cgif-form walk only.
    rule 24: no function proved. *)
@@ -11,10 +12,10 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F34.v f34_evt (:288), f34_evt_ro (:583) at
-     a working branch 3803efccea0 (blob 3ea1805a512e7c61ff389eef317e9438cb9536c9);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c),
-         lib/B/MemNormF.v blob 99f8b314301ceb0f253f1a6c8165b488b23ce218 (taken by path from dba073859bd);
+     a working branch (blob 3ea1805a512e7c61ff389eef317e9438cb9536c9);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release),
+         lib/B/MemNormF.v blob 99f8b314301ceb0f253f1a6c8165b488b23ce218 (taken by path);
    compare: both runs call declaration_of (jal at 0x82c20), so each is split: f34_evt_pre_F re-runs F34.v:335-476
      (0x82bf4 up to the callee entry 0x83114, ra = 0x82c24) and f34_evt_post_F re-runs F34.v:499-556 (from the
      return pc 0x82c24 to the exit cut 0x82c24, no step); f34_evt_ro_pre_F is the ro twin of the pre stretch

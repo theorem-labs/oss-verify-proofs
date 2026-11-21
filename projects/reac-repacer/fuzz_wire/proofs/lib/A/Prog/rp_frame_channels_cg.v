@@ -1,6 +1,6 @@
 (* rp_frame_channels_cg: fuzz_wire image A's rp_frame_channels, its footprint contract (rp_frame_channels_F_c.v) translated to cgif_file's leaf form
    (SRr world walk), as a STATEMENT, with its translation lemma, in the form of libreac/fuzz_decode's
-   released lib/A/Prog/reac_frame_clean_len_cg.v (origin/ossv/recipes 98c99a85e4). The premises of the
+   released lib/A/Prog/reac_frame_clean_len_cg.v. The premises of the
    target are rp_frame_channels_F_c.v's premises VERBATIM, read at the call state (registers from regs, memory mem, footprint RNG_W W).
    The cgif side (names, verbatim copies, the facts a proof may assume, the generic translation lemma) is the shared
    kit lib/A/Prog/LeafCgKit.v; this file only re-declares the kit's Section Variables and names its definitions.
@@ -18,11 +18,11 @@ Open Scope Z_scope.
 
 Section LeafCg.
 Context {fx : YK11.FPState}.
-Variable world : Type.                                                (* YA0n.v:19 *)
-Variable w_H : world -> word -> bool.                                 (* YA0n.v:20 *)
-Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:36 *)
-Variable alayout : Type.                                              (* YG0f.v:45 *)
-Variable astate : Type.                                               (* YG00.v:158 *)
+Variable world : Type.                                                (* YA0n.v:20 *)
+Variable w_H : world -> word -> bool.                                 (* YA0n.v:21 *)
+Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:37 *)
+Variable alayout : Type.                                              (* YG0f.v:46 *)
+Variable astate : Type.                                               (* YG00.v:159 *)
 Variable AR : alayout -> astate -> world -> (word -> option byte) -> Model -> Prop.  (* YG0n.v:795 *)
 Variable aview : (word -> bool) -> (word -> option byte) -> Z -> option Z.          (* YG0n.v:20 *)
 Variable same_but_materialized : Model -> Model -> Prop.              (* YK04.v:540 *)

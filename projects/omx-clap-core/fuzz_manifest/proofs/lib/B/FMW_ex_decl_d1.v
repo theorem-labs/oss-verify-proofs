@@ -8,8 +8,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_hp_kit.v, with its module paths and module names changed; 305 of its 367 lines of code are new or changed and 869 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_ex_tok_base.v; 567 of its 633 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_ex_decl_base.v; 259 of its 310 lines of code are new or changed and 582 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExDecl, IMAGE B: the space loop at D1 (0x81500..0x8155c, fuzz_manifest.c:147-148) on fm.asan-ubsan: dseg_D1.
-   B twin of lib/A/FMW_ex_decl_d1.v (06d82004dc3); B's code (fm_b_expected_iface.out lines 175-199):
+   B twin of lib/A/FMW_ex_decl_d1.v; B's code (fm_b_expected_iface.out lines 175-199):
    one iteration: the shadow check of a0 = text + q (q = i + a1 + k), lbu a1 = text[q] (via s4 = a0),
    `addi a3, a1, -9; bgeu a3, s3 (= 5)` and `bne a1, s11 (= ' ')` decide ManifestModel.is_space; a space passes the
    UBSan guard 0x8151c `beq s4, s0 (= -1)` and goes back to D1 at k + 1 (s4, a0, a2, s8 += 1, s10 -= 1), else

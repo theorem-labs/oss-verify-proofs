@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 2439 of its 2555 lines of code are new or changed and 895 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F2 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan build of libreac v1.9.0, image B), frame-loop turn
    j: from the return point 0x81f50 of F1's allocation call to the return point 0x81f78 of the checked memcpy
    (len > 0) or to the return point 0x82048 of the reac_ctrl_parse call 0x82044 (len = 0).
@@ -22,10 +23,10 @@
    parse block is at 0x82020 / 0x81f94 (was 0x81fb0 / 0x81f24); the checked memcpy is at 0x52164 and
    reac_ctrl_parse at 0x83e04 (the _c.v constants of a working branch).
    The parse block (stores + call, at 0x82020 or at its long-frame twin 0x81f94) is f2_parse_seg, used here and by
-   F3: lib/B/Prog/Seg/R9.v's parse-record stores and call (a working branch be153b10cd3) re-pinned to the
+   F3: lib/B/Prog/Seg/R9.v's parse-record stores and call (a working branch) re-pinned to the
    frame-loop record fr + 176, its side-stack package built at the call from FRA by Tac_fsfree.fra_fp, the run
    stepped on the normalized memory (MemNorm, R4.v's r4_run) since the contract takes mem_inv.  The memcpy stage is
-   lib/B/Prog/Seg/R8.v's (a working branch 72cb827d72b) checked_memcpy run re-pinned to the frame copy.  The head
+   lib/B/Prog/Seg/R8.v's (a working branch) checked_memcpy run re-pinned to the frame copy.  The head
    run 0x81f50 -> 0x82020 / 0x81f68 is on the real memory (sl_run_lib); FRA and ENT move across its store
    [A + 224, A + 232) by F1.f1_fra_spill.  Callees: checked_memcpy by its contract asan_memcpy_c.v (proved in tree
    by asan_memcpy.asan_memcpy_holds); reac_ctrl_parse by its contract reac_ctrl_parse_c.v, a Section hypothesis (a

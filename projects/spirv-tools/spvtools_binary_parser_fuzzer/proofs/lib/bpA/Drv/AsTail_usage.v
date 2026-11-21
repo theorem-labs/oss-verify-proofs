@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader a hypothesis of the tail, and the 10-byte room above the argument string). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require As0Gc.
@@ -50,6 +51,7 @@ Section Tail.
   Variables (pp : word) (path t8 : list byte) (can : Z).
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Hfd2 : fd_lookup (m_fds mo0) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrd0 : m_channel_reader mo0 = true.
 
   Hypothesis Hstk : stk asegs mem0 (bv_unsigned sp0 - 128 - OT_FR) (bv_unsigned sp0 - 128).
   Hypothesis Hgot : forall i, 0x17c000 <= i < 0x185000 -> mem0 (Z_to_bv 64 i) = None.
@@ -65,7 +67,7 @@ Section Tail.
 
   Hypothesis Hargv0 : rdn RSEGS mem0 (Z_to_bv 64 (bv_unsigned sp0 + 8)) 8 = Some (word_to_le_bytes 8 pp).
   Hypothesis HppLo : bv_unsigned sp0 <= bv_unsigned pp.
-  Hypothesis HppHi : bv_unsigned pp + Z.of_nat (length path) + 17 <= AAPP_HI.
+  Hypothesis HppHi : bv_unsigned pp + Z.of_nat (length path) + 10 <= AAPP_HI.
 
   Hypothesis Hsh0 : forall a, ASHADOW_BASE + (bv_unsigned sp0 - 128 - 65536) / 8 <= a < ASHADOW_BASE + 2^44 ->
                     mem0 (Z_to_bv 64 a) = Some (Z_to_bv 8 0).
@@ -274,6 +276,7 @@ Section Tail.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P141). unorm. exact MSG.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrd0.
     - exact OK'.
     - exact RS'.
     - exact HKnil.
@@ -712,6 +715,7 @@ Section Tail.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. exact Hnl.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrd0.
     - exact OK'.
     - exact RS'.
     - exact HKnil.
@@ -781,6 +785,7 @@ Section Tail.
       replace (bv_unsigned sp0 + -592)%Z with (bv_unsigned sp0 + -592)%Z by lia. exact H17.
     - cbn [edenot ev ENV PX]. rewrite P2. exact Hsrc.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrd0.
     - exact OK'.
     - exact RS'.
     - apply t_emit_has_nil.
@@ -922,6 +927,7 @@ Section Tail.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P141). unorm. exact MSG.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrd0.
     - exact OK'.
     - exact RS'.
     - exact HKnil.
@@ -1043,6 +1049,7 @@ Section Tail.
     - reflexivity.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrd0.
     - exact OK'.
     - exact RS'.
     - exact HKnil.
@@ -1106,6 +1113,7 @@ Section Tail.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P141). unorm. exact B80.
     - cbn [edenot]. exact Hnl.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrd0.
     - exact OK'.
     - exact RS'.
     - exact HKnil.

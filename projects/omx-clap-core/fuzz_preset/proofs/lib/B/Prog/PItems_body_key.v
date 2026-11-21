@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_head.v, with its module paths and module names changed; 4555 of its 4719 lines of code are new or changed and 1142 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: block KEY of parse_items' image-B walk.
    PI_O_KEY (0x87bc0) through PI_O_VAL (0x87cd8): skip_ws, the quote test, parse_string, the store into keys[n],
    skip_ws, the colon test, in->p++. The pres and the specs are in lib/B/Prog/PItems_pres.v; the
    preamble below is lib/B/Prog/PItems_body.v's, verbatim, so the proof inlines there unchanged.
-   REBOUND to the kit walkkit-next f97c8b2f046b (form (b), post-implication; lane PItemsB.SegBody): no rp_*
+   REBOUND to the kit walkkit-next (form (b), post-implication; lane PItemsB.SegBody): no rp_*
    binders, the ledger's most / own, fpre's frm_zero, parse_string's per-arm post (pik_ps_postX), the travelling
    PItems_posb.pi_posb / pi_live composed at every call, and the missing-colon hand-off's class-24 count derived in
    place (pik_cc24).
-   REBOUND to the batch kit 240b06ed4fd4 (lane PItemsB.K1Body.K1Key): the cursor set CW and the BUDGETED journal
+   REBOUND to the batch kit (lane PItemsB.K1Body.K1Key): the cursor set CW and the BUDGETED journal
    the cursor set CW and the BUDGETED journal (pi_aj .. WS0 at wbudget CW 0; runs on the rebased empty-budget journal,
    YCbqGwild.ajournal_xw_rebase / unbase0; skip_ws by YCbqGcallW.aj_call_xW_sp on the rebased journal, parse_string by
    wbudget CW 0), parse_string's batch-kit post (its refused arm's OUTCOME exclusion and ledger), the batch-kit post's OUTCOME,
@@ -100,7 +101,7 @@ Hypothesis HEPI : forall d, pi_epi_spec (L := Lb) (PA := PIb) (PL := PLb) B ARx 
 Hypothesis TSKW : forall fy : YK11.FPState, tskip_ws_specX (fx := fy) (L := Lb) (PA := PIb) B ARx SK.
 Hypothesis TGROW : forall (fy : YK11.FPState) CTX0,
   tgrow_specX (fx := fy) (L := Lb) (PA := PIb) B ARx SK CTX0.
-(* The batch kit (240b06ed4fd4): parse_string's text takes the cursor set CW (prh_cw_ok, wild_room, post at wbudget CW 0).
+(* The batch kit: parse_string's text takes the cursor set CW (prh_cw_ok, wild_room, post at wbudget CW 0).
    OWNER: the kit owner (lib/A/PRH_FnReader.v tparse_string_specX). *)
 Hypothesis TPSTR : forall (fy : YK11.FPState) CTX0 CW,
   tparse_string_specX (fx := fy) (L := Lb) (PA := PIb) B ARx SK CTX0 CW.
@@ -3427,7 +3428,7 @@ eapply (SRrG_bind SEGS (wle' SEGS YGcfRehidePost.RZ_cf) (wle'_trans SEGS YGcfReh
       (* fpre's frm_zero at the call (FRM0-ENTRY): the block's own float state, pi_fpok's first half *)
       split; [|exact (proj1 HFP)].
       (* the jal's own return pc, a literal of the listing, is below the allocation ceiling (fpre's fourth conjunct,
-         the kit owner's 2026-10-29 ruling; PItems_entry.v:1485-1489's discharge) *)
+         the kit owner's 2026-10-29 ruling; PItems_entry.v:1486-1490's discharge) *)
       unfold raZ. rewrite R1.
       pose proof (proj1 (@YG0f.ASAN_CEIL_range rc)) as CRr. unfold ASAN_CEIL in CRr.
       let w := eval vm_compute in (VALb A_TEXT) in change (VALb A_TEXT) with w.
@@ -4479,7 +4480,7 @@ assert (HCH2 : exists ch2, achain lyc (aview SEGS (w_H Wc) (ms_mem ms))
       split; [exact Hr|]. unfold bad_next. replace (nfp <=? q) with true by (symmetry; apply Z.leb_le; lia).
       reflexivity.
     + constructor; [cbn [fst]; lia | constructor]. }
-(* the room of the string's call (tparse_string_specX's last premise, the batch kit's tip 03fcabb582d0): the request of its
+(* the room of the string's call (tparse_string_specX's last premise, the batch kit's tip): the request of its
    malloc, the first event of the member's granted run (rd_room's request bound), and the live bytes at each of its
    own all-granted events, a prefix of the member's (rd_room's per-event room, PItems_ledk1.pik1_live_evs_pre) *)
 assert (Hy34 : rest_atR tb text pc = 34 :: rest_atR tb text (pc + 1)).
@@ -4564,7 +4565,7 @@ eapply (SRrG_bind SEGS (wle' SEGS YGcfRehidePost.RZ_cf) (wle'_trans SEGS YGcfReh
       (* fpre's frm_zero at the call (FRM0-ENTRY): the block's own float state, pi_fpok's first half *)
       split; [|exact (proj1 HFP)].
       (* the jal's own return pc, a literal of the listing, is below the allocation ceiling (fpre's fourth conjunct,
-         the kit owner's 2026-10-29 ruling; PItems_entry.v:1485-1489's discharge) *)
+         the kit owner's 2026-10-29 ruling; PItems_entry.v:1486-1490's discharge) *)
       unfold raZ. rewrite R1.
       pose proof (proj1 (@YG0f.ASAN_CEIL_range rc)) as CRr. unfold ASAN_CEIL in CRr.
       let w := eval vm_compute in (VALb A_TEXT) in change (VALb A_TEXT) with w.
@@ -5188,7 +5189,7 @@ eapply (SRrG_bind SEGS (wle' SEGS YGcfRehidePost.RZ_cf) (wle'_trans SEGS YGcfReh
       (* fpre's frm_zero at the call (FRM0-ENTRY): the block's own float state, pi_fpok's first half *)
       split; [|exact (proj1 HFP)].
       (* the jal's own return pc, a literal of the listing, is below the allocation ceiling (fpre's fourth conjunct,
-         the kit owner's 2026-10-29 ruling; PItems_entry.v:1485-1489's discharge) *)
+         the kit owner's 2026-10-29 ruling; PItems_entry.v:1486-1490's discharge) *)
       unfold raZ. rewrite R1.
       pose proof (proj1 (@YG0f.ASAN_CEIL_range rc)) as CRr. unfold ASAN_CEIL in CRr.
       let w := eval vm_compute in (VALb A_TEXT) in change (VALb A_TEXT) with w.

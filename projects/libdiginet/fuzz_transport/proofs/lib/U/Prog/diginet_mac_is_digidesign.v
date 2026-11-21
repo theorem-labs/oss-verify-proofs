@@ -1,5 +1,5 @@
 (* proves the UBSan contract of diginet_mac_is_digidesign (fuzz_transport.ubsan, 0x17fb0), with its two pointer-overflow traps not taken. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_mac_is_digidesign.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_mac_is_digidesign.v to fuzz_transport's images *)
 (* Walk of diginet_mac_is_digidesign (src/diginet_frame.c:50-53 at 835f336c) in fuzz_transport.ubsan, 0x17fb0.
    The UBSan checks at 0x17fc0 (mac = 2^64 - 1) and 0x17fd4 (mac > 2^64 - 3) branch to the trap at
    0x17ff0; bytes_at of the 6 bytes gives mac + 6 <= 2^64, so neither is taken. *)

@@ -1,4 +1,4 @@
-lib/B file	class	numerals changed	B blob	A donor blob	twin at 63064ea86fe	twin at 4c529cf6485	A value	B value	symbol + offset in image A	lines
+lib/B file	class	numerals changed	B blob	A donor blob	twin	twin	A value	B value	symbol + offset in image A	lines
 lib/B/Bz/A/D_kit.v	copy (module path only)	0	52035e7905e	0f0d4170d8f	52035e7905e same	-	-	-	-	-
 lib/B/Bz/A/F_memset.v	relocate	2	6e80db69bc7	49c5e3247c9	6e80db69bc7 same	-	0x99b74	0x99f14	memset[1/1]+0x0	16,44
 lib/B/Bz/A/I_amemcpy.v	relocate	6	0bca8762a8d	c1459f47fa5	0241abc595f differs	-	0x99770	0x99b10	memcpy[1/1]+0x0	51

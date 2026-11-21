@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): SEGMENT S6 of the walk of parse_noting (row
    N10-PNA; cut table lib/A/Prog/PN102Cuts.v): from the join pn_cut_S6 (+0x58) to the post of the batch kit's text pn_post.
@@ -9,9 +10,9 @@
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
    files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk preset-tree-at-2026-10-29T20-00-00Z.tsv (sha256 84c0bfddb1f3; internal record), its one
    announced re-bind). This file: segment S6 of that walk.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
    FORM: eight CONCRETE steps (PN102Help.v pn_step_addi / pn_step_ret, and pn6_step_ld here: pn_step_addi's form over
    YK11.v step_ld, the eight bytes read by PN102Help.v pn_rd64_val and YN01.v word_mem_ld). The steps leave memory and
    the world alone and only materialize the model, so the cut's journal (at the budget pn_cw X and at the relation
@@ -20,7 +21,7 @@
    back the entry ra, s0 .. s3 from the cut's saved words, the addi the entry sp, and the `ret` jumps to the entry ra
    (its ret_ok from pp_fpre). The batch kit's post is budgeted (fpostFbm (wbudget [] (prh_wk F_parse_noting))): its budget is
    pn_cw X, two traces (PN102Keep.v pn_cw_budget).
-   SHAPES TAKEN: pn6_aregs is lib/A/Prog/Ent102L6A.v l6_aregs (a working branch b1bc025047ea), renamed;
+   SHAPES TAKEN: pn6_aregs is lib/A/Prog/Ent102L6A.v l6_aregs (a working branch), renamed;
    pn6_fd is lib/A/Prog/Ent102L3ASteps.v l3_fd (same branch) at PL_prog_A.
    NUMERALS: 4 (an instruction), 8 (a word), 48 (the frame), 8 .. 40 (the save slots), 2 ^ 40 / 2 ^ 64 (the engine's
    code-span and word ranges), the instruction offsets 0x58 .. 0x74 (LENGTH). No ADDRESS. *)

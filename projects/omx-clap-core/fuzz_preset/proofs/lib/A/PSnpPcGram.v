@@ -8,7 +8,7 @@
      the non-owned ones from the contract's consts_view over PCM_CR, the owned ones from AR (FMInst.fmi_rom_viewO);
    - the post: the walk changes only [sp - PCOM_DEPTH, sp), inside the contract's window [sp - K, sp). *)
 (* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2; parent c-libc-stdio
-   13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_sh.v at origin/cold/port-fm-rtprintf-param 7e395de08f5: the
+   13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_sh.v: the
    grammar bridge WIDENED from fm's pieces (PLit | Ps | Pps) to PLit | Pc | Px04 | Ps | Pps (PSnpPfFam.pf_pcom_piece):
    %c is pcx_dir's PK_char arm, %04x its flag '0', width '4' and PK_int arm (I_pcxgram.v pcx_dir / pcx_conv), each with
    one scalar argument (pa_of AInt = PA_i, no range check: I_pcxlist.v ck_arg / sarg), so pc_cin gives each one None;

@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image range set to libreac/fuzz_boxreg's own (Reusable/YImgTop.v IMG_LO, IMG_TOP). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YCbq.v, with its module paths and module names changed; 448 of its 557 lines of code are new or changed and 2853 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_malloc_free.v (a working branch
-   8989ddd6cb6 = the copy at another working branch's 4fc1647c047), SAME lemma names and statements. Changed, and nothing else: the image
+   = the copy at another working branch), SAME lemma names and statements. Changed, and nothing else: the image
    imports point at lib/B (YB1v's tfibsegs = fs.asan-ubsan, FSH_Base's B addresses, FSH_Rt, FSW_K, FSW_ret); the
    image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's, as lib/B/FSW_K.v imports them; the two code
    tables take B's word counts (below); the comments name B's addresses.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (*
    fs ASan, group ALLOC: the U-form allocator call steps of fuzz_state (image tfibsegs), a kit file other walks import,
    plus the fuzz_free p = 0 arm. The fuzz_malloc_spec / fuzz_free_spec walks themselves (lib/B/FSH_Fn_alloc.v) are NOT
@@ -299,8 +300,8 @@ Qed.
    freed block, own = []), the free twin of fsw_aj_malloc04U_sub, for a walk whose own call machinery composes the callee
    half (CRT's crt_seg_call / crt_after_call). No trace premise (C5: afree_realizesU and ml_free admit any trace once
    st_nev < EV_MAX). Its premises are the callee's: acall_preU and astk_ok ASTACK at the call, the event room, the
-   block, U outside it, a0 and ra. ported from: CRT's crtD2_free_sub (lib/A/FSH_crt_segD2_s39.v, a working branch
-   6cf61486dca), the same statement and script, renamed into this file; fsw_aj_freeU below is now built on it. ---- *)
+   block, U outside it, a0 and ra. ported from: CRT's crtD2_free_sub (lib/A/FSH_crt_segD2_s39.v, a working branch),
+   the same statement and script, renamed into this file; fsw_aj_freeU below is now built on it. ---- *)
 Lemma fsw_aj_freeU_sub : FSupoisonU.afree_realizesU tfibsegs B ->
   forall lyc Sc U (W : world tfibsegs) regsT memT mdc pa n raw ch,
   FSupoisonU.acall_preU tfibsegs B lyc Sc U W regsT memT mdc ch ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (read_cstr_aux_bytes_in and read_cstr_aux_toolong_bytes_in take the TASK_SIZE bound on the string, since each byte read passes access_ok (read_cstr_aux_accepted)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -81,31 +82,43 @@ Proof. intros. unfold word_to_nat. rewrite unsigned_lit by lia. lia. Qed.
 
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (a + Z.of_nat (length str) < TASK_SIZE)%Z ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
-  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [read_cstr_aux]. rewrite Hb. reflexivity.
-  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [read_cstr_aux]. rewrite Hb.
+  induction str as [|b str IH]; intros fuel mp a Hf Hnz Hlo H.
+  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. pose proof H as (Ha0 & _ & _).
+    cbn [app] in H. apply bytes_in_cons in H as [Hb _].
+    assert (Hwa : bv_unsigned (wa a) = a) by (apply wa_unsigned; unfold TASK_SIZE in Hlo; lia).
+    assert (Hacc : access_okb (wa a) 1 = true) by (rewrite access_okb_one, Hwa; apply Z.ltb_lt; lia).
+    rewrite (read_cstr_aux_accepted _ _ _ Hacc). rewrite Hb. reflexivity.
+  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. pose proof H as (Ha0 & _ & _).
+    cbn [app] in H. apply bytes_in_cons in H as [Hb H].
+    cbn [length] in Hlo.
+    assert (Hwa : bv_unsigned (wa a) = a) by (apply wa_unsigned; unfold TASK_SIZE in Hlo; lia).
+    assert (Hacc : access_okb (wa a) 1 = true) by (rewrite access_okb_one, Hwa; apply Z.ltb_lt; lia).
+    rewrite (read_cstr_aux_accepted _ _ _ Hacc). rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | | lia |exact H].
     intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
   (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (fuel <> 0%nat -> a + Z.of_nat fuel <= TASK_SIZE)%Z ->
   bytes_in mp a str ->
   read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
-  destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-  cbn [read_cstr_aux]. rewrite Hb.
+  induction fuel as [|fuel IH]; intros str mp a Hf Hnz Hlo H; [reflexivity|].
+  specialize (Hlo ltac:(lia)).
+  destruct str as [|b str]; [cbn in Hf; lia|]. pose proof H as (Ha0 & _ & _). apply bytes_in_cons in H as [Hb H].
+  assert (Hwa : bv_unsigned (wa a) = a) by (apply wa_unsigned; unfold TASK_SIZE in Hlo; lia).
+  assert (Hacc : access_okb (wa a) 1 = true) by (rewrite access_okb_one, Hwa; apply Z.ltb_lt; lia).
+  rewrite (read_cstr_aux_accepted _ _ _ Hacc). rewrite Hb.
   assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | | intros _; lia |exact H].
   intro Hin. apply Hnz. right. exact Hin.
 Qed.
 

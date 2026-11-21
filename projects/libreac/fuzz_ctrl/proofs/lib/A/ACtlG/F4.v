@@ -6,10 +6,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its module paths and module names changed; 364 of its 379 lines of code are new or changed and 544 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F5_e10.v, with its module names and numbers changed; 1362 of its 1528 lines of code are new or changed and 213 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F4.v -- GLUE for stage seg_F4 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v (at head lib/A/ACtl.v:747) (an earlier version, blob 84ef756918c, not in this delivery),
    Hypothesis seg_F4).  Written by a Theorem Labs lane (lane of a Theorem Labs lane, helper of a Theorem Labs lane; single writer of this file),
-   from its two arm lanes: a Theorem Labs lane (glue_F4_d64, a working branch dd796055c2f) and a Theorem Labs lane
-   (glue_F4_dbc, a working branch d811c09d7a9), merged here except the lib/Lib aliases below; comments since reworded.
+   from its two arm lanes: a Theorem Labs lane (glue_F4_d64, a working branch) and a Theorem Labs lane
+   (glue_F4_dbc, a working branch), merged here except the lib/Lib aliases below; comments since reworded.
    Brief: stage-parse-sites.md (a working note, not in this delivery); pattern:
    glue-pattern.md (a working note, not in this delivery).  rule 24: no function proved (stage glue of a walk).
 
@@ -23,7 +24,7 @@
 
    THE 0x81dfc ARM (glue_F4_d64; Seg/F4.v seg_F4_d64 :3248-3611)
      The three inline runs of seg_F4_d64, extracted and re-run over StepF in lib/A/Prog/Seg/F4d64F.v (this lane's
-     file, a Theorem Labs lane's assignment 04:26Z; a working branch 13aa8a2b8bc; the substitute for a run pin is its
+     file, a Theorem Labs lane's assignment 04:26Z; a working branch; the substitute for a run pin is its
      seg_F4_d64_of_F, constr_eq-pinned to F4.seg_F4_d64): f4_d64_short_run_F (flen <= 49, exit 0x81e88),
      f4_d64_136_run_F (record byte 12 = 136, exit 0x81ea8, also stores [A+240] = b2z t_8819), f4_d64_n136_run_F
      (byte 12 <> 136, exit 0x81ea4).
@@ -49,7 +50,7 @@
    THE 0x81e54 ARM (glue_F4_dbc; Seg/F4.v f4_seg_dbc :2901), THROUGH THE PARSE CALL
      Machine code: 0x81e54 addi a0,s7,18 ; sd a0,200(s1) ; sb zero,22..25(s3) ; li a0,4 ; sb a0,26(s3)
      [F4F.f4_dbc_st_F, a Theorem Labs lane's] ; mv a0,s7 ; li a1,0 ; ld a2,248(s1) ; jal reac_ctrl_parse
-     [F4Fs.PF.f4_dbc_call_pre_Fs, this lane's split file lib/A/Prog/Seg/F4Fs.v, a working branch 98e9c5325bf,
+     [F4Fs.PF.f4_dbc_call_pre_Fs, this lane's split file lib/A/Prog/Seg/F4Fs.v, a working branch,
      a Theorem Labs lane's yes 04:01Z; its post stretch is ZERO instructions: the callee returns to 0x81e84, which IS the exit
      cut C_A81e84_at].
      G1  the entry cut at [j]: FRAC, b5_body (flen j = 0, IDj, b5_PF).
@@ -74,15 +75,15 @@
 
    SECTION HYPOTHESES (after End GlueF4 each lemma keeps only those its proof uses)
    - RELRO_IMG, LAWS, TFIB_SYMS: ACtl.v's Section Ctl hypotheses, same text (ACtl.v:181, :185, :193).
-   - TPARSE: the parse spec of record, a working branch 621a4ba64dc (REAC_CTRL_PARSE_STK = 8800),
+   - TPARSE: the parse spec of record, a working branch (REAC_CTRL_PARSE_STK = 8800),
      lib/A/Prog/C_reac_ctrl_parse.v (`treac_ctrl_parse_spec (SK := A.AE2k.tfib_sink_head) B RLO RHI`), as the
      brief's route cites it; P7 needs c_sp - LLVMF_STK <= sp - 8800, from FRAC's c_sp - 4096 < sp, LLVMF_STK = 32768.
    - none for the exits' runtime conjunct: route (C) takes ctl_rt_C from the post's AR by
      A.ProgWorldCtlRtC.ctl_rt_C_of_AR, which needs neither A.ProgWorld.AR_states_vis0_shadow nor
      AR_states_owned_ro, so the former Section hypotheses VIS0 / OWNED_RO are gone.
-   No run is a hypothesis: Seg/F4F.v (a Theorem Labs lane, e1ece7d93f27), Seg/F4Fs.v and Seg/F4d64F.v are Required.
+   No run is a hypothesis: Seg/F4F.v (a Theorem Labs lane), Seg/F4Fs.v and Seg/F4d64F.v are Required.
 
-   START-UP TABLE VALUES READ (checked by hand against the RECORD a working branch e56483f863b
+   START-UP TABLE VALUES READ (checked by hand against the RECORD a working branch
    lib/A/AF0m.v): Tfib_zero_shadow (KIND_NAME's 112 shadow bytes: record :2963 row (0x21aa0, 0x9e7d0 - 0x21aa0)
    covers [0x9e760, 0x9e7d0); found by value, no fixed index), Tfib_owned_static (no row meets
    [KIND_NAME, KIND_NAME + 112); record :2965-2981, (0x9e7d0, 0x30) starts at KIND_NAME + 112), TFIB_ERRNO (record
@@ -95,9 +96,9 @@
    full path and named only through LMem / LFr / LMS.  The commit message lists the blob of every frame-route file in
    the closure.
 
-   BUILD STATE: built on the stand-in-free image-A glue base a working branch 29ddfc3ea99 (interim core
-   5da74c9c931): the closure reaches no stand-in.  No Axiom, no Parameter, no Admitted, no admit. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+   BUILD STATE: built on the stand-in-free image-A glue base a working branch (interim core):
+   the closure reaches no stand-in.  No Axiom, no Parameter, no Admitted, no admit. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 
 From Coq Require Import ZArith List Lia Permutation Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -179,7 +180,7 @@ Local Notation C_A81ea8_at := (ACtlCutP.C_A81ea8_at B).
 (* ---------------------------------------------------------------------------------------------------------
    Section hypotheses. *)
 
-(* The parse spec of record (a working branch 621a4ba64dc), cgif form, applied at the
+(* The parse spec of record (a working branch), cgif form, applied at the
    `jal reac_ctrl_parse` 0x81e80 (route of a Theorem Labs lane 03:56Z). *)
 Hypothesis TPARSE : A.Prog.C_reac_ctrl_parse.treac_ctrl_parse_spec (SK := A.AE2k.tfib_sink_head) B RLO RHI.
 
@@ -189,7 +190,7 @@ Hypothesis TPARSE : A.Prog.C_reac_ctrl_parse.treac_ctrl_parse_spec (SK := A.AE2k
 (* ---------------------------------------------------------------------------------------------------------
    The 0x81dfc arm's helpers (stage-specific, f4g_d64_ prefix). *)
 
-(* The run's write set: the two spill words F4.v's f4_Wsp names (F4.v:771). *)
+(* The run's write set: the two spill words F4.v's f4_Wsp names (F4.v:772). *)
 Definition f4g_d64_W (A : Z) : list LFr.ivl := [(A + 200, A + 208); (A + 240, A + 248)].
 
 Lemma f4g_d64_W_out : forall A x, x < A + 200 \/ A + 208 <= x < A + 240 \/ A + 248 <= x ->
@@ -490,7 +491,7 @@ Proof.
 Qed.
 
 (* HB / FLSI / LK / b5_C / IDj across the run: every cell they read lies off the two spill words; the registers
-   they read are kept.  The cut-layer form of F4.v's f4_keep1 (F4.v:881). *)
+   they read are kept.  The cut-layer form of F4.v's f4_keep1 (F4.v:882). *)
 Lemma f4g_d64_keep : forall (cx : ACtlCut.ctlcx) (j : nat) (phi fr A : Z) (regs regs' : bvmap 5 word)
     (m m' : word -> option byte),
   ACtlCutP.HB m phi (ACtlCutP.flen cx j) -> ACtlCutP.FLSI cx j fr regs m -> ACtlCutP.LK cx fr j regs m ->
@@ -649,7 +650,7 @@ Proof.
   exact (conj HHB' (conj HF' (conj HL' (conj HC' HIDm)))).
 Qed.
 
-(* b5_PF across the run: every cell it names lies below A + 200 (F4.v's f4_pf_sp, F4.v:940). *)
+(* b5_PF across the run: every cell it names lies below A + 200 (F4.v's f4_pf_sp, F4.v:941). *)
 Lemma f4g_d64_pf_keep : forall (cx : ACtlCut.ctlcx) (j : nat) (phi fr A : Z) (regs regs' : bvmap 5 word)
     (m m' : word -> option byte),
   ACtlCutP.b5_PF cx j phi fr regs m -> ACtlCut.rgv regs 9 A ->

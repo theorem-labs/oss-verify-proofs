@@ -1,12 +1,12 @@
 (* The footprint walk of reac-repacer/fuzz_wire's rp_counter in image B, against the frozen lib/B/Prog/rp_counter_F_c.v
    rp_counter_contract_F (= wire_rp_counter_holds_stmt). The script is libreac/fuzz_decode's released
-   lib/B/Prog/reac_frame_counter_F_nosh.v reac_frame_counter_holds_F_nosh (recipes commit 48907dc7e8ca) step for step:
+   lib/B/Prog/reac_frame_counter_F_nosh.v reac_frame_counter_holds_F_nosh (recipes) step for step:
    rp_counter's code is reac_frame_counter's without its two last arithmetic instructions (`slli a0, a0, 0x30` /
    `srli a0, a0, 0x30`, its uint16_t return), so the walk takes two steps fewer before the return and reads the result
    of the `or` directly (lor_bytes16_z below, the Z form of AsanKAProof.v lor_bytes16); the GOT word and the cell are
    image B's (624760 = 0x98878 and 657400 = 0xa07f8), and the post names every temporary register, as the frozen
-   contract states it. The form of the file is reac-repacer/fuzz_uci's lib/B/Prog/rp_hot_clamp_FW.v (recipes commit
-   0295462466b2): StepF's step, one rng fact per access, the shadow loads read from the `addressable` premise. *)
+   contract states it. The form of the file is reac-repacer/fuzz_uci's lib/B/Prog/rp_hot_clamp_FW.v (recipes):
+   StepF's step, one rng fact per access, the shadow loads read from the `addressable` premise. *)
 (* rp_counter of fuzz_wire.asan-ubsan (objdump of record sha256 440b9550f4f5; entry 0x81314, 0x8c bytes):
      0x81314 `addi sp, sp, -0x10`, 0x81318 `sd ra, 8(sp)`;
      0x8131c `beqz a0, 0x8137c`, 0x81320 `addi a1, zero, -0xf`, 0x81324 `bltu a1, a0, 0x8137c`,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, brk grants whole pages (brk_page_range, brk_grow_bytes). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -41,17 +42,6 @@ Proof using .
   rewrite bv_add_unsigned.
   change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
   rewrite Z.add_0_r, bv_wrap64_mod. apply Z.mod_small. apply u64_range.
-Qed.
-
-(* [comment removed for export] *)
-Lemma word_add_sub_cancel : forall r t : word, r + t - r = t.
-Proof using .
-  intros r t. apply bv_eq.
-  rewrite bv_sub_unsigned, bv_add_unsigned, !bv_wrap64_mod.
-  rewrite Zminus_mod_idemp_l.
-  replace (bv_unsigned r + bv_unsigned t - bv_unsigned r)%Z
-    with (bv_unsigned t) by lia.
-  apply Z.mod_small. apply u64_range.
 Qed.
 
 Lemma word_neq0_unsigned : forall r : word,
@@ -323,8 +313,10 @@ Qed.
 Lemma brk_grants_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-  brk_grants req r old = [(old, r - old)].
-Proof using .
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
+Proof.
   intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
   assert (E1 : w_is0 req = false)
     by (unfold w_is0; apply bv_eqb_neq; exact Hreq).
@@ -395,8 +387,8 @@ Lemma brk_grow_ok_grow : forall h req r,
                 (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
                              - page_round_up_Z (bv_unsigned (vm_brk h))))
       else true)
-     && (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
-Proof using .
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
+Proof.
   intros h req r Hreq H0 Hlt.
   assert (Hmaps : m_vmmaps (vm_model h) = h) by reflexivity.
   assert (Hbacked : vm_backing_used (vm_model h) = vm_backed_bytes h).
@@ -510,8 +502,8 @@ Lemma brk_grow_ok_aligned_grow : forall h req r,
       && region_free (vm_reserved h ++ vm_maps h) (vm_brk h)
            (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
                         - bv_unsigned (vm_brk h))))
-     && (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
-Proof using .
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
+Proof.
   intros h req r Hreq Hpos Hlt Halign.
   rewrite brk_grow_ok_grow by assumption.
   rewrite (page_round_up_Z_aligned (bv_unsigned (vm_brk h))) by lia.
@@ -617,7 +609,8 @@ Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
                                (bv_unsigned r + bv_unsigned t)
                               + page_size - page_round_up_Z (bv_unsigned r)))
       else true)
-     && (bv_unsigned t <=? lim)%Z)%bool = true)).
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 
 (* [comment removed for export] *)
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
@@ -787,75 +780,77 @@ Proof using .
 Qed.
 
 Lemma T1_iff_T2 : forall reserved lim s (mb sp : word) t bufs r,
-  r <> Z_to_bv 64 0 -> (bv_unsigned s <= bv_unsigned r)%Z ->
-  (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z ->
-  forall o, T1 reserved lim (bv_unsigned sp - stack_max_size) t bufs r o <->
-    (exists r2, brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
-                /\ T2 (r + t) bufs r2 o).
+r <> Z_to_bv 64 0 -> (bv_unsigned s <= bv_unsigned r)%Z ->
+(bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z ->
+forall o, T1 reserved lim (bv_unsigned sp - stack_max_size) t bufs r o <->
+(exists r2, brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
+/\ T2 (r + t) bufs r2 o).
 Proof using .
-  intros reserved lim s mb sp t bufs r Hr0 Hs Hnw o.
-  pose proof (u64_range r) as Hur. pose proof (u64_range t) as Hut.
-  pose proof (word_neq0_unsigned r Hr0) as Hur0.
-  assert (Huadd : bv_unsigned (r + t) = (bv_unsigned r + bv_unsigned t)%Z)
-    by (apply u_add_small; exact Hnw).
-  assert (Hwant0 : r + t <> Z_to_bv 64 0).
-  { intro He. apply (f_equal bv_unsigned) in He.
-    rewrite Huadd in He.
-    change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in He. lia. }
-  assert (Bridge : forall r2,
-             brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2 <->
-             (r2 = r + t \/ r2 = r)
-             /\ brk_grow_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
-                = true)
-    by (intro r2; apply brk_r_ok_grow_iff with (maps := []) (noaccess := []); lia).
-  split.
-  - intros [[-> Hcase] | [Hg ->]].
-    + (* [comment removed for export] *)
-      assert (Ht0 : t <> Z_to_bv 64 0)
-        by (destruct Hcase as [Hc | [Hc | Hc]]; [congruence | lia | exact Hc]).
-      pose proof (word_neq0_unsigned t Ht0) as Hut0.
-      exists r. split.
-      * apply Bridge. split; [right; reflexivity|].
-        exact (brk_grow_ok_keep (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t)).
-      * right. split; [| reflexivity].
-        intro He. apply (f_equal bv_unsigned) in He.
-        rewrite Huadd in He. lia.
-    + (* [comment removed for export] *)
-      destruct Hg as (_ & _ & Hb).
-      exists (r + t). split.
-      * apply Bridge. split; [left; reflexivity|].
-        destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz].
-        { assert (Ht0 : t = Z_to_bv 64 0)
-            by (apply bv_eq; rewrite Hz; reflexivity).
-          rewrite Ht0, word_add_0_r.
-          exact (brk_grow_ok_keep (mkVmMapsFull reserved [] [] s r lim mb sp) r). }
-        destruct Hb as [Hb | Hb];
-          [exfalso; apply Hz; rewrite Hb; reflexivity |].
-        rewrite brk_grow_ok_grow;
-          cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes];
-          [| exact Hwant0 | lia | lia].
-        rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l.
-        exact Hb.
-      * left. split; reflexivity.
-  - intros (r2 & Hrok & Hb).
-    apply Bridge in Hrok. destruct Hrok as (Hcase & Hgrow).
-    destruct Hb as [[-> ->] | [Hne ->]].
-    + (* [comment removed for export] *)
-      right. split; [| reflexivity].
-      split; [exact Hr0 | split; [exact Hnw |]].
-      destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz];
-        [left; apply bv_eq; rewrite Hz; reflexivity | right].
-      rewrite brk_grow_ok_grow in Hgrow;
-        cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes] in *;
-        [| exact Hwant0 | lia | lia].
-      rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l in Hgrow.
-      exact Hgrow.
-    + (* [comment removed for export] *)
-      left. split; [reflexivity |].
-      right. right.
-      intro Ht0. subst t.
-      rewrite word_add_0_r in Hne, Hcase.
-      destruct Hcase as [Hc | Hc]; exact (Hne Hc).
+intros reserved lim s mb sp t bufs r Hr0 Hs Hnw o.
+pose proof (u64_range r) as Hur. pose proof (u64_range t) as Hut.
+pose proof (word_neq0_unsigned r Hr0) as Hur0.
+assert (Huadd : bv_unsigned (r + t) = (bv_unsigned r + bv_unsigned t)%Z)
+by (apply u_add_small; exact Hnw).
+assert (Hwant0 : r + t <> Z_to_bv 64 0).
+{ intro He. apply (f_equal bv_unsigned) in He.
+rewrite Huadd in He.
+change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in He. lia. }
+assert (Bridge : forall r2,
+brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2 <->
+(r2 = r + t \/ r2 = r)
+/\ brk_grow_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
+= true)
+by (intro r2; apply brk_r_ok_grow_iff with (maps := []) (noaccess := []); lia).
+split.
+- intros [[-> Hcase] | [Hg ->]].
++
+assert (Ht0 : t <> Z_to_bv 64 0)
+by (destruct Hcase as [Hc | [Hc | Hc]]; [congruence | lia | exact Hc]).
+pose proof (word_neq0_unsigned t Ht0) as Hut0.
+exists r. split.
+* apply Bridge. split; [right; reflexivity|].
+exact (brk_grow_ok_keep (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t)).
+* right. split; [| reflexivity].
+intro He. apply (f_equal bv_unsigned) in He.
+rewrite Huadd in He. lia.
++
+destruct Hg as (_ & _ & Hb).
+exists (r + t). split.
+* apply Bridge. split; [left; reflexivity|].
+destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz].
+{ assert (Ht0 : t = Z_to_bv 64 0)
+by (apply bv_eq; rewrite Hz; reflexivity).
+rewrite Ht0, word_add_0_r.
+exact (brk_grow_ok_keep (mkVmMapsFull reserved [] [] s r lim mb sp) r). }
+destruct Hb as [Hb | Hb];
+[exfalso; apply Hz; rewrite Hb; reflexivity |].
+rewrite brk_grow_ok_grow;
+cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes];
+[| exact Hwant0 | lia | lia].
+unfold brk_grow_bytes. cbn [vm_brk].
+rewrite app_nil_r, Huadd, Z.add_0_l.
+exact Hb.
+* left. split; reflexivity.
+- intros (r2 & Hrok & Hb).
+apply Bridge in Hrok. destruct Hrok as (Hcase & Hgrow).
+destruct Hb as [[-> ->] | [Hne ->]].
++
+right. split; [| reflexivity].
+split; [exact Hr0 | split; [exact Hnw |]].
+destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz];
+[left; apply bv_eq; rewrite Hz; reflexivity | right].
+rewrite brk_grow_ok_grow in Hgrow;
+cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes] in *;
+[| exact Hwant0 | lia | lia].
+unfold brk_grow_bytes in Hgrow. cbn [vm_brk] in Hgrow.
+rewrite app_nil_r, Huadd, Z.add_0_l in Hgrow.
+exact Hgrow.
++
+left. split; [reflexivity |].
+right. right.
+intro Ht0. subst t.
+rewrite word_add_0_r in Hne, Hcase.
+destruct Hcase as [Hc | Hc]; exact (Hne Hc).
 Qed.
 
 Lemma T2_fail_iff : forall want bufs r2,

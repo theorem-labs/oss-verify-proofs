@@ -2,10 +2,10 @@
    Section Visible, proved.  Written by a Theorem Labs lane.
    STATEMENT TEXT: this file states a Theorem Labs lane's record text directly, `A.ProgWorld.frame_vis_stmt B` and
    `A.ProgWorld.glob_sh_vis_stmt B`.  It carried local word-for-word copies of those two Definitions (from
-   ProgWorld.v (a version not in this delivery; from a working branch c03ce1627b6)) while A.ProgWorld could not
+   ProgWorld.v (a version not in this delivery; from a working branch)) while A.ProgWorld could not
    compile on this base, and was re-pointed on 10-29 at 05:4xZ once it could.  The copies were character-identical
    to ProgWorld's, so the proofs did not change and no bridge lemma exists.  Replay verified on a Theorem Labs lane's integration
-   head a48c4068c6e.
+   head.
      frame_vis    from AR_frames_law (lib/Reusable/YG0d.v:447-455): the frame bytes and the frame's shadow bytes
                   are present, so visible.  The law gives only frame_addr mod 32 = 0; the proof uses only its
                   consequence frame_addr mod 8 = 0, which makes frame_addr / 8 + fs_frame_bytes / 8 =
@@ -50,7 +50,7 @@ Section Visible.
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil}.
 Variable B : lib.Reusable.YG0f.asyms.
 
-(* ---- copied from ProgWorld.v c03ce1627b6 :336-362, word for word ---- *)
+(* ---- copied from ProgWorld.v :336-362, word for word ---- *)
 (* ---- end of the copied text ---- *)
 
 Lemma frame_vis : A.ProgWorld.frame_vis_stmt B.

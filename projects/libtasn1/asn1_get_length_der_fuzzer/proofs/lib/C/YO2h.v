@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -54,14 +55,21 @@ Proof.
 intros addr n m H. unfold munmap_model, with_mmap_destroyed, vm_forget_range, with_vm_backing, with_vmmaps.
 cbn [m_vm_materialized]. unfold m_vm_materialized in H |- *. cbn. rewrite H. reflexivity.
 Qed.
+(* At 08b1429 munmap's maps are [maps_subtract] (Sys/Mm/Mmap.v mmap_fixed_destroyed_next);
+   they equal [map_remove] when the range is exactly one entry ([maps_subtract_exact]). *)
 Lemma munmap_model_maps : forall addr n m,
+maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)
+= map_remove (vm_maps (m_vmmaps m)) addr ->
 vm_maps (m_vmmaps (munmap_model addr n m)) = map_remove (vm_maps (m_vmmaps m)) addr /\
 vm_noaccess (m_vmmaps (munmap_model addr n m)) = maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n) /\
 vm_reserved (m_vmmaps (munmap_model addr n m)) = vm_reserved (m_vmmaps m) /\
 vm_brk (m_vmmaps (munmap_model addr n m)) = vm_brk (m_vmmaps m) /\
 vm_start_brk (m_vmmaps (munmap_model addr n m)) = vm_start_brk (m_vmmaps m) /\
 vm_limit (m_vmmaps (munmap_model addr n m)) = vm_limit (m_vmmaps m).
-Proof. intros. repeat split; reflexivity. Qed.
+Proof.
+intros addr n m H. unfold munmap_model, with_mmap_destroyed, vm_forget_range, with_vm_backing, with_vmmaps. cbn.
+unfold mmap_fixed_destroyed_next. cbn. repeat split; try reflexivity. exact H.
+Qed.
 Lemma vm_backing_used_le_maps : forall m,
 m_vm_lazy m = [] -> m_vm_materialized m = [] ->
 vm_backing_used m <= State.live_bytes (vm_maps (m_vmmaps m)).
@@ -418,7 +426,17 @@ unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in H. rewrite len_u in
 Qed.
 Lemma ledger_ok_A4 : ledger_ok B L3 A4 md4.
 Proof.
-pose proof (munmap_model_maps a (Z_to_bv 64 len) md3) as (VM & VN & VR & VB & VS & VL).
+assert (VMEQ : maps_subtract (vm_maps (m_vmmaps md3)) (bv_unsigned a) (bv_unsigned a + bv_unsigned (Z_to_bv 64 len))
+= map_remove (vm_maps (m_vmmaps md3)) a).
+{ pose proof Hlen as [P0 _]. apply maps_subtract_exact.
+- rewrite len_u. lia.
+- intros b s H. destruct (lx_maps _ _ _ Y3 _ H) as [P _]. exact P.
+- intros b s H ->. destruct (lx_disj _ _ _ Y3 _ _ H r0_maps_entry) as [E|D]; [injection E as E; exact E|].
+exfalso. destruct (lx_maps _ _ _ Y3 _ H) as [P _].
+unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in *. rewrite ?len_u in *. lia.
+- intros b s H Hne. destruct (lx_disj _ _ _ Y3 _ _ H r0_maps_entry) as [E|D]; [injection E as E _; congruence|].
+unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in *. rewrite ?len_u in *. lia. }
+pose proof (munmap_model_maps a (Z_to_bv 64 len) md3 VMEQ) as (VM & VN & VR & VB & VS & VL).
 pose proof r0_placed as (Ral & Rlo & Rhi & Rimg). pose proof Hlen as [P Pm]. pose proof (proj1 alloc_ceiling_val) as AC. pose proof aZ.
 pose proof A4_fields as (E1 & E2 & E3 & E4 & E5 & E6 & E7 & _).
 assert (PG : PGSZ = 4096) by reflexivity.
@@ -477,6 +495,8 @@ destruct (mid_md _ _ _ _ _ MID3) as (_ & Hlz & Hmat).
 pose proof (vm_backing_used_le_maps (munmap_model a (Z_to_bv 64 len) md3) (munmap_model_no_lazy _ _ _ Hlz) (munmap_model_no_mat _ _ _ Hmat)) as VBU.
 rewrite VM in VBU. lia.
 -   exact (lg_ceil _ _ _ _ G3).
+-   intros e He. unfold md4 in *. rewrite ?VM in He. rewrite ?VR. apply In_map_remove in He as [He _]. exact (lg_mres _ _ _ _ G3 e He).
+-   unfold md4 in *. rewrite ?VR. exact (lg_vin _ _ _ _ G3).
 Qed.
 Lemma ledger_x_A4 : ledger_x L3 A4 md4.
 Proof.
@@ -522,6 +542,78 @@ exists (m_vmmaps md4). unfold md4 at 1. rewrite (munmap_model_with a (Z_to_bv 64
 rewrite E3 at 2. unfold md1, mmap_model. rewrite !with_vmmaps_twice. reflexivity.
 Qed.
 End D2.
+(* 08b1429 cause (3): the REFUSED munmap of a fresh mapping (injected -ENOMEM; musl ignores it). Nothing is
+   unmapped, so the state before the munmap (A3, md3) is the post-state; only stack and errno bytes change. *)
+Section D2k.
+Hypothesis X3nil : X3 = [].
+Variable sp : Z.
+Hypothesis Hsp : alloc_ceiling + ALLOC_STACK <= sp.
+Variable mem8 : word -> option byte.
+Hypothesis AG8k : forall x, 0 <= x < 2 ^ 64 ->
+~ ((sp - ALLOC_STACK <= x < sp) \/ (errno_addr B <= x < errno_addr B + 4)) -> mem8 (Z_to_bv 64 x) = mem6 (Z_to_bv 64 x).
+Let HI3k : Inv [] None U0 A3.
+Proof. rewrite <- X3nil. exact HI3. Qed.
+Lemma keptk : forall x, 4096 <= x < alloc_ceiling -> ~ (errno_addr B <= x < errno_addr B + 4) ->
+mem8 (Z_to_bv 64 x) = mem6 (Z_to_bv 64 x).
+Proof.
+intros x H1 H3. pose proof (proj1 alloc_ceiling_val). apply AG8k; [lia |].
+intros [Hs|He]; [unfold ALLOC_STACK in *; lia | exact (H3 He)].
+Qed.
+Lemma memrep_A3k : memrep B L3 A3 mem8.
+Proof.
+pose proof (mid_mem _ _ _ _ _ MID3) as (C1 & C2 & C3).
+assert (CELL : forall c, In c (image A3) \/ In c (tail_cells A3) -> cell_mem B L3 mem6 c -> cell_mem B L3 mem8 c).
+{ intros c Hc H. eapply cell_mem_ext; [|exact H]. intros j Hj.
+destruct (cells_A3_home c j Hc Hj) as (O1 & _ & O3 & _). apply keptk; assumption. }
+split; [|split].
+- apply Forall_forall. intros c Hc. apply CELL; [left; exact Hc|]. exact (proj1 (Forall_forall _ _) C1 c Hc).
+- apply Forall_forall. intros c Hc. apply CELL; [right; exact Hc|]. exact (proj1 (Forall_forall _ _) C2 c Hc).
+- apply Forall_forall. intros e He.
+pose proof (proj1 (Forall_forall _ _) C3 e He) as F. unfold foot_ok in *. destruct (fst e) as [o|p] eqn:Efst; [exact I|].
+intros x Hx. destruct (F x Hx) as [b Hb]. exists b.
+pose proof r0_placed as (Ral & Rlo & Rhi & Rimg).
+destruct (Z_le_dec (bv_unsigned a) x) as [Hxa|Hxa]; [destruct (Z_lt_dec x (bv_unsigned a + len)) as [Hxb|Hxb]|].
++ rewrite (keptk x ltac:(lia)); [exact Hb|]. intros Herr. exact (Rimg x ltac:(lia) (ERRIMG x Herr)).
++ assert (Hne : e <> r0_entry).
+{ intros ->. unfold r0_entry in Efst, Hx. cbn [fst snd] in Efst, Hx. injection Efst as <-. cbn [loc_addr] in Hx. rewrite L3_r0 in Hx. lia. }
+destruct (footprint_A3_home e x He Hne ltac:(rewrite Efst; exact Hx)) as [[E _] | (p' & _ & (O1 & _ & O3 & _) & _)];
+[congruence|]. rewrite (keptk x O1 O3). exact Hb.
++ assert (Hne : e <> r0_entry).
+{ intros ->. unfold r0_entry in Efst, Hx. cbn [fst snd] in Efst, Hx. injection Efst as <-. cbn [loc_addr] in Hx. rewrite L3_r0 in Hx. lia. }
+destruct (footprint_A3_home e x He Hne ltac:(rewrite Efst; exact Hx)) as [[E _] | (p' & _ & (O1 & _ & O3 & _) & _)];
+[congruence|]. rewrite (keptk x O1 O3). exact Hb.
+Qed.
+Lemma statics_A3k : statics_ok B mem8.
+Proof.
+apply (statics_ok_ext mem6); [| exact (mid_statics _ _ _ _ _ MID3)].
+intros x Hs. destruct (static_byte_ok x Hs) as (H1 & H2 & H3). pose proof (proj1 alloc_ceiling_val).
+apply AG8k; [lia |]. intros [Hs'|He]; [unfold ALLOC_STACK in *; lia | exact (H2 He)].
+Qed.
+Lemma midrep_A3k : midrep B L3 A3 mem8 md3.
+Proof.
+split.
+- exact (mid_syms _ _ _ _ _ MID3).
+- exact memrep_A3k.
+- exact (mid_tailg _ _ _ _ _ MID3).
+- exact statics_A3k.
+- exact G3.
+- exact Y3.
+- exact (mid_layout _ _ _ _ _ MID3).
+- exact (mid_ctx _ _ _ _ _ MID3).
+- exact (mid_sec _ _ _ _ _ MID3).
+- exact (mid_md _ _ _ _ _ MID3).
+Qed.
+Theorem MRx_A3k : bounded A3 -> ama_ok A3 -> MRx B L3 A3 mem8 md3.
+Proof.
+intros HB HA. apply midrep_MRx.
+- exact midrep_A3k.
+- exact HI3k.
+- exact HB.
+- apply (rsv_ok_sub A); [exact (MRx_rsv _ _ _ _ _ MX)|]. intros f Hf. rewrite frames_A3 in Hf. exact Hf.
+- exact HA.
+- exact span_ok_A3.
+Qed.
+End D2k.
 Lemma pairwise_map_In' {X Y} (R : Y -> Y -> Prop) (f : X -> Y) : forall l x y,
 pairwise R (map f l) -> In x l -> In y l -> x = y \/ R (f x) (f y) \/ R (f y) (f x).
 Proof.
@@ -548,6 +640,8 @@ split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact
 - rewrite LBy. exact (lg_sizes _ _ _ _ G).
 - rewrite LBy. exact (lg_backing _ _ _ _ G).
 -   exact (lg_ceil _ _ _ _ G).
+-   exact (lg_mres _ _ _ _ G).
+-   exact (lg_vin _ _ _ _ G).
 Qed.
 Lemma layout_ok_same : forall Lx A1 A2, layout_ok Lx A1 -> st_regions A2 = st_regions A1 -> footprint A2 = footprint A1 -> layout_ok Lx A2.
 Proof.
@@ -918,6 +1012,24 @@ split; [eapply L3_old; fin|].
 split; [eapply A3_r0; fin|].
 split; [eapply r0_maps_entry; fin|].
 eapply user_blocks_A3; fin.
+Qed.
+Lemma D2k_pack : forall B L A mem md (a : word) n L3 A3 mem6 md3 sp mem8,
+MRx B L A mem md -> MMAP_THRESHOLD <= n < 2 ^ 62 -> grant_ok (Z_to_bv 64 0) md a (dlen n) = true ->
+(forall x, errno_addr B <= x < errno_addr B + 4 -> ~ (ms_ctx B <= x < ms_ctx B + CTX_SIZE)) ->
+(forall x, errno_addr B <= x < errno_addr B + 4 -> ~ static_owned B x) ->
+(forall x, errno_addr B <= x < errno_addr B + 4 -> in_img B x) ->
+(forall x, static_owned B x -> ~ (ms_ctx B <= x < ms_ctx B + CTX_SIZE)) ->
+midrep B L3 A3 mem6 md3 -> layout_le (dA2 A n) (L1 L A a) L3 -> am_frame (dA2 A n) A3 -> ub_same (dA2 A n) A3 ->
+Inv [] None U0 A3 -> (forall g am, usedX [] A3 g am <-> usedX [] A g am) ->
+alloc_ceiling + ALLOC_STACK <= sp ->
+(forall x, 0 <= x < 2 ^ 64 -> ~ ((sp - ALLOC_STACK <= x < sp) \/ (errno_addr B <= x < errno_addr B + 4)) ->
+mem8 (Z_to_bv 64 x) = mem6 (Z_to_bv 64 x)) ->
+bounded A3 -> ama_ok A3 ->
+MRx B L3 A3 mem8 md3 /\ user_blocks A3 = user_blocks A.
+Proof.
+intros B L A mem md a n L3 A3 mem6 md3 sp mem8 MX Hn GR ENC ENS ERRIMG SNC MID3 LE3 FR3 UB3 HI3 EU3 Hsp AG8 HB3 HA3.
+assert (HX3 : forall g am, memb g [] = true -> MT A3 g <> Some (MUsed am)) by (intros g am H; discriminate).
+split; [eapply MRx_A3k; first [eassumption | reflexivity] | eapply user_blocks_A3; first [eassumption | reflexivity]].
 Qed.
 Lemma D3_pre : forall B L A mem md (a : word) n L3 A3 mem6 md3 m,
 MRx B L A mem md -> MMAP_THRESHOLD <= n < 2 ^ 62 -> grant_ok (Z_to_bv 64 0) md a (dlen n) = true ->

@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,13 +37,14 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 656 of its 702 lines of code are new or changed and 407 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan): sub-walk FOUND of segment A8b of reac_segconf_parse_file's
    walk, `pfa8b_found : forall n, HA_A8B_JOIN B n -> H_FOUND B n` (2026-10-30).
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk); the rule-24 record is the unit's
-   internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md (reuse
+   internal record, path records/segp/g3-lookup.md (reuse
    verdict: none, written new).
 
-   THE CODE (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s),
+   THE CODE (the unit's internal record, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s),
    FOUND 0x88964 .. 0x889b0:
      0x88964 srli a0,s7,3; add a0,a0,s6; lb a0,0(a0); bnez a0,0x88b78    check #36 (load4 seg[i].seen_gen)
      0x88974 ld a3,0x38(s1); lb a1,0(a3)                                check #37 (load4 c->gen; slot 0x38 holds
@@ -70,14 +71,14 @@
      refuse cf (ln + 1) F_twice [AS name]; the post is lifted from that FP state by srr_apost_baseF_lift.
    The model step is pf_a8b_m.pfa8b_step_found; pf_a8b_m.pfa8b_refuse_seg keeps rc_seg and rc_gen across the
    refusal, and fnd_cnt_refuse gives the next line's counter room (INV_A8B_JOIN's budget, pf_a8b_d.v; the
-   budget was this line's until d60ebb8b416c, which this sub-walk's stop case changed).
+   budget was this line's until, which this sub-walk's stop case changed).
 
    Section hypotheses:
      REF   refuse_contract at BASE + AF_refuse, at every FP state (A8b's callee, pf_pieces.v's segment list);
      SIGP  SegObj.seg_sig_prog (the call target pa_sigma SS_refuse is BASE + AF_refuse);
      OBJ   SegObj.seg_val_objs (the auipc / addi pair's object atom A_OBJ 68 is seg_litA_rc F_twice);
      VRO   SegObj.seg_val_relro, and
-     SSPX  the stack-protector cells at every AR state (lib/A/Prog/reac_segconf_parse.v:137's shape): both
+     SSPX  the stack-protector cells at every AR state (lib/A/Prog/reac_segconf_parse.v:138's shape): both
            FORCED by pf_a6_k.v's a6_base_move after the refuse call at 0x889ac, and used nowhere else.
            refuse's post gives only its journal, which keeps an image byte only when it is not one of
            `as_owned_static B` (YCbq.v:479); whether the GOT word 0xa36d8 and the guard 0x5ff078 are owned
@@ -86,7 +87,7 @@
            VRO (the pinned instance gives it by computation).
    The seen_gen / gen reads and the shadow-address term are pf_a8b_q.v's pfq_rd32_field / pfq_rd32_gen /
    pfq_sh_denot. Copied with attribution: fnd_val_mem_of_sa and fnd_u_reg are a8_val_mem_of_sa and a8_u_reg
-   of lib/A/Prog/pf_a8a.v at commit 29edc5f7c819 (another prover's branch, so not Required). *)
+   of lib/A/Prog/pf_a8a.v (another prover's branch, so not Required). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.
@@ -151,7 +152,7 @@ Definition fnd_SH : list shent := [mkSHE 23 0 8; mkSHE 32 0 seg_spec.SEG_C_SIZE]
 (* 0x889b0 after refuse: the slot 0x38, its value the atom 32 *)
 Definition fnd_j0slot : YP09.region := YP09.mkRegion (Some 9%nat) 0x38 0x40 0 0 [YP09.mkChunk 0x38 (CVal 8 (SOff 32 0))].
 Definition fnd_ssj : sstate := mkSS PF_A8B_J0 sr_atoms [fnd_j0slot] None (mkFacts [(2%nat, fnd_spF); (9%nat, fnd_spF)] [] []).
-(* lib/A/Prog/pf_a8a.v a8_val_mem_of_sa (commit 29edc5f7c819) *)
+(* lib/A/Prog/pf_a8a.v a8_val_mem_of_sa *)
 Lemma fnd_val_mem_of_sa : forall segs H mem a n v, sa_val (aview segs H mem) a n v -> val_mem segs (mrestrict H mem) a n v.
 Proof.
 intros segs H mem a n v Hv k Hk. specialize (Hv k Hk). unfold aview in Hv.
@@ -251,7 +252,7 @@ Context {PI : PAImg seg_listing}.
 #[local] Notation SIGMA := (@pa_sigma _ seg_listing PI).
 #[local] Notation rdW W mem := (aview SEGS (w_H W) mem).
 
-(* lib/A/Prog/pf_a8a.v a8_u_reg (commit 29edc5f7c819) *)
+(* lib/A/Prog/pf_a8a.v a8_u_reg *)
 Lemma fnd_u_reg : forall (rX : bvmap 5 word) extra n v, (n < 32)%nat -> getr rX (Z_to_bv 5 (Z.of_nat n)) = w64 v ->
   0 <= v < 2 ^ 64 -> bv_unsigned (ew (Eimg (Ereg rX extra)) n) = v.
 Proof.

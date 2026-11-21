@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 99 of its 112 lines of code are new or changed and 235 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block_F_1.v; 36 of its 74 lines of code are new or changed and 74 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block, image A (asan, entry 0x855f4): region R1 of the cgif glue (entry 0x855f4 -> the cut 0x85668).
    A Theorem Labs lane.  Re-base plan
    ctrl_lay_block-rebase.md section 3 R1 and section 5 (a working note, not in this delivery).
 
    R1's run is stretch k = 1 (ctrl_lay_block_F_1.v ctrl_lay_block_F_1), applied by the glue as it is with Section L's
    memory m := normalize memc (no copy: its post already states its exact write set, munch [(S - K, S)],
-   ctrl_lay_block_F_1.v:86).  The stretch stops BEFORE the `jal 3d72c <__asan_stack_malloc_1>` at 0x85668; the glue's
+   ctrl_lay_block_F_1.v:87).  The stretch stops BEFORE the `jal 3d72c <__asan_stack_malloc_1>` at 0x85668; the glue's
    cut rule (YC85.v aj_stack_malloc_atS) starts at the callee's entry with ra = the return address.  This file gives
    that one instruction:
    - lay_F_R1_jal: ctrl_lay_block.v ly_pro_go :2792, the second `step` of that line (it takes the jal).  One `step`,
@@ -22,7 +23,7 @@
       no new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header and goes to the auditor a Theorem Labs lane
       who signs it against its proved run before it counts.
@@ -34,8 +35,8 @@
      -> (internal path)
    - ELF sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd
    - compare: fuzz_ctrl.objdump.txt (a working note, not in this delivery), ctrl_lay_block 0x855f4 .. 0x85988
-   - FACTS of record ed6b6b7b0ab (origin/regen/libreac-v190-on-338), PAU (internal path)
-   - re-run from ctrl_lay_block.v at a working branch d69f7c708f6 (same text at 9d33dba1444). *)
+   - FACTS of record (origin/regen/libreac-v190-on-338), PAU (internal path)
+   - re-run from ctrl_lay_block.v at a working branch (same text). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import ctrl_lay_block_F_common.
 (* The skeleton's Require list, repeated in its order (Import is not transitive; lib.Lib ExecF StepF LAST, so StepF's
    step / if_false / finish / store_done shadow the evt engine's). *)
@@ -76,7 +77,7 @@ Qed.
 (* ---- the region's whole run: stretch k = 1 (ctrl_lay_block_F_1.v ctrl_lay_block_F_1) then lay_F_R1_jal, from the
    entry 0x855f4 to the callee's entry 0x3d72c with ra = 0x8566c.  The glue lifts this ONE run with Section L's
    memory m := normalize memc.  Pure composition (ExecF.evtF_cut); the post is k = 1's (lay_F_pre_smalloc,
-   ctrl_lay_block_F_1.v:78-87) with ra and pc moved by the jal. ---- *)
+   ctrl_lay_block_F_1.v:79-88) with ra and pc moved by the jal. ---- *)
 Section K1R.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (m : word -> option byte) (p f md g : Z).
@@ -85,7 +86,7 @@ Section K1R.
   Local Notation K := CTRL_LAY_BLOCK_K.
   Local Notation SP2 := ((S - 128) / 32 * 32).
 
-  (* k = 1's hypotheses (ctrl_lay_block_F_1.v:66-70 = ctrl_lay_block.v :415 ST0, :446 MI0, :448 AC0, :450 HHM,
+  (* k = 1's hypotheses (ctrl_lay_block_F_1.v:67-71 = ctrl_lay_block.v :415 ST0, :446 MI0, :448 AC0, :450 HHM,
      :451 HAE), exactly their types. *)
   Hypothesis ST0 : stk rsegs m (S - K) S.
   Hypothesis MI0 : mem_inv rsegs m.

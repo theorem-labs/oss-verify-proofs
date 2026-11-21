@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HK_node and HK_store written out in plain text with the new ASys.placed_at placement premise, their old encoded statements kept as definitions with lemmas proving them equal to the explicit statements without it; the proofs pass on the placement and the AMark.GRANT_MAX bound; import of AMark). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -7,6 +8,7 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import MState.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import BackingAlgebra.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ALazy AShadow.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import AModel AModelX. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import ASys ASysS. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import AKinv. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import AFreeSlot AVmLib. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import AVm AVst.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require AMark.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import DietDestruct.   (* [comment removed for export] *)
 Import ListNotations.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import LiaKitAH. (* [comment removed for export] *)
@@ -705,15 +707,48 @@ Section TRANS.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "00:0?L18926664858.23L34909867513.25L45250163605.21L50566837732.21L52566661889.2 L59375271233.23L63767303484.20L67788690458.22L67788838045.23L67792739209.2500000:00G00Q00b00h01201<01F01P01ZS3hAR1a2uaS3hAR1a2ua2A0S3hAR1a2uaS3hAR2AL3IML1a2uaS1h2SLS3hAR1a2uaS3hAR1a2uaS3hAR1a2uaS3hAR1a2uaS3hAR1a2ua". (* [comment removed for export] *)
-  #[using="ASB IML IMH"] Theorem HK_node : ltac2:(CDefT.buildp (gd_tbl_AVstT ()) "Ph,$?.Pmo,$2?.Pa,(7;.&40.)Ph',$?.P,(31.VhAR,VAL,R4.R3.)Zua,$0.(7<.&40.R3.)P,(5.$0.(3=.R1.+1000.)=)P,(1?.=R2.)P,(1>.(6.R3.(<.+2.+14.))(7=.VhAR,))P,(5.$32.(67.(2<.(30.(7;.&40.)(7;.&40.))(68.(65.R8.))(64.(65.R8.)))R7.(66.&40.(<.+2.+14.)))$=.)P,(1>.(6.(6.(7>.(54.R:.))(7?.+1000.(72.(54.R:.))))$80.)$81.)P,(5;.R;.(4>.$0.R6.(5:.$0.))(5:.$0.)R8.)(14.(31.VhAR,VAL,R9.(82.+22.R:.(<.+2.+14.)R;.))(14.(83.(84.VAL,(54.R9.))R7.(<.+2.+14.))(14.(1>.+65?000.R7.)(12.(1>.(6.R7.(<.+2.+14.))+7???7000.)(1>.+10007???8000.R7.)))))")
-(* [comment removed for export] *).
+  (* The original blob certifies the explicit statement before the placement premise. *)
+  Definition ZZ_HK_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AVstT ()) "Ph,$?.Pmo,$2?.Pa,(7;.&40.)Ph',$?.P,(31.VhAR,VAL,R4.R3.)Zua,$0.(7<.&40.R3.)P,(5.$0.(3=.R1.+1000.)=)P,(1?.=R2.)P,(1>.(6.R3.(<.+2.+14.))(7=.VhAR,))P,(5.$32.(67.(2<.(30.(7;.&40.)(7;.&40.))(68.(65.R8.))(64.(65.R8.)))R7.(66.&40.(<.+2.+14.)))$=.)P,(1>.(6.(6.(7>.(54.R:.))(7?.+1000.(72.(54.R:.))))$80.)$81.)P,(5;.R;.(4>.$0.R6.(5:.$0.))(5:.$0.)R8.)(14.(31.VhAR,VAL,R9.(82.+22.R:.(<.+2.+14.)R;.))(14.(83.(84.VAL,(54.R9.))R7.(<.+2.+14.))(14.(1>.+65?000.R7.)(12.(1>.(6.R7.(<.+2.+14.))+7???7000.)(1>.+10007???8000.R7.)))))").
+
+  Lemma ZZ_HK_node_faithful : ZZ_HK_node_old =
+    (forall (h : ahst) (mo : Model) (a : word) (h' : ahst),
+       HK AL h mo ->
+       let ua := bv_unsigned a in
+       ua mod 4096 = 0 ->
+       0 < ua ->
+       ua + 2 ^ 20 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+       v_eb (vst_of h) + 4096 * vnb (vst_of h) + CN <= VLIMIT ->
+       dgrow h [ua] [] h' ->
+       HK AL h' (anon_grant 0x22 a (2 ^ 20) mo)
+       /\ crange (vcs AL (vst_of h')) ua (2 ^ 20)
+       /\ 0x65f000 <= ua
+       /\ Pband ua (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+
+  #[using="ASB IML IMH"] Theorem HK_node :
+    forall (h : ahst) (mo : Model) (a : word) (h' : ahst),
+      HK AL h mo ->
+      let ua := bv_unsigned a in
+      ua mod 4096 = 0 ->
+      0 < ua ->
+      ua + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      v_eb (vst_of h) + 4096 * vnb (vst_of h) + CN <= VLIMIT ->
+      dgrow h [ua] [] h' ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      HK AL h' (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (vcs AL (vst_of h')) ua (2 ^ 20)
+      /\ 0x65f000 <= ua
+      /\ Pband ua (2 ^ 20).
   Proof.
-    intros h mo a h' K ua AAL A0 ACE RF SL DG. pose proof K as [Kv VR].
+    intros h mo a h' K ua AAL A0 ACE RF SL DG FL. pose proof K as [Kv VR].
     assert (N20 : bv_unsigned (Z_to_bv 64 (2^20)) = 2^20) by (apply u64_lit; lia).
     pose proof (HKv_fresh_above_img AL (vst_of h) mo a (Z_to_bv 64 (2^20)) Kv RF A0 IML ltac:(rewrite IMH; lia) ltac:(rewrite N20; lia) ltac:(rewrite N20; exact ACE)) as IMA. rewrite IMH in IMA. fold ua in IMA.
     pose proof (HKv_fresh_band AL (vst_of h) mo a (Z_to_bv 64 (2^20)) Kv RF ltac:(rewrite N20; lia)) as BND. rewrite N20 in BND. fold ua in BND.
     pose proof (HKv_grant_eager AL (vst_of h) mo a (2^20) true Kv ltac:(rewrite ASB; lia) ltac:(rewrite ASB; lia) AAL A0 ACE ltac:(lia) eq_refl ltac:(rewrite IMH; exact IMA) RF) as K'.
     cbn zeta in K'. fold ua in K'. specialize (K' ltac:(rewrite vnb_add_eager; unfold CN, npg_shadow, kDepotBlockBytes in SL; cbn [v_eb v_add_eager]; clear - SL; lia)).
+    specialize (K' FL). specialize (K' ltac:(unfold AMark.GRANT_MAX; lia)).
     pose proof (vst_of_grow h h' [ua] [] DG) as P. cbn [fold_right] in P.
     split; [| split; [| exact (conj IMA BND)]].
     - apply (HK_perm h' _ _ P K'). apply vranges_ok_eager; [exact VR| lia| lia].
@@ -723,15 +758,48 @@ Section TRANS.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "00:0?L18926664858.23L27571207402.2 L27607433216.21L34909867513.25L50158733945.25L50163156333.23L50163336682.22L50566837729.21L51035119644.20L59375271233.2300000:00@00J00W00a00k01501F01P01ZS3hAR1a2uaS1h2SLS3hAR1a2uaS3hAR1a2ua2A0S3hAR1a2uaS3hAR1a2uaS3hAR1a2uaS3hAR2AL3IML1a2uaS3hAR1a2uaS3hAR1a2ua". (* [comment removed for export] *)
-  #[using="ASB IML IMH"] Theorem HK_store : ltac2:(CDefT.buildp (gd_tbl_AVstT ()) "Ph,$?.Pmo,$2?.Pa,(7;.&40.)Ph',$?.P,(31.VhAR,VAL,R4.R3.)Zua,$0.(7<.&40.R3.)P,(5.$0.(3=.R1.+1000.)=)P,(1?.=R2.)P,(1>.(6.R3.(<.+2.+17.))(7=.VhAR,))P,(5.$32.(67.(2<.(30.(7;.&40.)(7;.&40.))(68.(65.R8.))(64.(65.R8.)))R7.(66.&40.(<.+2.+17.)))$=.)P,(1>.(6.(6.(7>.(54.R:.))(7?.+1000.(72.(54.R:.))))$85.)$81.)P,(5;.R;.(5:.$0.)(4>.$0.R6.(5:.$0.))R8.)(14.(31.VhAR,VAL,R9.(82.+4022.R:.(<.+2.+17.)R;.))(14.(83.(84.VAL,(54.R9.))R7.(<.+2.+17.))(14.(1>.+65?000.R7.)(12.(1>.(6.R7.(<.+2.+17.))+7???7000.)(1>.+10007???8000.R7.)))))")
-(* [comment removed for export] *).
+  (* The original blob certifies the explicit statement before the placement premise. *)
+  Definition ZZ_HK_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AVstT ()) "Ph,$?.Pmo,$2?.Pa,(7;.&40.)Ph',$?.P,(31.VhAR,VAL,R4.R3.)Zua,$0.(7<.&40.R3.)P,(5.$0.(3=.R1.+1000.)=)P,(1?.=R2.)P,(1>.(6.R3.(<.+2.+17.))(7=.VhAR,))P,(5.$32.(67.(2<.(30.(7;.&40.)(7;.&40.))(68.(65.R8.))(64.(65.R8.)))R7.(66.&40.(<.+2.+17.)))$=.)P,(1>.(6.(6.(7>.(54.R:.))(7?.+1000.(72.(54.R:.))))$85.)$81.)P,(5;.R;.(5:.$0.)(4>.$0.R6.(5:.$0.))R8.)(14.(31.VhAR,VAL,R9.(82.+4022.R:.(<.+2.+17.)R;.))(14.(83.(84.VAL,(54.R9.))R7.(<.+2.+17.))(14.(1>.+65?000.R7.)(12.(1>.(6.R7.(<.+2.+17.))+7???7000.)(1>.+10007???8000.R7.)))))").
+
+  Lemma ZZ_HK_store_faithful : ZZ_HK_store_old =
+    (forall (h : ahst) (mo : Model) (a : word) (h' : ahst),
+       HK AL h mo ->
+       let ua := bv_unsigned a in
+       ua mod 4096 = 0 ->
+       0 < ua ->
+       ua + 2 ^ 23 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+       v_eb (vst_of h) + 4096 * vnb (vst_of h) + CSB <= VLIMIT ->
+       dgrow h [] [ua] h' ->
+       HK AL h' (anon_grant 0x4022 a (2 ^ 23) mo)
+       /\ crange (vcs AL (vst_of h')) ua (2 ^ 23)
+       /\ 0x65f000 <= ua
+       /\ Pband ua (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+
+  #[using="ASB IML IMH"] Theorem HK_store :
+    forall (h : ahst) (mo : Model) (a : word) (h' : ahst),
+      HK AL h mo ->
+      let ua := bv_unsigned a in
+      ua mod 4096 = 0 ->
+      0 < ua ->
+      ua + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      v_eb (vst_of h) + 4096 * vnb (vst_of h) + CSB <= VLIMIT ->
+      dgrow h [] [ua] h' ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      HK AL h' (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (vcs AL (vst_of h')) ua (2 ^ 23)
+      /\ 0x65f000 <= ua
+      /\ Pband ua (2 ^ 23).
   Proof.
-    intros h mo a h' K ua AAL A0 ACE RF SL DG. pose proof K as [Kv VR].
+    intros h mo a h' K ua AAL A0 ACE RF SL DG FL. pose proof K as [Kv VR].
     assert (N23 : bv_unsigned (Z_to_bv 64 (2^23)) = 2^23) by (apply u64_lit; lia).
     pose proof (HKv_fresh_above_img AL (vst_of h) mo a (Z_to_bv 64 (2^23)) Kv RF A0 IML ltac:(rewrite IMH; lia) ltac:(rewrite N23; lia) ltac:(rewrite N23; exact ACE)) as IMA. rewrite IMH in IMA. fold ua in IMA.
     pose proof (HKv_fresh_band AL (vst_of h) mo a (Z_to_bv 64 (2^23)) Kv RF ltac:(rewrite N23; lia)) as BND. rewrite N23 in BND. fold ua in BND.
     pose proof (HKv_grant_lazy AL (vst_of h) mo a (2^23) Kv ltac:(rewrite ASB; lia) ltac:(rewrite ASB; lia) AAL A0 ACE ltac:(lia) eq_refl ltac:(rewrite IMH; exact IMA) RF) as K'.
     cbn zeta in K'. fold ua in K'. specialize (K' ltac:(rewrite vnb_add_lazy; unfold CSB, npg_shadow, kStoreBlockBytes in SL; cbn [v_eb v_add_lazy]; clear - SL; lia)).
+    specialize (K' FL). specialize (K' ltac:(unfold AMark.GRANT_MAX; lia)).
     pose proof (vst_of_grow h h' [] [ua] DG) as P. cbn [fold_right] in P.
     split; [| split; [| exact (conj IMA BND)]].
     - apply (HK_perm h' _ _ P K'). apply vranges_ok_lazy; [exact VR| lia| lia].

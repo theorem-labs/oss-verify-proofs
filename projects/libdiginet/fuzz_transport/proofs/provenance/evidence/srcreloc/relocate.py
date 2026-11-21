@@ -23,15 +23,15 @@ EQUAL or EQUAL-mod-pcrel):
               its helpers codec_cells.v (copied) and codec_img.v (rewritten: only the facts the walk reads, see
               HELPERS).
 A file absent at the donor commit is listed as "missing in the donor"; nothing else is skipped.
-Default refs: fuzz_frame 9bd29914ffde, the tip of the fuzz_frame proof's integration on 2026-10-30 16:00Z (a descendant
-of e807056547ed with the same contracts; it adds the walks of diginet_frame_build, both builds, and the ubsan walk of
-diginet_body_check); fuzz_codec d8e4e696562a, the fuzz_codec proof's lib.
+Default refs: fuzz_frame, the tip of the fuzz_frame proof's integration on 2026-10-30 16:00Z (a descendant
+with the same contracts; it adds the walks of diginet_frame_build, both builds, and the ubsan walk of
+diginet_body_check); fuzz_codec, the fuzz_codec proof's lib.
 
 WIDE donors (fuzz_frame's widened contracts of 2026-10-30: body = NULL with length 0, any int mode).  They
 are two branches that ADD <f>_w.v (the walk of the wide contract, with <f>_contract_of_w: the wide contract gives the
 narrow one) and <f>_w_c.v (the wide contract) to the fuzz_frame tree of --frame-ref, nothing else:
-  --widep-ref b8f2ecf2c3ff  lib/Prog/{diginet_body_check,diginet_frame_build}_w{,_c}.v
-  --wideu-ref bb3053036017  lib/U/Prog/{diginet_sum16,diginet_msg_next,
+  lib/Prog/{diginet_body_check,diginet_frame_build}_w{,_c}.v
+  lib/U/Prog/{diginet_sum16,diginet_msg_next,
                             diginet_body_check,diginet_frame_build}_w{,_c}.v
 The WIDE list names them (function, build, donor unit, wide ref).  Each (function, build) must be a FUNCS row of that
 build, so S1's equality control already covers its code; the files go through S2-S5 as the other files do.

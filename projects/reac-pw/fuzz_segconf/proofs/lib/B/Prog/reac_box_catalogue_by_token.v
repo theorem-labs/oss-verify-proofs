@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of check_refusal (plugin-hostd/fuzz_command, 0x87f08, 52 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (pb_wcb: entry, branch, return) and A/ACh2.v:122-290 (a program call through cl_callS and back). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_refusal.v, with its module paths and module names changed; 429 of its 474 lines of code are new or changed and 271 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3...; unstripped twin
    80e82127e8ca...): the walk of reac_box_catalogue_by_token (catalogue.c:47-50; entry 0x8a8f4 = BASE +
    AF_reac_box_catalogue_by_token = 0x84dc0 + 0x5b34, 64 bytes, 16 instructions, a 16-byte real-stack frame, no
    side-stack frame) against reac_box_catalogue_by_token_contract (lib/B/Prog/reac_box_catalogue_by_token_c.v, the
-   image-B copy of the image-A owner's FINAL 6f783602b5e3) at image B's numbers (lib/B/Prog/SegInstB.v), in
+   image-B copy of the image-A owner's FINAL) at image B's numbers (lib/B/Prog/SegInstB.v), in
    plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the entry, SRr of apost_base at the return, over
    `Context {PI : PAImg seg_listing}` of image B's listing).
    RELOCATION of image A's reac_box_catalogue_by_token (0x8a148): of image B's 16 words 14 are image A's, the other

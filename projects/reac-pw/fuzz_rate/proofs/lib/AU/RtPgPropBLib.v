@@ -1,26 +1,27 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v at a529a88a618 (the plumbing of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v (the plumbing of
    the property loop's block lemmas: pa_chunk8, pa_keep, pa_kwr_ro, pa_run, pa_runb, pa_branch, pa_reg, pa_leaf),
-   proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at a529a88a618 (kept_run) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
-   at a529a88a618 (its section g and its tactics: the (location, value) facts of a cut, the journal-and-frame step,
+   proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (kept_run) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
+   (its section g and its tactics: the (location, value) facts of a cut, the journal-and-frame step,
    the segment's write set, the first block's bounds and pod_put, the model of a shape-7 property, the start facts
    and the input at a cut) for reac-pw/fuzz_headamp's image B: rs_ / rl_ / rm_ -> hsu_ / hd_ / hm_, role's image A
    record and code -> fuzz_headamp.asan-ubsan's (lib/AU/Img0U.v rsegs, HPgImgB.headamp_himg_B: class-4 frame of
    1024 bytes, real frame of 0x220 bytes, write set [F+0x20, F+0x278) / 116 shadow bytes / [R, R+0x198)), the block
    post HPgSteps.hdu_blk_postE in place of pa_post, one table over the four pieces of image B. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgPropKit.v, with its module paths and module names changed; 139 of its 340 lines of code are new or changed and 210 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgProp.v at a529a88a6181 (its lines 1-340 and
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgProp.v (its lines 1-340 and
    674-687: the cut helpers and the tactics of the pieces, not the pieces) for reac-pw/fuzz_rate image A: the rl_
    vocabulary becomes rt_ (rt_at, rt_loc, rt_renv's q_ fields, rt_seg_pre, rt_inw), rm_ becomes rtm_; rate's image
    record (its 0x1e0-byte real frame, its write ranges hi_w1, its 56 frame shadow bytes); pa_E1_R names rate's R range
    [R+0x60, R+0x120) of hi_w1; pa_input_now takes the segment start's rt_fsh fact (rate's rt_seg_pre has none);
    pa_loop7 .. pa_wf7 and pa_nth_skipn / pa_suffix_step are role's model facts, here beside the helpers. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgPropLib.v at 4725a2583bb7 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgPropLib.v for image B
    (fuzz_rate.asan-ubsan): image B's record (its 0x220-byte real frame, its class-4 frame for locals of 1024 bytes
    with F mod 32 = 0, its write ranges hi_w1, its 88 frame shadow bytes); the cut vocabulary is lib/AU/RtPgSegB.v's
    (rsb_), the memory facts lib/AU/RtPgMemB.v's (rtmb_), the kit lib/AU/RtPgPropBKit.v's; pa_E1_R becomes one lemma per
    range of image B's hi_w1 that the pieces write (pab_E1_F, pab_E1_shF, pab_E1_R0, pab_E1_R58, pab_E1_R150). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; addresses measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): the helpers the pieces of the property loop

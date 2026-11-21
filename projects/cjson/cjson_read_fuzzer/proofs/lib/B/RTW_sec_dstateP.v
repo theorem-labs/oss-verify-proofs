@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: munmap cuts its range out of the maps with maps_subtract, so RTMODEL_dereg keeps every map apart from the freed one through iv_subtract_apart and In_maps_subtract_kept. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -1113,22 +1114,28 @@ Proof.
   pose proof (nowrap_of_wf _ (lok_na_ceil _ _ HO)) as Hna. pose proof (nowrap_of_ceil _ (lok_lazy_ceil _ _ HO)) as Hlz.
   (* [comment removed for export] *)
   pose proof mb_fresh as MF.
-  assert (NB : forall lo2 sz2, In (lo2, lo2 + sz2) (rt_ranges stD) -> wz lo2 <> wz mb).
-  { intros lo2 sz2 Hin E. pose proof (MF _ Hin) as D. cbn [fst snd] in D.
-    pose proof (wb_ranges st (wf_base_ok st WF) _ (dereg_In_ranges _ Hin)) as (R1 & R2 & R3 & _). cbn [fst snd] in R1, R2, R3. unfold KHIGHMEM_BEG, AIMG_HI in R1.
-    apply wz_inj in E; blia. }
   unfold RTMODEL. rewrite mm_unmap_maps. cbn [vm_limit st_pbase st_pa stD st].
-  assert (ZR : forall lo2 sz2, In (lo2, lo2 + sz2) (rt_ranges stD) -> zin lo2 sz2 (vm_maps (m_vmmaps moX)) -> zin lo2 sz2 (map_remove (vm_maps (m_vmmaps moX)) (wz mb))).
-  { intros lo2 sz2 Hin HZ. unfold zin in *. apply In_map_remove. split; [exact HZ| cbn [fst]; exact (NB lo2 sz2 Hin)]. }
+  (* munmap cuts [mb, mb + smapsize n) out of the maps (maps_subtract); an entry apart from the cut stays *)
+  assert (KEEP : forall lo2 sz2, 0 <= lo2 -> 0 < sz2 -> lo2 + sz2 < 2^64 -> (lo2 + sz2 <= mb \/ mb + smapsize n <= lo2) ->
+            zin lo2 sz2 (vm_maps (m_vmmaps moX)) ->
+            zin lo2 sz2 (maps_subtract (vm_maps (m_vmmaps moX)) (bv_unsigned (wz mb)) (bv_unsigned (wz mb) + bv_unsigned (wz (smapsize n))))).
+  { intros lo2 sz2 L0 L1 L2 LD HZ. unfold zin in *. apply In_maps_subtract_kept; [exact HZ|]. cbn [fst snd].
+    rewrite U1, U2. apply iv_subtract_apart; try unfold wz; rewrite ?unsigned_lit by lia; lia. }
+  pose proof (@alloc_ceiling_range ACEIL) as CR.
+  assert (ZR : forall lo2 sz2, In (lo2, lo2 + sz2) (rt_ranges stD) -> zin lo2 sz2 (vm_maps (m_vmmaps moX)) ->
+            zin lo2 sz2 (maps_subtract (vm_maps (m_vmmaps moX)) (bv_unsigned (wz mb)) (bv_unsigned (wz mb) + bv_unsigned (wz (smapsize n))))).
+  { intros lo2 sz2 Hin HZ. pose proof (MF _ Hin) as D. cbn [fst snd] in D.
+    pose proof (wb_ranges st (wf_base_ok st WF) _ (dereg_In_ranges _ Hin)) as (R1 & R2 & R3 & _). cbn [fst snd] in R1, R2, R3.
+    apply KEEP; [blia| blia| blia| blia| exact HZ]. }
   split; [apply ZR; [unfold stD; rewrite rt_ranges_of; left; reflexivity| exact M1]|].
   split; [apply ZR; [unfold stD; rewrite rt_ranges_of; right; left; reflexivity| exact M2]|].
-  split. { unfold zin in *. apply In_map_remove. split; [exact M3|]. cbn [fst]. intros E. apply wz_inj in E; [| unfold KHIGHSHADOW_BEG; lia| blia]. unfold KHIGHSHADOW_BEG in E. blia. }
-  split. { unfold zin in *. apply In_map_remove. split; [exact M4|]. cbn [fst]. intros E. apply wz_inj in E; [| unfold KLOWSHADOW_BEG; lia| blia]. unfold KLOWSHADOW_BEG in E. blia. }
+  split. { apply KEEP; [| | | | exact M3]; unfold HIGHSHADOW_SIZE in *; blia. }
+  split. { apply KEEP; [| | | | exact M4]; unfold LOWSHADOW_SIZE in *; blia. }
   split; [| split; [| split; [| split]]].
   - intros e He. apply (ZR (fst e) (snd e)); [exact (rt_loose_ranges _ _ _ e He)|]. apply M5.
     apply (Permutation_in e (Permutation_sym rt_loose_perm)). right. exact He.
   - (* [comment removed for export] *)
-    unfold zin in *. apply In_map_remove. split; [exact M6|]. cbn [fst]. intros E. apply wz_inj in E; [| unfold KLOWSHADOW_END; lia| blia]. unfold KLOWSHADOW_END in E. blia.
+    apply KEEP; [| | | | exact M6]; blia.
   - intros x Hx. specialize (M7 x Hx). unfold lzf in *. rewrite mm_unmap_lazy, mm_unmap_na, U1, U2.
     rewrite !inzr_maps_subtract by (first [exact Hlz| exact Hna| lia]).
     apply andb_true_iff in M7 as [L1 L2]. rewrite L1. apply negb_true_iff in L2. rewrite L2.

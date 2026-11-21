@@ -3,10 +3,10 @@
    fuzz_headamp's start-up depot holds traces (43 registered globals: the asan_globals array of fuzz_headamp.asan holds 43
    descriptors; depot_has_trace = true, as for fuzz_role's 49), so the
    AF0w / AF0q / AD2l / AD2m these lemmas apply are the relocated depot-true texts (libreac/fuzz_scene's,
-   origin/ossv/recipes 6ebe35ba632, as relocated for fuzz_role; the same applications as fuzz_scene's lib/A/SceneAlloc.v
+    as relocated for fuzz_role; the same applications as fuzz_scene's lib/A/SceneAlloc.v
    and libreac/fuzz_ctrl's lib/A/CtrlClose.v:144-146): each lemma is
-   `forall B, TfibSyms B -> (forall t, as_dhash B t = tfib_dhash t) -> ...` (AF0w.v:45 tfib_amalloc_realizes,
-   AF0q.v:13 afree_realizes_closed) or `forall B, TfibSyms B -> ...` (AD2m.v:17 tfib_AICPY), with TfibSyms TfibB from
+   `forall B, TfibSyms B -> (forall t, as_dhash B t = tfib_dhash t) -> ...` (AF0w.v:46 tfib_amalloc_realizes,
+   AF0q.v:14 afree_realizes_closed) or `forall B, TfibSyms B -> ...` (AD2m.v:18 tfib_AICPY), with TfibSyms TfibB from
    AD2l.TfibB_syms and the hash premise by eq_refl (TfibB's as_dhash field is tfib_dhash).
    The same malloc and free facts feed the entry function's program contract (lib/A/HPgLib.v headamp_lib_x_all_stmt),
    through HeadampClose's H_DRIVER and lib/A/AD2o.v's adapter; they are per call, so the entry function's four blocks

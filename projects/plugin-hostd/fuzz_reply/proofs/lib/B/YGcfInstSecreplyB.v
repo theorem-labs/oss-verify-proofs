@@ -48,7 +48,7 @@ unfold ImgBaseAGS.AFSTACK. unfold AGhy.AFSTACK in H1. zl.
 Qed.
 
 (* DEP_FP (YGcfInstSec.v:389): ReplyImg_depfp.dep_fp_a_B, which is at ag_dzone = AGis.DZONE; ims_dzone is AGjm.DZONE,
-   the same body (B/AGis.v:231-232, B/AGjm.v:573-574), so the proof is a conversion. *)
+   the same body (B/AGis.v:232-233, B/AGjm.v:574-575), so the proof is a conversion. *)
 Lemma DEP_FP_B : forall B, @im_syms AImg_reply B -> YGcfInstDepot.dep_fp_img B ims_dzone.
 Proof.
 intros B TS ly a LY IMG TSD FP. change (TfibSyms B) in TS. change (AGjm.DZONE ly a).

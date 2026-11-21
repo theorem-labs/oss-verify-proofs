@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs (for the cf layer at plugin-hostd/fuzz_reply; row img-constapart-A, its CONST_APART half).
    rule 24: no function proved (kind: image row; closed computations over reply image A's constant-cell table and
    owned-static table, fuzz_reply.asan, pin 42c58610e125, and the layout geometry of layout_ok).
 
    CONST_APART at image A, in the cf layer's restated form: CONST_APART
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:66-70 @ fa961f42daf), over the layout predicate ly_img_ok
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 @ e73dee6cc107, the same text @ fa961f42daf):
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:66-70), over the layout predicate ly_img_ok
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142, the same text):
      ly_img_ok B ly := layout_ok ly /\ ly_tsd ly = as_tsd B /\
                        Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B).
    The reply tree does not carry those layer files, so the Lemma at the end states CONST_APART's body at reply's
-   instance IM := AImg_reply (proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:23 @ d2bd679271c: im_syms := TfibSyms,
-   im_const := lib/A/AF0m.v:817 Tfib_const) with ly_img_ok UNFOLDED and qhdr = DMiface.qhdr
-   (proofs/plugin-hostd/fuzz_reply/lib/A/DMiface.v:71-73 @ d2bd679271c, the same text as
-   proofs/cgif/cgif_file_fuzzer/lib/DMiface.v:69-71 @ fa961f42daf).  The form over layout_ok alone is false at this
-   image (CONST_APART_refuted_A, lib/A/ReplyImg_constapart_refuted.v @ 9c5a7ec6f3a).  The row's other fact, IMG_QAPART,
+   instance IM := AImg_reply (proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:24: im_syms := TfibSyms,
+   im_const := lib/A/AF0m.v:818 Tfib_const) with ly_img_ok UNFOLDED and qhdr = DMiface.qhdr
+   (proofs/plugin-hostd/fuzz_reply/lib/A/DMiface.v:72-74, the same text as
+   proofs/cgif/cgif_file_fuzzer/lib/DMiface.v:69-71).  The form over layout_ok alone is false at this
+   image (CONST_APART_refuted_A, lib/A/ReplyImg_constapart_refuted.v).  The row's other fact, IMG_QAPART,
    is lib/A/ReplyImg_qapart.v.
    - the absolute cells (Tfib_const_abs ++ Tfib_const_shadow): a boolean scan (vm_compute) shows each is the 2-byte zero
      cell at TFIB_INST + o_q_cmutex + 2 (0xa2dca) or has no byte in the instance's quarantine header words; the cells of
@@ -114,7 +115,7 @@ Qed.
 
 Section g. Context {rc : YM05.RunCeil}.
 
-(* static_extents ly = [prim; Q; T; F; NB; SB; C; D; stack; img] (lib/Reusable/YG0f.v:294-299 @ d2bd679271c). *)
+(* static_extents ly = [prim; Q; T; F; NB; SB; C; D; stack; img] (lib/Reusable/YG0f.v:294-299). *)
 Lemma sdisj : forall ly i j x y, layout_ok ly -> (i < j)%nat -> nth_error (static_extents ly) i = Some x ->
   nth_error (static_extents ly) j = Some y -> zdisjoint x y.
 Proof. intros ly i j x y L Hij Hi Hj. exact (pairwise_nth _ _ i j x y (@lo_disj _ ly L) Hij Hi Hj). Qed.
@@ -209,8 +210,8 @@ unfold Tfib_const in Hc. apply in_app_or in Hc as [Hc|Hc].
       unfold kLowShadowBeg, kHighMemBeg in *. lia.
 Qed.
 
-(* CONST_APART at image A: proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:66-70 @ fa961f42daf, with ly_img_ok
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 @ e73dee6cc107) unfolded. *)
+(* CONST_APART at image A: proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:66-70, with ly_img_ok
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142) unfolded. *)
 Lemma CONST_APART_A : forall B ly c, @im_syms AImg_reply B ->
   (layout_ok ly /\ ly_tsd ly = as_tsd B /\ Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B)) ->
   In c (@im_const AImg_reply ly) ->

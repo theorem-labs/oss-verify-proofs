@@ -2,9 +2,9 @@
    of row ENTRY-SUMS (a Theorem Labs lane; statement owner another Theorem Labs lane). Nothing here is a function's proof (rule 24); kind: model
    bound lemma.
 
-   WHAT IT SAYS. The texts (d6318e886fd9) take `blocks_bytes S + LIVE_<fn> args <= LIVE_MAX` at their entry. For each
+   WHAT IT SAYS. The texts take `blocks_bytes S + LIVE_<fn> args <= LIVE_MAX` at their entry. For each
    text whose LIVE_<fn> is bounded, the lemma below states `0 <= LIVE_<fn> args <= ENTRY_ROOM` AT THE ARGUMENT
-   EXPRESSION ITS CONSUMER PASSES (file:line at d6318e886fd9 in each comment), from the text's own premises or the
+   EXPRESSION ITS CONSUMER PASSES (file:line in each comment), from the text's own premises or the
    consumer's facts (|x| <= MAXB, ck_read x = Some t). With lib/Spec/PresetLiveBytes.v
      entry_sum_ok    (Wf_cf, iface_room_pos at i, an event at i, 0 <= n <= ENTRY_ROOM)
      entry_sum_pos   (Wf_cf, iface_room_pos at i,                 0 <= n <= ENTRY_ROOM)
@@ -15,7 +15,7 @@
    The texts whose request is bounded only through cf_malloc_max (the allocator wrappers, parse_string, grow, pj_set,
    pj_string) are stated at the unit's instance CfParams_preset. The rest (Section G) are generic in CfParams under
    the hypothesis cf_head = PresetReqAt.HEAD. Of the texts only tpj_set_specX states that as an entry premise
-   (PRH_FnPj.v:1003 at d6318e886fd9); the check texts do not take it. The consumers use the Section G lemmas at
+   (PRH_FnPj.v:1003); the check texts do not take it. The consumers use the Section G lemmas at
    CfParams_preset, where preset_head discharges the hypothesis.
 
    NOT HERE, AND WHY (the row's recorded gaps, the internal file entry-sums-table.md last section): check_round_trip (its LIVE sum,
@@ -25,7 +25,7 @@
 
    PROVED HERE OR CITED: PjGrammar.G10 / G7_4 (a reading's peak and calls), PjRoundTrip.G9_trace (every read-back of
    wdoc t p has the trace of reading wdoc t false), PresetLiveBytes.Lf_read / Lt_read / copy_len_false / dbl_le /
-   dbl_ge, PresetReqAtNoMiss.wf_copy. hpeakR_prefix is a Theorem Labs lane's PjLiveBound.hpeak_prefix (d6318e886fd9
+   dbl_ge, PresetReqAtNoMiss.wf_copy. hpeakR_prefix is a Theorem Labs lane's PjLiveBound.hpeak_prefix (
    lib/Spec/PjLiveBound.v:118) over the hpeakR. *)
 From Stdlib Require Import ZArith List Lia.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG01 YGcfNames YG01cf.
@@ -49,8 +49,8 @@ Local Ltac rooms :=
 
 (* ================================================================ a reading's live room *)
 
-(* the live room of one granted reading of a text of m bytes: the LIVE_pj_parse (PRH_FnPj.v:239-240 at
-   d6318e886fd9) with PjGrammar.G10's peak bound 224 m + 16384 and G7_4's call bound 2 m + 2 *)
+(* the live room of one granted reading of a text of m bytes: the LIVE_pj_parse (PRH_FnPj.v:239-240)
+   with PjGrammar.G10's peak bound 224 m + 16384 and G7_4's call bound 2 m + 2 *)
 Definition LIVE_RD_BOUND (m : Z) : Z := 2 * (224 * m + 16384) + PresetReqAt.HEAD * (2 * m + 3).
 
 Lemma hpeakR_nn : forall tr, 0 <= PRH_Reader.hpeakR tr.
@@ -79,7 +79,7 @@ Qed.
 
 Section G.
 Context {cp : CfParams}.
-(* THE HEAD IS THE MODEL'S: tpj_set_specX's entry premise (PRH_FnPj.v:1003 at d6318e886fd9; no other text takes it
+(* THE HEAD IS THE MODEL'S: tpj_set_specX's entry premise (PRH_FnPj.v:1003; no other text takes it
    at entry); preset_head below discharges it at CfParams_preset *)
 Hypothesis HHD : cf_head = PresetReqAt.HEAD.
 
@@ -121,7 +121,7 @@ Qed.
 (* ---------------------------------------------------------------- the sites, generic in CfParams *)
 
 (* check_no_overread: PRH_FnCheck.v:768 `blocks_bytes S + LIVE_check_no_overread x <= LIVE_MAX` (def :506), its
-   exact form Ent102CutsA.v:157 / Ent102GrantA.v:303, and the walk's argument (e_x E) (ecov_cno, Ent102CutsA.v:615;
+   exact form Ent102CutsA.v:158 / Ent102GrantA.v:304, and the walk's argument (e_x E) (ecov_cno, Ent102CutsA.v:616;
    Ent102L1A.v:449-450). The text has size <= 3 * 2 ^ 20 (:753), which is |x| <= MAXB. *)
 Lemma live_cno_fits : forall x, Z.of_nat (length x) <= PresetReqAt.MAXB ->
   0 <= PRH_FnCheck.LIVE_check_no_overread x <= PresetLiveBytes.ENTRY_ROOM.
@@ -131,7 +131,7 @@ Proof.
 Qed.
 
 (* parse_noting: PRH_FnCheck.v:636 `blocks_bytes S + PRH_FnPj.LIVE_pj_parse tb <= LIVE_MAX`, its exact form
-   Ent102CutsA.v:205 / Ent102GrantA.v:195, the walk's argument (e_x E) (Ent102L2A.v:618, ecov_pno Ent102CutsA.v:617);
+   Ent102CutsA.v:206 / Ent102GrantA.v:196, the walk's argument (e_x E) (Ent102L2A.v:618, ecov_pno Ent102CutsA.v:618);
    pj_parse: PRH_FnPj.v:630 `blocks_bytes S + LIVE_pj_parse tl <= LIVE_MAX` at tl = x (PRH_FnCheck.v:506, :512) *)
 Lemma live_pj_parse_fits : forall tl, Z.of_nat (length tl) <= PresetReqAt.MAXB ->
   0 <= PRH_FnPj.LIVE_pj_parse tl <= PresetLiveBytes.ENTRY_ROOM.
@@ -170,15 +170,15 @@ Proof.
 Qed.
 
 (* check_as_written: PRH_FnCheck.v:855 `blocks_bytes S + LIVE_check_as_written size <= LIVE_MAX` (def :509),
-   size = Z.of_nat (length x) <= 3 * 2 ^ 20 (:846); Ent102GrantA.v:262; the walk's argument (e_n E) (ecov_caw,
-   Ent102CutsA.v:623, with e_n E <= EC_NMAX) *)
+   size = Z.of_nat (length x) <= 3 * 2 ^ 20 (:846); Ent102GrantA.v:263; the walk's argument (e_n E) (ecov_caw,
+   Ent102CutsA.v:624, with e_n E <= EC_NMAX) *)
 Lemma live_caw_fits : forall size, 0 <= size <= PresetReqAt.MAXB ->
   0 <= PRH_FnCheck.LIVE_check_as_written size <= PresetLiveBytes.ENTRY_ROOM.
 Proof. intros size HX. unfold PRH_FnCheck.LIVE_check_as_written. rooms. lia. Qed.
 
 (* check_reject_clean_starved on the accepted tree: PRH_FnCheck.v:1110
    `blocks_bytes S + LIVE_check_reject_clean_starved tb t <= LIVE_MAX` (def :511-512) at tb = the input, t = its tree
-   (Ent102L5cA.v:375-376 `(e_x E) .. t`; ecov_crs1 Ent102CutsA.v:629) *)
+   (Ent102L5cA.v:376-377 `(e_x E) .. t`; ecov_crs1 Ent102CutsA.v:630) *)
 Lemma live_crcs_fits : forall x t, Z.of_nat (length x) <= PresetReqAt.MAXB -> PRH_FnCheck.ck_read x = Some t ->
   0 <= PRH_FnCheck.LIVE_check_reject_clean_starved x t <= PresetLiveBytes.ENTRY_ROOM.
 Proof.
@@ -191,8 +191,8 @@ Proof.
   rooms. lia.
 Qed.
 
-(* the same text on the refused arm, at the tree it fixes there: Ent102L4A.v:669-670 `(e_x E) .. PjTree.JNull`
-   (ecov_crs0 Ent102CutsA.v:625) *)
+(* the same text on the refused arm, at the tree it fixes there: Ent102L4A.v:670-671 `(e_x E) .. PjTree.JNull`
+   (ecov_crs0 Ent102CutsA.v:626) *)
 Lemma live_crcs_null_fits : forall x, Z.of_nat (length x) <= PresetReqAt.MAXB ->
   0 <= PRH_FnCheck.LIVE_check_reject_clean_starved x PjTree.JNull <= PresetLiveBytes.ENTRY_ROOM.
 Proof.

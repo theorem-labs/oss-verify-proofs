@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of rec_clear on fuzz_command.asan-ubsan (image B): the B re-walk of
-   lib/A/Prog/rec_clear.v (a working branch 9dd2d0c2ea2), in the shape of
+   lib/A/Prog/rec_clear.v (a working branch), in the shape of
    proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v .. ACh1.v (cgif_close): the seed of a symbolic state over the
    listing, paj_run_tok steps, cl_callS for the program callee and the 04 rules for the runtime entries. B's code
-   has A's 26 instructions at other addresses (the image-B walk lib/B/Prog/rec_clear.v of a working branch
-   543f2c3645b, read as the B-code template, has the same instructions, calls and trap sites). *)
+   has A's 26 instructions at other addresses (the image-B walk lib/B/Prog/rec_clear.v of a working branch,
+   read as the B-code template, has the same instructions, calls and trap sites). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* The walk of rec_clear (BASE + AF_rec_clear = 0x899e4, 26 instructions, 104 bytes, one block, no instrumented
    check, no UBSan trap site, no call of an __asan_report_* entry: measured on fuzz_command.asan-ubsan
@@ -23,7 +24,7 @@
    lib/Reusable/YCbq.v admits through a Theorem Labs lane's journal change (awr_byte's `inFP FP a /\
    Exists (in_zr a) (as_prog_static B) /\ in_img segs a` disjunct and fp_spares' `~ inFP FP a`).
 
-   Statement: trec_clear_spec of a Theorem Labs lane's lib/B/Prog/rec_clear_c.v (a working branch f490061c104, pass 5: no astack_pres
+   Statement: trec_clear_spec of a Theorem Labs lane's lib/B/Prog/rec_clear_c.v (a working branch, pass 5: no astack_pres
    premise): the callee rec_calls_free and the runtime entries (free, free(NULL), the memset entry) are taken at every
    FP state, and the walk applies each at the Section's fx. The frame chain at each free is achain_chain_pre's: at
    the first, of afn_pre's achain (s0 the caller's); at the second, of achain_low (s0 = g_rec + 928). Section
@@ -309,7 +310,7 @@ Hypothesis cmd_img_facts_tfib : forall B0, CmdBSyms B0 -> @cmd_img_facts SK SEGS
 Hypothesis cmd_sig_prog_PB : cmd_sig_prog.
 Hypothesis PRW : prog_rw SEGS B.
 
-(* AR_laws is not a hypothesis: lib/Reusable/YG0q.v's AR_laws_ok proves it (socket_send.v:92) *)
+(* AR_laws is not a hypothesis: lib/Reusable/YG0q.v's AR_laws_ok proves it (socket_send.v:93) *)
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.
 Let RUN := paj_run B LAWS. Let RUNTO := paj_run_to B LAWS.
 Let RET := paj_ret_at (PL := PL_cmd) (PI := PI).

@@ -1,6 +1,6 @@
 # G9: every image-derived count of the image B files recomputed from the pins (gate record)
 
-Proves no function (kind: measurement). Run 2026-10-30 on the series base b1afc3e80791 (`run.sh g9`). It covers what
+Proves no function (kind: measurement). Run 2026-10-30 on the series base (`run.sh g9`). It covers what
 G8's roundconst v2 cannot (its named gaps: a small kept donor value that is also a right target quantity reads SAME;
 unpaired unnamed runs are not gated; function sizes are no quantity of it).
 
@@ -11,8 +11,8 @@ python3 count_recompute.py --lib "$LIB" --cgif-lib "$CLIB" --pac "$WORK/g7/pac3-
   --pin A="$PIN_DIR/fuzz_disco.asan" --twin A="$TWIN_DIR/fuzz_disco.asan" \
   --cgif-pin A="$CGIF_BIN/cgif_file_fuzzer.asan" --cgif-twin A="$CGIF_TWIN_DIR/cgif_file_fuzzer.asan" \
   (the same four arguments for B = asan-ubsan, P = plain, U = ubsan) \
-  --accept 'Reusable/YE34.v:24=DIFFERS:38 -> fixed in b0078622dec (build check pending)' \
-  --accept 'Reusable/YE34.v:20=DIFFERS:435 -> fixed in b0078622dec (build check pending)' \
+  --accept 'Reusable/YE34.v:24=DIFFERS:38 -> fixed (build check pending)' \
+  --accept 'Reusable/YE34.v:20=DIFFERS:435 -> fixed (build check pending)' \
   --accept "Reusable/YB1t.v:28:0x64c74=MEASURED TRUE:decode table, 30 words inside .text, one word past internal_madvise decodes internal_close's first instruction" \
   --out "$WORK/g9/G9-counts.tsv"
 ```
@@ -51,11 +51,11 @@ DIFFERS row carrying an `--accept`.
 
 - **DIFFERS: lib/Reusable/YE34.v:20** musl_sel_ranges `(0x95808, 435%nat)`: the cgif range runs `__stdio_write` + 0
   to `__stdio_exit` + 28; here (twin `__stdio_exit` 0x95de8 + 28 - 0x95808) / 4 = 383; the shipped 435 ends at
-  0x95ed4, 52 words past that point (cgif ships 435). `DIFFERS: 435 -> fixed in b0078622dec (build check pending)`.
+  0x95ed4, 52 words past that point (cgif ships 435). `DIFFERS: 435 -> fixed (build check pending)`.
 - **DIFFERS: lib/Reusable/YE34.v:24** icpt_ranges first tuple `(0x42a3c, 38%nat)`: in cgif the 38 words are 38
   trampolines from `__interceptor_trampoline_strlen` to the end of `__interceptor_trampoline_sigaction`; in
   fuzz_disco B the same cover is 36 words, [0x42a3c, 0x42acc); the shipped 38 runs 2 words into
-  `___interceptor_strlen`. `DIFFERS: 38 -> fixed in b0078622dec (build check pending)`.
+  `___interceptor_strlen`. `DIFFERS: 38 -> fixed (build check pending)`.
 - lib/Reusable/YB1v.v:10 tfibmusl_text_count ships 16102 = (.text end 0x9f248 - 0x8f6b0) / 4: MEASURED TRUE (cgif
   ships 16403; the same rule on cgif gives 16400). YE3h.v:1725 `(0x7057c, 12)` = the exact cover of
   `__sanitizer_cov_dump` (cgif's 13 is its own cover plus one word): MEASURED TRUE.

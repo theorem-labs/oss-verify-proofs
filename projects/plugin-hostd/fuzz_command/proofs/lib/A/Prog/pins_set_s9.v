@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry segment of pins_set's ASan walk (the prologue and the inlined
-   record(), both arms), after the cgif_close walk of cgif_file_fuzzer (proofs/cgif/cgif_file_fuzzer/lib/A/ACh*.v
-   at c8557374ad2e: AChc.v, the seed of a walk and its first straight run; ACh2.v, the step
+   record(), both arms), after the cgif_close walk of cgif_file_fuzzer (proofs/cgif/cgif_file_fuzzer/lib/A/ACh*.v:
+   AChc.v, the seed of a walk and its first straight run; ACh2.v, the step
    through a call and back) over fuzz_command's recorder. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* `ps_seg_entry`: from pins_set's entry to record()'s join. The prologue saves the ten callee-saved registers
    into the 80-byte frame and loads g_rec.ncalls; record() then takes the slot g_rec.calls[ncalls] and stores

@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrlen_rt.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrlen_rt.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's runtime contract for the strlen interceptor in the donor's form: astrlen_realizes (lib/A/FMH_Rt.v:107) at
    PC_strlen = 0x41328, the four-byte jump to the interceptor at 0x413c4 (REAL = musl strlen 0x92ef0).
    Proved input: A/FMstrlen.v strlen_icpt_srr, the whole function from the jump to its return in the donor's

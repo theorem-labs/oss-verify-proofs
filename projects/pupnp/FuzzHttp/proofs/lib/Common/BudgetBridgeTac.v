@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the system-call table's new rows set_robust_list, clock_getres and pwritev2, and write_file_tail's optional fault handler). *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Common Require Import BudgetBridgeCore.
@@ -64,7 +65,15 @@ else (apply sim_pure; reflexivity)
 | |- Sim _ _ _ (let _ := _ in _) => cbv zeta
 | |- Sim _ _ ?X ?Y =>
 lazymatch Y with
-| (match _ with _ => _ end) => pair_destruct X Y; cbv beta iota zeta
+| (match ?e with _ => _ end) =>
+    (* LPS 08b1429: write_file_tail takes its fault/place handlers as
+       [option (Sys _ -> Sys _)]; destructing one leaves an opaque
+       continuation no Sim lemma steps, so unfold its producer instead. *)
+    let x := innermost e in
+    lazymatch type of x with
+    | option (_ -> _) => let h := headc x in progress (unfold h); cbv beta iota zeta
+    | _ => pair_destruct X Y; cbv beta iota zeta
+    end
 | _ => first [ solve [ eauto with bb_simdb ]
 | let h := headc Y in progress (unfold h); cbv beta ]
 end

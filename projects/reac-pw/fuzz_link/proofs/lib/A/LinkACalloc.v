@@ -7,7 +7,7 @@
    lib/A/AD2l.v PcapB (PcapB_syms, PcapBFacts.PcapB_lib, and its depot hash by definition).
 
    The rows are libreac/fuzz_decode's lib/A/DecodeClose.v rows H_CALLOC_ALLOCATE .. H_CALLOC_IMG_CONST,
-   H_CALLOC_ERRNO_LOW, HB_CALLOC_UNIV0, CALLOC_REALIZES and H_LINK_CALLOC04 (origin/ossv/recipes a34e09bd40c1), each
+   H_CALLOC_ERRNO_LOW, HB_CALLOC_UNIV0, CALLOC_REALIZES and H_LINK_CALLOC04, each
    discharged by the ported row file it names there (lib/A/DecodeARows.v, DecodeARowsRt.v, DecodeARowsFill.v,
    DecodeACallocTp.v, DecodeACallocAllocate.v), with link's certificate facts in place of decode's GrantB ones.
 

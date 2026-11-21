@@ -1,8 +1,8 @@
 (* fuzz_preset lib/B, the #102 re-walk of tx_put on image B' (asan-ubsan pin d663f82d7f488d30): INSTANCE WITNESSES
    of TxPut102B_Base.v's tp_img fields that are facts of the IMAGE BINDING of B (lane TxPutB102, h-rw-pre-7; owner
    ruling 16:45Z / 16:5xZ: reduce them to ONE `TB : TfibSyms B`, the unit's symbol binding, which the top supplies).
-   TfibSyms is the B' YF0m of record for building, lib/Reusable/YF0m.v blob f82202ebccdf (origin/cold/h-pre-b3-bp-startup
-   f07f899fdd07, generated from the B' pin d663f82d; owner ruling 16:44Z: of record for ACCEPTANCE only after
+   TfibSyms is the B' YF0m of record for building, lib/Reusable/YF0m.v blob f82202ebccdf (
+   generated from the B' pin d663f82d; owner ruling 16:44Z: of record for ACCEPTANCE only after
    h-rw-ide-9's full B' gate). Mirror of the A' lane's TxPut102A_Wit.v route (TxPutA102, 16:5xZ).
    rule 24: proves function tx_put (reuse search: the internal file REWALK-102-PLAN.md section T3)
    - tpw_pst_owned / tpw_pst_errno (tpi_pst_owned / tpi_pst_errno): from ts_owned / ts_errno and a disjointness check
@@ -14,7 +14,7 @@
      Tfib_const holding SHADOW_OFF / that cell's address (asyms_ok's aso_const_law + ts_const), the wrapper entries and
      the two ra0 (below the text, and singletons of DRV_TRACES, in the universe by ts_universe_drv) by ts_code, errno
      by ts_errno, each by vm_compute. ts_code's Tfib_code is h-mani-a4's #102 B' code record, lib/Reusable/YF0l.v
-     4a405a3dba65 over YImgCellsB.v f1cc7493a79d (origin/cold/h-mani-a4-b102-cells d54322f67714, of record per the
+     4a405a3dba65 over YImgCellsB.v f1cc7493a79d (of record per the
      owner 17:14Z), checked field by field against the listing's SIGMA (TxPutB102 17:2xZ table: all EQUAL, the planted
      pc_wrap_malloc + 4 control FAILS). A' twin: TxPut102A_Wit.v 85ddc58906d2 (route of tp_cells_of_tfib et al.).
    Numerals: none of its own; every address is YF0m's or PRH_ImgB's. *)

@@ -3,7 +3,11 @@ project: wt
 harness: fuzz-http
 rocq: OSSVerify.wt.fuzz_http
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Copies the input (Size from 10 to 5120 bytes) into a buffer and parses it as an HTTP request
+  line and headers with the built-in httpd's http::server::RequestParser::parse, on a parser constructed
+  with a null Server, into a new http::server::Request; when parse returns true (a complete request) it
+  calls RequestParser::validate on that request. It drops the parse position and validate's status, and
+  returns -1 for an input with Size below 10 or above 5120.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +16,7 @@ source:
     repository: https://github.com/emweb/wt
     commit: 0ec92b6bfc41be037dcf3ddfc72664ca261821bd
     path: fuzz/fuzz-http.C
-  modified: false
+  modified: true
   licence: NOASSERTION
 library:
   repository: https://github.com/emweb/wt
@@ -23,11 +27,14 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/fuzz-http.C is wt 0ec92b6b''s fuzz/fuzz-http.C with one Theorem
+  Labs change: its length check returns -1, not 1, for an input outside its limits (libFuzzer rejects
+  the input; the driver exits 0, not 78).'
 builds:
   plain:
     file: fuzz-http.plain
     bytes: 9594048
-    sha256: 3f7fcdfdc6acfe4835b68d94947bc2aa6cba3e5a08b9c944c4d668e477baf283
+    sha256: 1f948b8dce9c4312d1edfcfe82001fb8d7b093549605afa1c3159964d9fffb59
     segments:
     - 1
     - 1
@@ -64,7 +71,7 @@ builds:
   ubsan:
     file: fuzz-http.ubsan
     bytes: 10201144
-    sha256: e1918d7d763e8be5df390e46ad622b206e192c5206baaf58b577511d837d3ccf
+    sha256: 67486787805f9ac41944231fbcf4b0db287eecf45037ee16a050fecd74d3ac5e
     segments:
     - 1
     - 1
@@ -101,7 +108,7 @@ builds:
   asan:
     file: fuzz-http.asan
     bytes: 18938536
-    sha256: a4cf97bfba8f8134ab3fb7835067d49543803a5805d8de6aca5c2fab8e8f46f7
+    sha256: 9c1b7344dc34f743154f969b9c93262a4b93cb68adabb8f1a81b6d2b27bb0cab
     segments:
     - 1
     - 2
@@ -141,7 +148,7 @@ builds:
   asan-ubsan:
     file: fuzz-http.asan-ubsan
     bytes: 19335016
-    sha256: 411a159cb34f4ba657924c74da3472780a57e9333d4a811f1ae2ae7c7fbdce00
+    sha256: d0f9df515c98b4325a1771a7d786e26a1a986283d303ee770807f29f95ed9ee4
     segments:
     - 1
     - 2
@@ -190,6 +197,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -199,6 +207,7 @@ statements:
     budgets: standard
     abort: signal
     status: open
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -208,6 +217,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -218,6 +228,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -228,6 +239,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -238,6 +250,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -248,3 +261,4 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2

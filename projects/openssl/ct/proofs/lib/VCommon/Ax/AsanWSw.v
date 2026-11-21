@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VCommon proof library over the revised model). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -103,6 +104,27 @@ Proof.
   apply rg_setx_other. intros ->. exact (Hr Hin).
 Qed.
 
+(* NEW at this revision, beside SWF_setx, which stays true and is untouched.
+   adv_latch (:140) now hands setx the literal `None` in the reservation slot because
+   advance_past_svc sets `ms_resv := None` (LPS@75d69e00 Run.v:221-227), so SWF_setx's
+   `r = ms_resv S` is no longer dischargeable by reflexivity there -- measured in the
+   donor tree as "Unable to unify "ms_resv S" with "None"" at AsanWStdio.v:364 chars
+   70-81; this tree's AsanWSw.vo and AsanWStdio.vo were
+   NOT-BUILT in a farm round, so the same text here was never reached.
+   Nothing is weakened: the SWF record's reservation field is ALREADY the disjunction
+   `ms_resv ms = ms_resv ms0 \/ ms_resv ms = None` (:89), so the `None` successor is
+   exactly the right-hand disjunct the record was written to carry.  Callers passing
+   `r = ms_resv S` keep using SWF_setx unchanged. *)
+Lemma SWF_setx_none : forall ms0 S lo hi rd v p m,
+  SWF ms0 S lo hi -> (rd = 0 \/ In rd CLOB) -> m = ms_mem S -> SWF ms0 (setx S rd v p None m) lo hi.
+Proof.
+  intros ms0 S lo hi rd v p m [H1 H2 H3 H4 H5 H6 H7 H8] Hrd ->. constructor;
+    [reflexivity | exact H2 | exact H3 | exact H4 | right; reflexivity | | exact H7 | exact H8].
+  intros r Hr. rewrite <- (H6 r Hr).
+  destruct Hrd as [->|Hin]; [apply rg_setx_x0|].
+  apply rg_setx_other. intros ->. exact (Hr Hin).
+Qed.
+
 Lemma SWF_store : forall ms0 S lo hi p (a : word) (bs : list byte) r m,
   SWF ms0 S lo hi ->
   r = inval a (ms_resv S) -> m = write_to_mem (ms_mem S) a bs ->
@@ -118,8 +140,17 @@ Proof.
   - intros x Hx. rewrite mem_setx. apply w2m_keeps_some. exact (H8 x Hx).
 Qed.
 
+(* WAS, and a farm round measured it false in the donor tree at
+   AsanWSw.v:108:
+     Lemma adv_latch : forall S v,
+       advance_past_svc (set_gpr0 (latch S) v)
+       = setx S 10 v (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (ms_mem S).
+   advance_past_svc sets `ms_resv := None` (LPS@75d69e00 Run.v:221-227), and setx's
+   fifth argument is the reservation (VCommon/BootWitness/BootStep.v:28-29).  set_gpr0
+   and latch touch neither ms_pc_val nor ms_resv, so the reservation is the only field
+   that moved. *)
 Lemma adv_latch : forall S v,
-  advance_past_svc (set_gpr0 (latch S) v) = setx S 10 v (ms_pc_val S + Z_to_bv 64 4) (ms_resv S) (ms_mem S).
+  advance_past_svc (set_gpr0 (latch S) v) = setx S 10 v (ms_pc_val S + Z_to_bv 64 4) None (ms_mem S).
 Proof. reflexivity. Qed.
 
 Lemma gpr_latch0 : forall S, ms_gpr (latch S) 0 = rg S 10. Proof. reflexivity. Qed.

@@ -2,7 +2,7 @@
    (lib/A/Prog/read_members_inst.v, read_members_holds_inst) with a Theorem Labs lane's pj_get / pj_get_str A' walks
    (lib/A/Prog/S6PjGet.v caa17d88daea pj_get_holds, lib/A/Prog/S6PjGetStr.v 846c46d9b454 pj_get_str_holds: the
    tpj_get_specX / tpj_get_str_specX), at PA := PI_prog_A, B := AD2l.TfibB, ARx := ARcf at CfParams_preset, on
-   a Theorem Labs lane's P'' set (a working branch 19a067d0b7eb, which carries every file used here; nothing
+   a Theorem Labs lane's P'' set (a working branch, which carries every file used here; nothing
    taken by path). The A' mirror of the B' corollary lib/B/Prog/read_members_Bp2.v.
    DISCHARGED HERE, the walks' Section hypotheses at the instance:
      LAWS  PALibA.palib_laws_A (lib/A/PALibA.v 88c72c8175cf)

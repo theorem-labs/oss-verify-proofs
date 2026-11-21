@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_ctrl_headamp_record_verify on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-10: the walk of reac_ctrl_headamp_record_verify on image B (fuzz_grant.asan-ubsan, bin/ sha256 fde52226dc48), proving image B's contract walk_reac_ctrl_headamp_record_verify of lib/B/Prog/GrantBContracts.v over image B's listing; image B's code is NOT the same as image A's: it is 36 bytes longer (UBSan's five trap guards and three report branches, refuted here, one of them through the six assumed loop guards hrv_conds), and its shadow-base cell is object 35 where image A's is object 32. *)
-(* Ported from lib/A/Prog/CtrlHeadampRecordVerify.v at a working branch 5aae1e8a0ce (identical at a working branch afd75724b5b). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/CtrlHeadampRecordVerify.v at a working branch (identical at a working branch). *)
 (* Image B (fuzz_grant.asan-ubsan, bin/ sha256 fde52226dc48, symbols 5a5ee7c02b4e) walk of
    reac_ctrl_headamp_record_verify (0x834dc = BASE + AF_reac_ctrl_headamp_record_verify 0x2aa0), the port of
    lib/A/Prog/CtrlHeadampRecordVerify.v to image B's listing and walk layer (lib/B/Prog).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -73,8 +74,11 @@ Proof.
   constructor; (eapply cell_agree; [ | | | eassumption]; [cbn; lia | lia | intros; apply Hag; cbn in *; lia]).
 Qed.
 
+(* LPS 727298f3: the launch maps only [stack_window_depth] = 6144513 bytes below sp0
+   ([S1Start.main_entry_store_ok_win]).  The offset [d] still counts from the allocator ceiling
+   sp0 - 8388608, and the span starts [stack_window_reach] = 2244095 bytes above it. *)
 Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop :=
-  forall d m, 0 <= d -> d + Z.of_nat m <= 8388608 ->
+  forall d m, 0 <= d - 2244095 -> d + Z.of_nat m <= 8388608 ->
     store_ok RSEGS M (Z_to_bv 64 (sp0 - 8388608 + d)) m = true.
 
 Lemma stack_writableZ_grows : forall M M' sp0, mem_grows M M' -> stack_writableZ M sp0 -> stack_writableZ M' sp0.
@@ -129,5 +133,5 @@ Proof.
 Qed.
 
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
+  forall d m, (0 <= d - 2244095)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
     store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.

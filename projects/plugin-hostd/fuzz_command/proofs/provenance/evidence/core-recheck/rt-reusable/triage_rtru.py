@@ -8,7 +8,7 @@ TRIAGE). A settled row keeps the base rule (PROOF-STEP, KERNEL-FACT, NO-PORTED-V
 first rule below that applies; every rule measures (symbol table, image bytes, section bounds, a GOT word, the
 instruction that forms an address, the file's own text, the donor file's text against the donor image).
 
-  OUT-OF-SCOPE-PREPORT  (run RU) the file is one of the 425 lib/Reusable files added 2026-10-27 in 84b1ffc6d7d and
+  OUT-OF-SCOPE-PREPORT  (run RU) the file is one of the 425 lib/Reusable files added 2026-10-27 and
                         unchanged since: not a port_core output (owner ruling). Result OK-out-of-scope. Measurement:
                         the plain-image run RUP's verdict of the same pair (these files describe the plain build).
   IMMEDIATE-DONOR-OK    (RtCgifA / RtCgifB) the numeral is judged OK (non-flag) in the run against the file's
@@ -515,7 +515,7 @@ def r_globals_layout(run, r, v, ctx):
     return None
 
 
-SIB = os.path.join(ROOT, 'work', 'sib', 'proofs')   # released sibling units' lib/Reusable (git archive 781f46bc05cd)
+SIB = os.path.join(ROOT, 'work', 'sib', 'proofs')   # released sibling units' lib/Reusable (git archive)
 _sib = {}
 
 

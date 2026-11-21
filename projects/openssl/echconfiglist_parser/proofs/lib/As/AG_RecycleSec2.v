@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap via maps_subtract: the RSModel proofs rewrite the post-maps as map_remove filtered by nz_at, adding hcnt_filter_le/hlen_filter_le and a nonzero-length premise on the RM keep step). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -34,6 +35,19 @@ Section HCW.
   Qed.
   Lemma zsum_perm : forall l l', Permutation l l' -> SecGap.zsum l = SecGap.zsum l'.
   Proof. intros l l' P. induction P; cbn in *; lia. Qed.
+  (* At 727298f3 rs_model's vm_maps is maps_subtract, which under nooverlap is the old map_remove
+     list filtered by nz_at (LazyLedger.maps_subtract_rm_nz); the hsec counts need the filter's
+     sublist bound (as boost-json/fuzz_parse's As/AG_RecycleSec2.v). *)
+  Lemma hcnt_filter_le : forall (f : word * word -> bool) (E : list (word * word)), hcnt (List.filter f E) <= hcnt E.
+  Proof.
+    intros f E. induction E as [|e E IH]; [cbn [List.filter]; lia|]. cbn [List.filter].
+    destruct (f e); [rewrite !hcnt_cons; destruct (ehigh e); lia| pose proof (hcnt_cons_ge e E); lia].
+  Qed.
+  Lemma hlen_filter_le : forall (f : word * word -> bool) (E : list (word * word)), hlen (List.filter f E) <= hlen E.
+  Proof.
+    intros f E. induction E as [|e E IH]; [cbn [List.filter]; lia|]. cbn [List.filter].
+    destruct (f e); [rewrite !hlen_cons; destruct (ehigh e); lia| pose proof (hlen_cons_ge e E); lia].
+  Qed.
 End HCW.
 
 Section RSModel.
@@ -122,19 +136,27 @@ Section RSModel.
       assert (SHB : (sh AHI_LO <= sh a /\ sh a + msz / 8 <= sh aceil) \/ (sh AIMG_TOP <= sh a /\ sh a + msz / 8 <= sh ALOWSH_LO)).
       { destruct BA as [X|X]; [right| left]; unfold sh, ASHADOW_BASE, AIMG_TOP, ALOWSH_LO, AHI_LO in *; clear - X B; try acb; Z.div_mod_to_equations; lia. }
       assert (E0IN : In (wz a, wz msz) (vm_maps hh)) by exact (K7 h HIN).
+      (* munmap's maps_subtract, as a filter of map_remove (LazyLedger.maps_subtract_rm_nz). *)
+      pose proof (maps_subtract_rm_nz (vm_maps hh) (wz a) (wz msz) ltac:(rewrite WM; clear - B; try acb; lia) NOV E0IN) as MSEQ.
+      rewrite WA, WM in MSEQ.
+      assert (VM2' : vm_maps h2 = List.filter (nz_at (a + msz)) (map_remove (vm_maps hh) (wz a))) by (rewrite VM2; exact MSEQ).
       (* [comment removed for export] *)
       assert (BASED : forall r, In r (vm_maps hh) -> bv_unsigned (fst r) = a -> r = (wz a, wz msz) \/ bv_unsigned (snd r) = 0).
       { intros r Hr Hb. pose proof (bv_unsigned_in_range _ (snd r)) as RR.
         destruct (nooverlap_in_in _ _ _ NOV Hr E0IN) as [E|[D|D]]; [left; exact E| right| right];
           unfold LazyLedger.lo, LazyLedger.hi in D; cbn [fst snd] in D; rewrite ?WA, ?WM in D; clear - D Hb B RR; try acb; lia. }
       (* [comment removed for export] *)
-      assert (RM : forall r, In r (vm_maps hh) -> bv_unsigned (fst r) <> a -> In r (vm_maps h2)).
-      { intros r Hr NE. unfold h2 in VM2 |- *. rewrite VM2. unfold map_remove. apply filter_In. split; [exact Hr|]. rewrite bv_eqb_Z, WA. apply negb_true_iff. apply Z.eqb_neq. exact NE. }
+      assert (RM : forall r, In r (vm_maps hh) -> bv_unsigned (fst r) <> a -> 0 < bv_unsigned (snd r) -> In r (vm_maps h2)).
+      { intros r Hr NE NZ. unfold h2 in VM2' |- *. rewrite VM2'. apply filter_In. split.
+        - unfold map_remove. apply filter_In. split; [exact Hr|]. rewrite bv_eqb_Z, WA. apply negb_true_iff. apply Z.eqb_neq. exact NE.
+        - unfold nz_at. apply negb_true_iff. apply andb_false_iff. left. apply Z.eqb_neq. clear - NZ. lia. }
       assert (KEEP : forall x : word, in_rangesb x (vm_maps hh) = true -> ~ (a <= bv_unsigned x < a + msz) -> in_rangesb x (vm_maps h2) = true).
       { intros x Hx NI. rewrite in_rangesb_zcovb in Hx |- *. apply zcovb_true in Hx as (r & Hr & R). apply zcovb_true. exists r. split; [| exact R].
-        apply RM; [exact Hr|]. intros Eb. destruct (BASED r Hr Eb) as [->|Z0].
-        - unfold LazyLedger.lo, LazyLedger.hi in R. cbn [fst snd] in R. rewrite WA, WM in R. exact (NI R).
-        - unfold LazyLedger.lo, LazyLedger.hi in R. rewrite Eb, Z0 in R. clear - R. lia. }
+        apply RM; [exact Hr| |].
+        - intros Eb. destruct (BASED r Hr Eb) as [->|Z0].
+          + unfold LazyLedger.lo, LazyLedger.hi in R. cbn [fst snd] in R. rewrite WA, WM in R. exact (NI R).
+          + unfold LazyLedger.lo, LazyLedger.hi in R. rewrite Eb, Z0 in R. clear - R. lia.
+        - unfold LazyLedger.lo, LazyLedger.hi in R. clear - R. lia. }
       assert (MC0 : forall xa xn y : word, bv_unsigned xn = 0 -> in_rangesb y (vm_maps h2) = true ->
                 (bv_unsigned y = bv_unsigned xa \/ bv_unsigned y + 1 = bv_unsigned xa) -> map_contains (vm_maps h2) xa xn = true).
       { intros xa xn y Z0 Hy EY. rewrite in_rangesb_zcovb in Hy. apply zcovb_true in Hy as (r & Hr & R). unfold LazyLedger.lo, LazyLedger.hi in R.
@@ -143,9 +165,11 @@ Section RSModel.
                 (bv_unsigned xa + bv_unsigned xn <= a \/ a + msz <= bv_unsigned xa) -> map_contains (vm_maps h2) xa xn = true).
       { intros xa xn MC POS D. apply LazyNodes.map_contains_In in MC as (r & Hr & R1 & R2). unfold LazyLedger.lo, LazyLedger.hi in R1, R2.
         unfold map_contains. apply existsb_exists. exists r. split.
-        - apply RM; [exact Hr|]. intros Eb. destruct (BASED r Hr Eb) as [->|Z0].
-          + cbn [fst snd] in R1, R2. rewrite WA in R1. rewrite WA, WM in R2. clear - R1 R2 POS D B; try acb. lia.
-          + rewrite Z0 in R2. clear - R1 R2 POS Eb. lia.
+        - apply RM; [exact Hr| |].
+          + intros Eb. destruct (BASED r Hr Eb) as [->|Z0].
+            * cbn [fst snd] in R1, R2. rewrite WA in R1. rewrite WA, WM in R2. clear - R1 R2 POS D B; try acb. lia.
+            * rewrite Z0 in R2. clear - R1 R2 POS Eb. lia.
+          + clear - R1 R2 POS. lia.
         - apply andb_true_iff. split; apply Z.leb_le; lia. }
       (* [comment removed for export] *)
       assert (NWL1 : entries_nowrap L1) by exact NWL.
@@ -184,13 +208,16 @@ Section RSModel.
           split.
           { intros mp Hin K1' K2' K3' K4'. apply filter_In in Hin. destruct Hin as [Hin NB]. apply negb_true_iff in NB. apply Z.eqb_neq in NB.
             destruct (A1 mp Hin K1' K2' K3' K4') as [INV RANGE].      (* [comment removed for export] *)
-            split; [| exact RANGE]. apply RM; [exact INV|]. cbn [fst]. rewrite unsigned_lit by exact RANGE. exact NB. }
+            split; [| exact RANGE]. intros POS. apply RM; [exact (INV POS)| |].
+            - cbn [fst]. rewrite unsigned_lit by exact RANGE. exact NB.
+            - cbn [snd]. exact POS. }
           split.
           { intros mp Hin KK x Hx. apply filter_In in Hin. destruct Hin as [Hin _]. destruct (A2 mp Hin KK x Hx) as [Q1 Q2]. split; [exact (NASUB x Q1)|].
             destruct (in_rangesb x L2) eqn:E; [| reflexivity]. rewrite (SUBL x E) in Q2. discriminate Q2. }
           split.
           { intros sc x Hin Hx. pose proof (A3 sc x (SUB1 sc Hin) Hx) as Q. destruct (in_rangesb x L2) eqn:E; [| reflexivity]. rewrite (SUBL x E) in Q. discriminate Q. }
-          unfold h2 in VM2 |- *. rewrite VM2. split; [apply nooverlap_map_remove; exact NOV|]. split; [apply entries_nowrap_map_remove; exact NW| exact NWA2]. }
+          unfold h2 in VM2' |- *. rewrite VM2'. split; [apply filter_sublist_nooverlap; apply nooverlap_map_remove; exact NOV|].
+          split; [apply entries_nowrap_filter; apply entries_nowrap_map_remove; exact NW| exact NWA2]. }
         split.
         { (* [comment removed for export] *)
           destruct ASV as [V1 V2]. unfold ashadow_visible. change (a_st s2) with st2. change (a_S s2) with (a_S s). change (as_sec st2) with l1.
@@ -235,9 +262,13 @@ Section RSModel.
       { (* [comment removed for export] *) intros sc x Hin Hx. apply NASUB. exact (K6b sc x (SUB1 sc Hin) Hx). }
       split.
       { (* [comment removed for export] *)
-        intros sc Hin. pose proof (proj1 (L1IN sc) Hin) as [Hin0 NE]. apply RM; [exact (K7 sc Hin0)|]. cbn [fst].
+        intros sc Hin. pose proof (proj1 (L1IN sc) Hin) as [Hin0 NE].
         placed. pose proof (SECP sc Hin0) as (_ & Q2 & Q3 & Q4 & _). apply aapp_env in Q2; [| unfold kPageSize in Q4; clear - Q4; lia].
-        unfold wz. rewrite unsigned_lit by (clear - Q2 Q3 Q4; try acb; unfold kPageSize in *; lia). exact NE. }
+        assert (WSC : bv_unsigned (wz (sc_map_size sc)) = sc_map_size sc)
+          by (unfold wz; apply unsigned_lit; clear - Q2 Q3 Q4; try acb; unfold kPageSize in *; lia).
+        apply RM; [exact (K7 sc Hin0)| |].
+        - cbn [fst]. unfold wz. rewrite unsigned_lit by (clear - Q2 Q3 Q4; try acb; unfold kPageSize in *; lia). exact NE.
+        - cbn [snd]. rewrite WSC. unfold kPageSize in Q4. clear - Q4. lia. }
       split.
       { intros x Hx. apply KEEP; [exact (K8a x Hx)|]. unfold ALOWSH_LO, AHI_LO in Hx. clear - Hx BA B; try acb. lia. }
       split.
@@ -251,16 +282,18 @@ Section RSModel.
       destruct K10 as (C1 & C2 & C3). unfold hsec in *. change (as_sec st2) with l1. change (as_sec (a_st s)) with (as_sec st) in C1, C2, C3.
       pose proof (Permutation_filter schigh _ _ (secdel_l1_perm _ _ _ HIDX)) as PF. fold l1 in PF. cbn [List.filter] in PF.
       assert (EHI : KInv.ehi (wz a, wz msz) = a + msz) by (unfold KInv.ehi; cbn [fst snd]; rewrite WA, WM; reflexivity).
-      unfold h2 in VM2 |- *. rewrite VM2.
+      unfold h2 in VM2' |- *. rewrite VM2'.
+      pose proof (hcnt_filter_le (nz_at (a + msz)) (map_remove (vm_maps hh) (wz a))) as HCF.
+      pose proof (hlen_filter_le (nz_at (a + msz)) (map_remove (vm_maps hh) (wz a))) as HLF.
       destruct (schigh h) eqn:SH; rewrite ?SH in PF; cbv iota in PF;
         pose proof (Permutation_length PF) as PL0; pose proof (zsum_perm _ _ (Permutation_map sc_map_size PF)) as PS;
         cbn [length] in PL0; cbn [map SecGap.zsum] in PS; fold msz in PS; unfold zlen in *; rewrite <- PL0 in C1; rewrite <- PS in C2.
       - (* [comment removed for export] *)
         unfold schigh in SH. apply Z.ltb_lt in SH. fold a msz in SH. rewrite <- EHI in SH.
         pose proof (hcnt_map_remove_in _ _ E0IN SH) as HC. pose proof (hlen_map_remove_in _ _ E0IN SH) as HL. cbn [fst snd] in HC, HL. rewrite WM in HL.
-        split; [clear - HC C1; lia|]. split; [clear - HL C2; lia|]. intros sc Hin. exact (C3 sc (SUB1 sc Hin)).
+        split; [clear - HC HCF C1; lia|]. split; [clear - HL HLF C2; lia|]. intros sc Hin. exact (C3 sc (SUB1 sc Hin)).
       - pose proof (hcnt_map_remove_le (vm_maps hh) (wz a)) as HC. pose proof (hlen_map_remove_le (vm_maps hh) (wz a)) as HL.
-        split; [clear - HC C1; lia|]. split; [clear - HL C2; lia|]. intros sc Hin. exact (C3 sc (SUB1 sc Hin)).
+        split; [clear - HC HCF C1; lia|]. split; [clear - HL HLF C2; lia|]. intros sc Hin. exact (C3 sc (SUB1 sc Hin)).
     Qed.
 
     (* [comment removed for export] *)
@@ -272,10 +305,15 @@ Section RSModel.
       assert (WA : bv_unsigned (wz a) = a) by (unfold wz; apply unsigned_lit; clear - B; try acb; lia).
       assert (WM : bv_unsigned (wz msz) = msz) by (unfold wz; apply unsigned_lit; clear - B; try acb; lia).
       assert (E0IN : In (wz a, wz msz) (vm_maps hh)) by exact (ak_secmaps s mo AK h HIN).
+      pose proof (maps_subtract_rm_nz (vm_maps hh) (wz a) (wz msz) ltac:(rewrite WM; clear - B; try acb; lia) NOV E0IN) as MSEQ.
+      rewrite WA, WM in MSEQ.
+      assert (VM2' : vm_maps h2 = List.filter (nz_at (a + msz)) (map_remove (vm_maps hh) (wz a))) by (rewrite VM2; exact MSEQ).
       intros x Hx NI. rewrite in_rangesb_zcovb in Hx |- *. apply zcovb_true in Hx as (r & Hr & R). apply zcovb_true. exists r. split; [| exact R].
-      unfold h2 in VM2 |- *. rewrite VM2. unfold map_remove. apply filter_In. split; [exact Hr|]. rewrite bv_eqb_Z, WA. apply negb_true_iff. apply Z.eqb_neq.
-      intros Eb. pose proof (bv_unsigned_in_range _ (snd r)) as RR.
       unfold LazyLedger.lo, LazyLedger.hi in R.
+      unfold h2 in VM2' |- *. rewrite VM2'. apply filter_In. split.
+      2:{ unfold nz_at. apply negb_true_iff. apply andb_false_iff. left. apply Z.eqb_neq. clear - R. lia. }
+      unfold map_remove. apply filter_In. split; [exact Hr|]. rewrite bv_eqb_Z, WA. apply negb_true_iff. apply Z.eqb_neq.
+      intros Eb. pose proof (bv_unsigned_in_range _ (snd r)) as RR.
       destruct (nooverlap_in_in _ _ _ NOV Hr E0IN) as [E|[D|D]].
       - subst r. cbn [fst snd] in R. rewrite WA, WM in R. exact (NI R).
       - unfold LazyLedger.lo, LazyLedger.hi in D; cbn [fst snd] in D; rewrite ?WA, ?WM in D. clear - D Eb R B RR; try acb; lia.

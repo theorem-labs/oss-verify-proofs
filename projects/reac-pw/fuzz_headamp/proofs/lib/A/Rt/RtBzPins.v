@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzPins.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the image-derived counts in the header comment recomputed for this image. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzPins.v; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the image-derived counts in the header comment recomputed for this image. *)
 (* G2 (rom_viewO from AR), the computed half: every read-only byte of this image (fuzz_headamp.asan) that the runtime OWNS
    (as_owned_static, A/AF0m.v Tfib_owned_static) is pinned to its image byte by a cell of the per-binary record's
    constant table (A/AF0m.v Tfib_const_abs, whose header says the table ends with cells for exactly these bytes).

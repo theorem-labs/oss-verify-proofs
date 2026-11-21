@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VM state record's two new fields, the kernel build and the vDSO, in one rewrite). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -281,7 +282,7 @@ Proof.
   split.
   { apply (pendS_intro A rhoX tp md (with_vmmaps h' md) a (mmap_n len) (secmapsize nv)); try assumption. clear -SMB. lia. }
   split.
-  { replace (with_vmmaps h' md) with (with_vm (mkVmState h' (m_vm_lazy md) (m_vm_materialized md)) md) by (destruct md; reflexivity). apply HKc. exact HK. }
+  { replace (with_vmmaps h' md) with (with_vm (mkVmState h' (m_vm_lazy md) (m_vm_materialized md) (m_kernel md) (m_vdso md)) md) by (destruct md; reflexivity). apply HKc. exact HK. }
   split; [unfold tp_ok in Htp |- *; unfold rho1; rewrite rho_set_rw_other by (apply NEQ; unfold GW; lia); exact Htp|].
   split; [apply (HUS rhoX rho1); [eapply agree_below_le; [|exact Hag1]; unfold GW, NF; lia | exact HU]|].
   split; [exact Hnv|].

@@ -5,7 +5,7 @@
    proves no function (kind: model lemma; the model and byte-encoding lemmas of m_file's image-B prologue, for the
    segment S_MF_ENTRY).
 
-   Adapted from image A's lib/A/Prog/m_file_s_entry_m.v (a working branch, dab7f3ccb5c5): the
+   Adapted from image A's lib/A/Prog/m_file_s_entry_m.v (a working branch): the
    Require lines name image B's copies (lib.B.YG0f, lib.B.YG0n, lib.B.Prog.SegABase, lib.B.Rt.RtPFShared). A's
    mf_lab_text, mf_c1, mf_file_lines, mf_file_nil and mf_c1_counters are left out: lib/B/Prog/mf_entry_d.v states
    the image-B model terms (mf_lab_text, mfe_reading, mfe_c0, mfe_c1, mf_file_lines, mf_file_nil, mfe_c0_counters).

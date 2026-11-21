@@ -1,7 +1,7 @@
 (* fuzz_state image B, realloc thin segment S2b: the copy routine's return -> Reallocate's `jal Deallocate`.
    The RGtop hypothesis is [seg_mid_b K2_fs K3_fs] at fs's image-B instance (lib/B/FSRealloc_inst.v, [FS_seg_mid_b]);
-   this file proves it ([fs_seg_mid_b]) over a Theorem Labs lane's c5 RGtop (2bd8ae006ef).
-   The B twin of lib/A/FSRealloc_S2b.v (a working branch ab749aeaed7): the same proof, at image B's
+   this file proves it ([fs_seg_mid_b]) over a Theorem Labs lane's c5 RGtop.
+   The B twin of lib/A/FSRealloc_S2b.v (a working branch): the same proof, at image B's
    addresses and instance.
 
    Rule 24 (released-proof lookup): proves function __asan::Allocator::Reallocate chain on fs image B
@@ -14,7 +14,7 @@
    of these walks is fs's pre-ruling bespoke line, a TEMPLATE ONLY (owner ruling a Theorem Labs lane 04:50Z): S2b lies inside
    ricptC_spec (a working branch, proofs/omx-clap-core/fuzz_state/lib/AZ/AsanW/AReallocP.v:370), which
    runs through the copy without a cut here; it is not bridged.
-   TEMPLATES: primary, lib/A/FSRealloc_S2b.v @ ab749aeaed7 (fs image A, proved); its donor is cgif_rgb_fuzzer's
+   TEMPLATES: primary, lib/A/FSRealloc_S2b.v (fs image A, proved); its donor is cgif_rgb_fuzzer's
    released realloc family, proofs/cgif/cgif_rgb_fuzzer/lib/YF78.v:553 (tfx_arealloc) with YF67 / YF6p: S2b is the
    donor's step from REAL(memcpy)'s return 0x32584 to `jal Deallocate` 0x3259c, i.e. YF67.v:126 (c1_postM, the register
    list at the Deallocate call), YF6p.v:45 (DCFACTS) and YF78.v:289-358 (the regsD / memD hypotheses D1..DP, AR_D,
@@ -50,9 +50,9 @@
 
    TWO PREMISES THE PROOF NEEDS come from c5's statement: [HRAW], the RAW copy frame
    `forall x : word, ~ (q <= bv_unsigned x < q + min(req_size n_old, n)) ->
-   mem3 x = memM x`, is seg_mid_b's premise (RGtop.v:289-290; amemcpy_realizes gives it, ReallocG.v:249; the donor had
+   mem3 x = memM x`, is seg_mid_b's premise (RGtop.v:290-291; amemcpy_realizes gives it, ReallocG.v:250; the donor had
    it: YF78.v:300 DM), needed because ARU's [ahs] part (YG0n.v:441-449) reads RAW memory at hidden in-band bytes, which
-   an aview frame cannot reach; [HBOT], `ly_bot ly + FS_RFRAME < spZ regs`, is rentry's realloc_pre (ReallocG.v:120,
+   an aview frame cannot reach; [HBOT], `ly_bot ly + FS_RFRAME < spZ regs`, is rentry's realloc_pre (ReallocG.v:121,
    RSTACK := FS_RFRAME), needed for Deallocate's `ly_bot ly2 < spZ regsD` at spZ regsD = spZ regs - FS_RFRAME.
 
    No Axiom, no Admitted. *)

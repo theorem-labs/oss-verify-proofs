@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: nret_MSsvc_copy1 clears the LR/SC reservation after a system call. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -19,7 +20,7 @@ Context {ACEIL : Ceil}.
 
 Lemma nret_MSsvc_copy1 : forall R F pc x8 fc rv m ro r zs us c cis,
   nret (MSsvc R F pc x8 fc rv m ro) (mkEffectU r [] zs us [c] cis)
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv (apply_copy m (apply_zeros (apply_unmaps m us) zs) c) ro.
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None (apply_copy m (apply_zeros (apply_unmaps m us) zs) c) ro.
 Proof. reflexivity. Qed.
 
 Definition in_rangeZ (a n : Z) (x : word) : bool :=

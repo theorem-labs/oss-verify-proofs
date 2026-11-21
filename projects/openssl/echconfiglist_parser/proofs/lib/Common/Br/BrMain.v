@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HR0 is the image's reservations plus the launch's vDSO/vvar intervals, with Hvdso; the invariant has one field fewer; the channel reader is a section hypothesis; the bridge state has no ghost range (co_gres)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -229,7 +230,11 @@ Variable FS0 : Fs.Fs.
 Hypothesis SEGS_in_hull : forall a : word, APS.in_hull A (bv_unsigned a) = false -> find_segment segs (bv_unsigned a) 1 = None.
 Hypothesis RES_cover : forall z, APC.img_lo A <= z < APC.img_hi A -> APS.in_ivs z R0 = true.
 Hypothesis HULL_ne : APC.img_lo A < APC.img_hi A.
-Hypothesis HR0 : R0 = segments_reserved segs.
+(* 08b1429: the reserved ledger is the image's reservations plus the launch's extra
+   intervals (the vDSO/vvar pair); the shape of [APS.co_res]. *)
+Hypothesis HR0 : exists rx : list (word * word),
+  R0 = segments_reserved segs ++ rx
+  /\ Forall (APS.resx_entry_ok A) rx /\ (length rx <= APC.n_resx A)%nat /\ APS.sum_sizes rx <= APC.resx_bytes A.
 (* [comment removed for export] *)
 Variable BD : bdata.
 Variable xv : nat -> word.
@@ -255,6 +260,9 @@ Local Notation V := (m_vmmaps m).
 Local Notation E := (env_of rho xv xb VT).
 
 Hypothesis HD : DInvX cfg segs IM R0 Lim rl keep mem0 XI xtags fr0 fc0 rom0 hi n rho F L ms m.
+Hypothesis Hvdso : incl (vdso_reserved (m_kernel m) (vdso_top V)) R0.
+(* LPS c0dd863a: [APS.cs_ok]'s [co_ehdr] at the bridge's valuation *)
+Hypothesis Hehdr : AX2.ev E APC.V_EHDR = Z_to_bv 64 (vdso_top V - vdso_text_pages (m_kernel m) * page_size).
 Hypothesis Hfr0 : fr0 = bvmap_empty.
 Hypothesis Hfc0 : fc0 = Z_to_bv 32 0.
 Hypothesis Hrom0 : rom0 = seg_rom segs.
@@ -318,7 +326,7 @@ Qed.
 
 Lemma br_alloc_top : alloc_top V = ISP - STKz /\ CEILz <= alloc_top V <= TOPMAXz.
 Proof.
-  destruct br_inv as [_ _ Hlo Hhi _ _ _ _ _ _ _ _ _ _ _ _].
+  destruct br_inv as [_ _ Hlo Hhi _ _ _ _ _ _ _ _ _ _ _].
   unfold alloc_top, stack_max_size, sp_window_lo, sp_window_hi, CEILz, TOPMAXz, STKz in *. lia.
 Qed.
 
@@ -542,7 +550,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma br_seps : APS.seps (vm_maps V).
 Proof.
-  destruct br_inv as [_ _ _ _ _ _ _ _ Hd _ _ _ _ _ _ _]. revert Hd.
+  destruct br_inv as [_ _ _ _ _ _ _ _ Hd _ _ _ _ _ _]. revert Hd.
   induction (vm_maps V) as [|p l IH]; intros Hd; [constructor|].
   destruct Hd as [Hp Hl]. constructor; [|exact (IH Hl)].
   apply Forall_forall. intros q Hq. pose proof (proj1 (Forall_forall _ _) Hp q Hq) as Hpq.
@@ -551,7 +559,7 @@ Qed.
 
 Lemma br_wf : model_ivs_wf m.
 Proof.
-  destruct br_inv as [_ _ Hsplo _ _ _ Htop _ _ _ _ Hna _ _ _ _].
+  destruct br_inv as [_ _ Hsplo _ _ _ Htop _ _ _ _ Hna _ _ _].
   pose proof (alloc_top_lt V) as Hat. unfold two_pow_64 in Hat.
   assert (Hmaps : forall p, In p (vm_maps V) -> e_hi p <= 2 ^ 64).
   { intros p Hp. pose proof (proj1 (Forall_forall _ _) Htop p Hp) as [_ H2]. lia. }
@@ -571,7 +579,7 @@ Lemma br_bounds :
                     /\ (bv_unsigned (fst iv) + bv_unsigned (snd iv) <= APC.img_lo A \/ APC.img_hi A <= bv_unsigned (fst iv))
                     /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= alloc_top V) (vm_maps V).
 Proof.
-  destruct br_inv as [_ _ _ _ Hpos Hal Htop HdR _ _ _ _ _ _ _ _].
+  destruct br_inv as [_ _ _ _ Hpos Hal Htop HdR _ _ _ _ _ _ _].
   apply Forall_forall. intros p Hp.
   pose proof (proj1 (Forall_forall _ _) Hpos p Hp) as H1.
   pose proof (proj1 (Forall_forall _ _) Hal p Hp) as [H2 H3].
@@ -590,7 +598,7 @@ Qed.
 
 Lemma br_nasub : forall z, APS.in_ivs z (vm_noaccess V) = true -> APS.in_ivs z (vm_maps V) = true.
 Proof.
-  intros z Hz. destruct br_inv as [_ _ _ _ _ _ _ _ _ _ _ Hna _ _ _ _].
+  intros z Hz. destruct br_inv as [_ _ _ _ _ _ _ _ _ _ _ Hna _ _ _].
   apply in_ivs_true in Hz as (q & Hq & Hzq). apply in_ivs_true.
   pose proof (proj1 (Forall_forall _ _) Hna q Hq) as (_ & p & Hp & Hin1 & Hin2).
   exists p. split; [exact Hp|]. lia.
@@ -598,7 +606,7 @@ Qed.
 
 Lemma br_eager : eager_used m <= fl_S L.
 Proof.
-  destruct br_inv as [_ _ _ _ _ _ _ _ _ _ Hsz _ _ _ _ _].
+  destruct br_inv as [_ _ _ _ _ _ _ _ _ _ Hsz _ _ _ _].
   pose proof (vm_backing_used_le_live m (proj2 br_nolazy)) as H1.
   rewrite vm_backing_used_split, (proj2 br_nolazy) in H1. cbn [length] in H1. lia.
 Qed.
@@ -758,6 +766,9 @@ Hypothesis Hfds : APS.fds_ok E (APC.a_fd CS) m.
 Hypothesis Hfs : m_fs m = FS0.
 Hypothesis Htid : APC.a_tidset CS = false -> m_tid m = None.
 Hypothesis Hsinv : SINV E (ms_mem ms).
+(* [cs_ok]'s [co_rdr] at LPS 727298f3: the channel reader of the model, which the Fx
+   invariants do not carry; a caller has it from the launch ([Run.valid_input_channel_reader]). *)
+Hypothesis Hrdr : m_channel_reader m = true.
 
 (* [comment removed for export] *)
 Hypothesis Hlimeq : vm_limit V = Lim.
@@ -769,7 +780,7 @@ Proof.
                            & Hvis & Hgh & Hab).
   destruct br_exact as [Emaps Ena].
   destruct (maps_check_sound _ _ Hmaps br_in_maps) as [Hmm Hkinds].
-  pose proof br_inv as Hinv. destruct Hinv as [Hres Hlimit _ _ _ _ _ _ _ _ Hsz _ _ _ Hbrkmin _].
+  pose proof br_inv as Hinv. destruct Hinv as [Hres Hlimit _ _ _ _ _ _ _ _ Hsz _ _ _ Hbrkmin].
   assert (HallowA : APS.allowA A E CS = []) by (unfold APS.allowA; rewrite Hvis, Hgh; reflexivity).
   apply CXI.cs_ok_intro; [|exact Hisp].
   constructor.
@@ -780,7 +791,10 @@ Proof.
   - exact Hfds.
   - exact Hfs.
   - exact Htid.
-  - rewrite Hres. exact HR0.
+  - rewrite Hres. split; [exact HR0 | split; [| split; [exact Hvdso | split; [rewrite Hgh; constructor | exact Hehdr]]]].
+    pose proof (li_disj_R _ _ _ _ _ br_inv) as HdR.
+    eapply Forall_impl; [|exact HdR]. intros p Hp. eapply Forall_impl; [|exact Hp].
+    intros q Hq. unfold APS.iv_disjoint. unfold e_disj, e_hi, e_lo, e_sz in Hq. lia.
   - exact Hlimeq.
   - rewrite Emaps. exact Hmm.
   - apply Forall_forall. intros mp Hmp Hhole. exfalso.
@@ -817,6 +831,7 @@ Proof.
   - intros a _ _ _ Hlz _. rewrite (proj1 br_nolazy) in Hlz. discriminate.
   - exact Hsinv.
   - (* [comment removed for export] *) rewrite Hvmx. cbn [fst snd]. split; [exact Ena | exact (proj1 br_nolazy)].
+  - exact Hrdr.
 Qed.
 
 Theorem bridge_sound :

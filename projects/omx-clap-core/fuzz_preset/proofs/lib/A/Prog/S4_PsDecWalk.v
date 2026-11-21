@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 635 of its 665 lines of code are new or changed and 322 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsRet.v, with its module names changed; 143 of its 195 lines of code are new or changed and 613 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4 (parse_string's decode stretch, part C): the WALK HELPERS of S4_PsDec.v. The engine
    facts a run from PS_DEC needs between its leaves: the out byte w is never a shadow byte, a shadow obligation at the
    current memory from the entry's text range, the cut a run reaches first (cut_of), the branch facts in Z.
    Numerals: 1276 / 1352 / 452 (DERIVED: offsets inside parse_string of the free cut, the success tail, the hex loop),
    2 ^ 47 / 2 ^ 44 / 8 (DERIVED: the address band, its shadow, a granule); no ADDRESS.
-   GENERIC-P (a Theorem Labs lane 12:18Z / 12:22Z; base 44a91d58bb5): dec_w_ns is over
+   GENERIC-P (a Theorem Labs lane 12:18Z / 12:22Z): dec_w_ns is over
    ps_at_decP .. P (Variable P right after SK, as in S4_PsDecKit.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

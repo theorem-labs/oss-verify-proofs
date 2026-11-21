@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_transport image A (asan) by gen_ad1k.py (start-up set of record, sha256 2a6885e5c27f) from fuzz_transport.asan, the regions of its generated A/AD2j.v and the owned statics of its generated A/AF0m.v; the donor A/AD1k.v at origin/ossv/recipes 25e3d17bdb50 gives the text only; the cut set it was given is Tfib_owned_static of A/AF0m.v with the payload bodies of the image's .bss asan_globals appended (18 harness globals; prep_owned.py --globals-bss, a parse copy: A/AF0m.v itself is unchanged) *)
+(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_transport image A (asan) by gen_ad1k.py (start-up set of record, sha256 2a6885e5c27f) from fuzz_transport.asan, the regions of its generated A/AD2j.v and the owned statics of its generated A/AF0m.v; the donor A/AD1k.v gives the text only; the cut set it was given is Tfib_owned_static of A/AF0m.v with the payload bodies of the image's .bss asan_globals appended (18 harness globals; prep_owned.py --globals-bss, a parse copy: A/AF0m.v itself is unchanged) *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader flag carried as fdchan's third conjunct (cs_ok's last field co_rdr), in reac-repacer/fuzz_uci's form); internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_transport.asan (libdiginet/fuzz_transport asan) sha256 e89be137db17b720e0310addc2dcc601998945478a9102e6a9850b0566106350; unstripped twin sha256 86efc3a80314981197619c115e313dbde50e8b86a6c5fefad4e5cc420250c792 *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -314,7 +315,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -347,7 +348,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

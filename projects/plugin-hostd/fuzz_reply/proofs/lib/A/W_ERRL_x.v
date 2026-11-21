@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_ERRL_x.v, with its module paths changed; 9 of its 83 lines of code are new or changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* rule 24: no function proved (kind: image law at the instance: errno's four bytes are readable and writable).
    Written for a Theorem Labs lane's top_x row ERRL_x (a Theorem Labs lane F1; integrator ReallocPrimary).
 
@@ -9,12 +10,12 @@
    lie in a writable segment.  The relation is never read: zz_ERRL (W_LLVMFuzzerTestOneInput_addI.v:247-275) drops
    its AR premise.  So the fact is stated ONCE, relation-free ([errno_rw_core], zz_ERRL's script for every W and
    mem), and both relation forms are 2-line corollaries:
-   - [errno_law_of_core] : errno_law B (the AR form, W_LLVMFuzzerTestOneInput_cut.v:328, zz_ERRL's statement);
-   - [errno_law_x_holds] : errno_law_x B ARx for EVERY ARx (W_LLVMFuzzerTestOneInput_cut_x.v:214, top_x's ERRL_x
+   - [errno_law_of_core] : errno_law B (the AR form, W_LLVMFuzzerTestOneInput_cut.v:329, zz_ERRL's statement);
+   - [errno_law_x_holds] : errno_law_x B ARx for EVERY ARx (W_LLVMFuzzerTestOneInput_cut_x.v:215, top_x's ERRL_x
      hypothesis `errno_law_x TfibB ARX`), in particular at reply's ARX (ARcf at CfParams_reply /\ Hp = []).
    Unit facts used: TfibSyms B (zz_HEV: as_errno B = TFIB_ERRNO_A), reply's segment table (seg_rom on errno's bytes,
    by vm_compute) and its writable-segment table (segwb, by vm_compute), exactly as zz_ERRL.
-   [errno_azs] : azs B (as_errno B) 4 (W_contract.v:314), the drain stages' HERRZ, from the start-up table alone. *)
+   [errno_azs] : azs B (as_errno B) 4 (W_contract.v:315), the drain stages' HERRZ, from the start-up table alone. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -88,18 +89,18 @@ Proof.
     apply inG_cons. left. unfold in_zr. cbn [fst snd]. lia.
 Qed.
 
-(* The AR form (W_LLVMFuzzerTestOneInput_cut.v:328), zz_ERRL's statement. *)
+(* The AR form (W_LLVMFuzzerTestOneInput_cut.v:329), zz_ERRL's statement. *)
 Lemma errno_law_of_core : forall B, TfibSyms B -> errno_law B.
 Proof. intros B TS ly S W mem md _. exact (errno_rw_core B TS W mem). Qed.
 
-(* The ARx form (W_LLVMFuzzerTestOneInput_cut_x.v:214), top_x's ERRL_x, for every relation ARx. *)
+(* The ARx form (W_LLVMFuzzerTestOneInput_cut_x.v:215), top_x's ERRL_x, for every relation ARx. *)
 Lemma errno_law_x_holds : forall B, TfibSyms B ->
   forall ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop,
   errno_law_x B ARx.
 Proof. intros B TS ARx ly S Hp W mem md _. exact (errno_rw_core B TS W mem). Qed.
 
-(* errno's four bytes lie in one of the instance's zero-shadow ranges (W_contract.v:314 azs), so every AR / ARx state
-   reads shadow 0 there (W_contract.v:443 azs_range_addressable, W_contract_x.v:416 azs_range_addressable_x): AF0m's
+(* errno's four bytes lie in one of the instance's zero-shadow ranges (W_contract.v:315 azs), so every AR / ARx state
+   reads shadow 0 there (W_contract.v:444 azs_range_addressable, W_contract_x.v:417 azs_range_addressable_x): AF0m's
    Tfib_zero_shadow range (0x5d8b60, 0x5fb000 - 0x5d8b60) holds [TFIB_ERRNO, TFIB_ERRNO + 4) = [0x5d93cc, 0x5d93d0).
    A fact of the start-up table alone; zz_HZS's script (W_LLVMFuzzerTestOneInput_addI.v:60-66). *)
 Lemma errno_azs : forall B, TfibSyms B -> azs B (as_errno B) 4.

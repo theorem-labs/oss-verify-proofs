@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the empty writev node proves RomBase.sys_rob for the three-part node_ok: its check is shown to be the same closed form at every larger read-only backing, read through RomWritev, and the reader conjunct of fdchan is destructed). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,6 +21,7 @@ From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YF00 YF03.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YF8v YE1o YF8r.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YF04.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomBase RomWritev.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -151,23 +153,38 @@ srealizes segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) mem ro
 srealizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
 intros regs pc mem rom model fd ch b0 T HAI Hno Hfdc H32 Hfd Hcnt Hb0 Hl0 Hiok Hok0 Hav Hc.
-set (CI := [(getr regs 11, 16%nat)]).
-destruct (node_ret_only_copyins_lazy segs H A regs pc mem rom model CI (Z_to_bv 64 0) model [] HAI)
-as (Hn & HA & Hs).
-- intros eff. rewrite (chk66 segs) by img_exact Hno. rewrite Hfd, H32.
-destruct Hfdc as [Hlk Hch].
+(* the check is the same closed form at every larger backing: the two words it reads are read
+   in full at the node *)
+assert (Hk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only_copyins [(getr regs 11, 16%nat)] eff (Z_to_bv 64 0) model []).
+{ intros rom' Hr eff.
+assert (Hx : mem_ext (ms_read_byte (pend_at regs pc mem rom)) (ms_read_byte (pend_at regs pc mem rom')))
+by exact (mem_ext_read_byte_wrom (pend_at regs pc mem rom) rom' Hr).
+assert (Hb0' : ms_read_u64 (pend_at regs pc mem rom') (getr regs 11) = Some b0)
+by (rewrite <- read_u64_ms in Hb0 |- *; exact (wv_read_u64_ext _ _ _ _ Hx Hb0)).
+assert (Hl0' : ms_read_u64 (pend_at regs pc mem rom') (Z_to_bv 64 (bv_unsigned (getr regs 11) + 8)) = Some (Z_to_bv 64 0))
+by (rewrite <- read_u64_ms in Hl0 |- *; exact (wv_read_u64_ext _ _ _ _ Hx Hl0)).
+rewrite (chk66 segs) by img_exact Hno. rewrite Hfd, H32.
+destruct Hfdc as [Hlk [Hch _]].
 unfold check_writev. cbn [in_mem sys_input]. rewrite Hlk, Hch, Hcnt.
 img_change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
 unfold import_iovecs, import_iovecs_accesses. rewrite bv_eqb_refl, Hiok. cbn [negb].
-rewrite (read_iovec_entry_of (pend_at regs pc mem rom) (getr regs 11) b0 (Z_to_bv 64 0) Hb0 Hl0)
+rewrite (read_iovec_entry_of (pend_at regs pc mem rom') (getr regs 11) b0 (Z_to_bv 64 0) Hb0' Hl0')
 by (img_try (img_change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; img_lia)).
 img_change (Z.min (bv_unsigned (Z_to_bv 64 0)) MAX_RW_COUNT) with 0%Z. rewrite Hok0. cbn [negb].
 cbv zeta.
 replace (iovs_total (cap_iovecs [(b0, Z_to_bv 64 0)]) =? 0)%Z with true by img_refl.
-(subst CI; cbv beta). destruct (check_ret_only_copyins _ _ _ _ _); img_refl.
+rewrite (iovec_entry_accesses_of _ _ _ _ Hb0' Hl0').
+first [img_refl | destruct (check_ret_only_copyins _ _ _ _ _); img_refl]. }
+set (CI := [(getr regs 11, 16%nat)]).
+destruct (node_ret_only_copyins_lazy segs H A regs pc mem rom model CI (Z_to_bv 64 0) model [] HAI)
+as (Hn & HA & Hs).
+- exact (Hk rom (rom_ext_refl _)).
 - img_exact (AI_halted segs H A model HAI).
 - repeat split; img_refl.
 - img_exact Hav.
+- apply (sys_rob_pend segs). intros r Hr eff. rewrite (Hk r Hr eff), (Hk rom (rom_ext_refl _) eff). reflexivity.
 - img_exact (srz_silent1 segs _ _ T Hn (Hc _ HA Hs)).
 Qed.
 End g.

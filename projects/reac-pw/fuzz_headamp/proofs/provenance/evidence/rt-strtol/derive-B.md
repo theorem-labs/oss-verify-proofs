@@ -1,6 +1,6 @@
 # Image B (fuzz_headamp.asan-ubsan) twin of the strtol wrapper chain: lib/AU
 
-Route: derive_y.py b7b132fb12a7 (sha256 b7b132fb12a73966...) over this branch's committed lib/A files at edf6010b0aae,
+Route: derive_y.py b7b132fb12a7 (sha256 b7b132fb12a73966...) over this branch's committed lib/A files,
 one run per directory (the tool writes base names into one directory), with --rename-mod lib.A=lib.AU,
 --rename-tok Asan=AsanUbsan, --rename-tok Img0=Img0U (lib/AU/Img0U.v is image B's one source of segments),
 --keep-name, --keep-head-literals; driver run-dy.sh and post-processor post_dy.py (copies in the evidence directory).
@@ -9,7 +9,7 @@ lib/A: astrtol_realizes keeps ONE text, the one HPgCSpec.v names for both images
 are image-independent too and stay lib/A.
 
 Independent checks:
-- alreloc a5c53bb2bed4 (A image -> B image, --from-build asan --build asan-ubsan --assume-source --dry, at 8017a2d315a5):
+- alreloc a5c53bb2bed4 (A image -> B image, --from-build asan --build asan-ubsan --assume-source --dry):
   129 distinct image-range numerals compared per file: 127 agree with derive_y, 2 disagree, both decided by hand
   against image B: R_prim_defs.v 0x40000 (6 rows; the 2^18 rounding constant of round_fa; derive_y moved it to
   0x40080 as a code address: WRONG; alreloc keeps it) and the comment number 0x84a0c in RtLStrtolH.v (the parse's

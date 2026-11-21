@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0c.v for libreac/fuzz_grant's program walk, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_grant lib/A/Prog/PaShadow.v at a working branch 32cceacec16, with its module paths changed (lib.A.Prog -> lib.Reusable). *)
+(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_grant lib/A/Prog/PaShadow.v at a working branch, with its module paths changed (lib.A.Prog -> lib.Reusable). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* This file is unit-independent: it states the walk layer over the symbols and tables a unit supplies. Any value of one unit (an address, a size, a table of its own) belongs in that unit's Grant* files, not here. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

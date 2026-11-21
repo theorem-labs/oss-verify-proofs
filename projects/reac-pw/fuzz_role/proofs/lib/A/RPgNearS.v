@@ -20,7 +20,7 @@
      reflexivity), so a view equation becomes a lib/Lib `bytes_at` and an 8-byte cell value becomes `le8`.
 
    These are short generic lemmas; the shapes follow proofs/libreac/fuzz_boxreg/lib/A/FMgxa_bridge.v and
-   proofs/libreac/fuzz_boxreg/lib/A/Rt/FMgxaSeamNorm.v at 781f46bc05c, and the le8 / le_byte digit bridges
+   proofs/libreac/fuzz_boxreg/lib/A/Rt/FMgxaSeamNorm.v, and the le8 / le_byte digit bridges
    follow this unit's lib/KindBGlue.v (word_mem_le8, bytes_at_le8_word). *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.

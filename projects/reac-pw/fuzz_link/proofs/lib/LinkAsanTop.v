@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v (and its fuzz_grant form,
-   a working branch lib/A/AsanTop.v, and its fuzz_scene form, a working branch e624b1e2c9a lib/A/SceneAsanTop.v)
+   a working branch lib/A/AsanTop.v, and its fuzz_scene form, a working branch lib/A/SceneAsanTop.v)
    for fuzz_pcap: the plain side is fuzz_pcap's released realization (built as its lib/AgreeFrameO.v builds it for the
    ubsan agreement, at AgreePcap.ag_out_shape), module paths changed. Moved from lib/A/ to the lib/ root, where the
    donor keeps the file that names both ASan images (proofs/cgif/cgif_file_fuzzer/lib/Theorems.v): it is Required by
    the asan closer lib/A/PcapClose.v and by the asan-ubsan closer lib/B/PcapCloseB.v. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput, mmap base and entry draw); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_link's asan_agrees and asan_halts, each from ONE ASan-side obligation, in the form of the file named above:
    - ASAN_T: from every valid start, the ASan build realizes, with no cut (Reusable/YK18.v srealizes), the trace set
      SPECX at link_shape, the library shape of the ASan driver's statement (lib/ZTraceSpec.v checksum_shape: each
@@ -151,6 +152,9 @@ Definition ASAN_T : Prop :=
   forall sp brk mbase rnd inp,
   valid_sp sp -> valid_brk Asan.M.loaded_segments brk -> valid_mmap_base mbase ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  (* 727298f3: [valid_entry]'s fifth conjunct, the launch's own check, read by the start-up's invariant
+     (as reac-pw/fuzz_role's A/RoleAsanTop.v). *)
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   srealizes Asan.M.loaded_segments
     (init_config Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
     (SPECX (LS:=link_shape) inp).
@@ -163,12 +167,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=mf_shape) inp) (SPECX (LS:=link_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (specx_mf_link inp)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (specx_mf_link inp)).
 Qed.
 
 Lemma lim_source_le_target : ShippedBudgets.lim_source <= target_alloc_limit.
@@ -183,8 +187,8 @@ Proof.
     Asan.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=link_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation top at the ceiling as an invariant, and a fresh grant at the address of the model's Linux placement). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Specs.
 
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Prelude.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.CJ.Lib Require Import PropExec MState ITree Nodes Decode NodesMM Gap.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.CJ.Spec Require Import Prelim Monad MSafe STree Malloc MallocCtrl Prog KInv KStep KLink
   MI_Kit MPos CtxMono LB_Logic LB_Kernel LB_Embed LB_Raw LB_Count.
@@ -215,7 +217,12 @@ Record NI (D : nat) (L : mled) (s : PState) (mo : Model) : Prop := mkNI {
   ni_li : LI L mo;
   ni_lim : LBUDGET <= vm_limit (m_vmmaps mo);
   ni_rsv : RSV (m_vmmaps mo);
-  ni_cnt : gc L + CB L + Z.of_nat D <= ETOT }.
+  ni_cnt : gc L + CB L + Z.of_nat D <= ETOT;
+  (* the ledger's allocation top is the ceiling the CJ nodes use: at the
+     revision the fresh-grant address is [Mmap.linux_place]'s, whose window
+     ends at [alloc_top].  It holds at the start ([ImplBridge.mstd']) and no
+     node moves [vm_init_sp] ([NodesInv.nstep_init_sp]). *)
+  ni_top : alloc_top (m_vmmaps mo) = alloc_ceiling }.
 
 Lemma zlen_app' {A} (l1 l2 : list A) : zlen (l1 ++ l2) = zlen l1 + zlen l2.
 Proof. unfold zlen. rewrite length_app. lia. Qed.
@@ -314,14 +321,29 @@ Lemma node_mmap_grant L D s mo len prot :
   exists kk eff mo1 a, ev_step e s = Vis (node_of e) kk /\ nstep (node_of e) mo eff mo1 [] /\ kk eff = Ret (Ok (a, s)) /\ is_err a = false
     /\ vm_limit (m_vmmaps mo1) = vm_limit (m_vmmaps mo) /\ vm_reserved (m_vmmaps mo1) = vm_reserved (m_vmmaps mo).
 Proof.
-  intros e HNI Hq Hp Hlen HB HLM HGB. pose proof HNI as [HK HLI Hlim HR HCnt].
+  intros e HNI Hq Hp Hlen HB HLM HGB. pose proof HNI as [HK HLI Hlim HR HCnt HTop].
   pose proof alloc_ceiling_lt64 as HC63.
-  destruct (gap_for L (S D) s mo len HNI ltac:(lia) HGB) as (a0 & F1 & F2 & F3 & F4 & F5).
+  destruct (gap_for L (S D) s mo len HNI ltac:(lia) HGB) as (g0 & G1 & G2 & G3 & G4 & G5).
   pose proof bottomup_floor_val as HF.
   destruct (mmap_len_facts len ltac:(lia)) as (M1 & M2 & M3 & M4).
+  (* At the revision the fresh grant returns the address [Mmap.linux_place]
+     gives, not any free one.  The gap [gap_for] finds lies in its second
+     window, [task_unmapped_base, alloc_top), so that address exists, and it
+     has the four properties the old free pick had
+     ([Placement.linux_place_admissible]). *)
+  assert (HPx : exists a, linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (mmap_len len) a).
+  { apply Placement.linux_place_exists; [exact M4| exact M2|].
+    exists g0. right. unfold gap_fits.
+    split; [exact G3|]. split; [unfold task_unmapped_base; lia|].
+    split; [rewrite HTop; exact G2| exact G5]. }
+  destruct HPx as [a0 HPl].
+  destruct (Placement.linux_place_admissible _ _ _ _ _ M4 M2 HPl) as (F3 & F4 & F2 & F5).
+  rewrite HTop in F2.
   set (nZ := mmap_len len) in *. set (aw := Z_to_bv 64 a0). set (nw := Z_to_bv 64 nZ).
   assert (Ua : bv_unsigned aw = a0) by (subst aw; apply unsigned_lit; lia).
   change (Z_to_bv 64 a0) with aw in F5. change (Z_to_bv 64 nZ) with nw in F5.
+  assert (HPi : Placement.linux_place_is (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) nZ aw = true).
+  { apply (proj2 (Placement.linux_place_is_iff _ _ _ _ aw M4 M2)). rewrite Ua. exact HPl. }
   assert (Hok : mmap_addr_ok len [] a0 = true).
   { rewrite <- Ua. apply (mmap_addr_ok_of_grant len [] aw mo); rewrite ?Ua; [lia| pose proof alloc_ceiling_State; fold nZ; lia| exact F3| exact F4| exact F2| exact F5| constructor]. }
   set (mo1 := if prot =? PROT_NONE then knoaccess_model aw nw mo else kmmap_model aw nw mo).
@@ -333,7 +355,11 @@ Proof.
   { subst mo1. destruct (prot =? PROT_NONE); unfold knoaccess_model, kmmap_model;
       (split; [apply minv_with_vmmaps; exact (kl_minv _ _ _ HK)| rewrite halted_with_vmmaps; exact (kl_halt _ _ _ HK)]). }
   destruct Hmi1 as [Hmi1 Hh1].
-  destruct (KL_mmap_new L (ps_brk s) mo mo1 a0 len (prot =? PROT_NONE) HK Hq Hlen Hok F5 Hmi1 Hh1 Hvm) as (_ & Hans & Herr).
+  (* [KL_mmap_new] now asks that the grant left the kernel alone; [mo1] is a
+     [with_vmmaps] of [mo] (Lib/Nodes.v:160-172), which keeps [vmst_kernel] *)
+  assert (Hker1 : m_kernel mo1 = m_kernel mo).
+  { subst mo1. destruct (prot =? PROT_NONE); unfold knoaccess_model, kmmap_model; reflexivity. }
+  destruct (KL_mmap_new L (ps_brk s) mo mo1 a0 len (prot =? PROT_NONE) HK Hq Hlen Hok F5 Hmi1 Hh1 Hker1 Hvm) as (_ & Hans & Herr).
   assert (Hansw : answer_ok L e a0 = true).
   { unfold e, answer_ok. change (Z.land MAPF MAP_FIXED =? 0) with true. exact Hans. }
 
@@ -348,7 +374,7 @@ Proof.
   -
     exists kk, (mkEffectU aw [] [] [(aw, nw)] [] []), mo1, a0.
     assert (G : kgrant_ok_na (Z_to_bv 64 0) mo aw nZ = true).
-    { unfold kgrant_ok_na. change (Z_to_bv 64 nZ) with nw. rewrite F5, Ua. rewrite (proj2 (Z.eqb_eq _ _) F3), (proj2 (Z.ltb_lt _ _) F4).
+    { unfold kgrant_ok_na. rewrite HPi. change (Z_to_bv 64 nZ) with nw. rewrite F5, Ua. rewrite (proj2 (Z.eqb_eq _ _) F3), (proj2 (Z.ltb_lt _ _) F4).
       rewrite (proj2 (Z.leb_le _ _) F2). reflexivity. }
     split; [exact Hvis|]. split.
     { split; [reflexivity|]. cbv zeta. change ((MAPF =? MAP_ANON_PRIV) && (PROT_NONE =? PROT_RW_Z)) with false.
@@ -359,7 +385,7 @@ Proof.
   -
     exists kk, (mkEffect aw [] [(aw, nw)]), mo1, a0.
     assert (G : kgrant_ok (Z_to_bv 64 0) mo aw nZ = true).
-    { unfold kgrant_ok. rewrite (proj2 (Z.leb_le _ _) HBUD). change (Z_to_bv 64 nZ) with nw. rewrite F5, Ua. rewrite (proj2 (Z.eqb_eq _ _) F3), (proj2 (Z.ltb_lt _ _) F4).
+    { unfold kgrant_ok. rewrite HPi. rewrite (proj2 (Z.leb_le _ _) HBUD). change (Z_to_bv 64 nZ) with nw. rewrite F5, Ua. rewrite (proj2 (Z.eqb_eq _ _) F3), (proj2 (Z.ltb_lt _ _) F4).
       rewrite (proj2 (Z.leb_le _ _) F2). reflexivity. }
     split; [exact Hvis|]. split.
     { split; [reflexivity|]. cbv zeta. change ((MAPF =? MAP_ANON_PRIV) && (PROT_RW =? PROT_RW_Z)) with true. cbv iota.
@@ -421,9 +447,12 @@ Proof. induction l as [|y l IH]; cbn; [lia|]. destruct (fst y =? a); cbn; lia. Q
 Lemma NI_child D L L' s s1 mo mo1 :
   NI (S D) L s mo -> KL L' (ps_brk s1) mo1 -> LI L' mo1 ->
   vm_limit (m_vmmaps mo1) = vm_limit (m_vmmaps mo) -> vm_reserved (m_vmmaps mo1) = vm_reserved (m_vmmaps mo) ->
+  vm_init_sp (m_vmmaps mo1) = vm_init_sp (m_vmmaps mo) ->
   gc L' + CB L' <= gc L + CB L + 1 -> NI D L' s1 mo1.
 Proof.
-  intros [HK HLI Hlim HR HC] HK1 HLI1 E1 E2 HCC. constructor; [exact HK1| exact HLI1| rewrite E1; exact Hlim| unfold RSV in *; rewrite E2; exact HR| lia].
+  intros [HK HLI Hlim HR HC HTop] HK1 HLI1 E1 E2 E3 HCC.
+  constructor; [exact HK1| exact HLI1| rewrite E1; exact Hlim| unfold RSV in *; rewrite E2; exact HR| lia
+               | unfold alloc_top in *; rewrite E3; exact HTop].
 Qed.
 
 End PATH.

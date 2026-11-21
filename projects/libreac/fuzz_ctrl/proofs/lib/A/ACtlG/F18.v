@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v; 451 of its 489 lines of code are new or changed and 807 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F18.v -- GLUE for stage seg_F18 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:806).
    Written by a Theorem Labs lane (piece W4d); single writer.  rule 24: no function proved (stage glue
    of a walk).  Pattern: glue-pattern.md (a working note, not in this delivery); worked example ACtlG/A5.v.
@@ -27,7 +28,7 @@
      bcmp_wrap_on.bcmp_wrap_holds_F_on; no split, a Theorem Labs lane's split rule 04:01Z), which writes only the
      wrapper's stack window W = [sp - 4560, sp).
 
-   ROUTE (C) (a working branch 1899bed1aee; recipe L3-recipe.md section 2 (a working note, not in this delivery)): the
+   ROUTE (C) (a working branch; recipe L3-recipe.md section 2 (a working note, not in this delivery)): the
    entry carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3, destructed as (Hcells & Hcut & Himgs & Hroag).  The 82400 arm's
    shadow premise, the aligned shadow words of [fr + 186, fr + 192) and [phi, phi + 6), comes from Hcut: the owned
    class-6 frame's shadow ((F) disjunct, glue_f18_frame_sh) and the live record block's shadow-word cover ((L),
@@ -81,18 +82,18 @@
    - LAWS : Reusable.YG0d.AR_laws segs B -- the core's AR law record (YCbq.v:207), as the route (C) walk's ACtl.v:244 states it.
    - TFIB_SYMS : A.AF0m.CtrlTSyms B -- the route (C) walk's ACtl.v:259 hypothesis, the bundle law rt_of_core_C takes.
    Both are the route (C) walk's ACtl.v Section hypotheses with the same name and text; VIS0 / OWNED_RO: none.
-   CITED from a Theorem Labs lane's shared KitMem (lib/A/ACtlG/KitMem.v, a working branch 4a56e997c0f, blob
-   19bfb2e48a9, merged c8728e5ba73): kitmem_not_img_hi, kitmem_own6, kitmem_grows_munch_stk, kitmem_stk_of_journal,
+   CITED from a Theorem Labs lane's shared KitMem (lib/A/ACtlG/KitMem.v, a working branch, blob
+   19bfb2e48a9, merged): kitmem_not_img_hi, kitmem_own6, kitmem_grows_munch_stk, kitmem_stk_of_journal,
    kitmem_bytes_munch, kitmem_q64_munch, kitmem_addr_munch, kitmem_spill_munch, kitmem_frac_munch,
    kitmem_asan_cells_img, kitmem_ro_agree_img.
    CITED, NOT HYPOTHESES: A.ProgWorldRtC.rt_of_core_C (lib/A/ProgWorldRtC.v:76, PROVED, a Theorem Labs lane): the five
    wrapper_bcmp runtime cells are not in the cut's ctl_rt_C; this is their one source.  Its am_const rows used here
-   (GOT_CF, CF+240..255, REAL_BCMP, REAL_MEMCMP) are the same on the record AF0m (e56483f863b AF0m.v:61-62, :98-99,
+   (GOT_CF, CF+240..255, REAL_BCMP, REAL_MEMCMP) are the same on the record AF0m (AF0m.v:62-63, :99-100,
    :173).  ShadowRwOn.shadow_rw_on_mono, ShadowRwOnK.fl_shadow_rw_on.
    No _F run is assumed: Seg/F18F_on.v (f18_evt0_F_on, moved from a Theorem Labs lane's Seg/F18F.v (not in this delivery) f18_evt0_F; and
    f18_evt_ro_F_on) is Required.  Seg/F18F.v (not in this delivery) is NOT Required (a Theorem Labs lane 2026-10-29 ~17:00Z): it Requires the frozen
    bcmp_wrap_F.v (not in this delivery), which brings the root lib.MemNormP / lib.MemNorm.  Route (C) leaves, by path from a Theorem Labs lane
-   f4423e55886 (the root-free bcmp proof): bcmp_wrap_c.v
+   (the root-free bcmp proof): bcmp_wrap_c.v
    64293314ee8, bcmp_wrap_c_on.v ca2f37ea2b6, bcmp_wrap_on.v 49fcbf2eeed, bcmp_wrap_Fk.v 1fa5b214cf3, A/MemNormP.v
    e45ea6f496f.
    FRAC RE-ESTABLISHED at a new memory: the 82400 exit's FRAC, by Kit.kit_frac_move (registers) and kitmem_frac_munch
@@ -102,7 +103,7 @@
    frame-route identifier (SlotInv / Seg / F18F_on names appear only inside the proof, qualified, closed by Qed).
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are written fully qualified.
 
-   BUILD STATE: type-checked with cb build on a build machine (workspace (internal path)) on a working branch 1899bed1aee;
+   BUILD STATE: type-checked with cb build on a build machine (workspace (internal path)) on a working branch;
    the build of record is the lane's cbrec run (report).
    No Axiom, no Parameter, no Admitted, no admit. *)
 
@@ -143,7 +144,7 @@ Proof.
   intros lo hi x H. cbn [OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Frame.outside]. split; [lia | exact I].
 Qed.
 
-(* The wrapper's shadow-word footprint premise (Seg/F18F.v:103 / :105, n = 6) from the visible 8-aligned shadow
+(* The wrapper's shadow-word footprint premise (Seg/F18F.v:104 / :106, n = 6) from the visible 8-aligned shadow
    word cover that ProgWorldVisFrame.frame_vis / ProgWorldVisHeap.heap_sh_vis give (rng_asan.sh_al8_lo / hi). *)
 Lemma glue_f18_sh8 : forall (H : word -> bool) (L : Z),
   6 = 0 \/ A.ProgBridge.range_visible H (A.Prog.rng_asan.sh_al8_lo L)
@@ -211,7 +212,7 @@ Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 Hypothesis TFIB_SYMS : A.AF0m.CtrlTSyms B.
 
 (* FLSI across a write set WR that keeps register 9 and misses the spill cells [A + 32, A + 280), the frame body
-   [fr, fr + FRAME_BYTES), every shadow byte and the input block's bytes.  Seg/F18.flsi_keep's proof (F18.v:483-541)
+   [fr, fr + FRAME_BYTES), every shadow byte and the input block's bytes.  Seg/F18.flsi_keep's proof (F18.v:484-542)
    over ACtlCutP's FLSI, whose f1_IN differs from SlotInv's (header). *)
 Lemma glue_f18_flsi_keep : forall (cx : ACtlCut.ctlcx) (j : nat) (fr A : Z) (regs regs' : bvmap 5 word)
     (m m' : word -> option byte) (WR : list OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Frame.ivl),

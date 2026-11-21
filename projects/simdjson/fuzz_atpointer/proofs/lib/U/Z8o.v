@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's stack window and the run_ok premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -60,7 +61,7 @@ Section D.
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid run_hw run_draw).
+  Notation IMGB := (pimg sp0 argv envp uid).
   Notation RUN0' := (RUN0 sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
   Notation RQEXIT := (Z8n.RQEXIT).
 
@@ -86,7 +87,7 @@ Section D.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s RQEXIT msx) end.
     eapply implM_bind.
     { unfold rfree_stmt in FREE.
-      eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
+      eapply FREE with (lo := usp0 - 4194304) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
         rewrite ?(unsigned_lit Zhy.RATP) by (unfold Zhy.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia; unfold Zhy.RATP; cbn [Z.add];
         first [ exact P0 | left; reflexivity | exact AUX | exact ST | exact MI | exact ERR | unfold RFREE_STACK; lia | lia ]. }
     cbv beta. intros [] s2 ms2 PO.
@@ -125,7 +126,7 @@ Section D.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s RQEXIT msx) end.
     eapply implM_bind.
     { unfold rtarget_run_stmt, RTARGET_RUN in TRUN.
-      eapply TRUN with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (cap := cap) (flags := fl) (errv := errv);
+      eapply TRUN with (lo := usp0 - 4194304) (B := usp0) (p := bufp) (cap := cap) (flags := fl) (errv := errv);
         rewrite ?(unsigned_lit (usp0 + -128)) by lia.
       - exact P0.
       - left; reflexivity.

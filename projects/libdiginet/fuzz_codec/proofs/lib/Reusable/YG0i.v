@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YG0i.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0i.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0i.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pages); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import bitvector.
@@ -24,6 +25,10 @@ Hypothesis L : ALedger segs ly S md.
 Hypothesis RES : vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md).
 Hypothesis LIM : vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md).
 Hypothesis ISP : vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md).
+(* 727298f3: the ALedger ledger equation carries the vvar/vDSO pair, so the restored model
+   needs the same pair (as YG0h's Section K3). *)
+Hypothesis VDSOR : vdso_reserved (m_kernel md') (vdso_top (m_vmmaps md'))
+= vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)).
 Hypothesis SPL : sec_placed ly S.
 Variables (lo hi : Z).
 Hypothesis WIN : ly_prim ly <= lo /\ lo < hi /\ hi <= ly_prim ly + kPrimResvSize.
@@ -91,7 +96,7 @@ x = wiv (lo, hi - lo) \/ (In x (vm_maps (m_vmmaps md)) /\ (uw (fst x) + uw (snd 
 assert (KEEP : forall q, In (wiv q) (vm_maps (m_vmmaps md)) -> 0 <= fst q -> 0 <= snd q -> fst q + snd q < 2 ^ 64 ->
 fst q + snd q <= lo \/ hi <= fst q -> In (wiv q) (vm_maps (m_vmmaps md'))).
 { intros q Hq H1 H2 H3 D. apply (proj2 (VM' _)). right. left. split; [exact Hq|]. unfold wiv, uw. cbn [fst snd]. rewrite !w64_unsigned by lia. exact D. }
-constructor; rewrite ?RES, ?LIM, ?TOPeq_r; try assumption.
+constructor; rewrite ?RES, ?VDSOR, ?LIM, ?TOPeq_r; try assumption.
 -
 exists piecesm. split; [split; [|split]|].
 +

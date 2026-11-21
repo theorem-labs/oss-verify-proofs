@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fd-stability lemma also asks the kernel state unchanged, the initial model carries the vDSO draw, and the mmap_base_min bound is derived for the initial invariant. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -48,12 +49,13 @@ Hypothesis Hrun : forall X cfg payload, zlength payload <= MAX_INPUT -> mspecN (
 
 Hypothesis Hown_minv : forall X s mo, own X s mo -> minv mo /\ m_halted mo = None.
 Hypothesis Hown_fds : forall X s mo mo', own X s mo ->
-  m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> own X s mo'.
+  m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_kernel mo' = m_kernel mo -> own X s mo'.
 
 Lemma own_after_node : forall X s mo n rsp mo' evs,
   own X s mo -> nsafe n mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo -> own X s mo'.
 Proof.
   intros X s mo n rsp mo' evs Ho Hsafe Hst Hvm. destruct (Hown_minv _ _ _ Ho) as [Hmi Hh].
+  pose proof (nstep_kernel n mo rsp mo' evs (nsafe_no_noreserve n mo Hsafe) Hst) as Hk.
   destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hsafe Hst) as [Hh' Hmi']. eapply Hown_fds; eauto.
 Qed.
 
@@ -265,12 +267,19 @@ Theorem prog_model_ok : forall segs rstage pc ph lim en inp,
   /\ tsafe nstep nsafe (prog segs rstage (in_argv inp)) (mo0 segs lim en inp).
 Proof.
   intros segs rstage pc ph lim [sp brk0 mbase] inp Hsegs Hve Hvi Htop HN.
-  destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _).
+  pose proof Hvi as (_ & _ & _ & _ & _ & _ & _ & _ & _ & HSv & _).
+  destruct Hve as (_ & Hbrk & Hmbv & _). destruct Hvi as (Hargv & _).
+  assert (Hmb : mmap_base_min <= bv_unsigned mbase) by (destruct Hmbv as (Hm & _); rewrite HSv in Hm; exact Hm).
   unfold prog, mo0 in *. cbn [en_brk en_mmap_base en_sp] in *.
   apply (mspecN_program (GI []) (prog_with rstage (argv_Z (in_argv inp)))); [| | exact HN].
   - apply prog_with_GIN; [apply argv_Z_short| apply argv_Z_paths]; exact Hargv.
   - cbn [img_segments] in Hbrk.
-    apply (GI_init segs); [exact Hbrk| apply reserved_top_pu; exact Hsegs| apply ceil_pu; exact Hsegs| exact Htop].
+    (* [mo0] carries the entry's vDSO draw ([with_vdso]); the VM ledger,
+       the fd table and the halt flag are [init_model]'s. *)
+    eapply GI_fds;
+      [ apply (GI_init segs); [exact Hbrk| apply reserved_top_pu; exact Hsegs| apply ceil_pu; exact Hsegs| exact Htop
+                              | destruct Hsegs as [E|E]; rewrite E; vm_compute; discriminate | exact Hmb]
+      | reflexivity | apply minv_with_vdso, minv_init | reflexivity | reflexivity ].
 Qed.
 
 Theorem prog_model_ok_P : forall en inp,

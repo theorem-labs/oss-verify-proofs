@@ -36,7 +36,7 @@ Let FG : forall L A mem md a, aa_MR API L A mem md -> in_globals frame_G a -> ~ 
   rtt_FG B API HSEG FA.
 
 (* #102: tx_value (CF tx_value_c.TX_VALUE 0x155ac) called from the round_trip_text frame of 112 bytes (struct text at
-   S-112; CF RttBase, the mirror of plain RttBase 1a5309005128); RTT_K = RTT_F + CF parse_noting_c.PN_K = 112 + 14208. *)
+   S-112; CF RttBase, the mirror of plain RttBase); RTT_K = RTT_F + CF parse_noting_c.PN_K = 112 + 14208. *)
 Lemma ra_value : (forall fx' : YK11.FPState, @tx_value_contract fx' rc B API F) ->
   forall L0 A0 regs0 mem0 md0 Lam0 peak0 cnt0 b0 doc pretty copy t D
     fx1 L A mem md X Lam peak cnt bnd q want len cap txt regs1 (Pc : config -> Prop),

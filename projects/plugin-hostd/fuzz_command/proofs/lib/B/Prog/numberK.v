@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v (ajournal_after_write) and lib/A/Prog/PaCall.v (aj_intrin_atS): the strtol call of number's walk, whose writes are its scratch window, the end pointer's word in number's own side-stack frame and the errno cell. *)
-(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/numberK.v (a working branch a7e5999afe4) for fuzz_command.asan-ubsan: module paths (B's RtNumber.astrtol_realizes). *)
+(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/numberK.v (a working branch) for fuzz_command.asan-ubsan: module paths (B's RtNumber.astrtol_realizes). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

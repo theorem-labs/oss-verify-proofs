@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 403 of its 523 lines of code are new or changed and 1138 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/FMbz_clean.v, with its module paths and module names changed; 344 of its 386 lines of code are new or changed and 481 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/A/HPgWrapNcmp.v's hd_strncmp_core (itself reac-pw/fuzz_pin's
-   lib/A/PPgWrapNcmp.v pin_strncmp_core at 90722657971) re-run with the caller's frame hole of lib/A/HPgHole.v
+   lib/A/PPgWrapNcmp.v pin_strncmp_core) re-run with the caller's frame hole of lib/A/HPgHole.v
    (ecall_preH in, the hole post out), as lib/A/Rt/FMrt_lift.v rt_post_roU_win re-runs rt_post_ro_win with
    lib/A/Rt/FMupoison.v ARU_frame: hd_rt_post_roH_win is rt_post_roU_win with HPgHole.ARH_frame in place of
    ARU_frame; the walk's premises that AR gives (the stack window, the runtime cells, the read-only views) are read
    off AR of the unpoisoned memory and carried to the memory itself, which agrees with it off the hole; the rest
    is pin's proof. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgWrapNcmpH.v, with its module paths and module names changed; 165 of its 262 lines of code are new or changed and 289 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The comments in this file are libreac/fuzz_boxreg's lib/A/FMstrncmp.v, through reac-pw/fuzz_pin's lib/A/Rt/FMstrncmp.v, unchanged apart from names and this unit's image and values. omx-clap-core/fuzz_manifest's runtime contract for the strncmp interceptor in the donor's form: astrncmp_realizes (FMH_Rt.v:124) at
    PC_strncmp = 0x41c24, the one-instruction trampoline `j 0x4270c` (lib/AU/Bz/A/I_tramp.v tramp_strncmp) in front of
    the interceptor body, whose effect A/Bz/A/I_strncmp.v istrncmp_spec states (its range check's Section
@@ -18,7 +19,7 @@
      runtime's fixed cells) and writes the call site's registers out as the walk states them (bz_canon);
    - post side: FMrt_lift.v reads the walk at the call site (srr_of_canon_bz) and gives the donor-form post
      (rt_post_ro_win); FMrt_pre.v bz_window gives its window facts;
-   - the answer: the walk returns strncmp_res (A/Bz/A/IcptSpec.v:38), which is 0 exactly when the compared
+   - the answer: the walk returns strncmp_res (A/Bz/A/IcptSpec.v:39), which is 0 exactly when the compared
      prefixes of the two strings with their NULs agree (strn_eq, FMH_Rt.v:24); proved here on the byte values,
      as FMspec_str.v does for strncasecmp. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.

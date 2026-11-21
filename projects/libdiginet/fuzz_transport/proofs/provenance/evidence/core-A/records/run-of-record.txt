@@ -1,9 +1,9 @@
 # port_core 83f5203d2a2f run of record (run.sh, WORK = work-rec5, 2026-10-31 07:26Z-07:34Z): its summary lines, then every
 # check.tsv FAIL row with the reason it is expected, then the relocation tool's reviewer's four limits. Paths are run-relative (WORK = the run
 # directory). The two lines port_core prints for its map and remap steps (they name the host's paths) are left out.
-# command: REL=<release 83f5203d2a2f> DON=<fuzz_grant lib 25e3d17bdb50, normalised> PG=<fuzz_grant images> P=<fuzz_transport
+# command: REL=<release 83f5203d2a2f> DON=<fuzz_grant lib, normalised> PG=<fuzz_grant images> P=<fuzz_transport
 #   images> EV=<this directory> SYMS=<fuzz_grant.asan.syms.txt b46268790c46> LIB=<the unit's lib: T3r's cut start-up
-#   layer> GRANTB=<recipes 4f87de75d67 lib/B> sh run.sh WORK; exit status 3
+#   layer> GRANTB=<recipes lib/B> sh run.sh WORK; exit status 3
 
 port_core: versions: port_core.py 83f5203d2a2f, resolve_code.py bf753845a1df, rvelf_strict.py 185b9a41fdb7, vendored asan-kit elfmap.py 4d51ec1c0069, vendored asan-kit remap.py 2d846496640d, vendored asan-kit rvelf.py 23152d9ca11c, gen_traces.py ce55b0dced47, adapted.patch 27bb43cc1436, symbol gate 309d2e5f7e01, gate scan_literals.py f0ec1e108ff8, gate inputs_used.py 3ed6c0c79f05, gate insn_targets.py efdf3951d4bb, gate qscan.py 7baa52331b8c
 port_core: provenance lines: 492

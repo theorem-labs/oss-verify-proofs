@@ -5,9 +5,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 1068 of its 1186 lines of code are new or changed and 1084 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F23.v; 148 of its 304 lines of code are new or changed and 1030 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE. Image A = fuzz_ctrl.asan, libreac v1.9.0 (pinned as lib/A/Prog/Seg/F23F.v's header states:
    (internal path) sha256
-   aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d). FACTS ed6b6b7b0ab, PAU pau-libreac-v190.
+   aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d). FACTS, PAU pau-libreac-v190.
    Source: lib/A/Prog/Seg/F23F.v (a Theorem Labs lane's mechanical re-run of Seg/F23.v's f23_evt), unchanged apart from comment text, and Required.
    Written by a Theorem Labs lane (the glue lane of stage seg_F23), under a Theorem Labs lane's narrowing rule (the
    stage's glue owner may add a minimal narrowed `_Fs` in its own new file, with a proved pin re-deriving a Theorem Labs lane's
@@ -15,7 +16,7 @@
    already-proved segment run).
 
    WHAT CHANGES, AND WHY. F23F.f23_evt_F (Seg/F23F.v:72-109) hands the copy's contract asan_memcpy_contract_F the
-   stack window `stk rsegs m lo sp` with lo FIXED to `spv - FN_STACK` (FN_STACK = 1044480; F23F.v:86 premise, :214
+   stack window `stk rsegs m lo sp` with lo FIXED to `spv - FN_STACK` (FN_STACK = 1044480; F23F.v:87 premise, :214
    instantiation, :106 post). The walk's cut (lib/A/ACtlCutP.v C_A825a0_at, under ACtlCut.v's ctl_from) gives
    presence of the journal's stack window [c_sp - 32768, c_sp) only (Reusable/YCbq.v:368; AR_stack_law,
    Reusable/YG0d.v:468, gives no presence), so that 1 MB premise is not provable at the cut. The contract itself

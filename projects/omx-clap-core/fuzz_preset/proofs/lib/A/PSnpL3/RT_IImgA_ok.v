@@ -1,7 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: moved from image A (fuzz_preset.asan d83eb25d), origin/cold/c-libc-str-p102-l3v1 3244f5c71f6, to the #102 pin A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b): no numeral changed (every numeral is a GXA key or a function size, and the keys are image-free); the image values come from lib/CJ/RL/I/IImgA.v at #102. *)
-(* Modified by Theorem Labs, 2026-10: copied onto omx-clap-core/fuzz_preset.asan (image A, d83eb25d) from origin/cold/port-fm-rtprintf-param 3e35620c52e proofs/omx-clap-core/fuzz_manifest/lib/A/RT_IImgA_ok.v: module paths only (lib/A/RT_IImgA_ok -> lib/A/PSnpL3/RT_IImgA_ok; lib/A/RT_IImgA's A_img / A_img_vsn -> lib/CJ/RL/I/IImgA's N_img_asan / N_img_vsn). Every numeral is a GXA KEY or a function size (equal in both images), so none moves: the instance maps the keys, and each lemma checks that mapping against the pinned image. *)
-(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply lib/A/RT_IImgA_ok.v at
-   cold/port-reply-r4 e51895d5655; the module path prefix is this harness's, the instance is
+(* Modified by Theorem Labs, 2026-10: moved from image A (fuzz_preset.asan d83eb25d), to the #102 pin A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b): no numeral changed (every numeral is a GXA key or a function size, and the keys are image-free); the image values come from lib/CJ/RL/I/IImgA.v at #102. *)
+(* Modified by Theorem Labs, 2026-10: copied onto omx-clap-core/fuzz_preset.asan (image A, d83eb25d) from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_IImgA_ok.v: module paths only (lib/A/RT_IImgA_ok -> lib/A/PSnpL3/RT_IImgA_ok; lib/A/RT_IImgA's A_img / A_img_vsn -> lib/CJ/RL/I/IImgA's N_img_asan / N_img_vsn). Every numeral is a GXA KEY or a function size (equal in both images), so none moves: the instance maps the keys, and each lemma checks that mapping against the pinned image. *)
+(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply lib/A/RT_IImgA_ok.v;
+   the module path prefix is this harness's, the instance is
    RT_IImgA.v's N_img on fuzz_manifest.asan, and the measured addresses in the comments are
    fuzz_manifest's. *)
 (* The image facts that lib/CJ/RL/GXA/G_vfprintf_snf_closed.v takes as Context (its lines 29-78),

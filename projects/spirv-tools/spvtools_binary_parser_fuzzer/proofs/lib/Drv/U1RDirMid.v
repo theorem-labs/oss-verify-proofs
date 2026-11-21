@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -203,7 +204,7 @@ Section Mid.
           cbn [kentry_ok]; unfold flat, estart, elenZ, adenot, v_addi; cbn [a_base a_off]; rewrite ?SPX; cbn [edenot]; rewrite ?E0, ?Uspw.
         * split; [lia | exact (proj2 Hsp)].
         * lia.
-        * split; [lia|]. intros d m Hd Hm. replace (sp0 + -8388608 + d)%Z with (sp0 - 8388608 + d)%Z by lia. apply (rm_stack _ _ _ _ _ RM); lia.
+        * split; [lia|]. intros d m Hd Hm. replace (sp0 + -6144513 + d)%Z with (sp0 - 8388608 + (d + 2244095))%Z by lia. apply (rm_stack _ _ _ _ _ RM); lia.
         * split; [lia|]. split; [lia|]. replace (sp0 + -56)%Z with (sp0 - 56)%Z by lia. exact F1.
         * split; [lia|]. split; [lia|]. replace (sp0 + -64)%Z with (sp0 - 64)%Z by lia. exact F2.
         * split; [lia|]. split; [lia|]. replace (sp0 + -72)%Z with (sp0 - 72)%Z by lia. exact F3.

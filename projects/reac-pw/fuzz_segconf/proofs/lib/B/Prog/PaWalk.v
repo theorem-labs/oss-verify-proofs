@@ -19,8 +19,9 @@
    upd_aboveW_init takes the segment list from the world's type, where ACja.v let typeclass search find pa_segs;
    add_atom's st_ok arm uses st_ok_havoc_hi (new here), where ACja.v used the st_ok_pi lemma, which does not apply
    to an st_ok hypothesis. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaWalk.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the listing modules Cmd* -> Seg*. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaWalk.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the listing modules Cmd* -> Seg*. *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/PaWalk.v for fuzz_segconf.asan-ubsan: module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

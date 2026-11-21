@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (S_after clears the reservation, as a system call's return now does; ok_pframe and ok_pframeJ written as plain text with a last premise, the read-only backing's robustness RomBase.sys_rob, LPS 75d69e00, which their producers take and the ioctl example closes by sys_rob_of_check; RomBase imported). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -10,7 +11,7 @@ From Stdlib Require Import PArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import SymState SymStep SymSoundA SymSoundB SymSoundV SymSoundI SymSoundL SymSoundM SymSoundW SymSoundR.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -284,8 +285,10 @@ Proof using .
   split; [apply smatch_pending_of; exact Hsm | exact Hk].
 Qed.
 
+(* LPS 08b1429: a syscall return clears the LR/SC reservation ([advance_past_svc] sets [ms_resv := None],
+   recipes/svc-clears-resv.md), so the symbolic post-syscall state carries no reservation either. *)
 Definition S_after (S : sstate) (e : sv) (objs : list sobj) (nx : positive) : sstate := ltac2:(tb__ "0|0|
-S5bS86S26VS;A1Z4A2S9fS20S5aVS;A1UaVe;A4S59VS;A1S40VS;A1S41VS;A1Vobjs;S3cVS;A1Vnx;S5cVS;A1A9").
+S5bS86S26VS;A1Z4A2S9fS20S5aVS;A1UaVe;A4S59VS;A1S40VS;A1S12S20A1Vobjs;S3cVS;A1Vnx;S5cVS;A1A9").
 
 Lemma swf_S_after : ltac2:(tb__ "0|0|
 S1fS20S5S1eA1S6eS0S7S3dR4A1SbA3Sb4S28R5A1R2A2S0S7S46R3R5A2SbA3S0S7SacS1eS3eR4A1R5A3SbA3S0S7S3dS7bR8R7R6R5A4A1SbA3F_;F_;F_;F_;Fnx;Fobjs;Fe;FS;").
@@ -297,6 +300,7 @@ Proof using .
   repeat (apply andb_prop in H1; destruct H1 as [H1 ?]).
   repeat (apply andb_true_intro; split);
     first [ assumption
+          | reflexivity
           | rewrite list_set_length; assumption
           | apply forallb_list_set; assumption ].
 Qed.
@@ -340,7 +344,7 @@ Proof using .
     destruct (Z.eqb_spec (bv_unsigned rr) 10) as [E|E]; [symmetry; exact Hev | apply Hregs; exact Hrr]. }
   split; [intros rr; rewrite after_sys_fregs, freg_sv_S_after; apply Hfregs|].
   split; [unfold fcsr_match in *; unfold S_after; cbn [ss_fcsr]; rewrite after_sys_fcsr; exact Hfcsr|].
-  split; [unfold resv_match in *; unfold S_after; cbn [ss_resv]; rewrite after_sys_resv; exact Hresv|].
+  split; [unfold resv_match; unfold S_after; cbn [ss_resv]; rewrite after_sys_resv; exact I|].
   split; [exact Hmm|].
   exact Hfacts.
 Qed.
@@ -1003,23 +1007,102 @@ Proof using .
   eapply etriple_seq; [apply etriple_ecallJ; exact Hi|]. apply etriple_pendingJ. exact H.
 Qed.
 
-Definition ok_pframe (ok : world -> Prop) (K : list event -> Model -> Prop) : Prop := ltac2:(tb__ "0|2|
-S5S70A1M0S5eS6fS15Q40A1M1VK;R4R2A2S0S8G1A1S64R4A1S9G1R2A2A3Sa2S1bVsegs;R5R3A3R4A2Vok;S6G0S18R7S19R6R5A2A4A1F_;F_;F_;Fx8;Fmd;Fms;Ftr;").
+(* LPS 75d69e00.  THESE TWO WERE ENCODED DEFINITIONS AND ARE NOW EXPLICIT HAND-WRITTEN TEXT,
+   WITH ONE PREMISE ADDED: [RomBase.sys_rob segs (mkCfg ms md)], LAST, immediately before the
+   conclusion.  Replacing an encoded definition with explicit text is the approved route;
+   re-encoding is not, and nothing here is re-encoded.
 
-Definition ok_pframeJ (ok : world -> Prop) (J : jpred) : Prop := ltac2:(tb__ "0|2|
-S1dS5S70A1M0S5eS6fS15Q40A1M1VJ;R5R4R2A3S0S8G1A1S64R4A1S9G1R2A2A3Sa2S1bVsegs;R5R3A3R4A2Vok;S6G0S18R7S19R6R5A2A4A1F_;F_;F_;Fx8;Fmd;Fms;Ftr;Frho;").
+   WARRANT FOR THE TEXT, by the compiler and not by reading: the encoded bodies were decoded
+   with [Print] under -vok, and a probe checked all six controls inside Qed-terminated proofs
+   (an [Abort]ed control is skipped by both -vos and -vok and proves nothing):
+     positive -- [ok_pframe segs ok K = <this text without the new premise>] by [reflexivity],
+                 likewise [ok_pframeJ] and [SysCallA.ok_pframeA];
+     negative -- three one-component variants (world's trace replaced by [nil]; [Some x8]
+                 replaced by [None]; [only_okA] replaced by [only_ok]) each FAIL [reflexivity];
+     and the new text with the premise is NOT the old one.
+   VOK OK, STUB 0, VOS-FAIL 0, single target, cold cone.
+
+   WHY THE PREMISE IS HERE AND NOT IN [ok].  [Fw/RunSeg.v]'s lift needs [sys_rob] at every
+   reachable configuration ([RunSeg.rob_reach]).  Strengthening [ok] cannot deliver it: this
+   obligation quantifies [x8] UNIVERSALLY and [K] constrains only [tr] and [md], never [ms],
+   so no syscall number is in scope to discharge against.  At the CALL sites the number IS
+   pinned, so [RomBase.sys_rob_memfree] + [memfree_lit] closes it there.
+   PLACED LAST so that every existing [eapply Hokp; [exact Hk | exact Hp | ...]] keeps its
+   prefix and an unupdated site fails with a missing argument rather than a mismatched one. *)
+
+(* THE SWEEP THIS PREMISE FORCED, AND ITS EXACT SIZE.  The comment above hoped the call sites
+   would "keep their prefix"; they do, but a three-slot list against four goals is still an
+   error, so every one of them had to move.  Counted at this tip, not estimated:
+     48  sites spelled [eapply Hokp; [exact Hk | exact Hp |]]            in 19 files
+      4  spelled [eapply Hokp; [split; reflexivity | exact Hp |]]        A/B/P/U Start*
+      1  spelled [eapply Hokp; [exact Hk | exact Hp | exact Hoo]]        Fw3A/MadviseA.v:467
+     53  positional sites in 22 files  (an earlier count of 26 was a mis-addition of the
+                                        per-file counts and is withdrawn)
+   NOT in the class, left alone: the six [eapply Hokp0; eauto] inside the [ok_pframeA]
+   re-wrappers (A/fp.v, B/nc.v) already SEARCH, and the [ok_pframe_imp] / [ok_pframeA_liftKA]
+   sites pass [Hokp] whole and never see a goal list.
+
+   THE SHAPE EVERY SITE NOW HAS.  Not a wider bracket -- a bracket is a count, and counting is
+   what broke:
+     eapply Hokp; try exact Hk; try exact Hp; try (solve [<rob>]).
+   Each tactic is offered to EVERY goal and closes only the one whose conclusion it fits; the
+   [only_ok] goal survives all three and the site's own existing discharge, unchanged, runs on
+   it as before.  This is insensitive to the number AND the order of the premises, so the next
+   premise added to [ok_pframe] cannot break these 42 sites by position again.
+
+   <rob> is [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption].  It is written
+   QUALIFIED on purpose: only four files in this tree [Require] RomBase (Fw/RunSeg.v,
+   Fw/SafetyAbort.v, this file, Fw3A/SysCallA.v), so an unqualified [rob_auto] would be an
+   unknown reference in the other twenty.  A qualified name needs the module LOADED, not
+   imported, and RomBase is loaded wherever [ok_pframe] is -- adding twenty [Require]s would
+   have risked a scope reopening for nothing.
+
+   ELEVEN SITES ARE NOT IN THIS COMMIT, and the reason is a fact and not a scheduling choice:
+   [RomBase.memfree_lit] lists 57, 63, 93, 94, 96, 172-178, 214, 215, 222, 226, 233 -- and NOT
+   64, 66, 56 or 29.  write, writev, openat and ioctl all read [in_mem], so their fourth goal
+   is a real obligation that [rob_auto] cannot and must not close:
+     Fw3/Glue3.v:1053,1207          write   64
+     Lib/SysExtra.v:248,357,446     writev  66
+     Lib/SysOpen.v:156              openat  56
+     LibA/SysA.v:78                 openat  56
+     LibA/SysA.v:341,732,844        writev  66
+     LibA/SysA.v:1046               ioctl   29
+   Each needs the route [triple1_ioctl_example] below uses -- [RomBase.sys_rob_of_check] with
+   the syscall's own check lemma ([write_check] SysSpec.v:282, [openat_check] :615,
+   [writev_check] :1275, [ioctl_check_open] :401) and RomBase's larger-view lemmas
+   ([read_bytes_map_ext] :184, [read_cstr_ext] :169), which exist for exactly this.  They are
+   held back deliberately rather than papered over with a [try] that would leave the goal open
+   and fail at [Qed] instead of at the tactic. *)
+Definition ok_pframe (ok : world -> Prop) (K : list event -> Model -> Prop) : Prop :=
+  forall (tr : list event) (ms : machine_state) (md : Model) (x8 : word),
+  K tr md ->
+  ms_svc_pending ms = Some x8 ->
+  only_ok (sys_input segs ms x8) md ->
+  RomBase.sys_rob segs (mkCfg ms md) ->
+  ok (tr, mkCfg ms md).
+
+Definition ok_pframeJ (ok : world -> Prop) (J : jpred) : Prop :=
+  forall (rho : valuation) (tr : list event) (ms : machine_state) (md : Model) (x8 : word),
+  J rho tr md ->
+  ms_svc_pending ms = Some x8 ->
+  only_ok (sys_input segs ms x8) md ->
+  RomBase.sys_rob segs (mkCfg ms md) ->
+  ok (tr, mkCfg ms md).
 
 Lemma ok_pframeJ_of_tcons : ltac2:(tb__ "0|1|
 S90OF_;S5S70A1M0OF_;Sa4S7fR3G0S6fS96R4R2A2L_;Ltr;A2S1dG0S6fR5R3R2R1A3S96R7R3A2F_;Fmd;Ftr;Frho;S85R5R3A2F_;F_;FJ;FSpec;Fok;").
 Proof using . intros ok Spec J Hok HJ rho tr ms md x8 Hj. apply Hok. eapply HJ; eauto. Qed.
+(* LPS 75d69e00: [ok_pframe*] gained a [RomBase.sys_rob] premise, so each of the two
+   producers below takes one more hypothesis and ignores it -- nothing it proves depends on
+   the backing being stable, and nothing it is handed needs to. *)
 
 Lemma ok_pframe_src : ltac2:(tb__ "0|1|
 S5S70A1M0OF_;S7fS99Vsegs;R1A2G0S6fS96R3R2A2L_;Ltr;A2FSpec;").
-Proof using . intros Spec tr ms md x8 Hk Hp Hok. eapply ok_src_pending; eauto. Qed.
+Proof using . intros Spec tr ms md x8 Hk Hp Hok Hrob. eapply ok_src_pending; eauto. Qed.
 
 Lemma ok_pframe_tgt : ltac2:(tb__ "0|1|
 S5S70A1M0OF_;S7fS9aVsegs;R1A2G0S6fS96R3R2A2L_;Ltr;A2FSpec;").
-Proof using . intros Spec tr ms md x8 Hk Hp Hok. eapply ok_tgt_pending; eauto. Qed.
+Proof using . intros Spec tr ms md x8 Hk Hp Hok Hrob. eapply ok_tgt_pending; eauto. Qed.
 
 Lemma triple1_ioctl_example : ltac2:(tb__ "0|3|
 S90OF_;S5S70A1M0S6fOF_;F_;S1fS1dSa7Vsegs;R4R3A3S7fR5R4A2S0S8S8eA1S9eVsegs;S26R4A1A2S9S8eS8fA2A3S0S15Q40M1A1M2S21R4S2aR5Z11A2A2S17G1Z1dA2A3G0S6fR9R2R1A2S3G2G2S0S8S71A1S77S78R3A1SbbS21R9S2aRaZaA2A2A1A2S9S71S75R1A1A2A3Le;A2F_;Fmd;Ftr;S0G2SbaS21R6S2aR7ZbA2A2A1SbcA3S93Vsegs;RaSa5Vsegs;R9R8R7A4Sa5Vsegs;R9S7bR8S34S16G1S76S74A1A2A1S23R8A1S28R8A1A4R7A4A4F_;F_;F_;F_;F_;F_;Frho;FS;FK;Fok;").
@@ -1035,7 +1118,38 @@ Proof using .
   rewrite <- G0 in He. pose proof Hcmd as Hc. rewrite <- G1 in Hc.
   assert (H29 : bv_unsigned (Z_to_bv 64 29) = 29) by reflexivity.
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. eapply ioctl_only_ok; eauto.
+  (* LPS 75d69e00: [ok_pframe] (line 1031 of this file) gained a fourth premise,
+     [RomBase.sys_rob segs (mkCfg ms md)], so [eapply Hokp] now leaves FOUR goals and the
+     old three-slot list [exact Hk | exact Hp |] failed with "Incorrect number of goals
+     (expected 4 tactics)".  The list is replaced by a SEARCH: one [first] applied to every
+     goal, each arm closing the one goal whose conclusion it matches.  The shape is
+     insensitive to the number and order of the premises, so a further premise added to
+     [ok_pframe] cannot break this site by counting again.
+
+     The fourth goal is NOT [RomBase.rob_auto]'s: ioctl is syscall 29 and 29 is not in
+     [RomBase.memfree_lit]'s list (RomBase.v:119-124), because ioctl's check does read
+     [in_mem] on the SIOCGIFINDEX branch.  It is closed by the check instead: under [He]
+     (the fd is a channel) and [Hc] (the request is TIOCGWINSZ), [ioctl_check_open]
+     (Fw/SysSpec.v:401) rewrites [check_syscall] to [check_ret_only eff (errno_ret ENOTTY)
+     md []], a right-hand side that mentions no input at all, so the larger backing and the
+     original give the same check and [RomBase.sys_rob_of_check] (RomBase.v:204) applies.
+     [He] and [Hc] transfer to [wrom ms r] by conversion: [RomBase.sys_input_wrom]
+     (RomBase.v:234) holds by [reflexivity], so the two inputs differ only in their memory
+     field and [in_fds]/[in_arg] project to the same terms. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply ioctl_only_ok; eauto ]
+        | solve [ apply RomBase.sys_rob_of_check; intros r x8' Hr Hs' eff;
+                  rewrite Hp in Hs'; injection Hs' as <-;
+                  first
+                    [ erewrite !ioctl_check_open by eauto
+                    | rewrite (ioctl_check_open
+                                 (sys_input segs (wrom ms r) (Z_to_bv 64 29)) md H29 e eff He Hc),
+                              (ioctl_check_open
+                                 (sys_input segs ms (Z_to_bv 64 29)) md H29 e eff He Hc) ];
+                  reflexivity ] ].
   - intros w' Hw. rewrite (wstep_ioctl_inv Hp Hh H29 He Hc Hw).
     split; [|exact Hk]. eapply smatch_after_ret_lit; [exact Hsp | exact Hh].
 Qed.

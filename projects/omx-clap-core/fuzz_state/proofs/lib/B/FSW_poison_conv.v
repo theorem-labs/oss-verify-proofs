@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_poison_conv.v from
-   a working branch 76d55f141ac (blob 3096f49800c, the text of 88124173568), same lemma names and statement
+   a working branch (blob 3096f49800c, the text), same lemma names and statement
    shapes; imports point at lib/B's image files (YB1v, FSH_Base, FSpoisonS, FSW_K); the image-agnostic FSupoison,
    FSupoisonU, FSH_Gen and lib/A/FSpoisonS.v's generic contract shapes (apoison16_realizes / aunpoison16_realizes,
    PO_WIN) stay lib/A's. The two call steps stay generic in the entry pc, as on A; B's entries are lib/B/FSH_Base.v's
@@ -13,7 +13,7 @@
    rule 24: proves no function (kind: segment lemma). *)
 (* The calls of __asan_poison_memory_region (h, 16) and __asan_unpoison_memory_region (h, 16) from a walk that holds
    the core's journal over the unpoisoned memory (FSW_K's U form): the contracts' raw-memory posts (lib/A/FSpoisonS.v
-   apoison16_realizes / aunpoison16_realizes, a working branch 63931ee52ed, with the global presence
+   apoison16_realizes / aunpoison16_realizes, a working branch, with the global presence
    conjunct of fix (a)) converted to FSW_K.fsw_intrin_atU's callee form over the unpoisoned memories, and the two call
    steps that put the caller's journal and ARU back together. Generic in B, in the entry pc and in the caller's FP.
    ONE COPY (kit layout, ruling a Theorem Labs lane 22:30Z): this file is the single writer of the conversion; fuzz_malloc /

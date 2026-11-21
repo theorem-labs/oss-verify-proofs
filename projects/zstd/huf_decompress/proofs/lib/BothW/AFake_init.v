@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: AMKN, APKN, imported from BothEntry; the fake block's shadow address unfolds AsanEmbed.ASHOFF by its full name, as BothEntry has an ASHOFF too; ported by content from zstd_frame_info's file of the same role, with this binary's addresses and names). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -9,7 +10,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr Tac InitMem.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.LibA Require Import ExecF.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Spec Require Import AsanEmbed.
-From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import MainExport MainFactsBoth.
+From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import MainExport MainFactsBoth BothEntry.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.BothW Require Import BImg ABase ABytes ALayout FsKit AFake_iface ARepInit_kit.   (* [comment removed for export] *)
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Common Require Import RunDraw.
 Import ListNotations.
@@ -60,8 +61,8 @@ Local Ltac pf V HP f H := pose proof (pfact_find V _ f HP ltac:(vm_compute; refl
 
 Section CANSEC2. Context {rc : runConstT}.
 Theorem afake_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem),
-  Forall (mfact_ok bsegs V m) asan_mem_facts ->
-  Forall (pfact_ok V) asan_pure_facts ->
+  Forall (mfact_ok bsegs V m) AMKN ->
+  Forall (pfact_ok V) APKN ->
   32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->      (* [comment removed for export] *)
   AFAKE (mkALayout (LV V) w U) [] m.
 Proof.
@@ -70,6 +71,7 @@ Proof.
   assert (EF : al_fake L = 4096 * V 377%nat) by reflexivity.
   assert (ED : al_dtls L = 4096 * V 310%nat) by reflexivity.
   assert (ET : al_t L = 4096 * V 227%nat) by reflexivity.
+  (* [comment removed for export] *)
   pf V HP (PVar 377 1551 34359733495) P393. pf V HP (PVar 310 1 34359736319) P310. pf V HP (PVar 227 1 34359736319) P227.
   pf V HP (PVar 0 4294901760 4294967295) P0. pf V HP (PVar 6 0 255) P6. pf V HP (PVar 10 0 7) P10.
   pf V HP (PDisj (ZMul (ZLit 4096) (ZV 377)) 11571200 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZMul (ZLit 4096) (ZV 10))) (ZLit (-8388608))) 140737496743936) DW393.
@@ -83,10 +85,11 @@ Proof.
   pf V HP (PDisj (ZMul (ZLit 4096) (ZV 310)) 4096 (ZMul (ZLit 4096) (ZV 377)) 11571200) D1.
   pf V HP (PDisj (ZMul (ZLit 4096) (ZV 227)) 4096 (ZMul (ZLit 4096) (ZV 310)) 4096) D2.
   pf V HP (PDisj (ZMul (ZLit 4096) (ZV 227)) 4096 (ZMul (ZLit 4096) (ZV 377)) 11571200) D3.
-  mf V m HM (MCell (ZLit 6214280) 8 (ZLit 6214320)) C40.
+  (* [comment removed for export] *)
+  mf V m HM (MCell (ZLit 6214280) 8 (ZLit 6214320)) C40.      (* [comment removed for export] *)
   mf V m HM (MCell (ZLit 6214288) 8 (ZMul (ZLit 4096) (ZV 377))) C48.
-  mf V m HM (MCell (ZLit 6214296) 8 (ZMul (ZLit 4096) (ZV 310))) C70.
-  mf V m HM (MCell (ZLit 6214328) 8 (ZLit 6216336)) C98.
+  mf V m HM (MCell (ZLit 6214296) 8 (ZMul (ZLit 4096) (ZV 310))) C70.   (* [comment removed for export] *)
+  mf V m HM (MCell (ZLit 6214328) 8 (ZLit 6216336)) C98.      (* [comment removed for export] *)
   mf V m HM (MCell (ZAdd (ZMul (ZLit 4096) (ZV 310)) (ZLit 24)) 8 (ZLit 6214288)) CD24.
   mf V m HM (MCell (ZLit 1359536) 8 (ZLit 256)) CCF.
   mf V m HM (MCell (ZLit 1351064) 4 (ZLit 0)) CVERB.
@@ -101,7 +104,8 @@ Proof.
   pose proof (mimg_cover bsegs V m _ 0x10000 0xb3fe8 HM ltac:(vm_compute; reflexivity)) as IMG.
   rewrite <- EF in *. rewrite <- ED in *. rewrite <- ET in *.
   assert (SHF : shad (al_fake L) = 512 * V 377%nat + 2147450880).
-  { unfold shad, ASHOFF. rewrite Z.shiftr_div_pow2, EF by lia. change (2^3) with 8.
+  { unfold shad, AsanEmbed.ASHOFF.
+rewrite Z.shiftr_div_pow2, EF by lia. change (2^3) with 8.
     replace (4096 * V 377%nat) with ((512 * V 377%nat) * 8) by lia. rewrite Z.div_mul by lia. lia. }
   assert (SHL : shlen FAKESZ = 1446400) by reflexivity.
   assert (G : afake_geom L).
@@ -130,7 +134,7 @@ Proof.
     apply (proj2 (rw_cells_app bsegs m _ [C8 _] [C8 _])). split; [exact CT48| cbn [cells_size csize Nat.add]].
     replace (al_t L + 48 + Z.of_nat 8) with (al_t L + 56) by lia. exact CT56. }
   split.
-  {
+  { (* [comment removed for export] *)
     pose proof (dc_of_cells m _ _ HINTS) as D88. cbn [cells_size csize Nat.add] in D88. change (Z.of_nat (Z.to_nat 88)) with 88 in D88.
     destruct (dc_take m _ 88 8 D88 ltac:(lia)) as [D0 R0]. destruct (c8_of_dc m _ D0) as [h0 H0].
     destruct (dc_take m _ (88 - 8) 8 R0 ltac:(lia)) as [D1' R1]. destruct (c8_of_dc m _ D1') as [h1 H1].

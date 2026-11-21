@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/ct/lib/CtColA/W_set0A.v, with its module paths and module names changed; 388 of its 406 lines of code are new or changed and 126 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_box_model_blockRB_case0.v; 98 of its 205 lines of code are new or changed and 299 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB_case0s.v is the re-based copy of lib/B/Prog/reac_box_model_block_case0s.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB_case0s.v is the re-based copy of lib/B/Prog/reac_box_model_block_case0s.v
    (source sha256 ff669d259814d1994aa93421692b4e3be0ec6d8e1338160202f21e4872eed91c) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: c0s_tail, c0s_fill, c0s_dd8, c0s_l2a, c0s_l2b, c0s_ec4, c0s_f34, c0s_l1a, c0s_l1b, c0s_s1, c0s_s2, c0s_lay1, c0s_lay2. *)
 From Stdlib Require Import ZArith List Lia Bool.

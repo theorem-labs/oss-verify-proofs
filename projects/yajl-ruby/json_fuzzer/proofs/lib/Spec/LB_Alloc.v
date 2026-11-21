@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vdso_of under with_tid). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Spec Require Export LB_Inv LB_StmtA LB_Raw LB_Init.
@@ -37,7 +38,8 @@ Proof.
   intros L pbrk mo t Ht HK.
   assert (Ev : m_vmmaps (with_tid t mo) = m_vmmaps mo) by (destruct mo; reflexivity).
   assert (Eh : m_halted (with_tid t mo) = m_halted mo) by (destruct mo; reflexivity).
-  destruct HK. constructor; rewrite ?Ev, ?Eh, ?m_vm_materialized_with_tid; auto.
+  assert (Evd : vdso_of (with_tid t mo) = vdso_of mo) by (destruct mo; reflexivity).
+  destruct HK. constructor; rewrite ?Evd, ?Ev, ?Eh, ?m_vm_materialized_with_tid; auto.
   apply minv_with_tid; assumption.
 Qed.
 

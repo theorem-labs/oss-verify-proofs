@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (bmain_at and bmain_atL over the launch's whole ProcInput: the pad pin (Wpad, in place of Wblk), the hidden argument block as AsanInit.argH0's two ranges (hidden_arg, STR0_of), the argv pointer cells in the launch's terms (argv_cells), the launch's memory (wrap_mem) and the zero-mapped stack window 6,144,513 below sp; the facts remade by MainRegen's rule from the computed main-entry states per CONFIG_RSEQ value (bmf, bpf) and the recorded lists as kept (BMKN, BMKNW, BPKN, keep_facts); bmodel and bmodelL gain the channel-reader fact, the reserved ledger with the vDSO pair and its byte bound, the mappings' clearance from it and the computed total BTOTSZ; the start-up chain, the bridge and both_side_ok moved to MainBridgeBoth.v). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -8,9 +9,8 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import
 PropExec ShapeAlg SpinAlg AsanAcct AsanAcctImages AxSymExec3 AxSymExec3Sound AxSymRun3
-AsanPlanCore AsanPlan AsanPlanSound BothPlanImages AsanInit BothStartup StartupHS2Both BothBoot
-AsanNodesWJoin StartupPlanBoth StartupHSBoth StartupPlan2Both BothCertDefs BothStartupCert BothStartupCertB BothStartupCertC BothStartupCertD BothStartupCert2
-RegsEqv0 SrzEqv MainExport MainFactsBoth.
+  AsanPlanCore AsanPlan AsanPlanSound BothPlanImages AsanInit StartupRegenBoth PlanRegen MainRenum
+  RegsEqv0 SrzEqv MainExport MainFactsBoth MainRegen.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import PropExec MState Mem Cells Step Frame.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import AcctCore TopLevelGen.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.BothW Require Import BImg.
@@ -29,13 +29,99 @@ Definition ASHOFF : Z := 0x7fff8000.
 Definition ABAND_LO : Z := 0x7fff7000.
 Definition ABAND_LEN : Z := 0x100000001000.
 Definition V_VMBRK : nat := 452.
+(* LPS 727298f3: the main entry's facts per CONFIG_RSEQ value [r] and hand-off [w]: the recorded ones
+   (MainFactsBoth), remade from the computed main-entry state ([stS1 r] / [stS2 r], StartupRegenBoth) by
+   MainRegen's rule, computed in the build.  The start-up run numbers its fresh variables by the probe-read
+   map [bp2] (StartupRegenBoth); the remade facts keep the recorded numbering. *)
+Definition BMW (w : bool) : list mfact := both_mem_facts ++ (if w then both_mem_facts_w1 else both_mem_facts_w2).
+Definition BPW (w : bool) : list pfact := both_pure_facts ++ (if w then both_pure_facts_w1 else both_pure_facts_w2).
+Definition rmf (hs : acs) (l : list mfact) : list mfact := remake_facts (kn hs) BIMG_LO BIMG_HI bp2 l.
+Definition rpf (hs : acs) (l : list pfact) : list pfact := remake_pfacts (kn hs) bp2 l.
+Definition BMF0T : list mfact := Eval vm_compute in rmf (stS1 0) (BMW true).
+Definition BMF1T : list mfact := Eval vm_compute in rmf (stS1 1) (BMW true).
+Definition BMF0F : list mfact := Eval vm_compute in rmf (stS2 0) (BMW false).
+Definition BMF1F : list mfact := Eval vm_compute in rmf (stS2 1) (BMW false).
+Definition BPF0T : list pfact := Eval vm_compute in rpf (stS1 0) (BPW true).
+Definition BPF1T : list pfact := Eval vm_compute in rpf (stS1 1) (BPW true).
+Definition BPF0F : list pfact := Eval vm_compute in rpf (stS2 0) (BPW false).
+Definition BPF1F : list pfact := Eval vm_compute in rpf (stS2 1) (BPW false).
+Definition bmf (r : Z) (w : bool) : list mfact :=
+  if w then (if Z.eqb r 1 then BMF1T else BMF0T) else (if Z.eqb r 1 then BMF1F else BMF0F).
+Definition bpf (r : Z) (w : bool) : list pfact :=
+  if w then (if Z.eqb r 1 then BPF1T else BPF0T) else (if Z.eqb r 1 then BPF1F else BPF0F).
+(* the recorded lists as the main-phase proofs read them (MainRegen's [kept_m] / [kept_p]): a recorded fact
+   every remade list still holds keeps its place, any other is replaced in place by a fact true of every
+   memory *)
+Definition BMKN : list mfact := Eval vm_compute in map (kept_m [BMF0T; BMF1T; BMF0F; BMF1F]) both_mem_facts.
+Definition BMKN1 : list mfact := Eval vm_compute in map (kept_m [BMF0T; BMF1T]) both_mem_facts_w1.
+Definition BMKN2 : list mfact := Eval vm_compute in map (kept_m [BMF0F; BMF1F]) both_mem_facts_w2.
+Definition BMKNW (w : bool) : list mfact := if w then BMKN1 else BMKN2.
+Definition BPKN : list pfact := Eval vm_compute in map (kept_p [BPF0T; BPF1T; BPF0F; BPF1F]) both_pure_facts.
+Lemma BMKN_eq : BMKN = map (kept_m [BMF0T; BMF1T; BMF0F; BMF1F]) both_mem_facts. Proof. vm_compute. reflexivity. Qed.
+Lemma BMKN1_eq : BMKN1 = map (kept_m [BMF0T; BMF1T]) both_mem_facts_w1. Proof. vm_compute. reflexivity. Qed.
+Lemma BMKN2_eq : BMKN2 = map (kept_m [BMF0F; BMF1F]) both_mem_facts_w2. Proof. vm_compute. reflexivity. Qed.
+Lemma BPKN_eq : BPKN = map (kept_p [BPF0T; BPF1T; BPF0F; BPF1F]) both_pure_facts. Proof. vm_compute. reflexivity. Qed.
+(* what a main-phase proof reads off [bmain_at]'s facts *)
+Lemma keep_facts : forall segs V m r w,
+  Forall (mfact_ok segs V m) (bmf r w) -> Forall (pfact_ok V) (bpf r w) ->
+  Forall (mfact_ok segs V m) BMKN /\ Forall (mfact_ok segs V m) (BMKNW w) /\ Forall (pfact_ok V) BPKN.
+Proof.
+  intros segs V m r w HM HP.
+  assert (IM : In (bmf r w) [BMF0T; BMF1T; BMF0F; BMF1F])
+    by (unfold bmf; destruct w, (Z.eqb r 1); cbn [In]; repeat (first [left; reflexivity | right])).
+  assert (IP : In (bpf r w) [BPF0T; BPF1T; BPF0F; BPF1F])
+    by (unfold bpf; destruct w, (Z.eqb r 1); cbn [In]; repeat (first [left; reflexivity | right])).
+  assert (IW : In (bmf r w) (if w then [BMF0T; BMF1T] else [BMF0F; BMF1F]))
+    by (unfold bmf; destruct w, (Z.eqb r 1); cbn [In]; repeat (first [left; reflexivity | right])).
+  split; [rewrite BMKN_eq; exact (kept_m_ok segs V m _ _ both_mem_facts IM HM)|].
+  split; [|rewrite BPKN_eq; exact (kept_p_ok V _ _ both_pure_facts IP HP)].
+  unfold BMKNW. destruct w; [rewrite BMKN1_eq | rewrite BMKN2_eq]; exact (kept_m_ok segs V m _ _ _ IW HM).
+Qed.
+(* the reserved-and-mapped total the computed states carry (the vDSO pair and the bigger head) *)
+Definition BTOTSZ : Z := Eval vm_compute in
+  Z.max (Z.max (a_totsz (stS1 0)) (a_totsz (stS1 1))) (Z.max (a_totsz (stS2 0)) (a_totsz (stS2 1))).
+(* the stack window below sp the start state states (AsanPlanCore's [KWr (SA e_sp0 (-6144513)) (ELit 6144513)]) *)
+Definition STKA : zexp := ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-6144513)).
+(* the argv pointer cells as the start state states them (AsanPlanCore: [KWord (SA e_sp0 8) 8 (e_str0 r)] and
+   [kw_argv1 (e_argv1w r)]), in the facts' terms; the bridge checks them against the computed main-entry state *)
+Definition zof0 (e : expr) : zexp := match zexp_of e with Some z => z | None => ZLit 0 end.
+Definition bargv (r : Z) : list mfact :=
+  [MRo (mkaddr (zof0 e_sp0) 8) 8 (zof0 (e_str0 r)); MRo (mkaddr (zof0 e_sp0) 16) 8 (zof0 (e_argv1w r))].
+Lemma zv_sp0 : forall V, zv V (zof0 e_sp0) = 32768 * V 0%nat + 16 * V 6%nat + 4096 * V 10%nat.
+Proof.
+  intros V. match goal with |- context [zof0 ?e] => let x := eval vm_compute in (zof0 e) in change (zof0 e) with x end.
+  cbn [zv]. lia.
+Qed.
+Lemma zv_str0 : forall V r, 0 <= r <= 1 ->
+  zv V (zof0 (e_str0 r)) = 32768 * V 0%nat + 16 * V 6%nat + 4096 * V 10%nat + 8 * V 1%nat + 8 * V 2%nat
+                           + 8 * V 11%nat + V 4%nat + 472 + 32 * r.
+Proof.
+  intros V r Hr. assert (r = 0 \/ r = 1) as [-> | ->] by lia;
+    match goal with |- context [zof0 ?e] => let x := eval vm_compute in (zof0 e) in change (zof0 e) with x end;
+    cbn [zv]; lia.
+Qed.
+Lemma zv_argv1 : forall V r, 0 <= r <= 1 -> 2 <= V 1%nat < 2 ^ 64 ->
+  zv V (zof0 (e_argv1w r)) = 32768 * V 0%nat + 16 * V 6%nat + 4096 * V 10%nat + 8 * V 1%nat + 8 * V 2%nat
+                             + 8 * V 11%nat + V 4%nat + 472 + 32 * r + V 3%nat + 1.
+Proof.
+  intros V r Hr Ha. assert (r = 0 \/ r = 1) as [-> | ->] by lia;
+    match goal with |- context [zof0 ?e] => let x := eval vm_compute in (zof0 e) in change (zof0 e) with x end;
+    cbn [zv]; unfold MainExport.two64; rewrite (Z.mod_small 1 (2 ^ 64)) by lia; rewrite (Z.mod_small (V 1%nat) (2 ^ 64)) by lia;
+    rewrite (proj2 (Z.ltb_lt 1 (V 1%nat))) by lia; cbn [Z.b2z]; lia.
+Qed.
 Lemma bph_BPH : BPH = b_phdrs. Proof. reflexivity. Qed.
 Record bmodel (V : nat -> Z) (sp : word) (fs : Fs.Fs) (mo : Model) : Prop := BMODEL {
 bm_halted : m_halted mo = None;
+  bm_reader   : m_channel_reader mo = true;   (* 08b1429: check_write/check_writev branch on the channel reader (SIGPIPE arm) *)
 bm_fds : m_fds mo = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
 (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))];
 bm_fs : m_fs mo = fs;
-bm_reserved : vm_reserved (m_vmmaps mo) = segments_reserved bsegs;
+  (* LPS 727298f3: the run's reservations are the image's and the vDSO pair, above the ASan
+     shadow ([AsanPlanSound.co_res]) *)
+  bm_reserved : exists rx : list (word * word),
+                  vm_reserved (m_vmmaps mo) = segments_reserved bsegs ++ rx
+                  /\ Forall (resx_entry_ok BOTH) rx /\ (length rx <= n_resx BOTH)%nat
+                  /\ sum_sizes rx <= resx_bytes BOTH;
 bm_limit : vm_limit (m_vmmaps mo) = target_alloc_limit;
 bm_brk : vm_brk (m_vmmaps mo) = Z_to_bv 64 (V V_VMBRK);
 bm_start_brk : bv_unsigned (vm_start_brk (m_vmmaps mo)) <= V V_VMBRK;
@@ -55,21 +141,27 @@ bm_lazy_bounds : Forall (fun iv => (bv_unsigned (fst iv) + bv_unsigned (snd iv) 
 bm_noaccess_wf : Forall (fun iv => bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 64) (vm_noaccess (m_vmmaps mo));
 bm_noaccess_sub : forall z, MainExport.in_ivs z (vm_noaccess (m_vmmaps mo)) -> MainExport.in_ivs z (vm_maps (m_vmmaps mo));
 bm_noaccess_pos : Forall (fun iv => 0 < bv_unsigned (snd iv)) (vm_noaccess (m_vmmaps mo));
-bm_totsz : ivs_sum (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= both_totsz;
+  bm_totsz    : ivs_sum (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= BTOTSZ;
 bm_nonlazy : nonlazy_bytes mo <= both_eager;
 bm_abytes : ivz_bytes (allow_of ASHOFF V both_vis) <= both_abytes;
 bm_budget : nonlazy_bytes mo + ivz_bytes (allow_of ASHOFF V both_vis) <= target_alloc_limit;
 bm_allow_wf : ivz_wf (allow_of ASHOFF V both_vis);
 bm_mat_nodup : List.NoDup (m_vm_materialized mo);
 bm_mat : forall p, In p (m_vm_materialized mo) ->
-bv_unsigned p mod 4096 = 0 /\ page_in_ranges p (m_vm_lazy mo) = true /\ aallowed (allow_of ASHOFF V both_vis) p
+                  bv_unsigned p mod 4096 = 0 /\ page_in_ranges p (m_vm_lazy mo) = true /\ aallowed (allow_of ASHOFF V both_vis) p;
+  (* LPS 727298f3: the mappings miss the reserved ledger, the vDSO pair included ([AsanPlanSound.co_mres]) *)
+  bm_mres     : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps mo))) (vm_maps (m_vmmaps mo))
 }.
 Record bmodelL (lim : Z) (V : nat -> Z) (sp : word) (fs : Fs.Fs) (mo : Model) : Prop := BMODELL {
 bmL_halted : m_halted mo = None;
+  bmL_reader   : m_channel_reader mo = true;   (* as [bm_reader] *)
 bmL_fds : m_fds mo = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
 (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))];
 bmL_fs : m_fs mo = fs;
-bmL_reserved : vm_reserved (m_vmmaps mo) = segments_reserved bsegs;
+  bmL_reserved : exists rx : list (word * word),
+                  vm_reserved (m_vmmaps mo) = segments_reserved bsegs ++ rx
+                  /\ Forall (resx_entry_ok BOTH) rx /\ (length rx <= n_resx BOTH)%nat
+                  /\ sum_sizes rx <= resx_bytes BOTH;
 bmL_limit : vm_limit (m_vmmaps mo) = lim;
 bmL_brk : vm_brk (m_vmmaps mo) = Z_to_bv 64 (V V_VMBRK);
 bmL_start_brk : bv_unsigned (vm_start_brk (m_vmmaps mo)) <= V V_VMBRK;
@@ -89,36 +181,52 @@ bmL_lazy_bounds : Forall (fun iv => (bv_unsigned (fst iv) + bv_unsigned (snd iv)
 bmL_noaccess_wf : Forall (fun iv => bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 64) (vm_noaccess (m_vmmaps mo));
 bmL_noaccess_sub : forall z, MainExport.in_ivs z (vm_noaccess (m_vmmaps mo)) -> MainExport.in_ivs z (vm_maps (m_vmmaps mo));
 bmL_noaccess_pos : Forall (fun iv => 0 < bv_unsigned (snd iv)) (vm_noaccess (m_vmmaps mo));
-bmL_totsz : ivs_sum (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= both_totsz;
+  bmL_totsz    : ivs_sum (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= BTOTSZ;
 bmL_nonlazy : nonlazy_bytes mo <= both_eager;
 bmL_abytes : ivz_bytes (allow_of ASHOFF V both_vis) <= both_abytes;
 bmL_budget : nonlazy_bytes mo + ivz_bytes (allow_of ASHOFF V both_vis) <= lim;
 bmL_allow_wf : ivz_wf (allow_of ASHOFF V both_vis);
 bmL_mat_nodup : List.NoDup (m_vm_materialized mo);
 bmL_mat : forall p, In p (m_vm_materialized mo) ->
-bv_unsigned p mod 4096 = 0 /\ page_in_ranges p (m_vm_lazy mo) = true /\ aallowed (allow_of ASHOFF V both_vis) p
+                  bv_unsigned p mod 4096 = 0 /\ page_in_ranges p (m_vm_lazy mo) = true /\ aallowed (allow_of ASHOFF V both_vis) p;
+  (* as [bm_mres] *)
+  bmL_mres     : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps mo))) (vm_maps (m_vmmaps mo))
 }.
 Lemma bmodelL_bmodel : forall V sp fs mo, bmodelL target_alloc_limit V sp fs mo -> bmodel V sp fs mo.
 Proof. intros V sp fs mo H. destruct H. constructor; assumption. Qed.
 Lemma bmodel_bmodelL : forall V sp fs mo, bmodel V sp fs mo -> bmodelL target_alloc_limit V sp fs mo.
 Proof. intros V sp fs mo H. destruct H. constructor; assumption. Qed.
-Definition Wblk (en : ExecEntry) (inp : ProcInput) : Z :=
-(Z.of_nat (length (build_stack_bytes b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en))) - 16
-- (8 * Z.of_nat (length (in_argv inp)) + 8 * Z.of_nat (length (in_envp inp)) + 184)) / 8.
+(* LPS 727298f3: Linux's stack block.  The arch_align_stack pad [Wpad] sits between the AT_RANDOM
+   bytes and argv[0]; the string area runs from [STR0_of] (argv[0]) to the stack VMA's end
+   ([ed_top]).  [hidden_arg] is [AsanInit.argH0]'s two ranges in the entry's own terms. *)
+Definition Wpad (en : ExecEntry) (inp : ProcInput) : Z :=
+  Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) (en_sp en) (ed_top (en_draw en)) (in_argv inp) (in_envp inp) (in_execfn inp)).
+Definition STR0_of (en : ExecEntry) (inp : ProcInput) : Z :=
+  bv_unsigned (en_sp en) + Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) + Wpad en inp.
 Definition hidden_arg (en : ExecEntry) (inp : ProcInput) (a : Z) : Prop :=
 let usp := bv_unsigned (en_sp en) in
 let argc := Z.of_nat (length (in_argv inp)) in
 let envc := Z.of_nat (length (in_envp inp)) in
 (usp + 8 * argc + 16 <= a < usp + 8 * argc + 8 * envc + 24)
-\/ (usp + 8 * argc + 8 * envc + 184 <= a < usp + 8 * argc + 8 * envc + 184 + 8 * Wblk en inp).
+  \/ (STR0_of en inp <= a < bv_unsigned (ed_top (en_draw en))).
+(* LPS 727298f3: the argv pointer cells, in the launch's terms: argv[0] points at the string area's start
+   [STR0_of], which is the launch's string base (the stack VMA's end less the strings and their 8-byte end
+   marker, InitMem.str_base), and argv[1], when there is one, right after argv[0]'s string *)
+Definition argv_cells (en : ExecEntry) (inp : ProcInput) (m : word -> option byte) : Prop :=
+  let usp := bv_unsigned (en_sp en) in
+  let sb := bv_unsigned (ed_top (en_draw en)) - 8 - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp)) in
+  STR0_of en inp = sb
+  /\ bytes_at bsegs m (usp + 8) (word_to_le_bytes 8 (Z_to_bv 64 sb))
+  /\ (2 <= Z.of_nat (length (in_argv inp)) ->
+      bytes_at bsegs m (usp + 16) (word_to_le_bytes 8 (Z_to_bv 64 (sb + Z.of_nat (length (nth 0 (in_argv inp) [])) + 1)))).
 Definition bshadow (a : Z) : Prop := (0x7fff7000 <= a < 0x8fff7000) \/ (0x2008fff7000 <= a < 0x10007fff8000).
 Definition BSHADOWS : list (Z * Z) := [(0x7fff7000, 0x8fff7000); (0x2008fff7000, 0x10007fff8000)].
 Definition bshadow_vis (V : nat -> Z) (a : Z) : Prop :=
 exists bn, In bn both_vis_app /\ ASHOFF + zv V (fst bn) / 8 <= a < ASHOFF + (zv V (fst bn) + zv V (snd bn)) / 8.
 Definition bshadow0 (V : nat -> Z) (m : word -> option byte) : Prop :=
 forall a, bshadow a -> ~ bshadow_vis V a -> m (wa a) = Some (Z_to_bv 8 0).
-Definition both_mem_facts_w (w : bool) : list mfact := if w then both_mem_facts_w1 else both_mem_facts_w2.
-Definition both_pure_facts_w (w : bool) : list pfact := if w then both_pure_facts_w1 else both_pure_facts_w2.
+(* the run's CONFIG_RSEQ flag as the plan's 0 or 1 (model commit 0c15dd4) *)
+Definition RZ_of (inp : ProcInput) : Z := rseq_z (kb_rseq (in_kernel inp)).
 Definition bmain_at (en : ExecEntry) (inp : ProcInput) (ms : machine_state) (mo : Model) : Prop :=
 let usp := bv_unsigned (en_sp en) in
 let argc := Z.of_nat (length (in_argv inp)) in
@@ -138,14 +246,16 @@ bvmap_empty (Z_to_bv 64 BMAIN) (Z_to_bv 32 0) None m (seg_rom bsegs)
 /\ 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp
 /\ V 1%nat = argc /\ V 2%nat = envc
 /\ V 3%nat = Z.of_nat (length (nth 0 (in_argv inp) [])) /\ V 7%nat = Z.of_nat (length (nth 1 (in_argv inp) []))
-/\ V 4%nat = Wblk en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
+        /\ V 4%nat = Wpad en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
 /\ V 9%nat = bv_unsigned (in_hwcap inp))
-/\ Forall (mfact_ok bsegs V m) (both_mem_facts ++ both_mem_facts_w w)
-/\ Forall (pfact_ok V) (both_pure_facts ++ both_pure_facts_w w)
+    /\ Forall (mfact_ok bsegs V m) (bmf (RZ_of inp) w)
+    /\ Forall (pfact_ok V) (bpf (RZ_of inp) w)
 /\ mem_inv bsegs m
-/\ stk bsegs m (usp - 8388608) usp
+    (* LPS 727298f3: the stack every launch zero-maps below the entry sp ([InitMem.im_stack_depth]) *)
+    /\ stk bsegs m (usp - 6144513) usp
 /\ (forall a, hidden_arg en inp a ->
-m (wa a) = wrap_mem b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (wa a))
+          m (wa a) = wrap_mem inp (en_mmap_base en) b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) (en_sp en) (en_draw en) (wa a))
+    /\ argv_cells en inp m
 /\ bshadow0 V m
 /\ bmodel V (en_sp en) (in_fs inp) mo.
 Definition bmain_atL (lim : Z) (en : ExecEntry) (inp : ProcInput) (ms : machine_state) (mo : Model) : Prop :=
@@ -167,27 +277,29 @@ bvmap_empty (Z_to_bv 64 BMAIN) (Z_to_bv 32 0) None m (seg_rom bsegs)
 /\ 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp
 /\ V 1%nat = argc /\ V 2%nat = envc
 /\ V 3%nat = Z.of_nat (length (nth 0 (in_argv inp) [])) /\ V 7%nat = Z.of_nat (length (nth 1 (in_argv inp) []))
-/\ V 4%nat = Wblk en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
+        /\ V 4%nat = Wpad en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
 /\ V 9%nat = bv_unsigned (in_hwcap inp))
-/\ Forall (mfact_ok bsegs V m) (both_mem_facts ++ both_mem_facts_w w)
-/\ Forall (pfact_ok V) (both_pure_facts ++ both_pure_facts_w w)
+    /\ Forall (mfact_ok bsegs V m) (bmf (RZ_of inp) w)
+    /\ Forall (pfact_ok V) (bpf (RZ_of inp) w)
 /\ mem_inv bsegs m
-/\ stk bsegs m (usp - 8388608) usp
+    (* LPS 727298f3: the stack every launch zero-maps below the entry sp ([InitMem.im_stack_depth]) *)
+    /\ stk bsegs m (usp - 6144513) usp
 /\ (forall a, hidden_arg en inp a ->
-m (wa a) = wrap_mem b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (wa a))
+          m (wa a) = wrap_mem inp (en_mmap_base en) b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) (en_sp en) (en_draw en) (wa a))
+    /\ argv_cells en inp m
 /\ bshadow0 V m
 /\ bmodelL lim V (en_sp en) (in_fs inp) mo.
 Lemma bmain_atL_bmain_at : forall en inp ms mo, bmain_atL target_alloc_limit en inp ms mo -> bmain_at en inp ms mo.
 Proof.
 intros en inp ms mo (w & V & m & H). exists w, V, m.
-destruct H as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-repeat (split; [assumption|]). apply bmodelL_bmodel. exact H10.
+  destruct H as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11).
+  repeat (split; [assumption|]). apply bmodelL_bmodel. exact H11.
 Qed.
 Lemma bmain_at_bmain_atL : forall en inp ms mo, bmain_at en inp ms mo -> bmain_atL target_alloc_limit en inp ms mo.
 Proof.
 intros en inp ms mo (w & V & m & H). exists w, V, m.
-destruct H as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-repeat (split; [assumption|]). apply bmodel_bmodelL. exact H10.
+  destruct H as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11).
+  repeat (split; [assumption|]). apply bmodel_bmodelL. exact H11.
 Qed.
 Lemma bshadow0_range : forall V m lo n,
 bshadow0 V m -> 0 < n ->
@@ -249,294 +361,4 @@ intros V VR PF bn a HV HPF H HS. unfold shad_clear in H. apply orb_prop in H as 
 - exact (range_clear_sound V VR BSHADOWS bn a HV H HS).
 - apply (band_fact_sound V ABAND_LO ABAND_LEN PF bn a HPF H).
 destruct HS as (s & Hs & Ha). unfold ABAND_LO, ABAND_LEN. cbn in Hs. destruct Hs as [<-|[<-|[]]]; cbn in Ha; lia.
-Qed.
-Section Bridge.
-Variable sp brk0 mbase : word.
-Variable rdraw : EntryDraw.
-Variable argv envp : list (list byte).
-Variable fs : Fs.Fs.
-Variable stdin : InputStream.
-Variables uid gid : word.
-Variable groups : list word.
-Variable net : NetQueue.
-Variables nof sigm : word.
-Variable hw : word.
-Variable abt : bool.
-Variable urnd : InputStream.
-Hypothesis Hsp : valid_sp sp.
-Hypothesis Hbrk : valid_brk BSEGS brk0.
-Hypothesis Hmb : valid_mmap_base mbase.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
-Hypothesis Huid : valid_id uid.
-Hypothesis Hhw : valid_hwcap hw.
-Definition en0 : ExecEntry := mkEntry sp brk0 mbase rdraw.
-Definition inp0 : ProcInput := AsanInit.inp argv envp fs stdin uid gid hw groups net nof sigm abt urnd.
-#[local] Abbreviation SINV := (SINV0 BPH sp rdraw brk0 argv envp uid hw).
-#[local] Abbreviation argH := (argH0 BPH sp rdraw argv envp uid hw).
-#[local] Abbreviation E0a := (AsanInit.E0 BPH sp rdraw brk0 argv envp uid hw).
-Section Lim.
-Variable LIM : Z.
-Let AH := argH0_high BPH sp rdraw argv envp uid hw Hsp Hva.
-#[using="Hsp Hva Hve Hfit"] Lemma sinv_usp : forall E M, SINV E M -> uE E e_sp0 = bv_unsigned sp.
-Proof.
-intros E M [HE _].
-transitivity (uE E0a e_sp0); [| exact (AsanInit.u_e_sp0 BPH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit)].
-unfold e_sp0, uE. rewrite !mkAlu_denot, !mkMd_denot, !edenot_lit. cbn [edenot].
-Local Ltac2 Set LiaHints.tbl := fun () => "0020>30226912190.3054441042655.30000001002SS".
-rewrite !HE by (unfold NX0, V_S1, V_S2, V_SP; lia). reflexivity.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="Hsp Hva Hve Hfit AH"] Theorem bmain_bridge_w : forall (w : bool) (hs : acs),
-s_regs (a_ss hs) = s_regs (a_ss HS_both2_1) -> pc hs = BMAIN -> a_fd hs = FdStd -> a_brk hs = EVar V_VMBRK ->
-forallb (mjustify (kn hs) (var_ranges (kn hs)) BIMG_LO BIMG_HI) (both_mem_facts ++ both_mem_facts_w w) = true ->
-forallb (pjustify (kn hs) (var_ranges (kn hs))) (both_pure_facts ++ both_pure_facts_w w) = true ->
-vis_match (var_ranges (kn hs)) (a_vis hs) both_vis_app = true /\ vis_match (var_ranges (kn hs)) (a_ghost hs) both_ghost = true ->
-ledger_xmatch (var_ranges (kn hs)) (a_maps hs) both_ledger = true ->
-a_totsz hs = both_totsz /\ a_ylo hs = both_ylo /\ a_eager hs = both_eager /\ a_abytes hs = both_abytes ->
-forall E R FULL mo,
-cs_ok BSEGS BOTH LIM SINV argH fs E hs R FULL mo ->
-exists ms, cfg_eqv (cfg_of BSEGS R (pc hs) FULL mo) (mkCfg ms mo) /\ bmain_atL LIM en0 inp0 ms mo.
-Proof.
-intros w hs Hregs Hpc Hfd Hbrk0 MJ PJ VJ LJ CONSTS E R FULL mo HC. rewrite Hpc.
-set (V := uev E).
-pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as HSINV. pose proof HSINV as [Hev Hhid].
-pose proof (sinv_usp E FULL HSINV) as USP.
-pose proof (AsanInit.uE0 BPH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (U0 & U6 & U1 & U2 & U3 & U4 & U5).
-pose proof (AsanInit.uE0_sp BPH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U10.
-pose proof (AsanInit.uE0_L1 BPH sp rdraw brk0 argv envp uid hw Hva) as U7.
-pose proof (AsanInit.uE0_uid BPH sp rdraw brk0 argv envp uid hw) as U8.
-pose proof (AsanInit.uE0_hw BPH sp rdraw brk0 argv envp uid hw) as U9.
-unfold APS.uE in U0, U6, U1, U2, U3, U4, U5, U7, U8, U9, U10. cbn [edenot] in U0, U6, U1, U2, U3, U4, U5, U7, U8, U9, U10.
-assert (PIN : forall n z, (n < 11)%nat -> bv_unsigned (ev E0a n) = z -> V n = z).
-{ intros n z Hn Hz. unfold V, uev. Local Ltac2 Set LiaHints.tbl := fun () => "00X0?11600010379.70 11801973628.62 12789838657.94 13279492882.10313777107832.74 1903867665.71  20231643195.70 20231643965.70 20839677384.11422009059152.70 24321371130.70 26105003527.81 30224946615.60 32061518864.81 34407172777.63 3828644984.94  38362372363.63 43608359801.76 45248729535.78 46757302991.74 47677823266.81 52526506853.70 54441433194.64 54441433448.61 54441433839.67 54441433964.66 54441434093.65 54441434339.70 54441434464.69 54441434593.68 56763568504.88 56765597065.81 56938766640.10357027975735.91 57030075784.93 59576979888.93 60849098329.76 64162592104.63 7083878915.70  863842192.81   00000400500=00D00I00Q00U00Y00]00b00g00k00l01001401901K01L01R01S01W01[01\01]01^01_01`01a01b01c01h02:02A02F02K02L02S02T02\02`S2P1SS2LO3HshS2X12X2S3PSPS2Hn3Hn1S2HcS2HaS2HIS3PSPS3PSPS2HaSS2HaS2HnS3HshS2P02P63P103Hal2LOSS1l2l0SS2HaS2HaSSSSSSSSS3HshS2LO2Ha1F2W12W22LAS2X12X2S3HshS3HshSS2LO2HaSS2P13PSPS2Ha".
-rewrite (Hev n) by (unfold NX0; lia). exact Hz. }
-pose proof (PIN 0%nat _ ltac:(lia) U0) as P0. pose proof (PIN 6%nat _ ltac:(lia) U6) as P6.
-pose proof (PIN 1%nat _ ltac:(lia) U1) as P1. pose proof (PIN 2%nat _ ltac:(lia) U2) as P2.
-pose proof (PIN 3%nat _ ltac:(lia) U3) as P3. pose proof (PIN 4%nat _ ltac:(lia) U4) as P4.
-pose proof (PIN 5%nat _ ltac:(lia) U5) as P5. pose proof (PIN 7%nat _ ltac:(lia) U7) as P7.
-pose proof (PIN 8%nat _ ltac:(lia) U8) as P8. pose proof (PIN 9%nat _ ltac:(lia) U9) as P9.
-pose proof (PIN 10%nat _ ltac:(lia) U10) as P10.
-clear U0 U6 U1 U2 U3 U4 U5 U7 U8 U9 U10.
-assert (Hal : bv_unsigned sp mod 16 = 0) by (pose proof Hsp as (_ & _ & H); exact H).
-pose proof (AsanInit.usp_lo sp Hsp) as LO.
-pose proof (AsanInit.usp_hi BPH sp rdraw argv envp uid hw Hva Hve Hfit) as HI.
-assert (PSP : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = bv_unsigned sp).
-{ rewrite P0, P6, P10. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia. }
-Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-assert (VR : forall n, 0 <= V n < 2 ^ 64) by (intros n; apply uev_range).
-pose proof (co_top _ _ _ _ _ _ _ _ _ _ _ HC) as TOP. rewrite USP in TOP.
-assert (ATOP : atop mo = bv_unsigned sp - 8388608) by (unfold atop; rewrite TOP; reflexivity).
-eexists. split; cycle 1.
-{
-exists w, V, FULL. split; [reflexivity|].
-split; [exact VR|].
-split; [repeat split; assumption|].
-assert (HIDrom : forall a, APS.hid BOTH argH E hs mo a = true -> seg_rom bsegs a = None).
-{ intros a Ha. apply (APS.seg_rom_off_hull BSEGS BOTH both_in_hull).
-unfold APS.hid in Ha. apply orb_prop in Ha as [Ha|Ha].
-- pose proof (AH E a Ha) as Hc. unfold APS.in_hull. cbn [img_lo img_hi BOTH]. unfold CEIL in Hc.
-apply andb_false_iff. right. apply Z.ltb_ge. lia.
-- apply negb_true_iff in Ha. unfold APS.vis in Ha. apply orb_false_iff in Ha as [Ha _]. apply orb_false_iff in Ha as [Ha _]. exact Ha. }
-assert (HULLvis : forall a, BIMG_LO <= bv_unsigned a < BIMG_HI -> APS.hid BOTH argH E hs mo a = false).
-{ intros a Ha. apply (APS.hid_hull BOTH both_hull_ok argH AH). unfold APS.in_hull. cbn [img_lo img_hi BOTH]. unfold BIMG_LO, BIMG_HI in Ha.
-apply andb_true_intro. split; [apply Z.leb_le| apply Z.ltb_lt]; lia. }
-pose proof (export_sound bsegs E (APS.hid BOTH argH E hs mo) FULL (kn hs) BIMG_LO BIMG_HI
-(co_know _ _ _ _ _ _ _ _ _ _ _ HC) HIDrom HULLvis _ _ MJ PJ) as [HMF HPF].
-pose proof (proj1 (Forall_app _ _ _) HMF) as [HMFc _].
-pose proof (proj1 (Forall_app _ _ _) HPF) as [HPFc _].
-split; [exact HMF|]. split; [exact HPF|].
-split.
-{ intros a b Hab. rewrite a_ro_addr.
-destruct (Z.leb_spec0 0x10000 (bv_unsigned a)); [|reflexivity].
-destruct (Z.ltb_spec0 (bv_unsigned a) 0x99000); [|reflexivity].
-exfalso. pose proof (mimg_cover bsegs V FULL both_mem_facts 0x10000 0x99000 HMFc ltac:(vm_compute; reflexivity) (bv_unsigned a) ltac:(lia)) as X.
-unfold wa in X. rewrite Z_to_bv_bv_unsigned in X. congruence. }
-split.
-{ pose proof (mwr_find bsegs V FULL both_mem_facts
-(ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8388608))) 8388608
-HMFc ltac:(vm_compute; reflexivity)) as W.
-cbn [zv] in W. fold V in W.
-replace (32768 * V 0%nat + (16 * V 6%nat + 4096 * V 10%nat) + -8388608) with (bv_unsigned sp - 8388608) in W by lia.
-cbn [en0 en_sp].
-apply wr_at_stk; [replace (bv_unsigned sp - (bv_unsigned sp - 8388608)) with 8388608 by lia; exact W|].
-intros a Ha. apply ref_find_segment_none; [lia|]. lia. }
-split.
-{ intros a Ha. cbn [en0 inp0 AsanInit.inp mkProcInput en_sp en_draw in_argv in_envp in_uid in_hwcap]. apply Hhid.
-pose proof (AsanInit.usp_fit BPH sp rdraw argv envp uid hw Hfit) as F.
-pose proof (AsanInit.W_range BPH sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3).
-pose proof (AsanInit.len_av BPH sp rdraw argv envp uid hw Hva) as LA. pose proof (AsanInit.len_ev BPH sp rdraw argv envp uid hw Hve) as LE.
-unfold hidden_arg, Wblk in Ha. cbn [en0 inp0 AsanInit.inp mkProcInput en_sp en_draw in_argv in_envp in_uid in_hwcap] in Ha.
-try rewrite <- bph_BPH in Ha.
-unfold argH0. rewrite wa_unsigned by lia.
-apply orb_true_intro. destruct Ha as [Ha|Ha]; [left|right]; apply andb_true_intro; split;
-first [apply Z.leb_le; lia | apply Z.ltb_lt; lia]. }
-pose proof (var_ranges_sound BSEGS E _ (kn hs) (co_know _ _ _ _ _ _ _ _ _ _ _ HC)) as HVR.
-destruct VJ as [VJa VJg].
-pose proof (vis_match_sound E _ _ _ HVR VJa) as HVISa. pose proof (vis_match_sound E _ _ _ HVR VJg) as HVISg.
-pose proof (Forall2_app HVISa HVISg) as HVIS. change (both_vis_app ++ both_ghost) with both_vis in HVIS.
-pose proof (ledger_den_sound E _ HVR _ _ _ LJ (co_maps _ _ _ _ _ _ _ _ _ _ _ HC)) as HLD.
-pose proof (ledger_kinds_sound E _ HVR _ _ mo LJ (co_none _ _ _ _ _ _ _ _ _ _ _ HC) (co_kinds _ _ _ _ _ _ _ _ _ _ _ HC)) as HKD.
-fold V in HLD, HKD.
-split.
-{ pose proof (pvranges_sound V both_pure_facts VR HPFc) as HVRp.
-assert (CLRv : forallb (shad_clear (pvranges both_pure_facts) both_pure_facts) both_vis_app = true) by (vm_compute; reflexivity).
-assert (CLRg : forallb (shad_clear (pvranges both_pure_facts) both_pure_facts) both_ghost = true) by (vm_compute; reflexivity).
-assert (Elow : In (LMap (ZLit 0x7fff7000) 0x10000000 KRWLAZY) both_ledger) by (cbn; tauto).
-assert (Ehigh : In (LMap (ZLit 0x2008fff7000) 0xdfff0001000 KRWLAZY) both_ledger) by (cbn; tauto).
-intros a Hsh Hnv.
-assert (Ha : 0 <= a < 2 ^ 64) by (unfold bshadow in Hsh; lia).
-assert (Ua : bv_unsigned (wa a) = a) by (apply wa_unsigned; exact Ha).
-assert (KL : ~ MainExport.in_ivs a (vm_noaccess (m_vmmaps mo)) /\ page_in_ranges (page_base (wa a)) (m_vm_lazy mo) = true
-/\ APS.in_ivs a (vm_maps (m_vmmaps mo)) = true).
-{ destruct Hsh as [Hsh|Hsh].
-- pose proof (proj1 (Forall_forall _ _) HKD _ Elow) as K. cbn [lentry_kind_ok zv] in K.
-destruct (K (wa a) ltac:(rewrite Ua; lia)) as [K1 K2]. rewrite Ua in K1. split; [exact K1|]. split; [exact K2|].
-apply (proj2 (in_ivs_APS _ _)). exists (wa 0x7fff7000, wa 0x10000000). split; [exact (ledger_den_In V _ _ _ _ _ HLD Elow)|].
-cbn [fst snd]. rewrite !wa_unsigned by lia. lia.
-- pose proof (proj1 (Forall_forall _ _) HKD _ Ehigh) as K. cbn [lentry_kind_ok zv] in K.
-destruct (K (wa a) ltac:(rewrite Ua; lia)) as [K1 K2]. rewrite Ua in K1. split; [exact K1|]. split; [exact K2|].
-apply (proj2 (in_ivs_APS _ _)). exists (wa 0x2008fff7000, wa 0xdfff0001000). split; [exact (ledger_den_In V _ _ _ _ _ HLD Ehigh)|].
-cbn [fst snd]. rewrite !wa_unsigned by lia. lia. }
-destruct KL as (Kna & Klz & Kmap).
-assert (HSS : exists s, In s BSHADOWS /\ fst s <= a < snd s).
-{ destruct Hsh as [Hsh|Hsh]; [exists (0x7fff7000, 0x8fff7000) | exists (0x2008fff7000, 0x10007fff8000)]; cbn; split; auto; lia. }
-apply (co_zero _ _ _ _ _ _ _ _ _ _ _ HC (wa a)); rewrite ?Ua.
--
-unfold APS.hid. apply orb_true_intro. right. apply negb_true_iff. unfold APS.vis. rewrite Ua.
-rewrite Klz. cbn [negb].
-replace (APS.in_hull BOTH a) with false.
-2:{ symmetry. unfold APS.in_hull. cbn [img_lo img_hi BOTH]. apply andb_false_iff. right. apply Z.ltb_ge. unfold bshadow in Hsh. lia. }
-replace (atop mo <=? a) with false by (symmetry; apply Z.leb_gt; rewrite ATOP; unfold bshadow in Hsh; lia).
-cbn [orb]. replace (APS.in_allow BOTH E hs a) with false; [destruct (APS.in_ivs _ _ && _)%bool; reflexivity|].
-symmetry. unfold APS.in_allow. apply orb_false_intro.
-+
-unfold APS.in_vis. apply Bool.not_true_iff_false. intros X. apply existsb_exists in X as (p & Hp & Xp).
-apply andb_prop in Xp as [X1 X2]. apply Z.leb_le in X1. apply Z.ltb_lt in X2.
-destruct (Forall2_In_l _ _ _ _ HVISa Hp) as (bn & Hbn & E1 & E2 & E3). unfold APS.uE in X1, X2. rewrite ?E1, ?E2 in X1; rewrite ?E1, ?E2 in X2. fold V in X1, X2.
-apply (shad_clear_sound V _ both_pure_facts bn a HVRp HPFc (proj1 (forallb_forall _ _) CLRv bn Hbn) HSS). lia.
-+
-unfold APS.in_sh. apply Bool.not_true_iff_false. intros X. apply existsb_exists in X as (p & Hp & Xp).
-apply andb_prop in Xp as [X1 X2]. apply Z.leb_le in X1. apply Z.ltb_lt in X2. unfold APS.sh_lo, APS.sh_hi, APS.uE in X1, X2.
-destruct (Forall2_In_l _ _ _ _ HVISa Hp) as (bn & Hbn & E1 & E2 & E3). rewrite ?E1, ?E2 in X1; rewrite ?E1, ?E2 in X2. fold V in X1, X2.
-apply Hnv. exists bn. split; [exact Hbn|]. change (shadow_off BOTH) with ASHOFF in X1, X2. lia.
-- exact Kmap.
-- apply Bool.not_true_iff_false. intros X. apply Kna. apply (proj1 (in_ivs_APS _ _)). exact X.
-- exact Klz.
--
-unfold APS.in_ghost. apply Bool.not_true_iff_false. intros X. apply existsb_exists in X as (p & Hp & Xp).
-apply andb_prop in Xp as [X1 X2]. apply Z.leb_le in X1. apply Z.ltb_lt in X2. unfold APS.uE in X1, X2.
-destruct (Forall2_In_l _ _ _ _ HVISg Hp) as (bn & Hbn & E1 & E2 & E3). rewrite ?E1, ?E2 in X1; rewrite ?E1, ?E2 in X2. fold V in X1, X2.
-apply (shad_clear_sound V _ both_pure_facts bn a HVRp HPFc (proj1 (forallb_forall _ _) CLRg bn Hbn) HSS). lia. }
-pose proof (allowA_allow_of BOTH E _ _ HVIS) as HAL. change (shadow_off BOTH) with ASHOFF in HAL. change (flat_map (allow1 BOTH E) (a_vis hs ++ a_ghost hs)) with (allowA BOTH E hs) in HAL.
-fold V in HAL.
-pose proof CONSTS as (Ct & Cy & Ce & Ca).
-assert (USPW : vm_init_sp (m_vmmaps mo) = sp) by (apply bv_eq; exact TOP).
-destruct HC. cbn [inp0 AsanInit.inp mkProcInput in_fs en0 en_sp]. rewrite Hfd in co_fds0. rewrite Hbrk0 in co_brk0.
-constructor.
-+ exact co_halt0.
-+ exact co_fds0.
-+ exact co_fs0.
-+ exact co_res0.
-+ exact co_limit0.
-+ rewrite co_brk0. cbn [edenot]. symmetry. apply Z_to_bv_bv_unsigned.
-+ rewrite co_brk0 in co_sbrk0. cbn [edenot] in co_sbrk0. exact co_sbrk0.
-+ exact USPW.
-+ split; [exact LO|]. split; [lia| exact Hal].
-+ exact HLD.
-+ exact HKD.
-+ apply seps_ivs_sep. exact co_seps0.
-+ eapply Forall_impl; [|exact co_bounds0]. cbv beta. intros iv (B1 & B2 & B3 & B4 & B5 & B6).
-unfold hull_clear in B5. cbn [img_lo img_hi BOTH] in B5. rewrite ATOP in B6. unfold BIMG_LO, BIMG_HI. repeat split; assumption.
-+ eapply Forall_impl; [|exact co_lazyb0]. cbv beta. intros iv (B5 & B6).
-unfold hull_clear in B5. cbn [img_lo img_hi BOTH] in B5. rewrite ATOP in B6. unfold BIMG_LO, BIMG_HI. split; assumption.
-+ destruct co_wf0 as (_ & Wn & _). apply Forall_forall. intros iv Hiv. exact (Wn iv Hiv).
-+ intros z Hz. apply (proj1 (in_ivs_APS _ _)). apply co_nasub0. apply (proj2 (in_ivs_APS _ _)). exact Hz.
-+ exact co_napos0.
-+ rewrite <- Ct. exact co_totsz0.
-+ rewrite <- Ce. exact co_eager0.
-+ rewrite <- Ca, <- HAL. exact co_abytes0.
-+ rewrite <- HAL. pose proof (minv_budget _ _ co_minv0) as B. rewrite co_limit0 in B. exact B.
-+ rewrite <- HAL. exact (APS.A_wf_allowA BOTH HS_both2 XN0 XE0 XB0 NX0 E hs).
-+ exact (minv_nodup _ _ co_minv0).
-+ intros p Hp. split; [exact (minv_aligned _ _ co_minv0 p Hp)|]. split; [exact (minv_lazy _ _ co_minv0 p Hp)|].
-rewrite <- HAL. apply page_allowedb_aallowed. exact (minv_allowed _ _ co_minv0 p Hp). }
--
-unfold cfg_of. split; [|reflexivity]. cbn [cfg_ms].
-split; [| split; [apply regs_eqv_refl| repeat split; reflexivity]].
-cbn [ms_regs AS.PropExec.mkst MS].
-intros r Hr. destruct (OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.RegsEquiv.reg_of_nat r) as (n & -> & Hn).
-pose proof (is_x0_of_nat n Hn Hr) as Hn1.
-rewrite (regs_ok_nth E _ R (co_regs _ _ _ _ _ _ _ _ _ _ _ HC) n Hn1). rewrite reg_get_mkR by exact Hn1. rewrite Hregs.
-destruct n as [|n]; [cbv in Hr; discriminate|].
-cbn [en0 inp0 AsanInit.inp mkProcInput en_sp in_argv in_envp].
-do 31 (destruct n as [|n];
-[ cbn [nth HS_both2_1 a_ss s_regs];
-first [ reflexivity
-| symmetry; apply Z_to_bv_bv_unsigned
-| erewrite <- (zexp_of_sound E) by reflexivity; cbn [zv]; fold V; unfold BMAIN, BRA, BGP, BTP; f_equal; lia ]
-|]). lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="Hsp Hva Hve Hfit AH"] Theorem bmain_bridgeL_1 : forall E R FULL mo,
-cs_ok BSEGS BOTH LIM SINV argH fs E HS_both2_1 R FULL mo ->
-exists ms, cfg_eqv (cfg_of BSEGS R (pc HS_both2_1) FULL mo) (mkCfg ms mo) /\ bmain_atL LIM en0 inp0 ms mo.
-Proof.
-exact (bmain_bridge_w true HS_both2_1 eq_refl eq_refl eq_refl eq_refl both_mem_facts_justified_w1 both_pure_facts_justified_w1
-both_vis_justified_w1 both_ledger_justified_w1 both_consts_w1).
-Qed.
-#[using="Hsp Hva Hve Hfit AH"] Theorem bmain_bridgeL_2 : forall E R FULL mo,
-cs_ok BSEGS BOTH LIM SINV argH fs E HS_both2_2 R FULL mo ->
-exists ms, cfg_eqv (cfg_of BSEGS R (pc HS_both2_2) FULL mo) (mkCfg ms mo) /\ bmain_atL LIM en0 inp0 ms mo.
-Proof.
-exact (bmain_bridge_w false HS_both2_2 eq_refl eq_refl eq_refl eq_refl both_mem_facts_justified_w2 both_pure_facts_justified_w2
-both_vis_justified_w2 both_ledger_justified_w2 both_consts_w2).
-Qed.
-Hypothesis HLIM : source_alloc_limit <= LIM.
-#[local] Notation CERT_A_T := (check BSEGS IT0 BOTH NX0 LIM (XNS BSEGS BOTH NX0 LIM) XE0 XB0 HS_bothA KC0 BFUEL FUEL None both_init startup_plan_both = COk startup_shape).
-#[local] Notation CERT_B_T := (check BSEGS ITB BOTH NXB LIM (XNS BSEGS BOTH NXB LIM) XE0 XB0 HS_bothB KC0 BFUEL FUEL None HS_bothA_10 startup_plan_both_segA = COk startup_shapeB).
-#[local] Notation CERT_C_T := (check BSEGS ITC BOTH NXC LIM (XNS BSEGS BOTH NXC LIM) XE0 XB0 HS_bothC KC0 BFUEL FUEL None HS_bothB_11 startup_plan_both_segB = COk startup_shapeC).
-#[local] Notation CERT_D_T := (check BSEGS ITD BOTH NXD LIM (XNS BSEGS BOTH NXD LIM) XE0 XB0 HS_bothD KC0 BFUEL FUEL None HS_bothC_12 startup_plan_both_segC = COk startup_shapeD).
-#[local] Notation CERT_2_T := (check BSEGS IT2 BOTH NXS2 LIM (XNS BSEGS BOTH NXS2 LIM) XE0 XB0 HS_both2 KC0 BFUEL FUEL None HS_bothD_0 startup2_plan_both = COk startup2_shape).
-Variable TL : TSet.
-Hypothesis TL_nil : TL [].
-Hypothesis MAINL : forall ms mo, bmain_atL LIM en0 inp0 ms mo -> srealizes bsegs (mkCfg ms mo) TL.
-#[using="Hsp Hbrk Hva Hve Hfit Huid Hhw AH HLIM TL_nil MAINL"] Theorem both_main_bootL : CERT_A_T -> CERT_B_T -> CERT_C_T -> CERT_D_T -> CERT_2_T ->
-srealizes bsegs (init_config bsegs AsanUbsan.M.init_pc b_phdrs sp brk0 mbase rdraw LIM inp0) TL.
-Proof.
-intros CERT_A CERT_B CERT_C CERT_D CERT_2.
-change bsegs with BSEGS. change b_phdrs with BPH.
-refine (both_boot sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nof sigm abt urnd Hsp Hbrk Hva Hve Hfit Huid Hhw
-LIM HLIM (fun _ _ => TL) _ _ _ CERT_A CERT_B CERT_C CERT_D CERT_2).
-- intros; reflexivity.
-- intros; exact TL_nil.
-- intros h ch Hh E R FULL mo HC. destruct h as [|[|[|h]]]; cbn in Hh; try discriminate Hh; injection Hh as <-.
-+ destruct (bmain_bridgeL_1 E R FULL mo HC) as (ms & Heqv & Hat).
-apply (srealizes_eqv BSEGS (mkCfg ms mo) TL (MAINL ms mo Hat)). apply cfg_eqv_sym. exact Heqv.
-+ destruct (bmain_bridgeL_2 E R FULL mo HC) as (ms & Heqv & Hat).
-apply (srealizes_eqv BSEGS (mkCfg ms mo) TL (MAINL ms mo Hat)). apply cfg_eqv_sym. exact Heqv.
-Qed.
-End Lim.
-Variable T : TSet.
-Hypothesis T_nil : T [].
-Hypothesis MAINA : forall ms mo, bmain_at en0 inp0 ms mo -> srealizes bsegs (mkCfg ms mo) T.
-#[using="Hsp Hbrk Hva Hve Hfit Huid Hhw T_nil MAINA"] Theorem both_main_boot :
-srealizes bsegs (init_config bsegs AsanUbsan.M.init_pc b_phdrs sp brk0 mbase rdraw target_alloc_limit inp0) T.
-Proof.
-exact (both_main_bootL AsanInit.LIMIT AsanInit.LIMIT_ge T T_nil (fun ms mo H => MAINA ms mo (bmain_atL_bmain_at _ _ _ _ H))
-startup_cert startup_certB startup_certC startup_certD startup2_cert).
-Qed.
-End Bridge.
-Theorem both_side_ok : forall T : tfam,
-(forall en inp, valid_entry (mkImage bsegs b_init_pc b_phdrs) en inp -> valid_input_either inp ->
-T inp en [] /\ forall ms mo, bmain_at en inp ms mo -> srealizes bsegs (mkCfg ms mo) (T inp en)) ->
-side_ok bsegs b_init_pc b_phdrs target_alloc_limit T.
-Proof.
-intros T HT. apply side_ok_of_srealizes. intros [sp brk0 mbase rdraw] inp Hv Hi.
-destruct (HT _ _ Hv Hi) as [Tnil MAINA].
-rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in Hv.
-destruct Hv as (Hsp & Hbrk & Hmb & Hfit).
-pose proof Hi as (Hva & Hve & Hfs & Hrel & [Huid Hgid] & Hnof & Hsigm & Hhw & Hvasz & Hur).
-destruct inp as [argv envp ifs stdin uid gid groups net nof sigm hw abt vasz urnd tmp].
-cbn in Hfit, Hva, Hve, Hfs, Huid, Hgid, Hhw, Hvasz. subst vasz.
-exact (both_main_boot sp brk0 mbase rdraw argv envp (fs_seed_tmp ifs tmp) stdin uid gid groups net nof sigm hw abt urnd Hsp Hbrk Hva Hve Hfit Huid Hhw _ Tnil MAINA).
 Qed.

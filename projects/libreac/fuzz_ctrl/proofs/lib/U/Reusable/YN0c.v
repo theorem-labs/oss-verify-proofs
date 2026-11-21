@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0c.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed leaf_unchanged, direct_grant_exists, auxv_pre_ext, none_tail; added src0_reserved_room). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -179,7 +180,7 @@ assert (EQ : forall x, owned B L A x -> mbyte (ms_segs B) mem' x = mbyte (ms_seg
 exists L, regs', mem', md. split; [reflexivity|]. split; [| split; [exact Ha0 | reflexivity]].
 split; [| split; [exact HW | split; [exact HB | split; [apply layout_le_refl | split; [auto | split; [exact Hpres | split;
 [exists (m_vmmaps md); apply with_vmmaps_self; assumption | split; [| split]]]]]]]].
--   apply (mr_frame _ _ (MRx_laws B) L A mem mem' md md MX).
+-   apply (mr_frame _ _ (MRx_laws B) L A mem mem' md md MX eq_refl).
 + exact EQ.
 + intros x Ho [b Hb]. pose proof (owned_low B L A mem md x M Ho). exists b. rewrite Hfr; [exact Hb | pose proof alloc_ceiling_val; lia | apply NS; exact Ho].
 + intros p k i Hin Hi. destruct (blocks_facts B L A mem md p k i M Hin Hi) as ([b Hb] & Hlo & Hhi & Hno).
@@ -270,6 +271,12 @@ Proof.
 assert (H : (ivs_bytes (segments_reserved src0segs) <=? 2 ^ 30) = true) by (vm_compute; reflexivity).
 apply Z.leb_le. exact H.
 Qed.
+Lemma src0_reserved_room : (length (segments_reserved src0segs) <= 6)%nat /\ ivs_bytes (segments_reserved src0segs) <= 2 ^ 30 - 0x14000.
+Proof.
+split; [vm_compute; lia|].
+assert (H : (ivs_bytes (segments_reserved src0segs) <=? 2 ^ 30 - 0x14000) = true) by (vm_compute; reflexivity).
+apply Z.leb_le. exact H.
+Qed.
 Lemma live_bytes_nonneg : forall A, WF A -> 0 <= live_bytes A.
 Proof.
 intros A HW. destruct (inv_areas HW) as (_ & _ & _ & _ & _ & _ & _ & _ & Hnn).
@@ -283,32 +290,32 @@ by (apply IH; intros k rg Hk; apply (Hl (S k) rg); exact Hk).
 destruct (rg_live r); lia. }
 apply G. exact Hnn.
 Qed.
-Lemma direct_grant_exists : forall L A mem md len,
+Lemma direct_grant_exists : forall L A mem md len, @amf AM = false ->
 MRx B L A mem md -> mgrant A (KMmapRW len) -> 0 < len ->
 vm_backing_used md + page_round len <= vm_limit (m_vmmaps md) ->
 exists a, grant_ok (Z_to_bv 64 0) md a (page_round len) = true.
 Proof using.
-intros L A mem md len MX (Hpos & Hlive & Hsl & Hreq) Hlen Hbud. pose proof (MRx_MRc _ _ _ _ _ MX) as M.
+intros L A mem md len Eaf MX (Hpos & Hlive & Hsl & Hreq) Hlen Hbud. pose proof (MRx_MRc _ _ _ _ _ MX) as M.
 pose proof (mc_ledger _ _ _ _ _ M) as G. pose proof (MRx_ledger_x _ _ _ _ _ MX) as LX.
 unfold req_len in Hpos, Hlive, Hsl, Hreq.
 assert (Hsc : nslots A + KRES <= slot_cap (page_round len)).
 { pose proof (slot_cap_ge (page_round len) (conj Hpos Hreq)). lia. }
 unfold MG_LIVE, MG_REQ in *.
 pose proof (live_bytes_nonneg A (mc_wf _ _ _ _ _ M)) as Hlb.
-destruct src0_reserved_small as [RS RL]. pose proof src0_reserved_bytes as RB.
-destruct (region_free_exists_cap (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (page_round len) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
+destruct src0_reserved_small as [RS RL]. pose proof src0_reserved_bytes as RB. destruct src0_reserved_room as [RL6 RB6].
+(* 08b1429: the grant is Linux's address (grant_ok's linux_place_is conjunct), so the room argument
+   goes through PlaceGap.linux_place_of_room over Linux's window, not any free gap. *)
+destruct (linux_place_of_room (m_vmmaps md) (kb_thp (m_kernel md)) (Z_to_bv 64 0) (page_round len) (page_round len))
+  as (a & Ha).
 - lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with src0segs. unfold KRES in Hsc. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G). change (ms_segs B) with src0segs.
-rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX). unfold SLOT_BYTES. lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
-pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
-assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ exact Hbud. }
-reflexivity.
+- unfold page_round, PGSZ, page_size; apply Z_mod_mult.
+- exact (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)).
+- rewrite length_app. destruct (lg_reserved _ _ _ _ G) as (rx & Erx & Lrx & _ & _). rewrite Erx, length_app. pose proof (lg_count _ _ _ _ G Eaf). change (ms_segs B) with src0segs. unfold KRES in Hsc. lia.
+- destruct (lg_reserved _ _ _ _ G) as (rx & Erx & _ & Brx & _). rewrite ivs_bytes_app, Erx, ivs_bytes_app. change (ms_segs B) with src0segs.
+(* lg_reserved states Brx over Reusable.YM01.ivs_bytes; this copy's goal uses U.Reusable.YM01's, the same fixpoint. *)
+change (ivs_bytes rx <= 81920) in Brx.
+rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX Eaf). unfold SLOT_BYTES. lia.
+- exists a. refine (grant_ok_intro _ _ _ _ _ _ Ha Hbud); [lia | unfold page_round, PGSZ, page_size; apply Z_mod_mult].
 Qed.
 Lemma in_wrange_list : forall E rs x,
 in_wrange E rs x ->
@@ -398,11 +405,27 @@ Lemma auxv_pre_ext : forall sec lo m m',
 (forall x, ms_libc B + 8 <= x < ms_libc B + 16 -> mbyte (ms_segs B) m' x = mbyte (ms_segs B) m x) ->
 auxv_pre B sec lo m -> auxv_pre B sec lo m'.
 Proof.
-intros sec lo m m' Hhi Hlibc (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat split; try assumption.
+(* [auxv_pre] (YO0d.v:87) now opens [exists (rs:bool) av ar]; the nine-way pattern was one
+   short, which Rocq reports as "No product even after head-reduction" and never names auxv.
+   [rs] is carried through untouched -- this lemma only moves the memory. *)
+intros sec lo m m' Hhi Hlibc (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+exists rs, av, ar. repeat split; try assumption.
 - intros k Hk. rewrite Hlibc by lia. apply H1. exact Hk.
+(* Same shape for the table walk: the address is [av + 16 * Z.of_nat k + j] with
+   [k < length (auxv_types rs)], so the bound needs H6 and nothing else -- but [lia] must be
+   able to relate the two occurrences of [length (auxv_types rs)], which it can, since they
+   are the same opaque term.  Left as it was. *)
 - intros k Hk j Hj. rewrite Hhi by lia. apply H2; assumption.
-- intros k Hk. rewrite Hhi by lia. apply H3. exact Hk.
+(* Two opaque terms stand between this side condition and [lia], and the second is the one
+   that actually blocks it.  [AUXV_RAND_K] is a [Definition], so [Z.of_nat AUXV_RAND_K] reads
+   as an unknown non-negative; and H6 bounds [av] by [16 * Z.of_nat (length (auxv_types rs))]
+   with [rs] a VARIABLE, so there is no literal to compare against either.  YO0d.v:85 ships
+   [auxv_types_len_ge : 27 <= Z.of_nat (length (auxv_types rs))] for exactly this: with it and
+   the value of AUXV_RAND_K, [lia] gets [av + 400 + k < av + 432 <= 2 ^ 63].  Unfolding
+   AUXV_RAND_K alone was not enough and the error kept pointing at [lia]. *)
+- intros k Hk. assert (HK24 : Z.of_nat AUXV_RAND_K = 24) by reflexivity.
+pose proof (auxv_types_len_ge rs) as HLEN.
+rewrite Hhi by lia. apply H3. exact Hk.
 - intros k Hk. rewrite Hhi by lia. apply H4. exact Hk.
 Qed.
 Ltac st_region HS i name :=
@@ -791,6 +814,76 @@ rewrite (L3old kk (region_of_lt A kk rg Hr)). lia.
 - intros Hin2. exact (new_disjoint_footprint B L A mem md a (dlen n) MX (dlen_pos n (proj1 Hrange)) GR (LMem (SP kk 0), rg_len rg) (ly_reg L kk + o + i)
 (footprint_region_In A kk rg Hr Hkind Hl) ltac:(cbn [fst snd loc_addr]; lia) Hin2). }
 intros x Hsx. eapply (scratch_writable_sym regs); [apply (proj2 none_end_checks) | exact HS9 |].
+unfold scratch, spZ, ALLOC_STACK in Hsx. rewrite B_errno in Hsx. exact Hsx.
+(* may-fail: munmap answered ENOMEM and kept the mapping; malloc returns 0 with the region dead in
+   the abstract state and still mapped in the model (md3). *)
+- intros Ham ee Hee. cbn beta.
+assert (Ee : errno_ret ee = Z_to_bv 64 (2 ^ 64 - 12)) by (destruct Hee as [<- | []]; apply bv_eq; vm_compute; reflexivity).
+unfold munmap_err_nx. rewrite Ee. apply mreal_IRet.
+pose proof (st_ok_mun2e regs (st_seq A) (st_mmap_counter A) (useq_of A) a (Z_to_bv 64 0) (xr_of regs6) regs7 mem7
+Hregs7 Hmem7 HG7) as HS8.
+fold E in HS8.
+eapply (SR_run_stop src0segs src0tbl src0tbl_ok FUEL E ss_mun2e ss_none_end_e);
+[exact Hh3 | exact Hlz3 | exact HS8 | apply run_mun2e |].
+intros ms8 HS9 HF9. cbn [ms_mem] in HF9.
+eapply (SR_final_ret E ss_none_end_e ms8); [exact HS9 | reflexivity | reflexivity | vm_compute; reflexivity | subst E; exact Hret
+| exact Hh3 | exact Hlz3 |].
+intros MP. subst E. cbn [ew E_mi].
+set (mem8 := ms_mem ms8).
+assert (FR8 : forall x, 0 <= x < 2 ^ 64 -> ~ scratch B regs x -> ~ (bv_unsigned a <= x < bv_unsigned a + dlen n) -> mem8 (Z_to_bv 64 x) = mem6 (Z_to_bv 64 x)).
+{ intros x Hx Hns _. subst mem8.
+rewrite (HF9 (Z_to_bv 64 x)) by (rewrite u64_of_Z by exact Hx; intros W; apply Hns; eapply (in_wrange_ret0 regs); [apply (proj2 sk_ret0) | exact W]).
+cbn [ms_mem mkst].
+rewrite (HF7 (Z_to_bv 64 x)) by (rewrite u64_of_Z by exact Hx; intros W; apply Hns; eapply (in_wrange_ret0 regs); [apply (proj1 sk_ret0) | exact W]).
+reflexivity. }
+destruct (D2_pack_leak B L A mem md a n L3 A3 mem6 md3 sp mem8) as (MX4 & UB4 & VM4); try assumption; try (unfold ALLOC_STACK; lia).
+1-4: first [exact src0_ENC | exact src0_ENS | exact src0_ERRIMG | exact src0_SNC].
+exists L3, (ms_regs ms8), mem8, md3. split; [reflexivity|]. split.
+2:{ cbn [fst snd]. split; [pose proof (st_ok_reg src0segs _ _ _ 10 HS9) as R; rewrite R; vm_compute; reflexivity | exact UB4]. }
+assert (OWNA : forall x, ms_ctx B <= x < ms_ctx B + CTX_SIZE -> owned B L A x).
+{ intros x Hx. left. split.
+- exists (LCtx 0, CTX_SIZE). split; [left; reflexivity|]. cbn [fst snd loc_addr]. rewrite (mc_ctx _ _ _ _ _ M). lia.
+- intros ([bp bn] & Hb & Hbx). cbn [fst snd] in Hbx.
+destruct (blocks_facts B L A mem md bp bn (x - ptr_addr L bp) M Hb ltac:(unfold ptr_addr; lia)) as (_ & Hlo & Hhi & _).
+destruct (block_region A bp bn HW Hb) as (k & o & rg & -> & Hr & Hk & Hl & Ho & Hbn & Hlen & _).
+destruct (lg_placed _ _ _ _ (mc_ledger _ _ _ _ _ M) k rg Hr Hl) as (_ & _ & _ & Himg).
+apply (Himg x); [unfold ptr_addr in *; cbn [loc_addr] in *; lia|]. apply (so_ctx_img _ (mc_syms _ _ _ _ _ M)). exact Hx. }
+assert (NONMAP : forall x, in_nonmap_region L3 A3 x -> 4096 <= x < alloc_ceiling /\ ~ in_img B x).
+{ intros x ((k & rg & Hk & Hl & Hkind & Hx) & _). pose proof (lg_placed _ _ _ _ (mid_ledger _ _ _ _ _ MID3) k rg Hk Hl) as (_ & Q1 & Q2 & Q3).
+pose proof (reg_lo_le rg). split; [lia|]. apply Q3. lia. }
+assert (FRall : forall x, 0 <= x < 2 ^ 64 -> (alloc_ceiling <= x \/ in_img B x) -> ~ owned B L A x -> ~ scratch B regs x ->
+mem8 (Z_to_bv 64 x) = mem (Z_to_bv 64 x)).
+{ intros x Hx Hhi Hno Hns. rewrite FR8; [| exact Hx | exact Hns | intros Hin; apply (NI x Hin); destruct Hhi as [Hhi|Hhi]; [lia | exact Hhi]].
+apply FR6; [exact Hx | exact Hns | intros Hc; apply Hno; apply OWNA; exact Hc | intros Hnm; destruct (NONMAP x Hnm) as [Q1 Q2]; destruct Hhi as [Hhi|Hhi]; [lia | exact (Q2 Hhi)]
+| intros Hin; apply (NI x Hin); destruct Hhi as [Hhi|Hhi]; [lia | exact Hhi]]. }
+split; [exact MX4|]. split; [destruct MP as [MP _]; exact MP|]. split; [apply kill_bounded; exact HB3|].
+split; [exact (layout_le_A3 L A a n L3 (proj1 Hrange) LE3)|].
+split.
+{ intros p k Hin _. destruct (block_region A p k HW Hin) as (kk & o & rg & -> & Hr & _). unfold ptr_addr. cbn [loc_addr].
+rewrite L3old; [reflexivity|]. exact (region_of_lt A kk rg Hr). }
+split; [eapply (regs_preserved_sym regs); [apply (proj1 none_end_e_checks) | exact HS9 | exact Htp]|].
+split; [exact VM4|].
+split.
+{ intros x Hhi Hno _ Hns _.
+assert (Hx : 0 <= x < 2 ^ 64) by (destruct Hhi as [Hhi|Hhi]; [lia | apply src0_img_range in Hhi; lia]).
+unfold mbyte, writable_at, wview. rewrite B_segs. rewrite (FRall x Hx ltac:(destruct Hhi as [Hhi|Hhi]; [left; lia | right; exact Hhi]) Hno Hns). tauto. }
+split.
+{ intros p k i Hin _ Hi. destruct (blocks_facts B L A mem md p k i M Hin Hi) as (_ & Hlo & Hhi & Hno).
+destruct (block_region A p k HW Hin) as (kk & o & rg & -> & Hr & Hkind & Hl & Ho & _ & Hlen & _).
+destruct (lg_placed _ _ _ _ (mc_ledger _ _ _ _ _ M) kk rg Hr Hl) as (_ & _ & _ & Himg).
+unfold ptr_addr in *. cbn [loc_addr] in *.
+unfold mbyte. rewrite B_segs. rewrite FR8; [| lia | intros [Hs|Hs]; [unfold spZ, ALLOC_STACK in Hs; fold sp in Hs; lia | rewrite B_errno in Hs; apply (Himg (ly_reg L kk + o + i)); [lia | apply src0_errno_img; exact Hs]]
+| intros Hin2; exact (new_disjoint_footprint B L A mem md a (dlen n) MX (dlen_pos n (proj1 Hrange)) GR (LMem (SP kk 0), rg_len rg) (ly_reg L kk + o + i)
+(footprint_region_In A kk rg Hr Hkind Hl) ltac:(cbn [fst snd loc_addr]; lia) Hin2)].
+rewrite FR6; [reflexivity | lia | | | |].
+- intros [Hs|Hs]; [unfold spZ, ALLOC_STACK in Hs; fold sp in Hs; lia | rewrite B_errno in Hs; apply (Himg (ly_reg L kk + o + i)); [lia | apply src0_errno_img; exact Hs]].
+- intros Hc. apply (Himg (ly_reg L kk + o + i)); [lia|]. apply (so_ctx_img _ (mc_syms _ _ _ _ _ M)). exact Hc.
+- intros [_ NM]. apply NM. pose proof (old_region_A3 A n Hrange A3 FR3 kk rg Hr Hkind) as Hr3.
+exists kk, rg. split; [exact Hr3|]. split; [exact Hl|]. split; [exact Hkind|].
+rewrite (L3old kk (region_of_lt A kk rg Hr)). lia.
+- intros Hin2. exact (new_disjoint_footprint B L A mem md a (dlen n) MX (dlen_pos n (proj1 Hrange)) GR (LMem (SP kk 0), rg_len rg) (ly_reg L kk + o + i)
+(footprint_region_In A kk rg Hr Hkind Hl) ltac:(cbn [fst snd loc_addr]; lia) Hin2). }
+intros x Hsx. eapply (scratch_writable_sym regs); [apply (proj2 none_end_e_checks) | exact HS9 |].
 unfold scratch, spZ, ALLOC_STACK in Hsx. rewrite B_errno in Hsx. exact Hsx.
 Qed.
 End f.

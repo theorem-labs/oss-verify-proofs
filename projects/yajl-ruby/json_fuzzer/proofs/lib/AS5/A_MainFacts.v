@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch's whole ProcInput, mmap base and kernel build, with launch_ok, the recorded kernel and entry_launch_ok_va, and reaches AsanInit's lemmas through iax/iap; hs_fact and hs_fact_in over the eight main-phase entry states, computed in the build per CONFIG_RSEQ value; vm_lhs for closed VM goals; Mr_hull proves its CEIL bound from valid_sp; the reserved ledger read from the model). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -28,18 +29,31 @@ Definition A_IMG_HI : Z := 0x603000.
 (* [comment removed for export] *)
 Definition hs_fact (K : kentry) : bool :=
   existsb (kentry_eqb K) (kn HS_s2_00) && existsb (kentry_eqb K) (kn HS_s2_01)
-  && existsb (kentry_eqb K) (kn HS_s2_10) && existsb (kentry_eqb K) (kn HS_s2_11).
+  && existsb (kentry_eqb K) (kn HS_s2_10) && existsb (kentry_eqb K) (kn HS_s2_11)
+  && existsb (kentry_eqb K) (kn HS_s2_00R) && existsb (kentry_eqb K) (kn HS_s2_01R)
+  && existsb (kentry_eqb K) (kn HS_s2_10R) && existsb (kentry_eqb K) (kn HS_s2_11R).
 
 (* [comment removed for export] *)
 Lemma hs_regs : forall hs, HS_MAIN hs -> s_regs (a_ss hs) = s_regs (a_ss HS_s2_00).
-Proof. intros hs [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
+Proof. intros hs Hx; hs_cases Hx; vm_compute; reflexivity. Qed.
 Lemma hs_fd : forall hs, HS_MAIN hs -> a_fd hs = FdStd.
-Proof. intros hs [-> | [-> | [-> | ->]]]; reflexivity. Qed.
+Proof. intros hs Hx; hs_cases Hx; reflexivity. Qed.
 
 Lemma existsb_exists' : forall {T} (f : T -> bool) l, existsb f l = true -> exists x, In x l /\ f x = true.
 Proof.
   intros T f l. induction l as [|y l IH]; cbn; intros H; [discriminate|].
   apply orb_prop in H as [H|H]; [exists y; auto|]. destruct (IH H) as (x & Hin & Hx). exists x. auto.
+Qed.
+
+(* a fact all eight entry states (two S2 hand-offs from two S1 hand-offs, at either CONFIG_RSEQ
+   value) hold is in each of them *)
+Lemma hs_fact_in : forall hs K, HS_MAIN hs -> hs_fact K = true -> In K (kn hs).
+Proof.
+  intros hs K H HK. unfold hs_fact in HK. rewrite !andb_true_iff in HK.
+  repeat match type of HK with _ /\ _ => destruct HK as [HK ?] end.
+  hs_cases H;
+  match goal with Hx : existsb (kentry_eqb K) (kn ?s) = true |- In K (kn ?s) =>
+    apply existsb_exists' in Hx as (K' & Hin & Heq); apply kentry_eqb_eq in Heq; subst K'; exact Hin end.
 Qed.
 
 (* [comment removed for export] *)
@@ -71,14 +85,49 @@ Section MainFacts.
   Variable argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variable uid : word.
+  Variable mbase : word.
+  Variable ifs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kbld : KernelBuild.
+  Variable execfn : list byte.
+  Variables rdr sgd sgt : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hfit : AsanInit.launch_ok sp brk0 mbase rdraw (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  Let Hfes : entry_stack_fits sp argv envp := proj1 Hfit.
+  Let Hkernel : in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) = recorded_kernel (in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt)) := proj1 (proj2 Hfit).
+  Let Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) := proj2 (proj2 (proj2 Hfit)).
+  #[local] Ltac iax X := first [ exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) ].
+  #[local] Ltac iap X H := first [ pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                 | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) as H ].
+  #[local] Notation IA X := (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp).
+  (* Closes [l = ?e] for a closed [l]: computes [l] alone with the VM and checks [eq_refl] by a VM cast.
+     [vm_compute] on such a goal also normalises the evar's instance, i.e. the bodies of the let-bound
+     section variables (Hfes, Hkernel, Hlau, Ez); those normal forms exhausted memory. *)
+  #[local] Ltac vm_lhs := match goal with |- ?l = ?e => let l' := eval vm_compute in l in unify e l'; exact (@eq_refl _ l' <: l = l') end.
 
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 APH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kbld execfn).
+  #[local] Notation E0a := (E0 sp rdraw brk0 argv envp uid gid hw kbld execfn).
   #[local] Notation LIM := AsanInit.LIMIT.
 
   Variable E : env.
@@ -98,12 +147,7 @@ Section MainFacts.
   (* [comment removed for export] *)
   Lemma fact_sound : forall K, hs_fact K = true -> kentry_ok ASEGS E MR K.
   Proof.
-    intros K HK. unfold hs_fact in HK. apply andb_prop in HK as [HK HK4]. apply andb_prop in HK as [HK HK3]. apply andb_prop in HK as [HK1 HK2].
-    assert (Hin : In K (kn hs)).
-    { destruct Hhs as [-> | [-> | [-> | ->]]];
-        [ apply existsb_exists' in HK1 as (K' & Hin & Heq) | apply existsb_exists' in HK2 as (K' & Hin & Heq)
-        | apply existsb_exists' in HK3 as (K' & Hin & Heq) | apply existsb_exists' in HK4 as (K' & Hin & Heq)];
-      apply kentry_eqb_eq in Heq; subst K'; exact Hin. }
+    intros K HK. pose proof (hs_fact_in hs K Hhs HK) as Hin.
     exact (proj1 (Forall_forall _ _) (co_know _ _ _ _ _ _ _ _ _ _ _ HC) K Hin).
   Qed.
 
@@ -120,19 +164,19 @@ Section MainFacts.
   Lemma edenot_sp0 : edenot E e_sp0 = sp.
   Proof.
     change (edenot E e_sp0) with (edenot Ez e_sp0).
-    rewrite <- (edenot_agree' NX0 E0a Ez e_sp0 Ez_agree (e_sp0_vars NX0 ltac:(unfold NX0; lia))). exact (edenot_e_sp0 APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit).
+    rewrite <- (edenot_agree' NX0 E0a Ez e_sp0 Ez_agree (e_sp0_vars NX0 ltac:(unfold NX0; lia))). iax edenot_e_sp0.
   Qed.
   Lemma uE_sp0 : uE E e_sp0 = usp.
   Proof. unfold uE. rewrite edenot_sp0. reflexivity. Qed.
   Lemma uE_envp : uE E e_envp = usp + 8 * argc + 16.
   Proof.
     change (uE E e_envp) with (uE Ez e_envp). unfold uE.
-    rewrite <- (edenot_agree' NX0 E0a Ez e_envp Ez_agree eq_refl). exact (u_e_envp APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit).
+    rewrite <- (edenot_agree' NX0 E0a Ez e_envp Ez_agree eq_refl). iax u_e_envp.
   Qed.
   Lemma uE_argc : uE E (EVar V_ARGC) = argc.
   Proof.
     unfold uE. cbn [edenot]. rewrite (ev_init V_ARGC ltac:(unfold V_ARGC, NX0; lia)).
-    unfold E0. cbn [ev]. unfold vals0. cbn [nth V_ARGC]. pose proof (AsanInit.len_av APH sp rdraw argv envp uid hw Hva). rewrite u64_lit; unfold argc in *; lia.
+    unfold E0. cbn [ev]. unfold vals0. cbn [nth V_ARGC]. pose proof (proj1 Hva). rewrite u64_lit; unfold argc in *; lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -140,18 +184,18 @@ Section MainFacts.
   Lemma reg_is : forall r e, sr_get (s_regs (a_ss HS_s2_00)) r = e -> getr R r = edenot E e.
   Proof. intros r e He. rewrite <- He, <- (hs_regs hs Hhs). exact (co_regs _ _ _ _ _ _ _ _ _ _ _ HC r). Qed.
 
-  Lemma main_ra : getr R 1 = Z_to_bv 64 0x91610.   Proof. exact (reg_is 1 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_gp : getr R 3 = Z_to_bv 64 0x10800.   Proof. exact (reg_is 3 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_tp : getr R 4 = Z_to_bv 64 0x5e0b10.  Proof. exact (reg_is 4 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s2 : getr R 18 = Z_to_bv 64 0x81aa4.  Proof. exact (reg_is 18 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s4 : getr R 20 = Z_to_bv 64 0.  Proof. exact (reg_is 20 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s5 : getr R 21 = Z_to_bv 64 0.  Proof. exact (reg_is 21 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s6 : getr R 22 = Z_to_bv 64 0.  Proof. exact (reg_is 22 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s7 : getr R 23 = Z_to_bv 64 0.  Proof. exact (reg_is 23 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s8 : getr R 24 = Z_to_bv 64 0.  Proof. exact (reg_is 24 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s9 : getr R 25 = Z_to_bv 64 0.  Proof. exact (reg_is 25 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s10 : getr R 26 = Z_to_bv 64 0.  Proof. exact (reg_is 26 _ ltac:(vm_compute; reflexivity)). Qed.
-  Lemma main_s11 : getr R 27 = Z_to_bv 64 0.  Proof. exact (reg_is 27 _ ltac:(vm_compute; reflexivity)). Qed.
+  Lemma main_ra : getr R 1 = Z_to_bv 64 0x91610.   Proof. exact (reg_is 1 _ ltac:(vm_lhs)). Qed.
+  Lemma main_gp : getr R 3 = Z_to_bv 64 0x10800.   Proof. exact (reg_is 3 _ ltac:(vm_lhs)). Qed.
+  Lemma main_tp : getr R 4 = Z_to_bv 64 0x5e0b10.  Proof. exact (reg_is 4 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s2 : getr R 18 = Z_to_bv 64 0x81aa4.  Proof. exact (reg_is 18 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s4 : getr R 20 = Z_to_bv 64 0.  Proof. exact (reg_is 20 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s5 : getr R 21 = Z_to_bv 64 0.  Proof. exact (reg_is 21 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s6 : getr R 22 = Z_to_bv 64 0.  Proof. exact (reg_is 22 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s7 : getr R 23 = Z_to_bv 64 0.  Proof. exact (reg_is 23 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s8 : getr R 24 = Z_to_bv 64 0.  Proof. exact (reg_is 24 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s9 : getr R 25 = Z_to_bv 64 0.  Proof. exact (reg_is 25 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s10 : getr R 26 = Z_to_bv 64 0.  Proof. exact (reg_is 26 _ ltac:(vm_lhs)). Qed.
+  Lemma main_s11 : getr R 27 = Z_to_bv 64 0.  Proof. exact (reg_is 27 _ ltac:(vm_lhs)). Qed.
 
   Lemma main_sp : getr R 2 = Z_to_bv 64 (usp + -48).
   Proof.
@@ -159,7 +203,7 @@ Section MainFacts.
     rewrite edenot_sp0. apply bv_eq. rewrite u_add64, !u_lit64a, Zplus_mod_idemp_r. f_equal.
   Qed.
   Lemma main_a0 : getr R 10 = Z_to_bv 64 argc.
-  Proof. rewrite (reg_is 10 (EVar V_ARGC) ltac:(vm_compute; reflexivity)). apply bv_eq. fold (uE E (EVar V_ARGC)). rewrite uE_argc. pose proof (AsanInit.len_av APH sp rdraw argv envp uid hw Hva). rewrite u64_lit; unfold argc in *; lia. Qed.
+  Proof. rewrite (reg_is 10 (EVar V_ARGC) ltac:(vm_compute; reflexivity)). apply bv_eq. fold (uE E (EVar V_ARGC)). rewrite uE_argc. pose proof (proj1 Hva). rewrite u64_lit; unfold argc in *; lia. Qed.
   Lemma main_s1 : getr R 9 = Z_to_bv 64 argc.
   Proof. rewrite (reg_is 9 (EVar V_ARGC) ltac:(vm_compute; reflexivity)). rewrite <- main_a0. symmetry. exact (reg_is 10 (EVar V_ARGC) ltac:(vm_compute; reflexivity)). Qed.
   Lemma main_a1 : getr R 11 = Z_to_bv 64 (usp + 8).
@@ -168,21 +212,22 @@ Section MainFacts.
     rewrite edenot_sp0. apply bv_eq. rewrite u_add64, !u_lit64a, Zplus_mod_idemp_r. f_equal.
   Qed.
   Lemma main_s0 : getr R 8 = Z_to_bv 64 (usp + 8).
-  Proof. rewrite <- main_a1, (reg_is 8 (eaddz e_sp0 8) ltac:(vm_compute; reflexivity)). symmetry. exact (reg_is 11 _ ltac:(vm_compute; reflexivity)). Qed.
+  Proof. rewrite <- main_a1, (reg_is 8 (eaddz e_sp0 8) ltac:(vm_compute; reflexivity)). symmetry. exact (reg_is 11 _ ltac:(vm_lhs)). Qed.
   Lemma main_a2 : getr R 12 = Z_to_bv 64 (usp + 8 * argc + 16).
   Proof.
     rewrite (reg_is 12 e_envp ltac:(vm_compute; reflexivity)).
     pose proof uE_envp as U. unfold uE in U. rewrite <- U. symmetry. apply Z_to_bv_bv_unsigned.
   Qed.
   Lemma main_s3 : getr R 19 = Z_to_bv 64 (usp + 8 * argc + 16).
-  Proof. rewrite <- main_a2, (reg_is 19 e_envp ltac:(vm_compute; reflexivity)). symmetry. exact (reg_is 12 _ ltac:(vm_compute; reflexivity)). Qed.
+  Proof. rewrite <- main_a2, (reg_is 19 e_envp ltac:(vm_compute; reflexivity)). symmetry. exact (reg_is 12 _ ltac:(vm_lhs)). Qed.
 
   (* [comment removed for export] *)
   Lemma main_fs : m_fs model = fs.                          Proof. exact (co_fs _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
   Lemma main_halted : m_halted model = None.               Proof. exact (co_halt _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
   Lemma main_fds : m_fds model = fds_std.
   Proof. pose proof (co_fds _ _ _ _ _ _ _ _ _ _ _ HC) as H. rewrite (hs_fd hs Hhs) in H. exact H. Qed.
-  Lemma main_res : vm_reserved (m_vmmaps model) = segments_reserved ASEGS. Proof. exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+  Lemma main_res : exists rx : list (word * word), vm_reserved (m_vmmaps model) = segments_reserved ASEGS ++ rx.
+  Proof. destruct (co_resx _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hrx & _). exists rx. exact Hrx. Qed.
   Lemma main_limit : vm_limit (m_vmmaps model) = LIM.     Proof. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
   (* [comment removed for export] *)
@@ -191,7 +236,14 @@ Section MainFacts.
     intros a Ha. unfold A_IMG_LO, A_IMG_HI in Ha. unfold Mr, mrestrict, hid.
     replace (argH E a) with false.
     2: { symmetry. destruct (argH E a) eqn:H; [|reflexivity]. exfalso.
-         pose proof (argH0_high APH sp rdraw argv envp uid hw Hsp Hva E a H). unfold AP.CEIL, CEIL in *. lia. }
+         (* LPS 727298f3: the argument block lies at or above sp (argH0), and valid_sp puts sp
+            above CEIL, so the bound needs only valid_sp *)
+         assert (Hc : CEIL <= bv_unsigned a).
+         { pose proof Hva as Hva0. (* keeps Mr_hull's signature: Hsp, Hva *)
+           assert (Hlo : 0x7fff80000000 <= bv_unsigned sp) by (destruct Hsp as [X _]; exact X).
+           unfold argH0 in H. cbv beta zeta in H.
+           apply orb_prop in H as [H|H]; apply andb_prop in H as [H _]; apply Z.leb_le in H; unfold CEIL; lia. }
+         unfold AP.CEIL, CEIL in *. lia. }
     unfold vis. replace (in_hull ASAN5 (bv_unsigned a)) with true by (symmetry; unfold in_hull; cbn [img_lo img_hi ASAN5]; apply andb_true_intro; split; [apply Z.leb_le | apply Z.ltb_lt]; lia).
     reflexivity.
   Qed.
@@ -373,17 +425,41 @@ Section B.
   Variable argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variable uid : word.
+  Variable mbase : word.
+  Variable ifs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kbld : KernelBuild.
+  Variable execfn : list byte.
+  Variables rdr sgd sgt : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hfit : AsanInit.launch_ok sp brk0 mbase rdraw (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  Let Hfes : entry_stack_fits sp argv envp := proj1 Hfit.
+  Let Hkernel : in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) = recorded_kernel (in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt)) := proj1 (proj2 Hfit).
+  Let Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) := proj2 (proj2 (proj2 Hfit)).
+  #[local] Ltac iax X := first [ exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) ].
+  #[local] Notation IA X := (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp).
   Variable E : env.
   Variable R : bvmap 5 word.
   Variable FULL : word -> option byte.
   Variable model : Model.
   Variable hs : acs.
   Hypothesis Hhs : HS_MAIN hs.
-  Hypothesis HC : cs_ok ASEGS ASAN5 AsanInit.LIMIT (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw) fs E hs R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN5 AsanInit.LIMIT (SINV0 APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) (argH0 sp rdraw argv envp kbld execfn) fs E hs R FULL model.
 
   (* [comment removed for export] *)
   Lemma hull_word_bytes_at : forall a (w : nat) v bs,
@@ -393,7 +469,7 @@ Section B.
     Mem.bytes_at ASEGS FULL a bs.
   Proof.
     intros a w v bs HK Hlo Hhi Hbs.
-    pose proof (hull_word sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC a w v HK Hlo Hhi) as Hr.
+    pose proof (hull_word sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC a w v HK Hlo Hhi) as Hr.
     rewrite Hbs, rdn_lib in Hr.
     assert (Hlen : length bs = w) by (rewrite <- Hbs; apply CatExec.length_N_to_le_bytes).
     subst w. unfold A_IMG_LO, A_IMG_HI in Hlo, Hhi. apply rdn_bytes_at; [lia | lia | exact Hr].
@@ -416,7 +492,7 @@ Section B.
     Step.rw_cells AImages.asegs FULL a [Cells.CB w (word_to_le_bytes w (edenot E e))].
   Proof.
     intros a w e HK H1 H2 HW. unfold A_IMG_LO, A_IMG_HI in H1, H2.
-    pose proof (lit_eword sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC a w e HK ltac:(lia)) as Hr. rewrite rdn_lib in Hr.
+    pose proof (lit_eword sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC a w e HK ltac:(lia)) as Hr. rewrite rdn_lib in Hr.
     pose proof (CatExec.length_N_to_le_bytes w (edenot E e)) as LEN.
     pose proof (rdn_bytes_at FULL (word_to_le_bytes w (edenot E e)) a ltac:(lia) ltac:(rewrite LEN; lia)) as HB. rewrite LEN in HB. specialize (HB Hr).
     rewrite <- LEN at 1. apply rw_cells_CB; [exact HB|].
@@ -431,7 +507,7 @@ Section B.
   Proof.
     intros lo hi a bs HK H1 H2 H3 H4 HB. unfold A_IMG_LO, A_IMG_HI in H1, H2. apply InitMem.rw_cells_image0; [| exact HB | lia | lia].
     intros x Hx. rewrite <- (MState.Z_to_bv_bv_unsigned x).
-    apply (hull_img sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC lo hi HK); unfold A_IMG_LO, A_IMG_HI; lia.
+    apply (hull_img sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC lo hi HK); unfold A_IMG_LO, A_IMG_HI; lia.
   Qed.
 End B.
 End LibBridge.

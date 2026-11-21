@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the header values carry the auxv base (auxvp) in place of argv[0]'s pointer (p0). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -48,7 +49,7 @@ Section DrvC.
   Hypothesis DL : drv_layoutA L ar IL sp0.
   Variable fs0 : Fs.Fs.
   Variable fdata : list byte.
-  Variables p0 p1 can : word.
+  Variables auxvp p1 can : word.
   Variable M0 : word -> option byte.
   Variable LK0 : list fframe.
   Variable A0 : list (Z * Z).
@@ -79,7 +80,7 @@ Section DrvC.
   (* [comment removed for export] *)
   Definition target_kA (KT : TSet) : Prop :=
     forall vals R M (model : Model) A (A1 : Z),
-      length vals = 81%nat -> hdr_valsA sp0 p0 p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 -> vals_ev vals 70 = Z_to_bv 64 LEN ->
+      length vals = 81%nat -> hdr_valsA sp0 auxvp p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 -> vals_ev vals 70 = Z_to_bv 64 LEN ->
       vals_ev vals 71 = Z_to_bv 64 B0A -> vals_ev vals 72 = Z_to_bv 64 B1A -> vals_ev vals 73 = Z_to_bv 64 CFGA ->
       vals_ev vals 79 = Z_to_bv 64 PLA -> vals_ev vals 80 = Z_to_bv 64 B2A ->
       regs_ok (ENVG vals) srT0A R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knT0A ->
@@ -159,7 +160,7 @@ Section DrvC.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Theorem hdr_okA : 6 + CFGA <= LEN -> forall KT, target_kA KT -> KT [] ->
-    close_kgA scfg ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC KT.
+    close_kgA scfg ar HI sp0 fs0 fdata auxvp p1 can M0 LK0 A0 CAP crC KT.
   Proof.
     intros Hok KT HKT HKT0. unfold close_kgA.
     intros vals R M model A A1 HL HV P48 P70 HR HK HC DI HINC G1 G2.
@@ -173,7 +174,7 @@ Section DrvC.
     (* [comment removed for export] *)
     set (vals1 := vals ++ [Z_to_bv 64 B0A; Z_to_bv 64 B1A]).
     assert (HL1 : length vals1 = 73%nat) by (subst vals1; rewrite length_app, HL; reflexivity).
-    assert (YV : hdr_valsA sp0 p0 p1 can vals1) by (subst vals1; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL; lia); exact HV).
+    assert (YV : hdr_valsA sp0 auxvp p1 can vals1) by (subst vals1; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL; lia); exact HV).
     pose proof YV as (Y0 & _).
     assert (Y48 : vals_ev vals1 48 = Z_to_bv 64 A1) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P48).
     assert (Y70 : vals_ev vals1 70 = Z_to_bv 64 LEN) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
@@ -203,7 +204,7 @@ Section DrvC.
                  Z_to_bv 64 (bv_unsigned (nth (Z.to_nat (5 + CFGA)) fdata (Z_to_bv 8 0)))]).
     set (vals2 := vals1 ++ ext).
     assert (HL2 : length vals2 = 79%nat) by (subst vals2 ext; rewrite length_app, HL1; reflexivity).
-    assert (WV : hdr_valsA sp0 p0 p1 can vals2) by (subst vals2; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL1; lia); exact YV).
+    assert (WV : hdr_valsA sp0 auxvp p1 can vals2) by (subst vals2; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL1; lia); exact YV).
     pose proof WV as (W0 & _).
     assert (W48 : vals_ev vals2 48 = Z_to_bv 64 A1) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y48).
     assert (W70 : vals_ev vals2 70 = Z_to_bv 64 LEN) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y70).
@@ -273,7 +274,7 @@ Section DrvC.
     pose proof (env_app_regs vals2 ext2 _ srHb _ ltac:(rewrite HL2; vm_compute; reflexivity) HR) as HR1.
     pose proof (env_app_know ASEGS vals2 ext2 _ _ knHb0 ltac:(rewrite HL2; vm_compute; reflexivity) HK) as HK0.
     fold vals3 in HR1, HK0. change (Env (vals_ev vals3) (blobs_ev [[]; []; []; []; fdata])) with (ENVG vals3) in HR1, HK0.
-    assert (TV : hdr_valsA sp0 p0 p1 can vals3) by (subst vals3; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL2; lia); exact WV).
+    assert (TV : hdr_valsA sp0 auxvp p1 can vals3) by (subst vals3; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL2; lia); exact WV).
     assert (T70 : vals_ev vals3 70 = Z_to_bv 64 LEN) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL2; lia); exact W70).
     assert (T71 : vals_ev vals3 71 = Z_to_bv 64 B0A) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL2; lia); exact W71).
     assert (T72 : vals_ev vals3 72 = Z_to_bv 64 B1A) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL2; lia); exact W72).

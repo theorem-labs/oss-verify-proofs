@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (in both sections, the valid_launch hypothesis; PB12 bounds the string area, now SI.strarea of the ProcInput, by the launch's E2BIG cap in place of the stack fit, and no longer states that its length is a multiple of 8; MP_file reads MP's file-system conjunct). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Specs Run.
@@ -22,6 +23,7 @@ Variables (sp : word) (rnd : EntryDraw).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
 
 Let MP := AsanDrun.MP inp.
 Let PB := AsanDrun.PB inp sp rnd.
@@ -35,7 +37,7 @@ Proof. exact (AsanDrun.MP_stable inp). Qed.
 
 Lemma MP_file : fs_lookup (in_fs inp) p1 <> None -> forall mo, MP mo -> fs_lookup (m_fs mo) p1 = Some file.
 Proof.
-  intros EX mo H. unfold MP, AsanDrun.MP in H. rewrite H. unfold file, AsanDrun.file, AsanDrun.fs0.
+  intros EX mo H. unfold MP, AsanDrun.MP in H. rewrite (proj1 H). unfold file, AsanDrun.file, AsanDrun.fs0.
   fold p1. destruct (fs_lookup (in_fs inp) p1) as [f|]; [reflexivity| exfalso; apply EX; reflexivity].
 Qed.
 
@@ -60,15 +62,16 @@ Proof.
   rewrite E4, E5. unfold payload. rewrite nth_skipn. f_equal. lia.
 Qed.
 
-Lemma PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)) /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Lemma PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 Proof.
   intros E H. unfold PB, AsanDrun.PB in H.
-  assert (E12 : eb E 12%uint63 = SI.strarea (in_argv inp) (in_envp inp)) by (rewrite H; reflexivity).
-  assert (E15 : eb E 15%uint63 = LE8 (Z.of_nat (length (SI.strarea (in_argv inp) (in_envp inp))))) by (rewrite H; reflexivity).
-  pose proof (SI.BSB_top AImg.a_phdrs sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd Hfit) as T. rewrite SI.length_BSB in T.
-  pose proof (SI.length_strarea (in_argv inp) (in_envp inp)) as L. pose proof (SI.SP_lo sp Hsp) as LO.
-  rewrite E12. split; [| apply SI.strarea_len8].
-  unfold CtrA.SZ. change wzero with (wp 0%uint63). apply (OL.den_param8_u E 15%uint63 _ E15). unfold SI.raw_len, SI.SP in *. lia.
+  assert (E12 : eb E 12%uint63 = SI.strarea inp) by (rewrite H; reflexivity).
+  assert (E15 : eb E 15%uint63 = LE8 (Z.of_nat (length (SI.strarea inp)))) by (rewrite H; reflexivity).
+  (* the string area's length: the launch's strings, the exec name, its NUL and the 8-byte slot, under the
+     launch's E2BIG cap ([valid_launch]) *)
+  pose proof (SI.length_strarea inp) as L. pose proof (proj2 Hvl) as CAP. unfold launch_bytes, e2big_limit in CAP.
+  rewrite E12.
+  unfold CtrA.SZ. change wzero with (wp 0%uint63). apply (OL.den_param8_u E 15%uint63 _ E15). unfold SI.LSB in L. lia.
 Qed.
 
 Lemma PB_str : forall b, PB b -> forall j js, StrReg.legal_str j js ->
@@ -107,6 +110,7 @@ Variables (sp : word) (rnd : EntryDraw).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
 
 Let MP := AsanDrun.TwinB.MP inp.
 Let PB := AsanDrun.TwinB.PB inp sp rnd.
@@ -120,7 +124,7 @@ Proof. exact (AsanDrun.TwinB.MP_stable inp). Qed.
 
 Lemma MP_file : fs_lookup (in_fs inp) p1 <> None -> forall mo, MP mo -> fs_lookup (m_fs mo) p1 = Some file.
 Proof.
-  intros EX mo H. unfold MP, AsanDrun.TwinB.MP in H. rewrite H. unfold file, AsanDrun.TwinB.file, AsanDrun.TwinB.fs0.
+  intros EX mo H. unfold MP, AsanDrun.TwinB.MP in H. rewrite (proj1 H). unfold file, AsanDrun.TwinB.file, AsanDrun.TwinB.fs0.
   fold p1. destruct (fs_lookup (in_fs inp) p1) as [f|]; [reflexivity| exfalso; apply EX; reflexivity].
 Qed.
 
@@ -145,15 +149,16 @@ Proof.
   rewrite E4, E5. unfold payload. rewrite nth_skipn. f_equal. lia.
 Qed.
 
-Lemma PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)) /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Lemma PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 Proof.
   intros E H. unfold PB, AsanDrun.TwinB.PB in H.
-  assert (E12 : eb E 12%uint63 = SI.strarea (in_argv inp) (in_envp inp)) by (rewrite H; reflexivity).
-  assert (E15 : eb E 15%uint63 = LE8 (Z.of_nat (length (SI.strarea (in_argv inp) (in_envp inp))))) by (rewrite H; reflexivity).
-  pose proof (SI.BSB_top BImg.b_phdrs sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd Hfit) as T. rewrite SI.length_BSB in T.
-  pose proof (SI.length_strarea (in_argv inp) (in_envp inp)) as L. pose proof (SI.SP_lo sp Hsp) as LO.
-  rewrite E12. split; [| apply SI.strarea_len8].
-  unfold CtrA.SZ. change wzero with (wp 0%uint63). apply (OL.den_param8_u E 15%uint63 _ E15). unfold SI.raw_len, SI.SP in *. lia.
+  assert (E12 : eb E 12%uint63 = SI.strarea inp) by (rewrite H; reflexivity).
+  assert (E15 : eb E 15%uint63 = LE8 (Z.of_nat (length (SI.strarea inp)))) by (rewrite H; reflexivity).
+  (* the string area's length: the launch's strings, the exec name, its NUL and the 8-byte slot, under the
+     launch's E2BIG cap ([valid_launch]) *)
+  pose proof (SI.length_strarea inp) as L. pose proof (proj2 Hvl) as CAP. unfold launch_bytes, e2big_limit in CAP.
+  rewrite E12.
+  unfold CtrA.SZ. change wzero with (wp 0%uint63). apply (OL.den_param8_u E 15%uint63 _ E15). unfold SI.LSB in L. lia.
 Qed.
 
 Lemma PB_str : forall b, PB b -> forall j js, StrReg.TwinB.legal_str j js ->

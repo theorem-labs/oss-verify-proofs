@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: descriptors_panel_get's ASan+UBSan walk from the call of arg_s (0x8cd20) to the call of rec_shape_of (0x8cd30) (plugin-hostd/fuzz_command.asan-ubsan), in the form of lib/A/Prog/descriptors_panel_get_s5.v (a working branch 2db68b2223b; a call through cl_callS and the callee's contract, then a run from a fresh seed to the next segment's statement), with B's function arg_s where A inlined it. *)
+(* Modified by Theorem Labs, 2026-10: descriptors_panel_get's ASan+UBSan walk from the call of arg_s (0x8cd20) to the call of rec_shape_of (0x8cd30) (plugin-hostd/fuzz_command.asan-ubsan), in the form of lib/A/Prog/descriptors_panel_get_s5.v (a working branch; a call through cl_callS and the callee's contract, then a run from a fresh seed to the next segment's statement), with B's function arg_s where A inlined it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* 0x8cd20 .. 0x8cd30: arg_s copies uri into a fresh block and records it in the slot (c->nargs := 1, c->args[0]);
    then a0 := "panel_get" (0x21fc0, the listing's object atom 88), a1 := 9 and the call of rec_shape_of, where

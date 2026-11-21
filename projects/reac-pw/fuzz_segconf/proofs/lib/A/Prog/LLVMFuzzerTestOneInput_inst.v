@@ -1,5 +1,5 @@
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the part of the harness walk's
-   instantiation that the image-A owner's lib/A/Prog/SegInstA.v (fff9a86547a5, merged in commit 53319a74bc25) does not state: the room the harness's own window leaves its callees. Statement text only: no
+   instantiation that the image-A owner's lib/A/Prog/SegInstA.v (merged) does not state: the room the harness's own window leaves its callees. Statement text only: no
    function of the binary is proved here.
 
    Every number of the walk comes from SegInstA (STK_LLVMFuzzerTestOneInput and the callees' STK_<F>, emptyA, RLO_A,

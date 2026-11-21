@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the demonstration states are seeded from the argc-not-2, rseq-on main state, the main state being indexed by the run's CONFIG_RSEQ flag). *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -131,8 +132,11 @@ sym_transport ubs2segs E ss s5 ms' HS HF
 end
 end end.
 Section c. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
+(* #38: [ss_main] is indexed by the run's CONFIG_RSEQ flag (UO3p.v).  These
+   demonstration states back no lemma; they are seeded from the argc <> 2,
+   rseq-on state [ss_main_ft]. *)
 Definition ss_pf_demo : sstate :=
-set_regs_pc ss_main_f [(2%bv : reg, SOff 0 (-208)); (10%bv : reg, SLit 0); (8%bv : reg, SLit 7);
+set_regs_pc ss_main_ft [(2%bv : reg, SOff 0 (-208)); (10%bv : reg, SLit 0); (8%bv : reg, SLit 7);
 (9%bv : reg, SLit 0x32f80); (18%bv : reg, SLit 0); (19%bv : reg, SLit 0);
 (20%bv : reg, SLit 0x32f70); (21%bv : reg, SLit 2); (22%bv : reg, SLit 0)] 0x12f98.
 
@@ -143,7 +147,7 @@ Definition ss_flush_demo : sstate :=
 let s := fst (sym_run_toN ubs2segs ubs2tbl FUEL 0x12fa0 (set_regs_pc ss_pf_after1 [(10%bv : reg, SLit 0)] 0x12f98)) in
 set_regs_pc s [(10%bv : reg, SLit 0)] 0x18488.
 
-Definition exit_demo_E : sstate := set_regs_pc ss_main_f [(10%bv : reg, SLit 3)] SRC1_EXIT.
+Definition exit_demo_E : sstate := set_regs_pc ss_main_ft [(10%bv : reg, SLit 3)] SRC1_EXIT.
 
 Definition stdout_dirty (rs : smem) : smem :=
 match store_region rs None (SRC1_STDOUT_FILE + 32) 8 (CVal 8 (SLit (0x53740 + 1024))) with
@@ -161,8 +165,8 @@ match store_region rs4 None (SRC1_STDOUT_FILE + 144) 4 (CVal 4 (SLit 4294967295)
 | None => [] end
 | None => [] end.
 Definition exit_demo_F : sstate :=
-add_atom (mkSS SRC1_EXIT (sr_sets (ss_regs ss_main_f) [(10%bv : reg, SLit 0)])
-(stdout_dirty (ss_mem ss_main_f)) None (ss_facts ss_main_f))
+add_atom (mkSS SRC1_EXIT (sr_sets (ss_regs ss_main_ft) [(10%bv : reg, SLit 0)])
+(stdout_dirty (ss_mem ss_main_ft)) None (ss_facts ss_main_ft))
 10 (mkAF 1 6 0).
 
 End c.

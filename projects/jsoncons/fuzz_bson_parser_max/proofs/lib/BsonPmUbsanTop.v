@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed bson_pm_ubsan_final_abort; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/BigintFinalA.v, lines 45-55. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -35,10 +36,17 @@ Proof.
   intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid Hsw.
   pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-  destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-  destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _).
-  specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
-  specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds).
+  destruct Hens as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [_ Halau]]]].
+  (* LPS 727298f3: the specs read the launch and the reader; [valid_input_abort]'s clauses are
+     read by shape, not by position *)
+  assert (Hvl : valid_launch inp) by (red in Hvalid; tauto).
+  assert (Hrd : in_channel_reader inp = true) by (red in Hvalid; tauto).
+  assert (Hargv : valid_argv (in_argv inp)) by (red in Hvalid; tauto).
+  assert (Henvp : valid_envp (in_envp inp)) by (red in Hvalid; tauto).
+  assert (Hfs : valid_fs (in_fs inp)) by (red in Hvalid; tauto).
+  assert (Hcreds : valid_creds inp) by (red in Hvalid; tauto).
+  specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hrd).
+  specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hvl Halau Hargv Henvp Hfs Hcreds Hrd).
   pose proof (srealizes_bm_transfer _ _ _ _ SRC ltac:(exact Hsw)) as SRC'. clear SRC.
   unfold ShippedBudgets.lim_source, ShippedBudgets.lim_target in *.
   split; [| split].

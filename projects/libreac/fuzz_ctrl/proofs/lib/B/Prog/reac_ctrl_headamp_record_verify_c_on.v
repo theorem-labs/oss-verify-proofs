@@ -4,12 +4,12 @@
    unchanged apart from comment text. The proofs are in lib/B/Prog/reac_ctrl_headamp_record_verify_F_on.v.
    rule 24: no function proved.
    This is the image-B twin of image A's route (C) text (lib/A/Prog/reac_ctrl_headamp_record_verify_c.v, blob
-   86718f5a3d6 (the blob this tree had at release c5e779efe8c), :37-75 and :113-154; a Theorem Labs lane's text as a Theorem Labs lane re-took it at 36bfd511da3): the same names,
+   86718f5a3d6 (the blob this tree had at release), :37-75 and :113-154; a Theorem Labs lane's text as a Theorem Labs lane re-took it): the same names,
    comments (lane names aside) and form, which DROP the shadow_rw premise with no region. Image A keeps this text inside its _c.v; image
    B's _c.v is accepted and stays unchanged apart from comment text, so the text is in this new file. The statements differ from A's only
    where image B's accepted contracts differ from A's: the post's existential registers (B: t0' a1' .. a7'; A: a1' ..
    a6', with t0 and a7 kept). *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame.

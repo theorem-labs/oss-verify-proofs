@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the walk of rec_code_declared on fuzz_command.asan, in the shape of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (cmpPixel's leaf walk): a seed lemma at the entry, then the executor's run/branch loop to every return. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_code_declared.v, with its module paths, module names and numbers changed; 235 of its 323 lines of code are new or changed and 224 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of check_role on fuzz_segconf.asan (image A, 0x87188 = BASE + AF_check_role, 34 instructions), against
    lib/A/Prog/check_role_c.v's check_role_contract, in the form of plugin-hostd/fuzz_command's leaf walk
-   lib/A/Prog/rec_code_declared.v (origin/ossv/recipes 501c0d516c69): a seed lemma at the entry, then the executor's
+   lib/A/Prog/rec_code_declared.v: a seed lemma at the entry, then the executor's
    run/branch loop to the return. Control flow as the plain / UBSan owner's plain walk lib/Prog/check_role.v.
    The run: the 16-byte frame (`addi sp,sp,-16; sd ra,8(sp)`), the shadow base through the GOT word A_OBJ 0 and the
    cell A_OBJ 12, the check of want + 0x14 (removed by the tokens: the shadow entry [want + 16, want + 24) is

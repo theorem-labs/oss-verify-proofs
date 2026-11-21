@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s4.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses ("resp %d" at 0x21100). *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s4.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses ("resp %d" at 0x21100). *)
 (* Modified by Theorem Labs, 2026-10: segment 4 of check_reply's walk (fuzz_command.asan-ubsan, 0x86e64): the snprintf call
    of the refusal path at 0x870b0, to its return 0x870b4 (cr_s4 : CR_RSNP_stmt at every FP state -> CR_SNP_stmt,
    lib/B/Prog/check_reply_m.v), after lib/B/Prog/check_reply_s5.v (a runtime entry from the mid-walk seed with the
@@ -14,6 +14,7 @@
    destination lies in the walk's own side-stack frame) and srr_after_artF continues at the FP state fx1 the wrapper
    returns, where CR_RSNP_stmt is used (check_reply_s4b.v proves it at every FP state). The text is at most 17 bytes,
    so snprintf writes all of it and its NUL into refusal[32] at F + 32. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

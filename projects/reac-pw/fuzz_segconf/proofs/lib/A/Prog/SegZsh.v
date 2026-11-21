@@ -1,11 +1,11 @@
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdZsh.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; CmdBSyms -> SegBSyms, cmd_ -> seg_. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdZsh.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; CmdBSyms -> SegBSyms, cmd_ -> seg_. *)
 (* The shadow of the image's registered objects, for the program walks.
 
    A walk's inline check reads the shadow byte at (a >> 3) + 0x7fff8000 of every address it loads or stores. For a
    byte of one of the image's registered objects (g_rec, record.spill, rec_codes, g_shapes, the string literals),
    that byte is 0, because the allocator invariant AR keeps every range of `as_zero_shadow B` at zero shadow
    (AR_laws' al_zshadow, Reusable/YG0d.v:443-446) and the allocator record names the ranges (CmdBSyms' ts_zsh,
-   lib/A/AF0m.v:313). This is the donor's own derivation (cgif lib/A/AD1k.v:205-212, rodata_zero_shadow), stated
+   lib/A/AF0m.v:314). This is the donor's own derivation (cgif lib/A/AD1k.v:205-212, rodata_zero_shadow), stated
    once for any range of the record, so that a contract states only the address range and a walk takes
    `HB : CmdBSyms B` beside `LAWS : AR_laws SEGS B`. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

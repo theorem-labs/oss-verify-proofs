@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the user-poisoned-heads form of the asan state (unpoison, ARU, ecall_preU and their U = []
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/UPoison.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
-   lemmas), taken by path from proofs/omx-clap-core/fuzz_state/lib/A/FSupoison.v:13-55, Section u only (a working branch
-   7c46ddd1720; itself from a Theorem Labs lane's FMupoison.v, a working branch 7ba11794c88, design/POISON.md), into the shared core,
+   lemmas), taken by path from proofs/omx-clap-core/fuzz_state/lib/A/FSupoison.v:13-55, Section u only (a working branch;
+   itself from a Theorem Labs lane's FMupoison.v, a working branch, design/POISON.md), into the shared core,
    module prefix only. The frame lemmas of FSupoison's Section l are not taken: the strcmp U form (AStrcmpDefU.v) needs only
    these definitions and the three _nil lemmas. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Reusable/UPoison.v, with its module paths changed; 320 of its 364 lines of code are new or changed and 4 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/omx-clap-core/fuzz_state/lib/A/FSupoison.v (commit ddc081c1a03, the user-poison allocator relation that fuzz_state's realloc segment S1 requires; file sha256 a4cc17690f96) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/omx-clap-core/fuzz_state/lib/A/FSupoison.v (the user-poison allocator relation that fuzz_state's realloc segment S1 requires; file sha256 a4cc17690f96) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/UPoison.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance: in the header prose, a branch name replaced by its commit (1). *)
-(* Ported from: commit 7ba11794c88 proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v:1-386 (a Theorem Labs lane,
+(* Ported from: proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v:1-386 (a Theorem Labs lane,
    POISON.md (sha256 f497c5c09ea6; internal record)), relocated to fuzz_state: module prefix fuzz_manifest -> fuzz_state only, plus this line. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the throw path's run is checked at both CONFIG_RSEQ values and read at the one the auxv walk fact names, and the auxv fact is carried across the region whole. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -191,7 +192,7 @@ Section ThrowA.
   Context {CE__ : Ceiling} {RN__ : RunRnd}.
   Variables (IT : itab) (pc0 raval : Z).
   Hypothesis ITS : itab_sound psegs IT.
-  Hypothesis RUN : forall uw : bool, exit_ok (xautoP IT xs_W xs_RW 0x705b8 XS_FUEL XS_K (xs_ss0 pc0 raval uw)) = true.
+  Hypothesis RUN : forall uw b : bool, exit_ok (xautoP IT xs_W xs_RW 0x705b8 XS_FUEL XS_K (xs_ss0 pc0 raval uw b)) = true.
 
   Variables (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
             (F : bvmap 5 word) (fc : bv 32) (m : mem).
@@ -228,10 +229,10 @@ Section ThrowA.
   Proof.
 
     destruct (xs_entry ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m blk lo B pc0 raval canary w0 uw
-                HB RB ST LO LOW SPB B62 AL AUX MI RELRO SSP XD HD EHG UNW W0S RAS RAV) as (E & HCIX & EREG & E40 & EFP).
+                HB RB ST LO LOW SPB B62 AL AUX MI RELRO SSP XD HD EHG UNW W0S RAS RAV) as (bw & E & HCIX & EREG & E40 & EFP).
 
-    destruct (exit_ok_some _ (RUN uw)) as (sf & HX & RUNu).
-    destruct (xauto_soundP IT ITS fc xs_W xs_RW 0x705b8 XS_FUEL XS_K (xs_ss0 pc0 raval uw) sf E m m _ eq_refl eq_refl HX HCIX)
+    destruct (exit_ok_some _ (RUN uw bw)) as (sf & HX & RUNu).
+    destruct (xauto_soundP IT ITS fc xs_W xs_RW 0x705b8 XS_FUEL XS_K (xs_ss0 pc0 raval uw bw) sf E m m _ eq_refl eq_refl HX HCIX)
       as (E' & base' & ms' & HAG & _ & HMS & [Hnx HC]).
     destruct (exit_check_sound sf RUNu) as (Hpc & Hlog & H10 & H1 & H2 & H3 & H4 & H25 & H26 & H27 & KE1 & KE2 & KU & KR).
     destruct (HC E' (eagree_refl _ _)) as (R' & F' & Hms' & HR' & HLF' & HK' & HFR' & HFP' & HMI' & HWM' & HBASE & _ & HRD').
@@ -291,8 +292,7 @@ Section ThrowA.
       - right. left. unfold RMallocRep.RLIBC, RMallocRep.RSSP_GUARD, RMallocRep.RGOT_SSP, RMallocRep.RCTX. lia.
       - right. left. unfold RMallocRep.RLIBC, RMallocRep.RSSP_GUARD, RMallocRep.RGOT_SSP, RMallocRep.RCTX. lia. }
     assert (AUX' : rauxv_ok base' B).
-    { destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AB & ARND & AH).
-      eapply rauxv_ok_frame; [exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd; eauto| exact MU| exact HWM'|].
+    { eapply rauxv_ok_frame; [exact AUX| exact MU| exact HWM'|].
       repeat apply Forall_cons; [| | | | apply Forall_nil]; cbn [fst snd]; unfold RMallocRep.RAUXV_CELL; lia. }
     assert (STF : stk psegs base' lo (usp + 16)).
     { eapply stk_transport; [exact ST| exact MU| exact HWM'|].

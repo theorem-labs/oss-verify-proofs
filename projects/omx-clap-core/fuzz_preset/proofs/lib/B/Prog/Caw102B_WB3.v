@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Disp_word.v, with its module paths and module names changed; 116 of its 154 lines of code are new or changed and 465 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Caw102A_Kit.v, with its module names changed; 674 of its 759 lines of code are new or changed and 69 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102): check_as_written's segment WB3 (B' 0x82000 `addi a0, sp, 8` -> jal ex_ws 0x82004 ->
    the three loads -> jal __wrap_free 0x82014 -> beq s1, s2 0x82018 -> {0x82074 lw s2 -> 0x82020 = cut_oB,
    0x8201c = cut_oA}) from cut_ws, in the continuation form of Caw102B.v. Lane CawB102.CawB102WB3; re-proved on the
-   caw_pst base by CawA102R.CawRWB3; re-proved on the decff67d721f ledger base by CawA102R.CawDWB3; re-fitted to the
+   caw_pst base by CawA102R.CawRWB3; re-proved ledger base by CawA102R.CawDWB3; re-fitted to the
    f97c re-keyed base by CawA102R.CawGWB3; re-fitted to the batch-prep base by CawA102R.KWB34 (now INT102-READY).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    BASE OF RECORD: the kit's cut, this row's lib/B/Prog/Caw102B.v (its
@@ -261,7 +262,7 @@ End bld.
 
 (* ---- the live class-24 count after one new block: the entry's count plus at most 1 (the scratch's malloc adds one
    block to ablocks, which keeps every request size; YGcfRoomLive.ccnt24 counts the class-24 request sizes). The A'
-   twin's caw_ccnt24_app (Caw102A_WA3.v at bef23d2b454f), statement and proof unchanged ---- *)
+   twin's caw_ccnt24_app (Caw102A_WA3.v), statement and proof unchanged ---- *)
 Lemma w3_ccnt24_app : forall (B : asyms) ly S ly' S' (x : Z * Z),
   ablocks B ly' S' = ablocks B ly S ++ [x] -> YGcfRoomLive.ccnt24 S' <= YGcfRoomLive.ccnt24 S + 1.
 Proof.

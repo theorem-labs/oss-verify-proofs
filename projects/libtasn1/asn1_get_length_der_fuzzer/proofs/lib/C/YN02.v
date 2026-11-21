@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YK15.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YP0j YP0g.
@@ -24,6 +25,8 @@ Definition fallible (q : kreq) : bool :=
 match q with
 | KMmapRW _ | KMmapNone _ | KBrkGrow _ | KMprotect _ => true
 | KMremap _ _ _ => true
+(* 08b1429: munmap of an exact mapping may answer an injected -ENOMEM (Sys/Mm/Mmap.v munmap_spec) *)
+| KMunmap _ _ => true
 | _ => false
 end.
 Definition canon (q : kreq) : Z :=

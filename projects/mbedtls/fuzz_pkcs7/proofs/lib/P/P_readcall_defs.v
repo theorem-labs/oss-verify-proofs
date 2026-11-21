@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window entry of kn_RD and kn_RDD moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run Specs.
@@ -29,7 +30,7 @@ Definition spx (k : Z) : expr := EAlu ALU_ADD (EVar 0) (ELit k).
 (* [comment removed for export] *)
 Definition sr_RD : list expr := ltac2:(CDefT.buildp (gd_tbl_P_readcall_defs ()) "(0.$1.(2.=)(0.$1.(2.+1<>;4.)(0.$1.(3.$4.(5.#0.)(2.-80.))(0.$1.(2.+10800.)(0.$1.(2.+599<8.)(0.$1.(5.#8.)(0.$1.(5.#9.)(0.$1.(5.#:.)(0.$1.(5.#;.)(0.$1.(5.#<.)(0.$1.(2.+3.)(0.$1.(5.#1.)(0.$1.(5.#2.)(0.$1.(5.#10.)(0.$1.(5.#11.)(0.$1.(5.#12.)(0.$1.(5.#13.)(0.$1.(5.#14.)(0.$1.(5.#15.)(0.$1.(5.#16.)(0.$1.(5.#17.)(0.$1.(5.#18.)(0.$1.(5.#19.)(0.$1.(5.#1:.)(0.$1.(5.#1;.)(0.$1.(5.#1<.)(0.$1.(5.#1=.)(0.$1.(5.#1>.)(0.$1.(5.#1?.)(0.$1.(5.#20.)(0.$1.(5.#21.)(0.$1.(5.#22.)(6.$1.)))))))))))))))))))))))))))))))))")
 (* [comment removed for export] *).
-Definition kn_RD : list kentry := ltac2:(CDefT.buildp (gd_tbl_P_readcall_defs ()) "(0.$7.(8.(5.#0.)+10.)(0.$7.(9.(5.#0.)+7???80000000.+800000000000.)(0.$7.(:.(;.(5.#0.)-800000.)+800000.)(6.$7.))))")
+Definition kn_RD : list kentry := ltac2:(CDefT.buildp (gd_tbl_P_readcall_defs ()) "(0.$7.(8.(5.#0.)+10.)(0.$7.(9.(5.#0.)+7???80000000.+800000000000.)(0.$7.(:.(;.(5.#0.)-5=<200.)+5=<200.)(6.$7.))))")
 (* [comment removed for export] *).
 Definition rdA := Eval vm_compute in runRC scr0 (SS 0x43c24 sr_RD [] kn_RD 35).
 Definition srRDA : list expr := Eval vm_compute in s_regs (fst (fst rdA)).
@@ -56,7 +57,7 @@ Definition logCLB : list sentry := Eval vm_compute in s_log (fst (fst clB)).
 
 (* [comment removed for export] *)
 Definition srRDD0 : list expr := sr_upd srRDA (ridx 10) (ELit (2 ^ 64 - 21)).
-Definition kn_RDD : list kentry := ltac2:(CDefT.buildp (gd_tbl_P_readcall_defs ()) "(0.$7.(8.(5.#0.)+10.)(0.$7.(9.(5.#0.)+7???80000000.+800000000000.)(0.$7.(:.(;.(5.#0.)-800000.)+800000.)(0.$7.(<.(;.(5.#0.)-88.)#8.(2.+1<>;4.))(0.$7.(:.(;.(2.=)+49000.)+32000.)(6.$7.))))))")
+Definition kn_RDD : list kentry := ltac2:(CDefT.buildp (gd_tbl_P_readcall_defs ()) "(0.$7.(8.(5.#0.)+10.)(0.$7.(9.(5.#0.)+7???80000000.+800000000000.)(0.$7.(:.(;.(5.#0.)-5=<200.)+5=<200.)(0.$7.(<.(;.(5.#0.)-88.)#8.(2.+1<>;4.))(0.$7.(:.(;.(2.=)+49000.)+32000.)(6.$7.))))))")
 (* [comment removed for export] *).
 Definition rdD := Eval vm_compute in runRC scr0 (SS 0x43ba4 srRDD0 [] kn_RDD 35).
 Definition srRDD : list expr := Eval vm_compute in s_regs (fst (fst rdD)).

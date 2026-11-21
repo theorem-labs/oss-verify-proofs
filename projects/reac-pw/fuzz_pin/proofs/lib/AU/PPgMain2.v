@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_Klib.v:146-200
-   (aj_strlen_at) at origin/ossv/recipes f26f9fbd8777 [Apache-2.0]; proofs/reac-pw/fuzz_pin/lib/Reusable/YCbq.v:2262-2310 (aj_bcmp_at)
+   (aj_strlen_at) [Apache-2.0]; proofs/reac-pw/fuzz_pin/lib/Reusable/YCbq.v:2262-2310 (aj_bcmp_at)
    [Apache-2.0 OR MIT]; proofs/reac-pw/fuzz_qdisc/lib/A/QPgSlots.v, QPgCheck.v, QPgRt.v [Apache-2.0] and QPgLoop0.v [Apache-2.0 OR MIT]
    at 160c9b4d5750 (walk tactics and plumbing lemmas); proofs/reac-pw/fuzz_pin/lib/A/ACep.v (reseat) [Apache-2.0]; for
    reac-pw/fuzz_pin's image A walk of fuzz_catalogue_row: the two call lemmas keep the wrappers' same_but_materialized
@@ -35,6 +35,7 @@
    the string's. pm_S2q proves Q -> M (with the call site pin_memcpy_site), pm_S2m proves M -> C / D (s11 pinned to
    slot 106, the byte q + k a one-byte region on slot 530, the call through aj_strlen_atS with the call site
    pin_strlen_site_main), pm_S2 is their composition. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 486 of its 603 lines of code are new or changed and 410 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 67 of its 106 lines of code are new or changed and 564 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The plain slot of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput at the agreement frame's shape, for ubsan_agrees
    (AgreeSeg.v). Prog/SegSlot.v proves the slot obligation under FrameAPI.frame_facts_plain, whose room conjunct is
    the halts frame's (lib_room -> sb_cap = CAPMAX); the agreement shape AgreeShape.ag_shape has sb_cap = CAP_AG
@@ -11,8 +12,8 @@
    (LLVMFuzzerTestOneInput_c.seg_lemmas) nor SegSlot.slot_early mention the shape, so both are taken at a halts shape
    LSh (any shape with frame_facts_plain); SegSlot's Section Bridge (slot_lib, with Tac_slot.sl_post_g) is restated
    here, word for word, at a shape LS with frame_facts_plain's LIBK and lib_delta conjuncts and
-   lib_room LS b n -> slot_room b. This is reac-pw/fuzz_pin's Prog/PinSlotAG.v (commit
-   a2a7540da98) for segconf's slot (G = frame_G = longl, GI = GI_SLOT, Post at its own FP state with frm_zero).
+   lib_room LS b n -> slot_room b. This is reac-pw/fuzz_pin's Prog/PinSlotAG.v
+    for segconf's slot (G = frame_G = longl, GI = GI_SLOT, Post at its own FP state with frm_zero).
    Proves no function by itself (kind: segment lemma of LLVMFuzzerTestOneInput's agreement walk: the composition of
    the plain segment lemmas with the slot at the agreement shape). *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

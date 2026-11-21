@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fd-entry case split covers the four new entry kinds. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Run.
@@ -226,7 +227,7 @@ Lemma nstep_read_xfer : forall fd bufG bufC cnt moG rsp moG' evs moC,
     /\ dec_read bufC cnt rspC = dec_read bufG cnt rsp.
 Proof.
   intros fd bufG bufC cnt moG rsp moG' evs moC [-> H] Ef Es. cbn [nstep]. rewrite <- Ef, <- Es.
-  destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id wr|rd wr| ]|].
+  destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id wr|rd wr| |sid sd st|ctx|fam|aid af]|].
   - destruct H.
   - destruct (Fs.fs_lookup (m_fs moG) p) as [data|]; [|destruct H]. destruct H as [-> ->].
     eexists. split; [split; [reflexivity|]; split; [reflexivity| rewrite m_fds_with_fds; reflexivity]|]. split; [rewrite m_fds_with_fds; reflexivity|].
@@ -240,6 +241,10 @@ Proof.
   - destruct H.
   - destruct H.   (* [comment removed for export] *)
   - destruct H.   (* [comment removed for export] *)
+  - destruct H.   (* FdEntry's four later constructors read nothing (14 constructors at 08b1429) *)
+  - destruct H.
+  - destruct H.
+  - destruct H.
   - destruct H as [-> ->]. exists (efferr EBADF). rewrite (with_fds_self moG), Ef, with_fds_self. repeat split; reflexivity.
 Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section takes main_entry's launch input and mmap base and the channel reader (ReaderOn), argv's pointers follow the launch's string layout, and the path pointer is shown below TASK_SIZE. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -28,8 +29,8 @@ Tactic Notation "run_block_keep" constr(scr) constr(NX) := run_block_gen FUEL ST
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
 Section DrvA.
-  Context {RE : RunEnv}.
-  (* [comment removed for export] *)
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
+
   Variable L : heap_layout.
   Variable HI : heap_iface.
   Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -52,7 +53,9 @@ Section DrvA.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
   Hypothesis Hppl : openat_plain_name path = true.
@@ -99,15 +102,15 @@ Section DrvA.
   Lemma ENV_agree : forall vals, blob_agree 4 (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw))) (ENV vals).
   Proof. intros vals. unfold ENV. apply (blob_agree_app (vals_ev vals) (blobs0 a0s path hw rdraw) [fdata]). Qed.
 
-  Lemma main_regs_ok_d : regs_ok (ENV (vals0 sp0 a0s path envv tid regs0)) sr_main regs0.
+  Lemma main_regs_ok_d : regs_ok (ENV (vals0 sp0 a0s path envv rdraw tid regs0 inp)) sr_main regs0.
   Proof.
-    pose proof (main_regs_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hvsp Htid ME) as HR.
+    pose proof (main_regs_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as HR.
     eapply regs_ok_bagree; [apply ENV_agree | vm_compute; reflexivity | exact HR].
   Qed.
 
-  Lemma main_know_ok_d : know_ok RSEGS (ENV (vals0 sp0 a0s path envv tid regs0)) mem0 kn_d0.
+  Lemma main_know_ok_d : know_ok RSEGS (ENV (vals0 sp0 a0s path envv rdraw tid regs0 inp)) mem0 kn_d0.
   Proof.
-    pose proof (main_know_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid ME) as HK.
+    pose proof (main_know_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as HK.
     eapply know_ok_bagree; [apply ENV_agree | vm_compute; reflexivity |].
     eapply ksubl_sound; [exact HK | exact kn_d0_sub].
   Qed.
@@ -117,7 +120,7 @@ Section DrvA.
     forall e vals R M,
       (1 <= e <= 4095)%Z ->
       length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 38 = errno_ret e ->
-      vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 2 = p1 a0s path envv rdraw inp ->
       regs_ok (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw))) (sr_upd Src0OpenFail_defs.srA (ridx 10) (EVar 38)) R ->
       know_ok RSEGS (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw))) M Src0OpenFail_defs.knA ->
       above_sp0 M ->
@@ -128,10 +131,9 @@ Section DrvA.
     intros vals. destruct (ENV_agree vals) as [A B]. split; [intros n; symmetry; apply A | intros k Hk; symmetry; apply B; exact Hk].
   Qed.
 
-  (* [comment removed for export] *)
-  Lemma main_kimg_alloc : know_ok RSEGS (ENV (vals0 sp0 a0s path envv tid regs0)) mem0 [KImg 0x90738 0x91000; KImg 0x5f871 0x70368].
+  Lemma main_kimg_alloc : know_ok RSEGS (ENV (vals0 sp0 a0s path envv rdraw tid regs0 inp)) mem0 [KImg 0x90738 0x91000; KImg 0x5f871 0x70368].
   Proof.
-    pose proof (main_know_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid ME) as HK.
+    pose proof (main_know_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as HK.
     constructor; [|constructor; [|constructor]].
     - exact (know_nth RSEGS _ _ kn_main ltac:(let i := kidx kn_main (is_kimg_cov 0x90738 (0x91000 - 0x90738)) in exact i) _ HK eq_refl).
     - exact (know_nth RSEGS _ _ kn_main ltac:(let i := kidx kn_main (is_kimg_cov 0x5f871 (0x70368 - 0x5f871)) in exact i) _ HK eq_refl).
@@ -141,8 +143,8 @@ Section DrvA.
   Definition file_k (KF : TSet) : Prop :=
     forall vals R M VM (A1 : Z),
       length vals = 70%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 48 = Z_to_bv 64 A1 ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
-      vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv -> vals_ev vals 5 = tid ->
+      vals_ev vals 1 = p0 a0s path envv rdraw inp -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
+      vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp -> vals_ev vals 5 = tid ->
       regs_ok (ENV vals) srC0 R -> know_ok RSEGS (ENV vals) M knC0 ->
       above_sp0 M -> block_range L A1 65536 ->
       hi_heap HI [(A1, 65536%Z)] (debit L cr0 65536) M VM ->
@@ -150,12 +152,12 @@ Section DrvA.
 
   (* [comment removed for export] *)
   Lemma hiv_facts : forall vals,
-    vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv ->
+    vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp ->
     forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
   Proof.
     intros vals P3 P4 i Hi.
-    destruct (auxvp_u sp0 a0s path envv uid hw rdraw Hva Hve Hvsp) as [A1 A2].
-    destruct (rnd_u sp0 a0s path envv uid hw rdraw Hva Hve Hvsp) as (R1 & R2 & _ & _).
+    destruct (auxvp_u sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as [A1 A2].
+    destruct (rnd_u sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as (R1 & R2 & _ & _).
     destruct Hi as [<-|[<-|[]]]; [rewrite P3 | rewrite P4]; lia.
   Qed.
 
@@ -181,17 +183,17 @@ Section DrvA.
     intros KA KF HKA HKF HKF0.
     pose proof Hsp as Hsp'. pose proof Hal as Hal'.
     pose proof main_regs_ok_d as HR.
-    assert (HK : know_ok RSEGS (ENV (vals0 sp0 a0s path envv tid regs0)) mem0 (kn_d0 ++ [KImg 0x90738 0x91000; KImg 0x5f871 0x70368]))
+    assert (HK : know_ok RSEGS (ENV (vals0 sp0 a0s path envv rdraw tid regs0 inp)) mem0 (kn_d0 ++ [KImg 0x90738 0x91000; KImg 0x5f871 0x70368]))
       by (apply Forall_app; split; [apply main_know_ok_d | apply main_kimg_alloc]).
-    set (vals := vals0 sp0 a0s path envv tid regs0) in *.
+    set (vals := vals0 sp0 a0s path envv rdraw tid regs0 inp) in *.
     assert (HL : length vals = 38%nat) by (subst vals; unfold vals0; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0 sp0 a0s path envv) by reflexivity.
-    assert (P2 : vals_ev vals 2 = p1 sp0 a0s path envv) by reflexivity.
+    assert (P1 : vals_ev vals 1 = p0 a0s path envv rdraw inp) by reflexivity.
+    assert (P2 : vals_ev vals 2 = p1 a0s path envv rdraw inp) by reflexivity.
     assert (P3 : vals_ev vals 3 = auxvp sp0 a0s path envv) by reflexivity.
-    assert (P4 : vals_ev vals 4 = rnd sp0 a0s path envv) by reflexivity.
+    assert (P4 : vals_ev vals 4 = rnd sp0 a0s path envv inp) by reflexivity.
     assert (P5 : vals_ev vals 5 = tid) by reflexivity.
-    destruct (main_str sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
+    destruct (main_str sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
     cbn [nth] in Sr, Slo, Shi, Slen.
     assert (HA0 : above_sp0 mem0) by (intros a Ha; reflexivity).
     clearbody vals.
@@ -201,9 +203,9 @@ Section DrvA.
     { rewrite EQM. eapply (heap_block scfg L HI HIok sp0 Hsp' DL vals _ []); [exact P0 | intros i nb Hf; discriminate | vm_compute; reflexivity | exact HH0]. }
     assert (HA : above_sp0 M).
     { rewrite EQM. apply above_sp0_block; [exact P0 | vm_compute; reflexivity | exact HA0]. }
-    (* [comment removed for export] *)
-    assert (Sr' : rdn RSEGS M (p1 sp0 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
-    { rewrite <- Sr. apply rdn_agree. intros j Hj. pose proof (u64_range (p1 sp0 a0s path envv)).
+
+    assert (Sr' : rdn RSEGS M (p1 a0s path envv rdraw inp) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
+    { rewrite <- Sr. apply rdn_agree. intros j Hj. pose proof (u64_range (p1 a0s path envv rdraw inp)).
       apply HA. unfold p1 in *. rewrite u_small; lia. }
     clear EQM.
     (* [comment removed for export] *)
@@ -217,7 +219,9 @@ Section DrvA.
     - exact Hfs.
     - rewrite m0_fds. rewrite alloc_fd_fds0. apply fd_lookup_fds0_3.
     - split; [exact Hplen|]. split; [apply path_nonul|].
-      regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. exact Sr'.
+      regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. split; [|exact Sr'].
+      pose proof (main_str_fits sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 1%nat ltac:(lia)) as Sfit.
+      cbn [nth] in Sfit. unfold p1. unfold TASK_SIZE. lia.
     - exact Hpne.
     - exact Hppl.
     - rewrite m0_fs. exact Hfile.

@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane missw): AGk1W, the AIfaceMw variant of AGk1.v (c5
-   8d6c9f45705b): the refill's stack window is the Section variable RW (0 <= RW, 176 + RW <= AFSTACK: hypothesis
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane missw): AGk1W, the AIfaceMw variant of AGk1.v (c5):
+   the refill's stack window is the Section variable RW (0 <= RW, 176 + RW <= AFSTACK: hypothesis
    RWB) of MnRefillW.v, not RSTACK = 1024.  Same proof script; the changes are AIfaceM -> AIfaceMw (fields if_ ->
    ifw_), the refill leaves -> their _w forms at RW, RSTACK -> RW, the refill-window steps through
    MnRefillW.win_af_w and the other frame lia steps under RWB, RW (and RWB) in the explicit arguments of the W
    twins' lemmas, and the imports of the W twins.  AGk1.v is unchanged.  rule 24: no function proved (kind:
    re-statement of a proved miss walk over a wider refill window). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk1W.v (commit 3295f3a9fd5, CfInstMiss lane M field round 3 (cf-miss 3295f3a9fd5); file sha256 819f6f3596ad) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk1W.v (CfInstMiss lane M field round 3 (cf-miss); file sha256 819f6f3596ad) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The OOM tail of the MISS arms of the frame-generic Allocate contract (AllocG.alloc_leaf), over the miss fields
    AGif0n.AIfaceM: from the refill callee's refusal (rleaf with a0 = 0, the class cache still empty) at the refill's
    return into Allocate, the run to Allocate's ret and the leaf's out-of-memory case (a0 = 0, the out-of-memory byte

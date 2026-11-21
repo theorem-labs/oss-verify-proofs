@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: APKN; ported by content from zstd_frame_info's file of the same role, with this binary's addresses and names). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -40,7 +41,7 @@ Local Ltac pf V HP f H := pose proof (pfact_find V _ f HP ltac:(vm_compute; refl
 Definition aspace_beg (V : nat -> Z) : Z := 4096 * V 208%nat - 4096 * V 209%nat + 65536.
 
 Theorem primary_shadow0 : forall (V : nat -> Z) (m : word -> option byte),
-  ashadow0 V m -> Forall (pfact_ok V) asan_pure_facts ->
+  ashadow0 V m -> Forall (pfact_ok V) APKN ->
   (forall i, 0 <= i < 2^34 -> m (wa (shad (aspace_beg V) + i)) = Some (Z_to_bv 8 0))
   /\ wr_at bsegs m (shad (aspace_beg V)) (2^34).
 Proof.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up facts stated over the launch's ProcInput; the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -125,15 +126,17 @@ Qed.
 (* [comment removed for export] *)
 Section CTXB.
   Variable CS : cli_sig.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid : word) (TID : Z).
+  Variables (sp0 : word) (inp : ProcInput) (mbase : word) (TID : Z).
+  Local Notation argv := (in_argv inp) (only parsing).
+  Local Notation envp := (in_envp inp) (only parsing).
   Notation usp0 := (bv_unsigned sp0).
   Notation LO' := (LO sp0).
-  Notation BASE' := (BASE sp0 argv envp uid TID).
+  Notation BASE' := (BASE sp0 inp mbase TID).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis CEIL : ceil_ok sp0.
   Hypothesis HT : 0 < TID < 4194304.
 
-  Lemma sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0 /\ alloc_ceiling <= LO' /\ LO' + 8388608 = usp0 /\ 0x353000 <= LO'.
+  Lemma sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0 /\ alloc_ceiling <= LO' /\ LO' + 6144513 = usp0 /\ 0x353000 <= LO'.
   Proof. destruct VSP as (A & B & C). unfold ceil_ok in CEIL. unfold LO, sp_window_lo, sp_window_hi, stack_max_size in *. repeat split; lia. Qed.
 
   (* [comment removed for export] *)
@@ -190,7 +193,7 @@ Section CTXB.
     split; [exact AUX'|]. split; [exact (RHEAP_ssp _ _ _ HP')|].
     split. { eapply lx_statics_agree; [exact AG| | exact LXS]. intros a Ha. right; left.
              unfold lxs_addr, LX_GOT_STDERR, LX_STDERR_PTR, LX_GOT_FLAGS, LX_STORAGE_FN, LX_DEBUG_STRICT, ralloc_static, RMallocRep.RLIBC, RMallocRep.RCTX, RMallocRep.RERRNO, RMallocRep.RSSP_GUARD, RMallocRep.RGOT_SSP in *. lia. }
-    eapply bytes_at_agree; [exact AG| exact IMG| intros a Ha; left; lia].
+    split; [eapply bytes_at_agree; [exact AG| exact (proj1 IMG)| intros a Ha; left; lia]| exact (proj2 IMG)].
   Qed.
 
   Lemma EXTRA_heap : forall LB m m' s s', rheap_pres LB (usp0 + -128) m m' -> ps_so s' = ps_so s -> EXTRA m s -> EXTRA m' s'.
@@ -242,7 +245,8 @@ Section CTXB.
       unfold RAUXV_CELL, RMallocRep.RERRNO in *. lia. }
     split; [eapply ssp_cells_agree; [exact AG| intros a Ha; apply WOKE_outside; [exact HW| unfold ssp_addr, got_ssp, ssp_guard, RMallocRep.RERRNO in *; lia]| exact SSP]|].
     split; [eapply lx_statics_agree; [exact AG| intros a Ha; apply WOKE_outside; [exact HW| unfold lxs_addr, LX_GOT_STDERR, LX_STDERR_PTR, LX_GOT_FLAGS, LX_STORAGE_FN, LX_DEBUG_STRICT, RMallocRep.RERRNO in *; lia]| exact LXS]|].
-    eapply bytes_at_agree; [exact AG| exact IMG|]. intros a Ha. apply WOKE_outside; [exact HW| left; lia].
+    split; [| exact (proj2 IMG)].
+    eapply bytes_at_agree; [exact AG| exact (proj1 IMG)|]. intros a Ha. apply WOKE_outside; [exact HW| left; lia].
   Qed.
 
   Lemma EXTRA_munch : forall W m m' s s', Forall WOK W -> munch W m m' -> wmono usegs m m' -> ps_so s' = ps_so s -> EXTRA m s -> EXTRA m' s'.
@@ -304,9 +308,9 @@ Section CTXB.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma MFRAME_heap : forall LB m m' pd a b c d, rheap_pres LB (usp0 + -128) m m' -> MFRAME sp0 argv m pd a b c d -> MFRAME sp0 argv m' pd a b c d.
+  Lemma MFRAME_heap : forall LB m m' pd a b c d, rheap_pres LB (usp0 + -128) m m' -> MFRAME sp0 inp m pd a b c d -> MFRAME sp0 inp m' pd a b c d.
   Proof. intros LB m m' pd a b c d HP FR. unfold MFRAME in *. eapply rheap_pres_rw_cells; [exact HP| exact FR| left; cbn; lia]. Qed.
-  Lemma MFRAME_munch : forall W m m' pd a b c d, Forall WOKE W -> munch W m m' -> wmono usegs m m' -> MFRAME sp0 argv m pd a b c d -> MFRAME sp0 argv m' pd a b c d.
+  Lemma MFRAME_munch : forall W m m' pd a b c d, Forall WOKE W -> munch W m m' -> wmono usegs m m' -> MFRAME sp0 inp m pd a b c d -> MFRAME sp0 inp m' pd a b c d.
   Proof.
     intros W m m' pd a b c d HW MU WM FR. unfold MFRAME in *. eapply rw_cells_agree; [eapply agree_on_of_munch; [exact MU| exact WM]| exact FR|].
     intros x Hx. cbn in Hx. apply WOKE_outside; [exact HW| left; lia].
@@ -341,7 +345,9 @@ End CTXB.
 (* [comment removed for export] *)
 Section B.
   Variable CS : cli_sig.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid : word) (arg0 arg1 : list byte) (TID : Z) (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Variables (sp0 : word) (inp : ProcInput) (mbase : word) (arg0 arg1 : list byte) (TID : Z) (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Local Notation argv := (in_argv inp) (only parsing).
+  Local Notation envp := (in_envp inp) (only parsing).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis CEIL : ceil_ok sp0.
   Hypothesis VARGV : valid_argv argv.
@@ -357,24 +363,21 @@ Section B.
 
   Notation usp0 := (bv_unsigned sp0).
   Notation LO' := (LO sp0).
-  Notation BASE' := (BASE sp0 argv envp uid TID).
+  Notation BASE' := (BASE sp0 inp mbase TID).
   Notation EXTRA' := (EXTRA CS).
-  Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid run_hw run_draw).
+  Notation FRAME' mm := (MFRAME sp0 inp mm PAD S7 S6 S5 S4).
+  Notation IMGB := (entry_stack_image inp mbase pph PENTRY sp0 run_draw).
 
   (* [comment removed for export] *)
   Notation GST pc x1 t0 t1 t2 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
     (MS (mkR x1 (Z_to_bv 64 (usp0 + -128)) (Z_to_bv 64 0x10800) (Z_to_bv 64 RATP) t0 t1 t2 (Z_to_bv 64 2) x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 S8 S9 S10 S11 t3 t4 t5 t6)
         F (Z_to_bv 64 pc) fc None mm (seg_rom usegs)).
 
-  Lemma IMGB_bound : usp0 + Z.of_nat (length IMGB) <= 2^64.
+  Lemma IMGB_bound : (usp0 + InitMem.head_size inp <= bv_unsigned (ed_top run_draw) - 8 - InitMem.str_len inp)%Z ->
+    usp0 + Z.of_nat (length IMGB) <= 2^64.
   Proof.
-    pose proof (build_stack_bytes_length pph sp0 argv envp uid run_hw run_draw) as BL. pose proof (raw_len_nonneg pph sp0 argv envp uid run_hw run_draw) as RLN.
-    destruct VSP as (A & B & C). unfold sp_window_lo, sp_window_hi in *.
-    destruct VARGV as (A1 & A2 & _). destruct VENVP as (E1 & E2 & _).
-    pose proof (flatten_strings_length argv) as L1. pose proof (flatten_strings_length envp) as L2.
-    unfold raw_len, struct_size, argc, envc, total_arg_bytes, pad_len in *. rewrite BL.
-    unfold raw_len, struct_size, argc, envc. Z.div_mod_to_equations. lia.
+    intros HSP. rewrite (image_length inp mbase pph PENTRY sp0 run_draw HSP).
+    pose proof (u64_range (ed_top run_draw)). lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -407,7 +410,7 @@ Section B.
     unfold implM. iprefix. zstep. apply evt_done.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => apply (implM_unfold__ usegs tm s Q msx) end.
     eapply implM_bind.
-    { eapply (FPR d) with (lo := usp0 - 8388608) (canary := rr_guard);
+    { eapply (FPR d) with (lo := usp0 - 6144513) (canary := rr_guard);
         [exact FWX| exact SWF| apply stderr_wfile0_wfile; exact SE| reflexivity
         | rewrite unsigned_lit by lia; unfold LO in DA; exact DA
         | rewrite unsigned_lit by lia; exact ST
@@ -417,9 +420,9 @@ Section B.
     destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & Ft & fc' & m2 & -> & MUc & WMc & MI2 & FRM2 & FEQ & ST2 & SEW & SSP2 & ->).
     rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
     replace (ret_pc (Z_to_bv 64 0xe1850)) with (Z_to_bv 64 0xe1850) by (symmetry; rpc).
-    assert (WOKW : Forall (WOKE sp0) [(usp0 - 8388608, usp0 + -128); (RSTDERR, RSTDERR + 232)]).
+    assert (WOKW : Forall (WOKE sp0) [(usp0 - 6144513, usp0 + -128); (RSTDERR, RSTDERR + 232)]).
     { unfold WOKE, WOK, LO. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia| constructor]. }
-    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 argv envp uid TID VSP CEIL); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; exact ST2]).
+    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 inp mbase TID VSP CEIL); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; exact ST2]).
     assert (HP2 : RHEAP s LB m2).
     { eapply (RHEAP_munchW sp0 VSP CEIL); [exact WOKW| exact MUc| exact WMc| | exact HP].
       intros iv [<-|[<-|[]]]; cbn [fst snd]; intros H1 H2; lia. }
@@ -448,7 +451,7 @@ Section B.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => apply (implM_unfold__ usegs tm s Q msx) end.
     cbn [s_diag]. change (concat pieces_oom) with s_oom.
     eapply implM_bind.
-    { eapply (FWR) with (lo := usp0 - 8388608) (canary := rr_guard) (s := s_oom);
+    { eapply (FWR) with (lo := usp0 - 6144513) (canary := rr_guard) (s := s_oom);
         [exact SE
         | rewrite unsigned_lit by (unfold S_OOM; lia); change (map _ s_oom) with (to_bytes s_oom); apply rodata_bytes; [exact MI| apply s_oom_ro| unfold S_OOM; lia| unfold S_OOM, s_oom, zlength; cbn; lia]
         | apply lit_range
@@ -462,9 +465,9 @@ Section B.
     destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m2 & -> & MUc & WMc & MI2 & ST2 & SEW & SSP2 & ->).
     rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
     replace (ret_pc (Z_to_bv 64 0xe1878)) with (Z_to_bv 64 0xe1878) by (symmetry; rpc).
-    assert (WOKW : Forall (WOKE sp0) [(usp0 - 8388608, usp0 + -128); (RSTDERR, RSTDERR + 232)]).
+    assert (WOKW : Forall (WOKE sp0) [(usp0 - 6144513, usp0 + -128); (RSTDERR, RSTDERR + 232)]).
     { unfold WOKE, WOK, LO. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia| constructor]. }
-    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 argv envp uid TID VSP CEIL); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; exact ST2]).
+    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 inp mbase TID VSP CEIL); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; exact ST2]).
     assert (HP2 : RHEAP s LB m2).
     { eapply (RHEAP_munchW sp0 VSP CEIL); [exact WOKW| exact MUc| exact WMc| | exact HP].
       intros iv [<-|[<-|[]]]; cbn [fst snd]; intros H1 H2; lia. }
@@ -563,7 +566,7 @@ Section B.
   (* [comment removed for export] *)
   Lemma rd_read : forall (fd P1v : Z) (st1 : rd_st) (s : PState) x1 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 (x23 : word) t3 t4 t5 t6
       (F : bvmap 5 word) (fc : bv 32) (mm : mem) (A : Z) (DATA junk : list byte) (errv : word),
-    3 <= fd < 2^32 -> nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) ->
+    3 <= fd < 2^32 -> nth_error (argv_ptrs inp run_draw) 1 = Some (Z_to_bv 64 P1v) ->
     rd_content st1 = map bv_unsigned DATA -> BUF mm s (rd_buf st1) A (rd_cap st1) DATA junk -> Z.of_nat (length DATA) < rd_cap st1 ->
     STG mm ->
     FRAME' mm -> BASE' mm -> EXTRA' mm s -> rw_cells usegs mm RMallocRep.RERRNO [C4 errv] -> frm0 fc ->
@@ -597,7 +600,7 @@ Section B.
     eapply implM_bind.
     { set (w1 := Z_to_bv 64 RSTAGE). unfold ustage. replace RSTAGE with (bv_unsigned w1) by (subst w1; rewrite unsigned_lit; lia).
       eapply implM_of_enode.
-      eapply Drv_sys.read_spec with (lo := usp0 - 8388608) (junk := sjk) (errv := errv); subst w1; unfold RATP;
+      eapply Drv_sys.read_spec with (lo := usp0 - 6144513) (junk := sjk) (errv := errv); subst w1; unfold RATP;
         rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia; rewrite ?(unsigned_lit RSTAGE) by lia; try reflexivity;
         unfold RMallocRep.RATP; cbn [Z.add];
         first [exact ST | exact DST | exact ERR | exact MI | lia]. }
@@ -613,9 +616,9 @@ Section B.
     assert (P2 : RHEAP s [(rd_buf st1, A, rd_cap st1)] m2).
     { eapply (RHEAP_munchW sp0 VSP CEIL); [apply WOK_WOKE; exact WOKW| exact MUc| exact WMc| | exact P0].
       intros iv [<-|[<-|[<-|[]]]]; cbn [fst snd]; intros Hiv Hiv2; lia. }
-    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 argv envp uid TID VSP CEIL); [exact BA| apply WOK_WOKE; exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; exact ST2]).
+    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 inp mbase TID VSP CEIL); [exact BA| apply WOK_WOKE; exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; exact ST2]).
     assert (EX2 : EXTRA' m2 s) by (eapply (EXTRA_munch CS sp0 VSP CEIL); [exact WOKW| exact MUc| exact WMc| reflexivity| exact EX]).
-    assert (FR2 : FRAME' m2) by (unfold MFRAME; eapply (MFRAME_munch sp0 argv VSP CEIL); [apply WOK_WOKE; exact WOKW| exact MUc| exact WMc| exact FR]).
+    assert (FR2 : FRAME' m2) by (unfold MFRAME; eapply (MFRAME_munch sp0 inp VSP CEIL); [apply WOK_WOKE; exact WOKW| exact MUc| exact WMc| exact FR]).
     assert (REST2 : stk usegs m2 (RSTAGE + CNT) (RSTAGE + 65536)).
     { eapply stk_agree; [eapply agree_on_of_munch; [exact MUc| exact WMc]| exact REST|]. intros x Hx. cbn. lia. }
     assert (BLK2 : rw_cells usegs m2 A [CB (length DATA) DATA; CB (Z.to_nat (rd_cap st1 - Z.of_nat (length DATA))) junk]).
@@ -627,9 +630,17 @@ Section B.
       pose proof BA2 as (ST3 & MI3 & ES3 & AUX3 & SSP3 & LXS3 & IMG3). unfold LO in ST3.
       pose proof LXS3 as (G1 & G2 & _).
       pose proof VARGV as (_ & _ & ARGLEN & NONUL & _).
-      destruct (argv_cstring sp0 argv envp uid m2 IMG3 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-        as (p1 & slack1 & HP1' & P1LO & P1HI & STR1 & SLK1). unfold str_base, struct_size, argc, envc in P1LO.
-      pose proof IMGB_bound as IL.
+      destruct (argv_cstring sp0 inp mbase m2 IMG3 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
+        as (p1 & slack1 & HP1' & P1LO & P1HI & STR1 & SLK1). unfold str_base, InitMem.str_len in P1LO.
+      (* LPS 08b1429: [argv_cstring]'s lower bound is [str_base], whose body spells the string
+         area with [launch_string_bytes] (the body of [InitMem.str_len]), while [BASE]'s
+         stack-image side condition keeps the folded [InitMem.str_len]/[InitMem.head_size]
+         spelling.  The two are convertible but are distinct atoms for [lia], so [0 <= p1] was
+         out of reach.  Name the side condition and put it into P1LO's spelling. *)
+      assert (HSP3 : (usp0 + InitMem.head_size inp <= bv_unsigned (ed_top run_draw) - 8 - InitMem.str_len inp)%Z)
+        by exact (proj2 IMG3).
+      pose proof (IMGB_bound HSP3) as IL.
+      unfold InitMem.head_size, InitMem.str_len in HSP3.
       rewrite HP1 in HP1'. assert (EP : Z_to_bv 64 P1v = Z_to_bv 64 p1) by congruence. rewrite EP. clear HP1' EP.
       assert (A1NN : ~ In (Z_to_bv 8 0) arg1) by (rewrite EARGV in NONUL; inversion NONUL as [|? ? ? X]; inversion X; assumption).
       assert (A1LEN : Z.of_nat (length arg1) <= 131071) by (rewrite EARGV in ARGLEN; inversion ARGLEN as [|? ? ? X]; inversion X; assumption).
@@ -674,11 +685,11 @@ Section B.
         assert (P3 : RHEAP s [(rd_buf st1, A, rd_cap st1)] m3).
         { eapply (RHEAP_munchW sp0 VSP CEIL); [apply WOK_WOKE; exact WOKV| exact MUd| exact WMd| | exact P2].
           intros iv [<-|[]]. cbn [fst snd]. intros _ _. exists (rd_buf st1, A, rd_cap st1). split; [left; reflexivity|]. cbn [fst snd blk_addr blk_size]. lia. }
-        assert (ST3 : stk usegs m3 (usp0 - 8388608) (usp0 + -128)).
+        assert (ST3 : stk usegs m3 (usp0 - 6144513) (usp0 + -128)).
         { eapply stk_agree; [eapply agree_on_of_munch; [exact MUd| exact WMd]| pose proof BA2 as (ST2' & _); unfold LO in ST2'; exact ST2'| intros y Hy; cbn; lia]. }
-        assert (BA3 : BASE' m3) by (eapply (BASE_munch sp0 argv envp uid TID VSP CEIL); [exact BA2| apply WOK_WOKE; exact WOKV| exact MUd| exact WMd| exact MI3| unfold LO; exact ST3]).
+        assert (BA3 : BASE' m3) by (eapply (BASE_munch sp0 inp mbase TID VSP CEIL); [exact BA2| apply WOK_WOKE; exact WOKV| exact MUd| exact WMd| exact MI3| unfold LO; exact ST3]).
         assert (EX3 : EXTRA' m3 s) by (eapply (EXTRA_munch CS sp0 VSP CEIL); [exact WOKV| exact MUd| exact WMd| reflexivity| exact EX2]).
-        assert (FR3 : FRAME' m3) by (unfold MFRAME; eapply (MFRAME_munch sp0 argv VSP CEIL); [apply WOK_WOKE; exact WOKV| exact MUd| exact WMd| exact FR2]).
+        assert (FR3 : FRAME' m3) by (unfold MFRAME; eapply (MFRAME_munch sp0 inp VSP CEIL); [apply WOK_WOKE; exact WOKV| exact MUd| exact WMd| exact FR2]).
         assert (ERR3 : rw_cells usegs m3 3344580 [C4 errv]).
         { eapply rw_cells_agree; [eapply agree_on_of_munch; [exact MUd| exact WMd]| exact ERR2|]. intros y Hy. cbn in Hy |- *. lia. }
         assert (BLK1' : rw_cells usegs m3 A [CB (length DATA) DATA]).

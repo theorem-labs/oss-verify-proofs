@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE23.v, with its module paths changed, and its fuzz_reply.asan addresses relocated from cgif_file_fuzzer.asan (258 numerals; per-numeral report). *)
 (* Modified by Theorem Labs, 2026-10: XW2, asan.module_dtor's write footprint, is fuzz_reply.asan's: the two flag cells and the four shadow runs __asan_unregister_globals clears for this image's 27 asan_globals descriptors and their 1728-byte array (A/AE37.v x2_shw); cgif's were three globals' runs and its array's. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/AE23.v, with its module paths, module names, addresses and numbers changed; 575 of its 666 lines of code are new or changed and 1676 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (stdout's fdchan with the launch's channel-reader flag exf_mid carries). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -709,7 +710,7 @@ Theorem exf_tail_link : exf_tail_tfa B AD1k.xst.
 Proof.
 intros W regs mem md usp code f k fs tid cval sew HAI MID R8.
 pose proof MID as (Msp & M16 & Musp & Mgp & Mtp & Mtpx & Mpres & Mcode & Mc02 & Mra & Mra2 & Mcells &
-  Mtid & Mtidr & Mgot & Mcan & Mcanr & Msew1 & Msew2 & Msewr & Mso & Mfds & Mfs & Mgi & Mf4 & Mf16 & Mfh & _).
+  Mtid & Mtidr & Mgot & Mcan & Mcanr & Msew1 & Msew2 & Msewr & Mso & Mfds & Mcr & Mfs & Mgi & Mf4 & Mf16 & Mfh & _).
 assert (H4 : getr regs 4%bv = w64 TFIB_TPX) by (rewrite Mtp, Mtpx; reflexivity).
 assert (Mtid' : val_mem tfibsegs (mrestrict (w_H W) mem) (TFIB_TPX - 168) 4 tid)
   by (rewrite <- Mtpx; exact Mtid).
@@ -738,7 +739,7 @@ destruct Mso as [[Hk0 HSI] | [Hk1 HX]].
     assert (Hwp : STDOUT_BUFA + 2 * (Z.of_nat k - 1) =
                   STDOUT_BUFA + Z.of_nat (length (concat (repeat line0 (k - 1))))) by (rewrite Hlen; lia).
     assert (Hch : fdchan (Z_to_bv 64 1) ch_stdout md)
-      by (split; [rewrite Mfds; vm_compute; reflexivity | reflexivity]).
+      by (split; [rewrite Mfds; vm_compute; reflexivity | split; [reflexivity | exact Mcr]]).
     unfold wr, ex.
     exact (exf_tail_F W regs mem md usp code f tid cval sew (STDOUT_BUFA + 2 * (Z.of_nat k - 1))
       (concat (repeat line0 (k - 1))) ch_stdout Msp M16 Musp H4 Mpres Mcode Mc02 Mra

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch model's channel-reader flag from the driver context, LPS 08b1429, as a section fact; the vDSO fact, from deJ_vdso, in the lifted world predicate; the existence loop's room margin HX0 over init_cost lowered from 2 ^ 29 to 2 ^ 28, the safety loop's in Drv_rs.v, since the existence room X0 now lies below 2 ^ 29). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -51,6 +52,7 @@ Let Hargc : length argv = 2%nat := f_argc cx.
 Let md0 : Model := f_md0 cx.
 Let Hfds0 : m_fds md0 = std_fds := f_fds0 cx.
 Let Hfs : m_fs md0 = fs := f_fs0 cx.
+Let Hrdr0 : m_channel_reader md0 = true := f_rdr0 cx.
 Let mdo : Model := md_open md0 argv1.
 Let ok : world -> Prop := f_ok cx.
 Let SpecT : list event -> Prop := Spec inp.
@@ -104,7 +106,7 @@ Section EX.
 
 Variable X0 : Z.
 Hypothesis HX0 : ltac2:(tb__ "0|0|
-S8S9S9bSdZ2Z1dA2A2VX0;A2").
+S8S9S9bSdZ2Z1cA2A2VX0;A2").
 Hypothesis MBX : malloc_big_ex_U true.
 Hypothesis FDX : free_drv_ex_U.
 
@@ -699,7 +701,7 @@ Proof using Hargc Hent Hinp P0_top.
   destruct (deJ segs C_U 31 P0 wtop P0_top (KdR 0) r0 tv0 (DG 65536 0) A rho _ _ giA dA p0R) as [snapR kdR0].
   exists (m_vmmaps (cfg_model (w_cfg w))), (m_vm_materialized (cfg_model (w_cfg w))).
   refine (conj snapR (conj matchK0 _)).
-  exact (conj kdR0 (conj eq_refl eq_refl)).
+  refine (conj kdR0 (conj eq_refl (conj eq_refl _))). eapply deJ_vdso; exact giA.
 Qed.
 
 Lemma fromKx : ltac2:(tb__ "0|1|
@@ -718,7 +720,7 @@ Proof using Hargc Hent Hinp P0_top P0_tp.
       rewrite (regsB 41%positive) by lia. split; reflexivity.
     - intros a. unfold Contract.rd_of. rewrite memB. reflexivity.
     - intros a. unfold Contract.wok_of. rewrite memB. reflexivity. }
-  destruct kbS as (kdOff & vmEq & matEq).
+  destruct kbS as (kdOff & vmEq & matEq & VDk).
   destruct (reJ segs C_U 31 P0 wtop P0_top P0_tp (KdR off) tv0 (DG 65536 0) rho vm mat (w_tr w) (cfg_model (w_cfg w))
               snapR vmEq matEq (DG_vm 65536 0) kdOff) as (A & giA & dA).
   split; [|exact p0R].

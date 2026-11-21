@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap over maps_subtract and Linux's own destination address). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
@@ -146,7 +147,8 @@ Lemma used_move_le : forall m old old_n dst new_n,
   (bv_unsigned new_n mod page_size = 0)%Z ->
   (0 < bv_unsigned new_n)%Z ->
   (bv_unsigned dst + bv_unsigned new_n < two_pow_64)%Z ->
-  region_free (map_remove (vm_maps (m_vmmaps m)) old) dst new_n = true ->
+  region_free (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old)
+                 (bv_unsigned old + bv_unsigned old_n)) dst new_n = true ->
   (vm_backing_used (mremap_model_next m old old_n dst new_n)
    <= mremap_move_charge m old old_n new_n)%Z.
 Proof.
@@ -162,11 +164,14 @@ Proof.
   unfold vm_backed_maps. cbn [vm_maps vm_noaccess vm_limit].
   set (KL := maps_subtract (m_vm_lazy m) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
   set (KP := List.filter (page_outside_range (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) (m_vm_materialized m)) in *.
-  set (R0 := map_remove (vm_maps (m_vmmaps m)) old) in *.
+  (* at the revision the source range is cut out of the maps ([maps_subtract]),
+     where it used to drop the entry based at [old] ([map_remove]) *)
+  set (R0 := maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old)
+               (bv_unsigned old + bv_unsigned old_n)) in *.
   set (NA := vm_noaccess (m_vmmaps m)) in *.
   pose proof (bv_unsigned_range_u64 dst) as Rd.
-  assert (HfitR : maps_fit R0) by (intros a sz Hin; apply (Hfit0 a sz); unfold R0, map_remove in Hin; apply filter_In in Hin; tauto).
-  assert (HnzR : entries_nonzero R0) by (intros a sz Hin; apply (Hnz0 a sz); unfold R0, map_remove in Hin; apply filter_In in Hin; tauto).
+  assert (HfitR : maps_fit R0) by (unfold R0; apply maps_fit_maps_subtract; exact Hfit0).
+  assert (HnzR : entries_nonzero R0) by (unfold R0; apply maps_subtract_nonzero; exact Hnz0).
   set (M := maps_subtract_all R0 NA) in *.
   assert (HfM : maps_fit M) by (apply maps_fit_maps_subtract_all; exact HfitR).
   assert (HnM : entries_nonzero M) by (apply maps_subtract_all_nonzero; exact HnzR).
@@ -239,9 +244,11 @@ Lemma INV_mremap_model_next m old old_n dst new_n :
   INV m -> INV (mremap_model_next m old old_n dst new_n).
 Proof.
   intros Hn Hd [HF HN]. unfold INV in *.
-  change (vm_maps (m_vmmaps (mremap_model_next m old old_n dst new_n))) with ((dst, new_n) :: map_remove (vm_maps (m_vmmaps m)) old).
-  split; [apply maps_fit_cons; [exact Hd| apply maps_fit_map_remove, HF]
-        | apply entries_nonzero_cons; [exact Hn| unfold map_remove; apply entries_nonzero_filter, HN]].
+  change (vm_maps (m_vmmaps (mremap_model_next m old old_n dst new_n)))
+    with ((dst, new_n) :: maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old)
+                            (bv_unsigned old + bv_unsigned old_n)).
+  split; [apply maps_fit_cons; [exact Hd| apply maps_fit_maps_subtract, HF]
+        | apply entries_nonzero_cons; [exact Hn| apply maps_subtract_nonzero, HN]].
 Qed.
 
 Lemma mremap_model_next_relim l m old old_n dst new_n :
@@ -250,8 +257,10 @@ Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Ltac mremap_move m l H nav Hnew_u Hnew_pos Hgt Htoplt :=
-  let dst := fresh "dst" in let HF := fresh "HF" in
+  let dst := fresh "dst" in let HF := fresh "HF" in let HPl := fresh "HPl" in
   apply choose_modify_pure_iff in H as (dst & HF & ->);
+  (* the revision moves to Linux's own address ([Mremap.mremap_dst_ok]) *)
+  destruct HF as [HPl HF];
   unfold mremap_fresh_b in HF;
   let Hfin := fresh "Hfin" in let Hrf := fresh "Hrf" in let Htopd := fresh "Htopd" in
   let Hpos := fresh "Hpos" in let Hal := fresh "Hal" in let Hne := fresh "Hne" in
@@ -263,16 +272,12 @@ Ltac mremap_move m l H nav Hnew_u Hnew_pos Hgt Htoplt :=
   [ split; [reflexivity|]; apply INV_mremap_model_next; rewrite Hnew_u; [exact Hnew_pos| lia]
   | let HI := fresh "HI" in let M1 := fresh "M1" in let M2 := fresh "M2" in
     intros HI M1 M2; syncall; synch M2; try rewrite Hgt in M1; try rewrite Hgt in M2;
-    let F1 := fresh "F1" in let V1 := fresh "V1" in let F2 := fresh "F2" in let V2 := fresh "V2" in
-    apply true_of_negb_false in M1; apply andb_true_iff in M1 as [F1 V1];
-    apply true_of_negb_false in M2; apply andb_true_iff in M2 as [F2 V2];
+    let V2 := fresh "V2" in
+    apply true_of_negb_false in M2; rename M2 into V2;
     right;
-    try (match goal with |- context [if mremap_inplace_grow_b (relim l m) ?a ?b ?c ?d ?e then _ else _] =>
-           replace (mremap_inplace_grow_b (relim l m) a b c d e) with (mremap_inplace_grow_b m a b c d e)
-             by (unfold mremap_inplace_grow_b; unrelim; rewrite F1, F2; reflexivity) end;
-         match goal with E : mremap_inplace_grow_b m _ _ _ _ _ = _ |- _ => rewrite E end);
     nav;
     apply choose_modify_pure_iff; exists dst; split; [| reflexivity];
+    split; [unrelim; exact HPl|];
     unfold mremap_fresh_b; unrelim; rewrite Hne, Hal, Hpos, Htopd, Hrf; cbn [andb];
     unfold mremap_final_budget_b, vm_backing_within_limit;
     rewrite mremap_model_next_relim, vm_backing_used_relim;
@@ -287,7 +292,7 @@ Ltac mremap_move m l H nav Hnew_u Hnew_pos Hgt Htoplt :=
     [ exact (proj1 HI) | exact (proj2 HI) | apply Z.eqb_eq; exact Hal
     | rewrite Hnew_u; apply page_round_up_Z_mod | rewrite Hnew_u; exact Hnew_pos
     | rewrite Hnew_u; lia
-    | unfold map_remove; apply region_free_filter; eapply region_free_app_r; exact Hrf ] ].
+    | apply region_free_subtract_fits; [exact (proj1 HI)| eapply region_free_app_r; exact Hrf] ] ].
 
 Lemma arm_216 : ARM 216 (fun i => mremap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) i).
 Proof.
@@ -318,24 +323,17 @@ Proof.
   - (* [comment removed for export] *)
     assert (Hgt : (new_nZ <=? old_nZ)%Z = false) by (apply Z.leb_gt; lia).
     cbv zeta in H.
+    (* at the revision the grow arm tests the room alone
+       ([Mremap.mremap_inplace_room_b]); the in-place grow then chooses its
+       budget, the move chooses Linux's address *)
     match type of H with (if ?b then _ else _) _ _ _ => destruct b eqn:Eg end.
-    + mm_hyp H.
-      * (* [comment removed for export] *)
-        apply modify_pure_iff in H. subst. split.
-        -- split; [reflexivity|]. apply INV_mremap_model_next; rewrite Hnew_u; [exact Hnew_pos|].
-           unfold mremap_inplace_grow_b in Eg. apply andb_true_iff in Eg as [Eg _]. apply andb_true_iff in Eg as [Eg _].
-           apply Z.leb_le in Eg. lia.
-        -- intros HI M1 M2. syncall. synch M2. try rewrite Hgt in M1; try rewrite Hgt in M2.
-           apply true_of_negb_false in M1. apply andb_true_iff in M1 as [F1 V1].
-           apply true_of_negb_false in M2. apply andb_true_iff in M2 as [F2 V2].
-           right.
-           match goal with |- context [if ?b then _ else _] => replace b with true end.
-           2:{ symmetry. revert Eg F2. unfold mremap_inplace_grow_b. unrelim.
-               intros Eg F2. rewrite F2. apply andb_true_iff in Eg as [Eg _]. rewrite Eg. reflexivity. }
-           left. apply modify_pure_iff. reflexivity.
-      * (* [comment removed for export] *)
-        mremap_move m l H ltac:(right) Hnew_u Hnew_pos Hgt Htoplt.
-    + (* [comment removed for export] *)
-      mremap_move m l H ltac:(idtac) Hnew_u Hnew_pos Hgt Htoplt.
+    + apply choose_modify_pure_iff in H as (u & Hfb & ->). split.
+      * split; [reflexivity|]. apply INV_mremap_model_next; rewrite Hnew_u; [exact Hnew_pos|].
+        unfold mremap_inplace_room_b in Eg. apply andb_true_iff in Eg as [Eg _].
+        apply Z.leb_le in Eg. lia.
+      * intros HI M1 M2. syncall. synch M2. try rewrite Hgt in M1; try rewrite Hgt in M2.
+        apply true_of_negb_false in M2.
+        right. apply choose_modify_pure_iff. exists u. split; [exact M2| reflexivity].
+    + mremap_move m l H ltac:(idtac) Hnew_u Hnew_pos Hgt Htoplt.
 Qed.
 

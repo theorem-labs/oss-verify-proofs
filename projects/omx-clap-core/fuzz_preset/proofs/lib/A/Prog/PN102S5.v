@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): SEGMENT S5 of the walk of parse_noting (row
    N10-PNA; cut table lib/A/Prog/PN102Cuts.v): from pn_cut_S5 (+0x48, the reading ran out) to pn_cut_S6 (+0x58).
@@ -9,9 +10,9 @@
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
    files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk preset-tree-at-2026-10-29T20-00-00Z.tsv (sha256 84c0bfddb1f3; internal record), its one
    announced re-bind). This file: segment S5 of that walk.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
    FORM: three concrete steps (PN102Help.v pn_step_addi), the jal (pn_step_call), the batch kit's text tcheck_reject_clean_specX
    at the cut's float state applied by PN102Help.v pn_call (o = -48 from the entry sp, footprint [], ch = [] since
    s0 = doc is below the ceiling; the caller's journal at the budget pn_cw X and at the cut's world relation
@@ -27,7 +28,7 @@
    (YG0scf.v frame_facts_cf), so the 64-byte-aligned shadow hull of [doc, doc + 56) lies in that frame's shadow; the
    journal from the entry keeps those bytes (its frames clause, the shadow is off the footprint), so the entry's
    range_addressable and shadow_hull_vis (pp_out's wdest_ok) hold at the current state.
-   SHAPES TAKEN: pn5_fd is lib/A/Prog/Ent102L3ASteps.v l3_fd (a working branch b1bc025047ea) at PL_prog_A;
+   SHAPES TAKEN: pn5_fd is lib/A/Prog/Ent102L3ASteps.v l3_fd (a working branch) at PL_prog_A;
    pn5_lsum_perm is lib/A/Prog/S1Ledger.v prh_lsum_perm; the call is shaped as Ent102L2A.v l2_pno (same branch).
    NUMERALS: 4 (an instruction), 8 (a word, a shadow granule), 48 (the frame), 56 (struct pj), 64 (the shadow hull
    and frame alignment), 4096 (a page), 2 ^ 31 (int range), 2 ^ 40 (the engine's code span), the instruction offsets

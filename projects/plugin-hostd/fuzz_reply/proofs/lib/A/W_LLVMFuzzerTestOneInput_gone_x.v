@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of ARM_gone of fuzz_reply's LLVMFuzzerTestOneInput
-   (lib/A/W_LLVMFuzzerTestOneInput_gone.v, a Theorem Labs lane's lf_arm_gone, 312c6aa4c95, adapted to integ at
-   commit 95cae0d4740) to the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v
+   (lib/A/W_LLVMFuzzerTestOneInput_gone.v, a Theorem Labs lane's lf_arm_gone, adapted to integ)
+   to the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v
    (a Theorem Labs lane's route (b), step 7).  lf_arm_gone_x is exactly cut_x's Section w hypothesis ARM_gone.  No AR file and
    no kit file is edited.
    THIS FILE IS THE ARM'S COMPOSITION, as _gone.v's: lf_arm_gone_x from the seven phase lemmas, by SRr_bind.  The
@@ -13,11 +14,11 @@
    Section hypotheses beyond cut_x's Section w header (B .. RINV, verbatim):
      _gone.v's, in its order: the AR-free ones verbatim (HERR, TL, HZS, RIR, RGP, HGRIG, HPAIRS, HFDS, HGCELLS, GWR,
        HROMPIN, HCE, HERRROM, HGs, ML; HLSRIG / RIstep / RIend with LS -> LSx); the callee contracts at their kit forms
-       (SNP asnprintf_realizes_x, W_sites_x.v:392; RIG rig_spec_x at K0's ACk0.CTX_AFREE, W_contract_x.v:857 of the kit
-       of record 628b62f1a9e; CNL cnl_spec_x :1186; CSHE cshe_spec_x :1086; CNLR cnlr_spec_x :353; CSD csd_spec_x :118);
+       (SNP asnprintf_realizes_x, W_sites_x.v:393; RIG rig_spec_x at K0's ACk0.CTX_AFREE, W_contract_x.v:858 of the kit
+       of record; CNL cnl_spec_x :1186; CSHE cshe_spec_x :1086; CNLR cnlr_spec_x :353; CSD csd_spec_x :118);
        HGOTG and GN_LITS over ARx;
      OWED: BLKN (kit _x twin of al_blocks' last conjunct; W_kit_x.v's text, as add_x / pro_x / event_x);
-     forced by the generic relation and placement: HPST (the image is off PST; add_x's text) and FRMF (W_frame_x.v:105,
+     forced by the generic relation and placement: HPST (the image is off PST; add_x's text) and FRMF (W_frame_x.v:106,
        the fake frames' 64-alignment frame_al64_x and shadow_hull_vis_of_frame_x read). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG FCiface YCe5x YGcallx.
@@ -76,7 +77,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 Section gxx.
-(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:191-235) *)
+(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:192-236) *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.
@@ -94,7 +95,7 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx hl.
-(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x at 0c4d57d9bf1;
+(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x;
    fuzz_reply calls no poison routine): the driver reads the post's Hp' = [] from the journal's ARx through it *)
 Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis HG : gx_ok segs B G_fr.
@@ -112,7 +113,7 @@ Hypothesis TL : PALib B.
 Hypothesis HZS : GN_HZS B.
 (* the slots check_no_loss_read is called on have no pending record *)
 Hypothesis RIR : GN_RI_read RINV.
-(* snprintf, the pf chain's interceptor contract: W_sites_x.v:392 asnprintf_realizes_x, the twin of _gone.v's SNP *)
+(* snprintf, the pf chain's interceptor contract: W_sites_x.v:393 asnprintf_realizes_x, the twin of _gone.v's SNP *)
 Hypothesis SNP : asnprintf_realizes_x B ARx (SIGMA WS_snprintf) FR_GOT_GUARD FR_GUARD.
 (* _gone.v's HGOTG and GN_LITS over ARx (Hp after S) *)
 Hypothesis HGOTG : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
@@ -127,8 +128,8 @@ Variable MMAX : Z.                                   (* W6's / W7's request boun
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c) / (d)): the room record the callees are taken at.  At the instance
    RM := fun S _ => NP S, so RPNP below holds by conversion *)
 Variable RP : roomp.
-(* W6's contract over ARx: W_contract_x.v rig_spec_x at CTX_AFREE := K0's table ACk0.CTX_AFREE (the kit of record
-   628b62f1a9e); rg_place verbatim *)
+(* W6's contract over ARx: W_contract_x.v rig_spec_x at CTX_AFREE := K0's table ACk0.CTX_AFREE (the kit of record);
+   rg_place verbatim *)
 Hypothesis RIG : rig_spec_x B PST ARx MT RP MMAX fr_RG ACk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 Hypothesis RGP : rg_place B fr_RG.
 (* the base's model obligations phase 3 takes *)
@@ -138,7 +139,7 @@ Hypothesis HFDS : GN_RI_fds RINV.
 Hypothesis HLSRIG : GN_LS_rig MT LSx RINV MMAX.
 (* the room round's count row and model count rules (top_x's rows): gn_pk is the arm's peak (s5-r1d's pk_gone at the
    instance); LSCNT is GN_LS_cnt_x (_gone_base_x.v); CNTRIG is GN_CNT_rig at relay_instance_gone's premise peak
-   rig_pk (W_contract_x.v:312) of its trace; CNTSTEP (phase 5, below) is GN_CNT_step at check_no_loss's cnl_pk *)
+   rig_pk (W_contract_x.v:313) of its trace; CNTSTEP (phase 5, below) is GN_CNT_step at check_no_loss's cnl_pk *)
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Hypothesis RPNP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis CNTRIG : GN_CNT_rig gn_pk (fun cx m hs =>
@@ -173,7 +174,7 @@ Hypothesis CSD : csd_spec_x B PST ARx (BASE + AF_fr_check_shape_done).
 Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
 (* the image is off PST (add_x's HPST): the callee journals' image clause and the ROM-view lemma take it *)
 Hypothesis HPST : forall a, in_img segs a -> ~ Exists (in_zr a) PST.
-(* W_frame_x.v:105's Section hypothesis FRMF (the generic counterpart of YG0s.v:442 frame_facts' fake-frame
+(* W_frame_x.v:106's Section hypothesis FRMF (the generic counterpart of YG0s.v:442 frame_facts' fake-frame
    alignment), which frame_al64_x and shadow_hull_vis_of_frame_x take (phases 1 and 5) *)
 Hypothesis FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.
@@ -281,10 +282,10 @@ End gxx.
 
 (* ---------------------------------------------------------------- THE CHECK
    In cut_x's scope (its Section w header and this piece's hypotheses): lf_arm_gone_x's type is cut_x's Section w
-   hypothesis ARM_gone (W_LLVMFuzzerTestOneInput_cut_x.v:557), restated and closed by `exact`, and it fills that slot
+   hypothesis ARM_gone (W_LLVMFuzzerTestOneInput_cut_x.v:558), restated and closed by `exact`, and it fills that slot
    of cut_x's composition lf_contract_of_segments_x. *)
 Section chk.
-(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:191-235) *)
+(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:192-236) *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.
@@ -302,7 +303,7 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx hl.
-(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x at 0c4d57d9bf1;
+(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x;
    fuzz_reply calls no poison routine): the driver reads the post's Hp' = [] from the journal's ARx through it *)
 Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis HG : gx_ok segs B G_fr.
@@ -319,7 +320,7 @@ Hypothesis TL : PALib B.
 Hypothesis HZS : GN_HZS B.
 (* the slots check_no_loss_read is called on have no pending record *)
 Hypothesis RIR : GN_RI_read RINV.
-(* snprintf, the pf chain's interceptor contract: W_sites_x.v:392 asnprintf_realizes_x, the twin of _gone.v's SNP *)
+(* snprintf, the pf chain's interceptor contract: W_sites_x.v:393 asnprintf_realizes_x, the twin of _gone.v's SNP *)
 Hypothesis SNP : asnprintf_realizes_x B ARx (SIGMA WS_snprintf) FR_GOT_GUARD FR_GUARD.
 (* _gone.v's HGOTG and GN_LITS over ARx (Hp after S) *)
 Hypothesis HGOTG : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
@@ -334,8 +335,8 @@ Variable MMAX : Z.                                   (* W6's / W7's request boun
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c) / (d)): the room record the callees are taken at.  At the instance
    RM := fun S _ => NP S, so RPNP below holds by conversion *)
 Variable RP : roomp.
-(* W6's contract over ARx: W_contract_x.v rig_spec_x at CTX_AFREE := K0's table ACk0.CTX_AFREE (the kit of record
-   628b62f1a9e); rg_place verbatim *)
+(* W6's contract over ARx: W_contract_x.v rig_spec_x at CTX_AFREE := K0's table ACk0.CTX_AFREE (the kit of record);
+   rg_place verbatim *)
 Hypothesis RIG : rig_spec_x B PST ARx MT RP MMAX fr_RG ACk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 Hypothesis RGP : rg_place B fr_RG.
 (* the base's model obligations phase 3 takes *)
@@ -345,7 +346,7 @@ Hypothesis HFDS : GN_RI_fds RINV.
 Hypothesis HLSRIG : GN_LS_rig MT LSx RINV MMAX.
 (* the room round's count row and model count rules (top_x's rows): gn_pk is the arm's peak (s5-r1d's pk_gone at the
    instance); LSCNT is GN_LS_cnt_x (_gone_base_x.v); CNTRIG is GN_CNT_rig at relay_instance_gone's premise peak
-   rig_pk (W_contract_x.v:312) of its trace; CNTSTEP (phase 5, below) is GN_CNT_step at check_no_loss's cnl_pk *)
+   rig_pk (W_contract_x.v:313) of its trace; CNTSTEP (phase 5, below) is GN_CNT_step at check_no_loss's cnl_pk *)
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Hypothesis RPNP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis CNTRIG : GN_CNT_rig gn_pk (fun cx m hs =>
@@ -378,7 +379,7 @@ Hypothesis CSD : csd_spec_x B PST ARx (BASE + AF_fr_check_shape_done).
 Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
 (* the image is off PST (add_x's HPST): the callee journals' image clause and the ROM-view lemma take it *)
 Hypothesis HPST : forall a, in_img segs a -> ~ Exists (in_zr a) PST.
-(* W_frame_x.v:105's Section hypothesis FRMF (the generic counterpart of YG0s.v:442 frame_facts' fake-frame
+(* W_frame_x.v:106's Section hypothesis FRMF (the generic counterpart of YG0s.v:442 frame_facts' fake-frame
    alignment), which frame_al64_x and shadow_hull_vis_of_frame_x take (phases 1 and 5) *)
 Hypothesis FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.
@@ -397,7 +398,7 @@ Definition gone_x_slot :=
   lf_contract_of_segments_x B MT XM_LIB XN_LIB RLO RHI fr_live_pre fr_live_post fr_surv LIBROOM NP G_fr fr_FP PST ARx
     LAWS HG LSx RINV SEG_PRO SEG_HEAD ARM_add ARM_write ARM_drain ARM_close ARM_remove lf_arm_gone_x_check ARM_eintr
     ARM_event ARM_sendmax ARM_default SEG_LATCH SEG_EXIT.
-(* ---- route R: lf_arm_gone_xR's type is cut_x's Section wR hypothesis ARM_gone_R (W_LLVMFuzzerTestOneInput_cut_x.v:461),
+(* ---- route R: lf_arm_gone_xR's type is cut_x's Section wR hypothesis ARM_gone_R (W_LLVMFuzzerTestOneInput_cut_x.v:462),
    restated and closed by `exact`, and it fills that slot of cut_x's composition lf_contract_of_segments_xR. *)
 Section chkR.
 Variable R : world segs -> world segs -> Prop.

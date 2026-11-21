@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the lifted world predicate's vDSO fact named where it is taken apart and given to Ks_intro from deJ_vdso; the frame's channel reader, LPS 08b1429, passed at each write sum; the exit steps and Kwf2/3/4_trace take KL1's four conjuncts apart). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -162,7 +163,7 @@ Proof using HC Hargc HokK HokP Hokh KL1_tcons P0 SIDEL TL normal_in_spec.
   intros Lf rho2 [<-|[]] Hag2. cbn [lf_state]. destruct cert_x1 as (Hi & H17 & H10).
   apply (triple_exit_eval segs ok SpecT KL1 E_x1 rho2 0);
     [apply HokK, KL1_tcons | apply HokP, KL1_tcons | exact Hokh | exact Hi | left; exact H17 | rewrite H10; reflexivity |].
-  intros tr md (-> & _ & ->). pose proof normal_in_spec as N. rewrite HC in N. exact N.
+  intros tr md (-> & _ & -> & _). pose proof normal_in_spec as N. rewrite HC in N. exact N.
 Qed.
 Lemma x1_exit_ex : ltac2:(tb__ "0|0|
 S1S48S29OF_;F_;S1S31S0S25S0VJD;VKL1;R3S17S1aS6S6A2A1R2A4S70R1A4S3cVcx;A1A3Frho;FDf;Fr0';").
@@ -180,7 +181,7 @@ Proof using HC SIDEL TL.
   eapply erun_tr; [exact run_T1f | exact LN1 |].
   intros Lf rho2 [<-|[]] Hag2. cbn [lf_state]. destruct cert_x1 as (Hi & H17 & H10).
   eapply etriple_conseq; [intros w Hw; exact Hw | | apply (etriple_exit_eval segs KL1 E_x1 rho2 0 Hi (or_introl H17))].
-  - intros w (tr & md & (Htr & _ & Hfs) & Hw). unfold Drv_hl.QN. rewrite Hw, Htr, Hfs, (HC : calls (f_F cx) = 1). reflexivity.
+  - intros w (tr & md & (Htr & _ & Hfs & _) & Hw). unfold Drv_hl.QN. rewrite Hw, Htr, Hfs, (HC : calls (f_F cx) = 1). reflexivity.
   - rewrite H10. reflexivity.
 Qed.
 
@@ -194,7 +195,7 @@ Proof using HC KL1_tcons MCs SIDEL TL normal_in_spec.
   intros rho vm mat HSn.
   eapply triple_conseq; [intros w Hw; exact (SPJ_unbase segs _ rho C_1m 0 (-128) C_1x w unb_C1 (SPJ_xforms segs _ [XRebase 0; XRebase 1; XMerge 0] rho C_1 C_1m w xs_C1_ok Hw)) | intros w Hw; exact Hw |].
   eapply triple_conseq with (P := SPJ segs (JD KL1 rho P.Drv_r__G1.Drv_r.tvK DTrue) C_1x rho); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 P.Drv_r__G1.Drv_r.tvK DTrue rho vm mat tr md HSn Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_ff1_vals as (F12 & F13 & F10 & F15). destruct C_1x_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_ff1 as (CHK & RCHK & NZ).
   apply (dfree_call segs C_P EC_P 31 KL1 rho P0 malloc_laws_P ok C_1x s_ff1 R_ff1 rho P.Drv_r__G1.Drv_r.tvK 0%nat (SVar 102, SVar 101) _ DTrue
@@ -233,7 +234,7 @@ Proof using FCX HC SIDEL TL.
   intros rho vm mat HSn.
   eapply etriple_conseq; [intros w Hw; exact (SPJ_unbase segs _ rho C_1m 0 (-128) C_1x w unb_C1 (SPJ_xforms segs _ [XRebase 0; XRebase 1; XMerge 0] rho C_1 C_1m w xs_C1_ok Hw)) | intros w Hw; exact Hw |].
   eapply etriple_conseq with (P := SPJ segs (JD KL1 rho P.Drv_r__G1.Drv_r.tvK DTrue) C_1x rho); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 P.Drv_r__G1.Drv_r.tvK DTrue rho vm mat tr md HSn Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_ff1_vals as (F12 & F13 & F10 & F15). destruct C_1x_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_ff1 as (CHK & RCHK & NZ).
   apply (dfree_call_ex segs C_P EC_P 31 KL1 rho P0 malloc_laws_P C_1x s_ff1 R_ff1 rho P.Drv_r__G1.Drv_r.tvK 0%nat (SVar 102, SVar 101) _ DTrue
@@ -345,7 +346,7 @@ Proof using SIDEL TL.
               ltac:(rewrite T_1BS_eq; exact swf_T_1BS)) as [Hsm' Hag].
   set (rho1 := rho_set_rw rho0 (ss_next T_1Bt) (Z_to_bv 64 g)) in *.
   assert (RW : forall i, i <> ss_next T_1Bt -> rw rho1 i = rw rho0 i) by (intros i Hi'; subst rho1; apply rho_set_rw_other; exact Hi').
-  exists rho1, g, (m_vmmaps md), (m_vm_materialized md). split; [|split; [rewrite <- T_1BS_eq; exact Hsm' | apply (Drv_hl.Ks_intro); exact Hk]].
+  exists rho1, g, (m_vmmaps md), (m_vm_materialized md). split; [|split; [rewrite <- T_1BS_eq; exact Hsm' | apply (Drv_hl.Ks_intro); [exact Hk | eapply deJ_vdso; exact HJi0]]].
   destruct (deJ segs C_P 31 P0 wtop P0_top KL1 r0 P.Drv_r__G1.Drv_r.tvK DTrue Ai rho0 tr md HJi0 I HP0) as [HSn _].
   split; [|split; [exact Vg | subst rho1; apply rho_set_rw_at]].
   apply (SIDEK_transport rho0 rho1 _ _ HSn).
@@ -421,7 +422,7 @@ Proof using HC Hargc HokK HokP Hokh JD KL1_tcons KL1_vmi MCs P0 P0_tp P0_transpo
   apply (triple_from ok _ (fun r w => (TL r /\ snapJ segs C_P P0 wtop tvL DTrue r vm mat) /\ SP segs (Ks KL1 vm mat) XB12 r w)); [intros w Hw; exact (x1_B2_intro rho g vm mat w HS HP Hw)|].
   intros rho1. apply triple_pure. intros [HT1 HSn1].
   eapply triple_conseq with (P := SPJ segs (JD KL1 rho1 tvL DTrue) XB12 rho1); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 tvL DTrue rho1 vm mat tr md HSn1 Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_fb1_vals as (F12 & F13 & F10 & F15). destruct XB12_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_fb1 as [CHK RCHK].
   pose proof HT1 as [_ [P1 _]]. destruct (P1 HP) as [E240 NZ241].
@@ -505,7 +506,7 @@ Proof using FCX HC TL.
   apply (etriple_from _ (fun r w => (TL r /\ snapJ segs C_P P0 wtop tvL DTrue r vm mat) /\ SP segs (Ks KL1 vm mat) XB12 r w)); [intros w Hw; exact (x1_B2_intro rho g vm mat w HS HP Hw)|].
   intros rho1 w0 [[HT1 HSn1] Hw0]. revert w0 Hw0.
   eapply etriple_conseq with (P := SPJ segs (JD KL1 rho1 tvL DTrue) XB12 rho1); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 tvL DTrue rho1 vm mat tr md HSn1 Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_fb1_vals as (F12 & F13 & F10 & F15). destruct XB12_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_fb1 as [CHK RCHK].
   pose proof HT1 as [_ [P1 _]]. destruct (P1 HP) as [E240 NZ241].
@@ -565,7 +566,7 @@ SeS15S12Q8A1M0A1S38Z2A1S19G0S39S61A3A3"). Proof using . reflexivity. Qed.
 Lemma Kwf2_trace : ltac2:(tb__ "0|1|
 S1cS15S2aA1M0S29S62R3R2R1A3SfSeG0R3S19S2aVTR1;S3aZ1S97S12Q8A1R4S61A3A2A3A3SfSeS15S1aS12Q40A1S2bA2A1S2cR2A1S99A3SeS98S2dR2A1Vfs;A3A2A2F_;Fmd;Ftr;Fk;").
 Proof using .
-  intros k tr md (tr0 & (-> & Hf & Hs) & ->). split; [|auto]. unfold WLout.TRk, WLout.MSG, wr. rewrite app_nil_r. reflexivity.
+  intros k tr md (tr0 & (-> & Hf & Hs & _) & ->). split; [|auto]. unfold WLout.TRk, WLout.MSG, wr. rewrite app_nil_r. reflexivity.
 Qed.
 Lemma Kwf2_tcons : ltac2:(tb__ "0|0|
 S1cS93VSpecT;S62R1A1A2Fk;").
@@ -583,6 +584,7 @@ Proof using HC SIDEL TL normal_in_spec.
   - intros k. apply HokK, Kwf2_tcons.
   - intros k. apply HokP, Kwf2_tcons.
   - apply KL1_fd1.
+  - intros tr md (_ & _ & _ & R). exact R.
   - rewrite bsf2_len. cbn. lia.
 Qed.
 Lemma wl2f2_ecall : ltac2:(tb__ "0|1|
@@ -592,6 +594,7 @@ Proof using SIDEL TL.
   apply (WLout.wl2_sum_ex KL1 rho1 bsf2 [] H5 H6 ltac:(rewrite H13, bsf2_len; reflexivity) ltac:(rewrite H15; reflexivity)).
   - unfold WLout.MSG, max_write_total. rewrite app_nil_r, bsf2_len. cbn. lia.
   - apply KL1_fd1.
+  - intros tr md (_ & _ & _ & R). exact R.
   - rewrite bsf2_len. cbn. lia.
 Qed.
 
@@ -689,7 +692,7 @@ Proof using HC KL1_tcons MCs SIDEL TL normal_in_spec.
   intros rho vm mat HSn.
   eapply triple_conseq; [intros w Hw; exact (SPJ_unbase segs _ rho C_2m 0 (-128) C_2x w unb_C2 (SPJ_xforms segs _ [XRebase 0; XRebase 1; XMerge 0] rho C_2 C_2m w xs_C2_ok Hw)) | intros w Hw; exact Hw |].
   eapply triple_conseq with (P := SPJ segs (JD KL1 rho P.Drv_r__G1.Drv_r.tvK DTrue) C_2x rho); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 P.Drv_r__G1.Drv_r.tvK DTrue rho vm mat tr md HSn Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_ff2_vals as (F12 & F13 & F10 & F15). destruct C_2x_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_ff2 as (CHK & RCHK & NZ).
   apply (dfree_call segs C_P EC_P 31 KL1 rho P0 malloc_laws_P ok C_2x s_ff2 R_ff2 rho P.Drv_r__G1.Drv_r.tvK 0%nat (SVar 102, SVar 101) _ DTrue
@@ -728,7 +731,7 @@ Proof using FCX HC SIDEL TL.
   intros rho vm mat HSn.
   eapply etriple_conseq; [intros w Hw; exact (SPJ_unbase segs _ rho C_2m 0 (-128) C_2x w unb_C2 (SPJ_xforms segs _ [XRebase 0; XRebase 1; XMerge 0] rho C_2 C_2m w xs_C2_ok Hw)) | intros w Hw; exact Hw |].
   eapply etriple_conseq with (P := SPJ segs (JD KL1 rho P.Drv_r__G1.Drv_r.tvK DTrue) C_2x rho); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 P.Drv_r__G1.Drv_r.tvK DTrue rho vm mat tr md HSn Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_ff2_vals as (F12 & F13 & F10 & F15). destruct C_2x_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_ff2 as (CHK & RCHK & NZ).
   apply (dfree_call_ex segs C_P EC_P 31 KL1 rho P0 malloc_laws_P C_2x s_ff2 R_ff2 rho P.Drv_r__G1.Drv_r.tvK 0%nat (SVar 102, SVar 101) _ DTrue
@@ -840,7 +843,7 @@ Proof using SIDEL TL.
               ltac:(rewrite T_2BS_eq; exact swf_T_2BS)) as [Hsm' Hag].
   set (rho1 := rho_set_rw rho0 (ss_next T_2Bt) (Z_to_bv 64 g)) in *.
   assert (RW : forall i, i <> ss_next T_2Bt -> rw rho1 i = rw rho0 i) by (intros i Hi'; subst rho1; apply rho_set_rw_other; exact Hi').
-  exists rho1, g, (m_vmmaps md), (m_vm_materialized md). split; [|split; [rewrite <- T_2BS_eq; exact Hsm' | apply (Drv_hl.Ks_intro); exact Hk]].
+  exists rho1, g, (m_vmmaps md), (m_vm_materialized md). split; [|split; [rewrite <- T_2BS_eq; exact Hsm' | apply (Drv_hl.Ks_intro); [exact Hk | eapply deJ_vdso; exact HJi0]]].
   destruct (deJ segs C_P 31 P0 wtop P0_top KL1 r0 P.Drv_r__G1.Drv_r.tvK DTrue Ai rho0 tr md HJi0 I HP0) as [HSn _].
   split; [|split; [exact Vg | subst rho1; apply rho_set_rw_at]].
   apply (SIDEK_transport rho0 rho1 _ _ HSn).
@@ -916,7 +919,7 @@ Proof using HC Hargc HokK HokP Hokh JD KL1_tcons KL1_vmi MCs P0 P0_tp P0_transpo
   apply (triple_from ok _ (fun r w => (TL r /\ snapJ segs C_P P0 wtop tvL DTrue r vm mat) /\ SP segs (Ks KL1 vm mat) XB22 r w)); [intros w Hw; exact (x2_B2_intro rho g vm mat w HS HP Hw)|].
   intros rho1. apply triple_pure. intros [HT1 HSn1].
   eapply triple_conseq with (P := SPJ segs (JD KL1 rho1 tvL DTrue) XB22 rho1); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 tvL DTrue rho1 vm mat tr md HSn1 Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_fb2_vals as (F12 & F13 & F10 & F15). destruct XB22_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_fb2 as [CHK RCHK].
   pose proof HT1 as [_ [P1 _]]. destruct (P1 HP) as [E240 NZ241].
@@ -1000,7 +1003,7 @@ Proof using FCX HC TL.
   apply (etriple_from _ (fun r w => (TL r /\ snapJ segs C_P P0 wtop tvL DTrue r vm mat) /\ SP segs (Ks KL1 vm mat) XB22 r w)); [intros w Hw; exact (x2_B2_intro rho g vm mat w HS HP Hw)|].
   intros rho1 w0 [[HT1 HSn1] Hw0]. revert w0 Hw0.
   eapply etriple_conseq with (P := SPJ segs (JD KL1 rho1 tvL DTrue) XB22 rho1); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 tvL DTrue rho1 vm mat tr md HSn1 Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_fb2_vals as (F12 & F13 & F10 & F15). destruct XB22_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_fb2 as [CHK RCHK].
   pose proof HT1 as [_ [P1 _]]. destruct (P1 HP) as [E240 NZ241].
@@ -1060,7 +1063,7 @@ SeS15S12Q8A1M0A1S38Z3A1S19G0S39S65A3A3"). Proof using . reflexivity. Qed.
 Lemma Kwf3_trace : ltac2:(tb__ "0|1|
 S1cS15S2aA1M0S29S66R3R2R1A3SfSeG0R3S19S2aVTR1;S3aZ1S97S12Q8A1R4S65A3A2A3A3SfSeS15S1aS12Q40A1S2bA2A1S2cR2A1S99A3SeS98S2dR2A1Vfs;A3A2A2F_;Fmd;Ftr;Fk;").
 Proof using .
-  intros k tr md (tr0 & (-> & Hf & Hs) & ->). split; [|auto]. unfold WLout.TRk, WLout.MSG, wr. rewrite app_nil_r. reflexivity.
+  intros k tr md (tr0 & (-> & Hf & Hs & _) & ->). split; [|auto]. unfold WLout.TRk, WLout.MSG, wr. rewrite app_nil_r. reflexivity.
 Qed.
 Lemma Kwf3_tcons : ltac2:(tb__ "0|0|
 S1cS93VSpecT;S66R1A1A2Fk;").
@@ -1078,6 +1081,7 @@ Proof using HC SIDEL TL normal_in_spec.
   - intros k. apply HokK, Kwf3_tcons.
   - intros k. apply HokP, Kwf3_tcons.
   - apply KL1_fd1.
+  - intros tr md (_ & _ & _ & R). exact R.
   - rewrite bsf3_len. cbn. lia.
 Qed.
 Lemma wl2f3_ecall : ltac2:(tb__ "0|1|
@@ -1087,6 +1091,7 @@ Proof using SIDEL TL.
   apply (WLout.wl2_sum_ex KL1 rho1 bsf3 [] H5 H6 ltac:(rewrite H13, bsf3_len; reflexivity) ltac:(rewrite H15; reflexivity)).
   - unfold WLout.MSG, max_write_total. rewrite app_nil_r, bsf3_len. cbn. lia.
   - apply KL1_fd1.
+  - intros tr md (_ & _ & _ & R). exact R.
   - rewrite bsf3_len. cbn. lia.
 Qed.
 
@@ -1184,7 +1189,7 @@ Proof using HC KL1_tcons MCs SIDEL TL normal_in_spec.
   intros rho vm mat HSn.
   eapply triple_conseq; [intros w Hw; exact (SPJ_unbase segs _ rho C_3m 0 (-128) C_3x w unb_C3 (SPJ_xforms segs _ [XRebase 0; XRebase 1; XMerge 0] rho C_3 C_3m w xs_C3_ok Hw)) | intros w Hw; exact Hw |].
   eapply triple_conseq with (P := SPJ segs (JD KL1 rho P.Drv_r__G1.Drv_r.tvK DTrue) C_3x rho); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 P.Drv_r__G1.Drv_r.tvK DTrue rho vm mat tr md HSn Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_ff3_vals as (F12 & F13 & F10 & F15). destruct C_3x_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_ff3 as (CHK & RCHK & NZ).
   apply (dfree_call segs C_P EC_P 31 KL1 rho P0 malloc_laws_P ok C_3x s_ff3 R_ff3 rho P.Drv_r__G1.Drv_r.tvK 0%nat (SVar 102, SVar 101) _ DTrue
@@ -1223,7 +1228,7 @@ Proof using FCX HC SIDEL TL.
   intros rho vm mat HSn.
   eapply etriple_conseq; [intros w Hw; exact (SPJ_unbase segs _ rho C_3m 0 (-128) C_3x w unb_C3 (SPJ_xforms segs _ [XRebase 0; XRebase 1; XMerge 0] rho C_3 C_3m w xs_C3_ok Hw)) | intros w Hw; exact Hw |].
   eapply etriple_conseq with (P := SPJ segs (JD KL1 rho P.Drv_r__G1.Drv_r.tvK DTrue) C_3x rho); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 P.Drv_r__G1.Drv_r.tvK DTrue rho vm mat tr md HSn Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_ff3_vals as (F12 & F13 & F10 & F15). destruct C_3x_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_ff3 as (CHK & RCHK & NZ).
   apply (dfree_call_ex segs C_P EC_P 31 KL1 rho P0 malloc_laws_P C_3x s_ff3 R_ff3 rho P.Drv_r__G1.Drv_r.tvK 0%nat (SVar 102, SVar 101) _ DTrue
@@ -1335,7 +1340,7 @@ Proof using SIDEL TL.
               ltac:(rewrite T_3BS_eq; exact swf_T_3BS)) as [Hsm' Hag].
   set (rho1 := rho_set_rw rho0 (ss_next T_3Bt) (Z_to_bv 64 g)) in *.
   assert (RW : forall i, i <> ss_next T_3Bt -> rw rho1 i = rw rho0 i) by (intros i Hi'; subst rho1; apply rho_set_rw_other; exact Hi').
-  exists rho1, g, (m_vmmaps md), (m_vm_materialized md). split; [|split; [rewrite <- T_3BS_eq; exact Hsm' | apply (Drv_hl.Ks_intro); exact Hk]].
+  exists rho1, g, (m_vmmaps md), (m_vm_materialized md). split; [|split; [rewrite <- T_3BS_eq; exact Hsm' | apply (Drv_hl.Ks_intro); [exact Hk | eapply deJ_vdso; exact HJi0]]].
   destruct (deJ segs C_P 31 P0 wtop P0_top KL1 r0 P.Drv_r__G1.Drv_r.tvK DTrue Ai rho0 tr md HJi0 I HP0) as [HSn _].
   split; [|split; [exact Vg | subst rho1; apply rho_set_rw_at]].
   apply (SIDEK_transport rho0 rho1 _ _ HSn).
@@ -1411,7 +1416,7 @@ Proof using HC Hargc HokK HokP Hokh JD KL1_tcons KL1_vmi MCs P0 P0_tp P0_transpo
   apply (triple_from ok _ (fun r w => (TL r /\ snapJ segs C_P P0 wtop tvL DTrue r vm mat) /\ SP segs (Ks KL1 vm mat) XB32 r w)); [intros w Hw; exact (x3_B2_intro rho g vm mat w HS HP Hw)|].
   intros rho1. apply triple_pure. intros [HT1 HSn1].
   eapply triple_conseq with (P := SPJ segs (JD KL1 rho1 tvL DTrue) XB32 rho1); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 tvL DTrue rho1 vm mat tr md HSn1 Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_fb3_vals as (F12 & F13 & F10 & F15). destruct XB32_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_fb3 as [CHK RCHK].
   pose proof HT1 as [_ [P1 _]]. destruct (P1 HP) as [E240 NZ241].
@@ -1495,7 +1500,7 @@ Proof using FCX HC TL.
   apply (etriple_from _ (fun r w => (TL r /\ snapJ segs C_P P0 wtop tvL DTrue r vm mat) /\ SP segs (Ks KL1 vm mat) XB32 r w)); [intros w Hw; exact (x3_B2_intro rho g vm mat w HS HP Hw)|].
   intros rho1 w0 [[HT1 HSn1] Hw0]. revert w0 Hw0.
   eapply etriple_conseq with (P := SPJ segs (JD KL1 rho1 tvL DTrue) XB32 rho1); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 tvL DTrue rho1 vm mat tr md HSn1 Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_fb3_vals as (F12 & F13 & F10 & F15). destruct XB32_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_fb3 as [CHK RCHK].
   pose proof HT1 as [_ [P1 _]]. destruct (P1 HP) as [E240 NZ241].
@@ -1555,7 +1560,7 @@ SeS15S12Q8A1M0A1S38Z4A1S19G0S39S69A3A3"). Proof using . reflexivity. Qed.
 Lemma Kwf4_trace : ltac2:(tb__ "0|1|
 S1cS15S2aA1M0S29S6aR3R2R1A3SfSeG0R3S19S2aVTR1;S3aZ1S97S12Q8A1R4S69A3A2A3A3SfSeS15S1aS12Q40A1S2bA2A1S2cR2A1S99A3SeS98S2dR2A1Vfs;A3A2A2F_;Fmd;Ftr;Fk;").
 Proof using .
-  intros k tr md (tr0 & (-> & Hf & Hs) & ->). split; [|auto]. unfold WLout.TRk, WLout.MSG, wr. rewrite app_nil_r. reflexivity.
+  intros k tr md (tr0 & (-> & Hf & Hs & _) & ->). split; [|auto]. unfold WLout.TRk, WLout.MSG, wr. rewrite app_nil_r. reflexivity.
 Qed.
 Lemma Kwf4_tcons : ltac2:(tb__ "0|0|
 S1cS93VSpecT;S6aR1A1A2Fk;").
@@ -1573,6 +1578,7 @@ Proof using HC SIDEL TL normal_in_spec.
   - intros k. apply HokK, Kwf4_tcons.
   - intros k. apply HokP, Kwf4_tcons.
   - apply KL1_fd1.
+  - intros tr md (_ & _ & _ & R). exact R.
   - rewrite bsf4_len. cbn. lia.
 Qed.
 Lemma wl2f4_ecall : ltac2:(tb__ "0|1|
@@ -1582,6 +1588,7 @@ Proof using SIDEL TL.
   apply (WLout.wl2_sum_ex KL1 rho1 bsf4 [] H5 H6 ltac:(rewrite H13, bsf4_len; reflexivity) ltac:(rewrite H15; reflexivity)).
   - unfold WLout.MSG, max_write_total. rewrite app_nil_r, bsf4_len. cbn. lia.
   - apply KL1_fd1.
+  - intros tr md (_ & _ & _ & R). exact R.
   - rewrite bsf4_len. cbn. lia.
 Qed.
 
@@ -1679,7 +1686,7 @@ Proof using HC KL1_tcons MCs SIDEL TL normal_in_spec.
   intros rho vm mat HSn.
   eapply triple_conseq; [intros w Hw; exact (SPJ_unbase segs _ rho C_4m 0 (-128) C_4x w unb_C4 (SPJ_xforms segs _ [XRebase 0; XRebase 1; XMerge 0] rho C_4 C_4m w xs_C4_ok Hw)) | intros w Hw; exact Hw |].
   eapply triple_conseq with (P := SPJ segs (JD KL1 rho P.Drv_r__G1.Drv_r.tvK DTrue) C_4x rho); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 P.Drv_r__G1.Drv_r.tvK DTrue rho vm mat tr md HSn Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_ff4_vals as (F12 & F13 & F10 & F15). destruct C_4x_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_ff4 as (CHK & RCHK & NZ).
   apply (dfree_call segs C_P EC_P 31 KL1 rho P0 malloc_laws_P ok C_4x s_ff4 R_ff4 rho P.Drv_r__G1.Drv_r.tvK 0%nat (SVar 102, SVar 101) _ DTrue
@@ -1718,7 +1725,7 @@ Proof using FCX HC SIDEL TL.
   intros rho vm mat HSn.
   eapply etriple_conseq; [intros w Hw; exact (SPJ_unbase segs _ rho C_4m 0 (-128) C_4x w unb_C4 (SPJ_xforms segs _ [XRebase 0; XRebase 1; XMerge 0] rho C_4 C_4m w xs_C4_ok Hw)) | intros w Hw; exact Hw |].
   eapply etriple_conseq with (P := SPJ segs (JD KL1 rho P.Drv_r__G1.Drv_r.tvK DTrue) C_4x rho); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 P.Drv_r__G1.Drv_r.tvK DTrue rho vm mat tr md HSn Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_ff4_vals as (F12 & F13 & F10 & F15). destruct C_4x_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_ff4 as (CHK & RCHK & NZ).
   apply (dfree_call_ex segs C_P EC_P 31 KL1 rho P0 malloc_laws_P C_4x s_ff4 R_ff4 rho P.Drv_r__G1.Drv_r.tvK 0%nat (SVar 102, SVar 101) _ DTrue
@@ -1830,7 +1837,7 @@ Proof using SIDEL TL.
               ltac:(rewrite T_4BS_eq; exact swf_T_4BS)) as [Hsm' Hag].
   set (rho1 := rho_set_rw rho0 (ss_next T_4Bt) (Z_to_bv 64 g)) in *.
   assert (RW : forall i, i <> ss_next T_4Bt -> rw rho1 i = rw rho0 i) by (intros i Hi'; subst rho1; apply rho_set_rw_other; exact Hi').
-  exists rho1, g, (m_vmmaps md), (m_vm_materialized md). split; [|split; [rewrite <- T_4BS_eq; exact Hsm' | apply (Drv_hl.Ks_intro); exact Hk]].
+  exists rho1, g, (m_vmmaps md), (m_vm_materialized md). split; [|split; [rewrite <- T_4BS_eq; exact Hsm' | apply (Drv_hl.Ks_intro); [exact Hk | eapply deJ_vdso; exact HJi0]]].
   destruct (deJ segs C_P 31 P0 wtop P0_top KL1 r0 P.Drv_r__G1.Drv_r.tvK DTrue Ai rho0 tr md HJi0 I HP0) as [HSn _].
   split; [|split; [exact Vg | subst rho1; apply rho_set_rw_at]].
   apply (SIDEK_transport rho0 rho1 _ _ HSn).
@@ -1906,7 +1913,7 @@ Proof using HC Hargc HokK HokP Hokh JD KL1_tcons KL1_vmi MCs P0 P0_tp P0_transpo
   apply (triple_from ok _ (fun r w => (TL r /\ snapJ segs C_P P0 wtop tvL DTrue r vm mat) /\ SP segs (Ks KL1 vm mat) XB42 r w)); [intros w Hw; exact (x4_B2_intro rho g vm mat w HS HP Hw)|].
   intros rho1. apply triple_pure. intros [HT1 HSn1].
   eapply triple_conseq with (P := SPJ segs (JD KL1 rho1 tvL DTrue) XB42 rho1); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 tvL DTrue rho1 vm mat tr md HSn1 Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_fb4_vals as (F12 & F13 & F10 & F15). destruct XB42_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_fb4 as [CHK RCHK].
   pose proof HT1 as [_ [P1 _]]. destruct (P1 HP) as [E240 NZ241].
@@ -1990,7 +1997,7 @@ Proof using FCX HC TL.
   apply (etriple_from _ (fun r w => (TL r /\ snapJ segs C_P P0 wtop tvL DTrue r vm mat) /\ SP segs (Ks KL1 vm mat) XB42 r w)); [intros w Hw; exact (x4_B2_intro rho g vm mat w HS HP Hw)|].
   intros rho1 w0 [[HT1 HSn1] Hw0]. revert w0 Hw0.
   eapply etriple_conseq with (P := SPJ segs (JD KL1 rho1 tvL DTrue) XB42 rho1); [| intros w Hw; exact Hw |].
-  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
+  { intros [tr [ms md]] [Hsm (Hk & Hvm & Hmat & VDk)]. split; [exact Hsm|]. unfold JD, P.Drv_m__G1.Drv_m.JD, JGD.
     exact (reJ segs C_P 31 P0 wtop P0_top P0_tp KL1 tvL DTrue rho1 vm mat tr md HSn1 Hvm Hmat ltac:(intros; exact I) Hk). }
   destruct s_fb4_vals as (F12 & F13 & F10 & F15). destruct XB42_shape as (Cpc & Cnx & Cfa & Cln). destruct chk_fb4 as [CHK RCHK].
   pose proof HT1 as [_ [P1 _]]. destruct (P1 HP) as [E240 NZ241].

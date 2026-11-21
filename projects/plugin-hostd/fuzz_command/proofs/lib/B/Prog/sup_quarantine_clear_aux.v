@@ -4,8 +4,9 @@
 (* Modified by Theorem Labs, 2026-10: the parts of sup_quarantine_clear's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan) that need no callee statement: the walk's points in B's listing, the listing's 22 slots,
    the 32-byte frame, the symbolic states and seeds of its segments, the verb literal and the model's step. In the
-   form of lib/A/Prog/sup_quarantine_clear_s2.v (the A walk's seeds, a working branch f2402580166),
+   form of lib/A/Prog/sup_quarantine_clear_s2.v (the A walk's seeds, a working branch),
    re-derived on B's code, which differs from A's (below). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* sup_quarantine_clear on B (recorder.c:411-417; entry BASE + AF_sup_quarantine_clear = 0x8bdb0, 22 instructions,
    88 bytes; measured with capstone on the .symtab entry of fuzz_command.asan-ubsan, sha256 658cefbe...):
@@ -312,7 +313,7 @@ End f.
 End d.
 
 (* ---------- part 2: the recorder's representation across the walk's journals ---------- *)
-(* In the form of lib/A/Prog/sup_quarantine_clear_s1.v and _s3.v (a working branch f2402580166) and
+(* In the form of lib/A/Prog/sup_quarantine_clear_s1.v and _s3.v (a working branch) and
    lib/A/Prog/RecBLemmas.v over B's lib/B/Prog/CmdRep.v (which is A's CmdRep at B's addresses). *)
 
 Lemma sqcb_aval_keep : forall rd rd' a n v, aval_mem rd a n v ->

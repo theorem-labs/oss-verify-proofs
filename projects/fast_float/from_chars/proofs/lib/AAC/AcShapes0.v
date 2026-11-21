@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fix_post clears the reservation, so the state check no longer rewrites it). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -364,7 +365,7 @@ Proof.
   intros L a H Hl. unfold state_wf, fix_post in *. cbn [s_next s_regs s_rgs s_facts s_resv] in *.
   apply andb_prop in H as [H H4]. apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
   assert (Hk : rkey a0r <> xH) by (intros Hc; vm_compute in Hc; discriminate Hc).
-  rewrite (regs_wf_rset _ _ (rkey a0r) a 31 Hk H1 Hl), H2, H3, H4. reflexivity.
+  rewrite (regs_wf_rset _ _ (rkey a0r) a 31 Hk H1 Hl), H2, H3. reflexivity.
 Qed.
 
 (* [comment removed for export] *)

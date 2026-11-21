@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: restates text of proofs/cgif/cgif_file_fuzzer/lib/A/AC95.v:145-147;
    proofs/cgif/cgif_file_fuzzer/lib/A/AC9z.v:176-178; proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v:180-183, 357-361,
    for libreac/fuzz_identity's ASan build (lib/A). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v at f26f9fbd8777; walks reac-pw/fuzz_pin's reac_box_catalogue 0x80f7c (fuzz_pin.asan sha256 3e4859aed23f) against lib/A/PPgCSpec.v's tpin_catalogue_specX on the CONCRETE image tfibsegs / tfibtbl_lib, so the PAImg layer is gone (paj_run_tok / paj_ret_at / pa_entry_st_ok_full / st_ok_pi -> aj_run_tok tfibtbl_lib_ok / SRr_ret_at / entry_st_ok_full / st_ok; the image atoms VAL (A_OBJ 1) and VAL (A_OBJ 30) -> the literal cells got_region and bcell_region of lib/A/ACeh.v; the result VAL CAT_OBJ -> the literal table address A_CAT_TBL); cat_pR_ok / twr_ok / cat_pR_where / cat_pR_addressable / cat_frame_zone_lo -> the contract's frame premises (In (cid, pos) own with its two bounds, afobj, the off-stack disjunction), the write to the count cell allowed by the journal through In (cid, pos) own as libreac/fuzz_knock's lib/A/APgHeard.v does (at 6ebe35ba632); tcat_post -> pin_post_simple with E = [c, c + 8); cat_mod4096_mod8 / cat_sub_mod8 dropped (no stack-range case). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v; walks reac-pw/fuzz_pin's reac_box_catalogue 0x80f7c (fuzz_pin.asan sha256 3e4859aed23f) against lib/A/PPgCSpec.v's tpin_catalogue_specX on the CONCRETE image tfibsegs / tfibtbl_lib, so the PAImg layer is gone (paj_run_tok / paj_ret_at / pa_entry_st_ok_full / st_ok_pi -> aj_run_tok tfibtbl_lib_ok / SRr_ret_at / entry_st_ok_full / st_ok; the image atoms VAL (A_OBJ 1) and VAL (A_OBJ 30) -> the literal cells got_region and bcell_region of lib/A/ACeh.v; the result VAL CAT_OBJ -> the literal table address A_CAT_TBL); cat_pR_ok / twr_ok / cat_pR_where / cat_pR_addressable / cat_frame_zone_lo -> the contract's frame premises (In (cid, pos) own with its two bounds, afobj, the off-stack disjunction), the write to the count cell allowed by the journal through In (cid, pos) own as libreac/fuzz_knock's lib/A/APgHeard.v does; tcat_post -> pin_post_simple with E = [c, c + 8); cat_mod4096_mod8 / cat_sub_mod8 dropped (no stack-range case). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_catalogue, 0x80f7c, 72 bytes, 18 instructions (P4-WALKPLAN.md section 2). a0 = c (the count cell, c <> 0,
    c mod 8 = 0, inside a frame (cid, pos) of the journal's own list).
      80f7c addi sp,sp,-0x10 ; 80f80 sd ra,8(sp)          the 16-byte frame (stack_region 16)
@@ -43,11 +44,11 @@ Open Scope Z_scope.
      with pyelftools 0.33 equal the excerpt's 18 words.
    A_CAT_TBL 0x97ee0: `auipc a0,0x17` at 0x80fac (0x80fac + 0x17000 = 0x97fac) and `addi a0,a0,-0xcc` at 0x80fb0
      (0x97fac - 0xcc = 0x97ee0, the excerpt's <fuzz_catalogue>), excerpt lines 14-15.
-   0x99050 (A_GOT_shadow, lib/A/ACeh.v line 21): `auipc a1,0x18` at 0x80f88 (0x98f88) and `ld a1,0xc8(a1)` at 0x80f8c
+   0x99050 (A_GOT_shadow, lib/A/ACeh.v line 22): `auipc a1,0x18` at 0x80f88 (0x98f88) and `ld a1,0xc8(a1)` at 0x80f8c
      (0x98f88 + 0xc8 = 0x99050), excerpt lines 5-6; the 8 bytes at 0x99050 of the file hold 0xa15f8.
-   0xa15f8 (A_shadow_glob, lib/A/ACeh.v line 22): the word loaded from 0x99050 (above); `ld a1,0(a1)` at 0x80f90 reads
+   0xa15f8 (A_shadow_glob, lib/A/ACeh.v line 23): the word loaded from 0x99050 (above); `ld a1,0(a1)` at 0x80f90 reads
      it (excerpt line 7); it is .bss, and AR's al_const gives its value SHADOW_OFF.
-   0x7fff8000 (SB, lib/A/ACeh.v line 25, = SHADOW_OFF by SB_SHADOW_OFF): the shadow base the code adds at 0x80f98.
+   0x7fff8000 (SB, lib/A/ACeh.v line 26, = SHADOW_OFF by SB_SHADOW_OFF): the shadow base the code adds at 0x80f98.
    0x80fc0 (errpath_store8): `bnez a1,80fc0` at 0x80fa0 and `jal 58e18` at 0x80fc0, excerpt lines 11 and 19; the
      engine decides the branch not taken from cat_SH, so the address appears in no lemma.
    11 (the count): `addi a1,zero,0xb` at 0x80fa4 and `sd a1,0(a0)` at 0x80fa8, excerpt lines 12-13.

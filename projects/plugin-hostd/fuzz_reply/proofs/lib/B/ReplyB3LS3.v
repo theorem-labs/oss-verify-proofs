@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v, with its module paths and module names changed; 219 of its 522 lines of code are new or changed and 291 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (kind: model and invariant lemmas): fr_LS3, LS v3 of the entry walk of LLVMFuzzerTestOneInput
    at image B, its room, and the rules of ReplyLSB.v / lib/A/ReplyLS.v at v3 *)
 (* Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3.v (sha256
-   f116a5fb48df; internal record) at 1b1e21bdbd40.  What v3 is and why (ECRED, E_ENT, W_U, K0,
+   f116a5fb48df; internal record).  What v3 is and why (ECRED, E_ENT, W_U, K0,
    W_OPEN): A's header, A :3-33; every definition is A's text and every lemma keeps A's name and statement but for the
    swaps below.  Each piece cites its A line (A = lib/A/ReplyLS3.v).
    A -> B SWAPS (as lib/B/ReplyLSB.v, the B port of A's v2 file, makes them):
@@ -431,7 +432,7 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------ the prologue (A :405-453) *)
-(* LS_pro_oa does not name LS: fr_LS_pro_oa (ReplyB3Base.v, A's ReplyLS.v:551) is the rule at v3 as it is; restated
+(* LS_pro_oa does not name LS: fr_LS_pro_oa (ReplyB3Base.v, A's ReplyLS.v:552) is the rule at v3 as it is; restated
    for the family *)
 Lemma fr_LS3_pro_oa : forall XM_LIB RLO RHI G_fr cx (S2 : astate) (pos : Z),
   lf_base B MT XM_LIB RLO RHI YCfn_cf.fr_live_pre_b G_fr cx ->
@@ -439,7 +440,7 @@ Lemma fr_LS3_pro_oa : forall XM_LIB RLO RHI G_fr cx (S2 : astate) (pos : Z),
   st_nev S2 = st_nev (c_S cx) -> blocks_bytes S2 = blocks_bytes (c_S cx) ->
   blocks_bytes S2 + APARTIAL + ATABLE <= LIVE_MAX.
 Proof. exact (fr_LS_pro_oa B). Qed.
-(* LS at the first head, at the proposed text of fr_LS_pro (ReplyLS.v:571, the pro arm's text; B: ReplyLSB.v
+(* LS at the first head, at the proposed text of fr_LS_pro (ReplyLS.v:572, the pro arm's text; B: ReplyLSB.v
    fr_LS_pro_b's form, the meter quantified, fr_live_pre at CALL_ROOM_B): the same premises; ECRED is E_ENT for the
    fresh entry ra_new 100 and K0 for the one open source, the bound's W_OPEN for it *)
 Lemma fr_LS3_pro : forall MT XM_LIB RLO RHI G_fr cx q T' pj c O cap out ly S,

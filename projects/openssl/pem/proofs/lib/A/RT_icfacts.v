@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the bounds below the top of user memory). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -162,7 +163,7 @@ Proof.
   - unfold region_in_mem, kLowMemEnd, kHighShadowEnd, kHighMemEnd, K_LOW_SHADOW_lo, K_HIGH_SHADOW_hi in *. destruct G4 as [G4|G4]; [left | right]; lia.
 Qed.
 
-Lemma rta_shw_stack : forall s n, rtA_sp0 Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 16 -> 1 <= n -> qc_words m s n /\ region_in_mem s n.
+Lemma rta_shw_stack : forall s n, rtA_sp0 Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 9 -> 1 <= n -> qc_words m s n /\ region_in_mem s n.
 Proof.
   intros s n H1 H2 Hn. pose proof (ART_shadow Σ m HA) as (_ & S & _ & _). pose proof (rta_sp0 Σ m HA) as ((Y1 & Y2) & _).
   unfold rtA_sp0, sp_window_hi, sp_window_lo, l_ACEIL, STACK_WIN, USTACK_TOP in *.

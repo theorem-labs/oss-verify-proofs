@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_knock/lib/A/APgStep.v at origin/ossv/recipes
-   6ebe35ba632 (itself ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v, ACeu.v, AD28.v and ACeh.v at
-   c8557374ad2e) for reac-pw/fuzz_qdisc's image A: it walks reac_qdisc_etf_catchup_slots against
+(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_knock/lib/A/APgStep.v
+    (itself ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v, ACeu.v, AD28.v and ACeh.v at
+   theorem-labs/oss-verify-proofs@6b32741d849a) for reac-pw/fuzz_qdisc's image A: it walks reac_qdisc_etf_catchup_slots against
    lib/A/QPgCSpec.v's qdisc_slots_specX on the CONCRETE image tfibsegs / tfibtbl_lib, without knock's PAImg layer,
    object region, shadow entry, GOT and shadow-cell regions or obj_at post; the divisor cell 0x10350 is a base-None
    region with the literal chunk QD_MAGIC, paid by the contract's val_mem premise; knock's branch arithmetic is
@@ -15,6 +15,7 @@
    0x10350). The function's 24 instructions are the asan image's, every pc 0x38 higher, the same registers and
    immediates, and the divisor load `auipc a0,0xfff92` 0x7e9c8 / `ld a0,-0x678(a0)` forms the same cell 0x10350
    (capstone 5.0.7 over both pinned images); the proof text is the A file's. The function has no UBSan check. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_qdisc_etf_catchup_slots, 0x7e984, 96 bytes, 24 instructions: a pure leaf (no sp move, no store, no shadow
    check). a0 = lead (0 <= lead <= 65535), a1 = fps (an int). The engine stops at three branches; each is split and
    its recorded condition turned into a Z fact:

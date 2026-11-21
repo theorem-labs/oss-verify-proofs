@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the zero-filled stack window): changed iter1A, pf_premsA; removed AUXV. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -290,7 +291,10 @@ Section DrvE2.
     let S := usp + PSO in
     (usp - 4096 <= S /\ S + 32 <= usp /\ S mod 16 = 0 /\ 0 <= bv_unsigned can < 2 ^ 64)
     /\ (getr R 1%bv = Z_to_bv 64 718136 /\ getr R 2%bv = Z_to_bv 64 S /\ getr R 10%bv = Z_to_bv 64 86114 /\ getr R 11%bv = Z_to_bv 64 (S + 24))
-    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    (* WINDOW, old beside new: was [usp - 8388608 <= a]; the zero-filled window is DRV_ZWIN
+       (Pm9DrvEntry).  CWS / DW / CWSA / DWA above keep 8388608: they are WRITE FOOTPRINTS
+       (regions_ok frame sets), true at any width covering the frames, not window claims. *)
+    /\ (forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
     /\ (forall i, 65536 <= i < 1400832 -> MV (Z_to_bv 64 i) = None)
     /\ rdn ASEGS MV (Z_to_bv 64 7019984) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))
     /\ rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)).
@@ -578,7 +582,9 @@ Section DrvE2.
   #[local] Notation cr1 := (Pm9DrvD.cr1A L fdata crC).
   #[local] Notation lh1_kA := (Pm9DrvD.lh1_kA scfg L ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC).
 
-  Hypothesis AUXV : auxv_atA sp0 p0 M0.
+  (* DROPPED, old beside new: [Hypothesis AUXV : auxv_atA sp0 p0 M0].  Its only use was
+     [lib_init_at_call]'s auxv premise, which is gone (Pm9DrvLibInit, LibIface): the
+     ten-pair auxv at [p0 - 160] is false at LPS 75d69e00 and no consumer reads it. *)
   Hypothesis HROOM1 : lib_roomA CALLS LK0 cr1.
 
   Hypothesis TAILX : forall j : nat, SSPA 1 (Z.of_nat j) (EA j).
@@ -590,7 +596,7 @@ Section DrvE2.
     change (e_valsA 102 vals A1 PTR OWN CALLS) in EV.
     pose proof EV as (HL & HV & _). pose proof HV as (P0 & P1 & _). pose proof Hsp as Hsp'. pose proof (CALLSA_range sp0 fdata) as HKr.
 
-    destruct (lib_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) DLC vals _ knLH1A LB LK0 cr1 A M model p0 HK ltac:(vm_compute; reflexivity) P1 DI AUXV)
+    destruct (lib_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) DLC vals _ knLH1A LB LK0 cr1 A M model p0 HK ltac:(vm_compute; reflexivity) P1 DI)
       as (av & uid & rnd & tid & cny & hw & LIF).
     destruct (atexit_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) vals _ knLH1A LB LK0 cr1 A M model HK ltac:(vm_compute; reflexivity) DI
                 (dlla_atexit Lay L DLL) (dlla_hs0 Lay L DLL) (dlla_need_locks Lay L DLL)) as (AT0 & NL0).

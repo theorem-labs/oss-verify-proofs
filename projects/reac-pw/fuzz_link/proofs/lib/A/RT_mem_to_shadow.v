@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: new file for libreac/fuzz_scene. The __asan::MemToShadow copy that
    __asan_stack_malloc_8 (jal at 0x3f538) and __asan_stack_free_8 (jal at 0x3f5b4) call, at 0x3f5d8 in the
    image fuzz_scene.asan, against the shared summary lib/Reusable/AsStackLeaf.v's mem_to_shadow_realizes.
-   The walk follows the cgif family's shape for a runtime body (a working branch f7bc59284239e578's
+   The walk follows the cgif family's shape for a runtime body (a working branch
    proofs/libreac/fuzz_grant/lib/A/Rt/AF0r.v: one code table of measured ranges, one phase lemma over
    sym_runN, start-up cells as read-only regions) with the 28-instruction range (0x3f5d8, 28) that AF0r.v:42
    holds as (0x3d410, 28) for fuzz_grant.
@@ -31,6 +31,7 @@
    the shadow offset, 0xa44e8 = 0 kMidMemBeg, 0xa44f0 = 0 kMidMemEnd, 0xa44e0 = 0x7fffffffffff kHighMemEnd) are
    the START-UP STATE, measured by a Theorem Labs lane in all 50 of scene's hand-off states, and enter through the
    start-up certificate that supplies Tfib_const. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

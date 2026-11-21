@@ -1,6 +1,7 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DMiface.v @ 86aa4177b94 (a working branch: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DMiface.v (a working branch: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The names the real-merge drain proof (DMdrain.v) reads the allocator relation by.
 
    The drain proof is over an opaque allocator relation [ARX inst] and owned set [AOX] (DMspec.v), and over
@@ -85,7 +86,7 @@ Record qview (B : asyms) (W : world im_segs) (ly : alayout) (inst : Z) (X : asta
              val_mem im_segs (mrestrict (w_H W) mem) (inst + o_q_cmutex + 2) 2 0;
   (* the thread cache's header (high memory) and the batch objects are present; the instance-side header in the image's
      .bss (inst + o_quar + 152 .. 192) needs no presence: the walks store there by the image's writability (rw_writable,
-     as DMdeq.v and the released YFev.v:237 do) *)
+     as DMdeq.v and the released YFev.v:238 do) *)
   qv_hpres : forall a, ly_T ly + t_qc <= a < ly_T ly + t_qc + 32 -> apresent (w_H W) mem a;
   qv_bpres : forall b a, In b (all_batches X) -> bobj ly b a -> apresent (w_H W) mem a;
   (* every batch object is a class-kBatchClass object of the region's allocated part *)

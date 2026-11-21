@@ -1,6 +1,6 @@
 (* WireCmCmp: lib/B/Prog/WireCmIface.v cm_cmp_stmt, the checks after the call of rp_meter_counter in check_meter of
    fuzz_wire.asan-ubsan (0x80350 .. 0x803c0, to CM_REL = 0x803c4), stepped by lib/Lib/StepF.v in the form of
-   reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v (recipes commit 0295462466b2), the shadow checks of the two frame
+   reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v (recipes), the shadow checks of the two frame
    bytes stepped with lib/B/Prog/AsanKAProof.v (gen_addi, gen_shr, rdw0, sxb_eq0, land7, lts_low, zxb_u):
      0x80350 `bne a0, s10` falls through (both are the want bit); 0x80354 `lhu a1, 0(s5)` reads ctr;
      want bit 0: 0x80358 `beqz s10` taken to 0x803b8, a0 := 0xa5c3, 0x803c0 `bne a1, a0` falls through;

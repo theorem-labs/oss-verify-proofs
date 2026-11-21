@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Ported from, release commit 1aeda8ab8602, projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/B10/:
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from, release, projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/B10/:
      I_strcmp.v   sha256 aa55d27bdd18  (istrcmp_post, the prologue, the whole walk and its epilogue)
      I_strcmpw.v  sha256 47bad47bee2a  (the byte-compare loop)
    Code match: see I_strcmpw.v (fuzz_reply.asan-ubsan 0x42ac4.. is the donor's 0x51b5c.. moved down by 0xf098, with

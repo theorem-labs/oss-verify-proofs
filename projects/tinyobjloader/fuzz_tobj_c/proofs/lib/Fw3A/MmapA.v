@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap sections take the decline premise place_declined_b, except the two mmap inversions wstep_mmap_invA and wstep_mmap_none_invA, which derive it from the step's answer, and the grant steps Linux's address (linux_place_is); the mmap triples take a NULL hint, from which that test is computed; etriple_mmap_rw_objA written as plain text, asking the request's non-refusability and its premise of every admissible address; MI's channel-reader conjunct kept; the frame obligation's new cases closed by RomBase's tactics). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -11,8 +12,9 @@ From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Refusable.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Refusable RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import SymState SymStep SymSoundA SymSoundB SymSoundM SymSoundR SymComplete SymCall SymExit Glue3 SymHeap.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A Require Import Restrict BackingAlgebra Virt StepA SoundA LedgerA SysCallA.
@@ -58,6 +60,9 @@ Section MmapRWA.
   Hypothesis Hlen : ms_gpr ms 1 <> Z_to_bv 64 0.
   Hypothesis Hsh : ltac2:(tb__ "0|0|
 S0S20S78S9Vms;U2A2S9Vms;U3A2S9Vms;U5A2A3S22A3").
+  (* LPS 727298f3: the decline premise of Fw/SysSpec.v Section MmapRW ([Hdecl]). *)
+  Hypothesis Hdecl : place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false.
 
   Lemma mmap_rw_model_halted : ltac2:(tb__ "0|1|
 S7Q40A1M0G0G0S0S21G0A1S45S73R3Vm;R2R1A4A1S45Vm;A1A3Fa;Flen;Fflags;").
@@ -68,19 +73,23 @@ S7Q40A1M0G0G0S0S21G0A1S45S73R3Vm;R2R1A4A1S45Vm;A1A3Fa;Flen;Fflags;").
 
   Lemma mmap_only_okA : ltac2:(tb__ "0|0|
 S69S3fVsegs;Vms;Vx8;A3Vm;A2").
-  Proof using Hh Hno Hlen Hsh.
-    eapply only_okA_of_inv; [intros R; exact (@mmap_rw_inv (sys_input segs ms x8) m Hno Hlen Hsh R)| |].
+  Proof using Hdecl Hh Hno Hlen Hsh.
+    eapply only_okA_of_inv; [intros R; exact (@mmap_rw_inv (sys_input segs ms x8) m Hno Hlen Hsh Hdecl R)| |].
     - intros [E | (a & _ & E)]; unfold is_ret in E; discriminate.
     - intros eff m' evs [E | (a & _ & E)] _; unfold is_ret in E; inversion E; subst;
         cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app]; rewrite materialize_nil; discriminate.
   Qed.
 
+  (* Section MmapRWA's decline fact [Hdecl] is not a premise here: the step's [Ok] answer
+     implies it, and [mmap_rw_ok_not_declined] (Fw/SysSpec.v) derives it from that answer
+     (c3 clause 2). *)
   Lemma wstep_mmap_invA : ltac2:(tb__ "0|4|
 S1fS42A1M0S59S0S21S7Q40A1M1A1ScVms;A1S23G1Vx8;A2A3S5aVsegs;S1eG0S3dR3S3eVms;Vm;A2A4R2A3S4S0S59R3S1eG0S3dR4S3eS5fVms;S47S46A1A2Vm;A2A4A3S3G1G1S1S72S9Vms;U0A2S9Vms;U3A2M2Vm;S9Vms;U1A2M3R1A5S0S59R4S1eG0S3dR5S3eS5eVms;R1S61SbVms;A1R1S70G3A1A3A3S73G2Vm;G3R1A4A2A4A3A2La;A2A2F_;F_;Fw';Ftr;").
   Proof using Hh Hno Hlen Hsh.
     intros tr w' Hp Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    apply (@mmap_rw_inv (sys_input segs ms x8) m Hno Hlen Hsh) in Hspec.
+    pose proof (@mmap_rw_ok_not_declined (sys_input segs ms x8) m eff m' evs0 Hno Hlen Hsh Hspec) as Hnd.
+    apply (@mmap_rw_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnd) in Hspec.
     destruct Hspec as [E | (a & Hpl & E)]; unfold is_ret in E; inversion E; subst.
     - left. destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hcd & _)]; [|congruence].
       cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app] in Hm. rewrite materialize_nil in Hm.
@@ -94,17 +103,23 @@ S1fS42A1M0S59S0S21S7Q40A1M1A1ScVms;A1S23G1Vx8;A2A3S5aVsegs;S1eG0S3dR3S3eVms;Vm;A
   Qed.
 
   Lemma wstep_mmap_intro_failA : ltac2:(tb__ "0|2|
-S1fS42A1M0S0S21S7Q40A1M1A1ScVms;A1S23G1Vx8;A2A3S0S20S7aS9Vms;U3A2Vm;S71S9Vms;U1A2A1A3S22A3S5aVsegs;S1eG0S3dR3S3eVms;Vm;A2A4S1eG0S3dR3S3eS5fVms;S47S46A1A2Vm;A2A4A3F_;F_;Ftr;").
-  Proof using Hh Hno Hlen Hsh.
+S1fS42A1M0S0S21S7Q40A1M1A1ScVms;A1S23G1Vx8;A2A3S0S20S7aS9Vms;U3A2S9Vms;U0A2Vm;S71S9Vms;U1A2A1A4S22A3S5aVsegs;S1eG0S3dR3S3eVms;Vm;A2A4S1eG0S3dR3S3eS5fVms;S47S46A1A2Vm;A2A4A3F_;F_;Ftr;").
+  Proof using Hdecl Hh Hno Hlen Hsh.
     intros tr Hp Hrf. eapply wstep_ret_introA; [exact Hp | exact Hh | | exact Hh].
-    exact (@mmap_rw_intro_fail (sys_input segs ms x8) m Hno Hlen Hsh Hrf).
+    exact (@mmap_rw_intro_fail (sys_input segs ms x8) m Hno Hlen Hsh Hdecl Hrf).
   Qed.
 
-  Lemma wstep_mmap_intro_okA : ltac2:(tb__ "0|4|
-S1fS42A1M0S7Q40A1M1S0S21G1A1ScVms;A1S23G1Vx8;A2A3S72S9Vms;U0A2S9Vms;U3A2M2Vm;S9Vms;U1A2M3R2A5S5aVsegs;S1eG0S3dR4S3eVms;Vm;A2A4S1eG0S3dR4S3eS5eVms;R3S61SbVms;A1R3S70G3A1A3A3S73G2Vm;G3R3A4A2A4A3F_;F_;Fa;Ftr;").
-  Proof using Hh Hno Hlen Hsh.
-    intros tr a Hp Hpl.
-    pose proof (@mmap_rw_intro_ok (sys_input segs ms x8) m Hno Hlen Hsh a Hpl) as Hs.
+  (* LPS 08b1429: a grant needs Linux's address at the hint [a0] ([linux_place_is]). *)
+  Lemma wstep_mmap_intro_okA : forall tr a,
+    ms_svc_pending ms = Some x8 ->
+    mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) m (ms_gpr ms 1) a ->
+    linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) (ms_gpr ms 0) (mmap_nZ (ms_gpr ms 1)) a = true ->
+    wstep (tr, mkCfg ms m)
+          (tr, mkCfg (after_sys_mem ms a (zero_range (ms_mem ms) a (mmap_n (ms_gpr ms 1))))
+                     (mmap_rw_model (ms_gpr ms 3) m (ms_gpr ms 1) a)).
+  Proof using Hdecl Hh Hno Hlen Hsh.
+    intros tr a Hp Hpl Hlp.
+    pose proof (@mmap_rw_intro_ok (sys_input segs ms x8) m Hno Hlen Hsh Hdecl a Hpl Hlp) as Hs.
     pose proof (wstep_pending_runA tr ms m x8 _ _ _ [] Hp Hh Hs ltac:(rewrite mmap_rw_model_halted; exact Hh) (materialize_nil _)) as W.
     rewrite app_nil_r, advance_apply_zero1 in W. exact W.
   Qed.
@@ -204,10 +219,15 @@ Proof using .
     rewrite Z.div_add by lia. change (4095 / 4096) with 0. lia.
 Qed.
 
-Theorem triple1_mmap_rw_objA : ltac2:(tb__ "0|10|
-S59OF_;S63S63S7Q40M0A1M1S63F_;S38S14S1fG1A1S2dS66Vsegs;R8R7A3S6aVsegs;R9R8A3S65Vsegs;S11S37R6A1A1R9A3S0S21S6eA1S85Vsegs;S1aS37R7A1A1A2S23S6eS6fA2A3S0SeS12S37R8A1Z11A2S15ZdeA1A3S0SeS12S37R9A1ZbA2S15R6A1A3S0S2dS33R7Z1000A2Z0M2A3S1S2fG2R8A2S2fR8S32Z2Z3eA2A2A2S1fS42A1M3SaS43S67Vsegs;ReRdRfS1eG3S3dR3S3eR2R1A2A4A5R13RfReR4R2A4S1S0S20S78S9R4U2A2S9R4U3M4A2M5S9R4U5A2A3S22A3S1S0S20S79G5A1S26A3S1S34S7fR3RfA2ReA2S1R13R10RfR5R3A4G1S72S9R5U0A2S9R5G4A2R4S9R5U1M6A2R1A5S1S10S5dS10R1S13S37R14A1A1A3S17S16R14R2A2S1eS2dS2dS6G0R4A2M7S30G7R12A2A4A2F_;Fo;S1G1S1S31S6G0R3A2M8S6G0R1A2M9A2S2fG9S30G8R11A2A2A2S0S20S19Vsegs;R2A2S26A3F_;Fx;S1S24SeSeA2MaS2dS5dGaR2S39R15A1A3S1S31S6G0SfR15S2aSeSeR3A3A2A2MbR2A2S2fR2S30GbS6G0SfR15S2bSeSeR3A3A2A2A2A2A2S2S1S31S6G0R6A2McS6G0S3cS6G0SfR16S3aR17A1A2A2R3A2A2MdA2S2fGdS30GcR14A2A2A2A1F_;F_;Fy;Fr;R14R2S6bR12S11S37R13A1A1R2A3R11R7S4aS75S44R5A1S9R6G6A2R2A3R5A2A5A2A2A2F_;Fa;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S5cVsegs;R11S62Vsegs;R10RdRcRbA5S59S4S62Vsegs;R10S68ReS15S6G0S47S46A1A2A1A2RdRcR1A6S3G1G1S62Vsegs;R10R1A1S3bRfS6cS37RfA1MeS18S11GeA1MfA1S29S10S13GeA1S27S10S6dGfRcA2S25S10A1A3A3S82GfA1A4A2S6bReGfR1A3RdR2A6La;A2A2Lw;A4F_;F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Ftp;Frho;FA;FJo;FJf;FJ;Fok;").
+(* LPS 727298f3: a premise [reg_sv (ax_S A) 10 = SLit 0] (the hint a0 is NULL) is inserted right
+   after the [reg_sv (ax_S A) 17 = SLit 222] premise, and nothing else changed; the blob was decoded
+   with this file's [tbs__] table, the premise added and re-encoded.  The proof computes the decline
+   test [place_declined_b ... = false] of [mmap_only_okA] from it
+   ([place_declined_b_null]).  The same for [etriple_mmap_rw_objA] and [etriple_mmap_rw_obj_anyA]. *)
+Theorem triple1_mmap_rw_objA : ltac2:(tb__ "0|0|
+S59OF_;S63S63S7Q40A1S63F_;S38S14S1fS7Q40A1A1S2dS66Vsegs;R8R7A3S6aVsegs;R9R8A3S65Vsegs;S11S37R6A1A1R9A3S0S21S6eA1S85Vsegs;S1aS37R7A1A1A2S23S6eS6fA2A3S0SeS12S37R8A1Z11A2S15ZdeA1A3S0SeS12S37R9A1ZaA2S15Z0A1A3S0SeS12S37RaA1ZbA2S15R7A1A3S0S2dS33R8Z1000A2Z0A3S1S2fZ0R9A2S2fR9S32Z2Z3eA2A2A2S1fS42A1SaS43S67Vsegs;RfReR10S1eS1fS42A1S3dR3S3eR2R1A2A4A5R14R10RfR4R2A4S1S0S20S78S9R4U2A2S9R4U3A2S9R4U5A2A3S22A3S1S0S20S79S9R4U3A2A1S26A3S1S34S7fR3R10A2RfA2S1R14R11R10R5R3A4S7Q40A1S72S9R5U0A2S9R5U3A2R4S9R5U1A2R1A5S1S10S5dS10R1S13S37R15A1A1A3S17S16R15R2A2S1eS2dS2dS6Q40R4A2S30S6Q40R4A2R13A2A4A2F_;Fo;S1S7Q40A1S1S31S6Q40R3A2S6Q40R1A2A2S2fS6Q40R1A2S30S6Q40R3A2R12A2A2A2S0S20S19Vsegs;R2A2S26A3F_;Fx;S1S24SeSeA2S2dS5dS24SeSeA2R2S39R16A1A3S1S31S6Q40SfR16S2aSeSeR3A3A2A2R2A2S2fR2S30S6Q40SfR16S2aSeSeR3A3A2A2S6Q40SfR16S2bSeSeR3A3A2A2A2A2A2S2S1S31S6Q40R6A2S6Q40S3cS6Q40SfR17S3aR18A1A2A2R3A2A2A2S2fS6Q40S3cS6Q40SfR17S3aR18A1A2A2R3A2A2S30S6Q40R6A2R15A2A2A2A1F_;F_;Fy;Fr;R15R2S6bR13S11S37R14A1A1R2A3R12R7S4aS75S44R5A1S9R6U1A2R2A3R5A2A5A2A2A2F_;Fa;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S5cVsegs;R12S62Vsegs;R11ReRdRcA5S59S4S62Vsegs;R11S68RfS15S6Q40S47S46A1A2A1A2ReRdR1A6S3S7Q40A1S7Q40A1S62Vsegs;R11R1A1S3bR10S6cS37R10A1S18S11S37R10A1A1A1S29S10S13S37R10A1A1S27S10S6dS11S37R10A1A1RdA2S25S10A1A3A3S82S11S37R10A1A1A1A4A2S6bRfS11S37R10A1A1R1A3ReR2A6La;A2A2Lw;A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Ftp;Frho;FA;FJo;FJf;FJ;Fok;").
 Proof using .
-  intros ok J Jf Jo A rho tp nlit Hokf Hokp Hst Hi H17 H11 Hmod Hn HJ.
+  intros ok J Jf Jo A rho tp nlit Hokf Hokp Hst Hi H17 H10 H11 Hmod Hn HJ.
   apply triple1_ecall_detA; [exact Hokf | exact Hst | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pendingA_pending segs _ _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -215,8 +235,12 @@ Proof using .
   destruct (mmap_len_lit rho tp A tr ms md nlit Hsp H11 Hmod Hn) as [Hlen HnZ].
   destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & Hroom & HJf & HOK).
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false).
+  { destruct (pending_argsA rho tp A tr ms md Hsp) as (G0 & _). rewrite G0, H10.
+    exact (place_declined_b_null _ _ _). }
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. apply (mmap_only_okA ms md _ Hh H222 Hlen Hmodb).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply (mmap_only_okA ms md _ Hh H222 Hlen Hmodb Hdecl).
   - intros w' Hw. destruct (wstep_mmap_invA ms md _ Hh H222 Hlen Hmodb tr w' Hp Hw) as [-> | (a & Hpl & ->)].
     + left. split; [|exact HJf]. eapply smatchA_after_ret_lit; [exact Hsp | exact Hh | apply vm_same_refl].
     + right. exists a. destruct (HOK a Hpl) as (Hdisj & Hnro & Hxs & HJo). split.
@@ -224,27 +248,114 @@ Proof using .
       * cbn [w_tr w_cfg fst snd cfg_model]. unfold mmap_rw_model. rewrite (with_mmap_backing_plain _ _ _ _ Hnr). exact HJo.
 Qed.
 
-Theorem etriple_mmap_rw_objA : ltac2:(tb__ "0|10|
-S63S7Q40M0A1M1S63F_;S38S14S1fG1A1S2dS65Vsegs;S11S37R4A1A1R6A3S0S21S6eA1S85Vsegs;S1aS37R5A1A1A2S23S6eS6fA2A3S0SeS12S37R6A1Z11A2S15ZdeA1A3S0SeS12S37R7A1ZbA2S15R4A1A3S0S2dS33R5Z1000A2Z0M2A3S1S2fG2R6A2S2fR6S32Z2Z3eA2A2A2S1fS42A1M3SaS43S67Vsegs;RcRbRdS1eG3S3dR3S3eR2R1A2A4A5R10RdRcR4R2A4S1S0S20S78S9R4U2A2S9R4U3M4A2M5S9R4U5A2A3S22A3S1S0S20S79G5A1S26A3S1S34S7fR3RdA2RcA2S3G1G1S1S72S9R5U0A2S9R5G4A2R4S9R5U1A2M6R1A5S1S10S5dS10R1S13S37R11A1A1A3S17S16R11R2A2S1eS2dS2dS6G0R3A2M7S30G7RfA2A4A2F_;Fo;S1G1S1S31S6G0R2A2M8S6G0R1A2M9A2S2fG9S30G8ReA2A2A2S0S20S19Vsegs;R2A2S26A3F_;Fx;S1S24SeSeA2MaS2dS5dGaR2S39R12A1A3S1S31S6G0SfR12S2aSeSeR3A3A2A2MbR2A2S2fR2S30GbS6G0SfR12S2bSeSeR3A3A2A2A2A2A2S2S1S31S6G0R5A2McS6G0S3cS6G0SfR13S3aR14A1A2A2R3A2A2MdA2S2fGdS30GcR11A2A2A2A1F_;F_;Fy;Fr;R11R1S6bRfS11S37R10A1A1R1A3ReR6S4aS75S44R4A1G6R1A3R4A2A5A2A2A2A2La;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S5bVsegs;S62Vsegs;RdRbRaR9A5S59S3G1G1S62Vsegs;ReR1A1S3bRdS6cS37RdA1MeS18S11GeA1MfA1S29S10S13GeA1S27S10S6dGfRaA2S25S10A1A3A3S82GfA1A4A2S6bRcGfR1A3RbR2A6La;A2Lw;A3F_;F_;F_;F_;F_;F_;F_;Fnlit;Ftp;Frho;FA;FJo;FJ;").
+(* RESTATED.  The old statement fails (measured) at
+   MmapA.v:245 characters 26-85:
+     The term "wstep_mmap_intro_okA ms md (Z_to_bv 64 222) Hh H222 Hlen Hmodb tr a Hp Hpl"
+     has type "linux_place_is (m_vmmaps md) (kb_thp (m_kernel md)) (ms_gpr ms 0)
+       (mmap_nZ (ms_gpr ms 1)) a = true -> wstep ..." while it is expected to have
+     type "wstep (tr, {| cfg_ms := ms; cfg_model := md |}) ?w'".
+   [wstep_mmap_intro_okA] (:105-117 above, with its own comment) takes Linux's placement
+   test as its last premise, because an mmap returns LINUX's address and not merely an
+   admissible one.  [mmap_place_ok] is strictly weaker -- it admits every free, aligned,
+   in-range, budget-ok address -- so no [a] the old existential names can discharge it.
+   THE SHAPE IS THIS FILE'S OWN.  [etriple_mmap_rw_obj_anyA] immediately below already has
+   it and its proof is copied verbatim here minus the refusable branch; [etriple_mmap_rw_okJ]
+   (Fw3/SymHeap.v:197) is the same restatement one layer down, and it compiles (measured).
+     old:  ... /\ exists a, mmap_place_ok ... a /\ DISJ a /\ RO a /\ XS a /\ Jo a ...
+     new:  ... /\ mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) md
+                   (mmap_nZ (ms_gpr ms 1)) = false
+                /\ forall a, mmap_place_ok ... a -> DISJ a /\ RO a /\ XS a /\ Jo a ...
+   Linux's own address then comes from [mmap_rw_not_refusable_place] (Fw/SysSpec.v:1909-1911)
+   and the caller's universal is instantiated at it.
+   THE GUARANTEE IS NOT WEAKENED: both changes are to a HYPOTHESIS, the postcondition is
+   untouched, and the universal half is STRONGER than the existential half for every caller
+   that already quantifies over its address.  The statement was decoded from this file's own
+   [tbs__] table and written out; NOTHING RE-ENCODED.  The decoder was validated first on a
+   fixture: triple1_mprotect_exposeJ's blob at an earlier revision decodes to its hand-written text
+   at the tip, conjunct for conjunct.
+   CONSUMERS, all six read at the tip: A/e7.v:1458, B/n1.v:1462, MallocA/SegD_skel.v:3195,
+   MallocA/SegD_skel2.v:3222, MallocB/SegD_skel.v:3208, MallocB/SegD_skel2.v:3235.  Each
+   proves the J-premise in tactic text, so each gains two visible goals -- loud and findable.
+   None of the six is compiled before this restatement (exact-field rocq-mem lookup: ABSENT, with must-miss
+   ZZ_nosuch.v -> ABSENT firing and Fw/SysSpec.v -> ok as the must-hit), so no file that
+   compiles is touched.  No obligation reaches a published file. *)
+Theorem etriple_mmap_rw_objA :
+  forall (J : jpredA) (Jo : word -> jpredA) (A : axst) (rho : valuation)
+         (tp : list word) (nlit : Z),
+    stableA segs (ss_next (ax_S A)) J ->
+    instr_at segs (ss_pc (ax_S A)) = Some Ecall ->
+    reg_sv (ax_S A) 17 = SLit 222 ->
+    reg_sv (ax_S A) 10 = SLit 0 ->
+    reg_sv (ax_S A) 11 = SLit nlit ->
+    nlit mod 4096 = 0 ->
+    0 < nlit < 2 ^ 62 ->
+    (forall tr ms md,
+        smatch_pendingA segs rho tp A (tr, mkCfg ms md) ->
+        J rho tp tr md ->
+        mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true
+        /\ mmap_noreserve_b (ms_gpr ms 3) = false
+        /\ headroom md tp >= nlit
+        /\ mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) md
+             (mmap_nZ (ms_gpr ms 1)) = false
+        /\ (forall a,
+              mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a ->
+              (forall o, In o (ss_objs (ax_S A)) ->
+                 ranges_disjoint (obj_range rho o)
+                   (bv_unsigned a, bv_unsigned a + nlit))
+              /\ (forall x, bv_unsigned a <= bv_unsigned x < bv_unsigned a + nlit ->
+                    ro_addr segs x = false)
+              /\ (forall (r : sv * sv) (y : Z),
+                    In r (ax_X A) ->
+                    bv_unsigned (eval rho (fst r)) <= y
+                      < bv_unsigned (eval rho (fst r)) + bv_unsigned (eval rho (snd r)) ->
+                    ~ (bv_unsigned a
+                         <= bv_unsigned (shadow_addr (bv_unsigned (eval rho (ax_base A))) y)
+                         < bv_unsigned a + nlit))
+              /\ Jo a (rho_set_rw rho (ss_next (ax_S A)) a) tp tr
+                   (with_vmmaps (mmap_rw_vm (m_vmmaps md) (ms_gpr ms 1) a) md))) ->
+    etriple segs (SPA segs J A rho tp)
+      (fun w => exists a,
+         SPA segs (Jo a)
+           (ax_setS A (S_after (ax_S A) (SVar (ss_next (ax_S A)))
+                         (ss_objs (ax_S A) ++ [mmap_obj (ss_next (ax_S A)) nlit])
+                         (Pos.succ (ss_next (ax_S A)))))
+           (rho_set_rw rho (ss_next (ax_S A)) a) tp w).
 Proof using .
-  intros J Jo A rho tp nlit Hst Hi H17 H11 Hmod Hn HJ.
+  intros J Jo A rho tp nlit Hst Hi H17 H10 H11 Hmod Hn HJ.
   apply etriple_ecall_detA; [exact Hst | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pendingA_pending segs _ _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   destruct (mmap_len_lit rho tp A tr ms md nlit Hsp H11 Hmod Hn) as [Hlen HnZ].
-  destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & Hroom & a & Hpl & Hdisj & Hnro & Hxs & HJo).
+  destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & Hroom & Hrf & HOK).
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
-  eexists. split; [exact (wstep_mmap_intro_okA ms md _ Hh H222 Hlen Hmodb tr a Hp Hpl)|].
-  exists a. split.
+  (* ARITY-ROBUST, the form Fw3/SymHeap.v's etriple_mmap_rw_okJ uses, which compiles
+     (measured): Section MmapRW closes [mmap_rw_not_refusable_place] with `Proof using Hlen`,
+     so whether [Hlen] is an explicit argument depends on how the Section abstracted it.
+     With the wrong form the error is at MmapA.v:314 characters
+     81-84 -- the [Hrf] argument landing in [Hlen]'s slot (measured).  Writing the type out also
+     does the job of the [change] on the next line. *)
+  destruct (ltac:(first
+    [ exact (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hlen Hrf)
+    | exact (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hrf) ])
+    : exists a, mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a
+                /\ linux_place_is (m_vmmaps md) (kb_thp (m_kernel md)) (ms_gpr ms 0)
+                     (mmap_nZ (ms_gpr ms 1)) a = true) as (a & Hpl & Hlp).
+  change (mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a) in Hpl.
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false).
+  { destruct (pending_argsA rho tp A tr ms md Hsp) as (G0 & _). rewrite G0, H10.
+    exact (place_declined_b_null _ _ _). }
+  eexists. split; [exact (wstep_mmap_intro_okA ms md _ Hh H222 Hlen Hmodb Hdecl tr a Hp Hpl Hlp)|].
+  exists a. destruct (HOK a Hpl) as (Hdisj & Hnro & Hxs & HJo). split.
   - eapply smatchA_after_mmap_obj; eauto.
   - cbn [w_tr w_cfg fst snd cfg_model]. unfold mmap_rw_model. rewrite (with_mmap_backing_plain _ _ _ _ Hnr). exact HJo.
 Qed.
 
-Theorem etriple_mmap_rw_obj_anyA : ltac2:(tb__ "0|10|
-S63S63S7Q40M0A1M1S63F_;S38S14S1fG1A1S2dS65Vsegs;S11S37R4A1A1R7A3S0S21S6eA1S85Vsegs;S1aS37R5A1A1A2S23S6eS6fA2A3S0SeS12S37R6A1Z11A2S15ZdeA1A3S0SeS12S37R7A1ZbA2S15R4A1A3S0S2dS33R5Z1000A2Z0M2A3S1S2fG2R6A2S2fR6S32Z2Z3eA2A2A2S1fS42A1M3SaS43S67Vsegs;RcRbRdS1eG3S3dR3S3eR2R1A2A4A5R11RdRcR4R2A4S1S0S20S78S9R4U2A2S9R4U3M4A2M5S9R4U5A2A3S22A3S1S0S20S79G5A1S26A3S1S34S7fR3RdA2RcA2S1R11ReRdR5R3A4G1S72S9R5U0A2S9R5G4A2R4S9R5U1M6A2R1A5S1S10S5dS10R1S13S37R12A1A1A3S17S16R12R2A2S1eS2dS2dS6G0R4A2M7S30G7R10A2A4A2F_;Fo;S1G1S1S31S6G0R3A2M8S6G0R1A2M9A2S2fG9S30G8RfA2A2A2S0S20S19Vsegs;R2A2S26A3F_;Fx;S1S24SeSeA2MaS2dS5dGaR2S39R13A1A3S1S31S6G0SfR13S2aSeSeR3A3A2A2MbR2A2S2fR2S30GbS6G0SfR13S2bSeSeR3A3A2A2A2A2A2S2S1S31S6G0R6A2McS6G0S3cS6G0SfR14S3aR15A1A2A2R3A2A2MdA2S2fGdS30GcR12A2A2A2A1F_;F_;Fy;Fr;R12R2S6bR10S11S37R11A1A1R2A3RfR7S4aS75S44R5A1S9R6G6A2R2A3R5A2A5A2A2A2F_;Fa;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S5bVsegs;S62Vsegs;ReRbRaR9A5S59S4S62Vsegs;ReS68RcS15S6G0S47S46A1A2A1A2RbRaR1A6S3G1G1S62Vsegs;ReR1A1S3bRdS6cS37RdA1MeS18S11GeA1MfA1S29S10S13GeA1S27S10S6dGfRaA2S25S10A1A3A3S82GfA1A4A2S6bRcGfR1A3RbR2A6La;A2A2Lw;A3F_;F_;F_;F_;F_;F_;F_;Fnlit;Ftp;Frho;FA;FJo;FJf;FJ;").
+Theorem etriple_mmap_rw_obj_anyA : ltac2:(tb__ "0|0|
+S63S63S7Q40A1S63F_;S38S14S1fS7Q40A1A1S2dS65Vsegs;S11S37R4A1A1R7A3S0S21S6eA1S85Vsegs;S1aS37R5A1A1A2S23S6eS6fA2A3S0SeS12S37R6A1Z11A2S15ZdeA1A3S0SeS12S37R7A1ZaA2S15Z0A1A3S0SeS12S37R8A1ZbA2S15R5A1A3S0S2dS33R6Z1000A2Z0A3S1S2fZ0R7A2S2fR7S32Z2Z3eA2A2A2S1fS42A1SaS43S67Vsegs;RdRcReS1eS1fS42A1S3dR3S3eR2R1A2A4A5R12ReRdR4R2A4S1S0S20S78S9R4U2A2S9R4U3A2S9R4U5A2A3S22A3S1S0S20S79S9R4U3A2A1S26A3S1S34S7fR3ReA2RdA2S1R12RfReR5R3A4S7Q40A1S72S9R5U0A2S9R5U3A2R4S9R5U1A2R1A5S1S10S5dS10R1S13S37R13A1A1A3S17S16R13R2A2S1eS2dS2dS6Q40R4A2S30S6Q40R4A2R11A2A4A2F_;Fo;S1S7Q40A1S1S31S6Q40R3A2S6Q40R1A2A2S2fS6Q40R1A2S30S6Q40R3A2R10A2A2A2S0S20S19Vsegs;R2A2S26A3F_;Fx;S1S24SeSeA2S2dS5dS24SeSeA2R2S39R14A1A3S1S31S6Q40SfR14S2aSeSeR3A3A2A2R2A2S2fR2S30S6Q40SfR14S2aSeSeR3A3A2A2S6Q40SfR14S2bSeSeR3A3A2A2A2A2A2S2S1S31S6Q40R6A2S6Q40S3cS6Q40SfR15S3aR16A1A2A2R3A2A2A2S2fS6Q40S3cS6Q40SfR15S3aR16A1A2A2R3A2A2S30S6Q40R6A2R13A2A2A2A1F_;F_;Fy;Fr;R13R2S6bR11S11S37R12A1A1R2A3R10R7S4aS75S44R5A1S9R6U1A2R2A3R5A2A5A2A2A2F_;Fa;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S5bVsegs;S62Vsegs;RfRcRbRaA5S59S4S62Vsegs;RfS68RdS15S6Q40S47S46A1A2A1A2RcRbR1A6S3S7Q40A1S7Q40A1S62Vsegs;RfR1A1S3bReS6cS37ReA1S18S11S37ReA1A1A1S29S10S13S37ReA1A1S27S10S6dS11S37ReA1A1RbA2S25S10A1A3A3S82S11S37ReA1A1A1A4A2S6bRdS11S37ReA1A1R1A3RcR2A6La;A2A2Lw;A3F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Ftp;Frho;FA;FJo;FJf;FJ;").
 Proof using .
-  intros J Jf Jo A rho tp nlit Hst Hi H17 H11 Hmod Hn HJ.
+  intros J Jf Jo A rho tp nlit Hst Hi H17 H10 H11 Hmod Hn HJ.
   apply etriple_ecall_detA; [exact Hst | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pendingA_pending segs _ _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -252,12 +363,23 @@ Proof using .
   destruct (mmap_len_lit rho tp A tr ms md nlit Hsp H11 Hmod Hn) as [Hlen HnZ].
   destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & Hroom & HJf & HOK).
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
-  destruct (mmap_grant_refusable (ms_gpr ms 3) md (mmap_nZ (ms_gpr ms 1))) eqn:Hrf.
-  - eexists. split; [exact (wstep_mmap_intro_failA ms md _ Hh H222 Hlen Hmodb tr Hp Hrf)|].
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false).
+  { destruct (pending_argsA rho tp A tr ms md Hsp) as (G0 & _). rewrite G0, H10.
+    exact (place_declined_b_null _ _ _). }
+  destruct (mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) md (mmap_nZ (ms_gpr ms 1))) eqn:Hrf.
+  - eexists. split; [exact (wstep_mmap_intro_failA ms md _ Hh H222 Hlen Hmodb Hdecl tr Hp Hrf)|].
     left. split; [|exact HJf]. eapply smatchA_after_ret_lit; [exact Hsp | exact Hh | apply vm_same_refl].
-  - destruct (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hrf) as [a Hpl].
+  - (* ARITY-ROBUST, same cause and same fix as :314 above.  PRE-EXISTING call, never
+       reached while :245 was red, so no round had named it. *)
+    destruct (ltac:(first
+      [ exact (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hlen Hrf)
+      | exact (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hrf) ])
+      : exists a, mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a
+                  /\ linux_place_is (m_vmmaps md) (kb_thp (m_kernel md)) (ms_gpr ms 0)
+                       (mmap_nZ (ms_gpr ms 1)) a = true) as (a & Hpl & Hlp).
     change (mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a) in Hpl.
-    eexists. split; [exact (wstep_mmap_intro_okA ms md _ Hh H222 Hlen Hmodb tr a Hp Hpl)|].
+    eexists. split; [exact (wstep_mmap_intro_okA ms md _ Hh H222 Hlen Hmodb Hdecl tr a Hp Hpl Hlp)|].
     right. exists a. destruct (HOK a Hpl) as (Hdisj & Hnro & Hxs & HJo). split.
     + eapply smatchA_after_mmap_obj; eauto.
     + cbn [w_tr w_cfg fst snd cfg_model]. unfold mmap_rw_model. rewrite (with_mmap_backing_plain _ _ _ _ Hnr). exact HJo.
@@ -272,6 +394,9 @@ Section MmapNoneA.
 S0S20S7bS9Vms;U2A2S9Vms;U3A2S9Vms;U5A2A3S22A3").
   Hypothesis Hnrw : ltac2:(tb__ "0|0|
 S0S20S78S9Vms;U2A2S9Vms;U3A2S9Vms;U5A2A3S26A3").
+  (* LPS 727298f3: the decline premise of Fw/SysSpec.v Section MmapNone ([Hdecl]). *)
+  Hypothesis Hdecl : place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false.
 
   Lemma mmap_none_model_halted : ltac2:(tb__ "0|1|
 S7Q40A1M0G0G0S0S21G0A1S45S74R3Vm;R2R1A4A1S45Vm;A1A3Fa;Flen;Fflags;").
@@ -282,19 +407,23 @@ S7Q40A1M0G0G0S0S21G0A1S45S74R3Vm;R2R1A4A1S45Vm;A1A3Fa;Flen;Fflags;").
 
   Lemma mmap_none_only_okA : ltac2:(tb__ "0|0|
 S69S3fVsegs;Vms;Vx8;A3Vm;A2").
-  Proof using Hh Hno Hlen Hsh Hnrw.
-    eapply only_okA_of_inv; [intros R; exact (@mmap_none_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnrw R)| |].
+  Proof using Hdecl Hh Hno Hlen Hsh Hnrw.
+    eapply only_okA_of_inv; [intros R; exact (@mmap_none_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hdecl R)| |].
     - intros [E | (a & _ & E)]; unfold is_ret in E; discriminate.
     - intros eff m' evs [E | (a & _ & E)] _; unfold is_ret in E; inversion E; subst;
         cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app]; rewrite materialize_nil; discriminate.
   Qed.
 
+  (* Section MmapNoneA's decline fact [Hdecl] is not a premise here: the step's [Ok] answer
+     implies it, and [mmap_none_ok_not_declined] (Fw/SysSpec.v) derives it from that answer
+     (c3 clause 2). *)
   Lemma wstep_mmap_none_invA : ltac2:(tb__ "0|3|
 S1fS42A1M0S59S0S21S7Q40A1M1A1ScVms;A1S23G1Vx8;A2A3S5aVsegs;S1eG0S3dR3S3eVms;Vm;A2A4R2A3S4S0S59R3S1eG0S3dR4S3eS5fVms;S47S46A1A2Vm;A2A4A3S3G1G1S1S76S9Vms;U0A2Vm;S9Vms;U1A2M2R1A4S0S59R4S1eG0S3dR5S3eS5eVms;R1S60SbVms;A1R1S70G2A1A3A3S74S9Vms;U3A2Vm;G2R1A4A2A4A3A2La;A2A2F_;F_;Fw';Ftr;").
   Proof using Hh Hno Hlen Hsh Hnrw.
     intros tr w' Hp Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    apply (@mmap_none_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnrw) in Hspec.
+    pose proof (@mmap_none_ok_not_declined (sys_input segs ms x8) m eff m' evs0 Hno Hlen Hsh Hnrw Hspec) as Hnd.
+    apply (@mmap_none_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hnd) in Hspec.
     destruct Hspec as [E | (a & Hpl & E)]; unfold is_ret in E; inversion E; subst.
     - left. destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hcd & _)]; [|congruence].
       cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app] in Hm. rewrite materialize_nil in Hm.
@@ -308,17 +437,22 @@ S1fS42A1M0S59S0S21S7Q40A1M1A1ScVms;A1S23G1Vx8;A2A3S5aVsegs;S1eG0S3dR3S3eVms;Vm;A
   Qed.
 
   Lemma wstep_mmap_none_intro_failA : ltac2:(tb__ "0|2|
-S1fS42A1M0S0S21S7Q40A1M1A1ScVms;A1S23G1Vx8;A2A3S0S20S7cVm;S71S9Vms;U1A2A1A2S22A3S5aVsegs;S1eG0S3dR3S3eVms;Vm;A2A4S1eG0S3dR3S3eS5fVms;S47S46A1A2Vm;A2A4A3F_;F_;Ftr;").
-  Proof using Hh Hno Hlen Hsh Hnrw.
+S1fS42A1M0S0S21S7Q40A1M1A1ScVms;A1S23G1Vx8;A2A3S0S20S7cS9Vms;U0A2Vm;S71S9Vms;U1A2A1A3S22A3S5aVsegs;S1eG0S3dR3S3eVms;Vm;A2A4S1eG0S3dR3S3eS5fVms;S47S46A1A2Vm;A2A4A3F_;F_;Ftr;").
+  Proof using Hdecl Hh Hno Hlen Hsh Hnrw.
     intros tr Hp Hrf. eapply wstep_ret_introA; [exact Hp | exact Hh | | exact Hh].
-    exact (@mmap_none_intro_fail (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hrf).
+    exact (@mmap_none_intro_fail (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hdecl Hrf).
   Qed.
 
-  Lemma wstep_mmap_none_intro_okA : ltac2:(tb__ "0|3|
-S1fS42A1M0S7Q40A1M1S0S21G1A1ScVms;A1S23G1Vx8;A2A3S76S9Vms;U0A2Vm;S9Vms;U1A2M2R2A4S5aVsegs;S1eG0S3dR4S3eVms;Vm;A2A4S1eG0S3dR4S3eS5eVms;R3S60SbVms;A1R3S70G2A1A3A3S74S9Vms;U3A2Vm;G2R3A4A2A4A3F_;F_;Fa;Ftr;").
-  Proof using Hh Hno Hlen Hsh Hnrw.
-    intros tr a Hp Hpl.
-    pose proof (@mmap_none_intro_ok (sys_input segs ms x8) m Hno Hlen Hsh Hnrw a Hpl) as Hs.
+  Lemma wstep_mmap_none_intro_okA : forall tr a,
+    ms_svc_pending ms = Some x8 ->
+    mmap_place_ok_none (ms_gpr ms 0) m (ms_gpr ms 1) a ->
+    linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) (ms_gpr ms 0) (mmap_nZ (ms_gpr ms 1)) a = true ->
+    wstep (tr, mkCfg ms m)
+          (tr, mkCfg (after_sys_mem ms a (unmap_range (ms_mem ms) a (mmap_n (ms_gpr ms 1))))
+                     (mmap_none_model (ms_gpr ms 3) m (ms_gpr ms 1) a)).
+  Proof using Hdecl Hh Hno Hlen Hsh Hnrw.
+    intros tr a Hp Hpl Hlp.
+    pose proof (@mmap_none_intro_ok (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hdecl a Hpl Hlp) as Hs.
     pose proof (wstep_pending_runA tr ms m x8 _ _ _ [] Hp Hh Hs ltac:(rewrite mmap_none_model_halted; exact Hh) (materialize_nil _)) as W.
     rewrite app_nil_r, advance_apply_unmap1 in W. exact W.
   Qed.
@@ -371,7 +505,7 @@ Proof using .
   intros rho rho' tp A tr ms md tr' h' a n r e nx Hsp Hmaps Hna Hlim Hal Hnl Hpos Hend Hfree Hseg Hdisj Hxs Hag' Hnx He Hev.
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   pose proof (smatch_pendingA_MI segs _ _ _ _ _ _ Hsp) as HMI.
-  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   pose proof Hsp as (Hspv & _ & Hwf & Hsh & Hhz). rewrite virt_unfold in Hspv.
   set (md1 := with_vmmaps h' md). set (md' := vm_add_lazy a n md1).
   assert (Hclr : tp_clear_of tp (lazy_interior a n)).
@@ -419,6 +553,7 @@ Proof using .
       exists a, n. rewrite m_vmmaps_with_vmmaps, Hmaps. split; [left; reflexivity | lia].
     + intros p Hp. destruct (Htm p Hp) as (Hpal & b & s0 & Hbs & X). split; [exact Hpal|]. exists b, s0. rewrite m_vmmaps_vm_add_lazy, m_vmmaps_with_vmmaps, Hmaps.
       split; [right; exact Hbs | exact X].
+    + exact Hrd.
   -   unfold axwf in Hwf |- *. cbn. apply andb_prop in Hwf as [HX Hb]. apply andb_true_intro. split.
     + apply forallb_forall. intros rr Hr. pose proof (proj1 (forallb_forall _ _) HX rr Hr) as Y.
       unfold xr_below in Y |- *. apply andb_prop in Y as [Y1 Y2].
@@ -447,7 +582,7 @@ Proof using .
   intros rho rho' tp A tr ms md tr' h' flags a n r e nx Hsp Hmaps Hna Hlim Hal Hnl Hpos Hend Hfree Hseg Hdisj Hxs Hag' Hnx He Hev.
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   pose proof (smatch_pendingA_MI segs _ _ _ _ _ _ Hsp) as HMI.
-  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   pose proof Hsp as (Hspv & _ & Hwf & Hsh & Hhz). rewrite virt_unfold in Hspv.
   set (md1 := with_vmmaps h' md). set (md' := with_mmap_backing flags a n md1).
   assert (Hclr : tp_clear_of tp (lazy_interior a n)).
@@ -497,7 +632,8 @@ Proof using .
       + rewrite paid_with_vmmaps, Hlim. pose proof (used_none_cons_le md h' a n Hivs (iv_wf_intro a n Hend) Hmaps Hna). lia.
       + exact Hlc. + exact Hwf1.
       + apply lazy_in_maps_with_vmmaps_grow; [exact Hlm | rewrite Hmaps; intros rr Hr; right; exact Hr].
-      + intros p Hp. destruct (Htm p Hp) as (Hpal & b & s0 & Hbs & X). split; [exact Hpal|]. exists b, s0. rewrite m_vmmaps_with_vmmaps, Hmaps. split; [right; exact Hbs | exact X]. }
+      + intros p Hp. destruct (Htm p Hp) as (Hpal & b & s0 & Hbs & X). split; [exact Hpal|]. exists b, s0. rewrite m_vmmaps_with_vmmaps, Hmaps. split; [right; exact Hbs | exact X].
+      + exact Hrd. }
     unfold md', with_mmap_backing. destruct (mmap_noreserve_b flags); [|exact MI1].
     apply (MI_add_lazy segs md1 a n tp MI1 Hend Hclr Hseg).
     exists a, n. unfold md1. rewrite m_vmmaps_with_vmmaps, Hmaps. split; [left; reflexivity | lia].

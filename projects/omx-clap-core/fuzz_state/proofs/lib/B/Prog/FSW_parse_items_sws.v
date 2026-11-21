@@ -10,6 +10,7 @@
    from the entry (no tick, U kept), the registers, the frame, struct pj_in at in->p past the white space, the chain at
    q, the caller's window, the text, v, the live list, the statics and the open object.
    rule 24: proves no function (kind: call-step lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -60,7 +61,7 @@ apply V; [lia | lia | exact (H0 j ltac:(apply in_seq; lia))].
 Qed.
 
 (* the frame chain at qq across a memory change off [qq, qq + 24), reads bounded by the stack top (image-free; the A walk's
-   piG_fpchain_kept / piG_chain_kept, a working branch 4480a5df1ae lib/A/FSW_parse_items_stG.v, renamed) *)
+   piG_fpchain_kept / piG_chain_kept, a working branch lib/A/FSW_parse_items_stG.v, renamed) *)
 Section C. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Lemma pis_fpchain_kept : forall (l1 l2 : Z -> option Z) qq s top cl bp,
   fpchain l1 bp top cl -> (bp = qq \/ qq + 40 <= bp) -> s + 16 <= bp -> bp + 16 < top ->

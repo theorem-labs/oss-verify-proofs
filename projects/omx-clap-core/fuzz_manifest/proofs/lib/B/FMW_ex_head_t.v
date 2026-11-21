@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_strkit.v, with its module paths and module names changed; 240 of its 267 lines of code are new or changed and 303 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head.v; 154 of its 201 lines of code are new or changed and 220 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head_t.v, with its module paths and module names changed; 61 of its 176 lines of code are new or changed and 86 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExHead.HeadTail, IMAGE B: the head walk from EX_TL 0x81484 (ex_prefix_word matched all six letters) to EX_P with
    a0 = 6 (i = 0, or text[i - 1] is a space) or to EX_NEXT 0x81694 and EX_L at i + 1 (fuzz_manifest.c:141-142).
    B's code: 0x81484 beqz s7 -> 0x814b0; 0x8148c the UBSan guard `beq s5, 1` (s5 - 1 reaches null); the instrumented
@@ -13,7 +14,7 @@
    `beq a0, s11` (c = ' ') -> 0x814b0, else 0x815d0 `j` EX_NEXT; 0x814b0..0x814b4 `addi a0, zero, -7; bltu a0, s5`, the
    UBSan guard on s5 + 6 (K4); a0 = 6; EX_P. The guards 0x8148c and 0x814b4 are decided by ss_T's fact on s5
    (atom 21 in [4096, 2^47 - 16]): the symbolic run never takes their trap arm.
-   Shape after image A's lib/A/FMW_ex_head_t.v (06d82004dc3). *)
+   Shape after image A's lib/A/FMW_ex_head_t.v. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new stack geometry: argv_str_fits and argv_str_fits' bound the argv strings from the launch premise entry_launch_ok_va over the run's ProcInput in place of entry_stack_fits, and argv_over_read bounds the over-read by the strings block that ends at the entry draw's top with the execfn string, in place of the random block; the cannot-open, file, directory, first-read and header interfaces take the mmap base, break, entry draw, valid_launch and the launch premise entry_launch_ok_va, with the layout environment at the entry draw's top, the run's CONFIG_RSEQ flag and execfn string; the diagnostic leaves take the model's own fdchan, three conjuncts now, and the arms carry the launch's channel-reader flag beside the fd table). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
-From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK11 YK15 YK18 YQ0k YN02 YQ0j YQ0b YQ0i YQ09 YQ0a YQ04 YO3p YO3v YK05 YA0i YA0l YA0e YG00 YG0a YG01 YG0m YG0h YG10 YG0u YG0d YB0z YF90 YD15 YD14 YD0f YD0l YD19.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK11 YK0j YK15 YK18 YQ0k YN02 YQ0j YQ0b YQ0i YQ09 YQ0a YQ04 YO3p YO3v YK05 YA0i YA0l YA0e YG00 YG0a YG01 YG0m YG0h YG10 YG0u YG0d YB0z YF90 YD15 YD14 YD0f YD0l YD19.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP07 YP01.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YCcx.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YG0n YG0o YG0p.
@@ -14,7 +15,7 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Section b. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
 Variable B : asyms.
-#[local] Notation ELV sp a0 p inp xw xd := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation ELV sp a0 p inp rnd xw xd := (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 Definition top_ok (usp : Z) (ly : alayout) : Prop :=
 usp - 160 <= ly_top ly <= usp + 3920 /\ ly_stk_lo ly = ASAN_CEIL /\ ly_stk_hi ly = kHighMemEnd
 /\ YN05.ceil_of_top (usp - stack_max_size).
@@ -25,83 +26,108 @@ unfold top_ok. rewrite Et, Elo, Ehi. exact (conj H1 (conj H2 (conj H3 H4))).
 Qed.
 Lemma top_ok_ceil : forall usp ly, top_ok usp ly -> YN05.ceil_of_top (usp - stack_max_size).
 Proof. intros usp ly (_ & _ & _ & H). exact H. Qed.
-Lemma argv_str_fits : forall sp argv envp k, entry_stack_fits sp argv envp -> (k < length argv)%nat ->
-z_argv (bv_unsigned sp) argv envp k + Z.of_nat (length (nth k argv [])) + 1 <= kHighMemEnd.
+(* 75d69e00: z_argv/z_strs are keyed on the stack TOP and the execfn (YQ0a.v:197-200), and
+   z_argv_end/z_argv_fits moved into YQ0a's Section t (YQ0a.v:388-1116) over inp/mbase/sp/brk/rnd
+   with valid_sp .. entry_launch_ok_va (YQ0a.v:406-410).  The old sp-keyed, entry_stack_fits-premised
+   shape cannot be stated any more, so these two restate onto inp and ed_top rnd and delegate to
+   YQ0a.z_argv_fits (YQ0a.v:624-626), which already proves the bound at SP_HI - 8. *)
+Lemma argv_str_fits : forall (inp : ProcInput) (mbase sp brk : word) (rnd : EntryDraw) (k : nat),
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> (k < length (in_argv inp))%nat ->
+z_argv (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp) k +
+Z.of_nat (length (nth k (in_argv inp) [])) + 1 <= kHighMemEnd.
 Proof.
-intros sp argv envp k Hfit Hk. pose proof (YQ0a.z_argv_end sp argv envp k Hk) as Z1.
-unfold entry_stack_fits, entry_stack_span, sp_window_hi in Hfit. rewrite !total_arg_bytes_Z in Hfit.
-pose proof (YQ0a.struct_size_eq argv envp) as SE. unfold z_strs in Z1. unfold kHighMemEnd.
-change (Z.of_nat StackLayout.auxv_size) with 160 in Hfit. pose proof (total_arg_bytes_nonneg envp). rewrite total_arg_bytes_Z in *. lia.
+intros inp mbase sp brk rnd k Hsp Hva Hve Hlau Hk.
+assert (HF : z_argv (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp) k +
+Z.of_nat (length (nth k (in_argv inp) [])) + 1 <= YQ0a.SP_HI - 8)
+by (eapply YQ0a.z_argv_fits; eassumption).
+unfold YQ0a.SP_HI in HF. unfold kHighMemEnd. lia.
 Qed.
-Lemma argv_str_fits' : forall sp argv envp k, entry_stack_fits sp argv envp -> (k < length argv)%nat ->
-z_argv (bv_unsigned sp) argv envp k + Z.of_nat (length (nth k argv [])) + 1 < kHighMemEnd.
+Lemma argv_str_fits' : forall (inp : ProcInput) (mbase sp brk : word) (rnd : EntryDraw) (k : nat),
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> (k < length (in_argv inp))%nat ->
+z_argv (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp) k +
+Z.of_nat (length (nth k (in_argv inp) [])) + 1 < kHighMemEnd.
 Proof.
-intros sp argv envp k Hfit Hk. pose proof (YQ0a.z_argv_end sp argv envp k Hk) as Z1.
-unfold entry_stack_fits, entry_stack_span, sp_window_hi in Hfit. rewrite !total_arg_bytes_Z in Hfit.
-pose proof (YQ0a.struct_size_eq argv envp) as SE. unfold z_strs in Z1. unfold kHighMemEnd.
-change (Z.of_nat StackLayout.auxv_size) with 160 in Hfit. pose proof (total_arg_bytes_nonneg envp). rewrite total_arg_bytes_Z in *. lia.
+intros inp mbase sp brk rnd k Hsp Hva Hve Hlau Hk.
+assert (HF : z_argv (bv_unsigned (ed_top rnd)) (in_argv inp) (in_envp inp) (in_execfn inp) k +
+Z.of_nat (length (nth k (in_argv inp) [])) + 1 <= YQ0a.SP_HI - 8)
+by (eapply YQ0a.z_argv_fits; eassumption).
+unfold YQ0a.SP_HI in HF. unfold kHighMemEnd. lia.
 Qed.
-Lemma argv_over_read : forall sp (rdraw : EntryDraw) argv envp (two : bool) (m : word -> option byte) k,
-valid_sp sp -> (k < length argv)%nat -> runs_at (bv_unsigned sp) m (runs_main_tfa two sp argv envp) ->
-forall a, z_argv (bv_unsigned sp) argv envp k + Z.of_nat (length (nth k argv [])) < a
-< z_argv (bv_unsigned sp) argv envp k + Z.of_nat (length (nth k argv []))
-- (z_argv (bv_unsigned sp) argv envp k + Z.of_nat (length (nth k argv []))) mod 8 + 8 ->
+(* #38: the geometry inverted.  The strings now sit at the TOP of the entry
+   block (YQ0a.v:196-204) and the random bytes moved into the head
+   (YQ0a.v:206), so the old "the strings end where the random block begins"
+   argument is gone.  What bounds the over-read now is the tail itself:
+   [stack_tail] (YQ0a.v:384) runs from z_strs up to ed_top and ends in the
+   exec file name, its NUL and the eight-byte slot below the top, so there
+   are at least nine mapped bytes above the last argv string.  No alignment
+   fact is used, and neither z_rand nor the rseq flag appears. *)
+Lemma argv_over_read : forall (sp top : word) (av ev : list (list byte)) (xf : list byte)
+(two : bool) (m : word -> option byte) k,
+valid_sp sp -> (k < length av)%nat ->
+runs_at (bv_unsigned sp) m (runs_main_tfa two sp top av ev xf) ->
+forall a, z_argv (bv_unsigned top) av ev xf k + Z.of_nat (length (nth k av [])) < a
+< z_argv (bv_unsigned top) av ev xf k + Z.of_nat (length (nth k av []))
+- (z_argv (bv_unsigned top) av ev xf k + Z.of_nat (length (nth k av []))) mod 8 + 8 ->
 m (Z_to_bv 64 a) <> None.
 Proof.
-intros sp rdraw argv envp two m k Hsp Hk HR a Ha.
-assert (HB : YQ04.bytes_at m (z_strs (bv_unsigned sp) argv envp) (stack_strs argv envp)).
+intros sp top av ev xf two m k Hsp Hk HR a Ha.
+assert (HB : YQ04.bytes_at m (z_strs (bv_unsigned top) av ev xf) (YQ0a.stack_tail av ev xf)).
 { apply (runs_at_nth _ _ _ (if two then 3 else 2)%nat _ _ HR). destruct two; reflexivity. }
-set (q := z_argv (bv_unsigned sp) argv envp k + Z.of_nat (length (nth k argv []))) in *.
-assert (Hlen : z_strs (bv_unsigned sp) argv envp + Z.of_nat (length (stack_strs argv envp)) = z_rand (bv_unsigned sp) argv envp).
-{ pose proof (YQ0a.stack_tail_end sp argv envp rdraw) as BT. unfold stack_strs.
-replace (stack_tail argv envp rdraw) with ((flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) (pad_len argv envp)) ++ YQ0a.rand_bytes rdraw) in BT
-by (unfold stack_tail; rewrite !app_assoc; reflexivity).
-rewrite length_app in BT. pose proof (YQ0a.length_rand_bytes rdraw) as LR. rewrite LR in BT. lia. }
-pose proof (YQ0a.z_argv_end sp argv envp k Hk) as Z1.
-pose proof (YQ0a.z_strs_rand sp argv envp) as Z2.
-assert (Hlo : z_strs (bv_unsigned sp) argv envp <= q) by (unfold q, z_argv; lia).
-assert (Hz8 : z_rand (bv_unsigned sp) argv envp mod 8 = 0).
-{ unfold z_rand. rewrite <- Zplus_mod_idemp_r, (YQ0a.rand_off_mod8 argv envp), Z.add_0_r.
-pose proof (YQ0a.mod8_of_mod16 (bv_unsigned sp) 0 (proj2 (proj2 Hsp))) as Hm8. rewrite Z.add_0_r in Hm8. exact Hm8. }
-pose proof (Z.div_mod q 8 ltac:(lia)) as D1. pose proof (Z.mod_pos_bound q 8 ltac:(lia)) as D2.
-pose proof (Z.div_mod (z_rand (bv_unsigned sp) argv envp) 8 ltac:(lia)) as D3.
-assert (Hal : q - q mod 8 + 8 <= z_rand (bv_unsigned sp) argv envp) by lia.
-replace a with (z_strs (bv_unsigned sp) argv envp + Z.of_nat (Z.to_nat (a - z_strs (bv_unsigned sp) argv envp))) by lia.
-rewrite (HB (Z.to_nat (a - z_strs (bv_unsigned sp) argv envp))) by lia.
+set (q := z_argv (bv_unsigned top) av ev xf k + Z.of_nat (length (nth k av []))) in *.
+pose proof (YQ0a.tab_firstn_nth_le av k Hk) as TF.
+assert (Hlo : z_strs (bv_unsigned top) av ev xf <= q) by (unfold q, z_argv; lia).
+assert (Hhi : q + 8 <= z_strs (bv_unsigned top) av ev xf +
+Z.of_nat (length (YQ0a.stack_tail av ev xf))).
+{ unfold q, z_argv, YQ0a.stack_tail.
+rewrite !length_app, !length_flatten_strings, repeat_length. cbn [length]. lia. }
+(* [lia] does not bound [q mod 8] by itself ([q] is not known to be nonnegative) *)
+pose proof (Z.mod_pos_bound q 8 ltac:(lia)) as D2.
+replace a with (z_strs (bv_unsigned top) av ev xf +
+Z.of_nat (Z.to_nat (a - z_strs (bv_unsigned top) av ev xf))) by lia.
+rewrite (HB (Z.to_nat (a - z_strs (bv_unsigned top) av ev xf))) by lia.
 destruct (nth_error _ _) eqn:Hn; [discriminate|]. apply nth_error_None in Hn. lia.
 Qed.
 Definition cannot_open_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte)
 (W : world trasegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (ly : alayout) (a0 p : list byte) (e : Z),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> entry_stack_fits sp [a0; p] (in_envp inp) ->
-regs_ok (ELV sp a0 p inp xw xd) (ss_regs ss_open) regs ->
-mem_ok trasegs (ELV sp a0 p inp xw xd) (mrestrict (w_H W) mem) (ss_mem ss_open) ->
-facts_ok (ELV sp a0 p inp xw xd) (ss_facts ss_open) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+regs_ok (ELV sp a0 p inp rnd xw xd) (ss_regs ss_open) regs ->
+mem_ok trasegs (ELV sp a0 p inp rnd xw xd) (mrestrict (w_H W) mem) (ss_mem ss_open) ->
+facts_ok (ELV sp a0 p inp rnd xw xd) (ss_facts ss_open) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly init_state W mem md ->
 top_ok (bv_unsigned sp) ly -> m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_channel_reader md = true ->
 0 < e < 4096 ->
 srealizes trasegs
 (mkCfg (mkst (regupd regs 10%bv (errno_ret e)) (v_addi (Z_to_bv 64 (ss_pc ss_open)) 4) mem (seg_rom trasegs)) md)
 (diag (msg_cannot_open p) (in_fs inp)).
 Definition file_arm_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte)
 (W : world trasegs) (ms : machine_state) (md : Model) (ly : alayout) (a0 p data : list byte),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 (length p < 4096)%nat -> p <> [] -> p <> dot_path -> fs_lookup (in_fs inp) p = Some data -> rrfc_universe B (payload_len data) ->
-st_ok trasegs (ELV sp a0 p inp xw xd) ss_m1 (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
+st_ok trasegs (ELV sp a0 p inp rnd xw xd) ss_m1 (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly init_state W (ms_mem ms) md ->
 top_ok (bv_unsigned sp) ly -> m_fs md = in_fs inp -> m_fds md = APSG.fds3 (FdFile p (Z_to_bv 64 0)) ->
+m_channel_reader md = true ->
 srealizes trasegs (mkCfg ms md) (CLOSED_loaded data (in_fs inp)).
 Definition dir_arm_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte)
 (W : world trasegs) (ms : machine_state) (md : Model) (ly : alayout) (a0 p : list byte),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> entry_stack_fits sp [a0; p] (in_envp inp) -> p = dot_path ->
-st_ok trasegs (ELV sp a0 p inp xw xd) ss_m1 (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
+in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> entry_stack_fits sp [a0; p] (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> p = dot_path ->
+st_ok trasegs (ELV sp a0 p inp rnd xw xd) ss_m1 (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly init_state W (ms_mem ms) md ->
 top_ok (bv_unsigned sp) ly -> m_fs md = in_fs inp -> m_fds md = APSG.fds3 FdDir ->
+m_channel_reader md = true ->
 srealizes trasegs (mkCfg ms md) (CLOSED_dir p (in_fs inp)).
 Definition drv_pre (ly : alayout) (S : astate) (W : world trasegs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) : Prop :=
@@ -210,29 +236,33 @@ getr regs 1%bv = w64 0x80d94 -> spZ regs = usp - 128 -> getr regs 3%bv = w64 TRA
 mem_ok trasegs E' (mrestrict (w_H W) mem) IMG_REGIONS ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly S W mem md -> top_ok usp ly -> vev S < VEV_MAX ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_fs md = fs ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md -> m_fs md = fs ->
 srealizes trasegs (mkCfg (mkst regs (w64 0x420e8) mem (seg_rom trasegs)) md) (diag msg_oom fs).
 Definition rd0_file_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
 (W : world trasegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 (length p < 4096)%nat -> p <> [] -> p <> dot_path -> fs_lookup (in_fs inp) p = Some data -> rrfc_universe B (payload_len data) ->
-st_ok trasegs (havoc (ELV sp a0 p inp xw xd) K_M1 ws) ss_rd0 (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
+st_ok trasegs (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) ss_rd0 (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly S W (ms_mem ms) md -> top_ok (bv_unsigned sp) ly ->
-blocks S = [(pb, 65536)] -> pb <> PNull -> sptr_addr B ly pb = bv_unsigned (ew (havoc (ELV sp a0 p inp xw xd) K_M1 ws) A_BUF) -> dev S <= 1 ->
+blocks S = [(pb, 65536)] -> pb <> PNull -> sptr_addr B ly pb = bv_unsigned (ew (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) A_BUF) -> dev S <= 1 ->
 prim_pristine_except S [] -> quar_bytes S = 0 -> frames S = [] -> qtightB S ->
 m_fs md = in_fs inp -> m_fds md = APSG.fds3 (FdFile p (Z_to_bv 64 0)) ->
+m_channel_reader md = true ->
 srealizes trasegs (mkCfg ms md) (RP data (in_fs inp) READ_FUEL CAP0).
 Definition rd0_dir_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
 (W : world trasegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p : list byte) (pb : sptr),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> entry_stack_fits sp [a0; p] (in_envp inp) -> p = dot_path ->
-st_ok trasegs (havoc (ELV sp a0 p inp xw xd) K_M1 ws) ss_rd0 (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
+in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> entry_stack_fits sp [a0; p] (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> p = dot_path ->
+st_ok trasegs (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) ss_rd0 (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly S W (ms_mem ms) md -> top_ok (bv_unsigned sp) ly ->
-blocks S = [(pb, 65536)] -> sptr_addr B ly pb = bv_unsigned (ew (havoc (ELV sp a0 p inp xw xd) K_M1 ws) A_BUF) -> dev S <= 1 ->
+blocks S = [(pb, 65536)] -> sptr_addr B ly pb = bv_unsigned (ew (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) A_BUF) -> dev S <= 1 ->
 m_fs md = in_fs inp -> m_fds md = APSG.fds3 FdDir ->
+m_channel_reader md = true ->
 srealizes trasegs (mkCfg ms md) (diag (msg_read_error p) (in_fs inp)).
 Definition drv_epre (ly : alayout) (S : astate) (W : world trasegs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) : Prop :=
@@ -294,7 +324,7 @@ YQ04.bytes_at (mrestrict (w_H W) mem) zp (p ++ [NUL]) ->
 mem_ok trasegs E' (mrestrict (w_H W) mem) IMG_REGIONS ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly S W mem md -> top_ok usp ly -> vev S < VEV_MAX ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_fs md = fs ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md -> m_fs md = fs ->
 srealizes trasegs (mkCfg (mkst regs (w64 0x42100) mem (seg_rom trasegs)) md) (diag (msg_read_error p) fs).
 Definition refused_leaf_tfa : Prop :=
 forall (E' : YQ0j.env) (W : world trasegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
@@ -305,20 +335,22 @@ getr regs 1%bv = w64 0x80d70 -> spZ regs = usp - 128 -> getr regs 3%bv = w64 TRA
 mem_ok trasegs E' (mrestrict (w_H W) mem) IMG_REGIONS ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly S W mem md -> top_ok usp ly -> vev S < VEV_MAX ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_fs md = fs ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md -> m_fs md = fs ->
 srealizes trasegs (mkCfg (mkst regs (w64 0x42100) mem (seg_rom trasegs)) md) (diag msg_refused fs).
 Definition hdr_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
 (W : world trasegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 fs_lookup (in_fs inp) p = Some data -> rrfc_universe B (payload_len data) -> dlen data < cap ->
-st_ok trasegs (havoc (ELV sp a0 p inp xw xd) K_M1 ws) S_HDR (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
+st_ok trasegs (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) S_HDR (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly S W (ms_mem ms) md -> top_ok (bv_unsigned sp) ly ->
-blocks S = [(pb, cap)] -> sptr_addr B ly pb = bv_unsigned (ew (havoc (ELV sp a0 p inp xw xd) K_M1 ws) A_BUF) ->
-bv_unsigned (ew (havoc (ELV sp a0 p inp xw xd) K_M1 ws) A_LEN) = dlen data -> 65536 <= cap <= 2 ^ 26 -> dev S <= 64 ->
+blocks S = [(pb, cap)] -> sptr_addr B ly pb = bv_unsigned (ew (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) A_BUF) ->
+bv_unsigned (ew (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) A_LEN) = dlen data -> 65536 <= cap <= 2 ^ 26 -> dev S <= 64 ->
 drv_minv S cap (dlen data) ->
 YQ04.bytes_at (mrestrict (w_H W) (ms_mem ms)) (sptr_addr B ly pb) data ->
 m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_channel_reader md = true ->
 srealizes trasegs (mkCfg ms md) (POST data (in_fs inp)).
 End b.

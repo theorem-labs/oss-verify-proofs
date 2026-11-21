@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d7f48, unstripped twin c90d4fa54d43), lane
    PjwBPort of a Theorem Labs lane: pj_write AT THE B' INSTANCE.
    rule 24: proves pj_write (image B'; the walk is PRW_pj_writeB.v's pj_write_holds_B, ported from
-   lib/A/Prog/PRW_pj_write.v @ f75b9f6e6fa6 (pjw_holds_lc) by relocation: see that file's header).
-   pj_write_holds_B_inst: the kit's tpj_write_specX (lib/A/PRH_FnWriter.v d89d3c67b78c :773-850, the cut 7cdbb61b5fa0),
+   lib/A/Prog/PRW_pj_write.v (pjw_holds_lc) by relocation: see that file's header).
+   pj_write_holds_B_inst: the kit's tpj_write_specX (lib/A/PRH_FnWriter.v d89d3c67b78c :773-850, the cut),
    VERBATIM, at B := YD2l.TfibB, PI := prh_img_B, L := B_prog_listing, PA := PI_prog_B, ci := CfImgB.CfImg_B,
    cp := CfParams_preset, RL := prh_room_live_a8, ARx := ARcf /\ xs_placed_cf over PI_prog_B's segments (the relation
    of every other B' top of this unit: grow_holds_B_inst, check_bounded_alloc_holds_B_inst_xs, write_value_holds_B),

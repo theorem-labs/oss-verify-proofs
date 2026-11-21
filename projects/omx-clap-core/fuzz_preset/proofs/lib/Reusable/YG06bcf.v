@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: WfP_cf_pop_add_prim proves WfP_cf's new field wfc_qsize (the queues do not change). *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG06bcf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG06bcf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the CACHE PATH of malloc_cf:
    the errbuf report of the class-full arm, populate_cf, get_from_allocator_cf, cache_alloc_cf, and the
    step that pops the cached record into a new allocated chunk. cgif's YG06.v (populate_okx :326,
@@ -14,9 +15,9 @@
      of WfP_cf, so a state that has popped a record and not yet stored it in a chunk is NOT a WfP_cf state;
      cache_alloc_post_cf therefore names the state BEFORE the pop, and WfP_cf_pop_add_prim moves the popped
      record into the new chunk in one step.
-   - the class-full arm: map_more_user_cf may run errb_report_cf (YG00cf.v:146-149), which ticks and
+   - the class-full arm: map_more_user_cf may run errb_report_cf (YG00cf.v:147-150), which ticks and
      appends errbuf control entries to st_secs. errb_report_cf_ok proves it, under the call premise
-     ERRB_ROOM (YG00cf.v:106). Its states are related to the start by errb_frame (only st_secs and st_nev
+     ERRB_ROOM (YG00cf.v:107). Its states are related to the start by errb_frame (only st_secs and st_nev
      move) and secs_ext_cf (every non-control entry keeps its length and size). The arm costs one unit of
      the cc slack (the errbuf size entry is appended once without a tick); it never also appends a chunk.
    - class kBatchClass keeps cgif's text, whose map mcheck (YG00.v:285) needs batch_room_cf (YG00cf.v).
@@ -34,7 +35,7 @@ Local Open Scope am_scope.
 
 (* ---------------------------------------------------------------------------- *)
 (* 1. The frame relations of the cf instance.                                    *)
-(* cgif's secs_ext (YG01.v:439-441), restricted to the real secondaries: the errbuf control entries of
+(* cgif's secs_ext (YG01.v:440-442), restricted to the real secondaries: the errbuf control entries of
    YG00cf.v (negative sm_size) are re-tagged and resized in place. The length clause is what the layout's
    index pinning needs (layout_le, YG0f.v:65-70). *)
 Definition secs_ext_cf (s s' : astate) : Prop :=
@@ -228,7 +229,7 @@ Qed.
 Section MAP.
 Context {ci : CfImg}.
 
-(* errb_map_cf (YG00cf.v:121-126): tick, ask for the map (a refusal is MmapOrDie, a spin), retire the old
+(* errb_map_cf (YG00cf.v:122-127): tick, ask for the map (a refusal is MmapOrDie, a spin), retire the old
    capacity entry, append the new one. *)
 Lemma errb_map_cf_ok : forall U pp cc bb s want ns,
 WfP_cf U pp cc bb s -> 0 < want -> round_up want kPage <= cf_nob ->
@@ -271,7 +272,7 @@ cbn in E; [injection E as <-; discriminate Hl | destruct m; discriminate].
 split; [exact X2|]. cbn [st_secs set_secs]. subst l'. rewrite find_sz_app_ctl by reflexivity. apply find_sz_retire.
 Qed.
 
-(* errb_set_size (YG00cf.v:90-95): update the size entry in place, or append it. *)
+(* errb_set_size (YG00cf.v:91-96): update the size entry in place, or append it. *)
 Lemma errb_set_size_ok : forall U pp cc bb s v ns,
 WfP_cf U pp cc bb s -> 0 <= v <= cf_nob ->
 (find_sz (st_secs s) 0 = None -> Z.of_nat (length (st_secs s)) + 1 + cc <= st_nev s) ->
@@ -317,7 +318,7 @@ split; [rewrite F; discriminate|]. unfold errb_size_cf. cbn [st_secs set_secs]. 
 rewrite nth_error_app2, Nat.sub_diag by lia. reflexivity.
 Qed.
 
-(* errb_append_cf (YG00cf.v:132-142): one Printf into the buffer, mapping or remapping it as needed. *)
+(* errb_append_cf (YG00cf.v:133-143): one Printf into the buffer, mapping or remapping it as needed. *)
 Lemma errb_append_cf_ok : forall U pp cc bb s len ns,
 WfP_cf U pp cc bb s -> 0 < len <= kPage -> errb_size_cf s + len + kPage <= cf_nob ->
 (find_sz (st_secs s) 0 = None -> Z.of_nat (length (st_secs s)) + 1 + cc <= st_nev s) ->
@@ -368,7 +369,7 @@ Qed.
 Lemma ndigits_bounds : forall z, 1 <= ndigits z <= 5.
 Proof. intros z. unfold ndigits. repeat match goal with |- context [if ?b then _ else _] => destruct b end; lia. Qed.
 
-(* The class-full report (YG00cf.v:146-149): nothing when the class's byte is set, else two Printfs. *)
+(* The class-full report (YG00cf.v:147-150): nothing when the class's byte is set, else two Printfs. *)
 Lemma errb_report_cf_ok : forall U pp cc bb s c ns,
 WfP_cf U pp cc bb s -> 1 <= cc -> ERRB_ROOM s ->
 atok_cf ns (errb_report_cf c s) (fun _ r => let s' := snd r in
@@ -470,7 +471,7 @@ Qed.
 Section CACHE.
 Context {cp : CfParams}.
 
-(* populate_cf's carve (YG00cf.v:193-196), as one region update: the class keeps Compl0 because the new
+(* populate_cf's carve (YG00cf.v:194-197), as one region update: the class keeps Compl0 because the new
    run adds exactly cnt records and cnt * class_size c carved bytes. *)
 Lemma WfP_cf_carve : forall U pp cc bb s c hs,
 WfP_cf U pp cc bb s -> 1 <= c <= 31 ->
@@ -708,7 +709,7 @@ exists r1, rest. rewrite upd_reg_upd_reg. split; [exact W1|]. split; [reflexivit
 split; [lia | exact E2].
 Qed.
 
-(* cache_alloc_cf (YG00cf.v:224-233). Some names the state just BEFORE the pop: the popped record is
+(* cache_alloc_cf (YG00cf.v:225-234). Some names the state just BEFORE the pop: the popped record is
    in no list of the class until malloc_cf stores it in its chunk (WfP_cf_pop_add_prim below). None: the
    refill was refused (ns = false) or the class is full (its byte is set), and the cc unit is spent. *)
 Definition cache_alloc_post_cf (U : Univ) (pp cc bb : Z) (s : astate) (c : Z) (ns : bool) (res : option Z * astate) : Prop :=

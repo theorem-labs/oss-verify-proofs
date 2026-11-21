@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput.v, with its module paths and module names changed; 100 of its 229 lines of code are new or changed and 1115 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Glue between the LLVMFuzzerTestOneInput walks (lt_segs.v) and the SR contracts of its callees, for fuzz_lock.plain:
-   libreac/fuzz_decode's lib/Prog/fd_glue.v (release 25e3d17bdb50) without its allocator lemmas (fuzz_lock's
+   libreac/fuzz_decode's lib/Prog/fd_glue.v (release) without its allocator lemmas (fuzz_lock's
    LLVMFuzzerTestOneInput allocates nothing), with g_cno and g_cl, the calls of check_no_overread and check_lookup
    through their contracts, in the form of decode's g_crt. Modified by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.

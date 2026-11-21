@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: QI_init takes the channel-reader premise, reads the initial ledger as the image's reservations followed by the vDSO pair (init_reserved), and proves the new ledger fields (KL_resv_init, KL_vin_init). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
@@ -77,23 +78,30 @@ Theorem QI_init : forall P segs brk0 mbase sp lim inp atop,
   reserved_top (segments_reserved segs) + brk_aslr_max + 2^31 + 8 * PGSZ <= FLOOR ->
   live_bytes (segments_reserved segs) <= 2^30 -> 2^31 <= lim ->
   (forall c, 0 <= P c) -> PQOK P -> PHI P <= LBUDGET ->
+  in_channel_reader inp = true ->
   QI [] P (ps_init (reservedZ segs) atop) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-  intros P segs brk0 mbase sp lim inp atop (Hlo & Hhi & Hal) Hpos Hsp Eatop Hceil Hfloor Hresv Hlim HP PQ HPHI. split; [| unfold R63X, zsum; cbn; lia].
+  intros P segs brk0 mbase sp lim inp atop (Hlo & Hhi & Hal) Hpos Hsp Eatop Hceil Hfloor Hresv Hlim HP PQ HPHI Hrdr. split; [| unfold R63X, zsum; cbn; lia].
   pose proof alloc_ceiling_lo_val as Hclo.
   assert (Hat : 0 < atop <= atop_hi) by (unfold atop_hi, sp_window_lo, sp_window_hi, stack_max_size in *; lia).
   exists (minit 0 (reservedZ segs) atop), (led_init (reservedZ segs) atop), [], (fun _ => []).
   split; [reflexivity|]. split; [apply INVL_init; [lia| exact Hat]|]. split; [apply SINV_minit|]. split; [apply AQ_minit; [exact HP| exact PQ]|].
+  (* LPS 08b1429: [init_model]'s ledger is the image's reservations followed by the vDSO pair. *)
   assert (Evm : m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)
-                = mkVmMapsFull (segments_reserved segs) [] [] brk0 brk0 lim mbase sp) by reflexivity.
+                = mkVmMapsFull (init_reserved (segments_reserved segs) mbase sp (in_kernel inp)) [] [] brk0 brk0 lim mbase sp)
+    by apply m_vmmaps_init_model.
   assert (Eh : m_halted (init_model (segments_reserved segs) brk0 mbase sp lim inp) = None) by reflexivity.
+  pose proof (KL_resv_init segs brk0 mbase sp lim inp (conj Hlo (conj Hhi Hal))) as [KR KB].
   split; [| split; [| split; [| apply Permutation_refl]]].
-  - constructor; rewrite ?Evm; cbn -[Z.pow Z.mul Z.add Z.sub init_model alloc_top].
-    + apply minv_init. exact Hsp.
+  - constructor.
+    13:{ apply KL_vin_init. }
+    12:{ rewrite Evm. intros e []. }
+    4:{ destruct KR as (R0 & rx & E1 & E2 & E3 & E4 & E5). exists R0, rx.
+        split; [exact E1|]. split; [rewrite <- E2; reflexivity|]. split; [exact E3|]. split; assumption. }
+    all: rewrite ?Evm; cbn -[Z.pow Z.mul Z.add Z.sub init_model alloc_top init_reserved].
+    + apply minv_init; [exact Hsp | exact Hrdr].
     + exact Eh.
     + split; [intros e []| apply pwdisj_nil].
-    + reflexivity.
-    + intros e Hin. pose proof (reserved_top_ge' _ _ Hin). unfold ehi. lia.
     + unfold PGSZ in *. unfold page_size in Hal. unfold alloc_ceiling_lo, sp_window_lo, stack_max_size in *. lia.
     + intros b l [].
     + intros b l k [].
@@ -104,6 +112,7 @@ Proof.
   - unfold LI, gm, BB. rewrite Evm. cbn. lia.
   - split; [| split].
     + rewrite Evm. unfold kcnt, lcnt. cbn. lia.
-    + unfold LNstat. rewrite Evm. cbn -[Z.pow Z.mul Z.add]. unfold PGSZ in *. split; [lia|]. split; [lia| exact Hresv].
+    + unfold LNstat. pose proof KB as KB'. rewrite Evm in KB' |- *. cbn -[Z.pow Z.mul Z.add init_reserved] in KB' |- *.
+      unfold PGSZ in *. split; [lia|]. split; [lia| lia].
     + intros b l H. discriminate.
 Qed.

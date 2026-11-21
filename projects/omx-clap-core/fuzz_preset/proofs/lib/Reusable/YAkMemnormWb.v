@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YAkMemnormWb.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, route R1 (a Theorem Labs lane, lane MnPrefix): memnorm (YAkMemnorm.memnorm) kept across a
    kernel read into a window, the one overlay change on the path from main to the driver loop head that is neither a
    runner segment nor a call site (port/mnloop-prefix-leaves.md §5): the read node of rd_step_pos_cf

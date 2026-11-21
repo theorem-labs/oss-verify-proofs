@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of sup_reply_code (plugin-hostd/fuzz_command, 0x89d6c, 20 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (pb_cmpPixel, a leaf that ends in a tail jump to a runtime entry) and A/ACh2.v (the step through a call and back). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_reply_code.v, with its module paths and module names changed; 422 of its 488 lines of code are new or changed and 222 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_ignored.v, with its module paths and module names changed; 78 of its 130 lines of code are new or changed and 436 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_split on fuzz_segconf image B (fuzz_segconf.asan-ubsan, 0x8a218 = BASE +
-   AF_reac_declared_vlan_split): the image-B port of lib/A/Prog/reac_declared_vlan_split_k.v
-   (commit ceb7e39832b2). Image B's listing object 0 is the GOT word 0xa3210 and object 12 the
+   AF_reac_declared_vlan_split): the image-B port of lib/A/Prog/reac_declared_vlan_split_k.v.
+   Image B's listing object 0 is the GOT word 0xa3210 and object 12 the
    shadow-base cell 0xac7b8 (lib/B/Prog/SegAddr.v seg_objs), the same positions as image A's.
    The kit of its walk: the symbolic entry state and its seed (the 64-byte frame below sp, the GOT word of the
    shadow-base cell, listing object 0, and the cell itself, object 12, whose word is the shadow base atom 32); the

@@ -1,6 +1,6 @@
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (asan #102 pin 1be0f53d96cb, unstripped twin bff8519bbe3e), same:
-   the walk at the instance of record (SameAp_final.v same_holds_Ap_TfibBx, the kit's text tsame_specX at the cut
-   7cdbb61b5fa0) with its TWO runtime rows CITED, so no premise is left (owner order 14:33Z; rows of a Theorem Labs lane).
+   the walk at the instance of record (SameAp_final.v same_holds_Ap_TfibBx, the kit's text tsame_specX at the cut)
+   with its TWO runtime rows CITED, so no premise is left (owner order 14:33Z; rows of a Theorem Labs lane).
    rule 24: no function proved. rule 24: proves no function (kind: instance corollary citing proved rows).
    Instance: B := AD2l.TfibB, PA := PI_prog_A, RL := prh_room_live_a8, cp := CfParams_preset,
    ARx := ARcf /\ xs_placed_cf over lib/A/Img0's rsegs (SameAp_final.v's ARX / Cno102A_TopA.v's ARcfx).

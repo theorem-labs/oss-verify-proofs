@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: regenerated for libreac/fuzz_identity image A (fuzz_identity.asan c954b804786c) from this image, its unstripped twin, the 50 collected hand-off states, AB12 and AF0m *)
 (* Read from: fuzz_identity.asan (libreac/fuzz_identity asan) sha256 c954b804786cb87fc218414447199e35235b9788453ec0db312f97cd0dc4291b; unstripped twin sha256 5b0cbe57303630895c71979f5c3209f1d343f0f42aad36e87c9f5193408da124 *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed R_RS). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YP0m YP09.
@@ -223,6 +224,11 @@ mkChunk 661769 (CImg 71) ].
 Definition R_RS : region :=
 mkRegion None 6059536 6125072 0 0
 [  ].
+(* LPS 727298f3: every computed hand-off state of A/AB01r.v knows the byte at 6125076 only as image bytes
+   ([KImg 6059530 6127232], both CONFIG_RSEQ flags: lib/A/ZZ_iddrv.v), and that image byte is 0 (it is in .bss
+   of fuzz_identity.asan, sha256 c954b804786c..., zero-filled), so the entry check reads [SLit 0] there through
+   the [KImg] fact.  The released cell stays as it was: one state family after the hand-off holds a non-image
+   chunk at 6125076 (A/AD2d.v's image cells split there), and this region's consumers compare chunk by chunk. *)
 Definition R_A5a : region :=
 mkRegion None 6125072 6127276 6125072 6127276
 [ mkChunk 6125072 (CImg 4);

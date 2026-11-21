@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -283,8 +284,9 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hrt : sep_route E (s_facts S) a R).
   { exact (pri_sep_c_route E (s_facts S) (sm_maps M) model (sm_sp M) _ HF0 (dn_maps _ _ _ _ _ _ _ _ _ Hd) (dn_pd _ _ _ _ _ _ _ _ _ Hd)
            (dn_gsh _ _ _ _ _ _ _ _ _ Hd) (dn_gtop _ _ _ _ _ _ _ _ _ Hd) (dn_sp _ _ _ _ _ _ _ _ _ Hd) (proj2 (dn_spok _ _ _ _ _ _ _ _ _ Hd))
-           (proj1 (dn_spok _ _ _ _ _ _ _ _ _ Hd)) (dn_mres _ _ _ _ _ _ _ _ _ Hd) ASEGSR (dn_res _ _ _ _ _ _ _ _ _ Hd) gq_res a m0 Hi jP jT _ _ Hp eq_refl eq_refl Ht eq_refl eq_refl Hsep
-           R Hz Hr Hps). }
+           (proj1 (dn_spok _ _ _ _ _ _ _ _ _ Hd)) (dn_mres _ _ _ _ _ _ _ _ _ Hd) (ASEGSR ++ vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+           (dn_res _ _ _ _ _ _ _ _ _ Hd) (FxChSep.in_res_b_app _ _ _ _ gq_res) a m0 Hi jP jT _ _ Hp eq_refl eq_refl Ht eq_refl eq_refl Hsep
+           R Hz Hr (pri_sep_c_app _ _ _ _ _ _ _ _ _ Hps)). }
   exact (batch_sep_at_sound E (s_facts S) HF0 a m0 Hi Hsep Hxt ql R Hz Hr Hrt Hck Hq Hx x ltac:(lia) Hb).
 Qed.
 

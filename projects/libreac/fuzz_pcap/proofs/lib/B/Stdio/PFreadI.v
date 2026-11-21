@@ -2,7 +2,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): asan-ubsan twin of lib/A/Stdio/PFreadI.v
-   (a working branch d340d6cc759, a Theorem Labs lane), ported from that file: the same walk, Requires
+   (a working branch, a Theorem Labs lane), ported from that file: the same walk, Requires
    lib.A.A<n> -> lib.Reusable.Y<n> (AB1v AE34 AF0l AF0m AF0x AB1w AE20 AE2y ACeg) and A<n>. -> Y<n>. qualified names,
    lib.A.Stdio.PFreadITbl / PFreadIChk -> their lib/B/Stdio twins; lib/A/Prog/PcapFrame's rdword_of_val_mem ->
    lib/Reusable/YCem.v's (same statement), lib/A/Prog/PcapSourceClose -> lib/A/Prog/PcapSourceCloseSpec.v (the
@@ -22,7 +22,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      interceptor 0x43550 ___interceptor_fread+0, st_size 628 = 157 words                             [0x43500]
      REAL        PStdioImgB.PFREAD_U = fread+0 = 0x8ed28 (by NAME), the value of the cell
                  __interception::real_fread+0 = 0x9b438 (.data; loaded by `ld a4,-0x154(a1)` at +0x40 = 0x43590,
-                 auipc a1 at +0x3c); the cell is lib/Reusable/YF0m.v:295                        [0x8ee5c / 0x9b570]
+                 auipc a1 at +0x3c); the cell is lib/Reusable/YF0m.v:296                        [0x8ee5c / 0x9b570]
      FR_RET_U   0x435ac  ___interceptor_fread+0x5c, the return of `jalr a4` at +0x58 = 0x435a8         [0x4355c]
      FR_B_U     0x435b8  ___interceptor_fread+0x68, the check's entry (= PFreadIChk.RC_ENTRY_U)       [0x43568]
      FR_END_U   0x43610  ___interceptor_fread+0xc0, the epilogue / join (= PFreadIChk.RC_END_U)       [0x435c0]
@@ -30,7 +30,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      TryAsanInitFromRtl 0x598e4 (+0x50); asan_inited 0xa2498 (`addi s0,a0,-0x458` at 0x598f4, auipc-relative;
      `lb a1,0(s0)` at 0x598f8), YE2y.v's icpt_rodata row (0xa2498, 2) = [1; 1].
      The shadow base: GOT 0x996f8 (`ld a1,0x124(a1)` at +0x88) -> __asan_shadow_memory_dynamic_address 0xa17b8 ->
-     0x7fff8000 (YE2y.v's icpt_rodata, against YF0m.v:176 and :81). [A: 0x99830 -> 0xa18b8]
+     0x7fff8000 (YE2y.v's icpt_rodata, against YF0m.v:177 and :82). [A: 0x99830 -> 0xa18b8]
      The common_flags GOT cell 0x996e8 (+0x118, +0x1f8) is on the report paths only and is never read.
    The 157 words agree with the asan image's at 151 positions; the 6 that differ are the auipc-relative data
    loads above (real slot, shadow GOT, common_flags GOT twice, and two lo12 changes to .rodata 0x1404b / 0x103d0 on
@@ -69,12 +69,12 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    (rodata_chk); asan_inited (0xa2498) and the shadow base (0xa17b8) are E-PEND rows of YF0m.v (:83, :81), named
    here as the core's push requires.
 
-   RULE 24: lookup files for 0x415d0, 0x43550, afread_spec and pcapu_afread_spec (sha256 a4f895991650, 4c209579c58e, 4148d9deac13, ca93669df20e; internal record) (at ossv/recipes 25e3d17bdb50 (2026-10-29), pcapu_afread_spec: 0 hits);
+   RULE 24: lookup files for 0x415d0, 0x43550, afread_spec and pcapu_afread_spec (sha256 a4f895991650, 4c209579c58e, 4148d9deac13, ca93669df20e; internal record) ((2026-10-29), pcapu_afread_spec: 0 hits);
    checker verdict (sha256 fcc950026052; internal record) (CONFIRM, template named).
    CROSS-CHECK (owner's order, a Theorem Labs lane 07:39Z: template ONLY; nothing imported, Required or copied) against
    fread_walkA / fread_walkB / fread_chk (I_freadw.v:38 / :241 / :161 (sha256 25add494ffa2; internal record)) and fread_wrap_holds
-   (fread_wrap.v:60 (sha256 9464b73219ca; internal record)) on a working branch f2159272960 (I_freadw.v (sha256 25add494ffa2; internal record), blob f63696f3, the same on
-   a working branch 988927a8299). EQUAL: entry 0x415d0 (I_freadw.v:48 (sha256 25add494ffa2; internal record)); REAL 0x8ed28 and its slot
+   (fread_wrap.v:60 (sha256 9464b73219ca; internal record)) on a working branch (I_freadw.v (sha256 25add494ffa2; internal record), blob f63696f3, the same on
+   a working branch). EQUAL: entry 0x415d0 (I_freadw.v:48 (sha256 25add494ffa2; internal record)); REAL 0x8ed28 and its slot
    0x9b438 (:34, :44); asan_inited 0xa2498 = 1 (:44); return 0x435ac (:31); sp - 2128 and the saved words
    s5..ra at sp-56..sp-8 (:31, :36; here SAVEDA / epi_chunks); s1 = size, s2 = d, s3 = f, s4 = nm, s5 = 1 (:31-32;
    here shapeA); the 2144-byte window (:35; FR_WIN); k = 0: `beqz s5` not taken, `beqz a0` taken to 0x43610
@@ -87,7 +87,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    template keeps both outcomes of `beqz a1` 0x436e8 (:220, :233) and may call region_is_poisoned, this walk proves
    it taken (PFreadIChk qc_flag_zero); (4) the granule loop 0x436d4 is an induction there (fread_loop :102),
    unrolled over t = g1 - g0 in 0 .. 8 here; (5) the windows: the template budgets FREAD_K 4480 / FREAD_MUSL_K 2352
-   (fread_wrap_c.v:14, :16 (sha256 b194cc66b7c8; internal record)), this statement AFREAD_STK 8192 / RFREAD_STK 4224 (PFreadISpec.v:77, PFreadM.v). *)
+   (fread_wrap_c.v:14, :16 (sha256 b194cc66b7c8; internal record)), this statement AFREAD_STK 8192 / RFREAD_STK 4224 (PFreadISpec.v:78, PFreadM.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -109,7 +110,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YCeg.
 (* Used QUALIFIED and for one lemma each, both segs-generic: lib/Reusable/YCem.v's `rdword_of_val_mem` (the
    val_mem -> rdword direction achain_push's frame-record premises need; the same statement as lib/A/Prog/
    PcapFrame.v:115, which this file does not Require because PcapFrame's closure holds the asan listing) and
-   a Theorem Labs lane's `asource_at_frame_segs` from the image-free statement file lib/A/Prog/PcapSourceCloseSpec.v:117
+   a Theorem Labs lane's `asource_at_frame_segs` from the image-free statement file lib/A/Prog/PcapSourceCloseSpec.v:118
    (the A walk reached it through PcapSourceClose's Require Export). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YCem.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require PcapSourceCloseSpec.
@@ -142,7 +143,7 @@ Lemma FR_END_is_check : FR_END_U = PFreadIChk.RC_END_U. Proof. reflexivity. Qed.
 
 (* The one rodata cell the interceptor reads beyond YE2y's icpt_rodata: __interception::real_fread+0 = 0x9b438
    (.data, 8 bytes), holding musl fread PStdioImgB.PFREAD_U; frA_rodata_chk checks the pair against the B start-up
-   table lib/Reusable/YF0m.v:295 `z8 (ANum 0x9b438) 0x8ed28`. *)
+   table lib/Reusable/YF0m.v:296 `z8 (ANum 0x9b438) 0x8ed28`. *)
 Definition frA_rodata : list (Z * Z * list (Z * BinNums.N * Z)) :=
 icpt_rodata ++ [((symaddr Symbols.AsanUbsan.s__ZN14__interception10real_freadE), 8, [(0, 8%N, PStdioImgB.PFREAD_U)])].
 Lemma frA_rodata_chk : forall ly, rodata_chk ly frA_rodata = true.
@@ -278,7 +279,7 @@ Variable B : asyms.
 Variable K : asource_syms.
 Hypothesis LAWS : AR_laws tfibsegs B.
 Hypothesis TB : PcapSyms B.
-(* a Theorem Labs lane's record (lib/A/Stdio/PSourceMeta.v), carried as lib/A/Stdio/PFclose.v:91 carries it:
+(* a Theorem Labs lane's record (lib/A/Stdio/PSourceMeta.v), carried as lib/A/Stdio/PFclose.v:92 carries it:
    discharged ONCE at instantiation, never per walk. *)
 Hypothesis ASIL : asource_img_laws SK tfibsegs B K.
 
@@ -286,7 +287,7 @@ Local Notation ajournal := (YCbq.ajournal tfibsegs B).
 Local Notation rread_k := PFreadM.rread_k.
 
 (* The stream predicate moves across a run that writes only outside the FILE block, the data buffer
-   and the stdio environment: a Theorem Labs lane's `asource_at_frame_segs` (lib/A/Prog/PcapSourceCloseSpec.v:117,
+   and the stdio environment: a Theorem Labs lane's `asource_at_frame_segs` (lib/A/Prog/PcapSourceCloseSpec.v:118,
    image-free), which is stated over an arbitrary `segs`. *)
 Local Notation asrc_kept := (PcapSourceCloseSpec.asource_at_frame_segs tfibsegs).
 
@@ -321,8 +322,8 @@ split.
 intros a Ha. apply Hpres. rewrite HSTK in Hslo. rewrite HWIN in Ha. clear - Ha Hslo Hshi. lia.
 Qed.
 
-(* This worker's musl-level statement at the REAL call (lib/A/Stdio/PFreadM.v, a working branch
-   8e0ae3045e4). SK is passed explicitly: sink_head is a CLASS with a global instance for the PLAIN
+(* This worker's musl-level statement at the REAL call (lib/A/Stdio/PFreadM.v, a working branch).
+   SK is passed explicitly: sink_head is a CLASS with a global instance for the PLAIN
    image (lib/Reusable/YI5b.v:12), so an inferred SK would be the wrong head. *)
 Hypothesis RFR : PFreadM.rfread_contract (SK:=SK) tfibsegs B K PStdioImgB.PFREAD_U.
 

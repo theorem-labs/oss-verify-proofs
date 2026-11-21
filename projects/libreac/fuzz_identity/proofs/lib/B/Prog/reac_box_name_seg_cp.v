@@ -4,9 +4,10 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACbk.v:76-79; projects/cgif/cgif_file_fuzzer/proofs/lib/A/AChd.v:200-203, 358-361,
    386-392, 532-535, for libreac/fuzz_identity's asan-ubsan build (lib/B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_family_stem.v, with its module paths and module names changed; 983 of its 1024 lines of code are new or changed and 232 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* reac_box_name (fuzz_identity.asan-ubsan, AF_reac_box_name = 0x2600): the three copy loops of its program walk
    (the walk, its cut-point states lib/B/Prog/reac_box_name_inv.v and the top chain
-   lib/B/Prog/reac_box_name.v:161). Each loop copies a NUL-terminated string into a buffer struct, per character:
+   lib/B/Prog/reac_box_name.v:162). Each loop copies a NUL-terminated string into a buffer struct, per character:
      rbn_cp_stem  C2 -> C3  0x83088 .. 0x830cc  stem -> nb (cursor s5, look-ahead s10, -1 in s8);
      rbn_cp_w4    C4 -> C5  0x83128 .. 0x8316c  w4   -> nb (cursor s4, look-ahead s5,  -1 in s8);
      rbn_cp_dp    C8 -> C9  0x83298 .. 0x832dc  nm   -> db (cursor s8, look-ahead s4,  -1 in s5).

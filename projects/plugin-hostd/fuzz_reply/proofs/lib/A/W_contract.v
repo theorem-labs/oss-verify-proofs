@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the per-function contract form of fuzz_reply's ASan program walks, in the form of
    the cgif function contracts that proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v assumes and lib/A/AC8h.v proves for freeCGIF. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Each contract has two halves.
    - The memory half is the donor's: `afn_pre` at the entry pc, and a post that is an `ajournal` of what the
      call did to the allocator state, `aregs_preserved`, and a `Permutation` of the live blocks.
@@ -47,8 +48,8 @@ Ltac pres_chain :=
   | Hg : mem_grows (mrestrict _ ?m0) (mrestrict _ ?m1) |- apresent _ ?m1 _ => apply (apresent_grows _ m0 m1 _ Hg)
   | Hp : forall a, apresent _ ?m0 a -> apresent _ ?m1 a |- apresent _ ?m1 _ => apply Hp
   end; assumption.
-(* C3 (a Theorem Labs lane's option (a); a Theorem Labs lane's lib/A/ReplyTrPeak.v:120-135 on a working branch
-   a974170418e, word for word; reviewer B1cReviewTrPeak SOUND): the most the
+(* C3 (a Theorem Labs lane's option (a); a Theorem Labs lane's lib/A/ReplyTrPeak.v:120-135 on a working branch,
+   word for word; reviewer B1cReviewTrPeak SOUND): the most the
    live bytes rise above their value at the start of a request trace, each request at its own point - RMalloc n
    reaches cur + n; RFree k lowers cur by k; RRealloc k n reaches cur + n (the old k bytes still live, ASan's
    allocate-copy-free) and leaves cur + n - k.  `bb + tr_peak tr <= LIVE_MAX` gives every allocator request of tr its
@@ -924,7 +925,7 @@ aout_at B RG ly S W mem c O mx no cap out ->
 rom_view SEGS W mem ->
 garr8 SEGS (arm W mem) line (bzs Bl) -> 0 <= line -> line + Z.of_nat (length Bl) < 2 ^ 63 ->
 sl_line_ok ly S out line (Z.of_nat (length Bl)) ->
-(* W7's premise (a working branch 14d97d478bb): the line is no byte of G_SL, so send_line's own writes to
+(* W7's premise (a working branch): the line is no byte of G_SL, so send_line's own writes to
    its globals cannot move it.  Taken verbatim so that the union merge converges. *)
 (forall a, line <= a < line + Z.of_nat (length Bl) -> ~ inG G_SL a) ->
 sl_maxr c mx no cap (Z.of_nat (length Bl)) < MMAX ->
@@ -1065,7 +1066,7 @@ Variable CTX : list (list Z).
 (* relay_event (line) (relay.c:403-409): send_line (line, strlen (line) + 1) under g_lock; the unlock is a tail call.
    Frame 32 bytes, deepest callee send_line.  It writes g_lock's lock word (through the mutex) and, through
    send_line, G_SL.  The line e ++ NUL lies in a live block other than g_out's; the bytes after the NUL up to the
-   end of its 8-byte granule are visible (strlen's interceptor reads them, astrlen_realizes W_contract.v:234) - a
+   end of its 8-byte granule are visible (strlen's interceptor reads them, astrlen_realizes W_contract.v:235) - a
    premise in that form, because op_event's line block is malloc(len + 1) and that granule tail lies past the
    block's requested size, so no "inside the block" bound holds for it. *)
 Definition RE_FRAME : Z := 32.
@@ -1750,7 +1751,7 @@ match es with
 end.
 (* send_line's room for every gestures_end, bb bounding blocks_bytes before each.  The next entry's room is
    bb + gse_cap r - cap, cap the entry's g_out capacity before the call: the entry's buffer and keys are freed and the
-   g_out block only changes from cap to gse_cap r (lx_rf_room_p's per-entry form, commit 066a0abe56c,
+   g_out block only changes from cap to gse_cap r (lx_rf_room_p's per-entry form,
    lib/A/ReplyLS3oRf.v:243-249).  The earlier threading bb + gse_cap r asked the caller for k * cap of room, which no
    LS row supplies. *)
 Fixpoint rf_room (bb : Z) (c : ctl) (O : list byte) (mx no cap : Z) (es : list rentry) : Prop :=
@@ -1813,7 +1814,7 @@ End w5f.
    lib/A/W_check_shape_ends.v on 2026-10-29 so that tools/bkit/mkbkit.py twins it into lib/B with no hand copy.
    Image B's body differs (frame 112; list_drop CALLED at 0x85924 / 0x85a00 where A inlines free + memmove), so B's
    CSHE_FRAME and CSHE_STK come in as cfg b_facts; the text below is shared.  B's two list_drop calls need
-   ldrop_spec's memmove size `AREC * (hl_n l - 1 - Z.of_nat i) < 2 ^ 32` (kit 5bf9ced2993's weakened form), which
+   ldrop_spec's memmove size `AREC * (hl_n l - 1 - Z.of_nat i) < 2 ^ 32` (kit's weakened form), which
    `hl_n H < 2 ^ 26` below already gives (16 * 2^26 < 2^32): no cap premise is stated. ---- *)
 Section w3e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.
@@ -2016,7 +2017,7 @@ c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
 ajournal_gx SEGS B G XO [(AT, AT + 8)] CNL_STK (spZ regs) (blk_FP (list_blks E ++ list_blks H))
   ly S W mem md [] ly' S' W' mem' md' kk /\
 aregs_preserved regs regs' /\ apres_kept B W mem W' mem' /\
-(* errno's view is kept, after apres_kept as in gm_post (W4 45476a00e76): the free keeps it (aj_free_gx), the
+(* errno's view is kept, after apres_kept as in gm_post (W4): the free keeps it (aj_free_gx), the
    memmove writes only its destination, gesture_model / next_line / bcmp keep it; ARM_gone reads it after the call *)
 (forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
 asrc_at B ly' S' W' mem' HA (set_exp_held h E' H') /\

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap answers, munmap's maps_subtract cut, Linux's mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -336,12 +337,19 @@ Section FreeSlow.
           - (* [comment removed for export] *) constructor.
             3:{ exact (UsOK_transfer A3 A5 (ii_us HII3) eq_refl (fun _ _ => eq_refl) (fun _ _ => eq_refl)). }
             3:{ exact (AvOK_transfer A3 A5 (ii_av HII3) eq_refl eq_refl (fun x mt' Hx Hr' => ex_intro _ mt' (conj Hx Hr'))). }
-            + intros a Ha Hra Hia. unfold h5. cbn [vm_maps vm_munmap].
+            + intros a Ha Hra Hia.
               rewrite M5out in Ha by lia.
               assert (HaB : ~ (B <= u a < B + L)) by (intros HaB; rewrite (M4in a HaB) in Ha; exact (Ha eq_refl)).
               rewrite (M4out a HaB) in Ha.
               pose proof (is_cov _ _ _ _ _ _ HIS3 a Ha Hra Hia) as Hc.
               pose proof HV3 as [_ _ _ _ _ Vpw Vmw _ _ _ _ _ _]. rewrite <- Hvm3 in Vpw, Vmw.
+              (* munmap cuts with [maps_subtract] at 08b1429; on this exact ledger it is [map_remove]
+                 ([VmLedger.vm_munmap_maps_exact]); the goal is restated over [h5] first, so the
+                 rewrite does not depend on how far [cbn] unfolds the state *)
+              change (mcov (vm_maps h5) (u a) 1). unfold h5.
+              rewrite (vm_munmap_maps_exact _ _ _
+                         (munmap_exact_pw (vm_maps (ms_vm s3)) (Z_to_bv 64 B) (Z_to_bv 64 L) Vpw
+                            (fun b sz Hb => proj1 (Vmw b sz Hb)) ltac:(rewrite (nf_vm _ _ _ HF3); exact Hin))).
               apply (mcov_remove (vm_maps (ms_vm s3)) (Z_to_bv 64 B) (Z_to_bv 64 L) (u a) 1 Vpw ltac:(rewrite (nf_vm _ _ _ HF3); exact Hin));
                 [rewrite HuL; lia | intros b sz Hb; exact (proj1 (Vmw b sz Hb)) | exact Hc | lia | rewrite HuB, HuL; lia | rewrite HuB, HuL; intros y Hy; lia].
             + intros x mtx Hx Hrl. exact (proj1 (ii_dd HII3 x) (ex_intro _ mtx (conj Hx Hrl))).
@@ -360,7 +368,14 @@ Section FreeSlow.
                  rewrite M5out by (rewrite Ea; lia). rewrite M4out by (rewrite Ea; intros HB; exact (Nod _ HB Hd)). exact E. }
         split. { intros a Ha. destruct (Z.lt_ge_cases (u a) B) as [Hb | Hb]; [| destruct (Z.lt_ge_cases (u a) (B + L)) as [Hb' | Hb']; [left; exact (DOMB _ (conj Hb Hb'))|]];
                  right; apply wbytes_keeps; rewrite ?Hlen4, ?uZ by lia; try (cbn; lia); rewrite M4out by lia; exact (MAP3 a Ha). }
-        unfold h5, vm_fixed, alloc_top, vm_live_bytes. cbn. rewrite (nf_vm _ _ _ HF3). cbn [ms_vm upd].
+        (* munmap's cut is [maps_subtract] at 08b1429; on this exact ledger it is [map_remove] *)
+        assert (Eh5 : vm_maps h5 = map_remove (vm_maps (ms_vm s3)) (Z_to_bv 64 B)).
+        { unfold h5. apply vm_munmap_maps_exact.
+          pose proof HV3 as [_ _ _ _ _ Vpw Vmw _ _ _ _ _ _]. rewrite <- Hvm3 in Vpw, Vmw.
+          apply (munmap_exact_pw _ _ _ Vpw (fun b sz Hb => proj1 (Vmw b sz Hb))).
+          rewrite (nf_vm _ _ _ HF3). exact Hin. }
+        unfold vm_live_bytes. rewrite Eh5.
+        unfold h5, vm_fixed, alloc_top. cbn. rewrite (nf_vm _ _ _ HF3). cbn [ms_vm upd].
         split; [repeat split; reflexivity|].
         unfold s2. cbn [ms_vm upd]. unfold s2 in Hin. cbn [ms_vm upd] in Hin.
         pose proof (live_bytes_remove_entry (vm_maps (ms_vm s)) (Z_to_bv 64 B) (Z_to_bv 64 L) Hin) as X. rewrite HuL in X. lia.

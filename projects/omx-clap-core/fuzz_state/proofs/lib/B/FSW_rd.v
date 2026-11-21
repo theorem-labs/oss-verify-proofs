@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image range set to libreac/fuzz_boxreg's own (Reusable/YImgTop.v IMG_LO, IMG_TOP). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YCbq.v, with its module paths and module names changed; 234 of its 308 lines of code are new or changed and 2888 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_frame.v; 494 of its 531 lines of code are new or changed and 271 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_rd.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_rd.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Reader walk kit: the reader statements' data premises (FSH_Fn_reader.v rnode / pobj / rd_blocks_ok, FSH_Gen.v
    fs_rblock) carried across a memory change that keeps every byte below alloc_ceiling (same_below m m' alloc_ceiling,
    FSW_K.v), e.g. from a function's entry to a program call after a prologue that writes only its frame, or from a
@@ -150,7 +151,7 @@ apply (aview_some_of_apresent tfibsegs). exact (proj1 Hsh).
 Qed.
 (* the reader's objects lie off fs's image [0x10000, FS_IMG_END): the layout's image zone covers [0x10000, FS_IMG_END)
    (YF0x.v img_cover_of_ledger: it holds fs's first and last PT_LOAD) and no client byte lies in it (AR_client_img_law);
-   the donor's blk_off_img / frm_off_img (ACeh.v) say the same but ACeh does not build (ACej.v:30). They lie off the
+   the donor's blk_off_img / frm_off_img (ACeh.v) say the same but ACeh does not build (ACej.v:31). They lie off the
    shadow [SHADOW_OFF, SHADOW_OFF + 2^44) = [0x7fff8000, kHighMemBeg) too: in_app puts each block / frame below
    kLowShadowBeg or at kHighMemBeg and above *)
 Lemma fsw_client_off_img : forall B ly S (W : world tfibsegs) mx md lo len, AR tfibsegs B ly S W mx md -> 0 < len ->
@@ -322,7 +323,7 @@ Qed.
 (* the body of a live block past its 16-byte head is addressable on the MACHINE's memory: AR (over the unpoisoned memory)
    makes its granules addressable (YCbq.range_addressable_of_block), and no head of U covers them, because each head is
    the start of a live block (FSupoisonU.fs_heads) and live blocks are pairwise disjoint (AR_blocks_law). Moved here
-   from the pj_get_str walk (a working branch 145a2f0cc88 FSW_pj_get_str.v pgs_body_addressable), same statement *)
+   from the pj_get_str walk (a working branch FSW_pj_get_str.v pgs_body_addressable), same statement *)
 Lemma fsw_block_body_addressable : forall B ly S U (W : world tfibsegs) mem md P n z len,
   ARU tfibsegs B ly S U W mem md -> FSupoisonU.fs_heads B ly S U ->
   In (P, n) (ablocks B ly S) -> P + 16 <= z -> 0 <= len -> z + len <= P + req_size n ->

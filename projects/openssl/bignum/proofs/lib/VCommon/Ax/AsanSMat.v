@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon Require Import PropExec CatSim ShapeAlg ShapeAlgCfg.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import AsanWLazy.
+From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
@@ -136,7 +138,7 @@ Lemma rzc_mat : forall ms model ms' acc model' T,
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
   intros ms model ms' acc model' T Hh Hsvc Hs Hmat Hc.
-  eapply rzc_silent1; [eapply node_instr_mat; eassumption | exact Hc].
+  eapply rzc_silent1; [eapply node_instr_mat; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 End Nodes.

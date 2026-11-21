@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with the auxv witness's unread value slots left as holes the bytes walk fills. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import base decidable list gmap.
@@ -441,61 +442,134 @@ Lemma auxv_sound : forall E st ms mo B,
   rauxv_ok (ms_mem ms) B.
 Proof.
   intros E st ms mo B HS HPB H HC HB1 HB2 HB3. unfold auxv_ok in H.
-  apply andb_prop in H as [H HR]. apply andb_prop in H as [H H152]. apply andb_prop in H as [H H136].
-  cbn [auxv_keys_ok AUXV_KEYS PrimInt63.add] in H. rewrite !andb_true_r in H.
-  repeat match goal with X : _ && _ = true |- _ => apply andb_prop in X as [? ?] end.
+  apply andb_prop in H as [H HR]. apply andb_prop in H as [H HNULL]. apply andb_prop in H as [H H392].
+  (** [Ctr.auxv_null_ok] is a disjunction over the two kernel builds, and the
+      disjunct that fires IS the CONFIG_RSEQ witness [rauxv_ok]'s
+      [exists (r : bool)] asks for -- which is why the checker reads the flag
+      off the state instead of taking it as a parameter.  Split first, so
+      each branch's own auxv reads enter the context below. *)
+  unfold auxv_null_ok in HNULL. apply orb_prop in HNULL as [HNULL|HNULL].
 
-  repeat match goal with
-  | X : is_litv (rload _ _ _ ?o _) _ = true |- _ => apply is_litv_inv in X
-  | X : match rload ?sg ?st ?k ?o ?w with Some _ => true | None => false end = true |- _ =>
-      destruct (rload sg st k o w) eqn:?L in X; [clear X| discriminate X]
-  end.
-  apply is_sv_inv in H136.
-  repeat match goal with
-  | X : rload rsegs st AUXV_ID ?o 8%uint63 = Some _ |- _ =>
-      apply (rload_inv E st ms mo AUXV_ID o 8%uint63 _ HS wok8 eq_refl) in X;
-      destruct X as (?rg & ?bys & ?Hreg & ?Ln & ?LO & ?HI & ?RH & ?BA & ?DV); cbn in Ln
-  end.
+  - (* no CONFIG_RSEQ: 27 pairs, AT_NULL at slot 26, bytes 416/424 *)
+    cbn [auxv_keys_ok AUXV_KEYS app PrimInt63.add] in H, HNULL.
+    rewrite !andb_true_r in H, HNULL.
+    repeat match goal with X : _ && _ = true |- _ => apply andb_prop in X as [? ?] end.
 
-  unfold rnd_region_ok in HR. destruct (IMap.find RND_ID (s_regs st)) as [qr|] eqn:Hqr; [|discriminate].
-  destruct (Mem.rg_cells qr) eqn:HCq; try discriminate. destruct (Mem.rg_bg qr) as [| | | |j sh] eqn:HBq; try discriminate.
-  apply andb_prop in HR as [HR HLq]. apply andb_prop in HR as [HR HLOq]. apply andb_prop in HR as [HJ HSH].
-  apply Uint63.eqb_correct in HJ. apply Uint63.eqb_correct in HSH. apply Uint63.eqb_correct in HLOq. subst j sh.
-  destruct (rload rsegs st RND_ID 8%uint63 8%uint63) as [vq|] eqn:Lq; [|discriminate].
-  destruct (rload_inv E st ms mo RND_ID 8%uint63 8%uint63 vq HS wok8 eq_refl Lq) as (qr' & bsq & Hqr' & _ & _ & HIq & RHq & _ & _).
-  rewrite Hqr in Hqr'. injection Hqr' as <-. lit_ints_in HIq.
-  pose proof (blob_region_bytes (s_priv st) E (ms_mem ms) RND_ID qr RND_ID 8 8 (so_reg _ _ _ _ _ _ HS _ _ Hqr) eq_refl HCq HBq
-                ltac:(lia) ltac:(unfold loZ; rewrite HLOq; change (keyZ 0%uint63) with 0; lia) ltac:(cbn; lia)) as SEC.
-  rewrite (secret_bytes E HPB) in SEC.
+    repeat match goal with
+    | X : is_litv (rload _ _ _ ?o _) _ = true |- _ => apply is_litv_inv in X
+    | X : match rload ?sg ?st ?k ?o ?w with Some _ => true | None => false end = true |- _ =>
+        destruct (rload sg st k o w) eqn:?L in X; [clear X| discriminate X]
+    end.
+    apply is_sv_inv in H392.
+    repeat match goal with
+    | X : rload rsegs st AUXV_ID ?o 8%uint63 = Some _ |- _ =>
+        apply (rload_inv E st ms mo AUXV_ID o 8%uint63 _ HS wok8 eq_refl) in X;
+        destruct X as (?rg & ?bys & ?Hreg & ?Ln & ?LO & ?HI & ?RH & ?BA & ?DV); cbn in Ln
+    end.
 
-  repeat match goal with
-  | Ln : length ?bs = Z.to_nat (to_Z 8%uint63), DV : den E ?v = bytes_val false (to_Z 8%uint63) ?bs, BA : bytes_at _ _ _ ?bs |- _ =>
-      change (Z.to_nat (to_Z 8%uint63)) with 8%nat in Ln; change (to_Z 8%uint63) with 8 in DV;
-      first [ rewrite (lit_load_bytes E 8 bs _ Ln ltac:(lia) DV) in BA; rewrite le8_wz in BA by (lit_ints; lia)
-            | rewrite (load8_bytes E bs v Ln DV) in BA; try rewrite (den_VPz E) in BA; rewrite <- (wz_unsigned (den E v)) in BA || rewrite <- (wz_unsigned (ev E RND_ID)) in BA ];
-      clear Ln DV; lit_ints_in BA
-  end.
-  rewrite <- (wz_unsigned (ev E AUXV_ID)) in HC.
-  set (av := bv_unsigned (ev E AUXV_ID)) in *. set (rnd := bv_unsigned (ev E RND_ID)) in *.
-  match goal with H : to_Z 152%uint63 + to_Z 8%uint63 <= hiZ E ?r, H' : av + hiZ E ?r < 2 ^ 64 |- _ =>
-    lit_ints_in H; assert (AVH : av + 160 <= 2 ^ 64) by lia end.
-  unfold rauxv_ok. eexists av, _, _, _, _, _, _, _, _, rnd.
-  split; [exact HC|]. split; [| split; [exact SEC|]].
-  - unfold auxv_list. cbn [map u64s app]. rewrite <- (Z.add_0_r av) at 1.
-    repeat (apply bytes_at_cons8; [eassumption|];
-            match goal with |- bytes_at _ _ (_ + ?c) _ => let v := eval vm_compute in c in change c with v end).
-    apply bytes_at_nil. pose proof (bv_unsigned_in_range 64 (ev E AUXV_ID)). lia.
-  - pose proof (bv_unsigned_in_range 64 (ev E RND_ID)) as RR. unfold bv_modulus in RR.
-    repeat match goal with |- context [bv_unsigned (den E ?v)] =>
-      lazymatch goal with _ : 0 <= bv_unsigned (den E v) < _ |- _ => fail | _ => pose proof (bv_unsigned_in_range 64 (den E v)) end end.
-    unfold bv_modulus in *. cbn -[Z.pow av rnd alloc_ceiling Z.le Z.lt Z.add] in *. lia.
+    unfold rnd_region_ok in HR. destruct (IMap.find RND_ID (s_regs st)) as [qr|] eqn:Hqr; [|discriminate].
+    destruct (Mem.rg_cells qr) eqn:HCq; try discriminate. destruct (Mem.rg_bg qr) as [| | | |j sh] eqn:HBq; try discriminate.
+    apply andb_prop in HR as [HR HLq]. apply andb_prop in HR as [HR HLOq]. apply andb_prop in HR as [HJ HSH].
+    apply Uint63.eqb_correct in HJ. apply Uint63.eqb_correct in HSH. apply Uint63.eqb_correct in HLOq. subst j sh.
+    destruct (rload rsegs st RND_ID 8%uint63 8%uint63) as [vq|] eqn:Lq; [|discriminate].
+    destruct (rload_inv E st ms mo RND_ID 8%uint63 8%uint63 vq HS wok8 eq_refl Lq) as (qr' & bsq & Hqr' & _ & _ & HIq & RHq & _ & _).
+    rewrite Hqr in Hqr'. injection Hqr' as <-. lit_ints_in HIq.
+    pose proof (blob_region_bytes (s_priv st) E (ms_mem ms) RND_ID qr RND_ID 8 8 (so_reg _ _ _ _ _ _ HS _ _ Hqr) eq_refl HCq HBq
+                  ltac:(lia) ltac:(unfold loZ; rewrite HLOq; change (keyZ 0%uint63) with 0; lia) ltac:(cbn; lia)) as SEC.
+    rewrite (secret_bytes E HPB) in SEC.
+
+    repeat match goal with
+    | Ln : length ?bs = Z.to_nat (to_Z 8%uint63), DV : den E ?v = bytes_val false (to_Z 8%uint63) ?bs, BA : bytes_at _ _ _ ?bs |- _ =>
+        change (Z.to_nat (to_Z 8%uint63)) with 8%nat in Ln; change (to_Z 8%uint63) with 8 in DV;
+        first [ rewrite (lit_load_bytes E 8 bs _ Ln ltac:(lia) DV) in BA; rewrite le8_wz in BA by (lit_ints; lia)
+              | rewrite (load8_bytes E bs v Ln DV) in BA; try rewrite (den_VPz E) in BA; rewrite <- (wz_unsigned (den E v)) in BA || rewrite <- (wz_unsigned (ev E RND_ID)) in BA ];
+        clear Ln DV; lit_ints_in BA
+    end.
+    rewrite <- (wz_unsigned (ev E AUXV_ID)) in HC.
+    set (av := bv_unsigned (ev E AUXV_ID)) in *. set (rnd := bv_unsigned (ev E RND_ID)) in *.
+    (** The span is the LAST auxv read plus its width, exactly as [152 + 8 =
+        160] was for the old ten-pair table: here the last read is AT_NULL's
+        value at 424, and [424 + 8 = 432 = 16 * 27 = auxv_size false]. *)
+    match goal with H : to_Z 424%uint63 + to_Z 8%uint63 <= hiZ E ?r, H' : av + hiZ E ?r < 2 ^ 64 |- _ =>
+      lit_ints_in H; assert (AVH : av + Z.of_nat (StackLayout.auxv_size false) <= 2 ^ 64) by (cbn; lia) end.
+    (** Twenty-six value slots, AT_RANDOM's at index 24; the rest are holes
+        the [bytes_at_cons8] walk fills from the state. *)
+    unfold rauxv_ok. eexists false, av, [_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_; rnd; _], rnd.
+    split; [exact HC|]. split; [| split; [exact SEC|]].
+    + unfold auxv_list, auxv_tags. cbn [flat_map combine app u64s fst snd]. rewrite <- (Z.add_0_r av) at 1.
+      repeat (apply bytes_at_cons8; [eassumption|];
+              match goal with |- bytes_at _ _ (_ + ?c) _ => let v := eval vm_compute in c in change c with v end).
+      apply bytes_at_nil. pose proof (bv_unsigned_in_range 64 (ev E AUXV_ID)). lia.
+    + split; [reflexivity|]. split; [reflexivity|].
+      pose proof (bv_unsigned_in_range 64 (ev E RND_ID)) as RR. unfold bv_modulus in RR.
+      repeat match goal with |- context [bv_unsigned (den E ?v)] =>
+        lazymatch goal with _ : 0 <= bv_unsigned (den E v) < _ |- _ => fail | _ => pose proof (bv_unsigned_in_range 64 (den E v)) end end.
+      unfold bv_modulus in *. split.
+      * repeat constructor; cbn -[Z.pow av rnd Z.le Z.lt] in *; lia.
+      * cbn -[Z.pow av rnd alloc_ceiling Z.le Z.lt Z.add] in *. lia.
+
+  - (* CONFIG_RSEQ: 29 pairs, the AT_RSEQ_* pairs at 416 and 432, AT_NULL at
+       slot 28, bytes 448/456 *)
+    cbn [auxv_keys_ok AUXV_KEYS AUXV_RSEQ_KEYS app PrimInt63.add] in H, HNULL.
+    rewrite !andb_true_r in H, HNULL.
+    repeat match goal with X : _ && _ = true |- _ => apply andb_prop in X as [? ?] end.
+
+    repeat match goal with
+    | X : is_litv (rload _ _ _ ?o _) _ = true |- _ => apply is_litv_inv in X
+    | X : match rload ?sg ?st ?k ?o ?w with Some _ => true | None => false end = true |- _ =>
+        destruct (rload sg st k o w) eqn:?L in X; [clear X| discriminate X]
+    end.
+    apply is_sv_inv in H392.
+    repeat match goal with
+    | X : rload rsegs st AUXV_ID ?o 8%uint63 = Some _ |- _ =>
+        apply (rload_inv E st ms mo AUXV_ID o 8%uint63 _ HS wok8 eq_refl) in X;
+        destruct X as (?rg & ?bys & ?Hreg & ?Ln & ?LO & ?HI & ?RH & ?BA & ?DV); cbn in Ln
+    end.
+
+    unfold rnd_region_ok in HR. destruct (IMap.find RND_ID (s_regs st)) as [qr|] eqn:Hqr; [|discriminate].
+    destruct (Mem.rg_cells qr) eqn:HCq; try discriminate. destruct (Mem.rg_bg qr) as [| | | |j sh] eqn:HBq; try discriminate.
+    apply andb_prop in HR as [HR HLq]. apply andb_prop in HR as [HR HLOq]. apply andb_prop in HR as [HJ HSH].
+    apply Uint63.eqb_correct in HJ. apply Uint63.eqb_correct in HSH. apply Uint63.eqb_correct in HLOq. subst j sh.
+    destruct (rload rsegs st RND_ID 8%uint63 8%uint63) as [vq|] eqn:Lq; [|discriminate].
+    destruct (rload_inv E st ms mo RND_ID 8%uint63 8%uint63 vq HS wok8 eq_refl Lq) as (qr' & bsq & Hqr' & _ & _ & HIq & RHq & _ & _).
+    rewrite Hqr in Hqr'. injection Hqr' as <-. lit_ints_in HIq.
+    pose proof (blob_region_bytes (s_priv st) E (ms_mem ms) RND_ID qr RND_ID 8 8 (so_reg _ _ _ _ _ _ HS _ _ Hqr) eq_refl HCq HBq
+                  ltac:(lia) ltac:(unfold loZ; rewrite HLOq; change (keyZ 0%uint63) with 0; lia) ltac:(cbn; lia)) as SEC.
+    rewrite (secret_bytes E HPB) in SEC.
+
+    repeat match goal with
+    | Ln : length ?bs = Z.to_nat (to_Z 8%uint63), DV : den E ?v = bytes_val false (to_Z 8%uint63) ?bs, BA : bytes_at _ _ _ ?bs |- _ =>
+        change (Z.to_nat (to_Z 8%uint63)) with 8%nat in Ln; change (to_Z 8%uint63) with 8 in DV;
+        first [ rewrite (lit_load_bytes E 8 bs _ Ln ltac:(lia) DV) in BA; rewrite le8_wz in BA by (lit_ints; lia)
+              | rewrite (load8_bytes E bs v Ln DV) in BA; try rewrite (den_VPz E) in BA; rewrite <- (wz_unsigned (den E v)) in BA || rewrite <- (wz_unsigned (ev E RND_ID)) in BA ];
+        clear Ln DV; lit_ints_in BA
+    end.
+    rewrite <- (wz_unsigned (ev E AUXV_ID)) in HC.
+    set (av := bv_unsigned (ev E AUXV_ID)) in *. set (rnd := bv_unsigned (ev E RND_ID)) in *.
+    (** Last read is AT_NULL's value at 456, and
+        [456 + 8 = 464 = 16 * 29 = auxv_size true]. *)
+    match goal with H : to_Z 456%uint63 + to_Z 8%uint63 <= hiZ E ?r, H' : av + hiZ E ?r < 2 ^ 64 |- _ =>
+      lit_ints_in H; assert (AVH : av + Z.of_nat (StackLayout.auxv_size true) <= 2 ^ 64) by (cbn; lia) end.
+    unfold rauxv_ok. eexists true, av, [_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_; rnd; _; _; _], rnd.
+    split; [exact HC|]. split; [| split; [exact SEC|]].
+    + unfold auxv_list, auxv_tags. cbn [flat_map combine app u64s fst snd]. rewrite <- (Z.add_0_r av) at 1.
+      repeat (apply bytes_at_cons8; [eassumption|];
+              match goal with |- bytes_at _ _ (_ + ?c) _ => let v := eval vm_compute in c in change c with v end).
+      apply bytes_at_nil. pose proof (bv_unsigned_in_range 64 (ev E AUXV_ID)). lia.
+    + split; [reflexivity|]. split; [reflexivity|].
+      pose proof (bv_unsigned_in_range 64 (ev E RND_ID)) as RR. unfold bv_modulus in RR.
+      repeat match goal with |- context [bv_unsigned (den E ?v)] =>
+        lazymatch goal with _ : 0 <= bv_unsigned (den E v) < _ |- _ => fail | _ => pose proof (bv_unsigned_in_range 64 (den E v)) end end.
+      unfold bv_modulus in *. split.
+      * repeat constructor; cbn -[Z.pow av rnd Z.le Z.lt] in *; lia.
+      * cbn -[Z.pow av rnd alloc_ceiling Z.le Z.lt Z.add] in *. lia.
 Qed.
 
 Lemma auxv_region : forall E st ms mo, St.st_ok rsegs OPS E st ms mo -> auxv_ok rsegs st = true ->
   exists r3, IMap.find AUXV_ID (s_regs st) = Some r3.
 Proof.
   intros E st ms mo HS H. unfold auxv_ok in H. apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. apply andb_prop in H as [_ H].
-  apply is_sv_inv in H. destruct (rload_inv E st ms mo AUXV_ID 136%uint63 8%uint63 _ HS wok8 eq_refl H) as (r3 & bs & Hr3 & _).
+  apply is_sv_inv in H. destruct (rload_inv E st ms mo AUXV_ID 392%uint63 8%uint63 _ HS wok8 eq_refl H) as (r3 & bs & Hr3 & _).
   exists r3. exact Hr3.
 Qed.
 
@@ -805,7 +879,7 @@ Proof.
   { intros a b Hm. unfold ro_addr. destruct (find_segment rsegs (bv_unsigned a) 1) as [seg|] eqn:Fs; [|reflexivity].
     rewrite (so_minv _ _ _ _ _ _ HS a b Hm seg Fs). reflexivity. }
   assert (MOK : mo_ok mo).
-  { destruct (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS)) as [MH ML]. split; [exact MH|]. split; [exact ML| exact MT]. }
+  { destruct (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS)) as [MH ML _]. split; [exact MH|]. split; [exact ML| exact MT]. }
   assert (DEC : decode (map (den E) hargs) = Some (w2Z md, den E A, wins_of E n rest, map (den E) (skipn (3 * n) rest))).
   { rewrite Eh. exact (decode_hargs E md A nw rest n T N L). }
   assert (RH : RHEAP s LBf (ms_mem ms)). { apply RHEAP_split. split; [exact RC| exact PU]. }
@@ -1256,61 +1330,126 @@ Lemma auxv_sound : forall E st ms mo B,
   rauxv_ok (ms_mem ms) B.
 Proof.
   intros E st ms mo B HS HPB H HC HB1 HB2 HB3. unfold auxv_ok in H.
-  apply andb_prop in H as [H HR]. apply andb_prop in H as [H H152]. apply andb_prop in H as [H H136].
-  cbn [auxv_keys_ok AUXV_KEYS PrimInt63.add] in H. rewrite !andb_true_r in H.
-  repeat match goal with X : _ && _ = true |- _ => apply andb_prop in X as [? ?] end.
+  apply andb_prop in H as [H HR]. apply andb_prop in H as [H HNULL]. apply andb_prop in H as [H H392].
+  (** The Ubsan twin; see the note on the Plain copy.  [Ctr.auxv_null_ok]'s
+      disjunct IS the CONFIG_RSEQ witness, so split before the reads. *)
+  unfold auxv_null_ok in HNULL. apply orb_prop in HNULL as [HNULL|HNULL].
 
-  repeat match goal with
-  | X : is_litv (rload _ _ _ ?o _) _ = true |- _ => apply is_litv_inv in X
-  | X : match rload ?sg ?st ?k ?o ?w with Some _ => true | None => false end = true |- _ =>
-      destruct (rload sg st k o w) eqn:?L in X; [clear X| discriminate X]
-  end.
-  apply is_sv_inv in H136.
-  repeat match goal with
-  | X : rload rsegs st AUXV_ID ?o 8%uint63 = Some _ |- _ =>
-      apply (rload_inv E st ms mo AUXV_ID o 8%uint63 _ HS wok8 eq_refl) in X;
-      destruct X as (?rg & ?bys & ?Hreg & ?Ln & ?LO & ?HI & ?RH & ?BA & ?DV); cbn in Ln
-  end.
+  - (* no CONFIG_RSEQ: 27 pairs, AT_NULL at slot 26, bytes 416/424 *)
+    cbn [auxv_keys_ok AUXV_KEYS app PrimInt63.add] in H, HNULL.
+    rewrite !andb_true_r in H, HNULL.
+    repeat match goal with X : _ && _ = true |- _ => apply andb_prop in X as [? ?] end.
 
-  unfold rnd_region_ok in HR. destruct (IMap.find RND_ID (s_regs st)) as [qr|] eqn:Hqr; [|discriminate].
-  destruct (Mem.rg_cells qr) eqn:HCq; try discriminate. destruct (Mem.rg_bg qr) as [| | | |j sh] eqn:HBq; try discriminate.
-  apply andb_prop in HR as [HR HLq]. apply andb_prop in HR as [HR HLOq]. apply andb_prop in HR as [HJ HSH].
-  apply Uint63.eqb_correct in HJ. apply Uint63.eqb_correct in HSH. apply Uint63.eqb_correct in HLOq. subst j sh.
-  destruct (rload rsegs st RND_ID 8%uint63 8%uint63) as [vq|] eqn:Lq; [|discriminate].
-  destruct (rload_inv E st ms mo RND_ID 8%uint63 8%uint63 vq HS wok8 eq_refl Lq) as (qr' & bsq & Hqr' & _ & _ & HIq & RHq & _ & _).
-  rewrite Hqr in Hqr'. injection Hqr' as <-. lit_ints_in HIq.
-  pose proof (blob_region_bytes (s_priv st) E (ms_mem ms) RND_ID qr RND_ID 8 8 (so_reg _ _ _ _ _ _ HS _ _ Hqr) eq_refl HCq HBq
-                ltac:(lia) ltac:(unfold loZ; rewrite HLOq; change (keyZ 0%uint63) with 0; lia) ltac:(cbn; lia)) as SEC.
-  rewrite (secret_bytes E HPB) in SEC.
+    repeat match goal with
+    | X : is_litv (rload _ _ _ ?o _) _ = true |- _ => apply is_litv_inv in X
+    | X : match rload ?sg ?st ?k ?o ?w with Some _ => true | None => false end = true |- _ =>
+        destruct (rload sg st k o w) eqn:?L in X; [clear X| discriminate X]
+    end.
+    apply is_sv_inv in H392.
+    repeat match goal with
+    | X : rload rsegs st AUXV_ID ?o 8%uint63 = Some _ |- _ =>
+        apply (rload_inv E st ms mo AUXV_ID o 8%uint63 _ HS wok8 eq_refl) in X;
+        destruct X as (?rg & ?bys & ?Hreg & ?Ln & ?LO & ?HI & ?RH & ?BA & ?DV); cbn in Ln
+    end.
 
-  repeat match goal with
-  | Ln : length ?bs = Z.to_nat (to_Z 8%uint63), DV : den E ?v = bytes_val false (to_Z 8%uint63) ?bs, BA : bytes_at _ _ _ ?bs |- _ =>
-      change (Z.to_nat (to_Z 8%uint63)) with 8%nat in Ln; change (to_Z 8%uint63) with 8 in DV;
-      first [ rewrite (lit_load_bytes E 8 bs _ Ln ltac:(lia) DV) in BA; rewrite le8_wz in BA by (lit_ints; lia)
-            | rewrite (load8_bytes E bs v Ln DV) in BA; try rewrite (den_VPz E) in BA; rewrite <- (wz_unsigned (den E v)) in BA || rewrite <- (wz_unsigned (ev E RND_ID)) in BA ];
-      clear Ln DV; lit_ints_in BA
-  end.
-  rewrite <- (wz_unsigned (ev E AUXV_ID)) in HC.
-  set (av := bv_unsigned (ev E AUXV_ID)) in *. set (rnd := bv_unsigned (ev E RND_ID)) in *.
-  match goal with H : to_Z 152%uint63 + to_Z 8%uint63 <= hiZ E ?r, H' : av + hiZ E ?r < 2 ^ 64 |- _ =>
-    lit_ints_in H; assert (AVH : av + 160 <= 2 ^ 64) by lia end.
-  unfold rauxv_ok. eexists av, _, _, _, _, _, _, _, _, rnd.
-  split; [exact HC|]. split; [| split; [exact SEC|]].
-  - unfold auxv_list. cbn [map u64s app]. rewrite <- (Z.add_0_r av) at 1.
-    repeat (apply bytes_at_cons8; [eassumption|];
-            match goal with |- bytes_at _ _ (_ + ?c) _ => let v := eval vm_compute in c in change c with v end).
-    apply bytes_at_nil. pose proof (bv_unsigned_in_range 64 (ev E AUXV_ID)). lia.
-  - pose proof (bv_unsigned_in_range 64 (ev E RND_ID)) as RR. unfold bv_modulus in RR.
-    repeat match goal with |- context [bv_unsigned (den E ?v)] =>
-      lazymatch goal with _ : 0 <= bv_unsigned (den E v) < _ |- _ => fail | _ => pose proof (bv_unsigned_in_range 64 (den E v)) end end.
-    unfold bv_modulus in *. cbn -[Z.pow av rnd alloc_ceiling Z.le Z.lt Z.add] in *. lia.
+    unfold rnd_region_ok in HR. destruct (IMap.find RND_ID (s_regs st)) as [qr|] eqn:Hqr; [|discriminate].
+    destruct (Mem.rg_cells qr) eqn:HCq; try discriminate. destruct (Mem.rg_bg qr) as [| | | |j sh] eqn:HBq; try discriminate.
+    apply andb_prop in HR as [HR HLq]. apply andb_prop in HR as [HR HLOq]. apply andb_prop in HR as [HJ HSH].
+    apply Uint63.eqb_correct in HJ. apply Uint63.eqb_correct in HSH. apply Uint63.eqb_correct in HLOq. subst j sh.
+    destruct (rload rsegs st RND_ID 8%uint63 8%uint63) as [vq|] eqn:Lq; [|discriminate].
+    destruct (rload_inv E st ms mo RND_ID 8%uint63 8%uint63 vq HS wok8 eq_refl Lq) as (qr' & bsq & Hqr' & _ & _ & HIq & RHq & _ & _).
+    rewrite Hqr in Hqr'. injection Hqr' as <-. lit_ints_in HIq.
+    pose proof (blob_region_bytes (s_priv st) E (ms_mem ms) RND_ID qr RND_ID 8 8 (so_reg _ _ _ _ _ _ HS _ _ Hqr) eq_refl HCq HBq
+                  ltac:(lia) ltac:(unfold loZ; rewrite HLOq; change (keyZ 0%uint63) with 0; lia) ltac:(cbn; lia)) as SEC.
+    rewrite (secret_bytes E HPB) in SEC.
+
+    repeat match goal with
+    | Ln : length ?bs = Z.to_nat (to_Z 8%uint63), DV : den E ?v = bytes_val false (to_Z 8%uint63) ?bs, BA : bytes_at _ _ _ ?bs |- _ =>
+        change (Z.to_nat (to_Z 8%uint63)) with 8%nat in Ln; change (to_Z 8%uint63) with 8 in DV;
+        first [ rewrite (lit_load_bytes E 8 bs _ Ln ltac:(lia) DV) in BA; rewrite le8_wz in BA by (lit_ints; lia)
+              | rewrite (load8_bytes E bs v Ln DV) in BA; try rewrite (den_VPz E) in BA; rewrite <- (wz_unsigned (den E v)) in BA || rewrite <- (wz_unsigned (ev E RND_ID)) in BA ];
+        clear Ln DV; lit_ints_in BA
+    end.
+    rewrite <- (wz_unsigned (ev E AUXV_ID)) in HC.
+    set (av := bv_unsigned (ev E AUXV_ID)) in *. set (rnd := bv_unsigned (ev E RND_ID)) in *.
+    (** Span = last auxv read plus its width, as [152 + 8 = 160] was for the
+        old table: [424 + 8 = 432 = 16 * 27 = auxv_size false]. *)
+    match goal with H : to_Z 424%uint63 + to_Z 8%uint63 <= hiZ E ?r, H' : av + hiZ E ?r < 2 ^ 64 |- _ =>
+      lit_ints_in H; assert (AVH : av + Z.of_nat (StackLayout.auxv_size false) <= 2 ^ 64) by (cbn; lia) end.
+    unfold rauxv_ok. eexists false, av, [_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_; rnd; _], rnd.
+    split; [exact HC|]. split; [| split; [exact SEC|]].
+    + unfold auxv_list, auxv_tags. cbn [flat_map combine app u64s fst snd]. rewrite <- (Z.add_0_r av) at 1.
+      repeat (apply bytes_at_cons8; [eassumption|];
+              match goal with |- bytes_at _ _ (_ + ?c) _ => let v := eval vm_compute in c in change c with v end).
+      apply bytes_at_nil. pose proof (bv_unsigned_in_range 64 (ev E AUXV_ID)). lia.
+    + split; [reflexivity|]. split; [reflexivity|].
+      pose proof (bv_unsigned_in_range 64 (ev E RND_ID)) as RR. unfold bv_modulus in RR.
+      repeat match goal with |- context [bv_unsigned (den E ?v)] =>
+        lazymatch goal with _ : 0 <= bv_unsigned (den E v) < _ |- _ => fail | _ => pose proof (bv_unsigned_in_range 64 (den E v)) end end.
+      unfold bv_modulus in *. split.
+      * repeat constructor; cbn -[Z.pow av rnd Z.le Z.lt] in *; lia.
+      * cbn -[Z.pow av rnd alloc_ceiling Z.le Z.lt Z.add] in *. lia.
+
+  - (* CONFIG_RSEQ: 29 pairs, AT_RSEQ_* at 416 and 432, AT_NULL at slot 28 *)
+    cbn [auxv_keys_ok AUXV_KEYS AUXV_RSEQ_KEYS app PrimInt63.add] in H, HNULL.
+    rewrite !andb_true_r in H, HNULL.
+    repeat match goal with X : _ && _ = true |- _ => apply andb_prop in X as [? ?] end.
+
+    repeat match goal with
+    | X : is_litv (rload _ _ _ ?o _) _ = true |- _ => apply is_litv_inv in X
+    | X : match rload ?sg ?st ?k ?o ?w with Some _ => true | None => false end = true |- _ =>
+        destruct (rload sg st k o w) eqn:?L in X; [clear X| discriminate X]
+    end.
+    apply is_sv_inv in H392.
+    repeat match goal with
+    | X : rload rsegs st AUXV_ID ?o 8%uint63 = Some _ |- _ =>
+        apply (rload_inv E st ms mo AUXV_ID o 8%uint63 _ HS wok8 eq_refl) in X;
+        destruct X as (?rg & ?bys & ?Hreg & ?Ln & ?LO & ?HI & ?RH & ?BA & ?DV); cbn in Ln
+    end.
+
+    unfold rnd_region_ok in HR. destruct (IMap.find RND_ID (s_regs st)) as [qr|] eqn:Hqr; [|discriminate].
+    destruct (Mem.rg_cells qr) eqn:HCq; try discriminate. destruct (Mem.rg_bg qr) as [| | | |j sh] eqn:HBq; try discriminate.
+    apply andb_prop in HR as [HR HLq]. apply andb_prop in HR as [HR HLOq]. apply andb_prop in HR as [HJ HSH].
+    apply Uint63.eqb_correct in HJ. apply Uint63.eqb_correct in HSH. apply Uint63.eqb_correct in HLOq. subst j sh.
+    destruct (rload rsegs st RND_ID 8%uint63 8%uint63) as [vq|] eqn:Lq; [|discriminate].
+    destruct (rload_inv E st ms mo RND_ID 8%uint63 8%uint63 vq HS wok8 eq_refl Lq) as (qr' & bsq & Hqr' & _ & _ & HIq & RHq & _ & _).
+    rewrite Hqr in Hqr'. injection Hqr' as <-. lit_ints_in HIq.
+    pose proof (blob_region_bytes (s_priv st) E (ms_mem ms) RND_ID qr RND_ID 8 8 (so_reg _ _ _ _ _ _ HS _ _ Hqr) eq_refl HCq HBq
+                  ltac:(lia) ltac:(unfold loZ; rewrite HLOq; change (keyZ 0%uint63) with 0; lia) ltac:(cbn; lia)) as SEC.
+    rewrite (secret_bytes E HPB) in SEC.
+
+    repeat match goal with
+    | Ln : length ?bs = Z.to_nat (to_Z 8%uint63), DV : den E ?v = bytes_val false (to_Z 8%uint63) ?bs, BA : bytes_at _ _ _ ?bs |- _ =>
+        change (Z.to_nat (to_Z 8%uint63)) with 8%nat in Ln; change (to_Z 8%uint63) with 8 in DV;
+        first [ rewrite (lit_load_bytes E 8 bs _ Ln ltac:(lia) DV) in BA; rewrite le8_wz in BA by (lit_ints; lia)
+              | rewrite (load8_bytes E bs v Ln DV) in BA; try rewrite (den_VPz E) in BA; rewrite <- (wz_unsigned (den E v)) in BA || rewrite <- (wz_unsigned (ev E RND_ID)) in BA ];
+        clear Ln DV; lit_ints_in BA
+    end.
+    rewrite <- (wz_unsigned (ev E AUXV_ID)) in HC.
+    set (av := bv_unsigned (ev E AUXV_ID)) in *. set (rnd := bv_unsigned (ev E RND_ID)) in *.
+    (** [456 + 8 = 464 = 16 * 29 = auxv_size true]. *)
+    match goal with H : to_Z 456%uint63 + to_Z 8%uint63 <= hiZ E ?r, H' : av + hiZ E ?r < 2 ^ 64 |- _ =>
+      lit_ints_in H; assert (AVH : av + Z.of_nat (StackLayout.auxv_size true) <= 2 ^ 64) by (cbn; lia) end.
+    unfold rauxv_ok. eexists true, av, [_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_;_; rnd; _; _; _], rnd.
+    split; [exact HC|]. split; [| split; [exact SEC|]].
+    + unfold auxv_list, auxv_tags. cbn [flat_map combine app u64s fst snd]. rewrite <- (Z.add_0_r av) at 1.
+      repeat (apply bytes_at_cons8; [eassumption|];
+              match goal with |- bytes_at _ _ (_ + ?c) _ => let v := eval vm_compute in c in change c with v end).
+      apply bytes_at_nil. pose proof (bv_unsigned_in_range 64 (ev E AUXV_ID)). lia.
+    + split; [reflexivity|]. split; [reflexivity|].
+      pose proof (bv_unsigned_in_range 64 (ev E RND_ID)) as RR. unfold bv_modulus in RR.
+      repeat match goal with |- context [bv_unsigned (den E ?v)] =>
+        lazymatch goal with _ : 0 <= bv_unsigned (den E v) < _ |- _ => fail | _ => pose proof (bv_unsigned_in_range 64 (den E v)) end end.
+      unfold bv_modulus in *. split.
+      * repeat constructor; cbn -[Z.pow av rnd Z.le Z.lt] in *; lia.
+      * cbn -[Z.pow av rnd alloc_ceiling Z.le Z.lt Z.add] in *. lia.
 Qed.
 
 Lemma auxv_region : forall E st ms mo, St.st_ok rsegs OPS E st ms mo -> auxv_ok rsegs st = true ->
   exists r3, IMap.find AUXV_ID (s_regs st) = Some r3.
 Proof.
   intros E st ms mo HS H. unfold auxv_ok in H. apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. apply andb_prop in H as [_ H].
-  apply is_sv_inv in H. destruct (rload_inv E st ms mo AUXV_ID 136%uint63 8%uint63 _ HS wok8 eq_refl H) as (r3 & bs & Hr3 & _).
+  apply is_sv_inv in H. destruct (rload_inv E st ms mo AUXV_ID 392%uint63 8%uint63 _ HS wok8 eq_refl H) as (r3 & bs & Hr3 & _).
   exists r3. exact Hr3.
 Qed.
 
@@ -1620,7 +1759,7 @@ Proof.
   { intros a b Hm. unfold ro_addr. destruct (find_segment rsegs (bv_unsigned a) 1) as [seg|] eqn:Fs; [|reflexivity].
     rewrite (so_minv _ _ _ _ _ _ HS a b Hm seg Fs). reflexivity. }
   assert (MOK : mo_ok mo).
-  { destruct (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS)) as [MH ML]. split; [exact MH|]. split; [exact ML| exact MT]. }
+  { destruct (St.plain_mf _ _ OPS_plain (so_mf _ _ _ _ _ _ HS)) as [MH ML _]. split; [exact MH|]. split; [exact ML| exact MT]. }
   assert (DEC : decode (map (den E) hargs) = Some (w2Z md, den E A, wins_of E n rest, map (den E) (skipn (3 * n) rest))).
   { rewrite Eh. exact (decode_hargs E md A nw rest n T N L). }
   assert (RH : RHEAP s LBf (ms_mem ms)). { apply RHEAP_split. split; [exact RC| exact PU]. }

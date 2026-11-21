@@ -6,7 +6,7 @@
      runtime's fixed cells) and writes the call site's registers out as the walk states them (bz_canon);
    - post side: FMrt_lift.v reads the walk at the call site (srr_of_canon_bz) and gives the donor-form post
      (rt_post_ro_win); FMrt_pre.v bz_window gives its window facts;
-   - the answer: the walk returns strncmp_res (A/Bz/A/IcptSpec.v:38), which is 0 exactly when the compared
+   - the answer: the walk returns strncmp_res (A/Bz/A/IcptSpec.v:39), which is 0 exactly when the compared
      prefixes of the two strings with their NULs agree (strn_eq, FMH_Rt.v:24); proved here on the byte values,
      as FMspec_str.v does for strncasecmp. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

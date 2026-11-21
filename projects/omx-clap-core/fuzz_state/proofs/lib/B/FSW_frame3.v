@@ -7,10 +7,11 @@
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v; 152 of its 219 lines of code are new or changed and 2619 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame3.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame3.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The fake-frame kit steps of fs's ASan walks that need RELOC's FP-keyed core (the twin of FSW_frame.v, as FSW_K3.v is
    of FSW_K.v; when S0 merges RELOC each pair folds into one file). Owner: lane CRT (a Theorem Labs lane), per the walk-kit layout
    (a Theorem Labs lane 22:01Z, the FSW_frame / FSW_frame3 split agreed 23:27Z). A kit: no function's contract is proved here
@@ -25,12 +26,12 @@
      FSW_rres's fsw_resume_after_rtU_s0 with two extra regions (one stack slot, the granted frame with its flag word)
      and the frame's alignment fact.
    Port-from:
-   - fsw_after_callU_s0_own: FSW_K.v fsw_after_callU_s0 (a working branch 770a908106b), the same proof with
+   - fsw_after_callU_s0_own: FSW_K.v fsw_after_callU_s0 (a working branch), the same proof with
      FSW_K3's fsw_ajournal_sub4 in place of ajournal_sub; it replaces the two-arm version removed from FSW_frame.v at
-     a working branch fd08073092b. Shape asked by a Theorem Labs lane (starved) for all six fake-frame walks.
-   - fsw_resume_after_stack_mallocU: a Theorem Labs lane's crcs_resume_sm (a working branch c4bfd3bc057,
+     a working branch. Shape asked by a Theorem Labs lane (starved) for all six fake-frame walks.
+   - fsw_resume_after_stack_mallocU: a Theorem Labs lane's crcs_resume_sm (a working branch,
      lib/A/FSH_check_reject_clean_starved.v:201-289), statement unchanged but for the crcs_ -> fsw_ names; the proof is
-     now an instance of a Theorem Labs lane's fsw_resume_after_rtU_s0 (a working branch cd423a71760), keeping
+     now an instance of a Theorem Labs lane's fsw_resume_after_rtU_s0 (a working branch), keeping
      a Theorem Labs lane's region, disjointness and fact arguments for the slot and the frame.
    Rule 24 lookup outputs (index v5 built 2026-10-28T21:58:24Z, status read from a file, not through a pipe):
    `proof-index __asan_stack_malloc_3` exits 0 with 0 file(s) named for it and 382 by address, and lists

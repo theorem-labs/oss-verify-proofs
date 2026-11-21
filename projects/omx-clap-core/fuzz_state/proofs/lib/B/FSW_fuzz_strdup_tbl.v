@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_fuzz_strdup_tbl.v (the canonical guarded
-   table, a working branch a402e796fc1, blob ebaab1a479d), same names; B's addresses, imports point at
+   table, a working branch, blob ebaab1a479d), same names; B's addresses, imports point at
    lib/B's image files (YB1v, FSH_Base, FSW_K); FSH_Gen stays lib/A's, as lib/B's kit imports it.
    rule 24: proves no function (kind: segment lemma). *)
 (* fuzz_strdup B 0x82d60 (fuzz/alloc.c:97-105) over fs.asan-ubsan: its decode table and the symbolic runs of its five

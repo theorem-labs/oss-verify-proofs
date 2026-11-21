@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: PE_STATIC_A's new conjunct for it, named HBTs or skipped where STC is destructed). *)
 
 From Stdlib Require ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -37,7 +38,7 @@ Hypothesis ISTRNCASECMP : istrncasecmp_spec_U.
 Hypothesis NEWBOOL : jo_new_boolean_A_stmt HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1231,7 +1232,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa (pe_jtA ST_boolean) (t_co ts) gp t0 (Z_to_bv 64 (q + 32 * Z.of_nat (t_depth ts))) (Z_to_bv 64 (tl_st l)) (Z_to_bv 64 0) (Z_to_bv 64 (q / 8 + 4 * Z.of_nat (t_depth ts) + A_SB)) (Z_to_bv 64 0) a5 (Z_to_bv 64 APE_JTAB) a7 s3 (Z_to_bv 64 q) s6 s7 (Z_to_bv 64 (Z.of_nat (t_depth ts))) s9 s11 t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL FL0 INV PBK BK Hl Hst Hco SPB Kbreak Kredo1 Kredo2 Kerr16a Kerr16b Kerrp.
-pose proof STC as (_ & _ & _ & _ & _ & LEN & _).
+pose proof STC as (_ & _ & _ & _ & _ & _ & LEN & _).
 pose proof INV as [(_ & _ & CO & _) _].
 eapply (bool_head_B pf pa q LB0 LM FRS payload me lo m md A B ts l cb nb pj sv errv T nB gp t0 a5 a7 s3 s6 s7 s9 s11 t3 t4 t5 t6 F fc STC BSL INV PBK BK Hl Hst Hco SPB); [| exact Kerr16a].
 intros m1 md1 A1 B1 pbs1 errv1 pj1 x1' gp' t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' s3v s5v s7' s11' t3' t4' t5' t6' F1 fc1 INV1 P16 PBK1 BK1 Es5 Es3 FS1 FRM1.
@@ -1355,7 +1356,7 @@ Hypothesis ISTRNCASECMP : istrncasecmp_spec_U.
 Hypothesis NEWBOOL : jo_new_boolean_A_stmt HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -2561,7 +2562,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (Z.of_nat (t_depth ts))) (Z_to_bv 64 q) (Z_to_bv 64 (pa_F pa + 64)) F fc m).
 Proof.
 intros until fc. intros STC BSL FL0 INV PBK BK Hl Hst Hco SPB Kbreak Kredo1 Kredo2 Kerr16a Kerr16b Kerrp.
-pose proof STC as (_ & _ & _ & _ & _ & LEN & _).
+pose proof STC as (_ & _ & _ & _ & _ & _ & LEN & _).
 pose proof INV as [(_ & _ & CO & _) _].
 eapply (bool_head_A pf pa q LB0 LM FRS payload me lo m md A B ts l cb nb pj sv errv T nB gp t0 t1 t2 a3 a5 a6 a7 F fc STC BSL INV PBK BK Hl Hst Hco SPB); [| exact Kerr16a].
 intros m1 md1 A1 B1 pbs1 errv1 pj1 x1' gp' t0' t1' t2' a1' a2' a5' a6' a7' s5v s6v t3' t4' t5' t6' F1 fc1 INV1 P16 PBK1 BK1 Es5 Es6 FS1 FRM1.

@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1165 of its 1242 lines of code are new or changed and 437 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_E2.v, with its module paths and module names changed; 736 of its 849 lines of code are new or changed and 1129 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved *)
 (* rule 24: proves no function (kind: segment lemma) *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b): segment CB7
    Cmp of the re-walk of check_no_overread (cno, entry B' 0x819f0) against the kit's text tcheck_no_overread_specX, lane
    CnoB102rR.CutR7 (sub-lane of CnoB102rR, a Theorem Labs lane; plan, the internal file PLAN-cno-caw-102.md 5.2 row CB7), re-fitted to the kit
-   CUT a working branch 7cdbb61b5fa0. The port of image A''s Cno102A_R9.v (lane CnoA102r.CnoA9) to B'.
-   INPUTS (by path): the contract lib/B/Prog/Cno102B_Base.v at a working branch 75415fdb6e76
+   CUT a working branch. The port of image A''s Cno102A_R9.v (lane CnoA102r.CnoA9) to B'.
+   INPUTS (by path): the contract lib/B/Prog/Cno102B_Base.v at a working branch
    (blob 20c89a1d4da2; this file never edits it), in its forms over a world relation R: cnb_baseR / cnb_JR (cnb_base /
    cnb_J are their instances at wle), the compare cut cnb_at_cmpR and the free exit cnb_ex_freeR (over cnb_at_freeR),
    both cuts after a free, used at R := wle' SEGS RZ_cf; the B' step kit lib/B/Prog/Cno102B_Ro.v by path
@@ -272,7 +273,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 Variable CTX0 : list (list Z).
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 Hypothesis IMG : cnb_img B.
-(* the callee texts, for any float state (the kit cut 7cdbb61b5fa0: PRH_FnAlloc.v 4d8aeba047e5 / PRH_FnEx.v
+(* the callee texts, for any float state (the kit cut: PRH_FnAlloc.v 4d8aeba047e5 / PRH_FnEx.v
    be1dd5ecaaf6); neither crosses a free, so both stay plain SRr with posts at wle, lifted into WLE' at each call *)
 Hypothesis HRO : forall fz : YK11.FPState, @tfuzz_alloc_ran_out_specX fz rc cp prh_img_B RL B_prog_listing PA B ARx SK.
 Hypothesis HSAME : forall fz : YK11.FPState, @tsame_specX fz rc cp prh_img_B RL B_prog_listing PA B ARx SK DOC_D.

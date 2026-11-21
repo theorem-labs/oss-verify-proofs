@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: jo_preA carries it after alloc_ceiling <= lo). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -543,7 +544,7 @@ Variable G : (word -> option byte) -> Prop.
 Definition jo_preA (A : ASA A4L HIx) (LBall LM : list blk) (FRS : list frame) (B : bud) (m : word -> option byte) (md : config)
 (sp tp ra : word) (lo stkb : Z) (errv : word) : Prop :=
 HEAPA A4L HIx A LBall LM FRS B m md /\
-stk asegs m lo (bv_unsigned sp) /\ alloc_ceiling <= lo /\ lo <= bv_unsigned sp - stkb /\
+stk asegs m lo (bv_unsigned sp) /\ alloc_ceiling <= lo /\ hiA_bot A4L HIx <= lo /\ lo <= bv_unsigned sp - stkb /\
 bv_unsigned sp mod 16 = 0 /\ bv_unsigned sp <= hiA_top A4L HIx /\
 rw_cells asegs m A_ERRNO [C4 errv] /\
 tp = Z_to_bv 64 A_TP /\ bv_unsigned ra mod 2 = 0.
@@ -1917,7 +1918,7 @@ Variable G : (word -> option byte) -> Prop.
 Definition jo_preA (A : ASA A4L HIx) (LBall LM : list blk) (FRS : list frame) (B : bud) (m : word -> option byte) (md : config)
 (sp tp ra : word) (lo stkb : Z) (errv : word) : Prop :=
 HEAPA A4L HIx A LBall LM FRS B m md /\
-stk asegs m lo (bv_unsigned sp) /\ alloc_ceiling <= lo /\ lo <= bv_unsigned sp - stkb /\
+stk asegs m lo (bv_unsigned sp) /\ alloc_ceiling <= lo /\ hiA_bot A4L HIx <= lo /\ lo <= bv_unsigned sp - stkb /\
 bv_unsigned sp mod 16 = 0 /\ bv_unsigned sp <= hiA_top A4L HIx /\
 rw_cells asegs m A_ERRNO [C4 errv] /\
 tp = Z_to_bv 64 A_TP /\ bv_unsigned ra mod 2 = 0.

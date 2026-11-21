@@ -3,14 +3,14 @@
    request through the lead, 19:06Z). rule 24: proves function check_reject_clean (ported; no #102 copy exists).
    check_reject_clean_holds_A102_inst_live is Crc102InstA.v's check_reject_clean_holds_A102_inst (B := AD2l.TfibB,
    ARx := c102_ARx = a Theorem Labs lane's ec_ARx body at CfParams_preset, PI := prh_img_A, PA := PI_prog_A) with:
-   - LIVE closed by a Theorem Labs lane's A' walk of fuzz_alloc_live (commit f5123281fbe2,
-     lib/A/Prog/PwAllocSurf.v, on the #102 integration line by path since 08db2cddc35): fuzz_alloc_live_holds_rl, the RL-generic form
+   - LIVE closed by a Theorem Labs lane's A' walk of fuzz_alloc_live (
+     lib/A/Prog/PwAllocSurf.v, on the #102 integration line by path): fuzz_alloc_live_holds_rl, the RL-generic form
      of fuzz_alloc_live_holds (which is it at RL := prh_room_live_a8 CfParams_preset, PwAllocSurf.v:796-798), against
      the tfuzz_alloc_live_specX (PRH_FnAlloc.v:71, blob 83fe93bc86e2) exactly. Its allocator relation is
      ARcf /\ xs_placed_cf at CfParams_preset over PI_prog_A's segments, which is c102_ARx by conversion; its only
      Section hypothesis, PST_unowned, is not used by that theorem (it serves fuzz_alloc_peak_reset / fail only);
-   - SK fixed at a Theorem Labs lane's preset_sink_head (lib/A/PresetCfnA.v of the #102 interface, which builds on the #102 integration line since its
-     d1659777b723: prh_ledger at thirteen arguments).
+   - SK fixed at a Theorem Labs lane's preset_sink_head (lib/A/PresetCfnA.v of the #102 interface, which builds on the #102 integration line since its:
+     prh_ledger at thirteen arguments).
    The one premise left is BCMP: the bcmp row with the memnorm keep (Reusable/YGcallMxmn.v:265 abcmp_realizes_xm) at
    the listing's __wrap_bcmp; owner: the bcmp realizer's lane, c-libc-stdio (its po_memcmp_cf row with the nested bcmp
    row, Reusable/YGcallCmp.v:3-6). No numeral. *)

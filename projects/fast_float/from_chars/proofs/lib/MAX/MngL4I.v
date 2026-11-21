@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's m_kernel field). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -100,11 +101,11 @@ Qed.
 #[using="Type"] Theorem heapI_need_locks : forall hs m md, HeapI HTOP hs m md -> rdn SEGS m (wa 0x95e63) 1 = Some [Z_to_bv 8 0].
 Proof. LiaFast.lf_pins LiaFast.u0. intros hs m md HP. destruct HP as [_ _ _ (E1 & _) _ _ _ _ _ _]. exact E1. Qed.
 
-#[using="Type"] Theorem heapI_model_vm : forall hs m md md', HeapI HTOP hs m md -> m_vmmaps md' = m_vmmaps md -> HeapI HTOP hs m md'.
+#[using="Type"] Theorem heapI_model_vm : forall hs m md md', HeapI HTOP hs m md -> m_vmmaps md' = m_vmmaps md -> m_kernel md' = m_kernel md -> HeapI HTOP hs m md'.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros hs m md md' HP E. destruct HP as [Hs H0 Hctx Henv Hkro Hled HT20 Hpg Hini Himg].
+  intros hs m md md' HP E K. destruct HP as [Hs H0 Hctx Henv Hkro Hled HT20 Hpg Hini Himg].
   constructor; try assumption.
-  intros md0 E0 Hh Hl. apply Hled; [rewrite E0, E; reflexivity | exact Hh | exact Hl].
+  intros md0 E0 K0 Hh Hl. apply Hled; [rewrite E0, E; reflexivity | rewrite K0, K; reflexivity | exact Hh | exact Hl].
 Qed.
 
 #[using="Type"] Theorem heapI_errno_frame : forall hs m m' md, HeapI HTOP hs m md -> munch [(ERRNO, ERRNO + 4)] m m' -> mem_grows m m' ->

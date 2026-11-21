@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the entry takes the launch's kernel build (Amb) and the channel reader (m_channel_reader), the stack window is 6144513 bytes, was 8388608, and the reservation is init_reserved with the vDSO entries (RefNodes.vdso_reserved_small). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -12,6 +13,8 @@ From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import PropExec C
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import Spec EnframeDefs TargetSpec TargetKDefs UbWorld UbTargetPre SumWalkTac.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import SymExec3 SymExec3Sound SymRun3 SymDrive3 SymPlan SymSlots SymPlanSoundA.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import UbATB UbTargetEntry_defs.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import Amb.   (* LPS 08b1429: target_vm's a_kernel *)
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require RefNodes.   (* LPS 08b1429: vdso_reserved_small *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require UbWseg.  (* [comment removed for export] *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -170,6 +173,7 @@ Qed.
 (* [comment removed for export] *)
 
 Section Entry.
+  Context {AMB : Amb}.   (* LPS 08b1429: target_vm reads the launch's kernel build (init_reserved) *)
   Variables (sp0 gm area brkv mas tid : Z) (content : list byte) (R : bvmap 5 word) (M : word -> option byte).
   Variables (VM : VmMaps) (model : Model) (nlo nhi : Z).
   Hypothesis TP : target_pre sp0 gm area brkv mas tid content R M.
@@ -179,6 +183,7 @@ Section Entry.
   Hypothesis Mhalt : m_halted model = None.
   Hypothesis Mlazy : m_vm_lazy model = [].
   Hypothesis Mmat : m_vm_materialized model = [].
+  Hypothesis Mrdr : m_channel_reader model = true.   (* LPS 08b1429: [cs_ok]'s [co_rdr] *)
   Hypothesis Hn : nlo <= hdr_paylen content <= nhi.
   Variable e : Z.
   Hypothesis He : 0 <= e < 2 ^ 32.
@@ -240,7 +245,7 @@ Section Entry.
   Ltac karith := anorm; lia.
   Ltac kflat := apply flat_intro; unfold elenZ; enorm; rewrite ?u_small by lia; lia.
   Ltac kwr_stack Hst := split; [kflat|]; intros d m Hd Hm; unfold elenZ in Hm; cbn [edenot] in Hm; rewrite ?u_small in Hm by lia; anorm;
-                    replace (sp0 + -8388608 + d) with (sp0 - 8388608 + d) by lia; apply Hst; lia.
+                    replace (sp0 + -6144513 + d) with (sp0 - 6144513 + d) by lia; apply (stack_writableZ_lit _ _ Hst); lia.
   Ltac kwr_def Hdef := split; [kflat|]; intros d m Hd Hm; unfold elenZ in Hm; cbn [edenot] in Hm; rewrite ?u_small in Hm by lia; anorm; rewrite ?Z.add_0_r;
                     first [ apply (store_ok_of_defined _ _ _ Hdef); lia
                           | replace (area + 0 + d) with (area + d) by lia; apply (store_ok_of_defined _ _ _ Hdef); lia
@@ -445,7 +450,8 @@ Section Entry.
       rewrite Mvm.
       destruct TV as [Vres Vhas Varea Vlen Vsmall Vseps Vlim Vsp Vgt Vat].
       constructor; cbn [c_maps c_nmaps c_live cs_T].
-      + exact Vres.
+      + (* LPS 08b1429: init_reserved = image entries ++ vdso_reserved (RefNodes.vdso_reserved_small) *)
+        rewrite Vres. unfold init_reserved. eexists. split; [reflexivity | apply RefNodes.vdso_reserved_small].
       + unfold maps_T. apply Forall_cons; [|apply Forall_cons; [|apply Forall_nil]]; unfold smap_ok; cbn [sm_base sm_len sm_exact edenot];
           rewrite ?EV1, ?EV2; rewrite ?u_small by lia.
         * split; [lia|]. split; [lia|]. exact Vhas.
@@ -467,26 +473,28 @@ Section Entry.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
       lazymatch goal with H : gm mod 4096 = 0 |- _ => clear -H; lia end.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+    - (* LPS 08b1429: [co_rdr] *) exact Mrdr.
   Qed.
 End Entry.
 
-Theorem target_entry_ok :
+Theorem target_entry_ok {AMB : Amb} :
   forall (sp0 gm area brkv mas tid : Z) (content : list byte) (R : bvmap 5 word) (M : word -> option byte)
          (VM : VmMaps) (model : Model) (nlo nhi : Z),
     target_pre sp0 gm area brkv mas tid content R M ->
     target_vm sp0 gm area VM ->
     m_fds model = fds_std -> m_vmmaps model = VM -> m_halted model = None ->
     m_vm_lazy model = [] -> m_vm_materialized model = [] ->
+    m_channel_reader model = true ->   (* LPS 08b1429: [cs_ok]'s [co_rdr] *)
     nlo <= hdr_paylen content <= nhi ->
     exists e c sv, 0 <= e < 2 ^ 32 /\
       cs_ok (E_T sp0 gm area tid content brkv mas e c sv R) (cs_T nlo nhi) R M model.
 Proof.
-  intros sp0 gm area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn.
+  intros sp0 gm area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn.
   destruct (w_errno _ _ _ _ _ _ (tp_world _ _ _ _ _ _ _ _ _ TP)) as (e & He & Ce).
   destruct (w_canary _ _ _ _ _ _ (tp_world _ _ _ _ _ _ _ _ _ TP)) as (c & Cc).
   destruct (w_secret _ _ _ _ _ _ (tp_world _ _ _ _ _ _ _ _ _ TP)) as (sv & _ & Cs1 & Cs2).
   exists e, c, sv. split; [exact He|].
-  apply (target_entry_ok_e sp0 gm area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn e He Ce c Cc sv Cs1 Cs2).
+  apply (target_entry_ok_e sp0 gm area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn e He Ce c Cc sv Cs1 Cs2).
 Qed.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

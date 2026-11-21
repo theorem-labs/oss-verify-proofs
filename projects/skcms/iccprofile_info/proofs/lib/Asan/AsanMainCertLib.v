@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the check runners and the PreB section take the launch's CONFIG_RSEQ layout (rz) and run under that layout's table (INFO_ASAN_at rz). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.AsLib Require AsFuzzContract.
 From Stdlib Require Import ZArith List Bool.
@@ -16,22 +17,22 @@ Definition BFUELm : nat := 400000.
 Definition FUELm : nat := 5000.
 
 (* [comment removed for export] *)
-Definition mrun (HS : nat -> option acs) (h : nat) (IT : itab) (C : class) (p : plan) : cres :=
-  APF.check ASEGS IT INFO_ASAN NX0 AsanInit.LIMIT (XNm ASEGS INFO_ASAN NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS INFO_ASAN NX0)
-            (XBm ASEGS NX0 (iotab_of C)) HS_none KCm BFUELm FUELm None (main_start HS h C) p.
-Definition mrun_from (IT : itab) (C : class) (cs : acs) (p : plan) : cres :=
-  APF.check ASEGS IT INFO_ASAN NX0 AsanInit.LIMIT (XNm ASEGS INFO_ASAN NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS INFO_ASAN NX0)
-            (XBm ASEGS NX0 (iotab_of C)) HS_none KCm BFUELm FUELm None cs p.
+Definition mrun (rz : Z) (HS : nat -> option acs) (h : nat) (IT : itab) (C : class) (p : plan) : cres :=
+  APF.check ASEGS IT (INFO_ASAN_at rz) NX0 AsanInit.LIMIT (XNm ASEGS (INFO_ASAN_at rz) NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS (INFO_ASAN_at rz) NX0)
+            (XBm ASEGS (INFO_ASAN_at rz) NX0 (iotab_of C)) HS_none KCm BFUELm FUELm None (main_start HS h C) p.
+Definition mrun_from (rz : Z) (IT : itab) (C : class) (cs : acs) (p : plan) : cres :=
+  APF.check ASEGS IT (INFO_ASAN_at rz) NX0 AsanInit.LIMIT (XNm ASEGS (INFO_ASAN_at rz) NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS (INFO_ASAN_at rz) NX0)
+            (XBm ASEGS (INFO_ASAN_at rz) NX0 (iotab_of C)) HS_none KCm BFUELm FUELm None cs p.
 (* [comment removed for export] *)
 Definition errst (r : cres) : acs := match r with CErr _ _ cs => cs | COk _ => asan_init end.
 (* [comment removed for export] *)
-Definition ok_child (C : class) (cs : acs) : acs :=
-  match XBm ASEGS NX0 (iotab_of C) 0 [] cs with Some (_, b) => b | None => cs end.
+Definition ok_child (rz : Z) (C : class) (cs : acs) : acs :=
+  match XBm ASEGS (INFO_ASAN_at rz) NX0 (iotab_of C) 0 [] cs with Some (_, b) => b | None => cs end.
 (* [comment removed for export] *)
 Definition vstA (er : expr) (mid : Z) (cs : acs) : acs := set_kn cs (KRange er (fst (ebounds (kn cs) er)) mid :: kn cs).
 Definition vstB (er : expr) (mid : Z) (cs : acs) : acs := set_kn cs (KRange er (mid + 1) (snd (ebounds (kn cs) er)) :: kn cs).
-Definition vmeet (cs0 ca cb : acs) : acs :=
-  match node_diamond_join INFO_ASAN NX0 (nxt cs0) (pc ca) [] ca cb with Some js => js | None => asan_init end.
+Definition vmeet (rz : Z) (cs0 ca cb : acs) : acs :=
+  match node_diamond_join (INFO_ASAN_at rz) NX0 (nxt cs0) (pc ca) [] ca cb with Some js => js | None => asan_init end.
 (* [comment removed for export] *)
 Definition kn_meet2 (k0 k1 : list kentry) : list kentry := List.filter (fun K => existsb (kentry_eqb K) k1) k0.
 Definition acs_meet (a b : acs) : option acs :=
@@ -97,16 +98,18 @@ Fixpoint disj_ixs (i : nat) (k : list kentry) : list nat :=
 
 (* [comment removed for export] *)
 Section PreB.
+  (* LPS 727298f3: the launch's CONFIG_RSEQ layout, read by the table every check is run under. *)
+  Variable rz : Z.
   Variables KC BF FU : nat.
   Definition seg_ok_b (IT : itab) (ch : acs) (C : class) (L : nat) (p : plan) (HT : list (nat * (nat * acs))) : bool :=
-    match APF.check ASEGS IT INFO_ASAN NX0 AsanInit.LIMIT (XNm ASEGS INFO_ASAN NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS INFO_ASAN NX0)
-                    (XBm ASEGS NX0 (iotab_of C)) (hs_of HT) KC BF FU None (pay_start ch C) p with
+    match APF.check ASEGS IT (INFO_ASAN_at rz) NX0 AsanInit.LIMIT (XNm ASEGS (INFO_ASAN_at rz) NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS (INFO_ASAN_at rz) NX0)
+                    (XBm ASEGS (INFO_ASAN_at rz) NX0 (iotab_of C)) (hs_of HT) KC BF FU None (pay_start ch C) p with
     | COk s => AsanShape.class_seg_ok (lv_of HT) L C s
     | CErr _ _ _ => false
     end.
   Lemma mtree_ok_pre_b : forall IT lo hi ch C L p HT PT,
     (Nat.leb lo L && Nat.leb L hi)%bool = true -> seg_ok_b IT ch C L p HT = true -> mcover HT PT = true ->
-    mforest_ok KC BF FU IT L HT C PT = true -> mtree_ok KC BF FU IT lo hi ch C (MPre L p HT PT) = true.
+    mforest_ok rz KC BF FU IT L HT C PT = true -> mtree_ok rz KC BF FU IT lo hi ch C (MPre L p HT PT) = true.
   Proof.
     intros IT lo hi ch C L p HT PT HL HS HC HF. rewrite mtree_ok_MPre. unfold seg_ok_b in HS.
     destruct (APF.check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s|]; [|discriminate HS].
@@ -114,6 +117,6 @@ Section PreB.
   Qed.
   (* [comment removed for export] *)
   Lemma mforest_ok_one : forall IT L lv S C t,
-    mtree_ok KC BF FU IT (Nat.max L 1) lv S C t = true -> mforest_ok KC BF FU IT L [(0%nat, (lv, S))] C [(0%nat, t)] = true.
+    mtree_ok rz KC BF FU IT (Nat.max L 1) lv S C t = true -> mforest_ok rz KC BF FU IT L [(0%nat, (lv, S))] C [(0%nat, t)] = true.
   Proof. intros IT L lv S C t H. eapply mforest_ok_cons; [reflexivity | exact H | apply mforest_ok_nil]. Qed.
 End PreB.

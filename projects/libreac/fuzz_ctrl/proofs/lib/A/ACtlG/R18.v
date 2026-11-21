@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths and module names changed; 987 of its 1046 lines of code are new or changed and 2016 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R18.v -- GLUE for stage seg_R18 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
-   (lib/A/ACtl.v (at head lib/A/ACtl.v:700) (an earlier version, blob c4edf0be7fe, not in this delivery), a Theorem Labs lane's route (C) walk shell (from a working branch 1899bed1aee)).
+   (lib/A/ACtl.v (at head lib/A/ACtl.v:700) (an earlier version, blob c4edf0be7fe, not in this delivery), a Theorem Labs lane's route (C) walk shell (from a working branch)).
    Written by a Theorem Labs lane's two workers (a Theorem Labs lane, under a Theorem Labs lane's glue programme); single
    writer of this file.  rule 24: no function proved (stage glue of a walk; kind: segment lemma).
 
@@ -34,8 +35,8 @@
    THE RUN: seg_R18_run_F IS GONE (a Theorem Labs lane 12:59Z).  The run is A.Prog.Seg.R18Fon.r18_evt_F_on, this lane's
    route (C) twin of a Theorem Labs lane's Seg/R18F.v (not in this delivery) r18_evt_F (lib/A/Prog/Seg/R18Fon.v, from a Theorem Labs lane's fold blob
    d8b02189343; Seg/R18F.v (not in this delivery) is unchanged), cited by name.  Its callee premise
-   A.Prog.declaration_of_c.declaration_of_contract_F_on (declaration_of_c.v ffd64306c80 (the blob this tree had at release c5e779efe8c), :210) is supplied by
-   A.Prog.declaration_ofF.declaration_of_F_holds_on (declaration_ofF.v 0061e2d011e (the blob this tree had at release c5e779efe8c), :2124) at the runtime's
+   A.Prog.declaration_of_c.declaration_of_contract_F_on (declaration_of_c.v ffd64306c80 (the blob this tree had at release), :210) is supplied by
+   A.Prog.declaration_ofF.declaration_of_F_holds_on (declaration_ofF.v 0061e2d011e (the blob this tree had at release), :2124) at the runtime's
    route (C) proofs A.Prog.asan_memsetF_on.asan_memset_holds_F_on (asan_memsetF_on.v:23, blob 34752af7b24) over
    this image's plain memset proof A.Prog.memset.memset_holds, and A.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on
    (asan_memcpyF_on.v:24, blob 7fa6770491b).  The twin's HPRE concludes A.Prog.Seg.R18Fon.r18_pre_on, which is
@@ -89,7 +90,7 @@
    THE WRITE SET is two munches composed: [(Sfr fr + 320, Sfr fr + 324)] for the four metadata stores, then
    [(sp - DECLARATION_OF_K, sp); (decl_slot fr, decl_slot fr + 32)] for the callee; they are weakened onto the
    union Wtot = [(sp - 2304, sp); (fr + 2560, fr + 2560 + 32); (Sfr fr + 320, Sfr fr + 324)] and composed with
-   Lib.Frame.munch_trans / Lib.Frame.wmono_trans.  r18_evt_F_on's CALLER OBLIGATION HPRE (R18Fon.v, as R18F.v:120-124)
+   Lib.Frame.munch_trans / Lib.Frame.wmono_trans.  r18_evt_F_on's CALLER OBLIGATION HPRE (R18Fon.v, as R18F.v:121-125)
    is discharged by producing A.Prog.Seg.R18Fon.r18_pre_on of the memory after the four metadata
    stores.  No byte of a stack-window SHADOW range is written, so lib.Reusable.YCbq.awr_byte's four disjuncts
    suffice (a Theorem Labs lane's 04:50Z gap warning, corrected 04:5xZ, does not apply to this stage).
@@ -116,10 +117,10 @@
      win_sh_vis and frame_vis take.
    - b7g_frame_GT is GONE (a Theorem Labs lane, 2026-10-29): the frame bound 0x5fe000 <= frame_addr is cited by name as
      A.ProgWorld_Fs.ctl_frame_above_img : A.ProgWorld.ctl_frame_above_img_stmt B (premise-free, every frame class;
-     lib/A/ProgWorld.v and ProgWorld_Fs.v taken by path from a working branch fec8db0a380).  It gives
+     lib/A/ProgWorld.v and ProgWorld_Fs.v taken by path from a working branch).  It gives
      6283264 <= fr, hence R18F.v's (not in this delivery) `6283264 <= D` and `6283264 <= SHv`.
-   The Kit placeholders are GONE: Kit.v builds on the base this file now sits on (a working branch
-   46eb24cd4b3, merged), so A.ACtlG.Kit.kit_wx and A.ACtlG.Kit.kit_segs_low are cited by name.
+   The Kit placeholders are GONE: Kit.v builds on the base this file now sits on (a working branch,
+   merged), so A.ACtlG.Kit.kit_wx and A.ACtlG.Kit.kit_segs_low are cited by name.
    - CAT_GLOBAL is GONE: all three of its parts are PROVED inside glue_seg_R18 from already-proved lemmas
      (two Theorem Labs lanes, 2026-10-29).  The catalogue BOX_CATALOGUE [CAT, CAT + 3256) = [0x9e800, 0x9f4b8)
      is a registered ASan global of B; in v1.9 its parts were FRA's (lib/A/Prog/Seg/R18.v:798 r18_cat_img, :784
@@ -137,9 +138,9 @@
      . THE SHADOW-WORD COVER [0x8000bd00, 0x8000be98) (route per byte): the 407 shadow bytes of the body,
        [0x8000bd00, 0x8000be97), from the catalogue's zero-shadow range (YG0d.al_zshadow) and vis_of_aview; the
        one remaining byte 0x8000be97 = shadow_addr 0x9f4b8, the redzone granule's, is a CONST row
-       `z1 (ANum 0x8000be97) 0xf9` (A/AF0m.v:2386), from A.ProgWorld_Fs.pw_row (am_const) and vis_of_aview.
-       That composition becomes a citation of A.ProgWorld.ctl_const_vis_of_AR_stmt (a Theorem Labs lane, statement at
-       e68ab9226495) when a Theorem Labs lane's proof of it lands.
+       `z1 (ANum 0x8000be97) 0xf9` (A/AF0m.v:2387), from A.ProgWorld_Fs.pw_row (am_const) and vis_of_aview.
+       That composition becomes a citation of A.ProgWorld.ctl_const_vis_of_AR_stmt (a Theorem Labs lane, statement)
+       when a Theorem Labs lane's proof of it lands.
      . Section hypotheses this adds, both verbatim from ACtl.v: TFIB_SYMS (ACtl.v:252) and RELRO_CAT (ACtl.v:232).
    - seg_R18_run_F is GONE: the run is A.Prog.Seg.R18Fon.r18_evt_F_on (THE RUN above).
    CITED BY NAME, NOT HYPOTHESES: lib.Reusable.YA0nR.SRr_fsteps / fsteps_keeps_hidden / SRr_xregs_eqv;
@@ -558,7 +559,7 @@ Proof.
   (* ---- G2b : the catalogue row ---- *)
   (* ---- the catalogue's 8-aligned shadow-word cover [0x8000bd00, 0x8000be98) is visible (former part 3): the
      shadow bytes of the body [0x9e800, 0x9f4b8) from the catalogue's own zero-shadow range, and the redzone
-     granule's shadow byte 0x8000be97 from its CONST row z1 (ANum 0x8000be97) 0xf9 (A/AF0m.v:2386) *)
+     granule's shadow byte 0x8000be97 from its CONST row z1 (ANum 0x8000be97) 0xf9 (A/AF0m.v:2387) *)
   assert (HCATsh : A.ProgBridge.range_visible (lib.Reusable.YA0n.w_H W3)
             (A.Prog.rng_asan.sh_al8_lo A.Prog.SlotModel.CAT)
             (A.Prog.rng_asan.sh_al8_hi A.Prog.SlotModel.CAT 3256 -

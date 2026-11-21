@@ -4,10 +4,10 @@
    (1) The harness-block shadow law is NOT here: it is AR_laws_x field 14 alx_hshadow (YCbqG 219748197d6b at the cut). Here:
        ARx_cell_vis (an image cell visible under ARx), a marked stand-in.
    (2) put_string's snprintf call (A 0x88598, `jal __wrap_snprintf`, escape buffer size 8, formats `\\%c` / `\\u%04x`)
-       is NOT stated here any more: the old stand-in asnprintf_esc_realizes_x (this file at 7ffbb0405d3, :79-100) was
+       is NOT stated here any more: the old stand-in asnprintf_esc_realizes_x (this file, :79-100) was
        too strong (it kept the caller's whole float state and lacked 17 premises; c-omx-alloc 11:56Z). A walk takes the
        FINAL snprintf ROW `asnprintf_realizes_xrom` (lib/Reusable/YGcallSnp.v blob 95c54c2a15b2 :92 at the cut; first
-       taken from a working branch 193779166e07; call rule aj_snprintf_at_xrom :189, implication form) as its
+       taken from a working branch; call rule aj_snprintf_at_xrom :189, implication form) as its
        hypothesis and calls through `snp_esc_realizes_xrom` (YGcallSnpCk.v blob 4b5de62cfcaa :175 at the cut), proved from the row
        by `snp_esc_of_xrom` (:315), with fx' after the call. The double printf_common nesting is in the row's premises.
    Numerals: 8 (LENGTH: a word). No ADDRESS numeral in a statement; the addresses above are image A's, for the reader

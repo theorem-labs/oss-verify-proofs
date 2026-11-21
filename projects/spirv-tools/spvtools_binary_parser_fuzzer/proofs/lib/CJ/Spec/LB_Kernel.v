@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap through the model's nstep_dec_munmap_remove, with its well-formedness premises proved from the kernel ledger). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -321,7 +322,15 @@ Proof.
   assert (Hlen3 : 0 < len < 2^64 /\ mmap_len len = mmap_len l0).
   { destruct Hlen as [-> | ->]; [split; [lia| reflexivity]| split; [lia| exact Hnn]]. }
   destruct Hlen3 as [Hlen1 Hlen2].
-  destruct (nstep_dec_munmap a len mo rsp mo' evs (kl_minv _ _ _ HK) Hst) as (_ & _ & _ & Emaps). rewrite Hlen2 in Emaps.
+  destruct (nstep_dec_munmap_remove a len mo rsp mo' evs (kl_minv _ _ _ HK)
+              ltac:(rewrite Hlen2; pose proof (proj1 (kl_wf _ _ _ HK) _ A5) as HWe;
+                    unfold elo, ehi, went, wz in HWe; cbn [fst snd] in HWe; lia)
+                   ltac:(intros e He; pose proof (proj1 (kl_wf _ _ _ HK) e He) as HWe;
+                         unfold elo, ehi in HWe; lia)
+                   ltac:(intros e1 e2 H1 H2;
+                         destruct (pwdisj_In _ e1 e2 (proj2 (kl_wf _ _ _ HK)) H1 H2) as [HE | HD];
+                         [left; exact HE | right; unfold edisj, elo, ehi in HD; exact HD])
+                   ltac:(rewrite Hlen2; unfold went, wz in A5; exact A5) Hst) as (_ & _ & _ & Emaps). rewrite Hlen2 in Emaps.
   unfold went, wz in A5. unfold LI, vm_live_bytes, nmaps. rewrite Emaps. cbn [vm_maps].
   rewrite (live_bytes_remove _ _ _ (kl_wf _ _ _ HK) A5).
   pose proof (length_remove_In _ _ _ A5) as LR.

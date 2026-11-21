@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 2867 of its 3071 lines of code are new or changed and 2908 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW1.v -- piece W1 (pre-loop: S_A4, S_A5, S_R1, S_R2, S_R3, S_R4, S_R5) of fuzz_ctrl image B's
    (asan-ubsan) walk of LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.  One writer: a Theorem Labs lane
    (proof pass).  rule 24: no function proved (stage glue of a walk).  Header: see the end of the file. *)
@@ -42,7 +43,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.CtrlBase B.Prog.ImgBo
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.asan_memset_c B.Prog.asan_memset_cF.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.asan_set_shadow_c B.Prog.asan_set_shadow_cF.
 (* route (C): the two callees' shared _on statements and their proofs (a Theorem Labs lane, by path on a working branch):
-   reac_identity_init_c.v:160 with reac_identity_initF.v (a Theorem Labs lane 74be6b218f4, cbrec v9 VERDICT ok) over
+   reac_identity_init_c.v:160 with reac_identity_initF.v (a Theorem Labs lane, cbrec v9 VERDICT ok) over
    asan_memsetF_on.v and memset.v; reac_box_catalogue_c.v:137 with reac_box_catalogueF.v:17. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.reac_identity_init_c B.Prog.reac_identity_initF.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.asan_memsetF_on B.Prog.memset.
@@ -915,8 +916,8 @@ Qed.
      dropped), PROVED as B.Prog.reac_box_catalogueF.reac_box_catalogue_F_holds_on (catalogueF.v:17).
    - reac_identity_init: B.Prog.reac_identity_init_c.reac_identity_init_contract_F_on (init_c.v:160; region
      reac_identity_init_shadow_R id = id <> 0 /\ sh_word_on id 38, post the forall-P transport), PROVED as the callee
-     case B.Prog.reac_identity_initF.reac_identity_init_F_holds_on : asan_memset_contract_F_on -> .. (a Theorem Labs lane
-     74be6b218f4), its callee by B.Prog.asan_memsetF_on.asan_memset_holds_F_on : memset_contract -> .. and that by
+     case B.Prog.reac_identity_initF.reac_identity_init_F_holds_on : asan_memset_contract_F_on -> .. (a Theorem Labs lane),
+     its callee by B.Prog.asan_memsetF_on.asan_memset_holds_F_on : memset_contract -> .. and that by
      B.Prog.memset.memset_holds. *)
 Local Notation reac_identity_init_F_holds_on :=
   (B.Prog.reac_identity_initF.reac_identity_init_F_holds_on
@@ -1050,7 +1051,7 @@ Proof.
     + split; [exact HAD | exact Hpos].
 Qed.
 
-(* The walk's journal footprint: ACtl.v instantiates FP with [] (ACtl.v:186-187, `ctl_from ... []`); the input
+(* The walk's journal footprint: ACtl.v instantiates FP with [] (ACtl.v:187-188, `ctl_from ... []`); the input
    block's bytes are kept by the journal only off FP (YCbq.v:360-361).  Discharged by eq_refl at the top. *)
 Hypothesis FP_nil : FP = [].
 
@@ -3380,7 +3381,7 @@ End W1.
    Footprint runs used: A4F.a4_evt_F (seg_A4), A5F.b_hd_ld_evt_F / b_z_evt_F / b_tail_evt_F / b_mode_evt_F /
    b_cat_evt_pre_F_on / b_cat_evt_post_F_on (w1_turn, w1_exit: seg_A5, seg_R1, w1_our_loop), R1F.seg_R1_F (seg_R1),
    R2F.r2_evt_pre_F (seg_R2), R3F.r3_pre_F_on / r3_post_F_on (seg_R3), R4F.r4_pre_F (seg_R4), R5F.r5_evt_F (seg_R5).
-   The four _on runs are a Theorem Labs lane's (a working branch e9effcf7313, R3F.v / A5F.v taken by path).  A5F / R1F /
+   The four _on runs are a Theorem Labs lane's (a working branch, R3F.v / A5F.v taken by path).  A5F / R1F /
    R2F are not on the v1.9 record line yet (auditor a Theorem Labs lane, batch 14): seg_A5, seg_R1, w1_our_loop, seg_R2
    depend on them.
 
@@ -3394,7 +3395,7 @@ End W1.
    - ctl_relro_not_owned (T10, RTPOST-SHARED-B.txt (a working note, not in this delivery), token for token).  a Theorem Labs lane.
    - ctl_names_addressable (V6, RTPOST-SHARED-B.txt (a working note, not in this delivery), token for token).  a Theorem Labs lane.
    - ctl_kind_name_addressable (RTPOST-SHARED-B.txt (a working note, not in this delivery), token for token).  a Theorem Labs lane.
-   - FP_nil : FP = [].  ACtl.v instantiates the journal footprint with [] (ACtl.v:182); eq_refl.  a Theorem Labs lane.
+   - FP_nil : FP = [].  ACtl.v instantiates the journal footprint with [] (ACtl.v:183); eq_refl.  a Theorem Labs lane.
    - AMEMSET : Reusable.YG0d.aintrin_realizes segs B Reusable.YG0d.OSet Reusable.YB1w.tfib_A_asan_memset.
      The core's memset rule at B's name (lib/B/ACtlW3a.v's text); the top discharges.  a Theorem Labs lane.
    - ASF00 : Reusable.SetShadowDefP.aset_shadow_realizesP segs B 0x55024 0 (RTPOST, 08:02Z).  The top discharges by

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new lemma mo_frame_reader for the channel reader; heap_mo also requires m_kernel unchanged, since the heap ledger reads the kernel's vDSO reservation). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -25,6 +26,10 @@ Lemma mo_frame_trans : forall a b c, mo_frame a b -> mo_frame b c -> mo_frame a 
 Proof. unfold mo_frame; intros a b c H1 H2; intuition congruence. Qed.
 Lemma mo_frame_fs : forall mo mo', mo_frame mo mo' -> m_fs mo' = m_fs mo.
 Proof. unfold mo_frame, m_fs; intros mo mo' H; intuition congruence. Qed.
+(* At 08b1429 a write reads [m_channel_reader]; it lives in [m_proc], which a
+   heap step frames (recipes/channel-reader-premise.md). *)
+Lemma mo_frame_reader : forall mo mo', mo_frame mo mo' -> m_channel_reader mo' = m_channel_reader mo.
+Proof. unfold mo_frame, m_channel_reader; intros mo mo' H; intuition congruence. Qed.
 Lemma mo_frame_halted : forall mo mo', mo_frame mo mo' -> m_halted mo' = m_halted mo.
 Proof. unfold mo_frame, m_halted; intros mo mo' H; intuition congruence. Qed.
 
@@ -157,8 +162,12 @@ Record heap_iface := HI {
       HEAP h LB m' mo;
 
   (* [comment removed for export] *)
+  (* 08b1429/75d69e00: the heap ledger reads the kernel build ([KInv.kresv]: the
+     launch's vDSO/vvar pair is [vdso_reserved (m_kernel mo) ...]), so a frame
+     move must keep [m_kernel] as well *)
   heap_mo : forall h LB m mo mo',
       HEAP h LB m mo -> m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> m_halted mo' = m_halted mo ->
+      m_kernel mo' = m_kernel mo ->
       HEAP h LB m mo';
 
   (* [comment removed for export] *)

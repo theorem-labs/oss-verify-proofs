@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/ct/lib/CtColB/W_set0A.v, with its module paths and module names changed; 44 of its 60 lines of code are new or changed and 129 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/Prog/SceneTac.v, with its module paths changed; 269 of its 286 lines of code are new or changed and 43 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Lib Require Import PropExec MState Mem Cells Exec Step Frame Tac Bytes.
@@ -14,7 +15,7 @@ Open Scope Z_scope.
 
 (** LLVMFuzzerTestOneInput of reac-pw/fuzz_qdisc (fuzz_qdisc.c:89-102; 312 bytes at 0x12ac8 in the plain image,
     frame 80 bytes) against qdisc_main_contract, given the contracts of its two callees. The walk is ported from
-    libreac/fuzz_knock's released Prog/LLVMFuzzerTestOneInput.v (ossv/recipes 25e3d17bdb50): a Section with the
+    libreac/fuzz_knock's released Prog/LLVMFuzzerTestOneInput.v: a Section with the
     frame hypotheses, the [saved] cells of the prologue, an exit lemma, and a fuel-indexed loop lemma over the
     budget count with the cursor invariant c + rem = length data. *)
 

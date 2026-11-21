@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry seat, the walk loop and the return adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v for libreac/fuzz_grant's kind_of_link1; the contract and the branch lemmas are new. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/KindOfLink1.v, ported from a working branch d98082bd58b: the same text over image B's listing and walk layer (lib/B/Prog). Image B's kind_of_link1 (0x831f8) is byte-identical to image A's 0x829a0, all 29 words. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/KindOfLink1.v, ported from a working branch: the same text over image B's listing and walk layer (lib/B/Prog). Image B's kind_of_link1 (0x831f8) is byte-identical to image A's 0x829a0, all 29 words. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* kind_of_link1 (image B fuzz_grant.asan-ubsan 0x831f8; code-identical to fuzz_grant.asan 0x829a0, 29 instructions): the contract of the ASan
    build's code and its walk. The function reads no memory and has no frame: it compares
    a0 with constants and returns Pau's KL1 of it in a0. *)

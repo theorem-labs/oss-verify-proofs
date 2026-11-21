@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs: copied from proofs/cgif/cgif_file_fuzzer/lib/YE07.v, with its module paths changed. *)
 (* Modified by Theorem Labs: copied from proofs/libreac/fuzz_grant/lib/YE07.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the region_side tactic unfolds the model's wok_lo and stack_window_reach stack-window bound). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -35,7 +36,9 @@ lazymatch z with
 end
 end.
 Ltac region_side :=
-unfold win_lo; rewrite ?stack_max_size_val, ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
+unfold win_lo, wok_lo; rewrite ?stack_max_size_val;
+unfold stack_window_reach;
+rewrite ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
 cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
 Ltac addr_norm :=
 gres; pin; imm_norm; rewrite ?v_addi_0; unfold v_addi, v_add; unorm; zlit.

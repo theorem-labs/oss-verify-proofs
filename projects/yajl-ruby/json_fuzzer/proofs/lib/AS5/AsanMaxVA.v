@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ value rz is a section variable, passed to x_stmt in node_x_sound_XMaxVA and asan_node_x_sound_XMaxVA). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -196,6 +197,7 @@ Variable SC : SpuriousCfg.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
 Hypothesis HULL_ok : APSX.hull_okP A.
@@ -268,7 +270,7 @@ Proof.
 Qed.
 
 Theorem node_x_sound_XMaxVA :
-  maxva_spec SEGS (x_maxva A) (x_maxva_k A) -> x_stmt SEGS SC A nx0 LIMIT SINV argH FS0 XMaxVA.
+  maxva_spec SEGS (x_maxva A) (x_maxva_k A) -> x_stmt SEGS SC A nx0 LIMIT rz SINV argH FS0 XMaxVA.
 Proof. intros SUM args. exact (summary_maxva_sound SUM). Qed.
 End Sound.
 End APSXM.
@@ -297,6 +299,7 @@ Section AsanNodes.
 Variable SC : SpuriousCfg.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> AP.CEIL <= bv_unsigned a.
@@ -306,7 +309,7 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis NX0_S : APS.nx0_sp_ok nx0.
 Variable FS0 : Fs.Fs.
 
-Theorem asan_node_x_sound_XMaxVA : APS.x_stmt ASEGS SC ASAN5 nx0 LIMIT SINV argH FS0 AP.XMaxVA.
+Theorem asan_node_x_sound_XMaxVA : APS.x_stmt ASEGS SC ASAN5 nx0 LIMIT rz SINV argH FS0 AP.XMaxVA.
 Proof.
   eapply APSXM.node_x_sound_XMaxVA; try eassumption.
   - exact asan_wx.

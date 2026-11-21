@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFeu.v, with its module paths changed; its image addresses relocated to omx-clap-core/fuzz_preset's ASan build through code-verified pairs; entries with no preset counterpart are listed in the commit that relocated them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AFeu.v; 75 of its 100 lines of code are new or changed and 257 lines of the source are left out. *)
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v@84ee52cd012; do not edit. Changed from the donor: this line, the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib, which is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable, and one code edit, recycle_body's abort label (YFeuC, the mcheck at :88): 4 where the donor has 209280, the unit's model-label rewrite (every mcheck label is a tag 1..14, not an image address; 209280 -> 4, the same label as lib/Reusable/YG00.v's own recycle check). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v; do not edit. Changed from the donor: this line, the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib, which is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable, and one code edit, recycle_body's abort label (YFeuC, the mcheck at :88): 4 where the donor has 209280, the unit's model-label rewrite (every mcheck label is a tag 1..14, not an image address; 209280 -> 4, the same label as lib/Reusable/YG00.v's own recycle check). *)
 (* The image-free base of the Deallocate interface DGif0.DIface and its drain contract (DMspec / DMiface), beside
    ImgBase.
 

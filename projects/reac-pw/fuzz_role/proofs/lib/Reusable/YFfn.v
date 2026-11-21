@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFfn.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YFfn.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_role. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YFfn.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_role. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's ENOMEM answer filtered under ACFG; munmap in the allocation-budget system calls; the specs' Monad combinators; the ROM-extension facts (RomBase)); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -13,6 +14,8 @@ From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import
 YK16 YK0n YK11 YK0h YK0i YK14 YK1c YK0v YK02 YK0p YK15 YK18 YK0y YK1b YK00 YK01 YK13 YP0n YK04 YK05 YA0i YA0n YA05 YA09 YK0g YA08 YG0b.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import YG0f YG0n YG0j.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import RomBase.
+From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -46,22 +49,16 @@ assert (Hpr : page_round_up (ms_gpr ms 1) = n) by (unfold page_round_up; rewrite
 assert (Hargs : munmap_args_ok ms md).
 { unfold munmap_args_ok. rewrite H0, Hu1, Hpr. repeat split; try assumption.
 intros Hz. apply (f_equal bv_unsigned) in Hz. rewrite Hu1 in Hz. change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hz. lia. }
-pose proof (fun eff => eq_trans (munmap_check segs ms (getr regs 17) md eff Hno) (munmap_check_modeled ms md eff Hargs)) as Hchk. rewrite H0, Hpr in Hchk.
 rewrite <- UF.
-apply (node_det_noacc segs ms md (getr regs 17) (mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] []) (munmap_model a n md) []);
-[exact Hh | reflexivity | | | rewrite munmap_model_halted; exact Hh | reflexivity].
-- intros eff m' evs. split.
-+ intros Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
-destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
-destruct (w_is0 r) eqn:E0; [|discriminate].
-destruct (listNN_eqb us [(a, n)]) eqn:Hl; [|discriminate].
-apply listNN_eqb_eq in Hl. subst us. cbn [andb] in Hck. injection Hck as <- <-.
-unfold w_is0 in E0. apply bv_eqb_eq in E0. subst r. repeat split; reflexivity.
-+ intros (-> & -> & ->). rewrite Hchk. unfold w_is0. rewrite bv_eqb_refl.
-rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
-- intros eff Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
-destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
-destruct (w_is0 r && listNN_eqb us _)%bool; discriminate.
+(* 727298f3: munmap (215) joined the allocation marks and may answer ENOMEM, so the node is no
+   longer a single deterministic answer; under ACFG that refusal is filtered, which is
+   [YK15.node_munmap_cfg] (as Reusable/YK0x.v's [node_munmap_lazy]). *)
+replace (mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] []) with (munmap_eff ms)
+  by (unfold munmap_eff; rewrite H0, Hpr; reflexivity).
+replace (munmap_model a n md) with (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) md)
+  by (rewrite H0, Hpr; reflexivity).
+exact (@node_munmap_cfg segs AcfgMode eq_refl ms md (getr regs 17) _ Hh ltac:(reflexivity) Hno Hargs
+  (materialize_model_accesses_nil _)).
 Qed.
 Lemma same_io_munmap : forall a n md, same_io md (munmap_model a n md).
 Proof. intros a n md. unfold munmap_model, with_mmap_destroyed, vm_forget_range. eapply same_io_trans; [apply same_io_with_vmmaps | apply same_io_with_vm_backing]. Qed.

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: hop DRAIN of the MATCH segment of the ASan walk of fuzz_reply's relay_remove
    (lib/A/W_rr_match_cx.v hop_drain_stmt): RRM i 0x83f48 -> RRG i 0x83f68.
-   rule 24: proves function relay_remove MATCH hop 1 (kind: segment lemma of the W6 walk, PORTED from 2ad36763b22
+   rule 24: proves function relay_remove MATCH hop 1 (kind: segment lemma of the W6 walk, PORTED from
    relay_remove_p_bc.v rrA_drain_hop / relay_remove_seg.v rrA_found; lookup + CONFIRM in context).
 
    The hop: the shadow check of entry i's eof field (0x83f4c-0x83f58: the engine's fast path over the slot's 56
@@ -43,7 +43,7 @@
    allocator relation ARx (Section c is W_relay_remove_cx.v's generic block, verbatim); rr_m_drain : hop_drain_stmt
    B PST ARx MT RP MMAX RG.  The laws, the journal and its lemmas are their _x twins (head set Hp after each state),
    drain is called at dr_spec_x through W_gestures_end.v gse_callS_x, and the slot's 8-alignment is rmd_sa_align
-   (commit 3d17f490d56, lib/A/W_drain_sa.v dr_sa_align_slot over alx_blocks).  The room round, RRG's two new conjuncts:
+   (lib/A/W_drain_sa.v dr_sa_align_slot over alx_blocks).  The room round, RRG's two new conjuncts:
    - eof <> 0 (rrd_closed_rrg): rtr = key run ++ frees (rm_tr_split, no drain), so rmbud's rp_RM is RHELD's; the count
      cnt_ok_pk RP gse_pk by cnt_ok_pk_mono from RHELD's rr_pk count (gse_pk = 4 <= tr_peakP + 4).
    - eof = 0 (rr_m_drain, rrd_open_rrg): drain at kr' = Z.to_nat (tr_cost MT_rk (key run ++ frees)) + kr.  Its rp_RM
@@ -54,6 +54,7 @@
    - rmd_drain_dr, rmd_ocap, rmd_bytes_close (new): rmd_dr_bytes's closing arithmetic is over a final state, a
      trace net and lines that are variables, so no proof term asks the kernel to compare dr_fin with an unfolded
      drain run (rmd_dr_bytes's one-proof form took 753 s at Qed; W_rr_m_dcnt.v rmc_close, the same cut). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -775,7 +776,7 @@ Hypothesis PSTR : forall a, in_rom SEGS a -> ~ Exists (in_zr a) PST.
 Hypothesis PSTG : forall a, Exists (fun r => fst r <= a < snd r) (rr_gcells B RG) -> ~ Exists (in_zr a) PST.
 
 (* ------------------------------------------------------------------ the meter's laws, the held array, the slot *)
-(* the counting meter's laws (commit 3d17f490d56, lib/A/W_relay_finish_h.v rfl_rk_laws, verbatim) *)
+(* the counting meter's laws (lib/A/W_relay_finish_h.v rfl_rk_laws, verbatim) *)
 Lemma rmd_rk_laws : ameter_laws MT_rk.
 Proof. constructor; cbn [mo_ok mo_le mo_malloc mo_free MT_rk]; intros; solve [exact I | lia]. Qed.
 (* an entry's held array: no pointer, or a block of nonzero size (aentry_ok's held-array clause, 8 <= re_kh) *)
@@ -784,7 +785,7 @@ Proof.
 intros ly S W mem e (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HK & _).
 destruct HK as [(Hz & _) | (_ & _ & _ & H8 & _)]; [left; exact Hz | right; lia].
 Qed.
-(* a slot of the table block is 8-aligned: every live block is 16-aligned (commit 3d17f490d56, lib/A/W_drain_sa.v
+(* a slot of the table block is 8-aligned: every live block is 16-aligned (lib/A/W_drain_sa.v
    dr_sa_align_slot, over alx_blocks) *)
 Lemma rmd_sa_align : forall ly S Hp W mem md (G : Z) (i : nat),
   ARx ly S Hp W mem md -> In (G, ATABLE) (ablocks B ly S) -> (G + AENT * Z.of_nat i) mod 8 = 0.

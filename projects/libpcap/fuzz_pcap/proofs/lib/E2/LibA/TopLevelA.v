@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: side_srz realizes over Run.run_segments (the binary's segments then the vDSO pair), and the top-level theorem takes vdso_image segs = None and lifts its walk by RomStable.srun_init (RomStable now required). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2 Require Import TopLevel.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require Import AcctCore ExecF.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require Import ITreeA.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim2__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require SpinAlg.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require RomStable.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -26,29 +28,33 @@ Definition tfam : Type := ProcInput -> ExecEntry -> list event -> Prop.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* LPS 727298f3: the run reads [Run.run_segments segs inp sp mbase], the binary's
+   segments followed by the vDSO pair, so the side's realization is over that list. *)
 Definition side_srz (segs : list Segment) (pc : N) (ph : PhdrInfo) (lim : Z) (T : tfam) : Prop :=
   forall en inp, valid_entry (mkImage segs pc ph) en inp -> valid_input inp ->
-    SpinAlg.srealizes segs (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) (T inp en).
+    let vsegs := run_segments segs inp (en_sp en) (en_mmap_base en) in
+    SpinAlg.srealizes vsegs (init_config vsegs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) (T inp en).
 
 Lemma side_srz_run : forall segs pc ph lim T en inp,
   side_srz segs pc ph lim T -> valid_entry (mkImage segs pc ph) en inp -> valid_input inp ->
   (forall tr, bh_traces (run_scfg CFG (mkImage segs pc ph) lim en inp) tr <-> T inp en tr)
   /\ ~ bh_errors (run_scfg CFG (mkImage segs pc ph) lim en inp).
 Proof.
-  intros segs pc ph lim T en inp H Hv Hi. specialize (H en inp Hv Hi).
-  rewrite run_eq. cbv zeta. cbn [bh_traces bh_errors]. rewrite init_config_eq in H. split.
-  - intros tr. exact (SpinAlg.srealizes_obs_iff segs _ _ H tr).
-  - exact (SpinAlg.srealizes_no_error segs _ _ H).
+  intros segs pc ph lim T en inp H Hv Hi. specialize (H en inp Hv Hi). cbv zeta in H.
+  rewrite run_eq. cbv zeta. cbn [bh_traces bh_errors]. rewrite init_config_run in H. split.
+  - intros tr. exact (SpinAlg.srealizes_obs_iff _ _ _ H tr).
+  - exact (SpinAlg.srealizes_no_error _ _ _ H).
 Qed.
 
 (* [comment removed for export] *)
 Lemma side_srz_eq : forall segs pc ph lim (T T' : tfam),
   (forall en inp, valid_entry (mkImage segs pc ph) en inp -> valid_input inp ->
-      SpinAlg.srealizes segs (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) (T' inp en)
+      let vsegs := run_segments segs inp (en_sp en) (en_mmap_base en) in
+      SpinAlg.srealizes vsegs (init_config vsegs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp) (T' inp en)
       /\ OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AllocSim2__Common.ShapeAlg.t_eq (T' inp en) (T inp en)) ->
   side_srz segs pc ph lim T.
 Proof.
-  intros segs pc ph lim T T' H en inp Hv Hi. destruct (H en inp Hv Hi) as [Hs Heq].
+  intros segs pc ph lim T T' H en inp Hv Hi. pose proof (H en inp Hv Hi) as HH. cbv zeta in HH |- *. destruct HH as [Hs Heq].
   eapply SpinAlg.srz_conseq; [exact Hs| exact Heq].
 Qed.
 
@@ -110,6 +116,9 @@ Qed.
          (tS : prog_tree RS) (QS : RS -> machine_state -> Prop)
          (AtMain : ProcInput -> ExecEntry -> machine_state -> Model -> Prop)
          (MainTree : ProcInput -> ExecEntry -> forall R : Type, itree node R -> Model -> Prop),
+    (* LPS 727298f3: the binary carries no vDSO image of its own, so the run's list is the
+       binary's followed by the launch's vDSO pair ([RomStable.srun_init]) *)
+    vdso_image segs = None ->
     tree_ok segsS pcS phS limS tS QS ->
     (* [comment removed for export] *)
     (forall enT inp, valid_entry (mkImage segs pcT phT) enT inp -> valid_input inp ->
@@ -128,7 +137,7 @@ Qed.
          /\ (forall tr, tree_exits (tS inp enS) (mo0 segsS limS enS inp) tr -> wins npeek nstep nexit t mo (is_prefix tr))) ->
     strong_universal_error_free_T_scfg_budgets CFG limS limT (mkImage segsS pcS phS) (mkImage segs pcT phT).
 Proof.
-  intros RS limS limT segsS pcS phS pcT phT tS QS AtMain MainTree HS BOOT MAIN HEQ enS enT inp HvS HvT Hvi _.
+  intros RS limS limT segsS pcS phS pcT phT tS QS AtMain MainTree HVI HS BOOT MAIN HEQ enS enT inp HvS HvT Hvi _.
   destruct (HS enS inp HvS Hvi) as (HimplS & HleavesS & HsafeS).
   destruct (run_of_tree segsS pcS phS limS (tS inp enS) QS enS inp HimplS HleavesS HsafeS Hvi)
     as (HsoundS & HcomplS & HerrS).
@@ -141,11 +150,13 @@ Proof.
     - intros tr Htr. apply HcomplS. apply HTS. exact Htr.
     - intros tr Htr. apply HST. apply (tree_traces_exits _ _ _ HleavesS). apply HsoundS. exact Htr. }
   split; [exact HerrS|].
-  rewrite (run_eq segs pcT phT limT enT inp). cbv zeta. cbn [bh_traces bh_errors]. rewrite init_config_eq in SRZ. split.
-  - exact (SpinAlg.srealizes_no_error segs _ _ SRZ).
+  pose proof (RomStable.srun_init segs inp (en_sp enT) (en_mmap_base enT) pcT phT (en_brk enT) (en_draw enT) limT K HVI SRZ)
+    as SRZr.
+  rewrite (run_eq segs pcT phT limT enT inp). cbv zeta. cbn [bh_traces bh_errors]. rewrite init_config_run in SRZr. split.
+  - exact (SpinAlg.srealizes_no_error _ _ _ SRZr).
   - intros tr. split.
-    + intros H. apply (SpinAlg.srealizes_obs_iff segs _ _ SRZ tr). exact H.
-    + intros H. apply (SpinAlg.srealizes_obs_iff segs _ _ SRZ tr) in H. exact H.
+    + intros H. apply (SpinAlg.srealizes_obs_iff _ _ _ SRZr tr). exact H.
+    + intros H. apply (SpinAlg.srealizes_obs_iff _ _ _ SRZr tr) in H. exact H.
 Qed.
 End BootMain.
 

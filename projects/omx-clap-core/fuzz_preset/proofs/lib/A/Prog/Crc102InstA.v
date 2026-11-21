@@ -1,7 +1,7 @@
 (* fuzz_preset, image A' (the #102 asan image, pinned 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): the walk
    of check_reject_clean (Wcrc102.v) at the listing instance PI_prog_A (lib/A/PAImg_prog.v blob 505a51ff7d08, the
    #102 listing of record) and the PrhImg prh_img_A (lib/A/PRH_Img.v blob 934516a622e8, generated from the twin).
-   A PORT of h-hpreset-7's S911ImgA.v / S911InstA.v (origin/cold/h-hpreset-7-walk-s9-got-rob 9a0674f0b5f2).
+   A PORT of h-hpreset-7's S911ImgA.v / S911InstA.v.
    rule 24: proves function check_reject_clean (ported; no #102 copy exists).
    THE IMAGE PREMISES of the walk, each with its INSTANCE WITNESS here (unit ruling 16:4xZ):
    - IMG (Crc102Kit.v c102_img) is PROVED at PI_prog_A by computation (c102_img_A): the body is the image's (the
@@ -126,7 +126,7 @@ Hypothesis S9_CF : forall ly S Hp (W : world rsegs) mem md, ARx ly S Hp W mem md
 (* the engine's laws (YCbqG.v AR_laws_x); at ec_ARx: YGcallcf.AR_laws_x_xs of YG0lawscf.AR_laws_ok_cf (below) *)
 Hypothesis LAWS : AR_laws_x rsegs B ARx cf_head.
 (* CALLEE: the bcmp row with the memnorm keep (Reusable/YGcallMxmn.v:280); owner: the bcmp realizer's lane, a Theorem Labs lane
-   (its po_memcmp_cf row with the nested bcmp row, Reusable/YGcallCmp.v:7-10) *)
+   (its po_memcmp_cf row with the nested bcmp row, Reusable/YGcallCmp.v:8-11) *)
 Hypothesis BCMP : YGcallMxmn.abcmp_realizes_xm rsegs B ARx (A_prog_sigma AS___wrap_bcmp).
 (* CALLEE: K0's text of fuzz_alloc_live (PRH_FnAlloc.v:137); its A' walk is a Theorem Labs lane's relocation *)
 Hypothesis LIVE : tfuzz_alloc_live_specX (PI := prh_img_A) (PA := PI_prog_A) B ARx SK.
@@ -176,9 +176,9 @@ End I.
    conversion). TS is AD2l.TfibB_syms, S9_CF is proj1, LAWS is YGcallcf.AR_laws_x_xs of YG0lawscf.AR_laws_ok_cf.
    Only BCMP (the bcmp realizer's lane, c-libc-stdio) and LIVE (K0's tfuzz_alloc_live_specX; h-w6rep-2's A'
    relocation) remain. THE SINK HEAD IS QUANTIFIED (forall SK), not fixed at preset_sink_head: that name lives in
-   lib/A/PresetCfnA.v (:251), which did not build at the #102 pins build of e1edc1af2c (log of 2026-10-29T18:44:11Z,
-   line 1945: PresetCfnA.v:417 applied prh_ledger to eleven arguments, the decff kit's has thirteen); on this tree it is in
-   the library build (lib/dune) and PRH_Refute.v:47 Requires it. The corollary at every SK includes SK := preset_sink_head;
+   lib/A/PresetCfnA.v (:251), which did not build at the #102 pins build (log of 2026-10-29T18:44:11Z,
+   line 1945: PresetCfnA.v:418 applied prh_ledger to eleven arguments, the decff kit's has thirteen); on this tree it is in
+   the library build (lib/dune) and PRH_Refute.v:48 Requires it. The corollary at every SK includes SK := preset_sink_head;
    no text's FP opens the sink (PRH_Base.v:794-795), so nothing in it depends on SK's value. ---- *)
 Definition c102_ARx {rc : YM05.RunCeil} {ci : CfImg} (ly : alayout) (S : astate) (Hp : list Z) (W : world rsegs)
   (mem : word -> option byte) (md : Model) : Prop :=

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_ok_malloc_fp's proof takes the startup auxv premise apart in its new form over the launch values: launch auxv, entry, uid, gid, hwcap and exec name). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -129,7 +130,7 @@ Proof.
   intros MR0 MR2 AUX PE CLO SB. eapply rauxv_ok_pres; [exact AUX| exact PE| |].
   - intros a Ha Hfp. Local Ltac2 Set LiaHints.tbl := fun () => "0030>16075364609.2059323410545.2159323410545.3100000400?00HS2HaS2SB2Ha1H1XS2HH2Ha1H".
 destruct (rmalloc_fp_cases st st2 lo sp m0 m2 a MR0 MR2 Hfp); [lia|].
-    destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). atop_facts. lia.
+    destruct AUX as (av & rnd & la & ent & uid & gid & hw & efn & _ & _ & _ & HH). atop_facts. lia.
   - intros a Ha Hfp. unfold RAUXV_CELL, RLIBC in Ha.
     destruct (rmalloc_fp_image st st2 lo sp m0 m2 a MR0 MR2 Hfp CLO ltac:(lia)) as [X|X]; unfold RCTX in X; lia.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".

@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes of J_nclosed; mmap placement by the model's linux_place_is, the first test of anon_place_ok, in step_mmap; munmap node changes: the cut is maps_subtract, a sublist of map_remove). *)
 
 From Stdlib Require ZArith NArith List Lia Bool FunctionalExtensionality.
 From stdpp Require gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType Fs State Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QbrW QlEo_c1 QWxq_c1 Q5Rg Q6q3 QZAi QUZl Q7S0 Qfya Ql2m QGeV QkRc QSui QQIi QdTb Q1lV Qqcs Qcrs QUcd QCUT QwAs Qc6I QJFf QVsB Qsn5 Qknc QBrp Q2ui Q1KO QPa2 QOb0 Qt4u Q6sh QvDJ QzgH QKTr Qqyb QNqr QeDS QGaR QwuX QCrt QgTJ QFL8.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -333,8 +335,9 @@ pose proof (shz_in_band LA LV B P T N LLx y' Hb) as Hband. lia.
 Qed.
 
 Variable J : config -> Prop.
+(* LPS 727298f3: a closure under nodes needs the node's [RomBase.sys_rob] *)
 Hypothesis J_nclosed : forall c (I : Type) (nx : I -> config) (i0 : I),
-node_ok segs c I (fun _ => []) nx -> (forall i, J (nx i)) -> J c.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c -> (forall i, J (nx i)) -> J c.
 
 Lemma step_mmap : forall Lg g c H ms1 len B T N,
 KLA Lg g c H (ms_mem ms1) B T N ->
@@ -379,7 +382,7 @@ assert (Hml : mmap_len len = len) by (apply mmap_len_aligned; exact Hmod).
 rewrite Hml in *.
 pose proof (drift_frame LV _ _ Hd) as (_ & _ & _ & _ & _ & Hvm & _).
 unfold anon_place_ok in Hpl. apply andb_prop in Hpl as [Hpl Hfree]. apply andb_prop in Hpl as [Hpl Htop].
-apply andb_prop in Hpl as [Hal Hpos]. apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
+apply andb_prop in Hpl as [Hal Hpos]. apply andb_prop in Hal as [_ Hal]. apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
 pose proof Htop as Htop0.
 rewrite Hvm, (kla_top _ _ _ _ _ _ _ _ KL) in Htop. unfold page_size in Hal.
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
@@ -657,11 +660,16 @@ assert (Hua : bv_unsigned (w64 a) = a) by (apply u_w64; lia).
 assert (Hall : forall y, in_sh a l y = true -> zeros_cover us y = true).
 { intros y Hy. unfold us, conceal. rewrite zeros_cover_bytes. apply existsb_bv_eqb.
 pose proof (ki_ch LV B _ (T - l) (N - 1) _ _ K2 (a, l) ltac:(cbn [g1 g_chunks]; left; reflexivity)) as CK.
-destruct CK as (_ & _ & _ & _ & _ & _ & _ & CIn & _ & CFree & _). cbn [fst snd] in CIn, CFree.
+destruct CK as (_ & _ & _ & _ & _ & _ & _ & CIn & CSz & CFree & _). cbn [fst snd] in CIn, CSz, CFree.
 pose proof (ki_x LV B _ (T - l) (N - 1) _ _ K2) as [_ (_ & _ & [_ Hbt])]. specialize (Hbt _ CIn). unfold cent in Hbt. cbn [fst snd] in Hbt.
 rewrite Hua, Hul in Hbt.
 assert (Hfree' : region_free (vm_reserved (m_vmmaps (cfg_model c1)) ++ vm_maps (m_vmmaps (cfg_model c1))) (w64 a) (w64 l) = true).
-{ rewrite Hmo, reserved_munmap, maps_munmap, Hvm. exact CFree. }
+{ rewrite Hmo, reserved_munmap, maps_munmap, Hvm.
+  (* LPS 727298f3: the cut is maps_subtract, here a sublist of map_remove (QJFf.maps_subtract_munmap) *)
+  pose proof (region_free_incl _ _ _ _ (fun e He => in_or_app _ _ e (or_intror He)) CFree) as CFm.
+  rewrite (maps_subtract_munmap _ (w64 a) (w64 l) ltac:(rewrite Hul; lia) CSz CFm).
+  eapply region_free_incl; [| exact CFree]. intros e He. apply in_app_iff in He as [He|He]; apply in_app_iff; [left; exact He| right].
+  apply filter_In in He as [He _]. exact He. }
 assert (Htop' : bv_unsigned (w64 a) + bv_unsigned (w64 l) <= alloc_top (m_vmmaps (cfg_model c1))).
 { rewrite Hmo, top_munmap, Hvm, Hua, Hul. exact Hbt. }
 assert (Ha8 : bv_unsigned (w64 a) mod 8 = 0) by (rewrite Hua; clear - Haal; Z.div_mod_to_equations; lia).

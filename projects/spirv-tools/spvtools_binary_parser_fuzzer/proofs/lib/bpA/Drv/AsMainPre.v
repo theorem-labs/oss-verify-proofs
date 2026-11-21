@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the room above an argument string is 10 bytes in the revised entry block, and the model's channel reader a premise at main). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -32,8 +33,12 @@ Section MainPre.
   Definition AMAIN_COST : Z :=
     12 * (as_Cm H (2 ^ 26) + as_Cf H (2 ^ 26)) + (as_Cm H (2 ^ 26) + as_Cf H (2 ^ 26) + 4 * fz_cost P (2 ^ 26)).
 
+  (* LPS 727298f3: the strings sit at the TOP of the entry block, so above the last argv NUL there are at least the
+     exec name's NUL and the eight-byte top slot (StackLayout.string_base_addr), and the block ends at or below
+     0x800000000000 (Run.valid_stack_top_va): hence 10, where the old block's sixteen AT_RANDOM bytes above the
+     strings gave 17. *)
   Definition astr_at (mem : word -> option byte) (sp0 : word) (p : Z) (s : list byte) : Prop :=
-    bv_unsigned sp0 <= p /\ p + Z.of_nat (length s) + 17 <= 0x800000000000 /\ ~ In (Z_to_bv 8 0) s
+    bv_unsigned sp0 <= p /\ p + Z.of_nat (length s) + 10 <= 0x800000000000 /\ ~ In (Z_to_bv 8 0) s
     /\ rdn RSEGS mem (Z_to_bv 64 p) (length s + 1) = Some (s ++ [Z_to_bv 8 0])
     /\ exists t8, rdn RSEGS mem (Z_to_bv 64 (p + Z.of_nat (length s))) 8 = Some t8.
 
@@ -78,7 +83,10 @@ Section MainPre.
 
     am_fds : m_fds mo = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1)); (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))];
 
-    am_dstat : LbA_DStat.dstat mem }.
+    am_dstat : LbA_DStat.dstat mem;
+
+    (* LPS 727298f3: the launch's channel reader at main (cs_ok's co_rdr); the writes need it *)
+    am_rdr : m_channel_reader mo = true }.
 
   Definition as_main_realizes_stmt : Prop :=
     forall (sp0 : word) (argv : list (list byte)) (s0 : as_St H) (msF : machine_state) (mo : Model)

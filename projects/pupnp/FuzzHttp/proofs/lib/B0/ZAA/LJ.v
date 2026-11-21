@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a system call's return clears the reservation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -169,7 +170,7 @@ Proof. reflexivity. Qed.
 Lemma nretL_MSsvc : forall n rsp H R F pc x17 fc rv m ro r ws zs us,
   strip rsp = mkEffectU r ws zs us [] [] ->
   nretL nodeL hideL n rsp H (MSsvc R F pc x17 fc rv m ro)
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None
        (mrestrict (hideL n rsp H) (apply_writes (apply_zeros (apply_unmaps (mreveal (unhidden H (hideL n rsp H)) m) us) zs) ws)) ro.
 Proof.
   intros n rsp H R F pc x17 fc rv m ro r ws zs us Hs. unfold nretL. rewrite reveal_MSsvc, <- nret_strip, Hs, nret_MSsvc. reflexivity.
@@ -897,13 +898,13 @@ Lemma implA_fixed {A} : forall flags H (k : unit -> itree nodeL (exc A)) Q R F p
   addr mod 4096 = 0 -> 0 < addr -> 0 < len < 2^47 -> addr + lenZ len <= 2^47 ->
   (let H' := unhide_range addr (addr + lenZ len) H in
    let m' := apply_zeros m [(Z_to_bv 64 addr, Z_to_bv 64 (lenZ len))] in
-   mclean H' m' -> implA H' (k tt) Q (MS (bvmap_set 10 (Z_to_bv 64 addr) R) F (Z_to_bv 64 pc4) fc rv m' ro)) ->
+   mclean H' m' -> implA H' (k tt) Q (MS (bvmap_set 10 (Z_to_bv 64 addr) R) F (Z_to_bv 64 pc4) fc None m' ro)) ->
   implA H (ebind (enode (LMmapFixed addr len flags) (dec_fixed addr len)) k) Q (MS R F (Z_to_bv 64 pc) fc rv m ro).
 Proof.
   intros flags H k Q R F pc pc4 fc rv m ro addr len w FL C FW EC -> R17 R10 R11 R12 R13 R14 R15 AL A0 L0 TOP CONT.
   pose proof (lenZ_bound len ltac:(lia)) as LB.
   eapply implA_ebind with (Q1 := fun u H' ms' => H' = unhide_range addr (addr + lenZ len) H /\
-      ms' = MS (bvmap_set 10 (Z_to_bv 64 addr) R) F (Z_to_bv 64 (pc + 4)) fc rv (apply_zeros m [(Z_to_bv 64 addr, lenW len)]) ro).
+      ms' = MS (bvmap_set 10 (Z_to_bv 64 addr) R) F (Z_to_bv 64 (pc + 4)) fc None (apply_zeros m [(Z_to_bv 64 addr, lenW len)]) ro).
   - apply implL_enode. apply (evt_ecall asegs _ R F pc fc rv m ro w FW EC). split.
     + cbn [at_nodeL]. unfold mmap_regs, areg. cbn [ms_svc_pending ms_regs MSsvc]. rewrite R17, R10, R11, R12, R13, R14, R15.
       rewrite w_is0_lit by lia. rewrite (proj2 (Z.eqb_neq len 0)) by lia.
@@ -989,13 +990,13 @@ Lemma implA_madv {A} : forall H (k : unit -> itree nodeL (exc A)) Q R F pc pc4 f
   addr mod 4096 = 0 -> 0x609000 <= addr -> 0 < len < 2^47 -> addr + lenZ len <= 2^47 ->
   (let H' := hide_range addr (addr + lenZ len) H in
    let m' := apply_unmaps m [(Z_to_bv 64 addr, Z_to_bv 64 (lenZ len))] in
-   mclean H' m' -> implA H' (k tt) Q (MS (bvmap_set 10 (Z_to_bv 64 0) R) F (Z_to_bv 64 pc4) fc rv m' ro)) ->
+   mclean H' m' -> implA H' (k tt) Q (MS (bvmap_set 10 (Z_to_bv 64 0) R) F (Z_to_bv 64 pc4) fc None m' ro)) ->
   implA H (ebind (t_madv addr len) k) Q (MS R F (Z_to_bv 64 pc) fc rv m ro).
 Proof.
   intros H k Q R F pc pc4 fc rv m ro addr len w C FW EC -> R17 R10 R11 R12 AL A0 L0 TOP CONT.
   pose proof (lenZ_bound len ltac:(lia)) as LB.
   eapply implA_ebind with (Q1 := fun u H' ms' => H' = hide_range addr (addr + lenZ len) H /\
-      ms' = MS (bvmap_set 10 (Z_to_bv 64 0) R) F (Z_to_bv 64 (pc + 4)) fc rv (apply_unmaps m [(Z_to_bv 64 addr, lenW len)]) ro).
+      ms' = MS (bvmap_set 10 (Z_to_bv 64 0) R) F (Z_to_bv 64 (pc + 4)) fc None (apply_unmaps m [(Z_to_bv 64 addr, lenW len)]) ro).
   - apply implL_enode. apply (evt_ecall asegs _ R F pc fc rv m ro w FW EC). split.
     + cbn [at_nodeL]. unfold madv_regs, areg. cbn [ms_svc_pending ms_regs MSsvc]. rewrite R17, R10, R11, R12.
       rewrite w_is0_lit by lia. rewrite (proj2 (Z.eqb_neq len 0)) by lia.
@@ -1022,13 +1023,13 @@ Lemma implA_unmap {A} : forall H (k : unit -> itree nodeL (exc A)) Q R F pc pc4 
   addr mod 4096 = 0 -> 0 < addr -> 0 < len < 2^47 -> addr + lenZ len <= 2^47 ->
   (let H' := unhide_range addr (addr + lenZ len) H in
    let m' := apply_unmaps m [(Z_to_bv 64 addr, Z_to_bv 64 (lenZ len))] in
-   mclean H' m' -> implA H' (k tt) Q (MS (bvmap_set 10 (Z_to_bv 64 0) R) F (Z_to_bv 64 pc4) fc rv m' ro)) ->
+   mclean H' m' -> implA H' (k tt) Q (MS (bvmap_set 10 (Z_to_bv 64 0) R) F (Z_to_bv 64 pc4) fc None m' ro)) ->
   implA H (ebind (t_unmap addr len) k) Q (MS R F (Z_to_bv 64 pc) fc rv m ro).
 Proof.
   intros H k Q R F pc pc4 fc rv m ro addr len w C FW EC -> R17 R10 R11 AL A0 L0 TOP CONT.
   pose proof (lenZ_bound len ltac:(lia)) as LB.
   eapply implA_ebind with (Q1 := fun u H' ms' => H' = unhide_range addr (addr + lenZ len) H /\
-      ms' = MS (bvmap_set 10 (Z_to_bv 64 0) R) F (Z_to_bv 64 (pc + 4)) fc rv (apply_unmaps m [(Z_to_bv 64 addr, lenW len)]) ro).
+      ms' = MS (bvmap_set 10 (Z_to_bv 64 0) R) F (Z_to_bv 64 (pc + 4)) fc None (apply_unmaps m [(Z_to_bv 64 addr, lenW len)]) ro).
   - apply implL_enode. apply (evt_ecall asegs _ R F pc fc rv m ro w FW EC). split.
     + cbn [at_nodeL at_node]. unfold areg. cbn [ms_svc_pending ms_regs MSsvc]. rewrite R17, R10, R11.
       rewrite w_is0_lit by lia. rewrite (proj2 (Z.eqb_neq len 0)) by lia. rewrite !unsigned_lit by lia. fold (lenZ len).
@@ -1091,7 +1092,7 @@ Lemma implA_anon {HC : HasCeiling} {A} : forall H (k : Z -> itree nodeL (exc A))
      let m' := apply_zeros m1 [(Z_to_bv 64 a, Z_to_bv 64 (lenZ len))] in
      mgrow m m1 -> (forall x, m1 x = m x \/ swlo a <= bv_unsigned x < swhi a (lenZ len)) -> mclean H' m' ->
      shvis H' m1 -> stk asegs m1 (swlo a) (swhi a (lenZ len)) ->
-     implA H' (k a) Q (MS (bvmap_set 10 (Z_to_bv 64 a) R) F (Z_to_bv 64 pc4) fc rv m' ro)) ->
+     implA H' (k a) Q (MS (bvmap_set 10 (Z_to_bv 64 a) R) F (Z_to_bv 64 pc4) fc None m' ro)) ->
   implA H (ebind (t_anon len avoid) k) Q (MS R F (Z_to_bv 64 pc) fc rv m ro).
 Proof.
   intros H k Q R F pc pc4 fc rv m ro len avoid w C SV FW EC -> R17 R10 R11 R12 R13 R14 R15 L0 CONT.
@@ -1100,7 +1101,7 @@ Proof.
       a mod 4096 = 0 /\ 0x609000 <= a /\ app_mem a (lenZ len) /\ anon_place a (lenZ len) /\
       Forall (fun iv => a + lenZ len <= fst iv \/ snd iv <= a) avoid /\
       H' = unhide_range (swlo a) (swhi a (lenZ len)) (unhide_range a (a + lenZ len) H) /\
-      ms' = MS (bvmap_set 10 (Z_to_bv 64 a) R) F (Z_to_bv 64 (pc + 4)) fc rv
+      ms' = MS (bvmap_set 10 (Z_to_bv 64 a) R) F (Z_to_bv 64 (pc + 4)) fc None
               (apply_zeros (wreveal H (swlo a) (swhi a (lenZ len)) m) [(Z_to_bv 64 a, lenW len)]) ro).
   - apply implL_enode. apply (evt_ecall asegs _ R F pc fc rv m ro w FW EC). split.
     + cbn [at_nodeL]. unfold mmap_regs, areg. cbn [ms_svc_pending ms_regs MSsvc]. rewrite R17, R10, R11, R12, R13, R14, R15.
@@ -1139,14 +1140,14 @@ Lemma implA_commit {A} : forall H (k : unit -> itree nodeL (exc A)) Q R F pc pc4
    let m' := apply_zeros m1 [(Z_to_bv 64 addr, Z_to_bv 64 (lenZ len))] in
    mgrow m m1 -> (forall x, m1 x = m x \/ swlo addr <= bv_unsigned x < swhi addr (lenZ len)) -> mclean H' m' ->
    shvis H' m1 -> stk asegs m1 (swlo addr) (swhi addr (lenZ len)) ->
-   implA H' (k tt) Q (MS (bvmap_set 10 (Z_to_bv 64 addr) R) F (Z_to_bv 64 pc4) fc rv m' ro)) ->
+   implA H' (k tt) Q (MS (bvmap_set 10 (Z_to_bv 64 addr) R) F (Z_to_bv 64 pc4) fc None m' ro)) ->
   implA H (ebind (t_commit addr len) k) Q (MS R F (Z_to_bv 64 pc) fc rv m ro).
 Proof.
   intros H k Q R F pc pc4 fc rv m ro addr len w C SV FW EC -> R17 R10 R11 R12 R13 R14 R15 AL IMG L0 TOP AM CONT.
   pose proof (lenZ_bound len ltac:(lia)) as LB.
   eapply implA_ebind with (Q1 := fun u H' ms' =>
       H' = unhide_range (swlo addr) (swhi addr (lenZ len)) (unhide_range addr (addr + lenZ len) H) /\
-      ms' = MS (bvmap_set 10 (Z_to_bv 64 addr) R) F (Z_to_bv 64 (pc + 4)) fc rv
+      ms' = MS (bvmap_set 10 (Z_to_bv 64 addr) R) F (Z_to_bv 64 (pc + 4)) fc None
               (apply_zeros (wreveal H (swlo addr) (swhi addr (lenZ len)) m) [(Z_to_bv 64 addr, lenW len)]) ro).
   - apply implL_enode. apply (evt_ecall asegs _ R F pc fc rv m ro w FW EC). split.
     + cbn [at_nodeL]. unfold mmap_regs, areg. cbn [ms_svc_pending ms_regs MSsvc]. rewrite R17, R10, R11, R12, R13, R14, R15.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module names changed; 580 of its 611 lines of code are new or changed and 747 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): the walk's live journal and every
    stretch statement sit at the world relation R := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf, the relation of the text's
    post QF (fpostFbm is AFTER-FREE-ONLY, restated at wle' in PRH_Base.v's R FAMILIES block). crt_live_journal is
@@ -16,15 +17,15 @@
 
    INPUTS OF RECORD (taken by path; every file of this walk repeats them):
    - pins: A' asan 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin c90d4fa54d43160b).
-   - contract texts: commit 3438f3406f33 -- lib/A/PRH_Base.v 016934fdc1af,
+   - contract texts: -- lib/A/PRH_Base.v 016934fdc1af,
      lib/A/PRH_FnCheck.v 37d8e4d0072e, lib/A/PRH_Img.v 934516a622e8, lib/B/PRH_ImgB.v 3216eca68342,
      lib/Spec/PresetRodata.v 4eb7e95e7e93, lib/Spec/PresetRodataCheck.v 04662cf6a9cf.
-   - listings of record: commit d42e123915ae -- lib/A/Listing_prog.v 1ab147923c5d,
+   - listings of record: -- lib/A/Listing_prog.v 1ab147923c5d,
      lib/A/PAImg_prog.v 47eeb54e93be, lib/B/Listing_prog.v 8bcc2c9e7809, lib/B/PAImg_prog.v 4392ab2c09ba,
      lib/Reusable/YPsym.v b6f5a85d234d.
-   - engine: the WHOLE SET by path from commit 459129c18903 (YCbqG.v c3b5d0111037,
+   - engine: the WHOLE SET by path (YCbqG.v c3b5d0111037,
      YGcallcf.v 6d2b13c24437, YG0dcf.v f2e11ac13457, the YC80x / YC1fPx collapse, YGcallMxmn.v, YSRrMemnorm(J).v).
-   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1, PAU pau-preset-102.
+   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS, PAU pau-preset-102.
    - rule 24: no function proved (proof-index check_round_trip, exit 0,
      output an internal record of that lookup): the released proofs are plain (lib/Prog) and ubsan
      (lib/U/Prog) only, concluding in SR, not consumable here. Written new.
@@ -142,7 +143,7 @@ Definition CRT_OWN_LO_B : Z := 720.
    T4's copy are deleted and both cite this. DERIVED (an offset from the B' entry 0x82828), not an address. *)
 Definition CRT_W0_OFF_B : Z := 676.
 (* the B' spill slots off s1 (= CRT_sp1) the loop tail reads that the slots above do not name - row T6's
-   (commit 62d39032031, lib/B/Prog/Crt102SeamB.v blob efaa8f4f71e4), read off B/Listing_prog.v
+   (lib/B/Prog/Crt102SeamB.v blob efaa8f4f71e4), read off B/Listing_prog.v
    8bcc2c9e7809 (writer offset, line). CRT_SP_SAVED (0x18) and CRT_SP_AT (0x20) are A' slots: B' keeps saved at 0(s1)
    and at at 0x40(s1). CRT_SP_BACK 0x38 and CRT_SP_F 0x70 are kept on B'. *)
 Definition CRT_SP_SAVED_B : Z := 0.     (* 0(s1) = saved: `sd s8, 0(s1)` +0x478 (L0's first word), line 1412 *)
@@ -174,7 +175,7 @@ Section f.
 Context {B : asyms}.
 Context {ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop}.
 (* G1 (kb round): the journal from the entry at a wild-trace budget WS (YCbqG.v ajournal_xw; its last conjunct is
-   `incl (wild_part (as_universe B) (st_depot S')) (wild_part (as_universe B) (st_depot S) ++ WS)`, YCbqG.v:400). The unbudgeted ajournal_x is ajournal_xw at
+   `incl (wild_part (as_universe B) (st_depot S')) (wild_part (as_universe B) (st_depot S) ++ WS)`, YCbqG.v:401). The unbudgeted ajournal_x is ajournal_xw at
    WS = [], and no statement of this file names it any more.
    The re-hiding move: the journal is the engine's R form ajournal_xwR at
    R := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf (YCbqG.v; its fourth conjunct is `wle' SEGS RZ_cf W W'`, every other
@@ -196,8 +197,8 @@ Context {ly : alayout} {S : astate} {Hp : list Z} {W : world SEGS} {regs : bvmap
 (* the realigned stack pointer the body runs on: s1 = sp = (sp0 - 0xe0) rounded down to 32 (DERIVED) *)
 Definition CRT_sp1 : Z := (sp0 - CRT_FRAME) / CRT_ALIGN * CRT_ALIGN.
 
-(* ---- the text's conclusion, as one name every segment proof ends in. tcheck_round_trip_specX's post at
-   commit 5f3f7cc29ecb (PRH_FnCheck.v f7be7f968195:1028-1039) over the record model (PresetReqAt 379c33e9e482):
+(* ---- the text's conclusion, as one name every segment proof ends in. tcheck_round_trip_specX's post
+    (PRH_FnCheck.v f7be7f968195:1028-1039) over the record model (PresetReqAt 379c33e9e482):
    NO position after room_live_cf; the EXACT advance by `length (PresetReqAt.round_trip rp_sm t)` (ReaderRes.jr_strtod for rp_sm in this tree's keyed text, PRH_FnCheck.v:2422) on the r = 0 arm
    only; the r = 1 arm states none. ---- *)
 (* RESTATED (PRH_FnCheck 9ecd8eb167c6): the E sweep moved g_most and g_own_ran_out into
@@ -211,7 +212,7 @@ Definition QT : alayout -> astate -> list Z -> world SEGS -> bvmap 5 word -> (wo
     prh_ledger B ly' S' Hp' W' mem' Lam' peak' cnt' SIZE_MAXZ ran' most own' /\
     pj_nodeR SEGS (mrestrict (w_H W') mem') (prh_lin Lam') doc t D /\
     exists r, getr regs' 10 = w64 r /\
-      (* commit 6557b95928b5 (PRH_FnCheck 0b6f7b597757): THE r = 1 ARM IS DEAD under the text's new entry premise
+      (* (PRH_FnCheck 0b6f7b597757): THE r = 1 ARM IS DEAD under the text's new entry premise
          prh_cons_from (every allocation of the call is a consumer allocation of the run, so no real refusal) *)
       r = 0 /\
       ((r = 1 /\ (own' = 1 \/ ran' = 1) /\ cnt <= cnt' <= cnt + ck_crt_count t cset) \/
@@ -295,7 +296,7 @@ Record crt_side (lyc : alayout) (Sc : astate) (Hpc : list Z) (Wc : world SEGS) (
    the room left): 0 at M, 32 between rtt1 and rtt2, 64 at U and W, 66 at L0, L3, C, X and J (THE BOUNDARIES'
    note). The room a later callee asks comes from the text's entry room by YCbqGwild.ajournal_xw_roomR (YCbqGwild.v:384) and
    wild_room_le (:186): `wild_room (as_universe B) [] (66 - kb) (st_depot Sc)`. At WS = [] the field is the unbudgeted journal at wle'
-   (ajournal_xR, YCbqG.v:425-429; its wle form is ajournal_x, :413-417), and a live state at kb is one at every larger budget. *)
+   (ajournal_xR, YCbqG.v:426-430; its wle form is ajournal_x, :413-417), and a live state at kb is one at every larger budget. *)
 Record crt_live (kb : nat) (lyc : alayout) (Sc : astate) (Hpc : list Z) (Wc : world SEGS) (memc : word -> option byte)
   (mdc : Model) (kj pos : Z) (Dx Lamc : list (Z * Z)) (peakc cntc ownc ranc : Z) : Prop := mk_crt_live {
   crt_live_journal : exists WS : list (list Z),
@@ -343,7 +344,7 @@ Record crt_dregs (rg : bvmap 5 word) (F : Z) : Prop := mk_crt_dregs {
 
 (* ---- PROPOSAL (row T8, 14:5xZ; accepted in shape by the walk owner 14:55Z, frozen by this walk): the
    image-B' twins. B' (asan-ubsan d663f82d) allocates the body's registers differently from A' after +0x1c8
-   (lib/B/Listing_prog.v 8bcc2c9e7809 @ d42e123915ae, check_round_trip at 0x82828;
+   (lib/B/Listing_prog.v 8bcc2c9e7809, check_round_trip at 0x82828;
    prologue `ld s11, 0(a1)` +0x5c, `mv s6, a0` +0x60, `mv s7, a0` +0x70, `mv s3, s7` +0x7c, `addi s4, s3, 0xe0`
    +0xa4, `srli s2, s3, 3` / `add s2, s2, s11`, `addi s9, zero, -8` +0xb8; the tail `beqz s7` +0x378,
    `ld a0, 0x1f8(s7)` +0x388, `mv a0, s5` +0x434). So on B': s7 = the frame-call result (F at every boundary,
@@ -482,7 +483,7 @@ Record crt_at_J (fxk : YK11.FPState) (lyc : alayout) (Sc : astate) (Hpc : list Z
      QT, so the r = 1 bound is `ck_crt_count t cset`, NOT `ck_crt_count t 0`: pj_set's absent-and-taken arm makes
      c = 1, or 3 when n = cap, and its refused arm 1 <= c <= 3 (Crt102Rewrite's finding). C1, C2 and C3 take
      cset = 0. The side condition is QT's own, carried here so the tail hands it over unchanged. *)
-  (* commit 6557b95928b5: THE r = 1 ARM IS DEAD (QT now states r = 0; the callees' texts state their refusal
+  (*: THE r = 1 ARM IS DEAD (QT now states r = 0; the callees' texts state their refusal
      arms dead under prh_cons_from). Stated as the text states it: `r = 0 /\` in front, the old disjunction kept
      so a producer's r = 0 case is unchanged; every r = 1 exit (C1, C2, C4a, C4c) must be shown UNREACHABLE at its
      source, from the callee text's dead refusal arm. *)
@@ -583,7 +584,7 @@ Record crt_at_U (fxk : YK11.FPState) (lyc : alayout) (Sc : astate) (Hpc : list Z
      the walk owner's order): the model ties the live set to the run only up to permutation, and the reader's
      allocation order differs from tblk's pre-order, so no ordered block fact is available at any instance.
      Writer-side: copy at U holds rtt1's read-back of wdoc t false (PresetFreeFo.rd_blocks_wdoc + fo_tblk give the
-     permutation, commit 407db1d16e7). This Permutation does NOT fix the header's cap (counterexample at crt_at_U_B). *)
+     permutation). This Permutation does NOT fix the header's cap (counterexample at crt_at_U_B). *)
   crt_at_U_copy_tblk : Permutation (map (fun b => snd b + cf_head) Db) (PresetReqAtNoMiss.tblk t);
   (* copy's HEADER CAP, the A' twin of crt_at_U_B's (consumer: Crt102Rewrite's pj_set (&copy, ..) at A' +0x278 via
      prhPj_set_evs_supply, PRH_FnPj:549-552; producer: Crt102Arms from round_trip_text's copy arm, CAP) *)
@@ -591,7 +592,7 @@ Record crt_at_U (fxk : YK11.FPState) (lyc : alayout) (Sc : astate) (Hpc : list Z
      pj_hdrR SEGS (mrestrict (w_H Wc) memc) (frame_addr lyc CRT_CID pos + CRT_OFF_COPY) ty num str kids keys n cap ->
      cap = Z.of_nat (PresetReqAt.ncap (length ms));
   (* copy's ORDERED FREE LIST at U, in the EXACT shape of the kit's tpj_set_specX ordered entry premise on its object
-     (commit cdde0ed15730, PRH_FnPj 838c63d8cd16:999-1002) at o = copy, D = Db (the walk owner's
+     (PRH_FnPj 838c63d8cd16:999-1002) at o = copy, D = Db (the walk owner's
      yes 2026-10-30, on this walk's finding: the batch's pj_set takes it, and U carried none). CONSUMERS: the rewrite's
      pj_set (&copy, ..) - Crt102Rewrite (A'), row T3 (B'). PRODUCER: rtt1's copy arm, tround_trip_text_specX's
      ordered conjunct (FREEORD-COPY; kit PRH_FnCheck 909d5290d0ba:1289-1293) with PresetFreeFo.pj_frees_wdoc_t -
@@ -694,7 +695,7 @@ Record crt_at_L0 (fxk : YK11.FPState) (lyc : alayout) (Sc : astate) (Hpc : list 
   crt_at_L0_outcome :
   exists ok : list bool,
   let st' := PRH_FnWriter.prhWriter_putN ok (WriterApp.w0 (crt_cw cset) SIZE_MAXZ) crt_wP in
-  (* commit 3ac20a5c9e30: prh_oks ok cnt fail k ns most ran ran' - ns = the call's per-call user requests;
+  (*: prh_oks ok cnt fail k ns most ran ran' - ns = the call's per-call user requests;
      tpj_write_specX's form verbatim (PRH_FnWriter 98737c36ea08:738) *)
   prh_oks ok (crt_cw cset) SIZE_MAXZ
     (PRH_FnWriter.prhWriter_k ok (WriterApp.w0 (crt_cw cset) SIZE_MAXZ) crt_wP)
@@ -794,7 +795,7 @@ Record crt_at_L0_B (fxk : YK11.FPState) (lyc : alayout) (Sc : astate) (Hpc : lis
    = 0, so `set` = 1 and `copy` holds the rewritten tree crt_tc over the blocks Dc it owns; O1's two flag tests fell
    through (g_own_ran_out = 0, fuzz_alloc_ran_out () = 0); s5 = 1 (+0x290); s10 = O1's auipc (+0x288), whose + 0x2d0
    is g_own_ran_out; the U spills; the count at pj_write's entry crt_cw cset; the room used so far (Crt102Model's
-   cm_live_write `b'` premise). WRITTEN in row T4 (commit 33b3e227271, lib/B/Prog/Crt102B_T4.v:215-236) and CHECKED
+   cm_live_write `b'` premise). WRITTEN in row T4 (lib/B/Prog/Crt102B_T4.v:215-236) and CHECKED
    conjunct by conjunct against the B' listing by row CRT-B-UGKO1 (which
    produces this state). Landed with exactly one substitution, `crt_dregsB` -> the frozen `crt_dregs_B` (the T4
    copies of the register snapshots are deleted by the unit owner's ruling: equal only by permutation); its local
@@ -846,8 +847,8 @@ Record crt_at_W_B (fxk : YK11.FPState) (lyc : alayout) (Sc : astate) (Hpc : list
   crt_at_W_B_copy_depth : (PjTree.depth crt_tree_J <= DOC_D)%nat }.
 
 (* ---- THE SEAM STATEMENTS for the B' loop tail (rows T5 = CRT-B-L012, T6 = CRT-B-L3, T7 = CRT-B-CEXIT),
-   WRITTEN in row T6 (commit 62d39032031, lib/B/Prog/Crt102SeamB.v blob efaa8f4f71e4, #102 pins
-   type-check rc=0, log, the internal file zf-fuzz-preset-62d3903203.build-20261029T155901Z.log) and landed VERBATIM; its local
+   WRITTEN in row T6 (lib/B/Prog/Crt102SeamB.v blob efaa8f4f71e4, #102 pins
+   type-check rc=0, log, the internal file zf-fuzz-preset.build-20261029T155901Z.log) and landed VERBATIM; its local
    notations LIVE / BREGS / SPILL / TC / XB / L0B / QFB / CFG are the glue's crt_live / crt_bregs_B / crt_spill /
    crt_tc / crt_at_X_B / crt_at_L0_B / QF / crt_cfg at this Section's binders. Its `bi` section (the instantiation at
    prh_img_B / B_prog_listing) stays in its own file: the glue imports no image.
@@ -988,14 +989,14 @@ End f.
 End w.
 
 (* ---- THE CAP BRIDGE (the walk owner's ruling 2026-10-30: committed, named, proved). The kit states copy's header
-   cap on rtt1's copy arm as PRH_Reader.pj_ncapR segs m copy t (commit cdde0ed15730:
+   cap on rtt1's copy arm as PRH_Reader.pj_ncapR segs m copy t (
    PRH_FnCheck 909d5290d0ba:1295-1299, pj_ncapR at PRH_Reader.v:243); the glue's field crt_at_U_copy_cap /
    crt_at_U_B_copy_cap is the pj_hdrR form. pj_ncapR's OBJECT clause is
      `rd_u64 m (p + 48) (Z.of_nat (PresetReqAt.ncap (length members))) /\ exists kids, ..`,
    so the field follows from that clause's first conjunct by crt_copy_cap_of_ncap48 below: pj_hdrR's last conjunct
    reads the same eight bytes as `cap`, and rd_u64 has one value. pj_ncapR is on this base (PRH_Reader.v:243,
    Required at :92); the bridge is stated over its object clause, and its users take the cap word from pj_ncapR
-   with `cbn [pj_ncapR]` first (Crt102Arms.v:864-866 arms_rtt_bridge; Crt102B_RRT.v:2012-2013 crtb_rrt).
+   with `cbn [pj_ncapR]` first (Crt102Arms.v:865-867 arms_rtt_bridge; Crt102B_RRT.v:2013-2014 crtb_rrt).
    crt_rdword_of_vm is Crt102KitB.cb4_rdword_of_val_mem's statement and proof, copied (the glue cannot import a
    file that imports it). Proves no function; rule 24: no function proved. ---- *)
 Lemma crt_rdword_of_vm : forall sg (Hh : word -> bool) m0 a v,

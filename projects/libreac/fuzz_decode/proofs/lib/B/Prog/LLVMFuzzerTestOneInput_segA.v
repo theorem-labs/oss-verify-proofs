@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segA: the ENTRY segment of the image-B (asan-ubsan) walk of libreac/fuzz_decode's
    LLVMFuzzerTestOneInput, i.e. llvm_b_entry_stmt of lib/B/Prog/LLVMFuzzerTestOneInput_segs.v: offsets
    +0x000..+0x070 of the listing lib/B/Prog/DecodeBList.v, ending at the return of __asan_stack_malloc_0, whose
@@ -23,15 +24,15 @@
      own post (lib/Reusable/YG0d.v:298) keeps every byte outside the window and the owned bytes, errno
      included, so the weaker hypothesis is the one the call gives; and with it the proof no longer needs
      `api_env segs B`, which the fixed statement dec_llvmf_holds_stmt
-     (lib/B/Prog/LLVMFuzzerTestOneInput_cg.v:212-246) does not carry. The text is YCbq's, clause for clause,
+     (lib/B/Prog/LLVMFuzzerTestOneInput_cg.v:213-247) does not carry. The text is YCbq's, clause for clause,
      with the errno case of each clause removed.
    - dec_aj_stack_malloc: lib/A/Prog/YC85.v:291 aj_stack_malloc_atS over dec_ceff_journal, so with the same
      premises less api_env, and with the post stating the call's own frame condition in place of acall_kept.
    Everything else is the kit: the Pa run of lib/A/Prog/PaRun.v through lib/B/Prog/DecodeBPaLib.v's
    paj_run_to / paj_branch, and lib/Reusable/YCbq.v's ajournal_init and ajournal_sub.
 
-   Templates: cgif_file_fuzzer's entry walk lib/A/ACez.v and its entry state lib/A/ACf5.v (origin/ossv/recipes
-   c8557374ad2e), boxreg's lib/A/Prog/ReadName.v (a working branch). sp1_facts,
+   Templates: cgif_file_fuzzer's entry walk lib/A/ACez.v and its entry state lib/A/ACf5.v (
+   theorem-labs/oss-verify-proofs@6b32741d849a), boxreg's lib/A/Prog/ReadName.v (a working branch). sp1_facts,
    land_m32 and denot_and_m32 below are cgif lib/A/ACer.v:140-166, copied because fuzz_decode's kit has no
    `andi sp,sp,-32` lemma. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
@@ -311,7 +312,7 @@ Qed.
 End sm.
 
 (* ------------------------------------------------------------------ *)
-(* 3b. Memory helpers (image A's twin file, lib/A/Prog/LLVMFuzzerTestOneInput_seg_entry.v:100-157)     *)
+(* 3b. Memory helpers (image A's twin file, lib/A/Prog/LLVMFuzzerTestOneInput_seg_entry.v:101-158)     *)
 (* ------------------------------------------------------------------ *)
 
 Section mh. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

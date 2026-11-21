@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3060 of its 3101 lines of code are new or changed and 207 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match.v, with its module paths, module names, addresses and numbers changed; 3183 of its 3895 lines of code are new or changed and 2389 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/reac_box_catalogue_matchF_on.v -- route (C) phase 2, image B: the ADDITIVE `_on` copy of the accepted
    footprint run lib/B/Prog/reac_box_catalogue_matchF.v (not in this delivery) (which stays byte-identical), generated from it by the patch
    list of gen_matchF_on.py (sha256 7498e0f9eb10; internal record).  A Theorem Labs lane,
@@ -28,8 +29,8 @@
      shadow bytes (fk_facts, the header, the marks, the exits) are in R by cmOn_R_fr, the callee windows and class
      blocks that cm_cf_rd re-reads by cmOn_R_win / cmOn_R_area;
    - cm_mb takes 50 <= len (R holds the table's shadow under that guard; its one caller cm_rows holds the gate).
-   rule 24: route-(C) proof work on this lane's own accepted run; At ossv/recipes c5e779efe8c (2026-10-31), no released proof of it exists outside this unit. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+   rule 24: route-(C) proof work on this lane's own accepted run; At (2026-10-31), no released proof of it exists outside this unit. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -109,7 +110,7 @@ Local Ltac acc_hint ::=
   end.
 
 (* The store hook of this file: Tac.v's mem_after_store_opt (the hook reac_box_catalogue_match.v runs under) on evtF
-   goals, as d0b3606c9c9 lib/B/Prog/reac_ctrl_parseF.v's rcpF_store_opt.  It folds Z_to_le_bytes of a literal into
+   goals, as lib/B/Prog/reac_ctrl_parseF.v's rcpF_store_opt.  It folds Z_to_le_bytes of a literal into
    le8 / le4 / le2 / le1 as Tac's fix_lit_store does, and it does not run StepF's norm_lit_store_bytes, whose
    le1 (Z_to_bv 64 z) -> [Z_to_bv 8 z] folding would change the stored bytes the plain script names. *)
 Ltac cmF_fix_lit_store :=

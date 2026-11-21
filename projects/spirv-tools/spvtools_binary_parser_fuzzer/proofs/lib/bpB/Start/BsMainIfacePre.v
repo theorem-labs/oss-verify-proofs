@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up invariant at the run's mmap base, and the revised stack window). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,8 +25,11 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  (* LPS #38: [AsanInit]/[BothInit] now take the mmap base; IMPLICIT so every caller
+     infers it by unification from the [cs_ok] hypothesis it already passes. *)
+  Context {mbase : word}.
+  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH AENTRY sp0 rdraw brk0 mbase inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -172,8 +176,8 @@ Section AT_MAIN.
   #[local] Notation rdn_Mr_full := (BsMainCells.rdn_Mr_full sp0 brk0 rdraw inp ch E FULL model) (only parsing).
 
   #[local] Notation CXV a := (cx_val sp0z brk0z X a).
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model FULL).
-  #[local] Notation HID := (hid ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model).
+  #[local] Notation MR := (Mr ASAN_H (argH0 sp0 rdraw inp) E ch model FULL).
+  #[local] Notation HID := (hid ASAN_H (argH0 sp0 rdraw inp) E ch model).
   Let KNF := co_know _ _ _ _ _ _ _ _ _ _ _ HC.
   Ltac csz := cbn [cells_size csize cells_bytes cbytes le8 le4 le2 le1 word_to_le_bytes Z_to_le_bytes length Nat.add Z.of_nat Pos.of_succ_nat Pos.succ Pos.add app repeat map].
 
@@ -274,8 +278,9 @@ Section AT_MAIN.
 
   Lemma pre_can : exists can, acanary VM can.
   Proof.
-    exists (bv_unsigned (edenot E (EVar 61))). split; [|apply u64_range].
-    pose proof (kword_main w_all (CAbs, 0x6e5898) 8 (EVar 61) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
+    (* LPS 727298f3: the canary's fresh variable is the recorded one (61) under the start-up renumbering [FSH] *)
+    exists (bv_unsigned (edenot E (EVar (BsStartupRegen.FSH 61)))). split; [|apply u64_range].
+    pose proof (kword_main w_all (CAbs, 0x6e5898) 8 (EVar (BsStartupRegen.FSH 61)) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
     revert W. pmc_simpl. rewrite Z.add_0_l. intros W. change AsanUbsan.M.loaded_segments with ASEGS.
     rewrite (W ltac:(lia) ltac:(lia) ltac:(apply vr_img; lia)). do 2 f_equal. apply bv_eq. rewrite Z_to_bv_unsigned. symmetry. apply bv_wrap_small. apply bv_unsigned_in_range.
   Qed.
@@ -315,15 +320,16 @@ Section AT_MAIN.
     | _ => false
     end.
 
-  Definition LSTK : lin := (-8388608, [(32768, EVar 0); (4096, EVar 6); (16, EVar 10)]).
+  (* LPS 727298f3: the KWr window of the start-up knowledge is [sp0 - 6144513, sp0) (AsanPlanCore.init_kn_with). *)
+  Definition LSTK : lin := (-6144513, [(32768, EVar 0); (4096, EVar 6); (16, EVar 10)]).
   Definition LSHSTK : lin := (2146402304, [(4096, EVar 0); (512, EVar 6)]).
   Definition LSHLEN : lin := (17592187092992, [(-4096, EVar 0); (-512, EVar 6)]).
-  Definition stk_check : bool := all_holes (fun g cls ch => existsb (kwr1 (mkbc (kn ch)) LSTK 8388608) (kn ch)).
+  Definition stk_check : bool := all_holes (fun g cls ch => existsb (kwr1 (mkbc (kn ch)) LSTK 6144513) (kn ch)).
   Definition shz_check : bool := all_holes (fun g cls ch => existsb (kzero1 (mkbc (kn ch)) LSHSTK LSHLEN) (kn ch)).
   Lemma stk_check_ok : stk_check = true.  Proof. vm_compute. reflexivity. Qed.
   Lemma shz_check_ok : shz_check = true.  Proof. vm_compute. reflexivity. Qed.
 
-  Lemma lden_LSTK : lden E LSTK = sp0z - 8388608.
+  Lemma lden_LSTK : lden E LSTK = sp0z - 6144513.
   Proof.
     pose proof (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & SP & _).
     unfold LSTK, lden. cbn [fst snd tden]. rewrite !uE_var. lia.
@@ -334,7 +340,9 @@ Section AT_MAIN.
     unfold LSHSTK, LSHLEN, lden, SHOFF. cbn [fst snd tden]. rewrite !uE_var. rewrite <- PGD. lia.
   Qed.
 
-  Lemma stack_full : forall z, sp0z - 8388608 <= z < sp0z -> exists b, FULL (wa z) = Some b.
+  (* LPS 727298f3: only [stack_window_lo, sp0) is mapped below sp0; the start-up knowledge's write window is
+     [sp0 - 6144513, sp0) (AsanInit.FULL0_below proves its bytes at the launch), so the floor is sp0z - 6144512. *)
+  Lemma stack_full : forall z, sp0z - 6144512 <= z < sp0z -> exists b, FULL (wa z) = Some b.
   Proof.
     intros z Hz. pose proof stk_check_ok as H0. unfold stk_check in H0. pose proof (all_holes_here _ H0) as H. cbv beta in H. clear H0.
     apply existsb_exists in H as [K [HK HW]]. pose proof (proj1 (Forall_forall _ _) KNF _ HK) as KO.
@@ -358,7 +366,7 @@ Section AT_MAIN.
       destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; cbn in Hb, Ht; lia.
   Qed.
 
-  Lemma pre_stk : forall lo, sp0z - 8388608 <= lo -> lo <= sp0z -> stk asegs VM lo sp0z.
+  Lemma pre_stk : forall lo, sp0z - 6144512 <= lo -> lo <= sp0z -> stk asegs VM lo sp0z.
   Proof.
     intros lo H1 H2. pose proof Vsp as [V1 [V2 _]]. unfold sp_window_lo, sp_window_hi in V1, V2.
     pose proof pd_facts as PD.

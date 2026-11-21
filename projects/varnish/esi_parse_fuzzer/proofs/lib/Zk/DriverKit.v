@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the auxv is the 27/29-pair vector of LPS 727298f3 (auxv_keys, auxv_wlist), and init_ok states it word by word. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -13,6 +14,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require Import PropExec ShapeAlg.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Ceiling Mem Frame.   (* [comment removed for export] *)
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zk Require KNodes.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zk Require Import AllocSpec.
 Import ListNotations.
 Open Scope bv_scope.
@@ -57,6 +59,17 @@ Definition auxv_at (m : mem) (av rp : Z) : Prop :=
     (forall j key val, (j < k)%nat -> nth_error pairs j = Some (key, val) -> key <> AT_RANDOM) /\
     0 <= rp /\ rp + 16 <= 2^64 /\ (forall i, 0 <= i < 16 -> m (wz (rp + i)) <> None).
 
+(* The AT_* types of the auxv Linux builds at LPS 727298f3 (StackLayout.auxv_entries): pairs 0..25,
+   then AT_RSEQ_FEATURE_SIZE and AT_RSEQ_ALIGN when the kernel has CONFIG_RSEQ; AT_NULL ends it. *)
+Definition auxv_keys (rs : bool) : list Z :=
+  [33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]
+  ++ (if rs then [27; 28] else []).
+(* The vector as words: pair j is (key j, its value); pair 24, AT_RANDOM, carries [rnd]; then AT_NULL's two zeros. *)
+Definition auxv_wlist (rs : bool) (v : nat -> Z) (rnd : Z) : list Z :=
+  flat_map (fun kj => [fst kj; if Nat.eqb (snd kj) 24 then rnd else v (snd kj)])
+           (combine (auxv_keys rs) (seq 0 (length (auxv_keys rs))))
+  ++ [0; 0].
+
 Section WithLayouts.
 Context {Clg : Ceiling} (L : AllocLayout) (IL : InitLayout).   (* [comment removed for export] *)
 Let segs := al_segs L.
@@ -70,16 +83,10 @@ Definition init_ok (lo : Z) (m : mem) (md : Model) : Prop :=
   /\ zero_img m rom (il_libc IL + 3)
   /\ cell8 m (il_libc IL + 48) 4096
      (* [comment removed for export] *)
-  /\ (exists av rnd x3 x4 x5 hw x6 x11 x12 x23,
-         cell8 m (il_libc IL + 8) av /\ 0 <= av /\ av mod 8 = 0 /\ av + 160 <= 2^64 /\ 0 <= rnd /\ rnd + 16 <= 2^64
-      /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= hw < 2^64 /\ 0 <= x6 < 2^64
-      /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64
-      /\ cell8 m av 3 /\ cell8 m (av + 8) x3 /\ cell8 m (av + 16) 4 /\ cell8 m (av + 24) x4
-      /\ cell8 m (av + 32) 5 /\ cell8 m (av + 40) x5 /\ cell8 m (av + 48) 16 /\ cell8 m (av + 56) hw
-      /\ cell8 m (av + 64) 6 /\ cell8 m (av + 72) x6
-      /\ cell8 m (av + 80) 11 /\ cell8 m (av + 88) x11 /\ cell8 m (av + 96) 12 /\ cell8 m (av + 104) x12
-      /\ cell8 m (av + 112) 23 /\ cell8 m (av + 120) x23 /\ cell8 m (av + 128) 25 /\ cell8 m (av + 136) rnd
-      /\ cell8 m (av + 144) 0 /\ cell8 m (av + 152) 0
+  /\ (exists av rnd (rs : bool) (v : nat -> Z),
+         cell8 m (il_libc IL + 8) av /\ 0 <= av /\ av mod 8 = 0 /\ av + 464 <= 2^64 /\ 0 <= rnd /\ rnd + 16 <= 2^64
+      /\ (forall j, 0 <= v j < 2^64)
+      /\ (forall j w, nth_error (auxv_wlist rs v rnd) j = Some w -> cell8 m (av + 8 * Z.of_nat j) w)
       /\ (forall i, 0 <= i < 16 -> m (wz (rnd + i)) <> None)
       /\ lo <= av /\ lo <= rnd)
      (* [comment removed for export] *)
@@ -93,7 +100,10 @@ Definition init_ok (lo : Z) (m : mem) (md : Model) : Prop :=
   /\ vm_brk (m_vmmaps md) = vm_start_brk (m_vmmaps md)
   /\ al_image_hi L <= bv_unsigned (vm_start_brk (m_vmmaps md))
      (* [comment removed for export] *)
-  /\ map (fun e => (bv_unsigned (fst e), bv_unsigned (snd e))) (vm_reserved (m_vmmaps md)) = il_resv IL
+  (* LPS 727298f3: the ledger is the image's reservations and then the vdso/vvar pair execve installed *)
+  /\ ((exists rx, map (fun e => (bv_unsigned (fst e), bv_unsigned (snd e))) (vm_reserved (m_vmmaps md)) = il_resv IL ++ rx
+                  /\ OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zk.KNodes.resv_x rx)
+      /\ OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zk.KNodes.VD md)
   /\ bv_unsigned (vm_start_brk (m_vmmaps md)) + 4 * 4096 <= alloc_ceiling
   /\ bv_unsigned (vm_start_brk (m_vmmaps md)) mod 4096 = 0
   /\ bw_limit (vm_limit (m_vmmaps md))   (* [comment removed for export] *)

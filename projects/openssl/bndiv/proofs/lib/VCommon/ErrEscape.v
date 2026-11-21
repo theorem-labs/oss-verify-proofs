@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the load-fault lemmas take the vvar premise ([range_meets_vvar]); the step inversions and unmodeled cases cover the vDSO arms; the err_escape lemmas run over [run_segments] with the launch input [inp] and the mmap base). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,12 +25,13 @@ Lemma step_lbu_fault : forall segs regs pc mem rom w rd rs (imm : bv 12) (isz : 
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Load SZ1 false rd rs imm, isz) ->
   rdn segs mem (v_addi (getr regs rs) (bv_signed imm)) 1%nat = None ->
+  range_meets_vvar segs (v_addi (getr regs rs) (bv_signed imm)) 1%nat = false ->
   RiscvSemantics.step segs (mkst regs pc mem rom) = MachineFault.
 Proof.
-  intros segs regs pc mem rom w rd rs imm isz Hfetch Hecall Hdecode Hread.
+  intros segs regs pc mem rom w rd rs imm isz Hfetch Hecall Hdecode Hread Hvv.
   step_pipeline Hfetch Hecall Hdecode.
-  unfold getr in Hread; rewrite ?bv_eqb0_is_x0 in Hread.
-  rewrite ov_rdn, b_addsext, Hread.
+  unfold getr in Hread, Hvv; rewrite ?bv_eqb0_is_x0 in Hread, Hvv.
+  rewrite ov_rdn, b_addsext, Hread, Hvv.
   reflexivity.
 Qed.
 
@@ -38,12 +40,13 @@ Lemma step_ld_fault : forall segs regs pc mem rom w rd rs (imm : bv 12) (isz : Z
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Load SZ8 true rd rs imm, isz) ->
   rdn segs mem (v_addi (getr regs rs) (bv_signed imm)) 8%nat = None ->
+  range_meets_vvar segs (v_addi (getr regs rs) (bv_signed imm)) 8%nat = false ->
   RiscvSemantics.step segs (mkst regs pc mem rom) = MachineFault.
 Proof.
-  intros segs regs pc mem rom w rd rs imm isz Hfetch Hecall Hdecode Hread.
+  intros segs regs pc mem rom w rd rs imm isz Hfetch Hecall Hdecode Hread Hvv.
   step_pipeline Hfetch Hecall Hdecode.
-  unfold getr in Hread; rewrite ?bv_eqb0_is_x0 in Hread.
-  rewrite ov_rdn, b_addsext, Hread.
+  unfold getr in Hread, Hvv; rewrite ?bv_eqb0_is_x0 in Hread, Hvv.
+  rewrite ov_rdn, b_addsext, Hread, Hvv.
   reflexivity.
 Qed.
 
@@ -108,8 +111,11 @@ Proof.
   - exists [], SError. apply sstep_instr_fault; [assumption | assumption |].
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hill. reflexivity.
   - intros evs Hss. inversion Hss; subst; split; reflexivity.
-  - intros evs c' Hnext. exfalso. inversion Hnext; subst; try congruence.
-    match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
+  - intros evs c' Hnext. exfalso. inversion Hnext; subst; try congruence;
+    (* the vDSO arms carry [MachineUnmodeled] where this state is
+       [MachineFault], so they close the same way the ordinary
+       instruction arm does *)
+    match goal with H : mi_account_step segs ms model = _ |- _ =>
       rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hill in H;
       discriminate
     end.
@@ -166,8 +172,12 @@ Lemma fault_covered_at : forall ms model,
   RiscvSemantics.step segs ms = MachineFault ->
   ~ unmodeled_at segs (mkCfg ms model).
 Proof.
-  intros ms model Hlazy Hsvc Hfault (_ & [(_ & Hum) | (x8 & Hsvc' & _)]); cbn in *.
+  intros ms model Hlazy Hsvc Hfault
+    (_ & [(_ & Hum & _) | [(_ & Hum & _) | (x8 & Hsvc' & _)]]); cbn in *.
   - rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hfault in Hum.
+    discriminate.
+  - (* the vDSO shape: same [MachineUnmodeled] against this fault *)
+    rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hfault in Hum.
     discriminate.
   - congruence.
 Qed.
@@ -251,8 +261,8 @@ Proof.
   constructor.
   - exists [], SError. apply sstep_instr_fault; [assumption | assumption |].
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hill. reflexivity.
-  - intros evs c' Hnext. inversion Hnext; subst; try congruence.
-    match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
+  - intros evs c' Hnext. inversion Hnext; subst; try congruence;
+    match goal with H : mi_account_step segs ms model = _ |- _ =>
       rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hill in H;
       discriminate
     end.
@@ -334,13 +344,16 @@ Lemma fault_no_unmodeled : forall ms model,
 Proof.
   intros ms model Hlazy Hsvc Hfault (tr & c & Hstar & Hun).
   assert (Hno : forall evs c2, ~ sstep segs (mkCfg ms model) evs (SNext c2)).
-  { intros evs c2 Hss. inversion Hss; subst; try congruence.
-    match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
+  { intros evs c2 Hss. inversion Hss; subst; try congruence;
+    match goal with H : mi_account_step segs ms model = _ |- _ =>
       rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hfault in H;
       discriminate
     end. }
   rewrite (star_stuck_refl _ tr c Hno Hstar) in Hun.
-  destruct Hun as (_ & [(_ & Hum) | (x8 & Hsvc' & _)]); cbn in *.
+  destruct Hun as (_ & [(_ & Hum & _) | [(_ & Hum & _) | (x8 & Hsvc' & _)]]);
+    cbn in *.
+  - rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hfault in Hum.
+    discriminate.
   - rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hfault in Hum.
     discriminate.
   - congruence.
@@ -356,7 +369,10 @@ Lemma instr_no_unmodeled : forall ms ms' model,
 Proof.
   intros ms ms' model Hlazy Hsvc Hstep Hnext (tr & c & Hstar & Hun).
   inversion Hstar as [| c1 evs c2 tr2 c3 Hss Hrest]; subst.
-  - destruct Hun as (_ & [(_ & Hum) | (x8 & Hsvc' & _)]); cbn in *.
+  - destruct Hun as (_ & [(_ & Hum & _) | [(_ & Hum & _) | (x8 & Hsvc' & _)]]);
+      cbn in *.
+    + rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep in Hum.
+      discriminate.
     + rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep in Hum.
       discriminate.
     + congruence.
@@ -393,9 +409,10 @@ End NoUnmodeledWithSegs.
 (* [comment removed for export] *)
 Lemma err_escape_omni_run :
   forall segs pc ph sp brk0 mb rnd lim inp ms',
-  msteps segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ms' ->
+  msteps (run_segments segs inp sp mb)
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ms' ->
   ms_svc_pending ms' = None ->
-  RiscvSemantics.step segs ms' = MachineFault ->
+  RiscvSemantics.step (run_segments segs inp sp mb) ms' = MachineFault ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp errors.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp ms' Hm Hsvc Hill.
@@ -406,10 +423,12 @@ Qed.
 (* [comment removed for export] *)
 Lemma err_escape_omni_covered :
   forall segs pc ph sp brk0 mb rnd lim inp ms',
-  msteps segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ms' ->
+  msteps (run_segments segs inp sp mb)
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ms' ->
   ms_svc_pending ms' = None ->
-  RiscvSemantics.step segs ms' = MachineFault ->
-  omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (covered segs).
+  RiscvSemantics.step (run_segments segs inp sp mb) ms' = MachineFault ->
+  omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
+    (covered (run_segments segs inp sp mb)).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp ms' Hm Hsvc Hill.
   cbn [omni_corun]. unfold init_config.
@@ -419,9 +438,10 @@ Qed.
 (* [comment removed for export] *)
 Lemma err_escape_omni_equiv :
   forall segs pc ph sp brk0 mb rnd lim inp T limT et ms',
-  msteps segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ms' ->
+  msteps (run_segments segs inp sp mb)
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ms' ->
   ms_svc_pending ms' = None ->
-  RiscvSemantics.step segs ms' = MachineFault ->
+  RiscvSemantics.step (run_segments segs inp sp mb) ms' = MachineFault ->
   omni_equiv (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) T limT et inp.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp T limT et ms' Hm Hsvc Hill.
@@ -431,9 +451,10 @@ Qed.
 (* [comment removed for export] *)
 Lemma err_escape_omni_strong_equiv :
   forall segs pc ph sp brk0 mb rnd inp T et ms',
-  msteps segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ms' ->
+  msteps (run_segments segs inp sp mb)
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ms' ->
   ms_svc_pending ms' = None ->
-  RiscvSemantics.step segs ms' = MachineFault ->
+  RiscvSemantics.step (run_segments segs inp sp mb) ms' = MachineFault ->
   omni_strong_equiv (mkImage segs pc ph) T (mkEntry sp brk0 mb rnd) et inp.
 Proof.
   intros segs pc ph sp brk0 mb rnd inp T et ms' Hm Hsvc Hill.
@@ -445,9 +466,10 @@ Qed.
 (* [comment removed for export] *)
 Lemma err_escape_equiv :
   forall segs pc ph sp brk0 mb rnd lim inp (target : behavior) ms',
-  msteps segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ms' ->
+  msteps (run_segments segs inp sp mb)
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ms' ->
   ms_svc_pending ms' = None ->
-  RiscvSemantics.step segs ms' = MachineFault ->
+  RiscvSemantics.step (run_segments segs inp sp mb) ms' = MachineFault ->
   Equivalence.equiv (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp) target.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp target ms' Hm Hsvc Hill.
@@ -457,9 +479,10 @@ Qed.
 (* [comment removed for export] *)
 Lemma err_escape_modeled :
   forall segs pc ph sp brk0 mb rnd lim inp ms',
-  msteps segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ms' ->
+  msteps (run_segments segs inp sp mb)
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ms' ->
   ms_svc_pending ms' = None ->
-  RiscvSemantics.step segs ms' = MachineFault ->
+  RiscvSemantics.step (run_segments segs inp sp mb) ms' = MachineFault ->
   Equivalence.modeled (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp ms' Hm Hsvc Hill.
@@ -469,9 +492,10 @@ Qed.
 (* [comment removed for export] *)
 Lemma err_escape_strong_equiv :
   forall segs pc ph sp brk0 mb rnd lim inp (target : behavior) ms',
-  msteps segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ms' ->
+  msteps (run_segments segs inp sp mb)
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ms' ->
   ms_svc_pending ms' = None ->
-  RiscvSemantics.step segs ms' = MachineFault ->
+  RiscvSemantics.step (run_segments segs inp sp mb) ms' = MachineFault ->
   Equivalence.modeled (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp)
   /\ Equivalence.equiv (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp)
        target.

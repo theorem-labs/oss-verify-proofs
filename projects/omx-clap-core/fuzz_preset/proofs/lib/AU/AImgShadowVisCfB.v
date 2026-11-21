@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: written for omx-clap-core/fuzz_preset's ASan image B (asan-ubsan, #102 pin d663f82d); the twin of
    lib/A/AImgShadowVisCf.v. h-mani-a8's img_shadow_vis_cf (lib/Reusable/YGcfAmx2.v, a Definition there) PROVED for
    image B: the cover check of B's generated lists (tfib_img_shadow_cover_B: the zero-shadow ranges Tfib_zero_shadow
@@ -49,7 +50,7 @@ Theorem tfib_img_shadow_vis_cf_B : forall segs B, TfibSyms B -> img_shadow_vis_c
 Proof. intros segs B HB. exact (img_shadow_vis_cf_B segs B (ts_zsh B HB) (ts_const B HB)). Qed.
 End b.
 
-(* img_shadow_vis_xs_B: the same fact at the generic rules' relation of the cf instance, ARxs (YGcallcf.v:214, a Local
+(* img_shadow_vis_xs_B: the same fact at the generic rules' relation of the cf instance, ARxs (YGcallcf.v:215, a Local
    Abbreviation there for ARcf segs B ly S Hp W mem md /\ xs_placed_cf ly S; written out here, no Require of YGcallcf),
    by its first conjunct. *)
 Section xs. Context {rc : YM05.RunCeil} {cp : CfParams} {ci : CfImg}.

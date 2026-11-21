@@ -4,12 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE 5, part a: the table-order loop of fuzz_reply.c:646-653, fuzz_reply.asan-ubsan 0x84b78 (GT0) to
    check_shape_done's call at 0x84c84 (GCSD).  A PORT of image A's phase file lib/A/W_LLVMFuzzerTestOneInput_gone_p5.v
-   (a working branch 32b23a20c3e): the model, block, journal-transport, coverage and value lemmas are
+   (a working branch): the model, block, journal-transport, coverage and value lemmas are
    A's text, the cut points, the walks and the transport across a call are rewritten at B's addresses, registers and
    frame, read from B's objdump (of the pinned binary fuzz_reply.asan-ubsan, guided by
-   the old-stack B walk a working branch e29b582ba724 lib/B/Prog/SlotPass5.v), over the base
-   lib/B/W_LLVMFuzzerTestOneInput_gone_base.v and the transport kit _gone_tk.v (a working branch
-   85b530db754).
+   the old-stack B walk a working branch lib/B/Prog/SlotPass5.v), over the base
+   lib/B/W_LLVMFuzzerTestOneInput_gone_base.v and the transport kit _gone_tk.v (a working branch).
+   
      for (i = 0; i < g_nsrc; i++) for (k = 0; k < 4; k++)
        if (g_s[k].open && g_s[k].fd == g_src[i].fd) {
          check_no_loss(&g_s[k], &at); check_shape_ends(&g_s[k], prefix, &at); }
@@ -24,6 +24,7 @@
      0x84c0c P5C -> check_no_loss -> 0x84c18 P5M -> check_shape_ends -> 0x84c28 P5T -> (P5IH | 0x84c74 P5OT) ;
      P5OT -> (P5OH | 0x84c84 GCSD).  The two calls are in part b (W_LLVMFuzzerTestOneInput_gone_p5b.v), the two
      inductions and gp5_t0_csd in W_LLVMFuzzerTestOneInput_gone_p5.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -68,7 +69,7 @@ Open Scope Z_scope.
 
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- the bytes of the relay's table: entry i's 4-byte fd field (W_LLVMFuzzerTestOneInput_drain.v:103-162,
+(* ---- the bytes of the relay's table: entry i's 4-byte fd field (W_LLVMFuzzerTestOneInput_drain.v:104-163,
    copied with dr_ -> gp5_ so this phase imports no other phase's file) ---- *)
 Lemma gp5_eb_len : forall e, length (re_pad1 e) = 4%nat -> length (re_pad2 e) = 4%nat ->
   length (entry_bytes e) = 56%nat.
@@ -134,7 +135,7 @@ Proof. intros n k. unfold YO0f.le_byte. rewrite Z.mod_0_l by (apply Z.pow_nonzer
 Section gp5.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
-(* the cut's Section w context (lib/B/W_LLVMFuzzerTestOneInput_cut.v:392-409, the base's Section g) *)
+(* the cut's Section w context (lib/B/W_LLVMFuzzerTestOneInput_cut.v:393-410, the base's Section g) *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB : Z -> Z.
@@ -155,7 +156,7 @@ Hypothesis HROMPIN : GN_ROM_PIN B.
 Hypothesis HZS : GN_HZS B.
 Hypothesis HCE : GN_CELLS_ERRNO B.
 Hypothesis RIend : GN_RI_end B MT LS RINV.
-(* the cut's two segment facts (lib/B/W_LLVMFuzzerTestOneInput_cut.v:412 / :414): G_fr's cells are writable in every
+(* the cut's two segment facts (lib/B/W_LLVMFuzzerTestOneInput_cut.v:413 / :415): G_fr's cells are writable in every
    memory, and errno is writable in every AR state (the callees' OWED conjunct gives errno's view only) *)
 Hypothesis GWL : glob_wr_law G_fr.
 Hypothesis ERRL : errno_law B.

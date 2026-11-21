@@ -1,8 +1,8 @@
 # fuzz_state YH03 cell records (lib/Reusable/YH03.v = plain build, lib/U/Reusable/YH03.v = ubsan build)
 
-Images: plain pin sha256 c9703541c41a, ubsan pin 6e4aa2cd877d (FACTS c8557374ad2e). Symbols come from unstripped twins of the same link, sha256 115c6ed24187 (plain) and a626088ba293 (ubsan); `drvcmp.py twins` (cmpkit 4bbd3a74be89 copy, drvcmp 4d70e90bc1fa) shows their PT_LOAD bytes equal the pins except the ELF header and .note.gnu.build-id.
+Images: plain pin sha256 c9703541c41a, ubsan pin 6e4aa2cd877d (FACTS). Symbols come from unstripped twins of the same link, sha256 115c6ed24187 (plain) and a626088ba293 (ubsan); `drvcmp.py twins` (cmpkit 4bbd3a74be89 copy, drvcmp 4d70e90bc1fa) shows their PT_LOAD bytes equal the pins except the ELF header and .note.gnu.build-id.
 
-Tools: yh03check e5d7cbda4e27 / yh03regen f357a8df6e49 (v6.3), yh03check fb3bfbc1eea8 / yh03regen 1254e5c96a44 (v6.4). Base of every count: the shipped fuzz_state tree 9a979984f23e.
+Tools: yh03check e5d7cbda4e27 / yh03regen f357a8df6e49 (v6.3), yh03check fb3bfbc1eea8 / yh03regen 1254e5c96a44 (v6.4). Base of every count: the shipped fuzz_state tree.
 
 ## 1. Cell fix (v6.3 scope) and the .got cell
 
@@ -18,7 +18,7 @@ One `yh03regen v6.4 ... --proofs proofs/omx-clap-core/fuzz_state --unchecked-ok 
 
 Each of the 45 NOSYM cells per file was judged TRUE or FALSE by what its name claims (constant bytes in a read-only section; table bytes and the function that reads them; a jump table at the dispatch base with entries inside the function; a .got cell's stored word; a static object at the start the reading code uses). A planted wrong value per class was called FALSE (62 controls). Per file 31 TRUE, 14 FALSE; no FALSE cell has a reader outside the two YH03.v files. The 14 FALSE cells were removed by deletion only (no value set); each: "NOSYM, FALSE, 0 readers, removed".
 
-| build | line at 7fe64089be9c | cell | value | verdict | what the image holds there | readers |
+| build | line | cell | value | verdict | what the image holds there | readers |
 |---|---|---|---|---|---|---|
 | plain | 143 | const_double_0x1p28 | 0x103a8 | FALSE | bytes[8]=693a207265616420 sec=.rodata near=$d+0x2e[fuzz_state.c] in C string @0x103a6 'cli: read error on %s\n' | 0 |
 | plain | 144 | const_double_1_0 | 0x103b0 | FALSE | bytes[8]=6572726f72206f6e sec=.rodata near=$d+0x36[fuzz_state.c] in C string @0x103a6 'cli: read error on %s\n' | 0 |
@@ -123,7 +123,7 @@ The cell names of the driver-static rows, and the symbol they name, are in the i
 
 ## 5. Cross-check with a relocator sweep of the same cells
 
-231 sweep rows name YH03 cells at 9a979984f23e: 30 it calls right (unchanged here, v6.4 OK too); of the 201 it calls wrong, 115 are removed here, 77 changed here (for the 44 rows with a numeric right value, this branch's value equals it in 44 of 44), 9 unchanged by the cell fix: str / str_2 (removed in section 6), and the FILE-sink cells read by YI5c (stdio_read, str_rwa), which the FILE-sink restatement in this series frees and removes. Cells v6.4 or the NOSYM judgment call right that the sweep calls wrong: 0.
+231 sweep rows name YH03 cells: 30 it calls right (unchanged here, v6.4 OK too); of the 201 it calls wrong, 115 are removed here, 77 changed here (for the 44 rows with a numeric right value, this branch's value equals it in 44 of 44), 9 unchanged by the cell fix: str / str_2 (removed in section 6), and the FILE-sink cells read by YI5c (stdio_read, str_rwa), which the FILE-sink restatement in this series frees and removes. Cells v6.4 or the NOSYM judgment call right that the sweep calls wrong: 0.
 
 ## 6. Cells no checker row examines
 
@@ -148,5 +148,5 @@ Per file 37 definitions are neither a v6.4 row nor a NOSYM cell: the 18 section 
 | str_dev_null | 0x10402 | `/dev/null` | TRUE | 0 |
 | str_null | 0x1040c | `(null)` | TRUE | 0 |
 
-str and str_2 still held the donor image's addresses (unchanged since 9a979984f23e); both are FALSE of this image and unread, so both are removed from both files (deletion only, no value set): "string cell, FALSE, 0 readers, removed". After the removal `git grep -n -w -E 'src0_D_str|src0_D_str_2' -- ':(glob)projects/omx-clap-core/fuzz_state/**/*.v'` prints nothing. The FILE-sink string cells of the shipped tree (str_wb, str_tmp_out_gif, str_3, str_rwa; they hold strings this image does not contain) were removed by the FILE-sink restatement once nothing read them.
+str and str_2 still held the donor image's addresses (unchanged); both are FALSE of this image and unread, so both are removed from both files (deletion only, no value set): "string cell, FALSE, 0 readers, removed". After the removal `git grep -n -w -E 'src0_D_str|src0_D_str_2' -- ':(glob)projects/omx-clap-core/fuzz_state/**/*.v'` prints nothing. The FILE-sink string cells of the shipped tree (str_wb, str_tmp_out_gif, str_3, str_rwa; they hold strings this image does not contain) were removed by the FILE-sink restatement once nothing read them.
 

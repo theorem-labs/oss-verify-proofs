@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff f6bfd4d6ab5 f6038f3d481
-   of lib/A/W_gesture_model_g.v applied by three-way merge onto lane W4's ARx text (a working branch
-   0d0105eaf4d) at B's names: pb_gesture_model_g_x at RP, and Section cf: pb_gesture_model_g_cf at the B top's ARX
+(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff
+   of lib/A/W_gesture_model_g.v applied by three-way merge onto lane W4's ARx text (a working branch)
+   at B's names: pb_gesture_model_g_x at RP, and Section cf: pb_gesture_model_g_cf at the B top's ARX
    (lib/B/W_LLVMFuzzerTestOneInput_top_x.v Definition ARX, word for word), its literal shadow facts by
    lib/B/TopxImageB.v tfib_shp_x. The AR statements (Section r) are W4's, unchanged. *)
 (* Modified by Theorem Labs, 2026-10: IMAGE B (asan-ubsan, entry 0x86048) twin of lib/A/W_gesture_model_g.v.
@@ -17,6 +17,7 @@
    a working branch): Section c proves pb_gesture_model_g_x : gm_spec_g_x over a generic allocator relation ARx
    from the three cuts' _x theorems (pb_gesture_model_x, pb_gm_scan_x, pb_gm_found_x) and the callees' _g_x twins;
    Section r re-derives pb_gesture_model_g, statement unchanged, at ARx := W_journal_x.ARi0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -172,8 +173,8 @@ End r.
 End b.
 End a.
 
-(* ---- AT the B top_x's INSTANCE (for its CNL_x / CSHE_x discharges; the twin of lib/A/W_gesture_model_g.v Section cf
-   at f6038f3d481): gesture_model's _g_x contract at B := TfibB (lib/B/YD2l.v), PST := [] and the B top's allocator
+(* ---- AT the B top_x's INSTANCE (for its CNL_x / CSHE_x discharges; the twin of lib/A/W_gesture_model_g.v Section cf):
+   gesture_model's _g_x contract at B := TfibB (lib/B/YD2l.v), PST := [] and the B top's allocator
    relation ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v Definition ARX, spelled out here so that top_x can Require this
    file: ARX unfolds to it), MMAX := fr_MMAX.  The relation's laws and no-hidden-head are discharged as top_x's
    ARX_laws / ARX_hp0 prove them; the three literals' shadow facts by lib/B/TopxImageB.v tfib_shp_x (image B's

@@ -5,17 +5,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names changed; 1538 of its 1613 lines of code are new or changed and 509 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v, with its module paths, module names, addresses and numbers changed; 98 of its 1490 lines of code are new or changed and 221 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81b9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan-ubsan (image
    tfibsegs = lib/B/YB1v.v, the pinned fuzz_state.asan-ubsan sha256
    5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204): the B twin of the ASan walk of lib/B/FSH_Fn_crt.v
    check_round_trip_spec, segment group C2 = segments 25-29, from the return of the last pj_set at 0x82370 (0x82374) to
    the return of pj_get_str at 0x823bc (0x823c0), with the class-3 fake frame live (own = [(3, pos)]).
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   ebb2a46b8f3 lib/A/FSH_crt_segC2.v, itself PORTED from a working branch d25a984c903
+   lib/A/FSH_crt_segC2.v, itself PORTED from a working branch
    check_round_trip_sd15.v / check_round_trip_sd16.v / check_round_trip_stdefs.v St14 / St15 / St16). The
    function-level lookup and its CONFIRM are the walk owner's (a Theorem Labs lane, checker a Theorem Labs lane).
 
-   PORT SOURCE: a working branch ebb2a46b8f3 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v
+   PORT SOURCE: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v
    (c2_chain, CTX-free). Same Definition / Lemma names and statement shapes as the A file, over image B; every pc,
    return address, register and slot fact RE-MEASURED on B (capstone listing (internal path)
    crt.B.s of the pinned projects/omx-clap-core/bin/fuzz_state/fuzz_state.asan-ubsan, and FSH_crt_segC.v's runs),
@@ -110,7 +111,7 @@ Definition c2_ss_268 : sstate := crt_ss_ret 0x823c0 crt_cs1 crt_csF.   (* return
 (* ================= the four INNER boundary invariants of segment group C2 =================
    One `c2_INV_<A pc>` per boundary strictly inside the group (B 0x82374 is the base's crt_INV_82218, C1's text;
    B 0x823c0 is the base's crt_INV_82268). Each is the document / buffer state the program holds there, ported from
-   A's (a working branch ebb2a46b8f3, itself from the bespoke ASan proof d25a984c903 St15 / St16): the
+   A's (a working branch, itself from the bespoke ASan proof St15 / St16): the
    memory, block and budget facts are A's word for word (B's frame offsets, objects and calls are the same); the
    register facts are B's, in crt_INV_82268's order: s2 = x18 text, s4 = x20 len, s5 = x21 bd, s7 = x23 F + 0x80,
    s11 = x27 F + 0xe0, s3 = x19 F (crt_INV_82218's, kept by every callee), s8 = x24 same, s9 = x25 back, and from
@@ -643,7 +644,7 @@ Lemma c2_doc_has_state : forall es,
   In ([115; 116; 97; 116; 101], PjTree.JObj (check_round_trip_stages_b.crt_st es)) (check_round_trip_stages_b.crt_doc es).
 Proof. intros es. unfold check_round_trip_stages_b.crt_doc. right; right; left. reflexivity. Qed.
 
-(* the decoded length (ported from FSH_crt_segC1.v at a working branch 725a5b225fe, crtC1_six_len /
+(* the decoded length (ported from FSH_crt_segC1.v at a working branch, crtC1_six_len /
    crtC1_dec_len, which port lib/Prog/check_no_overread.v:125-139) *)
 Lemma c2_six_len : forall six, (length (WriterSpec.six_bytes six) * 4 <= length six * 3)%nat.
 Proof.
@@ -732,7 +733,7 @@ intros st. unfold FSH_Fn_writer.wcalls, FSH_Fn_writer.wev0.
 destruct (WriterApp.w_calls st) as [|c r]; cbn [length]; unfold EV_fuzz_malloc, EV_fuzz_realloc; lia.
 Qed.
 (* blocks_bytes across a boundary whose block list is the entry's plus L plus the reader blocks of D (FSH_crt_segC1.v
-   crtC1_bsum_rd_hblocks / crtC1_rd_sum_le at a working branch 725a5b225fe, restated) *)
+   crtC1_bsum_rd_hblocks / crtC1_rd_sum_le at a working branch, restated) *)
 Lemma c2_bsum_rd_hblocks : forall D, YCbq.bsum (rd_hblocks D) = rd_sum D + HEAD * Z.of_nat (length D).
 Proof.
   induction D as [|b D IH]; [reflexivity|].
@@ -990,7 +991,7 @@ End s25.
    asks is FSH_crt_site.crt_rom, file's text as a C string FSH_crt_cstr.crt_cstr_of_block. The `beqz` arm is
    crt_seg_call_br's with BC_EQ. *)
 (* fs's allocator statics are image bytes, so a step that keeps the visible image keeps fs_glob (segD's crt_glob_img /
-   crt_glob_keep at 6b0ff16eb7c FSH_crt_segD.v:139-181, restated; B's statics G_FAIL 0xa41c0 .. G_COUNT 0x5dab00 lie in
+   crt_glob_keep at FSH_crt_segD.v:139-181, restated; B's statics G_FAIL 0xa41c0 .. G_COUNT 0x5dab00 lie in
    the same last RW segment [0xa1000, 0x5fd000) of tfibsegs) *)
 Lemma c2_glob_img : forall a, (G_FAIL <= a < G_FAIL + 8 \/ G_LIVE <= a < G_LIVE + 8 \/ G_PEAK <= a < G_PEAK + 8 \/
   G_COUNT <= a < G_COUNT + 8) -> in_img tfibsegs a.
@@ -1017,7 +1018,7 @@ split; [apply VB; [lia | exact G1]|]. split; [apply VB; [lia | exact G2]|].
 split; [apply VB; [lia | exact G3]|]. split; [apply VB; [lia | exact G4]|]. exact R.
 Qed.
 
-(* the `beqz a0` form of crt_seg_call_br (FSH_crt_site.v:578-614, BC_EQ for BC_NE, crt_no_trap_eq for _ne): a0 is a
+(* the `beqz a0` form of crt_seg_call_br (FSH_crt_site.v:579-615, BC_EQ for BC_NE, crt_no_trap_eq for _ne): a0 is a
    nonzero pointer the previous call returned *)
 Definition c2_c1 : acond := mkAC BC_NE (SOff 10 0) (SLit 0).
 Section beq. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -1241,7 +1242,7 @@ End s26.
    (SOff 47 0x140; A: s2), ra = 0x823a0 (MEASURED by the engine). An instance of
    FSH_crt_site.crt_seg_call; HCALL is pj_parse's contract at text = file (pj_write's block), out = back's object,
    t = the written document, pr = true, under the by-trace room crt_room_C2 (FSH_crt_room.crt_room_C2_holds).
-   pj_parse's post (S0, READER e9dc3b32681 / fd1c15a7141) gives `rd_sum D = PjGrammar.held tr` and
+   pj_parse's post (S0, READER) gives `rd_sum D = PjGrammar.held tr` and
    `(length D <= length tr)%nat`: the exit's live equation, and |Dback| for the D groups' allowance and the block bytes. *)
 Lemma c2_s27_site : crt_csite crtC_sc_238 A_pj_parse 0x823a0.
 Proof. repeat (split; [vm_compute; reflexivity|]). vm_compute. reflexivity. Qed.

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainT8.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 55fd7d735cc4) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainT8.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
-(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the RETURN arm's cut relation - DMiface.dmem_q (DMiface.v:118-127)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainT8.v (Quarantine::Drain walk set; file sha256 55fd7d735cc4) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainT8.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the RETURN arm's cut relation - DMiface.dmem_q (DMiface.v:119-128)
    at the transferred state (DMdrainM.sxf X: the thread cache emptied, the global cache the two lists joined),
    from the clauses Drain's entry walk leaves at its return (YFgj.at_RETD, YFgj.v:295-306) and the quarantine's
    cells at the entry.  With DMiface.di_requar_x it gives ARX at the transferred state, and with

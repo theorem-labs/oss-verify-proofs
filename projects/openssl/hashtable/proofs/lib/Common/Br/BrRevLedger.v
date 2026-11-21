@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reverse ledger counts the launch's vDSO/vvar pair with the image's reservations). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -83,8 +84,6 @@ Variable R : bvmap 5 word.
 Variable FULL : word -> option byte.
 Variable m : Model.
 Hypothesis HCS : CXS.cs_ok segs A Lim SINV argH ISP FS0 E CS R FULL m.
-(* [comment removed for export] *)
-Hypothesis RES_in_hull : Forall (fun p => CAP.img_lo A <= e_lo p /\ e_hi p <= CAP.img_hi A) (segments_reserved segs).
 
 Local Notation V := (m_vmmaps m).
 
@@ -95,24 +94,25 @@ Proof.
 Qed.
 
 Theorem cs_maps_facts :
-  vm_reserved V = segments_reserved segs
+  (exists rx, vm_reserved V = segments_reserved segs ++ rx)   (* LPS 727298f3: plus the launch's vDSO/vvar pair *)
   /\ Lim <= vm_limit V                                  (* [comment removed for export] *)
   /\ Forall (fun p => 0 < e_sz p) (vm_maps V)
   /\ Forall (fun p => e_lo p mod page_size = 0 /\ e_sz p mod page_size = 0) (vm_maps V)
   /\ Forall (fun p => e_hi p <= alloc_top V) (vm_maps V)
-  /\ Forall (fun p => Forall (e_disj p) (segments_reserved segs)) (vm_maps V)
+  /\ Forall (fun p => Forall (e_disj p) (vm_reserved V)) (vm_maps V)
   /\ pw_disj (vm_maps V)
   /\ sp_window_lo <= bv_unsigned (vm_init_sp V) <= sp_window_hi
   /\ bv_unsigned (vm_start_brk V) <= bv_unsigned (vm_brk V).
 Proof.
-  destruct HCS. split; [exact co_res|]. split; [exact co_limit|].
+  pose proof (CXS.co_mres _ _ _ _ _ _ _ _ _ _ _ _ HCS) as co_mres'.
+  destruct (CXS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ HCS) as (rx & Erx & _).
+  destruct HCS. split; [exists rx; exact Erx|]. split; [exact co_limit|].
   split; [eapply Forall_impl; [|exact co_bounds]; intros p Hp; cbv beta in Hp; destruct Hp as (H1 & H2 & H3 & H4 & H5); unfold e_sz; exact H1|].
   split; [eapply Forall_impl; [|exact co_bounds]; intros p Hp; cbv beta in Hp; destruct Hp as (H1 & H2 & H3 & H4 & H5); unfold e_lo, e_sz, page_size; split; assumption|].
   split; [eapply Forall_impl; [|exact co_bounds]; intros p Hp; cbv beta in Hp; destruct Hp as (H1 & H2 & H3 & H4 & H5); unfold e_hi, e_lo, e_sz; exact H5|].
   split.
-  { eapply Forall_impl; [|exact co_bounds]. intros p Hp. cbv beta in Hp. destruct Hp as (_ & _ & _ & Hh & _).
-    eapply Forall_impl; [|exact RES_in_hull]. intros q Hq. cbv beta in Hq. destruct Hq as [Hq1 Hq2].
-    unfold e_disj, e_hi, e_lo, e_sz in *. lia. }
+  { eapply Forall_impl; [|exact co_mres']. intros p Hp. eapply Forall_impl; [|exact Hp].
+    intros q Hq. unfold CXS.iv_disjoint in Hq. unfold e_disj, e_hi, e_lo, e_sz. lia. }
   split; [exact (seps_pw_disj _ co_seps)|].
   split; [|exact co_sbrk].
   unfold alloc_top, stack_max_size, CAP.CEIL, CAP.TOPMAX, sp_window_lo, sp_window_hi in *. lia.

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1.v at 32f84792c2a6; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1.v; for image B
    (fuzz_rate.asan-ubsan): the block lemma is w6bb_c1 of lib/AU/RtPgW6bBaseB.v over RtPgStepsB.rtsb_post; the pcs,
    registers and real-frame cells are image B's; the pod object is e62 (F + 0x210) in the class-4 frame (4, pos); the
    kind byte and what is left reach the tail through the spill cells [R+0x128] and [R+0x70]; the cursor stays in s10;

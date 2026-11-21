@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL: the TABLE-ENGINE idioms the loop's pieces use,
-   rebound onto the old-pin kit (4f18c75d4900, engine 459129c18903), WITHOUT ex_ws_x.v
+   rebound onto the old-pin kit (engine), WITHOUT ex_ws_x.v
    (a Theorem Labs lane rebinds that file; the loop needs only its journal-free helpers, so they are restated here, unchanged:
    lib/B/Prog/ex_ws_x.v Section h and its tactics, themselves a Theorem Labs lane's skip_ws_x.v idioms; credit there).
    NEW here: the memory-invariant (_inv) twins of YCbqG.v's table runners SRr_run_tok_AJx / SRr_run_to_tok_AJx
-   (YCbqG.v:988-1063), the table-engine form of YC80x.v's SRr_chain_pi_tok_AJx_inv / SRr_run(_to)_pi_tok_AJx_inv
-   (YC80x.v:221-318): an invariant P with srr_inv_laws is carried from the run's start memory to its end memory and
+   (YCbqG.v:989-1064), the table-engine form of YC80x.v's SRr_chain_pi_tok_AJx_inv / SRr_run(_to)_pi_tok_AJx_inv
+   (YC80x.v:222-319): an invariant P with srr_inv_laws is carried from the run's start memory to its end memory and
    handed to the continuation as one more premise right after the journal. The loop instantiates P with exvl_P
    (e_mem E) = the keep `memnorm rsegs (e_mem E) -> memnorm rsegs m` (YSRrMemnorm.srr_inv_laws_imp of
    srr_inv_laws_memnorm_k), EXB's exv_rm memory half. The tactics exw_run / exw_run_to are the _inv forms (one more
@@ -41,7 +42,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- the memory-invariant twins of the table runners (YCbqG.v:988-1063 with YC80x.v:221-276's P) ---- *)
+(* ---- the memory-invariant twins of the table runners (YCbqG.v:989-1064 with YC80x.v:222-277's P) ---- *)
 Section r. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.
 Variable segs : list Segment.

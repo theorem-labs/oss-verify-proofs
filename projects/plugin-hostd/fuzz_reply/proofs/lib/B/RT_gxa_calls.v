@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths and module names changed; 125 of its 195 lines of code are new or changed and 89 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMgxa_bzcj.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan-ubsan: module paths changed; 0 address numerals relocated (port_addr_check 0767e70e074a predict mode, symbol + offset). *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMgxa_bzcj.v (a working branch) to libreac/fuzz_boxreg.asan-ubsan: module paths changed; 0 address numerals relocated (port_addr_check 0767e70e074a predict mode, symbol + offset). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/B/Rt/FMgxa_bzcj.v, with its module paths changed; 83 of its 219 lines of code are new or changed and 59 lines of the source are left out. *)
-(* Image B twin of lib/A/RT_gxa_calls.v at d49bd1db505: module paths lib.A -> lib.B; 15 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* GXA's interceptor call contract for strnlen (lib/CJ/RL/GXA/StrnlenCall.v:29-41 strnlen_stack_contract),
-   discharged at the ASan instance A_img (RT_IImgA.v:96) on the pinned fuzz_reply.asan-ubsan.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B twin of lib/A/RT_gxa_calls.v: module paths lib.A -> lib.B; 15 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* GXA's interceptor call contract for strnlen (lib/CJ/RL/GXA/StrnlenCall.v:29-41 strnlen_stack_contract),
+   discharged at the ASan instance A_img (RT_IImgA.v:97) on the pinned fuzz_reply.asan-ubsan.
 
    This file proves no new function.  It composes three proofs that are already in the tree:
-   - a Theorem Labs lane's Bz interceptor walk of ___interceptor_strnlen 0x4251c (lib/A/Bz/A/I_strnlen.v:103 istrnlen_spec,
+   - a Theorem Labs lane's Bz interceptor walk of ___interceptor_strnlen 0x4251c (lib/A/Bz/A/I_strnlen.v:104 istrnlen_spec,
      relocated by R1Str), which calls REAL(strnlen) = musl strnlen 0x973c8 (I_strnlenw.v:81 musl_strnlen_spec);
-   - its two section hypotheses: rip_stmt (lib/A/Bz/A/R_isPoisoned.v:298 rip_proof) and memchr_stmt
+   - its two section hypotheses: rip_stmt (lib/A/Bz/A/R_isPoisoned.v:299 rip_proof) and memchr_stmt
      (lib/A/FRsl.v:76 mch_proof);
    - GXA's call-contract statement, which it takes as a Context in G_printf_core.v:124-125.
    What it adds is glue only:
    - the trampoline: GXA's call target `sym 0x21920` is __interceptor_trampoline_strnlen 0x421e8 under A_img
-     (RT_IImgA.v:59), and that is one instruction, `j 4251c <___interceptor_strnlen>` (fuzz_reply.objdump.txt:18281 sha256 17f5c434bf57; internal record);
+     (RT_IImgA.v:60), and that is one instruction, `j 4251c <___interceptor_strnlen>` (fuzz_reply.objdump.txt:18281 sha256 17f5c434bf57; internal record);
    - the vocabulary: the Bz tree (lib/A/Bz/Lib) and the CJ tree (lib/CJ/Lib) are two copies of the same machine
      library.  Every definition used here is the same term in both, so it converts by `exact`, except two:
      `msteps` (an Inductive in each tree; bz_cj_msteps) and `mem_inv` (CJ: every byte is outside read-only
@@ -27,7 +28,7 @@
      0x421e8  __interceptor_trampoline_strnlen  (fuzz_reply.nm.txt (sha256 544ac719824e; internal record); the A_img row KV 0x21920 0x421e8)
      0x4251c  ___interceptor_strnlen            (the target of the j at 0x421e8; istrnlen_spec's entry pc)
    The memcpy and memset contracts (CopyCall.v:29, SetCall.v:28) are discharged in RT_gxa_calls_mem.v, over
-   c-asan-rt's interceptor walks relocated from 840c4afa7e2 (lib/A/Bz/A/I_memcpy.v, I_imemset.v). *)
+   c-asan-rt's interceptor walks relocated (lib/A/Bz/A/I_memcpy.v, I_imemset.v). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -147,7 +148,7 @@ Proof.
   - pose proof (BzM.mem_inv_ov_below asegs m a b H E) as B. unfold BzM.UTOP in B. unfold TASK_SIZE. lia.
 Qed.
 
-(* GXA's call target, under A_img: the strnlen trampoline (RT_IImgA.v:59) *)
+(* GXA's call target, under A_img: the strnlen trampoline (RT_IImgA.v:60) *)
 Lemma A_sym_strnlen : @CJR.sym RTA.A_img 0x21920 = 0x421e8.
 Proof. vm_compute. reflexivity. Qed.
 

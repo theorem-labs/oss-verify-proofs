@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry of descriptors_panel_get's walk (plugin-hostd/fuzz_command.asan) and the two arms of the inlined record(), from 0x8d10c to the join at 0x8d180, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v (a segment proved from the next one's statement) with the shared seed pieces of lib/A/Prog/RecBTemplate.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/descriptors_panel_get_s7.v, with its module paths and module names changed; 762 of its 820 lines of code are new or changed and 839 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan): sub-walk NEW of segment A8b of reac_segconf_parse_file's
    walk (segment A8b's proof, by the G3 walk owner, 2026-10-30).
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk); the lane's rule-24 record is
-   the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md (reuse
+   the unit's internal record, path records/segp/g3-lookup.md (reuse
    verdict: none, written new).
 
    pfa8b_new : forall n, HA_A8B_JOIN B n -> H_NEW B n
    (H_NEW / INV_NEW are lib/A/Prog/pf_pieces.v; HA_A8B_JOIN / INV_A8B_JOIN are lib/A/Prog/pf_a8b_d.v).
 
-   THE CODE (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   THE CODE (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s):
      0x8890c ld a0,0xb0(s1); lb a0,0(a0); bnez a0,0x88b64       check #35 (store4 of c->n): the slot holds
                                                                  sh(&c->n) as the term (x >> 3) + s6

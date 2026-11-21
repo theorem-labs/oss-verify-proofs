@@ -33,7 +33,7 @@
    file Requires the ASan-side lib/A/Reusable copies.  Check:
      grep -nE '(^|[^.A-Za-z_])(mkst|getr|seg_rom|cfg_at)\b' lib/A/ACtlG/F8.v   -- comments only.
 
-   BUILD STATE: as lib/A/ACtlG/F7.v's header records (type-check on a working branch 1899bed1aee, no stand-in in the
+   BUILD STATE: as lib/A/ACtlG/F7.v's header records (type-check on a working branch, no stand-in in the
    closure).  Every step is proved: no unproved step and no assumed constant. *)
 
 From Stdlib Require Import ZArith List Lia Permutation Bool.

@@ -2,10 +2,10 @@
    only the band and the destination's first byte, ecall_preU from ARU, and the shadow facts of a stack range or a prefix
    of the destination. New file. *)
 (* Modified by Theorem Labs, 2026-10: restated over the engine's generic ARx with the ghost list Hp fixed (route (a),
-   c-omx-hpreset 10:51Z), from origin/cold/port-fm-rtprintf-param 7e395de08f5 proofs/omx-clap-core/fuzz_manifest/lib/A/
+   c-omx-hpreset 10:51Z), proofs/omx-clap-core/fuzz_manifest/lib/A/
    FMsnprintfGt.v; image-free (segs, B, ARx are Section variables; no image numeral). Only the two items the four roots'
    closure reaches are kept: writable_xfer (:52-61, unchanged but over segs) and g_ecall_preU (:273-289), which becomes
-   g_ecall_pre_x: ecall_pre_x (FCiface.v:42-48) is ARx plus the register facts, with no unpoison, so the ESTACK window
+   g_ecall_pre_x: ecall_pre_x (FCiface.v:43-49) is ARx plus the register facts, with no unpoison, so the ESTACK window
    argument of the U form (ush_facts, unpoison_out) is not needed. ac_bounds, rom_seg0, fmt_place, x_*, cstr_ok_x,
    frender_x, gl_pre_mk, gl_pre_xfer, vsn_file_xfer, snk_base_frame, band_addressable, dest_sub are not reached by
    snp_ok / svsni_ok / svsn_ok / svfi_ok and are not ported. *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (interp_omono re-proved for the vvar range check on loads (range_meets_vvar) and step_omono for fetch_failure's new vDSO-text case). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -30,7 +31,8 @@ Lemma interp_omono : forall t m r,
 Proof.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m r H; cbn [interp_eff_accesses] in H; try discriminate H.
   - injection H as <-. cbn. apply omono_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep| |] eqn:R; try discriminate.
     injection H as <-. cbn. exact (IH _ m rep R).
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -60,7 +62,8 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem st) (ms_pc st)) as [w|].
   { exact (decode_exec_omono st w st' H). }
   destruct (fetch_failure segs (ms_mem st) (ms_pc st)) as [st2| |] eqn:F; cbn in H; try discriminate H.
-  unfold fetch_failure in F. destruct (negb _); [discriminate F|]. destruct (_ : bool) in F; discriminate F.
+  unfold fetch_failure in F.
+  repeat match type of F with context [if ?b then _ else _] => destruct b end; discriminate F.
 Qed.
 
 Lemma msteps_omono : forall ms ms', msteps segs ms ms' -> omono (ms_mem ms) (ms_mem ms').

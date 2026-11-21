@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_ctrl_identity_poll_block on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlIdentityPollBlock.v, with its module paths, module names and numbers changed; 695 of its 772 lines of code are new or changed and 346 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/FuzzStrdup.v, with its module names changed; 1135 of its 1207 lines of code are new or changed and 700 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102, pin 1be0f53d / unstripped twin bff8519b): pieces 2 + 3 + 4 of the walk
    of ex_value (A' 0x832a4) against the text tex_value_specX (lib/A/PRH_FnEx.v), the statement ev_disp_spec of
    lib/A/Prog/S8aIface.v: from P_WS (0x833dc) through the inlined ex_ws, the end test and the switch on the byte (piece 2),
@@ -18,7 +19,7 @@
    register and extra atoms); 2 ^ 44, 2 ^ 46, 2 ^ 47, 2 ^ 64 (DERIVED: shadow, stack and word bounds); 34, 91, 93,
    102, 109, 110, 116, 123 (WORD: the bytes quote, '[', ']', 'f', 'm', 'n', 't', '{' the switch compares). No ADDRESS
    literal: addresses come from pa_sigma / pa_val of PAImg_prog.v and the PrhImg fields of PRH_Img.v.
-   MEMNORM (S8aIface.v ev_mid's last conjunct, walkkit old-pin 4951e104ca2e): every runner segment keeps
+   MEMNORM (S8aIface.v ev_mid's last conjunct, walkkit old-pin): every runner segment keeps
    `YAkMemnorm.memnorm SEGS mem` by YC1fPx's `*_inv` runners (paj_run_x_inv / paj_run_to_x_inv at P := that predicate,
    laws YSRrMemnorm.srr_inv_laws_memnorm_k); ev_mid_frame takes it at the new memory. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -71,8 +72,8 @@ Qed.
 
 (* ---- pure, the tree's footprint blocks satisfy lblk: COPIED from preset's released plain lib/Prog/pj_get.v:75-121
    (gp_items_blocks / gp_mems_blocks / gp_node_blocks; tree predicates only, no machine state), restated over any
-   segment list and over PRH_Reader's pj_itemsR / pj_memsR / pj_nodeR (the kit's tree representation since walkkit
-   b77223726823, prhex_tree) ---- *)
+   segment list and over PRH_Reader's pj_itemsR / pj_memsR / pj_nodeR (the kit's tree representation since walkkit,
+   prhex_tree) ---- *)
 Lemma ev_items_blocks : forall (lblk : Z -> Z -> Prop) (P : Z -> PjTree.jv -> list (Z * Z) -> Prop) l a D,
   (forall a' u D1, In u l -> P a' u D1 -> forall x k, In (x, k) D1 -> lblk x k) ->
   PRH_Reader.pj_itemsR P a l D -> forall x k, In (x, k) D -> lblk x k.
@@ -270,7 +271,7 @@ Variable SK : YI16.sink_head.
 Context {hl : Z}.  (* AR_laws_x's head length (YCbqG.v), implicit: inferred from LAWS; hl, since HL clashes with proof names *)
 Context {RL : PrhRoomLive}.  (* ev_mid's last conjunct (room_live_cf); S8aIface's Section c context *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
-(* STAND-IN: NewFnWalks / h-hpreset-7, lands as YCbqG's alx_zshadow_byte (walks-new b092d73a858): the real stack's
+(* STAND-IN: NewFnWalks / h-hpreset-7, lands as YCbqG's alx_zshadow_byte (walks-new): the real stack's
    shadow bytes read 0 under ARx (the per-byte form of alx_zshadow) *)
 Hypothesis ZSB_x : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> ly_stk_lo ly <= a < ly_stk_hi ly ->
   aview SEGS (w_H W) mem (SHADOW_OFF + a / 8) = Some 0.

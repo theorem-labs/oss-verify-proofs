@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_hdzo.v (commit 4d286b2e618d, file sha256 41fb0a506672) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 1 list indices re-picked, and 2 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_hdzo.v (file sha256 41fb0a506672) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 1 list indices re-picked, and 2 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, row img-hdzo-B of a Theorem Labs lane's internal file REPLY-IMG-ROWS.md, for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image row; a closed computation at reply's image B, fuzz_reply.asan-ubsan).
    Reuse search: proof-index hdzo_B HDZO HDZO_cgif (2026-10-30 04:4xZ, exit 0): HDZO only as the layer's
    Hypothesis (YGcfInstHit / HitCore / HitPost / Miss / MissW on unreleased internal branches), no discharge at any unit.
 
-   HDZO is the cf layer's Hypothesis of YGcfInstHit.v:142-143 (commit d2e17f315ba, Section b):
+   HDZO is the cf layer's Hypothesis of YGcfInstHit.v:143-144 (Section b):
      forall ly' a, ag_dzone ly' a ->
        Exists (in_zr a) (as_owned_static B) \/ (ly_NB ly' <= a < ly_NB ly' + kNodesBlockSize) \/
        (ly_SB ly' <= a < ly_SB ly' + kStoreBlockSize).
@@ -15,7 +16,7 @@
    class ImgBase.AImg at image B's AImg_cgif, B/AGif2cgif.v; ImgBaseAG.AGImg at B/AGif0cgif.v's AGImg_cgif,
    whose ag_dzone is AGis.DZONE), for a B with the image's symbol facts (im_syms = TfibSyms). A consumer closes the
    layer's HDZO with `exact (hdzo_B B TS)` once the layer is on reply. No Definition of the layer is copied here.
-   The proof is cgif's HDZO_cgif (YGcfInstHitcgif.v:65 @ cc4fb1f2a13, AGif5.v:913-917's own_Dg script) at this image:
+   The proof is cgif's HDZO_cgif (YGcfInstHitcgif.v:65, AGif5.v:913-917's own_Dg script) at this image:
    AGis.DZONE's image part [0x17d5c8, 0x5cdd50) (B/AGis.v) lies in the fifth region of Tfib_owned_static (B/YF0m.v,
    ts_owned), checked by vm_compute on the table's entry; its NB and SB parts are the statement's two other arms. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -35,7 +36,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import AGif2cgif.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require ImgBaseAG. From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require AGis AGif0cgif.
 Open Scope Z_scope.
 
-(* HDZO at image B (YGcfInstHit.v:142-143 @ d2e17f315ba). *)
+(* HDZO at image B (YGcfInstHit.v:143-144). *)
 Lemma hdzo_B : forall B, @im_syms AImg_cgif B ->
   forall ly' a, @ImgBaseAG.ag_dzone AImg_cgif AGif0cgif.AGImg_cgif ly' a ->
   Exists (in_zr a) (as_owned_static B) \/ (ly_NB ly' <= a < ly_NB ly' + kNodesBlockSize) \/

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU8.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail; file sha256 9a62bc6647de) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU8.v (drain recycle tail; file sha256 9a62bc6647de) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU8.v, with its module paths, module names and addresses changed; 16 of its 120 lines of code are new or changed and 2 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU8Rh.v at commit b93d7a87dae, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (2 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU8Rh.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (2 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the drain's EPILOGUE after DoRecycle returns, at the RE-HIDE twins - the
-   primed counterpart of DMdrainU8.epi_after_recycle (reply lib/A/DMdrainU8.v, relocated from cgif's DMdrainU8.v at commit
-   67fc7ef5787c).  DoRecycle's post is now DMwalkIFRh.dr_leaf_rh's YGcfRehidePost.acall_post_x_rh: the same as
+   primed counterpart of DMdrainU8.epi_after_recycle (reply lib/A/DMdrainU8.v, relocated from cgif's DMdrainU8.v).
+   DoRecycle's post is now DMwalkIFRh.dr_leaf_rh's YGcfRehidePost.acall_post_x_rh: the same as
    acall_post_x except that the world only grows outside the dead shadow (wle_in) and the view frame also excludes
    the dead shadow (YGcfRehidePost.acall_post_x_rh).  Recycle's six saved words sit on the stack at sp1 + 32 .. sp1 + 80, in
    high memory, and the dead shadow lies in the shadow ranges RZ_cf (YGcfRehidePost.dead_shadow_new_RZ), all of which end

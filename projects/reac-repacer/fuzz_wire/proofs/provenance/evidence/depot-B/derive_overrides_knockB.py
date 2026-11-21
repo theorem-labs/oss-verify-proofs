@@ -1,7 +1,7 @@
 """derive_overrides_knockB.py [--czone VALUE] [--files LIST] UNIT IMAGES LIBREAC_IMAGES STAGE UNIT_PIN_SHA256 UNIT_TWIN_SHA256
   > overrides-knockB.tsv 2> overrides-knockB-roles.tsv
 port_core --override rows for the knock-donor files of a reac-repacer image-B core (donor libreac/fuzz_knock's release
-88154566652a lib/AU), by role: the image-A core's derive_overrides_knock.py (image A of fuzz_wire) for image B and any unit. UNIT:
+lib/AU), by role: the image-A core's derive_overrides_knock.py (image A of fuzz_wire) for image B and any unit. UNIT:
 the unit (fuzz_wire); IMAGES: reac-repacer's result directory (bin/UNIT/UNIT.asan-ubsan, unstripped/UNIT/UNIT.asan-ubsan,
 whose sha256 must be UNIT_PIN_SHA256 / UNIT_TWIN_SHA256); LIBREAC_IMAGES: libreac's (fuzz_knock.asan-ubsan pin
 f834165f5002, twin 6b6e06f3c924). STAGE: the relocation run's stage/ (the donor text port_core relocates; line numbers are

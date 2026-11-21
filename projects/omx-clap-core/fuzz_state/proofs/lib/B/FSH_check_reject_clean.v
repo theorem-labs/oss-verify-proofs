@@ -15,7 +15,7 @@
    branches not taken in one run (a0 and a1 enter as literals, the G_LIVE cell holds the atom of a2), and the function
    returns at 0x81b8c with memory changed only in its 16-byte stack window.
    The decode tables are lib/B/FSW_check_reject_clean_tbl.v and lib/B/FSW_fuzz_alloc_live_tbl.v.
-   Ported from: lib/A/FSH_check_reject_clean.v (a working branch 3694074f8f1), the same walk over lib/B's walk
+   Ported from: lib/A/FSH_check_reject_clean.v (a working branch), the same walk over lib/B's walk
    kit lib/B/FSW_K.v (same lemma names) and lib/B's image files (YB1v, YB1w, FSH_Base, FSH_Rt, FSH_Fn_checks). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/MemNormTr.v; 103 of its 120 lines of code are new or changed and 212 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/C_reac_ctrl_parsePP.v -- fuzz_ctrl image A (asan, libreac v1.9.0): the first glue step of the cgif-form
    glue pb_reac_ctrl_parse (lib/A/Prog/C_reac_ctrl_parseP.v), route (C).
 
@@ -11,7 +12,7 @@
                    [S - 8800, S) by C_reac_ctrl_parseK.rcpK_journal_win.  The continuation receives PreCall's facts
                    over the normalized end memory m1n and the register file C_reac_ctrl_parseK.rcpK_regsE.
 
-   Ported from a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v @ 258208c7d59, image A addresses: B's rcpB_to_E1 (its
+   Ported from a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v, image A addresses: B's rcpB_to_E1 (its
    C_reac_ctrl_parseLib.rcpB_pre_F, GlueLift.rrB_lift and GlueLift.rrB_journal_win are A's PreFOn.pre_call_F,
    rcpK_lift_norm and rcpK_journal_win; B's four bytes_at premises of the GOT cells are A's asan_cells; A's run also
    takes the side-stack premise fpx, moved to normalize memc by the local rcpPP_fpx_normalize).

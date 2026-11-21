@@ -9,6 +9,7 @@
    0, in its NUL-free text), so they are disjoint from it (AR's pairwise separation); a held array at T that reached the
    slot would hold key 7 j + 5, whose pointer is the 8 bytes at T + 56 j + 40 = e's own hp field = T, a key block at T:
    excluded as above. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -49,7 +50,7 @@ Hypothesis LAWS : AR_laws SEGS B.
 (* ------------------------------------------------------------------ lists and bytes *)
 Lemma ra_sep_req_pos : forall n, 0 < n -> req_size n = n.
 Proof. intros n Hn. unfold req_size. destruct (Z.eqb_spec n 0); lia. Qed.
-(* W_relay_add_tail.v's tl_key_ptrs_len (a working branch 22c3862876d) *)
+(* W_relay_add_tail.v's tl_key_ptrs_len (a working branch) *)
 Lemma ra_sep_key_ptrs_len : forall ks, length (key_ptrs ks) = (8 * length ks)%nat.
 Proof.
 induction ks as [|k ks IH]; [reflexivity|]. unfold key_ptrs in *. cbn [map concat]. rewrite length_app, IH.

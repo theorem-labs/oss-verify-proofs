@@ -1,6 +1,6 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_IImgA_ok.v (a working branch 3e35620c52e); changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfB.N_img_asan_ubsan_vf/N_sym_asan_ubsan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanB.N_img_asan_ubsan/N_sym_asan_ubsan, module RT_IImgA_ok -> lib.B.RT_IImgB_ok, numerals 0x41308 -> 0x42a70 and 0x8ede0 -> 0x9634c; two row checks added (fr_RS_K_102a8, fr_RO_fmt_emit). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_IImgA_ok.v (a working branch); changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfB.N_img_asan_ubsan_vf/N_sym_asan_ubsan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanB.N_img_asan_ubsan/N_sym_asan_ubsan, module RT_IImgA_ok -> lib.B.RT_IImgB_ok, numerals 0x41308 -> 0x42a70 and 0x8ede0 -> 0x9634c; two row checks added (fr_RS_K_102a8, fr_RO_fmt_emit). *)
 (* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply lib/A/RT_IImgA_ok.v at
-   a working branch e51895d5655; the module path prefix is this harness's, the instance is
+   a working branch; the module path prefix is this harness's, the instance is
    RT_IImgA.v's A_img on fuzz_manifest.asan, and the measured addresses in the comments are
    fuzz_manifest's. *)
 (* The image facts that lib/CJ/RL/GXA/G_vfprintf_snf_closed.v takes as Context (its lines 28-77),

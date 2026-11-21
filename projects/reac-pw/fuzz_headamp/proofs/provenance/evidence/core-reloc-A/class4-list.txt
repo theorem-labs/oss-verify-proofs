@@ -32,7 +32,7 @@
 #             form). The A core does not use it (no file names aa_stack_malloc); role's A4 states class 3 directly, and
 #             headamp's A4 states class 4 directly in the same way.
 #
-# C. Start-up cells (step A2, generated from headamp's own image: A2 at cb68d3ec501; not this
+# C. Start-up cells (step A2, generated from headamp's own image: A2; not this
 #    step's files). A/AF0m.v Tfib_const_abs holds the option byte cell `z4 (ANum 0xa4dc0) 0x1` (row 50; role's row 50 is
 #    `z4 (ANum 0xa3400) 0x1`) and its .got word `z8 (ANum 0x9c3c8) 0xa4dc0` (row 155; role `z8 (ANum 0x9a888) 0xa3400`).
 #    These rows are class-independent; the per-class frame and flag areas lie inside the fake-stack map

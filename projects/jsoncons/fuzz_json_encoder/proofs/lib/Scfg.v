@@ -1,7 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
-
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO): changed injected_arm_215, injected_arm_64, sstep_cfg_of_sstep; added refusal_b_munmap, refusal_b_write; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Scfg.v, lines 22-46, 221-223. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -9,10 +8,6 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma injected_arm_214 : injected_arm 214 = Some (mkInjectedArm 214 FamAlloc []).
 Proof. reflexivity. Qed.
@@ -25,26 +20,38 @@ Proof. reflexivity. Qed.
 Lemma injected_arm_56 : injected_arm 56 = Some (mkInjectedArm 56 FamFs openat_errnos).
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-Lemma injected_arm_29 : injected_arm 29 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_57 : injected_arm 57 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_63 : injected_arm 63 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_64 : injected_arm 64 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_66 : injected_arm 66 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_93 : injected_arm 93 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_94 : injected_arm 94 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_96 : injected_arm 96 = None.   Proof. reflexivity. Qed.  (* [comment removed for export] *)
-Lemma injected_arm_215 : injected_arm 215 = None. Proof. reflexivity. Qed.  (* [comment removed for export] *)
+Lemma injected_arm_29 : injected_arm 29 = None.   Proof. reflexivity. Qed.
+Lemma injected_arm_57 : injected_arm 57 = None.   Proof. reflexivity. Qed.
+Lemma injected_arm_63 : injected_arm 63 = None.   Proof. reflexivity. Qed.
+Lemma injected_arm_64 : injected_arm 64 = Some (mkInjectedArm 64 FamFs [ENOMEM]).   Proof. reflexivity. Qed.
+Lemma injected_arm_66 : injected_arm 66 = None.   Proof. reflexivity. Qed.
+Lemma injected_arm_93 : injected_arm 93 = None.   Proof. reflexivity. Qed.
+Lemma injected_arm_94 : injected_arm 94 = None.   Proof. reflexivity. Qed.
+Lemma injected_arm_96 : injected_arm 96 = None.   Proof. reflexivity. Qed.
+Lemma injected_arm_215 : injected_arm 215 = Some (mkInjectedArm 215 FamAlloc [ENOMEM]). Proof. reflexivity. Qed.
+
+(* The revision's [injected_table] registers write and munmap, so an answer is
+   a refusal exactly when it is -ENOMEM.  [refusal_b] reads the arm's errno
+   list, and both arms list [ENOMEM] alone. *)
+Lemma refusal_b_write : forall i m r,
+  bv_unsigned (in_sysno i) = 64%Z -> refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r H. unfold refusal_b. rewrite H.
+  exact (Bool.orb_false_r (bv_eqb r (errno_ret ENOMEM))).
+Qed.
+
+Lemma refusal_b_munmap : forall i m r,
+  bv_unsigned (in_sysno i) = 215%Z -> refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r H. unfold refusal_b. rewrite H.
+  exact (Bool.orb_false_r (bv_eqb r (errno_ret ENOMEM))).
+Qed.
 
 Lemma ret_in_errnos_1 : forall e r, ret_in_errnos [e] r = bv_eqb r (errno_ret e).
 Proof. intros e r. unfold ret_in_errnos. cbn [existsb]. apply orb_false_r. Qed.
 
 Lemma ret_in_errnos_nil : forall r, ret_in_errnos [] r = false.
 Proof. reflexivity. Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma injected_family_off_none : forall cfg i,
   injected_arm (bv_unsigned (in_sysno i)) = None ->
@@ -118,10 +125,6 @@ Proof.
   intros cfg i Hn. unfold injected_family_off. rewrite Hn, injected_arm_56. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma not_spurious_on : forall cfg i m eff,
   injected_family_off cfg i = false -> ~ spurious_refusal_cfg cfg i m eff.
 Proof. exact spurious_refusal_family_on. Qed.
@@ -150,15 +153,10 @@ Proof.
   split; [exact Hoff|]. split; [exact Hr|]. exists eff1, m1, evs1. split; assumption.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Section WithSegs.
 Variable segs : list Segment.
 Variable scfg : SpuriousCfg.
 
-(* [comment removed for export] *)
 Definition fam_on (ms : machine_state) : Prop :=
   forall x8, ms_svc_pending ms = Some x8 ->
     injected_family_off scfg (sys_input segs ms x8) = false.
@@ -194,7 +192,6 @@ Proof.
   rewrite Harm, Hfam. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma fam_on_openat : forall ms x8,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 56%Z ->
@@ -206,14 +203,12 @@ Proof.
     [rewrite Hno; exact injected_arm_56 | exact Hfs].
 Qed.
 
-(* [comment removed for export] *)
 Lemma fam_on_exit : forall ms x8,
   ms_svc_pending ms = Some x8 -> (bv_unsigned x8 = 93%Z \/ bv_unsigned x8 = 94%Z) -> fam_on ms.
 Proof.
   intros ms x8 Hsvc [H|H]; eapply fam_on_sysno; eauto using injected_arm_93, injected_arm_94.
 Qed.
 
-(* [comment removed for export] *)
 Lemma sstep_cfg_of_sstep : forall ms model e st,
   sstep segs (mkCfg ms model) e st ->
   fam_on ms ->
@@ -224,6 +219,9 @@ Proof.
     [ eapply sstep_cfg_instr; eassumption
     | eapply sstep_cfg_instr_fault; eassumption
     | eapply sstep_cfg_instr_unmodeled; eassumption
+    | eapply sstep_cfg_vdso_call; eassumption
+    | eapply sstep_cfg_vdso_materialization_fault; eassumption
+    | eapply sstep_cfg_vdso_unmodeled; eassumption
     | eapply sstep_cfg_syscall; try eassumption; apply not_spurious_on; apply Hon; assumption
     | eapply sstep_cfg_syscall_materialization_fault; try eassumption;
         apply not_spurious_on; apply Hon; assumption
@@ -238,14 +236,9 @@ Lemma sstep_cfg_of_sstep' : forall c e st,
   sstep_cfg segs scfg c e st.
 Proof. intros [ms model] e st; cbn. apply sstep_cfg_of_sstep. Qed.
 
-(* [comment removed for export] *)
 Lemma sstep_of_sstep_cfg : forall c e st,
   sstep_cfg segs scfg c e st -> sstep segs c e st.
 Proof. intros c e st H. exact (sstep_cfg_sub segs scfg c e st H). Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma star_cfg_one : forall c evs c',
   sstep_cfg segs scfg c evs (SNext c') -> star_cfg segs scfg c evs c'.
@@ -281,7 +274,6 @@ Proof.
   - exfalso. apply Hh. eapply sstep_cfg_halted_none. exact Hss.
 Qed.
 
-(* [comment removed for export] *)
 Lemma reaches_error_cfg_here : forall c evs,
   sstep_cfg segs scfg c evs SError -> reaches_error_cfg segs scfg c.
 Proof.

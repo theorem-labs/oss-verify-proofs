@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the main entry reads argv's strings at the top of the launch block (InitMem's str_base), argv's pointer words, the hidden bytes and the stack span from BothMainU's layout lemmas, and splits the stack at the new floor ALO. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Strings.String.
@@ -86,15 +87,35 @@ Section Handoff.
   Proof.
     intros en inp w V m ms mo VE VI AM HA XPI XPR. exists (LDRV V w).
     pose proof (AHEAP_INIT en inp w V m ms mo VE VI AM HA) as AH. pose proof (ARESV_INIT en inp w V m ms mo VE VI AM) as ARK.
-    destruct en as [sp brk0 mbase rdraw]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ VI) in VE. destruct VE as (VSP & _ & _ & FITS). cbn [en_sp en_draw] in *.
-    destruct VSP as (SPLO & SPHI & SP16). unfold sp_window_lo in SPLO. unfold sp_window_hi in SPHI. unfold entry_stack_fits, sp_window_hi in FITS.
+    (* LPS 727298f3: the block's layout parts of [main_open] ([BothMainU]'s layout lemmas) *)
+    pose proof (main_hidden en inp w V m ms mo AM) as HIDm.
+    pose proof (main_argv_words en inp w V m ms mo AM) as [AP0 AP1].
+    pose proof (main_stk en inp w V m ms mo AM) as ST.
+    destruct en as [sp brk0 mbase rdraw].
+    pose proof (main_geom sp brk0 mbase rdraw inp VE VI) as MG.
+    unfold bmem0 in HIDm. cbn [en_sp en_brk en_draw en_mmap_base] in HIDm, AP0, AP1, ST, MG.
+    rewrite (valid_entry_either _ _ _ _ _ _ _ _ VI) in VE. destruct VE as (VSP & _ & _ & _ & HLAU).
+    pose proof (geom_of_launch Sv48 inp sp brk0 mbase rdraw HLAU) as GEOM.
+    pose proof (top_of_launch inp sp brk0 mbase rdraw HLAU) as TOPHI. unfold sp_window_hi in TOPHI.
+    assert (TOP8 : bv_unsigned (ed_top rdraw) mod 8 = 0).
+    { destruct HLAU as ((T1 & _) & _). unfold page_size in T1. Z.div_mod_to_equations. lia. }
+    destruct VSP as (SPLO & SPHI & SP16). unfold sp_window_lo in SPLO. unfold sp_window_hi in SPHI.
     pose proof VI as (VARGV & VENVP & _).
-    destruct AM as (Hms & HVR & PIN & HMF & HPF & MI & ST & HID & SH0 & AMOD). cbn [en_sp en_brk en_draw] in *.
+    destruct AM as (Hms & HVR & PIN & HMF & HPF & MI & _ & _ & SH0 & AMOD). cbn [en_sp en_brk en_draw] in *.
     apply Forall_app in HMF as [HM HMW]. apply Forall_app in HPF as [HP HPW].
-    destruct PIN as (PV0 & PV6 & PV10 & USP & PV1 & PV2 & PV3 & PV7 & PV4 & PV5 & PV8 & PV9).
+    destruct PIN as (PV0 & PV6 & PV10 & USP & PV1 & PV2 & PV3 & PV7 & PV4 & PV5 & PV8 & PV9 & PV11 & PV12).
     unfold atop_of in HA.
+    (* argv[0] is InitMem's [str_base], the first byte of the string area at the block's top *)
+    assert (SB0 : str0_of (mkEntry sp brk0 mbase rdraw) inp = str_base (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp)).
+    { unfold str_base, lsb. lia. }
+    pose proof (head_len_eq (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) as HLE.
+    unfold Lib.InitMem.argc, Lib.InitMem.envc, gap_len in HLE.
+    assert (SPAN24 : bv_unsigned sp + 24 <= 2^47).
+    { unfold geom_ok, lsb in GEOM. lia. }
+    rewrite SB0 in AP0, AP1.
     set (usp := bv_unsigned sp) in *.
     set (argv := in_argv inp) in *. set (envp := in_envp inp) in *.
+    set (SB := str_base (ed_top rdraw) argv envp (in_execfn inp)) in *.
     set (RNG := RNG0 A0 V mo).
     assert (HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP) by (rewrite USP; exact HA).   (* [comment removed for export] *)
     assert (USP3 : 32768 * V 0%nat + (16 * V 6%nat + 4096 * V 10%nat) = usp) by (clear - USP; lia).                  (* [comment removed for export] *)
@@ -103,10 +124,8 @@ Section Handoff.
     (* [comment removed for export] *)
     pose proof (tid_range V HP) as TID.
     pose proof (argc_pos := proj1 VARGV). cbv beta in argc_pos.
-    assert (SPAN24 : usp + 24 <= 2^47).
-    { unfold entry_stack_span in FITS. pose proof (Run.total_arg_bytes_nonneg argv). pose proof (Run.total_arg_bytes_nonneg envp). subst argv envp. lia. }
     assert (USPLO : ATOP + 8388608 <= usp) by (subst usp; lia).
-    assert (GEO : ATOP <= ALO usp /\ ALO usp + 8388608 - 4096 = usp /\ KHIGH <= ALO usp) by (unfold ALO, KHIGH in *; lia).
+    assert (GEO : ATOP <= ALO usp /\ ALO usp + 6094848 - 4096 = usp /\ KHIGH <= ALO usp) by (unfold ALO, KHIGH in *; lia).
     destruct GEO as (G1 & G2 & G3).
     assert (SPG : usp = al_sp0 (LDRV V w)) by (unfold LDRV; rewrite LV_sp0; lia).
     assert (TOPR : usp - 160 <= al_top (LDRV V w) <= 2^47).
@@ -116,35 +135,22 @@ Section Handoff.
     assert (M64 : 0 <= usp mod 64 < 64 /\ (usp - usp mod 64) mod 64 = 0 /\ (ALO usp - usp mod 64) mod 64 = 0).
     { unfold ALO. Z.div_mod_to_equations. lia. }
     destruct M64 as (M64a & M64b & M64c).
-    (* [comment removed for export] *)
-    assert (IMGHI : usp + Z.of_nat (length (entry_stack_image b_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw)) <= 2^64).
-    { (* [comment removed for export] *)
-      pose proof (length_entry_stack_image b_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw) as ILS.
-      pose proof (build_stack_bytes_length b_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw) as BL.
-      pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4).
-      unfold entry_stack_span in FITS. unfold raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in BL.
-      change (Z.of_nat auxv_size) with 160 in FITS. clear - ILS BL R2 R3 R4 FITS SPHI. lia. }
-    assert (SPLO' : stack_max_size <= usp) by (unfold stack_max_size; lia).
-    assert (HID' : forall z, str_base sp argv envp <= z < str_base sp argv envp + Z.of_nat (length (SBLK argv envp)) ->
-                     m (wa z) = wrap_mem b_phdrs sp argv envp (in_uid inp) (in_hwcap inp) rdraw (wa z)).   (* [comment removed for export] *)
-    { intros z Hz. apply HID. unfold hidden_arg. cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap]. right.
-      rewrite SBLK_length in Hz. unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in Hz.
-      unfold Wblk. cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap]. rewrite build_stack_bytes_length.
-      pose proof (raw_len_nonneg argv envp) as (_ & R2 & R3 & R4).
-      unfold raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc. unfold pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in Hz, R4 |- *.
-      subst argv envp usp. Z.div_mod_to_equations. lia. }
+    (* LPS 727298f3: the string area [str_base, top) holds the launch's image ([main_hidden]) *)
+    assert (HID' : forall z, SB <= z < bv_unsigned (ed_top rdraw) ->
+                     m (wa z) = wrap_mem inp mbase b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp rdraw (wa z)).
+    { intros z Hz. apply HIDm. unfold hidden_arg. cbv zeta. right. cbn [en_sp en_draw]. rewrite SB0. exact Hz. }
     (* [comment removed for export] *)
     assert (A0S : exists s0, nth_error argv 0 = Some s0 /\ nth 0 argv [] = s0).
     { subst argv. destruct (in_argv inp) as [|a l]; [cbn in argc_pos; lia|]. exists a. split; reflexivity. }
     destruct A0S as (s0 & Hn0 & En0).
-    destruct (arg_pack V sp argv envp (in_uid inp) (in_hwcap inp) rdraw m HM HP SPLO' IMGHI SP16 USPLO HAT FITS VARGV HID' 0 s0 Hn0)
+    destruct (arg_pack V inp mbase sp rdraw m HM HP USPLO HAT GEOM TOPHI TOP8 HID' 0 s0 Hn0)
       as (off0 & slack0 & RA0 & Hp0 & Ho0 & BY0 & SL0 & P024 & SC0 & LT0 & IR0 & RLO0 & RLO0' & RHI0 & END0).
     assert (Eoff0 : off0 = 0).
     { subst argv. destruct (in_argv inp) as [|a l]; [discriminate|]. cbn in Hp0. injection Hp0. lia. }
     (* [comment removed for export] *)
     assert (A1S : exists P1 (slack1 : list byte) (RA1 : region),
               2 <= Z.of_nat (length argv) ->
-              P1 = str_base sp argv envp + Z.of_nat (length s0) + 1
+              P1 = SB + Z.of_nat (length s0) + 1
               /\ bytes_at bsegs m P1 (nth 1 argv [] ++ Z_to_bv 8 0 :: slack1)
               /\ (- (P1 + Z.of_nat (length (nth 1 argv [])) + 1)) mod 8 <= zlength slack1
               /\ usp + 24 <= P1
@@ -153,12 +159,13 @@ Section Handoff.
               /\ usp + -112 <= r_rlo RA1 /\ ATOP <= r_rlo RA1 /\ r_rhi RA1 <= 2^47
               /\ P1 + Z.of_nat (length (nth 1 argv [])) + 1 + zlength slack1 <= 2^47).
     { destruct (nth_error argv 1) as [s1|] eqn:Hn1.
-      - destruct (arg_pack V sp argv envp (in_uid inp) (in_hwcap inp) rdraw m HM HP SPLO' IMGHI SP16 USPLO HAT FITS VARGV HID' 1 s1 Hn1)
+      - destruct (arg_pack V inp mbase sp rdraw m HM HP USPLO HAT GEOM TOPHI TOP8 HID' 1 s1 Hn1)
           as (off1 & slack1 & RA1 & Hp1 & Ho1 & BY1 & SL1 & P124 & SC1 & LT1 & IR1 & RLO1 & RLO1' & RHI1 & END1).
         assert (En1 : nth 1 argv [] = s1) by (apply nth_error_nth; exact Hn1).
         assert (Eoff1 : off1 = Z.of_nat (length s0) + 1).
-        { clear - Hp1 Hn0 Hn1. destruct argv as [|a [|b l]]; try discriminate. cbn in Hn0, Hp1. injection Hn0 as ->. injection Hp1. lia. }
-        exists (str_base sp argv envp + off1), slack1, RA1. intros _. rewrite En1. subst off1.
+        (* LPS 727298f3: arg_pack takes [inp], so Hp1 names [in_argv inp], not [argv]: destruct that, as Eoff0 does *)
+        { clear - Hp1 Hn0 Hn1. subst argv. destruct (in_argv inp) as [|a [|b l]]; try discriminate. cbn in Hn0, Hp1. injection Hn0 as ->. injection Hp1. lia. }
+        exists (SB + off1), slack1, RA1. intros _. rewrite En1. subst off1.
         repeat match goal with |- _ /\ _ => split end; try assumption. all: lia.
       - exists 0, [], RA0. intros H2. exfalso. apply nth_error_None in Hn1. lia. }
     destruct A1S as (P1 & slack1 & RA1 & A1F).
@@ -166,7 +173,7 @@ Section Handoff.
     unfold apat_mainA.
     exists usp, (V 44%nat), (Z_to_bv 64 (usp + 8)), (Z_to_bv 64 (Z.of_nat (length argv))), (Z_to_bv 64 BMAIN), (Z_to_bv 64 (usp + 8 * Z.of_nat (length argv) + 16)),
            (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0), (Z_to_bv 64 0).
-    exists (RSTK0 usp), (Z_to_bv 64 (V 45%nat)), (str_base sp argv envp), P1, slack0, slack1, RA0, RA1.   (* [comment removed for export] *)
+    exists (RSTK0 usp), (Z_to_bv 64 (V 45%nat)), SB, P1, slack0, slack1, RA0, RA1.   (* [comment removed for export] *)
     unfold RSTK0. cbn [r_lo r_hi r_rlo r_rhi].
     split; [lia|]. split; [lia|]. split; [lia|]. split; [exact SP16|]. split; [exact USPLO|]. split; [exact SPAN24|].
     split; [lia|]. split; [exact SPG|]. split; [exact BOT|].
@@ -182,7 +189,7 @@ Section Handoff.
            (Z_to_bv 64 (V 2432%nat)), (Z_to_bv 64 (V 2433%nat)), (Z_to_bv 64 (V 2434%nat)), (Z_to_bv 64 (V 2435%nat)), m.   (* [comment removed for export] *)
     split. { unfold ASTAGE2_RET, AMAIN_PC, BMAIN, ATP, MainEntryBoth.BRA, MainEntryBoth.BGP, MainEntryBoth.BTP, MainEntryBoth.BMAIN. subst argv. replace (usp + -48) with (usp - 48) by lia. reflexivity. }
     (* [comment removed for export] *)
-    split. { destruct (stk_split _ _ (usp - 8388608) (ALO usp) usp ST ltac:(unfold ALO; lia)) as [_ ST2]. exact ST2. }
+    split. { destruct (stk_split _ _ (usp - STACK_SPAN) (ALO usp) usp ST ltac:(unfold ALO, STACK_SPAN; lia)) as [_ ST2]. exact ST2. }
     split; [exact MI|].
     (* [comment removed for export] *)
     pose proof (exit_cells_init V m HM) as (E1 & E2 & E3 & _ & E5 & E6 & _ & E8 & E9 & _ & E11 & E12 & E13 & E14 & E15 & E16 & _).
@@ -210,11 +217,8 @@ Section Handoff.
     (* [comment removed for export] *)
     split; [exact AH|].
     (* [comment removed for export] *)
-    pose proof (argv_ptrs_init V m HM) as [AP0 AP1].
     split. { unfold AARGV. split; [| split].
-      - rewrite USP3 in AP0. cbn [u64s]. rewrite app_nil_r.
-        replace (str_base sp argv envp) with (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (16 * V 6%nat + 4096 * V 10%nat))) + 184); [exact AP0|].
-        unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc. subst argv envp. rewrite PV1, PV2. fold usp. lia.
+      - cbn [u64s]. rewrite app_nil_r. exact AP0.
       - unfold astring. fold argv. rewrite En0. rewrite Eoff0, Z.add_0_r in *.
         repeat match goal with |- _ /\ _ => split end; try assumption.
         + unfold F_fmt_fp_lib.zb. rewrite (zbytes_map_unsigned' s0). exact BY0.
@@ -225,11 +229,7 @@ Section Handoff.
         + unfold zlength in *. rewrite length_map. exact IR0.
         + clear - RLO0. lia.                                                    (* [comment removed for export] *)
       - intros HARGC2. fold argv. destruct (A1F HARGC2) as (EP1 & BY1 & SL1 & P124 & SC1 & LT1 & IR1 & RLO1 & RLO1' & RHI1 & END1). split.
-        + rewrite USP3 in AP1. cbn [u64s]. rewrite app_nil_r.
-          replace P1 with (Z.b2z ((1 mod two64) <? (V 1%nat mod two64)) * (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (V 3%nat + (16 * V 6%nat + 4096 * V 10%nat)))) + 185)); [exact AP1|].
-          rewrite EP1. unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc. rewrite <- En0 in *. rewrite PV3. subst argv envp. rewrite PV1, PV2. fold usp.
-          unfold two64. rewrite (Z.mod_small 1) by lia. rewrite Z.mod_small by lia.
-          replace (1 <? Z.of_nat (length (in_argv inp))) with true by (symmetry; apply Z.ltb_lt; lia). cbn [Z.b2z]. lia.
+        + cbn [u64s]. rewrite app_nil_r. rewrite EP1, <- En0. exact (AP1 HARGC2).
         + unfold astring.
           repeat match goal with |- _ /\ _ => split end; try assumption.
           * unfold F_fmt_fp_lib.zb. rewrite (zbytes_map_unsigned' (nth 1 argv [])). exact BY1.
@@ -254,7 +254,8 @@ Section Handoff.
       - replace (shad 0x10000) with 2147459072 by reflexivity. replace (shad 0x23700) with 2147469024 by reflexivity. apply RIS; lia.   (* [comment removed for export] *)
       - replace (shad 0x6d2ac0) with 2148345176 by reflexivity. replace (shad 0x6d2f00) with 2148345312 by reflexivity. apply RIS; lia.   (* [comment removed for export] *)
       - intros b Hb. apply rng_empty. exact Hb.
-      - apply RS; unfold zlength in *; rewrite ?length_map; lia.
+      - (* LPS 727298f3: P024 and END0 (arg_pack) name [str_base _ (in_argv inp) (in_envp inp) _]; unfold SB to that term for lia *)
+        apply RS; unfold zlength in *; rewrite ?length_map; subst SB argv envp; lia.
       - destruct SC0 as (_ & HL0 & _). unfold hull64, Shadow.KEND in HL0.
         apply RSS; rewrite !shad_div; unfold AsanEmbed.ASHOFF; clear - RLO0' RHI0; Z.div_mod_to_equations; lia.   (* [comment removed for export] *)
       - intros HARGC2. destruct (A1F HARGC2) as (EP1 & BY1 & SL1 & P124 & SC1 & LT1 & IR1 & RLO1 & RLO1' & RHI1 & END1).

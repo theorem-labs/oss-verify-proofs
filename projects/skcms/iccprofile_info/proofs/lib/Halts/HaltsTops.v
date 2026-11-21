@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/TopHaltsA.v and its sibling
-   TopHaltsB.v at commit c395a1e0dfa, lines 4-6 (the Stdlib/LPS import block), lines 14-15 (lim_source_le_target,
+   TopHaltsB.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8, lines 4-6 (the Stdlib/LPS import block), lines 14-15 (lim_source_le_target,
    verbatim) and lines 17-19 of each (the halts_allowed_T_scfg_budgets theorem statement), with from_chars's Asan and
    AsanUbsan images replaced by this harness's Plain and Ubsan, SpecHalts.HALT_CODES by this tree's HALT_CODES, and the
    theorem names by halts_skcms_iccprofile_info_plain and _ubsan.  The proof bodies are not copied: from_chars's single
    halts_allowed_lowered_of_realizes call is replaced here by HaltsBridge.halts_of_realizes_spec for the plain build and
    by must_exit_of_realizes_spec composed with Halts.Lim.LimTransfer.lim_transfer_scfg for the UBSan build. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the bridge onto the run's segment list takes vdso_none_plain and vdso_none_ubsan (neither binary image has a vDSO), and the cited source commit is named by its public id. *)
 (** The halting theorems of this harness, in the form [Statements.v] states them.
 
     The plain build's realization is proved at 16 GiB already, so its halting
@@ -20,6 +21,7 @@
 From Stdlib Require Import ZArith NArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType Fs State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require RiscvSemantics.
 From OSSVerify.skcms.iccprofile_info.images Require Import Plain Ubsan.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require Import ProofInfoPlan ProofInfoTop.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts Require Import SpecHalts HaltsBridge.
@@ -29,12 +31,26 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Lemma lim_source_le_target : (ShippedBudgets.lim_source <= target_alloc_limit)%Z.
 Proof. vm_compute. discriminate. Qed.
 
+(** [vdso_image … = None] is true of every binary image by computation
+    (Asan/RunSegsCfg.v:18); the bridge needs it to lift onto the run's segment
+    list, and here is where the image is concrete.
+
+    Named lemmas rather than an [ltac:(vm_compute; reflexivity)] in the argument
+    list: a tactic in TERM position runs before unification has given it a goal,
+    and a named lemma is also a control whose failure breaks the build rather
+    than a witness that might quietly resolve against the wrong type. *)
+Lemma vdso_none_plain : RiscvSemantics.vdso_image Plain.M.loaded_segments = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma vdso_none_ubsan : RiscvSemantics.vdso_image Ubsan.M.loaded_segments = None.
+Proof. vm_compute. reflexivity. Qed.
+
 Theorem halts_skcms_iccprofile_info_plain :
   halts_allowed_T_scfg_budgets forced_only_cfg ShippedBudgets.lim_source HALT_CODES
     (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs).
 Proof.
   exact (halts_of_realizes_spec Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs
-           source_alloc_limit info_ref_realizes).
+           source_alloc_limit vdso_none_plain info_ref_realizes).
 Qed.
 
 Theorem halts_skcms_iccprofile_info_ubsan :
@@ -46,6 +62,6 @@ Proof.
            (mkImage Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs) en inp
            ShippedBudgets.lim_source target_alloc_limit lim_source_le_target
            (must_exit_of_realizes_spec Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs
-              target_alloc_limit info_ub_realizes en inp Hen Hinp)
+              target_alloc_limit vdso_none_ubsan info_ub_realizes en inp Hen Hinp)
            Hbud).
 Qed.

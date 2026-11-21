@@ -75,7 +75,7 @@
    CARRIED (Section hypothesis below), at the instance, at CTX0 := iface_ctx0 and every float state:
      H_txt_tx_value_A tx_value: written as the D2p record writes its texts (owner: the tx rows' owner). On this head,
        no theorem in lib/A concludes PRH_FnTx.ttx_value_specX (the text, PRH_FnTx.v:975; elsewhere it is
-       a premise, e.g. TXVAL of Rtt102InstA.v:195, or a check); the one walk here is image B's BTxValue.tx_value_B_holds (lib/B/Prog/BTxValue.v:5887).
+       a premise, e.g. TXVAL of Rtt102InstA.v:195, or a check); the one walk here is image B's BTxValue.tx_value_B_holds (lib/B/Prog/BTxValue.v:5888).
    Image-side modules are cited FULLY QUALIFIED. The numerals in the code are the ones the restated texts carry:
    ASM3's frame class 3, ASFX's flag value 0 and address range 0 .. 2 ^ 64, SETSH's shadow value 245, the newline
    literal's length 1 (Rtt102InstA.v's LITNL); in the realloc walk's copied stand-ins the listing atoms 13 / 14

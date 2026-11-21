@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section assumes the stderr write's channel reader (m_channel_reader) and passes it on. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -72,6 +73,7 @@ Section Tail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 08b1429: the stderr write's channel reader *)
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
@@ -156,7 +158,7 @@ Section Tail.
     rdn RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 543 + P)) 1%nat = Some [Z_to_bv 8 10] ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e71c) M (seg_rom RSEGS)) model)
                (t_emit (W 2 (msg_cannot_open path)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros path P vals R M HP HPr HL P0 P113 HR HK SBp SBn.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     (* [comment removed for export] *)
@@ -216,6 +218,7 @@ Section Tail.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z in MSG by lia. exact MSG.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -241,7 +244,7 @@ Section Tail.
     rdn RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 543)) (length path) = Some path ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e71c) M (seg_rom RSEGS)) model)
                (t_emit (W 2 (msg_cannot_open path)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros path P vals R M HP HPr HL P0 P113 HR HK SBp.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     (* [comment removed for export] *)
@@ -419,7 +422,7 @@ Section Tail.
     rdn RSEGS M pp (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e71c) M (seg_rom RSEGS)) model)
                (t_emit (W 2 (msg_cannot_open path)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros path pp P vals R M HP HPr HL P0 P2 P113 Hpp1 Hpp2 HR HK Hstr.
     eapply (of_segF_gen path pp P _ vals); try eassumption; [lia|].
     intros vals' R' M' HL' Q0 Q113 HR' HK' SB. eapply (of_segG path P vals'); eassumption.

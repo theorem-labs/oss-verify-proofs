@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v, with its module paths and module names changed; 495 of its 520 lines of code are new or changed and 820 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F6_e28.v -- GLUE for stage seg_F6_e28 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:759).  Written by a Theorem Labs lane; single writer of this file.
    rule 24: no function proved (kind: segment lemma of a walk).
@@ -16,7 +17,7 @@
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. ACtl.v:576's Hypothesis
    seg_F6_e28 character for character.  ACtl.v:575's "glue:" comment names Seg/F6.v seg_F6_e28 :2727, runs
    f6_loop :398 and f6_e28_evt :483; the whole segment 0x81ec0 -> 0x81f54 is ONE footprint run,
-   lib/A/Prog/Seg/F6F.v:234-385 f6_e28_evt_F (PROVED there), which contains the loop.  No callee, no split.
+   lib/A/Prog/Seg/F6F.v:235-386 f6_e28_evt_F (PROVED there), which contains the loop.  No callee, no split.
 
    THE ONE WRITE.  f6_e28_evt_F reads the 50-byte record block at phi, its byte-exact shadow span and the
    spill cell [A+240, A+248), and writes EXACTLY ONE 8-byte cell: its post memory is
@@ -24,7 +25,7 @@
    (F6F.v:252).  So the stage carries the exit cut's whole body, the journal and ctl_rt_C ACROSS that write, with
    the write set WR := [(A + 280, A + 288)] (a Lib.Frame.munch WR, by Lib.Frame.munch_write).
 
-   ROUTE (C) (a working branch shell 1502cba0417): the cut carries A.ACtlRtC.ctl_rt_C B ly3 S3
+   ROUTE (C) (a working branch shell): the cut carries A.ACtlRtC.ctl_rt_C B ly3 S3
    mem3 in place of ctl_rt mem3.  This stage reads no shadow byte through it; it CARRIES it to the exit cut at the
    same ly3 S3: asan cells and read-only bytes by KitMem.kitmem_asan_cells_img / kitmem_ro_agree_img, both
    shadow_rw_on regions (cut_shadow B ly3 S3 and img_shadow) by the local e28_srw_on_munch (the write set misses
@@ -91,8 +92,8 @@
 
    CLOSURE: every Require below is qualified (no Import / Export of a project module); the `_F` file
    lib/A/Prog/Seg/F6F.v and its closure (which reaches the frame route) are allowed by glue closure rule 1; no
-   STATEMENT of this file names a frame-route identifier.  Measured (Require scan from this file, worktree HEAD
-   c5d58e80468): 403 files; no lib/AZ/AsanW, no W6, no SegCF / *_cfw / Cf* file; the lib/AZ files are
+   STATEMENT of this file names a frame-route identifier.  Measured (Require scan from this file, worktree HEAD):
+   403 files; no lib/AZ/AsanW, no W6, no SegCF / *_cfw / Cf* file; the lib/AZ files are
    LibA/AcctCore.v 0e06d81d553 (via lib/Lib/ExecF) and Spec/AsanCtrl.v 80ffbfc0a07, Spec/AsanCtrlProps.v
    b4f333a2672, Spec/STree.v 1293d54ecd2.  Frame-route files and their blobs (all the v1.9 blobs of record):
      lib/A/Prog/SlotInv.v 4cf85db229a   lib/A/Prog/Seg/Tac_slot.v de02ff45188   lib/A/Prog/SlotModel.v 04dc7903221
@@ -103,7 +104,7 @@
      lib/A/Prog/Seg/Tac_fsfree.v d76d2012bf8   lib/A/Prog/Seg/Tac_b5.v 4a9ebd96689
      lib/A/Prog/Seg/F6.v 5a9c598d249 (F6F's own provenance line)   lib/A/Prog/Seg/F6F.v 61c2fb6fc48
 
-   ROUTE (C) BUILD STATE: type-check rc=0 on a working branch shell 1899bed1aee (cb build, a build machine, log
+   ROUTE (C) BUILD STATE: type-check rc=0 on a working branch shell (cb build, a build machine, log
    of 2026-10-29T13:05:56Z); build of record: a Theorem Labs lane's cbrec record
    over an audit file not in this delivery.  The paragraph below is the pre-route-(C) state.
    BUILD STATE: TYPE-CHECKS (TYPES ONLY, values do not count): rc=0, wb4b.sh on a build machine, logs

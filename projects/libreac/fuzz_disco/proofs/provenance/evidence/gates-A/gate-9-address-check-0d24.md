@@ -82,7 +82,7 @@ matching 78 flagged rows; **82 moved rows (78 findings, 4 not findings), 82 tria
 STARTUP 6785, SYMTAB 2504, NO-PORTED-VALUE 1362, IMAGE-BYTES 1124, SMALL-QUANTITY 181, KERNEL 179, AE3I 148, MAP-SIZE 74,
 IDENT 48, SHADOW-SET 30, SEGMENT-TABLE 24, IMAGE-SPAN 21, DERIVED 9, AF0M-CELL 8, REGION-COUNT 6, SYMBOL 6, DECODE 2,
 FAKESTACK-OFFSET 2, LOOSE-BOUND 2, OVER-COVER 1, SIZE 1. The OVER-COVER row is `lib/A/AB1v.v:14`, which gate 6 corrects
-to a DEFECT fixed in the series code commit ac99185f1f10; read it so here too.
+to a DEFECT fixed in the series code; read it so here too.
 
 The rules of gates 1 and 6 gave no class to 40 of the moved rows and only the general KERNEL class to 38. Four rules
 were added to addr_triage.py for them; each measures its fact before it gives a class, and on the tables of gates 1

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the world predicates KB and K0 and the frame K1 stated over MInvR, which gained the vDSO conjunct, in place of MInv; MInvR built by minvr_split and taken apart by minvr_dest). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -543,8 +544,8 @@ S48S43Se9Z0R1A2SeaR1Z60A2A2S42S9SfaQ8A1M0A1S29VrhoV;SfbQ40SebS12eS56A1R2A2A2A2Sb
 Hypothesis Hrep_static : ltac2:(tb__ "0|1|
 S48S43Se9S12dS56A1M0R1A2SeaR1SebG0Z4A2A2A2S150S56R2A2F_;Fa;").
 
-Definition KB : list event -> Model -> Prop := ltac2:(tb__ "0|1|
-S5S128A1S127S43VKc;R2R1A2S16aS56VA';S18cS4aS29VrhoV;A1M0A2S18dS4aG0A2S12aR1A1A5A2Lmd;Ltr;").
+Definition KB : list event -> Model -> Prop := ltac2:(tb__ "0|0|
+S5S128A1S127S43VKc;R2R1A2S160S4aS56VA';VrhoV;R1A5A2Lmd;Ltr;").
 Definition G (r : valuation) : Prop := ltac2:(tb__ "0|0|
 S2dS6aVrhoV;Vr;A3").
 Lemma G_stable : ltac2:(tb__ "0|0|
@@ -702,7 +703,7 @@ Proof using HVW Hag0 HblA HblA' Hinit HinitT Hkept Hown Hrep_static Hrl0 Hsc_rm 
   cbn [w_tr w_cfg fst snd cfg_model]. exists A', l1, l2.
   split; [|split; [|split; [exact HblA | split; [|split; [exact Hinit | exact HK]]]]].
   -
-    unfold MInvR. rewrite Hrm4.
+    minvr_split. rewrite Hrm4.
     apply (minv_frame C A' _ _ (m_vmmaps md) _ _ (m_vmmaps md) HMI); try reflexivity; [|exact HinitT].
     intros a Ha Hos. apply AGREE; [exact Ha|].
     destruct Hos as [Hos | Hst]; [exact (owned_low _ _ _ a HMI Hos)|]. lia.
@@ -1437,8 +1438,8 @@ S0S2S19S13dA2M0S4S19S13dS85S6fS59A1M1A1S157S4aS56VA;VKc;A4M2A4S0G0S4S19S13dS85Sa
 Definition QF : assn := ltac2:(tb__ "0|0|
 S13eS4aSf4Vrho0;S19bA4").
 
-Definition K0 : list event -> Model -> Prop := ltac2:(tb__ "0|1|
-S5S128A1S127S43VKc;R2R1A2S16aS56VA;S18cS4aS29Vrho0;A1M0A2S18dS4aG0A2S12aR1A1A5A2Lmd;Ltr;").
+Definition K0 : list event -> Model -> Prop := ltac2:(tb__ "0|0|
+S5S128A1S127S43VKc;R2R1A2S160S4aS56VA;Vrho0;R1A5A2Lmd;Ltr;").
 
 Hypothesis Htp : ltac2:(tb__ "0|0|
 S42S48Sf9Q40S21Vrho0;P18A2A2S12fS56A1A3").
@@ -1539,7 +1540,7 @@ Proof using EF Htp Hwin TR_pre TR_run TR_skip okK0.
   exists A. assert (Hrm2 : forall a, rm rho2 a = rm rho0 a).
   { intros a. rewrite <- (proj2 (proj2 Hag2) a). symmetry. apply (proj2 (proj2 Hag1)). }
   split; [|split; [reflexivity | split; [| split; [split; [intros X; exact X | reflexivity] | exact HKc]]]].
-  - unfold MInvR. change (rm rho3) with m'. apply (EF A _ _ (m_vmmaps md) _ _ HMI).
+  - minvr_split. change (rm rho3) with m'. apply (EF A _ _ (m_vmmaps md) _ _ HMI).
     + intros a Ha Hne. unfold rd_of, wok_of, Contract.rd_of, Contract.wok_of. rewrite (M'out (Z_to_bv 64 a)), Hrm2; [split; reflexivity|].
       intros Hin. apply Hne. apply RNG in Hin. rewrite u64_of_sum in Hin by lia. exact Hin.
     + intros a Hr. unfold rd_of, Contract.rd_of. pose proof Hr as Hr'. unfold errno_range in Hr'.
@@ -1622,7 +1623,7 @@ Proof using BV HinitA Ht Htp HtopW Hwin Htv MALLOC P1 P10 P11 P12 P15 P2 P3 P4 P
   apply (TR_callP (liftK K0) (J_alloc_pre segs C A Kc) Ev (Pre_malloc E) s R PostsM QF rho P2 P3 MALLOC).
   -
     intros tr ms md Hsm [HKc HMI]. unfold J_alloc_pre. split; [|split; [exact HKc|split; [|split; [exact HinitA|]]]].
-    + unfold MInvR. apply (MInv_rm_ext A (rm rho0) _ (m_vmmaps md) HMI HinitA).
+    + minvr_split. apply (MInv_rm_ext A (rm rho0) _ (m_vmmaps md) HMI HinitA).
       intros a Ha Hlow. rewrite rm_absorb_out; [apply Hrm|]. intros Hin. apply RR in Hin. rewrite u64_of_sum in Hin by lia. lia.
     + unfold tp_ok. rewrite rw_call', P4. cbn [eval]. rewrite R24. exact Htp.
     +   unfold top_var. rewrite rw_call', P4T. cbn [eval]. rewrite R30. exact Htv.
@@ -1639,7 +1640,7 @@ Proof using BV HinitA Ht Htp HtopW Hwin Htv MALLOC P1 P10 P11 P12 P15 P2 P3 P4 P
       split. { split; [exact (KEPT A' HM' (init_kept_top _ _ Hinit) Hkept)|]. intros o' oR Hin' _. cbn in Hin'. destruct Hin'. }
       intros rho' Hlink.
       set (rhoP := rho_patch rho' (patchf rho rho' R)).
-      set (K1 := fun tr md => Kc tr md /\ exists A', MInv C A' (rd_of segs (rm rhoP)) (wok_of segs (rm rhoP)) (m_vmmaps md)
+      set (K1 := fun tr md => Kc tr md /\ exists A', MInvR segs C A' rhoP md
                                    /\ ma_blocks A' = ma_blocks A /\ init_kept A A' /\ mem_kept segs C A A' (rm rho0) (rm rhoP)).
       assert (Hag' : agree_vals (ss_next Ev) rho rho') by (destruct Hlink as (X & _); exact X).
       assert (HrmP : forall A2, MInvR segs C A2 rhoL (cfg_model (w_cfg (tr', mkCfg ms' md'))) \/ True ->
@@ -1653,7 +1654,7 @@ Proof using BV HinitA Ht Htp HtopW Hwin Htv MALLOC P1 P10 P11 P12 P15 P2 P3 P4 P
         - apply (entails_sound segs TnullN M_null _ _ w (proj1 P11)). eapply smatch_xforms; [exact P10|].
           exact (cont_smatch segs Ev (Pre_malloc E) (L_malloc_null E) s R rho rho' tr ms md w P2 Hsm eq_refl Hag' Hsm').
         - split; [exact Hk2|]. exists A2. split; [|split; [exact HbA2 | split; [exact Hinit2|]]].
-          + unfold MInvR in HM2. apply (MInv_rm_ext A2 (rm rhoL) (rm rhoP) _ HM2 (init_kept_init _ _ Hinit2 HinitA)).
+          + minvr_dest HM2. minvr_split. apply (MInv_rm_ext A2 (rm rhoL) (rm rhoP) _ HM2 (init_kept_init _ _ Hinit2 HinitA)).
             intros a Ha Hlow. apply (HrmP A2 (or_intror I) a Ha). rewrite (init_kept_top _ _ Hinit2) in Hlow. lia.
           + intros a Ha HcA HcA' Hne Hns. destruct (Z_lt_dec a (sp - 32)) as [Hlt|Hge]; [|destruct (Z_lt_dec a sp) as [Hlt2|Hge2]].
             * rewrite (HrmP A2 (or_intror I) a Ha) by lia. rewrite (Hkept2 a Ha HcA HcA' Hne Hns). rewrite rm_absorb_out; [apply Hrm|].
@@ -1682,7 +1683,7 @@ Proof using BV HinitA Ht Htp HtopW Hwin Htv MALLOC P1 P10 P11 P12 P15 P2 P3 P4 P
         - intros l. unfold rho4. cbn [rho_sub rl]. rewrite (proj2 AV l). apply (proj1 (proj2 Hag3)). }
       exists A3. assert (Hrm3 : forall a, rm rho4 a = rm rhoP a) by (intros a; unfold rho4; cbn [rho_sub rm]; symmetry; apply (proj2 (proj2 Hag3))).
       split; [|split; [exact HbA3 | split; [| split; [exact Hinit3 | exact HKc3]]]].
-      * unfold MInvR. apply (MInv_rm_ext A3 (rm rhoP) (rm rho4) _ HM3 (init_kept_init _ _ Hinit3 HinitA)). intros a Ha _. apply Hrm3.
+      * minvr_split. apply (MInv_rm_ext A3 (rm rhoP) (rm rho4) _ HM3 (init_kept_init _ _ Hinit3 HinitA)). intros a Ha _. apply Hrm3.
       * intros a Ha HcA HcA' Hne Hns. rewrite Hrm3. exact (Hkept3 a Ha HcA HcA' Hne Hns).
     +
       destruct HJL as (A' & l1 & l2 & HM' & HbA' & HbA & Hkept & Hinit & _).
@@ -1693,7 +1694,7 @@ Proof using BV HinitA Ht Htp HtopW Hwin Htv MALLOC P1 P10 P11 P12 P15 P2 P3 P4 P
       assert (Hnmn : n = bv_unsigned (rw rho0 12%positive) * bv_unsigned (rw rho0 13%positive)).
       { rewrite <- Hnt. rewrite (P12 rho HF0). rewrite (proj1 Hag 12%positive), (proj1 Hag 13%positive) by reflexivity. reflexivity. }
       assert (HinNew : In (p, n) (ma_blocks A')) by (rewrite HbA'; apply in_or_app; right; left; reflexivity).
-      pose proof HM' as HMi'. unfold MInvR in HMi'.
+      pose proof HM' as HMi'. minvr_dest HMi'.
       pose proof (minv_block_geom C A' _ _ _ p n HMi' HinNew) as (G0 & _ & G2 & G3 & G4). unfold PGSZ, UNIT, IB in G2, G3, G4.
       pose proof (init_kept_top _ _ Hinit) as ETOP.
       split.
@@ -1741,10 +1742,10 @@ Proof using BV HinitA Ht Htp HtopW Hwin Htv MALLOC P1 P10 P11 P12 P15 P2 P3 P4 P
                       HD HNF (conj HsmM I))). }
 
         assert (HMP : MInv C A2 (rd_of segs (rm rhoP)) (wok_of segs (rm rhoP)) (m_vmmaps (cfg_model (w_cfg w)))).
-        { unfold MInvR in HM2. apply (MInv_rm_ext A2 (rm rhoL) (rm rhoP) _ HM2 (init_kept_init _ _ Hinit2 HinitA)). intros a Ha Hlow. apply HrmP; [exact Ha | rewrite (init_kept_top _ _ Hinit2) in Hlow; lia]. }
+        { minvr_dest HM2. apply (MInv_rm_ext A2 (rm rhoL) (rm rhoP) _ HM2 (init_kept_init _ _ Hinit2 HinitA)). intros a Ha Hlow. apply HrmP; [exact Ha | rewrite (init_kept_top _ _ Hinit2) in Hlow; lia]. }
         assert (HinNew2 : In (bv_unsigned (eval rhoM cp), n) (ma_blocks A2)).
         { cbn [eval cp]. rewrite Ep. rewrite HbA2. apply in_or_app. right. left. reflexivity. }
-        destruct (BV A2 rhoM (cfg_model (w_cfg w)) 110%positive n HMP HinNew2 eq_refl) as (x & vals & Hlen & HBV).
+        destruct (BV A2 rhoM (cfg_model (w_cfg w)) 110%positive n (conj HMP (proj2 HM2)) HinNew2 eq_refl) as (x & vals & Hlen & HBV).
         cbn zeta in HBV. destruct HBV as (Bcarv & Bpw & Bblk & Bfacts & Bown & Brep).
         set (rhoV := bv_val rhoM vals) in *.
         assert (RV : forall i, (i < NF)%positive -> rw rhoV i = rw rho i).
@@ -1844,7 +1845,7 @@ Proof using BV HinitA Ht Htp HtopW Hwin Htv MALLOC P1 P10 P11 P12 P15 P2 P3 P4 P
           cbn [ss_facts M_ok] in HfactsV. exact HfactsV. }
 
         exists (SP segs (KB Kc A2 rhoV) (CB t x) rhoV). split.
-        { split; [exact HCB|]. split; [exact Hk2 | exact HMV]. }
+        { split; [exact HCB|]. split; [exact Hk2 | exact (conj HMV (proj2 HM2))]. }
         eapply TR_post; [intros w' Hw'; exact (Q_ok_QF A Kc rho0 w' Hw')|].
         assert (Q1 : forall i, (i < NF)%positive -> rw rho0 i = rw rhoV i).
         { intros i Hi. rewrite (RV i Hi). apply (proj1 Hag). unfold NF, HNEXT in *. lia. }

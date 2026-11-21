@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_lv2_worker_set (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, entry BASE + AF_sup_lv2_worker_set = 0x8c0cc, 28 instructions, 112 bytes): it proves
-   a Theorem Labs lane's `tsup_lv2_worker_set_spec` (lib/B/Prog/sup_lv2_worker_set_c.v; statement from a Theorem Labs lane f490061c104, over
-   a Theorem Labs lane c022a2f6a88) in the form of cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic
+   a Theorem Labs lane's `tsup_lv2_worker_set_spec` (lib/B/Prog/sup_lv2_worker_set_c.v; statement from a Theorem Labs lane, over
+   a Theorem Labs lane) in the form of cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic
    executor over the position-abstract listing up to each call (the plain runs of lib/B/Prog/PaCallRun.v, no shadow
    access in the function), the callee contracts of record, arg_s and rec_shape_of (taken at the entry's FP state,
    which these apost_base callees keep) through cl_callS_wide / cl_callS_na (lib/B/Prog/PaNoChain.v), and answer's
@@ -12,10 +12,10 @@
    apost_baseF. The frame chains (pass 5, no astack_pres): s0 = worker (a heap pointer) at the four program calls,
    achain_low; at the tail jump s0 and sp are the entry's, afn_pre's chain moved by achain_kept / achain_ly_top.
    It is the B re-walk of the A walk
-   lib/A/Prog/sup_lv2_worker_set.v + _s0 .. _s3 (a working branch 5c647899d9f), whose rec_shape_of call,
+   lib/A/Prog/sup_lv2_worker_set.v + _s0 .. _s3 (a working branch), whose rec_shape_of call,
    tail call of answer and post assembly (sup_lv2_worker_set_s2.v slw_D2 / slw_D3) it follows; B calls record and
    arg_s where A inlines them, so A's segments A, B and s3 become one contract step each. The Generation-N B walk
-   lib/B/Prog/sup_lv2_worker_set.v on a working branch 543f2c3645b (template only, not ported) cuts the same
+   lib/B/Prog/sup_lv2_worker_set.v on a working branch (template only, not ported) cuts the same
    code at the same return addresses.
 
    B code (MEASURED from the pinned fuzz_command.asan-ubsan with pyelftools and capstone, symbol-keyed; a Theorem Labs lane's
@@ -28,6 +28,7 @@
    __asan_report_* entries and 0 UBSan trap sites (a Theorem Labs lane's gen/traps.B.summary); its checks are its callees'
    (record 4, arg_s 5, answer 5 trap sites, rec_shape_of 2 inline checks), refuted in their own walks, whose
    contracts this walk uses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -249,14 +250,14 @@ Context {PI : PAImg cmd_listing}.
 Section e.
 Variable B : asyms.
 Variable MT : ameter_ops.
-(* the statement's Section hypotheses (sup_lv2_worker_set_c.v, Section e, a Theorem Labs lane f490061c104): the callees' contracts
+(* the statement's Section hypotheses (sup_lv2_worker_set_c.v, Section e, a Theorem Labs lane): the callees' contracts
    at every FP state *)
 Hypothesis TRECORD : forall fx0 : YK11.FPState, @trecord_spec fx0 rc SK PI B MT.
 Hypothesis TARG_S : forall fx0 : YK11.FPState, @targ_s_spec fx0 rc SK PI B MT.
 Hypothesis TREC_SHAPE_OF : forall fx0 : YK11.FPState, @trec_shape_of_spec fx0 rc SK PI B MT.
 Hypothesis TANSWER : forall fx0 : YK11.FPState, @tanswer_spec fx0 rc SK PI B MT.
 Hypothesis VOBJS : cmd_val_objs.
-(* the walk's named hypotheses, in a Theorem Labs lane's CmdRecFacts forms (lib/B/Prog/CmdRec*.v, a working branch f490061c104):
+(* the walk's named hypotheses, in a Theorem Labs lane's CmdRecFacts forms (lib/B/Prog/CmdRec*.v, a working branch):
    HB, the allocator record (lib/B/YF0m.v Record CmdBSyms); MTL, the meter's laws; cmd_img_facts_tfib, the image
    facts record (lib/B/Prog/CmdRecBase.v cmd_img_facts) at every record, which a Theorem Labs lane proves at the pinned image
    (CmdRecImg.v cmd_img_facts_tfib) and from which a Theorem Labs lane's lemmas give cmd_prog_img, cmd_ro_prog_apart, RELRO_IMG,

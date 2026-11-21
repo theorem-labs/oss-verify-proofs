@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: OWN_vm also asks the kernel state unchanged, and the initial-invariant proofs pass the input's channel-reader fact (valid_input_either_reader) to mo0_minv, GI_init and moZ0_ok and carry GI_init's invariant onto the initial model holding the vDSO draw (GI_fds, minv_with_vdso). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -36,14 +37,14 @@ Definition AIP (Y : list (bptr * Z)) (s : PState) (mo : Model) : Prop := OWN (ma
 Lemma OWN_minv X s mo : OWN X GT s mo -> minv mo /\ m_halted mo = None.
 Proof. intros [(L & _ & HK & _) _]. split; [exact (kl_minv _ _ _ HK)| exact (kl_halt _ _ _ HK)]. Qed.
 
-Lemma OWN_vm X s mo mo' : OWN X GT s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> OWN X GT s mo'.
+Lemma OWN_vm X s mo mo' : OWN X GT s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> OWN X GT s mo'.
 Proof.
-  intros [(L & Hc & HK & Hi) [Hnd _]] Hvm Hmi Hh. split; [|split; [exact Hnd| exact I]].
-  exists L. split; [exact Hc|]. split; [| exact Hi]. eapply KL_fds; [exact HK| exact Hvm| exact Hmi| exact Hh].
+  intros [(L & Hc & HK & Hi) [Hnd _]] Hvm Hkn Hmi Hh. split; [|split; [exact Hnd| exact I]].
+  exists L. split; [exact Hc|]. split; [| exact Hi]. eapply KL_fds; [exact HK| exact Hvm| exact Hkn| exact Hmi| exact Hh].
 Qed.
 
 Lemma OWN_fds X s mo f : OWN X GT s mo -> minv (with_fds f mo) -> m_halted (with_fds f mo) = None -> OWN X GT s (with_fds f mo).
-Proof. intros H Hmi Hh. eapply OWN_vm; [exact H| apply m_vmmaps_with_fds| exact Hmi| exact Hh]. Qed.
+Proof. intros H Hmi Hh. eapply OWN_vm; [exact H| apply m_vmmaps_with_fds| reflexivity| exact Hmi| exact Hh]. Qed.
 
 Lemma p_get_set : forall v s, ps_so (set_so_ps v s) = v. Proof. intros v [? ? ? ?]; reflexivity. Qed.
 Lemma p_set_set : forall v w s, set_so_ps v (set_so_ps w s) = set_so_ps v s. Proof. intros v w [? ? ? ?]; reflexivity. Qed.
@@ -121,9 +122,9 @@ Proof.
   intros X. apply rsim_silent. intros s1 mo1 s2 mo2 (M1 & H1 & HA & Hso & Hcl & Hfd & Hfs) G1 G2.
   destruct (AIP_model _ _ _ HA) as [Hmi2 Hh2].
   eexists _, _. split; [apply STOT_ret| split; [apply (startup_STOT s2 mo2 Hmi2 Hh2)|]].
-  intros [] s1' mo1' [] s2' mo2' (_ & -> & ->) (-> & Hvm2 & Hfd2 & Hfs2 & Hmi2' & Hh2').
+  intros [] s1' mo1' [] s2' mo2' (_ & -> & ->) (-> & Hvm2 & Hkn2 & Hfd2 & Hfs2 & Hmi2' & Hh2').
   unfold EquivZA.RX. split; [exact M1|]. split; [exact H1|]. split; [| split; [exact Hso| split; [exact Hcl| split; congruence]]].
-  cbn [AI KP]. unfold AIP in *. exact (OWN_vm _ _ _ _ HA Hvm2 Hmi2' Hh2').
+  cbn [AI KP]. unfold AIP in *. exact (OWN_vm _ _ _ _ HA Hvm2 Hkn2 Hmi2' Hh2').
 Qed.
 
 Lemma prog_pair : forall rsZ rsP argv (Q : Empty_set -> Empty_set -> RSim.rel ZSt PState),
@@ -158,7 +159,7 @@ Lemma tglob_prog : forall rs en inp,
   tglob nstep PhiP (ProgP.prog segs rs inp en) (mo0 segs lim en inp).
 Proof.
   intros rs en inp He Hi. apply tglob_PhiP_intro.
-  - eapply mo0_minv; [exact He| apply valid_input_either_va_size; exact Hi].
+  - eapply mo0_minv; [exact He| apply valid_input_either_va_size; exact Hi| exact (valid_input_either_reader _ Hi)].
   - apply mo0_not_halted.
   - exact (proj2 (prog_model_ok segs rs pc ph lim en inp Hpos Hceil Hfloor Hresv Hlim He Hi)).
   - exact (never_forced segs rs pc ph lim en inp Hpos Hceil Hfloor Hresv Hlim He Hi).
@@ -185,7 +186,11 @@ Proof.
     + cbn [AI KP]. unfold AIP, clb. cbn [a_cl PasA ps_fa sP0 ps_init app aX map].
       destruct en as [sp brk0 mbase rnd]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He. destruct He as ((Hsp1 & Hsp2 & _) & Hbrk & _ & _).
       unfold mo0, entry_atop. cbn [en_brk en_mmap_base en_sp].
-      eapply OWN_weakG; [apply (GI_init segs brk0 mbase sp lim inp _ Hbrk Hpos ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl Hceil)|]. intros _; exact I.
+      eapply OWN_weakG;
+        [ eapply GI_fds;
+            [ apply (GI_init segs brk0 mbase sp lim inp _ Hbrk Hpos ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl Hceil (valid_input_either_reader _ Hi))
+            | reflexivity | reflexivity | apply minv_with_vdso, minv_init; [split; [exact Hsp1| exact Hsp2] | exact (valid_input_either_reader _ Hi)] | reflexivity ]
+        |]. intros _; exact I.
     + rewrite FdZ. symmetry. apply m_fds_mo0.
     + rewrite FsZ. symmetry. apply m_fs_mo0.
   - apply tglob_trivial. intros; exact I.
@@ -204,7 +209,7 @@ Theorem tfam_ZP : forall rsP en inp,
              <-> Common.Spec.spec (in_argv inp) (in_fs inp) tr.
 Proof.
   intros rsP en inp He Hi tr.
-  destruct (moZ0_ok inp) as (Z1 & Z2 & Z3 & Z4).
+  destruct (moZ0_ok inp (valid_input_either_reader _ Hi)) as (Z1 & Z2 & Z3 & Z4).
   rewrite <- (bridgeU' inp (moZ0 inp) 0 Hi Z1 Z2 Z3 Z4 tr).
   unfold tree_traces. split; intros (full & Hf & Hp); exists full; (split; [| exact Hp]);
     apply (equiv_ZP_core 0 rsP en inp (moZ0 inp) He Hi Z1 Z2 Z3 Z4 full); exact Hf.

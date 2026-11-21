@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: helpers of the walk of verbs_receive on the ASan build of plugin-hostd/fuzz_command,
-   copied from the reply walk of the same lane (a Theorem Labs lane, lib/B/Prog/reply_s1.v:1-176; the A kit's source, an earlier version of lib/A/Prog/reply_s1.v, was :1-291): the recorder
+   copied from the reply walk of the same lane (a Theorem Labs lane, lib/B/Prog/reply_s1.v:1-177; the A kit's source, an earlier version of lib/A/Prog/reply_s1.v, was :1-291): the recorder
    representation under a memory that agrees on what it reads (rec_repA_agree). The call rule for a callee whose
    footprint holds program statics is the kit's (lib/B/Prog/PaCallPg.v cl_callS_pg). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

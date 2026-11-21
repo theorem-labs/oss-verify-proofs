@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (aevtS's step rule takes a sys_rob premise, carried through its induction principle, the monotonicity and conversion lemmas and the node built for srealizes and srealizesJ, where it is node_ok's third conjunct; import of RomBase). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import Shape AEvt.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import DivergeSim SpinAlg.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import SRz.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Export SRz.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require Import RomBase.
 
 Import ListNotations.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
@@ -23,12 +25,15 @@ Variable segs : list Segment.
 
 Abbreviation spinningS := (spinningJ segs).
 
+(* LPS revision (run_segments): as [AEvt.aevt_step], a silent step carries [RomBase.sys_rob],
+   which the node built in [srz_of_aevtS] / [srzJ_of_aevtS] needs (node_ok's third conjunct). *)
 Inductive aevtS (Q : config -> Prop) : config -> Prop :=
 | aevtS_now : forall c, Q c -> aevtS Q c
 | aevtS_step : forall c,
     (exists c', sstep segs c [] (SNext c') /\ aevtS Q c') ->
     (forall e st, sstep segs c e st -> e = [] /\ st <> SError) ->
     (forall e c', sstep segs c e (SNext c') -> aevtS Q c' \/ (spinningS c' /\ fo_excusedJ segs c e c')) ->
+    sys_rob segs c ->
     aevtS Q c.
 
 (* [comment removed for export] *)
@@ -38,17 +43,19 @@ Inductive aevtS (Q : config -> Prop) : config -> Prop :=
       (exists c', sstep segs c [] (SNext c') /\ aevtS Q c' /\ P c') ->
       (forall e st, sstep segs c e st -> e = [] /\ st <> SError) ->
       (forall e c', sstep segs c e (SNext c') -> (aevtS Q c' /\ P c') \/ (spinningS c' /\ fo_excusedJ segs c e c')) ->
+      sys_rob segs c ->
       P c) ->
   forall c, aevtS Q c -> P c.
 Proof.
   intros Q P Hnow Hstep.
-  fix IH 2. intros c H. destruct H as [c HQ | c Hw Hsil Hall].
+  fix IH 2. intros c H. destruct H as [c HQ | c Hw Hsil Hall Hrob].
   - apply Hnow. exact HQ.
   - apply Hstep.
     + destruct Hw as (c' & Hs & Ha). exists c'. split; [exact Hs|]. split; [exact Ha|]. exact (IH c' Ha).
     + exact Hsil.
     + intros e c' Hs. destruct (Hall e c' Hs) as [Ha | Hsp]; [left | right; exact Hsp].
       split; [exact Ha | exact (IH c' Ha)].
+    + exact Hrob.
 Qed.
 
 #[using="Type"] Lemma aevtS_mono : forall (P Q : config -> Prop) c,
@@ -56,7 +63,7 @@ Qed.
 Proof.
   intros P Q c H K. revert c H. apply aevtS_ind2.
   - intros c HP. apply aevtS_now. apply K, HP.
-  - intros c (c' & Hs & _ & IH') Hsil Hall. apply aevtS_step; [exists c'; split; assumption | exact Hsil |].
+  - intros c (c' & Hs & _ & IH') Hsil Hall Hrob. apply aevtS_step; [exists c'; split; assumption | exact Hsil | | exact Hrob].
     intros e c'' Hs''. destruct (Hall e c'' Hs'') as [[_ IH''] | Hsp]; [left; exact IH'' | right; exact Hsp].
 Qed.
 
@@ -65,16 +72,16 @@ Qed.
 Proof.
   intros P Q c H K. revert c H. apply aevtS_ind2.
   - intros c HP. apply K, HP.
-  - intros c (c' & Hs & _ & IH') Hsil Hall. apply aevtS_step; [exists c'; split; assumption | exact Hsil |].
+  - intros c (c' & Hs & _ & IH') Hsil Hall Hrob. apply aevtS_step; [exists c'; split; assumption | exact Hsil | | exact Hrob].
     intros e c'' Hs''. destruct (Hall e c'' Hs'') as [[_ IH''] | Hsp]; [left; exact IH'' | right; exact Hsp].
 Qed.
 
 (* [comment removed for export] *)
 #[using="Type"] Lemma aevtS_of_aevt : forall Q c, aevt segs Q c -> aevtS Q c.
 Proof.
-  intros Q c H. induction H as [c HQ | c Hprog Hsil Hk IH].
+  intros Q c H. induction H as [c HQ | c Hprog Hsil Hk IH Hrob].
   - apply aevtS_now. exact HQ.
-  - destruct Hprog as [c' Hs]. apply aevtS_step; [ | exact Hsil |].
+  - destruct Hprog as [c' Hs]. apply aevtS_step; [ | exact Hsil | | exact Hrob].
     + exists c'. split; [exact Hs | exact (IH _ _ Hs)].
     + intros e c'' Hs''. left. exact (IH _ _ Hs'').
 Qed.
@@ -84,8 +91,9 @@ Qed.
   sstep segs c [] (SNext c1) -> aevtS Q c1 ->
   (forall e st, sstep segs c e st -> e = [] /\ st <> SError) ->
   (forall e c', sstep segs c e (SNext c') -> aevtS Q c' \/ (spinningS c' /\ fo_excusedJ segs c e c')) ->
+  sys_rob segs c ->
   aevtS Q c.
-Proof. intros Q c c1 Hs H1 Hsil Hall. apply aevtS_step; [exists c1; split; assumption | exact Hsil | exact Hall]. Qed.
+Proof. intros Q c c1 Hs H1 Hsil Hall Hrob. apply aevtS_step; [exists c1; split; assumption | exact Hsil | exact Hall | exact Hrob]. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -105,14 +113,15 @@ Qed.
 Proof.
   intros Q c T H Hnil K. revert c H. apply aevtS_ind2.
   - intros c HQ. apply K, HQ.
-  - intros c (c1 & Hs1 & _ & IH1) Hsil Hall.
+  - intros c (c1 & Hs1 & _ & IH1) Hsil Hall Hrob.
     set (I := { c' : config | sstep segs c [] (SNext c') }).
     assert (Hnode : ShapeAlg.node_ok segs c I (fun _ => []) (fun i => proj1_sig i)).
-    { split.
+    { split; [|split].
       - intros [c' Hc']. exact Hc'.
       - intros e st Hs. destruct (Hsil e st Hs) as [-> Hne].
         destruct st as [c'|]; [|congruence].
-        exists (exist _ c' Hs). split; reflexivity. }
+        exists (exist _ c' Hs). split; reflexivity.
+      - exact Hrob. }
     (* [comment removed for export] *)
     set (Ti := fun (i : I) (tr : list event) => (srealizes segs (proj1_sig i) T /\ T tr) \/ tr = []).
     assert (PC : forall tr tr', T tr -> is_prefix tr' tr -> T tr').
@@ -151,14 +160,15 @@ Qed.
 Proof.
   intros Q c T H Hnil K. revert c H. apply aevtS_ind2.
   - intros c HQ. apply K, HQ.
-  - intros c (c1 & Hs1 & _ & IH1) Hsil Hall.
+  - intros c (c1 & Hs1 & _ & IH1) Hsil Hall Hrob.
     set (I := { c' : config | sstep segs c [] (SNext c') }).
     assert (Hnode : node_ok segs c I (fun _ => []) (fun i => proj1_sig i)).
-    { split.
+    { split; [|split].
       - intros [c' Hc']. exact Hc'.
       - intros e st Hs. destruct (Hsil e st Hs) as [-> Hne].
         destruct st as [c'|]; [|congruence].
-        exists (exist _ c' Hs). split; reflexivity. }
+        exists (exist _ c' Hs). split; reflexivity.
+      - exact Hrob. }
     set (Ti := fun (i : I) (tr : list event) => (srealizesJ segs (proj1_sig i) T /\ T tr) \/ tr = []).
     eapply srzJ_conseq.
     + apply (srzJ_node_sp segs c I (fun _ => []) (fun i => proj1_sig i) Ti (exist _ c1 Hs1) Hnode).

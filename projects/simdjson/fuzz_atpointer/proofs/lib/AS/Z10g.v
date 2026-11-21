@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded data's variables from 11 up renumbered by +1). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import Z78 Z2z Z2y.
@@ -22,9 +23,9 @@ Definition startup_plan_wsplit1 : plan :=
      (
       PSpin   )
      (
-      PShDisj (escale 4096 (EVar 85)) (ELit 0x1000) e_band e_bandlen
+      PShDisj (escale 4096 (EVar 86)) (ELit 0x1000) e_band e_bandlen
       (
-       PShDisj (escale 4096 (EVar 85)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+       PShDisj (escale 4096 (EVar 86)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
        (
         PRun []
         (
@@ -34,13 +35,13 @@ Definition startup_plan_wsplit1 : plan :=
           (
            PX XIMemset []
            (
-            PBump 182
+            PBump 183
             (
              PFog 1 8192
              (
-              PShDisj (escale 4096 (EVar 59)) (ELit 0xb09000) (eaddz (escale 4096 (EVar 84)) 4096) (ELit 4096)
+              PShDisj (escale 4096 (EVar 60)) (ELit 0xb09000) (eaddz (escale 4096 (EVar 85)) 4096) (ELit 4096)
               (
-               PUnvis (eaddz (escale 4096 (EVar 84)) 4096) (ELit 4096)
+               PUnvis (eaddz (escale 4096 (EVar 85)) 4096) (ELit 4096)
                (
                 PGhost (escale 4096 (EVar 5)) (ELit 8192)
                 (
@@ -53,17 +54,17 @@ Definition startup_plan_wsplit1 : plan :=
 Definition startup_plan_viafail2 : plan :=
   PRun []
   (
-   PBump 84
+   PBump 85
    (
     PMmap
     (
      PSpin   )
     (
-     PShDisj (escale 4096 (EVar 84)) (ELit 0x2000) e_band e_bandlen
+     PShDisj (escale 4096 (EVar 85)) (ELit 0x2000) e_band e_bandlen
      (
-      PShDisj (escale 4096 (EVar 84)) (ELit 0x2000) (ELit 0x10000) (ELit 0x659000)
+      PShDisj (escale 4096 (EVar 85)) (ELit 0x2000) (ELit 0x10000) (ELit 0x659000)
       (
-       PCaseDisj (ELit 0x7fff7000) (escale 4096 (EVar 84))
+       PCaseDisj (ELit 0x7fff7000) (escale 4096 (EVar 85))
        (
         startup_plan_wsplit1)
        (
@@ -80,9 +81,9 @@ Definition startup_plan_tail3 : plan :=
      (
       PSpin   )
      (
-      PShDisj (escale 4096 (EVar 42)) (ELit 0x100000) e_band e_bandlen
+      PShDisj (escale 4096 (EVar 43)) (ELit 0x100000) e_band e_bandlen
       (
-       PShDisj (escale 4096 (EVar 42)) (ELit 0x100000) (ELit 0x10000) (ELit 0x659000)
+       PShDisj (escale 4096 (EVar 43)) (ELit 0x100000) (ELit 0x10000) (ELit 0x659000)
        (
         PRun []
         (
@@ -90,9 +91,9 @@ Definition startup_plan_tail3 : plan :=
          (
           PSpin   )
          (
-          PShDisj (escale 4096 (EVar 43)) (ELit 0x800000) e_band e_bandlen
+          PShDisj (escale 4096 (EVar 44)) (ELit 0x800000) e_band e_bandlen
           (
-           PShDisj (escale 4096 (EVar 43)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
+           PShDisj (escale 4096 (EVar 44)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
            (
             PRun []
             (
@@ -104,9 +105,9 @@ Definition startup_plan_tail3 : plan :=
                (
                 PSpin   )
                (
-                PShDisj (escale 4096 (EVar 60)) (ELit 0x1000) e_band e_bandlen
+                PShDisj (escale 4096 (EVar 61)) (ELit 0x1000) e_band e_bandlen
                 (
-                 PShDisj (escale 4096 (EVar 60)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                 PShDisj (escale 4096 (EVar 61)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                  (
                   PRun []
                   (
@@ -150,9 +151,9 @@ Definition startup_plan_tail3 : plan :=
                                      (
                                       PSpin   )
                                      (
-                                      PShDisj (escale 4096 (EVar 205)) (ELit 0x1000) e_band e_bandlen
+                                      PShDisj (escale 4096 (EVar 206)) (ELit 0x1000) e_band e_bandlen
                                       (
-                                       PShDisj (escale 4096 (EVar 205)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                                       PShDisj (escale 4096 (EVar 206)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                                        (
                                         PRun []
                                         (
@@ -285,9 +286,9 @@ Definition startup_plan_tail4 : plan :=
      (
       PSpin   )
      (
-      PShDisj (escale 4096 (EVar 42)) (ELit 0x100000) e_band e_bandlen
+      PShDisj (escale 4096 (EVar 43)) (ELit 0x100000) e_band e_bandlen
       (
-       PShDisj (escale 4096 (EVar 42)) (ELit 0x100000) (ELit 0x10000) (ELit 0x659000)
+       PShDisj (escale 4096 (EVar 43)) (ELit 0x100000) (ELit 0x10000) (ELit 0x659000)
        (
         PRun []
         (
@@ -295,9 +296,9 @@ Definition startup_plan_tail4 : plan :=
          (
           PSpin   )
          (
-          PShDisj (escale 4096 (EVar 43)) (ELit 0x800000) e_band e_bandlen
+          PShDisj (escale 4096 (EVar 44)) (ELit 0x800000) e_band e_bandlen
           (
-           PShDisj (escale 4096 (EVar 43)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
+           PShDisj (escale 4096 (EVar 44)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
            (
             PRun []
             (
@@ -309,9 +310,9 @@ Definition startup_plan_tail4 : plan :=
                (
                 PSpin   )
                (
-                PShDisj (escale 4096 (EVar 60)) (ELit 0x1000) e_band e_bandlen
+                PShDisj (escale 4096 (EVar 61)) (ELit 0x1000) e_band e_bandlen
                 (
-                 PShDisj (escale 4096 (EVar 60)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                 PShDisj (escale 4096 (EVar 61)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                  (
                   PRun []
                   (
@@ -355,9 +356,9 @@ Definition startup_plan_tail4 : plan :=
                                      (
                                       PSpin   )
                                      (
-                                      PShDisj (escale 4096 (EVar 205)) (ELit 0x1000) e_band e_bandlen
+                                      PShDisj (escale 4096 (EVar 206)) (ELit 0x1000) e_band e_bandlen
                                       (
-                                       PShDisj (escale 4096 (EVar 205)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                                       PShDisj (escale 4096 (EVar 206)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                                        (
                                         PRun []
                                         (
@@ -482,7 +483,7 @@ Definition startup_plan_tail4 : plan :=
 Definition startup_plan_via_U : plan :=
   PRun []
   (
-   PVia 0 js_0 183
+   PVia 0 js_0 184
    (
     PBrk2S
     (
@@ -496,19 +497,19 @@ Definition startup_plan_via_U : plan :=
       (
        PRun []
        (
-        PBump 84
+        PBump 85
         (
-         PIntroW 4295491576 [KRange (EVar 84) 1 34359736318; KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (escale 4096 (EVar 84)) 0) (ELit 8192); KDisj (SA (ELit 65536) 0) (ELit 6656000) (SA (escale 4096 (EVar 84)) 0) (ELit 8192)]
+         PIntroW 4295491576 [KRange (EVar 85) 1 34359736318; KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (escale 4096 (EVar 85)) 0) (ELit 8192); KDisj (SA (ELit 65536) 0) (ELit 6656000) (SA (escale 4096 (EVar 85)) 0) (ELit 8192)]
          (
-          PGhost (eaddz (escale 4096 (EVar 84)) 4096) (ELit 4096)
+          PGhost (eaddz (escale 4096 (EVar 85)) 4096) (ELit 4096)
           (
            PMmap
            (
             PSpin   )
            (
-            PShDisj (escale 4096 (EVar 85)) (ELit 0x1000) e_band e_bandlen
+            PShDisj (escale 4096 (EVar 86)) (ELit 0x1000) e_band e_bandlen
             (
-             PShDisj (escale 4096 (EVar 85)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+             PShDisj (escale 4096 (EVar 86)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
              (
               PRun []
               (
@@ -518,11 +519,11 @@ Definition startup_plan_via_U : plan :=
                 (
                  PX XIMemset []
                  (
-                  PBump 182
+                  PBump 183
                   (
                    PFog 1 8192
                    (
-                    PShDisj (escale 4096 (EVar 59)) (ELit 0xb09000) (escale 4096 (EVar 5)) (ELit 8192)
+                    PShDisj (escale 4096 (EVar 60)) (ELit 0xb09000) (escale 4096 (EVar 5)) (ELit 8192)
                     (
                      PUnvis (escale 4096 (EVar 5)) (ELit 8192)
                      (
@@ -534,9 +535,9 @@ Definition startup_plan_via_U : plan :=
       (
        PSpin   ))))
    (
-    PRename [(26, 22); (59, 23); (84, 24); (85, 25); (182, 26); (183, 27); (184, 28); (185, 29); (186, 30); (187, 31); (188, 32); (189, 33); (190, 34); (191, 35); (192, 36); (193, 37); (194, 38); (195, 39); (196, 40); (197, 41)]%nat
+    PRename [(27, 23); (60, 24); (85, 25); (86, 26); (183, 27); (184, 28); (185, 29); (186, 30); (187, 31); (188, 32); (189, 33); (190, 34); (191, 35); (192, 36); (193, 37); (194, 38); (195, 39); (196, 40); (197, 41); (198, 42)]%nat
     (
-     PCase2 (esub (eaddz (escale 16 (EVar 6)) 36703) (escale 4096 (EVar 22))) 4030
+     PCase2 (esub (eaddz (escale 16 (EVar 6)) 36703) (escale 4096 (EVar 23))) 4030
      (
       startup_plan_tail3)
      (
@@ -555,9 +556,9 @@ Definition startup_plan_wsplit5 : plan :=
      (
       PSpin   )
      (
-      PShDisj (escale 4096 (EVar 85)) (ELit 0x1000) e_band e_bandlen
+      PShDisj (escale 4096 (EVar 86)) (ELit 0x1000) e_band e_bandlen
       (
-       PShDisj (escale 4096 (EVar 85)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+       PShDisj (escale 4096 (EVar 86)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
        (
         PRun []
         (
@@ -567,13 +568,13 @@ Definition startup_plan_wsplit5 : plan :=
           (
            PX XIMemset []
            (
-            PBump 182
+            PBump 183
             (
              PFog 1 8192
              (
-              PShDisj (escale 4096 (EVar 59)) (ELit 0xb09000) (eaddz (escale 4096 (EVar 84)) 4096) (ELit 4096)
+              PShDisj (escale 4096 (EVar 60)) (ELit 0xb09000) (eaddz (escale 4096 (EVar 85)) 4096) (ELit 4096)
               (
-               PUnvis (eaddz (escale 4096 (EVar 84)) 4096) (ELit 4096)
+               PUnvis (eaddz (escale 4096 (EVar 85)) 4096) (ELit 4096)
                (
                 PGhost (escale 4096 (EVar 5)) (ELit 8192)
                 (
@@ -586,17 +587,17 @@ Definition startup_plan_wsplit5 : plan :=
 Definition startup_plan_viafail6 : plan :=
   PRun []
   (
-   PBump 84
+   PBump 85
    (
     PMmap
     (
      PSpin   )
     (
-     PShDisj (escale 4096 (EVar 84)) (ELit 0x2000) e_band e_bandlen
+     PShDisj (escale 4096 (EVar 85)) (ELit 0x2000) e_band e_bandlen
      (
-      PShDisj (escale 4096 (EVar 84)) (ELit 0x2000) (ELit 0x10000) (ELit 0x659000)
+      PShDisj (escale 4096 (EVar 85)) (ELit 0x2000) (ELit 0x10000) (ELit 0x659000)
       (
-       PCaseDisj (ELit 0x7fff7000) (escale 4096 (EVar 84))
+       PCaseDisj (ELit 0x7fff7000) (escale 4096 (EVar 85))
        (
         startup_plan_wsplit5)
        (
@@ -613,9 +614,9 @@ Definition startup_plan_tail7 : plan :=
      (
       PSpin   )
      (
-      PShDisj (escale 4096 (EVar 42)) (ELit 0x100000) e_band e_bandlen
+      PShDisj (escale 4096 (EVar 43)) (ELit 0x100000) e_band e_bandlen
       (
-       PShDisj (escale 4096 (EVar 42)) (ELit 0x100000) (ELit 0x10000) (ELit 0x659000)
+       PShDisj (escale 4096 (EVar 43)) (ELit 0x100000) (ELit 0x10000) (ELit 0x659000)
        (
         PRun []
         (
@@ -623,9 +624,9 @@ Definition startup_plan_tail7 : plan :=
          (
           PSpin   )
          (
-          PShDisj (escale 4096 (EVar 43)) (ELit 0x800000) e_band e_bandlen
+          PShDisj (escale 4096 (EVar 44)) (ELit 0x800000) e_band e_bandlen
           (
-           PShDisj (escale 4096 (EVar 43)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
+           PShDisj (escale 4096 (EVar 44)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
            (
             PRun []
             (
@@ -637,9 +638,9 @@ Definition startup_plan_tail7 : plan :=
                (
                 PSpin   )
                (
-                PShDisj (escale 4096 (EVar 60)) (ELit 0x1000) e_band e_bandlen
+                PShDisj (escale 4096 (EVar 61)) (ELit 0x1000) e_band e_bandlen
                 (
-                 PShDisj (escale 4096 (EVar 60)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                 PShDisj (escale 4096 (EVar 61)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                  (
                   PRun []
                   (
@@ -683,9 +684,9 @@ Definition startup_plan_tail7 : plan :=
                                      (
                                       PSpin   )
                                      (
-                                      PShDisj (escale 4096 (EVar 205)) (ELit 0x1000) e_band e_bandlen
+                                      PShDisj (escale 4096 (EVar 206)) (ELit 0x1000) e_band e_bandlen
                                       (
-                                       PShDisj (escale 4096 (EVar 205)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                                       PShDisj (escale 4096 (EVar 206)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                                        (
                                         PRun []
                                         (
@@ -818,9 +819,9 @@ Definition startup_plan_tail8 : plan :=
      (
       PSpin   )
      (
-      PShDisj (escale 4096 (EVar 42)) (ELit 0x100000) e_band e_bandlen
+      PShDisj (escale 4096 (EVar 43)) (ELit 0x100000) e_band e_bandlen
       (
-       PShDisj (escale 4096 (EVar 42)) (ELit 0x100000) (ELit 0x10000) (ELit 0x659000)
+       PShDisj (escale 4096 (EVar 43)) (ELit 0x100000) (ELit 0x10000) (ELit 0x659000)
        (
         PRun []
         (
@@ -828,9 +829,9 @@ Definition startup_plan_tail8 : plan :=
          (
           PSpin   )
          (
-          PShDisj (escale 4096 (EVar 43)) (ELit 0x800000) e_band e_bandlen
+          PShDisj (escale 4096 (EVar 44)) (ELit 0x800000) e_band e_bandlen
           (
-           PShDisj (escale 4096 (EVar 43)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
+           PShDisj (escale 4096 (EVar 44)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
            (
             PRun []
             (
@@ -842,9 +843,9 @@ Definition startup_plan_tail8 : plan :=
                (
                 PSpin   )
                (
-                PShDisj (escale 4096 (EVar 60)) (ELit 0x1000) e_band e_bandlen
+                PShDisj (escale 4096 (EVar 61)) (ELit 0x1000) e_band e_bandlen
                 (
-                 PShDisj (escale 4096 (EVar 60)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                 PShDisj (escale 4096 (EVar 61)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                  (
                   PRun []
                   (
@@ -888,9 +889,9 @@ Definition startup_plan_tail8 : plan :=
                                      (
                                       PSpin   )
                                      (
-                                      PShDisj (escale 4096 (EVar 205)) (ELit 0x1000) e_band e_bandlen
+                                      PShDisj (escale 4096 (EVar 206)) (ELit 0x1000) e_band e_bandlen
                                       (
-                                       PShDisj (escale 4096 (EVar 205)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                                       PShDisj (escale 4096 (EVar 206)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                                        (
                                         PRun []
                                         (
@@ -1015,7 +1016,7 @@ Definition startup_plan_tail8 : plan :=
 Definition startup_plan_via_U_slice : plan :=
   PRun []
   (
-   PVia 3 js_3 183
+   PVia 3 js_3 184
    (
     PBrk2S
     (
@@ -1029,19 +1030,19 @@ Definition startup_plan_via_U_slice : plan :=
       (
        PRun []
        (
-        PBump 84
+        PBump 85
         (
-         PIntroW 4295491576 [KRange (EVar 84) 1 34359736318; KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (escale 4096 (EVar 84)) 0) (ELit 8192); KDisj (SA (ELit 65536) 0) (ELit 6656000) (SA (escale 4096 (EVar 84)) 0) (ELit 8192)]
+         PIntroW 4295491576 [KRange (EVar 85) 1 34359736318; KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (escale 4096 (EVar 85)) 0) (ELit 8192); KDisj (SA (ELit 65536) 0) (ELit 6656000) (SA (escale 4096 (EVar 85)) 0) (ELit 8192)]
          (
-          PGhost (eaddz (escale 4096 (EVar 84)) 4096) (ELit 4096)
+          PGhost (eaddz (escale 4096 (EVar 85)) 4096) (ELit 4096)
           (
            PMmap
            (
             PSpin   )
            (
-            PShDisj (escale 4096 (EVar 85)) (ELit 0x1000) e_band e_bandlen
+            PShDisj (escale 4096 (EVar 86)) (ELit 0x1000) e_band e_bandlen
             (
-             PShDisj (escale 4096 (EVar 85)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+             PShDisj (escale 4096 (EVar 86)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
              (
               PRun []
               (
@@ -1051,11 +1052,11 @@ Definition startup_plan_via_U_slice : plan :=
                 (
                  PX XIMemset []
                  (
-                  PBump 182
+                  PBump 183
                   (
                    PFog 1 8192
                    (
-                    PShDisj (escale 4096 (EVar 59)) (ELit 0xb09000) (escale 4096 (EVar 5)) (ELit 8192)
+                    PShDisj (escale 4096 (EVar 60)) (ELit 0xb09000) (escale 4096 (EVar 5)) (ELit 8192)
                     (
                      PUnvis (escale 4096 (EVar 5)) (ELit 8192)
                      (
@@ -1067,9 +1068,9 @@ Definition startup_plan_via_U_slice : plan :=
       (
        PSpin   ))))
    (
-    PRename [(26, 22); (59, 23); (84, 24); (85, 25); (182, 26); (183, 27); (184, 28); (185, 29); (186, 30); (187, 31); (188, 32); (189, 33); (190, 34); (191, 35); (192, 36); (193, 37); (194, 38); (195, 39); (196, 40); (197, 41)]%nat
+    PRename [(27, 23); (60, 24); (85, 25); (86, 26); (183, 27); (184, 28); (185, 29); (186, 30); (187, 31); (188, 32); (189, 33); (190, 34); (191, 35); (192, 36); (193, 37); (194, 38); (195, 39); (196, 40); (197, 41); (198, 42)]%nat
     (
-     PCase2 (esub (eaddz (escale 16 (EVar 6)) 36703) (escale 4096 (EVar 22))) 4030
+     PCase2 (esub (eaddz (escale 16 (EVar 6)) 36703) (escale 4096 (EVar 23))) 4030
      (
       startup_plan_tail7)
      (
@@ -1088,9 +1089,9 @@ Definition startup_plan_hmset9 : plan :=
       (
        PSpin   )
       (
-       PShDisj (escale 4096 (EVar 59)) (ELit 0xb09000) e_band e_bandlen
+       PShDisj (escale 4096 (EVar 60)) (ELit 0xb09000) e_band e_bandlen
        (
-        PShDisj (escale 4096 (EVar 59)) (ELit 0xb09000) (ELit 0x10000) (ELit 0x659000)
+        PShDisj (escale 4096 (EVar 60)) (ELit 0xb09000) (ELit 0x10000) (ELit 0x659000)
         (
          PRun []
          (
@@ -1105,7 +1106,7 @@ Definition startup_plan_hmset9 : plan :=
 Definition startup_plan_hmset10 : plan :=
   PX XMemset []
   (
-   PDropRange (eaddz (eadd (escale 4096 (EVar 0)) (escale 512 (EVar 26))) 2146398208) (eaddz (esub (escale 2 (EVar 6)) (escale 512 (EVar 26))) 4096)
+   PDropRange (eaddz (eadd (escale 4096 (EVar 0)) (escale 512 (EVar 27))) 2146398208) (eaddz (esub (escale 2 (EVar 6)) (escale 512 (EVar 27))) 4096)
    (
     PRun []
     (
@@ -1117,9 +1118,9 @@ Definition startup_plan_hmset10 : plan :=
        (
         PSpin   )
        (
-        PShDisj (escale 4096 (EVar 59)) (ELit 0xb09000) e_band e_bandlen
+        PShDisj (escale 4096 (EVar 60)) (ELit 0xb09000) e_band e_bandlen
         (
-         PShDisj (escale 4096 (EVar 59)) (ELit 0xb09000) (ELit 0x10000) (ELit 0x659000)
+         PShDisj (escale 4096 (EVar 60)) (ELit 0xb09000) (ELit 0x10000) (ELit 0x659000)
          (
           PRun []
           (
@@ -1138,11 +1139,11 @@ Definition startup_plan_s2U11 : plan :=
    (
     PRun []
     (
-     PCase2 (esub (eaddz (escale 2 (EVar 6)) 11776) (escale 512 (EVar 26))) 7679
+     PCase2 (esub (eaddz (escale 2 (EVar 6)) 11776) (escale 512 (EVar 27))) 7679
      (
       startup_plan_hmset9)
      (
-      PVisSlice (eadd (escale 32768 (EVar 0)) (eaddz (escale 4096 (EVar 26)) (-8421376))) (esub e_band (eadd (escale 32768 (EVar 0)) (eaddz (escale 4096 (EVar 26)) (-8421376))))
+      PVisSlice (eadd (escale 32768 (EVar 0)) (eaddz (escale 4096 (EVar 27)) (-8421376))) (esub e_band (eadd (escale 32768 (EVar 0)) (eaddz (escale 4096 (EVar 27)) (-8421376))))
       (
        startup_plan_hmset10))))).
 
@@ -1209,9 +1210,9 @@ Definition startup_plan : plan :=
                             (
                              PSpin   )
                             (
-                             PShDisj (escale 4096 (EVar 77)) (ELit 0x10000) e_band e_bandlen
+                             PShDisj (escale 4096 (EVar 78)) (ELit 0x10000) e_band e_bandlen
                              (
-                              PShDisj (escale 4096 (EVar 77)) (ELit 0x10000) (ELit 0x10000) (ELit 0x659000)
+                              PShDisj (escale 4096 (EVar 78)) (ELit 0x10000) (ELit 0x10000) (ELit 0x659000)
                               (
                                PRun []
                                (
@@ -1245,7 +1246,7 @@ Definition startup_plan : plan :=
                                              (
                                               PRun [0x79acc]
                                               (
-                                               PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                               PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                (
                                                 PRun [0x79acc]
                                                 (
@@ -1267,7 +1268,7 @@ Definition startup_plan : plan :=
                                                         (
                                                          PRun [0x79acc]
                                                          (
-                                                          PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                          PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                           (
                                                            PRun [0x79acc]
                                                            (
@@ -1289,7 +1290,7 @@ Definition startup_plan : plan :=
                                                                    (
                                                                     PRun [0x79acc]
                                                                     (
-                                                                     PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                     PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                      (
                                                                       PRun [0x79acc]
                                                                       (
@@ -1311,7 +1312,7 @@ Definition startup_plan : plan :=
                                                                               (
                                                                                PRun [0x79acc]
                                                                                (
-                                                                                PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                 (
                                                                                  PRun [0x79acc]
                                                                                  (
@@ -1333,7 +1334,7 @@ Definition startup_plan : plan :=
                                                                                          (
                                                                                           PRun [0x79acc]
                                                                                           (
-                                                                                           PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                           PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                            (
                                                                                             PRun [0x79acc]
                                                                                             (
@@ -1355,7 +1356,7 @@ Definition startup_plan : plan :=
                                                                                                     (
                                                                                                      PRun [0x79acc]
                                                                                                      (
-                                                                                                      PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                      PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                       (
                                                                                                        PRun [0x79acc]
                                                                                                        (
@@ -1377,7 +1378,7 @@ Definition startup_plan : plan :=
                                                                                                                (
                                                                                                                 PRun [0x79acc]
                                                                                                                 (
-                                                                                                                 PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                 PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                  (
                                                                                                                   PRun [0x79acc]
                                                                                                                   (
@@ -1399,7 +1400,7 @@ Definition startup_plan : plan :=
                                                                                                                           (
                                                                                                                            PRun [0x79acc]
                                                                                                                            (
-                                                                                                                            PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                            PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                             (
                                                                                                                              PRun [0x79acc]
                                                                                                                              (
@@ -1421,7 +1422,7 @@ Definition startup_plan : plan :=
                                                                                                                                      (
                                                                                                                                       PRun [0x79acc]
                                                                                                                                       (
-                                                                                                                                       PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                       PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                        (
                                                                                                                                         PRun [0x79acc]
                                                                                                                                         (
@@ -1443,7 +1444,7 @@ Definition startup_plan : plan :=
                                                                                                                                                 (
                                                                                                                                                  PRun [0x79acc]
                                                                                                                                                  (
-                                                                                                                                                  PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                  PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                   (
                                                                                                                                                    PRun [0x79acc]
                                                                                                                                                    (
@@ -1465,7 +1466,7 @@ Definition startup_plan : plan :=
                                                                                                                                                            (
                                                                                                                                                             PRun [0x79acc]
                                                                                                                                                             (
-                                                                                                                                                             PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                             PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                              (
                                                                                                                                                               PRun [0x79acc]
                                                                                                                                                               (
@@ -1487,7 +1488,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                       (
                                                                                                                                                                        PRun [0x79acc]
                                                                                                                                                                        (
-                                                                                                                                                                        PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                        PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                         (
                                                                                                                                                                          PRun [0x79acc]
                                                                                                                                                                          (
@@ -1509,7 +1510,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                  (
                                                                                                                                                                                   PRun [0x79acc]
                                                                                                                                                                                   (
-                                                                                                                                                                                   PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                   PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                    (
                                                                                                                                                                                     PRun [0x79acc]
                                                                                                                                                                                     (
@@ -1531,7 +1532,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                             (
                                                                                                                                                                                              PRun [0x79acc]
                                                                                                                                                                                              (
-                                                                                                                                                                                              PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                              PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                               (
                                                                                                                                                                                                PRun [0x79acc]
                                                                                                                                                                                                (
@@ -1553,7 +1554,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                        (
                                                                                                                                                                                                         PRun [0x79acc]
                                                                                                                                                                                                         (
-                                                                                                                                                                                                         PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                         PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                          (
                                                                                                                                                                                                           PRun [0x79acc]
                                                                                                                                                                                                           (
@@ -1575,7 +1576,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                   (
                                                                                                                                                                                                                    PRun [0x79acc]
                                                                                                                                                                                                                    (
-                                                                                                                                                                                                                    PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                    PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                     (
                                                                                                                                                                                                                      PRun [0x79acc]
                                                                                                                                                                                                                      (
@@ -1597,7 +1598,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                              (
                                                                                                                                                                                                                               PRun [0x79acc]
                                                                                                                                                                                                                               (
-                                                                                                                                                                                                                               PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                               PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                (
                                                                                                                                                                                                                                 PRun [0x79acc]
                                                                                                                                                                                                                                 (
@@ -1619,7 +1620,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                         (
                                                                                                                                                                                                                                          PRun [0x79acc]
                                                                                                                                                                                                                                          (
-                                                                                                                                                                                                                                          PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                          PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                           (
                                                                                                                                                                                                                                            PRun [0x79acc]
                                                                                                                                                                                                                                            (
@@ -1641,7 +1642,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                    (
                                                                                                                                                                                                                                                     PRun [0x79acc]
                                                                                                                                                                                                                                                     (
-                                                                                                                                                                                                                                                     PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                     PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                      (
                                                                                                                                                                                                                                                       PRun [0x79acc]
                                                                                                                                                                                                                                                       (
@@ -1663,7 +1664,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                               (
                                                                                                                                                                                                                                                                PRun [0x79acc]
                                                                                                                                                                                                                                                                (
-                                                                                                                                                                                                                                                                PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                 (
                                                                                                                                                                                                                                                                  PRun [0x79acc]
                                                                                                                                                                                                                                                                  (
@@ -1685,7 +1686,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                          (
                                                                                                                                                                                                                                                                           PRun [0x79acc]
                                                                                                                                                                                                                                                                           (
-                                                                                                                                                                                                                                                                           PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                           PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                            (
                                                                                                                                                                                                                                                                             PRun [0x79acc]
                                                                                                                                                                                                                                                                             (
@@ -1707,7 +1708,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                     (
                                                                                                                                                                                                                                                                                      PRun [0x79acc]
                                                                                                                                                                                                                                                                                      (
-                                                                                                                                                                                                                                                                                      PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                      PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                       (
                                                                                                                                                                                                                                                                                        PRun [0x79acc]
                                                                                                                                                                                                                                                                                        (
@@ -1729,7 +1730,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                (
                                                                                                                                                                                                                                                                                                 PRun [0x79acc]
                                                                                                                                                                                                                                                                                                 (
-                                                                                                                                                                                                                                                                                                 PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                 PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                  (
                                                                                                                                                                                                                                                                                                   PRun [0x79acc]
                                                                                                                                                                                                                                                                                                   (
@@ -1751,7 +1752,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                           (
                                                                                                                                                                                                                                                                                                            PRun [0x79acc]
                                                                                                                                                                                                                                                                                                            (
-                                                                                                                                                                                                                                                                                                            PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                            PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                             (
                                                                                                                                                                                                                                                                                                              PRun [0x79acc]
                                                                                                                                                                                                                                                                                                              (
@@ -1773,7 +1774,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                      (
                                                                                                                                                                                                                                                                                                                       PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                       (
-                                                                                                                                                                                                                                                                                                                       PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                       PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                        (
                                                                                                                                                                                                                                                                                                                         PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                         (
@@ -1795,7 +1796,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                 (
                                                                                                                                                                                                                                                                                                                                  PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                  (
-                                                                                                                                                                                                                                                                                                                                  PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                                  PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                                   (
                                                                                                                                                                                                                                                                                                                                    PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                    (
@@ -1817,7 +1818,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                            (
                                                                                                                                                                                                                                                                                                                                             PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                             (
-                                                                                                                                                                                                                                                                                                                                             PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                                             PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                                              (
                                                                                                                                                                                                                                                                                                                                               PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                               (
@@ -1839,7 +1840,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                       (
                                                                                                                                                                                                                                                                                                                                                        PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                        (
-                                                                                                                                                                                                                                                                                                                                                        PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                                                        PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                                                         (
                                                                                                                                                                                                                                                                                                                                                          PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                          (
@@ -1861,7 +1862,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                  (
                                                                                                                                                                                                                                                                                                                                                                   PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                   (
-                                                                                                                                                                                                                                                                                                                                                                   PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                                                                   PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                                                                    (
                                                                                                                                                                                                                                                                                                                                                                     PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                     (
@@ -1883,7 +1884,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                             (
                                                                                                                                                                                                                                                                                                                                                                              PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                              (
-                                                                                                                                                                                                                                                                                                                                                                              PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                                                                              PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                                                                               (
                                                                                                                                                                                                                                                                                                                                                                                PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                                (
@@ -1905,7 +1906,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                        (
                                                                                                                                                                                                                                                                                                                                                                                         PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                                         (
-                                                                                                                                                                                                                                                                                                                                                                                         PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                                                                                         PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                                                                                          (
                                                                                                                                                                                                                                                                                                                                                                                           PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                                           (
@@ -1927,7 +1928,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                   (
                                                                                                                                                                                                                                                                                                                                                                                                    PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                                                    (
-                                                                                                                                                                                                                                                                                                                                                                                                    PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                                                                                                    PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                                                                                                     (
                                                                                                                                                                                                                                                                                                                                                                                                      PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                                                      (
@@ -1949,7 +1950,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                              (
                                                                                                                                                                                                                                                                                                                                                                                                               PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                                                               (
-                                                                                                                                                                                                                                                                                                                                                                                                               PGcKeep [(escale 4096 (EVar 77), ELit 1536); (eaddz (escale 4096 (EVar 77)) 5808, ELit 16)]
+                                                                                                                                                                                                                                                                                                                                                                                                               PGcKeep [(escale 4096 (EVar 78), ELit 1536); (eaddz (escale 4096 (EVar 78)) 5808, ELit 16)]
                                                                                                                                                                                                                                                                                                                                                                                                                (
                                                                                                                                                                                                                                                                                                                                                                                                                 PRun [0x79acc]
                                                                                                                                                                                                                                                                                                                                                                                                                 (
@@ -1981,7 +1982,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                              (
                                                                                                                                                                                                                                                                                                                                                                                                                               PRun [0x6f8f0]
                                                                                                                                                                                                                                                                                                                                                                                                                               (
-                                                                                                                                                                                                                                                                                                                                                                                                                               PDropRange (escale 4096 (EVar 77)) (ELit 0x10000)
+                                                                                                                                                                                                                                                                                                                                                                                                                               PDropRange (escale 4096 (EVar 78)) (ELit 0x10000)
                                                                                                                                                                                                                                                                                                                                                                                                                                (
                                                                                                                                                                                                                                                                                                                                                                                                                                 PRun [0x7b4d0]
                                                                                                                                                                                                                                                                                                                                                                                                                                 (
@@ -1993,9 +1994,9 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                    (
                                                                                                                                                                                                                                                                                                                                                                                                                                     PSpin   )
                                                                                                                                                                                                                                                                                                                                                                                                                                    (
-                                                                                                                                                                                                                                                                                                                                                                                                                                    PShDisj (escale 4096 (EVar 206)) (ELit 0x38e000) e_band e_bandlen
+                                                                                                                                                                                                                                                                                                                                                                                                                                    PShDisj (escale 4096 (EVar 207)) (ELit 0x38e000) e_band e_bandlen
                                                                                                                                                                                                                                                                                                                                                                                                                                     (
-                                                                                                                                                                                                                                                                                                                                                                                                                                     PShDisj (escale 4096 (EVar 206)) (ELit 0x38e000) (ELit 0x10000) (ELit 0x659000)
+                                                                                                                                                                                                                                                                                                                                                                                                                                     PShDisj (escale 4096 (EVar 207)) (ELit 0x38e000) (ELit 0x10000) (ELit 0x659000)
                                                                                                                                                                                                                                                                                                                                                                                                                                      (
                                                                                                                                                                                                                                                                                                                                                                                                                                       PRun [0x66094]
                                                                                                                                                                                                                                                                                                                                                                                                                                       (
@@ -2007,9 +2008,9 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                          (
                                                                                                                                                                                                                                                                                                                                                                                                                                           PSpin   )
                                                                                                                                                                                                                                                                                                                                                                                                                                          (
-                                                                                                                                                                                                                                                                                                                                                                                                                                          PShDisj (escale 4096 (EVar 223)) (ELit 0x2000011000) e_band e_bandlen
+                                                                                                                                                                                                                                                                                                                                                                                                                                          PShDisj (escale 4096 (EVar 224)) (ELit 0x2000011000) e_band e_bandlen
                                                                                                                                                                                                                                                                                                                                                                                                                                           (
-                                                                                                                                                                                                                                                                                                                                                                                                                                           PShDisj (escale 4096 (EVar 223)) (ELit 0x2000011000) (ELit 0x10000) (ELit 0x659000)
+                                                                                                                                                                                                                                                                                                                                                                                                                                           PShDisj (escale 4096 (EVar 224)) (ELit 0x2000011000) (ELit 0x10000) (ELit 0x659000)
                                                                                                                                                                                                                                                                                                                                                                                                                                            (
                                                                                                                                                                                                                                                                                                                                                                                                                                             PDropRange (ELit 0x111438) (ELit 0x12b0)
                                                                                                                                                                                                                                                                                                                                                                                                                                             (
@@ -2033,9 +2034,9 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                                     (
                                                                                                                                                                                                                                                                                                                                                                                                                                                      PSpin   )
                                                                                                                                                                                                                                                                                                                                                                                                                                                     (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                     PShDisj (escale 4096 (EVar 241)) (ELit 0x800000) e_band e_bandlen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                     PShDisj (escale 4096 (EVar 242)) (ELit 0x800000) e_band e_bandlen
                                                                                                                                                                                                                                                                                                                                                                                                                                                      (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                      PShDisj (escale 4096 (EVar 241)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                      PShDisj (escale 4096 (EVar 242)) (ELit 0x800000) (ELit 0x10000) (ELit 0x659000)
                                                                                                                                                                                                                                                                                                                                                                                                                                                       (
                                                                                                                                                                                                                                                                                                                                                                                                                                                        PRun []
                                                                                                                                                                                                                                                                                                                                                                                                                                                        (
@@ -2043,9 +2044,9 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                                         (
                                                                                                                                                                                                                                                                                                                                                                                                                                                          PSpin   )
                                                                                                                                                                                                                                                                                                                                                                                                                                                         (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                         PShDisj (escale 4096 (EVar 242)) (ELit 0x1000) e_band e_bandlen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                         PShDisj (escale 4096 (EVar 243)) (ELit 0x1000) e_band e_bandlen
                                                                                                                                                                                                                                                                                                                                                                                                                                                          (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                          PShDisj (escale 4096 (EVar 242)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                          PShDisj (escale 4096 (EVar 243)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                                                                                                                                                                                                                                                                                                                                                                                                                                                           (
                                                                                                                                                                                                                                                                                                                                                                                                                                                            PRun []
                                                                                                                                                                                                                                                                                                                                                                                                                                                            (
@@ -2053,13 +2054,13 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                                             (
                                                                                                                                                                                                                                                                                                                                                                                                                                                              PSpin   )
                                                                                                                                                                                                                                                                                                                                                                                                                                                             (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                             PShDisj (escale 4096 (EVar 243)) (ELit 0x10000) e_band e_bandlen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                             PShDisj (escale 4096 (EVar 244)) (ELit 0x10000) e_band e_bandlen
                                                                                                                                                                                                                                                                                                                                                                                                                                                              (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                              PShDisj (escale 4096 (EVar 243)) (ELit 0x10000) (ELit 0x10000) (ELit 0x659000)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              PShDisj (escale 4096 (EVar 244)) (ELit 0x10000) (ELit 0x10000) (ELit 0x659000)
                                                                                                                                                                                                                                                                                                                                                                                                                                                               (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                               PCaseDisjJ (ELit 0x7fff7000) (escale 4096 (EVar 243)) 0x697e4 []
+                                                                                                                                                                                                                                                                                                                                                                                                                                                               PCaseDisjJ (ELit 0x7fff7000) (escale 4096 (EVar 244)) 0x697e4 []
                                                                                                                                                                                                                                                                                                                                                                                                                                                                (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                PBump 276
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                PBump 277
                                                                                                                                                                                                                                                                                                                                                                                                                                                                 (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                  PRun []
                                                                                                                                                                                                                                                                                                                                                                                                                                                                  (
@@ -2071,9 +2072,9 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                                                     (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                      PSpin   )
                                                                                                                                                                                                                                                                                                                                                                                                                                                                     (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                     PShDisj (escale 4096 (EVar 292)) (ELit 0x1000) e_band e_bandlen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     PShDisj (escale 4096 (EVar 293)) (ELit 0x1000) e_band e_bandlen
                                                                                                                                                                                                                                                                                                                                                                                                                                                                      (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                      PShDisj (escale 4096 (EVar 292)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                      PShDisj (escale 4096 (EVar 293)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                                                                                                                                                                                                                                                                                                                                                                                                                                                                       (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                        PRun []
                                                                                                                                                                                                                                                                                                                                                                                                                                                                        (
@@ -2097,9 +2098,9 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  PSpin   )
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 PShDisj (escale 4096 (EVar 357)) (ELit 0x1000) e_band e_bandlen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 PShDisj (escale 4096 (EVar 358)) (ELit 0x1000) e_band e_bandlen
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  PShDisj (escale 4096 (EVar 357)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  PShDisj (escale 4096 (EVar 358)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    PRun []
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    (
@@ -2107,9 +2108,9 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      PSpin   )
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     PShDisj (escale 4096 (EVar 358)) (ELit 0x1000) e_band e_bandlen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     PShDisj (escale 4096 (EVar 359)) (ELit 0x1000) e_band e_bandlen
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      PShDisj (escale 4096 (EVar 358)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      PShDisj (escale 4096 (EVar 359)) (ELit 0x1000) (ELit 0x10000) (ELit 0x659000)
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        PRun []
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        (
@@ -2123,7 +2124,7 @@ Definition startup_plan : plan :=
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             PSys YMunmap
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             PRename [(43, 10); (44, 11); (77, 12); (206, 13); (223, 14); (224, 15); (241, 16); (242, 17); (243, 18); (292, 19); (357, 20); (358, 21); (387, 22); (388, 23); (389, 24); (390, 25)]%nat
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             PRename [(44, 11); (45, 12); (78, 13); (207, 14); (224, 15); (225, 16); (242, 17); (243, 18); (244, 19); (293, 20); (358, 21); (359, 22); (388, 23); (389, 24); (390, 25); (391, 26)]%nat
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               startup_plan_s2U11))))))))))))))))))))))))))))))))))))))))))))))
                                                                                                                                                                                                                                                                                                                                                                                                                                                 (

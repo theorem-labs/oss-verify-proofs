@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,6 +37,7 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module names changed; 492 of its 566 lines of code are new or changed and 379 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (kind: segment lemma of m_refuse's image-B walk: the line = 0 snprintf arm).
    mr_arm_kept0 : MR_KEPT0_stmt B (statement in lib/B/Prog/m_refuse_k.v): on fuzz_segconf.asan-ubsan (image B, pin
    sha256 c3796c0b38f3..., m_refuse at 0x8782c), when n_kept < 8 and line = 0, the walk from the entry to the ret
@@ -64,8 +65,8 @@
      n_kept, the signed overflow: n_kept <= 7), stores n_kept + 1 and refused + 1 and returns.
    - the post: MF.mr_enc_kept (the text, n_kept + 1, refused + 1, every other byte of the block as at the entry),
      sa_kept over m_refuse_W's three ranges, sa_noalloc.
-   The call step and the tail follow the image-A m_file-family lane's image-A walk lib/A/Prog/m_refuseA.v (commit
-   0e3b3a97f9af: mr_snp :386-587 and the n_kept < 8 arm), at image B's numbers and with row 4's FR_seg family. *)
+   The call step and the tail follow the image-A m_file-family lane's image-A walk lib/A/Prog/m_refuseA.v (
+   mr_snp :386-587 and the n_kept < 8 arm), at image B's numbers and with row 4's FR_seg family. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -200,7 +201,7 @@ Ltac l0_disj := unfold zdisjoint; cbn [fst snd]; unfold kImgEnd, RtPFCmd.CMD_GOT
    Row 4 (RtPFSeg.seg_asnprintf_realizes = RtPFCmd.cmd_asnprintf_realizes at the family FR_seg), stepped by PaFx.v's
    aj_art_own_atF (the destination kept[n_kept] is in the footprint and in the live heap block) and
    srr_art_postF_of_pf; the format is .str.8 0x210e0 (SegModel.F_addr, seg_litA_fz), the one argument the reading at
-   c + 0x23b4. The pattern is image A's mr_snp (lib/A/Prog/m_refuseA.v:386-587 at a working branch). *)
+   c + 0x23b4. The pattern is image A's mr_snp (lib/A/Prog/m_refuseA.v:387-588 at a working branch). *)
 Lemma mr0_snp : forall W regsT memT mdc ly S mem md regs ch FP c line mc knock raw,
 afn_pre SEGS B MR_STK ly S W regs mem md ch ->
 arodata_okP SEGS SegInstB.RLO_A SegInstB.RHI_A B (rdW W mem) ->

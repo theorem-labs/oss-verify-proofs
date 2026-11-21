@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: memnorm twins of the core segments, written against core blob <sha> of each file, image A'
-   (#102 asan pin 1be0f53d, twin bff8519b; the core at commit b19e45bf552a):
+   (#102 asan pin 1be0f53d, twin bff8519b; the core):
    lib/A/AD26.v d3c4938c4380 (m1c_run :95, rd0_run :129), lib/A/AD25.v 9126f0c398a5 (rd_to_RW :240, cp_run :659),
    lib/A/AD23.v 1528c0d85010 (mg_run :171), lib/A/AD2g.v 16018f44d51c (short_run :50, h1_run :59, ovr_run :68,
    p_run :77), lib/A/AD2c.v
    b7ad0272218e (pb_run :69, bq_run :78), lib/A/AD2d.v 22004a37378e (pe_run :242, pm_run :325), lib/A/AD2e.v
    ea84e36fdb33 (pc_run :207, pl_run :218), lib/A/AD1r.v d33d8f723e32 (vp_run :333, br_run :342, l2_run :351).
-   Moved from image A (commit 5f6a2b85e1b9) to A': rd0_run's return pc main+0x54, 0x81100 -> 0x81194 (the
+   Moved from image A to A': rd0_run's return pc main+0x54, 0x81100 -> 0x81194 (the
    same move as AD26.v's; A' main is 0x81140), the only image numeral of this file.
    The original statements do not move; each twin <name>_mn is a NEW lemma.
    (The segments on the path from main to the driver loop head, port/mnloop-prefix-leaves.md §3 and §4.)
@@ -225,13 +226,15 @@ srr_run_with_inv tfibtbl_lp_ok PLAW HS HPM. mn_ret HS HPM HF HFr.
 Qed.
 
 Section f.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* the entry draw rnd is a Section variable after p, as in the core's AD25.v / AD26.v Section f (YP08.E0 takes the
+   draw's top, the run's kb_rseq flag and the execfn at 727298f3) *)
+Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 
 (* AD26.v:95 m1c_run *)
 Lemma m1c_run_mn : forall (W : world tfibsegs) ms md,
 st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms) -> P (ms_mem ms) ->
-SRr tfibsegs W (mkCfg ms md) (fun W' c' => at_m1c sp inp xw xd a0 p W ms md W' c' /\
+SRr tfibsegs W (mkCfg ms md) (fun W' c' => at_m1c sp inp xw xd a0 p rnd W ms md W' c' /\
   exists ms' md', c' = mkCfg ms' md' /\ P (ms_mem ms')).
 Proof.
 intros W ms md HS HPM. pose proof HWXi as HWX.
@@ -240,7 +243,7 @@ Qed.
 
 (* AD25.v:240 rd_to_RW *)
 Lemma rd_to_RW_mn : forall E (W : world tfibsegs) ms md len cap,
-AD25.eagree sp inp xw xd a0 p E -> st_ok tfibsegs E S_RD (restrict (w_H W) ms) ->
+AD25.eagree sp inp xw xd a0 p rnd E -> st_ok tfibsegs E S_RD (restrict (w_H W) ms) ->
 bv_unsigned (ew E A_LEN) = len -> bv_unsigned (ew E A_CAP) = cap -> 0 <= len < cap -> cap <= 2 ^ 26 ->
 P (ms_mem ms) ->
 SRr tfibsegs W (mkCfg ms md) (fun W' c' => at_RW E W (Z.min (cap - len) 65536) (ms_mem ms) md W' c' /\

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the budget walk through the vDSO entry arms (the call, its materialization fault and its unmodeled case) under an invariant kept by with_vdso_bump). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Classical_Prop.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
-  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common Require Import LimBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -45,6 +46,7 @@ Variable Inv : Model -> Prop.
 Hypothesis ARM : syscall_lt Inv L.
 Hypothesis INV_SYS : forall i m eff m' evs, syscall_spec i m (Ok eff m' evs) -> Inv m -> Inv m'.
 Hypothesis INV_MAT : forall m acc m', materialize_model_accesses m acc = Some m' -> Inv m -> Inv m'.
+Hypothesis INV_VDSO : forall m, Inv m -> Inv (with_vdso_bump m).
 
 Local Notation brf := (budget_refused_at segs).
 
@@ -77,7 +79,80 @@ Lemma not_refused_instr : forall ms m report,
   materialize_model_accesses m (@accessed_ranges _ report) <> None.
 Proof.
   intros ms m report Hh Hsvc Hn Hstep Hmat.
-  apply Hn. split; [exact Hh |]. left. split; [exact Hsvc |]. exists report. auto.
+  apply Hn. split; [exact Hh |]. left. split; [exact Hsvc |]. left. exists report. auto.
+Qed.
+
+Lemma not_refused_vdso : forall ms m fn n eff m' evs,
+  m_halted m = None -> ms_svc_pending ms = None ->
+  ~ brf (mkCfg ms m) ->
+  mi_account_step segs ms m = MachineUnmodeled ->
+  vdso_entry_fn segs (ms_pc ms) = Some fn ->
+  vdso_fn_sysno fn = Some n ->
+  syscall_spec (sys_input segs ms (Z_to_bv 64 n)) m (Ok eff m' evs) ->
+  eff_ret eff <> errno_ret EFAULT ->
+  m_halted m' = None ->
+  materialize_model_accesses m' (syscall_effect_accesses eff) <> None.
+Proof.
+  intros ms m fn n eff m' evs Hh Hsvc Hn Hacc Hfn Hno Hspec Hef Hh' Hmat.
+  apply Hn. split; [exact Hh |]. left. split; [exact Hsvc |]. right.
+  split; [exact Hacc |].
+  exists fn, n, eff, m', evs.
+  repeat split; assumption.
+Qed.
+
+(* [comment removed for export] *)
+Lemma vdso_alloc_false : forall ms m fn n,
+  Vdso.vdso_fn_sysno fn = Some n ->
+  alloc_budget_refused_b (sys_input segs ms (Z_to_bv 64 n)) m = false.
+Proof.
+  intros ms m fn n H. destruct fn; cbn in H; try discriminate H;
+    injection H as <-; reflexivity.
+Qed.
+
+Lemma acc_unmod_sl : forall ms m,
+  mi_account_step segs ms (sl L m) = MachineUnmodeled <->
+  mi_account_step segs ms m = MachineUnmodeled.
+Proof.
+  intros ms m. unfold mi_account_step.
+  destruct (RiscvSemantics.step_accesses segs ms) as [r | |].
+  - split; intro H;
+      [ destruct (materialize_model_accesses (sl L m) (@accessed_ranges _ r))
+      | destruct (materialize_model_accesses m (@accessed_ranges _ r)) ];
+      discriminate H.
+  - split; intro H; discriminate H.
+  - split; intro H; reflexivity.
+Qed.
+
+Lemma vdso_unmod_sl_fwd : forall ms m fn,
+  Inv m -> L <= mlim m ->
+  vdso_call_unmodeled segs ms (sl L m) fn -> vdso_call_unmodeled segs ms m fn.
+Proof.
+  intros ms m fn HF HL Hun. unfold vdso_call_unmodeled in Hun |- *.
+  destruct Hun as [H | [(n & Hn & Hs) | (n & eff & mL & evs & Hn & Hs & Hx)]].
+  - left. exact H.
+  - right. left. exists n. split; [exact Hn |].
+    destruct (ARM _ m HF HL (vdso_alloc_false ms (sl L m) fn n Hn)) as (_ & _ & A3).
+    exact (proj1 A3 Hs).
+  - right. right.
+    destruct (ARM _ m HF HL (vdso_alloc_false ms (sl L m) fn n Hn)) as (A1 & _ & _).
+    destruct (A1 _ _ _ Hs) as (m' & Hs' & -> & _).
+    exists n, eff, m', evs. split; [exact Hn |]. split; [exact Hs' | exact Hx].
+Qed.
+
+Lemma vdso_unmod_sl_bwd : forall ms m fn,
+  Inv m -> L <= mlim m ->
+  vdso_call_unmodeled segs ms m fn -> vdso_call_unmodeled segs ms (sl L m) fn.
+Proof.
+  intros ms m fn HF HL Hun. unfold vdso_call_unmodeled in Hun |- *.
+  destruct Hun as [H | [(n & Hn & Hs) | (n & eff & m' & evs & Hn & Hs & Hx)]].
+  - left. exact H.
+  - right. left. exists n. split; [exact Hn |].
+    destruct (ARM _ m HF HL (vdso_alloc_false ms (sl L m) fn n Hn)) as (_ & _ & A3).
+    exact (proj2 A3 Hs).
+  - right. right.
+    destruct (ARM _ m HF HL (vdso_alloc_false ms (sl L m) fn n Hn)) as (_ & A2 & _).
+    destruct (A2 _ _ _ Hs) as [HsL _].
+    exists n, eff, (sl L m'), evs. split; [exact Hn |]. split; [exact HsL | exact Hx].
 Qed.
 
 (* [comment removed for export] *)
@@ -133,8 +208,51 @@ Proof.
     destruct (RiscvSemantics.step_accesses segs ms) as [report | |] eqn:Hstep; try discriminate.
     + destruct (materialize_model_accesses (sl L m) (@accessed_ranges _ report)); discriminate.
     + exists SError. split; [| split; [reflexivity | intros c' E; discriminate E]].
-      apply sstep_cfg_instr_unmodeled; [assumption | assumption |].
+      apply sstep_cfg_instr_unmodeled; [assumption | assumption | | assumption].
       unfold mi_account_step. rewrite Hstep. reflexivity.
+  - (* vdso_call *)
+    match goal with
+    | Hacc : mi_account_step segs ms (sl L m) = MachineUnmodeled,
+      Hfn : vdso_entry_fn segs (ms_pc ms) = Some ?fn,
+      Hno : vdso_fn_sysno ?fn = Some ?n,
+      Hspec : syscall_spec _ _ (Ok ?ef ?mL ?ev),
+      Hmat : materialize_model_accesses _ _ = Some ?mL2,
+      Hh : m_halted (sl L m) = None, Hh' : m_halted ?mL = None,
+      Hef : eff_ret ?ef <> _, Hsvc : ms_svc_pending ms = None |- _ =>
+        pose proof (vdso_alloc_false ms (sl L m) fn n Hno) as Hb;
+        destruct (ARM _ m HF HL Hb) as (A1 & _ & _);
+        destruct (A1 _ _ _ Hspec) as (m' & Hspec' & E1 & Hlim');
+        subst mL;
+        assert (HL' : L <= mlim m') by (rewrite Hlim'; exact HL);
+        destruct (materialize_sl_fwd L m' _ _ HL' Hmat) as (m'' & Hmat' & E2 & Hlim'');
+        subst mL2;
+        eexists; split;
+        [ eapply sstep_cfg_vdso_call;
+          [ exact Hh | exact Hsvc | apply acc_unmod_sl; exact Hacc | exact Hfn | exact Hno
+          | exact Hspec' | exact Hef | exact Hh' | exact Hmat' ]
+        | split;
+          [ reflexivity
+          | intros c' E; injection E as <-; cbn [cfg_model]; split;
+            [ change (mlim m'' = mlim m); rewrite Hlim''; exact Hlim'
+            | apply INV_VDSO; exact (INV_MAT _ _ _ Hmat' (INV_SYS _ _ _ _ _ Hspec' HF)) ] ] ]
+    end.
+  - (* vdso_materialization_fault *)
+    exfalso.
+    match goal with
+    | Hacc : mi_account_step segs ms (sl L m) = MachineUnmodeled,
+      Hfn : vdso_entry_fn segs (ms_pc ms) = Some ?fn,
+      Hno : vdso_fn_sysno ?fn = Some ?n,
+      Hspec : syscall_spec _ _ (Ok ?ef ?mL ?ev),
+      Hmat : materialize_model_accesses _ _ = None,
+      Hh : m_halted (sl L m) = None, Hh' : m_halted ?mL = None,
+      Hef : eff_ret ?ef <> _, Hsvc : ms_svc_pending ms = None |- _ =>
+        exact (not_refused_vdso ms (sl L m) fn n ef mL ev Hh Hsvc Hn Hacc Hfn Hno Hspec Hef Hh' Hmat)
+    end.
+  - (* vdso_unmodeled *)
+    exists SError. split; [| split; [reflexivity | intros c' E; discriminate E]].
+    eapply sstep_cfg_vdso_unmodeled;
+      [ assumption | assumption | apply acc_unmod_sl; assumption | eassumption
+      | apply vdso_unmod_sl_fwd; [exact HF | exact HL | eassumption] ].
   - (* [comment removed for export] *)
     match goal with
     | Hsvc : ms_svc_pending ms = Some ?x, Hspec : syscall_spec _ _ (Ok ?ef ?mL ?ev),
@@ -210,12 +328,44 @@ Lemma sstep_sl_progress : forall c e X,
 Proof.
   intros [ms m] e X HF HL Hn Hss. unfold slc in *. cbn [cfg_ms cfg_model] in *.
   assert (INSTR : m_halted m = None -> ms_svc_pending ms = None ->
+                  (mi_account_step segs ms m = MachineUnmodeled -> vdso_entry_fn segs (ms_pc ms) = None) ->
                   exists e' X', sstep segs (mkCfg ms (sl L m)) e' X').
-  { intros Hh Hsvc.
+  { intros Hh Hsvc Hnv.
     destruct (mi_account_step segs ms (sl L m)) as [[ms' m'] | |] eqn:E.
     - exists [], (SNext (mkCfg ms' m')). apply sstep_instr; assumption.
     - exists [], SError. apply sstep_instr_fault; assumption.
-    - exists [], SError. apply sstep_instr_unmodeled; assumption. }
+    - exists [], SError. apply sstep_instr_unmodeled; try assumption.
+      apply Hnv. apply acc_unmod_sl. exact E. }
+  (* The vDSO entry arms (08b1429): the call's outcome on [m] moves to [sl L m] by [ARM]. *)
+  assert (VDSO : forall fn, m_halted m = None -> ms_svc_pending ms = None ->
+                  mi_account_step segs ms m = MachineUnmodeled ->
+                  vdso_entry_fn segs (ms_pc ms) = Some fn ->
+                  (vdso_call_unmodeled segs ms m fn \/
+                   exists n eff m' evs, vdso_fn_sysno fn = Some n /\
+                     syscall_spec (sys_input segs ms (Z_to_bv 64 n)) m (Ok eff m' evs) /\
+                     eff_ret eff <> errno_ret EFAULT /\ m_halted m' = None) ->
+                  exists e' X', sstep segs (mkCfg ms (sl L m)) e' X').
+  { intros fn Hh Hsvc Hacc Hfn Hc.
+    assert (HaccL : mi_account_step segs ms (sl L m) = MachineUnmodeled)
+      by (apply acc_unmod_sl; exact Hacc).
+    assert (HhL : m_halted (sl L m) = None) by exact Hh.
+    destruct Hc as [Hu | (n & eff & m' & evs & Hno & Hspec & Hef & Hh')].
+    - exists [], SError. eapply sstep_vdso_unmodeled; try eassumption.
+      destruct Hu as [Hu | [(n & Hno & Hspec) | (n & eff & m' & evs & Hno & Hspec & Hor)]].
+      + left; exact Hu.
+      + right; left. exists n. split; [exact Hno |].
+        destruct (ARM _ m HF HL (vdso_alloc_false ms (sl L m) fn n Hno)) as (_ & _ & A3).
+        apply A3; exact Hspec.
+      + right; right.
+        destruct (ARM _ m HF HL (vdso_alloc_false ms (sl L m) fn n Hno)) as (_ & A2 & _).
+        destruct (A2 _ _ _ Hspec) as [HspecL _].
+        exists n, eff, (sl L m'), evs. split; [exact Hno |]. split; [exact HspecL |]. exact Hor.
+    - destruct (ARM _ m HF HL (vdso_alloc_false ms (sl L m) fn n Hno)) as (_ & A2 & _).
+      destruct (A2 _ _ _ Hspec) as [HspecL _].
+      assert (HhL' : m_halted (sl L m') = None) by exact Hh'.
+      destruct (materialize_model_accesses (sl L m') (syscall_effect_accesses eff)) as [m'' |] eqn:Hmat.
+      + eexists _, _. eapply sstep_vdso_call; eassumption.
+      + eexists _, _. eapply sstep_vdso_materialization_fault; eassumption. }
   assert (SYS : forall x8 eff m' evs, m_halted m = None -> ms_svc_pending ms = Some x8 ->
                   syscall_spec (sys_input segs ms x8) m (Ok eff m' evs) ->
                   exists e' X', sstep segs (mkCfg ms (sl L m)) e' X').
@@ -231,8 +381,10 @@ Proof.
     { eexists _, _. eapply sstep_syscall; eassumption. }
     { eexists _, _. eapply sstep_syscall_materialization_fault; eassumption. } }
   inversion Hss; subst; clear Hss;
-    try (apply INSTR; assumption);
-    try (eapply SYS; eassumption).
+    try (apply INSTR; [assumption | assumption | intros HU; first [congruence | assumption]]);
+    try (eapply SYS; eassumption);
+    try (eapply VDSO; [eassumption .. | left; eassumption]);
+    try (eapply VDSO; [eassumption .. | right; do 4 eexists; repeat split; eassumption]).
   (* [comment removed for export] *)
   match goal with
   | Hsvc : ms_svc_pending ms = Some ?x, Hspec : syscall_spec _ _ Unmodeled |- _ =>

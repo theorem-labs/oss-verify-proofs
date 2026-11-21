@@ -1,8 +1,8 @@
-(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/B/Prog/LeafCgKit.v at recipes commit 88154566652a310ff96f54a5442e5c73fdaad090 (a recipes commit newer than the unit's base 25e3d17bdb50) for reac-repacer/fuzz_uci; comments that named work branches and lanes reworded without them; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
+(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/B/Prog/LeafCgKit.v at recipes (a recipes commit newer than the unit's base) for reac-repacer/fuzz_uci; comments that named work branches and lanes reworded without them; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
 (* LeafCgKit: the ONE shared interface for decode image B's program-leaf translations (footprint walk ->
    cgif_file leaf form). Port of fuzz_decode to the released cgif_file_fuzzer structure (the port recipe,
    sec. 3).
-   * cgif names are Section Variables named exactly as in cgif_file_fuzzer (at c8557374ad2e,
+   * cgif names are Section Variables named exactly as in cgif_file_fuzzer (
      proofs/cgif/cgif_file_fuzzer/lib/<file>:<line> in the comments); when the relocated core lands they become
      the core's names (a rename).
    * Small cgif definitions are copied verbatim (marked), at segs := rsegs and the unit's asyms B.
@@ -116,7 +116,7 @@ Definition AR_frame_stmt : Prop :=
 (* YG0d.v AR_stack_law. *)
 Definition AR_stack_stmt : Prop :=
   forall ly S W mem md a, AR ly S W mem md -> ly_stk_lo ly <= a < ly_stk_hi ly -> ~ aowned ly S a.
-(* A/AD1y.v:139 AR_same_but_materialized. *)
+(* A/AD1y.v:140 AR_same_but_materialized. *)
 Definition AR_sbm_stmt : Prop :=
   forall ly S W mem md md', AR ly S W mem md -> same_but_materialized md md' -> AR ly S W mem md'.
 (* From YG0n.v:17's body (aview H mem a = option_map bv_unsigned (mbyte segs (mrestrict H mem) a)). *)

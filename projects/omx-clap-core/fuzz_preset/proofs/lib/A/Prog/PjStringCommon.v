@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the IMAGE-FREE pieces of pj_string's walks (fuzz_preset), ONE copy for image A
    (lib/A/Prog, slice S6) and image B (lib/B/Prog/pj_string_*.v): the node bytes pjs_bytes, the two tree predicates
    the text's post asks of them, and what fuzz_strdup's post keeps. Generic over the program listing {L} and its image
    facts {PA : PAImg L}; no lib/B import. proves no function (kind: glue lemmas).
-   MOVED, statements unchanged, from h-rw-man-5's image-B lane at origin/cold/h-rw-man-5-b-pjstring eb3168fa754
+   MOVED, statements unchanged, from h-rw-man-5's image-B lane
    (lib/B/Prog/...; blobs pj_string_defs.v 5fceaf024172, pj_string_glue.v 86013eff7ee9, pj_string_seg_call.v
    1b23b24e9410):
-     pjs_bytes (Definition)  pj_string_defs.v:190-191
+     pjs_bytes (Definition)  pj_string_defs.v:191-192
      zc (Ltac)               pj_string_glue.v:40
      pjs_bytes_len           pj_string_glue.v:44-45
      pjs_bytes_0             pj_string_glue.v:46-47
@@ -19,23 +20,23 @@
      pjs_hdr                 pj_string_glue.v:88-117
      pjs_node_str            pj_string_glue.v:120-132
      pjs_fd0                 pj_string_glue.v:135-143
-     pjs1_app_disj           pj_string_seg_call.v:81-90
-     pjs1_fsb8               pj_string_seg_call.v:93-102
-     pjs1_val_keep           pj_string_seg_call.v:145-152
-     pjs1_garr8_keep         pj_string_seg_call.v:153-159
-     pjs1_hblock_kept        pj_string_seg_call.v:162-171
-     pjs1_heads              pj_string_seg_call.v:174-181
-     pjs1_blocks             pj_string_seg_call.v:184-201
+     pjs1_app_disj           pj_string_seg_call.v:82-91
+     pjs1_fsb8               pj_string_seg_call.v:94-103
+     pjs1_val_keep           pj_string_seg_call.v:146-153
+     pjs1_garr8_keep         pj_string_seg_call.v:154-160
+     pjs1_hblock_kept        pj_string_seg_call.v:163-172
+     pjs1_heads              pj_string_seg_call.v:175-182
+     pjs1_blocks             pj_string_seg_call.v:185-202
    MOVED SECOND, statements and proofs unchanged, from h-rw-man-5's segment C2 (lib/B/Prog/pj_string_seg_ep.v blob
-   e3ec811117c7, byte-identical at origin/cold/h-rw-man-5-b-pjstring-rb 09795a156cae and b251eef6c02):
-     PJS2_A0 (Definition)    pj_string_seg_ep.v:70-71
-     pjs2_a0                 pj_string_seg_ep.v:77-86
-     pjs2_blocks_kept        pj_string_seg_ep.v:200-208
-     pjs2_hull_bounds        pj_string_seg_ep.v:210-224
-     pjs2_post_keep          pj_string_seg_ep.v:226-267
-     pjs2_mbyte_word         pj_string_seg_ep.v:269-271 (pjs2_full uses it)
-     pjs2_bytes_final        pj_string_seg_ep.v:273-306
-     pjs2_full               pj_string_seg_ep.v:308-327
+   e3ec811117c7, byte-identical):
+     PJS2_A0 (Definition)    pj_string_seg_ep.v:71-72
+     pjs2_a0                 pj_string_seg_ep.v:78-87
+     pjs2_blocks_kept        pj_string_seg_ep.v:201-209
+     pjs2_hull_bounds        pj_string_seg_ep.v:211-225
+     pjs2_post_keep          pj_string_seg_ep.v:227-268
+     pjs2_mbyte_word         pj_string_seg_ep.v:270-272 (pjs2_full uses it)
+     pjs2_bytes_final        pj_string_seg_ep.v:274-307
+     pjs2_full               pj_string_seg_ep.v:309-328
    Section tail: image B's PA := PI_prog_B and SEGS / PST over it become {L} {PA} / pa_segs and {PI : PrhImg}'s
    prh_pst; the statements' text is unchanged. B is the leading explicit argument of pjs2_blocks_kept and
    pjs2_post_keep, as in the source (its Section ep's B).
@@ -277,7 +278,7 @@ Qed.
 End call.
 
 (* ======== the tail of pj_string: MOVED (statements and proofs unchanged) from h-rw-man-5's image-B segment C2,
-   lib/B/Prog/pj_string_seg_ep.v (blob e3ec811117c7, origin/cold/h-rw-man-5-b-pjstring-rb 09795a156cae = b251eef6c02) ======== *)
+   lib/B/Prog/pj_string_seg_ep.v (blob e3ec811117c7, =) ======== *)
 (* a0 after `snez a1, a0; addi a1, a1, -1; mv a0, a1`, as the engine leaves it *)
 Definition PJS2_A0 : sv := SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_SLTU (SLit 0) (SOff 10 0)) (SLit (-1))) (SLit 0).
 

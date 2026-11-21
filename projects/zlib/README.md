@@ -3,32 +3,35 @@
 
 [zlib.net](https://www.zlib.net) · OSS-Fuzz: [projects/zlib](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/zlib)
 
-**Status: available.** 10 of OSS-Fuzz's 11 fuzz targets have statements. 40 binaries, 16 MB. 146 statements: 2 proved, 0 known false, 0 suspected false, 0 blocked by the model, 144 open.
+**Status: available.** 10 of OSS-Fuzz's 11 fuzz targets have statements. 40 binaries, 16 MB. 384 statements: 109 proved, 0 known false, 0 suspected false, 0 blocked by the model, 275 open.
 
-Built from zlib 1.3.1 (commit `51b7f2ab`).
+Built from zlib 1.4 (commit `99623ef7`) with 8 patches, listed under [How these binaries were built](#how-these-binaries-were-built).
 
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [checksum_fuzzer](checksum_fuzzer/) | Checks 6 properties (listed below); the first, an algebraic law: CRC-32 combine law, per chunk (chunk size = data[0], min 1): crc32_combine_op(crc_so_far, crc32(0,chunk), crc32_combine_gen(chunk_len)) must equal crc32_z(crc_so_far, chunk). | 6 checks (algebraic, differential; 2 weak; all confirmed in the binary) | 15, 2 proved |
-| [compress_fuzzer](compress_fuzzer/) | check_decompress: uncompress of the input behind a synthesized 2-byte zlib header; result ignored. | none | 13 |
-| [example_dict_fuzzer](example_dict_fuzzer/) | Checks 2 properties (listed below); the first, a round trip: deflateInit2 (level/windowBits/memLevel/strategy from data[0]) with a preset dictionary = first data[0] bytes of the input, then inflate supplying the dictionary on Z_NEED_DICT; output memcmp-compared with the input. A mismatch only prints and returns 0. | 2 checks (api-contract, roundtrip; 1 confirmed in the binary) | 13 |
-| [example_flush_fuzzer](example_flush_fuzzer/) | Checks one property, an API contract: deflate 3 bytes with Z_FULL_FLUSH, corrupt compressed byte 3, deflate the rest; inflateSync must succeed and the final inflate(Z_FINISH) must return Z_DATA_ERROR or Z_STREAM_END. Return codes only, no data comparison; failures print + return 0. | 1 check (api-contract; 0 confirmed in the binary) | 15 |
-| [example_large_fuzzer](example_large_fuzzer/) | Checks 2 properties (listed below); the first, an invariant: Deflate a zero buffer, then already-compressed bytes at level 0, then the zero buffer again; inflate total_out must equal exactly 2*uncomprLen + diff. Length only; failure prints + returns 0. | 2 checks (api-contract, invariant; 0 confirmed in the binary) | 15 |
-| [example_small_fuzzer](example_small_fuzzer/) | Checks one property, a round trip: deflate then inflate with 1-byte in/out buffers; output memcmp-compared with the input; a mismatch prints "bad inflate" and returns 0. | 1 check (roundtrip; 0 confirmed in the binary) | 15 |
-| [gzio_fuzzer](gzio_fuzzer/) | gzopen on a mkstemp file with a fuzzer-chosen mode string, then two fuzzer-chosen gz* operations (put/get/read/write/seek/printf/flush/params/...); an error return jumps to exit and returns -1. Nothing compared. | none | 15 |
-| [zlib_uncompress2_fuzzer](zlib_uncompress2_fuzzer/) | uncompress2 of the whole input into a 256 KiB static buffer; return code ignored. | none | 15 |
-| [zlib_uncompress3_fuzzer](zlib_uncompress3_fuzzer/) | uncompress2 with an output length from the first 3 bytes (clamped to 256 KiB); return code ignored. | none | 15 |
-| [zlib_uncompress_fuzzer](zlib_uncompress_fuzzer/) | uncompress into a 256 KiB static buffer; the return code is tested but both branches return 0. | none | 15 |
+| [checksum_fuzzer](checksum_fuzzer/) | Checks 6 properties (listed below); the first, an algebraic law: CRC-32 combine law, per chunk (chunk size = data[0], min 1): crc32_combine_op(crc_so_far, crc32(0,chunk), crc32_combine_gen(chunk_len)) must equal crc32_z(crc_so_far, chunk). | 6 checks (algebraic, differential; 2 weak; all confirmed in the binary) | 40, 27 proved |
+| [compress_fuzzer](compress_fuzzer/) | check_decompress: uncompress of the input behind a synthesized 2-byte zlib header; result ignored. | none | 38, 1 proved |
+| [example_dict_fuzzer](example_dict_fuzzer/) | Checks 2 properties (listed below); the first, a round trip: deflateInit2 (level/windowBits/memLevel/strategy from data[0]) with a preset dictionary = first data[0] bytes of the input, then inflate supplying the dictionary on Z_NEED_DICT; output memcmp-compared with the input. A mismatch only prints and returns 0. | 2 checks (api-contract, roundtrip; 1 confirmed in the binary) | 38 |
+| [example_flush_fuzzer](example_flush_fuzzer/) | Checks one property, an API contract: deflate 3 bytes with Z_FULL_FLUSH, corrupt compressed byte 3, deflate the rest; inflateSync must succeed and the final inflate(Z_FINISH) must return Z_DATA_ERROR or Z_STREAM_END. Return codes only, no data comparison; failures print + return 0. | 1 check (api-contract; 0 confirmed in the binary) | 40, 3 proved |
+| [example_large_fuzzer](example_large_fuzzer/) | Checks 2 properties (listed below); the first, an invariant: Deflate a zero buffer, then already-compressed bytes at level 0, then the zero buffer again; inflate total_out must equal exactly 2*uncomprLen + diff. Length only; failure prints + returns 0. | 2 checks (api-contract, invariant; 0 confirmed in the binary) | 40, 8 proved |
+| [example_small_fuzzer](example_small_fuzzer/) | Checks one property, a round trip: deflate then inflate with 1-byte in/out buffers; output memcmp-compared with the input; a mismatch prints "bad inflate" and returns 0. | 1 check (roundtrip; 0 confirmed in the binary) | 40, 2 proved |
+| [gzio_fuzzer](gzio_fuzzer/) | gzopen on a mkstemp file with a fuzzer-chosen mode string, then two fuzzer-chosen gz* operations (put/get/read/write/seek/printf/flush/params/...); an error return jumps to exit and returns -1. Nothing compared. | none | 28 |
+| [zlib_uncompress2_fuzzer](zlib_uncompress2_fuzzer/) | uncompress2 of the whole input into a 256 KiB static buffer; return code ignored. | none | 40, 21 proved |
+| [zlib_uncompress3_fuzzer](zlib_uncompress3_fuzzer/) | uncompress2 with an output length from the first 3 bytes (clamped to 256 KiB); return code ignored. | none | 40, 22 proved |
+| [zlib_uncompress_fuzzer](zlib_uncompress_fuzzer/) | uncompress into a 256 KiB static buffer; the return code is tested but both branches return 0. | none | 40, 25 proved |
 
 Not included: **api-driver** (held from this release); **minigzip_fuzzer** (not built yet).
 
 ## What the statements say, for zlib
-- **`<build>_halts`**: on every input on which the build is never refused memory for exceeding 16 GiB (a premise: an input that needs more is not covered), and when the environment refuses nothing it is not forced to, every execution exits with status 0 or 2, without crashing, failing an assertion, hanging or tripping its sanitizer.
+- **`<build>_halts`**: on every input on which the build is never refused memory for exceeding 16 GiB (a premise: an input that needs more is not covered), and when the environment refuses nothing it is not forced to, every execution exits with any status (status 0 or 2 for checksum_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, compress_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, example_dict_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, example_flush_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, example_large_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, example_small_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, gzio_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, zlib_uncompress2_fuzzer's plain, ASan, UBSan and ASan+UBSan builds, zlib_uncompress3_fuzzer's plain, ASan, UBSan and ASan+UBSan builds and zlib_uncompress_fuzzer's plain, ASan, UBSan and ASan+UBSan builds), without crashing, failing an assertion, hanging or tripping its sanitizer.
 - **`<build>_halts_may_fail`**: with no memory premise, and even if any request is refused at any point, every execution exits, with any status. Stated for the plain and UBSan builds only.
 - **`<build>_agrees`**: on every input on which the plain build is never refused memory for exceeding its budget (a premise), neither build reaches an error, and the two have the same set of observable behaviours: every sequence of writes and exit status one can show, the other can too. A sanitizer report aborts, so this rules out every error the sanitizer build's configuration detects. It does not rule out a run that never ends; only a halts statement does.
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
+- **`<build>_ca_total`, `<build>_cb_total`**: a published riscv64 program of the harness, its classifier A or B for the pair, answers yes (exit 0), no (exit 1) or maybe (exit 2) on every valid finite input; a crash or a hang is not an answer.
+- **`<build>_ca_sound`, `<build>_cb_sound`**: that classifier is sound: a yes means the two builds without the patches agree on the input (A), or each build agrees with its build without the patches (B), and where they do it never says no. A harness with no patches names its own builds.
+- **`<build>_bound_good`, `<build>_bound_diff` b**: for inputs drawn from the harness's `Distribution.v`, that classifier does not answer yes with probability at most *b*.
 
 The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
 - `checksum_fuzzer`: CRC-32 combine law, per chunk (chunk size = data[0], min 1): crc32_combine_op(crc_so_far, crc32(0,chunk), crc32_combine_gen(chunk_len)) must equal crc32_z(crc_so_far, chunk); chunked crc32_z over the whole input (chunk size data[0]) must equal the one-shot crc32(0, data, len); crc32_combine(crc1,crc2,len)==crc32_combine(crc1,crc1,len) and crc32_combine_op(crc1,crc2,op)==crc32_combine_op(crc2,crc1,op): trivially true, since crc1 == crc2 was just asserted; crc32_combine(crc1, crc2, len) must equal crc32_combine_op(crc2, crc1, crc32_combine_gen(len)): the two combine APIs agree (operands swapped, but equal by the previous assert); chunked adler32_z over the input must equal the one-shot adler32(1, data, len); adler32_combine(adler1, adler2, len) == adler32_combine(adler1, adler1, len): trivially true, since adler1 == adler2 was just asserted.
@@ -40,19 +43,134 @@ None known.
     ./oft fetch zlib
     ./oft verify-sha zlib
 
-By hand: download `zlib-bin.tar.zst` from release [v2026.10.0](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0), unpack it into `projects/zlib/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
+By hand: download `zlib-bin.tar.zst` from release [v2026.11.3](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3), unpack it into `projects/zlib/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
 
 ## How these binaries were built
-- Library: [madler/zlib](https://github.com/madler/zlib) at `51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf` (1.3.1), built with CMake
-- Harnesses: unmodified
+- Library: [madler/zlib](https://github.com/madler/zlib) at `99623ef7097352da7993ba614161fd6a311e046e` (1.4), built with CMake:
+  - [*zlib-checksum-fuzzer-0001-inflate-memerr-totals*](../../projects/zlib/patches/zlib-checksum_fuzzer.0001-inflate-memerr-totals.patch): The public inflate fix of zlib pull request 1390, in the zlib tree that every fuzz target except gzio_fuzzer links ([reported upstream](https://github.com/madler/zlib/pull/1390))
+  - [*zlib-gzio-fuzzer-0001-inflate-memerr-totals*](../../projects/zlib/patches/zlib-gzio_fuzzer.0001-inflate-memerr-totals.patch): The public inflate fix of zlib pull request 1390, in the zlib tree of gzio_fuzzer ([reported upstream](https://github.com/madler/zlib/pull/1390))
+  - [*zlib-gzio-fuzzer-0002-gzseek-after-pushback*](../../projects/zlib/patches/zlib-gzio_fuzzer.0002-gzseek-after-pushback.patch): The public gzseek fix of zlib pull request 1361 (gzseek after a gzungetc at the start of a file), in the zlib tree of gzio_fuzzer ([reported upstream](https://github.com/madler/zlib/pull/1361))
+  - [*zlib-compress-fuzzer-0001-oss-fuzz-16582*](../../projects/zlib/patches/zlib-compress_fuzzer.0001-oss-fuzz-16582.patch): A fix to OSS-Fuzz's compress_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request 16582 ([fixed upstream](https://github.com/google/oss-fuzz/pull/16582))
+  - [*zlib-gzio-fuzzer-0003-oss-fuzz-16316*](../../projects/zlib/patches/zlib-gzio_fuzzer.0003-oss-fuzz-16316.patch): A fix to OSS-Fuzz's gzio_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request 16316 ([reported upstream](https://github.com/google/oss-fuzz/pull/16316))
+  - [*zlib-gzio-fuzzer-0004-oss-fuzz-16411*](../../projects/zlib/patches/zlib-gzio_fuzzer.0004-oss-fuzz-16411.patch): A fix to OSS-Fuzz's gzio_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request 16411 ([reported upstream](https://github.com/google/oss-fuzz/pull/16411))
+  - [*zlib-minigzip-fuzzer-0002-oss-fuzz-16428*](../../projects/zlib/patches/zlib-minigzip_fuzzer.0002-oss-fuzz-16428.patch): A fix to OSS-Fuzz's minigzip_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request 16428 ([reported upstream](https://github.com/google/oss-fuzz/pull/16428))
+  - [*zlib-minigzip-fuzzer-0003-oss-fuzz-16429*](../../projects/zlib/patches/zlib-minigzip_fuzzer.0003-oss-fuzz-16429.patch): A fix to OSS-Fuzz's minigzip_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request 16429 ([reported upstream](https://github.com/google/oss-fuzz/pull/16429))
+- Harnesses: the harness files are modified in `compress_fuzzer` and `gzio_fuzzer` (see each harness page); the others are unmodified
 - Everywhere: static riscv64 compiled for RV64G, musl, clang 20.1.8 with `-Os -g`, and a small driver that reads the input file ([docs/running.md](../../docs/running.md)). The sanitizer flags and options are in [docs/building.md](../../docs/building.md). Each harness page lists what else its builds change, and which of its checks were confirmed in the binaries.
-- Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. A binary whose SHA-256 differs after a rebuild with it is a bug: please open an issue.
+- Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. The OSS Verify port `projects/zlib` at `23e806fe4e4217abcc7fab4419f665f5277a602c` in `theorem-labs/oss-verify` built every binary of this project instead of a build recipe. Its archive [`zlib-port.tar.zst`](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3-src) holds the port's checker, which builds them again on this image with Docker: it fetches the project's source trees over the network, at the commits and SHA-256s the port pins, and does not read `zlib-src.tar.zst` ([docs/reproducing.md](../../docs/reproducing.md)).
 
 ## Proofs
 | statement | result |
 |---|---|
+| [zlib/checksum_fuzzer/asan_agrees_alloc_forced_only](checksum_fuzzer/proofs/asan_agrees_alloc_forced_only) | proved |
+| [zlib/checksum_fuzzer/asan_bound_diff](checksum_fuzzer/proofs/asan_bound_diff) | proved |
+| [zlib/checksum_fuzzer/asan_bound_good](checksum_fuzzer/proofs/asan_bound_good) | proved |
+| [zlib/checksum_fuzzer/asan_ca_sound](checksum_fuzzer/proofs/asan_ca_sound) | proved |
+| [zlib/checksum_fuzzer/asan_ca_total](checksum_fuzzer/proofs/asan_ca_total) | proved |
+| [zlib/checksum_fuzzer/asan_cb_sound](checksum_fuzzer/proofs/asan_cb_sound) | proved |
+| [zlib/checksum_fuzzer/asan_cb_total](checksum_fuzzer/proofs/asan_cb_total) | proved |
+| [zlib/checksum_fuzzer/asan_halts_any_exit](checksum_fuzzer/proofs/asan_halts_any_exit) | proved |
+| [zlib/checksum_fuzzer/asan_ubsan_agrees_alloc_forced_only](checksum_fuzzer/proofs/asan_ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/checksum_fuzzer/asan_ubsan_bound_diff](checksum_fuzzer/proofs/asan_ubsan_bound_diff) | proved |
+| [zlib/checksum_fuzzer/asan_ubsan_bound_good](checksum_fuzzer/proofs/asan_ubsan_bound_good) | proved |
+| [zlib/checksum_fuzzer/asan_ubsan_ca_sound](checksum_fuzzer/proofs/asan_ubsan_ca_sound) | proved |
+| [zlib/checksum_fuzzer/asan_ubsan_ca_total](checksum_fuzzer/proofs/asan_ubsan_ca_total) | proved |
+| [zlib/checksum_fuzzer/asan_ubsan_cb_sound](checksum_fuzzer/proofs/asan_ubsan_cb_sound) | proved |
+| [zlib/checksum_fuzzer/asan_ubsan_cb_total](checksum_fuzzer/proofs/asan_ubsan_cb_total) | proved |
+| [zlib/checksum_fuzzer/asan_ubsan_halts_any_exit](checksum_fuzzer/proofs/asan_ubsan_halts_any_exit) | proved |
 | [zlib/checksum_fuzzer/plain_halts](checksum_fuzzer/proofs/plain_halts) | proved |
+| [zlib/checksum_fuzzer/plain_halts_any_exit](checksum_fuzzer/proofs/plain_halts_any_exit) | proved |
 | [zlib/checksum_fuzzer/plain_halts_may_fail](checksum_fuzzer/proofs/plain_halts_may_fail) | proved |
+| [zlib/checksum_fuzzer/ubsan_agrees_alloc_forced_only](checksum_fuzzer/proofs/ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/checksum_fuzzer/ubsan_bound_diff](checksum_fuzzer/proofs/ubsan_bound_diff) | proved |
+| [zlib/checksum_fuzzer/ubsan_bound_good](checksum_fuzzer/proofs/ubsan_bound_good) | proved |
+| [zlib/checksum_fuzzer/ubsan_ca_sound](checksum_fuzzer/proofs/ubsan_ca_sound) | proved |
+| [zlib/checksum_fuzzer/ubsan_ca_total](checksum_fuzzer/proofs/ubsan_ca_total) | proved |
+| [zlib/checksum_fuzzer/ubsan_cb_sound](checksum_fuzzer/proofs/ubsan_cb_sound) | proved |
+| [zlib/checksum_fuzzer/ubsan_cb_total](checksum_fuzzer/proofs/ubsan_cb_total) | proved |
+| [zlib/checksum_fuzzer/ubsan_halts_any_exit](checksum_fuzzer/proofs/ubsan_halts_any_exit) | proved |
+| [zlib/compress_fuzzer/plain_halts_any_exit](compress_fuzzer/proofs/plain_halts_any_exit) | proved |
+| [zlib/example_flush_fuzzer/plain_halts_any_exit](example_flush_fuzzer/proofs/plain_halts_any_exit) | proved |
+| [zlib/example_flush_fuzzer/ubsan_agrees_alloc_forced_only](example_flush_fuzzer/proofs/ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/example_flush_fuzzer/ubsan_halts_any_exit](example_flush_fuzzer/proofs/ubsan_halts_any_exit) | proved |
+| [zlib/example_large_fuzzer/ubsan_agrees_alloc_forced_only](example_large_fuzzer/proofs/ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/example_large_fuzzer/ubsan_bound_diff](example_large_fuzzer/proofs/ubsan_bound_diff) | proved |
+| [zlib/example_large_fuzzer/ubsan_bound_good](example_large_fuzzer/proofs/ubsan_bound_good) | proved |
+| [zlib/example_large_fuzzer/ubsan_ca_sound](example_large_fuzzer/proofs/ubsan_ca_sound) | proved |
+| [zlib/example_large_fuzzer/ubsan_ca_total](example_large_fuzzer/proofs/ubsan_ca_total) | proved |
+| [zlib/example_large_fuzzer/ubsan_cb_sound](example_large_fuzzer/proofs/ubsan_cb_sound) | proved |
+| [zlib/example_large_fuzzer/ubsan_cb_total](example_large_fuzzer/proofs/ubsan_cb_total) | proved |
+| [zlib/example_large_fuzzer/ubsan_halts_any_exit](example_large_fuzzer/proofs/ubsan_halts_any_exit) | proved |
+| [zlib/example_small_fuzzer/plain_halts_any_exit](example_small_fuzzer/proofs/plain_halts_any_exit) | proved |
+| [zlib/example_small_fuzzer/ubsan_halts_any_exit](example_small_fuzzer/proofs/ubsan_halts_any_exit) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_agrees_alloc_forced_only](zlib_uncompress2_fuzzer/proofs/asan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_bound_diff](zlib_uncompress2_fuzzer/proofs/asan_bound_diff) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_bound_good](zlib_uncompress2_fuzzer/proofs/asan_bound_good) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_ca_total](zlib_uncompress2_fuzzer/proofs/asan_ca_total) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_cb_total](zlib_uncompress2_fuzzer/proofs/asan_cb_total) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_halts_any_exit](zlib_uncompress2_fuzzer/proofs/asan_halts_any_exit) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_ubsan_agrees_alloc_forced_only](zlib_uncompress2_fuzzer/proofs/asan_ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_ubsan_bound_diff](zlib_uncompress2_fuzzer/proofs/asan_ubsan_bound_diff) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_ubsan_bound_good](zlib_uncompress2_fuzzer/proofs/asan_ubsan_bound_good) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_ubsan_ca_total](zlib_uncompress2_fuzzer/proofs/asan_ubsan_ca_total) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_ubsan_cb_total](zlib_uncompress2_fuzzer/proofs/asan_ubsan_cb_total) | proved |
+| [zlib/zlib_uncompress2_fuzzer/asan_ubsan_halts_any_exit](zlib_uncompress2_fuzzer/proofs/asan_ubsan_halts_any_exit) | proved |
+| [zlib/zlib_uncompress2_fuzzer/plain_halts_any_exit](zlib_uncompress2_fuzzer/proofs/plain_halts_any_exit) | proved |
+| [zlib/zlib_uncompress2_fuzzer/ubsan_agrees_alloc_forced_only](zlib_uncompress2_fuzzer/proofs/ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress2_fuzzer/ubsan_bound_diff](zlib_uncompress2_fuzzer/proofs/ubsan_bound_diff) | proved |
+| [zlib/zlib_uncompress2_fuzzer/ubsan_bound_good](zlib_uncompress2_fuzzer/proofs/ubsan_bound_good) | proved |
+| [zlib/zlib_uncompress2_fuzzer/ubsan_ca_sound](zlib_uncompress2_fuzzer/proofs/ubsan_ca_sound) | proved |
+| [zlib/zlib_uncompress2_fuzzer/ubsan_ca_total](zlib_uncompress2_fuzzer/proofs/ubsan_ca_total) | proved |
+| [zlib/zlib_uncompress2_fuzzer/ubsan_cb_sound](zlib_uncompress2_fuzzer/proofs/ubsan_cb_sound) | proved |
+| [zlib/zlib_uncompress2_fuzzer/ubsan_cb_total](zlib_uncompress2_fuzzer/proofs/ubsan_cb_total) | proved |
+| [zlib/zlib_uncompress2_fuzzer/ubsan_halts_any_exit](zlib_uncompress2_fuzzer/proofs/ubsan_halts_any_exit) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_agrees_alloc_forced_only](zlib_uncompress3_fuzzer/proofs/asan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_bound_diff](zlib_uncompress3_fuzzer/proofs/asan_bound_diff) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_bound_good](zlib_uncompress3_fuzzer/proofs/asan_bound_good) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_ca_sound](zlib_uncompress3_fuzzer/proofs/asan_ca_sound) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_ca_total](zlib_uncompress3_fuzzer/proofs/asan_ca_total) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_cb_sound](zlib_uncompress3_fuzzer/proofs/asan_cb_sound) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_cb_total](zlib_uncompress3_fuzzer/proofs/asan_cb_total) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_halts_any_exit](zlib_uncompress3_fuzzer/proofs/asan_halts_any_exit) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_ubsan_agrees_alloc_forced_only](zlib_uncompress3_fuzzer/proofs/asan_ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_ubsan_bound_diff](zlib_uncompress3_fuzzer/proofs/asan_ubsan_bound_diff) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_ubsan_bound_good](zlib_uncompress3_fuzzer/proofs/asan_ubsan_bound_good) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_ubsan_ca_total](zlib_uncompress3_fuzzer/proofs/asan_ubsan_ca_total) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_ubsan_cb_total](zlib_uncompress3_fuzzer/proofs/asan_ubsan_cb_total) | proved |
+| [zlib/zlib_uncompress3_fuzzer/asan_ubsan_halts_any_exit](zlib_uncompress3_fuzzer/proofs/asan_ubsan_halts_any_exit) | proved |
+| [zlib/zlib_uncompress3_fuzzer/plain_halts_any_exit](zlib_uncompress3_fuzzer/proofs/plain_halts_any_exit) | proved |
+| [zlib/zlib_uncompress3_fuzzer/ubsan_agrees_alloc_forced_only](zlib_uncompress3_fuzzer/proofs/ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress3_fuzzer/ubsan_bound_diff](zlib_uncompress3_fuzzer/proofs/ubsan_bound_diff) | proved |
+| [zlib/zlib_uncompress3_fuzzer/ubsan_bound_good](zlib_uncompress3_fuzzer/proofs/ubsan_bound_good) | proved |
+| [zlib/zlib_uncompress3_fuzzer/ubsan_ca_sound](zlib_uncompress3_fuzzer/proofs/ubsan_ca_sound) | proved |
+| [zlib/zlib_uncompress3_fuzzer/ubsan_ca_total](zlib_uncompress3_fuzzer/proofs/ubsan_ca_total) | proved |
+| [zlib/zlib_uncompress3_fuzzer/ubsan_cb_sound](zlib_uncompress3_fuzzer/proofs/ubsan_cb_sound) | proved |
+| [zlib/zlib_uncompress3_fuzzer/ubsan_cb_total](zlib_uncompress3_fuzzer/proofs/ubsan_cb_total) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_agrees_alloc_forced_only](zlib_uncompress_fuzzer/proofs/asan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_bound_diff](zlib_uncompress_fuzzer/proofs/asan_bound_diff) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_bound_good](zlib_uncompress_fuzzer/proofs/asan_bound_good) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ca_sound](zlib_uncompress_fuzzer/proofs/asan_ca_sound) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ca_total](zlib_uncompress_fuzzer/proofs/asan_ca_total) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_cb_sound](zlib_uncompress_fuzzer/proofs/asan_cb_sound) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_cb_total](zlib_uncompress_fuzzer/proofs/asan_cb_total) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_halts_any_exit](zlib_uncompress_fuzzer/proofs/asan_halts_any_exit) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ubsan_agrees_alloc_forced_only](zlib_uncompress_fuzzer/proofs/asan_ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ubsan_bound_diff](zlib_uncompress_fuzzer/proofs/asan_ubsan_bound_diff) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ubsan_bound_good](zlib_uncompress_fuzzer/proofs/asan_ubsan_bound_good) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ubsan_ca_sound](zlib_uncompress_fuzzer/proofs/asan_ubsan_ca_sound) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ubsan_ca_total](zlib_uncompress_fuzzer/proofs/asan_ubsan_ca_total) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ubsan_cb_sound](zlib_uncompress_fuzzer/proofs/asan_ubsan_cb_sound) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ubsan_cb_total](zlib_uncompress_fuzzer/proofs/asan_ubsan_cb_total) | proved |
+| [zlib/zlib_uncompress_fuzzer/asan_ubsan_halts_any_exit](zlib_uncompress_fuzzer/proofs/asan_ubsan_halts_any_exit) | proved |
+| [zlib/zlib_uncompress_fuzzer/plain_halts_any_exit](zlib_uncompress_fuzzer/proofs/plain_halts_any_exit) | proved |
+| [zlib/zlib_uncompress_fuzzer/ubsan_agrees_alloc_forced_only](zlib_uncompress_fuzzer/proofs/ubsan_agrees_alloc_forced_only) | proved |
+| [zlib/zlib_uncompress_fuzzer/ubsan_bound_diff](zlib_uncompress_fuzzer/proofs/ubsan_bound_diff) | proved |
+| [zlib/zlib_uncompress_fuzzer/ubsan_bound_good](zlib_uncompress_fuzzer/proofs/ubsan_bound_good) | proved |
+| [zlib/zlib_uncompress_fuzzer/ubsan_ca_sound](zlib_uncompress_fuzzer/proofs/ubsan_ca_sound) | proved |
+| [zlib/zlib_uncompress_fuzzer/ubsan_ca_total](zlib_uncompress_fuzzer/proofs/ubsan_ca_total) | proved |
+| [zlib/zlib_uncompress_fuzzer/ubsan_cb_sound](zlib_uncompress_fuzzer/proofs/ubsan_cb_sound) | proved |
+| [zlib/zlib_uncompress_fuzzer/ubsan_cb_total](zlib_uncompress_fuzzer/proofs/ubsan_cb_total) | proved |
+| [zlib/zlib_uncompress_fuzzer/ubsan_halts_any_exit](zlib_uncompress_fuzzer/proofs/ubsan_halts_any_exit) | proved |
 
 ## Licence
-zlib is under `Zlib`. Each binary is a combined work of zlib, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `zlib-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `zlib-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches).
+zlib is under `Zlib`. Each binary is a combined work of zlib, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.11.3-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3-src): `zlib-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `zlib-src.MANIFEST.tsv`, which says where the build lays each one down; and [`zlib-port.tar.zst`](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3-src), the port archive at `23e806fe4e4217abcc7fab4419f665f5277a602c` holding its checker, its `infra/` and its `projects/zlib/` files: the build scripts, and the source of the driver linked into these binaries.

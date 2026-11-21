@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwSetup_c.v at cold/port-fm-int 5d8d8a15571, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
-(* lib/A/Prog/TwSetup_c.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), stated over the
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwSetup_c.v, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
+(* lib/A/Prog/TwSetup_c.v (RtStr's port, unchanged), stated over the
    local-shadow TW_ASAN and twoway contract (FMss_TwAsan.v, FMss_twoway_strstr_c.v); only the imports differ. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

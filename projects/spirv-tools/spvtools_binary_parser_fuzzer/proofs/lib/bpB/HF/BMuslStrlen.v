@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised entry stack block, with the strings at its top, and the launch facts; the run's mmap base). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -423,35 +424,38 @@ Proof.
     rewrite (IH k ltac:(lia)). lia.
 Qed.
 
-Lemma bsb_len_lower : forall ph (sp : word) (a e : list (list byte)) uid hw rnd,
-  (cat_struct_size a e + total_arg_bytes_nat a + 16
-   <= length (build_stack_bytes ph sp a e uid hw rnd))%nat.
+Lemma bsb_len_lower : forall inp mbase ph entry (sp : word) draw,
+  (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+     (in_argv inp) (in_envp inp) (in_execfn inp)
+   + total_arg_bytes_nat (in_argv inp) + 8
+   <= length (entry_stack_image inp mbase ph entry sp draw))%nat.
 Proof.
-  intros ph sp a e uid hw rnd.
-  unfold build_stack_bytes, cat_struct_size. cbv zeta.
-  rewrite (string_addrs_pair a). cbv beta iota.
-  rewrite (string_addrs_pair e). cbv beta iota.
-  rewrite !length_app, !length_flat_map_le8,
-    !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-    !length_flatten_strings, !repeat_length, length_at_random_bytes.
-  lia.
+  intros inp mbase ph entry sp draw.
+  unfold entry_stack_image. rewrite length_build_stack_bytes.
+  unfold cat_string_off, launch_string_bytes.
+  cbn [launch_auxv la_rseq].
+  rewrite !length_flatten_strings. lia.
 Qed.
 
 Section ArgvWord.
 
   Variable segs : list Segment.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
   Variable ph : PhdrInfo.
-  Variable sp : word.
-  Variable av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Variable entry : word.
+  Variable sp brk : word.
 
-  Variable rnd : EntryDraw.
+  Variable draw : EntryDraw.
 
-  Hypothesis Hva : valid_argv av.
-  Hypothesis Hve : valid_envp ev.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp brk mbase draw) inp.
   Hypothesis Hsp_lo : (sp_window_lo <= bv_unsigned sp)%Z.
   Hypothesis Hsp_hi : (bv_unsigned sp <= sp_window_hi)%Z.
+
 
   Lemma mstr_sp_lo : (0x7fff80000000 <= bv_unsigned sp)%Z.
   Proof. exact Hsp_lo. Qed.
@@ -460,27 +464,35 @@ Section ArgvWord.
   Proof. exact Hsp_hi. Qed.
 
   Lemma mstr_bsb_nw :
-    (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z.
+    (bv_unsigned sp
+     + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw)) < 2^64)%Z.
   Proof.
-    pose proof (bsb_bound ph sp av ev uid hw rnd Hva Hve). pose proof mstr_sp_hi. lia.
+    pose proof (bsb_bound v inp mbase ph entry sp brk draw Hvl Hlau).
+    pose proof mstr_sp_hi. lia.
   Qed.
 
-  Lemma argv_ptr_room : forall k, (k < length av)%nat ->
-    (bv_unsigned (cat_argv_ptr sp av ev k)
-       + Z.of_nat (length (nth k av [])) + 17
-     <= bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)))%Z.
+  Lemma argv_ptr_room : forall k, (k < length (in_argv inp))%nat ->
+    (bv_unsigned (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+                    (in_execfn inp) k)
+       + Z.of_nat (length (nth k (in_argv inp) [])) + 9
+     <= bv_unsigned sp
+        + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw)))%Z.
   Proof.
     intros k Hk.
     pose proof mstr_sp_lo. pose proof mstr_sp_hi.
     pose proof mstr_bsb_nw as Hnw.
-    pose proof (bsb_len_lower ph sp av ev uid hw rnd) as Hlow.
-    pose proof (total_arg_bytes_firstn_le (S k) av) as Hmono.
-    pose proof (total_arg_bytes_firstn_S av k Hk) as Hstep.
-    assert (Hptr : cat_argv_ptr sp av ev k
-      = sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-    { rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+    pose proof (bsb_len_lower inp mbase ph entry sp draw) as Hlow.
+    pose proof (total_arg_bytes_firstn_le (S k) (in_argv inp)) as Hmono.
+    pose proof (total_arg_bytes_firstn_S (in_argv inp) k Hk) as Hstep.
+    assert (Hptr : cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+                     (in_execfn inp) k
+      = sp + nat_to_word (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                            (in_argv inp) (in_envp inp) (in_execfn inp)
+                          + total_arg_bytes_nat (firstn k (in_argv inp)))).
+    { rewrite (cat_argv_ptr_offset (ed_top draw) (in_argv inp) (in_envp inp)
+                 (in_execfn inp) k Hk),
+              (cat_string_base_offset v inp mbase sp brk draw Hlau).
       rewrite nat_to_word_add_merge. reflexivity. }
     rewrite Hptr, word_add_nat, u_Z2bv by lia. lia.
   Qed.
-
 End ArgvWord.

@@ -8,6 +8,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_dec_E.v, with its module paths, module names and numbers changed; 1247 of its 1346 lines of code are new or changed and 1233 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_put.v; 214 of its 336 lines of code are new or changed and 1224 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_put_grow_entry.v; 91 of its 151 lines of code are new or changed and 276 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): put's GROW arm, the composition of its first half - put's entry and both
    tests (lib/B/FSW_put_grow_entry.v fsw_pg_entry_run) and the doubling loop (lib/B/FSW_put_grow.v fsw_pg_loop) - into
    one run from A_put 0x8449c to the call of the program function fuzz_realloc 0x82bc4 (ra = 0x84580), with the loop's
@@ -17,8 +18,8 @@
    Model facts used by path: lib/Prog/WriterSpec.v dbl / newcap; fsw_pgr_dbl_S / _fuel / fsw_pgr_newcap are pure
    arithmetic, no image numeral.
 
-   TAKEN FROM: lib/A/FSW_put_grow_run.v at a working branch 860b2fb1188 (the same blob is on
-   a working branch f0e2574c33c), unchanged in form; only the imports (lib/B) and this header differ.
+   TAKEN FROM: lib/A/FSW_put_grow_run.v at a working branch (the same blob is on
+   a working branch), unchanged in form; only the imports (lib/B) and this header differ.
 
    RULE-24: proves function put (omx-clap-core/fuzz_state, image B = asan-ubsan, entry 0x8449c; the GROW arm)
    (reuse search: proof-index put_holds / put_close_grow / fsw_pg_loop / pgt_run / fsw_pg_entry_run, index v5

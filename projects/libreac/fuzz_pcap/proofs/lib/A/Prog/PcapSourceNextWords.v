@@ -24,7 +24,7 @@
      0x81d68: s_and_ptr (Reusable/YP0m.v:969-980) rewrites ps & 7 to 0 from the alignment fact, so `bnez` sees 0 and is
               not taken.
    These are the decisions of the released UBSan proof for the v1.8 image (proofs/libreac/fuzz_pcap/lib/U/Prog/
-   pcap_source_close.v on origin/ossv/recipes c8557374ad2e): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
+   pcap_source_close.v): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
    :23) and :45-46 (ub_align A8, premise bv_unsigned a0 mod 8 = 0 at :23), close_pro :82 and :84-85 (premises :58).
 
    The contract is lib/A's, not a copy (the shared-text rule): pb_pcap_source_closeX proves lib/A's image-generic
@@ -39,6 +39,7 @@
    getr / mkst / seg_rom come from YK11; nothing from lib/Lib is imported. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapSourceClose.v, with its module names changed; 3497 of its 3557 lines of code are new or changed and 570 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Prog/PcapHarnessTail.v, with its module paths and module names changed; 106 of its 137 lines of code are new or changed and 3526 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pcap_source_next (0x8181c) on libreac v1.9.0: the word arithmetic of the record's 32-bit fields,
    in ONE image-free home, so that no walk file proves it twice.
 
@@ -60,10 +61,10 @@
 
    TAKEN FROM
    - the twelve: PcapSourceNextHdrB.v:54..281 (owner: a Theorem Labs lane, on
-     a working branch, first in cff93dd8aa1), statements and proofs unchanged.
+     a working branch, first), statements and proofs unchanged.
    - nx_nth_firstn_lt, nx_nth_skipn_add: nth_firstn_lt, nth_skipn_add of the released
-     proofs/libreac/fuzz_pcap/lib/Prog/pcap_source_next_lib.v:138,144 (owner: Theorem Labs,
-     origin/ossv/recipes 5121fb8693, commit 84b1ffc6d7d), text unchanged, renamed. That file states
+     proofs/libreac/fuzz_pcap/lib/Prog/pcap_source_next_lib.v:138,144 (owner: Theorem Labs),
+     text unchanged, renamed. That file states
      them image-free as well, but Requiring it would pull lib/Lib Tac, Bytes and Arr, lib/MemNorm
      and lib/RoAdapt into every consumer of this file and would put its whole namespace (and its
      Ltac) into PcapSourceNextHdrB.v through the Export below; the two three-line lemmas are kept

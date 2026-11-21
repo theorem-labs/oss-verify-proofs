@@ -2,8 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of answer_code on plugin-hostd/fuzz_command's ASan+UBSan build
-   (fuzz_command.asan-ubsan): tanswer_code_spec of lib/B/Prog/answer_code_c.v (a Theorem Labs lane f490061c104, statement passes 4,
-   4b and 5), re-walked from the ASan walk lib/A/Prog/answer_code.v (a working branch 2ba4488ce71) at B's
+   (fuzz_command.asan-ubsan): tanswer_code_spec of lib/B/Prog/answer_code_c.v (a Theorem Labs lane, statement passes 4,
+   4b and 5), re-walked from the ASan walk lib/A/Prog/answer_code.v (a working branch) at B's
    addresses, in the same shape (entry state, side-stack frame by __asan_stack_malloc_1, the snprintf wrapper,
    hand_back, the free wrapper, the release by the flag store, return). The snprintf wrapper is the shared contract
    (RtPFCmd.asnprintf_sh) and returns at some FP state fx1: the walk is proved for any entry FP state
@@ -23,6 +23,7 @@
    (A_OBJ 0), the shadow-base cell 0xb0c38 (A_OBJ 12), the format "resp %d" 0x21d40 (A_OBJ 47): the same object
    indices as A. The format literal's shadow (zsh_lit_21d40, ac_lit_hull) is proved from AR and the allocator record,
    where the A walk carried ZSH_lit_21d00 / HULL_lit_21d00 as hypotheses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Znumtheory.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -56,7 +57,7 @@ Proof.
 intros sg H mem a v Hv. unfold aview in Hv. destruct (mbyte sg (mrestrict H mem) a) as [b|]; [|discriminate].
 cbn in Hv. injection Hv as <-. pose proof (bv_unsigned_in_range 8 b) as R. change (bv_modulus 8) with 256 in R. lia.
 Qed.
-(* the read-only ranges the snprintf chain names (RtPFCmd.CMD_SNP_CR, since a Theorem Labs lane 0934cb146c3 the image's two
+(* the read-only ranges the snprintf chain names (RtPFCmd.CMD_SNP_CR, since a Theorem Labs lane the image's two
    non-writable load segments, [0x10000, 0x33000) and [0x33000, 0xa5000)) lie in the image hull (decided on the closed
    list) *)
 Lemma ac_snp_rng : forall r, In r RtPFCmd.CMD_SNP_CR -> 0x10000 <= fst r /\ fst r + snd r <= 0xa5000 /\ 0 <= snd r.
@@ -215,7 +216,7 @@ apply andb_prop in Hb as [Hp Hn]. apply Z.eqb_eq in Hp, Hn. subst p n. exact Hin
 Qed.
 
 (* membership in the record's constant shadow, decided by computation on a closed goal (the form of
-   a working branch 93eeb37e147 sup_reset_aux.v srb_cell_in) *)
+   a working branch sup_reset_aux.v srb_cell_in) *)
 Definition ac_cell_is (a v : Z) (c : acell) : bool :=
   match c with
   | ACell (ANum a') (S O) (AV (ANum v')) => (a' =? a) && (v' =? v)
@@ -287,7 +288,7 @@ Variable B : asyms.
 Variable MT : ameter_ops.
 #[local] Notation RLO := CMD_RLO.
 #[local] Notation RHI := CMD_RHI.
-(* the statement's Section hypotheses (lib/B/Prog/answer_code_c.v, a Theorem Labs lane 713692f1e0c), with its names and its
+(* the statement's Section hypotheses (lib/B/Prog/answer_code_c.v, a Theorem Labs lane), with its names and its
    forall fx0 forms *)
 Hypothesis THAND_BACK : forall fx0 : YK11.FPState, @thand_back_spec fx0 rc SK PI B MT.
 Hypothesis AFREE4 : forall fx0 : YK11.FPState, @afree04_rule fx0 rc SK SEGS B MT.
@@ -303,7 +304,7 @@ Hypothesis HB : YF0m.CmdBSyms B.
 Hypothesis TLF : @PALibF rc cmd_listing PI B.
 Hypothesis MTL : ameter_laws MT.
 Hypothesis MTLF : ameter_fs_laws MT.
-(* the facts a Theorem Labs lane proves only at its pinned instance (a working branch 713692f1e0c, lib/B/Prog/CmdRec*.v), each
+(* the facts a Theorem Labs lane proves only at its pinned instance (a working branch, lib/B/Prog/CmdRec*.v), each
    under the lemma's name with the lemma's statement at this walk's abstract instance, so that the closing file
    discharges each by `exact <lemma>`: cmd_palib, cmd_sig_prog_PB, cmd_frame_flag_law (CmdRecRest.v),
    cmd_img_facts_tfib (CmdRecImg.v). Every other record fact the walk uses (ROB, RELRO_IMG, cmd_ro_prog_apart,

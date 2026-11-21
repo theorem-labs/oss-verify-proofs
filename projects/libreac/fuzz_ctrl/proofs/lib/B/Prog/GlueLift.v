@@ -1,5 +1,5 @@
 (* lib/B/Prog/GlueLift.v -- the generic lift / footprint / journal tools of the fuzz_ctrl image-B glue
-   (asan-ubsan, libreac v1.9.0).  Moved verbatim from lib/B/Prog/C_reac_ctrl_identity_replyPf.v at e026bdcbd0d
+   (asan-ubsan, libreac v1.9.0).  Moved verbatim from lib/B/Prog/C_reac_ctrl_identity_replyPf.v
    (two Theorem Labs lanes 08:0xZ, the Require cycle parsePf -> identity_replyPf -> parsePf): a Theorem Labs lane's parse glue
    needs these lemmas, and the reply lane's top theorem needs parse's proof, so the shared home must not Require the
    reply glue.  This file Requires NO lib/B/Prog/C_reac_* file and no reac_ctrl_identity_reply* file.
@@ -225,7 +225,7 @@ Proof using LAWS segs_low.
     + rewrite <- Ex in Hrb. rewrite (rrB_seg_rom_above (bv_unsigned x) ltac:(lia)) in Hrb. discriminate Hrb.
 Qed.
 
-(* The window case (S-A: [S - 9072, S)), from munch over one range; its statement is unchanged since d37b6987833. *)
+(* The window case (S-A: [S - 9072, S)), from munch over one range; its statement is unchanged. *)
 Lemma rrB_journal_win :
   forall STK sp0 FP ly S0 (W0 : lib.Reusable.YA0n.world rsegs) mem0 md0 own lyc Sc (W : lib.Reusable.YA0n.world rsegs)
          memc mdc k (m1 mc : word -> option byte) mdc' (lo hi : Z),
@@ -268,8 +268,8 @@ Proof using.
 Qed.
 End Journal.
 
-(* Moved here UNCHANGED from lib/B/Prog/C_reac_box_model_blockPf.v (a working branch 8d5b2e35119,
-   a Theorem Labs lane; first Qed at 2e45e56a141), in its own Section so that Section Journal's arguments do not change.
+(* Moved here UNCHANGED from lib/B/Prog/C_reac_box_model_blockPf.v (a working branch,
+   a Theorem Labs lane; first Qed), in its own Section so that Section Journal's arguments do not change.
    The only edit: the proof's two references to C_reac_ctrl_identity_replyPf.rrB_seg_rom_above name this file's
    rrB_seg_rom_above (the same lemma, moved here by a Theorem Labs lane), so that GlueLift.v Requires no C_reac_* file. *)
 (* ---- The journal across a lifted stretch that FREES one fake frame by its flag byte (generic in cid; model_block's

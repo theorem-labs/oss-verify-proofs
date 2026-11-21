@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the summary's soundness at any CONFIG_RSEQ flag rz). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,6 +34,8 @@ Section NodesMaxVA.
   Variable A : atable.
   Variable nx0 : nat.
   Variable LIMIT : Z.
+  (* the plan's CONFIG_RSEQ flag ([APS.rz]); this summary does not read it *)
+  Variable rz : Z.
   Variable SINV : env -> (word -> option byte) -> Prop.
   Variable argH : env -> word -> bool.
   Variable FS0 : Fs.Fs.
@@ -49,7 +52,7 @@ Section NodesMaxVA.
   #[local] Notation lazy_cover_vis := (AsanNodesAux.lazy_cover_vis SEGS A LIMIT SINV argH FS0 HULL_ok).
   #[local] Notation H_off_segments_vis := (AsanNodesAux.H_off_segments_vis SEGS A SEGS_in_hull).
 
-  Theorem x_sound_maxva : x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMaxVA.
+  Theorem x_sound_maxva : x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XMaxVA.
   Proof.
     intros args cs cs' E R FULL model T HC _ Hn Hk. cbn [node_x] in Hn. unfold summary_maxva in Hn.
     destruct (Z.eqb (x_maxva A) 0 || negb (Z.eqb (pc cs) (x_maxva A)))%bool eqn:Hg; [discriminate|].

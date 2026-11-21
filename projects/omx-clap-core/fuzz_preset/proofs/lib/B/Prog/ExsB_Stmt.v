@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* RELOCATED B -> B' (h-pre-b3's #102 row, 2026-10-29): the walk of origin/cold/h-pre-b3-exstring-b 5f62ea0b5c45 (OLD
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* RELOCATED B -> B' (h-pre-b3's #102 row, 2026-10-29): the walk (OLD
    pin f8f98a95, unstripped twin 3b5e1a09) moved to the #102 pin B' (asan-ubsan d663f82d7f48, unstripped twin
-   c90d4fa54d43, facts 8f3e7e1a07f1) by alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9), on int102 with the kit
-   decff67d721f. ex_string, ex_hex4 and ex_utf8 have equal instruction words on B and B' up to pc-relative fields,
+   c90d4fa54d43, facts) by alreloc c4338d099cfb8025, on int102 with the kit.
+   ex_string, ex_hex4 and ex_utf8 have equal instruction words on B and B' up to pc-relative fields,
    and every pc-relative target names the same symbol + offset. Every address in this file, in a comment or in a term, is the B' image's; a mention of the record image
    f8f98a95 below names the donor's image. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, record f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_string (fuzz_preset.c :158-212, B_prog_sigma AS_ex_string = 0x84350, 354 instructions; neutral listing
    the internal file ex_string.fuzz_preset.asan-ubsan.s): the STATEMENTS of its walk against the tex_string_specX
-   (lib/A/PRH_FnEx.v:245-269, kit a3bdeca3920), instantiated at image B. This file proves nothing about the program:
+   (lib/A/PRH_FnEx.v:245-269, kit), instantiated at image B. This file proves nothing about the program:
    - es_e, the entry record; ES_PRE (tex_string_specX's premises at the record), ES_Q / ES_POST (its post);
    - ESB, the base invariant at every cut after the prologue, and ESG, the grammar invariant of the loop;
    - the CUTS of the walk, by offset from the entry (DERIVED: B address minus 0x84350):
@@ -73,7 +74,7 @@ Variable ARx : alayout -> astate -> list Z -> world rsegs -> (word -> option byt
 Variable SK : YI16.sink_head.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
-(* tex_string_specX's premises at the record (PRH_FnEx.v:251-263 at kit 4f18c75d4900, in order) *)
+(* tex_string_specX's premises at the record (PRH_FnEx.v:251-263 at kit, in order) *)
 Definition ES_PRE (E : es_e) : Prop :=
   let len := es_len E in
   let ly := e_ly E in let S := e_S E in let Hp := e_Hp E in let W := e_W E in let regs := e_regs E in
@@ -89,7 +90,7 @@ Definition ES_PRE (E : es_e) : Prop :=
   (scr + len + 1 <= x0 \/ x0 + len <= scr) /\ (scr + len + 1 <= q \/ q + 40 <= scr) /\
   prh_ledger B ly S Hp W mem (e_Lam E) (e_peak E) (e_cnt E) (e_fail E) (e_ran E) (e_most E) (e_own E).
 
-(* tex_string_specX's post (PRH_FnEx.v:264-275 at kit 4f18c75d4900): fpostWm over its Q, verbatim at the record *)
+(* tex_string_specX's post (PRH_FnEx.v:264-275 at kit): fpostWm over its Q, verbatim at the record *)
 Definition ES_Q (E : es_e) : alayout -> astate -> list Z -> world rsegs -> bvmap 5 word -> (word -> option byte) -> Model -> Prop :=
   fun ly' S' Hp' W' regs' mem' md' =>
     (room_live_cf (e_S E) -> room_live_cf S') /\ Hp' = e_Hp E /\ S' = e_S E /\

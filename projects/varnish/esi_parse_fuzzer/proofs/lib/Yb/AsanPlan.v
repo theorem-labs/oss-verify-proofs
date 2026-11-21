@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the start states and the extern dispatch take the run's CONFIG_RSEQ flag, which the auxv's size and Asanz3l's scan and layout nodes read. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -41,7 +42,10 @@ Definition ASAN : atable :=
 (* [comment removed for export] *)
 Definition ASAN_TEXT_LO : Z := 0x35f58.
 Definition ASAN_TEXT_N : nat := 116387.   (* [comment removed for export] *)
-Definition asan_init : acs := init_acs_of ASAN.
+(* 08b1429: [Asanz3l.init_acs_of] gained a leading [r : Z], the run's CONFIG_RSEQ flag as 0 or 1
+   ([Asanz3l.rseq_z]), because the auxv's size depends on it.  Threaded here rather than pinned:
+   a consumer states its certificate once per [r] value and the two are joined where discharged. *)
+Definition asan_init (r : Z) : acs := init_acs_of r ASAN.
 
 (* [comment removed for export] *)
 Definition BOTH : atable :=
@@ -54,7 +58,7 @@ Definition BOTH : atable :=
      stops_more := [0x3a184; 0x3b7a8; 0x5a118; 0x60720; 0x60734; 0x60748; 0x661ec; 0x662bc; 0x737e8; 0x746f4; 0x74884; 0x749f4; 0x7e5dc] |}.
 Definition BOTH_TEXT_LO : Z := 0x35e38.
 Definition BOTH_TEXT_N : nat := 116061.   (* [comment removed for export] *)
-Definition both_init : acs := init_acs_of BOTH.
+Definition both_init (r : Z) : acs := init_acs_of r BOTH.
 End Asanfbz.
 
 Module SymStepR.
@@ -7504,6 +7508,12 @@ Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.     (* [comment removed for export] *)
 Variable LIMIT : Z.     (* [comment removed for export] *)
+(* 08b1429: mirrors [Asanz3l]'s own [Section WithSegs], which gained [Variable rz : Z] at :71
+   after [LIMIT] -- the run's CONFIG_RSEQ flag as 0 or 1.  Every Asanz3l node this section
+   calls is discharged over it, so without the binder here [node_pnscan A nx0 cs] puts [cs]
+   into the [rz] slot and the kernel reports "cs has type acs while it is expected to have
+   type Z".  Declared in the SAME relative position so the discharged argument orders agree. *)
+Variable rz : Z.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -7585,6 +7595,9 @@ Definition node_sys (y : snode) (cs : acs) : option acs :=
   match y with
   | YMunmap => node_munmap A cs
   | YBrk => node_brk1 A cs
+  (* 08b1429: [node_settid] does NOT reach [rz] -- measured by the kernel, which wants [acs]
+     in the slot after [nx0].  A transitive-token closure over Asanz3l said it did; that is an
+     upper bound, not a dependency, and the kernel is the oracle here. *)
   | YSetTid => node_settid nx0 cs
   end.
 
@@ -7596,8 +7609,8 @@ Definition node_x (x : xnode) (args : list expr) (cs : acs) : option acs :=
   | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
   | XMemIsZero => summary_miz A nx0 cs
   | XEnvScan => node_envscan A cs
-  | XPnScan => node_pnscan A nx0 cs
-  | XLayout => node_layout cs args
+  | XPnScan => node_pnscan A nx0 rz cs
+  | XLayout => node_layout rz cs args
   | XIStrncpy => summary_istrncpy A nx0 cs
   | XPopFree => summary_popfree A nx0 cs args
   | XSniff => None   (* [comment removed for export] *)
@@ -7648,7 +7661,7 @@ Definition shape_sub (sb sa : shape) : bool :=
 
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of rz A)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>

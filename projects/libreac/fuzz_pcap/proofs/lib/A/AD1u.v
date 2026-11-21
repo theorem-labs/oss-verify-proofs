@@ -2,7 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1u.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. RESTATED over pcap's read SOURCE (porter ruling 2): cgif's harness writes a file sink (asink_syms tfib_K, lib/A/AE2k.v, not ported: fuzz_pcap's ASan image holds none of cgif's sink strings), pcap's harness reads a memory stream, so the driver invariant FINV is stated over pcap's source symbols pcap_KS (lib/A/Stdio/PSourceK.v) with the source vocabulary of lib/A/Stdio/PSource.v / PSourceMeta.v: donor AD1u.v:60-63 FINV = ameta_inv tfib_K /\ astdio_env tfib_K /\ ofl head 0 becomes asrc_meta_inv pcap_KS /\ asrc_stdio_env pcap_KS /\ ofl head 0 (the last two are PSource.v's asource_none pcap_KS, the conjunct the program contract lib/A/Prog/PcapEntry.v asks). The donor's image laws tfib_AIL (AD1u.v:34, asink_img_laws) become tfib_ASIL (asource_img_laws, PSourceMeta.v:77, the sink head SK passed explicitly); FINV_IVS lists pcap_KS's cells (the meta pointer pair, "rwa\0", "rb\0", the canary, threaded, need_locks, ofl lock and head) in place of cgif's (no path / trailer string). The two frame lemmas the donor takes from YE00.v (astdio_env_frame, ameta_ok_frame) are restated here for the source record (asrc_stdio_env_frame, asrc_meta_ok_frame), bodies identical up to the field names, and meta_ptr_of_AR is PSourceMeta.v's asrc_meta_ptr_of_AR with the law read off B's constant table. The sink head is the Section's SK; the class pcap_head ties it to pcap's measured ofl_head 0x5f4f88 (instantiated by reflexivity at SK := PcapSinkHeads.asan_sink_head). rule 24: no function proved anew; the image end is pcap_img_end (Reusable/PcapImgEnd.v). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1u.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. RESTATED over pcap's read SOURCE (porter ruling 2): cgif's harness writes a file sink (asink_syms tfib_K, lib/A/AE2k.v, not ported: fuzz_pcap's ASan image holds none of cgif's sink strings), pcap's harness reads a memory stream, so the driver invariant FINV is stated over pcap's source symbols pcap_KS (lib/A/Stdio/PSourceK.v) with the source vocabulary of lib/A/Stdio/PSource.v / PSourceMeta.v: donor AD1u.v:61-64 FINV = ameta_inv tfib_K /\ astdio_env tfib_K /\ ofl head 0 becomes asrc_meta_inv pcap_KS /\ asrc_stdio_env pcap_KS /\ ofl head 0 (the last two are PSource.v's asource_none pcap_KS, the conjunct the program contract lib/A/Prog/PcapEntry.v asks). The donor's image laws tfib_AIL (AD1u.v:35, asink_img_laws) become tfib_ASIL (asource_img_laws, PSourceMeta.v:78, the sink head SK passed explicitly); FINV_IVS lists pcap_KS's cells (the meta pointer pair, "rwa\0", "rb\0", the canary, threaded, need_locks, ofl lock and head) in place of cgif's (no path / trailer string). The two frame lemmas the donor takes from YE00.v (astdio_env_frame, ameta_ok_frame) are restated here for the source record (asrc_stdio_env_frame, asrc_meta_ok_frame), bodies identical up to the field names, and meta_ptr_of_AR is PSourceMeta.v's asrc_meta_ptr_of_AR with the law read off B's constant table. The sink head is the Section's SK; the class pcap_head ties it to pcap's measured ofl_head 0x5f4f88 (instantiated by reflexivity at SK := PcapSinkHeads.asan_sink_head). rule 24: no function proved anew; the image end is pcap_img_end (Reusable/PcapImgEnd.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -25,7 +26,7 @@ Local Notation KS := pcap_KS.
 Ltac kcst := unfold PCAP_THREADED, PCAP_NEED_LOCKS, PCAP_OFL_LOCK, PCAP_MODE, PCAP_RWA, PCAP_CANARY, PCAP_CAN_GOT,
 PCAP_META_PTR, PCAP_META_MEM, PCAP_MREAD, PCAP_MWRITE, PCAP_MSEEK, PCAP_MCLOSE in *.
 (* The two frame lemmas of the source vocabulary: donor YE00.v astdio_env_frame / ameta_ok_frame with ak_ -> as_
-   and the source's two string cells ("rb\0", "rwa\0", PSource.v:222-230) in place of cgif's four. *)
+   and the source's two string cells ("rb\0", "rwa\0", PSource.v:223-231) in place of cgif's four. *)
 Lemma asrc_stdio_env_frame : forall segs (m m' : word -> option byte),
 (forall a, asrc_env_addr KS a -> mbyte segs m' a = mbyte segs m a) -> asrc_stdio_env segs KS m -> asrc_stdio_env segs KS m'.
 Proof.
@@ -66,7 +67,7 @@ Proof. intros lo hi a Hc Ha. rewrite (ts_owned B HB). exact (ext_avoids_sound lo
 Lemma const_abs_in : forall ly c, In c Tfib_const_abs -> In c (as_const B ly).
 Proof. intros ly c Hc. rewrite (ts_const B HB). unfold Tfib_const. apply in_app_iff. right. apply in_app_iff. left. exact Hc. Qed.
 Ltac in_list := cbn; repeat (first [left; reflexivity | right]).
-(* PSourceMeta.v:132 asrc_meta_ptr_of_AR (= donor YE01.v:139 ameta_ptr_of_AR) with the law asil_meta_ptr read off
+(* PSourceMeta.v:133 asrc_meta_ptr_of_AR (= donor YE01.v:140 ameta_ptr_of_AR) with the law asil_meta_ptr read off
    B's constant table directly, so the FINV lemmas below do not depend on the sink head. *)
 Lemma meta_ptr_of_AR : forall ly S W mem md,
 AR segs B ly S W mem md -> val_mem segs (mrestrict (w_H W) mem) (as_meta_ptr KS) 8 (as_meta_mem KS).
@@ -83,7 +84,7 @@ unfold bv_wrap. change (bv_modulus 8) with 256%Z. apply Z.mod_small. apply Z.mod
 Qed.
 Lemma head_eq : YCbq.AOFL_HEAD = as_ofl_head KS.
 Proof. unfold YCbq.AOFL_HEAD. rewrite pcap_head_eq. reflexivity. Qed.
-(* donor AD1u.v:34 tfib_AIL : asink_img_laws segs B tfib_K, clause for clause over the source record. *)
+(* donor AD1u.v:35 tfib_AIL : asink_img_laws segs B tfib_K, clause for clause over the source record. *)
 Lemma tfib_ASIL : asource_img_laws SK segs B KS.
 Proof.
 pose proof (ts_errno B HB) as EE. unfold TFIB_ERRNO in EE.
@@ -110,8 +111,8 @@ split; [apply (owned_off PCAP_META_MEM (PCAP_META_MEM + 8)); [vm_compute; reflex
 - intros ly c Hc. cbn in Hc.
 destruct Hc as [<-|[<-|[]]]; apply const_abs_in; in_list.
 Qed.
-(* donor AD1u.v:60-63: the driver's frame invariant, over the source (porter ruling 2). The last two conjuncts are
-   asource_none segs KS (PSource.v:314). *)
+(* donor AD1u.v:61-64: the driver's frame invariant, over the source (porter ruling 2). The last two conjuncts are
+   asource_none segs KS (PSource.v:315). *)
 Definition FINV (ly : alayout) (H : word -> bool) (mem : word -> option byte) : Prop :=
 (exists M, asrc_meta_inv segs KS ly (mrestrict H mem) M) /\
 asrc_stdio_env segs KS (mrestrict H mem) /\

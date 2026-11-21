@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B' (pin d663f82d), the #102 kit: ex_word's text is the kit's tex_word_specX, discharged by the PROVED
    B' walk ExwB.ex_word_holds_B from EXV_HYP's eh_laws, eh_palib, eh_strlen and eh_bcmp. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
@@ -36,8 +37,8 @@ Lemma exvB_disp : forall {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {RL : 
   forall fx : YK11.FPState, CUT_C1 (fx := fx) B ARx SK n.
 Proof.
 intros rc ci cp RL B ARx SK HYP n CX CN CI.
-(* ex_word: K0's tex_word_specX at B', by h-pre-b3's PROVED walk ex_word_holds_B (origin/cold/h-pre-b3-exword-bp
-   e03676c00314, ExwB.v 56c3b5d735d4; Section inputs LAWS, PAL, STRLENm := eh_strlen, BCMPm := eh_bcmp) *)
+(* ex_word: K0's tex_word_specX at B', by h-pre-b3's PROVED walk ex_word_holds_B (
+   ExwB.v 56c3b5d735d4; Section inputs LAWS, PAL, STRLENm := eh_strlen, BCMPm := eh_bcmp) *)
 pose proof (fun fx : YK11.FPState => ExwB.ex_word_holds_B (fx := fx) B ARx SK
   (eh_laws B ARx SK HYP) (eh_palib B ARx SK HYP) (eh_strlen B ARx SK HYP fx) (eh_bcmp B ARx SK HYP fx)) as EHW.
 exact (ExvB_Disp_run.exvd_c1_all B ARx SK HYP n CX CN CI

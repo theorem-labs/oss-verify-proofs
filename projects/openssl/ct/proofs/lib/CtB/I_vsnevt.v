@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string bound below USTACK_TOP). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
@@ -100,14 +101,14 @@ Definition evarg_ok (m : mem) (lo bnd D dn : Z) (slot : word) (a : parg) (cov : 
         bytes_at ctbsegs m (bv_unsigned slot) (zb s ++ Z_to_bv 8 0 :: slack)
         /\ Forall (fun c => 0 < c < 256) s
         /\ ((- (bv_unsigned slot + zlength s + 1)) mod 8 <= zlength slack)
-        /\ 0 < bv_unsigned slot /\ bv_unsigned slot + zlength s + 1 + zlength slack <= USTACK_TOP - 16
+        /\ 0 < bv_unsigned slot /\ bv_unsigned slot + zlength s + 1 + zlength slack <= USTACK_TOP - 8
         /\ (bv_unsigned slot + zlength s + 1 + zlength slack <= lo \/ bnd <= bv_unsigned slot)
         /\ (bv_unsigned slot + zlength s + 1 + zlength slack <= D \/ D + dn <= bv_unsigned slot)
         /\ chkr m (bv_unsigned slot) (zlength s + 1))
       \/ (exists p, cov = Some p /\ 0 < p <= zlength s       (* [comment removed for export] *)
         /\ bytes_at ctbsegs m (bv_unsigned slot) (zb s)
         /\ Forall (fun c => 0 < c < 256) s
-        /\ 0 < bv_unsigned slot /\ bv_unsigned slot + zlength s <= USTACK_TOP - 16
+        /\ 0 < bv_unsigned slot /\ bv_unsigned slot + zlength s <= USTACK_TOP - 8
         /\ (bv_unsigned slot + zlength s <= lo \/ bnd <= bv_unsigned slot)
         /\ (bv_unsigned slot + zlength s <= D \/ D + dn <= bv_unsigned slot)
         /\ chkr m (bv_unsigned slot) p)

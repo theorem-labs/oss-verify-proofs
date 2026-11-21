@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import Z78 Z2z.
@@ -22,4 +23,6 @@ Definition ASAN_B : atable :=
 Definition ASAN_B_TEXT_LO : Z := 0x447c4.
 Definition ASAN_B_TEXT_N : nat := 211569.
 Definition ASAN_B_MAIN : Z := 0x96610.
-Definition asan_b_init : acs := init_acs_of ASAN_B.
+(* [r] is the launch's CONFIG_RSEQ bit, [rseq_z (kb_rseq (in_kernel inp))]; it
+   reaches the AT_NULL row's index inside [init_kn_with].  See Z2z.v:3496. *)
+Definition asan_b_init (r : Z) : acs := init_acs_of r ASAN_B.

@@ -3,15 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of pins_set (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, entry BASE + AF_pins_set = 0x8c938, 48 instructions, 192 bytes): it proves a Theorem Labs lane's
-   `tpins_set_spec` (lib/B/Prog/pins_set_c.v, a working branch 357b1f0783f) in the form of the B walks
-   lib/B/Prog/lv2_refusals_forget.v (a working branch 7b0abe3bdf8) and lib/B/Prog/sup_reset.v
-   (a working branch c79a9f2daf7): afn_pre at the entry, the symbolic executor over the position-abstract
+   `tpins_set_spec` (lib/B/Prog/pins_set_c.v, a working branch) in the form of the B walks
+   lib/B/Prog/lv2_refusals_forget.v (a working branch) and lib/B/Prog/sup_reset.v
+   (a working branch): afn_pre at the entry, the symbolic executor over the position-abstract
    listing between the calls, the callee contracts record_c, arg_s_c and mix_call_c through cl_callS_wide
    (pins_set_s2.v psb_call_record / psb_call_arg_s / psb_call_mix), and the tail jump into answer_code through
    callS_wideF (pins_set_s2.v psb_tail), whose post is apost_baseF. It is the B re-walk of the A walk
-   lib/A/Prog/pins_set.v (+ _s1 .. _s13.v, a working branch 3cc8391594b), where A inlines record() and
+   lib/A/Prog/pins_set.v (+ _s1 .. _s13.v, a working branch), where A inlines record() and
    xstrdup and B calls record and arg_s; the B code template was read from the Generation-N walk
-   lib/B/Prog/pins_set.v (template only, not ported: a working branch 3608b19d2cb).
+   lib/B/Prog/pins_set.v (template only, not ported: a working branch).
 
    B's code (capstone on fuzz_command.asan-ubsan, sha256 658cefbe..., symbol pins_set; listing CmdList.v:6481-6528):
      0x8c938 addi sp,sp,-48; sd ra,s0..s4; mv s1,a3; mv s2,a2; mv s3,a1; mv s4,a0; li a0,20
@@ -37,6 +37,7 @@
    targets), `cmd_img_facts_tfib` (lib/B/Prog/CmdRecImg.v), and `PRW : prog_rw SEGS B` (the hypothesis of
    lib/B/Prog/CmdRecCells.v PROG_WRITABLE, for the store of g_rec.state at 0x8c9d4). Every other per-binary fact is
    a Theorem Labs lane's lemma over them, by exact. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

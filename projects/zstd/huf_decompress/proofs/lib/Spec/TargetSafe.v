@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (5 recorded proofs replaced by written proofs (fuzz_malloc_spec, free_opt_spec, fuzz_one_spec and 2 more)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -46,12 +47,21 @@ Definition olist (o : option ptr) : list ptr := match o with Some p => [p] | Non
 Lemma fuzz_malloc_spec : forall X n, n <= OPNEW_MAX ->
   mspecP (own X) (fuzz_malloc raw_malloc new_handler n) (fun r => own (olist r ++ X)).
 Proof.
-ltac2:(KReplay.run1 (kr_t_TargetSafe ()) ["TargetSafe"] "p'0h01ri001rh12moh21sh31Hh41Ch51nh64__x1h74__x2h81mh91pi011ph:2Hnh;1Xh<2_Hh=7__arithh>4__ffh?8__varmaph@5__withA1ahB1ehC3mo'i021oi031xp;1p;2p;3p;5p;4p;7p;6p;:p;9p;8p,2StR0p4p300R1g0000R2p4p710p8P1g000eR3p4p710p8P1p1001bp4p710p8P1g002VR1p4p710p8p,3ptrR4p4p300R5p1003Pp4p710p8P5g004;R6p4p7210p8P5p1004lp4p710R7p8P5P3p4p7210p8P5p1005Ip4p710p8P5p10065p4p7210p8P5g006jR8p4p7210p8P5p1007ap4p7210p8P5g008^R9p4p7210p8P5g009YR:p4p7210p8P5P:p4p73110p8P5g00:UR;p4p710p8P5P1p4p7210p8P5g00;2R5p4p7210p8P7p100;np4p710p8g00<Lj1ETg00<lj25Tg00=HR7j1PTg00=jj28TP6j2bTg00>Gj2@Tg00>ij3?TP2j5>j6_Tg00?]j1<Tg00@?j1;TP;j31Tg00A9j20Tg00AUj2aTg00B5j32Tg00BUj1XTg00C:j1DTg00CXj13Tg00D=j2UTg00DZR;j26Tg00E5j1TTg00EUj2STg00F3j1OTg00FQj4NTg00Foj1MTg00GMj1LTg00H8j2KTg00H[j2BTg00I>j4:Tg00Iij7JTg00JMj2ITg00Joj2HTg00KIj2GTg00L5j3QTg00LTj4RTP8j54TP9j6ATP5j7FTg00MFj2`Tg00Mfj3^Tg00NCj3]Tg00N`j4\TP:l:YTg00OVj3CTP1l9ZTP3j5[Tg00P0j7WTg00PTj8VTg00Q8R3f0R1g00QXR:3Cp=7f1R5g00R8R9g00RWR8P8g00S7R2P1g00SWFWp=9f3R6P9P8P8P2f2R<P5P1GVp==%E4g00T7R=g00TUR>,51P0%P4R?g00USR@/85RAP0P?P?p,:raw_mallocRBP5O1P7P41b0?RCP11@419?0?RDP0g00V1REP?p,;new_handlerRFPEPCP1n011030000XBERCD>RGn10110000021010100RHX0?RID>%<4RJ9?0?p,3ownRKP<O1RLPK%;1RM=146O1X0?RN%7AP;1851#710<5[R;105118<5#7RO[106<\O1a51P5n2001000000120000000X8=X5=P;^8=^5=P1P@P6P5O310@6P0P?P?PBf4R;O1PIPKf5RIO1g00VVROP7P4p-0RPP<PKf9RQ9241P<P5O3f8RRg00WLRS#XRT#D%3S#3#3#3#3#D'URU'0'6g00X1RVn10110000021010100W1X20X0?PKf6914MO1X0?p,3HmSPIP;g00XNRW#T%EWP=1S=<P5%O=CN%M=%L=RWP=1K=@RXg00Y:1B=SRSC:,9W%<8RYPWP=PSg00YaRZ1B=TC:,9WRTPYPWP9P8P8P2P=PXPZPSC:,9WPTFJC=C=1IW2P1P<1H3:1G1<#7dAQ=@5CRb>b?b@X6=X7=10@1155<15@<15<6'6[[^6=^7=P1P>PIP5P;O4b=O3P7P4P0P?P7P4PPP<PKf:RP9241P<P5O310QUR7'6PVn10110000021010100X1OX20PHPKA14MRO1X0?D4P1P0P?PKA241RO1f7RR/0URUPDPKA14MQO1X0?RHP0P?1@45PKA245QO1PKA14MPO1X0?PKf;9246P5P1O3P1W3X1OX20EAX<UFFP0P?PKA24<PP5P1O3/67X1OX20PDPHD4eX94P1O1PV1`?0RHP0PEP?PFPCP6E_P<PKA^?05#;f<514A]?05P1O3XCOX9HC\P1n010000000X3VX1OX20P0P?PVX1OX20PGPKA14MRO1X0?D4RRePRen10110200021010100XA?M:Yb4b3W4g00ZH9C3AP0P?PJPKP6O1PKA14M;O1X0?PKPIP5P1O3P1W3X1OX20EAW4M9ZP0P?PLP0P4PBPFP5D[PND4eW:W5W;o"). Qed.
+  intros X n Hn. unfold fuzz_malloc.
+  apply mspecP_if; intros C.
+  - apply Z.ltb_lt in C.
+    eapply mspecP_bind; [apply HmS; lia|].
+    intros [p|]; cbn beta iota.
+    + apply mspecP_pure. intros _. apply mspecP_ret. intros s mo H; exact H.
+    + intros s mo [].
+  - apply mspecP_ret. intros s mo H; exact H.
+Qed.
 
 Lemma free_opt_spec : forall X o,
   mspec (own (olist o ++ X)) (free_opt raw_free o) (fun _ => own X).
 Proof.
-ltac2:(KReplay.run1 (kr_t_TargetSafe ()) ["TargetSafe"] "p'0h01Hh11Xh22moh31oi001oh41pi011ph51sp;1p;3p;4p;5p;2p;6g00<Lj18Tg00=HR0j17Tg00@?j12Tg00:Uj31Tg00Zhj43Tg0065j50Tg00>Gj26Tg00[bj64Tg00?]j15Tp,3ptrR1#8%71P0P1p,2StR0g00RWR2p,3ownR3f0R4#2f2R5511O1P0P1p,8raw_freeR6P4C3P3f3R7O1V2D0P4p,2HfP7P4O2P0P2P31614R8#2=117O1P0P1P6P8C3P3f4O1V2D0eX41P4O1P0P2g00SWP3f1R8O1P3P5O1V2R5g00VVP3P7P8P4O3P4W0W2X50E4P0P2P3%51R3#2=118O1P0P1P6P3C3P5D0en10110000021010100W3W1o"). Qed.
+  intros X [p|]; cbn [free_opt olist app]; [apply Hf| apply mspec_ret; intros s mo H; exact H].
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -59,7 +69,35 @@ ltac2:(KReplay.run1 (kr_t_TargetSafe ()) ["TargetSafe"] "p'0h01Hh11Xh22moh31oi00
 Lemma fuzz_one_spec : forall X data, zlength data <= MAX_INPUT ->
   mspecP (own X) (fuzz_one raw_malloc raw_free new_handler data) (fun _ => own X).
 Proof.
-ltac2:(KReplay.run1 (kr_t_TargetSafe ()) ["TargetSafe"] "h06__sat1h16__sat3h22Hah37__arithh46__sat0h54__x1h64__ffh78__varmaph85__with92_Hh:4__p1h;6__sat2h<1rh=1Hh>2PPh?2moh@1shA2HbhB4dBufhC2dthD1lhE8producerhF4wksphG1zhH2HdhI4HlenhJ1XhK4datap;1p;2p;3p;4p;6p;5p;8p;:p;7g00<Lj1PTg00\[j2QTg00<lj21Tg00BUj13Tg00C:j15Tg00CXj17Tg00]Sj2NTg00A9j2ATg00D=j2JTg00^;j3ITg00^_j2\Tg00Joj2RTg00E5j1vTg00EUj2tTg00Foj1sTg00GMj1pTg00H[j2lTg00?]j1cTg00_@j1MTg00_^j3LTg00JMj2bTg00KIj2aTg00OVj3`Tg00L5j3_Tg00LTj4^Tg00`Aj2]Tg00a@j1HTg00DZj2<Tg00b9j2[Tg00c:j1=Tg00d5j2ZTg00dRj6YTg00=Hj1XTg000ej5GTg00Zhj4WTg00>ij3uTg0000j5@Tg00@?j16Tg00:Uj30Tg00F3j1rTg00dnj3FTg00f3j6oTg00;nj6OTg00fWj3kTg00g:j2BTg00h<j4UTg003Pj3>Tg00i2j4STg00iPj8TTg00[bj6iTg007aj6hTg009Yl:ETg00jIj6jTg006jj5gTg00H8j2mTg00I>j4nTg00P0j7fTg00PTj8eTg00Iij7dTg00kCl:qTg00USR0f0R1'1p=4%31#3p=?%31#3#3#3p=;g00T7R2/m1p=:P2f1R3g00YaP1Cnp=8P3g00R8R4g00RWR5P5g00S7R6P1g00SWFfp=9f3R7P4P5P5P6f2R8P3P1Gep=KP8P5P2P3P1D@p=Cf4R9A0831707p=2P8P4P5P5P6P3P1Fdp=Vf7R:P5P2f6R;f5R<P9P7P8P3P1M:qp=Dp,3ptrR=#PR>%P21Q21g00l<'1g00WLR?#3R@#5RA%7?RB#3RC#7#3RD#5RE'NRF1A0ARG%4E1JAERH,A0[RI[RJ%4ARKg00m6RLAIAE3UW2RE%4H\L^2KRMP3g00mR1\0A'RPGeRNO1ROPIg00XNRP#vRQ%PPRP1t23RR%s2RS%p2RT1l2?R?%?@R@#3RU#3#?#;RV#3#?#;#;#;#5RW#:'8,9T%c5RX%:ARY%MD5L2,8?,9TCK1bT6RDP1P8g00Q8RZg00QXR['R1a18=`Z[dA_203C^R[b6b7b8X52RZ111W113H[^52RHP11Q2<P9O2b3b0b4b0,]3%3C#5RC%H3RW'1%7V#?#5RV,1W'<PFPJPEPMPOPIPZPHP11Q2;P<O2b3b0b4b0,[8%=8RH#4g00n8RZ,1H'<P2PZ%=9RZ#411Z1'<XG2P1%7BRB#3#7RZ#5RH,JARI%7B#7RB#3#7#?#5RM'ZREg00o2EY%=7RJ#411JE'<p,2StRJ%X=RFP2PJP=p,:raw_mallocRWp,;new_handlerR\g0100R]DGPJPFP2PJP=PWP\%H<R^DGR_PJPFP2PJP=PWP\g010oR`DGRaPJPFP2PJP=PWP\%=:RbDGRcPJP=p,8raw_freeRdP8CWRePJP=PdP;CWRfAuJ20V5Rg5CJV5Rh9CJeV5Ri9CJeV5Rj5CJRkXBFRlD@XFFRmD@XCFRnD@XEFp,3ownRoP<O1Po%61Rp=0=;RqO1RrX<FPoP;O1V21NAHRs%4H1A0I[Rt\GRuAIAH3VLX2KRH%4I\L^2KRI%5BRv,NARw%4v1JAvRx,A0[Ry\GRGAIAv3VLX2KRv%4x\L^2KRKPOPyP9PNO1RNPtPQPP%r2RLPS%5URU#:%MB9L2YRB'8,9TPDP[b6b7b811UxP1b3b1b0b4b0b;b1g00TURU,1]e9F<]PJPFP2P_PnPrPoP=PpP=%63RrP:D2RnO1R_X<FPoP:O1V2PsPuPHPIPwPGPvPKPOPyPNPtp-0R]PQPPPRPSPTPTP4P5P5P6P7EoR6%:V,8?,9T5VTPX18?B,9TR4CKPDP[b6b7b8X52W:111V,<3113xRV[^52^:]P1f<RA#HRz,1CPzf:RzO3b3b1b0b4b0b;b111^Ue9Fq^PJPFP2PaPmP_PoP=PpP=Pr%68R_f8Rm50=D2RaO1RqX<FPoPmO1V2P2%7@#3#;#;#5R@111UXG2PsPuPHPIPwPGPvPKPOPyPNPtPQPPPLPS%:@/8B,9TPDP[b6b7b811@xP1b3b1b0b4b0b;b111@UeP`g011jEO9Fn`PJPFP2PcPlPqPoP=PpP=Pr%67Rqf9Rl50=Rc90=_D2O1RnX<FPoPlO1V2PsPuPHPIPwPGPvPKPOPyPNPtPQPPPRPSPT%MZ9L2Y%:M5k2,8?,9T9VT6PXP4CKPDP[b6b7b8X52X:]111E,<3PV[^52^:]P1f>R]#=RV#4PVPzO3b3b1b0b4b0b;b111bUe9FabPJP2PnPkPoPzO1V2RkPJPePjPnPoP=PpP=PrPcD2RcO1PkPJP5PePoA0=_cO1PnPoP=PrP=P_%69R9=0=zRzD2O1RnV51Bc8g00VVRcPoP=P_P=Pq%6<R<f;Rk50=Rp90=9D2P3P1O3p,5HpermRjP=PqP=P9%6;Ra=0=ARb90=<RUD2P=PqP=P9PbD2RV90=<P8P3P=A0=q9RqP<PbCUA0=qUP=P<P=PqPbD25>=P>A0=9<Rq%6:R:f=RU50=RE90=aR[50=A0=<a%6mRm=0=]RD50=R490=:9>=1XD>P1P=P9P=P<P[D2RXP=P9P<P[CSEOP=PaP=PqPED29>=XP>P4P=PaP=P:P=PmP=%6lf?RlD2D2A0=m15>=XD>P1P=P<P=PaPDD2R>P=P<PaPDCSEOP=P<P=PaA0=:DD2A0=:>5>=P1b>b>b>P1O6W=W?X@JGTPJPePiPnPoA0=rzRzO1PoPkO1V2PJP5PePoA0=_zO1PnPoA0=_pO1R_V51Bz8PoPVP3P1O3PjP=P9P=P<PED2P=P<P=P9PED2P8P3P=P9P<PECUP1O6W=X?cX@JGTPJPePhP_PoPpO1PoPAO1R_V21Bp8PJPfPgPoPbO1P_PoPUO1RUV21BA;PJP2P0PUPoP]O1V2PoPlP3P1O3P1W=X?cX@JEiX95GDX95GDX95GDX95GDEhXBFM:EXFFM:EXCFM:EXEFM:EbAbAbHPJP2PoP8O1PJP=PWPdP\P3EjPoP7O1V2DgeWIWKWJo"). Qed.
+  intros X data Hlen. unfold fuzz_one.
+  pose proof (dt_size_range data ltac:(unfold MAX_INPUT in Hlen; exact Hlen)) as Hdt.
+  pose proof (dbuf_size_range data ltac:(unfold MAX_INPUT in Hlen; exact Hlen)) as Hdb. rewrite BUFF_MAX_val in Hdb.
+  eapply mspecP_bind; [apply fuzz_malloc_spec; unfold PRODUCER_SIZE, OPNEW_MAX; lia|]. intros producer.
+  eapply mspecP_bind; [apply fuzz_malloc_spec; unfold OPNEW_MAX; lia|]. intros dt.
+  eapply mspecP_bind; [apply fuzz_malloc_spec; rewrite WKSP_SIZE_val; unfold OPNEW_MAX; lia|]. intros wksp.
+  eapply mspecP_bind; [apply fuzz_malloc_spec; unfold OPNEW_MAX; lia|]. intros dBuf.
+  apply mspec_mspecP.
+  (* the frees run dt, wksp, dBuf, producer; each frame is the one before, permuted *)
+  eapply mspec_seq.
+  { eapply mspec_pre; [apply (free_opt_spec ((olist producer ++ X) ++ (olist dBuf ++ olist wksp)) dt)|].
+    intros s mo H. eapply Hperm; [|exact H].
+    rewrite (app_assoc (olist dBuf) (olist wksp) (olist dt ++ olist producer ++ X)).
+    rewrite (app_assoc (olist dt) (olist producer ++ X) (olist dBuf ++ olist wksp)).
+    apply Permutation_app_comm. }
+  intros _.
+  eapply mspec_seq.
+  { eapply mspec_pre; [apply (free_opt_spec ((olist producer ++ X) ++ olist dBuf) wksp)|].
+    intros s mo H. eapply Hperm; [|exact H].
+    rewrite (app_assoc (olist producer ++ X) (olist dBuf) (olist wksp)).
+    apply Permutation_app_comm. }
+  intros _.
+  eapply mspec_seq.
+  { eapply mspec_pre; [apply (free_opt_spec (olist producer ++ X) dBuf)|].
+    intros s mo H. eapply Hperm; [|exact H]. apply Permutation_app_comm. }
+  intros _.
+  eapply mspec_seq; [apply free_opt_spec|]. intros _.
+  apply mspec_ret. intros s mo H; exact H.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -67,11 +105,27 @@ ltac2:(KReplay.run1 (kr_t_TargetSafe ()) ["TargetSafe"] "h06__sat1h16__sat3h22Ha
 Lemma run_calls_spec : forall X n payload rc, zlength payload <= MAX_INPUT ->
   mspecP (own X) (run_calls (fuzz_one raw_malloc raw_free new_handler) emit n payload rc) (fun _ => own X).
 Proof.
-ltac2:(KReplay.run1 (kr_t_TargetSafe ()) ["TargetSafe"] "h01nh17payloadh22rch34Hlenh43rc'h51Hh62IHh71Xh82_Hh92moh:1sp;1p;2p;5p;6p;3p;:p;4p,2StR0p4p300g012iR1p4p710p8p,3ptrR2p4p300p1013dp4p7210p8g00<Lj13Tg00\[j2=Tg00<lj29Tg00jIj54j68TP1j60Tg006jj51Tg008^j6;Tg0000j55Tg014`j36Tg007aj67Tg015bl:2Tg016]j1:Tg017<j4<T%32g017]R1g00T7R3#3R4f1R5,=3g00l<'9R6P0P3p,3ownR7f5R8O1R9P0P0P2p,:raw_mallocR:p,8raw_freeR;p,;new_handlerR<D4R=p,4emitR>f3f2R?P5E0P7f6R@O1RAV3D1[^23]1RBX01P0P3P5P7f4RCO1RDP9V3R9g00VVP7P@P5f0REO3PEW5W9X:0E;P0P3PDP0P=P>g018<P?P5E0P9D1eX36X23X14P0P3P3P0P2P:P;P<P?E8P0g00RWR<P3P>PEO1R;P0P=P>P@PCP5E0V<R:D5X43PAPAP7f7R2O1R9V3RDA6@?EP0P<P3P;P:P9P9P7f8O1R7V3P0P<P9P;P7V<p,5HemitP2PEO2E7P8PCP5P?O3X8<M:2X43M:2P0P3PAP0P=P>%:CP?P5E0PDD1eX36X23X14X6BX01PEC<W0W7o"). Qed.
+  intros X n. induction n as [|n IH]; intros payload rc Hlen; cbn [run_calls].
+  - apply mspecP_ret. intros s mo H; exact H.
+  - eapply mspecP_seq; [apply fuzz_one_spec; exact Hlen|]. intros rc'.
+    eapply mspecP_seq; [apply mspec_mspecP; apply Hemit|]. intros _. apply IH. exact Hlen.
+Qed.
 
 Theorem target_run_spec : forall X cfg payload, zlength payload <= MAX_INPUT ->
   mspecP (own X) (target_run raw_malloc raw_free (fuzz_one raw_malloc raw_free new_handler) emit cfg payload) (fun _ => own X).
-Proof using Hm HmS Hf Hperm Hleak Hemit.
-ltac2:(KReplay.run1 (kr_t_TargetSafe ()) ["TargetSafe"] "p'0h02moh11sh21ai001ah31Hh42_Hh52rch64__x1h71pi011ph81ri021rh92H0h:4Hlenh;1Xh<7__arithh=4__ffh>8__varmaph?5__with@3cfghA4cstrhB1oi031ohC7payloadi045ownedi051yp;1p;2p;3p;5p;6p;4p;7p;8p;:p;9g00<Lj1FTg00<lj25Tg00=HR0j1GTg004;j2?Tg018[j2JTg00?]j1CTg00>Gj2ATg00>ij37Tg0000j5ETg00jIj5XTg00C:j18Tg00CXj16Tg0198j29Tg00d5j2;Tg019Vj1:Tg012ij6>Tg00BUj1]Tg00B5j30Tg00OVj3BTg008^j61Tg00D=j2\Tg00A9j2<Tg00DZR1j2@Tg01:6j2ITg01:Vj1[Tg01;;j1HTg00E5j1ZTg00EUj2YTg00Foj1WTg00GMj1VTg00H8j2UTg00H[j2RTg00I>j4QTg00P0j7PTg00PTj8OTg00JMj2STg00Joj2TTg00KIj2cTg00L5j3bTg00LTj4aTg007aj6NTg006jj5MTg009Yl:LTg002Vl9`Tg01;[j5KTg015bl:=Tg013dj8_Tg00\[j2^Tg00T7R2f0R3'^p=2f2R4g00RWR5P2f1R6P3DEp=DP4P2P2P6P3DEp=4f3R7P2P4P6P3DMp=3p,3ptrR8#F%F2%23g00l<'5p,2StR9%G8R:#GR;P2g00Q8R<1?9;%26R=g00USR>'JR?%C8,A:R@979;RAP9P:P;p,:raw_mallocRBP=O1P0P8P;P31A83,A:R=%C:RCn10110200021010100979;RDX8:REDERFn0100000020000P0P:1?92RGP3P9P9P8PBp,8raw_freeRHp,;new_handlerDXRIp,4emitRJg00WLRK#8RLf4RM%6KRN#8RO'9';#:P7P>E>P0P81?95P6PHP3O1g00SWRP9795RQn10110400021010100P<P21J6>P>PLn0100000020000RR9792V5RS5D9X52RT549%]K#8RU9792RVn10110000021010400X2;p,3ownRWP7O1RXg00VVRYP0P:p-0RZP4P0P8PZP3PWf8R[9083R\P7P4O3PWf7R]P4P6O3n10110500021010100PWf6R^P6P3O3R_n10110000021010500W0X19X2;R`PWPMO1RaV2RbP9P;P?PAPFPXP`g00QXR`9B<?P9P;P@PaP0P:PZP4P0P8PZP3PWf9R@9083RFP7P4O3PWP[P4P6O3RAn10110500021010100PWP]P6P3O3Rcn10110000021010500X0YX19RdX2;ReP3X3_X0YX19RfE1W4g00ZH9B<?P9P:P;PB%24R?O1RgPEPaP0P8PZP4PWP\P4P6O3%2^%6N#6#6#6#8,\URN'<'@Pcn10110200021010100X0YX19X8:REPeP9P:PaPgPEp,2HmPMP?1I24RE#[%HE,5>g00XNRE#Z%FE1Y26%W2%V2REg00R8RgP5P5g00S7RaPEPgP5P5PaP21U2>g00Ya1R2KCQPPFPRK%C5PKGO1SEaP3P41T<`1c34=B<`dAb2>6Cab=b>b?X6215>315>6[^62P31I2M#HP6O2b<bA15>?eO3ENP0P8P9P;P0P8PZP4PWPFP4P6O3%2]/<NRF'@PWP[P6P3O3R?n10110200021010100X0YX19PDP0P:PZP4P0P8PZP3PWf;RD9083P7P4O3PWf:R`P4P6O3n10110500021010100PWP@P6P3O3R<n10110000021010500X0YX19X2;DMP3P9P;P=PWA084@P6P3O3/@FRFX0YX19P0P:PZP4P0P8PZP3PWf<R=9083P7P4O3PWPDP4P6O3n10110500021010100PWP`P6P3O3Ran10110000021010500X0YX19X2;P1PWA087`P4P6O3R1%2[/<NPWA08MDP7P4O3P3PWf5RE=08=PMP7O3%2D/<NP6W4W3P6P3O2n2001000000120000000X9FX0YX19P1\F^0Y^19eE1X78P3O1P9P;PCPcX0YX19P0P:PZP4P0P8PZP3PWA083`RCP7P4O3PWP@P4P6O3n10110500021010100P?n10110000021010500X0YX19X2;P3X3cX0YX19PA\c^0Y^19eE1n10110300021010100X2:M:LW4M9`P0P:P9PdP0P:PGP3P9PIPJ19EO,;L#:RGPMP>E>Rd=49TPVn10110000021010400PWP^O1RcV2C3P3P0P8P9P0P8PZP4PWPCP4P6O3P<n10110500021010100X0YX19P9PIPJ19^O,;L#:PEP>E>=49TPWP[O1R[V2RTC3P3P9P2P2P9PIPJ19]O,;L#:RLP^P>E>ROPHP6O1RC=D9SX52RZPWA084`P6P3O3X0YX19R0PWP\O1PWP@O1RAV2RFP\PLP^P>PEDKP9P5P2PCPSPWA086@O1RLPAPWP`O1R`V2P9P5PLPCP`V5p,2HfP@P6O2ENP9P2PRP`PWPDO1V2PWP=P6P3O3P3W3X0YX19E1X45M:=X52M:=P9P0A49OZPFC3eX78P3O1P9P2P2PdAD9QSX52RZP?X0YX19R?PcPWP]O1R]V2RcP^PGPMP>P7DKP9P5P2PQPSP]P]PTP9P5PPP]P[V5P3X3<X0YX19E1P9P2PRP[PFP3X3aX0YX19E1X45M:=X52M:=P9P?A49dZPcC3en10110300021010100XB:P3O1P9P2PUP_X0YX19RYPWPEO1V2REPfE1P9PYPVPEC3en10110300021110300X2;M:LP9PXP9P8PBPHPIPJP4P6G_PbC3eW:WCX@2W;o"). Qed.
+Proof using Hm HmS Hf Hperm Hleak Hemit.   (* [comment removed for export] *)
+  intros X cfg payload Hlen. unfold target_run.
+  eapply mspecP_bind with (Q1 := fun a s mo => match a with
+                                               | None => own X s mo
+                                               | Some None => own X s mo
+                                               | Some (Some p) => own (p :: X) s mo
+                                               end).
+  { apply mspecP_if; intros _; [apply mspecP_ret; intros s mo H; exact H|].
+    eapply mspecP_bind; [apply mspec_mspecP; apply Hm; unfold zlength; lia|]. intros [p|]; apply mspecP_ret; cbn; [intros s mo [H _]; exact H| intros s mo H; exact H]. }
+  intros [[p|]|]; cbn beta iota.
+  - eapply mspecP_seq; [apply run_calls_spec; exact Hlen|]. intros rc. eapply mspecP_seq; [apply mspec_mspecP; apply Hf|]. intros _. apply mspecP_ret. intros s mo H; exact H.
+  - eapply mspecP_seq; [apply run_calls_spec; exact Hlen|]. intros rc. eapply mspecP_seq; [apply mspecP_ret; intros s mo H; exact H|]. intros _. apply mspecP_ret. intros s mo H; exact H.
+  - apply mspecP_ret. intros s mo H; exact H.
+Qed.
 
 End TargetSafe.

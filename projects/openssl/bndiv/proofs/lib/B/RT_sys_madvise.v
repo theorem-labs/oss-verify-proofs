@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the madvise proof shows the advised range free of the reserved regions through artm_res_free_in_maps, now that ARTM_A's reserved clause admits a tail). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -45,7 +46,14 @@ Proof.
         cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia. }
     destruct Hin as (e & He & He1 & He2).
     apply (madvise_dontneed_ok_intro _ _ _ e He); rewrite ?Eua, ?Eul; [exact He1| exact He2| |].
-    + rewrite Eres. apply reserved_free_above. rewrite Eua. unfold SEGTOP_A. lia.
+    (* [Eres] is no longer a bare equality and cannot be REWRITTEN with.  The range
+       advised lies inside the shadow mapping [e] the runtime already tracks, and
+       ARTM_A's reserved clause puts every tracked mapping apart from the tail.
+       Hunk from bignum BgB/RT_sys_madvise.v; the A twin of this file takes the same. *)
+    + apply (artm_res_free_in_maps mo _ _ _ Eres He);
+        [ rewrite Eua; exact He1
+        | rewrite Eua, Eul; exact He2
+        | apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia ].
     + apply region_free_noaccess_of_uncovered; [exact Hnp| rewrite Eul; exact Hlen| rewrite Eua, Eul; unfold len; lia|].
       intros a Ha. rewrite Eua, Eul in Ha.
       refine (proj2 (Hsl a _)). unfold shreg, Shadow.SHB, K_LOW_SHADOW_lo, K_LOW_SHADOW_hi, K_HIGH_SHADOW_lo, K_HIGH_SHADOW_hi. unfold len in Ha. lia.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor of dir_cpsE at STACK_SPAN in place of STACK_WIN). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
@@ -65,7 +66,7 @@ pose proof HCTX as (ART0 & MI0 & CLX0 & ARGV0 & FR0 & ST0 & B16 & UA & ULO & USP
 pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
 pose proof HSIG as (LV & FRS & CR & USP0' & SPW).
 destruct (path_b_facts argvb VARGV HL) as (NZ & NSL & NDD & LEN).
-set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 set (F1 := fd_insert fds0 (Z_to_bv 64 3) FdDir) in *.
 rewrite nth1_argv_Z.
 replace (evw 2 (msg_read_error (map bv_unsigned (nth 1 argvb []))))
@@ -247,7 +248,7 @@ pose proof HCTX as (ART0 & MI0 & CLX0 & ARGV0 & FR0 & ST0 & B16 & UA & ULO & USP
 pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
 pose proof HSIG as (LV & FRS & CR & USP0' & SPW).
 destruct (path_b_facts argvb VARGV HL) as (NZ & NSL & NDD & LEN).
-set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 set (F1 := fd_insert fds0 (Z_to_bv 64 3) FdDir) in *.
 rewrite nth1_argv_Z.
 replace (evw 2 (msg_read_error (map bv_unsigned (nth 1 argvb []))))

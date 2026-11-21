@@ -20,9 +20,9 @@
      sep_blocks_x and from the home frame by AR_laws_x's alx_sep (frame addresses kept by the journal's layout_le).
    The empty node (cap = 0) is the same construction with no element (IproD's vrd_hdr_fd needs a header with every
    field zero; here the header is vrd_inode's, so it is not used).
-   SET: a working branch on ival db50bd6cd2f / ielem da5334ad793; texts on walkkit-next 0afb3f76c28
+   SET: a working branch on ival / ielem; texts on walkkit-next
    (S5b preset-tree-at-2026-10-29T08-47-11Z.tsv (sha256 5a6e8ee53536; internal record)). A-only: B sites not measured.
-   The kit's CUT (lane RBase, a working branch 7cdbb61b5fa0, PRH_FnParse.v f0d92dcec7e9): DW -> CW, and the
+   The kit's CUT (lane RBase, a working branch, PRH_FnParse.v f0d92dcec7e9): DW -> CW, and the
    ORDERED twins every exit of the loop needs for the post's new conjuncts (FREEORD-NONE, CAP):
    vrd_inode_fo_core / vrd_inode_fo (vrd_inode + the batch kit order list -> pj_free's ordered list pj_foR at S nn, its
    requests the accumulator af followed by the container's arrays PresetReqAt.arrz o cap), vrd_arrz_blk (the arrays'

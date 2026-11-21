@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segment S5 of the walk of chain_words (0x8da84) on the ASan+UBSan build of
    plugin-hostd/fuzz_command (interface chain_words_d.v), the B twin of lib/A/Prog/chain_words_s5.v
-   (a working branch 5e2cdad423e): the two refusal tails, from KR1 (0x8dd5c: `li a0,-902;
+   (a working branch): the two refusal tails, from KR1 (0x8dd5c: `li a0,-902;
    jal sup_resp; mv s4,a0; j 0x8dd80`) and from KR2 (0x8dd6c: `li a0,-902; jal sup_resp; mv s4,a0; ld s3,16(s1);
    ld s6,8(s1)`) to the join KJ (0x8dd80). sup_resp's post is apost_baseF (it reaches the snprintf wrapper), so the
    call goes through the kit's cl_callS_wideF and srr_after_callF (lib/B/Prog/PaFx.v) and the code after it is a
@@ -13,6 +13,7 @@
    slot s1 + 24 and the spills of F at s1 + 8 / s1 + 16 above the callee's window), the recorder representation
    under an agreeing reader, and the two join tails: from 0x8dd64 (`mv s4,a0; j 0x8dd80`, F still in s3 / s6) and
    from 0x8dd58 or 0x8dd74 (`[j 0x8dd74;] mv s4,a0; ld s3,16(s1); ld s6,8(s1)`, F reloaded from its spills). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the walk kit of send_message on plugin-hostd/fuzz_command's ASan image, ported from
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close, a caller with calls) at
-   c8557374ad2e, with the class-1 side-stack frame steps of A/ACk4.v, A/ACk5.v and A/ACkc.v
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close, a caller with calls),
+   with the class-1 side-stack frame steps of A/ACk4.v, A/ACk5.v and A/ACkc.v
    (cgif_newgif and flushFrame): module paths, fuzz_command's listing (csym, cmd_listing), atoms below A_TEXT for the
    walk's own values, the symbolic states of send_message. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

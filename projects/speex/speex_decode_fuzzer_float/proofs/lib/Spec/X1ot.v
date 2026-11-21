@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's placement base is read off valid_entry and handed to QI_init, which the reserved ledger's vDSO/vvar pair needs, with the channel-reader fact from valid_input_core, and QI_with_vdso lifts it to the start model's vDSO run state). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Import X1bs X1c2 X1bn.
@@ -85,11 +86,11 @@ valid_entry (mkImage segs pc ph) en inp -> valid_input_core inp ->
 tlive LBUDGET (prog segs rs (ceil_of en) (in_argv inp)) (mo0 segs lim en inp).
 Proof.
 intros segs rs pc ph lim [sp brk0 mbase dr] inp Hpos Hceil H40 Hlim VE VI.
-pose proof (valid_entry_parts _ _ _ _ _ _ _ _ VI VE) as (Hsp & Hbrk & _).
+pose proof (valid_entry_parts _ _ _ _ _ _ _ _ VI VE) as (Hsp & Hbrk & Hmb & _).
 unfold prog, mo0, ceil_of. cbn [en_brk en_mmap_base en_sp].
 apply (mspecL_program LBUDGET (QI [] P0) (prog_with rs (argv_Z (in_argv inp))) (fun _ _ _ => False)).
 - apply prog_with_L.
-- apply QI_init; [exact Hbrk| exact Hpos| exact Hsp| exact Hceil| exact H40| exact Hlim| exact P0_nonneg| pose proof PHI_P0; lia].
+- apply QI_with_vdso. apply QI_init; [exact Hbrk| exact Hpos| exact Hsp| exact Hmb| exact Hceil| exact H40| exact Hlim| exact P0_nonneg| pose proof PHI_P0; lia| exact (valid_input_core_reader _ VI)].
 - intros a s' mo' [].
 Qed.
 
@@ -102,11 +103,11 @@ valid_entry (mkImage segs pc ph) en inp -> valid_input_core inp ->
 tsafe nstep no_enomem (prog segs rs (ceil_of en) (in_argv inp)) (mo0 segs lim en inp).
 Proof.
 intros segs rs pc ph lim [sp brk0 mbase dr] inp Hpos Hceil H40 Hlim VE VI.
-pose proof (valid_entry_parts _ _ _ _ _ _ _ _ VI VE) as (Hsp & Hbrk & _).
+pose proof (valid_entry_parts _ _ _ _ _ _ _ _ VI VE) as (Hsp & Hbrk & Hmb & _).
 unfold prog, mo0, ceil_of. cbn [en_brk en_mmap_base en_sp].
 apply (mspecL_program_ne LBUDGET (QI [] P0) (prog_with rs (argv_Z (in_argv inp))) (fun _ _ _ => False)).
 - apply prog_with_L.
-- apply QI_init; [exact Hbrk| exact Hpos| exact Hsp| exact Hceil| exact H40| exact Hlim| exact P0_nonneg| pose proof PHI_P0; lia].
+- apply QI_with_vdso. apply QI_init; [exact Hbrk| exact Hpos| exact Hsp| exact Hmb| exact Hceil| exact H40| exact Hlim| exact P0_nonneg| pose proof PHI_P0; lia| exact (valid_input_core_reader _ VI)].
 - intros a s' mo' [].
 Qed.
 

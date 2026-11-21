@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fm.asan's __interceptor_vsnprintf 0x458a0 over the GXA-route contract
@@ -27,13 +27,13 @@
    region is the walk's own frame [sp - 0x130, sp) (Gvsn's spans the whole chain's band), so that the walk needs the
    caller's window only where the contract gives it. The callees' cells are carried in the kcall XW instead of in a
    band below sp. New file. *)
-(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfSvsn.v (origin/cold/port-fm-rtprintf-param 7e395de08f5)
+(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfSvsn.v
    restated over the engine's generic ARx with the ghost list Hp fixed (route (a), c-omx-hpreset 10:51Z) and re-pinned
    at preset image A (fuzz_preset.asan, unstripped f0d2e8d4, pin d83eb25d). Restatement: ARU tfibsegs B .. U .. ->
    ARx .. Hp ..; the shared contracts -> their _x forms (PSnpSx); AMEMSET's aintrin_realizesU (FMsnprintfI) -> the
    engine's YGcallMx.aintrin_realizes_x (the same text over ecall_pre_x); the laws are Section hypotheses named after
    their AR_laws_x fields (alx_frame, alx_stack, alx_zshadow_byte), not the record; stk_kHighMemBeg (ARU_ARm ..) ->
-   stk_bounds_x, a Section hypothesis of the engine lemma's exact statement (YCbqG.stk_bounds_x, 7792959a2abb);
+   stk_bounds_x, a Section hypothesis of the engine lemma's exact statement (YCbqG.stk_bounds_x);
    FMsnprintfG.stack_zero_shadow -> PSnpG.stack_zero_shadow_x (from alx_zshadow_byte); g_ecall_preU -> PSnpGt's
    g_ecall_pre_x. Re-pin: the stack-protector cells FM_GOT_canary / FM_canary (FMH_Base) -> preset A's
    AE2p.A_GOT_canary 0xa2758 / AE2p.A_canary 0x5fd910 (by symbol: the .got slot of __stack_chk_guard, which vsnprintf
@@ -52,8 +52,8 @@
      .got slot of __stack_chk_guard             0x9a638 -> 0xa2758   (FM_GOT_canary -> AE2p.A_GOT_canary)
    The numerals in the comment above are fm's. '+ 8' in this file: word ranges of rdword / words_at and chunk lengths
    (address ranges), no presence form. *)
-(* Modified by Theorem Labs, 2026-10: port-fm 00daeaf3796's destination slack (origin/cold/port-fm-rtprintf-param, the
-   final text 3e35620c52e) passed through: the _xa entry's 'amem_range d (sn_len (n - 1) T + 8)' is the Section
+(* Modified by Theorem Labs, 2026-10: port-fm's destination slack (origin/cold/port-fm-rtprintf-param, the
+   final text) passed through: the _xa entry's 'amem_range d (sn_len (n - 1) T + 8)' is the Section
    hypothesis HD8, which is the vfprintf interceptor's GXA (5) at s0 = d, n0 = n - 1. The '+ 8' is an address-range fact. *)
 (* Modified by Theorem Labs, 2026-10: the memnorm keep (c-omx-alloc 17:03Z ruling (b); c-libc-stdio KEEP-SPLIT G2):
    AMEMSET is now the engine's YGcallMxmn.aintrin_realizes_xm at OSet (= PSnpLeaves.leaf_memset, whose post ends in
@@ -61,7 +61,8 @@
    step's keep `memnorm segs mem -> memnorm segs mem'`: after memset its post's last conjunct (carried through kcall's
    Q), after the vfprintf interceptor vf_post's last conjunct, at the store *d = 0 PSnpKeep.memnorm_of_subframe over the
    one writable byte d; sn_post's keep is sw_frame's sixth conjunct. *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpSvsn.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpSvsn.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -281,7 +282,7 @@ Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option 
 Hypothesis alx_frame : ARx_frame_law tfibsegs B ARx.
 Hypothesis alx_stack : ARx_stack_law tfibsegs B ARx.
 Hypothesis alx_zshadow_byte : ARx_zshadow_byte_law tfibsegs ARx.
-(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc 7792959a2abb YCbqG.v:308,
+(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc YCbqG.v:309,
    which needs the whole AR_laws_x record): an instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`; never proved here *)
 Hypothesis stk_bounds_x : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
   kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd.

@@ -9,8 +9,8 @@
    conversion). Also fe_lib_pre_of_fs: the harness pre fs_lib_pre_x at tfib_K is fe_base's tfib_lib_pre_x (B.YCfn),
    by conversion (the same constants under B's two names).
    rule 24: proves function LLVMFuzzerTestOneInput (the walk's post; reuse search: proof-index
-   LLVMFuzzerTestOneInput, ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_post.v (a working branch 0d34d65d2b7), A's names; A's conclusion
+   LLVMFuzzerTestOneInput, ported from a working branch).
+   Ported from: lib/A/FSW_entry_post.v (a working branch), A's names; A's conclusion
    ACfn.tfib_lib_post_x is B's FSH_Harness.fs_lib_post_x (A's ACfn post restated at build B). fe_aenv_off / fe_meta_off
    are proved here from tfib_K's cells (the proof text of lib/B/YD1u.v tfib_aenv_off_lib_fp / tfib_meta_off_lib_fp).
    Section p hypotheses: TS : YF0m.TfibSyms B, a premise of lib/B/FSH_Fn_entry.v fs_entry_goal. *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value, segment C1 DISP (lane ExvDisp, cut CUT_C1 of ExvB_Stmt.v at exv_pc 0x11c = B 0x83648): the PIECE
    STATEMENTS of the segment and the pure grammar lemmas its arms use. Proves nothing about the program.
@@ -196,7 +197,7 @@ Definition EXVD_WORD (n : nat) : Prop :=
   exv_spill E Wc memc 152 (e_v E) ->
   SRr rsegs Wc (cfg_at rsegs (exv_pc 0x42c) regs memc mdc) (EXV_POST B ARx SK E).
 
-(* ---- the shared kits the arms cite, all on the statement branch (ExValueB's base a90f298c25a): ExvLoop's
+(* ---- the shared kits the arms cite, all on the statement branch (ExValueB's base): ExvLoop's
    lib/B/Prog/ExvB_Loop_kit.v (KIT_EXB_CALL, KIT_CALL_CHAIN, KIT_RODATA, KIT_WDEST) with their proofs exv_kit_call
    (ExvB_Loop_kitP.v) and exv_kit_chain / exv_kit_rodata / exv_kit_wdest (ExvB_Loop_kitQ.v), and ExvOpen's
    lib/B/Prog/ExvB_Open_sh.v (exv_sh_blk, exv_sh_lam) and lib/B/Prog/ExvB_Open_kt.v (exv_kt). ---- *)

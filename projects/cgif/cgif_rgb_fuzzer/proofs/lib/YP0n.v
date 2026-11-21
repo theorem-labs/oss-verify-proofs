@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (free_spec: a refused munmap, answer 0, leaves the region live and the state unchanged). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YP0j YP0g YP0h YP0i YP0q YP0m
@@ -1004,9 +1005,13 @@ mbinds. apply itok_ask.
 apply Forall_forall. intros [q a] Hin Hml. cbn [snd] in *.
 apply (used_metas_iff s2 q a (proj1 (inv_keys HI2))) in Hin.
 exact (Hno q a (usedX_intro [] s2 q a eq_refl Hin) Hml). }
-intros z _. msimp. eapply upd_region_kill_spec; [exact HI2 | exact Hr | exact Hkd | exact Hno |].
+intros z _. msimp.
+(* 08b1429: a refused munmap (z = 0) leaves the region live; the state is [s2] *)
+destruct (negb (z =? 0)); cbv beta iota.
+{ eapply upd_region_kill_spec; [exact HI2 | exact Hr | exact Hkd | exact Hno |].
 intros s3 HI3 Em3 _. apply HQ; [exact HI3| |].
 -- intros q a Hq. apply C2. unfold usedX, MTX, MT in *. rewrite Em3 in Hq. exact Hq.
--- apply DEL. eapply ub_same_trans; [exact UB2 | apply ub_same_metas; exact Em3].
+-- apply DEL. eapply ub_same_trans; [exact UB2 | apply ub_same_metas; exact Em3]. }
+{ try msimp. apply itok_ret. apply HQ; [exact HI2 | exact C2 | apply DEL; exact UB2]. }
 * apply itok_ret. apply HQ; [exact HI2 | exact C2 | apply DEL; exact UB2].
 Qed.

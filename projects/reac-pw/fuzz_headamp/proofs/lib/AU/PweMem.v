@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v at 22fdb2585dec (the proofs of its byte-list lemmas rm_byte_range, rm_unsigned_byte, rm_le_byte_1, rm_le_byte_bv, rm_nth_le_bytes, rm_nth_map, rm_nth_repeat, rm_aview_mbyte and of rm_bytes_kept); restated over garr8 and val_mem with the pwm_ prefix, with no image and no frame; the lemmas on Pod/Layout.v's ent_mem and Pod/Model.v's enc_pod are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweMem.v at d75b4b9c2458; module paths changed to reac-pw/fuzz_headamp; nothing else. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v (the proofs of its byte-list lemmas rm_byte_range, rm_unsigned_byte, rm_le_byte_1, rm_le_byte_bv, rm_nth_le_bytes, rm_nth_map, rm_nth_repeat, rm_aview_mbyte and of rm_bytes_kept); restated over garr8 and val_mem with the pwm_ prefix, with no image and no frame; the lemmas on Pod/Layout.v's ent_mem and Pod/Model.v's enc_pod are new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweMem.v; module paths changed to reac-pw/fuzz_headamp; nothing else. *)
 (* The memory helper lemmas of the walk of pod_write_ent on reac-pw/fuzz_headamp's image B. Proves no function (kind:
    model lemma). Every lemma is over the shared kit's predicates (garr8, val_mem, mbyte, aview, range_addressable,
    shadow_hull_vis), generic in the segments segs: no image, no address and no unit-dependent number is named here.

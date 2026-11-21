@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (section hypothesis Hnk, that no segment is kernel-mapped, is passed to each sound lemma of asum_sound that needs it, since segments_reserved now filters seg_kernel_map). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -41,6 +42,13 @@ Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* NEW, carried from bignum's built copy: no_lazy_img/no_lazy_imgn gained this
+   discriminant when segments_reserved began filtering seg_kernel_map (LPS@75d69e00
+   Run.v:253-254), so the Sections it reaches take Hnk immediately after Hlow and
+   every sound-lemma call below passes it in that slot.  bignum threaded this when
+   its AxSumD built; the twins never got that half, which is why `A` landed in the
+   Hnk slot at :52 chars 69-70. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 Hypothesis KT_emit : forall ρ o bs, KT ρ (o ++ bs) [] -> t_eq (KT ρ o) (t_emit (W 2 bs) (KT ρ (o ++ bs))).
 
 Notation Snd := (Sound segs cfg LIM (MR segs fs0) KT).
@@ -49,13 +57,13 @@ Theorem asum_sound (k : Z) (A : AST) (l : list AST) : asum T segs LIM k A = Some
 Proof.
   unfold asum.
   destruct (k =? 1); [exact (sum_envp_sound segs cfg LIM fs0 KT A l)|].
-  destruct (k =? 2); [exact (sum_prog_sound segs cfg LIM fs0 KT Hlow A l)|].
+  destruct (k =? 2); [exact (sum_prog_sound segs cfg LIM fs0 KT Hlow Hnk A l)|].
   destruct (k =? 3); [exact (sum_strlen_sound segs cfg LIM fs0 KT A l)|].
   destruct (k =? 4).
-  { destruct (sum_rip T segs LIM A) as [l0|] eqn:E1; [intros H; injection H as <-; exact (sum_rip_sound T HT segs cfg LIM fs0 KT Hlow A l0 E1)|].
-    destruct (sum_rip2 T segs LIM A) as [l0|] eqn:E2; [intros H; injection H as <-; exact (sum_rip2_sound T HT segs cfg LIM fs0 KT Hlow A l0 E2)|].
-    exact (sum_rip_big_sound T HT segs cfg LIM fs0 KT Hlow A l). }
-  destruct (k =? 5); [exact (sum_memchr_sound T HT segs cfg LIM fs0 KT Hlow A l)|].
+  { destruct (sum_rip T segs LIM A) as [l0|] eqn:E1; [intros H; injection H as <-; exact (sum_rip_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l0 E1)|].
+    destruct (sum_rip2 T segs LIM A) as [l0|] eqn:E2; [intros H; injection H as <-; exact (sum_rip2_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l0 E2)|].
+    exact (sum_rip_big_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l). }
+  destruct (k =? 5); [exact (sum_memchr_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l)|].
   destruct (k =? 6).
   { destruct (sum_memcpy segs LIM A) as [l0|] eqn:E1; [intros H; injection H as <-; exact (sum_memcpy_sound segs cfg LIM fs0 KT Hlow A l0 E1)|].
     exact (sum_memcpy_big_sound segs cfg LIM fs0 KT Hlow A l). }
@@ -63,9 +71,9 @@ Proof.
   { destruct (sum_memset segs LIM A) as [l0|] eqn:E1; [intros H; injection H as <-; exact (sum_memset_sound segs cfg LIM fs0 KT Hlow A l0 E1)|].
     first [exact (sum_memset_big_sound segs cfg LIM fs0 KT Hlow A l) | exact (sum_memset_big_sound segs cfg LIM fs0 KT A l)]. }
   destruct (k =? 8).
-  { destruct (sum_stdio T segs A) as [l0|] eqn:E1; [intros H; injection H as <-; exact (sum_stdio_sound T HT segs cfg LIM fs0 KT Hlow KT_emit A l0 E1)|].
+  { destruct (sum_stdio T segs A) as [l0|] eqn:E1; [intros H; injection H as <-; exact (sum_stdio_sound T HT segs cfg LIM fs0 KT Hlow Hnk KT_emit A l0 E1)|].
     exact (sum_stdio0_sound segs cfg LIM fs0 KT Hlow A l). }
-  destruct (k =? 9); [exact (sum_amc_sound T HT segs cfg LIM fs0 KT Hlow A l)|].
+  destruct (k =? 9); [exact (sum_amc_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l)|].
   destruct (k =? 10).
   { destruct (sum_mzero segs LIM A) as [l0|] eqn:E1; [intros H; injection H as <-; exact (sum_mzero_sound segs cfg LIM fs0 KT Hlow A l0 E1)|].
     exact (sum_mfill_sound segs cfg LIM fs0 KT Hlow A l). }

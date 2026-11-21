@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -30,19 +31,20 @@ Section Tail.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   Hypothesis H_FEs : fx_hole SV argH ISP fs nk9es_tfe nk9esfee.
   Lemma tail_g9t012e_lit : forall PHIb : env -> Prop, piece (SVG PHIb SV) argH ISP fs vg9t012se T0.
   Proof.
     intros PHIb E R FULL m HC.
-    pose proof (nb_range sp rdraw argv envp uid hw fs SV _ _ _ _ BNK9eDrvks.HL BNK9eDrvks.BASE BNK9eDrvks.NB BNK9eDrvks.HNB BNK9eDrvks.HNB0 BNK9eDrvks.HKN PHIb E R FULL m HC) as Hr.      (* [comment removed for export] *)
+    pose proof (nb_range sp rdraw argv envp fs SV _ _ _ _ BNK9eDrvks.HL BNK9eDrvks.BASE BNK9eDrvks.NB BNK9eDrvks.HNB BNK9eDrvks.HNB0 BNK9eDrvks.HKN PHIb E R FULL m HC) as Hr.      (* [comment removed for export] *)
     unfold T0.
     exact (BNK9eDrvks.drive sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEs PHIb E R FULL m HC ltac:(lia)).
   Qed.

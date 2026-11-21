@@ -5,6 +5,7 @@
    imported from its own file (lib/A/PresetPlainRz.v) and the budget lemma is proved here (the asan-ubsan twin of
    lib/A/AsanAgreesTop.v asan_lim_source_le), in place of importing the asan agreement top, which the draft imported
    as lib/A/AsanTop.v (in this tree that top is lib/A/AsanAgreesTop.v; lib/A/AsanTop.v is the asan_halts top). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* fuzz_preset's asan_ubsan_agrees from the asan-ubsan side TFIB_T_AU (PresetTFIBAU.v), in the form of
    proofs/cgif/cgif_file_fuzzer/lib/YZ03.v:31-53 / YZ05.v (the donor's asan-ubsan agreement; its lib/A/AZ03.v is the
    asan twin) and of the released projects/libreac/fuzz_grant/proofs/lib/A/AsanTop.v:
@@ -43,11 +44,11 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     presetsegsAU AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=ZTraceSpec.checksum_shape) inp) (SPECX (LS:=ZTraceSpec.checksum_shape) inp) inp
-    asan_ubsan_lim_source_le SWB HP (HT Hsp' Hbrk' Hmb' Hfit' Hinp SWB) (t_eq_refl _)).
+    asan_ubsan_lim_source_le SWB HP (HT Hsp' Hbrk' Hmb' Hfit' Hinp Hlau' SWB) (t_eq_refl _)).
 Qed.
 End au.

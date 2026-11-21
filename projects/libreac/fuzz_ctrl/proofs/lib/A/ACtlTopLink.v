@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from cgif's ACed.v / ACfi.v top-link facts to fuzz_ctrl's CtrlB *)
-(* Image A. The donor is proofs/cgif/cgif_file_fuzzer/lib/A/ACed.v of c8557374ad2e:
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image A. The donor is proofs/cgif/cgif_file_fuzzer/lib/A/ACed.v:
      actl_ro_segs_chk / actl_ro_below / actl_RO   <- tfibX_ro_segs_chk :56, tfibX_ro_below :59, tfibX_RO0 :66
                                                      (ACfi.v:42-51 tfib_ro_segs_chk / tfib_ROB is the same check);
      actl_env                                     <- tfibX_env :76;

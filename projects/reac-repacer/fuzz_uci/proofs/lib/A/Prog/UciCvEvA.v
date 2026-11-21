@@ -5,8 +5,9 @@
    seg_sign, ev_val, ev_cur, ev_sign, ev_lb_nil, ev_60, ev_5c, ev_block and their list and sign helpers) moved to
    image A (fuzz_uci.asan): footprint runs (lib/Lib/ExecF.v evtF, lib/Lib/StepF.v step) instead of evt, this image's
    addresses (UciCvIface.v CV_AT offsets +0x06c .. +0x128) and registers, and the two ASan load checks of each loop
-   in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v at origin/ossv/recipes 88154566652a (cl1_F;
+   in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v (cl1_F;
    crt_sh1F, takeF and crt_lits copied as cv_sh1F, takeF and cv_lits, module paths changed to reac_repacer.fuzz_uci). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciCvEvA: cv_ev_of_dgt proves lib/A/Prog/UciCvIface.v cv_ev_stmt_F from cv_dgt_stmt_F, i.e. the walk of
    check_value's inlined expected_value from the return of rp_uci_int (+0x06c) to the digit loop's set-up (+0x128),
    whose rest cv_dgt_stmt_F states.  Offsets from the entry (UciCvIface.v CV_AT), read from the pinned image's code:

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyLSBTrPeak.v, with its module paths and module names changed; 892 of its 1054 lines of code are new or changed and 510 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyTrPeakCnl.v (sha256
-   15225bd2ea3e; internal record) at c653c819019, row G-BCNL: A's definitions,
+   15225bd2ea3e; internal record), row G-BCNL: A's definitions,
    lemmas, names, statements and proofs over lib/B's records, so that image B's drain arm and top_x can take
    dr_cnl_pk := fun h P => ReplyB3TrPeakCnl.cnl_pk (hs_held h) (map (map (Z_to_bv 8)) (dr_lines h)) P, as A does.
    A's text from its first line after the Requires to its end is kept byte for byte.  The swaps:
@@ -1117,7 +1118,7 @@ Proof.
   pose proof (w_cls_small k (Z.of_nat (length x) + 1) ltac:(lia)). lia.
 Qed.
 
-(* the facts of the drained pair the walk needs, from fr_RINV and the pick (fr_pair_ok, ReplyRINV.v:106-125) *)
+(* the facts of the drained pair the walk needs, from fr_RINV and the pick (fr_pair_ok, ReplyRINV.v:107-126) *)
 Lemma tk_dr_facts : forall cx t m si h j,
   fr_RINV cx t m -> dr_pick cx m si h -> (j < length (lm_es m))%nat ->
   re_fd (nth j (lm_es m) dr_e0) = hs_fd h -> re_eof (nth j (lm_es m) dr_e0) = 0 ->
@@ -1256,8 +1257,8 @@ End tk_inst.
 
 (* ################################################################## the instance term (a Theorem Labs lane row G-BCNL) *)
 (* Image B's drain arm (lib/B/W_LLVMFuzzerTestOneInput_drain_defs_x.v :177, _drain_x.v :329, _drain_calls_x.v :109,
-   _drain_entry_x.v :102 at the room 2e33f1270a5) and top_x keep check_no_loss's peak after a drain as the Section
-   variable dr_cnl_pk : hsrc -> (Z -> bool) -> nat.  A's instance (a working branch ce7d0d0bf8c:
+   _drain_entry_x.v :102 at the room) and top_x keep check_no_loss's peak after a drain as the Section
+   variable dr_cnl_pk : hsrc -> (Z -> bool) -> nat.  A's instance (a working branch:
    lib/A/W_LLVMFuzzerTestOneInput_top_x.v :1321, ReplyLScntRP.v :134) is A's cnl_pk of the held list and the drained
    lines; this is the same term over image B.  A consumer Requires this file without Import (as A does), because its
    cnl_tr / cnl_pk would hide lib/B/W_contract_x.v's. *)

@@ -5,8 +5,9 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 108 of its 144 lines of code are new or changed and 218 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_split on fuzz_segconf image B (fuzz_segconf.asan-ubsan): the image-B port of
-   lib/A/Prog/reac_declared_vlan_split_r.v (commit ceb7e39832b2); image B's epilogue is image
+   lib/A/Prog/reac_declared_vlan_split_r.v; image B's epilogue is image
    A's. The point KR (0x8a324), the epilogue. Eight loads restore ra and s0 .. s6 from the frame, `addi sp,sp,64`
    gives the entry sp back, `ret` returns to the entry ra; with the journal and the functional post of a0 at the
    point, the return is apost_base's. *)

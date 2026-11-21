@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/TxGlue.v, with its module paths and module names changed; 647 of its 739 lines of code are new or changed and 330 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/U/Prog/WriterRet.v, with its module paths and module names changed; 702 of its 749 lines of code are new or changed and 692 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/pj_write.v, with its module paths and module names changed; 447 of its 494 lines of code are new or changed and 702 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -44,7 +45,8 @@ Lemma interp_rm : forall t m r, interp_eff_accesses rsegs t m = MachineOk r -> r
 Proof.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m r H; cbn in H; try discriminate.
   - injection H as <-. cbn. apply rm_refl.
-  - destruct (ov_read_bytes rsegs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes rsegs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar rsegs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses rsegs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep| |] eqn:E; try discriminate.
     injection H as <-. cbn. exact (IH _ _ _ E).
   - destruct (store_ok rsegs m a (width_bytes n)) eqn:S; [|discriminate].
@@ -70,7 +72,7 @@ Qed.
 Lemma fetch_failure_not_ok : forall m a x, fetch_failure rsegs m a <> MachineOk x.
 Proof.
   intros m a x. unfold fetch_failure. cbv zeta.
-  destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+  try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
 Qed.
 
 Lemma step_rm : forall ms ms', RiscvSemantics.step rsegs ms = MachineOk ms' -> rm (ms_mem ms) (ms_mem ms').

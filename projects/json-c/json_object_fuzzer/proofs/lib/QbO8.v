@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the section's launch variables and `QpvH.launch_ok` in place of `entry_stack_fits`; the CONFIG_RSEQ flag of the start-up layer: the fake and depot checks on the four main-entry states in `HSCLASS_S`; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -72,25 +73,25 @@ Definition E_PG (v : nat) : expr := EMd Instr.M_MUL (ELit 4096) (EVar v).
 Definition E_SHPG (v : nat) : expr := EMd Instr.M_MUL (ELit 512) (EVar v).
 
 Definition FAKE_FACTS : list kentry :=
-[ KWord (SA (E_PG 406) 88) 8 (ELit 20); KZero (SA (E_PG 406) 96) (ELit 11571104); KZero (SA (E_PG 406) 0) (ELit 88);
-KWr (SA (E_PG 406) 0) (ELit 11571200);
-KZero (SA (E_SHPG 406) 0x7fff8000) (ELit 1446400); KRange (EVar 406) 1 34359733495 ].
+[ KWord (SA (E_PG 412) 88) 8 (ELit 20); KZero (SA (E_PG 412) 96) (ELit 11571104); KZero (SA (E_PG 412) 0) (ELit 88);
+KWr (SA (E_PG 412) 0) (ELit 11571200);
+KZero (SA (E_SHPG 412) 0x7fff8000) (ELit 1446400); KRange (EVar 412) 1 34359733495 ].
 Definition fake_checks (k : list kentry) : bool := kn_has_all FAKE_FACTS k.
 Lemma FAKE_CHECKS : forall w ch, HSCLASS_S w ch -> fake_checks (kn_view ch) = true.
-Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Section DepotFacts.
 Variables (tf h0 : Z).
 Let cell : Z := DP_TAB + 4 * bkt h0.
 
 Definition DEPOT_FACTS : list kentry :=
-[ KWord (SA (ELit 0) 0x5d40a8) 8 (E_PG 478); KWord (SA (ELit 0) 0x1c4098) 8 (E_PG 479);
-KWord (SA (E_PG 478) 16) 8 (ELit h0); KWord (SA (E_PG 478) 24) 4 (ELit 0); KWord (SA (E_PG 478) 28) 4 (ELit 1);
-KZero (SA (E_PG 478) 32) (ELit 1048544); KWr (SA (E_PG 478) 0) (ELit 1048576);
-KWr (SA (E_PG 479) 0) (ELit 8388608);
-KWord (SA (E_PG 237) 3168) 1 (ELit 0); KWr (SA (E_PG 237) 0) (ELit 4096);
+[ KWord (SA (ELit 0) 0x5d40a8) 8 (E_PG 484); KWord (SA (ELit 0) 0x1c4098) 8 (E_PG 485);
+KWord (SA (E_PG 484) 16) 8 (ELit h0); KWord (SA (E_PG 484) 24) 4 (ELit 0); KWord (SA (E_PG 484) 28) 4 (ELit 1);
+KZero (SA (E_PG 484) 32) (ELit 1048544); KWr (SA (E_PG 484) 0) (ELit 1048576);
+KWr (SA (E_PG 485) 0) (ELit 8388608);
+KWord (SA (E_PG 241) 3168) 1 (ELit 0); KWr (SA (E_PG 241) 0) (ELit 4096);
 KImg 0x1c40a8 cell; KImg (cell + 4) 0x5d4098;
-KRange (EVar 237) 1 34359736319; KRange (EVar 478) 1 34359736064; KRange (EVar 479) 1 34359734272 ].
+KRange (EVar 241) 1 34359736319; KRange (EVar 484) 1 34359736064; KRange (EVar 485) 1 34359734272 ].
 
 Definition depot_checks (k : list kentry) : bool :=
 kn_has_all DEPOT_FACTS k
@@ -102,7 +103,11 @@ End DepotFacts.
 
 Lemma DEPOT_CHECKS : forall w ch, HSCLASS_S w ch -> exists tf h0, depot_checks tf h0 (kn_view ch) = true.
 Proof.
-intros [|] ch [-> | ->].
+intros [|] ch [-> | [-> | [-> | ->]]].
+- exists 3, 0x60133795861b14d8. vm_compute. reflexivity.
+- exists 2, 0x2b43f9992ae5842b. vm_compute. reflexivity.
+- exists 3, 0x60133795861b14d8. vm_compute. reflexivity.
+- exists 2, 0x2b43f9992ae5842b. vm_compute. reflexivity.
 - exists 3, 0x60133795861b14d8. vm_compute. reflexivity.
 - exists 2, 0x2b43f9992ae5842b. vm_compute. reflexivity.
 - exists 3, 0x60133795861b14d8. vm_compute. reflexivity.
@@ -147,21 +152,35 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 Hypothesis HB : band_lo = atopE E.
 #[local] Notation m := (view (LV_J E) mo FULL).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB) (only parsing).
 
 Let KO : know_ok asegs E m (kn_view ch) := MV4 main_know_view.
 
@@ -178,16 +197,16 @@ Proof.
 pose proof (FAKE_CHECKS w ch HCL) as CK.
 assert (ffact : forall K, kn_has K FAKE_FACTS = true -> kn_has K (kn_view ch) = true).
 { intros K HK. unfold fake_checks, kn_has_all in CK. rewrite forallb_forall in CK. apply CK. apply kn_has_In. exact HK. }
-pose proof (kn_range_var E m (kn_view ch) KO 406 _ _ (ffact (KRange (EVar 406) 1 34359733495) eq_refl)) as B.
-pose proof (objf 406%nat 11571200 ltac:(inw)) as (O1 & O2 & O3 & O4). destruct O3 as [LH OH].
-assert (HI : 0x647000 <= pg E 406) by (unfold pg in *; lia).
-unfold RFake. change (ae_fs_base (RE_main sp w E)) with (pg E 406). cbv zeta.
-set (FS := pg E 406) in *.
-pose proof (kn_zero_rw E m (kn_view ch) KO (E_PG 406) 0 88 FS (ffact (KZero (SA (E_PG 406) 0) (ELit 88)) eq_refl) eq_refl ltac:(lia) ltac:(lia)) as Z88.
-pose proof (kn_zero_rw E m (kn_view ch) KO (E_PG 406) 96 11571104 FS (ffact (KZero (SA (E_PG 406) 96) (ELit 11571104)) eq_refl) eq_refl ltac:(lia) ltac:(lia)) as ZB.
-pose proof (kn_zero_some E m (kn_view ch) KO (E_PG 406) 96 11571104 FS (ffact (KZero (SA (E_PG 406) 96) (ELit 11571104)) eq_refl) eq_refl ltac:(lia) ltac:(lia)) as ZS.
-pose proof (kn_zero_some E m (kn_view ch) KO (E_SHPG 406) 0x7fff8000 1446400 (512 * bv_unsigned (ev E 406)) (ffact (KZero (SA (E_SHPG 406) 0x7fff8000) (ELit 1446400)) eq_refl) eq_refl ltac:(lia) ltac:(lia)) as ZSH.
-pose proof (kn_word E m (kn_view ch) (E_PG 406) 88 8 (ELit 20) FS 20 KO (ffact (KWord (SA (E_PG 406) 88) 8 (ELit 20)) eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as K88.
+pose proof (kn_range_var E m (kn_view ch) KO 412 _ _ (ffact (KRange (EVar 412) 1 34359733495) eq_refl)) as B.
+pose proof (objf 412%nat 11571200 ltac:(inw)) as (O1 & O2 & O3 & O4). destruct O3 as [LH OH].
+assert (HI : 0x647000 <= pg E 412) by (unfold pg in *; lia).
+unfold RFake. change (ae_fs_base (RE_main sp w E)) with (pg E 412). cbv zeta.
+set (FS := pg E 412) in *.
+pose proof (kn_zero_rw E m (kn_view ch) KO (E_PG 412) 0 88 FS (ffact (KZero (SA (E_PG 412) 0) (ELit 88)) eq_refl) eq_refl ltac:(lia) ltac:(lia)) as Z88.
+pose proof (kn_zero_rw E m (kn_view ch) KO (E_PG 412) 96 11571104 FS (ffact (KZero (SA (E_PG 412) 96) (ELit 11571104)) eq_refl) eq_refl ltac:(lia) ltac:(lia)) as ZB.
+pose proof (kn_zero_some E m (kn_view ch) KO (E_PG 412) 96 11571104 FS (ffact (KZero (SA (E_PG 412) 96) (ELit 11571104)) eq_refl) eq_refl ltac:(lia) ltac:(lia)) as ZS.
+pose proof (kn_zero_some E m (kn_view ch) KO (E_SHPG 412) 0x7fff8000 1446400 (512 * bv_unsigned (ev E 412)) (ffact (KZero (SA (E_SHPG 412) 0x7fff8000) (ELit 1446400)) eq_refl) eq_refl ltac:(lia) ltac:(lia)) as ZSH.
+pose proof (kn_word E m (kn_view ch) (E_PG 412) 88 8 (ELit 20) FS 20 KO (ffact (KWord (SA (E_PG 412) 88) 8 (ELit 20)) eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as K88.
 cbn [wcell] in K88.
 unfold A_FS_MAP_SIZE, kFsClasses in *.
 split; [exact O1|]. split; [split; [exact LH| exact OH]|]. split; [exact O4|].
@@ -216,20 +235,20 @@ apply andb_prop in C as [C H4]. apply andb_prop in C as [C H3]. apply andb_prop 
 apply Z.leb_le in H1. apply Z.leb_le in H2. apply Z.leb_le in H3. apply Z.ltb_lt in H4.
 apply andb_prop in C as [C IZ2]. apply andb_prop in C as [C IZ1]. apply andb_prop in C as [C W58]. apply andb_prop in C as [C CN].
 apply andb_prop in C as [C CBK]. apply andb_prop in C as [C C60]. apply andb_prop in C as [C W48]. apply andb_prop in C as [_ C38].
-pose proof (kn_range_var E m (kn_view ch) KO 237 _ _ (dfact 12%nat _ eq_refl)) as B240.
-pose proof (kn_range_var E m (kn_view ch) KO 478 _ _ (dfact 13%nat _ eq_refl)) as B486.
-pose proof (kn_range_var E m (kn_view ch) KO 479 _ _ (dfact 14%nat _ eq_refl)) as B487.
-pose proof (objf 478%nat 1048576 ltac:(inw)) as (D1 & D2 & D3 & D4).
-pose proof (objf 479%nat 8388608 ltac:(inw)) as (S1 & S2 & S3 & S4).
-pose proof (objf 237%nat 4096 ltac:(inw)) as (T1 & T2 & T3 & T4).
+pose proof (kn_range_var E m (kn_view ch) KO 241 _ _ (dfact 12%nat _ eq_refl)) as B240.
+pose proof (kn_range_var E m (kn_view ch) KO 484 _ _ (dfact 13%nat _ eq_refl)) as B486.
+pose proof (kn_range_var E m (kn_view ch) KO 485 _ _ (dfact 14%nat _ eq_refl)) as B487.
+pose proof (objf 484%nat 1048576 ltac:(inw)) as (D1 & D2 & D3 & D4).
+pose proof (objf 485%nat 8388608 ltac:(inw)) as (S1 & S2 & S3 & S4).
+pose proof (objf 241%nat 4096 ltac:(inw)) as (T1 & T2 & T3 & T4).
 unfold RDepot.
-change (rl_dn (X_main E)) with (pg E 478). change (rl_ssb (X_main E)) with (pg E 479). change (rl_T (X_main E)) with (pg E 237).
-assert (AD : appr_lia (pg E 478) 1048576) by (apply appr_to_lia; [lia| unfold pg in *; lia| exact D3]).
-assert (AS' : appr_lia (pg E 479) 8388608) by (apply appr_to_lia; [lia| unfold pg in *; lia| exact S3]).
-assert (AT : appr_lia (pg E 237) 4096) by (apply appr_to_lia; [lia| unfold pg in *; lia| exact T3]).
-assert (HDN : 0x647000 <= pg E 478) by (destruct D3 as [_ [X|X]]; unfold pg in *; lia).
-assert (HSS : 0x647000 <= pg E 479) by (destruct S3 as [_ [X|X]]; unfold pg in *; lia).
-set (DN := pg E 478) in *. set (SSB := pg E 479) in *. set (T := pg E 237) in *.
+change (rl_dn (X_main E)) with (pg E 484). change (rl_ssb (X_main E)) with (pg E 485). change (rl_T (X_main E)) with (pg E 241).
+assert (AD : appr_lia (pg E 484) 1048576) by (apply appr_to_lia; [lia| unfold pg in *; lia| exact D3]).
+assert (AS' : appr_lia (pg E 485) 8388608) by (apply appr_to_lia; [lia| unfold pg in *; lia| exact S3]).
+assert (AT : appr_lia (pg E 241) 4096) by (apply appr_to_lia; [lia| unfold pg in *; lia| exact T3]).
+assert (HDN : 0x647000 <= pg E 484) by (destruct D3 as [_ [X|X]]; unfold pg in *; lia).
+assert (HSS : 0x647000 <= pg E 485) by (destruct S3 as [_ [X|X]]; unfold pg in *; lia).
+set (DN := pg E 484) in *. set (SSB := pg E 485) in *. set (T := pg E 241) in *.
 exists 1, tf, tf, h0, 0x800000, (fun _ => h0), (fun _ => 1).
 split; [lia|]. split; [lia|]. split; [lia|].
 split; [intros i Hi; split; [unfold DEPOT_CAP; lia| lia]|].
@@ -241,7 +260,7 @@ split.
 {
 apply (proj2 (rw_cells_app asegs m SS_BASE [C8 (wz tf); C8 (wz 8388608)] _)). split; [exact (kn_rw_cells_sound E m (kn_view ch) _ _ KO C38)|].
 cbn [cells_size csize Nat.add]. unfold SS_BASE.
-pose proof (kn_word E m (kn_view ch) (ELit 0) 0x1c4098 8 (E_PG 479) 0 SSB KO (dfact 1%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as K58.
+pose proof (kn_word E m (kn_view ch) (ELit 0) 0x1c4098 8 (E_PG 485) 0 SSB KO (dfact 1%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as K58.
 cbn [wcell Z.add] in K58.
 apply (proj2 (rw_cells_app asegs m _ [C8 (wz SSB)] _)). split.
 - apply ro_rw; [exact K58|]. apply img_wn_wr_at; [exact W48| lia| cbn; lia].
@@ -260,33 +279,33 @@ apply (zero_range_C4 m (DP_TAB + 4 * bkt h0 + 4) (0x5d4098 - (DP_TAB + 4 * bkt h
 split; [exact (kn_rw_cells_sound E m (kn_view ch) _ _ KO CN)|].
 split.
 {
-pose proof (kn_word E m (kn_view ch) (ELit 0) 0x5d40a8 8 (E_PG 478) 0 DN KO (dfact 0%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as K58.
+pose proof (kn_word E m (kn_view ch) (ELit 0) 0x5d40a8 8 (E_PG 484) 0 DN KO (dfact 0%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as K58.
 cbn [wcell Z.add] in K58. apply ro_rw; [exact K58|]. apply img_wn_wr_at; [exact W58| unfold DP_MAP1; lia| unfold DP_MAP1; cbn; lia]. }
 split.
 {
 intros i Hi. replace i with 1 by lia. change (lastb (fun _ => h0) (bkt h0) (Z.to_nat (1 - 1))) with 0.
-pose proof (kn_word E m (kn_view ch) (E_PG 478) 16 8 (ELit h0) DN h0 KO (dfact 2%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as N1.
-pose proof (kn_word E m (kn_view ch) (E_PG 478) 24 4 (ELit 0) DN 0 KO (dfact 3%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as N2.
-pose proof (kn_word E m (kn_view ch) (E_PG 478) 28 4 (ELit 1) DN 1 KO (dfact 4%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as N3.
+pose proof (kn_word E m (kn_view ch) (E_PG 484) 16 8 (ELit h0) DN h0 KO (dfact 2%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as N1.
+pose proof (kn_word E m (kn_view ch) (E_PG 484) 24 4 (ELit 0) DN 0 KO (dfact 3%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as N2.
+pose proof (kn_word E m (kn_view ch) (E_PG 484) 28 4 (ELit 1) DN 1 KO (dfact 4%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as N3.
 cbn [wcell] in N1, N2, N3.
 apply ro_rw.
 - apply (proj2 (ro_cells_app asegs m _ [C8 (wz h0)] _)). split; [exact N1|]. cbn [cells_size csize Nat.add]. change (Z.of_nat 8) with 8.
 apply (proj2 (ro_cells_app asegs m _ [C4 (wz 0)] _)). split; [replace (DN + 16 * 1 + 8) with (DN + 24) by lia; exact N2|].
 cbn [cells_size csize Nat.add]. change (Z.of_nat 4) with 4. replace (DN + 16 * 1 + 8 + 4) with (DN + 28) by lia. exact N3.
 - cbn [cells_size csize Nat.add].
-apply (kn_wr_at E m (kn_view ch) KO (E_PG 478) 0 1048576 DN (dfact 6%nat _ eq_refl) eq_refl); lia. }
+apply (kn_wr_at E m (kn_view ch) KO (E_PG 484) 0 1048576 DN (dfact 6%nat _ eq_refl) eq_refl); lia. }
 split.
 {
 split; [right; lia|]. split; [lia|]. intros a Ha.
-apply (kn_zero_some E m (kn_view ch) KO (E_PG 478) 32 1048544 DN (dfact 5%nat _ eq_refl) eq_refl); lia. }
+apply (kn_zero_some E m (kn_view ch) KO (E_PG 484) 32 1048544 DN (dfact 5%nat _ eq_refl) eq_refl); lia. }
 split.
 {
 split; [right; lia|]. split; [lia|]. intros a Ha.
-apply (kn_wr_some E m (kn_view ch) KO (E_PG 479) 0 8388608 SSB (dfact 7%nat _ eq_refl) eq_refl); lia. }
+apply (kn_wr_some E m (kn_view ch) KO (E_PG 485) 0 8388608 SSB (dfact 7%nat _ eq_refl) eq_refl); lia. }
 
-pose proof (kn_word E m (kn_view ch) (E_PG 237) 3168 1 (ELit 0) T 0 KO (dfact 8%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as U.
+pose proof (kn_word E m (kn_view ch) (E_PG 241) 3168 1 (ELit 0) T 0 KO (dfact 8%nat _ eq_refl) eq_refl ltac:(lia) eq_refl ltac:(inl)) as U.
 cbn [wcell] in U. apply ro_rw; [exact U|]. cbn [cells_size csize Nat.add].
-apply (kn_wr_at E m (kn_view ch) KO (E_PG 237) 0 4096 T (dfact 9%nat _ eq_refl) eq_refl); lia.
+apply (kn_wr_at E m (kn_view ch) KO (E_PG 241) 0 4096 T (dfact 9%nat _ eq_refl) eq_refl); lia.
 Qed.
 End D.
 
@@ -295,7 +314,7 @@ RDepot (RE_main sp w E) (X_main E) m /\ RFake [] (RE_main sp w E) (X_main E) m.
 
 Theorem depot_at_main : at_main_stmt (fun BAND sp w E m => @depot_main BAND sp w E m).
 Proof.
-intros sp rdraw brk0 argv envp fs uid hw E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
-split; [exact (RDepot_main sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB)|].
-exact (RFake_main sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB).
+intros sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
+split; [exact (RDepot_main sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB)|].
+exact (RFake_main sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB).
 Qed.

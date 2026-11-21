@@ -19,9 +19,10 @@
      HGs / HZS - the G-coverage and zero-shadow facts of g_s (no gx_rt of G_fr: G_fr holds errno, see _exit.v);
      HGW / HERRS / ROM_ERR - G_fr / errno facts, proved for G_fr_c in W_LLVMFuzzerTestOneInput_G.v (c_HGW, c_HERRS,
                  c_ROM_ERR);
-     ROM_PIN - rom_out's pinning conjunct (W_journal.v:397), the start-up instance's debt;
+     ROM_PIN - rom_out's pinning conjunct (W_journal.v:398), the start-up instance's debt;
      RI_write_* and LS_write_* - the arm's open model obligations. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_write.v, with its module paths and module names changed; 129 of its 215 lines of code are new or changed and 2247 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The entry composition of fuzz_reply.asan's LLVMFuzzerTestOneInput at the concrete
    G_fr = G_fr_c B (W_LLVMFuzzerTestOneInput_G.v).  lf_contract_of_segments (_cut.v:650) is applied with every
    segment proved so far plugged in, and each segment still open taken as a Section hypothesis in _cut.v's own text
@@ -29,11 +30,11 @@
    (that is the check that the piece's statement is the _cut.v text, and that its extra Section hypotheses are
    discharged or carried here by name).
 
-   Plugged in now (ARM_add, a Theorem Labs lane 21c8237aca8; ARM_close / eintr / sendmax / default, a Theorem Labs lane 45f5b1d4122;
-   ARM_write, a Theorem Labs lane 3ccac58d123; MMAX pinned to WR_MMAX = 2^30 - 2^20):
+   Plugged in now (ARM_add, a Theorem Labs lane; ARM_close / eintr / sendmax / default, a Theorem Labs lane;
+   ARM_write, a Theorem Labs lane; MMAX pinned to WR_MMAX = 2^30 - 2^20):
      SEG_HEAD  - lf_seg_head (_head.v:1521), its HGnout / HERRNO from _G.v, its model rules carried below;
      SEG_LATCH - lf_seg_latch (_latch.v:799, a Theorem Labs lane), W1_check_bounded from W1's pb_check_bounded
-                 (W_check_bounded.v:391, with a working branch 817ce9dd54a's kept clause) by lt_cbk_of_cb, ERRNO_LOW
+                 (W_check_bounded.v:391, with a working branch's kept clause) by lt_cbk_of_cb, ERRNO_LOW
                  from _G.v.
    Still Section hypotheses: SEG_PRO, the ten arms, SEG_EXIT (FREE-W8.md (sha256 b75e6b922a31; internal record) rows); ARM_drain stays one until
    dr_found_join (_drain.v:1776) is Qed, so that this file rests on no Admitted lemma.
@@ -79,7 +80,7 @@ W_LLVMFuzzerTestOneInput_add W_LLVMFuzzerTestOneInput_addI W_LLVMFuzzerTestOneIn
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_check_shape_done.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_LLVMFuzzerTestOneInput_write.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AF0l AF0m W_palib_fr ACk0.
-(* RelocA's implicit-instance guard (lib/A/ReplyGuard.v, carried by path from a working branch c8b8af5eeeb):
+(* RelocA's implicit-instance guard (lib/A/ReplyGuard.v, carried by path from a working branch):
    no sink class resolves by inference after it, so the ASan sink_head is passed with @ below *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require ReplyGuard.
 Import ListNotations.
@@ -112,7 +113,7 @@ Variable fr_live_post : astate -> astate -> Z -> Prop.
 Variable fr_surv : alayout -> astate -> alayout -> astate -> Prop.
 Variable fr_FP : bvmap 5 word -> alayout -> astate -> world segs -> (word -> option byte) -> list (Z * Z).
 Hypothesis LAWS : AR_laws segs B.
-(* W1Verify's ARx check_bounded (a working branch be8158006bd) re-derives pb_check_bounded at ARi0 and takes
+(* W1Verify's ARx check_bounded (a working branch) re-derives pb_check_bounded at ARi0 and takes
    the laws there; the instance builds them once, W_journal_x.AR_laws_x_ARi0 (YCbqG.AR_laws_x_of_AR LAWS ..) with
    the three AR facts AR_laws_x_of_AR takes (stack bounds 8-aligned, the tail granule, the const cells) *)
 Hypothesis LX0 : AR_laws_x segs B (ARi0 segs B) 0.
@@ -120,7 +121,7 @@ Hypothesis LX0 : AR_laws_x segs B (ARi0 segs B) 0.
    lib/A/W_LLVMFuzzerTestOneInput_addI.v; TL by W1Verify's palib_tfib, lib/A/W_palib_fr.v) ---- *)
 Hypothesis TS : TfibSyms B.
 (* ---- callee contracts still taken as hypotheses: op_add's (W2's pb_op_add_g through zz_OA_from_W2 takes these),
-   and the default arm's two libc calls (R5's rt_pthread_mutex_lock / unlock, a working branch b1c048a98a5) ---- *)
+   and the default arm's two libc calls (R5's rt_pthread_mutex_lock / unlock, a working branch) ---- *)
 Hypothesis MLAW : ameter_laws MT.
 Hypothesis AMA : amalloc_cf_rule_c (SK := AE2k.tfib_sink_head) segs B MT WR_MMAX CTX_AMALLOC.
 Hypothesis SR : sr_spec_g (SK := AE2k.tfib_sink_head) B MT (BASE + AF_fr_source_reset).
@@ -204,8 +205,8 @@ Hypothesis LS_write_room : forall cx t m si h ly S,
   (lp_grow (hs_pending h) = true -> lp_vbytes (hs_pending h) < WR_MMAX) /\
   blocks_bytes S + (if lp_grow (hs_pending h) then lp_vbytes (hs_pending h) else 0) + (wr_n cx m + 1) <= LIVE_MAX /\
   mo_ok MT S (lp_cost MT (hs_pending h) (wr_n cx m)).
-(* W8Add's proposed text (ReplyLS.v atop_LS_write_push_prop, a working branch f57b3e2d0ca, proved at the
-   instance), adopted as the arm states it (a Theorem Labs lane 23184ff5c2a): lp_post's facts about the pushed list l' *)
+(* W8Add's proposed text (ReplyLS.v atop_LS_write_push_prop, a working branch, proved at the
+   instance), adopted as the arm states it (a Theorem Labs lane): lp_post's facts about the pushed list l' *)
 Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
   LS cx t m ly S -> wr_pick cx m si h -> 0 < wr_n cx m ->
   hl_recs l' = hl_recs (hs_pending h) ++ [(d, wr_x cx m)] ->
@@ -226,7 +227,7 @@ Hypothesis SEG_PRO : forall cx, lf_base B MT XM_LIB RLO RHI fr_live_pre (G_fr_c 
     (fun W' c' => INV_H B (G_fr_c B) fr_FP LS RINV cx 0 W' c' \/ INV_X B (G_fr_c B) fr_FP LS RINV cx W' c').
 Hypothesis ARM_drain : forall cx t W c, lf_base B MT XM_LIB RLO RHI fr_live_pre (G_fr_c B) cx ->
   INV_A B (G_fr_c B) fr_FP LS RINV 2 cx t W c -> SRr segs W c (INV_K B (G_fr_c B) fr_FP LS RINV cx t).
-(* ARM_remove (a Theorem Labs lane, 008b4688edd) is merged but NOT plugged in this head: its file predates the cut's flag word
+(* ARM_remove (a Theorem Labs lane) is merged but NOT plugged in this head: its file predates the cut's flag word
    and the req_size clause, and its holder is adapting it; the segment stays a hypothesis until then *)
 Hypothesis ARM_remove : forall cx t W c, lf_base B MT XM_LIB RLO RHI fr_live_pre (G_fr_c B) cx ->
   INV_A B (G_fr_c B) fr_FP LS RINV 4 cx t W c -> SRr segs W c (INV_K B (G_fr_c B) fr_FP LS RINV cx t).

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v for fuzz_grant's ASan image and grant_shape; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/GrantTFIB.v:4-23 (a working branch c2edc13c0fa) for fuzz_state's ASan image (images/Asan.v) and the shape of fuzz_state's ubsan agreement, ag_shape checksum_shape (lib/AgreeShape.v, lib/ZTraceSpec.v); module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/GrantTFIB.v:4-23 (a working branch) for fuzz_state's ASan image (images/Asan.v) and the shape of fuzz_state's ubsan agreement, ag_shape checksum_shape (lib/AgreeShape.v, lib/ZTraceSpec.v); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 (* What the ASan side of fuzz_state's two ASan statements proves: from every valid start, the ASan build realizes
    the same trace set SPECX as the plain build (lib/Reusable/YK18.v srealizes, no cut).
    lib/AgreeShape.v (ag_shape) requires lib/U/AgreeZlib.v (for SBD_AG), a released, proved file of fs's ubsan
@@ -21,6 +22,8 @@ Definition TFIB_T : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk fssegs0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+(* LPS 727298f3: [Run.valid_entry]'s fifth conjunct, which the ASan start-up reads; the statements give it *)
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes fssegs0
 (init_config fssegs0 Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=ag_shape checksum_shape) inp).

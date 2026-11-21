@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one certificate per value of the run's CONFIG_RSEQ flag, of the renumbered plan su_P3B_planR from the computed hand-off state at 1002 against the hand-off state at 0 computed from the run, and su_P3B_cert at the flag's boolean). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BBoot Require Import AsanCertDefs. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import PlanCut. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BBoot Require Import StartupPlanAsan StartupHSAsan StartupHScutAsan StartupPiecesAsan.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BBoot Require Import AsanCertDefs. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import PlanCut. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BBoot Require Import StartupPlanAsan StartupPiecesAsan StartupRegenAsan.
 Import ListNotations. Import AX2. Import APC. Import AP.
 Open Scope Z_scope.
 From Ltac2 Require Import Ltac2 Constr Std Control.
@@ -20,5 +21,11 @@ Ltac2 cert_refl (rhs : constr) :=
 Definition su_P3B_shape : shape := ltac2:(CDefT.buildp (gd_tbl_AsanStartupCertP3B ()) "(0.(0.(1.#0.)(0.(1.#0.)(0.(1.#0.)(1.#0.))))(0.(0.(1.#0.)(1.#0.))(0.(0.(1.#0.)(1.#0.))(0.(1.#0.)(1.#0.)))))")
 (* [comment removed for export] *).
 
-Lemma su_P3B_cert : s2_check NX0 IT0 HS_asan HS_s1c_1002 su_P3B_plan = COk su_P3B_shape.
+(* LPS 727298f3: [rz] is [s2_check]'s second argument (AsanCertDefs.v); one lemma per value, from
+   and against the states StartupRegenAsan.v computes from the run at that value. *)
+Lemma su_P3B_cert0 : s2_check NX0 0 IT0 (su_P3_tab 0) (HS_1002 0) su_P3B_planR = COk su_P3B_shape.
 Proof. cert_refl constr:(COk su_P3B_shape). Qed.
+Lemma su_P3B_cert1 : s2_check NX0 1 IT0 (su_P3_tab 1) (HS_1002 1) su_P3B_planR = COk su_P3B_shape.
+Proof. cert_refl constr:(COk su_P3B_shape). Qed.
+Lemma su_P3B_cert (b : bool) : s2_check NX0 (rseq_z b) IT0 (su_P3_tab (rseq_z b)) (HS_1002 (rseq_z b)) su_P3B_planR = COk su_P3B_shape.
+Proof. ltac1:(destruct b; [exact su_P3B_cert1 | exact su_P3B_cert0]). Qed.

@@ -1,13 +1,13 @@
 #!/bin/bash
 # libdiginet/fuzz_transport IMAGE-B (fuzz_transport.asan-ubsan) core relocation: libdiginet/fuzz_decode's image-B core
 # route (its provenance/evidence/core-B/METHOD.md, run.sh) with this unit's pins; donor libreac/fuzz_decode's released
-# lib/B (recipes 88154566652a, normalised by mkdon.sh).
+# lib/B (recipes, normalised by mkdon.sh).
 #
 #   run.sh <workdir> [extra port_core args]     then apply-B.sh
 #
 #   REL  port_core d9e0589898fd (the port_core release registry's tools/pg-reloc/d9e0589898fd/; best available, NOT of record: its four
 #        compensating checks apply to every output)
-#   DON  mkdon.sh 88154566652a fuzz_decode B $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_decode/lib
+#   DON  mkdon.sh fuzz_decode B $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_decode/lib
 #   P    libreac's pinned image tree (bin/fuzz_decode, unstripped/fuzz_decode)
 #   T    libdiginet's fuzz_transport image tree (result/bin/fuzz_transport, result/unstripped/fuzz_transport)
 #   LIB  proofs/libdiginet/fuzz_transport/lib of the branch before the run

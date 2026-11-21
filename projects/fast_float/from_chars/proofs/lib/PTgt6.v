@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the model's m_kernel field). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From Ltac2 Require Import Ltac2 Constr Std Control.
@@ -35,18 +36,27 @@ Local Notation stk := OSSVerify.Proofs.fast_float.from_chars.lib.Common.Lib.Fram
 Open Scope Z_scope.
 
 Section T6.
-Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry], [brk], with
+   [Hvl] and [Hlau]) instead of argv/envp/uid/hwcap, as PDrvMain's Handoff section
+   does; [Hfits] is kept so the statement is unchanged, now stated over the
+   [av]/[ev] notations. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
+Variables sp0 brk : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp0.
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Hfits : entry_stack_fits sp0 av ev.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 Hypothesis Hargc2 : length av = 2%nat.
 Variables IMG_LO IMG_END HTOP : Z.
 Variable STATIC : list ivl.
@@ -60,7 +70,7 @@ Hypothesis HCELL : forall hs m m' md, hi_Heap HI hs m md -> munch CELLS_NE m m' 
   (forall a, 0x63da0 <= a < 0x63da8 \/ 0x95e40 <= a < 0x95e48 -> mrd PSEGS m' (Z_to_bv 64 a) = mrd PSEGS m (Z_to_bv 64 a)) -> hi_Heap HI hs m' md.
 Hypothesis HNL : forall hs m md, hi_Heap HI hs m md -> NL m.
 Hypothesis HSTATI : forall x, ~ ioutside IMGIV x -> ioutside (CELLS_NE ++ ERRC) x -> ioutside STATIC x.
-Hypothesis HMV : forall hs m md md', hi_Heap HI hs m md -> m_vmmaps md' = m_vmmaps md -> m_halted md' = None -> m_vm_lazy md' = [] -> hi_Heap HI hs m md'.
+Hypothesis HMV : forall hs m md md', hi_Heap HI hs m md -> m_vmmaps md' = m_vmmaps md -> m_kernel md' = m_kernel md -> m_halted md' = None -> m_vm_lazy md' = [] -> hi_Heap HI hs m md'.
 Hypothesis HSTATR : forall x, RSX x -> ioutside STATIC x.
 Variable data : list byte.
 Variable fs0 : Fs.Fs.
@@ -70,19 +80,19 @@ Hypothesis HFZ : fuzz_contract PSEGS DCFG (hi_HS HI) (hi_Heap HI) (hi_blocks HI)
 Hypothesis HSRO : forall x, 0x10000 <= x < 0x22000 \/ 0x64de0 <= x < 0x64de4 -> ~ KRO x -> ioutside STATIC x.
 Hypothesis HKRO : forall hs m md, hi_Heap HI hs m md -> pristine m 0x16100 0x16120 /\ pristine m 0x182a8 0x18327.
 
-Let E := E_main sp0 av ev tid (canary rdraw) regs.
-Local Notation TRHEAD' := (TRHEAD sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
-Local Notation ITHEAD' := (ITHEAD sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
-Local Notation tr_front' := (tr_front sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HNL HSTATI data fs0).
-Local Notation j0_to_g0' := (j0_to_g0 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI data fs0).
-Local Notation j1_to_g0' := (j1_to_g0 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI data fs0).
-Local Notation iter1' := (iter1 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI data fs0).
+Let E := E_main inp sp0 (ed_top rdraw) tid (canary rdraw) regs.
+Local Notation TRHEAD' := (TRHEAD inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
+Local Notation ITHEAD' := (ITHEAD inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
+Local Notation tr_front' := (tr_front inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HNL HSTATI data fs0).
+Local Notation j0_to_g0' := (j0_to_g0 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI data fs0).
+Local Notation j1_to_g0' := (j1_to_g0 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI data fs0).
+Local Notation iter1' := (iter1 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI data fs0).
 
 (* [comment removed for export] *)
 Definition KREST (n : nat) : TSet := t_emit (W 1 (zero_lines n)) (t_exit (exit_code 0) fs0).
 
-#[using="av Hargc2"] Lemma n_calls_pos : (1 <= n_calls data)%nat.
-Proof. LiaFast.lf_pins (fun (av Hargc2 : LiaFast.U) => LiaFast.u0). unfold n_calls. destruct (config_len data); lia. Qed.
+#[using="inp Hargc2"] Lemma n_calls_pos : (1 <= n_calls data)%nat.
+Proof. LiaFast.lf_pins (fun (inp Hargc2 : LiaFast.U) => LiaFast.u0). unfold n_calls. destruct (config_len data); lia. Qed.
 
 #[using="Type"] Lemma krest_front : forall n, t_eq (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) (KREST n)) (KREST (S n)).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -94,22 +104,22 @@ Qed.
 Proof. LiaFast.lf_pins LiaFast.u0. intros n. unfold KREST, t_emit. left. exact I. Qed.
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO"] Theorem target_front : forall E3 ms md hs len cap buf,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO"] Theorem target_front : forall E3 ms md hs len cap buf,
   TRHEAD' E3 ms md hs len cap buf ->
   (forall E2 ms2 md2 hs2 al ow, ITHEAD' U_sw1 1 E2 ms2 md2 hs2 len cap buf al ow -> realizes PSEGS (mkCfg ms2 md2) (KREST (n_calls data - 1))) ->
   realizes PSEGS (mkCfg ms md) (t_emit (W 1 (zero_lines (n_calls data))) (t_exit (exit_code 0) fs0)).
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO : LiaFast.U) => LiaFast.u0).
   intros E3 ms md hs len cap buf HT K.
   change (realizes PSEGS (mkCfg ms md) (KREST (n_calls data))).
   pose proof n_calls_pos as Hn. replace (n_calls data) with (S (n_calls data - 1)) by lia.
   apply (rzc_conseq PSEGS DCFG _ (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) (KREST (n_calls data - 1)))); [|apply krest_front].
   apply (tr_front' E3 ms md hs len cap buf _ HT).
   - intros E4 ms4 HJ. apply (j0_to_g0' E4 ms4 md hs len cap buf _ HJ).
-    intros E5 ms5 HF. apply (iter1' HFZ HSRO HKRO E5 ms5 md hs len cap buf _ _ _ (fz_ithead sp0 av ev tid rdraw regs mem Hargc2 IMG_LO IMG_END HTOP STATIC HI data fs0 E5 ms5 md hs len cap buf _ _ HF)
+    intros E5 ms5 HF. apply (iter1' HFZ HSRO HKRO E5 ms5 md hs len cap buf _ _ _ (fz_ithead inp sp0 tid rdraw regs mem Hargc2 IMG_LO IMG_END HTOP STATIC HI data fs0 E5 ms5 md hs len cap buf _ _ HF)
                            (krest_nil _)).
     intros E2 ms2 md2 hs2 HI2. exact (K E2 ms2 md2 hs2 _ _ HI2).
   - intros E4 ms4 HJ. apply (j1_to_g0' E4 ms4 md hs len cap buf _ HJ).
-    intros E5 ms5 md5 hs5 p HF. apply (iter1' HFZ HSRO HKRO E5 ms5 md5 hs5 len cap buf _ _ _ (fz_ithead sp0 av ev tid rdraw regs mem Hargc2 IMG_LO IMG_END HTOP STATIC HI data fs0 E5 ms5 md5 hs5 len cap buf _ _ HF)
+    intros E5 ms5 md5 hs5 p HF. apply (iter1' HFZ HSRO HKRO E5 ms5 md5 hs5 len cap buf _ _ _ (fz_ithead inp sp0 tid rdraw regs mem Hargc2 IMG_LO IMG_END HTOP STATIC HI data fs0 E5 ms5 md5 hs5 len cap buf _ _ HF)
                            (krest_nil _)).
     intros E2 ms2 md2 hs2 HI2. exact (K E2 ms2 md2 hs2 _ _ HI2).
 Qed.

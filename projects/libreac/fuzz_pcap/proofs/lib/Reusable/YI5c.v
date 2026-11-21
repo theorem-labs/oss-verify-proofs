@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YI5c.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -18,7 +19,7 @@ Local Open Scope Z_scope.
    sk_trailer_addr and sk_rwa_addr (YI14.v's file_sink_syms, :36-42). With no file sink, YI14.v's sink_at is
    False, stdio_env asks nothing of a file and env_addr holds no file address; a statement taking sink_at over
    src0_sink as a premise has an UNSATISFIABLE premise and would be vacuously true. YH03.v still defines the
-   measured v1.9 src0_A_stdio_read (__stdio_read) and src0_A_stdio_seek (__stdio_seek); 261ff111ca53 removed
+   measured v1.9 src0_A_stdio_read (__stdio_read) and src0_A_stdio_seek (__stdio_seek); removed
    src0_D_str_rwa as unread, and src0_D_str_tmp_out_gif / _wb / _3 are not defined in this unit: pcap's image
    has no "/tmp/out.gif", "wb" or ";" string. pcap never opens that sink and the released chain uses
    sink_none.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader and kernel carried through the read loop's invariants). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -281,9 +282,10 @@ Section Abs.
         \/ (sp0 - 65536 <= bv_unsigned a < sp0 - 128)
         \/ (0xf0249 <= bv_unsigned a < 0x100249)) ->
     m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> m_halted mo' = m_halted mo -> m_vm_materialized mo' = m_vm_materialized mo ->
+    m_kernel mo' = m_kernel mo -> m_channel_reader mo' = m_channel_reader mo ->
     rmem sp0 tid p1 path M' /\ rabs A M' mo'.
   Proof.
-    intros A M M' mo mo' RM RA HG HW Hvm Hlz Hh Hmat. pose proof HAC as Hcv. pose proof ac_bounds_lit as Hcb. pose proof (ra_ainv _ _ _ RA) as AI.
+    intros A M M' mo mo' RM RA HG HW Hvm Hlz Hh Hmat Hkn Hrd. pose proof HAC as Hcv. pose proof ac_bounds_lit as Hcb. pose proof (ra_ainv _ _ _ RA) as AI.
     assert (AG : forall a, rfoot sp0 p1 (Z.of_nat (length path)) a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)).
     { intros a Hf. destruct (Classical_Prop.classic (M' (Z_to_bv 64 a) = M (Z_to_bv 64 a))) as [E|NE]; [exact E|]. exfalso.
       assert (Ha : 0 <= a < 2 ^ 64).
@@ -300,7 +302,7 @@ Section Abs.
     split.
     - eapply (rmem_xfer sp0 tid p1 path Hsp Hp1); [exact RM | exact AG | intros a _ Hd; apply HG; exact Hd].
     - constructor; try (destruct RA; assumption).
-      + eapply (ai_frame MI A M M' mo mo' AI); [ | exact HG | exact Hvm | exact Hlz].
+      + eapply (ai_frame_k MI A M M' mo mo' AI); [ | exact HG | exact Hvm | exact Hlz | exact Hkn | exact Hrd].
         intros a Ho. destruct (Classical_Prop.classic (M' a = M a)) as [E|NE]; [exact E|]. exfalso.
         destruct (HW _ NE) as [(q & k & Hin & Hr)|[Hr|Hr]].
         * destruct (ai_live_block MI A M mo q k AI Hin) as (_ & _ & _ & Hc & Hb). exact (proj1 (Hb _ Hr) Ho).
@@ -343,6 +345,20 @@ Section Abs.
     rs_len : 0 <= len < cap /\ len <= Z.of_nat (length content);
     rs_content : rdn RSEGS M (Z_to_bv 64 p) (Z.to_nat len) = Some (pref len content);
     rs_fds : m_fds mo = fds_file path (Z_to_bv 64 len);
+    (* 75d69e00.  [ReadWrite.writev_spec] answers a byte count only when the far end
+       still has a reader; without one the channel arm takes [sigpipe_write].  [rend]
+       already carries the bit as [re_rdr] and [U1RLoopN.stage_end] already takes it as
+       a premise -- but THIS invariant, which is what [stage] carries round the loop and
+       what must SUPPLY that premise, was never given it.  That half-migration is the
+       measured cause of `U1RLoopN.v:192 Cannot find witness`
+       (two earlier farm rounds, both twins, same
+       line, same characters): [eassumption] cannot find the bit, so the non-arithmetic
+       goal falls through to [lia].
+       The bit is FREE -- it is not derivable from [rs_fds], exactly as U1ExitT.v:51-55
+       records for [etp_rdr] -- so the invariant carries it, and the published
+       [Run.valid_input] pins [in_channel_reader inp = true] so every real launch
+       satisfies it.  Placed before [rs_fs] to match [rend]'s own field order. *)
+    rs_rdr : m_channel_reader mo = true;
     rs_fs : m_fs mo = fs0
   }.
 
@@ -353,6 +369,8 @@ Section Abs.
     op_mem : rmem sp0 tid p1 path M;
     op_abs : rabs A M mo;
     op_fd2 : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2));
+    (* LPS 727298f3: the refusal message is a write, which needs the launch's channel reader *)
+    op_rdr : m_channel_reader mo = true;
     op_fs : m_fs mo = fs0
   }.
 

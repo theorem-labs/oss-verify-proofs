@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the argument region's agreement widened to launch variable 13, the exec file name's address, where its strings now end; the launch's vDSO/vvar pair in the reserved ledger, which is the image's entries then the pair, res_out1 written as plain text; the break's page alignment passed to fh's mg_vmmaps, whose brk grow records a page range, LPS b07fadb; segment 7 per CONFIG_RSEQ through musl malloc(40), its exit joined into the one state both values reach, A/StartRegen3.v). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "eq"; "and"; "not"; "or"; "ex"; "True"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "lt"; "sub"; "modulo"; "mul"; "pow"; "land"; "max"; "of_nat"; "div"; "shiftr"; "divide"; "eqb"; "opp"; "to_nat"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "Z_to_bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "rw"; "valuation"; "sv"; "sobj"; "rm"; "sprop"; "SLit"; "ss_facts"; "holds"; "eval"; "SVar"; "rl"; "ss_next"; "obj_range"; "ranges_disjoint"; "SAlu"; "ss_objs"; "cell"; "sprop_eqb"; "SPUle"; "mkObj"; "DList"; "DImage"; "SPEq"; "outside_all"; "sstate"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Start7.Seg7"; "mE"; "r6of"; "rho0C"; "out18"; "Q18"; "vals"; "B18pre"; "TP18"; "XBz"; "band"; "PostC18"; "out18_ok"; "XEz"; "lowb"; "G18"; "Wz"; "out18_W"; "Q18post"; "TOPz"; "BE"; "SXB"; "SZ18"; "bandw"; "Wok"; "ZX18"; "nE"; "B18"; "Post18"; "SXE"; "grp_out"; "objs_belowS_except_b"; "out18_model"; "M18"; "obj_belowS_b"; "out18_tp"; "rho18g"; "@Corelib.Init.Datatypes"; "list"; "prod"; "pair"; "bool"; "true"; "nat"; "nil"; "snd"; "option"; "cons"; "fst"; "app"; "Some"; "length"; "orb"; "false"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ImageFacts"; "segsA"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "m_vmmaps"; "vm_maps"; "event"; "vm_brk"; "m_vm_lazy"; "vm_reserved"; "vm_start_brk"; "alloc_top"; "page_in_ranges"; "vm_noaccess"; "lazy_interior"; "vm_init_sp"; "maps_subtract"; "region_free"; "vm_limit"; "iv_subtract"; "VmMaps"; "page_mem"; "vm_add_lazy"; "vm_forget_range"; "with_vmmaps"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "ax_S"; "mkAX"; "ax_X"; "ax_base"; "axst"; "entailsA"; "word_byte"; "xr_below"; "@Stdlib.Lists.List"; "In"; "existsb"; "nth_error"; "combine"; "forallb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Start7States"; "R18"; "s18"; "C18"; "C18e"; "K18"; "I18a"; "I18b"; "I18c"; "E18g"; "SP18"; "es18"; "C18c"; "E18b"; "EV18"; "I18af"; "I18bf"; "I18cf"; "J18"; "L18b"; "L18c"; "T18c1"; "XB18"; "XL18"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SoundA"; "SPA"; "jpredA"; "ok_frameA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.KxA"; "KxA"; "@Corelib.Lists.ListDef"; "Forall"; "seq"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e2.MuslMallocIface"; "Pre_M"; "X_M"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Start6"; "x1"; "q12x"; "TP17"; "n17"; "m16"; "enspage"; "m17"; "G17"; "HPz"; "LIMz"; "PBz"; "PEz"; "RM6"; "TP16"; "e12x"; "tcls"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e9.MuslMalloc40Post"; "out1"; "out1_model"; "P_null0"; "P_null1"; "P_ok"; "out1_ok"; "out0"; "JL_null0"; "JL_null1"; "JL_ok"; "NA"; "NG"; "O_area"; "rm_kept_outside"; "O_grp"; "out1_W"; "out1_tp"; "m40_hyps"; "out0_W"; "out0_model"; "out0_ok"; "out1_base"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec"; "mmap_place_ok_none"; "munmap_model"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "vms"; "lazy_in_maps";
@@ -41,6 +42,7 @@ From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require fs.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require Start6.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require e3.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require Start7States.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require StartRegen3.
 Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ImageFacts OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Init OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Code OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartLib OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.KxA OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Placement OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.PlacementA OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.SysSpecStart OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e2.StartALib OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.SysStartA OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.SysStartA2 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e7.StartNodes OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fh.StartNodes2 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartDefsA OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e8.StartGlueA OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e5.StartGlueB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e6.StartGlueC OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Start4States OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e9.Start4 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e4.Start5States OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fn.Start5CallStates OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ec.Start5bStates OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fl.Start5 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fl.Start6States OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fq.Start6JStates OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fs.Start6Aux OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Start6 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e2.MuslMallocIface OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e3.MuslMalloc40States OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fh.MuslMalloc40Nodes OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e9.MuslMalloc40Post OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e6.MuslMalloc40 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fs.Start6bStates OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Start7States.
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
@@ -187,8 +189,9 @@ Ltac klia := unfold kHighMemBeg in *; repeat match goal with H : context [Z.modu
 Section Seg7.
 
 Variables (m : Model) (a1 a2 : word) (B : Z).
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S59S5aS18Q40A1M0G0A2A1S70S6bVm;A1A1S10cS69A1A3").
+Variable rq : bool. (* LPS 727298f3: the launch's CONFIG_RSEQ flag; segment 7 runs per flag up to the join in [seg18] / [eseg18]. *)
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Hmaps : ltac2:(tb__ "0|3|
 S0S59S5aS18Q40M0A1M1G1A2M2A1S6cS6bVm;A1A1S62G2S5bG1G1Va2;S1aG0Z38e000A2A4S62G2S5bG1G1Va1;S1aG0Z10000A2A4S62G2S5bG1G1S1aG0Z2008fff7000A2S1aG0Zdfff0001000A2A4S62G2S5bG1G1S1aG0Z8fff7000A2S1aG0Z20000000000A2A4S62G2S5bG1G1S1aG0Z7fff7000A2S1aG0Z10000000A2A4S5fG2A1A3A3A3A3A3A3").
 Hypothesis Hna : ltac2:(tb__ "0|3|
@@ -208,6 +211,9 @@ Hypothesis Hbrk : ltac2:(tb__ "0|1|
 S1S8Z646000S19Q40S6eS6bVm;A1A1A2M0A2S8G0Z80646000A2A2").
 Hypothesis Hbal : ltac2:(tb__ "0|0|
 S14Z1000S19Q40S6eS6bVm;A1A1A2A2").
+(* LPS 727298f3: the launch's vDSO/vvar pair is in the reserved ledger (State.v
+   [vm_reserved_init_model]); e9's [m40_vdso] reads it. *)
+Hypothesis Hvdr : forall e, In e (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) -> In e (vm_reserved (m_vmmaps m)).
 Variable ok : assn.
 Hypothesis OKF : ltac2:(tb__ "0|1|
 Sa5S1cS59S18Q40A1A1S59S6dA1M0S6aR5R4R3R2R1A4S0G0R3S5fS6dA1A3F_;Fmd;Ftr;Ftp;Frho;Sa6S69Vok;R2A3F_;FJ;").
@@ -461,7 +467,7 @@ Qed.
 
 Lemma m40_mE : ltac2:(tb__ "0|0|
 Sd6S35A1ScdS35S3bA2F_;").
-Proof using HBlim HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hbal Hbrk Hlz Hmaps Hres Hsb Htop Hx H16.
+Proof using HBlim HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hbal Hbrk Hlz Hmaps Hres Hsb Htop Hx H16 Hvdr.
   clear Ha1 Ha2 HPL10 Hxtop.
   intros Hlim. pose proof mE_fields as (MR & MM & ML & MB & LZ & NA & K1 & K2). pose proof lazy_mE_facts as [_ PZ]. destruct Hbal as [kb Hkb].
   constructor.
@@ -475,21 +481,35 @@ Proof using HBlim HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hbal Hbrk Hlz Hmaps Hres Hsb
   - exact band_mE.
   - exact PZ.
   - exact Hlim.
+  - (* LPS 727298f3: [mE] keeps [m]'s kernel build, reserved ledger, mmap base and stack top, so the
+       vDSO/vvar pair and the ledger are [m]'s ([Hvdr]). *)
+    intros e He. rewrite MR. apply Hvdr. exact He.
 Qed.
 
 Definition rho18g (rho : valuation) : valuation := ltac2:(tb__ "0|1|
 S119S119Vrho;P54S1aQ40M0S3dA2A3P55S1aG0SbS41S36Vrho;A1A1S3dA2A2A3").
 
-Lemma E18_facts23 : ltac2:(tb__ "0|1|
-S1S0S5cS89S20S2dS2eS25P2A1S21Z400A1A2A1S22S80SdcA1A1M0A3S5dA3S0S5cS89S20S2dS2eS25P3A1S21Z100A1A2A1G0A3S5dA3A2").
-Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
-Lemma E18b_eq : ltac2:(tb__ "0|0|
-S0S34S11cS80SdcA1P56A2S99A3"). Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma E18_at2 : ltac2:(tb__ "0|1|
-S1S0S7S27S80SdcA1A1P54A3S1S0S59S5aS1dS1dA2M0A1S82SdcA1S5fG0A1A3S0S1dS83SdcA1S21SdfA1A3A2A2"). Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma E18_facts23 :
+  existsb (sprop_eqb (SPUle (SVar 2%positive) (SLit 1024))) (ss_facts (ax_S (E18r rq))) = true /\
+  existsb (sprop_eqb (SPUle (SVar 3%positive) (SLit 256))) (ss_facts (ax_S (E18r rq))) = true.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma E18b_eq :
+  bump_next (ax_S (E18r rq)) 86%positive = E18b rq.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma E18_at2 :
+  ss_next (ax_S (E18r rq)) = 84%positive /\
+  ax_X (E18r rq) = @nil (sv * sv)%type /\
+  ax_base (E18r rq) = SLit SHB.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Lemma ghost18 : ltac2:(tb__ "0|2|
-S1cSd8S0S6SacR2A1Vx;A3S8S9Vx;Z50A2S36R3A1A2S8S9S36R4A1Z10M0A2SeZ2Z2fA2A2S8S9S36R5A1G0A2S9Vx;Z2228cfA2A2Sa4S69Sa7S35S48A2M1SdcR6SaeR6A1R5A6Sa4S69G1S81S95S5fS5aS1dS1dA2A1S21SdfA1A3S58R7A1SaeR7A1R6A6F_;F_;F_;F_;F_;Fw;Frho;").
+Lemma ghost18 :
+  forall (rho : valuation) (w : world),
+  x1 rho = x ->
+  x + 80 <= r6of rho ->
+  r6of rho + 16 <= 2 ^ 47 ->
+  r6of rho + 16 <= x + 2238671 ->
+  SPA segsA (KxA mE BE) (E18r rq) rho (TP17 rho) w ->
+  SPA segsA (KxA mE BE) (mkAX (E18g rq) (@nil (sv * sv)%type) (SLit SHB)) (rho18g rho) (TP17 rho) w.
 Proof using Hx H16 Hxtop.
   clear Hres Hmaps Hna Hlz Htop Ha1 Ha2 HBlim Hsb Hbrk Hbal OKF OKP HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 HPL10.
   intros rho w Hx1 H1 H2 H3 Hsp. pose proof (arith18 _ H1 H2 H3) as AR.
@@ -498,7 +518,7 @@ Proof using Hx H16 Hxtop.
   destruct E18_facts23 as [X2 X3]. pose proof (fact_of_state _ _ rho X2 HF) as F2. pose proof (fact_of_state _ _ rho X3 HF) as F3.
   cbn [holds eval] in F2, F3. rewrite u64_of_lit in F2 by lia. rewrite u64_of_lit in F3 by lia.
   pose proof (urange (rw rho 2%positive)) as UR2. pose proof (urange (rw rho 3%positive)) as UR3.
-  destruct E18_at2 as (N84 & X0 & B0). destruct sd18 as (SD & WF & NX).
+  destruct E18_at2 as (N84 & X0 & B0). destruct (sd18 rq) as (SD & WF & NX).
   set (rho' := rho18g rho).
   assert (R1 : rw rho' 1%positive = rw rho 1%positive) by (unfold rho', rho18g; rewrite !rho_set_rw_other by lia; reflexivity).
   assert (R2 : rw rho' 2%positive = rw rho 2%positive) by (unfold rho', rho18g; rewrite !rho_set_rw_other by lia; reflexivity).
@@ -519,8 +539,8 @@ Proof using Hx H16 Hxtop.
     set (u2 := bv_unsigned (rw rho 2%positive)) in *. set (u3 := bv_unsigned (rw rho 3%positive)) in *.
     rewrite (Z.mod_small (u2 * 8)) by lia. rewrite (Z.mod_small (u3 * 8)) by lia. rewrite (Z.mod_small (x + u2 * 8)) by lia.
     rewrite (Z.mod_small (x + u2 * 8 + u3 * 8)) by lia. rewrite Z.mod_small by lia. lia. }
-  replace (mkAX E18g [] (SLit SHB)) with (ax_setS E18 E18g) by (rewrite <- X0, <- B0; reflexivity).
-  apply (SPA_ghosts (KxA mE BE) rho rho' E18 E18g 86%positive (TP17 rho) w [] F18).
+  replace (mkAX (E18g rq) [] (SLit SHB)) with (ax_setS (E18r rq) (E18g rq)) by (rewrite <- X0, <- B0; reflexivity).
+  apply (SPA_ghosts (KxA mE BE) rho rho' (E18r rq) (E18g rq) 86%positive (TP17 rho) w [] F18).
   - intros r r' t tr md X; exact X.
   - rewrite N84. unfold rho', rho18g. split; [intros i Hi; rewrite !rho_set_rw_other by lia; reflexivity | split; [intros l; reflexivity | intros a; reflexivity]].
   - rewrite N84. lia.
@@ -583,43 +603,47 @@ Proof.
   destruct k; discriminate.
 Qed.
 
-Lemma C18_ssp_nth : ltac2:(tb__ "0|1|
-S0S61S1eA1S8aS1eS2bS98A1U15A3S65S1eS2fS21Z0A1S21Z6445f8M0A1S21Z644600A1S64S2cS11dG0S97A2S5fS2cA1A3S31A5A2A3").
-Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma C18_ssp_nth :
+  nth_error (ss_objs (C18c rq)) 21%nat = Some (mkObj (SLit 0) (SLit 6571512) (SLit 6571520) (byte_cells 6571512 es18
+      ++ @nil cell) DImage).
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
-Lemma shape18 : ltac2:(tb__ "0|2|
-Sa5S1cS59S18Q40A1A1Sd8Sa4S69R4S81S95S5fS5aS1dS1dA2A1M0S21SdfA1M1A3R3R2R1A6Sa4S69R5S81S90G0G1A3R4R3R2A6F_;Fw;Ftp;Frho;FJ;").
+Lemma shape18 :
+  forall (J : jpredA) (rho : valuation) (tp : list (bv 64)) (w : world),
+  SPA segsA J (mkAX (E18g rq) (@nil (sv * sv)%type) (SLit SHB)) rho tp w ->
+  SPA segsA J (mkAX (C18e rq) (@nil (sv * sv)%type) (SLit SHB)) rho tp w.
 Proof.
   clear. intros J rho tp w H0.
 
-  pose proof (SPA_split_chain segsA J rho splits18 (mkAX E18g [] (SLit SHB)) C18a tp w split18_ok H0) as H1. cbn [ax_setS] in H1.
+  pose proof (SPA_split_chain segsA J rho splits18 (mkAX (E18g rq) [] (SLit SHB)) (C18a rq) tp w (split18_ok rq) H0) as H1. cbn [ax_setS] in H1.
 
-  destruct C18b_facts as (N19 & D19 & S19 & E19).
-  pose proof (SPA_img_to_unknown J rho (mkAX C18a [] (SLit SHB)) 19 o18errno tp w N19 D19 S19 H1) as H2. cbn [ax_S ax_setS] in H2. rewrite E19 in H2.
+  destruct (C18b_facts rq) as (N19 & D19 & S19 & E19).
+  pose proof (SPA_img_to_unknown J rho (mkAX (C18a rq) [] (SLit SHB)) 19 (o18errno rq) tp w N19 D19 S19 H1) as H2. cbn [ax_S ax_setS] in H2. rewrite E19 in H2.
 
-  destruct C18c_facts as (N21 & B21 & L21 & U21 & D21 & I1 & I2 & S21 & E21).
-  pose proof (SPA_cells_equiv J rho (mkAX C18b [] (SLit SHB)) 21 (SLit 0) (SLit 0x6445f8) (SLit 0x644600) (ob_cells o18ssp) bytes18 DImage tp w) as H3.
+  destruct (C18c_facts rq) as (N21 & B21 & L21 & U21 & D21 & I1 & I2 & S21 & E21).
+  pose proof (SPA_cells_equiv J rho (mkAX (C18b rq) [] (SLit SHB)) 21 (SLit 0) (SLit 0x6445f8) (SLit 0x644600) (ob_cells (o18ssp rq)) bytes18 DImage tp w) as H3.
   cbn [ax_S ax_setS] in H3.
-  assert (EO : mkObj (SLit 0) (SLit 0x6445f8) (SLit 0x644600) (ob_cells o18ssp) DImage = o18ssp).
-  { destruct o18ssp as [b l h cs d]. cbn [ob_base ob_lo ob_hi ob_dflt ob_cells] in B21, L21, U21, D21 |- *. subst. reflexivity. }
+  assert (EO : mkObj (SLit 0) (SLit 0x6445f8) (SLit 0x644600) (ob_cells (o18ssp rq)) DImage = o18ssp rq).
+  { destruct (o18ssp rq) as [b l h cs d]. cbn [ob_base ob_lo ob_hi ob_dflt ob_cells] in B21, L21, U21, D21 |- *. subst. reflexivity. }
   rewrite EO in H3. change (mkObj (SLit 0) (SLit 0x6445f8) (SLit 0x644600) bytes18 DImage) with o18ssp_s in H3.
   specialize (H3 N21 (cells_incl_sound _ _ I2) (cells_incl_sound _ _ I1) S21 H2). rewrite E21 in H3.
-  destruct C18d_facts as (_ & S21m & E21m & N21m & S21u & E21u).
-  pose proof (SPA_merge8 J rho (mkAX C18c [] (SLit SHB)) 21 (SLit 0) (SLit 0x6445f8) (SLit 0x644600) DImage 0x6445f8 es18 EV18 [] tp w C18_ssp_nth eq_refl ltac:(lia) ltac:(lia)) as H4.
+  destruct (C18d_facts rq) as (_ & S21m & E21m & N21m & S21u & E21u).
+  pose proof (SPA_merge8 J rho (mkAX (C18c rq) [] (SLit SHB)) 21 (SLit 0) (SLit 0x6445f8) (SLit 0x644600) DImage 0x6445f8 es18 EV18 [] tp w C18_ssp_nth eq_refl ltac:(lia) ltac:(lia)) as H4.
   cbn [ax_S ax_setS] in H4. change (mkObj (SLit 0) (SLit 0x6445f8) (SLit 0x644600) (mkCell (SLit 0x6445f8) 8 EV18 :: []) DImage) with o18ssp_m in H4.
   specialize (H4 ltac:(intros _ k e Hk; exact (EV18_bytes rho k e Hk)) S21m H3).
   rewrite E21m in H4.
-  pose proof (SPA_img_to_unknown J rho (mkAX C18d [] (SLit SHB)) 21 o18ssp_m tp w N21m eq_refl S21u H4) as H5. cbn [ax_S ax_setS] in H5. rewrite E21u in H5.
+  pose proof (SPA_img_to_unknown J rho (mkAX (C18d rq) [] (SLit SHB)) 21 o18ssp_m tp w N21m eq_refl S21u H4) as H5. cbn [ax_S ax_setS] in H5. rewrite E21u in H5.
 
-  destruct C18e_facts as (N43 & D43 & F43 & S43 & E43).
-  pose proof (SPA_drop_cells_unknown J rho (mkAX C18d' [] (SLit SHB)) 43 o18win (fun _ => false) tp w N43 D43) as H6.
+  destruct (C18e_facts rq) as (N43 & D43 & F43 & S43 & E43).
+  pose proof (SPA_drop_cells_unknown J rho (mkAX (C18d' rq) [] (SLit SHB)) 43 (o18win rq) (fun _ => false) tp w N43 D43) as H6.
   unfold drop_cells in H6. rewrite F43 in H6. cbn [ax_S ax_setS] in H6. specialize (H6 S43 H5). rewrite E43 in H6. exact H6.
 Qed.
 
 Definition G18 : list (sv * Z) := ltac2:(tb__ "0|1|
 S64S5aS1dS6A2M0Sb3S62G0S5bS1dS6S25P53A1SafA4S5fG0A1A3A3").
-Lemma clear18 : ltac2:(tb__ "0|0|
-S0S5cSe1S43S90A2S5dA3"). Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma clear18 :
+  objs_clear_e G18 (C18e rq) = true.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
 Definition bandw (z : Z) : Prop := ltac2:(tb__ "0|0|
 S1S8SedVz;A2SaVz;SeeA2A2").
@@ -696,14 +720,27 @@ Proof using HPL HPL4 HPL5 HPL6 Hmaps Hres Htop Hx H16 Hxtop.
   apply In_TP17 in Hp as [(k & Hk & _ & Uk)|Hp]; [rewrite Uk; unfold LOWPG; lia | exact (T16 Hp)].
 Qed.
 
-Lemma objs18_clear : ltac2:(tb__ "0|1|
-S1cS1cS6S6S3aR4A1S0S18Q40A1M0S1bR5P24A2Vb7;A3S0G0S1bR6P4dA2Vb8;A3S0G0S1bR7P4eA2Vb9;A3S0G0S1bR8P53A2Vb10;A3S0S6SacR9A1Vx;A3S7S0G0S1bRaR1A2S1bRbR1A2A3Fi;S7S0S59S18Q8A1A1S26RbR1A2S26RcR1A2A3Fl;Sa8S20S23RbA1S22S90A1A3S8SadVx;A1RbA2S8Z0RbA2S8S9RdRcA2SdeA2Sa8S1eS1eS29S28R10R1A2S5bS6S6RfS9RfReA2A4A2Lo;S2bS90A1A3F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Flen;Flo;Fr;Frho;").
+Lemma objs18_clear :
+  forall (rho : valuation) (r : valuation) (lo : Z) (len : Z),
+  vals rho ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 78%positive = b9 ->
+  rw rho 83%positive = b10 ->
+  x1 rho = x ->
+  (forall i : positive, rw r i = rw rho i) ->
+  (forall l : positive, rl r l = rl rho l) ->
+  Forall (holds r) (ss_facts (C18e rq)) ->
+  q12x x <= lo ->
+  0 <= len ->
+  lo + len <= kHighMemBeg ->
+  Forall (fun o : sobj => ranges_disjoint (obj_range r o) (lo, lo + len)) (ss_objs (C18e rq)).
 Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hmaps Hres Htop Hx H16 Hxtop.
   clear Hsb Hbrk Hbal OKF OKP Hlz HBlim.
   intros rho r lo len HV H36 H77 H78 H83 Hx1 Hrw Hrl HFr Hlo Hlen Hhi.
   pose proof CAx as CA. cbv zeta in CA. destruct CA as (Ct & CHPlo & CPEhi & CPEHP & CHPq & _).
   apply Forall_forall. intros o Ho.
-  pose proof (objs_clear_e_sound r G18 C18e (Z_to_bv 64 lo) len HFr clear18 Hlen) as X. rewrite u64_of_lit in X by (unfold kHighMemBeg in *; lia).
+  pose proof (objs_clear_e_sound r G18 (C18e rq) (Z_to_bv 64 lo) len HFr clear18 Hlen) as X. rewrite u64_of_lit in X by (unfold kHighMemBeg in *; lia).
   apply X; [unfold kHighMemBeg in *; left; lia | intros y Hy; unfold kHighMemBeg in *; lia | | exact Ho].
   intros e sz Hin y Hy.
   assert (Ee : eval r e = eval rho e) by (apply eval_ext_rwrl; assumption).
@@ -724,8 +761,26 @@ Proof.
   destruct (page_mem p tp); [right; exact H | destruct H as [E|H]; [left; symmetry; exact E | right; exact H]].
 Qed.
 
-Lemma pay18 : ltac2:(tb__ "0|7|
-S1cS59S6dA1M0Sd2S6aS3aR4A1S0S6SacR5A1Vx;A3S0S18Q40M1A1M2S1bR6P24A2Vb7;A3S0G2S1bR7P4dA2Vb8;A3S0G2S1bR8P4eA2Vb9;A3S0G2S1bR9P53A2Vb10;A3S0S6SdZ8S19G1S1bRaP23A2A2A2S19G1Vb6;A2A3S8S9Vx;Z50A2S36RbA1A2S8S9S36RcA1Z10M3A2SeZ2Z2fA2A2S8S9S36RdA1G3A2S9Vx;Z2228cfA2A2S4aReA1Sa4S69Sa7S35S48A2S81S90S5fS5aS1dS1dA2A1S21SdfA1A3M4RfSaeRfA1S5bG0S10aReS10bRdRcA2A4A6S4S1cS1cS1Sa4S69Sa7S35S3bA2G4R1S3cR11A1S5bG0S10aR10S10bRfReA2A4A6S1S7S0G2S1bR2R1A2S1bR12R1A2A3Fi;S1S7S0S59S18Q8A1M5A1S26R2R1A2S26R12R1A2A3Fl;S1S4dS36R11A1R1A2G2S3SaS19G1R1A2M6S39A2S8S10S39S44S36R12A1A1A2G6A2A2S0S61G5A1S1fR3R2A2S1fR13R2A2A3F_;Fa;A2A2A2A2Lrho';A2F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fmd;Fms;Ftr;Frho;").
+Lemma pay18 :
+  forall (rho : valuation) (tr : list event) (ms : machine_state) (md : Model),
+  vals rho ->
+  x1 rho = x ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 78%positive = b9 ->
+  rw rho 83%positive = b10 ->
+  8 * bv_unsigned (rw rho 35%positive) = bv_unsigned b6 ->
+  x + 80 <= r6of rho ->
+  r6of rho + 16 <= 2 ^ 47 ->
+  r6of rho + 16 <= x + 2238671 ->
+  SZ18 rho ->
+  SPA segsA (KxA mE BE) (mkAX (C18e rq) (@nil (sv * sv)%type) (SLit SHB)) rho (TP17 rho) (tr, mkCfg ms md) ->
+  (exists rho' : valuation,
+  SPA segsA (KxA mE B18pre) (mkAX (C18e rq) (@nil (sv * sv)%type) (SLit SHB)) rho' (TP18 rho) (tr, mkCfg ms md) /\
+  (forall i : positive, rw rho' i = rw rho i) /\
+  (forall l : positive, rl rho' l = rl rho l) /\
+  ZX18 (r6of rho) rho' /\
+  (forall a : bv 64, bv_unsigned a < Q18 \/ Z.max Q18 (Wz (r6of rho)) <= bv_unsigned a -> rm rho' a = rm rho a)).
 Proof using HBlim HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hlz Hmaps Hna Hres Htop Hx H16 Hxtop.
   clear Hsb Hbrk Hbal OKF OKP.
   intros rho tr ms md HV Hx1 H36 H77 H78 H83 V35 H1 H2 H3 HSZ Hsp.
@@ -742,7 +797,7 @@ Proof using HBlim HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hlz Hmaps Hna 
   { unfold TP18. unfold B18pre, BE. destruct (nE (r6of rho) =? 0)%nat eqn:En; [klia|].
     pose proof (paid_app_le md (pages_rev (Q18 + 4096) (nE (r6of rho) - 1)) (enspage (Z_to_bv 64 Q18) (TP17 rho))) as P1. rewrite length_pages_rev in P1.
     pose proof (paid_enspage_le md (Z_to_bv 64 Q18) (TP17 rho)) as P2. unfold page_size in *. apply Nat.eqb_neq in En. klia. }
-  assert (Hsp0 : SPA segsA J' (mkAX C18e [] (SLit SHB)) rho (TP17 rho) (tr, mkCfg ms md)).
+  assert (Hsp0 : SPA segsA J' (mkAX (C18e rq) [] (SLit SHB)) rho (TP17 rho) (tr, mkCfg ms md)).
   { split; [exact Hsm|]. subst J'. cbv beta. split; [exact Htr|]. split; [exact Hem|]. exact PB. }
   destruct (nE (r6of rho)) as [|k] eqn:EN.
   -
@@ -752,7 +807,7 @@ Proof using HBlim HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hlz Hmaps Hna 
     intros z Hz. apply (proj1 HSZ). specialize (A22 eq_refl). klia.
   - specialize (A23 ltac:(discriminate)). assert (Hk : Z.of_nat (S k) = Z.of_nat k + 1) by klia. rewrite Hk in A23, A21.
 
-    destruct (ensure_page J' (mkAX C18e [] (SLit SHB)) Q18 Q18 (Q18 + 4096) rho (TP17 rho) tr ms md Hsp0 HJ' A16 ltac:(klia) ltac:(klia) ltac:(lia) ltac:(lia))
+    destruct (ensure_page J' (mkAX (C18e rq) [] (SLit SHB)) Q18 Q18 (Q18 + 4096) rho (TP17 rho) tr ms md Hsp0 HJ' A16 ltac:(klia) ltac:(klia) ltac:(lia) ltac:(lia))
       as (rho1 & tp1 & Hsp1 & Hrw1 & Hrl1 & Hz1 & Ho1 & Hfz1 & Hsm1 & Htp1).
     + rewrite Elz. apply high_shadow_lazy_mE; rewrite u64_of_lit by klia; klia.
     + intros z Hz. rewrite Evm. apply high_shadow_acc_mE. klia.
@@ -763,7 +818,7 @@ Proof using HBlim HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hlz Hmaps Hna 
       * apply (proj2 HSZ); [|exact Ha]. apply page_mem_In. exact Hin.
     +
       pose proof (SPA_facts_hold segsA _ _ _ _ _ Hsp1) as HF1. cbn [ax_S] in HF1.
-      destruct (SPA_prepay_pages_rm J' (mkAX C18e [] (SLit SHB)) (Q18 + 4096) k rho1 tp1 tr ms md Hsp1 HJ'
+      destruct (SPA_prepay_pages_rm J' (mkAX (C18e rq) [] (SLit SHB)) (Q18 + 4096) k rho1 tp1 tr ms md Hsp1 HJ'
                   ltac:(rewrite <- Zplus_mod_idemp_l, A16; reflexivity) ltac:(klia) ltac:(klia))
         as (rho2 & Hsp2 & Hrw2 & Hrl2 & Hz2 & Ho2).
       * intros k' Hk'. rewrite Elz. apply high_shadow_lazy_mE; unfold pageZ; rewrite u64_of_lit by klia; klia.
@@ -792,23 +847,38 @@ Proof using HBlim HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hlz Hmaps Hna 
         -- intros a Ha. rewrite Ho2 by klia. apply Ho1. klia.
 Qed.
 
-Lemma C18e_xr : ltac2:(tb__ "0|0|
-S0S5cS87S27S90A1S5bS1dS1dSa2Sa3A4A2S5dA3"). Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma C18e_xr :
+  xr_below (ss_next (C18e rq)) (XB18, XL18) = true.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
-Lemma publish18 : ltac2:(tb__ "0|3|
-Sa5S1cS59S18Q40M0A1M1A1Sd8S3aR3A1S0G1S1bR4P24A2Vb7;A3S0G1S1bR5P4dA2Vb8;A3S0G1S1bR6P4eA2Vb9;A3S0G1S1bR7P53A2Vb10;A3S0S6SacR8A1Vx;A3S8S9Vx;Z50A2S36R9A1A2S8S9S36RaA1Z10M2A2SeZ2Z2fA2A2S8S9S36RbA1G2A2S9Vx;Z2228cfA2A2S0G1S1bRcP54A2S1aG0S3dA2A3S0G1S1bRdP55A2S1aG0SbS41S36RdA1A1S3dA2A2A3S4dS36ReA1ReA2Sa4S69R10S81S90S5fS5aS1dS1dA2A1S21SdfA1A3RfReRdA6Sa4S69R11S8fR10RfReA6F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fw;Ftp;Frho;FJ;").
+Lemma publish18 :
+  forall (J : jpredA) (rho : valuation) (tp : list (bv 64)) (w : world),
+  vals rho ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 78%positive = b9 ->
+  rw rho 83%positive = b10 ->
+  x1 rho = x ->
+  x + 80 <= r6of rho ->
+  r6of rho + 16 <= 2 ^ 47 ->
+  r6of rho + 16 <= x + 2238671 ->
+  rw rho 84%positive = Z_to_bv 64 XBz ->
+  rw rho 85%positive = Z_to_bv 64 (XEz (r6of rho) - XBz) ->
+  ZX18 (r6of rho) rho ->
+  SPA segsA J (mkAX (C18e rq) (@nil (sv * sv)%type) (SLit SHB)) rho tp w ->
+  SPA segsA J (C18 rq) rho tp w.
 Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hmaps Hres Htop Hx H16 Hxtop.
   clear Hsb Hbrk Hbal OKF OKP Hlz HBlim.
   intros J rho tp w HV H36 H77 H78 H83 Hx1 H1 H2 H3 R84 R85 HZ Hsp.
   pose proof (arith18 _ H1 H2 H3) as AR.
   destruct AR as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14 & A15 & A16 & A17 & A18 & A19 & A20 & A21 & A22 & A23 & A24).
   pose proof (SPA_facts_hold segsA _ _ _ _ _ Hsp) as HF. cbn [ax_S] in HF.
-  unfold C18, X18. change (mkAX C18e [(XB18, XL18)] (SLit SHB)) with (ax_setX (mkAX C18e [] (SLit SHB)) ((XB18, XL18) :: ax_X (mkAX C18e [] (SLit SHB)))).
+  unfold C18, X18. change (mkAX (C18e rq) [(XB18, XL18)] (SLit SHB)) with (ax_setX (mkAX (C18e rq) [] (SLit SHB)) ((XB18, XL18) :: ax_X (mkAX (C18e rq) [] (SLit SHB)))).
   apply SPA_x_publish; [exact C18e_xr | | exact Hsp]. cbn [ax_S ax_base].
   assert (U84 : bv_unsigned (rw rho 84%positive) = XBz) by (rewrite R84; apply u64_of_lit; unfold kHighMemBeg; klia).
   assert (U85 : bv_unsigned (rw rho 85%positive) = XEz (r6of rho) - XBz) by (rewrite R85; apply u64_of_lit; unfold kHighMemBeg; klia).
   assert (ESH : bv_unsigned (eval rho (SLit SHB)) = SHB) by (cbn [eval]; apply u64_of_lit; unfold SHB; klia). rewrite ESH.
-  apply (xr_ok_of_zero rho (ss_objs C18e) SHB (XB18, XL18) SXB (SXE (r6of rho))); cbn [fst snd]; unfold XB18, XL18; cbn [eval]; rewrite ?U84, ?U85.
+  apply (xr_ok_of_zero rho (ss_objs (C18e rq)) SHB (XB18, XL18) SXB (SXE (r6of rho))); cbn [fst snd]; unfold XB18, XL18; cbn [eval]; rewrite ?U84, ?U85.
   - apply Z.mod_divide in A1 as [kb ->]; [|klia]. replace (kb * 64) with (kb * 8 * 8) by klia. apply Z_mod_mult.
   - klia.
   - klia.
@@ -822,7 +892,7 @@ Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hmaps Hres Htop Hx H
     { rewrite Hke. replace (ke * 64) with (ke * 8 * 8) by klia. rewrite Z_div_mult by klia. apply Z.div_lt_upper_bound; klia. }
     unfold SXB, SXE in *. klia.
   - intros z Hz. apply HZ. klia.
-  - intros z Hz. apply (outside_all_of_disjoint rho (ss_objs C18e) SXB (SXE (r6of rho) - SXB)); [|rewrite u64_of_lit by klia; klia].
+  - intros z Hz. apply (outside_all_of_disjoint rho (ss_objs (C18e rq)) SXB (SXE (r6of rho) - SXB)); [|rewrite u64_of_lit by klia; klia].
     apply (objs18_clear rho rho SXB (SXE (r6of rho) - SXB) HV H36 H77 H78 H83 Hx1); [intros; reflexivity | intros; reflexivity | exact HF | klia | klia | klia].
 Qed.
 
@@ -905,16 +975,25 @@ Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hres Htop Hmaps Ha1 Ha2 Hx H16 Hxt
   - exists b10, (Z_to_bv 64 n17). rewrite H83. split; [rewrite MM; left; reflexivity|]. unfold n17. rewrite u64_of_lit by lia. lia.
 Qed.
 
-Lemma clearR18 : ltac2:(tb__ "0|0|
-S0S5cSe1S43S120S90S8dA2A2S5dA3"). Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma clearR18 :
+  objs_clear_e G18 (set_objs (C18e rq) (R18 rq)) = true.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
 
-Lemma R18_clear_W : ltac2:(tb__ "0|1|
-S1cS6S6S3aR3A1S0S18Q40A1M0S1bR4P24A2Vb7;A3S0G0S1bR5P4dA2Vb8;A3S0G0S1bR6P53A2Vb10;A3S0S6SacR7A1Vx;A3Sa8S20S23R8A1S22S90A1A3S4cR8R7A2S1eS88S1eR1S8dA3S29S28RcR2A2S5bS6S6RbRaA4A2F_;Fo;F_;F_;F_;F_;F_;F_;F_;Fhi;Flo;Frho;").
+Lemma R18_clear_W :
+  forall (rho : valuation) (lo : Z) (hi : Z),
+  vals rho ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 83%positive = b10 ->
+  x1 rho = x ->
+  Forall (holds rho) (ss_facts (C18e rq)) ->
+  Wok lo hi ->
+  (forall o : sobj, In o (R18 rq) -> ranges_disjoint (obj_range rho o) (lo, hi)).
 Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hres Htop Hmaps Ha1 Ha2 Hx H16 Hxtop.
   clear Hsb Hbrk Hbal OKF OKP Hlz HBlim HPL10.
   intros rho lo hi HV H36 H77 H83 Hx1 HF HW o Ho.
   destruct HW as [Hemp|(W1 & W2 & W3 & W4 & W5 & W6)]; [unfold ranges_disjoint; cbn [fst snd]; lia|]. subst hi. unfold TOPz in W3.
-  pose proof (objs_clear_e_sound rho G18 (set_objs C18e R18) (Z_to_bv 64 lo) 8192 HF clearR18 ltac:(lia)) as X. rewrite u64_of_lit in X by lia.
+  pose proof (objs_clear_e_sound rho G18 (set_objs (C18e rq) (R18 rq)) (Z_to_bv 64 lo) 8192 HF clearR18 ltac:(lia)) as X. rewrite u64_of_lit in X by lia.
   apply X; [right; unfold x1 in Hx1; rewrite Hx1; lia | intros y Hy; lia | | exact Ho].
   intros e sz Hin y Hy. destruct (blocks18_maps rho HV H36 H77 H83 e sz Hin) as (b & s0 & Hm & B1 & B2 & _).
   pose proof (State.region_free_In _ _ _ _ _ (region_free_app_r _ _ _ _ W4) Hm) as OV.
@@ -951,25 +1030,45 @@ Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hx H16 Hbrk Hxtop.
   destruct o as [o0|o1|o1 g]; cbn [out18_tp out18_ok out18_W] in Ho |- *; [reflexivity | exact (GEN o1 Ho) | exact (GEN o1 (proj1 Ho))].
 Qed.
 
-Lemma R18_clear_band : ltac2:(tb__ "0|1|
-S1cS6S6S3aR3A1S0S18Q40A1M0S1bR4P24A2Vb7;A3S0G0S1bR5P4dA2Vb8;A3S0G0S1bR6P4eA2Vb9;A3S0G0S1bR7P53A2Vb10;A3S0S6SacR8A1Vx;A3Sa8S20S23R9A1S22S90A1A3S8SadVx;A1R9A2S8Z0R9A2S8S9RbRaA2SdeA2S1eS88S1eR1S8dA3S29S28RfR2A2S5bS6S6ReS9ReRdA2A4A2F_;Fo;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Flen;Flo;Frho;").
+Lemma R18_clear_band :
+  forall (rho : valuation) (lo : Z) (len : Z),
+  vals rho ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 78%positive = b9 ->
+  rw rho 83%positive = b10 ->
+  x1 rho = x ->
+  Forall (holds rho) (ss_facts (C18e rq)) ->
+  q12x x <= lo ->
+  0 <= len ->
+  lo + len <= kHighMemBeg ->
+  (forall o : sobj, In o (R18 rq) -> ranges_disjoint (obj_range rho o) (lo, lo + len)).
 Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hmaps Hres Htop Hx H16 Hxtop.
   clear Hsb Hbrk Hbal OKF OKP Hlz HBlim.
   intros rho lo len HV H36 H77 H78 H83 Hx1 HF Hlo Hlen Hhi o Ho.
   pose proof CAx as CA. cbv zeta in CA. destruct CA as (Ct & CHPlo & CPEhi & CPEHP & CHPq & _).
-  pose proof (objs_clear_e_sound rho G18 (set_objs C18e R18) (Z_to_bv 64 lo) len HF clearR18 Hlen) as X. rewrite u64_of_lit in X by (unfold kHighMemBeg in *; lia).
+  pose proof (objs_clear_e_sound rho G18 (set_objs (C18e rq) (R18 rq)) (Z_to_bv 64 lo) len HF clearR18 Hlen) as X. rewrite u64_of_lit in X by (unfold kHighMemBeg in *; lia).
   apply X; [unfold kHighMemBeg in *; left; lia | intros y Hy; unfold kHighMemBeg in *; lia | | exact Ho].
   intros e sz Hin y Hy. destruct (blocks18 rho HV H36 H77 H78 H83 Hx1 e sz Hin); unfold kHighMemBeg in *; lia.
 Qed.
 
-Lemma R18_clear_lowb : ltac2:(tb__ "0|3|
-S1cS18Q40M0A1M1S3aR2A1S0G1S1bR3P24A2Vb7;A3S0G1S1bR4P4dA2Vb8;A3S0G1S1bR5P4eA2Vb9;A3S0G1S1bR6P53A2Vb10;A3S0S6SacR7A1Vx;A3Sa8S20S23R8A1S22S90A1A3S42R9S19G0R8A2A2S1eS88S1eR1S8dA3S29S28RcR2A2S5bS6S6S19G0RbA2M2S9G2Z1A2A4A2F_;Fo;F_;F_;F_;F_;F_;F_;F_;F_;Fa;Frho;").
+Lemma R18_clear_lowb :
+  forall (rho : valuation) (a : bv 64),
+  vals rho ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 78%positive = b9 ->
+  rw rho 83%positive = b10 ->
+  x1 rho = x ->
+  Forall (holds rho) (ss_facts (C18e rq)) ->
+  lowb rho (bv_unsigned a) ->
+  (forall o : sobj, In o (R18 rq) -> ranges_disjoint (obj_range rho o) (bv_unsigned a, bv_unsigned a + 1)).
 Proof using HPL HPL10 HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Ha1 Ha2 Hmaps Hres Htop Hx H16 Hxtop.
   clear Hsb Hbrk Hbal OKF OKP Hlz HBlim.
   intros rho a HV H36 H77 H78 H83 Hx1 HF Hlb o Ho. pose proof Hlb as (Ha & N1 & N2).
   pose proof CAx as CA. cbv zeta in CA. destruct CA as (Ct & CHPlo & CPEhi & CPEHP & CHPq & _).
   pose proof q12x_hi as QHI.
-  pose proof (objs_clear_e_sound rho G18 (set_objs C18e R18) a 1 HF clearR18 ltac:(lia)) as X.
+  pose proof (objs_clear_e_sound rho G18 (set_objs (C18e rq) (R18 rq)) a 1 HF clearR18 ltac:(lia)) as X.
   apply X; [unfold SHADOW_BAND_LO, kHighMemBeg in *; left; lia | intros y Hy; unfold SHADOW_BAND_LO in *; lia | | exact Ho].
   intros e sz Hin y Hy. replace y with (bv_unsigned a) by lia. exact (blocks18_low rho HV H36 H77 H78 H83 Hx1 e sz Hin (bv_unsigned a) Hlb).
 Qed.
@@ -982,11 +1081,14 @@ Qed.
 
 Lemma s5_in_out1 : ltac2:(tb__ "0|2|
 SbcS88S5aS18Q40M0A1M1G1A2S5bG1G1S1aG0Z2008fff7000A2S1aG0Zdfff0001000A2A4S6cS6bSbdS35R1A2A1A1A3Fo;").
-Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hbrk Hx H16 Hxtop.
-  clear OKF OKP Hlz HBlim Ha1 Ha2 HPL10 Hsb Hbal.
+Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hbrk Hbal Hx H16 Hxtop.
+  clear OKF OKP Hlz HBlim Ha1 Ha2 HPL10 Hsb.
   intros o. pose proof hs_map_mE as H5. pose proof brk0_mE as (Hlo' & Hhi' & K1).
+  (* LPS 727298f3 (the model's b07fadb): a brk grow records the pages it installs, so fh's [mg_vmmaps]
+     takes the break's page alignment ([Hbal]). *)
+  assert (Hal' : bv_unsigned (brk0w mE) mod 4096 = 0) by (destruct Hbal as [kb Hkb]; rewrite K1, Hkb; apply Z_mod_mult).
   assert (MG : In (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 0xdfff0001000) (vm_maps (m_vmmaps (mg mE)))).
-  { rewrite (mg_vmmaps mE Hlo' Hhi'). cbn [vm_maps]. right. exact H5. }
+  { rewrite (mg_vmmaps mE Hal' Hlo' Hhi'). cbn [vm_maps]. right. exact H5. }
   destruct o as [| | |a]; cbn [out1_model].
   - exact MG.
   - unfold mg_ok. rewrite m_vmmaps_vm_forget_range, m_vmmaps_with_vmmaps. unfold mmap_fixed_ok_vm. cbn [vm_maps]. exact MG.
@@ -999,21 +1101,27 @@ Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hbrk Hx H16 Hxtop.
   - unfold mf_exp, mprotect_model_next. rewrite m_vmmaps_with_vmmaps. cbn [vm_maps]. rewrite mf_res_vmmaps. unfold mmap_none_vm. cbn [vm_maps]. right. exact H5.
 Qed.
 
-Lemma res_out1 : ltac2:(tb__ "0|2|
-SbcS1S0S59S5aS18Q40A1M0G0A2A1S70S6bSbdS35R1A2A1M1A1S10cS69A1A3S0G0S76G1A1S76S6bS35A1A1A3A2Fo;").
-Proof using Hres Hbrk Hx H16 Hxtop.
-  clear -Hres Hbrk Hx H16 Hxtop. intros o. pose proof mE_fields as (MR & _). pose proof brk0_mE as (Hlo' & Hhi' & K1). rewrite <- Hres, <- MR.
-  destruct o; cbn [out1_model]; unfold mg_ok, mg_dead, mf_exp, mprotect_model_next;
-    rewrite ?m_vmmaps_vm_forget_range, ?m_vmmaps_with_vmmaps, ?mf_res_vmmaps, ?(mg_vmmaps mE Hlo' Hhi'); cbn; split; reflexivity.
+(* LPS 727298f3: the reserved ledger's conjunct is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]), [mE]'s ledger and so [m]'s ([Hres]).  Statement written as plain text. *)
+Lemma res_out1 : forall o : out1,
+  (exists V, vm_reserved (m_vmmaps (out1_model mE o)) = segments_reserved segsA ++ V /\ vdso_pair_ok V)
+  /\ vm_init_sp (m_vmmaps (out1_model mE o)) = vm_init_sp (m_vmmaps mE).
+Proof using Hres Hbrk Hbal Hx H16 Hxtop.
+  clear -Hres Hbrk Hbal Hx H16 Hxtop. intros o. pose proof mE_fields as (MR & _). pose proof brk0_mE as (Hlo' & Hhi' & K1).
+  assert (Hal' : bv_unsigned (brk0w mE) mod 4096 = 0) by (destruct Hbal as [kb Hkb]; rewrite K1, Hkb; apply Z_mod_mult).
+  assert (E : vm_reserved (m_vmmaps (out1_model mE o)) = vm_reserved (m_vmmaps mE) /\ vm_init_sp (m_vmmaps (out1_model mE o)) = vm_init_sp (m_vmmaps mE)).
+  { destruct o; cbn [out1_model]; unfold mg_ok, mg_dead, mf_exp, mprotect_model_next;
+      rewrite ?m_vmmaps_vm_forget_range, ?m_vmmaps_with_vmmaps, ?mf_res_vmmaps, ?(mg_vmmaps mE Hal' Hlo' Hhi'); cbn; split; reflexivity. }
+  destruct E as [E1 E2]. split; [rewrite E1, MR; exact Hres | exact E2].
 Qed.
 Lemma top_out1 : ltac2:(tb__ "0|0|
 SbcS0S6S72S6bSbdS35R1A2A1A1S47A3Fo;").
-Proof using Hres Hbrk Hxtop Hx H16. clear -Hres Hbrk Hxtop Hx H16. intros o. pose proof (res_out1 o) as [_ E]. rewrite <- top_mE. unfold alloc_top. rewrite E. reflexivity. Qed.
+Proof using Hres Hbrk Hbal Hxtop Hx H16. clear -Hres Hbrk Hbal Hxtop Hx H16. intros o. pose proof (res_out1 o) as [_ E]. rewrite <- top_mE. unfold alloc_top. rewrite E. reflexivity. Qed.
 
 Lemma grp_facts : ltac2:(tb__ "0|6|
 SbcS18Q40M0A1M1Sd3S1aG0Z0M2A2SbdS35R2A2SfbR1A4S1S3S8S9S19G0R2A2M3Z1000A2M4Z2008fff7000A2S8SdeG3A2A2S1S3S8G4Z10000A2S8Z646000G3A2A2S1S8G4S47A2S1SaG2G3A2S0S5cS78S64S5aG1G1A2S70S6bSbdS35R3A2A1M5A1S6cG5A1A3R2SfbA3S5dA3A2A2A2A2F_;Fg;Fo;").
-Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hbrk Hxtop Hx H16.
-  clear OKF OKP Hlz HBlim Ha1 Ha2 HPL10 Hsb Hbal.
+Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hbrk Hbal Hxtop Hx H16.
+  clear OKF OKP Hlz HBlim Ha1 Ha2 HPL10 Hsb.
   intros o g (Pal & Ppos & Pceil & Pfree).
   assert (HnZ : mmap_nZ pgw = 4096) by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc). assert (Hn : mmap_n pgw = pgw) by (unfold mmap_n; rewrite HnZ; reflexivity). rewrite Hn in Pfree.
   rewrite HnZ, top_out1 in Pceil. assert (Upg : bv_unsigned pgw = 4096) by (unfold pgw; apply u64_of_lit; lia).
@@ -1021,29 +1129,34 @@ Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hbrk Hxtop Hx H16.
   unfold iv_overlap in OV. rewrite Upg in OV. rewrite !u64_of_lit in OV by lia. apply andb_false_iff in OV. unfold kHighMemBeg.
   pose proof (res_out1 o) as [RES _].
   assert (IB : band_covered (vm_reserved (m_vmmaps (out1_model mE o)) ++ vm_maps (m_vmmaps (out1_model mE o))) IMG_BAND_LO IMG_BAND_HI).
-  { apply img_band_covered. rewrite RES. apply incl_appl. apply incl_refl. }
+  { apply img_band_covered. destruct RES as (V & EV & _). rewrite EV. apply incl_appl. apply incl_appl. apply incl_refl. }
   pose proof (grant_avoids_band _ IMG_BAND_LO IMG_BAND_HI g pgw IB ltac:(unfold IMG_BAND_LO, IMG_BAND_HI; lia) Pfree ltac:(rewrite Upg; lia)) as IMG.
   rewrite Upg in IMG. unfold IMG_BAND_LO, IMG_BAND_HI in IMG.
   split; [destruct OV as [OV|OV]; apply Z.ltb_ge in OV; lia|]. split; [exact IMG|]. split; [exact Pceil|]. split; [exact Ppos | exact Pfree].
 Qed.
 
-Lemma join18 : ltac2:(tb__ "0|0|
-S6aS6S84SebS1cS59S18Q40A1A1Sd8S0S5cS85R5S9eR4A3S5dA3S0S5cSecR5P9cA2S5dA3Sa4S69Sa7R9R8A2R7R5R4R3A6Sa4S69Sa7RaR9A2S91Se9R6R7A2R5R4A6F_;F_;F_;Fw;Ftp;Frho;Fsx;FU;FBx;Fmo;").
+Lemma join18 :
+  forall (mo : Model) (Bx : Z) (U : axst) (sx : wsub) (rho : valuation) (tp : list (bv 64)) (w : world),
+  entailsA U (J18 rq) sx = true ->
+  wsub_id_below sx 156%positive = true ->
+  SPA segsA (KxA mo Bx) U rho tp w ->
+  SPA segsA (KxA mo Bx) (K18r rq) (rho_sub rho sx) tp w.
 Proof.
-  clear. intros mo Bx U sx rho tp w He Hid Hsp. destruct K18_eq as [M1 M2].
-  pose proof (SPA_entails segsA (KxA mo Bx) 156%positive U J18 sx rho tp w He Hid (stableA_KxA segsA _ mo Bx) Hsp) as H1.
-  pose proof (SPA_merge segsA (KxA mo Bx) _ J18 42 K18a tp w M1 H1) as H2.
-  pose proof (SPA_merge segsA (KxA mo Bx) _ (ax_setS J18 K18a) 42 K18S tp w M2 H2) as H3. exact H3.
+  clear. intros mo Bx U sx rho tp w He Hid Hsp. destruct (K18_eq rq) as [M1 M2].
+  pose proof (SPA_entails segsA (KxA mo Bx) 156%positive U (J18 rq) sx rho tp w He Hid (stableA_KxA segsA _ mo Bx) Hsp) as H1.
+  pose proof (SPA_merge segsA (KxA mo Bx) _ (J18 rq) 42 (K18a rq) tp w M1 H1) as H2.
+  pose proof (SPA_merge segsA (KxA mo Bx) _ (ax_setS (J18 rq) (K18a rq)) 42 (K18Sr rq) tp w M2 H2) as H3. exact H3.
 Qed.
 
 Lemma maps_mE_sub_out1 : ltac2:(tb__ "0|5|
 SbcS18Q40M0A1M1G1Sc1S35R3A2S88S5aG1G1A2M2S5bG1G1R3R2A4S6cS6bS35A1A1A3SaZ0S19G0R3A2A2Se5S5bG1G1R5R4A4A1S4G1G1S4G1G1S1S88G2S5bG1G1R2R1A4S6cS6bSbdS35R9A2A1A1A3S1S8S19G0R2A2M3S19G0R8A2M4A2S8S9G4S19G0R7A2A2S9G3S19G0R1A2A2A2A2A2Ls';A2Lb';A2F_;F_;F_;F_;Fsz;Fb;Fo;").
-Proof using Hbrk Hx H16 Hxtop.
-  clear -Hbrk x b10 Hx H16 Hxtop.
+Proof using Hbrk Hbal Hx H16 Hxtop.
+  clear -Hbrk Hbal x b10 Hx H16 Hxtop.
   intros o b sz Ho Hin Hsz Hwf. pose proof brk0_mE as (Hlo' & Hhi' & K1).
+  assert (Hal' : bv_unsigned (brk0w mE) mod 4096 = 0) by (destruct Hbal as [kb Hkb]; rewrite K1, Hkb; apply Z_mod_mult).
   assert (SELF : forall l, In (b, sz) l -> exists b' s', In (b', s') l /\ bv_unsigned b' <= bv_unsigned b /\ bv_unsigned b + bv_unsigned sz <= bv_unsigned b' + bv_unsigned s')
     by (intros l Hl; exists b, sz; split; [exact Hl | lia]).
-  assert (MG : In (b, sz) (vm_maps (m_vmmaps (mg mE)))) by (rewrite (mg_vmmaps mE Hlo' Hhi'); cbn [vm_maps]; right; exact Hin).
+  assert (MG : In (b, sz) (vm_maps (m_vmmaps (mg mE)))) by (rewrite (mg_vmmaps mE Hal' Hlo' Hhi'); cbn [vm_maps]; right; exact Hin).
   destruct o as [| | |a]; cbn [out1_model out1_ok] in Ho |- *.
   - apply SELF. exact MG.
   - apply SELF. unfold mg_ok. rewrite m_vmmaps_vm_forget_range, m_vmmaps_with_vmmaps. unfold mmap_fixed_ok_vm. cbn [vm_maps]. exact MG.
@@ -1058,13 +1171,23 @@ Proof using Hbrk Hx H16 Hxtop.
   - apply SELF. unfold mf_exp, mprotect_model_next. rewrite m_vmmaps_with_vmmaps. cbn [vm_maps]. rewrite mf_res_vmmaps. unfold mmap_none_vm. cbn [vm_maps]. right. exact Hin.
 Qed.
 
-Lemma grp_clear_R18 : ltac2:(tb__ "0|3|
-S1cSbcS18Q40M0A1M1S3aR3A1S0G1S1bR4P24A2Vb7;A3S0G1S1bR5P4dA2Vb8;A3S0G1S1bR6P53A2Vb10;A3S0S6SacR7A1Vx;A3Se4S6cS6bS35A1A1A1Sa8S20S23R9A1S22S90A1A3Sc1S35R9A2Sd3S1aG0Z0A2SbdS35RaA2SfbR9A4S1eS88S1eR1S8dA3S29S28ReR2A2S5bS6S6S19G0RcA2M2S9G2Z1000A2A4A2F_;FoR;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fg;Fo;Frho;").
-Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hbrk Hxtop Ha1 Ha2 Hx H16.
-  clear OKF OKP Hlz HBlim HPL10 Hsb Hbal.
+Lemma grp_clear_R18 :
+  forall (rho : valuation) (o : out1) (g : bv 64),
+  vals rho ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 83%positive = b10 ->
+  x1 rho = x ->
+  ivs_wf (vm_maps (m_vmmaps mE)) ->
+  Forall (holds rho) (ss_facts (C18e rq)) ->
+  out1_ok mE o ->
+  mmap_place_ok_none (Z_to_bv 64 0) (out1_model mE o) pgw g ->
+  (forall oR : sobj, In oR (R18 rq) -> ranges_disjoint (obj_range rho oR) (bv_unsigned g, bv_unsigned g + 4096)).
+Proof using HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hmaps Hres Htop Hbrk Hbal Hxtop Ha1 Ha2 Hx H16.
+  clear OKF OKP Hlz HBlim HPL10 Hsb.
   intros rho o g HV H36 H77 H83 Hx1 MWF HF Ho Hpl oR HoR. pose proof (grp_facts o g Hpl) as (G1 & G2 & G3 & G4 & G5). pose proof Hpl as (Pal & Ppos & Pceil & Pfree).
   assert (Upg : bv_unsigned pgw = 4096) by (unfold pgw; apply u64_of_lit; lia). unfold TOPz in G3.
-  apply (objs_clear_e_sound rho G18 (set_objs C18e R18) g 4096 HF clearR18 ltac:(lia)); [right; unfold x1 in Hx1; rewrite Hx1; lia | intros y Hy; lia | | exact HoR].
+  apply (objs_clear_e_sound rho G18 (set_objs (C18e rq) (R18 rq)) g 4096 HF clearR18 ltac:(lia)); [right; unfold x1 in Hx1; rewrite Hx1; lia | intros y Hy; lia | | exact HoR].
   intros e sz Hin y Hy. destruct (blocks18_maps rho HV H36 H77 H83 e sz Hin) as (b & s0 & Hm & B1 & B2 & B3).
   destruct (maps_mE_sub_out1 o b s0 Ho Hm B3 (MWF _ Hm)) as (b' & s' & Hm' & C1 & C2).
   pose proof (State.region_free_In _ _ _ _ _ (region_free_app_r _ _ _ _ G5) Hm') as OV.
@@ -1085,48 +1208,70 @@ S1cS6S42R2R1A2S4bR2A1F_;Fz;Frho;").
 Proof using Hx H16 Hxtop. clear -x Hx H16 Hxtop. intros rho z (Hz & _ & _). unfold bandw in *. pose proof q12x_hi.
   unfold SHADOW_BAND_LO, SHADOW_BAND_HI, kHighMemBeg in *. lia. Qed.
 
-Definition Q18post (mo : Model) (Bx : Z) (rho' : valuation) (tp : list word) (ex : Z -> Prop) : assn := ltac2:(tb__ "0|4|
-Sd8S4S1cS1cS1S7Sf8R1P56A2S0S18Q40M0A1M1S1bR3R2A2S1bVrho';R2A2A3F_;Fi;S1S7S0S59S18Q8A1M2A1S26R2R1A2S26Vrho';R1A2A3Fl;S1G1S3S3eS19G0R1A2M3A1S3S8Vx;G3A2S1S4bG3A1Vex;G3A1A2A2A2S0S61G2A1S1fR3R2A2S1fVrho';R2A2A3F_;Fa;Sa4S69Sa7Vmo;VBx;A2S91R1Vtp;R2A6A2A2A2Lrho4;A2Lw;").
+Definition Q18post (mo : Model) (Bx : Z) (rho' : valuation) (tp : list word) (ex : Z -> Prop) : assn :=
+  fun w : world =>
+  exists rho4 : valuation,
+  (forall i : positive, Pos.lt i 86%positive -> rw rho4 i = rw rho' i) /\
+  (forall l : positive, rl rho4 l = rl rho' l) /\
+  (forall a : bv 64, band (bv_unsigned a) \/ x <= bv_unsigned a \/ bandw (bv_unsigned a) /\ ex (bv_unsigned a) -> rm
+      rho4 a = rm rho' a) /\
+  SPA segsA (KxA mo Bx) (K18r rq) rho4 tp w.
 
-Lemma I18_nexts : ltac2:(tb__ "0|2|
-S1S0S7S27S80S9bA1A1P9cM0A3S1S0S7S27S80S9cA1A1G0A3S1S0S7S27S80S9dA1A1G0A3S1S0S7S27S80S92A1A1G0A3S1S0S7S27S80S93A1A1G0A3S1S0S7S27S80S94A1A1G0A3S1S0S5eS66S1eS2bS80S9fA1A1A2U31A3S1S0S5eS66S1eS2bS80Sa0A1A1A2U32M1A3S0S5eS66S1eS2bSa1A1A2G1A3A2A2A2A2A2A2A2A2").
-Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma I18_nexts :
+  ss_next (ax_S (I18af rq)) = 156%positive /\
+  ss_next (ax_S (I18bf rq)) = 156%positive /\
+  ss_next (ax_S (I18cf rq)) = 156%positive /\
+  ss_next (ax_S (I18a rq)) = 156%positive /\
+  ss_next (ax_S (I18b rq)) = 156%positive /\
+  ss_next (ax_S (I18c rq)) = 156%positive /\
+  length (ss_objs (ax_S (L18b rq))) = 49%nat /\
+  length (ss_objs (ax_S (L18c rq))) = 50%nat /\
+  length (ss_objs (T18c1 rq)) = 50%nat.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Lemma after18a : ltac2:(tb__ "0|0|
-S6aS6S1cS59S18Q40A1A1Sa8S20S23R2A1S22S90A1A3SdaS69Vok;Sa4S69Sa7R5R4A2S92R3R2A5S46R5R4R3R2S6S5L_;A5A4F_;Ftp;Frho';FBx;Fmo;").
+Lemma after18a :
+  forall (mo : Model) (Bx : Z) (rho' : valuation) (tp : list (bv 64)),
+  Forall (holds rho') (ss_facts (C18e rq)) ->
+  triple segsA ok (SPA segsA (KxA mo Bx) (I18a rq) rho' tp) (Q18post mo Bx rho' tp (fun x : Z => True)).
 Proof using OKF Hx H16 Hxtop.
   clear -ok OKF x Hx H16 Hxtop. intros mo Bx rho' tp HF. destruct I18_nexts as (Na & _ & _ & Ma & _).
-  eapply (@triple_conseq segsA ok (SPA segsA (KxA mo Bx) I18af rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
-  { rewrite <- (proj1 I18f_eq). unfold refact18. apply SPA_refacts; [exact Hw | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
+  eapply (@triple_conseq segsA ok (SPA segsA (KxA mo Bx) (I18af rq) rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
+  { rewrite <- (proj1 (I18f_eq rq)). unfold refact18. apply SPA_refacts; [exact Hw | destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
     intros HF'. apply Forall_app. split; [exact HF' | exact HF]. }
   eapply triple_conseq; [intros w Hw; exact Hw | |].
-  2:{ apply triple1_triple. eapply sym_run_soundA; [exact run18a | apply OKFx; exact OKF | reflexivity | apply stableA_KxA]. }
+  2:{ apply triple1_triple. eapply sym_run_soundA; [exact (run18a rq) | apply OKFx; exact OKF | destruct rq; reflexivity | apply stableA_KxA]. }
   intros w Hw. rewrite Na in Hw. apply (proj1 (LQA1 _ _ _ _ _ w)) in Hw as (rho2 & Hag & Hsp). pose proof Hag as (V2 & L2 & R2).
-  exists (rho_sub rho2 (sJ18 L18a)). destruct sJ18_id as (IDa & _). pose proof (rho_sub_agree (sJ18 L18a) 156%positive rho2 IDa) as (V3 & L3 & R3).
+  exists (rho_sub rho2 (sJ18 (L18a rq))). destruct (sJ18_id rq) as (IDa & _). pose proof (rho_sub_agree (sJ18 (L18a rq)) 156%positive rho2 IDa) as (V3 & L3 & R3).
   split; [|split; [|split]].
   - intros i Hi. rewrite <- (V3 i) by lia. symmetry. apply V2. lia.
   - intros l. rewrite <- (L3 l). symmetry. apply L2.
   - intros a Ha. rewrite <- (R3 a). symmetry. apply R2.
-  - apply (join18 mo Bx L18a); [exact entJ18a | exact IDa | exact Hsp].
+  - apply (join18 mo Bx (L18a rq)); [exact (entJ18a rq) | exact IDa | exact Hsp].
 Qed.
 
-Lemma after18b : ltac2:(tb__ "0|4|
-S6aS6S1cS59S18Q40M0A1A1S6Sa8S20S23R3A1S22S90A1A3S0S6S19G0S1bR4P94A2A2R2A3S8S9R3Z2000M1A2Vx;A2S6S3eR1A1S2S1S8S9R6Z1000A2M2R2A2SaR2S9R6G1A2M3A2A2A1F_;Fz;SdaS69Vok;Sa4S69Sa7R9R8A2S93R7R6A5S46R9R8R7R6S6S2S1S8G2R1A2SaR1G3A2A2A1Lz;A5A4F_;F_;F_;F_;Fnb;Ftp;Frho';FBx;Fmo;").
+Lemma after18b :
+  forall (mo : Model) (Bx : Z) (rho' : valuation) (tp : list (bv 64)) (nb : Z),
+  Forall (holds rho') (ss_facts (C18e rq)) ->
+  bv_unsigned (rw rho' 148%positive) = nb ->
+  nb + 8192 <= x ->
+  (forall z : Z, band z -> ~ (nb + 4096 <= z /\ z < nb + 8192)) ->
+  triple segsA ok (SPA segsA (KxA mo Bx) (I18b rq) rho' tp) (Q18post mo Bx rho' tp (fun z : Z => ~ (nb + 4096 <= z
+      /\ z < nb + 8192))).
 Proof using OKF Hx H16 Hxtop.
   clear -ok OKF x Hx H16 Hxtop. intros mo Bx rho' tp nb HF U148 Hnb Hband. destruct I18_nexts as (_ & Nb & _ & _ & Mb & _ & LENb & _).
-  eapply (@triple_conseq segsA ok (SPA segsA (KxA mo Bx) I18bf rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
-  { rewrite <- (proj1 (proj2 I18f_eq)). unfold refact18. apply SPA_refacts; [exact Hw | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
+  eapply (@triple_conseq segsA ok (SPA segsA (KxA mo Bx) (I18bf rq) rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
+  { rewrite <- (proj1 (proj2 (I18f_eq rq))). unfold refact18. apply SPA_refacts; [exact Hw | destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
     intros HF'. apply Forall_app. split; [exact HF' | exact HF]. }
   eapply triple_conseq; [intros w Hw; exact Hw | |].
-  2:{ apply triple1_triple. eapply sym_run_soundA; [exact run18b | apply OKFx; exact OKF | reflexivity | apply stableA_KxA]. }
+  2:{ apply triple1_triple. eapply sym_run_soundA; [exact (run18b rq) | apply OKFx; exact OKF | destruct rq; reflexivity | apply stableA_KxA]. }
   intros [tr [ms md]] Hw. rewrite Nb in Hw. apply (proj1 (LQA1 _ _ _ _ _ _)) in Hw as (rho2 & Hag & Hsp). pose proof Hag as (V2 & L2 & R2).
 
-  destruct T18b_facts as (MV & SMV & _ & SPL & EU & EO).
-  pose proof (SPA_move_lastX (KxA mo Bx) rho2 L18b 14 tp _ ltac:(rewrite LENb; lia) ltac:(rewrite MV; exact SMV) Hsp) as H1. rewrite MV in H1.
-  pose proof (SPA_unobj segsA (KxA mo Bx) rho2 (ax_setS L18b T18b) (ss_objs (ax_S U18b)) [oarea18b] tp tr ms md SPL H1 ltac:(intros X; exact X)) as H2.
+  destruct (T18b_facts rq) as (MV & SMV & _ & SPL & EU & EO).
+  pose proof (SPA_move_lastX (KxA mo Bx) rho2 (L18b rq) 14 tp _ ltac:(rewrite LENb; lia) ltac:(rewrite MV; exact SMV) Hsp) as H1. rewrite MV in H1.
+  pose proof (SPA_unobj segsA (KxA mo Bx) rho2 (ax_setS (L18b rq) (T18b rq)) (ss_objs (ax_S (U18b rq))) [oarea18b rq] tp tr ms md SPL H1 ltac:(intros X; exact X)) as H2.
   cbv zeta in H2. rewrite ax_S_ax_setS, ax_setS_ax_setS, EU in H2.
-  set (rho3 := rho_absorb rho2 [oarea18b] (vms md tp ms)) in *.
-  exists (rho_sub rho3 (sJ18 U18b)). destruct sJ18_id as (_ & IDb & _). pose proof (rho_sub_agree (sJ18 U18b) 156%positive rho3 IDb) as (V3 & L3 & R3).
+  set (rho3 := rho_absorb rho2 [oarea18b rq] (vms md tp ms)) in *.
+  exists (rho_sub rho3 (sJ18 (U18b rq))). destruct (sJ18_id rq) as (_ & IDb & _). pose proof (rho_sub_agree (sJ18 (U18b rq)) 156%positive rho3 IDb) as (V3 & L3 & R3).
   split; [|split; [|split]].
   - intros i Hi. rewrite <- (V3 i) by lia. unfold rho3. rewrite rw_absorb. symmetry. apply V2. lia.
   - intros l. rewrite <- (L3 l). unfold rho3. rewrite rl_absorb. symmetry. apply L2.
@@ -1136,27 +1281,36 @@ Proof using OKF Hx H16 Hxtop.
     rewrite (U_add_lit rho2 (SVar 148%positive) 4096) in Hr by (cbn [eval]; rewrite ?R148, ?U148; lia). cbn [eval] in Hr. rewrite R148, U148 in Hr.
     replace (bv_signed (Z_to_bv 64 0)) with 0 in Hr by reflexivity. replace (bv_signed (Z_to_bv 64 4096)) with 4096 in Hr by reflexivity.
     destruct Ha as [Ha|[Ha|[_ Hex]]]; [exact (Hband _ Ha ltac:(lia)) | lia | exact (Hex ltac:(lia))].
-  - apply (join18 mo Bx U18b); [exact entJ18b | exact IDb | exact H2].
+  - apply (join18 mo Bx (U18b rq)); [exact (entJ18b rq) | exact IDb | exact H2].
 Qed.
 
-Lemma after18c : ltac2:(tb__ "0|5|
-S6aS6S1cS59S18Q40M0A1A1S6S6Sa8S20S23R4A1S22S90A1A3S0S6S19G0S1bR5P94A2A2R3A3S8S9R4Z2000M1A2Vx;A2S0S6S19G0S1bR7P95A2A2R4A3S8S9R5Z1000M2A2Vx;A2S6S3eR1A1M3S2S1S8S9R9G2A2M4R2A2SaR2S9R9G1A2A2A2A1F_;Fz;S6G3S2S1S8R9R2A2SaR2G4A2A2A1F_;Fz;SdaS69Vok;Sa4S69Sa7RdRcA2S94RbRaA5S46RdRcRbRaS6S1S2S1S8S9RaG2A2R1A2SaR1S9RaG1A2A2A2A1S2S1S8R9R1A2SaR1G4A2A2A1A2Lz;A5A4F_;F_;F_;F_;F_;F_;F_;Fng;Fnb;Ftp;Frho';FBx;Fmo;").
+Lemma after18c :
+  forall (mo : Model) (Bx : Z) (rho' : valuation) (tp : list (bv 64)) (nb : Z) (ng : Z),
+  Forall (holds rho') (ss_facts (C18e rq)) ->
+  bv_unsigned (rw rho' 148%positive) = nb ->
+  nb + 8192 <= x ->
+  bv_unsigned (rw rho' 149%positive) = ng ->
+  ng + 4096 <= x ->
+  (forall z : Z, band z -> ~ (nb + 4096 <= z /\ z < nb + 8192)) ->
+  (forall z : Z, band z -> ~ (ng <= z /\ z < ng + 4096)) ->
+  triple segsA ok (SPA segsA (KxA mo Bx) (I18c rq) rho' tp) (Q18post mo Bx rho' tp (fun z : Z => ~ (nb + 4096 <= z
+      /\ z < nb + 8192) /\ ~ (ng <= z /\ z < ng + 4096))).
 Proof using OKF Hx H16 Hxtop.
   clear -ok OKF x Hx H16 Hxtop. intros mo Bx rho' tp nb ng HF U148 Hnb U149 Hng Hb1 Hb2. destruct I18_nexts as (_ & _ & Nc & _ & _ & Mc & _ & LENc & LENc1).
-  eapply (@triple_conseq segsA ok (SPA segsA (KxA mo Bx) I18cf rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
-  { rewrite <- (proj2 (proj2 I18f_eq)). unfold refact18. apply SPA_refacts; [exact Hw | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
+  eapply (@triple_conseq segsA ok (SPA segsA (KxA mo Bx) (I18cf rq) rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
+  { rewrite <- (proj2 (proj2 (I18f_eq rq))). unfold refact18. apply SPA_refacts; [exact Hw | destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
     intros HF'. apply Forall_app. split; [exact HF' | exact HF]. }
   eapply triple_conseq; [intros w Hw; exact Hw | |].
-  2:{ apply triple1_triple. eapply sym_run_soundA; [exact run18c | apply OKFx; exact OKF | reflexivity | apply stableA_KxA]. }
+  2:{ apply triple1_triple. eapply sym_run_soundA; [exact (run18c rq) | apply OKFx; exact OKF | destruct rq; reflexivity | apply stableA_KxA]. }
   intros [tr [ms md]] Hw. rewrite Nc in Hw. apply (proj1 (LQA1 _ _ _ _ _ _)) in Hw as (rho2 & Hag & Hsp). pose proof Hag as (V2 & L2 & R2).
-  destruct T18c_facts as (MV1 & SMV1 & _ & MV2 & SMV2 & _ & SPL & EU & EOa & EOb & EOl & EOh).
-  pose proof (SPA_move_lastX (KxA mo Bx) rho2 L18c 14 tp _ ltac:(rewrite LENc; lia) ltac:(rewrite MV1; exact SMV1) Hsp) as H1. rewrite MV1 in H1.
-  pose proof (SPA_move_lastX (KxA mo Bx) rho2 (ax_setS L18c T18c1) 14 tp _ ltac:(cbn [ax_S ax_setS]; rewrite LENc1; lia) ltac:(cbn [ax_S ax_setS]; rewrite MV2; exact SMV2) H1) as H1'.
+  destruct (T18c_facts rq) as (MV1 & SMV1 & _ & MV2 & SMV2 & _ & SPL & EU & EOa & EOb & EOl & EOh).
+  pose proof (SPA_move_lastX (KxA mo Bx) rho2 (L18c rq) 14 tp _ ltac:(rewrite LENc; lia) ltac:(rewrite MV1; exact SMV1) Hsp) as H1. rewrite MV1 in H1.
+  pose proof (SPA_move_lastX (KxA mo Bx) rho2 (ax_setS (L18c rq) (T18c1 rq)) 14 tp _ ltac:(cbn [ax_S ax_setS]; rewrite LENc1; lia) ltac:(cbn [ax_S ax_setS]; rewrite MV2; exact SMV2) H1) as H1'.
   cbn [ax_S ax_setS] in H1'. rewrite MV2, ax_setS_ax_setS in H1'.
-  pose proof (SPA_unobj segsA (KxA mo Bx) rho2 (ax_setS L18c T18c) (ss_objs (ax_S U18c)) [oarea18c; ogrp18c] tp tr ms md SPL H1' ltac:(intros X; exact X)) as H2.
+  pose proof (SPA_unobj segsA (KxA mo Bx) rho2 (ax_setS (L18c rq) (T18c rq)) (ss_objs (ax_S (U18c rq))) [oarea18c rq; ogrp18c rq] tp tr ms md SPL H1' ltac:(intros X; exact X)) as H2.
   cbv zeta in H2. rewrite ax_S_ax_setS, ax_setS_ax_setS, EU in H2.
-  set (rho3 := rho_absorb rho2 [oarea18c; ogrp18c] (vms md tp ms)) in *.
-  exists (rho_sub rho3 (sJ18 U18c)). destruct sJ18_id as (_ & _ & IDc). pose proof (rho_sub_agree (sJ18 U18c) 156%positive rho3 IDc) as (V3 & L3 & R3).
+  set (rho3 := rho_absorb rho2 [oarea18c rq; ogrp18c rq] (vms md tp ms)) in *.
+  exists (rho_sub rho3 (sJ18 (U18c rq))). destruct (sJ18_id rq) as (_ & _ & IDc). pose proof (rho_sub_agree (sJ18 (U18c rq)) 156%positive rho3 IDc) as (V3 & L3 & R3).
   split; [|split; [|split]].
   - intros i Hi. rewrite <- (V3 i) by lia. unfold rho3. rewrite rw_absorb. symmetry. apply V2. lia.
   - intros l. rewrite <- (L3 l). unfold rho3. rewrite rl_absorb. symmetry. apply L2.
@@ -1171,48 +1325,56 @@ Proof using OKF Hx H16 Hxtop.
       rewrite <- (V2 149%positive) in Hr by lia. rewrite U149 in Hr.
       replace (bv_signed (Z_to_bv 64 0)) with 0 in Hr by reflexivity. replace (bv_signed (Z_to_bv 64 4096)) with 4096 in Hr by reflexivity.
       destruct Ha as [Ha|[Ha|[_ [_ Hex]]]]; [exact (Hb2 _ Ha ltac:(lia)) | lia | exact (Hex ltac:(lia))].
-  - apply (join18 mo Bx U18c); [exact entJ18c | exact IDc | exact H2].
+  - apply (join18 mo Bx (U18c rq)); [exact (entJ18c rq) | exact IDc | exact H2].
 Qed.
 
 Lemma etriple_pre_fact : ltac2:(tb__ "0|1|
 SdbSd8OF_;OSd8R4R1A1R3F_;Fw;R2Sd9S69R5R4A3M0F_;G0F_;F_;FF;FQ;FP;").
 Proof. clear. intros P Q F H1 H2 w Hw. exact (H2 (H1 w Hw) w Hw). Qed.
 
-Lemma eafter18a : ltac2:(tb__ "0|0|
-S6aS6S1cS59S18Q40A1A1Sa8S20S23R2A1S22S90A1A3Sd9S69Sa4S69Sa7R5R4A2S92R3R2A5S46R5R4R3R2S6S5L_;A5A3F_;Ftp;Frho';FBx;Fmo;").
+Lemma eafter18a :
+  forall (mo : Model) (Bx : Z) (rho' : valuation) (tp : list (bv 64)),
+  Forall (holds rho') (ss_facts (C18e rq)) ->
+  etriple segsA (SPA segsA (KxA mo Bx) (I18a rq) rho' tp) (Q18post mo Bx rho' tp (fun x : Z => True)).
 Proof.
   clear -x Hx H16 Hxtop. intros mo Bx rho' tp HF. destruct I18_nexts as (Na & _ & _ & Ma & _).
-  eapply (@etriple_conseq segsA (SPA segsA (KxA mo Bx) I18af rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
-  { rewrite <- (proj1 I18f_eq). unfold refact18. apply SPA_refacts; [exact Hw | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
+  eapply (@etriple_conseq segsA (SPA segsA (KxA mo Bx) (I18af rq) rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
+  { rewrite <- (proj1 (I18f_eq rq)). unfold refact18. apply SPA_refacts; [exact Hw | destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
     intros HF'. apply Forall_app. split; [exact HF' | exact HF]. }
   eapply etriple_conseq; [intros w Hw; exact Hw | |].
-  2:{ eapply sym_run_etripleA; [reflexivity | apply stableA_KxA | exact run18a]. }
+  2:{ eapply sym_run_etripleA; [destruct rq; reflexivity | apply stableA_KxA | exact (run18a rq)]. }
   intros w Hw. rewrite Na in Hw. apply (proj1 (LQA1 _ _ _ _ _ w)) in Hw as (rho2 & Hag & Hsp). pose proof Hag as (V2 & L2 & R2).
-  exists (rho_sub rho2 (sJ18 L18a)). destruct sJ18_id as (IDa & _). pose proof (rho_sub_agree (sJ18 L18a) 156%positive rho2 IDa) as (V3 & L3 & R3).
+  exists (rho_sub rho2 (sJ18 (L18a rq))). destruct (sJ18_id rq) as (IDa & _). pose proof (rho_sub_agree (sJ18 (L18a rq)) 156%positive rho2 IDa) as (V3 & L3 & R3).
   split; [|split; [|split]].
   - intros i Hi. rewrite <- (V3 i) by lia. symmetry. apply V2. lia.
   - intros l. rewrite <- (L3 l). symmetry. apply L2.
   - intros a Ha. rewrite <- (R3 a). symmetry. apply R2.
-  - apply (join18 mo Bx L18a); [exact entJ18a | exact IDa | exact Hsp].
+  - apply (join18 mo Bx (L18a rq)); [exact (entJ18a rq) | exact IDa | exact Hsp].
 Qed.
 
-Lemma eafter18b : ltac2:(tb__ "0|4|
-S6aS6S1cS59S18Q40M0A1A1S6Sa8S20S23R3A1S22S90A1A3S0S6S19G0S1bR4P94A2A2R2A3S8S9R3Z2000M1A2Vx;A2S6S3eR1A1S2S1S8S9R6Z1000A2M2R2A2SaR2S9R6G1A2M3A2A2A1F_;Fz;Sd9S69Sa4S69Sa7R9R8A2S93R7R6A5S46R9R8R7R6S6S2S1S8G2R1A2SaR1G3A2A2A1Lz;A5A3F_;F_;F_;F_;Fnb;Ftp;Frho';FBx;Fmo;").
+Lemma eafter18b :
+  forall (mo : Model) (Bx : Z) (rho' : valuation) (tp : list (bv 64)) (nb : Z),
+  Forall (holds rho') (ss_facts (C18e rq)) ->
+  bv_unsigned (rw rho' 148%positive) = nb ->
+  nb + 8192 <= x ->
+  (forall z : Z, band z -> ~ (nb + 4096 <= z /\ z < nb + 8192)) ->
+  etriple segsA (SPA segsA (KxA mo Bx) (I18b rq) rho' tp) (Q18post mo Bx rho' tp (fun z : Z => ~ (nb + 4096 <= z /\
+      z < nb + 8192))).
 Proof using Hx H16 Hxtop.
   clear -x Hx H16 Hxtop. intros mo Bx rho' tp nb HF U148 Hnb Hband. destruct I18_nexts as (_ & Nb & _ & _ & Mb & _ & LENb & _).
-  eapply (@etriple_conseq segsA (SPA segsA (KxA mo Bx) I18bf rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
-  { rewrite <- (proj1 (proj2 I18f_eq)). unfold refact18. apply SPA_refacts; [exact Hw | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
+  eapply (@etriple_conseq segsA (SPA segsA (KxA mo Bx) (I18bf rq) rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
+  { rewrite <- (proj1 (proj2 (I18f_eq rq))). unfold refact18. apply SPA_refacts; [exact Hw | destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
     intros HF'. apply Forall_app. split; [exact HF' | exact HF]. }
   eapply etriple_conseq; [intros w Hw; exact Hw | |].
-  2:{ eapply sym_run_etripleA; [reflexivity | apply stableA_KxA | exact run18b]. }
+  2:{ eapply sym_run_etripleA; [destruct rq; reflexivity | apply stableA_KxA | exact (run18b rq)]. }
   intros [tr [ms md]] Hw. rewrite Nb in Hw. apply (proj1 (LQA1 _ _ _ _ _ _)) in Hw as (rho2 & Hag & Hsp). pose proof Hag as (V2 & L2 & R2).
 
-  destruct T18b_facts as (MV & SMV & _ & SPL & EU & EO).
-  pose proof (SPA_move_lastX (KxA mo Bx) rho2 L18b 14 tp _ ltac:(rewrite LENb; lia) ltac:(rewrite MV; exact SMV) Hsp) as H1. rewrite MV in H1.
-  pose proof (SPA_unobj segsA (KxA mo Bx) rho2 (ax_setS L18b T18b) (ss_objs (ax_S U18b)) [oarea18b] tp tr ms md SPL H1 ltac:(intros X; exact X)) as H2.
+  destruct (T18b_facts rq) as (MV & SMV & _ & SPL & EU & EO).
+  pose proof (SPA_move_lastX (KxA mo Bx) rho2 (L18b rq) 14 tp _ ltac:(rewrite LENb; lia) ltac:(rewrite MV; exact SMV) Hsp) as H1. rewrite MV in H1.
+  pose proof (SPA_unobj segsA (KxA mo Bx) rho2 (ax_setS (L18b rq) (T18b rq)) (ss_objs (ax_S (U18b rq))) [oarea18b rq] tp tr ms md SPL H1 ltac:(intros X; exact X)) as H2.
   cbv zeta in H2. rewrite ax_S_ax_setS, ax_setS_ax_setS, EU in H2.
-  set (rho3 := rho_absorb rho2 [oarea18b] (vms md tp ms)) in *.
-  exists (rho_sub rho3 (sJ18 U18b)). destruct sJ18_id as (_ & IDb & _). pose proof (rho_sub_agree (sJ18 U18b) 156%positive rho3 IDb) as (V3 & L3 & R3).
+  set (rho3 := rho_absorb rho2 [oarea18b rq] (vms md tp ms)) in *.
+  exists (rho_sub rho3 (sJ18 (U18b rq))). destruct (sJ18_id rq) as (_ & IDb & _). pose proof (rho_sub_agree (sJ18 (U18b rq)) 156%positive rho3 IDb) as (V3 & L3 & R3).
   split; [|split; [|split]].
   - intros i Hi. rewrite <- (V3 i) by lia. unfold rho3. rewrite rw_absorb. symmetry. apply V2. lia.
   - intros l. rewrite <- (L3 l). unfold rho3. rewrite rl_absorb. symmetry. apply L2.
@@ -1222,27 +1384,36 @@ Proof using Hx H16 Hxtop.
     rewrite (U_add_lit rho2 (SVar 148%positive) 4096) in Hr by (cbn [eval]; rewrite ?R148, ?U148; lia). cbn [eval] in Hr. rewrite R148, U148 in Hr.
     replace (bv_signed (Z_to_bv 64 0)) with 0 in Hr by reflexivity. replace (bv_signed (Z_to_bv 64 4096)) with 4096 in Hr by reflexivity.
     destruct Ha as [Ha|[Ha|[_ Hex]]]; [exact (Hband _ Ha ltac:(lia)) | lia | exact (Hex ltac:(lia))].
-  - apply (join18 mo Bx U18b); [exact entJ18b | exact IDb | exact H2].
+  - apply (join18 mo Bx (U18b rq)); [exact (entJ18b rq) | exact IDb | exact H2].
 Qed.
 
-Lemma eafter18c : ltac2:(tb__ "0|5|
-S6aS6S1cS59S18Q40M0A1A1S6S6Sa8S20S23R4A1S22S90A1A3S0S6S19G0S1bR5P94A2A2R3A3S8S9R4Z2000M1A2Vx;A2S0S6S19G0S1bR7P95A2A2R4A3S8S9R5Z1000M2A2Vx;A2S6S3eR1A1M3S2S1S8S9R9G2A2M4R2A2SaR2S9R9G1A2A2A2A1F_;Fz;S6G3S2S1S8R9R2A2SaR2G4A2A2A1F_;Fz;Sd9S69Sa4S69Sa7RdRcA2S94RbRaA5S46RdRcRbRaS6S1S2S1S8S9RaG2A2R1A2SaR1S9RaG1A2A2A2A1S2S1S8R9R1A2SaR1G4A2A2A1A2Lz;A5A3F_;F_;F_;F_;F_;F_;F_;Fng;Fnb;Ftp;Frho';FBx;Fmo;").
+Lemma eafter18c :
+  forall (mo : Model) (Bx : Z) (rho' : valuation) (tp : list (bv 64)) (nb : Z) (ng : Z),
+  Forall (holds rho') (ss_facts (C18e rq)) ->
+  bv_unsigned (rw rho' 148%positive) = nb ->
+  nb + 8192 <= x ->
+  bv_unsigned (rw rho' 149%positive) = ng ->
+  ng + 4096 <= x ->
+  (forall z : Z, band z -> ~ (nb + 4096 <= z /\ z < nb + 8192)) ->
+  (forall z : Z, band z -> ~ (ng <= z /\ z < ng + 4096)) ->
+  etriple segsA (SPA segsA (KxA mo Bx) (I18c rq) rho' tp) (Q18post mo Bx rho' tp (fun z : Z => ~ (nb + 4096 <= z /\
+      z < nb + 8192) /\ ~ (ng <= z /\ z < ng + 4096))).
 Proof using Hx H16 Hxtop.
   clear -x Hx H16 Hxtop. intros mo Bx rho' tp nb ng HF U148 Hnb U149 Hng Hb1 Hb2. destruct I18_nexts as (_ & _ & Nc & _ & _ & Mc & _ & LENc & LENc1).
-  eapply (@etriple_conseq segsA (SPA segsA (KxA mo Bx) I18cf rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
-  { rewrite <- (proj2 (proj2 I18f_eq)). unfold refact18. apply SPA_refacts; [exact Hw | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
+  eapply (@etriple_conseq segsA (SPA segsA (KxA mo Bx) (I18cf rq) rho' tp)); [intros w Hw | intros w Hw; exact Hw |].
+  { rewrite <- (proj2 (proj2 (I18f_eq rq))). unfold refact18. apply SPA_refacts; [exact Hw | destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
     intros HF'. apply Forall_app. split; [exact HF' | exact HF]. }
   eapply etriple_conseq; [intros w Hw; exact Hw | |].
-  2:{ eapply sym_run_etripleA; [reflexivity | apply stableA_KxA | exact run18c]. }
+  2:{ eapply sym_run_etripleA; [destruct rq; reflexivity | apply stableA_KxA | exact (run18c rq)]. }
   intros [tr [ms md]] Hw. rewrite Nc in Hw. apply (proj1 (LQA1 _ _ _ _ _ _)) in Hw as (rho2 & Hag & Hsp). pose proof Hag as (V2 & L2 & R2).
-  destruct T18c_facts as (MV1 & SMV1 & _ & MV2 & SMV2 & _ & SPL & EU & EOa & EOb & EOl & EOh).
-  pose proof (SPA_move_lastX (KxA mo Bx) rho2 L18c 14 tp _ ltac:(rewrite LENc; lia) ltac:(rewrite MV1; exact SMV1) Hsp) as H1. rewrite MV1 in H1.
-  pose proof (SPA_move_lastX (KxA mo Bx) rho2 (ax_setS L18c T18c1) 14 tp _ ltac:(cbn [ax_S ax_setS]; rewrite LENc1; lia) ltac:(cbn [ax_S ax_setS]; rewrite MV2; exact SMV2) H1) as H1'.
+  destruct (T18c_facts rq) as (MV1 & SMV1 & _ & MV2 & SMV2 & _ & SPL & EU & EOa & EOb & EOl & EOh).
+  pose proof (SPA_move_lastX (KxA mo Bx) rho2 (L18c rq) 14 tp _ ltac:(rewrite LENc; lia) ltac:(rewrite MV1; exact SMV1) Hsp) as H1. rewrite MV1 in H1.
+  pose proof (SPA_move_lastX (KxA mo Bx) rho2 (ax_setS (L18c rq) (T18c1 rq)) 14 tp _ ltac:(cbn [ax_S ax_setS]; rewrite LENc1; lia) ltac:(cbn [ax_S ax_setS]; rewrite MV2; exact SMV2) H1) as H1'.
   cbn [ax_S ax_setS] in H1'. rewrite MV2, ax_setS_ax_setS in H1'.
-  pose proof (SPA_unobj segsA (KxA mo Bx) rho2 (ax_setS L18c T18c) (ss_objs (ax_S U18c)) [oarea18c; ogrp18c] tp tr ms md SPL H1' ltac:(intros X; exact X)) as H2.
+  pose proof (SPA_unobj segsA (KxA mo Bx) rho2 (ax_setS (L18c rq) (T18c rq)) (ss_objs (ax_S (U18c rq))) [oarea18c rq; ogrp18c rq] tp tr ms md SPL H1' ltac:(intros X; exact X)) as H2.
   cbv zeta in H2. rewrite ax_S_ax_setS, ax_setS_ax_setS, EU in H2.
-  set (rho3 := rho_absorb rho2 [oarea18c; ogrp18c] (vms md tp ms)) in *.
-  exists (rho_sub rho3 (sJ18 U18c)). destruct sJ18_id as (_ & _ & IDc). pose proof (rho_sub_agree (sJ18 U18c) 156%positive rho3 IDc) as (V3 & L3 & R3).
+  set (rho3 := rho_absorb rho2 [oarea18c rq; ogrp18c rq] (vms md tp ms)) in *.
+  exists (rho_sub rho3 (sJ18 (U18c rq))). destruct (sJ18_id rq) as (_ & _ & IDc). pose proof (rho_sub_agree (sJ18 (U18c rq)) 156%positive rho3 IDc) as (V3 & L3 & R3).
   split; [|split; [|split]].
   - intros i Hi. rewrite <- (V3 i) by lia. unfold rho3. rewrite rw_absorb. symmetry. apply V2. lia.
   - intros l. rewrite <- (L3 l). unfold rho3. rewrite rl_absorb. symmetry. apply L2.
@@ -1257,25 +1428,53 @@ Proof using Hx H16 Hxtop.
       rewrite <- (V2 149%positive) in Hr by lia. rewrite U149 in Hr.
       replace (bv_signed (Z_to_bv 64 0)) with 0 in Hr by reflexivity. replace (bv_signed (Z_to_bv 64 4096)) with 4096 in Hr by reflexivity.
       destruct Ha as [Ha|[Ha|[_ [_ Hex]]]]; [exact (Hb2 _ Ha ltac:(lia)) | lia | exact (Hex ltac:(lia))].
-  - apply (join18 mo Bx U18c); [exact entJ18c | exact IDc | exact H2].
+  - apply (join18 mo Bx (U18c rq)); [exact (entJ18c rq) | exact IDc | exact H2].
 Qed.
 
-Definition PostC18 (rhoC : valuation) : assn := ltac2:(tb__ "0|5|
-Sd8S4S38S38S4S1cS1cS1S40R2A1S1S7Sf8R1P56A2S0S18Q40M0A1M1S1bR3R2A2S1bVrhoC;R2A2A3F_;Fi;S1S7S0S59S18Q8A1M2A1S26R2R1A2S26VrhoC;R1A2A3Fl;S1G1S3S3eS19G0R1A2M3A1Se0VrhoC;R1A2A2S0S61G2A1M4S1fR3R2A2S1fVrhoC;R2A2A3F_;Fa;S1G1S42VrhoC;G3A2S52R4S19G0R2A2A2S0G4S1fR4R3A2S1fVrhoC;R3A2A3F_;F_;Fa;Sa4S69Sa7S54R2A1S4fA2S91R1S3cVrhoC;A1R3A6A2A2A2A2A2Lrho4;A2Lo;A2Lw;").
+Definition PostC18 (rhoC : valuation) : assn :=
+  fun w : world =>
+  exists o : out18,
+  exists rho4 : valuation,
+  out18_ok o /\
+  (forall i : positive, Pos.lt i 86%positive -> rw rho4 i = rw rhoC i) /\
+  (forall l : positive, rl rho4 l = rl rhoC l) /\
+  (forall a : bv 64, band (bv_unsigned a) \/ ARGF rhoC a -> rm rho4 a = rm rhoC a) /\
+  (forall a : bv 64, lowb rhoC (bv_unsigned a) -> grp_out o (bv_unsigned a) -> rm rho4 a = rm rhoC a) /\
+  SPA segsA (KxA (out18_model o) B18) (K18r rq) rho4 (TP18 rhoC) w.
 
-Lemma imports18 : ltac2:(tb__ "0|6|
-S1S0S1dSe8Sf3S8eSd7S80SbfA1M0P56M1A4Sc6A2S25P94A1M2A3S1S0S1dSe8Sf3S8eSd7S80Sc0A1M3G1A4M4Sc6A2G2A3S1S0S1dSe8G4Sc7A2S25P95A1A3S1S0S5cSf5S8eSd7G1Sc6A4S5dA3S1S0S5cSf5S8eSd7G1Sc7A4S5dA3S1S0S7S27G0A1PaaM5A3S1S0S7S27G3A1G5A3S1S0S7S27S80SbeA1A1G5A3S1S0S1dSe8S8eP34A2S25P54A1A3S1S0S1dSe8S8eP35A2S25P55A1A3S0S1dSe8S8ePaA2S96A3A2A2A2A2A2A2A2A2A2A2").
-Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
-Lemma new_objs18 : ltac2:(tb__ "0|5|
-S1S0S59S1eA1M0Sf2S80SaaA1M1S80SbeA1A2S5fS1eA1M2A3S1S0G0Sf2G1S80SbfA1A2S62S1eSc8G2A3A3S1S0G0Sf2G1S80Sc0A1A2S62S1eSc8S62S1eScaG2A3A3A3S1S0S59S5aS1dS1dA2A1M3S82SbeA1SabA3S1S0G3S82SbfA1SabA3S1S0G3S82Sc0A1SabA3S1S0S1dS83SbeA1S21SdfA1M4A3S1S0S1dS83SbfA1G4A3S1S0S1dS83Sc0A1G4A3S1S0S7S27G1A1Sd7A3S0S7S27S80S8fA1A1P56A3A2A2A2A2A2A2A2A2A2A2").
-Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma imports18 :
+  wsub_get (import_sub (s18 rq) NF (ax_S (P_null1 rq)) 86%positive) NA = SVar 148%positive /\
+  wsub_get (import_sub (s18 rq) NF (ax_S (P_ok rq)) 86%positive) NA = SVar 148%positive /\
+  wsub_get (import_sub (s18 rq) NF (ax_S (P_ok rq)) 86%positive) NG = SVar 149%positive /\
+  post_vars (s18 rq) NF 86%positive NA = true /\
+  post_vars (s18 rq) NF 86%positive NG = true /\
+  ss_next (ax_S (P_null1 rq)) = 170%positive /\
+  ss_next (ax_S (P_ok rq)) = 170%positive /\
+  ss_next (ax_S (P_null0 rq)) = 170%positive /\
+  wsub_get (s18 rq) 52%positive = SVar 84%positive /\
+  wsub_get (s18 rq) 53%positive = SVar 85%positive /\
+  wsub_get (s18 rq) 10%positive = SP18.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma new_objs18 :
+  new_objs (ax_S (Pre_M rq)) (ax_S (P_null0 rq)) = @nil sobj /\
+  new_objs (ax_S (Pre_M rq)) (ax_S (P_null1 rq)) = O_area :: @nil sobj /\
+  new_objs (ax_S (Pre_M rq)) (ax_S (P_ok rq)) = O_area :: O_grp :: @nil sobj /\
+  ax_X (P_null0 rq) = X_M /\
+  ax_X (P_null1 rq) = X_M /\
+  ax_X (P_ok rq) = X_M /\
+  ax_base (P_null0 rq) = SLit SHB /\
+  ax_base (P_null1 rq) = SLit SHB /\
+  ax_base (P_ok rq) = SLit SHB /\
+  ss_next (ax_S (Pre_M rq)) = NF /\
+  ss_next (ax_S (C18 rq)) = 86%positive.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
 Lemma ranges_disjoint_sub : ltac2:(tb__ "0|0|
 S5aS6S6A2S6S6S6S6S29R5S5bS6S6R4R3A4A2S8R5R3A2S8R3R5A2S29R8S5bS6S6R5R4A4A2F_;F_;F_;Fhi';Flo';Fhi;Flo;Fr;").
 Proof. clear. intros [a b] lo hi lo' hi' H H1 H2. unfold ranges_disjoint in *. cbn [fst snd] in *. lia. Qed.
 
-Definition rho0C (rhoC : valuation) (md : Model) (ms : machine_state) : valuation := ltac2:(tb__ "0|0|
-Se9SeaVrhoC;S8dSd5Vmd;S3cVrhoC;A1Vms;A3A3S8eA2").
+Definition rho0C (rhoC : valuation) (md : Model) (ms : machine_state) : valuation :=
+  rho_sub (rho_absorb rhoC (R18 rq) (vms md (TP18 rhoC) ms)) (s18 rq).
 
 Lemma rm_sub_absorb : ltac2:(tb__ "0|0|
 S1cS59S1eA1Sd2SebS18Q40A1S2Se7R5R4R1A3A1S0S61S18Q8A1A1S1fSe9SeaR6R5R4A3R3A2R2A2S1fR6R2A2A3F_;Fa;Fs;Fms;FR;Frho;").
@@ -1284,8 +1483,12 @@ Lemma rw_sub_absorb : ltac2:(tb__ "0|0|
 S1cS59S1eA1Sd2SebS7S0S18Q40A1S1bSe9SeaR5R4R3A3R2A2R1A2S24R5Se8R2R1A2A2A3Fv;Fs;Fms;FR;Frho;").
 Proof. clear. intros rho R ms s v. unfold rho_sub. cbn [rw]. apply eval_absorb. Qed.
 
-Lemma rho0C_facts : ltac2:(tb__ "0|2|
-S1cS6aSd2S1S18Q40A1M0S2Se7R4S8dR1A3A1S0S61S18Q8A1A1S1fS37R5R4R3A3R2A2S1fR5R2A2A3F_;Fa;S1S0G0S1bS37R3R2R1A3M1P34A2S1bR3P54A2A3S1S0G0S1bG1P35A2S1bR3P55A2A3S0G0S1bG1PaA2S24R3S96A2A3A2A2A2Fms;Fmd;FrhoC;").
+Lemma rho0C_facts :
+  forall (rhoC : valuation) (md : Model) (ms : machine_state),
+  (forall a : bv 64, ~ in_ranges rhoC (R18 rq) a -> rm (rho0C rhoC md ms) a = rm rhoC a) /\
+  rw (rho0C rhoC md ms) 52%positive = rw rhoC 84%positive /\
+  rw (rho0C rhoC md ms) 53%positive = rw rhoC 85%positive /\
+  rw (rho0C rhoC md ms) 10%positive = eval rhoC SP18.
 Proof.
   clear. intros rhoC md ms. destruct imports18 as (_ & _ & _ & _ & _ & _ & _ & _ & S52 & S53 & S10). unfold rho0C.
   split; [intros a Ha; apply rm_sub_absorb; exact Ha|]. rewrite !rw_sub_absorb, S52, S53, S10. repeat split; reflexivity.
@@ -1316,12 +1519,16 @@ Proof.
       unfold ranges_disjoint in D'. cbn [fst snd] in D'. lia.
 Qed.
 
-Lemma R18_belowS : ltac2:(tb__ "0|0|
-S0S5cS53S22S90A1S43S62S5eU2S62S5eU3S5fS5eA1A3A3S8dA4S5dA3").
-Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma R18_nth23 : ltac2:(tb__ "0|6|
-S1S0S61S1eA1M0S8aS1eS8dU2A3S65S1eS2fS2aSf9S2aSf9S25P1M1A1S2aSfaS25P2M2A1S21Z3A1M3A3A3S21Z10A1A3S21Z0A1M4S2aSf9S2aSfaS25P3A1G3A3S21Z8A1A3S5fS2cA1S30G1A1A5A2A3S4S59S2cA1M5G5S0G0S8aS1eS8dU3A3S65S1eS2fS25P4A1G4S2aSf9S25P5A1S21Z1A1A3R1S30G2A1A5A2A3Lcs;A2A2").
-Proof. clear. split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | eexists; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc]. Qed.
+Lemma R18_belowS :
+  objs_belowS_except_b (ss_facts (C18e rq)) G18 (2%nat :: 3%nat :: @nil nat) (R18 rq) = true.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma R18_nth23 :
+  nth_error (R18 rq) 2%nat = Some (mkObj (SAlu ALU_ADD (SAlu ALU_ADD (SVar 1%positive) (SAlu ALU_SLL (SVar
+      2%positive) (SLit 3))) (SLit 16)) (SLit 0) (SAlu ALU_ADD (SAlu ALU_SLL (SVar 3%positive) (SLit 3)) (SLit 8))
+      (@nil cell) (DList 1%positive)) /\
+  (exists cs : list cell, nth_error (R18 rq) 3%nat = Some (mkObj (SVar 4%positive) (SLit 0) (SAlu ALU_ADD (SVar
+      5%positive) (SLit 1)) cs (DList 2%positive))).
+Proof. clear. destruct rq; (split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | eexists; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc]). Qed.
 
 Lemma blocks18_top : ltac2:(tb__ "0|2|
 S1cS3aR1A1S0S18Q40M0A1M1S1bR2P24A2Vb7;A3S0G1S1bR3P4dA2Vb8;A3S0G1S1bR4P4eA2Vb9;A3S0G1S1bR5P53A2Vb10;A3S0S6SacR6A1Vx;A3S1dS6S88S5aS1dS6A2S5bS1dS6R2R1A4S43A3S8S9S19G0S24RaR3A2A2R2A2Vx;A2F_;Fsz;Fe;F_;F_;F_;F_;F_;F_;Frho;").
@@ -1369,22 +1576,34 @@ Hypothesis R84 : ltac2:(tb__ "0|1|
 S0S18Q40M0A1S1bVrhoC;P54A2S1aG0S3dA2A3").
 Hypothesis R85 : ltac2:(tb__ "0|1|
 S0S18Q40M0A1S1bVrhoC;P55A2S1aG0SbS41S36VrhoC;A1A1S3dA2A2A3").
-Hypothesis HF : ltac2:(tb__ "0|0|
-Sa8S20S23VrhoC;A1S22S90A1A3").
+Hypothesis HF :
+  Forall (holds rhoC) (ss_facts (C18e rq)).
 Hypothesis HAL : arg_layout rhoC.
 
 Hypothesis MWF : ltac2:(tb__ "0|0|
 Se4S6cS6bS35A1A1A1").
 
-Lemma KEPT18 : ltac2:(tb__ "0|1|
-S6aSd2S1cS38S40R1A1Sc9S63S6S6S45R2A1M0A3S60S6S6G0A3S37VrhoC;R5R4A3R3A4S18Q40A1Se7VrhoC;S8dR1A3S0S61S18Q8A1A1S1fR6R2A2S1fS37VrhoC;R8R7A3R2A2A3F_;Fa;F_;F_;Fo;FrhoL;Fms;Fmd;").
+Lemma KEPT18 :
+  forall (md : Model) (ms : machine_state) (rhoL : valuation) (o : out18),
+  out18_ok o ->
+  rm_kept_outside (fst (out18_W o)) (snd (out18_W o)) (rho0C rhoC md ms) rhoL ->
+  (forall a : bv 64, in_ranges rhoC (R18 rq) a -> rm rhoL a = rm (rho0C rhoC md ms) a).
 Proof.
   intros md ms rhoL o Ho Hk a (oR & HoR & Hr). apply Hk. intros Hin.
   pose proof (R18_clear_W rhoC _ _ HV H36 H77 H83 Hx1 HF (out18_Wok o Ho) oR HoR) as D. unfold ranges_disjoint in D. cbn [fst snd] in D. klia.
 Qed.
 
-Lemma PSC18 : ltac2:(tb__ "0|7|
-S1cS1cS5aS1dS1dA2M0S6S6S1eS88G0R4SabA3S0S18Q40M1A1M2S1bR7P34A2S1bVrhoC;P54A2A3S0G2S1bR8P35A2S1bVrhoC;P55A2A3S7Sf8R1Sd7A2S0G2S1bRbR2A2S1bRaR2A2A3F_;Fi;S1S8S19G1S24R9S63S1dS1dR8A3A2A2M3R7A2SaR7S9G3S19G1S24R9S60S1dS1dR8A3A2A2A2A2A2S1S8Z0R7A2SaR7Z8M4A2A2S88S1eR7S8dA3S2S1S8S63S6S6S28VrhoC;R8A2M5A3S19G1S86S9S19G1S24RcS21SdfA1A2A2S12RaG4A2A2R9A2A2M6A2SaG6S60S6S6G5A3A2A2A1F_;F_;F_;F_;F_;F_;F_;FoR;Fj;Fa;Fr;FrhoL;Frho0';").
+Lemma PSC18 :
+  forall (rho0' : valuation) (rhoL : valuation) (r : (sv * sv)%type) (a : Z) (j : Z) (oR : sobj),
+  In r X_M ->
+  rw rho0' 52%positive = rw rhoC 84%positive ->
+  rw rho0' 53%positive = rw rhoC 85%positive ->
+  (forall i : positive, Pos.lt i NF -> rw rho0' i = rw rhoL i) ->
+  bv_unsigned (eval rhoL (fst r)) <= a /\ a < bv_unsigned (eval rhoL (fst r)) + bv_unsigned (eval rhoL (snd r)) ->
+  0 <= j /\ j < 8 ->
+  In oR (R18 rq) ->
+  ~ (fst (obj_range rhoC oR) <= bv_unsigned (word_byte (bv_unsigned (eval rhoL (SLit SHB)) + a / 8) j) /\
+      bv_unsigned (word_byte (bv_unsigned (eval rhoL (SLit SHB)) + a / 8) j) < snd (obj_range rhoC oR)).
 Proof.
   pose proof (arith18 _ H1 H2 H3) as AR.
   destruct AR as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11 & A12 & A13 & A14 & A15 & A16 & A17 & A18 & A19 & A20 & A21 & A22 & A23 & A24).
@@ -1406,16 +1625,20 @@ Proof.
   unfold ranges_disjoint in D. cbn [fst snd] in D. klia.
 Qed.
 
-Lemma HFof18 : ltac2:(tb__ "0|0|
-S1cSf0P56VrhoC;R1A3Sa8S20S23R2A1S22S90A1A3F_;Frho';").
+Lemma HFof18 :
+  forall (rho' : valuation),
+  agree_vals 86%positive rhoC rho' ->
+  Forall (holds rho') (ss_facts (C18e rq)).
 Proof.
   intros rho' Hag. apply Forall_forall. intros f Hf.
-  apply (proj1 (holds_agree_vals 86%positive rhoC rho' f Hag (proj1 (forallb_forall _ _) C18e_facts_below f Hf))).
+  apply (proj1 (holds_agree_vals 86%positive rhoC rho' f Hag (proj1 (forallb_forall _ _) (C18e_facts_below rq) f Hf))).
   exact (proj1 (Forall_forall _ _) HF f Hf).
 Qed.
 
-Lemma BANDR18 : ltac2:(tb__ "0|1|
-S18Q40M0A1S3eS19G0R1A2A1S2Se7VrhoC;S8dR2A3A1F_;Fa;").
+Lemma BANDR18 :
+  forall (a : bv 64),
+  band (bv_unsigned a) ->
+  ~ in_ranges rhoC (R18 rq) a.
 Proof.
   intros a Ha (oR & HoR & Hr). unfold band in Ha. pose proof q12x_lo as QLO.
   pose proof (R18_clear_band rhoC (bv_unsigned a) 1 HV H36 H77 H78 H83 Hx1 HF ltac:(klia) ltac:(lia) ltac:(klia) oR HoR) as D.
@@ -1428,8 +1651,12 @@ Proof.
   destruct HW as [HW|(W1 & W2 & W3 & W4 & W5 & W6)]; [lia|]. unfold SHADOW_BAND_LO, SHADOW_BAND_HI, kHighMemBeg in *. klia.
 Qed.
 
-Lemma area_clear18 : ltac2:(tb__ "0|0|
-SbcS1cS1eSc1S35R3A2S0S18Q40A1S1bR3Sc6A2Sd1S35R4A2A3S88S1eR3S8dA3S29S28R5Sc8A2S28VrhoC;R4A2A2F_;F_;F_;FoR;FrhoL;Fo;").
+Lemma area_clear18 :
+  forall (o : out1) (rhoL : valuation) (oR : sobj),
+  out1_ok mE o ->
+  rw rhoL NA = out1_base mE o ->
+  In oR (R18 rq) ->
+  ranges_disjoint (obj_range rhoL O_area) (obj_range rhoC oR).
 Proof.
   intros o rhoL oR Ho HNA HoR.
   pose proof (out18_Wok (O18b o) Ho) as HW. cbn [out18_W out1_W fst snd] in HW.
@@ -1440,8 +1667,13 @@ Proof.
   replace (bv_signed (Z_to_bv 64 0)) with 0 by reflexivity. replace (bv_signed (Z_to_bv 64 4096)) with 4096 by reflexivity.
   unfold ranges_disjoint in D |- *. cbn [fst snd] in D |- *. lia.
 Qed.
-Lemma grp_clear18 : ltac2:(tb__ "0|2|
-SbcS18Q40M0A1M1S1cS1eSc1S35R4A2Sd3S1aG0Z0A2SbdS35R5A2SfbR4A4S0G1S1bR4Sc7A2R5A3S88S1eR4S8dA3S29S28R6ScaA2S28VrhoC;R5A2A2F_;F_;F_;F_;FoR;FrhoL;Fg;Fo;").
+Lemma grp_clear18 :
+  forall (o : out1) (g : bv 64) (rhoL : valuation) (oR : sobj),
+  out1_ok mE o ->
+  mmap_place_ok_none (Z_to_bv 64 0) (out1_model mE o) pgw g ->
+  rw rhoL NG = g ->
+  In oR (R18 rq) ->
+  ranges_disjoint (obj_range rhoL O_grp) (obj_range rhoC oR).
 Proof.
   intros o g rhoL oR Ho Hpl HNG HoR. pose proof (grp_clear_R18 rhoC o g HV H36 H77 H83 Hx1 MWF HF Ho Hpl oR HoR) as D.
   pose proof (grp_facts o g Hpl) as (_ & _ & G3 & _). unfold TOPz in G3.
@@ -1450,19 +1682,23 @@ Proof.
   unfold ranges_disjoint in D |- *. cbn [fst snd] in D |- *. lia.
 Qed.
 
-Lemma ARGR18 : ltac2:(tb__ "0|0|
-S18Q40A1Se0VrhoC;R1A2S2Se7VrhoC;S8dR2A3A1F_;Fa;").
+Lemma ARGR18 :
+  forall (a : bv 64),
+  ARGF rhoC a ->
+  ~ in_ranges rhoC (R18 rq) a.
 Proof.
   intros a Ha.
   assert (HX1 : ARG_LIM <= bv_unsigned (rw rhoC 1%positive)) by (unfold ARG_LIM; unfold x1 in Hx1; rewrite Hx1; lia).
-  apply (objs_belowS_except_sound rhoC (ss_facts C18e) G18 [2; 3]%nat R18 a HF HX1); [| exact R18_belowS | exact Ha |].
+  apply (objs_belowS_except_sound rhoC (ss_facts (C18e rq)) G18 [2; 3]%nat (R18 rq) a HF HX1); [| exact R18_belowS | exact Ha |].
   - intros e sz Hin. pose proof (blocks18_top rhoC HV H36 H77 H78 H83 Hx1 e sz Hin). unfold x1 in Hx1. rewrite Hx1. lia.
   - destruct R18_nth23 as [N2 [cs3 N3]]. intros i o Hi Hn. destruct Hi as [<-|[<-|[]]].
     + rewrite N2 in Hn. injection Hn as <-. exact (argf_not_env rhoC _ _ a HAL Ha).
     + rewrite N3 in Hn. injection Hn as <-. exact (argf_not_str0 rhoC _ _ a HAL Ha).
 Qed.
-Lemma BANDR18g : ltac2:(tb__ "0|1|
-S18Q40M0A1S3S3eS19G0R1A2A1Se0VrhoC;R1A2A2S2Se7VrhoC;S8dR2A3A1F_;Fa;").
+Lemma BANDR18g :
+  forall (a : bv 64),
+  band (bv_unsigned a) \/ ARGF rhoC a ->
+  ~ in_ranges rhoC (R18 rq) a.
 Proof.
   intros a [Ha|Ha]; [exact (BANDR18 a Ha) | exact (ARGR18 a Ha)].
 Qed.
@@ -1479,8 +1715,10 @@ Proof.
   intros ex a [Ha|[Ha _]]; [left; exact Ha | right; left]. unfold x1 in Hx1. rewrite Hx1 in Ha. lia.
 Qed.
 
-Lemma BANDR18L : ltac2:(tb__ "0|1|
-S18Q40M0A1S42VrhoC;S19G0R1A2A2S2Se7VrhoC;S8dR2A3A1F_;Fa;").
+Lemma BANDR18L :
+  forall (a : bv 64),
+  lowb rhoC (bv_unsigned a) ->
+  ~ in_ranges rhoC (R18 rq) a.
 Proof.
   intros a Ha (oR & HoR & Hr). pose proof (R18_clear_lowb rhoC a HV H36 H77 H78 H83 Hx1 HF Ha oR HoR) as D. unfold ranges_disjoint in D. cbn [fst snd] in D. lia.
 Qed.
@@ -1503,8 +1741,16 @@ Proof.
   apply (proj1 (rho0C_facts rhoC md ms)). exact (BANDR18L a Ha).
 Qed.
 
-Lemma cont18a : ltac2:(tb__ "0|2|
-S6aSd2S1cS59S18Q40A1A1S59S6dA1S6aSf0Sd7S37VrhoC;R6R5A3R4A3Sc3S35S3bS37VrhoC;R7R6A3S3cVrhoC;A1M0R5R4R3R2A8S1Sf6VrhoC;Sd5R8G0R7A3S8dS8eSaaSbeS8fS5fS5aS1dS1dA2A1M1R6A9S1cSf1VrhoC;Sd5R9G0R8A3S8dS8eS80SaaA1S80S8fA1S80SbeA1R1R7A9SdaS69Vok;Sa4S69Sf4Sc3S35S3bA2S37VrhoC;RaR9A3G0R8R7A5Sf7S8eSaaSbeS8fS8dG1A6R2R7A5S3fVrhoC;A1A4F_;Frho';A2F_;F_;Fmd';Ftr';FtpL;FrhoL;Fms;Fmd;").
+Lemma cont18a :
+  forall (md : Model) (ms : machine_state) (rhoL : valuation) (tpL : list (bv 64)) (tr' : list event) (md' : Model),
+  agree_vals NF (rho0C rhoC md ms) rhoL ->
+  JL_null0 mE B18pre (rho0C rhoC md ms) (TP18 rhoC) rhoL tpL tr' md' ->
+  import_okPA3 rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (Pre_M rq) (P_null0 rq) (C18 rq) (@nil (sv * sv)%type)
+      rhoL /\
+  (forall rho' : valuation, call_linkP rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (ax_S (Pre_M rq)) (ax_S (C18
+      rq)) (ax_S (P_null0 rq)) rho' rhoL -> triple segsA ok (SPA segsA (J_ofPA (JL_null0 mE B18pre) (rho0C rhoC md
+      ms) (TP18 rhoC) rhoL tpL) (import_postA3 (s18 rq) (Pre_M rq) (P_null0 rq) (C18 rq) (R18 rq) (@nil (sv *
+      sv)%type)) rho' tpL) (PostC18 rhoC)).
 Proof using All.
   intros md ms rhoL tpL tr' md' HagL HJL.
   destruct new_objs18 as (NO0 & NO1 & NO2 & XL0 & XL1 & XL2 & BL0 & BL1 & BL2 & NPRE & NC). pose proof (rho0C_facts rhoC md ms) as (RM0 & E52 & E53 & _).
@@ -1514,9 +1760,9 @@ Proof using All.
   - intros o' oR Ho' HoR. rewrite NO0 in Ho'. destruct Ho'.
   - split; [|intros r a Hr; destruct Hr].
     intros r a j oR Hr Ha Hj HoR. rewrite XL0 in Hr. rewrite BL0. exact (PSC18 _ rhoL r a j oR Hr E52 E53 (proj1 HagL') Ha Hj HoR).
-  - intros rho' (HagC & HrmL & _ & Himp). rewrite (proj1 I18_eq).
+  - intros rho' (HagC & HrmL & _ & Himp). rewrite NC in HagC. rewrite (proj1 (I18_eq rq)).
     eapply (@triple_conseq segsA ok (fun w => exists o', out0_ok mE o' /\ rm_kept_outside (fst (out0_W o')) (snd (out0_W o')) (rho0C rhoC md ms) rhoL
-                                              /\ SPA segsA (KxA (out0_model mE o') B18) I18a rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
+                                              /\ SPA segsA (KxA (out0_model mE o') B18) (I18a rq) rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
     { destruct Hw as [HsmW HJW]. unfold J_ofPA, JL_null0 in HJW. destruct HJW as (_ & _ & o' & Ho' & Hkept' & HK').
       exists o'. split; [exact Ho'|]. split; [exact Hkept'|]. split; [exact HsmW | unfold B18; exact HK']. }
     apply triple_ex; intros o'. apply triple_pure; intros Ho'. apply triple_pure; intros Hkept'.
@@ -1529,8 +1775,16 @@ Proof using All.
     rewrite EtpL in Q4. exact Q4.
 Qed.
 
-Lemma cont18b : ltac2:(tb__ "0|2|
-S6aSd2S1cS59S18Q40A1A1S59S6dA1S6aSf0Sd7S37VrhoC;R6R5A3R4A3Sc4S35S3bS37VrhoC;R7R6A3S3cVrhoC;A1M0R5R4R3R2A8S1Sf6VrhoC;Sd5R8G0R7A3S8dS8eSaaSbfS8fS5fS5aS1dS1dA2A1M1R6A9S1cSf1VrhoC;Sd5R9G0R8A3S8dS8eS80SaaA1S80S8fA1S80SbfA1R1R7A9SdaS69Vok;Sa4S69Sf4Sc4S35S3bA2S37VrhoC;RaR9A3G0R8R7A5Sf7S8eSaaSbfS8fS8dG1A6R2R7A5S3fVrhoC;A1A4F_;Frho';A2F_;F_;Fmd';Ftr';FtpL;FrhoL;Fms;Fmd;").
+Lemma cont18b :
+  forall (md : Model) (ms : machine_state) (rhoL : valuation) (tpL : list (bv 64)) (tr' : list event) (md' : Model),
+  agree_vals NF (rho0C rhoC md ms) rhoL ->
+  JL_null1 mE B18pre (rho0C rhoC md ms) (TP18 rhoC) rhoL tpL tr' md' ->
+  import_okPA3 rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (Pre_M rq) (P_null1 rq) (C18 rq) (@nil (sv * sv)%type)
+      rhoL /\
+  (forall rho' : valuation, call_linkP rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (ax_S (Pre_M rq)) (ax_S (C18
+      rq)) (ax_S (P_null1 rq)) rho' rhoL -> triple segsA ok (SPA segsA (J_ofPA (JL_null1 mE B18pre) (rho0C rhoC md
+      ms) (TP18 rhoC) rhoL tpL) (import_postA3 (s18 rq) (Pre_M rq) (P_null1 rq) (C18 rq) (R18 rq) (@nil (sv *
+      sv)%type)) rho' tpL) (PostC18 rhoC)).
 Proof using All.
   intros md ms rhoL tpL tr' md' HagL HJL.
   destruct new_objs18 as (NO0 & NO1 & NO2 & XL0 & XL1 & XL2 & BL0 & BL1 & BL2 & NPRE & NC). destruct imports18 as (IM1 & IM2 & IM3 & PV1 & PV2 & NX1 & NX2 & NX0 & _).
@@ -1541,10 +1795,10 @@ Proof using All.
   - intros o' oR Ho' HoR. rewrite NO1 in Ho'. destruct Ho' as [<-|[]]. exact (area_clear18 o rhoL oR Ho HNA HoR).
   - split; [|intros r a Hr; destruct Hr].
     intros r a j oR Hr Ha Hj HoR. rewrite XL1 in Hr. rewrite BL1. exact (PSC18 _ rhoL r a j oR Hr E52 E53 (proj1 HagL') Ha Hj HoR).
-  - intros rho' (HagC & HrmL & _ & Himp). rewrite (proj1 (proj2 I18_eq)).
+  - intros rho' (HagC & HrmL & _ & Himp). rewrite NC in HagC. rewrite (proj1 (proj2 (I18_eq rq))).
     eapply (@triple_conseq segsA ok (fun w => exists o', out1_ok mE o' /\ tpL = out1_tp mE o' (TP18 rhoC) /\ rw rhoL NA = out1_base mE o'
                                               /\ rm_kept_outside (fst (out1_W mE o')) (snd (out1_W mE o')) (rho0C rhoC md ms) rhoL
-                                              /\ SPA segsA (KxA (out1_model mE o') B18) I18b rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
+                                              /\ SPA segsA (KxA (out1_model mE o') B18) (I18b rq) rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
     { destruct Hw as [HsmW HJW]. unfold J_ofPA, JL_null1 in HJW. destruct HJW as (_ & o' & Ho' & Etp' & HNA' & Hkept' & HK').
       exists o'. split; [exact Ho'|]. split; [exact Etp'|]. split; [exact HNA'|]. split; [exact Hkept'|]. split; [exact HsmW | unfold B18; exact HK']. }
     apply triple_ex; intros o'. apply triple_pure; intros Ho'. apply triple_pure; intros Etp'. apply triple_pure; intros HNA'. apply triple_pure; intros Hkept'.
@@ -1564,8 +1818,16 @@ Proof using All.
     pose proof (TP18_out18 rhoC (O18b o') HV Hx1 V35 H1 H2 H3 Ho') as TT. cbn [out18_tp] in TT. rewrite Etp', TT in Q4. exact Q4.
 Qed.
 
-Lemma cont18c : ltac2:(tb__ "0|2|
-S6aSd2S1cS59S18Q40A1A1S59S6dA1S6aSf0Sd7S37VrhoC;R6R5A3R4A3Sc5S35S3bS37VrhoC;R7R6A3S3cVrhoC;A1M0R5R4R3R2A8S1Sf6VrhoC;Sd5R8G0R7A3S8dS8eSaaSc0S8fS5fS5aS1dS1dA2A1M1R6A9S1cSf1VrhoC;Sd5R9G0R8A3S8dS8eS80SaaA1S80S8fA1S80Sc0A1R1R7A9SdaS69Vok;Sa4S69Sf4Sc5S35S3bA2S37VrhoC;RaR9A3G0R8R7A5Sf7S8eSaaSc0S8fS8dG1A6R2R7A5S3fVrhoC;A1A4F_;Frho';A2F_;F_;Fmd';Ftr';FtpL;FrhoL;Fms;Fmd;").
+Lemma cont18c :
+  forall (md : Model) (ms : machine_state) (rhoL : valuation) (tpL : list (bv 64)) (tr' : list event) (md' : Model),
+  agree_vals NF (rho0C rhoC md ms) rhoL ->
+  JL_ok mE B18pre (rho0C rhoC md ms) (TP18 rhoC) rhoL tpL tr' md' ->
+  import_okPA3 rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (Pre_M rq) (P_ok rq) (C18 rq) (@nil (sv * sv)%type)
+      rhoL /\
+  (forall rho' : valuation, call_linkP rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (ax_S (Pre_M rq)) (ax_S (C18
+      rq)) (ax_S (P_ok rq)) rho' rhoL -> triple segsA ok (SPA segsA (J_ofPA (JL_ok mE B18pre) (rho0C rhoC md ms)
+      (TP18 rhoC) rhoL tpL) (import_postA3 (s18 rq) (Pre_M rq) (P_ok rq) (C18 rq) (R18 rq) (@nil (sv * sv)%type))
+      rho' tpL) (PostC18 rhoC)).
 Proof using All.
   intros md ms rhoL tpL tr' md' HagL HJL.
   destruct new_objs18 as (NO0 & NO1 & NO2 & XL0 & XL1 & XL2 & BL0 & BL1 & BL2 & NPRE & NC). destruct imports18 as (IM1 & IM2 & IM3 & PV1 & PV2 & NX1 & NX2 & NX0 & _).
@@ -1576,11 +1838,11 @@ Proof using All.
   - intros o' oR Ho' HoR. rewrite NO2 in Ho'. destruct Ho' as [<-|[<-|[]]]; [exact (area_clear18 o rhoL oR Ho HNA HoR) | exact (grp_clear18 o g rhoL oR Ho Hpl HNG HoR)].
   - split; [|intros r a Hr; destruct Hr].
     intros r a j oR Hr Ha Hj HoR. rewrite XL2 in Hr. rewrite BL2. exact (PSC18 _ rhoL r a j oR Hr E52 E53 (proj1 HagL') Ha Hj HoR).
-  - intros rho' (HagC & HrmL & _ & Himp). rewrite (proj2 (proj2 I18_eq)).
+  - intros rho' (HagC & HrmL & _ & Himp). rewrite NC in HagC. rewrite (proj2 (proj2 (I18_eq rq))).
     eapply (@triple_conseq segsA ok (fun w => exists o' g', out1_ok mE o' /\ mmap_place_ok_none (Z_to_bv 64 0) (out1_model mE o') pgw g'
                                               /\ tpL = out1_tp mE o' (TP18 rhoC) /\ rw rhoL NA = out1_base mE o' /\ rw rhoL NG = g'
                                               /\ rm_kept_outside (fst (out1_W mE o')) (snd (out1_W mE o')) (rho0C rhoC md ms) rhoL
-                                              /\ SPA segsA (KxA (mgrant (out1_model mE o') g') B18) I18c rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
+                                              /\ SPA segsA (KxA (mgrant (out1_model mE o') g') B18) (I18c rq) rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
     { destruct Hw as [HsmW HJW]. unfold J_ofPA, JL_ok in HJW. destruct HJW as (_ & o' & g' & Ho' & Hpl' & Etp' & HNA' & HNG' & Hkept' & HK').
       exists o', g'. split; [exact Ho'|]. split; [exact Hpl'|]. split; [exact Etp'|]. split; [exact HNA'|]. split; [exact HNG'|]. split; [exact Hkept'|]. split; [exact HsmW | unfold B18; exact HK']. }
     apply triple_ex; intros o'. apply triple_ex; intros g'. apply triple_pure; intros Ho'. apply triple_pure; intros Hpl'. apply triple_pure; intros Etp'.
@@ -1607,16 +1869,17 @@ Proof using All.
     pose proof (TP18_out18 rhoC (O18b o') HV Hx1 V35 H1 H2 H3 Ho') as TT. cbn [out18_tp] in TT. rewrite Etp', TT in Q4. exact Q4.
 Qed.
 
-Lemma call18_core : ltac2:(tb__ "0|0|
-Sd6S35A1SdaS69Vok;Sa4S69Sa7S35S3bA2S8fVrhoC;S3cVrhoC;A1A5S3fVrhoC;A1A4F_;").
+Lemma call18_core :
+  lazy_in_maps mE ->
+  triple segsA ok (SPA segsA (KxA mE B18pre) (C18 rq) rhoC (TP18 rhoC)) (PostC18 rhoC).
 Proof using All.
   intros HLIM.
-  apply (call_soundPA3 segsA ok (KxA mE B18pre) (KxM mE B18pre) C18 Pre_M s18 R18 (Posts_M mE B18pre) [] (PostC18 rhoC) rhoC (TP18 rhoC)).
+  apply (call_soundPA3 segsA ok (KxA mE B18pre) (KxM mE B18pre) (C18 rq) (Pre_M rq) (s18 rq) (R18 rq) (Posts_M mE B18pre rq) [] (PostC18 rhoC) rhoC (TP18 rhoC)).
   - intros r [].
-  - exact ent18.
-  - exact chk18.
+  - exact (ent18 rq).
+  - exact (chk18 rq).
   -
-    intros rho1 tp1. exact (musl_malloc40_sum_A ok mE B18pre OKF OKP (m40_mE HLIM) rho1 tp1).
+    intros rho1 tp1. exact (musl_malloc40_sum_A ok mE B18pre OKF OKP (m40_mE HLIM) rq rho1 tp1).
   -
     intros tr ms md Hsm HK. split; [exact HK|].
     pose proof (rho0C_facts rhoC md ms) as (_ & _ & _ & E10). unfold rho0C in E10. rewrite E10, top_mE.
@@ -1624,15 +1887,23 @@ Proof using All.
     unfold TOPz, D_M. lia.
   -
     intros L JL tr ms md rhoL tpL tr' ms' md' HinL HsmC HK HagL HsmL HJL.
-    change (rho_sub (rho_absorb rhoC R18 (vms md (TP18 rhoC) ms)) s18) with (rho0C rhoC md ms) in HagL, HJL |- *.
+    change (rho_sub (rho_absorb rhoC (R18 rq) (vms md (TP18 rhoC) ms)) (s18 rq)) with (rho0C rhoC md ms) in HagL, HJL |- *.
     destruct HinL as [E|[E|[E|[]]]]; injection E as EL EJ; subst L JL.
     + exact (cont18a md ms rhoL tpL tr' md' HagL HJL).
     + exact (cont18b md ms rhoL tpL tr' md' HagL HJL).
     + exact (cont18c md ms rhoL tpL tr' md' HagL HJL).
 Qed.
 
-Lemma econt18a : ltac2:(tb__ "0|2|
-S6aSd2S1cS59S18Q40A1A1S59S6dA1S6aSf0Sd7S37VrhoC;R6R5A3R4A3Sc3S35S3bS37VrhoC;R7R6A3S3cVrhoC;A1M0R5R4R3R2A8S1Sf6VrhoC;Sd5R8G0R7A3S8dS8eSaaSbeS8fS5fS5aS1dS1dA2A1M1R6A9S1cSf1VrhoC;Sd5R9G0R8A3S8dS8eS80SaaA1S80S8fA1S80SbeA1R1R7A9Sd9S69Sa4S69Sf4Sc3S35S3bA2S37VrhoC;RaR9A3G0R8R7A5Sf7S8eSaaSbeS8fS8dG1A6R2R7A5S3fVrhoC;A1A3F_;Frho';A2F_;F_;Fmd';Ftr';FtpL;FrhoL;Fms;Fmd;").
+Lemma econt18a :
+  forall (md : Model) (ms : machine_state) (rhoL : valuation) (tpL : list (bv 64)) (tr' : list event) (md' : Model),
+  agree_vals NF (rho0C rhoC md ms) rhoL ->
+  JL_null0 mE B18pre (rho0C rhoC md ms) (TP18 rhoC) rhoL tpL tr' md' ->
+  import_okPA3 rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (Pre_M rq) (P_null0 rq) (C18 rq) (@nil (sv * sv)%type)
+      rhoL /\
+  (forall rho' : valuation, call_linkP rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (ax_S (Pre_M rq)) (ax_S (C18
+      rq)) (ax_S (P_null0 rq)) rho' rhoL -> etriple segsA (SPA segsA (J_ofPA (JL_null0 mE B18pre) (rho0C rhoC md ms)
+      (TP18 rhoC) rhoL tpL) (import_postA3 (s18 rq) (Pre_M rq) (P_null0 rq) (C18 rq) (R18 rq) (@nil (sv * sv)%type))
+      rho' tpL) (PostC18 rhoC)).
 Proof using All.
   intros md ms rhoL tpL tr' md' HagL HJL.
   destruct new_objs18 as (NO0 & NO1 & NO2 & XL0 & XL1 & XL2 & BL0 & BL1 & BL2 & NPRE & NC). pose proof (rho0C_facts rhoC md ms) as (RM0 & E52 & E53 & _).
@@ -1642,9 +1913,9 @@ Proof using All.
   - intros o' oR Ho' HoR. rewrite NO0 in Ho'. destruct Ho'.
   - split; [|intros r a Hr; destruct Hr].
     intros r a j oR Hr Ha Hj HoR. rewrite XL0 in Hr. rewrite BL0. exact (PSC18 _ rhoL r a j oR Hr E52 E53 (proj1 HagL') Ha Hj HoR).
-  - intros rho' (HagC & HrmL & _ & Himp). rewrite (proj1 I18_eq).
+  - intros rho' (HagC & HrmL & _ & Himp). rewrite NC in HagC. rewrite (proj1 (I18_eq rq)).
     eapply (@etriple_conseq segsA (fun w => exists o', out0_ok mE o' /\ rm_kept_outside (fst (out0_W o')) (snd (out0_W o')) (rho0C rhoC md ms) rhoL
-                                              /\ SPA segsA (KxA (out0_model mE o') B18) I18a rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
+                                              /\ SPA segsA (KxA (out0_model mE o') B18) (I18a rq) rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
     { destruct Hw as [HsmW HJW]. unfold J_ofPA, JL_null0 in HJW. destruct HJW as (_ & _ & o' & Ho' & Hkept' & HK').
       exists o'. split; [exact Ho'|]. split; [exact Hkept'|]. split; [exact HsmW | unfold B18; exact HK']. }
     apply etriple_ex; intros o'. apply etriple_pure; intros Ho'. apply etriple_pure; intros Hkept'.
@@ -1657,8 +1928,16 @@ Proof using All.
     rewrite EtpL in Q4. exact Q4.
 Qed.
 
-Lemma econt18b : ltac2:(tb__ "0|2|
-S6aSd2S1cS59S18Q40A1A1S59S6dA1S6aSf0Sd7S37VrhoC;R6R5A3R4A3Sc4S35S3bS37VrhoC;R7R6A3S3cVrhoC;A1M0R5R4R3R2A8S1Sf6VrhoC;Sd5R8G0R7A3S8dS8eSaaSbfS8fS5fS5aS1dS1dA2A1M1R6A9S1cSf1VrhoC;Sd5R9G0R8A3S8dS8eS80SaaA1S80S8fA1S80SbfA1R1R7A9Sd9S69Sa4S69Sf4Sc4S35S3bA2S37VrhoC;RaR9A3G0R8R7A5Sf7S8eSaaSbfS8fS8dG1A6R2R7A5S3fVrhoC;A1A3F_;Frho';A2F_;F_;Fmd';Ftr';FtpL;FrhoL;Fms;Fmd;").
+Lemma econt18b :
+  forall (md : Model) (ms : machine_state) (rhoL : valuation) (tpL : list (bv 64)) (tr' : list event) (md' : Model),
+  agree_vals NF (rho0C rhoC md ms) rhoL ->
+  JL_null1 mE B18pre (rho0C rhoC md ms) (TP18 rhoC) rhoL tpL tr' md' ->
+  import_okPA3 rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (Pre_M rq) (P_null1 rq) (C18 rq) (@nil (sv * sv)%type)
+      rhoL /\
+  (forall rho' : valuation, call_linkP rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (ax_S (Pre_M rq)) (ax_S (C18
+      rq)) (ax_S (P_null1 rq)) rho' rhoL -> etriple segsA (SPA segsA (J_ofPA (JL_null1 mE B18pre) (rho0C rhoC md ms)
+      (TP18 rhoC) rhoL tpL) (import_postA3 (s18 rq) (Pre_M rq) (P_null1 rq) (C18 rq) (R18 rq) (@nil (sv * sv)%type))
+      rho' tpL) (PostC18 rhoC)).
 Proof using All.
   intros md ms rhoL tpL tr' md' HagL HJL.
   destruct new_objs18 as (NO0 & NO1 & NO2 & XL0 & XL1 & XL2 & BL0 & BL1 & BL2 & NPRE & NC). destruct imports18 as (IM1 & IM2 & IM3 & PV1 & PV2 & NX1 & NX2 & NX0 & _).
@@ -1669,10 +1948,10 @@ Proof using All.
   - intros o' oR Ho' HoR. rewrite NO1 in Ho'. destruct Ho' as [<-|[]]. exact (area_clear18 o rhoL oR Ho HNA HoR).
   - split; [|intros r a Hr; destruct Hr].
     intros r a j oR Hr Ha Hj HoR. rewrite XL1 in Hr. rewrite BL1. exact (PSC18 _ rhoL r a j oR Hr E52 E53 (proj1 HagL') Ha Hj HoR).
-  - intros rho' (HagC & HrmL & _ & Himp). rewrite (proj1 (proj2 I18_eq)).
+  - intros rho' (HagC & HrmL & _ & Himp). rewrite NC in HagC. rewrite (proj1 (proj2 (I18_eq rq))).
     eapply (@etriple_conseq segsA (fun w => exists o', out1_ok mE o' /\ tpL = out1_tp mE o' (TP18 rhoC) /\ rw rhoL NA = out1_base mE o'
                                               /\ rm_kept_outside (fst (out1_W mE o')) (snd (out1_W mE o')) (rho0C rhoC md ms) rhoL
-                                              /\ SPA segsA (KxA (out1_model mE o') B18) I18b rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
+                                              /\ SPA segsA (KxA (out1_model mE o') B18) (I18b rq) rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
     { destruct Hw as [HsmW HJW]. unfold J_ofPA, JL_null1 in HJW. destruct HJW as (_ & o' & Ho' & Etp' & HNA' & Hkept' & HK').
       exists o'. split; [exact Ho'|]. split; [exact Etp'|]. split; [exact HNA'|]. split; [exact Hkept'|]. split; [exact HsmW | unfold B18; exact HK']. }
     apply etriple_ex; intros o'. apply etriple_pure; intros Ho'. apply etriple_pure; intros Etp'. apply etriple_pure; intros HNA'. apply etriple_pure; intros Hkept'.
@@ -1692,8 +1971,16 @@ Proof using All.
     pose proof (TP18_out18 rhoC (O18b o') HV Hx1 V35 H1 H2 H3 Ho') as TT. cbn [out18_tp] in TT. rewrite Etp', TT in Q4. exact Q4.
 Qed.
 
-Lemma econt18c : ltac2:(tb__ "0|2|
-S6aSd2S1cS59S18Q40A1A1S59S6dA1S6aSf0Sd7S37VrhoC;R6R5A3R4A3Sc5S35S3bS37VrhoC;R7R6A3S3cVrhoC;A1M0R5R4R3R2A8S1Sf6VrhoC;Sd5R8G0R7A3S8dS8eSaaSc0S8fS5fS5aS1dS1dA2A1M1R6A9S1cSf1VrhoC;Sd5R9G0R8A3S8dS8eS80SaaA1S80S8fA1S80Sc0A1R1R7A9Sd9S69Sa4S69Sf4Sc5S35S3bA2S37VrhoC;RaR9A3G0R8R7A5Sf7S8eSaaSc0S8fS8dG1A6R2R7A5S3fVrhoC;A1A3F_;Frho';A2F_;F_;Fmd';Ftr';FtpL;FrhoL;Fms;Fmd;").
+Lemma econt18c :
+  forall (md : Model) (ms : machine_state) (rhoL : valuation) (tpL : list (bv 64)) (tr' : list event) (md' : Model),
+  agree_vals NF (rho0C rhoC md ms) rhoL ->
+  JL_ok mE B18pre (rho0C rhoC md ms) (TP18 rhoC) rhoL tpL tr' md' ->
+  import_okPA3 rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (Pre_M rq) (P_ok rq) (C18 rq) (@nil (sv * sv)%type)
+      rhoL /\
+  (forall rho' : valuation, call_linkP rhoC (vms md (TP18 rhoC) ms) (R18 rq) (s18 rq) (ax_S (Pre_M rq)) (ax_S (C18
+      rq)) (ax_S (P_ok rq)) rho' rhoL -> etriple segsA (SPA segsA (J_ofPA (JL_ok mE B18pre) (rho0C rhoC md ms) (TP18
+      rhoC) rhoL tpL) (import_postA3 (s18 rq) (Pre_M rq) (P_ok rq) (C18 rq) (R18 rq) (@nil (sv * sv)%type)) rho'
+      tpL) (PostC18 rhoC)).
 Proof using All.
   intros md ms rhoL tpL tr' md' HagL HJL.
   destruct new_objs18 as (NO0 & NO1 & NO2 & XL0 & XL1 & XL2 & BL0 & BL1 & BL2 & NPRE & NC). destruct imports18 as (IM1 & IM2 & IM3 & PV1 & PV2 & NX1 & NX2 & NX0 & _).
@@ -1704,11 +1991,11 @@ Proof using All.
   - intros o' oR Ho' HoR. rewrite NO2 in Ho'. destruct Ho' as [<-|[<-|[]]]; [exact (area_clear18 o rhoL oR Ho HNA HoR) | exact (grp_clear18 o g rhoL oR Ho Hpl HNG HoR)].
   - split; [|intros r a Hr; destruct Hr].
     intros r a j oR Hr Ha Hj HoR. rewrite XL2 in Hr. rewrite BL2. exact (PSC18 _ rhoL r a j oR Hr E52 E53 (proj1 HagL') Ha Hj HoR).
-  - intros rho' (HagC & HrmL & _ & Himp). rewrite (proj2 (proj2 I18_eq)).
+  - intros rho' (HagC & HrmL & _ & Himp). rewrite NC in HagC. rewrite (proj2 (proj2 (I18_eq rq))).
     eapply (@etriple_conseq segsA (fun w => exists o' g', out1_ok mE o' /\ mmap_place_ok_none (Z_to_bv 64 0) (out1_model mE o') pgw g'
                                               /\ tpL = out1_tp mE o' (TP18 rhoC) /\ rw rhoL NA = out1_base mE o' /\ rw rhoL NG = g'
                                               /\ rm_kept_outside (fst (out1_W mE o')) (snd (out1_W mE o')) (rho0C rhoC md ms) rhoL
-                                              /\ SPA segsA (KxA (mgrant (out1_model mE o') g') B18) I18c rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
+                                              /\ SPA segsA (KxA (mgrant (out1_model mE o') g') B18) (I18c rq) rho' tpL w)); [intros w Hw | intros w Hw; exact Hw |].
     { destruct Hw as [HsmW HJW]. unfold J_ofPA, JL_ok in HJW. destruct HJW as (_ & o' & g' & Ho' & Hpl' & Etp' & HNA' & HNG' & Hkept' & HK').
       exists o', g'. split; [exact Ho'|]. split; [exact Hpl'|]. split; [exact Etp'|]. split; [exact HNA'|]. split; [exact HNG'|]. split; [exact Hkept'|]. split; [exact HsmW | unfold B18; exact HK']. }
     apply etriple_ex; intros o'. apply etriple_ex; intros g'. apply etriple_pure; intros Ho'. apply etriple_pure; intros Hpl'. apply etriple_pure; intros Etp'.
@@ -1735,16 +2022,17 @@ Proof using All.
     pose proof (TP18_out18 rhoC (O18b o') HV Hx1 V35 H1 H2 H3 Ho') as TT. cbn [out18_tp] in TT. rewrite Etp', TT in Q4. exact Q4.
 Qed.
 
-Lemma ecall18_core : ltac2:(tb__ "0|0|
-Sd6S35A1Sd9S69Sa4S69Sa7S35S3bA2S8fVrhoC;S3cVrhoC;A1A5S3fVrhoC;A1A3F_;").
+Lemma ecall18_core :
+  lazy_in_maps mE ->
+  etriple segsA (SPA segsA (KxA mE B18pre) (C18 rq) rhoC (TP18 rhoC)) (PostC18 rhoC).
 Proof using All.
   intros HLIM.
-  apply (call_completePA3 segsA (KxA mE B18pre) (KxM mE B18pre) C18 Pre_M s18 R18 (Posts_M mE B18pre) [] (PostC18 rhoC) rhoC (TP18 rhoC)).
+  apply (call_completePA3 segsA (KxA mE B18pre) (KxM mE B18pre) (C18 rq) (Pre_M rq) (s18 rq) (R18 rq) (Posts_M mE B18pre rq) [] (PostC18 rhoC) rhoC (TP18 rhoC)).
   - intros r [].
-  - exact ent18.
-  - exact chk18.
+  - exact (ent18 rq).
+  - exact (chk18 rq).
   -
-    intros rho1 tp1. exact (musl_malloc40_sum_ex_A mE B18pre (m40_mE HLIM) rho1 tp1).
+    intros rho1 tp1. exact (musl_malloc40_sum_ex_A mE B18pre (m40_mE HLIM) rq rho1 tp1).
   -
     intros tr ms md Hsm HK. split; [exact HK|].
     pose proof (rho0C_facts rhoC md ms) as (_ & _ & _ & E10). unfold rho0C in E10. rewrite E10, top_mE.
@@ -1752,7 +2040,7 @@ Proof using All.
     unfold TOPz, D_M. lia.
   -
     intros L JL tr ms md rhoL tpL tr' ms' md' HinL HsmC HK HagL HsmL HJL.
-    change (rho_sub (rho_absorb rhoC R18 (vms md (TP18 rhoC) ms)) s18) with (rho0C rhoC md ms) in HagL, HJL |- *.
+    change (rho_sub (rho_absorb rhoC (R18 rq) (vms md (TP18 rhoC) ms)) (s18 rq)) with (rho0C rhoC md ms) in HagL, HJL |- *.
     destruct HinL as [E|[E|[E|[]]]]; injection E as EL EJ; subst L JL.
     + exact (econt18a md ms rhoL tpL tr' md' HagL HJL).
     + exact (econt18b md ms rhoL tpL tr' md' HagL HJL).
@@ -1760,8 +2048,23 @@ Proof using All.
 Qed.
 End CallSite18.
 
-Lemma call18 : ltac2:(tb__ "0|3|
-S1cS3aR1A1S0S6SacR2A1Vx;A3S0S18Q40M0A1M1S1bR3P24A2Vb7;A3S0G1S1bR4P4dA2Vb8;A3S0G1S1bR5P4eA2Vb9;A3S0G1S1bR6P53A2Vb10;A3S0S6SdZ8S19G0S1bR7P23A2A2A2S19G0Vb6;A2A3S8S9Vx;Z50A2S36R8A1A2S8S9S36R9A1Z10M2A2SeZ2Z2fA2A2S8S9S36RaA1G2A2S9Vx;Z2228cfA2A2S0G1S1bRbP54A2S1aG0S3dA2A3S0G1S1bRcP55A2S1aG0SbS41S36RcA1A1S3dA2A2A3Sa8S20S23RdA1S22S90A1A3S100ReA1SdaS69Vok;Sa4S69Sa7S35S3bA2S8fRfS3cRfA1A5S3fRfA1A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;FrhoC;").
+Lemma call18 :
+  forall (rhoC : valuation),
+  vals rhoC ->
+  x1 rhoC = x ->
+  rw rhoC 36%positive = b7 ->
+  rw rhoC 77%positive = b8 ->
+  rw rhoC 78%positive = b9 ->
+  rw rhoC 83%positive = b10 ->
+  8 * bv_unsigned (rw rhoC 35%positive) = bv_unsigned b6 ->
+  x + 80 <= r6of rhoC ->
+  r6of rhoC + 16 <= 2 ^ 47 ->
+  r6of rhoC + 16 <= x + 2238671 ->
+  rw rhoC 84%positive = Z_to_bv 64 XBz ->
+  rw rhoC 85%positive = Z_to_bv 64 (XEz (r6of rhoC) - XBz) ->
+  Forall (holds rhoC) (ss_facts (C18e rq)) ->
+  arg_layout rhoC ->
+  triple segsA ok (SPA segsA (KxA mE B18pre) (C18 rq) rhoC (TP18 rhoC)) (PostC18 rhoC).
 Proof using All.
   intros rhoC HV Hx1 H36 H77 H78 H83 V35 H1 H2 H3 R84 R85 HF HAL.
   apply (triple_pre_fact ok _ _ (ivs_wf (vm_maps (m_vmmaps mE)) /\ lazy_in_maps mE)).
@@ -1774,12 +2077,17 @@ Qed.
 Definition Post18 (rho : valuation) : assn := ltac2:(tb__ "0|8|
 Sd8S4S38S38S4S1cS1cS1S40R2A1S1S7Sf8R1P54M0A2S0S18Q40M1A1M2S1bR3R2A2S1bVrho;R2A2A3F_;Fi;S1S7S0S59S18Q8A1M3A1S26R2R1A2S26Vrho;R1A2A3Fl;S1S0G2S1bR1G0A2S1aG1S3dA2A3S1S0G2S1bR1P55A2S1aG1SbS41S36Vrho;A1M4A1S3dA2A2A3S1S4dG4R1A2S1Se2Vrho;R1A2S1G2S42Vrho;S19G1R1A2M5A2S52R4S19G1R2A2M6A2S0S61G3A1S1fR4R3A2S1fVrho;R3A2A3M7F_;F_;Fa;S1G2S3eG5A1S8S10S39S44G4A1A2G6A2G7F_;F_;Fa;Sa4S69Sa7S54R2A1S4fA2S91R1S3cVrho;A1R3A6A2A2A2A2A2A2A2A2A2Lrho';A2Lo;A2Lw;").
 
-Lemma E18_facts35 : ltac2:(tb__ "0|2|
-S1S0S5cS89S20S2dS32S2aSfaS25P23A1M0S21Z3A1A3S25P22A1A2A1S22S80SdcA1A1M1A3S5dA3S0S5cS89S20S2dS2eG0S21SbSeZ2Z3dA2Z1A2A1A2A1G1A3S5dA3A2").
-Proof. clear. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma E18_facts35 :
+  existsb (sprop_eqb (SPEq (SAlu ALU_SLL (SVar 35%positive) (SLit 3)) (SVar 34%positive))) (ss_facts (ax_S (E18r
+      rq))) = true /\
+  existsb (sprop_eqb (SPUle (SVar 35%positive) (SLit (2 ^ 61 - 1)))) (ss_facts (ax_S (E18r rq))) = true.
+Proof. clear. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Lemma V35_of_facts : ltac2:(tb__ "0|1|
-S1cS3aR1A1Sa8S20S23R2A1S22S80SdcA1A1A3S0S6SdZ8S19Q40M0S1bR3P23A2A2A2S19G0Vb6;A2A3F_;F_;Frho;").
+Lemma V35_of_facts :
+  forall (rho : valuation),
+  vals rho ->
+  Forall (holds rho) (ss_facts (ax_S (E18r rq))) ->
+  8 * bv_unsigned (rw rho 35%positive) = bv_unsigned b6.
 Proof.
   clear. intros rho HV HF0.
   destruct E18_facts35 as [X1 X2]. pose proof (fact_of_state _ _ rho X1 HF0) as E1. pose proof (fact_of_state _ _ rho X2 HF0) as E2.
@@ -1796,8 +2104,20 @@ Proof.
   rewrite (TP16_ext rho rho') by (split; [intros i Hi; apply Hrw; lia | exact Hrl]). reflexivity.
 Qed.
 
-Theorem seg18 : ltac2:(tb__ "0|2|
-S1cS3aR1A1S0S18Q40A1M0S1bR2P24A2Vb7;A3S0G0S1bR3P4dA2Vb8;A3S0G0S1bR4P4eA2Vb9;A3S0G0S1bR5P53A2Vb10;A3S0S6SacR6A1Vx;A3S8S9Vx;Z50A2S36R7A1A2S8S9S36R8A1Z10M1A2SeZ2Z2fA2A2S8S9S36R9A1G1A2S9Vx;Z2228cfA2A2S4aRaA1S100RbA1SdaS69Vok;Sa4S69Sa7S35S48A2SdcRcSaeRcA1A5S50RcA1A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Frho;").
+Theorem seg18 :
+  forall (rho : valuation),
+  vals rho ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 78%positive = b9 ->
+  rw rho 83%positive = b10 ->
+  x1 rho = x ->
+  x + 80 <= r6of rho ->
+  r6of rho + 16 <= 2 ^ 47 ->
+  r6of rho + 16 <= x + 2238671 ->
+  SZ18 rho ->
+  arg_layout rho ->
+  triple segsA ok (SPA segsA (KxA mE BE) (E18r rq) rho (TP17 rho)) (Post18 rho).
 Proof using All.
   intros rho HV H36 H77 H78 H83 Hx1 H1 H2 H3 HSZ HAL0.
   pose proof (arith18 _ H1 H2 H3) as AR.
@@ -1829,7 +2149,7 @@ Proof using All.
 
   eapply (@triple_conseq segsA ok (fun w => exists rho2, (forall i, rw rho2 i = rw rho1 i) /\ (forall l, rl rho2 l = rl rho1 l) /\ ZX18 (r6of rho1) rho2
                                                  /\ (forall a : word, bv_unsigned a < Q18 \/ Z.max Q18 (Wz (r6of rho)) <= bv_unsigned a -> rm rho2 a = rm rho1 a)
-                                                 /\ SPA segsA (KxA mE B18pre) C18 rho2 (TP18 rho1) w)); [intros [tr [ms md]] Hw | intros w Hw; exact Hw |].
+                                                 /\ SPA segsA (KxA mE B18pre) (C18 rq) rho2 (TP18 rho1) w)); [intros [tr [ms md]] Hw | intros w Hw; exact Hw |].
   { apply shape18 in Hw.
     destruct (pay18 rho1 tr ms md HV1 Hx1a H36a H77a H78a H83a V35a ltac:(rewrite R6a; exact H1) ltac:(rewrite R6a; exact H2) ltac:(rewrite R6a; exact H3) HSZ1 Hw)
       as (rho2 & Hsp2 & Hrw2 & Hrl2 & HZ2 & Hrm2).
@@ -1859,17 +2179,29 @@ Proof using All.
       - rewrite R6b, Hrw2. exact G85.
       - apply (arg_layout_ext rho rho2); [intros i Hi; rewrite Hrw2; apply R1; lia | exact HAL0]. }
 
-  intros w (o & rho4 & Ho & Q1 & Q2 & Q3 & Q3L & Q4). exists o, rho4. split; [exact Ho|].
-  split; [intros i Hi; rewrite (Q1 i) by lia; rewrite Hrw2; apply R1; lia|].
-  split; [intros l; rewrite (Q2 l), Hrl2; apply L1|].
-  split; [rewrite (Q1 84%positive) by lia; rewrite Hrw2; exact G84|].
-  split; [rewrite (Q1 85%positive) by lia; rewrite Hrw2; exact G85|].
+  intros w (o & rho4 & Ho & Q1 & Q2 & Q3 & Q3L & Q4).
+  (* LPS 727298f3: [Q4] is over the per-flag exit [K18r rq]; A/StartRegen3.v [K18_join] gives the joined exit
+     [K18], keeping every variable below 159, every list, and memory on the argument region and below
+     kHighMemBeg, which holds every address the rest of [Post18] reads. *)
+  assert (HAL4 : arg_layout rho4)
+    by (apply (arg_layout_ext rho rho4); [intros i Hi; rewrite (Q1 i) by lia; rewrite Hrw2; apply R1; lia | exact HAL0]).
+  destruct (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartRegen3.K18_join rq (out18_model o) B18 rho4 (TP18 rho2) w HAL4 Q4)
+    as (rho5 & J1 & J2 & J3 & Q5).
+  assert (J3k : forall a : word, ARGF rho4 a \/ bv_unsigned a < kHighMemBeg -> rm rho5 a = rm rho4 a) by exact J3.
+  exists o, rho5. split; [exact Ho|].
+  split; [intros i Hi; rewrite (J1 i) by lia; rewrite (Q1 i) by lia; rewrite Hrw2; apply R1; lia|].
+  split; [intros l; rewrite (J2 l), (Q2 l), Hrl2; apply L1|].
+  split; [rewrite (J1 84%positive) by lia; rewrite (Q1 84%positive) by lia; rewrite Hrw2; exact G84|].
+  split; [rewrite (J1 85%positive) by lia; rewrite (Q1 85%positive) by lia; rewrite Hrw2; exact G85|].
   split.
-  - pose proof q12x_lo as QLO. intros z Hz. rewrite Q3; [apply HZ2; rewrite R6a; exact Hz|]. left. unfold band. rewrite u64_of_lit by klia. klia.
+  - pose proof q12x_lo as QLO. intros z Hz. rewrite J3k by (right; rewrite u64_of_lit by klia; klia).
+    rewrite Q3; [apply HZ2; rewrite R6a; exact Hz|]. left. unfold band. rewrite u64_of_lit by klia. klia.
   - split.
     +
-      assert (E2lo : forall i, (i < 7)%positive -> rw rho2 i = rw rho i) by (intros i Hi; rewrite Hrw2; apply R1; lia).
-      intros a Ha. rewrite (Q3 a) by (right; apply (proj2 (ARGF_ext rho rho2 a E2lo)); exact Ha).
+      assert (E2lo : forall i, (i < 14)%positive -> rw rho2 i = rw rho i) by (intros i Hi; rewrite Hrw2; apply R1; lia).
+      assert (E4lo : forall i, (i < 14)%positive -> rw rho4 i = rw rho i) by (intros i Hi; rewrite (Q1 i) by lia; exact (E2lo i Hi)).
+      intros a Ha. rewrite (J3k a) by (left; apply (proj2 (ARGF_ext rho rho4 a E4lo)); exact Ha).
+      rewrite (Q3 a) by (right; apply (proj2 (ARGF_ext rho rho2 a E2lo)); exact Ha).
       rewrite (HM2 a) by (right; destruct Ha as [Ha _]; unfold x1 in Hx1; unfold kHighMemBeg in *; lia). apply M1.
     + split.
       *
@@ -1877,11 +2209,13 @@ Proof using All.
         destruct AR3 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Q19 & _).
         intros a Ha Hg.
         assert (HaL : lowb rho2 (bv_unsigned a)) by (unfold lowb, priZ in *; rewrite Hrw2, (R1 31%positive) by lia; exact Ha).
+        rewrite (J3k a) by (right; destruct Ha as (HaQ & _ & _); pose proof q12x_hi as QH; klia).
         rewrite (Q3L a HaL Hg). rewrite (HM2 a) by (left; destruct Ha as (HaQ & _ & _); lia). apply M1.
       * split.
         --
-           intros a Ha Hhi. rewrite (Q3 a) by (left; exact Ha). rewrite (HM2 a) by (right; exact Hhi). apply M1.
-        -- rewrite T18b, T18 in Q4. exact Q4.
+           intros a Ha Hhi. rewrite (J3k a) by (right; unfold band in Ha; klia).
+           rewrite (Q3 a) by (left; exact Ha). rewrite (HM2 a) by (right; exact Hhi). apply M1.
+        -- rewrite T18b, T18 in Q5. exact Q5.
 Qed.
 
 Lemma pages_rev_In : ltac2:(tb__ "0|0|
@@ -1936,8 +2270,23 @@ Proof using HPL HPL4 HPL5 HPL6 Hmaps Hres Htop Hx H16 Hxtop.
         repeat (destruct Hpk as [Ep|Hpk]; [apply (f_equal bv_unsigned) in Ep; first [rewrite !u64_of_lit in Ep by lia | rewrite UP, u64_of_lit in Ep by lia]; lia|]); destruct Hpk.
 Qed.
 
-Lemma ecall18 : ltac2:(tb__ "0|3|
-S1cS3aR1A1S0S6SacR2A1Vx;A3S0S18Q40M0A1M1S1bR3P24A2Vb7;A3S0G1S1bR4P4dA2Vb8;A3S0G1S1bR5P4eA2Vb9;A3S0G1S1bR6P53A2Vb10;A3S0S6SdZ8S19G0S1bR7P23A2A2A2S19G0Vb6;A2A3S8S9Vx;Z50A2S36R8A1A2S8S9S36R9A1Z10M2A2SeZ2Z2fA2A2S8S9S36RaA1G2A2S9Vx;Z2228cfA2A2S0G1S1bRbP54A2S1aG0S3dA2A3S0G1S1bRcP55A2S1aG0SbS41S36RcA1A1S3dA2A2A3Sa8S20S23RdA1S22S90A1A3S100ReA1Sd9S69Sa4S69Sa7S35S3bA2S8fRfS3cRfA1A5S3fRfA1A3F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;FrhoC;").
+Lemma ecall18 :
+  forall (rhoC : valuation),
+  vals rhoC ->
+  x1 rhoC = x ->
+  rw rhoC 36%positive = b7 ->
+  rw rhoC 77%positive = b8 ->
+  rw rhoC 78%positive = b9 ->
+  rw rhoC 83%positive = b10 ->
+  8 * bv_unsigned (rw rhoC 35%positive) = bv_unsigned b6 ->
+  x + 80 <= r6of rhoC ->
+  r6of rhoC + 16 <= 2 ^ 47 ->
+  r6of rhoC + 16 <= x + 2238671 ->
+  rw rhoC 84%positive = Z_to_bv 64 XBz ->
+  rw rhoC 85%positive = Z_to_bv 64 (XEz (r6of rhoC) - XBz) ->
+  Forall (holds rhoC) (ss_facts (C18e rq)) ->
+  arg_layout rhoC ->
+  etriple segsA (SPA segsA (KxA mE B18pre) (C18 rq) rhoC (TP18 rhoC)) (PostC18 rhoC).
 Proof using All.
   intros rhoC HV Hx1 H36 H77 H78 H83 V35 H1 H2 H3 R84 R85 HF HAL.
   apply (etriple_pre_fact _ _ (ivs_wf (vm_maps (m_vmmaps mE)) /\ lazy_in_maps mE)).
@@ -1947,8 +2296,20 @@ Proof using All.
   - intros [MWF HLIM]. exact (ecall18_core rhoC HV Hx1 H36 H77 H78 H83 V35 H1 H2 H3 R84 R85 HF HAL MWF HLIM).
 Qed.
 
-Theorem eseg18 : ltac2:(tb__ "0|2|
-S1cS3aR1A1S0S18Q40A1M0S1bR2P24A2Vb7;A3S0G0S1bR3P4dA2Vb8;A3S0G0S1bR4P4eA2Vb9;A3S0G0S1bR5P53A2Vb10;A3S0S6SacR6A1Vx;A3S8S9Vx;Z50A2S36R7A1A2S8S9S36R8A1Z10M1A2SeZ2Z2fA2A2S8S9S36R9A1G1A2S9Vx;Z2228cfA2A2S4aRaA1S100RbA1Sd9S69Sa4S69Sa7S35S48A2SdcRcSaeRcA1A5S50RcA1A3F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Frho;").
+Theorem eseg18 :
+  forall (rho : valuation),
+  vals rho ->
+  rw rho 36%positive = b7 ->
+  rw rho 77%positive = b8 ->
+  rw rho 78%positive = b9 ->
+  rw rho 83%positive = b10 ->
+  x1 rho = x ->
+  x + 80 <= r6of rho ->
+  r6of rho + 16 <= 2 ^ 47 ->
+  r6of rho + 16 <= x + 2238671 ->
+  SZ18 rho ->
+  arg_layout rho ->
+  etriple segsA (SPA segsA (KxA mE BE) (E18r rq) rho (TP17 rho)) (Post18 rho).
 Proof using All.
   intros rho HV H36 H77 H78 H83 Hx1 H1 H2 H3 HSZ HAL0.
   pose proof (arith18 _ H1 H2 H3) as AR.
@@ -1980,7 +2341,7 @@ Proof using All.
 
   eapply (@etriple_conseq segsA (fun w => exists rho2, (forall i, rw rho2 i = rw rho1 i) /\ (forall l, rl rho2 l = rl rho1 l) /\ ZX18 (r6of rho1) rho2
                                                  /\ (forall a : word, bv_unsigned a < Q18 \/ Z.max Q18 (Wz (r6of rho)) <= bv_unsigned a -> rm rho2 a = rm rho1 a)
-                                                 /\ SPA segsA (KxA mE B18pre) C18 rho2 (TP18 rho1) w)); [intros [tr [ms md]] Hw | intros w Hw; exact Hw |].
+                                                 /\ SPA segsA (KxA mE B18pre) (C18 rq) rho2 (TP18 rho1) w)); [intros [tr [ms md]] Hw | intros w Hw; exact Hw |].
   { apply shape18 in Hw.
     destruct (pay18 rho1 tr ms md HV1 Hx1a H36a H77a H78a H83a V35a ltac:(rewrite R6a; exact H1) ltac:(rewrite R6a; exact H2) ltac:(rewrite R6a; exact H3) HSZ1 Hw)
       as (rho2 & Hsp2 & Hrw2 & Hrl2 & HZ2 & Hrm2).
@@ -2010,17 +2371,29 @@ Proof using All.
       - rewrite R6b, Hrw2. exact G85.
       - apply (arg_layout_ext rho rho2); [intros i Hi; rewrite Hrw2; apply R1; lia | exact HAL0]. }
 
-  intros w (o & rho4 & Ho & Q1 & Q2 & Q3 & Q3L & Q4). exists o, rho4. split; [exact Ho|].
-  split; [intros i Hi; rewrite (Q1 i) by lia; rewrite Hrw2; apply R1; lia|].
-  split; [intros l; rewrite (Q2 l), Hrl2; apply L1|].
-  split; [rewrite (Q1 84%positive) by lia; rewrite Hrw2; exact G84|].
-  split; [rewrite (Q1 85%positive) by lia; rewrite Hrw2; exact G85|].
+  intros w (o & rho4 & Ho & Q1 & Q2 & Q3 & Q3L & Q4).
+  (* LPS 727298f3: [Q4] is over the per-flag exit [K18r rq]; A/StartRegen3.v [K18_join] gives the joined exit
+     [K18], keeping every variable below 159, every list, and memory on the argument region and below
+     kHighMemBeg, which holds every address the rest of [Post18] reads. *)
+  assert (HAL4 : arg_layout rho4)
+    by (apply (arg_layout_ext rho rho4); [intros i Hi; rewrite (Q1 i) by lia; rewrite Hrw2; apply R1; lia | exact HAL0]).
+  destruct (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartRegen3.K18_join rq (out18_model o) B18 rho4 (TP18 rho2) w HAL4 Q4)
+    as (rho5 & J1 & J2 & J3 & Q5).
+  assert (J3k : forall a : word, ARGF rho4 a \/ bv_unsigned a < kHighMemBeg -> rm rho5 a = rm rho4 a) by exact J3.
+  exists o, rho5. split; [exact Ho|].
+  split; [intros i Hi; rewrite (J1 i) by lia; rewrite (Q1 i) by lia; rewrite Hrw2; apply R1; lia|].
+  split; [intros l; rewrite (J2 l), (Q2 l), Hrl2; apply L1|].
+  split; [rewrite (J1 84%positive) by lia; rewrite (Q1 84%positive) by lia; rewrite Hrw2; exact G84|].
+  split; [rewrite (J1 85%positive) by lia; rewrite (Q1 85%positive) by lia; rewrite Hrw2; exact G85|].
   split.
-  - pose proof q12x_lo as QLO. intros z Hz. rewrite Q3; [apply HZ2; rewrite R6a; exact Hz|]. left. unfold band. rewrite u64_of_lit by klia. klia.
+  - pose proof q12x_lo as QLO. intros z Hz. rewrite J3k by (right; rewrite u64_of_lit by klia; klia).
+    rewrite Q3; [apply HZ2; rewrite R6a; exact Hz|]. left. unfold band. rewrite u64_of_lit by klia. klia.
   - split.
     +
-      assert (E2lo : forall i, (i < 7)%positive -> rw rho2 i = rw rho i) by (intros i Hi; rewrite Hrw2; apply R1; lia).
-      intros a Ha. rewrite (Q3 a) by (right; apply (proj2 (ARGF_ext rho rho2 a E2lo)); exact Ha).
+      assert (E2lo : forall i, (i < 14)%positive -> rw rho2 i = rw rho i) by (intros i Hi; rewrite Hrw2; apply R1; lia).
+      assert (E4lo : forall i, (i < 14)%positive -> rw rho4 i = rw rho i) by (intros i Hi; rewrite (Q1 i) by lia; exact (E2lo i Hi)).
+      intros a Ha. rewrite (J3k a) by (left; apply (proj2 (ARGF_ext rho rho4 a E4lo)); exact Ha).
+      rewrite (Q3 a) by (right; apply (proj2 (ARGF_ext rho rho2 a E2lo)); exact Ha).
       rewrite (HM2 a) by (right; destruct Ha as [Ha _]; unfold x1 in Hx1; unfold kHighMemBeg in *; lia). apply M1.
     + split.
       *
@@ -2028,10 +2401,12 @@ Proof using All.
         destruct AR3 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Q19 & _).
         intros a Ha Hg.
         assert (HaL : lowb rho2 (bv_unsigned a)) by (unfold lowb, priZ in *; rewrite Hrw2, (R1 31%positive) by lia; exact Ha).
+        rewrite (J3k a) by (right; destruct Ha as (HaQ & _ & _); pose proof q12x_hi as QH; klia).
         rewrite (Q3L a HaL Hg). rewrite (HM2 a) by (left; destruct Ha as (HaQ & _ & _); lia). apply M1.
       * split.
         --
-           intros a Ha Hhi. rewrite (Q3 a) by (left; exact Ha). rewrite (HM2 a) by (right; exact Hhi). apply M1.
-        -- rewrite T18b, T18 in Q4. exact Q4.
+           intros a Ha Hhi. rewrite (J3k a) by (right; unfold band in Ha; klia).
+           rewrite (Q3 a) by (left; exact Ha). rewrite (HM2 a) by (right; exact Hhi). apply M1.
+        -- rewrite T18b, T18 in Q5. exact Q5.
 Qed.
 End Seg7.

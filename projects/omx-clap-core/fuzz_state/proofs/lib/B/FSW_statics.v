@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 639 of its 687 lines of code are new or changed and 451 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_fuzz_free.v, with its module names changed; 108 of its 155 lines of code are new or changed and 640 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_statics.v from
-   a working branch 76d55f141ac, same lemma names and statement shapes; imports point at lib/B's image files
+   a working branch, same lemma names and statement shapes; imports point at lib/B's image files
    (YB1v, YB1w, YB13, FSH_Base, FSPstat, FSW_K); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    Every address is image B's, by name: G_COUNT / G_FAIL / G_LIVE / G_PEAK (lib/B/FSH_Base.v), the two shadow-base cells
    (lib/B/YB1w.v), the RW load window (lib/B/YB13.v tfib_rw_window). Measured on the unstripped twin of the pinned
@@ -19,6 +19,7 @@
      RW window: PT_LOAD 0x9f678 + 0x1988 and 0xa1920 + 0x55b3f0, page-rounded to [0x9f000, 0x5fd000)
        = YB13.tfib_rw_window's range (image segments 002 / 003).
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The entry symbolic state of an instrumented fs function that reads and writes fuzz/alloc.c's statics (fuzz_malloc,
    fuzz_free, fuzz_realloc, and B's out-of-line own): FSW_K's fss0T (the frame, the .got word of the ASan shadow base and
    the shadow cell, atom 32 = SHADOW_OFF) plus the four 8-byte statics g_count, g_fail_at, g_live, g_peak as writable

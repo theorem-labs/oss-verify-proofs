@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module names changed; 841 of its 922 lines of code are new or changed and 3031 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW0.v -- piece W0 (the prologue: S_A1, S_A2, S_A3) of fuzz_ctrl image B's (asan-ubsan) walk of
    LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.  Writer: a Theorem Labs lane for a Theorem Labs lane.
    rule 24: no function proved (stage glue of a walk).
 
    WHAT THIS FILE PROVES: one stage lemma per cut of W0, in the donor's continuation shape (rt_A2 A/ACf0.v:173 at
-   c8557374ad2e): "the successor cuts hold -> this cut holds", over lib/B/ACtlCut.v's ctl_from and
+   theorem-labs/oss-verify-proofs@6b32741d849a): "the successor cuts hold -> this cut holds", over lib/B/ACtlCut.v's ctl_from and
    lib/B/ACtlCutP.v's cut records.  Each statement is token-equal to lib/B/ACtl.v's Hypothesis of the same name,
    generic in SK and FP (the top instantiates SK := tfib_sink_head, FP := []).
      ENTRY  (0x81018) --S_A1--> B81090   the prologue run, then __asan_stack_malloc_6 @0x8108c (seg_A1)
@@ -41,7 +42,7 @@
 
    PROVENANCE: cut table cut-table-B.tsv rows 1-3 (a working note, not in this delivery); plan
    llvmf-B-walk-plan.md 2.3 rows 1-3, 2.6, 6.2 (a working note, not in this delivery); ctrl's runs at
-   a working branch 3803efccea0 (Seg/A1.v, A2.v, A3.v); objdump
+   a working branch (Seg/A1.v, A2.v, A3.v); objdump
    fuzz_ctrl.objdump.txt L83794-L83924 (a working note, not in this delivery). *)
 
 From Stdlib Require Import ZArith List Permutation Lia.

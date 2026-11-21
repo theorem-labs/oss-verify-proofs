@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value: proofs of three Props of the shared call kit
    lib/B/Prog/ExvB_Loop_kit.v (owner ExvLoop; shared with ExvOpen / ExvDisp):
    - exv_kit_chain  : KIT_CALL_CHAIN. ex_value keeps s0 = its entry sp, so a call's frame chain is ex_value's own record

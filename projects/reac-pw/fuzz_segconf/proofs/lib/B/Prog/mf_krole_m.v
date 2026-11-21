@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 158 of its 182 lines of code are new or changed and 494 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, 0x86140), segment S_MF_KROLE (KDISP 0x86714 ->
    KMODEL 0x86840 or KDONE 0x86c1c; the image-B m_file segment table section 7, the image-B m_file cut map section 4, 101
    instructions owned): the inner points of the segment and the model facts its pieces use. Statement text and
    Gallina proofs; no instruction is executed here. A walk lane of the image-B m_file-family owner's G2B. Adapted from image A's
-   lib/A/Prog/m_file_s_krole_m.v (the image-A m_file-family lane, commit e8a825b42b08): the
+   lib/A/Prog/m_file_s_krole_m.v (the image-A m_file-family lane): the
    model facts are A's text (renamed nothing; this file is the only kr_* writer of image B); the points are image
    B's (B calls fold, A inlines it; B keeps line + 1 in s11, A spills it to 96(s1)).
 

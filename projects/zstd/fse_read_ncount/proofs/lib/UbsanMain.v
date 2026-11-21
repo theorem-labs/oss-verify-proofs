@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/zstd/zstd_frame_info/lib/UbsanMain.v, with its module paths and module names changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (side_ok_of_tree_ok's new premise segs_top segs <= 0x10000000, proved by computation at both calls). *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -33,7 +34,7 @@ Theorem base_ubsan :
 Proof.
   cbv delta [ShippedBudgets.lim_source ShippedBudgets.lim_target].
   apply (side_ok_equiv_budgets_L source_alloc_limit _ _ _ _ _ _ TPS TU).
-  - exact (side_ok_of_tree_ok _ _ _ _ _ _ (PlainTree.plain_tree_ok_L source_alloc_limit lim_p)).
-  - exact (side_ok_of_tree_ok _ _ _ _ _ _ ubsan_tree_ok).
+  - exact (side_ok_of_tree_ok _ _ _ _ _ _ (PlainTree.plain_tree_ok_L source_alloc_limit lim_p) ltac:(apply Z.leb_le; vm_compute; reflexivity)).
+  - exact (side_ok_of_tree_ok _ _ _ _ _ _ ubsan_tree_ok ltac:(apply Z.leb_le; vm_compute; reflexivity)).
   - intros enS enT inp HvS HvT Hi. unfold TPS, TU. apply equiv_PU; assumption.
 Qed.

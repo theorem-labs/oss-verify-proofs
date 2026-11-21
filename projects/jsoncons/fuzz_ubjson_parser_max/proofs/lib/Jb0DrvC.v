@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded the 12 encoded statements (w2le1_byteA, content_byteA, the B0A/B1A/B2A/CFGA range lemmas, ltu_hdr_scA, kbyte48A, know_GLA, hdr_okA, etc.) into plain Rocq, dropped TCodec, and renamed section variable p0 to auxvp; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvC.v, 38 lines within its lines 21-277. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -15,16 +16,17 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__Jb0DrvC () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Peano."; "Corelib.Lists.ListDef."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Instr."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIface."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIfaceA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvC.FPX_1.DrvC."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvC_defs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvG."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvG_defs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvLib."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2.SX2."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2Sound.SX2S."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymRun."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.AsanUbsan.M."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "0A0"; "0A1"; "0CAP"; "1Some"; "1bool"; "1cons"; "1length"; "1list"; "1nat"; "1nil"; "1option"; "1pair"; "1prod"; "2and"; "2eq"]; ["3le"; "3lt"; "4nth"; "5Z"; "0HI"; "0KT"; "0LEN"; "0LK"; "0LK0"; "6word_to_le_bytes"; "7Model"; "7event"; "8ALU_ADD"; "8BC_LTU"; "0M"; "0M0"]; ["0MV"; "9mrestrict"; ":credit"; ";ahid"; ";fframe"; "<ENVA"; "=B0A"; "=B1A"; "=B2A"; "=CFGA"; "=target_kA"; ">cfglen_xA"; ">knGLA"; "?close_kgA"; "@knGA"; "Adinv"]; ["AhzA"; "Brdn"; "CTSet"; "DEAlu"; "DELit"; "DEVar"; "DKRange"; "DKWord"; "DSA"; "DSCBr"; "Ekentry_ok"; "Eknow_ok"; "Esc_denot"; "Fvals_ev"; "Gloaded_segments"; "Hadd"]; ["Hle"; "Hlt"; "Hltb"; "Hof_nat"; "Hpow"; "Hto_nat"; "0ar"; "0bs"; "0can"; "0cr"; "0crC"; "0data"; "0fdata"; "0fs0"; "0fx"; "0hi"]; ["0j"; "0k"; "0lo"; "0m"; "0model"; "0n"; "0p0"; "0p1"; "0scfg"; "0sp0"; "IZ_to_bv"; "Ibv"; "Ibv_unsigned"; "0t"; "0u"; "0v"]; ["0vals"; "0x"]]).
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Lemma w2le1_byteA : ltac2:(TCodec.tc2 tcn__Jb0DrvC "E'RKy8%211'?'8%113&Iu1&RJyR0&RLr1%22;1%5241%8271(6(:%11?%33@71%@3>51pV4B1").
+Lemma w2le1_byteA : forall (x : byte), word_to_le_bytes 1 (Z_to_bv 64 (bv_unsigned x)) = [x].
 Proof.
 intros x. pose proof (bv_unsigned_in_range _ x) as Hx. change (bv_modulus 8) with 256 in Hx.
 unfold word_to_le_bytes. cbn [Z_to_le_bytes]. f_equal.
 rewrite u_small by lia. apply Z_to_bv_bv_unsigned.
 Qed.
-Lemma content_byteA : ltac2:(TCodec.tc2 tcn__Jb0DrvC "R7'RKyR0%211';y8%511%311p051'C'8%115'9'?%:13&QA&QNr4&RJr3%22B1&7r2%22A1%948741(4%12?4%>3=31&A%82G:%2281&R0zr5%3221&R1&QOr6&R3%B2Q16%211%5241&R4+2+R0%3221%;251r8r7%;1@%>221%Q12QA1u1%Q64Q5621&I&RL&B%Q72QDI%24QDIE1%42QF1%Q:2QJ1%7291%Q52QC1%QB3QA:1p0B1p0O1p0Q41p0Q81pU2QH1pTHQJ1p2QM1pQNQO1").
+Lemma content_byteA : forall M (A : Z) (data : list byte) j,
+rdn ASEGS M (Z_to_bv 64 A) (length data) = Some data -> (j < length data)%nat ->
+0 <= A -> A + Z.of_nat (length data) < 2 ^ 64 ->
+rdn ASEGS M (Z_to_bv 64 (A + Z.of_nat j)) 1%nat = Some (word_to_le_bytes 1 (Z_to_bv 64 (bv_unsigned (nth j data (Z_to_bv 8 0))))).
 Proof.
 intros M A data j Hc Hj HA HA2.
 pose proof (SeqExec.rdn_nth ASEGS M (length data) _ data j Hc Hj) as H.
@@ -45,7 +47,7 @@ Hypothesis Hal : bv_unsigned sp0 mod 16 = 0.
 Hypothesis DL : drv_layoutA L ar IL sp0.
 Variable fs0 : Fs.Fs.
 Variable fdata : list byte.
-Variables p0 p1 can : word.
+Variables auxvp p1 can : word.
 Variable M0 : word -> option byte.
 Variable LK0 : list fframe.
 Variable A0 : list (Z * Z).
@@ -61,17 +63,17 @@ Definition B1A : Z := bv_unsigned (nth 1 fdata (Z_to_bv 8 0)).
 Definition B2A : Z := bv_unsigned (nth 2 fdata (Z_to_bv 8 0)).
 Definition CFGA : Z := (B0A + 256 * B1A) mod 32768.
 Definition PLA : Z := LEN - 6 - CFGA.
-Lemma B0A_range : ltac2:(TCodec.tc2 tcn__Jb0DrvC "9'>&R0z&Q6%3221&R1+X0%2241%8241").
+Lemma B0A_range : 0 <= B0A < 256.
 Proof. clear HLEN. unfold B0A. pose proof (bv_unsigned_in_range _ (nth 0 fdata (Z_to_bv 8 0))) as H. change (bv_modulus 8) with 256 in H. lia. Qed.
-Lemma B1A_range : ltac2:(TCodec.tc2 tcn__Jb0DrvC "9'>&R0z&Q7%3221&R1+X0%2241%8241").
+Lemma B1A_range : 0 <= B1A < 256.
 Proof. clear HLEN. unfold B1A. pose proof (bv_unsigned_in_range _ (nth 1 fdata (Z_to_bv 8 0))) as H. change (bv_modulus 8) with 256 in H. lia. Qed.
-Lemma B2A_range : ltac2:(TCodec.tc2 tcn__Jb0DrvC "9'>&R0z&Q8%3221&R1+X0%2241%8241").
+Lemma B2A_range : 0 <= B2A < 256.
 Proof. clear HLEN. unfold B2A. pose proof (bv_unsigned_in_range _ (nth 2 fdata (Z_to_bv 8 0))) as H. change (bv_modulus 8) with 256 in H. lia. Qed.
-Lemma CFGA_range : ltac2:(TCodec.tc2 tcn__Jb0DrvC "9'>&R0z&Q9%3221&R1+QPP0%2241%8241").
+Lemma CFGA_range : 0 <= CFGA < 32768.
 Proof. clear HLEN. unfold CFGA. apply Z.mod_pos_bound. lia. Qed.
 Definition target_kA (KT : TSet) : Prop :=
 forall vals R M (model : Model) A (A1 : Z),
-length vals = 81%nat -> hdr_valsA sp0 p0 p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 -> vals_ev vals 70 = Z_to_bv 64 LEN ->
+length vals = 81%nat -> hdr_valsA sp0 auxvp p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 -> vals_ev vals 70 = Z_to_bv 64 LEN ->
 vals_ev vals 71 = Z_to_bv 64 B0A -> vals_ev vals 72 = Z_to_bv 64 B1A -> vals_ev vals 73 = Z_to_bv 64 CFGA ->
 vals_ev vals 79 = Z_to_bv 64 PLA -> vals_ev vals 80 = Z_to_bv 64 B2A ->
 regs_ok (ENVG vals) srT0A R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knT0A ->
@@ -79,7 +81,10 @@ rdn ASEGS M (Z_to_bv 64 A1) (length fdata) = Some fdata ->
 dinvA [(A1, CAP)] LK0 crC A M model -> incl A0 A ->
 m_fds model = fds0 -> m_fs model = fs0 ->
 srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa774c) M (seg_rom ASEGS)) model) KT.
-Lemma ltu_hdr_scA : ltac2:(TCodec.tc2 tcn__Jb0DrvC "R1'8'RKyR0%211%411';y8%611%311p061'5'?&QMr3uR6%3221&RJvF%22@1%83@41r4uR7%:221&Q6%82F1%>3F31r5uR8%@221&Q7%>2L1%D3L31&R2&QO&Q9+6%3221%52D1%K3L1B&QL&QNr6&Q5vR<r7%3221(QI(M(QE%11Q3(QC(L&Q;(QD%11C%53431%:4N971%B4A@<1p0D1p0L1p0Q31p0Q:1pULQD1pQNQF1pV2QL1").
+Lemma ltu_hdr_scA : forall vals M t,
+vals_ev vals 70 = Z_to_bv 64 LEN -> vals_ev vals 71 = Z_to_bv 64 B0A -> vals_ev vals 72 = Z_to_bv 64 B1A ->
+Z.ltb LEN (CFGA + 6) = t ->
+sc_denot ASEGS M (ENVG vals) (SCBr t BC_LTU (EVar 70) (EAlu ALU_ADD cfglen_xA (ELit 6))).
 Proof.
 intros vals M t P70 P71 P72 Ht. pose proof B0A_range as R0. pose proof B1A_range as R1. pose proof CFGA_range as RC.
 cbn [sc_denot branch_taken].
@@ -88,7 +93,9 @@ change (edenot (ENVG vals) (EVar 70)) with (vals_ev vals 70).
 unfold ENVA. rewrite cfglen_x_cfgFA, P70, P71, P72, cfgF_valA by lia. fold CFGA.
 rewrite alu_add_Z. unfold bv_ltu. rewrite !u_small by (unfold LEN in *; lia). exact Ht.
 Qed.
-Lemma content_visA : ltac2:(TCodec.tc2 tcn__Jb0DrvC "R9'8&Q4%211&Q2'='C%2211%711'RKyR0%211';y8%511%311p051'J'9%B15'Q?vR6vDvRIvO(6(<r4r3%34GG21(:%11H%73I31r9r8r7r6r5%B:A@?>654321&R0&R3%11=%321?'?%Q01I&QA&QN&RJ%12Q6<%443?1F(4%12Q0G%93831&Q1&Q3r:%221F%421H%;2Q@G%>4=21F%:2Q9Q1%B3A21p0:1p0E1p0J1pT@Q>1pU8Q@1pU<QM1pUNQN1pU:QD1pQNQF1p2QO1pTDR41pQ@R61").
+Lemma content_visA : forall LK cr A M model (u n : Z) (m : nat) bs,
+dinvA [(u, n)] LK cr A M model -> Z.of_nat m <= n ->
+rdn ASEGS M (Z_to_bv 64 u) m = Some bs -> rdn ASEGS (mrestrict (ahid A model) M) (Z_to_bv 64 u) m = Some bs.
 Proof.
 intros LK cr A M model u n m bs D Hm HC. pose proof Hsp as Hsp'.
 destruct (inv_block1 scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ _ _ D (or_introl eq_refl)) as (_ & _ & (Z1 & Z2 & Z3)).
@@ -96,7 +103,12 @@ rewrite <- HC. apply rdn_agree. intros j Hj. rewrite u_small by lia. unfold mres
 rewrite (vis_of_inv scfg L ar C IL HI HIok sp0 DL _ _ _ _ _ _ _ (u + Z.of_nat j) (di_inv _ _ _ _ _ _ _ _ _ _ D) ltac:(lia)); [reflexivity|].
 right. right. exists (u, n). split; [left; reflexivity | cbn [fst snd]; lia].
 Qed.
-Lemma kbyte48A : ltac2:(TCodec.tc2 tcn__Jb0DrvC "RB'8'RKyR0%211%411';y8%611%311p061'C'9'?&QMr5uQ@%3221&RJr3%22A1%83A41&Q@vRIr4v3%43321%J1C%F11&QA&QNr6%>2MA&7vR<%22K1%746541(4%12;4%J3;31&R0z%221K&A&R5%11>%321;r:%Q221A&RL&Br7%811%Q32Q><%44Q>2D1%62Q@1%Q62QE1%Q<3QE91&QJ&Q5r;%22K1(QG(QH(QE%11QAr8%4221u1%51B%83321%=4Q9:H1p0?1p0K1p0Q01p0Q41p0QB1p0QH1pV0R21pU4R41p6R51pR2R71pV2R=1").
+Lemma kbyte48A : forall vals MV (A1 : Z) (k : Z) (v : nat),
+vals_ev vals 48 = Z_to_bv 64 A1 -> hzA sp0 A1 CAP ->
+rdn ASEGS MV (Z_to_bv 64 A1) (length fdata) = Some fdata ->
+0 <= k -> (Z.to_nat k < length fdata)%nat ->
+vals_ev vals v = Z_to_bv 64 (bv_unsigned (nth (Z.to_nat k) fdata (Z_to_bv 8 0))) ->
+kentry_ok ASEGS (ENVG vals) MV (KWord (SA (EVar 48) k) 1 (EVar v)).
 Proof.
 intros vals MV A1 k v P48 (Z1 & Z2 & Z3) HC Hk Hkl Pv. pose proof Hsp as Hsp'.
 cbn [kentry_ok]. split; [lia|]. split.
@@ -104,9 +116,16 @@ cbn [kentry_ok]. split; [lia|]. split.
 - unfold adenot, v_addi. cbn [a_base a_off edenot ev ENVA]. rewrite P48, Pv, u_small by lia.
 replace (A1 + k) with (A1 + Z.of_nat (Z.to_nat k)) by lia. apply content_byteA; [exact HC | exact Hkl | lia | lia].
 Qed.
-Lemma krange_litA : ltac2:(TCodec.tc2 tcn__Jb0DrvC "QJ'8'RKyR0%211%411';y8%611%311p061'9'C'?&QMr6r4%3221&RJr3%22A1%83A41'>&R0z%2219&R1&R4+2+R0%3221%52?1%:271r5%;2B1%<22@%>221&QJ&QN&Q5vR<r9%3221r8(QF(QEr7%211%431?Q0%<4;761p0>1p0C1p0O1pU0Q91pU6Q:1pV4Q;1pV0Q=1pR2Q?1pV2QE1").
+Lemma krange_litA : forall vals MV (v : nat) (x lo hi : Z),
+vals_ev vals v = Z_to_bv 64 x -> 0 <= x < 2 ^ 64 -> lo <= x <= hi ->
+kentry_ok ASEGS (ENVG vals) MV (KRange (EVar v) lo hi).
 Proof. intros vals MV v x lo hi Pv Hx Hr. cbn [kentry_ok edenot ev ENVA]. rewrite Pv, u_small by lia. lia. Qed.
-Lemma know_GLA : ltac2:(TCodec.tc2 tcn__Jb0DrvC "RA'8'RKyR0%211%411';y8%611%311p061'C'?'9&7r3%22<1uR9%63521&QMr4uQ@%3221&RJr2%22F1%>3F41&Q@vRIv3%332?1%N1G%J11&QA&QNr5%=2Q1@vR<%H2N1%645431(4%12:4%N3:31'@u6%2217r8uR7%M221&Q6%K2Q?1%Q73Q?31r9uR8%Q3221&Q7%Q12QE1%Q=3QE31&QK&Q5r:%22H1&Q>+6+QooooO%3221%84Q05>1r;%92O1&Q<%<4Q42:1p051p0?1p0F1p0M1p0Q11p0Q>1p0QC1p0QL1p6R41pR2R61pV2R<1").
+Lemma know_GLA : forall vals MV (A1 : Z),
+length vals = 73%nat -> vals_ev vals 48 = Z_to_bv 64 A1 -> hzA sp0 A1 CAP ->
+rdn ASEGS MV (Z_to_bv 64 A1) (length fdata) = Some fdata -> (6 <= length fdata)%nat ->
+vals_ev vals 71 = Z_to_bv 64 B0A -> vals_ev vals 72 = Z_to_bv 64 B1A ->
+know_ok ASEGS (ENVG vals) MV (knGA 6 67108863) ->
+know_ok ASEGS (ENVG vals) MV knGLA.
 Proof.
 intros vals MV A1 HL P48 HZ HC H6 P71 P72 HK. pose proof B0A_range as R0. pose proof B1A_range as R1.
 unfold knGLA, kn_hdrA. apply Forall_app. split; [|exact HK].
@@ -121,7 +140,8 @@ let HZ := fresh "HZ" in
 pose proof (dinv_lzinv _ _ _ _ _ _ HIok _ DL _ _ _ _ _ _ _ DI) as HZ;
 run_block_lz_with HR HK HZ asegs_wx FUELA STOPS_HA scr NX true;
 [ .. | drv_block_post0 HIok Hsp DL DI P0 HZ ].
-Theorem hdr_okA : ltac2:(TCodec.tc2 tcn__Jb0DrvC "Q6&R0&QO+6&Q9%3221vF%6221&QB&Q:r1%211r2(:'K%211%411&Q=vR>vRHvR6vDvRIvR=vR<vRFvRGvR8vOvHv1v3vR:r3%A@@?>=<;:987654321p0C1p0I1pQ<M1p0O1").
+Theorem hdr_okA : 6 + CFGA <= LEN -> forall KT, target_kA KT -> KT [] ->
+close_kgA scfg ar HI sp0 fs0 fdata auxvp p1 can M0 LK0 A0 CAP crC KT.
 Proof.
 intros Hok KT HKT HKT0. unfold close_kgA.
 intros vals R M model A A1 HL HV P48 P70 HR HK HC DI HINC G1 G2.
@@ -134,7 +154,7 @@ assert (Hge : (6 <= length fdata)%nat) by lia.
 specialize (HK 6 67108863 ltac:(lia)).
 set (vals1 := vals ++ [Z_to_bv 64 B0A; Z_to_bv 64 B1A]).
 assert (HL1 : length vals1 = 73%nat) by (subst vals1; rewrite length_app, HL; reflexivity).
-assert (YV : hdr_valsA sp0 p0 p1 can vals1) by (subst vals1; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL; lia); exact HV).
+assert (YV : hdr_valsA sp0 auxvp p1 can vals1) by (subst vals1; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL; lia); exact HV).
 pose proof YV as (Y0 & _).
 assert (Y48 : vals_ev vals1 48 = Z_to_bv 64 A1) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P48).
 assert (Y70 : vals_ev vals1 70 = Z_to_bv 64 LEN) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
@@ -162,7 +182,7 @@ Z_to_bv 64 (bv_unsigned (nth (Z.to_nat (4 + CFGA)) fdata (Z_to_bv 8 0)));
 Z_to_bv 64 (bv_unsigned (nth (Z.to_nat (5 + CFGA)) fdata (Z_to_bv 8 0)))]).
 set (vals2 := vals1 ++ ext).
 assert (HL2 : length vals2 = 79%nat) by (subst vals2 ext; rewrite length_app, HL1; reflexivity).
-assert (WV : hdr_valsA sp0 p0 p1 can vals2) by (subst vals2; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL1; lia); exact YV).
+assert (WV : hdr_valsA sp0 auxvp p1 can vals2) by (subst vals2; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL1; lia); exact YV).
 pose proof WV as (W0 & _).
 assert (W48 : vals_ev vals2 48 = Z_to_bv 64 A1) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y48).
 assert (W70 : vals_ev vals2 70 = Z_to_bv 64 LEN) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y70).
@@ -228,7 +248,7 @@ assert (V80 : vals_ev vals3 80 = Z_to_bv 64 B2A).
 pose proof (env_app_regs vals2 ext2 _ srHb _ ltac:(rewrite HL2; vm_compute; reflexivity) HR) as HR1.
 pose proof (env_app_know ASEGS vals2 ext2 _ _ knHb0 ltac:(rewrite HL2; vm_compute; reflexivity) HK) as HK0.
 fold vals3 in HR1, HK0. change (Env (vals_ev vals3) (blobs_ev [[]; []; []; []; fdata])) with (ENVG vals3) in HR1, HK0.
-assert (TV : hdr_valsA sp0 p0 p1 can vals3) by (subst vals3; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL2; lia); exact WV).
+assert (TV : hdr_valsA sp0 auxvp p1 can vals3) by (subst vals3; unfold hdr_valsA in *; rewrite !vals_ev_app_l by (rewrite HL2; lia); exact WV).
 assert (T70 : vals_ev vals3 70 = Z_to_bv 64 LEN) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL2; lia); exact W70).
 assert (T71 : vals_ev vals3 71 = Z_to_bv 64 B0A) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL2; lia); exact W71).
 assert (T72 : vals_ev vals3 72 = Z_to_bv 64 B1A) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL2; lia); exact W72).

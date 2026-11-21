@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 3268 of its 3420 lines of code are new or changed and 1413 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: segment PI_O_LOOP of parse_items' image-B walk.
    Block: PI_O_LOOP (0x87b70 .. 0x87bb8), the member loop's head: a0 = v, the grow call, the refusal test and
    the frame cache the loop body reads (pi_regs_body). It stops at PI_O_BODY (0x87bbc), which is PItems_body.v's.
@@ -10,7 +11,7 @@
    in another file).
    THE RESULT: pi_loop_holds (section 5), `(forall N, pi_body_spec d CTX0 CW N) -> pi_loop_spec d CTX0 CW`: pi_loop_pre
    fixes the cursor pc inside an existential, so the cut is taken at N := length (rest_atR tb text pc).
-   KIT: the batch kit 240b06ed4fd4 (form (b), POST-IMPLICATION): no rp_* binders; the ledger's most / own (the entry's)
+   KIT: the batch kit (form (b), POST-IMPLICATION): no rp_* binders; the ledger's most / own (the entry's)
    POST-IMPLICATION): no rp_* binders; the ledger's most / own (the entry's) ride in every prh_ledger / pi_cur / pi_post;
    the prefix's travelling facts are PItems_posb.v's pi_posb / pi_live, extended at the grow call by tgrow_specX's per-arm
    live requests and position implication (pil_s_trav), and grow's two live-count premises come from pi_ent's by
@@ -82,7 +83,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Prog Require Import PItems
 (* the batch's travelling facts: memnorm and its runner laws (YSRrMemnorm is override-free), the run position *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YAkMemnorm YSRrMemnorm.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PresetRoomPos.
-(* The batch kit (the kit's batch 240b06ed4fd4): the order-list layer (PRH_PjOrder), the granted-prefix and ledger tools (PItems_ledk1),
+(* The batch kit (the kit's batch): the order-list layer (PRH_PjOrder), the granted-prefix and ledger tools (PItems_ledk1),
    granted-prefix and ledger tools (PItems_ledk1), the ordered exit lemmas (PItems_forder) and the capacity frame (PvB_Frees, by path) *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_PjOrder.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Prog Require PItems_ledk1 PItems_forder PvB_Frees.

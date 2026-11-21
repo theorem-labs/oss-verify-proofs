@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/U/Prog/LLVMFuzzerTestOneInput_cg.v, with its module paths changed; 384 of its 407 lines of code are new or changed and 22 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* the crash-free UBSan walk of fuzz_frame's LLVMFuzzerTestOneInput against its SRcf contract, with the callee contracts as Section hypotheses. *)
 (* LLVMFuzzerTestOneInput in fuzz_frame.ubsan, 0x12d48, against LLVMFuzzerTestOneInput_sr_contract_cf
-   (U/Prog/LLVMFuzzerTestOneInput_cfb.v), in the form of libreac/fuzz_decode's lib/U/Prog/LLVMFuzzerTestOneInput_cg.v
-   (bf7779f81ed7). The walk is the one of LLVMFuzzerTestOneInput.v (the same Exec.evt segments, lt_b from there),
+   (U/Prog/LLVMFuzzerTestOneInput_cfb.v), in the form of libreac/fuzz_decode's lib/U/Prog/LLVMFuzzerTestOneInput_cg.v.
+   The walk is the one of LLVMFuzzerTestOneInput.v (the same Exec.evt segments, lt_b from there),
    with SRcf in place of SR: the calls go through the crash-free glue lt_glue_cg.v (malloc_contract_ag,
    free_contract_cf, check_round_trip_contract_cf) and the return at once through LLVMFuzzerTestOneInput_early_cg.v.
    The room of the crash-free allocator: llvm_room_cf gives room_ag for the copy of the input (lf_room_ag) and the

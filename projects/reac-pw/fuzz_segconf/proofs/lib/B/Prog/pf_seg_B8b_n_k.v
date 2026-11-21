@@ -24,15 +24,16 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 521 of its 608 lines of code are new or changed and 4966 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B8b_s.v, with its module names changed; 381 of its 478 lines of code are new or changed and 511 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the kit of the NEW
    sub-walk of segment B8b of reac_segconf_parse_file's walk (lib/B/Prog/pf_seg_B8b_n.v, pb8b_new_holds : NEW
    0x88e54 -> JOIN 0x88f00). A B8b sub-lane of the image-B G3 walk owner, 2026-10-30.
    proves no function (kind: segment kit: closed arithmetic, byte-splice and fact-transport lemmas; no instruction
    is walked here). Reuse search and CONFIRM: the rule-24 lookup record (verdict none).
    ADAPTED from a working branch's lib/A/Prog/pf_a8b_m.v / pf_a8b_k.v (the byte splices and the keep clause,
-   here over pf_seg_B8b_m.v), the image-B G3 walk owner's lib/B/Prog/pf_seg_B9_c.v (commit 47521c589cf3: the
+   here over pf_seg_B8b_m.v), the image-B G3 walk owner's lib/B/Prog/pf_seg_B9_c.v (the
    addressability of buf from the frame's shadow cells, b9_addr_cells / b9_sa_addr_sub / b9_hull_sub) and
-   lib/B/Prog/pf_seg_B10b_j.v (commit 961c19ce3f65: the keep lemmas of a cut's objects), re-stated
+   lib/B/Prog/pf_seg_B10b_j.v (the keep lemmas of a cut's objects), re-stated
    for NEW's write set.
 
    WHAT NEW WRITES (the whole path NEW -> JOIN): c->n (4 bytes at c + RC_N, the `sw` at 0x88e64), c->seg[n] (356

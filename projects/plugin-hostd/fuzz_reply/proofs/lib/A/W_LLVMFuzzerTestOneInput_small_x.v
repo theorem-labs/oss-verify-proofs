@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of the four small arms of fuzz_reply's LLVMFuzzerTestOneInput
-   (lib/A/W_LLVMFuzzerTestOneInput_small.v, W8's AR proofs, Qed at a working branch 44de651f71b) to the cut
+   (lib/A/W_LLVMFuzzerTestOneInput_small.v, W8's AR proofs, Qed at a working branch) to the cut
    invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v (a Theorem Labs lane's route (b), step 7). Each theorem is exactly one
    of cut_x's Section w hypotheses: lf_arm_close_x = ARM_close, lf_arm_eintr_x = ARM_eintr, lf_arm_sendmax_x =
    ARM_sendmax, lf_arm_default_x = ARM_default. Neither _small.v nor cut_x is edited.
@@ -9,8 +10,8 @@
      piece's own Section hypotheses follow, in _small.v's text: HGs .. HGlk, HZS, TL, HERRHI (no allocator relation
      in them); ALOCK / AUNLOCK, the default arm's two libc calls, at their W_sites_x.v twins alock_realizes_x /
      aunlock_realizes_x over ARx; RI_* / LS_* carried verbatim, LS renamed LSx (cut_x's name).
-   - Kit: azs_range_addressable_x (W_contract_x.v:416) for g_s's ASan checks; the base is a working branch
-     9941927fa02 (44de651f71b + the kit patch that makes W_contract_x.v / W_sites_x.v build).
+   - Kit: azs_range_addressable_x (W_contract_x.v:417) for g_s's ASan checks; the base is a working branch
+     (+ the kit patch that makes W_contract_x.v / W_sites_x.v build).
    - The AR-free lemmas and definitions of _small.v are CITED from it (sm_xok, sm_kept_*, sm_pick, upd_hs*,
      sm_*_blks_in, sm_mx_entry, sm_df_entry, ...); its section-local tactics are restated. Each lemma of _small.v
      that takes an AR state is converted here under its name + _x, with _small.v's proof: its AR premise becomes
@@ -114,7 +115,7 @@ Hypothesis TL : PALib B.
    static-TLS cell; proved for G_fr_c's instance as W_LLVMFuzzerTestOneInput_G.v c_HERRHI) *)
 Hypothesis HERRHI : rg_out fr_RG + 8 <= as_errno B.
 (* the default arm's two libc calls: W_sites_x.v's site contracts (:175 / :188), the twins of _small.v's ALOCK /
-   AUNLOCK (W_sites.v's, proved by R5 at a working branch b1c048a98a5 over AR) *)
+   AUNLOCK (W_sites.v's, proved by R5 at a working branch over AR) *)
 Hypothesis ALOCK : alock_realizes_x B ARx (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes_x B ARx (SIGMA WS_pthread_mutex_unlock).
 (* the model step of each arm (the open obligations of this file), each at the choice the walk makes: the source
@@ -2040,7 +2041,7 @@ Hypothesis TL : PALib B.
    static-TLS cell; proved for G_fr_c's instance as W_LLVMFuzzerTestOneInput_G.v c_HERRHI) *)
 Hypothesis HERRHI : rg_out fr_RG + 8 <= as_errno B.
 (* the default arm's two libc calls: W_sites_x.v's site contracts (:175 / :188), the twins of _small.v's ALOCK /
-   AUNLOCK (W_sites.v's, proved by R5 at a working branch b1c048a98a5 over AR) *)
+   AUNLOCK (W_sites.v's, proved by R5 at a working branch over AR) *)
 Hypothesis ALOCK : alock_realizes_x B ARx (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes_x B ARx (SIGMA WS_pthread_mutex_unlock).
 (* the model step of each arm (the open obligations of this file), each at the choice the walk makes: the source

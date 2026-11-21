@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_cmp_defs: proves no function (kind: segment lemma).
    The shared part of the cmp segment of the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput
    (+0x5fc .. +0x744, the premise llvm_a_cmp_stmt of lib/A/Prog/LLVMFuzzerTestOneInput_segs.v, proved as
@@ -25,7 +26,7 @@
                      and res holds the body, and plain_byte's index is exactly the braid one (cmp_bytes_eq).  So
                      every call returns 0, s10 stays 0 and the `bnez s10` at +0x730 is refuted.
                      The measure is nch*ns - (c*ns + k), the one the old bespoke walk used
-                     (a working branch 3ee4cb94cb5 lib/A/Prog/afd_down.v:5465).
+                     (a working branch lib/A/Prog/afd_down.v:5465).
      +0x718..+0x738  the reloads of the spilled registers and of s2, and free #1 of the decode buffer
                      through afree04_rule (the block is live: it is the second appended block of st_5fc).
      +0x73c..+0x744  s10 := [56(s1)] = len, a0 := s10, and the call of reac_upstream_channels.
@@ -36,7 +37,7 @@
 
    The engine is the Pa walk of lib/A/Prog/{PaTable,PaSym,PaStep,PaRun,PaShadow,PaJournal}.v with the unit layer
    DecodePa / DecodePaLib / DecodeImg; the idiom is libreac/fuzz_boxreg's lib/A/Prog/ReadName.v at
-   a working branch 1d92330b7ad (sstate, paj_run / paj_run_to / paj_branch, awr_ok, the
+   a working branch (sstate, paj_run / paj_run_to / paj_branch, awr_ok, the
    shadow side conditions, the journal close). *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -376,7 +377,7 @@ apply (chunk_ok_val decodesegs0 E (mrestrict (w_H W) mem) base off 8%N (SOff n z
 - cbn [N.to_nat Pos.to_nat Pos.iter_op Nat.add]. apply val_mem_of_rdword. exact Hrd.
 Qed.
 
-(* A word read from its bytes, copied from LLVMFuzzerTestOneInput_seg_entry.v:108-123 (there from a Theorem Labs lane's
+(* A word read from its bytes, copied from LLVMFuzzerTestOneInput_seg_entry.v:109-124 (there from a Theorem Labs lane's
    GrantFrame.v). *)
 Lemma cmp_rdword_of_val_mem : forall segs H mem a v,
   val_mem segs (mrestrict H mem) a 8 v -> 0 <= v < 2 ^ 64 -> rdword (aview segs H mem) a = Some v.

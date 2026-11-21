@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the client's hand-off fact is stated for each CONFIG_RSEQ value over the hand-off states the start-up certificate computes. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.Lib Require Import MState Mem Frame Cells Step Arr Exec ImageA RzCPS.
-From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.AS Require Import PropExec ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound StartupHSAsan.
+From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.AS Require Import PropExec ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound AsanStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.A Require Import Layout Shadow RT_iface RT_iface2 D_defs D_libiface HandoffKit HandoffImage HandoffCLX RT_state RT_rep D_client
      Atp_activewA Pj_defsA Pj_handoffA El_defsA Drt_hdefsA Drt_handoffA Drt_recordA.
 Import ListNotations.
@@ -29,7 +30,7 @@ Proof.
   split; [exact HE| split; [exists false; exact HU| exact HTL]].
 Qed.
 
-Lemma client_drt_hs : forall h ch, HS_asan h = Some ch -> hs_libdrt_ok ch = true.
-Proof. intros h ch H. exact (HS_libdrt_ok h ch H). Qed.
+Lemma client_drt_hs : forall (b : bool) h ch, HS_asan (AP.rseq_z b) h = Some ch -> hs_libdrt_ok ch = true.
+Proof. intros b h ch H. exact (HS_libdrt_ok b h ch H). Qed.
 
 Definition client_drt : client_A := mkClientA el_libA el_lib_loc hs_libdrt_ok hs_libdrt_lib drt_cl_fuzz.

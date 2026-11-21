@@ -5,6 +5,7 @@
    statement and is the instance at wle. aj_intrin_at_xR, aj_intrin_at_x_frR, aj_strlen_at_xR, aj_bcmp_at_xR and
    aj_strcmp_at_xR are the call rules over a journal at a reflexive and transitive R (binders first; each call keeps
    the world, so no law of R is read); the old names keep their statements and are the instances at wle. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the memcpy / memset, strlen, bcmp and strcmp CALL-SITE RULES, GENERIC over the allocator
    invariant ARx of YCbqG.v (Section Variables segs B PST ARx). No allocator instance, no image class, no address and
    no ledger is named here.
@@ -74,8 +75,8 @@ Local Abbreviation AJ := (ajournal_x (SK := SK) segs B PST ARx).
 
 (* ---------------------------------------------------------------------------- *)
 (* 1. The texts.                                                                  *)
-(* STAND-IN DEFINITION for c-libc-stdio's amem_range8 (lib/Reusable/YGcfStr.v, origin/cold/c-libc-stdio-presetstr
-   3e37c5476fed), copied from it verbatim; swap by citation when that file lands in the worktree. It is the walks'
+(* STAND-IN DEFINITION for c-libc-stdio's amem_range8 (lib/Reusable/YGcfStr.v),
+   copied from it verbatim; swap by citation when that file lands in the worktree. It is the walks'
    own region_in_mem: 8 bytes of application memory past the bytes read, and in high memory a start at or above
    kHighMemBeg + 15. Both string kits' shadow check needs it, and no ARx field excludes a string that ends in the
    last 8 bytes of a range. Numerals: 8 and 15 are LENGTH slack of that check; 1 is DERIVED. *)
@@ -450,7 +451,7 @@ apply (ajournal_x_frame_writeR (SK := SK) segs B PST ARx LAWS segs_low R STK sp0
 - apply same_but_materialized_refl.
 Qed.
 
-(* YGcallMx.v:186 aj_intrin_at_x with the destination widened: each byte is a byte awr_byte admits OR a byte of a
+(* YGcallMx.v:187 aj_intrin_at_x with the destination widened: each byte is a byte awr_byte admits OR a byte of a
    frame of the caller's entry frames S that the footprint names (wr_fp_frame, YCbqG.v). Same conclusion. *)
 Lemma aj_intrin_at_x_fr : forall op pc, aintrin_realizes_x op pc ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k d x n (o : Z) raw,

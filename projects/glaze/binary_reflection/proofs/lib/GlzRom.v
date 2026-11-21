@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Segment's new seg_kind field in seg_eqb and its proof). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -118,18 +119,32 @@ Proof.
   induction a as [|x a IH]; intros [|y b] H; cbn [pstrs_eqb] in H; try discriminate; [reflexivity|].
   destruct (pstr_eqb x y) eqn:E; [|discriminate]. apply pstr_eqb_eq in E. subst y. rewrite (IH b H). reflexivity.
 Qed.
+(* LPS 08b1429: [Segment] gained [seg_kind : SegKind] (MemImageType.v), so the
+   equality test compares it too; the model gives no boolean equality for it. *)
+Definition segkind_eqb (a b : SegKind) : bool :=
+  match a, b with
+  | SegLoader, SegLoader => true
+  | SegVdsoText, SegVdsoText => true
+  | SegVdsoVvar, SegVdsoVvar => true
+  | _, _ => false
+  end.
+Lemma segkind_eqb_eq : forall a b, segkind_eqb a b = true -> a = b.
+Proof. intros a b H. destruct a, b; cbn [segkind_eqb] in H; try discriminate; reflexivity. Qed.
 Definition seg_eqb (a b : Segment) : bool :=
   if N.eqb (seg_base a) (seg_base b) then
     if N.eqb (seg_size a) (seg_size b) then
-      if String.eqb (seg_perms a) (seg_perms b) then pstrs_eqb (seg_bytes a) (seg_bytes b) else false
+      if String.eqb (seg_perms a) (seg_perms b) then
+        if pstrs_eqb (seg_bytes a) (seg_bytes b) then segkind_eqb (seg_kind a) (seg_kind b) else false
+      else false
     else false
   else false.
 Lemma seg_eqb_eq : forall a b, seg_eqb a b = true -> a = b.
 Proof.
-  intros [ba sa pa ya] [bb sb pb yb] H. unfold seg_eqb in H. cbn [seg_base seg_size seg_perms seg_bytes] in H.
+  intros [ba sa pa ya ka] [bb sb pb yb kb] H. unfold seg_eqb in H. cbn [seg_base seg_size seg_perms seg_bytes seg_kind] in H.
   destruct (N.eqb ba bb) eqn:E1; [|discriminate]. destruct (N.eqb sa sb) eqn:E2; [|discriminate].
-  destruct (String.eqb pa pb) eqn:E3; [|discriminate].
-  apply N.eqb_eq in E1. apply N.eqb_eq in E2. apply String.eqb_eq in E3. apply pstrs_eqb_eq in H. subst. reflexivity.
+  destruct (String.eqb pa pb) eqn:E3; [|discriminate]. destruct (pstrs_eqb ya yb) eqn:E4; [|discriminate].
+  apply N.eqb_eq in E1. apply N.eqb_eq in E2. apply String.eqb_eq in E3. apply pstrs_eqb_eq in E4.
+  apply segkind_eqb_eq in H. subst. reflexivity.
 Qed.
 Fixpoint segs_eqb (a b : list Segment) : bool :=
   match a, b with

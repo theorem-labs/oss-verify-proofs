@@ -436,17 +436,17 @@ Proof.
     destruct Hiv.
 Qed.
 
-(* ==== Route (C) (a Theorem Labs lane 09:20Z; form of record lib/B/ShadowRwOn.v c43f0ca34ff (the blob this tree had at release c5e779efe8c) = a working branch
-   937f7755750, the image-B twin of lib/A/ShadowRwOn.v; wave lead a Theorem Labs lane, ASSIGN.md (a working note, not in this delivery)): the four
+(* ==== Route (C) (a Theorem Labs lane 09:20Z; form of record lib/B/ShadowRwOn.v c43f0ca34ff (the blob this tree had at release) = a working branch,
+   the image-B twin of lib/A/ShadowRwOn.v; wave lead a Theorem Labs lane, ASSIGN.md (a working note, not in this delivery)): the four
    contracts above with the universal premise `shadow_rw m` narrowed
    to `shadow_rw_on (reac_ctrl_parse_shadow_R f n o S FS) m` and the post's `shadow_rw m'` stated as
    `forall P, shadow_rw_on P m -> shadow_rw_on P m'`. The four Definitions above stay byte-identical; the run lemmas
    that take callee contracts (reac_ctrl_parse.v (not in this delivery), reac_ctrl_parseF.v) are to prove the `_on` forms from the callees' `_on`
    contracts (a Theorem Labs lane 09:58Z ruling; in this delivery image B's reac_ctrl_parseF.v proves no `_on` form (its run is reac_ctrl_parse_x_F_holds), and the B files that use the `_on` forms take them as hypotheses, PARSE and HPC). Each `_on` Definition below is its old Definition with exactly those two
-   changes. Image-B twin of a Theorem Labs lane's image-A block (lib/A/Prog/reac_ctrl_parse_c.v, a working branch
-   671983b8c37). rule 24: proof-index reac_ctrl_parse (2026-10-29 10:55Z, exit 0): 16 named files + 10 released
+   changes. Image-B twin of a Theorem Labs lane's image-A block (lib/A/Prog/reac_ctrl_parse_c.v, a working branch).
+   rule 24: proof-index reac_ctrl_parse (2026-10-29 10:55Z, exit 0): 16 named files + 10 released
    lemma rows, plain / ubsan builds of fuzz_ctrl / fuzz_disco / fuzz_grant / fuzz_scene.
-   At ossv/recipes c5e779efe8c (2026-10-31), released ASan+UBSan proofs of reac_ctrl_parse exist in fuzz_grant, fuzz_disco and fuzz_scene. This restates ctrl's own image-B parse contracts; no function is proved in this file. ==== *)
+   At (2026-10-31), released ASan+UBSan proofs of reac_ctrl_parse exist in fuzz_grant, fuzz_disco and fuzz_scene. This restates ctrl's own image-B parse contracts; no function is proved in this file. ==== *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require Import ShadowRwOn.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import sh_word_on asan_stack_malloc_c_on.
 

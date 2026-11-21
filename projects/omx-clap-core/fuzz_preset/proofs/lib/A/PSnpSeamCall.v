@@ -11,7 +11,7 @@
    so it is a hypothesis here too, in the shape vf_ready_a asks for.
 
    Nothing in this file depends on the harness: it is GXA's own vocabulary. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamCall.v at origin/cold/port-fm-rtprintf-param 3e35620c52e: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str, f697dea427f); GXA's closed theorem at the image is c-libc-str's lib/A/PSnpL3/RT_gxa_inst.v fm_vfprintf_snf_a_closed at N_img_asan (3244f5c71f6), as fm's. seam_vfprintf_a's statement is unchanged. The sentences above name fm's addresses. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamCall.v: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str); GXA's closed theorem at the image is c-libc-str's lib/A/PSnpL3/RT_gxa_inst.v fm_vfprintf_snf_a_closed at N_img_asan, as fm's. seam_vfprintf_a's statement is unchanged. The sentences above name fm's addresses. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

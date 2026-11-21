@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainT5.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 9b9cb4d1f613) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainT5.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainT5.v (Quarantine::Drain walk set; file sha256 9b9cb4d1f613) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainT5.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the RETURN arm's LEAF - DIfaceR.drain_leaf_g at
-   MnEnq.acall_raw_em_x (the form MnDrain.de_drain_m_t takes, MnDrain.v:50) for the arm where Drain returns
+   MnEnq.acall_raw_em_x (the form MnDrain.de_drain_m_t takes, MnDrain.v:51) for the arm where Drain returns
    without recycling, assembled from what Drain's entry walk leaves at its return (YFgj.at_RETD, YFgj.v:295-306)
-   and the instance's re-quarantine field DMiface.di_requar_x (DMiface.v:209-215).
-   The leaf's three parts: DMspec.acall_post_x (DMspec.v:103-111), DIfaceR.acall_raw_x (DIfaceR.v:52-57) and the
+   and the instance's re-quarantine field DMiface.di_requar_x (DMiface.v:210-216).
+   The leaf's three parts: DMspec.acall_post_x (DMspec.v:104-112), DIfaceR.acall_raw_x (DIfaceR.v:53-58) and the
    errno / memnorm keeps.  Everything the walk writes is either the quarantine's own state (owned at the state
    before OR after the transfer, which is what di_qowned says of the header and the batch cells) or Drain's
    frame (scratch), so the frame clauses follow from the walk's YFgj.MEQ with DMdrainT2.win_in_dwin's inclusion.

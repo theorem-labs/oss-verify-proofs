@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-366, for
    libreac/fuzz_identity's ASan build (lib/A). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment H of LLVMFuzzerTestOneInput's ASan walk: the "any firmware value" block, 0x817bc..0x81878.
    seg_H of lib/A/Prog/LLVMFuzzerTestOneInput_inv.v, from inv_G_end to inv_H_end.
 
@@ -153,7 +154,7 @@ Hypothesis HMT0 : forall s s' : astate, mo_le MT s s' 0.
 Hypothesis HPD : tput_dec_spec B.
 Hypothesis HFWS : treac_identity_fw_str_spec B.
 Hypothesis ABCMP : abcmp_realizes SEGS B (SIGMA IS___interceptor_trampoline_bcmp).
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
   ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
   m_fds md' = m_fds md /\ m_fs md' = m_fs md.

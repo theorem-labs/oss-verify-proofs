@@ -9,7 +9,7 @@
    fuzz_preset.c:806). rq_crt_abs states the parameter-free bound RQ_crt t + cf_head <= 352,321,446, so any later
    value of cf_malloc_max above it is one lia step.
 
-   THE TERMS are the kit's (walkkit-next 99f596897b85, lib/A/PRH_FnCheck.v:178-220 and :377-406, PRH_FnPj.v:184-191,
+   THE TERMS are the kit's (walkkit-next, lib/A/PRH_FnCheck.v:178-220 and :377-406, PRH_FnPj.v:184-191,
    PRH_Charge.v:70, PRH_FnWriter.v:104, PRH_Reader.v:28 and :189, PRH_Base.v:178), copied below with their bodies;
    ck_strtod is the kit's prh_jr_strtod, and ReaderRes.jr_strtod is the same term (ck_strtod_res, by conversion).
 

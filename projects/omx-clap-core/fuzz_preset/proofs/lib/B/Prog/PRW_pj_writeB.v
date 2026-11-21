@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/WriteValueB_Base.v, with its module paths and module names changed; 2102 of its 2292 lines of code are new or changed and 1262 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image B' (#102 asan-ubsan pin d663f82d7f48, unstripped twin c90d4fa54d43), lane PjwBPort of
    a Theorem Labs lane: the program walk of pj_write (B' 0x872cc, 31 instructions) over the ONE image-B' program listing
    (lib/B/Listing_prog.v), generic in the image facts (Context PAImg) and in the allocator relation ARx
    (LAWS : AR_laws_x), concluding the kit's text tpj_write_specX for every depth n: pj_write_holds_B (below), and at the
    B' instance pj_write_holds_B_inst (PRW_pj_writeB_Inst.v, the image facts witnessed in PRW_pj_writeB_Wit.v).
    rule 24: proves pj_write (image B'); rule-24 CONFIRM (R24PjwB, 2026-10-30 09:55Z) in hand.
-   ported from lib/A/Prog/PRW_pj_write.v @ f75b9f6e6fa6 (pjw_holds_lc): how - a RELOCATION. MEASURED first, on the
+   ported from lib/A/Prog/PRW_pj_write.v (pjw_holds_lc): how - a RELOCATION. MEASURED first, on the
    #102 unstripped twins: pj_write is A' 0x86c10 and B' 0x872cc, both 124 bytes / 31 instructions, the SAME
    instruction sequence modulo addresses (the four differing words are the jal displacements to __asan_memset, put
    and fuzz_free and the addi lo12 of the auipc pair forming .str.3; both pairs form 0x21440 = "\n"), the same frame
@@ -21,7 +22,7 @@
    closed fact HWVF in pjw_walk states 192. The walk's lemma names stay the donor's (the pjw_ prefix), in this
    module's own namespace.
    THE DONOR'S HEADER, valid here word for word except where it names the image:
-   KIT: the kit's cut 7cdbb61b5fa0 (re-fitted on the batch kit's tip 44123abafeb7, merged forward onto the cut
+   KIT: the kit's cut (re-fitted on the batch kit's tip, merged forward onto the cut
    unchanged; the cut's blobs: PRH_Base, PRH_FnWriter
    d89d3c67b78c, PRH_FnAlloc 4d8aeba047e5): tpj_write_specX keys the run's strtod model (ReaderRes.jr_strtod), takes
    the closure without DW (prh_univ_closure B CTX0), the CONSUMER WINDOW prh_cons_from over its own events, its run
@@ -37,7 +38,7 @@
    YG01.admits_fix: no gap) and posts the BUDGETED fpostbm (PRH_Base.fpost_of_fpostb_fix reads it back); its arms
    transfer a position at E = [] (p = 0) or [HFr (n + cf_head)] (p <> 0). The put family's case 1 is the kit's form (a),
    which this walk does not use - both its calls are case 2.
-   ENGINE: the cut's (int102 f44822dff082's engine with the P'' set of the engine's univ-widening; YCbqG),
+   ENGINE: the cut's (int102's engine with the P'' set of the engine's univ-widening; YCbqG),
    listing of
    record: the cut's lib/B/Listing_prog.v c97cc46b3e13 / PAImg_prog.v 15fab93fe702.
    THE FLOAT STATE: the walk runs at the Section's fx (the ENTRY float state) up to write_value's return, which is at
@@ -85,7 +86,7 @@
    (LENGTH: the stack atom's range), 2 ^ 44 (LENGTH: the shadow span), 9 / 14 / 15 / 18 / 20 / 21 / 24 / 25
    (DERIVED: pj_write's own slots, counted from its entry), 65 / 80 / 81 / 82 / 83 (DERIVED: free atom bands of the
    symbolic environment). No ADDRESS.
-   Structural reference only (read, never Required or cited): a working branch e09c6006f5b
+   Structural reference only (read, never Required or cited): a working branch
    lib/A/Prog/pj_write.v (the old-framework walk of the ORIGINAL image). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -225,7 +226,7 @@ Hypothesis Hent : SIGMA AS_pj_write = BASE + AF_pj_write.
 (* R2's memset text at its entry, the memnorm row (YGcallMxmn.v blob b47cf7942c3d: YGcallMx.v's aintrin_realizes_x
    with the YAkMemnorm keep as its last post conjunct) *)
 Hypothesis AMS : YGcallMxmn.aintrin_realizes_xm SEGS B ARx OSet (SIGMA AS___asan_memset).
-(* the universe closure's parameter, as the cut's texts take it (cut 7cdbb61b5fa0: no DW) *)
+(* the universe closure's parameter, as the cut's texts take it (cut: no DW) *)
 Variable CTX0 : list (list Z).
 (* The batch kit's callee texts (lib/A/PRH_FnWriter.v blob d89d3c67b78c, lib/A/PRH_FnAlloc.v blob 4d8aeba047e5):
    S7bWriteValue's walk, WalkS7a's put walk, and the allocator lane's fuzz_free walk prove them. write_value is
@@ -1345,7 +1346,7 @@ destruct (prhWriter_grows st1 b) eqn:Hg.
   rewrite Ef, Ec in LJ. cbn [andb]. lia.
 Qed.
 
-(* the cut's post of tpj_write_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c at the cut 7cdbb61b5fa0,
+(* the cut's post of tpj_write_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c at the cut,
    :812-850, its `fun ly' S' Hp' W' regs' mem' md' =>` body), VERBATIM and named ONCE: pjw_walk carries it under the
    memory invariant, and pj_write_holds_B checks it against the cut's text by conversion *)
 Definition pjw_Q (rp_sm : list Z -> Z * Z) (rp_x : list Z) (rp_os : list (option nat * option nat * option nat))
@@ -2672,7 +2673,7 @@ psrr_branch_tok RUNI3 BR3 HS SHOK2 PJW_Bspan.
 Qed.
 End p.
 
-(* ---- THE CONTRACT: the cut's tpj_write_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c, cut 7cdbb61b5fa0,
+(* ---- THE CONTRACT: the cut's tpj_write_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c, cut,
    :773-850) with the ONE ruled ARGUMENT of pj_write's single fuzz_free call site (a Theorem Labs lane 08:06Z):
    tfuzz_free_specX (PRH_FnAlloc.v blob 4d8aeba047e5, :329) asks `p <> 0 -> YGcfRoomLive.ccnt24 S <=
    PresetLiveBounds.L24 + PresetLiveBounds.DRV` at its entry and nothing in pj_write's own text bounds it;

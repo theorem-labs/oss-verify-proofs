@@ -330,4 +330,4 @@ Proof.
 Qed.
 
 End T.
-(* rebuilt on the 50968be8342 statement set *)
+(* rebuilt statement set *)

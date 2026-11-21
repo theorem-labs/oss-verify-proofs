@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made from projects/cgif/cgif_file_fuzzer/proofs/lib/A/AE2k.v, with its module paths and addresses changed; 4 of its 42 lines of code are new or changed and 13 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YI16 YE00.
@@ -42,7 +43,7 @@ Definition FF_canary : Z := 0x5f7f90.
 Definition FF_mask : Z := 0x103a8.
 Definition FF_mask_val : Z := 0xafffff00000fffff.
 (* Theorem Labs, 2026-10-29: identity writes no file, so grant's no-file sink form applies
-   (ossv/recipes 48907dc7e8ca, projects/libreac/fuzz_grant/proofs/lib/A/AE2k.v:41,44-45). A_PATH / A_WB / A_RWA /
+   (projects/libreac/fuzz_grant/proofs/lib/A/AE2k.v:41,44-45). A_PATH / A_WB / A_RWA /
    A_TRAILER held port_core_refused_* markers - cgif's file-string addresses, for which identity has no
    counterpart - and the four string fields become 0. The owned environment cells move into tfib_owned;
    each address is confirmed BY SYMBOL in identity's own table, with the size the symbol declares:

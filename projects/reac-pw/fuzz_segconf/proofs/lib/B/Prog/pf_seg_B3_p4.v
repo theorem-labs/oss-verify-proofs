@@ -25,10 +25,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 414 of its 496 lines of code are new or changed and 4971 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B2.v, with its module names and addresses changed; 438 of its 521 lines of code are new or changed and 413 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B3_p2.v, with its addresses and numbers changed; 314 of its 401 lines of code are new or changed and 434 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B3 of reac_segconf_parse_file's
    walk, its last piece: 0x88148 (after check B#2) -> DONE (0x89114, the empty text) or HEAD (0x881f8, the first
    line). The B3 segment lane of the image-B G3 walk owner, 2026-10-30. ADAPTED from the image-A G3 walk owner's image-A segment walk lib/A/Prog/pf_a2.v
-   (commit 3f59c8d75ed4: seed, plain runs, region read-back, the exit cuts), re-derived on image B's
+   (seed, plain runs, region read-back, the exit cuts), re-derived on image B's
    code:
      0x88148 lbu a0,0(s11); sd s3,88(s1); srli a1,s3,3; sd a1,80(s1); 0x88158 bnez a0 -> 0x88160,
              else 0x8815c j DONE 0x89114 (t[0] = 0: the text is empty, s = [] since s has no NUL)

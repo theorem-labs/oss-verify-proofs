@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segment list). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import PropExec MState Mem Exec.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -74,7 +76,13 @@ Record node_sound : Prop := {
       m_halted mo' = Some code /\ sstep_cfg segs cfg (mkCfg ms mo) [ExitEv code (m_fs mo')] (SNext (mkCfg ms mo'));
 
   ns_progress : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
-      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo')
+      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo');
+
+  (* LPS 727298f3: the node's system call reads the same over every larger read-only backing
+     ([RomBase.sys_rob]; [Top.Realize.rz_node] and [Top.SafeReach.sr_node] ask it, so a walk over
+     a binary's own segments lifts to the run's segment list, [Top.RomStable]) *)
+  ns_rob : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
+      sys_rob segs (mkCfg ms mo)
 }.
 
 Fixpoint impl {R} (t : itree R) (Q : R -> machine_state -> Prop) (ms : machine_state) : Prop :=

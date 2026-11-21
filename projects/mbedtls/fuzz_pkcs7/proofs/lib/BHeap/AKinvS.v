@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the instruction-step case also proves the new sys_rob obligation, by RomBase.sys_rob_instr; the aevtS_ind2 step case introduces one more hypothesis). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -56,6 +57,7 @@ Proof.
       * exists (mkCfg ms1 mo1). split; [| exact A]. apply sstep_instr; [exact (ki_halted KL mo HK)| exact Hsvc| exact Hacc].
       * intros e st Hs. destruct (sstep_acc_inv segs _ _ _ _ _ _ Hsvc Hacc Hs) as [-> ->]. split; [reflexivity| congruence].
       * intros e c' Hs. destruct (sstep_acc_inv segs _ _ _ _ _ _ Hsvc Hacc Hs) as [_ E]. inversion E; subst. left. exact A.
+      * apply RomBase.sys_rob_instr. exact Hsvc.
     + right. eapply spinningJ_step; [exact Hsvc| exact Hacc| exact SP].
 Qed.
 
@@ -72,7 +74,7 @@ Proof.
   intros CS K P ms mo KL HK EV CONT.
   destruct (evtA_orS_K CS K P (fun _ => False) ms mo KL HK EV ltac:(intros; right; apply CONT; assumption)) as [A | SP]; [| exact SP].
   exfalso. clear - A. remember (mkCfg ms mo) as c. clear Heqc. revert c A.
-  apply aevtS_ind2; [intros c F; exact F|]. (intros c dd_H; ddestruct dd_H as (c' & _ & _ & F); intros _ _). exact F.
+  apply aevtS_ind2; [intros c F; exact F|]. (intros c dd_H; ddestruct dd_H as (c' & _ & _ & F); intros _ _ _). exact F.
 Qed.
 
 End GlueS.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap answers; the new spec_table rows). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Sys.SyscallTable.
@@ -79,8 +80,10 @@ apply Forall_cons; [ good_ungated (fun i : SyscallInput => exit_spec (in_arg i 0
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => exit_spec (in_arg i 0)) arm_nat_exit_group |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => set_tid_address_spec) arm_nat_set_tid_address |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => futex_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3)) arm_nat_futex |].
+apply Forall_cons; [ good_ungated (fun i : SyscallInput => set_robust_list_spec (in_arg i 1)) arm_nat_set_robust_list |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => nanosleep_spec (in_arg i 0) (in_arg i 1)) arm_nat_nanosleep |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1)) arm_nat_clock_gettime |].
+apply Forall_cons; [ good_ungated (fun i : SyscallInput => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1)) arm_nat_clock_getres |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => sched_setscheduler_spec (in_arg i 0) (in_arg i 1) (in_arg i 2)) arm_nat_sched_setscheduler |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => sched_getaffinity_spec (in_arg i 1)) arm_nat_sched_getaffinity |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => sched_yield_spec) arm_nat_sched_yield |].
@@ -120,6 +123,10 @@ apply Forall_cons; [ good_ungated (fun i : SyscallInput => getsockopt_spec (fd32
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => shutdown_spec (fd32 (in_arg i 0)) (int32 (in_arg i 1))) arm_nat_shutdown |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => sendmsg_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)) arm_nat_sendmsg |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => recvmsg_spec (fd32 (in_arg i 0)) (in_arg i 2)) arm_nat_recvmsg |].
+(* 08b1429 Run.v: [alloc_mark_sysnos_dispatched] gained a 215 (munmap) conjunct in SECOND
+   place, so 216/222/226 sit one [proj2] deeper (recipes/injected-table.md shape 3). munmap
+   stays ungated: [arm_nat_munmap] simulates it without the mark. [spec_table] gained 99, 114
+   and 287 (recipes/limsim-arms.md part 5). *)
 apply Forall_cons.
 { intros i m Hno Hmk Hle Hb. cbn [sa_no sa_spec] in *.
 rewrite (proj1 (alloc_mark_sysnos_dispatched i m) (eq_sym Hno)) in Hmk.
@@ -128,18 +135,18 @@ exact (brk_nat L i m Hmk Hle). }
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => munmap_spec (in_arg i 0) (in_arg i 1)) arm_nat_munmap |].
 apply Forall_cons.
 { intros i m Hno Hmk Hle Hb. cbn [sa_no sa_spec] in *.
-rewrite (proj1 (proj2 (alloc_mark_sysnos_dispatched i m)) (eq_sym Hno)) in Hmk.
+rewrite (proj1 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m))) (eq_sym Hno)) in Hmk.
 apply (sim1_reader L (fun i => mremap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3))).
 exact (mremap_nat MCLE L i m Hmk Hle Hb). }
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => clone_spec (in_arg i 0)) arm_nat_clone |].
 apply Forall_cons.
 { intros i m Hno Hmk Hle Hb. cbn [sa_no sa_spec] in *.
-rewrite (proj1 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m))) (eq_sym Hno)) in Hmk.
+rewrite (proj1 (proj2 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m)))) (eq_sym Hno)) in Hmk.
 apply (sim1_reader L (fun i => mmap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5))).
 exact (mmap_nat L i m Hmk Hle). }
 apply Forall_cons.
 { intros i m Hno Hmk Hle Hb. cbn [sa_no sa_spec] in *.
-rewrite (proj2 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m))) (eq_sym Hno)) in Hmk.
+rewrite (proj2 (proj2 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m)))) (eq_sym Hno)) in Hmk.
 apply (sim1_reader L (fun i => mprotect_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))).
 exact (mprotect_nat L i m Hmk Hle). }
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => madvise_spec (in_arg i 0) (in_arg i 1) (int32 (in_arg i 2))) arm_nat_madvise |].
@@ -147,6 +154,7 @@ apply Forall_cons; [ good_ungated (fun i : SyscallInput => accept4_spec (fd32 (i
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => wait4_spec (pid32 (in_arg i 0)) (in_arg i 1) (waitopts32 (in_arg i 2)) (in_arg i 3)) arm_nat_wait4 |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => prlimit64_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3)) arm_nat_prlimit64 |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2)) arm_nat_getrandom |].
+apply Forall_cons; [ good_ungated (fun i : SyscallInput => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5))) arm_nat_pwritev2 |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => clone3_spec (in_arg i 0) (in_arg i 1)) arm_nat_clone3 |].
 apply Forall_cons; [ good_ungated (fun i : SyscallInput => faccessat2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3)) arm_nat_faccessat2 |].
 apply Forall_nil.

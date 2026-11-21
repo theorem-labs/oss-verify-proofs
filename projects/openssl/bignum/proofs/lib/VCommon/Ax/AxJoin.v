@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the entry region). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -50,7 +50,7 @@ Definition kind_eqb (k1 k2 : rkind) : bool :=
   match k1, k2 with
   | KZero, KZero | KShadow, KShadow | KUnk, KUnk => true
   | KImg w1 i1, KImg w2 i2 => Bool.eqb w1 w2 &&& Nat.eqb i1 i2
-  | KEntry p1, KEntry p2 => (ph_addr p1 =? ph_addr p2)%N &&& (ph_ent p1 =? ph_ent p2)%N &&& (ph_num p1 =? ph_num p2)%N
+  | KEntry r1 p1, KEntry r2 p2 => Bool.eqb r1 r2 &&& (ph_addr p1 =? ph_addr p2)%N &&& (ph_ent p1 =? ph_ent p2)%N &&& (ph_num p1 =? ph_num p2)%N
   | _, _ => false
   end.
 

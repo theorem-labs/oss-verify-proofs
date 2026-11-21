@@ -29,7 +29,8 @@ Theorem ubsan_crealizes_of_cgo : forall (LS : lib_shape) (f : list byte -> list 
 Proof.
   intros LS f G GI HROOM HG GIL GI0 H [sp brk0 mbase rnd] inp lim Hentry Hinput Hlim.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
+  (* LPS 727298f3: [valid_entry_sv48]'s fifth conjunct, which [zlib_walk_crealizes] reads (as AgreeZlib.v) *)
+  destruct Hentry as [Hsp [Hbrk [Hmb [Hfits Hlau]]]].
   set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp) lim).
   assert (HG' : forall a, in_globals G a -> in_globals src0_G a) by (intros a h; exact (frame_G_src0 a (HG a h))).
   change (crealizes src0_msyms (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk0 mbase rnd lim inp)
@@ -39,7 +40,7 @@ Proof.
     (fun mem Hm => conj eq_refl (GI0 mem (G_img_mono src0segs G src0_G mem HG' Hm)))
     (fun fx j Hj => lib_contract_x_Rc_of_cgo src0_msyms (@zlib_API rc) (zlib_tables rc) f G src0_G frame_RELRO src0_R GI
       j LIBPC RA_LIB EMPTY LIB_STACK Hj HG' frame_RELRO_src0 (H rc fx j Hj))
-    sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinput Hlim).
+    sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hlau Hinput Hlim).
   unfold rc. apply ceil_of_top_run.
   unfold rc. reflexivity.
 Qed.

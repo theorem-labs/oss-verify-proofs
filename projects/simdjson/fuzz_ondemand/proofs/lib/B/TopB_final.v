@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the client's hand-off premise is taken for each CONFIG_RSEQ value over the hand-off states the start-up certificate computes. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -8,13 +9,13 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType St
 From OSSVerify.simdjson.fuzz_ondemand.images Require Import AsanUbsan.
 From OSSVerify.simdjson.fuzz_ondemand.images Require Import Plain.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.B Require Import RT_iface RT_iface2 RT_state RT_rep RT_malcore_stmt RT_refillstmt RT_sys_stmt RT_sys_fixed RT_sys_grant RT_sys_madvise RT_sys_munmap RT_refill RT_contracts RT_contracts2 RT_malsec RT_freestmt RT_drain_ldefs RT_drain_istmt RT_drain_fin RT_freeFin RT_dsec RT_drain_rhead RT_freeP D_client TopB_cert.
-From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan StartupHSBoth.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan BothStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib Require Import ProofBase TopLevelA.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Lib Require Import Cfg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Theorem base_both : forall CL : client_B,
-  (forall h ch, HS_both h = Some ch -> cl_hs_ok CL ch = true) ->
+  (forall (b : bool) h ch, HS_both (AP.rseq_z b) h = Some ch -> cl_hs_ok CL ch = true) ->
   impl_P_stmt ->
   strong_universal_error_free_T_scfg ACFG
     (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)
@@ -27,7 +28,7 @@ Proof.
 Qed.
 
 Theorem s3s_both : forall CL : client_B,
-  (forall h ch, HS_both h = Some ch -> cl_hs_ok CL ch = true) ->
+  (forall (b : bool) h ch, HS_both (AP.rseq_z b) h = Some ch -> cl_hs_ok CL ch = true) ->
   S3s_stmt_e AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs.
 Proof.
   intros CL HS_cl.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (STACK_SPAN as the guaranteed stack span in STARTF, and the string-end bound below USTACK_TOP in OPENF and OPENEDF). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
@@ -35,8 +36,8 @@ ASTA RT Σ (PMfd fds0 fs)
 (Z_to_bv 64 (Z.of_nat (length argvb))) (Z_to_bv 64 ap) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
 t3 t4 t5 t6 F fc a_main m)) c
 /\ ART RT Σ m /\ mem_inv bsegs m /\ CLX OUT_rep ERR_rep XENV LIB stdout_init m /\ argv_rep argvb m ap
-/\ stk bsegs m (rt_sp0 RT Σ - STACK_WIN) usp /\ sigma0_ok RT Σ usp
-/\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp
+/\ stk bsegs m (rt_sp0 RT Σ - STACK_SPAN) usp /\ sigma0_ok RT Σ usp
+/\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp
 /\ X1cn.frm0 fc.
 
 Definition OPENF (c : config) : Prop :=
@@ -47,7 +48,7 @@ ASTA RT Σ (PMfd fds0 fs)
 (Z_to_bv 64 path) (Z_to_bv 64 0) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11
 t3 t4 t5 t6 F fc e_open m)) c
 /\ MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok RT Σ usp
-/\ bytes_at bsegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16
+/\ bytes_at bsegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9
 /\ path_slack argvb m path /\ X1cn.frm0 fc.
 
 Definition OPENEDF (c : config) : Prop :=
@@ -57,7 +58,7 @@ ASTA RT Σ (PMfd (fd_insert fds0 (Z_to_bv 64 3) ent) fs)
 (ret_stF F fc (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1 (Z_to_bv 64 path)
 s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 3) m) c
 /\ MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok RT Σ usp
-/\ bytes_at bsegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16
+/\ bytes_at bsegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9
 /\ open_ent (path_b argvb) fs = Some ent /\ path_slack argvb m path /\ X1cn.frm0 fc.
 
 End DrvF.
@@ -93,8 +94,8 @@ ASTA RT Σ (PMfd fds0 fs)
 (Z_to_bv 64 (Z.of_nat (length argvb))) (Z_to_bv 64 ap) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
 t3 t4 t5 t6 F fc a_main m)) c
 /\ ART RT Σ m /\ mem_inv asegs m /\ CLX OUT_rep ERR_rep XENV LIB stdout_init m /\ argv_rep argvb m ap
-/\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) usp /\ sigma0_ok RT Σ usp
-/\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp
+/\ stk asegs m (rt_sp0 RT Σ - STACK_SPAN) usp /\ sigma0_ok RT Σ usp
+/\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp
 /\ X1cn.frm0 fc.
 
 Definition OPENF (c : config) : Prop :=
@@ -105,7 +106,7 @@ ASTA RT Σ (PMfd fds0 fs)
 (Z_to_bv 64 path) (Z_to_bv 64 0) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11
 t3 t4 t5 t6 F fc e_open m)) c
 /\ MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok RT Σ usp
-/\ bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16
+/\ bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9
 /\ path_slack argvb m path /\ X1cn.frm0 fc.
 
 Definition OPENEDF (c : config) : Prop :=
@@ -115,7 +116,7 @@ ASTA RT Σ (PMfd (fd_insert fds0 (Z_to_bv 64 3) ent) fs)
 (ret_stF F fc (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1 (Z_to_bv 64 path)
 s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 3) m) c
 /\ MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok RT Σ usp
-/\ bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16
+/\ bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9
 /\ open_ent (path_b argvb) fs = Some ent /\ path_slack argvb m path /\ X1cn.frm0 fc.
 
 End DrvF.

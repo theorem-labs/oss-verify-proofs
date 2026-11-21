@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_C1.v at a working branch 31d1eb57a40.
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_C1.v at a working branch.
    check_no_overread 0x80bd4: segment Q1 0x80c58 -> R1 0x80c94. `s3 := ~u1`; the UBSan check `bltu s3, s4` (0x80c5c,
    u1 + un would wrap) is dead: u1's block [u1, u1 + un + 18) lies below 2^64, so ~u1 >= un + 17 (cno_not_ge);
    `a0 := u1 + un`; the inline shadow check of the byte at a0 (inside u1's block, so it passes); `sb zero, 0(a0)` stores
@@ -42,8 +42,8 @@ Definition cnoC1_SH : list shent := [mkSHE 10 0 1].
 
 Section S. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-Hypothesis FB : FmB B.                                   (* FMW_seg.v:37: code addresses, GOT/cell values, statics not owned *)
-Hypothesis HB : TfibSyms B.                              (* YF0m.v:658 *)
+Hypothesis FB : FmB B.                                   (* FMW_seg.v:38: code addresses, GOT/cell values, statics not owned *)
+Hypothesis HB : TfibSyms B.                              (* YF0m.v:659 *)
 Hypothesis IMG : fm_img_facts tfibsegs B.                (* FMH_Fn.v:61 *)
 Hypothesis UNIV : fm_univ B.                             (* FMH_Fn.v:71: incl Tfib_universe (as_universe B) *)
 Hypothesis AMALLOC4 : amalloc04_rule tfibsegs B ameter_triv.   (* YC5d.v:57; ameter_triv YCbp.v:17, mo_ok = True *)

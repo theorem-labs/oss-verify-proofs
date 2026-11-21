@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the access_ok premise of tw_write_ret, and argv pointer bounds from the launch's string block below ed_top). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -381,6 +382,8 @@ Lemma tw_write_ret : forall segs regs pc mem rom buf bufs code,
                    ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
                    ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some buf ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
      to_wexit segs (mkst (regupd regs 10 (len_word (firstn n buf)))
@@ -390,17 +393,18 @@ Lemma tw_write_ret : forall segs regs pc mem rom buf bufs code,
                    ms_mem := mem; ms_rom := rom |}
     (buf :: bufs) code.
 Proof.
-  intros segs regs pc mem rom buf bufs code H17 H10 Hr Hnb Hcont.
+  intros segs regs pc mem rom buf bufs code H17 H10 Hr Hok Hnb Hcont.
   eapply tw_write.
   - cbn [ms_svc_pending]. reflexivity.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_0. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_1, arg_reg_2. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_1, arg_reg_2. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. apply Hcont; assumption.
 Qed.
 
-(* [comment removed for export] *)
+(** Exit with an arbitrary small code at the raw ecall post-state. *)
 Lemma tw_exit_coden : forall segs regs pc mem rom (c : word),
   bv_unsigned (getr regs 17) = 93%Z ->
   reg_get regs 10 = c -> (bv_unsigned c < 256)%Z ->
@@ -421,11 +425,23 @@ Proof.
   - left. exact H17.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ================================================================= *)
+(* Generic argv-pointer bounds                                       *)
+(* ================================================================= *)
 
-(* [comment removed for export] *)
+(** Argv string [k] lies between [sp] and the stack VMA's end.
+
+    THE BOUND IS NOW EXACT rather than a slack constant.  Under the
+    launch conjunct argv[0] sits at [top - 8 - L]
+    ([CatExec.u_cat_string_base]) and string [k] starts
+    [total_arg_bytes_nat (firstn k av)] above it, so with its own bytes
+    and its NUL it still ends at or below [top - 8]
+    ([CatExec.total_arg_bytes_firstn_within]).  [sp] is below that by
+    the head [C] ([CatExec.launch_string_base_arith]).  The old
+    [argv_layout_slack] over-approximation and the four arithmetic
+    cores that fed it are gone: they existed to keep [lia] out of the
+    multi-million-cell [valid_argv] literals, which this proof never
+    looks at. *)
 Definition argv_layout_slack : Z := 4300000%Z.
 
 (* [comment removed for export] *)
@@ -450,49 +466,40 @@ Local Lemma argv_final_arith : forall s m l : Z,
   (s <= s + m)%Z /\ (s + m + l + 1 < 2^64)%Z.
 Proof. intros. lia. Qed.
 
-Lemma argv_ptr_bounds : forall (sp : word) av ev k,
-  valid_argv av -> valid_envp ev -> (k < length av)%nat ->
-  (bv_unsigned sp + argv_layout_slack < 2^64)%Z ->
-  (bv_unsigned sp <= bv_unsigned (cat_argv_ptr sp av ev k))%Z /\
-  (bv_unsigned (cat_argv_ptr sp av ev k) + Z.of_nat (length (nth k av [])) + 1 < 2^64)%Z.
+Lemma argv_ptr_bounds : forall v inp mbase (sp brk : word) draw k,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  (bv_unsigned sp
+   <= bv_unsigned (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+                     (in_execfn inp) k))%Z
+  /\ (bv_unsigned (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+                     (in_execfn inp) k)
+      + Z.of_nat (length (nth k (in_argv inp) [])) + 1 < 2 ^ 64)%Z.
 Proof.
-  intros sp av ev k Hva Hve Hk Hsp.
-  pose proof (valid_argv_len av Hva) as HavZ.
-  pose proof (valid_argv_str_len av k Hva Hk) as HnthZ.
-  destruct Hva as [Hlen [Htot [Hstr Hnz]]].
-  destruct Hve as [Helen _].
-  assert (HevZ : (Z.of_nat (length ev) <= 256)%Z) by exact Helen.
-  assert (HtotZ : (Z.of_nat (total_arg_bytes_nat (firstn k av)) <= 2097152)%Z).
-  { rewrite total_arg_bytes_Z in Htot.
-    pose proof (total_arg_bytes_firstn_le k av). lia. }
-  assert (HA : (Z.of_nat (cat_struct_size av ev) <= 10424)%Z).
-  { unfold cat_struct_size, auxv_size.
-    repeat (rewrite !Nat2Z.inj_add || rewrite !Nat2Z.inj_mul).
-    change (Z.of_nat 8) with 8%Z. change (Z.of_nat 1) with 1%Z.
-    change (Z.of_nat 160) with 160%Z.
-    apply argv_struct_arith;
-      solve [ exact HavZ | exact HevZ | apply Nat2Z.is_nonneg ]. }
-  assert (Hptr : cat_argv_ptr sp av ev k
-    = sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  { rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
-    rewrite nat_to_word_add_merge. reflexivity. }
-  set (n := (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))%nat) in *.
-  assert (HnZ : (Z.of_nat n <= 2107576)%Z)
-    by (unfold n; rewrite Nat2Z.inj_add; exact (argv_sum_arith _ _ HA HtotZ)).
-  assert (Hu : bv_unsigned (sp + nat_to_word n) = (bv_unsigned sp + Z.of_nat n)%Z).
-  { unfold nat_to_word. rewrite bv_add_unsigned, Z_to_bv_unsigned.
-    rewrite bv_wrap_add_idemp_r, bv_wrap64_mod.
-    apply Z.mod_small.
-    pose proof (u64_range sp) as Hu64.
-    unfold argv_layout_slack in Hsp.
-    exact (argv_mod_arith _ _ (proj1 Hu64) (Nat2Z.is_nonneg n) HnZ Hsp). }
-  rewrite Hptr, Hu.
-  unfold argv_layout_slack in Hsp.
-  exact (argv_final_arith _ _ _ (Nat2Z.is_nonneg n)
-           (Nat2Z.is_nonneg (length (nth k av []))) HnZ HnthZ Hsp).
+  intros v inp mbase sp brk draw k Hlaunch Hk.
+  pose proof (launch_string_base_arith v inp mbase sp brk draw Hlaunch) as HA.
+  pose proof (u_cat_string_base v inp mbase sp brk draw Hlaunch) as Hu.
+  pose proof (u64_range sp). pose proof (u64_range (ed_top draw)).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Nat2Z.is_nonneg
+    (total_arg_bytes_nat (firstn k (in_argv inp)))).
+  assert (Hstr : (Z.of_nat (total_arg_bytes_nat (firstn k (in_argv inp)))
+                  + Z.of_nat (length (nth k (in_argv inp) [])) + 1
+                  <= Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                 (in_execfn inp)))%Z).
+  { pose proof (total_arg_bytes_firstn_within (in_argv inp) k Hk) as Hw.
+    unfold launch_string_bytes. rewrite length_flatten_strings.
+    pose proof (Nat2Z.is_nonneg (length (flatten_strings (in_envp inp)))).
+    pose proof (Nat2Z.is_nonneg (length (in_execfn inp))).
+    lia. }
+  rewrite (cat_argv_ptr_offset _ _ _ _ k Hk), word_add_nat_Z2bv, Hu.
+  rewrite u_Z2bv_lt by lia.
+  split; lia.
 Qed.
 
-(* [comment removed for export] *)
+(** Jalr with rd = x0 (RISC-V [ret] / tail jump) and the target named.
+    (No [align4_jalr] hypothesis: the ISA model has no jump alignment check.) *)
 Lemma step_jalr_x0 : forall segs regs pc mem rom w rs1 (imm : bv 12) tgt,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Jalr 0 rs1 imm, 4%Z) ->

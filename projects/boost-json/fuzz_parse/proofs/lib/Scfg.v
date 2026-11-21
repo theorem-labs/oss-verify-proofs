@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 
 From LinuxProcessSemantics.LinuxProcessSem Require Import Run.
@@ -28,7 +29,6 @@ Lemma injected_arm_none_66 : ltac2:(zQ "50!ic!l1!l8!n5!na@3$3@1$2$0@1$4+k2@1$1$0
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Lemma injected_arm_none_96 : ltac2:(zQ "50!ic!l1!l8!n5!na@3$3@1$2$0@1$4+m0@1$1$0").   Proof. reflexivity. Qed. (* [comment removed for export] *)
-Lemma injected_arm_none_215 : ltac2:(zQ "50!ic!l1!l8!n5!na@3$3@1$2$0@1$4+t7@1$1$0"). Proof. reflexivity. Qed. (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 Lemma injected_family_off_none : ltac2:(zQ "d0!n5!ic!l1!o8!of!l8!r0!r7!na!s4!hg8!hh7!hjf>3cfg$7>1i$a>0@3$0@1$5$1@1$8@2$c@1$6#k0@1$b^1@1$2$1@3$0$3@2$9^3^2$4").
@@ -52,6 +52,11 @@ Lemma injected_family_off_mmap : ltac2:(zQ "b0!n5!o8!ho3!r0!hoa!r7!s4!hp5!hg8!hh
 Proof. intros cfg i H. unfold Run.injected_family_off. rewrite H. reflexivity. Qed.
 
 Lemma injected_family_off_mprotect : ltac2:(zQ "b0!n5!o8!ho3!r0!hoa!r7!s4!hp5!hg8!hh7!hjf>3cfg$5>1i$8>0@3$0$4@2$a@1$3#k0@1$9^1+u2@3$0$1@2$6^3^2@1$2@1$7^3").
+Proof. intros cfg i H. unfold Run.injected_family_off. rewrite H. reflexivity. Qed.
+
+(* 08b1429 gives munmap (215) an injected FamAlloc arm with munmap_errnos. *)
+Lemma injected_family_off_munmap : forall cfg i,
+  bv_unsigned (in_sysno i) = 215%Z -> Run.injected_family_off cfg i = negb (Run.sc_alloc cfg).
 Proof. intros cfg i H. unfold Run.injected_family_off. rewrite H. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -94,5 +99,9 @@ Section ScfgFacts.
   Lemma family_off_mprotect_true {AF : AllocForced SC} : forall i,
     bv_unsigned (in_sysno i) = 226%Z -> Run.injected_family_off the_scfg i = true.
   Proof. intros i H. rewrite (injected_family_off_mprotect _ _ H), alloc_forced. reflexivity. Qed.
+
+  Lemma family_off_munmap_true {AF : AllocForced SC} : forall i,
+    bv_unsigned (in_sysno i) = 215%Z -> Run.injected_family_off the_scfg i = true.
+  Proof. intros i H. rewrite (injected_family_off_munmap _ _ H), alloc_forced. reflexivity. Qed.
 End ScfgFacts.
 (* [comment removed for export] *)

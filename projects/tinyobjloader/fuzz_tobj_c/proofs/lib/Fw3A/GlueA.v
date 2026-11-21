@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ASan malloc invariant's added conjunct named in its destruct patterns and kept). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -205,9 +206,9 @@ Qed.
 Lemma MI_prepay : ltac2:(tb__ "0|2|
 S40S0S13Q40M0A1M1A1G1S5cVsegs;R3R2A3S18S50G1R2R3A3A1S16S2eS4aS14G0R3A2S3fA2Z0A3S16S1S44R4S43R6A1A2S4A3S4bS5dR7R6A2S3fA2S5cVsegs;R8S2G1R6R7A3A3F_;F_;F_;F_;F_;Fp;Ftp;Fmd;").
 Proof.
-  intros md tp p (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm) Hnin Hal Hlz Hroom.
+  intros md tp p (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd) Hnin Hal Hlz Hroom.
   split; [exact HW|]. split; [constructor; assumption|]. split; [exact Hmat|].
-  split; [intros q Hq; right; exact (Hsub q Hq)|]. split; [|split; [exact Hlc | split; [exact Hivs | split; [exact Hlm|]]]].
+  split; [intros q Hq; right; exact (Hsub q Hq)|]. split; [|split; [exact Hlc | split; [exact Hivs | split; [exact Hlm| split; [|exact Hrd]]]]].
   - pose proof (paid_cons_le md p tp). unfold headroom in Hroom. lia.
   - intros q [<-|Hq]; [|exact (Htm q Hq)]. split; [exact Hal|].
     unfold page_in_ranges in Hlz. apply existsb_exists in Hlz as ([lo sz] & Hin & Hb). cbn [fst snd] in Hb.

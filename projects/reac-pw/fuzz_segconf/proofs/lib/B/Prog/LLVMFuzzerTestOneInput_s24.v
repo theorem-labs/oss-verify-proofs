@@ -3,14 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: segment F of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86a3c .. 0x86a60): the three frees of the words blocks (pointers reloaded from sp + 120 .. 136) and the latch s1 + 1 <> 32 back to the loop head or out to the second rec_clear, the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s71.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (pb_wcb: run, branch, exit) and A/ACh6.v (a segment statement proved from the statements of the points it leaves to). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_s71.v, with its module paths, module names and numbers changed; 1941 of its 2010 lines of code are new or changed and 315 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): segments S16 .. S20
    of the walk of the test harness's entry function LLVMFuzzerTestOneInput (0x85e50 .. 0x85ec4): the two declared
    calls, the four frees of mt, tab, m and c, and the store that puts n out of scope.
 
    THE FORM: the frees (S17, S18, S19 and S16's free(mt)) follow the image-B harness walk of plugin-hostd/fuzz_command
-   (lib/B/Prog/LLVMFuzzerTestOneInput_s70.v and _s71.v at origin/ossv/recipes 3abc3740de97: the free step as a lemma
+   (lib/B/Prog/LLVMFuzzerTestOneInput_s70.v and _s71.v: the free step as a lemma
    of its own, s24_free_at, and each segment an application of it). S16's two program calls and S20's shadow store
-   are the image-A twin's (image A's S16 .. S20 commit 68d839b8d799, lib/A/Prog/LLVMFuzzerTestOneInput_s24.v and its
+   are the image-A twin's (image A's S16 .. S20, lib/A/Prog/LLVMFuzzerTestOneInput_s24.v and its
    kit _s24k.v, ported here as the k24_* lemmas), over image B's own runs (s16_run1, s16_runC, s16_free3) and image
    B's cut statements (lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, image B's cut-statement lane). The image facts
    lt_img needs after a call come from the image-B listing owner's per-image record SegRecBase.seg_img_facts, and the
@@ -1136,7 +1137,7 @@ Qed.
 
 
 (* ============================ the S16 kit (image B port of the image-A twin's kit) ============================ *)
-(* The image-A twin's kit for segments S16 .. S20 (image A's S16 .. S20 commit 68d839b8d799,
+(* The image-A twin's kit for segments S16 .. S20 (image A's S16 .. S20,
    lib/A/Prog/LLVMFuzzerTestOneInput_s24k.v lines 1-892, everything before its free part), ported to image B with
    every s24_ / s24m_ / s24n_ name renamed k24_ / k24m_ / k24n_. Not ported, because this file has them with the
    same statement: s24_vlans, s24m_nth_firstn, s24m_nth_skipn, s24_hblk (here s24_hblk_of_AR), s24_aview_wrap and
@@ -1808,7 +1809,7 @@ Proof.
 Qed.
 
 (* ============================== S16 0x85e50 .. 0x85e98 ============================== *)
-(* the image-A twin's lt_seg_S16 (image A's S16 .. S20 commit 68d839b8d799, lib/A/Prog/LLVMFuzzerTestOneInput_s24.v),
+(* the image-A twin's lt_seg_S16 (image A's S16 .. S20, lib/A/Prog/LLVMFuzzerTestOneInput_s24.v),
    over image B's runs s16_run1 / s16_runC / s16_free3 and the twin's kit as k24_* *)
 Theorem lt_seg_S16 : lt_seg_S16_stmt B MT.
 Proof.
@@ -2071,7 +2072,7 @@ Qed.
    shadow byte SH(FR) + 32 (base atom 33) and the three read-only slots 16(s1), 24(s1) (FR) and 184(s1) (SH(FR)),
    base s1 (atom 9). The run's shadow span is (0, 0): the five instructions run no instrumented check, and the write
    window lies in the shadow band, which sh_static_ok's cells_safe_b asks the span to miss (image A's S16 .. S20
-   walk, the same segment at 0x85c34, commit 68d839b8d799, s24p_span) *)
+   walk, the same segment at 0x85c34, s24p_span) *)
 Definition s20_rsh : YP09.region := YP09.mkRegion (Some 33%nat) 32 33 32 33 [].
 Definition s20_rsl : YP09.region := YP09.mkRegion (Some 9%nat) 16 192 0 0
   [YP09.mkChunk 16 (CVal 8 (SOff 32 0)); YP09.mkChunk 24 (CVal 8 (SOff 32 0));

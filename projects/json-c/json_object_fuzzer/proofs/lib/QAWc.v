@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo at the window floor: H6_gs takes QrOY.hiA_jo's floor fact r8 (BOTJ <= stk_floor <= TOPJ), from QcGV). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
-From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3 QcGV.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QCcH. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q0Ek.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QbFI. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qwm6.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QZsi. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qhd4. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QYZ0.
@@ -44,10 +45,12 @@ Variable r4 : Q6q3.alloc_ceiling <= BOTJ /\ BOTJ mod 8 = 0 /\ BOTJ <= TOPJ.
 Variable r5 : Q6q3.alloc_ceiling < TOPJ /\ TOPJ <= 2^47.
 Variable r6 : TOPJ + 64 <= BAUX.
 Variable r7 : TOPJ + 64 <= QCrt.ae_stack_top RE + 4096.
+(* the interface's stack bottom: the window floor, at or above ASan's stack bottom BOTJ *)
+Variable r8 : BOTJ <= QcGV.stk_floor /\ QcGV.stk_floor <= TOPJ.
 Hypothesis BOT_cap : BOTJ <= 0x7fffff800000.
 Hypothesis BOT_near : BOTJ <= Q6q3.alloc_ceiling + 4096.
 
-Definition H6_gs : QZsi.heap_iface_A Qwm6.Mq4.A4L := QrOY.hiA_jo LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7.
+Definition H6_gs : QZsi.heap_iface_A Qwm6.Mq4.A4L := QrOY.hiA_jo LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 r8.
 #[local] Notation HIx := (Qhd4.hi5_of_v6 Qwm6.Mq4.A4L H6_gs).
 #[local] Notation BANDP := (QJny.BANDP BOTJ (proj1 r4) BOT_cap).
 

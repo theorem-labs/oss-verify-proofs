@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the throw path's run is checked at both CONFIG_RSEQ values, from a start state that holds the auxv walk's keys for each. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -18,6 +19,6 @@ Definition el_hcs_bbegin : list hcellA := [(0, 8%nat, HVopq); (8, 8%nat, HVopq);
 Definition el_xr_bbegin : xregs_exit := [(18%nat, EVar 51); (19%nat, EVar 50); (20%nat, EVar 49); (21%nat, EVar 21); (24%nat, EVar 24); (25%nat, EVar 25); (26%nat, EVar 26); (27%nat, EVar 27)].
 Definition el_xk_bbegin : xstack_exit := [(40, ELit 0xb27c4); (32, EVar 53); (24, EVar 52)].
 
-Lemma xr_bbegin_ok : forall uw : bool,
-  exit_okA 48 el_xr_bbegin el_xk_bbegin (xautoXA 48 el_IT_bbegin XS_END_A XSA_FUEL XSA_K (xs_ss0A 48 el_hcs_bbegin 0xb548c uw)) = true.
-Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
+Lemma xr_bbegin_ok : forall uw b : bool,
+  exit_okA 48 el_xr_bbegin el_xk_bbegin (xautoXA 48 el_IT_bbegin XS_END_A XSA_FUEL XSA_K (xs_ss0A 48 el_hcs_bbegin 0xb548c uw b)) = true.
+Proof. intros [|] [|]; vm_cast_no_check (eq_refl true). Qed.

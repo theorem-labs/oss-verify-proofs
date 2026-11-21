@@ -4,22 +4,23 @@
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v (a walk) and ACa2.v (a class-1 side-stack frame): tnumber_spec of lib/A/Prog/number_c.v, from number's entry (0x8e430) through __asan_stack_malloc_0 and strtol to strtol's return, then numberB.v's n_segB. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberA.v, with its module paths, module names and numbers changed; 1350 of its 1544 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: refuse's walk on reac-pw/fuzz_segconf's ASan image A (fuzz_segconf.asan,
-   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberA.v at origin/ossv/recipes
-   501c0d516c69 (number: a class-0 side-stack frame released inline): the entry to the call of
+   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberA.v
+    (number: a class-0 side-stack frame released inline): the entry to the call of
    __asan_stack_malloc_0 (0x88e30), the frame and its poisoning, the inline checks of c->refused, c->n_refusals
    and c->reading[0], and the branches up to the snprintf calls (0x88f5c, 0x88f74) and the n_refusals >= 8 exit
    (0x88efc -> 0x88fc4). The refuse walk, 2026-10-30. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/refuse_a.v, with its module paths and module names changed; 47 of its 84 lines of code are new or changed and 1507 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* refuse (reac_segconf.c:30-48) on reac-pw/fuzz_segconf's ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256
    c3796c0b38f3..., twin 80e82127e8ca; 0x892f8 .. 0x8963c, 210 instructions; a class-0 side-stack frame; 5
    instrumented checks; 5 UBSan trap branches; wrapper_snprintf twice and wrapper_vsnprintf once): the walk proving
-   refuse_contract (lib/B/Prog/refuse_c.v, the B copy of the image-A owner's image-independent text, closed against G3 FINAL
-   at 6f783602b5e3) at image B's numbers (lib/B/Prog/SegInstB.v). The image-B refuse walk lane of the image-B G3 walk owner, 2026-10-30.
+   refuse_contract (lib/B/Prog/refuse_c.v, the B copy of the image-A owner's image-independent text, closed against G3 FINAL)
+   at image B's numbers (lib/B/Prog/SegInstB.v). The image-B refuse walk lane of the image-B G3 walk owner, 2026-10-30.
 
-    proves function refuse (reuse search, rule 24: origin/main 6e24fa4d602c, origin/ossv/recipes 3abc3740de97, origin/ossv/candidates ee89628c9971, origin/release/pau-projects-recipes b6a0088adcb4, the earlier proof delivery and the working heads, by name and by the image-B address 0x892f8 (index and path-scoped git grep); confirmed by the rule-24 checker 2026-10-30T16:55:47Z; the result is recorded with the commissioning brief).
-   Verdict: none released; ADAPTED from the image-A G3 walk owner's image-A walk of refuse (commit 781e28832d34:
+    proves function refuse (reuse search, rule 24:, the earlier proof delivery and the working heads, by name and by the image-B address 0x892f8 (index and path-scoped git grep); confirmed by the rule-24 checker 2026-10-30T16:55:47Z; the result is recorded with the commissioning brief).
+   Verdict: none released; ADAPTED from the image-A G3 walk owner's image-A walk of refuse (
    lib/A/Prog/refuse_f.v, refuse_pft.v, copied as lib/B/Prog/refuse_f.v / refuse_pft.v) and fuzz_command's
-   released ASan+UBSan walks of number and check_reply (origin/ossv/recipes 501c0d516c69, lib/B/Prog/numberE.v,
+   released ASan+UBSan walks of number and check_reply (lib/B/Prog/numberE.v,
    numberA.v, numberB.v, numberR.v, check_reply_s4.v), re-derived on image B's code
    (refuse.fuzz_segconf.asan-ubsan.s).
 

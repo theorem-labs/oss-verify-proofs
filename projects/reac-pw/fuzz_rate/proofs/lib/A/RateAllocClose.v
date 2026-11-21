@@ -1,10 +1,10 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RoleAllocClose.v at fa745625e7df, for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RoleAllocClose.v, for reac-pw/fuzz_rate
    image A: fuzz_rate's descriptor count; names role_* -> rate_*; module paths changed. *)
 (* The allocator and memcpy parts of fuzz_rate's ASan image (image A), closed at the image's symbol table
    B := AD2l.TfibB: the slots H_ALLOC_MALLOC / H_ALLOC_FREE / H_RT_MEMCPY of lib/A/RateClose.v (Section asan). fuzz_rate's
    start-up depot holds traces (57 registered globals, none with an ODR indicator; depot_has_trace = true), so the
-   AF0w / AF0q / AD2l / AD2m these lemmas apply are the relocated depot-true texts (libreac/fuzz_scene's,
-   origin/ossv/recipes 6ebe35ba632; the same applications as fuzz_scene's lib/A/SceneAlloc.v and libreac/fuzz_ctrl's
+   AF0w / AF0q / AD2l / AD2m these lemmas apply are the relocated depot-true texts (libreac/fuzz_scene's,;
+   the same applications as fuzz_scene's lib/A/SceneAlloc.v and libreac/fuzz_ctrl's
    lib/A/CtrlClose.v:144-146): each lemma is
    `forall B, TfibSyms B -> (forall t, as_dhash B t = tfib_dhash t) -> ...` (AF0w.v:46 tfib_amalloc_realizes,
    AF0q.v:14 afree_realizes_closed) or `forall B, TfibSyms B -> ...` (AD2m.v:18 tfib_AICPY), with TfibSyms TfibB from

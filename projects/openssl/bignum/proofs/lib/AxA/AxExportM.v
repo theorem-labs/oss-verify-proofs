@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger, the run's segment list and the vDSO). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -143,14 +144,28 @@ Proof.
   destruct (r_budget _ _ _ _ _ _ _ HR) as [Hu _]. cbn [cfg_model] in Hu. rewrite vm_backing_used_split in Hu. unfold page_size in Hu. lia.
 Qed.
 
-Theorem ex_misc : vm_reserved (m_vmmaps model) = segments_reserved segs /\ vm_limit (m_vmmaps model) = LIM
+(* The first conjunct WAS [vm_reserved (m_vmmaps model) = segments_reserved segs], which
+   is exactly what [mr_res] used to say.  At the revision [mr_res] is
+     exists rx, vm_reserved (m_vmmaps m) = segments_reserved segs ++ rx
+                /\ (length rx <= 2)%nat /\ live_bytes rx <= 0x14000
+                /\ Forall (fun q => 0x154500000000 <= bas q) rx
+   (VCommon/Ax/AxModelRel.v:48-51): [segments_reserved] gained
+   [filter (fun s => negb (seg_kernel_map s))] (LPS@75d69e00 Run.v:253-254) while the
+   model is built over [run_segments], whose vDSO tail [init_reserved] puts back, so the
+   equality on the nose is false at entry.  This conjunct is restated in mr_res's own
+   shape -- the same four facts, not fewer -- so nothing here is weakened; it is the
+   model fact that moved. *)
+Theorem ex_misc : (exists rx, vm_reserved (m_vmmaps model) = segments_reserved segs ++ rx
+                              /\ (length rx <= 2)%nat
+                              /\ live_bytes rx <= 0x14000
+                              /\ Forall (fun q => 0x154500000000 <= bas q) rx)
+  /\ vm_limit (m_vmmaps model) = LIM
   /\ m_fs model = fs0 /\ m_halted model = None.
 Proof.
-  destruct (r_budget _ _ _ _ _ _ _ HR) as [_ Hl]. repeat split.
-  - exact (mr_res segs fs0 ρ _ model HM).
-  - exact Hl.
-  - exact (mr_fs segs fs0 ρ _ model HM).
-  - exact (r_halted _ _ _ _ _ _ _ HR).
+  destruct (r_budget _ _ _ _ _ _ _ HR) as [_ Hl].
+  split; [exact (mr_res segs fs0 ρ _ model HM)|].
+  split; [exact Hl|].
+  split; [exact (mr_fs segs fs0 ρ _ model HM) | exact (r_halted _ _ _ _ _ _ _ HR)].
 Qed.
 
 End ExportM2.

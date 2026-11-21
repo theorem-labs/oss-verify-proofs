@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed asan0_img_facts; internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.jsoncons.fuzz_json_cursor.images Require Import AsanUbsan.
@@ -145,4 +146,7 @@ Proof.
   - rewrite asan0_res_sizes. reflexivity.
   - cbn [rw_lo rw_len ASAN0]. split; [lia|]. intros m x Hx. apply asan0_rw_window. lia.
   - exact asan0_shadow_ok.
+  - (* NEW field [if_resx] (AsanInitK): the table's 2 extra
+       reserved intervals of at most 20 pages; ASAN0 sets n_resx 2, p_resx 20 *)
+    split; vm_compute; lia.
 Qed.

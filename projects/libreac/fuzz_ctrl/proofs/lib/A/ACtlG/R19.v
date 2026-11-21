@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v, with its module paths and module names changed; 336 of its 364 lines of code are new or changed and 938 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R19.v -- GLUE for stage seg_R19 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:702).  Written by a Theorem Labs lane; single writer.  The pattern is
    glue-pattern.md (a working note, not in this delivery) (steps G1-G5), the worked example lib/A/ACtlG/A5.v.
@@ -69,7 +70,7 @@
    rt_of_core_C is CITED, not assumed: A.ProgWorldRtC.rt_of_core_C (a Theorem Labs lane), at FP := [].  Needed for the
    wrapper's five runtime cells (REAL_BCMP, REAL_MEMCMP, GOT_CF, CF + 254, CF + 255), which ctl_rt_C does not carry.
    Route (C): no VIS0 / OWNED_RO (there were none in this file); the cut's ctl_rt_C is opened, never the universal form.
-   KitMem (lib/A/ACtlG/KitMem.v, a working branch 0a537d950be, blob 81524d6c608): kitmem_own6,
+   KitMem (lib/A/ACtlG/KitMem.v, a working branch, blob 81524d6c608): kitmem_own6,
    kitmem_stk_of_journal, kitmem_spill_munch, kitmem_frac_munch, kitmem_not_outside, kitmem_awr_win.
    No _of_F_bounded corollary (R19F has none, segment-F-premises-A.tsv rows R19).
 
@@ -80,8 +81,8 @@
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are YK11 / YG0d-qualified everywhere.  Check:
      grep -nE '(^|[^.A-Za-z_])(mkst|getr|seg_rom|cfg_at)\b' lib/A/ACtlG/R19.v   -- hits only inside comments.
 
-   BUILD STATE (route (C), type-check): rc=0 on a working branch (a working branch 1899bed1aee merged) through
-   cb (BASE row 23b918fe0c2e, a build machine), no substitution; the build of record
+   BUILD STATE (route (C), type-check): rc=0 on a working branch (a working branch merged) through
+   cb (BASE row, a build machine), no substitution; the build of record
    (cbrec) is named in the commit.  Print Assumptions glue_seg_R19 = Rocq primitives + functional_extensionality_dep.
    No Axiom, no Parameter, no Admitted, no admit. *)
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the encoded statements written out in plain text, the using attributes dropped and doc comments added; the stack window starts at the new wok_lo, with win_lo_le_wok_lo, stack_zero, wfJ_stack_zero and stack_zero_in_win added and store_ok_cmem_win bounded by wok_lo; cmem_init restated over the whole input with the launch premise and the launch's zero window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -25,8 +26,10 @@ Ltac2 gd_tbl_MemSplit () : Init.string Init.list := ["Corelib.Init.Datatypes.lis
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma wbytes_inside : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Pbs,(0.(1.&8.))Pm,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Px,(1.&40.)P,(3.(4.(5.&40.R2.)(6.(7.(1.&8.)R4.)))(8.+2.+40.))P,(9.(3.(5.&40.R3.)(5.&40.R2.))(:.(5.&40.R2.)(4.(5.&40.R3.)(6.(7.(1.&8.)R5.)))))(;.(2.(1.&8.))(<.R5.R4.R6.R3.)(=.(1.&8.)(>.(1.&8.)(?.(10.(5.&40.R3.)(5.&40.R4.)))R6.(11.&8.=))))")
-(* [comment removed for export] *).
+Lemma wbytes_inside : forall bs m (a x : word),
+  bv_unsigned a + Z.of_nat (length bs) <= 2^64 ->
+  bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat (length bs) ->
+  wbytes m a bs x = Some (nth (Z.to_nat (bv_unsigned x - bv_unsigned a)) bs (Z_to_bv 8 0)).
 Proof.
   induction bs as [|b rest IH]; intros m a x Hnw Hx; [cbn in Hx; lia|].
   cbn [wbytes length] in *.
@@ -48,15 +51,18 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma wbytes_outside : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Pbs,(0.(1.&8.))Pm,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Px,(1.&40.)P,(3.(4.(5.&40.R2.)(6.(7.(1.&8.)R4.)))(8.+2.+40.))P,(12.(:.(5.&40.R2.)(5.&40.R3.))(3.(4.(5.&40.R3.)(6.(7.(1.&8.)R5.)))(5.&40.R2.)))(;.(2.(1.&8.))(<.R5.R4.R6.R3.)A1.R5.R3.)")
-(* [comment removed for export] *).
+Lemma wbytes_outside : forall bs m (a x : word),
+  bv_unsigned a + Z.of_nat (length bs) <= 2^64 ->
+  (bv_unsigned x < bv_unsigned a \/ bv_unsigned a + Z.of_nat (length bs) <= bv_unsigned x) ->
+  wbytes m a bs x = m x.
 Proof.
   intros bs m a x Hnw [Hlt|Hge].
   - apply wbytes_below; assumption.
   - apply wbytes_above; assumption.
 Qed.
 
-(* [comment removed for export] *)
+(** [wbytes] commutes with any address selector that is constant on the
+    written range. *)
 Lemma wbytes_select : forall (P : word -> bool) (f g : word -> option byte) (a : word) bs,
   bv_unsigned a + Z.of_nat (length bs) <= 2^64 ->
   (forall x : word, bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat (length bs) ->
@@ -87,9 +93,11 @@ Proof.
     + rewrite !wbytes_outside by lia. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma wbytes_shadow : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Pm,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pbs1,(0.(1.&8.))Pbs2,(0.(1.&8.))P,(;.$13.(7.(1.&8.)R2.)(7.(1.&8.)R1.))P,(3.(4.(5.&40.R4.)(6.(7.(1.&8.)R2.)))(8.+2.+40.))(;.P,(1.&40.)(2.(1.&8.))(<.(<.R6.R5.R4.)R5.R3.)(<.R6.R5.R3.))")
-(* [comment removed for export] *).
+(** Two stores to the same slot: the later one wins. *)
+Lemma wbytes_shadow : forall m (a : word) bs1 bs2,
+  length bs1 = length bs2 ->
+  bv_unsigned a + Z.of_nat (length bs2) <= 2^64 ->
+  wbytes (wbytes m a bs1) a bs2 = wbytes m a bs2.
 Proof.
   intros m a bs1 bs2 Hlen Hnw. apply functional_extensionality. intro x.
   destruct (Z_lt_le_dec (bv_unsigned x) (bv_unsigned a)) as [Hlt|Hge].
@@ -99,9 +107,11 @@ Proof.
     + rewrite !wbytes_outside by lia. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma rdn_const : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Psegs,(0.$14.)Pm,Px,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pn,$13.Pb,(1.&8.)P,(3.(4.(5.&40.R3.)(6.R2.))(8.+2.+40.))P,Px,(1.&40.)P,(9.(3.(5.&40.R5.)(5.&40.R1.))(:.(5.&40.R1.)(4.(5.&40.R5.)(6.R4.))))(;.(2.(1.&8.))A1.R7.R2.(=.(1.&8.)R4.))(;.(2.(0.(1.&8.)))(15.R7.R6.R5.R4.)(=.(0.(1.&8.))(16.(1.&8.)R3.R4.)))")
-(* [comment removed for export] *).
+(** A constant region reads back as [repeat]. *)
+Lemma rdn_const : forall segs m (a : word) n b,
+  bv_unsigned a + Z.of_nat n <= 2^64 ->
+  (forall x : word, bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n -> m x = Some b) ->
+  rdn segs m a n = Some (repeat b n).
 Proof.
   intros segs m a n; revert a; induction n as [|n IH]; intros a b Hnw Hall; [reflexivity|].
   cbn [rdn repeat]. rewrite (Hall a) by lia.
@@ -112,20 +122,28 @@ Proof.
     reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ================================================================= *)
+(* The three-region overlay                                           *)
+(* ================================================================= *)
 
 Definition win_lo (sp0 : word) : Z := bv_unsigned sp0 - stack_max_size.
 
+(** An address at or above every admissible launch's [Run.stack_window_lo] ([StoreOk.stack_window_lo_valid]): every launch the fifth conjunct of [Run.valid_entry_va] admits maps [[wok_lo sp0, sp0)]. *)
+Definition wok_lo (sp0 : word) : Z :=
+  bv_unsigned sp0 + stack_window_reach - stack_max_size.
+
 Definition in_win (sp0 : word) (x : word) : Prop :=
-  win_lo sp0 <= bv_unsigned x < bv_unsigned sp0.
+  wok_lo sp0 <= bv_unsigned x < bv_unsigned sp0.
+
+Lemma win_lo_le_wok_lo : forall sp0, win_lo sp0 <= wok_lo sp0.
+Proof. intros. unfold win_lo, wok_lo, stack_window_reach. lia. Qed.
 
 Definition cmem (sp0 : word) (mem0 J D : word -> option byte) : word -> option byte :=
   fun a => if (bv_unsigned sp0 <=? bv_unsigned a) then mem0 a
            else if (win_lo sp0 <=? bv_unsigned a) then J a else D a.
 
-(* [comment removed for export] *)
+(** Window well-formedness: every byte of [in_win] is mapped (so stores
+    into it are in bounds). *)
 Definition wfJ (sp0 : word) (J : word -> option byte) : Prop :=
   forall x : word, in_win sp0 x -> J x <> None.
 
@@ -135,7 +153,36 @@ Proof. intros sp0 b x _. discriminate. Qed.
 Lemma wfJ_wbytes : forall sp0 J a bs, wfJ sp0 J -> wfJ sp0 (wbytes J a bs).
 Proof. intros sp0 J a bs H x Hx. apply wbytes_grows. apply H. exact Hx. Qed.
 
-(* [comment removed for export] *)
+(** The initial window: zero from [Run.stack_window_lo], unmapped below. *)
+Definition stack_zero (lo : Z) : word -> option byte :=
+  fun x => if lo <=? bv_unsigned x then Some (Z_to_bv 8 0) else None.
+
+Lemma wfJ_stack_zero : forall inp (sp0 brk0 mbase : word) (rdraw : EntryDraw),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp ->
+  wfJ sp0 (stack_zero (stack_window_lo (in_kernel inp) mbase rdraw)).
+Proof.
+  intros inp sp0 brk0 mbase rdraw Hvl Hlau x Hx. unfold in_win, wok_lo in Hx.
+  pose proof (stack_window_lo_valid inp sp0 brk0 mbase rdraw Hvl Hlau).
+  unfold stack_zero. rewrite (proj2 (Z.leb_le _ _)) by lia. discriminate.
+Qed.
+
+(** Reading [in_win] through the initial window gives zeros. *)
+Lemma stack_zero_in_win :
+  forall inp (sp0 brk0 mbase : word) (rdraw : EntryDraw) (x : word),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp ->
+  in_win sp0 x ->
+  stack_zero (stack_window_lo (in_kernel inp) mbase rdraw) x
+  = Some (Z_to_bv 8 0).
+Proof.
+  intros inp sp0 brk0 mbase rdraw x Hvl Hlau Hx. unfold in_win, wok_lo in Hx.
+  pose proof (stack_window_lo_valid inp sp0 brk0 mbase rdraw Hvl Hlau).
+  unfold stack_zero. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
+Qed.
+
+(** "J' agrees with J at/above [lo]" — what a callee summary promises about
+    the caller's frames. *)
 Definition agree_above (lo : Z) (J J' : word -> option byte) : Prop :=
   forall x : word, lo <= bv_unsigned x -> J' x = J x.
 
@@ -150,14 +197,17 @@ Lemma agree_above_mono : forall lo lo' J J',
   lo <= lo' -> agree_above lo J J' -> agree_above lo' J J'.
 Proof. intros lo lo' J J' Hle H x Hx. apply H. lia. Qed.
 
-Lemma agree_above_wbytes : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Plo,$17.PJ,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pbs,(0.(1.&8.))P,(3.(4.(5.&40.R2.)(6.(7.(1.&8.)R1.)))R4.)(18.R5.R4.(<.R4.R3.R2.))")
-(* [comment removed for export] *).
+Lemma agree_above_wbytes : forall lo J a bs,
+  bv_unsigned a + Z.of_nat (length bs) <= lo ->
+  agree_above lo J (wbytes J a bs).
 Proof.
   intros lo J a bs Hle x Hx. apply wbytes_above. lia.
 Qed.
 
-Lemma rdn_agree_above : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Psegs,(0.$14.)Plo,$17.PJ,P,(1.&40.)(2.(1.&8.))PJ',P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pn,$13.P,(18.R5.R4.R3.)P,(3.R6.(5.&40.R3.))P,(3.(4.(5.&40.R4.)(6.R3.))(8.+2.+40.))(;.(2.(0.(1.&8.)))(15.R9.R6.R5.R4.)(15.R9.R7.R5.R4.))")
-(* [comment removed for export] *).
+Lemma rdn_agree_above : forall segs lo J J' (a : word) n,
+  agree_above lo J J' -> lo <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= 2^64 ->
+  rdn segs J' a n = rdn segs J a n.
 Proof.
   intros segs lo J J' a n H Hlo Hnw. apply rdn_ext; [exact Hnw|].
   intros x Hx. apply H. lia.
@@ -169,13 +219,15 @@ Section CMem.
 
   Let csel := cmem sp0 mem0.
 
-  #[using="sp0 mem0 csel"] Lemma stack_max_size_pos : 0 < stack_max_size.
+  Lemma stack_max_size_pos : 0 < stack_max_size.
   Proof. rewrite stack_max_size_val. lia. Qed.
 
-  (* [comment removed for export] *)
+  (** *** Stores *)
 
-  #[using="csel"] Lemma wbytes_cmem_win : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "PJ,P,(1.&40.)(2.(1.&8.))PD,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pbs,(0.(1.&8.))P,(3.(19.Vsp0,)(5.&40.R2.))P,(3.(4.(5.&40.R3.)(6.(7.(1.&8.)R2.)))(5.&40.Vsp0,))(;.P,(1.&40.)(2.(1.&8.))(<.(1:.Vsp0,Vmem0,R6.R5.)R4.R3.)(1:.Vsp0,Vmem0,(<.R6.R4.R3.)R5.))")
-(* [comment removed for export] *).
+  Lemma wbytes_cmem_win : forall J D (a : word) bs,
+    win_lo sp0 <= bv_unsigned a ->
+    bv_unsigned a + Z.of_nat (length bs) <= bv_unsigned sp0 ->
+    wbytes (cmem sp0 mem0 J D) a bs = cmem sp0 mem0 (wbytes J a bs) D.
   Proof.
     intros J D a bs Hlo Hhi. unfold cmem.
     pose proof (u64_range sp0) as Hsp.
@@ -189,8 +241,9 @@ Section CMem.
     reflexivity.
   Qed.
 
-  #[using="csel"] Lemma wbytes_cmem_data : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "PJ,P,(1.&40.)(2.(1.&8.))PD,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pbs,(0.(1.&8.))P,(3.(4.(5.&40.R2.)(6.(7.(1.&8.)R1.)))(19.Vsp0,))(;.P,(1.&40.)(2.(1.&8.))(<.(1:.Vsp0,Vmem0,R5.R4.)R3.R2.)(1:.Vsp0,Vmem0,R5.(<.R4.R3.R2.)))")
-(* [comment removed for export] *).
+  Lemma wbytes_cmem_data : forall J D (a : word) bs,
+    bv_unsigned a + Z.of_nat (length bs) <= win_lo sp0 ->
+    wbytes (cmem sp0 mem0 J D) a bs = cmem sp0 mem0 J (wbytes D a bs).
   Proof.
     intros J D a bs Hhi. unfold cmem.
     pose proof (u64_range sp0) as Hsp. pose proof stack_max_size_pos.
@@ -205,17 +258,21 @@ Section CMem.
     reflexivity.
   Qed.
 
-  (* [comment removed for export] *)
+  (** *** Reads *)
 
-  #[using="csel"] Lemma rdn_cmem_above : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Psegs,(0.$14.)PJ,P,(1.&40.)(2.(1.&8.))PD,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pn,$13.P,(3.(5.&40.Vsp0,)(5.&40.R2.))P,(3.(4.(5.&40.R3.)(6.R2.))(8.+2.+40.))(;.(2.(0.(1.&8.)))(15.R7.(1:.Vsp0,Vmem0,R6.R5.)R4.R3.)(15.R7.Vmem0,R4.R3.))")
-(* [comment removed for export] *).
+  Lemma rdn_cmem_above : forall segs J D (a : word) n,
+    bv_unsigned sp0 <= bv_unsigned a ->
+    bv_unsigned a + Z.of_nat n <= 2^64 ->
+    rdn segs (cmem sp0 mem0 J D) a n = rdn segs mem0 a n.
   Proof.
     intros segs J D a n Hlo Hnw. apply rdn_ext; [exact Hnw|].
     intros x Hx. unfold cmem. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
   Qed.
 
-  #[using="csel"] Lemma rdn_cmem_win : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Psegs,(0.$14.)PJ,P,(1.&40.)(2.(1.&8.))PD,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pn,$13.P,(3.(19.Vsp0,)(5.&40.R2.))P,(3.(4.(5.&40.R3.)(6.R2.))(5.&40.Vsp0,))(;.(2.(0.(1.&8.)))(15.R7.(1:.Vsp0,Vmem0,R6.R5.)R4.R3.)(15.R7.R6.R4.R3.))")
-(* [comment removed for export] *).
+  Lemma rdn_cmem_win : forall segs J D (a : word) n,
+    win_lo sp0 <= bv_unsigned a ->
+    bv_unsigned a + Z.of_nat n <= bv_unsigned sp0 ->
+    rdn segs (cmem sp0 mem0 J D) a n = rdn segs J a n.
   Proof.
     intros segs J D a n Hlo Hhi. pose proof (u64_range sp0).
     apply rdn_ext; [lia|].
@@ -224,8 +281,9 @@ Section CMem.
     rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
   Qed.
 
-  #[using="csel"] Lemma rdn_cmem_data : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Psegs,(0.$14.)PJ,P,(1.&40.)(2.(1.&8.))PD,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pn,$13.P,(3.(4.(5.&40.R2.)(6.R1.))(19.Vsp0,))(;.(2.(0.(1.&8.)))(15.R6.(1:.Vsp0,Vmem0,R5.R4.)R3.R2.)(15.R6.R4.R3.R2.))")
-(* [comment removed for export] *).
+  Lemma rdn_cmem_data : forall segs J D (a : word) n,
+    bv_unsigned a + Z.of_nat n <= win_lo sp0 ->
+    rdn segs (cmem sp0 mem0 J D) a n = rdn segs D a n.
   Proof.
     intros segs J D a n Hhi. pose proof (u64_range sp0). pose proof stack_max_size_pos.
     unfold win_lo in *.
@@ -235,31 +293,35 @@ Section CMem.
     rewrite (proj2 (Z.leb_gt _ _)) by lia. reflexivity.
   Qed.
 
-  (* [comment removed for export] *)
-  #[using="csel"] Lemma cmem_at_above : forall J D (x : word),
+  (** Single-address versions (for [mem x = ..] style facts). *)
+  Lemma cmem_at_above : forall J D (x : word),
     bv_unsigned sp0 <= bv_unsigned x -> cmem sp0 mem0 J D x = mem0 x.
   Proof. intros. unfold cmem. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity. Qed.
 
-  #[using="csel"] Lemma cmem_at_win : forall J D (x : word),
+  Lemma cmem_at_win : forall J D (x : word),
     in_win sp0 x -> cmem sp0 mem0 J D x = J x.
   Proof.
-    intros J D x [Hlo Hhi]. unfold cmem.
+    intros J D x [Hlo Hhi]. pose proof (win_lo_le_wok_lo sp0). unfold cmem.
     rewrite (proj2 (Z.leb_gt _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
   Qed.
 
-  #[using="csel"] Lemma cmem_at_data : forall J D (x : word),
+  Lemma cmem_at_data : forall J D (x : word),
     bv_unsigned x < win_lo sp0 -> cmem sp0 mem0 J D x = D x.
   Proof.
     intros J D x Hx. pose proof stack_max_size_pos. unfold cmem, win_lo in *.
     rewrite (proj2 (Z.leb_gt _ _)) by lia. rewrite (proj2 (Z.leb_gt _ _)) by lia. reflexivity.
   Qed.
 
-  (* [comment removed for export] *)
+  (** *** Store bounds *)
 
-  #[using="csel"] Lemma store_ok_cmem_win : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Psegs,(0.$14.)PJ,P,(1.&40.)(2.(1.&8.))PD,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pn,$13.P,(1;.Vsp0,R4.)P,(3.(19.Vsp0,)(5.&40.R3.))P,(3.(4.(5.&40.R4.)(6.R3.))(5.&40.Vsp0,))(;.$1<.(1=.R8.(1:.Vsp0,Vmem0,R7.R6.)R5.R4.)$1>.)")
-(* [comment removed for export] *).
+  Lemma store_ok_cmem_win : forall segs J D (a : word) n,
+    wfJ sp0 J ->
+    wok_lo sp0 <= bv_unsigned a ->
+    bv_unsigned a + Z.of_nat n <= bv_unsigned sp0 ->
+    store_ok segs (cmem sp0 mem0 J D) a n = true.
   Proof.
     intros segs J D a n HJ Hlo Hhi. pose proof (u64_range sp0).
+    pose proof (win_lo_le_wok_lo sp0).
     apply store_ok_of_all; [lia|].
     intros x Hx. unfold wview.
     rewrite cmem_at_win by (unfold in_win; lia).
@@ -267,22 +329,36 @@ Section CMem.
     exfalso. apply (HJ x); [unfold in_win; lia | exact E].
   Qed.
 
-  #[using="Type"] Lemma store_ok_cmem_data : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Psegs,(0.$14.)PJ,P,(1.&40.)(2.(1.&8.))PD,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pn,$13.P,(;.$1<.(1?.R5.R2.R1.)$1>.)(;.$1<.(1=.R6.(1:.Vsp0,Vmem0,R5.R4.)R3.R2.)$1>.)")
-(* [comment removed for export] *).
+  Lemma store_ok_cmem_data : forall segs J D (a : word) n,
+    wseg_ok segs a n = true ->
+    store_ok segs (cmem sp0 mem0 J D) a n = true.
   Proof. intros. apply store_ok_wseg. assumption. Qed.
 
 End CMem.
 
-(* [comment removed for export] *)
-Lemma cmem_init : ltac2:(CDefT.buildp (gd_tbl_MemSplit ()) "Pph,$20.Psp0,(1.&40.)Pav,(0.(0.(1.&8.)))Pev,(0.(0.(1.&8.)))Puid,(1.&40.)Phw,(1.&40.)Prdraw,$21.(;.P,(1.&40.)(2.(1.&8.))(22.R7.R6.R5.R4.R3.R2.R1.)(1:.R6.(22.R7.R6.R5.R4.R3.R2.R1.)L,(1.&40.)(=.(1.&8.)(11.&8.=))L,(1.&40.)(23.(1.&8.))))")
-(* [comment removed for export] *).
+(** The initial overlay in three-region form: the window region is the
+    launch's own [stack_zero], unmapped below [Run.stack_window_lo]. *)
+Lemma cmem_init :
+  forall inp mbase ph entry (sp0 brk0 : word) (rdraw : EntryDraw),
+  entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp ->
+  wrap_mem inp mbase ph entry sp0 rdraw
+  = cmem sp0 (wrap_mem inp mbase ph entry sp0 rdraw)
+      (stack_zero (stack_window_lo (in_kernel inp) mbase rdraw))
+      (fun _ => None).
 Proof.
-  intros ph sp0 av ev uid hw rdraw. apply functional_extensionality. intro x.
+  intros inp mbase ph entry sp0 brk0 rdraw Hlau.
+  apply functional_extensionality. intro x.
+  pose proof (stack_window_lo_ge_sp inp sp0 brk0 mbase rdraw Hlau) as Hge.
   unfold cmem.
   destruct (bv_unsigned sp0 <=? bv_unsigned x) eqn:E1; [reflexivity|].
   apply Z.leb_gt in E1.
-  unfold wrap_mem, win_lo.
-  assert (Hst : stack_to_mem sp0 (entry_stack_image ph sp0 av ev uid hw rdraw) x = None).
+  unfold wrap_mem, win_lo, stack_zero.
+  assert (Hst : stack_to_mem sp0 (entry_stack_image inp mbase ph entry sp0 rdraw) x
+                = None).
   { unfold stack_to_mem. rewrite (proj2 (Z.leb_gt _ _)) by lia. reflexivity. }
-  rewrite Hst. rewrite (proj2 (Z.ltb_lt _ _) E1), andb_true_r. reflexivity.
+  rewrite Hst. rewrite (proj2 (Z.ltb_lt _ _) E1), andb_true_r.
+  destruct (bv_unsigned sp0 - stack_max_size <=? bv_unsigned x) eqn:E2;
+    [reflexivity|].
+  apply Z.leb_gt in E2.
+  rewrite (proj2 (Z.leb_gt _ _)) by lia. reflexivity.
 Qed.

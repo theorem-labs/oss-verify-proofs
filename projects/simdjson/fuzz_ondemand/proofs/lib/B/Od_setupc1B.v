@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -99,7 +100,7 @@ Proof using AF FDO MST RTF NEWA AFC AFV AFI GETACT CREATE HS1 HS1Z.
   set (S := F / 8 + 2147450880) in *.
   assert (GF : F + 512 <= lo /\ S + 64 <= lo /\ (F + 512 <= S \/ S + 64 <= F) /\ SEGTOP_A <= F) by (clear - FR1' SHT LOW FSELF FSEG; ul).
   destruct GF as (FLO & SLO & FSEP & FSG).
-  assert (LOWB : rt_sp0 RT ΣB - STACK_WIN <= lo) by (rewrite SP0; exact LOW).
+  assert (LOWB : rt_sp0 RT ΣB - STACK_SPAN <= lo) by (rewrite SP0; exact LOW).
   assert (EU1 : bv_unsigned (Z_to_bv 64 S1) = S1) by (apply unsigned_lit; ul).
   pose proof VR as (VSZ & VSC & VCAP & VA0 & VAT & _ & VB).
   destruct VB as [(B1 & B2)|(CAP1 & A16 & APOS & _)]; [lia|].
@@ -205,7 +206,7 @@ Proof using AF FDO MST RTF NEWA AFC AFV AFI GETACT CREATE HS1 HS1Z.
   set (CAP := OD_SBUF L) in *.
   assert (INFS : In (F, 3%nat) (rt_frames RT ΣS)) by (rewrite FRSS; exact INF).
   assert (INSB : In (SB, CAP) (rt_live RT ΣS)) by (rewrite LVS; left; reflexivity).
-  assert (LOWS : rt_sp0 RT ΣS - STACK_WIN <= lo) by (rewrite SPS; exact LOWB).
+  assert (LOWS : rt_sp0 RT ΣS - STACK_SPAN <= lo) by (rewrite SPS; exact LOWB).
   pose proof (af_frames_range RT AF ΣS m2 F 3%nat ART2 INFS) as (_ & _ & _ & FLVS). change (fs_size 3) with 512 in FLVS.
   pose proof (af_fshadow_apart RT AF ΣS m2 F 3 ART2 INFS) as (FSLS & _). change (fs_size 3) with 512 in FSLS. rewrite SHF in FSLS. unfold shad, SHB in FSLS. fold S in FSLS.
   pose proof (FLVS SB CAP INSB) as SF. pose proof (FSLS SB CAP INSB) as SS.
@@ -323,7 +324,7 @@ Proof using AF FDO MST RTF NEWA AFC AFV AFI GETACT CREATE HS1 HS1Z.
   assert (INFI : In (F, 3%nat) (rt_frames RT ΣI)) by (rewrite FRSI; exact INFS).
   assert (INIM : In (IMPL, 96) (rt_live RT ΣI)) by (rewrite LVI; do 3 right; left; reflexivity).
   assert (INIX : In (IDX, sc_idx L) (rt_live RT ΣI)) by (rewrite LVI; do 2 right; left; reflexivity).
-  assert (LOWI : rt_sp0 RT ΣI - STACK_WIN <= lo) by (rewrite SPI; exact LOWS).
+  assert (LOWI : rt_sp0 RT ΣI - STACK_SPAN <= lo) by (rewrite SPI; exact LOWS).
   pose proof (af_frames_range RT AF ΣI m6 F 3%nat ART6 INFI) as (_ & _ & _ & FLVI). change (fs_size 3) with 512 in FLVI.
   pose proof (af_fshadow_apart RT AF ΣI m6 F 3 ART6 INFI) as (FSLI & _). change (fs_size 3) with 512 in FSLI. rewrite SHF in FSLI. unfold shad, SHB in FSLI. fold S in FSLI.
   pose proof (FLVI IMPL 96 INIM) as IF'. pose proof (FSLI IMPL 96 INIM) as IS'. pose proof (FLVI IDX _ INIX) as XF. pose proof (FSLI IDX _ INIX) as XS.

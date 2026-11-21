@@ -1,6 +1,6 @@
 # G6: kimg_overlap on the image B start-up tables (gate record)
 
-Proves no function (kind: measurement). Re-run 2026-10-30 on the series base b1afc3e80791 (`run.sh g6`).
+Proves no function (kind: measurement). Re-run 2026-10-30 on the series base (`run.sh g6`).
 
 ## Tool
 kimg_overlap.py, the FROZEN version, sha256 `5db341e3cd628ad07bde939c902db9ecc0c3e5791fa3947434ad729031239d3a` (its
@@ -12,8 +12,8 @@ relocation markers. Exit 1 on a contradiction, 2 on a fill / region MISMATCH / r
 
 ## Command (per file)
 ```
-python3 kimg_overlap.py "$GIT" b1afc3e80791 proofs/libreac/fuzz_disco/lib/Reusable/<F>.v "$PIN_B" \
-  --donor c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib/<F>.v "$CGIF_B"
+python3 kimg_overlap.py "$GIT" proofs/libreac/fuzz_disco/lib/Reusable/<F>.v "$PIN_B" \:
+  proofs/cgif/cgif_file_fuzzer/lib/<F>.v "$CGIF_B"
 ```
 `$PIN_B` = fuzz_disco.asan-ubsan (sha256 `cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146`), `$CGIF_B` =
 cgif_file_fuzzer.asan-ubsan (`1c29845fe6058de6e1dbf3f6ec6abd566ea612d76b65ea5435d7ff77c63e08ef`), the donor's file the

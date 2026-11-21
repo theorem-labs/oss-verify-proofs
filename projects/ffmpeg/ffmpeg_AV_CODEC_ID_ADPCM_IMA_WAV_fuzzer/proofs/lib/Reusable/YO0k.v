@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0k.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YO0k.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (free_credit holds on the granted paths only: a refused munmap keeps the region and gives no credit). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YK15 YM02.
@@ -72,8 +73,31 @@ intros mi s3 tr3 _ [Hmi E3]. cbn [fst snd] in Hmi, E3. subst mi.
 eapply OK4_bind_y; [apply (OK4_frame_meas (free_meta g) s3); auto with presK presC|].
 intros u4 s4 tr4 _ E4. cbn [snd] in E4. apply OK4_ret. apply HQ. rewrite E4. exact E3.
 Qed.
+(* 727298f3: the shared program ([YO0i.free]) branches on the KMunmap answer -- a
+   refused munmap ([ok = false]) keeps the region -- so the credit holds only on the
+   paths where the munmap is granted.  [S4] ([YO0n]) quantifies over those paths: on a
+   [cpath04] path a KMunmap ask, not fallible in this tree ([YM02.fallible]), answers 1.
+   A refused munmap keeps the region and gives no credit; [YO04]'s bound, stated over
+   every answer ([leaves]), claims none. *)
+Lemma S4_eq {A B} (m : M A) (K : A -> M B) s a s' P : m s = IRet (a, s') -> S4 P (K a s') -> S4 P (bind m K s).
+Proof. intros E H. unfold bind. rewrite E. exact H. Qed.
+Lemma S4_bind_y {A B} (P : A * astate -> Prop) (Q : B * astate -> Prop) (m : M A) (f : A -> M B) s :
+S4 P (m s) -> (forall a s' tr, cpath04 (m s) tr (a, s') -> P (a, s') -> S4 Q (f a s')) -> S4 Q (bind m f s).
+Proof.
+intros Hm Hf tr b Hp. destruct (cpath04_mbind_inv _ _ _ _ _ Hp) as (tr1 & a & s1 & tr2 & -> & H1 & H2).
+exact (Hf a s1 tr1 H1 (Hm tr1 (a, s1) H1) tr2 b H2).
+Qed.
+Lemma S4_of_OK4 {A} (P : A -> Prop) t : OK4 P t -> S4 P t.
+Proof. intros [_ HL] tr a Hp. exact (leaves_cpath04 _ _ _ _ HL Hp). Qed.
+Lemma S4_ask_munmap r len s : S4 (fun x => x = (true, s)) (ask (KMunmap r len) s).
+Proof.
+intros [|[q' z] tr] x Hp; cbn in Hp; [destruct Hp|]. destruct Hp as (-> & Hc & Hp).
+unfold canswer04, canswer in Hc. cbn in Hc. subst z.
+destruct tr; cbn in Hp; [|destruct Hp]. subst x. reflexivity.
+Qed.
+Ltac s_ret := match goal with |- S4 ?P (bind (ret ?a) ?k ?s0) => change (S4 P (k a s0)); cbv beta end.
 Theorem free_credit s p n : WF s -> II s -> In (p, n) (user_blocks s) -> MMAP_THRESHOLD < n ->
-OK4 (fun x => map_bytes (snd x) <= map_bytes s - page_round (n + IB + UNIT) /\ map_count (snd x) <= map_count s - 1)
+S4 (fun x => map_bytes (snd x) <= map_bytes s - page_round (n + IB + UNIT) /\ map_count (snd x) <= map_count s - 1)
 (free (Some p) s).
 Proof.
 intros HW HII Hin Hn. pose proof (free_reqs_ok s p n HW Hin) as RQ.
@@ -101,14 +125,14 @@ replace (negb (am_maplen am =? 0)) with true in Fle by (symmetry; apply negb_tru
 cbn in Fle. unfold UNIT, IB, PGSZ in *. lia. }
 unfold free in RQ |- *.
 pose proof (find_frame_eq _ s _ (find_frame_in_spec [] None U0 s HW g am 0 fr Hu Hi Hfr)) as FF.
-eapply OK4_eq; [exact FF|]. apply (rq_eq _ _ _ _ _ FF) in RQ. cbn [fst snd] in RQ |- *. cbv zeta in RQ. cbv zeta.
-eapply OK4_eq; [apply getm_eq; exact Mg|]. apply (rq_eq _ _ _ _ _ (getm_eq g s am Mg)) in RQ. cbv zeta in RQ. cbv zeta.
+eapply S4_eq; [exact FF|]. apply (rq_eq _ _ _ _ _ FF) in RQ. cbn [fst snd] in RQ |- *. cbv zeta in RQ. cbv zeta.
+eapply S4_eq; [apply getm_eq; exact Mg|]. apply (rq_eq _ _ _ _ _ (getm_eq g s am Mg)) in RQ. cbv zeta in RQ. cbv zeta.
 destruct (release_slot_eq g 0 s am fr Mg Hfr) as (x & Hx & RS).
-eapply OK4_eq; [exact RS|]. apply (rq_eq _ _ _ _ _ RS) in RQ.
+eapply S4_eq; [exact RS|]. apply (rq_eq _ _ _ _ _ RS) in RQ.
 set (s1 := upd_meta g (MUsed (upd_slot am 0 x)) s) in *.
 rewrite Cfr, Cav. cbn [Z.lor Z.eqb negb andb Z.land].
 unfold massert. rewrite Cfr, Cav in RQ. cbn [Z.lor Z.eqb negb andb Z.land massert] in RQ.
-unfold massert in RQ. replace (Z.land (Z.lor 0 0) (bit 0) =? 0) with true in RQ |- * by reflexivity. cbv iota in RQ. cbv iota. o_ret. rq_ret RQ.
+unfold massert in RQ. replace (Z.land (Z.lor 0 0) (bit 0) =? 0) with true in RQ |- * by reflexivity. cbv iota in RQ. cbv iota. s_ret. rq_ret RQ.
 set (am1 := upd_slot am 0 x) in *.
 assert (F1 : am_sc am1 = 63) by (subst am1; destruct am; exact Csc).
 assert (F2 : am_last am1 = 0) by (subst am1; destruct am; exact Cl0).
@@ -119,19 +143,18 @@ assert (F6 : am_maplen am1 = am_maplen am) by (subst am1; destruct am; reflexivi
 assert (F7 : am_mem am1 = am_mem am) by (subst am1; destruct am; reflexivity).
 assert (M1 : MT s1 g = Some (MUsed am1)) by (subst s1; apply MT_upd_same).
 rq_bind RQ RQ1 RQ2.
-eapply OK4_bind_y.
-{ apply (OK4_nf63 _ g am1 s1 (fun x => fst x = Some (prid (am_mem am1), am_maplen am1 * 4096) /\ meas (snd x) = meas s1));
+eapply S4_bind_y.
+{ apply S4_of_OK4. apply (OK4_nf63 _ g am1 s1 (fun x => fst x = Some (prid (am_mem am1), am_maplen am1 * 4096) /\ meas (snd x) = meas s1));
 [exact M1 | exact F1 | exact F2 | exact F3 | exact F4 | exact F5 | rewrite F6; exact Cml |].
 intros s' E'. cbn [fst snd]. split; [reflexivity | exact E']. }
-intros mi s5 tr5 Hy5 [Hmi E5]. cbn [fst snd] in Hmi, E5. specialize (RQ2 tr5 mi s5 Hy5). clear RQ1 Hy5. subst mi.
+intros mi s5 tr5 Hy5 [Hmi E5]. cbn [fst snd] in Hmi, E5. specialize (RQ2 tr5 mi s5 (cpath04_yields _ _ _ Hy5)). clear RQ1 Hy5. subst mi.
 rewrite F6, F7, Hmem in RQ2 |- *. cbn [prid] in RQ2 |- *.
 rq_bind RQ2 RQ3 RQ4. pose proof (reqs_ok_ask_inv _ _ RQ3) as RK.
 assert (E50 : meas s5 = meas s) by (rewrite E5; subst s1; apply meas_upd_meta).
 pose proof (meas_eq_II _ _ E50 HII) as II5. pose proof (meas_eq_all _ _ E50) as (Y1 & Y2 & _).
-eapply OK4_bind_y.
-{ apply (OK4_ask_free (KMunmap r (am_maplen am * 4096)) s5 (fun q => snd q = s5)); [reflexivity | intros q; discriminate | intros b; reflexivity]. }
-intros b6 s6 tr6 _ E6. cbn [snd] in E6. subst s6.
-eapply OK4_mono; [|apply OK4_kill; [exact RK | exact II5]].
+eapply S4_bind_y; [apply S4_ask_munmap|].
+intros b6 s6 tr6 _ E6. cbv beta in E6. injection E6 as -> ->. cbv beta iota.
+eapply S4_mono; [|apply S4_of_OK4, OK4_kill; [exact RK | exact II5]].
 intros [u7 s7] HK. unfold KillPost in HK. cbn [snd] in HK. destruct HK as (_ & K1 & K2 & _).
 cbn [snd]. rewrite K1, K2, Y1, Y2. change 4096 with PGSZ. rewrite page_round_multiple by lia. lia.
 Qed.

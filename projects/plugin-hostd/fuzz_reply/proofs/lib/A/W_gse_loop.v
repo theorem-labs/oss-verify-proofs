@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the loop-body segment of fuzz_reply's gestures_end walk (lane W4). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Structure (not citation: another framework).  The step order and the shadow checks of this file are the ones
-   proved at halts level on the same runs in a working branch 38a6eaf28b2
+   proved at halts level on the same runs in a working branch
    lib/A/Prog/gestures_end_b.v:
      - one pass of the loop (0x825c0 -> gesture_end -> free (held[i]) -> 0x82610): gse_step :2542-2652;
      - the loop from its head, by induction on the keys left, with the two exits (back to 0x825c0, or 0x82638):
@@ -10,7 +11,7 @@
    The SRr form (a loop lemma from the loop head, a fresh symbolic state seated there, the induction on the
    entries left) is the one of proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v tcbb_loopX and of
    lib/A/W_check_bounded.v cb_loopX. *)
-(* gse_loop_at (W_gse_cut.v:159), the loop head 0x825c0 of gestures_end with i < nheld keys still to end:
+(* gse_loop_at (W_gse_cut.v:160), the loop head 0x825c0 of gestures_end with i < nheld keys still to end:
      0x825c0  load8 check of s->held, held[i]'s load8 check
      0x825e4  gesture_end (held[i])            (Section hypothesis GE, pb_gesture_end)
      0x825e8  the same two load8 checks, then  ld a0, held[i]
@@ -192,8 +193,8 @@ Hypothesis HOUTG : forall r a, In r (aout_fp B RG 0 0) -> fst r <= a < snd r -> 
    is FALSE at the instance (partial granule: shadow byte 5 at 0x7fffc1e0, W3's measurement) and was never needed. *)
 Hypothesis HEND5I : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 -> in_img SEGS a.
 (* HEND5G holds for EXACTLY [VAL A_lit_end5, VAL A_lit_end5 + 5) = [0x20f00, 0x20f05) on both images and MUST NOT BE
-   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch
-   5fab70f4113; ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
+   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch;
+   ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
    (0x20f05, 0x1b) - the literal's two redzones - end and start exactly at its edges.  One byte more on either side,
    or rounding the range to 8 bytes or an aligned word, makes that clause FALSE. *)
 Hypothesis HEND5G : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 ->
@@ -2308,8 +2309,8 @@ Hypothesis HOUTG : forall r a, In r (aout_fp B RG 0 0) -> fst r <= a < snd r -> 
    is FALSE at the instance (partial granule: shadow byte 5 at 0x7fffc1e0, W3's measurement) and was never needed. *)
 Hypothesis HEND5I : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 -> in_img SEGS a.
 (* HEND5G holds for EXACTLY [VAL A_lit_end5, VAL A_lit_end5 + 5) = [0x20f00, 0x20f05) on both images and MUST NOT BE
-   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch
-   5fab70f4113; ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
+   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch;
+   ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
    (0x20f05, 0x1b) - the literal's two redzones - end and start exactly at its edges.  One byte more on either side,
    or rounding the range to 8 bytes or an aligned word, makes that clause FALSE. *)
 Hypothesis HEND5G : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 ->

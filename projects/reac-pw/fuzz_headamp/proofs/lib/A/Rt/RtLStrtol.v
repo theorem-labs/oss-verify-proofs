@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtLStrtol.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 48 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the donor's objdump-line and AF0m-line references in the header comment replaced by this unit's. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtLStrtol.v; module paths changed to reac-pw/fuzz_headamp; 48 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the donor's objdump-line and AF0m-line references in the header comment replaced by this unit's. *)
 (* Our runtime contract for the strtol interceptor: astrtol_realizes (RtNumber.v) at 0x41c28, the one-instruction
    trampoline `j 0x47a58` (__interceptor_trampoline_strtol), with the stack-protector pair 0x9cff8 -> 0x5f7d90 that
    musl's strtol reads. The walk is A/Bz/A/I_strtolw.v istrtol_spec, which starts AT the trampoline (its first step

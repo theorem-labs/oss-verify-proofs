@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU7.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail and top; file sha256 0e254743c581) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU7.v (drain recycle tail and top; file sha256 0e254743c581) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): DoRecycle's walk AT the drain's recycle cut.  With the cut's
    invariant in hand (DMdrainU6.cut_invariant) this file discharges DMdrainC.dr_pre_at_call's remaining
    premises - the machine state DMdeq.ATDR leaves at 0x33afc - and runs H2's walk
@@ -67,7 +68,7 @@ Hypothesis HSTK : forall a, ly_stk_lo ly <= a < ly_stk_hi ly -> ~ AOX ly S' a.
 Hypothesis HIT : Forall (fun b => (length (b_items b) <= Z.to_nat kBatchSlots)%nat) P.
 Hypothesis HLEN : zl P < 2 ^ 40.
 Hypothesis HCI : st_cache_inited S' = true.
-(* the machine state at the call (DMdeq.ATDR, DMdeq.v:193-207) *)
+(* the machine state at the call (DMdeq.ATDR, DMdeq.v:194-208) *)
 Hypothesis Hra : getr regs' 1 = w64 0x33b00.
 Hypothesis Hsp : ly_stk_lo ly + DMwalkIF.DRSTACK_X <= sp1 /\ sp1 + 32 <= ly_stk_hi ly.
 Hypothesis Hal : sp1 mod 16 = 0.

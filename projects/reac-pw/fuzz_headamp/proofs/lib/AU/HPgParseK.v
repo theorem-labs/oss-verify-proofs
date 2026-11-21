@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v at afaa3cb55c1 (the engine plumbing
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v (the engine plumbing
    of a segment of a parse walk: entry state, run / branch / exit tactics, the frame temporaries as region chunks), for
    reac_headamp_prop_parse_result's pair loop on reac-pw/fuzz_headamp's ASan + UBSan image B, its two segments WALK
    and ADV of lib/AU/HPgParseCut.v; the arithmetic both images share is lib/A/HPgParseGWalk.v's; the entry states,
    the inner cuts WLB / WRET, the exits, the strncmp call inside the frame hole and the walks below are new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgParseW.v, with its module names and numbers changed; 1577 of its 1791 lines of code are new or changed and 1129 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_prop_parse_result 0x849ac of reac-pw/fuzz_headamp's ASan + UBSan image B (fuzz_headamp.asan-ubsan,
    pinned sha256 53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94): segment KEY of its walk, from the
    cut KEY 0x84db0 (strncmp said the key at ck has the prefix) to ADV 0x84edc (a refusal) or VAL 0x84f0c (the key

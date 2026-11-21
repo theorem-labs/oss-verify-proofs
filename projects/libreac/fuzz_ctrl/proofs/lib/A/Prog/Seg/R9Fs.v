@@ -4,20 +4,21 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2170 of its 2292 lines of code are new or changed and 889 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R9.v; 108 of its 198 lines of code are new or changed and 2202 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R9.v 149252a8846b (the blob this tree had at release c5e779efe8c) (r9_call :1258), beside
-   Seg/R9F.v blob a731621e2c6f (r9_call_F :153), at df99ee9b0bc. Callee: lib/A/Prog/reac_ctrl_parse_c.v blob
+   FACTS, PAU pau-libreac-v190. Source: Seg/R9.v 149252a8846b (the blob this tree had at release) (r9_call :1258), beside
+   Seg/R9F.v blob a731621e2c6f (r9_call_F :153). Callee: lib/A/Prog/reac_ctrl_parse_c.v blob
    16c204a84a2a (REAC_CTRL_PARSE = 0x83578, reac_ctrl_parse_contract :38).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    rule 24: no function proved (kind: segment split lemma). *)
 
 (* The SPLIT of R9.r9_call at its call of reac_ctrl_parse (split rule (a), a Theorem Labs lane 04:01Z; shape: SPLIT STRETCHES of
    segF-v19-spec.md (a working note, not in this delivery)). reac_ctrl_parse is a cgif-form fake-stack callee: the glue
    (lib/A/ACtlG/R9.v) cuts the run AT the call and consumes the call through a Theorem Labs lane's treac_ctrl_parse_spec
-   (lib/A/Prog/C_reac_ctrl_parse.v (at head lib/A/Prog/C_reac_ctrl_parse.v:63) (an earlier version, blob 57b1c193d726, not in this delivery)), never through the plain contract.
+   (lib/A/Prog/C_reac_ctrl_parse.v (at head lib/A/Prog/C_reac_ctrl_parse.v:64) (an earlier version, blob 57b1c193d726, not in this delivery)), never through the plain contract.
 
    The run r9_call is 0x81670 mv a0,s8 ; 0x81674 mv a1,s2 ; 0x81678 ld a2,56(s1) ; 0x8167c jal ra,reac_ctrl_parse.
    - r9_call_pre_Fs: the NARROWED pre stretch (narrowed-stretch rule, a Theorem Labs lane via a Theorem Labs lane 04:23Z). It carries
@@ -38,7 +39,7 @@
      one, followed by exactly the one premise ExecF.rng RNG (A + 56) 8.
    - r9_call_of_pre_post_verbatim: the type of r9_call_of_pre_post IS the type of R9.r9_call (the no-weakening
      check).
-   R9.v is unchanged apart from comment text. R9F.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 5 of its code lines changed or removed, 385 added. *)
+   R9.v is unchanged apart from comment text. R9F.v's code is unchanged since release (comments edited); it differs from the source blob above: 5 of its code lines changed or removed, 385 added. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

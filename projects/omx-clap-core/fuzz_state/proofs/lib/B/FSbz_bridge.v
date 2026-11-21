@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YEvtSRr.v, with its module paths changed; 17 of its 51 lines of code are new or changed and 88 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fs.asan-ubsan) twin of lib/A/FSbz_bridge.v, itself
-   Ported from: a working branch cedf3d02589 proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v (a Theorem Labs lane).
+   Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v (a Theorem Labs lane).
    Changes from A's twin (a Theorem Labs lane, 2026-10-29): the Bz tree is image B's (lib/B/Bz, a Theorem Labs lane's, by path from
-   a working branch 51f06361767), the donor's segments B's (lib/B/YB1v.v tfibsegs), FSbz_str B's;
+   a working branch), the donor's segments B's (lib/B/YB1v.v tfibsegs), FSbz_str B's;
    proofs unchanged. *)
 (* The generic half of the bridge between a body walk written over the machine state alone
    (lib/B/Bz: `evt asegs Q ms`, that is "some step chain from ms reaches a state in Q") and the

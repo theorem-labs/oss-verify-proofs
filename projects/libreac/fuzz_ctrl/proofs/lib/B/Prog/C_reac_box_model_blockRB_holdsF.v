@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 637 of its 652 lines of code are new or changed and 233 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_box_model_blockRB_case0F.v, with its addresses changed; 201 of its 246 lines of code are new or changed and 607 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB_holdsF.v is the re-based copy of lib/B/Prog/reac_box_model_block_holdsF.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB_holdsF.v is the re-based copy of lib/B/Prog/reac_box_model_block_holdsF.v
    (source sha256 9ba9b8db376557f40a50fe3a7b931649fdaa06af9ef97714bd5a6ecae9707467) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: holdsF_of_cases, holdsF_of_cases34, holdsF_of_cases5, holdsF_of_cases34_only, reac_box_model_block_holds_F. *)
 From Stdlib Require Import ZArith List Lia Bool.

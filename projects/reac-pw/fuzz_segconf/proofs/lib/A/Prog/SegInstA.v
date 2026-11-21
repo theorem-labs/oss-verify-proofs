@@ -4,8 +4,8 @@
    spellings of one number.
    proves no function (kind: instantiation: definitions, and lemmas closed by computation that tie each value to
    the listing (SegAddr, SegList) or to the image's bytes (images/Asan.v)).
-   Owner: the image-A owner (the close lane). Folded in: the G3 walk lane's interim lib/A/Prog/SegG3Inst.v
-   (commit ab4c0db8d074): its STK_ texts, its reac_segconf.c literal table with the pcs that form
+   Owner: the image-A owner (the close lane). Folded in: the G3 walk lane's interim lib/A/Prog/SegG3Inst.v:
+   its STK_ texts, its reac_segconf.c literal table with the pcs that form
    each address, catA, gotwA, guardA and their lemma names. Its seg_litA is seg_litA_rc here (two maps, below).
 
    WHERE EACH VALUE COMES FROM (no number is restated that another file states):
@@ -387,7 +387,7 @@ Proof. vm_compute. repeat split; reflexivity. Qed.
 (* ===================================== the stack each call needs ===================================== *)
 (* STK_<F>: the bytes below F's entry sp that F and its callees may use: F's own frame, its realignment, and the
    deepest window of a callee called at F's lowest sp. The entry sp is 16-aligned (afn_pre's astk_ok). Runtime
-   windows (fuzz_command lib/A/Rt at origin/ossv/recipes 501c0d516c69, the texts the interceptor lane's interface ports):
+   windows (fuzz_command lib/A/Rt, the texts the interceptor lane's interface ports):
    strlen ESTACK (RtString.v:80-90), strcmp / strspn 2 * ESTACK (RtString.v:108-154), bcmp 2 * ESTACK (kit
    YG0d.v abcmp_realizes), __asan_stack_malloc_<c> ESTACK (kit YG0d.v astack_malloc_realizes),
    __asan_stack_free_5 ESTACK (RtStack.v:77-92), __asan_set_shadow_<v> ESTACK (RtShadow.v:27-38),
@@ -548,7 +548,7 @@ Definition SEG_LIT_TAB_FZ : list (list Z * Z) := [
 (S_knock, 0x212e0)                              (* .str.21 auipc 0x86b20 *)
 ].
 (* reac_segconf.c's literals (the G3 walk lane's table; the pc is that of the pair's addi, the annotated G3 disassembly
-   on the unit's internal record at dfb49d6ad789) *)
+   on the unit's internal record) *)
 Definition SEG_LIT_TAB_RC : list (list Z * Z) := [
 (F_s, 0x21340);          (* .str    0x87cd8 0x8854c 0x88584 0x8887c 0x888fc 0x88948 0x889e0 *)
 (S_base, 0x21360);       (* .str.1  0x87cd0 0x88f3c 0x891e8 *)

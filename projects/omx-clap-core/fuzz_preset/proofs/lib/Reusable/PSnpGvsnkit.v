@@ -3,7 +3,7 @@
    memset (sp, 0, 0xe8) through __wrap_memset 0x51a60 (ra 0x91f70), the FILE fields, the cookie {D, N - 1}, *D = 0,
    __wrap_vfprintf 0x41308 = j 0x457ec (ra 0x91fac) with the FILE at sp0 + FO, the canary check and the epilogue.
    New file. *)
-(* Modified by Theorem Labs, 2026-10: the image-free half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-free half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsn.v for the snprintf chain restated over ARx (route (a),
    c-omx-hpreset 10:51Z): only the items the four roots' closure reaches, gv_zc / gv_addc (:52-54), gv_zchk / gv_vget
    (:151-159), gv_bv64_inj, gv_fld_zero, gv_fld_val, gv_region_wf_add, gv_all_disjoint_add, gv_st_ok_add (:187-256),

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok's third conjunct, sys_rob, discharged at the mmap call). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -107,7 +108,9 @@ Proof.
   intros Q R F pc fc rv m mo addr nZ ms Hh ATOP HA FR [HOK|HSP] HNO.
   - left. eapply (aevtS_mmap_norep_hole asegs Q); eauto.
   - right. assert (E222 : bv_unsigned (Z_to_bv 64 222) = 222) by (vm_compute; reflexivity).
-    eapply (spinningJ_sys asegs) with (x8 := Z_to_bv 64 222); [reflexivity| exact Hh| |].
+    eapply (spinningJ_sys asegs) with (x8 := Z_to_bv 64 222);
+      [reflexivity| exact Hh| |
+      | eapply (RomBase.sys_rob_memfree asegs); [reflexivity | exact RomBase.memfree_222]].
     + intros eff mo' evs Hs.
       destruct (mmap_norep_inv asegs ms (Z_to_bv 64 222) mo addr nZ eff mo' evs E222 HA ATOP Hs) as [-> OUT].
       split; [reflexivity|]. destruct OUT as [| OCC | _].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the read loop's stack floor, inside the stack window the launch maps, passed to the buffer prepare and its wild free). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require TP_0Gc. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -51,11 +52,12 @@ Qed.
 Lemma rs_read_round : forall (C : rsc) (MA R : Z) (sp : word) (s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra : word) (fr : list cell) (M0 : Z) (w : rsw) (cf : config),
   rs_static H C -> rs_placed C (bv_unsigned sp) -> 0 <= R -> bv_unsigned ra mod 2 = 0 ->
   rs_at_doread H C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M0 w cf ->
+  hceil + 2244096 <= c_lo C ->      (* LPS 727298f3: the stack floor the wild free (AsIface7) takes *)
   as_SR H (fun cf' => rs_done H C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M0 cf'
                       \/ exists M1 w', M1 < M0 /\ rs_at_put H C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M1 w' cf') cf.
 Proof.
-  intros C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M0 w cf STC PLC R0 RA AT.
-  eapply (ah_seq H HH); [exact (rs_read_A H HH FS0 HH7 HH8 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ STC PLC R0 AT)|].
+  intros C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M0 w cf STC PLC R0 RA AT FLR.
+  eapply (ah_seq H HH); [exact (rs_read_A H HH FS0 HH7 HH8 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ STC PLC R0 AT FLR)|].
   intros cf1 (w1 & _ & AT1).
   eapply (ah_seq H HH); [exact (rs_read_B1 H HH FS0 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ STC PLC R0 AT1)|].
   intros cf2 (n & eof & _ & AT2). exact (rs_read_B2 H HH _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ STC PLC R0 RA AT2).
@@ -65,20 +67,21 @@ Qed.
 Lemma rs_loop : forall (n : nat) (C : rsc) (MA R : Z) (sp : word) (s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra : word) (fr : list cell) (M0 : Z) (w : rsw) (cf : config),
   rs_static H C -> rs_placed C (bv_unsigned sp) -> 0 <= R -> bv_unsigned ra mod 2 = 0 -> M0 < Z.of_nat n ->
   rs_at_doread H C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M0 w cf ->
+  hceil + 2244096 <= c_lo C ->      (* LPS 727298f3: the stack floor the wild free (AsIface7) takes *)
   as_SR H (rs_done H C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M0) cf.
 Proof.
-  induction n as [|n IH]; intros C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M0 w cf STC PLC R0 RA LT AT.
+  induction n as [|n IH]; intros C MA R sp s0v s1v s2v s3v s4v s5v s6v s7v s8v s9v s10v s11v ra fr M0 w cf STC PLC R0 RA LT AT FLR.
   - exfalso. pose proof AT as AT'. unfold rs_at_doread, rs_core in AT'.
     destruct AT' as (rax & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & s0x & s9x & t3 & t4 & t5 & t6 & m & s & errv & E & tot & mw1 & mw2 & t2c & optc & XS
                      & _ & _ & _ & _ & _ & WM0).
     destruct C as [bs fb P Ev ioc N lo B shi SP stb implb A LBin LF pad7 pad2 j13 j32a j8a j32b j8b mb m0 mo0 gp tp F fc MXc CXc].
     unfold rs_static in STC. cbn_w_all.
     destruct STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & NR & _). unfold wM in WM0. clear - WM0 NR LT. unfold zlength in WM0. cbn in LT. nia.
-  - eapply (ah_seq H HH); [exact (rs_read_round _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ STC PLC R0 RA AT)|].
+  - eapply (ah_seq H HH); [exact (rs_read_round _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ STC PLC R0 RA AT FLR)|].
     intros cf1 [D | (M1 & w1 & LT1 & AP)]; [apply (ah_done H HH); exact D|].
     eapply (ah_seq H HH); [exact (rs_put_round H HH BPUT _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ STC PLC R0 RA AP)|].
     intros cf2 [D | (w2 & _ & AD)]; [apply (ah_done H HH); eapply rs_done_mono; [exact D | clear - LT1; lia]|].
-    eapply (ah_mono H HH); [eapply (IH _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ M1 w2); [exact STC | exact PLC | exact R0 | exact RA | clear - LT LT1; lia | exact AD]|].
+    eapply (ah_mono H HH); [eapply (IH _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ M1 w2); [exact STC | exact PLC | exact R0 | exact RA | clear - LT LT1; lia | exact AD | exact FLR]|].
     intros cf3 D. eapply rs_done_mono; [exact D | clear - LT1; lia].
 Qed.
 
@@ -87,7 +90,7 @@ Qed.
 Theorem hread_spec : forall MA MR, hread_stmt H MA MR.
 Proof.
   intros MA MR C ra sp t0 t1 t2 s0 s1 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 msF m mo fr w s errv E XS
-         VIS STC PLC NS11 RM RP ALK ST FR0 SZFR FXS XP0 NRB KREL MP RA.
+         VIS STC PLC NS11 RM RP ALK ST FR0 SZFR FXS XP0 NRB KREL MP RA FLR.
   pose proof STC as STC0. pose proof PLC as PLC0. pose proof RP as RP0.
   destruct C as [bs fb P Ev ioc N lo B shi SP stb implb A LBin LF pad7 pad2 j13 j32a j8a j32b j8b mb m0 mo0 gp tp F fc MXc CXc].
   destruct w as [d PB FBB FB fds Fs sds nr]. destruct d as [c S L ns ls em h u es insz g rdi LBn Ag].
@@ -230,7 +233,7 @@ Proof.
   destruct ALT as [[Z0 EMS] | [POS EMS]].
   - (* [comment removed for export] *)
     eapply (rs_loop (Datatypes.S (Z.to_nat (wM N w0))) C MA MR sp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra fr (wM N w0) w0);
-      [exact STC0 | exact PLC0 | exact R0 | exact RA | clear - WMN; lia |].
+      [exact STC0 | exact PLC0 | exact R0 | exact RA | clear - WMN; lia | | exact FLR].
     unfold rs_at_doread, rs_core, rs_frames. subst C w0. cbn_w. cbn [cfg_ms cfg_model ps_c ps_S ps_L ps_ns ps_ls ps_em ps_h ps_u ps_es ps_insz ps_g ps_rdi ps_LBn ps_A].
     exists rax, u0, u1, u2, b0, b1, b2, b3, b4, b5, b6, b7, s0, s9, u3, u4, u5, u6, m1, s, errv, EC_clear, 0, (CB 8 jm1), (CB 8 jm2), [CB 24 jt2], [CB 24 jopt], XS.
     split; [exact EMS|]. split; [exact NS11|]. split; [exact KREL1|]. split; [exact (ah_mpres_trans H HH _ _ _ MP MP1)|].
@@ -258,6 +261,6 @@ Proof.
       split; [split; [split; [exact LOC1| split; [exact MID1| split; [exact MSZa| split; [exact MSZb| split; [exact SHE1| split; [exact T21| split; [exact SZ21| split; [exact OPT1| exact SZO1]]]]]]]]| split; [exact SAVED1| split; [exact FR0'| exact SZFR]]]|].
       split; [exact FXS|]. split; [exact XP1|]. split; [clear; lia|]. split; [clear - SZS; lia|]. exact NRB. }
     intros cf2 [D | (w2 & _ & AD)]; [apply (ah_done H HH); exact D|].
-    eapply (rs_loop (Datatypes.S (Z.to_nat (wM N w0)))); [exact STC0 | exact PLC0 | exact R0 | exact RA | clear - WMN; lia | exact AD].
+    eapply (rs_loop (Datatypes.S (Z.to_nat (wM N w0)))); [exact STC0 | exact PLC0 | exact R0 | exact RA | clear - WMN; lia | exact AD | exact FLR].
 Qed.
 End HCW.

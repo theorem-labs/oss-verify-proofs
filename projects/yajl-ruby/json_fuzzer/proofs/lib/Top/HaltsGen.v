@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the sys_rob premise of each realizes_cfg node). *)
 (* [comment removed for export] *)
 
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import LiaTuning.
@@ -145,7 +146,7 @@ Theorem realizes_cfg_must_exit_in : forall (S : list word) c T,
   must_exit_in_at_cfg cfg segs S c.
 Proof.
   intros S c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros Hnone HS.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running.

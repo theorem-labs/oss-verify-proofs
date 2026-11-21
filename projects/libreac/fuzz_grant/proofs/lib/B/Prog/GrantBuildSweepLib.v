@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: what reac_grant_build_sweep's walk shares between its files (the cuts' symbolic states, the facts a cut carries, the cut lemmas' statements, and the walk's own tactics), adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACbf.v (the seat of a cut: submem, facts_incl, the havoc of the dead registers, and the writable-window case list of the flag-store run) and lib/A/ACa2.v (a loop walk split into cut-indexed lemmas); module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantBuildSweepLib.v at a working branch eacc832ec38a (blob 9b1a1140806, the blob the walk was ported from): what reac_grant_build_sweep's walk shares between its files, over image B's listing and walk layer (lib/B/Prog). Image B differs from image A in the loop: the column index and the row index are kept in registers s11 / s6 and the width and the struct pointer are reloaded from the realigned frame's slots at 40 and 56, there is a UBSan bound check on the row index (`bgeu s6,s3` 0x85850, trap 0x85a3c), and the store's address is the values buffer's base s8 = F + 32 plus the row index, so the cuts carry the column c and the cell p as literals instead of image A's row-pointer atom. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantBuildSweepLib.v at a working branch (blob 9b1a1140806, the blob the walk was ported from): what reac_grant_build_sweep's walk shares between its files, over image B's listing and walk layer (lib/B/Prog). Image B differs from image A in the loop: the column index and the row index are kept in registers s11 / s6 and the width and the struct pointer are reloaded from the realigned frame's slots at 40 and 56, there is a UBSan bound check on the row index (`bgeu s6,s3` 0x85850, trap 0x85a3c), and the store's address is the values buffer's base s8 = F + 32 plus the row index, so the cuts carry the column c and the cell p as literals instead of image A's row-pointer atom. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -375,7 +376,7 @@ ew Ec 33 = Z_to_bv 64 base /\ ew Ec 34 = Z_to_bv 64 w /\ ew Ec 35 = Z_to_bv 64 (
 ew Ec 60 = Z_to_bv 64 sp1 /\ ew Ec 516 = Z_to_bv 64 F /\ ew Ec 528 = Z_to_bv 64 FL /\ ew Ec 529 = Z_to_bv 64 (SB + F / 8) /\
 ew Ec 619 = Z_to_bv 64 (F + 32 + 3 * c) /\ ew Ec 620 = Z_to_bv 64 (3 * c) /\ ew Ec 621 = Z_to_bv 64 c.
 (* The read-only data: a state that keeps image B's bytes keeps arodata_okP. Image A's walks transport it with
-   lib/A/Prog/GrantBase.v:34 arodata_ok_journalP (image B's twin: lib/B/PaBase.v:38), whose `fp_spares` side condition needs the section's Context RO
+   lib/A/Prog/GrantBase.v:34 arodata_ok_journalP (image B's twin: lib/B/PaBase.v:39), whose `fp_spares` side condition needs the section's Context RO
    (ro_below_ofl, which hyps_reac_grant_build_sweep now holds as IMG_RO_BELOW); this walk does not use it: it
    carries the image's bytes themselves (every window it writes - the machine stack, the side-stack frame, its
    shadow, al's frame - is off image B) and reads arodata_okP off them. *)

@@ -4,6 +4,7 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/YN13.v:121-125; projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC1n.v:201-203, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/LLVMFuzzerTestOneInput_seg_D1.v, with its module paths, module names and addresses changed; 317 of its 395 lines of code are new or changed and 5987 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Phase 1 of segment D1 of LLVMFuzzerTestOneInput's ASan walk (0x80b20..0x80bc8 and the payload copy's malloc):
    the record header (fuzz_u16, fuzz_u8, fuzz_take: three checked input loads, the address bias of pick_addr, the
    length), then malloc(k). d1_ph1 takes inv_rec's state (D1ctx) to the running state D1S at 0x80bcc with P1.
@@ -102,7 +103,7 @@ In (firstn kUnwindMax (pc_malloc_ra0 (as_code B)
 Hypothesis HUMF : forall c, In c (LLVMF_FREE_CTX RA_LLVMF) ->
 In (firstn kUnwindMax (pc_free_ra0 (as_code B)
 :: flat_map (fun r => if r =? pc_free_ra0 (as_code B) then [] else [r]) c)) (as_universe B).
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
   ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
   m_fds md' = m_fds md /\ m_fs md' = m_fs md.

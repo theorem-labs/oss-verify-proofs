@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BPKN; imports MainEntryBoth, where they live). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,6 +11,7 @@ From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import MainEntryBoth.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.LibA Require Import ExecF.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Spec Require Import STree AsanCtrl AsanEmbed AsanHandoffBoth.
@@ -50,7 +52,7 @@ Local Ltac aobj_close :=
   split; [rewrite Z.mul_comm; apply Z_mod_mult|]; split; [lia|]; split; [lia|]; split; lia.
 
 Theorem alayout_stack_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)),
-  Forall (pfact_ok V) both_pure_facts -> 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
+  Forall (pfact_ok V) BPKN -> 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
   al_bot (mkALayout (LV V) w U) + 0x800000 = al_top (mkALayout (LV V) w U) /\ al_top (mkALayout (LV V) w U) mod 4096 = 0
   /\ ATOP + 0x800000 - 160 <= al_top (mkALayout (LV V) w U) <= ATOP + 0x800000 + 3936 /\ al_top (mkALayout (LV V) w U) <= 2^47.
 Proof.
@@ -63,7 +65,7 @@ Proof.
 Qed.
 
 Theorem alayout_ok_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)),
-  Forall (pfact_ok V) both_pure_facts -> (length U <= Z.to_nat AUMAX)%nat ->
+  Forall (pfact_ok V) BPKN -> (length U <= Z.to_nat AUMAX)%nat ->
   32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
   alayout_ok (mkALayout (LV V) w U).
 Proof.
@@ -166,7 +168,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Theorem awf_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)),
-  Forall (pfact_ok V) both_pure_facts -> (length U <= Z.to_nat AUMAX)%nat ->
+  Forall (pfact_ok V) BPKN -> (length U <= Z.to_nat AUMAX)%nat ->
   32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
   awf (mkALayout (LV V) w U) (ST0 V) X0.
 Proof.

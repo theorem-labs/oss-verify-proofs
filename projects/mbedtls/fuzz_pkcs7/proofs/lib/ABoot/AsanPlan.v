@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's CONFIG_RSEQ flag as a new section variable, passed to the program-name scan, the argv layout node and the initial state; a new two-outcome munmap plan node, refused or cut, with its checker arm, so the plain munmap node now answers nothing). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,6 +27,8 @@ Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.     (* [comment removed for export] *)
 Variable LIMIT : Z.     (* [comment removed for export] *)
+Variable rz : Z.        (** #108: the run's CONFIG_RSEQ flag as 0 or 1 ([APC.rseq_z]), which fixes the auxv size
+                            [APC.AUXSZ rz]; only [node_pnscan] / [node_layout] read it (bzip2 K/AS/AsanPlan.v:29-31) *)
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -95,7 +98,9 @@ Inductive plan : Type :=
 | PAbstractCell (b : expr) (n : Z) (k : plan) (* [comment removed for export] *)
 | PHavocWords (bs : list expr) (k : plan)    (* [comment removed for export] *)
 | PRespell (r : nat) (e : expr) (k : plan)    (* [comment removed for export] *)
-| PMmapInH (kkept kok kdestroyed : plan).     (* [comment removed for export] *)
+| PMmapInH (kkept kok kdestroyed : plan)
+| PMunmap2 (krefused kgranted : plan).        (** #38 (LPS 75d69e00): munmap of exactly one tracked entry, -ENOMEM child /
+                                                cut child (model theories/Common/AsanPlan.v:84) *)     (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -103,7 +108,8 @@ Inductive plan : Type :=
 
 Definition node_sys (y : snode) (cs : acs) : option acs :=
   match y with
-  | YMunmap => node_munmap A cs
+  | YMunmap => None   (** #38: munmap may be refused (-ENOMEM, LPS 75d69e00 Mmap.v:426-439): a munmap is a
+                          [PMunmap2] node (as model theories/Common/AsanPlan.v; coturn's AsanPlan.v:133) *)
   | YBrk => node_brk1 A cs
   | YSetTid => node_settid nx0 cs
   end.
@@ -116,8 +122,8 @@ Definition node_x (x : xnode) (args : list expr) (cs : acs) : option acs :=
   | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
   | XMemIsZero => summary_miz A nx0 cs
   | XEnvScan => node_envscan A cs
-  | XPnScan => node_pnscan A nx0 cs
-  | XLayout => node_layout cs args
+  | XPnScan => node_pnscan A nx0 rz cs
+  | XLayout => node_layout rz cs args
   | XIStrncpy => summary_istrncpy A nx0 cs
   | XPopFree => summary_popfree A nx0 cs args
   | XSniff => if Z.eqb (x_sniff A) 0 then None else summary_sniff segs A nx0 cs   (* [comment removed for export] *)
@@ -142,7 +148,7 @@ Variable bfuel : nat.              (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of rz A)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>
@@ -294,6 +300,20 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
                                     | COk sc => COk (salt2 sa (salt2 sb sc))
                                     | err => err
                                     end
+                        | err => err
+                        end
+            | err => err
+            end
+        | None => CErr 3 p cs
+        end
+      else CErr 2 p cs
+  | PMunmap2 ka kb =>   (* model theories/Common/AsanPlan.v:279-292 *)
+      if is_ecall_at segs cs then
+        match node_munmap2 A cs with
+        | Some (csa, csb) =>
+            match check f csa ka with
+            | COk sa => match check f csb kb with
+                        | COk sb => COk (salt2 sa sb)
                         | err => err
                         end
             | err => err

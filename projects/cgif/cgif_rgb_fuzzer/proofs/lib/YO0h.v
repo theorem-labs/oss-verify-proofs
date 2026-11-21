@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocator's start-state auxv facts indexed by the run's CONFIG_RSEQ flag: every pair's key from YK0a's key table, 27 or 29 pairs, AT_RANDOM's value word at byte 392 in place of 136, and the span bound at the larger layout, 464 in place of 160; YK0a imported). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -13,6 +14,12 @@ From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YQ0j YQ0b YQ03 YQ0i YQ0h YQ09 YQ04 YQ05 YQ0e YQ02.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YH04 YH07 YH06 YO0g YO0e YO0j.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05.
+(* #38: [APC.AUXV_OFFS]/[APC.AUXV_TYPES]/[APC.AUXSZ] live in YK0a.  Requiring
+   YP0c LOADS YK0a transitively but does NOT make its names visible here -
+   Coq's Require is transitive for loading, Import is not - which is the
+   "The reference APC.AUXV_OFFS was not found in the current environment"
+   the round reported.  One line, not a redesign. *)
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK0a.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -318,54 +325,71 @@ apply mem_ok_intro; [vm_compute; reflexivity | |].
 - subst E sp. cbn [pairwise_disjoint all_disjoint mem_am1].
 repeat split; unfold extent_disjoint; cbn [base_val r_base r_lo r_hi ew E0 R_stack R_got R_guard R_pgsz R_ctxA R_ctxB R_ctxC R_errno]; lits; lia.
 Qed.
+(* #38: the run's CONFIG_RSEQ flag, declared here so the four facts below and
+   the two lemmas that use them take it last.  Nothing fixes it. *)
+Variable rs : bool.
 Hypothesis Hauxp : word_mem src2segs mem (LIBC + 8) (cx 44%nat).
-Hypothesis Hauxv : forall k, (k < 10)%nat -> word_mem src2segs mem (cx 44%nat + 16 * Z.of_nat k) (nth k AUXV_TYPES 0).
-Hypothesis Har : word_mem src2segs mem (cx 44%nat + 16 * 8 + 8) (cx 45%nat).
-Hypothesis Hav_range : 4096 <= cx 44%nat /\ cx 44%nat + 160 <= 2 ^ 63 /\ 4096 <= cx 45%nat /\ cx 45%nat + 16 <= 2 ^ 63 /\ sp <= cx 44%nat.
-Lemma facts_ok_am0 : facts_ok E facts_am0.
+(* every pair's KEY, pair k at byte 16 * k ([APC.AUXV_KEYS]): the fixture
+   [R_auxv_of] carries a key chunk for each, because [get_random_secret] reads
+   them all on its way to AT_RANDOM. *)
+Hypothesis Hauxv : forall k, (k < length (APC.AUXV_KEYS (APC.rseq_z rs)))%nat ->
+word_mem src2segs mem (cx 44%nat + 16 * Z.of_nat k) (nth k (APC.AUXV_KEYS (APC.rseq_z rs)) 0).
+(* AT_RANDOM's VALUE word: pair 24, byte 16*24+8 = 392, in BOTH CONFIG_RSEQ
+   cases.  It was 16*8+8 = 136, which was pair 8 under the ten-pair layout. *)
+Hypothesis Har : word_mem src2segs mem (cx 44%nat + APC.AT_RANDOM_VOFF) (cx 45%nat).
+(* the span bound takes the LARGER layout, [APC.AUXSZ 1] = 464, so it is
+   rseq-free and is the stronger of the two; it was 160 = 16 * 10. *)
+Hypothesis Hav_range : 4096 <= cx 44%nat /\ cx 44%nat + APC.AUXSZ 1 <= 2 ^ 63 /\ 4096 <= cx 45%nat /\ cx 45%nat + 16 <= 2 ^ 63 /\ sp <= cx 44%nat.
+Lemma facts_ok_am0 : facts_ok E (facts_am0_of rs).
 Proof.
 pose proof (proj1 alloc_ceiling_val) as ACV_p9.
 subst E sp. pose proof (proj1 alloc_ceiling_val) as AC.
-unfold facts_am0, facts_ok. cbn [f_atoms f_conds f_alias atoms_ok conds_ok alias_ok].
-unfold afact_ok, F_sp, F_sh, F_av, F_ar; cbn [af_lo af_hi af_al2 ew E0]. lits.
-rewrite !u64_of_Z by lia. change (2 ^ 0) with 1. rewrite !Z.mod_1_r. change (2 ^ 4) with 16.
+unfold facts_am0_of, facts_ok. cbn [f_atoms f_conds f_alias atoms_ok conds_ok alias_ok].
+(* the flag reaches only [F_av_of]'s ceiling; split above the reduction so each
+   branch carries a literal, exactly as the single instantiation did. *)
+unfold afact_ok, F_sp, F_sh, F_av_of, F_ar, APC.AUXSZ in *; destruct rs;
+cbn [af_lo af_hi af_al2 ew E0]; lits;
+rewrite !u64_of_Z by lia; change (2 ^ 0) with 1; rewrite !Z.mod_1_r; change (2 ^ 4) with 16;
 repeat split; lia.
 Qed.
 Theorem st_ok_am0 :
 (forall k, (k < 4)%nat -> mbyte src2segs mem (CTX + 8 + Z.of_nat k) = Some (Z_to_bv 8 (le_byte 0 4 k))) ->
 word_mem src2segs mem CTX 0   ->
-st_ok src2segs E ss_am0 (mkst regs (Z_to_bv 64 src2_A_alloc_meta) mem (seg_rom src2segs)).
+st_ok src2segs E (ss_am0_of rs) (mkst regs (Z_to_bv 64 src2_A_alloc_meta) mem (seg_rom src2segs)).
 Proof.
 intros Hinit Hsec. pose proof (proj1 alloc_ceiling_val) as AC.
+(* [APC.AUXSZ 1] is an atom to [lia]; this is its value *)
+pose proof Hav_range as HAV. unfold APC.AUXSZ in HAV.
 assert (E44 : base_val E (Some 44%nat) = cx 44%nat).
 { subst E. cbn [base_val ew E0]. apply u64_of_Z. lia. }
-unfold st_ok, ss_am0, mkst; cbn [ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_rom ms_regs ms_mem ss_pc ss_regs ss_mem ss_resv ss_facts resv_denot].
+unfold st_ok, ss_am0_of, mkst; cbn [ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_rom ms_regs ms_mem ss_pc ss_regs ss_mem ss_resv ss_facts resv_denot].
 repeat (split; [reflexivity|]).
 split; [apply regs_ok_am|]. split; [| apply facts_ok_am0].
-apply mem_ok_intro; [vm_compute; reflexivity | |].
-- change mem_am0 with ((R_stack :: [R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno]) ++ [R_auxp; R_auxv]).
-apply Forall_app. split; [apply Forall_cons; [apply region_ok_stack | apply (region_ok_statics false Hinit Hsec)] |].
+apply mem_ok_intro; [destruct rs; vm_compute; reflexivity | |].
+(* #38: the flag enters this proof through [R_auxv_of]'s extent and its key
+   chunks; [R_auxv_of_eq] gives the one builder, whose chunks are a [map] over
+   the key table, so one argument covers every key in both CONFIG_RSEQ cases. *)
+- change (mem_am0_of rs) with ((R_stack :: [R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno]) ++ [R_auxp; R_auxv_of rs]).
+apply Forall_app; split; [apply Forall_cons; [apply region_ok_stack | apply (region_ok_statics false Hinit Hsec)] |].
 apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]].
 + apply region_ok_intro; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks base_val R_auxp]; lits; try lia.
-apply Forall_cons; [|apply Forall_nil]. apply (chunk_ok_word src2segs E mem 0 _ _ (cx 44%nat)); [apply E_cx; lia | exact Hauxp].
-+ apply region_ok_intro; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks R_auxv]; rewrite E44; [lia | lia | intros o Ho; lia |].
-assert (TY : forall k off ty, (k < 10)%nat -> off = 16 * Z.of_nat k -> ty = nth k AUXV_TYPES 0 ->
-chunk_ok src2segs E mem (cx 44%nat) (mkChunk off (CVal 8 (SLit ty)))).
-{ intros k off ty Hk -> ->. apply (chunk_ok_word src2segs E mem _ _ _ (nth k AUXV_TYPES 0)); [reflexivity | apply Hauxv; exact Hk]. }
-repeat apply Forall_cons; try apply Forall_nil;
-first [ apply (TY 0%nat); [lia | reflexivity | reflexivity]
-| apply (TY 1%nat); [lia | reflexivity | reflexivity]
-| apply (TY 2%nat); [lia | reflexivity | reflexivity]
-| apply (TY 3%nat); [lia | reflexivity | reflexivity]
-| apply (TY 4%nat); [lia | reflexivity | reflexivity]
-| apply (TY 5%nat); [lia | reflexivity | reflexivity]
-| apply (TY 6%nat); [lia | reflexivity | reflexivity]
-| apply (TY 7%nat); [lia | reflexivity | reflexivity]
-| apply (TY 8%nat); [lia | reflexivity | reflexivity]
-| apply (TY 9%nat); [lia | reflexivity | reflexivity]
-| apply (chunk_ok_word src2segs E mem _ _ _ (cx 45%nat)); [apply E_cx; lia | replace (cx 44%nat + 136) with (cx 44%nat + 16 * 8 + 8) by lia; exact Har] ].
-- subst sp. cbn [pairwise_disjoint all_disjoint app].
-repeat split; unfold extent_disjoint; subst E; cbn [base_val r_base r_lo r_hi ew E0 R_stack R_got R_guard R_pgsz R_ctxA R_ctxB R_ctxC R_errno R_auxp R_auxv];
+apply Forall_cons; [|apply Forall_nil]; apply (chunk_ok_word src2segs E mem 0 _ _ (cx 44%nat)); [apply E_cx; lia | exact Hauxp].
++ pose proof (APC.rseq_z_range rs) as Hr.
+pose proof (APC.AUXV_KEYS_length (APC.rseq_z rs) Hr) as KL. unfold APC.AUXV_NULL_IX in KL.
+assert (KC : forall lo n, (lo + n <= length (APC.AUXV_KEYS (APC.rseq_z rs)))%nat ->
+Forall (chunk_ok src2segs E mem (cx 44%nat)) (map (auxv_key_chunk (APC.rseq_z rs)) (seq lo n))).
+{ intros lo n Hn. apply Forall_forall. intros c Hc. apply in_map_iff in Hc as (k & <- & Hk). apply in_seq in Hk.
+unfold auxv_key_chunk. apply (chunk_ok_word src2segs E mem _ _ _ (nth k (APC.AUXV_KEYS (APC.rseq_z rs)) 0));
+[reflexivity | apply Hauxv; lia]. }
+rewrite R_auxv_of_eq. unfold auxv_region.
+apply region_ok_intro; cbn [r_base r_lo r_hi r_wlo r_whi r_chunks]; rewrite E44;
+[lia | unfold APC.AUXSZ in *; lia | intros o Ho; lia |].
+apply Forall_app; split; [apply KC; lia|].
+apply Forall_cons; [| apply KC; lia].
+apply (chunk_ok_word src2segs E mem _ _ _ (cx 45%nat)); [apply E_cx; lia | exact Har].
+- subst sp. destruct rs; cbn [pairwise_disjoint all_disjoint app mem_am0_of].
+all: repeat split; unfold extent_disjoint; subst E;
+cbn [base_val r_base r_lo r_hi ew E0 R_stack R_got R_guard R_pgsz R_ctxA R_ctxB R_ctxC R_errno R_auxp R_auxv_of R_auxv_t R_auxv_f];
 rewrite ?(u64_of_Z (cx 44%nat)) by lia; lits; lia.
 Qed.
 End e.

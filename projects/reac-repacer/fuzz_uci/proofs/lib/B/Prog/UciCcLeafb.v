@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v (origin/ossv/recipes 88154566652a) for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
+(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths and module names changed; 3 of its 523 lines of code are new or changed and 1 line of the source is left out. *)
-(* The image-B twin of this unit's lib/A/Prog/UciCcLeafb.v (commit 437ead9f0b3), for fuzz_uci.asan-ubsan: the B core's YCbq / YB1v, lib/B's Img0 / AsanCells and the lib/B/Prog modules UciCg / LeafCgKit / AsanKA / UciPImg, the lemmas and their proofs unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B twin of this unit's lib/A/Prog/UciCcLeafb.v, for fuzz_uci.asan-ubsan: the B core's YCbq / YB1v, lib/B's Img0 / AsanCells and the lib/B/Prog modules UciCg / LeafCgKit / AsanKA / UciPImg, the lemmas and their proofs unchanged. *)
 (* UciCcLeafb: the shared leaf-call bridge of the image-B walk of reac-repacer/fuzz_uci, over this unit's segments
    tfibsegs and its record B. A program leaf of this unit is stated in lib/B/Prog/<leaf>_cg.v over the kit
    lib/B/Prog/LeafCgKit.v: its premises are footprint facts about the RAW call memory (Frame.stk, Mem.bytes_at,

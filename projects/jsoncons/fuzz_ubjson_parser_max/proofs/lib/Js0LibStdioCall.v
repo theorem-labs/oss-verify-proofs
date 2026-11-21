@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded encoded lemma statements (hi_ok_sound, inr_spec, know_ok_frame3, split_lit_denot, sr_upd lemmas) into plain Rocq, flattened Section SE variables, and added an m_channel_reader premise to stdio_call_sound_fr and stdio_call_sound; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0LibStdioCall.v, 45 lines within its lines 55-528. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -17,8 +18,6 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import SX2. Import SX2S.
 Open Scope Z_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__Js0LibStdioCall () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Nat."; "Corelib.Init.Peano."; "Corelib.Lists.ListDef."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Js0LibStdioCall.FPX_1."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Js0StdioDefs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.LibKnowFrame."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StoreOk."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymDrive."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymDriveX."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2.SX2."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2Sound.SX2S."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymRun."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Plain.M."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1None"; "1O"; "1Some"; "1app"; "1bool"; "1false"; "1length"; "1list"; "1nat"; "1nil"; "1option"; "1pair"; "1prod"; "1true"; "2and"; "2eq"]; ["2ex"; "2iff"; "2not"; "2or"; "3sub"; "4le"; "4lt"; "5map"; "5nth"; "6Z"; "0E"; "0K"; "7mkCfg"; "8FdChannel"; "8FdEntry"; "8Model"]; ["8WriteEv"; "8event"; "8fd_lookup"; "8m_fds"; "8m_halted"; "8m_vm_lazy"; "9bvmap"; "0M"; "0M'"; "0R"; "0R'"; ":hi_ok"; ":inr"; ":kimg_cut"; ":sc_bufp"; ":sc_bufsz"]; [":sc_f"; ":sc_fd"; ":sc_kn"; ":sc_l"; ":sc_ret"; ":sc_s"; ":sc_sp"; ":sc_sr"; ":sc_wb"; ":sc_wp"; ":stdio_call"; ":stdio_res"; ";sw_post"; "<kn_frame"; "=mkst"; "=rdn"]; ["=seg_rom"; ">TSet"; ">t_emit"; "?srealizes"; "@mem_grows"; "Ajunk_vals"; "Asr_after_call_j"; "Bkindex"; "CELit"; "CEnv"; "CSA"; "Cedenot"; "Cenv"; "Cexpr"; "Ckentry"; "Cridx"]; ["Csplit_lit"; "Csr_get"; "Csr_upd"; "Destart"; "Dflat"; "Dknow_ok"; "Dregs_ok"; "Eexpr_vars_lt"; "Evals_ev"; "Floaded_segments"; "Gnth_error"; "Hadd"; "Hle"; "Hlt"; "Hof_nat"; "Hpow"]; ["Hsub"; "0a"; "0b"; "0b1"; "0b2"; "0b3"; "0e"; "0ebs"; "0extra"; "0fx"; "0i"; "0j"; "0k"; "0kept"; "0kn"; "0l"]; ["0lo"; "0m"; "0model"; "0n"; "0n1"; "0n2"; "0n3"; "0nv"; "0o1"; "0o2"; "0o3"; "0off"; "0p"; "0pending"; "0res"; "0s"]; ["0scfg"; "0sr"; "IZ_to_bv"; "Ibv"; "Ibv_unsigned"; "0su"; "0vals"; "0wb"; "0wp"; "0x"]]).
 #[local] Abbreviation RSEGS := Plain.M.loaded_segments.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section FPX_1. Context {fx : PropExec.FPState}.
@@ -40,7 +39,8 @@ sc_kn : list kentry
 }.
 Definition hi_ok (kn : list kentry) (e : expr) : bool :=
 match erange kn e with Some (_, hi) => Z.leb hi 0x800000000000 | None => false end.
-Lemma hi_ok_sound : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "Q7'R<'T3yR0%211':y8%511%311p051'7'R>%211'R=&RE&RIr4r3r2%544321'?'4&Q;%1265(=%53421&RL&T4&R;r6%221=%42L1+TPPPPPPPP0%7221p091p0@1pV>G1pVNI1pR@M1pQFQ61").
+Lemma hi_ok_sound : forall E M kn e, know_ok RSEGS E M kn -> hi_ok kn e = true ->
+(bv_unsigned (edenot E e) <= 0x800000000000)%Z.
 Proof.
 intros E M kn e HK H. unfold hi_ok in H.
 destruct (erange kn e) as [[lo hi]|] eqn:He; [|discriminate].
@@ -95,11 +95,20 @@ end
 | _, _ => None
 end.
 Definition inr (lo n : Z) (x : word) : bool := (Z.leb lo (bv_unsigned x) && Z.ltb (bv_unsigned x) (lo + n))%bool.
-Lemma inr_spec : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "L'I'T3yR0%211&A'?'4&Q<r3r2r1%43321(=%83721'>&RL&T4%12?7%32:1&RM&RK%12=<%3251%9251%D2;1pXDF1pW8J1pW2K1").
+Lemma inr_spec : forall lo n x, inr lo n x = true <-> (lo <= bv_unsigned x < lo + n)%Z.
 Proof. intros lo n x. unfold inr. rewrite andb_true_iff, Z.leb_le, Z.ltb_lt. tauto. Qed.
-Lemma inr_false : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "N'I'T3yR0%211&A'?'4&Q<r3r2r1%43321(5%83721&B'>&RL&T4%12@8%32;1&RM&RK%12>=%3251%9251%;11%F2=1pXDH1pW8L1pW2M1").
+Lemma inr_false : forall lo n x, inr lo n x = false <-> ~ (lo <= bv_unsigned x < lo + n)%Z.
 Proof. intros lo n x. rewrite <- inr_spec. destruct (inr lo n x); split; congruence. Qed.
-Lemma know_ok_frame3 : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "S>'R<'T3yR0%211':y8%511%311p051pXD62'7'R>%211'R='I&RE&RIr=r<r:%544321&RDr>(R:r9%2261r8%63521r?r7%7241r6%;3421r@r5%<241r4%@3421&B'>&RL&RCrB%D2EJ%3221&T4r1%22Q=1%8241&RM&RK%127Q1%3251%>251%@11rCr;%Q22Q71%A231r2%?2QJ1%E231%<24Q;%>231%I231%K11rD%J21Q:r3%H2R31%N231%E24Q=%G231%Q2231%Q411'?%E1Q8%;1Q9%33R721p051p0?1p0K1pXDR?1&R4rA%221QD&QM%14QFQKR1R6%241R6Q0R5%341R1QOQL%R;4R:Q361p061p0:1p0QH1p0QN1p0R41p0R<1pW>RC1pWFRD1pV<RF1pW<RF1pWDRG1pV:RI1pW:RI1pWBRJ1pV8RL1pVNRN1pRBS21pR@S41pQFS=1").
+Lemma know_ok_frame3 : forall E M M' kn b1 o1 n1 b2 o2 n2 b3 o3 n3,
+know_ok RSEGS E M kn ->
+flat E (SA b1 o1) n1 -> flat E (SA b2 o2) n2 -> flat E (SA b3 o3) n3 ->
+(forall x : word,
+~ (estart E (SA b1 o1) <= bv_unsigned x < estart E (SA b1 o1) + n1)%Z ->
+~ (estart E (SA b2 o2) <= bv_unsigned x < estart E (SA b2 o2) + n2)%Z ->
+~ (estart E (SA b3 o3) <= bv_unsigned x < estart E (SA b3 o3) + n3)%Z ->
+M' x = M x) ->
+mem_grows M M' ->
+know_ok RSEGS E M' (kn_frame (kn_frame (kn_frame kn b1 o1 n1) b2 o2 n2) b3 o3 n3).
 Proof.
 intros E M M' kn b1 o1 n1 b2 o2 n2 b3 o3 n3 HK F1 F2 F3 Hout Hg.
 set (a1 := estart E (SA b1 o1)) in *. set (a2 := estart E (SA b2 o2)) in *. set (a3 := estart E (SA b3 o3)) in *.
@@ -126,7 +135,7 @@ eapply know_ok_frame; [exact HK | exact F1 | exact O1 | exact G1].
 Qed.
 Lemma Forall_one' : forall {A} (P : A -> Prop) x, P x -> Forall P [x].
 Proof. intros A P x H. constructor; [exact H | constructor]. Qed.
-Lemma kimg_cut_sound : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "N'R<'T3yR0%211':y8%511%311p051'7'R>%211'I&RE&RIr5r4r3%544321r6&Q=r2%23651%:49481p061pW8=1pV4>1pVJ@1pR@D1pQFM1").
+Lemma kimg_cut_sound : forall E M k a n, know_ok RSEGS E M k -> know_ok RSEGS E M (kimg_cut k a n).
 Proof.
 intros E M k a n HK. unfold kimg_cut, know_ok. apply Forall_flat_map. apply Forall_forall. intros K Hin.
 pose proof (proj1 (Forall_forall _ _) HK K Hin) as HKK.
@@ -140,15 +149,15 @@ split; [lia|]. split; [lia|]. intros i Hi. apply Himg. lia.
 - destruct (Z.ltb (a + n) hi) eqn:E2; [|constructor]. apply Z.ltb_lt in E2. apply Forall_one'. cbn [kentry_ok].
 split; [lia|]. split; [lia|]. intros i Hi. apply Himg. lia.
 Qed.
-Lemma u_lit0 : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall ">'R<'?'I&T4yR0&R;r1(R8z%211%5241%8271%;3:14pQF=1").
+Lemma u_lit0 : forall E, bv_unsigned (edenot E (ELit 0)) = 0%Z.
 Proof. intros E. cbn [edenot]. apply u64_lit. lia. Qed.
-Lemma flat_abs0 : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "Q1'R<'I&RLzr2%3221&RKr4r3%3221&RO+2+R0%3221%<251&RMr5%2214&RDr7(R:(R8%11Cr6%4221%73619p091p0=1p0G1p0H1pW8M1pWHN1pQFQ01").
+Lemma flat_abs0 : forall E off n, (0 <= off)%Z -> (0 <= n)%Z -> (off + n <= 2 ^ 64)%Z -> (off < 2 ^ 64)%Z ->
+flat E (SA (ELit 0) off) n.
 Proof. intros E off n H0 Hn Hnw Hlt. unfold flat, estart. cbn [a_base a_off]. rewrite u_lit0. lia. Qed.
-Section SE.
-Local Abbreviation SEC_T_split_lit_denot := (ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "Q2'R<'R='I'?'<%1243&R@r3%211(;r2r1%34;:21%:3851'T3yR0%211&R;r5r4%3221&T2&RK&T4%726A%22:1%421@%62<1%I3<81p0@1pVJL1pV6N1pV>O1pQFQ11")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_split_lit_denot) 0%nat 0%nat).
-Lemma split_lit_denot : ltac:(sec_stmt2 constr:(SEC_T_split_lit_denot) 1%nat 0%nat).
+Lemma split_lit_denot : forall E e b k, split_lit e = (b, k) ->
+edenot E e = Z_to_bv 64 (bv_unsigned (edenot E b) + k).
 Proof.
+intros E.
 intros e b k H.
 assert (G : forall e' : expr, edenot E e' = Z_to_bv 64 (bv_unsigned (edenot E e') + 0)).
 { intros e'. rewrite Z.add_0_r. symmetry. apply Z_to_bv_bv_unsigned. }
@@ -160,8 +169,7 @@ lazymatch type of H with (match ?y with _ => _ end = _) => destruct y end; try (
 injection H as <- <-. cbn [edenot]. rewrite alu_add. unfold v_add. apply bv_eq.
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Z.add_mod_idemp_r by lia. reflexivity.
 Qed.
-End SE.
-Lemma split_lit_vars : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "N'8'R='I'?'<%1243&R@r3%211(;r2r1%34;:21%:3851'4&RGr5r4%3221(=%A3621r6%7215%D3914p041p0<1pVJH1pV6J1pV>K1pW8M1").
+Lemma split_lit_vars : forall n e b k, split_lit e = (b, k) -> expr_vars_lt n e = true -> expr_vars_lt n b = true.
 Proof.
 intros n e b k H Hv. unfold split_lit in H.
 destruct e; try (injection H as <- <-; first [reflexivity | exact Hv]).
@@ -169,7 +177,8 @@ lazymatch type of H with (match ?o with _ => _ end = _) => destruct o end; try (
 lazymatch type of H with (match ?y with _ => _ end = _) => destruct y end; try (injection H as <- <-; exact Hv).
 injection H as <- <-. cbn [expr_vars_lt] in Hv. apply andb_prop in Hv as [Hv _]. exact Hv.
 Qed.
-Lemma kindex_some : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "Q;'R>'4p021'7%114'8'?':%113&R7r4r3r2%43321(2r1%22;1%;3941'@'>%=1D&RJr5&D%12=>%43I31%<2J;%E3721r6%11>(=%I3N21'E%12GF%?231%@281qQHQ41%C2Q51p0E1pVHQ21pVFQ31pVNQ51pWJQ81").
+Lemma kindex_some : forall p kn i j, kindex p kn i = Some j ->
+exists K, nth_error kn (j - i) = Some K /\ p K = true /\ (i <= j)%nat.
 Proof.
 intros p kn. induction kn as [|K rest IH]; intros i j H; cbn [kindex] in H; [discriminate|].
 destruct (p K) eqn:HP.
@@ -177,12 +186,12 @@ destruct (p K) eqn:HP.
 - destruct (IH (S i) j H) as (K' & Hn & HP' & Hle). exists K'.
 replace (j - i)%nat with (S (j - S i))%nat by lia. cbn [nth_error]. repeat split; try assumption. lia.
 Qed.
-Lemma ridx_lit : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "A'8&Fr1uQ0%3221'?&R?&T2y5&RNr2%211%5241%711%93>14p0;1pW8@1").
+Lemma ridx_lit : forall n, (n < 32)%nat -> ridx (Z_to_bv 5 (Z.of_nat n)) = n.
 Proof.
 intros n Hn. unfold ridx. rewrite Z_to_bv_unsigned. unfold bv_wrap.
 change (bv_modulus 5) with 32%Z. rewrite Z.mod_small by lia. lia.
 Qed.
-Lemma sr_get_nat : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "O'7'R=%211'8'>&F(1r1%3221uQ0%5231%7231'?&RAr3&T2y5&RNr2%211%5241%8271&H(R8z%211%44I8<1%?3J61p0A1pW8J1pX4L1").
+Lemma sr_get_nat : forall sr n, (0 < n < 32)%nat -> sr_get sr (Z_to_bv 5 (Z.of_nat n)) = nth n sr (ELit 0).
 Proof.
 intros sr n Hn. unfold sr_get.
 assert (Hnz : bv_eqb (Z_to_bv 5 (Z.of_nat n)) 0%bv = false).
@@ -191,17 +200,17 @@ change (bv_modulus 5) with 32%Z. rewrite Z.mod_small by lia.
 replace (bv_unsigned (0%bv : bv 5)) with 0%Z by reflexivity. lia. }
 rewrite Hnz, ridx_lit by lia. reflexivity.
 Qed.
-Lemma length_sr_upd : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "E'7'R=%211'8&Fr2&6r3%2271%5241'?&RBr4%23168%82=1%92>3%63=21p081pV>A1pW8@1pX4B1").
+Lemma length_sr_upd : forall sr n e, (n < length sr)%nat -> length (sr_upd sr n e) = length sr.
 Proof.
 intros sr. induction sr as [|h t IH]; intros n e Hn; cbn [length] in Hn; [lia|].
 destruct n; cbn [sr_upd length]; [reflexivity|]. rewrite IH by lia. reflexivity.
 Qed.
-Lemma nth_sr_upd_same : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "H'7'R=%211'8&Fr2&6r3%2271%5241'?&H&RBr4%23179(R8z%211%74A;41%93B1>p0;1pV>D1pW8C1pX4E1").
+Lemma nth_sr_upd_same : forall sr n e, (n < length sr)%nat -> nth n (sr_upd sr n e) (ELit 0) = e.
 Proof.
 intros sr. induction sr as [|h t IH]; intros n e Hn; cbn [length] in Hn; [lia|].
 destruct n; cbn [sr_upd nth]; [reflexivity|]. apply IH. lia.
 Qed.
-Lemma nth_sr_upd_other : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "J'7'R=%211'8&B'?r3r2%33521%511&H&RBr5r4%33217(R8z%211%84A<41%94B=72%?3C21p0<1pV>E1pW4D1pW8E1pX4G1").
+Lemma nth_sr_upd_other : forall sr n m e, n <> m -> nth m (sr_upd sr n e) (ELit 0) = nth m sr (ELit 0).
 Proof.
 intros sr. induction sr as [|h t IH]; intros n m e Hne.
 - revert m Hne. induction n as [|n IHn]; intros m Hne; cbn [sr_upd].
@@ -209,20 +218,15 @@ intros sr. induction sr as [|h t IH]; intros n m e Hne.
 + destruct m; [reflexivity|]. cbn [nth]. rewrite IHn by lia. destruct m; reflexivity.
 - destruct n; destruct m; cbn [sr_upd nth]; try reflexivity; [lia|]. apply IH. lia.
 Qed.
-Lemma length_sr_after_call_j : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "B'7'R=%211'8%411'?&6&R6r3r2r1%43321%62;1uQ0%93;21pW@<1pVL<1pX4?1").
+Lemma length_sr_after_call_j : forall sr kept nv, length (sr_after_call_j sr kept nv) = 32%nat.
 Proof. intros. unfold sr_after_call_j. rewrite length_map, length_seq. reflexivity. Qed.
 Section SE.
-Variables (vals : list word).
-Variables (ebs : nat -> list byte).
-Variables (sr : list expr).
-Variables (kn : list kentry).
-Variables (R : bvmap 5 word).
-Variables (M : word -> option byte).
-Variables (model : Model).
-Variables (res : stdio_res).
-Variables (pending extra : list byte).
-Variables (K : TSet).
-Theorem stdio_call_sound_fr : let E := Env (vals_ev vals) ebs in
+Theorem stdio_call_sound_fr :
+forall (vals : list word) (ebs : nat -> list byte) (sr : list expr) (kn : list kentry)
+(R : bvmap 5 word) (M : word -> option byte) (model : Model) (res : stdio_res)
+(pending extra : list byte) (K : TSet),
+m_channel_reader model = true ->
+let E := Env (vals_ev vals) ebs in
 regs_ok E sr R -> know_ok RSEGS E M kn ->
 stdio_call (length vals) sr kn = Some res ->
 let wb := bv_unsigned (edenot E (sc_wb res)) in
@@ -250,7 +254,7 @@ srealizes RSEGS scfg (mkCfg (mkst R' (Z_to_bv 64 (sc_ret res)) M' (seg_rom RSEGS
 srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x9dc38) M (seg_rom RSEGS)) model)
 (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-intros E HR HK Hc.
+intros vals ebs sr kn R M model res pending extra K Hrdr E HR HK Hc.
 cbv beta delta [stdio_call] in Hc. cbv zeta in Hc.
 destruct (nth 10 sr (ELit 0)) as [f| | | | | | |] eqn:H10; try discriminate.
 destruct (lit_even_ret (nth 1 sr (ELit 0))) as [ret|] eqn:Hret; [|discriminate].
@@ -355,6 +359,7 @@ pending extra K).
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. unfold two64 in Hcgv. rewrite Hcgv. reflexivity.
 - apply orb_prop in Hfd12 as [H|H]; apply Z.eqb_eq in H; subst fd; lia.
 - exact Hfdlk.
+- exact Hrdr.
 - exact Hh.
 - exact Hlz.
 - lia.
@@ -436,11 +441,41 @@ repeat apply Forall_cons; [ | | | exact HK3]; cbn [kentry_ok]; (split; [lia|]); 
 + exact HPOST.
 Qed.
 End SE.
-Theorem stdio_call_sound : ltac2:(TCodec.tc2 tcn__Js0LibStdioCall "WO'7'T3yR0%211%411'8y8%611%811p041'R=%;11'R>%=11&Q6y5%221=':%11;p0@1'O'QK&R1'R<(R9&RHr;%211r:%5221&RFr1r8%33251&RE&RIr2%342159'?%F1B&QJ&6r>%22Q81r<%5321C(2r7%22K1%;3:41'I&T4&R;r4&QH%11G%4231%62QG1r5&QIr9%211%:241%<2QM1r6&QE%11Q6%?231&QC%11Q;%B2G1&QF%11L%E2Q91%G2R81&RL%12BG&RO+2+Q?%3221%62G1&S0%12CQ4&RN%Q<2R>Q;%211%QA3Q541%Q52RFN%QC3Q713&RKr@%QC2RE1%911r?%QF2RH1%<11%7241+N%F2E1%I231'C+S@%E2Q71%M2Q<1%N2Q9R=%5221%QH2S9Q?%QI2S:R<%C221%L2QO8%Q4221%Q52R15%<221%QO2S@RF%I218%Q921Q4%S41S=&QOrG&T2r=%22SH1rD%RC2SE1%74RJ631%R@2SF3%RI3:21rH%;4RN1RE5%RL3=14'N%SC11&Q2&Q3%117&QA%11B%B2T81%6241(M%113%S02;1%S93;41%SO1T=&Q4rI%211(0%11TB%S@3631'<%12TETE%TI11&Q5rJ%211(9%116%SI3631'Q1%411%Q;11&3rQ4&R5%11T2%43U431%T?11rQ3%TB221&QGrM%211%T@341T:rQ5r3%<11%?3U?31%TJ11%TL21@&QBrN%211%TF4TE4TD1'R3vT0(L&QNvS9&QDrO%211%R92UO1&R0%11U0%857T?3D1rQ0%;221rL%?4U5>21p0A1p0L1pRBUH1pRFUL1+cgQH%RF2V<1%C5B@1I<%E21Q4&R2&G(Q0%R<1=%RM2VC1%311rK%QE3VA1QM%74VBQI31%921R8%Q24UHQ1;1p0@1p0QK1p0QO1p0R91p0RA1p0RO1p0S31p0S?1p0SC1p0SK1p0T21p0T>1p0TA1p0TH1p0TN1tX<UIU11tW0W9U61tX0W:U:1tXBULU?1tX@UMUF1p0UO1p0V<1p0VA1tQFVLVF1pQHVN1pVBW=1pWLW>1pWNW21pW6W41pR@W61pRDW:1pVNW>1pX4WA1pV@WD1pX>WJ1").
+Theorem stdio_call_sound :
+forall (vals : list word) (ebs : nat -> list byte) (sr : list expr) (kn : list kentry)
+(R : bvmap 5 word) (M : word -> option byte) (model : Model) (res : stdio_res)
+(pending extra : list byte) (K : TSet),
+m_channel_reader model = true ->
+let E := Env (vals_ev vals) ebs in
+regs_ok E sr R -> know_ok RSEGS E M kn ->
+stdio_call (length vals) sr kn = Some res ->
+let wb := bv_unsigned (edenot E (sc_wb res)) in
+let wp := bv_unsigned (edenot E (sc_wp res)) in
+let s := edenot E (sc_s res) in
+let l := edenot E (sc_l res) in
+let su := bv_unsigned (edenot E (sc_sp res)) in
+(wb <= wp)%Z -> (wp <= 2 ^ 47)%Z ->
+(wp - wb = Z.of_nat (length pending))%Z ->
+(bv_unsigned l = Z.of_nat (length extra))%Z ->
+(Z.of_nat (length pending) + Z.of_nat (length extra) <= 2 ^ 30)%Z ->
+(wp <= su - 112 \/ su <= wb)%Z ->
+(bv_unsigned s + bv_unsigned l <= su - 112 \/ su <= bv_unsigned s)%Z ->
+(bv_unsigned s + bv_unsigned l <= 2 ^ 47)%Z ->
+rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
+rdn RSEGS M s (length extra) = Some extra ->
+fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+m_halted model = None -> m_vm_lazy model = [] ->
+K [] ->
+(forall R' M',
+regs_ok (Env (vals_ev (vals ++ junk_vals R')) ebs) (sc_sr res) R' ->
+know_ok RSEGS (Env (vals_ev (vals ++ junk_vals R')) ebs) M' (sc_kn res) ->
+srealizes RSEGS scfg (mkCfg (mkst R' (Z_to_bv 64 (sc_ret res)) M' (seg_rom RSEGS)) model) K) ->
+srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x9dc38) M (seg_rom RSEGS)) model)
+(t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-intros vals ebs sr kn R M model res pending extra K E HR HK Hc wb wp s l su
+intros vals ebs sr kn R M model res pending extra K Hrdr E HR HK Hc wb wp s l su
 H1 H1' H2 H3 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 HCONT.
-apply (stdio_call_sound_fr vals ebs sr kn R M model res pending extra K HR HK Hc); try assumption.
+apply (stdio_call_sound_fr vals ebs sr kn R M model res pending extra K Hrdr HR HK Hc); try assumption.
 intros R' M' A B C. apply HCONT; assumption.
 Qed.
 End FPX_1.

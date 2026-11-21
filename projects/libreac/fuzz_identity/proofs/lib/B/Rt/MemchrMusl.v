@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco (a working branch 91c9538449b, proofs/libreac/fuzz_disco/lib/Y/Rt/MemchrMusl.v) to fuzz_identity.asan-ubsan by an address map recorded by the porting lane; module paths, the record class TfibSyms (unchanged), and for B: Y core modules -> lib/B's A-named modules. *)
+(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco (a working branch, proofs/libreac/fuzz_disco/lib/Y/Rt/MemchrMusl.v) to fuzz_identity.asan-ubsan by an address map recorded by the porting lane; module paths, the record class TfibSyms (unchanged), and for B: Y core modules -> lib/B's A-named modules. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE3a.v's walk of musl memchr, generalised to any byte c in a1 and to a window that may hold no c at all (the count runs out); AE3a's fetch/decode lemmas, constants and step tactics are used as AE3a states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/A/Rt/MemchrMusl.v for the asan-ubsan image of libreac/fuzz_disco: tfibsegs, tfib_A_musl_memchr and AE3a's fetch/decode lemmas, constants and step tactics from lib/Reusable YB1v, YB1w, YE3a in place of lib/A AB1v, AB1w, AE3a. *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms, and the core modules are Required by full path at the applied B core's names: lib/B/A<x>.v -> lib/ReusableB/Y<x>.v (AB1v AB1w AE20 AE2y AE34 AE39 AE3a AE6y AF0l AF0m AF0x -> YB1v YB1w YE20 YE2y YE34 YE39 YE3a YE6y YF0l YF0m YF0x, qualified names included), lib/Reusable/YA0m, YE08, YE21. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

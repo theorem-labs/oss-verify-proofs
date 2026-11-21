@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adiag_args2 and diag_s_args bound a diagnostic string by argw + length + 9 <= 2^47 in place of + 16, what the launch's entry block gives). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -251,7 +252,7 @@ Definition adiag_args2 (d : diag_msg) (m : mem) (fmtp argw : word) (lo SP : Z) :
       /\ (exists slack : list byte, bytes_at bsegs m (bv_unsigned argw) (zb zs ++ Z_to_bv 8 0 :: slack)
                                     /\ (- (bv_unsigned argw + zlength zs + 1)) mod 8 <= zlength slack)
       /\ Forall (fun c => 0 < c < 256) zs /\ zlength zs < 2^20
-      /\ SP <= bv_unsigned argw /\ bv_unsigned argw + zlength zs + 16 <= 2^47
+      /\ SP <= bv_unsigned argw /\ bv_unsigned argw + zlength zs + 9 <= 2^47
   | DTooBig => fmtp = wz (f_too_big FM) /\ bv_unsigned argw mod 2^32 = 67108864
   | _ => False
   end.
@@ -259,7 +260,7 @@ Definition adiag_args2 (d : diag_msg) (m : mem) (fmtp argw : word) (lo SP : Z) :
 (* [comment removed for export] *)
 Lemma diag_s_args : forall m (argw a3 a4 a5 a6 a7 : word) (zs : list Z) (lo q : Z) slack,
   bytes_at bsegs m (bv_unsigned argw) (zb zs ++ Z_to_bv 8 0 :: slack) -> (- (bv_unsigned argw + zlength zs + 1)) mod 8 <= zlength slack ->
-  Forall (fun c => 0 < c < 256) zs -> zlength zs < 2^20 -> q <= bv_unsigned argw -> bv_unsigned argw + zlength zs + 16 <= 2^47 ->
+  Forall (fun c => 0 < c < 256) zs -> zlength zs < 2^20 -> q <= bv_unsigned argw -> bv_unsigned argw + zlength zs + 9 <= 2^47 ->
   alloc_ceiling <= q ->
   (bytes_at bsegs m (bv_unsigned argw) (zb zs ++ [Z_to_bv 8 0]) /\ Forall (fun x => 0 < x < 256) zs
      /\ q <= bv_unsigned argw /\ bv_unsigned argw + zlength zs + 1 < A_STK_HI /\ zlength zs + 1 < 2^40)

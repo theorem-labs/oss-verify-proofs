@@ -1,15 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/RT_pf_snp_srr.v, with its module paths, module names and addresses changed; 407 of its 510 lines of code are new or changed and 1032 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeam.v (cold/port-fm-rtprintf-param 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 25 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeam.table); GXA symbol keys kept (0x1029e, 0x22e18, 0x34288, 0x7f000400); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeam.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeam.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 25 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeam.table); GXA symbol keys kept (0x1029e, 0x22e18, 0x34288, 0x7f000400); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeam.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* THE GXA SEAM AT MUSL VFPRINTF, ASSEMBLED: fm.asan's musl vfprintf (0x8ede0 = sym 0x7f000400) realizes
    the shared vfprintf contract in its final GXA form (sh_avfprintf_icpt_realizesUx, the one definition,
-   in RtPrintf.Param's lib/A/FMsnprintfSx.v, cold/port-fm-rtprintf-param 00daeaf3796).
+   in RtPrintf.Param's lib/A/FMsnprintfSx.v).
 
    Nothing here walks a machine step.  The walk is the released, unguarded GXA theorem at fm.asan
-   (FMgxaSeamCall.v seam_vfprintf_a, lib/CJ/RL/GXA/G_vfprintf_snf.v vfprintf_snf_a_stmt, from
-   cold/port-fm-gxa efa2842e125); this file feeds it the contract's premises and reads its post back:
+   (FMgxaSeamCall.v seam_vfprintf_a, lib/CJ/RL/GXA/G_vfprintf_snf.v vfprintf_snf_a_stmt,);
+   this file feeds it the contract's premises and reads its post back:
    - the arguments: GXA's (Fp CK D N OM bufp A VA dn fmt slots args lo canary r o) are the contract's
      (fp cp s0 n0 |T| bp f ap (sn_len n0 T) (fmtb ++ [0]) (map w64 ws) (map pt_parg args0) (sp - K)
      (w64 cval) |T| T); the format, its pieces and its arguments come from pf_family_ro;
@@ -42,7 +42,8 @@
    The section's hypotheses are the three interceptor call contracts and their readiness predicates
    (as FMgxaSeamCall.v takes them), B with its laws and fm's symbols, and READY: the readiness
    predicates meet FMgxaSeamGuard.v's seam_calls_ready at this call site, on the normalized store. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeam.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeam.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeam.v keeps its donor's comment text) is kept as lib/A/FMgxaSeam.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeam.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeam.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeam.v keeps its donor's comment text) is kept as lib/A/FMgxaSeam.v writes it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

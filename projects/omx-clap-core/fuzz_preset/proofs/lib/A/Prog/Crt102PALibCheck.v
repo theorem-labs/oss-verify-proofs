@@ -3,7 +3,7 @@
    over a free `B : asyms`. This file decides, by vm_compute on closed terms, whether those facts HOLD for every B with
    AF0m.TfibSyms B (lib/A/AF0m.v:1789, the record class of the A' asan image), with the #102 AF0l on the lane base.
 
-   VERDICT: they hold. crt102_palibcore_A (PALibCore, YC1fP.v:322, all seven fields), crt102_palib_A (PALib, YC1fP.v:331,
+   VERDICT: they hold. crt102_palibcore_A (PALibCore, YC1fP.v:323, all seven fields), crt102_palib_A (PALib, YC1fP.v:332,
    PALibCore plus the two use-after-return fields), and Crt102Entry's three narrower stand-ins: crt102_tfib_uar_img_A
    (pal_uar_img), crt102_tfib_stack_malloc3_A (pal_stack_malloc3), crt102_tfib_pst_static_A (pal_pst_static). Under the
    base AF0l eb3d91d8c440 the four code fields were FALSE (pc_wrap_free / pc_wrap_malloc / pc_free_ra0 /
@@ -13,7 +13,7 @@
    88c72c8175cf, B := AD2l.TfibB). This file is the INDEPENDENT CONTROL of it, at every B with TfibSyms B rather than
    at the one record, derived from the record's cells and not from TfibB's field values; and it supplies what PALibA
    does not state: crt102_tfib_pst_static_A (Crt102Top's pal_pst_static at TfibB) and crt102_tfib_uar_img_A.
-   The core's PALibA 9191751aea39 (the core port at commit 16aec65c367b) is the OLD-PIN INSTANCE, not a
+   The core's PALibA 9191751aea39 (the core port) is the OLD-PIN INSTANCE, not a
    generic one: palib_A at the one concrete record AD2l.TfibB of that tree, whose AF0l is the base eb3d91d8c440 and
    AF0m 1d01cd9b0fcd, header pin d83eb25dbf0d (the old A pin).
 
@@ -28,14 +28,14 @@
    two theorems.
 
    INPUTS OF RECORD (by path):
-   - base commit b3beee08c347 (the file was first written on 42fde5231414; unchanged in
-     substance since 1b8c4b046f8).
+   - base (the file was first written; unchanged in
+     substance).
    - lib/A/AF0l.v dfca6bb1a8d7 (the #102 A' record, by path from the #102 integration, commit 987a6556ad7e),
      lib/A/AF0m.v 97f423adf6eb (generated for the A' asan twin bff8519bbe3ea0e4), lib/Reusable/YC1fP.v 5a3e259a9c67,
      lib/A/PRH_Img.v 934516a622e8, lib/A/PRH_Base.v ee2f5cd7ed35 (prh_pst unchanged), lib/Reusable/YImgTop.v d2a97d3111ce.
-   - listing v3 (commit 74dcda1eda12): lib/A/Listing_prog.v, lib/A/PAImg_prog.v.
+   - listing v3: lib/A/Listing_prog.v, lib/A/PAImg_prog.v.
    - the image-free checkers in_img_b / pst_allb of lib/A/Prog/S1ImgA.v (on the lane base).
-   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1,
+   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS,
      PAU pau-preset-102.
    - pins: A' asan 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4.
 

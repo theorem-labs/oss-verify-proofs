@@ -1,15 +1,21 @@
 # images.yml: the checker and runner images, built from toolchain/checker.Dockerfile and toolchain/runner.Dockerfile of
 # a commit on main and pushed to ghcr.io under the names release.yaml pins (images.checker and images.runner, less their
 # digests), each with a build provenance attestation (actions/attest-build-provenance) kept in this repository's
-# attestations.
+# attestations. The checker is built twice, from the same Dockerfile and the same model: the stock checker, with Rocq
+# 9.2.0, and the fork checker, with the Rocq of a release of theorem-labs/rocq, Theorem's fork of Rocq, that the image
+# job names by commit (its ROCQ_FORK_ lines). The runner is built once.
 #
 # It never changes a pin. It prints each pushed digest in the run's summary, and a new digest reaches release.yaml only
 # by a pull request that changes images.checker or images.runner; pr.yml re-checks, in the new image, what runs in it
-# (tools/oft/keys.py: each part's content key holds the image it runs in). A build of the same files gives another
-# digest (the apt mirror state and file times are not pinned), so each run pushes a new digest, under a tag that names
-# the commit and the run: no tag is ever moved, and two runs at once share nothing. A pushed digest is not yet cleared
-# for a release: the every-byte scan of an image is the release gate's image job, and a digest no gate scan has covered
-# may be built and pushed here but must not be pinned in release.yaml.
+# (tools/oft/keys.py: each part's content key holds the image it runs in). Nothing pins the fork checker yet: the pull
+# request that moves the checks to the fork's Rocq pins it, with the record of its build. A build of the same files
+# gives another digest (the apt mirror state and file times are not pinned), so each build pushes a new digest, under
+# a tag that names the commit and the run (the fork checker's tag starts with fork- and names the fork release): no tag
+# is ever moved, and two runs at once share nothing. A pushed digest is not yet cleared for a release: the every-byte
+# scan of an image is the release gate's image job, and a digest no gate scan has covered may be built and pushed here
+# but must not be pinned in release.yaml. Before a checker is pushed, the image job lists its opam packages; the fork
+# checker must also refuse three public proofs of False that Rocq 9.2.0 compiles, have a rocqchk that takes -compare,
+# and pass the scan of the release gate's image job, run here on the image (the steps after the build say how).
 #
 # When it runs:
 #   - every push to main; its plan job compares the pushed tree with the one before and builds the images whose inputs
@@ -33,6 +39,11 @@
 #   checker  toolchain/checker.Dockerfile and toolchain/lps-core.paths, and the model: rocq-linux-process-semantics at
 #            release.yaml's semantics.commit, cut to the files lps-core.paths lists (the `lps` build context). The
 #            Dockerfile refuses a cut whose hash is not its LPS_TREE_SHA256, so a new model changes the Dockerfile.
+#            This file is an input too: it names the fork release and holds the fork checker's steps, so a change to it
+#            builds both checkers. The fork checker also takes the fork's commit, as GitHub's archive of it (opam
+#            checks its sha256), and the `rocq-opam-released` build context: rocq-prover/opam's released/ at the
+#            Dockerfile's ROCQ_OPAM_REPO_SHA, which the stock checker fetches too, with three package files added (the
+#            image job's step that makes the context says how).
 #   runner   toolchain/runner.Dockerfile and tests/toy/ (its self-test), and the tools/oft that the public repository
 #            theorem-labs/oss-verify-proofs has on main (the `oft-tools` build context, with the PyYAML its
 #            requirements.txt pins). The runner exists to run released checks, so it carries the released tools, which
@@ -66,6 +77,13 @@
 # them -- the run in progress with cancel-in-progress, else the one waiting, since it keeps at most one pending run
 # per group -- and the change that run was to build is then built by nobody: the next push's diff starts after it.
 # A toolchain change would go silently unbuilt.  So a push run is left to finish, however many pushes land.
+#
+# Two jobs at the end of this file keep and check something else that this repository needs once a day and that no
+# image job reads: git_objects, the object store pr.yml's whole-tree checkouts start from, and git_objects_used, its
+# guard.  They run on the daily schedule and on every run by hand, whatever its `image` input, and never on a push.
+# They take no `needs` from the jobs above and give none, hold their own permissions and their own concurrency
+# groups, and the run's verdict for the images is still the job `images` alone (its `needs` says why it lists them).
+# Their own comment says what they do and why they are here.
 name: images
 on:
   push:
@@ -151,9 +169,10 @@ jobs:
             echo "::warning::no pushed runner has an attestation of this repository" >&2
             return 1
           }
-          # a path that ends in / stands for every file under it
+          # the files each image is built from (the header); a path that ends in / stands for every file under it.
+          # This file is a checker input: it names the fork release and holds the fork checker's steps.
           declare -A inputs=(
-            [checker]='toolchain/checker.Dockerfile toolchain/lps-core.paths'
+            [checker]='toolchain/checker.Dockerfile toolchain/lps-core.paths .github/workflows/images.yml'
             [runner]='toolchain/runner.Dockerfile tests/toy/'
           )
           want=()
@@ -209,7 +228,12 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.plan.outputs.images) }}
-    # the checker builds Rocq and the model from source: 16 cores, 64 GB
+        # stock: the runner, and the checker with Rocq 9.2.0; fork: the checker with the fork's Rocq (the header)
+        build: [stock, fork]
+        exclude:
+          - image: runner
+            build: fork
+    # each checker build compiles Rocq and the model from source: 16 cores, 64 GB
     runs-on: ${{ matrix.image == 'checker' && 'ubuntu-24.04-16core' || 'ubuntu-24.04' }}
     timeout-minutes: 180
     permissions:
@@ -219,8 +243,27 @@ jobs:
       attestations: write # to store the attestation, and to read it back to verify it (write holds read)
     env:
       KEY: ${{ matrix.image }}
+      BUILD: ${{ matrix.build }}
       TOOLS_COMMIT: ${{ needs.plan.outputs.tools_commit }}
       TOOLS_TREE: ${{ needs.plan.outputs.tools_tree }}
+      # The release of theorem-labs/rocq that the fork checker is built from. A reviewed pull request that moves the
+      # build to a later release changes these lines. The fork's archive is
+      # $ROCQ_FORK_REPOSITORY/archive/$ROCQ_FORK_COMMIT.tar.gz: theorem-labs/rocq has no release asset, so this
+      # archive, which GitHub makes of the commit (codeload.github.com serves it), is the only archive, and if GitHub
+      # ever changes its bytes, opam's checksum check fails the build at once. ROCQ_FORK_OPAM_VERSION is the version of
+      # the fork's three opam packages: never 9.2.0, the stock version, and it holds the tag with / written as - (an
+      # opam version has no /).
+      ROCQ_FORK_REPOSITORY: https://github.com/theorem-labs/rocq
+      ROCQ_FORK_TAG: bet/rocq-9.2-speed-8.0.9
+      ROCQ_FORK_BRANCH: release/9.2/2026-11-15-speed-8.0.9
+      ROCQ_FORK_COMMIT: "07e45e36f6e9966faa88bcc16fa5a1bd7bc34b72"
+      ROCQ_FORK_ARCHIVE_SHA256: "1686db21f520442ef396ad926cc5fe2d3a7f41876e347b6511fb04d92405d66f"
+      ROCQ_FORK_OPAM_VERSION: 9.2+bet-rocq-9.2-speed-8.0.9
+      # The stock checker image that release.yaml pins today, used only to compare with: the fork checker's package
+      # list is compared with its list, and each proof of False the fork checker must refuse must compile in it. It is
+      # named here, not read from release.yaml, because the pull request that moves the checks to the fork's Rocq
+      # moves that pin to the fork checker.
+      STOCK_CHECKER: ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:063f93261f11ba449f1c3825884fadc65cf1fc836d4a3ee534633211abbdc3eb
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
@@ -248,9 +291,24 @@ jobs:
             { echo "::error::release.yaml's images.$KEY is not a ghcr.io/theorem-labs/oss-fuzz-theorems-$KEY digest: '$pin'"; exit 1; }
           name=${pin%@*}
           echo "name=$name" >> "$GITHUB_OUTPUT"
-          echo "tag=$name:build-$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          case $BUILD in
+            stock) tag="build-$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" ;;
+            fork)
+              [ "$KEY" = checker ] || { echo "::error::only the checker has a fork build, not $KEY"; exit 1; }
+              [[ "$ROCQ_FORK_COMMIT" =~ ^[0-9a-f]{40}$ ]] ||
+                { echo "::error::ROCQ_FORK_COMMIT is not a commit id of 40 hex digits: '$ROCQ_FORK_COMMIT'"; exit 1; }
+              # the release tag, with / written as -, and the commit's first 8 digits; a tag that starts with fork-
+              # is never taken for a stock build by a reader that looks for the package's newest build- tag
+              tag="fork-${ROCQ_FORK_TAG//\//-}-${ROCQ_FORK_COMMIT:0:8}-build-$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" ;;
+            *) echo "::error::no build '$BUILD': stock or fork"; exit 1 ;;
+          esac
+          # docker takes a tag of at most 128 characters: letters, digits, _, . and -, the first not . or -
+          [[ "$tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] ||
+            { echo "::error::'$tag' is not a docker tag: at most 128 letters, digits, _, . and -"; exit 1; }
+          echo "tag=$name:$tag" >> "$GITHUB_OUTPUT"
           echo "release.yaml pins $pin"
       - name: the model, at release.yaml's semantics.commit, cut to toolchain/lps-core.paths
+        id: model
         if: matrix.image == 'checker'
         run: |
           set -euo pipefail
@@ -264,8 +322,180 @@ jobs:
           grep -v -e '^#' -e '^$' toolchain/lps-core.paths |
             xargs -d '\n' git -C "$RUNNER_TEMP/lps-repo" archive "$commit" -- | tar -x -C "$RUNNER_TEMP/lps"
           # the hash checker.Dockerfile compares with its LPS_TREE_SHA256
-          echo "model $commit, cut to $(find "$RUNNER_TEMP/lps" -type f | wc -l) files: sha256 $(cd "$RUNNER_TEMP/lps" &&
-            find . -type f -printf '%P\n' | LC_ALL=C sort | xargs -d '\n' -r sha256sum | sha256sum | cut -c1-64)"
+          tree=$(cd "$RUNNER_TEMP/lps" &&
+            find . -type f -printf '%P\n' | LC_ALL=C sort | xargs -d '\n' -r sha256sum | sha256sum | cut -c1-64)
+          echo "model $commit, cut to $(find "$RUNNER_TEMP/lps" -type f | wc -l) files: sha256 $tree"
+          {
+            echo "repository=$repo"
+            echo "commit=$commit"
+            echo "tree_sha256=$tree"
+          } >> "$GITHUB_OUTPUT"
+      # The fork release, checked before anything is built from it. GitHub serves each commit of a network of forks
+      # under the URL of every repository in it, so the commit must be the one that theorem-labs/rocq's own tag and
+      # branch point to: a commit that only another fork holds stops here. Then the archive's bytes, and the version
+      # the fork's opam packages take.
+      - name: "the fork release: its refs on theorem-labs/rocq and its archive"
+        id: release
+        if: matrix.build == 'fork'
+        run: |
+          set -euo pipefail
+          git ls-remote "$ROCQ_FORK_REPOSITORY" > "$RUNNER_TEMP/fork-refs.txt" ||
+            { echo "::error::git ls-remote $ROCQ_FORK_REPOSITORY failed"; exit 1; }
+          peeled="" tag="" branch=""
+          while read -r commit ref; do
+            case $ref in
+              "refs/tags/$ROCQ_FORK_TAG^{}") peeled=$commit ;;
+              "refs/tags/$ROCQ_FORK_TAG") tag=$commit ;;
+              "refs/heads/$ROCQ_FORK_BRANCH") branch=$commit ;;
+            esac
+          done < "$RUNNER_TEMP/fork-refs.txt"
+          # an annotated tag's own line names the tag object, and its line that ends in ^{} names the commit; a tag
+          # that is not annotated has one line, which names the commit
+          [ "${peeled:-$tag}" = "$ROCQ_FORK_COMMIT" ] ||
+            { echo "::error::$ROCQ_FORK_REPOSITORY has the tag $ROCQ_FORK_TAG at '${peeled:-$tag}', not at ROCQ_FORK_COMMIT" \
+                "$ROCQ_FORK_COMMIT"; exit 1; }
+          [ "$branch" = "$ROCQ_FORK_COMMIT" ] ||
+            { echo "::error::$ROCQ_FORK_REPOSITORY has the branch $ROCQ_FORK_BRANCH at '$branch', not at ROCQ_FORK_COMMIT" \
+                "$ROCQ_FORK_COMMIT"; exit 1; }
+          echo "$ROCQ_FORK_REPOSITORY: tag $ROCQ_FORK_TAG and branch $ROCQ_FORK_BRANCH at $ROCQ_FORK_COMMIT"
+          url="$ROCQ_FORK_REPOSITORY/archive/$ROCQ_FORK_COMMIT.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/fork-archive.tar.gz" "$url" || { echo "::error::the download of $url failed"; exit 1; }
+          got=$(sha256sum "$RUNNER_TEMP/fork-archive.tar.gz" | cut -c1-64)
+          [ "$got" = "$ROCQ_FORK_ARCHIVE_SHA256" ] ||
+            { echo "::error::$url has sha256 $got, not ROCQ_FORK_ARCHIVE_SHA256 $ROCQ_FORK_ARCHIVE_SHA256"; exit 1; }
+          echo "$url: $(stat -c %s "$RUNNER_TEMP/fork-archive.tar.gz") bytes, sha256 $got"
+          # the fork's packages never take the stock version, and their version names the release
+          dashed=${ROCQ_FORK_TAG//\//-}
+          [ "$ROCQ_FORK_OPAM_VERSION" != 9.2.0 ] ||
+            { echo "::error::ROCQ_FORK_OPAM_VERSION is 9.2.0, the stock Rocq's version"; exit 1; }
+          [[ "$ROCQ_FORK_OPAM_VERSION" == *"$dashed"* ]] ||
+            { echo "::error::ROCQ_FORK_OPAM_VERSION $ROCQ_FORK_OPAM_VERSION does not hold the tag $ROCQ_FORK_TAG as" \
+                "$dashed"; exit 1; }
+          echo "the fork's opam packages: version $ROCQ_FORK_OPAM_VERSION"
+          echo "archive_url=$url" >> "$GITHUB_OUTPUT"
+      # The fork's Rocq goes into the image as three opam packages, rocq-runtime, rocq-core and coq-core at
+      # ROCQ_FORK_OPAM_VERSION, through the rocq-opam-released build context and the build argument OPAM_PACKAGES, so
+      # the Dockerfile does not change. The context is the stock build's: rocq-prover/opam's released/ at the
+      # Dockerfile's ROCQ_OPAM_REPO_SHA, fetched as its fetch-rocq-opam stage fetches it. That stage does not run once
+      # the context is given, so ROCQ_OPAM_REPO_SHA is not passed. The step adds the three package files to it. Each is
+      # the base image's own file of the package at 9.2.0 (in its opam repository, ~/opam-repository), byte for byte,
+      # but for its one url section, from the line "url {" to the next line "}", which then names the fork's archive
+      # and its sha256; a stock file with no such section, or more than one, fails the step. The new files and
+      # directories take the time of the rocq-prover/opam commit, as git archive gives it to the others.
+      # OPAM_PACKAGES is the Dockerfile's default with rocq-runtime and rocq-core at the fork's version and coq-core
+      # added at it (the list beside the build step says why).
+      - name: the rocq-opam-released context of the fork build
+        id: context
+        if: matrix.build == 'fork'
+        env:
+          ARCHIVE_URL: ${{ steps.release.outputs.archive_url }}
+        run: |
+          set -euo pipefail
+          dockerfile=toolchain/checker.Dockerfile
+          version=$ROCQ_FORK_OPAM_VERSION
+          url=$ARCHIVE_URL
+          [ -n "$url" ] || { echo "::error::the release step gives no archive_url, the URL of the fork's archive"; exit 1; }
+          rocq_opam=$(sed -n 's/^ARG ROCQ_OPAM_REPO_SHA=//p' "$dockerfile")
+          [[ "$rocq_opam" =~ ^[0-9a-f]{40}$ ]] ||
+            { echo "::error::$dockerfile has not one line ARG ROCQ_OPAM_REPO_SHA=<40 hex digits>: '$rocq_opam'"; exit 1; }
+          base=$(sed -n 's/^ARG OPAM_BASE=//p' "$dockerfile")
+          [[ "$base" =~ ^[a-z0-9][a-z0-9._/-]*(:[A-Za-z0-9_][A-Za-z0-9_.-]*)?@sha256:[0-9a-f]{64}$ ]] ||
+            { echo "::error::$dockerfile has not one line ARG OPAM_BASE=<image>@sha256:<64 hex digits>: '$base'"; exit 1; }
+          default=$(sed -n 's/^ARG OPAM_PACKAGES="\([^"]*\)"$/\1/p' "$dockerfile")
+          [ -n "$default" ] && [ "$(wc -l <<< "$default")" = 1 ] ||
+            { echo "::error::$dockerfile has not one line ARG OPAM_PACKAGES=\"<packages>\": '$default'"; exit 1; }
+          # the fork build's OPAM_PACKAGES: the default, with rocq-runtime and rocq-core at the fork's version, and
+          # coq-core at it right after rocq-core
+          read -ra tokens <<< "$default"
+          packages=() missing=() runtime=0 core=0
+          for t in "${tokens[@]}"; do
+            case $t in
+              rocq-runtime.9.2.0) packages+=("rocq-runtime.$version"); runtime=1 ;;
+              rocq-core.9.2.0) packages+=("rocq-core.$version" "coq-core.$version"); core=1 ;;
+              *) packages+=("$t") ;;
+            esac
+          done
+          [ "$runtime" = 1 ] || missing+=(rocq-runtime.9.2.0)
+          [ "$core" = 1 ] || missing+=(rocq-core.9.2.0)
+          [ "${#missing[@]}" = 0 ] ||
+            { echo "::error::the default OPAM_PACKAGES of $dockerfile lacks ${missing[*]}, which the fork build replaces:" \
+                "'$default'"; exit 1; }
+          fork_packages="${packages[*]}"
+          echo "OPAM_PACKAGES of the fork build: $fork_packages"
+          # rocq-prover/opam's released/, as the Dockerfile's fetch-rocq-opam stage takes it
+          repo="$RUNNER_TEMP/rocq-opam-repo"
+          ctx="$RUNNER_TEMP/rocq-opam-released"
+          git init -q "$repo"
+          git -C "$repo" fetch -q --depth=1 https://github.com/rocq-prover/opam.git "$rocq_opam" ||
+            { echo "::error::the fetch of rocq-prover/opam at $rocq_opam failed"; exit 1; }
+          got=$(git -C "$repo" rev-parse FETCH_HEAD)
+          [ "$got" = "$rocq_opam" ] || { echo "::error::the fetch of rocq-prover/opam at $rocq_opam gave $got"; exit 1; }
+          mkdir "$ctx"
+          git -C "$repo" archive FETCH_HEAD released | tar -x -C "$ctx" --strip-components=1 ||
+            { echo "::error::rocq-prover/opam at $rocq_opam gives no released/"; exit 1; }
+          stamp=$(git -C "$repo" log -1 --format=%ct FETCH_HEAD)
+          # the base image's own files of the three packages at 9.2.0, and the commit of its opam repository
+          stock="$RUNNER_TEMP/rocq-stock"
+          mkdir "$stock"
+          docker pull --quiet "$base" || { echo "::error::docker pull $base failed"; exit 1; }
+          for p in rocq-runtime rocq-core coq-core; do
+            docker run --rm --network none "$base" sh -c 'cat "$HOME/opam-repository/packages/$1/$1.9.2.0/opam"' sh "$p" \
+              > "$stock/$p.opam" || { echo "::error::$base has no ~/opam-repository/packages/$p/$p.9.2.0/opam"; exit 1; }
+            [ ! -e "$ctx/packages/$p/$p.$version" ] ||
+              { echo "::error::rocq-prover/opam at $rocq_opam already has packages/$p/$p.$version"; exit 1; }
+          done
+          opam_repository=$(docker run --rm --network none "$base" sh -c 'git -C "$HOME/opam-repository" rev-parse HEAD') ||
+            opam_repository=""
+          [[ "$opam_repository" =~ ^[0-9a-f]{40}$ ]] ||
+            { echo "::error::$base gives no commit of its ~/opam-repository: '$opam_repository'"; exit 1; }
+          echo "$base: ~/opam-repository at ocaml/opam-repository $opam_repository"
+          python - "$stock" "$ctx" "$version" "$url" "$ROCQ_FORK_ARCHIVE_SHA256" <<'PY'
+          import os, re, sys
+          stock, ctx, version, url, sha256 = sys.argv[1:]
+          section = [b"url {", b'  src: "%s"' % url.encode(), b'  checksum: "sha256=%s"' % sha256.encode(), b"}"]
+          failed = False
+          for p in ("rocq-runtime", "rocq-core", "coq-core"):
+              with open(os.path.join(stock, p + ".opam"), "rb") as f:
+                  lines = f.read().split(b"\n")
+              starts = [i for i, line in enumerate(lines) if re.match(rb"\s*url\s*\{", line)]
+              ends = [i for i in range(starts[0] + 1, len(lines)) if lines[i] == b"}"] if len(starts) == 1 else []
+              if len(starts) != 1 or lines[starts[0]] != b"url {" or not ends:
+                  print("::error::the base image's %s 9.2.0 opam file has not one url section from a line 'url {' to a"
+                        " line '}' (%d lines open a url section)" % (p, len(starts)))
+                  failed = True
+                  continue
+              path = os.path.join(ctx, "packages", p, "%s.%s" % (p, version), "opam")
+              os.makedirs(os.path.dirname(path))
+              with open(path, "wb") as f:
+                  f.write(b"\n".join(lines[:starts[0]] + section + lines[ends[0] + 1:]))
+          sys.exit(1 if failed else 0)
+          PY
+          : > "$RUNNER_TEMP/fork-derived.tsv"
+          for p in rocq-runtime rocq-core coq-core; do
+            file="packages/$p/$p.$version/opam"
+            touch -d "@$stamp" "$ctx/$file" "$ctx/packages/$p/$p.$version" "$ctx/packages/$p"
+            echo "$file:"
+            cat "$ctx/$file"
+            diff -u --label "the base image's packages/$p/$p.9.2.0/opam" --label "$file" "$stock/$p.opam" "$ctx/$file" ||
+              [ $? = 1 ]
+            printf '%s\t%s\t%s\n' "$file" "packages/$p/$p.9.2.0/opam" "$(sha256sum "$ctx/$file" | cut -c1-64)" \
+              >> "$RUNNER_TEMP/fork-derived.tsv"
+          done
+          touch -d "@$stamp" "$ctx/packages"
+          # the hash of the context, made as the model's is
+          tree=$(cd "$ctx" &&
+            find . -type f -printf '%P\n' | LC_ALL=C sort | xargs -d '\n' -r sha256sum | sha256sum | cut -c1-64)
+          echo "the rocq-opam-released context: rocq-prover/opam $rocq_opam released/ and the three files above," \
+            "$(find "$ctx" -type f | wc -l) files: sha256 $tree"
+          {
+            echo "dir=$ctx"
+            echo "opam_packages=$fork_packages"
+            echo "rocq_opam_commit=$rocq_opam"
+            echo "opam_base=$base"
+            echo "opam_repository_commit=$opam_repository"
+            echo "derived=$RUNNER_TEMP/fork-derived.tsv"
+            echo "tree_sha256=$tree"
+          } >> "$GITHUB_OUTPUT"
       # The runner's tools/oft: the public repository's, at the commit the plan job read, checked out with git so that
       # its tracked files can be judged too.
       - name: the public repository's tools/oft, at the plan's commit
@@ -316,11 +546,28 @@ jobs:
       # The Dockerfile's last steps are the image's self-test, so an image that fails it is never built. No
       # provenance or SBOM is attached to the image and no git information is read: BuildKit's would name this
       # private repository in the public package.
+      #
+      # The fork build differs from the stock build in these ways, each with its reason:
+      #   - rocq-runtime, rocq-core and coq-core are at ROCQ_FORK_OPAM_VERSION, built from the fork's archive: they
+      #     are the fork's Rocq.
+      #   - OPAM_PACKAGES names coq-core too: coq-flocq 4.2.2 and rocq-read-file 0.0.2 depend on coq-core, and
+      #     coq-core depends on rocq-runtime at its own version, so the stock coq-core cannot go with the fork's
+      #     rocq-runtime.
+      #   - the rocq-opam-released build context is given: it holds the three packages' files (the step that makes
+      #     the context says how).
+      #   - three labels, oss-fuzz-theorems.rocq.repository, oss-fuzz-theorems.rocq.tag and
+      #     oss-fuzz-theorems.rocq.commit: they are how the image records the fork release it was built from.
+      #   - the tag starts with fork- and names the release (the name step), so that a reader that takes the
+      #     package's newest build- tag never takes the fork image.
+      #   Nothing else differs: every other package OPAM_PACKAGES names is at the version the Dockerfile names, and
+      #   the three packages keep the stock files' dependencies and build instructions.
       - name: build and self-test (toolchain/${{ matrix.image }}.Dockerfile)
         env:
           TAG: ${{ steps.name.outputs.tag }}
           BUILDX_GIT_INFO: "0"
           BUILDX_GIT_LABELS: "0"
+          CONTEXT: ${{ steps.context.outputs.dir }}
+          FORK_PACKAGES: ${{ steps.context.outputs.opam_packages }}
         run: |
           set -euo pipefail
           case $KEY in
@@ -328,11 +575,418 @@ jobs:
             runner) args=(--build-context "oft-tools=$RUNNER_TEMP/public/tools/oft" --build-context oft-toy=tests/toy
                           --label "oss-fuzz-theorems.tools.commit=$TOOLS_COMMIT" --label "oss-fuzz-theorems.tools.tree=$TOOLS_TREE") ;;
           esac
+          # the fork build's own arguments, after those it shares with the stock build (the list above)
+          case $KEY/$BUILD in
+            */stock) ;;
+            checker/fork)
+              [ -d "$CONTEXT" ] && [ -n "$FORK_PACKAGES" ] ||
+                { echo "::error::the fork build has no rocq-opam-released context or no OPAM_PACKAGES:" \
+                    "'$CONTEXT' '$FORK_PACKAGES'"; exit 1; }
+              args+=(--build-context "rocq-opam-released=$CONTEXT" --build-arg "OPAM_PACKAGES=$FORK_PACKAGES"
+                     --label "oss-fuzz-theorems.rocq.repository=$ROCQ_FORK_REPOSITORY"
+                     --label "oss-fuzz-theorems.rocq.tag=$ROCQ_FORK_TAG"
+                     --label "oss-fuzz-theorems.rocq.commit=$ROCQ_FORK_COMMIT") ;;
+            *) echo "::error::$KEY has no build '$BUILD'"; exit 1 ;;
+          esac
           start=$(date +%s)
           docker buildx build -f "toolchain/$KEY.Dockerfile" "${args[@]}" \
             --label org.opencontainers.image.revision="$GITHUB_SHA" --provenance=false --sbom=false \
             --progress plain --load -t "$TAG" toolchain/
           echo "build: $(( $(date +%s) - start )) s" | tee -a "$GITHUB_STEP_SUMMARY"
+      # The record of the fork build, which the pull request that pins the fork checker puts beside its pin: each input
+      # of the image by its public source and commit, the build arguments and the image's rocq labels. It names no
+      # commit of this repository. OPAMJOBS is read from the image; OPAM_BASE and ROCQ_OPAM_REPO_SHA are the
+      # Dockerfile's defaults, which the build does not pass. The scan below gives the record to ossv-imgverify
+      # (--build-record), which makes the three package files of the context again by it and compares the image's.
+      - name: the record of the fork build
+        id: record
+        if: matrix.build == 'fork'
+        env:
+          TAG: ${{ steps.name.outputs.tag }}
+          ARCHIVE_URL: ${{ steps.release.outputs.archive_url }}
+          LPS_REPOSITORY: ${{ steps.model.outputs.repository }}
+          LPS_COMMIT: ${{ steps.model.outputs.commit }}
+          LPS_TREE: ${{ steps.model.outputs.tree_sha256 }}
+          OPAM_PACKAGES: ${{ steps.context.outputs.opam_packages }}
+          OPAM_BASE: ${{ steps.context.outputs.opam_base }}
+          ROCQ_OPAM_COMMIT: ${{ steps.context.outputs.rocq_opam_commit }}
+          OPAM_REPOSITORY_COMMIT: ${{ steps.context.outputs.opam_repository_commit }}
+          DERIVED: ${{ steps.context.outputs.derived }}
+          CONTEXT_TREE: ${{ steps.context.outputs.tree_sha256 }}
+        run: |
+          set -euo pipefail
+          image_env="$RUNNER_TEMP/fork-image-env.json" image_labels="$RUNNER_TEMP/fork-image-labels.json"
+          docker image inspect --format '{{json .Config.Env}}' "$TAG" > "$image_env" ||
+            { echo "::error::docker image inspect of $TAG failed"; exit 1; }
+          docker image inspect --format '{{json .Config.Labels}}' "$TAG" > "$image_labels" ||
+            { echo "::error::docker image inspect of $TAG failed"; exit 1; }
+          python - "$image_env" "$image_labels" "$RUNNER_TEMP/fork-build.json" <<'PY'
+          import json, os, sys
+          image_env, image_labels, out = sys.argv[1:]
+          e = os.environ
+          def fail(message):
+              print("::error::" + message)
+              sys.exit(1)
+          for name in ("TAG", "ARCHIVE_URL", "LPS_REPOSITORY", "LPS_COMMIT", "LPS_TREE", "OPAM_PACKAGES", "OPAM_BASE",
+                       "ROCQ_OPAM_COMMIT", "OPAM_REPOSITORY_COMMIT", "DERIVED", "CONTEXT_TREE"):
+              if not e.get(name):
+                  fail("the steps before this one give no %s for the build record" % name)
+          with open(image_env, encoding="utf-8") as f:
+              jobs = [v.split("=", 1)[1] for v in json.load(f) or [] if v.startswith("OPAMJOBS=")]
+          if len(jobs) != 1 or not jobs[0]:
+              fail("the environment of %s has not one OPAMJOBS: %r" % (e["TAG"], jobs))
+          # the labels the build step gives the fork image, which name the fork release
+          pins = {"oss-fuzz-theorems.rocq.repository": e["ROCQ_FORK_REPOSITORY"],
+                  "oss-fuzz-theorems.rocq.tag": e["ROCQ_FORK_TAG"],
+                  "oss-fuzz-theorems.rocq.commit": e["ROCQ_FORK_COMMIT"]}
+          with open(image_labels, encoding="utf-8") as f:
+              labels = json.load(f) or {}
+          for key, value in pins.items():
+              if labels.get(key) != value:
+                  fail("%s has the label %s=%r, not %r" % (e["TAG"], key, labels.get(key), value))
+          with open("toolchain/lps-core.paths", encoding="utf-8") as f:
+              paths = [line for line in f.read().splitlines() if line and not line.startswith("#")]
+          derived = []
+          with open(e["DERIVED"], encoding="utf-8") as f:
+              for line in f.read().splitlines():
+                  fields = line.split("\t")
+                  if len(fields) != 3:
+                      fail("%s has a line that is not a path, a stock path and a sha256: %r" % (e["DERIVED"], line))
+                  derived.append({"path": fields[0],
+                                  "from": {"repository": "https://github.com/ocaml/opam-repository",
+                                           "commit": e["OPAM_REPOSITORY_COMMIT"], "path": fields[1]},
+                                  "url": e["ARCHIVE_URL"], "checksum": "sha256=" + e["ROCQ_FORK_ARCHIVE_SHA256"],
+                                  "sha256": fields[2]})
+          if not derived:
+              fail("%s names no derived package file" % e["DERIVED"])
+          record = {
+              "schema": "oss-fuzz-theorems/checker-fork-build/1",
+              "dockerfile": "toolchain/checker.Dockerfile",
+              "rocq": {"repository": e["ROCQ_FORK_REPOSITORY"], "tag": e["ROCQ_FORK_TAG"], "branch": e["ROCQ_FORK_BRANCH"],
+                       "commit": e["ROCQ_FORK_COMMIT"],
+                       "archive": {"url": e["ARCHIVE_URL"], "sha256": e["ROCQ_FORK_ARCHIVE_SHA256"]},
+                       "opam_version": e["ROCQ_FORK_OPAM_VERSION"]},
+              "build_args": {"OPAM_PACKAGES": e["OPAM_PACKAGES"], "OPAMJOBS": jobs[0], "OPAM_BASE": e["OPAM_BASE"],
+                             "ROCQ_OPAM_REPO_SHA": e["ROCQ_OPAM_COMMIT"]},
+              "contexts": {
+                  "lps": {"repository": e["LPS_REPOSITORY"], "commit": e["LPS_COMMIT"], "paths": paths,
+                          "tree_sha256": e["LPS_TREE"]},
+                  "rocq-opam-released": {
+                      "base": {"repository": "https://github.com/rocq-prover/opam", "commit": e["ROCQ_OPAM_COMMIT"],
+                               "path": "released"},
+                      "derived": derived,
+                      "tree_sha256": e["CONTEXT_TREE"]}},
+              "labels": {key: labels[key] for key in pins}}
+          with open(out, "w", encoding="utf-8") as f:
+              json.dump(record, f, indent=2)
+              f.write("\n")
+          PY
+          echo "the record of the fork build ($RUNNER_TEMP/fork-build.json):"
+          cat "$RUNNER_TEMP/fork-build.json"
+      # The checker image's opam packages, as opam lists them, in the log and the run's summary, so that the lists of
+      # the two checkers can be compared. The step reads the image and changes nothing in it. The fork leg also checks
+      # the versions: rocq-runtime, rocq-core and coq-core at ROCQ_FORK_OPAM_VERSION, and each other package of the
+      # Dockerfile's default OPAM_PACKAGES at the version that default names. Then it prints, for information only,
+      # how its list differs from the list of STOCK_CHECKER.
+      - name: the image's package list
+        id: packages
+        if: matrix.image == 'checker'
+        env:
+          TAG: ${{ steps.name.outputs.tag }}
+        run: |
+          set -euo pipefail
+          list="$RUNNER_TEMP/opam-list.txt"
+          docker run --rm --network none "$TAG" opam list --columns=name,version --short > "$list" ||
+            { echo "::error::opam list in $TAG failed"; exit 1; }
+          {
+            echo "the opam packages of \`${TAG##*:}\` (opam list --columns=name,version --short):"
+            echo '```text'
+            cat "$list"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$BUILD" = fork ] || exit 0
+          dockerfile=toolchain/checker.Dockerfile
+          default=$(sed -n 's/^ARG OPAM_PACKAGES="\([^"]*\)"$/\1/p' "$dockerfile")
+          [ -n "$default" ] && [ "$(wc -l <<< "$default")" = 1 ] ||
+            { echo "::error::$dockerfile has not one line ARG OPAM_PACKAGES=\"<packages>\": '$default'"; exit 1; }
+          declare -A have=()
+          while read -r name version _; do
+            if [ -n "$name" ]; then have[$name]=$version; fi
+          done < "$list"
+          # the fork's three packages at its version, then each other package of the default at the version it names
+          version=$ROCQ_FORK_OPAM_VERSION
+          want=("rocq-runtime.$version" "rocq-core.$version" "coq-core.$version")
+          read -ra tokens <<< "$default"
+          for t in "${tokens[@]}"; do
+            case ${t%%.*} in rocq-runtime | rocq-core | coq-core) ;; *) want+=("$t") ;; esac
+          done
+          failed=0
+          for t in "${want[@]}"; do
+            p=${t%%.*} v=${t#*.}
+            if [ "${have[$p]-}" = "$v" ]; then
+              echo "$p $v: the version it must have"
+            else
+              echo "::error::the fork image has $p ${have[$p]-(not installed)}, not $p $v"
+              failed=1
+            fi
+          done
+          docker pull --quiet "$STOCK_CHECKER" > /dev/null || { echo "::error::docker pull $STOCK_CHECKER failed"; exit 1; }
+          stock="$RUNNER_TEMP/opam-list-stock.txt"
+          docker run --rm --network none "$STOCK_CHECKER" opam list --columns=name,version --short > "$stock" ||
+            { echo "::error::opam list in $STOCK_CHECKER failed"; exit 1; }
+          echo "how this list differs from that of the stock checker $STOCK_CHECKER (information only):"
+          diff -u --label "$STOCK_CHECKER" --label "$TAG" "$stock" "$list" || [ $? = 1 ]
+          [ "$failed" = 0 ] || exit 1
+      # The fork's kernel fixes three public proofs of False that Rocq 9.2.0 compiles: Bad51.v (rocq-prover/rocq#22651),
+      # Bad60.v (#22760) and Bad72.v (#22772). The three files and the check of their refusal (the compile fails, and
+      # its output, with blanks and newlines squeezed to single spaces, holds "while it is expected to have type": a
+      # type error) are the ones measured on the fork's earlier builds, and come from those three public issues of
+      # rocq-prover/rocq. Beside each is a control, Ok51.v, Ok60.v and Ok72.v: the same definitions and the same form
+      # of proof, of a true statement, which the fork image must compile, so that an image that refuses every such
+      # proof does not pass. Each proof of False must also compile in STOCK_CHECKER, or its refusal shows nothing.
+      # Each file is written by a heredoc named after it (Bad60.v and Ok60.v write the 250 constructors of their type
+      # with a loop), so that another workflow can take the same text. Each compile runs in a fresh copy of the
+      # directory, as the runner's user, with no network.
+      - name: the fork image refuses the three proofs of False
+        id: refusals
+        if: matrix.build == 'fork'
+        env:
+          TAG: ${{ steps.name.outputs.tag }}
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/proofs-of-false"
+          logs="$RUNNER_TEMP/proofs-of-false-logs"
+          mkdir "$src" "$logs"
+          cat > "$src/Bad51.v" <<'Bad51.v'
+          Fixpoint p (n : nat) : nat := match n with 0 => 0 | S m => q m end
+          with     q (n : nat) : nat := match n with 0 => 1 | S m => p m end.
+          Lemma step : (fun n => q n) = p.
+          Proof. exact ((eq_refl : (fun n => q n) = (fun n => q n)) <: ((fun n => q n) = p)). Qed.
+          Lemma bottom : False.
+          Proof. assert (H : q 0 = p 0) by exact (f_equal (fun g => g 0) step). discriminate H. Qed.
+          Bad51.v
+          cat > "$src/Ok51.v" <<'Ok51.v'
+          Fixpoint p (n : nat) : nat := match n with 0 => 0 | S m => q m end
+          with     q (n : nat) : nat := match n with 0 => 1 | S m => p m end.
+          Lemma step : (fun n => q n) = q.
+          Proof. exact ((eq_refl : (fun n => q n) = (fun n => q n)) <: ((fun n => q n) = q)). Qed.
+          Ok51.v
+          big() { echo 'Inductive Big :='; for i in $(seq 250); do echo "| C${i} (n : nat)"; done; }
+          { big; cat <<'Bad60.v'; } > "$src/Bad60.v"
+          .
+          Definition f1 (x : Big) : nat -> nat := match x with C250 n => fun m => n | _ => fun m => 0 end.
+          Definition f2 (x : Big) : nat -> nat := match x with C250 n => fun m => m | _ => fun m => 0 end.
+          Definition yes : f1 = f2 := (eq_refl f1 <: f1 = f2).
+          Definition bad : False := match f_equal (fun f => f (C250 1) 2) yes in _ = z return match z with 1 => True | _ => False end with | eq_refl => I end.
+          Bad60.v
+          { big; cat <<'Ok60.v'; } > "$src/Ok60.v"
+          .
+          Definition f1 (x : Big) : nat -> nat := match x with C250 n => fun m => n | _ => fun m => 0 end.
+          Definition f2 (x : Big) : nat -> nat := match x with C250 n => fun m => n | _ => fun m => 0 end.
+          Definition yes : f1 = f2 := (eq_refl f1 <: f1 = f2).
+          Ok60.v
+          cat > "$src/Bad72.v" <<'Bad72.v'
+          From Corelib Require Import PrimInt63 PrimArray.
+          Definition T (a : array bool) : Prop := forall y : bool, get a 0 = y.
+          Lemma bad : forall x : bool, T [| x | x |].
+          Proof. exact_no_check (fun (x y : bool) => @eq_refl bool y). Qed.
+          Theorem boom : False.
+          Proof. exact (match bad true false in _ = b return (if b then True else False) with eq_refl => I end). Qed.
+          Bad72.v
+          cat > "$src/Ok72.v" <<'Ok72.v'
+          From Corelib Require Import PrimInt63 PrimArray.
+          Lemma ok : forall x : bool, get [| x | x |] 0 = x.
+          Proof. exact_no_check (fun (x : bool) => @eq_refl bool x). Qed.
+          Ok72.v
+          docker pull --quiet "$STOCK_CHECKER" > /dev/null || { echo "::error::docker pull $STOCK_CHECKER failed"; exit 1; }
+          # compile IMAGE FILE KIND: rocq compile of FILE in IMAGE, in a fresh copy of the directory; the output goes to
+          # $logs/KIND-FILE.log
+          compile() {
+            local work
+            work=$(mktemp -d "$RUNNER_TEMP/rocq-compile.XXXXXX")
+            cp -R "$src/." "$work/"
+            docker run --rm --network none -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$work:/work" -w /work "$1" \
+              rocq compile -w -all -native-compiler no -R . T "$2" > "$logs/$3-$2.log" 2>&1
+          }
+          failed=0
+          for n in 51 60 72; do
+            if compile "$STOCK_CHECKER" "Bad$n.v" stock; then
+              echo "Bad$n.v compiles in the stock checker $STOCK_CHECKER: there it is a proof of False"
+            else
+              echo "::error::Bad$n.v does not compile in the stock checker $STOCK_CHECKER, so its refusal shows nothing:"
+              cat "$logs/stock-Bad$n.v.log"
+              failed=1
+            fi
+            if compile "$TAG" "Bad$n.v" fork; then
+              echo "::error::Bad$n.v, a proof of False, compiles in the fork image $TAG"
+              failed=1
+            else
+              refusal=$(tr -s ' \n' '  ' < "$logs/fork-Bad$n.v.log")
+              if [[ $refusal == *"while it is expected to have type"* ]]; then
+                echo "Bad$n.v is refused by the fork image with a type error: ${refusal:0:200}"
+              else
+                echo "::error::Bad$n.v fails in the fork image $TAG, but not with a type error:"
+                cat "$logs/fork-Bad$n.v.log"
+                failed=1
+              fi
+            fi
+            if compile "$TAG" "Ok$n.v" fork; then
+              echo "Ok$n.v, the control of Bad$n.v, compiles in the fork image"
+            else
+              echo "::error::Ok$n.v, the control of Bad$n.v, does not compile in the fork image $TAG:"
+              cat "$logs/fork-Ok$n.v.log"
+              failed=1
+            fi
+          done
+          [ "$failed" = 0 ] || exit 1
+          echo "verdict=refused: Bad51 Bad60 Bad72; controls compile" >> "$GITHUB_OUTPUT"
+      # The fork's rocqchk takes the option -compare: given with no argument, it prints its usage on stderr and exits 1
+      # (checker/coqchk_main.ml of theorem-labs/rocq at ROCQ_FORK_COMMIT). The step prints only the start of the
+      # option's usage line, since the usage text holds a word the release scan blocks.
+      - name: rocqchk takes -compare
+        id: compare
+        if: matrix.build == 'fork'
+        env:
+          TAG: ${{ steps.name.outputs.tag }}
+        run: |
+          set -euo pipefail
+          rc=0
+          usage=$(docker run --rm --network none "$TAG" rocqchk -compare 2>&1 > /dev/null) || rc=$?
+          line=$(sed -n -E '/^[[:blank:]]*-compare config/{s/^[[:blank:]]*(-compare config).*/\1/p;q;}' <<< "$usage")
+          echo "rocqchk -compare in $TAG: exit $rc; its usage line: ${line:-none starts with -compare config}"
+          [ "$rc" = 1 ] || { echo "::error::rocqchk -compare in $TAG exits $rc, not 1"; exit 1; }
+          [ -n "$line" ] ||
+            { echo "::error::rocqchk -compare in $TAG prints on stderr no usage line that starts with -compare config"; exit 1; }
+          echo "verdict=exits 1, and its usage on stderr has the line of -compare config" >> "$GITHUB_OUTPUT"
+      # The every-byte scan of the release gate's image job, run on this image before its push: the sequence of
+      # job_image in tools/publish/gate-job, given this build's record. It runs ossv-imgverify and ossv-binscan from
+      # this checkout's dev/stream/bin/, as gate-job runs them (its SCAN), with the exception table and the scanner's
+      # release_pins.py (the held-entry rule of its --held) beside the scanner. It installs what gate-job's bootstrap
+      # installs for these tools when the machine lacks it: zstd, lz4 (ossv-imgverify reads apt's Packages.lz4),
+      # binutils' ar (it reads .deb files), and bzip2 and xz (ossv-binscan --tar reads a bzip2, xz or lzma member
+      # through them). The saved image is unpacked at /var/tmp/gate/oci, the path by which the image rows of the
+      # exception table beside ossv-binscan name layers. ossv-imgverify proves which members of the layers the image
+      # adds to its base (the Dockerfile's OPAM_BASE) are public, the three package files of the rocq-opam-released
+      # context among them (by the build record); ossv-binscan scans every other byte, for the held entries too, as
+      # job_image's --held does (tools/publish/release_pins.py held-lines writes them from this commit's
+      # tools/publish/; no exception clears a held hit); and a hit is cleared only when a proven public source holds
+      # its text (ossv-imgverify again, with --hits). The step fails unless no hit remains.
+      - name: the scan of the release gate's image job
+        id: scan
+        if: matrix.build == 'fork'
+        env:
+          TAG: ${{ steps.name.outputs.tag }}
+          BASE: ${{ steps.context.outputs.opam_base }}
+        run: |
+          set -euo pipefail
+          pkgs=()
+          for c in zstd:zstd lz4:lz4 ar:binutils bzip2:bzip2 xz:xz-utils; do
+            command -v "${c%%:*}" > /dev/null || pkgs+=("${c#*:}")
+          done
+          if [ "${#pkgs[@]}" -gt 0 ]; then
+            { sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${pkgs[@]}"; } ||
+              { echo "::error::apt-get install ${pkgs[*]} failed"; exit 1; }
+            echo "installed ${pkgs[*]}"
+          fi
+          out="$RUNNER_TEMP/fork-scan"
+          cache="$RUNNER_TEMP/fork-scan-cache"
+          record="$RUNNER_TEMP/fork-build.json"
+          oci=/var/tmp/gate/oci
+          [ -s "$record" ] || { echo "::error::no build record at $record"; exit 1; }
+          mkdir -p "$out" "$cache"
+          rm -rf "$oci" 2> /dev/null || sudo rm -rf "$oci"
+          mkdir -p "$oci"
+          docker save "$TAG" | tar -x -C "$oci" || { echo "::error::docker save of $TAG, unpacked at $oci, failed"; exit 1; }
+          docker pull --quiet "$BASE" > /dev/null || { echo "::error::docker pull $BASE failed"; exit 1; }
+          docker image inspect -f '{{range .RootFS.Layers}}{{println .}}{{end}}' "$BASE" | sed '/^$/d' > "$out/base.layers" ||
+            { echo "::error::docker image inspect of $BASE failed"; exit 1; }
+          # the layers the image adds to its base: a saved layer's blob is named by its (possibly compressed) digest,
+          # not its diff id, so the layers are paired with the diff ids through the saved manifest and config
+          rc=0
+          python3 - "$oci" "$out/base.layers" > "$out/added.layers" 2> "$out/layers.err" <<'PY' || rc=$?
+          import json, os, sys
+          oci = sys.argv[1]
+          with open(sys.argv[2]) as f:
+              base = {l.strip() for l in f if l.strip()}
+          with open(os.path.join(oci, "manifest.json")) as f:
+              m = json.load(f)
+          assert len(m) == 1, f"{len(m)} images in the saved tar"
+          with open(os.path.join(oci, m[0]["Config"])) as f:
+              cfg = json.load(f)
+          layers, diffs = m[0]["Layers"], cfg["rootfs"]["diff_ids"]
+          assert len(layers) == len(diffs), (len(layers), len(diffs))
+          for path, d in zip(layers, diffs):
+              p = os.path.join(oci, path)
+              assert os.path.isfile(p), p
+              if d not in base:
+                  print(p)
+          print(f"{len(diffs)} layers, {sum(d not in base for d in diffs)} added", file=sys.stderr)
+          PY
+          [ "$rc" = 0 ] ||
+            { echo "::error::the saved layers of $TAG could not be paired with diff ids:"; cat "$out/layers.err"; exit 1; }
+          mapfile -t blobs < "$out/added.layers"
+          echo "$TAG: $(cat "$out/layers.err")"
+          [ "${#blobs[@]}" -gt 0 ] || { echo "::error::$TAG adds no layer to its base $BASE"; exit 1; }
+          rc=0
+          python3 dev/stream/bin/ossv-imgverify "$out/imgverify" "$oci" "$out/added.layers" toolchain/checker.Dockerfile \
+            --cache "$cache" --build-record "$record" > "$out/imgverify.log" 2>&1 || rc=$?
+          [ "$rc" -le 1 ] || { echo "::error::ossv-imgverify failed with exit $rc; the end of its log:"
+                               tail -n 20 "$out/imgverify.log"; exit 1; }
+          cat "$out/imgverify/summary.txt"
+          awk -F'\t' 'NR>1 && ($2=="upstream" || $2=="derived") {print $1}' "$out/imgverify/members.tsv" > "$out/skip.txt"
+          # the held entries, kept out of the uploaded outputs; release_pins.py parses withheld.yaml with the PyYAML
+          # that `python` has
+          held="$RUNNER_TEMP/fork-held.txt"
+          python tools/publish/release_pins.py held-lines "$held" tools/publish ||
+            { echo "::error::tools/publish/release_pins.py held-lines could not read the held entries"; exit 1; }
+          echo "held entries, the --held of the scan: $(wc -l < "$held")"
+          scan=0
+          python3 dev/stream/bin/ossv-binscan "$out/scan-image" --skip "$out/skip.txt" --held "$held" --tar "${blobs[@]}" \
+            > "$out/scan-image.log" 2>&1 || scan=$?
+          [ "$scan" -le 1 ] || { echo "::error::ossv-binscan failed with exit $scan; the end of its log:"
+                                 tail -n 20 "$out/scan-image.log"; exit 1; }
+          rc=0 cleared=0 remaining=0
+          if [ "$scan" = 1 ]; then
+            # a hit is cleared only when a proven public source holds its whole printable run; the others remain
+            python3 dev/stream/bin/ossv-imgverify "$out/imgverify-hits" "$oci" "$out/added.layers" toolchain/checker.Dockerfile \
+              --cache "$cache" --hits "$out/scan-image/hits.tsv" --build-record "$record" > "$out/imgverify-hits.log" 2>&1 ||
+              rc=$?
+            [ "$rc" -le 1 ] || { echo "::error::ossv-imgverify --hits failed with exit $rc; the end of its log:"
+                                 tail -n 20 "$out/imgverify-hits.log"; exit 1; }
+            cleared=$(awk -F'\t' '$1 == "cleared hits" {print $2}' "$out/imgverify-hits/summary.txt")
+            remaining=$(awk -F'\t' '$1 == "remaining hits" {print $2}' "$out/imgverify-hits/summary.txt")
+          fi
+          proven=$(awk -F'\t' '$1 == "upstream" || $1 == "derived" {n += $2} END {print n + 0}' "$out/imgverify/summary.txt")
+          unproven=$(awk -F'\t' '$1 == "unproven" {print $2}' "$out/imgverify/summary.txt")
+          hits=$(( $(wc -l < "$out/scan-image/hits.tsv") - 1 ))
+          {
+            echo "the scan of the release gate's image job, on \`${TAG##*:}\` before its push:"
+            echo "- members of the added layers proven public, so not scanned: $proven; the others, scanned: $unproven"
+            echo "- ossv-binscan: exit $scan, $hits hits in hits.tsv"
+            if [ "$scan" = 1 ]; then
+              echo "- hits cleared, since a proven public source holds their text: $cleared; hits that remain: $remaining"
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$scan" = 1 ] && [ "$rc" != 0 ]; then
+            echo "::error::$remaining hits remain in $TAG that no proven public source clears; the first 50 of remaining.tsv:"
+            head -n 51 "$out/imgverify-hits/remaining.tsv" | cut -c1-240
+            exit 1
+          fi
+          echo "verdict=no hit remains: $proven members proven public, $hits binscan hits, $cleared cleared" >> "$GITHUB_OUTPUT"
+      # The build record, the six Rocq files as the step of the proofs of False wrote them, and the scan's outputs and
+      # logs, kept with the run also when a check failed: a failed scan can then be read, and the same files compiled
+      # elsewhere.
+      - name: the scan's outputs
+        if: always() && matrix.build == 'fork'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: checker-fork-scan-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/fork-build.json
+            ${{ runner.temp }}/proofs-of-false/
+            ${{ runner.temp }}/fork-scan/
+          if-no-files-found: warn
+          retention-days: 30
       - name: push
         id: push
         env:
@@ -421,23 +1075,59 @@ jobs:
           echo "::error::gh attestation verify refused $NAME@$DIGEST, the digest this job attested, in 3 tries"
           exit 1
       # only an attested and verified image is offered for a pin, and only once the release gate's image job has
-      # scanned it
+      # scanned it. The fork checker is offered for no pin yet: its summary gives the verdicts of its checks, the list
+      # of differences (the comment beside the build step, read from this file) and its build record.
       - name: the image, for a pull request that pins it
         env:
           REF: ${{ steps.push.outputs.ref }}
           SIZE: ${{ steps.push.outputs.size }}
           TAG: ${{ steps.name.outputs.tag }}
           ATTESTATION: ${{ steps.attest.outputs.attestation-id }}
+          REFUSALS: ${{ steps.refusals.outputs.verdict }}
+          COMPARE: ${{ steps.compare.outputs.verdict }}
+          SCAN: ${{ steps.scan.outputs.verdict }}
         run: |
+          set -euo pipefail
+          if [ "$BUILD" = fork ]; then
+            [ -n "$REFUSALS" ] && [ -n "$COMPARE" ] && [ -n "$SCAN" ] && [ -s "$RUNNER_TEMP/fork-build.json" ] || {
+              echo "::error::a check of the fork image left no verdict, or no build record: '$REFUSALS' '$COMPARE' '$SCAN'"
+              exit 1
+            }
+            # the comment beside the build step, from its first line up to the step's name; awk fails unless it reads
+            # both lines
+            differences=$(awk '/^ *# The fork build differs from the stock build/{on=1}
+              on && /^ *- name: build and self-test/{done=1; exit} on{sub(/^ *# ?/, ""); print} END{exit !done}' \
+              .github/workflows/images.yml) || {
+              echo "::error::.github/workflows/images.yml has no list of differences beside the build step: no line" \
+                "'# The fork build differs from the stock build', or no line '- name: build and self-test' after it"
+              exit 1
+            }
+          fi
           {
-            echo "### $KEY"
+            if [ "$BUILD" = fork ]; then echo "### $KEY (fork)"; else echo "### $KEY"; fi
             echo "pushed: \`$REF\` (tag \`${TAG##*:}\`), $SIZE"
             echo "attestation: $ATTESTATION"
             if [ "$KEY" = runner ]; then
               echo "tools/oft: theorem-labs/oss-verify-proofs at $TOOLS_COMMIT, git tree $TOOLS_TREE"
             fi
-            echo "The every-byte scan of this image is the release gate's image job. Pin it (a pull request that sets"
-            echo "\`images.$KEY\` in release.yaml to this digest) only after a gate scan has covered it."
+            if [ "$BUILD" = fork ]; then
+              echo "- the fork image refuses the three proofs of False: $REFUSALS"
+              echo "- rocqchk takes -compare: $COMPARE"
+              echo "- the scan of the release gate's image job, on this image before its push: $SCAN"
+              echo
+              echo '```text'
+              echo "$differences"
+              echo '```'
+              echo "The record of this build:"
+              echo '```json'
+              cat "$RUNNER_TEMP/fork-build.json"
+              echo '```'
+              echo "No pull request pins this image before the one that moves the checks to the fork's Rocq. That pull"
+              echo "request pins it, with the build record above."
+            else
+              echo "The every-byte scan of this image is the release gate's image job. Pin it (a pull request that sets"
+              echo "\`images.$KEY\` in release.yaml to this digest) only after a gate scan has covered it."
+            fi
           } | tee -a "$GITHUB_STEP_SUMMARY"
       - name: sign out
         if: always()
@@ -456,7 +1146,7 @@ jobs:
     if: >-
       github.repository_id == '1425069221' &&
       (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.image == 'none'))
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     timeout-minutes: 10
     permissions:
       contents: read       # release.yaml
@@ -505,9 +1195,14 @@ jobs:
           exit "$refused"
 
   images:
-    needs: [plan, image, verify-pins]
+    # Every other job of this workflow, so that a job added later cannot pass unseen
+    # (tools/oft/tests/test_workflow_verdicts.py, CollectTest).  git_objects and git_objects_used are about the
+    # object store, not the images: this job waits for them and its step below reads neither, so a store that fails
+    # leaves this verdict as it is (the run's own conclusion carries the store's failure).  They are skipped on a
+    # push, the event that builds images, so they delay nothing there.
+    needs: [plan, image, verify-pins, git_objects, git_objects_used]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     permissions: {}
     steps:
@@ -546,3 +1241,241 @@ jobs:
           [ "$IMAGE" = success ] ||
             { echo "::error::an image the plan named was not built, pushed and verified: $got"; exit 1; }
           echo "built, pushed and verified: $IMAGES"
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # The object store pr.yml's whole-tree checkouts start from.  Nothing above reads these two jobs and they read
+  # nothing above: no `needs` either way, their own permissions, their own concurrency group, and the run's verdict
+  # for the images is still the job `images` alone.  They are here, and not in a workflow of their own, because a
+  # workflow file of its own needs a row in tools/oft/paths.py, which is part of keys.checker and so re-keys every
+  # unit (rule D11, an announced window); this file is already classified and already runs daily.
+  #
+  # WHAT IT COSTS WITHOUT A STORE.  A plain actions/checkout of this repository downloads the whole tree every time:
+  # 2.4 GB of pack for one commit.  In lint job 128798148514 (merge queue group of #2347, 2026-11-08) the step took
+  # 524 s, of which the fetch ran from 16:57:53Z to 17:05:40Z (467 s) and writing the 287,199 files took the other
+  # 55 s; the same fetch takes 467 s from this repository's own box, so it is GitHub's pack, not the runner's
+  # network.  Five jobs of pr.yml pay it -- lint and tests where they read every file, controls, check and made_from
+  # always -- and lint pays it in every merge queue group, on the group's critical path.
+  #
+  # WHAT THESE JOBS DO.  Once a day git_objects fetches main one commit deep into a repository with no working tree
+  # and keeps that .git in the Actions cache under git-objects-v1-<date>.  Those pr.yml jobs restore it into
+  # head/.git before their actions/checkout: the action keeps a repository whose origin is this one
+  # (prepareExistingDirectory in actions/checkout 11bd7190), and its fetch then asks only for what the store lacks.
+  # Measured on ubuntu-24.04-4core, the runner a merge queue group's lint uses: restore 21-30 s and checkout 70-86 s,
+  # against 524-532 s cold.
+  #
+  # WHY DAILY.  Main moves 250 files in a day (measured against main 24 h before) but 273,969 of its 287,199 in a
+  # week.  Measured against GitHub: fetching a commit a day away into this store took 1.6 s and added no bytes, one a
+  # week away 387 s and 2.4 GB -- no better than cold.  So each pr.yml job takes the newest store there is
+  # (restore-keys), whatever its date, and this runs on the daily schedule above.
+  #
+  # WHAT IT DOES NOT DECIDE.  Not what any job checks out.  The job's actions/checkout still fetches the commit it
+  # was asked for by name, and `git checkout` fails on an object it does not have, so a store that is missing, stale
+  # or broken costs that run the cold fetch and changes no verdict.  The packs are not re-hashed object by object
+  # (`git index-pack --verify` of the 2.4 GB pack: 90 s of wall and 33 minutes of CPU on 8 cores, measured on the
+  # box) because nothing untrusted can write the entry: only a trusted trigger -- this schedule, or a
+  # workflow_dispatch -- may write a cache in the default branch's scope (docs.github.com, "Dependency caching
+  # reference", "Cache access for low-trust workflow triggers"), and the only other scopes a run searches are its own
+  # pull request's merge ref and its own merge queue group's branch, which only runs of the very workflow file that
+  # reads them can write.
+  #
+  # THE BUDGET.  A repository holds 10 GiB of cache and GitHub evicts the least recently used entry over that.  Read
+  # page by page from repos/<owner>/<repo>/actions/caches on 2026-11-09 (`gh cache list` returns 30 rows and is no
+  # measure of it), this repository held 5.210 GiB in 1,489 entries without a store: 5.209 GiB of that is 61
+  # bet467-bwrap-lps-c1-* entries, another lane's build caches, and the other 1,428, nearly all lint records, 1.4 MB.
+  # One store is 2.355 GiB (2,528,466,651 B, measured as GitHub stored it), 23.5% of the cap, and takes the
+  # repository to 7.565 GiB, which leaves 2.43 GiB.  Two stores would not fit: with the standing 5.210 GiB they
+  # come to 9.92 GiB, against the 10 GiB cap, and the eviction would fall on the least recently used entries, that
+  # other lane's caches, putting its cold build cost back on it.  So the step below deletes every older store of
+  # main after each save on main, and one is all there ever is.
+  git_objects:
+    # this repository only, as the plan job; on the daily schedule and by hand, never on a push (a push to main
+    # happens many times an hour, and one store a day is what the measurements above ask for)
+    if: >-
+      github.repository_id == '1425069221'
+      && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    # the fetch alone is 467 s and the upload of 2.4 GB follows it
+    timeout-minutes: 60
+    permissions:
+      contents: read   # the one commit of main this fetches
+      actions: write   # the cache entry it keeps
+    concurrency:
+      # One at a time per ref, and nothing this file's image jobs are in: two saves of the same key race for one
+      # entry, and the loser's 2.4 GB upload is thrown away.
+      group: images-git-objects-${{ github.ref }}
+      cancel-in-progress: false
+    outputs:
+      key: ${{ steps.key.outputs.key }}
+    steps:
+      - name: today's key
+        id: key
+        run: |
+          set -euo pipefail
+          echo "key=git-objects-v1-$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      # Whether today's entry is already there: a re-run, or a run by hand after the schedule, then costs nothing.
+      # lookup-only, so this downloads none of it.
+      - name: is today's store kept already
+        id: have
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
+        with:
+          path: head/.git
+          key: ${{ steps.key.outputs.key }}
+          lookup-only: true
+      # head/.git, the path the restoring jobs of pr.yml give actions/cache: the entry's version is a hash of the
+      # path, so the two must say it the same way for a restore to match this save.
+      - name: main, one commit deep, in a repository with no working tree
+        if: steps.have.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          store="$GITHUB_WORKSPACE/head"
+          mkdir -p "$store"
+          git init --quiet "$store"
+          git -C "$store" config gc.auto 0
+          # exactly the URL actions/checkout compares with (its getFetchUrl: the server's origin, the owner and the
+          # name, no .git), since a remote it does not recognise makes it delete this store and clone again
+          git -C "$store" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          # The job's token, the way actions/checkout passes it, and gone again below: anyone with read access can
+          # download a cache entry (docs.github.com, "Dependency caching reference"), so none of this leaves a
+          # credential in the store.
+          git -C "$store" config --local "http.$GITHUB_SERVER_URL/.extraheader" \
+            "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)"
+          git -C "$store" -c protocol.version=2 fetch --no-tags --no-recurse-submodules --depth=1 \
+            origin "+refs/heads/main:refs/ossv-git-cache/base"
+          git -C "$store" config --local --unset-all "http.$GITHUB_SERVER_URL/.extraheader"
+          if grep -q extraheader "$store/.git/config"; then
+            echo "::error::the store still holds a credential; nothing is kept"; exit 1
+          fi
+          # HEAD rests on an empty tree, not on the fetched commit, so that a restoring job writes the tree once:
+          # actions/checkout runs `git reset --hard HEAD` on a repository it keeps, which from the fetched commit
+          # would write all 287,199 files before `git checkout` wrote the ones that run's commit differs in.  The
+          # fetched commit stays reachable from refs/ossv-git-cache/base, which is what the later fetch offers the
+          # server as a `have`; actions/checkout deletes refs/heads/* and conflicting refs/remotes/origin/*, and
+          # leaves any other ref alone.
+          empty=$(git -C "$store" hash-object -w -t tree /dev/null)
+          rest=$(git -C "$store" -c user.name=git-cache -c user.email=git-cache@invalid \
+            commit-tree -m "the empty tree this store's HEAD rests on" "$empty")
+          git -C "$store" update-ref --no-deref HEAD "$rest"
+          base=$(git -C "$store" rev-parse refs/ossv-git-cache/base)
+          [ "$(wc -l < "$store/.git/shallow")" -eq 1 ] || {
+            echo "::error::the store is not one commit deep"; exit 1; }
+          echo "main at $base, $(du -sh "$store/.git" | cut -f1)" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: keep it for today
+        if: steps.have.outputs.cache-hit != 'true'
+        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
+        with:
+          path: head/.git
+          key: ${{ steps.key.outputs.key }}
+      # One store, ever.  Nothing in the Actions cache expires on a key, so without this yesterday's 2.355 GiB entry
+      # would sit beside today's and take the repository to its 10 GiB cap (THE BUDGET above), where GitHub's
+      # eviction would fall on the least recently used entries -- another lane's build caches, not ours.  It runs on
+      # every run of this job that is on main, not only where the save ran, so a day whose save was skipped still
+      # tidies a store an earlier failure left behind.
+      #
+      # ONLY ON MAIN, AND ONLY MAIN'S ENTRIES.  A cache entry belongs to the ref that saved it, a DELETE by id
+      # crosses scopes, and the entry pr.yml's jobs restore is main's: so a run by hand on a branch, which saves
+      # into that branch's scope, must not delete anything.  Three things hold that, and each would do alone: this
+      # step runs on main only (its `if`), the listing asks for this run's own ref, and a row of any other ref is
+      # skipped.  A branch's stray store is left to GitHub, which drops an entry no run has read for 7 days; delete
+      # it by id after a rehearsal rather than leave 2.355 GiB of the budget standing.
+      #
+      # It refuses loudly rather than guessing: today's key must be in the listing before anything is deleted (an
+      # empty match and a missing entry are different answers), the listing is read page by page, and a DELETE the
+      # API refuses fails the job.  Deleting nothing is not a failure: the first run of a day has nothing older.
+      - name: today's store is the only one
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP: ${{ steps.key.outputs.key }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/caches?per_page=100&ref=$GITHUB_REF" \
+            --jq '.actions_caches[] | [.id, .ref, .key] | @tsv' > "$RUNNER_TEMP/caches.tsv"
+          keep_seen=false
+          : > "$RUNNER_TEMP/stale.tsv"
+          while IFS=$'\t' read -r id ref key; do
+            [ "$ref" = "$GITHUB_REF" ] || continue
+            case "$key" in git-objects-v1-*) ;; *) continue ;; esac
+            if [ "$key" = "$KEEP" ]; then keep_seen=true; else printf '%s\t%s\n' "$id" "$key" >> "$RUNNER_TEMP/stale.tsv"; fi
+          done < "$RUNNER_TEMP/caches.tsv"
+          [ "$keep_seen" = true ] || {
+            echo "::error::$KEEP is not among $GITHUB_REF's cache entries, so the save did not keep it; nothing is deleted"
+            exit 1; }
+          gone=0
+          while IFS=$'\t' read -r id key; do
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/caches/$id" > /dev/null
+            echo "deleted $key ($id)"
+            gone=$((gone + 1))
+          done < "$RUNNER_TEMP/stale.tsv"
+          echo "$KEEP is $GITHUB_REF's only object store; $gone older one(s) deleted" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # The guard on the save above, on the runner a merge queue group's lint uses: a store that no checkout can start
+  # from is worse than none, because every pr.yml job then pays the restore before the cold fetch.  It restores what
+  # the save kept and runs the lint job's own whole-tree checkout over it, then holds two things: the tree is the
+  # commit's (the case a broken store would break), and the store's own pack is still in head/.git, which says
+  # actions/checkout kept the repository rather than deleting it and cloning again (the case this exists to catch: a
+  # store shaped so that the action throws it away still passes a checkout, in 467 s).  The case it must not catch --
+  # no store at all -- is the cold path pr.yml's five jobs take on a cache miss.
+  git_objects_used:
+    needs: git_objects
+    runs-on: ubuntu-24.04-4core
+    timeout-minutes: 60
+    permissions:
+      contents: read   # the commit it checks out, and the cache entry it restores
+    concurrency:
+      group: images-git-objects-used-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: when this job started reading
+        id: at
+        run: echo "start=$(date -u +%s)" >> "$GITHUB_OUTPUT"
+      - name: the store the save job kept
+        id: store
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
+        with:
+          path: head/.git
+          key: ${{ needs.git_objects.outputs.key }}
+          # no fallback: this job judges the entry this run's save job keeps, not whatever is newest
+          fail-on-cache-miss: true
+      - name: the packs this run restored
+        id: packs
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packs=
+          for pack in head/.git/objects/pack/*.pack; do packs="$packs ${pack##*/}"; done
+          packs=${packs# }
+          [ -n "$packs" ] || { echo "::error::the restored store holds no pack"; exit 1; }
+          echo "restored $(du -sh head/.git | cut -f1) in $(wc -w <<< "$packs") pack(s): $packs"
+          {
+            echo "packs=$packs"
+            echo "restored=$(date -u +%s)"
+          } >> "$GITHUB_OUTPUT"
+      # the lint job's whole-tree checkout, with the commit named so that the step below can hold the tree to it on
+      # any event
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          path: head
+          ref: ${{ github.sha }}
+      - name: the tree is this commit's and the store was kept
+        env:
+          START: ${{ steps.at.outputs.start }}
+          RESTORED: ${{ steps.packs.outputs.restored }}
+          PACKS: ${{ steps.packs.outputs.packs }}
+        run: |
+          set -euo pipefail
+          done_at=$(date -u +%s)
+          echo "restore $((RESTORED - START)) s, checkout $((done_at - RESTORED)) s" | tee -a "$GITHUB_STEP_SUMMARY"
+          # the tree: the commit this run is for, with no file missing or left over
+          [ "$(git -C head rev-parse HEAD)" = "$GITHUB_SHA" ] || {
+            echo "::error::head is $(git -C head rev-parse HEAD), not $GITHUB_SHA"; exit 1; }
+          dirty=$(git -C head status --porcelain | head -n 5)
+          [ -z "$dirty" ] || { echo "::error::the checkout differs from the commit:"; echo "$dirty"; exit 1; }
+          # the store: actions/checkout kept it, so its packs are still here
+          for pack in $PACKS; do
+            [ -f "head/.git/objects/pack/$pack" ] || {
+              echo "::error::actions/checkout threw the store away ($pack is gone): this run fetched the tree cold"
+              exit 1; }
+          done
+          echo "the store's packs are still in head/.git: the checkout started from them"

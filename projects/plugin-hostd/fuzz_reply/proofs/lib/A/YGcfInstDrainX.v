@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* CARRIED from commit 7fb5e1d920f1a960ba591aa28cade9497d873d3c,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v, sha256 c16f6530c08cb29faab1979917bdec9b0df793c679dbc375dd7138c567ff2e7e (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -14,7 +15,7 @@
    rule 24: no function proved (kind: interface-instance discharge of DMiface's re-quarantine fields; relation-level
    facts about the cut memory DMiface.dmem_q).
 
-   The cf twin of cgif's DGif1dq.requar_AR (DGif1dq.v:476) over YFey.drain_fin_ARm (YFey.v:707), restated over the
+   The cf twin of cgif's DGif1dq.requar_AR (DGif1dq.v:476) over YFey.drain_fin_ARm (YFey.v:708), restated over the
    event-free relation: from ARcf at the drain's entry state X, the cut memory relation DMiface.dmem_q (mem' differs from
    mem only on the stack window below sp0, the quarantine header words and the batch cells; the cut state's quarantine
    cells hold in mem'), the cut state S1 := set_qglobal g' (set_qthread qc0 X) (the transfer, then the merge and the
@@ -31,13 +32,13 @@
    Both keep xs_mapped_cf (same secondaries, same maps) and the owned set (aowned reads no quarantine field).
    Image premises (named, over ImgBase.AImg's fields and the symbol table only):
    - [IMG_QAPART]: the instance's quarantine header words are apart from the depot / store / internal-allocator areas
-     of the symbol table (cgif: by its numerals, YFey.v:577 / :584 / :637);
+     of the symbol table (cgif: by its numerals, YFey.v:578 / :585 / :638);
    - [ERRB_QAPART] (YGcfImgRows): the error-message buffer's object is apart from the instance object (cgif:
-     ERRB_QAPART_cgif, YGcfInstHitcgif.v:61 @ cf-hit 76362ece943);
+     ERRB_QAPART_cgif, YGcfInstHitcgif.v:61 @ cf-hit);
    - [CONST_APART]: each constant cell of the image is the two zero bytes after the mutex word (dmem_q pins them) or
      lies off the quarantine header words and off the primary reserve, for every layout with Base's
      YGcfInstBase.ly_img_ok (layout_ok, the TSD slot at the image's, the owned static inside ly_img: the stated row
-     over bare layout_ok was refuted at reply's image A, ReplyImg_constapart.v @ 507bcceac8e, by layouts that put
+     over bare layout_ok was refuted at reply's image A, ReplyImg_constapart.v, by layouts that put
      ly_tsd elsewhere) (cgif: YFev.Tfib_const_locd, DGif1dq.v:419-461);
    - [EXH_OFF_t] (YGcfImgRows, the unit row cf_exh_off = 68), from which the layer derives EXH_OFF_OK;
    - [errb_obj_owned_t]: Base's row (the error-message buffer's object is owned static);
@@ -80,7 +81,7 @@ forall B, im_syms B -> forall a, qhdr_inst B a ->
 
 (* ERRB_QAPART (the buffer's object apart from the instance object: the drain's walks write the instance's quarantine
    header words and the secondary recycle's four further instance words) is the class-free unit row of
-   YGcfImgRows.v (taken by path from a working branch 76362ece943; cgif: ERRB_QAPART_cgif, YGcfInstHitcgif.v:61).
+   YGcfImgRows.v (taken by path from a working branch; cgif: ERRB_QAPART_cgif, YGcfInstHitcgif.v:61).
    It is the first clause of YGcfErrbSep.ERRB_SEP_t. *)
 
 (* EXH_OFF_OK is a LAYER fact, derived from the one unit row YGcfImgRows.EXH_OFF_t (cf_exh_off = 68):

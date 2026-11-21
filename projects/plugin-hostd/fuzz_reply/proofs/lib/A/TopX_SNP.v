@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/TopX_SNP.v, with its module paths and module names changed; 9 of its 67 lines of code are new or changed and 46 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The top_x row SNP_x (TOPX-OWNERS.md (sha256 bb821fae800d; internal record), group RT; TOPX-PLUGS.md (sha256 e0a351b05fe4; internal record), "SNP narrowing"),
-   PROVED at the instance.  A's top_x (W_LLVMFuzzerTestOneInput_top_x.v:921) states
+   PROVED at the instance.  A's top_x (W_LLVMFuzzerTestOneInput_top_x.v:922) states
      SNP_x : asnprintf_realizes_x TfibB ARX (SIGMA WS_snprintf) W_sites.FR_GOT_GUARD W_sites.FR_GUARD
    and topx_SNP_x below states it at FMgxaSeamARX.v's ARX_seam, top_x.v:162-163's ARX verbatim, as TopX_RT.v states
    its rows at ARX_rt: the plug at the top (ReplyATopX.v's SNP_x) is `exact` up to unfolding.  This file does not

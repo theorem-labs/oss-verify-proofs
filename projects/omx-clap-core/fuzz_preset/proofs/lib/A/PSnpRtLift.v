@@ -11,14 +11,15 @@
    - A walk proved over the machine state alone (lib/Lib `evt`, its registers written `mkR ...`) is
      read at a donor call site (`SRr` from `cfg_at`, YG0d.v:213): the register map is moved with
      lib/Lib/RegisterBridge.v (canonical_contract_transport), and each step of the walk is a step of
-     the donor's `msteps`, which `SRr_msteps` (YA0n.v:149) lifts.
+     the donor's `msteps`, which `SRr_msteps` (YA0n.v:150) lifts.
    - A walk that returns to ra with the callee-saved registers kept and changes nothing but a window
      of K <= STK bytes below sp gives the donor-form post `rt_post_ro` (FMH_Rt.v:88); AR is kept by
      the donor's frame law (al_frame, YG0d.v:439), as cgif_file A/AE2j.v:142 keeps it.  Inside fm's
      user-poison window the same walk gives `rt_post_roU` (FMH_Rt.v:96), ARU kept by
      FMupoison.ARU_frame.
    - A body walk of lib/A/Bz (its own copy of `evt`) is read the same way (srr_of_canon_bz). *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMrt_lift.v at origin/cold/port-fm-rtprintf-param 7e395de08f5: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; Section p (rt_post_ro_win over AR_laws and rt_post_roU_win over ARU) is left out: the ARx printf_common contract keeps its own post (PSnpPcom.v pcm_post over alx_frame / alx_stack), as port-fm's RT_pf_shU.v does. No numeral. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMrt_lift.v: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; Section p (rt_post_ro_win over AR_laws and rt_post_roU_win over ARU) is left out: the ARx printf_common contract keeps its own post (PSnpPcom.v pcm_post over alx_frame / alx_stack), as port-fm's RT_pf_shU.v does. No numeral. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

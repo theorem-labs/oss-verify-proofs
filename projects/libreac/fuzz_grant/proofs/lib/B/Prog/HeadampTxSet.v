@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_headamp_tx_set on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxSet.v at a working branch 5651bf66924 (blob 4381d874223; the walk was ported from blob 706b07923f6, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; B adds eight UBSan guards into the trap at 0x85bac (null 0x85ad0, alignment 0x85ad8, six pointer-overflow), refuted for a live 4-aligned block with tx + 431 < 2^64. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxSet.v at a working branch (blob 4381d874223; the walk was ported from blob 706b07923f6, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; B adds eight UBSan guards into the trap at 0x85bac (null 0x85ad0, alignment 0x85ad8, six pointer-overflow), refuted for a live 4-aligned block with tx + 431 < 2^64. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_tx_set (image B 0x85a90, 88 instructions) on the build with the memory and undefined-behaviour
    checks: the walk of its machine code against the contract tb_reac_headamp_tx_set_spec of GrantBContracts.v.
    The branch tree is image A's (refusals ch > 47, p >= 3, p = 2 and v >= 56, p < 2 and v >= 2; acceptances

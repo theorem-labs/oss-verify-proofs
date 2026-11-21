@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MAIN also takes G0R, the library node of the file family's certificates for the start state with CONFIG_RSEQ). *)
 From Stdlib Require Import ZArith NArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -41,8 +42,9 @@ Definition ASAN : Image := mkImage ASAN_SEGS ASAN_PC ASAN_PH.
 Section G0.
 
 Let G0 : MA.G0_stmt := G0Asan.G0.
+Let G0R : MA.G0_stmtR := G0Asan.G0R.
 
-Let MAIN := MA.MAIN G0.
+Let MAIN := MA.MAIN G0 G0R.
 
 Theorem asan_base1 :
   strong_universal_error_free_T_scfg_budgets_abort (mkSpuriousCfg false true true true true true)

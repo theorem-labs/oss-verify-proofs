@@ -7,9 +7,10 @@
    program objects G_fr_obj (GF_OBJ): its view is its image byte (sPE_gf_img: every object lies in a CImg chunk of
    IMG_E, gf_cover_chk) and it is writable (sPE_gf_writable: every object lies in the writable window of an absolute
    region of IMG_E, gf_win_chk), so it holds gf_init a, the image byte (gf_init_rom).  Form of
-   omx-clap-core/fuzz_state's clip_ivs_ok / clipL_ok / pstat_cover_chk / sPE_pstat_img (a working branch
-   b7573d0eb37).  Presence (apresent) is NOT given: LPS starts ms_mem with the stack only (Run.v init_machine_state),
+   omx-clap-core/fuzz_state's clip_ivs_ok / clipL_ok / pstat_cover_chk / sPE_pstat_img (a working branch).
+   Presence (apresent) is NOT given: LPS starts ms_mem with the stack only (Run.v init_machine_state),
    and start-up never stores to these objects. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

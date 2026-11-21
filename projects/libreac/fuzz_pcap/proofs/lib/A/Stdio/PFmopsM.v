@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the two fmemopen FILE ops that libreac/fuzz_pcap's read stream closes and
    flushes through: musl mseek (0x8ec28) and mclose (0x8ecc4).
 
    STATEMENT ONLY: the definitions compile, there is no lemma yet.
 
-   At ossv/recipes 25e3d17bdb50 (2026-10-29), there was NO DONOR for these. cgif_file_fuzzer's stream is a real file, so its FILE ops are
-   __stdio_seek / __stdio_close; at ossv/recipes 25e3d17bdb50 (2026-10-29), the cookie ops of a memory stream appeared in no released proof outside
+   At (2026-10-29), there was NO DONOR for these. cgif_file_fuzzer's stream is a real file, so its FILE ops are
+   __stdio_seek / __stdio_close; (2026-10-29), the cookie ops of a memory stream appeared in no released proof outside
    libpcap / libreac (a Theorem Labs lane's runtime-donors.md (sha256 77e6fad19fb7; internal record) section 6 item 3), and libpcap/fuzz_pcap is ruled
    out as a donor (different program, different lineage; section 5). pcap's own plain proofs
    lib/Prog/mseek.v / mseek_ro.v / mclose.v are STEP TEMPLATES only: they state over the mallocng plain
@@ -14,7 +15,7 @@
 
    IMAGE ROOT: the ORIGINAL v1.9.0 set, which is what the statements target --
    the pinned fuzz_pcap images and their unstripped twins,
-   statements ed6b6b7b0ab. NOT the toolchain-N images: a runtime premise
+   statements. NOT the toolchain-N images: a runtime premise
    true on one can be false on the other (another proof's
    malloc_context_size = 1 is exactly such a premise, true on N and false here).
 
@@ -76,7 +77,7 @@ Variable K : asource_syms.
 
 (* The cgif-core vocabulary is the REAL relocated core (afn_pre / ajournal from YCbq.v, NOT YCe5.v;
    cfg_at / spZ / aregs_preserved from YG0d.v; SRr / world / w_H from YA0n.v). rd is the donor's own
-   abbreviation (YE01.v:47). *)
+   abbreviation (YE01.v:48). *)
 Local Notation rd W mem := (mrestrict (w_H W) mem).
 
 Definition PMSEEK_STK  : Z := 48.   (* MEASURED: addi sp,sp,-48 at 0x8ec28 *)
@@ -123,7 +124,7 @@ Definition amseek_rewind_spec (pc : Z) : Prop :=
        C 48 zero bytes: every premise holds -- source_static separates b only from f, and afn_pre
        only says the frame bytes are PRESENT -- yet after the store at 0x8ec2c the last 8 bytes of
        C read back as ra (>= 4096), so garr8 fails and the post is false. Stated in the form
-       PFreadISpec.v:67 already uses for its destination buffer. *)
+       PFreadISpec.v:68 already uses for its destination buffer. *)
     (b + Z.of_nat (length C) <= spZ regs - PMSEEK_STK \/ spZ regs <= b) ->
     val_mem segs (rd W mem) (f + SRC_COOKIE_OFF) 8 cpos ->
     p <= cpos ->

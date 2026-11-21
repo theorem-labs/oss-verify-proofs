@@ -4,6 +4,7 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YH03.v, with its addresses changed. *)
 (* Modified by Theorem Labs, 2026-11: removed 70 cells that no proof reads, those of the 37 address pairs that the pinned image contradicts or whose function the image does not link; kept the 4 start addresses that proofs read, and set src0_A_stdio_seek to 0x18250, the address both static FILEs of the image hold. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YH03.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its addresses and numbers named by Reusable/YAddr.v, which holds this fuzz target's plain binary's values; 46 cells that no proof reads removed; src0_D_vmlock (musl's vmlock, which this binary's __vm_wait reads) and src0_hw, src0_hr (the globals the harness writes and reads) added. *)
+(* Modified by Theorem Labs, 2026-11: removed src0_A_stdio_seek, src0_D_str_wb, src0_D_str_tmp_out_gif, src0_D_str_3 and src0_D_str_rwa, FILE sink rows that are not true of this image and that no proof reads once the sink has no FILE. *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YAddr.
 Import ListNotations.
@@ -113,7 +114,6 @@ Definition src0_A_fdopen : Z := (AX_fdopen).
 Definition src0_E_fdopen : Z := AX___fdopen_end.
 Definition src0_A_stdio_write : Z := (AX___stdio_write).
 Definition src0_E_stdio_write : Z := AX___stdio_write_end.
-Definition src0_A_stdio_seek : Z := (AX___stdio_seek).
 Definition src0_A_aio_close : Z := (AX___aio_close).
 Definition src0_E_aio_close : Z := AX___aio_close_end.
 Definition src0_A_stdio_close : Z := (AX___stdio_close).
@@ -209,7 +209,6 @@ Definition src0_D_str_cli_read_error_on_s_n : Z := (AX_str_cli__read_error_on__s
 Definition src0_D_str_NAN : Z := (AX_str_cli__out_of_memory_10).
 Definition src0_D_str_nan : Z := (AX_str_d).
 Definition src0_D_str_cli_input_shorter_than_h : Z := (AX_str_cli__input_shorter_than).
-Definition src0_D_str_rwa : Z := (AX_str_cli__config_len_overruns_c).
 Definition src0_D_str_dev_null : Z := (AX_str_dev_null).
 Definition src0_D_str_null : Z := (AX_str_null).
 Definition src0_D_debruijn32 : Z := (AX_debruijn32).
@@ -262,9 +261,6 @@ Definition src0_D_malloc_replaced : Z := (AX___malloc_replaced).
 Definition src0_D_stdin_used : Z := (AX_dummy_file).
 Definition src0_D_ofl_lock : Z := (AX_ofl_lock).
 Definition src0_D_ofl_head : Z := (AX_ofl_head).
-Definition src0_D_str_wb : Z := (AX_str_usage___s_INPUT_5).
-Definition src0_D_str_tmp_out_gif : Z := (AX_str_usage___s_INPUT_9).
-Definition src0_D_str_3 : Z := (AX_str_usage___s_INPUT_d).
 Definition src0_D_const_HIGHS_0x8080808080808080 : Z := (AX_str_A_________4_____C_2).
 Definition src0_D_const_ONES_0x0101010101010100 : Z := (AX_str_m8__c___________wQ__l_32).
 (* LLVMFuzzerTestOneInput's globals: reset_cpu_flags.default_cpu_flags and cpu_flags, av_log_level,

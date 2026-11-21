@@ -69,17 +69,29 @@ Ltac leaf_core HM :=
       destruct (mremap_move_budget_b (relim Lsmall m) o oo nn) eqn:E2; [|reflexivity];
       rewrite (mremap_final_budget_b_mono Lbig Lsmall HLE m o oo d nn HM E), (move_mono m o oo nn HM E2) in H;
       cbn [andb negb] in H; discriminate H
+  (* 08b1429: the mremap mark reads ONE gate, chosen by mremap_inplace_room_b *)
+  | |- negb (mremap_final_budget_b ?m ?o ?oo ?d ?nn) = true ->
+       negb (mremap_final_budget_b (relim Lsmall ?m) ?o ?oo ?d ?nn) = true =>
+      intros H; destruct (mremap_final_budget_b (relim Lsmall m) o oo d nn) eqn:E; [|reflexivity];
+      rewrite (mremap_final_budget_b_mono Lbig Lsmall HLE m o oo d nn HM E) in H; cbn [negb] in H; discriminate H
+  | |- negb (mremap_move_budget_b ?m ?o ?oo ?nn) = true ->
+       negb (mremap_move_budget_b (relim Lsmall ?m) ?o ?oo ?nn) = true =>
+      intros H; destruct (mremap_move_budget_b (relim Lsmall m) o oo nn) eqn:E; [|reflexivity];
+      rewrite (move_mono m o oo nn HM E) in H; cbn [negb] in H; discriminate H
   end.
 
 Lemma alloc_mark_down : forall i m, MOK Lbig m ->
   alloc_budget_refused_b i m = true -> alloc_budget_refused_b i (relim Lsmall m) = true.
 Proof.
   intros i m HM. unfold MOK in HM.
-  unfold alloc_budget_refused_b, brk_budget_refused_b, mremap_budget_refused_b, mmap_budget_refused_b,
-    mprotect_budget_refused_b, min_brk.
+  (* 08b1429: alloc_budget_refused_b gained munmap (215), whose mark is constantly false *)
+  unfold alloc_budget_refused_b, brk_budget_refused_b, munmap_budget_refused_b, mremap_budget_refused_b,
+    mmap_budget_refused_b, mprotect_budget_refused_b, min_brk.
   cbv zeta.
   rewrite ?src_relim, ?uni_relim.
   autorewrite with relim_rw.
+  (* 08b1429: the mremap mark branches on mremap_inplace_room_b, which relim does not change *)
+  rewrite ?mremap_inplace_room_b_relim.
   repeat match goal with
          | |- context [if ?b then _ else _] =>
              lazymatch b with true => fail | false => fail | _ => destruct b; lazy beta iota end
@@ -112,13 +124,28 @@ Lemma refused_down : forall c, MOK Lbig (cfg_model c) -> WF (cfg_model c) ->
   budget_refused_at segs c -> budget_refused_at segs (relim_cfg Lsmall c).
 Proof.
   intros [ms m] HM HW. cbn [cfg_model] in HM, HW. unfold relim_cfg. cbn [cfg_ms cfg_model].
-  intros (Hh & [(Hp & report & Est & Emat) | (x8 & Hp & [Ha | (eff & m1 & evs & Hsp & Hh1 & Emat)])]);
+  (* 08b1429: the instruction branch of budget_refused_at also covers a vDSO call whose effect
+     the budget refuses *)
+  intros (Hh & [(Hp & [(report & Est & Emat) | (Hun & fn & n & eff & m1 & evs & Hfn & Hno & Hsp & Hef & Hh1 & Emat)])
+               | (x8 & Hp & [Ha | (eff & m1 & evs & Hsp & Hh1 & Emat)])]);
     cbn [cfg_ms cfg_model] in *.
-  - split; [exact Hh|]. cbn [cfg_ms cfg_model]. left. split; [exact Hp|]. exists report. split; [exact Est|].
+  - split; [exact Hh|]. cbn [cfg_ms cfg_model]. left. split; [exact Hp|]. left. exists report. split; [exact Est|].
     destruct (materialize_model_accesses (relim Lsmall m) (@accessed_ranges _ report)) as [m2|] eqn:E;
       [|reflexivity].
     exfalso. assert (HL : Lsmall <= vm_limit (m_vmmaps m)) by (unfold MOK in HM; rewrite HM; exact HLE).
     destruct (materialize_relim_up Lsmall m _ _ HL E) as (m0 & E0 & _). rewrite E0 in Emat. discriminate Emat.
+  - split; [exact Hh|]. cbn [cfg_ms cfg_model]. left. split; [exact Hp|]. right. split.
+    + unfold mi_account_step in Hun |- *.
+      destruct (step_accesses segs ms) as [report| |]; [|discriminate Hun|reflexivity].
+      destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate Hun.
+    + destruct (spec_down _ _ _ _ _ HM (MV_OK_wf _ HW) (vdso_alloc_false segs ms (relim Lsmall m) fn n Hno) Hsp)
+        as (Hsp' & HM1).
+      exists fn, n, eff, (relim Lsmall m1), evs. split; [exact Hfn|]. split; [exact Hno|]. split; [exact Hsp'|].
+      split; [exact Hef|]. split; [exact Hh1|].
+      destruct (materialize_model_accesses (relim Lsmall m1) (syscall_effect_accesses eff)) as [m2|] eqn:E;
+        [|reflexivity].
+      exfalso. assert (HL : Lsmall <= vm_limit (m_vmmaps m1)) by (unfold MOK in HM1; rewrite HM1; exact HLE).
+      destruct (materialize_relim_up Lsmall m1 _ _ HL E) as (m0 & E0 & _). rewrite E0 in Emat. discriminate Emat.
   - split; [exact Hh|]. cbn [cfg_ms cfg_model]. right. exists x8. split; [exact Hp|]. left.
     exact (alloc_mark_down _ _ HM Ha).
   - split; [exact Hh|]. cbn [cfg_ms cfg_model]. right. exists x8. split; [exact Hp|].
@@ -423,14 +450,16 @@ Qed.
 
 End Relim.
 
+(* LPS 08b1429: RoomShapesDraft's canon family runs over [run_segments segs inp sp mbase], so the
+   relimit below is taken over that segment list. *)
 Lemma init_safe : forall env p segs pc ph sp brk0 mbase rnd (Lsmall Lbig : Z) inp,
   ~ canon_budget_refused env p (mkImage segs pc ph) Lsmall (mkEntry sp brk0 mbase rnd) inp ->
-  SafeC segs env p false full_strip
-    (stack_low (m_vmmaps (cfg_model (init_config segs pc ph sp brk0 mbase rnd Lbig inp))) p)
-    (relim_cfg Lsmall (init_config segs pc ph sp brk0 mbase rnd Lbig inp)).
+  SafeC (run_segments segs inp sp mbase) env p false full_strip
+    (stack_low (m_vmmaps (cfg_model (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp))) p)
+    (relim_cfg Lsmall (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp)).
 Proof.
   intros env p segs pc ph sp brk0 mbase rnd Lsmall Lbig inp Hnr tr c Hr Hb. apply Hnr. cbn [canon_budget_refused].
-  rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp).
+  rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp).
   exists tr, c. split; [|exact Hb]. unfold canon_run. rewrite stack_low_relim. exact Hr.
 Qed.
 
@@ -441,11 +470,11 @@ Lemma canon_relim_nr : forall (env : SpuriousCfg) (p : RoomShapesDraft.policy) (
 Proof.
   intros env p [segs pc ph] Lsmall Lbig [sp brk0 mbase rnd] inp HLE Hnr.
   pose proof (init_safe env p segs pc ph sp brk0 mbase rnd Lsmall Lbig inp Hnr) as Hsafe.
-  pose proof (init_config_limit segs pc ph sp brk0 mbase rnd Lbig inp) as HM0.
-  pose proof (init_config_WF segs pc ph sp brk0 mbase rnd Lbig inp) as HW0.
+  pose proof (init_config_limit (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp) as HM0.
+  pose proof (init_config_WF (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp) as HW0.
   intros (tr & c & Hr & Hb).
-  destruct (canon_down segs env Lbig Lsmall HLE _ _ _ _ _ _ _ Hr HM0 HW0 Hsafe) as (HMc & HWc & Hr').
-  exact (Hsafe _ _ Hr' (refused_down segs env Lbig Lsmall HLE c HMc HWc Hb)).
+  destruct (canon_down (run_segments segs inp sp mbase) env Lbig Lsmall HLE _ _ _ _ _ _ _ Hr HM0 HW0 Hsafe) as (HMc & HWc & Hr').
+  exact (Hsafe _ _ Hr' (refused_down (run_segments segs inp sp mbase) env Lbig Lsmall HLE c HMc HWc Hb)).
 Qed.
 
 Lemma canon_relim_pt : forall (env : SpuriousCfg) (p : RoomShapesDraft.policy) (img : Image) (Lsmall Lbig : Z) en inp,
@@ -458,39 +487,39 @@ Lemma canon_relim_pt : forall (env : SpuriousCfg) (p : RoomShapesDraft.policy) (
 Proof.
   intros env p [segs pc ph] Lsmall Lbig [sp brk0 mbase rnd] inp _ _ _ HLE Hnr.
   pose proof (init_safe env p segs pc ph sp brk0 mbase rnd Lsmall Lbig inp Hnr) as Hsafe.
-  pose proof (init_config_limit segs pc ph sp brk0 mbase rnd Lbig inp) as HM0.
-  pose proof (init_config_WF segs pc ph sp brk0 mbase rnd Lbig inp) as HW0.
+  pose proof (init_config_limit (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp) as HM0.
+  pose proof (init_config_WF (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp) as HW0.
   split.
   - cbn [guarded_reaches_error].
     intros (tr & c & evs & Hrun & He).
-    rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp) in Hrun.
+    rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp) in Hrun.
     destruct Hrun as [(Hg & Hu & Hb) | Hr].
-    + destruct (guarded_up segs env Lbig Lsmall HLE _ _ _ Hg _ eq_refl HM0 HW0) as ([ms m] & -> & HMc & HWc & Hg').
+    + destruct (guarded_up (run_segments segs inp sp mbase) env Lbig Lsmall HLE _ _ _ Hg _ eq_refl HM0 HW0) as ([ms m] & -> & HMc & HWc & Hg').
       cbn [cfg_model] in HMc, HWc.
       exists tr, (mkCfg ms m), evs. split.
       * left. split; [exact Hg'|]. split.
         -- intros Hu'. apply Hu.
-           exact (unplaced_down segs env Lbig Lsmall HLE (mkCfg ms m) HMc (MV_OK_wf _ HWc) Hb Hu').
-        -- intros Hb'. apply Hb. exact (refused_down segs env Lbig Lsmall HLE (mkCfg ms m) HMc HWc Hb').
-      * exact (step_up segs env Lbig Lsmall HLE ms m evs SError HMc (MV_OK_wf _ HWc) Hb He).
+           exact (unplaced_down (run_segments segs inp sp mbase) env Lbig Lsmall HLE (mkCfg ms m) HMc (MV_OK_wf _ HWc) Hb Hu').
+        -- intros Hb'. apply Hb. exact (refused_down (run_segments segs inp sp mbase) env Lbig Lsmall HLE (mkCfg ms m) HMc HWc Hb').
+      * exact (step_up (run_segments segs inp sp mbase) env Lbig Lsmall HLE ms m evs SError HMc (MV_OK_wf _ HWc) Hb He).
     + unfold canon_run in Hr. rewrite stack_low_relim in Hr.
       pose proof (Hsafe _ _ Hr) as Hb.
-      destruct (canon_up segs env Lbig Lsmall HLE _ _ _ _ _ _ _ Hr _ eq_refl HM0 HW0 Hsafe)
+      destruct (canon_up (run_segments segs inp sp mbase) env Lbig Lsmall HLE _ _ _ _ _ _ _ Hr _ eq_refl HM0 HW0 Hsafe)
         as ([ms m] & -> & HMc & HWc & Hr').
       cbn [cfg_model] in HMc, HWc.
       exists tr, (mkCfg ms m), evs. split.
       * right. exact Hr'.
-      * exact (step_up segs env Lbig Lsmall HLE ms m evs SError HMc (MV_OK_wf _ HWc) Hb He).
+      * exact (step_up (run_segments segs inp sp mbase) env Lbig Lsmall HLE ms m evs SError HMc (MV_OK_wf _ HWc) Hb He).
   - intros tr. split.
     + intros (tr' & c & Hr & Hpre). cbn [canon_trace].
-      rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp) in Hr.
+      rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp) in Hr.
       unfold canon_run in Hr. rewrite stack_low_relim in Hr.
-      destruct (canon_up segs env Lbig Lsmall HLE _ _ _ _ _ _ _ Hr _ eq_refl HM0 HW0 Hsafe)
+      destruct (canon_up (run_segments segs inp sp mbase) env Lbig Lsmall HLE _ _ _ _ _ _ _ Hr _ eq_refl HM0 HW0 Hsafe)
         as (c' & _ & _ & _ & Hr').
       exists tr', c'. split; [exact Hr' | exact Hpre].
     + intros (tr' & c & Hr & Hpre).
-      destruct (canon_down segs env Lbig Lsmall HLE _ _ _ _ _ _ _ Hr HM0 HW0 Hsafe) as (_ & _ & Hr').
-      cbn [canon_trace]. rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp).
+      destruct (canon_down (run_segments segs inp sp mbase) env Lbig Lsmall HLE _ _ _ _ _ _ _ Hr HM0 HW0 Hsafe) as (_ & _ & Hr').
+      cbn [canon_trace]. rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp).
       exists tr', (relim_cfg Lsmall c). split; [|exact Hpre].
       unfold canon_run. rewrite stack_low_relim. exact Hr'.
 Qed.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset's LIVE-SECONDARY CALL PREMISE at its cf instance, STATE FORM (row SEC-COUNT-102,
    h-pre-b2). The premise is YG0dcf.v:60, acall_pre_cf's conjunct
      Z.of_nat (length (st_sec_arr S)) < cf_sec_live_max
@@ -13,12 +14,12 @@
                                                  PRH_FnAlloc.v:264 / :368, PRH_FnCheck.v:837, Caw102A_Base.v's caw_cnt
                                                  :247-249; at a model position it is PresetRoomCounts.counts_of_room_pos_rl,
                                                  from PresetLiveSec.live_sec_state).
-   HOW. st_sec_arr holds the live AND the quarantined secondaries (YG01cf.v:153-165: an entry leaves it only at the
+   HOW. st_sec_arr holds the live AND the quarantined secondaries (YG01cf.v:154-166: an entry leaves it only at the
    quarantine recycle). The engine bounds it by the state alone, YGcfSecBound.sec_arr_bound_cf (lib/Reusable/
    YGcfSecBound.v:119-130): length st_sec_arr <= live_sec_blocks S + QSEC_MAX, under WfP_cf and qtight.
      LIVE part: live_sec_blocks S = sec_cnt S under Wf_cf (YGcfRoomLive.live_sec_blocks_req :1172), <= LSEC + DRV.
      QUARANTINED part: QSEC_MAX = (kQuarantineMax + kQuarantineCacheMax) / 64,513 = 4,177 (QSEC_MAX_value). Its
-       source is the ENGINE'S quarantine byte cap qtight (YG01.v:230-231: thread cache <= kQuarantineCacheMax = 2 ^ 20,
+       source is the ENGINE'S quarantine byte cap qtight (YG01.v:231-232: thread cache <= kQuarantineCacheMax = 2 ^ 20,
        global <= kQuarantineMax = 2 ^ 28, quar_n <= queued_n), which the call pre carries as qmeter_cf (YG0dcf.v:56).
        YGcfSecBound.qsec_bytes (:85-113) turns it into 64,513 * #(quarantined PSec chunks) <= 2 ^ 28 + 2 ^ 20 through
        YGcfRoom.quar_bytes_ok_cf; 64,513 is the least secondary request (sec_req_min / sec_req_min_exact). CITED, not

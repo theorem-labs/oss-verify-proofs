@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, vm_ok's ledger is the launch's (ResLaunch.res_launch), and cs_ok and std_model carry the channel reader (co_rdr, stdm_rdr). *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Prelude Instr Decode DecodeC Sem.
 From OSSVerify.skcms.iccprofile_info.images Require Plain.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require ResLaunch.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require PropExec CatExec CatSim SeqExec StoreOk SimInv ExitSim ShapeAlg Nodes MmapSim AllocSim FileSim AgentLib ShapeLaws Spec LibWritev RefNodes RefExitBase.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require SymExec3 SymExec3Sound SymRun3 SymDrive3 SymPlan.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require MallocDefs RefEnframeBase.
@@ -416,7 +418,7 @@ Definition smap_ok (E : env) (maps : list (word * word)) (m : smap) : Prop :=
   else exists lo sz, In (lo, sz) maps /\ bv_unsigned lo <= a /\ a + L <= bv_unsigned lo + bv_unsigned sz.
 
 Record vm_ok (E : env) (ms : list smap) (nmaps live : Z) (VM : VmMaps) : Prop := VM_OK {
-  vo_res   : vm_reserved VM = segments_reserved RSEGS;
+  vo_res   : ResLaunch.res_launch (segments_reserved RSEGS) VM;   (* LPS 727298f3: image entries ++ vdso/vvar pair *)
   vo_maps  : Forall (smap_ok E (vm_maps VM)) ms;
   vo_len   : Z.of_nat (length (vm_maps VM)) <= nmaps;
   vo_live  : vm_live_bytes VM <= live;
@@ -437,7 +439,11 @@ Record cs_ok (E : env) (cs : cstate) (R : bvmap 5 word) (M : word -> option byte
   co_mat  : m_vm_materialized model = [];
   co_fds  : m_fds model = fds_std;
   co_vm   : vm_ok E (c_maps cs) (c_nmaps cs) (c_live cs) (m_vmmaps model);
-  co_slots : slots_ok E M (c_slots cs)                       (* [comment removed for export] *)
+  co_slots : slots_ok E M (c_slots cs);                      (* [comment removed for export] *)
+  (* the launch's reader of the standard channels: seeded by [init_model] from the input and
+     written by no step, so every node re-establishes it by conversion.  Last field, byte for
+     byte with the Asan side's [AsanPlanSound.co_rdr] (AsanPlanSound.v:375-377). *)
+  co_rdr : m_channel_reader model = true
 }.
 
 Definition cfg_of (R : bvmap 5 word) (p : Z) (M : word -> option byte) (model : Model) : config :=
@@ -449,7 +455,11 @@ Record std_model (VM : VmMaps) (model : Model) : Prop := STD_MODEL {
   stdm_vm   : m_vmmaps model = VM;
   stdm_halt : m_halted model = None;
   stdm_lazy : m_vm_lazy model = [];
-  stdm_mat  : m_vm_materialized model = []
+  stdm_mat  : m_vm_materialized model = [];
+  (* LPS #38 (in 727298f3): the launch's channel reader, which [cs_ok.co_rdr] needs.
+     [State.mkModel] sets it to [true] ([c0dd863a:theories/LinuxProcessSem/State.v:5013]), so [std_model_mk]
+     below closes by [reflexivity]. *)
+  stdm_rdr  : m_channel_reader model = true
 }.
 
 Lemma std_model_mk : forall VM stdin0 fs0 tid rlim,
@@ -471,7 +481,7 @@ Lemma run_block_sound : forall bfuel stops cs cs' E R M model,
     /\ c_maps cs' = c_maps cs.
 Proof.
   intros bfuel stops cs cs' E R M model Hrb HC.
-  destruct HC as [HR HK HL Hh Hlz Hmt Hf HV HS]. unfold run_block in Hrb. rewrite sym_execT'_eq in Hrb. (* [comment removed for export] *)
+  destruct HC as [HR HK HL Hh Hlz Hmt Hf HV HS Hcr]. unfold run_block in Hrb. rewrite sym_execT'_eq in Hrb. (* [comment removed for export] *)
   set (ss' := sym_execT RSEGS IT bfuel true stops (c_ss cs)) in Hrb.
   destruct (carry (s_log ss') (s_know ss') []) as [[kn' scs] hs] eqn:Hc.
   destruct scs; [|discriminate]. injection Hrb as <-.
@@ -494,7 +504,7 @@ Qed.
 
 Lemma cs_gc_ok : forall E cs R M model, cs_ok E cs R M model -> cs_ok E (cs_gc cs) R M model.
 Proof.
-  intros E cs R M model [HR HK HL Hh Hlz Hmt Hf HV HS]. unfold cs_gc.
+  intros E cs R M model [HR HK HL Hh Hlz Hmt Hf HV HS Hcr]. unfold cs_gc.
   destruct (split_lit (reg cs 2)) as [spb spk].
   constructor; cbn [set_kn c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try assumption; try reflexivity.
   unfold know_ok in *. apply Forall_forall. intros K Hin. apply filter_In in Hin as [Hin _].
@@ -595,7 +605,7 @@ Lemma cs_ok_set_reg_pc : forall E cs R M model n e v p,
   cs_ok E cs R M model -> (0 < n < 32)%nat -> edenot E e = v ->
   cs_ok E (set_pc (set_reg cs n e) p) (regupd R (Z_to_bv 5 (Z.of_nat n)) v) M model.
 Proof.
-  intros E cs R M model n e v p HC Hn He. destruct HC as [HR HK HL Hh Hlz Hmt Hf HV HS].
+  intros E cs R M model n e v p HC Hn He. destruct HC as [HR HK HL Hh Hlz Hmt Hf HV HS Hcr].
   constructor; cbn [set_pc set_reg c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try assumption; try reflexivity.
   replace (sr_upd (s_regs (c_ss cs)) n e) with (sr_upd (s_regs (c_ss cs)) (ridx (Z_to_bv 5 (Z.of_nat n))) e)
     by (rewrite ridx_lit by lia; reflexivity).
@@ -622,7 +632,7 @@ Lemma split_sound : forall cs e mid lo hi E R M model,
   /\ (mid < bv_unsigned (edenot E e) -> cs_ok E (set_kn cs (KRange e (mid + 1) hi :: kn cs)) R M model).
 Proof.
   intros cs e mid lo hi E R M model HC Hr.
-  destruct HC as [HR HK HL Hh Hlz Hmt Hf HV HS].
+  destruct HC as [HR HK HL Hh Hlz Hmt Hf HV HS Hcr].
   pose proof (erange_sound RSEGS E M (kn cs) e lo hi HK Hr) as Hb.
   split; intros Hm; constructor; cbn [set_kn c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try assumption; try reflexivity;
     (constructor; [cbn [kentry_ok]; lia | exact HK]).

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (c-libc-stdio, lane RowsSet): fuzz_preset's two memset rows at image A (fuzz_preset.asan,
-   tfibsegs = AB1v.v), in the target text of c-omx-alloc's YGcallMxmn.v (s1b 459129c18903): the generic ARx with the
+   tfibsegs = AB1v.v), in the target text of c-omx-alloc's YGcallMxmn.v (s1b): the generic ARx with the
    ghost list Hp, and the memnorm keep as the last post conjunct.
      prow_asan_memset_xm_A : AR_laws_x tfibsegs B ARx hl -> TfibSyms B ->
                              aintrin_realizes_xm tfibsegs B ARx OSet (pc_asan_memset (as_code B))   (__asan_memset 0x52880)
@@ -34,9 +35,9 @@
    Templates read, not imported: fuzz_state's ARU walks (FSxMset.v:2204, FSupoisonIntrinS.v:2178).
    ADDRESS literals here are the two entries (0x52880, 0x523dc, = Tfib_code's pc_asan_memset / pc_wrap_memset,
    AF0l.v:13-14); every other numeral is in the donors' proof text.
-   #102 A' (c-libc-stdio rows102): this file is origin/cold/c-libc-stdio-rows-set a6f4ebf35892's lib/A/PRowSet.v (blob 4da6a4e379cd),
+   #102 A' (c-libc-stdio rows102): this file is a commit's lib/A/PRowSet.v (blob 4da6a4e379cd),
    relocated A (asan d83eb25d, twin f0d2e8d4) -> A' (asan 1be0f53d96cb, twin bff8519bbe3e) by the frozen alreloc
-   c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9): 46 numerals moved by symbol + offset (__asan_region_is_poisoned+0x174
+   c4338d099cfb8025: 46 numerals moved by symbol + offset (__asan_region_is_poisoned+0x174
    -> 349212, 32 times; __asan_memset -> 0x52880; __wrap_memset -> 0x523dc; ___interceptor_memset -> 0x52ac0, in the
    theorem texts of the _lit rows and the leaf and in comments); the 36 instruction words (icpt_ld8 operands 538627 /
    571523) kept by --resolve. The symbolic runs come from the tree's A' lib/A/AE6t.v (blob d4003b69c3f9) and
@@ -71,7 +72,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05
 (* Required, not Imported: the target texts and laws are cited by qualified name, so no name of the walks' imports
    is shadowed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YCbqG FCiface YGcallMx YGcallMxmn YAkMemnorm.
-(* c-libc-stdio's row kit (RowsCpy; merged from origin/cold/c-libc-stdio-rows-cpy 532cf8bd849e): the keep and the
+(* c-libc-stdio's row kit (RowsCpy; merged): the keep and the
    const-cell rodata lemma, one home each. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require PRowKit.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRowKitA.

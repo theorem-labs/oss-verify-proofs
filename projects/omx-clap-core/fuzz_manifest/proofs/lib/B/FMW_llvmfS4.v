@@ -1,13 +1,13 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS4.v at a working branch 79d8c0f1b8f, re-walked on B's
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS4.v at a working branch, re-walked on B's
    instructions (fuzz_manifest.asan-ubsan objdump, B 0x80ac0 .. 0x80b0c and the shadow slow path 0x80bc8 .. 0x80bd0).
    Same statements as A, re-keyed to B's cuts (LF_P3 0x80ac0, LF_P4 0x80b0c). B adds two UBSan pointer-overflow guards
    whose taken side is the shared trap block L+0x224 = 0x80ba0 (`unimp`): 0x80ae4 `not a0, s4` + 0x80ae8
    `bltu a0, s3, 0x80ba0` (t + tn wraps) and 0x80b00 `li a1, -1` + 0x80b08 `beq a0, a1, 0x80ba0` (t + tn = 2^64 - 1).
-   s4_tail proves both not taken inline with B5's class lemmas (lib/B/FMTrapB.v, a working branch c89f3cdf72d;
+   s4_tail proves both not taken inline with B5's class lemmas (lib/B/FMTrapB.v, a working branch;
    (internal path) rows 54 and 55): 0x80ae8 K2 fmt_not_ltu_not, 0x80b08 K1 fmt_eq_not, each from
    t + tn <= 2^47 - 16 in a cleared lemma; s4_mid kills `beqz a0, 0x80ba4` (0x80ac8, __asan_handle_no_return; abort; the
    second `unimp` at 0x80bac) from t >= 4096. So no path of this segment reaches 0x80ba0 or 0x80bac.
-   Imports per the B core rule (a Theorem Labs lane, core c22f1ae4253). *)
+   Imports per the B core rule (a Theorem Labs lane, core). *)
 (* LLVMFuzzerTestOneInput 0x8097c (fuzz_manifest.c:293-321), segment 0x80ac0 .. 0x80b0c (and the slow path of its shadow
    check, 0x80bc8 .. 0x80bd0): t = malloc (tn + 1) (`beqz a0` is dead: t >= 4096), s4 := t, memcpy (t, text, tn) when
    tn > 0 (__asan_memcpy 0x51ac8), the guard on t + tn, then the shadow check of t + tn, `sb zero, 0(t + tn)` and the guard
@@ -71,7 +71,7 @@ Definition ss_lf4 : sstate :=
 Definition LF4_Bx : sv := SOff 21 0.
 Definition LF4_SH : list shent := [mkSHE 32 0 1].
 
-(* ---- the facts that refute the two UBSan guards (B5's classes, lib/B/FMTrapB.v at a working branch c89f3cdf72d;
+(* ---- the facts that refute the two UBSan guards (B5's classes, lib/B/FMTrapB.v at a working branch;
    FM-B-TRAPS.md rows 54, 55), each in a cleared context ---- *)
 (* 0x80ae8 `bltu (not t), tn, 0x80ba0`, class K2 (fmt_not_ltu_not): t + tn < 2^64 *)
 Lemma s4_g1 : forall E p n vp vn, ew E p = Z_to_bv 64 vp -> ew E n = Z_to_bv 64 vn -> 0 <= vp -> 0 <= vn ->

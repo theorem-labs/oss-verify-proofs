@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise, the reserved-interval ledger): changed bridge_munmap, bridge_null, eager_unmap_le and 4 more; added grant_exists_na, live_fst_inj, maps_subtract_live; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/ArtBridge.v, 99 lines within its lines 83-1378. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
@@ -85,9 +86,13 @@ Proof.
   rewrite vbu_nomat by reflexivity. apply Z.eq_le_incl. apply eager_used_ext; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(* LPS 08b1429: a successful munmap CUTS [vm_maps] ([Sys/Mm/Mmap.mmap_fixed_destroyed_next]);
+   it no longer removes the entry based at [a].  [MmapSim.maps_subtract_exact] is the model's
+   own bridge back to [map_remove], for a ledger whose entries are non-empty, unique at [a]
+   and otherwise apart from [a, a + n). *)
 Definition munmap_vmmaps (a n : word) (h : VmMaps) : VmMaps :=
-  mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) a)
+  mkVmMapsFull (vm_reserved h)
+    (maps_subtract (vm_maps h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
     (maps_subtract (vm_noaccess h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
     (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
 
@@ -102,7 +107,7 @@ Proof.
   apply BA.model_ivs_wf_vm_forget_range; [lia|].
   destruct Hwf as (Wm & Wn & Wl & Wsp).
   apply BA.model_ivs_wf_with_vmmaps; [repeat split; assumption | | | reflexivity].
-  - cbn [munmap_vmmaps vm_maps]. unfold map_remove. apply BA.ivs_wf_filter. exact Wm.
+  - cbn [munmap_vmmaps vm_maps]. apply BA.maps_subtract_wf; [exact Wm | lia].
   - cbn [munmap_vmmaps vm_noaccess]. apply BA.maps_subtract_wf; [exact Wn | lia].
 Qed.
 
@@ -121,13 +126,11 @@ Proof.
   set (lo := bv_unsigned a). set (hi := lo + bv_unsigned n).
   destruct (BA.maps_subtract_sem _ lo hi Wn ltac:(subst hi; lia)) as (_ & _ & Cn).
   destruct (BA.maps_subtract_sem _ lo hi Wl ltac:(subst hi; lia)) as (_ & _ & Cl).
-  unfold map_remove. apply sum_count_filter_le.
-  intros q Hq Hf x Hx. apply negb_true_iff in Hf.
-  assert (Hout : BA.in_rng lo hi x = false).
-  { unfold BA.in_rng. destruct (Hap q Hq Hf) as [H|H]; subst lo hi.
-    - apply andb_false_iff. left. apply Z.leb_gt. lia.
-    - apply andb_false_iff. right. apply Z.ltb_ge. lia. }
-  rewrite !BA.covered_app, Cn, Cl, Hout. cbn [negb]. rewrite !andb_true_r. reflexivity.
+  destruct (BA.maps_subtract_sem _ lo hi Wm ltac:(subst hi; lia)) as (_ & Sm & _).
+  rewrite Sm. apply BA.sum_count_mono. intros x Hx.
+  apply andb_prop in Hx as [Hx1 Hx2]. apply negb_true_iff in Hx2.
+  rewrite BA.covered_app, Cn, Cl, Hx2 in Hx1. cbn [negb] in Hx1.
+  rewrite !andb_true_r in Hx1. rewrite BA.covered_app. exact Hx1.
 Qed.
 
 (* [comment removed for export] *)
@@ -142,7 +145,7 @@ Proof.
   intros t. induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
     intros m c m' rs Hi; cbn [interp_eff_accesses] in Hi; try discriminate.
   - injection Hi as <- <- <-. apply StoreOk.mem_grows_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
     cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-. exact (IH _ m c1 m1 rs1 Hk).
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -169,11 +172,7 @@ Proof.
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (HD w Hsa)|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (HD w Hsa)|].
   exfalso. unfold fetch_failure in Hsa.
-  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
-  destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
-            || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
-               | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
-               | None => false end); discriminate.
+  repeat match type of Hsa with context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 Lemma msteps_mem_grows : forall ms ms', msteps segs ms ms' -> StoreOk.mem_grows (ms_mem ms) (ms_mem ms').
@@ -970,6 +969,64 @@ Proof.
     unfold BA.B in Hap. rewrite E, (u64z addr) in Hap by lia. cbn [fst snd] in Hap. lia.
 Qed.
 
+Lemma live_fst_inj : forall L p p', live_ok L -> In p L -> In p' L -> fst p = fst p' -> p = p'.
+Proof.
+  intros L p p' (_ & Hnd & _) Hp Hp' Hfst. revert Hnd Hp Hp'.
+  induction L as [|q L IH]; intros Hnd Hp Hp'; [destruct Hp|].
+  cbn [map] in Hnd. apply NoDup_cons_iff in Hnd as [Hni Hnd].
+  destruct Hp as [<-|Hp]; destruct Hp' as [<-|Hp'].
+  - reflexivity.
+  - exfalso. apply Hni. rewrite Hfst. apply in_map. exact Hp'.
+  - exfalso. apply Hni. rewrite <- Hfst. apply in_map. exact Hp.
+  - exact (IH Hnd Hp Hp').
+Qed.
+
+(* LPS 08b1429: the cut [maps_subtract] and the old [map_remove] differ only on an EMPTY
+   entry based at [addr + len], and this ledger has none: every [grants] entry is a live
+   region (0 < size, [live_word]) and every [MAPS0] entry is non-empty ([bs_maps_pos]).
+   So the bridge lemma applies and the counting layer below keeps its [map_remove] shape. *)
+Lemma maps_subtract_live : forall log addr len,
+  live_ok (art_live log) -> In (addr, len) (art_live log) ->
+  maps_subtract (grants log ++ MAPS0) (bv_unsigned (Z_to_bv 64 addr))
+    (bv_unsigned (Z_to_bv 64 addr) + bv_unsigned (Z_to_bv 64 len))
+  = map_remove (grants log ++ MAPS0) (Z_to_bv 64 addr).
+Proof.
+  intros log addr len HL Hin.
+  assert (HL' := HL). destruct HL' as (_ & _ & Hap0).
+  destruct (live_word _ _ HL Hin) as (_ & _ & Hpos & Hlen0 & H64). cbn [fst snd] in *.
+  assert (Ua : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64z; lia).
+  assert (Un : bv_unsigned (Z_to_bv 64 len) = len) by (apply u64z; lia).
+  apply MmapSim.maps_subtract_exact.
+  - rewrite Un. lia.
+  - intros b s Hq. apply in_app_or in Hq as [Hq|Hq].
+    + unfold grants in Hq. apply in_map_iff in Hq as (p & Ep & Hp).
+      unfold toW in Ep. injection Ep as <- <-.
+      destruct (live_word _ _ HL Hp) as (_ & _ & P1 & P2 & P3). cbn [fst snd] in *.
+      rewrite (u64z (snd p)) by lia. exact P2.
+    + pose proof (bs_maps_pos STATIC (b, s) Hq) as Hs. unfold BA.S in Hs. cbn [snd] in Hs. exact Hs.
+  - intros b s Hq Eb. apply in_app_or in Hq as [Hq|Hq].
+    + unfold grants in Hq. apply in_map_iff in Hq as (p & Ep & Hp).
+      unfold toW in Ep. injection Ep as <- <-.
+      destruct (live_word _ _ HL Hp) as (_ & _ & P1 & P2 & P3). cbn [fst snd] in *.
+      assert (Efst : fst p = addr).
+      { apply (f_equal bv_unsigned) in Eb. rewrite (u64z (fst p)) in Eb by lia.
+        rewrite Ua in Eb. exact Eb. }
+      rewrite (live_fst_inj _ p (addr, len) HL Hp Hin ltac:(cbn [fst]; exact Efst)). reflexivity.
+    + exfalso. pose proof (maps0_apart_live _ _ (b, s) HL Hin Hq) as Hq'.
+      pose proof (bs_maps_pos STATIC (b, s) Hq) as Hs.
+      unfold BA.B, BA.S in Hq', Hs. cbn [fst snd] in Hq', Hs.
+      rewrite Eb, Ua in Hq'. lia.
+  - intros b s Hq Hne. rewrite Ua, Un. apply in_app_or in Hq as [Hq|Hq].
+    + unfold grants in Hq. apply in_map_iff in Hq as (p & Ep & Hp).
+      unfold toW in Ep. injection Ep as <- <-.
+      destruct (live_word _ _ HL Hp) as (_ & _ & P1 & P2 & P3). cbn [fst snd] in *.
+      rewrite (u64z (fst p)) by lia. rewrite (u64z (snd p)) by lia.
+      assert (Hne' : fst p <> addr) by (intros E; apply Hne; rewrite E; reflexivity).
+      destruct (Hap0 p (addr, len) Hp Hin ltac:(cbn [fst]; exact Hne')); cbn [fst snd] in *; lia.
+    + pose proof (maps0_apart_live _ _ (b, s) HL Hin Hq) as Hq'.
+      unfold BA.B, BA.S in Hq'. cbn [fst snd] in Hq'. lia.
+Qed.
+
 Lemma bridge_munmap : forall log A regs pc M rom model addr len K,
   BInv log A M model -> art_at_ecall segs pc -> art_munmap_args regs addr len ->
   EVOK log (AMunmap addr len) ->
@@ -995,7 +1052,8 @@ Proof.
   { rewrite munmap_model_eq, Ua, Un. reflexivity. }
   destruct (bi_wf _ _ _ _ B) as (Wm & Wn & Wl & Wsp).
   assert (Hmaps' : vm_maps h' = grants (log ++ [AMunmap addr len]) ++ MAPS0).
-  { unfold h', munmap_vmmaps. cbn [vm_maps]. unfold h. rewrite (bi_maps _ _ _ _ B).
+  { unfold h', munmap_vmmaps, aW, nW. cbn [vm_maps]. unfold h. rewrite (bi_maps _ _ _ _ B).
+    rewrite (maps_subtract_live log addr len (bi_live _ _ _ _ B) Hlive).
     apply map_remove_live; [exact (bi_live _ _ _ _ B) | exact Hlive]. }
   destruct (binv_forget log (log ++ [AMunmap addr len]) A M (unfill aW nW M) model [] addr (addr + len) h' 0 B) as (B' & HOUT & HST).
   - exact Hal.
@@ -1005,7 +1063,8 @@ Proof.
   - intros q [].
   - intros a Ha. cbn in Ha. discriminate.
   - exact Hmaps'.
-  - unfold h', munmap_vmmaps. cbn [vm_maps]. unfold map_remove. apply BA.ivs_wf_filter. exact Wm.
+  - unfold h', munmap_vmmaps. cbn [vm_maps].
+    apply BA.maps_subtract_wf; [unfold h; exact Wm | rewrite Un; lia].
   - reflexivity.
   - reflexivity.
   - reflexivity.
@@ -1031,8 +1090,10 @@ Proof.
   - intros a Ha. unfold unfill. rewrite Ua, Un.
     destruct ((addr <=? bv_unsigned a) && (bv_unsigned a <? addr + len))%bool eqn:E; [|reflexivity].
     apply andb_prop in E as [E3 E4]. apply Z.leb_le in E3. apply Z.ltb_lt in E4. lia.
-  - (* [comment removed for export] *)
-    apply (AsanNodesLibEK.srz_munmap_lazy segs scfg regs pc M rom model w aW len K HF HE (bi_halt _ _ _ _ B) H17 H10
+  -
+    (* [srz_munmap_lazy] gained [sc_alloc scfg = false] at the revision (munmap's
+       injected -ENOMEM arm); this Section's own [Halloc] at :252 discharges it. *)
+    apply (AsanNodesLibEK.srz_munmap_lazy segs scfg Halloc regs pc M rom model w aW len K HF HE (bi_halt _ _ _ _ B) H17 H10
              ltac:(rewrite Ua; unfold page_size; exact Hal) H11 Hlen ltac:(rewrite Ua, Hpr; unfold TASK_SIZE; lia)).
     + rewrite Hpr. fold nW. rewrite (bi_maps _ _ _ _ B). apply map_has_intro. apply in_or_app. left.
       unfold grants. apply in_map_iff. exists (addr, len). split; [reflexivity | exact Hlive].
@@ -1094,6 +1155,50 @@ Proof.
   rewrite Hfree. unfold page_size in Hal |- *.
   rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt 0 g)) by lia.
   rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
+Qed.
+
+(* The PLACED twin of [grant_exists]: srz_mmap_rw1's existential is now [grant_ok_na hint ..]
+   (Linux's own placement answer), not the admissible window's base.  Same window as
+   [grant_exists]; it fits Linux's bottom-up range [task_unmapped_base, alloc_top), so
+   Placement.linux_place_exists answers, and its answer is admissible and placed.  Same
+   argument as AsanNodesMmLibK.gap_ok_sound and the model's own
+   (75d69e00:theories/Common/AsanNodesMmLib.v:2320-2355). *)
+Lemma grant_exists_na : forall log A M model len,
+  BInv log A M model -> 0 < len <= LENMAX -> len mod page_size = 0 -> Z.of_nat (length (art_live log)) < KMAX ->
+  exists a : word, RefNodes.grant_ok_na (Z_to_bv 64 0) model a len = true.
+Proof.
+  intros log A M model len B Hlen Hnal HK.
+  destruct (bs_budget STATIC) as (HB0 & HK0 & HL0). pose proof (bs_gap STATIC) as Hgap.
+  set (h := m_vmmaps model).
+  assert (EL : vm_reserved h ++ vm_maps h = RESV0 ++ grants log ++ MAPS0)
+    by (unfold h; rewrite (bi_resv _ _ _ _ B), (bi_maps _ _ _ _ B); reflexivity).
+  assert (Hsz : AsanPlacement.gw_sizes (vm_reserved h ++ vm_maps h) <= AsanPlacement.gw_sizes (RESV0 ++ MAPS0) + BUDGET).
+  { rewrite EL, !gw_sizes_app. unfold grants. rewrite (gw_sizes_grants _ (bi_live _ _ _ _ B)).
+    pose proof (bi_livesum _ _ _ _ B). pose proof (bi_cost _ _ _ _ B). lia. }
+  assert (Hlen' : Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= Z.of_nat (length (RESV0 ++ MAPS0)) + KMAX).
+  { rewrite EL, !length_app. unfold grants. rewrite length_map. lia. }
+  destruct (AsanPlacement.free_gap_of_totals h len (AsanPlacement.gw_sizes (RESV0 ++ MAPS0) + BUDGET) ltac:(lia) Hsz)
+    as (g & Hal & Hfl & Hc & Hfree & _).
+  { assert (Hm : Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (len + 4095)
+                 <= (Z.of_nat (length (RESV0 ++ MAPS0)) + KMAX) * (LENMAX + 4095)).
+    { apply Z.mul_le_mono_nonneg; lia. }
+    lia. }
+  destruct (bi_wf _ _ _ _ B) as (_ & _ & _ & Wsp).
+  pose proof (AsanCeil.alloc_ceiling_le_alloc_top h Wsp) as Htop.
+  pose proof AsanCeil.bottomup_floor_val as Hfv. pose proof AsanCeil.alloc_ceiling_val as Hcv.
+  assert (Hn0 : 0 < len) by lia.
+  destruct (Placement.linux_place_exists h (kb_thp (m_kernel model)) (Z_to_bv 64 0) len Hn0 Hnal) as (a & Hpl).
+  { exists g. right. apply Placement.gap_fits_b_iff. unfold Placement.gap_fits_b.
+    rewrite Hfree, (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.leb_le (g + len) _)) by lia.
+    rewrite (proj2 (Z.leb_le _ g)); [reflexivity|].
+    apply Z.le_trans with AsanCeil.bottomup_floor; [|exact Hfl].
+    vm_compute. intro Hc0. discriminate Hc0. }
+  destruct (Placement.linux_place_admissible _ _ _ _ _ Hn0 Hnal Hpl) as (Hal' & Hpos' & Hhi' & Hfree').
+  pose proof (alloc_top_lt h) as Hat. unfold two_pow_64 in Hat.
+  exists (Z_to_bv 64 a).
+  apply (RefNodes.grant_ok_na_of_pin _ _ _ _ Hn0 Hnal). unfold RefNodes.grant_ok_na_pin.
+  apply (proj2 (Placement.linux_place_is_iff _ _ _ _ _ Hn0 Hnal)).
+  rewrite (u64z a) by lia. exact Hpl.
 Qed.
 
 Lemma aligned_pos_ge : forall r, r mod 4096 = 0 -> 0 < r -> 4096 <= r.
@@ -1188,8 +1293,8 @@ Proof.
   { intros x Hx. unfold bhid, mkH.
     rewrite (page_allowed_in (A ++ [w]) w x); [apply andb_false_r | apply in_or_app; right; left; reflexivity | exact Wa | exact Wb | exact Hx]. }
   split; [|split; [|split; [|split]]].
-  - (* [comment removed for export] *) unfold art_GR. repeat split; try assumption; lia.
-  - (* [comment removed for export] *)
+  -   unfold art_GR. repeat split; try assumption; lia.
+  -
     destruct (bi_wf _ _ _ _ B) as (Wm & Wn & Wl & Wsp).
     assert (Ecost : art_cost_sum (log ++ [AMmapNull len r]) = art_cost_sum log + (len + len / 8 + 8192))
       by (rewrite art_cost_sum_snoc; reflexivity).
@@ -1306,9 +1411,14 @@ Proof.
   pose proof Hev as (Hlen & Hll & Hmax & HKc & Hcb).
   destruct (bs_budget STATIC) as (HB0 & HK0 & HL0).
   assert (Hpr : page_round_up_Z len = len) by (apply AllocSim.page_round_up_Z_aligned; [lia | exact Hll]).
+  (* 727298f3: the null hint (H10) discharges the new decline premise outright. *)
   apply (srz_mmap_rw1 segs scfg Halloc regs pc M rom model w len (Z_to_bv 64 34) K HF HE (bi_halt _ _ _ _ B) H17 H11
-           ltac:(lia) H12 H13 mmap_flags_core_22 ltac:(rewrite H14; exact mm1_eq) H15).
-  - rewrite Hpr. exact (grant_exists log A M model len B ltac:(lia) HKc).
+           ltac:(lia) H12 H13 mmap_flags_core_22 ltac:(rewrite H14; exact mm1_eq) H15
+           ltac:(rewrite H10; apply place_declined_b_null)).
+  - (* the existential is now a PLACED witness at the null hint (getr regs 10 = 0, H10) *)
+    rewrite Hpr, H10.
+    exact (grant_exists_na log A M model len B ltac:(lia)
+             ltac:(first [exact Hll | unfold page_size; exact Hll | unfold page_size in Hll; exact Hll]) HKc).
   - rewrite Hpr. unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22. apply Z.leb_le.
     pose proof (vm_backing_used_le A model (bi_minv _ _ _ _ B) (bi_awf _ _ _ _ B)).
     pose proof (bi_budget _ _ _ _ B). pose proof (bi_limit _ _ _ _ B).

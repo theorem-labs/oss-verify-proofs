@@ -1,6 +1,6 @@
 (* crtB_iface: the addresses and the frame shape of check_round_trip in image B (fuzz_decode.asan-ubsan, original
    pin), for the cgif-form walk of lib/B/Prog/check_round_trip_cg.v.  Twin of lib/A/Prog/crtA_iface.v
-   (a working branch ae1529ccb00): the same names, image B's offsets.
+   (a working branch): the same names, image B's offsets.
 
    FORM (decision of the porter, a Theorem Labs lane, 2026-10-29 01:54Z): check_round_trip's own body is walked as decode's
    footprint runs (lib/Lib/ExecF.v evtF), bridged into cgif's SRr, with the journal re-established across each run
@@ -9,7 +9,7 @@
 
    Control flow (offsets from the entry; the listing lib/B/Prog/DecodeBList.v, slot AF_check_round_trip; neutral
    disassembly of the original image, CUTPOINTS.md), the same as the
-   donor record lib/B/Prog/crt_segs.v / crt_iface.v on a working branch at dc455613c81 (entry 0x80d54,
+   donor record lib/B/Prog/crt_segs.v / crt_iface.v on a working branch (entry 0x80d54,
    frame 160: the record's addresses are the original image's):
      +0x000 entry, frame 160 bytes              +0x064 call malloc(4 nch ns), returns +0x068
      +0x074 call malloc(8 nch), ret +0x078      +0x090 call calloc(3 nch ns, 1), ret +0x094

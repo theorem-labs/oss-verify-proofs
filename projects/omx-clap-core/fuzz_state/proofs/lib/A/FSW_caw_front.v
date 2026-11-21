@@ -28,7 +28,7 @@
    re-keys to the callee's sp. No contract gives ra after `jal __wrap_malloc`, so the loop states hold ra as atom 31
    (a Theorem Labs lane ruling 2026-10-29): the two handover states are re-keyed with YL09.st_ok_reabs keeping cawf_P (the atoms
    below 33 except 31) and setting atom 31 to the machine's ra (cawf_env738 / cawf_envH).
-   Template consulted (same code, bespoke model, not imported): a working branch 0603c9ef351
+   Template consulted (same code, bespoke model, not imported): a working branch
    lib/A/Prog/check_as_written_blocks.v acw_pro / acw_mid1, for the segment cuts at the malloc returns 0x815dc and
    0x815f8; its ledger facts (aledger / akeeps) have no counterpart here.
 

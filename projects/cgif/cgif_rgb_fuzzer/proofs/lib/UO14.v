@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap's in-place grow cuts the source range with maps_subtract, shown equal to map_remove for the one ledger entry; the reserved ledger also holds the vDSO pair, and no tracked map meets it; the new size stays below TASK_SIZE; the ledger's w64 spelling is unfolded so lia sees one atom). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -150,7 +151,7 @@ SR ubs2segs (mkCfg ms1 md)
 (if negb (z =? 0) then IRet (Some (p_ok A am fr n), A_ok A g am fr n) else realloc_move (pp am fr) n A)
 (realloc_leaf ubs2_msyms (MRx ubs2_msyms) L A regs mem md (pp am fr) (fr_n fr) n))).
 Proof.
-intros ms1 HS1 HF1 Hne. destruct Hmd as (Hh & Hlz & Hmat). pose proof needed_range as (NR1 & NR2 & NR3).
+intros ms1 HS1 HF1 Hne. destruct Hmd as (Hh & Hlz & Hmat). pose proof needed_range as (NR1 & NR2 & NR3). pose proof (needed_taskG L A regs mem md g am fr n a ka rg HC) as NT.
 destruct grp_region as (r & Hmem & Hr & Hk & Hlv & Hlen & Hml).
 pose proof (lg_placed _ _ _ _ (mc_ledger _ _ _ _ _ M) r rg Hr Hlv) as (Pal & Plo & Pce & Pimg).
 pose proof YN05.alloc_ceiling_val as HCV.
@@ -197,9 +198,9 @@ constructor; rewrite ?E10, ?E11, ?E12, ?E13, ?E17; rewrite ?lit64_small by lia; 
 + exact NR2.
 +
 pose proof (YN05.ceil_le_top _ (lg_ceil _ _ _ _ (mc_ledger _ _ _ _ _ M))). rewrite EMEM, ELEN. lia.
-+   rewrite (lg_reserved _ _ _ _ (mc_ledger _ _ _ _ _ M)).
-apply (region_free_of_img ubs2_msyms); [exact ubs2_segs_ne | exact ubs2_segs_pos | lia | lia | lia |].
-rewrite EMEM, ELEN. exact Pimg.
++   (* 08b1429: the ledger now also reserves the vDSO pair; no tracked map meets the ledger ([lg_mres]) *)
+pose proof (lg_mres _ _ _ _ (mc_ledger _ _ _ _ _ M) _ (lg_maps _ _ _ _ (mc_ledger _ _ _ _ _ M) r rg Hr Hlv ltac:(rewrite Hk; discriminate))) as RM.
+cbn [fst snd] in RM. rewrite EMEM, ELEN. exact RM.
 +   apply map_has_In. rewrite EMEM, ELEN. exact (lg_maps _ _ _ _ (mc_ledger _ _ _ _ _ M) r rg Hr Hlv ltac:(rewrite Hk; discriminate)).
 +   apply region_free_of_disjoint; [lia | lia | lia |].
 intros e He. destruct (lx_noacc _ _ _ (MRx_ledger_x _ _ _ _ _ MX) e He) as (E0 & HE0 & Hlo0 & Hhi0 & Hd).
@@ -212,13 +213,38 @@ exact (OFB regs3 mem3 AT2).
 -
 intros mem' HPM Hce Hrf. cbn [Z.eqb negb]. apply mreal_leaf.
 rewrite E10, E11, E12 in *. rewrite !lit64_small in HPM by lia. rewrite !lit64_small in Hce by lia.
+(* 08b1429: the in-place grow gate cuts the source range with [maps_subtract] (Sys/Mm/Mremap.v
+   mremap_inplace_room_b); the source is exactly one ledger entry, so that equals [map_remove]. *)
+assert (VMX : maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (Z_to_bv 64 (ptr_addr L (am_mem am))))
+(bv_unsigned (Z_to_bv 64 (ptr_addr L (am_mem am))) + bv_unsigned (Z_to_bv 64 (old_len am)))
+= map_remove (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ptr_addr L (am_mem am)))).
+{ pose proof (lg_maps _ _ _ _ (mc_ledger _ _ _ _ _ M) r rg Hr Hlv ltac:(rewrite Hk; discriminate)) as Hin.
+(* #38, rule 10d: the failing tactic is the LAST one on :228, the [lia] at columns 64-67 (and
+   :230's is the same cause one bullet later).  [lg_maps] (YO04.v:129) states its membership with
+   [w64] -- [Definition w64 (z : Z) : word := Z_to_bv 64 z], YO04.v:14 -- while this [assert]'s
+   range is spelled [Z_to_bv 64], and it has to be: :237 rewrites [VMX] into [Hrf], which carries
+   the [Z_to_bv 64] spelling [E10]/[E11] put there.  [lia] compares ATOMS SYNTACTICALLY and never
+   unfolds a definition, so [bv_unsigned (w64 x)] and [bv_unsigned (Z_to_bv 64 x)] are two
+   unrelated atoms: the disjointness [lx_disj] hands back in [D] then contradicts nothing.
+   ([exact]/[apply] at :201-:203 are unaffected -- they unify up to conversion.)
+   Unfold [w64] in [Hin] so one spelling reaches both [lia]s and the [congruence] at :229. *)
+unfold YO04.w64 in Hin. rewrite <- EMEM, <- ELEN in Hin.
+pose proof (MRx_ledger_x _ _ _ _ _ MX) as LX.
+apply maps_subtract_exact.
+- rewrite lit64_small by lia. lia.
+- intros b s H. destruct (lx_maps _ _ _ LX _ H) as [P _]. exact P.
+- intros b s H ->. destruct (lx_disj _ _ _ LX _ _ H Hin) as [Heq|D]; [injection Heq as Heq; exact Heq|].
+exfalso. destruct (lx_maps _ _ _ LX _ H) as [P _]. destruct (lx_maps _ _ _ LX _ Hin) as [P2 _].
+unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in *. first [lia | clear - P P2 D; lia].
+- intros b s H Hne'. destruct (lx_disj _ _ _ LX _ _ H Hin) as [Heq|D]; [injection Heq as Heq _; exfalso; exact (Hne' Heq)|].
+unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in *. first [lia | clear - D; lia]. }
 apply (OOK regs3 mem3 (Z_to_bv 64 (ptr_addr L (am_mem am))) mem' AT2 Hne).
 + rewrite lit64_small by lia. exact HPM.
 + left. split; [reflexivity|].
 split; [
 apply (YN05.grant_below_ceil _ _ (lg_ceil _ _ _ _ (mc_ledger _ _ _ _ _ M))); [| exact Hce];
 rewrite EMEM, Z.add_mod, Pal, NR2 by lia; reflexivity |].
-destruct Hrf as [Hrf|Hrf]; [left; exact Hrf | right; rewrite !lit64_small in Hrf by lia; exact Hrf].
+destruct Hrf as [Hrf|Hrf]; [left; rewrite VMX in Hrf; exact Hrf | right; rewrite !lit64_small in Hrf by lia; exact Hrf].
 -
 intros dst mem' Hlt Hfresh HPM. cbn [Z.eqb negb]. apply mreal_leaf.
 rewrite E10, E11, E12 in *. rewrite !lit64_small in HPM by lia. rewrite !lit64_small in Hlt by lia.

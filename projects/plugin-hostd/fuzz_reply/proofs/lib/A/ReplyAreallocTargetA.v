@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-31 (a Theorem Labs lane, for a Theorem Labs lane's reply-A realloc row and a Theorem Labs lane's reply top): reply's two
    realloc targets at image A,
      ReplyAllocTargets.arealloc_target_reply      (lib/A/ReplyAllocTargets.v, CfF1's PRIMED text:
        `forall fx rc k, YGcfInstReallocK.arealloc_realizes_cf_k tfibsegs TfibB [] (pa_sigma WS_realloc) k`)
      ReplyAllocTargets.arealloc_null_target_reply (`forall fx rc, YGcfRealloc.arealloc_null_realizes_cf tfibsegs TfibB []
        (pa_sigma WS_realloc)`),
-   from the layer's instance theorems YGcfInstReallocK.arealloc_realizes_cf_k_inst (lib/A/YGcfInstReallocK.v:244) and
-   YGcfInstRealloc.arealloc_null_realizes_cf_inst (lib/A/YGcfInstRealloc.v:94) at the image (IM := AImg_reply, so
+   from the layer's instance theorems YGcfInstReallocK.arealloc_realizes_cf_k_inst (lib/A/YGcfInstReallocK.v:245) and
+   YGcfInstRealloc.arealloc_null_realizes_cf_inst (lib/A/YGcfInstRealloc.v:95) at the image (IM := AImg_reply, so
    im_segs is tfibsegs; ci := CfImg_A, cp := CfParams_reply), B := TfibB, IOK := ReplyAllocInst.IOK_reply, can_fill
    acf := 1, whose named premises are closed here by reply's existing instances:
      Allocate (memnorm-kept, em_m) : YGcfInstWalkSigreply.aalloc_realizes_cf_reply (a Theorem Labs lane's Allocate instance);
-     Deallocate (primed raw, em_m_rh): ReplyDeallocInst.adealloc_realizes_raw_cf_em_m_rh_reply (dealloc-rh-a eb934de95d1,
+     Deallocate (primed raw, em_m_rh): ReplyDeallocInst.adealloc_realizes_raw_cf_em_m_rh_reply (dealloc-rh-a,
                                       premise-free);
      errno_word_cf                 : ReplyImg_errnoword.errno_word_cf_A_TfibB;
      relro_seg_t / errno_relro_t   : ReplyRelroGeoA.relro_seg_reply_A / errno_relro_reply_A (a Theorem Labs lane's rows).

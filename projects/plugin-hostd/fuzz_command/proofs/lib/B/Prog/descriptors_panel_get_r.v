@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: descriptors_panel_get's ASan+UBSan walk from the call of rec_shape_of (0x8cd30) to its end (plugin-hostd/fuzz_command.asan-ubsan), re-made at B's addresses from lib/A/Prog/descriptors_panel_get_s8.v (a working branch 2db68b2223b): rec_shape_of composed with its contract (cl_callS_na), the epilogue run from a fresh seed, and the tail jump into answer at the entry's stack pointer (PaFx.v's callS_wideF: answer's post is FP-existential, apost_baseF). *)
+(* Modified by Theorem Labs, 2026-10: descriptors_panel_get's ASan+UBSan walk from the call of rec_shape_of (0x8cd30) to its end (plugin-hostd/fuzz_command.asan-ubsan), re-made at B's addresses from lib/A/Prog/descriptors_panel_get_s8.v (a working branch): rec_shape_of composed with its contract (cl_callS_na), the epilogue run from a fresh seed, and the tail jump into answer at the entry's stack pointer (PaFx.v's callS_wideF: answer's post is FP-existential, apost_baseF). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* 0x8cd30 .. 0x8cd50: rec_shape_of finds the reply shape of the verb "panel_get" (0x21fc0, 9 bytes); at 0x8cd34
    a1 := the shape, a0 := the slot c (s1), a2 := 0, the epilogue loads ra, s0, s1 from the frame and adds 32 to sp,

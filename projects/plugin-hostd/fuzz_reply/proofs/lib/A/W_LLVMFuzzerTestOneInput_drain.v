@@ -25,6 +25,7 @@
        LAST, passed from the cut's STKR by dr_stkr), at every G with gx_ok / gx_rt, taken at the slot's two list headers;
      the G-coverage and image facts (HGs, HG_DR, HGlock, HG_GK, HERR_HI, DR_ROM_OUT, HZS, HAP), and
      the model obligations RI_* / LS_* (pure, over lmod and the plain records). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -164,7 +165,7 @@ Qed.
 
 (* ---- check_no_loss: W3's published contract is lib/A/W_contract.v Section w3n (capstep, capb, tbytes, hbytes,
    cnl_cap, cnl_room, gmc, cnl_go, cnl_cost, CNL_FRAME, CNL_STK, cnl_post, cnl_spec, A_g_s), cited; the STUB copied
-   here from a working branch 553dcc19240 is gone (the published text adds the readable-stack premise LAST and an
+   here from a working branch is gone (the published text adds the readable-stack premise LAST and an
    errno-view conjunct to cnl_post after apres_kept). ---- *)
 
 (* ---- the transport kit, copied from W_LLVMFuzzerTestOneInput_latch.v Section kit (lt_ -> dr_, CEIL8 -> DR_CEIL8) ---- *)
@@ -491,7 +492,7 @@ Variable MMAX : Z.                                  (* W7's request bound, dr_sp
 Hypothesis TL : PALib B.                            (* the allocator instance (W_kit.v) *)
 (* W7, lib/A/W_contract.v, verbatim *)
 Hypothesis DRAIN : dr_spec B MT MMAX fr_RG (BASE + AF_fr_drain).
-(* W6's W_sites.v forms, proved by R5 (a working branch b1c048a98a5) *)
+(* W6's W_sites.v forms, proved by R5 (a working branch) *)
 Hypothesis ALOCK : alock_realizes B (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes B (SIGMA WS_pthread_mutex_unlock).
 (* proved: lib/A/W_check_shape_done.v pb_check_shape_done *)
@@ -523,7 +524,7 @@ Hypothesis HERR_HI : rg_out fr_RG + 8 <= as_errno B.
    check_no_loss and check_shape_done keep no errno byte (their journals exclude it), so the stream's errno value
    is re-read after them *)
 Hypothesis ERR : errno_law B.
-(* W_journal.v's rom_out at G_fr (a working branch 45a3cc9bdd0's text): ROM is outside G_fr, errno and the
+(* W_journal.v's rom_out at G_fr (a working branch's text): ROM is outside G_fr, errno and the
    sink's overflow head, and an owned ROM byte is pinned; so rom_view survives every callee's journal *)
 Hypothesis DR_ROM_OUT : rom_out segs B G_fr.
 (* _cut's glob_wr_law at G_fr, verbatim: a byte of G_fr is writable in every memory (so a kept view keeps it
@@ -617,7 +618,7 @@ Proof. intros e. unfold re_nheld. lia. Qed.
 (* ---- the allocator-state facts the two calls take, read off LS; the instance discharges them ---- *)
 (* the peak form (a Theorem Labs lane's ROOM-ROUND row #19; dr_spec's byte premise is the drain trace's byte PEAK, C3): conjunct 5
    is s5-r1d's fr_LS_drain_pre_c5p (lib/A/ReplyTrPeak.v:927), and the three premises after re_eof are the ones its
-   rows take (fr_LS3_drain_pre_c4 ReplyLS3Arms.v:791, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U| bound and
+   rows take (fr_LS3_drain_pre_c4 ReplyLS3Arms.v:792, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U| bound and
    the drained blocks' sizes (dc_stB's HXP).  The sum form (tr_alloc) was FALSE at reachable states. *)
 Hypothesis LS_drain_pre : forall cx t m ly S si h j,
   LS cx t m ly S -> RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->

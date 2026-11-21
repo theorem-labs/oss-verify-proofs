@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo at the window floor: RUN_floor (BOTJ <= stk_floor <= TOPJ), and jo_free2_null and hiA_jo at stk_floor). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From stdpp Require gmap.
@@ -332,6 +333,8 @@ Hypothesis RUN_botj : RC.alloc_ceiling <= BOTJ /\ BOTJ mod 8 = 0 /\ BOTJ <= TOPJ
 Hypothesis RUN_topj : RC.alloc_ceiling < TOPJ /\ TOPJ <= 2^47.
 Hypothesis RUN_baux : TOPJ + 64 <= BAUX.
 Hypothesis RUN_top_re : TOPJ + 64 <= ae_stack_top RE + 4096.
+(* the interface's stack bottom: the window floor stk_floor, at or above ASan's stack bottom BOTJ *)
+Hypothesis RUN_floor : BOTJ <= stk_floor /\ stk_floor <= TOPJ.
 Lemma RUN_bot8 : BOTJ mod 8 = 0. Proof. exact (proj1 (proj2 RUN_botj)). Qed.
 Lemma RUN_bot : RC.alloc_ceiling <= BOTJ. Proof. exact (proj1 RUN_botj). Qed.
 Lemma jo_top_re : TOPJ + 64 <= ae_stack_top RE + JH.hl_stack_A L. Proof. exact RUN_top_re. Qed.
@@ -349,7 +352,7 @@ Let hs_froff := proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (p
 Let hs_frlow := proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 HS)))))))))).
 Let hs_rel := proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 HS)))))))))).
 
-Lemma jo_free2_null : JH.hiA_free2_null_ty L (aj_base_vj segs LV hs_wx hs_segs) unit (HEAPA63 L LV PERM0 TMAX NMAX DL RE DCo FR0 S BAUX STAT) TOPJ.
+Lemma jo_free2_null : JH.hiA_free2_null_ty L (aj_base_vj segs LV hs_wx hs_segs) unit (HEAPA63 L LV PERM0 TMAX NMAX DL RE DCo FR0 S BAUX STAT) TOPJ stk_floor.
 Proof.
 apply QM2q.Mq0.free2_null_A.
 intros A LB LM FR B m c a n (HP & _) Hin.
@@ -393,7 +396,7 @@ jo_SIVS jo_L_sivs_cover jo_L_sivs_data jo_L_scratch jo_IMG_errno_any jo_L_rstat_
 jo_SD jo_SD_stack jo_RL jo_RL_stack (DT2_jo_closed RC.rc_canary LV) jo_L_strdup jo_L_realloc jo_L_t2_stack
 TOPJ RUN_topj RUN_baux jo_top_re jo_STATC (stat_cells L BOTJ TOPJ jo_STATC) jo_L_rtc_all jo_L_sb_cells
 (stat_static L BOTJ TOPJ jo_STATC DL jo_L_sb RUN_bot LA LV PERM0 TMAX NMAX hs_LL0 hs_segs hs_low RE DCo FR0 hs_froff S BAUX RC.rc_canary eq_refl eq_refl jo_L_can_got jo_L_can_guard jo_L_can_copy jo_L_need_locks)
-jo_free2_null (proj2 RUN_botj) jo_L_img_lo_small.
+jo_free2_null RUN_floor jo_L_img_lo_small.
 
 Definition loop_rule_jo : QCVR.heap_loop_rule6 L hiA_jo :=
 @heap_loop_rule_v63 RC__ L LA LV PERM0 TMAX NMAX hs_LL0 hs_wx hs_segs hs_sh hs_bx hs_bc hs_b47 hs_low DL RE hs_rel DCo FR0 hs_frok hs_froff hs_frlow S BAUX STAT
@@ -410,7 +413,7 @@ jo_SIVS jo_L_sivs_cover jo_L_sivs_data jo_L_scratch jo_IMG_errno_any jo_L_rstat_
 jo_SD jo_SD_stack jo_RL jo_RL_stack (DT2_jo_closed RC.rc_canary LV) jo_L_strdup jo_L_realloc jo_L_t2_stack
 TOPJ RUN_topj RUN_baux jo_top_re jo_STATC (stat_cells L BOTJ TOPJ jo_STATC) jo_L_rtc_all jo_L_sb_cells
 (stat_static L BOTJ TOPJ jo_STATC DL jo_L_sb RUN_bot LA LV PERM0 TMAX NMAX hs_LL0 hs_segs hs_low RE DCo FR0 hs_froff S BAUX RC.rc_canary eq_refl eq_refl jo_L_can_got jo_L_can_guard jo_L_can_copy jo_L_need_locks)
-jo_free2_null (proj2 RUN_botj) jo_L_img_lo_small.
+jo_free2_null RUN_floor jo_L_img_lo_small.
 
 End Jo.
 End Mq0.
@@ -776,6 +779,8 @@ Hypothesis RUN_botj : RC.alloc_ceiling <= BOTJ /\ BOTJ mod 8 = 0 /\ BOTJ <= TOPJ
 Hypothesis RUN_topj : RC.alloc_ceiling < TOPJ /\ TOPJ <= 2^47.
 Hypothesis RUN_baux : TOPJ + 64 <= BAUX.
 Hypothesis RUN_top_re : TOPJ + 64 <= ae_stack_top RE + 4096.
+(* the interface's stack bottom: the window floor stk_floor, at or above ASan's stack bottom BOTJ *)
+Hypothesis RUN_floor : BOTJ <= stk_floor /\ stk_floor <= TOPJ.
 Lemma RUN_bot8 : BOTJ mod 8 = 0. Proof. exact (proj1 (proj2 RUN_botj)). Qed.
 Lemma RUN_bot : RC.alloc_ceiling <= BOTJ. Proof. exact (proj1 RUN_botj). Qed.
 Lemma jo_top_re : TOPJ + 64 <= ae_stack_top RE + JH.hl_stack_A L. Proof. exact RUN_top_re. Qed.
@@ -793,7 +798,7 @@ Let hs_froff := proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (p
 Let hs_frlow := proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 HS)))))))))).
 Let hs_rel := proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 HS)))))))))).
 
-Lemma jo_free2_null : JH.hiA_free2_null_ty L (aj_base_vj segs LV hs_wx hs_segs) unit (HEAPA63 L LV PERM0 TMAX NMAX DL RE DCo FR0 S BAUX STAT) TOPJ.
+Lemma jo_free2_null : JH.hiA_free2_null_ty L (aj_base_vj segs LV hs_wx hs_segs) unit (HEAPA63 L LV PERM0 TMAX NMAX DL RE DCo FR0 S BAUX STAT) TOPJ stk_floor.
 Proof.
 apply QM2q.free2_null_A.
 intros A LB LM FR B m c a n (HP & _) Hin.
@@ -837,7 +842,7 @@ jo_SIVS jo_L_sivs_cover jo_L_sivs_data jo_L_scratch jo_IMG_errno_any jo_L_rstat_
 jo_SD jo_SD_stack jo_RL jo_RL_stack (DT2_jo_closed RC.rc_canary LV) jo_L_strdup jo_L_realloc jo_L_t2_stack
 TOPJ RUN_topj RUN_baux jo_top_re jo_STATC (stat_cells L BOTJ TOPJ jo_STATC) jo_L_rtc_all jo_L_sb_cells
 (stat_static L BOTJ TOPJ jo_STATC DL jo_L_sb RUN_bot LA LV PERM0 TMAX NMAX hs_LL0 hs_segs hs_low RE DCo FR0 hs_froff S BAUX RC.rc_canary eq_refl eq_refl jo_L_can_got jo_L_can_guard jo_L_can_copy jo_L_need_locks)
-jo_free2_null (proj2 RUN_botj) jo_L_img_lo_small.
+jo_free2_null RUN_floor jo_L_img_lo_small.
 
 Definition loop_rule_jo : QCVR.heap_loop_rule6 L hiA_jo :=
 @heap_loop_rule_v63 RC__ L LA LV PERM0 TMAX NMAX hs_LL0 hs_wx hs_segs hs_sh hs_bx hs_bc hs_b47 hs_low DL RE hs_rel DCo FR0 hs_frok hs_froff hs_frlow S BAUX STAT
@@ -854,6 +859,6 @@ jo_SIVS jo_L_sivs_cover jo_L_sivs_data jo_L_scratch jo_IMG_errno_any jo_L_rstat_
 jo_SD jo_SD_stack jo_RL jo_RL_stack (DT2_jo_closed RC.rc_canary LV) jo_L_strdup jo_L_realloc jo_L_t2_stack
 TOPJ RUN_topj RUN_baux jo_top_re jo_STATC (stat_cells L BOTJ TOPJ jo_STATC) jo_L_rtc_all jo_L_sb_cells
 (stat_static L BOTJ TOPJ jo_STATC DL jo_L_sb RUN_bot LA LV PERM0 TMAX NMAX hs_LL0 hs_segs hs_low RE DCo FR0 hs_froff S BAUX RC.rc_canary eq_refl eq_refl jo_L_can_got jo_L_can_guard jo_L_can_copy jo_L_need_locks)
-jo_free2_null (proj2 RUN_botj) jo_L_img_lo_small.
+jo_free2_null RUN_floor jo_L_img_lo_small.
 
 End Jo.

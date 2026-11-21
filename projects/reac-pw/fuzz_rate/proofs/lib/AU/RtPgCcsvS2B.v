@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/Reusable/YCbq.v at 7379c28ff70f
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/Reusable/YCbq.v
    [Apache-2.0 OR MIT] (aj_bcmp_at, here with the callee's same_but_materialized in its post, which the cut's same_io
    needs), for reac-pw/fuzz_rate's image A. The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS2.v (the draft over ae282742a698, not
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS2.v (the draft over, not
    committed); the same segment for image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan, the step and memory
    kits lib/AU/RtPgStepsB.v and lib/AU/RtPgMemB.v, the cut lib/AU/RtPgCcsvCutB.v; buf, the list length and n are
    reloaded from the realigned frame's cells R1 + 56, R1 + 48 and R1 + 40; the n > 0 arm is finished (the bcmp wrapper
    at image B's entry 0x42200, image B's pointer-overflow test 0x83ac8, the check of buf + c and its slow block). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address is measured on its unstripped twin
    sha256 a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): segment S2 of the walk of check_csv

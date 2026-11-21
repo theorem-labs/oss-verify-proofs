@@ -1,6 +1,7 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodyDefs.v, sha256 b67b4cf4e2be; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodyDefs.v, sha256 b67b4cf4e2be; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the malloc interceptor's BODY contract for omx-clap-core/fuzz_preset image A (asan, pin
    1be0f53d96cb), the text it is proved against, and the window-generic forms the body walk uses.
    - LOCAL COPY of the layer text a Theorem Labs lane drafted for Reusable/YG0dcf.v (amalloc-body-text.v, a Theorem Labs lane option (a) of
@@ -12,8 +13,8 @@
    - bpre_w STK BF: acall_pre_cf (YG0dcf.v:48-71) with ASTACK -> STK and ACALL_PREFIX -> BF, IN THE SAME CONJUNCT ORDER,
      so the walk files' destructs are the wrapper walk's; acall_pre_cf is bpre_w ASTACK ACALL_PREFIX (bpre_w_cf) and the
      body text's acall_pre_cf_w STK is bpre_w STK MALLOC_BODY_FRAME_CF (bpre_w_body), both by reflexivity.
-   - rin_w / rwin_w / rkeep_w STK: RGtop.rin / rwin / rkeep (RGtop.v:201-211) with ASTACK -> STK.
-   - K_w STK: K_A (WrapMallocADefs.v:51-64) with ASTACK -> STK. *)
+   - rin_w / rwin_w / rkeep_w STK: RGtop.rin / rwin / rkeep (RGtop.v:202-212) with ASTACK -> STK.
+   - K_w STK: K_A (WrapMallocADefs.v:52-65) with ASTACK -> STK. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -114,7 +115,7 @@ Lemma bpre_w_body : forall stk ly S Hp W regs mem md ch,
 acall_pre_cf_w_L stk ly S Hp W regs mem md ch <-> bpre_w stk MALLOC_BODY_FRAME_L ly S Hp W regs mem md ch.
 Proof. intros. unfold acall_pre_cf_w_L, bpre_w. reflexivity. Qed.
 
-(* RGtop.v:201-211 with ASTACK -> stk. *)
+(* RGtop.v:202-212 with ASTACK -> stk. *)
 Definition rkeep_w (stk : Z) (regs : bvmap 5 word) (W : world segs) (mem : word -> option byte)
 (W' : world segs) (mem' : word -> option byte) : Prop :=
 (forall a, 0 <= a < 2 ^ 64 -> ~ ascratch B stk regs a -> aview segs (w_H W') mem' a = aview segs (w_H W) mem a) /\
@@ -122,14 +123,14 @@ Definition rkeep_w (stk : Z) (regs : bvmap 5 word) (W : world segs) (mem : word 
 Definition rwin_w (stk : Z) (regs : bvmap 5 word) (W : world segs) (mem : word -> option byte) : Prop :=
 forall a, spZ regs - stk <= a < spZ regs -> apresent (w_H W) mem a.
 Definition rin_w (stk : Z) (regs : bvmap 5 word) (sp stk' : Z) : Prop := spZ regs - stk <= sp - stk' /\ sp <= spZ regs.
-(* YGcfMallocCompose.ikeep_cf (YGcfMallocCompose.v:77-82) with ASTACK -> stk. *)
+(* YGcfMallocCompose.ikeep_cf (YGcfMallocCompose.v:78-83) with ASTACK -> stk. *)
 Definition ikeep_w (stk : Z) (ly : alayout) (S : astate) (regs : bvmap 5 word) (W : world segs) (mem : word -> option byte)
 (W' : world segs) (mem' : word -> option byte) : Prop :=
 (forall a, 0 <= a < 2 ^ 64 -> ~ aowned B ly S a -> ~ ascratch B stk regs a ->
  aview segs (w_H W') mem' a = aview segs (w_H W) mem a) /\
 (forall x : word, ~ aowned B ly S (bv_unsigned x) -> ~ ascratch B stk regs (bv_unsigned x) -> mem' x = mem x) /\
 (YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem').
-(* YGcfMallocCompose.mentry_cf (YGcfMallocCompose.v:98-102) at bpre_w stk bf. *)
+(* YGcfMallocCompose.mentry_cf (YGcfMallocCompose.v:99-103) at bpre_w stk bf. *)
 Definition bentry_w (stk bf : Z) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) (n : Z) (ch : list (Z * Z * Z)) : Prop :=
 bpre_w stk bf ly S Hp W regs mem md ch /\
@@ -137,7 +138,7 @@ getr regs 10 = w64 n /\ 0 <= n < cf_malloc_max /\ blocks_bytes S + n <= LIVE_MAX
 admits (as_universe B) (YGcfMallocCompose.mtr_cf B ly regs ch) S.
 End J.
 
-(* K_A (WrapMallocADefs.v:51-64) with ASTACK -> stk. *)
+(* K_A (WrapMallocADefs.v:52-65) with ASTACK -> stk. *)
 Definition K_w (stk : Z) : YGcfMallocCompose.Kmalloc_t tfibsegs := fun ly S Hp W regs mem md n ch W1 regsA memA mdA =>
 W1 = W /\ getr regsA 2 = w64 (spZ regs - 2144) /\ getr regsA 1 = w64 RA_ALLOC /\
 getr regsA 8 = getr regs 2 /\ getr regsA 3 = getr regs 3 /\ getr regsA 4 = getr regs 4 /\

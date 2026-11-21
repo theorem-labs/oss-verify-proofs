@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 826 of its 913 lines of code are new or changed and 1478 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the MISSING-COLON FREE path of parse_items' image-B walk, PI_O_FREE (0x87ec8) .. the `j`
    back to the epilogue (0x87f34). Proves PItems_pres.v's
    pi_free_spec. Source preset_file.c:236-240: the colon is missing, so keys[n] (the key parse_string just made) is
@@ -29,7 +30,7 @@
    (q + 16, text + len, the cursor), stopped by bad_next because the cursor is below alloc_ceiling and so below q
    (prh_cur_entry at parse_items), or no record when q + 16 is at the stack top; the closure's cursor clause or its
    empty-chain clause puts it in the universe (and [pc0] when frame 0 is not ok).
-   FORM (b) (kit walkkit-next f97c8b2f046b, POST-IMPLICATION): the kit's tfuzz_free_specX states no entry position; its
+   FORM (b) (kit walkkit-next, POST-IMPLICATION): the kit's tfuzz_free_specX states no entry position; its
    post's p <> 0 arm gives the position implication over [HFr (kk + cf_head)] from the call state to the return state,
    which PItems_posb.pi_posb_call composes onto pi_free_pre's pi_posb S Sc tr0 (the free's own trace event is
    rd_hevs [EFree kk] = [HFr (kk + HEAD)], HEAD = cf_head by PIF_HEAD); the live requests after the free are the
@@ -691,7 +692,7 @@ assert (Hwe : prh_word_entry W mem regs0 (q + 8) (text + len)).
   destruct (Z.eqb_spec (q + 8) (spZ regs0 - 8)) as [E8'|_]; [lia|].
   destruct (Z.eqb_spec (q + 8) (spZ regs0 - 16)) as [E16'|_]; [lia|].
   apply (pif_rdword_of_val (w_H W) mem (q + 8) (text + len) Vee). lia. }
-(* THE CURSOR SET (the batch kit 240b06ed4fd4): the trace of this free, with the data word text + len, is CW's (or its word is
+(* THE CURSOR SET (the batch kit): the trace of this free, with the data word text + len, is CW's (or its word is
    of this free, with the data word text + len, is CW's (or its word is pj_parse's code word, a FIXED trace by the closure's clause 4a) *)
 assert (Hwe8 : prh_word_entry W mem regs0 (prh_s0 F_parse_items q - 8) (text + len))
   by (unfold prh_s0; rewrite FS0; replace (q + 16 - 8) with (q + 8) by lia; exact Hwe).

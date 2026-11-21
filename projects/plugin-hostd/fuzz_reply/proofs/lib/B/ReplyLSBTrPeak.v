@@ -2,10 +2,11 @@
    algebra and the bounds on the summed positive growth of drain's and relay_remove's request traces *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
-(* Ported from A at a working branch 9f4cbd12a19 lib/A/ReplyTrPeak.v (A below), names and statements
-   kept, over lib/B's records and request traces (lib/B/W_contract.v of a working branch
-   61e610e6176: tr_max, tr_alloc, sl_alloc, sl_cap, sl_run_fin, dr_tr, dr_fin, dr_live, rr_tr have A's text) and the
+(* Ported from A at a working branch lib/A/ReplyTrPeak.v (A below), names and statements
+   kept, over lib/B's records and request traces (lib/B/W_contract.v of a working branch:
+   tr_max, tr_alloc, sl_alloc, sl_cap, sl_run_fin, dr_tr, dr_fin, dr_live, rr_tr have A's text) and the
    plain model files of lib/Prog (byte-identical in both trees).  For what the measure is and why C3 uses it, read
    A's header (A :3-67).
      A :136-165 tr_pos, tr_room, tr_olds_ok, tr_sizes_ok; A :167-342 the Section peak (the measure's algebra, the

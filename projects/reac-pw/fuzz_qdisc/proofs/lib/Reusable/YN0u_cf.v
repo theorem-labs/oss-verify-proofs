@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0u.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,6 +21,7 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Definition aP := 58%nat. Definition aN := 59%nat. Definition aNMEM := 60%nat. Definition aNAIDX := 61%nat. Definition aNFR := 62%nat. Definition aHD := 63%nat.
 Definition XU : Z := src0_A_nontrivial_free + 0x228.
 Inductive apath := Q1 | Q2 | Q3 | Q4V1 | Q4V2 | Q5V1 | Q5V2 | Q6V1 | Q6V2 | Q7V1 | Q7V2.

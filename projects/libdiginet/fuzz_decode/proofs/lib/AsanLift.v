@@ -1,7 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AsanLift.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AsanLift.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require Import YK0i YK15 YM06.
+From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable.R Require Import Cfg.
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Lib Require Exec RegisterBridge Regs6ss.
 Import ListNotations.
@@ -63,7 +64,7 @@ Lemma node_instr_lazy : forall ms model ms' model',
   node_ok segs (mkCfg ms model) unit (fun _ => []) (fun _ => mkCfg ms' model').
 Proof.
   intros ms model ms' model' Hh Hsvc Ha.
-  apply node_ok_of_pnode; [apply transparent_instr; exact Hsvc |]. split.
+  apply node_ok_of_pnode; [apply transparent_instr; exact Hsvc | apply sys_rob_instr; exact Hsvc |]. split.
   - intros []. exact (sstep_instr segs ms model ms' model' Hh Hsvc Ha).
   - intros e st Hss. exists tt.
     inversion Hss; subst; try congruence.
@@ -82,8 +83,10 @@ Proof.
   destruct (acct_cases ms model ms' Hstep) as [(acc & model' & Hm & Ha) | (report & Hr & Hn)].
   - eapply rz_silent1; [exact (node_instr_lazy ms model ms' model' Hh Hsvc Ha) |].
     apply K. exact (mat_step model acc model' model' Hm (mat_refl model')).
-  - apply rz_cut. unfold budget_refused_at. split; [exact Hh |]. left. split; [exact Hsvc |].
-    exists report. split; [exact Hr | exact Hn].
+  - apply rz_cut; [| apply sys_rob_instr; exact Hsvc].
+    unfold budget_refused_at. split; [exact Hh |]. left. split; [exact Hsvc |].
+    (* 08b1429: the instruction branch is a disjunction; the access refusal is its left *)
+    left. exists report. split; [exact Hr | exact Hn].
 Qed.
 
 Lemma rz_msteps_lazy : forall ms ms' model T,

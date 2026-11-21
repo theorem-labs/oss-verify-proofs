@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: call lemmas for the ASan walk of check_round_trip: ajournal_after_write_win (the core's ajournal_after_write, lib/Reusable/YCbq.v, with its presence premise narrowed to the journal's stack window), aj_set_shadow_atS (a shadow-fill entry __asan_set_shadow_XX on the shadow of the caller's own side-stack frame) and aj_stack_free_cls_atS (the release entry of a side-stack class that fills the whole frame's shadow). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip_k.v, with its module paths changed; 4 of its 106 lines of code are new or changed and 198 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the journal lemma that the walk of segment A4 of
    reac_segconf_parse_file needs for the CALL that releases its class-5 side-stack frame
    (`jal __asan_stack_free_5` at 0x88c10, a1 = 0x480), carried here verbatim from the released donor walk
-   plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip_k.v at origin/ossv/recipes 501c0d516c69 (its lines
+   plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip_k.v (its lines
    236-313), with only the module paths changed. It is NOT in the Pa kit: check_round_trip is the one released
    walk whose frame is released by a call, and it keeps it local (the walk group's Pa walk map, section
    3(c.2)).

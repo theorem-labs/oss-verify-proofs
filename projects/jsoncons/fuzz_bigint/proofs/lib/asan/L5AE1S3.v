@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv lies at least 16 bytes above the stack top (ar_sptop ar + 16 <= av), and the auxv fact is the launch's vector (L5USA.auxv_okA) in place of the ten-pair auxv20A. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -74,7 +75,7 @@ Lemma e1_s3 :
     forall (RNDR : 0 <= rnd < 2 ^ 64),
     forall (CANR : 0 <= canary < 2 ^ 64),
     forall (HWR : 0 <= hw < 2 ^ 64),
-    forall (AVS : ar_sptop ar <= av),
+    forall (AVS : ar_sptop ar + 16 <= av),
     forall (HH : ri_inv HI LB FF LK cr A M (vml_of model)),
     forall (AM : amodel_ok A model),
     forall (HK : K []),
@@ -193,7 +194,7 @@ Lemma e1_s3 :
     forall (FL5 : fl = true -> L5.u8_at RSEGS M11 6360118 0),
     forall (FL3 : fl = true -> L5.u8_at RSEGS M11 6360116 0),
     forall (FL1 : fl = true -> L5.u8_at RSEGS M11 6360114 0),
-    forall (AUXV : forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M11 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)),
+    forall (AUXV : L5USA.auxv_okA M11 av uid rnd hw),
     forall (RDS : rdn RSEGS M11 (Z_to_bv 64 (Sp - 32 - 55)) 16 = Some (firstn 16 (map (Z_to_bv 8) EINVAL_MSG))),
     forall (IC3 : L5.img_clear M11 892784 (892784 + 8)),
     forall (IC2 : L5.img_clear M11 892736 892768),

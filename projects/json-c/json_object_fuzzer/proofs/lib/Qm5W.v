@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the sections that hold alloc_ceiling <= lo as LO also take it as HBTlo). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -79,6 +80,7 @@ Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : 
 Variables (m0 : word -> option byte) (md0 : config) (LB VBS PBS LM : list blk) (FRS : list frame) (B0 : bud) (KBS : list (list blk)).
 Variables (lo p v k kn pb t tbl size : Z) (es : list lent) (ks : list byte) (kids : list (option jshape)) (vs : option jshape) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - (80 + 96 + 4096 + 144 + HD).
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.

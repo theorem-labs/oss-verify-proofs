@@ -37,11 +37,11 @@
      slow path or __asan_report_* edge is taken.
 
    rule 24: proves function preset_base64_encode (part round; reuse search: proof-index preset_base64_encode,
-   ported from a working branch 402eb5565fc + donor a working branch b96980d72d1)
-   Ported from: lib/A/FSW_preset_base64_encode.v (a working branch 402eb5565fc, encR_round_step lines 1571-2009
+   ported from a working branch + donor a working branch)
+   Ported from: lib/A/FSW_preset_base64_encode.v (a working branch, encR_round_step lines 1571-2009
    with the branch and the two hand-offs as a Theorem Labs lane's worktree text of 09:52Z, lines 1571-2229 there, and encR_kept_reg
    1571-1580 there); image-B step order and UBSan / ASan deciders from the old-B donor a working branch
-   b96980d72d1 lib/B/Prog/preset_base64_encode_blocks.v:374-379 (BL, the loop's register file), 401-456 (enc_B_r1 /
+   lib/B/Prog/preset_base64_encode_blocks.v:374-379 (BL, the loop's register file), 401-456 (enc_B_r1 /
    enc_B_r2: 0x84784 -> 0x84814), 470-633 (enc_B_o0 .. enc_B_o3: 0x84814 -> 0x84910), 658-784 (enc_iter / enc_loop:
    the branch `bltu a5,s0` at 0x84910 and the exit 0x84914). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

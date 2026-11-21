@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths changed; 142 of its 194 lines of code are new or changed and 691 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch 86b50358d34) to libreac/fuzz_boxreg: module paths changed, no other change. *)
+(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch) to libreac/fuzz_boxreg: module paths changed, no other change. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/RT_mem_bz.v, with its module paths changed; 34 of its 65 lines of code are new or changed and 163 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fs.asan-ubsan) twin of lib/A/FSsl.v, itself
-   Ported from: a working branch 840c4afa7e2 lib/A/Prog/wrap_kit.v:39-68 and lib/A/Prog/asan_memcpy.v:42-50.
-   The B original of the two proofs is a Theorem Labs lane's own, a working branch 51f06361767
+   Ported from: a working branch lib/A/Prog/wrap_kit.v:39-68 and lib/A/Prog/asan_memcpy.v:42-50.
+   The B original of the two proofs is a Theorem Labs lane's own, a working branch
    proofs/omx-clap-core/fuzz_state/lib/B/Prog/wrap_kit.v (sl_proof, mch_proof) and lib/B/Prog/asan_memcpy.v (evt_to_bz,
    mem_inv_of_bz); here restated without AsanRT / AsanRTFacts / BzBridge, as A's twin is (a Theorem Labs lane, 2026-10-29).
    Changes from A's twin: module paths lib.A -> lib.B; nothing else.
-   The musl walks it uses are a Theorem Labs lane's B ones, taken by path from 51f06361767, unchanged: lib/B/R_strlen.v (strlen_spec),
+   The musl walks it uses are a Theorem Labs lane's B ones, taken by path, unchanged: lib/B/R_strlen.v (strlen_spec),
    lib/B/Prog/strlen_c.v (strlen_contract, STRLEN 0x9958c), lib/B/Prog/strlen.v (strlen_holds), lib/B/R_memchr.v,
    lib/B/Prog/memchr_c.v (MEMCHR 0x98e40), lib/B/Prog/memchr.v (memchr_holds), lib/B/Spec/StrFun.v, lib/B/Ox/F80_001.v ..
    F80_003.v, lib/B/Img0.v (rsegs = the fs.asan-ubsan image). No AsanRT, Admitted or Axiom in their closure.

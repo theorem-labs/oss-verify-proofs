@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,13 +37,14 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 230 of its 272 lines of code are new or changed and 411 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B5 of reac_segconf_parse_file,
    piece R4 -> L 0 (the B5 segment lane of the image-B G3 walk owner, piece prover: a sub-lane, 2026-10-30): b5_r4_ok : H_L B 0 n -> H_R4 B n.
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-B walk; the function's rule-24 record
    is the rule-24 lookup record).
-   ADAPTED from the image-A G3 walk owner's image-A piece lib/A/Prog/pf_a5_r3.v (commit 003b9dc874eb, a5_r4_ok)
+   ADAPTED from the image-A G3 walk owner's image-A piece lib/A/Prog/pf_a5_r3.v (a5_r4_ok)
    and the unit owner's UBSan piece lib/U/Prog/pf_p2.v (the trap's arithmetic), re-derived on image B's code with the B5
-   kit (pf_seg_B5_k.v) and the template piece pf_seg_B5_r2.v (the B5 segment lane, 2305ce2c2c85).
+   kit (pf_seg_B5_k.v) and the template piece pf_seg_B5_r2.v (the B5 segment lane).
    The code (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s), reached from R3 when LEN < 512 and the checked
    memcpy has copied the line into buf:
      0x882cc `ld a0,176(s1)`    a0 = slot 0xb0 = pf_nt buf = 2 ^ 64 - 1 - buf (PF_SL)

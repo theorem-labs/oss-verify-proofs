@@ -47,7 +47,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK04
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG0v.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YG0p YCbqG.
-(* NOTE: lib/Reusable/YCbqGcall.v (aj_call_x) is NOT imported: at YCbqG ea24ad37a3c it does not compile
+(* NOTE: lib/Reusable/YCbqGcall.v (aj_call_x) is NOT imported: at YCbqG it does not compile
    (aj_call_x still passes ajournal_x_sub the old footprint premise). The arm proofs need it; the statements
    do not. Reported to a Theorem Labs lane 2026-10-28. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import
@@ -183,7 +183,7 @@ Lemma vrd_call_W :
   (afn_pre_x SEGS B ARx STK1 lyc Sc Hpc W (ms_regs ms) (ms_mem ms) mdc ch1 ->
    SRr SEGS W (mkCfg (YK11.mkst (ms_regs ms) (Z_to_bv 64 (ss_pc ss)) (ms_mem ms) (YK11.seg_rom SEGS)) mdc)
      (fpostW B ARx SK STK1 e1 FP1 (ms_regs ms) lyc Sc Hpc W (ms_mem ms) mdc Q)) ->
-  (* the callee's footprint, in exactly the shape YCbqG.ajournal_x_sub takes at base b816476b5f1 (four
+  (* the callee's footprint, in exactly the shape YCbqG.ajournal_x_sub takes at base (four
      disjuncts, the fourth the caller's own real-stack window), passed through unchanged *)
   (forall a, inFP FP1 a -> inFP FP a \/ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a \/
      (exists f, In f own /\ in_zr a (frame_rng lyc f)) \/
@@ -239,7 +239,7 @@ Lemma vrd_call_WF :
   (afn_pre_x SEGS B ARx STK1 lyc Sc Hpc W (ms_regs ms) (ms_mem ms) mdc ch1 ->
    SRr SEGS W (mkCfg (YK11.mkst (ms_regs ms) (Z_to_bv 64 (ss_pc ss)) (ms_mem ms) (YK11.seg_rom SEGS)) mdc)
      (fpostWF B ARx SK STK1 e1 FP1 (ms_regs ms) lyc Sc Hpc W (ms_mem ms) mdc Q)) ->
-  (* the callee's footprint, in exactly the shape YCbqG.ajournal_x_sub takes at base b816476b5f1 (four
+  (* the callee's footprint, in exactly the shape YCbqG.ajournal_x_sub takes at base (four
      disjuncts, the fourth the caller's own real-stack window), passed through unchanged *)
   (forall a, inFP FP1 a -> inFP FP a \/ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a \/
      (exists f, In f own /\ in_zr a (frame_rng lyc f)) \/
@@ -372,7 +372,7 @@ split; [exact HWIN|]. split; [exact HP|]. split; [exact HQ|].
 exact (PCALL (ms_mem ms) mem2 HK HPM).
 Qed.
 
-(* ---- THE BUDGETED TWINS (the kit's cut 7cdbb61b5fa0, PRH_FnReader.v blob f1ae32e3b2cd / PRH_FnParse.v blob f0d92dcec7e9:
+(* ---- THE BUDGETED TWINS (the kit's cut, PRH_FnReader.v blob f1ae32e3b2cd / PRH_FnParse.v blob f0d92dcec7e9:
    parse_string's text posts fpostWbm and parse_items' / parse_value's fpostWFbm, at YCbqGwild.wbudget CW 0, the
    journal at a budget WS1 of wild traces of which the text claims Pb WS1). vrd_call_W_P / vrd_call_WF_P with the
    caller's journal at a budget WS0 and the callee's post budgeted at Pb: the callee's entry pre by
@@ -508,8 +508,8 @@ Qed.
 (* the nesting of this call of parse_value, and the call contexts the texts quantify over *)
 Variable d : nat.
 Variable CTX : list (list Z).
-(* The kit's call-graph universe closure takes the driver's contexts (PRH_Base.v prh_univ_closure B CTX0, the kit's cut
-   7cdbb61b5fa0), and the cursor texts take the cursor set CW (the run-word list DW is GONE at the cut) *)
+(* The kit's call-graph universe closure takes the driver's contexts (PRH_Base.v prh_univ_closure B CTX0, the kit's cut),
+   and the cursor texts take the cursor set CW (the run-word list DW is GONE at the cut) *)
 Variable CTX0 : list (list Z).
 Variable CW : list (list Z).
 
@@ -538,7 +538,7 @@ Hypothesis H_parse_items : tparse_items_specX B ARx SK d CTX CTX0 CW.
 
 (* H_vrd_epi_a is RETIRED (a Theorem Labs lane, 2026-10-29 02:04Z): it lacked the frame registers (s2 / s10 / s8), the
    frame's flag word at F + 56, this call's own fake frame and rd_blocks_move, and is not provable from an
-   arm's state. Every arm CONCLUDES at VnumB's vrd_epi_a (lib/A/VrdNum.v, a working branch 88c78d5e972),
+   arm's state. Every arm CONCLUDES at VnumB's vrd_epi_a (lib/A/VrdNum.v, a working branch),
    whose RQ is VnumB's vrd_pv_post -- the body of tparse_value_specX d's post with the return value rv in
    place of `getr regs' 10`, no registers at all (the shared tail reloads them), and rd_blocks_move's frames
    clause read AT THE JOIN, where this call's own frame (0, pos) is still live. The step from the join to

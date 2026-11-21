@@ -3,11 +3,13 @@
     SUBJECT.  [Images.plain] faults on its first instruction; [Images.asan]
     calls exit_group(0) (Images.v).  Below is one statement of each kind of
     OSSVerify.Core.Shapes, at each budget, environment, abort reading,
-    machine and exit set the generator writes, in the generator's own words
-    (tools/oft/shapes.py, [term] and [templates]; the test
-    tools/oft/tests/test_toy_controls.py requires each statement here to be
-    exactly the generator's rendering, and every one of its choices to have
-    one).
+    machine and exit set the generator writes, and of each kind of classifier
+    statement (OSSVerify.Core.ClassifierShapes), for each classifier, reading
+    and originals and with and without an input distribution, in the
+    generator's own words (tools/oft/shapes.py, [term], [classifier_term] and
+    [templates]; the test tools/oft/tests/test_toy_controls.py requires each
+    statement here to be exactly the generator's rendering, and every one of
+    its choices to have one).
 
     Each statement without a parameter, other than the decidability ones, is
     a control: it is false for this pair, and
@@ -16,13 +18,15 @@
     budget premise holds) and it reaches an error.  A statement with a
     parameter (a bound [b], a classifier [C]) is controlled through the
     statement after it: the bound statements hold at no [b] below 1
-    ([_below_1]), and the classifier problem fails for a classifier that
-    accepts every input ([_accept_all]).  The decidability statements are true
-    for this pair and are not controls (see their section). *)
+    ([_below_1]), the classifier problem fails for a classifier that accepts
+    every input ([_accept_all]), and the soundness of a classifier fails for
+    one that always answers yes ([_accept_all]) or always no
+    ([_reject_all]).  The decidability statements are true for this pair and
+    are not controls (see their section). *)
 
 From Stdlib Require Import QArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
-From OSSVerify.Core Require Import Shapes.
+From OSSVerify.Core Require Import Shapes ClassifierShapes.
 From OSSVerify.Tests.toy.ebreak Require Images Distribution.
 
 (** ** Halting: [halts_within_budget] at the one budget the generator uses (16 GiB, for plain, UBSan
@@ -126,3 +130,79 @@ Definition asan_agreement_decidable_rv64gc_may_fail : Prop :=
   agreement_decidable_rv64gc Env.may_fail Images.plain Images.asan.
 Definition asan_agreement_decidable_rv64gc_alloc_forced_only : Prop :=
   agreement_decidable_rv64gc Env.alloc_forced_only Images.plain Images.asan.
+
+(** ** Each classifier answers yes, no or maybe, as the generator writes it, for the pair's
+    classifiers [Images.classifier_a_asan] and [Images.classifier_b_asan], which give no answer: each
+    is lps's ebreak image, whose one run faults (refuted). *)
+Definition asan_ca_total : Prop :=
+  classifier_total3 Images.classifier_a_asan.
+Definition asan_cb_total : Prop :=
+  classifier_total3 Images.classifier_b_asan.
+
+(** ** Each classifier is sound, as the generator writes it, in each reading and with each
+    originals ([Images.plain_original] and [Images.asan_original] are the builds' own images), with
+    the classifier a parameter [C]: a classifier that gives no answer is sound for every property.
+    Classifier A's property fails for [Images.always_yes], which answers yes on an input where the
+    builds disagree ([_accept_all], refuted); classifier B's for [Images.always_no], which answers no
+    on an input where each build agrees with its original ([_reject_all], refuted). *)
+Definition asan_ca_sound_may_fail_published (C : Image) : Prop :=
+  classifies_good_inputs_sound Env.may_fail Images.plain Images.asan C.
+Definition asan_ca_sound_may_fail_published_accept_all : Prop :=
+  asan_ca_sound_may_fail_published Images.always_yes.
+Definition asan_ca_sound_may_fail_unpatched (C : Image) : Prop :=
+  classifies_good_inputs_sound Env.may_fail Images.plain_original Images.asan_original C.
+Definition asan_ca_sound_may_fail_unpatched_accept_all : Prop :=
+  asan_ca_sound_may_fail_unpatched Images.always_yes.
+Definition asan_ca_sound_alloc_forced_only_published (C : Image) : Prop :=
+  classifies_good_inputs_sound Env.alloc_forced_only Images.plain Images.asan C.
+Definition asan_ca_sound_alloc_forced_only_published_accept_all : Prop :=
+  asan_ca_sound_alloc_forced_only_published Images.always_yes.
+Definition asan_ca_sound_alloc_forced_only_unpatched (C : Image) : Prop :=
+  classifies_good_inputs_sound Env.alloc_forced_only Images.plain_original Images.asan_original C.
+Definition asan_ca_sound_alloc_forced_only_unpatched_accept_all : Prop :=
+  asan_ca_sound_alloc_forced_only_unpatched Images.always_yes.
+Definition asan_cb_sound_may_fail_published (C : Image) : Prop :=
+  classifies_patch_diff_sound Env.may_fail Images.plain Images.plain Images.asan Images.asan C.
+Definition asan_cb_sound_may_fail_published_reject_all : Prop :=
+  asan_cb_sound_may_fail_published Images.always_no.
+Definition asan_cb_sound_may_fail_unpatched (C : Image) : Prop :=
+  classifies_patch_diff_sound Env.may_fail Images.plain_original Images.plain Images.asan_original Images.asan C.
+Definition asan_cb_sound_may_fail_unpatched_reject_all : Prop :=
+  asan_cb_sound_may_fail_unpatched Images.always_no.
+Definition asan_cb_sound_alloc_forced_only_published (C : Image) : Prop :=
+  classifies_patch_diff_sound Env.alloc_forced_only Images.plain Images.plain Images.asan Images.asan C.
+Definition asan_cb_sound_alloc_forced_only_published_reject_all : Prop :=
+  asan_cb_sound_alloc_forced_only_published Images.always_no.
+Definition asan_cb_sound_alloc_forced_only_unpatched (C : Image) : Prop :=
+  classifies_patch_diff_sound Env.alloc_forced_only Images.plain_original Images.plain Images.asan_original Images.asan C.
+Definition asan_cb_sound_alloc_forced_only_unpatched_reject_all : Prop :=
+  asan_cb_sound_alloc_forced_only_unpatched Images.always_no.
+
+(** ** How often each classifier answers maybe, as the generator writes it with the toy distribution
+    (a bound [b]; the control is that it holds at NO [b] below 1, [_below_1], refuted) and, for a
+    harness with no distribution, as the empty maybe set ([_no_distribution], refuted): lps's finite
+    input gets no firm answer, and it weighs the whole mass. *)
+Definition asan_maybe_good (b : Q) : Prop :=
+  maybe_at_most Images.classifier_a_asan Distribution.w Distribution.M b.
+Definition asan_maybe_good_below_1 : Prop :=
+  exists b : Q, (b < 1)%Q /\ asan_maybe_good b.
+Definition asan_maybe_diff (b : Q) : Prop :=
+  maybe_at_most Images.classifier_b_asan Distribution.w Distribution.M b.
+Definition asan_maybe_diff_below_1 : Prop :=
+  exists b : Q, (b < 1)%Q /\ asan_maybe_diff b.
+Definition asan_maybe_good_no_distribution : Prop :=
+  maybe_empty Images.classifier_a_asan.
+Definition asan_maybe_diff_no_distribution : Prop :=
+  maybe_empty Images.classifier_b_asan.
+
+(** ** How much each classifier does not accept, as the generator writes it (a bound [b]; the
+    control is that it holds at NO [b] below 1, [_below_1], refuted): the classifier does not accept
+    lps's finite input, which weighs the whole mass. *)
+Definition asan_bound_good (b : Q) : Prop :=
+  classifier_rejects_at_most Images.classifier_a_asan Distribution.w Distribution.M b.
+Definition asan_bound_good_below_1 : Prop :=
+  exists b : Q, (b < 1)%Q /\ asan_bound_good b.
+Definition asan_bound_diff (b : Q) : Prop :=
+  classifier_rejects_at_most Images.classifier_b_asan Distribution.w Distribution.M b.
+Definition asan_bound_diff_below_1 : Prop :=
+  exists b : Q, (b < 1)%Q /\ asan_bound_diff b.

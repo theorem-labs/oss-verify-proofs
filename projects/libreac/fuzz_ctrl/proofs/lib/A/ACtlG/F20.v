@@ -13,8 +13,8 @@
    NO LIFT IS CITED, and no `<f>_SRr_at` and no `_hid` placeholder (a Theorem Labs lane, 04:10Z and 04:43Z): the
    segment's `_F` for the call half SPANS the `jal` and discharges the callee's footprint contract itself with the
    callee's own closed theorem.  The caller obligation at the call site is therefore that contract's premises (the
-   record block, the runtime cells, the 16-byte callee window), not a lift's.  ROUTE (C) (a working branch
-   1899bed1aee): the call half is A.Prog.Seg.F20Fs.f20_call_evt_F_on, this lane's twin
+   record block, the runtime cells, the 16-byte callee window), not a lift's.  ROUTE (C) (a working branch):
+   the call half is A.Prog.Seg.F20Fs.f20_call_evt_F_on, this lane's twin
    of a Theorem Labs lane's Seg/F20F.v f20_call_evt_F WITHOUT its `shadow_rw m` premise (Seg/F20F.v unchanged apart from comment text), cut
    through the narrowed reac_ctrl_checksum_verify_F.reac_ctrl_checksum_verify_F_holds_on.  The cut now carries
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3.
@@ -60,8 +60,8 @@
    - LAWS : OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YG0d.AR_laws segs B.  The core's AR law record, the Section hypothesis of YCbq Section a0
      (YCbq.v:207) that ajournal_exec, frames_bounds and al_blocks take; ACtl.v:183 has it.
    NOTHING ELSE is left open: the image facts come from the shared kit, A.ACtlG.Kit.kit_wx and
-   A.ACtlG.Kit.kit_segs_low (Kit.v builds on the glue base 46eb24cd4b3, blob 7e164a09a73; the placeholders this
-   file carried on the older base eb89fed7fac are gone).  A.ACtlG.Kit.kit_frac_move is NOT used here: FRAC has
+   A.ACtlG.Kit.kit_segs_low (Kit.v builds on the glue base, blob 7e164a09a73; the placeholders this
+   file carried on the older base are gone).  A.ACtlG.Kit.kit_frac_move is NOT used here: FRAC has
    to move over memory as well as registers, which kit_frac_move does not do, so this file rebuilds FRAC
    conjunct by conjunct instead.
    No Axiom, no Parameter, no unproved step.

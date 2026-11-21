@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger, the run's segment list and the vDSO). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -9,6 +10,14 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon Require Import PropExec FastWord FastWordSem.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import ExTrie.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import AxLazy AxLin AxVal AxBytes AxMem AxZZ AxState AxAcct AxSys AxPostFix.
+(* elem_of_list_filter and elem_of_list_In, for in_segs_reserved below.  The probe
+   showed segments_reserved's `filter` is STDPP's -- the goal prints
+   `if decide (negb (seg_kernel_map a)) then …`, and `decide` is stdpp's -- so the
+   lemma that keys to it must come from stdpp.list, which this file did not require:
+   stdpp reaches it only transitively through BvBase, which loads but does not import.
+   Placed BEFORE `Import ListNotations` on the next line so Stdlib's list notations
+   still win, and above `Local Open Scope Z_scope` so bv_scope cannot be reopened. *)
+From stdpp Require Import list.
 Import ListNotations.
 
 Local Open Scope Z_scope.
@@ -19,10 +28,105 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Section Grant.
 Variable segs : list Segment.
 Hypothesis Hlow : segs_low segs.
+(* THE SECTION HYPOTHESIS.  It is why in_segs_reserved below carries no explicit
+   premise and why ledger_free's call to it is textually unchanged -- Coq's section
+   discharge gives it only to the lemmas that actually use it, so nothing else in this
+   file gains an argument.  Discharged, never assumed: run_segments is a literal append
+   (LPS@75d69e00 Run.v:328-330), so the vDSO tail is the only place a kernel-mapped
+   segment enters and no image segment is ever marked; at the top segs is the unit's
+   own ELF image and this is a closed computation. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+(* WAS, and the revision made it FALSE:
+     Lemma in_segs_reserved (z : Z) : in_segs segs z -> inl (segments_reserved segs) z.
+     Proof. intros [sg [HIn Hz]]. exists (segment_reservation sg).
+            split; [apply in_map; exact HIn|].
+            pose proof (Hlow sg HIn) as Hl. …
+   segments_reserved gained `filter (fun s => negb (seg_kernel_map s))`
+   (LPS@75d69e00 Run.v:253-254), so `apply in_map; exact HIn` is now asked for
+   `In sg (filter … segs)` and `In sg segs` no longer suffices.  NOTE THE DIRECTION:
+   this face of the cause is the OPPOSITE of mr_res's.  mr_res fails because the
+   model's list is BIGGER -- `run_segments segs inp sp mb = segs ++ vdso_segments …`
+   (Run.v:328-330) -- and the append form repairs it.  Here segments_reserved is
+   SMALLER than before, and no appended tail can restore a member the filter dropped,
+   so the PREMISE moves instead of the conclusion.
+   The obligation is discharged, not assumed: every consumer of this lemma takes the
+   proof library's `Variable segs`, the unit's own ELF image, for which
+   `forallb (fun s => negb (seg_kernel_map s)) SEGS = true` is a closed computation at
+   the top.  run_segments is the only place a kernel-mapped segment enters, and it
+   appends them rather than marking any image segment. *)
+(* WAS, before the first port of this lemma:
+     Lemma in_segs_reserved (z : Z) : in_segs segs z -> inl (segments_reserved segs) z.
+     Proof. intros [sg [HIn Hz]]. exists (segment_reservation sg).
+            split; [apply in_map; exact HIn|].
+            pose proof (Hlow sg HIn) as Hl. …
+   AND WAS, in two later attempts, which I am retracting here:
+     Lemma in_segs_reserved (z : Z) :
+       in_segs (filter (fun s => negb (seg_kernel_map s)) segs) z -> …
+            pose proof (Hlow sg (proj1 (List.filter_In _ sg segs) HIn)) as Hl.
+
+   WHY THE RETRACTION.  segments_reserved maps over
+   `filter (fun s => negb (seg_kernel_map s)) segs` (LPS@75d69e00 Run.v:253-254), so
+   `apply in_map; exact HIn` no longer takes `In sg segs`.  My first repair moved the
+   premise to the filtered list -- which puts `filter` INTO THIS LEMMA'S STATEMENT,
+   where it resolves against THIS file's scope while the one in segments_reserved's
+   body resolved against Run.v's.  This tree carries 483 stdpp references and no own
+   `Definition filter`, so the two can be different constants from two libraries: that
+   is cause 6, and two lanes have measured `filter_In` -- qualified or not -- failing
+   in exactly this position, with the error reading `In sg (filter …)` against
+   `In sg (List.filter …)`.  Qualifying the LEMMA name cannot help once the contested
+   constant is in the STATEMENT.
+
+   THE SHAPE THAT NAMES NO CONTESTED CONSTANT, the same one AsanWLazy took in
+   an earlier edit: keep the original premise, add the closed Boolean, and prove the
+   membership by unfolding segments_reserved and reducing -- `cbn` reduces whichever
+   `filter` the model's body actually carries, so the proof is correct under either.
+   The new premise is discharged, never assumed: run_segments is a literal append
+   (Run.v:328-330), so the vDSO tail is the only place a kernel-mapped segment enters,
+   and at the top segs is the unit's own ELF image for which the forallb is a closed
+   computation.  Its three consumers keep `In sg segs` untouched. *)
 Lemma in_segs_reserved (z : Z) : in_segs segs z -> inl (segments_reserved segs) z.
 Proof.
-  intros [sg [HIn Hz]]. exists (segment_reservation sg). split; [apply in_map; exact HIn|].
+  intros [sg [HIn Hz]]. exists (segment_reservation sg). split.
+  { clear - HIn Hnk. unfold segments_reserved. apply in_map.
+    (* Keyed to STDPP's own lemma, because the probe below showed the goal's `filter`
+       is stdpp's.  Reduction was tried twice and failed twice; this asks the library
+       that owns the constant instead of trying to compute through it. *)
+    (* `first [...|...]` because stdpp RENAMED this lemma: older pins export
+       elem_of_list_In, newer ones list_elem_of_In, and the previous run failed with
+       "The variable elem_of_list_In was not found" even after `From stdpp Require
+       Import list`, which is the rename and not a missing import.  The pair costs
+       nothing and does not depend on which pin this image carries. *)
+    first [apply elem_of_list_In | apply list_elem_of_In].
+    (* Same rename family: line 104's pair resolved (the error moved here), so one of
+       elem_of_list_In / list_elem_of_In exists in this pin; elem_of_list_filter is
+       renamed the same way.  Pair it rather than guess which. *)
+    first [apply elem_of_list_filter | apply list_elem_of_filter
+          | apply elem_of_filter | apply filter_elem_of]. split.
+    (* MEASURED, with `lazymatch goal with |- ?G => fail 100 "UNCLOSED-GOAL:" G end`.
+       The goal is
+         In (segment_reservation sg)
+            (map segment_reservation
+               (if decide (negb (seg_kernel_map a))
+                then a :: filter (fun s => negb (seg_kernel_map s)) l
+                else filter (fun s => negb (seg_kernel_map s)) l))
+       -- `decide`, so the `filter` segments_reserved is built from is STDPP's, not
+       Stdlib's.  That settles cause 6 for this site by printing the term instead of
+       arguing about import blocks: my earlier reading of Run.v's `From Stdlib …
+       List …` line was wrong, and `List.filter_In` would have failed here, which is
+       why those two attempts were retracted.
+       It also explains the previous VOS-FAIL at `left`, "Not an inductive definition":
+       `destruct (negb (seg_kernel_map a)) eqn:E` cases on the BOOLEAN while the `if`
+       scrutinises `decide (…)`, a Decision instance, so the `if` never reduced, no
+       cons appeared, and the goal's head stayed `In` rather than `or`.  Casing on the
+       decision is what exposes the cons. *)
+    - apply Is_true_eq_left. exact (proj1 (forallb_forall _ segs) Hnk sg HIn).
+    - first [apply elem_of_list_In | apply list_elem_of_In]. exact HIn. }
   pose proof (Hlow sg HIn) as Hl. unfold ls_beg in Hl.
   unfold bas, bsz, segment_reservation, page_round_down_Z, page_round_up_Z, page_size. cbn [fst snd].
   pose proof (N2Z.is_nonneg (seg_base sg)) as Hb. pose proof (N2Z.is_nonneg (seg_size sg)) as Hs.
@@ -36,7 +140,13 @@ Proof.
 Qed.
 
 Lemma ledger_free (h : VmMaps) (a : word) (nZ : Z) :
-  vm_reserved h = segments_reserved segs -> 0 <= nZ -> bv_unsigned a + nZ <= alloc_top h ->
+  (* WAS: vm_reserved h = segments_reserved segs.  Weakened to the append form MR now
+     carries; Er is used once, at :53, in the membership direction only. *)
+  (* Shaped exactly like mr_res; see AxSum.v for why the one-conjunct form was wrong. *)
+  (exists rx, vm_reserved h = segments_reserved segs ++ rx
+              /\ (length rx <= 2)%nat /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => 0x154500000000 <= bas q) rx) ->
+  0 <= nZ -> bv_unsigned a + nZ <= alloc_top h ->
   region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true ->
   forall q, bv_unsigned a <= q < bv_unsigned a + nZ -> ~ in_ledger segs h q.
 Proof.
@@ -45,10 +155,14 @@ Proof.
   assert (Hu : bv_unsigned (Z_to_bv 64 nZ) = nZ) by (apply u_Z_to_bv; lia).
   assert (Hq' : bv_unsigned a <= q < bv_unsigned a + bv_unsigned (Z_to_bv 64 nZ)) by (rewrite Hu; exact Hq).
   apply (region_free_not_inl _ _ _ q Hf Hq'). apply inl_app. destruct Hl as [Hs|[Hs|Hs]].
-  - left. rewrite Er. exact (in_segs_reserved q Hs).
+  - left. destruct Er as [rx [Hrx _]]. rewrite Hrx. apply inl_app. left. exact (in_segs_reserved q Hs).
   - lia.
   - right. exact Hs.
 Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma seg_rom_in_segs (x : word) (b : byte) : seg_rom segs x = Some b -> in_segs segs (bv_unsigned x).
 Proof.
@@ -70,6 +184,7 @@ Proof.
   intros H. unfold rv in H. destruct (m x) as [b0|] eqn:E; [left; discriminate | right; exact (seg_rom_in_segs x b H)].
 Qed.
 
+(* [comment removed for export] *)
 Lemma region_byte (ρ : valuation) (m : word -> option byte) (R : region) (z : Z) :
   region_wf ρ R -> RRegion segs ρ m R -> is_entry R = false -> in_rg ρ R z -> m (wz z) <> None \/ in_segs segs z.
 Proof.
@@ -82,6 +197,7 @@ Proof.
   destruct (rv_cases m (wz z) b Hrv) as [X|X]; [left; exact X | right]. rewrite u_wz in X by (unfold two64 in *; lia). exact X.
 Qed.
 
+(* [comment removed for export] *)
 Lemma region_cov (ρ : valuation) (model : Model) (m : word -> option byte) (R : region) (z : Z) :
   mem_cov segs model m -> region_wf ρ R -> RRegion segs ρ m R -> is_entry R = false -> in_rg ρ R z ->
   in_ledger segs (m_vmmaps model) z.
@@ -95,6 +211,10 @@ Proof.
   pose proof (rv_cov model m (wz z) b Hcov Hrv) as X. rewrite u_wz in X by (unfold two64 in *; lia). exact X.
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section Fresh.
 Variable ρ : valuation.
 Variable A : list region.
@@ -107,24 +227,33 @@ Hypothesis Hcomp : comp_inv segs ρ A model.
 Hypothesis Hfree : forall q, a <= q < a + n -> ~ in_ledger segs (m_vmmaps model) q.
 Hypothesis Heb : forall R, In R A -> is_entry R = true -> a + n <= rbase ρ R.
 
+(* [comment removed for export] *)
 Lemma region_fresh_all : forall R, In R A -> forall z, in_rg ρ R z -> ~ (a <= z < a + n).
 Proof.
   intros R HIn z Hz Hr. destruct HRM as [Hok HF].
-  pose proof (regions_ok_in ρ A R Hok HIn) as Hwf. pose proof (proj1 (Forall_forall _ _) HF R HIn) as HRR.
+  (* `List.Forall_forall` is QUALIFIED because the `From stdpp Require Import list`
+     this file now carries shadows the bare name: stdpp's Forall_forall is stated with
+     `R ∈ A` where Stdlib's uses `In R A`, and the measured error was exactly
+     `The term "HIn" has type "In R A" while it is expected to have type "R ∈ A"`.
+     That shadowing is a cost of the import, paid here and at :239 and nowhere else --
+     checked by grep over this file for the Stdlib list names stdpp also defines. *)
+  pose proof (regions_ok_in ρ A R Hok HIn) as Hwf. pose proof (proj1 (List.Forall_forall _ _) HF R HIn) as HRR.
   destruct (is_entry R) eqn:Ee.
   - pose proof (Heb R HIn Ee). unfold in_rg in Hz. lia.
   - exact (Hfree z Hr (region_cov ρ model m R z Hcov Hwf HRR Ee Hz)).
 Qed.
 
+(* [comment removed for export] *)
 Lemma region_fresh : forall R, In R A -> is_shadow R = false -> forall z, in_rg ρ R z -> ~ (a <= z < a + n).
 Proof.
   intros R HIn _ z Hz Hr. destruct HRM as [Hok HF].
-  pose proof (regions_ok_in ρ A R Hok HIn) as Hwf. pose proof (proj1 (Forall_forall _ _) HF R HIn) as HRR.
+  pose proof (regions_ok_in ρ A R Hok HIn) as Hwf. pose proof (proj1 (List.Forall_forall _ _) HF R HIn) as HRR.
   destruct (is_entry R) eqn:Ee.
   - pose proof (Heb R HIn Ee). unfold in_rg in Hz. lia.
   - exact (Hfree z Hr (region_cov ρ model m R z Hcov Hwf HRR Ee Hz)).
 Qed.
 
+(* [comment removed for export] *)
 Lemma comp_fresh (C0 : region) : a mod 8 = 0 -> n mod 8 = 0 -> rbase ρ C0 = a / 8 + sh_off -> to_Z (rg_n C0) = n / 8 ->
   forall R, In R A -> is_shadow R = true -> forall z, in_rg ρ R z -> ~ in_rg ρ C0 z.
 Proof.
@@ -135,6 +264,10 @@ Proof.
 Qed.
 
 End Fresh.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma of_Z_small (z : Z) : 0 <= z < 2 ^ 63 -> to_Z (of_Z z) = z.
 Proof. intros H. rewrite of_Z_spec. apply Z.mod_small. change wB with (2 ^ 63). exact H. Qed.
@@ -172,6 +305,10 @@ Proof.
   - intros w i E. discriminate E.
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Lemma has_wit_sound (ρ : valuation) (s : store) (lo hi : Z) (A : list region) :
   sat ρ s -> 0 <= lo -> hi <= two64 -> has_wit s lo hi A = true ->
   exists W w, In W A /\ is_shadow W = true /\ in_rg ρ W w /\ lo <= w < hi.
@@ -187,6 +324,7 @@ Proof.
   exists W, (rbase ρ W). split; [exact HIn|]. split; [exact H1|]. split; [unfold in_rg; lia | lia].
 Qed.
 
+(* [comment removed for export] *)
 Lemma comp_mapped (ρ : valuation) (s : store) (A : list region) (m : word -> option byte) (a n : Z) :
   sat ρ s -> RMem segs ρ A m -> hs_ok ρ A m ->
   has_wit s ls_beg ls_end A = true -> has_wit s hs_beg hs_hi A = true ->
@@ -205,6 +343,10 @@ Proof.
 Qed.
 
 End Grant.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma zeros_cover_one (a n x : word) :
   zeros_cover [(a, n)] x = (bv_unsigned a <=? bv_unsigned x) && (bv_unsigned x <? bv_unsigned a + bv_unsigned n).

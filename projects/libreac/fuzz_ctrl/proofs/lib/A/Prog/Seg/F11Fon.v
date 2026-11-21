@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 3124 of its 3235 lines of code are new or changed and 900 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F4.v, with its module names, addresses and numbers changed; 1179 of its 1302 lines of code are new or changed and 3112 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F11.v, with its module names changed; 61 of its 242 lines of code are new or changed and 1121 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F11Fon.v -- route (C) twin of a Theorem Labs lane's Seg/F11F.v f11_014_evt_F, WITHOUT its `shadow_rw m`
    premise.  An ADDITIVE beside-file of the stage owner (a Theorem Labs lane, the Seg *F.v twin rule of
    a Theorem Labs lane 12:52Z as L3-brief.md (a working note, not in this delivery) states it); Seg/F11F.v stays byte-identical apart from comments.
@@ -12,15 +13,15 @@
 
    WHY A TWIN.  The stage glue lib/A/ACtlG/F11_014.v lifts this footprint run (an ExecF.evtF over RNG) through
    Reusable.YA0nR.SRr_fevt_hid; the route (C) walk's cut carries A.ACtlRtC.ctl_rt_C (shadow_rw_on over the cut's regions), which
-   cannot feed a universal `shadow_rw m`.  a Theorem Labs lane's f11_014_evt_on of Seg/F11.v (a version not in this delivery; from a working branch 947e598319e)
+   cannot feed a universal `shadow_rw m`.  a Theorem Labs lane's f11_014_evt_on of Seg/F11.v (a version not in this delivery; from a working branch)
    is the same stretch with the premise dropped, but it is a plain Lib.Exec.evt under a
    Section hypothesis (HING_on), not a footprint run, so the lift cannot take it; this file is its footprint form.
 
-   BASE.  The text of f11_014_evt_F at a Theorem Labs lane's fold a working branch 4bae33fdf54, Seg/F11F.v
-   blob 2a9b50649ca (= the route (C) walk's blob, a working branch 1502cba0417 / 1899bed1aee, the same file), lines 302-526, with exactly these
+   BASE.  The text of f11_014_evt_F at a Theorem Labs lane's fold a working branch, Seg/F11F.v
+   blob 2a9b50649ca (= the route (C) walk's blob, a working branch, the same file), lines 302-526, with exactly these
    changes: the premise `shadow_rw m` and its intro name HSW removed, and the ingest call cut through the callee's
-   narrowed footprint contract reac_identity_ingest_contract_F_on (premise dropped; a Theorem Labs lane 28e24b8fe6c, LANDED.md
-   (a working note, not in this delivery) 10:09Z) and its proof reac_identity_ingestF.reac_identity_ingest_F_holds_on (a Theorem Labs lane 36bfd511da3, LANDED.md (a working note, not in this delivery)
+   narrowed footprint contract reac_identity_ingest_contract_F_on (premise dropped; a Theorem Labs lane, LANDED.md
+   (a working note, not in this delivery) 10:09Z) and its proof reac_identity_ingestF.reac_identity_ingest_F_holds_on (a Theorem Labs lane, LANDED.md (a working note, not in this delivery)
    11:12Z, a Theorem Labs lane SIGNED) instead of reac_identity_ingest_F_holds.  REGION: none.  The run reads no shadow byte through
    shadow_rw (its two instrumented loads, the shadow bytes of phi + 36 / phi + 37, come from `addressable m phi 50` by
    sl_shadow1), stores no shadow byte, and the old proof passed HSW only to the ingest call.  The footprint (rng)

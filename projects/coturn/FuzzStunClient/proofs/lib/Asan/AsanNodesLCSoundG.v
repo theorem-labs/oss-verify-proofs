@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -70,6 +71,7 @@ Proof. intros X Y f p l. induction l as [|x l IH]; [reflexivity|]. cbn [map fora
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -102,7 +104,7 @@ Proof.
 Qed.
 
 Theorem node_lc_sound : forall T, lc_wf T = true -> lc_spec SEGS (shadow_off A) T ->
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (LCN.node_lc_ref SEGS A nx0 T).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (LCN.node_lc_ref SEGS A nx0 T).
 Proof.
   intros T WF SPEC cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -238,7 +240,7 @@ Qed.
 (* [comment removed for export] *)
 Theorem lc_xn_sound : forall TS,
   Forall (fun T => lc_wf T = true /\ lc_spec SEGS (shadow_off A) T) TS ->
-  ext_stmt SEGS A nx0 LIMIT (LCN.xn SEGS A nx0 TS) SINV argH FS0.
+  ext_stmt SEGS A nx0 LIMIT (LCN.xn SEGS A nx0 TS) SINV argH FS0 sfl.
 Proof.
   intros TS HTS id args. unfold LCN.xn. destruct (Nat.eqb id 122).
   - destruct args as [|[i| | | | | | |] [|? ?]]; try (intros cs cs' E R FULL model TT _ _ H; discriminate H).

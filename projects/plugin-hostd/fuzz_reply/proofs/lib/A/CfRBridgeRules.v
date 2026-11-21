@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan, the cf allocator bridge (new file), part 4: the
    MALLOC, FREE and FREE(NULL) rules of the `_x` journal at top_x's instance, from the cf contracts amalloc_realizes_cf
    and afree_realizes_cf (AMA_x_room_of_cf, AFREE_x_room_of_cf, AFREEN_x_room_of_cf), and the REALLOC rule from the
@@ -7,21 +8,21 @@
    the unprimed end rule with the caller's room restated in this tree, and YGcfRealloc.arealloc_null_realizes_cf;
    through the CfRBridgeAjRealloc journal lemmas; the room comes from room_live_cf by room_live_room_k).  The free rules are stated the
    same way (W_journal_x.v afree_cf_rule_c_x / afree_null_cf_rule_c_x: :770-793 / :794-815 at this base, :880-907 /
-   :908-933 in the landed text at commit 479fec81839: the count premise right after the RM line, a charge of 1 for a
+   :908-933 in the landed text: the count premise right after the RM line, a charge of 1 for a
    block and for NULL) and proved through YGcallx.aj_free_at_x_ct
    and CfRBridgeAjFreeN.aj_free_null_at_x_ct (the free(NULL) twin).  The malloc rule's text:
    The rule is stated here in the ruled text (ROOM-TEXTS.md v3 (sha256 767baa12f13c; internal record)
    sections 0.1-0.3, (a), and (h) for the stack line): W_journal_x.v amalloc_cf_rule_c_x (:749-769) at top_x's instance
-   (A/W_LLVMFuzzerTestOneInput_top_x.v:109-110 ARX, PST := [], MMAX := fr_MMAX, CTX := CTX_AMALLOC) with
+   (A/W_LLVMFuzzerTestOneInput_top_x.v:110-111 ARX, PST := [], MMAX := fr_MMAX, CTX := CTX_AMALLOC) with
    - the binder (kr : nat) after ch;
    - the count premise right after the bytes premise (cb_cf: top_x's Psec := rl_sec_req, P24 := in_cls kBatchClass,
      Lsec := 1024, L24 := 2 ^ 15, Pcls := in_cls, LPRIM c := Z.to_nat (RL_PRIM c); acnt: CfRBridgePrim.v);
    - the stack line `ly_bot lyc + ACALL_PREFIX < spZ regsT` right after `ASTACK - o <= STK`, ACALL_PREFIX := 4096
-     (commit a3e599d9f79e YG0d.v:21; written as its value until the kit carries the notation);
+     (YG0d.v:21; written as its value until the kit carries the notation);
    - after the CTX premise `RM Sc (1 + kr)` (realloc: `2 + kr`), and after mo_le in the post `RM S2 kr`, over a
      PARAMETER RM with HRM : RM = fun S _ => room_live_cf S (R1); the count premise is ONE premise `CNT (ablocks ..)`
-     over a parameter CNT with HCNT : CNT l -> cb_cf l, so at commit 479fec81839 the bridges apply at RM := rp_RM RPi,
-     CNT := cnt_ok RPi (W_journal_x.v Record roomp, commit 479fec81839 :626-633, rules :855-964);
+     over a parameter CNT with HCNT : CNT l -> cb_cf l, so the bridges apply at RM := rp_RM RPi,
+     CNT := cnt_ok RPi (W_journal_x.v Record roomp, :626-633, rules :855-964);
    - the meter MT generic (KF-COUNT); its instance is MT_sec (Section TOPK).
    When that text lands in W_journal_x.v, the rule at top_x's instance is this statement by conversion,
    provided top_x's LPRIM is ReplyCnt.LPRIM (Z.to_nat (ReplyCnt.RL_PRIM c); the class bound PresetRoom.room_ok is
@@ -34,7 +35,7 @@
    the post room by YGcfRoomLive.room_live_call_keep, errno by the leaf's raw clause (the image is never hidden:
    w_Hoff), the image's presence by the leaf's raw frame (image bytes are not owned, not scratch, not the block, not
    an extra extent: the owned-image, layout, client-image and extents laws).
-   The call's memory facts (QMm; the frame law's kept bytes, commit 1aba1a15346b; top_x's ARX, commit b27e847023f8):
+   The call's memory facts (QMm; the frame law's kept bytes; top_x's ARX):
    top_x's relation ARX carries arodata_ok_cf on the call memory as its LAST conjunct, so each rule projects it from
    ARX at the call into
    QMm_cf, and re-establishes it at the post from the callee leaf's raw frame (arodata_post_keep: the bytes
@@ -129,7 +130,7 @@ Hypothesis errno_low : api_env segs TfibB.
 Definition cb_cf (l : list (Z * Z)) : Prop :=
   (acnt rl_sec_req l <= 1024)%nat /\ (acnt (PresetRoom.in_cls kBatchClass) l <= 2 ^ 15)%nat /\
   (forall c, 1 <= c <= 30 -> (acnt (PresetRoom.in_cls c) l <= Z.to_nat (RL_PRIM c))%nat).
-(* The room record's two fields the rules read (W_journal_x.v Record roomp at commit 479fec81839: rp_RM, and the count
+(* The room record's two fields the rules read (W_journal_x.v Record roomp: rp_RM, and the count
    premise cnt_ok RP), as parameters: there the bridges apply at RM := rp_RM RPi and CNT := cnt_ok RPi.  R1 (the
    ruled placement): RM is room_live_cf with the budget ignored.  The count premise gives the cf count block. *)
 Variable RM : astate -> nat -> Prop.
@@ -159,7 +160,7 @@ Hypothesis MO_OK_HULL_F : forall s, mo_ok MT s (mo_free MT) -> cf_hull_ok s.
 Hypothesis HRS : relro_seg_t segs.
 Hypothesis HER : errno_relro_t TfibB.
 
-(* top_x's relation (W_LLVMFuzzerTestOneInput_top_x.v:173-174 after W1: its last conjunct is arodata_ok_cf on the
+(* top_x's relation (W_LLVMFuzzerTestOneInput_top_x.v:174-175 after W1: its last conjunct is arodata_ok_cf on the
    memory) and YGcallcf's (:218). *)
 Local Abbreviation ARX := (fun ly S Hp (W : world segs) mem md =>
   ARcf segs TfibB ly S Hp W mem md /\ Hp = [] /\ arodata_ok_cf segs TfibB mem).
@@ -569,7 +570,7 @@ Variable segs : list Segment.
 Hypothesis L : AR_laws_cf segs TfibB.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Hypothesis errno_low : api_env segs TfibB.
-(* The room record's two fields the rules read (W_journal_x.v Record roomp at commit 479fec81839: rp_RM, and the count
+(* The room record's two fields the rules read (W_journal_x.v Record roomp: rp_RM, and the count
    premise cnt_ok RP), as parameters: there the bridges apply at RM := rp_RM RPi and CNT := cnt_ok RPi.  R1 (the
    ruled placement): RM is room_live_cf with the budget ignored.  The count premise gives the cf count block. *)
 Variable RM : astate -> nat -> Prop.
@@ -880,7 +881,7 @@ Hypothesis errno_low : api_env segs TfibB.
 Local Abbreviation ARX := (fun ly S Hp W mem md => ARcf (ci := CfImg_A) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
     @arodata_ok_cf CfImg_A segs TfibB mem).
 (* FIT CHECK of the relation: the rules' ARX is top_x's relation after W1, whose text is quoted
-   here VERBATIM from commit b27e847023f8, lib/A/W_LLVMFuzzerTestOneInput_top_x.v:171-172
+   here VERBATIM from lib/A/W_LLVMFuzzerTestOneInput_top_x.v:172-173
    (Definition ARX's body); it closes by reflexivity only if the two are the same term. *)
 Goal ARX = (
   fun ly S Hp W mem md => ARcf (ci := CfImg_A) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
@@ -891,14 +892,14 @@ Variable nsec_cf : astate -> Z.
 Hypothesis nsec_malloc_cf : forall n tr s,
   cfx_ipost (malloc_cf n tr s) (fun r => nsec_cf (snd r) <= nsec_cf s + (if from_primary n then 0 else 1)).
 Hypothesis nsec_free_cf : forall p tr s, cfx_ipost (free_cf p tr s) (fun r => nsec_cf (snd r) <= nsec_cf s).
-(* MT_sec's defining equations, its literal text (ReplyKfMeter.v at a968c6e24aec: mkAMeter (fun s m => nsec s + m <= KMAX)
+(* MT_sec's defining equations, its literal text (ReplyKfMeter.v: mkAMeter (fun s m => nsec s + m <= KMAX)
    (fun s s' m => nsec s' <= nsec s + m) (fun n => if 64512 <? n then 1 else 0) 0); each holds by reflexivity at
    MT := MT_sec nsec_cf cf_kmax.  mo_ok is not used by these rules' posts. *)
 Hypothesis MT_malloc : forall n, mo_malloc MT n = if 64512 <? n then 1 else 0.
 Hypothesis MT_free : mo_free MT = 0.
 Hypothesis MT_le : forall s s' m, mo_le MT s s' m <-> nsec_cf s' <= nsec_cf s + m.
-(* MT_sec's fourth defining equation, its mo_ok (MT_ok, the same text route R's TOPK_rh takes, commit
-   07260ccc92a1 lib/A/CfRBridgeRulesRhTop.v:267): at MT := MT_sec YGcfNames.nsec_cf cf_kmax it holds by iff_refl. *)
+(* MT_sec's fourth defining equation, its mo_ok (MT_ok, the same text route R's TOPK_rh takes,
+    lib/A/CfRBridgeRulesRhTop.v:267): at MT := MT_sec YGcfNames.nsec_cf cf_kmax it holds by iff_refl. *)
 Hypothesis MT_ok : forall s m, mo_ok MT s m <-> YGcfNames.nsec_cf s + m <= cf_kmax.
 (* The unit's two image rows (Section B's HRS / HER). *)
 Hypothesis HRS : relro_seg_t segs.

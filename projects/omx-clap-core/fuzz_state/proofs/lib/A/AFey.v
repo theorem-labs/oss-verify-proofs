@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFey.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 (5e580eb5ab5) bounds a class region's mapped user part by kFreeArrayOffset (YG0s cfacts, YG07 prim_chunk_off), not 2 ^ 31; batch_geom and ext_zone state kFreeArrayOffset, and the proofs unfold it where lia needs its value. *)
+(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 bounds a class region's mapped user part by kFreeArrayOffset (YG0s cfacts, YG07 prim_chunk_off), not 2 ^ 31; batch_geom and ext_zone state kFreeArrayOffset, and the proofs unfold it where lia needs its value. *)
 (* Modified by Theorem Labs, 2026-10: the depot length bound is 20480 from depot_inv_cap (the depot need not lie inside the universe). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

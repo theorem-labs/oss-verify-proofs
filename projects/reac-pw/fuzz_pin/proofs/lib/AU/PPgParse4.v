@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_hand, fs_roF / fs_rwF) and
-   APgStep.v (same_io_wvb) at 6ebe35ba632; adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
+   APgStep.v (same_io_wvb); adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/PPgParse4.v of this library, for image B
    (fuzz_pin.asan-ubsan, reac_box_pin_parse at 0x80ba4). What differs: the image modules are image B's lib/AU twins
    and the cut state ss_P4 is image B's (lib/AU/PPgParseCx.v); the proof text is the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_pin_parse of reac-pw/fuzz_pin, image B (fuzz_pin.asan-ubsan): segment 4 of the walk, 0x80e98 -> `ret`.
    The frame on the side stack is given back: its first word is set to 0x45E0360E (`sd a0,0(s7)`), `beqz s3` is not
    taken (s3 = F, at least 4096), its 8 shadow bytes are set to 0xf5 through s11, the flag pointer is loaded from

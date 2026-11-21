@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: pj_free's image-B walk (fuzz_preset asan-ubsan, B 0x86a24, 136 slots of lib/B/Listing_prog.v
    v4 f843fdf7fe2f; lib/B/Prog/pj_free_defs.v), THE TOP: the segments composed, by induction on the depth n (the
    recursive call at B 0x86b10 cites the text at n - 1, pj_free_seg_loop.v), the free order, and the kit's text.
@@ -35,7 +36,7 @@
      back from the writer's text, pj_nodeR v t D with map (fun b => snd b + HEAD) D = PresetReqAtNoMiss.tblk t, the
      run's fuzz_free calls free, in order, a list F of D's blocks with map (fun b => snd b + HEAD) F =
      PresetReqAt.fo t, lib/Spec/PresetReqAt.v:215 blob 379c33e9e482), pf_walk_of_segs, pj_free_frees_fo.
-   THE cf_head = 0 HOLE (a finding against the kit's abstract-CfParams text, unchanged at 98f44d272006): at cf_head = 0
+   THE cf_head = 0 HOLE (a finding against the kit's abstract-CfParams text, unchanged): at cf_head = 0
    tpj_free_specX is false - v may start a live harness block (a, k) not in D with v = a (v mod 8 = 0, a mod 16 = 0),
    and the memset at B 0x86bc8 zeroes that block's ledger head word val_mem (a - cf_head) 8 k while the post's ledger
    keeps (a, k). The walk takes the prh_head_wide (PRH_Base.v, 8 <= cf_head; 16 at CfParams_preset). The same hole
@@ -54,7 +55,7 @@
    prh_head_wide premise holds at CfParams_preset, and the texts' image premise prh_univ_closure has its witness
    pf_wit_univ at the driver context. No ADDRESS numeral in the proofs (the addresses above are comment pins) except
    0x815c8 in pf_wit_univ's statement: the driver context CTX0 = [[0x815c8]], target_run's
-   `jal LLVMFuzzerTestOneInput` + 4 (lib/AU/PresetCfnB.v:198 RA_LLVMF, blob 316b293c8f23; the context
+   `jal LLVMFuzzerTestOneInput` + 4 (lib/AU/PresetCfnB.v:199 RA_LLVMF, blob 316b293c8f23; the context
    lib/Reusable/YCej.v's universe was generated at, its header). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

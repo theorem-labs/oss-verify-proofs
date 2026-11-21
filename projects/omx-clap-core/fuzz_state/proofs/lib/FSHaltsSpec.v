@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/HaltsSpecX.v for fuzz_grant: the library shape is grant_shape (each call returns 0 and writes nothing), so cgif's lemmas for its file-writing shape are replaced by the one-line case of grant_shape; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/HaltsSpecG.v:4-61 (a working branch c2edc13c0fa) for fuzz_state: the library shape is ag_shape checksum_shape (lib/AgreeShape.v, lib/ZTraceSpec.v), whose LIBK is grant_shape's, K (LL 0 fs []); module paths changed. lib/AgreeShape.v requires lib/U/AgreeZlib.v (for SBD_AG), a released, proved file of fs's ubsan chain. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/HaltsSpecG.v:4-61 (a working branch) for fuzz_state: the library shape is ag_shape checksum_shape (lib/AgreeShape.v, lib/ZTraceSpec.v), whose LIBK is grant_shape's, K (LL 0 fs []); module paths changed. lib/AgreeShape.v requires lib/U/AgreeZlib.v (for SBD_AG), a released, proved file of fs's ubsan chain. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs Run.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YK11 YK15 YO0i YO0f YM02 YM05 YO05 YO09 YO06.

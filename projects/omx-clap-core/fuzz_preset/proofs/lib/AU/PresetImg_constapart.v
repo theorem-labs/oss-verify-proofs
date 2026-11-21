@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_constapart.v (commit ce1a656b52b7, file sha256 6d36e1911feb) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_constapart.v (file sha256 6d36e1911feb) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-constapart-B (its CONST_APART half) of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the constant-cell table of reply's image B,
    fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
 
-   CONST_APART, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:66-70 @ fa961f42daf, over the image class
+   CONST_APART, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:66-70, over the image class
    (Context {IM : AImg}).  Reply does not carry YGcfInstDrainX.v nor YGcfInstBase.v, so the Lemma states the body of
    CONST_APART VERBATIM at reply's instance IM := AImg_cgif (B/AGif2cgif.v:24: im_syms := YF0m.TfibSyms,
    im_const := YF0m.Tfib_const), with the premise ly_img_ok B ly unfolded; ly_img_ok is
-   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 @ fa961f42daf (= @ e73dee6cc107):
+   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 (=):
    ly_img_ok B ly := layout_ok ly /\ ly_tsd ly = as_tsd B /\
                      Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B).
    qhdr is DMiface.qhdr, the same text in reply (B/DMiface.v:72-74) as in the layer
-   (proofs/cgif/cgif_file_fuzzer/lib/DMiface.v:69-71 @ fa961f42daf).
+   (proofs/cgif/cgif_file_fuzzer/lib/DMiface.v:69-71).
    Proof at image B: the third conjunct puts the image window ly_img around [TFIB_IMG_LO, TFIB_IMG_END) (two scans of
    Tfib_owned_static ++ Tfib_zero_shadow, B/YF0m.v:817-852).  Each cell of Tfib_const passes the check const_apart_okb
    by computation (cgif's pattern: YFev.const_loc_okd / Tfib_const_locd, B/YFev.v:394-410, with the cell's value
@@ -82,7 +83,7 @@ Local Ltac mem_owned := unfold owned_extents; cbn [In]; repeat (first [left; ref
 
 Section r. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* CONST_APART at image B: YGcfInstDrainX.v:66-70 @ fa961f42daf, ly_img_ok unfolded, at IM := AImg_cgif. *)
+(* CONST_APART at image B: YGcfInstDrainX.v:66-70, ly_img_ok unfolded, at IM := AImg_cgif. *)
 Lemma CONST_APART_B : forall B ly c, @im_syms AImg_cgif B ->
   (layout_ok ly /\ ly_tsd ly = as_tsd B /\ Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B)) ->
   In c (@im_const AImg_cgif ly) ->

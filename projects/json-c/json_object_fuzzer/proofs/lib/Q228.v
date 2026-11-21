@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: esc_specA and strtod_A_stmt take it after alloc_ceiling <= lo; the serializer sections take it as HBTlo and pass it to ser_appendA; the jo_get_num_A_stmt proofs name jo_preA's conjunct; the escape, stack_malloc_full and PI64 calls discharge it; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -44,7 +45,7 @@ bytes_at asegs m Sa src -> Z.of_nat (length src) = n -> 0 <= n < 2^31 ->
 32 <= cap < 2^30 -> bpos + 6 * n < 2^28 -> ser_need cap bpos (6 * n) <= bB B ->
 aflags_ok fl ->
 Z.of_nat (length FRS) + 1 < 4096 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - AESC_STACK ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - AESC_STACK ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> JHEX_A m ->
 tp = wz A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
@@ -59,6 +60,7 @@ Variables (sp gp : word) (m0 : word -> option byte) (md0 : config) (LB LM : list
 Variables (bpos0 cap0 w : Z).
 Let usp := bv_unsigned sp.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
 Hypothesis TXT : bpos0 + w < 2^28.
@@ -112,6 +114,7 @@ rewrite ?U2.
 - exact FRN.
 - exact ST.
 - exact LO.
+- first [assumption | lia].
 - exact LOS.
 - exact FAA.
 - unfold usp in *. lia.
@@ -194,7 +197,7 @@ Definition GU64_STK_A : Z := 96 + PI64_STK_A.
 
 Lemma get_uint64_A : jo_get_num_A_stmt HIx 0x9cf10 GU64_STK_A.
 Proof.
-unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
+unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
 unfold GU64_STK_A, PI64_STK_A in LOS. subst a0 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -223,6 +226,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -499,7 +503,7 @@ lazymatch type of SHB with bytes_at _ _ _ ?wb => eapply (unpoisoned_gran8 asegs 
 - replace (((Fr + 32) / 8 + A_SB) mod 8) with 4 by (unfold A_SB; clear - HFal; Z.div_mod_to_equations; lia). reflexivity. }
 evt_done5.
 eapply PI64 with (LB := BS ++ LB) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (str := str0) (SA := TX) (R := Fr + 32) (lo := lo);
-[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
+[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | first [assumption | lia] | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | unfold A_ERRNO, A_TP; eassumption | reflexivity | rewrite unsigned_lit by lia; reflexivity
 | reflexivity | reflexivity | exact BY | exact NIN
@@ -618,7 +622,7 @@ Variable HIx : heap_iface_A A4L.
 Variable GA : (word -> option byte) -> Prop.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -750,7 +754,7 @@ Hypothesis OBL_REALLOC_NF : realloc_nf_stmt HIx.
 
 Lemma ser_boolA : ser_specA HIx ASER_BOOL Sbool.
 Proof.
-unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (b & junk & EREST & NODE). unfold jhdr_cells in NODE. cbn [app] in NODE.
 subst a0 a1 a2 a3 tp REST.
 cbn [app jtx] in JTX. rewrite Z.eqb_refl in JTX. injection JTX as <- _.
@@ -803,7 +807,7 @@ F (Z_to_bv 64 0x9a0ac) fc None m1 (seg_rom asegs))).
 { intros lit k bs t0_ t1_ t2_ a4_ a5_ a6_ a7_ t3_ t4_ t5_ t6_ RB BL Hk Hl Hlk CHK.
 pose proof INV1 as (buf1 & cap1 & bpos1 & content1 & errv1 & B1 & HP1 & _).
 evt_done5.
-eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap 8 LO HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := bs) (e := 0);
+eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap 8 LO HBT HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := bs) (e := 0);
 [ exact INV1 | apply rodata_bytes_at; [exact MI1 | exact RB | lia | lia] | exact BL | lia | lia
 | right; right; apply src_globA_of_chk; exact CHK
 | intros _; eapply (unpoisoned_of_glob HIx); [exact HP1 | apply src_globA_of_chk; exact CHK | lia]
@@ -1014,6 +1018,7 @@ Variables (sp gp : word) (m0 : word -> option byte) (md0 : config) (LB LM : list
 Variables (bpos0 cap0 w : Z).
 Let usp := bv_unsigned sp.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
 Hypothesis TXT : bpos0 + w < 2^28.
@@ -1042,7 +1047,7 @@ Proof.
 intros lit k bs RB BL CHK Hk Hl Hlk. intros until e. intros INV He Hek LOS FAA FAU FA0 X3 Hret Hret2 FS FRM K.
 pose proof (ser_memA_mem_inv _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ INV) as MI.
 pose proof INV as (buf1 & cap1 & bpos1 & content1 & errv1 & B1 & HP1 & _).
-eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS0 B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := bs) (e := e);
+eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS0 B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := bs) (e := e);
 [ exact INV | apply rodata_bytes_at; [exact MI | exact RB | lia | lia] | exact BL | lia | lia
 | right; right; apply src_globA_of_chk; exact CHK
 | intros _; eapply (unpoisoned_of_glob HIx); [exact HP1 | apply src_globA_of_chk; exact CHK | lia]
@@ -1089,7 +1094,7 @@ Hypothesis OBL_REALLOC_NF : realloc_nf_stmt HIx.
 
 Lemma ser_udA : ser_specA HIx ASER_UD (Sdouble true).
 Proof.
-unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (bits & ud & udn & uds & EREST & Hudn & NODE & CS). unfold jhdr_cells in NODE. cbn [app] in NODE.
 subst a0 a1 a2 a3 tp REST.
 cbn [app jtx] in JTX. rewrite Z.eqb_refl in JTX. injection JTX as <- _.
@@ -1164,7 +1169,7 @@ assert (SRC : bytes_at asegs m4 ud uds).
 { replace (uds ++ Z_to_bv 8 0 :: slack) with (uds ++ (Z_to_bv 8 0 :: slack)) in STR3 by reflexivity.
 apply bytes_at_app in STR3. exact (proj1 STR3). }
 evt_done5.
-eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap (16 + Z.max 0 (udn - 1)) LO HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := uds) (e := 0);
+eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap (16 + Z.max 0 (udn - 1)) LO HBT HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := uds) (e := 0);
 [ exact INV4 | exact SRC | reflexivity | fold len; lia | lia
 | left; exists ud, udn; split; [exact INuL | fold len; lia]
 | intros Hk; eapply (unpoisoned_of_blk HIx); [exact HP4 | right; right; exact INuL | lia | fold len; lia | exact Hk]
@@ -1224,7 +1229,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud)
 (str : list byte) (SA R lo : Z) (rj errv : word),
 HEAPA A4L HIx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - STRTOD_STK_A ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - STRTOD_STK_A ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 SA -> a1 = Z_to_bv 64 R ->
@@ -1247,7 +1252,7 @@ F (Z_to_bv 64 0xda5f4) fc None m (seg_rom asegs)).
 
 Theorem strtod_A_of_musl : strtod_A_stmt.
 Proof.
-unfold strtod_A_stmt, STRTOD_STK_A. intros until errv. intros HP ST LO LOS SPA HT ERR TP RA A0 A1 STR NUL LS (ab & nb & INB & HB1 & HB2) (Fc & kc & INF & HF1 & HF2) RC RAL FRM K.
+unfold strtod_A_stmt, STRTOD_STK_A. intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP RA A0 A1 STR NUL LS (ab & nb & INB & HB1 & HB2) (Fc & kc & INF & HF1 & HF2) RC RAL FRM K.
 subst a0 a1 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. change (hl_segs A4L) with asegs in MI.
@@ -1362,7 +1367,7 @@ bytes_at asegs m Sa src -> Z.of_nat (length src) = n -> 0 <= n < 2^31 ->
 32 <= cap < 2^30 -> bpos + 6 * n < 2^28 -> ser_need cap bpos (6 * n) <= bB B ->
 aflags_ok fl ->
 Z.of_nat (length FRS) + 1 < 4096 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - AESC_STACK ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - AESC_STACK ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> JHEX_A m ->
 tp = wz A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
@@ -1377,6 +1382,7 @@ Variables (sp gp : word) (m0 : word -> option byte) (md0 : config) (LB LM : list
 Variables (bpos0 cap0 w : Z).
 Let usp := bv_unsigned sp.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
 Hypothesis TXT : bpos0 + w < 2^28.
@@ -1430,6 +1436,7 @@ rewrite ?U2.
 - exact FRN.
 - exact ST.
 - exact LO.
+- first [assumption | lia].
 - exact LOS.
 - exact FAA.
 - unfold usp in *. lia.
@@ -1518,7 +1525,7 @@ Variable HIx : heap_iface_A A4L.
 Variable GA : (word -> option byte) -> Prop.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1650,7 +1657,7 @@ Hypothesis OBL_REALLOC_NF : realloc_nf_stmt HIx.
 
 Lemma ser_boolA : ser_specA HIx ASER_BOOL Sbool.
 Proof.
-unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (b & junk & EREST & NODE). unfold jhdr_cells in NODE. cbn [app] in NODE.
 subst a0 a1 a2 a3 tp REST.
 cbn [app jtx] in JTX. rewrite Z.eqb_refl in JTX. injection JTX as <- _.
@@ -1703,7 +1710,7 @@ F (Z_to_bv 64 0x9b4fc) fc None m1 (seg_rom asegs))).
 { intros lit k bs t0_ t1_ t2_ a4_ a5_ a6_ a7_ t3_ t4_ t5_ t6_ RB BL Hk Hl Hlk CHK.
 pose proof INV1 as (buf1 & cap1 & bpos1 & content1 & errv1 & B1 & HP1 & _).
 evt_done5.
-eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap 8 LO HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := bs) (e := 0);
+eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap 8 LO HBT HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := bs) (e := 0);
 [ exact INV1 | apply rodata_bytes_at; [exact MI1 | exact RB | lia | lia] | exact BL | lia | lia
 | right; right; apply src_globA_of_chk; exact CHK
 | intros _; eapply (unpoisoned_of_glob HIx); [exact HP1 | apply src_globA_of_chk; exact CHK | lia]
@@ -1914,6 +1921,7 @@ Variables (sp gp : word) (m0 : word -> option byte) (md0 : config) (LB LM : list
 Variables (bpos0 cap0 w : Z).
 Let usp := bv_unsigned sp.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
 Hypothesis TXT : bpos0 + w < 2^28.
@@ -1942,7 +1950,7 @@ Proof.
 intros lit k bs RB BL CHK Hk Hl Hlk. intros until e. intros INV He Hek LOS FAA FAU FA0 X3 Hret Hret2 FS FRM K.
 pose proof (ser_memA_mem_inv _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ INV) as MI.
 pose proof INV as (buf1 & cap1 & bpos1 & content1 & errv1 & B1 & HP1 & _).
-eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS0 B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := bs) (e := e);
+eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS0 B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := bs) (e := e);
 [ exact INV | apply rodata_bytes_at; [exact MI | exact RB | lia | lia] | exact BL | lia | lia
 | right; right; apply src_globA_of_chk; exact CHK
 | intros _; eapply (unpoisoned_of_glob HIx); [exact HP1 | apply src_globA_of_chk; exact CHK | lia]
@@ -1989,7 +1997,7 @@ Hypothesis OBL_REALLOC_NF : realloc_nf_stmt HIx.
 
 Lemma ser_udA : ser_specA HIx ASER_UD (Sdouble true).
 Proof.
-unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (bits & ud & udn & uds & EREST & Hudn & NODE & CS). unfold jhdr_cells in NODE. cbn [app] in NODE.
 subst a0 a1 a2 a3 tp REST.
 cbn [app jtx] in JTX. rewrite Z.eqb_refl in JTX. injection JTX as <- _.
@@ -2068,7 +2076,7 @@ assert (SRC : bytes_at asegs m4 ud uds).
 { replace (uds ++ Z_to_bv 8 0 :: slack) with (uds ++ (Z_to_bv 8 0 :: slack)) in STR3 by reflexivity.
 apply bytes_at_app in STR3. exact (proj1 STR3). }
 evt_done5.
-eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap (16 + Z.max 0 (udn - 1)) LO HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := uds) (e := 0);
+eapply (ser_appendA HIx sp gp m md LB LM FRS B pb lo bpos cap (16 + Z.max 0 (udn - 1)) LO HBT HT CAP TXT NEED OBL_REALLOC_NF) with (F := F) (sb := uds) (e := 0);
 [ exact INV4 | exact SRC | reflexivity | fold len; lia | lia
 | left; exists ud, udn; split; [exact INuL | fold len; lia]
 | intros Hk; eapply (unpoisoned_of_blk HIx); [exact HP4 | right; right; exact INuL | lia | fold len; lia | exact Hk]
@@ -2126,7 +2134,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud)
 (str : list byte) (SA R lo : Z) (rj errv : word),
 HEAPA A4L HIx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - STRTOD_STK_A ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - STRTOD_STK_A ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 SA -> a1 = Z_to_bv 64 R ->
@@ -2149,7 +2157,7 @@ F (Z_to_bv 64 0xdccb8) fc None m (seg_rom asegs)).
 
 Theorem strtod_A_of_musl : strtod_A_stmt.
 Proof.
-unfold strtod_A_stmt, STRTOD_STK_A. intros until errv. intros HP ST LO LOS SPA HT ERR TP RA A0 A1 STR NUL LS (ab & nb & INB & HB1 & HB2) (Fc & kc & INF & HF1 & HF2) RC RAL FRM K.
+unfold strtod_A_stmt, STRTOD_STK_A. intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP RA A0 A1 STR NUL LS (ab & nb & INB & HB1 & HB2) (Fc & kc & INF & HF1 & HF2) RC RAL FRM K.
 subst a0 a1 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. change (hl_segs A4L) with asegs in MI.
@@ -2313,7 +2321,7 @@ Definition GU64_STK_A : Z := 96 + PI64_STK_A.
 
 Lemma get_uint64_A : jo_get_num_A_stmt HIx 0x9e8d8 GU64_STK_A.
 Proof.
-unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
+unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
 unfold GU64_STK_A, PI64_STK_A in LOS. subst a0 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -2342,6 +2350,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -2648,7 +2657,7 @@ lazymatch type of SHB with bytes_at _ _ _ ?wb => eapply (unpoisoned_gran8 asegs 
 - replace (((Fr + 32) / 8 + A_SB) mod 8) with 4 by (unfold A_SB; clear - HFal; Z.div_mod_to_equations; lia). reflexivity. }
 evt_done5.
 eapply PI64 with (LB := BS ++ LB) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (str := str0) (SA := TX) (R := Fr + 32) (lo := lo);
-[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
+[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | first [assumption | lia] | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | unfold A_ERRNO, A_TP; eassumption | reflexivity | rewrite unsigned_lit by lia; reflexivity
 | reflexivity | reflexivity | exact BY | exact NIN

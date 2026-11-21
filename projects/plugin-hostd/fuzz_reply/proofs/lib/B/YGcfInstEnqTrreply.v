@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnqTrcgif.v (commit 1223f55a2a51, CfF1 round-2 re-fit; file sha256 769598b6107a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstEnqTrreply.v at commit f303438be5b, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnqTrcgif.v (CfF1 round-2 re-fit; file sha256 769598b6107a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstEnqTrreply.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
    cgif_file's image: the TRANSPORT fields of lane B2's frame-generic Enqueue interface (EnqGbase.v, taken by path)
    at the cf instance, i.e. at the layer's walk relation YGcfInstBase.ARX_cf B IOK Hp, owned set aowned B and call
@@ -16,7 +17,7 @@
    - [ir_frame_cf]: the walk's post returns to the caller and keeps every byte outside its window (at_RETP);
    - [iface_room_cf_cgif]: the whole record, at B2's strict block-size parameter := YGcfInstEnqG.ENQ_NMAX_STRICT
      (the layer's NMAXD is the inclusive guard `ck_n k <= kQuarantineMax`), from the unit's walk field [ir_walk] (the
-     walk at the inclusive bound is the unit's relocated walk, not this file: YFgp.v:96 bounds cgif's at < 2 ^ 28).
+     walk at the inclusive bound is the unit's relocated walk, not this file: YFgp.v:97 bounds cgif's at < 2 ^ 28).
    HIT arm (EnqIfaceHit): [ih_post_cf] (YFg5cf.FINQH_cf through YFf2cf.enq_fin_ARmcf; Wf_cf of the end state from
    YGcfInstEnqG.enq_hit_wf_cf), [ih_owned_cf] (YFf2cf.D_owned_cf), [ih_safe_cf] (MemnormLoc.YFf2_D_safe's script over
    ARmcf), [ih_frame_cf] (at_RETQ), and [iface_hit_cf_cgif] at ENQ_NMAX_STRICT, RMAXD := kFreeArrayOffset and
@@ -55,7 +56,7 @@ Local Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Local Open Scope am_scope.
 
-(* MemnormLoc.YFf1_D_safe (MemnormLoc.v:104-118) over ARmcf. *)
+(* MemnormLoc.YFf1_D_safe (MemnormLoc.v:105-119) over ARmcf. *)
 Lemma YFf1cf_D_safe : forall (B : asyms) (ly : alayout) (X : astate) (rd : reader) (Hp : list Z) (M : ARmcf B ly X Hp rd)
   (lb : batch) (initr : list batch),
   rev (qc_list (st_qthread X)) = lb :: initr -> Z.of_nat (length (b_items lb)) < kBatchSlots ->
@@ -72,7 +73,7 @@ destruct (YFf1cf.D_cases B ly X rd Hp M lb initr Hrev Hroom sp Hsp IMG _ Hd) as 
 - apply MemnormHitG.mn_safe_high. unfold kHighMemBeg, kHighMemEnd, kImgEnd, TASK_SIZE in *. lia.
 Qed.
 
-(* MemnormLoc.YFf2_D_safe (MemnormLoc.v:134-149) over ARmcf. *)
+(* MemnormLoc.YFf2_D_safe (MemnormLoc.v:135-150) over ARmcf. *)
 Lemma YFf2cf_D_safe : forall (B : asyms) (ly : alayout) (X : astate) (rd : reader) (Hp : list Z) (M : ARmcf B ly X Hp rd),
   st_cache_inited X = true -> forall l : list Z, pc_chunks (cache X kBatchClass) = l -> l <> [] ->
   forall sp : Z, ly_stk_lo ly + YFew.QSTACK <= sp <= ly_stk_hi ly -> img_cover ly ->

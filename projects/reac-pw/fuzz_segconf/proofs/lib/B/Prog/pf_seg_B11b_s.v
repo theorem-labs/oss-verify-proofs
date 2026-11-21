@@ -3,7 +3,7 @@
    state to the return state at the FP state the wrapper returns. The B11b segment lane of the image-B G3 walk owner, 2026-10-30.
    proves function reac_segconf_parse_file (segment B11b, the snprintf step; reuse search and CONFIRM:
    the rule-24 lookup record, the rule-24 checker 2026-10-30T16:55:47Z; reuse verdict none).
-   ADAPTED from plugin-hostd/fuzz_command's released lib/A/Prog/check_reply_s4.v (origin/ossv/recipes 501c0d516c69,
+   ADAPTED from plugin-hostd/fuzz_command's released lib/A/Prog/check_reply_s4.v (
    cr_s4: the snprintf call step of check_reply's walk: ecall_pre_stk_at, aj_art_own_atF with the destination in the
    walk's own class-5 frame, srr_art_postF_of_pf, srr_after_artF).
 

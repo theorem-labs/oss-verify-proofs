@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, program part, the GENERIC djb2 byte loop of check_reject_clean_starved
    (fuzz_pick, fuzz.h:65-72, inlined three times on each image). Lane BCrs of h-rw-pre-5; the A walk (h-w6u-rep) and
    the B walk (BCrs) cite it, each three times. Image-free: no listing, no address, no allocator instance.
@@ -15,7 +16,7 @@
      address of the next byte (a copy may keep one, two or the caller's data register), the bytes themselves (garr8)
      and the ONE memory premise of the per-byte ASan check, range_addressable over [data, data + size) (the src_rd
      gives both); J is the walk's own frame (journal, saved registers, the registers the loop does not touch);
-   - djb_loop: the induction (SRr_loopZ, YA0n.v:95) from one-iteration steps to the exit pc;
+   - djb_loop: the induction (SRr_loopZ, YA0n.v:96) from one-iteration steps to the exit pc;
    - the per-iteration facts a step needs: the hash update (PRW_CrsModel.v crs_djb2_snoc, frozen), the counter, the
      shadow byte of the next byte (saddr_ok, so the check's fast path or its in-granule arm), the UBSan facts
      (no pointer wrap, non-null) and the byte's value.

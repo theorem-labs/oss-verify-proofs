@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths, module names and numbers changed; 5113 of its 5220 lines of code are new or changed and 407 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/BTxValue.v, with its module paths and module names changed; 2360 of its 2536 lines of code are new or changed and 5044 lines of the source are left out. *)
-(* proves function fuzz_realloc (A' 0x858ac) (reuse search: the proof index v5 on main / ossv/recipes@25e3d17bdb50 / ossv/candidates / release/pau-projects-recipes (the unpinned ones at their tips at index build 2026-10-29T21:33:35Z, as the index output header states) + lemma index + live heads, and git grep of 0x858ac on those four refs: 0 released lemmas for 0x858ac; the released fuzz_realloc lemmas are the old-pin plain / ubsan contracts; this file restates this walk's own proof)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* proves function fuzz_realloc (A' 0x858ac) (reuse search: the proof index v5 on main / ossv/recipes / ossv/candidates / release/pau-projects-recipes (the unpinned ones at their tips at index build 2026-10-29T21:33:35Z, as the index output header states) + lemma index + live heads, and git grep of 0x858ac on those four refs: 0 released lemmas for 0x858ac; the released fuzz_realloc lemmas are the old-pin plain / ubsan contracts; this file restates this walk's own proof)
    fuzz_preset, row AL3 (the internal file FREE-PIECES-102.md Part 5): the ASan walk of fuzz_realloc on image A' (asan, #102 pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519b; merged alloc.c :104-128,
    blob bd2740a) and its top theorem fuzz_realloc_holds_Ap : tfuzz_realloc_specX (lib/A/PRH_FnAlloc.v, the #102 kit of
    record, post-implication position form) at the generated PrhImg prh_img_A, the allocator lane's room invariant
    prh_room_live_a8 and the allocator relation ARcf /\ xs_placed_cf. The segments before the realloc call are restated
-   from the held walk lib/A/Prog/FuzzRealloc.v.wip blob ec606ccf (commit dc23a75bafa, V1 pin).
+   from the held walk lib/A/Prog/FuzzRealloc.v.wip blob ec606ccf (V1 pin).
    SOURCES: the A' listing Listing_prog.v (sha256 62db5cdc9519; internal record) / PAImg_prog.v (sha256 04074e99eb62; internal record) / lib/Reusable/YPsym.v (as in this tree) of
    the #102 pins listing (A_OBJ by symbol: 7 g_count, 8 g_fail_at, 9 g_live, 10 g_peak,
    11 g_ran_out, 12 __asan_shadow_memory_dynamic_address, 13 g_own_ran_out, 14 g_most), carried by the AL base
@@ -2179,7 +2180,7 @@ apply KR.
 Qed.
 
 (* ==== THE TOP THEOREM: fuzz_realloc on A' against the text tfuzz_realloc_specX (lib/A/PRH_FnAlloc.v on the AL
-   base, the kit's caa965672d21; on this tree PRH_FnAlloc.v:627, the SRr' form with the hull budget and use), at the generated PrhImg prh_img_A and a Theorem Labs lane's room invariant. The CfImg stays the Section's
+   base, the kit; on this tree PRH_FnAlloc.v:627, the SRr' form with the hull budget and use), at the generated PrhImg prh_img_A and a Theorem Labs lane's room invariant. The CfImg stays the Section's
    {ci}: its two runtime call targets are named premises CF_unpoison / CF_poison, the final instance closes them by computation. ==== *)
 #[local] Existing Instance prh_img_A.
 Lemma ra_trace_eq : forall pc0 r, unwind_of_chain pc0 [(0, r, 0)] = prh_trace pc0 r [].

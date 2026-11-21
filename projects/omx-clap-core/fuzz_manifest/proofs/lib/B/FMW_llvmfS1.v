@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS1.v at a working branch 79d8c0f1b8f, RE-WALKED on B's
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS1.v at a working branch, RE-WALKED on B's
    instructions (B 0x809e0..0x80a50; A 0x8097c..0x809c4). Registers as on A. B differs from A by: four UBSan pointer-overflow
    guards between `add s4, a0, a1` and the first memchr, each branching to 0x80ba0 (L+0x224, `unimp`):
      0x809e8 bltu s4, a0          (uri < data)
@@ -6,7 +6,7 @@
      0x80a00 bltu s2, s4          (text < uri)
      0x80a0c beqz a0              (a0 = (data != 0) ^ (text == 0), set by 0x80a04 seqz / 0x80a08 xor);
    each is proved NOT taken in lf_seg1: the trap arm of the branch split is refuted by B5's class lemma for it
-   (lib/B/FMTrapB.v at a working branch c89f3cdf72d; FM-B-TRAPS.md rows 48-51: 0x809e8 and 0x80a00 class K3,
+   (lib/B/FMTrapB.v at a working branch; FM-B-TRAPS.md rows 48-51: 0x809e8 and 0x80a00 class K3,
    fmt_add_ltu_not; 0x809f8 and 0x80a0c class K6, fmt_nullpres_not); and by the
    s6 / s1 arithmetic: A keeps s6 = (size != 0) and computes size - s6 in a0; B computes a1 = (size != 0), uri = data + a1,
    s6 := -a1 (0x80a10 neg) and, after the first memchr, s1 := size + s6 (0x80a30), s3 := s1 - k (0x80a34). lf_P1 (the cut

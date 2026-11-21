@@ -79,7 +79,7 @@ Definition reac_ctrl_record_cksum_verify_contract_F : Prop :=
    so the _on forms DROP the guarded conjunct `(1 <= bv_unsigned a1 -> shadow_rw m) ->` and name no region.
    (a Theorem Labs lane proposed a narrowed shadow_rw_on (sh_word_on a0 a1); the dropped form is stronger and its run
    discharges it trivially.) The guarded asan_cells and addressable premises STAY: the run does use them.
-   Image-A form: premise DROPPED, as A's checksum_verify / headamp_record_verify (a Theorem Labs lane e8539574cef). *)
+   Image-A form: premise DROPPED, as A's checksum_verify / headamp_record_verify (a Theorem Labs lane). *)
 Definition reac_ctrl_record_cksum_verify_contract_on : Prop :=
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
          (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z) (bs : list byte),

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstDrainCl.v (commit ce1a656b52b7, file sha256 127ade7f2060) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstDrainCl.v (file sha256 127ade7f2060) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (second hand of the lane): the LEDGER half of F11,
    the cf ledger ALedger_cf carried across the free-array grant of SizeClassAllocator64LocalCache::Deallocate
    (EnsureFreeArraySpace -> one KMapFreeArray map of kFreeArrayMapSize bytes at the class's next free-array slot).
@@ -41,7 +42,7 @@ Local Open Scope Z_scope.
 Section U. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {IM : AImg}.
 Variable B : asyms.
 
-(* YG08cf.sec_extents_sizes64P_cf (YG08cf.v:150) over the cut invariant WfR_cf: its proof reads only the chunks. *)
+(* YG08cf.sec_extents_sizes64P_cf (YG08cf.v:151) over the cut invariant WfR_cf: its proof reads only the chunks. *)
 Lemma sec_extents_sizes_R : forall U pp cc bb ly s, WfR_cf U pp cc bb s ->
 Forall (fun e => 4096 <= snd e < 2 ^ 64) (sec_extents ly s).
 Proof.

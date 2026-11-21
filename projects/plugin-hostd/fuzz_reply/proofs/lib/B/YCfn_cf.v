@@ -2,7 +2,7 @@
    (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v, the Section cf parameters fr_live_pre / fr_live_post / fr_surv / fr_FP; the
    B top lib/B/W_LLVMFuzzerTestOneInput_top_x.v and the B plug lib/B/ReplyDriverCfB.v fill them with this file's _b
    names; the non-x lib/B/W_LLVMFuzzerTestOneInput_cut.v takes a 4-argument fr_surv that fr_surv_b does not fill):
-   lib/B's twin of lib/A/ACfn_cf.v (commit 2dc8b98f64d), at image B's globals fr_globals_b
+   lib/B's twin of lib/A/ACfn_cf.v, at image B's globals fr_globals_b
    (lib/B/W_rep.v) and image B's segments tfibsegs (lib/B/YB1v.v).  The texts are the ones W8Entry-2 and ATopKeeper
    agreed for A; a Theorem Labs lane approved them for B (2026-10-29), with fr_surv in A's MEMORY-NAMED form from the start:
    the count form (A's fr_surv_v0) cannot carry the driver's own buf and q across a call, because its dropped block is
@@ -38,11 +38,11 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require W_contract ReplyCnt.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* g_out's largest buffer, from the source (projects/plugin-hostd/fuzz_reply/source/fuzz_reply.c at the pin
-   c8557374ad2e, the same source as image A's): g_capout <= 2 * (the most bytes the controller reads in one op), and the
+(* g_out's largest buffer, from the source (projects/plugin-hostd/fuzz_reply/source/fuzz_reply.c at the pin,
+   the same source as image A's): g_capout <= 2 * (the most bytes the controller reads in one op), and the
    remove op (a drain, then the held gestures ended in the same op) sends at most 2 * R_s - 2 with
    R_s <= 511 * 65,535, so g_capout <= 133,953,536 <= OUT_MAX = 4 * 511 * 65,535 = 133,953,540.  The B twin of
-   lib/A/ACfn_cf.v's OUT_MAX (a Theorem Labs lane, commit 15e5eb0c405 / d36b6f2c3b1; a Theorem Labs lane's ruling
+   lib/A/ACfn_cf.v's OUT_MAX (a Theorem Labs lane; a Theorem Labs lane's ruling
    2026-10-30 01:39Z on a Theorem Labs lane's B1cOutMax, fresh reviewer OutMax4Review), whose comment gives the full
    derivation and the witnesses: the bound is a fact of the source, so it holds for image B without change.  The
    older 2^25 - 2 holds only for 1-byte sends from cap 0; the REMOVE op exceeds it. *)
@@ -51,8 +51,8 @@ Definition OUT_MAX : Z := 133953540.
 Lemma OUT_MAX_src : OUT_MAX = 2 * (2 * ((W_LLVMFuzzerTestOneInput_cut.OPS_MAX - 1) * 65535)).
 Proof. reflexivity. Qed.
 
-(* The room one call may use on top of everything live: 2^33, as A (lib/A/ACfn_cf.v CALL_ROOM, a Theorem Labs lane
-   78ca01c6153). A Theorem Labs lane's ruling (B) 2026-10-29 23:47Z: ATABLE + OUT_MAX was too small for the arms' room
+(* The room one call may use on top of everything live: 2^33, as A (lib/A/ACfn_cf.v CALL_ROOM, a Theorem Labs lane).
+   A Theorem Labs lane's ruling (B) 2026-10-29 23:47Z: ATABLE + OUT_MAX was too small for the arms' room
    premises (LS_write_room, LS_event_malloc, LS_rm_rr_pre, HLSRIG, LS_rf_room, LS_pro_oa, LS_add_room), which need
    CALL_ROOM_B >= ~6.58e9; the driver's H_live still holds (blocks_bytes stays below 2^30 over the <= 4 calls:
    2^27 + 3 * (ATABLE + OUT_MAX) < 2^30, and 2^30 + 2^33 <= LIVE_MAX = 2^34). fr_live_post_b keeps ATABLE + OUT_MAX. *)

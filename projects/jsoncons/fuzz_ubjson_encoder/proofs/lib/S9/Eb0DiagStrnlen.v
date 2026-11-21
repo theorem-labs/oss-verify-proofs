@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the string read-ahead slack of 9; addresses and numbers; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagStrnlen.v, lines 86, 104. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -78,7 +79,7 @@ Section SN.
   Hypothesis HW : L5.writable RSEGS M (s - 4400) 4400.
   Hypothesis HD : L5.defined M (s - 4400) 4400.
   Hypothesis HIMG : L5.img_clear M 65536 1306624.
-  Hypothesis Hp : s <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+  Hypothesis Hp : s <= p /\ p + n + 1 + 9 <= 2 ^ 47.
   Hypothesis Hn : n <= 131071.
   Hypothesis HSTR : cstr M p bs t8.
   Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
@@ -93,7 +94,7 @@ Section SN.
       /\ mem_grows M M'.
   Proof.
     pose proof HC as (C1 & C2 & C3 & CG & C5 & C6).
-    assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+    assert (Pr : 140735332552704 <= p <= 140737488355318) by lia.
     assert (Nr : 0 <= n <= 131071) by lia.
 
     pose proof (sC1_conc fx R M (fun j => match j with 2%nat => s | 33%nat => p | 34%nat => n | _ => 0 end)) as P. cbn beta iota in P.

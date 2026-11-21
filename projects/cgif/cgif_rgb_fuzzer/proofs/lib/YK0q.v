@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (read_cstr_of_rdn, read_cstr_toolong_of_rdn and their aux lemmas take a TASK_SIZE premise, as read_cstr now checks access_okb at every byte; these proofs re-indented; with_fds_channel_reader, the fd-table update's transport of the channel-reader flag fdchan asks for). *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
@@ -16,6 +17,10 @@ Lemma with_fds_fs : forall f m, m_fs (with_fds f m) = m_fs m.
 Proof. reflexivity. Qed.
 
 Lemma with_fds_fds : forall f m, m_fds (with_fds f m) = f.
+Proof. reflexivity. Qed.
+(* LPS 727298f3: [fdchan]'s third conjunct, [m_channel_reader], is a field of the
+   process record, so an fd-table update leaves it where it was. *)
+Lemma with_fds_channel_reader : forall f m, m_channel_reader (with_fds f m) = m_channel_reader m.
 Proof. reflexivity. Qed.
 
 
@@ -133,66 +138,82 @@ destruct (rdn segs mem (a + 1) n) as [rest1|]; [|discriminate].
 injection H; intros; subst; reflexivity.
 Qed.
 Lemma read_cstr_aux_of_rdn : forall segs str fuel mem a,
-(length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
-rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
-read_cstr_aux (mrb segs mem) a fuel = CstrOk str.
+  (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (bv_unsigned a + Z.of_nat (length str) < TASK_SIZE)%Z ->
+  rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
+  read_cstr_aux (mrb segs mem) a fuel = CstrOk str.
 Proof.
-intros segs str; induction str as [|b str IH]; intros fuel mem a Hf Hnz Hr.
-- cbn [length] in *. destruct fuel as [|fuel]; [lia|].
-assert (Hb0 : mrb segs mem a = Some (Z_to_bv 8 0))
-by (apply (mrb_first segs mem a 0 (Z_to_bv 8 0) []); exact Hr).
-cbn [read_cstr_aux]. rewrite Hb0. reflexivity.
-- cbn [length] in *. destruct fuel as [|fuel]; [lia|].
-cbn [read_cstr_aux]. cbn [app] in Hr.
-assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
-assert (Hfirst : mrb segs mem a = Some b)
-by (apply (mrb_first segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
-exact Hr).
-assert (Htail : rdn segs mem (a + 1) (length str + 1)
-= Some (str ++ [Z_to_bv 8 0]))
-by (apply (rdn_tail segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
-exact Hr).
-rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
-rewrite (IH fuel mem (a + 1) ltac:(lia)
-ltac:(intro; apply Hnz; right; assumption) Htail).
-reflexivity.
+  intros segs str; induction str as [|b str IH]; intros fuel mem a Hf Hnz Hlo Hr.
+  - cbn [length] in *. destruct fuel as [|fuel]; [lia|].
+    assert (Hb0 : mrb segs mem a = Some (Z_to_bv 8 0))
+      by (apply (mrb_first segs mem a 0 (Z_to_bv 8 0) []); exact Hr).
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one; apply Z.ltb_lt; lia).
+    rewrite Hb0. reflexivity.
+  - cbn [length] in *. destruct fuel as [|fuel]; [lia|].
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one; apply Z.ltb_lt; lia).
+    cbn [app] in Hr.
+    assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
+    assert (Hfirst : mrb segs mem a = Some b)
+      by (apply (mrb_first segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
+          exact Hr).
+    assert (Htail : rdn segs mem (a + 1) (length str + 1)
+                    = Some (str ++ [Z_to_bv 8 0]))
+      by (apply (rdn_tail segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
+          exact Hr).
+    assert (Hu1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+      by (apply bv_unsigned_succ_below_task_size; lia).
+    rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
+    rewrite (IH fuel mem (a + 1) ltac:(lia)
+               ltac:(intro; apply Hnz; right; assumption) ltac:(lia) Htail).
+    reflexivity.
 Qed.
 Lemma read_cstr_of_rdn : forall segs mem a str,
-(length str <= 4095)%nat -> ~ In (Z_to_bv 8 0) str ->
-rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
-read_cstr (mrb segs mem) a = CstrOk str.
+  (length str <= 4095)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (bv_unsigned a + Z.of_nat (length str) < TASK_SIZE)%Z ->
+  rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
+  read_cstr (mrb segs mem) a = CstrOk str.
 Proof.
-intros segs mem a str Hlen Hnz Hr.
-unfold read_cstr. apply read_cstr_aux_of_rdn; [|exact Hnz|exact Hr].
-change path_max with 4096%nat. lia.
+  intros segs mem a str Hlen Hnz Hlo Hr.
+  unfold read_cstr. apply read_cstr_aux_of_rdn; [|exact Hnz|exact Hlo|exact Hr].
+  change path_max with 4096%nat. lia.
 Qed.
 Lemma read_cstr_aux_toolong_of_rdn : forall segs fuel bs mem a,
-length bs = fuel -> ~ In (Z_to_bv 8 0) bs ->
-rdn segs mem a fuel = Some bs ->
-read_cstr_aux (mrb segs mem) a fuel = CstrTooLong.
+  length bs = fuel -> ~ In (Z_to_bv 8 0) bs ->
+  (fuel <> 0%nat -> (bv_unsigned a + Z.of_nat fuel <= TASK_SIZE)%Z) ->
+  rdn segs mem a fuel = Some bs ->
+  read_cstr_aux (mrb segs mem) a fuel = CstrTooLong.
 Proof.
-intros segs fuel; induction fuel as [|fuel IH]; intros bs mem a Hlen Hnz Hr;
-[reflexivity|].
-destruct bs as [|b bs]; [cbn in Hlen; lia|].
-cbn [read_cstr_aux].
-assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
-assert (Hfirst : mrb segs mem a = Some b)
-by (apply (mrb_first segs mem a fuel b bs); exact Hr).
-assert (Htail : rdn segs mem (a + 1) fuel = Some bs)
-by (apply (rdn_tail segs mem a fuel b bs); exact Hr).
-rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
-rewrite (IH bs mem (a + 1) ltac:(cbn in Hlen; lia)
-ltac:(intro; apply Hnz; right; assumption) Htail).
-reflexivity.
+  intros segs fuel; induction fuel as [|fuel IH]; intros bs mem a Hlen Hnz Hlo Hr;
+    [reflexivity|].
+  specialize (Hlo ltac:(lia)).
+  destruct bs as [|b bs]; [cbn in Hlen; lia|].
+  rewrite read_cstr_aux_accepted
+    by (rewrite access_okb_one; apply Z.ltb_lt; lia).
+  assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
+  assert (Hfirst : mrb segs mem a = Some b)
+    by (apply (mrb_first segs mem a fuel b bs); exact Hr).
+  assert (Htail : rdn segs mem (a + 1) fuel = Some bs)
+    by (apply (rdn_tail segs mem a fuel b bs); exact Hr).
+  assert (Hu1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+    by (apply bv_unsigned_succ_below_task_size; lia).
+  rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
+  rewrite (IH bs mem (a + 1) ltac:(cbn in Hlen; lia)
+             ltac:(intro; apply Hnz; right; assumption)
+             ltac:(intro; lia) Htail).
+  reflexivity.
 Qed.
 Lemma read_cstr_toolong_of_rdn : forall segs mem a bs,
-length bs = 4096%nat -> ~ In (Z_to_bv 8 0) bs ->
-rdn segs mem a 4096%nat = Some bs ->
-read_cstr (mrb segs mem) a = CstrTooLong.
+  length bs = 4096%nat -> ~ In (Z_to_bv 8 0) bs ->
+  (bv_unsigned a + 4096 <= TASK_SIZE)%Z ->
+  rdn segs mem a 4096%nat = Some bs ->
+  read_cstr (mrb segs mem) a = CstrTooLong.
 Proof.
-intros segs mem a bs Hlen Hnz Hr.
-unfold read_cstr. change path_max with 4096%nat.
-eapply read_cstr_aux_toolong_of_rdn; eauto.
+  intros segs mem a bs Hlen Hnz Hlo Hr.
+  unfold read_cstr. change path_max with 4096%nat.
+  eapply read_cstr_aux_toolong_of_rdn; [exact Hlen|exact Hnz| |exact Hr].
+  intros _. change (Z.of_nat 4096) with 4096%Z. lia.
 Qed.
 
 

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, the fuzz_reply.asan-ubsan twin of lib/A/AD1r_fp.v (RelocA-2,
-   a working branch 50f0c528115): the footprint lemmas of target_run's loop for the cf program
+   a working branch): the footprint lemmas of target_run's loop for the cf program
    contract over YCbqG's ajournal_x (lib/B/YCbqG.v) with the program globals G_fr_c B as its PST and the footprint
    sink_token :: fr_FP_b (lib/B/YCfn_cf.v). Text adapted from B/YD1r.v and B/YE22.v as AD1r_fp adapts their A twins.
    Image-B values: the G_fr_c ranges (0xa2520 .. 0xa2564, 0x5d8cc0 .. 0x5d90c8 = A's + 0x580, and errno 0x5d994c ..
    0x5d9950, B/W_LLVMFuzzerTestOneInput_G.v TFIB_ERRNO_B), the atexit table finished_atexit 0x5f9a40 .. 0x5f9b70 (B's
    symtab; A's 0x5f94c0 + 0x580), the image end 0x5fc000, and B's globals fr_globals_b (B/W_rep.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

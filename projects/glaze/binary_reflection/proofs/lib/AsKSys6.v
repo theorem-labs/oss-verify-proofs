@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise on the mmap nodes; grant_ok_na_pin and the refusal tests take the hint address and place through linux_place; the vDSO-free premise of mprotect; check_mmap's MAP_FIXED overflow arm; RomBase.sys_rob as the third part of node_ok at the instruction, brk, mmap, mprotect and madvise nodes, and a premise of the node_chk_ev_mat, node_chk_ev_noacc and node_chk_noacc wrappers). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -392,7 +393,7 @@ Proof.
   assert (Hacc : mi_account_step segs ms model = MachineOk (ms', model)).
   { unfold mi_account_step. rewrite Hstep. cbn [accessed_ranges access_value].
     rewrite materialize_model_accesses_nil. reflexivity. }
-  apply node_ok_of_u; [CfgStep.kit_pending_on |].
+  apply node_ok_of_u; [CfgStep.kit_pending_on | apply RomBase.sys_rob_instr; exact Hsvc |].
   split.
   - intros []. apply (sstep_instr segs ms model ms' model Hh Hsvc Hacc).
   - intros e st Hss. exists tt.
@@ -419,11 +420,12 @@ Lemma node_chk_ev_mat : forall ms model x8 (I : Type)
   (forall eff, check_syscall (sys_input segs ms x8) eff model <> CheckUnmodeled) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, syscall_effect_accesses (effs i) = []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   StoreOk.ShapeAlg.node_ok segs (mkCfg ms model) I evs
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
 Proof.
-  intros ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hcls Hnu Hh' Hacc.
-  apply (node_chk_cfg segs ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hcls Hnu Hh').
+  intros ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hcls Hnu Hh' Hacc Hrob.
+  apply (node_chk_cfg segs ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hcls Hnu Hh'); [| exact Hrob].
   intros i. rewrite (Hacc i). apply materialize_model_accesses_nil.
 Qed.
 
@@ -437,23 +439,26 @@ Lemma mmap_none_check : forall ms x8 model eff flags,
   ms_gpr ms 1 <> Z_to_bv 64 0 -> ms_gpr ms 2 = Z_to_bv 64 0 ->
   ms_gpr ms 3 = flags -> mmap_flags_core flags = 34%Z ->
   ms_gpr ms 4 = Z_to_bv 64 (-1) -> ms_gpr ms 5 = Z_to_bv 64 0 ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   check_syscall (sys_input segs ms x8) eff model
   = match eff with
     | mkEffectU r [] [] us [] [] =>
         if errno_ret_in mmap_errnos r   (* [comment removed for export] *)
         then match us with [] => CheckOk model [] | _ => CheckReject end
-        else if grant_ok_na_pin model r nZ && listNN_eqb us [(r, Z_to_bv 64 nZ)]
+        else if grant_ok_na_pin (ms_gpr ms 0) model r nZ && listNN_eqb us [(r, Z_to_bv 64 nZ)]
         then CheckOk (with_mmap_backing flags r (Z_to_bv 64 nZ) (noaccess_model r (Z_to_bv 64 nZ) model)) []
         else CheckReject
     | _ => CheckReject
     end.
 Proof.
-  intros ms x8 model eff flags Hno H1 H2 H3 Hcore H4 H5 nZ.
+  intros ms x8 model eff flags Hno H1 H2 H3 Hcore H4 H5 Hdecl nZ.
   destruct (mmap_gates_core34 flags Hcore) as (_ & Gm & Gn).
-  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap.
+  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
   assert (E1 : w_is0 (ms_gpr ms 1) = false) by (unfold w_is0; apply bv_eqb_neq; exact H1).
-  rewrite E1, H2, H3, H5, mmap_off_aligned_b_0, (mmap_anon_b_of_core flags _ Hcore eq_refl), Gm, Gn. cbn [negb]. cbv beta iota zeta. fold nZ.
+  rewrite E1, H2, H3, H5, mmap_off_aligned_b_0, (mmap_anon_b_of_core flags _ Hcore eq_refl), Gm, Gn. cbn [negb]. cbv beta iota zeta.
+  rewrite Hdecl. fold nZ.
   destruct eff as [r ws zs us cs ci]. destruct ws; [|reflexivity]. destruct zs; [|reflexivity].
   destruct cs; [|destruct us; reflexivity]. destruct ci; [|destruct us; reflexivity].
   match goal with |- context [errno_ret_in ?es r] => destruct (errno_ret_in es r) end; [reflexivity|].
@@ -715,7 +720,8 @@ Section FPGen.
           unfold Mmap.brk_grow_ok. rewrite Z.ltb_irrefl, Bool.andb_false_r. reflexivity. }
     set (ms := epend regs pc mem rom (getr regs 17)).
     pose proof (node_brk_u segs ms model (getr regs 17) Hh Hl eq_refl Hno) as Nu.
-    pose proof (node_ok_exact segs (mkCfg ms model) _ (fun _ => []) (brk_nx ms model) Nu
+    pose proof (node_ok_exact segs (mkCfg ms model) _ (fun _ => []) (brk_nx ms model)
+                  (RomBase.sys_rob_memfree segs ms model (getr regs 17) eq_refl ltac:(rewrite Hno; exact RomBase.memfree_214)) Nu
                   (CfgStep.kit_pending_off_sysno segs ms model (getr regs 17) 214 eq_refl Hno eq_refl)
                   (fun i => brk_nx_halted segs ms model (getr regs 17) i Hh Hl Hno)) as N.
     destruct (brk_exact_inh segs ms model (getr regs 17) Hh Hl eq_refl Hno) as (i0 & Hi0).
@@ -762,23 +768,27 @@ Section FPGen.
       mkCfg (mkst (regupd regs 10 a) (v_addi pc 4) (zfill a n mem) rom) (mmap_model a n model).
 
     (* [comment removed for export] *)
-    Lemma mmrw_rf : mmap_grant_refusable (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))
-                    = mmap_grant_refusable (Z_to_bv 64 34) model nZ.
-    Proof. rewrite mmrw_len. unfold ms. rewrite ms_gpr_epend3, H13. reflexivity. Qed.
+    Lemma mmrw_rf : mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))
+                    = mmap_grant_refusable (Z_to_bv 64 34) (getr regs 10) model nZ.
+    Proof. rewrite mmrw_len. unfold ms. rewrite ms_gpr_epend3, H13, ms_gpr_epend0. reflexivity. Qed.
 
     (* [comment removed for export] *)
     Lemma node_mmap_rw_grant :
-      mmap_grant_refusable (Z_to_bv 64 34) model nZ = false ->
+      place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) nZ = false ->
+      mmap_grant_refusable (Z_to_bv 64 34) (getr regs 10) model nZ = false ->
       node_ok segs (mkCfg ms model)
         {a : word | grant_ok (getr regs 10) model a nZ = true}
         (fun _ => [])
         (fun i => match i with exist _ a _ => mmrw_grant a end).
     Proof.
-      intros RF.
-      pose proof (node_mmap_grant segs ms model (getr regs 17) Hh Hl eq_refl mmrw_no mmrw_args
-                    (eq_trans mmrw_rf RF)) as N.
+      intros DECL RF.
       assert (E0 : ms_gpr ms 0 = getr regs 10) by (unfold ms; apply ms_gpr_epend0).
       assert (E1 : page_round_up_Z (bv_unsigned (ms_gpr ms 1)) = nZ) by (rewrite mmrw_len; reflexivity).
+      assert (DECL' : place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+                        (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false)
+        by (rewrite E0, E1; exact DECL).
+      pose proof (node_mmap_grant segs ms model (getr regs 17) Hh Hl eq_refl mmrw_no mmrw_args
+                    DECL' (eq_trans mmrw_rf RF)) as N.
       assert (E2 : page_round_up (ms_gpr ms 1) = n) by (unfold page_round_up; rewrite mmrw_len; reflexivity).
       unshelve eapply (node_ok_reindex segs _ _ _ _ _ _ _
                 (fun j => match j with exist _ a Ha => exist _ a _ end)
@@ -808,6 +818,8 @@ Section FPGen.
                (H12 : getr regs 12 = Z_to_bv 64 0) (H13 : getr regs 13 = Z_to_bv 64 34)
                (H14 : getr regs 14 = Z_to_bv 64 (-1)) (H15 : getr regs 15 = Z_to_bv 64 0).
 
+    Hypothesis Hdecl : place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+      (page_round_up_Z (bv_unsigned (getr regs 11))) = false.
     Let nZ : Z := page_round_up_Z len.
     Let n : word := Z_to_bv 64 nZ.
     Let ms : machine_state := epend regs pc mem rom (getr regs 17).
@@ -833,7 +845,7 @@ Section FPGen.
         | mkEffectU r [] [] us [] [] =>
             if errno_ret_in mmap_errnos r
             then match us with [] => CheckOk model [] | _ => CheckReject end
-            else if grant_ok_na_pin model r nZ && listNN_eqb us [(r, n)]
+            else if grant_ok_na_pin (ms_gpr ms 0) model r nZ && listNN_eqb us [(r, n)]
                  then CheckOk (with_mmap_backing (Z_to_bv 64 34) r n (noaccess_model r n model)) []
                  else CheckReject
         | _ => CheckReject
@@ -844,29 +856,33 @@ Section FPGen.
                     ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12)
                     ltac:(unfold ms; rewrite ms_gpr_epend3; exact H13) mmap_flags_core_22
                     ltac:(unfold ms; rewrite ms_gpr_epend4; exact H14)
-                    ltac:(unfold ms; rewrite ms_gpr_epend5; exact H15)) as X.
+                    ltac:(unfold ms; rewrite ms_gpr_epend5; exact H15)
+                    ltac:(unfold ms; rewrite ms_gpr_epend0, ms_gpr_epend1; exact Hdecl)) as X.
       cbv zeta in X. rewrite L1 in X. exact X.
     Qed.
 
     (* [comment removed for export] *)
-    Lemma grant_na_pin_not_refusable : forall a, grant_ok_na_pin model a nZ = true -> mmap_reserve_refusable model nZ = false.
+    Lemma grant_na_pin_not_refusable : forall a, grant_ok_na_pin (ms_gpr ms 0) model a nZ = true -> mmap_reserve_refusable (ms_gpr ms 0) model nZ = false.
     Proof.
       intros a Ha. unfold mmap_reserve_refusable.
-      rewrite (vm_find_base_complete (m_vmmaps model) nZ a Ha). reflexivity.
+      rewrite (linux_place_is_available _ _ _ _ _ Ha). reflexivity.
     Qed.
 
 
     (* [comment removed for export] *)
     Lemma node_mmap_na_when :
       node_ok segs (mkCfg ms model)
-        ({e : Z | In e (mmap_errnos_when (mmap_reserve_refusable model nZ))} + {a : word | grant_ok_na_pin model a nZ = true})
+        ({e : Z | In e (mmap_errnos_when (mmap_reserve_refusable (ms_gpr ms 0) model nZ))} + {a : word | grant_ok_na_pin (ms_gpr ms 0) model a nZ = true})
         (fun _ => [])
         (fun i => match i with inl (exist _ e _) => mmna_fail e | inr (exist _ a _) => mmna_grant a end).
     Proof.
-      assert (Hn0 : 0 <= nZ) by (unfold nZ; apply page_round_up_Z_nonneg; lia).
-      set (ERR := mmap_errnos_when (mmap_reserve_refusable model nZ)).
+      assert (Hng : 0 < nZ /\ nZ mod page_size = 0).
+      { destruct mmna_len as [L1 L2]. unfold nZ. rewrite <- L1.
+        apply mmap_grant_len_ok. unfold w_is0. apply bv_eqb_neq. exact L2. }
+      destruct Hng as [Hnp Hnal].
+      set (ERR := mmap_errnos_when (mmap_reserve_refusable (ms_gpr ms 0) model nZ)).
       assert (HERR : forall e, In e ERR -> In e mmap_errnos) by (intros e; apply mmap_errnos_when_sub).
-      pose (I := ({e : Z | In e ERR} + {a : word | grant_ok_na_pin model a nZ = true})%type).
+      pose (I := ({e : Z | In e ERR} + {a : word | grant_ok_na_pin (ms_gpr ms 0) model a nZ = true})%type).
       pose (effs := fun i : I => match i with
                                | inl (exist _ e _) => mkEffectU (errno_ret e) [] [] [] [] []
                                | inr (exist _ a _) => mkEffectU a [] [] [(a, n)] [] [] end).
@@ -880,7 +896,7 @@ Section FPGen.
       { apply (node_chk_ev_mat segs ms model (getr regs 17) I effs ms' (fun _ => []) Hh eq_refl).
         - intros [[e He]|[a Ha]]; cbn [effs ms']; rewrite mmna_check.
           + rewrite (errno_ret_in_intro _ _ (HERR e He)). reflexivity.
-          + rewrite (grant_na_pin_not_errno model a nZ Hn0 Ha), Ha. cbn [andb].
+          + rewrite (grant_na_pin_not_errno (ms_gpr ms 0) model a nZ Hnp Hnal Ha), Ha. cbn [andb].
             rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
         - intros [r ws zs us cs ci] m' evs Hc. rewrite mmna_check in Hc.
           destruct ws; [|discriminate]. destruct zs; [|discriminate].
@@ -888,36 +904,36 @@ Section FPGen.
           destruct (errno_ret_in mmap_errnos r) eqn:Er.
           + destruct us; [|discriminate]. injection Hc as <- <-.
             destruct (proj1 (errno_ret_in_true _ _) Er) as (e & He & ->).
-            destruct (mmap_reserve_refusable model nZ) eqn:RF.
+            destruct (mmap_reserve_refusable (ms_gpr ms 0) model nZ) eqn:RF.
             * left. assert (He' : In e ERR) by (unfold ERR; try rewrite RF; exact He).
               exists (inl (exist _ e He')). repeat split; reflexivity.
             * right. cbn [eff_ret]. rewrite Hrb. split; [exact Er |]. split; [exact Hh |]. split.
               { rewrite (CfgStep.injected_family_off_alloc_only CfgStep.kit_cfg _ CfgStep.kit_cfg_alloc_only).
                 cbn [sys_input in_sysno]. rewrite mmna_no. reflexivity. }
               unfold mmap_reserve_refusable in RF. apply negb_false_iff in RF.
-              destruct (vm_gap_available_find _ _ RF) as (a & Hf).
-              unfold vm_find_base in Hf. apply List.find_some in Hf as [_ Hok].
+              destruct (vm_place_available_grant _ _ _ _ Hnp Hnal RF) as (a & Hok).
               exists (inr (exist _ a Hok)). cbn [effs eff_ret]. rewrite Hrb.
-              exact (grant_na_pin_not_errno model a nZ Hn0 Hok).
-          + destruct (grant_ok_na_pin model r nZ) eqn:Hg; [|discriminate]. cbn [andb] in Hc.
+              exact (grant_na_pin_not_errno (ms_gpr ms 0) model a nZ Hnp Hnal Hok).
+          + destruct (grant_ok_na_pin (ms_gpr ms 0) model r nZ) eqn:Hg; [|discriminate]. cbn [andb] in Hc.
             destruct (listNN_eqb us [(r, n)]) eqn:Hlq; [|discriminate].
             apply listNN_eqb_eq in Hlq. subst us. injection Hc as <- <-.
             left. exists (inr (exist _ r Hg)). repeat split; reflexivity.
-        - destruct (mmap_reserve_refusable model nZ) eqn:RF.
+        - destruct (mmap_reserve_refusable (ms_gpr ms 0) model nZ) eqn:RF.
           + right. intros [[e He]|[a Ha]]; cbn [effs eff_ret]; rewrite Hrb.
             * apply errno_ret_in_intro. exact (HERR e He).
             * exfalso. rewrite (grant_na_pin_not_refusable a Ha) in RF. discriminate RF.
           + left. intros [[e He]|[a Ha]]; cbn [effs eff_ret]; rewrite Hrb.
             * exfalso. unfold ERR in He. try rewrite RF in He. destruct He.
-            * exact (grant_na_pin_not_errno model a nZ Hn0 Ha).
+            * exact (grant_na_pin_not_errno (ms_gpr ms 0) model a nZ Hnp Hnal Ha).
         - intros [r ws zs us cs ci] Hc. rewrite mmna_check in Hc.
           destruct ws; [|discriminate]. destruct zs; [|discriminate].
           destruct cs; [|discriminate]. destruct ci; [|discriminate].
           destruct (errno_ret_in mmap_errnos r); [destruct us; discriminate|].
-          destruct (grant_ok_na_pin model r nZ && listNN_eqb us [(r, n)])%bool; discriminate.
+          destruct (grant_ok_na_pin (ms_gpr ms 0) model r nZ && listNN_eqb us [(r, n)])%bool; discriminate.
         - intros [[e He]|[a Ha]]; cbn [ms']; [exact Hh | rewrite with_mmap_backing_halted; unfold noaccess_model; rewrite with_vmmaps_halted'; exact Hh].
-        - intros [[e He]|[a Ha]]; reflexivity. }
-      destruct N as [N1 N2]. split.
+        - intros [[e He]|[a Ha]]; reflexivity.
+        - exact (RomBase.sys_rob_memfree segs ms model (getr regs 17) eq_refl ltac:(rewrite mmna_no; exact RomBase.memfree_222)). }
+      destruct N as [N1 [N2 N3]]. split; [| split; [| exact N3]].
       - intros i. pose proof (N1 i) as X. destruct i as [[e He]|[a Ha]]; cbn [effs ms'] in X; cbn.
         + unfold mmna_fail. rewrite <- (adv_retU_epend regs pc mem rom (getr regs 17)). exact X.
         + unfold mmna_grant. rewrite <- (adv_unmaps1_epend regs pc mem rom (getr regs 17)).
@@ -932,9 +948,9 @@ Section FPGen.
 
     (* [comment removed for export] *)
     Lemma node_mmap_na_grant :
-      mmap_reserve_refusable model nZ = false ->
+      mmap_reserve_refusable (ms_gpr ms 0) model nZ = false ->
       node_ok segs (mkCfg ms model)
-        {a : word | grant_ok_na_pin model a nZ = true}
+        {a : word | grant_ok_na_pin (ms_gpr ms 0) model a nZ = true}
         (fun _ => [])
         (fun i => match i with exist _ a _ => mmna_grant a end).
     Proof.
@@ -965,6 +981,12 @@ Section FPGen.
                (Hnw : bv_unsigned addr + page_round_up_Z len < two_pow_64)
                (H12 : getr regs 12 = Z_to_bv 64 3).
     Let n : word := Z_to_bv 64 (page_round_up_Z len).
+    (* 08b1429 Checks/Sys/Mm/Mprotect.v:35-37: a request meeting the vDSO/vvar pair answers
+       [CheckUnmodeled], so [RefNodes.mprotect_check] now asks the range to be free of the
+       pair.  Threaded as a premise from the caller, in the position the model's own caller
+       [Common/AsanNodesMmLib.srz_mprotect2:1144] puts it: after [n], before the two
+       [map_contains] facts. *)
+    Hypothesis Hvd : region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true.
     Hypotheses (Hna : map_contains (vm_noaccess (m_vmmaps model)) addr n = true)
                (Hma : map_contains (vm_maps (m_vmmaps model)) addr n = true).
     Let ms : machine_state := epend regs pc mem rom (getr regs 17).
@@ -994,7 +1016,7 @@ Section FPGen.
       exact (mprotect_check segs ms (getr regs 17) model eff addr len mpr_no
                ltac:(unfold ms; rewrite ms_gpr_epend0; exact H10) Hal
                ltac:(unfold ms; rewrite ms_gpr_epend1; exact H11) Hlen Hnw
-               ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12) Hna Hma).
+               ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12) Hvd Hna Hma).
     Qed.
 
 
@@ -1057,8 +1079,9 @@ Section FPGen.
           destruct (errno_ret_in mprotect_errnos r); [destruct zs; discriminate|].
           destruct (Sumbool.sumbool_of_bool (mprotect_budget_ok model addr n && w_is0 r && listNN_eqb zs [(addr, n)])%bool) as [E|E]; rewrite E in Hc; discriminate.
         - intros [[e He]|[[] Hb]]; cbn [ms']; [exact Hh | unfold mprotect_model; rewrite with_vmmaps_halted'; exact Hh].
-        - intros [[e He]|[[] Hb]]; reflexivity. }
-      destruct N as [N1 N2]. split.
+        - intros [[e He]|[[] Hb]]; reflexivity.
+        - exact (RomBase.sys_rob_memfree segs ms model (getr regs 17) eq_refl ltac:(rewrite mpr_no; exact RomBase.memfree_226)). }
+      destruct N as [N1 [N2 N3]]. split; [| split; [| exact N3]].
       - intros i. pose proof (N1 i) as X. destruct i as [[e He]|[[] Hb]]; cbn [effs ms'] in X; cbn -[ms n].
         + unfold mpr_fail. rewrite <- (adv_retU_epend regs pc mem rom (getr regs 17)). exact X.
         + unfold mpr_ok. rewrite <- (adv_zerosr_epend regs pc mem rom (getr regs 17)). exact X.
@@ -1154,7 +1177,7 @@ Section FPGen.
       assert (E1 : w_is0 (ms_gpr ms 1) = false).
       { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E.
         rewrite L1 in E. change (bv_unsigned (Z_to_bv 64 0)) with 0 in E. lia. }
-      rewrite (mmap_check segs ms (getr regs 17) model eff mmfx_no). unfold check_mmap.
+      rewrite (mmap_check segs ms (getr regs 17) model eff mmfx_no). unfold check_mmap, check_mmap_fixed_overflow.
       rewrite E1. unfold ms. rewrite ms_gpr_epend2, ms_gpr_epend3, ms_gpr_epend5, ms_gpr_epend0.
       rewrite H12, H13, H15, H10, mmap_off_aligned_b_0, (mmap_anon_b_of_core (Z_to_bv 64 50) _ mmap_flags_core_32 eq_refl), Gm, Gn, Gfn.
       cbn [negb]. cbv beta iota zeta. fold ms. rewrite L1. fold nZ.
@@ -1218,8 +1241,9 @@ Section FPGen.
           destruct (errno_ret_in mmap_errnos r); [destruct us; [discriminate | destruct (listNN_eqb _ _); discriminate] |].
           destruct (bv_eqb r addr && listNN_eqb us [(addr, n)])%bool; discriminate.
         - intros []; cbn [ms']; reflexivity || exact Hh.
-        - intros []; reflexivity. }
-      destruct N as [N1 N2]. split.
+        - intros []; reflexivity.
+        - exact (RomBase.sys_rob_memfree segs ms model (getr regs 17) eq_refl ltac:(rewrite mmfx_no; exact RomBase.memfree_222)). }
+      destruct N as [N1 [N2 N3]]. split; [| split; [| exact N3]].
       - intros i. pose proof (N1 i) as X. destruct i; unfold effs, ms' in X; cbn -[ms n nZ].
         unfold mmfx_ok. rewrite <- (adv_unmaps1_epend regs pc mem rom (getr regs 17)). exact X.
       - intros e st Hss. destruct (N2 e st Hss) as (i & -> & ->). exists i. split; [reflexivity|].
@@ -1274,7 +1298,7 @@ Proof.
   assert (Hacc : mi_account_step segs ms model = MachineOk (ms', model)).
   { (lazymatch goal with |- ?G => let G' := eval unfold mi_account_step in G in change_no_check G' end). rewrite Hstep. (lazymatch goal with |- ?G => let G' := eval cbn [accessed_ranges access_value] in G in change_no_check G' end).
     rewrite materialize_model_accesses_nil. reflexivity. }
-  apply node_ok_of_u; [CfgStep.kit_pending_on |].
+  apply node_ok_of_u; [CfgStep.kit_pending_on | apply RomBase.sys_rob_instr; exact Hsvc |].
   split.
   - intros []. apply (sstep_instr segs ms model ms' model Hh Hsvc Hacc).
   - intros e st Hss. exists tt.
@@ -1345,6 +1369,8 @@ Section MmapRw.
   Variables (ms : machine_state) (model : Model) (x8 : word).
   Hypotheses (Hh : m_halted model = None) (Hsvc : ms_svc_pending ms = Some x8)
              (Hno : bv_unsigned x8 = 222) (Hargs : mmap_args_ok ms).
+  Hypothesis Hdecl : place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false.
   Let nZ : Z := page_round_up_Z (bv_unsigned (ms_gpr ms 1)).
 
   Definition mmrw_fail (e : Z) : config := mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model.
@@ -1359,7 +1385,7 @@ Section MmapRw.
             (fun i => match i with exist _ a _ => mmrw_grant a end).
   Proof.
     intros a0 Ha0.
-    exact (node_mmap_lazy_grant segs ms model x8 Hh Hsvc Hno Hargs (grant_ok_not_refusable (ms_gpr ms 3) _ _ _ _ Ha0)).
+    exact (node_mmap_lazy_grant segs ms model x8 Hh Hsvc Hno Hargs Hdecl (grant_ok_not_refusable (ms_gpr ms 3) _ _ _ _ Ha0)).
   Qed.
 
 
@@ -1385,6 +1411,8 @@ Section MmapNr.
   Variables (ms : machine_state) (model : Model) (x8 : word).
   Hypotheses (Hh : m_halted model = None) (Hsvc : ms_svc_pending ms = Some x8)
              (Hno : bv_unsigned x8 = 222) (Hargs : mmap_args_ok_noreserve ms).
+  Hypothesis Hdecl : place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false.
   Let nZ : Z := page_round_up_Z (bv_unsigned (ms_gpr ms 1)).
 
   Definition mmnr_fail (e : Z) : config := mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model.
@@ -1399,9 +1427,9 @@ Section MmapNr.
             (fun i => match i with exist _ a _ => mmnr_grant a end).
   Proof.
     intros a0 Ha0.
-    assert (RF : mmap_grant_refusable (ms_gpr ms 3) model nZ = false).
+    assert (RF : mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) model nZ = false).
     { destruct Hargs as (_ & _ & Hfl & _ & _). rewrite Hfl. exact (grant_ok_nr_not_refusable _ _ _ _ Ha0). }
-    exact (node_mmap_noreserve_grant segs ms model x8 Hh Hsvc Hno Hargs RF).
+    exact (node_mmap_noreserve_grant segs ms model x8 Hh Hsvc Hno Hargs Hdecl RF).
   Qed.
 
 
@@ -1422,13 +1450,15 @@ End MmapNr.
 (* [comment removed for export] *)
 Lemma katD_mmap_rw_dm : forall ms model x8 Q,
   m_halted model = None -> ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 222 -> mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   (forall e, In e mmap_errnos -> doomed (mmrw_fail ms model e)) ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true -> katD (mmrw_grant ms model a) Q) ->
   katD (mkCfg ms model) Q.
 Proof.
-  intros ms model x8 Q Hh Hsvc Hno Hargs [a0 Ha0] _ Hg.
-  apply (katD_node segs _ _ (exist _ a0 Ha0) _ Q (node_mmap_rw_wit ms model x8 Hh Hsvc Hno Hargs a0 Ha0)).
+  intros ms model x8 Q Hh Hsvc Hno Hargs Hdecl [a0 Ha0] _ Hg.
+  apply (katD_node segs _ _ (exist _ a0 Ha0) _ Q (node_mmap_rw_wit ms model x8 Hh Hsvc Hno Hargs Hdecl a0 Ha0)).
   intros [a Ha]. exact (Hg a Ha).
 Qed.
 
@@ -1514,11 +1544,12 @@ Lemma node_chk_ev_noacc : forall ms model x8 (I : Type)
   (forall eff, check_syscall (sys_input segs ms x8) eff model <> CheckUnmodeled) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, syscall_effect_accesses (effs i) = []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) I evs
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
 Proof.
-  intros ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hcls Hnu Hh' Hacc.
-  apply (node_chk_cfg segs ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hcls Hnu Hh').
+  intros ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hcls Hnu Hh' Hacc Hrob.
+  apply (node_chk_cfg segs ms model x8 I effs ms' evs Hh Hsvc Hok Hinv Hcls Hnu Hh'); [| exact Hrob].
   intros i. rewrite (Hacc i). apply materialize_model_accesses_nil.
 Qed.
 
@@ -1535,10 +1566,11 @@ Lemma node_chk_noacc : forall ms model x8 (I : Type) (effs : I -> SyscallEffect)
   (forall eff, check_syscall (sys_input segs ms x8) eff model <> CheckUnmodeled) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, syscall_effect_accesses (effs i) = []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) I (fun _ => [])
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
 Proof.
-  intros ms model x8 I effs ms' Hh Hsvc Hok Hinv Hcls Hnu Hh' Hacc.
+  intros ms model x8 I effs ms' Hh Hsvc Hok Hinv Hcls Hnu Hh' Hacc Hrob.
   apply (node_chk_ev_noacc ms model x8 I effs ms' (fun _ => []) Hh Hsvc Hok); auto.
 Qed.
 
@@ -1725,7 +1757,7 @@ Proof.
   assert (Hlen' : (len < 2 ^ 64)%Z).
   { pose proof (page_round_up_Z_bounds len ltac:(lia)). pose proof (u64_range addr). unfold two_pow_64 in Htop64. lia. }
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; lia).
-  rewrite (mmap_check segs ms x8 model eff Hno). (lazymatch goal with |- ?G => let G' := eval unfold check_mmap in G in change_no_check G' end).
+  rewrite (mmap_check segs ms x8 model eff Hno). (lazymatch goal with |- ?G => let G' := eval unfold check_mmap, check_mmap_fixed_overflow in G in change_no_check G' end).
   assert (E1 : w_is0 (ms_gpr ms 1) = false).
   { (lazymatch goal with |- ?G => let G' := eval unfold w_is0 in G in change_no_check G' end). apply bv_eqb_neq. intros Hz. rewrite Hz in Hu1. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hu1. lia. }
   rewrite E1, H2, H3, H5, H0, Hu1.
@@ -1837,6 +1869,7 @@ Section Fixedin.
         destruct (bv_eqb r addr && listNN_eqb _ _)%bool; discriminate.
     - intros []. (lazymatch goal with |- ?G => let G' := eval unfold fixedin_ok_model in G in change_no_check G' end); rewrite with_mmap_replacement_halted', with_vmmaps_halted; exact Hh.
     - intros []. (lazymatch goal with |- ?G => let G' := eval unfold fixedin_ok_eff in G in change_no_check G' end); destruct (Z.eqb prot 0); reflexivity.
+    - exact (RomBase.sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_222)).
   Qed.
 
 
@@ -2257,7 +2290,8 @@ Lemma node_madvise : forall ms model x8,
     (fun _ => mkCfg (advance_past_svc (apply_effect ms (madvise_eff ms))) (madvise_model ms model)).
 Proof.
   intros ms model x8 Hh Hsvc Hno Hargs.
-  apply node_ok_of_u; [exact (CfgStep.kit_pending_on_sysno segs ms model x8 233 Hsvc Hno eq_refl) |].
+  apply node_ok_of_u; [exact (CfgStep.kit_pending_on_sysno segs ms model x8 233 Hsvc Hno eq_refl)
+                      | exact (RomBase.sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_233)) |].
   split.
   - intros []. apply (sstep_syscall segs ms model x8 (madvise_eff ms) (madvise_model ms model) (madvise_model ms model) []).
     + exact Hh.

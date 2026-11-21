@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE6x.v's proof of the memchr interceptor (entry walk, musl body, shadow check) with AE7d.v's 2144-byte frame and eight saved registers, restated for the strlen interceptor of libreac/fuzz_disco over lib/Rt/StrlenDef.v's contract; module paths. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Rt/Strlen.v, with its module paths, module names and addresses changed; 183 of its 493 lines of code are new or changed and 133 lines of the source are left out. *)
-(* Relocated from libreac/fuzz_identity's released proofs/lib/A/FMstrlen.v (c3777b3715d0) to libdiginet/fuzz_transport's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from libreac/fuzz_identity's released proofs/lib/A/FMstrlen.v to libdiginet/fuzz_transport's
    image A, fuzz_transport.asan e89be137db17 (unstripped twin 86efc3a80314).
    The walked functions (the trampoline, ___interceptor_strlen, __asan_region_is_poisoned,
    __asan::TryAsanInitFromRtl, __sanitizer::mem_is_zero, 0xb58 above the donor's; musl strlen, 0x8bfc above)
@@ -145,7 +146,7 @@ exists regs', msteps tfibsegs (mkst regs (Z_to_bv 64 tfib_A_musl_strlen) mem rom
 /\ (forall r : bv 5, r <> 10%bv -> r <> 11%bv -> r <> 12%bv -> r <> 13%bv -> r <> 14%bv -> r <> 15%bv -> r <> 16%bv ->
 getr regs' r = getr regs r).
 (* ---- the composition: entry, musl strlen, the range check, the epilogue (as A/AE7d.v, the musl call as A/AE6x.v) ---- *)
-(* as A/AE6x.v:71-105 *)
+(* as A/AE6x.v:72-106 *)
 Lemma bytes_of_str : forall (H : word -> bool) (mem : word -> option byte) x k,
 0 <= k -> (forall i, 0 <= i < k -> exists b, aview tfibsegs H mem (x + i) = Some b /\ b <> 0) ->
 exists bs : list byte, length bs = Z.to_nat k /\ ~ In NUL bs /\
@@ -189,7 +190,7 @@ split; [exact Hsbm|]. split; [exact A10|]. split; [exact Hfr | exact Hpres'].
 Qed.
 Lemma sl_musl : MUSL_SL.
 Proof. exact FMstrlen_musl.tfib_musl_strlen. Qed.
-(* from the call of musl strlen onwards (A/AE7d.v:94 snl_tail, with the musl call of A/AE6x.v:110 mchr_tail) *)
+(* from the call of musl strlen onwards (A/AE7d.v:95 snl_tail, with the musl call of A/AE6x.v:111 mchr_tail) *)
 Lemma sl_tail : forall ly S (W : world tfibsegs) regs mem md (regs1 : bvmap 5 word) (mem1 : word -> option byte) mat1 x k,
 ecall_pre tfibsegs B ly S W regs mem md ->
 ly_stk_lo ly + 2 * ESTACK <= spZ regs -> (forall a, spZ regs - 2 * ESTACK <= a < spZ regs -> apresent (w_H W) mem a) ->
@@ -237,7 +238,7 @@ destruct Hfb as (Hkn & Hbef & Hlast).
 destruct (bytes_of_str H mem1 x k Hk0) as (bs & LEN & NONUL & BS).
 { intros i Hi. destruct (Hbef i Hi) as (b & Hb & Hb0). exists b. split; [|exact Hb0]. rewrite AV1; [exact Hb | lia | apply SRCW; lia]. }
 assert (KLEN : Z.of_nat (length bs) = k) by lia.
-(* the call of musl strlen (A/AE6x.v:153-192) *)
+(* the call of musl strlen (A/AE6x.v:154-193) *)
 destruct (sl_musl bs (w64 x) (mrestrict H mem1) (seg_rom tfibsegs) regs1 NONUL) as (regs2 & Hms & A10 & KEEP).
 - unfold w64. rewrite unsigned_lit_small by lia. lia.
 - intros j Hj. unfold w64. rewrite unsigned_lit_small by lia.
@@ -276,7 +277,7 @@ assert (KEEPr : forall r : bv 5, r <> 10%bv -> r <> 11%bv -> r <> 12%bv -> r <> 
 getr regs2 r = getr regs1 r) by (intros r; apply KEEP).
 assert (R2sp : spZ regs2 = sp0 - 2144).
 { unfold spZ. rewrite KEEPr by (intros H'; discriminate H'). rewrite G2. unfold w64. apply unsigned_lit_small. lia. }
-(* the range check (A/AE7d.v:205-227) *)
+(* the range check (A/AE7d.v:206-228) *)
 eapply SRr_bind.
 { apply (sl_chk ly S W regs2 mem2 (with_vm_backing (m_vm_lazy md) (m_vm_materialized model') md) x (k + 1)).
 - apply (al_frame _ _ LAWS ly S W mem md mem2 _ HAR).
@@ -315,7 +316,7 @@ pose proof (Z.div_mod (shadow_addr (x + (k + 1) - 1)) 8 ltac:(lia)); pose proof 
 unfold sp0 in *; lia. }
 cbv beta. intros W3 c3 _ (-> & regs3 & mem3 & md3 & -> & HAR3 & KEPT3 & Hsbm3 & A10' & Hfr3 & Hpres3).
 rewrite R2sp in Hfr3. unfold CHK_SCR in Hfr3.
-(* the epilogue (A/AE7d.v:230-331) *)
+(* the epilogue (A/AE7d.v:231-332) *)
 set (E4 := Ereg regs3 [getr regs 1; getr regs 8; getr regs 9; getr regs 18; getr regs 19; getr regs 20; getr regs 21; getr regs 22]).
 assert (K3 : forall z (rr : bv 5), rr = Z_to_bv 5 z -> acallee_saved z -> z <> 9 -> z <> 18 -> z <> 19 -> z <> 20 -> z <> 21 -> z <> 22 -> getr regs3 rr = getr regs2 rr).
 { intros z rr -> H1 H2 H3 H4 H5 H6 H7. exact (KEPT3 z H1 H2 H3 H4 H5 H6 H7). }
@@ -416,7 +417,7 @@ destruct (Z_lt_le_dec a' (sp0 - 2160)) as [L1|L1]; [apply (apresent_same H mem m
 destruct (Z_lt_le_dec a' sp0) as [L3|L3]; [apply PRS1; lia|].
 apply (apresent_same H mem mem1 a'); [apply MEQ1; rewrite unsigned_lit_small by lia; lia | exact Hp].
 Qed.
-(* the wrapper from its trampoline (A/AE7d.v:360 strnlen_icpt_srr) *)
+(* the wrapper from its trampoline (A/AE7d.v:361 strnlen_icpt_srr) *)
 Theorem strlen_icpt_srr : forall ly S (W : world tfibsegs) regs mem md x k,
 ecall_pre tfibsegs B ly S W regs mem md ->
 ly_stk_lo ly + 2 * ESTACK <= spZ regs ->
@@ -449,7 +450,7 @@ set (EE := AE2y.Env regs []).
 assert (EEreg : forall i (r : bv 5), Z.of_nat i = bv_unsigned r -> ew EE i = getr regs r) by (intros; apply AE2y.Env_reg; assumption).
 assert (EE2 : bv_unsigned (ew EE 2) = spZ regs) by (rewrite (EEreg 2%nat 2%bv eq_refl); reflexivity).
 assert (EE10 : ew EE 10 = Z_to_bv 64 x) by (rewrite (EEreg 10%nat 10%bv eq_refl); exact G10).
-(* the entry phase, from the trampoline to the call of musl strlen (A/AE7d.v:379-397) *)
+(* the entry phase, from the trampoline to the call of musl strlen (A/AE7d.v:380-398) *)
 assert (HS0 : st_ok tfibsegs EE ssA (restrict H (mkst regs (Z_to_bv 64 SL_ENTRY) mem (seg_rom tfibsegs)))).
 { rewrite restrict_mkst_fx. unfold ssA. unfold EE, AE2y.Env. apply (entry_st_ok_full tfibsegs); change (Ereg regs (map (Z_to_bv 64) [])) with EE.
 - apply regs_ok_Ereg.
@@ -469,7 +470,7 @@ assert (MEQ1 : forall z : word, ~ (spZ regs - SL_WIN <= bv_unsigned z < spZ regs
 { intros z Hz. apply (HF1 z). intros Hin.
 unshelve epose proof (in_wrange_single_b EE _ (bv_unsigned z) 2 (- SL_WIN) 0 (spZ regs) _ EE2 Hin) as X; [vm_compute; reflexivity|]. unfold SL_WIN in *. lia. }
 clear HF1 HFr1.
-(* the state at the call, read off shapeA (A/AE7d.v:398-423) *)
+(* the state at the call, read off shapeA (A/AE7d.v:399-424) *)
 pose proof shapeA_ok as Hsh. unfold shapeA in Hsh.
 apply andb_prop in Hsh as [Hsh HSV]. apply andb_prop in Hsh as [Hsh HK].
 apply andb_prop in Hsh as [Hsh R18]. apply andb_prop in Hsh as [Hsh R9]. apply andb_prop in Hsh as [Hsh R8].

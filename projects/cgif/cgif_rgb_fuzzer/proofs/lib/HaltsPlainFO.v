@@ -50,9 +50,12 @@ Proof.
   intros [sp brk mb rnd] inp Hen Hinp.
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-  destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-  unfold must_exit_in_scfg.
-  apply (fo_exits_must_exit src2segs codes02 _ (SPEC inp)).
+  destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+  unfold must_exit_in_scfg. cbv zeta.
+  (* the walk is over the binary's own segments; the run reads them with the vDSO pair
+     ([HaltsFO.fo_exits_must_exit_run]) *)
+  apply (fo_exits_must_exit_run src2segs codes02 inp sp mb _ _ brk rnd _ (SPEC inp)).
+  - first [reflexivity | unfold vdso_image, vdso_text_seg; vm_compute; reflexivity].
   - apply fo_of_realizes. apply src2_realizes; try assumption. apply SRC_LIM_MIN_le_source.
   - apply SPEC_shape_ok02.
   - reflexivity.

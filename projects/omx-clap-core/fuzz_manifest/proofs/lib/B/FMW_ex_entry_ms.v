@@ -1,5 +1,5 @@
 (* G4.ExEntry, IMAGE B: the scan's setup 0x81358..0x813bc (fuzz_manifest.c:134) from EX_MS to EX_L 0x813c0 with
-   i = d = 0. B twin of lib/A/FMW_ex_entry_ms.v (06d82004dc3). B's setup stores the ten slots of ex_slots (d = 0; F+0x78 =
+   i = d = 0. B twin of lib/A/FMW_ex_entry_ms.v. B's setup stores the ten slots of ex_slots (d = 0; F+0x78 =
    text was stored at 0x812d4 and is read back here into a6), sets s7 = i = 0, s5 = text + 0, the callee-saved constants
    s3 = 5, s11 = ' ', s0 = -1 and the caller-saved a6 = text, a7 = 6, t0 = ':', t1 = the NUL/space mask; the answer is
    the scan's (whole = false). No guard on this path. ex_MS_seg (FMW_ex_entry_kit.v). *)

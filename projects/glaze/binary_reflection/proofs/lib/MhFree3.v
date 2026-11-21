@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: forward vDSO reservation inclusion through free preconditions and results. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -44,7 +45,10 @@ Section Free3.
       (exists st', WF st' Lc' /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\ nojunk st' /\ nolimbo st' /\ fsub st st') /\
       PHI Lc' <= B' /\ Z.of_nat (length Lc') <= C' /\ VMLIM <= vm_limit (m_vmmaps mdl') /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
-      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl.
+      m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      (* [m_channel_reader] rides with the group above; see MhUnmap.with_vmmaps_rdr. *)
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')).
 
   Lemma free_core : forall stk st R M mdl Lc Lc' B C B' C' ret sp p,
     FSTK <= stk ->
@@ -54,7 +58,7 @@ Section Free3.
     kat RSEGS (free_cfg R M mdl) (free_post3 st stk R M mdl Lc' B' C' ret sp).
   Proof.
     intros stk st R M mdl Lc Lc' B C B' C' ret sp p Hstk HWF HREP HLG NJ NL HB HC HV
-           (Hh & Hlz & Hmat & H1 & Hret & Hret2 & H10 & CASE & H2 & Hsp16 & Hsplo & H4 & SOK).
+           (Hh & Hlz & Hmat & H1 & Hret & Hret2 & H10 & CASE & H2 & Hsp16 & Hsplo & H4 & SOK & HVDSO).
     pose proof (u64_range (getr R 2)) as SPR. rewrite H2 in SPR.
     assert (E2 : getr R 2 = Z_to_bv 64 sp) by (apply bv_eq; rewrite u_Z2bv by lia; exact H2). ceil.
     assert (Hra : ret_ok (getr R 1)) by (rewrite H1; apply ret_ok_even; rewrite u_Z2bv by lia; exact Hret2).
@@ -67,7 +71,7 @@ Section Free3.
       exists R, M, mdl. split; [reflexivity|]. split; [intros r _; reflexivity|].
       split; [intros a NE; exfalso; exact (NE eq_refl)|]. split; [exact SOK|].
       split; [exists st; repeat (split; [assumption|]); apply fsub_refl|].
-      repeat (split; [assumption|]). split; reflexivity.
+      repeat (split; [assumption|]). split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|exact HVDSO].
     - (* [comment removed for export] *)
       pose proof (wL_nodup st Lc (WF_live st Lc HWF)) as ND. apply NoDup_ListNoDup in ND.
       assert (Hin : In (bv_unsigned p, m) Lc) by (rewrite EL; apply in_app_iff; right; left; reflexivity).
@@ -83,8 +87,8 @@ Section Free3.
         pose proof (SOK (Z_to_bv 64 a)) as X. rewrite u_Z2bv in X by lia. apply X. lia. }
       assert (P10 : getr R 10 = Z_to_bv 64 (bv_unsigned p)) by (rewrite H10; symmetry; apply bv_eq; rewrite u_Z2bv by (pose proof (u64_range p); lia); reflexivity).
       apply (free_kat st R M mdl (seg_rom RSEGS) Lc (L1 ++ L2) (bv_unsigned p) m sp _
-               HWF HREP HLG NJ NL Hh Hlz Hmat Hin HL'in HL'nd HL'len P10 Hra E2 Hsp16 ltac:(unfold FSTK; lia) ltac:(lia) H4 DEF).
-      intros c' (R' & M' & mdl' & -> & RG & FR & DF & MI & X1 & X2 & X3 & X4 & X5 & X6). unfold FSTK in FR, DF.
+               HWF HREP HLG NJ NL Hh Hlz Hmat HVDSO Hin HL'in HL'nd HL'len P10 Hra E2 Hsp16 ltac:(unfold FSTK; lia) ltac:(lia) H4 DEF).
+      intros c' (R' & M' & mdl' & -> & RG & FR & DF & MI & X1 & X2 & X3 & X4 & X5 & XR & XVDSO & X6). unfold FSTK in FR, DF.
       destruct RG as (Q2 & Q3 & Q4 & Q8 & Q9 & Q18 & Q19 & Q20 & Q21 & Q22 & Q23 & Q24 & Q25 & Q26 & Q27).
       rewrite H1. exists R', M', mdl'. split; [reflexivity|]. split.
       { intros r Hr. unfold callee_saved_regs in Hr. cbn in Hr.
@@ -112,7 +116,7 @@ Section Free3.
       split; [exact MI|].
       rewrite EL in HB. rewrite PHI_app in HB |- *. cbn in HB. rewrite EL, length_app in HC. cbn in HC. rewrite length_app.
       split; [lia|]. split; [lia|]. split; [rewrite X6; exact HV|].
-      repeat (split; [assumption|]). exact X5.
+      repeat (split; [assumption|]). exact XVDSO.
   Qed.
 
   (* [comment removed for export] *)

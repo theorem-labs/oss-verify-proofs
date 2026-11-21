@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30: KF-COUNT F3: HLS1 carries gn_cst (relay_instance_gone's cost at q = 0) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's phase p3 on image B (lib/B/W_LLVMFuzzerTestOneInput_gone_p3.v,
-   a Theorem Labs lane's fee5272ac13 with our adaptation to the kit's CTX_AFREE rig_spec, 4c35818d04c: the relay_instance_gone
+   a Theorem Labs lane's with our adaptation to the kit's CTX_AFREE rig_spec: the relay_instance_gone
    call, GRG to GC1), for the conversion of ARM_gone to the cut invariants of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.
    _gone_p3.v is not edited.
    - CITED from _gone_p3.v: its AR-free names (gp3_G_RIG, gp3_not_RIG, gp3_rom_out, gp3_others, gp3_errno_g4, ...), with
      the Section variables they were generalized over;
    - RESTATED under their names + _x, merged per item with SmallX's image-A twin
-     lib/A/W_LLVMFuzzerTestOneInput_gone_p3_x.v (95a5de32ab2): the journal-keep and slot lemmas that read AR
+     lib/A/W_LLVMFuzzerTestOneInput_gone_p3_x.v: the journal-keep and slot lemmas that read AR
      (gp3_inner_x, gp3_keeps_x, gp3_slot_kept_x, ...), the callee's afn_pre_x at sp = F (gp3_afn_pre_x, with the chain's
      spine and the room above sp that rig_spec's caller-context premise names), and the phase lemma gp3_rig_c1_x.
    Section hypotheses beyond cut_x's header: _gone.v's RIG in its kit _x form (rig_spec_x at image B's K0 table
@@ -125,7 +126,7 @@ Variable MMAX : Z.
 Variable RP : roomp.
 (* relay_instance_gone, W6: lib/B/W_contract.v's rig_spec (Section s6 at CTX_AFREE := image B's K0 table
    YCk0.CTX_AFREE; its last premise is the free's caller context [0x82fb8; 0x84b4c(; 0x82240)]) and rg_place,
-   verbatim.  The adaptation to the CTX_AFREE rig_spec is image A's (95cae0d4740), at B's numbers. *)
+   verbatim.  The adaptation to the CTX_AFREE rig_spec is image A, at B's numbers. *)
 (* @@ RESOLVED Hypothesis RIG *)
 Hypothesis RIG : rig_spec_x (PI := PB_fr) B PST ARx MT RP MMAX fr_RG YCk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 (* @@ RESOLVED Hypothesis RGP *)
@@ -143,7 +144,7 @@ Hypothesis HLSRIG : GN_LS_rig MT LSx RINV MMAX.
    RM := fun S _ => NP S (so RPNP holds by conversion) and the counts are ReplyCnt's.  gn_pk is the arm's peak
    (s5-r1d's pk_gone).  LSCNT is the arm's count row GN_LS_cnt_x (_gone_base_x.v: s5-r1d's fr_LS3cp_cnt_gone's guards,
    ReplyCnt.msz_ok among them).  CNTRIG is the arm's model count rule GN_CNT_rig (_gone_base.v) at relay_instance_gone's
-   premise peak, rig_spec_x's rig_pk of its trace (W_contract_x.v:307) ---- *)
+   premise peak, rig_spec_x's rig_pk of its trace (W_contract_x.v:308) ---- *)
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Hypothesis RPNP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis CNTRIG : GN_CNT_rig gn_pk (fun cx m hs =>
@@ -161,7 +162,7 @@ Hypothesis GWR : glob_wr_law G_fr.
 (* @@ HDR-CITED-IN-AX Hypothesis HCE *)
 Hypothesis HCE : GN_CELLS_ERRNO B.
 (* the read-only bytes are off G_fr, pinned when the allocator owns them, off errno and off the sink head
-   (lib/B/W_journal.v:397 rom_out; B's add walk's HRO; _G.v c_rom_out at G_fr_c): with GN_HG_RIG it gives rom_out at
+   (lib/B/W_journal.v:398 rom_out; B's add walk's HRO; _G.v c_rom_out at G_fr_c): with GN_HG_RIG it gives rom_out at
    G_RIG (gp3_rom_out), so the cut's rom_view survives the callee's journal *)
 (* @@ B-ONLY-HDR Hypothesis HRO *)
 Hypothesis HRO : rom_out segs B G_fr.
@@ -640,7 +641,7 @@ Proof.
     as (ch & HPREc & HSPINE & HTOP).
   (* _gone_p3.v:1108: GN_LS_rig's premises at GRG_x, all held: gn_op (HOP), aentry_ok's |re_U| <= APARTIAL, the model
      blocks' sizes not negative (the AR block law over HPERM0), the pending offsets (Hoff), and the CAPOUT clause;
-     A f5d40188e29 *)
+     A *)
   pose proof HOP as (_ & HO0 & Ht0 & _).
   assert (HUs : Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL) (lm_es m)).
   { pose proof HREL as (_ & _ & _ & _ & _ & _ & _ & _ & _ & GdAE & _).
@@ -1455,7 +1456,7 @@ Proof.
     as (ch & HPREc & HSPINE & HTOP).
   (* _gone_p3.v:1108: GN_LS_rig's premises at GRG_x, all held: gn_op (HOP), aentry_ok's |re_U| <= APARTIAL, the model
      blocks' sizes not negative (the AR block law over HPERM0), the pending offsets (Hoff), and the CAPOUT clause;
-     A f5d40188e29 *)
+     A *)
   pose proof HOP as (_ & HO0 & Ht0 & _).
   assert (HUs : Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL) (lm_es m)).
   { pose proof HREL as (_ & _ & _ & _ & _ & _ & _ & _ & _ & GdAE & _).

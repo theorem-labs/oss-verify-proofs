@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (page_round's alignment lemma). *)
 From Stdlib Require Import ZArith List Bool Lia.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -42,6 +43,9 @@ Definition clz32 (x : Z) : Z := 31 - Z.log2 x.
 Definition ones (k : Z) : Z := 2 ^ (k + 1) - 1.
 Definition bit (k : Z) : Z := 2 ^ k.
 Definition page_round (x : Z) : Z := (x + PGSZ - 1) / PGSZ * PGSZ.
+(* Every rounded allocation length is a whole number of pages. *)
+Lemma page_round_mod x : page_round x mod PGSZ = 0.
+Proof. unfold page_round. apply Z_mod_mult. Qed.
 Definition class_of_units (k : Z) : Z :=
 if k <? 10 then k else
 let k := k + 1 in

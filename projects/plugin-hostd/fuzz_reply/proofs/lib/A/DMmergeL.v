@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMmergeL.v (commit fe876300d09, Quarantine::Drain walk set; file sha256 15bdb0d91019) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 15 image addresses moved by code-verified function pairs (15 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 1 code pcs the tool read as sizes, by funcpair.py), and 10 pcs named in comments; 1 hand maps (each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMmergeL.v (Quarantine::Drain walk set; file sha256 15bdb0d91019) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 15 image addresses moved by code-verified function pairs (15 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 1 code pcs the tool read as sizes, by funcpair.py), and 10 pcs named in comments; 1 hand maps (each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1 slice H1 of ReallocPrimary's Theorem Labs lane walk lanes, brief
-   a Theorem Labs lane's B-WALK-LANES.md (sha256 68c13c734927; internal record); interface DMwalkIF.v at 3e29c198d40, FROZEN):
+   a Theorem Labs lane's B-WALK-LANES.md (sha256 68c13c734927; internal record); interface DMwalkIF.v, FROZEN):
    QuarantineCache::MergeBatches (0x33b74, fuzz_reply's asan image A) against the shared model's
-   merge_batches_cf (YG00cf.v:287-301).  This file proves the heads DMwalkIF.v states for H1:
+   merge_batches_cf (YG00cf.v:288-302).  This file proves the heads DMwalkIF.v states for H1:
    - [mb_model_facts] (pure, section 1 below);
    - [mb_inv_entry_t] (the loop invariant at the first arrival at 0x33bac: the satisfiability witness);
    - [mb_ok_t] (the walk from 0x33b74 to the return at 0x33a38).
@@ -236,7 +237,7 @@ Lemma ent_b : forall b, In b L0 ->
   (addrb ly b + kBatchBytes <= spr - 16 \/ spr + 32 <= addrb ly b).
 Proof. intros b Hb. exact (mb_bfacts _ _ _ _ _ _ HP b Hb). Qed.
 
-(* the atoms' facts: a value in range, aligned (DMdeq.v:357's AF) *)
+(* the atoms' facts: a value in range, aligned (DMdeq.v:358's AF) *)
 Lemma ent_AF : forall (E : env) k0 Xv lo hi al, ew E k0 = w64 Xv -> 0 <= Xv < 2 ^ 64 -> lo <= Xv <= hi ->
   Xv mod 2 ^ al = 0 -> 0 <= al <= 64 -> afact_ok E k0 (mkAF lo hi al).
 Proof.

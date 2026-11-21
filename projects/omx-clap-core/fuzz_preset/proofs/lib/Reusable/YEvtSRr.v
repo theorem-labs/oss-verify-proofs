@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStr, c-libc-stdio lane): the bridge from a K-kit machine walk (`evt` over a
    machine_state) to cgif_file's call-site form (`SRr segs W (cfg_at segs pc regs mem md) POST`). PORTED, not new:
 
-   DONOR: origin/cold/port-fm-rtscan 10d0c5cd0be, proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v (port-fm's
+   DONOR: proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v (port-fm's
    RtScan; blob 7449bf6e). Its three lemmas, ported in that order:
      bz_msteps_tfib   FMbz_bridge.v:32-37   a kit `msteps` is cgif's `msteps` (YK0i.v:284)
      srr_of_evt       FMbz_bridge.v:46-58   a kit `evt` walk from the restricted state gives SRr, through cgif's own
                                             SRr_msteps (YA0n.v) and SRr_ret
      stk_of_apresent  FMbz_bridge.v:61-73   cgif's stack-presence premise gives the kit's `Frame.stk`
-   The donor's recorded build is rc=0 (its commit f8664b31b9c); I did not re-run it.
-   fuzz_state carries a copy (origin/cold/port-state-rt-str 17818dd9abc lib/A/FSbz_bridge.v).
+   The donor's recorded build is rc=0; I did not re-run it.
+   fuzz_state carries a copy (lib/A/FSbz_bridge.v).
 
    WHAT CHANGED, so this file can be diffed against the donor:
    - SEGS-GENERIC. The donor states all three lemmas over its image: `Exec.msteps asegs`, `SRr tfibsegs`,

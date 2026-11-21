@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC5.v at f3898085bda (the model values
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC5.v (the model values
    of ent_build's case 5, their arithmetic, the pod's byte list and the shape of the case's head run) for
    reac-pw/fuzz_headamp's image B: image B's own code and registers, its two pointer-overflow tests (each shown not
    taken by hand), the engine kit of lib/AU/HPgW6bBase.v (hb_entry / hb_shok / hb_tbl / HBx / hb_SH) in place of

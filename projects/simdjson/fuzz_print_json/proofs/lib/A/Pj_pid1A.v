@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Pj_pid1A.v, lines 42, 150, 249. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -38,7 +39,7 @@ Definition getact_cps2 : Prop :=
          F fc (m : mem) (lo : Z),
   fdfs_only PMc -> mat_stable PMc -> sj_lib m ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 32 <= bv_unsigned sp -> bv_unsigned sp <= USTACK_TOP -> frm0 fc ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 32 <= bv_unsigned sp -> bv_unsigned sp <= USTACK_TOP -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                        t3 t4 t5 t6 F fc e_getact m)))
     (ASTA RT Σ PMc (fun ms => exists m', ret_st ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 SJ_ACTIVE) m' ms
@@ -146,7 +147,7 @@ Theorem pid_front : forall (Σ : rts RT) PMc (ra sp gp t0 t1 t2 s0 s1 a6 a7 s2 s
   bv_unsigned sp <= RES -> RES + 24 <= USTACK_TOP -> rw_cells asegs m RES [CB 24 jr] ->
   Z.of_nat (length (rt_live RT Σ)) + 6 <= LIVE_MAX -> pid_cost6 (Z.max (Z.of_nat (length bs)) 32) <= rt_credit RT Σ ->
   sj_lib m -> ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PID_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PID_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp (Z_to_bv 64 0x6a68a8) t0 t1 t2 s0 s1 (Z_to_bv 64 RES) (Z_to_bv 64 P) (Z_to_bv 64 (P + 24)) (Z_to_bv 64 d)
                                        (Z_to_bv 64 (Z.of_nat (length bs))) (Z_to_bv 64 1) a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_pid m)))
@@ -245,7 +246,7 @@ Proof using AF ALLOC CREATE AFI.
     destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
     cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2. rewrite (ret_pc_even 0xb2414) in Hc2' by (clear; lia).
     assert (SUB1 : forall e, In e (rt_live RT Σ) -> In e (rt_live RT Σ1)) by (intros e He; rewrite LV1; right; right; exact He).
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (INF1 : In (f, k) (rt_frames RT Σ1)) by (rewrite FRS1; exact INF).
     assert (PCL : forall (Σx : rts RT) x, rt_frames RT Σx = rt_frames RT Σ -> P <= x < P + 80 -> aclient (rt_live RT Σx) (rt_frames RT Σx) (usp + -112) x).
     { intros Σx x E Hx. right; right; right; left. exists f, k. split; [rewrite E; exact INF| lia]. }

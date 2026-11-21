@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: adds the sys_rob read-only-memory hypothesis Hrob to the node case of both induction patterns and passes it to rz_node in the second proof. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -18,7 +19,7 @@ m_halted (cfg_model c) = None ->
 must_exit_in_at_cfg scfg segs S c.
 Proof.
 intros S c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh Hsl | c T T' H IH Heq];
+induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh Hsl | c T T' H IH Heq];
 intros HX Hrun.
 - destruct Hnode as [Hcomp Hsound].
 apply must_exit_in_at_cfg_running.
@@ -51,8 +52,8 @@ Lemma realizes_of_srealizes : forall c T,
 srealizes segs scfg c T -> realizes segs scfg c T.
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh Hsl | c T T' H IH Heq].
-- exact (rz_node segs scfg c I evs nx T i0 Hnode IH).
+induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh Hsl | c T T' H IH Heq].
+- exact (rz_node segs scfg c I evs nx T i0 Hnode Hrob IH).
 - exact (rz_halt segs scfg c Hh).
 - exfalso. exact Hsl.
 - exact (rz_conseq segs scfg c T T' IH Heq).

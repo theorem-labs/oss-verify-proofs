@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only cgif_file_fuzzer lib/YG0d.v's amemchr0_realizes, restated for the strlen wrapper of libreac/fuzz_disco (one argument; the string ends at its first NUL, so first_byte takes k + 1 for n); module paths. *)
 (* Modified by Theorem Labs, 2026-10: the constant-bytes form of the same contract (cgif_file_fuzzer lib/A/AE39.v's mconsts_view and astrnlen_realizesM), over lib/Rt/ConstsViewDef.v's consts_view with cgif's fixed MC_LO/MC_HI as arguments, so that this file needs no image. *)
-(* Modified by Theorem Labs, 2026-10: a second text exists for user-poisoning callers, omx-clap-core/fuzz_state's astrlen_realizesU (a working branch 17818dd9abc, over ARU); U = [] reduces it to this one (unpoison [] mem = mem, ARU_nil, ecall_preU_k_nil, rt_post_ro_of_U), so both stay (a Theorem Labs lane, 2026-10-29). *)
+(* Modified by Theorem Labs, 2026-10: a second text exists for user-poisoning callers, omx-clap-core/fuzz_state's astrlen_realizesU (a working branch, over ARU); U = [] reduces it to this one (unpoison [] mem = mem, ARU_nil, ecall_preU_k_nil, rt_post_ro_of_U), so both stay (a Theorem Labs lane, 2026-10-29). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

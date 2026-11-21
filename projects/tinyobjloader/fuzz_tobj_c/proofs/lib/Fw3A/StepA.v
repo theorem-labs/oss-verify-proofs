@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sym_load and sym_step unfolded through their new guards on unresolved variables). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -549,7 +550,7 @@ Qed.
 Lemma sym_load_exts : ltac2:(tb__ "0|0|
 S1S0S5eS43S0S1S57S72S7dVsegs;R6R5R4R3A5S74R2R1A2A3S57S47S45S45S0S0A2S0A2A1Sa8R2A1Sa8R7A1A3F_;FS';Fv;Fsgn;Fk;Fae;FS;").
 Proof using .
-  intros S ae k sgn v S' H. unfold sym_load in H. lazy zeta in H. revert H.
+  intros S ae k sgn v S' H. unfold sym_load in H. destruct (segs_novvar segs) eqn:Hnv; [|discriminate H]. unfold sym_load0 in H. lazy zeta in H. revert H.
   destruct (match ae with SLit a => ro_load segs (a mod 2 ^ 64) (Z.to_nat k) | _ => None end) as [z|]; intros H.
   { apply lrok_inj in H as [_ <-]. reflexivity. }
   destruct (find_obj (ss_objs S) (ss_facts S) ae k 0) as [[[n o] off]|] eqn:Hfo.
@@ -580,6 +581,7 @@ Lemma sym_step_exts : ltac2:(tb__ "0|0|
 S1S14dR1S6cVsegs;R1A2A2FS;").
 Proof using .
   intros S. unfold sym_step.
+  destruct (sc_unres_b segs S); [exact I|]. unfold sym_step0.
   destruct (instr_at segs (ss_pc S)) as [i|]; [|exact I].
   destruct i; try exact I; cbn [exts_kept]; rewrite ?exts_set_pc, ?exts_set_reg, ?exts_set_freg; try reflexivity.
   - destruct (mk_addk (get_reg S rs1) (immI imm)); try exact I. cbn [exts_kept]. rewrite exts_set_pc, exts_set_reg. reflexivity.

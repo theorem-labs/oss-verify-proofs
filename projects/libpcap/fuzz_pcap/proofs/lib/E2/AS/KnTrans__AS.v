@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies, the boot-variable dictionary's source indices (PAGES4, RENAMES, SPECIAL, OTHERS, HSB, HST, HXQ) move up by 16, and the new vkeep and vsrc (with vsrc_vkeep) keep the target numbering, sending the entry table's new slots 7 to 22 to KEEP + 200 + i; asan_totsz grows by the vDSO pair's largest width, which the reserved list now ends with. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -771,45 +772,57 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition PAGES4 : list (nat * nat * Z * Z) :=
-  [(26%nat, 78%nat, 1, 34359736304);
-   (27%nat, 207%nat, 1, 34359735410);
-   (28%nat, 208%nat, 4295491576, 34326181871);
-   (36%nat, 226%nat, 1, 34359734272);
-   (37%nat, 227%nat, 1, 34359736319);
-   (38%nat, 228%nat, 1, 34359736304);
-   (46%nat, 245%nat, 1, 34359736319);
-   (60%nat, 310%nat, 1, 34359736319);
-   (83%nat, 393%nat, 1, 34359733495);
-   (101%nat, 5%nat, 1507, 525795);
-   (104%nat, 469%nat, 1, 34359736064);
-   (105%nat, 470%nat, 1, 34359734272);
-   (106%nat, 568%nat, 1, 34359736319);
-   (107%nat, 487%nat, 1, 34359736319)].
+  [(42%nat, 78%nat, 1, 34359736304);
+   (43%nat, 207%nat, 1, 34359735410);
+   (44%nat, 208%nat, 4295491576, 34326181871);
+   (52%nat, 226%nat, 1, 34359734272);
+   (53%nat, 227%nat, 1, 34359736319);
+   (54%nat, 228%nat, 1, 34359736304);
+   (62%nat, 245%nat, 1, 34359736319);
+   (76%nat, 310%nat, 1, 34359736319);
+   (99%nat, 393%nat, 1, 34359733495);
+   (117%nat, 5%nat, 1507, 525795);
+   (120%nat, 469%nat, 1, 34359736064);
+   (121%nat, 470%nat, 1, 34359734272);
+   (122%nat, 568%nat, 1, 34359736319);
+   (123%nat, 487%nat, 1, 34359736319)].
 Definition PAGES : list (nat * nat) := List.map (fun q => (fst (fst (fst q)), snd (fst (fst q)))) PAGES4.
 (* [comment removed for export] *)
-Definition RENAMES : list (nat * nat) := [(1, 1); (2, 2); (3, 3); (4, 4); (5, 8); (6, 9); (8, 44); (9, 45)]%nat.
+Definition RENAMES : list (nat * nat) := [(1, 1); (2, 2); (3, 3); (4, 4); (5, 8); (6, 9); (24, 44); (25, 45)]%nat.
 (* [comment removed for export] *)
-Definition SPECIAL : list nat := [0; 29; 62; 63]%nat.
+Definition SPECIAL : list nat := [0; 45; 78; 79]%nat.
 Definition mapped (i : nat) : bool :=
   existsb (Nat.eqb i) SPECIAL || existsb (fun p => Nat.eqb i (fst p)) PAGES || existsb (fun p => Nat.eqb i (fst p)) RENAMES.
-Definition OTHERS : list nat := Eval vm_compute in (List.filter (fun i => negb (mapped i)) (List.seq 0 108)).
+Definition OTHERS : list nat := Eval vm_compute in (List.filter (fun i => negb (mapped i)) (List.seq 0 124)).
 Definition KEEP : nat := 1000.
+(* LPS 727298f3's [vals0] is 23 words, not 7: boot slot [i >= 23] is the pre-revision slot [i - 16], and the V-space
+   keeps the pre-revision numbering ([KEEP + i - 16]); the new slots 7..22 go to [KEEP + 200 + i]. *)
+Definition vkeep (i : nat) : nat := if Nat.ltb i 7 then i else if Nat.ltb i 23 then (200 + i)%nat else (i - 16)%nat.
+Definition vsrc (j : nat) : nat := if Nat.ltb j 7 then j else if Nat.ltb j 200 then (j + 16)%nat else (j - 200)%nat.
+Lemma vsrc_vkeep : forall i, (i < 216)%nat -> vsrc (vkeep i) = i.
+Proof.
+  intros i Hi. unfold vkeep, vsrc.
+  destruct (Nat.ltb_spec i 7) as [H1|H1]; [destruct (Nat.ltb_spec i 7); [reflexivity | lia]|].
+  destruct (Nat.ltb_spec i 23) as [H2|H2].
+  - destruct (Nat.ltb_spec (200 + i) 7); [lia|]. destruct (Nat.ltb_spec (200 + i) 200); [lia|]. lia.
+  - destruct (Nat.ltb_spec (i - 16) 7); [lia|]. destruct (Nat.ltb_spec (i - 16) 200); [lia | lia].
+Qed.
 
 Definition D_SPECIAL : dict :=
   [(0%nat, ([(32768, 0%nat); (16, 6%nat); (4096, 10%nat)], 0));
-   (29%nat, ([(4096, 208%nat); (-4096, 209%nat)], 65536));
-   (62%nat, ([(32768, 0%nat); (4096, 10%nat); (4096, 344%nat)], 0));
-   (63%nat, ([(4096, 0%nat); (512, 10%nat); (512, 344%nat)], -1048576))].
+   (45%nat, ([(4096, 208%nat); (-4096, 209%nat)], 65536));
+   (78%nat, ([(32768, 0%nat); (4096, 10%nat); (4096, 344%nat)], 0));
+   (79%nat, ([(4096, 0%nat); (512, 10%nat); (512, 344%nat)], -1048576))].
 Definition D_PAGES : dict := List.map (fun p => (fst p, ([(4096, snd p)], 0))) PAGES.
 Definition D_RENAMES : dict := List.map (fun p => (fst p, ([(1, snd p)], 0))) RENAMES.
-Definition D_OTHERS : dict := List.map (fun i => (i, ([(1, (KEEP + i)%nat)], 0))) OTHERS.
+Definition D_OTHERS : dict := List.map (fun i => (i, ([(1, (KEEP + vkeep i)%nat)], 0))) OTHERS.
 Definition D_A3 : dict := D_SPECIAL ++ D_PAGES ++ D_RENAMES ++ D_OTHERS.
 
 Definition VR_SPECIAL : vranges := [(0%nat, 4294901760, 4294967295); (6%nat, 0, 255); (10%nat, 0, 7); (344%nat, 0, 1); (209%nat, 0, 15)].
 Definition VR_PAGES : vranges := List.map (fun q => (snd (fst (fst q)), snd (fst q), snd q)) PAGES4.
 (* [comment removed for export] *)
 Definition VR_REN : list (nat * nat * Z * Z) :=
-  [(1%nat, 1%nat, 1, 1024); (2%nat, 2%nat, 0, 256); (3%nat, 3%nat, 0, 131071); (4%nat, 4%nat, 0, 280000); (5%nat, 8%nat, 0, 4294967294); (8%nat, 44%nat, 1, 4194303)].
+  [(1%nat, 1%nat, 1, 1024); (2%nat, 2%nat, 0, 256); (3%nat, 3%nat, 0, 131071); (4%nat, 4%nat, 0, 280000); (5%nat, 8%nat, 0, 4294967294); (24%nat, 44%nat, 1, 4194303)].
 Definition VR_A3 : vranges := VR_SPECIAL ++ VR_PAGES ++ List.map (fun q => (snd (fst (fst q)), snd (fst q), snd q)) VR_REN.
 
 Section Dict.
@@ -823,12 +836,12 @@ Definition ren_src (k : nat) : option nat :=
   match List.find (fun p => Nat.eqb (snd p) k) RENAMES with Some p => Some (fst p) | None => None end.
 
 Definition tgt_val (k : nat) : Z :=
-  if Nat.leb KEEP k then u (k - KEEP)%nat
+  if Nat.leb KEEP k then u (vsrc (k - KEEP))
   else if Nat.eqb k 0 then u 0%nat / 32768
   else if Nat.eqb k 6 then u 0%nat mod 4096 / 16
   else if Nat.eqb k 10 then u 0%nat mod 32768 / 4096
-  else if Nat.eqb k 209 then u 28%nat mod 65536 / 4096
-  else if Nat.eqb k 344 then (u 62%nat - u 0%nat / 4096 * 4096) / 4096
+  else if Nat.eqb k 209 then u 44%nat mod 65536 / 4096
+  else if Nat.eqb k 344 then (u 78%nat - u 0%nat / 4096 * 4096) / 4096
   else match page_src k with
        | Some i => u i / 4096
        | None => match ren_src k with Some i => u i | None => 0 end
@@ -841,9 +854,9 @@ Hypothesis H16 : u 0%nat mod 16 = 0.
 Hypothesis HSP : 0x7fff80000000 <= u 0%nat < 2 ^ 47.
 Hypothesis HAL : Forall (fun q => u (fst (fst (fst q))) mod 4096 = 0 /\ 4096 * snd (fst q) <= u (fst (fst (fst q))) <= 4096 * snd q) PAGES4.
 Hypothesis HREN : Forall (fun q => In (fst (fst (fst q)), snd (fst (fst q))) RENAMES /\ snd (fst q) <= u (fst (fst (fst q))) <= snd q) VR_REN.
-Hypothesis HSB : u 29%nat = u 28%nat + 65536 - u 28%nat mod 65536.
-Hypothesis HST : u 62%nat = (u 0%nat + 3935) / 4096 * 4096.
-Hypothesis HXQ : u 63%nat = (u 62%nat - 8388608) / 8.
+Hypothesis HSB : u 45%nat = u 44%nat + 65536 - u 44%nat mod 65536.
+Hypothesis HST : u 78%nat = (u 0%nat + 3935) / 4096 * 4096.
+Hypothesis HXQ : u 79%nat = (u 78%nat - 8388608) / 8.
 
 #[using="Type"] Lemma V'_small : forall k, 0 <= tgt_val k < 2 ^ 64 -> V' k = tgt_val k.
 Proof. intros k H. unfold uev, tgt_env. cbn [ev]. apply u_small. exact H. Qed.
@@ -860,10 +873,10 @@ Proof.
   pose proof (Z.div_mod (u i) 4096 ltac:(lia)) as DM. rewrite A in DM. lia.
 Qed.
 
-#[using="HSP"] Lemma V'_keep : forall i, V' (KEEP + i)%nat = u i.
+#[using="HSP"] Lemma V'_keep : forall i j, vsrc i = j -> V' (KEEP + i)%nat = u j.
 Proof.
-  intros i. rewrite V'_small; unfold tgt_val; rewrite (proj2 (Nat.leb_le KEEP (KEEP + i)) ltac:(lia));
-    replace (KEEP + i - KEEP)%nat with i by lia; [reflexivity | apply u_rng].
+  intros i j Hj. rewrite V'_small; unfold tgt_val; rewrite (proj2 (Nat.leb_le KEEP (KEEP + i)) ltac:(lia));
+    replace (KEEP + i - KEEP)%nat with i by lia; rewrite Hj; [reflexivity | apply u_rng].
 Qed.
 
 #[using="HSP"] Lemma V'_0 : V' 0%nat = u 0%nat / 32768.
@@ -875,12 +888,12 @@ Proof. pose proof (Z.mod_pos_bound (u 0%nat) 4096 ltac:(lia)). rewrite V'_small;
 #[using="Type"] Lemma V'_10 : V' 10%nat = u 0%nat mod 32768 / 4096.
 Proof. pose proof (Z.mod_pos_bound (u 0%nat) 32768 ltac:(lia)). rewrite V'_small; [reflexivity|]. change (tgt_val 10) with (u 0%nat mod 32768 / 4096).
   split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia]. Qed.
-#[using="Type"] Lemma V'_209 : V' 209%nat = u 28%nat mod 65536 / 4096.
-Proof. pose proof (Z.mod_pos_bound (u 28%nat) 65536 ltac:(lia)). rewrite V'_small; [reflexivity|]. change (tgt_val 209) with (u 28%nat mod 65536 / 4096).
+#[using="Type"] Lemma V'_209 : V' 209%nat = u 44%nat mod 65536 / 4096.
+Proof. pose proof (Z.mod_pos_bound (u 44%nat) 65536 ltac:(lia)). rewrite V'_small; [reflexivity|]. change (tgt_val 209) with (u 44%nat mod 65536 / 4096).
   split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia]. Qed.
 
 (* [comment removed for export] *)
-#[using="HSP HST"] Lemma st_step : let s := (u 62%nat - u 0%nat / 4096 * 4096) / 4096 in (s = 0 \/ s = 1) /\ u 62%nat = u 0%nat / 4096 * 4096 + 4096 * s.
+#[using="HSP HST"] Lemma st_step : let s := (u 78%nat - u 0%nat / 4096 * 4096) / 4096 in (s = 0 \/ s = 1) /\ u 78%nat = u 0%nat / 4096 * 4096 + 4096 * s.
 Proof.
   cbv zeta. rewrite HST. set (q := u 0%nat / 4096).
   pose proof (Z.div_mod (u 0%nat) 4096 ltac:(lia)) as DM. pose proof (Z.mod_pos_bound (u 0%nat) 4096 ltac:(lia)) as MB. fold q in DM.
@@ -890,8 +903,8 @@ Proof.
   - assert (X : (u 0%nat + 3935) / 4096 = q + 1) by (symmetry; apply Z.div_unique with (r := u 0%nat mod 4096 - 161); lia).
     rewrite X. replace ((q + 1) * 4096 - q * 4096) with (1 * 4096) by lia. rewrite Z.div_mul by lia. split; [right; reflexivity | lia].
 Qed.
-#[using="HSP HST"] Lemma V'_344 : V' 344%nat = (u 62%nat - u 0%nat / 4096 * 4096) / 4096.
-Proof. destruct st_step as [S _]. rewrite V'_small; [reflexivity|]. change (tgt_val 344) with ((u 62%nat - u 0%nat / 4096 * 4096) / 4096). lia. Qed.
+#[using="HSP HST"] Lemma V'_344 : V' 344%nat = (u 78%nat - u 0%nat / 4096 * 4096) / 4096.
+Proof. destruct st_step as [S _]. rewrite V'_small; [reflexivity|]. change (tgt_val 344) with ((u 78%nat - u 0%nat / 4096 * 4096) / 4096). lia. Qed.
 
 #[using="Type"] Lemma V'_page : forall i k, In (i, k) PAGES -> V' k = u i / 4096.
 Proof.
@@ -933,19 +946,19 @@ Proof.
   apply Forall_app. split; [| apply Forall_app; split; [| apply Forall_app; split]].
   1: unfold D_SPECIAL; apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]]]].
   - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 0%nat). rewrite V'_0, V'_6, V'_10. rewrite (Z.mod_small _ (2 ^ 64)); lia.
-  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 29%nat). rewrite (V'_page 28%nat 208%nat), V'_209 by (unfold PAGES; cbn; tauto).
-    pose proof (page_al 28%nat 208%nat ltac:(unfold PAGES; cbn; tauto)) as A28.
-    pose proof (Z.div_mod (u 28%nat) 4096 ltac:(lia)) as D28. rewrite A28 in D28.
-    pose proof (Z.mod_pos_bound (u 28%nat) 65536 ltac:(lia)) as M28.
-    assert (A2 : (u 28%nat mod 65536) mod 4096 = 0).
-    { rewrite <- (Znumtheory.Zmod_div_mod 4096 65536 (u 28%nat)) by (try lia; exists 16; reflexivity). exact A28. }
-    pose proof (Z.div_mod (u 28%nat mod 65536) 4096 ltac:(lia)) as D2. rewrite A2 in D2.
-    pose proof (u_rng 29%nat) as R29. rewrite HSB in *. rewrite (Z.mod_small _ (2 ^ 64)); lia.
-  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 62%nat). rewrite V'_0, V'_10, V'_344. pose proof (u_rng 62%nat). rewrite (Z.mod_small _ (2 ^ 64)); lia.
-  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 63%nat). rewrite V'_0, V'_10, V'_344. pose proof (u_rng 63%nat) as R63.
-    set (a := u 0%nat / 32768) in *. set (b := u 0%nat mod 32768 / 4096) in *. set (s := (u 62%nat - u 0%nat / 4096 * 4096) / 4096) in *.
-    assert (U62 : u 62%nat = 32768 * a + 4096 * b + 4096 * s) by lia.
-    assert (X : (u 62%nat - 8388608) / 8 = 4096 * a + 512 * b + 512 * s - 1048576).
+  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 45%nat). rewrite (V'_page 44%nat 208%nat), V'_209 by (unfold PAGES; cbn; tauto).
+    pose proof (page_al 44%nat 208%nat ltac:(unfold PAGES; cbn; tauto)) as A28.
+    pose proof (Z.div_mod (u 44%nat) 4096 ltac:(lia)) as D28. rewrite A28 in D28.
+    pose proof (Z.mod_pos_bound (u 44%nat) 65536 ltac:(lia)) as M28.
+    assert (A2 : (u 44%nat mod 65536) mod 4096 = 0).
+    { rewrite <- (Znumtheory.Zmod_div_mod 4096 65536 (u 44%nat)) by (try lia; exists 16; reflexivity). exact A28. }
+    pose proof (Z.div_mod (u 44%nat mod 65536) 4096 ltac:(lia)) as D2. rewrite A2 in D2.
+    pose proof (u_rng 45%nat) as R29. rewrite HSB in *. rewrite (Z.mod_small _ (2 ^ 64)); lia.
+  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 78%nat). rewrite V'_0, V'_10, V'_344. pose proof (u_rng 78%nat). rewrite (Z.mod_small _ (2 ^ 64)); lia.
+  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 79%nat). rewrite V'_0, V'_10, V'_344. pose proof (u_rng 79%nat) as R63.
+    set (a := u 0%nat / 32768) in *. set (b := u 0%nat mod 32768 / 4096) in *. set (s := (u 78%nat - u 0%nat / 4096 * 4096) / 4096) in *.
+    assert (U62 : u 78%nat = 32768 * a + 4096 * b + 4096 * s) by lia.
+    assert (X : (u 78%nat - 8388608) / 8 = 4096 * a + 512 * b + 512 * s - 1048576).
     { rewrite U62. replace (32768 * a + 4096 * b + 4096 * s - 8388608) with ((4096 * a + 512 * b + 512 * s - 1048576) * 8) by lia. apply Z.div_mul. lia. }
     rewrite HXQ, X in *. rewrite (Z.mod_small _ (2 ^ 64)); lia.
   - (* [comment removed for export] *) unfold D_PAGES. apply Forall_forall. intros [i l] Hin. apply in_map_iff in Hin as ([i0 k] & X & Hin). injection X as <- <-. unfold lval; cbn [fst snd tval]. fold (u i0).
@@ -954,8 +967,10 @@ Proof.
   - (* [comment removed for export] *) unfold D_RENAMES. apply Forall_forall. intros [i l] Hin. apply in_map_iff in Hin as ([i0 k] & X & Hin). injection X as <- <-. unfold lval; cbn [fst snd tval]. fold (u i0).
     rewrite (V'_ren i0 k Hin). pose proof (u_rng i0). rewrite (Z.mod_small _ (2 ^ 64)); lia.
   - (* [comment removed for export] *) unfold D_OTHERS. apply Forall_forall. intros [i l] Hin. apply in_map_iff in Hin as (i0 & X & Hin). injection X as <- <-.
-    change (u i0 = (1 * V' (KEEP + i0)%nat + 0 + 0) mod 2 ^ 64).
-    rewrite V'_keep. pose proof (u_rng i0). rewrite (Z.mod_small _ (2 ^ 64)); lia.
+    change (u i0 = (1 * V' (KEEP + vkeep i0)%nat + 0 + 0) mod 2 ^ 64).
+    assert (FB : forallb (fun j => Nat.ltb j 216) OTHERS = true) by reflexivity.
+    pose proof (proj1 (forallb_forall _ _) FB i0 Hin) as Hlt. apply Nat.ltb_lt in Hlt.
+    rewrite (V'_keep (vkeep i0) i0 (vsrc_vkeep i0 Hlt)). pose proof (u_rng i0). rewrite (Z.mod_small _ (2 ^ 64)); lia.
 Qed.
 
 #[using="HSP HAL HREN HST"] Theorem vr_A3_sound : vr_sound V' VR_A3.
@@ -967,7 +982,7 @@ Proof.
   - rewrite V'_6. pose proof (Z.mod_pos_bound (u 0%nat) 4096 ltac:(lia)). assert (u 0%nat mod 4096 / 16 < 256) by (apply Z.div_lt_upper_bound; lia). split; [apply Z.div_pos; lia | lia].
   - rewrite V'_10. pose proof (Z.mod_pos_bound (u 0%nat) 32768 ltac:(lia)). assert (u 0%nat mod 32768 / 4096 < 8) by (apply Z.div_lt_upper_bound; lia). split; [apply Z.div_pos; lia | lia].
   - rewrite V'_344. lia.
-  - rewrite V'_209. pose proof (Z.mod_pos_bound (u 28%nat) 65536 ltac:(lia)). assert (u 28%nat mod 65536 / 4096 < 16) by (apply Z.div_lt_upper_bound; lia). split; [apply Z.div_pos; lia | lia].
+  - rewrite V'_209. pose proof (Z.mod_pos_bound (u 44%nat) 65536 ltac:(lia)). assert (u 44%nat mod 65536 / 4096 < 16) by (apply Z.div_lt_upper_bound; lia). split; [apply Z.div_pos; lia | lia].
   - unfold VR_PAGES. apply Forall_forall. intros [[k lo] hi] Hin. apply in_map_iff in Hin as ([[[i0 k0] lo0] hi0] & X & Hin). cbn [fst snd] in X. injection X as <- <- <-.
     rewrite (V'_page i0 k0). 2:{ unfold PAGES. apply in_map_iff. exists (i0, k0, lo0, hi0). split; [reflexivity | exact Hin]. }
     exact (page_rng i0 k0 lo0 hi0 Hin).
@@ -1005,45 +1020,57 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition PAGES4 : list (nat * nat * Z * Z) :=
-  [(26%nat, 78%nat, 1, 34359736304);
-   (27%nat, 207%nat, 1, 34359735410);
-   (28%nat, 208%nat, 4295491576, 34326181871);
-   (36%nat, 226%nat, 1, 34359734272);
-   (37%nat, 227%nat, 1, 34359736319);
-   (38%nat, 228%nat, 1, 34359736304);
-   (46%nat, 245%nat, 1, 34359736319);
-   (60%nat, 310%nat, 1, 34359736319);
-   (83%nat, 393%nat, 1, 34359733495);
-   (101%nat, 5%nat, 1508, 525796);   (* [comment removed for export] *)
-   (104%nat, 469%nat, 1, 34359736064);
-   (105%nat, 470%nat, 1, 34359734272);
-   (106%nat, 568%nat, 1, 34359736319);
-   (107%nat, 487%nat, 1, 34359736319)].
+  [(42%nat, 78%nat, 1, 34359736304);
+   (43%nat, 207%nat, 1, 34359735410);
+   (44%nat, 208%nat, 4295491576, 34326181871);
+   (52%nat, 226%nat, 1, 34359734272);
+   (53%nat, 227%nat, 1, 34359736319);
+   (54%nat, 228%nat, 1, 34359736304);
+   (62%nat, 245%nat, 1, 34359736319);
+   (76%nat, 310%nat, 1, 34359736319);
+   (99%nat, 393%nat, 1, 34359733495);
+   (117%nat, 5%nat, 1508, 525796);   (* [comment removed for export] *)
+   (120%nat, 469%nat, 1, 34359736064);
+   (121%nat, 470%nat, 1, 34359734272);
+   (122%nat, 568%nat, 1, 34359736319);
+   (123%nat, 487%nat, 1, 34359736319)].
 Definition PAGES : list (nat * nat) := List.map (fun q => (fst (fst (fst q)), snd (fst (fst q)))) PAGES4.
 (* [comment removed for export] *)
-Definition RENAMES : list (nat * nat) := [(1, 1); (2, 2); (3, 3); (4, 4); (5, 8); (6, 9); (8, 44); (9, 45)]%nat.
+Definition RENAMES : list (nat * nat) := [(1, 1); (2, 2); (3, 3); (4, 4); (5, 8); (6, 9); (24, 44); (25, 45)]%nat.
 (* [comment removed for export] *)
-Definition SPECIAL : list nat := [0; 29; 62; 63]%nat.
+Definition SPECIAL : list nat := [0; 45; 78; 79]%nat.
 Definition mapped (i : nat) : bool :=
   existsb (Nat.eqb i) SPECIAL || existsb (fun p => Nat.eqb i (fst p)) PAGES || existsb (fun p => Nat.eqb i (fst p)) RENAMES.
-Definition OTHERS : list nat := Eval vm_compute in (List.filter (fun i => negb (mapped i)) (List.seq 0 108)).
+Definition OTHERS : list nat := Eval vm_compute in (List.filter (fun i => negb (mapped i)) (List.seq 0 124)).
 Definition KEEP : nat := 1000.
+(* LPS 727298f3's [vals0] is 23 words, not 7: boot slot [i >= 23] is the pre-revision slot [i - 16], and the V-space
+   keeps the pre-revision numbering ([KEEP + i - 16]); the new slots 7..22 go to [KEEP + 200 + i]. *)
+Definition vkeep (i : nat) : nat := if Nat.ltb i 7 then i else if Nat.ltb i 23 then (200 + i)%nat else (i - 16)%nat.
+Definition vsrc (j : nat) : nat := if Nat.ltb j 7 then j else if Nat.ltb j 200 then (j + 16)%nat else (j - 200)%nat.
+Lemma vsrc_vkeep : forall i, (i < 216)%nat -> vsrc (vkeep i) = i.
+Proof.
+  intros i Hi. unfold vkeep, vsrc.
+  destruct (Nat.ltb_spec i 7) as [H1|H1]; [destruct (Nat.ltb_spec i 7); [reflexivity | lia]|].
+  destruct (Nat.ltb_spec i 23) as [H2|H2].
+  - destruct (Nat.ltb_spec (200 + i) 7); [lia|]. destruct (Nat.ltb_spec (200 + i) 200); [lia|]. lia.
+  - destruct (Nat.ltb_spec (i - 16) 7); [lia|]. destruct (Nat.ltb_spec (i - 16) 200); [lia | lia].
+Qed.
 
 Definition D_SPECIAL : dict :=
   [(0%nat, ([(32768, 0%nat); (16, 6%nat); (4096, 10%nat)], 0));
-   (29%nat, ([(4096, 208%nat); (-4096, 209%nat)], 65536));
-   (62%nat, ([(32768, 0%nat); (4096, 10%nat); (4096, 344%nat)], 0));
-   (63%nat, ([(4096, 0%nat); (512, 10%nat); (512, 344%nat)], -1048576))].
+   (45%nat, ([(4096, 208%nat); (-4096, 209%nat)], 65536));
+   (78%nat, ([(32768, 0%nat); (4096, 10%nat); (4096, 344%nat)], 0));
+   (79%nat, ([(4096, 0%nat); (512, 10%nat); (512, 344%nat)], -1048576))].
 Definition D_PAGES : dict := List.map (fun p => (fst p, ([(4096, snd p)], 0))) PAGES.
 Definition D_RENAMES : dict := List.map (fun p => (fst p, ([(1, snd p)], 0))) RENAMES.
-Definition D_OTHERS : dict := List.map (fun i => (i, ([(1, (KEEP + i)%nat)], 0))) OTHERS.
+Definition D_OTHERS : dict := List.map (fun i => (i, ([(1, (KEEP + vkeep i)%nat)], 0))) OTHERS.
 Definition D_A3 : dict := D_SPECIAL ++ D_PAGES ++ D_RENAMES ++ D_OTHERS.
 
 Definition VR_SPECIAL : vranges := [(0%nat, 4294901760, 4294967295); (6%nat, 0, 255); (10%nat, 0, 7); (344%nat, 0, 1); (209%nat, 0, 15)].
 Definition VR_PAGES : vranges := List.map (fun q => (snd (fst (fst q)), snd (fst q), snd q)) PAGES4.
 (* [comment removed for export] *)
 Definition VR_REN : list (nat * nat * Z * Z) :=
-  [(1%nat, 1%nat, 1, 1024); (2%nat, 2%nat, 0, 256); (3%nat, 3%nat, 0, 131071); (4%nat, 4%nat, 0, 280000); (5%nat, 8%nat, 0, 4294967294); (8%nat, 44%nat, 1, 4194303)].
+  [(1%nat, 1%nat, 1, 1024); (2%nat, 2%nat, 0, 256); (3%nat, 3%nat, 0, 131071); (4%nat, 4%nat, 0, 280000); (5%nat, 8%nat, 0, 4294967294); (24%nat, 44%nat, 1, 4194303)].
 Definition VR_A3 : vranges := VR_SPECIAL ++ VR_PAGES ++ List.map (fun q => (snd (fst (fst q)), snd (fst q), snd q)) VR_REN.
 
 Section Dict.
@@ -1057,12 +1084,12 @@ Definition ren_src (k : nat) : option nat :=
   match List.find (fun p => Nat.eqb (snd p) k) RENAMES with Some p => Some (fst p) | None => None end.
 
 Definition tgt_val (k : nat) : Z :=
-  if Nat.leb KEEP k then u (k - KEEP)%nat
+  if Nat.leb KEEP k then u (vsrc (k - KEEP))
   else if Nat.eqb k 0 then u 0%nat / 32768
   else if Nat.eqb k 6 then u 0%nat mod 4096 / 16
   else if Nat.eqb k 10 then u 0%nat mod 32768 / 4096
-  else if Nat.eqb k 209 then u 28%nat mod 65536 / 4096
-  else if Nat.eqb k 344 then (u 62%nat - u 0%nat / 4096 * 4096) / 4096
+  else if Nat.eqb k 209 then u 44%nat mod 65536 / 4096
+  else if Nat.eqb k 344 then (u 78%nat - u 0%nat / 4096 * 4096) / 4096
   else match page_src k with
        | Some i => u i / 4096
        | None => match ren_src k with Some i => u i | None => 0 end
@@ -1075,9 +1102,9 @@ Hypothesis H16 : u 0%nat mod 16 = 0.
 Hypothesis HSP : 0x7fff80000000 <= u 0%nat < 2 ^ 47.
 Hypothesis HAL : Forall (fun q => u (fst (fst (fst q))) mod 4096 = 0 /\ 4096 * snd (fst q) <= u (fst (fst (fst q))) <= 4096 * snd q) PAGES4.
 Hypothesis HREN : Forall (fun q => In (fst (fst (fst q)), snd (fst (fst q))) RENAMES /\ snd (fst q) <= u (fst (fst (fst q))) <= snd q) VR_REN.
-Hypothesis HSB : u 29%nat = u 28%nat + 65536 - u 28%nat mod 65536.
-Hypothesis HST : u 62%nat = (u 0%nat + 3935) / 4096 * 4096.
-Hypothesis HXQ : u 63%nat = (u 62%nat - 8388608) / 8.
+Hypothesis HSB : u 45%nat = u 44%nat + 65536 - u 44%nat mod 65536.
+Hypothesis HST : u 78%nat = (u 0%nat + 3935) / 4096 * 4096.
+Hypothesis HXQ : u 79%nat = (u 78%nat - 8388608) / 8.
 
 #[using="Type"] Lemma V'_small : forall k, 0 <= tgt_val k < 2 ^ 64 -> V' k = tgt_val k.
 Proof. intros k H. unfold uev, tgt_env. cbn [ev]. apply u_small. exact H. Qed.
@@ -1094,10 +1121,10 @@ Proof.
   pose proof (Z.div_mod (u i) 4096 ltac:(lia)) as DM. rewrite A in DM. lia.
 Qed.
 
-#[using="HSP"] Lemma V'_keep : forall i, V' (KEEP + i)%nat = u i.
+#[using="HSP"] Lemma V'_keep : forall i j, vsrc i = j -> V' (KEEP + i)%nat = u j.
 Proof.
-  intros i. rewrite V'_small; unfold tgt_val; rewrite (proj2 (Nat.leb_le KEEP (KEEP + i)) ltac:(lia));
-    replace (KEEP + i - KEEP)%nat with i by lia; [reflexivity | apply u_rng].
+  intros i j Hj. rewrite V'_small; unfold tgt_val; rewrite (proj2 (Nat.leb_le KEEP (KEEP + i)) ltac:(lia));
+    replace (KEEP + i - KEEP)%nat with i by lia; rewrite Hj; [reflexivity | apply u_rng].
 Qed.
 
 #[using="HSP"] Lemma V'_0 : V' 0%nat = u 0%nat / 32768.
@@ -1109,12 +1136,12 @@ Proof. pose proof (Z.mod_pos_bound (u 0%nat) 4096 ltac:(lia)). rewrite V'_small;
 #[using="Type"] Lemma V'_10 : V' 10%nat = u 0%nat mod 32768 / 4096.
 Proof. pose proof (Z.mod_pos_bound (u 0%nat) 32768 ltac:(lia)). rewrite V'_small; [reflexivity|]. change (tgt_val 10) with (u 0%nat mod 32768 / 4096).
   split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia]. Qed.
-#[using="Type"] Lemma V'_209 : V' 209%nat = u 28%nat mod 65536 / 4096.
-Proof. pose proof (Z.mod_pos_bound (u 28%nat) 65536 ltac:(lia)). rewrite V'_small; [reflexivity|]. change (tgt_val 209) with (u 28%nat mod 65536 / 4096).
+#[using="Type"] Lemma V'_209 : V' 209%nat = u 44%nat mod 65536 / 4096.
+Proof. pose proof (Z.mod_pos_bound (u 44%nat) 65536 ltac:(lia)). rewrite V'_small; [reflexivity|]. change (tgt_val 209) with (u 44%nat mod 65536 / 4096).
   split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia]. Qed.
 
 (* [comment removed for export] *)
-#[using="HSP HST"] Lemma st_step : let s := (u 62%nat - u 0%nat / 4096 * 4096) / 4096 in (s = 0 \/ s = 1) /\ u 62%nat = u 0%nat / 4096 * 4096 + 4096 * s.
+#[using="HSP HST"] Lemma st_step : let s := (u 78%nat - u 0%nat / 4096 * 4096) / 4096 in (s = 0 \/ s = 1) /\ u 78%nat = u 0%nat / 4096 * 4096 + 4096 * s.
 Proof.
   cbv zeta. rewrite HST. set (q := u 0%nat / 4096).
   pose proof (Z.div_mod (u 0%nat) 4096 ltac:(lia)) as DM. pose proof (Z.mod_pos_bound (u 0%nat) 4096 ltac:(lia)) as MB. fold q in DM.
@@ -1124,8 +1151,8 @@ Proof.
   - assert (X : (u 0%nat + 3935) / 4096 = q + 1) by (symmetry; apply Z.div_unique with (r := u 0%nat mod 4096 - 161); lia).
     rewrite X. replace ((q + 1) * 4096 - q * 4096) with (1 * 4096) by lia. rewrite Z.div_mul by lia. split; [right; reflexivity | lia].
 Qed.
-#[using="HSP HST"] Lemma V'_344 : V' 344%nat = (u 62%nat - u 0%nat / 4096 * 4096) / 4096.
-Proof. destruct st_step as [S _]. rewrite V'_small; [reflexivity|]. change (tgt_val 344) with ((u 62%nat - u 0%nat / 4096 * 4096) / 4096). lia. Qed.
+#[using="HSP HST"] Lemma V'_344 : V' 344%nat = (u 78%nat - u 0%nat / 4096 * 4096) / 4096.
+Proof. destruct st_step as [S _]. rewrite V'_small; [reflexivity|]. change (tgt_val 344) with ((u 78%nat - u 0%nat / 4096 * 4096) / 4096). lia. Qed.
 
 #[using="Type"] Lemma V'_page : forall i k, In (i, k) PAGES -> V' k = u i / 4096.
 Proof.
@@ -1167,19 +1194,19 @@ Proof.
   apply Forall_app. split; [| apply Forall_app; split; [| apply Forall_app; split]].
   1: unfold D_SPECIAL; apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]]]].
   - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 0%nat). rewrite V'_0, V'_6, V'_10. rewrite (Z.mod_small _ (2 ^ 64)); lia.
-  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 29%nat). rewrite (V'_page 28%nat 208%nat), V'_209 by (unfold PAGES; cbn; tauto).
-    pose proof (page_al 28%nat 208%nat ltac:(unfold PAGES; cbn; tauto)) as A28.
-    pose proof (Z.div_mod (u 28%nat) 4096 ltac:(lia)) as D28. rewrite A28 in D28.
-    pose proof (Z.mod_pos_bound (u 28%nat) 65536 ltac:(lia)) as M28.
-    assert (A2 : (u 28%nat mod 65536) mod 4096 = 0).
-    { rewrite <- (Znumtheory.Zmod_div_mod 4096 65536 (u 28%nat)) by (try lia; exists 16; reflexivity). exact A28. }
-    pose proof (Z.div_mod (u 28%nat mod 65536) 4096 ltac:(lia)) as D2. rewrite A2 in D2.
-    pose proof (u_rng 29%nat) as R29. rewrite HSB in *. rewrite (Z.mod_small _ (2 ^ 64)); lia.
-  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 62%nat). rewrite V'_0, V'_10, V'_344. pose proof (u_rng 62%nat). rewrite (Z.mod_small _ (2 ^ 64)); lia.
-  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 63%nat). rewrite V'_0, V'_10, V'_344. pose proof (u_rng 63%nat) as R63.
-    set (a := u 0%nat / 32768) in *. set (b := u 0%nat mod 32768 / 4096) in *. set (s := (u 62%nat - u 0%nat / 4096 * 4096) / 4096) in *.
-    assert (U62 : u 62%nat = 32768 * a + 4096 * b + 4096 * s) by lia.
-    assert (X : (u 62%nat - 8388608) / 8 = 4096 * a + 512 * b + 512 * s - 1048576).
+  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 45%nat). rewrite (V'_page 44%nat 208%nat), V'_209 by (unfold PAGES; cbn; tauto).
+    pose proof (page_al 44%nat 208%nat ltac:(unfold PAGES; cbn; tauto)) as A28.
+    pose proof (Z.div_mod (u 44%nat) 4096 ltac:(lia)) as D28. rewrite A28 in D28.
+    pose proof (Z.mod_pos_bound (u 44%nat) 65536 ltac:(lia)) as M28.
+    assert (A2 : (u 44%nat mod 65536) mod 4096 = 0).
+    { rewrite <- (Znumtheory.Zmod_div_mod 4096 65536 (u 44%nat)) by (try lia; exists 16; reflexivity). exact A28. }
+    pose proof (Z.div_mod (u 44%nat mod 65536) 4096 ltac:(lia)) as D2. rewrite A2 in D2.
+    pose proof (u_rng 45%nat) as R29. rewrite HSB in *. rewrite (Z.mod_small _ (2 ^ 64)); lia.
+  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 78%nat). rewrite V'_0, V'_10, V'_344. pose proof (u_rng 78%nat). rewrite (Z.mod_small _ (2 ^ 64)); lia.
+  - (* [comment removed for export] *) unfold lval; cbn [fst snd tval]. fold (u 79%nat). rewrite V'_0, V'_10, V'_344. pose proof (u_rng 79%nat) as R63.
+    set (a := u 0%nat / 32768) in *. set (b := u 0%nat mod 32768 / 4096) in *. set (s := (u 78%nat - u 0%nat / 4096 * 4096) / 4096) in *.
+    assert (U62 : u 78%nat = 32768 * a + 4096 * b + 4096 * s) by lia.
+    assert (X : (u 78%nat - 8388608) / 8 = 4096 * a + 512 * b + 512 * s - 1048576).
     { rewrite U62. replace (32768 * a + 4096 * b + 4096 * s - 8388608) with ((4096 * a + 512 * b + 512 * s - 1048576) * 8) by lia. apply Z.div_mul. lia. }
     rewrite HXQ, X in *. rewrite (Z.mod_small _ (2 ^ 64)); lia.
   - (* [comment removed for export] *) unfold D_PAGES. apply Forall_forall. intros [i l] Hin. apply in_map_iff in Hin as ([i0 k] & X & Hin). injection X as <- <-. unfold lval; cbn [fst snd tval]. fold (u i0).
@@ -1188,8 +1215,10 @@ Proof.
   - (* [comment removed for export] *) unfold D_RENAMES. apply Forall_forall. intros [i l] Hin. apply in_map_iff in Hin as ([i0 k] & X & Hin). injection X as <- <-. unfold lval; cbn [fst snd tval]. fold (u i0).
     rewrite (V'_ren i0 k Hin). pose proof (u_rng i0). rewrite (Z.mod_small _ (2 ^ 64)); lia.
   - (* [comment removed for export] *) unfold D_OTHERS. apply Forall_forall. intros [i l] Hin. apply in_map_iff in Hin as (i0 & X & Hin). injection X as <- <-.
-    change (u i0 = (1 * V' (KEEP + i0)%nat + 0 + 0) mod 2 ^ 64).
-    rewrite V'_keep. pose proof (u_rng i0). rewrite (Z.mod_small _ (2 ^ 64)); lia.
+    change (u i0 = (1 * V' (KEEP + vkeep i0)%nat + 0 + 0) mod 2 ^ 64).
+    assert (FB : forallb (fun j => Nat.ltb j 216) OTHERS = true) by reflexivity.
+    pose proof (proj1 (forallb_forall _ _) FB i0 Hin) as Hlt. apply Nat.ltb_lt in Hlt.
+    rewrite (V'_keep (vkeep i0) i0 (vsrc_vkeep i0 Hlt)). pose proof (u_rng i0). rewrite (Z.mod_small _ (2 ^ 64)); lia.
 Qed.
 
 #[using="HSP HAL HREN HST"] Theorem vr_A3_sound : vr_sound V' VR_A3.
@@ -1201,7 +1230,7 @@ Proof.
   - rewrite V'_6. pose proof (Z.mod_pos_bound (u 0%nat) 4096 ltac:(lia)). assert (u 0%nat mod 4096 / 16 < 256) by (apply Z.div_lt_upper_bound; lia). split; [apply Z.div_pos; lia | lia].
   - rewrite V'_10. pose proof (Z.mod_pos_bound (u 0%nat) 32768 ltac:(lia)). assert (u 0%nat mod 32768 / 4096 < 8) by (apply Z.div_lt_upper_bound; lia). split; [apply Z.div_pos; lia | lia].
   - rewrite V'_344. lia.
-  - rewrite V'_209. pose proof (Z.mod_pos_bound (u 28%nat) 65536 ltac:(lia)). assert (u 28%nat mod 65536 / 4096 < 16) by (apply Z.div_lt_upper_bound; lia). split; [apply Z.div_pos; lia | lia].
+  - rewrite V'_209. pose proof (Z.mod_pos_bound (u 44%nat) 65536 ltac:(lia)). assert (u 44%nat mod 65536 / 4096 < 16) by (apply Z.div_lt_upper_bound; lia). split; [apply Z.div_pos; lia | lia].
   - unfold VR_PAGES. apply Forall_forall. intros [[k lo] hi] Hin. apply in_map_iff in Hin as ([[[i0 k0] lo0] hi0] & X & Hin). cbn [fst snd] in X. injection X as <- <- <-.
     rewrite (V'_page i0 k0). 2:{ unfold PAGES. apply in_map_iff. exists (i0, k0, lo0, hi0). split; [reflexivity | exact Hin]. }
     exact (page_rng i0 k0 lo0 hi0 Hin).
@@ -1281,7 +1310,8 @@ Definition asan_ledger : list lentry := [
 ].
 
 (* [comment removed for export] *)
-Definition asan_totsz : Z := 17729664598016.  (* [comment removed for export] *)
+Definition asan_totsz : Z := 17729664679936.  (* LPS c0dd863a: + 81920, the vDSO pair's largest width (State.vdso_len_bounds, 20 pages), which the reserved list now ends with *)
+(* was: 17729664598016 *)  (* [comment removed for export] *)
 Definition asan_eager : Z := 16519168.        (* [comment removed for export] *)
 Definition asan_abytes : Z := 4294967296.     (* [comment removed for export] *)
 
@@ -1343,7 +1373,8 @@ Definition asan_ledger : list lentry := [
 ].
 
 (* [comment removed for export] *)
-Definition asan_totsz : Z := 17729664602112.  (* [comment removed for export] *)
+Definition asan_totsz : Z := 17729664684032.  (* LPS c0dd863a: + 81920, the vDSO pair's largest width (State.vdso_len_bounds, 20 pages), which the reserved list now ends with *)
+(* was: 17729664602112 *)  (* [comment removed for export] *)
 Definition asan_eager : Z := 16519168.        (* [comment removed for export] *)
 Definition asan_abytes : Z := 4294967296.     (* [comment removed for export] *)
 End TwB.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: segment C2 of pj_string's image-B walk (fuzz_preset asan-ubsan; the cuts of
    lib/B/Prog/pj_string_defs.v): from PJS_C2 (+0x6c, fuzz_strdup's return site) to the walk's post pjs_FIN:
      +0x6c           s0 := v + 16
@@ -13,7 +14,7 @@
    memnorm keep as YC80x.v's memory invariant: the node may be in a caller's fake frame, which the footprint names)
    stops at the ret; YC1fP.v paj_ret_at returns to the entry ra (no memory change). The model-run position of the cut
    (fuzz_strdup's post implication at pj_string's entry position, keyed on res, and DEAD-PJSTRING from its OUTCOME
-   conjunct: the kit's tip d607d12e4b0f, lib/A/PRH_FnAlloc.v:517-558) and the keep at the cut (pjs_C2,
+   conjunct: the kit's tip, lib/A/PRH_FnAlloc.v:517-558) and the keep at the cut (pjs_C2,
    pjs_inv) are the walk's post's (fpostWm).
    The post: res = 0 (the chosen or refused failure) stores 0 over the zero str word, so the memory reads as at the
    cut everywhere and prh_alloc_post rides through unchanged; res <> 0 (success) writes only v + 16 .. v + 24, apart

@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,6 +37,7 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 607 of its 657 lines of code are new or changed and 403 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): piece c (p3) of
    segment S14 of the walk of the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0):
    the statement s22_p3_stmt of LLVMFuzzerTestOneInput_s22k.v, the digit loop of the inlined m_split from its head
@@ -60,9 +61,9 @@
    byte as atom 32 in a read-only region at a1, the shadow entry of that byte), split at the four branches. Every fact
    of s22_inv is carried by c_inv_kept: the runs have no write window, so every byte is kept.
 
-   THE FORM: the image-B segment files of this walk (the S21 / ret walk's LLVMFuzzerTestOneInput_s25.v / _s25k.v,
-   commit 315447ae529c: c_lit_kept / c_img_kept are its s25_lit_kept / s25_img_kept; the S01 / S02 walk's _s12k.v,
-   commit c9accd8a8a50: c_hblk is its lk_hblk, c_core_kept the full-agreement case of its
+   THE FORM: the image-B segment files of this walk (the S21 / ret walk's LLVMFuzzerTestOneInput_s25.v / _s25k.v,:
+   c_lit_kept / c_img_kept are its s25_lit_kept / s25_img_kept; the S01 / S02 walk's _s12k.v,:
+   c_hblk is its lk_hblk, c_core_kept the full-agreement case of its
    lk_core_run) and the image-A twin's exploration (image A's S14 walk (piece c), vd_seed / vd_shok). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -383,8 +384,8 @@ Let RUNTO := paj_run_to B LAWS.
 Let BR := paj_branch (PI := PI).
 
 (* ---- every fact of s22_inv at a memory that agrees on every byte ---- *)
-(* the S21 / ret walk's s25_lit_kept / s25_img_kept (LLVMFuzzerTestOneInput_s25k.v, image B's S21 / ret commit
-   315447ae529c) *)
+(* the S21 / ret walk's s25_lit_kept / s25_img_kept (LLVMFuzzerTestOneInput_s25k.v, image B's S21 / ret)
+   *)
 Lemma c_lit_kept : forall H (mem mem' : word -> option byte) a s,
   (forall x, in_img SEGS x -> aview SEGS H mem' x = aview SEGS H mem x) ->
   sa_lit SEGS B (aview SEGS H mem) a s -> sa_lit SEGS B (aview SEGS H mem') a s.
@@ -448,7 +449,7 @@ split; [|split].
   refine (proj1 (H12 _ _)). unfold LONGL_W, LONGL_N. lia.
 Qed.
 
-(* the S01 / S02 walk's lk_hblk (LLVMFuzzerTestOneInput_s12k.v, image B's S01 / S02 commit c9accd8a8a50) *)
+(* the S01 / S02 walk's lk_hblk (LLVMFuzzerTestOneInput_s12k.v, image B's S01 / S02) *)
 Lemma c_hblk : forall ly S (W : world SEGS) mem md a n,
   AR SEGS B ly S W mem md -> In (a, n) (ablocks B ly S) -> lt_hblk B ly S (rdW W mem) a n.
 Proof.

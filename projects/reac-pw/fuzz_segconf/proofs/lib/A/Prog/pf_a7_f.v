@@ -5,7 +5,7 @@
 
    Section 1 is the build-independent spine of the plain-build walk owner's PLAIN walk, copied VERBATIM (only
    the p4_ prefix becomes a7_, and the file header is this one) from
-   proofs/reac-pw/fuzz_segconf/lib/Prog/pfB_p4_spine.v at commit 16c6d72c0344,
+   proofs/reac-pw/fuzz_segconf/lib/Prog/pfB_p4_spine.v,
    lines 19-127 (its part 1, "The spine"). That file cannot be Required here: its parts 2 and 3 are stated
    over the PLAIN build's memory vocabulary (lib/Lib/Mem's bytes_at / cstr_at / munch), which image A's walk
    does not use. Segment A7's proof, 2026-10-30.
@@ -23,7 +23,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 
-(** ** 1. The spine (pfB_p4_spine.v:19-113 at 16c6d72c0344, p4_ -> a7_) *)
+(** ** 1. The spine (pfB_p4_spine.v:19-113, p4_ -> a7_) *)
 
 (** The header's body (R:174, after `*close = 0`) and its name (R:184). *)
 Definition a7_body (l : list Z) (ci : nat) : list Z := r_trim (slice 1 ci l).

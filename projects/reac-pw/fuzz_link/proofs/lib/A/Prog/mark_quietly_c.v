@@ -6,7 +6,7 @@
    one (the shapes for a function that reaches the printf family: rounding mode 0 at entry, a Post at SOME fx'
    related to the entry's by BoxBase.v `fxr`, and a Pre that also sees the call's block list). The first-call
    shape `aleaf_alloc_fx_sk` is `aleaf_alloc_fx` with the premise `YI16.sink_open_fp FP` right after `apre`
-   (form e47ff041e8b3): fmemopen's tail call to __ofl_add writes musl's open-file-list head, and a journal
+   (form): fmemopen's tail call to __ofl_add writes musl's open-file-list head, and a journal
    spares that head only when its footprint is sink-open (Reusable/YCbq.v `fp_spares`; found by
    the mark-quietly walk). The harness discharges it by this unit's AMemFile.v `amf_harness_fp_sink_open`.
 
@@ -135,14 +135,14 @@
    - `(bv_unsigned (getr regs 10) <> 0 -> exists q n, In (q, n) (blocks L A) /\ ...)`, the plain gap 16: on image
      A it is stated over the block list the fx shapes hand the Pre. The marks block, when a0 <> 0:
      `amarks_ledger bl a0` (remember_c.v: `In (a0, MK_SIZE) bl` and `YCbq.off_img a0 MK_SIZE`), which remember's
-     snprintf destination needs through the tail call (`link_snp_place`, LinkSnpDef.v:166); on the
+     snprintf destination needs through the tail call (`link_snp_place`, LinkSnpDef.v:167); on the
      opening arm fmemopen's Post appends the FILE block to the list, so the marks block stays in it. The FILE
      block, on the later arm: `In (sink, AMF_BLOCK) bl`, which the libc rewind / fprintf / vfprintf contracts
      need (the slot gives both from the frame's `amf_gi_ledger`, lib/A/AMemFileSink.v, and its own calloc
      block). On the opening arm the FILE block does not exist yet; the fmemopen contract's Post adds it.
    Nothing of the plain Post is false of image A.
    THE FLOATING-POINT STATE is the shapes'. Entry: `aleaf_fx` / `aleaf_alloc_fx` take
-   `YK0o.frm_zero (fp_csr fx)`, as the plain contract does (lib/Prog/mark_quietly_c.v:151), because the tail
+   `YK0o.frm_zero (fp_csr fx)`, as the plain contract does (lib/Prog/mark_quietly_c.v:152), because the tail
    call reaches the printf family, whose released contracts ask for rounding mode 0 at entry; it holds at every
    call site, because the start-up fcsr is 0 (`fp_frm_zero_fx0`, Reusable/YK0o.v:15) and none of the 36
    listings of link's own functions holds an f* or csr* instruction. Exit: `apostF` returns at some fx' with

@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10-30 (G-BRA): the walk of image B's wake (fuzz_reply.asan-ubsan, 0x82484, 101
    instructions) over a GENERIC allocator relation ARx with its laws: pb_wake_x proves lib/B/W_wake_c_x.v's
    wk_spec_x B PST ARx RG at wake's entry (BASE + AF_fr_wake).  SOURCE: the AR walk lib/B/W_wake.v (pb_wake : wk_spec B
-   RG (BASE + AF_fr_wake); taken by path from a working branch 22c3862876d), converted step for step by
-   the C1 method of image A's relay_add conversion (fc38e83bfbf; its room form, W_relay_add.v (sha256 db38e2e41e5d; internal record), Section c).  The
+   RG (BASE + AF_fr_wake); taken by path from a working branch), converted step for step by
+   the C1 method of image A's relay_add conversion (its room form, W_relay_add.v (sha256 db38e2e41e5d; internal record), Section c).  The
    machine-code account, the symbolic states and every numeral are the AR walk's (image B's, checked there against the
    pinned binary); its AR-free helpers (wk_land_m32 .. wk_grab, the entry state) are restated here with the same text,
    so that this file does not build the AR walk.
@@ -23,6 +23,7 @@
      aowned in no ARx state (alx_owned_image) - not by the journal (image A's walk does the same, RAK);
    - wk_post_x's seat conjunct: the end state is stack_free_state 0 fpos S2 (a set_fs, Reusable/YG01.v) with
      S2 = set_fs f S, so it is set_fs (its own fake stack) S by conversion. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

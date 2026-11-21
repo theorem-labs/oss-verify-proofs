@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0q.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the initial model and its reservations; the allocator ledger's new fields; the Checks.Placement imports and the ledger-preservation obligations). *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -119,6 +120,10 @@ split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact
 - rewrite LBy. exact (lg_sizes _ _ _ _ G).
 - rewrite LBy. exact (lg_backing _ _ _ _ G).
 -   exact (lg_ceil _ _ _ _ G).
+- exact (lg_vdso _ _ _ _ G).
+- intros k rg Hk. rewrite RO in Hk. exact (lg_rfree _ _ _ _ G k rg Hk).
+- exact (lg_vdso_lo _ _ _ _ G).
+- exact (lg_brk0_hi _ _ _ _ G).
 Qed.
 Lemma layout_ok_same' L A1 A2 : layout_ok L A1 -> st_regions A2 = st_regions A1 -> footprint A2 = footprint A1 -> layout_ok L A2.
 Proof.

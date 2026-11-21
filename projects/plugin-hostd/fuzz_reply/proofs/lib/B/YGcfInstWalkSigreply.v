@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane; 2026-10-31 part 3c and the closers, a Theorem Labs lane, for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply): the image B twin
    (fuzz_reply.asan-ubsan) of lib/A/YGcfInstWalkSigreply.v (a Theorem Labs lane):
@@ -7,12 +8,12 @@
    rule 24: no function proved (kind: assembly of proved Allocate arms into WalkSigA).
    Changes against the A text: module paths lib.A -> lib.B and the image twins A<r> -> Y<r> (CfImgA -> CfImgB,
    ReplyUnitFactsA -> ReplyUnitFactsB, hoeb_A -> hoeb_B); the entry is B's
-   cf_pc_allocate = 0x31c30 (B/CfImgB.v:40 = B/AGhy.v:34 A_Allocate).  The CfParams instance stays A's CfParams_reply
-   (lib/A/CfParamsReply.v), not lib/B/CfParamsReplyB.v's CfParams_reply_B: image B's target text (B/ReplyAllocTargetsB.v:7-10)
+   cf_pc_allocate = 0x31c30 (B/CfImgB.v:40 = B/AGhy.v:35 A_Allocate).  The CfParams instance stays A's CfParams_reply
+   (lib/A/CfParamsReply.v), not lib/B/CfParamsReplyB.v's CfParams_reply_B: image B's target text (B/ReplyAllocTargetsB.v:8-11)
    and its consumers (a Theorem Labs lane's B/ReplyMallocB.v, B/ReplyClosedB.v) name CfParams_reply.
    Round 3 part 3c (this line is a Theorem Labs lane's 3c-b): the miss arms are the B miss chain's tops
    YGcfInstMissW.cfi_alloc_missg_cf_em / cfi_alloc_missk_cf_em (CfInstMiss), which take part 3c's arodata_ok_cf
-   (WalkSigA's wsa_missg / wsa_missk at cf layer 9e2e0be6e3e5); the round-3 image premises PF_AG / HPFA / HRS come from
+   (WalkSigA's wsa_missg / wsa_missk at cf layer); the round-3 image premises PF_AG / HPFA / HRS come from
    YGcfInstHitreply.hit_pf_ag_B and ReplyRelroGeoB.  No premise of the instance files is left named: HRW is B3LeafCf's
    YGcfRefillTopreply.refill_walk_cf_reply_closed (a Theorem Labs lane's B relocation), IFS / IFSE are CfInstSec's
    YGcfInstSecreply.ifaceSw_B / ifaceSE_B.
@@ -72,7 +73,7 @@ Section b.
 (* the unit's instance object (YGcfInstBase's IOK) *)
 Variable IOK : Z -> Prop.
 Hypothesis IOK_inst : IOK_ok TfibB IOK.
-(* the call site's can_fill (YGcfInstAllocTop.v:44-45) *)
+(* the call site's can_fill (YGcfInstAllocTop.v:45-46) *)
 Variable cf : Z.
 Hypothesis HCF : cf = 0 \/ cf = 1.
 
@@ -120,7 +121,7 @@ destruct (proj1 (Forall_forall _ _) FA t Ht) as (_ & [I | (pw & sfx & HP & _)]);
 assert (EW : u_wild (as_universe TfibB) = []) by reflexivity. rewrite EW in HP. destruct HP.
 Qed.
 
-(* The depot field at the instance (YGcfInstDepot.if_depot_cf, YGcfInstDepot.v:201), from reply's image facts and CfF1's
+(* The depot field at the instance (YGcfInstDepot.if_depot_cf, YGcfInstDepot.v:202), from reply's image facts and CfF1's
    depot walk row YGcfInstDepotWreply.depot_spec_a_reply at reply's dhash (uf_dhash_img). *)
 Lemma HDEP_reply : forall Hp, CLdepot.depot_field im_segs ag_depot_put im_tp TfibB (ARXq_cf TfibB IOK Hp) (U_cf TfibB)
   ag_dzone (fun ly a => ag_dzone ly a \/ ag_czone ly a).
@@ -202,7 +203,7 @@ Local Ltac to_arm Hp inst so bp ly S W regs mem md n tr HPRE pc :=
     (MemnormT.alloc_leaf_em tfibsegs TfibB malloc_cf (ARXq_cf TfibB IOK Hp) (AOX_cf TfibB) qtight TFIB_OOM
       inst ly S W regs mem md n tr)).
 
-(* The walk signature at the instance YGcfInstAllocTop.v:49-50 names, at every ghost set. *)
+(* The walk signature at the instance YGcfInstAllocTop.v:50-51 names, at every ghost set. *)
 Theorem walksig_cf_reply : forall Hp, WalkSigA im_segs TfibB (U_cf TfibB) malloc_cf (ARXq_cf TfibB IOK Hp)
   (AOXm_cf TfibB) (YGcfRmodel.rpre_cfr TfibB) cf_malloc_max LIVE_MAX qtight cf.
 Proof.
@@ -236,7 +237,7 @@ intros Hp. apply Build_WalkSigA.
     inst so bp ly S W regs mem md n tr HPRE Hn).
 Qed.
 
-(* YGcfInstAllocTop's top (YGcfInstAllocTop.v:98) at reply, its WS given by walksig_cf_reply. *)
+(* YGcfInstAllocTop's top (YGcfInstAllocTop.v:99) at reply, its WS given by walksig_cf_reply. *)
 Theorem aalloc_realizes_cf_reply : aalloc_realizes_cf_em_m im_segs TfibB cf_malloc_max 8 1 cf (ARXq_cf TfibB IOK).
 Proof. exact (YGcfInstAllocTop.aalloc_realizes_cf_em_m_cf TfibB IOK cf HCF walksig_cf_reply). Qed.
 

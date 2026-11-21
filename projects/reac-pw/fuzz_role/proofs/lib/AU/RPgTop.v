@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v
    (lines 132-146 ajournal_fp_nil and 156-159 ajournal_nil_io, from cgif ACfh.v; lines 207-239, the leaf of
    knock_lib_x_body: the contract's post from the walk's return state) for reac-pw/fuzz_role image A: the walk is
    role's chain of five segments over the harness-level cuts of lib/A/RPgHarn.v, with lib/A/RPgCSpec.v's two
    middle contracts in the middle and the malloc(pod) step between them; the leaf is unchanged but for the
    exists-fx' form of RPgCSpec.rl_lib_contract_x. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTop.v at ad0e022f7af for image B, in the
-   form of proofs/reac-pw/fuzz_rate/lib/AU/RtPgTopB.v at 2e01bfcb541: the segment statements are lib/AU/RPgHarn.v's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTop.v for image B, in the
+   form of proofs/reac-pw/fuzz_rate/lib/AU/RtPgTopB.v: the segment statements are lib/AU/RPgHarn.v's
    continuation form (S_E01 .. S_X01 composed by rh_seg_chain; S_M01 and S_M02 proved here from the two middle
    contracts and the malloc(pod) step rh_S_C23_stmt), the record is lib/AU/RPgImgA.v role_himg_B, the real frame is
    0x200 bytes, the frame for locals is a class-4 frame (1024 bytes, 128 shadow bytes, flag pointer word at F + 0x3f8),
    the two segments' write ranges lie in [F, F + 0x3f8), its shadow and the real frame's cells [R, R + 0x198), and
    the real frame's checked cells come from lib/AU/RPgMem.v rm_B_rz. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; addresses measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a): THE WHOLE RUN of LLVMFuzzerTestOneInput

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed interp_eff0, interp_eff_eq0; added find_segment_in, range_meets_vvar_segs, segs_vvar. *)
 (* [comment removed for export] *)
 Set Warnings "-require-in-module".
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel. From Stdlib Require ZArith NArith List Lia Bool. From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run. From LinuxProcessSemantics.Riscv Require Prelude Instr Decode DecodeC Sem Fpu. From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.CJ.Lib Require PropExec. From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require KReplay.
@@ -40,6 +41,55 @@ ltac2:(KReplay.run1 (kr_t_MState ()) [] "p'0h0>ms_svc_pendingi00>ms_svc_pendingh
 
 (* [comment removed for export] *)
 
+(* VVAR-LOAD-ARM.  At 75d69e00 (the checker image's model) RiscvSemantics.v's
+   [interp_eff_accesses] gained a new arm in the ELoad MISS branch:
+     | None => if range_meets_vvar a (width_bytes n) then MachineUnmodeled else MachineFault
+   where before the revision that branch was plain [MachineFault].  Two-window: the name
+   [range_meets_vvar] is in 0 files of theories/ at f1006fe8, 4 at 08b1429 and 4 at
+   75d69e00/cd320f53, with [fetch_failure] firing 5 / 8 / 9 as a control, so this is
+   RETARGET DAMAGE and not pre-existing debt.
+
+   This file's [interp_eff0] had already been ported to the new arm, which is what made
+   Mh_0064.v:177 and Mh_0065.v:76 red: both supply a RECORDED step-execution witness to
+   [StepKit.evt_step_gen], and those witnesses were built against the pre-revision
+   [| None => MachineFault] shape.  They are single [ltac2:(KReplay.run1 ...)] blobs of
+   53,066 and 45,662 characters, so the old branch cannot be edited in them and a
+   [destruct] cannot reach it.
+
+   The repair (VVAR-GUARD-RESTORES-RECORDED) guards the new arm with [segs_vvar segs]
+   FIRST.  On a binary's own segment list there is no vvar segment, so [segs_vvar segs]
+   reduces to [false] BY CONVERSION, the arm collapses back to [MachineFault], and the
+   recorded witnesses typecheck untouched.  [interp_eff_eq0] below stays UNCONDITIONAL --
+   true for every [segs], not only for vvar-free ones -- because a byte of the vvar pages
+   lies in a vvar segment of [segs], which is exactly [range_meets_vvar_segs].  So the
+   guard CANNOT make a false statement provable: if some walk here ever ranged over a list
+   that does contain the vDSO pair, [segs_vvar] would not reduce, the recorded witnesses
+   would fail to typecheck, and the file would go RED rather than quietly weaken.
+
+   [segs_vvar], [find_segment_in] and [range_meets_vvar_segs] are ported VERBATIM from the
+   donor already on this branch, zstd/huf_decompress/proofs/lib/Lib/MState.v:69-83.
+   NOT copied from it: that unit additionally needs an access-report SHIM, because its
+   recorded terms carry the [mkAccessReport ... ((a, n) :: ...)] node and so can never
+   match a collapsed [core * mem] result (measured there, 87-vs-53).  This
+   unit's recorded terms are the COLLAPSED shape -- Mh_0064's failing witness builds
+   [MachineOk ({| c_regs := ... |}, m)] directly -- so [interp_eff0] is the right place to
+   guard here and no shim is needed. *)
+Definition segs_vvar (segs : list Segment) : bool := existsb seg_vdso_vvar segs.
+
+Lemma find_segment_in : forall segs a n seg, find_segment segs a n = Some seg -> In seg segs.
+Proof.
+  induction segs as [|s r IH]; intros a n seg H; cbn in H; [discriminate|].
+  destruct (_ && _)%bool; [injection H as <-; left; reflexivity | right; exact (IH _ _ _ H)].
+Qed.
+
+Lemma range_meets_vvar_segs : forall segs a n, range_meets_vvar segs a n = true -> segs_vvar segs = true.
+Proof.
+  intros segs a n; revert a. induction n as [|n IH]; intros a H; cbn in H; [discriminate|].
+  apply orb_prop in H as [H|H]; [|exact (IH _ H)].
+  unfold vvar_byte_at in H. destruct (find_segment segs (bv_unsigned a) 1) as [seg|] eqn:E; [|discriminate].
+  unfold segs_vvar. apply existsb_exists. exists seg. split; [exact (find_segment_in _ _ _ _ E) | exact H].
+Qed.
+
 (* [comment removed for export] *)
 Fixpoint interp_eff0 (segs : list Segment) (t : eff) (m : word -> option byte)
     : machine_result (core * (word -> option byte)) :=
@@ -50,7 +100,8 @@ Fixpoint interp_eff0 (segs : list Segment) (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff0 segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if (segs_vvar segs && range_meets_vvar segs a (width_bytes n))%bool
+                then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -60,7 +111,18 @@ Fixpoint interp_eff0 (segs : list Segment) (t : eff) (m : word -> option byte)
 
 Lemma interp_eff_eq0 : forall segs t m, interp_eff segs t m = interp_eff0 segs t m.
 Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "p'0h01mi001mh11ch21th31ai011ah42m0h51nh66resulti026resulth71vh81Hh93IHth:3acch;1bi031bh<2bsi042bsh=1kh>1oi051oh?4segsh@2v'i06<access_valuei07?accessed_rangesi081li091ri0:6reporti0;1xp;1p;2p;4p;3p;6p;:p-1R0p10000p4p710p9P0p1000Sp4p710p9P0p1001?R1p4p710p9P0P1p4p7210p9P0P1p4p73110p9P0p1001]p4p710p9P0p1002Dp4p710p9P0p1003<p4p710p8p1003Yp4p710R0g0046R1p4p710R2p8P0p1004Rp4p710R0p8p10050p4p7210R3g005\R4p4p710p8P3P2p8P3p10066p4p710p8P3p1006Tp4p7210p8P3P0p8p10071p4p7210P0p8p1007jp4p7210P0p8p1008dp4p710P0p8p1009?p4p710P0p8g00I7j1?Tg009^j15Tg00:Cj1ATg00:aj1<Tg00;DR0j1KTg00IWj2ITg00J7R3j1ETg00K?j44Tg00K_j21Tg00G1j2>Tg00Lgj1NTg00MOj1GTg00NWj1ZTg00O?j1JTg00PGj1VTg00Poj1UTg00QWj1TTg00R?j1STg00Rgj12Tg00Sjj4RTg00ToR2j1QTg00V6j1CTg00W6j4BTg00W_j38Tg00Xjj2=Tg00Ynj2OTg00[5j3:Tg00[Uj37Tg00\\j39Tg00]bj2;TP4j33TP1j6@Tg00^lj3MTg00_Tj4PTg00`Tj2DTg00a>j2HTg00b;j3FTg00c?j4LTg00cgl:YTg00dQj3XTf7R1f6R4f5R5f4R6f3R738';f2R8f1R9f0R:3933p=01;89=37:p=6A989:9367p=Wg00eS#?g00fRR;g00HR#5#5#5R<#5#5#5#AR=#<R>%A<#<R<#K[R?g00g:R@/I?RA#ERBPAP7P9P:P7P9P:G0]0X2;P@P?P9P:C4,1A,>BPBPAP7%N9RCP:P7PCP:G0eX0?X1@%GARC,>BRDPBPAP7%Z9REP:P7PEP:G0eX0?X1@%JARE,>BRFPBPAP7%V9RGP:P7PGP:G0eX0?X1@PDPBPAP7%U9RGP:P7PGP:G0eX0?X1@PFPBPAP7%T9RGP:P7PGP:G0eX0?X1@PFPBPAP7%S9RGP:P7PGP:G0eX0?X1@g00gcR@%<9RGP;[%<8PBPAP4P8P9O1RHP:P4PHP:G0^0?[P4P:P7%26CR%?<R<#KP0P<PBPAP0P<%QARH#ERIP:P3PHPIf9RJP5P=g00hARKP1%C:CBRLO1RM;87RN1=A:ROg00h_RP,I>RQP>PPP1f8RR#2C41OA:RS3:57A,1HRT%JHRU%GHRVn10110;00031010:0000RWPUn10110;00021110400P0P<PBP:A9JM7RMPEn10110;00021010400C6P:PB1;ANR0PBPAP3PHPIf:RXP4P=PKPR%C9CBO1;86P>PPPR%2JC4=:QS97AO,1HRKPUPVn10110;00031010:0000P:C6X0BPNPIP3PHP3PHPBP3PHPIP:P>PPPJ%2XC4=:QS97AORN,1HPUPVn10110;00031010:000011AOR=PEPCn10110900031010:0000P3PHPBP:P=PEPCn10110900031010:0000RY53BP:P2PAP>PPPXf;#2C4=:QS97AO,=A,1A=3B=P:g00i>#?A7A9:,=A,1A,>BW:RXX7AP9P:O2n101101010120106107X6HP:O1PFPDn1011000103111020000b4PBPAPWP0C6ePMP6PLP7O2E@X<<P:O1PFn10110501021110800b>PBPAP4AM678R<P:P4P<P:G0eX0?W8W=X3>W5PBPAP4P9P:P4P9P:G0^0?P1P:P6%25CPg00jCR<P<PBPAP<PIP:P3PHPI%21RL1D15'H9F84RM98J6PTPUPVn10110;00031010:0000RTPUn0100000020100P<PBP:A9J6MPEn0100000020000C6P:PB%241D46'H9F95RM98R7RJ,;AR<PBPAPTP:C6X0BPJPIP3PHP3PHPBP3PHPIP:PKPUPVn10110;00031010:0000P=PEPCn10110900031010:0000=3BYP:P2PA1=AN,1A=3B=P:PXX@AP9P:O2n101101010120106107X6HP:O1PFPDn1011000103111020000b4PBPAP3PHPIPJP>PPP4PLC4=:QS97AO,1HPUPVn10110;00031010:0000P<C6eA9R7MP8PMO1E@PFn0110301020100b;PBPAP1P5P6P7P8CLR7P:P1P7P:G0eX0?W9X2;X7GX3>X5@P:M:YPBAX89:P8P9P:DW^0?eW2W?o"). Qed.
+intros segs t. unfold interp_eff. induction t; intros m; cbn [interp_eff_accesses interp_eff0]; try reflexivity.
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+  [|destruct (segs_vvar segs) eqn:Esv; cbn [andb];
+    [destruct (range_meets_vvar segs a (width_bytes n)); reflexivity
+    |destruct (range_meets_vvar segs a (width_bytes n)) eqn:Erv; [|reflexivity];
+     rewrite (range_meets_vvar_segs _ _ _ Erv) in Esv; discriminate]].
+rewrite <- H. unfold RiscvSemantics.drop_access_report.
+destruct (interp_eff_accesses segs _ m) as [[v acc]| |]; reflexivity.
+- destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
+rewrite <- IHt. unfold RiscvSemantics.drop_access_report.
+destruct (interp_eff_accesses segs t _) as [[v' acc]| |]; reflexivity.
+Qed.
 
 Definition lift_result (ro : word -> option byte) (r : machine_result (core * (word -> option byte)))
   : machine_result machine_state :=

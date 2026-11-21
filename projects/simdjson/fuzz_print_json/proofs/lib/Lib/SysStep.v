@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a system-call return now clears the LR/SC reservation, and a tactic case proves an open's path ends below TASK_SIZE. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -36,7 +37,7 @@ Ltac step_ecall :=
 
 Lemma nret_MSsvc : forall R F pc x8 fc rv m ro r ws zs us ci,
   nret (MSsvc R F pc x8 fc rv m ro) (mkEffectU r ws zs us [] ci)
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
 Proof. reflexivity. Qed.
 
 Lemma mkR_set_a0 : forall x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 v,
@@ -319,6 +320,15 @@ Ltac at_node_solve :=
               | H : ro_cells segs m A ?cs |- _ =>
                 apply (bytes_at_ext segs m A _ bs (ro_cells_bytes_at segs m A cs H));
                 cbn [cells_bytes cbytes]; rewrite ?app_nil_r; reflexivity
+              end
+          (* LPS 08b1429: an open's path ends below [TASK_SIZE]: from the path's bytes and [mem_inv]. *)
+          | |- (?A + Z.of_nat (length ?p) < TASK_SIZE)%Z =>
+              match goal with
+              | H : bytes_at ?segs ?m A (p ++ ?tl), HM : mem_inv ?segs ?m |- _ =>
+                  let B := fresh "B" in
+                  pose proof (bytes_at_below segs m A (p ++ tl) HM H
+                                ltac:(let E := fresh "E" in intro E; apply app_eq_nil in E; destruct E as [_ E]; discriminate E)) as B;
+                  rewrite length_app in B; cbn [length] in B; unfold UTOP in B; unfold TASK_SIZE; lia
               end
           end
         | idtac ].

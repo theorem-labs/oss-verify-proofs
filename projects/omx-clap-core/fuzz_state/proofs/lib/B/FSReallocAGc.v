@@ -13,13 +13,13 @@
      dpostA mtagA stagA rtree  AGif1.dpost_cgif, 3, 12 (labels 202260, 449860), YFl1.refill_tree (what the instances fix)
      dpostD dbody L24 QB DRq   CLdepot.dpost_x tfibsegs, YFeu.drain_body, 16385, qloose, DGif1dr.DRq_cgif
                 (dpostD is DGif1.diface_cgif's dpost; fs_difR_U's CLenqcgifRaw.dpost_enq_cgif is its eta-expansion,
-                CLenqcgifRaw.v:51-52, so the one value serves H_dtop, H_dif and H_difR_U by conversion)
+                CLenqcgifRaw.v:52-53, so the one value serves H_dtop, H_dif and H_difR_U by conversion)
      H_if AGif1.iface_cgif     H_ifk AGif1k.iface_cgif_k   H_ifm AGif1m.iface_cgif_m   H_ifs AGif5.ifaceS_cgif
-     H_dif  DGif1.diface_cgif at L24 = 16385, its six drain-side premises discharged as DGtopcgifC.v:41-47 does
+     H_dif  DGif1.diface_cgif at L24 = 16385, its six drain-side premises discharged as DGtopcgifC.v:42-48 does
             ([fs_dif_cgif])
      B TS HDH   this file's Section variables (at YD2l.TfibBU: YD2l.TfibBU_syms, eq_refl, YD2l.v:34)
      H_refill_U H_difR_U   this file's Section hypotheses, in the texts of the conclusions of lib/B
-                FSupoisonARXmRf.fs_refill_U (FSupoisonARXmRf.v:98-100) and of lib/B FSupoisonARXmDR.fs_difR_U at
+                FSupoisonARXmRf.fs_refill_U (FSupoisonARXmRf.v:99-101) and of lib/B FSupoisonARXmDR.fs_difR_U at
                 L24 = 16385; after the Section they are FSupoisonARXmRf.fs_refill_U_closed (a Theorem Labs lane) and
                 FSupoisonARXmDRc.fs_difR_U_closed at 16385 (a Theorem Labs lane)
      the twelve image premises, each stated with Section g's text at the instances above:
@@ -32,7 +32,7 @@
        HSZ        FSReallocAG.fs_zones_free_CZS (lib/B) at AGjm.DZONE = DZONE_shape 0x17a308 0x5caa90    [fs_HSZ]
        HZ3        FSReallocAG.fs_zone3_app (lib/B)
        HWF        lib/A FSupoisonARXmS.wframe_up_AGif0n
-       HIZ / HIAL the B DImg_cgif's IZONE / IAL_POST (DGgi.v:518 / :153, the text of YFgi.v:484 / :560) by their
+       HIZ / HIAL the B DImg_cgif's IZONE / IAL_POST (DGgi.v:519 / :154, the text of YFgi.v:484 / :560) by their
                   literals: [TFIB_IAL_LO, TFIB_IAL_HI) and [TFIB_IAL_FLAG, +4) lie below the shadow, and IAL_POST
                   reads only IZONE cells                                                               [fs_HIZ / fs_HIAL]
 
@@ -152,7 +152,7 @@ unfold DGgi.IZONE, TFIB_IAL_LO, TFIB_IAL_HI, TFIB_IAL_FLAG in Ha. unfold SHADOW_
 Qed.
 
 (* HIAL: IAL_POST reads TFIB_IAL_FLAG, +1, TFIB_IAL_W .. +16 and [TFIB_IAL_LO, TFIB_IAL_HI), all IZONE cells
-   (the argument of DGgi.MEQI_frame, DGgi.v:608-615). *)
+   (the argument of DGgi.MEQI_frame, DGgi.v:609-616). *)
 Lemma fs_HIAL : FSupoisonARXmD.ial_local.
 Proof.
 intros W m1 m2 HEQ HP. change (DGgi.IAL_POST W m2). change (DGgi.IAL_POST W m1) in HP.
@@ -171,7 +171,7 @@ split; [apply V; [intros k Hk; lia | exact I3]|]. split; [apply V; [intros k Hk;
 intros a Ha. rewrite <- (I5 a Ha). apply YF0x.mbyte_mrestrict_same. apply LOWEQ; lia.
 Qed.
 
-(* H_dif: DGif1.diface_cgif at L24 = 16385, its six drain-side premises as DGtopcgifC.v:41-47 discharges them. *)
+(* H_dif: DGif1.diface_cgif at L24 = 16385, its six drain-side premises as DGtopcgifC.v:42-48 discharges them. *)
 Definition fs_dif_cgif (B : asyms) (TS : TfibSyms B) (HD1 : YFl0.tfib_depot_spec B) :=
   DGif1.diface_cgif B TS 16385 HD1 (Z.le_refl 16385)
     (DGif1d.di_drain_cgif B TS 16385) (DGif1dI.di_requar_x_cgif B TS 16385)
@@ -189,11 +189,11 @@ Hypothesis TS : TfibSyms B.
 Hypothesis HDH : forall t, as_dhash B t = YF0p.tfib_dhash t.
 
 (* Section g's H_refill_U at rtree := YFl1.refill_tree, in the text of lib/B FSupoisonARXmRf.fs_refill_U's conclusion
-   (FSupoisonARXmRf.v:98-100 at 432a2933d97; PENDING a Theorem Labs lane). *)
+   (FSupoisonARXmRf.v:98-100; PENDING a Theorem Labs lane). *)
 Hypothesis H_refill_U : forall Up,
   FSupoisonARXmA.if_refill_t B (ARX_ARU im_segs B TFIB_INST Up) (aowned B) FS_rpreA qtight YFl1.refill_tree.
 (* Section g's H_difR_U at dbody := YFeu.drain_body, L24 := 16385, QB := qloose, DRq := DGif1dr.DRq_cgif, in the text of
-   lib/B FSupoisonARXmDR.fs_difR_U's conclusion at L24 = 16385 (b42f82b55c7; PENDING a Theorem Labs lane): its UA B, FS_rpreD,
+   lib/B FSupoisonARXmDR.fs_difR_U's conclusion at L24 = 16385 (PENDING a Theorem Labs lane): its UA B, FS_rpreD,
    fpreU im_segs and dpostD := CLdepot.dpost_x tfibsegs are, by conversion, the lambda, rpre_dealloc_cgif, fpreU tfibsegs
    and CLenqcgifRaw.dpost_enq_cgif written here. *)
 Hypothesis H_difR_U : forall Up,

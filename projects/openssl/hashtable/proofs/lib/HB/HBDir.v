@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -18,15 +19,11 @@ Open Scope Z_scope.
 Section Leaf.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variables brk0 mbase : word.
+  Variable brk0 : word.
   Variable lim : Z.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InStreams.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
+  Variables uid hw : word.
+  Variable L : LaunchX.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk HASEGS brk0.
   Hypothesis Hlim : (AsanInit.LIMIT <= lim)%Z.
@@ -34,13 +31,15 @@ Section Leaf.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
+  Hypothesis HLX : launchL HAT sp rdraw brk0 argv envp uid hw L.
+  Let fs := lx_fs L.
   Let argv1 := nth 1 argv [].
   (* [comment removed for export] *)
   Hypothesis Hargc : length argv = 2%nat.
   Hypothesis Hclass : path_is_dirref argv1 = true.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation FXHOLE := (fx_hole SV argH ISP fs).
 
@@ -51,7 +50,7 @@ Section Leaf.
   Lemma T_main_dir : forall E M, SV E M -> T_main T98d E fs = T_dir argv1 fs.
   Proof.
     intros E M HS.
-    pose proof (HBArg.vals_of_SINV1 sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit E M (SVm_to1 sp rdraw brk0 argv envp uid hw c E M HS)) as (_ & _ & _ & H1 & _).
+    pose proof (HBArg.vals_of_SINV1 sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit E M (SVm_to1 sp rdraw brk0 argv envp uid hw L c E M HS)) as (_ & _ & _ & H1 & _).
     unfold T_main, usage_shape. cbn [sd]. change (EVar 1) with (EVar V_ARGC). rewrite H1, Hargc. reflexivity.
   Qed.
 
@@ -66,11 +65,10 @@ Section Leaf.
   Hypothesis H_S6_B1 : FXHOLE c2b1_hs10 s6endb1.   Hypothesis H_FE_B1 : FXHOLE c3b1_hs20 feendb1.   Hypothesis H_FEO_B1 : FXHOLE c4b1_hs21 feendob1.   Hypothesis H_FED_B1 : FXHOLE c5b1_hs23 feenddb1.
 
   Theorem dir_leaf :
-    crz HASEGS (init_config HASEGS AsanUbsan.M.init_pc HAPH sp brk0 mbase rdraw lim
-                  (inp argv envp fs stdin uid gid hw groups net nofile sigmask))
+    crz HASEGS (INITL HASEGS HAPH sp rdraw brk0 lim argv envp uid hw L)
         (T_dir argv1 fs).
   Proof.
-    pose proof (usage_chain sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid T98d T98d_agree T98d_nil
+    pose proof (usage_chain sp rdraw brk0 lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX T98d T98d_agree T98d_nil
                   H_S6_A0 H_FE_A0 (dir_a0 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A0 H_FED_A0 Hclass)
                   H_S6_A2 H_FE_A2 (dir_a2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A2 H_FED_A2 Hclass)
                   H_S6_A3 H_FE_A3 (dir_a3 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A3 H_FED_A3 Hclass)
@@ -79,9 +77,8 @@ Section Leaf.
                   H_S6_B2 H_FE_B2 (dir_b2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B2 H_FED_B2 Hclass)
                   H_S6_B3 H_FE_B3 (dir_b3 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B3 H_FED_B3 Hclass)
                   H_S6_B1 H_FE_B1 (dir_b1 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B1 H_FED_B1 Hclass)) as RZ.
-    rewrite (T_main_dir _ (FULL0 HAPH sp rdraw argv envp uid hw)) in RZ; [exact RZ|].
+    rewrite (T_main_dir _ (FULL0L HAPH sp rdraw argv envp uid hw L)) in RZ; [exact RZ|].
     apply SINVm_reblob.
-    exact (AsanPlanSound.APS.co_sinv _ _ _ _ _ _ _ _ _ _ _ _ (init_cs_ok HASEGS HAT HAPH sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask
-                  ha_img_facts Hsp Hbrk Hlim Hva Hve Hfit Huid)).
+    exact (AsanPlanSound.APS.co_sinv _ _ _ _ _ _ _ _ _ _ _ _ (init_cs_okL HASEGS HAT HAPH sp rdraw brk0 lim argv envp uid hw L ha_img_facts Hsp Hbrk Hlim Hva Hve Hfit Huid HLX)).
   Qed.
 End Leaf.

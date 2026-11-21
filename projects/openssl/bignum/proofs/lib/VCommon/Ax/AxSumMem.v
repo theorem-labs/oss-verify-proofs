@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the entry region). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -101,7 +101,7 @@ Fixpoint load_bw (s : store) (A : list region) (v : xv) (j : Z) (k : nat) : opti
   end.
 
 Definition mc_load (s : store) (A : list region) (v : xv) (n : nat) : option (list xb) :=
-  match (match find_entry A with Some _ => str_load s v n | None => None end) with
+  match (match find_entry A with Some (r, _) => str_load r s v n | None => None end) with
   | Some l => Some l
   | None =>
       match a_load4 segs s A v n with
@@ -136,9 +136,9 @@ Lemma mc_load_sound (ρ : valuation) (s : store) (A : list region) (m : word -> 
   exists bs, rdn segs m a n = Some bs /\ Forall2 (xb_bv ρ) l bs.
 Proof.
   intros Hs HM Hhs Hv Hx Hn H. unfold mc_load in H.
-  destruct (match find_entry A with Some _ => str_load s v n | None => None end) as [l1|] eqn:E1.
-  { injection H as <-. destruct (find_entry A) as [ph|] eqn:Efe; [|discriminate].
-    destruct (eb_of_R segs ρ A m ph HM Efe) as [nR Heb]. exact (str_load_sound segs ph ρ s m nR v a n l1 Hs Heb Hv E1). }
+  destruct (match find_entry A with Some (r, _) => str_load r s v n | None => None end) as [l1|] eqn:E1.
+  { injection H as <-. destruct (find_entry A) as [[r ph]|] eqn:Efe; [|discriminate].
+    destruct (eb_of_R segs ρ A m r ph HM Efe) as [nR Heb]. exact (str_load_sound segs ph ρ s m nR v a n l1 Hs Heb Hv E1). }
   destruct (a_load4 segs s A v n) as [l0|] eqn:E.
   - injection H as <-. exact (a_load4_sound segs ρ s A m v a n l0 Hlow Hs HM Hhs Hv Hn E).
   - destruct (load_bw_sound ρ s A m v a Hs HM Hhs Hv Hx n 0 l H) as [bs [Hr HF]]. exists bs. split; [|exact HF].
@@ -260,7 +260,6 @@ Proof.
   assert (Hsv : bv_unsigned src = leval ρ (wS osr, tsr)) by (apply (addr_form_val' ρ _ src tsr osr (2 ^ 47 - n) Hvs Esr); [lia | unfold FastWord.two64; lia]).
   pose proof (disj_ok_sound ρ _ _ _ n Hsat Hdj) as Hdisj. rewrite <- Hdv, <- Hsv in Hdisj.
   assert (Hxs : xaddr (aget (a_regs A) 11%uint63) <> None) by (rewrite Esr; discriminate).
-
   assert (Hrdx : exists bs, rdn segs (ms_mem ms) src (Z.to_nat n) = Some bs).
   { destruct (Z.eq_dec n 0) as [->|Hnz]; [exists []; reflexivity|].
     unfold mc_mem in Emc. rewrite (proj2 (Z.eqb_neq n 0) Hnz) in Emc.
@@ -272,7 +271,6 @@ Proof.
   pose proof (wZ_range r) as Hrr.
   assert (Edst : dst = Z_to_bv 64 (bv_unsigned dst)) by (apply word_lit_w; reflexivity).
   assert (Esrc : src = Z_to_bv 64 (bv_unsigned src)) by (apply word_lit_w; reflexivity).
-
   assert (Hok : store_ok segs (ms_mem ms) dst (Z.to_nat n) = true).
   { destruct (Z.eq_dec n 0) as [->|Hnz]; [reflexivity|].
     unfold mc_mem in Emc. rewrite (proj2 (Z.eqb_neq n 0) Hnz) in Emc.

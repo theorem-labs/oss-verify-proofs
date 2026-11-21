@@ -4,7 +4,7 @@ Proves no function (kind: measurement). Supersedes BYTECMP-cmpkit.md (old pins, 
 
 Pins (the re-pin to the port commit 835f336c + c47f6290): fuzz_transport.asan e89be137db17b720 (unstripped twin
 86efc3a803149811), fuzz_transport.asan-ubsan 41113a03c82fde82 (twin e217cb0a84f1e181). The donor is unchanged:
-plugin-hostd/fuzz_command at origin/ossv/recipes 781f46bc05cd, asan c0661b96b5bd / 68db792d5fa7, asan-ubsan
+plugin-hostd/fuzz_command, asan c0661b96b5bd / 68db792d5fa7, asan-ubsan
 bbe55d24d096 / 658cefbe806b.
 
 Kit: cmpkit 86da41d3ef68 (kit id = the first 12 hex of sha256(SHA256SUMS); its SHA256SUMS sha256

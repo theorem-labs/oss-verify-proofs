@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises valid_launch and entry_launch_ok_va). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -149,15 +150,18 @@ Proof. LiaFast.lf_pins (fun (DIRWK : LiaFast.U) => LiaFast.u0).
     (fun HTOP hs m m' md H1 H2 H3 => heap_errno_frame HTOP hs m m' md H1 H2 H3)
     (fun HTOP hs m m' md H1 H2 H3 H4 => heap_cells_frame HTOP hs m m' md H1 H2 H3 H4)
     (fun HTOP hs m md H1 => heap_need_locks HTOP hs m md H1)
-    (fun HTOP hs m md md' H1 H2 _ _ => heap_model_vm HTOP hs m md md' H1 H2)
+    (fun HTOP hs m md md' H1 H2 H3 _ _ => heap_model_vm HTOP hs m md md' H1 H2 H3)
     (fun HTOP hs m md H1 => hp_kro HTOP hs m md H1)
     (fun HTOP => HeapI HTOP) (fun HTOP => INIT) hoki_c
     (fun HTOP hs m md H1 => heapI_owned HTOP hs m md H1)
     (fun HTOP hs m m' md H1 H2 H3 => heapI_errno_frame HTOP hs m m' md H1 H2 H3)
     (fun HTOP hs m m' md H1 H2 H3 H4 => heapI_cells_frame HTOP hs m m' md H1 H2 H3 H4)
-    (fun HTOP hs m md md' H1 H2 _ _ => heapI_model_vm HTOP hs m md md' H1 H2)
-    (fun sp0 av ev uid tid hw rdraw regs mem brk mbase lim inp Hsp Hva Hve Hfits Hbrk Hmb Hlim ME =>
-       heapI_main sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Hfits ME brk mbase lim inp Hbrk Hmb Hlim)
+    (fun HTOP hs m md md' H1 H2 H3 _ _ => heapI_model_vm HTOP hs m md md' H1 H2 H3)
+    (* LPS 08b1429: UTop's [HINIT] and UHeapInst's [heapI_main] both take the launch
+       ([inp], [mbase], [entry], [brk]) with [Hvl]/[Hlau]; [heapI_main] does not take
+       [Hfits], which is in neither its #[using=] nor its statement. *)
+    (fun inp mbase entry sp0 brk tid rdraw regs mem lim Hsp Hva Hve Hvl Hlau Hfits Hbrk Hmb Hlim ME =>
+       heapI_main inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME lim Hbrk Hmb Hlim)
     hfz_c).
 Qed.
 

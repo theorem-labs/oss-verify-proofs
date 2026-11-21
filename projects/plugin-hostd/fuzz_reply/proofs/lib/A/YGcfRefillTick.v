@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfRefillTick.v (commit f01d79f3fb5, cf refill round 3; file sha256 dc3436c09eaa) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2, base a working branch d50ec3c8a93a + seam
-   545dcbdd931b): the TICK transport of the cf refill walk, written once for both halves.
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfRefillTick.v (cf refill round 3; file sha256 dc3436c09eaa) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2, base a working branch + seam):
+   the TICK transport of the cf refill walk, written once for both halves.
    YGcfInstRefill.refill_walk_cf (and MnRefillSeamcf.refill_case_cf) run refill_tree_cf from the TICKED entry state
    set_nev (st_nev S0 + 1) S0, while their premises (ARXq_cf, rpre_cf) and their leaf (rwalk_leaf_cf) are at S0.
    The tick changes st_nev only, and no part of the cf relation reads st_nev except Wf_cf's lower bounds, which

@@ -1,7 +1,7 @@
-(* Image B (fuzz_reply.asan-ubsan) twin of lib/A/W_drain_room_x.v (a working branch d22cbdbd553): the room round's
+(* Image B (fuzz_reply.asan-ubsan) twin of lib/A/W_drain_room_x.v (a working branch): the room round's
    bookkeeping at an allocator call of the drain walks over ARx (DR_x, 2026-10-30), one text for every B stage that calls the
-   allocator (gesture_seen's add / free, drop, lines).  Moved verbatim from lib/B/W_drain_gs.v's Section rk (a working branch
-   56eb8efeca9, B slice D's own copy of A's): W_drain_cx_x.v's dbud_x carries
+   allocator (gesture_seen's add / free, drop, lines).  Moved verbatim from lib/B/W_drain_gs.v's Section rk (a working branch,
+   B slice D's own copy of A's): W_drain_cx_x.v's dbud_x carries
    the room rp_RM at MT_rk's charge of the requests still owed plus kr, and the live counts plus their peak
    tr_peakP + 2; at a call the head request's room and count premise come from it (gs_rm_take, gs_cnt_call), and the
    counts after the call for the three request kinds (gs_cnt_malloc, gs_cnt_realloc, gs_cnt_free, through gs_cnt_step).

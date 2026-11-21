@@ -2,7 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: lib/B twin of lib/A/Prog/PcapEntryTop.v (a working branch 9be46202615) for fuzz_pcap.asan-ubsan (libreac v1.9.0; the pinned fuzz_pcap.asan-ubsan image, sha256 9e66f771f22af67a..., the image the build loads as AsanUbsan; symbols from its unstripped twin fuzz_pcap, sha256 c969d83cdd5943a8..., fuzz_pcap.nm.txt (sha256 49b2ad826669; internal record) / fuzz_pcap.readelf.txt (sha256 13e925e26aa1; internal record) beside it): the code table of the program code lib/B/Prog/PcapList.v lists (0x80788 .. 0x81dc8, 1424 words), the value table over lib/B/Prog/PcapAddr.v, the instance PI_pcap of lib/B/Prog/PcapPa.PAImg with its named equalities at this image's MEASURED values, the image facts the lib/B walk lanes take as Section hypotheses (HHI8, HG42, HGW, HGSRC, ro_below_ofl), and the composition of the lib/B phase lemmas into lib/B/Prog/PcapEntry.v's tfib_lib_contract_x_all_B. No numeral is an asan (lib/A) value. *)
+(* Modified by Theorem Labs, 2026-10: lib/B twin of lib/A/Prog/PcapEntryTop.v (a working branch) for fuzz_pcap.asan-ubsan (libreac v1.9.0; the pinned fuzz_pcap.asan-ubsan image, sha256 9e66f771f22af67a..., the image the build loads as AsanUbsan; symbols from its unstripped twin fuzz_pcap, sha256 c969d83cdd5943a8..., fuzz_pcap.nm.txt (sha256 49b2ad826669; internal record) / fuzz_pcap.readelf.txt (sha256 13e925e26aa1; internal record) beside it): the code table of the program code lib/B/Prog/PcapList.v lists (0x80788 .. 0x81dc8, 1424 words), the value table over lib/B/Prog/PcapAddr.v, the instance PI_pcap of lib/B/Prog/PcapPa.PAImg with its named equalities at this image's MEASURED values, the image facts the lib/B walk lanes take as Section hypotheses (HHI8, HG42, HGW, HGSRC, ro_below_ofl), and the composition of the lib/B phase lemmas into lib/B/Prog/PcapEntry.v's tfib_lib_contract_x_all_B. No numeral is an asan (lib/A) value. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The asan-ubsan build's entry contract for fuzz_pcap: PcapEntry.tfib_lib_contract_x_all_B, from the walks of
    LLVMFuzzerTestOneInput (0x80818) phase by phase (lib/B/Prog/PcapEntry{Entry,Open,Skip,Rec,End,Tail}.v).
 
@@ -174,11 +175,11 @@ Lemma pi_pcap_obj4 : @pa_val rc pcap_listing PI_pcap (A_OBJ 4) = (symaddr Symbol
 Proof. vm_compute. reflexivity. Qed.
 Lemma pi_pcap_relro : @pa_relro_lo rc pcap_listing PI_pcap = PCAP_RLO /\ @pa_relro_hi rc pcap_listing PI_pcap = PCAP_RHI.
 Proof. split; reflexivity. Qed.
-(* The walk lanes' HHI8 (lib/B/Prog/PcapEntryEntry.v:479, PcapEntryEnd.v:346): g_file_len is the auipc value 8
+(* The walk lanes' HHI8 (lib/B/Prog/PcapEntryEntry.v:480, PcapEntryEnd.v:347): g_file_len is the auipc value 8
    (0x5d39a8, `auipc s8,0x553` 0x809a8) + 0x498 (`sd s6,0x498(s8)` 0x809ac). *)
 Lemma pi_pcap_glen : @pa_val rc pcap_listing PI_pcap (A_HI 8) + PE_GLEN_LO = @pa_val rc pcap_listing PI_pcap (A_OBJ 4).
 Proof. vm_compute. reflexivity. Qed.
-(* The walk lanes' HG42 (PcapEntryEntry.v:480): g_file_len [0x5d3e40, +8) ends below g_file 0x5d3e60. *)
+(* The walk lanes' HG42 (PcapEntryEntry.v:481): g_file_len [0x5d3e40, +8) ends below g_file 0x5d3e60. *)
 Lemma pi_pcap_g42 : @pa_val rc pcap_listing PI_pcap (A_OBJ 4) + 8 <= @pa_val rc pcap_listing PI_pcap (A_OBJ 2) \/
   @pa_val rc pcap_listing PI_pcap (A_OBJ 2) + 8 <= @pa_val rc pcap_listing PI_pcap (A_OBJ 4).
 Proof. left. rewrite pi_pcap_obj4, pi_pcap_obj2. lia. Qed.
@@ -221,7 +222,7 @@ Proof.
   exact (AllocCut.writable_of_seg _ m a b E).
 Qed.
 
-(* HGW_B: the walk lanes' HGW (a Theorem Labs lane, lib/B/Prog/PcapEntryOpen.v:2915; a Theorem Labs lane's Entry walk) at PI_pcap: the segment
+(* HGW_B: the walk lanes' HGW (a Theorem Labs lane, lib/B/Prog/PcapEntryOpen.v:2916; a Theorem Labs lane's Entry walk) at PI_pcap: the segment
    view of every byte of pe_G, through a memory that holds none of them, is a byte. *)
 Lemma HGW_B {rc : YM05.RunCeil} : forall a, inG (@pe_G rc PI_pcap) a ->
   wview (@pa_segs rc pcap_listing PI_pcap) (fun _ => None) (Z_to_bv 64 a) <> None.
@@ -272,7 +273,7 @@ Proof.
   unfold inG in Ha. apply Exists_exists in Ha as (r & Hr & Har).
   destruct Hr as [<- | [<- | []]]; unfold in_zr in Har; cbn [fst snd] in Har; lia.
 Qed.
-(* The walk lanes' HGSRC (a Theorem Labs lane, lib/B/Prog/PcapEntryOpen.v:2919) at PI_pcap and pcap_KS. *)
+(* The walk lanes' HGSRC (a Theorem Labs lane, lib/B/Prog/PcapEntryOpen.v:2920) at PI_pcap and pcap_KS. *)
 Lemma pcap_G_harness_src {rc : YM05.RunCeil} : forall a, inG (@pe_G rc PI_pcap) a -> ~ asrc_env_addr pcap_KS a.
 Proof.
   intros a Ha. rewrite pi_pcap_pe_G in Ha.
@@ -282,8 +283,8 @@ Proof.
   destruct Hr as [<- | [<- | []]]; unfold in_zr in Har; cbn [fst snd] in Har; lia.
 Qed.
 
-(* The walk lanes' class ro_below_ofl (PcapBase.v:23; lib/B PcapEntryOpen.v:2136, PcapEntryEnd.v:1481,
-   PcapEntryTail.v:137) at this image, for a sink head whose open-file list head is pcap_KS's (0x5f4e88): the
+(* The walk lanes' class ro_below_ofl (PcapBase.v:23; lib/B PcapEntryOpen.v:2137, PcapEntryEnd.v:1482,
+   PcapEntryTail.v:138) at this image, for a sink head whose open-file list head is pcap_KS's (0x5f4e88): the
    read-only segments end at 0x99000 and the RELRO window at 0x9a3f0. *)
 Lemma pcap_ro_below (SK : YI16.sink_head) : @YI16.sk_ofl_head SK = (symaddr Symbols.AsanUbsan.s_ofl_head) ->
   @ro_below_ofl AsanUbsan.M.loaded_segments PCAP_RLO PCAP_RHI SK.
@@ -330,7 +331,7 @@ Hypothesis HXM : forall n, pe_need MT n <= XM_LIB n.
 Hypothesis HXMN : forall n, XM_LIB n <= XN_LIB n.
 
 (* (2) The core's B (the asan-ubsan TfibB) and the runtime rules, exactly as the lanes' Section premises state them
-       (PcapEntryEntry.v:152-159, PcapEntryOpen.v:124-129, PcapEntryTail.v:131-141): LAWS, TL, TLF, ML, ASF, FFL, and
+       (PcapEntryEntry.v:153-160, PcapEntryOpen.v:125-130, PcapEntryTail.v:132-142): LAWS, TL, TLF, ML, ASF, FFL, and
        the fx-indexed rules ASM1 (astack_malloc_realizes 1), AMALLOC4, AFREE4 (Reusable/YC5d.v, cgif core), which the
        contract needs at every FPState. *)
 Hypothesis LAWS : AR_laws PSEGS B.
@@ -347,7 +348,7 @@ Hypothesis AFREE4 : forall fx : YK11.FPState, @afree04_rule fx rc SK PSEGS B MT.
    harness's globals is an allocator static of B or errno. *)
 Hypothesis HGOS : forall a, inG G_HARNESS_U a -> ~ Exists (in_zr a) (as_owned_static B).
 Hypothesis HGERR : forall a, inG G_HARNESS_U a -> ~ (as_errno B <= a < as_errno B + 4).
-(* pe_base's two trace conjuncts (PcapEntryDefs.v:512-515): this image has no trace universe yet (PcapEntryDefs.v:487:
+(* pe_base's two trace conjuncts (PcapEntryDefs.v:513-516): this image has no trace universe yet (PcapEntryDefs.v:488:
    pc_malloc_ra0 = 0x52ec4, pc_free_ra0 = 0x52d64, BASE = 0x80788, spine [0x80684]); stated in pe_base's own form for
    a call from target_run (the twin of lib/A's ACejSites.llvmf_site_in over ACej.Tfib_universe). *)
 Hypothesis HTRM : forall cx : @ecx rc PIp, raZ (c_regs cx) = RA_LLVMF ->
@@ -363,15 +364,15 @@ Hypothesis ASIL : asource_img_laws SK PSEGS B pcap_KS.
 Hypothesis AFM : @asrc_file_meter rc SK PSEGS B MT.
 
 (* (4) The callee contracts the proved lanes take, at PI_pcap:
-       - the fclose wrapper and its two free traces (PcapEntryEnd.v:336-340, PcapSourceClose.v:116-122): with them
+       - the fclose wrapper and its two free traces (PcapEntryEnd.v:337-341, PcapSourceClose.v:117-123): with them
          pcap_source_close's contract is PROVED here (PcapSourceClose.pb_pcap_source_closeX), not assumed;
-       - pcap_source_next's contract at its window NSTK (PcapEntryOpen.v:2140-2143, PcapEntryTail.v:1839-1841;
+       - pcap_source_next's contract at its window NSTK (PcapEntryOpen.v:2141-2144, PcapEntryTail.v:1840-1842;
          lib/A/Prog/PcapSourceNextSpec.v, a Theorem Labs lane);
        - __asan_memcpy / __asan_memset at their entries (aintrin_realizes, Reusable/YG0d.v:318;
-         PcapEntryOpen.v:2940-2941);
+         PcapEntryOpen.v:2941-2942);
        - pcap_source_open's contract and its call-site facts at each of its two call sites: PP_K2 (cut A,
-         PcapEntryOpen.v:2942-2955: HOPEN, HROI_K2, HCTX_K2, HFMU_K2 over FM_RA_K2 / CTX_K2 / ROI_K2) and PP_K7 (R1,
-         PcapEntryTail.v:2419-2432: OPENS, HROI, HCTX, HFMU over FM_RA / CTX / ROI). Each lane quantifies its own
+         PcapEntryOpen.v:2943-2956: HOPEN, HROI_K2, HCTX_K2, HFMU_K2 over FM_RA_K2 / CTX_K2 / ROI_K2) and PP_K7 (R1,
+         PcapEntryTail.v:2420-2433: OPENS, HROI, HCTX, HFMU over FM_RA / CTX / ROI). Each lane quantifies its own
          FM_RA / CTX / ROI, and the open contract is not monotone in CTX or ROI, so the two sites keep separate
          variables (a discharger may pass the same three to both); HPATH names no variable and is shared.
          lib/B/Prog/PcapSourceOpen.v pb_pcap_source_openX_of gives the contract, whose own premises are open. *)
@@ -391,7 +392,7 @@ Hypothesis HMCPY : forall fx : YK11.FPState,
 Hypothesis HMSET : forall fx : YK11.FPState,
   @aintrin_realizes fx rc PSEGS B OSet (@pa_sigma rc pcap_listing PIp PS___asan_memset).
 (* The bcmp interceptor at its trampoline (abcmp_realizes, Reusable/YG0d.v:353), for the record checks' three bcmp
-   calls (0x80c94, 0x80cc4, 0x80d40; lib/B/Prog/PcapEntryRec.v:722). *)
+   calls (0x80c94, 0x80cc4, 0x80d40; lib/B/Prog/PcapEntryRec.v:723). *)
 Hypothesis ABCMP : forall fx : YK11.FPState,
   @abcmp_realizes fx rc PSEGS B (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_bcmp).
 Variable FM_RA_K2 : Z.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: section-encoded dg_machine_pre and refuse_chain turned into plain lemmas, the stack write window bound in dg_machine_pre and dg_init_of lowered from 8388608 to 6144513, and refuse_armA's p0 argument renamed auxvp; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagArmRefuse.v, lines 85, 90, 122, 147, 206-209. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -69,29 +70,18 @@ assert (B : 0 <= a /\ a + Z.of_nat (Z.to_nat n) <= 0x693000).
 rewrite (u_small a) by lia. apply (vis_low scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ _ D). lia.
 Qed.
 #[using="Type"] Lemma wseg_stderr : wseg_ok ASEGS (Z_to_bv 64 1280936) 152 = true. Proof. vm_compute. reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_dg_machine_pre := (forall vals kn LB LK cr A M (model : Model) (can : word) S, know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) kn -> dg_kn_ok kn = true -> vals_ev vals 0 = sp0 -> vals_ev vals 3 = can ->
+#[using="scfg L C IL HIok Hsp DL Hdg"] Lemma dg_machine_pre : forall vals kn LB LK cr A M (model : Model) (can : word) S, know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) kn -> dg_kn_ok kn = true -> vals_ev vals 0 = sp0 -> vals_ev vals 3 = can ->
 dinvA LB LK cr A M model -> usp - 4096 <= S -> S + 64 <= usp -> S mod 16 = 0 ->
 let MV := mrestrict (ahid A model) M in
 L5Defs.L5.writable ASEGS MV (S - 5440) 5440 /\ L5Defs.L5.defined MV (S - 5440) 5440 /\ L5Defs.L5.img_clear MV 65536 1269760
-/\ L5KnA.L5KA.zeros_at MV (SB + S / 8 - 680) 688 /\ Jb0DiagGlue.DG.diag_cells MV (bv_unsigned can)) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 0%nat 0%nat).
-Variable kn : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 1%nat 0%nat).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 2%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 3%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 4%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 5%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 6%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 7%nat 0%nat).
-Variable can : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 8%nat 0%nat).
-Variable S : ltac:(sec_ty2 constr:(SEC_T_dg_machine_pre) 9%nat 0%nat).
-Lemma dg_machine_pre : ltac:(sec_stmt2 constr:(SEC_T_dg_machine_pre) 10%nat 0%nat).
-Proof using scfg L C IL HIok Hsp DL Hdg vals kn LB LK cr A M model can S.
+/\ L5KnA.L5KA.zeros_at MV (SB + S / 8 - 680) 688 /\ Jb0DiagGlue.DG.diag_cells MV (bv_unsigned can).
+Proof.
+intros vals kn LB LK cr A M model can S.
 intros HK OKb P0 P3 D HS1 HS2 HS16 MV.
 pose proof Hsp as Hsp'.
 unfold dg_kn_ok in OKb. apply andb_prop in OKb as (OKb & HW). rewrite forallb_forall in OKb.
 assert (KB : forall K, In K (DG_KN ++ XKN) -> existsb (kentry_eqb K) kn = true) by (intros K HKin; exact (OKb K HKin)).
-assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+assert (WIN : forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV kn a n HK HW P0 Ha Hn d k Hd Hk)).
 pose proof (kimg_clear (ENVG vals) MV kn 1280936 1281176 HK (KB (KImg 1280936 1281176) ltac:(unfold DG_KN; cbn [In app]; tauto))) as CLe.
 assert (ICe : forall a (n : nat) bs, rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> (1280936 <=? a) && (a + Z.of_nat n <=? 1281176) = true -> rdn ASEGS MV (Z_to_bv 64 a) n = Some bs).
@@ -119,10 +109,9 @@ split; [exact (ICe 1281076 4%nat (word_to_le_bytes 4 (Z_to_bv 64 4294967295)) lt
 split; [exact (ICe 1281008 8%nat (word_to_le_bytes 8 (Z_to_bv 64 1167540)) ltac:(img_rd) eq_refl)|]. split; [exact (ICe 1281056 4%nat (word_to_le_bytes 4 (Z_to_bv 64 2)) ltac:(img_rd) eq_refl)|].
 exact (wsg_writable sp0 Hsp M0 MV 1280936 152%nat wseg_stderr ltac:(lia) ltac:(cbn; lia)).
 Qed.
-End SE.
 #[using="Hsp M0"] Lemma dg_init_of : forall vals kn (MV : word -> option byte),
 know_ok ASEGS (ENVG vals) MV kn -> dg_kn_ok kn = true -> vals_ev vals 0 = sp0 ->
-(forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+(forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 /\ (forall i, 65536 <= i < 1269760 -> MV (Z_to_bv 64 i) = None)
 /\ exitA (bv_unsigned (vals_ev vals 4)) MV /\ stdoutPA MV.
 Proof.
@@ -139,20 +128,14 @@ split; [exact (ICo 1281316 4%nat (word_to_le_bytes 4 (Z_to_bv 64 4294967295)) lt
 split; [exact (ICo 1281232 8%nat (word_to_le_bytes 8 (Z_to_bv 64 0)) ltac:(img_rd) eq_refl)|]. split; [exact (ICo 1281184 8%nat (word_to_le_bytes 8 (Z_to_bv 64 0)) ltac:(img_rd) eq_refl)|].
 exact (ICo 1281192 8%nat (word_to_le_bytes 8 (Z_to_bv 64 0)) ltac:(img_rd) eq_refl).
 Qed.
-Section SE.
-Local Abbreviation SEC_T_refuse_chain := (forall (fxq : PropExec.FPState) R (MV : word -> option byte) (S can : Z), getr R 1%bv = Z_to_bv 64 685792 -> getr R 2%bv = Z_to_bv 64 S -> getr R 4%bv = Z_to_bv 64 6752960 ->
+#[using="Hsp M0"] Lemma refuse_chain : forall (fxq : PropExec.FPState) R (MV : word -> option byte) (S can : Z), getr R 1%bv = Z_to_bv 64 685792 -> getr R 2%bv = Z_to_bv 64 S -> getr R 4%bv = Z_to_bv 64 6752960 ->
 getr R 10%bv = Z_to_bv 64 1280936 -> getr R 11%bv = Z_to_bv 64 109065 -> getr R 12%bv = Z_to_bv 64 67108864 ->
 usp - 4096 <= S -> S + 64 <= usp -> S mod 16 = 0 ->
 L5Defs.L5.writable ASEGS MV (S - 5440) 5440 -> L5Defs.L5.defined MV (S - 5440) 5440 -> L5Defs.L5.img_clear MV 65536 1269760 ->
 L5KnA.L5KA.zeros_at MV (SB + S / 8 - 680) 688 -> L5KnA.L5KA.zeros_at MV 2147464512 8 -> 0 <= can < 2 ^ 64 -> Jb0DiagGlue.DG.diag_cells MV can ->
-dg_chain usp MV S S [Jb0DiagRefuse.DRF.MSGR] fxq R 0x62d34 MV) (only parsing).
-Variable fxq : ltac:(sec_ty2 constr:(SEC_T_refuse_chain) 0%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_refuse_chain) 1%nat 0%nat).
-Variable MV : ltac:(sec_ty2 constr:(SEC_T_refuse_chain) 2%nat 0%nat).
-Variable S : ltac:(sec_ty2 constr:(SEC_T_refuse_chain) 3%nat 0%nat).
-Variable can : ltac:(sec_ty2 constr:(SEC_T_refuse_chain) 4%nat 0%nat).
-Lemma refuse_chain : ltac:(sec_stmt2 constr:(SEC_T_refuse_chain) 5%nat 0%nat).
-Proof using Hsp M0 fxq R MV S can.
+dg_chain usp MV S S [Jb0DiagRefuse.DRF.MSGR] fxq R 0x62d34 MV.
+Proof.
+intros fxq R MV S can.
 intros G1 G2 G4 G10 G11 G12 HS1 HS2 HS16 HW HD HIMG HSTK HFMT Hcan HC.
 pose proof Hsp as Hsp'.
 destruct (Jb0DiagRefuse.DRF.refuse_run fxq R MV S can G1 G2 G10 G11 G12 ltac:(lia) HS16 HW HD HIMG HSTK HFMT Hcan HC)
@@ -177,7 +160,6 @@ exists fxF, RF, MF. split; [exact MSF|]. unfold dg_finA.
 split; [exact F10|]. split; [exact F2|]. split; [eapply eq_trans; [exact F4 | exact G4]|]. split; [exact AGF|].
 split; [exact C1|]. split; [exact C2|]. split; [exact C3 | exact C4].
 Qed.
-End SE.
 #[using="Type"] Lemma MSGR_eq : Jb0DiagRefuse.DRF.MSGR = msg_refused.
 Proof. apply Jb0DiagGlue.DG.list_bv_eq. vm_compute. reflexivity. Qed.
 #[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdg"] Lemma dg_refuse_site : forall (fxq : PropExec.FPState) vals R M (model : Model) LB LK cr A fs (can : word),
@@ -207,10 +189,10 @@ unfold t_die. rewrite <- MSGR_eq.
 exact (dg_chain_run scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL Hex M0 [Jb0DiagRefuse.DRF.MSGR] LB LK cr A MV S S (bv_unsigned (vals_ev vals 4)) fs fxq R 0x62d34 M model D EFS
 (fun x _ _ => eq_refl) (mem_grows_refl _) ltac:(unfold S; lia) ltac:(unfold S; lia) HS16 WINi IMGi XAi SOPi FD2 CH).
 Qed.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdg"] Theorem refuse_armA : forall path fs0 p0 p1 can LK0 A0,
-refuse_kA scfg ar HI sp0 path fs0 fdata p0 p1 can M0 LK0 A0 (t_die msg_refused fs0).
+Theorem refuse_armA : forall path fs0 auxvp p1 can LK0 A0,
+refuse_kA scfg ar HI sp0 path fs0 fdata auxvp p1 can M0 LK0 A0 (t_die msg_refused fs0).
 Proof.
-intros path fs0 p0 p1 can LK0 A0. unfold refuse_kA.
+intros path fs0 auxvp p1 can LK0 A0. unfold refuse_kA.
 intros A1 vals R M model A cr HL HV P38 P48 P70 HR HK DI HINC (MF & MS).
 pose proof HV as (P0 & _ & _ & P3). pose proof Hsp as Hsp'.
 drv_block0 HIok Hsp DL HR HK DI P0 (SCR [true; true] [] []) 71%nat.

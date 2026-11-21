@@ -1,6 +1,6 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNormG.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamNormG.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNormG.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamNormG.table). *)
 (* Modified by Theorem Labs, 2026-10: drop set parametrised. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamNormG.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamNormG.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* lib/MemNorm.v's normalization simulation (its section WithSegsCJ, :524-967) with the drop set a
    PARAMETER `drop` instead of MemNorm.cj_drop (:527).  The statements and proofs are MemNorm's with
    cj_drop replaced by `drop`; names carry a g: gdrop_normalize (normalize_cj :534), gmem_rel
@@ -176,7 +176,10 @@ Proof.
   - injection H as <-. eexists. split; [reflexivity|]. cbn [access_value fst snd].
     split; [reflexivity|]. split; [exact HR|]. intros x _. reflexivity.
   - revert H. destruct (ov_read_bytes segs m0 a (width_bytes n)) as [bs|] eqn:Eo; intros H;
-      cbn beta iota in H; [|discriminate H].
+      cbn beta iota in H;
+      (* 08b1429: a failed load answers MachineUnmodeled on the vvar pages and MachineFault
+         elsewhere, so the empty case needs that test split before it can be discriminated *)
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     rewrite (gov_read_rel m m0 a _ bs HR Eo). cbn beta iota.
     revert H.
     lazymatch goal with

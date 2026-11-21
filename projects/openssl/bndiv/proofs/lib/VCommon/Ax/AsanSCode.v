@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (stdio_write_loop_ck takes the channel-reader premise m_channel_reader, as stdio_write_loop does). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -81,6 +82,11 @@ Theorem stdio_write_loop_ck :
          (ents : list (word * word)) (bss : list (list byte)),
   ms_svc_pending ms = None -> ms_rom ms = seg_rom segs -> ms_pc_val ms = pcw b 0x88 ->
   m_halted model = None ->
+  (* NEW, mirroring stdio_write_loop (AsanWStdio.v:592), which this theorem is the
+     SWCode-existential repackaging of: its proof is `exact (stdio_write_loop ...)`, so
+     the two statements must agree premise for premise.  See AsanWStdio's Hcr for the
+     model line (LPS@75d69e00 Sys/Fs/ReadWrite.v:1708). *)
+  m_channel_reader model = true ->
   rg ms 17 = Z_to_bv 64 66 -> rg ms 10 = Z_to_bv 64 fd ->
   rg ms 11 = Z_to_bv 64 iovp -> rg ms 19 = Z_to_bv 64 iovp ->
   rg ms 12 = Z_to_bv 64 (Z.of_nat (length ents)) -> rg ms 18 = Z_to_bv 64 (Z.of_nat (length ents)) ->

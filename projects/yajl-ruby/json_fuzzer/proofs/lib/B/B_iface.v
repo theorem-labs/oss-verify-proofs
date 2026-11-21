@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adiag_args bounds a diagnostic string by argw + length + 9 <= 2^47 in place of + 16, what the launch's entry block gives). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -244,7 +245,9 @@ Definition adiag_args (d : diag_msg) (m : mem) (fmtp argw : word) (lo SP : Z) : 
              bytes_at segs m (bv_unsigned argw) (zb zs ++ Z_to_bv 8 0 :: slack)
              /\ (- (bv_unsigned argw + zlength zs + 1)) mod 8 <= zlength slack)
       /\ Forall (fun c => 0 < c < 256) zs /\ zlength zs < 2^20
-      /\ SP <= bv_unsigned argw /\ bv_unsigned argw + zlength zs + 16 <= 2^47   (* [comment removed for export] *)
+      /\ SP <= bv_unsigned argw /\ bv_unsigned argw + zlength zs + 9 <= 2^47   (* [comment removed for export] *)
+      (* LPS 727298f3: +9, what the launch's entry block gives (an argv string can end 9 bytes
+         under the block top, which can be 2^47); the reads stop at the NUL's 8-byte word. *)
   | DTooBig => fmtp = wz (f_too_big FM) /\ bv_unsigned argw mod 2^32 = 67108864
   | _ => False
   end.

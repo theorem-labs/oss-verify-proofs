@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/Sj_num_wrap2.v, lines 114, 188. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -110,7 +111,7 @@ Section TOP2.
     tp = Z_to_bv 64 0x6b4068 -> frm0 fc ->
     (length (rt_frames RT Σ) + NUMA_FRAMES <= FRAMES_MAX)%nat -> (NUMA_CREDIT <= rt_credit RT Σ)%Z ->
     ART RT Σ m -> mem_inv bsegs m ->
-    stk bsegs m lo (bv_unsigned sp) -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z -> (lo + NUMA_STACK <= bv_unsigned sp)%Z ->
+    stk bsegs m lo (bv_unsigned sp) -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z -> (lo + NUMA_STACK <= bv_unsigned sp)%Z ->
     (bv_unsigned sp + 16 <= USTACK_TOP)%Z -> (bv_unsigned sp mod 16 = 0)%Z ->
     In (p, n) (rt_live RT Σ) -> (p mod 8 = 0)%Z -> (p <= A)%Z -> (A + stop + 8 <= p + n)%Z -> (A + Z.of_nat (length txt) <= p + n)%Z ->
     bytes_at bsegs m A txt -> (Z.of_nat (length txt) < 2147483648)%Z ->
@@ -184,7 +185,7 @@ Section TOP2.
     destruct RA as (ART' & MI' & WM' & ST').
     pose proof (agree_pres _ _ _ mm m' (fun x => aclient (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp + -32) x) PR (fun x H => H)) as AG.
     rt_transport_with mm m' AG WM' ltac:(intros x Hx; cbn [cells_size csize Nat.add length] in Hx; cbv beta; aclient_tac).
-    assert (LOR' : (rt_sp0 RT Σ' - 8388608 <= lo)%Z) by (rewrite ES; exact LOR).
+    assert (LOR' : (rt_sp0 RT Σ' - STACK_SPAN <= lo)%Z) by (rewrite ES; exact LOR).
     assert (FPOK2 : fp_ok RT Σ' lo [((bv_unsigned sp + -32)%Z, bv_unsigned sp); (OUT, (OUT + 8)%Z)]).
     { constructor; [left; cbn [fst snd]; unfold USTACK_TOP; lia|]. constructor; [left; cbn [fst snd]; unfold USTACK_TOP; lia| constructor]. }
     pose proof (shzp_stack RT AF Σ' m' lo _ OUT 8 ART' LOR' FPOK2 ltac:(unfold STACK_WIN; lia) ltac:(unfold USTACK_TOP; lia) OUT8) as SHPO.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the checks take the launch's CONFIG_RSEQ layout (rz) and run under that layout's table (INFO_ASAN_at rz). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -104,13 +105,15 @@ Qed.
 
 Section MainCheck.
   (* [comment removed for export] *)
+  (* LPS 727298f3: the launch's CONFIG_RSEQ layout, read by the table every check is run under. *)
+  Variable rz : Z.
   Variable HS_asan : nat -> option acs.
   Variables KCm BFUELm FUELm : nat.
   Variable ITm : itab.
 
   (* [comment removed for export] *)
   #[local] Notation CHK C HS cs p :=
-    (APF.check ASEGS ITm INFO_ASAN NX0 AsanInit.LIMIT (XNm ASEGS INFO_ASAN NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS INFO_ASAN NX0) (XBm ASEGS NX0 (iotab_of C))
+    (APF.check ASEGS ITm (INFO_ASAN_at rz) NX0 AsanInit.LIMIT (XNm ASEGS (INFO_ASAN_at rz) NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS (INFO_ASAN_at rz) NX0) (XBm ASEGS (INFO_ASAN_at rz) NX0 (iotab_of C))
            HS KCm BFUELm FUELm None cs p).
 
   (* [comment removed for export] *)
@@ -174,11 +177,11 @@ Section MainCheck.
   Proof. intros lo hi ch C L p s HL H1 H2. cbn [mtree_ok]. rewrite H1, H2, HL. reflexivity. Qed.
   (* [comment removed for export] *)
   Lemma mtree_ok_leaf0 : forall h C p s,
-    main_check HS_asan KCm BFUELm FUELm ITm h C p = COk s -> class_shape_ok C s = true -> mtree_ok 0 0 (HSA HS_asan h) C (MLeaf 0 p) = true.
+    main_check rz HS_asan KCm BFUELm FUELm ITm h C p = COk s -> class_shape_ok C s = true -> mtree_ok 0 0 (HSA HS_asan h) C (MLeaf 0 p) = true.
   Proof. intros h C p s H1 H2. cbn [mtree_ok]. unfold main_check, main_start in H1. rewrite H1. exact H2. Qed.
   Lemma mtree_ok_leafP : forall lo hi ch C L p s,
     (Nat.leb lo L && Nat.leb L hi)%bool = true ->
-    pay_check KCm BFUELm FUELm ITm ch C p = COk s -> class_pay_ok L C s = true -> mtree_ok lo hi ch C (MLeaf L p) = true.
+    pay_check rz KCm BFUELm FUELm ITm ch C p = COk s -> class_pay_ok L C s = true -> mtree_ok lo hi ch C (MLeaf L p) = true.
   Proof. intros lo hi ch C L p s HL H1 H2. eapply mtree_ok_leaf; eassumption. Qed.
 
   Lemma mtree_ok_seg : forall lo hi ch C L p HT PT s,
@@ -190,14 +193,14 @@ Section MainCheck.
   (* [comment removed for export] *)
   Lemma mtree_ok_pre0 : forall hi h C L p HT PT s,
     Nat.leb L hi = true ->
-    pre_check HS_asan KCm BFUELm FUELm ITm h C HT p = COk s -> class_seg_ok (lv_of HT) L C s = true ->
+    pre_check rz HS_asan KCm BFUELm FUELm ITm h C HT p = COk s -> class_seg_ok (lv_of HT) L C s = true ->
     mcover HT PT = true -> mforest_ok L HT C PT = true ->
     mtree_ok 0 hi (HSA HS_asan h) C (MPre L p HT PT) = true.
   Proof. intros hi h C L p HT PT s HL H1 H2 H3 H4. unfold pre_check, main_start in H1. exact (mtree_ok_seg 0%nat hi (HSA HS_asan h) C L p HT PT s HL H1 H2 H3 H4). Qed.
   (* [comment removed for export] *)
   Lemma mtree_ok_segP : forall lo hi ch C L p HT PT s,
     (Nat.leb lo L && Nat.leb L hi)%bool = true ->
-    seg_check KCm BFUELm FUELm ITm ch C HT p = COk s -> class_seg_ok (lv_of HT) L C s = true ->
+    seg_check rz KCm BFUELm FUELm ITm ch C HT p = COk s -> class_seg_ok (lv_of HT) L C s = true ->
     mcover HT PT = true -> mforest_ok L HT C PT = true ->
     mtree_ok lo hi ch C (MPre L p HT PT) = true.
   Proof. intros. eapply mtree_ok_seg; eassumption. Qed.

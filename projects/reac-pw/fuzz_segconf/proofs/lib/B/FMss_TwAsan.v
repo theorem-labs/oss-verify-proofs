@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwAsan.v at cold/port-fm-int 5d8d8a15571, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
-(* lib/A/Prog/TwAsan.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8) with the local-shadow change
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwAsan.v, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
+(* lib/A/Prog/TwAsan.v (RtStr's port, unchanged) with the local-shadow change
    (FMss_shv.v): TW_ASAN's `shadow_rw m` becomes `shv2 m a0 a1 hb nb` (the shadow words of the haystack's and the
    needle's checked bytes) and tw_asan_kept keeps it through shvis_kept.  Same names as the original; import this
    module instead of TwAsan. *)

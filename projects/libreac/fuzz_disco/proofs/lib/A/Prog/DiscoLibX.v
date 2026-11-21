@@ -3,11 +3,11 @@
    B := AD2l.TfibB, MT := ameter_triv, XM_LIB = XN_LIB := fun _ => 0, RLO / RHI := disco_relro_lo / disco_relro_hi,
    tfib_K := AE2k.tfib_K, SK := AE2k.tfib_sink_head, LS := DiscoAsanTop.disco_shape, generic in rc. It is
    DiscoEntTop.d_walk_to_spec applied to DiscoEntWalk.d_entry_walk_ok and to a dentry_env record built field by field.
-   disco_lib_x_all_acfn has exactly the type of S1's H_PROG_LIBX (lib/A/AD2p.v:55-59, a Theorem Labs lane landing 25
-   b2ef98f0a6d): G2's ACfn.tfib_lib_contract_x_all under DiscoAsanT.H_RO_stmt rc, which the proof does not use.
+   disco_lib_x_all_acfn has exactly the type of S1's H_PROG_LIBX (lib/A/AD2p.v:56-60, a Theorem Labs lane landing 25):
+   G2's ACfn.tfib_lib_contract_x_all under DiscoAsanT.H_RO_stmt rc, which the proof does not use.
    No Section hypothesis is left: de_asnprintf is dl_asnprintf (a Theorem Labs lane's FMsnprintfDiscoSnp.disco_snprintf_R,
-   a Theorem Labs lane landing 24 5ed86fcc436) and de_ttjson is dl_ttjson (a Theorem Labs lane's
-   TjTop.pb_reac_disco_table_json_gen TJ_STK dimg_tj, a working branch cea77c23f9c). *)
+   a Theorem Labs lane landing 24) and de_ttjson is dl_ttjson (a Theorem Labs lane's
+   TjTop.pb_reac_disco_table_json_gen TJ_STK dimg_tj, a working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

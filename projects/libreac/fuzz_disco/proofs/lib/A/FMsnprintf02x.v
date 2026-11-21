@@ -1,5 +1,5 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintf02x.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
-(* R1 row R-02x: %02x is IN fm's snprintf route. fm_snprintf_gxaP (FMsnprintfFmI.v, a Theorem Labs lane's W0 ccca7d8f411) at the
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintf02x.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* R1 row R-02x: %02x is IN fm's snprintf route. fm_snprintf_gxaP (FMsnprintfFmI.v, a Theorem Labs lane's W0) at the
    covered-piece predicate RT_pf_02x.pf_pc_02x (fm's pieces PLit / %s / %.*s and %02x), with its four arms: the three
    seam arms (W0's lit / %s / %.*s arms, FMgxaSeamPf.v, and FMgxaSeam02x.v's at Px02) and the printf_common arm
    (RT_pf_02x.pf_pc_02x_arms). New file; nothing is edited. *)

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the read-only-backing form of the system-call steps; imports. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import CatSim.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import ShapeAlg.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import AsanAcct SpinAlg.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.Common.Cfg Require RomBase RomWrite.
 Import ListNotations.
 Open Scope bv_scope.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require PropExec.
@@ -32,9 +34,10 @@ Let P_of_silent1 (T : TSet) : forall c c',
     ms_svc_pending (cfg_ms c) = None ->
     AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
     P_of T c' -> P_of T c :=
-  fun c c' Hsvc Hn Hr => rz_silent1 segs scfg c c' T (node_ok_of_pnode_instr segs scfg c _ _ _ Hsvc Hn) Hr.
+  fun c c' Hsvc Hn Hr => rz_silent1 segs scfg c c' T (node_ok_of_pnode_instr segs scfg c _ _ _ Hsvc Hn)
+                          (RomBase.sys_rob_instr segs c Hsvc) Hr.
 
-Let P_of_leaf (T : TSet) (BOFF : bm_on = false) : bm_on = true -> forall c c', budget_refused_at segs c -> P_of T c' -> P_of T c.
+Let P_of_leaf (T : TSet) (BOFF : bm_on = false) : bm_on = true -> forall c c', ms_svc_pending (cfg_ms c) = None -> budget_refused_at segs c -> P_of T c' -> P_of T c.
 Proof. intros Hon. rewrite BOFF in Hon. discriminate Hon. Qed.
 
 Theorem rz_step_restricted_T : bm_on = false -> forall A ms msr' model T,
@@ -70,10 +73,11 @@ Let SP_of_silent1 (T : TSet) : forall c c',
     ms_svc_pending (cfg_ms c) = None ->
     AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
     SP_of T c' -> SP_of T c :=
-  fun c c' Hsvc Hn Hr => srz_silent1 segs scfg c c' T (node_ok_of_pnode_instr segs scfg c _ _ _ Hsvc Hn) Hr.
+  fun c c' Hsvc Hn Hr => srz_silent1 segs scfg c c' T (node_ok_of_pnode_instr segs scfg c _ _ _ Hsvc Hn)
+                          (RomBase.sys_rob_instr segs c Hsvc) Hr.
 
-Let SP_of_leaf (T : TSet) : bm_on = true -> forall c c', budget_refused_at segs c -> SP_of T c' -> SP_of T c :=
-  fun Hon c c' Hb Hr => srz_brefused segs scfg c T Hon Hb (srealizes_nonempty segs scfg c' T Hr).
+Let SP_of_leaf (T : TSet) : bm_on = true -> forall c c', ms_svc_pending (cfg_ms c) = None -> budget_refused_at segs c -> SP_of T c' -> SP_of T c :=
+  fun Hon c c' Hsvc Hb Hr => srz_brefused segs scfg c T Hon Hb (RomBase.sys_rob_instr segs c Hsvc) (srealizes_nonempty segs scfg c' T Hr).
 
 Theorem srz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->

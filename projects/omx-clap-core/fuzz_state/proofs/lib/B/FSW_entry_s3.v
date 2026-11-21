@@ -5,13 +5,13 @@
    instructions of the segment are A's (A 0x81024-0x8104c, every address + 0x70; the `bltu` target A 0x81110 is B
    0x81190, + 0x80); the UBSan pointer-overflow trap of image B (0x810e0 / 0x810e4 -> 0x8123c) lies after C2, in S5.
    rule 24: proves function LLVMFuzzerTestOneInput (segment S3; reuse search: proof-index LLVMFuzzerTestOneInput,
-   ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_s3.v of a working branch 0d34d65d2b7, same lemma names and argument order,
+   ported from a working branch).
+   Ported from: lib/A/FSW_entry_s3.v of a working branch, same lemma names and argument order,
    B numerals (PC_s3mid 0x810ac; check_no_overread's stack bound over lib/B/FSH_Base.v's definitions, not its value),
    the CTX premises dropped (check_no_overread_spec is the
    base's CTX-free text, so fe3_chain no longer concludes a site_ctx form and the Section has no CTX_cno / ctx_cno).
-   len's shadow byte (fe_lensh, the last conjunct of INV_C2; the ENTRY owner's layer of a working branch
-   60372e5bd05, mirrored in lib/B/FSW_entry_{defs,canon}.v): the head's run stores it (`sb zero, 4(s9)` at 0x8109c) and
+   len's shadow byte (fe_lensh, the last conjunct of INV_C2; the ENTRY owner's layer of a working branch,
+   mirrored in lib/B/FSW_entry_{defs,canon}.v): the head's run stores it (`sb zero, 4(s9)` at 0x8109c) and
    ends with the chunk fe_shadow_region_z (fe_lensh_of), so INV_S3mid carries it; the tail starts both runs from
    fe_ss_z (fe_ss_z_ok, fe_awr_z, fe_frame_z), reads it at the call (fe_lensh_of) and keeps it across
    check_no_overread by the callee journal's frames clause (fe_lensh_journal, fe_lensh_npstat).
@@ -25,7 +25,7 @@
    on the entry's empty chain (YCbq.achain_push), the spec en_no_overread, its fpostU journal composed onto the walk's
    by FSW_K3.fsw_ajournal_sub4 (the statics arm), the canonical state rebuilt at the return (C2).
    Form: FSW_entry_defs.v fe_from (donor cgif_file_fuzzer lib/A/ACf5.v:73-84 rt_from); the program call follows
-   FSW_ret.v:180-196 fsw_fpreU_at with the walk's own FP and fake frame. *)
+   FSW_ret.v:181-197 fsw_fpreU_at with the walk's own FP and fake frame. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

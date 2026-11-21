@@ -1,4 +1,4 @@
-(* CARRIED from commit d692856bfecbb98b2d89a0bba73b457c2098f96d,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YP09R.v, sha256 8687eef1896c3106d9e94709264453570e9f3081f8403bf51ba322ea71c57951 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable

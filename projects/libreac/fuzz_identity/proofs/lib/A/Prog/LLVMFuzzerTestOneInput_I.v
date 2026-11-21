@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YCbo.v:2300-2306, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/LLVMFuzzerTestOneInput_seg_I.v, with its module paths, module names, addresses and numbers changed; 2106 of its 2322 lines of code are new or changed and 2945 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment I of LLVMFuzzerTestOneInput's ASan walk: the family, its stem, the three output buffers and the two
    reac_box_name calls, 0x81878..0x81974 (63 slots). seg_I of lib/A/Prog/LLVMFuzzerTestOneInput_inv.v: from
    inv_H_end to inv_I_end.
@@ -540,7 +541,7 @@ Hypothesis HUMM : forall c, In c (LLVMF_MALLOC_CTX RA_LLVMF) ->
   In (firstn kUnwindMax (pc_malloc_ra0 (as_code B)
   :: flat_map (fun r => if r =? pc_malloc_ra0 (as_code B) then [] else [r]) c)) (as_universe B).
 Hypothesis AMALLOC4 : amalloc04_rule SEGS B MT.
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
   ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
   m_fds md' = m_fds md /\ m_fs md' = m_fs md.
@@ -1476,7 +1477,7 @@ Local Ltac i_keep2 HFr U :=
   cbn [I_r0 I_r1 YP09.r_base YP09.r_wlo YP09.r_whi base_val] in Hr; rewrite U in Hr; lia.
 
 (* The stem table's three entries, with the range the walk needs to refute `beqz a0` at 0x8189c.
-   llvmf_img (LLVMFuzzerTestOneInput.v:272, its object-17 block at :289-292) stated only t <> 0; val_mem does
+   llvmf_img (LLVMFuzzerTestOneInput.v:273, its object-17 block at :289-292) stated only t <> 0; val_mem does
    not bound its value, so t mod 2 ^ 64 = 0 was not excluded; the range at :293 is what I_stem_tbl reads off. *)
 Definition I_stem_tbl_r : Prop := forall (W : world SEGS) mem,
   arodata_okP SEGS pa_relro_lo pa_relro_hi B (aview SEGS (w_H W) mem) ->

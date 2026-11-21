@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (a working branch 384adc62265, file sha256 d7e7597570eb) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at 3d44582d342f) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch b85bfdee67c4), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 1 numeral changed. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's P'' delta to proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (384adc62265 -> a working branch a9d93b8c304 = cf layer ae2fa80b0325 + lanes H / M, file sha256 ecaf4ac21aee) applied at A' by a 3-way merge: base = the 384adc62265 text relocated cgif -> A', theirs = the a9d93b8c304 text relocated the same way, ours = this file; 22 lines changed, no numeral in the delta. *)
-(* Modified by Theorem Labs, 2026-10-30: lane B2's comment-only delta to proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (a9d93b8c304 -> a working branch f38a2a07767b, B2's sha of record on layer 987b886cbb10, file sha256 fd42537792fa) applied by the same 3-way merge; 3 comment lines (im_rmax's route), no code. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (a working branch, file sha256 d7e7597570eb) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 1 numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's P'' delta to proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (-> a working branch = cf layer + lanes H / M, file sha256 ecaf4ac21aee) applied at A' by a 3-way merge: base = the text relocated cgif -> A', theirs = the text relocated the same way, ours = this file; 22 lines changed, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10-30: lane B2's comment-only delta to proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (-> a working branch, B2's sha of record on layer, file sha256 fd42537792fa) applied by the same 3-way merge; 3 comment lines (im_rmax's route), no code. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B2; integrator ReallocPrimary).
    rule 24: proves function __sanitizer::QuarantineCache<__asan::QuarantineCallback>::Enqueue (the MISS arm: a new
    batch is needed and the class-24 cache is EMPTY, so Enqueue calls the internal allocator's Refill in the middle
@@ -121,15 +122,15 @@ Record EnqIfaceMiss : Prop := {
      chunk_ok_cf, through the Wf_cf conjunct of enq_pre_cf), as for ir_nmax / ih_nmax (fresh reviewer, 01:1xZ). *)
   im_nmax : forall inst ly X W regs mem md k, EPRE inst ly X W regs mem md k -> 1 <= ck_n k < NMAXD;
 
-  (* RMAXD's window, in DMwalkIF's form (cgif/cgif_file_fuzzer lib/DMwalkIF.v (file sha256 0b0918eebd50; donor not released) :307 rmaxd_ok), as EnqGbase.v:201 [ih_rmaxd_ok]: a
+  (* RMAXD's window, in DMwalkIF's form (cgif/cgif_file_fuzzer lib/DMwalkIF.v (file sha256 0b0918eebd50; donor not released) :307 rmaxd_ok), as EnqGbase.v:202 [ih_rmaxd_ok]: a
      field, not a Section hypothesis, so that it is a compiled lemma at each instance. *)
   im_rmaxd_ok : 2 ^ 31 <= RMAXD <= kFreeArrayOffset;
 
   (* the class-24 region's mapped-user bound of this instance, AT THE REFILLED STATE X1: that is where the tail walk
      reads it.  cgif_file: YFf2.nb_geom's fifth conjunct at X1.  At cf, batch_room_cf ALONE does not give it:
-     batch_room_cf (YG00cf.v:349-350, `rg_mapped_user + kUserMapSize <= kFreeArrayOffset`) holds at the PRE-state X
+     batch_room_cf (YG00cf.v:350-351, `rg_mapped_user + kUserMapSize <= kFreeArrayOffset`) holds at the PRE-state X
      (an enq_pre_cf conjunct), and regs_only X X1 (im_apostg) says nothing about [reg X1].  The cf instance closes it
-     at X1 itself: the refill leaf's relation gives Wf_cf at X1 (amc_wf), and YG01cf.mapped_bound_cf (YG01cf.v:251)
+     at X1 itself: the refill leaf's relation gives Wf_cf at X1 (amc_wf), and YG01cf.mapped_bound_cf (YG01cf.v:252)
      bounds every class's mapped-user bytes by kFreeArrayOffset (cgif/cgif_file_fuzzer lib/YGcfInstEnqMisscgif.v
      (file sha256 4f95afc368e7; donor not released) :134-138). *)
   im_rmax : forall inst ly X W regs mem md k c1 X1 W5 c5 l,

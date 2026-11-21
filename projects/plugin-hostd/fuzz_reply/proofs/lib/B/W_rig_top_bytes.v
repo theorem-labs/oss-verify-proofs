@@ -13,9 +13,10 @@
    C3 (the image-A twin's re-fit of lib/A/W_rig_top.v td_* / dr_bytes, mirrored): every request moves the live bytes by
    exactly its share of tr_net (W_tr_peak.v tr_net_app), td_pot weighs the pending texts too (drain frees each one as
    it reads it whole), and td_lw_pend is new.
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v, commit f4cd818e98d): only the
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v): only the
    Section header changes (W_relay_instance_gone_cx.v's generic list); dr_bytes reads no Section hypothesis.
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

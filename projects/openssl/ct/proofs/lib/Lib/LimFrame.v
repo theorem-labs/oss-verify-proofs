@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -102,6 +103,9 @@ Proof.
     | eapply check_unlinkat_frame; eassumption
     | eapply check_wait4_frame; eassumption
     | eapply check_write_frame; eassumption
+    | eapply check_pwritev2_frame; eassumption
+    | eapply check_clock_getres_frame; eassumption
+    | eapply check_set_robust_list_frame; eassumption
     | eapply check_writev_frame; eassumption
     | fail 1 "no frame lemma for this arm" ].
 Qed.

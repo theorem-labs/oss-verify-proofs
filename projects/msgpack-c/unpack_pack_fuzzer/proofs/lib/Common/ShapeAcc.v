@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rz_astep proves rz_silent1's RomBase.sys_rob premise at the instruction node; imports RomBase). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common Require Import ShapeAlg.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import Fcfg.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require RomBase.
 Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Unset Lia Cache.
@@ -65,7 +67,7 @@ Lemma rz_astep : forall ms model ms' model' T,
   realizes segs (mkCfg ms' model') T -> realizes segs (mkCfg ms model) T.
 Proof.
   intros ms model ms' model' T Hh Hsvc Hstep Hc.
-  eapply rz_silent1; [apply node_ainstr; eassumption | exact Hc].
+  eapply rz_silent1; [apply node_ainstr; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma account_step_halted : forall ms model ms' model',

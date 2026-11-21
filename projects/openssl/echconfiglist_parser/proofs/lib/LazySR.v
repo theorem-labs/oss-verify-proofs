@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sreach_silent1 and the silent steps take the RomBase.sys_rob_instr robustness premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
   Scfg PropExec CatSim ShapeAlg SReach LazyRestrict LazyRestrictRun LazyRestrictAlg.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Exec MState Mem.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
@@ -160,7 +162,8 @@ Lemma sreach_dsteps : forall c c' (Q : config -> Prop),
   dsteps segs c c' -> sreach segs Q c' -> sreach segs Q c.
 Proof.
   intros c c' Q H; induction H as [c | ms model ms' model' c3 Hh Hsvc Hacc H IH]; intros HQ; [exact HQ|].
-  eapply sreach_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc] | apply IH; exact HQ].
+  eapply sreach_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc]
+                         | apply RomBase.sys_rob_instr; exact Hsvc | apply IH; exact HQ].
 Qed.
 
 Section WithLazy.
@@ -182,6 +185,7 @@ Proof.
     as (mo' & Hacc & Hinv' & Hsame & Hnone).
   eapply sreach_silent1.
   - apply node_account; [exact (lzok_halted _ _ _ _ Hok) | exact Hsvc | exact Hacc].
+  - apply RomBase.sys_rob_instr. exact Hsvc.
   - apply Hk; [| exact Hsame | apply restrict_unrestrict_to; exact Hnone].
     eapply lzok_lifted; [exact Hok | exact Hinv' | exact Hsame | apply hid_same_unrestrict].
 Qed.

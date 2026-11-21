@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the VM-backing transfer also carries m_channel_reader, new lemmas raise_sigpipe_WB, check_sigpipe_write_WB and check_sigpipe_writev_WB with xfer_loop2 cover the SIGPIPE arm, and check_ioctl_WB takes the new SyscallInput argument. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -27,7 +28,12 @@ Ltac norm_proj m :=
   change (m_pipes (F m)) with (m_pipes m) in *; change (m_stdin (F m)) with (m_stdin m) in *;
   change (m_halted (F m)) with (m_halted m) in *; change (m_tid (F m)) with (m_tid m) in *;
   change (m_net (F m)) with (m_net m) in *; change (m_conn_ix (F m)) with (m_conn_ix m) in *;
-  change (m_urandom (F m)) with (m_urandom m) in *.   (* [comment removed for export] *)
+  change (m_urandom (F m)) with (m_urandom m) in *;
+  (* The revision's reader gate: [check_write] and [check_writev] now branch on
+     [State.m_channel_reader] (75d69e00 Checks/Sys/Fs/ReadWrite.v:1808 and :5251).
+     [with_vm_backing] rebuilds the VmState and nothing else, so the flag rides
+     through untouched, exactly as the nine projections above do. *)
+  change (m_channel_reader (F m)) with (m_channel_reader m) in *.
 
 Ltac destr_one :=
   match goal with
@@ -43,12 +49,58 @@ Ltac destr_one :=
 
 Ltac xfer_loop m := repeat first [ progress norm_proj m | destr_one ].
 
+(* ------------------------------------------------------------------------ *)
+(* THE SIGPIPE ARM, new at 75d69e00.  A write or writev to a channel whose far
+   end has no reader answers -EPIPE over [ReadWrite.raise_sigpipe]'s model
+   instead of delivering bytes (75d69e00 Sys/Fs/ReadWrite.v:1383 and
+   Checks/Sys/Fs/ReadWrite.v:255, :5182).  The arm MODIFIES the model, which is
+   the one thing [xfer_loop]'s projection normalisation cannot see through, so
+   it gets its own transfer lemma: [raise_sigpipe] touches [ProcState] alone and
+   [WB] touches [VmState] alone, so the two commute.                           *)
+(* ------------------------------------------------------------------------ *)
+
+#[using="Type"] Lemma raise_sigpipe_WB : forall m, raise_sigpipe (F m) = F (raise_sigpipe m).
+Proof.
+  intros m. unfold raise_sigpipe.
+  change (m_sigpipe_default (F m)) with (m_sigpipe_default m).
+  change (m_sigmask (F m)) with (m_sigmask m).
+  destruct (negb (m_sigpipe_default m)); [reflexivity|].
+  match goal with |- (if ?b then _ else _) = _ => destruct b end; reflexivity.
+Qed.
+
+#[using="Type"] Lemma check_sigpipe_write_WB : forall eff m,
+  check_sigpipe_write eff (F m) = cmap F (check_sigpipe_write eff m).
+Proof.
+  intros eff m. unfold check_sigpipe_write.
+  change (sigpipe_declines (F m)) with (sigpipe_declines m).
+  rewrite raise_sigpipe_WB.
+  destruct (sigpipe_declines m); [reflexivity|].
+  unfold check_ret_only, cmap. xfer_loop m; reflexivity.
+Qed.
+
+#[using="Type"] Lemma check_sigpipe_writev_WB : forall reads eff m,
+  check_sigpipe_writev reads eff (F m) = cmap F (check_sigpipe_writev reads eff m).
+Proof.
+  intros reads eff m. unfold check_sigpipe_writev.
+  change (sigpipe_declines (F m)) with (sigpipe_declines m).
+  rewrite raise_sigpipe_WB.
+  destruct (sigpipe_declines m); [reflexivity|].
+  unfold check_ret_only_copyins, check_ret_only, cmap. xfer_loop m; reflexivity.
+Qed.
+
+(* [xfer_loop] with the sigpipe arm discharged as soon as it appears, so that the
+   generic loop never has to look inside a model-modifying branch. *)
+Ltac xfer_loop2 m :=
+  repeat first [ progress norm_proj m
+               | progress (rewrite ?check_sigpipe_write_WB, ?check_sigpipe_writev_WB)
+               | destr_one ].
+
 Ltac xfer_main h m :=
-  intros; unfold h; xfer_loop m;
+  intros; unfold h; xfer_loop2 m;
   unfold check_ret_only_copyins, check_copyins_after, check_copyin_prefix, check_copyins, check_access_ok_zero, check_efault_or,
          check_ret_only, cmap;
   try unfold check_read_urandom;   (* [comment removed for export] *)
-  xfer_loop m; try reflexivity.
+  xfer_loop2 m; try reflexivity.
 
 #[using="Type"] Lemma check_read_WB : forall i fd buf cnt eff m,
   check_read i fd buf cnt eff (F m) = cmap F (check_read i fd buf cnt eff m).
@@ -70,8 +122,11 @@ Proof. xfer_main @check_writev m. Qed.
   check_close fd eff (F m) = cmap F (check_close fd eff m).
 Proof. xfer_main @check_close m. Qed.
 
-#[using="Type"] Lemma check_ioctl_WB : forall fd cmd eff m,
-  check_ioctl fd cmd eff (F m) = cmap F (check_ioctl fd cmd eff m).
+(* [check_ioctl] gained a leading [SyscallInput] at 75d69e00
+   (Checks/Sys/Fs/Ioctl.v:181; the arm passes it at Checks/Sys/Dispatch.v:1324),
+   so the four-argument form put [F m] in the effect's slot. *)
+#[using="Type"] Lemma check_ioctl_WB : forall i fd cmd eff m,
+  check_ioctl i fd cmd eff (F m) = cmap F (check_ioctl i fd cmd eff m).
 Proof. xfer_main @check_ioctl m. Qed.
 
 #[using="Type"] Lemma check_lseek_WB : forall fd off wh eff m,

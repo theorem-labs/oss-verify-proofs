@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_LLVMFuzzerTestOneInput_top_x.v, with its module paths and module names changed; 75 of its 182 lines of code are new or changed and 1120 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B's plugs of the drain arm's three LS rows at B's instance LSI
    (lib/B/ReplyLS3B_inst.v), a Theorem Labs lane row G-BLS-drain (a Theorem Labs lane; B-TOPX-OWNERS rows 55 LS_drain_pre, 56
    LS_cnl_pre, 58 LS_drain_step): the B twins of lib/A/ReplyLSI.v's lsi_LS_drain_pre (:659-664), lsi_LS_cnl_pre
-   (:604-609) and lsi_LS_drain_step (:508-524) at 1318828167d3 (sha256
+   (:604-609) and lsi_LS_drain_step (:508-524) (sha256
    39227fa5fa20; internal record), each stated at B top_x's own text (lib/B/W_LLVMFuzzerTestOneInput_top_x.v LS_drain_pre :461,
    LS_cnl_pre :479, LS_drain_step :510, the B cutover's re-point, a Theorem Labs lane 10:58Z; the TX_* texts they used to cite
    are equal up to unfolding), with drain_defs_x's dr3_* / ls3_* as top_x names them.
-   fr_CAP is A's SLOT (ReplyLSI.v:241-247): a Section variable with the one rule these rows read,
+   fr_CAP is A's SLOT (ReplyLSI.v:242-248): a Section variable with the one rule these rows read,
    fr_CAP_drain_step (A :291-313, the same text with lib/B's names), as a Section hypothesis.
    A -> B SWAPS: lib/A/ReplyLSI.v's imports -> lib/B/ReplyLS3B_inst.v's; fr_LS3 B -> ReplyB3LS3.fr_LS3 B
    YCfn_cf.CALL_ROOM_B (the instance's call room); room-reading plugs get `Z.le_refl YCfn_cf.CALL_ROOM_B`. *)

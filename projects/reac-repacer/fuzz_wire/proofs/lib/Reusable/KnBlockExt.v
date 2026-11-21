@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/KnBlockExt.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/KnBlockExt.v (donor image sha256 61768cf4739b), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): the StackDepot nodes block (NB) and store block (SB) extents of libreac/fuzz_knock in
    the shared ASan kernel's own encoding. knock records no stack trace before main (DepotCfg.depot_has_trace = false), so
    NB and SB are mapped only by the first StackDepot Put; until then the layout holds the "not yet mapped" sentinel

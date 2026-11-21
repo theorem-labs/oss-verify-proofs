@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: AMKN, APKN, imported from BothEntry, in the section's hypotheses and in every fact lookup; the unused replay table dropped). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,11 +11,10 @@ From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr InitMem.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.LibA Require Import ExecF.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Spec Require Import STree AsanCtrl AsanEmbed BothHandoff.
-From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import MainExport MainFactsBoth.
+From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import MainExport MainFactsBoth BothEntry.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import AsanHexScan.   (* [comment removed for export] *)
 From OSSVerify.Proofs.zstd.huf_decompress.lib.BothW Require Import BImg ABase ABytes ACanary ALayout ARep AHeapP AQConst ARepQ ARepInit_kit ARepInit_A.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Common Require Import RunDraw.
-From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
 From Ltac2 Require Import Ltac2.
 Set Default Proof Mode "Classic".
 Ltac2 rds2_cert_ok (p : constr) : bool :=
@@ -63,21 +63,20 @@ Ltac2 rds2_run (subs : (constr * constr) list) (tab : string) (secs : string lis
   Std.exact_no_check (rds2_fix subs c);
   List.iter (fun (e, b) => Control.new_goal e; Control.enter (fun () => Std.exact_no_check (rds2_fix subs b))) (ph.(contents)).
 Ltac2 rds2_run1 (tab : string) (secs : string list) (s : string) : unit := rds2_run [] tab secs s.
-Ltac2 kr_t_ARepInit_B () := "C56Stdlib6ZArith6BinInt1Z2leC56Stdlib6ZArith6BinInt1Z2ltI47Corelib4Init5Logic3and00K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums8positive01K47Corelib7Numbers7BinNums1Z02K47Corelib4Init5Logic2eq01C56Stdlib6ZArith6BinInt1Z3lebC47Corelib4Init9Datatypes4andbC46Stdlib5Lists4List7existsbI47Corelib4Init5Logic2eq00C59OSSVerify5KrLib2AS:MainExport:mimg_coverC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00C59OSSVerify5KrLib3Lib3Mem2waC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes6option02K47Corelib4Init9Datatypes4list01I47Corelib4Init9Datatypes4list00K46Stdlib9micromega6VarMap1t02I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega=RingMicromega7Formula01K46Stdlib9micromega5Tauto8GFormula05K46Stdlib9micromega5Tauto8GFormula08C46Stdlib9micromega5Tauto8BFormulaC46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundC59OSSVerify5KrLib5BothW4ARep6arelroC1?~~~~~~~~~~~~~~~K46Stdlib9micromega5Tauto8GFormula04C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib4Init9Datatypes4unit01I47Corelib7Numbers7BinNums1Z00C59OSSVerify5KrLib5BothW5ABase9ARELRO_LOC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ABase9ARELRO_HIC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW4BImg5bsegsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS=MainFactsBoth>asan_mem_factsC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive03I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01I59OSSVerify5KrLib2AS:MainExport5mfact00C1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4bool02I46Stdlib9micromega:ZMicromega;ZArithProof00K46Stdlib9micromega=RingMicromega3Op203K46Stdlib9micromega=RingMicromega3Op205K47Corelib7Numbers7BinNums1Z01K59OSSVerify5KrLib2AS:MainExport4zexp01C1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes3nat02K59OSSVerify5KrLib2AS:MainExport5mfact01C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport9mfact_eqbC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport:mfact_findC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport8mfact_okC1?~~~~~~~~~~~~~~~C45stdpp9bitvector;definitions7Z_to_bvK59OSSVerify5KrLib3Lib5Cells4cell01C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib3Lib5Cells4cell04C1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic3and01C59OSSVerify5KrLib3Lib5Cells8cells_wfC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib5Cells;cells_bytesC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4list02C45stdpp9bitvector;definitions;bv_unsignedC47Corelib5Lists7ListDef3mapC59OSSVerify5KrLib5BothW<ARepInit_kitEbytes_eq_of_unsigned'C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib5Cells:cells_sizeC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem?rw_cells_recastC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit;rw_cells_tlC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib5Cells5csizeC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z6of_natC56Stdlib6ZArith6BinInt1Z3addC59OSSVerify5KrLib5BothW<ARepInit_kit;rw_cells_hdC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib4Step8rw_cellsC1?~~~~~~~~~~~~~~~I59OSSVerify5KrLib3Lib5Cells4cell00C1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic4True00K47Corelib4Init5Logic4True01K47Corelib4Init9Datatypes3nat01I47Corelib4Init9Datatypes3nat00K46Stdlib9micromega6VarMap1t01C56Stdlib6ZArith6BinInt1Z>pow_pos_nonnegC56Stdlib6ZArith6BinInt1Z3powC56Stdlib6ZArith6BinInt1Z:pow_nonnegC56Stdlib6ZArith6BinInt1Z7compareK46Stdlib9micromega7EnvRing5PExpr07K59OSSVerify5KrLib3Lib5Cells4cell02C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp02C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp04C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp03C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib3Lib5Cells4cell03C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ABase6al_ctxC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ABase4al_tC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit=rw_cells_consC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW4ARep7arep_rtC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib7InitMem:rw_bytes_bC1?~~~~~~~~~~~~~~~K46Stdlib9micromega7EnvRing5PExpr03C59OSSVerify5KrLib5BothW<ARepInit_kit9img_chunkC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes:comparison00C59OSSVerify5KrLib5BothW5ABase5ATP88C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ABase4ATSDC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW:ARepInit_B<flags85_initC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW:ARepInit_B=cflags34_initC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW4ARep8arep_rt2C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib3Lib5Cells4cell05C1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic2ex00C59OSSVerify5KrLib5BothW7ACanaryApremap_canary_anyC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW4ARep8arep_rt3C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z03K46Stdlib9micromega6VarMap1t03K46Stdlib9micromega7EnvRing5PExpr04K46Stdlib9micromega7EnvRing5PExpr05C56Stdlib6ZArith6BinInt1Z3subC56Stdlib6ZArith6BinInt1Z3mulC59OSSVerify5KrLib5BothW5ABase4al_VC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ABase<al_space_begC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ABase<al_ptr_arrayC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW:ARepInit_A3ST0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec8AsanCtrl6a_nresC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec8AsanCtrl6a_nsecC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic8eq_ind_rC47Corelib4Init5Logic6eq_indC59OSSVerify5KrLib5BothW4ARep9ainstanceC1?~~~~~~~~~~~~~~~K46Stdlib9micromega=RingMicromega3Op201C59OSSVerify5KrLib4Spec8AsanCtrl<K_SPACE_SIZEC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ARepQ@aquar_glob_constC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec8AsanCtrl5Q_MAXC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec8AsanCtrl5Q_MINC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec8AsanCtrl7Q_CACHEC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes6lengthC59OSSVerify5KrLib5BothW5ARepQ6qfirstC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ARepQ5qlastC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ARepQ8abatchesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ARepQ7aqcacheC1?~~~~~~~~~~~~~~~I59OSSVerify5KrLib4Spec8AsanCtrl6abatch00C1?~~~~~~~~~~~~~~~I59OSSVerify5KrLib5BothW5ARepQ7qbatchc00C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW7AQConst9AQ_GCACHEC1?~~~~~~~~~~~~~~~C56Stdlib6NArith6BinNat1N3eqbC59OSSVerify5KrLib5BothW<ARepInit_kit9byte_zeroC1?~~~~~~~~~~~~~~~C56Stdlib6NArith6BinNat1N4div2C59OSSVerify5KrLib5BothW<ARepInit_kit6zscanNC1?~~~~~~~~~~~~~~~C56Stdlib6NArith6BinNat1N3addC56Stdlib6NArith6BinNat1N3subC47Corelib7Strings:PrimString6stringI47Corelib7Numbers7BinNums1N00K47Corelib7Numbers7BinNums1N01C56Stdlib6NArith6BinNat1N6of_natC56Stdlib6NArith6BinNat1N3powC56Stdlib6NArith6BinNat1N2leC56Stdlib6NArith6BinNat1N2ltK47Corelib4Init9Datatypes6option01C56Stdlib6NArith6BinNat1N8eqb_specI47Corelib4Init9Datatypes7reflect00C47Corelib4Init5Logic3notC56Stdlib6ZArith6BinInt1Z4of_NC56Stdlib6ZArith4Znat3N2Z7inj_iffC47Corelib4Init5Logic7iff_symC46Stdlib9micromega;ZifyClasses7rew_iffC56Stdlib6ZArith4Znat3N2Z9is_nonnegK46Stdlib9micromega7EnvRing3Pol01K46Stdlib9micromega=RingMicromega5Psatz04K46Stdlib9micromega=RingMicromega5Psatz02C46Stdlib9micromega;ZifyClasses;rew_iff_revC56Stdlib6NArith6BinNat1N7add_0_rC56Stdlib6ZArith6BinInt1Z3eqbC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics;hex_byte_atC46Stdlib9micromega;ZifyClasses9not_morphC47Corelib4Init5Logic9False_indc59OSSVerify5KrLib5BothW:ARepInit_B8zscanN_SC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith4Znat5Nat2Z9is_nonnegC56Stdlib6NArith6BinNat1N3divC56Stdlib6NArith6BinNat1N4succC56Stdlib6NArith4Nnat5Nat2N8inj_succC56Stdlib6NArith6BinNat1N3mulC56Stdlib6NArith6BinNat1N;pow_succ_r'C56Stdlib6NArith6BinNat1N7div_modC56Stdlib6NArith6BinNat1N6moduloC56Stdlib6ZArith6BinInt1Z3divC56Stdlib6ZArith6BinInt1Z3remC46Stdlib9micromega9SatDivModCZ_div_nonneg_nonnegC56Stdlib6NArith6BinNat1N6mod_ltK46Stdlib9micromega=RingMicromega5Psatz07K46Stdlib9micromega=RingMicromega5Psatz05C56Stdlib6ZArith6BinInt1Z8max_specI47Corelib4Init5Logic2or00K46Stdlib9micromega:ZMicromega;ZArithProof03C56Stdlib6NArith6BinNat1N9add_assocC47Corelib4Init9Datatypes?andb_true_introC56Stdlib6NArith6BinNat1N8div2_divC47Corelib4Init9Datatypes7nat_indC46Stdlib9micromega;ZifyClasses5mkrelC46Stdlib9micromega;ZifyClasses5mkappC46Stdlib9micromega;ZifyClasses6mkapp2K46Stdlib9micromega=RingMicromega5Psatz06K46Stdlib9micromega:ZMicromega;ZArithProof02K46Stdlib9micromega5Tauto8GFormula07K46Stdlib9micromega5Tauto8GFormula03C56Stdlib6ZArith6BinInt1Z3maxK46Stdlib9micromega5Tauto8GFormula06C56Stdlib6ZArith4Znat3N2Z6inj_ltC46Stdlib6ZArith4Znat7nat_N_ZC56Stdlib6ZArith4Znat3N2Z7inj_powC56Stdlib6ZArith4Znat3N2Z6inj_leK46Stdlib9micromega:ZMicromega;ZArithProof01C56Stdlib6ZArith4Znat5Nat2Z8inj_succC56Stdlib6ZArith4Znat3N2Z7inj_mulC56Stdlib6ZArith4Znat3N2Z7inj_divC56Stdlib6ZArith4Znat3N2Z7inj_remC56Stdlib6ZArith4Znat3N2Z7inj_addC56Stdlib6ZArith4Znat3N2Z;inj_sub_maxI47Corelib4Init5Logic5False00C59OSSVerify5KrLib2AS;AsanHexScan6zscanZC1?~~~~~~~~~~~~~~~C49OSSVerify5KrImgGTgt_huf_decompress_bothUTgt_huf_decompress_both_seg_bytes_003C1@~~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW7AQConst8AIA_BASEC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit4SEG3C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW7AQConst8AIA_SIZEC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z4to_NC56Stdlib6NArith6BinNat1N3lebC56Stdlib6NArith6BinNat1N6leb_leC47Corelib4Init5Logic8iff_reflC46Stdlib9micromega;ZifyClasses3injC46Stdlib9micromega;ZifyClasses9and_morphC59OSSVerify5KrLib2AS;AsanHexScan<zscanZ_soundC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW:ARepInit_B?zscanN_completeC1?~~~~~~~~~~~~~~~C46Stdlib9micromega8ZifyInst7Inj_Z_Zc59OSSVerify5KrLib5BothW:ARepInit_B:aia_scan63C1?~~~~~~~~~~~~~~~C46Stdlib9micromega8ZifyInst7Inj_N_ZI47Corelib7Numbers7BinNums8positive00C59OSSVerify5KrLib3Lib3Mem3le8C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Mem8bytes_atC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport8zexp_eqbC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport8mwr_findC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS:MainExport2zvC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Mem5wr_atC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith4Znat3Z2N2idC59OSSVerify5KrLib5BothW<ARepInit_kit<img_zero_stkC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit9wr_at_subC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW5ARepQ6aintalC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib5Frame3stkC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW7AQConst<AIA_MAP1_LENC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW7AQConst8AIA_MAP1C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW:ARepInit_B8aia_scanC1?~~~~~~~~~~~~~~~".
 Import ListNotations.
 Open Scope Z_scope.
 
 Section CANSEC1. Context {rc : runConstT}.
 Section B.
   Variables (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem).
-  Hypothesis HM : Forall (mfact_ok bsegs V m) asan_mem_facts.
-  Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
+  Hypothesis HM : Forall (mfact_ok bsegs V m) AMKN.
+  Hypothesis HP : Forall (pfact_ok V) APKN.
   Let L := mkALayout (LV V) w U.
 
   Lemma arelro_init : arelro m.
 Proof.
   unfold arelro.
-  apply (mimg_cover bsegs V m asan_mem_facts ARELRO_LO ARELRO_HI HM).
+  apply (mimg_cover bsegs V m AMKN ARELRO_LO ARELRO_HI HM).
   vm_compute. reflexivity.
 Qed.
 
@@ -85,7 +84,7 @@ Qed.
   Lemma flags85_init : rw_cells bsegs m 0xb7b4d [C1 (Z_to_bv 8 1)].
 Proof.
   assert (qw_b7b48 : rw_cells bsegs m 752456 [C8 (Z_to_bv 64 72340172838010881)]).
-  { apply (mfact_find bsegs V m asan_mem_facts (MCell (ZLit 752456) 8 (ZLit 72340172838010881)) HM).
+  { apply (mfact_find bsegs V m AMKN (MCell (ZLit 752456) 8 (ZLit 72340172838010881)) HM).
     vm_compute. reflexivity. }
   assert (cut_at_5 : rw_cells bsegs m 752456
     ([CB 5 (firstn 5 (le8 (Z_to_bv 64 72340172838010881)))] ++ [C1 (Z_to_bv 8 1)]
@@ -101,7 +100,7 @@ Qed.
 
   Lemma cflags34_init : rw_cells bsegs m 0x14be4a [C1 (Z_to_bv 8 1)].
 Proof.
-  pose proof (mfact_find bsegs V m asan_mem_facts (MCell (ZLit 1359432) 8 (ZLit 128849084416)) HM)
+  pose proof (mfact_find bsegs V m AMKN (MCell (ZLit 1359432) 8 (ZLit 128849084416)) HM)
     as qw_14be48.
   cbn [mfact_ok zv cellw] in qw_14be48.
   specialize (qw_14be48 ltac:(vm_compute; reflexivity)).
@@ -117,7 +116,7 @@ Qed.
 
   Theorem arep_rt_init : arep_rt L m.
 Proof.
-  pose proof (fun f => mfact_find bsegs V m asan_mem_facts f HM) as handoff.
+  pose proof (fun f => mfact_find bsegs V m AMKN f HM) as handoff.
   (* three cells whose address or value comes from the layout *)
   assert (tsd_slot : rw_cells bsegs m ATSD [C8 (Z_to_bv 64 (al_ctx L))]).
   { unfold L. rewrite LV_ctx.
@@ -147,7 +146,7 @@ Proof.
     [ match goal with known : rw_cells _ _ ?a ?cs |- rw_cells _ _ ?a ?cs => exact known end
     | lazymatch goal with |- context [L] => fail | _ => idtac end;
       first
-      [ apply (img_chunk V m asan_mem_facts);
+      [ apply (img_chunk V m AMKN);
           [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
           | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]
       | lazymatch goal with
@@ -166,7 +165,7 @@ Qed.
 
   Theorem arep_rt2_init : arep_rt2 m.
 Proof.
-  pose proof (fun f => mfact_find bsegs V m asan_mem_facts f HM) as handoff.
+  pose proof (fun f => mfact_find bsegs V m AMKN f HM) as handoff.
   assert (byte_14bf2c : rw_cells bsegs m 0x14bf2c [C1 (Z_to_bv 8 0)]).
   { assert (qw_14bf28 : rw_cells bsegs m 1359656 [C8 (Z_to_bv 64 16843009)])
       by (apply (handoff (MCell (ZLit 1359656) 8 (ZLit 16843009))); vm_compute; reflexivity).
@@ -180,7 +179,7 @@ Proof.
     exact split_4_1_3. }
   unfold arep_rt2. split; [exact byte_14bf2c | split].
   - apply (handoff (MCell (ZLit 0x14beb8) 8 (ZLit 0))). vm_compute. reflexivity.
-  - apply (img_chunk V m asan_mem_facts);
+  - apply (img_chunk V m AMKN);
       [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
       | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ].
 Qed.
@@ -190,19 +189,19 @@ Proof.
   unfold arep_rt3.
   repeat match goal with |- _ /\ _ => split end.
   all: try first
-    [ apply (img_chunk V m asan_mem_facts);
+    [ apply (img_chunk V m AMKN);
         [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
         | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]
     | lazymatch goal with
       | |- rw_cells _ _ ?at_ [C8 (Z_to_bv _ ?val)] =>
-          apply (mfact_find bsegs V m asan_mem_facts (MCell (ZLit at_) 8 (ZLit val)) HM)
+          apply (mfact_find bsegs V m AMKN (MCell (ZLit at_) 8 (ZLit val)) HM)
       | |- rw_cells _ _ ?at_ [C4 (Z_to_bv _ ?val)] =>
-          apply (mfact_find bsegs V m asan_mem_facts (MCell (ZLit at_) 4 (ZLit val)) HM)
+          apply (mfact_find bsegs V m AMKN (MCell (ZLit at_) 4 (ZLit val)) HM)
       | |- rw_cells _ _ ?at_ [C1 (Z_to_bv _ ?val)] =>
-          apply (mfact_find bsegs V m asan_mem_facts (MCell (ZLit at_) 1 (ZLit val)) HM)
+          apply (mfact_find bsegs V m AMKN (MCell (ZLit at_) 1 (ZLit val)) HM)
       end; vm_compute; reflexivity ].
   (* the eight bytes at 0x60d2d0 hold a value only known as V 45 *)
-  pose proof (mfact_find bsegs V m asan_mem_facts (MRo (ZLit 0x60d2d0) 8 (ZV 45)) HM) as seen_v45.
+  pose proof (mfact_find bsegs V m AMKN (MRo (ZLit 0x60d2d0) 8 (ZV 45)) HM) as seen_v45.
   specialize (seen_v45 ltac:(vm_compute; reflexivity)).
   cbn [mfact_ok zv] in seen_v45.
   assert (open_for_writes : wr_at bsegs m 0x60d2d0 8).
@@ -216,7 +215,7 @@ Qed.
 
   Theorem ainstance_init : ainstance L (ST0 V) m.
 Proof.
-  pose proof (fun f => mfact_find bsegs V m asan_mem_facts f HM) as handoff.
+  pose proof (fun f => mfact_find bsegs V m AMKN f HM) as handoff.
   assert (space_lo : al_space_beg L = 4096 * V 208 + -4096 * V 209 + 65536)
     by (unfold L; rewrite LV_space_beg; ring).
   assert (space_hi : al_space_beg L + K_SPACE_SIZE = 4096 * V 208 + -4096 * V 209 + 137439019008)
@@ -247,11 +246,11 @@ Proof.
   (* cells still as the image left them *)
   assert (counts : rw_cells bsegs m (AINSTANCE + 112) [C8 (Z_to_bv 64 (a_nres (ST0 V))); C8 (Z_to_bv 64 (a_nsec (ST0 V)))]).
   { change (a_nres (ST0 V)) with 0. change (a_nsec (ST0 V)) with 0.
-    apply (img_chunk V m asan_mem_facts);
+    apply (img_chunk V m AMKN);
       [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
       | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]. }
   assert (c984 : rw_cells bsegs m (AINSTANCE + 984) [C1 (Z_to_bv 8 0)]).
-  { apply (img_chunk V m asan_mem_facts);
+  { apply (img_chunk V m AMKN);
       [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
       | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]. }
   exact (conj c32 (conj c48 (conj c64 (conj c72 (conj counts (conj c680 (conj c984 (conj c40 c56)))))))).
@@ -260,7 +259,7 @@ Qed.
   (* [comment removed for export] *)
   Theorem aquar_glob_const_init : aquar_glob_const m.
 Proof.
-  pose proof (fun f => mfact_find bsegs V m asan_mem_facts f HM) as handoff.
+  pose proof (fun f => mfact_find bsegs V m AMKN f HM) as handoff.
   assert (limits : rw_cells bsegs m AQ_MAX [C8 (Z_to_bv 64 Q_MAX); C8 (Z_to_bv 64 Q_MIN); C8 (Z_to_bv 64 Q_CACHE)]).
   { apply rw_cells_cons; [apply (handoff (MCell (ZLit 749488) 8 (ZLit Q_MAX))); vm_compute; reflexivity |].
     change (AQ_MAX + Z.of_nat (csize (C8 (Z_to_bv 64 Q_MAX)))) with 749496.
@@ -272,7 +271,7 @@ Proof.
     change (AQ_MUTEX + Z.of_nat (csize (C1 (Z_to_bv 8 0)))) with 749577.
     apply rw_cells_cons; [apply (handoff (MCell (ZLit 749577) 1 (ZLit 0))); vm_compute; reflexivity |].
     change (749577 + Z.of_nat (csize (C1 (Z_to_bv 8 0)))) with 749578.
-    apply (img_chunk V m asan_mem_facts);
+    apply (img_chunk V m AMKN);
       [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
       | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ]. }
   exact (conj limits lock_bytes).
@@ -282,7 +281,7 @@ Qed.
 Proof.
   unfold aqcache. split.
   2: exact I.
-  apply (img_chunk V m asan_mem_facts); [exact HM | | | | |].
+  apply (img_chunk V m AMKN); [exact HM | | | | |].
   4, 5: vm_compute; congruence.
   all: vm_compute; try reflexivity; repeat split.
 Qed.
@@ -321,15 +320,15 @@ Proof.
   Theorem aintal_init : aintal false m.
 Proof.
   assert (no_overlay : forall i, AIA_BASE <= i < AIA_BASE + Z.of_N (Z.to_N AIA_SIZE) -> m (wa i) = None).
-  { apply (mimg_cover bsegs V m asan_mem_facts _ _ HM). vm_compute. reflexivity. }
+  { apply (mimg_cover bsegs V m AMKN _ _ HM). vm_compute. reflexivity. }
   assert (writable_seg : wr_at bsegs m 724992 5620432).
-  { apply (mfact_find bsegs V m asan_mem_facts (MWr (ZLit 724992) 5620432) HM). vm_compute. reflexivity. }
+  { apply (mfact_find bsegs V m AMKN (MWr (ZLit 724992) 5620432) HM). vm_compute. reflexivity. }
   assert (writable_aia : wr_at bsegs m AIA_BASE (Z.of_N (Z.to_N AIA_SIZE))).
   { apply (wr_at_sub m 724992 5620432 _ _ writable_seg); vm_compute; congruence. }
   pose proof (img_zero_stk _ _ m AIA_BASE aia_scan ltac:(vm_compute; reflexivity)
                 ltac:(vm_compute; congruence) no_overlay writable_aia) as aia_stack.
   unfold aintal. split; [| split].
-  - apply (img_chunk V m asan_mem_facts);
+  - apply (img_chunk V m AMKN);
       [ exact HM | vm_compute; reflexivity | vm_compute; repeat split
       | vm_compute; reflexivity | vm_compute; congruence | vm_compute; congruence ].
   - exact aia_stack.

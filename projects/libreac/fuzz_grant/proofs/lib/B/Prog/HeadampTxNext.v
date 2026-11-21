@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract of reac_headamp_tx_next for fuzz_grant.asan; tnext_kept and tnext_post adapted from proofs/cgif/cgif_file_fuzzer/lib/YC20.v (tlzw_kept, tlzw_post). *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxNext.v at a working branch afd75724b5b (blob 95ee256830c, the blob the walk was ported from), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; the shared definitions, model bridge and six cut statements of the walk; frame 96 and NX_STK = STK_reac_headamp_tx_next because image B calls reac_headamp_tx_effective at 0x863dc where image A inlines it; past the prologue the table is in s0 (atom 8) and the value pointer in s1 (atom 9); the shadow-base cell is object 35; atom facts are the fields' machine ranges because the contract gives thd_replay_ok, not I1; the .rodata divisor image B's scan reads is GrantBContracts.v's IMG_NEXT_DIV3 *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxNext.v at a working branch (blob 95ee256830c, the blob the walk was ported from), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; the shared definitions, model bridge and six cut statements of the walk; frame 96 and NX_STK = STK_reac_headamp_tx_next because image B calls reac_headamp_tx_effective at 0x863dc where image A inlines it; past the prologue the table is in s0 (atom 8) and the value pointer in s1 (atom 9); the shadow-base cell is object 35; atom facts are the fields' machine ranges because the contract gives thd_replay_ok, not I1; the .rodata divisor image B's scan reads is GrantBContracts.v's IMG_NEXT_DIV3 *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_tx_next (image B 0x85efc, 465 instructions, 35 instrumented accesses, one call):
    what every segment of the walk shares.
 
@@ -19,7 +20,7 @@
 
    Image-B boundary rule: this file never uses off_img or a `*_imgP` lemma (image A's carry image A's top
    0x5fa000; on the integration tree off_img is lib/B/YCbq.v's, over image B's top 0x5fb000; the walk does not
-   depend on which); it uses blk_off_imgB (lib/B/Prog/GrantPaLib.v:324) with
+   depend on which); it uses blk_off_imgB (lib/B/Prog/GrantPaLib.v:325) with
    IMG_LO_B_val / IMG_TOP_B_val (GrantTop.v:33, :35). The shadow-base cell is listing object 35 on
    image B (image A: 32). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
@@ -50,7 +51,7 @@ Unset Lia Cache. Unset Nia Cache.
 (* The model's branches are full of `j / 3`, `j mod 3` and the shadow's `a / 8`, and zify turns
    every one of them into a euclidean-division equation before lia runs, which is what makes a
    goal of this file take minutes instead of milliseconds. The unit's heavy walks switch it off the
-   same way (lib/A/Prog/CtrlChecksumVerify.v:28, CtrlBuildGrantSweep.v:45): where a proof here
+   same way (lib/A/Prog/CtrlChecksumVerify.v:28, CtrlBuildGrantSweep.v:46): where a proof here
    really needs the division, it says `Z.div_mod_to_equations` itself. *)
 Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Local Set Warnings "-abstract-large-number".

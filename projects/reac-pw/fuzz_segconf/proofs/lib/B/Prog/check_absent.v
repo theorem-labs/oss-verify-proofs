@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of check_refusal (plugin-hostd/fuzz_command, 0x87f08, 52 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (pb_wcb: entry, branch, return) and A/ACh2.v:122-290 (a program call through cl_callS and back). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_refusal.v, with its module paths and module names changed; 515 of its 561 lines of code are new or changed and 270 lines of the source are left out. *)
-(* the image-B port of lib/A/Prog/check_absent.v (commit 5ed426e78b84): the walk of
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* the image-B port of lib/A/Prog/check_absent.v: the walk of
    check_absent on reac-pw/fuzz_segconf image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, entry 0x875f0 =
    BASE + AF_check_absent = 0x84dc0 + 0x2830; code: the neutral image-B excerpt
    check_absent.fuzz_segconf.asan-ubsan.s) against
-   check_absent_contract (lib/B/Prog/check_absent_c.v, image B's copy of the FINAL contract 6f783602b5e3).
+   check_absent_contract (lib/B/Prog/check_absent_c.v, image B's copy of the FINAL contract).
    RELOCATION: image B's 29 words are image A's 28 at +8 bytes, the only changed words the six pc-relative `jal`s,
    plus one UBSan trap word `unimp` (c0001073) at 0x87660 after `jal abort`. A-to-B map: every A address a in
    [0x875e8, 0x87654] is B's a + 8; the call targets are B's own (find 0x89a84, role 0x89be0, ignored 0x89b78,

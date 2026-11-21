@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff f6bfd4d6ab5 f6038f3d481
-   of lib/A/W_gesture_model.v applied by three-way merge onto lane W4's ARx text (a working branch
-   0d0105eaf4d) at B's names: pb_gesture_model_x states gm_spec_x at RP (gm_rm_down drops the unused budget on the
+(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff
+   of lib/A/W_gesture_model.v applied by three-way merge onto lane W4's ARx text (a working branch)
+   at B's names: pb_gesture_model_x states gm_spec_x at RP (gm_rm_down drops the unused budget on the
    early-return arms) and passes the room premises to GMSCAN_X. The AR statements (Section r) are W4's, unchanged. *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (asan-ubsan) walk of fuzz_reply's gesture_model at 0x86048, lane
    W4: the entry and the composition, in the form of lib/A/W_gesture_model.v (A's proved composition, 0x85b9c) and the
@@ -10,6 +10,7 @@
 (* Modified by Theorem Labs, 2026-10: the meter at the KF-COUNT kit's gm_cost H ln (the trace's charge), A's re-fit of
    lib/A/W_gesture_model.v at B's names: GMSCAN_X's meter and room texts take the line; the three early returns name no
    gesture and are charged 0 (gmm_cost_none). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* gesture_model(s, line, len) is the harness's reference reading of one relayed line as PHD_EVENTS declares
    param_gesture (fuzz_reply.c:377-401).  It returns at once unless len >= 14, the first 13 bytes are "param_gesture"
    (bcmp) and byte 13 is a space; it then scans back from the end for the last space (lib/B/W_gm_cut.v gm_scan_at),

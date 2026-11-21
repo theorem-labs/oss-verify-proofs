@@ -8,6 +8,7 @@
    StackStore::Store 0x6e8f4, the store block through S2 AD3b.tfib_alloc_ok and S3 AD3c.tfib_blockinfo_create_ok) with
    a Theorem Labs lane's lib/A/AD3i.v (depot_room, depot_store_one_block). rule 24: proves function
    StackDepotBase<StackDepotNode,1,20>::Put (reuse search: see (internal path)). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed depot_room_at, AR_but_depot). *)
 
 (* THE PATH (A image; a0 = buf, a1 = length tr at StackDepotPut; disassembly of the packed base's Asan_seg_001.hex)
      0x70ef0 StackDepotPut: a0 := &theDepot (0x180418), a1 := buf, a2 := size word, a3 := 0; j Put.
@@ -145,7 +146,7 @@ Definition aareas_depot_kd (S : astate) : list (aexp * Z) :=
 Definition depot_junk_kd : list (aexp * Z) := [(ADepot (d_nuniq + 4), 12); (AStore 8, 8); (AStore 24, 8)].
 
 (* The cells the first Put's callees read as 0 that no kernel cell fixes (see the header): the nodes-map mutex word
-   (TwoLevelMap::Create's lock, AD3g.v:154), stored_ (Store's stored_ += n + 1, AD3a.v:159) and mtx_ of blocks_[0]
+   (TwoLevelMap::Create's lock, AD3g.v:154), stored_ (Store's stored_ += n + 1, AD3a.v:160) and mtx_ of blocks_[0]
    (BlockInfo::Create's lock, AD3c.v:193). *)
 Definition put_zero_cells : list acell :=
   [ z4 (ADepot tlm_mu) 0; z4 (AStore AD3a.bi0_stored) 0; z4 (AStore bi0_mtx) 0 ].
@@ -155,12 +156,13 @@ Definition put_zero_cells : list acell :=
 Definition first_put_avoid (ly : alayout) (S : astate) : list (Z * Z) :=
   ext_but_NB ly ++ ly_extra ly ++ sec_extents ly S ++ band_maps.
 
-(* The room and budget of both depot maps at Put's entry: a Theorem Labs lane's depot_room (lib/A/AD3i.v:209-231) conclusion,
+(* The room and budget of both depot maps at Put's entry: a Theorem Labs lane's depot_room (lib/A/AD3i.v:242-265) conclusion,
    VERBATIM with md := md and Wx := W; the caller gets it from AD3i.depot_room (AR + mroom, X := [], k := 0, or the
    walk's own X / k). *)
 Definition depot_room_at (W : world tfibsegs) (md : Model) : Prop :=
   ((exists g, g mod 4096 = 0 /\ 0 < g /\ g + kNodesBlockSize <= alloc_top (m_vmmaps md) /\
-      region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 kNodesBlockSize) = true) /\
+      region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 kNodesBlockSize) = true /\
+      LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g) /\
    eager_used md + A_bytes (w_A W) + 2 * kNodesBlockSize <= vm_limit (m_vmmaps md)) /\
   eager_used md + A_bytes (w_A W) + 3 * kNodesBlockSize + kStoreBlockSize <= vm_limit (m_vmmaps md) /\
   (forall (xw nw : word) (md' : Model) (Wx' : world tfibsegs),
@@ -171,7 +173,8 @@ Definition depot_room_at (W : world tfibsegs) (md : Model) : Prop :=
     (forall e, In e (vm_maps (m_vmmaps md')) -> e = (xw, nw) \/ In e (vm_maps (m_vmmaps md))) ->
     eager_used md' <= eager_used md + kNodesBlockSize -> A_bytes (w_A Wx') <= A_bytes (w_A W) + kNodesBlockSize ->
     (exists g, g mod 4096 = 0 /\ 0 < g /\ g + kStoreBlockSize <= alloc_top (m_vmmaps md') /\
-      region_free (vm_reserved (m_vmmaps md') ++ vm_maps (m_vmmaps md')) (Z_to_bv 64 g) (Z_to_bv 64 kStoreBlockSize) = true) /\
+      region_free (vm_reserved (m_vmmaps md') ++ vm_maps (m_vmmaps md')) (Z_to_bv 64 g) (Z_to_bv 64 kStoreBlockSize) = true /\
+      LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g) /\
     eager_used md' + A_bytes (w_A Wx') + kStoreBlockSize <= vm_limit (m_vmmaps md')).
 
 (* rev5 section 4's two knock branches of YG0n.depot_ok (depot_ids / depot_traces at their knock meanings, section
@@ -658,7 +661,7 @@ Hypothesis as_const_g2_def : forall B ly c, In c (as_const_g2 B ly) <-> In c (as
    tfib_depot_spec's post states it).
    Right arm, the first Put (B2): both blocks unmapped before (ly_NB ly = ly_SB ly = 0), mapped at nb, sb <> 0 after;
    ly' = set_ly_SB (set_ly_NB ly nb) sb with the layout step layout_grow_kd ly ly'; W grows by exactly the two blocks
-   (w_A consed, w_H unchanged outside them); the model as S7 (AD3g.v:170-171) and S1 (AD3a.v:94-95) state it after
+   (w_A consed, w_H unchanged outside them); the model as S7 (AD3g.v:170-171) and S1 (AD3a.v:95-96) state it after
    the two maps: no I/O change, the maps of mmap_model sb (mmap_model nb md), the store block lazy.
    put_effect_refl: the left arm. put_effect_trans: left-left by wvb_wvb (YA0o.v:20), left-right / right-left because
    the right arm reads md only through m_vmmaps, m_vm_lazy and same_io, which with_vm_backing keeps; right-right is
@@ -1097,7 +1100,9 @@ Definition AR_but_depot (B : asyms) (ly' : alayout) (S : astate) (W : world tfib
   (* ALedger *)
   (forall sg, In sg tfibsegs -> fst (ly_img ly') <= Z.of_N (seg_base sg) /\
      Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly') + snd (ly_img ly')) /\
-  ASAN_VM_LMIN <= vm_limit (m_vmmaps md) /\ vm_reserved (m_vmmaps md) = segments_reserved tfibsegs /\
+  ASAN_VM_LMIN <= vm_limit (m_vmmaps md) /\
+  (* the image's reservations followed by a tail, as [YG0n.ALedger]'s [al_reserved] states it *)
+  (exists rx, vm_reserved (m_vmmaps md) = segments_reserved tfibsegs ++ rx /\ res_tail_ok ly' rx) /\
   (exists pieces, prim_pieces_ok ly' S pieces /\ (forall p, In p pieces <-> (In (wiv p) (vm_maps (m_vmmaps md)) /\
      0 < snd p /\ ly_prim ly' <= fst p /\ fst p + snd p <= ly_prim ly' + kPrimResvSize))) /\
   In (wiv (ly_Q ly', kPtrArrayResv)) (vm_maps (m_vmmaps md)) /\
@@ -2156,7 +2161,7 @@ Proof using kd_grow_NB kd_grow_SB kd_grow_trans depot_ok_pre_kd depot_ok_post_kd
 Qed.
 
 (* 'empty -> post-Put depot_ok': from an empty depot, the section 7 facts give the post-Put depot_ok (rev5 section 7:
-   cgif's init_facts with tr0 := tr1, so the proof is the one-trace depot_init, YG0r.v:209-221, true branch:
+   cgif's init_facts with tr0 := tr1, so the proof is the one-trace depot_init, YG0r.v:210-222, true branch:
    heads := fun b => if b =? b1 then 1 else 0, links := fun _ => 0). *)
 Lemma depot_ok_first_put : forall B ly' rd' S tr,
   st_depot S = [] -> depot_first_put_facts B ly' (depot_after 1 tr S) tr rd' ->

@@ -11,14 +11,14 @@
    per character class, the class being a range fact on the value's atom. The induction is on the remaining trips.
 
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
-   a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_loops.v:
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_loops.v:
    et_pre :349, crt_expected_text, et_iter / et_loop). The segment is crt_INV_81d0c -> crt_INV_81f58.
    What is taken from that file: the invariant et_pre / et_facts :349-352, the per-character steps achr0 .. achr3,
    the iteration et_iter and the loop et_loop of Section ExpectedText, assembled as crt_expected_text :1008 - the
    exact ASan proof of these bytes, in the bespoke contract a_call_pre / a_call_post, not importable here, so its
    structure is followed over the kit's symbolic engine. Reuse search (lane head 04:26Z, checker a Theorem Labs lane):
    proof-index check_round_trip / 0x81a9c / 0x81b9c and git grep over origin/main, ossv/recipes, ossv/candidates,
-   release/pau-projects-recipes; the only exact hit is d25a984c903. The pure arithmetic (sh62, sh60, vB, vC, vD,
+   release/pau-projects-recipes; the only exact hit is a commit. The pure arithmetic (sh62, sh60, vB, vC, vD,
    lor_p, b64_enc_app3, enc_len_Z) is REUSED by Require from the released plain lib/Prog/check_round_trip_loops.v.
    The ASan engine pattern follows cgif lib/A/ACik.v .. ACix.v on origin/ossv/recipes. A new file: no licence lines
    (internal). *)

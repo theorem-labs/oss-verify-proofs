@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window is the launch's). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Uint63 PrimString.
@@ -22,8 +23,20 @@ Definition START0 : CAP.acs := (with_facts c7b1_hs25 [par_even]).
 Definition END0 : CAP.acs := fiaendb1e.
 Definition TT0 : ttab_e := [(2%uint63, CAP.eaddz CAP.e_spw (-8388608)); (4%uint63, AX2.ELit 0)].
 (* [comment removed for export] *)
+(* LPS c0dd863a: the stack region's writable part is the window that START0's own KWr fact on the entry's
+   stack pointer gives (8 MiB less the launch block's bound, in whole pages: AsanInit.stack_window_ok); its
+   offset from the pointer, read here *)
+Definition STK_K : Z :=
+  match List.find (fun K => match K with AX2.KWr (AX2.SA b _) (AX2.ELit _) => AX2.expr_eqb b CAP.e_spw | _ => false end) (CAP.kn START0) with
+  | Some (AX2.KWr (AX2.SA _ k) _) => k
+  | _ => 0
+  end.
+(* LPS c0dd863a: the stack's shadow (tag 3) is claimed from the shadow of the stack window up (tag 2's lo / 8),
+   its zero pages from the first whole page there *)
+Definition STK3_LO : Z := (8388608 + STK_K) / 8.
+Definition STK3_P0 : Z := (STK3_LO + 4095) / 4096.
 Definition shapes0 : list rshape := [(0%uint63, of_Z (CAP.img_lo HAT), of_Z (CAP.img_hi HAT), 0%uint63, None);
-   (2%uint63, 0%uint63, 8388608%uint63, 4%uint63, Some PKUnk);
+   (2%uint63, of_Z (8388608 + STK_K), 8388608%uint63, 4%uint63, Some PKUnk);
    (4%uint63, of_Z (CAP.shadow_off HAT + CAP.img_lo HAT / 8), of_Z (CAP.shadow_off HAT + CAP.img_hi HAT / 8), 12%uint63,
     (* [comment removed for export] *)
     if existsb (fun K => match K with
@@ -119,7 +132,7 @@ Definition RTs : list rrow := flat_map row_of (kbases (CAP.kn START0)).
 Definition START : CAP.acs := resp_cs RTs START0.
 Definition shapes : list rshape := (let '(_, shs, _, _, _, _) := rootgen in
    filter (fun s : rshape => negb (sh_tag s =? TG)%uint63) shs ++ [(TSB, 65536%uint63, 137439023104%uint63, 12%uint63, None);
-      (TSBS, 8192%uint63, 17179877376%uint63, 9%uint63, None); (3%uint63, 0%uint63, 1048576%uint63, 1%uint63, None)]).
+      (TSBS, 8192%uint63, 17179877376%uint63, 9%uint63, None); (3%uint63, of_Z STK3_LO, 1048576%uint63, 1%uint63, None)]).
 Definition classes : list (int * rclass) := (let '(_, _, cl, _, _, _) := rootgen in filter (fun c => negb (fst c =? TG)%uint63) cl ++ [(TSB, RCEnt IRES); (TSBS, RCSpan); (3%uint63, RCSpan)]).
 Definition ALL0 : list fent := (let '(_, _, _, all, _, _) := rootgen in all).
 Definition regtags : ttab_e := gen_tt TT1 100%uint63 (map (fun e => AX2.KWord (AX2.SA (AX2.ELit 0) 0) 8 e) (AX2.s_regs (CAP.a_ss START))).
@@ -272,7 +285,7 @@ Definition add_pages_unk (ts : int) (pns : list int) (r : rdesc) : rdesc :=
     RD (rd_tag r) (rd_lo r) (rd_len r) (rd_align r) (rd_dflt r)
        (rd_pages r ++ map (fun pn => PD pn true PKUnk []) (filter (fun pn => negb (existsb (fun q => (q =? pn)%uint63) have)) pns))
   else r.
-Definition d : sdesc := SD (sd_pc d2) (sd_regs d2) (map (fun r => set_ro (drop_partial (add_pages_unk TSB slice_pages (add_pages 3%uint63 false (pages_list 256 0%uint63 255%uint63) (add_pages TSBS true (xa_pages TSBS) r))))) (sd_mem d2)).
+Definition d : sdesc := SD (sd_pc d2) (sd_regs d2) (map (fun r => set_ro (drop_partial (add_pages_unk TSB slice_pages (add_pages 3%uint63 false (pages_list 256 (of_Z STK3_P0) 255%uint63) (add_pages TSBS true (xa_pages TSBS) r))))) (sd_mem d2)).
 Definition STK_RANGE : Z * Z := odflt (0, 0) (AX2.base_range (CAP.kn START) (tte TT 2%uint63)).
 Definition MAXI : int := 9223372036854775807%uint63.
 Definition bs : list ditem := [(4%uint63, 0%uint63, 0%uint63, RK_plain)]

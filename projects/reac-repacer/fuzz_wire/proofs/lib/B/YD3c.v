@@ -30,9 +30,10 @@
      0x202d2 ("StackStore" on both pins), the size 0x800000; the image end TFIB_IMG_END = YImgTop.IMG_TOP = 0x5f3000
      (YF0x.v:27; Reusable/YImgTop.v:5), the writable window's low end 0x96000 (YFem.v:303 rw_writable), MNR_STK 104
      (YD3d.v:97).
-   lib/B/YF0m.v (WireSyms, TFIB_STORE) is on this base, generated for this image; the donor (projects/libreac/fuzz_knock/proofs/lib/AU/YD3c.v:33-34 at 41e80c0a1bbb) built its copy from a working branch
+   lib/B/YF0m.v (WireSyms, TFIB_STORE) is on this base, generated for this image; the donor (projects/libreac/fuzz_knock/proofs/lib/AU/YD3c.v:33-34) built its copy from a working branch
    (a build-only input). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3c.v at 88154566652a (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build, YImgTop taken from lib/B instead of lib/Reusable and its proofs' unfolds of YImgTop.IMG_TOP (in 4 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3c.v (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build, YImgTop taken from lib/B instead of lib/Reusable and its proofs' unfolds of YImgTop.IMG_TOP (in 4 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.B Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -84,12 +85,12 @@ Proof.
 Qed.
 
 
-(* a Theorem Labs lane's helper; the same text as lib/Reusable/YG0f.v:97-99 (set_ly_SB). *)
+(* a Theorem Labs lane's helper; the same text as lib/Reusable/YG0f.v:98-100 (set_ly_SB). *)
 Definition set_ly_SB (ly : alayout) (sb : Z) : alayout :=
 ALayout (ly_prim ly) (ly_space ly) (ly_Q ly) (ly_T ly) (ly_C ly) (ly_F ly) (ly_NB ly) sb (ly_top ly)
 (ly_stk_lo ly) (ly_stk_hi ly) (ly_tsd ly) (ly_tr0 ly) (ly_extra ly) (ly_D ly) (ly_vis0 ly) (ly_img ly) (ly_sec ly).
 
-(* static_extents ly (YG0f.v:375-385) without the store block's own entry (ly_SB ly, kStoreBlockSize): the extents
+(* static_extents ly (YG0f.v:376-386) without the store block's own entry (ly_SB ly, kStoreBlockSize): the extents
    the new block must avoid. With ly_SB ly = 0 that entry is (0, kStoreBlockSize), which no layout fact places.
    amendment 5: the nodes map's entry is listed only once it is mapped (a Theorem Labs lane's sentinel ly_NB ly = 0). *)
 Definition ext_but_SB (ly : alayout) : list (Z * Z) := [(ly_prim ly, kPrimResvSize); (ly_Q ly, kPtrArrayResv); (ly_T ly, kThreadObjSize); (ly_F ly, kFakeStackSize)] ++ (if ly_NB ly =? 0 then [] else [(ly_NB ly, kNodesBlockSize)]) ++ [(ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO's mappings and steps): changed TFIB. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YK09.
@@ -8,7 +9,7 @@ Unset Lia Cache. Unset Nia Cache.
 Import ListNotations. Import APC.
 Open Scope Z_scope.
 Definition TFIB : atable :=
-{| img_lo := 0x10000; img_hi := 0x5fb000; n_res := 4; shadow_off := 0x7fff8000;
+{| img_lo := 0x10000; img_hi := 0x5fb000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
 a_entry := 0x3030c; rw_lo := 0x9f000; rw_len := 0x55c000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
 x_imemset := 0x63998; x_imemcpy := 0x6391c; x_memset := 0x9790c; x_memcpy := 0x97508; x_memiszero := 0x63ec8;
 x_istrncpy := 0x63dc4; x_sealed := 0x11806; x_popfree := 0x366f8;

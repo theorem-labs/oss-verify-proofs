@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE39.v (mconsts_view, mconsts_of_rom_view, mconsts_view_keep) as consts_view, consts_view_of_rom_view, consts_view_keep, with the constant range as two parameters lo, hi in place of cgif_file's fixed range, over lib/Reusable only so both builds of libreac/fuzz_disco share it; module paths. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/Rt/ConstsViewDef.v, with its module paths changed; 1 of its 23 lines of code is new or changed and 1 line of the source is left out. *)
-(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_boxreg/lib/A/Rt/ConstsViewDef.v (recipes commit 88154566652a; the text of libreac/fuzz_disco's proved general memchr contract, lib/Rt/ConstsViewDef.v) for reac-repacer/fuzz_uci's image B, as this unit's lib/A/Rt/ConstsViewDef.v (commit 8c3eb0365c8c) is for image A, with its module paths changed. Image-generic: segs and the constants' range lo .. hi are parameters, and no boxreg image value occurs in this file. *)
+(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_boxreg/lib/A/Rt/ConstsViewDef.v (recipes; the text of libreac/fuzz_disco's proved general memchr contract, lib/Rt/ConstsViewDef.v) for reac-repacer/fuzz_uci's image B, as this unit's lib/A/Rt/ConstsViewDef.v is for image A, with its module paths changed. Image-generic: segs and the constants' range lo .. hi are parameters, and no boxreg image value occurs in this file. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

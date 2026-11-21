@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/varnish/esi_parse_fuzzer/lib/Lib/Regs6ss.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ms_reg_eqv, interp_eff_accesses_eqv, step_accesses_eqv, sstep_xport, xport_round_trip; added NoVdso, vdso_entry_fn_none, vdso_arm_absurd). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -180,8 +181,24 @@ Proof.
   assert (r = 0%bv) by (apply bv_eq; rewrite H0; reflexivity). subst r. rewrite bv_eqb_refl in E. discriminate.
 Qed.
 
+(* 08b1429: sstep_cfg has three vDSO arms, where the step runs Run.vdso_post, not RiscvSemantics.step; the
+   transport below (xport_cfg) follows the step, so it holds only over segments that carry no vDSO image.
+   The walks this transport serves run over the binary's loaded segments, which have none; run_segments
+   (the kernel's pair) is reached only at the top level.  NoVdso is closed by computation on a concrete
+   image (the global hint), so callers of YA0nR's lemmas over a concrete image need not name it. *)
+Class NoVdso (segs : list Segment) : Prop := no_vdso : RiscvSemantics.vdso_image segs = None.
+#[global] Hint Extern 1 (NoVdso _) => (unfold NoVdso; reflexivity) : typeclass_instances.
+
 Section WithSegs.
 Variable segs : list Segment.
+
+Lemma vdso_entry_fn_none : RiscvSemantics.vdso_image segs = None ->
+  forall pc, RiscvSemantics.vdso_entry_fn segs pc = None.
+Proof. intros Hn pc. unfold RiscvSemantics.vdso_entry_fn. rewrite Hn. reflexivity. Qed.
+
+Ltac vdso_arm_absurd Hnv :=
+  match goal with Hf : RiscvSemantics.vdso_entry_fn segs _ = Some _ |- _ =>
+    rewrite (vdso_entry_fn_none Hnv) in Hf; discriminate Hf end.
 
 Lemma interp_eff_accesses_eqv : forall t t', eff_eqv t t' -> forall m,
   match interp_eff_accesses segs t m, interp_eff_accesses segs t' m with
@@ -195,7 +212,8 @@ Lemma interp_eff_accesses_eqv : forall t t', eff_eqv t t' -> forall m,
   end.
 Proof.
   intros t t' H. induction H; intros m; cbn [interp_eff_accesses]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+    [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [ra| |]; destruct (interp_eff_accesses segs (k' _) m) as [rb| |];
       cbn [access_value accessed_ranges] in *; try exact H0; try contradiction.
@@ -232,7 +250,9 @@ Proof.
   destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure.
+  (* 08b1429: a pc in the vDSO text is MachineUnmodeled; split every test, both sides agree *)
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; exact I.
 Qed.
 
 (* [comment removed for export] *)
@@ -316,14 +336,14 @@ Proof.
   unfold m_halted. rewrite Hp. reflexivity.
 Qed.
 
-Lemma sstep_xport : forall ms ms' mo evs X, ms_eqv ms ms' ->
+Lemma sstep_xport : RiscvSemantics.vdso_image segs = None -> forall ms ms' mo evs X, ms_eqv ms ms' ->
   sstep_cfg segs ACFG (mkCfg ms mo) evs X ->
   sstep_cfg segs ACFG (mkCfg ms' mo) evs (xport ms ms' X) /\ to_eqv X (xport ms ms' X).
 Proof.
-  intros ms ms' mo evs X Heqv Hst.
+  intros Hnv ms ms' mo evs X Heqv Hst.
   pose proof (step_accesses_eqv ms ms' Heqv) as Hrep.
   pose proof Heqv as (_ & _ & _ & Hsvc & _ & _ & _ & _).
-  inversion Hst; subst.
+  inversion Hst; subst; try vdso_arm_absurd Hnv.
   - (* [comment removed for export] *)
     unfold mi_account_step in H5.
     destruct (RiscvSemantics.step_accesses segs ms) as [[msa acc]| |] eqn:E; try discriminate.
@@ -350,12 +370,14 @@ Proof.
     + destruct (RiscvSemantics.step_accesses segs ms') as [b| |] eqn:E'; cbn in Hrep; try contradiction.
       unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. split; [|exact I].
       apply sstep_cfg_instr_fault; [assumption| congruence|]. unfold mi_account_step. rewrite E'. reflexivity.
-  - unfold mi_account_step in H5.
+  - match goal with Hx : mi_account_step _ _ _ = MachineUnmodeled |- _ => rename Hx into H5 end.
+    unfold mi_account_step in H5.
     destruct (RiscvSemantics.step_accesses segs ms) as [[msa acc]| |] eqn:E; try discriminate.
     + cbn [access_value accessed_ranges] in H5. destruct (materialize_model_accesses mo acc); discriminate.
     + destruct (RiscvSemantics.step_accesses segs ms') as [b| |] eqn:E'; cbn in Hrep; try contradiction.
       unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. split; [|exact I].
-      apply sstep_cfg_instr_unmodeled; [assumption| congruence|]. unfold mi_account_step. rewrite E'. reflexivity.
+      apply sstep_cfg_instr_unmodeled; [assumption| congruence| |exact (vdso_entry_fn_none Hnv _)].
+      unfold mi_account_step. rewrite E'. reflexivity.
   - (* [comment removed for export] *)
     unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. match goal with Hs : ms_svc_pending ms = Some _ |- _ => rewrite Hs end.
     match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ => rewrite (materialize_halted _ _ _ Hm) end.
@@ -398,13 +420,13 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma xport_round_trip : forall ms ms' mo evs X', ms_eqv ms ms' ->
+Lemma xport_round_trip : RiscvSemantics.vdso_image segs = None -> forall ms ms' mo evs X', ms_eqv ms ms' ->
   sstep_cfg segs ACFG (mkCfg ms' mo) evs X' -> xport ms ms' (xport ms' ms X') = X'.
 Proof.
-  intros ms ms' mo evs X' Heqv Hst0.
+  intros Hnv ms ms' mo evs X' Heqv Hst0.
   pose proof (sstep_cfg_sub segs ACFG _ _ _ Hst0) as Hst.
   pose proof Heqv as (_ & _ & _ & Hsvc & _ & _ & _ & _).
-  inversion Hst; subst; unfold xport, xport_cfg; cbn [cfg_ms cfg_model]; try reflexivity.
+  inversion Hst; subst; try vdso_arm_absurd Hnv; unfold xport, xport_cfg; cbn [cfg_ms cfg_model]; try reflexivity.
   - (* [comment removed for export] *)
     match goal with Hs : ms_svc_pending ms' = None |- _ => rewrite Hsvc, Hs end.
     match goal with Ha : mi_account_step segs ms' mo = MachineOk _ |- _ =>

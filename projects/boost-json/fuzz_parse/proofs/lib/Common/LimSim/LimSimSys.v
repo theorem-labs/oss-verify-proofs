@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the run's segment list (run_segments). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -8,8 +9,6 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad 
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import SyscallTable.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Common.LimSim Require Import LimSim LimSimMm LimSimArms LimSimMv LimSimWf.
-Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "4h5LinuxProcessSemanticsfLinuxProcessSem3Sys8Dispatch07SpecArm37Corelib4Init9Datatypesje4bool37Corelib4Init5Logicld2eqje5false07sa_spec37Corelib7Numbers7BinNumso74Nposo71Z3h5LinuxProcessSemanticsfLinuxProcessSem3Runqbh6alloc_budget_refused_b3h5LinuxProcessSemanticsfLinuxProcessSem5Statev15Modelv1dSyscallEffectv1cSyscallInputv18in_sysno05sa_no89OSSVerify6Proofsaboost_jsonafuzz_parse3lib6Common6LimSim6LimSim~~~~~~hl83DIRhl83MOKhl85relim89OSSVerify6Proofsaboost_jsonafuzz_parse3lib6Common6LimSim8LimSimMm~~~~~~hr65MV_OK35stdpp9bitvectorbdefinitionsig8bbv_unsignedje4Someje4listje6optionld3and0alookup_arm36Stdlib5Lists4Listild2In08dispatch99OSSVerify6Proofsaboost_jsonafuzz_parse3lib6Common6LimSim9LimSimSys8Dispatch~~~~~~io06ARM_OK4h5LinuxProcessSemanticsfLinuxProcessSem3SyscSyscallTableitdaspec_table3h5LinuxProcessSemanticsfLinuxProcessSem5Specsji4csyscall_specqb6configqb9cfg_modelqb9refusal_big82bvqbh4spurious_refusal_cfgje4Noneld3not3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsjqedmachine_statejqeems_svc_pendingqbh1budget_refused_atqb5mkCfgqb9sys_inputv18m_haltedqb9sstep_cfgqb7step_told2exqb6SErrorqb5SNextv15eventqb8star_cfg99OSSVerify6Proofsaboost_jsonafuzz_parse3lib6Common6LimSim9LimSimSys5Steps~~~~~~knbeMREMAP_MOVE_OKqbhareaches_budget_refused_cfg3h5LinuxProcessSemanticsh5EquivalenceDefinition8MustExitkvbh3must_exit_in_at_cfghl89relim_cfgknb4MOKc3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypelm07SegmentqbbSpuriousCfgv18m_vmmapsv18vm_limit89OSSVerify6Proofsaboost_jsonafuzz_parse3lib6Common6LimSim9LimSimSys~~~~~~ls4eMREMAP_MOVE_OK46Stdlib6ZArith6BinInt1Zmi02leqbbinit_configo71Nlm08PhdrInfo3h5LinuxProcessSemanticsfLinuxProcessSembStackLayoutmlc9EntryDrawv19ProcInputlm05Imageqb9ExecEntrykvbh1must_exit_in_scfg3h5LinuxProcessSemanticsh5EquivalenceDefinitionbEquivalencemt4h9source_within_budget_scfg89OSSVerify6Proofsaboost_jsonafuzz_parse3lib6Common6LimSim8LimSimMv~~~~~~nid2WF" s.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope. Open Scope bv_scope. Open Scope sys_scope.
@@ -20,11 +19,14 @@ Set Default Proof Mode "Classic".
 (* [comment removed for export] *)
 Section Dispatch.
 Variable L0 L : Z.
-Hypothesis HLE : ltac2:(zQ "10!mj8@2$0?1L?2L0").
+Hypothesis HLE : L <= L0.
 
-Definition ARM_OK : ltac2:(zQ "10!j5>1a$0P") := ltac2:(zQ "h20!l6!n1!n6!ne!q0!q7!t7!hhf!hi7!hj7!hk6!j5!hl1!hpf!hq6!hqd!hvf!ii5\1a$b>1d$0>1i$9>1m$7>0@3$1$5@2$h1@1$4#k0@1$a^2@1$c^4>0@2$e?2L0^2>0>0@3$1$0^5$2@3$1$0@2$6^5@2$f?1L^4$2>0>0@3$1$0^6$2@1$h0^5@8$d?2L0?1L$8^7^6^5@1$3^8@1$3^8").
+Definition ARM_OK (a : SpecArm) : Prop :=
+  forall (d : bool) i m, bv_unsigned (in_sysno i) = sa_no a -> MOK L0 m ->
+    (d = false -> alloc_budget_refused_b i (relim L m) = false) -> (d = false -> MV_OK m) ->
+    DIR L0 L d i m (sa_spec a) (sa_spec a).
 
-Lemma lookup_arm_In : ltac2:(zQ "a0!j5!n1!q7!ij4!ijb!ik2!ikb!il1!hl1!in0>1t@1$4$0>1n$2>1a$0>0@3$1@1$5$0@2$7^3^2@2$3$0^1@2$6@3$9$0^2^4@3$1$2@1$8^2^3").
+Lemma lookup_arm_In : forall t n a, lookup_arm t n = Some a -> In a t /\ sa_no a = n.
 Proof.
   induction t as [|x t IH]; intros n a H; [discriminate H|]. cbn in H.
   destruct (Z.eqb (sa_no x) n) eqn:E.
@@ -32,7 +34,9 @@ Proof.
   - destruct (IH n a H) as [Hin Hno]. split; [right; exact Hin | exact Hno].
 Qed.
 
-Lemma dispatch_dir : ltac2:(zQ "h00!l6!n6!n1!j5!in6!ijb!t7!hhf!hi7!hj7!hpf!hq6!hqd!hvf!it3!in0>1t@1$5$3>0>1a$3>0@3$f$3^1^2@1$e^2>1d$0>1i$9>1m$7>0@2$b?2L0^1>0>0@3$2$0^4$1@3$2$0@2$6^4@2$c?1L^3$1>0>0@3$2$0^5$1@1$d^4@8$a?2L0?1L$8^6^5^4@1$4^8@1$4^8").
+Lemma dispatch_dir : forall t, (forall a, In a t -> ARM_OK a) ->
+  forall (d : bool) i m, MOK L0 m -> (d = false -> alloc_budget_refused_b i (relim L m) = false) -> (d = false -> MV_OK m) ->
+  DIR L0 L d i m (dispatch t) (dispatch t).
 Proof.
   intros t Ht d i m HM G1 G2.
   destruct (lookup_arm t (bv_unsigned (in_sysno i))) as [a|] eqn:E.
@@ -43,7 +47,7 @@ Proof.
       [ exact (dir_unmodeled L0 L true i m o Ho) | exact (dir_unmodeled L0 L false i m o Ho) ].
 Qed.
 
-Lemma spec_table_ok : ltac2:(zQ "40!j5!jh6!it3!in0>1a$0>0@3$3$0^1$1@1$2^2").
+Lemma spec_table_ok : forall a, In a spec_table -> ARM_OK a.
 Proof.
   intros a Hin d i m Hno HM G1 G2.
   unfold spec_table in Hin.
@@ -83,8 +87,10 @@ Proof.
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_94 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_96 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_98 L0 L d i m HM) |].
+  destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_99 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_101 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_113 L0 L d i m HM) |].
+  destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_114 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_119 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_123 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_124 L0 L d i m HM) |].
@@ -135,39 +141,62 @@ Proof.
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_260 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_261 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_278 L0 L d i m HM) |].
+  destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_287 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_435 L0 L d i m HM) |].
   destruct Hin as [<-|Hin]; [cbn [sa_spec sa_no] in Hno |- *; exact (sim_arm_439 L0 L d i m HM) |].
   destruct Hin.
 Qed.
 
-Theorem syscall_spec_dir : ltac2:(zQ "c0!l6!n6!n1!jl2!t7!hhf!hi7!hj7!hpf!hq6!hqd!hvf>1d$0>1i$7>1m$5>0@2$9?2L0^1>0>0@3$2$0^4$1@3$2$0@2$4^4@2$a?1L^3$1>0>0@3$2$0^5$1@1$b^4@8$8?2L0?1L$6^6^5^4$3$3").
+Theorem syscall_spec_dir : forall (d : bool) i m, MOK L0 m ->
+  (d = false -> alloc_budget_refused_b i (relim L m) = false) -> (d = false -> MV_OK m) ->
+  DIR L0 L d i m syscall_spec syscall_spec.
 Proof. exact (dispatch_dir spec_table spec_table_ok). Qed.
+
+Lemma account_unmodeled_any : forall segs ms m m',
+  mi_account_step segs ms m = MachineUnmodeled -> mi_account_step segs ms m' = MachineUnmodeled.
+Proof.
+  intros segs ms m m'. unfold mi_account_step.
+  destruct (step_accesses segs ms) as [report| |]; [|intros H; discriminate H|intros _; reflexivity].
+  destruct (materialize_model_accesses m (@accessed_ranges _ report)); intros H; discriminate H.
+Qed.
+
+Lemma vdso_not_alloc : forall segs ms m fn n, Vdso.vdso_fn_sysno fn = Some n ->
+  alloc_budget_refused_b (sys_input segs ms (Z_to_bv 64 n)) m = false.
+Proof.
+  intros segs ms m fn n Hn.
+  destruct fn; cbn in Hn; try discriminate Hn; injection Hn as <-; first [reflexivity | vm_compute; reflexivity].
+Qed.
+
+Lemma relim_with_vdso_bump : forall L m, with_vdso_bump (relim L m) = relim L (with_vdso_bump m).
+Proof. reflexivity. Qed.
 End Dispatch.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Steps.
-Variable segs : ltac2:(zQ "20!ijb!lp5@1$0$1").
-Variable cfg : ltac2:(zQ "10!lq0$0").
+Variable segs : list Segment.
+Variable cfg : SpuriousCfg.
 Variable L0 L : Z.
-Hypothesis HLE : ltac2:(zQ "10!mj8@2$0?1L?2L0").
+Hypothesis HLE : L <= L0.
 
-Definition MOKc : ltac2:(zQ "10!jm2>1c$0P") := ltac2:(zQ "30!jmb!jm2!hq6\1c$1@2$2?2L0@1$0^1").
+Definition MOKc (c : config) : Prop := MOK L0 (cfg_model c).
 Ltac halt_tac H := first [ exact H | rewrite relim_halted; exact H | cbn [cfg_model cfg_ms]; rewrite relim_halted; exact H ].
 Ltac kill_tac H := first [ exact H | rewrite relim_killed; exact H | cbn [cfg_model cfg_ms]; rewrite relim_killed; exact H ].
 
-Lemma refusal_b_relim : ltac2:(zQ "80!jn7!l6!n1!q0!hhf!hj7!hqd!jo3>1i$5>1m$4>1r@1$7@1$3#k0@3$2$1@3$0^3@2$6?1L^2^1@3$0^3^2^1").
+Lemma refusal_b_relim : forall i m r, refusal_b i (relim L m) r = refusal_b i m r.
 Proof. intros. reflexivity. Qed.
 
-Lemma spurious_relim_up : ltac2:(zQ "b0!jo9!hqd!l6!n6!n1!t7!hhf!hi7!hj7!hq6!hvf>1i$8>1m$6>3eff$7>0@2$9?2L0^2>0@3$4$2@2$5^4@2$1?1L^3$3>0@1$a^4>0@4$0?3cfg^6^5^4@4$0?3cfg^7@2$1?1L^6^5").
+Lemma spurious_relim_up : forall i m eff, MOK L0 m -> alloc_budget_refused_b i (relim L m) = false -> MV_OK m ->
+  spurious_refusal_cfg cfg i m eff -> spurious_refusal_cfg cfg i (relim L m) eff.
 Proof.
   intros i m eff HM G MV (Hoff & Hr & (eff' & m' & evs' & Hs & Hnr)). split; [exact Hoff|]. split; [rewrite refusal_b_relim; exact Hr|].
   destruct (syscall_spec_dir L0 L HLE false i m HM (fun _ => G) (fun _ => MV) _ Hs) as ([e0 m0 ev0|] & Hs' & R); cbn in R; [|contradiction].
   destruct R as (-> & -> & -> & _). exists eff', (relim L m'), evs'. split; [exact Hs' | rewrite refusal_b_relim; exact Hnr].
 Qed.
 
-Lemma spurious_relim_down : ltac2:(zQ "60!jo9!hhf!hi7!hj7!hq6!hqd>1i$3>1m$1>3eff$2>0@2$4?2L0^2>0@4$0?3cfg^4@2$5?1L^3^2@4$0?3cfg^5^4^3").
+Lemma spurious_relim_down : forall i m eff, MOK L0 m ->
+  spurious_refusal_cfg cfg i (relim L m) eff -> spurious_refusal_cfg cfg i m eff.
 Proof.
   intros i m eff HM (Hoff & Hr & (eff' & m' & evs' & Hs & Hnr)). split; [exact Hoff|]. split; [rewrite <- (refusal_b_relim i m); exact Hr|].
   destruct (syscall_spec_dir L0 L HLE true i m HM ltac:(discriminate) ltac:(discriminate) _ Hs) as ([e0 m0 ev0|] & Hs' & R); cbn in R; [|contradiction].
@@ -175,18 +204,30 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma not_refused_mark : ltac2:(zQ "h20!q0!jo3!n1!ik2!hqd!jq1!ij4!l6!n6!jq8!ju5!jv6!t7!kg8!khd!ki5!hhf!kj1>2ms$a>1m$h0>2x8@1$1@1$0#k0>0@1$9@2$d?4segs@2$e^3@2$4?1L^2>0@3$2@1$3@1$1@1$0#k0@1$h1^3@1$5@1$1@1$0#k0>0@3$2@1$3@1$1@1$0#k0@1$b^5@2$6@1$1@1$0#k0^3@3$2$7@2$c@3$f?4segs^6^4@2$4?1L^5$8").
+Lemma not_refused_mark : forall ms m x8,
+  ~ budget_refused_at segs (mkCfg ms (relim L m)) -> m_halted m = None -> ms_svc_pending ms = Some x8 ->
+  alloc_budget_refused_b (sys_input segs ms x8) (relim L m) = false.
 Proof.
   intros ms m x8 NB Hh Hp. destruct (alloc_budget_refused_b (sys_input segs ms x8) (relim L m)) eqn:E; [|reflexivity].
   exfalso. apply NB. split; [exact Hh|]. right. exists x8. split; [exact Hp|]. left. exact E.
 Qed.
 
 (* [comment removed for export] *)
-Lemma step_up : ltac2:(zQ "h20!khd!ju5!kjc!kk8!hhf!hqd!ikb!kl2!jm2!hq6!ijb!n1!jq8!kl7!km0!kg8!km8!hvf>2ms$1>1m$4>3evs@1$a$h0>2st$3>0@2$9?2L0^3>0@1$h1^4>0@1$c@2$f?4segs@2$0^6@2$5?1L^5>0@5$2?4segs?3cfg@2$0^7@2$5?1L^6^5^4M3\2st$3P^5\2c'$8@2$7$1\3ms'$1@2$7$4\2m0$4@2$6@5$2?4segs?3cfg@2$0^b^a^9@1$e@2$0^2^1@2$6@3$b$8^3@2$0^2@2$5?1L^1@2$9?2L0^1@5$2?4segs?3cfg@2$0^8^7^6$d").
+Lemma step_up : forall ms m evs st,
+  MOK L0 m -> MV_OK m -> ~ budget_refused_at segs (mkCfg ms (relim L m)) ->
+  sstep_cfg segs cfg (mkCfg ms (relim L m)) evs st ->
+  match st with
+  | SNext c' => exists ms' m0, sstep_cfg segs cfg (mkCfg ms m) evs (SNext (mkCfg ms' m0)) /\ c' = mkCfg ms' (relim L m0) /\ MOK L0 m0
+  | SError => sstep_cfg segs cfg (mkCfg ms m) evs SError
+  end.
 Proof.
   intros ms m evs st HM MV NB Hs.
   remember (mkCfg ms (relim L m)) as c eqn:Ec.
-  destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
+  destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha Hv
+                 | ms0 mm fn n eff mm' mm'' evs0 Hh Hp Ha Hv Hn Hsp Hne Hh' Hmat
+                 | ms0 mm fn n eff mm' evs0 Hh Hp Ha Hv Hn Hsp Hne Hh' Hmat
+                 | ms0 mm fn Hh Hp Ha Hv Hu
+                 | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
                  | ms0 mm x8 eff mm' evs0 Hh Hp Hsp Hnsp Hh' Hmat | ms0 mm x8 eff mm' evs0 code Hh Hp Hsp Hh' Hk | ms0 mm x8 eff mm' evs0 sig Hh Hp Hsp Hk | ms0 mm x8 Hh Hp Hsp];
     injection Ec as -> ->; rewrite relim_halted in Hh.
   - (* [comment removed for export] *)
@@ -202,12 +243,38 @@ Proof.
     unfold mi_account_step in Ha.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; [|apply sstep_cfg_instr_fault; [exact Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity]|discriminate].
     destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)) as [m1|] eqn:Emat; [discriminate|].
-    exfalso. apply NB. split; [exact Hh|]. left. split; [exact Hp|]. exists report. split; [exact Est | exact Emat].
+    exfalso. apply NB. split; [exact Hh|]. left. split; [exact Hp|]. left. exists report. split; [exact Est | exact Emat].
   - (* [comment removed for export] *)
     unfold mi_account_step in Ha.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; [|discriminate|].
     + destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)); discriminate.
-    + apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity].
+    + apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hv].
+  - (* vDSO call *)
+    destruct (syscall_spec_dir L0 L HLE true _ m HM ltac:(discriminate) ltac:(discriminate) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+    destruct R as (<- & -> & <- & HM0).
+    rewrite relim_halted in Hh'.
+    assert (HLE' : L <= vm_limit (m_vmmaps m0)) by (unfold MOK in HM0; rewrite HM0; exact HLE).
+    destruct (materialize_relim_up L m0 _ _ HLE' Hmat) as (m0' & Hmat0 & ->).
+    exists (vdso_post segs ms m (vdso_frame segs) eff), (with_vdso_bump m0').
+    split; [|split; [rewrite <- relim_with_vdso_bump; reflexivity
+                    | unfold MOK; rewrite m_vmmaps_with_vdso_bump, (materialize_limit _ _ _ Hmat0); exact HM0]].
+    eapply sstep_cfg_vdso_call; [exact Hh | exact Hp | exact (account_unmodeled_any segs ms _ _ Ha) | exact Hv | exact Hn
+                                | exact Hsp0 | exact Hne | exact Hh' | exact Hmat0].
+  - (* vDSO materialization fault: the relim side's refusal *)
+    exfalso. apply NB. split; [exact Hh|]. left. split; [exact Hp|]. right. split; [exact Ha|].
+    exists fn, n, eff, mm', evs0. split; [exact Hv|]. split; [exact Hn|]. split; [exact Hsp|]. split; [exact Hne|].
+    split; [exact Hh' | exact Hmat].
+  - (* vDSO unmodeled *)
+    eapply sstep_cfg_vdso_unmodeled; [exact Hh | exact Hp | exact (account_unmodeled_any segs ms _ _ Ha) | exact Hv |].
+    unfold vdso_call_unmodeled in Hu |- *.
+    destruct Hu as [Hu | [(n & Hn & Hsp) | (n & eff & mm' & evs0 & Hn & Hsp & Hbad)]].
+    + left. exact Hu.
+    + right. left. exists n. split; [exact Hn|].
+      destruct (syscall_spec_dir L0 L HLE true _ m HM ltac:(discriminate) ltac:(discriminate) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [contradiction|exact Hsp0].
+    + right. right.
+      destruct (syscall_spec_dir L0 L HLE true _ m HM ltac:(discriminate) ltac:(discriminate) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+      destruct R as (<- & -> & <- & _).
+      exists n, eff, m0, evs0. split; [exact Hn|]. split; [exact Hsp0|]. exact Hbad.
   - (* [comment removed for export] *)
     destruct (syscall_spec_dir L0 L HLE true _ m HM ltac:(discriminate) ltac:(discriminate) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
     destruct R as (<- & -> & <- & HM0).
@@ -238,11 +305,18 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma step_down : ltac2:(zQ "d0!ijb!khd!kk8!km8!kl2!kjc!hqd!jq8!ju5!kg8!hhf!hq6!hvf>2ms$8>1m$a>3evs@1$0$3>2st$2>0@2$b?2L0^3>0@1$c^4>0@1$7@2$9?4segs@2$1^6@2$6?1L^5>0@5$5?4segs?3cfg@2$1^7^6^5^4@2$4@1$0$3\4evs'@1$0$3@2$4$2\3st'$2@5$5?4segs?3cfg@2$1^a@2$6?1L^9^2^1").
+Lemma step_down : forall ms m evs st,
+  MOK L0 m -> MV_OK m -> ~ budget_refused_at segs (mkCfg ms (relim L m)) ->
+  sstep_cfg segs cfg (mkCfg ms m) evs st ->
+  exists evs' st', sstep_cfg segs cfg (mkCfg ms (relim L m)) evs' st'.
 Proof.
   intros ms m evs st HM MV NB Hs.
   remember (mkCfg ms m) as c eqn:Ec.
-  destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
+  destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha Hv
+                 | ms0 mm fn n eff mm' mm'' evs0 Hh Hp Ha Hv Hn Hsp Hne Hh' Hmat
+                 | ms0 mm fn n eff mm' evs0 Hh Hp Ha Hv Hn Hsp Hne Hh' Hmat
+                 | ms0 mm fn Hh Hp Ha Hv Hu
+                 | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
                  | ms0 mm x8 eff mm' evs0 Hh Hp Hsp Hnsp Hh' Hmat | ms0 mm x8 eff mm' evs0 code Hh Hp Hsp Hh' Hk | ms0 mm x8 eff mm' evs0 sig Hh Hp Hsp Hk | ms0 mm x8 Hh Hp Hsp];
     injection Ec as -> ->.
   - (* [comment removed for export] *)
@@ -251,19 +325,50 @@ Proof.
     destruct (materialize_model_accesses m (@accessed_ranges _ report)) as [m0|] eqn:Emat; [|discriminate].
     destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)) as [m1|] eqn:Emat1.
     + eexists [], _. apply sstep_cfg_instr; [halt_tac Hh | exact Hp |]. unfold mi_account_step. rewrite Est, Emat1. reflexivity.
-    + exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. exists report. split; [exact Est | exact Emat1].
+    + exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. left. exists report. split; [exact Est | exact Emat1].
   - (* [comment removed for export] *)
     unfold mi_account_step in Ha.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; [|  |discriminate].
     + destruct (materialize_model_accesses m (@accessed_ranges _ report)) as [m0|] eqn:Emat; [discriminate|].
       destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)) as [m1|] eqn:Emat1.
       * eexists [], _. apply sstep_cfg_instr; [halt_tac Hh | exact Hp |]. unfold mi_account_step. rewrite Est, Emat1. reflexivity.
-      * exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. exists report. split; [exact Est | exact Emat1].
+      * exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. left. exists report. split; [exact Est | exact Emat1].
     + eexists [], SError. apply sstep_cfg_instr_fault; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity].
   - (* [comment removed for export] *)
     unfold mi_account_step in Ha.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
-    eexists [], SError. apply sstep_cfg_instr_unmodeled; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity].
+    eexists [], SError. apply sstep_cfg_instr_unmodeled; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hv].
+  - (* vDSO call: the relim side calls, or faults materializing *)
+    pose proof (vdso_not_alloc segs ms (relim L m) fn n Hn) as G.
+    destruct (syscall_spec_dir L0 L HLE false _ m HM (fun _ => G) (fun _ => MV) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+    destruct R as (-> & -> & -> & HM0).
+    destruct (materialize_model_accesses (relim L mm') (syscall_effect_accesses eff)) as [m1|] eqn:Emat1.
+    + eexists evs0, _. eapply sstep_cfg_vdso_call; [halt_tac Hh | exact Hp | exact (account_unmodeled_any segs ms _ _ Ha) | exact Hv | exact Hn
+                                                  | exact Hsp0 | exact Hne | halt_tac Hh' | exact Emat1].
+    + eexists [], SError. eapply sstep_cfg_vdso_materialization_fault; [halt_tac Hh | exact Hp | exact (account_unmodeled_any segs ms _ _ Ha) | exact Hv | exact Hn
+                                                                       | exact Hsp0 | exact Hne | halt_tac Hh' | exact Emat1].
+  - (* vDSO materialization fault: the same two answers *)
+    pose proof (vdso_not_alloc segs ms (relim L m) fn n Hn) as G.
+    destruct (syscall_spec_dir L0 L HLE false _ m HM (fun _ => G) (fun _ => MV) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+    destruct R as (-> & -> & -> & HM0).
+    destruct (materialize_model_accesses (relim L mm') (syscall_effect_accesses eff)) as [m1|] eqn:Emat1.
+    + eexists evs0, _. eapply sstep_cfg_vdso_call; [halt_tac Hh | exact Hp | exact (account_unmodeled_any segs ms _ _ Ha) | exact Hv | exact Hn
+                                                  | exact Hsp0 | exact Hne | halt_tac Hh' | exact Emat1].
+    + eexists [], SError. eapply sstep_cfg_vdso_materialization_fault; [halt_tac Hh | exact Hp | exact (account_unmodeled_any segs ms _ _ Ha) | exact Hv | exact Hn
+                                                                       | exact Hsp0 | exact Hne | halt_tac Hh' | exact Emat1].
+  - (* vDSO unmodeled *)
+    eexists [], SError. eapply sstep_cfg_vdso_unmodeled; [halt_tac Hh | exact Hp | exact (account_unmodeled_any segs ms _ _ Ha) | exact Hv |].
+    unfold vdso_call_unmodeled in Hu |- *.
+    destruct Hu as [Hu | [(n & Hn & Hsp) | (n & eff & mm' & evs0 & Hn & Hsp & Hbad)]].
+    + left. exact Hu.
+    + right. left. exists n. split; [exact Hn|].
+      pose proof (vdso_not_alloc segs ms (relim L m) fn n Hn) as G.
+      destruct (syscall_spec_dir L0 L HLE false _ m HM (fun _ => G) (fun _ => MV) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [contradiction|exact Hsp0].
+    + right. right.
+      pose proof (vdso_not_alloc segs ms (relim L m) fn n Hn) as G.
+      destruct (syscall_spec_dir L0 L HLE false _ m HM (fun _ => G) (fun _ => MV) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+      destruct R as (-> & -> & -> & _).
+      exists n, eff, (relim L mm'), evs0. split; [exact Hn|]. split; [exact Hsp0|]. exact Hbad.
   - (* [comment removed for export] *)
     pose proof (not_refused_mark _ _ _ NB Hh Hp) as G.
     destruct (syscall_spec_dir L0 L HLE false _ m HM (fun _ => G) (fun _ => MV) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
@@ -303,21 +408,26 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition MREMAP_MOVE_OK : ltac2:(zQ "10!jm2>1c$0P") := ltac2:(zQ "60!jm2!ijb!jmb!kn0!km8!hvf\1c$0>2tr@1$1$4>2c'$0>0@5$3?4segs?3cfg^3^2^1@1$5@1$2^2").
+Definition MREMAP_MOVE_OK (c : config) : Prop :=
+  forall tr c', star_cfg segs cfg c tr c' -> MV_OK (cfg_model c').
 
-Lemma MREMAP_MOVE_OK_here : ltac2:(zQ "40!jmb!jm2!hvf!ksb>1c$1>0@1$3^1@1$2@1$0^2").
+Lemma MREMAP_MOVE_OK_here : forall c, MREMAP_MOVE_OK c -> MV_OK (cfg_model c).
 Proof. intros c H. apply (H []). apply star_cfg_refl. Qed.
-Lemma MREMAP_MOVE_OK_step : ltac2:(zQ "60!jm2!ksb!ijb!km0!kjc!km8>1c$0>3evs@1$2$5>2c'$0>0@1$1^3>0@5$4?4segs?3cfg^4^3@1$3^2@1$1^3").
+Lemma MREMAP_MOVE_OK_step : forall c evs c', MREMAP_MOVE_OK c -> sstep_cfg segs cfg c evs (SNext c') -> MREMAP_MOVE_OK c'.
 Proof. intros c evs c' H Hs tr c'' Hstar. apply (H (evs ++ tr)). eapply star_cfg_step; [exact Hs | exact Hstar]. Qed.
 
-Lemma not_reaches_here : ltac2:(zQ "40!jq8!kg8!jm2!ktd>1c$2>0@1$0@3$3?4segs?3cfg^1@1$0@2$1?4segs^2").
+Lemma not_reaches_here : forall c, ~ reaches_budget_refused_cfg segs cfg c -> ~ budget_refused_at segs c.
 Proof. intros c H B. apply H. exists [], c. split; [apply star_cfg_refl | exact B]. Qed.
-Lemma not_reaches_step : ltac2:(zQ "70!jq8!jm2!ktd!ijb!km0!kjc!km8>1c$1>3evs@1$3$6>2c'$1>0@1$0@3$2?4segs?3cfg^3>0@5$5?4segs?3cfg^4^3@1$4^2@1$0@3$2?4segs?3cfg^3").
+Lemma not_reaches_step : forall c evs c', ~ reaches_budget_refused_cfg segs cfg c -> sstep_cfg segs cfg c evs (SNext c') ->
+  ~ reaches_budget_refused_cfg segs cfg c'.
 Proof.
   intros c evs c' H Hs (tr & c'' & Hstar & B). apply H. exists (evs ++ tr), c''. split; [eapply star_cfg_step; [exact Hs | exact Hstar] | exact B].
 Qed.
 
-Theorem must_exit_relim_at : ltac2:(zQ "a0!lj3!lkb!ijb!jq8!q0!jm2!ktd!ll8!ksb!jo3>1S@1$2@1$9@1$4#k0>1c$5>0@4$0?3cfg?4segs^2^1>0@1$7^2>0@1$3@3$6?4segs?3cfg@2$1?1L^3>0@1$8^4@4$0?3cfg?4segs^6@2$1?1L^5").
+Theorem must_exit_relim_at : forall S c,
+  must_exit_in_at_cfg cfg segs S c ->
+  MOKc c -> ~ reaches_budget_refused_cfg segs cfg (relim_cfg L c) -> MREMAP_MOVE_OK c ->
+  must_exit_in_at_cfg cfg segs S (relim_cfg L c).
 Proof.
   intros S c Hme. induction Hme as [c code Hh Hin Hk | c Hnone Hprog Hnoerr Hnext IH]; intros HM NR MV.
   - apply (must_exit_in_at_cfg_halted _ _ _ _ code); [cbn; halt_tac Hh | exact Hin | cbn; kill_tac Hk].
@@ -335,39 +445,68 @@ Proof.
 Qed.
 End Steps.
 
-Theorem must_exit_relim : ltac2:(zQ "h00!ijb!lj3!lkb!jq8!q0!q7!lp5!lq0!jmb!jm2!ktd!lqe!lr9!mge!mj8!jo3>4segs@1$0$6>3cfg$7>1S@1$0@1$f@1$4#k0>1c$9>1L$5>0@2$e^1@1$c@1$b@1$8^2>0@1$3@3$a^6^5@2$2^2^3>0@3$d^7^6^4>0@4$1^7^8^6^5@4$1^8^9^7@2$2^5^6").
+Theorem must_exit_relim :
+  forall segs cfg S (c : config) (L : Z),
+    L <= vm_limit (m_vmmaps (cfg_model c)) ->
+    ~ reaches_budget_refused_cfg segs cfg (relim_cfg L c) ->
+    MREMAP_MOVE_OK segs cfg c ->
+    must_exit_in_at_cfg cfg segs S c ->
+    must_exit_in_at_cfg cfg segs S (relim_cfg L c).
 Proof.
   intros segs cfg S c L HLE NR MV Hme.
   exact (must_exit_relim_at segs cfg (vm_limit (m_vmmaps (cfg_model c))) L HLE S c Hme eq_refl NR MV).
 Qed.
 
 (* [comment removed for export] *)
-Lemma init_config_relim : ltac2:(zQ "d0!q0!jo3!q7!mje!ijb!n1!mkc!ml0!lp5!jm2!mp0!mpd!lkb>4segs@1$4$8>2pc$6>2ph$7>2sp@1$1@1$0#k0>4brk0@1$1@1$0#k0>5mbase@1$1@1$0#k0>3rnd$a>4Lbig$2>6Lsmall$2>3inp$b@3$5$9@9$3^a^9^8^7^6^5^4^2^1@2$c^2@9$3^a^9^8^7^6^5^4^3^1").
+Lemma init_config_relim : forall segs pc ph sp brk0 mbase rnd Lbig Lsmall inp,
+  init_config segs pc ph sp brk0 mbase rnd Lsmall inp = relim_cfg Lsmall (init_config segs pc ph sp brk0 mbase rnd Lbig inp).
 Proof. intros. reflexivity. Qed.
-Lemma init_config_limit : ltac2:(zQ "e0!q0!jo3!q7!ijb!n1!mkc!ml0!lp5!jmb!mje!mp0!mpd!lqe!lr9>4segs@1$3$7>2pc$5>2ph$6>2sp@1$1@1$0#k0>4brk0@1$1@1$0#k0>5mbase@1$1@1$0#k0>3rnd$a>3lim$2>3inp$b@3$4$2@1$d@1$c@1$8@9$9^9^8^7^6^5^4^3^2^1^2").
+Lemma init_config_limit : forall segs pc ph sp brk0 mbase rnd lim inp,
+  vm_limit (m_vmmaps (cfg_model (init_config segs pc ph sp brk0 mbase rnd lim inp))) = lim.
 Proof. intros. reflexivity. Qed.
 
-Corollary must_exit_in_scfg_relim : ltac2:(zQ "h10!q0!jo3!mq9!mr2!ijb!q7!mre!mkc!ngf!ml0!lp5!lq0!mje!mp0!mpd!mge!mj8>3cfg$b>1S@1$4@1$1@1$0#k0>3img$2>4Lbig$5>6Lsmall$5>2en$3>3inp$e>0@2$h0^3^4>0@5$8^8^4^6^3^2>0M2\3img$2P^7\4segs@1$4$a\2pc$7\2ph$9M3\2en$3P^7\2sp@1$1@1$0#k0\4brk0@1$1@1$0#k0\5mbase@1$1@1$0#k0\3rnd$d@3$f^7^h0@9$c^7^6^5^4^3^2^1^d^a>0@6$6^a^9^8^7^5^4@6$6^b^a^9^7^6^5").
+Corollary must_exit_in_scfg_relim : forall cfg S img (Lbig Lsmall : Z) en inp,
+  Lsmall <= Lbig ->
+  source_within_budget_scfg cfg Lsmall img en inp ->
+  (match img, en with mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
+     MREMAP_MOVE_OK (run_segments segs inp sp mbase) cfg
+       (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp) end) ->
+  must_exit_in_scfg cfg S img Lbig en inp ->
+  must_exit_in_scfg cfg S img Lsmall en inp.
 Proof.
   intros cfg S [segs pc ph] Lbig Lsmall [sp brk0 mbase rnd] inp HLE NB MV Hme.
   unfold must_exit_in_scfg in *. unfold source_within_budget_scfg, run_scfg_budget_refused in NB.
-  rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp) in NB |- *.
+  cbv beta iota zeta in NB, MV, Hme |- *.
+  rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp) in NB |- *.
   apply must_exit_relim; [rewrite init_config_limit; exact HLE | exact NB | exact MV | exact Hme].
 Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Theorem MREMAP_MOVE_OK_of_WF : ltac2:(zQ "70!ijb!lp5!lq0!jmb!jm2!nn6!mge>4segs@1$0$1>3cfg$2>1c$4>0@1$5@1$3^1@3$6^4^3^2").
+Theorem MREMAP_MOVE_OK_of_WF : forall segs cfg c, WF (cfg_model c) -> MREMAP_MOVE_OK segs cfg c.
 Proof. intros segs cfg c Hwf tr c' Hstar. apply MV_OK_wf. exact (star_cfg_WF segs cfg _ _ _ Hstar Hwf). Qed.
 
-Theorem MREMAP_MOVE_OK_init : ltac2:(zQ "c0!q0!jo3!ijb!mkc!q7!ml0!lp5!lq0!mje!mp0!mpd!mge>4segs@1$2$6>3cfg$7>2pc$3>2ph$5>2sp@1$1@1$0#k0>4brk0@1$1@1$0#k0>5mbase@1$1@1$0#k0>3rnd$9>3lim$4>3inp$a@3$b^a^9@9$8^a^8^7^6^5^4^3^2^1").
+Theorem MREMAP_MOVE_OK_init : forall segs cfg pc ph sp brk0 mbase rnd lim inp,
+  MREMAP_MOVE_OK segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp).
 Proof. intros. apply MREMAP_MOVE_OK_of_WF. apply init_config_WF. Qed.
 
-Corollary must_exit_in_scfg_relim_closed : ltac2:(zQ "b0!q7!mre!ijb!q0!ngf!mq9!mr2!lq0!mpd!mj8!jo3>3cfg$7>1S@1$2@1$a@1$3#k0>3img$5>4Lbig$0>6Lsmall$0>2en$6>3inp$8>0@2$9^3^4>0@5$4^8^4^6^3^2>0@6$1^9^8^7^6^4^3@6$1^a^9^8^6^5^4").
+Theorem must_exit_relim_closed :
+  forall segs cfg S (c : config) (L : Z),
+    L <= vm_limit (m_vmmaps (cfg_model c)) ->
+    WF (cfg_model c) ->
+    ~ reaches_budget_refused_cfg segs cfg (relim_cfg L c) ->
+    must_exit_in_at_cfg cfg segs S c ->
+    must_exit_in_at_cfg cfg segs S (relim_cfg L c).
+Proof. intros segs cfg S c L HLE Hwf NR Hme. exact (must_exit_relim segs cfg S c L HLE NR (MREMAP_MOVE_OK_of_WF segs cfg c Hwf) Hme). Qed.
+
+Corollary must_exit_in_scfg_relim_closed : forall cfg S img (Lbig Lsmall : Z) en inp,
+  Lsmall <= Lbig ->
+  source_within_budget_scfg cfg Lsmall img en inp ->
+  must_exit_in_scfg cfg S img Lbig en inp ->
+  must_exit_in_scfg cfg S img Lsmall en inp.
 Proof.
   intros cfg S img Lbig Lsmall en inp HLE NB Hme.
   apply (must_exit_in_scfg_relim cfg S img Lbig Lsmall en inp HLE NB); [|exact Hme].
-  destruct img, en. apply MREMAP_MOVE_OK_init.
+  destruct img, en. cbv beta iota zeta. apply MREMAP_MOVE_OK_init.
 Qed.
-(* [comment removed for export] *)

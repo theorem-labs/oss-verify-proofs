@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -40,7 +41,7 @@ Lemma od_tail_sb : forall (Σ : rts RT) (K : config -> Prop) (usp S1 F lo IMPL i
     (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s7 s9 s10 s11 t3 t4 t5 t6 : word) FR fc (m : mem)
     (j0 j208 j224 j400 h0 l12 l13 l14 l15 l16 l17 l18 pre8 mid rest : list byte),
   S1 mod 32 = 0 -> usp - 528 <= S1 <= usp - 512 -> usp mod 16 = 0 -> usp + 16 <= USTACK_TOP ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
   ART RT Σ m -> mem_inv asegs m -> stk asegs m lo S1 ->
   rt_frames RT Σ = [(F, 3%nat)] ->
   rt_live RT Σ = (ia, nia) :: (oc, noc) :: (idx, nidx) :: (IMPL, 96) :: (SB, CAP) :: vblockA A cap size ++ L0 ->
@@ -178,7 +179,7 @@ Proof using AF FDO MST RTF DELA DTOR VDES AFV.
   assert (VR2 : vrepA m2 (F + 32) A cap size els).
   { unfold vrepA, zlength. split; [exact VSZ|]. split; [exact VSC|]. split; [exact VCAP|]. split; [exact VA0|]. split; [exact VAT|].
     split; [exact VS|]. right. split; [exact CAP1|]. split; [exact A16|]. split; [exact APOS| exact VEL]. }
-  assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW).
+  assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2; exact LOW).
   rewrite FRS in FRS2.
   eapply (od_tail RT AF PMc FDO MST RTF DTOR VDES AFV Σ2 K usp S1 F lo IMPL idx oc ia nidx noc nia A cap size els L0
             cra cgp cs0 cs1 cs2 cs3 cs4 cs5 cs6 cs7 cs8 cs9 cs10 cs11);
@@ -202,7 +203,7 @@ Proof using LIB_loc AF FDO MST RTF DELA DTOR VDES AFV.
                   (h0 & h8 & OHDR) OVEC SZ1 OWRS (jd & DOC) OLIB OPRES].
   remember (rt_live RT Σ0) as L0 eqn:EL0.
   unfold wz in *.
-  assert (LOW : rt_sp0 RT Σx - STACK_WIN <= lo) by (rewrite SP0; exact LOW0).
+  assert (LOW : rt_sp0 RT Σx - STACK_SPAN <= lo) by (rewrite SP0; exact LOW0).
   pose proof (af_sp0_range RT AF Σx mx ART0) as SP0R. pose proof (af_sp0_win RT AF Σx mx ART0) as SP0W.
   assert (INF : In (F, 3%nat) (rt_frames RT Σx)) by (rewrite FRS; left; reflexivity).
   pose proof (af_frames_range RT AF Σx mx F 3 ART0 INF) as (_ & FR1 & _ & FLV).
@@ -431,7 +432,7 @@ Proof using LIB_loc AF FDO MST RTF DELA DTOR VDES AFV.
     assert (VR3 : vrepA m3 (F + 32) A cap size els).
     { unfold vrepA, zlength. split; [exact VSZ|]. split; [exact VSC|]. split; [exact VCAP|]. split; [exact VA0|]. split; [exact VAT|].
       split; [exact VS|]. right. split; [exact CAP1|]. split; [exact A16|]. split; [exact APOS| exact VEL]. }
-    assert (LOW3 : rt_sp0 RT Σ3 - STACK_WIN <= lo) by (rewrite SP3; exact LOW).
+    assert (LOW3 : rt_sp0 RT Σ3 - STACK_SPAN <= lo) by (rewrite SP3; exact LOW).
     eapply (od_tail_sb Σ3 K usp S1 F lo IMPL IDX OC IA NIDX 8192 1024 SB CAP A cap size els L0
               cra gp cs0 cs1 cs2 cs3 cs4 cs5 cs6 cs7 cs8 cs9 cs10 cs11);
       [ exact S32 | exact S1R | exact USP16 | exact USPT | exact LOW3 | exact LOR | exact FRM3 | exact ART3 | exact MI3 | exact ST3

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AF0x.v, with its module paths changed; 177 of its 210 lines of code are new or changed and 539 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* sup_remove's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan,
    BASE + AF_sup_remove = 0x8b258), the post at answer's return 0x8b3a0 (SR_T) from the posts of record(), arg_s()
    and answer() (sr_q_stmt, sup_remove_s1.v): no symbolic execution.
@@ -175,7 +176,7 @@ Variable MT : ameter_ops.
 Hypothesis LAWS : AR_laws SEGS B.
 Hypothesis MTL : ameter_laws MT.
 
-(* ---- over AR (sup_remove_all_s1.v:219-264; rca_blk and rca_same_start are CmdRecAns's) ---- *)
+(* ---- over AR (sup_remove_all_s1.v:220-265; rca_blk and rca_same_start are CmdRecAns's) ---- *)
 
 (* no block is listed twice in a permutation of the live blocks *)
 Lemma sr_q_nodup2 : forall ly S (W : world SEGS) mem md (l1 l2 : list (Z * Z)) pn, AR SEGS B ly S W mem md ->

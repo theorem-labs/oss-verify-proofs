@@ -5,17 +5,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 1684 of its 1797 lines of code are new or changed and 898 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R6.v, with its module paths, module names and numbers changed; 1340 of its 1484 lines of code are new or changed and 1653 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F1.v; 78 of its 128 lines of code are new or changed and 1434 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F1Fs.v -- the NARROWED footprint run of segment F1 of fuzz_ctrl image A's LLVMFuzzerTestOneInput
    (libreac v1.9.0), written by the stage's glue owner (a Theorem Labs lane) under a Theorem Labs lane's split /
    narrowed-stretch convention (a Theorem Labs lane 04:01Z / 04:23Z: the stage owner writes <S>Fs.v, Requiring only a Theorem Labs lane's
    <S>F.v and the sources, never editing them).  rule 24: no function proved (a re-cut of an already-proved run).
 
    PROVENANCE. Image A = fuzz_ctrl.asan, libreac v1.9.0, pinned
-   (internal path) (sha256 aac16e1f...135704d), FACTS
-   ed6b6b7b0ab, PAU pau-libreac-v190.  Sources: Seg/F1.v 0f7557862644 (the blob this tree had at release c5e779efe8c) and a Theorem Labs lane's Seg/F1F.v (an earlier version, blob c4287e871a45, not in this delivery),
+   (internal path) (sha256 aac16e1f...135704d), FACTS,
+   PAU pau-libreac-v190.  Sources: Seg/F1.v 0f7557862644 (the blob this tree had at release) and a Theorem Labs lane's Seg/F1F.v (an earlier version, blob c4287e871a45, not in this delivery),
    both unchanged since that release apart from comment text; F1F.v's code differs from that earlier version only by fully qualified names.
 
-   WHY. F1F.f1_evt_F (F1F.v (at head lib/A/Prog/Seg/F1F.v:165)) states its two footprint regions of the HIGH length byte, [q + 1, q + 2) and its
+   WHY. F1F.f1_evt_F (F1F.v (at head lib/A/Prog/Seg/F1F.v:166)) states its two footprint regions of the HIGH length byte, [q + 1, q + 2) and its
    shadow byte (q + 1) >> 3 + ASAN_K, UNCONDITIONALLY, although the run reads them only when left >= 2 (its own
    premise H2 is guarded by `2 <= left ->`, and the segment-F table says "read only when left >= 2").  At the cut
    A81d40_at the walk has q = p + c, left = n - c for the input block (p, n); at left = 1 the byte q + 1 = p + n is
@@ -24,7 +25,7 @@
    RNG_W (w_H W) (its fp_avoids needs every footprint range visible).  f1_evt_Fs is f1_evt_F with exactly those two
    premises guarded by `2 <= left ->`, nothing else changed.
 
-   HOW. left >= 2: f1_evt_F itself.  left = 1: the left = 1 path of f1_evt_F's own proof (F1F.v (at head lib/A/Prog/Seg/F1F.v:199-228)),
+   HOW. left >= 2: f1_evt_F itself.  left = 1: the left = 1 path of f1_evt_F's own proof (F1F.v (at head lib/A/Prog/Seg/F1F.v:200-229)),
    verbatim with left substituted: f1_chk0_F, four steps, the not-taken branch, three steps, f1_tail_F.
 
    THE PIN. f1_evt_F_of_Fs re-derives a Theorem Labs lane's f1_evt_F from f1_evt_Fs (the guarded premises from the
@@ -97,7 +98,7 @@ Proof.
   2: { exact (f1_evt_F RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                 t3 t4 t5 t6 F fc m A q left b0 b1 k0 k1 E1 E6 E9 E10 Hq0 Hq1 Hl HA0 HA1 HK0 Hk0 HB0 H2 HS
                 RSH0 RQ0 (RSH1 Hl2) (RQ1 Hl2) RSP). }
-  (* left = 1: F1F.v:198-227, the left = 1 path of f1_evt_F's own proof *)
+  (* left = 1: F1F.v:199-228, the left = 1 path of f1_evt_F's own proof *)
   assert (EL : left = 1) by lia. subst s1 s6 s9 s10 left. clear RSH1 RQ1 H2 Hl1.
   pose proof (bv_unsigned_in_range 8 b0) as Hb0. pose proof (bv_unsigned_in_range 8 b1) as Hb1.
   change (bv_modulus 8) with 256 in Hb0, Hb1.

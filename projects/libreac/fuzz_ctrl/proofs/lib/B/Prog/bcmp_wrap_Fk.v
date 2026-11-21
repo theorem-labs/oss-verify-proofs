@@ -1,14 +1,14 @@
-(* lib/B/Prog/bcmp_wrap_Fk.v -- the helper lemmas of lib/B/Prog/bcmp_wrap_F.v 6feca7363ed (the blob this tree had at release c5e779efe8c), lines 1-344 (segs_in ..
+(* lib/B/Prog/bcmp_wrap_Fk.v -- the helper lemmas of lib/B/Prog/bcmp_wrap_F.v 6feca7363ed (the blob this tree had at release), lines 1-344 (segs_in ..
    stk_join) over image B's lib/B/MemNormP.v instead of the root lib/MemNormP.v, for bcmp_wrap_on.v, so its closure
    holds one normalization twin (lib.B.MemNorm) only (two Theorem Labs lanes 15:30Z). TEXT: the tree's bcmp_wrap_F.v lines 1-344 byte for
    byte except line 17 (the MemNormP Require). bcmp_wrap_F.v itself is unchanged apart from comment text (its users AuditClosedB /
-   reac_ctrl_identity_fragment_F_closed keep it). B twin of a Theorem Labs lane's lib/A/Prog/bcmp_wrap_Fk.v (f4423e55886).
+   reac_ctrl_identity_fragment_F_closed keep it). B twin of a Theorem Labs lane's lib/A/Prog/bcmp_wrap_Fk.v.
    rule 24: no function proved (helper lemmas; bcmp_wrap's run is proved in bcmp_wrap_F.v / bcmp_wrap_on.v). *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 (* The footprint proof of the bcmp wrapper of image B. ORIGINAL AUTHOR a Theorem Labs lane, taken BY PATH from
-   a working branch dba073859bd lib/B/Prog/bcmp_wrap_F.v (that ref's own bcmp_wrap_c.v,
+   a working branch lib/B/Prog/bcmp_wrap_F.v (that ref's own bcmp_wrap_c.v,
    blob 5704c00631d, is NOT taken: the published statement of this branch, lib/B/Prog/bcmp_wrap_c.v blob
-   28990b512f7 (the blob this tree had at release c5e779efe8c) of F5 2ec9a4d28bf, stays as it is, because three B proofs depend on it).
+   28990b512f7 (the blob this tree had at release) of F5, stays as it is, because three B proofs depend on it).
    RE-FIT to that published statement, mechanically and in two places only: where the proof consumes the
    contract's two shadow-cover premises RSL and RSR, the published text writes the cover as
    `shadow_addr p / 8 * 8 .. shadow_addr (p + n - 1) / 8 * 8 + 8`, while this file's own sh_lo / sh_hi (and so

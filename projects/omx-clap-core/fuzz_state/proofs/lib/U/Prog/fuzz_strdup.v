@@ -97,7 +97,17 @@ Proof using HSEG.
   pose proof sd_segs_low as HL. rewrite <- HSEG in HL. rewrite forallb_forall in HL.
   specialize (HL seg Hin). apply Z.leb_le in HL.
   split; [intros E; rewrite E in Hin; destruct Hin|].
-  exists (segment_reservation seg). split; [unfold segments_reserved; apply in_map; exact Hin|].
+  (* 08b1429, Run.v:253-254: segments_reserved maps over
+     `filter (fun s => negb (seg_kernel_map s)) segs`, so `apply in_map` now leaves
+     membership in the FILTERED list and `exact Hin` no longer closes it.  `filter_In`
+     cannot engage here: this file's `filter` and the one in the model's definition are
+     different constants (U/Reusable/YG0h.v:85-95 hit the same wall in the other
+     direction and says so).  Discharged by reduction over the concrete image segments
+     instead, which is YG0h's technique and already terminates on `rsegs` here (:90). *)
+  exists (segment_reservation seg). split;
+    [ unfold segments_reserved; apply in_map;
+      rewrite HSEG in Hin |- *; vm_compute in Hin |- *; tauto
+    | ].
   unfold segment_reservation, page_round_down_Z, page_round_up_Z, page_size. cbv zeta. cbn [fst snd].
   assert (E1 : 0 <= Z.of_N (seg_base seg) / 4096 * 4096 <= Z.of_N (seg_base seg)) by (Z.div_mod_to_equations; lia).
   assert (E2 : Z.of_N (seg_base seg) + Z.of_N (seg_size seg) <=

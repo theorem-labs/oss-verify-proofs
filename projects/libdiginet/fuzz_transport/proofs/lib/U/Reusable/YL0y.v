@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0y.v, with its module paths, addresses and numbers changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0y.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; 3 image values moved to fuzz_transport's binaries by symbol and offset (provenance/evidence/kit-relocation/values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0y.v for libdiginet/fuzz_transport; 3 image values moved to fuzz_transport's binaries by symbol and offset (provenance/evidence/kit-relocation/values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ProcInput launch spine in the diagnostic providers; the Ubsan image import in the U twin; fpf_memchr's argv spelling and stack_tail_end at the call sites; auxv_bytes_range posed where the stack bound needs it); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -24,36 +25,51 @@ Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Lemma msg_usage_eq : forall a, msg_usage a = strB "usage: " ++ a ++ strB " INPUT" ++ nl.
 Proof. intros a. unfold msg_usage. vm_compute. reflexivity. Qed.
 Section c.
+(* Every lemma here takes the whole declared prefix of its variables, in order, so the
+   discharge cannot silently shorten the argument list under a later change. *)
+Local Set Default Proof Using "All".
 Variable sp : word.
-Variable argv envp : list (list byte).
+Variable inp : ProcInput.
+Variable mbase brk : word.
 Variable tid : word.
 Variable rnd : EntryDraw.
+Local Notation argv := (in_argv inp) (only parsing).
+Local Notation envp := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
 Hypothesis Hfits : entry_stack_fits sp argv envp.
 Hypothesis Hargc : (length argv <> 2)%nat.
 Theorem src0_usage : forall ms model,
-st_ok src0segs (E_main sp argv envp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp argv envp rnd) ->
+st_ok src0segs (E_main sp inp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp inp rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 realizes src0segs (mkCfg ms model) (diag (msg_usage (nth 0 argv [])) (m_fs model)).
 Proof.
 intros ms model HS HR Hh Hlz Hfd2.
 unfold diag, wr, ex, ch_stderr. rewrite msg_usage_eq.
-pose proof (argc_bounds argv Hva) as HA.
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L. unfold SP_LO, SP_HI in L.
-pose proof (z_argv_bounds sp argv envp 0 ltac:(lia)) as B0.
-pose proof (argv_no_nul argv Hva 0 ltac:(lia)) as Hnul.
-pose proof (argv_str_len argv Hva 0 ltac:(lia)) as Hlen0.
-pose proof (ewm1 sp argv envp Hsp Hva Hve rnd tid) as H1.
-pose proof (ew0 sp argv envp (xw_main sp argv envp tid rnd) (xd_main rnd)) as H0.
-change (E0 _ _ _ _ _) with (E_main sp argv envp tid rnd) in H0.
-pose proof (ew3 sp argv envp Hva (xw_main sp argv envp tid rnd) (xd_main rnd)) as H3.
-change (E0 _ _ _ _ _) with (E_main sp argv envp tid rnd) in H3.
-pose proof (z_argv_fits sp argv envp Hfits 0 ltac:(lia)) as F0. unfold SP_HI in F0.
+pose proof (argc_bounds src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau) as HA.
+(* `SP_HI` unfolds to an expression carrying `AUXV_BYTES (kb_rseq (in_kernel inp))`, which is
+   an atom with no bound of its own, so `lia` cannot get from z_argv_fits to `< 2 ^ 64`.
+   Posed exactly as libreac/fuzz_boxreg's already-ported YL0w/YL0x/YL0y pose it, and as
+   YL0n.v:52 and YN3e.v:256 pose it in this unit. *)
+pose proof (layout_facts src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau) as L. pose proof (auxv_bytes_range (kb_rseq (in_kernel inp))) as ARL. unfold SP_LO, SP_HI in L.
+pose proof (z_argv_bounds src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau 0 ltac:(lia)) as B0.
+pose proof (argv_no_nul src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau 0 ltac:(lia)) as Hnul.
+pose proof (argv_str_len src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau 0 ltac:(lia)) as Hlen0.
+pose proof (ewm1 inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau tid) as H1.
+pose proof (ew0 src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau
+  1 ltac:(lia) (xw_main inp rnd tid) (xd_main rnd)) as H0.
+change (E0 _ _ _ _ _ _ _ _) with (E_main sp inp tid rnd) in H0.
+pose proof (ew3 src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau
+  1 ltac:(lia) (xw_main inp rnd tid) (xd_main rnd)) as H3.
+change (E0 _ _ _ _ _ _ _ _) with (E_main sp inp tid rnd) in H3.
+pose proof (z_argv_fits src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau 0 ltac:(lia)) as F0. unfold SP_HI in F0.
 sym_norm HS.
 sym_run_to_with src0tbl_ok HS 0x20a48.
+pose proof (YP08.stack_tail_end src0segs Ubsan_phdrs inp mbase Ubsan_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau) as Hste.
 fpf_memchr HS HR 1%nat 2%nat 1%nat 10%nat (nth 0 argv []).
 sym_run_with src0tbl_ok HS.
 fpf_lbu_nul HS HR 1%nat 1%nat 10%nat (nth 0 argv []).
@@ -145,7 +161,7 @@ Qed.
 End c.
 Theorem src0_usage_hyp : usage_hyp.
 Proof.
-unfold usage_hyp. intros sp argv envp tid rnd ms model Hsp Hva Hve Hfits Hargc HS HR Hh Hlz Hch.
-exact (src0_usage sp argv envp tid rnd Hsp Hva Hve Hfits Hargc ms model HS HR Hh Hlz Hch).
+unfold usage_hyp. intros sp inp mbase brk tid rnd ms model Hsp Hva Hve Hvl Hlau Hfits Hargc HS HR Hh Hlz Hch.
+exact (src0_usage sp inp mbase brk tid rnd Hsp Hva Hve Hvl Hlau Hfits Hargc ms model HS HR Hh Hlz Hch).
 Qed.
 End b.

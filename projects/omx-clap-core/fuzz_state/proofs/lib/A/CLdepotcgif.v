@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLdepotcgif.v (a working branch 84ee52cd012, file sha256 12a504bff9a6) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLdepotcgif.v (a working branch, file sha256 12a504bff9a6) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): per a Theorem Labs lane's FS-INSTANCE.md 1.4 (CLdepot row) the two depot fields come from CLdepotA.depot_field_ok_a at fs's admissibility adm := fun S tr => areq_ok S (KDepot tr) (the trace length AFl0.tfib_depot_spec takes), not from CLdepot.depot_field_ok (whose contract takes In tr (as_universe B)); Ucgif is the instance's trace premise tr_admit (as_universe B) S tr (S1a), sub_a / sub_d are CLdepotA.DepotSubA with dsa_adm by YG01.tr_admit_len, and spec_x_of_tfib gives CLdepotA.depot_spec_xa by conversion. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): dep_keep reads fs's depot invariant (YG01.WfP.wf_depot is depot_inv) through AGix.depot_ids_bound's fs form (bound 20481, AFix.v:357), FS-INSTANCE.md 1.3's L line, in place of cgif's NoDup / incl pair. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* cgif_file's instance of the generic depot sub-interface (CLdepotA.DepotSubA at fs's admissibility), and the two depot fields it
    discharges: AGif0n.if_depot (Allocate's call, QuarantineChunk's twin on the hit path) and DGif0.di_depot
    (Deallocate's call).  Both come from the released machine-level contract AFl0.tfib_depot_spec; this file adds

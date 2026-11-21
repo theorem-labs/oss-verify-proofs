@@ -2,16 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_add (op 0) of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput over the
    GENERIC allocator relation ARx: the ARx conversion of lib/A/W_LLVMFuzzerTestOneInput_add.v's lf_arm_add (Qed on
-   a working branch 44de651f71b), in the form of W1Verify's converted check_bounded (a working branch,
+   a working branch), in the form of W1Verify's converted check_bounded (a working branch,
    lib/A/W_check_bounded.v).  lf_arm_add_x's statement is the text of the Section hypothesis ARM_add of
    lib/A/W_LLVMFuzzerTestOneInput_cut_x.v Section w (:302), checked at the end (lf_arm_add_x_check, and
    lf_arm_add_x_cut_x, which feeds it to cut_x's own lf_arm_x).
    The arm and the proof are _add.v's (see its header): one run to op_add's entry, op_add through W2's oa_spec_g_x
-   (lib/A/W_op_add.v:2936) at op_add's OWN globals ad_G, its journal lifted to G_fr and composed into the cut's, one
+   (lib/A/W_op_add.v:2937) at op_add's OWN globals ad_G, its journal lifted to G_fr and composed into the cut's, one
    run to the latch.  The conversion: AR -> ARx with the ghost lists (Hpe at the entry, Hp3 at the cut, Hp' after the
    call), al_* -> alx_*, the journal lemmas -> W_journal_x / YCbqG / W_frame_x's _x twins, op_add's keep lemmas ->
    W_op_add.v's _x ones (oa_call_keep takes HPST), paj_run_to_tok -> paj_run_to_tok_x.
-   NOT CITED, RESTATED: _add.v no longer compiles after the merge of a working branch b87fa52d984 (W2's W_op_add.v
+   NOT CITED, RESTATED: _add.v no longer compiles after the merge of a working branch (W2's W_op_add.v
    keeps only the _x oa_call_keep / _blk / _hi), so this file does not Require it.  Its AR-free helpers (ad_set_nth ..
    ad_none_nwr, Section kit's ad_wr_offimg .. ad_aout_rebuild, ad_at_op / ad_none / ad_open and their lemmas,
    ad_romb, ae_* / ar_*, ad_awr / ad_nowr / ad_meq) are restated here with IDENTICAL names, statements and proofs
@@ -19,7 +19,7 @@
    AR-free lemmas) are restated over ARx with the suffix _x: lt_blk_x .. lt_ainput_kept_x, ad_nodup_x, ad_fp_avoid_x,
    ad_call_keep_frm_x, lt_afn_pre_at_x, ad_gxp_x, ad_carry_x, ad_flag_kept_x.
    Section hypotheses beyond cut_x's Section w header (B .. RINV, verbatim):
-     OA     - op_add: oa_spec_g_x exactly as W_op_add.v:2936 defines it, at PI := PB_fr, the walk's PST / ARx;
+     OA     - op_add: oa_spec_g_x exactly as W_op_add.v:2937 defines it, at PI := PB_fr, the walk's PST / ARx;
      HEV / HZS / HGOBJ / ROMPIN - _add.v's instance facts, verbatim;
      ERRL   - cut_x's errno_law_x (the _x form of _add.v's ERRL : errno_law B);
      GSHV   - _add.v's GSHV over ARx (gx_prog_x's last conjunct at ad_G);
@@ -34,6 +34,7 @@
    text of cut_x's Section wR hypothesis ARM_add_R (:456), over R R_refl R_trans WLE_R and op_add at R (OA_R :=
    oa_spec_g_xR, W_op_add.v) in place of OA; its proof is lf_arm_add_x's over the R journal (see the Section's
    comment).  ad_call_keep_frm_x / lt_afn_pre_at_x are their _xR twins (R implicit) at wle. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -655,7 +656,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:191-235), verbatim ---- *)
+(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:192-236), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -758,8 +759,8 @@ Hypothesis LS_add_open : forall cx t m i q pj ev ly S (ly' : alayout) (S' : asta
 Hypothesis LS_add_none : forall cx t m ly S,
   LSx cx t m ly S -> RINV cx t m -> ad_at_op cx m -> oa_first (ad_os (lm_hs m)) = None ->
   LSx cx (t + 1) (ad_none m) ly S.
-(* the room round's count row (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c); lib/A/ReplyLScnt.v fr_LS3cp_cnt_add at
-   commit ba8e99b5bd2): at the cut, the live counts plus op_add's premise peak oa_peak stay under RP's bounds.  The
+(* the room round's count row (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c); lib/A/ReplyLScnt.v fr_LS3cp_cnt_add):
+   at the cut, the live counts plus op_add's premise peak oa_peak stay under RP's bounds.  The
    guards are the walk's facts at the cut (the model's sizes come from amodel_at) *)
 Hypothesis LS_cnt : forall cx t m ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> ad_at_op cx m -> amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->
@@ -1074,7 +1075,7 @@ Ltac ad_meq HF Em := lazymatch type of HF with frame_of ?E ?rs ?m ?m' =>
   pose proof (frame_of_read_only E rs m m' ltac:(vm_compute; reflexivity) HF) as Em end.
 
 (* ------------------------------------------------------------------ the arm *)
-(* the text of cut_x's Section w hypothesis ARM_add (W_LLVMFuzzerTestOneInput_cut_x.v:552) *)
+(* the text of cut_x's Section w hypothesis ARM_add (W_LLVMFuzzerTestOneInput_cut_x.v:553) *)
 Theorem lf_arm_add_x : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_x B NP G_fr fr_FP PST ARx LSx RINV 0 cx Hp t W c -> SRr segs W c (INV_K_x B NP G_fr fr_FP PST ARx LSx RINV cx Hp t).
@@ -1566,7 +1567,7 @@ Proof.
     + reflexivity.
 Qed.
 
-(* CHECK (cut_x's scope): lf_arm_add_x's type is the Section w hypothesis ARM_add of W_LLVMFuzzerTestOneInput_cut_x.v:552,
+(* CHECK (cut_x's scope): lf_arm_add_x's type is the Section w hypothesis ARM_add of W_LLVMFuzzerTestOneInput_cut_x.v:553,
    restated with the generic invariants at this Section's variables *)
 Lemma lf_arm_add_x_check : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
@@ -1597,7 +1598,7 @@ Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
 Hypothesis OA_R : oa_spec_g_xR (PI := PB_fr) B PST ARx R MT RP (BASE + AF_fr_op_add).
 Let RUNTOG := paj_run_to_x_xG (PL := PL_fr) (PI := PB_fr) B PST ARx LAWS R G_fr HG 0 [].
 Let RUNTOR := paj_run_to_x_xR (PL := PL_fr) (PI := PB_fr) B PST ARx LAWS R G_fr HG 0 [].
-(* the text of cut_x's Section wR hypothesis ARM_add_R (W_LLVMFuzzerTestOneInput_cut_x.v:456) *)
+(* the text of cut_x's Section wR hypothesis ARM_add_R (W_LLVMFuzzerTestOneInput_cut_x.v:457) *)
 Theorem lf_arm_add_xR : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_xR B NP G_fr fr_FP PST ARx LSx RINV R 0 cx Hp t W c ->
@@ -2098,13 +2099,13 @@ Proof.
 Qed.
 
 (* CHECK (cut_x's scope): lf_arm_add_xR's type is the Section wR hypothesis ARM_add_R of
-   W_LLVMFuzzerTestOneInput_cut_x.v:456, restated with the generic invariants at this Section's variables *)
+   W_LLVMFuzzerTestOneInput_cut_x.v:457, restated with the generic invariants at this Section's variables *)
 Lemma lf_arm_add_xR_check : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_xR B NP G_fr fr_FP PST ARx LSx RINV R 0 cx Hp t W c ->
   YA0nH.SRrG segs R W c (INV_K_xR B NP G_fr fr_FP PST ARx LSx RINV R cx Hp t).
 Proof. exact lf_arm_add_xR. Qed.
-(* and cut_x's own composition of the arms at R, lf_arm_xR (lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:476), takes it as its ARM_add_R argument *)
+(* and cut_x's own composition of the arms at R, lf_arm_xR (lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:477), takes it as its ARM_add_R argument *)
 Definition lf_arm_add_xR_cut_x :=
   lf_arm_xR B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr fr_FP PST ARx LSx RINV R lf_arm_add_xR.
 End addR.

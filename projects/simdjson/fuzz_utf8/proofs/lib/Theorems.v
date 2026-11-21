@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* The proofs in this file are Anthropic's; the theorem statements were issued by the task authors and are reproduced as issued (see NOTICE). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the three theorems are proved as simdjson/fuzz_minifyimpl's proofs/lib/Theorems.v proves them, through this unit's ClosedM and ClosedMU closures and its plain and UBSan client proofs (Plain/PM_client.v, Ubsan/UM_client.v), in place of the recorded main-phase tree; the ASan and ASan+UBSan closures take no client proof, because this unit's AsanW and BothW closures need none; the theorem statements are unchanged. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import NArith List QArith.
@@ -12,7 +13,7 @@ Require OSSVerify.simdjson.fuzz_utf8.images.Plain.
 Require OSSVerify.simdjson.fuzz_utf8.images.Asan.
 Require OSSVerify.simdjson.fuzz_utf8.images.Ubsan.
 Require OSSVerify.simdjson.fuzz_utf8.images.AsanUbsan.
-From OSSVerify.Proofs.simdjson.fuzz_utf8.lib Require Thm_fuzz_utf8_ubsan Tree_src13 Tree_utf8_ubsan AsanFinalU BothFinalU.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib Require ClosedMU Plain.PM_client Ubsan.UM_client ClosedM.
 
 Theorem strong_universal_error_free_fuzz_utf8_asan :
   LinuxProcessSemantics.EquivalenceDefinition.Equivalence.strong_universal_error_free_T_scfg_budgets_abort
@@ -21,7 +22,7 @@ Theorem strong_universal_error_free_fuzz_utf8_asan :
     LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.simdjson.fuzz_utf8.images.Plain.M.loaded_segments OSSVerify.simdjson.fuzz_utf8.images.Plain.M.init_pc OSSVerify.simdjson.fuzz_utf8.images.Plain.M.phdrs)
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.simdjson.fuzz_utf8.images.Asan.M.loaded_segments OSSVerify.simdjson.fuzz_utf8.images.Asan.M.init_pc OSSVerify.simdjson.fuzz_utf8.images.Asan.M.phdrs).
-Proof. exact (AsanFinalU.base_asan Tree_src13.CERTS_src13).
+Proof. exact (ClosedM.base_asan_mc Plain.PM_client.plain_client_proof).
 Qed.
 
 Theorem strong_universal_error_free_fuzz_utf8_ubsan :
@@ -31,7 +32,7 @@ Theorem strong_universal_error_free_fuzz_utf8_ubsan :
     LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_target
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.simdjson.fuzz_utf8.images.Plain.M.loaded_segments OSSVerify.simdjson.fuzz_utf8.images.Plain.M.init_pc OSSVerify.simdjson.fuzz_utf8.images.Plain.M.phdrs)
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.simdjson.fuzz_utf8.images.Ubsan.M.loaded_segments OSSVerify.simdjson.fuzz_utf8.images.Ubsan.M.init_pc OSSVerify.simdjson.fuzz_utf8.images.Ubsan.M.phdrs).
-Proof. exact (Thm_fuzz_utf8_ubsan.thm Tree_src13.CERTS_src13 Tree_utf8_ubsan.CERTS_utf8_ubsan).
+Proof. exact (ClosedMU.base_ubsan_mc Plain.PM_client.plain_client_proof Ubsan.UM_client.ubsan_client_proof).
 Qed.
 
 Theorem strong_universal_error_free_fuzz_utf8_both :
@@ -41,7 +42,7 @@ Theorem strong_universal_error_free_fuzz_utf8_both :
     LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_target
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.simdjson.fuzz_utf8.images.Plain.M.loaded_segments OSSVerify.simdjson.fuzz_utf8.images.Plain.M.init_pc OSSVerify.simdjson.fuzz_utf8.images.Plain.M.phdrs)
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.simdjson.fuzz_utf8.images.AsanUbsan.M.loaded_segments OSSVerify.simdjson.fuzz_utf8.images.AsanUbsan.M.init_pc OSSVerify.simdjson.fuzz_utf8.images.AsanUbsan.M.phdrs).
-Proof. exact (BothFinalU.base_both Tree_src13.CERTS_src13).
+Proof. exact (ClosedM.base_both_mc Plain.PM_client.plain_client_proof).
 Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)

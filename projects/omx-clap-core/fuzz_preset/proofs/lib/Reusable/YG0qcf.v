@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG0qcf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG0qcf.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG0qcf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG0qcf.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf). Copied from YG0q.v (cgif's
    ownership helpers and AR_frame_law_ok), re-stated over the FRESH record ARmcf / ARcf of YG0ncf.v with the
    naming contract's substitutions only: ARm B ly S rd -> ARmcf B ly S Hp rd, AR -> ARcf, ALedger -> ALedger_cf,
@@ -667,7 +668,7 @@ intros ly S Hp S' H mem mem' IMG M [HA HZ] VIS HK CL SE AG. split.
 - exact (ahz_transfer segs ly S S' H mem mem' IMG HZ SE HK AG).
 Qed.
 (* The two machine cells' bytes are owned (field round 2: ARmcf's amc_exh_cell / amc_errb_cells). From CfF2a's
-   YGcfInstFreeView.v section x (cf-f2a 78e7ba371b9d: x_exh_where, x_K, x_owned), over the two unit image rows the
+   YGcfInstFreeView.v section x (cf-f2a: x_exh_where, x_K, x_owned), over the two unit image rows the
    frame law takes: the exhausted byte's offset (YGcfImgRows.EXH_OFF_t: the byte stays in its RegionInfo slot, in
    the primary reserve past the space) and the errbuf object in the owned static data (YG0ncf.errb_obj_owned_t). *)
 Lemma exh_byte_where_cf : forall ly S Hp rd c, ARmcf B ly S Hp rd -> EXH_OFF_t -> 1 <= c <= 31 ->

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, written by a Theorem Labs lane: the asan-ubsan twin of libreac/fuzz_knock lib/A/AD3g.v
-   at 48907dc7e8ca (by a Theorem Labs lane, the S7 prover, with amendment 11 to the statement's approval), the statement of
+   (by a Theorem Labs lane, the S7 prover, with amendment 11 to the statement's approval), the statement of
    __sanitizer::TwoLevelMap<StackDepotNode,32768,65536,LocalAddressSpaceView>::Create (0x71714-0x71814, 64 insns, YB1w.v
    tfib_A_TwoLevelMap_Create_71714, fuzz_knock.asan-ubsan sha256 f834165f5002...) on knock's first-use path, and its proof.
    rule 24: proves function TwoLevelMap<StackDepotNode,32768,65536,LocalAddressSpaceView>::Create (asan-ubsan); reuse
@@ -19,10 +19,11 @@
      0x12dfe0 -> 0x12e020 = PageSizeCached), read here through YD3h's MOD_PSC_GOT / MOD_PSC.
    - Unchanged: the code addresses (0x71714, 0x717b8 = 464824, MmapOrDie 0x64278), the image end TFIB_IMG_END =
      YImgTop.IMG_TOP = 0x5f3000 (YF0x.v:27; Reusable/YImgTop.v:5) and the writable window's low end 0x96000 (rw7, from
-     YB1h.v:87-88 tfib_rw_window: LOAD 0x96088 page-rounded, 8192 + 5615616 bytes to
-     0x5f3000, YB1h.v:80-83).
+     YB1h.v:88-89 tfib_rw_window: LOAD 0x96088 page-rounded, 8192 + 5615616 bytes to
+     0x5f3000, YB1h.v:81-84).
    lib/AU/YF0m.v (TfibSyms, TFIB_DEPOT) was not on the base this file was written on: it built from
    YF0m.v (sha256 77ff7f6e6d76; internal record), a build-only input. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -123,8 +124,8 @@ Definition tfib_tlm_create_nb_spec (B : asyms) : Prop :=
                (forall a, apresent H mem a -> apresent (w_H W') mem' a) /\ same_io md md' /\
       (* P6 *) layout_grow_kd ly (set_ly_NB ly x) /\
       (* P7 *) Forall (fun q => zdisjoint (x, kNodesBlockSize) (bv_unsigned (fst q), bv_unsigned (snd q))) (vm_maps (m_vmmaps md))).
-(* YD3h.v:50 md_takes md ((sp - 32) - MOD_STK, MOD_STK): from YD3g.v:100 (md_takes over ext_but_NB's stack extent, YD3g.v:63) and YD3g.v:98 (ly_stk_lo ly <= sp - TLM_STK, sp <= ly_stk_hi ly), by md_takes_sub. *)
-(* YD3h.v:49 TFIB_IMG_END <= (sp - 32) - MOD_STK: TFIB_IMG_END = IMG_TOP = 0x5f3000 (YF0x.v:27; YImgTop.v:5) < kHighMemBeg <= ly_stk_lo ly <= sp - TLM_STK (YD3g.v:98). *)
+(* YD3h.v:50 md_takes md ((sp - 32) - MOD_STK, MOD_STK): from YD3g.v:101 (md_takes over ext_but_NB's stack extent, YD3g.v:64) and YD3g.v:99 (ly_stk_lo ly <= sp - TLM_STK, sp <= ly_stk_hi ly), by md_takes_sub. *)
+(* YD3h.v:49 TFIB_IMG_END <= (sp - 32) - MOD_STK: TFIB_IMG_END = IMG_TOP = 0x5f3000 (YF0x.v:27; YImgTop.v:5) < kHighMemBeg <= ly_stk_lo ly <= sp - TLM_STK (YD3g.v:99). *)
 
 (* ---- The walk. Phase A: 0x71714 to MmapOrDie's entry (the run stops at the fetch of 0x64278, which tfibtbl_rtB does
    not cover); the call: YD3h's mod_holds through SRr_bind; phase B: 0x717b8 to the ret at 0x717dc. ---- *)

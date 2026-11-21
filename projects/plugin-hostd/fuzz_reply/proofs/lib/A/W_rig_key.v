@@ -9,16 +9,16 @@
    by AFREE, nheld -= 1 (0x82ed4) and held[n] = held[nheld] (0x82f08), then RGI i n r' or RGE i.  The model side is
    GIN's geik_loop step and the swap-remove of the keys; the meter moves between gbud states through gkrest.
    KEYS (rig_keys_proof): the inner loop by induction on r.
-   GE is used at ge_spec as commit ece23323751 states it (W_contract.v: ge_room, the room over
+   GE is used at ge_spec as states it (W_contract.v: ge_room, the room over
    gesture_end's own request trace), which this branch carries as a cherry-pick.  Written new, with the plain proof
    lib/Prog/relay_instance_gone_b.v (and its list lemmas, relay_instance_gone_b_lem.v) as the template; the
    restarted trace's independence of the addresses is proved here once (rkb_er_tr, rkb_er_eq, rkb_ker_er).
-   C3 (475b8a2b569, the peak form): ge_room and gbud's room are over tr_peak; each key's gesture_end takes its room from
+   C3 (the peak form): ge_room and gbud's room are over tr_peak; each key's gesture_end takes its room from
    the remaining trace's prefix (rkb_ker_split, rkb_ge_room), and gbud after the key from the NET change of the key's
    gesture_end and free (rkb_ge_net: g_out's growth; the free lowers the live bytes by |key| + 1; rkb_gbud_end). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)), the RIG_x
    round: KEY and KEYS over any allocator relation ARx with its laws and the room record RP, against the cx file's
-   generic Section (commit 863f3bb0f69, lib/A/W_relay_instance_gone_cx.v; its Section c copied verbatim below).
+   generic Section (lib/A/W_relay_instance_gone_cx.v; its Section c copied verbatim below).
    Every ARx state of this walk is read at the empty head set (HP0: ARh below), so each journal runs from [] to [].
    strncmp at astrncmp_realizes_x; gesture_end at ge_spec_x with its room premise rp_RM RP S1 (ge's MT_rk charge +
    1 + the room the rest of the trace owes, rk_krn) and its count premise cnt_ok_pk RP ge_pk, both from GIN's gbud
@@ -30,6 +30,7 @@
 (* Modified by Theorem Labs, 2026-10: route R (G8 rig, key): Section wR at the end of Section c lifts KEY and KEYS to a
    world relation R, concluding rig_key_stmt_xR / rig_keys_stmt_xR of the cx file's Section wR.  The strict statements
    and proofs are unchanged; two Require lines are added (W_contract_xR, YA0nH). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -158,7 +159,7 @@ aview SEGS (w_H W) mem a <> None.
 (* the runtime entries relay_instance_gone calls, at their SIGMA pcs, over ARx (W_sites_x.v / W_contract_x.v /
    W_journal_x.v Section hc; the free rule at the room record RP).  snprintf: a Theorem Labs lane's statement at fuzz_reply's
    addresses (W_sites.v asnprintf_realizes, its twin W_sites_x.v asnprintf_realizes_x), which the snprintf chain
-   (commit 9067b7156f9, lib/A/RT_pf_vf.v snprintf_chain_ok, through a Theorem Labs lane's evt -> SRr bridge) discharges. *)
+   (lib/A/RT_pf_vf.v snprintf_chain_ok, through a Theorem Labs lane's evt -> SRr bridge) discharges. *)
 Hypothesis ALOCK : alock_realizes_x B ARx (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes_x B ARx (SIGMA WS_pthread_mutex_unlock).
 Hypothesis AFREE : afree_cf_rule_c_x SEGS B PST ARx MT RP CTX_AFREE.
@@ -181,10 +182,10 @@ Hypothesis HGOTG : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
    through mbyte's seg_rom fallback: aguard_ok's second half needs nothing carried (a Theorem Labs lane's ruling; a Theorem Labs lane's
    pin measurement).  PB_fr decides it by vm_compute. *)
 Hypothesis HCANR : forall a, FR_GUARD <= a < FR_GUARD + 8 -> seg_rom SEGS (Z_to_bv 64 a) <> None.
-(* the two literals of the snprintf call, in W7's dlit_at form (W_drain_cx.v:220): the bytes in .rodata, read-only,
+(* the two literals of the snprintf call, in W7's dlit_at form (W_drain_cx.v:221): the bytes in .rodata, read-only,
    zero shadow, and the shadow hull visible in every ARx state *)
 Definition RIG_FMT : list Z := [37; 115; 32; 37; 100; 32].   (* "%s %d " *)
-(* ashp is RomOutPlace's lib/A/W_shadow_pin.v (commit 209a71e66fe), the unit's one definition: range_addressable over
+(* ashp is RomOutPlace's lib/A/W_shadow_pin.v, the unit's one definition: range_addressable over
    exactly [a, a + n) and the shadow hull, in every allocator state; glit_at_x states it over ARx (W_contract_x.v
    ashp_x), as the cx file does. *)
 Definition glit_at_x (i : nat) (l : list Z) : Prop :=
@@ -202,7 +203,7 @@ Hypothesis HLIT21 : glit_at_x 21 (RelayModel.K_GESTURE ++ [0]).
 (* the two literals lie in .rodata below the GOT word FR_GOT_GUARD = 0x9e658, |"%s %d "| + 1 = 7 and
    |"param_gesture"| + 1 + 8 = 22 bytes: the location premises M1 / M3 of the narrowed asnprintf_realizes_x
    (W_sites_x.v), which this abstract placement does not fix.  PB_fr decides it by vm_compute: SnpNarrowSites.v
-   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (commit 2f48fc47493's hypothesis, carried here). *)
+   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (a commit's hypothesis, carried here). *)
 Hypothesis HLITGOT : VAL (A_OBJ 20) + 7 <= FR_GOT_GUARD /\ VAL (A_OBJ 21) + 22 <= FR_GOT_GUARD.
 (* " end\0" (.str.4, A_lit_end5 = A_OBJ 31) in the same form, for gesture_end's / gestures_end's garr8 premise and its
    ashp (instance: W_shadow_pin_fr.v ashp_end5_5_fr): bytes, in_rom, ashp, the granule's tail; HEND5L above gives the
@@ -5890,12 +5891,12 @@ Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end
 Let RUNG := paj_run_x_xG B PST ARx LAWS R (G_RIG B RG) HGRIG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R (G_RIG B RG) HGRIG 0 [].
 Let BRR := paj_branch_xR (PI := PI) (R := R).
-(* W_rig_key.v:229 rig_lift_DR at R *)
+(* W_rig_key.v:230 rig_lift_DR at R *)
 Lemma rig_lift_DR_xR : forall XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_DR B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
 Proof. intros. eapply ajournal_gx_G_mono_xR; [exact rig_G_DR_RIG | eassumption]. Qed.
-(* W_rig_key.v:233 rig_lift_SL at R *)
+(* W_rig_key.v:234 rig_lift_SL at R *)
 Lemma rig_lift_SL_xR : forall XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_SL B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
@@ -5906,14 +5907,14 @@ Proof. intros. eapply ajournal_gx_G_mono_xR; [exact rig_G_SL_RIG | eassumption].
    each journal from [] to [] (a callee's post state is brought to [] by rk_hp0 / rk_jhp0_xR as it arrives). The wrappers
    keep the AR walk's argument order: rk_alb is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN). *)
 #[local] Notation ARh ly S W mem md := (ARx ly S (@nil Z) W mem md).
-(* W_rig_key.v:245 rk_jhp0 at R *)
+(* W_rig_key.v:246 rk_jhp0 at R *)
 Lemma rk_jhp0_xR : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k -> Hp' = [].
 Proof.
 intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k HJ.
 exact (HP0 _ _ _ _ _ _ (ajournal_gx_AR_xR SEGS B PST ARx _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HJ)).
 Qed.
-(* W_rig_key.v:251 rk_jAR at R *)
+(* W_rig_key.v:252 rk_jAR at R *)
 Lemma rk_jAR_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k ->
 ARh ly' S' W' mem' md'.
@@ -5921,7 +5922,7 @@ Proof.
 intros G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k HJ.
 exact (ajournal_gx_AR_xR SEGS B PST ARx _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HJ).
 Qed.
-(* W_rig_key.v:1855 rkk_jar at R *)
+(* W_rig_key.v:1856 rkk_jar at R *)
 Lemma rkk_jar_xR : forall cx fpos ly1 S1 W1 m1 md1 k1,
   ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx) (gFP cx) (gxly cx) (gxS cx) [] (gxW cx) (gxmem cx) (gxmd cx) [(1, fpos)] ly1 S1 [] W1 m1 md1 k1 ->
   ARh ly1 S1 W1 m1 md1 /\ In (1, fpos) (frames S1).
@@ -5931,7 +5932,7 @@ Proof.
   destruct HJ' as (HAR & _ & _ & _ & _ & Hfrs & _).
   split; [exact HAR|]. rewrite Hfrs. apply in_or_app. left. left. reflexivity.
 Qed.
-(* W_rig_key.v:1866 rkk_gin at R *)
+(* W_rig_key.v:1867 rkk_gin at R *)
 Theorem rkk_gin_xR : forall cx i n r F FL fpos qd cB OB capB e1 h1 ev LB c1 O1 cap1 ks Ed f c2 O2 cap2 out2 spent
   ly1 S1 W1 m1 md1 k1 m2,
   GBASE B ARx MT RP MMAX RG cx ->
@@ -5982,7 +5983,7 @@ Proof.
     cbn [length] in Hx. unfold shadow_addr, SHADOW_OFF in Hx. lia. }
   exact G18.
 Qed.
-(* W_rig_key.v:1918 rkk_live at R *)
+(* W_rig_key.v:1919 rkk_live at R *)
 Theorem rkk_live_xR : forall cx F FL fpos ly1 S1 W1 m1 md1 k1 m2 md2 k2,
   GBASE B ARx MT RP MMAX RG cx ->
   ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx) (gFP cx) (gxly cx) (gxS cx) [] (gxW cx) (gxmem cx) (gxmd cx) [(1, fpos)] ly1 S1 [] W1 m1 md1 k1 ->
@@ -6019,7 +6020,7 @@ Proof.
   apply (alock_at_kept RG W1 m1 W1 m2 true HL). intros r Hr a Ha. destruct Hr as [<-|[]].
   apply KC. cbn [fst snd] in Ha. apply (rkk_glob cx a HB). tauto.
 Qed.
-(* W_rig_key.v:2315 rk_callS at R *)
+(* W_rig_key.v:2316 rk_callS at R *)
 Lemma rk_callS_xR : forall G W (regsc : bvmap 5 word) memc pc STK sp0 FP ly S W0 mem md own lyc Sc mdc k STK1 FP1 (o : Z) raw ch1
 (K : alayout -> astate -> world SEGS -> bvmap 5 word -> (word -> option byte) -> Model -> Prop),
 gx_ok SEGS B G ->
@@ -6061,7 +6062,7 @@ change own with ([] ++ own).
 eapply (ajournal_gx_sub_xR SEGS B PST ARx LAWS pa_segs_low R_trans); [exact HJ | exact HJ1 | lia | lia | lia | | exact HGx | exact HF].
 intros a (r & Hr & _). destruct Hr.
 Qed.
-(* W_rig_key.v:2378 rk_gx_keep_high at R *)
+(* W_rig_key.v:2379 rk_gx_keep_high at R *)
 Lemma rk_gx_keep_high_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
 gx_ok SEGS B G -> ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k ->
 forall a, alloc_ceiling <= a < 2 ^ 64 -> ~ (sp0 + XO - (STK + XO) <= a < sp0 + XO) ->
@@ -6073,14 +6074,14 @@ pose proof asan_consts as (C1 & _).
 apply (aview_gagree SEGS G _ _ _ a Hag). apply inGb_false. rewrite unsigned_lit_small by lia. intros HGa.
 pose proof (inG_low SEGS B pa_segs_low G a HGx HGa) as HL. unfold kLowMemEnd in HL. lia.
 Qed.
-(* W_rig_key.v:2389 rk_gx_ly_top at R *)
+(* W_rig_key.v:2390 rk_gx_ly_top at R *)
 Lemma rk_gx_ly_top_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k -> ly_top ly' = ly_top ly.
 Proof.
 intros G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k (_ & _ & (memS & HJi & _) & _).
 pose proof HJi as (_ & Hly & _). destruct Hly as (_ & _ & _ & _ & _ & _ & _ & _ & ET & _). exact ET.
 Qed.
-(* W_rig_key.v:2398 rk_chain2p at R *)
+(* W_rig_key.v:2399 rk_chain2p at R *)
 Lemma rk_chain2p_xR : forall cx own ly1 S1 W1 m1 md1 k1,
 GBASE B ARx MT RP MMAX RG cx ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx) (gFP cx) (gxly cx) (gxS cx) [] (gxW cx) (gxmem cx) (gxmd cx) own ly1 S1 [] W1 m1 md1 k1 ->
@@ -6104,7 +6105,7 @@ apply (achain_push (gxly cx) (aview SEGS (w_H (gxW cx)) (gxmem cx))); [exact Hch
 - replace (gsp0 cx) with (8 * (2 * (gsp0 cx / 16))) by (pose proof (Z.div_mod (gsp0 cx) 16 ltac:(lia)); lia).
   rewrite Z.mul_comm. apply Z_mod_mult.
 Qed.
-(* W_rig_key.v:2422 rk_chain2 at R *)
+(* W_rig_key.v:2423 rk_chain2 at R *)
 Lemma rk_chain2_xR : forall cx own ly1 S1 W1 m1 md1 k1,
 GBASE B ARx MT RP MMAX RG cx ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx) (gFP cx) (gxly cx) (gxS cx) [] (gxW cx) (gxmem cx) (gxmd cx) own ly1 S1 [] W1 m1 md1 k1 ->
@@ -6117,7 +6118,7 @@ destruct (Z_lt_le_dec (gsp0 cx) (ly_top ly1 - 16)) as [Hlt | Hge].
 - exists ((gsp0 cx, raZ (gxregs cx), s0Z (gxregs cx)) :: gxch cx). exact (rk_chain2p_xR cx own ly1 S1 W1 m1 md1 k1 HB HJ V1 V8 Hlt).
 - exists []. left. split; [right; left; lia | reflexivity].
 Qed.
-(* W_rig_key.v:2523 rk_keep_blk at R *)
+(* W_rig_key.v:2524 rk_keep_blk at R *)
 Lemma rk_keep_blk_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k p n i,
 gx_ok SEGS B G -> ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k ->
 In (p, n) (ablocks B ly S) -> In (p, n) (ablocks B ly' S') -> 0 <= i < req_size n -> ~ inFP FP (p + i) ->
@@ -6133,7 +6134,7 @@ destruct (HGx _ HGa) as [Hi' _].
 pose proof (rk_boi ly' S' W' mem' md' p n HAR0 H2) as Hoff.
 pose proof (pa_img_range _ Hi') as HR. unfold off_img in Hoff. lia.
 Qed.
-(* W_rig_key.v:2539 rk_ge_blk at R *)
+(* W_rig_key.v:2540 rk_ge_blk at R *)
 Lemma rk_ge_blk_xR : forall XO OUT STK sp0 ly1 S1 W1 m1 md1 ly2 S2 W2 m2 md2 k cap out cap' out' rest p n,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) XO OUT STK sp0 (ablocks_fp (aout_blks cap out)) ly1 S1 [] W1 m1 md1 [] ly2 S2 [] W2 m2 md2 k ->
 ARh ly1 S1 W1 m1 md1 ->
@@ -6152,7 +6153,7 @@ assert (Hin'1 : In (p', n') (ablocks B ly1 S1)) by (apply (Permutation_in _ (Per
 assert (Hne : (p, n) <> (p', n')) by (intros E; rewrite E in Hno; exact (Hno Hin')).
 pose proof (rk_blk_apart _ _ _ _ _ _ _ HAR Hin Hin'1 Hne) as Hd. cbn [fst snd] in Hd. lia.
 Qed.
-(* W_rig_key.v:2558 rk_ge_call at R *)
+(* W_rig_key.v:2559 rk_ge_call at R *)
 Lemma rk_ge_call_xR : forall W regsc memc mdc STK sp0 FP ly S W0 mem md own lyc Sc k raw c O mx no cap out x q m (o : Z) ch1,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] STK sp0 FP ly S [] W0 mem md own lyc Sc [] W memc mdc k ->
 spZ regsc = sp0 + o -> o mod 16 = 0 -> o <= 0 -> GE_STK - o <= STK ->
@@ -6222,7 +6223,7 @@ exists ly2, S2, regs2, mem2, md2, k1, out', kg. split; [reflexivity|]. split; [e
 split; [exact HJc2|]. split; [exact HJs|]. split; [exact HP2|]. split; [exact HA|]. split; [exact HM|]. split; [exact HRM2|].
 split; [exact HPm | exact HO].
 Qed.
-(* W_rig_key.v:2628 rk_free at R *)
+(* W_rig_key.v:2629 rk_free at R *)
 Lemma rk_free_xR : forall G W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k pa n (o : Z) raw ch,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R G 0 [] STK sp0 FP ly S [] W0 mem md own lyc Sc [] W memT mdc k ->
 In (pa, n) (ablocks B lyc Sc) ->
@@ -6263,7 +6264,7 @@ split; [apply (ajournal_gx_pack_xR SEGS B PST ARx G 0 [] STK sp0 FP ly S [] W0 m
 split; [exact HP2|]. split; [exact HL|]. split; [exact HFr|]. split; [exact HK|]. split; [exact HM|]. split; [exact HRM2|].
 split; [exact HE | exact HPr].
 Qed.
-(* W_rig_key.v:2930 rk_fpos_eq at R *)
+(* W_rig_key.v:2931 rk_fpos_eq at R *)
 Lemma rk_fpos_eq_xR : forall cx p1 p2 ly S W m md k m' md' k',
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx) (gFP cx) (gxly cx) (gxS cx) [] (gxW cx) (gxmem cx) (gxmd cx) [(1, p1)] ly S [] W m md k ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx) (gFP cx) (gxly cx) (gxS cx) [] (gxW cx) (gxmem cx) (gxmd cx) [(1, p2)] ly S [] W m' md' k' ->
@@ -6273,7 +6274,7 @@ intros cx p1 p2 ly S W m md k m' md' k' (_ & _ & (memS1 & HJ1 & _) & _) (_ & _ &
 pose proof HJ1 as (_ & _ & _ & _ & _ & F1 & _). pose proof HJ2 as (_ & _ & _ & _ & _ & F2 & _).
 rewrite F1 in F2. cbn [app] in F2. injection F2 as E. exact E.
 Qed.
-(* W_rig_key.v:3721 rkk_jx_img at R *)
+(* W_rig_key.v:3722 rkk_jx_img at R *)
 Lemma rkk_jx_img_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
   ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k ->
   forall a, in_img SEGS a -> ~ Exists (in_zr a) (as_owned_static B) -> ~ (as_errno B <= a < as_errno B + 4) ->
@@ -6285,7 +6286,7 @@ Proof.
   pose proof (pa_segs_low a Hi) as HL.
   apply (aview_gagree SEGS G _ _ _ a Hag). apply inGb_false. rewrite unsigned_lit_small by (unfold kLowMemEnd in HL; lia). exact Hg.
 Qed.
-(* W_rig_key.v:3732 rkk_jx_high at R *)
+(* W_rig_key.v:3733 rkk_jx_high at R *)
 Lemma rkk_jx_high_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
   gx_ok SEGS B G -> ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k ->
   forall a, alloc_ceiling <= a < 2 ^ 64 -> ~ (sp0 + XO - (STK + XO) <= a < sp0 + XO) ->
@@ -6297,7 +6298,7 @@ Proof.
   apply (aview_gagree SEGS G _ _ _ a Hag). apply inGb_false. rewrite unsigned_lit_small by lia. intros HGa.
   pose proof (inG_low SEGS B pa_segs_low G a HGx HGa) as HL. unfold kLowMemEnd in HL. lia.
 Qed.
-(* W_rig_key.v:3743 rkk_jx_blk at R *)
+(* W_rig_key.v:3744 rkk_jx_blk at R *)
 Lemma rkk_jx_blk_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k p n i,
   gx_ok SEGS B G -> ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k ->
   In (p, n) (ablocks B ly S) -> In (p, n) (ablocks B ly' S') -> 0 <= i < req_size n -> ~ inFP FP (p + i) ->
@@ -6313,7 +6314,7 @@ Proof.
   pose proof (rk_boi ly' S' W' mem' md' p n HAR0 H2) as Hoff.
   pose proof (pa_img_range _ Hi') as HR. unfold off_img in Hoff. lia.
 Qed.
-(* W_rig_key.v:3758 rkk_jx_frame at R *)
+(* W_rig_key.v:3759 rkk_jx_frame at R *)
 Lemma rkk_jx_frame_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k cid pos a,
   gx_ok SEGS B G -> ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k ->
   In (cid, pos) (frames S) ->
@@ -6327,7 +6328,7 @@ Proof.
   apply (aview_gagree SEGS G _ _ _ a Hag). apply inGb_false. rewrite unsigned_lit_small by lia.
   intros HGa. exact (Hni (proj1 (HGx a HGa))).
 Qed.
-(* W_rig_key.v:3771 rkk_jx_lyF at R *)
+(* W_rig_key.v:3772 rkk_jx_lyF at R *)
 Lemma rkk_jx_lyF_xR : forall G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
   ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k ->
   ly_F ly' = ly_F ly /\ frames S' = own ++ frames S.
@@ -6336,7 +6337,7 @@ Proof.
   destruct HJi as (_ & Hly & _ & _ & _ & Hfr & _). destruct Hly as (_ & _ & _ & _ & _ & HF & _).
   split; [exact HF | exact Hfr].
 Qed.
-(* W_rig_key.v:4016-4688 Section e at R *)
+(* W_rig_key.v:4017-4689 Section e at R *)
 Section eR.
 Variables (cx : gcx) (i n r : nat) (F FL fpos : Z) (qd : list (rentry * hsrc)) (cB : ctl) (OB : list byte) (capB : Z)
   (e1 : rentry) (h1 : hsrc) (ev : Z) (LB : list byte) (c1 : ctl) (O1 : list byte) (cap1 : Z)
@@ -7010,7 +7011,7 @@ Proof.
   split; [apply ek_VH8_xR; [lia | lia | exact H32] | apply ek_VH8_xR; [lia | lia | exact H88]].
 Qed.
 End eR.
-(* W_rig_key.v:4693 rkk_end_mem at R *)
+(* W_rig_key.v:4694 rkk_end_mem at R *)
 Theorem rkk_end_mem_xR : forall cx i n r F FL fpos qd cB OB capB e1 h1 ev LB c1 O1 cap1 ks Ed f c2 O2 cap2 out2 spent
   ly1 S1 W1 mA mdA kA ly2 S2 W2 mB mdB kB out2' mB' ly3 S3 W3 mC mdC l1 l2 slo shi mD mdD kD,
   let d0 : Z * list byte * list byte := (0, [], []) in
@@ -7086,7 +7087,7 @@ Proof.
     ly1 S1 W1 mA mdA kA ly2 S2 W2 mB mB' mdB kB out2' ly3 S3 W3 mC mD mdC mdD kD l1 l2 slo shi
     HB HJ1 HG HAP1 HF1 HL1 HLS1 H32 H88 HJG HAP12 HPG HO2 HK2 HP2 HAR3 HL2 HL3 HCK Hshi HERR HAPF HK3 HP3 HNH HSL HJ3).
 Qed.
-(* W_rig_key.v:4769 rig_key_proof at R *)
+(* W_rig_key.v:4770 rig_key_proof at R *)
 Theorem rig_key_proof_xR : rig_key_stmt_xR B PST ARx MT RP MMAX RG CTX_AFREE R.
 Proof.
 unfold rig_key_stmt_xR. intros cx i n r W1 c1 HB HC HI KP KE KR.
@@ -8176,7 +8177,7 @@ psrr_branch_tok RUNG BRR HS SHOKa rk_Bspan.
     split; [exact RLS|].
     exact HGOf.
 Qed.
-(* W_rig_key.v:5861 rig_keys_proof at R *)
+(* W_rig_key.v:5862 rig_keys_proof at R *)
 Theorem rig_keys_proof_xR : rig_keys_stmt_xR B PST ARx MT RP MMAX RG CTX_AFREE R.
 Proof.
 unfold rig_keys_stmt_xR. intros KEY cx i n r. revert n.

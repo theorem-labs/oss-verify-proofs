@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG0n.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: depot_cells, aareas, depot_traces, core_extents and perm_maps are picked by DepotCfg.depot_has_trace (one-trace text when true); depot_empty_ok added. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0n.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_qdisc. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0n.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_qdisc. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the reserved ledger; segments_reserved's filter of the kernel-installed segments); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -445,7 +446,10 @@ match l with
 | e :: t => Z.eqb (fst e) lo && Z.leb 0 (snd e) && Z.ltb (lo + snd e) (2 ^ 64) && tiles_b t (lo + snd e) hi
 end.
 Definition img_covered_b (segs : list Segment) (img : Z * Z) : bool :=
-Z.leb 0 (fst img) && tiles_b (map seg_resv_z segs) (fst img) (fst img + snd img).
+(* 08b1429: Run.segments_reserved maps over `filter (fun s => negb (seg_kernel_map s)) segs`
+   (Run.v:253-254), so the boolean gate must tile the SAME list; the kernel's own maps -- the
+   vDSO/vvar pair that run_segments appends -- are not the binary's reservations. *)
+Z.leb 0 (fst img) && tiles_b (map seg_resv_z (filter (fun s => negb (seg_kernel_map s)) segs)) (fst img) (fst img + snd img).
 Lemma tiles_b_cover : forall l lo hi a, 0 <= lo -> tiles_b l lo hi = true -> lo <= a < hi ->
 exists e, In e l /\ fst e <= a < fst e + snd e /\ 0 <= fst e /\ fst e + snd e < 2 ^ 64.
 Proof.
@@ -607,7 +611,35 @@ Definition vm_takes (md : Model) (e : Z * Z) : Prop :=
 Record ALedger (S : astate) (md : Model) : Prop := {
 al_img : forall sg, In sg segs -> fst (ly_img ly) <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly) + snd (ly_img ly);
 al_limit : ASAN_VM_LMIN <= vm_limit (m_vmmaps md);
-al_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+(* 75d69e00: the launch's reserved ledger is [State.init_reserved] -- the image's
+   segments with the vvar/vDSO pair appended (State.v:7716-7721, equation
+   [State.vm_reserved_init_model] State.v:7844, read at the contract sha).  An
+   equation to [segments_reserved] alone is false of every launch. *)
+(* 75d69e00, SECOND CONJUNCT.  The ledger now ends with the vvar/vDSO pair, so a
+   consumer that needs a range of the primary reservation to be free of the WHOLE
+   ledger needs the pair's extent too, and that is NOT derivable from [layout_ok]:
+   [lo_high]/[prim_hi] give only [ly_prim + kPrimResvSize <= ASAN_CEIL], and in the
+   ordinary case ASAN_CEIL and [vdso_top] are the SAME value, while the pair occupies
+   the top [vdso_len kb] bytes of that extent (State.v:6540-6545, bound :3847).  It IS
+   true at the concrete construction sites, where [ly_prim] is the model-placed
+   reservation rather than a layout constant, so it is carried as a conjunct of this
+   field: proved once at construction and transported unchanged.  PACKED into
+   [al_reserved] rather than added as a sixteenth field, so the record KEEPS ITS
+   ARITY 15 and every positional [destruct L as [L1 .. L15]] site is untouched.
+   [al_reseq] below projects the equation back out for the rewrite consumers. *)
+al_reserved : vm_reserved (m_vmmaps md)
+  = segments_reserved segs ++ vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))
+  /\ region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)))
+       (w64 (ly_prim ly)) (w64 kPrimResvSize) = true
+  (* 727298f3: two more facts of the same kind, proved at construction from [cs_ok]
+     ([co_mres], [co_vlo]) and transported unchanged: the pointer-array window misses the
+     pair (A/AFjt.v's [nodeV] places a map in it; libdiginet/fuzz_codec's conjunct), and
+     every entry of the pair starts at or above high memory (0x10007fff8000 = YK09.KHI),
+     above both shadows ([YG0g.madvise_gate]). *)
+  /\ region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)))
+       (w64 (ly_Q ly)) (w64 kPtrArrayResv) = true
+  /\ Forall (fun iv => 0x10007fff8000 <= bv_unsigned (fst iv))
+       (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)));
 al_prim : exists pieces, prim_pieces_ok S pieces /\
 (forall p, In p pieces <-> (In (wiv p) (vm_maps (m_vmmaps md)) /\ 0 < snd p /\ ly_prim ly <= fst p /\ fst p + snd p <= ly_prim ly + kPrimResvSize));
 al_Q : In (wiv (ly_Q ly, kPtrArrayResv)) (vm_maps (m_vmmaps md));
@@ -630,6 +662,28 @@ exists e, In e (segments_reserved segs) /\ bv_unsigned (fst e) <= a < bv_unsigne
 al_shna : region_free (vm_noaccess (m_vmmaps md)) (w64 kLowShadowBeg) (w64 (kLowShadowEnd - kLowShadowBeg)) = true /\
 region_free (vm_noaccess (m_vmmaps md)) (w64 kHighShadowBeg) (w64 (kHighShadowEnd - kHighShadowBeg)) = true
 }.
+(* The equation half of [al_reserved], for the consumers that rewrite with it.
+   Named rather than spelled [proj1] at each site because the field's argument
+   count differs inside and outside the Section. *)
+Lemma al_reseq : forall S md, ALedger S md ->
+vm_reserved (m_vmmaps md)
+= segments_reserved segs ++ vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)).
+Proof. intros S md L. exact (proj1 (al_reserved _ _ L)). Qed.
+(* The vDSO half: the primary-reservation window misses the vvar/vDSO pair. *)
+Lemma al_vdso_window : forall S md, ALedger S md ->
+region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)))
+  (w64 (ly_prim ly)) (w64 kPrimResvSize) = true.
+Proof. intros S md L. exact (proj1 (proj2 (al_reserved _ _ L))). Qed.
+(* The pointer-array window misses the pair. *)
+Lemma al_vdso_qwindow : forall S md, ALedger S md ->
+region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)))
+  (w64 (ly_Q ly)) (w64 kPtrArrayResv) = true.
+Proof. intros S md L. exact (proj1 (proj2 (proj2 (al_reserved _ _ L)))). Qed.
+(* Every entry of the pair starts in high memory. *)
+Lemma al_vdso_hi : forall S md, ALedger S md ->
+Forall (fun iv => 0x10007fff8000 <= bv_unsigned (fst iv))
+  (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))).
+Proof. intros S md L. exact (proj2 (proj2 (proj2 (al_reserved _ _ L)))). Qed.
 (* The extents a first StackDepotPut's new maps must miss (git-lead's AD3j.first_put_avoid, the same text). *)
 Definition kd_avoid (S : astate) : list (Z * Z) :=
 [(ly_prim ly, kPrimResvSize); (ly_Q ly, kPtrArrayResv); (ly_T ly, kThreadObjSize); (ly_F ly, kFakeStackSize);
@@ -645,7 +699,13 @@ Qed.
 Lemma img_takes : forall S md, ALedger S md -> 0 < snd (ly_img ly) -> vm_takes md (ly_img ly).
 Proof.
 intros S md L P. left. split; [exact P|]. intros a Ha. destruct (al_imgcov _ _ L a Ha) as (e & He & R).
-apply Exists_exists. exists e. split; [apply in_or_app; left; rewrite (al_reserved _ _ L); exact He | exact R].
+(* 75d69e00: [al_reserved] is the packed two-conjunct field; this site wants the
+   equation only.  r2 (farm/...-d425f2) showed `rewrite` finds no subterm here --
+   the goal is an [Exists] over the ledger, not the ledger itself -- so SUBSTITUTE
+   the equation into the membership proof instead of rewriting the goal. *)
+apply Exists_exists. exists e. split;
+  [apply in_or_app; left; rewrite (al_reseq S md L); apply in_or_app; left; exact He
+  | exact R].
 Qed.
 Lemma ceil_top_init_sp_ok : forall md, YM05.ceil_of_top (alloc_top (m_vmmaps md)) -> YK06.init_sp_ok (m_vmmaps md).
 Proof.

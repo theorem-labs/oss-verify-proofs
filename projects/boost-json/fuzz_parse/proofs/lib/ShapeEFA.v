@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the run's segment list (run_segments), the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -64,14 +65,29 @@ Section WithCfg.
   Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
 Context {SC : StepCfg}.
 
-Lemma realizes_not_dies : ltac2:(zQ "h30!md!p1!hh5!ijb!ik2!ik6!io5!isc!it8!iu3!iue!ivd!jg8!jk8!jl5!jp8!hge!jq4!jua>4segs@1$2$8>2pc$4>2ph$7>2sp@1$1@1$0#k0>4brk0@1$1@1$0#k0>2mb@1$1@1$0#k0>3rnd$d>3lim$5>3inp$e>1T$h0>0@4$h1^a?2SC@9$a^a^9^8^7^6^5^4^3^2^1>0@1$h2^2@1$3@1$6@5$c@1$f?2SC@3$9^c^b^a^5@4$b^9^8^7^6^4").
+Lemma realizes_not_dies : forall segs pc ph sp brk0 mb rnd lim inp T,
+  realizes (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
+  kill_free T ->
+  ~ dies_by_signal (run_scfg the_scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
-  (intros segs pc ph sp brk0 mb rnd lim inp T Hrz HK nd_i1; ndestruct nd_i1 as (tr & sig & fs & Htr & Hin)).
-  cbn in Htr. apply (realizes_obs_iff segs _ T Hrz tr) in Htr.
+  intros segs pc ph sp brk0 mb rnd lim inp T Hrz HK (tr & sig & fs & Htr & Hin).
+  cbn in Htr. apply (realizes_obs_iff (run_segments segs inp sp mb) _ T Hrz tr) in Htr.
   pose proof (HK tr Htr _ Hin) as Hk. discriminate Hk.
 Qed.
 
-Theorem shape_strong_equiv_ef_abort : ltac2:(zQ "h10!md!p1!hh5!ik2!ik6!isc!it8!iu3!iue!ivd!jk8!jq4!jv7!jl5!jp8!hge!jua>bsource_segs@1$2$6>3rpc$3>3rph$5>3rsp@1$1@1$0#k0>4rbrk@1$1@1$0#k0>3rmb@1$1@1$0#k0>4rrnd$a>4rlim$4>btarget_segs@1$2$6>3apc$3>3aph$5>3asp@1$1@1$0#k0>4abrk@1$1@1$0#k0>3amb@1$1@1$0#k0>4arnd$a>4alim$4>1T$f>3inp$d>0@4$b^h2?2SC@9$8^h2^h1^h0^f^e^d^c^b^1^2>0@4$b^b?2SC@9$8^b^a^9^8^7^6^5^4^2^3>0@1$h0^4@8$c@1$e?2SC^e^6@3$7^h5^h4^h3@3$7^d^c^b@4$9^h2^h1^h0^f@4$9^a^9^8^7^4").
+Theorem shape_strong_equiv_ef_abort :
+  forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
+         target_segs apc aph asp abrk amb arnd (alim : Z)
+         (T : TSet) (inp : ProcInput),
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  realizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
+  kill_free T ->
+  strong_equiv_error_free_budgets_scfg_abort the_scfg rlim alim
+    (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
     T inp Hsource Htarget HK.

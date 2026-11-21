@@ -5,7 +5,7 @@ From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib Require Import Img0.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* Ported from libreac/fuzz_decode lib/Prog/reac_frame_counter_c.v (origin/ossv/recipes 25e3d17bdb5, blob a2a231d8f7b3):
+(* Ported from libreac/fuzz_decode lib/Prog/reac_frame_counter_c.v (blob a2a231d8f7b3):
    the text is unchanged except the name and the address. repace_wire.c:69-72. *)
 Definition RP_COUNTER : Z := 0x13608.
 

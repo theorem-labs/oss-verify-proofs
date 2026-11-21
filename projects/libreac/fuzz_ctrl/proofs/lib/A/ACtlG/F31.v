@@ -5,9 +5,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module names changed; 85 of its 151 lines of code are new or changed and 3787 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match_lib.v, with its module paths and module names changed; 717 of its 758 lines of code are new or changed and 110 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F31.v, with its module paths and module names changed; 494 of its 571 lines of code are new or changed and 681 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F31.v -- GLUE for stage seg_F31 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    Hypothesis seg_F31).  Written by a Theorem Labs lane; single writer.  rule 24: no function proved (stage
-   glue of a walk; the released-proof position of LLVMFuzzerTestOneInput was settled for this unit: At ossv/recipes c5e779efe8c (2026-10-31), no released proof of it outside this unit).
+   glue of a walk; the released-proof position of LLVMFuzzerTestOneInput was settled for this unit: At (2026-10-31), no released proof of it outside this unit).
    Pattern: glue-pattern.md (a working note, not in this delivery) (G1-G5), worked example lib/A/ACtlG/A5.v.
 
    WHAT IT PROVES
@@ -16,13 +17,13 @@
        CF POST (ix_cut C_A82798_at [Z.of_nat j])
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's seg_F31.  The entry
    is C_A82798_at j (pc 0x82798); the two exits are C_A827d8_at j (the bcmp wrapper returned) and C_A82800_at j (the
-   target of `bnez a0` at 0x82798).  The source segment is Seg/F31.v seg_F31 :550 (6a74d5929d2).
+   target of `bnez a0` at 0x82798).  The source segment is Seg/F31.v seg_F31 :550.
 
    THE RUNS LIFTED (lib/A/Prog/Seg/F31F.v, this worker's v1.9 footprint re-run of Seg/F31.v)
      F31F.f31n_evt_F   classify = None (a0 = -1): the branch to 0x82800, register-only.
      F31F.f31c_norm_F_on  classify = Some e (a0 = 0): the three byte checks fall through and the bcmp wrapper at
                        0x827d4 compares the 6 source bytes at fr + 452 with our[] at fr + 2624; the wrapper writes only
-                       its stack window [sp - 4560, sp).  Route (C) form (a working branch 2f98bce6530): its
+                       its stack window [sp - 4560, sp).  Route (C) form (a working branch): its
                        callee premise `bcmp_wrap_F_at_on RNG` (bcmp_wrap_c_on.v's narrowed footprint contract at one
                        footprint) is DISCHARGED AT THE CALL by a Theorem Labs lane's A.Prog.bcmp_wrap_on.bcmp_wrap_holds_F_on
                        (Qed) through F31F.F31BWO.bcmp_wrap_F_at_on_owner; its shadow premise is

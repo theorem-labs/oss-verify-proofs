@@ -4,19 +4,20 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/As/AllocWalkKit.v, with its module paths and module names changed; 353 of its 387 lines of code are new or changed and 128 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Tk/AW/SmLeaf.v, with its module paths, module names and numbers changed; 359 of its 393 lines of code are new or changed and 353 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Tk/AW/Sm6.v, with its module paths, module names and numbers changed; 131 of its 252 lines of code are new or changed and 272 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/asan_stack_malloc_0F.v -- fuzz_ctrl image B (asan-ubsan): __asan_stack_malloc_0 (0x3d6f4) in footprint
    form.  asan_stack_malloc_0_holds_F_on proves asan_stack_malloc_0_contract_F_on (asan_stack_malloc_cF_on.v) by the
    walk; asan_stack_malloc_0_holds_F proves asan_stack_malloc_0_contract_F (asan_stack_malloc_cF.v) by that file's
    bridge asan_stack_malloc_contract_F_of_F_on.  Neither statement is changed here.
    rule 24: no function proved for the first time.  fuzz_grant proves this walk at the footprint level.
 
-   DONOR.  a working branch dac1040b24ec, proofs/libreac/fuzz_grant/lib/B/Prog/asan_stack_mallocF.v:
+   DONOR.  a working branch, proofs/libreac/fuzz_grant/lib/B/Prog/asan_stack_mallocF.v:
    rng_sh_frame0 (lines 166-178), Section LoopF0 / probeF0 (664-721) and asan_stack_malloc_0_holds_Fcan (841-1015),
-   itself relocated from fuzz_pcap lib/B/Prog/asan_stack_malloc_0F.v at 78bd0706625 (the donor's header, lines
+   itself relocated from fuzz_pcap lib/B/Prog/asan_stack_malloc_0F.v (the donor's header, lines
    19-23).  The class-independent part (cell helpers, TLS callees, MemToShadow) is this unit's
    asan_stack_mallocF_kit.v (same donor, lines 53-165 and 202-662).
 
-   STATEMENTS.  The donor proves grant's asan_stack_malloc_0_contract_Fcan (asan_stack_mallocF_c.v at dac1040b24ec).
+   STATEMENTS.  The donor proves grant's asan_stack_malloc_0_contract_Fcan (asan_stack_mallocF_c.v).
    This unit's asan_stack_malloc_contract_F_on has the same premises and post, in the same order, except:
    - shadow: `shadow_rw m` is `shadow_rw_on (asan_stack_malloc_shadow_R FS 0) m` (asan_stack_malloc_c_on.v);
    - side stack: in place of grant's single `rng RNG FS FS_SIZE` it has two regions, the header

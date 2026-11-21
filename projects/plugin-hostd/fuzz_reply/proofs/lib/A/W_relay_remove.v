@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: the ASSEMBLY of the ASan walk of fuzz_reply's relay_remove (fuzz_reply.asan
    0x83de4): pb_relay_remove_x : rr_spec_x (first written as the AR pb_relay_remove : rr_spec, deleted: see the next
    note), from the segment statements of lib/A/W_relay_remove_cx.v composed by W_rr_all.v rr_all.  Applied: W_rr_pro.v rr_pro, W_rr_scan.v rr_scan / rr_scans (a Theorem Labs lane), W_rr_match.v rr_match
-   (a Theorem Labs lane's MATCH, commit a5a15c9620a), W_rr_tail.v rr_tail.  No segment is open.  The Section block
+   (a Theorem Labs lane's MATCH), W_rr_tail.v rr_tail.  No segment is open.  The Section block
    is regenerated from the cx file whenever the cx file changes. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)) in the room form
    (a Theorem Labs lane, lane RR_x): this file proves pb_relay_remove_x : rr_spec_x over ANY allocator relation ARx with its
-   laws (Section c, the cx file's generic block), at W8's stack constants (commit b9052387bcb, lib/A/W_contract_x.v:
+   laws (Section c, the cx file's generic block), at W8's stack constants (lib/A/W_contract_x.v:
    rr_spec_x at RR_STK_x = RR_STK + 128, the drain at DRAIN_STK_x = DRAIN_STK + 128, room for the strndup
    interceptor's inner malloc below the drain's frame).  The AR theorem pb_relay_remove : rr_spec and its
    re-derivation Section cAR are DELETED (a Theorem Labs lane's ruling 10:34Z, option 1): the x -> AR bridge rr_spec_x_AR0 is
    false at RR_STK_x and was removed with it, and nothing on the window applied pb_relay_remove (the AR arms keep
    rr_spec as a hypothesis; top_x takes rr_spec_x). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -158,9 +159,9 @@ Qed.
 (* ---- route R (RULE-SHAPES.md (sha256 2e856ce788dd; internal record) sec 0): THE WALK AT A WORLD RELATION R.  The segments' R statements give
    W_contract_xR_relay.rr_spec_xR (a Theorem Labs lane's) by W_rr_all.rr_all_xR; MATCH is W_rr_match.rr_match_xR over the hops.
    The pieces (G8-SPLIT.md sha256 c3dda82fe6c5; internal record): PRO / SCAN / SCANS and hop GE are a Theorem Labs lane's rr_pro_xR / rr_scan_xR / rr_scans_xR /
-   rr_m_ge_xR (c1089c75e734; GE's own premises GSE_R / R_IMG); TAIL and hops DRAIN / FREE are a Theorem Labs lane's rr_tail_xR
-   (950778133741), rr_m_drain_xR (d6c7b54f4237; its premise DRAIN_R) and rr_m_free_xR (03c312b6b482; the crew's free
-   rules at R, AFREE_R / AFREEN_R .. RO, RO_ARx); hop CPY is a Theorem Labs lane's rr_m_cpy_xR (1d015fa2530c).  The
+   rr_m_ge_xR (GE's own premises GSE_R / R_IMG); TAIL and hops DRAIN / FREE are a Theorem Labs lane's rr_tail_xR,
+   rr_m_drain_xR (its premise DRAIN_R) and rr_m_free_xR (the crew's free
+   rules at R, AFREE_R / AFREEN_R .. RO, RO_ARx); hop CPY is a Theorem Labs lane's rr_m_cpy_xR.  The
    R premises below are the pieces' own, verbatim.  At R := wle, rr_spec_xR is rr_spec_x
    (W_contract_xR_relay.rr_spec_x_wle). ---- *)
 Section wR.
@@ -173,7 +174,7 @@ Hypothesis WLE_R : forall W W', @wle SEGS W W' -> R W W'.
 Hypothesis GSE_R : gse_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gestures_end).
 (* the R law of the image (a Theorem Labs lane 00:40Z, exact text): R adds no hidden byte inside the image *)
 Hypothesis R_IMG : forall (W W' : world SEGS) (a : word), R W W' -> in_img SEGS (bv_unsigned a) -> w_H W' a = true -> w_H W a = true.
-(* the free rules at R (crew lines, token-equal to W_gestures_end.v:296-299): what W_rr_m_free.rr_m_free_xR takes *)
+(* the free rules at R (crew lines, token-equal to W_gestures_end.v:297-300): what W_rr_m_free.rr_m_free_xR takes *)
 Variable RO : (word -> option byte) -> Prop.
 Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md -> RO mem.
 Hypothesis AFREE_R : afree_cf_rule_c_xR SEGS B PST ARx MT RP RO CTX_AFREE R.

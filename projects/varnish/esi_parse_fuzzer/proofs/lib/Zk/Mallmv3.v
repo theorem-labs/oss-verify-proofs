@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: auxv_ok_pres follows auxv_ok to the 27/29-pair auxv of LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -156,8 +157,8 @@ Lemma auxv_ok_pres : forall C m m' B,
   (forall a, B <= a -> ~ C a) -> (forall a, AUXV_CELL <= a < AUXV_CELL + 8 -> ~ C a) ->
   auxv_ok m' B.
 Proof.
-  (intros C m m' B; (first [ intro dR_4; dex10 dR_4 as av x3 x4 x5 hw x6 x11 x12 x23 rnd; dand4 dR_4 as C1 A1 A2 H | intro dR_4; dand14 dR_4 as av x3 x4 x5 hw x6 x11 x12 x23 rnd C1 A1 A2 H | intros (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & C1 & A1 & A2 & H) ]); intros HP HB HC).
-  exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros C m m' B (av & rs & v & rnd & C1 & A1 & A2 & HB0 & HBav & HAV & HBr & HR16 & HV & HR) HP HB HC.
+  exists av, rs, v, rnd. split; [|split; [|split; [|exact (conj HB0 (conj HBav (conj HAV (conj HBr (conj HR16 (conj HV HR))))))]]].
   - eapply pres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HC. lia.
   - eapply pres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
   - eapply pres_except_bytes_at; [exact HP| exact A2|]. intros a Ha. apply HB. lia.

@@ -6,10 +6,10 @@
      run lemma, f11_lu_evt :93, is the engine bridge lib.Lib Exec.evt -> UL evt, which records no address and has
      no footprint twin); the run is stepped INLINE inside seg_F11 under Tac_slot.sl_run (F11.v:800-948), so these
      two lemmas are cut mechanically out of the segment proof's own steps, as the brief prescribes for an inline
-     stretch.  Source at a working branch 3803efccea0
+     stretch.  Source at a working branch
      (blob 6235924c49ee6a73221a4ddd9042982052e3ea53);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    split (parent 23:50Z: split at EVERY call, never state a callee contract locally): the stretch calls
      record_sum_closes (0x83614) at 0x82284 and reac_identity_ingest (0x87e0c) at 0x82300.
      seg_F11_pre_F  re-runs F11.v lines 816-819 (0x8226c -> 0x83614, ra = 0x82288);

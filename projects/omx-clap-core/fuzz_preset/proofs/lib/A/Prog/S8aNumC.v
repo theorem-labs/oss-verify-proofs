@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 asan 1be0f53d, twin bff8519b), ex_value piece 5 (ev_number), lane C:
    ev_C_stmt of S8aNumCut.v, the sub-piece CS (+0x8c0, 0x83b64) -> CR (+0x924, 0x83bc8): in->scratch's shadow check,
    __asan_memcpy (scratch, x0 + i1, j - i1), in's shadow check, the scratch byte's 1-byte check and its NUL store,
@@ -328,7 +329,7 @@ Hypothesis LAWS : AR_laws_x segs B ARx hl.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Hypothesis ERRIMG : forall a, as_errno B <= a < as_errno B + 4 -> in_img segs a.
 
-(* ajournal_x_after_write (YCbqG.v:298-416) with errno allowed to change as well, Sc / Hpc / own unchanged:
+(* ajournal_x_after_write (YCbqG.v:299-417) with errno allowed to change as well, Sc / Hpc / own unchanged:
    the errno word is in the image, so below alloc_ceiling and the frame shadows, off every block and frame;
    the image and ly_extra clauses exclude it by their own premise. *)
 Lemma evc_journal_errno : forall STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc' mdc' (Wr : Z -> Prop),

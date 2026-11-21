@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 1917 of its 1994 lines of code are new or changed and 2709 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image A (fs.asan): the SECOND HALF of put's GROW arm (preset_file.c:454-476, A_put 0x8418c), the
    case `failed = 0 /\ cap < len + n + 1`: from the call of the PROGRAM function fuzz_realloc (A_fuzz_realloc
    0x829e8, ra = 0x84268) to the `ret` 0x84314, concluding lib/A/FSH_Fn_writer.v put_spec's post.
@@ -258,12 +259,12 @@ Qed.
 Section pgt. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
 (* S0's shadow-base cells (FSH_Base.v:119), the one interceptor contract the granted path calls (__asan_memcpy,
-   FSH_Rt.v FsRt's fr_memcpy field, as a working branch 49c7970f491's put walk takes it) and the image facts *)
+   FSH_Rt.v FsRt's fr_memcpy field, as a working branch's put walk takes it) and the image facts *)
 Hypothesis HSS : FsShadowSyms B.
 Hypothesis RT_memcpy : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Hypothesis IMG : fs_img_facts tfibsegs B.
 (* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/A/FSH_Fn_alloc.v, CTX-free with its
-   `cnt <> fail ->` room guards since a working branch 77f319b4b0e), discharged at composition. *)
+   `cnt <> fail ->` room guards since a working branch), discharged at composition. *)
 Hypothesis HREALLOC : fuzz_realloc_spec tfibsegs B.
 
 (* ---- put_spec's data, on the grow arm (failed = 0, cap < len + n + 1) ---- *)
@@ -476,7 +477,7 @@ Qed.
    (FSW_K3.fsw_ajournal_sub5, the callee's FP1 under fsw_fp_sub), ARU at the callee's heads U2, and the resume state
    pgt_ss1 on the memory after the call. FSW_K3.fsw_after_callFPU_args ties the frame top to the journal top sp0;
    put's journal top is ot > sp, so the state is built here with entry_st_ok_full as that lemma builds its own
-   (FSW_K3.v:386-427): the frame's 14 words and o's len / failed fields read off the call site and kept by the
+   (FSW_K3.v:387-428): the frame's 14 words and o's len / failed fields read off the call site and kept by the
    callee journal's frames clause (at or above alloc_ceiling, outside [sp - 112 - STK_fuzz_realloc, sp - 112)), the
    shadow-base cells from AR, then the nine re-seated callee-saved registers (st_ok_set_reg). *)
 Lemma pgt_resume : forall FP1 kc ly2 S2 U2 W2 regs2 mem2 md2 res d,

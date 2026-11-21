@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: free and free(NULL) are proved at the instance AS_InstX.KHX for every kernel-relation conjunct a heap call keeps (inst_free_stmt_X, inst_free_null_stmt_X), and inst_free_stmt and inst_free_null_stmt are those theorems at the conjunct that always holds. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,7 +16,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AsanAllocM
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsShadow AsConst AsIface AsDriverLaws AsSR AsChain AsUnwind FakeStackRep
      AllocWf AllocKit AllocBudget AllocRep AllocRepFacts AllocRepX SecLazy SecGap AsDepotInv AsDepotHash
      AG_WFHit AG_MallocModel AG_Frame AG_WriteSet AW_MallocBase AG_Malloc2 AG_MallocCold AG_MallocLarge3 AG_MallocAll AG_FreeNull
-     AG_Free2 AG_FreeTail AG_FreeTop AS_InstDefs AS_InstChain AS_InstLaws2 AS_InstHeap AsWalk CidBits AG_RecycleDefs.
+     AG_Free2 AG_FreeTail AG_FreeTop AS_InstDefs AS_InstX AS_InstChain AS_InstLaws2 AS_InstHeap AsWalk CidBits AG_RecycleDefs.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -221,11 +222,16 @@ Section Free.
               (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 AFREE_STUB) fc None m (seg_rom asegs)).
   Proof. intros until m. intros MI. unfold AFREE_STUB, AFREE_ICPT. step. apply evt_done. reflexivity. Qed.
 
-  Theorem inst_free_null_stmt : free_null_stmt_at (KHp p) AFREE_STUB.
+  (* free(NULL) at [KHX p X] for every [X] a heap call keeps; [inst_free_null_stmt] below is the
+     case of an [X] that always holds *)
+  Theorem inst_free_null_stmt_X : forall (Iv : config -> Prop) (Xk : ist -> config -> Prop),
+    ikeep Iv -> (forall x c, Xk x c -> Iv c) -> XKEEP Iv Xk -> free_null_stmt_at (KHX p Xk) AFREE_STUB.
   Proof.
-    unfold free_null_stmt_at. cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cf as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St KHp].
+    intros Iv Xk IKP XI XK.
+    unfold free_null_stmt_at. cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cf as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St KHX KHp].
     intros ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc msF m x LB lo B errv mo CH.
     intros VIS HP K CF AUX SPB ST CEIL LO ERR MI TP SP16 AC HCH.
+    destruct K as [K XPRE].
     destruct x as [s d]. cbn [i_s i_d] in *.
     unfold AsSR.VIS in VIS. unfold AsSR.AKREL in K. cbn [i_s cfg_model] in VIS, K. destruct K as [OK IKx]. destruct IKx as (AMX & DCOV & DTV).
     unfold Irauxv_ok in AUX. unfold AFREE_STACK in LO.
@@ -236,6 +242,8 @@ Section Free.
     unfold ILIVE_CNT_MAX, ADRV_CNT in LEN.
     (* [comment removed for export] *)
     unfold AsSR.SR.
+    (* the invariant [Iv] holds where the reach ends *)
+    apply (sr_keep_imp Iv _ _ IKP (XI _ _ XPRE)).
     eapply (evt_sreach_lazy_at asegs (a_L s) (a_S s) (a_Zr s) _ msF _ mo _ OK VIS); [apply free_stub_evt; exact MI|].
     cbv beta. intros msF1 mo1 OK1 SBM1 _ E1.
     pose proof (AMODELX_mat s mo mo1 AMX SBM1) as AMX1. pose proof (depot_cov_mat d mo mo1 DCOV SBM1) as DCOV1.
@@ -286,13 +294,18 @@ Section Free.
       split; [exact DAP|].
       split; [| exact PI'].
       intros sc Hsc. exact (DSEC sc Hsc). }
-    apply sreach_done. unfold AsIface.free_null_post.
+    apply sreach_done. intros IPOST. unfold AsIface.free_null_post.
     exists t0', t1', t2', a0', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6', m', (IST s' d).
-    cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cf as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_FSB KHp i_s i_d].
+    cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cf as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_FSB KHX KHp i_s i_d].
     split; [unfold AsSR.VIS; cbn [i_s]; exact VIS'|].
-    split. { unfold AsSR.AKREL. cbn [i_s i_d cfg_model cfg_ms]. split; [exact OK'|]. split; [exact AMX'|]. split; [exact DCOV'|].
-             intros x0 Hx. destruct (proj1 (AVX' x0 (DTV1 x0 Hx))) as [C|(sc & INs & _ & Rx)]; [exact C| exfalso].
-             pose proof (DSEC sc INs) as DS. clear - DS Rx Hx. unfold disj, kPageSize in *. lia. }
+    split. { split.
+             { unfold AsSR.AKREL. cbn [i_s i_d cfg_model cfg_ms]. split; [exact OK'|]. split; [exact AMX'|]. split; [exact DCOV'|].
+               intros x0 Hx. destruct (proj1 (AVX' x0 (DTV1 x0 Hx))) as [C|(sc & INs & _ & Rx)]; [exact C| exfalso].
+               pose proof (DSEC sc INs) as DS. clear - DS Rx Hx. unfold disj, kPageSize in *. lia. }
+             (* [Xk] of the new state, from [Xk] of the caller's and the write set *)
+             { exact (XK s s' d d msF mo msF' mo' m m' lo (bv_unsigned sp) XPRE IPOST AMX AWV PL DPL
+                         ltac:(rewrite VIS; reflexivity) AMX' AWV' PL' ltac:(rewrite VIS'; reflexivity)
+                         (awkeep_of_compl s s' d lo (bv_unsigned sp) m m' CP') CEIL). } }
     split; [exact (nonvm_same_trans _ _ _ (nonvm_same_mat mo mo1 SBM1) NV')|].
     split; [exact MI'|]. split; [exact ST'|].
     split. { rewrite TP. unfold wz. rewrite unsigned_lit by (unfold AsIface.ATP; lia). rewrite TP in ERR. rewrite unsigned_lit in ERR by (unfold AsIface.ATP; lia).
@@ -300,7 +313,7 @@ Section Free.
              intros a Ha. apply IMGW; unfold astatw, AsIface.ATP, AIMG_LO, AIMG_TOP, AINST, AIAINIT, AIAINST in *; lia. }
     split; [exact AUX|].
     split. { intros a Ha CL. split; [| intros Wv; apply WM'; exact Wv]. apply (FR' a Ha).
-             unfold aclient_addr in CL. unfold aclient. cbn [as_FSB KHp] in CL.
+             unfold aclient_addr in CL. unfold aclient. cbn [as_FSB KHX KHp] in CL.
              destruct CL as [C|[C|[C|[C|[C|[C|C]]]]]]; [left; exact C| right; left; exact C| | | | |].
              - right; right; left. destruct C as (b & Hb & Rb). exists (blk_addr b), (blk_size b). split; [| exact Rb].
                unfold lbp. apply in_map_iff. exists b. split; [reflexivity| exact Hb].
@@ -322,6 +335,12 @@ Section Free.
                unfold mrd in *. rewrite (AGR a); [exact Hb| | unfold sh, AIMG_LO, AIMG_TOP, ASHADOW_BASE in *; lia].
                exact (imgshadow_not_written s s' d lo (bv_unsigned sp) a PL PL' E_thr DPL CEIL Ha). }
     unfold ICf. change (a_AL s') with (a_AL s). lia.
+  Qed.
+
+  Theorem inst_free_null_stmt : free_null_stmt_at (KHp p) AFREE_STUB.
+  Proof.
+    exact (free_null_of_X p (fun _ _ => True) (fun _ _ => I)
+             (inst_free_null_stmt_X (fun _ => True) (fun _ _ => True) ikeep_true (fun _ _ _ => I) xkeep_true)).
   Qed.
 
   (* [comment removed for export] *)
@@ -365,11 +384,16 @@ Section Free.
 
   Local Ltac tcells := cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ length].
 
-  Theorem inst_free_stmt : free_stmt (KHp p).
+  (* free at [KHX p X] for every [X] a heap call keeps; [inst_free_stmt] below is the case of an
+     [X] that always holds *)
+  Theorem inst_free_stmt_X : forall (Iv : config -> Prop) (Xk : ist -> config -> Prop),
+    ikeep Iv -> (forall x c, Xk x c -> Iv c) -> XKEEP Iv Xk -> free_stmt (KHX p Xk).
   Proof.
-    unfold free_stmt, free_stmt_at. cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cf as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_lb_remove KHp].
+    intros Iv Xk IKP XI XK.
+    unfold free_stmt, free_stmt_at. cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cf as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_lb_remove KHX KHp].
     intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc msF m x LB q A n lo B errv mo CH bs sbs.
     intros VIS HP K INB CF BLK SHD SHL AUX SPB ST CEIL LO ERR MI TP SP16 AC HCH TR A0.
+    destruct K as [K XPRE].
     destruct x as [s d]. cbn [i_s i_d] in *.
     unfold AsSR.VIS in VIS. unfold AsSR.AKREL in K. cbn [i_s cfg_model] in VIS, K. destruct K as [OK IKx]. destruct IKx as (AMX & DCOV & DTV).
     unfold Irauxv_ok in AUX. unfold AFREE_STACK in LO.
@@ -384,6 +408,8 @@ Section Free.
     pose proof (proj1 (Forall_forall _ _) IDS (q, A, n) INB) as [EQA SZB]. cbn [blk_id blk_addr blk_size fst snd] in EQA, SZB.
     (* [comment removed for export] *)
     unfold AsSR.SR.
+    (* the invariant [Iv] holds where the reach ends *)
+    apply (sr_keep_imp Iv _ _ IKP (XI _ _ XPRE)).
     eapply (evt_sreach_lazy_at asegs (a_L s) (a_S s) (a_Zr s) _ msF _ mo _ OK VIS); [apply free_stub_evt; exact MI|].
     cbv beta. intros msF1 mo1 OK1 SBM1 _ E1.
     pose proof (AMODELX_mat s mo mo1 AMX SBM1) as AMX1. pose proof (depot_cov_mat d mo mo1 DCOV SBM1) as DCOV1.
@@ -455,13 +481,18 @@ Section Free.
       split; [unfold IDAPART; rewrite ESB, E_thr, EPA, DNB, DSB; exact DAP|].
       split; [| exact PI'].
       intros sc Hsc. exact (DSEC sc (SUB sc Hsc)). }
-    apply sreach_done. unfold AsIface.free_post.
+    apply sreach_done. intros IPOST. unfold AsIface.free_post.
     exists t0', t1', t2', a0', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6', m', (IST s' d').
-    cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cf as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_FSB as_lb_remove KHp i_s i_d].
+    cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cf as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_FSB as_lb_remove KHX KHp i_s i_d].
     split; [unfold AsSR.VIS; cbn [i_s]; exact VIS'|].
-    split. { unfold AsSR.AKREL. cbn [i_s i_d cfg_model cfg_ms]. split; [exact OK'|]. split; [exact AMX'|]. split; [exact DCOV'|].
-             intros x0 Hx. destruct (proj1 (AVX' x0 (DTV1 x0 Hx))) as [C|(sc & INs & _ & Rx)]; [exact C| exfalso].
-             pose proof (DSEC sc INs) as DS. clear - DS Rx Hx. unfold disj, kPageSize in *. lia. }
+    split. { split.
+             { unfold AsSR.AKREL. cbn [i_s i_d cfg_model cfg_ms]. split; [exact OK'|]. split; [exact AMX'|]. split; [exact DCOV'|].
+               intros x0 Hx. destruct (proj1 (AVX' x0 (DTV1 x0 Hx))) as [C|(sc & INs & _ & Rx)]; [exact C| exfalso].
+               pose proof (DSEC sc INs) as DS. clear - DS Rx Hx. unfold disj, kPageSize in *. lia. }
+             (* [Xk] of the new state, from [Xk] of the caller's and the write set *)
+             { exact (XK s s' d d' msF mo msF' mo' m m' lo (bv_unsigned sp) XPRE IPOST AMX AWV PL DPL
+                         ltac:(rewrite VIS; reflexivity) AMX' AWV' PL' ltac:(rewrite VIS'; reflexivity)
+                         (awkeep_of_compl s s' d lo (bv_unsigned sp) m m' CP') CEIL). } }
     split; [exact (nonvm_same_trans _ _ _ (nonvm_same_mat mo mo1 SBM1) NV')|].
     split; [exact MI'|]. split; [exact ST'|].
     split. { rewrite TP. unfold wz. rewrite unsigned_lit by (unfold AsIface.ATP; lia). rewrite TP in ERR. rewrite unsigned_lit in ERR by (unfold AsIface.ATP; lia).
@@ -473,7 +504,7 @@ Section Free.
              assert (BLKIN : forall b, In b (Ilb_remove q LB) -> In (blk_addr b, blk_size b) (lb_remove U (lbp LB))).
              { intros b Hb. rewrite <- ELB. unfold lbp. apply in_map_iff. exists b. split; [reflexivity| exact Hb]. }
              split.
-             - apply (FR' a Ha). unfold aclient_addr in CL. unfold aclient. cbn [as_FSB KHp] in CL.
+             - apply (FR' a Ha). unfold aclient_addr in CL. unfold aclient. cbn [as_FSB KHX KHp] in CL.
                destruct CL as [C|[C|[C|[C|[C|[C|C]]]]]]; [left; exact C| right; left; exact C| | | | |].
                + right; right; left. destruct C as (b & Hb & Rb). exists (blk_addr b), (blk_size b). split; [exact (BLKIN b Hb)| exact Rb].
                + right; right; right; left. destruct C as (b & Hb & Rb). exists (blk_addr b), (blk_size b). split; [exact (BLKIN b Hb)| exact Rb].
@@ -481,7 +512,7 @@ Section Free.
                + do 5 right; left. rewrite EF. exact C.
                + do 6 right. exact C.
              - intros Wv. destruct (AVI' (wa a) Wv) as [V|G]; [exact V| exfalso]. rewrite wa_unsigned in G by exact Ha.
-               revert G. unfold aclient_addr in CL. cbn [as_FSB KHp] in CL.
+               revert G. unfold aclient_addr in CL. cbn [as_FSB KHX KHp] in CL.
                destruct CL as [C|[C|[C|[C|[C|[C|C]]]]]].
                + apply (secgone_not_stack s s' PL a lo CEIL). clear - C LO. lia.
                + apply (secgone_not_image s s' PL a). clear - C. unfold aimg_client, AIMG_LO, AIMG_TOP in *. lia.
@@ -508,5 +539,11 @@ Section Free.
                unfold mrd in *. rewrite (AGR a); [exact Hb| | unfold sh, AIMG_LO, AIMG_TOP, ASHADOW_BASE in *; lia].
                exact (imgshadow_not_written s s' d lo (bv_unsigned sp) a PL PL' E_thr DPL CEIL Ha). }
     unfold ICf. unfold FREE_COST in AL. clear - AL. lia.
+  Qed.
+
+  Theorem inst_free_stmt : free_stmt (KHp p).
+  Proof.
+    exact (free_of_X p (fun _ _ => True) (fun _ _ => I)
+             (inst_free_stmt_X (fun _ => True) (fun _ _ => True) ikeep_true (fun _ _ _ => I) xkeep_true)).
   Qed.
 End Free.

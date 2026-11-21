@@ -4,8 +4,8 @@
    The twin of RT_gxa_calls.v (strnlen), in the same shape; the statements, ready predicates and intro lemmas are
    word for word fuzz_manifest's lib/A/FMgxa_mem.v (a Theorem Labs lane), so a unit can take either by relocation.
 
-   This file proves no new function.  It composes walks that are already in the tree, relocated from
-   origin/cold/c-asan-rt-stateio-n 840c4afa7e2 (proofs/omx-clap-core/fuzz_state/lib) by code pairing
+   This file proves no new function.  It composes walks that are already in the tree, relocated
+    (proofs/omx-clap-core/fuzz_state/lib) by code pairing
    (RT_gxa_mem_Tbl.v holds the table, the counts and the stack measurement):
    - memcpy: the Bz walk of ___interceptor_memcpy 0x53464 (lib/A/Bz/A/I_memcpy.v imemcpy_spec, over I_memcpyw.v /
      I_memcpyw2.v), with its two Section hypotheses rip_stmt (R_isPoisoned.v rip_proof) and memcpy_stmt (musl
@@ -194,7 +194,7 @@ Qed.
 
 (* ---- memset ---- *)
 
-(* Asked only when 0 <= n, as a Theorem Labs lane's FMgxa_mem.v:222-223 since 3899f140f93: GXA's pc_guard
+(* Asked only when 0 <= n, as a Theorem Labs lane's FMgxa_mem.v:222-223: GXA's pc_guard
    (G_printf_core_common.v:156) asks set_ready at every D + N + 8 <= q with N unbounded below, where sp < 2 ^ 63
    cannot follow, so without the premise the clause cannot hold (a Theorem Labs lane proved pc_guard_set_false against the
    old form; FMgxaSeamReady.v header).  The contract applies set_ready only at bv_unsigned a2 (SetCall.v:35). *)

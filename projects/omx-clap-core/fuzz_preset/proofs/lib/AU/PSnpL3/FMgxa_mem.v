@@ -1,12 +1,12 @@
-(* Modified by Theorem Labs, 2026-10: moved from image B (fuzz_preset.asan-ubsan f8f98a95), commit 3244f5c71f6, to the #102 pin B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5): 29 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, commit d99acc3edd9, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-B-why.tsv). *)
-(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan-ubsan (image B, f8f98a95) from commit 3e35620c52e proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_mem.v: module paths (lib/A/FMgxa_mem.v -> lib/AU/PSnpL3/FMgxa_mem.v; lib/A/{Spec,Strw,Ox} -> preset's own lib/... (byte-identical modulo module paths, reused); lib/A/RT_IImgA (A_img / A_img_vsn) -> lib/CJ/RL/I/IImgB (N_img_asan / N_img_vsn)) and the address numerals by alreloc (sha256 c4338d099cfb8025, commit d99acc3edd97, --build asan-ubsan --from-build asan), each by symbol + offset in both images (per-numeral report: the relocation record, B-run). *)
+(* Modified by Theorem Labs, 2026-10: moved from image B (fuzz_preset.asan-ubsan f8f98a95), to the #102 pin B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5): 29 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-B-why.tsv). *)
+(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan-ubsan (image B, f8f98a95) from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_mem.v: module paths (lib/A/FMgxa_mem.v -> lib/AU/PSnpL3/FMgxa_mem.v; lib/A/{Spec,Strw,Ox} -> preset's own lib/... (byte-identical modulo module paths, reused); lib/A/RT_IImgA (A_img / A_img_vsn) -> lib/CJ/RL/I/IImgB (N_img_asan / N_img_vsn)) and the address numerals by alreloc (sha256 c4338d099cfb8025, --build asan-ubsan --from-build asan), each by symbol + offset in both images (per-numeral report: the relocation record, B-run). *)
 (* GXA's interceptor call contracts for memcpy and memset (lib/CJ/RL/GXA/CopyCall.v:29-41 memcpy_stack_contract,
    SetCall.v:28-37 memset_stack_contract), discharged at the ASan instance A_img (RT_IImgA.v:102) on the pinned
    fuzz_manifest.asan, and memset also at A_img_vsn (RT_IImgA.v:113), which RT_gxa_inst.v:108 consumes.  The twin of
    RT_gxa_strnlen.v (strnlen); names, predicates and file shape follow the fuzz_reply port's pf-calls work
-   86b50358d34 proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls_mem.v.
+   proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls_mem.v.
    The two contract proofs are adapted from the same composition, already Qed at fuzz_manifest.asan under other image
-   instances, on commit 486fc9eb410 proofs/omx-clap-core/fuzz_manifest/lib:
+   instances, proofs/omx-clap-core/fuzz_manifest/lib:
      memcpy_stack_contract_A  adapted from  lib/A/Prog/vfprintf_snf_closed.v:180-236 memcpy_bridge_R
                                              (@CopyCall.memcpy_stack_contract VSF.N_img_vf copy_okR)
      memset_stack_contract_A  adapted from  lib/A/Prog/vsnprintf_F.v:53-103 memset_bridge_P
@@ -17,7 +17,7 @@
    closures bring AsanRT.v and the restricted-memory kit, outside this file's closure).
 
    This file proves no new function.  It composes walks that are already in the tree, at fuzz_manifest.asan's own
-   addresses (the ASan runtime proofs' Bz tree, commit affce6489c8; nothing is relocated):
+   addresses (the ASan runtime proofs' Bz tree; nothing is relocated):
    - memcpy: the Bz walk of the memcpy interceptor 0x52e9c (lib/A/Bz/A/I_memcpy.v imemcpy_spec, over I_memcpyw.v /
      I_memcpyw2.v), with its two Section hypotheses rip_stmt (R_isPoisoned.v rip_proof) and memcpy_stmt (musl
      memcpy 0x9bb04: RT_mem_bz.v mc_proof, from the libc walks lib/A/Prog/memcpy.v and memcpy_same.v).
@@ -142,7 +142,7 @@ Definition copy_ready (m : word -> option byte) (sp d s n : Z) : Prop :=
   /\ chk_ok m s n /\ chk_ok m d n
   /\ m2s_cells m /\ icells m.
 
-(* adapted from commit 486fc9eb410 lib/A/Prog/vfprintf_snf_closed.v:180-236 memcpy_bridge_R *)
+(* adapted from lib/A/Prog/vfprintf_snf_closed.v:180-236 memcpy_bridge_R *)
 Theorem memcpy_stack_contract_A : @GXC.memcpy_stack_contract RTA.N_img_asan copy_ready.
 Proof.
   unfold GXC.memcpy_stack_contract.
@@ -229,7 +229,7 @@ Definition set_ready (m : word -> option byte) (sp d n : Z) : Prop :=
   /\ chk_ok m d n
   /\ m2s_cells m /\ icells_ms m.
 
-(* adapted from commit 486fc9eb410 lib/A/Prog/vsnprintf_F.v:53-103 memset_bridge_P *)
+(* adapted from lib/A/Prog/vsnprintf_F.v:53-103 memset_bridge_P *)
 Theorem memset_stack_contract_A : @GXM.memset_stack_contract RTA.N_img_asan set_ready.
 Proof.
   unfold GXM.memset_stack_contract.

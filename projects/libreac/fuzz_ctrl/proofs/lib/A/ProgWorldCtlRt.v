@@ -139,7 +139,7 @@ End Bridge.
 (* Membership of a const row in image A's const table.  Was a walk by in_eq / in_cons, which is quadratic in the
    table's length: on a Theorem Labs lane's RECORD table (2135 rows) image B's twin took 1606 s / 13 GB and this file 2027 s
    (a Theorem Labs lane 06:52Z, a Theorem Labs lane 07:12Z).  Now lib/Reusable/YConstIn.v's in_const_tbl: ONE vm_compute of
-   `existsb (row_eqb row) tbl` on a closed goal, 0.001 s per use (YConstIn.v:8-11). *)
+   `existsb (row_eqb row) tbl` on a closed goal, 0.001 s per use (YConstIn.v:9-12). *)
 Ltac inconst :=
   unfold A.AF0m.Tfib_const;
   lib.Reusable.YConstIn.in_const_tbl.

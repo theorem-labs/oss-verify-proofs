@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new arms of checked_table). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
@@ -48,8 +49,10 @@ Proof.
   apply Forall_cons; [exact arm_94_frame |].
   apply Forall_cons; [exact arm_96_frame |].
   apply Forall_cons; [exact arm_98_frame |].
+  apply Forall_cons; [exact arm_99_frame |].
   apply Forall_cons; [exact arm_101_frame |].
   apply Forall_cons; [exact arm_113_frame |].
+  apply Forall_cons; [exact arm_114_frame |].
   apply Forall_cons; [exact arm_119_frame |].
   apply Forall_cons; [exact arm_123_frame |].
   apply Forall_cons; [exact arm_124_frame |].
@@ -100,6 +103,7 @@ Proof.
   apply Forall_cons; [exact arm_260_frame |].
   apply Forall_cons; [exact arm_261_frame |].
   apply Forall_cons; [exact arm_278_frame |].
+  apply Forall_cons; [exact arm_287_frame |].
   apply Forall_cons; [exact arm_435_frame |].
   apply Forall_cons; [exact arm_439_frame |].
   apply Forall_nil.
@@ -144,8 +148,10 @@ Proof.
   apply Forall_cons; [exact arm_94_lpres |].
   apply Forall_cons; [exact arm_96_lpres |].
   apply Forall_cons; [exact arm_98_lpres |].
+  apply Forall_cons; [exact arm_99_lpres |].
   apply Forall_cons; [exact arm_101_lpres |].
   apply Forall_cons; [exact arm_113_lpres |].
+  apply Forall_cons; [exact arm_114_lpres |].
   apply Forall_cons; [exact arm_119_lpres |].
   apply Forall_cons; [exact arm_123_lpres |].
   apply Forall_cons; [exact arm_124_lpres |].
@@ -196,6 +202,7 @@ Proof.
   apply Forall_cons; [exact arm_260_lpres |].
   apply Forall_cons; [exact arm_261_lpres |].
   apply Forall_cons; [exact arm_278_lpres |].
+  apply Forall_cons; [exact arm_287_lpres |].
   apply Forall_cons; [exact arm_435_lpres |].
   apply Forall_cons; [exact arm_439_lpres |].
   apply Forall_nil.
@@ -240,8 +247,10 @@ Proof.
   apply Forall_cons; [exact arm_94_inv |].
   apply Forall_cons; [exact arm_96_inv |].
   apply Forall_cons; [exact arm_98_inv |].
+  apply Forall_cons; [exact arm_99_inv |].
   apply Forall_cons; [exact arm_101_inv |].
   apply Forall_cons; [exact arm_113_inv |].
+  apply Forall_cons; [exact arm_114_inv |].
   apply Forall_cons; [exact arm_119_inv |].
   apply Forall_cons; [exact arm_123_inv |].
   apply Forall_cons; [exact arm_124_inv |].
@@ -292,6 +301,7 @@ Proof.
   apply Forall_cons; [exact arm_260_inv |].
   apply Forall_cons; [exact arm_261_inv |].
   apply Forall_cons; [exact arm_278_inv |].
+  apply Forall_cons; [exact arm_287_inv |].
   apply Forall_cons; [exact arm_435_inv |].
   apply Forall_cons; [exact arm_439_inv |].
   apply Forall_nil.

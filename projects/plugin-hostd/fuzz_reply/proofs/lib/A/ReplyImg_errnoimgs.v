@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the three proofs are those of proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartScgif.v
-   (a working branch ad994c271653) at plugin-hostd/fuzz_reply's image A, with reply A's names. *)
+   (a working branch) at plugin-hostd/fuzz_reply's image A, with reply A's names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Reply image row img-errnoimgs-A (a Theorem Labs lane pool 14): the secondary path's errno image facts at reply A, the three
    fields of the cf layer's [ErrnoImgSCf] beyond its base record (YGcfInstErrnoS.v: eis_dzone_s / eis_shadow_s /
    eis_zone3_s), each as a CLOSED lemma over reply A's TfibSyms and its image classes.
@@ -13,11 +14,11 @@
    - errno_apart_zone3_s_A  = ErrnoApartS.errno_apart_zone3_s  (ErrnoApartS.v, Definition errno_apart_zone3_s);
    each at IM := AImg_reply (AGif2reply) and IMS := AImgS_reply (AGif4reply).
 
-   Reply A's values: errno is TFIB_ERRNO = 0x5d93cc (AF0m.v:22, ts_errno), 4 bytes;
-   - ims_dzone = AGjm.DZONE (AGif4reply.v, AGjm.v:572-573): [0x177f88, 0x5c8710), which ends 0x10cbc below errno, then
+   Reply A's values: errno is TFIB_ERRNO = 0x5d93cc (AF0m.v:23, ts_errno), 4 bytes;
+   - ims_dzone = AGjm.DZONE (AGif4reply.v, AGjm.v:573-574): [0x177f88, 0x5c8710), which ends 0x10cbc below errno, then
      the nodes block and the store block, owned extents apart from errno by ErrnoApart.errno_apart_owned with
      ErrnoApartreply.errno_in_img_reply;
-   - ims_shb = AGjm.SHBv = 0x7fff8000 (AGjm.v:164), above errno;
+   - ims_shb = AGjm.SHBv = 0x7fff8000 (AGjm.v:165), above errno;
    - ims_zone3 = AF0x.zone3: off the image (AF0x.zone3_off_img, AF0x.v:73), while errno lies in
      [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x5fb000) (AF0x.v:37, :25).
 

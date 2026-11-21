@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* Theorem Labs, 2026-10-30 (ReallocPrimary.CfW, lane W, cf refill re-base, B3 half): the cf model lemmas of the B3 top
    MnRefillB3cf.v.
    - Section g: cgif's YG0o.v helpers over ARmcf (shadow_apart_not_client_cf, prim_shadow_not_client_cf,
@@ -18,6 +19,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YG0h YG0o.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YK0g.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YG01cf YG00cf YG02cf YG06cf YG06bcf YG08cf YG0ncf YG0dcf YG0qcf YG0scf.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YK13.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Ltac ceil := let H := fresh "CR" in let H2 := fresh "CR" in pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as H; pose proof H as H2; unfold ASAN_CEIL in H2.
@@ -487,7 +489,11 @@ assert (R : ly_prim ly <= lg_addrU /\ lg_addrU + n <= ly_prim ly + kPrimResvSize
 { clear - B1 B2 B3 B4 B5 C1 C2. unfold lg_addrU, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
 split.
-- rewrite L3. apply (region_free_reserved segs); [exact lg_img_env | exact R3 | unfold kUserMapSize; lia | lia].
+- destruct L3 as (rx & L3 & _ & _ & _ & RP). rewrite L3, YK13.region_free_app. apply andb_true_intro. split.
++ apply (region_free_reserved segs); [exact lg_img_env | exact R3 | unfold kUserMapSize; lia | lia].
++ (* the reservation tail misses the primary reservation (YG0n.res_tail_ok), as YG0h.ALedger_user_place_piece *)
+apply (YG0h.region_free_within rx (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact RP | |]; unfold YG0h.uw;
+rewrite !YG0h.w64_unsigned by (unfold kUserMapSize, kPrimResvSize, kHighMemBeg in *; lia); lia.
 - destruct L4 as (pieces & (P1 & P2 & P3) & P4).
 destruct (proj1 (Exists_exists _ _) (proj2 (P3 lg_addrU ltac:(unfold kUserMapSize in *; lia)) (wf_no_prim_hole_cf U pp cc bb S ly lg_addrU WS))) as (P0 & HP & Hin).
 pose proof (proj1 (Forall_forall _ _) P1 P0 HP) as (Q0 & _ & QE). pose proof (lg_no_cut_inside HU _ QE) as NC. unfold in_zr in Hin.
@@ -550,7 +556,10 @@ assert (R : ly_prim ly <= lg_addrF /\ lg_addrF + n <= ly_prim ly + kPrimResvSize
 { clear - B1 B2 B3 B4 B5 C1 C2 M3. unfold lg_addrF, lg_offF, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
 split.
-- rewrite L3. apply (region_free_reserved segs); [exact lg_img_env | exact R3 | unfold kUserMapSize; lia | lia].
+- destruct L3 as (rx & L3 & _ & _ & _ & RP). rewrite L3, YK13.region_free_app. apply andb_true_intro. split.
++ apply (region_free_reserved segs); [exact lg_img_env | exact R3 | unfold kUserMapSize; lia | lia].
++ apply (YG0h.region_free_within rx (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact RP | |]; unfold YG0h.uw;
+rewrite !YG0h.w64_unsigned by (unfold kUserMapSize, kPrimResvSize, kHighMemBeg in *; lia); lia.
 - destruct L4 as (pieces & (P1 & P2 & P3) & P4).
 destruct (proj1 (Exists_exists _ _) (proj2 (P3 lg_addrF ltac:(unfold kUserMapSize in *; lia)) (wf_no_prim_hole_cf U pp cc bb S ly lg_addrF WS))) as (P0 & HP & Hin).
 pose proof (proj1 (Forall_forall _ _) P1 P0 HP) as (Q0 & _ & QE). pose proof (lg_no_cut_insideF HF _ QE) as NC. unfold in_zr in Hin.

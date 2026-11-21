@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgTopA.v at af0538adbf24 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgTopA.v for image B
    (fuzz_rate.asan-ubsan): rate_lib_x_A_close's discharge of the pieces by their walks, at image B's pieces
    (lib/AU/RtPgSegB.v), image B's walk lanes (lib/AU) and image B's runtime entries, cells and traces; the static law
    from image B's read-only facts by lib/AU/RtPgStaticB.v. *)

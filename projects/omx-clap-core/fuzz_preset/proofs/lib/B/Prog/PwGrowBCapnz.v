@@ -5,8 +5,8 @@
    the keys realloc fuzz_realloc (keys, 8 cap -> 16 cap) with its NULL arms (5 / 6) and arm 7 (by
    PwGrowBArm7.growB_seg_arm7). The cap = 0 class is PwGrowBCap0.v's growB_seg_cap0.
    History: written as the old image B's walk (2026-10-29, the old image-B branch), relocated to B' (alreloc
-   c4338d, 1c70a2dd48da, audited AGREE), closed, and re-fitted to the kit's cut
-   7cdbb61b5fa0.
+   c4338d, audited AGREE), closed, and re-fitted to the kit's cut.
+   
    MEASURED in this walk: three unscoped lia ran 280-330 s each (HV5 / HV6 frame cases and the old-blocks
    disjointness), now scoped with clear - ..; the region-add disjointness goals use a VM-checked equation for the
    region list, not `vm_compute ss_mem` (its missing cast made a Qed run past 50 min); the keys call's branch

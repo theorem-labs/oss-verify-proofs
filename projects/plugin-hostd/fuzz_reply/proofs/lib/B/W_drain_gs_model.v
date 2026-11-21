@@ -8,13 +8,14 @@
    image key_ptrs, and upds over one more relayed line.  The three stage walks of lib/B/W_drain_gs.v
    (gs_scan_stmt, gs_add_stmt, gs_free_stmt) cite it.
 
-   PORTED from image A's lib/A/W_drain_gs.v:59-599 on a working branch ed12337f74d (the file last
-   changed in 1ef2c00b5d5), every lemma name kept.  The block names no image address and no image-A
+   PORTED from image A's lib/A/W_drain_gs.v:60-600 on a working branch (the file last
+   changed), every lemma name kept.  The block names no image address and no image-A
    definition, so it is stated here over image B's own definitions: dcx, dW, drlp, dskp, drlq, dlrun, dlno,
    dloc, dlH, dlka, dbound and dline of lib/B/W_drain_cx.v (:411, :617-642; the same text as image A's), and
    the shared model of lib/A/W_drain_model.v and lib/Prog (lrun, seen_arr, seen_ka, seen_tr, index_of,
    set_nth, swap_remove, key_ptrs, keys_texts, scan, gesture, upds, with_nul).  The Require list is
    lib/B/W_drain_gs.v's, plus lib/Lib/Mem for le8. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -52,7 +53,7 @@ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.
 Section b.
 Context {PI : PAImg fr_prog_listing}.
-(* dcx (lib/B/W_drain_cx.v:423) carries a world over PI's segments, so the lemmas about dlrun / dloc /
+(* dcx (lib/B/W_drain_cx.v:424) carries a world over PI's segments, so the lemmas about dlrun / dloc /
    dlH / dlka take the image as an implicit argument, as W_drain_cx.v's own definitions do. *)
 
 (* ---- The pure model of the segment (no machine state): the line loop's values after one more

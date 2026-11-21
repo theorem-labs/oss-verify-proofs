@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0c.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed Zify, B, leaf_unchanged, direct_grant_exists, auxv_pre_ext; added mreal_IAsk, mreal_IRet, src0_reserved_room). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -30,7 +31,11 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
+Lemma mreal_IAsk {R} : forall segs c q s (k : Z -> itree astate R) Q,
+SR segs c (fun c1 => knode segs c1 q s (fun z c2 => mreal segs c2 (k z) Q)) -> mreal segs c (IAsk q s k) Q.
+Proof. intros. exact H. Qed.
+Lemma mreal_IRet {R} : forall segs c (r : R) Q, SR segs c (Q r) -> mreal segs c (IRet r) Q.
+Proof. intros. exact H. Qed.
 Lemma mreal_cf_IAsk {R} : forall segs c q s (k : Z -> itree astate R) Q,
 SR_cfv segs c (fun c1 => knode_cf segs c1 q s (fun z c2 => mreal_cf segs c2 (k z) Q)) -> mreal_cf segs c (IAsk q s k) Q.
 Proof. intros. exact H. Qed.
@@ -44,7 +49,6 @@ Qed.
 End d.
 Notation B := src0_msyms.
 Section e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Lemma B_segs : ms_segs B = src0segs. Proof. reflexivity. Qed.
 Lemma B_ctx : ms_ctx B = CTX. Proof. reflexivity. Qed.
 Lemma B_lock : ms_lock B = LOCK. Proof. reflexivity. Qed.
@@ -180,7 +184,7 @@ assert (EQ : forall x, owned B L A x -> mbyte (ms_segs B) mem' x = mbyte (ms_seg
 exists L, regs', mem', md. split; [reflexivity|]. split; [| split; [exact Ha0 | reflexivity]].
 split; [| split; [exact HW | split; [exact HB | split; [apply layout_le_refl | split; [auto | split; [exact Hpres | split;
 [exists (m_vmmaps md); apply with_vmmaps_self; assumption | split; [| split]]]]]]]].
--   apply (mr_frame _ _ (MRx_laws B) L A mem mem' md md MX).
+-   apply (mr_frame _ _ (MRx_laws B) L A mem mem' md md MX eq_refl).
 + exact EQ.
 + intros x Ho [b Hb]. pose proof (owned_low B L A mem md x M Ho). exists b. rewrite Hfr; [exact Hb | pose proof alloc_ceiling_val; lia | apply NS; exact Ho].
 + intros p k i Hin Hi. destruct (blocks_facts B L A mem md p k i M Hin Hi) as ([b Hb] & Hlo & Hhi & Hno).
@@ -271,6 +275,12 @@ Proof.
 assert (H : (ivs_bytes (segments_reserved src0segs) <=? 2 ^ 30) = true) by (vm_compute; reflexivity).
 apply Z.leb_le. exact H.
 Qed.
+Lemma src0_reserved_room : (length (segments_reserved src0segs) <= 6)%nat /\ ivs_bytes (segments_reserved src0segs) <= 2 ^ 30 - 0x14000.
+Proof.
+split; [vm_compute; lia|].
+assert (H : (ivs_bytes (segments_reserved src0segs) <=? 2 ^ 30 - 0x14000) = true) by (vm_compute; reflexivity).
+apply Z.leb_le. exact H.
+Qed.
 Lemma live_bytes_nonneg : forall A, WF A -> 0 <= live_bytes A.
 Proof.
 intros A HW. destruct (inv_areas HW) as (_ & _ & _ & _ & _ & _ & _ & _ & Hnn).
@@ -296,20 +306,19 @@ assert (Hsc : nslots A + KRES <= slot_cap (page_round len)).
 { pose proof (slot_cap_ge (page_round len) (conj Hpos Hreq)). lia. }
 unfold MG_LIVE, MG_REQ in *.
 pose proof (live_bytes_nonneg A (mc_wf _ _ _ _ _ M)) as Hlb.
-destruct src0_reserved_small as [RS RL]. pose proof src0_reserved_bytes as RB.
-destruct (region_free_exists_cap (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (page_round len) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
+destruct src0_reserved_small as [RS RL]. pose proof src0_reserved_bytes as RB. destruct src0_reserved_room as [RL6 RB6].
+(* 08b1429: the grant is Linux's address; see YN0c.direct_grant_exists. *)
+destruct (linux_place_of_room (m_vmmaps md) (kb_thp (m_kernel md)) (Z_to_bv 64 0) (page_round len) (page_round len))
+  as (a & Ha).
 - lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with src0segs. unfold KRES in Hsc. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G). change (ms_segs B) with src0segs.
-rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX). unfold SLOT_BYTES. lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
-pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
-assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ exact Hbud. }
-reflexivity.
+- unfold page_round, PGSZ, page_size; apply Z_mod_mult.
+- exact (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)).
+- rewrite length_app. destruct (lg_reserved _ _ _ _ G) as (rx & Erx & Lrx & _ & _). rewrite Erx, length_app. pose proof (lg_count _ _ _ _ G eq_refl). change (ms_segs B) with src0segs. unfold KRES in Hsc. lia.
+- destruct (lg_reserved _ _ _ _ G) as (rx & Erx & _ & Brx & _). rewrite ivs_bytes_app, Erx, ivs_bytes_app. change (ms_segs B) with src0segs.
+(* lg_reserved states Brx over Reusable.YM01.ivs_bytes; this copy's goal uses U.Reusable.YM01's, the same fixpoint. *)
+change (ivs_bytes rx <= 81920) in Brx.
+rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX eq_refl). unfold SLOT_BYTES. lia.
+- exists a. refine (grant_ok_intro _ _ _ _ _ _ Ha Hbud); [lia | unfold page_round, PGSZ, page_size; apply Z_mod_mult].
 Qed.
 Lemma in_wrange_list : forall E rs x,
 in_wrange E rs x ->
@@ -399,11 +408,27 @@ Lemma auxv_pre_ext : forall sec lo m m',
 (forall x, ms_libc B + 8 <= x < ms_libc B + 16 -> mbyte (ms_segs B) m' x = mbyte (ms_segs B) m x) ->
 auxv_pre B sec lo m -> auxv_pre B sec lo m'.
 Proof.
-intros sec lo m m' Hhi Hlibc (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat split; try assumption.
+(* [auxv_pre] (YO0d.v:87) now opens [exists (rs:bool) av ar]; the nine-way pattern was one
+   short, which Rocq reports as "No product even after head-reduction" and never names auxv.
+   [rs] is carried through untouched -- this lemma only moves the memory. *)
+intros sec lo m m' Hhi Hlibc (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+exists rs, av, ar. repeat split; try assumption.
 - intros k Hk. rewrite Hlibc by lia. apply H1. exact Hk.
+(* Same shape for the table walk: the address is [av + 16 * Z.of_nat k + j] with
+   [k < length (auxv_types rs)], so the bound needs H6 and nothing else -- but [lia] must be
+   able to relate the two occurrences of [length (auxv_types rs)], which it can, since they
+   are the same opaque term.  Left as it was. *)
 - intros k Hk j Hj. rewrite Hhi by lia. apply H2; assumption.
-- intros k Hk. rewrite Hhi by lia. apply H3. exact Hk.
+(* Two opaque terms stand between this side condition and [lia], and the second is the one
+   that actually blocks it.  [AUXV_RAND_K] is a [Definition], so [Z.of_nat AUXV_RAND_K] reads
+   as an unknown non-negative; and H6 bounds [av] by [16 * Z.of_nat (length (auxv_types rs))]
+   with [rs] a VARIABLE, so there is no literal to compare against either.  YO0d.v:85 ships
+   [auxv_types_len_ge : 27 <= Z.of_nat (length (auxv_types rs))] for exactly this: with it and
+   the value of AUXV_RAND_K, [lia] gets [av + 400 + k < av + 432 <= 2 ^ 63].  Unfolding
+   AUXV_RAND_K alone was not enough and the error kept pointing at [lia]. *)
+- intros k Hk. assert (HK24 : Z.of_nat AUXV_RAND_K = 24) by reflexivity.
+pose proof (auxv_types_len_ge rs) as HLEN.
+rewrite Hhi by lia. apply H3. exact Hk.
 - intros k Hk. rewrite Hhi by lia. apply H4. exact Hk.
 Qed.
 Ltac st_region HS i name :=

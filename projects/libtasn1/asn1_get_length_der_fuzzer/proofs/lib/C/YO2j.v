@@ -2,7 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia.
+From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YK11 YK0s YK0j YK15 YN06 YN02 YQ0b.
@@ -31,8 +33,8 @@ r <- new_region RkMap (page_round (n + IB + UNIT)) ;;
 step_seq ;;
 og <- alloc_meta ;;
 match og with
-| None => _ <- ask (KMunmap r (n + IB + UNIT)) ;;
-upd_region r (fun rg => mkRegion RkMap (rg_len rg) [] false) ;;
+| None => ok2 <- ask (KMunmap r (n + IB + UNIT)) ;;
+(if ok2 then upd_region r (fun rg => mkRegion RkMap (rg_len rg) [] false) else ret tt) ;;
 ret None
 | Some g =>
 setm g (mkAMeta None None (SP r 0) 0 0 0 63 (page_round (n + IB + UNIT) / 4096) 0 [slot_zero]) ;;
@@ -45,8 +47,8 @@ end.
 Definition dm_k (n : Z) (A : astate) : option sptr * astate -> itree astate (option sptr * astate) :=
 fun '(og, s') =>
 (match og with
-| None => _ <- ask (KMunmap (r0 A) (n + IB + UNIT)) ;;
-upd_region (r0 A) (fun rg => mkRegion RkMap (rg_len rg) [] false) ;;
+| None => ok2 <- ask (KMunmap (r0 A) (n + IB + UNIT)) ;;
+(if ok2 then upd_region (r0 A) (fun rg => mkRegion RkMap (rg_len rg) [] false) else ret tt) ;;
 ret None
 | Some g =>
 setm g (mkAMeta None None (SP (r0 A) 0) 0 0 0 63 (page_round (n + IB + UNIT) / 4096) 0 [slot_zero]) ;;
@@ -68,8 +70,12 @@ Definition dm_kill (A : astate) (s : astate) : astate :=
 set_regions (lupd (st_regions s) (r0 A)
 (mkRegion RkMap (rg_len (nth (r0 A) (st_regions s) (mkRegion RkMap 0 [] false))) [] false)) s.
 Lemma dm_k_none : forall n A s,
-dm_k n A (None, s) = IAsk (KMunmap (r0 A) (n + IB + UNIT)) s (fun _ => IRet (None, dm_kill A s)).
-Proof. intros. reflexivity. Qed.
+dm_k n A (None, s) = IAsk (KMunmap (r0 A) (n + IB + UNIT)) s
+(fun z => if negb (z =? 0) then IRet (None, dm_kill A s) else IRet (None, s)).
+Proof.
+intros n A s. unfold dm_k, bind, ask. cbn [ibind]. f_equal. apply FunctionalExtensionality.functional_extensionality. intros z.
+destruct (negb (z =? 0)); cbn [ibind upd_region modify ret]; reflexivity.
+Qed.
 Definition dm_ctr (s : astate) : Z := Z.land (st_mmap_counter s + 1) (2^32 - 1).
 Definition dm_A5 (n : Z) (A : astate) (g : sptr) (s : astate) : astate :=
 set_mmap_counter (dm_ctr s) (upd_meta g (MUsed (dm_am (r0 A) n)) s).

@@ -6,7 +6,7 @@
    s <= 11, nch <= 40), the frame pointer c + 3 * (..) + 50 and its walk overflow (0x13450, 0x13470: inside c's len
    bytes), be + at + k overflows (0x13498..0x134a0: inside the frame below sp). Structure as the plain walk: ww_loopU,
    cr_b16 / cr_zero, cr_tail, cr_loop (12 samples), cr_exit.
-   land_hi is ported from libreac/fuzz_decode lib/Prog/check_braid.v:9-27 (recipes 25e3d17bdb5, released). *)
+   land_hi is ported from libreac/fuzz_decode lib/Prog/check_braid.v:9-27 (recipes, released). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Lib Require Import Tac Bytes ZBridge.
@@ -50,7 +50,7 @@ Lemma rdz : forall m a bs k, bytes_at rsegs m a bs -> 0 <= k < Z.of_nat (length 
   ov_read_bytes rsegs m (wa (a + k)) 1 = Some [nth (Z.to_nat k) bs (Z_to_bv 8 0)].
 Proof. intros m a bs k H Hk. pose proof (rd1 m a bs (Z.to_nat k) H ltac:(lia)) as R. rewrite Z2Nat.id in R by lia. exact R. Qed.
 
-(* Ported from libreac/fuzz_decode lib/Prog/check_braid.v:9-27 (recipes 25e3d17bdb5, released). *)
+(* Ported from libreac/fuzz_decode lib/Prog/check_braid.v:9-27 (recipes, released). *)
 Lemma land_hi : forall x k, 0 <= x < 2^64 -> 0 <= k <= 64 -> Z.land x (2^64 - 2^k) = 2^k * (x / 2^k).
 Proof.
   intros x k Hx Hk.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/Sj_num_ff_top.v, line 155. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -150,7 +151,7 @@ Section FFTOP.
       cbv beta. intros ms3 POST.
       destruct POST as (t0_3 & t1_3 & t2_3 & a0_3 & a1_3 & a2_3 & a3_3 & a4_3 & a5_3 & a6_3 & a7_3 & t3_3 & t4_3 & t5_3 & t6_3 & F3 & fc3 & m3 & -> & FRM3 & MU3 & WM3 & MI3 & ST3).
       unfold E in MU3, ST3; cbn [f_sp f_lo f_ra f_gp f_tp f_s0 f_s1 f_s2 f_s3 f_s4 f_s5 f_s6 f_s7 f_s8 f_s9 f_s10 f_s11] in MU3, ST3 |- *.
-      assert (LOR' : (rt_sp0 RT Σ' - 8388608 <= lo)%Z) by (rewrite ES; exact LOR).
+      assert (LOR' : (rt_sp0 RT Σ' - STACK_SPAN <= lo)%Z) by (rewrite ES; exact LOR).
       apply evt_done.
       eapply HK; [exact FRM3 | | | exact EF | exact EL | exact ES | exact EC].
       + split; [exact (art_of_munch RT AF Σ' m'' m3 lo _ ART'' ltac:(unfold STACK_WIN; exact LOR') (FPOK Σ') MU3 WM3)|]. split; [exact MI3|].

@@ -9,7 +9,7 @@
    same in parse_items_spec's own shape (its premises with ms := [] and its post with D = Da = []), as the A walk's
    pitems_spec_nil is, so that the final parse_items_holds applies it for ms = [] without restating anything.
    Section hypotheses: FsShadowSyms B and skip_ws_spec only (no other callee is reached on this path).
-   B-LOCAL COPIES of A-kit helpers with no B twin, copied from a working branch 493982bffc9
+   B-LOCAL COPIES of A-kit helpers with no B twin, copied from a working branch
    proofs/omx-clap-core/fuzz_state/lib/A/FSW_pitems_dev.v (a Theorem Labs lane): pid_nil_tr / pid_nil_ev / pid_nil_held /
    pid_nil_len (renamed pih_nil_tr / pih_nil_ev / pih_nil_held / pih_nil_len) and pid_byte1 (pih_byte1), verbatim.
    parse_items_holds_of: parse_items_holds' final statement (memset contract last) with the two segments other provers
@@ -20,6 +20,7 @@
    statement with pib_HINITF the one open input; pib_HINITF_of_init discharges it by a Theorem Labs lane's
    FSW_parse_items_init.pi_init, and parse_items_holds is the function theorem.
    rule 24: proves parse_items (parse_items_holds : parse_items_spec k on image B, k <= 1). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -386,7 +387,7 @@ destruct ms as [|[kk x] rm].
 Qed.
 
 (* ================= the segment 0x85048 .. 0x851d0 discharged: a Theorem Labs lane's piv_val ================= *)
-(* pib_HVALF from FSW_parse_items_val.piv_val (a Theorem Labs lane, 68d63eeea0b, merged at 1a8bf4e5820; `Proof using All`: its
+(* pib_HVALF from FSW_parse_items_val.piv_val (a Theorem Labs lane, merged; `Proof using All`: its
    Section's variables, the 28 entry hypotheses, then HSW, HPV, HMS) *)
 Lemma pib_HVALF_of_val : forall {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head} (B : asyms) (k : nat),
   (k <= 1)%nat -> FsShadowSyms B -> @skip_ws_spec fx rc SK tfibsegs B ->

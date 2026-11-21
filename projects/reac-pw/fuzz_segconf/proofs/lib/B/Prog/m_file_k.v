@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the shape join of check_reply's walk (fuzz_command.asan, 0x86fcc .. 0x86ff8),
    ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's segments and
-   their program calls, cl_callS then a fresh seed at the return) at c8557374ad2e.
+   their program calls, cl_callS then a fresh seed at the return).
 
    From CR_JOIN (a0 = the shape string q) the code re-checks the shadow of g_rec.reply, loads the reply into s3 and
    calls syntax_reply_matches(q, reply) (0x86fdc). A match goes to the epilogue CR_EPI; otherwise it calls
@@ -11,11 +11,12 @@
    second conjunct refutes (0 <= code: one of the two shapes matches). Each run starts from the mid-walk seed
    (check_reply_sd.v cr_seed) with the frame header read-only, so the run changes no byte the walk reads. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s7.v, with its module paths and module names changed; 1415 of its 1472 lines of code are new or changed and 486 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, twin 80e82127e8ca; 0x86140): the generic keep
    lemmas of its walk, shared by the segment lanes of the image-B m_file-family owner's G2B (on
-   a working branch; one copy). The image-B port of the image-A m_file-family lane's lib/A/Prog/m_file_k.v (
-   commit 9057ab48ad6c): the same lemma names and statement shapes, over image B's cut predicates
-   lib/B/Prog/m_file_m.v (commit 4fafedc587cb) at image B's frame and numbers.
+   a working branch; one copy). The image-B port of the image-A m_file-family lane's lib/A/Prog/m_file_k.v:
+   the same lemma names and statement shapes, over image B's cut predicates
+   lib/B/Prog/m_file_m.v at image B's frame and numbers.
 
    WHAT A STEP KEEPS. Between two cuts the walk writes (mf_rw): the callee windows below s1 (and the unused cells
    s1 + 0 .. s1 + 16), the mconf block, its side-stack frame but the flag pointer at FB + 120, the frame's 16
@@ -40,7 +41,7 @@
    own are kept by the journal's image clause, because M_FILE_FP lies inside the mconf block, mf_fp_in_block,
    which needs the model bounds n <= 32, n_kept <= 8 of the final model, mf_final_bnd).
    mf_loop_next steps the line loop's facts to the next line.
-   an image-A walk lane's kit (image A: commit 48a979165341 lib/A/Prog/m_file_s_tail_k.v: mf_win,
+   an image-A walk lane's kit (image A: lib/A/Prog/m_file_s_tail_k.v: mf_win,
    mf_frame_facts, mf_block_apart, mf_stack_apart, mf_ftail_apart, mf_blk_c, mf_blk_t, mf_sp0, mf_tx_*,
    mf_loop_blk, mf_loop_hd, mf_aview_all, mf_regs_at_of, mf_carry_eq, mf_val1_of_aview, mf_cur_range) is taken in
    with the same statements but mf_regs_at_of (below): the runs inside mf_win (the frame's header and low.i, its
@@ -601,7 +602,7 @@ destruct rest as [|b r]; cbn [app nth hd0].
 Qed.
 
 (* readers that agree on [0, 2^64) agree everywhere: a byte address is taken mod 2^64 (fuzz_command's
-   check_reply_s7.v cr7_aview_all at origin/ossv/recipes 501c0d516c69) *)
+   check_reply_s7.v cr7_aview_all) *)
 Lemma mf_aview_all : forall (H : word -> bool) (m m' : word -> option byte),
 (forall a, 0 <= a < 2 ^ 64 -> aview SEGS H m' a = aview SEGS H m a) -> forall a, aview SEGS H m' a = aview SEGS H m a.
 Proof.

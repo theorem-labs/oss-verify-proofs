@@ -28,7 +28,13 @@ Qed.
 
 Definition CAPMAX : Z := 296960.
 
-Definition CAP29 : Z := 174080.
+(* 08b1429/75d69e00: [PlaceCap.slot_cap]'s budget is now the window [MMAP_FLOOR, CEIL_MIN) rather
+   than [0, CEIL_MIN) -- a grant is Linux's own bottom-up address, so the task_unmapped_base
+   floor (183251939328 bytes) is not available to slots.  At n = 2^29 + 2^13 the divisor is
+   536887296, so slot_cap drops 196593 -> 196253 while SLOTS_BOUND 174080 + 5 + KRES = 196589.
+   169 * 1024 is the largest multiple of 1024 that fits (195434 <= 196253), and it keeps the
+   ~800-slot margin CAPMAX (850) and CAP30 (939) carry.  Only CAP29's margin was below 340. *)
+Definition CAP29 : Z := 173056.
 
 Definition CAP30 : Z := 86016.
 

@@ -1,6 +1,6 @@
 # G5: ASan cell, shadow, owned and coverage gates on lib/Reusable/YF0m.v (gate record)
 
-Proves no function (kind: measurement). Re-run 2026-10-30 on the series base b1afc3e80791 (`run.sh g5`).
+Proves no function (kind: measurement). Re-run 2026-10-30 on the series base (`run.sh g5`).
 
 ## Tools (cited, not copied)
 | tool | sha256 | reads |

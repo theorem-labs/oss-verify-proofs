@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the credential getters and read_cstr read memory through the read-only backing, below TASK_SIZE). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -12,7 +13,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Syscall Uapi.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Kernel Require Import Sys.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require Import Namei Open.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import
-  ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg.
+  RomBase ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg.
 
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -26,6 +27,10 @@ Inductive getid_no : Z -> (Creds -> word) -> Prop :=
 | getid_euid : getid_no 175 cr_euid
 | getid_gid  : getid_no 176 cr_gid
 | getid_egid : getid_no 177 cr_egid.
+
+(* the credential getters read no memory (RomBase.memfree_174..177) *)
+Lemma memfree_getid : forall no sel, getid_no no sel -> memfree no.
+Proof. intros no sel H. destruct H; memfree_lit. Qed.
 
 Lemma syscall_spec_getid : forall segs ms x8 m o no sel,
   getid_no no sel -> bv_unsigned x8 = no ->
@@ -83,7 +88,8 @@ Theorem rzc_getid : forall ms x8 m no sel T,
   realizes_cfg cfg segs (mkCfg ms m) T.
 Proof.
   intros ms x8 m no sel T Hsel Hno Hh Hl Hsvc HT.
-  eapply rzc_silent1; [apply (node_getid_cfg ms x8 m no sel); assumption | exact HT].
+  eapply rzc_silent1; [apply (node_getid_cfg ms x8 m no sel); assumption | | exact HT].
+  apply (sys_rob_memfree segs ms m x8 Hsvc). rewrite Hno. exact (memfree_getid no sel Hsel).
 Qed.
 
 End WithCfg.
@@ -175,29 +181,45 @@ Definition nul_byte : byte := Z_to_bv 8 0.
 (* [comment removed for export] *)
 Definition no_nul (p : list byte) : bool := forallb (fun b => negb (bv_eqb b nul_byte)) p.
 
+(* LPS 08b1429: [read_cstr_aux] asks [access_okb a 1] before each byte
+   ([State.read_cstr_aux_accepted]), so the walk needs every byte up to the NUL
+   below [TASK_SIZE]. *)
+Lemma access_okb_1 : forall a : word, bv_unsigned a < TASK_SIZE -> access_okb a 1 = true.
+Proof.
+  intros a H. unfold access_okb. apply andb_true_iff.
+  unfold TASK_SIZE in *. split; apply Z.leb_le; lia.
+Qed.
+
 Lemma read_cstr_aux_intro : forall p mp a k,
   (length p < k)%nat ->
+  (forall i, (i <= length p)%nat -> bv_unsigned (addr_off a i) < TASK_SIZE) ->
   no_nul p = true ->
   (forall i, (i < length p)%nat -> mp (addr_off a i) = nth_error p i) ->
   mp (addr_off a (length p)) = Some nul_byte ->
   read_cstr_aux mp a k = CstrOk p.
 Proof.
-  induction p as [|b p IH]; intros mp a k Hk Hnn Hbytes Hnul.
-  - destruct k as [|k]; [cbn in Hk; lia |]. cbn [read_cstr_aux].
+  induction p as [|b p IH]; intros mp a k Hk Htop Hnn Hbytes Hnul.
+  - destruct k as [|k]; [cbn in Hk; lia |].
+    pose proof (Htop 0%nat ltac:(cbn; lia)) as Ht0. rewrite addr_off_0 in Ht0.
+    rewrite (read_cstr_aux_accepted mp a k (access_okb_1 a Ht0)).
     cbn [length] in Hnul. rewrite addr_off_0 in Hnul. rewrite Hnul.
     unfold nul_byte. change (bv_eqb (Z_to_bv 8 0) (Z_to_bv 8 0)) with true. reflexivity.
-  - destruct k as [|k]; [cbn in Hk; lia |]. cbn [read_cstr_aux].
+  - destruct k as [|k]; [cbn in Hk; lia |].
+    pose proof (Htop 0%nat ltac:(cbn; lia)) as Ht0. rewrite addr_off_0 in Ht0.
+    rewrite (read_cstr_aux_accepted mp a k (access_okb_1 a Ht0)).
     pose proof (Hbytes 0%nat ltac:(cbn; lia)) as H0. cbn [nth_error] in H0.
     rewrite addr_off_0 in H0. rewrite H0.
     cbn [no_nul forallb] in Hnn. apply andb_true_iff in Hnn as [Hb Hnn].
     apply negb_true_iff in Hb. unfold nul_byte in Hb. rewrite Hb.
-    rewrite (IH mp (a + 1)%bv k); [reflexivity | cbn [length] in Hk; lia | exact Hnn | |].
+    rewrite (IH mp (a + 1)%bv k); [reflexivity | cbn [length] in Hk; lia | | exact Hnn | |].
+    + intros i Hi. rewrite addr_off_S. apply (Htop (S i)). cbn [length]. lia.
     + intros i Hi. rewrite addr_off_S. apply (Hbytes (S i)). cbn [length]. lia.
     + rewrite addr_off_S. exact Hnul.
 Qed.
 
 Lemma read_cstr_intro : forall p mp a,
   (length p < path_max)%nat ->
+  (forall i, (i <= length p)%nat -> bv_unsigned (addr_off a i) < TASK_SIZE) ->
   no_nul p = true ->
   (forall i, (i < length p)%nat -> mp (addr_off a i) = nth_error p i) ->
   mp (addr_off a (length p)) = Some nul_byte ->
@@ -242,9 +264,11 @@ Theorem openat_sep_unmodeled : forall segs ms x8 m p,
   path_eqb p devnull_path = false ->
   path_eqb p urandom_path = false ->   (* [comment removed for export] *)
   tmp_name p = None ->
+  (* LPS 08b1429: openat_sep_spec models /proc/self/fd/N ([proc_self_fd]) *)
+  proc_self_fd p = None ->
   syscall_spec (sys_input segs ms x8) m Unmodeled.
 Proof.
-  intros segs ms x8 m p Hno Hfd Hfl Hread Hslash Hlt Hdn Hur Htmp.
+  intros segs ms x8 m p Hno Hfd Hfl Hread Hslash Hlt Hdn Hur Htmp Hpsf.
   apply (syscall_spec_openat segs ms x8 m Unmodeled Hno).
   unfold openat_spec, record_copyins.
   (* [comment removed for export] *)
@@ -260,7 +284,7 @@ Proof.
   rewrite (path_has_slash_nonempty p Hslash).
   rewrite Hfd. change (bv_eqb AT_FDCWD32 AT_FDCWD32) with true. cbn [negb].
   unfold openat_resolved_spec. rewrite Hslash.
-  unfold openat_sep_spec. rewrite Hlt, Hdn, Hur, Htmp. reflexivity.
+  unfold openat_sep_spec. rewrite Hlt, Hdn, Hur, Hpsf, Htmp. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -272,14 +296,16 @@ Theorem openat_sep_reaches_error : forall cfg segs ms x8 m p,
   (length p < path_max)%nat -> no_nul p = true ->
   (forall i, (i < length p)%nat -> ms_read_byte ms (addr_off (ms_gpr ms 1) i) = nth_error p i) ->
   ms_read_byte ms (addr_off (ms_gpr ms 1) (length p)) = Some nul_byte ->
+  (forall i, (i <= length p)%nat -> bv_unsigned (addr_off (ms_gpr ms 1) i) < TASK_SIZE) ->
   path_has_slash p = true ->
   path_eqb p localtime_path = false ->
   path_eqb p devnull_path = false ->
   path_eqb p urandom_path = false ->   (* [comment removed for export] *)
   tmp_name p = None ->
+  proc_self_fd p = None ->
   reaches_error_cfg segs cfg (mkCfg ms m).
 Proof.
-  intros cfg segs ms x8 m p Hh Hsvc Hno Hfd Hfl Hlen Hnn Hbytes Hnul Hslash Hlt Hdn Hur Htmp.
+  intros cfg segs ms x8 m p Hh Hsvc Hno Hfd Hfl Hlen Hnn Hbytes Hnul Htop Hslash Hlt Hdn Hur Htmp Hpsf.
   apply (reaches_error_cfg_unmodeled_here cfg segs ms m x8 Hh Hsvc).
   apply (openat_sep_unmodeled segs ms x8 m p Hno Hfd Hfl); try assumption.
   apply read_cstr_intro; assumption.
@@ -295,14 +321,16 @@ Corollary openat_sep_reaches_error_star : forall cfg segs c tr ms x8 m p,
   (length p < path_max)%nat -> no_nul p = true ->
   (forall i, (i < length p)%nat -> ms_read_byte ms (addr_off (ms_gpr ms 1) i) = nth_error p i) ->
   ms_read_byte ms (addr_off (ms_gpr ms 1) (length p)) = Some nul_byte ->
+  (forall i, (i <= length p)%nat -> bv_unsigned (addr_off (ms_gpr ms 1) i) < TASK_SIZE) ->
   path_has_slash p = true ->
   path_eqb p localtime_path = false ->
   path_eqb p devnull_path = false ->
   path_eqb p urandom_path = false ->   (* [comment removed for export] *)
   tmp_name p = None ->
+  proc_self_fd p = None ->
   reaches_error_cfg segs cfg c.
 Proof.
-  intros cfg segs c tr ms x8 m p Hstar Hh Hsvc Hno Hfd Hfl Hlen Hnn Hbytes Hnul Hslash Hlt Hdn Hur Htmp.
+  intros cfg segs c tr ms x8 m p Hstar Hh Hsvc Hno Hfd Hfl Hlen Hnn Hbytes Hnul Htop Hslash Hlt Hdn Hur Htmp Hpsf.
   eapply reaches_error_cfg_star; [exact Hstar |].
   eapply openat_sep_reaches_error; eassumption.
 Qed.

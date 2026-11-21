@@ -3,8 +3,8 @@
    read-only strings; the image facts as one constant fact (fs_img_facts) and the reader-cell discipline (rd_cells).
    The contract shapes are FSH_Gen.v's (generic in pc, stated once for both builds); lib/B/FSH_Rt.v holds the same names
    over fs.asan-ubsan. Statements only.
-   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v (a working branch e48bf3cce32: FM_SN_FMTS,
-   FmRt) and FMH_Fn.v at 137702429de (FM_RO_STRS, fm_img_facts). fs drops fm's strncmp / strncasecmp / strstr / strchr /
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v (a working branch: FM_SN_FMTS,
+   FmRt) and FMH_Fn.v (FM_RO_STRS, fm_img_facts). fs drops fm's strncmp / strncasecmp / strstr / strchr /
    isalnum entries (not linked or not called: fsh_base_measure.asan.txt callee list) and adds strcmp, memchr with any byte,
    and the "\\%c" / "\\u%04x" formats. Every numeral MEASURED as in FSH_Base.v ((internal path),
    section ".rodata strings the target functions address": auipc + addi pairs in the target code, bytes read). *)
@@ -107,7 +107,7 @@ Definition cstr_kept (ly : alayout) (S : astate) (U : list (Z * Z)) (p : Z) (l :
    pc_wrap_free / pc_stack_malloc cid of as_code B. Their fields pin that pc to PC_* (first conjunct) beside the contract
    (second conjunct), so a walk at a measured `jal PC_*` rewrites its pc and applies the contract.
    FSH_Fn_entry.v's FsEntryRt states the entry's OWN runtime use at the as_code B pcs, and fs_entry_goal takes it
-   instead of this whole record (a Theorem Labs lane 25c141b8cb6): fe_malloc, fe_free and fe_stack_malloc_0 are exactly the
+   instead of this whole record (a Theorem Labs lane): fe_malloc, fe_free and fe_stack_malloc_0 are exactly the
    second conjuncts of fr_malloc, fr_free and fr_stack_malloc_0; fe_memchr is fr_memchr; fe_memcpy (at
    pc_asan_memcpy (as_code B)) is fr_memcpy once pc_asan_memcpy (as_code B) = PC_memcpy, which the final asyms of this
    build gives by computation. A callee's closing theorem adds its own runtime premise when it is composed in.

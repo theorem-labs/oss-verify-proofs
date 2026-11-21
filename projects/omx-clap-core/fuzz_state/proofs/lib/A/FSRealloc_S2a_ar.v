@@ -4,21 +4,21 @@
    musl memcpy 0x98a20).  FSRealloc_S2a.v consumes these lemmas; the machine walk is FSRealloc_S2a_walk.v.
 
    Rule 24 (released-proof lookup): a Theorem Labs lane (internal path; ossv proof
-   index v5, 2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df) answered CONFIRM: no released ASan-image proof of any
+   index v5, 2026-10-28T21:58:24Z, ossv/recipes) answered CONFIRM: no released ASan-image proof of any
    fuzz_state function.  The released donor of this step is cgif_rgb_fuzzer's lib/YF78.v:220-249 (`hdr_facts`, over
    YF1w's hw_val / hb1_facts / p_zone / cell_lit).  The facts here are fs's own in-tree lemmas, lifted; where the
    in-tree lemma sits in a file that Requires lib/A/AFex.v (AFf0, AFfu, AFg1), which does not build at this tree
-   (AFex.v:244 batch_geom), its proof script is restated inline over the same lib/Reusable / AF0x facts:
+   (AFex.v:245 batch_geom), its proof script is restated inline over the same lib/Reusable / AF0x facts:
      - the chunk of a live block and its header cells: lib/A/AFg1.v:63-72 (kk, kk_facts, KF, Epa, Enn),
-       :116-117 (hdr_In), :128-140 (hw_val's V0 / V2 / V4); the same block is lib/A/AFfu.v:112-121, :171-172,
+       :116-117 (hdr_In), :128-140 (hw_val's V0 / V2 / V4); the same block is lib/A/AFfu.v:113-122, :172-173,
        :183-195.  Its parts: lib/Reusable/YG03.v:48 find_user_block, lib/Reusable/YG0s.v:226 cfacts / :240
        chunk_facts, lib/Reusable/YG0n.v:49-53 hdr_state / chunk_cells, :118 acells, ARm's am_cells / am_wf,
-       lib/A/AF0x.v:106 cell_holds_val_mem; the address of a header cell is lib/A/AFf0.v:286-295 (EA / EA2, as
+       lib/A/AF0x.v:106 cell_holds_val_mem; the address of a header cell is lib/A/AFf0.v:287-296 (EA / EA2, as
        AFg1.v:123, :132, :134 use them), restated inline.
-     - the zone of the header + user bytes: lib/A/AFf0.v:97-104 ZCH (zone3 of the chunk's extent, from
-       lib/A/AF0x.v:66 zone3_intro + lib/Reusable/YG0s.v:287 chunk_apart + AFf0.v:92-96 zdisjoint_of_pointwise),
-       restated inline, narrowed to [pa - 16, pa + req_size n) as lib/A/AFg1.v:269-273 / lib/A/AFfu.v:379-385
-       (p_zone) narrow it; img_cover from lib/A/AF0x.v:55 img_cover_of_ledger, as lib/A/AFfu.v:325-326 (IMG).
+     - the zone of the header + user bytes: lib/A/AFf0.v:98-105 ZCH (zone3 of the chunk's extent, from
+       lib/A/AF0x.v:66 zone3_intro + lib/Reusable/YG0s.v:287 chunk_apart + AFf0.v:93-97 zdisjoint_of_pointwise),
+       restated inline, narrowed to [pa - 16, pa + req_size n) as lib/A/AFg1.v:269-273 / lib/A/AFfu.v:380-386
+       (p_zone) narrow it; img_cover from lib/A/AF0x.v:55 img_cover_of_ledger, as lib/A/AFfu.v:326-327 (IMG).
      - the two image cells: lib/A/AF0x.v:207 tfib_const_lookup, the pattern of lib/A/AFg1.v:88-89 (cell_lit), over
        the start-up certificate rows lib/A/AF0m.v:180 (`z8 (ANum 0x9f718) 0xa1568`) and :96
        (`z8 (ANum 0xa1568) 0x98a20`), used where they stand.
@@ -58,8 +58,8 @@ Local Open Scope Z_scope.
 (* SINK GUARD (a Theorem Labs lane 02:29Z): a SUCCESS here (the build errors naming this line) means a WRONG sink instance resolved. *)
 Fail Definition probe_SK : OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable.YI16.sink_head := _.
 Fail Definition probe_SH : OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable.YI14.sink_syms := _.
-(* A range none of whose points lies in [e] is disjoint from [e]: lib/A/AFf0.v:92-96 (zdisjoint_of_pointwise), restated
-   here because AFf0.v Requires lib/A/AFex.v, which does not build at this tree (AFex.v:244 batch_geom). *)
+(* A range none of whose points lies in [e] is disjoint from [e]: lib/A/AFf0.v:93-97 (zdisjoint_of_pointwise), restated
+   here because AFf0.v Requires lib/A/AFex.v, which does not build at this tree (AFex.v:245 batch_geom). *)
 Lemma s2a_zdisjoint_of_pointwise : forall a s (e : Z * Z), 0 < s -> 0 < snd e -> (forall x, a <= x < a + s -> ~ in_zr x e) ->
   zdisjoint (a, s) e.
 Proof.
@@ -73,7 +73,7 @@ Hypothesis TB : TfibSyms B.
 
 (* The chunk header of a live block: state byte 2 = CHUNK_ALLOCATED at pa-16 (0x3299c `lb a0, -0x10(s1)`), the
    UsedSize halves at pa-14 (0x329e4 `lhu a0, -0xe(s1)`) and pa-12 (0x329e8 `lwu a1, -0xc(s1)`), and the header +
-   user bytes off the image.  AFg1.v:63-72, :116-117, :128-140 and AFf0.v:97-104 (ZCH) / :286-295 (EA, EA2), lifted
+   user bytes off the image.  AFg1.v:63-72, :116-117, :128-140 and AFf0.v:98-105 (ZCH) / :286-295 (EA, EA2), lifted
    out of their sections and restated inline (AFf0 / AFg1 / AFfu Require AFex.v, which does not build here). *)
 Lemma s2a_hdr : forall ly S (W : world tfibsegs) mem md p n,
   AR tfibsegs B ly S W mem md -> In (p, n) (blocks S) ->
@@ -96,7 +96,7 @@ assert (CS : forall c e (w : nat) x, In c (chunk_cells k) -> c = ACell e w (AV (
   val_mem tfibsegs (mrestrict (w_H W) mem) (aeval B ly e) w x).
 { intros c e w x Hc ->. apply (cell_holds_val_mem B ly (w_H W) mem e w (ANum x)).
   exact (proj1 (Forall_forall _ _) (am_cells B ly S _ M) _ (HIN _ Hc)). }
-(* AFf0.v:286-295 (EA / EA2): ck_beg is PPrim or PSec (cfacts), so the header-cell expressions evaluate to
+(* AFf0.v:287-296 (EA / EA2): ck_beg is PPrim or PSec (cfacts), so the header-cell expressions evaluate to
    ck_base + offset; the YG0f.v:252 aeval_aoff side condition (not ASh) holds by construction. *)
 assert (EA : forall d, aeval B ly (aoff (sptr_exp (ck_beg k)) d) = ck_base B ly k + d).
 { intros d. clear - GG. unfold ck_base, sptr_addr. destruct (ck_beg k) as [|o|r o|c q]; try solve [destruct GG]; cbn; lia. }
@@ -106,7 +106,7 @@ assert (EH : aeval B ly (aoff (sptr_exp (ck_beg k)) (ck_rz k - kChunkHeaderSize)
 { rewrite EA, Epa. unfold kChunkHeaderSize. lia. }
 assert (EH2 : forall d, aeval B ly (aoff (aoff (sptr_exp (ck_beg k)) (ck_rz k - kChunkHeaderSize)) d) = sptr_addr B ly p - 16 + d).
 { intros d. rewrite EA2, Epa. unfold kChunkHeaderSize. lia. }
-(* AFf0.v:97-104 (ZCH): the chunk's extent is a zone3 range. *)
+(* AFf0.v:98-105 (ZCH): the chunk's extent is a zone3 range. *)
 assert (ZK : zone3 (ck_base B ly k) (ck_extent k)).
 { pose proof (am_layout B ly S _ M) as LO.
   pose proof (req_size_bounds (ck_req k) ltac:(clear - G7; lia)) as (_ & Q1 & _).

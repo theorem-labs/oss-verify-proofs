@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (15 recorded proofs replaced by written proofs (MS_eta, step_gen, step_ecall_gen and 12 more); adds kr_u_anchor, kr_u_anchor2, segs_vvar and 6 more; imports). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,6 +12,34 @@ From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
 Ltac2 kr_t_MState () := "C4ELinuxProcessSemantics5Riscv7PreludeBbvmap_get_set_sameC47Corelib4Init5Logic8eq_ind_rC4ELinuxProcessSemantics5Riscv7PreludeCbvmap_get_set_otherK47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>ms_svc_pendingK47Corelib4Init9Datatypes6option02I47Corelib4Init5Logic2eq00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics7ms_regsC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics8ms_fregsC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics9ms_pc_valC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics7ms_fcsrC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics7ms_resvC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics6ms_memC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics6ms_romc59OSSVerify5KrLib3Lib6MState2MSC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive01C4ELinuxProcessSemantics5Riscv7Prelude5bvmapK4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=machine_state01K47Corelib4Init5Logic2eq01I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=machine_state00K47Corelib7Numbers7BinNums8positive03I47Corelib4Init9Datatypes4list00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics:fetch_wordK47Corelib4Init9Datatypes6option01C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics8is_ecallI47Corelib4Init9Datatypes4prod00C4ELinuxProcessSemantics5Riscv7DecodeC:decode_anyK47Corelib4Init9Datatypes4prod01I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result00I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=access_report00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemanticsDdecode_exec_accessesC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=fetch_word_ovC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>fetch_tail_anyC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=fetch_failureK47Corelib4Init9Datatypes4list01K4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result02K4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result03C45stdpp9bitvector;definitions7Z_to_bvK4ELinuxProcessSemantics5Riscv3Sem4core01C4ELinuxProcessSemantics5Riscv3Sem4execC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics:interp_effc59OSSVerify5KrLib3Lib6MState;lift_resultC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z02K45stdpp9bitvector;definitions2bv01C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics6ms_regC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemanticsCinterp_eff_accessesC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics<access_valueC4ELinuxProcessSemantics5Riscv3Sem6c_regsC4ELinuxProcessSemantics5Riscv3Sem7c_fregsC4ELinuxProcessSemantics5Riscv3Sem4c_pcC4ELinuxProcessSemantics5Riscv3Sem6c_resvC4ELinuxProcessSemantics5Riscv3Sem6c_fcsrC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics?accessed_rangesC4ELinuxProcessSemantics5Riscv7DecodeCBis_defined_illegalC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemanticsBdrop_access_reportK4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result01K4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=access_report01C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics5ms_pcC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics4stepI4ELinuxProcessSemantics?LinuxProcessSem<MemImageType7Segment00I4ELinuxProcessSemantics5Riscv5Instr5instr00I47Corelib7Numbers7BinNums1Z00I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool02C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=memory_accessK47Corelib4Init5Logic4True01I4ELinuxProcessSemantics5Riscv3Sem4core00C4ELinuxProcessSemantics5Riscv3Sem5is_x0C4ELinuxProcessSemantics5Riscv3Sem7reg_getc59OSSVerify5KrLib3Lib6MState5MSsvcC1?~~~~~~~~~~~~~~~C45stdpp9bitvector;definitions4BvWfK47Corelib4Init9Datatypes4bool01C4ELinuxProcessSemantics5Riscv3Sem2w0C4ELinuxProcessSemantics5Riscv7Prelude9bvmap_setC4ELinuxProcessSemantics5Riscv7Prelude9bvmap_getC47Corelib4Init5Logic3notK47Corelib7Numbers7BinNums1Z01C45stdpp9bitvector;definitions;bv_unsignedC45stdpp9bitvector;definitions5bv_eqC45stdpp9bitvector;definitions6bv_addC56Stdlib6ZArith6BinInt1Z3addC45stdpp9bitvector;definitions7bv_wrapC45stdpp9bitvector;definitions:bv_modulusC56Stdlib6ZArith6BinInt1Z6moduloC46Stdlib6ZArith4Zdiv9Zplus_modC47Corelib4Init5Logic6eq_indC45stdpp9bitvector;definitions@Z_to_bv_unsignedC45stdpp9bitvector;definitions?bv_add_unsignedI47Corelib7Numbers7BinNums1N00I47Corelib4Init5Logic3and00C46Stdlib6ZArith4ZdivAZplus_mod_idemp_lC59OSSVerify5KrLib3Lib8PropExec6v_addiC1?~~~~~~~~~~~~~~~K46Stdlib9micromega6VarMap1t02K46Stdlib9micromega6VarMap1t03I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega7EnvRing5PExpr03K46Stdlib9micromega=RingMicromega7Formula01K46Stdlib9micromega5Tauto8GFormula04C46Stdlib9micromega5Tauto8BFormulaC46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundC35stdpp7tactics<f_equal_helpI46Stdlib9micromega:ZMicromega;ZArithProof00C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K46Stdlib9micromega=RingMicromega3Op201K47Corelib4Init9Datatypes4unit01C45stdpp9bitvector;definitionsDbv_unsigned_in_rangeC45stdpp9bitvector;definitions=bv_wrap_smallc59OSSVerify5KrLib3Lib6MStateCZ_to_bv_bv_unsignedC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z7add_0_rC56Stdlib6ZArith6BinInt1Z2leC56Stdlib6ZArith6BinInt1Z3powC56Stdlib6ZArith6BinInt1Z2ltc59OSSVerify5KrLib3Lib6MState6ret_pcC1?~~~~~~~~~~~~~~~C45stdpp9bitvector;definitions6bv_notC45stdpp9bitvector;definitions6bv_andC56Stdlib6ZArith6BinInt1Z4landC56Stdlib6ZArith6BinInt1Z4lnotC56Stdlib6ZArith6BinInt1Z4onesC56Stdlib6ZArith6BinInt1Z3subC56Stdlib6ZArith6BinInt1Z7testbitC47Corelib4Init9Datatypes4andbC56Stdlib6ZArith6BinInt1Z6eq_decI47Corelib4Init6Specif7sumbool00C56Stdlib6ZArith6BinInt1Z3eqbK47Corelib7Numbers7BinNums1Z03K46Stdlib9micromega7EnvRing3Pol01K47Corelib4Init9Datatypes3nat02K46Stdlib9micromega=RingMicromega5Psatz02K46Stdlib9micromega=RingMicromega5Psatz04K46Stdlib9micromega=RingMicromega5Psatz06K46Stdlib9micromega:ZMicromega;ZArithProof02K47Corelib4Init9Datatypes4list02K46Stdlib9micromega7EnvRing5PExpr01C56Stdlib6ZArith6BinInt1Z8bit0_eqbC56Stdlib6ZArith6BinInt1Z9ltb_spec0C56Stdlib6ZArith6BinInt1Z3ltbI47Corelib4Init9Datatypes7reflect00C56Stdlib6ZArith6BinInt1Z>pow_pos_nonnegC56Stdlib6ZArith6BinInt1Z:pow_nonnegC46Stdlib9micromega9SatDivModCZ_mod_nonneg_nonnegC56Stdlib6ZArith6BinInt1Z7div_modC56Stdlib6ZArith6BinInt1Z3divC56Stdlib6ZArith6BinInt1Z3mulC56Stdlib6ZArith6BinInt1Z=mod_pos_boundC56Stdlib6ZArith6BinInt1Z=mod_neg_boundC56Stdlib5omega8PreOmega1Z;div_0_r_extC56Stdlib5omega8PreOmega1Z;mod_0_r_extC59OSSVerify5KrLib3Lib9LiaTuning9zify_doneC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z7compareK46Stdlib9micromega7EnvRing5PExpr04C56Stdlib6ZArith6BinInt1Z=ones_spec_lowC56Stdlib6ZArith6BinInt1Z6shiftlC56Stdlib6ZArith6BinInt1Z;shiftl_specC47Corelib4Init5Logic6eq_symC46Stdlib4Bool4Bool;andb_true_rC56Stdlib6ZArith6BinInt1Z4log2C56Stdlib6ZArith6BinInt1Z<log2_lt_pow2K46Stdlib9micromega6VarMap1t01K46Stdlib9micromega7EnvRing5PExpr07C56Stdlib6ZArith6BinInt1Z;lt_le_transC56Stdlib6ZArith6BinInt1Z?bits_above_log2C56Stdlib6ZArith6BinInt1Z9land_specC56Stdlib6ZArith6BinInt1Z9bits_inj'C56Stdlib6ZArith6BinInt1Z4of_NC46Stdlib9micromega;ZifyClasses6eq_iffC47Corelib4Init5Logic8iff_reflC46Stdlib9micromega;ZifyClasses3injC46Stdlib9micromega;ZifyClasses5mkrelC46Stdlib9micromega;ZifyClasses9and_morphC46Stdlib9micromega;ZifyClasses;rew_iff_revC45stdpp9bitvector;definitions?bv_not_unsignedC45stdpp9bitvector;definitions?bv_and_unsignedK46Stdlib9micromega5Tauto8GFormula08K46Stdlib9micromega5Tauto8GFormula07K46Stdlib9micromega5Tauto8GFormula05K46Stdlib9micromega5Tauto8GFormula03C46Stdlib9micromega;ZifyClasses5mkappC46Stdlib9micromega;ZifyClasses6mkapp2K46Stdlib9micromega=RingMicromega3Op205K46Stdlib9micromega=RingMicromega3Op203K47Corelib4Init9Datatypes3nat01K46Stdlib9micromega:ZMicromega;ZArithProof01I47Corelib4Init5Logic4True00I47Corelib4Init9Datatypes:comparison00I47Corelib4Init5Logic5False00C46Stdlib9micromega8ZifyInst7Inj_Z_Z".
 Import ListNotations.
 Open Scope bv_scope.
+
+(* UNIVERSE ANCHOR, and it is load-bearing rather than decoration.  The F_memchr replays rewrite
+   under `@respectful machine_state Prop eq (flip impl)`, and the kernel checks that application
+   against the universe graph it inherits instead of inferring a fresh constraint for it.  With
+   the inequality absent the check fails with
+     Type@{max(Set,bvmap.u0)} ... should be a subtype of Type@{Proper.u0}
+   at a line holding nothing but a replay blob, which names neither the file nor the cause.
+   Writing the application once here records `machine_state`'s universe below [respectful]'s in
+   MState.vo, which every replay file already Requires.  Nothing is assumed and nothing is
+   proved: this is a definition whose only job is the constraint it carries. *)
+From Corelib Require Import Classes.Morphisms.
+Definition kr_u_anchor (R : machine_state -> machine_state -> Prop) (S : Prop -> Prop -> Prop)
+  : (machine_state -> Prop) -> (machine_state -> Prop) -> Prop :=
+  @respectful machine_state Prop R S.
+
+(* ANCHOR 2, UNVERIFIED BY A COMPILER -- it is the next link of the same chain, and it is a
+   HYPOTHESIS until a build removes it.  With kr_u_anchor above in place the failure moved from
+   respectful to
+     @reflexive_eq_dom_reflexive : forall (A B : Type) (R' : relation B),
+        Reflexive R' -> Reflexive (eq ==> R')%signature
+     "Type@{max(Set,bvmap.u0)} ... should be a subtype of Type@{GenericInstances.u0}"
+   (log-20261106T043815Z).  The signature below is transcribed from that error, not guessed.
+   The chain is BOUNDED and its extent is measured, not estimated: decoding the four F_memchr
+   constant tables lists exactly 26 Corelib.Classes constants, the same 26 in every lane, so at
+   most that many universes can need recording and most take no Type argument at all. *)
+Definition kr_u_anchor2 (R : Prop -> Prop -> Prop) (H : Reflexive R)
+  : Reflexive (@respectful machine_state Prop eq R) :=
+  @reflexive_eq_dom_reflexive machine_state Prop R H.
 
 (* [comment removed for export] *)
 Definition MS (R F : bvmap 5 word) (pc : word) (fc : bv 32) (rv : option word)
@@ -29,10 +58,105 @@ Definition MS_of_core (c : core) (m ro : word -> option byte) : machine_state :=
 
 Lemma MS_eta : forall ms, ms_svc_pending ms = None ->
   ms = MS (ms_regs ms) (ms_fregs ms) (ms_pc_val ms) (ms_fcsr ms) (ms_resv ms) (ms_mem ms) (ms_rom ms).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "p'0h0>ms_svc_pendingi00>ms_svc_pendingh11Hh22msh37ms_fcsri017ms_fcsrh48ms_fregsi028ms_fregsh56ms_memi036ms_memh69ms_pc_vali049ms_pc_valh77ms_regsi057ms_regsh87ms_resvi067ms_resvh96ms_romi076ms_romi081mp;1p;3p;7p;2p;8p;6p10000p4p7210g000iR0p4p710R1p8p1001Gp4p7210P1p8g002Aj10Tg002fj13Tg003Dj14Tg003gj16Tg004Ij1=Tg005Oj1BTg0061j31Tg006Kj1<Tg007Jj1;Tg008Jj1:Tg009Kj17Tg00:Jj18Tg00;Ij19Tg00<Gj1>Tg00=Ej72Tg00>7j1CTg00>\j2ATg00?Hj85Tg00@Oj2@TP0j6?Tg00@iR0P0g00B0#0R1#0#0R2#0#0R3#0#3#4R4#6R5f0R6#=%B4R731f1R8%<8%;8%:8%78%88%98%>8F2510[P6%C1#3/A4R1%33#4%32#4#6\4R2f7R3f6R9f5R:f4R;f3R<f2R=P8P6G5#==157P5P7f9R7f8R>P3P6P:P;P<P=G5P7P>P3P;P:P<P=F2510X05P>P3P9P<P;P=P8F2,@0P:P6E?P>P3P9P:P;P<P=P8G5R>%<>%;>%:>%7>%8>%9>%>>F2510eW1X92W5W3X85X05X64X41W7P3P9P:P;P<P=P8P6O8n01108000181105102104100106101103107W2o"). Qed.
+Proof. intros [] H; cbn in *; subst; reflexivity. Qed.
 
 (* [comment removed for export] *)
+
+(* The vvar arm of a failed load (08b1429, unchanged at 75d69e00) is guarded by [segs_vvar segs]
+   first: for a binary's own segment list (no vvar segment) that reduces to [false] by conversion,
+   so the shim below keeps, on a concrete image, the pre-revision shape the recorded walk terms
+   were built against.  [interp_eff_accesses_nv_shim_ok] stays unconditional, because a byte of the
+   vvar pages lies in a vvar segment of [segs] ([range_meets_vvar_segs]). *)
+Definition segs_vvar (segs : list Segment) : bool := existsb seg_vdso_vvar segs.
+
+Lemma find_segment_in : forall segs a n seg, find_segment segs a n = Some seg -> In seg segs.
+Proof.
+  induction segs as [|s r IH]; intros a n seg H; cbn in H; [discriminate|].
+  destruct (_ && _)%bool; [injection H as <-; left; reflexivity | right; exact (IH _ _ _ H)].
+Qed.
+
+Lemma range_meets_vvar_segs : forall segs a n, range_meets_vvar segs a n = true -> segs_vvar segs = true.
+Proof.
+  intros segs a n; revert a. induction n as [|n IH]; intros a H; cbn in H; [discriminate|].
+  apply orb_prop in H as [H|H]; [|exact (IH _ H)].
+  unfold vvar_byte_at in H. destruct (find_segment segs (bv_unsigned a) 1) as [seg|] eqn:E; [|discriminate].
+  unfold segs_vvar. apply existsb_exists. exists seg. split; [exact (find_segment_in _ _ _ _ E) | exact H].
+Qed.
+
+Section InterpEffNV.
+Variable segs : list Segment.
+
+(* [RiscvSemantics.interp_eff_accesses] (RiscvSemantics.v:988-1033 at 75d69e00) copied
+   STRUCTURALLY, with one change: the ELoad miss arm's vvar test is guarded by [segs_vvar segs].
+   The access-report layer is reproduced exactly as the model builds it.  Its predecessor
+   [interp_eff0] collapsed that layer into the bare [core * mem] result, so a recorded term --
+   which carries the layer reduced but present (the [mkAccessReport ... ((a, n) :: ...)] node) --
+   could never match it; that is measured, not argued, in the 87-vs-53 round. *)
+Fixpoint interp_eff_accesses_nv_shim (t : eff) (m : word -> option byte)
+    : machine_result (access_report (core * (word -> option byte))) :=
+  match t with
+  | EDone c => MachineOk (@mkAccessReport _ (c, m) [])
+  | EEbreak _ | EFault _ | EDefinedIllegal _ => MachineFault
+  | EIllegal _ | EEcall _ => MachineUnmodeled
+  | ELoad n a k =>
+      match ov_read_bytes segs m a (width_bytes n) with
+      | Some bs =>
+        match interp_eff_accesses_nv_shim (k (bv_extract 0 n (le_bytes_to_word bs))) m with
+        | MachineOk report =>
+          MachineOk
+            (@mkAccessReport _ (@access_value _ report)
+               ((a, width_bytes n) :: @accessed_ranges _ report))
+        | MachineFault => MachineFault
+        | MachineUnmodeled => MachineUnmodeled
+        end
+      | None =>
+        if (segs_vvar segs && range_meets_vvar segs a (width_bytes n))%bool
+        then MachineUnmodeled else MachineFault
+      end
+  | EStore n a v k =>
+      if store_ok segs m a (width_bytes n)
+      then
+        match interp_eff_accesses_nv_shim k
+                (write_to_mem m a
+                   (Z_to_le_bytes (width_bytes n) (bv_unsigned v))) with
+        | MachineOk report =>
+          MachineOk
+            (@mkAccessReport _ (@access_value _ report)
+               ((a, width_bytes n) :: @accessed_ranges _ report))
+        | MachineFault => MachineFault
+        | MachineUnmodeled => MachineUnmodeled
+        end
+      else MachineFault
+  end.
+
+Lemma interp_eff_accesses_nv_shim_ok :
+  forall t m, interp_eff_accesses segs t m = interp_eff_accesses_nv_shim t m.
+Proof.
+  induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m;
+    cbn [interp_eff_accesses interp_eff_accesses_nv_shim]; try reflexivity.
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|].
+    + rewrite <- IH. reflexivity.
+    + destruct (range_meets_vvar segs a (width_bytes n)) eqn:Ev.
+      * rewrite (range_meets_vvar_segs _ _ _ Ev). reflexivity.
+      * rewrite andb_false_r. reflexivity.
+  - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
+    rewrite <- IH. reflexivity.
+Qed.
+End InterpEffNV.
+
+(* NAME LENGTHS HERE ARE LOAD-BEARING, and the two numbers are forced, not chosen.  A replay
+   reaches these by one swapped entry in its own encoded constant table, and KReplay indexes
+   that table by BYTE OFFSET (KReplay.v:594/:635), so a swapped entry must occupy exactly as
+   many bytes as the model entry it replaces.  An entry is `C<nsegs>(<len><seg>)*`, each <len>
+   written as chr(48+len), so with the path Lib.MState fixed at 48 bytes:
+     RiscvSemantics.interp_eff           = 66 bytes  ->  name must be 18 chars
+     RiscvSemantics.interp_eff_accesses  = 75 bytes  ->  name must be 27 chars
+   [interp_eff_nv_shim] is 18 and [interp_eff_accesses_nv_shim] is 27.  Renaming either without
+   re-padding makes the decoder read a shifted offset and die on `KReplay: bad identifier`;
+   that is measured, in log-20261106T033929Z. *)
+Definition interp_eff_nv_shim (segs : list Segment) (t : eff) (m : word -> option byte)
+    : machine_result (core * (word -> option byte)) :=
+  drop_access_report (interp_eff_accesses_nv_shim segs t m).
 
 Definition lift_result (ro : word -> option byte) (r : machine_result (core * (word -> option byte)))
   : machine_result machine_state :=
@@ -49,7 +173,34 @@ Lemma step_gen : forall segs R F pc fc rv m ro w i sz,
   RiscvSemantics.step segs (MS R F pc fc rv m ro) =
   lift_result ro (interp_eff segs (exec (Z_to_bv 64 sz) i (Core R F pc fc rv)) m).
 Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "p'0h01oi001oh11Fh22Hdh32Heh42Hfh51Rh63acch7<access_valuei01<access_valueh8?accessed_rangesi02?accessed_rangesh91bh:1ci031ch;2fch<1ii041ih=1mi051mh>2m'i062m'h?2m0h@2pchA6resulti076resulthB2rohC2rvhD4segshE2szhF1wi081wi091ai0:3iszi0;1pi0<6reporti0=3st'i0>1xp;1p;2p;3p;4p;7p;5p;8p;6g00BUj1ZTg002Aj15Tg00>7j1UTg002fj1>Tg003Dj1JTg00>\j2eTg003gR0j1<Tg00C5j2ETg00D7j27Tg0061j38Tg00DYj1QTg00EYR1j2PTg00F9j1?Tg00Fjj4OTg00GJR2j1KTg00HRR3j1[Tg00=Ej76Tg00IYj3HTg00;Ij1ATg00Jej3XTg00Kjj3WTg00M0j3VTg00N5j1`Tg00NUj1TTg00O]j1STg00Pej2CTg00QKj5=Tg00R4j3;Tg00R[j3RTg00S]j22Tg006Kj1BTg007Jj1LTg008Jj1@Tg00TXj1_Tg00U6j3^Tg00UYj2]Tg00:Jj1DTg009Kj1MTg00<Gj1NTg00?Hj84Tg00VWj3GTg00Wbj2\Tg00Xfj1jTg00YOj1iTg00Z9j1hTg005Oj1gTg00Z`j1fTg00[Ij1dTg00\2j2YTg00]9j1cTg00^2j23Tg00_<j29Tg00`Dj3:Tg00@Oj2ITg000ij6FTg00aKj1bTg00bHj2aTf2R4g00@iR5f1R6f0R73:'9p=11356=847p=0g00cD#Zg00B0#5R8#U#>R9%58#5R8#5#5R:#5#>R;#JR<'eR=%>:#JR:%<<%>8#J#<\<R>g00dCR?g00doR@%<:RAf:RBf7RC'E17:438g00eMRDf3RE#Qg00emRF381P?@RG#<RHf4RI#?P?P@PEP4CO,7G38PAf5RJ,7:%K5RKP0P:%[5RL#KRMP7f?RNf>ROf=RPf<RQf;RRPBf9RSf8RTF6;H7RUP0P:PMPPPQPRPBPSPTPCF6RV#ARW=XORPUP0P:PMAWOWRPUP2P5PMAVOWRg00fMRU#`RX91L7RY%TLRZ%SLR[n10110>00031010=0000n10110>00021010800n10110>00021010800n10110>000210108001C;IPPPQPRPBPSD=7;J=ROT,2CR\30X0APDPFPDPMP7%BV%LV%@V%U8#_g00gR5^9,]V,7<%DV%MVPW%NVG4=1LXP0PGPMf6RX#?P1P?P@PMP7P2g00gnRW/P>R9#[R8PMfARF1C;7f@RAPNPOPPPQPRPBF6R]#B%L]%@]%M]%D]D=7;6%A]3GP1PWP>PM1\97R]%j6R^%i6R_%h6R`%g<Ra%f6Rb%d6RcP7fCfBPFPAPNPOPPF6#NG41Y94Rd51Ln200110>000120103106PZP[n10110>00031010<0000n200110;00012110410:RePDPM%cXPZP[n0100000020000Rfn10110>00021110;00n0100000020001=0K\X9DPHP?P@PIPECO,7GP0PGPMP7PePfn10110>00021110;00=0K\X0H1C;ER;PQPRPBPSPTD=7;IRH=GPCR\%K8P2P8P2P8PMP7P1PWP>PMP]P^P_P`PaPbPcP7PRG4=1Ldn200110>000120103106PZP[n10110>00031010<00001397,2T50KP7P3P9P1PWP>PMP]P^P_P`PaPbPcP7PQG4=1Ldn200110>0001201031061987,39,2B50KP7P1PWP>%ZURUP1PWP>PMA:967R3,\9P^P_P`PaPbPcP7PAG4A:9E4,Y951Ln200110>0001201031061983,39,2O50K]8P7PWP>P4P6CO=:97,98,39,2F,IKX6UX>>X:WP6P7O2n200110;010120103100X79P6P7O2n101109000121101102XA8P7O1%T8,39,2C,IK%S8,39,2C,IKn1011050003111070000b?P2P8PMP\P1PWP>PMP]P^P_P`PaPbPcP7PSG4=1Ldn200110>000120103106PZP[n10110>00031010<0000ARPHC,2XRH50KeP2P8PMPQPRPBPSPTPCPXF6RX#B%LX%@X%MX%DXD=9;;I%AXR;5GPP1PWP>PMP]P^P_P`PaPbPcP7PNPOPPPQPRPBPSF6#NG4=1Ldn200110>000120103106PZP[n10110>00031010<0000=0KHe%?JP7EF%QJP6EFAHPXJ=0KHe1EPBP4EFP0P:PM%bXR4,EPAHOV7RVP0P:PMAXP;4PVP0P:PMAWP;4PVP2P5PMAVP;4PYPZP[n10110>00031010=0000n10110>00021010800n10110>00021010800n10110>00021010800=0KHe1aPX=8KHeW2W3W4WEW<XF:XB>W=WCW;X@<X1=W5WDo"). Qed.
+  intros segs R F pc fc rv m ro w i sz Hf He Hd.
+  (* [comment removed for export] *)
+  unfold RiscvSemantics.step, RiscvSemantics.step_accesses. cbn [ms_pc ms_pc_val MS]. rewrite Hf.
+  unfold decode_exec_accesses. rewrite He, Hd. cbn [ms_regs ms_fregs ms_pc_val ms_fcsr ms_resv ms_mem ms_rom MS].
+  unfold interp_eff.
+  destruct (interp_eff_accesses segs (exec (Z_to_bv 64 sz) i _) m) as [[[c m'] acc]| |]; reflexivity.
+Qed.
+
+(* [step_gen] with its right-hand side over the shim.  Two things about it are load-bearing and
+   neither is cosmetic.
+   (1) BINDERS AND ARITY ARE IDENTICAL to [step_gen]'s.  The recorded terms apply it
+       positionally, so one premise or one argument more would break every one of them.
+   (2) THE NAME IS EXACTLY AS LONG AS [step_gen], eight characters, and must stay so.  A replay
+       reaches this lemma by one name swap inside its own encoded constant table, and KReplay
+       indexes that table by BYTE OFFSET (KReplay.v:594/:635, `kr_global ... tab (kr_num4 ...)`),
+       so a longer name shifts every later entry and the decoder dies on `bad identifier`.
+       That is measured: `step_gen_nv` produced exactly that error before the rename. *)
+Lemma step_gnv : forall segs R F pc fc rv m ro w i sz,
+  fetch_word segs pc = Some w ->
+  is_ecall w = false ->
+  decode_any w = Some (i, sz) ->
+  RiscvSemantics.step segs (MS R F pc fc rv m ro) =
+  lift_result ro (interp_eff_nv_shim segs (exec (Z_to_bv 64 sz) i (Core R F pc fc rv)) m).
+Proof.
+  intros segs R F pc fc rv m ro w i sz Hf He Hd.
+  unfold interp_eff_nv_shim. rewrite <- (interp_eff_accesses_nv_shim_ok segs).
+  exact (step_gen segs R F pc fc rv m ro w i sz Hf He Hd).
+Qed.
 
 (* [comment removed for export] *)
 Lemma step_ecall_gen : forall segs R F pc fc rv m ro w,
@@ -58,19 +209,20 @@ Lemma step_ecall_gen : forall segs R F pc fc rv m ro w,
   RiscvSemantics.step segs (MS R F pc fc rv m ro) =
   MachineOk (MSsvc R F pc (if is_x0 17 then w0 else reg_get R 17) fc rv m ro).
 Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "p'0h01Fh12Heh22Hfh31Rh41bh52fch61mh71oh82pch92roh:2rvh;4segsh<1wi001wi011ci021ii033iszi042m'i051pi066reporti073st'i081xp;1p;2p;3p;7p;8p;5p;6g00BUj1iTg002Aj12Tg00>7j1GTg002fj15Tg003Dj1;Tg00>\j2ZTg003gR0j1:Tg00C5j28Tg00D7j2<Tg0061j30Tg00DYj1MTg00GJR1j1@Tg00HRj1NTg00=Ej73Tg00IYj36Tg00;Ij1>Tg00Jej3JTg00Kjj3OTg00M0j3PTg00N5j1VTg00`Dj37Tg00_<j21Tg00NUj1UTg00O]j1TTg00^2j24Tg00TXj1STg00U6j3DTg00hWj1ITg00i?j29Tg00iij8=Tg006Kj1CTg007Jj1BTg008Jj1ATg00UYj2RTg00:Jj1LTg009Kj1?Tg00<Gj1ETg00?Hj8HTg00EYR2j2FTg00F9j1QTg00Pej2hTg00QKj5gTg00R4j3fTg00VWj3cTg00Wbj2bTg00Xfj1aTg00YOj1]Tg00Z9j1\Tg005Oj1[Tg00Z`j1YTg00[Ij1^Tg00\2j2_Tg00]9j1XTg00@Oj2`Tg000ij6KTg00aKj1WTg00bHj2dTg00j^j2eTg00cD#ig00B0#2R3#G#5R4%23#2R3#2#2R5#2#5R6#;R7'ZR8%55#;R5%:7%53#;#:\7R9%:5R:f8R;f5R<'8f0R=,<530g00eMR>f1R?#Mg00kAR@30P:f2RA,<5g00@iRB#@RCP0P5%NBRD#@REP=f<RFf;RGf:RHf9RIP;f7RJf6RKP<F3;6=RLP0P5PEPHPIP;PJPKP<f4RMF3RN#>RO=JG;PLP0P5PEAOGO;PLP1PBPEAPGO;g00fM#VRL97B=,1DRP%UDRQ%TDRRn1011080003101070000n10110800021010000n10110800021010000n10110800021010000,4BPHPIP;P>P7%G3#SR3g00gRRS5D4RT#IRUg00kaRV19HTn0100000020000PJPKP<PMG=,1BRW30X7:P>P@P>PEP=%CN%BN%AN1RNT,<7%LN%?NPO%ENGH=7BL,1DP0g00dCRLg00doRO'FPEf3R@#QP2PLPOPEP=P1g00gnRO/F9RL#NPEf>R:1h6=f=R6PFPGPHPIP;PJF3RX#C%BX%AX%?X%LXDg7f?%>X3cP2POP9PE1bL=%a?%]?%\?%[7%Y?%^?P=f@f?P:P6PFPGPHF3#EGH1_LA57B,1Dn2001108000120101104PQPRn1011080003101060000n2001105000121102103P>PE%X@PQPRn0100000020000n10110800021110500n0100000020001,4B=0CWX4>PIP;PJP>P7PUPV19ITn0100000020000PKP<PMP@G=,1BRT,`C%MAP=EKPIP;PJPKP<PMP@F3RU=6HA,4B=0CTe18HJP?EKP0P5PE%WUR?,8HA6GN=RNP0P5PE%>URG=JH?PNP0P5PEAOHG?PNP1PBPEAPHG?PPPQPRn1011080003101070000n10110800021010000n10110800021010000n10110800021010000,4B=0CTe1dHUPIP;PJP>P7PS1e43d9D43R3#IPV19I3n0100000020000PKP<PMP@G=,1B50CeW1W2X<5X99W6W:W5X87X08W3W;o"). Qed.
+  intros segs R F pc fc rv m ro w Hf He.
+  unfold RiscvSemantics.step, RiscvSemantics.step_accesses. cbn [ms_pc ms_pc_val MS]. rewrite Hf.
+  unfold decode_exec_accesses. rewrite He. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 
 Lemma reg_get_set_same : forall (R : bvmap 5 word) (r : reg) v,
   reg_get (bvmap_set r v R) r = v.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "p'0h01Rh11oh21rh31vi001vi011xp;1p;2p;3p;5p;4p;6g002Aj10Tg00>7j1=Tg002fj12Tg003Dj13Tg00>\j2<Tg003gR0j1:Tg00D7j27Tg0061j31Tg00@Oj25Tg00lFj56Tg00m6j44Tg0000j58Tg000ij69Tg00i?j2;Tg00B0#0R1#=#2R2%01#0#0#0#0#2#3R1'<%32%:1R3f0R4,71P0P1P1P4P4g00kan10110100021010000f1R0511X131514P2P1P0P2P1P0P4f2R3D6R5C4P2P1P0P4P3D8E91;50=114eX31W2W0o"). Qed.
+Proof. intros. unfold reg_get. rewrite bvmap_get_set_same. reflexivity. Qed.
 
 Lemma reg_get_set_other : forall (R : bvmap 5 word) (r r' : reg) v,
   r <> r' -> reg_get (bvmap_set r v R) r' = reg_get R r'.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "p'0h01Rh11oh21rh32r'h41vi001vi011xp;1p;2p;3p;4p;5p;7p;6g002Aj10Tg00>7j1=Tg002fj13Tg003Dj14Tg00>\j2<Tg0061j32Tg00mfj1;Tg003gR0j18Tg00m6j41Tg00@Oj27Tg00lFj56Tg001Gj79Tg000ij6:Tg00i?j25Tg00B0#0R1#=#3R2%01#0#0#0#0#3#4R1'<%42R3f2R4f1R5523#;%81R6P2P1P4f4R7C1R8P0P1P1f0R9P9g00kaR:n10110100021010000P0P1P1P2P1f3R;f5C1P9P:n10110100021010000521X16P0P1P1P8P9P:n10110100021010000,71P2P1P4P2P1P;P5P7D6R:C1P2P1P;P4P5P7P9F9E:15:41574521eUX41X33W2W0o"). Qed.
+Proof. intros. unfold reg_get. rewrite bvmap_get_set_other by assumption. reflexivity. Qed.
 
 (* [comment removed for export] *)
 
@@ -84,46 +236,58 @@ ltac2:(KReplay.run1 (kr_t_MState ()) [] "p;1p;2g002Aj10Tg002fj15Tg003Dj12Tg00TXj
 (* [comment removed for export] *)
 Lemma lit_add_lit : forall a b, (Z_to_bv 64 a + Z_to_bv 64 b : word) = Z_to_bv 64 (a + b).
 Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h01zh12b1h22b2h31nh41Hh51ah61bp;1p;3p;2p;6g003Dj16Tg0061j39Tg00n]j20Tg00oGj3BTg002Aj14Tg002fj1=Tg00Pej28Tg00okj3<Tg010Pj22Tg010mj21Tg011Sj1;Tg012<j25Tg00@Oj2ATg012\j3@Tg013;j6?Tg013Wj2:Tg000ij67Tg014Fj3>Tg00doR0f1R1f0R239p=3g0154R3%62R4%61R5g015Rf2R6#6?912f3R7/061071'3R8[10611062'3%67?961[R9f4#6?976\8AB612P2n2001000000120000000W2W1W3P9^25^14^33P2g00B0#4#4#4#4#4#4#=R31836R41831R55<3R91261R8,83R:P01034R;1035R<'2,131276R=,83,03R>,32X00P01136R?122;,13/3>X00P01131R@1137R7/22,13/3>X00P01138R>127?,13/32X00P0%;3R7,58RA15=7,32X001A0A15671517'2/57A@617E?12?@,13/3>e103:1:38E7P<1:31E7P;1:36E71039A>345E7O4b4X60X50o"). Qed.
+  intros. apply bv_eq. rewrite bv_add_unsigned, !Z_to_bv_unsigned.
+  unfold bv_wrap. rewrite <- Zplus_mod. reflexivity.
+Qed.
 
 Lemma v_addi_lit : forall p i, v_addi (Z_to_bv 64 p) i = Z_to_bv 64 (p + i).
 Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h01zh12b1h22b2h31nh41Hh51ih61pp;1p;2p;3p;6g002Aj15Tg002fj1@Tg010mj22Tg003Dj16Tg010Pj21Tg00Pej27Tg0061j34Tg00n]j20Tg00oGj3=Tg011Sj1<Tg012<j28Tg00@Oj2;Tg015mj3?Tg000ij69Tg013Wj2:Tg016Tj2>Tg00doR0f1R1f0R234p=3P0g00B0#5#5#5#5#5#5#@R3/21%63R41121,73f2R5/11R6,73R734X00g0154R8%62R9%61R:g015R%65?412f3R;/0510;1'3R<[10511052'3%6;?451[R=f4#6?4;5\<A=512P2n2001000000120000000W2W1W3P=^2:^19^38P2P31235/11R8,73R9P7P01238R:11;5R=,73,03,32X00P01236R<123;/15,23/32X00P0%<3R;,86R>18=;,32X001;0>185;/11/8;A?51;E913:<e10371:36E910391:38E9O4b41731R8,031:31E91>821112,73544eX50X60o"). Qed.
+  intros p i. unfold v_addi. rewrite Z_to_bv_unsigned. apply bv_eq.
+  rewrite !Z_to_bv_unsigned. unfold bv_wrap. rewrite Zplus_mod_idemp_l. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma v_addi_assoc : forall (x : word) a b,
   v_addi (Z_to_bv 64 (bv_unsigned x + a)) b = Z_to_bv 64 (bv_unsigned x + (a + b)).
 Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h01zh14__x1h24__x2h34__x3h42b1h52b2h61nh71Hh87__arithh94__ffh:8__varmaph;5__with<1ah=1bh>1xp;1p;3p;2p;4p;7p;8p;6g002Aj16Tg002fj1QTg003Dj15Tg0061j37Tg00n]j21Tg00oGj3LTg010Pj20Tg00Pej24Tg010mj23Tg011Sj1BTg012<R0j28j1>Tg00@Oj2=Tg00N5j1PTg00BUj1OTg017Lj2@Tg017jj4NTg018Hj1MTg018fj1KTg019Qj2;Tg01:4j39Tg00>7j1GTg01:Wj4FTg01;Bj7ETg01;fj2DTg01<Hj2HTg01=4j3ITg01=Sj4CTg01>Ej8?Tg015mj3JTg000ij6:Tg013Wj2<Tg016Tj2ATg00doR1f1R2f0R337p=2g00B0R4#6R5#6#6#6#6#6#QR6#5R7g0154R8%53R9%52R:g015Rf2R;#5?723f3R</1;11<2'2R=[11;211;3'2%5<?7;2[R>f4R?#5?7<;\=AL;23P3n2001000000120000000W5W4W6P>^5:^49^68P3P6116<R8/0;R9,46,16R:/02R>,46R=10;2,08R8,46R@P1136>116?R?10<;'0RA,46,16RB,23X01P11369RC103;,36/2BX01P11368RB10?<,36/0;,36/23X01P11092RD%B6RE'818AE,23X01P1P1%>D%>8PEPEP1P1\1RAP0P0PDP8PA\1/=0g01>bR0#P%O0P11@1;P21@1<CN%M1%K1R0g01?Ng01?mRAPAg01@MRAP11;14RD1;15R5591%G4,;1R4591g01@mA9154991DCFg01ATFE1D0AP3P;g00eMRAg00kAR0'=1H3;=7A0dg00n?=I12CCb9b:b;X11X21X311032/0;102;,03'2^11^21^31P3P;P<P?O3b8G?1=1EG?189E/02/8EAJ92EE:10C2,36/2Be116@1<68E:P:1<69E:116=1<6>E:O4b7116;R;/02,46/A31023,0;,46577eX=1X<1W>o"). Qed.
+  intros. unfold v_addi. apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap.
+  rewrite Zplus_mod_idemp_l. f_equal. lia.
+Qed.
 
 Lemma v_addi_var : forall (x : word) b, v_addi x b = Z_to_bv 64 (bv_unsigned x + b).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h01bh11xp;1p;2g002Aj10Tg002fj16Tg003Dj12Tg00n]j21Tg010Pj25Tg00Pej24Tg00@Oj23Tg00B0#0#0#0#0#0#0#6R0#2R1g00dof1,10f0'5,40,31W0W1o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma Z_to_bv_bv_unsigned : forall (x : word), Z_to_bv 64 (bv_unsigned x) = x.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h02b1h12b2h21nh31Hh41xh51zp;1p;3p;2p;6g002Aj13Tg002fj1;Tg003Dj11Tg0061j32Tg00n]j20Tg00oGj3:Tg00Pej29Tg010mj25Tg01B4j26Tg01Bgj37Tg013Wj24Tg000ij68Tg00B0#3#3#3#3#3#3#;R0#1g0154R1f0R2#1R3f1R4#1R5g015Rf2R6#1?242g00doR7f3R8/06108432R9[10641062527%18?264[R:f4#1?286\9A:642P2n2001000000120000000W1W0W2P:^15^03^21P2P01004R1,90R3P4P7150110069272X571604970110031401E8O4b3W4o"). Qed.
+Proof. intros. apply bv_eq. rewrite Z_to_bv_unsigned. apply bv_wrap_small. apply bv_unsigned_in_range. Qed.
 
 Lemma Z_to_bv_plus0 : forall (x : word), Z_to_bv 64 (bv_unsigned x + 0) = x.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h01xh11zp;1p;2p;3p;6g002Aj10Tg002fj19Tg003Dj12Tg00n]j21Tg00Pej28Tg0061j37Tg01CSj13Tg010Pj24Tg01DVj15Tg000ij66Tg00B0#0#0#0#0#0#0#9R0#2R1g00doR2f0R3,10R41803f1571X12%33g00n?,44%54E6W0o"). Qed.
+Proof. intros. rewrite Z.add_0_r. apply Z_to_bv_bv_unsigned. Qed.
 
 (* [comment removed for export] *)
 Lemma unsigned_lit : forall z, (0 <= z < 2^64)%Z -> bv_unsigned (Z_to_bv 64 z) = z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h01zp;2p;1p;3p;6g01E7j24Tg002Aj10Tg00TXj11Tg01ESj25Tg01F0j23Tg015Rj22Tg002fj1<Tg010mj2;Tg0061j3:Tg011Sj16Tg01Bgj37Tg00Pej28Tg00n]j29Tg013Wj2>Tg000ij6=Tg00doR0g00n?R1f0R2'4g00B0#0R3#1%03#0#0#0#0R3#1'5,32'2P0%<3R3f1R4';f29:02X00P21414%63,34'2e97341834,931>34E=UW0o"). Qed.
+Proof. intros. rewrite Z_to_bv_unsigned. apply bv_wrap_small. unfold bv_modulus. exact H. Qed.
 
 Lemma unsigned_lit_wrap : forall z, bv_unsigned (Z_to_bv 64 z) = (z mod 2^64)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h01zp;1p;2p;3p;6g002Aj10Tg002fj1;Tg010mj24Tg00TXj11Tg01ESj2:Tg012<j22Tg0061j39Tg00@Oj25Tg00Pej26Tg00n]j27Tg013Wj23Tg000ij68Tg00doR0P0g00B0#0R1#0#0#0#0#0R2#;R3f0R4'4f1%11%12':R2'29904X001242,501634,731334E8W0o"). Qed.
+Proof. intros. rewrite Z_to_bv_unsigned. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition ret_pc (ra : word) : word := bv_and ra (bv_not (Z_to_bv 64 1)).
 
 Lemma ret_pc_fold : forall ra, bv_and ra (bv_not (Z_to_bv 64 1)) = ret_pc ra.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "h02rap;1p;2g002Aj10Tg002fj14Tg003Dj12Tg01FLj11Tg00@Oj23Tg00B0#0#0#0#0#0#0#4#2R0f0#1,30W0o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma ret_pc_even : forall z, (0 <= z < 2^64)%Z -> (z mod 2 = 0)%Z -> ret_pc (Z_to_bv 64 z) = Z_to_bv 64 z.
 Proof.
-ltac2:(KReplay.run1 (kr_t_MState ()) [] "p'0h04__x1h17__arithh24__ffh38__varmaph45__with51Hh62H0h71bi001bh81zh94__p1h:6__sat2h;6__sat3h<1ah=2H1h>2H2h?2H3h@2H4hA6__sat1hB6__sat4hC1ni011nhD2zhhE2HehF2HihG2HzhH1xhI2HahJ4__x2hK2b1hL2b2hM1ei021ehN1ihO1si031shP6__sat0hQ1li041lhR1mhS2n0hT2n1hU1ri051rhV1yp%0p&0p;1p;2p;3p;4p;6p;7p;8p;5p;<p;Bg002Aj1GTg00TXj1VTg01ESR0j2JTg01F0S00j20Tg015RS01j25Tg012<j24Tg003Dj1DTg0061j37Tg00n]j2;Tg00oGj3qTg002fk10\Tg00Pej2ZTg01GBk20STg01Ggk30FTg01HLj2ATg01Hjj1\Tg010mj2FTg01IHj1jTg01Ifj2YTg01JCj22Tg01Jdj2dTg01KBj2cTg00mfj1?Tg01KbS02j2bTg01E7j2=Tg01LBj2]Tg01L_j1zTg01M=j2wTg01M^j1vTg01N=j2iTg01Nfj3sTg01OOj3rTg01P8j2pTg00N5j1oTg01Pdj3nTg00BUk10[Tg017Lj2mTg018Hk10WTg018fk10VTg019Qj2lTg01QDj2KTg005Ok10RTg01;fk20ETg00@Oj2:Tg01<Hk20DTg01=4k30CTg01=Sk40ATg013;j6gTg01Qgk10;Tg000ij6<k709j8{Tg01RIk208Tg01Rlj2eTg01SIR1k207Tg00>7j1HTg01Slk205Tg01TTk304Tg01U8j2XTg01Uij2WTg01VJj2CTg01Vgj2QTg010Pj2MTg01WDj2NTg01Wkj2UTg01XRj2OTg01Y8j2TTg01Y^j2RTg01ZZk201Tg01[;k300Tg01[^j3~Tg01\Ej2}Tg01\ek403Tg01]Jj4|Tg01]fk106Tg01^Ej1ETg01^ck30:Tg01_Ij1yTg017jj4xTg01_gk30<Tg01`Jk50=Tg01`ok40>Tg01aXk30?Tg01b;k30@Tg01b^R2j1hTg01c<k30BTg01cbj1uTg01d@j4tTg01dcm<0ITg01eHk60JTg01f1k40KTg011Sk10LTg01Bgk30MTg013Wj2kTg01f\k20NTg01gJk30OTg01FLk10PTg01:Wj4_Tg01;Bk70QTg01h8j8aTg01h\k60TTg01i@k70UTg01idk60ZTg01jHm<0YTg01jmmB0XTg00n?R3f0R4'=p=1g00doR5?743p=3f1R6=754p=6g00eMR7?764p>02f2R8/d6=774p=>P5P6g01@mP4C_p=`P6g01?NR9g01?mR:P:g01@MR;P4g01ATK0Qp=8f3R<P9P:P:P;P8P6P4Gap=BA7534p=^1034p=@1064,58p=9P5P6g01kSP4C_p=SP6P9P:P:P;P4J0Tp=[P5P6g01l:P4C_p=PP8P9P:P:P;P6P4K0Up=Lf6R=P9P:P:P;f5R>f4R?P<P9P:P:P;P8P6P4GaGap=IP6P9P:P:P;P4J0Zp=fg0154R9P5P5P5P2P2P>P?P<P8P6P4N<0Yp>0GP5P5P5P5P5P5P0P4P6P8P0P<P?P>P=f7R0f8R2f9R@NB0Xp>0H%14RAg00B0RB#GRC#VRD%GC#G#G#G#GRC#VRE'JRF,04S03'5RG146D#3S04%D4RH%D6RIQ01%D8?7641;<81;<6'6RJ[1;861;84'6%D<?786[RK%D??7<8\JAq864P4n2001000000120000000WLWKXC9PK^LI^KH^C9P4&0\CRC1ZC<RH%VBRI,ZCRK-0SCRJ60FCS05PHP51;CHS061;CJS07'A1ZC?,;CRL,64X85P51;CKS08#\,FCRM1AL4/6LX85P51FC<S091A4M/64X85P51FCIRM1FC?RL%\4,FC'A/6LX85P5P<%\M,FC,A4/64X85%jE/YIRM,A<P712>612M6RL'd12=8-024X771c63%36RN%?N'bQ02%38RO%?O120<RP12M<;>PP4%3<RPP5P3f:RQ/26RR?>LR^FAXN51=33RRP714@DRL/]I12M3RS=>44X77g01>bRT%zB,w5g01laRU#v,i55s51i5U5r5g01m@'p%oTRU3n&0[TRT1m56RV&0W5RW&0V5RX1l5BRY1K53RZ'`,8XR[&0R:R:1`ZY,8XCB20EX;R;P4P8g00kAR\,:720D48=77\dB0C536H0AR]b2b3b4X05%34R^%^6[^05P414QDR_P2O2b1%^LP5P31]4IRL?>SLX85g00emS0:,:7S0;1]3IRL?>SLeP_P4Egb512@3&0;@E<WFP?P4P<K09WMP4O1%?P208?E10?E1e?E+071e>EP7P110=Ef<R=/22R112M2RP;>1P6100ER0P7PPP\P7%HBRB#H#H#H#H#VR_#jRL1Y2IRS'2A774\X77205DER`%@DRa%1E%@FRb[Rc[Rd%1DReg01mlRfB04DE6UWIRg%1FRh\f^IeRif>Rj/XD%1jf@Rk/4DRl#1\e[f?Rm/WD%3DRn#?Ro1CkD,QD/Ml,6k[1NkDfARl/4DRp#1?9pD\a1UlD10D3RpfBRq/4DRr,0D1=r3'5[1OqDfCRr/CDS0<#3\n1TrDfDRs/4DRt/6s\ng00gRRu1RsDRvePvP?g01nH2013D':PaeRvO1RwfERx/4DRy#1?9yDS0=P6PfPQP4P6O2X<eS0>Ph^<eRhf;S0?PvO1S0@PcPUPTPVPWPX1K5ES0A,SY,8XS0BP:PX1[X[R[P:PX1PZY,8XRzP:1K5I:005YR{,PZ,8X1K5_,S{,8X5LXCBFIP;P]b2b3b4X05104ER{g01nnR|\NS0C%18RN1Y<IR}#1?9}_[[[^05P4fFR}PjPqPxO4b1b:bAbDb61YlIR~#1?9~_eb@b?b>b=b6b5bPbAb:9~_S1}LI/22PLPIP2PUPTPVPWPXPzP:PzCBP;P]b2b3b4X05%16RL\A^05P4P@P2O2b1H03E<C|A77\PP7P\12jQR\?>4\X77f=R\/2@$0612M@RPP4Egb5WQP4O1%?0P7Q0:A>4P4X77Q0;P1P=P2p-0R2PUPTPVPWPX1fX<R19LXzP:PzCBP;P]b2b3b4X05W915A6PL[^05^92P410\FP\P=O3b11c=3%3=R=%?='bQ02%3\R=%?=%Ej/0QP4%3jR=P5P3Q04%E8R7/0j]E^GGX8515Rb143DRb#3RP1X3D%1bR0\e\RP`PdPgPi1W3D1C3DRR,QD/Mb#^\o1N3DA90bDR0\a1U3D10Db1=b3'5\p1O3D%3R\n1T3DPP\nPu1R3DRPePPPwP0P6PfP@P4P6O2X<ePhPQPvO1PcPUPTPVPWPXP[P:PXPzP:1SZY,8XRvFIP;P]b2b3b4X05P|\^R^%@8\L[^05P4fKfGRQfJR@O3b1b:bAbDb6%@}eb@b?b>b=b6b5bAb:b;%E3/0\eWEWGPmP4PjP\G{WMP4O1%?=%EmPEQ0?%@6R=Q011JD6,08%E</08[R\10761JD8,0<R7[%E?/0<\7B0:864P6n2001000000120000000UX75X<5P\\=^75^<5P4PkPEP`PdPgPi1XqD%1q%1tR=\e[1WrD1CsD,QD/Mt,6s\o1NsDQ0=\a1UxD14}DR\,0D1=\3'5\p1O}D1CQD#3\n1TQDfHR\/4DR7/6\\nPu1R\DRjePjPwfIRj/4DR0#1?90DP6PfQ0>PhQ0@PcPUPTP5%y5P61m58CxPWPXP[P:PX1l5BRB/`Z,8X,[XP:PX1PZB,8XP:PX1fX?9LXzP:PvFIFIP;P]b2b3b4X05XJ5X92P|\O%1<RO15O>%@?[[[\^^05^J5^92P4fNR^/0FP@P^PmP}PjfMO7b1bBb;bDb6%@jeb@b?b>b=b6b5b:b;bBPUPTPVPWPX1K5D>0<5C,SY,8XRm9LX1P:PmCBP;P]b2b3b4X05X92Q03,56106FR1[^05^92P4%1lR^PlPkO3b1O4b5P`PdPgPi1XlD14rDRi#1\e\^1WqDQ0<,QD/Mi,6r\o1NrDA9=tD\a1UsD10Dy1=y3'5\p1OxD1C}D#3\n1T}D14QD/6Q\nPu1RQDRQePQPw%17?97DP6PfQ0>PhQ0@PcPUPTPVPWPXQ0B,[XP:PXP[P:PXPzP:Q0A/PY,8XCBFIP;P]b2b3b4X05P|\{Q0C1=E<\N[[^05P4PjPlPxP\O4b1bBb;bDb61=Eseb@b?b>b=b6b5b:b;bBI0=WTP4O1n200110300021110211101bOH0>E<WSP4O1n10210010500021110411101b7bUWCP4O1n200110300021110211101bO1A>M/26B0?>M6E<XFAXN580@<Q09%hCRA,JDRM,0<R>,5O10<FRs,5OPOP>POPs1:2O:0BOOP5P5Q00P4XH5R2Q001064#uXV5XH5P<P<1:5<PMPFP2P2P2P5P5g01oK1J64Ct,:5XR5XC5PDPD1:5DPAPEP2P2%h4,:5XH9PCPE1:5EJ0GN:0HN<0IJ0JPUPTPVPWPXALXzmRmP:PmCBP;P]b2b3b4X0515L1\G^05P4P?P<O2b1H0K&0LC99O<e:0MC<E<Q081kCIE<Q061kC<E<Q0720NCKE<Q05,;CB0OCHJE<O4b5%DC1ZC8RC$0P;7CeWEWGX85o"). Qed.
+  intros z Hz He. unfold ret_pc. apply bv_eq. rewrite bv_and_unsigned, bv_not_unsigned, !Z_to_bv_unsigned.
+  rewrite !(bv_wrap_small 64 z) by (unfold bv_modulus; lia).
+  change (bv_wrap 64 (Z.lnot (bv_wrap 64 1))) with (Z.ones 64 - 1)%Z.
+  apply Z.bits_inj'. intros i Hi. rewrite Z.land_spec.
+  destruct (Z.eq_dec i 0).
+  - subst i. rewrite (Z.bit0_eqb z). replace (z mod 2)%Z with 0%Z by lia. cbn. reflexivity.
+  - destruct (Z.ltb_spec0 i 64).
+    + replace (Z.testbit (Z.ones 64 - 1) i) with true. { apply andb_true_r. }
+      symmetry. change (Z.ones 64 - 1)%Z with (Z.shiftl (Z.ones 63) 1). rewrite Z.shiftl_spec by lia. apply Z.ones_spec_low. lia.
+    + rewrite (Z.bits_above_log2 z i); [reflexivity| lia |].
+      destruct (Z.eq_dec z 0). { subst. cbn. lia. }
+      apply Z.lt_le_trans with 64%Z; [|lia]. apply Z.log2_lt_pow2; lia.
+Qed.

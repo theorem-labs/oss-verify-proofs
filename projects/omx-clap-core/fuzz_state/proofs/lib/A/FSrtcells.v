@@ -3,7 +3,7 @@
    The start-up facts themselves are S0-native, in lib/A/FSrtcellsS0.v: fs_shadow_syms_of (FSH_Base.FsShadowSyms from
    ACeg.TfibLib) and fs_rt_vals (the cells of FSstrlen.fs_rt_rest as val_mem facts, from AR's ARm and TfibSyms).
    This file keeps only what needs the Bz view:
-   - fs_rt_cells_of: FSstrlen.FsRtCells B (lib/A/FSstrlen.v:587-588) from fs_rt_vals. The C8 bridge is
+   - fs_rt_cells_of: FSstrlen.FsRtCells B (lib/A/FSstrlen.v:588-589) from fs_rt_vals. The C8 bridge is
      FSstrlen.ro_c8_of_val_mem; the C1 bridge (a 1-byte val_mem value) is ro_c1_of_val_mem below. Bz's ImageA.asegs and
      AB1v.tfibsegs are the same segments (FSbz_str.mbyte_mrd holds by reflexivity).
    - The string contracts without the two premises: fs_strlen_realizesU_s, fs_memchr_realizesU_s (ACeg.TfibLib B in

@@ -1,4 +1,4 @@
-# check ordered 17:49Z: port_core d9e0589898fd (sha256 d9e0589898fd12f83fd76e086a3d7ddf3d1a43a7008dd59a73f442bff30388aa, pg-tools registry 4cc81ff763b tools/pg-reloc/d9e0589898fd) re-run on the SAME inputs and options as my 1e42da8952ec runs (S9, J9, K9, G9); stage-out compared file by file by sha256. I stay on 1e42da8952ec for the cross-check of record.
+# check ordered 17:49Z: port_core d9e0589898fd (sha256 d9e0589898fd12f83fd76e086a3d7ddf3d1a43a7008dd59a73f442bff30388aa, pg-tools registry tools/pg-reloc/d9e0589898fd) re-run on the SAME inputs and options as my 1e42da8952ec runs (S9, J9, K9, G9); stage-out compared file by file by sha256. I stay on 1e42da8952ec for the cross-check of record.
 # result: 387 stage-out files, 372 equal, 15 differ.
 # provenance-only (the differing lines are comment lines): A/ACeg.v, A/AD2l.v, A/AE2k.v (scene), A/ACeh.v, A/ACejTfib.v, A/ACfm.v (knock) - 6 files.
 # VALUE (the new tag writes a different number) - 9 files, and in EVERY one my core already holds the new tag's value, each from a decision row written before this check, so 0 rows to fix:

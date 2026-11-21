@@ -1,7 +1,7 @@
 (* rp_slot_read walk, fuzz_wire ubsan 6e91fe0b5555 0x13acc..0x13c5c (repace_wire.c:111-124); new.
    rp_slot_width is the named Section hypothesis HSW (its contract, rp_slot_width_c.v). The inlined reac_braid_pos is
    proved against braid_pos (rp_slot_read_c.v) through braid_pos_lin, copied from libreac/fuzz_decode's released
-   lib/Prog/reac_decode.v:17 (recipes 25e3d17bdb5, blob d70727b17a36). Here reac_braid_pos keeps its pos[3] array, in
+   lib/Prog/reac_decode.v:17 (recipes, blob d70727b17a36). Here reac_braid_pos keeps its pos[3] array, in
    the first 24 bytes of the 80-byte frame. Every UBSan check is an inline `unimp` at 0x13c5c; each is refuted below. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -7,16 +7,17 @@
    loop's setup 0x82d68-0x82d94 (-> the outer head RGO 0 at 0x82d98).  The walk to the lock is the first single-file
    walk of this function's (superseded), with the stack allocator's call through W_frame_x.v
    aj_stack_malloc_pres_at_raw_x (ASMP's frame clause kept, for errno).  The journal budget is RIG_STK_x (W8's
-   DRAIN_STK_x ruling, commit b9052387bcb). *)
+   DRAIN_STK_x ruling). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the RIG_x
-   round): converted IN PLACE to the generic Section of lib/A/W_relay_instance_gone_cx.v (commit 863f3bb0f69), any
+   round): converted IN PLACE to the generic Section of lib/A/W_relay_instance_gone_cx.v, any
    allocator relation ARx with its laws and the room record RP.  The prologue runs on the donor journal ajournal_x
    (YC80x.v SRr_run_pi_tok_AJx); __asan_stack_malloc_1 is ASMP (astack_malloc_pres_x, class 1) through
    aj_stack_malloc_pres_at_raw_x with OWNLOW / WFx / WFL / SMALLOC, as lib/A/W_relay_finish_h.v's rf_entry_seg seats
-   its fake frame (commit 3d17f490d56); the lock is alock_realizes_x.  At RGO 0 / RGU, GLIVE's journal ends at the
+   its fake frame; the lock is alock_realizes_x.  At RGO 0 / RGU, GLIVE's journal ends at the
    entry's head set (the seat and the lock keep it), and gbud's room and count are GBASE's: the seat's state is a
    set_fs of the entry's (RPF_of keeps the room) with the same blocks, the lock keeps the state, and the requests
    still owed at entry 0 are gtr by conversion. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -158,7 +159,7 @@ Hypothesis HGOTG : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
    through mbyte's seg_rom fallback: aguard_ok's second half needs nothing carried (a Theorem Labs lane's ruling; a Theorem Labs lane's
    pin measurement).  PB_fr decides it by vm_compute. *)
 Hypothesis HCANR : forall a, FR_GUARD <= a < FR_GUARD + 8 -> seg_rom SEGS (Z_to_bv 64 a) <> None.
-(* the two literals of the snprintf call, in W7's dlit_at form (W_drain_cx.v:175): the bytes in .rodata, read-only,
+(* the two literals of the snprintf call, in W7's dlit_at form (W_drain_cx.v:176): the bytes in .rodata, read-only,
    zero shadow, and the shadow hull visible in every ARx state.  RIG_FMT and glit_at_x (ashp over ARx, W_contract_x.v
    ashp_x) are the cx file's definitions (lib/A/W_relay_instance_gone_cx.v). *)
 Hypothesis HLIT20 : glit_at_x ARx 20 (RIG_FMT ++ [0]).
@@ -166,7 +167,7 @@ Hypothesis HLIT21 : glit_at_x ARx 21 (RelayModel.K_GESTURE ++ [0]).
 (* the two literals lie in .rodata below the GOT word FR_GOT_GUARD = 0x9e658, |"%s %d "| + 1 = 7 and
    |"param_gesture"| + 1 + 8 = 22 bytes: the location premises M1 / M3 of the narrowed asnprintf_realizes_x
    (W_sites_x.v), which this abstract placement does not fix.  PB_fr decides it by vm_compute: SnpNarrowSites.v
-   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (commit 2f48fc47493's hypothesis, carried here). *)
+   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (a commit's hypothesis, carried here). *)
 Hypothesis HLITGOT : VAL (A_OBJ 20) + 7 <= FR_GOT_GUARD /\ VAL (A_OBJ 21) + 22 <= FR_GOT_GUARD.
 (* " end\0" (.str.4, A_lit_end5 = A_OBJ 31) in the same form, for gesture_end's / gestures_end's garr8 premise and its
    ashp (instance: W_shadow_pin_fr.v ashp_end5_5_fr): bytes, in_rom, ashp, the granule's tail; HEND5L above gives the
@@ -377,7 +378,7 @@ destruct H as [H1 H2]. destruct i as [|i]; destruct j as [|j]; try lia.
 - cbn [nth]. apply IH; [exact H2 | cbn in Hij; lia].
 Qed.
 (* YCbq.v:2602 region_kept_stack_aj over YCbqG.v's journal ajournal_x (no kit twin; lib/A/W_relay_finish_h.v's
-   rf_region_kept_stack_aj_x, commit 3d17f490d56, the same proof: it reads only the journal's stack presence and stack
+   rf_region_kept_stack_aj_x, the same proof: it reads only the journal's stack presence and stack
    geometry and the call's acall_kept frame clause) *)
 Lemma rgp_region_kept_stack_aj_x : forall E lyc Sc W memc W2 mem2 slo shi (Er : Z -> Prop) n lo hi wlo whi cs sp0 sp
 STK FP ly S Hp W0 mem md own ly2 S2 Hp2 md2 k,
@@ -1128,7 +1129,7 @@ Let BRR := paj_branch_xR (PI := PI) (R := R).
 Let RUNPR := SRrG_run_pi_AJ_xG (PL := PL_fr) B PST ARx LAWS (R := R).
 Let RUNCR := SRrG_run_pi_AJ_call_xG (PL := PL_fr) B PST ARx LAWS (R := R).
 
-(* W_rig_pro.v:381 rgp_region_kept_stack_aj_x over the journal at R *)
+(* W_rig_pro.v:382 rgp_region_kept_stack_aj_x over the journal at R *)
 Lemma rgp_region_kept_stack_aj_xR : forall E lyc Sc W memc W2 mem2 slo shi (Er : Z -> Prop) n lo hi wlo whi cs sp0 sp
 STK FP ly S Hp W0 mem md own ly2 S2 Hp2 md2 k,
 acall_kept SEGS B lyc Sc W memc W2 mem2 slo shi Er ->
@@ -1145,7 +1146,7 @@ split; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi base_val]; rew
 - intros _. apply (apresent_writable SEGS). apply Hpres. zlia.
 Qed.
 
-(* W_rig_pro.v:414 rig_pro at R *)
+(* W_rig_pro.v:415 rig_pro at R *)
 Theorem rig_pro_xR : rig_pro_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 intros cx HB KO KU.

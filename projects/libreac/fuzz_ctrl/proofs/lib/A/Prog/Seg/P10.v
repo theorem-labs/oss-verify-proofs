@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its addresses and numbers changed; 417 of its 446 lines of code are new or changed and 367 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment P10 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, libreac v1.9.0 image A): 0x81c4c-0x81c5c, 5 instructions
    (v1.8 0x81bcc-0x81bd8, 4 instructions; S_P10 is CHANGED: the v1.8 `bne a0,s2,82b34` became a `beq` over a `j`
    to the error block, branch relaxation after the function grew).
@@ -28,8 +29,8 @@
    window, at or above stklo and below A, and one frame byte). v1.9: the fragment-record spill is [s1 + 192]
    (v1.8 [s1 + 208]); the frame is FRAME_BYTES = 3136 bytes (v1.8 3040, whose last bytes held `code`); the cut
    bundle's round 4 adds `addressable m (fr + 2880) 35` (first.sroa.7) last on both cuts, kept by sl_addr_keep.
-   v1.9 re-fit BUILT on v1.9 facts: rc=0 on a build machine workspace (internal path) (a copy of (internal path) at a working branch e3c0b7a9d6,
-   FACTS ed6b6b7b0ab) with the cut base a working branch cf5ad0d7203, 2026-10-28. *)
+   v1.9 re-fit BUILT on v1.9 facts: rc=0 on a build machine workspace (internal path) (a copy of (internal path) at a working branch,
+   FACTS) with the cut base a working branch, 2026-10-28. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

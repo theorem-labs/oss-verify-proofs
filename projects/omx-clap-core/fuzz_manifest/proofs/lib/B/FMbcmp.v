@@ -1,7 +1,7 @@
-(* B twin (fm.asan-ubsan) of lib/A/FMbcmp.v at a working branch 9261fc100fc.
+(* B twin (fm.asan-ubsan) of lib/A/FMbcmp.v at a working branch.
    The bcmp wrapper's contract at fuzz_manifest's symbol on image B: abcmp_realizes at PC_bcmp (lib/B/FMH_Base.v,
    0x41348 = __interceptor_trampoline_bcmp in fuzz_manifest.asan-ubsan). It is ReusableB/YE2s.v bcmp_icpt_contract,
-   a Theorem Labs lane's relocation of the donor proof (cgif_file_fuzzer lib/A/AE2s.v:710) onto image B (core2 e70bcdbfb7d).
+   a Theorem Labs lane's relocation of the donor proof (cgif_file_fuzzer lib/A/AE2s.v:710) onto image B (core2).
    fm_bcmp_TfibB is the form that G4's expected_spec_holds instance takes (its BCMP premise). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith.

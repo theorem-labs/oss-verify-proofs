@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_egress: the cut-free (SRcf) walk of check_mute on the UBSan image, 0x12f50, against
    lib/U/Prog/check_mute_ccf.v: check_mute_holds_cf, as reac-repacer/fuzz_uci's lib/U/Prog/check_value_cg.v
-   (at bc49657c087a) is to its check_value.v. Section CM is lib/U/Prog/check_mute.v's with SR replaced by SRcf
+   is to its check_value.v. Section CM is lib/U/Prog/check_mute.v's with SR replaced by SRcf
    (SRcf_bind / SRcf_ret, EgressGlue_cg's eg_runA_cf / eg_runN_cf), malloc(n ? n : 1) at the agree room
    (malloc_contract_ag; room_ag_gen from the room premise cm_room_cf), free by the kit's free_contract_cf; memcpy,
    rp_mute and bcmp are Section hypotheses, as there. The instruction segments (CMSeg.cm_seg1, cm_seg2, cm_seg3) and

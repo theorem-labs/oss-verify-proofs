@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0s.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: reads the cell src0_D_oft_aligned_copy_empty, renamed from its earlier name in YH03.v. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -154,7 +155,7 @@ Proof. intros E data buf k regs g Hk H. eapply run_env_agree; [exact Hk | apply 
 Definition md_inv (fs : Fs) (md : Model) : Prop :=
 fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = fs.
 Lemma md_inv_vm : forall fs md vm, md_inv fs md -> md_inv fs (with_vmmaps vm md).
-Proof. intros fs md vm ([H1 H1'] & [H2 H2'] & H3). unfold md_inv, fdchan. autorewrite with model. repeat split; assumption. Qed.
+Proof. intros fs md vm ([H1 [H1' H1'']] & [H2 [H2' H2'']] & H3). unfold md_inv, fdchan. autorewrite with model. repeat split; assumption. Qed.
 Lemma md_inv_ex : forall fs md md', md_inv fs md -> (exists vm, md' = with_vmmaps vm md) -> md_inv fs md'.
 Proof. intros fs md md' H [vm ->]. apply md_inv_vm. exact H. Qed.
 Lemma md_inv_ch1 : forall fs md, md_inv fs md -> fdchan (Z_to_bv 64 1) ch_stdout md.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (grants at a null hint, the Model record's revised destruct pattern, and the reserved-ledger fact taken from al_zres). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -916,7 +917,7 @@ Hypothesis Htr : In tr (as_universe B).
 Hypothesis D1 : tfx_depot_spec B.
 Hypothesis HBC : BCELLS.
 Hypothesis HDP : forall z m, DPOST z m <-> DPOSTS W3 z m.
-Hypothesis GOK : grant_ok_na_pin mdN (w64 mb) MSv = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 mb) MSv = true.
 Hypothesis LE3 : wle W W3.
 Hypothesis SUB3 : hsub (w_H W3) (w_H W).
 Hypothesis MON3 : forall x : word, w_H W x = false -> w_H W3 x = false.
@@ -1021,7 +1022,7 @@ Qed.
 Lemma grant50_isp : forall (a k : word) md, vm_init_sp (m_vmmaps (grant_md false (Z_to_bv 64 50) a k md)) = vm_init_sp (m_vmmaps md).
 Proof.
 clear. intros a k md. unfold grant_md, fixedin_ok_model, fixedin_ok_vmmaps, with_mmap_replacement, with_mmap_backing. rewrite YF7m.nores50. cbn.
-destruct md as [fd [maps lazy mat] io fs pr lim tm sg sc]. cbn. destruct maps; cbn; img_refl.
+destruct md as [fd [maps lazy mat kb_md vd_md] io fs pr lim tm]. cbn. destruct maps; cbn; img_refl.
 Qed.
 Lemma LED1 : forall z mdV md5, idx = res -> ALedger tfxsegs lyF (SFS false z) mdV ->
 vm_maps (m_vmmaps md5) = vm_maps (m_vmmaps mdV) -> vm_reserved (m_vmmaps md5) = vm_reserved (m_vmmaps mdV) ->
@@ -1332,7 +1333,7 @@ pose proof VM2 as (VMa & VMr & VMl & VMb).
 img_apply (nodeV W3 md2 sV KV QLEAF (fun _ => True) c4 EQ HN HAI).
 - clear; intros m m' _ _; img_exact I.
 - rewrite EcM. img_exact MWV.
-- rewrite EcM. img_exact (al_reserved _ _ _ _ (LV 0)).
+- rewrite EcM. img_exact (proj2 (al_zres _ _ _ _ (LV 0))).
 - img_exact (al_img_env tfxsegs lyF (SFS false 0) _ lyF_ok (LV 0)).
 - rewrite EcM. img_exact (al_Q _ _ _ _ (LV 0)).
 -

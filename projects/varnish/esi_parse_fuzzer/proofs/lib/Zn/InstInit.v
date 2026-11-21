@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the auxv is the 27/29-pair vector of LPS 727298f3 (rr_ok, init_rr, auxv_ok_init, p0_dk_init_frame). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -191,16 +192,10 @@ Section RR.
 Context {Clg : Ceiling} {Rr : RunRandom}.
 Definition rr_ok (lo : Z) (m : mem) : Prop :=
   DriverKit.cell8 m (il_guard InitPU) run_guard /\
-  exists av rnd x3 x4 x5 hw x6 x11 x12 x23,
-         DriverKit.cell8 m (il_libc InitPU + 8) av /\ 0 <= av /\ av mod 8 = 0 /\ av + 160 <= 2^64 /\ 0 <= rnd /\ rnd + 16 <= 2^64
-      /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= hw < 2^64 /\ 0 <= x6 < 2^64
-      /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64
-      /\ DriverKit.cell8 m av 3 /\ DriverKit.cell8 m (av + 8) x3 /\ DriverKit.cell8 m (av + 16) 4 /\ DriverKit.cell8 m (av + 24) x4
-      /\ DriverKit.cell8 m (av + 32) 5 /\ DriverKit.cell8 m (av + 40) x5 /\ DriverKit.cell8 m (av + 48) 16 /\ DriverKit.cell8 m (av + 56) hw
-      /\ DriverKit.cell8 m (av + 64) 6 /\ DriverKit.cell8 m (av + 72) x6
-      /\ DriverKit.cell8 m (av + 80) 11 /\ DriverKit.cell8 m (av + 88) x11 /\ DriverKit.cell8 m (av + 96) 12 /\ DriverKit.cell8 m (av + 104) x12
-      /\ DriverKit.cell8 m (av + 112) 23 /\ DriverKit.cell8 m (av + 120) x23 /\ DriverKit.cell8 m (av + 128) 25 /\ DriverKit.cell8 m (av + 136) rnd
-      /\ DriverKit.cell8 m (av + 144) 0 /\ DriverKit.cell8 m (av + 152) 0
+  exists av rnd (rs : bool) (v : nat -> Z),
+         DriverKit.cell8 m (il_libc InitPU + 8) av /\ 0 <= av /\ av mod 8 = 0 /\ av + 464 <= 2^64 /\ 0 <= rnd /\ rnd + 16 <= 2^64
+      /\ (forall j, 0 <= v j < 2^64)
+      /\ (forall j w, nth_error (DriverKit.auxv_wlist rs v rnd) j = Some w -> DriverKit.cell8 m (av + 8 * Z.of_nat j) w)
       /\ bytes_at rsegs m (rnd + 8) (Mem.le8 (wz run_secret))
       /\ lo <= av /\ lo <= rnd.
 End RR.
@@ -210,15 +205,12 @@ Theorem init_rr {Clg : Ceiling} lo m md : init_ok LayoutPU InitPU lo m md -> exi
 Proof.
   intros IOK. pose proof IOK as (_ & _ & _ & AUX & _ & GU & _).
   (first [ dex1 GU as g; destruct GU as [Hg Cg] | dand3 GU as g Hg Cg | destruct GU as (g & Hg & Cg) ]).
-  (first [ dex10 AUX as av rnd x3 x4 x5 hw x6 x11 x12 x23; dand15 AUX as Cav Hav0 Hav8 Hav160 Hr0 Hr16 R3 R4 R5 RHW R6 R11 R12 R23 CELLS | dand25 AUX as av rnd x3 x4 x5 hw x6 x11 x12 x23 Cav Hav0 Hav8 Hav160 Hr0 Hr16 R3 R4 R5 RHW R6 R11 R12 R23 CELLS | destruct AUX as (av & rnd & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & Cav & Hav0 & Hav8 & Hav160 & Hr0 & Hr16
-                   & R3 & R4 & R5 & RHW & R6 & R11 & R12 & R23 & CELLS) ]).
+  destruct AUX as (av & rnd & rs & v & Cav & Hav0 & Hav8 & Hav464 & Hr0 & Hr16 & HV & CELLS & RNDM & LOav & LOrnd).
   exists (rr_init m rnd g Hg). split; [exact Cg|].
-  exists av, rnd, x3, x4, x5, hw, x6, x11, x12, x23.
-  repeat match goal with |- _ /\ _ => split; [assumption|] end || idtac.
-  all: try assumption.
-  decompose [and] CELLS.
-  repeat (split; [assumption|]).
-  split; [| split; assumption].
+  exists av, rnd, rs, v.
+  split; [exact Cav|]. split; [exact Hav0|]. split; [exact Hav8|]. split; [exact Hav464|].
+  split; [exact Hr0|]. split; [exact Hr16|]. split; [exact HV|]. split; [exact CELLS|].
+  split; [| split; [exact LOav| exact LOrnd]].
   (* [comment removed for export] *)
   cbn [run_secret rr_init]. rewrite (le8_of_bytes _ (bytes_from_length m (rnd + 8) 8)).
   split; [lia|]. split; [rewrite bytes_from_length; lia|].
@@ -280,6 +272,26 @@ Lemma bytes_at_cell8 a v : DriverKit.cell8 m a v -> 0 <= v < 2 ^ 64 -> 0 <= a ->
   bytes_at rsegs m a (Mem.le8 (wz v)).
 Proof.
   intros C Hv Ha Hl. destruct (rw_C8_of_cell8 a v C Hv Ha Hl) as [[_ B] _]. cbn [cells_bytes cbytes] in B. rewrite app_nil_r in B. exact B.
+Qed.
+
+(* A word list stated cell by cell (word j at a + 8 j) is the byte list of its little-endian words. *)
+Lemma bytes_at_words a (ws : list Z) :
+  (forall j w, nth_error ws j = Some w -> DriverKit.cell8 m (a + 8 * Z.of_nat j) w) ->
+  (forall w, In w ws -> 0 <= w < 2 ^ 64) ->
+  0 <= a -> a + 8 * Z.of_nat (length ws) <= 2 ^ 64 ->
+  bytes_at rsegs m a (u64s (map (Z_to_bv 64) ws)).
+Proof.
+  revert a. induction ws as [|w ws IH]; intros a C R Ha Hl.
+  - cbn [map u64s]. apply bytes_at_nil. cbn [length Z.of_nat] in Hl. lia.
+  - cbn [map u64s]. cbn [length] in Hl. apply (proj2 (bytes_at_app rsegs m _ _ _)). split.
+    + pose proof (C 0%nat w eq_refl) as C0. replace (a + 8 * Z.of_nat 0) with a in C0 by lia.
+      apply (bytes_at_cell8 a w); [exact C0| apply R; left; reflexivity| exact Ha| lia].
+    + rewrite length_le8. apply IH.
+      * intros j w' Hj. replace (a + Z.of_nat 8 + 8 * Z.of_nat j) with (a + 8 * Z.of_nat (S j)) by lia.
+        exact (C (S j) w' Hj).
+      * intros w' Hw'. apply R. right. exact Hw'.
+      * lia.
+      * lia.
 Qed.
 
 Lemma u64arr_of_rw_cells' A n bs k : rw_cells rsegs m A [CB n bs] -> bs = u64s (repeat (wz 0) k) -> (n = 8 * k)%nat ->
@@ -347,12 +359,11 @@ Proof.
   pose proof IOK as (_ & _ & _ & _ & _ & _ & _ & VM & NA & LZ & MAT & BRK & HI & RESV & CEIL & ALG & LIM & HALT & CEILOK).   (* [comment removed for export] *)
   cbn [al_image_hi LayoutPU] in HI. cbn [il_resv InitPU] in RESV.
   constructor; cbn [ld_resv ld_groups ld_metas ld_brkreg ld_brk ld_live led_init].
-  - exact LZ.
+  - split; [exact LZ | exact (proj2 RESV)].   (* LPS 727298f3: minv also carries VD *)
   - exact HALT.
   - rewrite VM. split; [intros e []| constructor].
-  - unfold p0_reserved. rewrite <- RESV. unfold wwZ. reflexivity.
-  - intros e He. pose proof (in_map (fun e => (bv_unsigned (fst e), bv_unsigned (snd e))) _ _ He) as Hin. rewrite RESV in Hin.
-    unfold ehi. cbn in Hin. destruct Hin as [E|[E|[E|[E|[]]]]]; injection E as E1 E2; rewrite E1, E2 || rewrite <- E1, <- E2; lia.
+  - destruct RESV as [(rx & Erx & Xr) _]. exists rx. split; [| exact Xr]. unfold wwZ. rewrite Erx. reflexivity.
+  - intros b n Hin. unfold p0_reserved in Hin. destruct Hin as [E|[E|[E|[E|[]]]]]; injection E as <- <-; lia.
   - split; [lia|]. split; [unfold PGSZ; exact ALG|]. split; [rewrite BRK; lia|]. (let acv := fresh "ACV" in pose proof alloc_ceiling_val as acv); unfold PGSZ. (let acv := fresh "ACV" in pose proof alloc_ceiling_val as acv). lia.
   - intros b l [].
   - intros b l k [].
@@ -389,19 +400,29 @@ Proof. split; [exact HEAP_init| split; [exact OWN_init| split; [exact repl0_init
 #[using="RROK"] Theorem auxv_ok_init (B : Z) : alloc_ceiling <= B -> B <= lo -> auxv_ok m B.
 Proof.
   intros HB HBlo. destruct RROK as [_ AUX].
-  (first [ dex10 AUX as av rnd x3 x4 x5 hw x6 x11 x12 x23; dand36 AUX as Cav Hav0 Hav8 Hav160 Hr0 Hr16 R3 R4 R5 RHW R6 R11 R12 R23 K0 V0 K1 V1 K2 V2 K3 V3 K4 V4 K5 V5 K6 V6 K7 V7 K8 V8 K9 V9 RND dR_AUX_t0; destruct dR_AUX_t0 as [LOav LOrnd] | dand36 AUX as av rnd x3 x4 x5 hw x6 x11 x12 x23 Cav Hav0 Hav8 Hav160 Hr0 Hr16 R3 R4 R5 RHW R6 R11 R12 R23 K0 V0 K1 V1 K2 V2 K3 V3 K4 V4 K5 dR_AUX_t0; dand12 dR_AUX_t0 as V5 K6 V6 K7 V7 K8 V8 K9 V9 RND LOav LOrnd | destruct AUX as (av & rnd & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & Cav & Hav0 & Hav8 & Hav160 & Hr0 & Hr16
-                   & R3 & R4 & R5 & RHW & R6 & R11 & R12 & R23
-                   & K0 & V0 & K1 & V1 & K2 & V2 & K3 & V3 & K4 & V4 & K5 & V5 & K6 & V6 & K7 & V7 & K8 & V8 & K9 & V9 & RND & LOav & LOrnd) ]).
-  exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd.
+  destruct AUX as (av & rnd & rs & v & Cav & Hav0 & Hav8 & Hav464 & Hr0 & Hr16 & HV & CELLS & RND & LOav & LOrnd).
+  exists av, rs, v, rnd.
   split; [| split; [| split]].
   - change AUXV_CELL with (il_libc InitPU + 8). apply rw_C8_of_cell8; [exact Cav| lia| cbn; lia| cbn; lia].
-  - unfold auxv_list. cbn [map u64s].
-    repeat (apply (proj2 (bytes_at_app rsegs m _ _ _)); split;
-            [apply bytes_at_cell8; [assumption| lia| lia| lia]
-            | rewrite length_le8; rewrite <- ?Z.add_assoc; cbn [Z.of_nat Pos.of_succ_nat Pos.succ Z.add Pos.add]]).
-    apply bytes_at_nil. lia.
+  - (* MTree.auxv_list rs v rnd is map wz (DriverKit.auxv_wlist rs v rnd) by conversion (the two key lists are copies). *)
+    change (auxv_list rs v rnd) with (map (Z_to_bv 64) (DriverKit.auxv_wlist rs v rnd)).
+    assert (KB : forall k, In k (DriverKit.auxv_keys rs) -> 0 <= k < 2 ^ 64).
+    { intros k Hk.
+      assert (FB : forallb (fun k0 : Z => andb (Z.leb 0 k0) (Z.ltb k0 (2 ^ 64))) (DriverKit.auxv_keys rs) = true) by (destruct rs; reflexivity).
+      rewrite forallb_forall in FB. specialize (FB k Hk). cbv beta in FB. apply andb_prop in FB. destruct FB as [F1 F2].
+      apply Z.leb_le in F1. apply Z.ltb_lt in F2. lia. }
+    assert (LW : 8 * Z.of_nat (length (DriverKit.auxv_wlist rs v rnd)) <= 464).
+    { destruct rs; [change (Z.of_nat (length (DriverKit.auxv_wlist true v rnd))) with 58
+                   | change (Z.of_nat (length (DriverKit.auxv_wlist false v rnd))) with 54]; lia. }
+    apply bytes_at_words; [exact CELLS| | exact Hav0| lia].
+    intros w Hw. unfold DriverKit.auxv_wlist in Hw. apply in_app_or in Hw. destruct Hw as [Hw|Hw].
+    + apply in_flat_map in Hw. destruct Hw as ([k j] & Hkj & Hw). cbn [fst snd] in Hw.
+      destruct Hw as [<-|[<-|[]]].
+      * apply KB. apply in_combine_l in Hkj. exact Hkj.
+      * destruct (Nat.eqb j 24); [lia| apply HV].
+    + destruct Hw as [<-|[<-|[]]]; lia.
   - exact RND.
-  - OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; lia.
+  - split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [exact HV| lia].
 Qed.
 End INIT.
 
@@ -432,18 +453,21 @@ Proof.
   intros lo m m' md md' IOK ES EL EG EU EUP HZ' EVM HALT'.
   pose proof IOK as (ST & NL & PS & AUX & GOT & GU & HZ & VM & NA & LZ & MAT & BRK & HI & RESV & CEIL & ALG & LIM & HALT & CEILOK).
   assert (EVMM : m_vmmaps md' = m_vmmaps md) by (unfold m_vmmaps; rewrite EVM; reflexivity).
+  destruct RESV as [RESV1 RESVd].   (* LPS 727298f3: VD moves to md' (same kernel and maps) *)
+  assert (RESVd' : VD md') by (apply (VD_transfer md md' RESVd); [unfold m_kernel; rewrite EVM; reflexivity
+    | rewrite EVMM; reflexivity | rewrite EVMM; reflexivity | rewrite EVMM; reflexivity]).
+  pose proof (conj RESV1 RESVd') as RESV'.
   unfold init_ok. rewrite EVMM. unfold m_vm_lazy, m_vm_materialized in *. rewrite EVM.
   split; [intros a Ha; apply (zero_img_agree m m'); [apply ES; exact Ha| exact (ST a Ha)]|].
   split; [apply (zero_img_agree m m'); [apply EL; cbn; lia| exact NL]|].
   split; [apply (cell8_agree m m'); [intros i Hi; apply EL; cbn; lia| exact PS]|].
   split.
-  { (first [ dex10 AUX as av rnd x3 x4 x5 hw x6 x11 x12 x23; dand15 AUX as Cav Hav0 Hav8 Hav160 Hr0 Hr16 R3 R4 R5 RHW R6 R11 R12 R23 REST | dand25 AUX as av rnd x3 x4 x5 hw x6 x11 x12 x23 Cav Hav0 Hav8 Hav160 Hr0 Hr16 R3 R4 R5 RHW R6 R11 R12 R23 REST | destruct AUX as (av & rnd & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & Cav & Hav0 & Hav8 & Hav160 & Hr0 & Hr16
-                     & R3 & R4 & R5 & RHW & R6 & R11 & R12 & R23 & REST) ]).
-    exists av, rnd, x3, x4, x5, hw, x6, x11, x12, x23.
+  { destruct AUX as (av & rnd & rs & v & Cav & Hav0 & Hav8 & Hav464 & Hr0 & Hr16 & HV & CELLS & RND & LOav & LOrnd).
+    exists av, rnd, rs, v.
     split; [apply (cell8_agree m m'); [intros i Hi; apply EL; cbn; lia| exact Cav]|].
-    repeat (split; [assumption|]).
-    (first [ dand23 REST as K0 V0 K1 V1 K2 V2 K3 V3 K4 V4 K5 V5 K6 V6 K7 V7 K8 V8 K9 V9 RND LOav LOrnd | destruct REST as (K0 & V0 & K1 & V1 & K2 & V2 & K3 & V3 & K4 & V4 & K5 & V5 & K6 & V6 & K7 & V7 & K8 & V8 & K9 & V9 & RND & LOav & LOrnd) ]).
-    repeat (split; [apply (cell8_agree m m'); [intros i Hi; apply EUP; lia| assumption]|]).
+    split; [exact Hav0|]. split; [exact Hav8|]. split; [exact Hav464|].
+    split; [exact Hr0|]. split; [exact Hr16|]. split; [exact HV|].
+    split; [intros j w Hj; apply (cell8_agree m m'); [intros i Hi; apply EUP; lia| exact (CELLS j w Hj)]|].
     split; [| split; assumption]. intros i Hi. rewrite (EUP (rnd + i)) by lia. exact (RND i Hi). }
   split; [apply (cell8_img_agree m m'); [intros i Hi; apply EG; lia| exact GOT]|].
   split. { (first [ dex1 GU as g; destruct GU as [Hg Cg] | dand3 GU as g Hg Cg | destruct GU as (g & Hg & Cg) ]). exists g. split; [exact Hg|]. apply (cell8_agree m m'); [intros i Hi; apply EU; lia| exact Cg]. }

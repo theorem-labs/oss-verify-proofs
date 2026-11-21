@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """nsB.py -- module paths and record names of a generated image-B start-up file for reac-repacer/fuzz_uci's lib/B
-layout (fuzz_grant B's released layout at commit 4f87de75d67: lib/B per-image + lib/Reusable shared, the layout the B
+layout (fuzz_grant B's released layout: lib/B per-image + lib/Reusable shared, the layout the B
 core stages port_core 0e4e065eab9f in), then the committed-header rule on its comments (hdrfix.py).
 
 The rewrite is port_core's OWN rename_text (pg-reloc 0e4e065eab9f, imported unchanged; a Require whose modules live in
 two dirs becomes two sentences on the SAME line, so line numbers stay the donor's), with --reusable-dir B
---kernel-dir Reusable, and each module's dir taken from fuzz_grant B's released tree (4f87de75d67): lib/B/<M>.v -> lib.B,
+--kernel-dir Reusable, and each module's dir taken from fuzz_grant B's released tree: lib/B/<M>.v -> lib.B,
 lib/Reusable/<M>.v -> lib.Reusable. A module that tree does not hold falls back to port_core's own rule (kernel_split
 over core-files-Y.txt, else where the trunk lib holds it, else the donor's split). Record names: --rename TfibB=UciB
 TfibSyms=UciSyms TfibB_syms=UciB_syms TfibB_ok=UciB_ok (image A's names). Numerals are never touched. Paths come from
@@ -28,7 +28,7 @@ import port_core as P  # noqa: E402
 HUB = need('UCIB_OVPI')
 GREF = '4f87de75d6772f4c4d7a147cec9da775eaade18d'
 GLIB = 'proofs/libreac/fuzz_grant/lib/'
-LT = need('UCIB_LT')   # local scratch: donorlib/ = `git archive 25e3d17bdb50 proofs/cgif/cgif_file_fuzzer/lib`
+LT = need('UCIB_LT')   # local scratch: donorlib/ = `git archive proofs/cgif/cgif_file_fuzzer/lib`
 TMOD = 'OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib'
 a = types.SimpleNamespace(
     src_lib=LT + '/donorlib/proofs/cgif/cgif_file_fuzzer/lib',
@@ -64,14 +64,14 @@ for r, _, fs in os.walk(a.src_lib):
                     GRANT_DIR[rel] = d
                     break
 # SHARED kernel modules (build finding of record). DUP = the modules
-# grant B's release (commit 4f87de75d67) carries in BOTH lib/B and lib/Reusable (33, derived from its tree). Placement
+# grant B's release carries in BOTH lib/B and lib/Reusable (33, derived from its tree). Placement
 # rule: Require X from lib.B iff the merged B core tree's lib/B/X.v exists (the core's own placement), else lib.Reusable.
 #   UCIB_BCORE_LIB set (the merged core's lib dir): that rule, read from the tree.
 #   not set (the B core is not readable here): the EXPECTED placement, derived from grant's tree: X is PER-IMAGE when its
 #   two grant copies differ in a hex numeral (an image bound: YCbq, YCe5, YImgTop) or its grant lib/B copy Requires a
 #   per-image module from lib.B (YC5d, YCbp, YE01); every other DUP module is shared and comes from lib.Reusable.
 #   With UCIB_BCORE_LIB set, the derived expectation is still computed and compared with the tree's placement.
-# YA0e and YA09 were held in lib.B until the B core owner's commit 09ea58a92a8 made all 125 Zify flag redefinitions of
+# YA0e and YA09 were held in lib.B until the B core owner's made all 125 Zify flag redefinitions of
 # their relocated lib/Reusable copies Local; they now route with the rest. The --grant-twin gate maps grant's lib.B.<M>
 # to lib.Reusable.<M> for exactly the routed set.
 DUP = sorted(p[2:] for p in tree if p.startswith('B/') and p.endswith('.v') and 'Reusable/' + p[2:] in tree)

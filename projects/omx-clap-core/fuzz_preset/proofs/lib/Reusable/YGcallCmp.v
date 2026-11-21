@@ -4,6 +4,7 @@
    call-site rules over a journal at a reflexive and transitive world relation R (binders first; the call keeps the
    world, so no law of R is read); aj_memcmp_at_x / aj_memcmp_at_xm keep their statements and are the instances at
    wle. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-29: fuzz_preset, the memcmp CALL TEXT and CALL-SITE RULES over the allocator invariant ARx of
    YCbqG.v (Section Variables segs B PST ARx), in the plain form (_x) and with the YAkMemnorm keep (_xm). The text of
    record for c-libc-stdio's po_memcmp_cf row, and the nested call of its bcmp row (musl bcmp is one `j` to
@@ -25,7 +26,7 @@
      shadow range checks, then `jalr s5` = REAL(memcmp) (0x43b70 / 0x43c04), `mv s5, a0`, the weak hook (a bare `ret`,
      0x43a50 / 0x43ae4), `mv a0, s5` (0x43c74 / 0x43d08), `ret`. So on the strict path a0 is REAL(memcmp)'s a0 unchanged.
    - The model's flags: Tfib_const_abs pins the 8 bytes common_flags+0xf8..+0xff to 0x0101010101010101 (A/AF0m.v:61
-     at 0x13c4e0, Reusable/YF0m.v:62 at 0x13cda0 for rebuilt B), so intercept_memcmp = strict_memcmp = 1 and the code
+     at 0x13c4e0, Reusable/YF0m.v:63 at 0x13cda0 for rebuilt B), so intercept_memcmp = strict_memcmp = 1 and the code
      takes the strict path; cgif's walk of this code reads exactly those bytes (A/AE2z.v:67 mcA_rodata). No #102
      constant table is on this branch; the #102 code reads the same two struct offsets.
    - REAL(memcmp) is musl memcmp (the interceptor's t1 is __interception::real_memcmp, .data 0xa3800 / 0xa3d40, which
@@ -41,7 +42,7 @@
    inside bcmp's [sp0 - 2 * ESTACK, sp0) (A/AE2s.v:241). The memcmp chain needs 2312 bytes (A/AE2z.v:37 MC_SCR), so
    ESTACK covers it. With abcmp_realizes_x's 2 * ESTACK premises and frame at the nested sp the frame would leave
    bcmp's window, and ly_stk_lo + 2 * ESTACK <= sp0 - 2240 does not follow from bcmp's premises. So the text is
-   cgif's YG0d.v:337-352 amemcmp_realizes (= the amemcmp_realizes_cf field, YG0d2cf.v:60-75): an ESTACK frame and
+   cgif's YG0d.v:337-352 amemcmp_realizes (= the amemcmp_realizes_cf field, YG0d2cf.v:61-76): an ESTACK frame and
    only ecall_pre_x's stack facts.
 
    1. THE TEXTS (Section mx):
@@ -52,11 +53,11 @@
       amemcmp_realizes_xm  = amemcmp_realizes_x plus the keep (MN.memnorm segs mem -> MN.memnorm segs mem') as the
                              last post conjunct (as YGcallMxmn.v's abcmp_realizes_xm); _xm_forget gives _x back.
       amemcmp_res_zero_iff = the result clause gives the zero-iff-equal fact of the AR / bcmp texts.
-      abcmp_of_memcmp_x    = amemcmp_realizes_x pc -> abcmp_realizes_x segs B ARx pc (YGcallMx.v:125): the bcmp-form
+      abcmp_of_memcmp_x    = amemcmp_realizes_x pc -> abcmp_realizes_x segs B ARx pc (YGcallMx.v:126): the bcmp-form
                              text at the same pc, by the window widening ESTACK -> 2 * ESTACK and amemcmp_res_zero_iff.
                              A walk that needs only zero-iff-equal at a memcmp call takes amemcmp_res_zero_iff.
    2. THE RULES (Section l), over ajournal_x (YCbqG.v):
-      aj_memcmp_at_x       = cgif's YCbq.v:2019 aj_memcmp_at over ajournal_x, derived from it as YGcallMx.v:448
+      aj_memcmp_at_x       = cgif's YCbq.v:2019 aj_memcmp_at over ajournal_x, derived from it as YGcallMx.v:449
                              aj_bcmp_at_x is from YCbq.v:2062 aj_bcmp_at (the ecall_pre_x proved inline), with the
                              result clause amemcmp_res W memT x y n v;
       aj_memcmp_at_xm      = aj_memcmp_at_x plus the keep (MN.memnorm segs memT -> MN.memnorm segs mem2) as the last
@@ -66,7 +67,7 @@
    | call   | rule            | text                | keep | frame                |
    | memcmp | aj_memcmp_at_x  | amemcmp_realizes_x  | no   | ESTACK below the sp  |
    | memcmp | aj_memcmp_at_xm | amemcmp_realizes_xm | yes  | ESTACK below the sp  |
-   A script checked that amemcmp_realizes_x differs from YG0d.v:337 amemcmp_realizes (and from YG0d2cf.v:60
+   A script checked that amemcmp_realizes_x differs from YG0d.v:337 amemcmp_realizes (and from YG0d2cf.v:61
    amemcmp_realizes_cf) only in AR -> ARx, the ghost Hp and the result clause; that aj_memcmp_at_x's statement differs
    from aj_bcmp_at_x's exactly as cgif's aj_memcmp_at's from aj_bcmp_at's (the two stack-window premises go, the
    window is ESTACK, the result clause is the text's); and that each _xm differs from its _x only in the keep, as the
@@ -189,7 +190,7 @@ split; [reflexivity|]. exists regs', mem', md', v.
 exact (conj Hc (conj K1 (conj K2 (conj K3 (conj K4 (conj K5 (conj K6 K7))))))).
 Qed.
 
-(* the bcmp-form text at the same pc (YGcallMx.v:125): its window [sp - 2 * ESTACK, sp) contains the memcmp text's
+(* the bcmp-form text at the same pc (YGcallMx.v:126): its window [sp - 2 * ESTACK, sp) contains the memcmp text's
    [sp - ESTACK, sp), its premises contain the memcmp text's, and the result gives zero-iff-equal. *)
 Lemma abcmp_of_memcmp_x : forall pc, amemcmp_realizes_x pc -> abcmp_realizes_x segs B ARx pc.
 Proof.

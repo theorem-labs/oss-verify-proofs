@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv's distance of 16 bytes above the stack comes from the premises alone, in place of auxv_above_friend. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -117,7 +118,7 @@ Proof.
     - destruct FLG as (X0 & X2 & X4). repeat split; first [assumption | intros X; discriminate X]. }
   clear FLG. destruct FLX as (FL0 & FL2 & FL4 & FL1 & FL3 & FL5).
   pose proof STK as (A16 & SLO & SHI & SPT & DSCR & DUP).
-  assert (AVT : Sp + 16 <= av) by (apply (L5BUF.auxv_above_friend M Sp av uid rnd hw RTRA AUXV AV8 A16); clear - SHI AVS; lia).
+  assert (AVT : Sp + 16 <= av) by (clear - SHI AVS; lia).
   assert (HS0 : 0 <= SCR) by (clear - HSCR; lia).
   assert (ALS : (Sp - 1296) mod 16 = 0) by (apply mod16_sub; [exact A16 | reflexivity]).
   assert (ALS8 : (Sp - 1296) mod 8 = 0) by (apply mod8_of_16; exact ALS).

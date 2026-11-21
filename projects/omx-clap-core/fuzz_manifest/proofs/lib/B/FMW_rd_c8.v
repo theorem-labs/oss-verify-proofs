@@ -7,7 +7,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/Y/Prog/SbDecSeg1.v, with its module paths, module names and numbers changed; 1841 of its 1900 lines of code are new or changed and 491 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_rd_pl.v, with its module paths and module names changed; 919 of its 1019 lines of code are new or changed and 1800 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_rd_lp.v; 783 of its 881 lines of code are new or changed and 921 lines of the source are left out. *)
-(* Image B (fm.asan-ubsan, pin ca61e5c9eabc0050) twin of lib/A/FMW_rd_c8.v (a working branch e2e59892bef),
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B (fm.asan-ubsan, pin ca61e5c9eabc0050) twin of lib/A/FMW_rd_c8.v (a working branch),
    re-walked on B's own code: lv2_locate_manifest_readings, the C8 segment, from 0x821c0 (after strchr (ns, '>')) to
    the next cut (lv2_locate.c:131-135, plain_local :44-46; B-readings.lst lines 204-250).
    r = 0 -> 0x82370 (s9 = 0) -> the shared return 0x82374; r <> 0 (r = ns + o): s5 := r, o >= uri_len -> RD_CONT -> L;

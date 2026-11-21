@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset.asan image A (pin d83eb25dbf0d, unstripped twin f0d2e8d40c7e). The allocator laws
    RTlaws (A/RGthinS.v) that the relocated thin realloc segments take, at the realloc record's relation
    ARX := ARXqA B Hp = YGcfInstBase.ARXq_cf B (fun i => i = as_inst B) at image A (every ghost set Hp, B with

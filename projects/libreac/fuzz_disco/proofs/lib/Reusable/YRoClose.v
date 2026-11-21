@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_disco/lib/A/Prog/DiscoRoClose.v
-   (a working branch 1d9f9ae40f4), the asan twin of this file, for the asan-ubsan image: the same
+   (a working branch), the asan twin of this file, for the asan-ubsan image: the same
    is_shc, is_shv, zfind, vscan, glob_chk, in_zr_b, byte_free_b and ro_range_b and their lemmas, stated at
    lib/Reusable/YD2l.v TfibB and lib/Reusable/YB1v.v tfibsegs over lib/Reusable/YRo.v's lists (tfib_globs,
    tfib_ro_ranges) and lib/Reusable/YF0m.v's tables; module paths changed; the asan file's glue over PB_disco
    (disco_segs_tfib, disco_glob_readable) is not carried, because the asan-ubsan statements take the three facts of
    a Theorem Labs lane's d_ro_hyps (lib/Y/Prog/DiscoYEntBodyStmt.v:70) and nothing else. *)
-(* The read-only instance of the asan-ubsan image, row Y9 of proofs/libreac/fuzz_disco/lib/A/OBLIGATIONS.md at a working branch 37e11e67676d: the three facts the entry walk's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The read-only instance of the asan-ubsan image, row Y9 of proofs/libreac/fuzz_disco/lib/A/OBLIGATIONS.md at a working branch: the three facts the entry walk's
    d_ro_hyps names, each by computation at TfibB. It replaces the ROSTAT form
    `forall a, in_rom segs a -> ~ Exists (in_zr a) (as_owned_static B) /\ ~ errno`, which is FALSE for this unit:
    40 owned-static redzone entries lie in the read-only segment (e.g. the tail of the string at 0x20f80 size 30 is

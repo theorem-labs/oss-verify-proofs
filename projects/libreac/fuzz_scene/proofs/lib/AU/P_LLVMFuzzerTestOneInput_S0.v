@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* SEGMENT S0 of the asan-ubsan walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput.  Proves
    `seg_S0_stmt SEGS B ameter_triv WK scene_geom_asan_ubsan` (lib/AU/P_LLVMFuzzerTestOneInput_seg.v:560): from the
    entry 0x828a4 to cut C1 0x82c28, the walk realizes whatever the rest of the walk realizes from C1, for the frame
@@ -88,11 +89,11 @@ lazymatch goal with
   eapply (awr_ok_cons_stack_off _ _ _ _ _ _ _ _ _ _ 60%nat (sp1 - sp0)); [reflexivity | evalE AG | cbn; lia | cbn; lia |] end
 end.
 (* The extent goals of the own frame and its shadow against the walk's regions, from one packed hypothesis BND
-   (P_check_step_S0.v:46 cs_djtac, with this walk's sp1 bound). *)
+   (P_check_step_S0.v:47 cs_djtac, with this walk's sp1 bound). *)
 Ltac s0h_djtac BND :=
 repeat split; revert BND; clear; unfold in_app, off_img, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, SB; intros; lia.
 (* One callee-saved word of the prologue, read back from a chunk of the entry stack region (atom 2): the shape of
-   P_check_step_S0.v:217-231, over the Z-indexed save list `sc_saved_regs` of this walk's cut. *)
+   P_check_step_S0.v:218-232, over the Z-indexed save list `sc_saved_regs` of this walk's cut. *)
 Ltac s0h_save HRs AG EE Usp :=
 cbn [Z.to_nat Pos.to_nat Pos.iter_op Nat.add nth sc_saved_regs];
 lazymatch goal with
@@ -213,7 +214,7 @@ Section f.
 #[local] Notation BASE := (@pa_val _ scene_listing PI A_TEXT).
 
 (* One byte of a region chunk, read through the ASan reader view: the port of cgif_file_fuzzer lib/YCew.v:18-30
-   (byte_of_chunk_ok) and :70-80 (byte_of_region), image-free, with aview_of_val_mem1 (AU/Prog/SceneFrame.v:235)
+   (byte_of_chunk_ok) and :70-80 (byte_of_region), image-free, with aview_of_val_mem1 (AU/Prog/SceneFrame.v:236)
    in front.  The 28 inline shadow stores leave one-byte chunks whose value is a NEGATIVE literal (`addi a0,zero,-0xf`),
    so the byte read is its low eight bits, not the literal. *)
 Lemma s0h_byte_of_chunk_ok : forall E (m : word -> option byte) base off e V,

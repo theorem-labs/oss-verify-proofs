@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *) (* Modified by Theorem Labs, 2026-10: two donor ranges are split, never widened (the release's range-content rule): musl_sel_ranges' (0x92f60, 435) covers the donor's fopen 0x93158 and fclose 0x93154, which fuzz_decode.asan-ubsan does not link, so it becomes (0x8e310, 125) = __stdio_write + dprintf and (0x8e504, 258) = __lockfile .. __stdio_exit; and icpt_ranges' trampoline table has the donor's two dead slots 0x41980 (fopen) and 0x41988 (fclose) cut out, so it becomes (0x41590, 24), (0x415f0, 1) and (0x415f4, 11) = the 36 live trampolines, not 38 slots *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE34.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
-(* Relocated from proofs/libreac/fuzz_decode/lib/YE34.v at 88154566652a by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_decode/lib/YE34.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

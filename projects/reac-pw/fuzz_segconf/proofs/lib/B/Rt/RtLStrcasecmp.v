@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 403 of its 523 lines of code are new or changed and 1138 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/FMbz_clean.v, with its module paths and module names changed; 344 of its 386 lines of code are new or changed and 481 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/A/HPgWrapNcmp.v's hd_strncmp_core (itself reac-pw/fuzz_pin's
-   lib/A/PPgWrapNcmp.v pin_strncmp_core at 90722657971) re-run with the caller's frame hole of lib/A/HPgHole.v
+   lib/A/PPgWrapNcmp.v pin_strncmp_core) re-run with the caller's frame hole of lib/A/HPgHole.v
    (ecall_preH in, the hole post out), as lib/A/Rt/FMrt_lift.v rt_post_roU_win re-runs rt_post_ro_win with
    lib/A/Rt/FMupoison.v ARU_frame: hd_rt_post_roH_win is rt_post_roU_win with HPgHole.ARH_frame in place of
    ARU_frame; the walk's premises that AR gives (the stack window, the runtime cells, the read-only views) are read
@@ -13,8 +13,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Rt/RtLStrncmp.v; 263 of its 353 lines of code are new or changed and 215 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Rt/RtLStrncasecmp.v, with its module paths and module names changed; 67 of its 137 lines of code are new or changed and 283 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Rt/RtLStrcasecmp.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf image B, interface row 10: the strcasecmp contract RtSeg.astrcasecmp_realizes (lib/A/Rt/RtSeg.v,
-   accepted by the contracts' owner of record 2026-10-30T17:27Z, 80d098bd1905) at SegRtPC.PC_strcasecmp = 0x43aa8, from the wrapper walk
+   accepted by the contracts' owner of record 2026-10-30T17:27Z) at SegRtPC.PC_strcasecmp = 0x43aa8, from the wrapper walk
    lib/A/Bz/A/I_strcasecmp.v istrcasecmp_spec (its range check's Section hypothesis discharged by the kit's
    A/Bz/A/R_isPoisoned.v rip_proof), through fuzz_command's relocated bridge (RtBz*.v), the way fuzz_command's
    lib/A/Rt/RtLStrncmpR.v proves RtString.astrncmp_realizes:

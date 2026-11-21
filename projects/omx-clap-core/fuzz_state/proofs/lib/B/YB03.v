@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: GENERATED, not relocated. JS_tfib_band is the join state that a Theorem Labs lane's collector (tools/startup colrun.py Pass1 on the donor checker of cgif_file_fuzzer at c8557374ad2; hsform.py js --image, KImg gate PASS) collected on fuzz_state.asan-ubsan, with this tree's plan B/YB05.v and atable B/YB12.v; log (internal path) *)
+(* Modified by Theorem Labs, 2026-10: GENERATED, not relocated. JS_tfib_band is the join state that a Theorem Labs lane's collector (tools/startup colrun.py Pass1 on the donor checker of cgif_file_fuzzer; hsform.py js --image, KImg gate PASS) collected on fuzz_state.asan-ubsan, with this tree's plan B/YB05.v and atable B/YB12.v; log (internal path) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_state.asan-ubsan (omx-clap-core/fuzz_state asan-ubsan) sha256 5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204; unstripped twin sha256 b1566a1ca816049d20588a70b9b43f152a338319c8ebea649df5b62ff5c4cc00 *)
 (* malloc_context_size: common_flags 0x139f68 + 36 reads 30 in all 1 join state (the originals; the toolchain-N image reads 1) *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the if_resx obligation for the vDSO/vvar pair is discharged from ASAN_H's n_resx and p_resx). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -136,6 +137,12 @@ Proof.
   - rewrite asan_res_sizes. reflexivity.
   - cbn [rw_lo rw_len ASAN_H]. split; [lia|]. intros m x Hx. apply asan_rw_window. lia.
   - exact asan_shadow_ok.
+  (* [if_resx], new at #38: the launch reserves the vDSO PAIR beside the image -
+     two intervals ([State.vdso_reserved] builds vvar then text) of at most twenty
+     pages in total ([State.vdso_len_bounds]).  [ASAN_H] already carries
+     [n_resx := 2] and [p_resx := 20] (AsCert/AsImages.v), so the field is a
+     projection, not a new obligation; the eighth bullet was simply absent. *)
+  - cbn [n_resx p_resx ASAN_H]. split; lia.
 Qed.
 
 (* [comment removed for export] *)

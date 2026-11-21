@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the client's hand-off fact is stated for each CONFIG_RSEQ value over the hand-off states the start-up certificate computes. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.Lib Require Import MState Mem Frame Cells Step Arr Exec ImageA RzCPS.
-From OSSVerify.Proofs.simdjson.fuzz_element.lib.AS Require Import PropExec ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound StartupHSAsan.
+From OSSVerify.Proofs.simdjson.fuzz_element.lib.AS Require Import PropExec ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound AsanStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.A Require Import Shadow HandoffKit.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.A Require Import Layout RT_iface. From OSSVerify.Proofs.simdjson.fuzz_element.lib.BA Require Import RT_iface2. From OSSVerify.Proofs.simdjson.fuzz_element.lib.A Require Import D_defs D_libiface. From OSSVerify.Proofs.simdjson.fuzz_element.lib.BA Require Import HandoffImage HandoffCLX RT_state RT_rep RT_refillstmt D_client Pj_defsA Pj_handoffA El_defsA El_frontA El_recordA El_handoffA.
 Import ListNotations.
@@ -44,8 +45,8 @@ Proof.
   split; [exact HE| split; [exists false; exact HU| exact HTL]].
 Qed.
 
-Lemma client_el_hs : forall h ch, HS_asan h = Some ch -> hs_libel_ok ch = true.
-Proof. intros h ch H. exact (HS_libel_ok h ch H). Qed.
+Lemma client_el_hs : forall (b : bool) h ch, HS_asan (AP.rseq_z b) h = Some ch -> hs_libel_ok ch = true.
+Proof. intros b h ch H. exact (HS_libel_ok b h ch H). Qed.
 
 Section CL.
 Hypothesis RF : refill_stmt.

@@ -1,15 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, as fuzz_grant's lib/A/Prog/GrantBase.v (a working branch 4a980cd5011) and fuzz_identity's lib/A/Prog/IdentBase.v (a working branch ea5560a967b) carry it, with only the unit's module prefix changed, for libreac/fuzz_boxreg: the read-only range, the frame object and the shape of a call's post-condition. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxBase.v at origin/ossv/recipes ee71d1fd3fc
+(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, as fuzz_grant's lib/A/Prog/GrantBase.v (a working branch) and fuzz_identity's lib/A/Prog/IdentBase.v (a working branch) carry it, with only the unit's module prefix changed, for libreac/fuzz_boxreg: the read-only range, the frame object and the shape of a call's post-condition. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxBase.v
    for reac-pw/fuzz_role (image A and image B): module paths changed; its lines 17-45 (in_roP, arodata_okP,
    ro_below_ofl, ro_spares, arodata_ok_journalP) are taken as they stand; its lines 46-107 (afobj, apost_base,
    apost_baseF, fxr, apost_baseF_continue) are left out and replaced by the role definitions below (rl_fxk in place of
    fxr, for role's float registers; rl_wcell in place of afobj, for a cell that lies on the stack or in a side-stack
    frame); the role constants, the string predicate rl_cstr and the read-only cell predicate rl_ro_cells are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgBase.v at
-   0de5d668c87 for reac-pw/fuzz_headamp (image A and image B): module paths changed and the rl_ prefix renamed to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgBase.v
+    for reac-pw/fuzz_headamp (image A and image B): module paths changed and the rl_ prefix renamed to
    hd_. Lines 36-64 (in_roP, arodata_okP, ro_below_ofl, ro_spares, arodata_ok_journalP), the float predicate, the
    cell predicate, the two fresh-block bridges and the cut-state machinery are taken as they stand, renamed. What
    differs, because headamp's binary differs from role's:
@@ -19,14 +19,15 @@
    - hd_cstr asks `amem_range a (len + 8)` where role's rl_cstr asks `len + 1`, and adds the tail clause
      `hd_str_tail` (every byte after the NUL up to the end of its 8-byte word is readable). Headamp's parse calls
      the strncmp wrapper and the strtol wrapper, which role's program does not: both ask for the longer range and
-     for the tail (reac-pw/fuzz_pin lib/A/PPgWrap.v awrap_str at ee62985a892;
-     plugin-hostd/fuzz_command lib/A/Rt/RtNumber.v astrtol_realizes and lib/A/Rt/RtDefs.v atail_vis at
-     2d2ff01bb6f2). `amem_range a (len + 8)` implies role's `amem_range a (len + 1)`
+     for the tail (reac-pw/fuzz_pin lib/A/PPgWrap.v awrap_str;
+     plugin-hostd/fuzz_command lib/A/Rt/RtNumber.v astrtol_realizes and lib/A/Rt/RtDefs.v atail_vis).
+     `amem_range a (len + 8)` implies role's `amem_range a (len + 1)`
      (hd_amem_range_le), so every consumer of the role form is served.
    - the run's quantities (hd_env) are headamp's: four live blocks (pp, pod, out, first), the parse's answer rc, the
      cap and the null flag, in place of role's two blocks and its flags byte.
    - hd_x gains the constructors headamp's cut lists need (XF c for a cell of the frame for locals, XOut, XFirst,
      XCap, XCap3, XCap33, XNull, XNotNull, XProps, XRc, XRc3, XRc3NZ). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-independent definitions that the ASan-level contracts of reac-pw/fuzz_headamp's program functions
    (lib/A/HPgCSpec.v) are stated over. No image module is Required: every address is an argument.
 

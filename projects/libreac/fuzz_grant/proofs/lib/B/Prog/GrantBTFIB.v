@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v for libreac/fuzz_grant's ASan build: module paths changed, names TfibB -> GrantB and TfibSyms -> GrantSyms, the library shape grant_shape, and the contract of the target's entry function taken as one hypothesis instead of cgif's three function contracts, so that ACfi.v and the cgif function files are not needed. *)
-(* Modified by Theorem Labs, 2026-10: adapted from lib/A/AGrantT.v for image B (fuzz_grant.asan-ubsan, bin fde52226dc48), with lib/A/ACfn.v's tfib_lib_contract_x restated at image B and lib/A/Prog/GrantLibX.v's grant_lib_x (a working branch 7d31e8f3534) proved from image B's entry contract: the core facts as named hypotheses. *)
+(* Modified by Theorem Labs, 2026-10: adapted from lib/A/AGrantT.v for image B (fuzz_grant.asan-ubsan, bin fde52226dc48), with lib/A/ACfn.v's tfib_lib_contract_x restated at image B and lib/A/Prog/GrantLibX.v's grant_lib_x (a working branch) proved from image B's entry contract: the core facts as named hypotheses. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed entry_top_B, grant_srealizesX_rc_B, grant_srealizesX_top_B, grant_TFIB_TB_of_lib). *)
 (* THE BRIDGE FROM IMAGE B'S ENTRY TOP TO TFIB_TB. This file proves no function: it composes and walks nothing.
 
    TFIB_TB (lib/B/GrantTFIBB.v:19) is the premise from which lib/B/AsanUbsanTop.v:30-58 derives
@@ -12,8 +13,8 @@
        the closer's named runtime and image facts as named Section hypotheses (RT_*, IMG_*, and the three facts of B H_*_B;
        RT_LAWS is proved by rt_laws_B); no walk is open. grant_lib_x_B turns it into image B's form of
        the driver's slot, tfib_lib_contract_xB (the twin of lib/A/ACfn.v:62 tfib_lib_contract_x). The shapes match
-       one to one; the step is PROVED (it is image A's grant_lib_x, lib/A/Prog/GrantLibX.v:120-164 on a working branch
-       7d31e8f3534, with image B's apost_base post in place of image A's phase machine);
+       one to one; the step is PROVED (it is image A's grant_lib_x, lib/A/Prog/GrantLibX.v:120-164 on a working branch,
+       with image B's apost_base post in place of image A's phase machine);
    (b) the CORE side: every core fact that image A's composition lib/A/AGrantT.v takes by `Let`, as one named
        Section hypothesis H_<A theorem> (or, where image A proves the fact here, the proof). The B core (the
        relocation of image A's core, lib/B/Y*.v) is in this tree; lib/B/GrantBTop.v:182-184 instantiates each of these
@@ -49,8 +50,8 @@
      tfib_lib_contract_x_allB      ACfn.v:138
    Hypotheses (Section hypotheses):
      RT_* / IMG_* / H_*_B          the premises of GrantBClose.tb_LLVMFuzzerTestOneInput_holds_B, as the closer
-                                   names them (image A: the open program parts of GrantTop.v, a working branch
-                                   7d31e8f3534); RT_MALLOC / RT_FREE at fx0 are also AF0w.v:45
+                                   names them (image A: the open program parts of GrantTop.v, a working branch);
+                                   RT_MALLOC / RT_FREE at fx0 are also AF0w.v:45
                                    tfib_amalloc_realizes / AF0q.v:13 afree_realizes_closed (AGrantT.v:43-44)
      H_tfib_AIL                    AD1u.v:43 tfib_AIL (GrantLibX.v:216 AILG on a working branch)
      H_GrantB_syms                 AD2l.v:73 GrantB_syms                (AGrantT.v:36)
@@ -218,7 +219,7 @@ Definition tfib_lib_contract_x_allB {rc : YM05.RunCeil} {LS : lib_shape} (tfib_K
 forall fx : YK11.FPState, @tfib_lib_contract_xB fx rc LS tfib_K_B B MT XM_LIB XN_LIB RLO RHI.
 
 (* ---- (a) the program side: the slot from image B's entry contract --------------------------------------------------
-   Image A's grant_lib_x (lib/A/Prog/GrantLibX.v:120-164, a working branch 7d31e8f3534) with image B's entry contract in
+   Image A's grant_lib_x (lib/A/Prog/GrantLibX.v:120-164, a working branch) with image B's entry contract in
    place of image A's phase machine. Premise by premise, the slot's pre-condition holds every premise of
    tb_LLVMFuzzerTestOneInput_spec (GrantBContracts.v tb_LLVMFuzzerTestOneInput_spec): the read-only view at
    [RLO_B, RHI_B) is the walk layer's view at [pa_relro_lo, pa_relro_hi), the same range. Conjunct by conjunct, the
@@ -408,7 +409,7 @@ Hypothesis IMG_reac_ctrl_parse : forall rc : YM05.RunCeil, GrantBContracts.IMG_r
 Hypothesis IMG_check_groupa : forall rc : YM05.RunCeil, GrantBContracts.IMG_check_groupa (rc := rc) (PI := @PI_grant rc) B.
 (* H_universe_B, H_malloc_ra0_B, H_free_ra0_B: the three facts of B from which GrantBClose.v proves IMG_LLVMF_TRACES
    (GrantBTraces.img_llvmf_traces_grant); A: lib/A/AD2l.v:38, lib/A/AF0l.v:10, :11. Each closes by reflexivity at
-   image B's concrete asyms record (lib/B/GrantBCloseInst.v:366, :369, :372; given at lib/B/GrantBTop.v:227-229). *)
+   image B's concrete asyms record (lib/B/GrantBCloseInst.v:367, :370, :373; given at lib/B/GrantBTop.v:227-229). *)
 Hypothesis H_universe_B : as_universe B = YCej.Tfib_universe.
 Hypothesis H_malloc_ra0_B : pc_malloc_ra0 (as_code B) = 0x53178.
 Hypothesis H_free_ra0_B : pc_free_ra0 (as_code B) = 0x53018.
@@ -485,6 +486,7 @@ Hypothesis H_tfib_srealizesX : forall (rc : YM05.RunCeil),
   forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk grantsegsB0 brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
   srealizes grantsegsB0 (init_config grantsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw target_alloc_limit inp)
     (SPECX inp).
@@ -500,31 +502,33 @@ Let RO_IN : forall a, RLO_B <= a < RHI_B -> in_ro_tfa_B a := fun a H => or_intro
 Lemma grant_srealizesX_rc_B : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk grantsegsB0 brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 srealizes grantsegsB0 (init_config grantsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 exact (H_tfib_srealizesX rc H_GrantB_syms (RT_MALLOC rc YK11.fx0) (RT_FREE rc YK11.fx0) (H_tfib_AICPY rc)
   (H_tfib_ARDCHK rc) ameter_triv XL0_B XL0_B RLO_B RHI_B MT_FREE RO_IN LIBX
   xst_B H_tfib_xst_frame (H_tfib_printf_first rc) (H_tfib_printf_next rc)
   est_B H_tfib_est_img H_tfib_est_frame (H_tfib_fwrite_site rc) (H_tfib_refused_site rc)
   (H_tfib_fprintf_open_site rc) (H_tfib_fprintf_rderr_site rc) (H_tfib_fprintf_usage_site rc) (H_tfib_exit_site rc)
-  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem grant_srealizesX_top_B : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk grantsegsB0 brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 srealizes grantsegsB0 (init_config grantsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
 exact (@grant_srealizesX_rc_B (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowB sp Hsp)) sp rdraw brk mb inp
-  Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 Theorem grant_TFIB_TB_of_lib : GrantTFIBB.TFIB_TB.
 Proof.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
-exact (grant_srealizesX_top_B sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp).
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+exact (grant_srealizesX_top_B sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau).
 Qed.
 
 (* Inside the Section, Print Assumptions lists what TFIB_TB rests on here: the Section variables (the values and

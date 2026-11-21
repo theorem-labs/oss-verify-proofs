@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's check_bounded, a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)), after lib/A/W_check_bounded.v (7086983dbc8), in the form of the cgif walks of
+(* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's check_bounded, a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)), after lib/A/W_check_bounded.v, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v and lib/A/ACbk.v, with its loop in the form of lib/A/AC8b.v tcbb_loopX. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_bounded() at 0x856a0 (image B; 0x85304 in A) walks the g_nsrc entries of the relay table g_src and aborts when an entry's
    used or cap is out of bounds.  The loop is its own lemma (cb_loopX), from a fresh symbolic state at the
    loop head, by induction on the entries left; the outer walk runs to the loop head, takes the lemma, and

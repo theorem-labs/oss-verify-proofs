@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the openat nodes' TASK_SIZE bound on the path, taken from open_pre). *)
 
 From Stdlib Require ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Fs Specs Run.
@@ -182,30 +183,30 @@ apply (ajv_read_dir segs LV Hwx Hsegs Hsh Hbx Hbc T fd buf cnt c _); [| exact HC
 rewrite !areg_epend by discriminate. split; [exact H10|]. split; [exact H11|]. split; [exact H12|]. split; [exact Hcnt|]. split; [exact Htop | exact Hwr].
 + intros c' HN F S. unfold efferr. rewrite nret_epend_ret. exact (HK c' HN (conj F S)).
 -
-intros regs pc mem c path T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) Hlen HK.
+intros regs pc mem c path T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) Hlen HK.
 apply (ajv_open_toolong segs LV Hwx Hsegs Hsh Hbx Hbc T path c _); [| exact HCK | exact Hlen |].
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros c' HN F S. unfold efferr. rewrite nret_epend_ret. exact (HK c' HN (conj F S)).
 -
-intros regs pc mem c T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) HK.
+intros regs pc mem c T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) HK.
 apply (ajv_open_empty segs LV Hwx Hsegs Hsh Hbx Hbc T c _); [| exact HCK |].
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros c' HN F S. unfold efferr. rewrite nret_epend_ret. exact (HK c' HN (conj F S)).
 -
-intros regs pc mem c path T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) Hlen Hne Hdot Hfs HK.
+intros regs pc mem c path T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) Hlen Hne Hdot Hfs HK.
 apply (ajv_open_absent segs LV Hwx Hsegs Hsh Hbx Hbc T path c _); [| exact HCK | exact Hlen | exact Hne | exact Hdot | exact Hfs |].
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros c' HN F S. unfold efferr. rewrite nret_epend_ret. exact (HK c' HN (conj F S)).
 -
-intros regs pc mem c path d TA TB HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) Hlen Hne Hdot Hfs Hfree HA0 HB0 KA KB.
+intros regs pc mem c path d TA TB HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) Hlen Hne Hdot Hfs Hfree HA0 HB0 KA KB.
 refine (ajv_open_file segs LV Hsegs Hsh Hbx Hbc TA TB path d c _ _ HCK Hlen Hne Hdot Hfs Hfree HA0 HB0 _ _).
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros e c' He HN F S. unfold efferr. rewrite nret_epend_ret. exact (KA e c' He HN (conj F S)).
 + intros c' HN F S. rewrite nret_epend_ret. exact (KB c' HN F S).
 -
-intros regs pc mem c TA TB HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) Hfree HA0 HB0 KA KB.
+intros regs pc mem c TA TB HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) Hfree HA0 HB0 KA KB.
 refine (ajv_open_dot segs LV Hsegs Hsh Hbx Hbc TA TB c _ _ HCK Hfree HA0 HB0 _ _).
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros e c' He HN F S. unfold efferr. rewrite nret_epend_ret. exact (KA e c' He HN (conj F S)).
 + intros c' HN F S. rewrite nret_epend_ret. exact (KB c' HN F S).
 -
@@ -568,30 +569,30 @@ apply (ajv_read_dir segs LV Hwx Hsegs Hsh Hbx Hbc T fd buf cnt c _); [| exact HC
 rewrite !areg_epend by discriminate. split; [exact H10|]. split; [exact H11|]. split; [exact H12|]. split; [exact Hcnt|]. split; [exact Htop | exact Hwr].
 + intros c' HN F S. unfold efferr. rewrite nret_epend_ret. exact (HK c' HN (conj F S)).
 -
-intros regs pc mem c path T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) Hlen HK.
+intros regs pc mem c path T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) Hlen HK.
 apply (ajv_open_toolong segs LV Hwx Hsegs Hsh Hbx Hbc T path c _); [| exact HCK | exact Hlen |].
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros c' HN F S. unfold efferr. rewrite nret_epend_ret. exact (HK c' HN (conj F S)).
 -
-intros regs pc mem c T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) HK.
+intros regs pc mem c T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) HK.
 apply (ajv_open_empty segs LV Hwx Hsegs Hsh Hbx Hbc T c _); [| exact HCK |].
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros c' HN F S. unfold efferr. rewrite nret_epend_ret. exact (HK c' HN (conj F S)).
 -
-intros regs pc mem c path T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) Hlen Hne Hdot Hfs HK.
+intros regs pc mem c path T HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) Hlen Hne Hdot Hfs HK.
 apply (ajv_open_absent segs LV Hwx Hsegs Hsh Hbx Hbc T path c _); [| exact HCK | exact Hlen | exact Hne | exact Hdot | exact Hfs |].
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros c' HN F S. unfold efferr. rewrite nret_epend_ret. exact (HK c' HN (conj F S)).
 -
-intros regs pc mem c path d TA TB HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) Hlen Hne Hdot Hfs Hfree HA0 HB0 KA KB.
+intros regs pc mem c path d TA TB HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) Hlen Hne Hdot Hfs Hfree HA0 HB0 KA KB.
 refine (ajv_open_file segs LV Hsegs Hsh Hbx Hbc TA TB path d c _ _ HCK Hlen Hne Hdot Hfs Hfree HA0 HB0 _ _).
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros e c' He HN F S. unfold efferr. rewrite nret_epend_ret. exact (KA e c' He HN (conj F S)).
 + intros c' HN F S. rewrite nret_epend_ret. exact (KB c' HN F S).
 -
-intros regs pc mem c TA TB HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby) Hfree HA0 HB0 KA KB.
+intros regs pc mem c TA TB HCK (H17 & H10 & Hfl & Hnz & Hsl & Hdd & Hby & Htk) Hfree HA0 HB0 KA KB.
 refine (ajv_open_dot segs LV Hsegs Hsh Hbx Hbc TA TB c _ _ HCK Hfree HA0 HB0 _ _).
-+ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Hby.
++ cbn [at_nodeA at_node]. rewrite H17. rewrite !areg_epend by discriminate. repeat (split; [first [reflexivity | assumption]|]). exact Htk.
 + intros e c' He HN F S. unfold efferr. rewrite nret_epend_ret. exact (KA e c' He HN (conj F S)).
 + intros c' HN F S. rewrite nret_epend_ret. exact (KB c' HN F S).
 -

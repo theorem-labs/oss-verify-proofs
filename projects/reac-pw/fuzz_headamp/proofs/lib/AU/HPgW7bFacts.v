@@ -1,6 +1,6 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bFacts.v at 25d4b718638 (the model of a
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bFacts.v (the model of a
    case-0 turn: w7_join_part_small, w7_join4, w7_ent_build_0, w7_js_len, w7_ent_text_js; the frame patterns at G and
-   J) and the string facts of proofs/reac-pw/fuzz_role/lib/A/RPgW7bCall.v at 25d4b718638 (w7_chs_nonzero, the param
+   J) and the string facts of proofs/reac-pw/fuzz_role/lib/A/RPgW7bCall.v (w7_chs_nonzero, the param
    table cells and strings) for reac-pw/fuzz_headamp's image B: the definitions are HPgW7bBase's (hw7b_sepb, hw7b_pab,
    hw7b_js, hw7b_e62), the patterns lib/AU/HPgSeg.v's hsu_PG / hsu_PJ at image B's record against lib/AU/HPgMem.v's
    hmu_sh, the table, strings and globals image B's (lib/AU/HPgImgB.v); e62's bytes at J (hw7b_ent_mem_js) are new;

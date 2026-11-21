@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2d.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed munmap_model_maps, ledger_ok_A4, ledger_ok_same). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -57,7 +58,9 @@ intros addr n m H. unfold munmap_model, with_mmap_destroyed, vm_forget_range, wi
 cbn [m_vm_materialized]. unfold m_vm_materialized in H |- *. cbn. rewrite H. reflexivity.
 Qed.
 Lemma munmap_model_maps : forall addr n m,
-vm_maps (m_vmmaps (munmap_model addr n m)) = map_remove (vm_maps (m_vmmaps m)) addr /\
+(* 08b1429: munmap_model cuts the maps with maps_subtract (as the noaccess ranges); callers turn it
+   into map_remove with YK0v.maps_subtract_exact. *)
+vm_maps (m_vmmaps (munmap_model addr n m)) = maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n) /\
 vm_noaccess (m_vmmaps (munmap_model addr n m)) = maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n) /\
 vm_reserved (m_vmmaps (munmap_model addr n m)) = vm_reserved (m_vmmaps m) /\
 vm_brk (m_vmmaps (munmap_model addr n m)) = vm_brk (m_vmmaps m) /\
@@ -421,7 +424,19 @@ unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in H. rewrite len_u in
 Qed.
 Lemma ledger_ok_A4 : ledger_ok B L3 A4 md4.
 Proof.
-pose proof (munmap_model_maps a (Z_to_bv 64 len) md3) as (VM & VN & VR & VB & VS & VL).
+pose proof (munmap_model_maps a (Z_to_bv 64 len) md3) as (VM0 & VN & VR & VB & VS & VL).
+assert (VM : vm_maps (m_vmmaps (munmap_model a (Z_to_bv 64 len) md3)) = map_remove (vm_maps (m_vmmaps md3)) a).
+{ rewrite VM0. apply maps_subtract_exact.
+- rewrite len_u. exact (proj1 Hlen).
+- intros b s Hbs. exact (proj1 (lx_maps _ _ _ Y3 _ Hbs)).
+- intros b s Hbs Eb. subst b.
+destruct (lx_disj _ _ _ Y3 _ _ Hbs r0_maps_entry) as [E|D]; [injection E as ->; reflexivity|].
+exfalso. unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D.
+pose proof (proj1 (lx_maps _ _ _ Y3 _ Hbs)) as Hs. unfold iv_len in Hs. cbn [snd] in Hs.
+rewrite len_u in D. pose proof Hlen. lia.
+- intros b s Hbs Hne.
+destruct (lx_disj _ _ _ Y3 _ _ Hbs r0_maps_entry) as [E|D]; [injection E as -> _; exfalso; exact (Hne eq_refl)|].
+unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D. rewrite len_u in D |- *. lia. }
 pose proof r0_placed as (Ral & Rlo & Rhi & Rimg). pose proof Hlen as [P Pm]. pose proof (proj1 alloc_ceiling_val) as AC. pose proof aZ.
 pose proof A4_fields as (E1 & E2 & E3 & E4 & E5 & E6 & E7 & _).
 assert (PG : PGSZ = 4096) by reflexivity.
@@ -459,10 +474,10 @@ apply andb_prop in Hc as [C1 C2]. apply Z.leb_le in C1. apply Z.leb_le in C2. cb
 - rewrite E7. pose proof (lg_brk _ _ _ _ G3) as HB. destruct (st_brk A3); exact HB.
 - intros k rg Hk Hl. rewrite A4_region_of in Hk. destruct (Nat.eqb_spec k r0) as [->|Hne]; [injection Hk as <-; discriminate|].
 exact (lg_placed _ _ _ _ G3 k rg Hk Hl).
-- pose proof (length_map_remove _ _ _ r0_maps_entry). pose proof (lg_count _ _ _ _ G3).
+- intros Eaf. pose proof (length_map_remove _ _ _ r0_maps_entry). pose proof (lg_count _ _ _ _ G3 Eaf).
 unfold A4. rewrite (kill_nslots A n A3 (proj1 Hn) FR3). lia.
-- unfold A4. rewrite (kill_live_bytes A n A3 (proj1 Hn) FR3). apply Forall_forall. intros e He. apply In_map_remove in He as [He Hne].
-destruct (lx_in _ _ _ Y3 e He) as (k & rg & Hk & Hl & G1 & G2).
+- intros Eaf. unfold A4. rewrite (kill_live_bytes A n A3 (proj1 Hn) FR3). apply Forall_forall. intros e He. apply In_map_remove in He as [He Hne].
+destruct (lx_in _ _ _ Y3 Eaf e He) as (k & rg & Hk & Hl & G1 & G2).
 destruct (Nat.eq_dec k r0) as [->|Hk0].
 + rewrite A3_r0 in Hk. injection Hk as <-. cbn [rgn rg_len] in G2. rewrite L3_r0 in G1, G2.
 exfalso. apply Hne. rewrite (entry_in_r0 e He G1 G2). reflexivity.
@@ -475,12 +490,16 @@ destruct (Nat.eqb k' (YN2c.r0 A)); [injection Hk' as <-; cbn; lia|].
 destruct (inv_areas HI3) as (_&_&_&_&_&_&_&_&A9). exact (A9 k' rg' Hk'). }
 pose proof (region_len_le_live len Hlen (dm_kill A A3) k rg NN Hk4 Hl) as LE.
 rewrite (kill_live_bytes A n A3 (proj1 Hn) FR3) in LE. unfold iv_lo, iv_len in G1, G2. cbn beta. lia.
-- pose proof (lx_lb _ _ _ Y3) as LB. pose proof (live_bytes_map_remove _ _ _ r0_maps_entry) as LR. rewrite len_u in LR.
+- intros Eaf. pose proof (lx_lb _ _ _ Y3 Eaf) as LB. pose proof (live_bytes_map_remove _ _ _ r0_maps_entry) as LR. rewrite len_u in LR.
 unfold A4. rewrite (kill_live_bytes A n A3 (proj1 Hn) FR3).
 destruct (mid_md _ _ _ _ _ MID3) as (_ & Hlz & Hmat).
 pose proof (vm_backing_used_le_maps (munmap_model a (Z_to_bv 64 len) md3) (munmap_model_no_lazy _ _ _ Hlz) (munmap_model_no_mat _ _ _ Hmat)) as VBU.
 rewrite VM in VBU. lia.
 -   exact (lg_ceil _ _ _ _ G3).
+- pose proof (mres_incl (m_vmmaps md3) (m_vmmaps (munmap_model a (Z_to_bv 64 len) md3)) VR
+    ltac:(intros x Hx; rewrite VM in Hx; apply In_map_remove in Hx; tauto) (lg_mres _ _ _ _ G3)) as MR.
+  unfold mres_ok in MR. rewrite ?VM, ?VR in MR. exact MR.
+- exact (lg_vin _ _ _ _ G3).
 Qed.
 Lemma ledger_x_A4 : ledger_x L3 A4 md4.
 Proof.
@@ -543,7 +562,7 @@ intros Lx A1' A2' mdx G ER EB.
 assert (RO : forall k, region_of A2' k = region_of A1' k) by (intros k; unfold region_of; rewrite ER; reflexivity).
 assert (NS : nslots A2' = nslots A1') by (unfold nslots; rewrite ER; reflexivity).
 assert (LBy : live_bytes A2' = live_bytes A1') by (unfold live_bytes; rewrite ER; reflexivity).
-split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact (lg_rclim _ _ _ _ G) || exact (lg_brk0 _ _ _ _ G)).
+split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact (lg_rclim _ _ _ _ G) || exact (lg_brk0 _ _ _ _ G) || exact (lg_mres _ _ _ _ G) || exact (lg_vin _ _ _ _ G)).
 - intros k rg Hk. rewrite RO in Hk. exact (lg_maps _ _ _ _ G k rg Hk).
 - intros k rg off Hk. rewrite RO in Hk. exact (lg_noaccess _ _ _ _ G k rg off Hk).
 - rewrite EB. exact (lg_brk _ _ _ _ G).

@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, copied for libreac/fuzz_grant's program walk: the read-only range, the frame object and the shape of a call's post-condition. The cgif-specific stack and event constants and the cgif function contracts are left out; each function's walk states its own. *)
-(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_grant lib/A/Prog/GrantBase.v at a working branch 32cceacec16, with its module paths changed (lib.A.Prog -> lib.Reusable) and its name GrantBase -> PaBase. *)
+(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_grant lib/A/Prog/GrantBase.v at a working branch, with its module paths changed (lib.A.Prog -> lib.Reusable) and its name GrantBase -> PaBase. *)
 (* Modified by Theorem Labs, 2026-10: image B twin of lib/Reusable/PaBase.v (a working branch): the same text, with its Requires of image-specific core modules (YCbq) pointed at image B's lib/B twins, so that a file of image B's layer loads one copy of each. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* This file is unit-independent: it states the walk layer over the symbols and tables a unit supplies. Any value of one unit (an address, a size, a table of its own) belongs in that unit's Grant* files, not here. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.

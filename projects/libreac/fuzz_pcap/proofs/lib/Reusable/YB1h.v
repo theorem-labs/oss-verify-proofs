@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: regenerated for libreac/fuzz_pcap's asan-ubsan image by mkfiles.py (sha256 8e6d8a8535c7; internal record) (the image hull, the four page-rounded PT_LOADs, the writable window and musl's env / program-name scan loops are this image's own); module paths changed *)
-(* gated: a Theorem Labs lane PASS A+B at c061542723f / 731386609e0.  Every literal is read from the asan-ubsan image named above; nothing is filled.  Control: mkfiles.py (sha256 8e6d8a8535c7; internal record) --control regenerates the donor's own file byte for byte. *)
-(* Before commit 5098883da0b3 (2026-10-29) brought YF0l and YB13 into this tree, the asan-ubsan files built ONLY in a union that also included a working branch 27d40cfe97f76cd158308a2aef684e7e509db360: lib/Reusable/YF0m.v Requires YF0l and lib/Reusable/YD2i.v Requires YB13, both of them core files of that branch. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* gated: a Theorem Labs lane PASS A+B.  Every literal is read from the asan-ubsan image named above; nothing is filled.  Control: mkfiles.py (sha256 8e6d8a8535c7; internal record) --control regenerates the donor's own file byte for byte. *)
+(* Before (2026-10-29) brought YF0l and YB13 into this tree, the asan-ubsan files built ONLY in a union that also included a working branch: lib/Reusable/YF0m.v Requires YF0l and lib/Reusable/YD2i.v Requires YB13, both of them core files of that branch. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

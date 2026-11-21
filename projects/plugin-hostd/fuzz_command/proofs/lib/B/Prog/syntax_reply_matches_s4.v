@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v and lib/A/AC8b.v (the
-   loop by fuel induction, tcbb_loopX) at c8557374ad2e: the walk of syntax_reply_matches on fuzz_command.asan, the
+   loop by fuel induction, tcbb_loopX): the walk of syntax_reply_matches on fuzz_command.asan, the
    search of an item for '<' (L3, 0x886b4, check C3), the strcspn wrapper's call (CALL1, 0x88694) and its result
    (RET1, 0x886a0). *)
-(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s4.v (a working branch
-   db7d4effe38) for fuzz_command.asan-ubsan: L3 0x889ec, where a0 = i, a1 = ~s3, s4 = s3 + i is the checked byte and
+(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s4.v (a working branch)
+   for fuzz_command.asan-ubsan: L3 0x889ec, where a0 = i, a1 = ~s3, s4 = s3 + i is the checked byte and
    s3 + a0 the loaded one; the UBSan check 0x889ec (~s3 < i: s3 + i would wrap) is decided by the facts
    s3 <= CEIL_HI, i < 2^31. *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 713692f1e0c (statement pass 4b): ABCMP holds at every FP
+(* Modified by Theorem Labs, 2026-10: onto a working branch (statement pass 4b): ABCMP holds at every FP
    state, as the statement has it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

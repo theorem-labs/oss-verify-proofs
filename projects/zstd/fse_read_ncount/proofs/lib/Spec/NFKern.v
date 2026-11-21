@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nstep_mmap_anon_err_forced restated with the refusal tests at the null hint (mmap_grant_refusable_at, mmap_reserve_refusable_at); NF_mmap_anon takes Linux's placement, mmap_place_found at the null hint, in place of the free-gap premise vm_gap_available, and reads the NORESERVE backing check (mmap_noreserve_backed_ok); mmap_answer_ok_of_free re-proved with kl_resv_sub, the ledger's reserved regions now being a prefix of the model's; 1 recorded proof replaced by a written proof (NF_mmap_anon)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
@@ -13,8 +14,8 @@ Lemma nstep_mmap_anon_err_forced : forall len prot mo rsp mo' evs,
 0 < len -> mmap_len len < 2^63 -> (prot = PROT_NONE \/ prot = PROT_RW) ->
 nstep (NMmap 0 len prot MAPF) mo rsp mo' evs ->
 errno_of (eff_ret rsp) <> None ->
-(prot = PROT_RW /\ mmap_grant_refusable (Z_to_bv 64 MAPF) mo (mmap_len len) = true)
-\/ (prot = PROT_NONE /\ mmap_reserve_refusable mo (mmap_len len) = true).
+  (prot = PROT_RW /\ mmap_grant_refusable_at (Z_to_bv 64 MAPF) mo (Z_to_bv 64 0) (mmap_len len) = true)
+  \/ (prot = PROT_NONE /\ mmap_reserve_refusable_at mo (Z_to_bv 64 0) (mmap_len len) = true).
 Proof.
 intros len prot mo rsp mo' evs Hlen Hlen2 Hp H He. pose proof (mmap_len_ge len Hlen) as ML.
 destruct (errno_of (eff_ret rsp)) as [e|] eqn:E; [|congruence].
@@ -29,16 +30,18 @@ Lemma NF_mmap_anon : forall len prot mo,
 0 < len -> mmap_len len < 2^63 -> (prot = PROT_NONE \/ prot = PROT_RW) ->
 m_vm_lazy mo = [] -> m_vm_materialized mo = [] ->
 vm_live_bytes (m_vmmaps mo) + mmap_len len <= vm_limit (m_vmmaps mo) ->
-vm_gap_available (m_vmmaps mo) (mmap_len len) = true ->
+  (* LPS 75d69e00: the request is placed where Linux puts it; this is that it has a place. *)
+  mmap_place_found mo (Z_to_bv 64 0) (mmap_len len) = true ->
 NF (NMmap 0 len prot MAPF) mo.
 Proof.
-intros len prot mo Hlen Hlen2 Hp Hlz Hmt Hbud Hgap rsp mo' evs Hst.
+  intros len prot mo Hlen Hlen2 Hp Hlz Hmt Hbud Hpf rsp mo' evs Hst.
 destruct (errno_of (eff_ret rsp)) eqn:E; [|reflexivity]. exfalso.
 destruct (nstep_mmap_anon_err_forced len prot mo rsp mo' evs Hlen Hlen2 Hp Hst ltac:(rewrite E; discriminate)) as [[_ R]|[_ R]].
-- rewrite (grant_refusable_false_intro (Z_to_bv 64 MAPF) mo (mmap_len len) eq_refl) in R; [discriminate| | exact Hgap].
-pose proof (backing_le_live mo Hlz Hmt). Local Ltac2 Set LiaHints.tbl := fun () => "0010>54731852163.18000008S4Hbud1H".
-lia.
-- rewrite (reserve_refusable_false_intro mo (mmap_len len) Hgap) in R. discriminate.
+  - rewrite (grant_refusable_at_false_intro (Z_to_bv 64 MAPF) mo (Z_to_bv 64 0) (mmap_len len)) in R; [discriminate| | exact Hpf].
+    (* LPS 727298f3: a non-NORESERVE request is refusable when its backing exceeds the limit *)
+    unfold mmap_noreserve_backed_ok. destruct (mmap_noreserve_b (Z_to_bv 64 MAPF)); [reflexivity|]. apply Z.leb_le.
+    pose proof (backing_le_live mo Hlz Hmt). lia.
+  - rewrite (reserve_refusable_at_false_intro mo (Z_to_bv 64 0) (mmap_len len) Hpf) in R. discriminate.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 Lemma NF_mmap_fixed : forall a mo,
 let h := m_vmmaps mo in
@@ -102,7 +105,7 @@ unfold ranges_free. apply forallb_forall. intros [lo m] Hin. cbn [fst snd]. unfo
 enough (a + n <= lo \/ lo + m <= a) as D.
 { destruct D as [D|D]; [rewrite (proj2 (Z.leb_le _ _) D); reflexivity| rewrite (proj2 (Z.leb_le _ _) D); apply orb_true_r]. }
 apply In_lranges in Hin as [H|[(b0 & l0 & H & E)|[(b0 & l0 & k & H & E)|(b0 & l0 & H & E)]]].
-+ rewrite (kl_resv _ _ _ HK) in H. apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
+    + apply (kl_resv_sub _ _ _ _ HK) in H. apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
 pose proof (region_free_In _ _ _ _ _ Hrf (in_or_app _ _ _ (or_introl H))) as D. rewrite Ua, Un in D. exact D.
 + injection E as -> ->. rewrite round_up_pg_eq. fold (mmap_len l0). apply Dgm. left; exact H.
 + injection E as -> ->. rewrite round_up_pg_eq. fold (mmap_len l0). apply Dgm. right; exists k; exact H.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the grant lemmas place by Linux's placement under a floor (place_exists_floor), the KL facts follow the reserved list with the vDSO pair, munmap's witness is the model's post-state, and brk_grow_ok_intro reads the page-granular brk budget (brk_grow_bytes). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -115,7 +116,7 @@ Lemma twf_tcan : forall {R} (t : itree node R) mo (P Q : R -> Model -> Prop),
 Proof.
   intros R t mo P Q Hw Hc. induction Hc as [r mo Q H | n k mo Q rsp mo' Ha H IH]; cbn in Hw.
   - constructor. split; assumption.
-  - destruct Hw as (_ & _ & Hk). econstructor; [exact Ha|]. apply IH. apply Hk. exact Ha.
+  - destruct Hw as (_ & _ & _ & Hk). econstructor; [exact Ha|]. apply IH. apply Hk. exact Ha.
 Qed.
 
 (* [comment removed for export] *)
@@ -124,7 +125,9 @@ Lemma twf_tcan_ex : forall {R} (t : itree node R) mo (P : R -> Model -> Prop),
 Proof.
   intros R t. induction t as [r|n k IH]; intros mo P Hw; cbn in Hw.
   - constructor. exact Hw.
-  - destruct Hw as (Hn & Hs & Hk).
+  (* anstep_inhabited still takes only Hn and Hs (Lib/NodesSound.v:1041); only the PATTERN
+     grows, because twf's Vis case now carries nvdso_free as its third conjunct. *)
+  - destruct Hw as (Hn & Hs & _ & Hk).
     destruct (anstep_inhabited n mo Hn Hs) as (rsp & mo' & Ha).
     econstructor; [exact Ha|]. apply IH. apply Hk. exact Ha.
 Qed.
@@ -154,10 +157,12 @@ Proof.
   induction t as [r|n k IH]; intros Q R T ms mo Himpl HM Hwf HK; cbn in Himpl, Hwf.
   - destruct r as [|a]; [destruct Hwf|].
     eapply rz_evt; [exact HM | exact Himpl |]. intros ms' HQ. apply (HK a); auto.
-  - destruct Hwf as (Hn & Hs & Hk).
+  - destruct Hwf as (Hn & Hs & Hvd & Hk).
     eapply rz_evt; [exact HM | exact Himpl |].
     intros ms1 [Hat Hk1].
-    apply (rz_alloc_node segs n ms1 mo T Hn Hat HM Hs).
+    (* rz_alloc_node took the vDSO premise at Lib/NodesSound.v:1233; Spec/KRaw.v:121 is the
+       in-unit site that already passes it, and this is the twin the split left behind. *)
+    apply (rz_alloc_node segs n ms1 mo T Hn Hat HM Hs Hvd).
     intros rsp mo' Ha.
     apply (IH rsp Q R T (nret ms1 rsp) mo' (Hk1 rsp) (anstep_MOK n mo rsp mo' HM Ha) (Hk rsp mo' Ha) HK).
 Qed.
@@ -168,8 +173,9 @@ Lemma twf_and : forall {R} (t : itree node R) mo (P Q : R -> Model -> Prop),
 Proof.
   intros R t. induction t as [r|n k IH]; intros mo P Q HP HQ; cbn in *.
   - split; assumption.
-  - destruct HP as (Hn & Hs & HkP). destruct HQ as (_ & _ & HkQ).
-    split; [exact Hn|]. split; [exact Hs|]. intros rsp mo' Ha. apply IH; [apply HkP| apply HkQ]; exact Ha.
+  - destruct HP as (Hn & Hs & Hvd & HkP). destruct HQ as (_ & _ & _ & HkQ).
+    split; [exact Hn|]. split; [exact Hs|]. split; [exact Hvd|].
+    intros rsp mo' Ha. apply IH; [apply HkP| apply HkQ]; exact Ha.
 Qed.
 
 Lemma etwf_and : forall {A} (t : itree node (exc A)) mo (P Q : A -> Model -> Prop),
@@ -186,7 +192,7 @@ Lemma twf_reach : forall {R} (t : itree node R) mo (P Q : R -> Model -> Prop),
 Proof.
   intros R t. induction t as [r|n k IH]; intros mo P Q HP HQ; cbn in *.
   - split; [exact HP|]. apply HQ. constructor. auto.
-  - destruct HP as (Hn & Hs & Hk). split; [exact Hn|]. split; [exact Hs|].
+  - destruct HP as (Hn & Hs & Hvd & Hk). split; [exact Hn|]. split; [exact Hs|]. split; [exact Hvd|].
     intros rsp mo' Ha. apply IH; [exact (Hk rsp mo' Ha)|].
     intros r mo2 Hc. apply HQ. econstructor; [exact Ha| exact Hc].
 Qed.
@@ -242,6 +248,7 @@ End ImplRz.
 
 (* [comment removed for export] *)
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mprotect.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require MmapSim.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require PStartupDefs.
@@ -370,15 +377,17 @@ Qed.
 Lemma evcan_brk_refuse : forall req s mo,
   let h := m_vmmaps mo in let b := bv_unsigned (vm_brk h) in
   req <> 0 -> ps_brk s = b -> 0 < b -> bv_unsigned (vm_start_brk h) <= b -> b < req < 2^64 ->
+  (* the two premises anstep_dec_brk gained at LPS 75d69e00; not otherwise in scope here *)
+  b mod PGSZ = 0 -> req mod PGSZ = 0 ->
   exists mo', evres (EBrk req) s mo (ps_brk s) s mo'
     /\ m_vmmaps mo' = mkVmMapsFull (vm_reserved h) (vm_maps h) (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)
     /\ vm_only mo mo' /\ (m_vm_lazy mo = [] -> m_vm_lazy mo' = []) /\ (m_vm_materialized mo = [] -> m_vm_lazy mo = [] -> m_vm_materialized mo' = []).
 Proof.
-  intros req s mo h b Hreq Hpb Hb Hsb Hr.
+  intros req s mo h b Hreq Hpb Hb Hsb Hr Hba Hra.
   set (rq := Z_to_bv 64 req). set (mo' := with_brk_next mo rq (vm_brk h)).
   assert (Ha : anstep (NBrk req) mo (mkEffectU (vm_brk h) [] (brk_zeros rq (vm_brk h) (vm_brk h)) (brk_unmaps (vm_brk h) (vm_brk h)) [] []) mo').
   { cbn [anstep]. exists (vm_brk h). split; [apply brk_r_ok_refuse|]. split; reflexivity. }
-  pose proof (anstep_dec_brk mo req _ mo' Hb Hsb Hr Ha) as (a & Hd & Hx). fold h b in Hd, Hx.
+  pose proof (anstep_dec_brk mo req _ mo' Hb Hsb Hr Hba Hra Ha) as (a & Hd & Hx). fold h b in Hd, Hx.
   destruct a.
   { exfalso. destruct Hx as (_ & E & _). apply (f_equal eff_ret) in E. unfold eff0 in E. cbn [eff_ret] in E.
     apply (f_equal bv_unsigned) in E. rewrite unsigned_lit in E by lia. fold b in E. lia. }
@@ -398,20 +407,24 @@ Qed.
 Lemma evcan_brk_grant : forall req s mo,
   let h := m_vmmaps mo in let b := bv_unsigned (vm_brk h) in
   req <> 0 -> ps_brk s = b -> 0 < b -> bv_unsigned (vm_start_brk h) <= b -> b < req < 2^64 ->
+  (* the two premises anstep_dec_brk gained at LPS 75d69e00.  They also keep THIS
+     statement's raw-endpoint cons below true: with both ends page-aligned the
+     75d69e00 page-rounded grant collapses to exactly that singleton. *)
+  b mod PGSZ = 0 -> req mod PGSZ = 0 ->
   brk_grow_ok mo (Z_to_bv 64 req) (Z_to_bv 64 req) = true ->
   exists mo', evres (EBrk req) s mo req (set_brk_ps req s) mo'
     /\ m_vmmaps mo' = mkVmMapsFull (vm_reserved h) ((vm_brk h, (Z_to_bv 64 req - vm_brk h)%bv) :: vm_maps h) (vm_noaccess h)
                      (vm_start_brk h) (Z_to_bv 64 req) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)
     /\ vm_only mo mo' /\ (m_vm_lazy mo = [] -> m_vm_lazy mo' = []) /\ (m_vm_materialized mo = [] -> m_vm_lazy mo = [] -> m_vm_materialized mo' = []).
 Proof.
-  intros req s mo h b Hreq Hpb Hb Hsb Hr Hg.
+  intros req s mo h b Hreq Hpb Hb Hsb Hr Hba Hra Hg.
   set (rq := Z_to_bv 64 req). set (mo' := with_brk_next mo rq rq).
   assert (Ha : anstep (NBrk req) mo (mkEffectU rq [] (brk_zeros rq rq (vm_brk h)) (brk_unmaps rq (vm_brk h)) [] []) mo').
   { cbn [anstep]. exists rq. split; [|split; reflexivity].
     unfold brk_r_ok. fold h. rewrite (w_is0_false req) by lia. unfold min_brk. subst rq. rewrite unsigned_lit by lia.
     rewrite (proj2 (Z.ltb_ge req _)) by lia. cbn [orb]. fold b. rewrite (proj2 (Z.ltb_ge req b)) by lia.
     rewrite bv_eqb_refl. cbn [orb]. exact Hg. }
-  pose proof (anstep_dec_brk mo req _ mo' Hb Hsb Hr Ha) as (a & Hd & Hx). fold h b in Hd, Hx.
+  pose proof (anstep_dec_brk mo req _ mo' Hb Hsb Hr Hba Hra Ha) as (a & Hd & Hx). fold h b in Hd, Hx.
   destruct a.
   2:{ exfalso. destruct Hx as [E _]. apply (f_equal eff_ret) in E. unfold eff0 in E. cbn [eff_ret] in E. subst rq.
       apply (f_equal bv_unsigned) in E. rewrite unsigned_lit in E by lia. fold b in E. lia. }
@@ -429,7 +442,7 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma evcan_mmap_refuse : forall a len prot flags s mo,
-  mm_refusable mo prot flags (mmap_len len) = true ->
+  mm_refusable mo prot flags (Z_to_bv 64 a) (mmap_len len) = true ->
   evres (EMmap a len prot flags) s mo (neg_errno ENOMEM) s mo.
 Proof.
   intros a len prot flags s mo Hforced.
@@ -495,7 +508,9 @@ Proof.
   intros a len s mo aw n.
   assert (Ha : anstep (NMunmap a len) mo (mkEffectU (Z_to_bv 64 0) [] [] [(aw, n)] [] []) (mm_unmapped_model mo aw n)).
   { cbn [anstep]. split; reflexivity. }
-  pose proof (anstep_dec_munmap mo a len _ _ Ha) as [Hd _].
+  (* The response is concrete, so the decode is computed directly. *)
+  assert (Hd : dec_munmap a len (mkEffectU (Z_to_bv 64 0) [] [] [(aw, n)] [] []) = Some (RgDone true)).
+  { unfold dec_munmap. change (bv_unsigned (Z_to_bv 64 0)) with 0. rewrite Z.eqb_refl, !bv_eqb_refl. reflexivity. }
   unfold evres, ev_step. eapply tcan_mbind; [eapply tcan_msys; [exact Ha| exact Hd| split; reflexivity]|]. apply tcan_mret. split; reflexivity.
 Qed.
 
@@ -570,7 +585,7 @@ Definition ev_forced (e : ev) (mo : Model) (z : Z) : Prop :=
   match e with
   | EMmap a len prot flags =>
       if negb (Z.land flags MAP_FIXED_Z =? 0) then True
-      else is_err z = true -> mm_refusable mo prot flags (mmap_len len) = true
+      else is_err z = true -> mm_refusable mo prot flags (Z_to_bv 64 a) (mmap_len len) = true
   | EMprotect a len prot => z <> 0 -> mprotect_refusable mo (Z_to_bv 64 a) (Z_to_bv 64 (mmap_len len)) = true
   | _ => True
   end.
@@ -633,47 +648,57 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma grant_ok_mm_grant_rw : forall mo hint a n, grant_ok hint mo a n = true -> mm_grant_rw mo hint a n.
+(* LPS 08b1429: a grant is Linux's address.  The bottom-up candidate of [grant_exists_na_floor] is a free
+   gap inside Linux's window [task_unmapped_base, alloc_top), so Linux has an address
+   ([Placement.linux_place_exists]); the walk takes whichever one it is (every resolution is a grant). *)
+Lemma place_exists_floor : forall mo hint (N C nZ : Z),
+  let h := m_vmmaps mo in
+  0 < N -> N mod 4096 = 0 -> 0 < nZ <= N -> nZ mod page_size = 0 ->
+  Forall (fun p => bv_unsigned (snd p) <= N) (vm_reserved h ++ vm_maps h) ->
+  Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= C ->
+  AsanCeil.bottomup_floor + C * (2 * N) + N <= alloc_top h ->
+  exists z, Mmap.linux_place h (kb_thp (m_kernel mo)) hint nZ z.
 Proof.
-  intros mo hint a n H. unfold grant_ok in H. unfold mm_grant_rw.
-  repeat (apply andb_prop in H as [H ?]).
-  apply Z.eqb_eq in H. repeat split; auto; try (apply Z.ltb_lt; assumption); try (apply Z.leb_le; assumption).
+  intros mo hint N C nZ h HN HNa Hn Hal HF HC Hband.
+  destruct (grant_exists_na_floor mo N nZ C HN HNa ltac:(lia) HF HC Hband) as [g [Hg Hfl]].
+  unfold grant_ok_na_pin in Hg. repeat (apply andb_prop in Hg as [Hg ?]).
+  apply Z.eqb_eq in Hg.
+  match goal with H : (0 <? _) = true |- _ => apply Z.ltb_lt in H end.
+  match goal with H : (_ <=? alloc_top _) = true |- _ => apply Z.leb_le in H end.
+  apply (Placement.linux_place_exists h (kb_thp (m_kernel mo)) hint nZ ltac:(lia) Hal).
+  exists (bv_unsigned g). right.
+  pose proof AsanCeil.bottomup_floor_val as Hfv.
+  repeat split; try assumption.
+  - try unfold Mmap.task_unmapped_base. rewrite Hfv in Hfl. lia.
+  - rewrite Z_to_bv_bv_unsigned. assumption.
 Qed.
 
-(* [comment removed for export] *)
-Lemma grant_ok_na_mm_grant_none : forall mo hint a n, grant_ok_na_pin mo a n = true -> mm_grant_none mo hint a n.
-Proof.
-  intros mo hint a n H. unfold grant_ok_na_pin in H. unfold mm_grant_none.
-  repeat (apply andb_prop in H as [H ?]).
-  apply Z.eqb_eq in H. repeat split; auto; try (apply Z.ltb_lt; assumption); try (apply Z.leb_le; assumption).
-Qed.
-
-(* [comment removed for export] *)
 Theorem grant_rw_exists : forall mo hint (N C nZ : Z),
   let h := m_vmmaps mo in
-  0 < N -> N mod 4096 = 0 -> 0 <= nZ <= N ->
+  0 < N -> N mod 4096 = 0 -> 0 < nZ <= N -> nZ mod page_size = 0 ->
   Forall (fun p => bv_unsigned (snd p) <= N) (vm_reserved h ++ vm_maps h) ->
   Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= C ->
   AsanCeil.bottomup_floor + C * (2 * N) + N <= alloc_top h ->
   vm_backing_used mo + nZ <= vm_limit h ->
   exists g, mm_grant_rw mo hint g nZ.
 Proof.
-  intros mo hint N C nZ h HN HNa Hn HF HC Hband Hbud.
-  destruct (grant_exists_gen hint mo N nZ C HN HNa Hn HF HC Hband Hbud) as [g Hg].
-  exists g. apply grant_ok_mm_grant_rw. exact Hg.
+  intros mo hint N C nZ h HN HNa Hn Hal HF HC Hband Hbud.
+  apply (mm_grant_rw_exists_of_place mo hint nZ ltac:(lia) Hal).
+  - exact (place_exists_floor mo hint N C nZ HN HNa Hn Hal HF HC Hband).
+  - apply Z.leb_le. exact Hbud.
 Qed.
 
 Theorem grant_none_exists : forall mo hint (N C nZ : Z),
   let h := m_vmmaps mo in
-  0 < N -> N mod 4096 = 0 -> 0 <= nZ <= N ->
+  0 < N -> N mod 4096 = 0 -> 0 < nZ <= N -> nZ mod page_size = 0 ->
   Forall (fun p => bv_unsigned (snd p) <= N) (vm_reserved h ++ vm_maps h) ->
   Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= C ->
   AsanCeil.bottomup_floor + C * (2 * N) + N <= alloc_top h ->
   exists g, mm_grant_none mo hint g nZ.
 Proof.
-  intros mo hint N C nZ h HN HNa Hn HF HC Hband.
-  destruct (grant_exists_na_gen mo N nZ C HN HNa Hn HF HC Hband) as [g Hg].
-  exists g. apply grant_ok_na_mm_grant_none. exact Hg.
+  intros mo hint N C nZ h HN HNa Hn Hal HF HC Hband.
+  apply (mm_grant_none_exists_of_place mo hint nZ ltac:(lia) Hal).
+  exact (place_exists_floor mo hint N C nZ HN HNa Hn Hal HF HC Hband).
 Qed.
 
 (* [comment removed for export] *)
@@ -719,7 +744,10 @@ Proof.
   replace (req + page_size - b) with (req - b + page_size) by lia. rewrite Hrf. cbn [andb].
   replace (bv_unsigned (Z_to_bv 64 req - vm_brk h)) with (req - b).
   2:{ rewrite bv_sub_unsigned, Hureq. rewrite bv_wrap_small by (unfold bv_modulus; change (2 ^ Z.of_N 64) with (2^64); lia). fold b. lia. }
-  apply Z.leb_le. apply grant_budget_intro; assumption.
+  (* LPS 727298f3: brk_budget_ok charges the pages the grow installs, brk_grow_bytes =
+     max 0 (PAGE_ALIGN(req) - PAGE_ALIGN(brk)), which is req - b here (both page aligned, b < req). *)
+  apply Z.leb_le. apply grant_budget_intro; [exact Hl | exact Hm |].
+  unfold Mmap.brk_grow_bytes. fold h. rewrite Hureq. fold b. rewrite Epb, Epr. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -942,7 +970,7 @@ Proof.
   pose proof (simrel_malloc_contract _ _ _ Hc Hn) as CT. rewrite Et in CT. cbn [ctree_ok] in CT. destruct CT as [Hpre Hk].
   assert (Hlen0 : 0 < len) by lia. pose proof (mmap_len_ge' len Hlen0) as Hml.
   assert (A1 : 0 < N) by lia. assert (A2 : 0 <= mmap_len len <= N) by lia. assert (A3 : vm_backing_used mo + mmap_len len <= vm_limit h) by lia.
-  destruct (grant_rw_exists mo (Z_to_bv 64 0) N C (mmap_len len) A1 HNa A2 HF HC Hband A3) as [g Hg].
+  destruct (grant_rw_exists mo (Z_to_bv 64 0) N C (mmap_len len) A1 HNa ltac:(lia) ltac:(rewrite page_size_val; apply mmap_len_aligned) HF HC Hband A3) as [g Hg].
   apply tcan_raw_malloc_inv in Hcan as (st' & rc & s1 & Hc1 & ->). rewrite Hcs, Et in Hc1.
   apply tcan_membed_vis_inv in Hc1 as (z & s2 & mo2 & Hev & Hc2).
   pose proof (evres_post L _ s mo _ _ _ Hpre HK Hev) as (Hans & _).
@@ -951,7 +979,7 @@ Proof.
   assert (Herr : is_err z = false).
   { destruct (is_err z) eqn:E; [|reflexivity]. specialize (Hf eq_refl).
     change (MAP_PRIVATE + MAP_ANON) with mm_flags_anon in Hf. rewrite PROT_RW_eq in Hf.
-    rewrite (mm_grant_rw_not_refusable _ _ _ _ Hg) in Hf. discriminate Hf. }
+    rewrite (mm_grant_rw_not_refusable mo (Z_to_bv 64 0) g (mmap_len len) ltac:(lia) ltac:(rewrite page_size_val; apply mmap_len_aligned) Hg) in Hf. discriminate Hf. }
   specialize (Hk _ Hans). pose proof (ctree_ok_not_rejects _ _ _ Hk) as NR.
   destruct (Hok z NR Herr) as (cs' & c & Ek). rewrite Ek in Hc2.
   apply tcan_membed_ret_inv in Hc2 as [E _]. injection E as <- <- <-. reflexivity.
@@ -973,11 +1001,11 @@ Proof.
   { cbn [event_pre] in Hpre. destruct Hpre as [(_ & _ & _ & _ & H)|(cur & _ & _ & _ & E & _)]; [exact H| discriminate]. }
   assert (Hlen0 : 0 < len) by lia. pose proof (mmap_len_ge' len Hlen0) as Hml.
   assert (A1 : 0 < N) by lia. assert (A2 : 0 <= mmap_len len <= N) by lia. assert (A3 : vm_backing_used mo + mmap_len len <= vm_limit h) by lia.
-  destruct (grant_rw_exists mo (Z_to_bv 64 0) N C (mmap_len len) A1 HNa A2 HF HC Hband A3) as [g Hg].
+  destruct (grant_rw_exists mo (Z_to_bv 64 0) N C (mmap_len len) A1 HNa ltac:(lia) ltac:(rewrite page_size_val; apply mmap_len_aligned) HF HC Hband A3) as [g Hg].
   pose proof (evcan_mmap_rw_grant len s mo g Hlen0 Hg Hlink) as Hev. cbv zeta in Hev.
   pose proof (evres_post L _ s mo _ _ _ Hpre HK Hev) as (Hans & HK' & _).
   specialize (Hk _ Hans). pose proof (ctree_ok_not_rejects _ _ _ Hk) as NR.
-  destruct Hg as (G1 & G2 & G3 & _). pose proof alloc_ceiling_lt as Hcl. fold h in G3.
+  destruct Hg as (_ & G1 & G2 & G3 & _). pose proof alloc_ceiling_lt as Hcl. fold h in G3.
   destruct (Hok (bv_unsigned g) NR ltac:(unfold is_err, TWO64; apply Z.ltb_ge; lia)) as (cs' & c & Ek).
   eapply tcan_mono; [apply (tcan_raw_malloc n s mo (fun rc => rc <> None))|].
   - rewrite Hcs, Et. eapply tcan_membed_vis; [exact Hev|]. rewrite Ek. apply tcan_membed_ret. exists cs', (Some c), s. split; [reflexivity| discriminate].
@@ -1125,10 +1153,11 @@ Lemma KL_small_room : forall L pbrk mo,
   KL L pbrk mo -> led_small L (2^17) 4 ->
   Forall (fun p => bv_unsigned (snd p) <= 2^18) (vm_reserved (m_vmmaps mo)) ->
   Z.of_nat (length (vm_reserved (m_vmmaps mo))) <= 16 ->
-  forall nZ, 0 <= nZ <= 2^17 ->
-    mm_refusable mo mm_prot_rw mm_flags_anon nZ = false /\ mm_refusable mo mm_prot_none mm_flags_anon nZ = false.
+  forall nZ, 0 < nZ <= 2^17 -> nZ mod page_size = 0 ->
+    mm_refusable mo mm_prot_rw mm_flags_anon (Z_to_bv 64 0) nZ = false
+    /\ mm_refusable mo mm_prot_none mm_flags_anon (Z_to_bv 64 0) nZ = false.
 Proof.
-  intros L pbrk mo HK HS HRs HRl nZ HnZ.
+  intros L pbrk mo HK HS HRs HRl nZ HnZ Hal.
   assert (HS' : led_small L (2^18) 4).
   { destruct HS as (S1 & S2 & S3 & S4). split; [intros b l Hi; pose proof (S1 b l Hi); lia|].
     split; [intros b l k Hi; pose proof (S2 b l k Hi); lia|]. split; lia. }
@@ -1138,10 +1167,10 @@ Proof.
   assert (Hbud : vm_backing_used mo + nZ <= vm_limit (m_vmmaps mo)).
   { pose proof (vm_backing_used_le_live mo (kl_lazy _ _ _ HK) (kl_mat _ _ _ HK)). pose proof (kl_lim _ _ _ HK). unfold drv_limit in *. lia. }
   split.
-  - destruct (grant_rw_exists mo (Z_to_bv 64 0) (2^18) 20 nZ ltac:(lia) eq_refl ltac:(lia) F1 ltac:(lia) Hband Hbud) as [g Hg].
-    exact (mm_grant_rw_not_refusable _ _ _ _ Hg).
-  - destruct (grant_none_exists mo (Z_to_bv 64 0) (2^18) 20 nZ ltac:(lia) eq_refl ltac:(lia) F1 ltac:(lia) Hband) as [g Hg].
-    exact (mm_grant_none_not_refusable _ _ _ _ Hg).
+  - destruct (grant_rw_exists mo (Z_to_bv 64 0) (2^18) 20 nZ ltac:(lia) eq_refl ltac:(lia) Hal F1 ltac:(lia) Hband Hbud) as [g Hg].
+    exact (mm_grant_rw_not_refusable mo (Z_to_bv 64 0) g nZ ltac:(lia) Hal Hg).
+  - destruct (grant_none_exists mo (Z_to_bv 64 0) (2^18) 20 nZ ltac:(lia) eq_refl ltac:(lia) Hal F1 ltac:(lia) Hband) as [g Hg].
+    exact (mm_grant_none_not_refusable mo (Z_to_bv 64 0) g nZ ltac:(lia) Hal Hg).
 Qed.
 
 Lemma KL_small_mprotect : forall L pbrk mo a n,
@@ -1172,6 +1201,7 @@ Lemma site_grant_69632 : forall mo,
 Proof.
   intros mo HF HC HB Hlink. apply (grant_rw_exists mo (Z_to_bv 64 0) (2^17) 17 (mmap_len 69632)); try assumption.
   - lia. - reflexivity. - change (mmap_len 69632) with 69632. lia.
+  - rewrite page_size_val. apply mmap_len_aligned.
   - rewrite AsanCeil.bottomup_floor_val, Hlink. pose proof (@alloc_ceiling_lo ACEIL). lia.
   - change (mmap_len 69632) with 69632. lia.
 Qed.
@@ -1264,13 +1294,13 @@ Lemma m0_group_step : forall v k L s mo Post (r : mstate * option cptr) sf mof,
   (forall z, mmap_answer_ok (live_ranges (m0_st7 resv v)) 69632 z = true -> is_err z = false ->
      k z = SRet (m0_pre resv v z, Some (m0 , 0))) ->
   ctree_ok L (sbind (SVis (EMmap 0 69632 PROT_RW MAPF) k) cm_fin) Post -> KL L (ps_brk s) mo ->
-  mm_refusable mo mm_prot_rw mm_flags_anon (mmap_len 69632) = false ->
+  mm_refusable mo mm_prot_rw mm_flags_anon (Z_to_bv 64 0) (mmap_len 69632) = false ->
   tcan (membed (sbind (SVis (EMmap 0 69632 PROT_RW MAPF) k) cm_fin) s) mo (fun x mo1 => x = Ok (r, sf) /\ mo1 = mof) ->
   snd r <> None.
 Proof.
   intros v k L s mo Post r sf mof Hbad Hgood CT HK Hroom Hc.
   destruct (walk_inv _ cm_fin _ _ L s mo Post r sf mof eq_refl CT HK ltac:(cbn; lia) Hc) as (z & s' & mo' & Hans & HK' & Hf & CT' & Hc').
-  change (is_err z = true -> mm_refusable mo mm_prot_rw mm_flags_anon (mmap_len 69632) = true) in Hf.
+  change (is_err z = true -> mm_refusable mo mm_prot_rw mm_flags_anon (Z_to_bv 64 0) (mmap_len 69632) = true) in Hf.
   rewrite Hroom in Hf.
   assert (Herr : is_err z = false) by (destruct (is_err z); [specialize (Hf eq_refl); discriminate Hf| reflexivity]).
   pose proof (not_rejects_sbind _ _ (ctree_ok_not_rejects _ _ _ CT')) as NR.
@@ -1282,11 +1312,10 @@ Qed.
 (* [comment removed for export] *)
 Theorem m0_never_none : forall s mo,
   ps_m s = cs0 -> ps_brk s = 0 -> KL (led_init resv) 0 mo ->
-  let h := m_vmmaps mo in
-  Forall (fun p => bv_unsigned (snd p) <= 2^18) (vm_reserved h) -> Z.of_nat (length (vm_reserved h)) <= 16 ->
+  Forall (fun p => snd p <= 2^18) resv -> Z.of_nat (length resv) <= 14 ->
   forall p sf mof, tcan (raw_malloc 65536 s) mo (fun x mo1 => x = Ok (p, sf) /\ mo1 = mof) -> is_none p = false.
 Proof.
-  intros s mo Hcs Hpb HK h HRs HRl p sf mof Hcan. pose proof alloc_ceiling_lt as Hcl.
+  intros s mo Hcs Hpb HK HRs0 HRl0 p sf mof Hcan. pose proof alloc_ceiling_lt as Hcl.
   pose proof (simrel_malloc_contract _ _ 65536 (simrel_init resv) ltac:(lia)) as CT.
   change (strip (minit 0 resv)) with cs0 in CT. rewrite cmalloc0_eq in CT.
   destruct T0_shape as (k1 & E0 & Hsh).
@@ -1296,7 +1325,7 @@ Proof.
   (* [comment removed for export] *)
   assert (RES : forall L' pb' mo', KL L' pb' mo' -> ld_resv L' = resv ->
             Forall (fun p => bv_unsigned (snd p) <= 2^18) (vm_reserved (m_vmmaps mo')) /\ Z.of_nat (length (vm_reserved (m_vmmaps mo'))) <= 16).
-  { intros L' pb' mo' HK' E. rewrite (KL_resv_eq _ _ _ _ _ _ HK HK' E). split; assumption. }
+  { intros L' pb' mo' HK' E. apply (KL_resv_small _ _ _ HK'); rewrite E; assumption. }
   (* [comment removed for export] *)
   rewrite <- Hpb in HK.
   destruct (walk_inv _ cm_fin _ _ _ s mo _ r sfin mof E0 CT HK I Hc0) as (cur & s1' & mo1 & Hans1 & HK1 & _ & CT1 & Hc1).
@@ -1323,7 +1352,7 @@ Proof.
     cbn [event_post] in HK3. change (Z.land MAPFX MAP_FIXED =? 0) with false in HK3. cbv iota in HK3.
     eapply (m0_group_step (VA cur) k4 _ s3 mo3 _ r sfin mof Hk4bad Hk4ok CT3 HK3); [| exact Hc3].
     destruct (RES _ _ _ HK3 eq_refl) as [R1 R2].
-    refine (proj1 (KL_small_room _ _ _ HK3 _ R1 R2 (mmap_len 69632) ltac:(change (mmap_len 69632) with 69632; lia))).
+    refine (proj1 (KL_small_room _ _ _ HK3 _ R1 R2 (mmap_len 69632) ltac:(change (mmap_len 69632) with 69632; lia) ltac:(rewrite page_size_val; apply mmap_len_aligned))).
     split; [intros b l []|]. split; [intros b l k0 []|]. split; [unfold PGSZ; lia|].
     unfold brk_count. cbn. change (2 * PGSZ / PGSZ) with 2. lia.
   - (* [comment removed for export] *)
@@ -1333,8 +1362,8 @@ Proof.
     assert (HS2 : led_small (set_brkph BPDead (set_brkph (BPQueried cur) (led_init resv))) (2^17) 4).
     { split; [intros b l []|]. split; [intros b l k0 []|]. split; [unfold PGSZ; lia|]. unfold brk_count. cbn. lia. }
     destruct (walk_inv _ cm_fin (EMmap 0 8192 PROT_NONE MAPF) k3B _ s2 mo2 _ r sfin mof eq_refl CT2 HK2 ltac:(cbn; lia) Hc2) as (am & s3 & mo3 & Hans3 & HK3 & Hf3 & CT3 & Hc3).
-    change (is_err am = true -> mm_refusable mo2 mm_prot_none mm_flags_anon (mmap_len 8192) = true) in Hf3.
-    rewrite (proj2 (KL_small_room _ _ _ HK2 HS2 R1 R2 (mmap_len 8192) ltac:(change (mmap_len 8192) with 8192; lia))) in Hf3.
+    change (is_err am = true -> mm_refusable mo2 mm_prot_none mm_flags_anon (Z_to_bv 64 0) (mmap_len 8192) = true) in Hf3.
+    rewrite (proj2 (KL_small_room _ _ _ HK2 HS2 R1 R2 (mmap_len 8192) ltac:(change (mmap_len 8192) with 8192; lia) ltac:(rewrite page_size_val; apply mmap_len_aligned))) in Hf3.
     assert (Herr3 : is_err am = false) by (destruct (is_err am); [specialize (Hf3 eq_refl); discriminate Hf3| reflexivity]).
     pose proof (not_rejects_sbind _ _ (ctree_ok_not_rejects _ _ _ CT3)) as NR3.
     destruct (mmap_answer_ok (resv ++ []) 8192 am) eqn:HA3; [| exfalso; apply NR3; apply HbadB; exact HA3].
@@ -1355,7 +1384,7 @@ Proof.
     (* [comment removed for export] *)
     eapply (m0_group_step (VB am) k5 _ s4 mo4 _ r sfin mof Hk5bad Hk5ok CT4 HK4); [| exact Hc4].
     destruct (RES _ _ _ HK4 ltac:(rewrite led_resv_event_post; reflexivity)) as [R1' R2'].
-    refine (proj1 (KL_small_room _ _ _ HK4 _ R1' R2' (mmap_len 69632) ltac:(change (mmap_len 69632) with 69632; lia))).
+    refine (proj1 (KL_small_room _ _ _ HK4 _ R1' R2' (mmap_len 69632) ltac:(change (mmap_len 69632) with 69632; lia) ltac:(rewrite page_size_val; apply mmap_len_aligned))).
     cbn [event_post]. change ((0 =? 0) || (0 =? TWO64 - ENOSYS)) with true. cbv iota.
     split; [intros b l []|]. split.
     + intros b l k0 Hin. cbn [ld_metas set_metas L3 map] in Hin. destruct Hin as [E|[]].

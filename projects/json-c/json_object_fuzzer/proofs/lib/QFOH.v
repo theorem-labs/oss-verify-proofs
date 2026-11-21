@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the libc data block D_main written from the launch's input, main_entry over that input, the mmap base and the entry point, ref_startup's valid_launch and entry_launch_ok_va premises and the hand-off model of init_config; RomBase.sys_rob at the set_tid_address node; the section variables main_entry_tid and main_entry_guard declare). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -51,16 +52,17 @@ End FPGEN1.
 
 Section Facts.
 Context {AMB : Amb}.
+(* LPS 727298f3: the libc data block [D_main] is written from the launch's input ([QFeQ.D_main inp]) *)
+Variable inp : ProcInput.
 Variable sp0 : word.
-Variables av ev : list (list byte).
 Variable tid : word.
-Hypothesis Hva : valid_argv av.
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
 Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
 
-Let D := D_main sp0 av ev tid.
+Let D := D_main inp sp0 tid.
 
-#[using="Hva"] Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
+#[using="Hva"] Lemma len_av : (1 <= Z.of_nat (length (in_argv inp)) <= 1024)%Z.
 Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
 
 #[using="Type"] Lemma D_main_tid : forall segs,
@@ -104,21 +106,23 @@ unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 apply rdn_wbytes_hit8. unorm; lia.
 Qed.
 
+Variable mbase entry : word.
+Variables av ev : list (list byte).
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
-Hypothesis ME : main_entry sp0 av ev tid regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 av ev tid regs mem.
 
-#[using="AMB sp0 av ev Hlo D regs ME"] Lemma main_entry_tid : forall segs,
+#[using="Hlo D ME"] Lemma main_entry_tid : forall segs,
 rdn segs mem (Z_to_bv 64 0x75dc8) 4 = Some (word_to_le_bytes 4 tid).
 Proof.
-intros segs. rewrite (main_entry_rdn_data sp0 av ev tid regs mem ME)
+intros segs. rewrite (main_entry_rdn_data inp mbase entry sp0 av ev tid regs mem ME)
 by (rewrite stack_max_size_val; unorm; lia). apply D_main_tid.
 Qed.
 
-#[using="sp0 av ev tid Hlo D regs ME"] Lemma main_entry_guard : forall segs,
+#[using="Hlo D ME"] Lemma main_entry_guard : forall segs,
 rdn segs mem (Z_to_bv 64 0x960e0) 8 = Some (word_to_le_bytes 8 ssp_canary).
 Proof.
-intros segs. rewrite (main_entry_rdn_data sp0 av ev tid regs mem ME)
+intros segs. rewrite (main_entry_rdn_data inp mbase entry sp0 av ev tid regs mem ME)
 by (rewrite stack_max_size_val; unorm; lia). apply D_main_guard.
 Qed.
 
@@ -207,21 +211,27 @@ eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
 apply (rz_conseq segs _ (t_alt (fun _ : tid_I0 => K)));
 [| intros tr; split; [intros [_ Ht]; exact Ht | intros Ht; exists (exist _ (Z_to_bv 64 1) one_tid_ok0); exact Ht]].
 eapply rz_cases; [exact (exist _ (Z_to_bv 64 1) one_tid_ok0)
-| eapply node_set_tid0; [exact Hh | exact Hlazy | reflexivity | rewrite H17; apply u64_lit; lia | exact Htid] |].
+| eapply node_set_tid0; [exact Hh | exact Hlazy | reflexivity | rewrite H17; apply u64_lit; lia | exact Htid]
+| eapply (Cfg.RomBase.sys_rob_memfree segs);
+  [reflexivity | rewrite H17, u64_lit by lia; exact Cfg.RomBase.memfree_96] |].
 intros [t Ht]. cbn [proj1_sig]. rewrite adv_set_epend. apply Hk. exact Ht.
 Qed.
 End SetTid.
 
+(* LPS 727298f3: the start-up runs on the launch's input; the launch facts it reads ([valid_launch], the
+   Sv48 [entry_launch_ok_va]) are the start's premises, and the hand-off model is the start
+   configuration's own (as coturn/FuzzStunClient's RefStartup.ref_startup). *)
 Theorem ref_startup : forall sp brk mbase rnd lim inp K (Hsp : valid_sp sp),
 valid_brk rsegs brk -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 (forall tid regs mem,
 (0 < bv_unsigned tid < 2^22)%Z ->
-@main_entry (amb_of inp rnd sp Hsp) sp (in_argv inp) (in_envp inp) tid regs mem ->
+@main_entry (amb_of inp rnd sp Hsp) inp mbase (0x20874 : word) sp (in_argv inp) (in_envp inp) tid regs mem ->
 realizes rsegs (mkCfg (mkst regs (0x209c0 : word) mem (seg_rom rsegs))
-(with_tid tid (init_model (segments_reserved rsegs) brk mbase sp lim inp))) K) ->
+(with_tid tid (cfg_model (init_config rsegs rpc rph sp brk mbase rnd lim inp)))) K) ->
 realizes rsegs (init_config rsegs rpc rph sp brk mbase rnd lim inp) K.
 Proof.
-intros sp brk mbase rnd lim inp K Hsp Hbrk Hva Hve HK.
+intros sp brk mbase rnd lim inp K Hsp Hbrk Hva Hve Hvl Hlau HK.
 change (realizes rsegs ?c K)
 with ((fun st model => realizes rsegs (mkCfg st model) K) (cfg_ms c) (cfg_model c)).
 apply (startup (fun st model => realizes rsegs (mkCfg st model) K)) with (Hsp := Hsp).
@@ -230,6 +240,8 @@ apply (startup (fun st model => realizes rsegs (mkCfg st model) K)) with (Hsp :=
 eapply rz_set_tid0; eassumption.
 - exact Hva.
 - exact Hve.
+- exact Hvl.
+- exact Hlau.
 - exact HK.
 Qed.
 End Mq1.

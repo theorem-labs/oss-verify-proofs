@@ -23,14 +23,15 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 214 of its 259 lines of code are new or changed and 5008 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): piece PB10_S of
    segment B10b of reac_segconf_parse_file's walk, pb10_s_ok : PB10_S B (lib/B/Prog/pf_seg_B10b_k.v:
    HA_JOIN n -> H_ROLEV n; ROLEV 0x88d6c -> JOIN 0x88dc8). A B10b sub-lane of the image-B G3 walk owner, 2026-10-30.
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk, piece PB10_S of segment B10b; the
    function's reuse search and CONFIRM are the rule-24 lookup record).
-   ADAPTED from the B10b segment lane's lib/B/Prog/pf_seg_B10b_j.v (961c19ce3f65: the seed at a cut, the cut rebuilt),
+   ADAPTED from the B10b segment lane's lib/B/Prog/pf_seg_B10b_j.v (the seed at a cut, the cut rebuilt),
    image B's trim walk lib/B/Prog/trim_f.v / trim_s.v (a token run with a shadow entry, an awr_ok write, a UBSan
-   trap refuted after psrr_branch_tok) and 501c0d516c69 fuzz_command lib/A/Prog/check_reply_s4.v (the snprintf
+   trap refuted after psrr_branch_tok) and fuzz_command lib/A/Prog/check_reply_s4.v (the snprintf
    site, in pf_seg_B10b_sj.v).
 
    SECTION HYPOTHESES (the segment's piece list, section 3), and only these:

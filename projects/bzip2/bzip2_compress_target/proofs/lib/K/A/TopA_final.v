@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image with no vDSO segment). *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -30,7 +31,7 @@ Theorem canon_B0_of : rt_contracts RTA -> fuzz_one_cps RTA LIB_A ->
                 (canonT (argv_Z (in_argv inp)) (in_fs inp))
     /\ ~ bh_errors (Run.run_scfg (Run.alloc_only_cfg false) (mkImage AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs)
                             target_alloc_limit en inp).
-Proof. intros RC FUZZ. exact (T_canon _ _ _ (s3s_A_rc RC FUZZ)). Qed.
+Proof. intros RC FUZZ. exact (T_canon _ _ _ (s3s_A_rc RC FUZZ) eq_refl). Qed.  (* eq_refl: the image has no vDSO segment *)
 End TwinB__.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
@@ -51,4 +52,4 @@ Theorem canon_A0_of : rt_contracts RTA -> fuzz_one_cps RTA LIB_A ->
                 (canonT (argv_Z (in_argv inp)) (in_fs inp))
     /\ ~ bh_errors (Run.run_scfg (Run.alloc_only_cfg false) (mkImage Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs)
                             target_alloc_limit en inp).
-Proof. intros RC FUZZ. exact (T_canon _ _ _ (s3s_A_rc RC FUZZ)). Qed.
+Proof. intros RC FUZZ. exact (T_canon _ _ _ (s3s_A_rc RC FUZZ) eq_refl). Qed.  (* eq_refl: the image has no vDSO segment *)

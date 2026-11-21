@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the exit proof discharges and skips the fd predicate's new channel-reader flag; the stack floors of the exit chain and of the calls it makes are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB, and where such a floor meets an 8 MiB premise it is derived by lia. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -168,10 +169,10 @@ Hypothesis AF_XC : forall Σ m, ART RT Σ m -> xcells (rt_sp0 RT Σ) m.
 Hypothesis AF_IOSX : forall Σ m, ART RT Σ m -> iosx_img_facts m.
 Hypothesis LIBX : forall v m, LIBv v m -> libx v m.
 Hypothesis VECX : forall PMc, vecx_stmt RT PMc.
-Hypothesis IFW : forall sp0, ifwrite0_stmt (ixit2 sp0) (sp0 - STACK_WIN).
-Hypothesis IFFI : forall sp0, ifflush_idle_stmt (ixit_rt sp0) (sp0 - STACK_WIN).
-Hypothesis IWC : forall sp0, iwcrtomb_stmt (ixit2 sp0) (sp0 - STACK_WIN).
-Hypothesis IFFS : forall sp0, ifflush_stdout_stmt (ixit_rt sp0) (sp0 - STACK_WIN) so_id so_set.
+Hypothesis IFW : forall sp0, ifwrite0_stmt (ixit2 sp0) (sp0 - STACK_SPAN).
+Hypothesis IFFI : forall sp0, ifflush_idle_stmt (ixit_rt sp0) (sp0 - STACK_SPAN).
+Hypothesis IWC : forall sp0, iwcrtomb_stmt (ixit2 sp0) (sp0 - STACK_SPAN).
+Hypothesis IFFS : forall sp0, ifflush_stdout_stmt (ixit_rt sp0) (sp0 - STACK_SPAN) so_id so_set.
 Hypothesis SX0 : stdio_exit0_stmt.
 
 Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, GLOBALS_TOP, X_DEPTH, VECX_DEPTH, XPRE_DEPTH, HDXA in *; lia.
@@ -189,7 +190,7 @@ Lemma exit_tail_impl : forall (Σx : rts RT) (ra gp t0 t1 t2 s1 a0 a1 a3 a4 a5 a
     (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z) (p1 p2 : list byte) (f3 f4 f5 a3v a4v a5v : word) (j8 : list byte) (xs3 xs2 xs1 : word)
     (code : Z) (so : stdout_st) (g : word),
   ART RT Σx m -> mem_inv asegs m ->
-  stk asegs m lo usp -> rt_sp0 RT Σx - STACK_WIN <= lo -> lo + HDXA <= usp -> usp + 80 <= USTACK_TOP ->
+  stk asegs m lo usp -> rt_sp0 RT Σx - STACK_SPAN <= lo -> lo + HDXA <= usp -> usp + 80 <= USTACK_TOP ->
   rw_cells asegs m usp (foe_frame j8 xs3 xs2 xs1 (Z_to_bv 64 code) (Z_to_bv 64 X_EXIT_FOE_RET)) -> 0 <= code < 256 ->
   rw_cells asegs m AEX (aex_tbl 2 p1 p2 f3 f4 f5) -> rw_cells asegs m AEX_A0 (aex_args a3v a4v a5v) ->
   cstat so g m ->
@@ -212,14 +213,14 @@ Proof.
              U0 ST ltac:(ul) ltac:(ul) NL TBL TA GF CIO MI). }
   intros ms5 PO. destruct PO as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m5 & -> & MU5 & WM5 & MI5 & ST5 & TBL5 & TA5).
   assert (ART5 : ART RT Σx m5).
-  { apply (af_frame RT AF Σx m m5 lo ART0 LOW); [| exact WM5]. intros a Ha. apply MU5. nacl Ha. }
+  { apply (af_frame RT AF Σx m m5 lo ART0 ltac:(clear - LOW; lia)); [| exact WM5]. intros a Ha. apply MU5. nacl Ha. }
   assert (AG5 : agree_on CSP m m5) by (apply (agree_of_munch _ _ _ _ MU5); intros x Hx; unfold CSP, XSP in Hx; unfold AEX; cbn [outside]; ul).
   pose proof (cstat_agree so g m m5 CS AG5) as CS5. destruct CS5 as (XX5 & OUT5 & ERR5 & CAN5 & LX35 & TPL5).
   assert (FR5 : rw_cells asegs m5 usp (foe_frame j8 xs3 xs2 xs1 (Z_to_bv 64 code) (Z_to_bv 64 X_EXIT_FOE_RET))) by trw_mu FR MU5.
   assert (NL5 : ro_cells asegs m5 LIBC_NLX [C1 (Z_to_bv 8 0)]) by tro_mu NL MU5.
   pose proof XX5 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & IOB5).
 
-  pose proof (ios_exitA_proof (ixit2 (rt_sp0 RT Σx)) (rt_sp0 RT Σx - STACK_WIN) (IX2_frame _) (IFW _)
+  pose proof (ios_exitA_proof (ixit2 (rt_sp0 RT Σx)) (rt_sp0 RT Σx - STACK_SPAN) (IX2_frame _) (IFW _)
                 (ifflush_idle_lift _ _ _ (xcells_CF (rt_sp0 RT Σx)) (IFFI _)) (IWC _) so_id so_set
                 (ifflush_stdout_lift _ _ _ (xcells_CF (rt_sp0 RT Σx)) so_id so_set (IFFS _))) as IOSX.
   unfold ios_exitA_stmt in IOSX.
@@ -236,7 +237,7 @@ Proof.
                   & -> & MU6 & WM6 & MI6 & ST6 & SO'' & _ & OUTC & FL72 & ERRC & FL40 & TPL6 & SSP6 & IOB6 & IX6).
   rewrite EU in MU6, ST6.
   assert (ART6 : ART RT Σx m6).
-  { apply (af_frame RT AF Σx m5 m6 lo ART5 LOW); [| exact WM6]. intros a Ha. apply MU6. nacl Ha. }
+  { apply (af_frame RT AF Σx m5 m6 lo ART5 ltac:(clear - LOW; lia)); [| exact WM6]. intros a Ha. apply MU6. nacl Ha. }
   destruct (AF_XIT Σx m6 ART6) as (FA & GF6 & GCX & (dso & DSO) & GX & UG1 & UG2 & RG & MUX & SHC & AI & CP & THR & RMS & COV & SC1 & SC2 & SC3).
   assert (AG6 : agree_on XSP m5 m6) by (apply (agree_of_munch _ _ _ _ MU6); intros x Hx; unfold XSP in Hx; unfold XWI, XTPLOC; cbn [outside]; ul).
   pose proof (xenv_x_agree m5 m6 XX5 AG6) as XX6.
@@ -313,13 +314,13 @@ Proof.
   { intros Σx cx msx Hcx IMPL.
     assert (RZ : realizes asegs cx (TT ((stdout_exit_flush so_id so_set : @M stdout_st unit) so) (fun _ => t_emit [] T))).
     { apply (impl_realizes asegs SEGTOP_A asegs_wx asegs_below [1] _ (rt_allow RT Σx) (fun mo => ARTM RT Σx mo /\ PMfd F0 fs0 mo) (Qfin code)
-               (fun _ => t_emit [] T) msx cx (ASTA_PM_mat_stable RT AF Σx F0 fs0)); [| exact (tok_exit_flush so (proj1 SOK) (proj2 SOK))| exact Hcx| exact IMPL|].
+               (fun _ => t_emit [] T) msx cx (ASTA_PM_mat_stable RT AF Σx F0 fs0)); [| intros mo (_ & _ & _ & HRD); exact HRD| exact (tok_exit_flush so (proj1 SOK) (proj2 SOK))| exact Hcx| exact IMPL|].
       - intros mo fd (HAR & HF & _) Hin. cbn in Hin. destruct Hin as [<-|[]]. rewrite HF. exact HFD.
       - intros x ms' c' (HS & HA0) Hc'.
         assert (R : realizes asegs c' T).
         { apply Hk. exists (rt_allow RT Σx), (eq ms'), (fun mo => ARTM RT Σx mo /\ PMfd F0 fs0 mo). split; [exact Hc'|]. split.
           + intros ms <-. split; [right; exact HS| exact HA0].
-          + intros mo (_ & _ & HFS). exact HFS. }
+          + intros mo (_ & _ & HFS & _). exact HFS. }
         eapply rz_conseq; [exact R|]. apply t_eq_sym, t_emit_nil_eq. exact (realizes_nonempty asegs _ _ R). }
     eapply rz_conseq; [exact RZ|].
     eapply t_eq_trans; [apply TT_exit_flush; [exact (proj1 SOK)| exact (proj2 SOK)| apply t_emit_has_nil]|].
@@ -345,7 +346,7 @@ Proof.
     destruct (ASTA_unpack RT Σ _ _ c1 Hc1) as (ms1 & PO1 & Hc1'). clear Hc1.
     destruct PO1 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & j8 & m1 & -> & MU1 & WM1 & MI1 & ST1 & FRX1 & FRF1 & EXL1 & TBL1 & TA1).
     assert (ART1 : ART RT Σ m1).
-    { apply (af_frame RT AF Σ m m1 lo ART0 LOW); [| exact WM1]. intros a Ha. apply MU1. nacl Ha. }
+    { apply (af_frame RT AF Σ m m1 lo ART0 ltac:(clear - LOW; lia)); [| exact WM1]. intros a Ha. apply MU1. nacl Ha. }
     assert (AG1 : agree_on CSP m m1) by (apply (agree_of_munch _ _ _ _ MU1); intros x Hx; unfold CSP, XSP in Hx; unfold AEX; cbn [outside]; ul).
     pose proof (cstat_agree so g m m1 CS0 AG1) as CS1.
     assert (VW1 : rw_cells asegs m1 AEX_VEC_OBJ [C8 (Z_to_bv 64 A8); C8 (Z_to_bv 64 (A8 + 8)); C8 (Z_to_bv 64 (A8 + 8))]).
@@ -395,7 +396,7 @@ Proof.
                p1 p2 (Z_to_bv 64 X_CALL) (Z_to_bv 64 X_VECDTOR) (Z_to_bv 64 X_ATCXA) ltac:(ul) NL2 TBL2 MI2). }
     intros ms3 PO3. destruct PO3 as (ra3 & x0 & x1 & x3 & m3 & -> & MU3 & WM3 & MI3 & TBL3).
     assert (ART3 : ART RT Σ' m3).
-    { apply (af_frame RT AF Σ' m2 m3 lo ART2 ltac:(rewrite SP2; exact LOW)); [| exact WM3]. intros a Ha. apply MU3. nacl Ha. }
+    { apply (af_frame RT AF Σ' m2 m3 lo ART2 ltac:(rewrite SP2; clear - LOW; lia)); [| exact WM3]. intros a Ha. apply MU3. nacl Ha. }
     assert (AG3 : agree_on CSP m2 m3) by (apply (agree_of_munch _ _ _ _ MU3); intros x Hx; unfold CSP, XSP in Hx; unfold AEX; cbn [outside]; ul).
     pose proof (cstat_agree so g m2 m3 CS2 AG3) as CS3.
     assert (FRF3 : rw_cells asegs m3 (usp + -64) (foe_frame j8 s3 s2 s1 (Z_to_bv 64 code) (Z_to_bv 64 X_EXIT_FOE_RET))) by trw_mu FRF2 MU3.
@@ -410,7 +411,7 @@ Proof.
                p1 p2 (Z_to_bv 64 X_VECDTOR) (Z_to_bv 64 X_ATCXA) (Z_to_bv 64 AEX_VEC_OBJ) (Z_to_bv 64 0) ltac:(ul) NL3 TBL3 TA3 INCB3 MI3). }
     intros ms4 PO4. destruct PO4 as (ra4 & y0 & y1 & y2 & ys1 & ya0 & ya1 & ya3 & ys3 & m4 & -> & MU4 & WM4 & MI4 & TBL4).
     assert (ART4 : ART RT Σ' m4).
-    { apply (af_frame RT AF Σ' m3 m4 lo ART3 ltac:(rewrite SP2; exact LOW)); [| exact WM4]. intros a Ha. apply MU4. nacl Ha. }
+    { apply (af_frame RT AF Σ' m3 m4 lo ART3 ltac:(rewrite SP2; clear - LOW; lia)); [| exact WM4]. intros a Ha. apply MU4. nacl Ha. }
     assert (AG4 : agree_on CSP m3 m4) by (apply (agree_of_munch _ _ _ _ MU4); intros x Hx; unfold CSP, XSP in Hx; unfold AEX; cbn [outside]; ul).
     pose proof (cstat_agree so g m3 m4 CS3 AG4) as CS4.
     assert (FRF4 : rw_cells asegs m4 (usp + -64) (foe_frame j8 s3 s2 s1 (Z_to_bv 64 code) (Z_to_bv 64 X_EXIT_FOE_RET))) by trw_mu FRF3 MU4.
@@ -430,7 +431,7 @@ Proof.
       intros ms1 PO1. destruct PO1 as (ra1 & u0 & u1 & u2 & ua0 & ua1 & ua3 & ua4 & ua5 & ua6 & ua7 & u3 & u4 & u5 & u6 & j8 & m1 & -> & MU1 & WM1 & MI1 & ST1
                                        & FRX1 & FRF1 & EXL1 & TBL1 & TA1).
       assert (ART1 : ART RT Σ m1).
-      { apply (af_frame RT AF Σ m m1 lo ART0 LOW); [| exact WM1]. intros a Ha. apply MU1. nacl Ha. }
+      { apply (af_frame RT AF Σ m m1 lo ART0 ltac:(clear - LOW; lia)); [| exact WM1]. intros a Ha. apply MU1. nacl Ha. }
       assert (AG1 : agree_on CSP m m1) by (apply (agree_of_munch _ _ _ _ MU1); intros x Hx; unfold CSP, XSP in Hx; unfold AEX; cbn [outside]; ul).
       pose proof (cstat_agree so g m m1 CS0 AG1) as CS1.
       exact (exit_tail_impl Σ ra1 gp u0 u1 u2 s1 ua0 ua1 ua3 ua4 ua5 ua6 ua7 s3 s4 s5 s6 s7 s8 s9 s10 s11 u3 u4 u5 u6 (usp + -64) F fc m1 lo
@@ -442,7 +443,7 @@ Proof.
       intros ms1 PO1. destruct PO1 as (ra1 & u0 & u1 & u2 & ua0 & ua1 & ua3 & ua4 & ua5 & ua6 & ua7 & u3 & u4 & u5 & u6 & j8 & m1 & -> & MU1 & WM1 & MI1 & ST1
                                        & FRX1 & FRF1 & EXL1 & TBL1 & TA1).
       assert (ART1 : ART RT Σ m1).
-      { apply (af_frame RT AF Σ m m1 lo ART0 LOW); [| exact WM1]. intros a Ha. apply MU1. nacl Ha. }
+      { apply (af_frame RT AF Σ m m1 lo ART0 ltac:(clear - LOW; lia)); [| exact WM1]. intros a Ha. apply MU1. nacl Ha. }
       assert (AG1 : agree_on CSP m m1) by (apply (agree_of_munch _ _ _ _ MU1); intros x Hx; unfold CSP, XSP in Hx; unfold AEX; cbn [outside]; ul).
       pose proof (cstat_agree so g m m1 CS0 AG1) as CS1.
       assert (NL1 : ro_cells asegs m1 LIBC_NLX [C1 (Z_to_bv 8 0)]) by tro_mu NL MU1.
@@ -453,7 +454,7 @@ Proof.
                  p1 p2 f4 f5 a4v a5v ltac:(ul) NL1 TBL1 TA1 INCB1 MI1). }
       intros ms2 PO2. destruct PO2 as (ra2 & y0 & y1 & y2 & ys1 & ya0 & ya1 & ya3 & ys3 & m2 & -> & MU2 & WM2 & MI2 & TBL2).
       assert (ART2 : ART RT Σ m2).
-      { apply (af_frame RT AF Σ m1 m2 lo ART1 LOW); [| exact WM2]. intros a Ha. apply MU2. nacl Ha. }
+      { apply (af_frame RT AF Σ m1 m2 lo ART1 ltac:(clear - LOW; lia)); [| exact WM2]. intros a Ha. apply MU2. nacl Ha. }
       assert (AG2 : agree_on CSP m1 m2) by (apply (agree_of_munch _ _ _ _ MU2); intros x Hx; unfold CSP, XSP in Hx; unfold AEX; cbn [outside]; ul).
       pose proof (cstat_agree so g m1 m2 CS1 AG2) as CS2.
       assert (FRF2 : rw_cells asegs m2 (usp + -64) (foe_frame j8 s3 s2 s1 (Z_to_bv 64 code) (Z_to_bv 64 X_EXIT_FOE_RET))) by trw_mu FRF1 MU2.

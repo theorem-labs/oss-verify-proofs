@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fflush on libreac/fuzz_pcap's fmemopen READ stream.
 
    STATEMENT ONLY: the definitions compile, there is no lemma yet.
 
-   Donor: cgif_file_fuzzer lib/A/AE29.v:616 fflush_real (donor sha c8557374ad2e), which walks the SAME
+   Donor: cgif_file_fuzzer lib/A/AE29.v:616 fflush_real (donor sha), which walks the SAME
    interceptor and musl code -- masked-equal on pcap (icpt_fflush 67/67 insns, musl fflush 92/92,
    a Theorem Labs lane's runtime-donors.md (sha256 77e6fad19fb7; internal record) rows 5-6) -- but only for a WRITE stream over __stdio_write. The
    read-stream branch is not covered there, and that branch is this file.
 
    IMAGE ROOT: the ORIGINAL v1.9.0 set, which is what the statements target --
    the pinned fuzz_pcap images, unstripped twins fuzz_pcap.asan (sha256 36da3052c383) and
-   fuzz_pcap.asan-ubsan (sha256 c969d83cdd59), statements ed6b6b7b0ab. NOT the toolchain-N images: a runtime premise
+   fuzz_pcap.asan-ubsan (sha256 c969d83cdd59), statements. NOT the toolchain-N images: a runtime premise
    true on one can be false on the other (another proof's
    malloc_context_size = 1 is exactly such a premise, true on N and false here).
 
@@ -67,7 +68,7 @@ Variable K : asource_syms.
 
 (* The cgif-core vocabulary is the REAL relocated core (afn_pre / ajournal from YCbq.v, NOT YCe5.v;
    cfg_at / spZ / aregs_preserved from YG0d.v; SRr / world / w_H from YA0n.v). rd is the donor's own
-   abbreviation (YE01.v:47). *)
+   abbreviation (YE01.v:48). *)
 Local Notation rd W mem := (mrestrict (w_H W) mem).
 
 (* The WHOLE-REACH stack of a call to fflush on this stream, covering BOTH entries the statement
@@ -127,9 +128,9 @@ Definition afflush_source_spec (pc rlo rhi : Z) : Prop :=
        a Theorem Labs lane corrected it at 00:07Z. The memory model gives image bytes no value --
        arbitrary there and AR pins only as_const cells -- so without this the bucket index came
        from an arbitrary multiplier, the bucket address was garbage, and the meta premise below
-       could not be used. Form as PFclose.v:134, which already holds this premise at its fflush
+       could not be used. Form as PFclose.v:135, which already holds this premise at its fflush
        call; the donor discharges the same fact the same way (cgif AE24 ffc_ro_img_of_arodata,
-       AE2f.v:221 iflush_tail's ro_img). *)
+       AE2f.v:222 iflush_tail's ro_img). *)
     arodata_okS segs B rlo rhi (aview segs (w_H W) mem) ->
     (* The ASan meta region is pinned. Needed ONLY by the INTERCEPTOR entry, and the statement
        admits it (pfflush_entry_ok), so the spec must carry it. Found while proving (a Theorem Labs lane,
@@ -139,8 +140,8 @@ Definition afflush_source_spec (pc rlo rhi : Z) : Prop :=
        M = *as_meta_mem), takes that bucket's spin lock and scans its cells. The outcome decides
        0x46704 / 0x4670c / 0x46718: a found cell whose created/refcount is not 1 goes to
        CheckFailed 0x6b918 and the process DIES, and a held lock spins forever. Nothing else in
-       this spec pinned M or the bucket bytes. PFclose.v:133 already carries exactly this premise,
-       and the donor's interceptor tail consumes the same zero-bucket fact (cgif A/AE2f.v:208-222
+       this spec pinned M or the bucket bytes. PFclose.v:134 already carries exactly this premise,
+       and the donor's interceptor tail consumes the same zero-bucket fact (cgif A/AE2f.v:209-223
        meta_pre / iflush_tail). asrc_meta_inv_kept (PSourceMeta.v) carries it across the call. *)
     asrc_meta_inv segs K ly (rd W mem) M ->
     asource_at segs K (rd W mem) f b C p ->
@@ -158,7 +159,7 @@ Definition afflush_source_spec (pc rlo rhi : Z) : Prop :=
        measured against the whole reach, not fflush's own 32-byte frame: mseek's frame sits at
        [sp0 - 80, sp0 - 32), and YCbq.v:355 keeps unchanged only what lies outside the stated
        window -- which is why PFFLUSH_OWN_STK is the measured 1840 and not 32. Form as
-       PFreadISpec.v:67. *)
+       PFreadISpec.v:68. *)
     (b + Z.of_nat (length C) <= spZ regs - PFFLUSH_OWN_STK \/ spZ regs <= b) ->
     (* NO premise pins the FILE's ops to an image's addresses. An earlier `pmops_ok K`
        (as_seek K = PMSEEK /\ as_close K = PMCLOSE) named asan constants INSIDE this statement,

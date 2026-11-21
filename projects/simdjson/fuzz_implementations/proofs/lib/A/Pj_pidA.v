@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Pj_pidA.v, line 61. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -57,7 +58,7 @@ Proof using AF RTF PARSE ALLOC CREATE NEWA AFC AFV AFI.
   destruct (ASTA_unpack_f RT Σ2 _ _ c2 Hc2 FC2) as (ms2 & (m2 & u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & j & q1 & q17 & q57 & q12 & q28 & q50
                                                     & -> & ART2 & MI2 & ST2 & FR2 & PC2 & FOBJ2 & IC2 & RC2 & BS2 & LIB2 & CH2) & FRM2 & Hc2'). clear Hc2.
   cbn [ms_fcsr] in FRM2. fold len in Hc2'. fold cap in Hc2', PC2, IC2, LV2, CR2.
-  assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW).
+  assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2; exact LOW).
 
   assert (FIN : forall cost (CP : list (Z * Z) -> Prop), pid_cost6 cap + cost <= pid_cost6 cap + mcost (len + 64) + S2A_COST len ->
             (forall cp, CP cp -> (exists COPY, cp = [(COPY, len + 64)] /\ 0 < COPY /\ len <= SJ_PADMAX) \/ cp = []) ->

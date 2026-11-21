@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -15,54 +16,57 @@ Open Scope Z_scope.
 Local Ltac bvlit := vm_compute; try (f_equal; repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]); try reflexivity).
 
 Section HI.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry]) instead of
+   argv/envp/uid/hwcap, as PDrvMain's Handoff section does. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
 Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
 Hypothesis Hsp : valid_sp sp0.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 
 (* [comment removed for export] *)
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_pristine : forall lo hi, 0 <= lo -> lo <= hi -> hi <= 0xa0000 -> miss_ok lo (Z.to_nat (hi - lo)) = true -> pristine mem lo hi.
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0).
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_pristine : forall lo hi, 0 <= lo -> lo <= hi -> hi <= 0xa0000 -> miss_ok lo (Z.to_nat (hi - lo)) = true -> pristine mem lo hi.
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0).
   intros lo hi H0 H1 H2 Hm. split; [lia|]. split; [lia|]. intros i Hi. unfold wa.
   replace i with (lo + (i - lo)) by lia.
-  apply (mem_miss sp0 av ev uid tid hw rdraw regs mem Hsp ME lo (Z.to_nat (hi - lo)) (i - lo)); [lia | rewrite Z2Nat.id by lia; lia | exact Hm | rewrite Z2Nat.id by lia; lia].
+  apply (mem_miss inp mbase entry sp0 tid rdraw regs mem Hsp ME lo (Z.to_nat (hi - lo)) (i - lo)); [lia | rewrite Z2Nat.id by lia; lia | exact Hm | rewrite Z2Nat.id by lia; lia].
 Qed.
 
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_rdn_img : forall lo hi (a : Z) (n : nat), 0 <= lo -> lo <= hi -> hi <= 0xa0000 -> miss_ok lo (Z.to_nat (hi - lo)) = true ->
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_rdn_img : forall lo hi (a : Z) (n : nat), 0 <= lo -> lo <= hi -> hi <= 0xa0000 -> miss_ok lo (Z.to_nat (hi - lo)) = true ->
   lo <= a -> a + Z.of_nat n <= hi -> rdn PSEGS mem (wa a) n = rdn PSEGS (fun _ => None) (wa a) n.
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0).
   intros lo hi a n H0 H1 H2 Hm Ha Hn. destruct (hi_pristine lo hi H0 H1 H2 Hm) as (_ & _ & HP).
   apply (rdn_img PSEGS mem a n lo hi); [| lia | lia | lia | lia]. intros i Hi. exact (HP i Hi).
 Qed.
 
 (* [comment removed for export] *)
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_kro : pristine mem 0x16100 0x16120 /\ pristine mem 0x182a8 0x18327.
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). split; apply hi_pristine; first [lia | vm_compute; reflexivity]. Qed.
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_tables : forall a n, (0x16100 <= a /\ a + Z.of_nat n <= 0x16120) \/ (0x182a8 <= a /\ a + Z.of_nat n <= 0x18327) ->
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_kro : pristine mem 0x16100 0x16120 /\ pristine mem 0x182a8 0x18327.
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). split; apply hi_pristine; first [lia | vm_compute; reflexivity]. Qed.
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_tables : forall a n, (0x16100 <= a /\ a + Z.of_nat n <= 0x16120) \/ (0x182a8 <= a /\ a + Z.of_nat n <= 0x18327) ->
   rdn PSEGS mem (wa a) n = rdn PSEGS (fun _ => None) (wa a) n.
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0).
   intros a n [[A B]|[A B]].
   - apply (hi_rdn_img 0x16100 0x16120); first [lia | vm_compute; reflexivity].
   - apply (hi_rdn_img 0x182a8 0x18327); first [lia | vm_compute; reflexivity].
 Qed.
 
 (* [comment removed for export] *)
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_need_locks : rdn PSEGS mem (wa 613987) 1 = Some (word_to_le_bytes 1 (wa 0)).
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). rewrite (hi_rdn_img 613987 613988) by first [lia | vm_compute; reflexivity]. bvlit. Qed.
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_need_locks : rdn PSEGS mem (wa 613987) 1 = Some (word_to_le_bytes 1 (wa 0)).
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). rewrite (hi_rdn_img 613987 613988) by first [lia | vm_compute; reflexivity]. bvlit. Qed.
 (* [comment removed for export] *)
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_got_guard : rdn PSEGS mem (wa 408992) 8 = Some (word_to_le_bytes 8 (wa 0x95e40)).
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). rewrite (hi_rdn_img 408992 409000) by first [lia | vm_compute; reflexivity]. bvlit. Qed.
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_got_guard : rdn PSEGS mem (wa 408992) 8 = Some (word_to_le_bytes 8 (wa 0x95e40)).
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). rewrite (hi_rdn_img 408992 409000) by first [lia | vm_compute; reflexivity]. bvlit. Qed.
 (* [comment removed for export] *)
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_lock : rdn PSEGS mem (wa 614096) 4 = Some (word_to_le_bytes 4 (wa 0)).
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). rewrite (hi_rdn_img 614096 614100) by first [lia | vm_compute; reflexivity]. bvlit. Qed.
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_lock : rdn PSEGS mem (wa 614096) 4 = Some (word_to_le_bytes 4 (wa 0)).
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). rewrite (hi_rdn_img 614096 614100) by first [lia | vm_compute; reflexivity]. bvlit. Qed.
 (* [comment removed for export] *)
-#[using="sp0 av ev uid tid hw regs Hsp ME"] Lemma hi_canary : rdn PSEGS mem (wa 613952) 8 = Some (word_to_le_bytes 8 (wa (bv_unsigned (canary rdraw)))).
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw regs Hsp ME : LiaFast.U) => LiaFast.u0).
-  change (wa 613952) with (Z_to_bv 64 0x95e40). rewrite (rdn_guard sp0 av ev uid tid hw rdraw regs mem Hsp ME). f_equal.
+#[using="inp mbase entry sp0 tid regs Hsp ME"] Lemma hi_canary : rdn PSEGS mem (wa 613952) 8 = Some (word_to_le_bytes 8 (wa (bv_unsigned (canary rdraw)))).
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid regs Hsp ME : LiaFast.U) => LiaFast.u0).
+  change (wa 613952) with (Z_to_bv 64 0x95e40). rewrite (rdn_guard inp mbase entry sp0 tid rdraw regs mem Hsp ME). f_equal.
   unfold wa. rewrite Z_to_bv_bv_unsigned. unfold word_to_le_bytes. rewrite <- (canary_val rdraw).
   assert (HL : length (canary_bytes rdraw) = 8%nat) by reflexivity.
   rewrite <- HL at 1. symmetry. apply Z_to_le_bytes_lez.
@@ -71,10 +75,10 @@ Qed.
 Proof. LiaFast.lf_pins LiaFast.u0. pose proof (bv_unsigned_in_range _ (canary rdraw)) as R. unfold bv_modulus in R. change (2 ^ Z.of_N 64) with (2 ^ 64) in R. lia. Qed.
 
 (* [comment removed for export] *)
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_errno_pristine : pristine mem 0x75b2c 0x75b30.
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). apply hi_pristine; first [lia | vm_compute; reflexivity]. Qed.
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_errno_rd : forall j, 0 <= j < 4 -> exists b, mrd PSEGS mem (wa (0x75b2c + j)) = Some b.
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0).
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_errno_pristine : pristine mem 0x75b2c 0x75b30.
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). apply hi_pristine; first [lia | vm_compute; reflexivity]. Qed.
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_errno_rd : forall j, 0 <= j < 4 -> exists b, mrd PSEGS mem (wa (0x75b2c + j)) = Some b.
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0).
   intros j Hj. destruct hi_errno_pristine as (_ & _ & HP). unfold mrd. rewrite (HP (0x75b2c + j)) by lia.
   assert (Hc : forallb (fun j => match seg_rom PSEGS (wa (0x75b2c + Z.of_nat j)) with Some _ => true | None => false end) (seq 0 4) = true)
     by (vm_compute; reflexivity).
@@ -83,6 +87,6 @@ Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U)
 Qed.
 
 (* [comment removed for export] *)
-#[using="sp0 av ev uid tid hw rdraw regs Hsp ME"] Lemma hi_ctx : pristine mem 0x95ed8 0x96278.
-Proof. LiaFast.lf_pins (fun (sp0 av ev uid tid hw rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). apply hi_pristine; first [lia | vm_compute; reflexivity]. Qed.
+#[using="inp mbase entry sp0 tid rdraw regs Hsp ME"] Lemma hi_ctx : pristine mem 0x95ed8 0x96278.
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs Hsp ME : LiaFast.U) => LiaFast.u0). apply hi_pristine; first [lia | vm_compute; reflexivity]. Qed.
 End HI.

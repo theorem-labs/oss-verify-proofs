@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE2z.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to plugin-hostd/fuzz_reply's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: made generic in place over YE2y.v's icpt_laws_x (any allocator invariant ARx;
-   ghost head set Hpx threaded unchanged), hunk for hunk as image A's twin lib/A/AE2z.v was (a working branch
-   6b4f6082575; SitesCf's pattern for AE2t / AE6y / AE7e): each walk lemma is stated over ARx (<name>_x, and POSTr_x /
+   ghost head set Hpx threaded unchanged), hunk for hunk as image A's twin lib/A/AE2z.v was (a working branch;
+   SitesCf's pattern for AE2t / AE6y / AE7e): each walk lemma is stated over ARx (<name>_x, and POSTr_x /
    POSTC_x for the section posts); every theorem or lemma that took AR_laws keeps its statement byte for byte (its post
    definition too) and is re-proved from its _x at ARx := AR_x B (YE2y.icpt_laws_x_AR), in a section named <section>A.
    Contract texts over ARx: lib/B/IcptRealizesX.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

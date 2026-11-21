@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0t.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YO0t.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the refused munmap branch keeps the region). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import
 YO0i YO0f YO0g YO0h YO0w YO0s
@@ -1010,7 +1011,9 @@ mbinds. apply itok_ask.
 apply Forall_forall. intros [q a] Hin Hml. cbn [snd] in *.
 apply (used_metas_iff s2 q a (proj1 (inv_keys HI2))) in Hin.
 exact (Hno q a (usedX_intro [] s2 q a eq_refl Hin) Hml). }
-intros z _. msimp. eapply upd_region_kill_spec; [exact HI2 | exact Hr | exact Hkd | exact Hno |].
+intros z _. msimp. destruct (z =? 0); cbn [negb].
+{ apply itok_ret. apply HQ; [exact HI2 | exact C2 | apply DEL; exact UB2]. }
+eapply upd_region_kill_spec; [exact HI2 | exact Hr | exact Hkd | exact Hno |].
 intros s3 HI3 Em3 _. apply HQ; [exact HI3| |].
 -- intros q a Hq. apply C2. unfold usedX, MTX, MT in *. rewrite Em3 in Hq. exact Hq.
 -- apply DEL. eapply ub_same_trans; [exact UB2 | apply ub_same_metas; exact Em3].

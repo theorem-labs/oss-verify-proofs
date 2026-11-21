@@ -5,7 +5,7 @@
 
    PRE.  The run needs NO shadow byte through its shadow_rw premise: its two shadow loads (shadow_addr (a0 + 4) and
    shadow_addr ja) are read through `addressable` (rt_shadow_rd, in jbF_shadow), and joined_byte_holds_F introduces the
-   premise as HSW and clears it unused (joined_byteF.v:165, :181 at 6c3b15fd429; the plain proof the same,
+   premise as HSW and clears it unused (joined_byteF.v:165, :181; the plain proof the same,
    joined_byte.v:135, :150).  Its one store is ra at S - 8, inside the frame, which the premise at :48-49 keeps apart
    from the shadow, so it stores no shadow byte.  By the form's rule "no read: premise dropped" (ASSIGN.md:9-10 and
    the amendment :74), the _on forms are the contracts WITHOUT `shadow_rw m ->`.

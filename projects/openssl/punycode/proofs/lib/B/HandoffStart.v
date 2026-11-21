@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the handoff also proves the model's channel-reader flag m_channel_reader, from APS.co_rdr; the stack and its headroom are taken from rt_sp0 - STACK_WOK, the part of the stack mapping the launch writes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -57,9 +58,9 @@ Hypothesis Hart : ART RT Σ m.
 Hypothesis Hinv : mem_inv bsegs m.
 Hypothesis Hclx : CLX OUT_rep ERR_rep XENV LIB stdout_init m.
 Hypothesis Hargv : argv_rep argvb m ap.
-Hypothesis Hstk : stk bsegs m (rt_sp0 RT Σ - STACK_WIN) usp.
+Hypothesis Hstk : stk bsegs m (rt_sp0 RT Σ - STACK_WOK) usp.
 Hypothesis Hsig : sigma0_ok RT Σ usp.
-Hypothesis Husp : usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp.
+Hypothesis Husp : usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp.
 
 Theorem start_of_handoff : START RT OUT_rep ERR_rep XENV LIB argvb fs (canon_cfg bsegs R a_main FULL model).
 Proof.
@@ -76,7 +77,7 @@ Proof.
   - (* [comment removed for export] *) unfold macct. split; [exact Hawf|]. split; [exact Hminv|].
     split; [exact (hk_halted bsegs A LIMIT SINV argH ISP fs E ch R FULL model HC)|].
     split; [rewrite <- Hsegtop; exact (hk_lazy_apart bsegs A LIMIT SINV argH ISP fs E ch R FULL model HC Hseglo)|].
-    unfold SEGTOP_A. lia.
+    split; [unfold SEGTOP_A; lia| exact (APS.co_rdr _ _ _ _ _ _ _ _ _ _ _ _ HC)].
   - (* [comment removed for export] *)
     unfold canon_cfg, canon_regs, entry_st, restrict, mkst, MS, mH. cbn [cfg_ms cfg_model].
     rewrite R1, R2, R4, R10, R11. reflexivity.

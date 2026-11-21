@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -16,7 +17,7 @@ Section AFrame.
 Variable RT : rt_sig.
 Hypothesis AF : art_facts RT.
 
-Lemma new_frame_facts : forall Σ (m : mem) f k n lo, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> In (f, k) (rt_frames RT Σ) ->
+Lemma new_frame_facts : forall Σ (m : mem) f k n lo, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> In (f, k) (rt_frames RT Σ) ->
   n = fs_size k - 8 -> n mod 8 = 0 -> 0 <= n ->
   f mod 64 = 0 /\ 0x676000 <= f /\ f + n <= lo
   /\ (f + n <= f / 8 + 2147450880 \/ f / 8 + 2147450880 + n / 8 <= f)

@@ -2,9 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segments FEED and FEEDS of the ASan walk of fuzz_reply's drain -
    reference_feed's byte loop (fuzz_reply.asan 0x8347c .. 0x83550, the call to list_push at 0x834f0) and
-   its composition.  The statements are W_drain_cx.v:805 dr_feed_stmt and :851 dr_feeds_stmt; the cut
-   predicates are W_drain_cx.v:601 DRB (the loop head, after k of the n bytes) and :619 DE (the loop left).
-   The Section header below is W_drain_top.v:44-102 verbatim, so that dr_feed_p / dr_feeds_p carry exactly
+   its composition.  The statements are W_drain_cx.v:806 dr_feed_stmt and :851 dr_feeds_stmt; the cut
+   predicates are W_drain_cx.v:602 DRB (the loop head, after k of the n bytes) and :619 DE (the loop left).
+   The Section header below is W_drain_top.v:45-103 verbatim, so that dr_feed_p / dr_feeds_p carry exactly
    the premises of that file's dr_feed / dr_feeds.
 
    THE LOOP, as the pinned listing holds it (W_listing.v; address a is entry (a - 0x822ec) / 4, line 41 +
@@ -76,6 +76,7 @@
    dr_feed_stmt, and the induction stops because DRB carries `Z.of_nat k < dnum s1`, so a DRB at S k with
    S k = dnum s1 is uninhabited. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_feed.v; 42 of its 117 lines of code are new or changed and 6522 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Satisfiability at the real image A of the R contract texts (W_contract_xR.v), at R := wle' SEGS RZ_cf: each
    lemma derives the R form from the existing strict walk, under that walk's own Section hypotheses. The import block
    is the walk file's (W_drain_pb.v), so each hypothesis reads as there. *)

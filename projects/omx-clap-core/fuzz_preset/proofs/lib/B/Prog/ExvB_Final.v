@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ex_word by h-pre-b3's verbatim ExwB.ex_word_holds_B; memnorm threaded in the statements (EXB's exv_rm keep, m-form
    callee posts); no memnorm premise. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value: THE WALK, closed. ExvB_Top.v's ex_value_holds_B with its seven
@@ -14,7 +15,7 @@
    What remains open, by name: EXV_HYP B ARx SK only - the callee texts (eh_string: S8b; eh_strcmp / eh_strlen:
    c-libc-stdio's read-only-premise m-rows; eh_bcmp / eh_memcpy / eh_sm1: YGcallMxmn m-rows) and the laws and image facts
    (at the instance B := TfibB, ARx := ARcf, every image fact and allocator law is PROVED in ExvB_ImgFacts.v / PALibB.v).
-   Kit of record: the kit's cut 7cdbb61b5fa0 (PRH_FnEx be1dd5ecaaf6: tex_value_specX with the memnorm entry premise and the
+   Kit of record: the kit's cut (PRH_FnEx be1dd5ecaaf6: tex_value_specX with the memnorm entry premise and the
    fpostWFm post; the draft's tex_value_specX (PRH_FnEx.v:292), which ex_value_holds_B_final proves, adds, at PRH_FnEx.v:335,
    the hull use with no events, both secondary-map meters kept; PRH_Base ef7c8ca98529: src_rd without int102's `+ 8`, so the
    walk's bound on the text is `x0 + len <= alloc_ceiling` (ExvB_NumA exa_facts, ExvB_Loop_A2_w a2_seat, ExvB_Loop_B2_post)).

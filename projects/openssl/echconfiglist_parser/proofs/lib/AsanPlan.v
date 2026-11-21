@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plan node PGhost, which no plan uses, and its check arm are removed, so that the checker's invariant can keep every ghost range apart from the reserved ledger; likewise the plan node PUnvis, which no plan uses, and its check arm). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -83,8 +84,6 @@ Inductive plan : Type :=
 | PSpin                                      (* [comment removed for export] *)
 | PFog (i : nat) (sz : Z) (k : plan)          (* [comment removed for export] *)
 | PFogNew (i : nat) (sz : Z) (k : plan)       (* [comment removed for export] *)
-| PGhost (b n : expr) (k : plan)              (* [comment removed for export] *)
-| PUnvis (b n : expr) (k : plan)              (* [comment removed for export] *)
 | PHavocBrk (lo hi : Z) (k : plan)            (* [comment removed for export] *)
 | PIntro (lo hi : Z) (k : plan)               (* [comment removed for export] *)
 | PDiamond (joinpc : Z) (rs : list nat) (k : plan)  (* [comment removed for export] *)
@@ -374,8 +373,6 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
   | PSpin => CErr 2 p cs (* [comment removed for export] *)
   | PFog i sz k => match node_fog cs i sz with Some cs' => check f cs' k | None => CErr 3 p cs end
   | PFogNew i sz k => match node_fognew cs i sz with Some cs' => check f cs' k | None => CErr 3 p cs end
-  | PGhost b n k => match node_ghost LIMIT cs b n with Some cs' => check f cs' k | None => CErr 3 p cs end
-  | PUnvis b n k => match node_unvis A cs b n with Some cs' => check f cs' k | None => CErr 3 p cs end
   | PHavocBrk lo hi k => match node_havocbrk nx0 cs lo hi with Some cs' => check f cs' k | None => CErr 3 p cs end
   | PIntro lo hi k => match node_intro nx0 cs lo hi with Some cs' => check f cs' k | None => CErr 3 p cs end
   | PRename m k => match node_rename gcb cs m with Some cs' => check f cs' k | None => CErr 3 p cs end

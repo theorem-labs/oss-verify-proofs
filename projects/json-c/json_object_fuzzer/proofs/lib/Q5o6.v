@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer: the facts over HSCLASS_S cover its four main-entry states; the stack facts over the launch's auxv of 27 or 29 pairs, its words up to 24 + AUXSZ 1 and its KUnk span). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -239,9 +240,13 @@ Qed.
 Definition E_AUXV : expr :=
 EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0))
 (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 1)) (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 8) (EVar 2)) (EMd Instr.M_MUL (ELit 16) (EVar 6)))).
+(* LPS 727298f3: the launch's auxv is 27 pairs, 29 with CONFIG_RSEQ ([StackLayout.auxv_entries], [AUXSZ_of]),
+   so its words run up to 24 + AUXSZ 1 above E_AUXV, and the start state also knows the vector's span as one
+   KUnk entry *)
 Definition stack_fact (K : kentry) : bool :=
 match K with
-| KWord (SA b off) w _ => (expr_eqb b E_AUXV && (24 <=? off) && (off + Z.of_nat w <=? 184))%bool
+| KWord (SA b off) w _ => (expr_eqb b E_AUXV && (24 <=? off) && (off + Z.of_nat w <=? 24 + AUXSZ 1))%bool
+| KUnk (SA b off) (ELit n) => (expr_eqb b E_AUXV && (24 <=? off) && (0 <=? n) && (off + n <=? 24 + AUXSZ 1))%bool
 | _ => false
 end.
 Lemma split_auxv : split_lit e_auxv = (E_AUXV, 24).  Proof. vm_compute. reflexivity. Qed.
@@ -271,10 +276,10 @@ Definition F6 : kentry := KRange (EVar 6) 0 2047.
 
 Definition facts_classified (k : list kentry) : bool := forallb (fun K => fact_below k (2^47) K || stack_fact K)%bool k.
 Lemma HS2_kimg : forall w ch, HSCLASS_S w ch -> kimg_inside (img_lo AJO6) (img_hi AJO6) (kn ch) = true.
-Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 Lemma FACTS_CLASSIFIED : forall w ch, HSCLASS_S w ch -> facts_classified (kn_rest ch) = true.
-Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 Lemma GAP_APART : forall w ch, HSCLASS_S w ch -> forallb (gap_apart (kn ch)) (kn_rest ch) = true.
-Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 Lemma HS2_band_facts : forall w ch, HSCLASS_S w ch -> In KW_BAND (kn ch) /\ In F6 (kn ch).
-Proof. intros w ch HCL. split; apply kn_mem_In; destruct w; destruct HCL as [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros w ch HCL. split; apply kn_mem_In; destruct w; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.

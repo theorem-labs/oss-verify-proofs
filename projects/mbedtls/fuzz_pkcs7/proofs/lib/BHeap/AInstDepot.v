@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (AMark imported for the GRANT_MAX bound the proofs now discharge; D_T_node and D_T_store written out in plain text with a new last premise ASys.placed_at at the grant size, the old encodings kept as ZZ_D_T_node_old and ZZ_D_T_store_old, with faithful lemmas proving them equal to the statements without that premise; D_ROOM_e added, room for a 64 KiB grant). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -8,6 +9,7 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import MState.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import BackingAlgebra.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ALazy AShadow.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import ASys ASysS. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import AKinv. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import AFreeSlot AVmLib. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BHeap Require Import AVm.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require AMark.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import DietDestruct.   (* [comment removed for export] *)
 Import ListNotations.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import LiaKitAH. (* [comment removed for export] *)
@@ -228,10 +230,33 @@ Section InstDepot.
     apply (HKv_apart AL v mo a n HK RF N16 CE). destruct Hx as [Hx|Hx]; [left; apply EQ; exact Hx| right; exact Hx].
   Qed.
 
-  #[using="ASB IML IMH SLACK"] Theorem D_T_node : ltac2:(CDefT.buildp (gd_tbl_AInstDepot ()) "Pnb,(3.$4.)Pbl,(3.$4.)Pmo,$18.Pa,(1?.&40.)P,(2;.R4.R3.)P,(19.R5.R4.R3.)P,(2.$4.(2<.(27.&40.R3.)+1000.)=)P,(14.=(27.&40.R4.))P,(13.(15.(27.&40.R5.)(;.+2.+14.))(28.VhAR,))P,(2.$20.(21.(7.(22.(1?.&40.)(1?.&40.))(23.(24.R7.))(25.(24.R7.)))R6.(2=.&40.(;.+2.+14.)))$26.)(1.(19.(7.$4.R:.(8.$4.(27.&40.R7.)(9.$4.)))R9.(2>.+22.R7.(;.+2.+14.)R8.))(2?.(17.(7.$4.R:.(8.$4.(27.&40.R7.)(9.$4.)))R9.)(27.&40.R7.)(;.+2.+14.)))")
-(* [comment removed for export] *).
+  Definition ZZ_D_T_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstDepot ()) "Pnb,(3.$4.)Pbl,(3.$4.)Pmo,$18.Pa,(1?.&40.)P,(2;.R4.R3.)P,(19.R5.R4.R3.)P,(2.$4.(2<.(27.&40.R3.)+1000.)=)P,(14.=(27.&40.R4.))P,(13.(15.(27.&40.R5.)(;.+2.+14.))(28.VhAR,))P,(2.$20.(21.(7.(22.(1?.&40.)(1?.&40.))(23.(24.R7.))(25.(24.R7.)))R6.(2=.&40.(;.+2.+14.)))$26.)(1.(19.(7.$4.R:.(8.$4.(27.&40.R7.)(9.$4.)))R9.(2>.+22.R7.(;.+2.+14.)R8.))(2?.(17.(7.$4.R:.(8.$4.(27.&40.R7.)(9.$4.)))R9.)(27.&40.R7.)(;.+2.+14.)))").
+
+  Lemma ZZ_D_T_node_faithful : ZZ_D_T_node_old =
+    (forall (nb bl : list Z) (mo : Model) (a : word),
+       Gn nb bl ->
+       Kd nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 20 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+       Kd (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+       /\ crange (CSd (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+
+  #[using="ASB IML IMH SLACK"] Theorem D_T_node :
+    forall (nb bl : list Z) (mo : Model) (a : word),
+      Gn nb bl ->
+      Kd nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      Kd (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (CSd (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20).
   Proof.
-    intros nb bl mo a [-> ->] K AAL A0 ACE RF.
+    intros nb bl mo a [-> ->] K AAL A0 ACE RF FL.
     destruct K as [(_ & _ & K)|[(x & E & _)|[(y & _ & E & _)|(x & y & E & _)]]]; [| exfalso; symmetry in E; exact (app_cons_neq _ _ E)..].
     assert (N20 : bv_unsigned (Z_to_bv 64 (2^20)) = 2^20) by (apply u64_lit; lia).
     pose proof (HKv_fresh_above_img AL v0 mo a (Z_to_bv 64 (2^20)) K RF A0 IML ltac:(rewrite IMH; lia) ltac:(rewrite N20; lia) ltac:(rewrite N20; exact ACE)) as IMA.
@@ -239,15 +264,42 @@ Section InstDepot.
     assert (SA : sane (2^20) (bv_unsigned a)) by (unfold sane; rewrite IMH in IMA; split; [lia| split; [lia| exact BND]]).
     split.
     - right. left. exists (bv_unsigned a). split; [reflexivity|]. split; [reflexivity|]. split; [exact SA|].
-      unfold vN. apply (HKv_grant_eager AL v0 mo a (2^20) true K); try assumption; try (rewrite ASB; lia); try lia; try reflexivity.
-      fold (vN (bv_unsigned a)). rewrite vnb_N. unfold RES_DEPOT in SLACK. lia.
+      unfold vN. apply (HKv_grant_eager AL v0 mo a (2^20) true K
+        ltac:(rewrite ASB; lia) ltac:(rewrite ASB; lia)
+        AAL A0 ACE ltac:(lia) eq_refl IMA RF).
+      + fold (vN (bv_unsigned a)). rewrite vnb_N. unfold RES_DEPOT in SLACK. lia.
+      + exact FL.
+      + unfold AMark.GRANT_MAX; lia.
     - intros z Hz. apply (proj2 (CSd_N (bv_unsigned a) z SA)). apply (proj2 (vcs_N _ _)). right. exact Hz.
   Qed.
 
-  #[using="ASB IML IMH SLACK"] Theorem D_T_store : ltac2:(CDefT.buildp (gd_tbl_AInstDepot ()) "Pnb,(3.$4.)Pbl,(3.$4.)Pmo,$18.Pa,(1?.&40.)P,(30.R4.R3.)P,(19.R5.R4.R3.)P,(2.$4.(2<.(27.&40.R3.)+1000.)=)P,(14.=(27.&40.R4.))P,(13.(15.(27.&40.R5.)(;.+2.+17.))(28.VhAR,))P,(2.$20.(21.(7.(22.(1?.&40.)(1?.&40.))(23.(24.R7.))(25.(24.R7.)))R6.(2=.&40.(;.+2.+17.)))$26.)(1.(19.R:.(7.$4.R9.(8.$4.(27.&40.R7.)(9.$4.)))(2>.+4022.R7.(;.+2.+17.)R8.))(2?.(17.R:.(7.$4.R9.(8.$4.(27.&40.R7.)(9.$4.))))(27.&40.R7.)(;.+2.+17.)))")
-(* [comment removed for export] *).
+  Definition ZZ_D_T_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstDepot ()) "Pnb,(3.$4.)Pbl,(3.$4.)Pmo,$18.Pa,(1?.&40.)P,(30.R4.R3.)P,(19.R5.R4.R3.)P,(2.$4.(2<.(27.&40.R3.)+1000.)=)P,(14.=(27.&40.R4.))P,(13.(15.(27.&40.R5.)(;.+2.+17.))(28.VhAR,))P,(2.$20.(21.(7.(22.(1?.&40.)(1?.&40.))(23.(24.R7.))(25.(24.R7.)))R6.(2=.&40.(;.+2.+17.)))$26.)(1.(19.R:.(7.$4.R9.(8.$4.(27.&40.R7.)(9.$4.)))(2>.+4022.R7.(;.+2.+17.)R8.))(2?.(17.R:.(7.$4.R9.(8.$4.(27.&40.R7.)(9.$4.))))(27.&40.R7.)(;.+2.+17.)))").
+
+  Lemma ZZ_D_T_store_faithful : ZZ_D_T_store_old =
+    (forall (nb bl : list Z) (mo : Model) (a : word),
+       Gs nb bl ->
+       Kd nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 23 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+       Kd nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+       /\ crange (CSd nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+
+  #[using="ASB IML IMH SLACK"] Theorem D_T_store :
+    forall (nb bl : list Z) (mo : Model) (a : word),
+      Gs nb bl ->
+      Kd nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      Kd nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (CSd nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23).
   Proof.
-    intros nb bl mo a [-> GN] K AAL A0 ACE RF.
+    intros nb bl mo a [-> GN] K AAL A0 ACE RF FL.
     assert (N23 : bv_unsigned (Z_to_bv 64 (2^23)) = 2^23) by (apply u64_lit; lia).
     destruct (Kd_cases _ _ mo K) as (v & HK & EQ & CASE).
     pose proof (HKv_fresh_above_img AL v mo a (Z_to_bv 64 (2^23)) HK RF A0 IML ltac:(rewrite IMH; lia) ltac:(rewrite N23; lia) ltac:(rewrite N23; exact ACE)) as IMA.
@@ -257,13 +309,21 @@ Section InstDepot.
     3:{ exfalso. symmetry in E. exact (app_cons_neq _ _ E). } 3:{ exfalso. symmetry in E. exact (app_cons_neq _ _ E). }
     - subst nb. split.
       + right. right. left. exists (bv_unsigned a). split; [reflexivity|]. split; [reflexivity|]. split; [exact SB|].
-        unfold vS. apply (HKv_grant_lazy AL v0 mo a (2^23) HK); try assumption; try (rewrite ASB; lia); try lia; try reflexivity.
-        rewrite vnb_S. unfold RES_DEPOT in SLACK. lia.
+        unfold vS. apply (HKv_grant_lazy AL v0 mo a (2^23) HK
+          ltac:(rewrite ASB; lia) ltac:(rewrite ASB; lia)
+          AAL A0 ACE ltac:(lia) eq_refl IMA RF).
+        * rewrite vnb_S. unfold RES_DEPOT in SLACK. lia.
+        * exact FL.
+        * unfold AMark.GRANT_MAX; lia.
       + intros z Hz. apply (proj2 (CSd_S (bv_unsigned a) z SB)). apply (proj2 (vcs_S _ _)). right. exact Hz.
     - subst nb. split.
       + right. right. right. dexists x, (bv_unsigned a). split; [reflexivity|]. split; [reflexivity|]. split; [exact SA|]. split; [exact SB|].
-        unfold vNS. apply (HKv_grant_lazy AL (vN x) mo a (2^23) HK); try assumption; try (rewrite ASB; lia); try lia; try reflexivity.
-        rewrite vnb_S, vnb_N, veb_N. unfold RES_DEPOT in SLACK. lia.
+        unfold vNS. apply (HKv_grant_lazy AL (vN x) mo a (2^23) HK
+          ltac:(rewrite ASB; lia) ltac:(rewrite ASB; lia)
+          AAL A0 ACE ltac:(lia) eq_refl IMA RF).
+        * rewrite vnb_S, vnb_N, veb_N. unfold RES_DEPOT in SLACK. lia.
+        * exact FL.
+        * unfold AMark.GRANT_MAX; lia.
       + intros z Hz. apply (proj2 (CSd_NS x (bv_unsigned a) z SA SB)). apply (proj2 (vcs_NS _ _ _)). right. right. exact Hz.
   Qed.
 
@@ -272,6 +332,31 @@ Section InstDepot.
     intros nb bl mo [-> ->] K.
     destruct K as [(_ & _ & K)|[(x & E & _)|[(y & _ & E & _)|(x & y & E & _)]]]; [| exfalso; symmetry in E; exact (app_cons_neq _ _ E)..].
     apply (HKv_room20 AL v0 mo 0x22 VR0 K CB20). intros _. unfold RES_DEPOT in SLACK. lia.
+  Qed.
+
+  (* LPS #38: the emb-sized sibling of [D_ROOM_n].  [AInstEmbT.MX_ROOM_e] used to
+     SHRINK this lemma's 2^20 answer down to [kEmbBytes], which was sound while
+     [anon_grantable]'s third slot was the size-free [bottomup_floor <= a].  It is
+     [ASysS.grant_placed nZ mo a] now, with [nZ] inside [Placement.linux_place_is],
+     and Linux's answer for a 2^20 request is not its answer for a 0x10000 one.
+     So the emb path asks for its own size.  Same hypotheses as [D_ROOM_n] -- the
+     bound is still [v_cb20 v0 < J20], because [AVm.HKv_room_emb] refines the 2^20
+     census rather than demanding a 2^16 one. *)
+  #[using="VR0 SLACK CB20"] Theorem D_ROOM_e : forall nb bl mo, Gn nb bl -> Kd nb bl mo -> exists a, anon_grantable 0x22 0x10000 mo a.
+  Proof.
+    intros nb bl mo [-> ->] K.
+    destruct K as [(_ & _ & K)|[(x & E & _)|[(y & _ & E & _)|(x & y & E & _)]]]; [| exfalso; symmetry in E; exact (app_cons_neq _ _ E)..].
+    (* The size is the LITERAL, not [AModel.kEmbBytes]: neither [AVm] nor this
+       file imports [AModel], and `kEmbBytes was not found` is what the two
+       previous rounds measured.  [AInstEmbT], which does import it, consumes
+       this lemma up to conversion -- [kEmbBytes] is a transparent
+       [Definition ... := 0x10000]. *)
+    apply (HKv_room16 AL v0 mo 0x10000 0x22);
+      [ lia
+      | reflexivity
+      | lia
+      | exact VR0 | exact K | exact CB20
+      | intros _; unfold RES_DEPOT in SLACK; lia ].
   Qed.
 
   #[using="VR0 CB23"] Theorem D_ROOM_s : forall nb bl mo, Gs nb bl -> Kd nb bl mo -> exists a, anon_grantable 0x4022 (2^23) mo a.

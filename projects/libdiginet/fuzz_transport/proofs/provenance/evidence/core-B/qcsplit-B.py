@@ -2,7 +2,7 @@
 """qcsplit-B.py STAGE STAGE_OUT OUT_PATCH: B-qcache.patch, the donor's `0x32dd0 beq a4,a1` case split in B/YFgg.v and
 B/YFgh.v undone where the image does not need it.
 
-The donor's postfix patch (commit dfa268302f2, proofs/libreac/fuzz_decode/provenance/core-reloc/B/postfix/B_YFgg.v.patch
+The donor's postfix patch (proofs/libreac/fuzz_decode/provenance/core-reloc/B/postfix/B_YFgg.v.patch
 and B_YFgh.v.patch, sha256 5ac4c18d5930 for the first) inserted 5 lines into each file: on libreac fuzz_decode.asan-ubsan
 `&cache_ = A_QUAR + 160` and the thread's cache `T + t_qc` are equal mod 4096 (A_QUAR + 160 - t_qc = 0x9e000, page
 aligned), so the symbolic executor keeps both sides of the branch and the equal one is refuted from the layout bound.

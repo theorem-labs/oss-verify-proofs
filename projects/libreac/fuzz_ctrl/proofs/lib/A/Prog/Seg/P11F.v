@@ -5,15 +5,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its addresses and numbers changed; 232 of its 267 lines of code are new or changed and 361 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P11.v, with its module paths and module names changed; 127 of its 198 lines of code are new or changed and 196 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/P11.v f0a39ffef74b (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/P11.v f0a39ffef74b (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: p11_evt_of_F re-derives P11.p11_evt at ExecF.RNG_all; p11_evt_of_F_verbatim checks by constr_eq that
    its type is the type of P11.p11_evt. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only.
-   Source comment P11.v:14 names 0xa1000 (the end of the v1.9 GNU_RELRO range); no statement and no proof step of
+   Source comment P11.v:15 names 0xa1000 (the end of the v1.9 GNU_RELRO range); no statement and no proof step of
    P11.v or of this file uses it. *)
 (* The footprint twin of P11.v p11_evt (0x81c60-0x81c80, nine instructions and the call of reac_ctrl_kind_name with
    x = 14, which returns QMARK and writes only its 16-byte window [sp - 16, sp)). The footprint premises: the spill
@@ -172,7 +173,7 @@ Qed.
 
 (* ---- route (C): p11_evt_F_on, the _on twin of p11_evt_F (additive; p11_evt_F above is unchanged). ----
    The callee premise is a Theorem Labs lane's reac_ctrl_kind_name_contract_F_on (lib/A/Prog/reac_ctrl_kind_name_c.v, blob
-   b4ceb15d813 at 74f16d5f8e7), cited by name in the position of HKNF. The run's R (the shadow bytes it reads or
+   b4ceb15d813), cited by name in the position of HKNF. The run's R (the shadow bytes it reads or
    stores THROUGH its shadow_rw premise, form rule R amended 10:33Z) is EMPTY, so the premise shadow_rw m is DROPPED
    (no fun _ => False region), as the callee's own _on statements do. How R was derived:
    - the run's own steps, 0x81c60-0x81c80 (li, beq, ld a0,280(s1), lbu a0,0(a0), beqz, li, jal): no instrumented
@@ -184,7 +185,7 @@ Qed.
    P11F.rng.tsv:6, the 14 shadow bytes of the kind-name table at shadow_addr KIND_NAME, is the callee's RNG footprint
    row. It stays here as the premise ExecF.rng RNG (shadow_addr KIND_NAME) 14. It is not a shadow_rw region. The post
    is p11_evt_F's: it names no shadow_rw m', so it has no transport. Same script as p11_evt_F, without HSW. The plain
-   twin P11.p11_evt_on (not in this delivery; written on a working branch b1e8eb09299) drops the premise for the same reasons. *)
+   twin P11.p11_evt_on (not in this delivery; written on a working branch) drops the premise for the same reasons. *)
 Section CallF_on.
 Hypothesis HKNF_on : reac_ctrl_kind_name_contract_F_on.
 

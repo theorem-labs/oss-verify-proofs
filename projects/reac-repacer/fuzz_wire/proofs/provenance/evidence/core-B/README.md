@@ -46,3 +46,5 @@ each is preserved, with its date and subject, in the unit's internal records (PR
 | yb1w-side-stack-note.py | post-step: empties YB1w.v's donor note on side-stack rows that image B links and image A does not, after it measures on both twins that no such function exists (GATES.md section 13) |
 
 GATES.md and records/yb1w-side-stack-note.txt were removed from the shipped tree on 2026-11-04 (internal record; in git history); the GATES.md sections cited above and in this directory's scripts are in that record.
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

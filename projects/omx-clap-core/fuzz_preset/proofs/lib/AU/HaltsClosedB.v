@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: fuzz_preset's asan-ubsan image on the #102 pins (image B', pin d663f82d7f488d30,
    twin c90d4fa54d43160b): the halts top Statements.asan_ubsan_halts, made from the halting theorem of
    proofs/cgif/cgif_file_fuzzer/lib/Halts_tfib.v by way of lib/AU/HaltsTop.v. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)); internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved (kind: composition).
    BASE: the kit cut preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record) (the kit's texts lib/A/PRH_*, the no-DW interface
    lib/AU/PresetCfnB.v), with the kit's first post-batch change merged: prh_univ_closure's fifth clause
@@ -12,18 +13,18 @@
    PresetD1pBPf.v re-fit to that change's YGcfNilInit.v; here the cut's row keeps its stand-in. The
    program slot (sections A-C) is the B' program slot of the version HaltsClosedB.v (sha256 3fcaea9ffeb8; internal record) of this
    path, rebound to the cut's texts; the composition (sections D-F) is the donor's
-   (commit 2f1789b29f0, this path, sections C-E) on the B' closed room export
+   (this path, sections C-E) on the B' closed room export
    PresetD2pBPf.TFIB_T_room_all_B_closed_stmt_holds (lib/AU/PresetD2pBPf.v; statement
    lib/AU/PresetDrvTopBStmt.v TFIB_T_room_all_B_closed_stmt), whose program SLOT section C proves.
    THE INSTANCE (the driver's and the seam's, cited, not chosen here):
    - PAYLOAD_ROOM := fun _ => True: the composed B' top lib/AU/Prog/Ent102DrvTopB.v
-     and its A' twin lib/A/Prog/Ent102DrvTopA.v:7; the interface's own
-     expectation, lib/AU/PresetCfnB.v:724-727. PAYLOAD_ROOM occurs in the slot only in its PRE (PresetCfnB.v:832,
+     and its A' twin lib/A/Prog/Ent102DrvTopA.v:8; the interface's own
+     expectation, lib/AU/PresetCfnB.v:725-728. PAYLOAD_ROOM occurs in the slot only in its PRE (PresetCfnB.v:833,
      `PAYLOAD_ROOM pl`), so at True the slot assumes no room; the seam proves the slot for every PAYLOAD_ROOM, so it holds
      at True. In the export's conclusion the room premise is then I. PAYLOAD_ROOM_dec and the no-room arm are LEMMAS
      (PAYLOAD_ROOM_dec_B, payload_refusal_B: left I; the no-room premise ~ True is absurd).
    - sm := ReaderRes.jr_strtod, iface_room_np := np_live_B, A_MOD_AT / A_STAMP := Ent102InstB.ia_mod_at /
-     ia_stamp: the B' seam's values (lib/AU/Prog/Ent102SeamB.v:6-9).
+     ia_stamp: the B' seam's values (lib/AU/Prog/Ent102SeamB.v:7-10).
    - XM_LIB / XN_LIB: NOT fixed by the driver or the seam (the seam quantifies them; Ent102DrvTopB keeps them as Section
      variables). The top's type does not mention them and ameter_triv reads neither, so they are INSTANTIATED here as
      fun _ => 0 (XLIB0), not left as binders.
@@ -44,7 +45,7 @@
      (FCxmCfxB.set_shadow_f5_contract_xm_cfx_B, on the cut) and padded (
      Padded102B_Inst.padded_B_at_PI_prog_B, lib/B/Prog/Padded102B_Inst.v: the kit's tpadded_specX verbatim, its
      trace from clause 5; premises the malloc row, __asan_memcpy and __asan_memset at iface_ARx);
-   - check_reject_clean_starved: CrsTopBp.crs_holds_Bp (commit d664902eef28); the guarded
+   - check_reject_clean_starved: CrsTopBp.crs_holds_Bp; the guarded
      dead-pj_parse conjunct is a conjunct of the kit's tpj_parse_specX itself (lib/A/PRH_FnPj.v), so the stand-in
      CrsPjpDeadAp.tpj_parse_specX_K0dead and the Section hypothesis K0_DEAD_PJPARSE are gone: crs_holds_Bp is cited
      with no K0_DEAD_PJPARSE argument and takes pj_parse's text as it is; its callee premises: check_reject_clean and
@@ -66,7 +67,7 @@
    - pj_write: PRW_pj_writeB_Inst.pj_write_holds_B_inst (lib/B/Prog/PRW_pj_writeB_Inst.v);
      its premises: write_value (WriteValueB_Inst.write_value_holds_B, lib/B/Prog/WriteValueB_Inst.v),
      put, fuzz_free (above) and pjw_ARGCNT (PresetRoomCounts.counts_of_room_pos_rl,
-     lib/Spec/PresetRoomCounts.v:60, as lib/AU/Prog/Ent102DrvTopB3.v drv3_argcnt does);
+     lib/Spec/PresetRoomCounts.v:61, as lib/AU/Prog/Ent102DrvTopB3.v drv3_argcnt does);
      write_value's premises: put, put_string (PutStringB_SnpWit.put_string_holds_B_owner,
      lib/B/Prog/PutStringB_SnpWit.v: put, the class-0 frame call (FCm01xm at ARcf lifted by
      astack_malloc_realizes_xm_conj, as FCxmCfxB does), __asan_memcpy, and the __wrap_snprintf row at K := 8160
@@ -97,7 +98,7 @@
    - start-up, driver walk, interceptor and printf / exit sites, the non-primary room and the universe closure: inside
      the export.
    NOT CITED: check_round_trip. The crt102_topB_TfibB this file was written against (the version Crt102TopB.v (sha256 0e8e2bd9b046; internal record) of
-   lib/B/Prog/Crt102TopB.v:795) ends in Abort: it is not a theorem. The closed form there is crt102_topB_open_TfibB with
+   lib/B/Prog/Crt102TopB.v:796) ends in Abort: it is not a theorem. The closed form there is crt102_topB_open_TfibB with
    the antecedent CRT_B_SEAM_OPEN and 20 Section hypotheses; H_text_check_round_trip_B stays.
    THE PROOF of the top: split on argv's shape and on the file system's lookup; the room arm is the export, the no-room
    arm payload_refusal_B; the SPECX arm closes with HaltsTFIB.v's presetAU_SPECX_shape_ok (exits 0 / 2), and
@@ -623,12 +624,13 @@ Hypothesis H_aread_check_stmt_cf_B : forall rc : YM05.RunCeil, aread_check_stmt_
 Lemma PAYLOAD_ROOM_dec_B : PresetDrvTopBStmt.PAYLOAD_ROOM_dec_stmt PRT.
 Proof. intros d. left. exact I. Qed.
 Lemma payload_refusal_B : forall sp brk mbase rnd inp a0 p data, valid_sp sp -> valid_brk presetsegsAU brk ->
-  valid_mmap_base mbase -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp -> in_argv inp = [a0; p]
+  valid_mmap_base mbase -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> in_argv inp = [a0; p]
   -> Fs.fs_lookup (in_fs inp) p = Some data -> ~ PRT (payload data) -> exists T, srealizes presetsegsAU
   (init_config presetsegsAU AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp) T /\
   shape_ok Exits.ok_or_refused T.
 Proof.
-intros sp brk mbase rnd inp a0 p data Hsp Hbrk Hmb Hfit Hinp Hargv Hlook HNPR.
+intros sp brk mbase rnd inp a0 p data Hsp Hbrk Hmb Hfit Hinp Hlau Hargv Hlook HNPR.
 destruct (HNPR I).
 Qed.
 
@@ -636,7 +638,7 @@ Qed.
 (* F. The ASan side of the halts top, and the top. *)
 Lemma TFIB_T_AU_H_closed_B : TFIB_T_AU_H.
 Proof.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
 (* the room arm: SPECX from the export at the slot of section C, exits 0 / 2 from HaltsTFIB.v's exit lemma *)
 assert (ROOM : (forall a0 p data : list byte, in_argv inp = [a0; p] -> Fs.fs_lookup (in_fs inp) p = Some data ->
     PRT (payload data)) ->
@@ -649,7 +651,7 @@ assert (ROOM : (forall a0 p data : list byte, in_argv inp = [a0; p] -> Fs.fs_loo
     H_amalloc_realizes_cf_keep_B H_afree_realizes_cf_B aintrin_cpy_B aintrin_set_B
     H_aread_check_stmt_cf_B
     SMB XLIB0 XLIB0 PRT preset_lib_contract_x_all_B
-    sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp HROOM). }
+    sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau HROOM). }
 (* argv's shape: only [a0; p] can ask for room (destruct also rewrites in_argv inp inside ROOM) *)
 destruct (in_argv inp) as [| a0 [| p [| a2 rest]]] eqn:Hargv;
   [ apply ROOM; intros a0' p' data' Hargv'; discriminate Hargv'
@@ -666,7 +668,7 @@ destruct (PAYLOAD_ROOM_dec_B (payload data)) as [HPR | HNPR].
   rewrite Hlook in Hlook'. injection Hlook' as Hd. subst data'. exact HPR.
 - (* destruct put [a0; p] for in_argv inp in Hfit too; payload_refusal_B takes it in its stated form *)
   rewrite <- Hargv in Hfit.
-  exact (payload_refusal_B sp brk mbase rnd inp a0 p data Hsp Hbrk Hmb Hfit Hinp Hargv Hlook HNPR).
+  exact (payload_refusal_B sp brk mbase rnd inp a0 p data Hsp Hbrk Hmb Hfit Hinp Hlau Hargv Hlook HNPR).
 Qed.
 
 Print Assumptions TFIB_T_AU_H_closed_B.

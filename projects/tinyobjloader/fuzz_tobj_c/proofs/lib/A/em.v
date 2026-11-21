@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (WS's room after the printed string weakened from its length plus 16 bytes to its length plus 10, equal to str_facts' fact: what the launch's image holds after the exec file name at LPS 727298f3). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -374,7 +375,7 @@ S0S15S24S18S4eVT7;A1M0A1S18P10A1A2S6cVa;Vn;Vr;G0Vcls;A5A3").
 Definition WZ (v : positive) (n : Z) : list sprop := ltac2:(tb__ "0|0|
 S0S15S24S18Vv;A1S18P10A1A2S6bVv;Vn;A2A3").
 Definition WS : list sprop := ltac2:(tb__ "0|3|
-S6S15S0S15S1bS1dS88S18P10A1M0S17Z8A1M1A3S18P11A1M2A2S0S15S1bG1G2A2S0S15S1bG2S17Sb0A1A2S0S15S1bS1dS88G0S17Z10A1A3G2A2S5S15A1A3A3A3A3S54A3").
+S6S15S0S15S1bS1dS88S18P10A1M0S17Z8A1M1A3S18P11A1M2A2S0S15S1bG1G2A2S0S15S1bG2S17Sb0A1A2S0S15S1bS1dS88G0S17ZaA1A3G2A2S5S15A1A3A3A3A3S54A3").
 Definition WX : list sprop := ltac2:(tb__ "0|5|
 S0S15S1bS1dS88S98S18P11A1M0A3S95A2S0S15S1bS98S95A2S0S15S1bG0S95A2S0S15S1bS95S17S5dZ2M1Z28A2A1A2S0S15S1bS17ScbA1S97A2S0S15S1bS1dS88S97S95A3M2S17S5dG1Z2fA2M3A1A2S0S15S1bS97S17S5eG3Z40A2A1A2S0S15S23P12Z6M4A2S0S15S23P13G4A2S0S15S1bS1dS88S96S17Z1A1A3G2A2S0S15S1bS18PaA1S96A2S5S15A1A3A3A3A3A3A3A3A3A3A3A3").
 Definition FA1 (v : positive) (n : Z) : list sprop := ltac2:(tb__ "0|0|

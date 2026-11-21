@@ -9,6 +9,7 @@
    `li a2,0; li t0,4; addi t1,s1,192`.  The stack premise of the call is discharged here: aj_gx_entry_at checks
    3 * ESTACK - (F - sp0) <= LLVMF_STK (12,288 + at most 352 <= 32,768) and hands back the scratch's presence from
    the journal (ascratch_ok), which ecall_pre_stk_of turns into the contract's ecall_pre_stk. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -88,9 +89,9 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* ---- this phase's Section hypotheses ---- *)
 (* the allocator instance (W_kit.v): errno's 4 bytes lie in the image (pal_env, Reusable/YCbq.v api_env) *)
 Hypothesis TL : PALib B.
-(* snprintf at the interceptor's entry: W_sites.v:305's contract, at the image's two stack-protector cells *)
+(* snprintf at the interceptor's entry: W_sites.v:306's contract, at the image's two stack-protector cells *)
 Hypothesis SNP : asnprintf_realizes B (SIGMA WS_snprintf) FR_GOT_GUARD FR_GUARD.
-(* INSTANCE FACT, W6's text verbatim (lib/A/W_relay_instance_gone_cx.v on 6a1bcf9f403, :201-217).  The GOT word
+(* INSTANCE FACT, W6's text verbatim (lib/A/W_relay_instance_gone_cx.v, :201-217).  The GOT word
    FR_GOT_GUARD = 0x9e658 holds &__stack_chk_guard = FR_GUARD in every AR state: on image A it is one of the
    instance's pinned const cells (AF0m Tfib_const_abs `z8 (ANum 0x9e658) 0x5f94b0`), which AR holds (YG0n.v
    am_const).  It cannot be carried from the entry state through the journal instead (the base's GN_GUARD form):
@@ -719,7 +720,7 @@ Proof.
             replace (SB + x / 8) with (SB + FF / 8 + (x / 8 - FF / 8)) by lia. apply ZS. lia.
           + intros _. exact (shadow_hull_vis_of_frame segs B LAWS ly S W (ms_mem msT) _ 1 fpos (FF + 32) 48 HART Hfin
               ltac:(fold FF; lia) ltac:(change (fs_frame_bytes 1) with 128; fold FF; lia) ltac:(lia)).
-        - (* seven bytes past prefix[48] (W_sites.v:319, W6's f4dbfd816b6): [FF + 32, FF + 87) still lies in the
+        - (* seven bytes past prefix[48] (W_sites.v:320, W6): [FF + 32, FF + 87) still lies in the
              128-byte fake frame, application memory below the ceiling (in_app, either memory arm) *)
           exact (amem_range_sub_app FF 128 (FF + 32) (48 + 7) HFFapp HFFc ltac:(lia) ltac:(lia) ltac:(lia)).
         - exact (rt_rom_view_of_rom_view B W (ms_mem msT) HRVT). }

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 
-(* Modified by Theorem Labs, 2026-10: ctrlb_lib_consts_chk and ctrlb_libS (Reusable.YCeg.TfibLib at CtrlB) port tfib_lib_consts_chk and TfibB_libS of proofs/cgif/cgif_file_fuzzer/lib/YCfi.v:19-39 (c8557374ad2e): the check covers ctrl's three lib_const_addr ranges instead of cgif's two, and errno's segment is tfibsegs' index 3, (0xa2000, 0x55c000). *)
+(* Modified by Theorem Labs, 2026-10: ctrlb_lib_consts_chk and ctrlb_libS (Reusable.YCeg.TfibLib at CtrlB) port tfib_lib_consts_chk and TfibB_libS of proofs/cgif/cgif_file_fuzzer/lib/YCfi.v:19-39 (theorem-labs/oss-verify-proofs@6b32741d849a): the check covers ctrl's three lib_const_addr ranges instead of cgif's two, and errno's segment is tfibsegs' index 3, (0xa2000, 0x55c000). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
 From OSSVerify Require Import Proofs.libreac.fuzz_ctrl.lib.Reusable.YG0f Proofs.libreac.fuzz_ctrl.lib.Reusable.YF0l

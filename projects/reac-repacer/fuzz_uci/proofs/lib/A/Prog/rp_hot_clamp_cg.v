@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's rp_hot_clamp in the form of proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_cg.v and reac_decode_cg.v (origin/ossv/recipes 88154566652a): the footprint contract of lib/A/Prog/rp_hot_clamp_F_c.v translated to cgif_file's leaf form, with the translation lemma proved over the kit's generic translation, as those files prove theirs. *)
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's rp_hot_clamp in the form of proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_cg.v and reac_decode_cg.v: the footprint contract of lib/A/Prog/rp_hot_clamp_F_c.v translated to cgif_file's leaf form, with the translation lemma proved over the kit's generic translation, as those files prove theirs. *)
 (* rp_hot_clamp_cg: image A's rp_hot_clamp, its footprint contract (rp_hot_clamp_F_c.v) translated to cgif_file's leaf
    form (SRr world walk). The premises of the target are rp_hot_clamp_F_c.v's premises VERBATIM, read at the call
    state (registers from regs, memory mem, footprint RNG_W W), and the kit's write premise for the 20 written bytes.

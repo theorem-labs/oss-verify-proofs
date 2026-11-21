@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the leaf walk: the seed at
-   the entry, the run, the return) and lib/A/AC8b.v (loops by fuel induction) at c8557374ad2e: the walk of
+   the entry, the run, the return) and lib/A/AC8b.v (loops by fuel induction): the walk of
    syntax_reply_matches on fuzz_command.asan. This file: the prologue (0x8857c to the item loop at 0x885e8), the entry
    facts the statement's premises give, and the theorem. The segments are in syntax_reply_matches_s1.v .. _s7.v. *)
-(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches.v (a working branch
-   db7d4effe38) for fuzz_command.asan-ubsan: the prologue 0x88898 to the item loop at 0x8890c with the UBSan null check
+(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches.v (a working branch)
+   for fuzz_command.asan-ubsan: the prologue 0x88898 to the item loop at 0x8890c with the UBSan null check
    of the shape (0x888d0, decided by ps >= 4096), the B constants, the shadow-base GOT word 0xa5f50 and cell 0xb0c38,
    the strcspn set .str.5 at 0x21160, and B's astr_argA (its read-only arm gives the shape's shadow facts). *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 917ca7ac6b1 (lib/B/Prog/CmdChk.v, the regenerated CmdRo.v):
+(* Modified by Theorem Labs, 2026-10: onto a working branch (lib/B/Prog/CmdChk.v, the regenerated CmdRo.v):
    astr_argA's read-only arm now gives cmd_addr_b / cmd_hull_b, which cmd_aread_ok_chk turns into the shape's shadow
    facts; the set .str.5 takes the same two facts and cmd_tail_vis_at (0x21161 is among B's cmd_ro_ends). *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 6830f0bf032 (lib/B/Prog/CmdRecFacts.v): the record facts
+(* Modified by Theorem Labs, 2026-10: onto a working branch (lib/B/Prog/CmdRecFacts.v): the record facts
    cmd_aread_ok_chk, cmd_tail_vis_at and cmd_rec_cells are the kit's lemmas, over the ruling's HB and IMG; the
    read-only span is the kit's cmd_ro_low. *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 713692f1e0c (statement pass 4b): ASTRCSPN and ABCMP hold at
+(* Modified by Theorem Labs, 2026-10: onto a working branch (statement pass 4b): ASTRCSPN and ABCMP hold at
    every FP state, as the statement has them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

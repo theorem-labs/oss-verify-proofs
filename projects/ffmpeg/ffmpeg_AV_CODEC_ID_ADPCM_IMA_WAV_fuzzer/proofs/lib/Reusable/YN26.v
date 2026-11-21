@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN26.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YN26.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed; musl's vmlock, which this binary's __vm_wait reads and zlib's binary does not link, added to the static memory the proofs track, and the proofs extended to it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (free_K kills the region only when the munmap ask is granted). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -36,8 +37,9 @@ Definition free_K (r : option (nat * Z) * astate) : itree astate (unit * astate)
 match fst r with
 | Some (k, len) =>
 IAsk (KMunmap k len) (snd r)
-(fun _ => IRet (tt, set_regions (lupd (st_regions (snd r)) k
-(mkRegion RkMap (rg_len (nth k (st_regions (snd r)) (mkRegion RkMap 0 [] false))) [] false)) (snd r)))
+(fun z => if negb (z =? 0) then IRet (tt, set_regions (lupd (st_regions (snd r)) k
+(mkRegion RkMap (rg_len (nth k (st_regions (snd r)) (mkRegion RkMap 0 [] false))) [] false)) (snd r))
+else IRet (tt, snd r))
 | None => IRet (tt, snd r)
 end.
 Lemma free_tree :
@@ -61,7 +63,8 @@ change (mlookup (st_metas A_rel) g) with (MT A_rel g). unfold A_rel. rewrite MT_
 unfold ret. cbn [ibind]. unfold setm, modify. reflexivity.
 - unfold bind at 1. f_equal. apply FunctionalExtensionality.functional_extensionality.
 intros [mi s2]. unfold free_K. cbn [fst snd]. destruct mi as [[k len]|]; [|reflexivity].
-unfold bind, ask. cbn [ibind]. unfold upd_region, modify. reflexivity.
+unfold bind, ask. cbn [ibind]. unfold upd_region, modify, ret. f_equal.
+apply FunctionalExtensionality.functional_extensionality. intros z. destruct (z =? 0); reflexivity.
 Qed.
 End b0.
 Section c0.

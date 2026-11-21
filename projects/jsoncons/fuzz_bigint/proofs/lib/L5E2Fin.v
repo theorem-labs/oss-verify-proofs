@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells are read in the launch's layout (auxv_cells with the CONFIG_RSEQ flag's fact) and that fact is passed to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -96,7 +97,7 @@ Proof.
   assert (OBJ16: (A + 128) mod 16 = 0). { replace (A + 128) with (A + 8 * 16) by alia. rewrite Z_mod_plus_full. exact BR2. }
   pose proof ST11 as (S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9 & S10 & S11 & S12 & S13 & S14 & S15 & S16 & S17 & S18 & S19 & S20 & S21 & S22 & S23 & S24 & S25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14.
-  pose proof (auxv_cells M11 av uid rnd hw S18) as (X0 & X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 & X9 & X10 & X11 & X12 & X13 & X14 & X15 & X16 & X17 & X18 & X19).
+  pose proof (auxv_cells M11 av uid rnd hw S18 ltac:(lia)) as (Xr & X0 & X1 & X2 & X3 & X4 & X5 & X6).
   pose proof E11 as (HDR & VT & IMP & RS).
   pose proof HDR as (Z8 & RC & TI & DT & UH & TH & Z12 & HS & AR & LS & CT & AP & EC & CL & P1 & P2).
   unfold L5US.TI_RUNTIME_ERROR, L5US.DTOR_RUNTIME_ERROR, L5US.UNEXPECTED_H, L5US.TERMINATE_H, L5US.EXC_ACTION, L5US.EXC_LSDA, L5US.TOP_PAD,
@@ -155,15 +156,15 @@ Proof.
   assert (R12_4: getr R12 (reg 4) = Z_to_bv 64 459832) by (kin K12 4%nat; exact R11_4).
   pose proof ST12 as (T1 & T2 & T3 & T4 & T5 & T6 & T7 & T8 & T9 & T10 & T11 & T12 & T13 & T14 & _ & _ & _ & T18 & _ & _ & _ & _ & T23 & T24 & T25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14.
-  pose proof (auxv_cells M12 av uid rnd hw T18) as (Y0 & Y1 & Y2 & Y3 & Y4 & Y5 & Y6 & Y7 & Y8 & Y9 & Y10 & Y11 & Y12 & Y13 & Y14 & Y15 & Y16 & Y17 & Y18 & Y19).
+  pose proof (auxv_cells M12 av uid rnd hw T18 ltac:(lia)) as (Yr & Y0 & Y1 & Y2 & Y3 & Y4 & Y5 & Y6).
   pose proof E12 as ((_ & _ & _ & _ & _ & _ & _ & HS12 & _ & _ & CT12 & _ & EC12 & _ & P1_12 & P2_12) & _ & _ & _).
   unfold L5US.TOP_PAD, L5US.EXC_CLASS in HS12, CT12, EC12, P1_12, P2_12.
   pose proof F12 as (G56 & G64 & G72 & G80 & G88 & G96 & G104 & G112 & G120 & G128 & G136 & G144 & G152 & G184 & G48). unfold DIV_RET in G56.
-  clear AG12 STAT12 FR12 MS12 X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 X14 X15 X16 X17 X18 X19
+  clear AG12 STAT12 FR12 MS12 Xr X0 X1 X2 X3 X4 X5 X6
         S1 S2 S3 S4 S5 S6 S7 S8 S9 S10 S11 S12 S13 S14 S18 S23 S24 S25 F56 F64 F72 F80 F88 F96 F104 F112 F120 F128 F136 F144 F152 F184 F48
         Z8 RC TI DT UH TH Z12 HS AR LS CT AP EC CL P1 P2 HDR VT IMP RS.
   (* [comment removed for export] *)
-  unshelve epose proof (e2r1x_conc fx12 R12 M12 (S - 352) (A + 128) av canary uid rnd hw (U R0 9) (U R0 18) (U R0 19) (U R0 20) (U R0 21) (U R0 22) (U R0 23) (U R0 24) (U R0 25) (U R0 26) (U R0 27)
+  unshelve epose proof (e2r1x_conc Yr fx12 R12 M12 (S - 352) (A + 128) av canary uid rnd hw (U R0 9) (U R0 18) (U R0 19) (U R0 20) (U R0 21) (U R0 22) (U R0 23) (U R0 24) (U R0 25) (U R0 26) (U R0 27)
       _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx13 & R13 & M13 & MS13 & K13 & R13_1 & R13_2 & R13_8 & R13_9 & R13_10 & R13_11 & R13_18 & R13_19 & R13_20 & R13_21 & R13_22 & R13_23 & R13_24 & R13_25 & R13_26 & R13_27 & FR13 & GR13).
   { (* [comment removed for export] *) pr. }
@@ -201,9 +202,7 @@ Proof.
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
+  { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -238,7 +237,7 @@ Proof.
   assert (R13_4: getr R13 (reg 4) = Z_to_bv 64 459832) by (kin K13 4%nat; exact R12_4).
   pose proof ST13 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & U23 & U24 & U25).
   pose proof F13 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & I48).
-  clear AG13 STAT13 FR13 MS13 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13 Y14 Y15 Y16 Y17 Y18 Y19
+  clear AG13 STAT13 FR13 MS13 Yr Y0 Y1 Y2 Y3 Y4 Y5 Y6
         T1 T2 T3 T4 T5 T6 T7 T8 T9 T10 T11 T12 T13 T14 T18 T23 T24 T25 G56 G64 G72 G80 G88 G96 G104 G112 G120 G128 G136 G144 G152 G184 G48 HS12 CT12 EC12 P1_12 P2_12.
   (* [comment removed for export] *)
   unshelve epose proof (e2p2_conc fx13 R13 M13 (S - 352) (A + 128) 0 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
@@ -290,14 +289,14 @@ Proof.
   assert (R14_4: getr R14 (reg 4) = Z_to_bv 64 459832) by (kin K14 4%nat; exact R13_4).
   pose proof ST14 as (V1 & V2 & V3 & V4 & V5 & V6 & V7 & V8 & V9 & V10 & V11 & V12 & V13 & V14 & _ & _ & _ & V18 & _ & _ & _ & _ & V23 & V24 & V25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14.
-  pose proof (auxv_cells M14 av uid rnd hw V18) as (W0 & W1 & W2 & W3 & W4 & W5 & W6 & W7 & W8 & W9 & W10 & W11 & W12 & W13 & W14 & W15 & W16 & W17 & W18 & W19).
+  pose proof (auxv_cells M14 av uid rnd hw V18 ltac:(lia)) as (Wr & W0 & W1 & W2 & W3 & W4 & W5 & W6).
   pose proof E14 as ((_ & _ & _ & _ & _ & _ & _ & HS14 & _ & _ & CT14 & _ & EC14 & _ & P1_14 & P2_14) & _ & _ & _).
   unfold L5US.TOP_PAD, L5US.EXC_CLASS in HS14, CT14, EC14, P1_14, P2_14.
   pose proof FT14 as (J16 & J8). unfold OPMOD1_RET in J8.
   clear AG14 STAT14 FR14 MS14 U23 U24 U25 I48.
   (* [comment removed for export] *)
-  unshelve epose proof (e2r2x_conc fx14 R14 M14 (S - 352) (A + 128) av canary uid rnd hw (U R0 8)
-      _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
+  unshelve epose proof (e2r2x_conc Wr fx14 R14 M14 (S - 352) (A + 128) av canary uid rnd hw (U R0 8)
+      _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx15 & R15 & M15 & MS15 & K15 & R15_1 & R15_2 & R15_8 & R15_10 & R15_11 & FR15 & GR15).
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -314,9 +313,7 @@ Proof.
   { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
+  { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. } { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }

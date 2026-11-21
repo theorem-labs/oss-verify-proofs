@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -51,7 +52,8 @@ Ltac len_rw :=
 
 (* [comment removed for export] *)
 Ltac region_side :=
-  unfold win_lo;
+  (* LPS 08b1429: the zero window under sp starts at [MemSplit.wok_lo], as in the model's StartupTac *)
+  unfold win_lo, wok_lo, stack_window_reach;
   match goal with |- context [stack_max_size] => rewrite ?stack_max_size_val | _ => idtac end;
   len_rw;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
@@ -233,6 +235,23 @@ Definition bwd (segs : list Segment) (G : machine_state -> Prop) : Prop :=
 
 Lemma bwd_msteps : forall segs tgt, bwd segs (fun st => msteps segs st tgt).
 Proof. intros segs tgt st st' H1 H2. eapply msteps_trans; eassumption. Qed.
+
+(* A walk over the binary's own segments is the same walk over the run's
+   segment list ([StoreOk.step_run_segments]). *)
+Lemma msteps_run_segments : forall segs inp (sp mbase : word) st st',
+  msteps segs st st' -> msteps (run_segments segs inp sp mbase) st st'.
+Proof.
+  intros segs inp sp mbase st st' H.
+  induction H as [ms | ms ms' ms'' Hs Hstep _ IH]; [apply mst_refl|].
+  eapply mst_step; [exact Hs | apply step_run_segments; exact Hstep | exact IH].
+Qed.
+
+Lemma bwd_run_segments : forall segs inp (sp mbase : word) G,
+  bwd (run_segments segs inp sp mbase) G -> bwd segs G.
+Proof.
+  intros segs inp sp mbase G HG st st' Hm HG'.
+  apply (HG st st'); [apply msteps_run_segments; exact Hm | exact HG'].
+Qed.
 
 (* [comment removed for export] *)
 Ltac gsteps HG := eapply HG.

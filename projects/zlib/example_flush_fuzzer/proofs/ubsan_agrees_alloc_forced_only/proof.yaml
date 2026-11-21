@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: zlib/example_flush_fuzzer/ubsan_agrees_alloc_forced_only
+fingerprint: b306d4dfc1e257f6f65dcc17791f25e99a793394ed49c8f0f661e6b6669338c7

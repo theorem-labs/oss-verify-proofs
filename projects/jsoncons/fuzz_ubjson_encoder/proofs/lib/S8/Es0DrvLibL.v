@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: proof steps for the model's changed definitions; imports; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0DrvLibL.v, lines 214-220. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -12,7 +13,7 @@ From OSSVerify.jsoncons.fuzz_ubjson_encoder.images Require Import Plain.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import RunEnv
   PropExec CatExec CatSim SeqExec StoreOk ShapeAlg ShapeLaws SpinAlg SpinAlgX
   SymExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX RefMemcpyLib Hoare AsanAcct
-  HeapIface LibIface DrvKit Es0Drv_defs Es0DrvLib Es0DrvD_defs.
+  HeapIface LibIface DrvKit Es0MainEntry Es0Drv_defs Es0DrvLib Es0DrvD_defs.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import BMode.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import LibIfaceE.
 Import ListNotations.
@@ -253,11 +254,13 @@ Section DrvLibLayout.
         destruct (has_window_nth kn Hiw) as [i Hn].
         split; [rewrite Z.add_mod, Hal, Hsoal by lia; reflexivity|]. split; [lia|]. split; [lia|]. split; [lia|]. split.
         * intros d m Hd Hm.
-          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (so - 65536 + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
+          (* old: [... (EVar 0) (-8388608) 8388608 ...]; [so - 65536 + d >= - 2 ^ 22 - 65536 = -4259840 >= - DRV_ZWIN] *)
+          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (so - 65536 + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
           unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
           replace (bv_unsigned sp0 + so - 65536 + d) with (bv_unsigned sp0 + (so - 65536 + d)) by lia. exact W.
         * intros a Ha.
-          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (a - bv_unsigned sp0) 1%nat HK Hn ltac:(lia) ltac:(cbn; lia)) as W.
+          (* old: [... (EVar 0) (-8388608) 8388608 ...]; [a >= bv_unsigned sp0 + so - 65536 >= bv_unsigned sp0 - DRV_ZWIN] *)
+          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (a - bv_unsigned sp0) 1%nat HK Hn ltac:(lia) ltac:(cbn; lia)) as W.
           unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
           replace (bv_unsigned sp0 + (a - bv_unsigned sp0)) with a in W by lia.
           apply (window_defined M a); [lia | lia | exact W].

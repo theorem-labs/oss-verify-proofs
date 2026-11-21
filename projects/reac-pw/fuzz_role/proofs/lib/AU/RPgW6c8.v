@@ -1,8 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c8.v at cb9cdc023f20; image B's case 8:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c8.v; image B's case 8:
    its pcs and code table, the registers s2 / s6 / s10 / t1 / s4 / a6, the cells R + 0x130 / R + 0x150, e62 at
    F + 0x210 in the class-4 frame (1024 bytes), the three UBSan trap tests decided by the engine, and s2 / s6 / s10 at
    the entry of __asan_memset. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6c8B.v at 05426fac6916 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6c8B.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role (lib/AU/Img0.rsegs,
    lib/A/RPgBase and RPgCSpec, lib/AU/RPgMem / RPgSteps / RPgSeg / RPgW6bBase / RPgW6cBase; rtmb_ -> rm_,
    rtsb_ -> rl_); every pc is role B's (the case entry 0x8122c, the stops 0x81284 and 0x812a4, __asan_memset 0x51608)

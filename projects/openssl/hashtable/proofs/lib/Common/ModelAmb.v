@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the initial model's kernel record, vDSO, channel reader and SIGPIPE defaults). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs Vdso State.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.hashtable.lib Require Export SpecConsts.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -23,8 +24,24 @@ Record AmbIn := mkAmbIn {
   ia_hwcap  : word;          (* [comment removed for export] *)
   ia_abort_terminal : bool;  (* [comment removed for export] *)
   ia_va : VaSize;            (* [comment removed for export] *)
-  ia_urandom : InputStream   (* [comment removed for export] *)
+  ia_urandom : InputStream   (* [comment removed for export] *);
+  ia_kernel : KernelBuild;
+  ia_execfn : list byte;
+  ia_channel_reader : bool;
+  ia_sigpipe_default : bool;
+  ia_sigpipe_terminal : bool;
+  (* LPS 75d69e00: the run's model is [with_vdso (vdso_run_init (ed_vdso rdraw)) (init_model ...)]
+     (Run/AllocSim), so the vDSO draw is part of the ambient state every reached model carries.
+     APPENDED LAST, which is free for the [destruct a] patterns in this file and costs only the
+     [mkAmbIn] applications -- 8 of them -- while leaving all 155 [mkModelA] applications alone. *)
+  ia_vdso : VdsoDraw
 }.
+
+(* [comment removed for export] *)
+Definition set_vdso (d : VdsoDraw) (a : AmbIn) : AmbIn :=
+  mkAmbIn (ia_stdin a) (ia_uid a) (ia_gid a) (ia_groups a) (ia_net a) (ia_nofile a) (ia_sigmask a)
+          (ia_hwcap a) (ia_abort_terminal a) (ia_va a) (ia_urandom a) (ia_kernel a) (ia_execfn a)
+          (ia_channel_reader a) (ia_sigpipe_default a) (ia_sigpipe_terminal a) d.
 
 (* [comment removed for export] *)
 Definition amb_creds (a : AmbIn) : Creds :=
@@ -34,10 +51,11 @@ Definition amb_creds (a : AmbIn) : Creds :=
 Definition mkModelA (fds : list (word * FdEntry)) (vm : VmMaps) (a : AmbIn)
     (fs : Fs.Fs) (halted : option word) (tid : option word)
     (rlim : option (list byte)) : Model :=
-  mkModelOf (mkFdState fds []) (mkVmState vm [] [])
+  mkModelOf (mkFdState fds []) (mkVmState vm [] [] (ia_kernel a) (vdso_run_init (ia_vdso a)))
             (mkIoState (ia_stdin a) (ia_urandom a) (ia_net a) (Z_to_bv 64 0)) (mkFsState fs)
             (mkProcState halted tid (amb_creds a)
-               false (ia_sigmask a) false None false false false (ia_abort_terminal a) [])
+               false (ia_sigmask a) false None false false false (ia_abort_terminal a) [] false (ia_channel_reader a)
+               (sigpipe_action_at_exec (ia_sigpipe_default a)) (ia_sigpipe_terminal a))
             (mkLimState rlim (ia_nofile a))
             (mkTimeState (Z_to_bv 64 0)).
 
@@ -46,17 +64,21 @@ Definition mkModelA (fds : list (word * FdEntry)) (vm : VmMaps) (a : AmbIn)
 Definition mkProcInputA (argv envp : list (list byte)) (fs : Fs.Fs) (a : AmbIn) : ProcInput :=
   mkProcInput_full argv envp fs (ia_stdin a) (ia_uid a) (ia_gid a) (ia_groups a) (ia_net a)
               (ia_nofile a) (ia_sigmask a) (ia_hwcap a) (ia_abort_terminal a) (ia_va a)
-              (ia_urandom a) [].
+              (ia_urandom a) []
+              (ia_kernel a) (ia_execfn a) (ia_channel_reader a) (ia_sigpipe_default a) (ia_sigpipe_terminal a).
 
 Definition amb_of (inp : ProcInput) : AmbIn :=
   mkAmbIn (in_stdin inp) (in_uid inp) (in_gid inp) (in_groups inp) (in_net inp)
           (in_nofile inp) (in_sigmask inp) (in_hwcap inp) (in_abort_terminal inp) (in_va_size inp)
-          (in_urandom inp).
+          (in_urandom inp)
+          (in_kernel inp) (in_execfn inp) (in_channel_reader inp)
+          (in_sigpipe_default inp) (in_sigpipe_terminal inp) vdso_draw_keep.
 
 (* [comment removed for export] *)
 
+(* [comment removed for export] *)
 Lemma amb_of_mkProcInputA : forall argv envp fs a,
-  amb_of (mkProcInputA argv envp fs a) = a.
+  amb_of (mkProcInputA argv envp fs a) = set_vdso vdso_draw_keep a.
 Proof. intros argv envp fs a. destruct a. reflexivity. Qed.
 
 Lemma in_argv_A : forall argv envp fs a, in_argv (mkProcInputA argv envp fs a) = argv.
@@ -94,7 +116,29 @@ Lemma init_model_A : forall reserved (brk0 mbase sp : word) lim argv envp fs a,
   = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
                (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
                (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
-             (mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp) a fs None None None.
+             (mkVmMapsFull (init_reserved reserved mbase sp (ia_kernel a)) [] [] brk0 brk0 lim mbase sp)
+             (set_vdso vdso_draw_keep a) fs None None None.
+Proof. reflexivity. Qed.
+
+(* THE VDSO'd FORMS, which are what [ref_startup] actually hands a consumer: the run's model is
+   [with_tid tid (with_vdso (vdso_run_init (ed_vdso rdraw)) (init_model ...))].  Carrying the draw
+   in the AmbIn makes that term CONVERTIBLE to the same [mkModelA] shape the whole consumer chain
+   already reasons about, so no successor model and no [mkModelA] application changes. *)
+Lemma with_vdso_init_model_A : forall reserved (brk0 mbase sp : word) lim argv envp fs a,
+  with_vdso (vdso_run_init (ia_vdso a)) (init_model reserved brk0 mbase sp lim (mkProcInputA argv envp fs a))
+  = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
+               (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
+               (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
+             (mkVmMapsFull (init_reserved reserved mbase sp (ia_kernel a)) [] [] brk0 brk0 lim mbase sp) a fs None None None.
+Proof. reflexivity. Qed.
+
+Lemma with_tid_vdso_init_model_A : forall reserved (brk0 mbase sp : word) lim argv envp fs a tid,
+  with_tid tid (with_vdso (vdso_run_init (ia_vdso a))
+                  (init_model reserved brk0 mbase sp lim (mkProcInputA argv envp fs a)))
+  = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
+               (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
+               (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
+             (mkVmMapsFull (init_reserved reserved mbase sp (ia_kernel a)) [] [] brk0 brk0 lim mbase sp) a fs None (Some tid) None.
 Proof. reflexivity. Qed.
 
 Lemma with_tid_init_model_A : forall reserved (brk0 mbase sp : word) lim argv envp fs a tid,
@@ -102,7 +146,8 @@ Lemma with_tid_init_model_A : forall reserved (brk0 mbase sp : word) lim argv en
   = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
                (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
                (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
-             (mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp) a fs None (Some tid) None.
+             (mkVmMapsFull (init_reserved reserved mbase sp (ia_kernel a)) [] [] brk0 brk0 lim mbase sp)
+             (set_vdso vdso_draw_keep a) fs None (Some tid) None.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -111,8 +156,18 @@ Lemma init_model_amb_of : forall reserved (brk0 mbase sp : word) lim inp,
   = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
                (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
                (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
-             (mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp) (amb_of inp) (in_fs inp)
+             (mkVmMapsFull (init_reserved reserved mbase sp (in_kernel inp)) [] [] brk0 brk0 lim mbase sp) (amb_of inp) (in_fs inp)
              None None None.
+Proof. intros. destruct inp. reflexivity. Qed.
+
+(* [comment removed for export] *)
+Lemma with_vdso_init_model_amb_of : forall reserved (brk0 mbase sp : word) lim inp d,
+  with_vdso (vdso_run_init d) (init_model reserved brk0 mbase sp lim inp)
+  = mkModelA [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
+               (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
+               (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
+             (mkVmMapsFull (init_reserved reserved mbase sp (in_kernel inp)) [] [] brk0 brk0 lim mbase sp)
+             (set_vdso d (amb_of inp)) (in_fs inp) None None None.
 Proof. intros. destruct inp. reflexivity. Qed.
 
 (* [comment removed for export] *)

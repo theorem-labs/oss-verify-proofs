@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v, with its module paths and module names changed; 33 of its 207 lines of code are new or changed and 420 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (kind: model and invariant lemmas): the helpers of A's v2 LS files that image B's v2 port lacks
    and the v3 layer reads *)
 (* Theorem Labs, 2026-10: the image-B port of the helpers of lib/A/ReplyLS.v (sha256 9996c0f696df; internal record) and
-   lib/A/ReplyLSArms.v (sha256 829a485ef52f; internal record) at 1b1e21bdbd40 that lib/B/ReplyLSB.v,
+   lib/A/ReplyLSArms.v (sha256 829a485ef52f; internal record) that lib/B/ReplyLSB.v,
    ReplyLSBArms.v and ReplyLSBTrPeak.v do not define and A's v3 files (ReplyLS3.v, ReplyLS3c.v, ReplyLS3Arms.v, ...)
    read.  Names and statements are A's; each lemma cites its A line (A = ReplyLS.v, AA = ReplyLSArms.v).
      ROOM_SPARE (A :79); zsum_app, zsum_map_nonneg, zsum_map_elem (A :106-116); set_nth_len, ad_set_nth_eq,
@@ -30,7 +31,7 @@
    - lib/A W_LLVMFuzzerTestOneInput_small / _write / _add / W_op_add -> lib/B's files of the same names (upd_hs,
      upd_hs_blks, sm_kn; set_nth, wr_*, WR_MMAX; ad_set_nth, ad_open, ad_os; oa_first, oa_new_src, oa_cost).  The wr_*
      names are B's _write.v's, NOT the copies in lib/B/ReplyLSBArms.v :116-128;
-   - lib/A W_LLVMFuzzerTestOneInput_event -> lib/B ReplyLSBArms.ev_len (:136, the copy of lib/B/W_LLVMFuzzerTestOneInput_arm_event.v:502-503);
+   - lib/A W_LLVMFuzzerTestOneInput_event -> lib/B ReplyLSBArms.ev_len (:136, the copy of lib/B/W_LLVMFuzzerTestOneInput_arm_event.v:503-504);
    - ACfn_cf.fr_live_pre (fr_LS_pro_oa) -> lib/B/YCfn_cf.v :61 fr_live_pre_b, whose room CALL_ROOM_B (:59) is A's
      2 ^ 33; ameter_triv is lib/Reusable/YCbp.v's (the instance of lf_base's meter record lib/Reusable/YC5d.v);
    - wr_facts -> wr_facts_B: lib/B/W_LLVMFuzzerTestOneInput_write.v :299 already names a Definition wr_facts.
@@ -73,7 +74,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ReplyLSBArms.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require YCfn_cf.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import ReplyLSB.
 Import ListNotations.
-(* the event op's length (ReplyLSBArms.v:152, the text-identical copy of arm_event.v:502; cand13 rebase: the event
+(* the event op's length (ReplyLSBArms.v:153, the text-identical copy of arm_event.v:502; cand13 rebase: the event
    walk arm_event does not load beside the B kit until an internal work row re-fits it) *)
 Local Notation ev_len := ReplyLSBArms.ev_len.
 Local Unset Lia Cache. Local Unset Nia Cache.

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Ent102ReqA.v, with its module paths and module names changed; 30 of its 60 lines of code are new or changed and 1 line of the source is left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, harness fix #102 (both images; image-free): THE REQUEST BOUND of the walk of
    LLVMFuzzerTestOneInput (lib/A/Ent102CutsA.v ec_req_bound) PROVED from a Theorem Labs lane's bounds, so it is not a
    premise of the walk: every ledger request of the check_* subtrees on an input x of at most 0x300000 bytes is within
    g_most = PJ_ALLOC_BOUND (|x|) = 256 |x| + 20480 (fuzz_preset.c:810, set by fuzz_alloc_most at +0x13c).
    SOURCES: lib/Spec/PjReqBoundW.v 0394d1a7ad83 (rq_read_bound, rqw_read, rqa_crt_bound) from
-   a working branch d6092ab75a2, by path. Its terms are the kit's (PRH_FnPj.RQ_pj_parse, PRH_FnCheck.RQW /
-   RQA_crt, walkkit-next 3438f3406f33) with their bodies written out; the bridge below is conversion only
+   a working branch, by path. Its terms are the kit's (PRH_FnPj.RQ_pj_parse, PRH_FnCheck.RQW /
+   RQA_crt, walkkit-next) with their bodies written out; the bridge below is conversion only
    (PRH_Reader.prh_jr_strtod and ReaderRes.jr_strtod have the same body: strtod_c.strtod_model txt is
    FloatScan.scan_strtod (txt ++ [0])), plus PjReqBoundW.crt_tree_form for ck_crt_tree.
    rule 24: proves no function (kind: segment lemma - a pure fact the walk's call sites cite). *)
@@ -64,7 +65,7 @@ Qed.
 End req.
 
 (* AT THE CONCRETE CfParams, CLOSED: the premise is discharged by a Theorem Labs lane's rq_crt_cf_bound
-   (lib/Spec/PjReqBoundC.v blob 196cc949112c, a working branch 65f21a2d711; via rq_crt_abs, RQ_crt t at
+   (lib/Spec/PjReqBoundC.v blob 196cc949112c, a working branch; via rq_crt_abs, RQ_crt t at
    most 352,321,446), through a reflexivity bridge to its LOCAL copies of the kit's RQ_crt and ck_read. Its cf_malloc_max
    is the FINAL value 402,653,184 (lands with a Theorem Labs lane's landing 1); THIS base's CfParams_preset still carries
    2 ^ 29 - 2 ^ 20 = 535,822,336, and since 402,653,184 <= 535,822,336 the fact holds at the value this base carries

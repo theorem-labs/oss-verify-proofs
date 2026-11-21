@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_catalogue_match (0x84498 = BASE + AF_reac_box_catalogue_match) of fuzz_ctrl's ASan build
    (image A, libreac v1.9.0): the cgif-form contract.
 
    STATEMENT ONLY. `Theorem pb_reac_box_catalogue_match` and its walk are in reac_box_catalogue_match_glue.v
    (statement / walk split for the callers, two Theorem Labs lanes via a Theorem Labs lane 08:2xZ). Rule 24:
    `proof-index reac_box_catalogue_match` gives 0 named, 0 by address and 0 related hits (a Theorem Labs lane,
-   2026-10-28 21:05Z), second-agent check a Theorem Labs lane CONFIRM; At ossv/recipes c5e779efe8c (2026-10-31), no released proof of this function is reused.
+   2026-10-28 21:05Z), second-agent check a Theorem Labs lane CONFIRM; At (2026-10-31), no released proof of this function is reused.
 
    Contract form: the function writes only its own side-stack frame and returns a value in a0, so it takes cgif's
-   `afn_pre` / `apost_base` form (lib/Reusable/APostBase.v:54, copied verbatim from cgif lib/YC20.v:91-96), not the
+   `afn_pre` / `apost_base` form (lib/Reusable/APostBase.v:55, copied verbatim from cgif lib/YC20.v:91-96), not the
    caller-journal form that its two callees take.
 
-   Segments: the statement is over the walk's segments `tfibsegs` (lib/A/AB1v.v:11), not `pa_segs PI`
+   Segments: the statement is over the walk's segments `tfibsegs` (lib/A/AB1v.v:12), not `pa_segs PI`
    (two Theorem Labs lanes, 23:37Z; bridge lemma `tfibsegs_rsegs` in ProgBridge.v). The PA layer enters through
-   the CONCRETE instance `PI_ctrl` (lib/A/Prog/CtrlImg.v:79, whose `pa_segs` IS `tfibsegs`), so `pa_segs PI_ctrl`
+   the CONCRETE instance `PI_ctrl` (lib/A/Prog/CtrlImg.v:80, whose `pa_segs` IS `tfibsegs`), so `pa_segs PI_ctrl`
    reduces to `tfibsegs` and lib/A/Prog/CtrlCallerJ.v's `tcj_kept` / `twr_ok` / `tsrc_ok` apply at the two calls
    (a Theorem Labs lane, 23:49Z). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
@@ -81,11 +82,11 @@ Definition CM_FRAME : Z := 144.
    (stk / addressable / fp over [S - 9136, S); S1's footprint range), so the statement gives the walk all of it
    (a Theorem Labs lane, 2026-10-29: decision B1). It covers the cgif bound of the side-stack arm, CM_FRAME + max over the
    calls made at sp = CA:
-     - reac_ctrl_parse at `84684: jal 83578`      : REAC_CTRL_PARSE_STK      = 8800 (a Theorem Labs lane, C_reac_ctrl_parse.v:46)
+     - reac_ctrl_parse at `84684: jal 83578`      : REAC_CTRL_PARSE_STK      = 8800 (a Theorem Labs lane, C_reac_ctrl_parse.v:47)
      - reac_box_model_block at `846c8: jal 85b44` : REAC_BOX_MODEL_BLOCK_STK = 4320 (a Theorem Labs lane's draft sec. 2-3 (a working note, not in this delivery))
      - the bcmp wrapper at `846dc: jal 42970`     : 2 * ESTACK = 8192 (`aj_bcmp_at`, D YCbq.v:2065)
      - `__asan_stack_malloc_2` at `84500/84504`   : ESTACK = 4096 (`aj_stack_malloc_atS`, D YC85.v:295)
-   CA >= S - 160 (CA_facts, reac_box_catalogue_match.v:232), so 160 + max(8800, 4320, 8192, 4096) = 8960 <= 9136
+   CA >= S - 160 (CA_facts, reac_box_catalogue_match.v:233), so 160 + max(8800, 4320, 8192, 4096) = 8960 <= 9136
    (the real-stack arm calls at CA - 192 >= S - 336: 336 + 8800 = 9136, with equality). The callees' own constants
    are not restated here: they belong to their owners' files (CONVENTIONS sec. 2). *)
 Definition CM_STK : Z := 9136.
@@ -116,7 +117,7 @@ Permutation (ablocks B ly' S') (ablocks B ly S)).
 Definition treac_box_catalogue_match_spec : Prop :=
 forall ly S W (regs : bvmap 5 word) mem md ch (f len : Z) (fb : list byte),
 afn_pre tfibsegs B CM_STK ly S W regs mem md ch ->
-(* RO premise in a Theorem Labs lane's `ctl_base` form (Reusable/YE01.v:192, as A/ACfn.v:43 uses it); the PA layer's
+(* RO premise in a Theorem Labs lane's `ctl_base` form (Reusable/YE01.v:193, as A/ACfn.v:43 uses it); the PA layer's
    `arodata_okP` comes from ProgWorld's `arodata_okP_of_S` (a Theorem Labs lane; donor cgif A/ACfj.v:119). *)
 arodata_okS tfibsegs B RLO RHI (aview tfibsegs (w_H W) mem) ->
 (* No `achain` premise on entry and no `In (raZ regs :: spine ch) CTX`: the walk cannot supply a chain at the callee

@@ -1,10 +1,10 @@
 (* a Theorem Labs lane's FREE-PIECES row B1c, cause C3 (a Theorem Labs lane): a peak-live-bytes measure for the request traces of
    RelayRunT (lib/Prog/RelayRunT.v), to replace the summed measure tr_alloc in the room premises of dr_spec
-   (W_contract.v:992 at a working branch 129f255c729) and rr_spec (W_contract.v:1301 at
-   a working branch 30d91cacb63).  Proves no function (kind: invariant lemma).
+   (W_contract.v:993 at a working branch) and rr_spec (W_contract.v:1302 at
+   a working branch).  Proves no function (kind: invariant lemma).
 
-   WHAT EACH ALLOCATOR REQUEST NEEDS (lib/A/W_journal.v of this tree, b9907bed0d7, the cf rules; the same texts are at
-   129f255c729 :755 :766 :788 :826 :839-840 :855 :868 and at 30d91cacb63 :776 :787 :809 :847 :860-861 :876 :889):
+   WHAT EACH ALLOCATOR REQUEST NEEDS (lib/A/W_journal.v of this tree, the cf rules; the same texts are:
+    755 :766 :788 :826 :839-840 :855 :868 and :776 :787 :809 :847 :860-861 :876 :889):
      malloc (n)       amalloc_cf_rule :779 `blocks_bytes Sc + n <= LIVE_MAX`; post :790
                       `ablocks ly2 S2 = ablocks lyc Sc ++ [(res, n)]` (live bytes + n);
      free (pa) of n   afree_cf_rule: no live-bytes premise; post :812 `ablocks lyc Sc = l1 ++ (pa, n) :: l2 /\
@@ -25,7 +25,7 @@
    more than the requests' premises, for traces whose freed sizes are not negative and bb <= LIVE_MAX).
    tr_peak_le_alloc: it is never above tr_alloc (traces with nonnegative sizes), so the new premise is weaker.
    rr_spec's `4 * Z.max cap (tr_max tr)` is not an allocator requirement: it bounds the capacity form ge_roomb
-   (W_contract.v:1437-1439 at 30d91cacb63, `bb + 2 * sl_cap + 2 * ge_cap <= LIVE_MAX`, each capacity at most
+   (W_contract.v:1437-1439, `bb + 2 * sl_cap + 2 * ge_cap <= LIVE_MAX`, each capacity at most
    max cap tr_max), added with `cap < MMAX` for a Theorem Labs lane's Q2 ROOM (W_relay_remove_cx.v:54-55); W_ge_room.v:184
    ge_room_of_roomb turns it into gesture_end's trace room ge_room.  It is not realloc's copy (the peak counts old +
    new at a realloc's point, arealloc_cf_rule :850) nor ASan's quarantine (a freed block leaves ablocks, :812).  The
@@ -51,8 +51,8 @@
    VERIFY 21:4xZ): fr_LS_drain_pre_c5p / fr_LS_rm_rr_pre_c3p prove `blocks_bytes S + tr_peak (..) <= LIVE_MAX` from
    LS_drain_pre's / LS_rm_rr_pre's premises plus the two facts fr_LS_drain_pre_c4 / fr_LS_rm_rr_pre_c2 already take
    (`0 <= t < OPS_MAX`, `|re_U| <= APARTIAL`) and one more each: the model blocks' sizes are not negative (the drain
-   arm's HXP, _drain.v:3907-3911 at 129f255c729, asserted before the application of LS_drain_pre at :3917; the
-   remove arm's rr_blks_pos, _remove.v:2155 at 30d91cacb63, at rm_rr's state, ReplyLSRemove3.v's (P1)).  Without
+   arm's HXP, _drain.v:3907-3911, asserted before the application of LS_drain_pre at :3917; the
+   remove arm's rr_blks_pos, _remove.v:2155, at rm_rr's state, ReplyLSRemove3.v's (P1)).  Without
    it a negative g_capout or held-array size makes a realloc's net growth unbounded in the model (not in the program).
    The bound: tr_peak <= tr_pos + tr_max (tr_peak_le_pos), tr_pos (the summed positive net growth) of a drain is at
    most 44 P + 8 K + 92320 for P pending bytes and K held keys (tp_dr: the drain buffer, the expected vector
@@ -110,13 +110,13 @@ Import ListNotations.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:132 WR_MMAX) *)
+(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:133 WR_MMAX) *)
 Local Notation MT := ameter_triv.
 Local Notation MMAX := WR_MMAX.
 
 (* ================================================================== the measure *)
 (* tr_peak (the most the live bytes rise above their start while tr runs, each request at its own point) and tr_net
-   (the live bytes' change over tr) are W_contract.v's (:58, :66): the kit took this file's text (C3, 475b8a2b569) *)
+   (the live bytes' change over tr) are W_contract.v's (:58, :66): the kit took this file's text (C3) *)
 (* the positive parts of the requests' net changes, summed (a bound on the live bytes' rise, for the proofs) *)
 Definition tr_pos {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
 fold_right (fun ev acc =>
@@ -472,7 +472,7 @@ Proof.
       [rewrite tr_alloc_malloc, tr_peak_malloc, tr_max_malloc | rewrite tr_alloc_realloc, tr_peak_realloc, tr_max_realloc];
       lia.
 Qed.
-(* (b): send_line's sum premise (sl_spec, W_contract.v:883 at 129f255c729, :889 at 30d91cacb63) is within the peak
+(* (b): send_line's sum premise (sl_spec, W_contract.v:883, :889) is within the peak
    and largest request of its trace (the window drain's trace has at each send_line call) *)
 Lemma tr_sl_window : forall c mx no cap len j o, 0 <= cap ->
   sl_alloc c mx no cap len <=
@@ -484,7 +484,7 @@ Proof.
   rewrite <- (tp_sl_alloc (Z.to_nat len) mx no cap len j o).
   destruct (tp_sl_win_run (Z.to_nat len) mx no cap len j o Hc) as [E|I]; [rewrite E; cbn; lia | lia].
 Qed.
-(* (b): list_push's sum premise (lp_spec, W_contract.v:361 at 129f255c729) is within the peak and largest request of
+(* (b): list_push's sum premise (lp_spec, W_contract.v:361) is within the peak and largest request of
    its trace ListTr.list_push_tra (the window of each reference_feed push in drain's trace) *)
 Lemma tr_lp_window : forall v (l : hlist) n, 0 <= hl_cap l -> 0 <= n ->
   (if lp_grow l then lp_vbytes l else 0) + (n + 1) <=
@@ -495,7 +495,7 @@ Proof.
     cbv beta iota; cbn [app tr_peak tr_max fold_right]; lia.
 Qed.
 (* (a): a send's peak is within twice the capacity it leaves, so the event arm's capacity premise
-   `blocks_bytes S1 + 2 * sl_cap .. <= LIVE_MAX` (LS_event_relay, _event.v:1034 at 1172d6d9065) gives send_line's
+   `blocks_bytes S1 + 2 * sl_cap .. <= LIVE_MAX` (LS_event_relay, _event.v:1034) gives send_line's
    peak premise *)
 Lemma tp_sl_run : forall f mx no cap rem j o, 0 <= cap ->
   tr_pos (fst (send_line_b_c.sl_run f mx no cap rem j o)) = fst (snd (send_line_b_c.sl_run f mx no cap rem j o)) - cap /\
@@ -811,7 +811,7 @@ Lemma tp_kw_fold : forall (a0 : RelayRunT.addr YO0i.sptr) (H : list (list Z)),
   fold_right (fun xl acc => xl + 5 + acc) 0 (map fst (map (fun x => (Z.of_nat (length x), a0)) H)) = rm3_kw H.
 Proof. intros a0 H. unfold rm3_kw. induction H as [|x H IH]; cbn [map fold_right fst]; lia. Qed.
 
-(* relay_remove's requests from g_nout = 0 (rr_tr, W_contract.v:1238 at 30d91cacb63): drain's when the entry is open,
+(* relay_remove's requests from g_nout = 0 (rr_tr, W_contract.v:1238): drain's when the entry is open,
    the key run's g_capout growth (at most 2 (g_nout + keys' bytes)), two frees *)
 Lemma tp_rr : forall c mx cap FD es h (e : rentry),
   find (fun e => re_fd e =? FD) es = Some e ->
@@ -880,7 +880,7 @@ Proof.
   apply (H (out, cap)). unfold aout_blks. rewrite (proj2 (Z.eqb_neq _ _) E). left. reflexivity.
 Qed.
 
-(* dr_spec's proposed premise in its variant (b), `+ tr_max`, from LS_drain_pre's premises (129f255c729 _drain.v:730),
+(* dr_spec's proposed premise in its variant (b), `+ tr_max`, from LS_drain_pre's premises (_drain.v:730),
    fr_LS_drain_pre_c4's two (`0 <= t < OPS_MAX`, dc_regs :2627; |re_U| <= APARTIAL, HEOK :3859) and the drain arm's
    HXP (_drain.v:3907-3911, asserted before LS_drain_pre is applied at :3917) *)
 Lemma fr_LS_drain_pre_c5p_slack : forall cx t m ly S si h j,
@@ -942,7 +942,7 @@ Proof.
     (dr_tr (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (nth j (lm_es m) dr_e0) h)). lia.
 Qed.
 
-(* rr_spec's proposed premise in its variant (b), from LS_rm_rr_pre's premises (30d91cacb63 _remove.v:1971),
+(* rr_spec's proposed premise in its variant (b), from LS_rm_rr_pre's premises (_remove.v:1971),
    fr_LS_rm_rr_pre_c2's two (rm_regs_base :358; aentry_ok through HREL :2356) and the model blocks' sizes
    (rr_blks_pos, _remove.v:2155, at rm_rr's state; ReplyLSRemove3.v (P1)) *)
 Lemma fr_LS_rm_rr_pre_c3p_slack : forall cx t m ly S si h j0,

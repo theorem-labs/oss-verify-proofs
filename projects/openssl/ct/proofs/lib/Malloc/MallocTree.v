@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv table). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -93,9 +94,51 @@ Definition ptr_rel (p : optr) (r : option bptr) : Prop :=
   | _, _ => False
   end.
 
-(* [comment removed for export] *)
-Definition auxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* LPS 08b1429: the auxv musl's [getauxval(AT_RANDOM)] walks, in the order
+   [StackLayout.auxv_entries] writes it: 24 fixed-key pairs, then AT_RANDOM (25) and AT_EXECFN (26),
+   then the two rseq pairs WHEN [la_rseq] is set, then AT_NULL.  The rseq pairs are why the
+   terminator's position is not a constant: 27 pairs without them, 29 with. *)
+Record auxv_vals : Type := mkAuxv {
+  ax_sysinfo : Z;
+  ax_l1i : Z;
+  ax_l1ig : Z;
+  ax_l1d : Z;
+  ax_l1dg : Z;
+  ax_l2 : Z;
+  ax_l2g : Z;
+  ax_l3 : Z;
+  ax_l3g : Z;
+  ax_minsig : Z;
+  ax_hwcap : Z;
+  ax_pagesz : Z;
+  ax_clktck : Z;
+  ax_phdr : Z;
+  ax_phent : Z;
+  ax_phnum : Z;
+  ax_base : Z;
+  ax_flags : Z;
+  ax_entry : Z;
+  ax_uid : Z;
+  ax_euid : Z;
+  ax_gid : Z;
+  ax_egid : Z;
+  ax_secure : Z }.
+
+Definition auxv_list (v : auxv_vals) (rnd execfn : Z) (r : bool) : list word :=
+  map wz ([33; ax_sysinfo v; 40; ax_l1i v; 41; ax_l1ig v; 42; ax_l1d v; 43; ax_l1dg v; 44; ax_l2 v; 45; ax_l2g v; 46; ax_l3 v; 47; ax_l3g v; 51; ax_minsig v; 16; ax_hwcap v; 6; ax_pagesz v; 17; ax_clktck v; 3; ax_phdr v; 4; ax_phent v; 5; ax_phnum v; 7; ax_base v; 8; ax_flags v; 9; ax_entry v; 11; ax_uid v; 12; ax_euid v; 13; ax_gid v; 14; ax_egid v; 23; ax_secure v; 25; rnd; 31; execfn]
+          ++ (if r then [27; 28; 28; 32] else [])
+          ++ [0; 0]).
+
+(* the vector's byte length: 27 pairs, or 29 with rseq.  Named [auxv_vec_bytes] because
+   Common/RefLayout already has an [auxv_bytes] for the model's byte list. *)
+Definition auxv_vec_bytes (r : bool) : Z := if r then 464 else 432.
+
+(* The bridge to the model, so that the two literals above cannot go stale silently: if
+   [StackLayout.auxv_count] ever moves again this lemma breaks loudly, where the literals
+   alone would still compile. [StackLayout] is loaded through [Run], so the qualified name
+   resolves without an Import (an Import here would re-resolve other names). *)
+Lemma auxv_vec_bytes_model : forall r, auxv_vec_bytes r = Z.of_nat (StackLayout.auxv_size r).
+Proof. intros []; reflexivity. Qed.
 
 Lemma Forall_disjoint_from : forall (P : Z * Z -> Prop) W a n,
   Forall P W -> (forall lo hi, P (lo, hi) -> a + n <= lo \/ hi <= a) -> disjoint_from W a n.

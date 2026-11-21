@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* omx-clap-core/fuzz_preset, image A' (asan): the CLOSED TOPS of the asan image, from the A' driver's one composition
    of its discharges (lib/A/Prog/Ent102DrvTopA3.v TFIB_T_room_all_A_walked3, the room form at
    PAYLOAD_ROOM := fun _ => True) and from walked3 (Ent102DrvTopA3.TFIB_T_closed_A_walked3), which that file derives
@@ -29,8 +30,8 @@ Proof. exact (AsanAgreesTop.preset_asan_agrees_of_tfib Ent102DrvTopA3.TFIB_T_clo
 Lemma TFIB_T_halts_A_closed : OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.HaltsTFIB.TFIB_T.
 Proof.
 apply OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.HaltsTFIB.TFIB_T_of_specx.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
-exact (Ent102DrvTopA3.TFIB_T_room_all_A_walked3 sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp (fun _ _ _ _ _ => I)).
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+exact (Ent102DrvTopA3.TFIB_T_room_all_A_walked3 sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau (fun _ _ _ _ _ => I)).
 Qed.
 
 Theorem preset_asan_halts_closed : OSSVerify.omx_clap_core.fuzz_preset.Statements.asan_halts.

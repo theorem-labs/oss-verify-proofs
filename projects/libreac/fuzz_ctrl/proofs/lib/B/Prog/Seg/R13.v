@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 844 of its 926 lines of code are new or changed and 929 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R13 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): cut Inv_B81860_at b
    (v1.9 pc 0x81860) -> cut Inv_B81aa0_at b (v1.9 pc 0x81aa0) (plan-asan-ubsan.md section 2 (a working note, not in this delivery), row R13, range
    0x81860-0x818a4; S_R13 (forms-asan-ubsan.md (a working note, not in this delivery)); section 4, FREE = wrapper_free at 0x534b4). rule 24: no function
-   proved (a slot segment).  Re-fit of the v1.8 proof (a working branch c439fa41c5b) onto the v1.9.0 bytes and
+   proved (a slot segment).  Re-fit of the v1.8 proof (a working branch) onto the v1.9.0 bytes and
    a Theorem Labs lane's v1.9 cut bundle (pcs +0x64, frame 3136 bytes, the 33-conjunct RBE, CUR in s7 / s9, the constant 32 in s11).
    The cut 0x81860 is the return point of the reac_identity_ingest call 0x8185c (R11, b = 3, 4; R12, b = 6). From it
    the code runs four instructions and one call:
@@ -37,14 +38,14 @@
    FRA's input facts move across the call: for g_n > 0 the input block is a live block of g_H g apart from the freed
    block (a_laws_disjoint), so its bytes and its shadow bytes are the allocator's in neither state.
 
-   No local cut: seg_R13 is proved against the official Inv_B81860_at (SlotInv.v, de2516edf5), whose body adds,
+   No local cut: seg_R13 is proved against the official Inv_B81860_at (SlotInv.v), whose body adds,
    inside the CUTST predicate,
      IDBr g fr (RID (g_in g) (S b)) m /\ FGBr g fr (RFG (g_in g) (S b)) m /\ rg regs 20 phi /\ a0v regs 1
    - a0v regs 1: the ingest result; 0x81864 beq a0,a1 with a1 = 1 decides the abort edge 0x81868;
    - rg regs 20 phi: s4 = Phi_r (0x8176c mv s4,a0), the block the free call releases (a0 = s4 at 0x81a98);
    - IDBr / FGBr at turn S b: Inv_B81aa0_at b names the records of turn S b (RB g fr b (RID (S b)) (RFG (S b))), and
      the free call keeps both records (frame bytes);
-   - (adopt 10, a working branch de0ff9e12a) rg regs 27 32: s11 = 32, which the three instructions do not write and the free
+   - (adopt 10, a working branch) rg regs 27 32: s11 = 32, which the three instructions do not write and the free
      call keeps (a_callee_saved 27), so the exit Inv_B81aa0_at gets it. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

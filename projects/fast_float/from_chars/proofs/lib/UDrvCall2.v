@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -45,6 +46,7 @@ Theorem fx_stdio_write : forall E L ms model K (su f wb wp fd : Z) (s l bufp buf
   sw_file (ms_mem ms) f wb wp fd bufp bufsz -> ssp_cells (ms_mem ms) can ->
   rdn PSEGS (ms_mem ms) (Z_to_bv 64 (f + 48)) 8 = Some (repeat (Z_to_bv 8 0) 8) ->
   (0 < fd < 2147483648)%Z -> fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   (0 <= wb <= wp)%Z -> (wp <= TASK_SIZE)%Z -> (wp - wb = Z.of_nat (length pending))%Z ->
   (bv_unsigned l = Z.of_nat (length extra))%Z ->
@@ -62,7 +64,7 @@ Theorem fx_stdio_write : forall E L ms model K (su f wb wp fd : Z) (s l bufp buf
   realizes PSEGS (mkCfg ms model) (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
 Proof.
   intros E L ms model K su f wb wp fd s l bufp bufsz can ret pending extra i0 o0 i5 RF lbuf lbsz lres
-         Hd Hpc Hrv Hrom Hok Hwf Hfi Hi5 HbF HsF HwF H2 H10 H11 H12 H1 Su1 Su2 F1 F2 SWF SSP H48 FD Hfd Hh Hl
+         Hd Hpc Hrv Hrom Hok Hwf Hfi Hi5 HbF HsF HwF H2 H10 H11 H12 H1 Su1 Su2 F1 F2 SWF SSP H48 FD Hfd Hrdr Hh Hl
          W1 W2 W3 W4 W5 W6 D1 D2 W7 R1 R2 Hret HKnil Hlb Hls Hlr Hwb Hws Hk.
   rewrite (sden_mkst PSEGS E L ms Hd Hrv). rewrite Hpc, Hrom.
   set (fxs := mkFP (ms_fregs ms) (ms_fcsr ms)).
@@ -70,7 +72,7 @@ Proof.
   pose proof (frame_in_store_ok E L ms i0 o0 112 _ Hd Hfi ltac:(lia)) as Hst.
   replace (Z_to_bv 64 0x55e08) with (0x55e08%bv : word) by (apply bv_eq; reflexivity).
   apply (@ref_stdio_write fxs regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K
-           H2 H10 H11 H12 H1 Su1 Su2 Hst F1 F2 SWF SSP FD Hfd Hh Hl W1 W2 W3 W4 W5 W6 D1 D2 W7 R1 R2 (ret_ok_even ret Hret) HKnil).
+           H2 H10 H11 H12 H1 Su1 Su2 Hst F1 F2 SWF SSP FD Hfd Hrdr Hh Hl W1 W2 W3 W4 W5 W6 D1 D2 W7 R1 R2 (ret_ok_even ret Hret) HKnil).
   intros regs' mem' Q10 Q2 Q1 Q8 Q9 Q18 Q19 Q20 Q21 Q22 Q23 Q24 Q25 Q26 Q27 Q3 Q4 Hpost.
   set (ms' := @mkst fxs regs' ret mem' (seg_rom PSEGS)).
   assert (HszF : forall E0, rsz E0 RF = 232) by (intros E0; apply rsz_const; [exact HsF | unfold two64; lia]).

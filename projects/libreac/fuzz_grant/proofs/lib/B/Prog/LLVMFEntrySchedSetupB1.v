@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedSetupB1), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySchedSetupB1.v. *)
-(* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntrySchedSetupB1.v, ported from a working branch 7c8c67da870 (blob d6eb3c3959e): image B's own cut pcs (0x81a20 .. 0x81a50) and register file (s8 the scene's width and s7 the bytes left for the frame count, where image A has s10 and s8; s4 the table and s5 the scene's base, where image A has s4 and s2), the call contract of GrantBContracts.v (tb_reac_headamp_tx_set_resweep_spec, STK_reac_headamp_tx_set_resweep), and the slots of image B's sch_common, kept one by one, in place of image A's gslots_late. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntrySchedSetupB1.v, ported from a working branch (blob d6eb3c3959e): image B's own cut pcs (0x81a20 .. 0x81a50) and register file (s8 the scene's width and s7 the bytes left for the frame count, where image A has s10 and s8; s4 the table and s5 the scene's base, where image A has s4 and s2), the call contract of GrantBContracts.v (tb_reac_headamp_tx_set_resweep_spec, STK_reac_headamp_tx_set_resweep), and the slots of image B's sch_common, kept one by one, in place of image A's gslots_late. *)
 
 (* Segment B1 of the scheduler's setup (LLVMFEntrySchedSetupDefs.v), the path with at
    most one input byte left at 0x81944: from the return of reac_headamp_tx_arm_scene at

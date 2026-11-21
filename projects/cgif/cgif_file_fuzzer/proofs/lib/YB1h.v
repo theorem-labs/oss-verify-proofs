@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO's mappings and steps): changed tfib_img_facts. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -111,6 +112,8 @@ constructor.
 - rewrite tfib_res_sizes. reflexivity.
 - split; [cbn [rw_lo rw_len TFIB]; lia|]. cbn [rw_lo rw_len TFIB]. intros m x Hx. apply tfib_rw_window. lia.
 - cbn [shadow_off TFIB]. lia.
+- (* if_resx (08b1429: the vDSO pair's two reservations and their auxv words) *)
+  split; cbn [n_resx p_resx TFIB]; lia.
 Qed.
 Section b. Context {fx : YK11.FPState}.
 Lemma tfibmusl_fetch : forall (p : word) (w : bv 32),

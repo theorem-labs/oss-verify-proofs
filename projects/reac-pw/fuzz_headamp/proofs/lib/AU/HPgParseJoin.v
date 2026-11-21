@@ -1,6 +1,6 @@
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgParseJoin.v (the image-A composition of this
    walk's segment statements), the image-B twin over lib/AU/HPgParseCut.v; itself the composition of
-   proofs/reac-pw/fuzz_role/lib/A/RPgParse.v at afaa3cb55c1 (the segment statements joined by induction on the
+   proofs/reac-pw/fuzz_role/lib/A/RPgParse.v (the segment statements joined by induction on the
    loops). *)
 (* reac_headamp_prop_parse_result 0x849ac of reac-pw/fuzz_headamp's ASan + UBSan image B (fuzz_headamp.asan-ubsan,
    pinned sha256 53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94): hd_parse_result_specX from the

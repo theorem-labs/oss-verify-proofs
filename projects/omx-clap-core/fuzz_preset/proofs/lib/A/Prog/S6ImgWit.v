@@ -11,10 +11,10 @@
      pal_lit (S6PjString.v)                                           S6PalLitRefute.v pal_lit_A
      AIM (S6PjFreeTail.v, S6PjFreeTop.v, S6PjString.v; the A' memset row)  s6w_aim, by citation of c-libc-stdio's
                                                                       PRowSet.v prow_asan_memset_xm_A_lit (lib/A/PRow*
-                                                                      set from origin/cold/c-libc-stdio-rows102
-                                                                      599a4cefc740), under that lemma's own premises
+                                                                      set),
+                                                                      under that lemma's own premises
    Not here, other hands' witnesses: TL : PALib B (lib/A/PALibA.v palib_A), LAWS (palib_laws_A, same file; 88c72c8175cf
-   on the kit's cut 7cdbb61b5fa0). Not image facts (no witness asked): the callee texts (ASCR, STRDUP, FREE), the allocator facts VISF and
+   on the kit's cut). Not image facts (no witness asked): the callee texts (ASCR, STRDUP, FREE), the allocator facts VISF and
    pal_lit_sh (STATE claims on every allocator state).
    Every goal is closed: vm_compute only after the instance projections are reduced (no Section variable, no abstract
    model term). rule 24: proves no function (kind: image-premise witnesses). *)

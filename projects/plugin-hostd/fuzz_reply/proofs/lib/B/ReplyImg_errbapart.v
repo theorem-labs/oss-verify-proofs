@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: new file, reply image B's discharge of the cf-layer unit row ERRB_APART (row
    img-errbapart-B of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record); CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row ERRB_APART): the error-buffer object misses the
    internal allocator's zone and, at every layout the cf relation admits, the depot zone. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 YG0f YM05 YGcfNames.
@@ -18,8 +19,8 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 (* The statement is the cf layer's ERRB_APART (lane F2a, YGcfInstFreePost.v, a working branch) at reply image B:
    B := TfibB (YD2l.v), cf_errbuf_obj := CfImg_B's (CfImgB.v: __asan::error_message_buffer, 0xa5ea8), dg_izone /
    dg_dzone := DImg_reply's (DGif0reply.v: DGgi.IZONE / DGgi.DZONE). The layout guard is the UNFOLDED text of the cf
-   layer's LGUARD (YGcfInstFreePost.v @ a3d076d83cd: ly_img_ok B ly /\ im_img_cover ly /\ asyms_ok B) with ly_img_ok
-   unfolded (YGcfInstBase.v:140 @ a3d076d83cd: layout_ok ly /\ ly_tsd ly = as_tsd B /\ Forall ...); this tree carries
+   layer's LGUARD (YGcfInstFreePost.v: ly_img_ok B ly /\ im_img_cover ly /\ asyms_ok B) with ly_img_ok
+   unfolded (YGcfInstBase.v:140: layout_ok ly /\ ly_tsd ly = as_tsd B /\ Forall ...); this tree carries
    neither name yet. *)
 Lemma ERRB_APART_B : forall a, @cf_errbuf_obj CfImg_B <= a < @cf_errbuf_obj CfImg_B + 56 ->
   ~ dg_izone a /\

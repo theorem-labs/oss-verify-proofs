@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed A0. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -17,7 +18,9 @@ Abbreviation RSEGS := Ubsan.M.loaded_segments.
 Definition X_CPY : Z := 0xab480.  Definition X_SET : Z := 0xaba00.  Definition X_LEN : Z := 0xabee4.
 Definition RO_LO : Z := 0x13698.  Definition RO_HI : Z := 0x136b0.
 (* [comment removed for export] *)
-Definition A0 : APC.atable := APC.AT 0x10000 0xeb000 0%nat 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 [].
+(* [atable] gained [n_resx] and [p_resx] after [n_res] at LPS 727298f3; this kit
+   table admits none, leaving [resx_bytes A0] at 0. *)
+Definition A0 : APC.atable := APC.AT 0x10000 0xeb000 0%nat 0%nat 0%nat 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 [].
 
 Lemma src0_in_hull : forall a : word, APS.in_hull A0 (bv_unsigned a) = false -> find_segment RSEGS (bv_unsigned a) 1 = None.
 Proof. apply SGP.in_hull_of_b. vm_compute. reflexivity. Qed.

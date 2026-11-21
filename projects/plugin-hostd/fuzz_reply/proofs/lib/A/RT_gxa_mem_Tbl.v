@@ -1,5 +1,5 @@
 (* fuzz_reply.asan numerals of GXA's memcpy and memset call contracts (RT_gxa_calls_mem.v), and the relocation table of
-   the eighteen files those contracts compose, copied from a working branch 840c4afa7e2
+   the eighteen files those contracts compose, copied from a working branch
    (proofs/omx-clap-core/fuzz_state/lib): lib/A/Bz/A/{I_memcpyw, I_memcpyw2, I_amemcpyw, I_amemcpyw2, I_amemcpy,
    I_memcpy, I_memsetw, F_memset, I_imemset}.v, lib/A/Prog/{memcpy_c, memcpy, memcpy_same_c, memcpy_same, memset_c,
    memset}.v, lib/A/R_memset.v, lib/A/Strw/{STRW_tac, STRWaj3}.v.
@@ -44,7 +44,7 @@ Definition MS_TRAMP : Z := 0x52720.   (* __interceptor_trampoline_memset: `j 0x5
 Definition MS_ICPT : Z := 0x53174.    (* ___interceptor_memset: imemset_spec's entry (I_imemset.v) *)
 
 (* Build identity: this is fuzz_reply.asan.  The first words of main 0x81e4c and LLVMFuzzerTestOneInput 0x840b0
-   (as RT_asan_memmove.v:63-67), the two trampolines' `j` words, the first word of each interceptor
+   (as RT_asan_memmove.v:64-68), the two trampolines' `j` words, the first word of each interceptor
    (`addi sp, sp, -2032`), and the first word of musl memcpy 0x964cc (`andi a3, a1, 3`) and of musl memset 0x96900
    (`beqz a2, +0xf4`), the REAL() targets the walks call. *)
 Lemma rt_gxa_mem_build_identity :

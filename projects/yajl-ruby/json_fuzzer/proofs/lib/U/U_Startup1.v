@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (UIMG_ok, the entry block from sp to ed_top with InitMem.launch_facts' bounds, and its lemmas; the launchT context; rstartup_from_libc over UIMG_ok and the 6,144,513-byte stack window, without the image-length premises). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -31,7 +32,37 @@ From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import RunCeiling.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Section RC__1.
 Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+(* LPS 08b1429: the entry block at sp, from [Lib/InitMem.launchT]'s auxv, exec name and gid:
+   [build_stack_bytes] runs from sp to [ed_top] (the strings at the top), with the facts
+   [InitMem.launch_facts] gives for it (no clamped pad, at most 2101782 bytes, under 2^47). *)
+Section UImg.
+  Context {LT : launchT}.
+  Definition UIMG_ok (sp : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw)
+      (m : word -> option byte) : Prop :=
+    bytes_at usegs m (bv_unsigned sp)
+      (build_stack_bytes L_LA u_phdrs (Z_to_bv 64 (Z.of_N u_init_pc)) sp (ed_top rnd) argv envp L_EXECFN uid L_GID hw rnd)
+    /\ (bv_unsigned sp + hsz (la_rseq L_LA) argv envp + lstr argv envp L_EXECFN + 8 <= bv_unsigned (ed_top rnd))%Z
+    /\ (bv_unsigned (ed_top rnd) - bv_unsigned sp <= 2101782)%Z
+    /\ (bv_unsigned (ed_top rnd) <= 0x800000000000)%Z.
+
+  Lemma UIMG_ok_len : forall sp argv envp uid hw rnd m, UIMG_ok sp argv envp uid hw rnd m ->
+    Z.of_nat (length (build_stack_bytes L_LA u_phdrs (Z_to_bv 64 (Z.of_N u_init_pc)) sp (ed_top rnd) argv envp L_EXECFN uid L_GID hw rnd))
+    = (bv_unsigned (ed_top rnd) - bv_unsigned sp)%Z.
+  Proof. intros sp argv envp uid hw rnd m (_ & P & _). apply build_stack_bytes_length_top. exact P. Qed.
+
+  Lemma UIMG_ok_transport : forall W sp argv envp uid hw rnd m m',
+    UIMG_ok sp argv envp uid hw rnd m -> munch W m m' ->
+    disjoint_from W (bv_unsigned sp) (bv_unsigned (ed_top rnd) - bv_unsigned sp) ->
+    UIMG_ok sp argv envp uid hw rnd m'.
+  Proof.
+    intros W sp argv envp uid hw rnd m m' H MU D. pose proof (UIMG_ok_len _ _ _ _ _ _ _ H) as L.
+    destruct H as (B & P & T1 & T2). unfold UIMG_ok. split; [| exact (conj P (conj T1 T2))].
+    eapply bytes_at_transport; [exact B| exact MU|]. rewrite L. exact D.
+  Qed.
+End UImg.
+
 Section AtMain.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
   Notation usp0 := (bv_unsigned sp0).
 
@@ -48,7 +79,7 @@ Section AtMain.
                  (Z_to_bv 64 0x13500) (Z_to_bv 64 (envp_addr sp0 argv)) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
              bvmap_empty (Z_to_bv 64 0x13500) (Z_to_bv 32 0) None m' (seg_rom usegs)
     /\ mem_inv usegs m'
-    /\ stk usegs m' (usp0 - 8388608) (usp0 + -48)
+    /\ stk usegs m' (usp0 - 6144513) (usp0 + -48)
     (* [comment removed for export] *)
     /\ rw_cells usegs m' 0x355d8 [C8 (Z_to_bv 64 0x355d8); C8 (Z_to_bv 64 0x355d8); C8 (Z_to_bv 64 0x355d8); C8 z64; C4 (Z_to_bv 64 t)]
     (* [comment removed for export] *)
@@ -95,10 +126,9 @@ Section AtMain.
     /\ rw_cells usegs m' 0x55d60 [C8 z64]
     /\ stdout_file m' stdout_init
     /\ stderr_file m'
-    (* [comment removed for export] *)
-    /\ bytes_at usegs m' usp0 (build_stack_bytes u_phdrs sp0 argv envp uid hw rnd)
-    /\ wr_at usegs m' usp0 (Z.of_nat (length (build_stack_bytes u_phdrs sp0 argv envp uid hw rnd)))
-    /\ nth_error (argv_ptrs sp0 argv envp) 0 = Some (Z_to_bv 64 P0)
+    (* LPS 08b1429: the entry block, untouched by the start-up (it sits above sp). *)
+    /\ UIMG_ok sp0 argv envp uid hw rnd m'
+    /\ nth_error (argv_ptrs (ed_top rnd) argv envp L_EXECFN) 0 = Some (Z_to_bv 64 P0)
     (* [comment removed for export] *)
     /\ (forall a : word, (0x24000 <= bv_unsigned a < 0x57000)%Z -> outside rcrt_written (bv_unsigned a) -> m' a = None)
     /\ (0 < t < 4194304)%Z.
@@ -131,44 +161,22 @@ Ltac rimg_chunk' NONE m A cs H :=
 Section RC__2.
 Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
 Section Proof.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
-  Hypothesis VSP : valid_sp sp0.
-  Hypothesis VARGV : valid_argv argv.
-  Hypothesis VENVP : valid_envp envp.
   Notation ph := u_phdrs.
   Notation usp0 := (bv_unsigned sp0).
-  Notation img := (build_stack_bytes u_phdrs sp0 argv envp uid hw rnd).
-
-  Lemma rimg_len_bound : (Z.of_nat (length img) <= 2500000)%Z.
-  Proof.
-    rewrite build_stack_bytes_length. destruct VARGV as (A1 & A2 & _). destruct VENVP as (E1 & E2 & _).
-    pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd). unfold raw_len, struct_size, argc, envc in *. lia.
-  Qed.
-
-  Lemma rsp_facts : (stack_max_size <= usp0)%Z /\ (usp0 + Z.of_nat (length img) <= 2^64)%Z /\
-                    (usp0 mod 16 = 0)%Z /\ (0x7fff80000000 <= usp0 <= 0x800000000000)%Z.
-  Proof.
-    destruct VSP as (L & H & M). unfold sp_window_lo, sp_window_hi, stack_max_size in *.
-    pose proof rimg_len_bound. lia.
-  Qed.
 
   (* [comment removed for export] *)
+  (* LPS 08b1429: the entry block is [UIMG_ok] (it moves with the memory as a whole), the
+     stack below sp is the launch's window, at least 6144513 bytes ([InitMem.launch_facts]). *)
   Lemma rstartup_from_libc :
-   (stack_max_size <= usp0) ->
-    (usp0 + Z.of_nat (length img) <= 2 ^ 64) ->
     (usp0 mod 16 = 0%Z) ->
     (140735340871680 <= usp0 <= 140737488355328) ->
-    (Z.of_nat (length img) <= 2500000) ->
      forall (m : word → option byte),
     (∀ a : word, bv_unsigned a < 356352 → m a = None) ->
-    (id (bytes_at usegs m usp0 img)) ->
-    (id (wr_at usegs m usp0 (Z.of_nat (length img)))) ->
-    (1 <= Z.of_nat (length argv) <= 1024) ->
-     forall (arg0 : list byte),
-    (nth_error argv 0 = Some arg0) ->
+    (id (UIMG_ok sp0 argv envp uid hw rnd m)) ->
      forall (P0 : Z),
-    (nth_error (argv_ptrs sp0 argv envp) 0 = Some (Z_to_bv 64 P0)) ->
-    (str_base sp0 argv envp <= P0) ->
+    (nth_error (argv_ptrs (ed_top rnd) argv envp L_EXECFN) 0 = Some (Z_to_bv 64 P0)) ->
      forall (x15 : word → option byte),
     (rw_cells usegs x15 350488 [C8 z64]) ->
     (rw_cells usegs x15 152904 [C4 (Z_to_bv 64 131072)]) ->
@@ -181,16 +189,15 @@ Section Proof.
     (rw_cells usegs x15 152912 [C1 (Z_to_bv 8 0)]) ->
     (argc argv = Z.of_nat (length argv)) ->
     (envc envp = Z.of_nat (length envp)) ->
-    (usp0 + 184 <= P0) ->
-    (munch [((usp0 - 8388608)%Z, usp0); (152912%Z, 152913%Z); (218576%Z, 349864%Z); (349872%Z, 349920%Z); (350480%Z, 350488%Z); (350496%Z, 350624%Z)] m x15) ->
+    (munch [((usp0 - 6144513)%Z, usp0); (152912%Z, 152913%Z); (218576%Z, 349864%Z); (349872%Z, 349920%Z); (350480%Z, 350488%Z); (350496%Z, 350624%Z)] m x15) ->
     (wmono usegs m x15) ->
      forall (junk : list byte),
     (rw_cells usegs x15 (usp0 + -32) [C8 z64; C8 z64; C8 z64; C8 z64]) ->
      forall (ans : Z) (x : word) (x0 : word) (x1 : word) (x2 : word) (x3 : word) (x4 : word) (x5 : word) (x6 : word) (x7 : word) (x8 : word) (x9 : word) (x10 : word) (x11 : word) (x12 : word) (x13 : word) (x14 : word),
     (mem_inv usegs x15) ->
-    (stk usegs x15 (usp0 - 8388608) (usp0 + -32)) ->
+    (stk usegs x15 (usp0 - 6144513) (usp0 + -32)) ->
     (rw_cells usegs x15 218584 [C8 (Z_to_bv 64 218584); C8 (Z_to_bv 64 218584); C8 (Z_to_bv 64 218584); C8 z64; C4 (Z_to_bv 64 ans); C4 z64; C4 (Z_to_bv 64 2); CB 76 (repeat (Z_to_bv 8 0) 76); C8 (Z_to_bv 64 218704); CB 24 (repeat (Z_to_bv 8 0) 24); C8 (Z_to_bv 64 350568); CB 24 (repeat (Z_to_bv 8 0) 24); C8 rc_guard; C8 (Z_to_bv 64 218800); CB 16 (repeat (Z_to_bv 8 0) 16); C8 z64; CB 112 (repeat (Z_to_bv 8 0) 112)]) ->
-    (rw_cells usegs x15 350512 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C4 z64; C8 (Z_to_bv 64 (usp0 + 8 * (argc argv + 2) + 8 * (Z.of_nat (length (envp_ptrs sp0 argv envp)) + 1))); C8 z64; C8 (Z_to_bv 64 224); C8 (Z_to_bv 64 8); C8 z64; C8 (Z_to_bv 64 4096); CB 48 (repeat (Z_to_bv 8 0) 48)]) ->
+    (rw_cells usegs x15 350512 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C4 z64; C8 (Z_to_bv 64 (usp0 + 8 * (argc argv + 2) + 8 * (Z.of_nat (length (envp_ptrs (ed_top rnd) argv envp L_EXECFN)) + 1))); C8 z64; C8 (Z_to_bv 64 224); C8 (Z_to_bv 64 8); C8 z64; C8 (Z_to_bv 64 4096); CB 48 (repeat (Z_to_bv 8 0) 48)]) ->
     (rw_cells usegs x15 349864 [C8 z64; C8 z64; C8 z64; C8 z64; C8 z64; C8 (Z_to_bv 64 8); C8 z64]) ->
     (rw_cells usegs x15 350488 [C8 z64]) ->
     (rw_cells usegs x15 350496 [C8 x14; C8 (Z_to_bv 64 P0)]) ->
@@ -205,7 +212,7 @@ Section Proof.
     (ans < 4194304) ->
     evt usegs (rat_main sp0 argv envp uid hw rnd) (MS (mkR (Z_to_bv 64 96576) (Z_to_bv 64 (usp0 + -32)) (Z_to_bv 64 67584) (Z_to_bv 64 218784) x x0 x1 (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (argc argv)) x2 x3 x4 x5 x6 x7 x8 x9 (Z_to_bv 64 79104) z64 z64 z64 z64 z64 z64 z64 z64 z64 x10 x11 x12 x13) bvmap_empty (Z_to_bv 64 96576) (Z_to_bv 32 0) None x15 (seg_rom usegs)).
   Proof.
-    intros SPLO IMGHI SP16 SPW IL m NONE IMG WR VA1 arg0 Harg0 P0 HP0 P0LO x15 SI DS GOT3 GG GD GOT0 GIN INA INI HC HE P0GE MU WM junk FR ans x x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 MI ST PC0 PC1 PC2 PC3 PC4 PC5 PC6 PC7 PC8 PC9 PC10 PC11 PC15 POST.
+    intros SP16 SPW m NONE IMG P0 HP0 x15 SI DS GOT3 GG GD GOT0 GIN INA INI HC HE MU WM junk FR ans x x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 MI ST PC0 PC1 PC2 PC3 PC4 PC5 PC6 PC7 PC8 PC9 PC10 PC11 PC15 POST.
     (* [comment removed for export] *)
     steps_to 0x17968%Z. release_frame FR ST (bv_unsigned sp0). astep.
     (* [comment removed for export] *)
@@ -220,14 +227,13 @@ Section Proof.
     replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)) with (Z_to_bv 64 (usp0 + 8 * (argc argv + 2)))
       by (f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
     (* [comment removed for export] *)
-    unfold id in IMG, WR.
+    unfold id in IMG.
     lazymatch type of MU with munch ?W m ?mf =>
-      apply (bytes_at_transport usegs W m mf usp0 img) in IMG; [| exact MU | cbn [disjoint_from]; lia];
-      apply (wr_at_transport usegs m mf) in WR; [| exact WM] end.
+      apply (UIMG_ok_transport W sp0 argv envp uid hw rnd m mf) in IMG; [| exact MU | cbn [disjoint_from]; lia] end.
     (* [comment removed for export] *)
     lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mf _) =>
       assert (NONE' : forall a : word, (bv_unsigned a < 0x57000)%Z ->
-                outside [(usp0 - 8388608, usp0); (0x25550, 0x25551); (0x355d0, 0x556a8); (0x556b0, 0x556e0);
+                outside [(usp0 - 6144513, usp0); (0x25550, 0x25551); (0x355d0, 0x556a8); (0x556b0, 0x556e0);
                          (0x55910, 0x55918); (0x55920, 0x559a0)]%Z (bv_unsigned a) -> mf a = None)
         by (intros a Ha Ho; rewrite (MU a Ho); apply NONE; exact Ha);
       rimg_chunk' NONE' mf 0x24240%Z [C8 (Z_to_bv 64 0x17e18); C8 z64] GCX;
@@ -257,6 +263,17 @@ Section Proof.
         by (unfold auxv_addr; lia);
       apply (proj1 (rw_cells_app _ _ _ [_;_;_;_;_] _)) in L; destruct L as [LCa LCb] end.
     match type of LCb with rw_cells _ _ ?A _ => replace A with 0x55938%Z in LCb by reflexivity end.
+    (* LPS 08b1429: [envp_addr] is [usp + 8 * (argc + 2)]; the register holds the shifted form of
+       the wrapped count.  The count is under 2^64: the block holds its pointer array. *)
+    assert (ARGB : (0 <= argc argv < 2^64)%Z).
+    { pose proof IMG as (_ & PD & TS & TP). pose proof (hsz_eq (la_rseq L_LA) argv envp) as HS.
+      pose proof (lstr_eq argv envp L_EXECFN) as HL. pose proof (total_arg_bytes_nonneg argv). pose proof (total_arg_bytes_nonneg envp).
+      pose proof (Nat2Z.is_nonneg (length L_EXECFN)). pose proof (Nat2Z.is_nonneg (gap_len argv envp)).
+      pose proof (Nat2Z.is_nonneg (auxv_count (la_rseq L_LA))). unfold argc, envc in *. lia. }
+    rewrite ?(Z.mod_small (argc argv) 18446744073709551616) by lia.
+    repeat lazymatch goal with |- context [Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)] =>
+      replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)) with (Z_to_bv 64 (usp0 + 8 * (argc argv + 2)))
+        by (f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia) end.
     apply evt_done. unfold rat_main, envp_addr.
     repeat (lazymatch goal with |- ex _ => eexists end).
     split; [cbv delta [mkR]; reflexivity|].
@@ -269,7 +286,7 @@ Section Proof.
              split; [apply (proj1 (Z.leb_le _ _)); vm_compute; reflexivity|]; intros _; reflexivity
          | |- stderr_file _ => exists (Z_to_bv 64 5), z64, 0%Z, 0%Z, (repeat (Z_to_bv 8 0) 80); exact SEF
          | |- nth_error _ _ = _ => exact HP0
-         | |- wr_at _ _ _ _ => exact WR
+         | |- UIMG_ok _ _ _ _ _ _ _ => exact IMG
          | |- forall _, _ => intros a Ha Hout; rewrite (MU a); [apply NONE; lia|];
                               unfold rcrt_written in Hout; cbn [outside] in Hout |- *; lia
          | |- _ => first [hyp_by_addr | lia]

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch model's channel reader as a premise of the writev paths, LPS 08b1429; the initial-valuation invariant Jinit taking the launch's mmap base; the cannot-open path per CONFIG_RSEQ, its lemmas stated for the run's flag and its loop checks for both values of the flag; DrvTail1's new layout: the random bytes below the strings, the auxv's CONFIG_RSEQ-dependent size, the tail's bound N + 10; w2_window written as plain text). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -89,8 +90,8 @@ Module Drv_copen_chk4.
 Import Stdlib.ZArith.ZArith Stdlib.Lists.List Stdlib.Bool.Bool.
 Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_copen__G1.Drv_copen_states.
 
-Lemma check_range_3 : check_range 3 0 64 = true.
-Proof. unfold check_range, check_nr. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.CfgFast.fast_forallb. Qed.
+Lemma check_range_3 : forall r, check_range r 3 0 64 = true.
+Proof. intros [|]; unfold check_range, check_nr; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.CfgFast.fast_forallb. Qed.
 End Drv_copen_chk4.
 
 Module Drv_copen.
@@ -221,6 +222,7 @@ Hypothesis Hfds0 : ltac2:(tb__ "0|0|
 S0S2bS35S3dQ40A1S54A2A1S55Vmd0;A1S51A3").
 Hypothesis Hfs : ltac2:(tb__ "0|0|
 S0Se6S5aVmd0;A1Vfs;A3").
+Hypothesis Hrdr0 : m_channel_reader md0 = true.
 Variable ok : world -> Prop.
 Let SpecT : list event -> Prop := Spec inp.
 Hypothesis HokK : ltac2:(tb__ "0|0|
@@ -231,71 +233,91 @@ Hypothesis Hokh : ok_halted ok SpecT.
 
 Lemma Hsp : valid_sp sp. Proof using Hent. exact (proj1 Hent). Qed.
 Lemma Hargc2 : (2 <= length argv)%nat. Proof using Hargc. unfold argv in *. lia. Qed.
+Lemma Hlaunch : entry_launch_ok_va Sv48 (mkEntry sp brk mb draw) inp.
+Proof using Hent. destruct Hent as (_ & _ & _ & _ & H). exact H. Qed.
 Let JI : ltac2:(tb__ "0|0|
 SaOFrho;") := ltac2:(tb__ "0|0|
-SedS6SdcSdbVsp;Vdraw;Vinp;A6").
-Let STR : ltac2:(tb__ "0|0|
-S7") := ltac2:(tb__ "0|0|
-S5dSe0Vargv;Venvp;A2A1").
-Let RND : ltac2:(tb__ "0|0|
-S7") := ltac2:(tb__ "0|0|
-S5dSe2Vargv;Venvp;A2A1").
-Let LEN : ltac2:(tb__ "0|0|
-S7") := ltac2:(tb__ "0|0|
-S5dSe1Vargv;Venvp;A2A1").
+SedS6SdcSdbVsp;Vmb;Vdraw;Vinp;A7").
+(* LPS 727298f3: the layout numbers of the new entry stack (Lib/InitState.v): the head holds argc, argv,
+   envp, the auxv ([AUX] = [auxv_size] bytes: 432, or 464 with CONFIG_RSEQ), a parity gap and the random
+   bytes at [rand_off]; the strings start at [str_off], above them. *)
+Let STR : Z := Z.of_nat (str_off inp sp draw).
+Let RND : Z := Z.of_nat (rand_off inp).
+Let LEN : Z := Z.of_nat (img_len inp sp draw).
+Let AUX : Z := Z.of_nat (auxv_size (kb_rseq (in_kernel inp))).
 Let ENVC := Z.of_nat (length envp).
-Let A1 : Z := A1 sp inp.
+Let A1 : Z := InitArg1.A1 sp draw inp.
 
 Let N : Z := Z.of_nat (length argv1).
 Let L3 : Z := ltac2:(tb__ "0|0|
 S61VLEN;S5cS5cVSTR;S5dS2cS3dQ8A1Vargv0;A2A1A2Z1A2A2").
 
-Let tail1 : list byte := DrvTail1.tail1 draw inp.
+Let tail1 : list byte := DrvTail1.tail1 inp.
 
 Lemma A1_eq : ltac2:(tb__ "0|0|
 S0S7VA1;S5cS5cS5cS3eQ40Vsp;A2VSTR;A2S5dS2cS3dQ8A1Vargv0;A2A1A2Z1A2A3").
 Proof using argv envp. reflexivity. Qed.
 
-Lemma NU : ltac2:(tb__ "0|a|
-S1S1S5bZ7fff80000000S3eQ40Vsp;A2M0A2S5bG0Z800000000000M1A2A2S1S0S7VSTR;S5cS5cZb8S65Z8M2Z2M3A2A2S65G2VENVC;A2A2A3S1S1S5bZ0M4VENVC;A2S5bVENVC;Z100A2A2S1S5bS5cS5cS5cS5dS2cS3dQ8A1Vargv0;A2A1M5Z1M6A2VN;A2G6A2S5dSe4Vargv;A1A1M7A2S1S5bS5cVSTR;G7A2VRND;A2S1S0S7VLEN;S5cVRND;Z10M8A2A3S1S60VLEN;S5eG3Z16A2A2S1S5bVN;Z1ffffM9A2S1S5bG5G9A2S1S0S7S5fG0G8A2G4A3S5bS5cG0VLEN;A2G1A2A2A2A2A2A2A2A2A2A2A2").
-Proof using A1 Hargc Hent Hinp L3 argv1.
-  pose proof (NUMS1 sp inp Hsp Hinp Hargc2) as N1. pose proof (InitStrs.NUMS sp inp Hsp Hinp) as N2.
-  pose proof (LEN_fit sp inp Hinp (proj2 (proj2 (proj2 Hent)))) as F. rewrite sp_hi_val in F.
+(* The numbers the path reads, in the new layout (Lib/InitArg1.v's [NUMS1], Lib/InitState.v's [nums]
+   and [LEN_fit]): the auxv ends below the random bytes, the strings start above them, and the image
+   ends below the stack window's top. *)
+Lemma NU :
+  (140735340871680 <= bv_unsigned sp <= 140737488355328)
+  /\ RND = 8 * 2 + 8 * ENVC + 24 + AUX + 8 * Z.of_nat (Nat.modulo (block_items argv envp) 2)
+  /\ RND + 16 <= STR
+  /\ (432 <= AUX <= 464)
+  /\ (0 <= ENVC <= 256)
+  /\ Z.of_nat (length argv0) + 1 + N + 1 <= Z.of_nat (tab argv)
+  /\ STR + Z.of_nat (tab argv) + Z.of_nat (tab envp) + 9 <= LEN
+  /\ LEN < 2 ^ 22
+  /\ N <= 131071
+  /\ Z.of_nat (length argv0) <= 131071
+  /\ bv_unsigned sp mod 16 = 0
+  /\ bv_unsigned sp + LEN <= 140737488355328.
+Proof using Hargc Hent Hinp.
+  pose proof (NUMS1 pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc2) as N1.
+  pose proof (nums pcU phU sp brk mb draw inp Hsp Hinp Hlaunch) as N2.
+  pose proof (LEN_fit pcU phU sp brk mb draw inp Hlaunch) as LF.
+  pose proof (execfn_nums pcU phU sp brk mb draw inp Hsp Hinp Hlaunch) as (_ & EX).
+  pose proof (auxv_size_le (kb_rseq (in_kernel inp))) as AL.
+  pose proof (auxv_size_ge (kb_rseq (in_kernel inp))) as AG.
   assert (E : Z.of_nat (length (in_argv inp)) = 2) by (unfold argv in Hargc; rewrite Hargc; reflexivity).
-  unfold STR, RND, LEN, ENVC, N in *. unfold argv0, argv1 in *. unfold argv, envp in *. rewrite E in N1. lia.
+  cbv zeta in N1, N2, LF, EX. rewrite sp_hi_val in LF.
+  unfold STR, RND, LEN, ENVC, AUX, N in *. unfold argv0, argv1 in *. unfold argv, envp in *. lia.
 Qed.
 
 Lemma length_tail1 : ltac2:(tb__ "0|0|
 S0S7S5dS2cS3dQ8A1Vtail1;A2A1VL3;A3").
-Proof using Hargc Hent Hinp. exact (DrvTail1.length_tail1 sp draw inp Hsp Hinp Hargc). Qed.
-Lemma L3_ge : ltac2:(tb__ "0|0|
-S1S5bS5cVN;Z11A2VL3;A2S60VL3;S5eZ2Z16A2A2A2").
-Proof using Hargc Hent Hinp. exact (DrvTail1.L3_ge sp inp Hsp Hinp Hargc). Qed.
-Lemma tail1_nth : ltac2:(tb__ "0|3|
-S31S0S3dQ8M0A1M1S73G1R1Vtail1;S3fG0Z0A2M2A4S73G1S70R1S70S2cG1Vargv0;A2U1A2A2Sf0Vdraw;Vinp;A2G2A4A3Fj;").
-Proof using Hargc Hent. exact (DrvTail1.tail1_nth sp draw inp Hargc). Qed.
-Lemma region_tail1 : ltac2:(tb__ "0|0|
-Se3SdbVsp;Vargv;Venvp;S59Vinp;A1S58Vinp;A1Vdraw;S70Se0Vargv;Venvp;A2S70S2cS3dQ8A1Vargv0;A2U1A2A2Vtail1;A9").
-Proof using Hargc Hent Hinp. exact (DrvTail1.region_tail1 phU sp draw inp Hsp Hinp Hargc). Qed.
+Proof using Hargc Hent Hinp. exact (DrvTail1.length_tail1 pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc). Qed.
+(* The tail after argv[0] holds argv[1], its NUL, the envp strings, AT_EXECFN's name, a NUL and a zero
+   word: at least [N + 10] bytes (it was [N + 17], with the random bytes at its end). *)
+Lemma L3_ge : N + 10 <= L3 /\ L3 < 2 ^ 22.
+Proof using Hargc Hent Hinp. exact (DrvTail1.L3_ge pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc). Qed.
+Lemma tail1_nth : forall j : nat,
+  nth j tail1 (Z_to_bv 8 0) = nth (j + (length argv0 + 1)) (strs_tail inp) (Z_to_bv 8 0).
+Proof using . exact (DrvTail1.tail1_nth inp). Qed.
+Lemma region_tail1 : region inp mb phU (Z_to_bv 64 (Z.of_N pcU)) sp draw
+  (str_off inp sp draw + (length argv0 + 1)) tail1.
+Proof using Hargc Hent Hinp. exact (DrvTail1.region_tail1 pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc). Qed.
 Lemma tail1_head : ltac2:(tb__ "0|3|
 S31Sb1R1S2cS3dQ8M0A1M1Vargv1;A2A2S0G1S73G1R2Vtail1;S3fG0Z0A2M2A4S73G1R2S33G1Vargv1;S32G1G2S30G1A1A3A3G2A4A3F_;Fj;").
-Proof using Hargc. exact (DrvTail1.tail1_head draw inp Hargc). Qed.
+Proof using Hargc. exact (DrvTail1.tail1_head inp Hargc). Qed.
 Lemma tail1_firstn : ltac2:(tb__ "0|1|
 S0S2bS3dQ8A1M0A1S71G0S2cG0Vargv1;A2Vtail1;A3Vargv1;A3").
-Proof using Hargc Hent Hinp. exact (DrvTail1.tail1_firstn sp draw inp Hsp Hinp Hargc). Qed.
+Proof using Hargc. exact (DrvTail1.tail1_firstn inp Hargc). Qed.
 Lemma tail1_nul : ltac2:(tb__ "0|3|
 S0S3dQ8M0A1M1S73G1S2cG1Vargv1;A2Vtail1;S3fG0Z0A2M2A4G2A3").
-Proof using Hargc. exact (DrvTail1.tail1_nul draw inp Hargc). Qed.
+Proof using Hargc. exact (DrvTail1.tail1_nul inp Hargc). Qed.
 Lemma argv1_nonul : ltac2:(tb__ "0|3|
 S31Sb2R1S2cS3dQ8M0A1M1Vargv1;A2A2S4S0G1S73G1R2Vtail1;S3fG0Z0A2M2A4G2A3A1F_;Fj;").
-Proof using Hargc Hinp. exact (DrvTail1.argv1_nonul draw inp Hinp Hargc). Qed.
+Proof using Hargc Hinp. exact (DrvTail1.argv1_nonul inp Hinp Hargc). Qed.
 
 Lemma tail1_frame : ltac2:(tb__ "0|2|
 SaVJI;R1A1S31Sb2R1S2cS3dQ8M0A1M1Vtail1;A2A2S0S2fG1A1S27R4S3fQ40S5cVA1;S5dR2A1A2A2A2S2eG1S73G1R2Vtail1;S3fG0Z0A2A4A2A3F_;Fj;F_;Frho;").
-Proof using Hargc Hent Hinp. exact (DrvTail1.tail1_frame segs pcU phU sp draw inp Hsp Hinp Hargc). Qed.
-Lemma tail1_ms0 : ltac2:(tb__ "0|2|
-S31Sb2R1S2cS3dQ8M0A1M1Vtail1;A2A2S0S2fG1A1Sc4SeeS6SdcSdbVsp;Vdraw;Vinp;A6S3fQ40S5cVA1;S5dR2A1A2A2A2S2eG1S73G1R2Vtail1;S3fG0Z0A2A4A2A3F_;Fj;").
-Proof using Hargc Hent Hinp. exact (DrvTail1.tail1_ms0 segs pcU phU sp draw inp Hsp Hinp Hargc). Qed.
+Proof using Hargc Hent Hinp. exact (DrvTail1.tail1_frame segs pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc). Qed.
+Lemma tail1_ms0 : forall j : nat, (j < length tail1)%nat ->
+  ms_mem (ms0 segs pcU phU sp mb draw inp) (Z_to_bv 64 (A1 + Z.of_nat j)) = Some (nth j tail1 (Z_to_bv 8 0)).
+Proof using Hargc Hent Hinp. exact (DrvTail1.tail1_ms0 segs pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc). Qed.
 
 Definition M1 : list byte := str "cli: cannot open ".
 Definition MSG : list byte := ltac2:(tb__ "0|1|
@@ -356,11 +378,11 @@ Lemma Good_of_JI : ltac2:(tb__ "0|2|
 SaVJI;R1A1S0S3dQ40M0A1M1S15R2P19A2S3fG0VA1;A2A3S0G1S15R3P1bA2S3fG0VL3;A2A3S0G1S15R4P1cA2S3fG0VN;A2A3S0S2bS3dQ8A1A1ScR5P3A2Vtail1;A3S43R6A1F_;F_;F_;F_;F_;Frho;").
 Proof using .
   intros rho HJ H25 H27 H28 H3. constructor; try assumption.
-  - exact (ji_sp _ _ _ _ _ _ _ HJ).
-  - rewrite (ji_envc _ _ _ _ _ _ _ HJ). reflexivity.
-  - rewrite (ji_argv0 _ _ _ _ _ _ _ HJ). reflexivity.
-  - rewrite (ji_len0 _ _ _ _ _ _ _ HJ). reflexivity.
-  - rewrite (ji_rand _ _ _ _ _ _ _ HJ). reflexivity.
+  - exact (ji_sp _ _ _ _ _ _ _ _ HJ).
+  - rewrite (ji_envc _ _ _ _ _ _ _ _ HJ). reflexivity.
+  - rewrite (ji_argv0 _ _ _ _ _ _ _ _ HJ). reflexivity.
+  - rewrite (ji_len0 _ _ _ _ _ _ _ _ HJ). reflexivity.
+  - rewrite (ji_rand _ _ _ _ _ _ _ _ HJ). reflexivity.
 Qed.
 
 Lemma Good_agree : ltac2:(tb__ "0|1|
@@ -430,13 +452,13 @@ S0S7S3eQ40SeVrho;SdP1cA1A2A2VN;A3").
 Proof using HG Hargc Hent Hinp JI. cbn [eval]. rewrite (g_v28 rho HG). pose proof NU. apply Z_to_bv_small. rewrite mod64. lia. Qed.
 Lemma G_rl3 : ltac2:(tb__ "0|0|
 S0S2bS3dQ8A1A1ScVrho;P3A2Vtail1;A3"). Proof using HG. exact (g_rl3 rho HG). Qed.
-Let ADD := J_add inp rho.
+Let ADD := J_add rho.
 Let LIT := J_lit rho.
-Let SOFF := J_soff_small inp rho.
+Let SOFF := J_soff_small rho.
 Let SOFFL := J_soff_lit rho.
 Lemma G_sll3 : ltac2:(tb__ "0|0|
 S0S7S3eQ40SeVrho;S12S79SdP3A1S11Z3A1A3A2A2S65Z8VENVC;A2A3").
-Proof using HG Hargc Hent Hinp JI. pose proof NU. apply (J_sll3 inp rho 3 ENVC G_v3). lia. Qed.
+Proof using HG Hargc Hent Hinp JI. pose proof NU. apply (J_sll3 rho 3 ENVC G_v3). lia. Qed.
 
 Definition lit_of (e : sv) : option Z := ltac2:(tb__ "0|6|
 SbS2fS7A1M0Le;Ve;S7S2dG0L_;S3cS62S63S5eZ2Z28A2M1A1R1A2S62R1G1A2A2S2eS7R1A2S38S7A1M2X2dx2Lc;S8G2Li;S78SbSbG2Lb;La;M3Lop;M4G4S7aG3Lop;M5G5S2dS9SbG2La;Lw;Lsgn;S8SbS7G2Lk;Li;Ll;Xbx8").
@@ -548,32 +570,63 @@ Ltac solve_disj HG :=
           [erewrite (shape_range _ HG) by reflexivity; unfold ranges_disjoint; cbn [fst snd]; lia|]);
   destruct Hin.
 
-Lemma co_intro : ltac2:(tb__ "0|1|
-SaS66S50Vsp;Vdraw;Vinp;R2A4S40S6S4fS30S52A1Vmd0;A2M0SdaR3R2A5S2SaSaS1S43R1A1S40S6G0S95R1R4A5A2Lrho';A2F_;F_;Fw;Frho;").
-Proof using Hargc Hent Hinp.
-  intros rho [tr [ms md]] [HJ H25] [Hsm Hk]. pose proof NU as NU'. pose proof L3_ge as HL3. pose proof length_tail1 as LT1.
-  destruct S_coR_next as [NxR Nx0].
+(* The assertions the per-flag lemmas below share; none of them depends on the flag. *)
+Definition Q_at (S : sstate) (n : nat) : assn := ltac2:(tb__ "0|0|
+S66S2SaSaS1S43R1A1S40S6S4fS44Vn;A1Vmd0;A2VS;R1R2A5A2Lrho;A2Lw;").
+Definition PRw (bs1 bs2 : list byte) (rho1 : valuation) : Prop := ltac2:(tb__ "0|3|
+S1S0S2bS3dQ8A1M0A1M1ScVrho1;P5A2Vbs1;A3S1S0G1ScVrho1;P6A2Vbs2;A3S1S0S7S3eQ40M2S15Vrho1;PdA2A2S5dS2cG0Vbs1;A2A1A3S0S7S3eG2S15Vrho1;PfA2A2S5dS2cG0Vbs2;A2A1A3A2A2A2").
+Definition GoodS (rho : valuation) : Prop := ltac2:(tb__ "0|0|
+S1S43Vrho;A1S0S2bS3dQ8A1A1ScVrho;P7A2Vargv1;A3A2").
+Definition QS_at (S : sstate) (n : nat) : assn := ltac2:(tb__ "0|0|
+S66S2SaSaS1S47R1A1S40S6S4fS44Vn;A1Vmd0;A2VS;R1R2A5A2Lrho;A2Lw;").
+Definition V70 : Z := 4 * (A1 / 4).
+Definition PRloc (n : Z) (rho1 : valuation) : Prop := ltac2:(tb__ "0|3|
+S1S0S2bS3dQ8A1M0A1ScVrho1;P7A2S71G0S64Vn;A1M1ScVrho1;P3A2M2A3A3Sb1G1S2cG0G2A2A2A2").
 
-  pose proof (smatch_xforms segs xs_co rho S_operr S_co0 _ xs_co_ok Hsm) as Hsm0.
-  destruct (smatch_release_obj segs rho S_co0 _ (ss_objs S_coR) (lastobj S_co0) (ss_next S_co0) Hsm0 S_co0_objs
-              ltac:(rewrite Nx0; exact swf_S_coR)) as (m' & Hsm1 & Hout & Hin & HoR & Hrom).
+(* LPS 727298f3: the states of the cannot-open path depend on the run's CONFIG_RSEQ flag
+   (Drv_copen__G1.v); the lemmas below are stated for the run's flag [rq]. *)
+Section PerR.
+Variable rq : bool.
+Hypothesis Hrq : kb_rseq (in_kernel inp) = rq.
+
+(* The auxv object of the path's states is 464 bytes with CONFIG_RSEQ, 432 without (Lib/InitState.v
+   [O_aux]); [NU] places it below the random bytes and the strings. *)
+Lemma AUXSZ : AUX = if rq then 464 else 432.
+Proof using Hrq. unfold AUX. rewrite Hrq. destruct rq; vm_compute; reflexivity. Qed.
+
+Ltac solve_disjr HG := pose proof AUXSZ as AX; destruct rq; cbv beta iota in AX; solve_disj HG.
+Ltac by_r t := destruct rq; [exact (t true) | exact (t false)].
+
+
+Lemma co_intro : forall (rho : valuation) (w : world),
+  J25 sp mb draw inp rho -> SP segs (Kx [] md0) (S_operr rq) rho w ->
+  exists rho' : valuation, Good rho' /\ SP segs (Kx [] md0) (S_co rq) rho' w.
+Proof using Hargc Hent Hinp Hrq.
+  intros rho [tr [ms md]] [HJ H25] [Hsm Hk]. pose proof NU as NU'. pose proof L3_ge as HL3. pose proof length_tail1 as LT1.
+  destruct (S_coR_next rq) as [NxR Nx0].
+
+  pose proof (smatch_xforms segs xs_co rho (S_operr rq) (S_co0 rq) _ (xs_co_ok rq) Hsm) as Hsm0.
+  destruct (smatch_release_obj segs rho (S_co0 rq) _ (ss_objs (S_coR rq)) (lastobj (S_co0 rq)) (ss_next (S_co0 rq)) Hsm0 (S_co0_objs rq)
+              ltac:(rewrite Nx0; by_r swf_S_coR)) as (m' & Hsm1 & Hout & Hin & HoR & Hrom).
   cbn [w_cfg cfg_ms] in Hin, HoR, Hrom.
   set (rho1 := set_rm rho m') in Hsm1.
-  assert (Hsm1' : smatch segs rho1 S_coR (tr, mkCfg ms md)) by (rewrite Nx0 in Hsm1; exact Hsm1). clear Hsm1.
+  assert (Hsm1' : smatch segs rho1 (S_coR rq) (tr, mkCfg ms md)) by (rewrite Nx0 in Hsm1; destruct rq; exact Hsm1). clear Hsm1.
 
-  assert (RR : obj_range rho (lastobj S_co0) = (bv_unsigned sp + RND, bv_unsigned sp + RND + 16)).
-  { rewrite last_co0. unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi].
-    rewrite (J_v6 segs pcU phU sp draw inp Hsp Hinp rho HJ). rewrite !soff_lit_small by lia. unfold RND, argv, envp. f_equal; lia. }
-  assert (PR : forall a, m' a = ms_mem (ms0 segs pcU phU sp draw inp) a).
+  assert (RR : obj_range rho (lastobj (S_co0 rq)) = (bv_unsigned sp + RND, bv_unsigned sp + RND + 16)).
+  { rewrite (last_co0 rq). unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi].
+    rewrite (J_v6 segs pcU phU sp brk mb draw inp Hsp Hinp Hlaunch rho HJ). rewrite !soff_lit_small by lia. unfold RND. f_equal; lia. }
+  (* The random bytes of the released object lie at [rand_off] of the launch image (Lib/InitStrs.v
+     [region_rnd]), below the strings. *)
+  assert (PR : forall a, m' a = ms_mem (ms0 segs pcU phU sp mb draw inp) a).
   { intros a. destruct (Z_lt_le_dec (bv_unsigned a) (bv_unsigned sp + RND)) as [Hlt|Hge];
-      [rewrite Hout; [apply (ji_mem _ _ _ _ _ _ _ HJ) | rewrite RR; unfold in_rng; cbn [fst snd]; lia]|].
+      [rewrite Hout; [apply (ji_mem _ _ _ _ _ _ _ _ HJ) | rewrite RR; unfold in_rng; cbn [fst snd]; lia]|].
     destruct (Z_lt_le_dec (bv_unsigned a) (bv_unsigned sp + RND + 16)) as [Hlt2|Hge2];
-      [|rewrite Hout; [apply (ji_mem _ _ _ _ _ _ _ HJ) | rewrite RR; unfold in_rng; cbn [fst snd]; lia]].
+      [|rewrite Hout; [apply (ji_mem _ _ _ _ _ _ _ _ HJ) | rewrite RR; unfold in_rng; cbn [fst snd]; lia]].
     rewrite Hin by (rewrite RR; unfold in_rng; cbn [fst snd]; lia).
 
-    rewrite last_co0 in HoR. pose proof HoR as (_ & Hw & Hc & _ & _).
+    rewrite (last_co0 rq) in HoR. pose proof HoR as (_ & Hw & Hc & _ & _).
     unfold obj_lo_of, obj_hi_of in Hw, Hc. cbn [ob_base ob_lo ob_hi ob_dflt ob_cells] in Hw, Hc.
-    pose proof (J_v6 segs pcU phU sp draw inp Hsp Hinp rho HJ) as V6. fold argv envp RND in V6.
+    pose proof (J_v6 segs pcU phU sp brk mb draw inp Hsp Hinp Hlaunch rho HJ) as V6. fold RND in V6.
     rewrite V6 in Hw. rewrite !soff_lit_small in Hw by lia.
     set (off := bv_unsigned a - (bv_unsigned sp + RND)).
     assert (Ea : a = Z_to_bv 64 (bv_unsigned sp + RND + off)) by (apply bv_eq; rewrite Z_to_bv_small; [lia | rewrite mod64; lia]).
@@ -582,24 +635,23 @@ Proof using Hargc Hent Hinp.
       destruct C9 as (_ & _ & R9). destruct C10 as (_ & _ & R10). cbn [c_off c_width c_val Z.to_nat Pos.to_nat] in R9, R10.
       rewrite !soff_lit_small in R9, R10 by lia. unfold oaddr in R9, R10. rewrite V6 in R9, R10.
       change (eval rho (SVar 9)) with (rw rho 9) in R9. change (eval rho (SVar 10)) with (rw rho 10) in R10.
-      rewrite (ji_rnd0 _ _ _ _ _ _ _ HJ) in R9. rewrite (ji_rnd1 _ _ _ _ _ _ _ HJ) in R10.
+      rewrite (ji_rnd0 _ _ _ _ _ _ _ _ HJ) in R9. rewrite (ji_rnd1 _ _ _ _ _ _ _ _ HJ) in R10.
       destruct (Nat.lt_ge_cases (Z.to_nat off) 8) as [Hlt8|Hge8].
       - pose proof (rd_bytes_nth ms 8 _ _ (Z.to_nat off) R9 Hlt8 ltac:(rewrite Z_to_bv_small by (rewrite mod64; lia); lia)) as X.
         rewrite Z_to_bv_small in X by (rewrite mod64; lia).
         replace (bv_unsigned sp + RND + 0 + Z.of_nat (Z.to_nat off)) with (bv_unsigned sp + RND + off) in X by lia. rewrite <- Ea in X.
-        rewrite X. f_equal. pose proof (rand_bytes_nth draw inp 0 (Z.to_nat off) ltac:(lia) Hlt8) as RBN.
+        rewrite X. f_equal. pose proof (rand_bytes_nth draw 0 (Z.to_nat off) ltac:(lia) Hlt8) as RBN.
         replace (8 * 0 + Z.to_nat off)%nat with (Z.to_nat off) in RBN by lia. rewrite RBN. reflexivity.
       - pose proof (rd_bytes_nth ms 8 _ _ (Z.to_nat off - 8) R10 ltac:(lia) ltac:(rewrite Z_to_bv_small by (rewrite mod64; lia); lia)) as X.
         rewrite Z_to_bv_small in X by (rewrite mod64; lia).
         replace (bv_unsigned sp + RND + 8 + Z.of_nat (Z.to_nat off - 8)) with (bv_unsigned sp + RND + off) in X by lia. rewrite <- Ea in X.
-        rewrite X. f_equal. pose proof (rand_bytes_nth draw inp 1 (Z.to_nat off - 8) ltac:(lia) ltac:(lia)) as RBN.
+        rewrite X. f_equal. pose proof (rand_bytes_nth draw 1 (Z.to_nat off - 8) ltac:(lia) ltac:(lia)) as RBN.
         replace (8 * 1 + (Z.to_nat off - 8))%nat with (Z.to_nat off) in RBN by lia. rewrite RBN. reflexivity. }
-    rewrite Ea in RB |- *. rewrite (ms_mem_some_high segs inp ms _ (nth (Z.to_nat off) (rand_bytes draw) (Z_to_bv 8 0))).
-    - replace (bv_unsigned sp + RND + off) with (bv_unsigned sp + (Z.of_nat (str_off argv envp) + Z.of_nat (Z.to_nat (RND - STR + off)))) by (unfold STR; lia).
-      rewrite (ms0_mem_region segs pcU phU sp draw inp Hsp Hinp _ (InitStrs.strs_tail draw inp) _ (region_tail phU sp draw inp)).
-      2:{ pose proof (length_tail draw inp) as LT. fold argv envp in LT. fold LEN STR in LT. lia. }
-      f_equal. replace (Z.to_nat (RND - STR + off)) with (Z.to_nat (RND - STR) + Z.to_nat off)%nat by lia.
-      symmetry. apply (tail_nth_rand sp draw inp Hsp Hinp). lia.
+    rewrite Ea in RB |- *. rewrite (ms_mem_some_high segs ms _ (nth (Z.to_nat off) (rand_bytes draw) (Z_to_bv 8 0))).
+    - replace (bv_unsigned sp + RND + off) with (bv_unsigned sp + (Z.of_nat (rand_off inp) + Z.of_nat (Z.to_nat off))) by (unfold RND; lia).
+      rewrite (ms0_mem_region segs pcU phU sp brk mb draw inp Hsp Hinp Hlaunch _ (rand_bytes draw) (Z.to_nat off)
+                 (region_rnd pcU phU sp brk mb draw inp Hlaunch)) by (rewrite length_rand_bytes; lia).
+      reflexivity.
     - rewrite Z_to_bv_small by (rewrite mod64; lia). change segs with segsU. rewrite segs_topU. lia.
     - apply Hw; [lia | reflexivity].
     - exact RB. }
@@ -607,27 +659,27 @@ Proof using Hargc Hent Hinp.
   { destruct HJ; constructor; cbn [rho1 set_rm rw rl rm]; assumption. }
 
   set (rho2 := rho_set_rw (rho_set_rw (rho_set_rl rho1 3 tail1) 27 (Z_to_bv 64 L3)) 28 (Z_to_bv 64 N)).
-  assert (Hsm2 : smatch segs rho2 S_coR (tr, mkCfg ms md)).
-  { eapply smatch_agree; [| apply smatch_set_rl; [exact norl3_S_coR | exact Hsm1']].
+  assert (Hsm2 : smatch segs rho2 (S_coR rq) (tr, mkCfg ms md)).
+  { eapply smatch_agree; [| apply smatch_set_rl; [exact (norl3_S_coR rq) | exact Hsm1']].
     rewrite NxR. apply (agree_below_trans 27 _ (rho_set_rw (rho_set_rl rho1 3 tail1) 27 (Z_to_bv 64 L3))); apply agree_below_set_rw; lia. }
   assert (HJ2 : JI rho2).
   { apply Jinit_set_rw; [|lia]. apply Jinit_set_rw; [|lia]. apply Jinit_set_rl; [exact HJ1 | lia | lia]. }
   assert (HG2 : Good rho2) by (apply (Good_of_JI rho2 HJ2); [cbn; exact H25 | reflexivity | reflexivity | reflexivity]).
   exists rho2. split; [exact HG2|]. split; [|exact Hk].
 
-  rewrite <- S_co_eq. apply smatch_add_facts; [| | reflexivity].
-  - rewrite <- S_cow_eq. unfold app_objs.
-    apply (smatch_carve_listobj segs rho2 S_coR _ (SVar 25) (SLit 0) (SVar 27) 0 L3 (DList 3) 3 29 Hsm2 eq_refl);
+  rewrite <- (S_co_eq rq). apply smatch_add_facts; [| | destruct rq; reflexivity].
+  - rewrite <- (S_cow_eq rq). unfold app_objs.
+    apply (smatch_carve_listobj segs rho2 (S_coR rq) _ (SVar 25) (SLit 0) (SVar 27) 0 L3 (DList 3) 3 29 Hsm2 eq_refl);
       rewrite ?(G_v25 rho2 HG2).
-    + exact swf_S_cow.
+    + by_r swf_S_cow.
     + apply soff_lit_small. lia.
-    + apply (J_soff_small inp rho2 _ _ (G_v27 rho2 HG2)). lia.
+    + apply (J_soff_small rho2 _ _ (G_v27 rho2 HG2)). lia.
     + lia.
     + lia.
     + rewrite A1_eq. lia.
     + rewrite A1_eq. lia.
     + rewrite (G_rl3 rho2 HG2), LT1. lia.
-    + solve_disj HG2.
+    + solve_disjr HG2.
     + intros off Hoff _. cbn [rho2 rho1 rho_set_rw rho_set_rl set_rm rm].
       replace (A1 + off) with (A1 + Z.of_nat (Z.to_nat off)) by lia.
       unfold wview. set (a := Z_to_bv 64 _). change (m' a) with (rm rho2 a). subst a. rewrite (tail1_frame rho2 HJ2) by lia. discriminate.
@@ -637,18 +689,16 @@ Proof using Hargc Hent Hinp.
       rewrite Z.sub_0_r. reflexivity.
   - pose proof (G_v27 rho2 HG2) as V27. pose proof (G_v28 rho2 HG2) as V28. cbn [eval] in V27, V28.
     unfold F_co. repeat constructor; cbn [holds]; unfold bv_leu.
-    + rewrite (J_add inp rho2 (SVar 28) (SLit 17) N 17); [| exact V28 | apply U_lit64; lia | lia | lia | lia].
+    + rewrite (J_add rho2 (SVar 28) (SLit 10) N 10); [| exact V28 | apply U_lit64; lia | lia | lia | lia].
       change (eval rho2 (SVar 27)) with (rw rho2 27). rewrite V27. lia.
     + change (eval rho2 (SVar 27)) with (rw rho2 27). rewrite V27, U_lit64 by lia. lia.
     + change (eval rho2 (SVar 28)) with (rw rho2 28). rewrite V28, U_lit64 by lia. lia.
     +
       pose proof (G_v25 rho2 HG2) as V25. pose proof A1_eq as EA1.
-      rewrite (J_add inp rho2 (SVar 25) (SVar 28) A1 N); [| exact V25 | exact V28 | lia | lia | lia].
+      rewrite (J_add rho2 (SVar 25) (SVar 28) A1 N); [| exact V25 | exact V28 | lia | lia | lia].
       rewrite U_lit64 by lia. lia.
 Qed.
 
-Definition Q_at (S : sstate) (n : nat) : assn := ltac2:(tb__ "0|0|
-S66S2SaSaS1S43R1A1S40S6S4fS44Vn;A1Vmd0;A2VS;R1R2A5A2Lrho;A2Lw;").
 
 Lemma SP_add1 : ltac2:(tb__ "0|0|
 S2bS52A1S53OF_;F_;S10SaS66S13S40S6R5R4R3R2A5S18R4R2A2S0S2dS29S16R6A1R3A2S34A3S40S6R8Sb4S32S13R4S30S13A1A3R7A2R6R5A5F_;F_;F_;Ff;Fw;Frho;FS;FK;").
@@ -659,10 +709,10 @@ Lemma hd_fact : ltac2:(tb__ "0|1|
 SaS10S13S2bS13A1M0S66S2bS52A1S53OF_;F_;S0G0S1aR5A1S32S13R4R3A3A3S40S6R2R6R7R3A5S18R8R6A2F_;F_;FK;Fw;FF;Ff;FS;Frho;").
 Proof using . intros rho S f F w K E Hsp. eapply SP_fact; [exact Hsp|]. rewrite E. left. reflexivity. Qed.
 
-Lemma FirstNul_call : ltac2:(tb__ "0|0|
-SaSc3S43R2A1Sf2SbeSc0R3Sa5R2A3Sa9A2A1F_;Fms;Frho;").
+Lemma FirstNul_call : forall (rho : valuation) (ms : machine_state),
+  Good rho -> FirstNul (rho_sub (rho_absorb rho (R_cs rq) ms) (s_cs rq)).
 Proof using Hargc Hent Hinp.
-  intros rho ms HG. unfold FirstNul. rewrite rl_call, rw_call, s_cs_16.
+  intros rho ms HG. unfold FirstNul. rewrite rl_call, rw_call, (s_cs_16 rq).
   rewrite (G_rl3 rho HG), (G_v28 rho HG). unfold nthb, N. rewrite Nat2Z.id. split.
   - rewrite tail1_nul. reflexivity.
   - intros i Hi E. apply (argv1_nonul (Z.to_nat i) ltac:(lia)). apply bv_eq. rewrite E. reflexivity.
@@ -676,87 +726,87 @@ Proof using Hargc Hent Hinp.
   apply Hf. rewrite (G_rl3 rho HG), (G_v28 rho HG). unfold nthb, N. rewrite Nat2Z.id, tail1_nul. reflexivity.
 Qed.
 
-Lemma L_cs_post : ltac2:(tb__ "0|1|
-SaS43R1A1S74S13S18R2A1S1aS99A1A3S68S6Vok;S40S6S4fS44U0M0A1Vmd0;A2S9aR3A4S46S81G0A2A4F_;F_;Frho;").
+Lemma L_cs_post : forall rho : valuation, Good rho -> Forall (holds rho) (ss_facts (E_cs rq)) ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (T_imp rq) rho) (Q_at (T_cs1 rq) 0).
 Proof using .
   intros rho2 HG2 HF2.
-  apply (post_path segs ok (Kx (TR 0) md0) T_imp T_cs (ss_facts E_cs) xs_post rho2 _ fb_cs2 xs_post_ok HF2).
+  apply (post_path segs ok (Kx (TR 0) md0) (T_imp rq) (T_cs rq) (ss_facts (E_cs rq)) xs_post rho2 _ (fb_cs2 rq) (xs_post_ok rq) HF2).
   apply triple_facts. intros HFT.
   eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
   intros w Hsp. exists rho2. split; [exact HG2|].
-  eapply (SP_restate segs _ rho2 T_cs T_cs1 w); [exact swf_T_cs1 | exact diff_cs | | constructor | exact Hsp].
-  constructor; [|constructor]. cbn [fst snd]. exact (proj1 (Forall_forall _ _) HFT _ fact_T_cs).
+  eapply (SP_restate segs _ rho2 (T_cs rq) (T_cs1 rq) w); [exact (swf_T_cs1 rq) | exact (diff_cs rq) | | constructor | exact Hsp].
+  constructor; [|constructor]. cbn [fst snd]. exact (proj1 (Forall_forall _ _) HFT _ (fact_T_cs rq)).
 Qed.
 
-Lemma L_call : ltac2:(tb__ "0|1|
-SaS43R1A1S68S6Vok;S40S6S4fS44U0M0A1Vmd0;A2S95R2A4S46S81G0A2A4F_;Frho;").
-Proof using Hargc Hent Hinp HokK.
+Lemma L_call : forall rho : valuation, Good rho ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (S_co rq) rho) (Q_at (T_cs1 rq) 0).
+Proof using Hargc Hent Hinp HokK Hrq.
   intros rho HG.
-  eapply run_tr; [exact run_co | reflexivity | apply okf |].
+  eapply run_tr; [exact (run_co rq) | destruct rq; reflexivity | apply okf |].
   intros L rho1 [<-|[]] Hag1. cbn [lf_state].
-  pose proof (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) as HG1.
-  apply (call_path segs FirstNul ok (Kx (TR 0) md0) (Kx (TR 0) md0) E_cs E_csX Pre_strnlen xs_pre s_cs R_cs Posts_strnlen _ rho1
-           xs_pre_ok efr_cs chk_cs fb_cs).
+  pose proof (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) as HG1.
+  apply (call_path segs FirstNul ok (Kx (TR 0) md0) (Kx (TR 0) md0) (E_cs rq) (E_csX rq) Pre_strnlen xs_pre (s_cs rq) (R_cs rq) Posts_strnlen _ rho1
+           (xs_pre_ok rq) (efr_cs rq) (chk_cs rq) (fb_cs rq)).
   - intros rho2 HF. apply strnlen_sum; [apply okf | exact HF].
   - intros ms _. apply FirstNul_call. exact HG1.
-  - intros L rho2 [<-|[]] Hag2 HF2. cbn [lf_state]. replace (ss_next Pre_strnlen) with NF by reflexivity. rewrite T_imp_eq.
-    apply L_cs_post; [|exact HF2]. exact (Good_agree _ _ _ Hag2 ltac:(cbn; lia) HG1).
+  - intros L rho2 [<-|[]] Hag2 HF2. cbn [lf_state]. replace (ss_next Pre_strnlen) with NF by reflexivity. rewrite (T_imp_eq rq).
+    apply L_cs_post; [|exact HF2]. exact (Good_agree _ _ _ Hag2 ltac:(destruct rq; cbn; lia) HG1).
 Qed.
 
-Lemma eL_cs_post : ltac2:(tb__ "0|1|
-SaS43R1A1S74S13S18R2A1S1aS99A1A3S67S6S40S6S4fS44U0M0A1Vmd0;A2S9aR3A4S46S81G0A2A3F_;F_;Frho;").
+Lemma eL_cs_post : forall rho : valuation, Good rho -> Forall (holds rho) (ss_facts (E_cs rq)) ->
+  etriple segs (SP segs (Kx (TR 0) md0) (T_imp rq) rho) (Q_at (T_cs1 rq) 0).
 Proof using .
   intros rho2 HG2 HF2.
-  apply (epost_path segs (Kx (TR 0) md0) T_imp T_cs (ss_facts E_cs) xs_post rho2 _ fb_cs2 xs_post_ok HF2).
+  apply (epost_path segs (Kx (TR 0) md0) (T_imp rq) (T_cs rq) (ss_facts (E_cs rq)) xs_post rho2 _ (fb_cs2 rq) (xs_post_ok rq) HF2).
   apply etriple_facts. intros HFT w Hsp. exists w. split; [apply wsteps_refl|]. exists rho2. split; [exact HG2|].
-  eapply (SP_restate segs _ rho2 T_cs T_cs1 w); [exact swf_T_cs1 | exact diff_cs | | constructor | exact Hsp].
-  constructor; [|constructor]. cbn [fst snd]. exact (proj1 (Forall_forall _ _) HFT _ fact_T_cs).
+  eapply (SP_restate segs _ rho2 (T_cs rq) (T_cs1 rq) w); [exact (swf_T_cs1 rq) | exact (diff_cs rq) | | constructor | exact Hsp].
+  constructor; [|constructor]. cbn [fst snd]. exact (proj1 (Forall_forall _ _) HFT _ (fact_T_cs rq)).
 Qed.
 
-Lemma eL_call : ltac2:(tb__ "0|1|
-SaS43R1A1S67S6S40S6S4fS44U0M0A1Vmd0;A2S95R2A4S46S81G0A2A3F_;Frho;").
-Proof using Hargc Hent Hinp.
+Lemma eL_call : forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR 0) md0) (S_co rq) rho) (Q_at (T_cs1 rq) 0).
+Proof using Hargc Hent Hinp Hrq.
   intros rho HG.
-  eapply erun_tr; [exact run_co | reflexivity |].
+  eapply erun_tr; [exact (run_co rq) | destruct rq; reflexivity |].
   intros L rho1 [<-|[]] Hag1. cbn [lf_state].
-  pose proof (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) as HG1.
-  apply (ecall_path segs FirstNul (Kx (TR 0) md0) (Kx (TR 0) md0) E_cs E_csX Pre_strnlen xs_pre s_cs R_cs Posts_strnlen _ rho1
-           xs_pre_ok efr_cs chk_cs fb_cs).
+  pose proof (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) as HG1.
+  apply (ecall_path segs FirstNul (Kx (TR 0) md0) (Kx (TR 0) md0) (E_cs rq) (E_csX rq) Pre_strnlen xs_pre (s_cs rq) (R_cs rq) Posts_strnlen _ rho1
+           (xs_pre_ok rq) (efr_cs rq) (chk_cs rq) (fb_cs rq)).
   - intros rho2 HF. apply strnlen_sum_ex. exact HF.
   - intros ms _. apply FirstNul_call. exact HG1.
-  - intros L rho2 [<-|[]] Hag2 HF2. cbn [lf_state]. replace (ss_next Pre_strnlen) with NF by reflexivity. rewrite T_imp_eq.
-    apply eL_cs_post; [|exact HF2]. exact (Good_agree _ _ _ Hag2 ltac:(cbn; lia) HG1).
+  - intros L rho2 [<-|[]] Hag2 HF2. cbn [lf_state]. replace (ss_next Pre_strnlen) with NF by reflexivity. rewrite (T_imp_eq rq).
+    apply eL_cs_post; [|exact HF2]. exact (Good_agree _ _ _ Hag2 ltac:(destruct rq; cbn; lia) HG1).
 Qed.
 
-Lemma T64_intro : ltac2:(tb__ "0|1|
-SaS66S43R2A1S5bZ40VN;A2S40S6S4fS44U0A1Vmd0;A2M0S81R4R3A5S40S6G0Sa6R5R4A5F_;F_;F_;Fw;Frho;").
-Proof using Hargc Hent Hinp.
-  intros rho w HG HN Hsp. unfold T64. apply SP_add1; [exact Hsp | | reflexivity].
+Lemma T64_intro : forall (rho : valuation) (w : world), Good rho -> 64 <= N ->
+  SP segs (Kx (TR 0) md0) (T_cs1 rq) rho w -> SP segs (Kx (TR 0) md0) (T64 rq) rho w.
+Proof using Hargc Hent Hinp Hrq.
+  intros rho w HG HN Hsp. unfold T64. apply SP_add1; [exact Hsp | | destruct rq; reflexivity].
   cbn [holds]. unfold bv_leu. rewrite U_lit64 by lia. rewrite (G_v28 rho HG). lia.
 Qed.
 
-Lemma L_64 : ltac2:(tb__ "0|1|
-S5bZ40VN;A2SaS43R1A1S68S6Vok;S40S6S4fS44U0M0A1Vmd0;A2S81R2A4S46S8bG0A2A4F_;Frho;F_;").
-Proof using Hargc Hent Hinp HokK.
+Lemma L_64 : 64 <= N -> forall rho : valuation, Good rho ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (T_cs1 rq) rho) (Q_at (E_W1 rq) 0).
+Proof using Hargc Hent Hinp HokK Hrq.
   intros HN rho HG.
-  eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) T64 rho); [intros w Hw; exact (T64_intro rho w HG HN Hw) | intros w Hw; exact Hw |].
-  eapply run_tr; [exact run_64 | reflexivity | apply okf |].
+  eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) (T64 rq) rho); [intros w Hw; exact (T64_intro rho w HG HN Hw) | intros w Hw; exact Hw |].
+  eapply run_tr; [exact (run_64 rq) | destruct rq; reflexivity | apply okf |].
   intros L rho1 [<-|[<-|[]]] Hag1; cbn [lf_state].
-  - pose proof (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) as HG1.
-    intros n Hg w Hw. exfalso. exact (ovf_contra rho1 X_ovf w _ HG1 fact_ovf Hw).
+  - pose proof (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) as HG1.
+    intros n Hg w Hw. exfalso. exact (ovf_contra rho1 (X_ovf rq) w _ HG1 (fact_ovf rq) Hw).
   - eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-    intros w Hw. exists rho1. split; [exact (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) | exact Hw].
+    intros w Hw. exists rho1. split; [exact (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma eL_64 : ltac2:(tb__ "0|1|
-S5bZ40VN;A2SaS43R1A1S67S6S40S6S4fS44U0M0A1Vmd0;A2S81R2A4S46S8bG0A2A3F_;Frho;F_;").
-Proof using Hargc Hent Hinp.
+Lemma eL_64 : 64 <= N -> forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR 0) md0) (T_cs1 rq) rho) (Q_at (E_W1 rq) 0).
+Proof using Hargc Hent Hinp Hrq.
   intros HN rho HG.
-  eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) T64 rho); [intros w Hw; exact (T64_intro rho w HG HN Hw) | intros w Hw; exact Hw |].
-  eapply erun_tr; [exact run_64 | reflexivity |].
+  eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) (T64 rq) rho); [intros w Hw; exact (T64_intro rho w HG HN Hw) | intros w Hw; exact Hw |].
+  eapply erun_tr; [exact (run_64 rq) | destruct rq; reflexivity |].
   intros L rho1 [<-|[<-|[]]] Hag1; cbn [lf_state]; intros w Hw.
-  - exfalso. exact (ovf_contra rho1 X_ovf w _ (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) fact_ovf Hw).
-  - exists w. split; [apply wsteps_refl|]. exists rho1. split; [exact (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) | exact Hw].
+  - exfalso. exact (ovf_contra rho1 (X_ovf rq) w _ (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) (fact_ovf rq) Hw).
+  - exists w. split; [apply wsteps_refl|]. exists rho1. split; [exact (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
 Lemma map_beval_BL_co : ltac2:(tb__ "0|1|
@@ -767,54 +817,57 @@ Lemma rd_high_mem : ltac2:(tb__ "0|3|
 Sc3S3dQ40M0A1S3dQ8A1M1S28S6R3A2S5bSefS6A1S3eG0R3A2A2S0S2fG1A1M2S26R5R4A2S2eG1R3A2A3S0G2Sc4R6R5A2S2eG1R4A2A3F_;F_;F_;Fb;Fa;Fms;").
 Proof using inp.
   intros ms a b Hrom Ha Hr. unfold rd, ms_read_byte in Hr. destruct (ms_mem ms a) as [b'|] eqn:E; [exact Hr|].
-  rewrite (Hrom a) in Hr. rewrite (image_byte_none_high segs inp a Ha) in Hr. discriminate.
+  rewrite (Hrom a) in Hr. rewrite (image_byte_none_high segs a Ha) in Hr. discriminate.
 Qed.
 
-Lemma w1_intro : ltac2:(tb__ "0|2|
-SaS66S43R2A1S40S6S4fS44U0A1Vmd0;A2M0S8bR3R2A5S2SaSaS1S43R1A1S1S0S2bS3dQ8A1A1M1ScR1P5A2S48A3S1S0G1ScR1P6A2Vargv1;A3S40S6G0S8cR1R4A5A2A2A2Lrho';A2F_;F_;Fw;Frho;").
-Proof using Hargc Hent Hinp.
+Lemma w1_intro : forall (rho : valuation) (w : world), Good rho ->
+  SP segs (Kx (TR 0) md0) (E_W1 rq) rho w ->
+  exists rho' : valuation, Good rho' /\ rl rho' 5 = M1 /\ rl rho' 6 = argv1 /\ SP segs (Kx (TR 0) md0) (E_W1c rq) rho' w.
+Proof using Hargc Hent Hinp Hrq.
   intros rho [tr [ms md]] HG [Hsm Hk]. pose proof NU as NU'. pose proof L3_ge as HL3. pose proof length_tail1 as LT1.
 
-  pose proof (smatch_xforms segs xs_w1 rho E_W1 E_W1x _ xs_w1_ok Hsm) as Hsm1.
-  destruct obj3_w1 as (Hn3 & Hlo3 & Hhi3 & Hwr3 & Harr3).
-  pose proof (smatch_obj_to_list segs rho E_W1x _ 3 5 (obj E_W1x 3) (-560) (-543) BL_co Hsm1 Hn3 Hlo3 Hhi3
-                ltac:(lia) ltac:(lia) Hwr3 Harr3 cb_w1 norl5_w1) as Hsm2.
-  rewrite E_W1l_eq, map_beval_BL_co in Hsm2.
+  pose proof (smatch_xforms segs xs_w1 rho (E_W1 rq) (E_W1x rq) _ (xs_w1_ok rq) Hsm) as Hsm1.
+  destruct (obj3_w1 rq) as (Hn3 & Hlo3 & Hhi3 & Hwr3 & Harr3).
+  pose proof (smatch_obj_to_list segs rho (E_W1x rq) _ 3 5 (obj (E_W1x rq) 3) (-560) (-543) BL_co Hsm1 Hn3 Hlo3 Hhi3
+                ltac:(lia) ltac:(lia) Hwr3 Harr3 (cb_w1 rq) (norl5_w1 rq)) as Hsm2.
+  rewrite (E_W1l_eq rq), map_beval_BL_co in Hsm2.
   set (rho1 := rho_set_rl rho 5 M1) in Hsm2.
   assert (HG1 : Good rho1) by (apply Good_set_rl; [exact HG | lia]).
 
-  destruct (smatch_release_obj segs rho1 E_W1l _ (ss_objs E_W1r) O_str1 (ss_next E_W1l) Hsm2 E_W1l_objs swf_E_W1r)
+  destruct (smatch_release_obj segs rho1 (E_W1l rq) _ (ss_objs (E_W1r rq)) O_str1 (ss_next (E_W1l rq)) Hsm2 (E_W1l_objs rq)
+              ltac:(by_r swf_E_W1r))
     as (m' & Hsm3 & Hout & Hin & Ho1 & Hrom).
   cbn [w_cfg cfg_ms] in Hin, Ho1, Hrom.
   set (rho2 := set_rm rho1 m') in Hsm3.
   assert (HG2 : Good rho2) by (apply Good_rm; exact HG1).
   assert (R1 : obj_range rho1 O_str1 = (A1, A1 + L3)).
   { unfold obj_range, obj_lo_of, obj_hi_of, O_str1. cbn [ob_base ob_lo ob_hi]. rewrite (G_v25 rho1 HG1).
-    rewrite soff_lit_small by lia. rewrite (J_soff_small inp rho1 _ _ (G_v27 rho1 HG1)) by lia. f_equal; lia. }
+    rewrite soff_lit_small by lia. rewrite (J_soff_small rho1 _ _ (G_v27 rho1 HG1)) by lia. f_equal; lia. }
 
   set (rho3 := rho_set_rl rho2 6 argv1).
-  assert (Hsm4 : smatch segs rho3 E_W1r (tr, mkCfg ms md)) by (apply smatch_set_rl; [exact norl6_w1 | exact Hsm3]).
+  assert (Hsm4 : smatch segs rho3 (E_W1r rq) (tr, mkCfg ms md))
+    by (apply smatch_set_rl; [exact (norl6_w1 rq) | destruct rq; exact Hsm3]).
   assert (HG3 : Good rho3) by (apply Good_set_rl; [exact HG2 | lia]).
   exists rho3. split; [exact HG3|]. split; [reflexivity|]. split; [reflexivity|]. split; [|exact Hk].
-  rewrite <- E_W1c_eq. unfold app_objs.
-  apply (smatch_carve_listobj segs rho3 E_W1r _ (SVar 25) (SLit 0) (SVar 28) 0 N (DRom 6) 6 (ss_next E_W1r) Hsm4 eq_refl);
+  rewrite <- (E_W1c_eq rq). unfold app_objs.
+  apply (smatch_carve_listobj segs rho3 (E_W1r rq) _ (SVar 25) (SLit 0) (SVar 28) 0 N (DRom 6) 6 (ss_next (E_W1r rq)) Hsm4 eq_refl);
     rewrite ?(G_v25 rho3 HG3).
-  - exact swf_E_W1c.
+  - by_r swf_E_W1c.
   - apply soff_lit_small. lia.
-  - apply (J_soff_small inp rho3 _ _ (G_v28 rho3 HG3)). lia.
+  - apply (J_soff_small rho3 _ _ (G_v28 rho3 HG3)). lia.
   - lia.
   - lia.
   - rewrite A1_eq. lia.
   - rewrite A1_eq. lia.
   - cbn. unfold N. lia.
-  - solve_disj HG3.
+  - solve_disjr HG3.
   - intros off Hoff D. discriminate D.
   - intros off Hoff. cbn [rho3 rho2 rho1 rho_set_rl set_rm rm rl]. rewrite Pos.eqb_refl.
     rewrite (released_rd segs m' ms (fun a => in_rng (obj_range rho1 O_str1) (bv_unsigned a))); [| exact Hin | exact Hrom |].
     2:{ rewrite R1. unfold in_rng. cbn [fst snd]. rewrite Z_to_bv_small by (rewrite mod64, A1_eq; lia). lia. }
     pose proof (obj_bytes_list segs rho1 ms O_str1 3 off Ho1 eq_refl eq_refl) as RB.
     unfold obj_lo_of, obj_hi_of, O_str1 in RB. cbn [ob_base ob_lo ob_hi] in RB.
-    rewrite (G_v25 rho1 HG1), soff_lit_small, (J_soff_small inp rho1 _ _ (G_v27 rho1 HG1)) in RB by lia.
+    rewrite (G_v25 rho1 HG1), soff_lit_small, (J_soff_small rho1 _ _ (G_v27 rho1 HG1)) in RB by lia.
     rewrite (RB ltac:(lia)). f_equal. rewrite !Z.sub_0_r. cbn [rl rho1 rho_set_rl]. rewrite (G_rl3 rho HG).
     rewrite tail1_head by (unfold N in Hoff; lia). apply app_nth1. unfold N in Hoff. lia.
 Qed.
@@ -841,14 +894,15 @@ Proof using Hargc HokP.
 Qed.
 Lemma Kx_fd2 : ltac2:(tb__ "0|1|
 S2bS52A1M0G0S53S4fR3Vmd0;R2R1A4S0S2fS54A1S57S55R2A1Sb9A2S2eS54S56Sb9A1A2A3F_;Fmd;Ftr;Ft;").
-Proof using Hfds0. intros t tr md [_ ->]. rewrite chw_eq. apply fd2. exact Hfds0. Qed.
+Proof using Hfds0 Hrdr0. intros t tr md [_ ->]. rewrite chw_eq. apply fd2. exact Hfds0. Qed.
+(* LPS 08b1429: a nonempty writev needs the channel's reader ([writev_spec]'s SIGPIPE arm). *)
+Lemma Kx_rdr : forall t tr md, Kx t md0 tr md -> m_channel_reader md = true.
+Proof using Hrdr0. intros t tr md [_ ->]. exact Hrdr0. Qed.
 
-Definition PRw (bs1 bs2 : list byte) (rho1 : valuation) : Prop := ltac2:(tb__ "0|3|
-S1S0S2bS3dQ8A1M0A1M1ScVrho1;P5A2Vbs1;A3S1S0G1ScVrho1;P6A2Vbs2;A3S1S0S7S3eQ40M2S15Vrho1;PdA2A2S5dS2cG0Vbs1;A2A1A3S0S7S3eG2S15Vrho1;PfA2A2S5dS2cG0Vbs2;A2A1A3A2A2A2").
 
 Lemma wl2_call : ltac2:(tb__ "0|4|
 S31S2bS3dQ8A1M0A1M1G1SaSb1U1S2cG0R3A2A2S0G1S33G0R4R3A3M2S71G0S2cG0G2A2S72G0R5S45A3A3A3S4cR5R4R3A3S68S6Vok;S40S6S4fS44R7A1Vmd0;A2M3Sd1R4A4S41S6Sb6G3R6R5S2cG0Sb7R6R5A2A2A4S16Sd1A1R4Sb8A5A4F_;F_;F_;Frho1;Fbs2;Fbs1;Fn0;").
-Proof using A1 Hargc Hent Hfds0 Hinp HokK HokP JI.
+Proof using A1 Hargc Hent Hfds0 Hrdr0 Hinp HokK HokP JI.
   intros n0 bs1 bs2 rho1 H1 Hw (H5 & H6 & H13 & H15).
   apply (WLerr.wl2_sum ok (Kx (TR n0) md0) rho1 bs1 bs2 H5 H6 H13 H15).
   - pose proof NU. unfold WLerr.MSG. apply (f_equal (@length byte)) in Hw. rewrite length_firstn, length_skipn, MSG_len in Hw.
@@ -856,17 +910,19 @@ Proof using A1 Hargc Hent Hfds0 Hinp HokK HokP JI.
   - intros k. apply Kw_okf. exact Hw.
   - intros k. apply Kw_okp. exact Hw.
   - intros tr md HK. exact (Kx_fd2 _ _ _ HK).
+  - intros tr md HK. exact (Kx_rdr _ _ _ HK).
   - exact H1.
 Qed.
 
 Lemma wl2_ecall : ltac2:(tb__ "0|4|
 S31S2bS3dQ8A1M0A1M1G1SaSb1U1S2cG0R3A2A2S0G1S33G0R4R3A3M2S71G0S2cG0G2A2S72G0R5S45A3A3A3S4cR5R4R3A3S67S6S40S6S4fS44R7A1Vmd0;A2M3Sd1R4A4S41S6Sb6G3R6R5S2cG0Sb7R6R5A2A2A4S16Sd1A1R4Sb8A5A3F_;F_;F_;Frho1;Fbs2;Fbs1;Fn0;").
-Proof using A1 Hargc Hent Hfds0 Hinp JI.
+Proof using A1 Hargc Hent Hfds0 Hrdr0 Hinp JI.
   intros n0 bs1 bs2 rho1 H1 Hw (H5 & H6 & H13 & H15).
   apply (WLerr.wl2_sum_ex (Kx (TR n0) md0) rho1 bs1 bs2 H5 H6 H13 H15).
   - pose proof NU. unfold WLerr.MSG. apply (f_equal (@length byte)) in Hw. rewrite length_firstn, length_skipn, MSG_len in Hw.
     unfold max_write_total. unfold N in *. lia.
   - intros tr md HK. exact (Kx_fd2 _ _ _ HK).
+  - intros tr md HK. exact (Kx_rdr _ _ _ HK).
   - exact H1.
 Qed.
 
@@ -881,101 +937,103 @@ Lemma w1_window : ltac2:(tb__ "0|2|
 S0S2bS3dQ8A1M0A1S33G0S48Vargv1;A3M1S71G0S2cG0G1A2S72G0U0S45A3A3A3").
 Proof using . unfold MSG. cbn [skipn]. apply firstn_exact3. Qed.
 
-Lemma L_W1 : ltac2:(tb__ "0|2|
-SaS43R1A1S0S2bS3dQ8A1M0A1M1ScR2P5A2S48A3S0G1ScR3P6A2Vargv1;A3S68S6Vok;S40S6S4fS44U0A1Vmd0;A2S8cR4A4S46S86S70U11S2cG0Vargv1;A2A2A2A4F_;F_;F_;Frho;").
-Proof using Hargc Hent Hfds0 Hinp HokK HokP.
+Lemma L_W1 : forall rho : valuation, Good rho -> rl rho 5 = M1 -> rl rho 6 = argv1 ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (E_W1c rq) rho) (Q_at (T_D1 rq) (17 + length argv1)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hinp HokK HokP Hrq.
   intros rho HG H5 H6. destruct s_w1_vals as (S12 & S13 & S14 & S15).
   apply (call_path segs (PRw M1 argv1) ok (Kx (TR 0) md0) (WLerr.Kw (Kx (TR 0) md0) M1 argv1 (length (WLerr.MSG M1 argv1)))
-           E_W1c E_W1c WLerrS.Pre_wl2 [] s_w1 R_w1 WLerr.Posts_wl _ rho
-           eq_refl efr_w1 chk_w1 ltac:(rewrite facts_w1c; exact fb_w1)).
+           (E_W1c rq) (E_W1c rq) WLerrS.Pre_wl2 [] s_w1 (R_w1 rq) WLerr.Posts_wl _ rho
+           eq_refl (efr_w1 rq) (chk_w1 rq) ltac:(rewrite (facts_w1c rq); exact (fb_w1 rq))).
   - intros rho1 HPR. apply (wl2_call 0 M1 argv1 rho1 ltac:(rewrite M1_len; lia) w1_window HPR).
   - intros ms _. unfold PRw. rewrite rl_call, !rw_call, S13, S15. split; [exact H5|]. split; [exact H6|].
     split; [rewrite U_lit64 by lia; reflexivity | exact (G_v28 rho HG)].
-  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite facts_w1c in HF.
-    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite T_D1i_eq.
-    eapply triple_conseq with (P := SP segs (Kx (TR (17 + length argv1)) md0) T_D1i rho'); [| intros w Hw; exact Hw |].
+  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite (facts_w1c rq) in HF.
+    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite (T_D1i_eq rq).
+    eapply triple_conseq with (P := SP segs (Kx (TR (17 + length argv1)) md0) (T_D1i rq) rho'); [| intros w Hw; exact Hw |].
     { intros w [Hsm HK]. split; [exact Hsm|]. apply (Kw_TR 0 M1 argv1 _ _ _ w1_window) in HK.
       unfold WLerr.MSG in HK. rewrite Nat.min_id, length_app, M1_len in HK. exact HK. }
-    apply (post_path segs ok _ T_D1i T_D1 (ss_facts E_W1) xs_d1 rho' _ fb_d1 xs_d1_ok HF).
+    apply (post_path segs ok _ (T_D1i rq) (T_D1 rq) (ss_facts (E_W1 rq)) xs_d1 rho' _ (fb_d1 rq) (xs_d1_ok rq) HF).
     eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-    intros w Hw. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(cbn; lia) HG) | exact Hw].
+    intros w Hw. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma eL_W1 : ltac2:(tb__ "0|2|
-SaS43R1A1S0S2bS3dQ8A1M0A1M1ScR2P5A2S48A3S0G1ScR3P6A2Vargv1;A3S67S6S40S6S4fS44U0A1Vmd0;A2S8cR4A4S46S86S70U11S2cG0Vargv1;A2A2A2A3F_;F_;F_;Frho;").
-Proof using Hargc Hent Hfds0 Hinp.
+Lemma eL_W1 : forall rho : valuation, Good rho -> rl rho 5 = M1 -> rl rho 6 = argv1 ->
+  etriple segs (SP segs (Kx (TR 0) md0) (E_W1c rq) rho) (Q_at (T_D1 rq) (17 + length argv1)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hinp Hrq.
   intros rho HG H5 H6. destruct s_w1_vals as (S12 & S13 & S14 & S15).
   apply (ecall_path segs (PRw M1 argv1) (Kx (TR 0) md0) (WLerr.Kw (Kx (TR 0) md0) M1 argv1 (length (WLerr.MSG M1 argv1)))
-           E_W1c E_W1c WLerrS.Pre_wl2 [] s_w1 R_w1 WLerr.Posts_wl _ rho
-           eq_refl efr_w1 chk_w1 ltac:(rewrite facts_w1c; exact fb_w1)).
+           (E_W1c rq) (E_W1c rq) WLerrS.Pre_wl2 [] s_w1 (R_w1 rq) WLerr.Posts_wl _ rho
+           eq_refl (efr_w1 rq) (chk_w1 rq) ltac:(rewrite (facts_w1c rq); exact (fb_w1 rq))).
   - intros rho1 HPR. apply (wl2_ecall 0 M1 argv1 rho1 ltac:(rewrite M1_len; lia) w1_window HPR).
   - intros ms _. unfold PRw. rewrite rl_call, !rw_call, S13, S15. split; [exact H5|]. split; [exact H6|].
     split; [rewrite U_lit64 by lia; reflexivity | exact (G_v28 rho HG)].
-  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite facts_w1c in HF.
-    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite T_D1i_eq.
-    eapply etriple_conseq with (P := SP segs (Kx (TR (17 + length argv1)) md0) T_D1i rho'); [| intros w Hw; exact Hw |].
+  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite (facts_w1c rq) in HF.
+    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite (T_D1i_eq rq).
+    eapply etriple_conseq with (P := SP segs (Kx (TR (17 + length argv1)) md0) (T_D1i rq) rho'); [| intros w Hw; exact Hw |].
     { intros w [Hsm HK]. split; [exact Hsm|]. apply (Kw_TR 0 M1 argv1 _ _ _ w1_window) in HK.
       unfold WLerr.MSG in HK. rewrite Nat.min_id, length_app, M1_len in HK. exact HK. }
-    apply (epost_path segs _ T_D1i T_D1 (ss_facts E_W1) xs_d1 rho' _ fb_d1 xs_d1_ok HF).
-    intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(cbn; lia) HG) | exact Hw].
+    apply (epost_path segs _ (T_D1i rq) (T_D1 rq) (ss_facts (E_W1 rq)) xs_d1 rho' _ (fb_d1 rq) (xs_d1_ok rq) HF).
+    intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma L_d1 : ltac2:(tb__ "0|1|
-SaS43R1A1S68S6Vok;S40S6S4fS44S70U11S2cS3dQ8A1Vargv1;A2A2M0A1Vmd0;A2S86R2A4S46S8dG0A2A4F_;Frho;").
-Proof using Hargc HokK.
-  intros rho HG. eapply run_tr; [exact run_d1 | reflexivity | apply okf |].
+Lemma L_d1 : forall rho : valuation, Good rho ->
+  triple segs ok (SP segs (Kx (TR (17 + length argv1)) md0) (T_D1 rq) rho) (Q_at (E_W2 rq) (17 + length argv1)).
+Proof using Hargc HokK Hrq.
+  intros rho HG. eapply run_tr; [exact (run_d1 rq) | destruct rq; reflexivity | apply okf |].
   intros L rho1 [<-|[]] Hag1. cbn [lf_state].
   eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-  intros w Hw. exists rho1. split; [exact (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) | exact Hw].
+  intros w Hw. exists rho1. split; [exact (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
-Lemma eL_d1 : ltac2:(tb__ "0|1|
-SaS43R1A1S67S6S40S6S4fS44S70U11S2cS3dQ8A1Vargv1;A2A2M0A1Vmd0;A2S86R2A4S46S8dG0A2A3F_;Frho;").
-Proof using Hargc.
-  intros rho HG. eapply erun_tr; [exact run_d1 | reflexivity |].
+Lemma eL_d1 : forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR (17 + length argv1)) md0) (T_D1 rq) rho) (Q_at (E_W2 rq) (17 + length argv1)).
+Proof using Hargc Hrq.
+  intros rho HG. eapply erun_tr; [exact (run_d1 rq) | destruct rq; reflexivity |].
   intros L rho1 [<-|[]] Hag1. cbn [lf_state]. intros w Hw. exists w. split; [apply wsteps_refl|].
-  exists rho1. split; [exact (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) | exact Hw].
+  exists rho1. split; [exact (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma w2_intro : ltac2:(tb__ "0|3|
-SaS66S43R2A1S40S6S4fS44S70U11S2cS3dQ8A1M0Vargv1;A2A2A1Vmd0;A2M1S8dR3R2A5S2SaSaS1S43R1A1S1S0S2bG0A1M2ScR1P5A2SacA3S1S0G2ScR1P6A2S30G0A1A3S40S6G1S8eR1R4A5A2A2A2Lrho';A2F_;F_;Fw;Frho;").
-Proof using Hargc Hent Hinp.
+Lemma w2_intro : forall (rho : valuation) (w : world), Good rho ->
+  SP segs (Kx (TR (17 + length argv1)) md0) (E_W2 rq) rho w ->
+  exists rho' : valuation, Good rho' /\ rl rho' 5 = nl /\ rl rho' 6 = []
+    /\ SP segs (Kx (TR (17 + length argv1)) md0) (E_W2c rq) rho' w.
+Proof using Hargc Hent Hinp Hrq.
   intros rho [tr [ms md]] HG [Hsm Hk]. pose proof NU as NU'. pose proof L3_ge as HL3.
-  destruct E_W2_next as (Nx2 & Nxs & Nxr1).
+  destruct (E_W2_next rq) as (Nx2 & Nxs & Nxr1).
 
-  pose proof (smatch_xforms segs xs_w2s rho E_W2 E_W2s _ xs_w2s_ok Hsm) as Hsm1.
-  destruct (smatch_release_obj segs rho E_W2s _ (ss_objs E_W2r1) (lastobj E_W2s) (ss_next E_W2s) Hsm1 E_W2s_objs
-              ltac:(rewrite Nxs, <- Nxr1; exact swf_E_W2r1)) as (m1 & Hsm2 & _ & _ & _ & _).
+  pose proof (smatch_xforms segs xs_w2s rho (E_W2 rq) (E_W2s rq) _ (xs_w2s_ok rq) Hsm) as Hsm1.
+  destruct (smatch_release_obj segs rho (E_W2s rq) _ (ss_objs (E_W2r1 rq)) (lastobj (E_W2s rq)) (ss_next (E_W2s rq)) Hsm1 (E_W2s_objs rq)
+              ltac:(rewrite Nxs, <- Nxr1; by_r swf_E_W2r1)) as (m1 & Hsm2 & _ & _ & _ & _).
   set (rho1 := set_rm rho m1) in Hsm2.
-  assert (Hsm2' : smatch segs rho1 E_W2r1 (tr, mkCfg ms md)) by (rewrite Nxs, <- Nxr1 in Hsm2; exact Hsm2). clear Hsm2.
+  assert (Hsm2' : smatch segs rho1 (E_W2r1 rq) (tr, mkCfg ms md)) by (rewrite Nxs, <- Nxr1 in Hsm2; destruct rq; exact Hsm2). clear Hsm2.
   assert (HG1 : Good rho1) by (apply Good_rm; exact HG).
-  destruct (smatch_release_obj segs rho1 E_W2r1 _ (ss_objs E_W2r) (lastobj E_W2r1) (ss_next E_W2r1) Hsm2' E_W2r1_objs
-              ltac:(rewrite Nxr1; exact swf_E_W2r)) as (m2 & Hsm3 & Hout & Hin & Hob & Hrom).
+  destruct (smatch_release_obj segs rho1 (E_W2r1 rq) _ (ss_objs (E_W2r rq)) (lastobj (E_W2r1 rq)) (ss_next (E_W2r1 rq)) Hsm2' (E_W2r1_objs rq)
+              ltac:(rewrite Nxr1; by_r swf_E_W2r)) as (m2 & Hsm3 & Hout & Hin & Hob & Hrom).
   cbn [w_cfg cfg_ms] in Hin, Hob, Hrom.
   set (rho2 := set_rm rho1 m2) in Hsm3.
-  assert (Hsm3' : smatch segs rho2 E_W2r (tr, mkCfg ms md)) by (rewrite Nxr1 in Hsm3; exact Hsm3). clear Hsm3.
+  assert (Hsm3' : smatch segs rho2 (E_W2r rq) (tr, mkCfg ms md)) by (rewrite Nxr1 in Hsm3; destruct rq; exact Hsm3). clear Hsm3.
   assert (HG2 : Good rho2) by (apply Good_rm; exact HG1).
   assert (B1 : bv_unsigned (eval rho1 (SAlu ALU_ADD (SVar 1) (SLit (-560)))) = bv_unsigned sp - 560).
   { pose proof (bval_sound rho1 HG1 (SAlu ALU_ADD (SVar 1) (SLit (-560))) (bv_unsigned sp + (-560)) eq_refl). lia. }
-  assert (Rb : obj_range rho1 (lastobj E_W2r1) = (bv_unsigned sp - 560, bv_unsigned sp - 560 + 17)).
-  { rewrite last_w2r1. unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi]. rewrite B1.
+  assert (Rb : obj_range rho1 (lastobj (E_W2r1 rq)) = (bv_unsigned sp - 560, bv_unsigned sp - 560 + 17)).
+  { rewrite (last_w2r1 rq). unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi]. rewrite B1.
     rewrite !soff_lit_small by lia. f_equal; lia. }
 
-  destruct norl_w2 as [N5 N6].
+  destruct (norl_w2 rq) as [N5 N6].
   set (rho3 := rho_set_rl (rho_set_rl rho2 6 []) 5 nl).
-  assert (Hsm4 : smatch segs rho3 E_W2r (tr, mkCfg ms md)).
+  assert (Hsm4 : smatch segs rho3 (E_W2r rq) (tr, mkCfg ms md)).
   { apply smatch_set_rl; [exact N5|]. apply smatch_set_rl; [exact N6|]. exact Hsm3'. }
   assert (HG3 : Good rho3) by (apply Good_set_rl; [apply Good_set_rl; [exact HG2|lia]|lia]).
   exists rho3. split; [exact HG3|]. split; [reflexivity|]. split; [reflexivity|]. split; [|exact Hk].
 
-  apply (smatch_xforms segs xs_w2 rho3 E_W2c0 E_W2c _ xs_w2_ok).
-  rewrite <- E_W2c0_eq. unfold app_objs.
+  apply (smatch_xforms segs xs_w2 rho3 (E_W2c0 rq) (E_W2c rq) _ (xs_w2_ok rq)).
+  rewrite <- (E_W2c0_eq rq). unfold app_objs.
   assert (B3 : bv_unsigned (eval rho3 (SAlu ALU_ADD (SVar 1) (SLit (-560)))) = bv_unsigned sp - 560).
   { pose proof (bval_sound rho3 HG3 (SAlu ALU_ADD (SVar 1) (SLit (-560))) (bv_unsigned sp + (-560)) eq_refl). lia. }
-  assert (Hsm5 : smatch segs rho3 E_W2c1 (tr, mkCfg ms md)).
-  { rewrite <- E_W2c1_eq. unfold app_objs.
-    apply (smatch_carve_listobj segs rho3 E_W2r _ (SAlu ALU_ADD (SVar 1) (SLit (-560))) (SLit 0) (SLit 1) 0 1 (DList 5) 5 (ss_next E_W2r) Hsm4 eq_refl);
+  assert (Hsm5 : smatch segs rho3 (E_W2c1 rq) (tr, mkCfg ms md)).
+  { rewrite <- (E_W2c1_eq rq). unfold app_objs.
+    apply (smatch_carve_listobj segs rho3 (E_W2r rq) _ (SAlu ALU_ADD (SVar 1) (SLit (-560))) (SLit 0) (SLit 1) 0 1 (DList 5) 5 (ss_next (E_W2r rq)) Hsm4 eq_refl);
       rewrite ?B3.
-    - exact swf_E_W2c1.
+    - by_r swf_E_W2c1.
     - apply soff_lit_small. lia.
     - apply soff_lit_small. lia.
     - lia.
@@ -983,24 +1041,24 @@ Proof using Hargc Hent Hinp.
     - lia.
     - lia.
     - reflexivity.
-    - solve_disj HG3.
+    - solve_disjr HG3.
     - intros off Hoff _. cbn [rho3 rho2 rho_set_rl set_rm rm].
-      rewrite (released_wview segs m2 ms (fun a => in_rng (obj_range rho1 (lastobj E_W2r1)) (bv_unsigned a))); [| exact Hin |].
+      rewrite (released_wview segs m2 ms (fun a => in_rng (obj_range rho1 (lastobj (E_W2r1 rq))) (bv_unsigned a))); [| exact Hin |].
       2:{ rewrite Rb. unfold in_rng. cbn [fst snd]. rewrite Z_to_bv_small by (rewrite mod64; lia). lia. }
-      pose proof (obj_writable segs rho1 ms (lastobj E_W2r1) off Hob) as W. rewrite last_w2r1 in W.
+      pose proof (obj_writable segs rho1 ms (lastobj (E_W2r1 rq)) off Hob) as W. rewrite (last_w2r1 rq) in W.
       unfold obj_lo_of, obj_hi_of in W. cbn [ob_base ob_lo ob_hi ob_dflt] in W. rewrite B1, !soff_lit_small in W by lia.
       exact (W eq_refl ltac:(lia)).
     - intros off Hoff. cbn [rho3 rho2 rho_set_rl set_rm rm rl]. rewrite Pos.eqb_refl.
-      rewrite (released_rd segs m2 ms (fun a => in_rng (obj_range rho1 (lastobj E_W2r1)) (bv_unsigned a))); [| exact Hin | exact Hrom |].
+      rewrite (released_rd segs m2 ms (fun a => in_rng (obj_range rho1 (lastobj (E_W2r1 rq))) (bv_unsigned a))); [| exact Hin | exact Hrom |].
       2:{ rewrite Rb. unfold in_rng. cbn [fst snd]. rewrite Z_to_bv_small by (rewrite mod64; lia). lia. }
-      pose proof (obj_bytes_cells segs rho1 ms (lastobj E_W2r1) (ss_next E_W2r1) 0 1 [BLit 10] off Hob wf_w2r1) as RB.
-      rewrite last_w2r1 in RB. unfold obj_hi_of in RB. cbn [ob_base ob_lo ob_hi ob_cells] in RB.
+      pose proof (obj_bytes_cells segs rho1 ms (lastobj (E_W2r1 rq)) (ss_next (E_W2r1 rq)) 0 1 [BLit 10] off Hob (wf_w2r1 rq)) as RB.
+      rewrite (last_w2r1 rq) in RB. unfold obj_hi_of in RB. cbn [ob_base ob_lo ob_hi ob_cells] in RB.
       rewrite B1, !soff_lit_small in RB by lia.
-      rewrite (RB eq_refl ltac:(lia) ltac:(lia) ltac:(lia) cb_w2 ltac:(lia)).
+      rewrite (RB eq_refl ltac:(lia) ltac:(lia) ltac:(lia) ltac:(by_r cb_w2) ltac:(lia)).
       replace off with 0 by lia. reflexivity. }
-  apply (smatch_carve_listobj segs rho3 E_W2c1 _ (SLit 0) (SLit 0) (SLit 0) 0 0 (DRom 6) 6 (ss_next E_W2c1) Hsm5 eq_refl);
+  apply (smatch_carve_listobj segs rho3 (E_W2c1 rq) _ (SLit 0) (SLit 0) (SLit 0) 0 0 (DRom 6) 6 (ss_next (E_W2c1 rq)) Hsm5 eq_refl);
     rewrite ?U_lit64 by lia.
-  - exact swf_E_W2c0.
+  - by_r swf_E_W2c0.
   - apply soff_lit_small. lia.
   - apply soff_lit_small. lia.
   - lia.
@@ -1008,99 +1066,99 @@ Proof using Hargc Hent Hinp.
   - lia.
   - lia.
   - reflexivity.
-  - solve_disj HG3.
+  - solve_disjr HG3.
   - intros off Hoff D. discriminate D.
   - intros off Hoff. lia.
 Qed.
 
-Lemma w2_window : ltac2:(tb__ "0|2|
-S0S2bS3dQ8A1M0A1S33G0SacS30G0A1A3M1S71G0S2cG0G1A2S72G0S70U11S2cG0Vargv1;A2A2S45A3A3A3").
+(* As main's [w2_window], written as plain text. *)
+Lemma w2_window : nl ++ [] = firstn (length (nl ++ [])) (skipn (17 + length argv1)%nat MSG).
 Proof using A1 Hargc.
   unfold MSG. rewrite app_nil_r. replace (17 + length argv1)%nat with (length (M1 ++ argv1)) by (rewrite length_app, M1_len; lia).
   replace (M1 ++ argv1 ++ nl) with ((M1 ++ argv1) ++ nl) by (rewrite <- app_assoc; reflexivity).
   rewrite skipn_app, skipn_all, Nat.sub_diag. reflexivity.
 Qed.
 
-Lemma L_W2 : ltac2:(tb__ "0|2|
-SaS43R1A1S0S2bS3dQ8A1M0A1M1ScR2P5A2SacA3S0G1ScR3P6A2S30G0A1A3S68S6Vok;S40S6S4fS44S70U11S2cG0Vargv1;A2A2A1Vmd0;A2S8eR4A4S46S87S2cG0S45A2A2A4F_;F_;F_;Frho;").
-Proof using Hargc Hent Hfds0 Hinp HokK HokP.
+Lemma L_W2 : forall rho : valuation, Good rho -> rl rho 5 = nl -> rl rho 6 = [] ->
+  triple segs ok (SP segs (Kx (TR (17 + length argv1)) md0) (E_W2c rq) rho) (Q_at (T_D2 rq) (length MSG)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hinp HokK HokP Hrq.
   intros rho HG H5 H6. destruct s_w2_vals as (S12 & S13 & S14 & S15).
   apply (call_path segs (PRw nl []) ok (Kx (TR (17 + length argv1)) md0)
            (WLerr.Kw (Kx (TR (17 + length argv1)) md0) nl [] (length (WLerr.MSG nl [])))
-           E_W2c E_W2c WLerrS.Pre_wl2 [] s_w2 R_w2 WLerr.Posts_wl _ rho
-           eq_refl efr_w2 chk_w2 ltac:(rewrite facts_w2c; exact fb_w2)).
+           (E_W2c rq) (E_W2c rq) WLerrS.Pre_wl2 [] s_w2 (R_w2 rq) WLerr.Posts_wl _ rho
+           eq_refl (efr_w2 rq) (chk_w2 rq) ltac:(rewrite (facts_w2c rq); exact (fb_w2 rq))).
   - intros rho1 HPR. apply (wl2_call _ nl [] rho1 ltac:(cbn; lia) w2_window HPR).
   - intros ms _. unfold PRw. rewrite rl_call, !rw_call, S13, S15. split; [exact H5|]. split; [exact H6|].
     split; rewrite U_lit64 by lia; reflexivity.
-  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite facts_w2c in HF.
-    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite T_D2i_eq.
-    eapply triple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) T_D2i rho'); [| intros w Hw; exact Hw |].
+  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite (facts_w2c rq) in HF.
+    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite (T_D2i_eq rq).
+    eapply triple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) (T_D2i rq) rho'); [| intros w Hw; exact Hw |].
     { intros w [Hsm HK]. split; [exact Hsm|]. apply (Kw_TR _ nl [] _ _ _ w2_window) in HK.
       unfold WLerr.MSG in HK. rewrite Nat.min_id in HK. cbn [length app] in HK. rewrite MSG_len.
       replace (18 + length argv1)%nat with (17 + length argv1 + 1)%nat by lia. exact HK. }
-    apply (post_path segs ok _ T_D2i T_D2 (ss_facts E_W2) xs_d2 rho' _ fb_d2 xs_d2_ok HF).
+    apply (post_path segs ok _ (T_D2i rq) (T_D2 rq) (ss_facts (E_W2 rq)) xs_d2 rho' _ (fb_d2 rq) (xs_d2_ok rq) HF).
     eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-    intros w Hw. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(cbn; lia) HG) | exact Hw].
+    intros w Hw. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma eL_W2 : ltac2:(tb__ "0|2|
-SaS43R1A1S0S2bS3dQ8A1M0A1M1ScR2P5A2SacA3S0G1ScR3P6A2S30G0A1A3S67S6S40S6S4fS44S70U11S2cG0Vargv1;A2A2A1Vmd0;A2S8eR4A4S46S87S2cG0S45A2A2A3F_;F_;F_;Frho;").
-Proof using Hargc Hent Hfds0 Hinp.
+Lemma eL_W2 : forall rho : valuation, Good rho -> rl rho 5 = nl -> rl rho 6 = [] ->
+  etriple segs (SP segs (Kx (TR (17 + length argv1)) md0) (E_W2c rq) rho) (Q_at (T_D2 rq) (length MSG)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hinp Hrq.
   intros rho HG H5 H6. destruct s_w2_vals as (S12 & S13 & S14 & S15).
   apply (ecall_path segs (PRw nl []) (Kx (TR (17 + length argv1)) md0)
            (WLerr.Kw (Kx (TR (17 + length argv1)) md0) nl [] (length (WLerr.MSG nl [])))
-           E_W2c E_W2c WLerrS.Pre_wl2 [] s_w2 R_w2 WLerr.Posts_wl _ rho
-           eq_refl efr_w2 chk_w2 ltac:(rewrite facts_w2c; exact fb_w2)).
+           (E_W2c rq) (E_W2c rq) WLerrS.Pre_wl2 [] s_w2 (R_w2 rq) WLerr.Posts_wl _ rho
+           eq_refl (efr_w2 rq) (chk_w2 rq) ltac:(rewrite (facts_w2c rq); exact (fb_w2 rq))).
   - intros rho1 HPR. apply (wl2_ecall _ nl [] rho1 ltac:(cbn; lia) w2_window HPR).
   - intros ms _. unfold PRw. rewrite rl_call, !rw_call, S13, S15. split; [exact H5|]. split; [exact H6|].
     split; rewrite U_lit64 by lia; reflexivity.
-  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite facts_w2c in HF.
-    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite T_D2i_eq.
-    eapply etriple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) T_D2i rho'); [| intros w Hw; exact Hw |].
+  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite (facts_w2c rq) in HF.
+    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite (T_D2i_eq rq).
+    eapply etriple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) (T_D2i rq) rho'); [| intros w Hw; exact Hw |].
     { intros w [Hsm HK]. split; [exact Hsm|]. apply (Kw_TR _ nl [] _ _ _ w2_window) in HK.
       unfold WLerr.MSG in HK. rewrite Nat.min_id in HK. cbn [length app] in HK. rewrite MSG_len.
       replace (18 + length argv1)%nat with (17 + length argv1 + 1)%nat by lia. exact HK. }
-    apply (epost_path segs _ T_D2i T_D2 (ss_facts E_W2) xs_d2 rho' _ fb_d2 xs_d2_ok HF).
-    intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(cbn; lia) HG) | exact Hw].
+    apply (epost_path segs _ (T_D2i rq) (T_D2 rq) (ss_facts (E_W2 rq)) xs_d2 rho' _ (fb_d2 rq) (xs_d2_ok rq) HF).
+    intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma L_exit : ltac2:(tb__ "0|0|
-SaS43R1A1S68S6Vok;S40S6S4fS44S2cS3dQ8A1S45A2A1Vmd0;A2S87R2A4S66S3L_;A4F_;Frho;").
-Proof using Hargc Hfs HokK HokP Hokh.
-  intros rho HG. eapply run_tr; [exact run_d2 | reflexivity | apply okf |].
+Lemma L_exit : forall rho : valuation, Good rho ->
+  triple segs ok (SP segs (Kx (TR (length MSG)) md0) (T_D2 rq) rho) (fun _ : world => False).
+Proof using Hargc Hfs HokK HokP Hokh Hrq.
+  intros rho HG. eapply run_tr; [exact (run_d2 rq) | destruct rq; reflexivity | apply okf |].
   intros L rho1 [<-|[]] Hag1. cbn [lf_state].
-  destruct cert_exit as (Hi & H17 & H10).
-  apply (triple_exit_eval segs ok SpecT (Kx (TR (length MSG)) md0) E_exit rho1 2);
+  destruct (cert_exit rq) as (Hi & H17 & H10).
+  apply (triple_exit_eval segs ok SpecT (Kx (TR (length MSG)) md0) (E_exit rq) rho1 2);
     [apply okf | apply okp | exact Hokh | exact Hi | left; exact H17 | rewrite H10; rewrite U_lit64 by lia; reflexivity |].
   intros tr md [-> ->]. rewrite TR_all by lia. rewrite Hfs. exact final_in_spec.
 Qed.
 
-Lemma eL_exit : ltac2:(tb__ "0|1|
-SaS43R1A1S67S6S40S6S4fS44S2cS3dQ8A1S45A2A1Vmd0;A2S87R2A4S66S0S2bS52A1S69R1A1S33S52SadZ2M0S45A2S32S52SaeVfs;G0A2S30S52A1A3A3A3Lw;A3F_;Frho;").
-Proof using Hargc Hfs.
-  intros rho HG. eapply erun_tr; [exact run_d2 | reflexivity |].
+Lemma eL_exit : forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR (length MSG)) md0) (T_D2 rq) rho) (fun w : world => w_tr w = wr 2 MSG ++ [ex fs 2]).
+Proof using Hargc Hfs Hrq.
+  intros rho HG. eapply erun_tr; [exact (run_d2 rq) | destruct rq; reflexivity |].
   intros L rho1 [<-|[]] Hag1. cbn [lf_state].
-  destruct cert_exit as (Hi & H17 & H10).
+  destruct (cert_exit rq) as (Hi & H17 & H10).
   eapply etriple_conseq; [intros w Hw; exact Hw | |
-    apply (etriple_exit_eval segs (Kx (TR (length MSG)) md0) E_exit rho1 2 Hi (or_introl H17))].
+    apply (etriple_exit_eval segs (Kx (TR (length MSG)) md0) (E_exit rq) rho1 2 Hi (or_introl H17))].
   - intros w (tr & md & [-> ->] & ->). rewrite TR_all by lia. rewrite Hfs. reflexivity.
   - rewrite H10. rewrite U_lit64 by lia. reflexivity.
 Qed.
 
-Theorem copen64_safe : ltac2:(tb__ "0|0|
-S5bZ40VN;A2SaS43R1A1S68S6Vok;S40S6S4fS44U0A1Vmd0;A2S81R2A4S66S3L_;A4F_;Frho;F_;").
-Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
+Theorem copen64_safe : 64 <= N -> forall rho : valuation, Good rho ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (T_cs1 rq) rho) (fun _ : world => False).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp HokK HokP Hokh Hrq.
   intros HN rho HG.
   eapply triple_seq; [exact (L_64 HN rho HG)|].
   apply triple_ex; intros rho1. apply triple_pure; intros HG1.
-  apply (triple_from ok _ (fun r w => (Good r /\ rl r 5 = M1 /\ rl r 6 = argv1) /\ SP segs (Kx (TR 0) md0) E_W1c r w)).
+  apply (triple_from ok _ (fun r w => (Good r /\ rl r 5 = M1 /\ rl r 6 = argv1) /\ SP segs (Kx (TR 0) md0) (E_W1c rq) r w)).
   { intros w Hw. destruct (w1_intro rho1 w HG1 Hw) as (r & A & B & C & D). exists r. auto. }
   intros rho2. apply triple_pure. intros (HG2 & H5 & H6).
   eapply triple_seq; [exact (L_W1 rho2 HG2 H5 H6)|].
   apply triple_ex; intros rho3. apply triple_pure; intros HG3.
   eapply triple_seq; [exact (L_d1 rho3 HG3)|].
   apply triple_ex; intros rho4. apply triple_pure; intros HG4.
-  apply (triple_from ok _ (fun r w => (Good r /\ rl r 5 = nl /\ rl r 6 = []) /\ SP segs (Kx (TR (17 + length argv1)) md0) E_W2c r w)).
+  apply (triple_from ok _ (fun r w => (Good r /\ rl r 5 = nl /\ rl r 6 = []) /\ SP segs (Kx (TR (17 + length argv1)) md0) (E_W2c rq) r w)).
   { intros w Hw. destruct (w2_intro rho4 w HG4 Hw) as (r & A & B & C & D). exists r. auto. }
   intros rho5. apply triple_pure. intros (HG5 & H5' & H6').
   eapply triple_seq; [exact (L_W2 rho5 HG5 H5' H6')|].
@@ -1108,20 +1166,20 @@ Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
   exact (L_exit rho6 HG6).
 Qed.
 
-Theorem copen64_exists : ltac2:(tb__ "0|1|
-S5bZ40VN;A2SaS43R1A1S67S6S40S6S4fS44U0A1Vmd0;A2S81R2A4S66S0S2bS52A1S69R1A1S33S52SadZ2M0S45A2S32S52SaeVfs;G0A2S30S52A1A3A3A3Lw;A3F_;Frho;F_;").
-Proof using Hargc Hent Hfds0 Hfs Hinp.
+Theorem copen64_exists : 64 <= N -> forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR 0) md0) (T_cs1 rq) rho) (fun w : world => w_tr w = wr 2 MSG ++ [ex fs 2]).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp Hrq.
   intros HN rho HG.
   eapply etriple_seq; [exact (eL_64 HN rho HG)|].
   apply etriple_ex; intros rho1. apply etriple_pure; intros HG1.
-  apply (etriple_from _ (fun r w => (Good r /\ rl r 5 = M1 /\ rl r 6 = argv1) /\ SP segs (Kx (TR 0) md0) E_W1c r w)).
+  apply (etriple_from _ (fun r w => (Good r /\ rl r 5 = M1 /\ rl r 6 = argv1) /\ SP segs (Kx (TR 0) md0) (E_W1c rq) r w)).
   { intros w Hw. destruct (w1_intro rho1 w HG1 Hw) as (r & A & B & C & D). exists r. auto. }
   intros rho2. apply etriple_pure. intros (HG2 & H5 & H6).
   eapply etriple_seq; [exact (eL_W1 rho2 HG2 H5 H6)|].
   apply etriple_ex; intros rho3. apply etriple_pure; intros HG3.
   eapply etriple_seq; [exact (eL_d1 rho3 HG3)|].
   apply etriple_ex; intros rho4. apply etriple_pure; intros HG4.
-  apply (etriple_from _ (fun r w => (Good r /\ rl r 5 = nl /\ rl r 6 = []) /\ SP segs (Kx (TR (17 + length argv1)) md0) E_W2c r w)).
+  apply (etriple_from _ (fun r w => (Good r /\ rl r 5 = nl /\ rl r 6 = []) /\ SP segs (Kx (TR (17 + length argv1)) md0) (E_W2c rq) r w)).
   { intros w Hw. destruct (w2_intro rho4 w HG4 Hw) as (r & A & B & C & D). exists r. auto. }
   intros rho5. apply etriple_pure. intros (HG5 & H5' & H6').
   eapply etriple_seq; [exact (eL_W2 rho5 HG5 H5' H6')|].
@@ -1148,10 +1206,6 @@ Proof using .
   subst. reflexivity.
 Qed.
 
-Definition GoodS (rho : valuation) : Prop := ltac2:(tb__ "0|0|
-S1S43Vrho;A1S0S2bS3dQ8A1A1ScVrho;P7A2Vargv1;A3A2").
-Definition QS_at (S : sstate) (n : nat) : assn := ltac2:(tb__ "0|0|
-S66S2SaSaS1S47R1A1S40S6S4fS44Vn;A1Vmd0;A2VS;R1R2A5A2Lrho;A2Lw;").
 Lemma GoodS_agree : ltac2:(tb__ "0|1|
 S8SaSaS17R3R2R1A3SdeP1dR4A2S47R4A1M0G0F_;F_;F_;Frho';Frho;Fn;").
 Proof using Hargc.
@@ -1159,44 +1213,44 @@ Proof using Hargc.
   rewrite <- (proj1 (proj2 Hag)). exact H7.
 Qed.
 
-Lemma Tsm_intro : ltac2:(tb__ "0|1|
-SaS66S43R2A1S5bVN;Z3fA2S40S6S4fS44U0A1Vmd0;A2M0S81R4R3A5S40S6G0Sa7R5R4A5F_;F_;F_;Fw;Frho;").
-Proof using Hargc Hent Hinp.
-  intros rho w HG HN Hsp. unfold Tsm. apply SP_add1; [exact Hsp | | reflexivity].
+Lemma Tsm_intro : forall (rho : valuation) (w : world), Good rho -> N <= 63 ->
+  SP segs (Kx (TR 0) md0) (T_cs1 rq) rho w -> SP segs (Kx (TR 0) md0) (Tsm rq) rho w.
+Proof using Hargc Hent Hinp Hrq.
+  intros rho w HG HN Hsp. unfold Tsm. apply SP_add1; [exact Hsp | | destruct rq; reflexivity].
   cbn [holds]. unfold bv_leu. rewrite U_lit64 by lia. rewrite (G_v28 rho HG). lia.
 Qed.
 
-Lemma L_sm : ltac2:(tb__ "0|1|
-S5bVN;Z3fA2SaS43R1A1S68S6Vok;S40S6S4fS44U0M0A1Vmd0;A2S81R2A4S46S93G0A2A4F_;Frho;F_;").
-Proof using Hargc Hent Hinp HokK.
+Lemma L_sm : N <= 63 -> forall rho : valuation, Good rho ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (T_cs1 rq) rho) (Q_at (E_fx rq) 0).
+Proof using Hargc Hent Hinp HokK Hrq.
   intros HN rho HG.
-  eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) Tsm rho); [intros w Hw; exact (Tsm_intro rho w HG HN Hw) | intros w Hw; exact Hw |].
-  eapply run_tr; [exact run_sm | reflexivity | apply okf |].
+  eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) (Tsm rq) rho); [intros w Hw; exact (Tsm_intro rho w HG HN Hw) | intros w Hw; exact Hw |].
+  eapply run_tr; [exact (run_sm rq) | destruct rq; reflexivity | apply okf |].
   intros L rho1 [<-|[<-|[]]] Hag1; cbn [lf_state].
-  - pose proof (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) as HG1.
-    intros n Hg w Hw. exfalso. exact (ovf_contra rho1 X_ovfS w _ HG1 fact_ovfS Hw).
-  - pose proof (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) as HG1.
-    eapply run_tr; [exact run_fx0 | reflexivity | apply okf |].
+  - pose proof (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) as HG1.
+    intros n Hg w Hw. exfalso. exact (ovf_contra rho1 (X_ovfS rq) w _ HG1 (fact_ovfS rq) Hw).
+  - pose proof (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) as HG1.
+    eapply run_tr; [exact (run_fx0 rq) | destruct rq; reflexivity | apply okf |].
     intros L rho2 [<-|[]] Hag2; cbn [lf_state].
     eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-    intros w Hw. exists rho2. split; [exact (Good_agree _ _ _ Hag2 ltac:(cbn; lia) HG1) | exact Hw].
+    intros w Hw. exists rho2. split; [exact (Good_agree _ _ _ Hag2 ltac:(destruct rq; cbn; lia) HG1) | exact Hw].
 Qed.
 
-Lemma eL_sm : ltac2:(tb__ "0|1|
-S5bVN;Z3fA2SaS43R1A1S67S6S40S6S4fS44U0M0A1Vmd0;A2S81R2A4S46S93G0A2A3F_;Frho;F_;").
-Proof using Hargc Hent Hinp.
+Lemma eL_sm : N <= 63 -> forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR 0) md0) (T_cs1 rq) rho) (Q_at (E_fx rq) 0).
+Proof using Hargc Hent Hinp Hrq.
   intros HN rho HG.
-  eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) Tsm rho); [intros w Hw; exact (Tsm_intro rho w HG HN Hw) | intros w Hw; exact Hw |].
-  eapply erun_tr; [exact run_sm | reflexivity |].
+  eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) (Tsm rq) rho); [intros w Hw; exact (Tsm_intro rho w HG HN Hw) | intros w Hw; exact Hw |].
+  eapply erun_tr; [exact (run_sm rq) | destruct rq; reflexivity |].
   intros L rho1 [<-|[<-|[]]] Hag1; cbn [lf_state].
-  - intros w Hw. exfalso. exact (ovf_contra rho1 X_ovfS w _ (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) fact_ovfS Hw).
-  - pose proof (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) as HG1.
-    eapply erun_tr; [exact run_fx0 | reflexivity |].
+  - intros w Hw. exfalso. exact (ovf_contra rho1 (X_ovfS rq) w _ (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) (fact_ovfS rq) Hw).
+  - pose proof (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) as HG1.
+    eapply erun_tr; [exact (run_fx0 rq) | destruct rq; reflexivity |].
     intros L rho2 [<-|[]] Hag2; cbn [lf_state]. intros w Hw. exists w. split; [apply wsteps_refl|].
-    exists rho2. split; [exact (Good_agree _ _ _ Hag2 ltac:(cbn; lia) HG1) | exact Hw].
+    exists rho2. split; [exact (Good_agree _ _ _ Hag2 ltac:(destruct rq; cbn; lia) HG1) | exact Hw].
 Qed.
 
-Definition V70 : Z := 4 * (A1 / 4).
+
 Lemma V70_eq : ltac2:(tb__ "0|3|
 S1S0S7VA1;S5cS4aS5fVA1;Z4M0A2M1A2A3S1S1S5bZ0M2G1A2S60G1G0A2A2S0S7S5fS4aG0A2G2A3A2A2").
 Proof using Hargc.
@@ -1204,25 +1258,26 @@ Proof using Hargc.
   rewrite Z.mul_comm. apply Z_mod_mult.
 Qed.
 
-Lemma fxA_intro : ltac2:(tb__ "0|2|
-SaS66S43R2A1S40S6S4fS44U0A1Vmd0;A2M0S93R3R2A5S2SaSaS1S47R1A1S1S0S3dQ40M1A1S15R1P46A2S3fG1S4aA2A3S40S6G0S84R1R4A5A2A2Lrho';A2F_;F_;Fw;Frho;").
+Lemma fxA_intro : forall (rho : valuation) (w : world), Good rho ->
+  SP segs (Kx (TR 0) md0) (E_fx rq) rho w ->
+  exists rho' : valuation, GoodS rho' /\ rw rho' 70 = Z_to_bv 64 V70 /\ SP segs (Kx (TR 0) md0) (E_fxA rq) rho' w.
 Proof using Hargc Hent Hinp.
   intros rho w HG [Hsm Hk]. pose proof NU as NU'. pose proof A1_eq as EA1. pose proof V70_eq as (EV & RV & MV).
-  destruct E_fxA_next as (NxA & NxX & NxW).
-  pose proof (smatch_xforms segs xs_fx rho E_fx E_fxX _ xs_fx_ok Hsm) as Hsm1.
-  destruct (SP_entails segs (Kx (TR 0) md0) E_fxX E_fxW [] rho w ent_fxW (conj Hsm1 Hk)) as [Hsm2 _].
+  destruct (E_fxA_next rq) as (NxA & NxX & NxW).
+  pose proof (smatch_xforms segs xs_fx rho (E_fx rq) (E_fxX rq) _ (xs_fx_ok rq) Hsm) as Hsm1.
+  destruct (SP_entails segs (Kx (TR 0) md0) (E_fxX rq) (E_fxW rq) [] rho w (ent_fxW rq) (conj Hsm1 Hk)) as [Hsm2 _].
   set (rho1 := rho_sub rho []) in Hsm2.
   assert (HG1 : Good rho1) by (apply Good_sub; [reflexivity | exact HG]).
   set (rho2 := rho_set_rw rho1 70 (Z_to_bv 64 V70)).
-  assert (Hsm3 : smatch segs rho2 E_fxW w).
+  assert (Hsm3 : smatch segs rho2 (E_fxW rq) w).
   { eapply smatch_agree; [|exact Hsm2]. rewrite NxW. apply agree_below_set_rw. lia. }
   assert (HG2 : Good rho2) by (apply Good_set_rw; [exact HG1 | lia]).
   set (rho3 := rho_set_rl rho2 7 argv1).
   exists rho3. split; [|split].
   - split; [apply Good_set_rl; [exact HG2 | lia] | reflexivity].
   - reflexivity.
-  - split; [|exact Hk]. apply smatch_set_rl; [exact norl7_fxA|].
-    apply (SP_restate segs (Kx (TR 0) md0) rho2 E_fxW E_fxA w _ _ swf_E_fxA diff_fxA); [constructor | | split; [exact Hsm3 | exact Hk]].
+  - split; [|exact Hk]. apply smatch_set_rl; [exact (norl7_fxA rq)|].
+    apply (SP_restate segs (Kx (TR 0) md0) rho2 (E_fxW rq) (E_fxA rq) w _ _ (swf_E_fxA rq) (diff_fxA rq)); [constructor | | split; [exact Hsm3 | exact Hk]].
     constructor; [|constructor]. cbn [holds rho2 rho_set_rw rw]. rewrite Pos.eqb_refl.
     rewrite Z_to_bv_small by (rewrite mod64; unfold V70; lia). split; [lia | exact MV].
 Qed.
@@ -1257,13 +1312,18 @@ Proof using A1 ENVC Hargc JI L3 N RND.
   rewrite (map_nth_seq_k (rl rho 3) (Z.to_nat n) 0 (Z_to_bv 8 0)) by lia. reflexivity.
 Qed.
 
-Lemma check_pre_sound : ltac2:(tb__ "0|6|
-S7S7S10S10S0S2fS35S10S10A2M0A1S9bR4R3A2S2eG0S37S10S10R2R1A4A2A3S2S2bS35SbSbA2M1A1M2G2S1S0S2dS2aSa0R6R5A2M3A1S34A3S1S0S2fS35G2S2bS13A1M4A2M5A1Sc7S84G3A2S2eG5S37G2G4R1S32S13Sa1R6A1S30S13A1A3A4A2A3S1S74G1G1SaS0S3dQ40A1SeR1Sc1S98R8R7A2S3aSbSbR2A3A2A2SeR1S3bSbSbR2A3A2A3Frho;Lab;R1A3S1S0S2fS10A1Sf1G3SabR6A1A2S2eS10R4A2A3S1S0S10R3Sa8R4A1A3S1S0S8S16R4A1P47A3S0S2dS1bR4A1S36A3A2A2A2A2A2A2Ld;A2F_;FP;FC;Fr;Fn;").
+Lemma check_pre_sound : forall (n r : Z) (C P : sstate), check_pre rq n r = Some (C, P) ->
+  exists d : list (sv * sv),
+    swf (C0_nr rq n r) = true
+    /\ state_diff (E_fxA rq) (C0_nr rq n r) = Some (d, [F_n n])
+    /\ Forall (fun ab : sv * sv => forall rho : valuation, eval rho (sv_subst (s_nr n r) (fst ab)) = eval rho (snd ab)) d
+    /\ apply_xforms (C0_nr rq n r) (xs_c n) = Some C
+    /\ P = pre_loc C /\ ss_next C = 71%positive /\ ss_lenient C = false.
 Proof using .
   intros n r C P H. unfold check_pre in H. cbv zeta in H.
-  destruct (state_diff E_fxA (C0_nr n r)) as [[d nf]|] eqn:Ed; [|discriminate].
-  destruct (apply_xforms (C0_nr n r) (xs_c n)) as [C'|] eqn:Ex; [|discriminate].
-  destruct (swf (C0_nr n r) && forallb (diff_in_ok n r) d && list_eqb sprop_eqb nf [F_n n] && (ss_next C' =? 71)%positive && negb (ss_lenient C')) eqn:Eb; [|discriminate].
+  destruct (state_diff (E_fxA rq) (C0_nr rq n r)) as [[d nf]|] eqn:Ed; [|discriminate].
+  destruct (apply_xforms (C0_nr rq n r) (xs_c n)) as [C'|] eqn:Ex; [|discriminate].
+  destruct (swf (C0_nr rq n r) && forallb (diff_in_ok n r) d && list_eqb sprop_eqb nf [F_n n] && (ss_next C' =? 71)%positive && negb (ss_lenient C')) eqn:Eb; [|discriminate].
   injection H as <- <-.
   apply andb_prop in Eb as [Eb Eln]. apply andb_prop in Eb as [Eb Enx]. apply andb_prop in Eb as [Eb Enf]. apply andb_prop in Eb as [Ewf Ein].
   assert (Eln' : ss_lenient C' = false) by (destruct (ss_lenient C'); [discriminate|reflexivity]).
@@ -1272,11 +1332,28 @@ Proof using .
   apply Forall_forall. intros ab Hab rho. apply sv_equiv_sound. exact (proj1 (forallb_forall _ _) Ein ab Hab).
 Qed.
 
-Lemma check_core_sound : ltac2:(tb__ "0|13|
-S7S7S2fS2bS6bA1M0A1M1S0S2dS96R3R2R1A3S34A3S2S10S10S2S10S10S2S6bS6bS2SfSfS2S2bS7dA1M2G2S2S2bS35SbSbA2M3A1M4G4S1S0S2fS35S10S10A2M5A1S9bRaR9A2S2eG5S37S10S10R6R5A4A2A3S1S0S2fS2bSfA1M6A1Sd8R6R5S30S35S8SbA2A1M7A3S2eG6S94A2A3S1S0S2dSebR6R5G7S94S32S6bS6fS9cRaR9R6A3M8S6eA2S30S6bA1M9A3A5S34A3S1S0G1R8S2eG0S32S6bR4G9A3A2A3S1S0S2fSfA1SbcSfS1dS6cR4A1MaA1U1MbA3S2eSfR3A2A3S1S0SbS22R3A1S11N21fA1McA3S1S0SbS21R3A1S11S61RaZ21fA2A1A3S1S0S2dS1eS19R3A1MdA1S34A3S1S0S2dS1fGdA1S36A3S1S0S2fG2A1S80S20R3A1GcZ0S64RaA1A4S2eG2R2A2A3S1S0S2dSc5S7dS7fR2S83RaA1A4S34A3S1S0S2dSd3P7MeGaA2S36A3S1S0S2dSd7Sb5GaGbGeA3MfG8Sb3P47M10GfG8A3A3S34A3S1S8SdfR1G10A2S0SbSbfSb3G10Sb5S6cR6A1GbGeA3S9cRcRbR8A3A3R2A2SdR2A1A3F_;Fi;S1S0S2fS35G4S2bS13A1M11A2M12A1Sc7SecG7G10G8G10S94A5S82A2S2eG12S37G4G11R1S30S13A1A4A2A3S74G3G3SaS0S3dQ40A1SeR1S3aSbSbR2A3A2SeR1Sc1S98RcRbA2S3bSbSbR2A3A2A2A3Frho;Lab;R1A3A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2Ld2;A2Lbl;A2Lo;A2LL;A2LP;A2LC;A2F_;Fres;Fr;Fn;").
+Lemma check_core_sound : forall (n r : Z) (res : option (list leaf)), check_core rq n r res = true ->
+  exists (C P : sstate) (L : leaf) (o : sobj) (bl : list bexp) (d2 : list (sv * sv)),
+    check_pre rq n r = Some (C, P)
+    /\ entails_fr C P [] = Some (R_gen rq)
+    /\ call_check C P [] (R_gen rq) [mkLeaf (post_loc n r C) RsCut] = true
+    /\ res = Some [L]
+    /\ nth_error (ss_objs (lf_state L)) 1 = Some o
+    /\ ob_lo o = SLit (-543)
+    /\ ob_hi o = SLit (n - 543)
+    /\ dflt_writable (ob_dflt o) = true
+    /\ is_arr (ob_dflt o) = false
+    /\ cells_bytes (ob_cells o) (SLit (-543)) 0 (Z.to_nat n) = Some bl
+    /\ list_eqb bexp_eqb bl (BLn n) = true
+    /\ state_has_rl 7 (lf_state L) = false
+    /\ entails (obj_to_list (lf_state L) 1 7) (post_loc n r C) (infer_sub 71 (obj_to_list (lf_state L) 1 7) (post_loc n r C)) = true
+    /\ (forall i : positive, (i < 71)%positive ->
+          wsub_get (infer_sub 71 (obj_to_list (lf_state L) 1 7) (post_loc n r C)) i = SVar i)
+    /\ state_diff (import_post [] 71 (post_loc n r C) 71 (R_gen rq)) (E_po rq) = Some (d2, [])
+    /\ Forall (fun ab : sv * sv => forall rho : valuation, eval rho (fst ab) = eval rho (sv_subst (s_nr n r) (snd ab))) d2.
 Proof using A1 ENVC Hargc L3 N RND.
   intros n r res H. unfold check_core in H.
-  destruct (check_pre n r) as [[C P]|] eqn:Ep; [|discriminate]. cbv zeta in H.
+  destruct (check_pre rq n r) as [[C P]|] eqn:Ep; [|discriminate]. cbv zeta in H.
   apply andb_prop in H as [H HD]. apply andb_prop in H as [H HC]. apply andb_prop in H as [HA HB].
   destruct (entails_fr C P []) as [R|] eqn:Efr; [|discriminate].
   apply (list_eqb_sound sobj_eqb) in HA; [|exact sobj_eqb_sound]. subst R.
@@ -1286,7 +1363,7 @@ Proof using A1 ENVC Hargc L3 N RND.
   apply andb_prop in HC as [HC Hcb]. apply andb_prop in HC as [HC Harr]. apply andb_prop in HC as [HC Hwr]. apply andb_prop in HC as [Hlo Hhi].
   destruct (cells_bytes (ob_cells o) (SLit (-543)) 0 (Z.to_nat n)) as [bl|] eqn:Ecb; [|discriminate].
   apply andb_prop in He as [He Hs].
-  destruct (state_diff (import_post [] 71 (post_loc n r C) 71 R_gen) E_po) as [[d2 [|? ?]]|] eqn:Ed2; try discriminate.
+  destruct (state_diff (import_post [] 71 (post_loc n r C) 71 (R_gen rq)) (E_po rq)) as [[d2 [|? ?]]|] eqn:Ed2; try discriminate.
   exists C, P, L, o, bl, d2. repeat split; auto.
   - apply sv_eqb_sound in Hlo. exact Hlo.
   - apply sv_eqb_sound in Hhi. exact Hhi.
@@ -1297,8 +1374,6 @@ Proof using A1 ENVC Hargc L3 N RND.
   - apply Forall_forall. intros ab Hab rho. apply sv_equiv_sound. exact (proj1 (forallb_forall _ _) HD ab Hab).
 Qed.
 
-Definition PRloc (n : Z) (rho1 : valuation) : Prop := ltac2:(tb__ "0|3|
-S1S0S2bS3dQ8A1M0A1ScVrho1;P7A2S71G0S64Vn;A1M1ScVrho1;P3A2M2A3A3Sb1G1S2cG0G2A2A2A2").
 
 Lemma loc_sum : ltac2:(tb__ "0|9|
 S7S10S10S6bSfS2bS7dA1M0S2bS52A1S53OF_;F_;S0S2fS2bS6bA1M1A1S6dS6S85S32S7Sc9S30S7A1A3R6S34A5S2eG1S32S6bR4S30S6bA1M2A3A2A3S0S2dS1bR7A1S36A3S0S8S16R8A1P47M3A3S0S2fSfA1SbcSfS1dS6cR7A1A1U1M4A3S2eSfR6A2A3S0SbS22R7A1S11N21fA1M5A3S0SbS21R8A1S11S61RcZ21fA2A1A3S1S5bZ0M6RdA2S5bRdZ3fA2A2S0S2dS1eS19RaA1A1S34A3S0S2dS1fS19RbA1A1S36A3S0S2fG0A1S80S20RcA1G5G6S64R10A1A4S2eG0RbA2A3S0S2dSc5S7dS7fRcS83R11A1A4S34A3S0S2dSd3P7M7S6cRfA1A2S36A3S0S2dSd7Sb5S6cR10A1G4G7A3M8R11Sb3G3G8R11A3A3S34A3S8SdfR1G3A2S0SbSbfSb3G3Sb5S6cR13A1G4G7A3R14A3R2A2SdR2A1A3F_;Fi;S42S6Vok;RfA3SaS4bR17R1A2S68S6Vok;S40S6R12R17R2A4S41S6R12G3R2S32S6bS6fR16S6eA2G2A3A5A4F_;Frho1;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;FK;Fbl;Fo;FL;FQ;FP;Fn;").
@@ -1357,7 +1432,7 @@ Proof using Hargc Hent Hinp.
   destruct (Pos.eqb_spec v 28) as [->|N28].
   - cbn [eval]. rewrite (g_v28 rho HG). subst n. reflexivity.
   - destruct (Pos.eqb_spec v 25) as [->|N25]; [|reflexivity].
-    apply bv_eq. rewrite (J_add inp rho (SVar 70) (SLit r) V70 r); [| cbn [eval]; rewrite H70; apply Z_to_bv_small; rewrite mod64; unfold V70; lia
+    apply bv_eq. rewrite (J_add rho (SVar 70) (SLit r) V70 r); [| cbn [eval]; rewrite H70; apply Z_to_bv_small; rewrite mod64; unfold V70; lia
       | apply U_lit64; lia | unfold V70; lia | lia | unfold V70; lia].
     pose proof (G_v25 rho HG) as V25. cbn [eval] in V25. rewrite V25. lia.
 Qed.
@@ -1369,8 +1444,9 @@ Proof using Hargc Hent Hinp.
   split; [symmetry; exact tail1_firstn|]. pose proof length_tail1. pose proof L3_ge. unfold N in *. lia.
 Qed.
 
-Lemma L_nr : ltac2:(tb__ "0|2|
-S7S7S0S2dS96R2R1S6dS6S85S32S7Sc9S30S7A1A3S9dR2R1A2S34A5A3S34A3S0S7VN;R3A3S0S7S5fVA1;Z4A2R3A3S5bVN;Z3fA2SaS47R1A1S0S3dQ40M0A1S15R2P46A2S3fG0S4aA2A3S68S6Vok;S40S6S4fS44U0M1A1Vmd0;A2S84R3A4S49S82G1A2A4F_;F_;Frho;F_;F_;F_;F_;Fr;Fn;").
+Lemma L_nr : forall n r : Z, check_core rq n r (sym_run segs FUELm [ret_out] (the_pre rq n r) true) = true ->
+  N = n -> A1 mod 4 = r -> N <= 63 -> forall rho : valuation, GoodS rho -> rw rho 70 = Z_to_bv 64 V70 ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (E_fxA rq) rho) (QS_at (E_po rq) 0).
 Proof using Hargc Hent Hinp HokK.
   intros n r Hchk Hn Hr HN rho HGS H70. pose proof (proj1 HGS) as HG. pose proof NU as NU'. pose proof L3_ge as HL3. pose proof V70_eq as (EV & RV & MV).
   destruct (check_core_sound n r _ Hchk) as (C & P & L & o & bl & d2 & Hpre & Hefr & Hcc & Hrun & Ho & Hlo & Hhi & Hwr & Harr & Hcb & Hbl & Hrl & He & Hs & Hd2 & Hd2ok).
@@ -1379,32 +1455,33 @@ Proof using Hargc Hent Hinp HokK.
   { unfold the_pre in Hrun. rewrite Hpre in Hrun. exact Hrun. }
 
   eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) C rho); [| intros w Hw; exact Hw |].
-  { intros w Hsp. apply (SP_xforms segs (Kx (TR 0) md0) (xs_c n) rho (C0_nr n r) C w Hx).
-    apply (SP_restate segs (Kx (TR 0) md0) rho E_fxA (C0_nr n r) w _ _ Hwf0 Hd); [| | exact Hsp].
+  { intros w Hsp. apply (SP_xforms segs (Kx (TR 0) md0) (xs_c n) rho (C0_nr rq n r) C w Hx).
+    apply (SP_restate segs (Kx (TR 0) md0) rho (E_fxA rq) (C0_nr rq n r) w _ _ Hwf0 Hd); [| | exact Hsp].
     - unfold diffs_ok. apply Forall_forall. intros ab Hab.
       rewrite <- (proj1 (Forall_forall _ _) Hdok ab Hab rho). rewrite eval_subst. symmetry. apply (s_nr_id n r rho HG Hn Hr H70).
     - constructor; [|constructor]. unfold F_n. cbn [holds]. rewrite U_lit64 by lia.
       rewrite (G_v27 rho HG). subst n. lia. }
 
   subst P.
-  apply (call_sound_P segs (PRloc n) ok (Kx (TR 0) md0) (Kx (TR 0) md0) C (pre_loc C) [] R_gen [mkLeaf (post_loc n r C) RsCut] _ rho Hefr Hcc).
+  apply (call_sound_P segs (PRloc n) ok (Kx (TR 0) md0) (Kx (TR 0) md0) C (pre_loc C) [] (R_gen rq) [mkLeaf (post_loc n r C) RsCut] _ rho Hefr Hcc).
   - intros rho1 HPR.
     replace (ss_next (pre_loc C)) with 71%positive by (unfold pre_loc, set_objs; cbn [ss_next]; symmetry; exact HnxC).
     apply (loc_sum n (pre_loc C) (post_loc n r C) L o bl (Kx (TR 0) md0) Hrun'); try assumption;
       try (unfold pre_loc, set_objs; cbn [ss_lenient ss_next]; assumption); [subst n; unfold N; lia | apply okf].
-  - intros ms. apply (PRloc_intro n rho R_gen ms HGS Hn).
+  - intros ms. apply (PRloc_intro n rho (R_gen rq) ms HGS Hn).
   - intros L' rho' [<-|[]] Hag. cbn [lf_state]. unfold pre_loc, set_objs. cbn [ss_next]. rewrite HnxC.
     pose proof (GoodS_agree _ _ _ Hag ltac:(rewrite HnxC; lia) HGS) as HGS'. pose proof (proj1 HGS') as HG'.
     assert (H70' : rw rho' 70 = Z_to_bv 64 V70) by (rewrite <- (proj1 Hag 70%positive ltac:(rewrite HnxC; lia)); exact H70).
     eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
     intros w Hsp. exists rho'. split; [exact HGS'|].
-    apply (SP_restate segs (Kx (TR 0) md0) rho' _ E_po w _ _ swf_E_po Hd2); [| constructor | exact Hsp].
+    apply (SP_restate segs (Kx (TR 0) md0) rho' _ (E_po rq) w _ _ (swf_E_po rq) Hd2); [| constructor | exact Hsp].
     unfold diffs_ok. apply Forall_forall. intros ab Hab.
     rewrite (proj1 (Forall_forall _ _) Hd2ok ab Hab rho'). rewrite eval_subst. apply (s_nr_id n r rho' HG' Hn Hr H70').
 Qed.
 
-Lemma eL_nr : ltac2:(tb__ "0|2|
-S7S7S0S2dS96R2R1S6dS6S85S32S7Sc9S30S7A1A3S9dR2R1A2S34A5A3S34A3S0S7VN;R3A3S0S7S5fVA1;Z4A2R3A3S5bVN;Z3fA2SaS47R1A1S0S3dQ40M0A1S15R2P46A2S3fG0S4aA2A3S67S6S40S6S4fS44U0M1A1Vmd0;A2S84R3A4S49S82G1A2A3F_;F_;Frho;F_;F_;F_;F_;Fr;Fn;").
+Lemma eL_nr : forall n r : Z, check_core rq n r (sym_run segs FUELm [ret_out] (the_pre rq n r) true) = true ->
+  N = n -> A1 mod 4 = r -> N <= 63 -> forall rho : valuation, GoodS rho -> rw rho 70 = Z_to_bv 64 V70 ->
+  etriple segs (SP segs (Kx (TR 0) md0) (E_fxA rq) rho) (QS_at (E_po rq) 0).
 Proof using Hargc Hent Hinp.
   intros n r Hchk Hn Hr HN rho HGS H70. pose proof (proj1 HGS) as HG. pose proof NU as NU'. pose proof L3_ge as HL3. pose proof V70_eq as (EV & RV & MV).
   destruct (check_core_sound n r _ Hchk) as (C & P & L & o & bl & d2 & Hpre & Hefr & Hcc & Hrun & Ho & Hlo & Hhi & Hwr & Harr & Hcb & Hbl & Hrl & He & Hs & Hd2 & Hd2ok).
@@ -1412,24 +1489,24 @@ Proof using Hargc Hent Hinp.
   assert (Hrun' : sym_run segs FUELm [ret_out] P true = Some [L]).
   { unfold the_pre in Hrun. rewrite Hpre in Hrun. exact Hrun. }
   eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) C rho); [| intros w Hw; exact Hw |].
-  { intros w Hsp. apply (SP_xforms segs (Kx (TR 0) md0) (xs_c n) rho (C0_nr n r) C w Hx).
-    apply (SP_restate segs (Kx (TR 0) md0) rho E_fxA (C0_nr n r) w _ _ Hwf0 Hd); [| | exact Hsp].
+  { intros w Hsp. apply (SP_xforms segs (Kx (TR 0) md0) (xs_c n) rho (C0_nr rq n r) C w Hx).
+    apply (SP_restate segs (Kx (TR 0) md0) rho (E_fxA rq) (C0_nr rq n r) w _ _ Hwf0 Hd); [| | exact Hsp].
     - unfold diffs_ok. apply Forall_forall. intros ab Hab.
       rewrite <- (proj1 (Forall_forall _ _) Hdok ab Hab rho). rewrite eval_subst. symmetry. apply (s_nr_id n r rho HG Hn Hr H70).
     - constructor; [|constructor]. unfold F_n. cbn [holds]. rewrite U_lit64 by lia.
       rewrite (G_v27 rho HG). subst n. lia. }
   subst P.
-  apply (call_complete_P segs (PRloc n) (Kx (TR 0) md0) (Kx (TR 0) md0) C (pre_loc C) [] R_gen [mkLeaf (post_loc n r C) RsCut] _ rho Hefr Hcc).
+  apply (call_complete_P segs (PRloc n) (Kx (TR 0) md0) (Kx (TR 0) md0) C (pre_loc C) [] (R_gen rq) [mkLeaf (post_loc n r C) RsCut] _ rho Hefr Hcc).
   - intros rho1 HPR.
     replace (ss_next (pre_loc C)) with 71%positive by (unfold pre_loc, set_objs; cbn [ss_next]; symmetry; exact HnxC).
     apply (eloc_sum n (pre_loc C) (post_loc n r C) L o bl (Kx (TR 0) md0) Hrun'); try assumption;
       try (unfold pre_loc, set_objs; cbn [ss_lenient ss_next]; assumption); subst n; unfold N; lia.
-  - intros ms. apply (PRloc_intro n rho R_gen ms HGS Hn).
+  - intros ms. apply (PRloc_intro n rho (R_gen rq) ms HGS Hn).
   - intros L' rho' [<-|[]] Hag. cbn [lf_state]. unfold pre_loc, set_objs. cbn [ss_next]. rewrite HnxC.
     pose proof (GoodS_agree _ _ _ Hag ltac:(rewrite HnxC; lia) HGS) as HGS'. pose proof (proj1 HGS') as HG'.
     assert (H70' : rw rho' 70 = Z_to_bv 64 V70) by (rewrite <- (proj1 Hag 70%positive ltac:(rewrite HnxC; lia)); exact H70).
     intros w Hsp. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact HGS'|].
-    apply (SP_restate segs (Kx (TR 0) md0) rho' _ E_po w _ _ swf_E_po Hd2); [| constructor | exact Hsp].
+    apply (SP_restate segs (Kx (TR 0) md0) rho' _ (E_po rq) w _ _ (swf_E_po rq) Hd2); [| constructor | exact Hsp].
     unfold diffs_ok. apply Forall_forall. intros ab Hab.
     rewrite (proj1 (Forall_forall _ _) Hd2ok ab Hab rho'). rewrite eval_subst. apply (s_nr_id n r rho' HG' Hn Hr H70').
 Qed.
@@ -1438,65 +1515,65 @@ Lemma GoodS_sub_nil : ltac2:(tb__ "0|0|
 SaS47R1A1S47SbeR2S30S35S8SbA2A1A2A1F_;Frho;").
 Proof using . intros rho [HG H7]. split; [apply Good_sub; [reflexivity | exact HG] | cbn; exact H7]. Qed.
 
-Lemma L_po62 : ltac2:(tb__ "0|1|
-S5bVN;Z3eA2SaS47R1A1S68S6Vok;S40S6S4fS44U0M0A1Vmd0;A2S82R2A4S49S8fG0A2A4F_;Frho;F_;").
-Proof using Hargc Hent Hinp HokK.
+Lemma L_po62 : N <= 62 -> forall rho : valuation, GoodS rho ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (E_po rq) rho) (QS_at (E_Wa rq) 0).
+Proof using Hargc Hent Hinp HokK Hrq.
   intros HN rho HGS. pose proof (proj1 HGS) as HG.
-  eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) E_po62 rho); [| intros w Hw; exact Hw |].
-  { intros w Hsp. unfold E_po62. apply SP_add1; [apply (SP_xforms segs _ xs_po rho E_po E_po2 w xs_po_ok Hsp) | | reflexivity].
+  eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) (E_po62 rq) rho); [| intros w Hw; exact Hw |].
+  { intros w Hsp. unfold E_po62. apply SP_add1; [apply (SP_xforms segs _ xs_po rho (E_po rq) (E_po2 rq) w (xs_po_ok rq) Hsp) | | destruct rq; reflexivity].
     cbn [holds]. unfold bv_leu. rewrite U_lit64 by lia. rewrite (G_v28 rho HG). lia. }
-  eapply run_tr; [exact run_po62 | reflexivity | apply okf |].
-  intros L rho1 [<-|[]] Hag1; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag1 ltac:(cbn; lia) HGS) as HGS1.
-  eapply run_tr; [exact run_fx2a | reflexivity | apply okf |].
-  intros L rho2 [<-|[<-|[]]] Hag2; cbn [lf_state]; pose proof (GoodS_agree _ _ _ Hag2 ltac:(cbn; lia) HGS1) as HGS2.
+  eapply run_tr; [exact (run_po62 rq) | destruct rq; reflexivity | apply okf |].
+  intros L rho1 [<-|[]] Hag1; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HGS) as HGS1.
+  eapply run_tr; [exact (run_fx2a rq) | destruct rq; reflexivity | apply okf |].
+  intros L rho2 [<-|[<-|[]]] Hag2; cbn [lf_state]; pose proof (GoodS_agree _ _ _ Hag2 ltac:(destruct rq; cbn; lia) HGS1) as HGS2.
   - eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-    intros w Hw. exists (rho_sub rho2 []). split; [exact (GoodS_sub_nil _ HGS2) | exact (SP_entails segs _ _ _ [] rho2 w ent_Wa1 Hw)].
+    intros w Hw. exists (rho_sub rho2 []). split; [exact (GoodS_sub_nil _ HGS2) | exact (SP_entails segs _ _ _ [] rho2 w (ent_Wa1 rq) Hw)].
   - eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-    intros w Hw. exists (rho_sub rho2 []). split; [exact (GoodS_sub_nil _ HGS2) | exact (SP_entails segs _ _ _ [] rho2 w ent_Wa2 Hw)].
+    intros w Hw. exists (rho_sub rho2 []). split; [exact (GoodS_sub_nil _ HGS2) | exact (SP_entails segs _ _ _ [] rho2 w (ent_Wa2 rq) Hw)].
 Qed.
 
-Lemma eL_po62 : ltac2:(tb__ "0|1|
-S5bVN;Z3eA2SaS47R1A1S67S6S40S6S4fS44U0M0A1Vmd0;A2S82R2A4S49S8fG0A2A3F_;Frho;F_;").
-Proof using Hargc Hent Hinp.
+Lemma eL_po62 : N <= 62 -> forall rho : valuation, GoodS rho ->
+  etriple segs (SP segs (Kx (TR 0) md0) (E_po rq) rho) (QS_at (E_Wa rq) 0).
+Proof using Hargc Hent Hinp Hrq.
   intros HN rho HGS. pose proof (proj1 HGS) as HG.
-  eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) E_po62 rho); [| intros w Hw; exact Hw |].
-  { intros w Hsp. unfold E_po62. apply SP_add1; [apply (SP_xforms segs _ xs_po rho E_po E_po2 w xs_po_ok Hsp) | | reflexivity].
+  eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) (E_po62 rq) rho); [| intros w Hw; exact Hw |].
+  { intros w Hsp. unfold E_po62. apply SP_add1; [apply (SP_xforms segs _ xs_po rho (E_po rq) (E_po2 rq) w (xs_po_ok rq) Hsp) | | destruct rq; reflexivity].
     cbn [holds]. unfold bv_leu. rewrite U_lit64 by lia. rewrite (G_v28 rho HG). lia. }
-  eapply erun_tr; [exact run_po62 | reflexivity |].
-  intros L rho1 [<-|[]] Hag1; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag1 ltac:(cbn; lia) HGS) as HGS1.
-  eapply erun_tr; [exact run_fx2a | reflexivity |].
-  intros L rho2 [<-|[<-|[]]] Hag2; cbn [lf_state]; pose proof (GoodS_agree _ _ _ Hag2 ltac:(cbn; lia) HGS1) as HGS2;
+  eapply erun_tr; [exact (run_po62 rq) | destruct rq; reflexivity |].
+  intros L rho1 [<-|[]] Hag1; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HGS) as HGS1.
+  eapply erun_tr; [exact (run_fx2a rq) | destruct rq; reflexivity |].
+  intros L rho2 [<-|[<-|[]]] Hag2; cbn [lf_state]; pose proof (GoodS_agree _ _ _ Hag2 ltac:(destruct rq; cbn; lia) HGS1) as HGS2;
     intros w Hw; exists w; (split; [apply wsteps_refl|]); exists (rho_sub rho2 []); split; [exact (GoodS_sub_nil _ HGS2) | | exact (GoodS_sub_nil _ HGS2) |].
-  - exact (SP_entails segs _ _ _ [] rho2 w ent_Wa1 Hw).
-  - exact (SP_entails segs _ _ _ [] rho2 w ent_Wa2 Hw).
+  - exact (SP_entails segs _ _ _ [] rho2 w (ent_Wa1 rq) Hw).
+  - exact (SP_entails segs _ _ _ [] rho2 w (ent_Wa2 rq) Hw).
 Qed.
 
-Lemma L_po63 : ltac2:(tb__ "0|1|
-S0S7VN;Z3fA3SaS47R1A1S68S6Vok;S40S6S4fS44U0M0A1Vmd0;A2S82R2A4S49S91G0A2A4F_;Frho;F_;").
-Proof using Hargc Hent Hinp HokK.
+Lemma L_po63 : N = 63 -> forall rho : valuation, GoodS rho ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (E_po rq) rho) (QS_at (E_Wb rq) 0).
+Proof using Hargc Hent Hinp HokK Hrq.
   intros HN rho HGS. pose proof (proj1 HGS) as HG.
-  eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) E_po63 rho); [| intros w Hw; exact Hw |].
-  { intros w Hsp. unfold E_po63. apply SP_add1; [apply (SP_xforms segs _ xs_po rho E_po E_po2 w xs_po_ok Hsp) | | reflexivity].
+  eapply triple_conseq with (P := SP segs (Kx (TR 0) md0) (E_po63 rq) rho); [| intros w Hw; exact Hw |].
+  { intros w Hsp. unfold E_po63. apply SP_add1; [apply (SP_xforms segs _ xs_po rho (E_po rq) (E_po2 rq) w (xs_po_ok rq) Hsp) | | destruct rq; reflexivity].
     cbn [holds]. unfold bv_leu. rewrite U_lit64 by lia. rewrite (G_v28 rho HG). lia. }
-  eapply run_tr; [exact run_po63 | reflexivity | apply okf |].
-  intros L rho1 [<-|[]] Hag1; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag1 ltac:(cbn; lia) HGS) as HGS1.
-  eapply run_tr; [exact run_fx2b | reflexivity | apply okf |].
-  intros L rho2 [<-|[]] Hag2; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag2 ltac:(cbn; lia) HGS1) as HGS2.
+  eapply run_tr; [exact (run_po63 rq) | destruct rq; reflexivity | apply okf |].
+  intros L rho1 [<-|[]] Hag1; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HGS) as HGS1.
+  eapply run_tr; [exact (run_fx2b rq) | destruct rq; reflexivity | apply okf |].
+  intros L rho2 [<-|[]] Hag2; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag2 ltac:(destruct rq; cbn; lia) HGS1) as HGS2.
   eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
   intros w Hw. exists rho2. split; [exact HGS2 | exact Hw].
 Qed.
 
-Lemma eL_po63 : ltac2:(tb__ "0|1|
-S0S7VN;Z3fA3SaS47R1A1S67S6S40S6S4fS44U0M0A1Vmd0;A2S82R2A4S49S91G0A2A3F_;Frho;F_;").
-Proof using Hargc Hent Hinp.
+Lemma eL_po63 : N = 63 -> forall rho : valuation, GoodS rho ->
+  etriple segs (SP segs (Kx (TR 0) md0) (E_po rq) rho) (QS_at (E_Wb rq) 0).
+Proof using Hargc Hent Hinp Hrq.
   intros HN rho HGS. pose proof (proj1 HGS) as HG.
-  eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) E_po63 rho); [| intros w Hw; exact Hw |].
-  { intros w Hsp. unfold E_po63. apply SP_add1; [apply (SP_xforms segs _ xs_po rho E_po E_po2 w xs_po_ok Hsp) | | reflexivity].
+  eapply etriple_conseq with (P := SP segs (Kx (TR 0) md0) (E_po63 rq) rho); [| intros w Hw; exact Hw |].
+  { intros w Hsp. unfold E_po63. apply SP_add1; [apply (SP_xforms segs _ xs_po rho (E_po rq) (E_po2 rq) w (xs_po_ok rq) Hsp) | | destruct rq; reflexivity].
     cbn [holds]. unfold bv_leu. rewrite U_lit64 by lia. rewrite (G_v28 rho HG). lia. }
-  eapply erun_tr; [exact run_po63 | reflexivity |].
-  intros L rho1 [<-|[]] Hag1; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag1 ltac:(cbn; lia) HGS) as HGS1.
-  eapply erun_tr; [exact run_fx2b | reflexivity |].
-  intros L rho2 [<-|[]] Hag2; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag2 ltac:(cbn; lia) HGS1) as HGS2.
+  eapply erun_tr; [exact (run_po63 rq) | destruct rq; reflexivity |].
+  intros L rho1 [<-|[]] Hag1; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HGS) as HGS1.
+  eapply erun_tr; [exact (run_fx2b rq) | destruct rq; reflexivity |].
+  intros L rho2 [<-|[]] Hag2; cbn [lf_state]. pose proof (GoodS_agree _ _ _ Hag2 ltac:(destruct rq; cbn; lia) HGS1) as HGS2.
   intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho2. split; [exact HGS2 | exact Hw].
 Qed.
 
@@ -1518,7 +1595,7 @@ SaS43R1A1S0S7S3eQ40M0SeR2S8aA2A2S61S3eG0Vsp;A2Z230A2A3F_;Frho;").
 Proof using Hargc Hent Hinp. intros rho HG. pose proof (bval_sound rho HG B544 (bv_unsigned sp + -560) eq_refl). lia. Qed.
 Lemma G_LENa : ltac2:(tb__ "0|0|
 SaS43R1A1S0S7S3eQ40SeR2Sa3A2A2S5cVN;Z12A2A3F_;Frho;").
-Proof using Hargc Hent Hinp. intros rho HG. pose proof NU. unfold LENa. apply (J_add inp rho _ _ N 18 (G_v28 rho HG)); [apply U_lit64; lia | lia | lia | lia]. Qed.
+Proof using Hargc Hent Hinp. intros rho HG. pose proof NU. unfold LENa. apply (J_add rho _ _ N 18 (G_v28 rho HG)); [apply U_lit64; lia | lia | lia | lia]. Qed.
 Lemma G_LOnl : ltac2:(tb__ "0|0|
 SaS43R1A1S0S7S1cR2Sa4A2S61VN;Z21fA2A3F_;Frho;").
 Proof using Hargc Hent Hinp. intros rho HG. pose proof NU. unfold LOnl. apply (soff_add_small rho _ _ _ (G_v28 rho HG)); lia. Qed.
@@ -1529,70 +1606,71 @@ Lemma G_IOV : ltac2:(tb__ "0|0|
 SaS7S43R2A1S1S5bZ0R2A2S5bR2Z1A2A2S4S0S3dQ40A1SeR4S12S77S12S77S12S77SdP1A1S11N21fA1A3SdP1cA1A3S11R3A1A3A2SeR4S8aA2A3A1F_;F_;Fk;Frho;").
 Proof using Hargc Hent Hinp.
   intros rho k HG Hk E. pose proof NU as NU'. apply (f_equal bv_unsigned) in E. rewrite (G_B544 rho HG) in E.
-  erewrite (J_add inp rho _ _ (bv_unsigned sp - 543 + N) k) in E; [lia | | apply U_lit64; lia | lia | lia | lia].
-  apply (J_add inp rho _ _ (bv_unsigned sp - 543) N); [| exact (G_v28 rho HG) | lia | lia | lia].
+  erewrite (J_add rho _ _ (bv_unsigned sp - 543 + N) k) in E; [lia | | apply U_lit64; lia | lia | lia | lia].
+  apply (J_add rho _ _ (bv_unsigned sp - 543) N); [| exact (G_v28 rho HG) | lia | lia | lia].
   pose proof (bval_sound rho HG (SAlu ALU_ADD (SVar 1) (SLit (-543))) (bv_unsigned sp + -543) eq_refl). lia.
 Qed.
 
-Lemma wa_intro : ltac2:(tb__ "0|3|
-SaS66S5bVN;Z3eA2S47R3A1S40S6S4fS44U0A1Vmd0;A2M0S8fR4R3A5S2SaSaS1S43R1A1S1S0S2bS3dQ8A1M1A1M2ScR1P5A2S45A3S1S0G2ScR1P6A2S30G1A1A3S40S6G0S90R1R5A5A2A2A2Lrho';A2F_;F_;F_;Fw;Frho;").
-Proof using Hargc Hent Hinp.
+Lemma wa_intro : forall (rho : valuation) (w : world), N <= 62 -> GoodS rho ->
+  SP segs (Kx (TR 0) md0) (E_Wa rq) rho w ->
+  exists rho' : valuation, Good rho' /\ rl rho' 5 = MSG /\ rl rho' 6 = [] /\ SP segs (Kx (TR 0) md0) (E_Wa_c rq) rho' w.
+Proof using Hargc Hent Hinp Hrq.
   intros rho [tr [ms md]] HN [HG H7] [Hsm Hk]. pose proof NU as NU'. pose proof L3_ge as HL3. pose proof A1_eq as EA1.
-  destruct E_Wa_nexts as (Nxm & Nxx & Nxl1 & Nxm2).
+  destruct (E_Wa_nexts rq) as (Nxm & Nxx & Nxl1 & Nxm2).
 
-  assert (Hsm0 : smatch segs rho E_Wa_r (tr, mkCfg ms md)).
-  { refine (proj1 (SP_restate segs (Kx (TR 0) md0) rho E_Wa E_Wa_r _ _ _ swf_E_Wa_r diff_wa _ _ (conj Hsm Hk))); [|constructor].
+  assert (Hsm0 : smatch segs rho (E_Wa_r rq) (tr, mkCfg ms md)).
+  { refine (proj1 (SP_restate segs (Kx (TR 0) md0) rho (E_Wa rq) (E_Wa_r rq) _ _ _ (swf_E_Wa_r rq) (diff_wa rq) _ _ (conj Hsm Hk))); [|constructor].
     unfold diffs_ok. unfold IOVa. repeat constructor; cbn [fst snd]; apply iovcnt_two; apply (G_IOV rho 1 HG); lia. }
 
-  pose proof (smatch_xforms segs xs_wa1 rho E_Wa_r E_Wa_x _ xs_wa1_ok Hsm0) as Hsm1.
-  destruct obj1_wa as (Hn1 & Hlo1 & Hhi1 & Hwr1 & Harr1).
-  pose proof (smatch_obj_to_list segs rho E_Wa_x _ 1 8 (obj E_Wa_x 1) (-560) (-543) BL_co Hsm1 Hn1 Hlo1 Hhi1
-                ltac:(lia) ltac:(lia) Hwr1 Harr1 cb_wa1 norl8_wa) as Hsm2.
-  rewrite E_Wa_l1_eq, map_beval_BL_co in Hsm2.
+  pose proof (smatch_xforms segs xs_wa1 rho (E_Wa_r rq) (E_Wa_x rq) _ (xs_wa1_ok rq) Hsm0) as Hsm1.
+  destruct (obj1_wa rq) as (Hn1 & Hlo1 & Hhi1 & Hwr1 & Harr1).
+  pose proof (smatch_obj_to_list segs rho (E_Wa_x rq) _ 1 8 (obj (E_Wa_x rq) 1) (-560) (-543) BL_co Hsm1 Hn1 Hlo1 Hhi1
+                ltac:(lia) ltac:(lia) Hwr1 Harr1 (cb_wa1 rq) (norl8_wa rq)) as Hsm2.
+  rewrite (E_Wa_l1_eq rq), map_beval_BL_co in Hsm2.
   set (rho1 := rho_set_rl rho 8 M1) in Hsm2.
   assert (HG1 : Good rho1) by (apply Good_set_rl; [exact HG | lia]).
 
-  destruct obj3_wa as (Hn3 & Hlo3 & Hhi3 & Hwr3 & Harr3 & Hb3).
-  pose proof (smatch_obj_to_list_sym segs rho1 E_Wa_l1 _ 3 9 (obj E_Wa_l1 3) (N - 543) (N - 542) [BLit 10] Hsm2 Hn3
+  destruct (obj3_wa rq) as (Hn3 & Hlo3 & Hhi3 & Hwr3 & Harr3 & Hb3).
+  pose proof (smatch_obj_to_list_sym segs rho1 (E_Wa_l1 rq) _ 3 9 (obj (E_Wa_l1 rq) 3) (N - 543) (N - 542) [BLit 10] Hsm2 Hn3
                 ltac:(rewrite Hlo3; exact (G_LOnl rho1 HG1)) ltac:(rewrite Hhi3; exact (G_HInl rho1 HG1))
                 ltac:(lia) ltac:(lia) Hwr3 Harr3) as Hsm3.
   rewrite Hlo3 in Hsm3. replace (Z.to_nat (N - 542 - (N - 543))) with 1%nat in Hsm3 by lia.
-  specialize (Hsm3 cb_wa3 norl9_wa). rewrite E_Wa_l_eq in Hsm3. cbn [map beval] in Hsm3.
+  specialize (Hsm3 (cb_wa3 rq) (norl9_wa rq)). rewrite (E_Wa_l_eq rq) in Hsm3. cbn [map beval] in Hsm3.
   set (rho2 := rho_set_rl rho1 9 [Z_to_bv 8 10]) in Hsm3.
   assert (HG2 : Good rho2) by (apply Good_set_rl; [exact HG1 | lia]).
 
   set (rho3 := rho_set_rl rho2 10 (M1 ++ argv1)).
   assert (HG3 : Good rho3) by (apply Good_set_rl; [exact HG2 | lia]).
-  assert (Hsm4 : smatch segs rho3 E_Wa_m1 (tr, mkCfg ms md)).
-  { rewrite <- E_Wa_m1_eq. destruct m1_wa as [Hm1 Hm2].
-    apply (smatch_merge_lists segs rho3 E_Wa_l _ 1 10 _ _ 8 7 ltac:(apply smatch_set_rl; [exact norl10_wa | exact Hsm3]) Hm1 Hm2);
+  assert (Hsm4 : smatch segs rho3 (E_Wa_m1 rq) (tr, mkCfg ms md)).
+  { rewrite <- (E_Wa_m1_eq rq). destruct (m1_wa rq) as [Hm1 Hm2].
+    apply (smatch_merge_lists segs rho3 (E_Wa_l rq) _ 1 10 _ _ 8 7 ltac:(apply smatch_set_rl; [exact (norl10_wa rq) | exact Hsm3]) Hm1 Hm2);
       cbn [ob_cells ob_dflt ob_base ob_lo ob_hi dlist_of dflt_writable];
-      match goal with |- swf _ = true => rewrite E_Wa_m1_eq; exact swf_E_Wa_m1 | _ => try reflexivity end.
+      match goal with |- swf _ = true => rewrite (E_Wa_m1_eq rq); exact (swf_E_Wa_m1 rq) | _ => try (destruct rq; reflexivity) end.
     - rewrite (G_LOnl rho3 HG3), soff_lit_small by lia. lia.
     - cbn [rho3 rho2 rho1 rho_set_rl rl]. rewrite H7. reflexivity. }
   set (rho4 := rho_set_rl rho3 5 MSG).
   assert (HG4 : Good rho4) by (apply Good_set_rl; [exact HG3 | lia]).
-  assert (Hsm5 : smatch segs rho4 E_Wa_m2 (tr, mkCfg ms md)).
-  { rewrite <- E_Wa_m2_eq. destruct m2_wa as [Hm1 Hm2].
-    apply (smatch_merge_lists segs rho4 E_Wa_m1 _ 1 5 _ _ 10 9 ltac:(apply smatch_set_rl; [exact norl5_wa | exact Hsm4]) Hm1 Hm2);
+  assert (Hsm5 : smatch segs rho4 (E_Wa_m2 rq) (tr, mkCfg ms md)).
+  { rewrite <- (E_Wa_m2_eq rq). destruct (m2_wa rq) as [Hm1 Hm2].
+    apply (smatch_merge_lists segs rho4 (E_Wa_m1 rq) _ 1 5 _ _ 10 9 ltac:(apply smatch_set_rl; [exact (norl5_wa rq) | exact Hsm4]) Hm1 Hm2);
       cbn [ob_cells ob_dflt ob_base ob_lo ob_hi dlist_of dflt_writable];
-      match goal with |- swf _ = true => rewrite E_Wa_m2_eq; exact swf_E_Wa_m2 | _ => try reflexivity end.
+      match goal with |- swf _ = true => rewrite (E_Wa_m2_eq rq); exact (swf_E_Wa_m2 rq) | _ => try (destruct rq; reflexivity) end.
     rewrite (G_HInl rho4 HG4), soff_lit_small by lia. lia. }
 
-  assert (Hsm6 : smatch segs rho4 E_Wa_m (tr, mkCfg ms md)).
-  { rewrite <- E_Wa_m_eq.
-    apply (smatch_reframe_listobj segs rho4 E_Wa_m2 _ 1 _ 5 B544 (SLit 0) LENa Hsm5 rf_wa eq_refl eq_refl);
-      cbn [ob_base ob_lo ob_hi]; match goal with |- swf _ = true => rewrite E_Wa_m_eq; exact swf_E_Wa_m | _ => idtac end.
+  assert (Hsm6 : smatch segs rho4 (E_Wa_m rq) (tr, mkCfg ms md)).
+  { rewrite <- (E_Wa_m_eq rq).
+    apply (smatch_reframe_listobj segs rho4 (E_Wa_m2 rq) _ 1 _ 5 B544 (SLit 0) LENa Hsm5 (rf_wa rq) eq_refl eq_refl);
+      cbn [ob_base ob_lo ob_hi]; match goal with |- swf _ = true => rewrite (E_Wa_m_eq rq); exact (swf_E_Wa_m rq) | _ => idtac end.
     - rewrite (G_B544 rho4 HG4), !soff_lit_small by lia. rewrite (G_v1 rho4 HG4). lia.
-    - rewrite (G_B544 rho4 HG4), (G_HInl rho4 HG4). rewrite (J_soff_small inp rho4 _ _ (G_LENa rho4 HG4)) by lia. rewrite (G_v1 rho4 HG4). lia. }
+    - rewrite (G_B544 rho4 HG4), (G_HInl rho4 HG4). rewrite (J_soff_small rho4 _ _ (G_LENa rho4 HG4)) by lia. rewrite (G_v1 rho4 HG4). lia. }
 
   set (rho5 := rho_set_rl rho4 6 []).
   assert (HG5 : Good rho5) by (apply Good_set_rl; [exact HG4 | lia]).
-  assert (Hsm7 : smatch segs rho5 E_Wa_c0 (tr, mkCfg ms md)).
-  { rewrite <- E_Wa_c0_eq. unfold app_objs.
-    apply (smatch_carve_listobj segs rho5 E_Wa_m _ (SLit 0) (SLit 0) (SLit 0) 0 0 (DRom 6) 6 (ss_next E_Wa_m)
-             ltac:(apply smatch_set_rl; [exact norl6_wa | exact Hsm6]) eq_refl); rewrite ?U_lit64 by lia.
-    - exact swf_E_Wa_c0.
+  assert (Hsm7 : smatch segs rho5 (E_Wa_c0 rq) (tr, mkCfg ms md)).
+  { rewrite <- (E_Wa_c0_eq rq). unfold app_objs.
+    apply (smatch_carve_listobj segs rho5 (E_Wa_m rq) _ (SLit 0) (SLit 0) (SLit 0) 0 0 (DRom 6) 6 (ss_next (E_Wa_m rq))
+             ltac:(apply smatch_set_rl; [exact (norl6_wa rq) | exact Hsm6]) eq_refl); rewrite ?U_lit64 by lia.
+    - by_r swf_E_Wa_c0.
     - apply soff_lit_small. lia.
     - apply soff_lit_small. lia.
     - lia.
@@ -1600,75 +1678,75 @@ Proof using Hargc Hent Hinp.
     - lia.
     - lia.
     - reflexivity.
-    - solve_disj HG5.
+    - solve_disjr HG5.
     - intros off Hoff D. discriminate D.
     - intros off Hoff. lia. }
   exists rho5. split; [exact HG5|]. split; [reflexivity|]. split; [reflexivity|]. split; [|exact Hk].
-  exact (smatch_xforms segs xs_wa2 rho5 E_Wa_c0 E_Wa_c _ xs_wa2_ok Hsm7).
+  exact (smatch_xforms segs xs_wa2 rho5 (E_Wa_c0 rq) (E_Wa_c rq) _ (xs_wa2_ok rq) Hsm7).
 Qed.
 
 Lemma wa_window : ltac2:(tb__ "0|2|
 S0S2bS3dQ8A1M0A1S33G0S45S30G0A1A3M1S71G0S2cG0G1A2S72G0U0S45A3A3A3").
 Proof using . rewrite app_nil_r. cbn [skipn]. rewrite firstn_all. reflexivity. Qed.
 
-Lemma L_Wa : ltac2:(tb__ "0|2|
-SaS43R1A1S0S2bS3dQ8A1M0A1M1ScR2P5A2S45A3S0G1ScR3P6A2S30G0A1A3S68S6Vok;S40S6S4fS44U0A1Vmd0;A2S90R4A4S46S88S2cG0S45A2A2A4F_;F_;F_;Frho;").
-Proof using Hargc Hent Hfds0 Hinp HokK HokP.
+Lemma L_Wa : forall rho : valuation, Good rho -> rl rho 5 = MSG -> rl rho 6 = [] ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (E_Wa_c rq) rho) (Q_at (T_Da rq) (length MSG)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hinp HokK HokP Hrq.
   intros rho HG H5 H6. destruct s_wa_vals as (S12 & S13 & S14 & S15). pose proof NU as NU'. pose proof MSG_len as ML.
   apply (call_path segs (PRw MSG []) ok (Kx (TR 0) md0) (WLerr.Kw (Kx (TR 0) md0) MSG [] (length (WLerr.MSG MSG [])))
-           E_Wa_c E_Wa_c WLerrS.Pre_wl2 [] s_wa R_wa WLerr.Posts_wl _ rho
-           eq_refl efr_wa chk_wa ltac:(rewrite facts_wac; exact fb_wa)).
+           (E_Wa_c rq) (E_Wa_c rq) WLerrS.Pre_wl2 [] s_wa (R_wa rq) WLerr.Posts_wl _ rho
+           eq_refl (efr_wa rq) (chk_wa rq) ltac:(rewrite (facts_wac rq); exact (fb_wa rq))).
   - intros rho1 HPR. apply (wl2_call 0 MSG [] rho1 ltac:(rewrite ML; lia) wa_window HPR).
   - intros ms _. unfold PRw. rewrite rl_call, !rw_call, S13, S15. split; [exact H5|]. split; [exact H6|].
     split; [rewrite (G_LENa rho HG), ML; lia | rewrite U_lit64 by lia; reflexivity].
-  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite facts_wac in HF.
-    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite T_Dai_eq.
-    eapply triple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) T_Dai rho'); [| intros w Hw; exact Hw |].
+  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite (facts_wac rq) in HF.
+    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite (T_Dai_eq rq).
+    eapply triple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) (T_Dai rq) rho'); [| intros w Hw; exact Hw |].
     { intros w [Hsm HK]. split; [exact Hsm|]. apply (Kw_TR 0 MSG [] _ _ _ wa_window) in HK.
       unfold WLerr.MSG in HK. rewrite app_nil_r, Nat.min_id in HK. exact HK. }
-    apply (post_path segs ok _ T_Dai T_Da (ss_facts E_Wa) [] rho' _ fb_da xs_da_ok HF).
+    apply (post_path segs ok _ (T_Dai rq) (T_Da rq) (ss_facts (E_Wa rq)) [] rho' _ (fb_da rq) (xs_da_ok rq) HF).
     eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-    intros w Hw. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(cbn; lia) HG) | exact Hw].
+    intros w Hw. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma eL_Wa : ltac2:(tb__ "0|2|
-SaS43R1A1S0S2bS3dQ8A1M0A1M1ScR2P5A2S45A3S0G1ScR3P6A2S30G0A1A3S67S6S40S6S4fS44U0A1Vmd0;A2S90R4A4S46S88S2cG0S45A2A2A3F_;F_;F_;Frho;").
-Proof using Hargc Hent Hfds0 Hinp.
+Lemma eL_Wa : forall rho : valuation, Good rho -> rl rho 5 = MSG -> rl rho 6 = [] ->
+  etriple segs (SP segs (Kx (TR 0) md0) (E_Wa_c rq) rho) (Q_at (T_Da rq) (length MSG)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hinp Hrq.
   intros rho HG H5 H6. destruct s_wa_vals as (S12 & S13 & S14 & S15). pose proof NU as NU'. pose proof MSG_len as ML.
   apply (ecall_path segs (PRw MSG []) (Kx (TR 0) md0) (WLerr.Kw (Kx (TR 0) md0) MSG [] (length (WLerr.MSG MSG [])))
-           E_Wa_c E_Wa_c WLerrS.Pre_wl2 [] s_wa R_wa WLerr.Posts_wl _ rho
-           eq_refl efr_wa chk_wa ltac:(rewrite facts_wac; exact fb_wa)).
+           (E_Wa_c rq) (E_Wa_c rq) WLerrS.Pre_wl2 [] s_wa (R_wa rq) WLerr.Posts_wl _ rho
+           eq_refl (efr_wa rq) (chk_wa rq) ltac:(rewrite (facts_wac rq); exact (fb_wa rq))).
   - intros rho1 HPR. apply (wl2_ecall 0 MSG [] rho1 ltac:(rewrite ML; lia) wa_window HPR).
   - intros ms _. unfold PRw. rewrite rl_call, !rw_call, S13, S15. split; [exact H5|]. split; [exact H6|].
     split; [rewrite (G_LENa rho HG), ML; lia | rewrite U_lit64 by lia; reflexivity].
-  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite facts_wac in HF.
-    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite T_Dai_eq.
-    eapply etriple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) T_Dai rho'); [| intros w Hw; exact Hw |].
+  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite (facts_wac rq) in HF.
+    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite (T_Dai_eq rq).
+    eapply etriple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) (T_Dai rq) rho'); [| intros w Hw; exact Hw |].
     { intros w [Hsm HK]. split; [exact Hsm|]. apply (Kw_TR 0 MSG [] _ _ _ wa_window) in HK.
       unfold WLerr.MSG in HK. rewrite app_nil_r, Nat.min_id in HK. exact HK. }
-    apply (epost_path segs _ T_Dai T_Da (ss_facts E_Wa) [] rho' _ fb_da xs_da_ok HF).
-    intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(cbn; lia) HG) | exact Hw].
+    apply (epost_path segs _ (T_Dai rq) (T_Da rq) (ss_facts (E_Wa rq)) [] rho' _ (fb_da rq) (xs_da_ok rq) HF).
+    intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma L_exa : ltac2:(tb__ "0|0|
-SaS43R1A1S68S6Vok;S40S6S4fS44S2cS3dQ8A1S45A2A1Vmd0;A2S88R2A4S66S3L_;A4F_;Frho;").
-Proof using Hargc Hfs HokK HokP Hokh.
-  intros rho HG. eapply run_tr; [exact run_da | reflexivity | apply okf |].
+Lemma L_exa : forall rho : valuation, Good rho ->
+  triple segs ok (SP segs (Kx (TR (length MSG)) md0) (T_Da rq) rho) (fun _ : world => False).
+Proof using Hargc Hfs HokK HokP Hokh Hrq.
+  intros rho HG. eapply run_tr; [exact (run_da rq) | destruct rq; reflexivity | apply okf |].
   intros L rho1 [<-|[]] Hag1. cbn [lf_state].
-  destruct cert_exa as (Hi & H17 & H10).
-  apply (triple_exit_eval segs ok SpecT (Kx (TR (length MSG)) md0) E_exa rho1 2);
+  destruct (cert_exa rq) as (Hi & H17 & H10).
+  apply (triple_exit_eval segs ok SpecT (Kx (TR (length MSG)) md0) (E_exa rq) rho1 2);
     [apply okf | apply okp | exact Hokh | exact Hi | left; exact H17 | rewrite H10; rewrite U_lit64 by lia; reflexivity |].
   intros tr md [-> ->]. rewrite TR_all by lia. rewrite Hfs. exact final_in_spec.
 Qed.
 
-Lemma eL_exa : ltac2:(tb__ "0|1|
-SaS43R1A1S67S6S40S6S4fS44S2cS3dQ8A1S45A2A1Vmd0;A2S88R2A4S66S0S2bS52A1S69R1A1S33S52SadZ2M0S45A2S32S52SaeVfs;G0A2S30S52A1A3A3A3Lw;A3F_;Frho;").
-Proof using Hargc Hfs.
-  intros rho HG. eapply erun_tr; [exact run_da | reflexivity |].
+Lemma eL_exa : forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR (length MSG)) md0) (T_Da rq) rho) (fun w : world => w_tr w = wr 2 MSG ++ [ex fs 2]).
+Proof using Hargc Hfs Hrq.
+  intros rho HG. eapply erun_tr; [exact (run_da rq) | destruct rq; reflexivity |].
   intros L rho1 [<-|[]] Hag1. cbn [lf_state].
-  destruct cert_exa as (Hi & H17 & H10).
+  destruct (cert_exa rq) as (Hi & H17 & H10).
   eapply etriple_conseq; [intros w Hw; exact Hw | |
-    apply (etriple_exit_eval segs (Kx (TR (length MSG)) md0) E_exa rho1 2 Hi (or_introl H17))].
+    apply (etriple_exit_eval segs (Kx (TR (length MSG)) md0) (E_exa rq) rho1 2 Hi (or_introl H17))].
   - intros w (tr & md & [-> ->] & ->). rewrite TR_all by lia. rewrite Hfs. reflexivity.
   - rewrite H10. rewrite U_lit64 by lia. reflexivity.
 Qed.
@@ -1677,106 +1755,109 @@ Lemma G_IOV0 : ltac2:(tb__ "0|0|
 SaS43R1A1S4S0S3dQ40A1SeR2S12S77S12S77SdP1A1S11N21fA1A3SdP1cA1A3A2SeR2S8aA2A3A1F_;Frho;").
 Proof using Hargc Hent Hinp.
   intros rho HG E. pose proof NU as NU'. apply (f_equal bv_unsigned) in E. rewrite (G_B544 rho HG) in E.
-  erewrite (J_add inp rho _ _ (bv_unsigned sp - 543) N) in E; [lia | | exact (G_v28 rho HG) | lia | lia | lia].
+  erewrite (J_add rho _ _ (bv_unsigned sp - 543) N) in E; [lia | | exact (G_v28 rho HG) | lia | lia | lia].
   pose proof (bval_sound rho HG (SAlu ALU_ADD (SVar 1) (SLit (-543))) (bv_unsigned sp + -543) eq_refl). lia.
 Qed.
 
 Lemma nl_eq : ltac2:(tb__ "0|2|
 S0S2bS3dQ8M0A1M1A1SacS32G1S3fG0ZaA2S30G1A1A3A3"). Proof using . reflexivity. Qed.
 
-Lemma wb_intro : ltac2:(tb__ "0|3|
-SaS66S0S7VN;Z3fA3S47R3A1S40S6S4fS44U0A1Vmd0;A2M0S91R4R3A5S2SaSaS1S43R1A1S1S0S2bS3dQ8A1M1A1M2ScR1P5A2S33G1S48Vargv1;A3A3S1S0G2ScR1P6A2SacA3S40S6G0S92R1R5A5A2A2A2Lrho';A2F_;F_;F_;Fw;Frho;").
-Proof using Hargc Hent Hinp.
+Lemma wb_intro : forall (rho : valuation) (w : world), N = 63 -> GoodS rho ->
+  SP segs (Kx (TR 0) md0) (E_Wb rq) rho w ->
+  exists rho' : valuation, Good rho' /\ rl rho' 5 = M1 ++ argv1 /\ rl rho' 6 = nl
+    /\ SP segs (Kx (TR 0) md0) (E_Wb_c rq) rho' w.
+Proof using Hargc Hent Hinp Hrq.
   intros rho [tr [ms md]] HN [HG H7] [Hsm Hk]. pose proof NU as NU'. pose proof L3_ge as HL3. pose proof A1_eq as EA1.
-  destruct E_Wb_nexts as (Nxm & Nxx & Nxm1).
+  destruct (E_Wb_nexts rq) as (Nxm & Nxx & Nxm1).
 
-  assert (Hsm0 : smatch segs rho E_Wb_r (tr, mkCfg ms md)).
-  { refine (proj1 (SP_restate segs (Kx (TR 0) md0) rho E_Wb E_Wb_r _ _ _ swf_E_Wb_r diff_wb _ _ (conj Hsm Hk))); [|constructor].
+  assert (Hsm0 : smatch segs rho (E_Wb_r rq) (tr, mkCfg ms md)).
+  { refine (proj1 (SP_restate segs (Kx (TR 0) md0) rho (E_Wb rq) (E_Wb_r rq) _ _ _ (swf_E_Wb_r rq) (diff_wb rq) _ _ (conj Hsm Hk))); [|constructor].
     unfold diffs_ok. unfold IOVb. repeat constructor; cbn [fst snd]; apply iovcnt_two; apply (G_IOV0 rho HG). }
 
-  pose proof (smatch_xforms segs xs_wb1 rho E_Wb_r E_Wb_x _ xs_wb1_ok Hsm0) as Hsm1.
-  destruct obj1_wb as (Hn1 & Hlo1 & Hhi1 & Hwr1 & Harr1).
-  pose proof (smatch_obj_to_list segs rho E_Wb_x _ 1 8 (obj E_Wb_x 1) (-560) (-543) BL_co Hsm1 Hn1 Hlo1 Hhi1
-                ltac:(lia) ltac:(lia) Hwr1 Harr1 cb_wb1 norl8_wb) as Hsm2.
-  rewrite E_Wb_l_eq, map_beval_BL_co in Hsm2.
+  pose proof (smatch_xforms segs xs_wb1 rho (E_Wb_r rq) (E_Wb_x rq) _ (xs_wb1_ok rq) Hsm0) as Hsm1.
+  destruct (obj1_wb rq) as (Hn1 & Hlo1 & Hhi1 & Hwr1 & Harr1).
+  pose proof (smatch_obj_to_list segs rho (E_Wb_x rq) _ 1 8 (obj (E_Wb_x rq) 1) (-560) (-543) BL_co Hsm1 Hn1 Hlo1 Hhi1
+                ltac:(lia) ltac:(lia) Hwr1 Harr1 (cb_wb1 rq) (norl8_wb rq)) as Hsm2.
+  rewrite (E_Wb_l_eq rq), map_beval_BL_co in Hsm2.
   set (rho1 := rho_set_rl rho 8 M1) in Hsm2.
   assert (HG1 : Good rho1) by (apply Good_set_rl; [exact HG | lia]).
 
   set (rho2 := rho_set_rl rho1 5 (M1 ++ argv1)).
   assert (HG2 : Good rho2) by (apply Good_set_rl; [exact HG1 | lia]).
-  assert (Hsm3 : smatch segs rho2 E_Wb_m1 (tr, mkCfg ms md)).
-  { rewrite <- E_Wb_m1_eq. destruct m_wb as [Hm1 Hm2].
-    apply (smatch_merge_lists segs rho2 E_Wb_l _ 1 5 _ _ 8 7 ltac:(apply smatch_set_rl; [exact norl5_wb | exact Hsm2]) Hm1 Hm2);
+  assert (Hsm3 : smatch segs rho2 (E_Wb_m1 rq) (tr, mkCfg ms md)).
+  { rewrite <- (E_Wb_m1_eq rq). destruct (m_wb rq) as [Hm1 Hm2].
+    apply (smatch_merge_lists segs rho2 (E_Wb_l rq) _ 1 5 _ _ 8 7 ltac:(apply smatch_set_rl; [exact (norl5_wb rq) | exact Hsm2]) Hm1 Hm2);
       cbn [ob_cells ob_dflt ob_base ob_lo ob_hi dlist_of dflt_writable];
-      match goal with |- swf _ = true => rewrite E_Wb_m1_eq; exact swf_E_Wb_m1 | _ => try reflexivity end.
+      match goal with |- swf _ = true => rewrite (E_Wb_m1_eq rq); exact (swf_E_Wb_m1 rq) | _ => try (destruct rq; reflexivity) end.
     - rewrite (G_LOnl rho2 HG2), soff_lit_small by lia. lia.
     - cbn [rho2 rho1 rho_set_rl rl]. rewrite H7. reflexivity. }
 
-  assert (Hsm4 : smatch segs rho2 E_Wb_m (tr, mkCfg ms md)).
-  { rewrite <- E_Wb_m_eq.
-    apply (smatch_reframe_listobj segs rho2 E_Wb_m1 _ 1 _ 5 B544 (SLit 0) (SLit 80) Hsm3 rf_wb eq_refl eq_refl);
-      cbn [ob_base ob_lo ob_hi]; match goal with |- swf _ = true => rewrite E_Wb_m_eq; exact swf_E_Wb_m | _ => idtac end.
+  assert (Hsm4 : smatch segs rho2 (E_Wb_m rq) (tr, mkCfg ms md)).
+  { rewrite <- (E_Wb_m_eq rq).
+    apply (smatch_reframe_listobj segs rho2 (E_Wb_m1 rq) _ 1 _ 5 B544 (SLit 0) (SLit 80) Hsm3 (rf_wb rq) eq_refl eq_refl);
+      cbn [ob_base ob_lo ob_hi]; match goal with |- swf _ = true => rewrite (E_Wb_m_eq rq); exact (swf_E_Wb_m rq) | _ => idtac end.
     - rewrite (G_B544 rho2 HG2), !soff_lit_small by lia. rewrite (G_v1 rho2 HG2). lia.
     - rewrite (G_B544 rho2 HG2), (G_LOnl rho2 HG2), soff_lit_small by lia. rewrite (G_v1 rho2 HG2). lia. }
 
   set (rho3 := rho_set_rl rho2 6 nl).
   assert (HG3 : Good rho3) by (apply Good_set_rl; [exact HG2 | lia]).
   destruct img_nl as [Himg Hro].
-  assert (Hsm5 : smatch segs rho3 E_Wb_c0 (tr, mkCfg ms md)).
-  { rewrite <- E_Wb_c0_eq. unfold app_objs.
-    apply (ReprGlue.smatch_carve_rom segs rho3 E_Wb_m _ nl_addr 1 6 (ss_next E_Wb_m) ltac:(apply smatch_set_rl; [exact norl6_wb | exact Hsm4])).
-    - exact swf_E_Wb_c0.
+  assert (Hsm5 : smatch segs rho3 (E_Wb_c0 rq) (tr, mkCfg ms md)).
+  { rewrite <- (E_Wb_c0_eq rq). unfold app_objs.
+    apply (ReprGlue.smatch_carve_rom segs rho3 (E_Wb_m rq) _ nl_addr 1 6 (ss_next (E_Wb_m rq))
+             ltac:(apply smatch_set_rl; [exact (norl6_wb rq) | exact Hsm4])).
+    - by_r swf_E_Wb_c0.
     - unfold nl_addr. lia.
     - lia.
     - unfold nl_addr. lia.
     - reflexivity.
     - intros k Hk0. replace k with 0 by lia. rewrite Z.add_0_r. split; [exact Hro | exact Himg].
-    - unfold nl_addr. solve_disj HG3. }
+    - unfold nl_addr. solve_disjr HG3. }
   exists rho3. split; [exact HG3|]. split; [reflexivity|]. split; [reflexivity|]. split; [|exact Hk].
-  exact (smatch_xforms segs xs_wb2 rho3 E_Wb_c0 E_Wb_c _ xs_wb2_ok Hsm5).
+  exact (smatch_xforms segs xs_wb2 rho3 (E_Wb_c0 rq) (E_Wb_c rq) _ (xs_wb2_ok rq) Hsm5).
 Qed.
 
 Lemma wb_window : ltac2:(tb__ "0|2|
 S0S2bS3dQ8A1M0A1S33G0S33G0S48Vargv1;A3SacA3M1S71G0S2cG0G1A2S72G0U0S45A3A3A3").
 Proof using . unfold MSG. rewrite <- app_assoc. cbn [skipn]. rewrite firstn_all. reflexivity. Qed.
 
-Lemma L_Wb : ltac2:(tb__ "0|2|
-S0S7VN;Z3fA3SaS43R1A1S0S2bS3dQ8A1M0A1M1ScR2P5A2S33G0S48Vargv1;A3A3S0G1ScR3P6A2SacA3S68S6Vok;S40S6S4fS44U0A1Vmd0;A2S92R4A4S46S89S2cG0S45A2A2A4F_;F_;F_;Frho;F_;").
-Proof using Hargc Hent Hfds0 Hinp HokK HokP.
+Lemma L_Wb : N = 63 -> forall rho : valuation, Good rho -> rl rho 5 = M1 ++ argv1 -> rl rho 6 = nl ->
+  triple segs ok (SP segs (Kx (TR 0) md0) (E_Wb_c rq) rho) (Q_at (T_Db rq) (length MSG)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hinp HokK HokP Hrq.
   intros HN rho HG H5 H6. destruct s_wb_vals as (S12 & S13 & S14 & S15). pose proof NU as NU'. pose proof MSG_len as ML.
   apply (call_path segs (PRw (M1 ++ argv1) nl) ok (Kx (TR 0) md0) (WLerr.Kw (Kx (TR 0) md0) (M1 ++ argv1) nl (length (WLerr.MSG (M1 ++ argv1) nl)))
-           E_Wb_c E_Wb_c WLerrS.Pre_wl2 [] s_wb R_wb WLerr.Posts_wl _ rho
-           eq_refl efr_wb chk_wb ltac:(rewrite facts_wbc; exact fb_wb)).
+           (E_Wb_c rq) (E_Wb_c rq) WLerrS.Pre_wl2 [] s_wb (R_wb rq) WLerr.Posts_wl _ rho
+           eq_refl (efr_wb rq) (chk_wb rq) ltac:(rewrite (facts_wbc rq); exact (fb_wb rq))).
   - intros rho1 HPR. apply (wl2_call 0 (M1 ++ argv1) nl rho1 ltac:(rewrite length_app, M1_len; lia) wb_window HPR).
   - intros ms _. unfold PRw. rewrite rl_call, !rw_call, S13, S15. split; [exact H5|]. split; [exact H6|].
     split; rewrite U_lit64 by lia; [rewrite length_app, M1_len; unfold N in HN; lia | reflexivity].
-  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite facts_wbc in HF.
-    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite T_Dbi_eq.
-    eapply triple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) T_Dbi rho'); [| intros w Hw; exact Hw |].
+  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite (facts_wbc rq) in HF.
+    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite (T_Dbi_eq rq).
+    eapply triple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) (T_Dbi rq) rho'); [| intros w Hw; exact Hw |].
     { intros w [Hsm HK]. split; [exact Hsm|]. apply (Kw_TR 0 (M1 ++ argv1) nl _ _ _ wb_window) in HK.
       unfold WLerr.MSG in HK. rewrite Nat.min_id in HK. unfold MSG. rewrite <- app_assoc in HK. exact HK. }
-    apply (post_path segs ok _ T_Dbi T_Db (ss_facts E_Wb) [] rho' _ fb_db xs_db_ok HF).
+    apply (post_path segs ok _ (T_Dbi rq) (T_Db rq) (ss_facts (E_Wb rq)) [] rho' _ (fb_db rq) (xs_db_ok rq) HF).
     eapply triple_conseq; [| intros w Hw; exact Hw | apply triple_refl].
-    intros w Hw. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(cbn; lia) HG) | exact Hw].
+    intros w Hw. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
-Lemma eL_Wb : ltac2:(tb__ "0|2|
-S0S7VN;Z3fA3SaS43R1A1S0S2bS3dQ8A1M0A1M1ScR2P5A2S33G0S48Vargv1;A3A3S0G1ScR3P6A2SacA3S67S6S40S6S4fS44U0A1Vmd0;A2S92R4A4S46S89S2cG0S45A2A2A3F_;F_;F_;Frho;F_;").
-Proof using Hargc Hent Hfds0 Hinp.
+Lemma eL_Wb : N = 63 -> forall rho : valuation, Good rho -> rl rho 5 = M1 ++ argv1 -> rl rho 6 = nl ->
+  etriple segs (SP segs (Kx (TR 0) md0) (E_Wb_c rq) rho) (Q_at (T_Db rq) (length MSG)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hinp Hrq.
   intros HN rho HG H5 H6. destruct s_wb_vals as (S12 & S13 & S14 & S15). pose proof NU as NU'. pose proof MSG_len as ML.
   apply (ecall_path segs (PRw (M1 ++ argv1) nl) (Kx (TR 0) md0) (WLerr.Kw (Kx (TR 0) md0) (M1 ++ argv1) nl (length (WLerr.MSG (M1 ++ argv1) nl)))
-           E_Wb_c E_Wb_c WLerrS.Pre_wl2 [] s_wb R_wb WLerr.Posts_wl _ rho
-           eq_refl efr_wb chk_wb ltac:(rewrite facts_wbc; exact fb_wb)).
+           (E_Wb_c rq) (E_Wb_c rq) WLerrS.Pre_wl2 [] s_wb (R_wb rq) WLerr.Posts_wl _ rho
+           eq_refl (efr_wb rq) (chk_wb rq) ltac:(rewrite (facts_wbc rq); exact (fb_wb rq))).
   - intros rho1 HPR. apply (wl2_ecall 0 (M1 ++ argv1) nl rho1 ltac:(rewrite length_app, M1_len; lia) wb_window HPR).
   - intros ms _. unfold PRw. rewrite rl_call, !rw_call, S13, S15. split; [exact H5|]. split; [exact H6|].
     split; rewrite U_lit64 by lia; [rewrite length_app, M1_len; unfold N in HN; lia | reflexivity].
-  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite facts_wbc in HF.
-    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite T_Dbi_eq.
-    eapply etriple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) T_Dbi rho'); [| intros w Hw; exact Hw |].
+  - intros L rho' [<-|[]] Hag HF. cbn [lf_state]. rewrite (facts_wbc rq) in HF.
+    change (ss_next WLerrS.Pre_wl2) with 92%positive. rewrite (T_Dbi_eq rq).
+    eapply etriple_conseq with (P := SP segs (Kx (TR (length MSG)) md0) (T_Dbi rq) rho'); [| intros w Hw; exact Hw |].
     { intros w [Hsm HK]. split; [exact Hsm|]. apply (Kw_TR 0 (M1 ++ argv1) nl _ _ _ wb_window) in HK.
       unfold WLerr.MSG in HK. rewrite Nat.min_id in HK. unfold MSG. rewrite <- app_assoc in HK. exact HK. }
-    apply (epost_path segs _ T_Dbi T_Db (ss_facts E_Wb) [] rho' _ fb_db xs_db_ok HF).
-    intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(cbn; lia) HG) | exact Hw].
+    apply (epost_path segs _ (T_Dbi rq) (T_Db rq) (ss_facts (E_Wb rq)) [] rho' _ (fb_db rq) (xs_db_ok rq) HF).
+    intros w Hw. exists w. split; [apply wsteps_refl|]. exists rho'. split; [exact (Good_agree _ _ _ Hag ltac:(destruct rq; cbn; lia) HG) | exact Hw].
 Qed.
 
 Lemma pending_obj : ltac2:(tb__ "0|1|
@@ -1786,84 +1867,84 @@ Proof using .
   exact (Forall_nth_error _ _ _ _ Hall Hn).
 Qed.
 
-Lemma L_wz : ltac2:(tb__ "0|0|
-SaS43R1A1S68S6Vok;S40S6S4fS44S2cS3dQ8A1S45A2A1Vmd0;A2S89R2A4S66S3L_;A4F_;Frho;").
-Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
+Lemma L_wz : forall rho : valuation, Good rho ->
+  triple segs ok (SP segs (Kx (TR (length MSG)) md0) (T_Db rq) rho) (fun _ : world => False).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp HokK HokP Hokh Hrq.
   intros rho HG. pose proof NU as NU'.
-  destruct cert_wz as (Hi & H17 & H10 & H12 & R11 & Hnz & Hbz & C1 & C2).
-  eapply run_tr; [exact run_db | reflexivity | apply okf |].
-  intros L rho1 [<-|[]] Hag1. cbn [lf_state]. pose proof (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) as HG1.
+  destruct (cert_wz rq) as (Hi & H17 & H10 & H12 & R11 & Hnz & Hbz & C1 & C2).
+  eapply run_tr; [exact (run_db rq) | destruct rq; reflexivity | apply okf |].
+  intros L rho1 [<-|[]] Hag1. cbn [lf_state]. pose proof (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) as HG1.
   eapply triple_seq.
   { apply triple1_triple.
-    apply (triple1_writev01J segs ok (liftK (Kx (TR (length MSG)) md0)) E_Wz rho1 2);
+    apply (triple1_writev01J segs ok (liftK (Kx (TR (length MSG)) md0)) (E_Wz rq) rho1 2);
       [apply ok_frame_liftK; apply okf
       | eapply ok_pframeJ_of_tcons; [apply HokP; intros tr0 md0_ H0; exact H0 | intros r tr' md' Hk'; exact (Ktc _ _ tr' md' Hk')]
       | exact Hi | exact H17 | exact H10 | exact H12 | lia | intros r tr' md' Hk'; exact (Kx_fd2 _ _ _ Hk') |].
     intros tr ms md Hsp _. rewrite R11.
-    pose proof (pending_obj rho1 E_Wz tr ms md ozi _ Hsp Hnz) as Ho.
+    pose proof (pending_obj rho1 (E_Wz rq) tr ms md ozi _ Hsp Hnz) as Ho.
     assert (A0 : bv_unsigned (eval rho1 (SAlu ALU_ADD (SVar 1) (SLit (-664)))) = bv_unsigned sp - 664).
     { pose proof (bval_sound rho1 HG1 (SAlu ALU_ADD (SVar 1) (SLit (-664))) (bv_unsigned sp + -664) eq_refl). lia. }
     exists (eval rho1 (SLit 0)). split.
-    - apply (cell_read_u64 segs rho1 ms (obj E_Wz ozi) (SLit (-664)) (SLit 0) _ Ho (In_cellb _ _ C1)).
+    - apply (cell_read_u64 segs rho1 ms (obj (E_Wz rq) ozi) (SLit (-664)) (SLit 0) _ Ho (In_cellb _ _ C1)).
       rewrite Hbz, A0, soff_lit_small by lia. rewrite (G_v1 rho1 HG1). lia.
     - split; [|split; [rewrite A0; unfold TASK_SIZE; lia | rewrite U_lit64 by lia; unfold TASK_SIZE; lia]].
       change (Z_to_bv 64 0) with (eval rho1 (SLit 0)).
-      apply (cell_read_u64 segs rho1 ms (obj E_Wz ozi) (SLit (-656)) (SLit 0) _ Ho (In_cellb _ _ C2)).
+      apply (cell_read_u64 segs rho1 ms (obj (E_Wz rq) ozi) (SLit (-656)) (SLit 0) _ Ho (In_cellb _ _ C2)).
       rewrite Hbz, soff_lit_small by lia. rewrite (G_v1 rho1 HG1).
       rewrite bv_add_unsigned, A0. change (bv_unsigned 8%bv) with 8. unfold bv_wrap. rewrite mod64, Z.mod_small by lia. lia. }
-  change (SPJ segs (liftK (Kx (TR (length MSG)) md0)) (S_after E_Wz (SLit 0) (ss_objs E_Wz) (ss_next E_Wz)) rho1)
-    with (SP segs (Kx (TR (length MSG)) md0) (S_after E_Wz (SLit 0) (ss_objs E_Wz) (ss_next E_Wz)) rho1).
-  rewrite PZ_eq.
-  eapply run_tr; [exact run_pz | reflexivity | apply okf |].
+  change (SPJ segs (liftK (Kx (TR (length MSG)) md0)) (S_after (E_Wz rq) (SLit 0) (ss_objs (E_Wz rq)) (ss_next (E_Wz rq))) rho1)
+    with (SP segs (Kx (TR (length MSG)) md0) (S_after (E_Wz rq) (SLit 0) (ss_objs (E_Wz rq)) (ss_next (E_Wz rq))) rho1).
+  rewrite (PZ_eq rq).
+  eapply run_tr; [exact (run_pz rq) | destruct rq; reflexivity | apply okf |].
   intros L rho2 [<-|[]] Hag2. cbn [lf_state].
-  destruct cert_exb as (Hix & H17x & H10x).
-  apply (triple_exit_eval segs ok SpecT (Kx (TR (length MSG)) md0) E_exb rho2 2);
+  destruct (cert_exb rq) as (Hix & H17x & H10x).
+  apply (triple_exit_eval segs ok SpecT (Kx (TR (length MSG)) md0) (E_exb rq) rho2 2);
     [apply okf | apply okp | exact Hokh | exact Hix | left; exact H17x | rewrite H10x; rewrite U_lit64 by lia; reflexivity |].
   intros tr md [-> ->]. rewrite TR_all by lia. rewrite Hfs. exact final_in_spec.
 Qed.
 
-Lemma eL_wz : ltac2:(tb__ "0|1|
-SaS43R1A1S67S6S40S6S4fS44S2cS3dQ8A1S45A2A1Vmd0;A2S89R2A4S66S0S2bS52A1S69R1A1S33S52SadZ2M0S45A2S32S52SaeVfs;G0A2S30S52A1A3A3A3Lw;A3F_;Frho;").
-Proof using Hargc Hent Hfds0 Hfs Hinp.
+Lemma eL_wz : forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR (length MSG)) md0) (T_Db rq) rho) (fun w : world => w_tr w = wr 2 MSG ++ [ex fs 2]).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp Hrq.
   intros rho HG. pose proof NU as NU'.
-  destruct cert_wz as (Hi & H17 & H10 & H12 & R11 & Hnz & Hbz & C1 & C2).
-  eapply erun_tr; [exact run_db | reflexivity |].
-  intros L rho1 [<-|[]] Hag1. cbn [lf_state]. pose proof (Good_agree _ _ _ Hag1 ltac:(cbn; lia) HG) as HG1.
+  destruct (cert_wz rq) as (Hi & H17 & H10 & H12 & R11 & Hnz & Hbz & C1 & C2).
+  eapply erun_tr; [exact (run_db rq) | destruct rq; reflexivity |].
+  intros L rho1 [<-|[]] Hag1. cbn [lf_state]. pose proof (Good_agree _ _ _ Hag1 ltac:(destruct rq; cbn; lia) HG) as HG1.
   eapply etriple_seq.
-  { apply (etriple_writev01J segs (liftK (Kx (TR (length MSG)) md0)) E_Wz rho1 2);
+  { apply (etriple_writev01J segs (liftK (Kx (TR (length MSG)) md0)) (E_Wz rq) rho1 2);
       [exact Hi | exact H17 | exact H10 | exact H12 | lia | intros r tr md Hk; exact (Kx_fd2 _ _ _ Hk) |].
     intros tr ms md Hsp _. rewrite R11.
-    pose proof (pending_obj rho1 E_Wz tr ms md ozi _ Hsp Hnz) as Ho.
+    pose proof (pending_obj rho1 (E_Wz rq) tr ms md ozi _ Hsp Hnz) as Ho.
     assert (A0 : bv_unsigned (eval rho1 (SAlu ALU_ADD (SVar 1) (SLit (-664)))) = bv_unsigned sp - 664).
     { pose proof (bval_sound rho1 HG1 (SAlu ALU_ADD (SVar 1) (SLit (-664))) (bv_unsigned sp + -664) eq_refl). lia. }
     exists (eval rho1 (SLit 0)). split.
-    - apply (cell_read_u64 segs rho1 ms (obj E_Wz ozi) (SLit (-664)) (SLit 0) _ Ho (In_cellb _ _ C1)).
+    - apply (cell_read_u64 segs rho1 ms (obj (E_Wz rq) ozi) (SLit (-664)) (SLit 0) _ Ho (In_cellb _ _ C1)).
       rewrite Hbz, A0, soff_lit_small by lia. rewrite (G_v1 rho1 HG1). lia.
     - split; [|split; [rewrite A0; unfold TASK_SIZE; lia | rewrite U_lit64 by lia; unfold TASK_SIZE; lia]].
       change (Z_to_bv 64 0) with (eval rho1 (SLit 0)).
-      apply (cell_read_u64 segs rho1 ms (obj E_Wz ozi) (SLit (-656)) (SLit 0) _ Ho (In_cellb _ _ C2)).
+      apply (cell_read_u64 segs rho1 ms (obj (E_Wz rq) ozi) (SLit (-656)) (SLit 0) _ Ho (In_cellb _ _ C2)).
       rewrite Hbz, soff_lit_small by lia. rewrite (G_v1 rho1 HG1).
       rewrite bv_add_unsigned, A0. change (bv_unsigned 8%bv) with 8. unfold bv_wrap. rewrite mod64, Z.mod_small by lia. lia. }
-  change (SPJ segs (liftK (Kx (TR (length MSG)) md0)) (S_after E_Wz (SLit 0) (ss_objs E_Wz) (ss_next E_Wz)) rho1)
-    with (SP segs (Kx (TR (length MSG)) md0) (S_after E_Wz (SLit 0) (ss_objs E_Wz) (ss_next E_Wz)) rho1).
-  rewrite PZ_eq.
-  eapply erun_tr; [exact run_pz | reflexivity |].
+  change (SPJ segs (liftK (Kx (TR (length MSG)) md0)) (S_after (E_Wz rq) (SLit 0) (ss_objs (E_Wz rq)) (ss_next (E_Wz rq))) rho1)
+    with (SP segs (Kx (TR (length MSG)) md0) (S_after (E_Wz rq) (SLit 0) (ss_objs (E_Wz rq)) (ss_next (E_Wz rq))) rho1).
+  rewrite (PZ_eq rq).
+  eapply erun_tr; [exact (run_pz rq) | destruct rq; reflexivity |].
   intros L rho2 [<-|[]] Hag2. cbn [lf_state].
-  destruct cert_exb as (Hix & H17x & H10x).
+  destruct (cert_exb rq) as (Hix & H17x & H10x).
   eapply etriple_conseq; [intros w Hw; exact Hw | |
-    apply (etriple_exit_eval segs (Kx (TR (length MSG)) md0) E_exb rho2 2 Hix (or_introl H17x))].
+    apply (etriple_exit_eval segs (Kx (TR (length MSG)) md0) (E_exb rq) rho2 2 Hix (or_introl H17x))].
   - intros w (tr & md & [-> ->] & ->). rewrite TR_all by lia. rewrite Hfs. reflexivity.
   - rewrite H10x. rewrite U_lit64 by lia. reflexivity.
 Qed.
 
-Theorem copenS_safe : ltac2:(tb__ "0|0|
-S31S31S0S2dS97R2R1A2S34A3S0S7VN;S5dR2A1A3S0S7S5fVA1;Z4A2S5dR4A1A3S5bVN;Z3fA2SaS43R1A1S68S6Vok;S40S6S4fS44U0A1Vmd0;A2S81R2A4S66S3L_;A4F_;Frho;F_;F_;F_;F_;Fk;Fq;").
-Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
+Theorem copenS_safe : forall q k : nat, check_nr rq q k = true -> N = Z.of_nat k -> A1 mod 4 = Z.of_nat q -> N <= 63 ->
+  forall rho : valuation, Good rho -> triple segs ok (SP segs (Kx (TR 0) md0) (T_cs1 rq) rho) (fun _ : world => False).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp HokK HokP Hokh Hrq.
   intros q k Hnr Hn Hr HN rho HG.
-  assert (Hchk : check_core (Z.of_nat k) (Z.of_nat q) (sym_run segs FUELm [ret_out] (the_pre (Z.of_nat k) (Z.of_nat q)) true) = true) by exact Hnr.
+  assert (Hchk : check_core rq (Z.of_nat k) (Z.of_nat q) (sym_run segs FUELm [ret_out] (the_pre rq (Z.of_nat k) (Z.of_nat q)) true) = true) by exact Hnr.
   eapply triple_seq; [exact (L_sm HN rho HG)|].
   apply triple_ex; intros rho1. apply triple_pure; intros HG1.
-  apply (triple_from ok _ (fun r w => (GoodS r /\ rw r 70 = Z_to_bv 64 V70) /\ SP segs (Kx (TR 0) md0) E_fxA r w)).
+  apply (triple_from ok _ (fun r w => (GoodS r /\ rw r 70 = Z_to_bv 64 V70) /\ SP segs (Kx (TR 0) md0) (E_fxA rq) r w)).
   { intros w Hw. destruct (fxA_intro rho1 w HG1 Hw) as (r & A & B & C). exists r. auto. }
   intros rho2. apply triple_pure. intros [HGS2 H70].
   eapply triple_seq; [exact (L_nr _ _ Hchk Hn Hr HN rho2 HGS2 H70)|].
@@ -1871,7 +1952,7 @@ Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
   destruct (Z_le_gt_dec N 62) as [H62|H63].
   - eapply triple_seq; [exact (L_po62 H62 rho3 HGS3)|].
     apply triple_ex; intros rho4. apply triple_pure; intros HGS4.
-    apply (triple_from ok _ (fun r w => (Good r /\ rl r 5 = MSG /\ rl r 6 = []) /\ SP segs (Kx (TR 0) md0) E_Wa_c r w)).
+    apply (triple_from ok _ (fun r w => (Good r /\ rl r 5 = MSG /\ rl r 6 = []) /\ SP segs (Kx (TR 0) md0) (E_Wa_c rq) r w)).
     { intros w Hw. destruct (wa_intro rho4 w H62 HGS4 Hw) as (r & A & B & C & D). exists r. auto. }
     intros rho5. apply triple_pure. intros (HG5 & H5 & H6).
     eapply triple_seq; [exact (L_Wa rho5 HG5 H5 H6)|].
@@ -1880,7 +1961,7 @@ Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
   - assert (H63' : N = 63) by lia.
     eapply triple_seq; [exact (L_po63 H63' rho3 HGS3)|].
     apply triple_ex; intros rho4. apply triple_pure; intros HGS4.
-    apply (triple_from ok _ (fun r w => (Good r /\ rl r 5 = M1 ++ argv1 /\ rl r 6 = nl) /\ SP segs (Kx (TR 0) md0) E_Wb_c r w)).
+    apply (triple_from ok _ (fun r w => (Good r /\ rl r 5 = M1 ++ argv1 /\ rl r 6 = nl) /\ SP segs (Kx (TR 0) md0) (E_Wb_c rq) r w)).
     { intros w Hw. destruct (wb_intro rho4 w H63' HGS4 Hw) as (r & A & B & C & D). exists r. auto. }
     intros rho5. apply triple_pure. intros (HG5 & H5 & H6).
     eapply triple_seq; [exact (L_Wb H63' rho5 HG5 H5 H6)|].
@@ -1888,14 +1969,15 @@ Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
     exact (L_wz rho6 HG6).
 Qed.
 
-Theorem copenS_exists : ltac2:(tb__ "0|1|
-S31S31S0S2dS97R2R1A2S34A3S0S7VN;S5dR2A1A3S0S7S5fVA1;Z4A2S5dR4A1A3S5bVN;Z3fA2SaS43R1A1S67S6S40S6S4fS44U0A1Vmd0;A2S81R2A4S66S0S2bS52A1S69R1A1S33S52SadZ2M0S45A2S32S52SaeVfs;G0A2S30S52A1A3A3A3Lw;A3F_;Frho;F_;F_;F_;F_;Fk;Fq;").
-Proof using Hargc Hent Hfds0 Hfs Hinp.
+Theorem copenS_exists : forall q k : nat, check_nr rq q k = true -> N = Z.of_nat k -> A1 mod 4 = Z.of_nat q -> N <= 63 ->
+  forall rho : valuation, Good rho ->
+  etriple segs (SP segs (Kx (TR 0) md0) (T_cs1 rq) rho) (fun w : world => w_tr w = wr 2 MSG ++ [ex fs 2]).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp Hrq.
   intros q k Hnr Hn Hr HN rho HG.
-  assert (Hchk : check_core (Z.of_nat k) (Z.of_nat q) (sym_run segs FUELm [ret_out] (the_pre (Z.of_nat k) (Z.of_nat q)) true) = true) by exact Hnr.
+  assert (Hchk : check_core rq (Z.of_nat k) (Z.of_nat q) (sym_run segs FUELm [ret_out] (the_pre rq (Z.of_nat k) (Z.of_nat q)) true) = true) by exact Hnr.
   eapply etriple_seq; [exact (eL_sm HN rho HG)|].
   apply etriple_ex; intros rho1. apply etriple_pure; intros HG1.
-  apply (etriple_from _ (fun r w => (GoodS r /\ rw r 70 = Z_to_bv 64 V70) /\ SP segs (Kx (TR 0) md0) E_fxA r w)).
+  apply (etriple_from _ (fun r w => (GoodS r /\ rw r 70 = Z_to_bv 64 V70) /\ SP segs (Kx (TR 0) md0) (E_fxA rq) r w)).
   { intros w Hw. destruct (fxA_intro rho1 w HG1 Hw) as (r & A & B & C). exists r. auto. }
   intros rho2. apply etriple_pure. intros [HGS2 H70].
   eapply etriple_seq; [exact (eL_nr _ _ Hchk Hn Hr HN rho2 HGS2 H70)|].
@@ -1903,7 +1985,7 @@ Proof using Hargc Hent Hfds0 Hfs Hinp.
   destruct (Z_le_gt_dec N 62) as [H62|H63].
   - eapply etriple_seq; [exact (eL_po62 H62 rho3 HGS3)|].
     apply etriple_ex; intros rho4. apply etriple_pure; intros HGS4.
-    apply (etriple_from _ (fun r w => (Good r /\ rl r 5 = MSG /\ rl r 6 = []) /\ SP segs (Kx (TR 0) md0) E_Wa_c r w)).
+    apply (etriple_from _ (fun r w => (Good r /\ rl r 5 = MSG /\ rl r 6 = []) /\ SP segs (Kx (TR 0) md0) (E_Wa_c rq) r w)).
     { intros w Hw. destruct (wa_intro rho4 w H62 HGS4 Hw) as (r & A & B & C & D). exists r. auto. }
     intros rho5. apply etriple_pure. intros (HG5 & H5 & H6).
     eapply etriple_seq; [exact (eL_Wa rho5 HG5 H5 H6)|].
@@ -1912,7 +1994,7 @@ Proof using Hargc Hent Hfds0 Hfs Hinp.
   - assert (H63' : N = 63) by lia.
     eapply etriple_seq; [exact (eL_po63 H63' rho3 HGS3)|].
     apply etriple_ex; intros rho4. apply etriple_pure; intros HGS4.
-    apply (etriple_from _ (fun r w => (Good r /\ rl r 5 = M1 ++ argv1 /\ rl r 6 = nl) /\ SP segs (Kx (TR 0) md0) E_Wb_c r w)).
+    apply (etriple_from _ (fun r w => (Good r /\ rl r 5 = M1 ++ argv1 /\ rl r 6 = nl) /\ SP segs (Kx (TR 0) md0) (E_Wb_c rq) r w)).
     { intros w Hw. destruct (wb_intro rho4 w H63' HGS4 Hw) as (r & A & B & C & D). exists r. auto. }
     intros rho5. apply etriple_pure. intros (HG5 & H5 & H6).
     eapply etriple_seq; [exact (eL_Wb H63' rho5 HG5 H5 H6)|].
@@ -1920,14 +2002,15 @@ Proof using Hargc Hent Hfds0 Hfs Hinp.
     exact (eL_wz rho6 HG6).
 Qed.
 
-Definition checks_S : Prop := ltac2:(tb__ "0|0|
-S31S31Sb2R2U4A2Sb2R2U40A2S0S2dS97R4R3A2S34A3F_;F_;Fk;Fq;").
+(* The loop checks, for both values of the CONFIG_RSEQ flag. *)
+Definition checks_S : Prop :=
+  forall (b : bool) (q k : nat), (q < 4)%nat -> (k < 64)%nat -> check_nr b q k = true.
 
-Theorem copen_safe : ltac2:(tb__ "0|0|
-S4dSaS50Vsp;Vdraw;Vinp;R1A4S68S6Vok;S40S6S4fS30S52A1Vmd0;A2SdaR2A4S66S3L_;A4F_;Frho;F_;").
-Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
+Theorem copen_safe_r : checks_S -> forall rho : valuation, J25 sp mb draw inp rho ->
+  triple segs ok (SP segs (Kx [] md0) (S_operr rq) rho) (fun _ : world => False).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp HokK HokP Hokh Hrq.
   intros Hchk rho HJ. pose proof NU as NU'. pose proof V70_eq as (EV & RV & MV).
-  apply (triple_from ok _ (fun r w => Good r /\ SP segs (Kx (TR 0) md0) S_co r w)).
+  apply (triple_from ok _ (fun r w => Good r /\ SP segs (Kx (TR 0) md0) (S_co rq) r w)).
   { intros w Hw. destruct (co_intro rho w HJ Hw) as (r & A & B). exists r. rewrite TR0. auto. }
   intros rho1. apply triple_pure. intros HG1.
   eapply triple_seq; [exact (L_call rho1 HG1)|].
@@ -1937,12 +2020,12 @@ Proof using Hargc Hent Hfds0 Hfs Hinp HokK HokP Hokh.
   - apply (copenS_safe (Z.to_nat (A1 mod 4)) (length argv1)); [apply Hchk; lia | reflexivity | lia | lia | exact HG2].
 Qed.
 
-Theorem copen_exists : ltac2:(tb__ "0|0|
-S4dSaS50Vsp;Vdraw;Vinp;R1A4S67S6S40S6S4fS30S52A1Vmd0;A2SdaR2A4S66S0S2bS52A1S69R1A1Sb0Vfs;SafVargv1;A1A2A3Lw;A3F_;Frho;F_;").
-Proof using Hargc Hent Hfds0 Hfs Hinp.
+Theorem copen_exists_r : checks_S -> forall rho : valuation, J25 sp mb draw inp rho ->
+  etriple segs (SP segs (Kx [] md0) (S_operr rq) rho) (fun w : world => w_tr w = die fs (msg_cannot_open argv1)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp Hrq.
   intros Hchk rho HJ. pose proof NU as NU'. pose proof V70_eq as (EV & RV & MV).
   unfold die. rewrite <- MSG_eq.
-  apply (etriple_from _ (fun r w => Good r /\ SP segs (Kx (TR 0) md0) S_co r w)).
+  apply (etriple_from _ (fun r w => Good r /\ SP segs (Kx (TR 0) md0) (S_co rq) r w)).
   { intros w Hw. destruct (co_intro rho w HJ Hw) as (r & A & B). exists r. rewrite TR0. auto. }
   intros rho1. apply etriple_pure. intros HG1.
   eapply etriple_seq; [exact (eL_call rho1 HG1)|].
@@ -1950,6 +2033,21 @@ Proof using Hargc Hent Hfds0 Hfs Hinp.
   destruct (Z_le_gt_dec 64 N) as [H64|HS].
   - exact (copen64_exists H64 rho2 HG2).
   - apply (copenS_exists (Z.to_nat (A1 mod 4)) (length argv1)); [apply Hchk; lia | reflexivity | lia | lia | exact HG2].
+Qed.
+End PerR.
+
+(* The run's own flag: the cannot-open path from the open-error state of the launch's CONFIG_RSEQ. *)
+Theorem copen_safe : checks_S -> forall rho : valuation, J25 sp mb draw inp rho ->
+  triple segs ok (SP segs (Kx [] md0) (S_operr (kb_rseq (in_kernel inp))) rho) (fun _ : world => False).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp HokK HokP Hokh.
+  exact (copen_safe_r (kb_rseq (in_kernel inp)) eq_refl).
+Qed.
+
+Theorem copen_exists : checks_S -> forall rho : valuation, J25 sp mb draw inp rho ->
+  etriple segs (SP segs (Kx [] md0) (S_operr (kb_rseq (in_kernel inp))) rho)
+    (fun w : world => w_tr w = die fs (msg_cannot_open argv1)).
+Proof using Hargc Hent Hfds0 Hrdr0 Hfs Hinp.
+  exact (copen_exists_r (kb_rseq (in_kernel inp)) eq_refl).
 Qed.
 
 End Copen.

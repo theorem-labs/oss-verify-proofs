@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: pj_parse of fuzz_preset's asan-ubsan image B' (pin d663f82d7f488d30, twin c90d4fa54d43; B'
-   0x862ec, 36 instructions; preset_file.c :296-309) on the kit's cwpj-fix f29626eb1667: the kit's tpj_parse_specX ITSELF
+   0x862ec, 36 instructions; preset_file.c :296-309) on the kit's cwpj-fix: the kit's tpj_parse_specX ITSELF
    the kit's tpj_parse_specX ITSELF (lib/A/PRH_FnPj.v (sha256 35457d119ddb; internal record) :592-738) at image B', composed from the segment files
    lib/B/Prog/pj_parse_defs.v. NO twin: the kit's repaired PRH_Base.prh_cw_pj (blob ae260e28900e :1521-1527, each cursor
    arm's FIRST disjunct only) is word for word the B' cursor set the cut's walk proved under its twin prh_cw_pjB /

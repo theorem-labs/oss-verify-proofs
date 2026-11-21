@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: some recorded proofs replaced by tactic proofs; the new launch (process input, auxv, group id, exec file name); the read-only-backing form of the system-call steps; the run over the run's segments; the channel-reader premise of writev; imports; new lemmas. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
@@ -8,7 +9,8 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import BMode ShapeAlg SpinAlg ShapeEF KillFree Spec BigintSpec.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Export UbjEncShapes.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require PropExec.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require PropExec FrmInit.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.Common.Cfg Require SRomStable.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require KReplay.
 Ltac2 kr_t_UbjEncGLink () := "C47Corelib7Classes9Morphisms6ProperC47Corelib7Classes?RelationClasses9ReflexiveC47Corelib7Program6Basics4flipC47Corelib7Classes9MorphismsKrespectful_per_obligation_1C4ELinuxProcessSemantics?LinuxProcessSem2Fs2FsC46Stdlib5Lists4List2hdC47Corelib4Init5Logic6eq_indC4ELinuxProcessSemantics?LinuxProcessSem3Run9is_prefixC47Corelib4Init5Logic8eq_transC47Corelib4Init5Logic7f_equalC47Corelib4Init5Logic8eq_ind_rC47Corelib4Init9Datatypes3appC47Corelib4Init5Logic3notC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7SpinAlgEsrealizes_bm_transferC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7SpinAlg=srealizes0_ofC13~~~I79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7SpinAlg:srealizes000C13~~~I47Corelib4Init9Datatypes4list00I47Corelib4Init5Logic3and00I47Corelib4Init5Logic2ex00C4ELinuxProcessSemantics?LinuxProcessSem3Run=obs_trace_cfgC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7SpinAlgAsrealizes_obs_iffC13~~~C46Stdlib5Logic>Classical_Prop4NNPPC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib5BMode;bm_off_instC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib5BMode:bm_on_instC13~~~I4ELinuxProcessSemantics?LinuxProcessSem5State5event00I47Corelib4Init5Logic5False00K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec?msg_cannot_openC13~~~K47Corelib4Init9Datatypes4list01K47Corelib4Init9Datatypes4list02C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec5t_dieC13~~~K46Stdlib7Strings5Ascii5ascii01K46Stdlib7Strings6String6string02C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec3s2bC13~~~K47Corelib7Numbers7BinNums8positive01K47Corelib7Numbers7BinNums1Z02C45stdpp9bitvector;definitions7Z_to_bvI47Corelib4Init5Logic2eq00C46Stdlib5Lists4List:app_eq_nilC47Corelib4Init5Logic9False_indK47Corelib4Init5Logic2eq01C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec1WC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec9exit_codeC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8ShapeAlg6t_exitC13~~~I47Corelib4Init5Logic2or00K4ELinuxProcessSemantics?LinuxProcessSem5State5event02C45stdpp9bitvector;definitions;bv_unsignedC45stdpp9bitvector;definitionsDZ_to_bv_obligation_1K45stdpp9bitvector;definitions2bv01C47Corelib5Lists7ListDef3mapc79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib;UbjEncGLink3ev0C13~~~K47Corelib7Numbers7BinNums8positive03K47Corelib4Init9Datatypes4bool01K47Corelib4Init9Datatypes4bool02K46Stdlib7Strings6String6string01I47Corelib4Init5Logic4True00K47Corelib4Init5Logic4True01I47Corelib7Numbers7BinNums1Z00K47Corelib7Numbers7BinNums1Z01I47Corelib7Numbers7BinNums8positive00K47Corelib4Init9Datatypes3nat02I47Corelib4Init5Peano2le00C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec:zero_linesC13~~~C56Stdlib6ZArith6BinInt1Z2leC46Stdlib9micromega;ZifyClasses7rew_iffK46Stdlib9micromega6VarMap1t01I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega=RingMicromega7Formula01K46Stdlib9micromega5Tauto8GFormula04K47Corelib4Init9Datatypes6option02K46Stdlib9micromega5Tauto8GFormula03K46Stdlib9micromega5Tauto8GFormula08C46Stdlib9micromega5Tauto8BFormulaC46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundK47Corelib4Init5Logic2ex01C46Stdlib9micromega;ZifyClasses5mkrelI47Corelib4Init9Datatypes3nat00C56Stdlib6ZArith6BinInt1Z6of_natC56Stdlib6ZArith4Znat5Nat2Z6inj_leK47Corelib4Init9Datatypes3nat01I46Stdlib9micromega:ZMicromega;ZArithProof00C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K46Stdlib9micromega=RingMicromega3Op203K47Corelib4Init9Datatypes4unit01I47Corelib4Init9Datatypes4bool00C47Corelib4Init9Datatypes6lengthC47Corelib4Init5Peano2ltI47Corelib4Init9Datatypes6option00C4ELinuxProcessSemantics?LinuxProcessSem2Fs9fs_lookupK47Corelib4Init9Datatypes6option01C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<UbjEncShapes<ue_header_okC13~~~C56Stdlib6ZArith6BinInt1Z2ltC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<UbjEncShapes6ue_cfgC13~~~C56Stdlib6ZArith6BinInt1Z3addC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:BigintSpec4specC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<UbjEncShapes6spec_kC13~~~C56Stdlib5Arith8PeanoNat3Nat3lebC56Stdlib5Arith8PeanoNat3Nat6leb_gtC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec=list_byte_eqbC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec>msg_read_errorC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8ShapeAlg6t_alt2C13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:BigintSpec6t_bodyC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<UbjEncShapes8t_body_kC13~~~C56Stdlib6ZArith6BinInt1Z3mulC56Stdlib6ZArith4Znat5Nat2Z9is_nonnegC56Stdlib6ZArith6BinInt1Z=mod_pos_boundC56Stdlib6ZArith6BinInt1Z6moduloC56Stdlib6ZArith6BinInt1Z3lebC56Stdlib6ZArith6BinInt1Z6leb_gtC56Stdlib5Arith8PeanoNat3Nat3ltbC56Stdlib6ZArith6BinInt1Z6to_natC47Corelib4Init3Nat3addC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8ShapeAlg6t_emitC13~~~C56Stdlib5Arith8PeanoNat3Nat6ltb_geK46Stdlib9micromega=RingMicromega5Psatz02K46Stdlib9micromega:ZMicromega;ZArithProof02K46Stdlib9micromega6VarMap1t02K46Stdlib9micromega6VarMap1t03K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega7EnvRing5PExpr03C46Stdlib9micromega;ZifyClasses;rew_iff_revC56Stdlib6ZArith6BinInt1Z8max_specC46Stdlib9micromega9SatDivModCZ_mod_nonneg_nonnegC56Stdlib6ZArith6BinInt1Z7div_modC56Stdlib6ZArith6BinInt1Z3divC56Stdlib6ZArith6BinInt1Z=mod_neg_boundC56Stdlib5omega8PreOmega1Z;div_0_r_extC56Stdlib5omega8PreOmega1Z;mod_0_r_extK47Corelib7Numbers7BinNums1Z03K46Stdlib9micromega7EnvRing3Pol01K46Stdlib9micromega=RingMicromega5Psatz04c79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib;UbjEncGLink?zero_lines_headC13~~~K47Corelib4Init5Logic3and01K47Corelib4Init5Logic2or01K47Corelib4Init5Logic2or02C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8ShapeAlg5t_nilC13~~~c79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib;UbjEncGLink;ev0_not_dieC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<UbjEncShapesAlist_byte_eqb_neqC13~~~C47Corelib4Init5Logic6eq_symC47Corelib5Lists7ListDef3nthK46Stdlib9micromega=RingMicromega5Psatz06C56Stdlib6ZArith6BinInt1Z3maxC46Stdlib9micromega;ZifyClasses5mkappC46Stdlib9micromega;ZifyClasses6mkapp2K46Stdlib9micromega5Tauto8GFormula05K46Stdlib9micromega5Tauto8GFormula06C56Stdlib6ZArith4Znat5Nat2Z6inj_ltC46Stdlib9micromega8ZifyInst@of_nat_to_nat_eqC56Stdlib5Arith8PeanoNat3Nat3addC56Stdlib6ZArith4Znat5Nat2Z7inj_addK46Stdlib9micromega=RingMicromega3Op201C56Stdlib6ZArith4Znat5Nat2Z8inj_succC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec8dot_pathC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec9MAX_INPUTC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8ShapeAlg4TSetC13~~~K46Stdlib9micromega=RingMicromega3Op205C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec;msg_refusedC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec9msg_shortC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib4Spec;msg_overrunC13~~~K46Stdlib9micromega:ZMicromega;ZArithProof01C4ELinuxProcessSemantics?LinuxProcessSem3Run8valid_spC4ELinuxProcessSemantics?LinuxProcessSem3Run9valid_brkC4ELinuxProcessSemantics?LinuxProcessSem3Run?valid_mmap_baseC4ELinuxProcessSemantics?LinuxProcessSem5State7in_argvC4ELinuxProcessSemantics?LinuxProcessSem5State7in_envpC4ELinuxProcessSemantics?LinuxProcessSem3Run@entry_stack_fitsC4ELinuxProcessSemantics?LinuxProcessSem3Run:valid_argvC4ELinuxProcessSemantics?LinuxProcessSem3Run:valid_envpC4ELinuxProcessSemantics?LinuxProcessSem5State5in_fsC4ELinuxProcessSemantics?LinuxProcessSem2Fs8valid_fsC4ELinuxProcessSemantics?LinuxProcessSem3Run;valid_credsC4ELinuxProcessSemantics?LinuxProcessSem3Run;init_configC4ELinuxProcessSemantics?LinuxProcessSem3RunJreaches_budget_refused_cfgC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<UbjEncShapes:ue_payloadC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7SpinAlg8frm_safeC13~~~C4ELinuxProcessSemantics?LinuxProcessSem3Run6cfg_msC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics7ms_fcsrC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7FPSteps8frm_zeroC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<UbjEncShapes;ue_reach_okC13~~~c79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib;UbjEncGLink=shapes_differC13~~~c79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib;UbjEncGLink:glink_coreC13~~~I4ELinuxProcessSemantics?LinuxProcessSem;StackLayout9EntryDraw00I4ELinuxProcessSemantics?LinuxProcessSem5State9ProcInput00K4ELinuxProcessSemantics?LinuxProcessSem<MemImageType5Image01C4ELinuxProcessSemantics?LinuxProcessSem3Run;valid_entryC4ELinuxProcessSemantics?LinuxProcessSem3RunAvalid_input_abortC4ELinuxProcessSemanticsEEquivalenceDefinition;EquivalenceIsource_within_budget_scfgC4ELinuxProcessSemanticsEEquivalenceDefinition;EquivalenceZstrong_equiv_error_free_budgets_scfg_abortK4ELinuxProcessSemantics?LinuxProcessSem3Run9ExecEntry01C4ELinuxProcessSemantics?LinuxProcessSem3RunIvalid_input_abort_va_sizeC47Corelib4Init5Logic3iffC47Corelib7Classes9MorphismsDiff_impl_subrelationC4ELinuxProcessSemantics?LinuxProcessSem3Run@valid_entry_sv48C4ELinuxProcessSemantics?LinuxProcessSem3Run=valid_sigmaskc79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib;UbjEncGLink8ue_glinkC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7SpinAlg9srealizesC13~~~C4ELinuxProcessSemantics?LinuxProcessSem3Run8run_scfgC4ELinuxProcessSemanticsEEquivalenceDefinition;EquivalenceCerror_free_unkilledC4ELinuxProcessSemantics?LinuxProcessSem3Run9bh_tracesC4ELinuxProcessSemanticsEEquivalenceDefinition;Equivalence;trace_equivC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8KillFree>kill_free_specC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8KillFreeMsrealizes_error_free_unkilledC13~~~C47Corelib7Classes9Morphisms?eq_proper_proxyC47Corelib7Classes9MorphismsMtrans_co_eq_inv_impl_morphismC79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7ShapeEFDsrealizes_traces_iffC13~~~C47Corelib7Classes?RelationClasses?Equivalence_PERC47Corelib7Classes9MorphismsNtrans_sym_co_inv_impl_morphismC47Corelib7Classes?RelationClasses;reflexivityC4ELinuxProcessSemanticsEEquivalenceDefinition;Equivalence`strong_universal_error_free_T_scfg_budgets_abortC4ELinuxProcessSemantics?LinuxProcessSem5State:in_va_sizeC4ELinuxProcessSemantics?LinuxProcessSem5State;in_image_fsC4ELinuxProcessSemantics?LinuxProcessSem2Fs@fs_keys_relativeC4ELinuxProcessSemantics?LinuxProcessSem5State9in_nofileC4ELinuxProcessSemantics?LinuxProcessSem3Run<valid_nofileC4ELinuxProcessSemantics?LinuxProcessSem5State8in_hwcapC4ELinuxProcessSemantics?LinuxProcessSem3Run;valid_hwcapC4ELinuxProcessSemantics?LinuxProcessSem5StateAin_abort_terminalC4ELinuxProcessSemantics?LinuxProcessSem3Run=valid_urandomI4ELinuxProcessSemantics?LinuxProcessSem5State6VaSize00K4ELinuxProcessSemantics?LinuxProcessSem5State6VaSize02I4ELinuxProcessSemantics?LinuxProcessSem3Run9ExecEntry00I4ELinuxProcessSemantics?LinuxProcessSem<MemImageType5Image00C47Corelib7Classes?RelationClasses>iff_TransitiveC47Corelib7Classes?RelationClasses?iff_equivalenceC47Corelib7Classes?RelationClasses=iff_Reflexive".
 Import ListNotations.
@@ -29,9 +31,20 @@ Hypothesis WEIRD : ~ G -> @srealizes bm_on_inst segs scfg c0 Tw.
 Hypothesis PREM : ~ reaches_budget_refused_cfg segs scfg c0.
 Hypothesis DIFF : exists tr, Tn tr /\ ~ Tw tr.
 
+(* The budget-mode transfer turns each walk into an off-mode one (the source never reaches a
+   budget refusal), the frm guard turns it into the bare [srealizes0], and two bare walks of the
+   same start state have the same observable traces: a trace of [Tn] outside [Tw] refutes [~ G]. *)
 Theorem glink_core : G.
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncGLink ()) ["Core"] "p'0h01Hh12trh22HTh32HWh42N0h52NGh62W0h71ei001xp;1p;7p;5p;2p;4p;6p-1R0p10000p4p710p9P0p1000Sp4p710p9P0p1001?R1p4p710p9P0P1p4p7210p9P0P1p4p73110p9P0p1001]p4p710p9p1002Up4p70R0p1003Cp4p710p8P0p1003Zp4p710p8P0p10046p4p710p8P0p1004lp4p710p8P0p1005Jp4p7210p8P0p1005gp4p710p8P0p1006Ep4p710p8g006bj10Tg007;j75Tg008Sj73Tg009cj52Tg00;2j19Tg00;RR0j28Tg00;mR1j27Tg00<Gj41Tg00=Aj64Tg00>Uj26Tp,1GR2%02R2g00?8R3p,4segsR4p,4scfgR5p,2c0R6p,2TnR7p,2FGR8g00@DR9P4P5P6P7p,4NORMp,4PREMR:F5F3P3P4P5P6P7D2P3P4P5P6p,2TwR;P8P9P4P5P6P;p,5WEIRDf1R9O1P:F5F3P3P4P5P6P;D2p,4DIFFg00AO#9R3P7f0R:O1P;P:O1#0'8R8X13R<'7P1P3P<g00BER<P:P0P7P9O1P;P9O1#0P<P:P7f3R<O1P;f4O1#0P:P0P4P5P6f5R1C1P;f6R=O1[R>P;P1O1P4P5P6P=C1R?[P;f7R@O1\?P4P5P6P;f9P1E4P9n2001000000120000000P>P:P0P7P@O1R0\?P7P=O1P4P5P6P@C1[R@P4P5P6f8C1\0P4P5P6P7f;P=E4P:n2001000000120000000P@P:P<O1b0O1b0O1W3W2P9P:O2n2001000000120000000X08X13P9P:O2n2001000000120100000b7b6b4W5%02e'6o"). Qed.
+  apply NNPP. intros HnG.
+  destruct DIFF as [tr [Htn Htw]]. apply Htw.
+  pose proof (@srealizes_bm_transfer bm_on_inst segs scfg c0 Tn NORM PREM) as Nn.
+  pose proof (@srealizes_bm_transfer bm_on_inst segs scfg c0 Tw (WEIRD HnG) PREM) as Nw.
+  pose proof (@srealizes0_of bm_off_inst segs scfg c0 Tn FG Nn) as N0.
+  pose proof (@srealizes0_of bm_off_inst segs scfg c0 Tw FG Nw) as W0.
+  apply (proj1 (srealizes_obs_iff segs scfg c0 Tw W0 tr)).
+  apply (proj2 (srealizes_obs_iff segs scfg c0 Tn N0 tr)). exact Htn.
+Qed.
 End Core.
 
 (* [comment removed for export] *)
@@ -59,6 +72,19 @@ End Shapes.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* [Run.valid_input_either]'s clauses, read by type, as the model's own
+   [valid_input_either_of_valid_input] does.  The SIGPIPE disposition is not among them: at
+   LPS 727298f3 it is free. *)
+Lemma vie_parts : forall inp, valid_input_either inp ->
+  valid_argv (in_argv inp) /\ valid_envp (in_envp inp) /\ valid_fs (in_fs inp)
+  /\ valid_creds inp /\ valid_hwcap (in_hwcap inp) /\ in_va_size inp = Sv48
+  /\ in_channel_reader inp = true /\ valid_launch inp.
+Proof.
+  intros inp H. red in H.
+  repeat match goal with H' : _ /\ _ |- _ => destruct H' end.
+  repeat match goal with |- _ /\ _ => split end; assumption.
+Qed.
+
 Section GLinkTop.
 #[local] Existing Instance PropExec.fx0.
 Variable segs : list Segment.
@@ -68,23 +94,28 @@ Variable scfg : SpuriousCfg.
 Variable lim : Z.
 Variable PayExport : list byte -> Prop.
 
-(* [comment removed for export] *)
+(* The run reads the binary's segments with the run's vDSO appended ([Run.run_segments], LPS
+   727298f3), and its start is pinned by the launch ([Run.valid_launch],
+   [Run.entry_launch_ok_va]). *)
 Definition plain_norm_stmt : Prop :=
   forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk segs brk -> valid_mmap_base mbase ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp ->
-    @srealizes bm_on_inst segs scfg (init_config segs pc ph sp brk mbase rdraw lim inp)
+    in_channel_reader inp = true ->
+    @srealizes bm_on_inst (run_segments segs inp sp mbase) scfg
+      (init_config (run_segments segs inp sp mbase) pc ph sp brk mbase rdraw lim inp)
       (BigintSpec.spec (in_argv inp) (in_fs inp)).
 
-(* [comment removed for export] *)
 Definition plain_g_stmt : Prop :=
   forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk segs brk -> valid_mmap_base mbase ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp ->
+    in_channel_reader inp = true ->
     ue_reach_ok (fun p => ~ PayExport p) inp ->
-    @srealizes bm_on_inst segs scfg (init_config segs pc ph sp brk mbase rdraw lim inp)
+    @srealizes bm_on_inst (run_segments segs inp sp mbase) scfg
+      (init_config (run_segments segs inp sp mbase) pc ph sp brk mbase rdraw lim inp)
       (spec_k t_nil (in_argv inp) (in_fs inp)).
 
 Hypothesis FS : frm_safe segs.
@@ -94,15 +125,42 @@ Hypothesis WEIRD : plain_g_stmt.
 Theorem ue_glink :
   forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk segs brk -> valid_mmap_base mbase ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp ->
-    ~ reaches_budget_refused_cfg segs scfg (init_config segs pc ph sp brk mbase rdraw lim inp) ->
+    in_channel_reader inp = true ->
+    ~ reaches_budget_refused_cfg (run_segments segs inp sp mbase) scfg
+        (init_config (run_segments segs inp sp mbase) pc ph sp brk mbase rdraw lim inp) ->
     ue_reach_ok PayExport inp.
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncGLink ()) ["GLinkTop"] "p'0h01Hh14Hlk'h21eh36Hargv'h42_Hh56fdata'h61li001lh75path'h85Hargvh94Hbrkh:3Hcrh;4Hfith<4Hhdrh=4Hlenh>3Hlkh?3Hmbh@3HndhA3HnehB3HsphC3HvahD3HvehE4HvfshF2NGhG4PREMhH3_H0hI3_H1hJ3_H2hK3a0shL4a0s'hM3brkhN5fdatahO3inphP5mbasehQ1oi011ohR1phS4pathhT5rdrawhU2sphV2trp;1p;2p;3p;9p;4p;6p;7p;;g00Bbj18Tg00CGj1FTg00Cej1?Tg01`nj1JTg01acj2`Tg01bYj1YTg01cUj15Tg01dKj1ATg01eAj3UTg01f>j1RTg01g5j1ITg01glj16Tg01h`j1GTg01iTj1_Tg01jLl9DTg01kDj3\Tg006bj14Tg00;2R0j1>Tg00EWj1=Tg00F7j33Tg00KHj32Tg00k<j2XTg00k\j2WTg00l4R1j1VTg00lVj29Tg00mKj27Tg00mmj1TTg011Hj2Qj3@Tg012Rj3Nj4BTg01lKj1;Tg01m]j1KTg01nhj1LTg01o[j1MTg020Zj1HTg00L`j2OTg01L2j4PTg003Zj6:j7STg005Jj6<Tg021ej2ETg00;Rj2CTg0238l9^Tg005gj6]Tg00dKj4[Tg024Ll;ZTg00Ycj11Tf0R2#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=0g00UD#8#8#8R3#8#8#8#F#?R4g025]g026]f4R5#Jp,4segsR6/`5%Y5f7R7f3R8#5%A83U%55#Rf5R9#A#If6R:#6#G%_7p,4scfgR;P6p,2pcR<p,2phR=f<R>f;R?f:R@f9RAp,3limRBf8RCM9D5\6#4%F3#?R3#>RD%>DRE%5>f2RFf1RG%=DRH53D53DRI321X3Fg00fk#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0'WRJ%=392D8#4R3g01Xc92D5#4RK%VDRLf@RM#6/9917D5RN32%T9ROP6P;P6P<P=fFR=fER<fDR;fCRPPBfBRBM9DRQ%5BRR%6BRS'Qg01MART?NRSp,9PayExportRU%;:O1RV%K6%LQ#M#Hp,2FSg00XBg00X`'OCPp,4NORMP=P<P;PPPBfARQPMf?R6f>RWf=RXP>P?P@O=%4Vp,5WEIRDfGRVP=P<P;PPPBPQPMP6PWPXP>P?%5==2EIfJ#6/99=2LNPEfL#5A3DCH93DARN92E2X6EP9A3DQH93DBRIP6E:A3D7H93DCRM92EIPEPDP0PDPDP2PPP0PDPDP2P<PGn10110000020020100100R0n10110000020020100100X2EA3DBH93DPPNP2E<A2DBCPEPDP0X2EA3DPH93D;A3DAH93D@PGE<A2D;@A2D<?R<PDP=fR#6R;/9217D>R@52LPU%;XO1#4]1X7DfQ#6/9=17D?52LPL19;V17DXR;92L2XQLP217D=R=PQE:A2L=@PLPDP1PDPDP2P2fHR1n10110100021010000X2L17DVP;P2E<A2DVXA2D1WPDfIPU%;2O1#4X5DPBP6P2E:W0P2O1b0b1W1P>P2P:FSX0<W4P2O1b0P2O1b0b3XJOW1XIKXH3X4JW3X5DX7DXLDPUP2O1#4XRD/EPeO>WFPAg00AORJ#>R3%5PRK%6PRP;@2PTPKPPP2CB#4'CXV3g00T:%=J53JRJPEPMA@2PJPTP2PPPJCB#4'CX6EPCP7P:PSP5P8PFPGP2M9^PRP9E]C[M;ZW<W>W@WAW=W8XNDXSDWK1EUAeWGW:WEWDWCW;W?W9WBWOWTXP4XM4WUo"). Qed.
+  intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hvl Hlau Hva Hve Hvfs Hcr Hrd PREM.
+  apply NNPP. intros HnG.
+  assert (W : exists a0s path fdata, in_argv inp = [a0s; path] /\ (length path < 4096)%nat /\ path <> [] /\ path <> dot_path
+                /\ fs_lookup (in_fs inp) path = Some fdata /\ ue_header_ok fdata /\ ~ PayExport (ue_payload fdata)).
+  { apply NNPP. intros HnW. apply HnG. intros a0s path fdata H1 H2 H3 H4 H5 H6.
+    apply NNPP. intros HnP. apply HnW. exists a0s, path, fdata.
+    exact (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 (conj H6 HnP)))))). }
+  destruct W as (a0s & path & fdata & Hargv & Hlen & Hne & Hnd & Hlk & Hhdr & HnP).
+  assert (FG : frm_guard (run_segments segs inp sp mbase)
+                 (init_config (run_segments segs inp sp mbase) pc ph sp brk mbase rdraw lim inp)).
+  { unfold frm_guard. split; [apply SRomStable.frm_safe_run_segments; exact FS | apply FrmInit.init_fz]. }
+  assert (WEIRD' : ~ ue_reach_ok PayExport inp ->
+                   @srealizes bm_on_inst (run_segments segs inp sp mbase) scfg
+                     (init_config (run_segments segs inp sp mbase) pc ph sp brk mbase rdraw lim inp)
+                     (spec_k t_nil (in_argv inp) (in_fs inp))).
+  { intros _. apply (WEIRD sp brk mbase rdraw inp Hsp Hbrk Hmb Hvl Hlau Hva Hve Hvfs Hcr Hrd).
+    intros a0s' path' fdata' H1 H2 H3 H4 H5 H6.
+    rewrite Hargv in H1. injection H1 as <- <-. rewrite Hlk in H5. injection H5 as <-. exact HnP. }
+  apply HnG.
+  apply (glink_core (run_segments segs inp sp mbase) scfg
+           (init_config (run_segments segs inp sp mbase) pc ph sp brk mbase rdraw lim inp)
+           (BigintSpec.spec (in_argv inp) (in_fs inp)) (spec_k t_nil (in_argv inp) (in_fs inp))
+           (ue_reach_ok PayExport inp) FG
+           (NORM sp brk mbase rdraw inp Hsp Hbrk Hmb Hvl Hlau Hva Hve Hvfs Hcr Hrd) WEIRD' PREM).
+  exists [ev0]. rewrite Hargv.
+  exact (shapes_differ a0s path fdata (in_fs inp) Hlen Hne Hnd Hlk Hhdr).
+Qed.
 End GLinkTop.
 
-(* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Base.
 #[local] Existing Instance PropExec.fx0.
@@ -110,17 +168,20 @@ Variable ssegs : list Segment. Variable spc : N. Variable sph : PhdrInfo.
 Variable tsegs : list Segment. Variable tpc : N. Variable tph : PhdrInfo.
 Variable scfg : SpuriousCfg.
 Variables lim_s lim_t : Z.
-Variable G : list byte -> Prop.      (* [comment removed for export] *)
+Variable G : list byte -> Prop.
 
-(* [comment removed for export] *)
+(* The target's walk, over the run's segments.  [valid_input_either] carries the input clauses
+   both abort stances share (the launch, the channel reader, the recorded kernel, ...); it is
+   discharged from the published binder [valid_input_abort]. *)
 Definition tgt_g_stmt : Prop :=
   forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk tsegs brk -> valid_mmap_base mbase ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
-    valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp -> valid_hwcap (in_hwcap inp) ->
-    in_va_size inp = Sv48 ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp -> valid_launch inp ->
+    valid_input_either inp ->
     ue_reach_ok G inp ->
-    @srealizes bm_off_inst tsegs scfg (init_config tsegs tpc tph sp brk mbase rdraw lim_t inp)
+    @srealizes bm_off_inst (run_segments tsegs inp sp mbase) scfg
+      (init_config (run_segments tsegs inp sp mbase) tpc tph sp brk mbase rdraw lim_t inp)
       (BigintSpec.spec (in_argv inp) (in_fs inp)).
 
 Hypothesis FSs : frm_safe ssegs.
@@ -132,5 +193,33 @@ Hypothesis TGT : tgt_g_stmt.
 Theorem ue_base_abort :
   strong_universal_error_free_T_scfg_budgets_abort scfg lim_s lim_t (mkImage ssegs spc sph) (mkImage tsegs tpc tph).
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncGLink ()) ["Base"] "p'0h01Hh15lemmah23inph34Hensh44Henth59en_targeth62HGh75Habrkh85Hafith94Hambh:5Hargvh;4Hasph<6Hcredsh=5Henvph>3Hfsh?3Hhwh@5HrbrkhA5HrfithB4HrmbhC4HrsphD5Hsv48hE3HswhF6HvalidhG4PREMhH3SRChI4SRC0hJ2TGhK4TGT0hL2_HhM3_H0hN3_H1hO3_H2hP4abrkhQ3ambhR4arndhS3asphT9en_sourcehU4rbrkhV3rmbhW4rrndhX3rsphY2tri004brk0i011ei022eni036en_brki047en_drawi05<en_mmap_basei065en_spi073imgi08;img_init_pci099img_phdrsi0:5mbasei0;4segsi0<2spp&0p;3p;1p;5p;8p;4p;2p;9p;Gp;7p;=g027Wj3iTg028Tj3:Tg029Lj1tTg02:Jj5OTg02;^j81Tg00Bbj1ATg00CGj1zTg00Cej1sTg02=Cj40Tg02>;j2nTg01`nj1DTg01acj29Tg01bYj17Tg01cUj12Tg01dKj16Tg02?AR0j2LTg02?Zj3^Tg02@Kj4QTg01f>j1[Tg01g5j1KTg01glj15Tg01h`j1BTg01iTj1=Tg02AHj1ITg01jLl9ETg01kDj3lTg006bj1kTg02BBlGjTg021ek200Tg011Hj2Cj3]Tg02CQj5hTg01m]j1gTg01nhj1fTg01o[j1eTg020Zj1dTg00L`j2~Tg01L2j4NTg007;j7}Tg008Sj7bTg009cj5aTg02D]j5@Tg02ERj1`Tg02F`j1cj2GTg02GVj2|Tg00;RR1j24Tg02H\j2{Tg02Inl=_Tg00;2j1yTg02KOj2xTg02L;l9wTg02M5l=\Tg02NLj3vTg02O>j7uTg02P9j4rTg02Pgj5qTg02RRj1PTg00KHj3FTg01eAj3UTg02SKj1pTg02TEj1oTg02UAj1TTg02V9j1ZTg02W2j1JTg02Wij1MTg02Xaj1YTg02Yaj1XTg02Z[R2f0R3#Pg02[RR43Fp=mf3R5f2R6f1R7;U3'4p=>1473,46p=3%27%635U6p=;%p3#op=<f5R8#T#Zf4R9#I%J5#Mg00j\R:%Y6g00UiR;3F%P7=F24%X3'4'4'4'4'4p=8%=7/43p=H%T3#Zp=W%Y6=F:;%P7=F24%X3'4'4p=?%I6%J7#M/43'4p=V%J7#M/43p=S%J3#Mp=Rg02\IR4P4g026]R2p,5ssegsR;p,3spcR:p,3sphR<3iR=?:63p,5tsegsR>p,3tpcR?p,3tphR@3iRA?:67RB%t6RCp,4scfgRDp,5lim_sREP=P8P5DOPDPEp,5lim_tRFP=PAf6RGP8P9G1[[[[]2^54P3g00UD#A#A#A#A#A#A#z#sRHg025]RIP4PGP8P9P5C0=:=3PDPEP=f9RJf8RKf7RLPGC0P5DOPDPEPFP=PAf:RMPJPKPLC0RNP8P9G1[\C\B[^22P3f=RBf<ROf;RPPMC0RQ=:=3P8P9P5P6C0=:A7PDPEP=f@RRf?RSf>RTPBC0RUP5DO1n97%m9fBRVfARWPRPSC0RX=:=8g02]ARYp-0RZP=P4PZfER[fDR\fCR]PVC0R^%D5R_19G6R`%77RaP5%2O%6OC>33n0110200014010<10010:104n0110700013010;108109Rb'LP]PVPWPRC0=:=GPYPZP=P4PZfFRcP[P\P]C0PaP5%2B%6BC>93_`Rdn0110200014010<10010:104n0110700013010;108109;^3W1P=PXP8P3CQP9O2PbA:ANGPYPZPAP4PZPQPdn0110200014010<10010:104n0110700013010;108109Rd'LPPPMPJPKC0=:ALPYPZPAP4PZPTPBPOPPC0PaP5%2TRa%6TRBC>93_`n0110200014010<10010:104n0110700013010;108109;^3W1PAPNPGP7CQP9O2PdP1%D\19;]%7VA;\LL33PDPEPFP=PAP^POPPPMPJC0PKG1P7%Dc19;c%7[RKfGRJ?;MM33P119;J%7cfHRM%2P%6PC>PDPEPFP=PAfIRPPMPJPcC0PUPOG1P319;P%7PRUfKR^PaPBC>P1fJRB#7fLRa?;SSPDPEPFP=PAfMRLPaP^PBC0P\P]PVPWC0PRG1P3%7aRWfORd?;VVP1%DJ19>cA;J]]73KPDPEPFP=PAfQRKfPR]PdfNRVC0PMPJPcP[C0P\G1PO%DP19>P%7MA;Bcc33P119>BPUP^%2J%6JC>PDPEPFP=PAfURUfTROfSR\fRR[C0PaP^PBPPC0PMG1P319>aPWPV%2B%6BC>P1%7LA;d^^PDPEPFP=PAfYRWfXRPfWRGfVRNC0P]PdPVPLC0PaG1P3%7dA;[VVP1%2d#[%6d#K%5d#B%<d%=dPdPdPdPdPdPdE83333PDPEPFP=PAf]RLf\R`f[R_fZRYC0POP\P[PKC0P]G1Pa%2K#[%6[#K%5[#B%<[%=[P[P[P[P[P[P[E83333P1%6\#K%5\#B%<\P\P\P\P\P\P\E8,H\33PDPEPFP=PAfaR[f`RKf_RQf^RbC0PPPGPNPUC0POG1P3%6U#K%5N#B%<NPNPNPNPNPNPNE8,HN33P1%5G#B%<G%=GPGPGPGPGPGPGE833PDPEPFP=PAfeRGfdRNfcRUfbR8C0P`P_PYPWC0PPG1P3%5W#B%<Y%=YPYPYPYPYPYPYE833P1%<_P_P_P_P_P_P_E8,H_PDPEPFP=PAfiR_fhRYfgRWffRXC0PKPQPbPLC0P`G1P3%<LPbPbPbPbPbPbE8,HbP1%=QPQPQPQPQPQPQE8PDPEPFP=PAfmReflRffkRgfjRhC0PNPUP8P[C0PKG1P3%=[P8P8P8P8P8P8E8P1%WUA?UUU9VUUPDPEPFP=PAfqR[fpRKfoRifnRjC0PYPWPXPGC0PNG1P3%WGA?XXX9VXXP1%IWA?WWW,SWPDPEPFP=PAfuRGftRNfsRkfrRlC0PfPgPhP_C0PYG1P3%I_A?hhh,ShP1%RgA?gggPDPEPFP=PAfyR1fxRhfwR_fvRYC0RmPKPiPjPeC0PfG1P3%ReA?jjjPgP;P:P<f|Rgf{RjfzRfP1PEPiM9E9l;D#kP;P:P<PDPEp,1GRip,3FSsRnp,4NORMRop,5WEIRDf}RpPgPjPfPKPXP8PbPLPVPBPcPTP3MGj200iKPof~RoPpPgPjP[PWPUPQPbPdP^PJPSO=g00@DRSP;PDP;P:P<PoPpPgPjPEP[M9E%2[%5['CDhp,3TGTPYPGPNPkPlP`PPPOP\P]PaPMPRP9PeP7O@g00?8ReP>PDP>P?P@PYPGPNPkPFPlM9E%2l%5l'CDhPeP;PDP;P:P<p+01ARlp+01@R9PoPpPEPkM9ERp%2k%5k'CRk%g;%fp#e#dPng00XBg00X`'~RnCNPSP;PDPpPkP7P5F}FbPeP;PDPpPkDaPeP>PDP>P?P@PhP_PYPGPFPNM9ERk%2N%5N'CRN%g>%fk#e#dp,3FStPnCNP7FbPeP>PDPkPNDaPDP=PEp+01CRNp+01BRkPlP9C0PGD@Re#`PDPAPFPmPGD@Rm#`Rn%ce%cm'|Rm'4PDP;P:P<PNPkPlP9PEPG%2GR9%5GRe'CRpP71{9eReM=_PnPmPDP>P?P@P1PhP_PYPFPGPpP3PeM=_g00AO#yPDP=PEp+01DRePNPkPlC0PYD@/G3%2YRp%5YRG;]3Rn'LPZP0g02^>PDP=PEp+01EPePNPkC0P_D@/G7%2_%5_;]7R9P3PDPAPFPjPfP1PhC0P_D@/G7RjPj1xZjM9wW1PDP;P:P<PePNPkPlPEPY1CpGRGP3P6M=\PDPAPFPfP1PhP_C0PYD@/G3/LnPZP0g02^o9vZ0P9PjP9P3FuW1PDP>P?P@PfP1PhP_PFPYPGP3P7M=\PZP0g02_aPnCrO2O2WYPmeCNCNbJbHbKbIb6bGWOW?P7P3O2n2001000000121000000W0WNP7P3O2n2001000000121000000W0WMP7P3O2n2001000000121000000W0W<P7P3O2n2001000000121000000W0WLP7P3O2n2001000000121000000W0W>P7P3O2n2001000000121000000W0W=P7P3O2n2001000000121000000W0W:P7P3O2n2001000000121000000W8W9P7P3O2n2001000000121000000W0W7P7P3O2n2001000000121000000W0W;P7P3O2n2001000000121000000WAWBP7P3O2n2001000000121000000W0W@P7P3O2n2001000000121000000W0WCP7P3O2n2001000000121000000b4b3bDWEXFCW4W3X22XRIXQHXPHXSHP5P6P7P3O4n01101000141106103105104X54WWXVHXUHWXP5P6P7P3O4n01101000141106103105104WTPDPEPFP=PADqeo"). Qed.
+  intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid Hwb.
+  pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
+  destruct Hens as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [Hafit Halau]]]].
+  pose proof (valid_input_either_of_valid_input_abort inp Hvalid) as Hvi.
+  destruct (vie_parts inp Hvi) as (Hargv & Henvp & Hfs & Hcreds & _ & _ & Hrd & Hvl).
+  unfold source_within_budget_scfg, run_scfg_budget_refused in Hwb. cbv beta iota zeta in Hwb.
+  pose proof (NORM rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hrd) as SRC.
+  pose proof (ue_glink ssegs spc sph scfg lim_s G FSs NORM WEIRD rsp rbrk rmb rrnd inp
+                Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hrd Hwb) as HG.
+  pose proof (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Halau Hvl Hvi HG) as TG.
+  pose proof (@srealizes_bm_transfer bm_on_inst _ _ _ _ SRC Hwb) as SRC'.
+  assert (FGs : frm_guard (run_segments ssegs inp rsp rmb)
+                  (init_config (run_segments ssegs inp rsp rmb) spc sph rsp rbrk rmb rrnd lim_s inp)).
+  { unfold frm_guard. split; [apply SRomStable.frm_safe_run_segments; exact FSs | apply FrmInit.init_fz]. }
+  assert (FGt : frm_guard (run_segments tsegs inp asp amb)
+                  (init_config (run_segments tsegs inp asp amb) tpc tph asp abrk amb arnd lim_t inp)).
+  { unfold frm_guard. split; [apply SRomStable.frm_safe_run_segments; exact FSt | apply FrmInit.init_fz]. }
+  pose proof (@srealizes0_of bm_off_inst _ _ _ _ FGs SRC') as S0.
+  pose proof (@srealizes0_of bm_off_inst _ _ _ _ FGt TG) as T0.
+  unfold strong_equiv_error_free_budgets_scfg_abort.
+  split; [| split].
+  - eapply srealizes_error_free_unkilled; [exact S0 | apply kill_free_spec].
+  - eapply srealizes_error_free_unkilled; [exact T0 | apply kill_free_spec].
+  - intro tr.
+    pose proof (srealizes_traces_iff scfg _ _ _ _ _ _ _ _ _ _ tr S0) as E1.
+    pose proof (srealizes_traces_iff scfg _ _ _ _ _ _ _ _ _ _ tr T0) as E2.
+    rewrite E1, E2. reflexivity.
+Qed.
 End Base.

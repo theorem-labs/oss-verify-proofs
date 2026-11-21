@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v (a walk) and ACa2.v (a class-1 side-stack frame): tnumber_spec of lib/A/Prog/number_c.v, from number's entry (0x8e430) through __asan_stack_malloc_0 and strtol to strtol's return, then numberB.v's n_segB. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberA.v, with its module paths, module names and numbers changed; 1350 of its 1544 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: refuse's walk on reac-pw/fuzz_segconf's ASan image A (fuzz_segconf.asan,
-   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberA.v at origin/ossv/recipes
-   501c0d516c69 (number: a class-0 side-stack frame released inline): the entry to the call of
+   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberA.v
+    (number: a class-0 side-stack frame released inline): the entry to the call of
    __asan_stack_malloc_0 (0x88e30), the frame and its poisoning, the inline checks of c->refused, c->n_refusals
    and c->reading[0], and the branches up to the snprintf calls (0x88f5c, 0x88f74) and the n_refusals >= 8 exit
    (0x88efc -> 0x88fc4). The refuse walk, 2026-10-30. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -46,8 +47,8 @@ pose proof (bv_unsigned_in_range 8 b) as R8. change (bv_modulus 8) with 256 in R
 unfold YO0f.le_byte, bv_wrap. change (bv_modulus 8) with 256. change (8 * Z.of_nat 1) with 8. change (8 * Z.of_nat 0) with 0.
 rewrite Z.shiftr_0_r. change (2 ^ 8) with 256. repeat rewrite (Z.mod_small (bv_unsigned b) 256) by lia. reflexivity.
 Qed.
-(* numberB.v's n_chunk4_aval and n_region_aval4 (plugin-hostd/fuzz_command lib/A/Prog/numberB.v:75-99 at
-   origin/ossv/recipes 501c0d516c69), with SegRep's aval_mem written out: a 4-byte chunk of a value v (sw stores the
+(* numberB.v's n_chunk4_aval and n_region_aval4 (plugin-hostd/fuzz_command lib/A/Prog/numberB.v:75-99),
+   with SegRep's aval_mem written out: a 4-byte chunk of a value v (sw stores the
    low 4 bytes of the register) holds le_byte v 4 k in its 4 bytes *)
 Lemma r_chunk4_aval : forall {fx : YK11.FPState} segs E H (m : word -> option byte) base off e (v : Z),
 YP09.chunk_ok segs E (mrestrict H m) base (YP09.mkChunk off (CVal 4 e)) -> sv_denot E e = Z_to_bv 64 v ->

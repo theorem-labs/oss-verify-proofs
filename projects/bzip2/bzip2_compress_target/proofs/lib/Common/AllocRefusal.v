@@ -1,8 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the anonymous grant placed by Linux's own search (Placement.linux_place) from the caller's hint). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -12,14 +15,20 @@ Definition mmap_errnos_when (forced : bool) : list Z :=
 Definition mprotect_errnos_when (forced : bool) : list Z :=
   if forced then mprotect_errnos else [].
 
+(* At the revision Linux places an anonymous grant itself
+   ([Mmap.linux_place]): a free gap counts only where Linux's search
+   looks.  The floor is the bottom of its bottom-up window,
+   [task_unmapped_base], and the ceiling stays [alloc_top], so a gap
+   found here is a [gap_fits] for that window and Linux therefore has an
+   answer ([vm_gap_available_place]). *)
 Definition vm_base_ok (h : VmMaps) (nZ : Z) (a : word) : bool :=
   (bv_unsigned a mod page_size =? 0)%Z
-  && (0 <? bv_unsigned a)%Z
+  && (task_unmapped_base <=? bv_unsigned a)%Z
   && (bv_unsigned a + nZ <=? alloc_top h)%Z
   && region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ).
 
 Definition vm_base_candidates (h : VmMaps) : list word :=
-  Z_to_bv 64 page_size
+  Z_to_bv 64 task_unmapped_base
   :: map (fun iv => Z_to_bv 64 (page_round_up_Z
                       (bv_unsigned (fst iv) + bv_unsigned (snd iv))))
          (vm_reserved h ++ vm_maps h).
@@ -33,7 +42,7 @@ Definition vm_gap_available (h : VmMaps) (nZ : Z) : bool :=
 Lemma vm_base_ok_sound : forall h nZ a,
   vm_base_ok h nZ a = true ->
   (bv_unsigned a mod page_size = 0)%Z
-  /\ (0 < bv_unsigned a)%Z
+  /\ (task_unmapped_base <= bv_unsigned a)%Z
   /\ (bv_unsigned a + nZ <= alloc_top h)%Z
   /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
@@ -41,14 +50,14 @@ Proof.
   apply andb_true_iff in H as [H Hfree].
   apply andb_true_iff in H as [H Htop].
   apply andb_true_iff in H as [Halign Hpos].
-  apply Z.eqb_eq in Halign. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
+  apply Z.eqb_eq in Halign. apply Z.leb_le in Hpos. apply Z.leb_le in Htop.
   repeat split; assumption.
 Qed.
 
 Lemma vm_find_base_sound : forall h nZ a,
   vm_find_base h nZ = Some a ->
   (bv_unsigned a mod page_size = 0)%Z
-  /\ (0 < bv_unsigned a)%Z
+  /\ (task_unmapped_base <= bv_unsigned a)%Z
   /\ (bv_unsigned a + nZ <= alloc_top h)%Z
   /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
@@ -83,22 +92,22 @@ Proof.
   intros h nZ a Hok.
   pose proof (vm_base_ok_sound h nZ a Hok) as (Hal & Hpos & Htop & Hfree).
   pose proof (bv_unsigned_in_range 64 a) as [_ Ha]. unfold bv_modulus in Ha.
-  destruct (Z.eq_dec (bv_unsigned a) page_size) as [Heq|Hne].
+  destruct (Z.eq_dec (bv_unsigned a) task_unmapped_base) as [Heq|Hne].
   { left. left. rewrite <- Heq. apply Z_to_bv_bv_unsigned. }
-  assert (Hge : (2 * page_size <= bv_unsigned a)%Z).
-  { unfold page_size in *.
+  assert (Hge : (task_unmapped_base + page_size <= bv_unsigned a)%Z).
+  { unfold page_size, task_unmapped_base in *.
     pose proof (Z_div_mod_eq_full (bv_unsigned a) 4096). lia. }
   set (a' := Z_to_bv 64 (bv_unsigned a - page_size)).
   assert (Ua' : bv_unsigned a' = (bv_unsigned a - page_size)%Z).
   { subst a'. rewrite Z_to_bv_unsigned. apply bv_wrap_small.
-    unfold bv_modulus, page_size in *. lia. }
+    unfold bv_modulus, page_size, task_unmapped_base in *. lia. }
   destruct (vm_base_ok h nZ a') eqn:Hok'.
   { right. exists a'. split; [exact Ua'|exact Hok']. }
   left. unfold vm_base_ok in Hok'. rewrite Ua' in Hok'.
   assert (H1 : ((bv_unsigned a - page_size) mod page_size =? 0)%Z = true)
     by (apply Z.eqb_eq; rewrite Zminus_mod, Hal, Z_mod_same_full; reflexivity).
-  assert (H2 : (0 <? bv_unsigned a - page_size)%Z = true)
-    by (apply Z.ltb_lt; unfold page_size in *; lia).
+  assert (H2 : (task_unmapped_base <=? bv_unsigned a - page_size)%Z = true)
+    by (apply Z.leb_le; unfold page_size in *; lia).
   assert (H3 : (bv_unsigned a - page_size + nZ <=? alloc_top h)%Z = true)
     by (apply Z.leb_le; unfold page_size in *; lia).
   rewrite H1, H2, H3 in Hok'. cbn [andb] in Hok'.
@@ -128,7 +137,8 @@ Lemma vm_find_base_complete_aux : forall h nZ k a,
   exists c, In c (vm_base_candidates h) /\ vm_base_ok h nZ c = true.
 Proof.
   intros h nZ k. induction k as [|k IH]; intros a Hk Hok.
-  - pose proof (vm_base_ok_sound h nZ a Hok) as (_ & Hpos & _). cbn in Hk. lia.
+  - pose proof (vm_base_ok_sound h nZ a Hok) as (_ & Hpos & _). cbn in Hk.
+    unfold task_unmapped_base in Hpos. lia.
   - destruct (vm_base_ok_step h nZ a Hok) as [Hin | (a' & Ua' & Hok')].
     + exists a. split; assumption.
     + apply (IH a'); [|exact Hok'].
@@ -152,7 +162,7 @@ Qed.
 Lemma vm_gap_available_iff : forall h nZ,
   vm_gap_available h nZ = true <->
   exists a, (bv_unsigned a mod page_size = 0)%Z
-            /\ (0 < bv_unsigned a)%Z
+            /\ (task_unmapped_base <= bv_unsigned a)%Z
             /\ (bv_unsigned a + nZ <= alloc_top h)%Z
             /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
@@ -161,16 +171,89 @@ Proof.
     exists a. exact (vm_find_base_sound h nZ a Ha).
   - intros (a & Hal & Hpos & Htop & Hfree).
     apply (vm_find_base_complete h nZ a). unfold vm_base_ok.
-    rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
+    rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.leb_le _ _) Hpos),
       (proj2 (Z.leb_le _ _) Htop), Hfree. reflexivity.
 Qed.
 
-Definition mmap_grant_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
-  negb (mmap_noreserve_backed_ok flags m nZ)
-  || negb (vm_gap_available (m_vmmaps m) nZ).
+(* Linux has an answer wherever a gap is available: the gap fits the
+   bottom-up window of [Placement.linux_place_exists]. *)
+Lemma vm_gap_available_place : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_gap_available h nZ = true -> exists a, linux_place h thp hint nZ a.
+Proof.
+  intros h thp hint nZ Hn Hnal H.
+  apply vm_gap_available_iff in H as (a & Hal & Hlo & Htop & Hfree).
+  apply (Placement.linux_place_exists h thp hint nZ Hn Hnal).
+  exists (bv_unsigned a). right. unfold gap_fits.
+  rewrite Z_to_bv_bv_unsigned. repeat split; assumption.
+Qed.
 
-Definition mmap_reserve_refusable (m : Model) (nZ : Z) : bool :=
-  negb (vm_gap_available (m_vmmaps m) nZ).
+(* THE PREDICATE THE TREE REFUSES BY.  At the revision an anonymous mmap
+   is granted at the one address Linux picks, so "a grant is possible
+   here" is exactly "[Placement.linux_place_b] has an answer": the
+   grant direction ([vm_place_available_of_is]) and the refusal
+   direction ([vm_place_available_is]) both hold on the nose. *)
+Definition vm_place_available (h : VmMaps) (thp : bool) (hint : word)
+    (nZ : Z) : bool :=
+  match Placement.linux_place_b h thp hint nZ with
+  | Some _ => true
+  | None => false
+  end.
+
+Lemma vm_place_available_of_is : forall h thp hint nZ (a : word),
+  Placement.linux_place_is h thp hint nZ a = true ->
+  vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ a H. unfold vm_place_available.
+  unfold Placement.linux_place_is in H.
+  destruct (Placement.linux_place_b h thp hint nZ) as [x|];
+    [reflexivity| discriminate].
+Qed.
+
+Lemma vm_place_available_is : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_place_available h thp hint nZ = true ->
+  exists a : word, Placement.linux_place_is h thp hint nZ a = true.
+Proof.
+  intros h thp hint nZ Hn Hnal H. unfold vm_place_available in H.
+  destruct (Placement.linux_place_b h thp hint nZ) as [x|] eqn:Hb;
+    [| discriminate].
+  destruct (Placement.linux_place_b_spec h thp hint nZ Hn Hnal)
+    as [Hsome _].
+  pose proof (proj1 (Hsome x) Hb) as HL.
+  destruct (Placement.linux_place_admissible h thp hint nZ x Hn Hnal HL)
+    as (_ & Hpos & Htop & _).
+  pose proof (Placement.alloc_top_lt_two_pow_64 h) as Hat.
+  assert (Hx : bv_unsigned (Z_to_bv 64 x) = x).
+  { rewrite Z_to_bv_unsigned. apply bv_wrap_small.
+    unfold bv_modulus, two_pow_64 in *. lia. }
+  exists (Z_to_bv 64 x). unfold Placement.linux_place_is.
+  rewrite Hb, Hx. apply Z.eqb_refl.
+Qed.
+
+Lemma vm_place_available_of_gap : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_gap_available h nZ = true -> vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ Hn Hnal H.
+  destruct (vm_gap_available_place h thp hint nZ Hn Hnal H) as [a HL].
+  unfold vm_place_available.
+  destruct (Placement.linux_place_b h thp hint nZ) as [x|] eqn:Hb;
+    [reflexivity| exfalso].
+  destruct (Placement.linux_place_b_spec h thp hint nZ Hn Hnal)
+    as [_ Hnone].
+  exact (proj1 Hnone Hb a HL).
+Qed.
+
+(* The hint is the caller's address argument: Linux's search reads it,
+   so the refusal predicate does too. *)
+Definition mmap_grant_refusable (hint flags : word) (m : Model) (nZ : Z)
+    : bool :=
+  negb (mmap_noreserve_backed_ok flags m nZ)
+  || negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
+
+Definition mmap_reserve_refusable (hint : word) (m : Model) (nZ : Z) : bool :=
+  negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
 
 Definition mmap_fixed_fresh_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
   negb (mmap_noreserve_backed_ok flags m nZ).

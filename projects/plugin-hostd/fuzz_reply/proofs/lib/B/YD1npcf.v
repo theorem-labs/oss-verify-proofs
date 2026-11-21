@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AD1npcf.v, with its module paths and module names changed. *)
-(* Image B's twin of lib/A/AD1npcf.v (a working branch 46f1762ad5a), image-free: A's text with lib/B/YD1w_cf.v
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B's twin of lib/A/AD1npcf.v (a working branch), image-free: A's text with lib/B/YD1w_cf.v
    for lib/A/AD1w_cf.v.
    The cf driver's room bookkeeping, in one place.  The donor driver threads event bounds (`st_nev S < EV_MAX` at
    each allocator call, `st_nev S <= 1` / `<= 64` at its cut points, `st_nev S + EV_LIB * r + 3 <= EV_MAX` into the

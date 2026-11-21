@@ -19,10 +19,10 @@
    shadow), then FSW_entry_canon.v fe_lensh_ra at the decode call. The decoder's bad-text arm returns the block list
    EQUAL to the caller's (the base's post), used here as a permutation.
    rule 24: proves function LLVMFuzzerTestOneInput (segment S6; reuse search: proof-index LLVMFuzzerTestOneInput,
-   ported from a working branch 08ad70da3bf).
-   Ported from: a working branch 0d34d65d2b7 lib/A/FSW_entry_s6.v (fs.asan 0x8108c-0x810c4), with the CTX
+   ported from a working branch).
+   Ported from: a working branch lib/A/FSW_entry_s6.v (fs.asan 0x8108c-0x810c4), with the CTX
    premises dropped (decode_spec_ff / check_as_written_spec of the base are CTX-free; s6_chain has no trace conjunct),
-   the fe_lensh layer of a working branch 60372e5bd05 (lib/A/FSW_entry_{defs,canon}.v) added, and
+   the fe_lensh layer of a working branch (lib/A/FSW_entry_{defs,canon}.v) added, and
    every address image B's own.
    RELOC-B hypotheses: none (the six callee specs are FsEntryFns fields of lib/B/FSH_Fn_entry.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/PN102Cuts.v, with its module paths changed; 174 of its 323 lines of code are new or changed and 163 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4): THE CUT TABLE of
    the walk of parse_noting (A' 0x81f14, 120 bytes, 30 instructions, frame 48; row N10-PNA). STATEMENTS ONLY: the
@@ -8,11 +9,11 @@
    There is no Admitted, no Axiom and no Parameter in this file.
    rule 24: proves function parse_noting (reuse search: `proof-index parse_noting` exit 4 at 2026-10-30 07:2xZ,
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
-   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk 13970867e0c9, its one
+   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk, its one
    announced re-bind). This file: the cut table of that walk.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
    The cut pcs are the signed walk's (unchanged).
 
    SOURCES (record keys).
@@ -31,12 +32,12 @@
        +0x58 mv a0,s2; +0x5c .. +0x6c ld ra / s0 / s1 / s2 / s3; +0x70 addi sp,sp,48; +0x74 ret          [S6]
      No ASan check remains in the body: its only memory accesses are the ten of its own frame. Section 6 checks
      every call slot, the branch slot and the ret slot on the listing by vm_compute (PL_prog_A).
-   - The batch kit's TEXTS (the kit's cut 7cdbb61b5fa0): the statement lib/A/PRH_FnCheck.v
+   - The batch kit's TEXTS (the kit's cut): the statement lib/A/PRH_FnCheck.v
      tparse_noting_specX :596-730; the callees lib/A/PRH_FnAlloc.v tfuzz_alloc_live_specX (S1, owner a Theorem Labs lane) and
      tfuzz_alloc_ran_out_specX (S3, owner a Theorem Labs lane); lib/A/PRH_FnPj.v tpj_parse_specX (S2, owned by the kit owner a Theorem Labs lane);
      PRH_FnCheck.v tcheck_reject_clean_specX :566-580 (S5, owned by the kit owner). S4 and S6 call nothing.
    - THE STATEMENT. The walk proves the batch kit's tparse_noting_specX ITSELF (PRH_FnCheck.tparse_noting_specX), with no _FIX
-     twin and no premise of its own. Against the signed walk's tparse_noting_exactX_FIX (13970867e0c9 PN102Cuts.v
+     twin and no premise of its own. Against the signed walk's tparse_noting_exactX_FIX (PN102Cuts.v
      :160-219), the batch kit:
        DROPS rp_sm .. rp_hist, `rp_sm = ReaderRes.jr_strtod`, iface_room_pos and prh_run_at at entry (the position
          is now a post-implication, quantified over every run: the post's two `forall sm x os i H0 hist` conjuncts);
@@ -129,7 +130,7 @@ Variable SK : YI16.sink_head.
 #[local] Notation rdW W mem := (mrestrict (w_H W) mem).
 
 (* ---------------------------------------------------------------------- *)
-(* 1. THE TEXT THIS WALK PROVES: the batch kit's tparse_noting_specX (lib/A/PRH_FnCheck.v :596-730 on the kit's cut 7cdbb61b5fa0) AS IT IS.
+(* 1. THE TEXT THIS WALK PROVES: the batch kit's tparse_noting_specX (lib/A/PRH_FnCheck.v :596-730 on the kit's cut) AS IT IS.
       It is not restated here; pn_intro below reads it into the walk's entry record. *)
 
 (* ---------------------------------------------------------------------- *)

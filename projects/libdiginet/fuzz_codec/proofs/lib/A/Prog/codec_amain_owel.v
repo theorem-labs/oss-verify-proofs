@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the run / keep / branch / leaf tactics, kept_run and same_io_wvb are the text of
-   projects/reac-pw/fuzz_qdisc/proofs/lib/A/QPgSlots.v:123-188 (made there from proofs/libreac/fuzz_knock/lib/A/APgStep.v,
-   origin/ossv/recipes 6ebe35ba632), the stack-slot write tactics that of QPgCheck.v:52-69, the entry regions those of
-   QPgRt.v:61-65 / 193-243, the shadow entry that of proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec.v:354-370
-   (origin/ossv/recipes 4b6f0df50aa7), cw_U_sx32_eqb that of proofs/libreac/fuzz_knock/lib/A/APgStep.v:54-68
-   (U_sx32_eqb, origin/ossv/recipes 4b6f0df50aa7), cw_join_win that of proofs/reac-pw/fuzz_qdisc/lib/A/QPgLoop0.v:169-196
-   (ra_join_win, a working branch b0f706c04a19), cw_bcmp_at that of lib/Reusable/YCbq.v:2262-2310 (aj_bcmp_at) with
+   projects/reac-pw/fuzz_qdisc/proofs/lib/A/QPgSlots.v:123-188 (made there from proofs/libreac/fuzz_knock/lib/A/APgStep.v),
+   the stack-slot write tactics that of QPgCheck.v:52-69, the entry regions those of
+   QPgRt.v:61-65 / 193-243, the shadow entry that of proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec.v:354-370,
+   cw_U_sx32_eqb that of proofs/libreac/fuzz_knock/lib/A/APgStep.v:54-68
+   (U_sx32_eqb), cw_join_win that of proofs/reac-pw/fuzz_qdisc/lib/A/QPgLoop0.v:169-196
+   (ra_join_win, a working branch), cw_bcmp_at that of lib/Reusable/YCbq.v:2262-2310 (aj_bcmp_at) with
    the wrapper's same_but_materialized kept in its post, cw_st_ok_at that of lib/Reusable/YI04.v:342-356 (entry_st_ok_full)
    with the env apart from the registers, renamed with the prefix cw_ and moved to libdiginet/fuzz_codec's ASan
    build (image A); the leaf ends in lib/A/Prog/CPgBase.v's cdc_post, whose memory clause is CodecCJ's tcj_kept. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgWalk.v, with its module names changed; 414 of its 469 lines of code are new or changed and 578 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Facts the owe() segments of the image-A walk of LLVMFuzzerTestOneInput share (lib/A/Prog/codec_amain_inv.v, the
    cuts OWE0 .. OWE11 to CHK): the call record k at q = F + 176 after owe() wrote its answer.
    - owe_setZ: k with want_rc, want, want_len, want_key and want_display replaced.
@@ -451,7 +452,7 @@ End e.
    The state of an OWEk segment is am_entry's base (regions 0-4: the save area, the .got slot, the shadow cell, the
    spills, the cursor) and three frame regions: k's fields read (index 5), want_rc .. want[L) (index 6, window
    [316, 320 + L)) and want_len .. want_display (index 7, window [344, 360)), with KE over owe_zone L. *)
-(* `lw` of a 4-byte field s: the sign-extended value (lib/A/Prog/check_range_A.v:41-54, cg_U_sx32) *)
+(* `lw` of a 4-byte field s: the sign-extended value (lib/A/Prog/check_range_A.v:42-55, cg_U_sx32) *)
 Lemma owe_U_sx32 : forall E n s, ew E n = Z_to_bv 64 s -> 0 <= s < 2 ^ 32 ->
 U E (SExt true 32 (SOff n 0)) = if s <? 2 ^ 31 then s else s + (2 ^ 64 - 2 ^ 32).
 Proof.

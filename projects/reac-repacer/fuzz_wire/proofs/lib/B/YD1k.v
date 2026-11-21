@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-repacer/fuzz_wire image B (asan-ubsan) by gen_ad1k.py (sha256 43a0cf0abc67, the start-up tool set at commit dbb5a97ad14) from fuzz_wire.asan-ubsan, the regions of its generated lib/B/YD2j.v and the owned statics of its generated lib/B/YF0m.v; the image registers 0 ASan globals, so the rodata hull bound is the end of YF0m's first Tfib_zero_shadow range (the image top) floored to 64 bytes; proofs/cgif/cgif_file_fuzzer/lib/YD1k.v at commit 25e3d17bdb50 gives the text only *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-repacer/fuzz_wire image B (asan-ubsan) by gen_ad1k.py (sha256 43a0cf0abc67, the start-up tool set) from fuzz_wire.asan-ubsan, the regions of its generated lib/B/YD2j.v and the owned statics of its generated lib/B/YF0m.v; the image registers 0 ASan globals, so the rodata hull bound is the end of YF0m's first Tfib_zero_shadow range (the image top) floored to 64 bytes; proofs/cgif/cgif_file_fuzzer/lib/YD1k.v at commit theorem-labs/oss-verify-proofs@6b32741d849a gives the text only *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fdchan's third conjunct, the channel-reader flag, carried in cs_ok (co_rdr) and threaded to the fd sites); internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_wire.asan-ubsan (reac-repacer/fuzz_wire asan-ubsan) sha256 af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6; unstripped twin sha256 51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3 *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -297,7 +298,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -330,7 +331,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

@@ -18,7 +18,7 @@
        PSN.kind's own tests, in its order: incl = 0, incl <= cap, cap = 0, q + 16 + incl <= flen (flen = |C|).
    (e) chain_empty_at: nx_chain_empty with its kind premise read off the header (incl = 0 at a full header).
 
-   TAKEN FROM: (a) lib/A/Prog/PcapSourceNextHdrB.v nx_fb_hb / nx_hw_hb (a working branch 43308d15d0d,
+   TAKEN FROM: (a) lib/A/Prog/PcapSourceNextHdrB.v nx_fb_hb / nx_hw_hb (a working branch,
    a Theorem Labs lane), restated over lib/B's nx_hdr and rd_u32_val; incl_range / orig_range: HdrBDefs' nx_hw_range (a Theorem Labs lane);
    (b) Reusable/YI01.v garr8_sub; (c) the same lib/A file's nx_hk_16 / nx_hdr_len16; (d) lib/B/Prog/
    PcapSourceNextHdrBDefs.v nx_kind_cases (a Theorem Labs lane) and lib/A/Prog/PcapSourceNextSpec.v nx_kind_empty; (e)

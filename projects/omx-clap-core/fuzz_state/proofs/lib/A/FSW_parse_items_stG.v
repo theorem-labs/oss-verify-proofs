@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane (a Theorem Labs lane): the GROW STEP of parse_items' member loop (pi_step_G),
    from the call-site invariant pi_IG at grow (A_grow) to pi_IP at the parse_string call (A_parse_string). Route: the
    grow call (FSW_parse_items_grow.pig_call_84b68 for the first member, pig_call_84e60 for a later one; frame pi_cs0 /
@@ -92,7 +93,7 @@ Hypothesis HGLOB : fs_glob tfibsegs W mem live peak cnt fail.
 #[local] Abbreviation IM := (pi_IM B k ly S U W regs mem md q ot v text len tcap tb ms pr rest live peak cnt fail).
 #[local] Abbreviation IV := (pi_IV B k ly S U W regs mem md q ot v text len tcap tb ms pr rest live peak cnt fail).
 #[local] Abbreviation Q := (pi_Q B k ly S U W regs mem md q ot v text len p tcap tb ms pr live peak cnt fail).
-(* callee: grow (S0 30057674945, lib/A/Prog/FSW_grow_holds.v grow_holds) *)
+(* callee: grow (S0, lib/A/Prog/FSW_grow_holds.v grow_holds) *)
 Hypothesis HGROW : @grow_spec fx rc SK tfibsegs B.
 #[local] Abbreviation JC := (pi_jc B k ly S U W regs mem md ot v).
 #[local] Abbreviation RP := (pi_regsP B regs q v).

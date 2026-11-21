@@ -1,8 +1,8 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMpfArmPdSeam.v (cold/port-fm-rtprintf-param 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMpfArmPdSeam.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMpfArmPdSeam.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMpfArmPdSeam.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMpfArmPdSeam.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMpfArmPdSeam.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* R-1 W9 (RtPrintf): the conversion %d (Pd) at the seam, on W0's per-piece arms (FMgxaSeamPf.v :98-111). The renderer
-   equations pt_pf_digits_d / pt_pf_dec_d are fuzz_disco's pt_pf_digits / pt_pf_dec (origin/cold/h-rw-dis-5-r1
-   5a2af4f2707 lib/A/FMgxaSeamPf.v Section CoveredD's preamble), copied; the three arms restate CoveredD's Pd case in
+   equations pt_pf_digits_d / pt_pf_dec_d are fuzz_disco's pt_pf_digits / pt_pf_dec (
+    lib/A/FMgxaSeamPf.v Section CoveredD's preamble), copied; the three arms restate CoveredD's Pd case in
    W0's form (one step of the renderer, FMpfStep.v pf_step). New file; nothing else is edited. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GX Require Import Printf_model.

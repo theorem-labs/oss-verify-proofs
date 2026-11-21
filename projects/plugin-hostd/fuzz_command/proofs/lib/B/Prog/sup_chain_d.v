@@ -14,6 +14,7 @@
    far), s6 = x22 = list, s7 = x23 = "%d" 0x21f40, s9 = x25 = 1 (ids 4-aligned and non-null), s10 = x26 = k,
    s11 = x27 = n. Stack words (sp1-relative): +8 the slot, +16 the frame F, +24 F's shadow SB + F / 8, +32 F (the
    stack-malloc result), +40 " %d" 0x21f20, +48 ids, +56 SB, +80 F. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -48,7 +49,7 @@ Definition scb_m (v : Z) : Z := Z.of_nat (length (dec v)) + 1.
 (* the journal count at the loop: record()'s frees, xmalloc's malloc, the two arg_s mallocs *)
 Definition scb_kL (R : rstate) : Z := EV_RECORD R + EV_XMALLOC + EV_ARG_S + EV_ARG_S.
 
-(* the FP state (a Theorem Labs lane pass 4b, f490061c104): the printf wrappers return at SOME fx' whose rounding mode is 0 and whose
+(* the FP state (a Theorem Labs lane pass 4b): the printf wrappers return at SOME fx' whose rounding mode is 0 and whose
    f registers equal the caller's except f10 (lib/B/Rt/RtPFCmd.v:187-190); the statement's post apost_baseF asks the
    same of the return against the entry's f registers fr0 and fcsr csr0 (lib/B/Prog/CmdBase.v apost_baseF). A
    segment of the walk starts at any FP state with rounding mode 0 that is `scb_fxok fr0 csr0` and hands the next

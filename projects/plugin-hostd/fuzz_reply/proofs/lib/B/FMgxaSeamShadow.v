@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamShadow.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamShadow.table); by hand (numerals.py BY_HAND, reason in the table): 0x20d00 -> 0x20eb0; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v, AF0m->YF0m. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamShadow.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamShadow.table); by hand (numerals.py BY_HAND, reason in the table): 0x20d00 -> 0x20eb0; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v, AF0m->YF0m. *)
 (* Step 2 of the evt -> SRr seam at musl vfprintf: the ASAN SHADOW.
 
    The harness states ASan facts over its reader `aview tfibsegs H mem` (YG0n.v:18):
@@ -16,10 +16,10 @@
    gives.
 
    The musl prefix (GXA's musl_prefix_addressable, AsanFacts.v:82): the nine image bytes at
-   `sym 0x1029e` = 0x10b4c (RT_IImgA.v:36) lie in fm.asan's first zero-shadow range
-   (0x10000, 0x20d00 - 0x10000) (AF0m.v:553), which AR's am_zshadow (YG0n.v:218) covers whenever that
+   `sym 0x1029e` = 0x10b4c (RT_IImgA.v:37) lie in fm.asan's first zero-shadow range
+   (0x10000, 0x20d00 - 0x10000) (AF0m.v:554), which AR's am_zshadow (YG0n.v:218) covers whenever that
    range is in `as_zero_shadow B` (TfibSyms' ts_zsh gives it).  musl_prefix_of_AR states it for AR;
-   musl_prefix_of_ARU states it for ARU (lib/A/FMupoison.v:32), the form the shared contract's
+   musl_prefix_of_ARU states it for ARU (lib/A/FMupoison.v:33), the form the shared contract's
    ecall_preU carries: a user-poisoned shadow byte is the shadow of a live block's granule, and no
    live block meets the image (AR_client_img_law, YG0d.v:502). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

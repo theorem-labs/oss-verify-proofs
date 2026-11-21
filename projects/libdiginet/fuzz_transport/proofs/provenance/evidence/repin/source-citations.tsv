@@ -1,5 +1,5 @@
 # Line citations of fuzz_transport.c moved to the patched harness (port commit 835f336c + c47f6290).
-# Line numbers: of the tree after the merge of the re-pin base f6acfcb0c1b8 (it removed the Modified-by first lines of many files).
+# Line numbers: of the tree after the merge of the re-pin base (it removed the Modified-by first lines of many files).
 # old source: projects/libdiginet/fuzz_transport/source/fuzz_transport.c sha256 044738ce0df1780d88ca48c2d17992c68bc339a8e3655b01779a289ffcfb6a06 (1215 lines)
 # patched source: fuzz/fuzz_transport.c of the tree the new pins were built from (build-info source tree sha256 28333193fe20...) sha256 ae837185e62539c8a8fb9deb8f3aa2fbde60b2fe2f7f81110cd06e281761b6e7 (1218 lines)
 # map: old 1-917 stay; old 918-999 +9; old 1000-1007 replaced by new 1009-1010; old >= 1008 +3. Old lines 51-55 (header comment) are re-wrapped; no citation names them.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MX_ROOM_e reproved from MG_ROOM_e at the emb size itself, since shrinking a 2^20 grant no longer gives Linux's placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -63,14 +64,21 @@ Section G.
   Local Notation CS := (CSh AL0 h c).
   Local Notation KF := (KhF h c mo0).
 
-  (* [comment removed for export] *)
+  (* LPS #38.  THIS USED TO SHRINK A 2^20 GRANT AND THAT IS NOW UNSOUND.  The old
+     proof took [MG_ROOM_n]'s [anon_grantable 0x22 (2^20) mo a] and rebuilt it at
+     [kEmbBytes] conjunct by conjunct: [region_free_prefix'] narrowed the region,
+     [lia] narrowed the ceiling, and the third slot came over by `exact FL`
+     because that slot was [bottomup_floor <= a], which does not mention the size.
+     At the revision the third slot is [ASysS.grant_placed nZ mo a] and [nZ] is an
+     ARGUMENT OF [Placement.linux_place_is], so `exact FL` would be claiming that
+     Linux's answer to a 2^20 request is also its answer to a 0x10000 one.  It is
+     not, and no repair of the old proof recovers it -- the emb path has to ask
+     for its own size, which is what [MG_ROOM_e] does. *)
   Lemma MX_ROOM_e : forall mo, KF None None nb0 bl0 mo -> exists a, anon_grantable 0x22 kEmbBytes mo a.
   Proof.
     intros mo KK.
-    ddestruct (MG_ROOM_n h c mo0 K0 B HV Hc ROOMF None None nb0 bl0 mo (MG_Gn h c mo0 K0 B HV Hc ROOMF None None) KK) as (a & AAL & A0 & FL & CE & RF & BU).
-    exists a. unfold anon_grantable, kEmbBytes. split; [exact AAL|]. split; [exact A0|]. split; [exact FL|]. split; [clear - CE; lia|]. split.
-    - eapply region_free_prefix'; [| exact RF]. rewrite !u64_lit by lia. lia.
-    - intros E. specialize (BU E). clear - BU. lia.
+    exact (MG_ROOM_e h c mo0 K0 B HV Hc ROOMF None None nb0 bl0 mo
+             (MG_Gn h c mo0 K0 B HV Hc ROOMF None None) KK).
   Qed.
 
   (* [comment removed for export] *)

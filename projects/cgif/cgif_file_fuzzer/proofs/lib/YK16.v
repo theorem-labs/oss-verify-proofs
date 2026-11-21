@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input): changed no_error_run_corun, no_error_run_modeled. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
@@ -52,21 +53,24 @@ destruct (m_halted (cfg_model c)) as [code |] eqn:Hh.
 + intros evs c' Hss. exact (CH c' (Hstep c evs c' HInv Hss)).
 Qed.
 Lemma no_error_run_corun :
-forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
-(lim : Z) (inp : ProcInput),
-~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
-omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
+  forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
+         (lim : Z) (inp : ProcInput),
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
+  omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
 Proof.
-intros segs pc ph sp brk0 mb rnd lim inp H. cbn [omni_corun].
-apply no_error_coexec, H.
+  intros segs pc ph sp brk0 mb rnd lim inp H. cbn [omni_corun].
+  apply no_error_coexec, H.
 Qed.
 Lemma no_error_run_modeled :
-forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
-(lim : Z) (inp : ProcInput),
-~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
-Equivalence.modeled (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
+  forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
+         (lim : Z) (inp : ProcInput),
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
+  Equivalence.modeled (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
-intros segs pc ph sp brk0 mb rnd lim inp H.
-apply modeled_iff. cbn [img_segments].
-eapply coexec_conseq; [apply no_error_run_corun, H | apply never_errors_covered].
+  intros segs pc ph sp brk0 mb rnd lim inp H.
+  apply modeled_iff.
+  cbn [image_run_segments img_segments en_sp en_mmap_base].
+  eapply coexec_conseq; [apply no_error_run_corun, H | apply never_errors_covered].
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the section also takes the run's launch class (runLaunchT), and dvalid_sp also asks InitMem.launch_ok of the entry stack; taken in part from projects/simdjson/fuzz_parser/proofs/lib/Ubsan/RDriver_iface.v, lines 26, 102-103. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -23,7 +24,7 @@ Notation mem := (word -> option byte).
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {rl : runLaunchT}.
 Definition PMAIN : Z := 0x3b974.
 Definition PSTAGE2_RET : Z := 0xbd838.      (* [comment removed for export] *)
 Definition PEXIT : Z := 0xbde84.
@@ -89,7 +90,8 @@ Definition STG (m : mem) : Prop := exists sj, rw_cells usegs m UREAD_STAGE [CB P
 
 (* [comment removed for export] *)
 Definition dvalid_sp (sp0 : word) (argv envp : list (list byte)) : Prop :=
-  valid_sp sp0 /\ ATOP = bv_unsigned sp0 - 8388608 /\ entry_stack_fits sp0 argv envp.   (* [comment removed for export] *)
+  valid_sp sp0 /\ ATOP = bv_unsigned sp0 - 8388608 /\ entry_stack_fits sp0 argv envp   (* [comment removed for export] *)
+  /\ InitMem.launch_ok RL_la sp0 RL_top argv envp RL_execfn.
 
 (* [comment removed for export] *)
 Definition pmain_stmt : Prop :=

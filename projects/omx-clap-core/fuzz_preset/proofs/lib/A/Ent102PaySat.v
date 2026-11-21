@@ -1,7 +1,7 @@
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102 pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): THE VACUITY GUARD of the walk of
    LLVMFuzzerTestOneInput. The budget hypotheses of every segment statement (ec_ccut_ok, ec_lcut_ok, ec_pay of
-   lib/A/Ent102CutsA.v, statement blob f40892fb5ddb at a working branch 3b0db38483cf) are SATISFIABLE:
+   lib/A/Ent102CutsA.v, statement blob f40892fb5ddb at a working branch) are SATISFIABLE:
    ec_pay_sat exhibits the two budgets and proves the three records AS STATED there.
    rule 24: proves no function (kind: segment lemma - a pure fact about the two budget functions).
 
@@ -21,8 +21,8 @@
      805,322,784 + 9,017,853,504 = 9,823,176,288 <= LIVE_LIB = 12,884,901,888.
 
    PROVED HERE OR CITED (no sat_* input premise is left):
-   - the LIVE bounds: a Theorem Labs lane's lib/Spec/PjLiveBound.v (blob 91ccec38b4d0, a working branch
-     cc743fba411, taken BY PATH with lib/Prog/PackTreeTight.v 1add21fa18a6): live_pj_parse_maxb,
+   - the LIVE bounds: a Theorem Labs lane's lib/Spec/PjLiveBound.v (blob 91ccec38b4d0, a working branch,
+     taken BY PATH with lib/Prog/PackTreeTight.v 1add21fa18a6): live_pj_parse_maxb,
      live_check_no_overread_maxb, live_check_reject_clean_starved_maxb, live_check_round_trip_maxb, hpeak_rd; the kit's
      LIVE_* are its live_* at cf_head / prh_jr_strtod by conversion (sat_live_*_eq); LIVE_check_reject_clean_starved
      at JNull is bounded here (the writer's first buffer, PjReqBoundW.newcap0_le);
@@ -33,7 +33,7 @@
    cf_head for every x, so at a CfParams with cf_head > LIVE_LIB the records are refutable; CfParams bounds cf_head
    only below (cf_head_nonneg). ec_pay_sat_preset discharges it at CfParams_preset (cf_head = 16) and is CLOSED.
 
-   THE OLD ecov_caw (blobs 7af9d0fe1491 / e9a447dec8c0, before 3b0db38483cf) is kept as a record:
+   THE OLD ecov_caw (blobs 7af9d0fe1491 / e9a447dec8c0, before) is kept as a record:
    sat_ecov_caw_old_refuted proves that its form - LIVE_check_as_written (e_n E) <= ec_lcut E 3 under the length guard
    alone - refutes ec_lcut_ok at ANY budget for every inhabited ecx (e_n := LIVE_LIB, e_pl := []), which is why the
    field now also asks e_n E <= EC_NMAX. *)
@@ -546,7 +546,7 @@ Proof. exists sat_ccut, sat_lcut. exact (conj sat_ccut_ok (conj sat_lcut_ok sat_
 (* 6. THE RECORD OF THE OLD ecov_caw (statement blobs 7af9d0fe1491 / e9a447dec8c0): under the length guard alone,
       LIVE_check_as_written (e_n E) <= ec_lcut E 3 refutes ec_lcut_ok at ANY live budget as soon as one entry
       context exists: e_n is free in ecx, so E0 with e_pl := [] and e_n := LIVE_LIB passes the guard and asks
-      LIVE_LIB + 1 <= ec_lcut E 3 <= LIVE_LIB. Hence ecov_caw's second guard e_n E <= EC_NMAX (3b0db38483cf). *)
+      LIVE_LIB + 1 <= ec_lcut E 3 <= LIVE_LIB. Hence ecov_caw's second guard e_n E <= EC_NMAX. *)
 Definition sat_ecov_caw_old (lcut : ECX -> nat -> Z) : Prop :=
   forall E : ECX, Z.of_nat (length (e_x E)) <= EC_NMAX -> LIVE_check_as_written (e_n E) <= lcut E 3%nat.
 

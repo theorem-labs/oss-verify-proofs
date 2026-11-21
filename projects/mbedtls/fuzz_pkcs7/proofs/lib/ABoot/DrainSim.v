@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the whole-run lemmas take the channel-reader premise and are stated over run_segments, the new initial machine state and the vDSO initial model; encoded (CDefT) statements written out in plain text, comments restored, #[using] attributes dropped). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -35,7 +36,7 @@ Fixpoint procs (a : A) (bs : list byte) : option A :=
   | b :: rest => match f a b with Some a' => procs a' rest | None => None end
   end.
 
-#[using="Type"] Lemma procs_app : forall bs1 bs2 a,
+Lemma procs_app : forall bs1 bs2 a,
   procs a (bs1 ++ bs2) =
   match procs a bs1 with Some a' => procs a' bs2 | None => None end.
 Proof.
@@ -44,15 +45,18 @@ Proof.
 Qed.
 End Proc.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* The abstract trace set.                                                    *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** An admissible read block for the [cnt]-byte chunked reader (same
+    2-conjunct shape as StreamSim's [block_ok]; the byte-range clause is
+    typed away by [byte = bv 8]). *)
 Definition block_ok (cnt : word) (bs : list byte) : Prop :=
   (1 <= Z.of_nat (length bs))%Z /\ (Z.of_nat (length bs) <= bv_unsigned cnt)%Z.
 
-(* [comment removed for export] *)
+(** All read events of a list of blocks, in order, delivered on channel
+    [rch].  The write-side twin is [CatSim.wevents_ch]. *)
 Definition reads_ch (rch : word) (blocks : list (list byte)) : list event :=
   flat_map (fun bs => map (ReadEv rch) bs) blocks.
 
@@ -60,7 +64,9 @@ Lemma reads_ch_cons : forall rch bs blocks,
   reads_ch rch (bs :: blocks) = map (ReadEv rch) bs ++ reads_ch rch blocks.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
+(** All read events of a list of blocks, in order.  Channel 0 is the only
+    one a read can name: [ReadWrite.read_spec] answers -EBADF on every
+    other. *)
 Definition reads (blocks : list (list byte)) : list event :=
   reads_ch (Z_to_bv 64 0) blocks.
 
@@ -75,25 +81,49 @@ Variable f : A -> byte -> option A.
 Variable out : A -> list byte.
 Variable ec : word.
 
-(* [comment removed for export] *)
+(** What the run emits after its last read block: the loop only finishes
+    when the INPUT RUNS OUT, so the write-out and exit 0 appear exactly
+    in the chunkings that consumed the whole stream.  While input
+    remains, the trace so far is just a prefix of a longer run. *)
 Definition out_tail (s : InputStream) (a : A) (fs : Fs.Fs) : list event :=
   match s with
   | IEof => map (WriteEv (Z_to_bv 64 1)) (out a) ++ [ExitEv (Z_to_bv 64 0) fs]
   | ICons _ _ => []
   end.
 
-(* [comment removed for export] *)
-Definition drain_from_ch (rch : word) (a : A) (fs : Fs.Fs) (s : InputStream)
-    (tr : list event) : Prop := ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "(0.(1.(2.(2.(3.&8.)))Lblocks,(2.(2.(3.&8.)))(1.$4.Ls',$4.(1.VA,La',VA,(5.(6.Vcnt,O2.R3.R2.)(5.(7.(8.VA,)(9.VA,Vf,O4.(:.(3.&8.)R3.))(;.VA,R1.))(<.$=.O1.(>.$=.(?.O5.R3.)(10.R2.R1.O3.))))))))(1.(2.(2.(3.&8.)))Lblocks,(2.(2.(3.&8.)))(1.(2.(3.&8.))Lbs,(2.(3.&8.))(1.$4.Ls',$4.(1.VA,La',VA,(5.(6.Vcnt,O2.(>.(2.(3.&8.))R4.(11.(2.(3.&8.))R3.(12.(2.(3.&8.)))))R2.)(5.(7.(8.VA,)(9.VA,Vf,O4.(:.(3.&8.)R4.))(;.VA,R1.))(5.(7.(8.VA,)(9.VA,Vf,R1.R3.)(13.VA,))(<.$=.O1.(>.$=.(?.O5.(>.(2.(3.&8.))R4.(11.(2.(3.&8.))R3.(12.(2.(3.&8.))))))(11.$=.(14.Vec,O3.)(12.$=.))))))))))))")
-(* [comment removed for export] *).
+(** Traces admissible from abstract state [a] on the remaining input
+    [s], with reads delivered on channel [rch]: either the blocks read so
+    far all process fine (and, if they exhausted the input, the run
+    finishes with the write-out of the final state and exit 0), or the
+    last delivered block aborts processing and the run finishes with exit
+    [ec] (no output).  WHICH bytes each block holds is fixed by [s] —
+    [StreamSim.chunks] — so only the read CHUNKING is nondeterministic.
 
-(* [comment removed for export] *)
+    [rch] is a parameter of the TRACE ALGEBRA only; it does not widen
+    what a program may read. *)
+Definition drain_from_ch (rch : word) (a : A) (fs : Fs.Fs) (s : InputStream)
+    (tr : list event) : Prop :=
+  (exists blocks s' a',
+     chunks cnt s blocks s' /\
+     procs f a (concat blocks) = Some a' /\
+     is_prefix tr (reads_ch rch blocks ++ out_tail s' a' fs))
+  \/ (exists blocks bs s' a',
+     chunks cnt s (blocks ++ [bs]) s' /\
+     procs f a (concat blocks) = Some a' /\
+     procs f a' bs = None /\
+     is_prefix tr (reads_ch rch (blocks ++ [bs]) ++ [ExitEv ec fs])).
+
+(** The same, reading channel 0 — the only channel a read can name:
+    [ReadWrite.read_spec] answers -EBADF on the rest directly, and
+    [ReadWrite.readv_spec] does so through [ReadWrite.readable_fd].  This is the
+    form the realization lemmas below ([star_drain_only],
+    [drain_obs_iff]) are stated with. *)
 Definition drain_from (a : A) (fs : Fs.Fs) (s : InputStream)
     (tr : list event) : Prop :=
   drain_from_ch (Z_to_bv 64 0) a fs s tr.
 
-#[using="Type"] Lemma drain_from_ch_prefix : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Prch,(3.&40.)Pa,VA,Pfs,$15.Ps,$4.Ptr,(2.$=.)Ptr',(2.$=.)P,(16.R6.R5.R4.R3.R2.)P,(<.$=.R2.R3.)(16.R8.R7.R6.R5.R3.)")
-(* [comment removed for export] *).
+Lemma drain_from_ch_prefix : forall rch a fs s tr tr',
+  drain_from_ch rch a fs s tr -> is_prefix tr' tr -> drain_from_ch rch a fs s tr'.
 Proof.
   intros rch a fs s tr tr' [ (blocks & s' & a' & HC & Hp & Hpref)
                            | (blocks & bs & s' & a' & HC & Hp & Hn & Hpref) ] Hp'.
@@ -104,33 +134,39 @@ Proof.
     split; [exact Hn | eapply is_prefix_trans; eauto]]].
 Qed.
 
-#[using="Type"] Lemma drain_from_prefix : forall a fs s tr tr',
+Lemma drain_from_prefix : forall a fs s tr tr',
   drain_from a fs s tr -> is_prefix tr' tr -> drain_from a fs s tr'.
 Proof. exact (drain_from_ch_prefix (Z_to_bv 64 0)). Qed.
 
-#[using="Type"] Lemma drain_from_ch_nil : forall rch a fs s, drain_from_ch rch a fs s [].
+Lemma drain_from_ch_nil : forall rch a fs s, drain_from_ch rch a fs s [].
 Proof.
   intros rch a fs s. left. exists [], s, a.
   split; [constructor | split; [reflexivity | apply is_prefix_nil]].
 Qed.
 
-#[using="Type"] Lemma drain_from_nil : forall a fs s, drain_from a fs s [].
+Lemma drain_from_nil : forall a fs s, drain_from a fs s [].
 Proof. exact (drain_from_ch_nil (Z_to_bv 64 0)). Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma drain_from_ch_out : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Prch,(3.&40.)Pa,VA,Pfs,$15.Ptr,(2.$=.)P,(<.$=.R1.(>.$=.(17.(3.&8.)$=.(18.(19.&40.+1.))A1.Vout,R3.)(11.$=.(14.(19.&40.=)R2.)(12.$=.))))(16.R5.R4.R3.$1:.R2.)")
-(* [comment removed for export] *).
+(** At end of input: the finishing phase. *)
+Lemma drain_from_ch_out : forall rch a fs tr,
+  is_prefix tr (map (WriteEv (Z_to_bv 64 1)) (out a) ++ [ExitEv (Z_to_bv 64 0) fs]) ->
+  drain_from_ch rch a fs IEof tr.
 Proof.
   intros rch a fs tr Hp. left. exists [], IEof, a.
   split; [constructor | split; [reflexivity | exact Hp]].
 Qed.
 
-#[using="Type"] Lemma drain_from_out : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pa,VA,Pfs,$15.Ptr,(2.$=.)P,(<.$=.R1.(>.$=.(17.(3.&8.)$=.(18.(19.&40.+1.))A1.Vout,R3.)(11.$=.(14.(19.&40.=)R2.)(12.$=.))))(1;.R4.R3.$1:.R2.)")
-(* [comment removed for export] *).
+Lemma drain_from_out : forall a fs tr,
+  is_prefix tr (map (WriteEv (Z_to_bv 64 1)) (out a) ++ [ExitEv (Z_to_bv 64 0) fs]) ->
+  drain_from a fs IEof tr.
 Proof. exact (drain_from_ch_out (Z_to_bv 64 0)). Qed.
 
-#[using="Type"] Lemma drain_from_ch_block : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Prch,(3.&40.)Pa,VA,Pa1,VA,Pfs,$15.Ps,$4.Pbs,(2.(3.&8.))Ptr,(2.$=.)P,(1<.+1.(1=.(1>.(3.&8.)R2.)))P,(1<.(1=.(1>.(3.&8.)R3.))(1?.&40.Vcnt,))P,(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.R5.(1>.(3.&8.)R4.)))R4.)P,(7.(8.VA,)(9.VA,Vf,R9.R5.)(;.VA,R8.))P,(16.R;.R9.R8.(22.(2.(3.&8.))$4.(21.R7.(1>.(3.&8.)R6.)))R5.)(16.R<.R;.R9.R8.(>.$=.(17.(3.&8.)$=.(23.R<.)R7.)R6.))")
-(* [comment removed for export] *).
+Lemma drain_from_ch_block : forall rch a a1 fs s bs tr,
+  (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
+  fst (stream_take s (length bs)) = bs ->
+  procs f a bs = Some a1 ->
+  drain_from_ch rch a1 fs (snd (stream_take s (length bs))) tr ->
+  drain_from_ch rch a fs s (map (ReadEv rch) bs ++ tr).
 Proof.
   intros rch a a1 fs s bs tr Hlo Hhi Hpre Hs
     [ (blocks & s' & a' & HC & Hp & Hpref)
@@ -150,12 +186,20 @@ Proof.
     apply is_prefix_app_mono. exact Hpref.
 Qed.
 
-#[using="Type"] Lemma drain_from_block : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pa,VA,Pa1,VA,Pfs,$15.Ps,$4.Pbs,(2.(3.&8.))Ptr,(2.$=.)P,(1<.+1.(1=.(1>.(3.&8.)R2.)))P,(1<.(1=.(1>.(3.&8.)R3.))(1?.&40.Vcnt,))P,(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.R5.(1>.(3.&8.)R4.)))R4.)P,(7.(8.VA,)(9.VA,Vf,R9.R5.)(;.VA,R8.))P,(1;.R9.R8.(22.(2.(3.&8.))$4.(21.R7.(1>.(3.&8.)R6.)))R5.)(1;.R;.R9.R8.(>.$=.(17.(3.&8.)$=.(23.(19.&40.=))R7.)R6.))")
-(* [comment removed for export] *).
+Lemma drain_from_block : forall a a1 fs s bs tr,
+  (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
+  fst (stream_take s (length bs)) = bs ->
+  procs f a bs = Some a1 ->
+  drain_from a1 fs (snd (stream_take s (length bs))) tr ->
+  drain_from a fs s (map (ReadEv (Z_to_bv 64 0)) bs ++ tr).
 Proof. exact (drain_from_ch_block (Z_to_bv 64 0)). Qed.
 
-#[using="Type"] Lemma drain_from_ch_err : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Prch,(3.&40.)Pa,VA,Pfs,$15.Ps,$4.Pbs,(2.(3.&8.))Ptr,(2.$=.)P,(1<.+1.(1=.(1>.(3.&8.)R2.)))P,(1<.(1=.(1>.(3.&8.)R3.))(1?.&40.Vcnt,))P,(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.R5.(1>.(3.&8.)R4.)))R4.)P,(7.(8.VA,)(9.VA,Vf,R8.R5.)(13.VA,))P,(<.$=.R5.(11.$=.(14.Vec,R8.)(12.$=.)))(16.R;.R:.R9.R8.(>.$=.(17.(3.&8.)$=.(23.R;.)R7.)R6.))")
-(* [comment removed for export] *).
+Lemma drain_from_ch_err : forall rch a fs s bs tr,
+  (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
+  fst (stream_take s (length bs)) = bs ->
+  procs f a bs = None ->
+  is_prefix tr [ExitEv ec fs] ->
+  drain_from_ch rch a fs s (map (ReadEv rch) bs ++ tr).
 Proof.
   intros rch a fs s bs tr Hlo Hhi Hpre Hn Hp. right.
   exists [], bs, (snd (stream_take s (length bs))), a.
@@ -167,15 +211,19 @@ Proof.
   apply is_prefix_app_mono. exact Hp.
 Qed.
 
-#[using="Type"] Lemma drain_from_err : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pa,VA,Pfs,$15.Ps,$4.Pbs,(2.(3.&8.))Ptr,(2.$=.)P,(1<.+1.(1=.(1>.(3.&8.)R2.)))P,(1<.(1=.(1>.(3.&8.)R3.))(1?.&40.Vcnt,))P,(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.R5.(1>.(3.&8.)R4.)))R4.)P,(7.(8.VA,)(9.VA,Vf,R8.R5.)(13.VA,))P,(<.$=.R5.(11.$=.(14.Vec,R8.)(12.$=.)))(1;.R:.R9.R8.(>.$=.(17.(3.&8.)$=.(23.(19.&40.=))R7.)R6.))")
-(* [comment removed for export] *).
+Lemma drain_from_err : forall a fs s bs tr,
+  (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
+  fst (stream_take s (length bs)) = bs ->
+  procs f a bs = None ->
+  is_prefix tr [ExitEv ec fs] ->
+  drain_from a fs s (map (ReadEv (Z_to_bv 64 0)) bs ++ tr).
 Proof. exact (drain_from_ch_err (Z_to_bv 64 0)). Qed.
 
 End Traces.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Model plumbing.                                                            *)
+(* ========================================================================= *)
 
 Lemma fd1chan_with_stdin : forall s m, fd1chan m -> fd1chan (with_stdin s m).
 Proof. intros s m H. exact H. Qed.
@@ -183,9 +231,9 @@ Proof. intros s m H. exact H. Qed.
 Lemma m_fds_with_stdin : forall s m, m_fds (with_stdin s m) = m_fds m.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* The generic drain-loop theory.                                             *)
+(* ========================================================================= *)
 
 Section Drain.
 Context {A : Type}.
@@ -198,16 +246,21 @@ Variable ec : word.
 Hypothesis Hec : (bv_unsigned ec < 256)%Z.
 Variable LH : A -> machine_state -> Prop.
 
-(* [comment removed for export] *)
+(** The state runs (deterministically) to some [LH a] loop-head state. *)
 Definition lh_next (a : A) (ms : machine_state) : Prop :=
   exists ms', msteps segs ms ms' /\ LH a ms'.
 
-(* [comment removed for export] *)
+(** A write-pending ecall state that delivers exactly [bs] to stdout and
+    then reaches exit 0.  Delivery is a [WallSim.to_wall] put-style RETRY
+    LOOP, not a single ecall: each write may return any nonempty prefix of
+    what is left, so the return is NOT pinned to a2 and [bs] may take one
+    syscall or many.  The nonemptiness side condition is the loop's own
+    ([to_wall] never delivers zero bytes). *)
 Definition WrFin (bs : list byte) (ms : machine_state) : Prop :=
   (1 <= length bs)%nat /\
   to_wall segs (Z_to_bv 64 1) ms bs (to_exit segs (Z_to_bv 64 0)).
 
-(* [comment removed for export] *)
+(** The finishing phase: emit [bs] (empty = no write) then exit 0. *)
 Inductive to_out : list byte -> machine_state -> Prop :=
 | tout_exit : forall ms, to_exit segs (Z_to_bv 64 0) ms -> to_out [] ms
 | tout_wr : forall bs ms, WrFin bs ms -> to_out bs ms
@@ -216,7 +269,8 @@ Inductive to_out : list byte -> machine_state -> Prop :=
     RiscvSemantics.step segs ms = MachineOk ms' ->
     to_out bs ms' -> to_out bs ms.
 
-(* [comment removed for export] *)
+(** A read-pending ecall state (fd 0, count [cnt], buffer a1 writable) at
+    abstract state [a], together with both continuations. *)
 Definition ReadPend (a : A) (ms : machine_state) : Prop :=
   exists buf x8,
   ms_svc_pending ms = Some x8 /\
@@ -226,10 +280,19 @@ Definition ReadPend (a : A) (ms : machine_state) : Prop :=
   ms_gpr ms 2 = cnt /\
   (exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt
              = Some w) /\
-  (* [comment removed for export] *)
+  (* the destination range passes [access_ok]: [vfs_read] tests
+     [buf + cnt <= TASK_SIZE] before it looks at the input, and being
+     mapped is not that — [read_bytes_map] walks the range in word
+     arithmetic, which wraps at 2^64.  Like [buf_modeled (out a)] below,
+     this is carried on the states the binary actually reaches, and a
+     binary's read buffer is far under [State.TASK_SIZE]. *)
   access_okb buf (bv_unsigned cnt) = true /\
   to_out (out a) (advance_past_svc (set_gpr0 ms (Z_to_bv 64 0))) /\
-  (* [comment removed for export] *)
+  (* the finishing phase emits [out a] in ONE write, so it has to be
+     inside the transfer size the model judges ([Uaccess.rw_bytes_max]).
+     Carried here, on the states the binary actually reaches, rather than
+     as a claim about [out] at every abstract state — the per-binary
+     proof discharges it exactly where its own length caps are known. *)
   buf_modeled (out a) /\
   (forall bs,
      (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
@@ -242,7 +305,7 @@ Definition ReadPend (a : A) (ms : machine_state) : Prop :=
             (mkEffect (len_word bs) [(buf, bs)] [])))
      end).
 
-(* [comment removed for export] *)
+(** Straight line of instructions to a read-pending state. *)
 Inductive to_rd : A -> machine_state -> Prop :=
 | trd_here : forall a ms, ReadPend a ms -> to_rd a ms
 | trd_step : forall a ms ms',
@@ -250,23 +313,25 @@ Inductive to_rd : A -> machine_state -> Prop :=
     RiscvSemantics.step segs ms = MachineOk ms' ->
     to_rd a ms' -> to_rd a ms.
 
-#[using="Type"] Lemma msteps_to_rd : forall a ms ms',
+Lemma msteps_to_rd : forall a ms ms',
   msteps segs ms ms' -> to_rd a ms' -> to_rd a ms.
 Proof.
   intros a ms ms' H; induction H; [auto|].
   intro Hrd. eapply trd_step; eauto.
 Qed.
 
-#[using="Type"] Lemma msteps_to_out : forall bs ms ms',
+Lemma msteps_to_out : forall bs ms ms',
   msteps segs ms ms' -> to_out bs ms' -> to_out bs ms.
 Proof.
   intros bs ms ms' H; induction H; [auto|].
   intro Ho. eapply tout_step; eauto.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma to_out_wall_tail : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pbs,(2.(3.&8.))Pms,$24.P,(25.R2.R1.)(26.Vsegs,(19.&40.+1.)R2.R3.(27.Vsegs,(19.&40.=)))")
-(* [comment removed for export] *).
+(** A finishing phase IS a write-all tail derivation down to the exit
+    line (the [to_out] instruction prefix becomes [twt_step]s). *)
+Lemma to_out_wall_tail : forall bs ms,
+  to_out bs ms ->
+  to_wall_tail segs (Z_to_bv 64 1) ms bs (to_exit segs (Z_to_bv 64 0)).
 Proof.
   intros bs ms H;
     induction H as [ms Hte | bs ms HWF | bs ms ms' Hsvc Hstep Ho IH].
@@ -275,20 +340,22 @@ Proof.
   - eapply twt_step; eauto.
 Qed.
 
-(* [comment removed for export] *)
+(** The single per-binary hypothesis: every loop head runs to a read. *)
 Variable H_LH : forall a ms, LH a ms -> to_rd a ms.
 
-#[using="H_LH"] Lemma lh_next_to_rd : forall a ms, lh_next a ms -> to_rd a ms.
+Lemma lh_next_to_rd : forall a ms, lh_next a ms -> to_rd a ms.
 Proof.
   intros a ms (ms' & Hm & HL). eapply msteps_to_rd; [exact Hm | apply H_LH, HL].
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Straight lines are event-free star runs.                                   *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Type"] Lemma to_rd_star : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pa,VA,Pms,$24.Pmodel,$28.P,(7.(8.(3.&40.))(29.R1.)(13.(3.&40.)))P,(7.(2.(2:.(3.&40.)(3.&40.)))(2;.R2.)(12.(2:.(3.&40.)(3.&40.))))P,(2<.R5.R4.)(1.$24.LmsR,$24.(5.(2=.R7.R1.)(2>.Vsegs,(2?.R6.R5.)(12.$=.)(2?.R1.R5.))))")
-(* [comment removed for export] *).
+Lemma to_rd_star : forall a ms model,
+  m_halted model = None -> m_vm_lazy model = [] -> to_rd a ms ->
+  exists msR, ReadPend a msR /\
+    star segs (mkCfg ms model) [] (mkCfg msR model).
 Proof.
   intros a ms model Hh Hlazy Hrd.
   induction Hrd as [a ms HRP | a ms ms' Hsvc Hstep Hrd IH].
@@ -301,8 +368,9 @@ Proof.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-#[using="Type"] Lemma msteps_star : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pms,$24.Pms',$24.Pmodel,$28.P,(7.(8.(3.&40.))(29.R1.)(13.(3.&40.)))P,(7.(2.(2:.(3.&40.)(3.&40.)))(2;.R2.)(12.(2:.(3.&40.)(3.&40.))))P,(30.Vsegs,R5.R4.)(2>.Vsegs,(2?.R6.R4.)(12.$=.)(2?.R5.R4.))")
-(* [comment removed for export] *).
+Lemma msteps_star : forall ms ms' model,
+  m_halted model = None -> m_vm_lazy model = [] -> msteps segs ms ms' ->
+  star segs (mkCfg ms model) [] (mkCfg ms' model).
 Proof.
   intros ms ms' model Hh Hlazy H. induction H as [ms | ms ms1 ms2 Hsvc Hstep H IH].
   - apply star_refl.
@@ -312,12 +380,15 @@ Proof.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* The finishing phase: admissibility and exhaustiveness.                     *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Type"] Lemma to_out_star_admits : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pbs,(2.(3.&8.))Pms,$24.Pmodel,$28.P,(31.R1.)P,(7.(8.(3.&40.))(29.R2.)(13.(3.&40.)))P,(7.(2.(2:.(3.&40.)(3.&40.)))(2;.R3.)(12.(2:.(3.&40.)(3.&40.))))P,(25.R6.R5.)P,(32.R7.)(1.$33.Lc,$33.(2>.Vsegs,(2?.R8.R7.)(>.$=.(17.(3.&8.)$=.(18.(19.&40.+1.))R9.)(11.$=.(14.(19.&40.=)(34.R7.))(12.$=.)))R1.))")
-(* [comment removed for export] *).
+Lemma to_out_star_admits : forall bs ms model,
+  fd1chan model -> m_halted model = None -> m_vm_lazy model = [] ->
+  to_out bs ms -> buf_modeled bs ->
+  exists c, star segs (mkCfg ms model)
+              (map (WriteEv (Z_to_bv 64 1)) bs ++ [ExitEv (Z_to_bv 64 0) (m_fs model)]) c.
 Proof.
   intros bs ms model Hfd1 Hh Hlazy Ho Hbm. revert Hbm.
   induction Ho as [ms Hte | bs ms HWF | bs ms ms' Hsvc Hstep Ho IH]; intro Hbm.
@@ -341,8 +412,11 @@ Proof.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-#[using="Type"] Lemma to_out_star_only : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pbs,(2.(3.&8.))Pms,$24.Pmodel,$28.P,(31.R1.)P,(7.(8.(3.&40.))(29.R2.)(13.(3.&40.)))P,(7.(2.(2:.(3.&40.)(3.&40.)))(2;.R3.)(12.(2:.(3.&40.)(3.&40.))))P,(25.R6.R5.)P,(32.R7.)Ptr,(2.$=.)Pc,$33.P,(2>.Vsegs,(2?.R9.R8.)R2.R1.)(<.$=.R3.(>.$=.(17.(3.&8.)$=.(18.(19.&40.+1.))R;.)(11.$=.(14.(19.&40.=)(34.R9.))(12.$=.))))")
-(* [comment removed for export] *).
+Lemma to_out_star_only : forall bs ms model,
+  fd1chan model -> m_halted model = None -> m_vm_lazy model = [] ->
+  to_out bs ms -> buf_modeled bs ->
+  forall tr c, star segs (mkCfg ms model) tr c ->
+  is_prefix tr (map (WriteEv (Z_to_bv 64 1)) bs ++ [ExitEv (Z_to_bv 64 0) (m_fs model)]).
 Proof.
   intros bs ms model Hfd1 Hh Hlazy Ho Hbm. revert Hbm.
   induction Ho as [ms Hte | bs ms HWF | bs ms ms' Hsvc Hstep Ho IH];
@@ -368,48 +442,147 @@ Proof.
     exact (IH Hbm tr2 _ Hstar2).
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Channel-read spec facts at count [cnt]: thin corollaries of StreamSim's    *)
+(* [cnt]-parameterized read0_* family (audit 1.1/3.1), instantiated at the    *)
+(* section's [cnt]/[Hcnt] instead of re-proving the whole family              *)
+(* (StreamSim's own consumer uses 4096 via the same parameterized lemmas).    *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Hcnt"] Lemma read0_check_eof_cnt : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pms,$24.Px8,(3.&40.)Pmodel,$28.Pw,(2.(3.&8.))P,(7.$35.(1?.&40.R3.)+3?.)P,(7.(8.$36.)(37.(38.R3.)(19.&40.=))(;.$36.(39.(19.&40.=))))P,(7.$4.(3:.R4.)$1:.)P,(7.(3.&40.)(3;.R7.#0.)(19.&40.=))P,(7.(3.&40.)(3;.R8.#2.)Vcnt,)P,(7.(8.(2.(3.&8.)))(3<.(3=.Vsegs,R9.)(3;.R9.#1.)Vcnt,)(;.(2.(3.&8.))R6.))P,(7.$3>.(3?.(3;.R:.#1.)(1?.&40.Vcnt,))$40.)(7.$41.(42.(43.Vsegs,R;.R:.)(44.(3;.R;.#0.))(3;.R;.#1.)(3;.R;.#2.)(45.(19.&40.=)(12.(2:.(3.&40.)(2.(3.&8.))))(12.(2:.(3.&40.)(3.&40.)))(12.(2:.(3.&40.)(3.&40.)))(12.$46.)(12.(2:.(3.&40.)$47.)))R9.)(48.R9.(12.$=.)))")
-(* [comment removed for export] *).
+Lemma read0_check_eof_cnt : forall ms x8 model w,
+  bv_unsigned x8 = 63%Z ->
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
+  m_stdin model = IEof ->
+  ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 2 = cnt ->
+  read_bytes_map (ms_writable_byte segs ms) (ms_gpr ms 1) cnt = Some w ->
+  (* the range passes [access_ok]: [vfs_read] tests it before the fd's
+     content is consulted *)
+  access_okb (ms_gpr ms 1) (bv_unsigned cnt) = true ->
+  check_read (sys_input segs ms x8)
+    (fd32 (ms_gpr ms 0)) (ms_gpr ms 1) (ms_gpr ms 2)
+    (mkEffect (Z_to_bv 64 0) [] []) model
+    = CheckOk model [].
 Proof. apply (StreamSim.read0_check_eof cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_ok_eof_cnt : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pms,$24.Px8,(3.&40.)Pmodel,$28.Pw,(2.(3.&8.))P,(7.$35.(1?.&40.R3.)+3?.)P,(7.(8.$36.)(37.(38.R3.)(19.&40.=))(;.$36.(39.(19.&40.=))))P,(7.$4.(3:.R4.)$1:.)P,(7.(3.&40.)(3;.R7.#0.)(19.&40.=))P,(7.(3.&40.)(3;.R8.#2.)Vcnt,)P,(7.(8.(2.(3.&8.)))(3<.(3=.Vsegs,R9.)(3;.R9.#1.)Vcnt,)(;.(2.(3.&8.))R6.))P,(7.$3>.(3?.(3;.R:.#1.)(1?.&40.Vcnt,))$40.)(49.(43.Vsegs,R;.R:.)R9.(4:.$4;.(45.(19.&40.=)(12.(2:.(3.&40.)(2.(3.&8.))))(12.(2:.(3.&40.)(3.&40.)))(12.(2:.(3.&40.)(3.&40.)))(12.$46.)(12.(2:.(3.&40.)$47.)))R9.(12.$=.)))")
-(* [comment removed for export] *).
+Lemma read0_ok_eof_cnt : forall ms x8 model w,
+  bv_unsigned x8 = 63%Z ->
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
+  m_stdin model = IEof ->
+  ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 2 = cnt ->
+  read_bytes_map (ms_writable_byte segs ms) (ms_gpr ms 1) cnt = Some w ->
+  (* the range passes [access_ok]: [vfs_read] tests it before the fd's
+     content is consulted *)
+  access_okb (ms_gpr ms 1) (bv_unsigned cnt) = true ->
+  syscall_spec (sys_input segs ms x8) model
+    (Ok (mkEffect (Z_to_bv 64 0) [] []) model []).
 Proof. apply (StreamSim.read0_ok_eof cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_check_bytes_cnt : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pms,$24.Px8,(3.&40.)Pmodel,$28.Pw,(2.(3.&8.))Pbs,(2.(3.&8.))P,(7.$35.(1?.&40.R4.)+3?.)P,(7.(8.$36.)(37.(38.R4.)(19.&40.=))(;.$36.(39.(19.&40.=))))P,(7.(3.&40.)(3;.R7.#0.)(19.&40.=))P,(7.(3.&40.)(3;.R8.#2.)Vcnt,)P,(7.(8.(2.(3.&8.)))(3<.(3=.Vsegs,R9.)(3;.R9.#1.)Vcnt,)(;.(2.(3.&8.))R6.))P,(7.$3>.(3?.(3;.R:.#1.)(1?.&40.Vcnt,))$40.)P,(1<.+1.(1=.(1>.(3.&8.)R7.)))P,(1<.(1=.(1>.(3.&8.)R8.))(1?.&40.Vcnt,))P,(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.(3:.R;.)(1>.(3.&8.)R9.)))R9.)(7.$41.(42.(43.Vsegs,R>.R=.)(44.(3;.R>.#0.))(3;.R>.#1.)(3;.R>.#2.)(45.(4<.(3.&8.)R:.)(11.(2:.(3.&40.)(2.(3.&8.)))(4=.(3.&40.)(2.(3.&8.))(3;.R>.#1.)R:.)(12.(2:.(3.&40.)(2.(3.&8.)))))(12.(2:.(3.&40.)(3.&40.)))(12.(2:.(3.&40.)(3.&40.)))(12.$46.)(12.(2:.(3.&40.)$47.)))R<.)(48.(4>.(22.(2.(3.&8.))$4.(21.(3:.R<.)(1>.(3.&8.)R:.)))R<.)(17.(3.&8.)$=.(23.(19.&40.=))R:.)))")
-(* [comment removed for export] *).
+Lemma read0_check_bytes_cnt : forall ms x8 model w bs,
+  bv_unsigned x8 = 63%Z ->
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
+  ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 2 = cnt ->
+  read_bytes_map (ms_writable_byte segs ms) (ms_gpr ms 1) cnt = Some w ->
+  access_okb (ms_gpr ms 1) (bv_unsigned cnt) = true ->
+  (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
+  fst (stream_take (m_stdin model) (length bs)) = bs ->
+  check_read (sys_input segs ms x8)
+    (fd32 (ms_gpr ms 0)) (ms_gpr ms 1) (ms_gpr ms 2)
+    (mkEffect (len_word bs) [(ms_gpr ms 1, bs)] []) model
+    = CheckOk (with_stdin (snd (stream_take (m_stdin model) (length bs))) model)
+              (map (ReadEv (Z_to_bv 64 0)) bs).
 Proof. apply (StreamSim.read0_check_bytes cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_ok_bytes_cnt : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pms,$24.Px8,(3.&40.)Pmodel,$28.Pw,(2.(3.&8.))Pbs,(2.(3.&8.))P,(7.$35.(1?.&40.R4.)+3?.)P,(7.(8.$36.)(37.(38.R4.)(19.&40.=))(;.$36.(39.(19.&40.=))))P,(7.(3.&40.)(3;.R7.#0.)(19.&40.=))P,(7.(3.&40.)(3;.R8.#2.)Vcnt,)P,(7.(8.(2.(3.&8.)))(3<.(3=.Vsegs,R9.)(3;.R9.#1.)Vcnt,)(;.(2.(3.&8.))R6.))P,(7.$3>.(3?.(3;.R:.#1.)(1?.&40.Vcnt,))$40.)P,(1<.+1.(1=.(1>.(3.&8.)R7.)))P,(1<.(1=.(1>.(3.&8.)R8.))(1?.&40.Vcnt,))P,(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.(3:.R;.)(1>.(3.&8.)R9.)))R9.)(49.(43.Vsegs,R>.R=.)R<.(4:.$4;.(45.(4<.(3.&8.)R:.)(11.(2:.(3.&40.)(2.(3.&8.)))(4=.(3.&40.)(2.(3.&8.))(3;.R>.#1.)R:.)(12.(2:.(3.&40.)(2.(3.&8.)))))(12.(2:.(3.&40.)(3.&40.)))(12.(2:.(3.&40.)(3.&40.)))(12.$46.)(12.(2:.(3.&40.)$47.)))(4>.(22.(2.(3.&8.))$4.(21.(3:.R<.)(1>.(3.&8.)R:.)))R<.)(17.(3.&8.)$=.(23.(19.&40.=))R:.)))")
-(* [comment removed for export] *).
+Lemma read0_ok_bytes_cnt : forall ms x8 model w bs,
+  bv_unsigned x8 = 63%Z ->
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
+  ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 2 = cnt ->
+  read_bytes_map (ms_writable_byte segs ms) (ms_gpr ms 1) cnt = Some w ->
+  access_okb (ms_gpr ms 1) (bv_unsigned cnt) = true ->
+  (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
+  fst (stream_take (m_stdin model) (length bs)) = bs ->
+  syscall_spec (sys_input segs ms x8) model
+    (Ok (mkEffect (len_word bs) [(ms_gpr ms 1, bs)] [])
+        (with_stdin (snd (stream_take (m_stdin model) (length bs))) model)
+        (map (ReadEv (Z_to_bv 64 0)) bs)).
 Proof. apply (StreamSim.read0_ok_bytes cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_ok_inv_cnt : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pms,$24.Px8,(3.&40.)Pmodel,$28.Pbuf,(3.&40.)Pw,(2.(3.&8.))Peff,$4;.Pmodel',$28.Pevs,(2.$=.)P,(7.$35.(1?.&40.R7.)+3?.)P,(7.(8.$36.)(37.(38.R7.)(19.&40.=))(;.$36.(39.(19.&40.=))))P,(7.(3.&40.)(3;.R:.#0.)(19.&40.=))P,(7.(3.&40.)(3;.R;.#1.)R8.)P,(7.(3.&40.)(3;.R<.#2.)Vcnt,)P,(7.(8.(2.(3.&8.)))(3<.(3=.Vsegs,R=.)R:.Vcnt,)(;.(2.(3.&8.))R9.))P,(7.$3>.(3?.R;.(1?.&40.Vcnt,))$40.)P,(49.(43.Vsegs,R?.R>.)R=.(4:.$4;.R:.R9.R8.))(0.(5.(7.$4.(3:.R>.)$1:.)(5.(7.$4;.R;.(45.(19.&40.=)(12.(2:.(3.&40.)(2.(3.&8.))))(12.(2:.(3.&40.)(3.&40.)))(12.(2:.(3.&40.)(3.&40.)))(12.$46.)(12.(2:.(3.&40.)$47.))))(5.(7.$28.R:.R>.)(7.(2.$=.)R9.(12.$=.)))))(1.(2.(3.&8.))Lbs,(2.(3.&8.))(5.(1<.+1.(1=.(1>.(3.&8.)R1.)))(5.(1<.(1=.(1>.(3.&8.)R1.))(1?.&40.Vcnt,))(5.(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.(3:.R?.)(1>.(3.&8.)R1.)))R1.)(5.(7.$4;.R<.(45.(4<.(3.&8.)R1.)(11.(2:.(3.&40.)(2.(3.&8.)))(4=.(3.&40.)(2.(3.&8.))R>.R1.)(12.(2:.(3.&40.)(2.(3.&8.)))))(12.(2:.(3.&40.)(3.&40.)))(12.(2:.(3.&40.)(3.&40.)))(12.$46.)(12.(2:.(3.&40.)$47.))))(5.(7.$28.R;.(4>.(22.(2.(3.&8.))$4.(21.(3:.R?.)(1>.(3.&8.)R1.)))R?.))(7.(2.$=.)R:.(17.(3.&8.)$=.(23.(19.&40.=))R1.)))))))))")
-(* [comment removed for export] *).
+Lemma read0_ok_inv_cnt : forall ms x8 model buf w eff model' evs,
+  bv_unsigned x8 = 63%Z ->
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
+  ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 1 = buf -> ms_gpr ms 2 = cnt ->
+  read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w ->
+  (* the range passes [access_ok]: [vfs_read] tests it before the fd's
+     content is consulted *)
+  access_okb buf (bv_unsigned cnt) = true ->
+  syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) ->
+  (m_stdin model = IEof /\ eff = mkEffect (Z_to_bv 64 0) [] [] /\
+   model' = model /\ evs = [])
+  \/ (exists bs,
+        (1 <= Z.of_nat (length bs))%Z /\ (Z.of_nat (length bs) <= bv_unsigned cnt)%Z /\
+        fst (stream_take (m_stdin model) (length bs)) = bs /\
+        eff = mkEffect (len_word bs) [(buf, bs)] [] /\
+        model' = with_stdin (snd (stream_take (m_stdin model) (length bs))) model /\
+        evs = map (ReadEv (Z_to_bv 64 0)) bs).
 Proof. apply (StreamSim.read0_ok_inv cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_no_err_cnt : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pms,$24.Px8,(3.&40.)Pmodel,$28.Pw,(2.(3.&8.))P,(7.$35.(1?.&40.R3.)+3?.)P,(7.(8.$36.)(37.(38.R3.)(19.&40.=))(;.$36.(39.(19.&40.=))))P,(7.(3.&40.)(3;.R6.#0.)(19.&40.=))P,(7.(3.&40.)(3;.R7.#2.)Vcnt,)P,(7.(8.(2.(3.&8.)))(3<.(3=.Vsegs,R8.)(3;.R8.#1.)Vcnt,)(;.(2.(3.&8.))R5.))P,(7.$3>.(3?.(3;.R9.#1.)(1?.&40.Vcnt,))$40.)(4?.(49.(43.Vsegs,R:.R9.)R8.(50.$4;.)))")
-(* [comment removed for export] *).
+Lemma read0_no_err_cnt : forall ms x8 model w,
+  bv_unsigned x8 = 63%Z ->
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
+  ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 2 = cnt ->
+  read_bytes_map (ms_writable_byte segs ms) (ms_gpr ms 1) cnt = Some w ->
+  (* the range passes [access_ok]: [vfs_read] tests it before the fd's
+     content is consulted *)
+  access_okb (ms_gpr ms 1) (bv_unsigned cnt) = true ->
+  ~ syscall_spec (sys_input segs ms x8) model Unmodeled.
 Proof. apply (StreamSim.read0_no_unmodeled cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma sstep_read_inv_cnt : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pms,$24.Pmodel,$28.Pbuf,(3.&40.)Px8,(3.&40.)Pw,(2.(3.&8.))Pevs,(2.$=.)Pst,$51.P,(7.(8.(3.&40.))(29.R6.)(13.(3.&40.)))P,(7.(2.(2:.(3.&40.)(3.&40.)))(2;.R7.)(12.(2:.(3.&40.)(3.&40.))))P,(7.(8.$36.)(37.(38.R8.)(19.&40.=))(;.$36.(39.(19.&40.=))))P,(7.(8.(3.&40.))(52.R:.)(;.(3.&40.)R7.))P,(7.$35.(1?.&40.R8.)+3?.)P,(7.(3.&40.)(3;.R<.#0.)(19.&40.=))P,(7.(3.&40.)(3;.R=.#1.)R;.)P,(7.(3.&40.)(3;.R>.#2.)Vcnt,)P,(7.(8.(2.(3.&8.)))(3<.(3=.Vsegs,R?.)R=.Vcnt,)(;.(2.(3.&8.))R;.))P,(7.$3>.(3?.R>.(1?.&40.Vcnt,))$40.)P,(53.Vsegs,(2?.R11.R10.)R<.R;.)(0.(5.(7.$4.(3:.R11.)$1:.)(5.(7.(2.$=.)R=.(12.$=.))(7.$51.R<.(54.(2?.(55.(56.R12.(19.&40.=)))R11.)))))(1.(2.(3.&8.))Lbs,(2.(3.&8.))(5.(1<.+1.(1=.(1>.(3.&8.)R1.)))(5.(1<.(1=.(1>.(3.&8.)R1.))(1?.&40.Vcnt,))(5.(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.(3:.R12.)(1>.(3.&8.)R1.)))R1.)(5.(7.(2.$=.)R>.(17.(3.&8.)$=.(23.(19.&40.=))R1.))(7.$51.R=.(54.(2?.(55.(57.R13.(45.(4<.(3.&8.)R1.)(11.(2:.(3.&40.)(2.(3.&8.)))(4=.(3.&40.)(2.(3.&8.))R11.R1.)(12.(2:.(3.&40.)(2.(3.&8.)))))(12.(2:.(3.&40.)(3.&40.)))(12.(2:.(3.&40.)(3.&40.)))(12.$46.)(12.(2:.(3.&40.)$47.)))))(4>.(22.(2.(3.&8.))$4.(21.(3:.R12.)(1>.(3.&8.)R1.)))R12.))))))))))")
-(* [comment removed for export] *).
+Lemma sstep_read_inv_cnt : forall ms model buf x8 w evs st,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 63%Z ->
+  ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 1 = buf -> ms_gpr ms 2 = cnt ->
+  read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w ->
+  (* the range passes [access_ok]: [vfs_read] tests it before the fd's
+     content is consulted *)
+  access_okb buf (bv_unsigned cnt) = true ->
+  sstep segs (mkCfg ms model) evs st ->
+  (m_stdin model = IEof /\ evs = [] /\
+   st = SNext (mkCfg (advance_past_svc (set_gpr0 ms (Z_to_bv 64 0))) model))
+  \/ (exists bs,
+        (1 <= Z.of_nat (length bs))%Z /\ (Z.of_nat (length bs) <= bv_unsigned cnt)%Z /\
+        fst (stream_take (m_stdin model) (length bs)) = bs /\
+        evs = map (ReadEv (Z_to_bv 64 0)) bs /\
+        st = SNext (mkCfg
+               (advance_past_svc (apply_effect ms
+                  (mkEffect (len_word bs) [(buf, bs)] [])))
+               (with_stdin (snd (stream_take (m_stdin model) (length bs)))
+                           model))).
 Proof. apply (StreamSim.sstep_read_inv cnt Hcnt). Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Admissibility: every drain trace is realized.                              *)
+(* ------------------------------------------------------------------------- *)
 
-(* [comment removed for export] *)
-#[using="Hcnt"] Lemma drain_read_step : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pbs,(2.(3.&8.))Pms,$24.Pmodel,$28.Pbuf,(3.&40.)Px8,(3.&40.)Pw,(2.(3.&8.))P,(58.R4.)P,(7.(8.(3.&40.))(52.R6.)(;.(3.&40.)R3.))P,(7.$35.(1?.&40.R4.)+3?.)P,(7.(3.&40.)(3;.R8.#0.)(19.&40.=))P,(7.(3.&40.)(3;.R9.#1.)R7.)P,(7.(3.&40.)(3;.R:.#2.)Vcnt,)P,(7.(8.(2.(3.&8.)))(3<.(3=.Vsegs,R;.)R9.Vcnt,)(;.(2.(3.&8.))R7.))P,(7.$3>.(3?.R:.(1?.&40.Vcnt,))$40.)P,(1<.+1.(1=.(1>.(3.&8.)R>.)))P,(1<.(1=.(1>.(3.&8.)R?.))(1?.&40.Vcnt,))P,(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.(3:.R>.)(1>.(3.&8.)R10.)))R10.)(53.Vsegs,(2?.R10.R?.)(17.(3.&8.)$=.(23.(19.&40.=))R11.)(54.(2?.(55.(57.R10.(45.(4<.(3.&8.)R11.)(11.(2:.(3.&40.)(2.(3.&8.)))(4=.(3.&40.)(2.(3.&8.))R>.R11.)(12.(2:.(3.&40.)(2.(3.&8.)))))(12.(2:.(3.&40.)(3.&40.)))(12.(2:.(3.&40.)(3.&40.)))(12.$46.)(12.(2:.(3.&40.)$47.)))))(4>.(22.(2.(3.&8.))$4.(21.(3:.R?.)(1>.(3.&8.)R11.)))R?.))))")
-(* [comment removed for export] *).
+(** One loop iteration: deliver block [bs] off the front of the model's
+    input, run the per-binary continuation, and land at the successor
+    state with the shortened input. *)
+Lemma drain_read_step : forall bs ms model buf x8 w,
+  M_loop model ->
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 63%Z ->
+  ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 1 = buf ->
+  ms_gpr ms 2 = cnt ->
+  read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w ->
+  access_okb buf (bv_unsigned cnt) = true ->
+  (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
+  fst (stream_take (m_stdin model) (length bs)) = bs ->
+  sstep segs (mkCfg ms model) (map (ReadEv (Z_to_bv 64 0)) bs)
+    (SNext (mkCfg (advance_past_svc (apply_effect ms
+                     (mkEffect (len_word bs) [(buf, bs)] [])))
+                  (with_stdin (snd (stream_take (m_stdin model) (length bs)))
+                              model))).
 Proof.
   intros bs ms model buf x8 w HM Hsvc Hno Hg0 Hg1 Hg2 Hw Haok Hlo Hhi Hpre.
   pose proof HM as (Hfd0 & Hfd1 & Hh & Hlazy).
@@ -426,8 +599,13 @@ Proof.
     + rewrite m_vm_lazy_with_stdin. exact Hlazy.
 Qed.
 
-#[using="Hcnt H_LH"] Lemma drain_star_admits_ok : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Ps,$4.Pblocks,(2.(2.(3.&8.)))Ps',$4.P,(6.Vcnt,R3.R2.R1.)Pa,VA,Pa',VA,Pms,$24.Pmodel,$28.P,(58.R1.)P,(7.$4.(3:.R2.)R9.)P,(2<.R6.R4.)P,(7.(8.VA,)(9.VA,Vf,R7.(:.(3.&8.)R:.))(;.VA,R6.))(1.$33.Lc,$33.(2>.Vsegs,(2?.R7.R6.)(>.$=.(59.R<.)(5:.VA,Vout,R;.R8.(34.R6.)))R1.))")
-(* [comment removed for export] *).
+Lemma drain_star_admits_ok : forall s blocks s',
+  chunks cnt s blocks s' ->
+  forall a a' ms model,
+  M_loop model -> m_stdin model = s -> to_rd a ms ->
+  procs f a (concat blocks) = Some a' ->
+  exists c, star segs (mkCfg ms model)
+              (reads blocks ++ out_tail out s' a' (m_fs model)) c.
 Proof.
   intros s blocks s' HC.
   induction HC as [s | s bs blocks s'' Hlo Hhi Hpre HC IH];
@@ -436,7 +614,7 @@ Proof.
   - cbn [concat procs] in Hp. injection Hp as <-.
     unfold reads, reads_ch. cbn [flat_map app].
     destruct s as [|b0 s0] eqn:Hs.
-    + (* [comment removed for export] *)
+    + (* the input has run out: EOF read, then the finishing phase *)
       destruct (to_rd_star a ms model Hh Hlazy Hrd) as (msR & (buf & x8 & HRP) & Hstar0).
       destruct HRP as (Hsvc & Hno & Hg0 & Hg1 & Hg2 & (w & Hw) & Haok & Hout & Hobm & _).
       assert (HssE : sstep segs (mkCfg msR model) []
@@ -460,9 +638,9 @@ Proof.
         by reflexivity.
       eapply star_trans; [exact Hstar0|].
       eapply star_step; [exact HssE | exact Hstar2].
-    + (* [comment removed for export] *)
+    + (* input remains: nothing more is emitted along this chunking *)
       cbn [out_tail app]. exists (mkCfg ms model). apply star_refl.
-  - (* [comment removed for export] *)
+  - (* one more block *)
     cbn [concat] in Hp. rewrite procs_app in Hp.
     destruct (procs f a bs) as [a1|] eqn:Hp1; [|discriminate].
     destruct (to_rd_star a ms model Hh Hlazy Hrd) as (msR & (buf & x8 & HRP) & Hstar0).
@@ -497,8 +675,16 @@ Proof.
     eapply star_step; [exact HssR | exact Hstar3].
 Qed.
 
-#[using="Hcnt Hec H_LH"] Lemma drain_star_admits_err : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Ps,$4.Pblocks,(2.(2.(3.&8.)))Ps1,$4.P,(6.Vcnt,R3.R2.R1.)Pa,VA,Pa',VA,PbsE,(2.(3.&8.))Pms,$24.Pmodel,$28.P,(58.R1.)P,(7.$4.(3:.R2.)R:.)P,(2<.R7.R4.)P,(7.(8.VA,)(9.VA,Vf,R8.(:.(3.&8.)R;.))(;.VA,R7.))P,(1<.+1.(1=.(1>.(3.&8.)R7.)))P,(1<.(1=.(1>.(3.&8.)R8.))(1?.&40.Vcnt,))P,(7.(2.(3.&8.))(20.(2.(3.&8.))$4.(21.R=.(1>.(3.&8.)R9.)))R9.)P,(7.(8.VA,)(9.VA,Vf,R;.R:.)(13.VA,))(1.$33.Lc,$33.(2>.Vsegs,(2?.R;.R:.)(>.$=.(59.(>.(2.(3.&8.))R11.(11.(2.(3.&8.))R<.(12.(2.(3.&8.))))))(11.$=.(14.Vec,(34.R:.))(12.$=.)))R1.))")
-(* [comment removed for export] *).
+Lemma drain_star_admits_err : forall s blocks s1,
+  chunks cnt s blocks s1 ->
+  forall a a' bsE ms model,
+  M_loop model -> m_stdin model = s -> to_rd a ms ->
+  procs f a (concat blocks) = Some a' ->
+  (1 <= Z.of_nat (length bsE))%Z -> (Z.of_nat (length bsE) <= bv_unsigned cnt)%Z ->
+  fst (stream_take s1 (length bsE)) = bsE ->
+  procs f a' bsE = None ->
+  exists c, star segs (mkCfg ms model)
+              (reads (blocks ++ [bsE]) ++ [ExitEv ec (m_fs model)]) c.
 Proof.
   intros s blocks s1 HC.
   induction HC as [s | s bs blocks s'' Hlo Hhi Hpre HC IH];
@@ -567,12 +753,13 @@ Proof.
     eapply star_step; [exact HssR | exact Hstar3].
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Exhaustiveness: every run trace is a drain trace.                          *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Hcnt Hec H_LH"] Lemma star_drain_only : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pc0,$33.Ptr,(2.$=.)Pc',$33.P,(2>.Vsegs,R3.R2.R1.)Pa,VA,Pms,$24.Pmodel,$28.P,(7.$33.R7.(2?.R2.R1.))P,(58.R2.)P,(2<.R5.R4.)(5;.VA,Vcnt,Vf,Vout,Vec,R6.(34.R4.)(3:.R4.)R9.)")
-(* [comment removed for export] *).
+Lemma star_drain_only : forall c0 tr c', star segs c0 tr c' ->
+  forall a ms model, c0 = mkCfg ms model -> M_loop model -> to_rd a ms ->
+  drain_from cnt f out ec a (m_fs model) (m_stdin model) tr.
 Proof.
   intros c0 tr c' Hstar.
   induction Hstar as [c | c1 evs c2 tr2 c3 Hss Hstar IH];
@@ -580,17 +767,17 @@ Proof.
   - apply drain_from_nil.
   - pose proof HM as (Hfd0 & Hfd1 & Hh & Hlazy).
     destruct Hrd as [a ms (buf & x8 & HRP) | a ms ms' Hsvc Hstep Hrd'].
-    + (* [comment removed for export] *)
+    + (* at the read ecall *)
       destruct HRP as (Hsvc & Hno & Hg0 & Hg1 & Hg2 & (w & Hw) & Haok & Hout & Hobm & Hbytes).
       destruct (sstep_read_inv_cnt ms model buf x8 w evs (SNext c2)
                   Hh Hlazy Hfd0 Hsvc Hno Hg0 Hg1 Hg2 Hw Haok Hss)
         as [(Hs & Hevs & Hc2) | (bs & Hlo & Hhi & Hpre & Hevs & Hc2)];
         inversion Hc2; subst.
-      * (* [comment removed for export] *)
+      * (* end of input: the rest is the finishing phase *)
         pose proof (to_out_star_only (out a) _ model Hfd1 Hh Hlazy Hout Hobm
                       tr2 c3 Hstar) as Hpref.
         cbn [app]. rewrite Hs. apply drain_from_out. exact Hpref.
-      * (* [comment removed for export] *)
+      * (* bytes *)
         pose proof (Hbytes bs Hlo Hhi) as Hcont.
         destruct (procs f a bs) as [a1|] eqn:Hp1.
         -- destruct Hcont as (msL & Hms & HLa1).
@@ -610,22 +797,33 @@ Proof.
                               (snd (stream_take (m_stdin model) (length bs)))
                               model)) with (m_fs model).
               rewrite land_255_small by exact Hec. apply is_prefix_refl.
-    + (* [comment removed for export] *)
+    + (* an ordinary instruction *)
       destruct (sstep_instr_inv segs ms model ms' evs (SNext c2)
                   Hlazy Hsvc Hstep Hss) as [Hevs Hc2].
       subst evs. inversion Hc2; subst c2. cbn [app].
       exact (IH a _ model eq_refl HM Hrd').
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* No error: the phase invariant.                                             *)
+(* ------------------------------------------------------------------------- *)
 
-Definition dinv (c : config) : Prop := ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "(0.(5.(58.(5<.O1.))(1.VA,La,VA,(2<.R1.(5=.O1.))))(0.(5.(31.(5<.O1.))(5.(7.(8.(3.&40.))(29.(5<.O1.))(13.(3.&40.)))(5.(7.(2.(2:.(3.&40.)(3.&40.)))(2;.(5<.O1.))(12.(2:.(3.&40.)(3.&40.))))(1.(2.(3.&8.))Lrest,(2.(3.&8.))(5.(32.R1.)(26.Vsegs,(19.&40.+1.)(5=.O1.)R1.(27.Vsegs,(19.&40.=))))))))(0.(5>.Vsegs,(19.&40.=)O1.)(5>.Vsegs,Vec,O1.))))")
-(* [comment removed for export] *).
+Definition dinv (c : config) : Prop :=
+  (M_loop (cfg_model c) /\ exists a, to_rd a (cfg_ms c))
+  \/ (fd1chan (cfg_model c) /\ m_halted (cfg_model c) = None /\
+      m_vm_lazy (cfg_model c) = [] /\
+      exists rest, buf_modeled rest /\
+        to_wall_tail segs (Z_to_bv 64 1) (cfg_ms c) rest
+          (to_exit segs (Z_to_bv 64 0)))
+  \/ on_path segs (Z_to_bv 64 0) c
+  \/ on_path segs ec c.
 
-#[using="Type"] Lemma wall_out_dinv_step : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Prest,(2.(3.&8.))Pms,$24.Pmodel,$28.Pevs,(2.$=.)Pms',$24.Pmodel',$28.P,(31.R4.)P,(7.(8.(3.&40.))(29.R5.)(13.(3.&40.)))P,(7.(2.(2:.(3.&40.)(3.&40.)))(2;.R6.)(12.(2:.(3.&40.)(3.&40.))))P,(32.R9.)P,(26.Vsegs,(19.&40.+1.)R9.R:.(27.Vsegs,(19.&40.=)))P,(53.Vsegs,(2?.R:.R9.)R8.(54.(2?.R7.R6.)))(5?.(2?.R8.R7.))")
-(* [comment removed for export] *).
+Lemma wall_out_dinv_step : forall rest ms model evs ms' model',
+  fd1chan model -> m_halted model = None -> m_vm_lazy model = [] ->
+  buf_modeled rest ->
+  to_wall_tail segs (Z_to_bv 64 1) ms rest (to_exit segs (Z_to_bv 64 0)) ->
+  sstep segs (mkCfg ms model) evs (SNext (mkCfg ms' model')) ->
+  dinv (mkCfg ms' model').
 Proof.
   intros rest ms model evs ms' model' Hfd1 Hh Hlazy Hbm Ht Hss.
   assert (Hfdc : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) model)
@@ -633,26 +831,26 @@ Proof.
   revert Hbm.
   inversion Ht as [msD kD HkD | msM restM kM HnbM Hwl
                   | msS msS' restS kS HsvcS HstepS Ht']; subst; intro Hbm.
-  - (* [comment removed for export] *)
+  - (* twt_done: on the exit line *)
     right. right. left.
     apply (on_path_step segs (Z_to_bv 64 0) (mkCfg ms model) evs); [|exact Hss].
     left. repeat split; assumption.
-  - (* [comment removed for export] *)
+  - (* twt_more: at the write ecall *)
     destruct (sstep_to_wall_inv segs (Z_to_bv 64 1) (Z_to_bv 64 1) fd32_1
                 ms rest _ model evs (SNext (mkCfg ms' model'))
                 Hh Hlazy Hfdc Hbm Hwl Hss) as (n & Hn1 & Hn2 & _ & Hc2 & Ht2).
     inversion Hc2; subst.
-    right. left. cbn. repeat split; try assumption.
+    right. left. cbn. split; [exact Hfd1 | repeat split; try assumption].
     exists (skipn n rest).
     split; [apply buf_modeled_skipn; exact Hbm | exact Ht2].
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     destruct (sstep_instr_inv segs ms model msS' evs (SNext (mkCfg ms' model'))
                 Hlazy HsvcS HstepS Hss) as [_ Hc2].
     inversion Hc2; subst.
-    right. left. cbn. repeat split; try assumption.
+    right. left. cbn. split; [exact Hfd1 | repeat split; try assumption].
     exists rest. split; [exact Hbm | exact Ht'].
 Qed.
-#[using="Hcnt H_LH"] Lemma dinv_step : forall c evs c',
+Lemma dinv_step : forall c evs c',
   dinv c -> sstep segs c evs (SNext c') -> dinv c'.
 Proof.
   intros [ms model] evs [ms' model'] Hinv Hss.
@@ -667,7 +865,7 @@ Proof.
                   Hh Hlazy Hfd0 Hsvc Hno Hg0 Hg1 Hg2 Hw Haok Hss)
         as [(Hs & Hevs & Hc2) | (bs & Hlo & Hhi & Hpre & Hevs & Hc2)];
         inversion Hc2; subst.
-      * right. left. cbn. repeat split; try assumption.
+      * right. left. cbn. split; [exact Hfd1 | repeat split; try assumption].
         exists (out a).
         split; [exact Hobm | exact (to_out_wall_tail _ _ Hout)].
       * pose proof (Hbytes bs Hlo Hhi) as Hcont.
@@ -686,7 +884,7 @@ Proof.
   - right. right. right. eapply on_path_step; eauto.
 Qed.
 
-#[using="Hcnt"] Lemma dinv_no_error : forall c evs, dinv c -> ~ sstep segs c evs SError.
+Lemma dinv_no_error : forall c evs, dinv c -> ~ sstep segs c evs SError.
 Proof.
   intros [ms model] evs Hinv Hss.
   destruct Hinv as
@@ -714,10 +912,10 @@ Proof.
   - eapply on_path_no_error; eauto.
 Qed.
 
-#[using="Hcnt H_LH"] Lemma star_dinv : forall c tr c', dinv c -> star segs c tr c' -> dinv c'.
+Lemma star_dinv : forall c tr c', dinv c -> star segs c tr c' -> dinv c'.
 Proof. exact (star_inv segs dinv dinv_step). Qed.
 
-#[using="Hcnt H_LH"] Lemma to_rd_no_error : forall a ms model,
+Lemma to_rd_no_error : forall a ms model,
   M_loop model -> to_rd a ms -> ~ reaches_error segs (mkCfg ms model).
 Proof.
   intros a ms model HM Hrd.
@@ -725,19 +923,27 @@ Proof.
   left; cbn; eauto.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Whole-run packaging from the initial state.                                *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Hcnt Hec H_LH"] Lemma drain_obs_iff : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Ppc,$60.Pph,$61.Psp,(3.&40.)Pbrk0,(3.&40.)Pmb,(3.&40.)Prnd,$62.Plim,$35.Pinp,$63.Pa0,VA,P,(2<.R1.(64.Vsegs,R9.R8.R7.R4.(65.R2.)(66.R2.)(67.R2.)(68.R2.)))Ptr,(2.$=.)(69.(6:.Vsegs,(6;.Vsegs,R;.R:.R9.R8.R7.R6.R5.R4.)R1.)(5;.VA,Vcnt,Vf,Vout,Vec,R3.(6<.R4.)(6=.R4.)R1.))")
-(* [comment removed for export] *).
+(** The whole-run lemmas below are about a launch with a reader on the
+    far end of fd 1: [StreamSim.M_loop] carries [CatSim.fd1chan], because
+    a write whose reader has gone KILLS the process. *)
+Lemma drain_obs_iff : forall pc ph sp brk0 mb rnd lim inp a0,
+  to_rd a0 (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+             <-> drain_from cnt f out ec a0 (in_fs inp) (in_stdin inp) tr.
 Proof.
-  intros pc ph sp brk0 mb rnd lim inp a0 Hrd tr.
+  intros pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr tr.
   set (fs0 := in_fs inp) in *; set (stdin0 := in_stdin inp) in *.
   unfold init_config.
-  set (ms0 := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  pose proof (init_M_loop (segments_reserved segs) brk0 mb sp lim inp) as HM0.
-  set (model0 := init_model (segments_reserved segs) brk0 mb sp lim inp) in *.
+  set (ms0 := init_machine_state segs pc ph sp mb rnd inp) in *.
+  pose proof (init_M_loop (segments_reserved segs) brk0 mb sp lim inp Hrdr) as HM0'.
+  set (model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                   (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (HM0 : StreamSim.M_loop model0) by exact HM0'.
   assert (Hst0 : m_stdin model0 = stdin0) by reflexivity.
   assert (Hfs0 : m_fs model0 = fs0) by reflexivity.
   split.
@@ -759,96 +965,138 @@ Proof.
       eexists; exists c; split; [exact Hstar | exact Hpref].
 Qed.
 
-#[using="Hcnt H_LH"] Lemma drain_no_error : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Ppc,$60.Pph,$61.Psp,(3.&40.)Pbrk0,(3.&40.)Pmb,(3.&40.)Prnd,$62.Plim,$35.Pinp,$63.Pa0,VA,P,(2<.R1.(64.Vsegs,R9.R8.R7.R4.(65.R2.)(66.R2.)(67.R2.)(68.R2.)))(4?.(6>.Vsegs,(6;.Vsegs,R:.R9.R8.R7.R6.R5.R4.R3.)))")
-(* [comment removed for export] *).
+Lemma drain_no_error : forall pc ph sp brk0 mb rnd lim inp a0,
+  to_rd a0 (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
 Proof.
-  intros pc ph sp brk0 mb rnd lim inp a0 Hrd.
-  apply (to_rd_no_error a0); [apply init_M_loop | exact Hrd].
+  intros pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr.
+  apply (to_rd_no_error a0); [apply init_M_loop; exact Hrdr | exact Hrd].
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* The omni reading: as for [StreamSim], the loop invariant is a proof of    *)
+(* [OmniRun.coexec … never_errors] by coinduction, and the trace             *)
+(* characterisation is the prefix judgment.                                  *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Hcnt H_LH"] Lemma to_rd_coexec : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Pa,VA,Pms,$24.Pmodel,$28.P,(58.R1.)P,(2<.R4.R3.)(6?.Vsegs,(2?.R4.R3.)$70.)")
-(* [comment removed for export] *).
+Lemma to_rd_coexec : forall a ms model,
+  M_loop model -> to_rd a ms -> OmniRun.coexec segs (mkCfg ms model) never_errors.
 Proof.
   intros a ms model HM Hrd.
   apply (inv_coexec segs dinv dinv_step dinv_no_error).
   left; cbn. split; [exact HM | exists a; exact Hrd].
 Qed.
 
-#[using="Hcnt H_LH"] Lemma drain_omni_corun : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Ppc,$60.Pph,$61.Psp,(3.&40.)Pbrk0,(3.&40.)Pmb,(3.&40.)Prnd,$62.Plim,$35.Pinp,$63.Pa0,VA,P,(2<.R1.(64.Vsegs,R9.R8.R7.R4.(65.R2.)(66.R2.)(67.R2.)(68.R2.)))(71.(72.Vsegs,R:.R9.)R4.(73.R8.R7.R6.R5.)R3.$70.)")
-(* [comment removed for export] *).
+(** Stated at the CONFIGURATION, for the reason
+    [StreamSim.stream_omni_corun] gives: [omni_corun] reads
+    [Run.run_segments] while this section has one segment list. *)
+Lemma drain_omni_corun : forall pc ph sp brk0 mb rnd lim inp a0,
+  to_rd a0 (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  OmniRun.coexec segs (init_config segs pc ph sp brk0 mb rnd lim inp) never_errors.
 Proof.
-  intros pc ph sp brk0 mb rnd lim inp a0 Hrd. cbn [omni_corun]. unfold init_config.
-  apply (to_rd_coexec a0); [apply init_M_loop | exact Hrd].
+  intros pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr. unfold init_config.
+  set (model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                   (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (HM0 : StreamSim.M_loop model0)
+    by exact (init_M_loop (segments_reserved segs) brk0 mb sp lim inp Hrdr).
+  apply (to_rd_coexec a0); [exact HM0 | exact Hrd].
 Qed.
 
-#[using="Hcnt Hec H_LH"] Lemma drain_omni_cosafe : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "Ppc,$60.Pph,$61.Psp,(3.&40.)Pbrk0,(3.&40.)Pmb,(3.&40.)Prnd,$62.Plim,$35.Pinp,$63.Pa0,VA,P,(2<.R1.(64.Vsegs,R9.R8.R7.R4.(65.R2.)(66.R2.)(67.R2.)(68.R2.)))(74.(72.Vsegs,R:.R9.)R4.(73.R8.R7.R6.R5.)R3.(5;.VA,Vcnt,Vf,Vout,Vec,R2.(6<.R3.)(6=.R3.)))")
-(* [comment removed for export] *).
+Lemma drain_omni_cosafe : forall pc ph sp brk0 mb rnd lim inp a0,
+  to_rd a0 (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  OmniRun.cosafe segs (init_config segs pc ph sp brk0 mb rnd lim inp)
+    (drain_from cnt f out ec a0 (in_fs inp) (in_stdin inp)).
 Proof.
-  intros pc ph sp brk0 mb rnd lim inp a0 Hrd. cbn [omni_cosafe].
+  intros pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr.
   apply cosafe_obs_iff.
-  - (* [comment removed for export] *)
+  - (* prefix-closed, through the trace-set characterisation itself *)
     intros t t' Ht Hp.
-    apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd).
+    apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr).
     eapply obs_trace_prefix_closed; [| exact Hp].
-    apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd). exact Ht.
-  - intros tr Hobs. apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd). exact Hobs.
+    apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr). exact Ht.
+  - intros tr Hobs. apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr). exact Hobs.
 Qed.
 
 End Drain.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Pair equivalence: [drain_from cnt f out ec a0 fs0 stdin0] does not mention *)
+(* the binary, so two binaries that both satisfy it are observably equivalent *)
+(* — ON THE SAME INPUT STREAM, which is what the theorem shape quantifies     *)
+(* over.  Both binaries must read at the SAME chunk count [cnt] (the trace    *)
+(* set fixes the admissible chunkings).                                       *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-Lemma drain_omni_strong_equiv : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "PA,StPcnt,(3.&40.)Pf,P,R2.P,(3.&8.)(8.R4.)Pout,P,R3.(2.(3.&8.))Pec,(3.&40.)Pa0,R5.Psource_segs,(2.$75.)PrLH,Px,R7.Px0,$24.SpPrpc,$60.Prph,$61.Prsp,(3.&40.)Prbrk,(3.&40.)Prmb,(3.&40.)Prrnd,$62.Ptarget_segs,(2.$75.)PaLH,Px,R?.Px0,$24.SpPapc,$60.Paph,$61.Pasp,(3.&40.)Pabrk,(3.&40.)Pamb,(3.&40.)Parnd,$62.Pinp,$63.P,(76.(1?.&40.R13.)+100.)P,(5.(76.=(1?.&40.R17.))(1<.(1?.&40.R17.)$77.))P,Pa,R19.Pms,$24.P,A2.R14.R2.R1.(78.R1<.R16.R1;.R1:.R19.R18.R15.R3.R2.)P,Pa,R1:.Pms,$24.P,A2.R=.R2.R1.(78.R1=.R?.R1<.R1;.R1:.R19.R>.R3.R2.)P,(78.R1;.R15.R1:.R19.R18.R17.R14.R16.(64.R15.R13.R12.R11.R>.(65.R5.)(66.R5.)(67.R5.)(68.R5.)))P,(78.R1<.R>.R1;.R1:.R19.R18.R=.R17.(64.R>.R<.R;.R:.R7.(65.R6.)(66.R6.)(67.R6.)(68.R6.)))(79.(72.R17.R15.R14.)(72.R?.R=.R<.)(73.R13.R12.R11.R10.)(73.R;.R:.R9.R8.)R7.)")
-(* [comment removed for export] *).
+(** The omni equivalence of two drain loops on the same input stream, at
+    the two role budgets, on a launch with a reader on stdout. *)
+Lemma drain_omni_strong_equiv :
+  forall (A : Type) (cnt : word) (f : A -> byte -> option A)
+         (out : A -> list byte) (ec : word) (a0 : A)
+         source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd inp,
+  (bv_unsigned ec < 256)%Z ->
+  (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
+  (forall a ms, rLH a ms -> to_rd (run_segments source_segs inp rsp rmb) cnt f out ec rLH a ms) ->
+  (forall a ms, aLH a ms -> to_rd (run_segments target_segs inp asp amb) cnt f out ec aLH a ms) ->
+  to_rd (run_segments source_segs inp rsp rmb) cnt f out ec rLH a0
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_rd (run_segments target_segs inp asp amb) cnt f out ec aLH a0
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  in_channel_reader inp = true ->
+  omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+                    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros A cnt f out ec a0 source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd
-         inp Hec Hcnt HrLH HaLH Hr Ha.
+         inp Hec Hcnt HrLH HaLH Hr Ha Hrdr.
   split.
   { cbn [img_segments].
     eapply coexec_conseq;
-      [exact (drain_omni_corun source_segs cnt Hcnt f out ec rLH HrLH
-                rpc rph rsp rbrk rmb rrnd source_alloc_limit inp a0 Hr) | apply never_errors_covered]. }
+      [exact (drain_omni_corun (run_segments source_segs inp rsp rmb) cnt Hcnt f out ec rLH HrLH
+                rpc rph rsp rbrk rmb rrnd source_alloc_limit inp a0 Hr Hrdr) | apply never_errors_covered]. }
   right. split.
   - apply trace_equiv_iff_omni. intro tr. cbn.
-    rewrite (drain_obs_iff source_segs cnt Hcnt f out ec Hec rLH HrLH
-               rpc rph rsp rbrk rmb rrnd source_alloc_limit inp a0 Hr tr).
-    rewrite (drain_obs_iff target_segs cnt Hcnt f out ec Hec aLH HaLH
-               apc aph asp abrk amb arnd target_alloc_limit inp a0 Ha tr).
+    rewrite (drain_obs_iff (run_segments source_segs inp rsp rmb) cnt Hcnt f out ec Hec rLH HrLH
+               rpc rph rsp rbrk rmb rrnd source_alloc_limit inp a0 Hr Hrdr tr).
+    rewrite (drain_obs_iff (run_segments target_segs inp asp amb) cnt Hcnt f out ec Hec aLH HaLH
+               apc aph asp abrk amb arnd target_alloc_limit inp a0 Ha Hrdr tr).
     reflexivity.
-  - exact (drain_omni_corun target_segs cnt Hcnt f out ec aLH HaLH
-             apc aph asp abrk amb arnd target_alloc_limit inp a0 Ha).
+  - exact (drain_omni_corun (run_segments target_segs inp asp amb) cnt Hcnt f out ec aLH HaLH
+             apc aph asp abrk amb arnd target_alloc_limit inp a0 Ha Hrdr).
 Qed.
 
-Lemma drain_strong_equiv : ltac2:(CDefT.buildp (gd_tbl_DrainSim ()) "PA,StPcnt,(3.&40.)Pf,P,R2.P,(3.&8.)(8.R4.)Pout,P,R3.(2.(3.&8.))Pec,(3.&40.)Pa0,R5.Psource_segs,(2.$75.)PrLH,Px,R7.Px0,$24.SpPrpc,$60.Prph,$61.Prsp,(3.&40.)Prbrk,(3.&40.)Prmb,(3.&40.)Prrnd,$62.Prlim,$35.Ptarget_segs,(2.$75.)PaLH,Px,R10.Px0,$24.SpPapc,$60.Paph,$61.Pasp,(3.&40.)Pabrk,(3.&40.)Pamb,(3.&40.)Parnd,$62.Palim,$35.Pinp,$63.P,(76.(1?.&40.R15.)+100.)P,(5.(76.=(1?.&40.R19.))(1<.(1?.&40.R19.)$77.))P,Pa,R1;.Pms,$24.P,A2.R16.R2.R1.(78.R1>.R18.R1=.R1<.R1;.R1:.R17.R3.R2.)P,Pa,R1<.Pms,$24.P,A2.R>.R2.R1.(78.R1?.R10.R1>.R1=.R1<.R1;.R?.R3.R2.)P,(78.R1=.R17.R1<.R1;.R1:.R19.R16.R18.(64.R17.R15.R14.R13.R10.(65.R5.)(66.R5.)(67.R5.)(68.R5.)))P,(78.R1>.R?.R1=.R1<.R1;.R1:.R>.R19.(64.R?.R=.R<.R;.R8.(65.R6.)(66.R6.)(67.R6.)(68.R6.)))(5.(7:.(7;.(72.R19.R17.R16.)R11.(73.R15.R14.R13.R12.)R7.))(7<.(7;.(72.R19.R17.R16.)R11.(73.R15.R14.R13.R12.)R7.)(7;.(72.R10.R>.R=.)R8.(73.R<.R;.R:.R9.)R7.)))")
-(* [comment removed for export] *).
+Lemma drain_strong_equiv :
+  forall (A : Type) (cnt : word) (f : A -> byte -> option A)
+         (out : A -> list byte) (ec : word) (a0 : A)
+         source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim inp,
+  (bv_unsigned ec < 256)%Z ->
+  (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
+  (forall a ms, rLH a ms -> to_rd (run_segments source_segs inp rsp rmb) cnt f out ec rLH a ms) ->
+  (forall a ms, aLH a ms -> to_rd (run_segments target_segs inp asp amb) cnt f out ec aLH a ms) ->
+  to_rd (run_segments source_segs inp rsp rmb) cnt f out ec rLH a0
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_rd (run_segments target_segs inp asp amb) cnt f out ec aLH a0
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  in_channel_reader inp = true ->
+  Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+  /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+                       (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros A cnt f out ec a0 source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim
-         inp Hec Hcnt HrLH HaLH Hr Ha.
+         inp Hec Hcnt HrLH HaLH Hr Ha Hrdr.
   split.
   { apply no_error_run_modeled.
-    apply (drain_no_error source_segs cnt Hcnt f out ec rLH HrLH
-             rpc rph rsp rbrk rmb rrnd rlim inp a0 Hr). }
+    apply (drain_no_error (run_segments source_segs inp rsp rmb) cnt Hcnt f out ec rLH HrLH
+             rpc rph rsp rbrk rmb rrnd rlim inp a0 Hr Hrdr). }
   right. split.
   - intro tr. cbn.
-    rewrite (drain_obs_iff source_segs cnt Hcnt f out ec Hec rLH HrLH
-               rpc rph rsp rbrk rmb rrnd rlim inp a0 Hr tr).
-    rewrite (drain_obs_iff target_segs cnt Hcnt f out ec Hec aLH HaLH
-               apc aph asp abrk amb arnd alim inp a0 Ha tr).
+    rewrite (drain_obs_iff (run_segments source_segs inp rsp rmb) cnt Hcnt f out ec Hec rLH HrLH
+               rpc rph rsp rbrk rmb rrnd rlim inp a0 Hr Hrdr tr).
+    rewrite (drain_obs_iff (run_segments target_segs inp asp amb) cnt Hcnt f out ec Hec aLH HaLH
+               apc aph asp abrk amb arnd alim inp a0 Ha Hrdr tr).
     reflexivity.
   - cbn.
-    apply (drain_no_error target_segs cnt Hcnt f out ec aLH HaLH
-             apc aph asp abrk amb arnd alim inp a0 Ha).
+    apply (drain_no_error (run_segments target_segs inp asp amb) cnt Hcnt f out ec aLH HaLH
+             apc aph asp abrk amb arnd alim inp a0 Ha Hrdr).
 Qed.

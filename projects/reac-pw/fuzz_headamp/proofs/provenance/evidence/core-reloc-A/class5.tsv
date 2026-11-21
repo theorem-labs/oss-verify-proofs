@@ -1,4 +1,4 @@
-# class 5 (model constants): every numeral of the headamp files whose donor value lies in the donor image range and is the SAME in the donor and in at least two twin files of the other donor units (scene / identity / knock / grant / cgif lib/A at 6ebe35ba632 / c8557374ad2e): a value no image layout moves; verdict OK = headamp value byte-identical to the donor value
+# class 5 (model constants): every numeral of the headamp files whose donor value lies in the donor image range and is the SAME in the donor and in at least two twin files of the other donor units (scene / identity / knock / grant / cgif lib/A): a value no image layout moves; verdict OK = headamp value byte-identical to the donor value
 file:line(headamp)	donor unit	donor value	headamp value	twins	verdict
 A/AB13.v:84	scene	65536	65536	cgif=0x10000,grant=0x10000,identity=0x10000,knock=0x10000	OK
 A/AB13.v:84	scene	65536	65536	cgif=0x10000,grant=0x10000,identity=0x10000,knock=0x10000	OK

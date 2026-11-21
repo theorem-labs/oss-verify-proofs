@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TRB loop section and trb_loop_L take the mmap base, break, entry draw and launch premises, with the layout environment at the entry draw's top, the run's CONFIG_RSEQ flag and execfn string, and EL6 taken from the launch; the channel-reader flag carried through the library call's journal step, by its same_io, into the printf and exit leaves). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -44,16 +45,19 @@ Hypothesis FREE : forall fx : YK11.FPState, @free_site_tfa fx rc B.
 Hypothesis FREEN : forall fx : YK11.FPState, @free_null_site_tfa fx rc B.
 Hypothesis EXITL : forall fx : YK11.FPState, @exit_leaf_tfa fx rc B xst.
 Hypothesis XFR : xst_frame_tfa xst.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv [a0; p].
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hvfs : valid_fs (in_fs inp).
-#[local] Notation EL := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
+(* #38: valid_entry's launch conjunct, threaded from the caller; the retabled
+   YQ0a layout lemmas are all proved from it. *)
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+#[local] Notation EL := (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
-#[local] Notation EL6 := (YD1m.EL6 sp inp xw xd a0 p Hsp Hva Hve).
+#[local] Notation EL6 := (YD1m.EL6 sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hlau).
 #[local] Notation arodata_keep := (YD1m.arodata_keep B).
 #[local] Notation arodata_frame := (YD1m.arodata_frame B).
 #[local] Notation lib_reseat := (YD1m.lib_reseat B HB sp Hsp).
@@ -77,11 +81,11 @@ frames S = [] -> qtightB S ->
 AI trbsegs (w_H W) (w_A W) md -> AR trbsegs B ly S W (ms_mem ms) md -> top_ok usp ly ->
 rbud S (Z.of_nat r) 3 -> 65536 <= cap <= 2 ^ 26 -> dlen data < cap -> (2 <= length data)%nat ->
 so_state xst j (w_H W) (ms_mem ms) -> arodata_ok B (aview trbsegs (w_H W) (ms_mem ms)) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> frm_zero (@fp_csr fx) ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true -> frm_zero (@fp_csr fx) ->
 srealizes trbsegs (mkCfg ms md) (wr ch_stdout (concat (repeat line0 (r + (j - 1)))) (ex 0 (in_fs inp))).
 Proof.
 induction r as [|r IH]; [intros; lia|].
-intros fx j E W ms md ly S data buf cap q LK Hlk Hok HEE HEd E41 E61 E62 E63 E65 HS _ Hjr HBL HLK0 HLK Hfr HQT HAI HAR HTOP Hnev Hcap HLc Hlen HSO HRO Hfs Hfds Hfrm.
+intros fx j E W ms md ly S data buf cap q LK Hlk Hok HEE HEd E41 E61 E62 E63 E65 HS _ Hjr HBL HLK0 HLK Hfr HQT HAI HAR HTOP Hnev Hcap HLc Hlen HSO HRO Hfs Hfds Hcr Hfrm.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YN05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YN05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 pose proof (config_len_bound data) as Hcl.
@@ -203,14 +207,15 @@ assert (POST : printf_post B xst ly' S' W' regsV memV mdV (Datatypes.S j) (wr ch
 2:{ rewrite HshapeV, PCV. fold regsV memV.
 change (mkCfg (mkst regsV (Z_to_bv 64 A_icpt_vprintf) memV (seg_rom trbsegs)) mdV) with (cfg_at trbsegs A_icpt_vprintf regsV memV mdV).
 assert (HfdsV : m_fds mdV = APSG.fds_std) by (subst mdV; rewrite wvb_fds', Efds; exact Hfds).
+assert (HcrV : m_channel_reader mdV = true) by (subst mdV; rewrite YK05.wvb_channel_reader, (same_io_channel_reader _ _ Hio); exact Hcr).
 destruct j as [|j'].
 -
 replace (Datatypes.S r + (0 - 1))%nat with (Datatypes.S r) by lia. cbn [repeat concat].
 apply (srz_conseq trbsegs _ (wr ch_stdout line0 (wr ch_stdout (concat (repeat line0 r)) (ex 0 (in_fs inp))))); [| apply wr_app].
-apply (PF1 _ ly' S' W' regsV memV mdV _ PREV ltac:(rdrv_lia) ltac:(destruct HSOV as [[_ X]|[X _]]; [exact X | exfalso; lia]) HfdsV HAI3).
+apply (PF1 _ ly' S' W' regsV memV mdV _ PREV ltac:(rdrv_lia) ltac:(destruct HSOV as [[_ X]|[X _]]; [exact X | exfalso; lia]) HfdsV HcrV HAI3).
 replace (r + (1 - 1))%nat with r in POST by lia. exact POST.
 -
-apply (PFN _ ly' S' W' regsV memV mdV _ (Datatypes.S j') PREV ltac:(rdrv_lia) ltac:(destruct HSOV as [[X _]|[_ X]]; [exfalso; lia | exact X]) ltac:(lia) HfdsV HAI3).
+apply (PFN _ ly' S' W' regsV memV mdV _ (Datatypes.S j') PREV ltac:(rdrv_lia) ltac:(destruct HSOV as [[X _]|[_ X]]; [exfalso; lia | exact X]) ltac:(lia) HfdsV HcrV HAI3).
 replace (Datatypes.S r + (Datatypes.S j' - 1))%nat with (r + (Datatypes.S (Datatypes.S j') - 1))%nat by lia. exact POST. }
 intros regs4 mem4 md4 HAR4 HP4 Hs4 Ha04 HX4 Hfr4 Hpres4 HAI4. unfold cfg_at. rewrite HraV. rewrite HspV in Hfr4.
 pose proof (same_but_materialized_frame _ _ Hs4) as (_ & _ & _ & _ & _ & _ & _ & _ & Hfds4 & _ & _ & Hfs4 & _).
@@ -248,6 +253,9 @@ assert (HROB : arodata_ok B (aview trbsegs (w_H W') (ms_mem msB))).
 { exact (arodata_frame (w_H W') E4 (ss_mem S_VP) _ _ HFrB WOKV ltac:(rewrite E4_0; exact Ulo) HRO4). }
 assert (HfsB : m_fs mdB = in_fs inp) by (subst mdB; rewrite wvb_fs', Hfs4; subst mdV; rewrite wvb_fs', Efs; exact Hfs).
 assert (HfdsB : m_fds mdB = APSG.fds_std) by (subst mdB; rewrite wvb_fds', Hfds4; subst mdV; rewrite wvb_fds', Efds; exact Hfds).
+assert (HcrB : m_channel_reader mdB = true).
+{ subst mdB. rewrite YK05.wvb_channel_reader, (YK05.sbm_channel_reader _ _ Hs4). subst mdV.
+rewrite YK05.wvb_channel_reader, (same_io_channel_reader _ _ Hio). exact Hcr. }
 destruct (Nat.eq_dec r 0) as [Hr0 | Hr1].
 -
 assert (HSB' : st_ok trbsegs E4 (add_cond S_BR cond_BRf) (restrict (w_H W') msB)).
@@ -399,7 +407,7 @@ pose proof (xm_to_CM E8 W4 msX HSX) as (HSCM & V79 & ECold).
 set (E9 := E_CM E8 (ms_regs msX)) in *.
 replace (r + (Datatypes.S j - 1))%nat with (Datatypes.S j - 1)%nat by lia.
 replace (ex 0 (in_fs inp)) with (ex (if count_mode data then 0 else 0) (in_fs inp)) by (destruct (count_mode data); reflexivity).
-apply (trb_main_tail B HB ARL ML xst (FREE _) (EXITL _) XFR sp inp xw xd a0 p Hsp Hva Hve E9 W4 msX mdX ly6 S6 data pb6 cap 0 (Datatypes.S j)).
+apply (trb_main_tail B HB ARL ML xst (FREE _) (EXITL _) XFR sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hlau E9 W4 msX mdX ly6 S6 data pb6 cap 0 (Datatypes.S j)).
 + intros i Hi. rewrite ECold by (unfold K_CM, K_M1 in *; lia). rewrite E8old by (unfold K_FQ, K_M1 in *; lia). rewrite E4old by (unfold K_VP, K_M1 in *; lia).
 rewrite E2old by (unfold K_LR, K_M1 in *; lia). apply HEE. exact Hi.
 + change (ed E9 2) with (ed E 2). exact HEd.
@@ -416,6 +424,7 @@ rewrite E2old by (unfold K_LR, K_M1 in *; lia). apply HEE. exact Hi.
 + rdrv_lia.
 + exact HSOX.
 + subst mdX. rewrite wvb_fds', Efds6. subst mdF. rewrite wvb_fds'. exact HfdsB.
++ subst mdX. rewrite YK05.wvb_channel_reader, (same_io_channel_reader _ _ Hio6). subst mdF. rewrite YK05.wvb_channel_reader. exact HcrB.
 + subst mdX. rewrite wvb_fs', Efs6. subst mdF. rewrite wvb_fs'. exact HfsB.
 -
 assert (HSB' : st_ok trbsegs E4 (add_cond S_BR cond_BRt) (restrict (w_H W') msB)).
@@ -468,6 +477,7 @@ apply (IH fx' (Datatypes.S j) E6n W' msL mdL ly' S' data buf cap q LK' Hlk Hok).
 + exact HROL.
 + subst mdL. rewrite wvb_fs'. exact HfsB.
 + subst mdL. rewrite wvb_fds'. exact HfdsB.
++ subst mdL. rewrite YK05.wvb_channel_reader. exact HcrB.
 + exact Hfrm'.
 Qed.
 Theorem trb_loop_L_at : forall (fx : YK11.FPState), frm_zero (@fp_csr fx) -> forall E (W : world trbsegs) ms md ly S data (pb pq : sptr) (cap q : Z) (j r : nat),
@@ -486,10 +496,10 @@ AI trbsegs (w_H W) (w_A W) md -> AR trbsegs B ly S W (ms_mem ms) md -> top_ok us
 rbud S (Z.of_nat r) 3 -> 65536 <= cap <= 2 ^ 26 -> dlen data < cap ->
 ((j = 0%nat /\ stdout_img (w_H W) (ms_mem ms)) \/ ((1 <= j)%nat /\ xst j (w_H W) (ms_mem ms))) ->
 arodata_ok B (aview trbsegs (w_H W) (ms_mem ms)) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true ->
 srealizes trbsegs (mkCfg ms md) (wr ch_stdout (concat (repeat line0 (r + (j - 1))%nat)) (ex 0 (in_fs inp))).
 Proof.
-intros fx Hfrm E W ms md ly S data pb pq cap q j r Hlk Hok HEE HEd E41 E42 E60 E61 E62 E63 E65 HS Hr Hjr HBL Hfr HQT HAI HAR HTOP Hnev Hcap HLc HSO HRO Hfs Hfds.
+intros fx Hfrm E W ms md ly S data pb pq cap q j r Hlk Hok HEE HEd E41 E42 E60 E61 E62 E63 E65 HS Hr Hjr HBL Hfr HQT HAI HAR HTOP Hnev Hcap HLc HSO HRO Hfs Hfds Hcr.
 pose proof (calls_bound data) as Hcb. pose proof (config_len_bound data) as Hcl.
 apply (calls_loop r fx j E W ms md ly S data (sptr_addr B ly pb) cap q [] Hlk Hok HEE HEd E41 E61 E62 E63 E65 HS Hr ltac:(lia)).
 - destruct HBL as [(Hz & Hq & Hbl) | (Hp & Hbl & Hpq)]; [left | right]; unfold ablocks; rewrite Hbl; cbn [map fst snd app].
@@ -510,6 +520,7 @@ apply (calls_loop r fx j E W ms md ly S data (sptr_addr B ly pb) cap q [] Hlk Ho
 - exact HRO.
 - exact Hfs.
 - exact Hfds.
+- exact Hcr.
 - exact Hfrm.
 Qed.
 End c.
@@ -521,7 +532,7 @@ Theorem trb_loop_L {fx : YK11.FPState} {rc : YN05.RunCeil} (B : asyms) (HB : Trb
 (EXITL : forall fx : YK11.FPState, @exit_leaf_tfa fx rc B xst) (XFR : xst_frame_tfa xst)
 (FRM0 : frm_zero (@fp_csr fx)) : @loop_L_tfa fx rc B xst.
 Proof.
-intros sp inp xw xd E W ms md ly S a0 p data pb pq cap q j r Hargv Hsp Hva Hve Hvfs Hlk.
-exact (trb_loop_L_at B HB ARL ML xst LIB PF1 PFN FREE FREEN EXITL XFR sp inp xw xd a0 p Hsp Hva Hve
+intros sp inp mbase brk rnd xw xd E W ms md ly S a0 p data pb pq cap q j r Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlk.
+exact (trb_loop_L_at B HB ARL ML xst LIB PF1 PFN FREE FREEN EXITL XFR sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hlau
 fx FRM0 E W ms md ly S data pb pq cap q j r Hlk).
 Qed.

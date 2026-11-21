@@ -15,7 +15,7 @@
      `forall x, ms_mem ms' x = ms_mem ms x`).
    Templates (cited, not imported): the block-list lemmas psg3k_block_low / psg3k_pairwise_dup / psg3k_ab_mid_dup
    are a Theorem Labs lane's ZZwv_comp.v zzwv_block_low / zzwv_pairwise_dup / zzwv_ab_mid_dup
-   (a working branch d25c24802e0, :96-105, :147-155, :173-188), renamed. *)
+   (a working branch, :96-105, :147-155, :173-188), renamed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

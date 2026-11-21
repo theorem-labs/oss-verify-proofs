@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nsc_rob at each node). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -196,6 +197,7 @@ Proof.
     eapply rz_msteps_lib_cfg; [exact Hh | apply (nsc_lazy _ _ _ _ _ _ _ _ NS); exact Hmi | exact Hms |].
     apply (rz_node_cfg cfg segs (mkCfg ms1 mo) (ans_idxN n mo) (ans_evsN n mo) (nxcfgN n mo ms1) TT i0).
     + apply node_ok_at_cfg; assumption.
+    + exact (nsc_rob _ _ _ _ _ _ _ _ NS n ms1 mo Hat Hmi).
     + intros [[[[rsp mo'] evs] Hst] | [[code mo'] Hxt]]; cbn.
       * destruct (nsc_sound _ _ _ _ _ _ _ _ NS n ms1 mo rsp mo' evs Hat Hh Hmi Hsafe Hst) as (Hh' & Hmi' & _).
         apply (IH rsp mo' evs Hst (nret ms1 rsp) (Hcont rsp) Hh' Hmi').
@@ -255,6 +257,7 @@ Proof.
         destruct i as [[[[rsp mo'] evs] Hn] | [[code mo'] Hxt]]; cbn in He |- *.
         -- destruct (Hk rsp mo' evs Hn) as [E _]. subst. reflexivity.
         -- exfalso. exact (Hnx code mo' Hxt).
+    + exact (nsc_rob _ _ _ _ _ _ _ _ NS n ms1 mo Hat Hmi).
     + intros [[[[rsp mo'] evs] Hst] | [[code mo'] Hxt]]; cbn.
       * destruct (nsc_sound _ _ _ _ _ _ _ _ NS n ms1 mo rsp mo' evs Hat Hh Hmi Hsafe Hst) as (Hh' & Hmi' & _).
         destruct (Hk rsp mo' evs Hst) as [_ Hsil'].

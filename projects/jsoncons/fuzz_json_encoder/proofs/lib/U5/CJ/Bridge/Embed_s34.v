@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO, the launch input's kernel build): changed RI_grant_na, brk_grow_ok_aligned_elim, step_mmap_none and 4 more. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -183,13 +184,18 @@ Proof. intros CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R6 & R7 & R8) HK Hbig. e
 
 Lemma RI_grant_na : forall CAPK CAPB ne bb (mo : Model) (n : Z),
   RI CAPK CAPB ne bb (m_vmmaps mo) -> CAPK <= CAPKMAX ->
-  0 <= n <= NMAX ->
+  0 < n <= NMAX -> n mod page_size = 0 ->
   exists a, grant_ok_na (Z_to_bv 64 0) mo a n = true.
 Proof.
-  intros CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R6 & R7 & R8) HK Hn.
-  pose proof NMAX_facts as (N1 & N2 & N3). pose proof (NMAX_band _ R6) as HB.
-  apply (grant_exists_na_gen (Z_to_bv 64 0) mo NMAX n CAPKMAX (2 ^ 32)); [exact N1 | exact N2 | exact Hn | exact R2 | lia | reflexivity | lia |].
-  assert (0 <= NMAX) by lia. unfold CAPKMAX in *. nia.
+  intros CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R6 & R7 & R8) HK Hn Hnal.
+  (* LPS 727298f3: the grant is Linux's placement over [task_unmapped_base, alloc_top), so the band
+     starts at [task_unmapped_base] and the length is page-aligned and nonzero *)
+  pose proof NMAX_facts as (N1 & N2 & N3). pose proof (alloc_top_ge_window _ R6) as Htop.
+  apply (grant_exists_na_gen (Z_to_bv 64 0) mo NMAX n CAPKMAX task_unmapped_base);
+    [exact N1 | exact N2 | exact Hn | exact Hnal | exact R2 | lia
+    | rewrite ?task_unmapped_base_val; reflexivity
+    | rewrite ?task_unmapped_base_val; unfold task_unmapped_base; lia
+    | rewrite ?task_unmapped_base_val; unfold task_unmapped_base, CAPKMAX, NMAX in *; lia ].
 Qed.
 
 Lemma RI_live_limit : forall CAPK CAPB ne bb h, RI CAPK CAPB ne bb h ->
@@ -217,8 +223,14 @@ Proof.
       unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok in H. fold h in H. fold b in H.
       rewrite (proj2 (Z.ltb_lt 0 _) Hb0) in H. rewrite Hureq in H. rewrite (proj2 (Z.ltb_lt (bv_unsigned b) _)) in H by lia. cbn [andb] in H.
       apply andb_prop in H as [_ H]. apply Z.leb_le in H.
-      replace (bv_unsigned (Z_to_bv 64 (bv_unsigned b + d) - b)) with d in H; [exact H|].
-      rewrite bv_sub_unsigned, Hureq. rewrite bv_wrap_small by (unfold bv_modulus; lia). lia. }
+      (* LPS 727298f3: the budget charges the pages the grow installs ([Mmap.brk_grow_bytes]); with
+         both ends page-aligned that is [d] *)
+      replace (brk_grow_bytes h (Z_to_bv 64 (bv_unsigned b + d))) with d in H; [exact H|].
+      unfold brk_grow_bytes. fold b. rewrite Hureq.
+      rewrite (page_round_up_Z_aligned (bv_unsigned b)) by (first [lia | exact Hbal]).
+      rewrite (page_round_up_Z_aligned (bv_unsigned b + d))
+        by (first [lia | rewrite Z.add_mod, Hbal, Hdal by (unfold page_size; lia); reflexivity]).
+      lia. }
   assert (Hureq : bv_unsigned (Z_to_bv 64 (bv_unsigned b + d)) = bv_unsigned b + d) by (apply u64_lit; lia).
   unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok in H. fold h in H. fold b in H. rewrite Hureq in H.
   rewrite (proj2 (Z.ltb_lt 0 _) Hb0), (proj2 (Z.ltb_lt (bv_unsigned b) _)) in H by lia. cbn [andb] in H.
@@ -418,10 +430,17 @@ Proof.
   pose proof (mmap_len_ge len ltac:(lia)) as Hn1. fold n in Hn1.
   assert (HnA : n mod page_size = 0) by (unfold n; apply mmap_len_aligned).
   assert (Hun : bv_unsigned (Z_to_bv 64 n) = n) by (apply u64_lit; unfold NMAX in HnN; lia).
-  eapply (bn_mmap_rw_nbr segs scfg Halloc ms mo len K Hh Hl Hat); [unfold LEN_MAX in Hlen; lia| | | exact HK0|].
-  - change (page_round_up_Z len) with n. eapply (RI_grant_na CAPK CAPB (S ne) bb mo n HRI HCAPK); lia.
+  (* LPS 727298f3: [bn_mmap_rw_nbr] no longer hands the fit to its continuation, so an mmap that
+     does not fit is taken first: under [nbr_limit] the budget refuses it *)
+  destruct (Z_le_gt_dec (vm_backing_used mo + n) (vm_limit (m_vmmaps mo))) as [Hfit | Hover].
+  2: { pose proof HRI as (_ & _ & _ & _ & _ & R7 & _).
+       eapply (bn_mmap_rw_over segs scfg ms mo len K Hh Hat); [unfold LEN_MAX in Hlen; lia | | | exact HK0].
+       - change (page_round_up_Z len) with n. lia.
+       - fold h. unfold XLIM, nbr_limit in *. lia. }
+  eapply (bn_mmap_rw_nbr segs scfg Halloc ms mo len K Hh Hl Hat); [unfold LEN_MAX in Hlen; lia| | |].
+  - change (page_round_up_Z len) with n. eapply (RI_grant_na CAPK CAPB (S ne) bb mo n HRI HCAPK); first [exact HnA | lia].
   - change (page_round_up_Z len) with n. intros Hbig. exact (RI_budget CAPK CAPB (S ne) bb mo n HRI Hbig).
-  - intros a Hg Hfit. change (page_round_up_Z len) with n in Hg, Hfit |- *.
+  - intros a Hg. change (page_round_up_Z len) with n in Hg |- *.
     assert (Hused : 0 <= vm_backing_used mo).
     { unfold vm_backing_used. pose proof (RefNodes.live_bytes_nonneg (maps_subtract_all (vm_backed_maps (m_vmmaps mo)) (m_vm_lazy mo))). unfold page_size. lia. }
     destruct (grant_ok_na_unpack _ _ _ _ Hg) as (G1 & G2 & G3 & G4).
@@ -459,7 +478,7 @@ Proof.
   assert (HnA : n mod page_size = 0) by (unfold n; apply mmap_len_aligned).
   assert (Hun : bv_unsigned (Z_to_bv 64 n) = n) by (apply u64_lit; unfold NONEMAX in HnN; lia).
   eapply (bn_mmap_none segs scfg Halloc ms mo len K Hh Hl Hat); [unfold LEN_MAX in Hlen; lia| |].
-  - change (page_round_up_Z len) with n. eapply (RI_grant_na CAPK CAPB (S ne) bb mo n HRI HCAPK); unfold NONEMAX, NMAX in *; lia.
+  - change (page_round_up_Z len) with n. eapply (RI_grant_na CAPK CAPB (S ne) bb mo n HRI HCAPK); unfold NONEMAX, NMAX in *; first [exact HnA | lia].
   - intros a Hg. change (page_round_up_Z len) with n in Hg |- *.
     destruct (grant_ok_na_unpack _ _ _ _ Hg) as (G1 & G2 & G3 & G4).
     fold h in G3. rewrite (KL2_alloc_top _ _ _ _ _ HK) in G3.
@@ -560,13 +579,15 @@ Proof.
     as (Hlen1 & Hlen2 & Hal & Ha0 & Hn0 & Hce & Hhas & Hans & HK' & Hcnt & Hlb).
   fold n aw nw in Hhas, HK', Hcnt, Hlb, Hlen2, Hn0, Hce.
   assert (Hpr : page_round_up_Z len = n) by (rewrite <- Hlen2; reflexivity).
-  eapply (bn_munmap segs scfg ms mo a len K Hh Hl Hat).
+  eapply (bn_munmap segs scfg Halloc ms mo a len K Hh Hl Hat).
   - unfold page_size. unfold PGSZ in Hal. exact Hal.
   - lia.
   - lia.
   - rewrite Hpr. unfold TASK_SIZE. pose_ceil. lia.
   - rewrite Hpr. exact Hhas.
   - rewrite Hpr. fold aw nw. rewrite (munmap_model_simple aw nw mo Hl Hm). fold h.
+    (* LPS 727298f3: munmap cuts [vm_maps]; on this ledger the cut is [map_remove] (KLink) *)
+    rewrite (maps_subtract_has (vm_maps h) aw nw (k2_wf _ _ _ _ _ HK) Hhas).
     assert (Ua : bv_unsigned aw = a) by (subst aw; apply u64_lit; lia).
     assert (Un : bv_unsigned nw = n) by (subst nw; apply u64_lit; lia).
     rewrite Ua, Un. apply HC.
@@ -613,6 +634,11 @@ Proof.
   - unfold PGSZ; lia.
   - lia.
   - rewrite HprP. unfold two_pow_64. lia.
+  - (* LPS 727298f3: the page is apart from the run's vDSO pair: the pair is in the reserved ledger
+       ([k2_vdso]) and the meta page is free of that ledger ([KL2_meta_page_free]) *)
+    rewrite HprP. destruct (k2_vdso _ _ _ _ _ HK) as [kb Hvd].
+    rewrite (vdso_reserved_kb_indep kb (m_kernel mo)) in Hvd.
+    exact (KL2_meta_page_free resv_img img_hi L pbrk h b l k _ HK Hin Hk Hvd).
   - rewrite HprP. exact Hcn.
   - rewrite HprP. exact Hcm.
   - rewrite HprP. fold nw. intros Hbig. apply RefNodes.mprotect_budget_ok_intro; [exact Hl| exact Hm|].
@@ -928,13 +954,15 @@ Proof.
     as (Hlen1 & Hlen2 & Hal & Ha0 & Hn0 & Hce & Hhas & Hans & HK' & Hcnt & Hlb).
   fold n aw nw in Hhas, HK', Hcnt, Hlb, Hlen2, Hn0, Hce.
   assert (Hpr : page_round_up_Z len = n) by (rewrite <- Hlen2; reflexivity).
-  eapply (bn_munmap segs scfg ms mo a len K Hh Hl Hat).
+  eapply (bn_munmap segs scfg Halloc ms mo a len K Hh Hl Hat).
   - unfold page_size. unfold PGSZ in Hal. exact Hal.
   - lia.
   - lia.
   - rewrite Hpr. unfold TASK_SIZE. pose_ceil. lia.
   - rewrite Hpr. exact Hhas.
   - rewrite Hpr. fold aw nw. rewrite (munmap_model_simple aw nw mo Hl Hm). fold h.
+    (* LPS 727298f3: munmap cuts [vm_maps]; on this ledger the cut is [map_remove] (KLink) *)
+    rewrite (maps_subtract_has (vm_maps h) aw nw (k2_wf _ _ _ _ _ HK) Hhas).
     assert (Ua : bv_unsigned aw = a) by (subst aw; apply u64_lit; lia).
     assert (Un : bv_unsigned nw = n) by (subst nw; apply u64_lit; lia).
     rewrite Ua, Un. apply HC.

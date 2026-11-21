@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor of done_cpsE at STACK_SPAN in place of STACK_WIN, with the close contract's side goals closed by kind). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
@@ -185,19 +186,21 @@ pose proof HLS as (LV & FRS & CR & USP0').
 pose proof (cap_ok_range cap HCAP) as CAPR.
 assert (INB : In (buf, cap) (rt_live RT Σ)) by (rewrite LV; left; reflexivity).
 pose proof (af_live_range RT AF Σ m buf cap ART0 INB) as (PR1 & PR2 & PR3).
-set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 set (n := Z.of_nat (length data)) in *.
 assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
-assert (UTOP : usp + 16 <= USTACK_TOP) by lia.
+assert (UTOP : usp + 16 <= USTACK_TOP) by ul.
 
 apply (CLS Σ (FD argvb n) fs (Z_to_bv 64 0x963b0) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2)
 (Z_to_bv 64 buf) (Z_to_bv 64 3) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) (Z_to_bv 64 n) (Z_to_bv 64 3) (Z_to_bv 64 cap)
 (Z_to_bv 64 g_read_stage) (Z_to_bv 64 0) s8 s9 s10 s11 t3 t4 t5 t6 F fc m 3 lo); try reflexivity; try assumption.
-- lia.
-- unfold FD. rewrite fd_lookup_insert_same. discriminate.
-- rewrite EU. exact ST0.
-- rewrite EU. ul.
-- intros cf1 (m1 & Hc1). rewrite fd_remove_FD in Hc1.
+(* the close contract's side goals, by kind: at 727298f3 the stack span is [STACK_SPAN], which adds
+   an arithmetic side goal over [lo] that [try assumption] no longer closes *)
+all: try (unfold FD; rewrite fd_lookup_insert_same; discriminate).
+all: try (rewrite EU; exact ST0).
+all: try (rewrite EU; ul).
+all: try ul.
+intros cf1 (m1 & Hc1). rewrite fd_remove_FD in Hc1.
 destruct (ASTA_unpack RT Σ _ _ cf1 Hc1) as (ms1 & (RS1 & (ART1 & MI1 & WM1 & ST1 & MU1)) & Hc1').
 destruct RS1 as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & ->).
 rewrite EU in ST1, MU1.
@@ -501,19 +504,19 @@ pose proof HLS as (LV & FRS & CR & USP0').
 pose proof (cap_ok_range cap HCAP) as CAPR.
 assert (INB : In (buf, cap) (rt_live RT Σ)) by (rewrite LV; left; reflexivity).
 pose proof (af_live_range RT AF Σ m buf cap ART0 INB) as (PR1 & PR2 & PR3).
-set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 set (n := Z.of_nat (length data)) in *.
 assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
-assert (UTOP : usp + 16 <= USTACK_TOP) by lia.
+assert (UTOP : usp + 16 <= USTACK_TOP) by ul.
 
 apply (CLS Σ (FD argvb n) fs (Z_to_bv 64 0x962c4) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2)
 (Z_to_bv 64 buf) (Z_to_bv 64 3) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) (Z_to_bv 64 n) (Z_to_bv 64 3) (Z_to_bv 64 cap)
 (Z_to_bv 64 g_read_stage) (Z_to_bv 64 0) s8 s9 s10 s11 t3 t4 t5 t6 F fc m 3 lo); try reflexivity; try assumption.
-- lia.
-- unfold FD. rewrite fd_lookup_insert_same. discriminate.
-- rewrite EU. exact ST0.
-- rewrite EU. ul.
-- intros cf1 (m1 & Hc1). rewrite fd_remove_FD in Hc1.
+all: try (unfold FD; rewrite fd_lookup_insert_same; discriminate).
+all: try (rewrite EU; exact ST0).
+all: try (rewrite EU; ul).
+all: try ul.
+intros cf1 (m1 & Hc1). rewrite fd_remove_FD in Hc1.
 destruct (ASTA_unpack RT Σ _ _ cf1 Hc1) as (ms1 & (RS1 & (ART1 & MI1 & WM1 & ST1 & MU1)) & Hc1').
 destruct RS1 as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & ->).
 rewrite EU in ST1, MU1.

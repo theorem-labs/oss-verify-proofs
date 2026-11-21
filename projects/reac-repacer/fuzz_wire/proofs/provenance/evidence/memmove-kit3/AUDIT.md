@@ -1,8 +1,8 @@
-# Audit of memmove-kit3 (commit 97ab13e41f99): the by-hand acceptances
+# Audit of memmove-kit3: the by-hand acceptances
 
 Reviewer: a fresh read-only reviewer (no function proved). Date: 2026-10-30.
 
-Record: `proofs/reac-repacer/fuzz_wire/provenance/evidence/memmove-kit3/README.md` at 97ab13e41f99, with `records/` and `tools/`. Kit: cmpkit 4bbd3a74be89
+Record: `proofs/reac-repacer/fuzz_wire/provenance/evidence/memmove-kit3/README.md`, with `records/` and `tools/`. Kit: cmpkit 4bbd3a74be89
 (the kit directory, SHA256SUMS hash 4bbd3a74be89...). Images: X = fuzz_wire.asan.unstripped
 d2f662a22962 (A) and fuzz_wire.asan-ubsan.unstripped 51eb4bef2425 (B); Y = fuzz_pcap.asan 36da3052c383 (A) and fuzz_pcap.asan-ubsan
 c969d83cdd59 (B), the unstripped twins. The stripped pins differ from the twins only in the ELF header and .note.gnu.build-id
@@ -340,7 +340,7 @@ unprinted targets and 3 unmeasured words (F1, F2), and an automated pass over 35
 
 ## Re-check of v2
 
-Record: the record's working commit 6ec81ea98d60 (v2 = 833c5da53b35 plus the README paragraph at lines 25-29), same
+Record: the record's working (v2 = plus the README paragraph at lines 25-29), same
 directory. Read-only, same images and kit as above. Record line references in this section: `S2:n` =
 records/settle2-asan.txt line n, `CS:n` = records/closure-settlement-asan.txt line n, `JO:n` = records/jtcheck-open-asan.txt,
 `JM:n` = records/jtcheck-members-asan.txt, `BH:n` = records/byhand-asan.txt. The -asan-ubsan files have the same rows on
@@ -361,7 +361,7 @@ name list (jtcheck.py:200).
   The classes are TABLE 7, CSTR 152, WORD-EQUAL 3 and OPEN 16 (S2:179), the same on A and B by name + offset. Keyed by
   name, the list has 179 entries, because ErrorGeneric's constructor has two names at one address (C2 and C1). settle2
   keys by address, which is correct.
-- settle2's CSTR set equals my 71 + 78 + 3 exactly, on both images. 71 = the v1 CSTR rows (97ab13e41f99
+- settle2's CSTR set equals my 71 + 78 + 3 exactly, on both images. 71 = the v1 CSTR rows (
   records/settle-*) minus OpenFile. 78 = the full list minus the targets that closure_strict2 / paircl print. 3 = F3
   (HeapAddressDescription::Print +0xbc, PrintMemoryByte +0x70, +0x88). The three sets are disjoint and their union is
   152. My own byte check of all 152 (target addresses from `targets()`, equal to settle2's): equal up to and including
@@ -443,7 +443,7 @@ code.** The bytes are equal, so neither one hides a difference.
 
 ### The new paragraph (README.md:25-29)
 
-- "The central re-run ... counts 736 / 49": CONFIRMED. STRICTCMP-RERUN.md:77 at bdc037d1af2a ("It certifies 736 of 785
+- "The central re-run ... counts 736 / 49": CONFIRMED. STRICTCMP-RERUN.md:77 ("It certifies 736 of 785
   closure members"). rerun/memmove/RESULT.md says "closure_strict2 certifies 723 of 785 members, the kit jtcheck 13
   more; the other 49 closure members are NOT certified by the kit".
 - "The one function in which they differ is LoadedModule::addAddressRange (A 0x5f8f4, B 0x5f694)": CONFIRMED. My

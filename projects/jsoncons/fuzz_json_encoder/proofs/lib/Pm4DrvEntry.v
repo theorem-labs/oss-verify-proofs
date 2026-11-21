@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed WINDOW, kn_mainA, main_know_okA and 2 more; added DRV_ZWIN; removed auxv_atA, auxv_listA; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm8DrvEntry.v, 54 lines within its lines 18-191. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -19,6 +20,23 @@ Import SX2. Import SX2S.
 
 Abbreviation ASEGS := Asan.M.loaded_segments.
 
+(* THE ZERO-FILLED STACK WINDOW below sp, as one name for the whole driver.
+     OLD  8388608 (8 MiB) at every window site: [kn_mainA]'s KWr, [WINDOW] below,
+          Pm4DrvLib.has_window / window_store_ok / window_defined and the store_ok
+          window conjuncts re-exported through DrvE, DrvE2, DrvExit, DrvExitM, DrvPrintf*,
+          DrvStdio, DrvLibL.
+     NEW  [DRV_ZWIN] = 6144513 = [StoreOk.stack_window_depth] ([StoreOk.stack_window_depth_val]).
+   The 8 MiB width is FALSE at LPS 75d69e00: [PropExec.wrap_mem] zero-fills only down to
+   [Run.stack_window_lo], strictly above [sp - 8388608] ([Pm4DrvEntryK.ent_window]).  The
+   narrowing is allowed because the window is a launch-supplied fact and every consumer
+   needs far less: [Pm4DrvLib.astack_ok_of_window] uses at most [2 ^ 22 + 4096] below sp,
+   and the printf/exit frames a few KiB.  A NOTATION for the closed numeral, not a
+   Definition and not [stack_window_depth] itself: the driver's certificates compare [KWr]
+   entries under [vm_compute], and every window [lia] downstream must see the number.
+   NOT this family: [usp - 8388608] as alloc_top / the asan ceiling [ahl_ceil] and its
+   shadow, which is [stack_max_size] and still 8388608 at the revision. *)
+Notation DRV_ZWIN := 6144513%Z.
+
 Definition spx (k : Z) : expr := EAlu ALU_ADD (EVar 0) (ELit k).
 
 Definition sr_mainA : list expr :=
@@ -29,35 +47,42 @@ Definition sr_mainA : list expr :=
 
 Definition kn_mainA : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN;
    KWord (SA (EVar 0) 0) 8 (ELit 2); KWord (SA (EVar 0) 8) 8 (EVar 1); KWord (SA (EVar 0) 16) 8 (EVar 2);
-   KImg 0x10000 0x162000; KImg 0x69c550 0x69df00;          (* [comment removed for export] *)
-   KImg 0x165448 0x165538; KImg 0x165538 0x165620; KImg 0x165620 0x166840;   (* [comment removed for export] *)
+   KImg 0x10000 0x162000; KImg 0x69c550 0x69df00;
+   KImg 0x165448 0x165538; KImg 0x165538 0x165620; KImg 0x165620 0x166840;
    KWord (SA (ELit 0) 0x6be010) 8 (EVar 3);
-   (* [comment removed for export] *)
+
    KWord (SA (ELit 0) 0x69df08) 8 (ELit 0x69df08); KWord (SA (ELit 0) 0x69df28) 4 (EVar 4); KRange (EVar 4) 1 4194303;
    KWord (SA (ELit 0) 0x69dfc0) 8 (EVar 3); KWord (SA (ELit 0) 0x69dfa0) 8 (ELit 0x6be298);
-   KWord (SA (ELit 0) 0x6be268) 8 (EAlu ALU_ADD (EVar 1) (ELit (-160)));
-   KImg 0x165360 0x165448; KImg 0x6be298 0x6be2c8; KImg 0x6be340 0x6be344 (* [comment removed for export] *);
-   (* [comment removed for export] *)
+   (* DROPPED, old beside new: [KWord (SA (ELit 0) 0x6be268) 8 (EAlu ALU_ADD (EVar 1) (ELit (-160)))],
+      libc's __auxv as argv[0]'s pointer - 160 -- false at LPS 75d69e00 (the strings are at the
+      top of the stack VMA; argv[0] - e_auxv is not a constant), and read by no consumer
+      (LibIface.lib_init_facts, Main's ruling option D). *)
+   KImg 0x165360 0x165448; KImg 0x6be298 0x6be2c8; KImg 0x6be340 0x6be344  ;
+
    KWord (SA (ELit 0) 7070272) 4 (ELit 0); KWord (SA (ELit 0) 7070307) 1 (ELit 0); KWord (SA (ELit 0) 7069744) 8 (ELit 7069752); KWord (SA (ELit 0) 7069736) 4 (ELit 1);
    KWord (SA (ELit 0) 7069760) 8 (ELit 1317312); KWord (SA (ELit 0) 7070016) 8 (ELit 654096); KWord (SA (ELit 0) 7069732) 4 (ELit 0); KWord (SA (ELit 0) 7069752) 8 (ELit 0);
    KWord (SA (ELit 0) 7071704) 8 (ELit 0);
-   (* [comment removed for export] *)
+
    KWord (SA (ELit 0) 7069728) 1 (ELit 0)].
-(* [comment removed for export] *)
+
 Definition XC9_CELLS : list (Z * nat * Z) :=
   [(7070272, 4%nat, 0); (7070307, 1%nat, 0); (7069744, 8%nat, 7069752); (7069736, 4%nat, 1); (7069760, 8%nat, 1317312); (7070016, 8%nat, 654096); (7069732, 4%nat, 0); (7069752, 8%nat, 0);
    (7071704, 8%nat, 0); (7069728, 1%nat, 0)].
 
-(* [comment removed for export] *)
-Definition auxv_listA (uidz rnd hwz : Z) : list Z := [3; 0x10040; 4; 56; 5; 11; 16; hwz; 6; 4096; 11; uidz; 12; uidz; 23; 0; 25; rnd; 0; 0].
-Definition auxv_atA (sp p0 : word) (M0 : word -> option byte) : Prop :=
-  exists uidz rnd hwz : Z,
-    (forall j, (j < 20)%nat ->
-       rdn ASEGS M0 (Z_to_bv 64 (bv_unsigned p0 - 160 + 8 * Z.of_nat j)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (nth j (auxv_listA uidz rnd hwz) 0))))
-    /\ 0 <= uidz < 2 ^ 32 /\ 0 <= hwz < 2 ^ 64 /\ bv_unsigned sp <= rnd /\ rnd + 16 <= 2 ^ 64
-    /\ bv_unsigned sp + 160 <= bv_unsigned p0 <= 2 ^ 47 /\ bv_unsigned p0 mod 8 = 0.
+(* DROPPED, old beside new (Main's ruling, option D):
+     OLD  Definition auxv_listA (uidz rnd hwz : Z) : list Z :=
+            [3; 0x10040; 4; 56; 5; 11; 16; hwz; 6; 4096; 11; uidz; 12; uidz; 23; 0; 25; rnd; 0; 0].
+          Definition auxv_atA (sp p0 : word) (M0 : word -> option byte) : Prop :=
+            exists uidz rnd hwz, (forall j, (j < 20)%nat ->
+              rdn ASEGS M0 (Z_to_bv 64 (bv_unsigned p0 - 160 + 8 * Z.of_nat j)) 8 = ..) /\ ..
+   The ten-pair auxv at [p0 - 160] is FALSE at LPS 75d69e00 (27 or 29 pairs,
+   AT_SYSINFO_EHDR and the cache words first; the strings, hence [p0], at the top of the
+   VMA).  Its consumer chain ended at LibIface.lib_init_facts' auxv conjuncts, which no
+   lib_statics_init prover reads (PmLibStaticsA.lib_init_okA:141,
+   PmTop/TopGlueC.pm_statics_init:167-171), so it is dropped with them rather than
+   restated; the pair-list restatement approved for [Pm4DrvEntryK.ent_auxv] is retired. *)
 
 Definition NX_MAIN : nat := 38.
 Definition vals_mainA (sp p0 p1 can tid : word) (R : bvmap 5 word) : list word := [sp; p0; p1; can; tid; Z_to_bv 64 0] ++ junk_vals R.
@@ -91,11 +116,21 @@ Section Pack.
     [(1, 0x14124c); (2, usp - 48); (3, 0x10800); (4, 0x69dfd0); (8, usp + 8); (9, 2); (10, 2); (11, usp + 8);
      (12, usp + 32); (18, 0xb00b0); (19, usp + 32); (20, 0); (21, 0); (22, 0); (23, 0); (24, 0); (25, 0); (26, 0); (27, 0)] ->
     getr R (Z_to_bv 5 r) = Z_to_bv 64 v.
+  (* STATEMENT CHANGED, old beside new: the argv pointers are now Section variables.
+       OLD  Let p0 := Z_to_bv 64 (usp + 8*envc + 200); Let p1 := Z_to_bv 64 (usp + 8*envc + L0 + 201);
+            WORDS gave those two values at [usp + 8] and [usp + 16].
+       NEW  [p0 p1 : word], whatever the launch put there; WORDS says they are the words at
+            [usp + 8] and [usp + 16].
+     The old closed forms are FALSE at LPS 75d69e00 (the strings sit at the top of the stack
+     VMA, [STRLO = usp + cat_string_off ..]); and since [kn_mainA] no longer derives the
+     __auxv cell from [p0], nothing here needs [p0]'s value, only its identity with the word
+     at [usp + 8].  The caller (Pm4DrvEntryInst) supplies [cat_argv_ptr (ed_top rdraw) ..]. *)
+  Variables (p0 p1 : word).
   Hypothesis WORDS :
     rdn ASEGS MV (Z_to_bv 64 usp) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 2))
-    /\ rdn ASEGS MV (Z_to_bv 64 (usp + 8)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (usp + 8 * envc + 200)))
-    /\ rdn ASEGS MV (Z_to_bv 64 (usp + 16)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (usp + 8 * envc + L0 + 201))).
-  Hypothesis WINDOW : forall d (m : nat), 0 <= d -> d + Z.of_nat m <= 8388608 -> store_ok ASEGS MV (Z_to_bv 64 (usp - 8388608 + d)) m = true.
+    /\ rdn ASEGS MV (Z_to_bv 64 (usp + 8)) 8 = Some (word_to_le_bytes 8 p0)
+    /\ rdn ASEGS MV (Z_to_bv 64 (usp + 16)) 8 = Some (word_to_le_bytes 8 p1).
+  Hypothesis WINDOW : forall d (m : nat), 0 <= d -> d + Z.of_nat m <= DRV_ZWIN -> store_ok ASEGS MV (Z_to_bv 64 (usp - DRV_ZWIN + d)) m = true.
   Variable can : word.
   Hypothesis GUARD : rdn ASEGS MV (Z_to_bv 64 0x6be010) 8 = Some (word_to_le_bytes 8 can).
   Hypothesis IMG : forall lo hi i, In (lo, hi) [(0x10000, 0x162c90); (0x162cac, 0x166840); (0x68c54a, 0x69df00); (0x6be298, 0x6be2c8); (0x6be340, 0x6be344)] -> lo <= i < hi -> MV (Z_to_bv 64 i) = None.
@@ -106,14 +141,12 @@ Section Pack.
     rdn ASEGS MV (Z_to_bv 64 0x69df08) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x69df08))
     /\ rdn ASEGS MV (Z_to_bv 64 0x69df28) 4 = Some (word_to_le_bytes 4 tid)
     /\ rdn ASEGS MV (Z_to_bv 64 0x69dfc0) 8 = Some (word_to_le_bytes 8 can)
-    /\ rdn ASEGS MV (Z_to_bv 64 0x69dfa0) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x6be298))
-    /\ rdn ASEGS MV (Z_to_bv 64 0x6be268) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (usp + 8 * envc + 40))).
+    /\ rdn ASEGS MV (Z_to_bv 64 0x69dfa0) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x6be298)).
+  (* DROPPED, old beside new: the fifth conjunct [rdn .. 0x6be268 8 = Some (.. (usp + 8*envc + 40))],
+     the __auxv cell, with its [kn_mainA] entry. *)
 
-  (* [comment removed for export] *)
   Hypothesis XCW : Forall (fun c : Z * nat * Z => rdn ASEGS MV (Z_to_bv 64 (fst (fst c))) (snd (fst c)) = Some (word_to_le_bytes (snd (fst c)) (Z_to_bv 64 (snd c)))) XC9_CELLS.
 
-  Let p0 : word := Z_to_bv 64 (usp + 8 * envc + 200).
-  Let p1 : word := Z_to_bv 64 (usp + 8 * envc + L0 + 201).
   Let ES : env := env_mainA sp p0 p1 can tid R.
 
   Lemma ev_junkA : forall i, (i < 32)%nat -> ev ES (6 + i) = getr R (Z_to_bv 5 (Z.of_nat i)).
@@ -147,12 +180,12 @@ Section Pack.
 
   Theorem main_know_okA : know_ok ASEGS ES MV kn_mainA.
   Proof.
-    destruct Hsp as (S1 & S2). destruct Hb as (B1 & B2). destruct WORDS as (W0 & W8 & W16). destruct LIBW as (L1 & L2 & L3 & L4 & L5).
+    destruct Hsp as (S1 & S2). destruct Hb as (B1 & B2). destruct WORDS as (W0 & W8 & W16). destruct LIBW as (L1 & L2 & L3 & L4).
     assert (FLIT : forall a n, 0 <= a -> 0 <= n -> a + n <= 2 ^ 63 -> flat ES (SA (ELit 0) a) n).
     { intros a n H1 H2 H3. unfold flat, estart. cbn [a_base a_off edenot]. rewrite (u_small 0) by lia. lia. }
     assert (ALIT : forall a, 0 <= a < 2 ^ 63 -> adenot ES (SA (ELit 0) a) = Z_to_bv 64 a).
     { intros a Ha. rewrite (adenot_flat ES (SA (ELit 0) a) 0 ltac:(apply FLIT; lia)). unfold estart. cbn [a_base a_off edenot]. rewrite (u_small 0) by lia. reflexivity. }
-    assert (FL : forall off n, -8388608 <= off -> 0 <= n -> off + n <= 4096 -> flat ES (SA (EVar 0) off) n).
+    assert (FL : forall off n, - DRV_ZWIN <= off -> 0 <= n -> off + n <= 4096 -> flat ES (SA (EVar 0) off) n).
     { intros off n H1 H2 H3. unfold flat. rewrite estart_sp. lia. }
     assert (XC : forall (i : nat) c, nth_error XC9_CELLS i = Some c ->
                    rdn ASEGS MV (Z_to_bv 64 (fst (fst c))) (snd (fst c)) = Some (word_to_le_bytes (snd (fst c)) (Z_to_bv 64 (snd c))))
@@ -160,7 +193,7 @@ Section Pack.
     unfold kn_mainA, know_ok. repeat (apply Forall_cons); [ .. | apply Forall_nil]; cbn [kentry_ok].
     - split; [lia | exact S2].
     - cbn [edenot]. change (ev ES 0) with sp. lia.
-    - split; [apply FL; lia|]. intros d m Hd Hm. rewrite estart_sp. replace (usp + -8388608 + d) with (usp - 8388608 + d) by ring. apply WINDOW; assumption.
+    - split; [apply FL; lia|]. intros d m Hd Hm. rewrite estart_sp. replace (usp + - DRV_ZWIN + d) with (usp - DRV_ZWIN + d) by ring. apply WINDOW; assumption.
     - split; [lia|]. split; [apply FL; lia|]. rewrite (adenot_flat ES (SA (EVar 0) 0) 8 ltac:(apply FL; lia)), estart_sp, Z.add_0_r. exact W0.
     - split; [lia|]. split; [apply FL; lia|]. rewrite (adenot_flat ES (SA (EVar 0) 8) 8 ltac:(apply FL; lia)), estart_sp. exact W8.
     - split; [lia|]. split; [apply FL; lia|]. rewrite (adenot_flat ES (SA (EVar 0) 16) 8 ltac:(apply FL; lia)), estart_sp. exact W16.
@@ -176,10 +209,6 @@ Section Pack.
     - cbn [edenot]. change (ev ES 4) with tid. lia.
     - split; [lia|]. split; [apply FLIT; lia|]. rewrite ALIT by lia. exact L3.
     - split; [lia|]. split; [apply FLIT; lia|]. rewrite ALIT by lia. exact L4.
-    - split; [lia|]. split; [apply FLIT; lia|]. rewrite ALIT by lia.
-      replace (edenot ES (EAlu ALU_ADD (EVar 1) (ELit (-160)))) with (Z_to_bv 64 (usp + 8 * envc + 40)); [exact L5|].
-      cbn [edenot]. change (ev ES 1) with p0. rewrite alu_add. unfold v_add, p0. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod.
-      rewrite <- Z.add_mod by lia. f_equal. lia.
     - split; [lia|]. split; [lia|]. intros i Hi. apply (IMG 0x162cac 0x166840); [right; left; reflexivity | lia].
     - split; [lia|]. split; [lia|]. intros i Hi. apply (IMG 0x6be298 0x6be2c8); [right; right; right; left; reflexivity | lia].
     - split; [lia|]. split; [lia|]. intros i Hi. apply (IMG 0x6be340 0x6be344); [do 4 right; left; reflexivity | lia].

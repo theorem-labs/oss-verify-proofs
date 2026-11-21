@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the narrowing of image B's snprintf site contract (W_sites.v asnprintf_realizes,
    W_sites_x.v asnprintf_realizes_x: the format, M1, M3 and M2 premises, the ruling, SNP-ROUTE.md (sha256 5a5fabe9f628; internal record)
    section 7.5) is SATISFIED at its three walked applications, each premise from the facts the application itself
    holds there.
    - W_LLVMFuzzerTestOneInput_gone_p1.v (AR at PB_fr) and W_LLVMFuzzerTestOneInput_gone_p1_x.v (ARx at PB_fr):
      san_M1, san_M3, san_M2_AR and san_M2_x, SnpAssembly's sanity section on image A, a working branch
-     8f558767590a lib/A/RT_pf_snp_srr.v:125-247 (with pf_unparse_piece, pf_unparse, pf_parse_unparse, snp_fmtb,
+     lib/A/RT_pf_snp_srr.v:126-248 (with pf_unparse_piece, pf_unparse, pf_parse_unparse, snp_fmtb,
      snp_ps, snp_fmt_eq), re-pointed to image B: the format .str.9 is A_OBJ 17 and the %s string .str.5
      "param_gesture" is A_lit_gesture = A_OBJ 18 (at the same addresses as image A's, 0x20f80 and 0x20f20), B's GOT
      word FR_GOT_GUARD = 0x9ebd8, and B's image top PF_GLOBALS_TOP = 0x5fc000 (W_sites.v).

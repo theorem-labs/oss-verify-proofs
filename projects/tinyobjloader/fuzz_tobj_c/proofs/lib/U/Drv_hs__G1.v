@@ -1,9 +1,10 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the frame Ko carries the run's channel reader, LPS 08b1429, written as plain text, and that fact passed at the two write sums; the lifted world predicate Ks carries the vDSO fact, which KH_Ks0 takes from deJ_vdso; the exit steps take Ko's four conjuncts apart). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Datatypes"; "cons"; "pair"; "nil"; "list"; "true"; "false"; "option"; "bool"; "nat"; "Some"; "app"; "prod"; "None"; "length"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "SLit"; "sv"; "SVar"; "cell"; "mkCell"; "sprop"; "SPUle"; "sobj"; "SAlu"; "mkObj"; "SExt"; "valuation"; "sstate"; "DImage"; "DUnknown"; "SPBranch"; "SPAlign"; "ss_next"; "ss_facts"; "SPNot"; "ss_objs"; "mkSS"; "rw"; "ss_lenient"; "ss_pc"; "rm"; "DZero"; "FcsrFrm0"; "SLBytes"; "SPUlt"; "swf"; "DList"; "ss_fcsr"; "ss_fregs"; "ss_regs"; "ss_resv"; "reg_sv"; "rl"; "DRom"; "smatch"; "sprop_below"; "ro_addr"; "sprop_eqb"; "obj_range"; "odefault"; "ranges_disjoint"; "@Corelib.Numbers.BinNums"; "positive"; "Z"; "@Corelib.Init.Logic"; "eq"; "and"; "False"; "ex"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Code"; "segs"; "@LinuxProcessSemantics.Riscv.Instr"; "ALU_ADD"; "ALU_SRL"; "ALU_OR"; "ALU_SLL"; "BC_EQ"; "BC_GE"; "BC_NE"; "instr"; "Ecall"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "leaf"; "mkLeaf"; "sym_run"; "RsEcall"; "RsCut"; "instr_at"; "set_objs"; "@stdpp.bitvector.definitions"; "bv"; "Z_to_bv"; "bv_unsigned"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "VmMaps"; "m_vm_materialized"; "m_vmmaps"; "FdEntry"; "m_fds"; "FdChannel"; "fd_lookup"; "m_fs"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_U"; "wz"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.ObjXform"; "xform"; "apply_xforms"; "XSplit"; "XRebase"; "XMerge"; "XSelect"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_r__G1.Drv_r"; "tvK"; "INVX"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_r__G1.Drv_r_states"; "FUEL"; "@Stdlib.ZArith.BinInt.Z"; "lt"; "add"; "le"; "pow"; "of_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_hs__G1.Drv_hs.HS.Tail"; "Ks"; "Ko"; "PRo"; "TRo"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "SP"; "ok_frame"; "LQ"; "jpred"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_hs__G1.Drv_hs_states"; "C_ofr"; "C_sfr"; "C_of"; "C_sf"; "E_oom"; "E_som"; "E_oomc"; "E_somc"; "X_s"; "X_o"; "C_of1"; "C_sf1"; "T_ofr"; "T_sfr"; "X_oS"; "X_sS"; "s_ofr"; "s_ow"; "s_sfr"; "s_sw"; "E_oomx"; "E_somx"; "PreF"; "T_oD"; "T_ofrS"; "T_sD"; "T_sfrS"; "R_ofr"; "R_sfr"; "T_oDi"; "T_sDi"; "E_oomb"; "E_ox"; "E_somb"; "E_sx"; "R_ow"; "R_sw"; "tvK"; "C_of2"; "C_sf2"; "O_ob1"; "O_sb1"; "T_oDm"; "T_sDm"; "xs_od"; "xs_sd"; "O_ob2"; "O_sb2"; "xs_oom"; "xs_som"; "MEMO_12"; "MEMO_14"; "MEMO_2"; "MEMO_20"; "MEMO_24"; "MEMO_8"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "etriple"; "triple"; "w_tr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymFrame"; "wsub_get"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvStatics"; "app_objs"; "statics_objs"; "static3"; "statics_view"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail"; "entails_fr"; "entails"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_r__G1.Drv_r_states.RAddr"; "free_entry"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Musl_wl__G1.Musl_wl_err.WLerrS"; "Pre_wl1"; "D";
-"@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "is_prefix"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "EC_U"; "L_free"; "V_TOP"; "tp_ok"; "vm_insensitive"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_h__G1.Drv_h_states.HAddr"; "msg_overrun_addr"; "msg_short_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_hs__G1.Drv_hs.HS"; "SIDE"; "DE"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCFG"; "add_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_m__G1.Drv_m_states.MAddr"; "stderr_wbase"; "stderr_file"; "wl_ecall"; "@Stdlib.Lists.List"; "nth_error"; "forallb"; "existsb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStepFast"; "sym_run_fast"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "import_post"; "call_check"; "call_checkP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "T_after"; "malloc_contracts"; "aceil"; "robjs_check"; "JGi"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvPristine"; "rom_bytes_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_h__G1.Drv_h_states"; "X_ov"; "X_sh0"; "X_sh"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Musl_wl__G1.Musl_wl_err.WLerr"; "Kw"; "MSG"; "Posts_wl"; "chw"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Spec.DriverSpec"; "die"; "ex"; "msg_short"; "wr"; "msg_overrun"; "config_len"; "MAX_INPUT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "state_has_rl"; "ok_pframe"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop"; "robjs_missT_statics"; "tv_geo"; "robjs_missT"; "snapJ"; "tv_eval_eq"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.ObjUnbase"; "unbase_obj_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_m__G1.Drv_m"; "P0"; "JD"; "P0_top"; "P0_tp"; "wtop"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymExit"; "K_tcons"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvWins"; "robj_inw"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast"; "apply_xforms_fast"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_wins"; "WINS_U"; "@Stdlib.PArith.BinPos.Pos"; "lt"; "le"; "@Corelib.Lists.ListDef"; "Forall"; "@LinuxProcessSemantics.LinuxProcessSem.Fs"; "Fs"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv"; "drvN"; "vm_room"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_open__G1.Drv_open"; "std_fds"; "@Stdlib.Arith.PeanoNat.Nat"; "min"].
+"@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "is_prefix"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "EC_U"; "L_free"; "V_TOP"; "tp_ok"; "vm_insensitive"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_h__G1.Drv_h_states.HAddr"; "msg_overrun_addr"; "msg_short_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_hs__G1.Drv_hs.HS"; "SIDE"; "DE"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCFG"; "add_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_m__G1.Drv_m_states.MAddr"; "stderr_wbase"; "stderr_file"; "wl_ecall"; "@Stdlib.Lists.List"; "nth_error"; "forallb"; "existsb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStepFast"; "sym_run_fast"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "import_post"; "call_check"; "call_checkP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "T_after"; "malloc_contracts"; "aceil"; "robjs_check"; "JGi"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvPristine"; "rom_bytes_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_h__G1.Drv_h_states"; "X_ov"; "X_sh0"; "X_sh"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Musl_wl__G1.Musl_wl_err.WLerr"; "Kw"; "MSG"; "Posts_wl"; "chw"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Spec.DriverSpec"; "die"; "ex"; "msg_short"; "wr"; "msg_overrun"; "config_len"; "MAX_INPUT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "state_has_rl"; "ok_pframe"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop"; "robjs_missT_statics"; "tv_geo"; "robjs_missT"; "snapJ"; "tv_eval_eq"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.ObjUnbase"; "unbase_obj_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_m__G1.Drv_m"; "P0"; "JD"; "P0_top"; "P0_tp"; "wtop"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymExit"; "K_tcons"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvWins"; "robj_inw"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast"; "apply_xforms_fast"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_wins"; "WINS_U"; "@Stdlib.PArith.BinPos.Pos"; "lt"; "le"; "@Corelib.Lists.ListDef"; "Forall"; "@LinuxProcessSemantics.LinuxProcessSem.Fs"; "Fs"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv"; "drvN"; "vm_room"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Drv_open__G1.Drv_open"; "std_fds"; "@Stdlib.Arith.PeanoNat.Nat"; "min"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "vdso_ok"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 Require Stdlib.ZArith.ZArith.
 Require Stdlib.NArith.NArith.
@@ -769,11 +770,12 @@ Hypothesis msg_in_spec : ltac2:(tb__ "0|1|
 VSpecT;SaS57Se8Z2M0Vmsg;A2S0S57Se6Vfs;G0A2S2S57A1A3A3A1").
 
 Definition TRo (n : nat) : list event := wr 2 (firstn n msg).
-Definition Ko (n : nat) : list event -> Model -> Prop := ltac2:(tb__ "0|1|
-S3S57A1M0S56S3fS3eG0R2S73Vn;A1A3S3fS3eS3SbS53Q40A1S5bA2A1S5cR1A1S103A3S3eS100S5fR1A1Vfs;A3A2A2Lmd;Ltr;").
+(* LPS 08b1429: the frame carries the run's channel reader (a nonempty writev needs it). *)
+Definition Ko (n : nat) : list event -> Model -> Prop :=
+  fun tr md => tr = TRo n /\ m_fds md = std_fds /\ m_fs md = fs /\ m_channel_reader md = true.
 
 Definition Ks (n : nat) (vm : VmMaps) (mat : list word) : list event -> Model -> Prop := ltac2:(tb__ "0|0|
-S3S57A1S56S3fS71Vn;R2R1A3S3fS3eS58S5aR1A1Vvm;A3S3eS3S53Q40A1A1S59R1A1Vmat;A3A2A2Lmd;Ltr;").
+S3S57A1S56S3fS71Vn;R2R1A3S3fS3eS58S5aR1A1Vvm;A3S3fS3eS3S53Q40A1A1S59R1A1Vmat;A3S105R1A1A2A2A2Lmd;Ltr;").
 
 Lemma TRo_prefix : ltac2:(tb__ "0|1|
 S8Sc2S57S73R1A1SaS57Se8Z2M0Vmsg;A2S0S57Se6Vfs;G0A2S2S57A1A3A3A3Fn;").
@@ -800,14 +802,15 @@ Lemma Ko_okp : ltac2:(tb__ "0|0|
 S8SedS42Vok;S71R1A1A3Fn;"). Proof using msg_in_spec. intros. apply HokP, Ko_tcons. Qed.
 Lemma Ko_vmi : ltac2:(tb__ "0|0|
 S8Sc7S71R1A1A1Fn;").
-Proof using . intros n. split; [intros tr md vm (A & B & C) | intros tr md lz mt (A & B & C)]; (split; [exact A|]; split; autorewrite with model; assumption). Qed.
+Proof using . intros n. split; [intros tr md vm (A & B & C & R) | intros tr md lz mt (A & B & C & R)];
+  (split; [exact A|]; split; [autorewrite with model; assumption|]; split; [autorewrite with model; assumption | exact R]). Qed.
 Lemma KH_Ks0 : ltac2:(tb__ "0|0|
-S3S57A1S56VKH;R2R1A2S70U0S5aR2A1S59R2A1R3R2A5F_;Fmd;Ftr;").
-Proof using . intros tr md (A & B & C). split; [|split; reflexivity]. split; [exact A|]. split; [exact B | exact C]. Qed.
+S3S57A1S56VKH;R2R1A2S105R2A1S70U0S5aR3A1S59R3A1R4R3A5F_;F_;Fmd;Ftr;").
+Proof using . intros tr md (A & B & C) V. split; [|split; [reflexivity | split; [reflexivity | exact V]]]. split; [exact A|]. split; [exact B | exact C]. Qed.
 Lemma Kw_Ks : ltac2:(tb__ "0|0|
 S58S3S53Q40A1A1S8S3S57A1S56Se1S70U0R5R4A3S2S53Q8A1A1Vmsg;R3R2R1A6S70S104R4U1fA2R6R5R3R2A5F_;Fmd;Ftr;Fk;Fmat;Fvm;").
 Proof using Hmsg.
-  intros vm mat k tr md (tr0 & ((-> & Hf & Hs) & Hv & Hm) & ->). split; [|split; [exact Hv | exact Hm]]. split; [|split; [exact Hf | exact Hs]].
+  intros vm mat k tr md (tr0 & ((-> & Hf & Hs) & Hv & Hm & VD) & ->). split; [|split; [exact Hv | split; [exact Hm | exact VD]]]. split; [|split; [exact Hf | exact Hs]].
   unfold WLerr.TRk, WLerr.MSG, TRo, wr. cbn [app]. change WLerr.chw with (Z_to_bv 64 2).
   rewrite <- Hmsg, <- firstn_firstn, firstn_all. reflexivity.
 Qed.
@@ -833,6 +836,7 @@ Proof using Hmsg msg_in_spec.
   - apply Kw_okf.
   - apply Kw_okp.
   - apply Ks_fd2.
+  - intros tr md ((_ & _ & _ & R) & _). exact R.
   - reflexivity.
   - rewrite Hmsg. lia.
 Qed.
@@ -843,6 +847,7 @@ Proof using Hmsg.
   apply (WLerr.wl1_sum_ex (Ks 0 vm mat) rho1 [] msg H6 ltac:(rewrite Hmsg; exact H15)).
   - unfold WLerr.MSG, max_write_total. cbn [app]. rewrite Hmsg. cbn. lia.
   - apply Ks_fd2.
+  - intros tr md ((_ & _ & _ & R) & _). exact R.
   - reflexivity.
   - rewrite Hmsg. lia.
 Qed.
@@ -877,7 +882,7 @@ Proof using Hmsg.
     + apply (tv_geo_K rho rho1); [apply RW; lia | apply RW; lia | exact HG].
     + exact Vg.
     + subst rho1. apply rho_set_rw_at.
-  - split; [rewrite <- X_sS_eq; exact Hsm' | apply KH_Ks0; exact Hk].
+  - split; [rewrite <- X_sS_eq; exact Hsm' | apply KH_Ks0; [exact Hk | eapply deJ_vdso; exact HJi]].
 Qed.
 
 Lemma somc_intro : ltac2:(tb__ "0|6|
@@ -919,7 +924,7 @@ Qed.
 Lemma sfr_intro : ltac2:(tb__ "0|5|
 Sb5S56OFx0;Fx;S58S3S53Q40M0A1A1M1S19S3dS3S57A1M2SdcS56Sb5S56S56S3eS58S5aR1A1S5aR2A1A3S3eG1S59R2A1S59R3A1A3RdR5R4A2ReR6R4A2F_;F_;F_;Fm';Fm;FA;ScaR9P99R6R5R8R7A6S3dS3fS6dZ0R1A2S6bR1Z1fA2A2S3eS6S53Q8A1M3A1S27R9S54G0S6cSc9R2A2A2A2ScG3A1A3F_;Fk;S75S42S70U1fM4RaR9A3S7cR8S1G2Sc0R6Sc1R5R4A2A4A5S41S19S19S74S42VJD;S71G4A1R1S68RdA4S7aR1S1G2Sc0R8Sc1R7R6A2A4A5Lrho6;A2F_;F_;F_;F_;Fmd;Fms;Ftr;Fg;Frho5;Fmat;Fvm;FD;").
 Proof using Hmsg Hrom.
-  intros D vm mat rho5 g tr ms md HDvm (HSn & HG & HV & Hv) RN [Hsm ((Htr & Hf & Hs) & Hvm & Hmat)].
+  intros D vm mat rho5 g tr ms md HDvm (HSn & HG & HV & Hv) RN [Hsm ((Htr & Hf & Hs) & Hvm & Hmat & VDk)].
   destruct C_sf_objs as (O0 & O1 & O2). destruct C_sf_sets as (E1 & E2 & E3). destruct swf_C_sf as (W1 & W2 & W3). destruct sb1_addr as (B1 & B2 & B3).
   assert (Hsm1 : smatch segs rho5 C_sf1 (tr, mkCfg ms md)).
   { rewrite E1. apply (smatch_drop_rom rho5 C_sf _ _ msg_short_addr 31 6 _ Hsm); [rewrite O0, <- !app_assoc; reflexivity | lia | lia | lia | | | rewrite <- E1; exact W1].
@@ -966,7 +971,7 @@ Proof using D Hmsg msg_in_spec.
   destruct cert_sexit as (Hi & H17 & H10).
   apply (triple_exit_eval segs ok SpecT (Ko 31) E_sx rho2 2);
     [apply Ko_okf | apply Ko_okp | exact Hokh | exact Hi | left; exact H17 | rewrite H10; cbn [eval]; rewrite U_addr by lia; reflexivity |].
-  intros tr md (-> & _ & ->). unfold TRo. rewrite firstn_all2 by (rewrite Hmsg; lia). exact msg_in_spec.
+  intros tr md (-> & _ & -> & _). unfold TRo. rewrite firstn_all2 by (rewrite Hmsg; lia). exact msg_in_spec.
 Qed.
 
 Lemma s_free_safe : ltac2:(tb__ "0|0|
@@ -1077,7 +1082,7 @@ Proof using DE Hmsg.
   intros Lf rho2 [<-|[]] Hag2. cbn [lf_state].
   destruct cert_sexit as (Hi & H17 & H10).
   eapply etriple_conseq; [intros w Hw; exact Hw | | apply (etriple_exit_eval segs (Ko 31) E_sx rho2 2 Hi (or_introl H17))].
-  - intros w (tr & md & (Htr & _ & Hfs) & Hw). unfold Q, TRo, die in *. rewrite Hw, Htr, Hfs. rewrite firstn_all2 by (rewrite Hmsg; lia). reflexivity.
+  - intros w (tr & md & (Htr & _ & Hfs & _) & Hw). unfold Q, TRo, die in *. rewrite Hw, Htr, Hfs. rewrite firstn_all2 by (rewrite Hmsg; lia). reflexivity.
   - rewrite H10. cbn [eval]. rewrite U_addr by lia. reflexivity.
 Qed.
 
@@ -1195,7 +1200,7 @@ Proof using Hmsg.
     + apply (tv_geo_K rho rho1); [apply RW; lia | apply RW; lia | exact HG].
     + exact Vg.
     + subst rho1. apply rho_set_rw_at.
-  - split; [rewrite <- X_oS_eq; exact Hsm' | apply KH_Ks0; exact Hk].
+  - split; [rewrite <- X_oS_eq; exact Hsm' | apply KH_Ks0; [exact Hk | eapply deJ_vdso; exact HJi]].
 Qed.
 
 Lemma oomc_intro : ltac2:(tb__ "0|6|
@@ -1237,7 +1242,7 @@ Qed.
 Lemma ofr_intro : ltac2:(tb__ "0|5|
 Sb5S56OFx0;Fx;S58S3S53Q40M0A1A1M1S19S3dS3S57A1M2SdcS56Sb5S56S56S3eS58S5aR1A1S5aR2A1A3S3eG1S59R2A1S59R3A1A3RdR5R4A2ReR6R4A2F_;F_;F_;Fm';Fm;FA;ScaR9P99R6R5R8R7A6S3dS3fS6dZ0R1A2S6bR1Z1fA2A2S3eS6S53Q8A1M3A1S27R9S54G0S6cSc8R2A2A2A2ScG3A1A3F_;Fk;S75S42S70U1fM4RaR9A3S7bR8S1G2Sc0R6Sc1R5R4A2A4A5S41S19S19S74S42VJD;S71G4A1R1S68RdA4S79R1S1G2Sc0R8Sc1R7R6A2A4A5Lrho6;A2F_;F_;F_;F_;Fmd;Fms;Ftr;Fg;Frho5;Fmat;Fvm;FD;").
 Proof using Hmsg Hrom.
-  intros D vm mat rho5 g tr ms md HDvm (HSn & HG & HV & Hv) RN [Hsm ((Htr & Hf & Hs) & Hvm & Hmat)].
+  intros D vm mat rho5 g tr ms md HDvm (HSn & HG & HV & Hv) RN [Hsm ((Htr & Hf & Hs) & Hvm & Hmat & VDk)].
   destruct C_of_objs as (O0 & O1 & O2). destruct C_of_sets as (E1 & E2 & E3). destruct swf_C_of as (W1 & W2 & W3). destruct ob1_addr as (B1 & B2 & B3).
   assert (Hsm1 : smatch segs rho5 C_of1 (tr, mkCfg ms md)).
   { rewrite E1. apply (smatch_drop_rom rho5 C_of _ _ msg_overrun_addr 31 6 _ Hsm); [rewrite O0, <- !app_assoc; reflexivity | lia | lia | lia | | | rewrite <- E1; exact W1].
@@ -1284,7 +1289,7 @@ Proof using D Hmsg msg_in_spec.
   destruct cert_oexit as (Hi & H17 & H10).
   apply (triple_exit_eval segs ok SpecT (Ko 31) E_ox rho2 2);
     [apply Ko_okf | apply Ko_okp | exact Hokh | exact Hi | left; exact H17 | rewrite H10; cbn [eval]; rewrite U_addr by lia; reflexivity |].
-  intros tr md (-> & _ & ->). unfold TRo. rewrite firstn_all2 by (rewrite Hmsg; lia). exact msg_in_spec.
+  intros tr md (-> & _ & -> & _). unfold TRo. rewrite firstn_all2 by (rewrite Hmsg; lia). exact msg_in_spec.
 Qed.
 
 Lemma o_free_safe : ltac2:(tb__ "0|0|
@@ -1395,7 +1400,7 @@ Proof using DE Hmsg.
   intros Lf rho2 [<-|[]] Hag2. cbn [lf_state].
   destruct cert_oexit as (Hi & H17 & H10).
   eapply etriple_conseq; [intros w Hw; exact Hw | | apply (etriple_exit_eval segs (Ko 31) E_ox rho2 2 Hi (or_introl H17))].
-  - intros w (tr & md & (Htr & _ & Hfs) & Hw). unfold Q, TRo, die in *. rewrite Hw, Htr, Hfs. rewrite firstn_all2 by (rewrite Hmsg; lia). reflexivity.
+  - intros w (tr & md & (Htr & _ & Hfs & _) & Hw). unfold Q, TRo, die in *. rewrite Hw, Htr, Hfs. rewrite firstn_all2 by (rewrite Hmsg; lia). reflexivity.
   - rewrite H10. cbn [eval]. rewrite U_addr by lia. reflexivity.
 Qed.
 

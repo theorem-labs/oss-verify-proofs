@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the image's table is INFO_ASAN_at r, at the launch's CONFIG_RSEQ layout r (a_rseq), and the image facts hold at each layout. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,14 +17,18 @@ Open Scope Z_scope.
 Definition ASEGS := Asan.M.loaded_segments.
 
 (* [comment removed for export] *)
-Definition INFO_ASAN : atable :=
-  {| img_lo := 0x10000; img_hi := 0x5fc000; n_res := 4; shadow_off := 0x7fff8000;
+(* LPS 727298f3: the image's table at the launch's CONFIG_RSEQ layout [r] ([a_rseq]), as coturn's
+   [ASAN_at r]; there is deliberately no r-free table, so a certificate cannot pair one r's start
+   state with another r's nodes. *)
+Definition INFO_ASAN_at (r : Z) : atable :=
+  {| img_lo := 0x10000; img_hi := 0x5fc000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x3030c; rw_lo := 0x9e000; rw_len := 0x55e000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x633c0; x_imemcpy := 0x63344; x_memset := 0x98220; x_memcpy := 0x97e1c; x_memiszero := 0x638f0;
      x_istrncpy := 0x637ec; x_sealed := 0x117fe; x_popfree := 0x366f8;
      x_sniff := 0; sniff_tab := 0; sniff_cell := 0;
      x_envscan := 0x8dc24; x_envscan_k := 0x8dc30; x_pnscan := 0x8dce8; x_pnscan_k := 0x8dcf4;
-     stops_more := [0x3436c; 0x35990; 0x536cc; 0x59a84; 0x59a98; 0x59aac; 0x5f43c; 0x5f50c; 0x6ca38; 0x6d944; 0x6dad4; 0x7782c; 0x6dc44] |}.
+     stops_more := [0x3436c; 0x35990; 0x536cc; 0x59a84; 0x59a98; 0x59aac; 0x5f43c; 0x5f50c; 0x6ca38; 0x6d944; 0x6dad4; 0x7782c; 0x6dc44];
+     a_rseq := r |}.
 
 Definition INFO_TEXT_LO : Z := 0x3030c.
 Definition INFO_TEXT_N : nat := 111762.
@@ -51,33 +56,33 @@ Proof.
   - symmetry. apply andb_false_iff. destruct Hx as [Hx|Hx]; [left | right]; apply Z.leb_gt; lia.
 Qed.
 
-Lemma asan_segs_in_hull : segs_in_hull_b ASEGS (img_lo INFO_ASAN) (img_hi INFO_ASAN) = true.
+Lemma asan_segs_in_hull {r : Z} : segs_in_hull_b ASEGS (img_lo (INFO_ASAN_at r)) (img_hi (INFO_ASAN_at r)) = true.
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma asan_in_hull : forall a : word,
-  APS.in_hull INFO_ASAN (bv_unsigned a) = false -> find_segment ASEGS (bv_unsigned a) 1 = None.
+Lemma asan_in_hull {r : Z} : forall a : word,
+  APS.in_hull (INFO_ASAN_at r) (bv_unsigned a) = false -> find_segment ASEGS (bv_unsigned a) 1 = None.
 Proof.
-  intros a H. apply (find_segment1_none_outside ASEGS (img_lo INFO_ASAN) (img_hi INFO_ASAN)); [exact asan_segs_in_hull|].
+  intros a H. apply (find_segment1_none_outside ASEGS (img_lo (INFO_ASAN_at r)) (img_hi (INFO_ASAN_at r))); [exact asan_segs_in_hull|].
   unfold APS.in_hull in H. apply andb_false_iff in H as [H|H]; [apply Z.leb_gt in H; left | apply Z.ltb_ge in H; right]; lia.
 Qed.
 
-Lemma asan_res_len : APS.res_len_ok ASEGS INFO_ASAN.
+Lemma asan_res_len {r : Z} : APS.res_len_ok ASEGS (INFO_ASAN_at r).
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma asan_res_hull : Forall (fun iv => img_lo INFO_ASAN <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= img_hi INFO_ASAN) (segments_reserved ASEGS).
+Lemma asan_res_hull {r : Z} : Forall (fun iv => img_lo (INFO_ASAN_at r) <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= img_hi (INFO_ASAN_at r)) (segments_reserved ASEGS).
 Proof.
   assert (E : segments_reserved ASEGS = [(Z_to_bv 64 0x10000, Z_to_bv 64 0x20000); (Z_to_bv 64 0x30000, Z_to_bv 64 0x6e000);
                                          (Z_to_bv 64 0x9e000, Z_to_bv 64 0x2000); (Z_to_bv 64 0xa0000, Z_to_bv 64 0x55c000)])
     by (vm_compute; reflexivity).
-  rewrite E. cbn [img_lo img_hi INFO_ASAN].
+  rewrite E. cbn [img_lo img_hi INFO_ASAN_at].
   repeat constructor; cbn [fst snd]; rewrite ?u64_lit by lia; lia.
 Qed.
 
-Lemma asan_hull_ok : APS.hull_ok INFO_ASAN.
-Proof. unfold APS.hull_ok. cbn [img_lo img_hi INFO_ASAN]. unfold KHI. repeat split; reflexivity || lia. Qed.
+Lemma asan_hull_ok {r : Z} : APS.hull_ok (INFO_ASAN_at r).
+Proof. unfold APS.hull_ok. cbn [img_lo img_hi INFO_ASAN_at]. unfold KHI. repeat split; reflexivity || lia. Qed.
 
-Lemma asan_shadow_ok : APS.shadow_ok INFO_ASAN.
-Proof. unfold APS.shadow_ok. cbn [shadow_off INFO_ASAN]. lia. Qed.
+Lemma asan_shadow_ok {r : Z} : APS.shadow_ok (INFO_ASAN_at r).
+Proof. unfold APS.shadow_ok. cbn [shadow_off INFO_ASAN_at]. lia. Qed.
 
 Lemma asan_res_sizes : APS.sum_sizes (segments_reserved ASEGS) = 0x5ec000.
 Proof. vm_compute. reflexivity. Qed.
@@ -132,22 +137,23 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import Run.
 
 Definition APH : PhdrInfo := Asan.M.phdrs.
 
-Lemma asan_img_facts : img_facts ASEGS INFO_ASAN APH.
+Lemma asan_img_facts {r : Z} : img_facts ASEGS (INFO_ASAN_at r) APH.
 Proof.
   constructor.
   - repeat split; reflexivity.
-  - cbn [img_lo img_hi INFO_ASAN]. lia.
+  - cbn [img_lo img_hi INFO_ASAN_at]. lia.
   - vm_compute. reflexivity.
   - exact asan_res_hull.
   - rewrite asan_res_sizes. reflexivity.
-  - cbn [rw_lo rw_len INFO_ASAN]. split; [lia|]. intros m x Hx. apply asan_rw_window. lia.
+  - cbn [rw_lo rw_len INFO_ASAN_at]. split; [lia|]. intros m x Hx. apply asan_rw_window. lia.
   - exact asan_shadow_ok.
+  - split; vm_compute; lia.
 Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Lemma asan_res_cover : APS.res_cover_ok ASEGS INFO_ASAN.
+Lemma asan_res_cover {r : Z} : APS.res_cover_ok ASEGS (INFO_ASAN_at r).
 Proof.
   split; [reflexivity|]. intros z Hz.
-  apply (APS.cover_run_sound _ 4 (img_lo INFO_ASAN) (img_hi INFO_ASAN)); [vm_compute; reflexivity | exact Hz].
+  apply (APS.cover_run_sound _ 4 (img_lo (INFO_ASAN_at r)) (img_hi (INFO_ASAN_at r))); [vm_compute; reflexivity | exact Hz].
 Qed.

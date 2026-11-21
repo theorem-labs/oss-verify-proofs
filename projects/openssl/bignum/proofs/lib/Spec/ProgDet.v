@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -115,10 +116,10 @@ Proof.
   pose proof (Hne en inp Hve Hvi) as Hne'. unfold the_prog in *.
   set (t := @prog (run_ceiling en) segs rstage (in_argv inp)) in *.
   set (mo := mo0 segs lim en inp) in *.
-  assert (HPn : tsafe nstep Pn t mo) by (apply tsafe_Pn; [exact Hs| exact Hne'| apply mo0_minv| apply mo0_not_halted]).
+  assert (HPn : tsafe nstep Pn t mo) by (apply tsafe_Pn; [exact Hs| exact Hne'| apply mo0_minv; exact (vie_reader _ Hvi)| apply mo0_not_halted]).
   assert (Hargv : Forall (fun a => zlength a < 2^32) (argv_Z (in_argv inp))) by (apply argv_Z_short; exact (proj1 Hvi)).
-  assert (Hfd : m_fds mo = fds_std) by (unfold mo, TopLevel.mo0; rewrite m_fds_init_model; reflexivity).
-  assert (Hfs : m_fs mo = in_fs inp) by (unfold mo, TopLevel.mo0; rewrite m_fs_init_model; reflexivity).
+  assert (Hfd : m_fds mo = fds_std) by (unfold mo; rewrite m_fds_mo0, m_fds_init_model; reflexivity).
+  assert (Hfs : m_fs mo = in_fs inp) by (unfold mo; rewrite m_fs_mo0, m_fs_init_model; reflexivity).
   split.
   - intros (full & Hfull & Hp).
     apply ttrace_split in Hfull. destruct Hfull as [Hx|(r & mo' & Hpath)]; [|exfalso; exact (Hl _ _ _ Hpath)].

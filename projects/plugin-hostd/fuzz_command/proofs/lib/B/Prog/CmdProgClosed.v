@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the twin of lib/A/Prog/CmdProgClosed.v for the ASan+UBSan build
    fuzz_command.asan-ubsan: module paths A -> B, core files AE2k / AD2l / AF0q -> YE2k / YD2l / YF0q, and the
    runtime closers of this build. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The program side of plugin-hostd/fuzz_command's ASan+UBSan proof, composed at the pinned image B: every one of the
    64 program functions' contracts (`t<fn>_spec`, lib/B/Prog/<fn>_c.v) at CmdImg.v's instance PB_cmd (segments
    tfibsegs, lib/B/YB1v.v), the sink head YE2k.tfib_sink_head, the allocator record YD2l.CmdB (YD2l.CmdB_syms) and
@@ -201,7 +202,7 @@ Lemma r_shf8 : forall fx0 : YK11.FPState,
 Proof. exact (fun fx0 => @RtClosed.cmd_set_shadow_f8_closed fx0 rc B HB). Qed.
 
 (** * The program functions, callees first; each by its closed theorem *)
-(* mix_call: tmix_call_closed (MixCallClosed.v:30) *)
+(* mix_call: tmix_call_closed (MixCallClosed.v:31) *)
 Lemma cl_mix_call : forall fx0 : YK11.FPState, @B.Prog.mix_call_c.tmix_call_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @MixCallClosed.tmix_call_closed fx0 rc B MT HB r_strlen). Qed.
 (* xmalloc: txmalloc_closed (CmdA9ClosedB.v:49) *)
@@ -228,42 +229,42 @@ Lemma cl_rec_calls_copy : forall fx0 : YK11.FPState,
 Proof.
 exact (fun fx0 => @CmdA9ClosedB.trec_calls_copy_closed fx0 rc B MT HB MTL cl_xmalloc r_memcpy r_strlen).
 Qed.
-(* record: trecord_closed (RecordClosed.v:39) *)
+(* record: trecord_closed (RecordClosed.v:40) *)
 Lemma cl_record : forall fx0 : YK11.FPState, @B.Prog.record_c.trecord_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @RecordClosed.trecord_closed fx0 rc B MT HB MTL cl_rec_calls_free). Qed.
-(* arg_s: targ_s_closed (ArgSClosed.v:41) *)
+(* arg_s: targ_s_closed (ArgSClosed.v:42) *)
 Lemma cl_arg_s : forall fx0 : YK11.FPState, @B.Prog.arg_s_c.targ_s_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @ArgSClosed.targ_s_closed fx0 rc B MT HB MTL cl_xmalloc r_memcpy r_strlen). Qed.
-(* hand_back: thand_back_closed (HandBackClosed.v:43) *)
+(* hand_back: thand_back_closed (HandBackClosed.v:44) *)
 Lemma cl_hand_back : forall fx0 : YK11.FPState, @B.Prog.hand_back_c.thand_back_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @HandBackClosed.thand_back_closed fx0 rc B MT HB MTL cl_xmalloc r_free4 r_free_null4 r_memcpy
   r_strlen).
 Qed.
-(* answer: tanswer_closed (AnswerClosed.v:46) *)
+(* answer: tanswer_closed (AnswerClosed.v:47) *)
 Lemma cl_answer : forall fx0 : YK11.FPState, @B.Prog.answer_c.tanswer_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @AnswerClosed.tanswer_closed fx0 rc B MT HB MTL MTFL cl_hand_back cl_mix_call r_sm7 r_sf7 r_sh00
   r_shf8 r_snprintf).
 Qed.
-(* answer_code: tanswer_code_closed (AnswerCodeClosed.v:40) *)
+(* answer_code: tanswer_code_closed (AnswerCodeClosed.v:41) *)
 Lemma cl_answer_code : forall fx0 : YK11.FPState,
   @B.Prog.answer_code_c.tanswer_code_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @AnswerCodeClosed.tanswer_code_closed fx0 rc B MT HB MTL MTFL cl_hand_back r_free4 r_sm1
   r_snprintf).
 Qed.
-(* arg_line: targ_line_closed (ArgLineClosed.v:40) *)
+(* arg_line: targ_line_closed (ArgLineClosed.v:41) *)
 Lemma cl_arg_line : forall fx0 : YK11.FPState, @B.Prog.arg_line_c.targ_line_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @ArgLineClosed.targ_line_closed fx0 rc B MT HB MTL cl_rec_canonical r_strlen). Qed.
-(* socket_send: tsocket_send_closed (SocketSendClosed.v:37) *)
+(* socket_send: tsocket_send_closed (SocketSendClosed.v:38) *)
 Lemma cl_socket_send : forall fx0 : YK11.FPState,
   @B.Prog.socket_send_c.tsocket_send_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SocketSendClosed.tsocket_send_closed fx0 rc B MT HB MTL cl_xmalloc r_free4 r_free_null4 r_memset
   r_memcpy).
 Qed.
-(* reply: treply_closed (ReplyClosed.v:36) *)
+(* reply: treply_closed (ReplyClosed.v:37) *)
 Lemma cl_reply : forall fx0 : YK11.FPState, @B.Prog.reply_c.treply_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @ReplyClosed.treply_closed fx0 rc B MT HB MTL cl_socket_send r_strlen r_free4). Qed.
 (* rec_clear: trec_clear_closed (RecClearClosed.v:37) *)
@@ -305,11 +306,11 @@ exact (fun fx0 => @CmdReplyWalksClosed.tcheck_reply_closed fx0 rc B MT HB cl_che
   cl_sup_reply_code cl_rec_code_declared cl_rec_shape_of cl_syntax_reply_matches r_sm1 r_memchr r_strlen r_snprintf
   r_strcmp).
 Qed.
-(* is_instance_verb: tis_instance_verb_closed (IsInstanceVerbClosed.v:36) *)
+(* is_instance_verb: tis_instance_verb_closed (IsInstanceVerbClosed.v:37) *)
 Lemma cl_is_instance_verb : forall fx0 : YK11.FPState,
   @B.Prog.is_instance_verb_c.tis_instance_verb_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @IsInstanceVerbClosed.tis_instance_verb_closed fx0 rc B MT HB r_strcspn r_strncmp). Qed.
-(* verb_is: tverb_is_closed (VerbIsClosed.v:34) *)
+(* verb_is: tverb_is_closed (VerbIsClosed.v:35) *)
 Lemma cl_verb_is : forall fx0 : YK11.FPState, @B.Prog.verb_is_c.tverb_is_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @VerbIsClosed.tverb_is_closed fx0 rc B MT HB r_strcspn r_strncmp). Qed.
 (* number: tnumber_closed (NumberClosed.v:38) *)
@@ -320,7 +321,7 @@ Lemma cl_sup_resp : forall fx0 : YK11.FPState, @B.Prog.sup_resp_c.tsup_resp_spec
 Proof.
 exact (fun fx0 => @SupRespClosed.tsup_resp_closed fx0 rc B MT HB MTFL cl_xmalloc r_sm1 r_snprintf r_strlen r_memcpy).
 Qed.
-(* sup_chain: tsup_chain_closed (SupChainClosed.v:41) *)
+(* sup_chain: tsup_chain_closed (SupChainClosed.v:42) *)
 Lemma cl_sup_chain : forall fx0 : YK11.FPState, @B.Prog.sup_chain_c.tsup_chain_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupChainClosed.tsup_chain_closed fx0 rc B MT HB MTL MTFL cl_record cl_xmalloc cl_arg_s
@@ -333,20 +334,20 @@ Proof.
 exact (fun fx0 => @ChainWordsClosed.tchain_words_closed fx0 rc B MT HB MTL MTFL cl_number cl_sup_chain cl_sup_resp
   r_sm3 r_shf5).
 Qed.
-(* descriptors_add: tdescriptors_add_closed (DescriptorsAddClosed.v:39) *)
+(* descriptors_add: tdescriptors_add_closed (DescriptorsAddClosed.v:40) *)
 Lemma cl_descriptors_add : forall fx0 : YK11.FPState,
   @B.Prog.descriptors_add_c.tdescriptors_add_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @DescriptorsAddClosed.tdescriptors_add_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_mix_call).
 Qed.
-(* descriptors_get: tdescriptors_get_closed (DescriptorsGetClosed.v:34) *)
+(* descriptors_get: tdescriptors_get_closed (DescriptorsGetClosed.v:35) *)
 Lemma cl_descriptors_get : forall fx0 : YK11.FPState,
   @B.Prog.descriptors_get_c.tdescriptors_get_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @DescriptorsGetClosed.tdescriptors_get_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_rec_shape_of
   cl_answer).
 Qed.
-(* descriptors_panel_get: tdescriptors_panel_get_closed (DescriptorsPanelGetClosed.v:36) *)
+(* descriptors_panel_get: tdescriptors_panel_get_closed (DescriptorsPanelGetClosed.v:37) *)
 Lemma cl_descriptors_panel_get : forall fx0 : YK11.FPState,
   @B.Prog.descriptors_panel_get_c.tdescriptors_panel_get_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
@@ -360,25 +361,25 @@ Proof.
 exact (fun fx0 => @Lv2RefusalsForgetClosed.tlv2_refusals_forget_closed fx0 rc B MT HB MTL cl_record cl_arg_s
   cl_mix_call).
 Qed.
-(* pins_set: tpins_set_closed (PinsSetClosed.v:40) *)
+(* pins_set: tpins_set_closed (PinsSetClosed.v:41) *)
 Lemma cl_pins_set : forall fx0 : YK11.FPState, @B.Prog.pins_set_c.tpins_set_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @PinsSetClosed.tpins_set_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_mix_call cl_answer_code).
 Qed.
-(* pins_clear: tpins_clear_closed (PinsClearClosed.v:41) *)
+(* pins_clear: tpins_clear_closed (PinsClearClosed.v:42) *)
 Lemma cl_pins_clear : forall fx0 : YK11.FPState, @B.Prog.pins_clear_c.tpins_clear_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @PinsClearClosed.tpins_clear_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_mix_call
   cl_answer_code).
 Qed.
-(* pin_set_words: tpin_set_words_closed (PinSetWordsClosed.v:39) *)
+(* pin_set_words: tpin_set_words_closed (PinSetWordsClosed.v:40) *)
 Lemma cl_pin_set_words : forall fx0 : YK11.FPState,
   @B.Prog.pin_set_words_c.tpin_set_words_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @PinSetWordsClosed.tpin_set_words_closed fx0 rc B MT HB MTL cl_pins_set cl_lv2_refusals_forget
   r_strlen r_strncmp).
 Qed.
-(* sup_add: tsup_add_closed (SupAddClosed.v:42) *)
+(* sup_add: tsup_add_closed (SupAddClosed.v:43) *)
 Lemma cl_sup_add : forall fx0 : YK11.FPState, @B.Prog.sup_add_c.tsup_add_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupAddClosed.tsup_add_closed fx0 rc B MT HB MTL MTFL cl_record cl_arg_s cl_mix_call cl_hand_back
@@ -409,49 +410,49 @@ Lemma cl_sup_connect : forall fx0 : YK11.FPState, @B.Prog.sup_connect_c.tsup_con
 Proof.
 exact (fun fx0 => @SupConnectClosed.tsup_connect_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_arg_line cl_answer).
 Qed.
-(* sup_host_setting: tsup_host_setting_closed (SupHostSettingClosed.v:43) *)
+(* sup_host_setting: tsup_host_setting_closed (SupHostSettingClosed.v:44) *)
 Lemma cl_sup_host_setting : forall fx0 : YK11.FPState,
   @B.Prog.sup_host_setting_c.tsup_host_setting_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupHostSettingClosed.tsup_host_setting_closed fx0 rc B MT HB MTL MTFL cl_record cl_arg_line
   cl_arg_s cl_xmalloc cl_mix_call r_sm0 r_snprintf r_free4 r_strlen r_strcat).
 Qed.
-(* sup_instance_info: tsup_instance_info_closed (SupInstanceInfoClosed.v:40) *)
+(* sup_instance_info: tsup_instance_info_closed (SupInstanceInfoClosed.v:41) *)
 Lemma cl_sup_instance_info : forall fx0 : YK11.FPState,
   @B.Prog.sup_instance_info_c.tsup_instance_info_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupInstanceInfoClosed.tsup_instance_info_closed fx0 rc B MT HB MTL MTFL cl_record cl_arg_s
   cl_rec_shape_of cl_answer r_sm0 r_snprintf).
 Qed.
-(* sup_instance_verb: tsup_instance_verb_closed (SupInstanceVerbClosed.v:43) *)
+(* sup_instance_verb: tsup_instance_verb_closed (SupInstanceVerbClosed.v:44) *)
 Lemma cl_sup_instance_verb : forall fx0 : YK11.FPState,
   @B.Prog.sup_instance_verb_c.tsup_instance_verb_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupInstanceVerbClosed.tsup_instance_verb_closed fx0 rc B MT HB MTL MTFL cl_record cl_arg_line
   cl_arg_s cl_rec_shape_of cl_answer r_sm0 r_snprintf r_strspn r_strcspn).
 Qed.
-(* sup_lv2_worker_set: tsup_lv2_worker_set_closed (SupLv2WorkerSetClosed.v:38) *)
+(* sup_lv2_worker_set: tsup_lv2_worker_set_closed (SupLv2WorkerSetClosed.v:39) *)
 Lemma cl_sup_lv2_worker_set : forall fx0 : YK11.FPState,
   @B.Prog.sup_lv2_worker_set_c.tsup_lv2_worker_set_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupLv2WorkerSetClosed.tsup_lv2_worker_set_closed fx0 rc B MT HB MTL cl_record cl_arg_s
   cl_rec_shape_of cl_answer).
 Qed.
-(* sup_pin_accept: tsup_pin_accept_closed (SupPinAcceptClosed.v:39) *)
+(* sup_pin_accept: tsup_pin_accept_closed (SupPinAcceptClosed.v:40) *)
 Lemma cl_sup_pin_accept : forall fx0 : YK11.FPState,
   @B.Prog.sup_pin_accept_c.tsup_pin_accept_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupPinAcceptClosed.tsup_pin_accept_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_rec_shape_of
   cl_answer).
 Qed.
-(* sup_policy_set: tsup_policy_set_closed (SupPolicySetClosed.v:35) *)
+(* sup_policy_set: tsup_policy_set_closed (SupPolicySetClosed.v:36) *)
 Lemma cl_sup_policy_set : forall fx0 : YK11.FPState,
   @B.Prog.sup_policy_set_c.tsup_policy_set_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupPolicySetClosed.tsup_policy_set_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_rec_shape_of
   cl_answer).
 Qed.
-(* sup_pool_config: tsup_pool_config_closed (SupPoolConfigClosed.v:43) *)
+(* sup_pool_config: tsup_pool_config_closed (SupPoolConfigClosed.v:44) *)
 Lemma cl_sup_pool_config : forall fx0 : YK11.FPState,
   @B.Prog.sup_pool_config_c.tsup_pool_config_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
@@ -469,25 +470,25 @@ Qed.
 Lemma cl_sup_remove_all : forall fx0 : YK11.FPState,
   @B.Prog.sup_remove_all_c.tsup_remove_all_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @SupRemoveAllClosed.tsup_remove_all_closed fx0 rc B MT HB MTL cl_record cl_answer). Qed.
-(* sup_remove: tsup_remove_closed (sup_remove_closed.v:41) *)
+(* sup_remove: tsup_remove_closed (sup_remove_closed.v:42) *)
 Lemma cl_sup_remove : forall fx0 : YK11.FPState, @B.Prog.sup_remove_c.tsup_remove_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @sup_remove_closed.tsup_remove_closed fx0 rc B MT HB MTL MTFL cl_record cl_arg_s cl_answer r_sm0
   r_snprintf).
 Qed.
-(* sup_reset: tsup_reset_closed (SupResetClosed.v:39) *)
+(* sup_reset: tsup_reset_closed (SupResetClosed.v:40) *)
 Lemma cl_sup_reset : forall fx0 : YK11.FPState, @B.Prog.sup_reset_c.tsup_reset_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupResetClosed.tsup_reset_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_rec_shape_of cl_answer).
 Qed.
-(* sup_worker_env: tsup_worker_env_closed (SupWorkerEnvClosed.v:42) *)
+(* sup_worker_env: tsup_worker_env_closed (SupWorkerEnvClosed.v:43) *)
 Lemma cl_sup_worker_env : forall fx0 : YK11.FPState,
   @B.Prog.sup_worker_env_c.tsup_worker_env_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @SupWorkerEnvClosed.tsup_worker_env_closed fx0 rc B MT HB MTL cl_record cl_arg_s cl_rec_shape_of
   cl_answer).
 Qed.
-(* sup_worker_list: tsup_worker_list_closed (SupWorkerListClosed.v:39) *)
+(* sup_worker_list: tsup_worker_list_closed (SupWorkerListClosed.v:40) *)
 Lemma cl_sup_worker_list : forall fx0 : YK11.FPState,
   @B.Prog.sup_worker_list_c.tsup_worker_list_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
@@ -520,7 +521,7 @@ Proof.
 exact (fun fx0 => @CmdReplyWalksClosed.tsend_message_closed fx0 rc B MT HB MTL MTFL cl_rec_clear cl_verbs_receive
   r_sm1 r_malloc4 r_free4 r_memcpy).
 Qed.
-(* check_words_add: tcheck_words_add_closed (CheckWordsAddClosed.v:35) *)
+(* check_words_add: tcheck_words_add_closed (CheckWordsAddClosed.v:36) *)
 Lemma cl_check_words_add : forall fx0 : YK11.FPState,
   @B.Prog.check_words_add_c.tcheck_words_add_spec fx0 rc SK0 PB_cmd B MT.
 Proof. exact (fun fx0 => @CheckWordsAddClosed.tcheck_words_add_closed fx0 rc B MT HB r_strcmp r_strncmp). Qed.

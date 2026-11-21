@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (G0_stmt takes valid_launch; MAIN reads valid_launch from valid_input_either and entry_launch_ok_va from valid_entry_sv48, passes valid_launch to the registry tables and G0, and passes both to the Top theorems in place of entry_stack_fits; the file case reads MP's file-system conjunct; G0_stmtR and the registry tables of the file and directory families' certificates for the start state with CONFIG_RSEQ, passed to the Top theorems). *)
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Specs Run.
@@ -24,6 +25,12 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Bridge Require Acct AcctR
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AsanW Require ARepAtMain ATsafeOps.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp Require Ops ClientX TdOps TdInst.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.BothU Require UnivBoth.
+(* The CONFIG_RSEQ copies first: their short names are shadowed by the in-place ones below, and are used only
+   through the full-path aliases after the imports. *)
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2FR Require T_Both2F.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2LR Require T_Both2L.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR Require Both_r12.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueAsmB.RunR Require Registry_Both2F Registry_Both2L Registry_Both2E Registry_Both2D.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2F Require T_Both2F.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2L Require T_Both2L.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2E Require T_Both2E.
@@ -49,6 +56,13 @@ Module R2 := RootBoth2.RootBoth2.
 Module RN := RootBothN.RootBothN.
 Module OUR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common.ShapeAlg.
 Module RCo := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib.RunConst.
+Module TFR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2FR.T_Both2F.
+Module TLR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2LR.T_Both2L.
+Module L12R := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR.Both_r12.LibRunBoth_r12.
+Module RgFR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueAsmB.RunR.Registry_Both2F.
+Module RgLR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueAsmB.RunR.Registry_Both2L.
+Module RgER := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueAsmB.RunR.Registry_Both2E.
+Module RgDR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueAsmB.RunR.Registry_Both2D.
 
 Section MainBoth.
 
@@ -67,11 +81,17 @@ Definition RAx (rc : runConstT) (en : ExecEntry) (inp : ProcInput) (Hva : valid_
   AsanDrun.TwinB.RA AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok (ACCT rc) (COVP rc) NMAX (ACCT_led rc) (ACCT_cov rc) (ACCT_cov_sh rc) (ACCT_mat rc) UnivBoth.UNIV (AI_frame_top rc) Cw (ACCT_fds rc)
               AsanImgx.TwinB.IMGX_A_rs3 inp (en_sp en) (en_draw en) Hva.
 
-Definition G0_stmt : Prop := forall rc en inp Hva (Hsp : valid_sp (en_sp en)) (Hfit : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp)) E0 K,
+Definition G0_stmt : Prop := forall rc en inp Hva (Hsp : valid_sp (en_sp en)) (Hfit : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp)) (Hvl : valid_launch inp) E0 K,
   r_PB (RAx rc en inp Hva) (Val.eb E0) ->
   LNODE bsegs (RAx rc en inp Hva) Both_r12.LibRunBoth_r12.N E0 K (t_st T_Both2F.R_LIBGEN_r12_RET) ->
   LNODE bsegs (RAx rc en inp Hva) Both_r12.LibRunBoth_r12.N E0 K (t_st T_Both2L.T_G0_r31o5n0o1n63o7n1o15n2o10n0o11n0o12n0o13n0o14n1o16n0o17n0).
 Hypothesis G0 : G0_stmt.
+(* the same library node for the certificates of the start state with CONFIG_RSEQ *)
+Definition G0_stmtR : Prop := forall rc en inp Hva (Hsp : valid_sp (en_sp en)) (Hfit : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp)) (Hvl : valid_launch inp) E0 K,
+  r_PB (RAx rc en inp Hva) (Val.eb E0) ->
+  LNODE bsegs (RAx rc en inp Hva) L12R.N E0 K (t_st TFR.R_LIBGEN_r12_RET) ->
+  LNODE bsegs (RAx rc en inp Hva) L12R.N E0 K (t_st TLR.T_G0_r31o5n0o1n63o7n1o15n2o10n0o11n0o12n0o13n0o14n1o16n0o17n0).
+Hypothesis G0R : G0_stmtR.
 
 Lemma UNIV_ok : ARepAtMain.TwinB.univ_ok UnivBoth.UNIV.
 Proof. split; [apply Nat.leb_le; vm_compute; reflexivity| vm_compute; discriminate]. Qed.
@@ -102,7 +122,7 @@ Proof.
   split; [exact NS|]. split.
   { destruct Hc as [E|[D _]]; [rewrite E; reflexivity| exact D]. }
   split; [exact Hs|].
-  destruct Hc as [E|[_ L]]; [left; exact E| right]. intros model HMP. unfold AsanDrun.TwinB.MP, AsanDrun.TwinB.fs0 in HMP. rewrite HMP. exact L.
+  destruct Hc as [E|[_ L]]; [left; exact E| right]. intros model HMP. unfold AsanDrun.TwinB.MP, AsanDrun.TwinB.fs0 in HMP. rewrite (proj1 HMP). exact L.
 Qed.
 
 Lemma CRED0_same : RunBothATND.CRED0i = RunBothF.CRED0i.
@@ -114,8 +134,8 @@ Theorem MAIN : forall en inp, valid_entry (mkImage bsegs b_init_pc b_phdrs) en i
   forall ms mo, ME.bmain_at en inp ms mo -> OUR.realizes bsegs (mkCfg ms mo) (K inp).
 Proof.
   intros en inp Hen Hi ms mo HM.
-  pose proof Hi as (Hva & Hve & _ & _ & _ & _ & _ & Hhw & Hsz & _).
-  apply (proj1 (valid_entry_sv48 _ en inp Hsz)) in Hen. destruct en as [sp brk0 mb rnd]. destruct Hen as (Hsp & _ & _ & Hfit).
+  pose proof Hi as (Hva & Hve & _ & _ & _ & _ & _ & _ & Hhw & Hsz & _ & Hvl & _).
+  apply (proj1 (valid_entry_sv48 _ en inp Hsz)) in Hen. destruct en as [sp brk0 mb rnd]. destruct Hen as (Hsp & _ & _ & Hfit & Hlau).
   set (en := mkEntry sp brk0 mb rnd) in *.
   set (rc := RCo.run_consts_of en (Z_to_bv 64 0) Hsp).
   assert (USP : bv_unsigned (en_sp en) = @ATOP rc + 8388608).
@@ -128,33 +148,38 @@ Proof.
   { split; [exact HM|]. split; [exact USP|]. split; [exact AH|]. split; [rewrite CRED0_same; exact AC|].
     split; [exact HU|]. split; [exact LZ|]. exact APR. }
 
-  pose proof (@Registry_Both2L.ctab_Both2L rc inp sp rnd Hva Hsp Hfit) as cL.
-  pose proof (@Registry_Both2E.ctab_Both2E rc inp sp rnd Hva Hsp Hfit) as cE.
-  pose proof (fun Hs Hc => @Registry_Both2A.ctab_Both2A rc inp sp rnd Hva Hsp Hfit (fam_absent inp Hva Hs Hc)) as cA.
-  pose proof (fun Hl : (4096 <= length (AsanDrun.TwinB.p1 inp))%nat => @Registry_Both2T.ctab_Both2T rc inp sp rnd Hva Hsp Hfit Hl) as cT.
-  pose proof (@Registry_BothNU.ctab_BothNU rc inp sp rnd Hva Hsp Hfit) as cN.
-  pose proof (@Registry_Both2D.ctab_Both2D rc inp sp rnd Hva Hsp Hfit) as cD.
+  pose proof (@Registry_Both2L.ctab_Both2L rc inp sp rnd Hva Hsp Hfit Hvl) as cL.
+  pose proof (@Registry_Both2E.ctab_Both2E rc inp sp rnd Hva Hsp Hfit Hvl) as cE.
+  pose proof (fun Hs Hc => @Registry_Both2A.ctab_Both2A rc inp sp rnd Hva Hsp Hfit Hvl (fam_absent inp Hva Hs Hc)) as cA.
+  pose proof (fun Hl : (4096 <= length (AsanDrun.TwinB.p1 inp))%nat => @Registry_Both2T.ctab_Both2T rc inp sp rnd Hva Hsp Hfit Hvl Hl) as cT.
+  pose proof (@Registry_BothNU.ctab_BothNU rc inp sp rnd Hva Hsp Hfit Hvl) as cN.
+  pose proof (@Registry_Both2D.ctab_Both2D rc inp sp rnd Hva Hsp Hfit Hvl) as cD.
+  pose proof (@RgLR.ctab_Both2L rc inp sp rnd Hva Hsp Hfit Hvl) as cLR.
+  pose proof (@RgER.ctab_Both2E rc inp sp rnd Hva Hsp Hfit Hvl) as cER.
+  pose proof (@RgDR.ctab_Both2D rc inp sp rnd Hva Hsp Hfit Hvl) as cDR.
   set (FAMA := @TopBothATND.rz_absent_asan_top rc (ACCT rc) (COVP rc) NMAX (ACCT_led rc) (ACCT_cov rc) (ACCT_cov_sh rc) (ACCT_mat rc) (AI_frame_top rc) (ACCT_fds rc)
-                en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta).
+                en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta).
   set (FAMT := @TopBothATND.rz_toolong_asan_top rc (ACCT rc) (COVP rc) NMAX (ACCT_led rc) (ACCT_cov rc) (ACCT_cov_sh rc) (ACCT_mat rc) (AI_frame_top rc) (ACCT_fds rc)
-                en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta).
+                en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta).
   set (FAMD := @TopBothATND.rz_dir_asan_top rc (ACCT rc) (COVP rc) NMAX (ACCT_led rc) (ACCT_cov rc) (ACCT_cov_sh rc) (ACCT_mat rc) (AI_frame_top rc) (ACCT_fds rc)
-                en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta).
+                en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta).
   set (FAMN := @TopBothATND.rz_usage_asan_top rc (ACCT rc) (COVP rc) NMAX (ACCT_led rc) (ACCT_cov rc) (ACCT_cov_sh rc) (ACCT_mat rc) (AI_frame_top rc) (ACCT_fds rc)
-                en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta).
+                en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta).
   set (FAMF := @TopBothF.rz_file_asan_top rc (ACCT rc) (COVP rc) NMAX (ACCT_led rc) (ACCT_cov rc) (ACCT_cov_sh rc) (ACCT_mat rc) (AI_frame_top rc) (ACCT_fds rc)
-                en inp Hva Hve Hsp Hfit Hhw).
+                en inp Hva Hve Hsp Hlau Hhw Hvl).
 
   destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hargc2 | HargcN]; [| exact (FAMN HargcN cN HN)].
   destruct (Nat.lt_ge_cases (length (AsanDrun.TwinB.p1 inp)) 4096) as [Hs | Hl]; [| exact (FAMT Hargc2 Hl (cT Hl) H2)].
   destruct (list_eq_dec (@bv_eq_dec 8) (AsanDrun.TwinB.p1 inp) []) as [Hnil | Hne]; [exact (FAMA Hargc2 Hs (or_introl Hnil) (cA Hs (or_introl Hnil)) H2)|].
-  destruct (Sumbool.sumbool_of_bool (path_is_dirref (AsanDrun.TwinB.p1 inp))) as [Hd | Hd]; [exact (FAMD Hargc2 Hd cD H2)|].
+  destruct (Sumbool.sumbool_of_bool (path_is_dirref (AsanDrun.TwinB.p1 inp))) as [Hd | Hd]; [exact (FAMD Hargc2 Hd cD cDR H2)|].
   destruct (opt_cases (fs_lookup (in_fs inp) (AsanDrun.TwinB.p1 inp))) as [[f Hl] | Hl].
   - assert (Hfile : fs_lookup (in_fs inp) (AsanDrun.TwinB.p1 inp) = Some (AsanDrun.TwinB.file inp)) by (unfold AsanDrun.TwinB.file, AsanDrun.TwinB.fs0; rewrite Hl; reflexivity).
     assert (AC' : ACCT rc (wbv (wlit RunBothF.CRED0i)) L RNG sta [] mo) by (rewrite <- CRED0_same; exact AC).
     assert (HFILE : fs_lookup (in_fs inp) (AsanDrun.TwinB.p1 inp) <> None) by (rewrite Hfile; discriminate).
-    pose proof (@Registry_Both2F.ctab_Both2F rc inp sp rnd Hva Hsp Hfit (AsanPB.TwinB.MP_file inp HFILE)) as cF.
-    exact (FAMF Hargc2 Hfile Hd Hne Hs cF cL cE (G0 rc en inp Hva Hsp Hfit) ms mo L RNG sta HM USP AH AC' HU LZ APR).
+    pose proof (@Registry_Both2F.ctab_Both2F rc inp sp rnd Hva Hsp Hfit Hvl (AsanPB.TwinB.MP_file inp HFILE)) as cF.
+    pose proof (@RgFR.ctab_Both2F rc inp sp rnd Hva Hsp Hfit Hvl (AsanPB.TwinB.MP_file inp HFILE)) as cFR.
+    exact (FAMF Hargc2 Hfile Hd Hne Hs cF cL cE (G0 rc en inp Hva Hsp Hfit Hvl) cFR cLR cER (G0R rc en inp Hva Hsp Hfit Hvl)
+             ms mo L RNG sta HM USP AH AC' HU LZ APR).
   - exact (FAMA Hargc2 Hs (or_intror (conj Hd Hl)) (cA Hs (or_intror (conj Hd Hl))) H2).
 Qed.
 

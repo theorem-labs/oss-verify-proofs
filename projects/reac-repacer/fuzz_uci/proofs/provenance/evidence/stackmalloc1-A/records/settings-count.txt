@@ -14,7 +14,7 @@ read Reusable/YF0v.v: 3 reported
    :16 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
 SUMMARY: 3 files read of 3 given; ESCAPES 3; PLAIN 6; UNMEASURED 0; KERNEL 0; levels TACTIC 9, OPTION 0; HINTS 0 (report only, tactic-level)
 rc=0
-# fuzz_grant's released counterparts (recipes 4f87de75d67)
+# fuzz_grant's released counterparts (recipes)
 TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
 read proofs/libreac/fuzz_grant/lib/A/Rt/AF0r.v: 3 reported
    :20 PLAIN TACTIC: Unset Lia Cache.

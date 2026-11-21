@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch input ProcInput, the m_channel_reader premise, the vDSO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -16,6 +17,7 @@ From OSSVerify.Proofs.leptonica.fhmtgen_fuzzer.lib.O10 Require Import O10Main.
 From OSSVerify.Proofs.leptonica.fhmtgen_fuzzer.lib.V10 Require Import V10Drv1.
 Import V10Drv1.V10FuzzIface.
 From OSSVerify.Proofs.leptonica.fhmtgen_fuzzer.lib.V10 Require Import V10Main.
+From OSSVerify.Proofs.leptonica.fhmtgen_fuzzer.lib.Common.Cfg Require Import RomStable.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -38,13 +40,18 @@ Section Pre.
     intros [sps brks mbs draws] [spt brkt mbt drawt] inp Hvs Hvt Hvi _.
     pose proof (valid_input_va_size _ Hvi) as Hsv.
     rewrite (valid_entry_sv48 _ _ _ Hsv) in Hvs. rewrite (valid_entry_sv48 _ _ _ Hsv) in Hvt.
-    destruct Hvs as (Hsps & Hbrks & _ & Hfits). destruct Hvt as (Hspt & Hbrkt & _ & Hfitt).
+    destruct Hvs as (Hsps & Hbrks & _ & Hfits & Hlaus). destruct Hvt as (Hspt & Hbrkt & _ & Hfitt & Hlaut).
+    pose proof (valid_input_channel_reader _ Hvi) as Hrd. pose proof (valid_input_launch _ Hvi) as Hvl.
     destruct Hvi as (Hva & Hve & _).
     apply (shape_strong_equiv_ef _ _ _ sps brks mbs draws ShippedBudgets.lim_source
              _ _ _ spt brkt mbt drawt ShippedBudgets.lim_target (spec (in_argv inp) (in_fs inp)) inp).
-    - apply (@O10Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption.
+    - (* the run reads the binary against its segments and the vDSO pair: [RomStable.run_init] *)
+      apply run_init; [reflexivity |].
+      apply (@O10Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption.
       unfold ShippedBudgets.lim_source, source_alloc_limit. apply Z.le_refl.
-    - apply (@V10Main.ref_realizes_spec_pins ALu CLu ASRu PINu FZu); try assumption.
+    - (* the run reads the binary against its segments and the vDSO pair: [RomStable.run_init] *)
+      apply run_init; [reflexivity |].
+      apply (@V10Main.ref_realizes_spec_pins ALu CLu ASRu PINu FZu); try assumption.
       unfold ShippedBudgets.lim_target, target_alloc_limit. cbn. lia.
   Qed.
 End Pre.

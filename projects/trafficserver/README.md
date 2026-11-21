@@ -3,7 +3,7 @@
 
 [trafficserver.apache.org](https://trafficserver.apache.org) · OSS-Fuzz: [projects/trafficserver](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/trafficserver)
 
-**Status: available.** 8 of OSS-Fuzz's 9 fuzz targets have statements. 32 binaries, 127 MB. 56 statements: 0 proved, 0 known false, 0 suspected false, 0 blocked by the model, 56 open.
+**Status: available.** 8 of OSS-Fuzz's 9 fuzz targets have statements. 32 binaries, 127 MB. 56 statements: 0 proved, 0 known false, 0 suspected false, 7 blocked by the model, 49 open.
 
 Built from trafficserver (commit `97d2831f`) with 3 patches, listed under [How these binaries were built](#how-these-binaries-were-built).
 
@@ -14,10 +14,10 @@ Built from trafficserver (commit `97d2831f`) with 3 patches, listed under [How t
 | [fuzz_chunked](fuzz_chunked/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [fuzz_hpack](fuzz_hpack/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
 | [fuzz_http](fuzz_http/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [fuzz_json](fuzz_json/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [fuzz_proxy_protocol](fuzz_proxy_protocol/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [fuzz_rec_http](fuzz_rec_http/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
-| [fuzz_yamlcpp](fuzz_yamlcpp/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 7 |
+| [fuzz_json](fuzz_json/) | Copies the input (size_data from 5 to 1024 bytes) into a string and passes it as a JSON-RPC 2.0 message to rpc::JsonRPCManager::handle_call, with a default-constructed rpc::Context, on a new manager to which the harness adds no handlers (only the manager's own show_registered_handlers and get_service_descriptor methods are registered), and drops the response. Before the call it installs a new Diags object with DiagsPtr::set, and it deletes that object after. It returns -1 for an input with size_data below 5 or above 1024. | none | 7 |
+| [fuzz_proxy_protocol](fuzz_proxy_protocol/) | Views the input (size_data from 8 to 1024 bytes) in place as a swoc::TextView and passes it with a new ProxyProtocol to proxy_protocol_parse, which parses a PROXY protocol v1 or v2 header when the input begins with that version's preface and has at least 15 (v1) or 16 (v2) bytes; it drops the returned length and the parsed fields. Before the call it installs a new Diags object with DiagsPtr::set, and it deletes that object after. It returns -1 for an input with size_data below 8 or above 1024. | none | 7 |
+| [fuzz_rec_http](fuzz_rec_http/) | Copies the input (Size from 8 to 1024 bytes) into a string and, after ts_session_protocol_well_known_name_indices_init registers the well-known protocol names, converts it, read as a comma-separated list of ALPN protocol names, to ALPN wire format with convert_alpn_to_wire_format into a 30-byte (MAX_ALPN_STRING) buffer, and drops the result and the buffer. Before those calls it installs a new Diags object with DiagsPtr::set, and it deletes that object after. It returns -1 for an input with Size below 8 or above 1024. | none | 7, 7 blocked by the model |
+| [fuzz_yamlcpp](fuzz_yamlcpp/) | Copies the input (size_data from 8 to 1024 bytes) into a string and parses it with yaml-cpp's YAML::Load, catching and dropping every exception (catch (...)), and drops the parsed node. It returns -1 for an input with size_data below 8 or above 1024. | none | 7 |
 
 Not included: **fuzz_http3frame** (it needs a Rust compiler in the build image).
 
@@ -26,18 +26,20 @@ Not included: **fuzz_http3frame** (it needs a Rust compiler in the build image).
 - **`<build>_agrees`**: on every input on which the plain build is never refused memory for exceeding its budget (a premise), neither build reaches an error, and the two have the same set of observable behaviours: every sequence of writes and exit status one can show, the other can too. A sanitizer report aborts, so this rules out every error the sanitizer build's configuration detects. It does not rule out a run that never ends; only a halts statement does.
 
 ## Known issues
-None known.
+| statement | status | why |
+|---|---|---|
+| fuzz_rec_http: every statement | blocked by the model | each binary calls prctl |
 
 ## Get and run the binaries
     ./oft fetch trafficserver
     ./oft verify-sha trafficserver
 
-By hand: download `trafficserver-bin.tar.zst` from release [v2026.10.0](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0), unpack it into `projects/trafficserver/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
+By hand: download `trafficserver-bin.tar.zst` from release [v2026.11.3](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.3), unpack it into `projects/trafficserver/bin/`, and check each file against its SHA-256 in the harness's `harness.yaml`. Each binary is run as `<file> <input-file>` under qemu-user 10; an OSS-Fuzz testcase needs the six-byte header `00 00 00 00 00 00` in front ([docs/running.md](../../docs/running.md)).
 
 ## How these binaries were built
 - Library: [apache/trafficserver](https://github.com/apache/trafficserver) at `97d2831fbd38c8f43b39e3ed996d9bd6e3173384`, built with CMake:
-  - 3 patches, whose text is not in this release yet (it ships in the source bundle)
-- Harnesses: unmodified
+  - 3 patches, whose text is not in this repository: it is in `recipe.tar.zst` in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src), under `patches/`, in the order `patches/series.tsv` gives
+- Harnesses: the harness files are modified in `fuzz_json`, `fuzz_proxy_protocol`, `fuzz_rec_http` and `fuzz_yamlcpp` (see each harness page); the others are unmodified
 - Everywhere: static riscv64 compiled for RV64G, musl, clang 20.1.8 with `-Os -g`, and a small driver that reads the input file ([docs/running.md](../../docs/running.md)). The sanitizer flags and options are in [docs/building.md](../../docs/building.md). Each harness page lists what else its builds change, and which of its checks were confirmed in the binaries.
 - Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. A binary whose SHA-256 differs after a rebuild with it is a bug: please open an issue.
 

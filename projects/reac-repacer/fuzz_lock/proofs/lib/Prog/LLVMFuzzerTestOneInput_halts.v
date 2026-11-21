@@ -1,5 +1,5 @@
 (* fuzz_lock's plain halting statement, in the form of libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_halts.v
-   (release 25e3d17bdb50). It closes with no premise: the libc strlen contract is strlen.v's strlen_holds (the walk
+   (release). It closes with no premise: the libc strlen contract is strlen.v's strlen_holds (the walk
    of libreac/fuzz_disco's strlen, by path), and the frame step for a return of 0 or -1 (FrameRet.v frame_ret_hyp)
    is FrameRetOk.v's frame_ret_ok. *)
 From Stdlib Require Import ZArith List Lia.

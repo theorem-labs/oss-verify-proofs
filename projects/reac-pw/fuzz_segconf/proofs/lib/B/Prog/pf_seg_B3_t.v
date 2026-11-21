@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Reusable/YCbq.v, with its numbers changed; 205 of its 373 lines of code are new or changed and 3177 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaRt.v, with its module paths and module names changed; 289 of its 338 lines of code are new or changed and 324 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the snprintf step and the "%s" format
    fact that segment B3 of reac_segconf_parse_file's walk (lib/B/Prog/pf_pieces.v's S_B3, the call
    snprintf(c->reading, 96, "%s", label ? label : "reac-pw.conf") at 0x880cc) needs. The B3 segment lane of the image-B G3 walk owner,
@@ -13,9 +14,9 @@
    proves no function (kind: model lemma): pure helper lemmas for the segment walk lib/B/Prog/pf_seg_B3.v.
 
    ADAPTED (a copy, module paths to image B's kit and Rt carriers) from the image-A G3 walk owner's image-A file
-   lib/A/Prog/pf_a8b_t.v (commit 3f59c8d75ed4, an image-A segment lane), itself the image-A refuse walk lane's
+   lib/A/Prog/pf_a8b_t.v (an image-A segment lane), itself the image-A refuse walk lane's
    refuse_pft.v r_snp_pre / r_snp_post / r_aj_snprintf_atSF with one premise changed (the destination off the image
-   as YCbq.off_img). Row 4 on image B is RtFormat.asnprintf_realizes = RtPFCmd.asnprintf_sh (lib/B/Rt/RtPFCmd.v:359,
+   as YCbq.off_img). Row 4 on image B is RtFormat.asnprintf_realizes = RtPFCmd.asnprintf_sh (lib/B/Rt/RtPFCmd.v:360,
    image B's constants CMD_GOTW 0xa3e98, CMD_SNP_K = 2 * ESTACK, CMD_IMG_LO 0x10000, CMD_IMG_HI kImgEnd); no lemma
    here names an image-A number.
    - b3t_snp_pre, b3t_snp_post, b3t_aj_snprintf_FF, b3t_aj_snprintf_atSF: the snprintf step through the walk's

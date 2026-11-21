@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the segment of check_reply's walk (fuzz_command.asan, 0x86d78) from the strlen
    call 0x86f68 through rec_shape_of (0x86f74) and `j 0x86fcc` to the shape join, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's call steps: cl_callS,
-   jafter_call_keep_pi) at c8557374ad2e.
+   jafter_call_keep_pi).
 
    The symbolic state carries the registers only (no regions): the segment loads and stores nothing, so each run
    keeps every byte (frame_of with no window). cr_mid goes from point to point by cr_mid_step: the journal from the
@@ -13,6 +13,7 @@
 
    rec_shape_of's post (rec_shape_of_c.v) gives the returned string as astr_argA for every owned-block list, which
    is the join's premise (CR_JOIN_stmt) at the list []; its `ly' = ly /\ S' = S` carries cr_ls to the join. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

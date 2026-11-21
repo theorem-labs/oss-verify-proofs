@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput.v, with its module paths changed; 122 of its 387 lines of code are new or changed and 1164 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Glue of the walk of fuzz_frame's LLVMFuzzerTestOneInput between Exec.evt segments and the SR
-   contracts of its callees, in the form of libreac/fuzz_decode's lib/Prog/fd_glue.v and fd_seghelp.v
-   (bf7779f81ed7): g_run runs an evt segment under the frame lf_fr, g_malloc, g_free and g_crt call
+   contracts of its callees, in the form of libreac/fuzz_decode's lib/Prog/fd_glue.v and fd_seghelp.v:
+   g_run runs an evt segment under the frame lf_fr, g_malloc, g_free and g_crt call
    malloc, free and check_round_trip through their contracts. g_crt states the premises of
    fuzz_frame's check_round_trip_contract. Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.

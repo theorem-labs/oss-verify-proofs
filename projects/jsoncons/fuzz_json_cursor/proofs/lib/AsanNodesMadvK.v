@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the budget-refusal facts): changed srz_madvise_lazy. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import AsanAcct.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim ShapeAlg SpinAlg Nodes StoreOk AgentLib AgentNodes RefNodes AsanAcctShape Scfg KitNodesS.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import AsanNodesLibEK.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -67,7 +69,9 @@ Proof.
   eapply (srz_det_noacc segs scfg ms model (getr regs 17)
             (mkEffectU (Z_to_bv 64 0) [] [(a, Z_to_bv 64 len)] [] [] [])
             (madvise_dontneed_next model a (Z_to_bv 64 len)));
-    [exact Hh | reflexivity | rewrite Hno; reflexivity | | | | reflexivity |].
+    [exact Hh | reflexivity | rewrite Hno; reflexivity
+    | exact (RomBase.sys_rob_memfree segs ms model (getr regs 17) eq_refl ltac:(rewrite Hno; exact RomBase.memfree_233))
+    | | | | reflexivity |].
   - intros eff m' evs. split.
     + intros Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
       destruct ws; [|discriminate]. destruct us; [|discriminate].

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-370, for
    libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_JE.v, with its addresses and numbers changed; 263 of its 443 lines of code are new or changed and 1282 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Sub-run D of piece E of segment J of LLVMFuzzerTestOneInput's ASan walk (fuzz_identity.asan 0x81d8c .. 0x81e18,
    BASE + 0x1680 .. BASE + 0x170c): jeD_stmt of LLVMFuzzerTestOneInput_JE.v.
      0x81d8c .. 0x81da0  a6 := the shadow base (mf + 176), a4 := ' ', s2 := ld (mf + 200), a2 := object 10, a3 := 6
@@ -100,7 +101,7 @@ Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 
 (* ---- what the segment takes, each as the contract's Section states it (LLVMFuzzerTestOneInput.v) ----------- *)
 Hypothesis HSTK : STK_LLVMF <= LLVMF_STK.
-(* The contract's own event bound (LLVMFuzzerTestOneInput.v:124): put_dec asks `st_nev Sc <= EV_MAX`, which
+(* The contract's own event bound (LLVMFuzzerTestOneInput.v:125): put_dec asks `st_nev Sc <= EV_MAX`, which
    the entry's pre-condition gives only through it. *)
 Hypothesis HEV : EV_LLVMF <= EV_LIB.
 Hypothesis LAWS : AR_laws SEGS B.

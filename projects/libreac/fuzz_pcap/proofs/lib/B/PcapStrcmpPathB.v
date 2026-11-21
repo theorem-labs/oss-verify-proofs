@@ -10,14 +10,15 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      B     := YD2l.PcapB,  roimg := YE3i.ro_img,
      pc    := pa_sigma (PI_pcap rc) PS___interceptor_trampoline_strcmp (= 0x415b4, by computation: strcmp_pc_B),
      x     := pa_val (PI_pcap rc) (A_OBJ FO_PATH)                       (= 0x20d00, by computation: fuzz_path_obj_B).
-   The source is lib/B/Rt/StrcmpIcpt.v:470 strcmp_lit_contract (astrcmp_lit_realizes B, lib/B/Rt/StrcmpDef.v:61),
+   The source is lib/B/Rt/StrcmpIcpt.v:471 strcmp_lit_contract (astrcmp_lit_realizes B, lib/B/Rt/StrcmpDef.v:62),
    with its two premises at PcapB: AR_laws tfibsegs PcapB (lib/Reusable/YG0q.v:805 AR_laws_ok) and PcapSyms PcapB
-   (lib/Reusable/YD2l.v:72 TfibB_syms). The contract's one literal instance (SM_INST, StrcmpDef.v:48) is
+   (lib/Reusable/YD2l.v:73 TfibB_syms). The contract's one literal instance (SM_INST, StrcmpDef.v:48) is
    (0x20d00, 0x20d00, 0), its entry SM_ENTRY = 0x415b4 and its post astrcmp_post (StrcmpDef.v:50) is the post of
    astrcmp_path_at at res = 0, token for token. Its x and y premises are the same two facts, because x = y.
    The literal [0x20d00, 0x20d0d) ("<fuzz-input>" and NUL) is inside YE3i's chunk 0x20a84 .. 0x20d0d
    (lib/Reusable/YE3i.v:48, fuzz_path_in_ro_chunk), and its 13 image bytes are those bytes (fuzz_path_bytes_img). So
    ro_img holds them; the strcmp walk reads them from ro_img there (StrcmpIcpt.v:352). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

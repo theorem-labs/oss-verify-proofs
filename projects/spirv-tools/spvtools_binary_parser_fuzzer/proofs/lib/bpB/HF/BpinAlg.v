@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's injected -ENOMEM, a spurious refusal under the forced-only allocation configuration; each node of a walk asks that its system call answers the same over a larger read-only backing (RomBase.sys_rob), so a walk over the image's own segments lifts to the run's segment list). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
-From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Bcfg BSimInv BExitSim BCatSim BMmapSim BShapeAlg BDivergeSim BazyFrame BSymTac.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Bcfg BSimInv BExitSim BCatSim BMmapSim BShapeAlg BNodes BllocNodes BDivergeSim BazyFrame BSymTac.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
@@ -19,6 +21,7 @@ Inductive srealizes : config -> TSet -> Prop :=
 | srz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                     (T : I -> TSet) (i0 : I),
     node_ok segs c I evs nx ->
+    RomBase.sys_rob segs c ->   (* LPS 08b1429: as [BShapeAlg.rz_node] *)
     (forall i, srealizes (nx i) (T i)) ->
     srealizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | srz_halt : forall c,
@@ -31,8 +34,8 @@ Lemma srealizes_of_realizes : forall c T,
   realizes segs c T -> srealizes c T.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (srz_node c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (srz_node c I evs nx T i0 Hnode Hrob IH).
   - exact (srz_halt c Hh).
   - exact (srz_conseq c T T' IH Heq).
 Qed.
@@ -40,7 +43,7 @@ Qed.
 Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - apply Heq. exact IH.
@@ -50,12 +53,13 @@ Definition srz_path (c : config) : Prop := exists T, srealizes c T.
 
 Lemma srz_silent1 : forall c c' T,
   node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  RomBase.sys_rob segs c ->
   srealizes c' T ->
   srealizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (srz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -71,7 +75,7 @@ Lemma srz_step : forall ms model ms' T,
   srealizes (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply srz_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply srz_silent1; [apply node_instr; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma srz_msteps : forall ms ms' model T,
@@ -99,7 +103,7 @@ Proof.
   apply srealizes_of_realizes. apply (rz_exit segs ms model x8); assumption.
 Qed.
 
-Lemma node_munmap : forall ms model x8,
+Lemma node_munmap {AF : AllocForced SC} : forall ms model x8,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
@@ -110,21 +114,58 @@ Lemma node_munmap : forall ms model x8,
                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
                                   model)).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno Hargs. split.
+  intros ms model x8 Hh Hlazy Hsvc Hno Hargs.
+  assert (Hno' : bv_unsigned (in_sysno (sys_input segs ms x8)) = 215%Z)
+    by (rewrite in_sysno_sys_input; exact Hno).
+  assert (Hns0 : ~ spurious_refusal_cfg the_scfg (sys_input segs ms x8) model (munmap_eff ms)).
+  { apply Run.spurious_refusal_not_refusal. unfold munmap_eff. cbn [eff_ret].
+    exact (zero_not_refusal_munmap _ model Hno'). }
+  split.
   - intros []. apply (sstep_cfg_syscall segs the_scfg ms model x8 (munmap_eff ms)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
     + exact Hh.
     + exact Hsvc.
     + apply munmap_ok; assumption.
-    + apply not_spurious_none. rewrite in_sysno_sys_input, Hno. apply injected_arm_none_215.
+    + exact Hns0.
     + rewrite munmap_model_halted; exact Hh.
     + apply materialize_model_accesses_no_lazy.
       exact (munmap_model_no_lazy _ _ _ Hlazy).
-  - intros e st Hss. apply sstep_cfg_sub in Hss.
-    destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
-      as [-> ->].
-    exists tt. split; reflexivity.
+  - intros e st Hss.
+    destruct (sstep_cfg_svc_inv segs ms model x8 e st Hsvc Hss)
+      as [(eff & model' & evs & Hc & Hcase) | (Hc & _ & _)];
+      [| exfalso; exact (munmap_no_unmodeled segs ms x8 model Hno Hargs Hc)].
+    destruct (munmap_ok_inv segs ms x8 model eff model' evs Hno Hargs Hc) as (Hevs & Hd).
+    subst evs.
+    destruct Hd as [(e0 & HIn & -> & ->) | (-> & ->)].
+    + (* the refusal: spurious under [AllocForced], so no [sstep_cfg] takes it *)
+      exfalso.
+      assert (Hsp : spurious_refusal_cfg the_scfg (sys_input segs ms x8) model
+                      (mkEffect (errno_ret e0) [] [])).
+      { apply (alloc_refusal_spurious (sys_input segs ms x8) model _ (munmap_eff ms)
+                 (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
+        - exact (family_off_munmap_true _ Hno').
+        - cbn [eff_ret]. exact (errno_is_refusal_munmap _ model e0 Hno' HIn).
+        - apply munmap_ok; assumption.
+        - unfold munmap_eff. cbn [eff_ret]. exact (zero_not_refusal_munmap _ model Hno'). }
+      destruct Hcase as [(m'' & _ & _ & Hns & _ & _)
+                        | [(_ & _ & Hns & _ & _)
+                        | [(code & Hhc & _) | (sig & Hk & _)]]].
+      * exact (Hns Hsp).
+      * exact (Hns Hsp).
+      * rewrite Hh in Hhc. discriminate.
+      * rewrite (m_killed_of_m_halted_none _ Hh) in Hk. discriminate.
+    + destruct Hcase as [(m'' & _ & He & _ & Hmat & Hst)
+                        | [(_ & _ & _ & Hmat & _)
+                        | [(code & Hhc & _) | (sig & Hk & _)]]].
+      * rewrite (materialize_model_accesses_no_lazy _ _
+                   (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat.
+        injection Hmat as <-. exists tt. split; [exact He | exact Hst].
+      * rewrite (materialize_model_accesses_no_lazy _ _
+                   (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat. discriminate.
+      * rewrite munmap_model_halted, Hh in Hhc. discriminate.
+      * rewrite (m_killed_of_m_halted_none _
+                   (eq_trans (munmap_model_halted _ _ _) Hh)) in Hk. discriminate.
 Qed.
 
 End WithSegs.

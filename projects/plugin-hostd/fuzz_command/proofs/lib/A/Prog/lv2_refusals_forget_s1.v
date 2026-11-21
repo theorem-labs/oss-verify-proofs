@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the symbolic states and seeds of lv2_refusals_forget's ASan walk
    (plugin-hostd/fuzz_command, 0x8d278), after proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v (cl_seed, the region and
-   fact tables of cgif_close's walk) at c8557374ad2e, and the entry seed of the recorder-call template
+   fact tables of cgif_close's walk), and the entry seed of the recorder-call template
    (lib/A/Prog/RecBTemplate.v, lib/A/Prog/sup_worker_list.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

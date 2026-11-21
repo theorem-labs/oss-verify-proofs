@@ -87,7 +87,7 @@
    only that those .rodata bytes be readable). The text_of arm that copies input bytes into a fresh malloc(s1 + 1)
    block is not used here; it meets `slack` too: the bytes past the block's requested size are not client bytes
    (YG0n.v:230-232), but the alias-write walk's `awc_blk_tail_vis` (proved in
-   reac_link_alias_writeArmsC.v:100-120, Qed) makes [p + req_size, p + round_up(req_size, 16)) visible at every AR
+   reac_link_alias_writeArmsC.v:101-121, Qed) makes [p + req_size, p + round_up(req_size, 16)) visible at every AR
    state (a second comparer, 2026-10-30; this was the first comparer's open remark 5).
 
    Proves no function (kind: statement text). *)

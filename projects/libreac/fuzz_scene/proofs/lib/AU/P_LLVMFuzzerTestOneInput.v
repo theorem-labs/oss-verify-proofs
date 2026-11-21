@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the statement of the walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput in the
    asan-ubsan build: the text of lib/A/P_LLVMFuzzerTestOneInput.v (the asan build) over this image's names and
-   numbers, in the released form of proofs/cgif/cgif_file_fuzzer (c8557374ad2e): the entry contract is scene's own
+   numbers, in the released form of proofs/cgif/cgif_file_fuzzer: the entry contract is scene's own
    `scene_tfib_lib_contract_x` (lib/AU/P_LLVMFuzzerTestOneInput_ctx.v, the text of lib/A's: A/ACfn.v:59-69 with the
    changes a Theorem Labs lane's ENTRY-REVIEW.md required), and the Section hypotheses follow A/ACfj.v:94-127 (the donor's
    harness walk) and A/ACk1.v:62-110 (its position-abstract walks), module paths changed.  STATEMENTS ONLY (rule 24):
@@ -11,6 +11,7 @@
    SEGMENT CUTS are lib/AU/P_LLVMFuzzerTestOneInput_seg.v.  Module layout (gate 6o, a Theorem Labs lane): every module of the
    trunk's lib/Reusable and every shared contract from lib.Reusable; the A twins, the listing lib.AU.Prog and the
    modules outside the trunk's lib/Reusable whose closure reaches YCbq (YCbq, YC5d, YE01, YCbp) from lib.AU. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   Image: fuzz_scene.asan-ubsan, sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f
    (pau-pipeline/libreac/bin/fuzz_scene/), symbols from the unstripped twin
@@ -42,7 +43,7 @@
        free 0x82f9c (+0x6fc = 0x82fa0), 0x8315c (+0x8bc = 0x83160), 0x83164 (+0x8c4 = 0x83168).
      - the allocator's own return pcs, pc_malloc_ra0 (as_code B) = 0x54fe0 (__interceptor_malloc 0x54f18 + 0xc8,
        after `jal` 0x54fdc) and pc_free_ra0 (as_code B) = 0x54e80 (__interceptor_free 0x54d48 + 0x138, after `jal`
-       0x54e7c); a Theorem Labs lane's universe (a working branch a219644fba4, lib/AU/YCej.v:35-55) holds the 12
+       0x54e7c); a Theorem Labs lane's universe (a working branch, lib/AU/YCej.v:36-56) holds the 12
        traces [pc; ra] and [pc; ra; 0x827a0] of these sites.
      - reac_scene_placeholder = 0x20e80 (STT_OBJECT, 11136 bytes with its redzone; registered size 8904 in its
        asan_globals record at 0xa0400), read through GOT word 0x9c6b8 (`auipc` 0x82c64, `ld` 0x82c68) for i < 8904
@@ -53,7 +54,7 @@
        this file only as as_shadow_cell B / as_uar_cell B; their bindings are PALib's (lib/AU/Prog/ScenePaLib.v:
        objects 16, 17).
      - the read-only window RLO..RHI is PI_scene's pa_relro_lo / pa_relro_hi (lib/AU/Prog/SceneImg.v: 0x9b4e0..0x9c740,
-       the listing at a working branch ae48bfd851f).
+       the listing at a working branch).
      - this build's 23 UBSan trap branches (to `unimp` 0x83234) and the `unimp` 0x83240 after `jal abort` add no
        hypothesis: each guard tests an address in the input block, in a block from the three mallocs or in the fake
        frame for wrap-around, and the facts that keep it untaken come from the entry contract's pre, the allocator
@@ -102,7 +103,7 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YM05.
 (* A Theorem Labs lane (landed) and a Theorem Labs lane: the three shared runtime contract types, one copy each -- no file of mine
    defines any of them.  astack_malloc_sz_realizes <- lib/Reusable/AsStackSz.v, astack_free_realizes <-
    lib/Reusable/StackFreeDef.v, aset_shadow_realizes <- lib/Reusable/SetShadowDef.v (from a Theorem Labs lane,
-   at 798447a1772 proofs/libreac/fuzz_grant/lib/A/Rt/SetShadowDef.v:19, at scene's relocated
+   at proofs/libreac/fuzz_grant/lib/A/Rt/SetShadowDef.v:19, at scene's relocated
    path). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import AsStackSz StackFreeDef SetShadowDef.
 (* scene_shape is image-independent and lives in lib/SceneAsanBase.v (split out of lib/A/SceneAsanTop.v by
@@ -112,17 +113,17 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_LLVMFuzzerTestO
 (* The three callee walks of a Theorem Labs lane, written in a separate worktree, now in this tree (the Require below). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_reac_ctrl_build_scene_step P_reac_ctrl_scene_build P_reac_ctrl_scene_set_mac.
 (* A Theorem Labs lane: the class-8 table's asan-ubsan twin, lib/AU/Rt/StackMalloc8Tbl.v (its asan file,
-   at 08cb863a87d, names this twin): CID8 = 8 and
+    names this twin): CID8 = 8 and
    PC_STACK_MALLOC_8 = 0x3f438 = __asan_stack_malloc_8 of this image. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Rt Require Import StackMalloc8Tbl.
 (* A Theorem Labs lane: check_step's asan-ubsan contract tcheck_step_specX (the sink head is its explicit first argument,
    gate 6h) and its window TCHECK_STEP_STK = 8496, exported from lib/AU/P_check_step_cut.v:66-70
-   (at aa04a8e2795; the same value as asan). *)
+   (the same value as asan). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_check_step P_check_step_cut.
 (* A Theorem Labs lane: the fake-frame region setup for every class and size, `frame_setup : forall segs val B cid n,
-   frame_setup_stmt segs val B cid n`, in its asan-ubsan twin lib/AU/P_check_step_frame.v (the asan file is Qed at
-   aa91b415da2, the asan-ubsan twin at 9aad9023964; both are Qed with kernel primitives
-   only, of record at 55f2a74be63).  It replaces this file's former local copy of frame_setup_stmt and its hypothesis HFRAME8;
+   frame_setup_stmt segs val B cid n`, in its asan-ubsan twin lib/AU/P_check_step_frame.v (the asan file is Qed,
+   the asan-ubsan twin; both are Qed with kernel primitives
+   only, of record).  It replaces this file's former local copy of frame_setup_stmt and its hypothesis HFRAME8;
    the walk uses the instance `frame_setup SEGS VAL B 8 9408`. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_check_step_frame.
 (* A Theorem Labs lane: sink_img_laws, the laws of the closed sink's own cells, from the glue's asan-ubsan G_Sink (the path

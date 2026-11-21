@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap's v1.9.0 ASan build. *)
 (* Modified by Theorem Labs, 2026-10: relocated to reac-repacer/fuzz_wire's asan build: addresses and numbers moved by symbol to its asan image; module paths changed; the image end read from TFIB_IMG_END (PcapImgEnd dropped); the symbol record PcapSyms renamed WireSyms. *)
-(* Declaration: the structure follows proofs/cgif/cgif_file_fuzzer/lib/A/AE6k.v (origin/ossv/recipes c8557374ad2e); its image-symbol record TfibSyms is renamed WireSyms, and every numeral is pcap's own, measured on the v1.9.0 asan pin. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Declaration: the structure follows proofs/cgif/cgif_file_fuzzer/lib/A/AE6k.v (theorem-labs/oss-verify-proofs@6b32741d849a); its image-symbol record TfibSyms is renamed WireSyms, and every numeral is pcap's own, measured on the v1.9.0 asan pin. *)
 (* The walk of __asan_memmove (0x51310) of libreac/fuzz_pcap's v1.9.0 ASan build, in the form
    proofs/cgif/cgif_file_fuzzer/lib/A/AE6k.v walks __asan_memcpy: the symbolic-run chains of the source
    phase (entry .. 0x513a4) and of the destination phase (0x513a4 .. the call of internal_memmove at

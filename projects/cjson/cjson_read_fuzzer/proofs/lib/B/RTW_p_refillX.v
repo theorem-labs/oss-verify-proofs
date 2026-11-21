@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: FRONTR_placeable takes the length's page alignment (EMB_CAP mod 4096 = 0). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -2173,7 +2174,7 @@ Proof.
     { (* [comment removed for export] *)
       intros Z0. pose proof (prov_emb_nonneg st) as PE. (nelimp (rt_prov_parts_nonneg st WF) 8%nat; intros Q1 Q2 Q3 Q4 Q5 Q6 Q7 Q8). pose proof (prov_l24_nonneg st) as Q9.
       assert (PV : prov_emb st <= rt_prov st) by (unfold rt_prov; lia). unfold prov_emb in PV. rewrite Z0 in PV. cbn [Z.eqb] in PV.
-      split; [lia|]. apply (FRONTR_placeable mo R EMB_CAP HOK HFR); unfold EMB_CAP, FR_NMAX; lia. }
+      split; [lia|]. apply (FRONTR_placeable mo R EMB_CAP HOK HFR); [unfold EMB_CAP; lia| reflexivity| unfold EMB_CAP, FR_NMAX; lia]. }
     intros q5 q6 q7 q11 q12 q13 q14 q15 q16 q17 q28 q29 q30 q31 m3 mo' R' d' sz' MI3 MU3 WM3 ST3 RIb3 EC3 HSZ3 STEP3 HL3.
     rewrite E224 in MU3, ST3.
     (* [comment removed for export] *)

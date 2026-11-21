@@ -1,5 +1,5 @@
 (* proves the UBSan contract of diginet_cursor_init (fuzz_transport.ubsan, 0x18814), with its alignment trap not taken. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_cursor_init.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_cursor_init.v to fuzz_transport's images *)
 (* Walk of diginet_cursor_init (src/diginet_msg.c:10-18 at 835f336c) in fuzz_transport.ubsan, 0x18814.
    The UBSan check at 0x1881c (c & 7 is not 0) branches to the trap at 0x18840; the premise
    c mod 8 = 0 keeps it from firing. *)

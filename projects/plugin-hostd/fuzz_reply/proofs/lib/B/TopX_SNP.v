@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the B top's SNP row.  lib/B/W_LLVMFuzzerTestOneInput_top_x.v's Section hypothesis SNP_x
      Hypothesis SNP_x : asnprintf_realizes_x TfibB ARX (pa_sigma WS_snprintf) W_sites.FR_GOT_GUARD W_sites.FR_GUARD.
-   (top_x.v:851 on a working branch 5f9367924bc) at the B top's instance, closed: topx_SNP_x below states that type
+   (top_x.v:851 on a working branch) at the B top's instance, closed: topx_SNP_x below states that type
    with top_x's ARX written as its body (top_x.v:164-165, `fun ly S Hp W mem md => ARcf (cp := CfParams_reply) segs
    TfibB ly S Hp W mem md /\ Hp = []`), as lib/B/TopxDrainLitB.v and RT_pf_snp_srr.v snp_xn_ARX do, so this file does
    not Require top_x and the plug of SNP_x is `exact topx_SNP_x` up to unfolding ARX.

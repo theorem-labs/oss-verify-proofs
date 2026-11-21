@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -36,6 +36,7 @@
    first, then the plain rule's binders, with the journals, the callee's post (fpostW_xR / fpostWF_xR) and the
    conclusion at R. Each plain lemma is its R form at wle (wle_refl / wle_trans); its statement is unchanged.
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -517,7 +518,7 @@ exact (ajournal_x_subR (SK := SK) segs B PST ARx LAWS segs_low R Rt STK sp0 FP l
 Qed.
 
 (* ajournal_x_sub at the footprint predicate the window rules take. WalkS4 proved this separately because the engine
-   then asked a narrower side condition; at YCbqG 9052c7a7d74 the engine asks fp_sub_x itself, so this is
+   then asked a narrower side condition; at YCbqG the engine asks fp_sub_x itself, so this is
    ajournal_x_sub under the name WalkS4's callers use. *)
 Lemma ajournal_x_sub_W : forall STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k STK1 sp1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1,
   ajournal_x (SK := SK) segs B PST ARx STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
@@ -811,7 +812,7 @@ exists ly2, S2, Hp2, regs2, mem2, md2, k1. split; [exact Hc|]. split; [exact HJ2
 split; [|split; [exact HP | exact HQ]]. intros a Ha Hn. apply HX; [lia | exact Hn].
 Qed.
 
-(* h-verbs-3's call rule (lib/A/VrdArm.v:164-205 at 6d4cddbdff5, there over PRH_Base.fpostW at image A, PST :=
+(* h-verbs-3's call rule (lib/A/VrdArm.v:164-205, there over PRH_Base.fpostW at image A, PST :=
    prh_pst), premise shape kept: the caller's journal is already in window form, so the callee's window top
    sp0 + o + e1 is the caller's sp0 (o + e1 = 0); the callee's text needs no fwin_x; its footprint takes YCbqG.v's
    first three disjuncts; the callee's journal is dropped from the conclusion. It is aj_call_xW_sp at e1 := - o. *)
@@ -886,8 +887,8 @@ split; [exact HFZ|]. split; [exact HFK|]. rewrite Hsp' in HJ1.
 split; [| split; [exact HJ1 | split; [exact HP | exact HQ]]].
 change own with ([] ++ own). eapply (ajournal_x_subR segs B PST ARx LAWS segs_low R Rt); [exact HJ | exact HJ1 | zlia | zlia | exact HF].
 Qed.
-(* WalkH6's caller-window float call rule, offered by h-walk-identity (origin/cold/h-walk-identity-s8a34-interim
-   fa47eb682cc lib/A/Prog/S8aCallW.v, blob 53f2aabd579, there named aj_call_xWF; donor WalkH6 78f9b475ee95,
+(* WalkH6's caller-window float call rule, offered by h-walk-identity (
+    lib/A/Prog/S8aCallW.v, blob 53f2aabd579, there named aj_call_xWF; donor WalkH6 78f9b475ee95,
    the internal file kit-aj_call_xF.patch), statement and proof verbatim under the name aj_call_xWF_d. The callee's journal runs at
    (STK1 + d) (sp_c + d), d bytes above its entry sp, inside the caller's frame (o + d <= 0). It is NOT a corollary
    of aj_call_xWF / aj_call_xWF_sp, nor they of it: this rule asks no `d mod 16 = 0`, hands the callee no fwin_x, and

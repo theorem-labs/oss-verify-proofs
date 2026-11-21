@@ -1,10 +1,10 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillB3Cgif.v (commit f01d79f3fb5, cf refill round 3; file sha256 94efbdcb8a75) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillB3Cgif.v (cf refill round 3; file sha256 94efbdcb8a75) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Theorem Labs, 2026-10-30 (lane W, ReallocPrimary.CfW; a Theorem Labs lane cf layer, refill half 1 at cgif's image).
    rule 24: no function proved (kind: composition: the B3 entry with a Theorem Labs lane's class-full report arm).
 
    HALF 1 of the cf refill walk at cgif's image, complete: MnRefillB3Topcf.refill_B3_entry_cf_of_parts at
    ci := YGcfImgcgif.CfImg_cgif, its class-full arm from RepArmTcf.classfull_cf_of_hyps (a Theorem Labs lane,
-   a working branch b811d748045), which proves the seam's refill_B3_classfull_cf at CfImg_cgif with no premise: the
+   a working branch), which proves the seam's refill_B3_classfull_cf at CfImg_cgif with no premise: the
    report's image facts (RepIFcf.rep_img_facts: the tool-name / callback / silent cells and VSNPrintf's read-only bytes)
    come from the seam's entry facts (ARcf's amc_pf_cells, memnorm, arodata_ok_cf; field round 3) by
    RepArmTcf.rep_img_of_seam.  So the final theorem refill_B3_entry_cf_cgif has no image premise. *)

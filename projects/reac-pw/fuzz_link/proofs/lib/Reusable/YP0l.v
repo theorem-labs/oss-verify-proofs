@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0l.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a store-conditional without a reservation stops the symbolic stepper). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -250,7 +251,10 @@ end
 let a := R rs1 in
 if negb (aligned_dec G a (amo_bytes_of wd)) then SStop SR_align else
 match ss_resv ss with
-| None => SRun (mkSST (pc + 4) (sr_set (ss_regs ss) rd (SLit 1)) (ss_fregs ss) (ss_mem ss) None G)
+(* 08b1429: a FAILING sc is no longer a no-op. Sem.v's Sc arm loads the word and stores it back, so
+   it can fault, and the symbolic stepper may not claim a step. It stops, as YK0c's stepper does; a
+   walk never meets one, because its lr precedes the sc on a single hart (recipes/failing-sc.md). *)
+| None => SStop SR_resv
 | Some a' =>
 if negb (sv_eqb a' a) then SStop SR_resv else
 match addr_of a with

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: imports. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.boost_json.fuzz_parse.lib.RefU Require Import HeapMF_iface
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.BJU Require BJEhTabs.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.EHU Require Import EhIface EhGlue.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.EHU Require EhX_ubsan EhSums.
+From OSSVerify.Proofs.boost_json.fuzz_parse.lib.ERU Require EhGlue.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.RefU Require MallocMF.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
 Local Ltac2 zQ s := CDef.cdeft "79OSSVerify6Proofsaboost_jsonafuzz_parse3lib4RefU8MallocMF~~~~~~03HMF89OSSVerify6Proofsaboost_jsonafuzz_parse3lib3EHU7EhIface3EHI~~~~~~k53EHK79OSSVerify6Proofsaboost_jsonafuzz_parse3lib4RefUcHeapMF_iface~~~~~~odcheap_mf_hyps79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3BJU8BJEhTabs~~~~~~u09bj_ehtabs~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" s.
@@ -20,7 +22,15 @@ Section Plain.
 Context {HCEIL : HeapCeil} {HSEC : HeapSecret}.
 
 Theorem heap_mf_hyps_plain : ltac2:(zQ "30!k0!o7!t1@3$2?5HCEIL@2$0?5HCEIL?4HSEC@1$1@2$0?5HCEIL?4HSEC").
-Proof. exact (EHG.heap_mf_hyps_HMF EhSums.eh_copy_spec EhSums.eh_fill_spec). Qed.
+(* LPS 727298f3: one chain per CONFIG_RSEQ value -- EHU's facts claim the vector without the AT_RSEQ
+   pair, ERU's (the same proofs over the other tail) the vector with it -- picked by the run's flag. *)
+Proof.
+  destruct (@hrseq HSEC) eqn:R.
+  - exact (OSSVerify.Proofs.boost_json.fuzz_parse.lib.ERU.EhGlue.EHG.heap_mf_hyps_HMF R
+             EhSums.eh_copy_spec EhSums.eh_fill_spec).
+  - exact (OSSVerify.Proofs.boost_json.fuzz_parse.lib.EHU.EhGlue.EHG.heap_mf_hyps_HMF R
+             EhSums.eh_copy_spec EhSums.eh_fill_spec).
+Qed.
 
 (* [comment removed for export] *)
 Theorem bj_ehtabs_plain : ltac2:(zQ "30!hhf!o7!k0@1$0@1$1@2$2?5HCEIL?4HSEC").

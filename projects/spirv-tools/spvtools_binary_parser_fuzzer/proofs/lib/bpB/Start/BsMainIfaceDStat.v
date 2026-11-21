@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up invariant at the run's mmap base). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -30,14 +31,17 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  (* LPS #38: [AsanInit]/[BothInit] now take the mmap base; IMPLICIT so every caller
+     infers it by unification from the [cs_ok] hypothesis it already passes. *)
+  Context {mbase : word}.
+  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH AENTRY sp0 rdraw brk0 mbase inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation VM := (pm_vmem (bv_unsigned sp0) (bv_unsigned brk0) (Xof g E) FULL).
 
   Lemma pre_druns : Forall (fun r => bytes_at asegs VM (fst r) (map b8 (snd r))) LbB_DStat.D_DIAG_A.
 Proof.
-ltac2:(KReplay.run1 (kr_t_BsMainIfaceDStat ()) ["AT_MAIN"] "p;2p;1p;3p;Cg00=Sj25Tg000mj14Tg001Mj20Tg00jSj31Tg009Gj33Tg00jolC2Tp,3sp0p,4brk0p,5rdrawp,3inpp,1hp,2chp,1Ep,1Rp,4FULLp,5modelp,3Vspp,4Vbrkp,3Vavp,3Vevp,4Vfitp,2Hhp,2HCg00l6R0g00_`R1g00`@R2'5g00]6R3%43'0g00m5;10=312dMC2o"). Qed.
+ltac2:(KReplay.run1 (kr_t_BsMainIfaceDStat ()) ["AT_MAIN"] "p;2p;1p;3p;Cg00=Sj25Tg000mj14Tg001Mj20Tg00jSj31Tg009Gj33Tg00jog00jof0f1f2f3f4f5f6f7f8f9f:f;f<f=f>f?p,5mbasef@fAfBODp=2Tp,3sp0p,4brk0p,5rdrawp,3inpp,1hp,2chp,1Ep,1Rp,4FULLp,5modelp,3Vspp,4Vbrkp,3Vavp,3Vevp,4Vfitp,2Hhp,2HCg00l6R0g00_`R1g00`@R2'5g00]6R3%43'0g00m5;10=312dMC2o"). Qed.
 
   Lemma pre_dstat : LbB_DStat.dstat VM.
 Proof.

@@ -1,10 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main section takes the launch values (launchT) as a context; imports InitMem, which defines them; plain_main_proof's recorded lia hint table dropped, the lia calls run unhinted). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Fpu Sem.
+(* LPS 727298f3: launchT (the launch values) lives in InitMem; imported first so later imports keep their names *)
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import InitMem.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import Tac Image ZBridge SysStep ITree Nodes Decode Arr FP MonadX.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Common Require Import DrvAgree Startup_kit STRW_tac F_fmt_fp_lib Printf_fmts.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Ubsan Require Import UImg F_syscalls StdioFiles Startup Exit F_printf_iface Stdio_iface Stdio_kit.
@@ -18,7 +21,7 @@ Open Scope Z_scope.
 Open Scope mspec_scope.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {lx : launchT}.
 Section Main.
   Hypothesis MALLOC : rmalloc_stmt.
   Hypothesis FREE : rfree_stmt.
@@ -53,7 +56,6 @@ Section Main.
   Proof.
     intros sp0 argv envp uid hw draw ms VSP VARGV VENVP HSEC AM.
     destruct (Z.eq_dec (Z.of_nat (length argv)) 2) as [E2|NE2]; [| exact (main_usage sp0 argv envp uid hw draw VSP HSEC VARGV VENVP FPR FWX SWF ms AM NE2)].
-    Local Ltac2 Set LiaHints.tbl := fun () => "0040=5056405920.245056405920.255056405920.265056405920.2800000400800900=S2E2S2E2FS2E2".
 destruct argv as [|arg0 [|arg1 [|x l]]] eqn:EARGV; cbn in E2; try lia. rewrite <- EARGV in *.
     eapply implM_mono with (Q := RQEXIT); [| intros code s' ms' H; exact H].
     rewrite (main_model_eq argv arg0 arg1 EARGV).

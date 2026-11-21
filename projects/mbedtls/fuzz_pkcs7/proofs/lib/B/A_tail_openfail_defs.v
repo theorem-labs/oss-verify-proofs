@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack frame that the calls may write, framed out of the known facts by kn_frame, starts at sp0 - 6144512, the window the revision's launch maps). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run Specs.
@@ -52,7 +53,7 @@ Definition knA2e : list kentry := Eval vm_compute in kn_after rA2 knA2.
 (* [comment removed for export] *)
 Definition KEPT_SARG : list reg := [2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 24; 25; 26; 27]%bv.
 Definition srB1 : list expr := Eval vm_compute in sr_after_call_j srA2e (map ridx KEPT_SARG) 74.
-Definition knB1 : list kentry := Eval vm_compute in kn_frame knA2e (EVar 0) (-8388608) (8388608 + (-2352)).
+Definition knB1 : list kentry := Eval vm_compute in kn_frame knA2e (EVar 0) (-6144512) (6144512 + (-2352)).
 Definition scrB1 : scripts := SCR [] [] [].
 Definition ssB1 := SS 0x5b504 srB1 [] knB1 106.
 Definition rB1 := Eval vm_compute in runOF scrB1 ssB1.
@@ -93,7 +94,7 @@ Definition NXB4e : nat := Eval vm_compute in s_next (fst (fst rB4)).   (* [comme
 (* [comment removed for export] *)
 Definition KEPT_CR : list reg := [1; 2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27]%bv.
 Definition srC1 : list expr := Eval vm_compute in sr_after_call_j srB4e (map ridx KEPT_CR) 140.
-Definition knC1 : list kentry := Eval vm_compute in kn_frame knB4e (EVar 0) (-8388608) (8388608 + (-1024)).
+Definition knC1 : list kentry := Eval vm_compute in kn_frame knB4e (EVar 0) (-6144512) (6144512 + (-1024)).
 Definition scrC1 : scripts := SCR [false; false; false; false; false; true] [] [].
 Definition ssC1 := SS 0x0e79c4 srC1 [] knC1 172.
 Definition rC1 := Eval vm_compute in runOF scrC1 ssC1.

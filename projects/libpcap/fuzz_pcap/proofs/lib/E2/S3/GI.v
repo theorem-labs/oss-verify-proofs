@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: rctx carries the launch's (inp, mb, ph, entry, sp, rnd) with argv, envp, uid, gid and hwcap read off inp, the libc cell reads InitMem.argv_ptrs, CORE_STK pairs the launch fact rc_launch with the entry stack image (rc_span, after CatSim's launch_string_base_arith, and rc_top_align added), and rc_lo is sp - 6144512 (was sp - 8388608) while GIo keeps the 8388608 ceiling, in both kits. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,19 +27,38 @@ Notation CEILZ := alloc_ceiling (only parsing).   (* [comment removed for export
 (* [comment removed for export] *)
 Section WithCeil.
 Context {CEILV : CEIL}.
-(* [comment removed for export] *)
-Record rctx := mkRC { rc_sp0 : word; rc_argv : list (list byte); rc_envp : list (list byte); rc_uid : word;
-                      rc_hw : word; rc_rnd : EntryDraw; rc_tp : word;
-                      rc_cb : bool }.
+(* PORTED to 75d69e00.  [rctx] now carries [InitMem]'s [Section Layout] tuple
+   (InitMem.v:369-371) -- (inp, mb, ph, entry, sp, rnd) -- in place of the
+   deleted seven-tuple (sp0, argv, envp, uid, hw, rnd).  argv, envp, the exec
+   file name and the credentials are READ OFF [inp]: [Run.entry_stack_image]
+   (Run.v:1344) feeds [StackLayout.build_stack_bytes]'s twelve arguments
+   (StackLayout.v:483) from it.  [rc_argv], [rc_envp], [rc_uid], [rc_gid] and
+   [rc_hw] therefore survive as DERIVED DEFINITIONS rather than fields, so
+   every call site that reads them is unchanged.  CONFIG_RSEQ,
+   [kb_rseq (in_kernel inp)], is carried symbolically and pinned nowhere. *)
+Record rctx := mkRC { rc_inp : ProcInput; rc_mb : word; rc_ph : PhdrInfo;
+                      rc_entry : word; rc_sp0 : word; rc_rnd : EntryDraw;
+                      rc_tp : word; rc_cb : bool }.
+Definition rc_argv (R : rctx) : list (list byte) := in_argv (rc_inp R).
+Definition rc_envp (R : rctx) : list (list byte) := in_envp (rc_inp R).
+Definition rc_uid (R : rctx) : word := in_uid (rc_inp R).
+Definition rc_gid (R : rctx) : word := in_gid (rc_inp R).
+Definition rc_hw (R : rctx) : word := in_hwcap (rc_inp R).
+(* the stack VMA's end: the image now runs from [sp] to [ed_top] *)
+Definition rc_top (R : rctx) : word := ed_top (rc_rnd R).
 (* [comment removed for export] *)
 Definition set_cb (R : rctx) (b : bool) : rctx :=
-  mkRC (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) (rc_tp R) b.
+  mkRC (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) (rc_tp R) b.
 Lemma set_cb_same : forall R, set_cb R (rc_cb R) = R.
 Proof. intros []. reflexivity. Qed.
 Definition rc_canary (R : rctx) : word := ssp_canary (rc_rnd R).
 Definition utp (R : rctx) : Z := bv_unsigned (rc_tp R).
 Definition usp0 (R : rctx) : Z := bv_unsigned (rc_sp0 R).
-Definition rc_lo (R : rctx) : Z := usp0 R - 8388608.
+(* The main stack floor.  At LPS 727298f3 [wrap_mem] zero-maps only
+   [stack_window_lo, sp), and [StoreOk.stack_window_lo_valid] puts that floor at
+   or below [sp + stack_window_reach - stack_max_size] = [sp - 6144513]; the
+   16-aligned floor above it is [sp - 6144512] (boost-json's [wok_lo] floor). *)
+Definition rc_lo (R : rctx) : Z := usp0 R - 6144512.
 (* [comment removed for export] *)
 Definition rc_spmain (R : rctx) : Z := usp0 R - 48.
 
@@ -254,7 +274,7 @@ Section Kit.
     /\ rw_cells ssegs m 0x53d08 [C8 (rc_canary R)]                        (* [comment removed for export] *)
     /\ rw_cells ssegs m 0x53d10 [C8 (Z_to_bv 64 0)]
     /\ (exists (pg : word) (P0 : Z), rw_cells ssegs m 0x53d18 [C8 pg; C8 (Z_to_bv 64 P0)]
-                                  /\ nth_error (argv_ptrs (rc_sp0 R) (rc_argv R) (rc_envp R)) 0 = Some (Z_to_bv 64 P0)).
+                                  /\ nth_error (InitMem.argv_ptrs (rc_inp R) (rc_sp0 R) (rc_rnd R)) 0 = Some (Z_to_bv 64 P0)).
   Definition core_libc_fp (a : Z) : Prop := (0x53d08 <= a < 0x53d90) \/ (0x22620 <= a < 0x22628).
 
   (* [comment removed for export] *)
@@ -288,11 +308,67 @@ Section Kit.
     (0x53d00 <= a < 0x53d04) \/ (0x53ae0 <= a < 0x53d00) \/ (0x22628 <= a < 0x22638) \/ (0x22558 <= a < 0x22560)
     \/ (0x23988 <= a < 0x23989) \/ (0x225a8 <= a < 0x225b8) \/ (0x23638 <= a < 0x23640) \/ (0x33990 <= a < 0x33995).
 
-  (* [comment removed for export] *)
+  (* PORTED to 75d69e00.  The image is [Run.entry_stack_image] of the ported
+     tuple (Run.v:1344); the seven-argument [build_stack_bytes] it used to name
+     no longer exists (StackLayout.v:483 takes twelve).  The image is now the
+     WHOLE block, running from [sp] to [ed_top], so the launch fact travels
+     with it: without it [block_pad_len]'s [Z.to_nat] clamp can bite and none
+     of [Printf_kit__Musl]'s piece lemmas apply (their [SPAN] hypothesis,
+     Printf_kit__Musl.v:194).  [brk] is existential because nothing here reads
+     it; [entry_launch_ok_va] is the premise shape the rest of this unit
+     already ports to (AmoStep__Musl.v:236-238). *)
+  Definition rc_launch (R : rctx) : Prop :=
+    exists brk : word,
+      entry_launch_ok_va Sv48 (mkEntry (rc_sp0 R) brk (rc_mb R) (rc_rnd R)) (rc_inp R).
   Definition CORE_STK (R : rctx) (m : mem) : Prop :=
-    bytes_at ssegs m (usp0 R) (build_stack_bytes Plain.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)).
+    rc_launch R
+    /\ bytes_at ssegs m (usp0 R)
+         (entry_stack_image (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R)).
   Definition core_stk_fp (R : rctx) (a : Z) : Prop :=
-    usp0 R <= a < usp0 R + Z.of_nat (length (build_stack_bytes Plain.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R))).
+    usp0 R <= a < usp0 R
+      + Z.of_nat (length (entry_stack_image (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R))).
+
+  (* [SPAN], the premise [Printf_kit__Musl.Section StackImage] carries
+     (Printf_kit__Musl.v:194) and [InitMem.Section Layout] carries
+     (InitMem.v:465): read off [valid_launch_sp]'s upper bound,
+     75d69e00:theories/LinuxProcessSem/Run.v:3656, whose [launch_sp_hi]
+     (Run.v:3641) is [align_down16 (top - 8 - L) - C] with
+     [align_down16 x = x - x mod 16] (Run.v:3572), so [align_down16 x <= x].
+     PROVENANCE (rule 23c): this is [Common/CatSim__Common.v:1361]
+     [launch_string_base_arith], whose unit this one does not depend on; the
+     proof is its proof.  The literal numbers are never named --
+     [InitMem.struct_size] is [block_head_size rseq argv envp] with [rseq] =
+     [kb_rseq (in_kernel inp)] symbolic. *)
+  Lemma rc_span : forall R, rc_launch R ->
+    (usp0 R + InitMem.struct_size (rc_inp R) + InitMem.str_len (rc_inp R) + 8
+     <= bv_unsigned (rc_top R))%Z.
+  Proof using CEILV. pin_using (fun (CEILV : unit) => tt). ceil_facts.
+    intros R [brk LA]. cbn [entry_launch_ok_va] in LA.
+    destruct LA as (_ & (_ & _ & Hhi) & _).
+    unfold usp0, rc_top, InitMem.struct_size, InitMem.str_len.
+    unfold launch_sp_hi, align_down16 in Hhi.
+    pose proof (Z.mod_pos_bound
+      (bv_unsigned (ed_top (rc_rnd R)) - 8
+       - Z.of_nat (launch_string_bytes (in_argv (rc_inp R)) (in_envp (rc_inp R))
+                     (in_execfn (rc_inp R)))) 16 ltac:(lia)).
+    lia.
+  Qed.
+
+  (* The image ENDS at [ed_top], so [sp]'s alignment says nothing about its end
+     and [stack_argv_string_slack]'s premise moved onto [top]
+     (Printf_kit__Musl.v:318).  [valid_stack_top_va]'s first conjunct
+     (75d69e00:theories/LinuxProcessSem/Run.v:3610) gives
+     [bv_unsigned top mod page_size = 0], which is strictly stronger. *)
+  Lemma rc_top_align : forall R, rc_launch R -> (bv_unsigned (rc_top R) mod 8 = 0)%Z.
+  Proof using CEILV. pin_using (fun (CEILV : unit) => tt). ceil_facts.
+    intros R [brk LA]. cbn [entry_launch_ok_va] in LA.
+    destruct LA as ((HP & _ & _) & _ & _). unfold rc_top.
+    unfold page_size in HP.
+    pose proof (Z.div_mod (bv_unsigned (ed_top (rc_rnd R))) 4096 ltac:(lia)) as D.
+    assert (E : bv_unsigned (ed_top (rc_rnd R))
+                = (512 * (bv_unsigned (ed_top (rc_rnd R)) / 4096) * 8)%Z) by lia.
+    rewrite E. apply Z_mod_mult.
+  Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -306,7 +382,7 @@ Section Kit.
     /\ ps_tls s = utp R - 200 /\ tls_block_ok (utp R - 200)
     /\ blocks_ok (utp R) (CL ++ FB)
     /\ 0x7fff80000000 <= usp0 R <= 2^47       (* [comment removed for export] *)
-    /\ CEILZ <= rc_lo R.                      (* [comment removed for export] *)
+    /\ CEILZ <= usp0 R - 8388608.             (* [comment removed for export] *)
 
   (* [comment removed for export] *)
   Definition SXGI (s : PState H hptr) (tp : word) (m : mem) : Prop :=
@@ -367,7 +443,7 @@ Section Kit.
   Qed.
 
   Lemma CORE_STK_agree : forall P R m m', agrees_on P m m' -> (forall a, core_stk_fp R a -> P a) -> CORE_STK R m -> CORE_STK R m'.
-  Proof using CEILV. pin_using (fun (CEILV : unit) => tt). ceil_facts. intros P R m m' AG HP A1. unfold core_stk_fp in HP. unfold CORE_STK in *. eapply agrees_bytes_at; [exact AG| exact A1| intros a Ha; apply HP; lia]. Qed.
+  Proof using CEILV. pin_using (fun (CEILV : unit) => tt). ceil_facts. intros P R m m' AG HP (LA & A1). unfold core_stk_fp in HP. unfold CORE_STK in *. split; [exact LA|]. eapply agrees_bytes_at; [exact AG| exact A1| intros a Ha; apply HP; lia]. Qed.
 End Kit.
 End WithCeil.
 
@@ -402,19 +478,30 @@ Notation CEILZ := alloc_ceiling (only parsing).   (* [comment removed for export
 (* [comment removed for export] *)
 Section WithCeil.
 Context {CEILV : CEIL}.
-(* [comment removed for export] *)
-Record rctx := mkRC { rc_sp0 : word; rc_argv : list (list byte); rc_envp : list (list byte); rc_uid : word;
-                      rc_hw : word; rc_rnd : EntryDraw; rc_tp : word;
-                      rc_cb : bool }.
+(* PORTED to 75d69e00, identically to the Plain kit above (GI.v:29-50): [rctx]
+   carries [InitMem]'s [Section Layout] tuple (inp, mb, ph, entry, sp, rnd) and
+   argv, envp, the exec file name and the credentials are read off [inp].
+   [kb_rseq (in_kernel inp)] is carried symbolically and pinned nowhere. *)
+Record rctx := mkRC { rc_inp : ProcInput; rc_mb : word; rc_ph : PhdrInfo;
+                      rc_entry : word; rc_sp0 : word; rc_rnd : EntryDraw;
+                      rc_tp : word; rc_cb : bool }.
+Definition rc_argv (R : rctx) : list (list byte) := in_argv (rc_inp R).
+Definition rc_envp (R : rctx) : list (list byte) := in_envp (rc_inp R).
+Definition rc_uid (R : rctx) : word := in_uid (rc_inp R).
+Definition rc_gid (R : rctx) : word := in_gid (rc_inp R).
+Definition rc_hw (R : rctx) : word := in_hwcap (rc_inp R).
+(* the stack VMA's end: the image now runs from [sp] to [ed_top] *)
+Definition rc_top (R : rctx) : word := ed_top (rc_rnd R).
 (* [comment removed for export] *)
 Definition set_cb (R : rctx) (b : bool) : rctx :=
-  mkRC (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) (rc_tp R) b.
+  mkRC (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) (rc_tp R) b.
 Lemma set_cb_same : forall R, set_cb R (rc_cb R) = R.
 Proof. intros []. reflexivity. Qed.
 Definition rc_canary (R : rctx) : word := ssp_canary (rc_rnd R).
 Definition utp (R : rctx) : Z := bv_unsigned (rc_tp R).
 Definition usp0 (R : rctx) : Z := bv_unsigned (rc_sp0 R).
-Definition rc_lo (R : rctx) : Z := usp0 R - 8388608.
+(* the main stack floor, as in the plain copy above *)
+Definition rc_lo (R : rctx) : Z := usp0 R - 6144512.
 (* [comment removed for export] *)
 Definition rc_spmain (R : rctx) : Z := usp0 R - 48.
 
@@ -630,7 +717,7 @@ Section Kit.
     /\ rw_cells usegs m 0x544c8 [C8 (rc_canary R)]                        (* [comment removed for export] *)
     /\ rw_cells usegs m 0x544d0 [C8 (Z_to_bv 64 0)]
     /\ (exists (pg : word) (P0 : Z), rw_cells usegs m 0x544d8 [C8 pg; C8 (Z_to_bv 64 P0)]
-                                  /\ nth_error (argv_ptrs (rc_sp0 R) (rc_argv R) (rc_envp R)) 0 = Some (Z_to_bv 64 P0)).
+                                  /\ nth_error (InitMem.argv_ptrs (rc_inp R) (rc_sp0 R) (rc_rnd R)) 0 = Some (Z_to_bv 64 P0)).
   Definition core_libc_fp (a : Z) : Prop := (0x544c8 <= a < 0x54550) \/ (0x22de0 <= a < 0x22de8).
 
   (* [comment removed for export] *)
@@ -664,11 +751,51 @@ Section Kit.
     (0x544c0 <= a < 0x544c4) \/ (0x542a0 <= a < 0x544c0) \/ (0x22de8 <= a < 0x22df8) \/ (0x22d18 <= a < 0x22d20)
     \/ (0x24148 <= a < 0x24149) \/ (0x22d68 <= a < 0x22d78) \/ (0x23df8 <= a < 0x23e00) \/ (0x34150 <= a < 0x34155).
 
-  (* [comment removed for export] *)
+  (* PORTED to 75d69e00, identically to the Plain kit (GI.v:306-367): the image
+     is [Run.entry_stack_image] of the ported tuple (Run.v:1344) and the launch
+     fact travels with it, because the image now runs from [sp] to [ed_top]. *)
+  Definition rc_launch (R : rctx) : Prop :=
+    exists brk : word,
+      entry_launch_ok_va Sv48 (mkEntry (rc_sp0 R) brk (rc_mb R) (rc_rnd R)) (rc_inp R).
   Definition CORE_STK (R : rctx) (m : mem) : Prop :=
-    bytes_at usegs m (usp0 R) (build_stack_bytes Ubsan.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)).
+    rc_launch R
+    /\ bytes_at usegs m (usp0 R)
+         (entry_stack_image (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R)).
   Definition core_stk_fp (R : rctx) (a : Z) : Prop :=
-    usp0 R <= a < usp0 R + Z.of_nat (length (build_stack_bytes Ubsan.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R))).
+    usp0 R <= a < usp0 R
+      + Z.of_nat (length (entry_stack_image (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R))).
+
+  (* PROVENANCE (rule 23c): [Common/CatSim__Common.v:1361]
+     [launch_string_base_arith], whose unit this one does not depend on.
+     [valid_launch_sp]'s upper bound, 75d69e00:theories/LinuxProcessSem/Run.v:3656
+     with [launch_sp_hi] at :3641 and [align_down16] at :3572. *)
+  Lemma rc_span : forall R, rc_launch R ->
+    (usp0 R + InitMem.struct_size (rc_inp R) + InitMem.str_len (rc_inp R) + 8
+     <= bv_unsigned (rc_top R))%Z.
+  Proof using CEILV. pin_using (fun (CEILV : unit) => tt). ceil_facts.
+    intros R [brk LA]. cbn [entry_launch_ok_va] in LA.
+    destruct LA as (_ & (_ & _ & Hhi) & _).
+    unfold usp0, rc_top, InitMem.struct_size, InitMem.str_len.
+    unfold launch_sp_hi, align_down16 in Hhi.
+    pose proof (Z.mod_pos_bound
+      (bv_unsigned (ed_top (rc_rnd R)) - 8
+       - Z.of_nat (launch_string_bytes (in_argv (rc_inp R)) (in_envp (rc_inp R))
+                     (in_execfn (rc_inp R)))) 16 ltac:(lia)).
+    lia.
+  Qed.
+
+  (* [valid_stack_top_va]'s first conjunct (Run.v:3610): [top mod page_size = 0],
+     strictly stronger than the [mod 8] [stack_argv_string_slack] now needs. *)
+  Lemma rc_top_align : forall R, rc_launch R -> (bv_unsigned (rc_top R) mod 8 = 0)%Z.
+  Proof using CEILV. pin_using (fun (CEILV : unit) => tt). ceil_facts.
+    intros R [brk LA]. cbn [entry_launch_ok_va] in LA.
+    destruct LA as ((HP & _ & _) & _ & _). unfold rc_top.
+    unfold page_size in HP.
+    pose proof (Z.div_mod (bv_unsigned (ed_top (rc_rnd R))) 4096 ltac:(lia)) as D.
+    assert (E : bv_unsigned (ed_top (rc_rnd R))
+                = (512 * (bv_unsigned (ed_top (rc_rnd R)) / 4096) * 8)%Z) by lia.
+    rewrite E. apply Z_mod_mult.
+  Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -682,7 +809,7 @@ Section Kit.
     /\ ps_tls s = utp R - 200 /\ tls_block_ok_u (utp R - 200)
     /\ blocks_ok (utp R) (CL ++ FB)
     /\ 0x7fff80000000 <= usp0 R <= 2^47       (* [comment removed for export] *)
-    /\ CEILZ <= rc_lo R.                      (* [comment removed for export] *)
+    /\ CEILZ <= usp0 R - 8388608.             (* [comment removed for export] *)
 
   (* [comment removed for export] *)
   Definition SXGI (s : PState H hptr) (tp : word) (m : mem) : Prop :=
@@ -743,7 +870,7 @@ Section Kit.
   Qed.
 
   Lemma CORE_STK_agree : forall P R m m', agrees_on P m m' -> (forall a, core_stk_fp R a -> P a) -> CORE_STK R m -> CORE_STK R m'.
-  Proof using CEILV. pin_using (fun (CEILV : unit) => tt). ceil_facts. intros P R m m' AG HP A1. unfold core_stk_fp in HP. unfold CORE_STK in *. eapply agrees_bytes_at; [exact AG| exact A1| intros a Ha; apply HP; lia]. Qed.
+  Proof using CEILV. pin_using (fun (CEILV : unit) => tt). ceil_facts. intros P R m m' AG HP (LA & A1). unfold core_stk_fp in HP. unfold CORE_STK in *. split; [exact LA|]. eapply agrees_bytes_at; [exact AG| exact A1| intros a Ha; apply HP; lia]. Qed.
 End Kit.
 End WithCeil.
 

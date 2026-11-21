@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag rz threaded through the plan checker; a munmap plan node with its soundness premise and cases; the cs_ok reserved-ledger field widened to the launch's vDSO and vvar intervals, with the projections co_resx, co_mres and co_vdso; check_all_ok and cont_agree written out in plain text; cs_ok gains the split-ledger field co_split (the ysplit predicate, with its frame lemmas) and the channel-reader field co_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -135,6 +136,7 @@ Fixpoint spin_guarded (p : plan) : bool :=
   | PMmap kr kg => (spin_only kr || spin_guarded kr) && spin_guarded kg
   | PMmapIn kk ko kd | PMmapInH kk ko kd => (spin_only kk || spin_guarded kk) && spin_guarded ko && (spin_only kd || spin_guarded kd)
   | PMprotect kr kg => (spin_only kr || spin_guarded kr) && spin_guarded kg
+  | PMunmap2 kr kg => (spin_only kr || spin_guarded kr) && spin_guarded kg
   | PBrk2 ka kb => spin_guarded ka && spin_guarded kb
   | PX _ _ k | PExt _ _ k | PEmit _ _ k => spin_guarded k
   | PExt2 _ _ k1 k2 => (spin_only k1 || spin_guarded k1) && spin_guarded k2
@@ -154,6 +156,10 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(** #108: the plan's CONFIG_RSEQ flag as 0 or 1 ([APC.rseq_z]): [AP.node_x] reads it through
+    [node_pnscan] / [node_layout], so [x_stmt] and [CHECK] do too (sound for every value);
+    bzip2 K/AS/AsanPlanSound.v:120-122 *)
+Variable rz : Z.
 Variable HS : nat -> option acs.
 (* [comment removed for export] *)
 Variable XN : nat -> list expr -> acs -> option acs.
@@ -215,7 +221,23 @@ Variable FS0 : Fs.Fs.
 (* [comment removed for export] *)
 Variable KC : nat.
 
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
+(** THE LAUNCH'S EXTRA RESERVED INTERVALS (the vDSO text and the vvar pages,
+    [State.init_reserved] / [State.vdso_reserved]): [vm_reserved] is the image's
+    reservations followed by a list [rx] the launch adds, of which the nodes need
+    the geometry, the count and the total size. *)
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  (** a PAGE clear of [KHI]: a FIXED range ending at or below [KHI]
+      ([AP.resx_clear]) meets none of them *)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  (** NOT [<= CEIL]: the pair hangs off [mm->mmap_base], and
+      [Run.valid_mmap_base] admits a base up to [State.mmap_base_max] *)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT rz XN XE XB HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -376,6 +398,20 @@ Definition in_tok (E : env) (z : Z) (t : expr * expr) : Prop := uE E (fst t) <= 
 Definition cov_ok (E : env) (N : list (word * word)) (sub : list (expr * expr)) (m : amap) : Prop := ltac2:(CDefT.buildp (gd_tbl_AsanPlanSound ()) "P,(34.$4?.(50.O1.)$53.)Pz,$1.P,(5.(2.(6.O4.(45.O1.))R1.)(1?.R1.(18.(6.O4.(45.O1.))(6.O4.(46.O1.)))))(1:.(3.$20.(21.R2.O3.)$22.)(4:.(11.$29.$29.)Lt,(11.$29.$29.)(5.(34.(11.$29.$29.)R1.O2.)(54.O4.R3.R1.))))")
 (* [comment removed for export] *).
 
+(** LPS 727298f3: THE SPLIT LEDGER, from the launch to main's entry.  The heap's room invariant
+    ([AHeap/AMark.heap_mark]) needs, at main's entry, every ledger interval to end at or below
+    [kHighMemBeg] or to start at or above a page-aligned high mark [Y] under [State.mmap_top], with
+    [Y] far above [kHighMemBeg].  The launch gives it (the image ends low; the vDSO pair hangs off
+    [State.vdso_top]); Linux's top-down placement keeps it, lowering [Y] by at most twice each
+    NULL-hint grant ([AsanPlacement.null_hint_grant_step]); and the plan tracks a floor [y] on [Y]
+    in [a_ylo] ([AsanPlanCore.mmap_null] lowers it by [2 * nhi] and refuses a grant that could
+    reach [KHI]).  The floor stays under [State.mmap_base_min], so a grant above the bottom-up
+    floor cannot lift the mark over it. *)
+Definition ysplit (y : Z) (h : VmMaps) : Prop :=
+  y <= mmap_base_min
+  /\ exists Y : Z, y <= Y /\ Y mod 4096 = 0 /\ Y <= mmap_top h
+       /\ ledger_split (vm_reserved h ++ vm_maps h) kHighMemBeg Y.
+
 Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) : Prop := CS_OK {
   (* [comment removed for export] *)
   co_regs  : regs_ok E (s_regs (a_ss cs)) R;
@@ -386,7 +422,20 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  (* the reserved ledger: the image's intervals plus the launch's extra ones; every
+     tracked mapping apart from the whole ledger; the launch's vDSO/vvar pair inside
+     the ledger.  One field, so that the record keeps its arity; [co_resx],
+     [co_mres] and [co_vdso] below project the three parts.  The existential is
+     spelled INLINE: the frame lemmas rewrite [m_vmmaps model'] under it. *)
+  co_res   : (exists rx : list (word * word),
+                vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+                /\ Forall resx_entry_ok rx
+                /\ (length rx <= n_resx A)%nat
+                /\ sum_sizes rx <= resx_bytes A)
+             /\ Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                       (vm_maps (m_vmmaps model))
+             /\ incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                     (vm_reserved (m_vmmaps model));
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
   (* [comment removed for export] *)
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -432,9 +481,101 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_def   : Forall (def_ok E FULL) (a_maps cs);
   (* [comment removed for export] *)
   co_nn    : forall a : word, in_ivs (bv_unsigned a) (vm_noaccess (m_vmmaps model)) = true -> FULL a = None;
-  co_cov   : Forall (cov_ok E (vm_noaccess (m_vmmaps model)) (a_sub cs)) (a_maps cs)
+  co_cov   : Forall (cov_ok E (vm_noaccess (m_vmmaps model)) (a_sub cs)) (a_maps cs);
+  (* LPS 727298f3: the split ledger above, with [a_ylo] its floor *)
+  co_split : ysplit (a_ylo cs) (m_vmmaps model);
+  (* LPS 727298f3: the launch's reader of fd 1's channel ([Run.valid_input_channel_reader]);
+     nothing the start-up does closes it *)
+  co_rdr   : m_channel_reader model = true
 }.
 
+(* #108 (LPS 75d69e00): [co_res] is packed (the record keeps its arity); its three parts, from
+   the bzip2/bzip2_compress_target unit's
+   K/AS/AsanPlanSound.v co_resx/co_mres/co_vdso
+   (statement and proof). *)
+Lemma co_resx : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  exists rx : list (word * word),
+    vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+    /\ Forall resx_entry_ok rx /\ (length rx <= n_resx A)%nat /\ sum_sizes rx <= resx_bytes A.
+Proof. intros E cs R FULL model HC. exact (proj1 (co_res _ _ _ _ _ HC)). Qed.
+
+Lemma co_mres : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model)).
+Proof. intros E cs R FULL model HC. exact (proj1 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+Lemma co_vdso : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+Proof. intros E cs R FULL model HC. exact (proj2 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+(** LPS 727298f3: the frame lemmas of [ysplit].  [State.mmap_top] reads only the mmap base and the
+    initial stack pointer; a ledger that only loses or cuts intervals keeps the split; a new interval
+    keeps it when it ends at or below [kHighMemBeg], or when it starts at or above the floor (the
+    high mark drops to the interval's page-aligned base). *)
+#[using="Type"] Lemma mmap_top_eq : forall h h',
+  vm_mmap_base h' = vm_mmap_base h -> vm_init_sp h' = vm_init_sp h -> mmap_top h' = mmap_top h.
+Proof. intros h h' E1 E2. unfold mmap_top, alloc_top. rewrite E1, E2. reflexivity. Qed.
+
+#[using="Type"] Lemma ysplit_mono : forall y y' h, ysplit y h -> y' <= y -> ysplit y' h.
+Proof.
+  intros y y' h (Hb & Y & H1 & H2) Hy. split; [lia|]. exists Y. split; [lia | exact H2].
+Qed.
+
+#[using="Type"] Lemma ysplit_within : forall y h h',
+  ysplit y h -> mmap_top h' = mmap_top h ->
+  (forall b s, In (b, s) (vm_reserved h' ++ vm_maps h') ->
+     exists b0 s0, In (b0, s0) (vm_reserved h ++ vm_maps h)
+       /\ bv_unsigned b0 <= bv_unsigned b
+       /\ bv_unsigned b + bv_unsigned s <= bv_unsigned b0 + bv_unsigned s0) ->
+  ysplit y h'.
+Proof.
+  intros y h h' (Hb & Y & H1 & H2 & H3 & H4) Ht Hw. split; [exact Hb|].
+  exists Y. split; [exact H1|]. split; [exact H2|]. split; [rewrite Ht; exact H3|].
+  intros b s Hin. destruct (Hw b s Hin) as (b0 & s0 & H0 & L1 & L2).
+  destruct (H4 b0 s0 H0) as [X|X]; [left | right]; lia.
+Qed.
+
+#[using="Type"] Lemma ysplit_incl : forall y h h',
+  ysplit y h -> mmap_top h' = mmap_top h ->
+  incl (vm_reserved h' ++ vm_maps h') (vm_reserved h ++ vm_maps h) ->
+  ysplit y h'.
+Proof.
+  intros y h h' H Ht Hi. apply (ysplit_within y h h' H Ht).
+  intros b s Hin. exists b, s. split; [exact (Hi _ Hin) | lia].
+Qed.
+
+#[using="Type"] Lemma ysplit_cons_low : forall y h h' (a n : word),
+  ysplit y h -> mmap_top h' = mmap_top h -> vm_reserved h' = vm_reserved h ->
+  vm_maps h' = (a, n) :: vm_maps h ->
+  bv_unsigned a + bv_unsigned n <= kHighMemBeg ->
+  ysplit y h'.
+Proof.
+  intros y h h' a n (Hb & Y & H1 & H2 & H3 & H4) Ht Hr Hm Hlow. split; [exact Hb|].
+  exists Y. split; [exact H1|]. split; [exact H2|]. split; [rewrite Ht; exact H3|].
+  rewrite Hr, Hm. intros b s Hin. apply in_app_iff in Hin as [Hin|[Heq|Hin]].
+  - apply H4. apply in_app_iff. left. exact Hin.
+  - injection Heq as <- <-. left. exact Hlow.
+  - apply H4. apply in_app_iff. right. exact Hin.
+Qed.
+
+#[using="Type"] Lemma ysplit_cons_high : forall y h h' (a n : word),
+  ysplit y h -> mmap_top h' = mmap_top h -> vm_reserved h' = vm_reserved h ->
+  vm_maps h' = (a, n) :: vm_maps h ->
+  y <= bv_unsigned a -> bv_unsigned a mod 4096 = 0 ->
+  ysplit y h'.
+Proof.
+  intros y h h' a n (Hb & Y & H1 & H2 & H3 & H4) Ht Hr Hm Hya Hal. split; [exact Hb|].
+  exists (Z.min Y (bv_unsigned a)). split; [lia|].
+  split; [destruct (Z.le_ge_cases Y (bv_unsigned a));
+            [rewrite Z.min_l by lia; exact H2 | rewrite Z.min_r by lia; exact Hal]|].
+  split; [rewrite Ht; lia|].
+  rewrite Hr, Hm. intros b s Hin. apply in_app_iff in Hin as [Hin|[Heq|Hin]].
+  - destruct (H4 b s ltac:(apply in_app_iff; left; exact Hin)); [left | right]; lia.
+  - injection Heq as <- <-. right. lia.
+  - destruct (H4 b s ltac:(apply in_app_iff; right; exact Hin)); [left | right]; lia.
+Qed.
+
+Lemma co_split_ylo : forall E cs R FULL model, cs_ok E cs R FULL model -> a_ylo cs <= mmap_base_min.
+Proof. intros E cs R FULL model HC. exact (proj1 (co_split _ _ _ _ _ HC)). Qed.
 
 
 (* [comment removed for export] *)
@@ -593,8 +734,9 @@ Proof.
   assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
   assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
   pose proof (fun a => noacc_hid E cs R FULL model a HC) as NH.
+  assert (Ekn : m_kernel model' = m_kernel model) by (rewrite Hs; reflexivity).
   destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-    rewrite ?Evm, ?Elz; try assumption.
+    rewrite ?Evm, ?Elz, ?Ekn; try assumption.
   - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
   - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
   - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -607,6 +749,8 @@ Proof.
   - eapply SINV_frame; [| intros a0 _ D0; exact (Hdom a0 D0) | eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
   - (* [comment removed for export] *) apply Forall_forall. intros m Hin Hf Hk a Ha. apply Hdom. exact (proj1 (Forall_forall _ _) co_def0 m Hin Hf Hk a Ha).
   - (* [comment removed for export] *) intros a Hn. rewrite (Hhid a (NH a Hn)). auto.
+  - (* LPS 727298f3: co_rdr; [with_vm_backing] keeps the process state, so the channel reader *)
+    rewrite Hs. exact co_rdr0.
 Qed.
 
 (* [comment removed for export] *)
@@ -1456,12 +1600,12 @@ Lemma srchain_srealizes0 : srchain (srealizes0 SEGS).
 Proof. intros H HH Hwx. exact (srz0_msteps_restricted_T SEGS H HH Hwx). Qed.
 
 (* [comment removed for export] *)
-Definition x_stmt0 (x : xnode) : Prop := forall args, node1_stmt_R (srealizes0 SEGS) always (node_x SEGS A nx0 x args).
+Definition x_stmt0 (x : xnode) : Prop := forall args, node1_stmt_R (srealizes0 SEGS) always (node_x SEGS A nx0 rz x args).
 
 (* [comment removed for export] *)
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
 (* [comment removed for export] *)
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 (* [comment removed for export] *)
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 (* [comment removed for export] *)
@@ -1528,6 +1672,7 @@ Hypothesis node_brk2_sound : brk2_stmt.
 Hypothesis node_mmap2_sound : mm2_stmt (node_mmap2 A nx0 LIMIT).
 Hypothesis node_mmapin_sound : mm3_stmt (node_mmapin A LIMIT false).   (* [comment removed for export] *)
 Hypothesis node_mprotect2_sound : mm2_stmt (node_mprotect2 A LIMIT).
+Hypothesis node_munmap2_sound : mm2_stmt (node_munmap2 A).   (** #38: model theories/Common/AsanPlanSound.v:1744 *)
 Hypothesis node_exit_sound : exit_stmt.
 Hypothesis node_x_sound : forall x, x_stmt x.
 Hypothesis node_x_sound0 : forall x, x_spin_ok x = true -> x_stmt0 x.   (* [comment removed for export] *)
@@ -1773,6 +1918,7 @@ Proof.
   - lia.
   - lia.
   - intros a. rewrite HH. replace (in_ghost E ch) with (in_ghost E cs) by (unfold in_ghost, in_ghostl; rewrite Hghost; reflexivity). exact (co_zero0 a).
+  - (* LPS 727298f3: co_split; [entails] only lowers the floor *) eapply ysplit_mono; [exact co_split0 | lia].
 Qed.
 
 
@@ -3412,7 +3558,9 @@ Proof.
     - unfold Mr. rewrite HH. eapply kn_incl_h_sound; [exact co_know0 | exact Hkn].
     - unfold Tc. cbn [set_regs with_ss a_maps a_ylo]. rewrite <- Hmaps. eapply holes_mono; [exact co_holes0 | lia].
     - intros a. rewrite HH. replace (in_ghost E Tc) with (in_ghost E cs) by (unfold in_ghost, in_ghostl, Tc; cbn [set_regs with_ss a_ghost]; rewrite Hghost; reflexivity).
-      exact (co_zero0 a). }
+      exact (co_zero0 a).
+    - (* LPS 727298f3: co_split; [entails_h] only lowers the floor *)
+      unfold Tc. cbn [set_regs with_ss a_ylo]. eapply ysplit_mono; [exact co_split0 | lia]. }
   (* [comment removed for export] *)
   assert (ET : T = set_regs Tc (s_regs (a_ss T))).
   { subst Tc. clear - HL HRV. destruct T as [[p sr lg k nx rv] m t y e v g ab br f ti sb]. cbn in HL, HRV. subst lg rv. reflexivity. }
@@ -3465,8 +3613,13 @@ Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-#[using="Type"] Lemma check_all_ok : ltac2:(CDefT.buildp (gd_tbl_AsanPlanSound ()) "Pchk,P,$2>.P,$?:.$?;.Pk,$?:.Pcss,(2?.$2>.)Ps,$:0.P,(3.$?;.(?<.VA,R4.R3.R2.)(?=.R1.))(5.(4:.$2>.Lcs1,$2>.(5.(34.$2>.R1.R4.)(5.(3.$?;.A2.R6.R1.R5.(?=.R3.))$?>.)))Pcs,$2>.P,(34.$2>.R1.R4.)(3.$?;.A2.R7.R2.R6.(?=.R4.)))")
-(* [comment removed for export] *).
+(* Was an encoded statement (CDefT.buildp) applying [AP.check_all] at its old arity; #108 threads
+   [rz] through it (its empty-list error witness is [init_acs_of rz A]).  Written out from its
+   decode (cdeft_print.py), not re-encoded; the only change is [rz]. *)
+#[using="Type"] Lemma check_all_ok : forall (chk : AP.acs -> AP.plan -> AP.cres) (k : AP.plan) (css : list AP.acs) (s : AP.shape),
+  AP.check_all A rz chk k css = AP.COk s ->
+  (exists cs1 : AP.acs, In cs1 css /\ chk cs1 k = AP.COk s /\ True)
+  /\ (forall cs : AP.acs, In cs css -> chk cs k = AP.COk s).
 Proof.
   intros chk k css s H. unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
   destruct (chk cs0 k) as [s0|] eqn:H0; [|discriminate].
@@ -3492,7 +3645,7 @@ Proof.
   intros bfuel fuel. induction fuel as [|fuel IH]; intros lc p cs s Hc; [discriminate|].
   cbn [AP.check] in Hc.
   match type of Hc with (if ?g then _ else _) = _ => destruct g; [discriminate|] end.
-  destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc].
+  destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc|mua mub].
   - destruct (run_block_gc SEGS IT _ KC bfuel (stops ++ STOPS A) cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (AP.expr_vars_lt nx0 e) eqn:Hv; [|discriminate].
     destruct (erange (kn cs) e) as [[lo hi]|]; [|discriminate].
@@ -3533,7 +3686,7 @@ Proof.
   - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A rz (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
     apply salt2_vars; [exact (IH _ ia _ sa H1) | apply salt2_vars; [exact (IH _ ib _ sb H2) | exact (IH _ ic _ sc Hc1)]].
@@ -3546,7 +3699,7 @@ Proof.
     destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
     destruct (shape_le sb sa); [|discriminate].   (* [comment removed for export] *)
     injection Hc as <-. apply salt2_vars; [exact (IH _ ka _ sa H1) | exact (IH _ kb _ sb H2)].
-  - destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+  - destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -3593,10 +3746,15 @@ Proof.
     destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A rz (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
     apply salt2_vars; [exact (IH _ iha _ sa H1) | apply salt2_vars; [exact (IH _ ihb _ sb H2) | exact (IH _ ihc _ sc Hc1)]].
+  - (* munmap2: refused / cut (model AsanPlanSound.v:3312) *)
+    destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_munmap2 A cs) as [[csa csb]|]; [|discriminate].
+    destruct (CHECK bfuel fuel lc csa mua) as [sa|] eqn:H1; [|discriminate].
+    destruct (CHECK bfuel fuel lc csb mub) as [sb|] eqn:H2; [|discriminate].
+    injection Hc as <-. apply salt2_vars; [exact (IH _ mua _ sa H1) | exact (IH _ mub _ sb H2)].
 Qed.
 
 (* [comment removed for export] *)
@@ -4842,7 +5000,17 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="HOLES_agree"] Lemma cont_agree : ltac2:(CDefT.buildp (gd_tbl_AsanPlanSound ()) "Pbfuel,$6:.Pfuel,$6:.Plc,(23.$12=.)Pk,$?:.Pcs,$2>.Pcs',$2>.Ps,$:0.PE,$0.Pmodel,$56.PD,$9>.P,(3.$?;.(130.VSEGS,VIT,VA,Vnx0,VLIMIT,VXN,VXE,VXB,VHS,VKC,R:.R9.R8.R5.R7.)(?=.R4.))P,(12>.R9.R2.R4.(:5.R3.))P,(3.$20.(12?.R:.R8.)$22.)P,A1.R4.(2=.$::.)P,PE,$0.PR,(55.&5.(12.&40.))PFULL,P,(12.&40.)(23.(12.&8.))Pmodel,$56.P,(57.R4.R=.R3.R2.R1.)P,(12>.R11.R:.R5.(:5.R2.))P,A1.R;.(2=.$::.)(:6.VSEGS,(:7.VSEGS,R6.(83.R10.)R5.R4.)(:2.R<.R7.(:5.R4.)R?.))PE',$0.PR',(55.&5.(12.&40.))PFULL',P,(12.&40.)(23.(12.&8.))Pmodel',$56.P,(5.(9;.Vnx0,R<.R4.)(9;.(:4.R?.)R<.R4.))P,(57.R5.R?.R4.R3.R2.)P,(3.$9?.(:5.R3.)(:5.R=.))(:6.VSEGS,(:7.VSEGS,R6.(83.R11.)R5.R4.)(:2.R=.R?.(:5.R>.)R10.))")
+(* Was an encoded statement (CDefT.buildp) applying [AP.check] at its old arity; #108 threads [rz]
+   through [AP.check], so it is written out (decoded with cdeft_print.py, not re-encoded) over
+   [CHECK], exactly [cont_agree0]'s shape with [srealizes] in place of [srealizes0]. *)
+#[using="HOLES_agree"] Lemma cont_agree : forall bfuel fuel lc k cs cs' s E model D,
+  CHECK bfuel fuel lc cs' k = COk s ->
+  LCOK lc D E (m_fs model) -> lc_guard lc cs = true -> D [] ->
+  (forall E R FULL model, cs_ok E cs' R FULL model -> LCOK lc D E (m_fs model) -> D [] ->
+     srealizes SEGS (cfg R (pc cs') FULL model) (sd D E (m_fs model) s)) ->
+  forall E' R' FULL' model',
+    env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' cs' R' FULL' model' -> m_fs model' = m_fs model ->
+    srealizes SEGS (cfg R' (pc cs') FULL' model') (sd D E (m_fs model) s)
 (* [comment removed for export] *).
 Proof.
   intros bfuel fuel lc k cs cs' s E model D Hc HL Hg HD IH E' R' FULL' model' [Hag Hag2] HC' Hfs.
@@ -4877,7 +5045,7 @@ Proof.
             forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' cs' R' FULL' model' ->
             m_fs model' = m_fs model -> srealizes0 SEGS (cfg R' (pc cs') FULL' model') (sd D E (m_fs model) s')).
   { intros k cs' s' Hk Hgk. eapply cont_agree0; [exact Hk | exact HL | exact Hg | exact HD | intros; eapply IH; eassumption]. }
-  destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc].
+  destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc|mua mub].
   all: cbn [spin_only] in Hso; try discriminate Hso.
   - (* [comment removed for export] *)
     destruct (run_block_gc SEGS IT _ KC bfuel (stops ++ STOPS A) cs) as [cs1|] eqn:Hrb; [|discriminate].
@@ -4889,7 +5057,7 @@ Proof.
     eapply (node_fresh_sound0 r logc fb cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc Hso).
   - (* [comment removed for export] *)
     apply andb_prop in Hso as [Hx Hso].
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound0 x Hx args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc Hso).
   - (* [comment removed for export] *)
     destruct (node_spin SEGS cs) eqn:Hn; [|discriminate]. injection Hc as <-. cbn [sd].
@@ -4928,7 +5096,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="IT_ok SEGS_wx SEGS_in_hull HULL_ok SHADOW_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree HOLES_agree HOLES_nil node_sys_sound node_brk2_sound node_mmap2_sound node_mmapin_sound node_mprotect2_sound node_exit_sound node_x_sound node_x_sound0 node_join_sound node_ext_sound node_emit_sound node_ext2_sound HS_sound"] Theorem check_sound : forall fuel bfuel lc p cs s,
+#[using="IT_ok SEGS_wx SEGS_in_hull HULL_ok SHADOW_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree HOLES_agree HOLES_nil node_sys_sound node_brk2_sound node_mmap2_sound node_mmapin_sound node_mprotect2_sound node_munmap2_sound node_exit_sound node_x_sound node_x_sound0 node_join_sound node_ext_sound node_emit_sound node_ext2_sound HS_sound"] Theorem check_sound : forall fuel bfuel lc p cs s,
   CHECK bfuel fuel lc cs p = COk s -> spin_guarded p = true ->
   forall E R FULL model D, cs_ok E cs R FULL model -> LCOK lc D E (m_fs model) -> D [] ->
   srealizes SEGS (cfg R (pc cs) FULL model) (sd D E (m_fs model) s).
@@ -4951,7 +5119,7 @@ Proof.
     - eapply cont_agree0; [exact Hk | exact HL | exact Hg | exact HD | intros; eapply check_sound0; eassumption].
     - cbn [orb] in Hgk. intros E' R' FULL' model' Hag HC' Hfs. apply srealizes_srealizes0. exact (CONT k cs' s' Hk Hgk E' R' FULL' model' Hag HC' Hfs). }
   cbn [spin_guarded] in Hsg.
-  destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc].
+  destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc|mua mub].
   - (* [comment removed for export] *)
     destruct (run_block_gc SEGS IT _ KC bfuel (stops ++ STOPS A) cs) as [cs1|] eqn:Hrb; [|discriminate].
     pose proof (LCOK_bnd lc D E (m_fs model) HL) as Hgb.
@@ -5057,7 +5225,7 @@ Proof.
     destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A rz (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
     eapply srz_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].
@@ -5085,7 +5253,7 @@ Proof.
     eapply (node_brk2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT ka csa sa H1 Hsg1) | exact (CONT kb csb sb H2 Hsg2) |].
     exact (shape_le_sound _ E (m_fs model) sb sa HD Hle).
   - (* [comment removed for export] *)
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc Hsg).
   - (* [comment removed for export] *)
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].
@@ -5289,13 +5457,22 @@ Proof.
     destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A rz (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
     eapply srz_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].
     eapply (node_mmapin_sound cs csa csb cscs E R FULL model);
       [exact HC | exact Hec | exact Hn | exact (CONT0 iha csa sa H1 Hsg1) | exact (CONT ihb csb sb H2 Hsg2) |].
     intros csc E' R' FULL' model' Hin. exact (CONT0 ihc csc sc (Hall csc Hin) Hsg3 E' R' FULL' model').
+  - (* munmap2: refused / cut (model AsanPlanSound.v:4405-4412) *)
+    apply andb_prop in Hsg as [Hsg1 Hsg2].
+    destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
+    destruct (node_munmap2 A cs) as [[csa csb]|] eqn:Hn; [|discriminate].
+    destruct (CHECK bfuel fuel lc csa mua) as [sa|] eqn:H1; [|discriminate].
+    destruct (CHECK bfuel fuel lc csb mub) as [sb|] eqn:H2; [|discriminate].
+    injection Hc as <-.
+    eapply srz_conseq; [| apply sd_salt2; exact HD].
+    eapply (node_munmap2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT0 mua csa sa H1 Hsg1) | exact (CONT mub csb sb H2 Hsg2)].
 Qed.
 
 End Sound.

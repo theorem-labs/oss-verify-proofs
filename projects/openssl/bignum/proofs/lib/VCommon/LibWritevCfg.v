@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -32,6 +33,15 @@ Variable cfg : SpuriousCfg.
 
 Lemma writev_check_nomax : forall ms x8 model (fd : Z) (iov : word) iovs bss,
   ms_rom ms = seg_rom segs ->
+  (* NEW at this revision, and the same premise bndiv's later writev lemmas carry
+     (LibWritev.v:229, :296, :381, :433, :478, :516, :550).  The model's writev now
+     wraps its result in `if negb (m_channel_reader model) then check_sigpipe_writev …`,
+     so without this the `if` does not reduce and the proof's CheckReject branches
+     cannot be reached (LibWritevCfg.v:89, "Unable to
+     unify CheckReject with if negb (m_channel_reader model) then …").  It is
+     DISCHARGED, not assumed: AxEntryS's init_rdr proves m_channel_reader model0 = true
+     at the launch from the tree's own input. *)
+  m_channel_reader model = true ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
   (0 < fd < 2^31)%Z ->
   bv_unsigned x8 = 66%Z ->
@@ -59,7 +69,7 @@ Lemma writev_check_nomax : forall ms x8 model (fd : Z) (iov : word) iovs bss,
       | _ => CheckReject
       end.
 Proof.
-  intros ms x8 model fd iov iovs bss Hrom Hfd Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs bs tot Ht1 Ht30 CA.
+  intros ms x8 model fd iov iovs bss Hrom Hcr Hfd Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs bs tot Ht1 Ht30 CA.
   pose proof (gather_of_bufs segs ms iovs bss Hrom Hbufs) as Hg. fold bs in Hg.
   pose proof (gather_iovecs_length _ _ _ Hg) as Hlen. fold tot in Hlen.
   split; [exact Hlen|].
@@ -85,7 +95,7 @@ Proof.
   { unfold len_word. rewrite Hlen. apply u64_lit. lia. }
   replace (addr_is_error_b (len_word bs)) with false
     by (symmetry; unfold addr_is_error_b, two_pow_64; apply Z.ltb_ge; rewrite Hlw; lia).
-  cbv beta iota.
+  rewrite Hcr. cbn [negb]. cbv beta iota.
   destruct eff as [ret ws zs us cs ci]. destruct ws; [|reflexivity]. destruct zs; [|reflexivity].
   destruct us; [|reflexivity]. destruct cs; [|reflexivity].
   rewrite Hlen. reflexivity.

@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-hdzo-A of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record); merger ReallocPrimary.CfW).
    rule 24: no function proved (kind: image rows; a closed computation at reply's image A, fuzz_reply.asan).
-   Reuse search: the row's own cgif discharge, YGcfInstHitcgif.v:65 HDZO_cgif (a working branch cc4fb1f2a13), and
-   a Theorem Labs lane's reply A rows (ReplyImgRowsA.v, a working branch c61d83c6f0cc): no HDZO discharge at reply.
+   Reuse search: the row's own cgif discharge, YGcfInstHitcgif.v:65 HDZO_cgif (a working branch), and
+   a Theorem Labs lane's reply A rows (ReplyImgRowsA.v, a working branch): no HDZO discharge at reply.
 
-   HDZO is the cf layer's YGcfInstHit.v:142-143 (commit d2e17f315ba):
+   HDZO is the cf layer's YGcfInstHit.v:143-144:
      forall ly' a, ag_dzone ly' a ->
        Exists (in_zr a) (as_owned_static B) \/ (ly_NB ly' <= a < ly_NB ly' + kNodesBlockSize) \/
        (ly_SB ly' <= a < ly_SB ly' + kStoreBlockSize).
    [ag_dzone] is a field of the cf layer's interface class AGImg, which reply does not carry yet. At cgif the field is
-   AGis.DZONE (AGis.v:230-231): the image part [TFIB_STORE, end of Tfib_owned_static's fifth region) = [0x178148,
+   AGis.DZONE (AGis.v:231-232): the image part [TFIB_STORE, end of Tfib_owned_static's fifth region) = [0x178148,
    0x5c88d0), then the depot's nodes block and store block. So this file states HDZO with [ag_dzone] UNFOLDED:
    - [hdzo_A_any]: for ANY image part [lo, hi) inside Tfib_owned_static's fifth region (0xa5910, 0x5c8710 - 0xa5910),
-     A/AF0m.v:823, so the row closes whatever image part reply's AGImg instance chooses there;
+     A/AF0m.v:824, so the row closes whatever image part reply's AGImg instance chooses there;
    - [hdzo_A]: the instance cgif's DZONE has at reply A's symbols, image part [TFIB_STORE = 0x177f88, 0x5c8710)
-     (A/AF0m.v:18), i.e. [DZONE_A] below = AGis.DZONE's text with reply's numbers.
+     (A/AF0m.v:19), i.e. [DZONE_A] below = AGis.DZONE's text with reply's numbers.
    A consumer closes the layer's row with `exact` (or `exact (hdzo_A_any lo hi _ _)`) once the layer is on reply. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -34,7 +35,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AGif2reply.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* The fifth region of Tfib_owned_static (A/AF0m.v:823): every address in [0xa5910, 0x5c8710) is owned. *)
+(* The fifth region of Tfib_owned_static (A/AF0m.v:824): every address in [0xa5910, 0x5c8710) is owned. *)
 Lemma owned5_A : forall B, @im_syms AImg_reply B -> forall a, 0xa5910 <= a < 0x5c8710 ->
   Exists (in_zr a) (as_owned_static B).
 Proof.
@@ -57,8 +58,8 @@ intros lo hi Hlo Hhi B TS ly a [Hd|[Hd|Hd]].
 - right; right; exact Hd.
 Qed.
 
-(* AGis.DZONE's text (cgif AGis.v:230-231) with reply A's numbers: the image part starts at TFIB_STORE (0x177f88,
-   A/AF0m.v:18; cgif 0x178148 = its TFIB_STORE) and ends where Tfib_owned_static's fifth region ends (0x5c8710;
+(* AGis.DZONE's text (cgif AGis.v:231-232) with reply A's numbers: the image part starts at TFIB_STORE (0x177f88,
+   A/AF0m.v:19; cgif 0x178148 = its TFIB_STORE) and ends where Tfib_owned_static's fifth region ends (0x5c8710;
    cgif 0x5c88d0). *)
 Definition DZONE_A (ly : alayout) (a : Z) : Prop :=
   (TFIB_STORE <= a < 0x5c8710) \/ (ly_NB ly <= a < ly_NB ly + kNodesBlockSize) \/ (ly_SB ly <= a < ly_SB ly + kStoreBlockSize).

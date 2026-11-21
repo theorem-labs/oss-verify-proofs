@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start state per CONFIG_RSEQ, taken at the launch's flag; main_safe and top_sound_A proved from the same walk stated for every world predicate that meets the frame obligations, which top_rob_A runs at RobReach.ok_rob for the read-only backing's robustness at every reached configuration, RunSeg.rob_reach, LPS 75d69e00). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Bool PArith Lia.
@@ -18,6 +19,8 @@ From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.LibA Require Import BudA Tob
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require Import ImageFacts Code Init Start0 StartLib KxA StartMain StartArgBytes
   DrvTLXa DrvIfaceT DrvIfaceR DrvIfaceM DrvM_states DrvM DrvR DrvR_facts DrvR_dstates DrvFw MainJoin SpineA Lib_fuzz_iface2.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require RunSeg.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A Require RobReach.
 Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
@@ -142,9 +145,15 @@ Proof using inp. apply ok_halted_tgt. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Lemma main_safe : triple segsA okT (QMain sp brk mb draw lim inp) (fun _ => False).
+(* LPS 75d69e00: [main_safe] for every world predicate that meets the frame obligations of
+   the main walk; [main_safe] is it at [okT], and [top_rob_A] runs it at [RobReach.ok_rob]. *)
+Lemma main_safe_ok : forall (ok : world -> Prop),
+  (forall J : jpredA, (forall rho tp tr md, J rho tp tr md -> tcons (SpineA.SpecT argv FS0) tr) -> ok_frameA segsA ok J) ->
+  (forall J : jpredA, (forall rho tp tr md, J rho tp tr md -> tcons (SpineA.SpecT argv FS0) tr) -> ok_pframeA segsA ok J) ->
+  ok_halted ok (SpineA.SpecT argv FS0) ->
+  triple segsA ok (QMain sp brk mb draw lim inp) (fun _ => False).
 Proof.
-  intros n Hg w HQ.
+  intros ok HJF HJP Hh n Hg w HQ.
   destruct (Z.eq_dec (ARGC inp) 2) as [E|NE].
   - destruct (HandM w E HQ) as (Mm & B & rhoM & tpM & A0 & HS & HP0 & Hfds & Hfs & HA0).
     destruct HA0 as (HAI & Htp & Htop & Hfr & HV & Hfresh & Hnl & Hns).
@@ -152,24 +161,46 @@ Proof.
     destruct (argv1_plain Hargc) as [Hnsl Hndd].
     pose proof (MainJoin.main_join_M AInv CST XGL argv FS0 Mm B rhoM tpM A0 Hfds Hfs HAI Htp Htop Hfr HV Hfresh Hnl Hns w HP0 HS) as HS2.
     exact (SpineA.spine_safe_A AInv CST XGL ALA HCST HXGL HLV HLF HCSTok HCSTdrv HLPP HCSTdrv2 argv FS0 Hargc (argv1_nonul Hargc) Hndd Hnsl
-             (MDfs FS0) (MDfs_vm FS0) (MDfs_fds FS0) (MDfs_fs FS0) rhoM okT HOKJ HOKP Hokh AC MS HFZ
+             (MDfs FS0) (MDfs_vm FS0) (MDfs_fds FS0) (MDfs_fs FS0) rhoM ok HJF HJP Hh AC MS HFZ
              rhoM tpM n Hg w HS2).
   - destruct (HandU w NE HQ) as (Mm & B & rhoM & tpM & A0 & HS & HP0 & Hfds & Hfs & HA0).
     destruct HA0 as (HAI & Htp & Htop & Hfr & HV & Hfresh & Hnl & Hns).
     assert (Hne : length argv <> 2%nat) by (intros E; apply NE, argc_len, E).
     exact (MainJoin.usage_safe AInv CST XGL argv FS0 Mm B rhoM tpM A0 Hfds Hfs HAI Htp Htop Hfr HV Hfresh Hnl Hns ALA HLV HCSTok HCSTdrv HLPP HCSTdrv2
-             Hne argv0_nonul HP0 okT HOKJ HOKP Hokh n Hg w HS).
+             Hne argv0_nonul HP0 ok HJF HJP Hh n Hg w HS).
+Qed.
+
+Lemma main_safe : triple segsA okT (QMain sp brk mb draw lim inp) (fun _ => False).
+Proof. exact (main_safe_ok okT HOKJ HOKP Hokh). Qed.
+
+Lemma Ktc_nil : forall K, K_nil K -> K_tcons SpecT K.
+Proof using inp. intros K HK tr md H. rewrite (HK _ _ H). exact tcons_nil. Qed.
+Lemma Jtc_nil : forall J : jpredA, (forall rho tp tr md, J rho tp tr md -> tr = []) ->
+  forall rho tp tr md, J rho tp tr md -> tcons (SpineA.SpecT argv FS0) tr.
+Proof using inp. intros J HJ rho tp tr md H. rewrite (HJ _ _ _ _ H). exact tcons_nil. Qed.
+
+(* LPS 75d69e00: [top_sound_A] for every world predicate that meets the frame obligations of
+   the start-up and main walks. *)
+Theorem top_sound_ok : forall (ok : world -> Prop),
+  (forall K, K_nil K -> ok_frame segsA ok K) ->
+  (forall K, K_nil K -> ok_pframe segsA ok K) ->
+  (forall J : jpredA, (forall rho tp tr md, J rho tp tr md -> tcons (SpineA.SpecT argv FS0) tr) -> ok_frameA segsA ok J) ->
+  (forall J : jpredA, (forall rho tp tr md, J rho tp tr md -> tcons (SpineA.SpecT argv FS0) tr) -> ok_pframeA segsA ok J) ->
+  ok_halted ok (SpineA.SpecT argv FS0) ->
+  forall n, safe segsA ok n (w0 c0).
+Proof.
+  intros ok HKF HKP HJF HJP Hh n.
+  destruct (init_smatch_A sp brk mb draw lim inp Hent Hinp) as (rhoI & Hsm & HJ).
+  apply (triple_init_safe c0 (Init := SymSoundR.SP segsA (Start0.K0 m0) (S0_A (kb_rseq (in_kernel inp))) rhoI)).
+  { split; [exact Hsm | split; reflexivity]. }
+  eapply triple_seq;
+    [exact (start_main_A sp brk mb draw lim inp Hent Hinp Hlim rhoI HJ ok HKF HKP
+              (fun J HJ0 => HJF J (Jtc_nil J HJ0)) (fun J HJ0 => HJP J (Jtc_nil J HJ0)))|].
+  exact (main_safe_ok ok HJF HJP Hh).
 Qed.
 
 Theorem top_sound_A : forall n, safe segsA okT n (w0 c0).
-Proof.
-  intros n.
-  destruct (init_smatch_A sp brk mb draw lim inp Hent Hinp) as (rhoI & Hsm & HJ).
-  apply (triple_init_safe c0 (Init := SymSoundR.SP segsA (Start0.K0 m0) S0_A rhoI)).
-  { split; [exact Hsm | split; reflexivity]. }
-  eapply triple_seq; [exact (start_main_A sp brk mb draw lim inp Hent Hinp Hlim rhoI HJ okT OKF OKP OKFA OKPA)|].
-  exact main_safe.
-Qed.
+Proof. exact (top_sound_ok okT OKF OKP HOKJ HOKP Hokh). Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -199,7 +230,7 @@ Theorem top_complete_A : COMPLETE segsA c0 SpecT.
 Proof.
   apply etriple_complete. intros t Ht w ->.
   destruct (init_smatch_A sp brk mb draw lim inp Hent Hinp) as (rhoI & Hsm & HJ).
-  assert (Hsp0 : SymSoundR.SP segsA (Start0.K0 m0) S0_A rhoI (w0 c0)) by (split; [exact Hsm | split; reflexivity]).
+  assert (Hsp0 : SymSoundR.SP segsA (Start0.K0 m0) (S0_A (kb_rseq (in_kernel inp))) rhoI (w0 c0)) by (split; [exact Hsm | split; reflexivity]).
   destruct (start_main_ex_A sp brk mb draw lim inp Hent Hinp Hlim rhoI HJ okT OKFA OKPA (w0 c0) Hsp0) as (w1 & Hst1 & HQ1).
   destruct (main_exists t Ht w1 HQ1) as (w2 & Hst2 & Htr2).
   exists w2. split; [eapply wsteps_trans; eauto | exact Htr2].
@@ -212,6 +243,21 @@ Proof.
   - apply (safe_tgt_sound SpecT). exact top_sound_A.
   - exact top_complete_A.
   - apply (safe_tgt_noerror SpecT). exact top_sound_A.
+Qed.
+
+(* LPS 75d69e00: the read-only backing is robust at every configuration the run reaches over
+   the binary's own segments ([RunSeg.rob_reach]), the premise of the lift of [top_A]'s facts
+   to the run's segment list (RobReach.facts_run_init): the walk of [top_sound_ok] at
+   [RobReach.ok_rob].  Its section hypotheses are [top_A]'s, so that its callers pass the
+   same arguments. *)
+Theorem top_rob_A : RunSeg.rob_reach segsA c0.
+Proof using Hent Hinp ALA HCST HXGL HLV HLF HCSTok HCSTdrv HLPP HCSTdrv2 AC ACX MS MSX HFZ HFZX HandM HandU.
+  apply (RobReach.safe_rob_reach segsA SpecT c0).
+  exact (top_sound_ok (RobReach.ok_rob segsA SpecT)
+           (fun K HK => RobReach.ok_frame_rob_K segsA SpecT K (Ktc_nil K HK))
+           (fun K HK => RobReach.ok_pframe_rob_K segsA SpecT K (Ktc_nil K HK))
+           (RobReach.ok_frameA_rob segsA SpecT) (RobReach.ok_pframeA_rob segsA SpecT)
+           (RobReach.ok_halted_rob segsA SpecT)).
 Qed.
 
 End TopA.

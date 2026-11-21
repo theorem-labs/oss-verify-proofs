@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: parse_items image B', segment ENTRY + EPILOGUE, rebound to the batch kit 240b06ed4fd4
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: parse_items image B', segment ENTRY + EPILOGUE, rebound to the batch kit
    (PRH_FnParse.v ed236011cf99:360-466, tparse_items_specX d CTX CTX0 CW): no DW, the cursor set CW with its two entry
    premises prh_cw_entry / wild_room (pi_ent's last two conjuncts), the post at fpostWFbm (wbudget CW 0). The journal at
    the entry is the EMPTY-budget one from S (ajournal_x = ajournal_xw .. []), so the head's spec gets WS0 = [] and
@@ -1738,11 +1739,11 @@ split.
   destruct o; reflexivity. }
 pose proof Eroom as (RL1 & RL2 & RL3).
 split; [exact (Hrk RL1)|]. split; [exact RL2|].
-(* The batch kit's tip 03fcabb582d0: rd_room's live conjunct is prh_live_evs over the live list, and skip_ws keeps the state *)
+(* The batch kit's tip: rd_room's live conjunct is prh_live_evs over the live list, and skip_ws keeps the state *)
 first [rewrite HSeq; exact RL3 | rewrite <- HSeq; exact RL3].
 Qed.
 
-(* THE ENTRY OF parse_items, image B': the kit's tparse_items_specX d CTX CTX0 CW (the batch kit 240b06ed4fd4), from the entry
+(* THE ENTRY OF parse_items, image B': the kit's tparse_items_specX d CTX CTX0 CW (the batch kit), from the entry
    block (pie_core), the depth refusal (pie_refuse, closed) and the skip_ws call (pie_call: skip_ws_mn.v's skip_ws_holds,
    then PItems_head.v's segment), the post at the budget wbudget CW 0. The text's hull budget (Hhull) is threaded to the
    walk as pi_ent's last conjunct. Instance fact taken: 8 <= cf_head (the harness head covers a head word; alloc.c's

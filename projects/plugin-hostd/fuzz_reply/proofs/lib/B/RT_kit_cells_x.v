@@ -4,7 +4,7 @@
    `aentry_post_of_walk`: a Bz interceptor/intrinsic walk that ends at the return address with a0 = r, whose only
    memory change is the stack window [sp - D, sp) and a list WR of written ranges, read back as W_sites.v's
    `aentry_post`.  Written here (R3Mem) by agreement with R1Str so that RT_kit.v imports it rather than restating it;
-   it is FSstrlen.v's post_of_walk (a working branch 3210d71ee38, a Theorem Labs lane, itself a Theorem Labs lane's) with
+   it is FSstrlen.v's post_of_walk (a working branch, a Theorem Labs lane, itself a Theorem Labs lane's) with
    three changes: the pre is `ecall_pre` (no POISON-U), the post is W_sites' aentry_post at PI := PB_fr, and the
    written set WR / the result predicate Pr are parameters, so one lemma serves the read-only interceptors
    (WR := []) and the intrinsics (WR := [(d, d + n)]).
@@ -12,18 +12,19 @@
    0x600000 is a valid ceiling for fuzz_reply.asan-ubsan too (its last segment ends in the page below 0x5fc000). *)
 (* Modified by Theorem Labs, 2026-10-30: from lib/A/RT_post.v, as the new module RT_kit_cells_x: only its ro_c1_one_of_val_mem, restated at the value 0 as ro_c1_zero_of_val_mem; new lemmas discharge RT_kit.v's named premises FrRtCells / FrRtCells_x from the laws and TfibSyms (fr_rest_rows, fr_rest_not_row, cell_val_c, fr_rest_of_cells, FrRtCells_x_of_syms, FrRtCells_of_syms) and give RT_kit.v walk_cells_x's conclusion as FrWalkCells_x (walk_cells_x_of_syms, walk_cells_x_of_cells). *)
 (* Modified by Theorem Labs, 2026-10-30: copied from lib/A/RT_kit_cells_x.v to image B (fuzz_reply.asan-ubsan): module paths lib.A -> lib.B with the image modules AB1v / AF0m / AF0x / AE2y -> YB1v / YF0m / YF0x / YE2y and one more Require (Bz.A.I_strncmpw), and the cell addresses and values of fr_rest_rows, fr_rest_not_row and fr_rest_of_cells moved to image B's (generated YF0m.v); lemma names, statements and proofs otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B's (fuzz_reply.asan-ubsan) twin of lib/A/RT_kit_cells_x.v
-   (a working branch 6b4f6082575), with A's lemma names, statements and proofs and B's numbers:
+   (a working branch), with A's lemma names, statements and proofs and B's numbers:
    RT_kit.v's named premises FrRtCells (over cgif's AR) and FrRtCells_x (over a generic ARx), fr_rt_rest's 14
-   conjuncts (RT_kit.v:173-187) at every state AR / ARx accepts, discharged from the laws and TfibSyms B.  RT_kit.v
+   conjuncts (RT_kit.v:174-188) at every state AR / ARx accepts, discharged from the laws and TfibSyms B.  RT_kit.v
    is not edited.
    (a) Measurement, by vm_compute in fr_rest_rows / fr_rest_not_row below: under TfibSyms B, as_const B ly is the
-   generated YF0m's Tfib_const ly (ts_const); YF0m.v has sha256 4c8cb16b0e68 (internal record; commit
-   4fedc522440, which adds the row z8 (ANum 0x9fc90) 0x9740c, REAL(strrchr), YF0m.v:446).  Thirteen of fr_rt_rest's
+   generated YF0m's Tfib_const ly (ts_const); YF0m.v has sha256 4c8cb16b0e68 (internal record;,
+   which adds the row z8 (ANum 0x9fc90) 0x9740c, REAL(strrchr), YF0m.v:447).  Thirteen of fr_rt_rest's
    conjuncts are direct rows of it (address, width and value all equal; YE2y.const_chk): 0x9df40, 0x9df58 (three
-   words), 0x9fc68 (REAL(strlen), YF0m.v:443), 0x9fca8, 0x9fd98, 0xa7318, 0xa7320 (three words), 0x13825d, 0x138262,
+   words), 0x9fc68 (REAL(strlen), YF0m.v:444), 0x9fca8, 0x9fd98, 0xa7318, 0xa7320 (three words), 0x13825d, 0x138262,
    0x138263, 0x9eab8, 0xa7319 and 0x9fc90 (REAL(strrchr) = 0x9740c).  0x138265 (intercept_strchr, 1 byte) is not a
-   row, but it is byte 5 of the row 0x138260 = 0x0101010101010101 (YF0m.v:72).
+   row, but it is byte 5 of the row 0x138260 = 0x0101010101010101 (YF0m.v:73).
    (b) fr_rest_of_cells: the 14 conjuncts from the const-cells fact `Forall (cell_holds B ly (aview frsegs H mem))
    (as_const B ly)` (RTx.rtl_const_cells) and TfibSyms B.  cell_holds reads aview over the restricted memory and gives
    val_mem on mrestrict (YF0x.cell_holds_val_mem), the same view fr_rt_rest's ro_cells read.  The one extra step is
@@ -31,8 +32,8 @@
    (c) FrRtCells_x_of_syms : rt_laws + TfibSyms -> FrRtCells_x, at every ARx; FrRtCells_of_syms : AR_laws + TfibSyms
    -> FrRtCells, at cgif's AR (through RTx.rt_laws_AR): a consumer of an original that carries the named premise
    FrRtCells discharges it with this lemma.
-   (d) The strlen / strcmp / strncmp walks read only conjuncts 1-10 (RT_kit.v:215 fr_walk_cells_of): FrWalkCells_x
-   (RT_kit.v:265 walk_cells_x's conclusion as a predicate over ARx) holds from rt_laws + FrShadowSyms + TfibSyms
+   (d) The strlen / strcmp / strncmp walks read only conjuncts 1-10 (RT_kit.v:216 fr_walk_cells_of): FrWalkCells_x
+   (RT_kit.v:266 walk_cells_x's conclusion as a predicate over ARx) holds from rt_laws + FrShadowSyms + TfibSyms
    (walk_cells_x_of_syms), and from FrRtCells_x (walk_cells_x_of_cells, the originals' route). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -109,7 +110,7 @@ Proof.
   rewrite (ts_const B TB ly). exact (cell_lookup_In _ _ _ (YE2y.const_chk_sound ly a w v Hc)).
 Qed.
 
-(* RT_post.v:586 ro_c1_one_of_val_mem at the value 0 *)
+(* RT_post.v:587 ro_c1_one_of_val_mem at the value 0 *)
 Lemma ro_c1_zero_of_val_mem : forall m A, 0 <= A -> A + 1 <= 2 ^ 64 ->
   val_mem frsegs m A 1 0 -> BSt.ro_cells BI.asegs m A [BC.C1 (Z_to_bv 8 0)].
 Proof.
@@ -172,9 +173,9 @@ Proof.
   exact (FrRtCells_x_of_syms B (FCiface.AR_nohp frsegs B) (rt_laws_AR frsegs B LAWS) TB ly S [] W mem md HAR).
 Qed.
 
-(* ---- (d) the string walks' cells. RT_kit.v:215 fr_walk_cells_of destructs fr_rt_rest as (R1 .. R10 & _ & _ & _ &
+(* ---- (d) the string walks' cells. RT_kit.v:216 fr_walk_cells_of destructs fr_rt_rest as (R1 .. R10 & _ & _ & _ &
    _): the walks of strlen, strcmp and strncmp read conjuncts 1-10 only. ---- *)
-(* what the strlen / strcmp / strncmp twins read, over ARx: RT_kit.v:265 walk_cells_x's conclusion, as one
+(* what the strlen / strcmp / strncmp twins read, over ARx: RT_kit.v:266 walk_cells_x's conclusion, as one
    predicate, so that each twin is proved once and instanced from either source below *)
 Definition FrWalkCells_x
   (ARx : alayout -> astate -> list Z -> world frsegs -> (word -> option byte) -> Model -> Prop) : Prop :=

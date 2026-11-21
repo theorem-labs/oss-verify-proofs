@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up facts stated over the launch's ProcInput; the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -43,7 +44,9 @@ Local Ltac OSSVerify.Proofs.openssl.pem.lib.Lib.Step.slia ::= first [ exact I | 
 Section WithCeiling0. Context {CE__ : Ceiling} {RN__ : RunRnd}.
 Section B2.
   Variable CS : cli_sig.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid : word) (arg0 arg1 : list byte) (TID : Z) (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Variables (sp0 : word) (inp : ProcInput) (mbase : word) (arg0 arg1 : list byte) (TID : Z) (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Local Notation argv := (in_argv inp) (only parsing).
+  Local Notation envp := (in_envp inp) (only parsing).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis CEIL : ceil_ok sp0.
   Hypothesis VARGV : valid_argv argv.
@@ -59,11 +62,11 @@ Section B2.
 
   Notation usp0 := (bv_unsigned sp0).
   Notation LO' := (LO sp0).
-  Notation BASE' := (BASE sp0 argv envp uid TID).
-  Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
-  Notation RDHEAD' := (RDHEAD CS sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation RDBRK' := (RDBRK CS sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation POSTBODY' := (POSTBODY CS sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation BASE' := (BASE sp0 inp mbase TID).
+  Notation FRAME' mm := (MFRAME sp0 inp mm PAD S7 S6 S5 S4).
+  Notation RDHEAD' := (RDHEAD CS sp0 inp mbase TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation RDBRK' := (RDBRK CS sp0 inp mbase TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation POSTBODY' := (POSTBODY CS sp0 inp mbase TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
   Ltac hyps := first [exact VSP | exact CEIL | exact VARGV | exact VENVP | exact EARGV | exact HT | exact MALLOC | exact FREE | exact FPR | exact FWX | exact SWF | exact FWR].
 
   Notation GST pc x1 t0 t1 t2 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
@@ -72,7 +75,7 @@ Section B2.
 
   (* [comment removed for export] *)
   Lemma rd_body : forall (fd P1v : Z) (st : rd_st) (s : PState) ms,
-    3 <= fd < 2^32 -> nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) ->
+    3 <= fd < 2^32 -> nth_error (argv_ptrs inp run_draw) 1 = Some (Z_to_bv 64 P1v) ->
     RDHEAD' fd P1v st s ms ->
     implM usegs (read_loop_body io raw_malloc raw_free ustage fd (map bv_unsigned arg1) st) s (POSTBODY' fd P1v) ms.
   Proof.
@@ -92,7 +95,7 @@ Section B2.
       zstep. zstep. apply evt_done.
       lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s (POSTBODY' fd P1v) msx) end.
       apply implM_retb. cbv iota beta.
-      rewrite <- LENZ. eapply (rd_read CS sp0 argv envp uid arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11);
+      rewrite <- LENZ. eapply (rd_read CS sp0 inp mbase arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11);
         first [hyps | exact FD | exact HP1 | exact HC | exact BU | exact SG | exact BA | exact EX | unfold MFRAME; exact FR | unfold RMallocRep.RERRNO; exact ERR | exact FRM | lia]. }
     (* [comment removed for export] *)
     replace (Z.of_nat (length DATA) =? rd_cap st) with true by (symmetry; apply Z.eqb_eq; lia).
@@ -106,7 +109,7 @@ Section B2.
       zstep. zstep. zstep. zstep. zstep. zstep. apply evt_done.
       lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s (POSTBODY' fd P1v) msx) end.
       apply implM_bind_assoc. cbn [io_diag io io_S].
-      eapply (fprintf_exit CS sp0 argv envp uid TID S8 S9 S10 S11 VSP CEIL HT FPR FWX SWF DTooBig);
+      eapply (fprintf_exit CS sp0 inp mbase TID S8 S9 S10 S11 VSP CEIL HT FPR FWX SWF DTooBig);
         [| exact BA| exact P0| exact EX| exact FRM| intros ms'' AE; apply implM_retb; cbv beta iota; apply implM_ret; apply evt_done; exact AE].
       cbn [diag_args]. split; [reflexivity|]. rewrite unsigned_lit by lia. reflexivity. }
     (* [comment removed for export] *)
@@ -119,7 +122,7 @@ Section B2.
     replace (Z.shiftl (Z.of_nat (length DATA)) 1) with (rd_cap st * 2) by (rewrite Z.shiftl_mul_pow2 by lia; lia).
     eapply implM_bind.
     { unfold rmalloc_stmt in MALLOC.
-      eapply MALLOC with (lo := usp0 - 8388608) (B := usp0); try reflexivity; unfold RATP; rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia;
+      eapply MALLOC with (lo := usp0 - 6144513) (B := usp0); try reflexivity; unfold RATP; rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia;
         unfold RMallocRep.RATP; cbn [Z.add];
         first [ exact P0 | exact AUX | exact ST | exact ERR | exact MI | unfold RMALLOC_STACK; lia | lia ]. }
     cbv beta. intros r s1 ms1 PO.
@@ -134,7 +137,7 @@ Section B2.
     destruct r as [nb|].
     2:{ (* [comment removed for export] *)
         destruct RR as [-> HEAP1].
-        assert (BA1 : BASE' m1) by (eapply (BASE_heap sp0 argv envp uid TID); [exact BA| exact HPR| exact MI1| unfold LO; exact ST1| exact AUX1| exact HEAP1]).
+        assert (BA1 : BASE' m1) by (eapply (BASE_heap sp0 inp mbase TID); [exact BA| exact HPR| exact MI1| unfold LO; exact ST1| exact AUX1| exact HEAP1]).
         assert (EX1 : EXTRA CS m1 s1) by (eapply (EXTRA_heap CS sp0); [exact HPR| exact SOE| exact EX]).
         clear FR BLK ST MI AUX IMG ES SSP ERR.
         pose proof BA1 as (ST & MI & ES & AUX & SSP & LXS' & IMG). unfold LO in ST.
@@ -143,12 +146,12 @@ Section B2.
         zstep. zstep. zstep. zstep. zstep. zstep. zstep. apply evt_done.
         lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s1 (POSTBODY' fd P1v) msx) end.
         apply implM_bind_assoc. cbn [io_diag io io_S].
-        eapply (fwrite_exit CS sp0 argv envp uid TID S8 S9 S10 S11 VSP CEIL HT FWR);
+        eapply (fwrite_exit CS sp0 inp mbase TID S8 S9 S10 S11 VSP CEIL HT FWR);
           [exact BA1| exact HEAP1| exact EX1| intros ms'' AE; apply implM_retb; cbv beta iota; apply implM_ret; apply evt_done; exact AE]. }
     (* [comment removed for export] *)
     destruct RR as (A' & junk' & -> & BR' & HEAP1 & NBLK & HEXP).
     specialize (HEXP ltac:(apply raddr_exposed_big; unfold MMAP_THRESHOLD; lia)).
-    assert (BA1 : BASE' m1) by (eapply (BASE_heap sp0 argv envp uid TID); [exact BA| exact HPR| exact MI1| unfold LO; exact ST1| exact AUX1| exact HEAP1]).
+    assert (BA1 : BASE' m1) by (eapply (BASE_heap sp0 inp mbase TID); [exact BA| exact HPR| exact MI1| unfold LO; exact ST1| exact AUX1| exact HEAP1]).
     assert (EX1 : EXTRA CS m1 s1) by (eapply (EXTRA_heap CS sp0); [exact HPR| exact SOE| exact EX]).
     clear FR BLK ST MI AUX IMG ES SSP ERR SG LXS.
     pose proof BR' as (BQ1 & BQ2 & BQ3 & BQ4 & BQ5).
@@ -179,9 +182,9 @@ Section B2.
     assert (P2 : RHEAP s1 [(nb, A', rd_cap st * 2); (rd_buf st, A, rd_cap st)] m2).
     { eapply (RHEAP_munchW sp0 VSP CEIL); [apply WOK_WOKE; exact WOKW| exact MUc| exact WMc| | exact HEAP1].
       intros iv [<-|[]]. cbn [fst snd]. intros _ _. exists (nb, A', rd_cap st * 2). split; [left; reflexivity|]. cbn [fst snd blk_addr blk_size]. lia. }
-    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 argv envp uid TID VSP CEIL); [exact BA1| apply WOK_WOKE; exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; eapply stk_agree; [eapply agree_on_of_munch; [exact MUc| exact WMc]| exact ST| intros a Ha; cbn; lia]]).
+    assert (BA2 : BASE' m2) by (eapply (BASE_munch sp0 inp mbase TID VSP CEIL); [exact BA1| apply WOK_WOKE; exact WOKW| exact MUc| exact WMc| exact MI2| unfold LO; eapply stk_agree; [eapply agree_on_of_munch; [exact MUc| exact WMc]| exact ST| intros a Ha; cbn; lia]]).
     assert (EX2 : EXTRA CS m2 s1) by (eapply (EXTRA_munch CS sp0 VSP CEIL); [exact WOKW| exact MUc| exact WMc| reflexivity| exact EX1]).
-    assert (FR2 : rw_cells usegs m2 (usp0 + -128) [CB 8 PAD; C8 S7; C8 S6; C8 S5; C8 S4; C8 (wz (envp_addr sp0 argv)); C8 (wz RMAIN); C8 (wz (argc argv)); C8 (wz (usp0 + 8)); C8 (wz RMAIN_RET)]).
+    assert (FR2 : rw_cells usegs m2 (usp0 + -128) [CB 8 PAD; C8 S7; C8 S6; C8 S5; C8 S4; C8 (wz (envp_addr inp sp0)); C8 (wz RMAIN); C8 (wz (argc inp)); C8 (wz (usp0 + 8)); C8 (wz RMAIN_RET)]).
     { eapply rw_cells_agree; [eapply agree_on_of_munch; [exact MUc| exact WMc]| exact FR1|]. intros a Ha. cbn in Ha |- *. lia. }
     assert (SG2 : STG m2) by (eapply STG_munch; [exact MUc| exact WMc| intros a Ha; cbn; lia| exact SG1]).
     assert (NB2' : rw_cells usegs m2 (A' + Z.of_nat (length DATA + 0)) [CB (Z.to_nat (rd_cap st * 2) - length DATA) (take (Z.to_nat (rd_cap st * 2) - length DATA) (drop (length DATA) junk'))]).
@@ -195,7 +198,7 @@ Section B2.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s1 (POSTBODY' fd P1v) msx) end.
     eapply implM_bind.
     { apply implM_leaves. unfold rfree_stmt in FREE.
-      eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := rd_buf st) (A := A) (n := rd_cap st); try reflexivity; unfold RATP;
+      eapply FREE with (lo := usp0 - 6144513) (B := usp0) (p := rd_buf st) (A := A) (n := rd_cap st); try reflexivity; unfold RATP;
         rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia; unfold RMallocRep.RATP; cbn [Z.add];
         first [ exact P2 | right; left; reflexivity | exact AUX | exact ST | exact MI | exact ERR2 | unfold RFREE_STACK; lia | lia ]. }
     cbv beta. intros [] s2 ms2 [PO LEAF].
@@ -204,7 +207,7 @@ Section B2.
     rewrite ?(unsigned_lit (usp0 + -128)) in ST3 by lia. rewrite ?(unsigned_lit (usp0 + -128)) in HPR3 by lia.
     replace (ret_pc (Z_to_bv 64 0xe16a0)) with (Z_to_bv 64 0xe16a0) by (symmetry; rpc).
     rewrite (lb_remove_second (rd_buf st) (nb, A', rd_cap st * 2) (rd_buf st, A, rd_cap st) eq_refl ND) in HPR3, HEAP3.
-    assert (BA3 : BASE' m3) by (eapply (BASE_heap sp0 argv envp uid TID); [exact BA2| exact HPR3| exact MI3| unfold LO; exact ST3| exact AUX3| exact HEAP3]).
+    assert (BA3 : BASE' m3) by (eapply (BASE_heap sp0 inp mbase TID); [exact BA2| exact HPR3| exact MI3| unfold LO; exact ST3| exact AUX3| exact HEAP3]).
     assert (EX3 : EXTRA CS m3 s2) by (eapply (EXTRA_heap CS sp0); [exact HPR3| exact SOE3| exact EX2]).
     assert (FR3 : FRAME' m3) by (unfold MFRAME; eapply rheap_pres_rw_cells; [exact HPR3| exact FR2| left; cbn; lia]).
     assert (SG3 : STG m3) by (eapply (STG_heap sp0); [exact HPR3| exact SG2]).
@@ -221,7 +224,7 @@ Section B2.
     (* [comment removed for export] *)
     apply implM_retb. cbv beta iota.
     rewrite <- LENZ.
-    eapply (rd_read CS sp0 argv envp uid arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP EARGV HT FPR FWX SWF fd P1v (mkRd nb (rd_cap st * 2) (rd_content st)) s2);
+    eapply (rd_read CS sp0 inp mbase arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV EARGV HT FPR FWX SWF fd P1v (mkRd nb (rd_cap st * 2) (rd_content st)) s2);
       cbn [rd_buf rd_cap rd_content]; first [exact FD | exact HP1 | exact HC | exact SG3 | exact FR3 | exact BA3 | exact EX3 | unfold RMallocRep.RERRNO; exact ERR3 | exact FRM | lia | idtac].
     split; [exact HEAP3|]. split; [exact HA3|]. split; [exact NB3|].
     assert (CAP2 : rd_cap st * 2 <= 67108864).
@@ -238,7 +241,7 @@ Section B2.
     end.
 
   Lemma rd_loop : forall (fuel : nat) (fd P1v : Z) (st : rd_st) (s : PState) ms,
-    3 <= fd < 2^32 -> nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) ->
+    3 <= fd < 2^32 -> nth_error (argv_ptrs inp run_draw) 1 = Some (Z_to_bv 64 P1v) ->
     RDHEAD' fd P1v st s ms ->
     implM usegs (mloop fuel (read_loop_body io raw_malloc raw_free ustage fd (map bv_unsigned arg1)) st) s (POSTLOOP fd P1v) ms.
   Proof.

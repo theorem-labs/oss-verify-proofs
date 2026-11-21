@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* fuzz_state image B, realloc segment S1 (a Theorem Labs lane, 2026-10-29).
    The register / frame checks at Allocate's entry (PAREGS, PAFRAMES, PAST_top, pachk_ok) and the prefix leaf pa_leaf.
-   The B twin of lib/A/FSRealloc_S1_pa.v (a working branch ce07ca45bca; port of cgif_rgb_fuzzer
+   The B twin of lib/A/FSRealloc_S1_pa.v (a working branch; port of cgif_rgb_fuzzer
    lib/YF6q.v + YF6v.v).
    Every B address literal is the A file's at fs-addr-map.tsv's B column (internal path), each checked by
    capstone (RV64, no compressed instructions) over the pinned fuzz_state.asan-ubsan (sha256 5ac5ce0954f87e2d...):
@@ -12,7 +12,8 @@
    0x32988 [0x32918] (asan_realloc 0x32984 `jal 0x14`, `beqz a0, -0x20`); the trace pc 0x53620 [0x535b0] (0x5361c
    `jal 0x20314`, `auipc a1, 0x4c`).  pa_leaf states fs's allocator relation FSupoison.ARU (FS_ARX's form). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10-29: the image-B twin of lib/A/FSRealloc_S1_pa.v (a working branch ce07ca45bca): image B's modules (lib/B/Yxxx for lib/A/Axxx) and fuzz_state.asan-ubsan's addresses (a Theorem Labs lane's realloc-thin/fs-addr-map.tsv, capstone-checked). *)
+(* Modified by Theorem Labs, 2026-10-29: the image-B twin of lib/A/FSRealloc_S1_pa.v (a working branch): image B's modules (lib/B/Yxxx for lib/A/Axxx) and fuzz_state.asan-ubsan's addresses (a Theorem Labs lane's realloc-thin/fs-addr-map.tsv, capstone-checked). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

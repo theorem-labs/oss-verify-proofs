@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_string.v; 2571 of its 2712 lines of code are new or changed and 1460 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_free 0x83570 (pf.c:334-350) on fs.asan (sha256 64b53ff86172...), 108 instructions: the symbolic walk of
    FSH_Fn_reader.v pj_free_spec k, level-indexed k = 0..2 (statement FIXED, not edited here).
-   rule 24: the function's released plain proof exists (lib/Prog/pj_free.v @ c8557374ad2e); no released ASan-image proof
+   rule 24: the function's released plain proof exists (lib/Prog/pj_free.v); no released ASan-image proof
    of any fs function exists: a Theorem Labs lane, (internal path) (a Theorem Labs lane), ossv proof index v5 built
-   2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df: every fs function CONFIRMED.
+   2026-10-28T21:58:24Z, ossv/recipes: every fs function CONFIRMED.
    The code (listing 0x83570 .. 0x8371c): prologue (12 saves), `beqz a0` to the epilogue; s0 := v, s4 := the shadow base,
    s2 / s3 / s1 := v + 40 / v + 24 / v + 32, s5 / s9 / s10 their shadow bytes; when n = v->n > 0 the loop i = s8 (s6 = 56 i,
    s7 = 8 i): pj_free (&kids[i]) (0x83608, level k + 1), then fuzz_free (keys[i]) when keys (0x83634); then
@@ -16,7 +17,7 @@
    walk: the checked bytes are v's fields (v is a pobj, addressable) and keys[i] (the live keys block).
    Port-from: the released plain proof lib/Prog/pj_free.v (control flow, the loop invariant: freed / remaining blocks and
    the footprint of the not-yet-freed kids kept since entry), a Theorem Labs lane's call walks (FMW_check_reject_clean.v,
-   a working branch) and the fs walks FSH_check_reject_clean.v (bab265ebece), FSW_caw_tail.v (token run),
+   a working branch) and the fs walks FSH_check_reject_clean.v, FSW_caw_tail.v (token run),
    FSW_pj_object.v (a working branch: the __asan_memset step and the resume after it).
    The data lemmas are lib/A/FSW_pj_free_dat.v. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -364,7 +365,7 @@ Section W. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}
 Variable B : asyms.
 (* S0 lib/A/FSH_Base.v FsShadowSyms; owner RELOC: TfibLib tl_got_shadow / tl_shadow_cell (donor A/ACeg.v:28-29) *)
 Hypothesis HSS : FsShadowSyms B.
-(* owner ALLOC (a Theorem Labs lane, lib/A/FSH_Fn_alloc.v, S0 CTX drop a working branch faa7e2570e5): the room premise
+(* owner ALLOC (a Theorem Labs lane, lib/A/FSH_Fn_alloc.v, S0 CTX drop a working branch): the room premise
    is on p <> 0 only (a null free has no event), no CTX binder *)
 Hypothesis fs_fuzz_free_spec : @fuzz_free_spec fx rc SK tfibsegs B.
 (* owner POISON-U (a Theorem Labs lane, lib/A/FSupoisonU.v:244, the ARU form of the donor's __asan_memset contract; named in

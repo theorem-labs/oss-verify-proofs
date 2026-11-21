@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the IO nodes take the table (A), since openat's path argument (e_str1 A) sits where its CONFIG_RSEQ layout puts it. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -64,6 +65,9 @@ Section WithSegs.
 Variable segs : list Segment.
 Variable nx0 : nat.
 Variable T : iotab.
+(* LPS 727298f3: [openat]'s path is argv[1], whose address [e_str1 A] reads the table's
+   CONFIG_RSEQ layout. *)
+Variable A : atable.
 
 (* [comment removed for export] *)
 Definition at_sys (cs : acs) (nr : Z) : bool :=
@@ -87,7 +91,7 @@ Definition openat_args_ok (cs : acs) : bool :=
   let k := kn cs in
   at_sys cs 56
   && match reg_lit cs 10 with Some z => Z.eqb (z mod 2 ^ 32) (2 ^ 32 - 100) | None => false end
-  && len_eqb k (reg cs 11) e_str1
+  && len_eqb k (reg cs 11) (e_str1 A)
   && match reg_lit cs 12 with Some z => Z.eqb (Z.ldiff z open_ignored) 0 | None => false end
   && match xlo k (EVar V_ARGC) with Some lo => Z.leb 2 lo | None => false end
   && is_std (a_fd cs).

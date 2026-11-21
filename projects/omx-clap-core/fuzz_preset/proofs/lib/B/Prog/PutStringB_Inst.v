@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d7f488d30, twin c90d4fa54d43160b), this
-   PutStringB (a Theorem Labs lane): the batch kit's tput_string_specX (the cut 7cdbb61b5fa0,
+   PutStringB (a Theorem Labs lane): the batch kit's tput_string_specX (the cut,
    lib/A/PRH_FnWriter.v (sha256 bc9a9128f55a; internal record), PRH_Base.v (sha256 2ca8a3d631bd; internal record); the walk proved the earlier PRH_FnWriter.v (sha256 1b338cb8e926; internal record) and was
    and was re-fitted to the batch kit with no new walk) for put_string AT THE INSTANCE OF RECORD (the internal file bprime-pivot.md item 6):
    PA := PAImg_prog.PI_prog_B, B := YD2l.TfibB, ARx := ARcfx = YG0ncf.ARcf SEGS TfibB /\ YG0ncf.xs_placed_cf

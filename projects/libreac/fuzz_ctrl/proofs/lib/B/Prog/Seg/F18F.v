@@ -6,18 +6,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 756 of its 937 lines of code are new or changed and 2376 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F18.v; 70 of its 133 lines of code are new or changed and 874 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F18.v f18_evt (:342), f18_evt_skip (:439) at a working branch
-     3803efccea0 (blob ca8603bbf018e24b9743a220b9c834f200d5d15f);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     (blob ca8603bbf018e24b9743a220b9c834f200d5d15f);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f18_evt_skip_of_F (evtF_evt + rng_all) re-derives F18.f18_evt_skip verbatim.  f18_evt has one call
-     (jal wrapper_bcmp at 0x82648), so it is split: f18_pre_F re-runs F18.v:385-393 (0x82634 -> the callee entry
-     0x42aac) and f18_post_F re-runs F18.v:425-434 (the return pc 0x8264c -> the run's end, no step), with the
-     bcmp wrapper post facts as premises.  f18_pre_F is taken by path from lib/B/Prog/Seg/F18F.v at dba073859bd
+     (jal wrapper_bcmp at 0x82648), so it is split: f18_pre_F re-runs F18.v:386-394 (0x82634 -> the callee entry
+     0x42aac) and f18_post_F re-runs F18.v:426-435 (the return pc 0x8264c -> the run's end, no step), with the
+     bcmp wrapper post facts as premises.  f18_pre_F is taken by path from lib/B/Prog/Seg/F18F.v
      and keeps its name. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -82,7 +83,7 @@ Proof.
 Qed.
 
 (* The post half of f18_evt: from the wrapper's return pc 0x8264c there is no further instruction before the run's
-   exit cut, so the run's post is the wrapper post facts themselves (F18.v:425-434).  Premises = exactly the clauses
+   exit cut, so the run's post is the wrapper post facts themselves (F18.v:426-435).  Premises = exactly the clauses
    f18_evt reads out of BW.bcmp_wrap_contract at that point, stated over the post-call machine state. *)
 Lemma f18_post_F :
   forall (ra' sp gp tp t0' t1' t2' s0 a1' a2' a3' a4' a5' a6' a7' s3 s4 s5 s6 s7 s8 s9 s10 s11 t3' t4' t5' t6' : word)

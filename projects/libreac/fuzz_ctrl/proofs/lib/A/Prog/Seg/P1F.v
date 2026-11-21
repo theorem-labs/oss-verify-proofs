@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module names, addresses and numbers changed; 893 of its 1109 lines of code are new or changed and 180 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P1.v; 333 of its 498 lines of code are new or changed and 944 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/P1.v blob 783a7f55d96e at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/P1.v blob 783a7f55d96e.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives P1.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of P1.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -23,7 +24,7 @@
    run plain. They are left plain in P1.v; their statements are the source's, and their proofs now apply P1.v's p1_evt_on / p1_evt_ro_on.
    p1_beqz is the one step 0x81ac0 `beqz a0,0x81ac8` with a0 = 0. It makes no data access (instruction fetch is not
    an access), so p1_beqz_F appends NO rng premise: the statement is p1_beqz's with (RNG : ExecF.footprint) first and
-   ExecF.evtF rsegs RNG in place of evt rsegs. P1.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 33 of its code lines changed or removed, 161 added. *)
+   ExecF.evtF rsegs RNG in place of evt rsegs. P1.v's code is unchanged since release (comments edited); it differs from the source blob above: 33 of its code lines changed or removed, 161 added. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes.
@@ -86,7 +87,7 @@ Proof. let A := type of P1.p1_beqz in let B := type of p1_beqz_of_F in constr_eq
                     ends there), premises = the machine-level facts the source script holds right after it
                     applies the contract;
      p1_evt_of_pre_post  the two stretches at ExecF.RNG_all plus the PLAIN contract, re-deriving P1.p1_evt.
-   Both stretches are cut from P1.v's own script; no new reasoning.  P1.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 33 of its code lines changed or removed, 161 added.
+   Both stretches are cut from P1.v's own script; no new reasoning.  P1.v's code is unchanged since release (comments edited); it differs from the source blob above: 33 of its code lines changed or removed, 161 added.
    ================================================================================================================ *)
 
 (* P1.v's p1_sb (P1.v:135) with the evtF goal head: one frame-shadow store `sb s2,K(s3)` (s3 = Sh), store_ok from
@@ -284,7 +285,7 @@ Proof. let A := type of P1.p1_evt in let B := type of p1_evt_of_pre_post in cons
 
 (* ================================================================================================================
    Route (C) twins (a Theorem Labs lane 09:20Z; frozen form a Theorem Labs lane's ASSIGN.md (a working note, not in this delivery); R = the shadow bytes the run reads
-   and stores through its shadow_rw premise, a Theorem Labs lane 10:33Z), on P1.v's own _on pieces (a Theorem Labs lane 89bc67ea2ac: p1_J_on,
+   and stores through its shadow_rw premise, a Theorem Labs lane 10:33Z), on P1.v's own _on pieces (a Theorem Labs lane: p1_J_on,
    p1_J_init_on, p1_J_on_store_ok, p1_J_on_store, p1_rw_of_shadow_on, p1_shadow_rw_call_on, p1_evt_shadow_R,
    p1_evt_ro_shadow_R). The old stretches above are unchanged. The run reads no shadow byte (no shadow check between
    0x81ac8 and 0x81b10; __asan_set_shadow_f8's contract takes its destination as rw_cells and has no shadow_rw

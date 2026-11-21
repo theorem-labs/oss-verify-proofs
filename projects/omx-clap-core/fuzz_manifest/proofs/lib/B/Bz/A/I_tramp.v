@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Bz/A/I_tramp.v: ported from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/B/Bz/A/I_tramp.v, which equals the A->B relocation (Theorem Labs tools) of lib/A/Bz/A/I_tramp.v at a working branch 5d8d8a15571 modulo module paths; module paths for this tree. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Bz/A/I_tramp.v: ported from a working branch proofs/omx-clap-core/fuzz_manifest/lib/B/Bz/A/I_tramp.v, which equals the A->B relocation (Theorem Labs tools) of lib/A/Bz/A/I_tramp.v at a working branch modulo module paths; module paths for this tree. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

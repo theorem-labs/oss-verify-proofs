@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: DMOD gains dm_rdr, that the channel has a reader as a write to it now needs, and DMOD_chan, DMOD_vm_only and DMOD_with_fds carry it. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -163,22 +164,25 @@ Lemma FDS3_3 : forall e, fd_lookup (FDS3 e) (wz 3) = Some e. Proof. reflexivity.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Record DMOD (fs : Fs) (F : list (word * FdEntry)) (mo : Model) : Prop := mkDMOD {
-  dm_mok : MOK mo; dm_fds : m_fds mo = F; dm_fs : m_fs mo = fs }.
+  dm_mok : MOK mo; dm_fds : m_fds mo = F; dm_fs : m_fs mo = fs;
+  (* the channel has a reader (08b1429 write_spec): pinned by the launch, kept by every step here *)
+  dm_rdr : m_channel_reader mo = true }.
 
 Lemma DMOD_chan : forall fs F mo, DMOD fs F mo -> (F = FDS0 \/ exists e, F = FDS3 e) -> chan_ok mo 1 /\ chan_ok mo 2.
 Proof.
-  intros fs F mo [_ HF _] H. unfold chan_ok. rewrite HF. destruct H as [-> | [e ->]]; split; reflexivity.
+  intros fs F mo [_ HF _ HR] H. unfold chan_ok. rewrite HF. destruct H as [-> | [e ->]]; split; split; first [reflexivity | exact HR].
 Qed.
 
 Lemma DMOD_vm_only : forall fs F mo mo', DMOD fs F mo -> vm_only mo mo' -> MOK mo' -> DMOD fs F mo'.
 Proof.
-  intros fs F mo mo' [HM HF HS] VO HM'. destruct (vm_only_facts mo mo' VO) as (E1 & E2 & _).
-  split; [exact HM'| |]; rewrite ?E1, ?E2; auto.
+  intros fs F mo mo' [HM HF HS HR] VO HM'. destruct (vm_only_facts mo mo' VO) as (E1 & E2 & _).
+  split; [exact HM'| | |]; rewrite ?E1, ?E2; auto.
+  unfold m_channel_reader. destruct VO as (_ & _ & _ & Ep & _). rewrite Ep. exact HR.
 Qed.
 
 Lemma DMOD_with_fds : forall fs F F' mo, DMOD fs F mo -> DMOD fs F' (with_fds F' mo).
 Proof.
-  intros fs F F' mo [[HM1 HM2] HF HS]. split; [split| |]; autorewrite with model; auto.
+  intros fs F F' mo [[HM1 HM2] HF HS HR]. split; [split| | | exact HR]; autorewrite with model; auto.
 Qed.
 
 (* [comment removed for export] *)

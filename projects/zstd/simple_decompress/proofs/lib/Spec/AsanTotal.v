@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's placement for a fresh grant and munmap's subtracted range; INV_resv_hi restated, and INV_fixed_aok_high, INV_recommit_aok and INV_madvise_aok proved, from AMI's new fact that the mappings miss the reserved ledger). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -171,8 +172,9 @@ Proof.
     unfold EAGER0, CBMAX, K_FREEARR_OFF, K_FREEARR_MAX, K_CHUNKS_BLOCK in *. lia.
 Qed.
 
+(* LPS 727298f3: the mappings miss the reserved ledger (no bound on the ledger's entries: it holds the vDSO pair) *)
 Lemma INV_resv_hi : forall pc pb st mo, INV pc pb st mo ->
-  Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (vm_reserved (m_vmmaps mo)).
+  forall e, In e (vm_maps (m_vmmaps mo)) -> region_free (vm_reserved (m_vmmaps mo)) (fst e) (snd e) = true.
 Proof. intros pc pb st mo [_ HM]. destruct HM as (_ & _ & M3 & _). exact M3. Qed.
 
 (* [comment removed for export] *)
@@ -186,7 +188,9 @@ Proof.
   assert (HEok : bv_unsigned (fst E) + bv_unsigned (snd E) <= ATOP) by (destruct (proj1 (Forall_forall _ _) M6 E HinE) as (_ & _ & _ & ?); assumption).
   unfold ACEIL, ATOP_MAX in T1, T2. unfold B, S in HE1, HE2. unfold RES_HI in HR.
   apply (INV_fixed_aok pc pb st mo E a len HI HinE); unfold B, S; auto; try lia.
-  apply (region_free_above _ a len RES_HI M3); unfold RES_HI in *; lia.
+  (* LPS 727298f3: the range lies inside E, which misses the reserved ledger *)
+  pose proof (bv_unsigned_in_range 64 (fst E)) as HE0.
+  apply (ami_region_free_within _ (fst E) (snd E)); [exact (M3 E HinE)| rewrite unsigned_lit by lia; lia| rewrite !unsigned_lit by lia; lia].
 Qed.
 
 Lemma INV_recommit_aok : forall pc pb st mo E a len,
@@ -203,7 +207,8 @@ Proof.
   cbn [AsanNodeSem.aok]. split; [reflexivity|]. split; [lia|]. split; [exact T3|].
   replace (a =? 0) with false by (symmetry; apply Z.eqb_neq; lia).
   rewrite ML. split; [right; reflexivity|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [|split].
-  - apply (region_free_above _ a len 0x7fff7000); auto; try lia.
+  - (* LPS 727298f3: the range lies inside E, which misses the reserved ledger *)
+    apply (ami_region_free_within _ (fst E) (snd E)); [exact (M3 E HinE)| rewrite unsigned_lit by lia; lia| rewrite !unsigned_lit by lia; lia].
   - apply (map_contains_In _ E); auto; rewrite !unsigned_lit by lia; lia.
   - apply mmap_fixed_rw_budget_ok_recommit_intro; [reflexivity| exact Hwf| | | | |];
       rewrite ?unsigned_lit by lia; unfold page_size; try lia.
@@ -219,8 +224,14 @@ Proof.
   pose proof HM as (M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & MT & MN & L0 & HP & HS & HB).
   assert (ML : mmap_len ms = ms) by (apply mmap_len_id; lia).
   cbn [AsanNodeSem.aok]. rewrite ML. split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|].
-  apply map_has_In. eapply Permutation_in; [apply Permutation_sym; exact HP|]. apply in_app_iff. right.
-  change (Z_to_bv 64 mb, Z_to_bv 64 ms) with (went (mb, ms)). apply in_map. exact Hin.
+  assert (HinM : In (Z_to_bv 64 mb, Z_to_bv 64 ms) (vm_maps (m_vmmaps mo))).
+  { eapply Permutation_in; [apply Permutation_sym; exact HP|]. apply in_app_iff. right.
+    change (Z_to_bv 64 mb, Z_to_bv 64 ms) with (went (mb, ms)). apply in_map. exact Hin. }
+  split; [apply map_has_In; exact HinM|].
+  (* LPS 727298f3: munmap subtracts the range; the ledger's entries are separated *)
+  destruct MT as [[T1 T2] _]. unfold ACEIL, ATOP_MAX in T1, T2.
+  pose proof (seps_maps_subtract_exact _ _ _ _ M9 M6 HinM) as E.
+  rewrite !unsigned_lit in E by lia. exact E.
 Qed.
 
 Lemma live_bytes_perm' : forall l l', Permutation l l' -> live_bytes l = live_bytes l'.
@@ -242,15 +253,28 @@ Proof.
     apply Z_mod_mult. }
   cbn [AsanNodeSem.aok]. rewrite Z.eqb_refl. rewrite ML. split; [reflexivity|]. split; [lia|]. split; [exact T3|]. split; [reflexivity|]. split.
   - rewrite M2. unfold LIMIT. pose proof (INV_backing_bound _ _ _ _ HI). unfold EAGER0, CBMAX, K_FREEARR_OFF, K_FREEARR_MAX, K_CHUNKS_BLOCK in *. lia.
-  - apply (vm_gap_available_intro_N _ _ (LEN0 + LEN0 + 16000) (2^30 + 2^20) (RTOT0 + TOT0 + 2^35)); [lia| | | |].
-    + (* [comment removed for export] *) rewrite T3. unfold ACEIL in T1. rewrite CEIL_val. exact T1.
-    + eapply Z.le_trans. { apply inj_le. apply length_filter_le. }
-      rewrite length_app, Nat2Z.inj_add. fold (zlen (vm_reserved (m_vmmaps mo))). fold (zlen (vm_maps (m_vmmaps mo))).
-      unfold zlen at 2. rewrite (Permutation_length HP). fold (zlen (L0 ++ map went (CH pc pb st))). rewrite zlen_app.
-      unfold zlen at 3. rewrite length_map. fold (zlen (CH pc pb st)). destruct HS as (_ & _ & _ & _ & _ & _ & _ & HL & _). lia.
-    + rewrite live_bytes_app'. rewrite (live_bytes_perm' _ _ HP).
-      rewrite live_bytes_app', (live_bytes_went _ (CH_wf _ _ _ HA)). destruct HS as (_ & _ & _ & _ & _ & _ & _ & _ & HT & _). lia.
-    + rewrite CEIL_val, FLOOR_val. unfold LEN0, RTOT0, TOT0. lia.
+  - (* LPS 75d69e00: the band walk gives the free base itself, at or above FLOOR, where Linux's
+       placement for the NULL hint succeeds ([Gap.place_found_of_band]). *)
+    assert (HBAND : exists g, g mod 4096 = 0 /\ FLOOR <= g /\ g + sec_map_size n <= CEIL
+              /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) (Z_to_bv 64 g) (Z_to_bv 64 (sec_map_size n)) = true).
+    { apply (gap_band_intro_N _ _ (LEN0 + LEN0 + 16000) (2^30 + 2^20) (RTOT0 + TOT0 + 2^35)); [lia| | | |].
+      + (* [comment removed for export] *) rewrite T3. unfold ACEIL in T1. rewrite CEIL_val. exact T1.
+      + eapply Z.le_trans. { apply inj_le. apply length_filter_le. }
+        rewrite length_app, Nat2Z.inj_add. fold (zlen (vm_reserved (m_vmmaps mo))). fold (zlen (vm_maps (m_vmmaps mo))).
+        unfold zlen at 2. rewrite (Permutation_length HP). fold (zlen (L0 ++ map went (CH pc pb st))). rewrite zlen_app.
+        unfold zlen at 3. rewrite length_map. fold (zlen (CH pc pb st)). destruct HS as (_ & _ & _ & _ & _ & _ & _ & HL & _). lia.
+      + rewrite live_bytes_app'. rewrite (live_bytes_perm' _ _ HP).
+        rewrite live_bytes_app', (live_bytes_went _ (CH_wf _ _ _ HA)). destruct HS as (_ & _ & _ & _ & _ & _ & _ & _ & HT & _). lia.
+      + rewrite CEIL_val, FLOOR_val. unfold LEN0, RTOT0, TOT0. lia. }
+    assert (HCT : CEIL <= alloc_top (m_vmmaps mo)) by (rewrite T3; unfold ACEIL in T1; rewrite CEIL_val; exact T1).
+    destruct HBAND as (g & G1 & G2 & G3 & G4).
+    apply (place_found_of_band mo (Z_to_bv 64 0) (sec_map_size n) g).
+    + lia.
+    + rewrite <- ML. unfold mmap_len, page_round_up_Z. apply Z_mod_mult.
+    + exact G1.
+    + exact G2.
+    + lia.
+    + exact G4.
 Qed.
 
 (* [comment removed for export] *)
@@ -723,7 +747,9 @@ Proof.
   cbn [AsanNodeSem.aok]. rewrite ML.
   split; [lia|]. split; [lia|]. split; [unfold PG in R3; exact R3|]. split; [lia|]. split; [exact M1|].
   unfold madvise_dontneed_ok. apply andb_true_iff. split; [apply andb_true_iff; split|].
-  - apply (region_free_above _ pbeg (pend - pbeg) 0x7fff7000); auto; try lia. unfold SHADOW_OFF in *. lia.
+  - (* LPS 727298f3: the range lies inside the shadow mapping, which misses the reserved ledger *)
+    apply (ami_region_free_within _ (fst (went (lo, sz))) (snd (went (lo, sz)))); [exact (M3 _ HinE)| |];
+      cbn [went fst snd]; rewrite !unsigned_lit by (unfold SHADOW_OFF in *; lia); lia.
   - apply (map_contains_In _ (went (lo, sz))); [exact HinE| |]; unfold went; cbn [fst snd]; rewrite !unsigned_lit by lia; lia.
   - apply (region_free_sub _ lo sz pbeg (pend - pbeg) HNA); lia.
 Qed.

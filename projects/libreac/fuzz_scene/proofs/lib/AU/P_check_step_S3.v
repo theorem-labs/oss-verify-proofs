@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and addresses changed; 145 of its 210 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/A/P_check_step_S0.v, with its module paths changed; 410 of its 460 lines of code are new or changed and 160 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment S3 of the ASan walk of check_step in fuzz_scene.asan-ubsan (sha256
    e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f): 0x8362c .. 0x836d4, proved here (a Theorem Labs lane)
    against the statement a Theorem Labs lane fixed. Rule 24 holds: this is ONE segment of the walk, not the function
@@ -11,7 +12,7 @@
    `__asan_memcpy(F + 48, blk, 34)` (0x83674) through aj_intrin_at (YCbq.v:1955), with the UBSan guard 0x83664
    decided from the frame's range fact; then the unpoison of `p`, reac_ctrl_parse (0x8369c, PARSE) in
    P_check_step_S3_mid.v (s3u_mid), and the five field checks plus reac_ctrl_checksum_verify (0x836cc, CKV through
-   cl_callS, AU/Prog/YC85.v:384) in P_check_step_S3_aux.v (s3u_tail).
+   cl_callS, AU/Prog/YC85.v:385) in P_check_step_S3_aux.v (s3u_tail).
    Pre: the cut state at its first pc; post: cs_st4 at the next cut pc (P_check_step_cut.v).
    The 50-byte frame object is firstn 16 cs_frame_init ++ scene_block b k = s3_fr b k (P_check_step_S3_aux.v). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
@@ -67,9 +68,9 @@ Hypothesis ASF : astack_free_law SEGS B.
 Hypothesis FFL : frame_flag_lawP SEGS B.
 (* A Theorem Labs lane. *)
 Hypothesis AMEMCPY : aintrin_realizes SEGS B OCpy (SIGMA SS___asan_memcpy).
-(* reac_ctrl_parse: a Theorem Labs lane (8cd86323565). *)
+(* reac_ctrl_parse: a Theorem Labs lane. *)
 Hypothesis PARSE : tctrl_parse_spec (SK := SK) B.
-(* reac_ctrl_checksum_verify (a Theorem Labs lane 33d26845cd2). *)
+(* reac_ctrl_checksum_verify (a Theorem Labs lane). *)
 Hypothesis CKV : tctrl_checksum_verify_spec (SK := SK) B.
 (* scene's start-up shadow of check_step's two globals as named facts of B (an internal review, CHECKSTEP-REVIEW item R2): full
    granules in as_zero_shadow, the partial granules and the f9 redzones as constant cells; the walk derives

@@ -1,10 +1,11 @@
-(* CARRIED from commit 13dada94373d48ba230c171e98126b88ba98118e,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfRoomFree.v, sha256 c977bf56bdd6d584323329ec4e5c06ad5df7cc2f63e1350bba89d84e1b8ddf87 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30 (free_cf's size test, Quarantine::Put): the charge rules of section 6-9 take free_small (free_cf's enqueue side, ck_n <= kQuarantineMax): rf_free_inner (tree with free_cf's size test), rf_free, free_step_q_cf, free_room_keep_nonew_cf, free_charge_cf, free_step_slots_cf, free_step_bytes_cf, free_run's frun_step. STATEMENT CHANGES (premise added); no consumer outside this file. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the ROOM STEPS THAT COST
    NOTHING, over YGcfRoomKeep.v's ROOM_cf_k S k (STATE FIRST, then the headroom k).
    YGcfRoomStep.v's charges (RK_malloc = RK_free = 1) are the worst case of one call. This file proves

@@ -5,13 +5,14 @@
    libreac/fuzz_knock's ASan harness walk, with the
    init-call premise as the A file discharges it), for LLVMFuzzerTestOneInput 0x7eed0 in fuzz_knock.asan-ubsan (sha256
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82; 350 words, size 0x578), made the way
-   proofs/cgif/cgif_file_fuzzer/lib/YCfe.v is made from A/ACfe.v at c8557374ad2e: the walk framework imports move to
+   proofs/cgif/cgif_file_fuzzer/lib/YCfe.v is made from A/ACfe.v: the walk framework imports move to
    the lib/AU twins, every pc is the asan-ubsan one, and the registers follow the asan-ubsan code. The A file's comment
    gives the donor line each step follows (A/ACfe.v:159-330, A/ACf0.v:56-78). The S2 -> S7 boundary ss_X / INV_X is
    a Theorem Labs lane's lib/AU/APgMain7.v (over lib/AU/APgRt.v); the S2 -> S3
    boundary ss_L is lib/AU/APgStates.v's, INV_L and the closed loop
    rt_loop are a Theorem Labs lane's lib/AU/APgLoop0.v / APgMainL.v.
    rule 24: no function proved (a twin of a port of the released cgif_file_fuzzer harness walk structure). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* SEGMENT S2 PARSED, pc 0x7f0d4-0x7f150 (32 insns), ending at ss_L (0x7f154, 0x7f150 falls through) or ss_X (0x7f2c4,
    0x7f150 taken) (internal path section 2 row S2, section 6 lines

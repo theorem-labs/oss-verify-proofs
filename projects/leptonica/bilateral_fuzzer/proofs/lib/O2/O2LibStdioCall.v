@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (writev's channel-reader flag). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -117,6 +118,7 @@ Theorem stdio_call_sound_fr :
   rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
   rdn RSEGS M s (length extra) = Some extra ->
   fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   K [] ->
   (forall R' M',
@@ -127,7 +129,13 @@ Theorem stdio_call_sound_fr :
   realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x31958) M (seg_rom RSEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-ltac2:(KReplay.run1 (kr_t_O2LibStdioCall ()) ["VP17"] "h02M'h12R'h21Ah31Bh41Eh52H1h63H10h73H11h83H12h93H13h:3H14h;3H15h<2H2h=2H3h>2H4h?2H5h@2H6hA2H7hB2H8hC2H9hD5HCONThE2HKhF2HRhG2HchH1KhI1MhJ1PhK1RhL3RLThM3ebshN5extrahO2knhP1lhQ5modelhR7pendinghS3reshT1shU2srhV2suhW4valshX2wbhY2wpp;1p;2p;3p;4p;5p;6p;7p;Tg004Jj10Tg004oj1DTg005Mj1PTg00>=j1;Tg008Sj12Tg00F\j2aTg0060j19Tg00GHj17Tg00HLj26Tg00ITj3ETg00Jdj4ITg00L4j28Tg00LTj5pTg00C[j2CTg00<fj35Tg00M\j1eTg00N_j21Tg00:3j23Tg00Ohj1`Tg00Pkj1_Tg00Qmj1^Tg00Roj1?Tg00:]j24Tg0098j1:Tg009Vj2FTg00T2j1@Tg00<Ij2>Tg00TRj2]Tg00Toj2MTg00?\j2ATg00@aj4LTg00UIj1\Tg00V=j1KTg00W@j2[Tg00X8j1ZTg00Y0j1YTg00Ygj1XTg00ZIj2oTg00Zij1nTg00[aj1WTg00\Aj1VTg00]Ij3=Tg00]fj1UTg00^ij1TTg00_lj1JTg00`nj1GTg00b3j1HTg007Vj6dTg00c9j1cTg00d=j1QTg00e9j5OTg00f2j2RTg00fgj3STg00>]j1bTg006Rj7fTg00gfj7gTg00hflThTg00j7j2iTg00k7j2jTg00l1j1kTg000^j4lTg00lgj2mTf0R0#0#0p=B%00#0#0#0#0#0#0#0p=<%00#0#0#0p=Ng00E:R1#0R2#BR3#BR4#0R5#DR6#PR7#;g00mb%D3#PR3#;R8[g00nA#;g00oJ#;%22R9#D/a7R:%93\7R;g010Ug011KR<g012Tf:R=#7f9R>'6g013Mf7R?9E0>g014UR@f1RAP?P>CI%9<g002FRBg016;RCf=RD,87f;REP=Dpf6RF,C<35f3R<%e?'1,36g00E_RGf4RHf8RI#`'1,36PGf5RJ%_>'1P7%^=,1FP7%?E,1?,36PG14H<%05#<#<#<#<#<#:R5,4H1FJF183D#@RK55G136H=5GKf?RK,83#@RGf>RL,83#@'>%:2%21#2R1#2#0#:']R2'4f@,83#@/>G/42%N1#:R1,FF,4>14F='M136>R2136I'>1F?1'414?2'M136=/>2/45%98R5P@fGR21A6DfDR1,83RGCL1C81R135P@fHRMf<RNPGCL=551g0175R1#9%\M%K2,A6RM'[%ZM,C135%97fIR1#Y%X7351o77RM#;fJR5#n%WM35P2g017mRM#WO1fTRG%VARO5=7#7fSRP'6fMRQ#U;EAP@fURRf2RS#VRT5=7#7/6GPAfNRU#TCIfQRVfKRWfORX#?'1,36%JX%GX,1W%HX,1WPSEdp,2fxRYPHfPRZ#c,A6P<%Q@DO/RV=S@Q[[[^0;^1:PYPBg018cg019^PCg01:[PPfRRCPVPZPXPUPQfLR@PWP5P1P2fFfEPKPLPDPNPEP=P>PIP?PFPJPHP<PSPAA=7RO#7/6G%UU;EA%bBRGfVRO==7T#7/6RPA%TXCIPBPCfWRC#7/6ORO%?Z'1,36%JZ%GZ,1O%HZ,1OPSFfPJPHP<PSPAPPfX#7/6CRC%?V'1,36%JV%GV,1C%HV,1CP<P0FgO5WJW3W2X0;X1:MThPYPX%24#2#2#0#2,iB%29#2#2#0#B#2#2#B#N#:'jPU%QGDO/RQP3PM%K@,A6#kA=3W5Cl/m15SGP0bLWDW;W:W9W8W7W6WCWBWAW@W?W>W=W<W5bVbPbTbYbXWGWEWFb4WHXN8XR8WSWQWIWKWOWUWMWWo"). Qed.
+  intros vals ebs sr kn R M model res pending extra K E HR HK Hc wb wp s l su
+         H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 Hrd H13 H14 H15 HCONT.
+  rl_tail (@LibStdioCall.stdio_call_sound_fr _ o2_reloc o2_code o2_sites o2_data o2_rw
+             vals ebs sr kn R M model res pending extra K HR HK Hc
+             H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 Hrd H13 H14 H15
+             (fun R' M' A B P => HCONT R' M' A B (sw_post_L _ _ _ _ _ _ P))).
+Qed.
 
 (* [comment removed for export] *)
 Theorem stdio_call_sound :
@@ -153,6 +161,7 @@ Theorem stdio_call_sound :
   rdn RSEGS M (Z_to_bv 64 wb) (length pending) = Some pending ->
   rdn RSEGS M s (length extra) = Some extra ->
   fd_lookup (m_fds model) (Z_to_bv 64 (sc_fd res)) = Some (FdChannel (Z_to_bv 64 (sc_fd res))) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   K [] ->
   (forall R' M',
@@ -162,5 +171,7 @@ Theorem stdio_call_sound :
   realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x31958) M (seg_rom RSEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-ltac2:(KReplay.run1 (kr_t_O2LibStdioCall ()) ["VP17"] "h02M'h12R'h21Eh32HKh43HK'h52HRh63HR'h72Hch81Kh91Mh:1Rh;2_Hh<3ebsh=5extrah>2knh?1lh@5modelhA7pendinghB3reshC1shD2srhE2suhF4valshG2wbhH2wpp;1p;2p;3p;4p;5p;6p;Ng004Jj10Tg004oj1BTg005Mj1HTg00>=j1:Tg008Sj1>Tg00F\j2ZTg0060j19Tg00GHj15Tg00HLj26Tg00ITj3ATg00Jdj4@Tg00L4j27Tg00LTj5hTg00C[j2DTg00<fj33Tg00M\j1^Tg00N_j22Tg00:3j24Tg00Ohj1YTg00Pkj1XTg00Qmj1WTg00Roj1ITg00:]j21Tg0098j1;Tg009Vj2CTg00T2j1?Tg00<Ij2=Tg00TRj2VTg00Toj2GTg00?\j2ETg00@aj4FTg00UIj1QTg00V=j1PTg00W@j2RTg00X8j1OTg00Y0j1STg00Ygj1TTg00ZIj2gTg00Zij1fTg00[aj1MTg00\Aj1LTg00]Ij3<Tg00]fj1JTg00^ij1KTg00c9j1eTg00d=j1dTg00e9j5]Tg00f2j2_Tg00fgj3`Tg00_lj1\Tg00`nj1aTg00b3j1bTg007Vj6[Tg01;TlNcTf0R0#0#0p=N%00#0#0#0#0#0#0#0p=8%00#0#0#0p=Ug00E:R1#0R2#NR3#0#NR4#BR5#HR6#:g00mb%B3#HR3#:R7[g00nA#:g00oJ#:%>2#B/Z6R8%93\6R9g010Ug011KR:g012Tf:R;#5f9R<'6g013Mf7R=9A0<g014UR0f1R>P=P<C@%9:g002Fg016;f=R?,76f;R@P;Dhf6RA,D:33f3R:%^='2,45g00E_RBf4RCf8RD#Y'2,45PBf5RE%X<'2P6%W;,2AP6%I@,2=,45PB11C:%04#8#8#8#8#8#;R4,1C1CEA173?#?R@53B145C=3B@f?R@,73#?RBf>RF,73#?'=%;2%>1#>R1#>#0#;'VR2'1f@,73#?/=B/12%U1#;R1,CA,1<11A;'G145<R2145D'=1C=1'111=2'G145;/=2/14%97R4P0fGR21E5?fDR1,73R3CF1D71R133P0fHRBf<RGP3CF=341g0175R1#9%QB%P2,E5RB'R%OB,D133%96fIR1#S%T6331g66RB#:fJR4#f%MB33P2g017m#MO1fTRB%L>R35<6#5fSRH'6fMRI#J;A>P0fURJf2RK#LRL5<6#5/6BP>fNRM#KC@p,2fxP:fORN#e,E5PK%d0D]fPRO'_fLRP5`0[[^09^18PHfRRHfQPOPNPMPIPPfKP4P1P2fFfEP@PFP?PGP;P;P<PDP=PAPEPCP:PKP>A<6J3#5/6B%JM;A>P0fVR0=<6L#5/6JP>%KNC@PHfW#5/60R0%IO'2,45%\O%aO,20%bO,20PKE[PEPCP:PKP>O4W;W4W6X09X18MNcUUUUUUUUUUUUUUUUbEb?bCbHbGW7W3W5b2W8X=7XA7WBW@W9W:W>WDW<WFo"). Qed.
+  intros vals ebs sr kn R M model res pending extra K E HR HK Hc wb wp s l su; intros.
+  eapply stdio_call_sound_fr; try eassumption. intros R' M' HR' HK' _. auto.
+Qed.
 End VP17.

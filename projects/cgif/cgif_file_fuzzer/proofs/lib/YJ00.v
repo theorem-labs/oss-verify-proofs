@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input): changed realizes_must_exit_at, realizes_exit_verdict. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool Classical.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs Monad State Specs Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YK15.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.R Require Import Cfg.
+From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.Cfg Require Import RomStable.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Section a.
@@ -43,7 +45,7 @@ must_exit_at_cfg ACFG segs v c.
 Proof using segs.
 intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
 intros v Hnone Hx.
-- destruct Hnode as [Hsound Hinv].
+- destruct Hnode as [Hsound [Hinv _]].
 apply must_exit_at_cfg_running.
 + exact Hnone.
 + eexists _, _. exact (Hsound i0).
@@ -110,12 +112,16 @@ Proof.
 intros cfg code img lim en inp H.
 apply must_exit_with_scfg_of_must_exit_with; [apply run_decided_classic | exact H].
 Qed.
+(* LPS 08b1429: the run reads the binary against [run_segments segs ..] from
+   [init_config (run_segments segs ..) ..]; [Cfg.RomStable.run_init] lifts the walk there. *)
 Theorem realizes_exit_verdict : forall cfg segs pc ph sp brk mb rnd lim inp v fs,
 cfg_le cfg ACFG ->
 realizes segs (init_config segs pc ph sp brk mb rnd lim inp) (t_exit v fs) ->
+vdso_image segs = None ->
 must_exit_with_scfg cfg v (mkImage segs pc ph) lim (mkEntry sp brk mb rnd) inp.
 Proof.
-intros cfg segs pc ph sp brk mb rnd lim inp v fs Hle H.
+intros cfg segs pc ph sp brk mb rnd lim inp v fs Hle H Hvi.
 apply (must_exit_with_scfg_mono cfg ACFG); [exact Hle | apply run_decided_classic |]. cbn [must_exit_with_scfg].
-apply (realizes_must_exit_at segs _ _ H); [reflexivity | apply exits_only_with_t_exit].
+apply (realizes_must_exit_at (run_segments segs inp sp mb) _ _
+(run_init segs inp sp mb pc ph brk rnd lim _ Hvi H)); [reflexivity | apply exits_only_with_t_exit].
 Qed.

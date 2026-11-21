@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_rgb_fuzzer/lib/YG0e.v (its Definition astack_malloc_sz_realizes, lines 17-33),
    with its module paths changed to fuzz_scene's relocated cgif framework (lib/Reusable/YG0d.v and its imports). Not named YG0e:
    cgif_file's own lib/Reusable/YG0e.v is a different file with the same name. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   The size-dependent stack-malloc contract. The shared stack-free contract (astack_free_realizes) is
-   lib/Reusable/StackFreeDef.v (libreac/fuzz_grant c3bfa00452c) and the set-shadow contract (aset_shadow_realizes) is
+   lib/Reusable/StackFreeDef.v (libreac/fuzz_grant) and the set-shadow contract (aset_shadow_realizes) is
    a Theorem Labs lane's SetShadowDef.v (identical to cgif_rgb YG0e.v:48); Require those directly. Generic in the class id and the entry pc; it
    holds no fuzz_scene address. The pc / cid arguments are explicit on purpose: the code record (Tfib_code, pc_stack_malloc)
    maps only classes 1 and 2, so do not "fix" this by editing that record. fuzz_scene's instance (class 8, entry

@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_C2.v at a working branch 31d1eb57a40: the same two
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_C2.v at a working branch: the same two
    segment lemmas (cno_seg_Q3, cno_seg_Q4) over lib/B/FMW_cno0.v's resume states. The store split follows A's
    FMW_cno_C1.v (store the NUL, then memset past it), not A's FMW_cno_C2.v (memset 17 bytes over the NUL).
    check_no_overread 0x80bd4: segments Q3 0x80d54 -> R3 0x80d8c and Q4 0x80dcc -> R4 0x80e04. Each is
@@ -43,8 +43,8 @@ Definition cnoC2_SH : list shent := [mkSHE 10 0 1].
 
 Section S. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-Hypothesis FB : FmB B.                                   (* FMW_seg.v:37: code addresses, GOT/cell values, statics not owned *)
-Hypothesis HB : TfibSyms B.                              (* ReusableB/YF0m.v:658 *)
+Hypothesis FB : FmB B.                                   (* FMW_seg.v:38: code addresses, GOT/cell values, statics not owned *)
+Hypothesis HB : TfibSyms B.                              (* ReusableB/YF0m.v:659 *)
 Hypothesis IMG : fm_img_facts tfibsegs B.                (* FMH_Fn.v:61 *)
 Hypothesis UNIV : fm_univ B.                             (* FMH_Fn.v:71: incl Tfib_universe (as_universe B) *)
 Hypothesis AMALLOC4 : amalloc04_rule tfibsegs B ameter_triv.   (* YC5d.v:57; ameter_triv YCbp.v:17, mo_ok = True *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: lh_del_loopA and del_exit_okA take it after alloc_ceiling <= lo; the lh_delete_tail_A_stmt proofs name it; the IH and del_exit_okA calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -128,7 +129,7 @@ forall (d : nat) (es0 : list lent) (e : lent) (svs : list slotv)
 HEAPAx A (lh_blocks t tbl size (es0 ++ [e]) ++ LB) LM FRS B m md ->
 lh_open asegs A4F m t tbl size (es0 ++ [e]) svs ->
 (forall j x, (jf <= j)%nat -> nth_error (es0 ++ [e]) j = Some x -> le_v x = 0) ->
-stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -144 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -144 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 del_frameA m -> rw_cells asegs m A_ERRNO [C4 errv] ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m ->
@@ -137,7 +138,7 @@ del_exitA (firstn jf es0) ->
 AJ5 A4L HIx A T md
 (MS (dl_regsA x1 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 (ent_addr tbl (le_ix e)) s4v t3 t4 t5 t6) F (Z_to_bv 64 0xa52ec) fc None m (seg_rom asegs)).
 Proof.
-induction d as [|d IH]; intros until B; intros Hd Hjf Hef HP OPEN VZ ST LO LOS SPA HT FR ERR VM0 HPR BUD KX.
+induction d as [|d IH]; intros until B; intros Hd Hjf Hef HP OPEN VZ ST LO HBT LOS SPA HT FR ERR VM0 HPR BUD KX.
 all: pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen); unfold lh_hdr, lh_hdrf in HDR.
 all: rewrite tl_of_app in HDR.
 all: pose proof LINK as (LK1 & LK2 & LK3 & LK4).
@@ -490,7 +491,7 @@ all: try (rewrite E0, firstn_snoc_le in KX by lia).
 all: try (rewrite E0 in HPF, OPENF).
 all: evt_done5.
 all: eapply (IH es1 el _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ mF md2 A2);
-first [exact HPF | exact OPENF | exact HPRF | exact KX | exact LO | exact SPA | exact HT | idtac].
+first [exact HPF | exact OPENF | exact HPRF | exact KX | exact LO | exact HBT | exact SPA | exact HT | idtac].
 + lia.
 + lia.
 + rewrite <- E0. rewrite nth_error_app1 in Hef by lia. exact Hef.
@@ -505,7 +506,7 @@ rewrite nth_error_app1 by (apply (proj1 (nth_error_Some es0 j)); rewrite Hx; dis
 Qed.
 
 Lemma del_exit_okA : forall (esf : list lent),
-bv_unsigned rac mod 2 = 0 -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -48 ->
+bv_unsigned rac mod 2 = 0 -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -48 ->
 (forall (m : word -> option byte) (md : config) (A : ASA A4L HIx) (B : bud) (svsf : list slotv)
 (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word),
 HEAPAx A (lh_blocks t tbl size esf ++ LB) LM FRS B m md -> lh_open asegs A4F m t tbl size esf svsf ->
@@ -516,7 +517,7 @@ AJ5 A4L HIx A T md
 F (ret_pc rac) fc None m (seg_rom asegs))) ->
 del_exitA esf.
 Proof.
-intros esf RAC LO LOS K. unfold del_exitA. intros until svsf; intros HP OPEN ST FR ERR VM0 HPR BUD.
+intros esf RAC LO HBT LOS K. unfold del_exitA. intros until svsf; intros HP OPEN ST FR ERR VM0 HPR BUD.
 unfold del_frameA in FR. unfold_consts. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (wmono_refl asegs m) as WM. pose proof (munch_refl [] m) as MU.
@@ -530,7 +531,7 @@ End DelLoopA.
 
 Lemma lh_delete_tail_A_cps : lh_delete_tail_A_stmt HIx.
 Proof.
-unfold lh_delete_tail_A_stmt. intros until ef. intros HP OPEN Hef VZ ST LO LOS SPA HT ERR TP RA A0 A1 COST K.
+unfold lh_delete_tail_A_stmt. intros until ef. intros HP OPEN Hef VZ ST LO HBT LOS SPA HT ERR TP RA A0 A1 COST K.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen). unfold lh_hdr, lh_hdrf in HDR.
 destruct (snoc_inv es) as [Enil | (es0 & e & E0)]; [rewrite Enil in Hef; destruct jf; discriminate|].
 pose proof (proj1 (nth_error_Some es jf) ltac:(rewrite Hef; discriminate)) as Hjf. rewrite E0, length_app in Hjf. cbn in Hjf.
@@ -580,11 +581,12 @@ first [exact COST | reflexivity | exact Hef | exact HP1 | exact OPEN1 | exact VZ
 - lia.
 - exact ST.
 - clia.
+- first [assumption | lia].
 - lia.
 - unfold del_frameA. eassumption.
 - unfold A_ERRNO in *. eassumption.
 - unfold del_budA, lh_delete_costB. rewrite length_app. cbn [length]. split; lia.
-- apply del_exit_okA; [exact RA | clia | lia |].
+- apply del_exit_okA; [exact RA | clia | first [assumption | lia] | lia |].
 intros m' md' A' B' svsf u0 u1 u2 v1 v2 v3 v4 v5 v6 v7 u3 u4 u5 u6 HPf OPENf STf ERRf VMf HPRf BUDf.
 apply K. exists m', svsf, B'.
 split; [unfold ret_state; do 14 eexists; reflexivity|].
@@ -746,7 +748,7 @@ forall (d : nat) (es0 : list lent) (e : lent) (svs : list slotv)
 HEAPAx A (lh_blocks t tbl size (es0 ++ [e]) ++ LB) LM FRS B m md ->
 lh_open asegs A4F m t tbl size (es0 ++ [e]) svs ->
 (forall j x, (jf <= j)%nat -> nth_error (es0 ++ [e]) j = Some x -> le_v x = 0) ->
-stk asegs m lo (bv_unsigned sp + -144) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -144 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -144) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -144 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 del_frameA m -> rw_cells asegs m A_ERRNO [C4 errv] ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m ->
@@ -755,7 +757,7 @@ del_exitA (firstn jf es0) ->
 AJ5 A4L HIx A T md
 (MS (dl_regsA x1 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s5 (ent_addr tbl (le_ix e)) s9 t3 t4 t5 t6) F (Z_to_bv 64 0xa2a5c) fc None m (seg_rom asegs)).
 Proof.
-induction d as [|d IH]; intros until B; intros Hd Hjf Hef HP OPEN VZ ST LO LOS SPA HT FR ERR VM0 HPR BUD KX.
+induction d as [|d IH]; intros until B; intros Hd Hjf Hef HP OPEN VZ ST LO HBT LOS SPA HT FR ERR VM0 HPR BUD KX.
 all: pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen); unfold lh_hdr, lh_hdrf in HDR.
 all: rewrite tl_of_app in HDR.
 all: pose proof LINK as (LK1 & LK2 & LK3 & LK4).
@@ -1075,7 +1077,7 @@ all: try (rewrite E0, firstn_snoc_le in KX by lia).
 all: try (rewrite E0 in HPF, OPENF).
 all: evt_done5.
 all: eapply (IH es1 el _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ mF md2 A2);
-first [exact HPF | exact OPENF | exact HPRF | exact KX | exact LO | exact SPA | exact HT | idtac].
+first [exact HPF | exact OPENF | exact HPRF | exact KX | exact LO | exact HBT | exact SPA | exact HT | idtac].
 + lia.
 + lia.
 + rewrite <- E0. rewrite nth_error_app1 in Hef by lia. exact Hef.
@@ -1090,7 +1092,7 @@ rewrite nth_error_app1 by (apply (proj1 (nth_error_Some es0 j)); rewrite Hx; dis
 Qed.
 
 Lemma del_exit_okA : forall (esf : list lent),
-bv_unsigned rac mod 2 = 0 -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -144 ->
+bv_unsigned rac mod 2 = 0 -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -144 ->
 (forall (m : word -> option byte) (md : config) (A : ASA A4L HIx) (B : bud) (svsf : list slotv)
 (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word),
 HEAPAx A (lh_blocks t tbl size esf ++ LB) LM FRS B m md -> lh_open asegs A4F m t tbl size esf svsf ->
@@ -1101,7 +1103,7 @@ AJ5 A4L HIx A T md
 F (ret_pc rac) fc None m (seg_rom asegs))) ->
 del_exitA esf.
 Proof.
-intros esf RAC LO LOS K. unfold del_exitA. intros until svsf; intros HP OPEN ST FR ERR VM0 HPR BUD.
+intros esf RAC LO HBT LOS K. unfold del_exitA. intros until svsf; intros HP OPEN ST FR ERR VM0 HPR BUD.
 unfold del_frameA in FR. unfold_consts. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (wmono_refl asegs m) as WM. pose proof (munch_refl [] m) as MU.
@@ -1115,7 +1117,7 @@ End DelLoopA.
 
 Lemma lh_delete_tail_A_cps : lh_delete_tail_A_stmt HIx.
 Proof.
-unfold lh_delete_tail_A_stmt. intros until ef. intros HP OPEN Hef VZ ST LO LOS SPA HT ERR TP RA A0 A1 COST K.
+unfold lh_delete_tail_A_stmt. intros until ef. intros HP OPEN Hef VZ ST LO HBT LOS SPA HT ERR TP RA A0 A1 COST K.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen). unfold lh_hdr, lh_hdrf in HDR.
 destruct (snoc_inv es) as [Enil | (es0 & e & E0)]; [rewrite Enil in Hef; destruct jf; discriminate|].
 pose proof (proj1 (nth_error_Some es jf) ltac:(rewrite Hef; discriminate)) as Hjf. rewrite E0, length_app in Hjf. cbn in Hjf.
@@ -1175,11 +1177,12 @@ first [exact COST | reflexivity | exact Hef | exact HP1 | exact OPEN1 | exact VZ
 - lia.
 - exact ST.
 - clia.
+- first [assumption | lia].
 - lia.
 - unfold del_frameA. eassumption.
 - unfold A_ERRNO in *. eassumption.
 - unfold del_budA, lh_delete_costB. rewrite length_app. cbn [length]. split; lia.
-- apply del_exit_okA; [exact RA | clia | lia |].
+- apply del_exit_okA; [exact RA | clia | first [assumption | lia] | lia |].
 intros m' md' A' B' svsf u0 u1 u2 v1 v2 v3 v4 v5 v6 v7 u3 u4 u5 u6 HPf OPENf STf ERRf VMf HPRf BUDf.
 apply K. exists m', svsf, B'.
 split; [unfold ret_state; do 14 eexists; reflexivity|].

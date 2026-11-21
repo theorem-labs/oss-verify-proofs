@@ -1,6 +1,6 @@
 (* check_round_trip (fs.asan 0x81a9c, build A), WALK LANE D2, segment 37: 0x8233c -> 0x82344, the second fuzz_free.
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd21.v / sd22.v, stages St21 / St22 - the
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd21.v / sd22.v, stages St21 / St22 - the
    same two fuzz_free calls at 0x82338 and 0x82340). The function-level lookup is the one quoted in the lane head
    (internal path) (checker a Theorem Labs lane, role check, CONFIRM).
 
@@ -8,7 +8,7 @@
    then 0x82340 `jal fuzz_free`, returning to 0x82344. The run stores nothing, so the step is the base's
    crt_seg_call (FSH_crt_site.v) at r0 = 0x8233c, A_c = A_fuzz_free, r = 0x82344, STKc = STK_fuzz_free.
 
-   What St22 of d25a984c903 does at this call, restated in S0's ajournal / ARU / U form:
+   What St22 does at this call, restated in S0's ajournal / ARU / U form:
    - the callee frees text's reader block (text - HEAD, enc_size len + HEAD), the last block of the walk that has a
      user-poisoned head, so the head (text - HEAD, HEAD) leaves U and U is the entry's c_U again (up to order);
    - g_live goes down by enc_size len, back to the entry's c_live;

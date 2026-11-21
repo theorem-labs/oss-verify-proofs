@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppRcf.v (commit 3cae605a900a, blob 7f63bbe40963) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppRcf.v (blob 7f63bbe40963) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -61,7 +62,7 @@ sr_get (ss_regs ss) 1%bv = SLit retpc -> 0 < nb ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
    ~ (sp - REALLOC_STK <= x < sp) /\ ~ (v <= x < v + 16) /\ ~ (d <= x < d + cap)) ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
-   forall a : word, grant_ok_na_pin md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
+   forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
 realloc_post W (ms_regs ms) (ms_mem ms) md v nb d cap sz W' c' ->
 exists (regs' : bvmap 5 word) (mem' : word -> option byte) (mdx : Model),
   c' = mkCfg (mkst regs' (Z_to_bv 64 retpc) mem' (seg_rom tfibsegs)) mdx /\
@@ -104,7 +105,7 @@ realloc_pre W (ms_regs ms) (ms_mem ms) md v nb d cap sz ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
    ~ (sp - REALLOC_STK <= x < sp) /\ ~ (v <= x < v + 16) /\ ~ (d <= x < d + cap)) ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
-   forall a : word, grant_ok_na_pin md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
+   forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
 (forall (W' : world tfibsegs) (regs' : bvmap 5 word) (mem' : word -> option byte) (mdx : Model),
    realloc_post W (ms_regs ms) (ms_mem ms) md v nb d cap sz W' (mkCfg (mkst regs' (Z_to_bv 64 retpc) mem' (seg_rom tfibsegs)) mdx) ->
    st_ok tfibsegs (havoc E k (map (getr regs') CLOB)) (ss_after_call ss rs k retpc)
@@ -138,7 +139,7 @@ realloc_pre W (ms_regs ms) (ms_mem ms) md v nb d cap sz ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
    ~ (sp - REALLOC_STK <= x < sp) /\ ~ (v <= x < v + 16) /\ ~ (d <= x < d + cap)) ->
 (forall r x, In r rs -> base_val E (YP09.r_base r) + YP09.r_lo r <= x < base_val E (YP09.r_base r) + YP09.r_hi r ->
-   forall a : word, grant_ok_na_pin md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
+   forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a ncap = true -> ~ (bv_unsigned a <= x < bv_unsigned a + ncap)) ->
 (forall (W' : world tfibsegs) (regs' : bvmap 5 word) (mem' : word -> option byte) (mdx : Model),
    realloc_post W (ms_regs ms) (ms_mem ms) md v nb d cap sz W' (mkCfg (mkst regs' (Z_to_bv 64 retpc) mem' (seg_rom tfibsegs)) mdx) ->
    st_ok tfibsegs (havoc E k (map (getr regs') CLOB)) (ss_after_call ss rs k retpc)

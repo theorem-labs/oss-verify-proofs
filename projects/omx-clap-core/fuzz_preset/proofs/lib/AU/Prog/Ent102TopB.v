@@ -1,23 +1,24 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43): THE B' TOP of
    the walk of LLVMFuzzerTestOneInput (entry 0x816cc) - ONE statement, from cut_start to cut_ret, at the unit's
    CfParams (CfParams_preset):
      forall E, ec_hyps -> ec_laneR WLE' (cut_start E) (cut_ret E)    (WLE' := wle' segs RZ_cf: the walk frees)
-   (the statements of lib/AU/Ent102CutsB.v, on the kit's cut 7cdbb61b5fa0). It is entry_B_of_segs (lib/AU/Prog/Ent102L7B.v, the
+   (the statements of lib/AU/Ent102CutsB.v, on the kit's cut). It is entry_B_of_segs (lib/AU/Prog/Ent102L7B.v, the
    composition) applied to the thirteen segment theorems, each merged by sha into the record line a working branch:
-     seg_L0a_B, seg_L0b_B   lib/AU/Prog/Ent102L0B.v                  (a Theorem Labs lane, c2ea314d0fb0)
-     seg_L1_B               lib/AU/Prog/Ent102L1B.v                  (a Theorem Labs lane, ca1c591014b4)
-     seg_L2_B               lib/AU/Prog/Ent102L2B.v                  (a Theorem Labs lane, 9b9694ae4896)
-     seg_L3_B               lib/AU/Prog/Ent102L3B.v                  (a Theorem Labs lane, d9247d9c057d)
-     seg_L4_B               lib/AU/Prog/Ent102L4B.v                  (a Theorem Labs lane, d2760ca3af40)
-     seg_L4j_B              lib/AU/Prog/Ent102L4jB.v                 (a Theorem Labs lane, 1e48ffd42f76)
-     seg_L5a_B              lib/AU/Prog/Ent102L5aB.v                 (this lane, e6241d139dd8)
-     seg_L5b_B, seg_L5c_B   lib/AU/Prog/Ent102L5bB.v / Ent102L5cB.v  (a Theorem Labs lane, 1a3b4412c781)
-     seg_L5d_B              lib/AU/Prog/Ent102L5dB.v                 (a Theorem Labs lane, bfc3e902e3f2)
-     seg_L6f_B              lib/AU/Prog/Ent102L6Bf.v                 (a Theorem Labs lane, 038e7ecbcbeb)
-     seg_L6x_B              lib/AU/Prog/Ent102L6B.v                  (a Theorem Labs lane, 0ff0afabbfa0)
+     seg_L0a_B, seg_L0b_B   lib/AU/Prog/Ent102L0B.v                  (a Theorem Labs lane)
+     seg_L1_B               lib/AU/Prog/Ent102L1B.v                  (a Theorem Labs lane)
+     seg_L2_B               lib/AU/Prog/Ent102L2B.v                  (a Theorem Labs lane)
+     seg_L3_B               lib/AU/Prog/Ent102L3B.v                  (a Theorem Labs lane)
+     seg_L4_B               lib/AU/Prog/Ent102L4B.v                  (a Theorem Labs lane)
+     seg_L4j_B              lib/AU/Prog/Ent102L4jB.v                 (a Theorem Labs lane)
+     seg_L5a_B              lib/AU/Prog/Ent102L5aB.v                 (this lane)
+     seg_L5b_B, seg_L5c_B   lib/AU/Prog/Ent102L5bB.v / Ent102L5cB.v  (a Theorem Labs lane)
+     seg_L5d_B              lib/AU/Prog/Ent102L5dB.v                 (a Theorem Labs lane)
+     seg_L6f_B              lib/AU/Prog/Ent102L6Bf.v                 (a Theorem Labs lane)
+     seg_L6x_B              lib/AU/Prog/Ent102L6B.v                  (a Theorem Labs lane)
    The only premise of any segment is seg_L5b's per-request ceiling sat_rq_crt (generic in cp), discharged here at
    CfParams_preset by lib/A/Ent102ReqA.v sat_rq_crt_preset (a Theorem Labs lane's rq_crt_cf_bound); the granted callee texts
    the rows cite are derived from the batch kit's in lib/A/Prog/Ent102OfPost.v. So this theorem carries NO premise beyond its

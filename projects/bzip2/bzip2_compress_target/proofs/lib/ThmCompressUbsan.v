@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises valid_launch, entry_launch_ok_va and in_channel_reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -38,8 +39,10 @@ Section Contracts.
   (* [comment removed for export] *)
   Lemma s0_realizes04 :
     forall sp brk mbase (rnd : EntryDraw) (inp : ProcInput),
-      valid_sp sp -> valid_brk s0segs brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+      valid_sp sp -> valid_brk s0segs brk ->
+      valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+      in_channel_reader inp = true ->
       alloc_ceiling = (bv_unsigned sp - 8388608)%Z ->
       run_guard = bv_unsigned (canary_w rnd) -> run_secret = bv_unsigned (secret_word rnd) ->
       realizes s0segs

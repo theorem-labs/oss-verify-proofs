@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vDSO; the reserved-range ledger; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Bridge/HeapInst1.v, 29 lines within its lines 118-1023. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -35,7 +36,7 @@ Definition PAMAX : Z := 37233.
 Definition RESB : Z := 38084608.
 Definition CALLBX : Z := 3032216.
 Definition B0 : Z := 2^39 - RESB - CALLBX.
-Definition NSEG : Z := 4.
+Definition NSEG : Z := 6.
 Definition IMG_LO : Z := 0x10000.
 Definition IMG_HI : Z := 0xec000.
 Definition RESV : list (word * word) := segments_reserved rsegs.
@@ -137,7 +138,8 @@ Definition hi_heap0 (LB : list (Z * Z)) (cr : credit) (M : word -> option byte) 
     /\ Forall (fun p => bv_unsigned (snd p) <= NMAX) (vm_reserved VM ++ vm_maps VM)
     /\ (bm_on = true \/ 2 ^ 39 <= vm_limit VM)
     /\ vm_limit VM = lim
-    /\ Forall (fun b => fits lim (blk_size b)) LBb.
+    /\ Forall (fun b => fits lim (blk_size b)) LBb
+    /\ (exists kb, vdso_inc kb VM).
 Definition HI0 : heap_iface := {| hi_heap := hi_heap0 |}.
 
 Definition init_statics0 (M : word -> option byte) : Prop :=
@@ -225,7 +227,7 @@ End INST.
 
 Lemma HI0_wf : heap_blocks_wf L0 HI0.
 Proof.
-  intros LB cr M VM (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS).
+  intros LB cr M VM (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS & VDI).
   pose proof (hi0_nodup_addr s LBb M HR BLK) as ND. rewrite <- map_fst_blk_iv, <- ELB in ND.
   split; [| split; [apply NoDup_ListNoDup; exact ND| split; [exact Hfst| exact Hsnd]]].
   intros b Hb. pose proof Hb as Hb0. rewrite ELB in Hb. apply in_map_iff in Hb as (bb & <- & Hbb). cbn [fst snd blk_iv].
@@ -249,7 +251,7 @@ Qed.
 
 Lemma HI0_perm : heap_perm HI0.
 Proof.
-  intros LB LB' cr M VM (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS) Hiff Hnd'.
+  intros LB LB' cr M VM (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS & VDI) Hiff Hnd'.
   pose proof (hi0_nodup_addr s LBb M HR BLK) as ND. rewrite <- map_fst_blk_iv, <- ELB in ND.
   apply NoDup_ListNoDup in Hnd'.
   assert (HP : Permutation LB LB').
@@ -281,6 +283,7 @@ Proof.
   - exact LIMEQ.
   - apply List.Forall_forall. intros b Hb. apply (proj1 (List.Forall_forall _ _) FITS).
     eapply Permutation_in; [apply Permutation_sym; exact HPb| exact Hb].
+  - exact VDI.
 Qed.
 
 Section INST2.
@@ -385,7 +388,7 @@ End INST2.
 
 Lemma HI0_frame : heap_frame L0 HI0.
 Proof.
-  intros LB cr M M' VM (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS) Hpriv Hmono.
+  intros LB cr M M' VM (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS & VDI) Hpriv Hmono.
   pose proof AUX as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & CELL & BY1 & BY2 & Bc & Bav & Hav & Brnd & Hrnd & X3 & X4 & X5 & XHW & X6 & X11 & X12 & X23 & Xr).
   assert (WM : wmono rsegs M M') by (apply wmono_of_grows; exact Hmono).
   assert (AG : forall a, 0 <= a < 2^64 -> alloc_private L0 LB a -> M' (wa a) = M (wa a)).
@@ -425,6 +428,7 @@ Proof.
   - exact LIM.
   - exact LIMEQ.
   - exact FITS.
+  - exact VDI.
 Qed.
 
 Section INST3.
@@ -593,7 +597,7 @@ Proof.
   cbn [hi_heap HI0 hl_tp hl_free hl_segs L0] in *.
   rewrite <- (bv5_lit 10 ltac:(lia)) in R10. rewrite <- (bv5_lit 4 ltac:(lia)) in R4. rewrite <- (bv5_lit 1 ltac:(lia)) in RET, CONT.
   rewrite <- (bv5_lit 2 ltac:(lia)) in SOK, CONT.
-  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS).
+  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS & VDI).
   pose proof (hi0_nodup_addr s LBb M HR BLK) as NDa. pose proof (RHEAP_slots_nodup s LBb M HR) as NDs.
 
   rewrite ELB in HinLB. apply in_map_iff in HinLB as (bb & Ebb & Hbb).
@@ -622,7 +626,7 @@ Proof.
 
   assert (LIVEp : In (fst p) (ld_live L)).
   { eapply Permutation_in; [apply Permutation_sym; exact PL|]. apply in_map_iff. exists (p, A, n). split; [reflexivity| exact Hbb]. }
-  eapply (embed_freew rsegs SCFG RESV IMG_HI _ _ _ _ _ _ s _ _ model model (m_vmmaps model) 0 0 K
+  eapply (embed_freew rsegs SCFG HALLOC RESV IMG_HI _ _ _ _ _ _ s _ _ model model (m_vmmaps model) 0 0 K
             (cfree_contract_proof _ _ _ CR LIVEp) (mb_free (MBND RUNp) _ _ _ CR LIVEp) IMPL HKL).
   - symmetry. apply with_vmmaps_eta.
   - exact Hh. - exact Hl. - exact Hm.
@@ -696,6 +700,10 @@ Proof.
       * rewrite S5. exact LIM.
       * rewrite S5. exact LIMEQ.
       * apply List.Forall_forall. intros b Hb. apply (proj1 (List.Forall_forall _ _) FITS). apply SUB. exact Hb.
+      *
+        destruct VDI as [kb0 VDI]. exists kb0.
+        apply (vdso_inc_keep _ (m_vmmaps model)); [exact VDI | exact S1 | exact S6 |].
+        apply bv_eq. rewrite (k2_isp _ _ _ _ _ HK'), (k2_isp _ _ _ _ _ HKL). reflexivity.
 Qed.
 
 Lemma size_overflows_small : forall n, n <= NREQ -> size_overflows n = false.
@@ -723,7 +731,7 @@ Proof.
   rewrite <- (bv5_lit 10 ltac:(lia)) in R10, CONT. rewrite <- (bv5_lit 4 ltac:(lia)) in R4. rewrite <- (bv5_lit 1 ltac:(lia)) in RET, CONT.
   rewrite <- (bv5_lit 2 ltac:(lia)) in SOK, CONT.
   destruct HCR as [CRK CRB].
-  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS).
+  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS & VDI).
   pose proof (hi0_nodup_addr s LBb M HR BLK) as NDa. pose proof (RHEAP_slots_nodup s LBb M HR) as NDs.
 
   destruct (stack_ok_stk HCEIL M _ SOK) as (STK & LO & SPT & SPR). set (sp := bv_unsigned (getr R (Z_to_bv 5 2))) in *.
@@ -770,8 +778,9 @@ Proof.
     + unfold CAPBMAX. exact LIM.
     + exact (KL2_init_sp_window _ _ _ _ _ HKL).
     + exact LIMEQ.
+  - destruct VDI as [kb0 VDI]. unfold vdso_inc in *. rewrite (vdso_reserved_kb_indep (m_kernel model) kb0). exact VDI.
   -
-    intros [cs' rc] s' ms' mo' L' cst nev HQ HCP HPOST [HSOME HPOT] HK' Emo' HRI' E1 E2 E3. cbn [fst snd] in HSOME, HPOT, HPOST.
+    intros [cs' rc] s' ms' mo' L' cst nev HQ HCP HPOST [HSOME HPOT] HK' Emo' HRI' Hvd' E1 E2 E3. cbn [fst snd] in HSOME, HPOT, HPOST.
     destruct rc as [c|]; [| exfalso; apply HSOME; reflexivity]. clear HSOME.
     cbv beta iota in HQ. apply implM_mupd_inv, implM_ret_inv in HQ. destruct HQ as (ms2 & Hms2 & (ms1 & POST & EQV)).
     destruct POST as (t0' & t1' & t2' & a0' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m' & errv' & Ems1 &
@@ -847,6 +856,7 @@ Proof.
       * unfold CAPBMAX in Q5. exact Q5.
       * exact Q7.
       * subst LBb'. constructor; [exact FIT| exact FITS].
+      * exists (m_kernel model). exact Hvd'.
     + exact FIT.
   - exact HK0.
 Qed.
@@ -875,7 +885,7 @@ Proof.
   rewrite <- (bv5_lit 10 ltac:(lia)) in R10, CONT. rewrite <- (bv5_lit 11 ltac:(lia)) in R11. rewrite <- (bv5_lit 4 ltac:(lia)) in R4. rewrite <- (bv5_lit 1 ltac:(lia)) in RET, CONT.
   rewrite <- (bv5_lit 2 ltac:(lia)) in SOK, CONT.
   destruct HCR as [CRK CRB].
-  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS).
+  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS & VDI).
   pose proof (hi0_nodup_addr s LBb M HR BLK) as NDa. pose proof (RHEAP_slots_nodup s LBb M HR) as NDs.
 
   destruct (stack_ok_stk HCEIL M _ SOK) as (STK & LO & SPT & SPR). set (sp := bv_unsigned (getr R (Z_to_bv 5 2))) in *.
@@ -923,8 +933,9 @@ Proof.
     + unfold CAPBMAX. exact LIM.
     + exact (KL2_init_sp_window _ _ _ _ _ HKL).
     + exact LIMEQ.
+  - destruct VDI as [kb0 VDI]. unfold vdso_inc in *. rewrite (vdso_reserved_kb_indep (m_kernel model) kb0). exact VDI.
   -
-    intros [cs' rc] s' ms' mo' L' cst nev HQ HCP HPOST [HSOME HPOT] HK' Emo' HRI' E1 E2 E3. cbn [fst snd] in HSOME, HPOT, HPOST.
+    intros [cs' rc] s' ms' mo' L' cst nev HQ HCP HPOST [HSOME HPOT] HK' Emo' HRI' Hvd' E1 E2 E3. cbn [fst snd] in HSOME, HPOT, HPOST.
     destruct rc as [c|]; [| exfalso; apply HSOME; reflexivity]. clear HSOME.
     cbv beta iota in HQ. apply implM_mupd_inv, implM_ret_inv in HQ. destruct HQ as (ms2 & Hms2 & (ms1 & [POST _] & EQV)).
     destruct POST as (t0' & t1' & t2' & a0' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m' & errv' & Ems1 &
@@ -1000,6 +1011,7 @@ Proof.
       * unfold CAPBMAX in Q5. exact Q5.
       * exact Q7.
       * subst LBb'. constructor; [exact FIT| exact FITS].
+      * exists (m_kernel model). exact Hvd'.
     + exact FIT.
   - exact HK0.
 Qed.
@@ -1028,14 +1040,14 @@ Qed.
 Lemma HI0_fit : heap_fit HI0 lim.
 Proof.
   intros LB cr M VM A n HH Hin. cbn [hi_heap HI0] in HH.
-  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS).
+  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS & _).
   rewrite ELB in Hin. apply in_map_iff in Hin as (b & Eb & Hb). pose proof (proj1 (List.Forall_forall _ _) FITS b Hb) as F.
   unfold blk_iv in Eb. injection Eb as _ EN. rewrite <- EN. exact F.
 Qed.
 Lemma HI0_limit : heap_limit HI0 lim.
 Proof.
   intros LB cr M VM HH. cbn [hi_heap HI0] in HH.
-  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS).
+  destruct HH as (RUNp & s & L & LBb & HCEIL & ELB & HR & CR & PL & HKL & MI & AUX & REPL & BLK & RS & Hfst & Hsnd & HKc & HB & LIVE & LEN & FA & LIM & LIMEQ & FITS & _).
   exact LIMEQ.
 Qed.
 
@@ -1064,7 +1076,7 @@ Proof.
   intros M VM (NONE & NONEV & NL & PS & GOT & (canary & Hcan & GUARD)
                    & (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & secret & AUXC & AVL & RND & Bav & Hav & Brnd & Hrnd
                       & X3 & X4 & X5 & XHW & X6 & X11 & X12 & X23 & Xr & Xs) & MI)
-         (brk0 & mbase & isp & -> & VB & VMB & VSP & Hisp & Hlim0) Hlim.
+         (brk0 & mbase & isp & kb & -> & VB & VMB & VSP & Hisp & Hlim0) Hlim.
   cbn [hi_heap HI0 hl_K0 hl_B0 hl_segs hl_sptop L0] in *.
   destruct VB as (VB1 & VB2 & VB3). fold RESV in VB1, VB2 |- *. rewrite reserved_top_RESV in VB1, VB2.
   destruct VSP as (SP1 & SP2 & SP3). rewrite Hisp in SP1, SP2, SP3. unfold sp_window_lo in SP1. unfold sp_window_hi in SP2.
@@ -1088,10 +1100,18 @@ Proof.
     + split; [intros e []| constructor].
     + intros e [].
     + exact ER.
-    + reflexivity.
-    + intros e He. enough (ehi e <= IMG_HI) by lia.
-      rewrite RESV_eq in He. unfold ehi.
-      destruct He as [<-|[<-|[<-|[<-|[]]]]]; vm_compute; discriminate.
+    + unfold init_reserved. eexists. reflexivity.
+    + intros e He. unfold init_reserved in He. apply in_app_iff in He as [He|He].
+      * left. enough (ehi e <= IMG_HI) by lia.
+        rewrite RESV_eq in He. unfold ehi.
+        destruct He as [<-|[<-|[<-|[<-|[]]]]]; vm_compute; discriminate.
+      *
+        right. destruct VMB as (MB1 & _ & _). unfold mmap_base_min in MB1.
+        destruct (vdso_init_facts kb (Z.min (bv_unsigned mbase) (bv_unsigned isp - stack_max_size))
+                    ltac:(rewrite stack_max_size_val; pose proof (bv_unsigned_in_range 64 mbase) as Rm; unfold bv_modulus in Rm; lia))
+          as (_ & _ & V3).
+        pose proof (V3 e He) as V. unfold elo. rewrite stack_max_size_val in V.
+        unfold brk_aslr_max, IMG_HI, page_size, PGSZ in *. lia.
     + rewrite HCEIL. unfold brk_aslr_max, IMG_HI, page_size, PGSZ, CEIL_LO in *. splits; first [lia| exact VB3].
     + intros b l [].
     + intros b l k [].
@@ -1099,6 +1119,7 @@ Proof.
     + intros b l H. discriminate.
     + split; reflexivity.
     + rewrite HCEIL, Hisp. lia.
+    + intros e [].
   - exact MI.
   -
     exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. unfold RAUXV_CELL, auxv_list, wz. rewrite HCEIL.
@@ -1111,12 +1132,24 @@ Proof.
   - cbn [length Z.of_nat fst snd]. lia.
   - right. unfold charge. cbn [map zsum fold_right fst snd]. unfold B0, RESB, CALLBX. lia.
   - unfold ps_init; cbn [ps_m vm_maps live_bytes]. rewrite PHI0. lia.
-  - unfold ps_init; cbn [ps_m vm_reserved vm_maps]. rewrite PSI0, app_nil_r, RESV_eq. cbn [length]. unfold NSEG. lia.
-  - cbn [vm_reserved vm_maps]. rewrite app_nil_r, RESV_eq. unfold NMAX.
-    repeat (apply Forall_cons; [cbn [snd]; vm_compute; discriminate|]). apply Forall_nil.
+  - unfold ps_init; cbn [ps_m vm_reserved vm_maps]. rewrite PSI0, app_nil_r. unfold init_reserved. rewrite length_app, RESV_eq. cbn [length].
+    destruct (vdso_init_facts kb (Z.min (bv_unsigned mbase) (bv_unsigned isp - stack_max_size))
+                ltac:(rewrite stack_max_size_val; pose proof (bv_unsigned_in_range 64 mbase) as Rm; unfold bv_modulus in Rm; unfold mmap_base_min in VMB; lia))
+      as (V1 & _ & _).
+    unfold NSEG. lia.
+  - cbn [vm_reserved vm_maps]. rewrite app_nil_r. unfold init_reserved. apply Forall_app. split.
+    + rewrite RESV_eq. unfold NMAX.
+      repeat (apply Forall_cons; [cbn [snd]; vm_compute; discriminate|]). apply Forall_nil.
+    + destruct (vdso_init_facts kb (Z.min (bv_unsigned mbase) (bv_unsigned isp - stack_max_size))
+                  ltac:(rewrite stack_max_size_val; pose proof (bv_unsigned_in_range 64 mbase) as Rm; unfold bv_modulus in Rm; unfold mmap_base_min in VMB; lia))
+        as (_ & V2 & _).
+      revert V2. apply Forall_impl. intros p Hp. unfold NMAX. lia.
   - cbn [vm_limit]. exact Hlim.
   - reflexivity.
   - constructor.
+  -
+    exists kb. unfold vdso_inc, vdso_top, mmap_top, alloc_top. cbn [vm_reserved vm_mmap_base vm_init_sp].
+    rewrite page_round_down_Z_min_r. unfold init_reserved. apply incl_appr, incl_refl.
 Qed.
 
 End LAYOUT.

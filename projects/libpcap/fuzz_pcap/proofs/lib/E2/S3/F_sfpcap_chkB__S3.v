@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies the stack-floor premise of the context bundle and the hypothesis LO read usp0 R - 6144512 <= lo, the floor 6144512 bytes below the entry sp (rc_lo at this revision), where they read usp0 R - 8388608 <= lo; the steps that unfold rc_lo do so in every hypothesis. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -125,7 +126,7 @@ Section Chk.
       eapply evt_cut.
       { eapply (SNPRINTF _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ R ps2 CL FB lo EB 256%Z FMTA fs args e2);
           [| reflexivity | reflexivity | reflexivity | lia | exact FMT5 | exact FOK | exact (Nat.le_le_succ_r _ _ LA) | rewrite Hsp; replace (firstn (length args) [a3'; a4'; a5']) with (firstn (length args) [a3'; a4']) by (clear -LA; destruct args as [|? [|? [|? ?]]]; cbn in LA |- *; fastfirst (first [ noevar_assumption |reflexivity | lia])); exact FW | exact HEB2 | right; rewrite Hsp; lia].
-        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI2|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       cbv beta. intros ms' PO. destruct PO as (av & m6 & junk6 & E & MU6 & WM6 & MI6 & ST6 & -> & HEB6).
       unfold hpost_regs in E. destruct_exs E. subst ms'. rewrite Hsp in *. unname_sp.
@@ -139,7 +140,7 @@ Section Chk.
       apply KEEP in ERRc; [|lia|cbn [cells_size csize Nat.add]; lia]. apply KEEP in MG4; [|lia|rewrite cells_size_map_C1, GL; lia].
       assert (G6 : GIo K R ps2 CL FB m6).
       { eapply (GIo_client_frame K HFL SFL); [exact G2 | exact MU6 | exact WM6 |].
-        apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, STDIO_STACK; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]. }
+        apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, STDIO_STACK; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]. }
       assert (AG6 : agrees_on (fun a => client_keeps CL (bv_unsigned sp) a /\ ~ (EB <= a < EB + 256) /\ ~ (ERR <= a < ERR + 4))%Z m m6).
       { eapply agrees_on_trans; [exact AG2|]. eapply agrees_on_weaken; [exact AGS|]. intros a [[Ha|Ha] [Hn1 Hn2]]; cbn [outside]; [lia|].
         pose proof (CLB a Ha). unfold rc_lo in LO. lia. }
@@ -191,7 +192,7 @@ Section Chk.
         name_sp sp (-112)%Z.
         apply evt_done. eapply (implM_bind ssegs).
         { eapply OPEN_COMMON; [| reflexivity | reflexivity | reflexivity | left; reflexivity | exact HEB2 | | exact E8 ].
-          { split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo; lia|]. split; [unfold PCAP_L1B_STACK; rewrite Hsp; lia|].
+          { split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo in *; lia|]. split; [unfold PCAP_L1B_STACK; rewrite Hsp; lia|].
             split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
           right; rewrite Hsp; lia. }
         intros [msg|q] ps3 ms3 PO; cbv beta iota in PO.
@@ -368,7 +369,7 @@ Section Chk.
       eapply evt_cut.
       { eapply (SNPRINTF _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ R ps2 CL FB lo EB 256%Z FMTA fs args e2);
           [| reflexivity | reflexivity | reflexivity | lia | exact FMT5 | exact FOK | exact (Nat.le_le_succ_r _ _ LA) | rewrite Hsp; replace (firstn (length args) [a3'; a4'; a5']) with (firstn (length args) [a3'; a4']) by (clear -LA; destruct args as [|? [|? [|? ?]]]; cbn in LA |- *; fastfirst (first [ noevar_assumption |reflexivity | lia])); exact FW | exact HEB2 | right; rewrite Hsp; lia].
-        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI2|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       cbv beta. intros ms' PO. destruct PO as (av & m6 & junk6 & E & MU6 & WM6 & MI6 & ST6 & -> & HEB6).
       unfold hpost_regs in E. destruct_exs E. subst ms'. rewrite Hsp in *. unname_sp.
@@ -382,7 +383,7 @@ Section Chk.
       apply KEEP in ERRc; [|lia|cbn [cells_size csize Nat.add]; lia]. apply KEEP in MG4; [|lia|rewrite cells_size_map_C1, GL; lia].
       assert (G6 : GIo K R ps2 CL FB m6).
       { eapply (GIo_client_frame K HFL SFL); [exact G2 | exact MU6 | exact WM6 |].
-        apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, STDIO_STACK; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]. }
+        apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, STDIO_STACK; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]. }
       assert (AG6 : agrees_on (fun a => client_keeps CL (bv_unsigned sp) a /\ ~ (EB <= a < EB + 256) /\ ~ (ERR <= a < ERR + 4))%Z m m6).
       { eapply agrees_on_trans; [exact AG2|]. eapply agrees_on_weaken; [exact AGS|]. intros a [[Ha|Ha] [Hn1 Hn2]]; cbn [outside]; [lia|].
         pose proof (CLB a Ha). unfold rc_lo in LO. lia. }
@@ -434,7 +435,7 @@ Section Chk.
         name_sp sp (-96)%Z.
         apply evt_done. eapply (implM_bind usegs).
         { eapply OPEN_COMMON; [| reflexivity | reflexivity | reflexivity | left; reflexivity | exact HEB2 | | exact E8 ].
-          { split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo; lia|]. split; [unfold PCAP_L1B_STACK; rewrite Hsp; lia|].
+          { split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo in *; lia|]. split; [unfold PCAP_L1B_STACK; rewrite Hsp; lia|].
             split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
           right; rewrite Hsp; lia. }
         intros [msg|q] ps3 ms3 PO; cbv beta iota in PO.
@@ -565,7 +566,7 @@ Section Chk.
            (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 x6 x8 : word)
            (m m1 : mem) (R : rctx) (s : PState H hptr) (CL FB : list cblock) (lo MG FA EB ERR : Z) (f : hptr)
            (magic : list Z) (ej junk : list byte) (W mi : Z) (sw : bool),
-      GIo K R s CL FB m -> (usp0 R - 8388608 <= lo)%Z -> (lo + 81920 <= bv_unsigned sp)%Z -> (bv_unsigned sp <= rc_spmain R)%Z ->
+      GIo K R s CL FB m -> (usp0 R - 6144512 <= lo)%Z -> (lo + 81920 <= bv_unsigned sp)%Z -> (bv_unsigned sp <= rc_spmain R)%Z ->
       tp = rc_tp R -> (bv_unsigned sp mod 16 = 0)%Z ->
       In (f, FA, FILE_BLOCK) FB -> sites = sites_at (bv_unsigned sp + D_CHECK_HEADER) ->
       length magic = 4%nat -> Forall (fun z => 0 <= z < 256)%Z magic ->
@@ -594,7 +595,7 @@ Section Chk.
     (* [comment removed for export] *)
     assert (G1 : GIo K R s CL FB m1).
     { eapply (GIo_client_frame K HFL SFL); [exact G | exact MU | exact WM |].
-      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]. }
+      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]. }
     assert (AG1 : agrees_on (fun a => client_keeps CL (bv_unsigned sp) a /\ ~ (EB <= a < EB + 256) /\ ~ (ERR <= a < ERR + 4))%Z m m1).
     { eapply agrees_on_of_munch; [exact MU | exact WM |]. intros a _ [[Ha|Ha] [Hn1 Hn2]]; cbn [outside]; [lia|].
       destruct (GIo_CLc_facts K R s CL [] FB m a ltac:(rewrite app_nil_r; exact G) Ha) as [Hc _]. unfold rc_lo in *. lia. }
@@ -613,7 +614,7 @@ Section Chk.
     do 5 step.
     lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
       assert (G1' : GIo K R s CL FB mm)
-        by (eapply (GIo_client_frame K HFL SFL); [exact G1 | exact MU | exact WM |]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]);
+        by (eapply (GIo_client_frame K HFL SFL); [exact G1 | exact MU | exact WM |]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]);
       assert (AG1' : agrees_on (fun a => client_keeps CL (bv_unsigned sp) a /\ ~ (EB <= a < EB + 256) /\ ~ (ERR <= a < ERR + 4))%Z m mm)
         by (eapply agrees_on_trans; [exact AG1|]; eapply agrees_on_of_munch; [exact MU | exact WM |]; intros a _ [[Ha|Ha] [Hn1 Hn2]]; cbn [outside]; [lia|];
             destruct (GIo_CLc_facts K R s CL [] FB m a ltac:(rewrite app_nil_r; exact G) Ha) as [Hc _]; unfold rc_lo in *; lia)
@@ -624,7 +625,7 @@ Section Chk.
     apply evt_done. eapply (implM_bind ssegs).
     { apply implM_mget. cbn [eval_rdest fo_site fo_nop].
       replace (sites SitePcapHdrRest + 0)%Z with (bv_unsigned sp + -100)%Z by (rewrite SITES; unfold sites_at, D_CHECK_HEADER; lia).
-      eapply FREAD; [ split; [exact G1|]; split; [rewrite Hsp; exact ST|]; split; [unfold rc_lo; lia|]; split; [unfold STDIO_STACK; rewrite Hsp; lia|];
+      eapply FREAD; [ split; [exact G1|]; split; [rewrite Hsp; exact ST|]; split; [unfold rc_lo in *; lia|]; split; [unfold STDIO_STACK; rewrite Hsp; lia|];
                       split; [rewrite Hsp; lia|]; split; [assumption|]; split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]
                     | exact HinF | reflexivity | reflexivity | reflexivity | reflexivity | lia | exact FRD | right; rewrite Hsp; lia]. }
     intros got s' ms' PO. cbv beta in PO.
@@ -677,7 +678,7 @@ Section Chk.
         assert (MG' : rw_cells ssegs mm MG [CB 4 (map b8 [k0; k1; k2; k3])])
           by (eapply rw_cells_recell; [eapply agrees_rw_cells; [exact AGW | exact MG3 | intros a Ha; cbn [outside cells_size csize Nat.add] in *; lia] | cbn; repeat split; exact Logic.I | reflexivity]);
         assert (G' : GIo K R ps3 CL FB mm)
-          by (eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU3 | exact WM3 |]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil])
+          by (eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU3 | exact WM3 |]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil])
       end.
       apply evt_done. unfold check_header_post.
       lazymatch goal with |- context [MS _ _ _ _ _ ?mm _] => exists (Z_to_bv 64 0), mm, (Z_to_bv 64 1) end.
@@ -702,7 +703,7 @@ Section Chk.
       name_sp sp (-112)%Z.
       apply evt_done. eapply (implM_bind ssegs).
       { eapply FERROR; [| exact HinF | reflexivity].
-        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [|] ps3 ms3 PO; cbv beta in PO; destruct PO as (av3 & m3 & E & MI3' & ST3 & AG3 & G3 & -> & -> & ERRNO);
         unfold hpost_regs in E; destruct_exs E; subst ms3; rewrite Hsp in *; unname_sp;
@@ -728,7 +729,7 @@ Section Chk.
         { eapply (FMT _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ R s' CL FB lo EB 0x108d6%Z e "error reading dump file"%string [] ej);
             [| reflexivity | reflexivity | reflexivity | lia | reflexivity | exact MSG | reflexivity | cbn; lia | constructor | exact HEB1
              | right; rewrite Hsp; lia | exact E8 ].
-          split; [exact G3|]. split; [rewrite Hsp; exact ST3|]. split; [unfold rc_lo; lia|]. split; [unfold PCAP_L1_STACK; rewrite Hsp; lia|].
+          split; [exact G3|]. split; [rewrite Hsp; exact ST3|]. split; [unfold rc_lo in *; lia|]. split; [unfold PCAP_L1_STACK; rewrite Hsp; lia|].
           split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
         cbv beta. intros ms' PO. destruct PO as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & y14 & m4 & junk4 & -> & MI4 & ST4 & AG4 & G4 & HEB4).
         rewrite Hsp in *. unname_sp.
@@ -755,7 +756,7 @@ Section Chk.
         { eapply (SNPRINTF _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ R s' CL FB lo EB 256%Z 0x1050c%Z
                     "truncated dump file; tried to read %zu file header bytes, only got %zu"%string [AInt 24; AInt (Z.of_nat (length got))] ej);
             [| reflexivity | reflexivity | reflexivity | lia | exact MSG | vm_compute; reflexivity | cbn; lia | | exact HEB1 | right; rewrite Hsp; lia].
-          { split; [exact G3|]. split; [rewrite Hsp; exact ST3|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+          { split; [exact G3|]. split; [rewrite Hsp; exact ST3|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
             split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
           cbn [length firstn]. constructor; [reflexivity|]. constructor; [reflexivity| constructor]. }
         cbv beta. intros ms' PO. destruct PO as (av4 & m4 & junk4 & E & MU4 & WM4 & MI4 & ST4 & -> & HEB4).
@@ -772,7 +773,7 @@ Section Chk.
           by (eapply agrees_rw_cells; [exact AGS | exact MG4 | intros a Ha; rewrite cells_size_map_C1, GL in Ha; cbn [outside]; lia]).
         assert (G4 : GIo K R s' CL FB m4).
         { eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU4 | exact WM4 |].
-          apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, STDIO_STACK; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]. }
+          apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo, STDIO_STACK; lia|]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]. }
         change (Z.to_nat 256) with 256%nat in HEB4.
         replace (256 - length (Fmt.snprintf 256 "truncated dump file; tried to read %zu file header bytes, only got %zu" [AInt 24; AInt (Z.of_nat (length got))]) - 1)%nat
           with (255 - length (Fmt.snprintf 256 "truncated dump file; tried to read %zu file header bytes, only got %zu" [AInt 24; AInt (Z.of_nat (length got))]))%nat in HEB4 by lia.
@@ -821,7 +822,7 @@ Section Chk.
       apply KEEP in FRA; [|cbn [cells_size csize Nat.add]; lia]. apply KEEP in FRS; [|cbn [cells_size csize Nat.add]; lia].
       apply KEEP in ERRc; [|cbn [cells_size csize Nat.add]; lia]. apply KEEP in MG4; [|rewrite cells_size_map_C1, GL; lia]. apply KEEP in HEB1; [|cbn [cells_size csize Nat.add]; lia].
       assert (G4 : GIo K R s' CL FB m4).
-      { eapply (GIo_client_frame K HFL SFL); [exact G2 | exact MU4 | exact WM4 |]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]. }
+      { eapply (GIo_client_frame K HFL SFL); [exact G2 | exact MU4 | exact WM4 |]. apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]. }
       assert (ST4 : stk ssegs m4 lo (bv_unsigned sp + -112)).
       { eapply stk_transport_disjoint; [exact ST2 | exact MU4 | exact WM4 | cbn [disjoint_from]; unfold rc_lo in LO; lia]. }
       assert (AG04 : agrees_on (fun a => client_keeps CL (bv_unsigned sp) a /\ ~ (EB <= a < EB + 256) /\ ~ (ERR <= a < ERR + 4))%Z m m4).
@@ -912,7 +913,7 @@ Section Chk.
           by (eapply agrees_rw_cells; [exact AGW | exact HEB | intros a Ha; cbn [outside cells_size csize Nat.add] in *; unfold rc_lo in LO; lia]);
         assert (G' : GIo K R s CL FB mm)
           by (eapply (GIo_client_frame K HFL SFL); [exact G | exact MU | exact WM |];
-              apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia|]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil]);
+              apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia|]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil]);
         assert (MG' : rw_cells ssegs mm MG [CB 4 [Z_to_bv 8 m0; Z_to_bv 8 m1; Z_to_bv 8 m2; Z_to_bv 8 m3]])
           by (eapply rw_cells_recell; [exact MG4 | cbn; repeat split; exact Logic.I | reflexivity])
       end.
@@ -1081,7 +1082,7 @@ Section NpCtxB.
   Variables (self buffer f : hptr) (bufsize bufalloc : Z) (bufdata : list Z) (swapped : bool)
             (vmaj vmin snapshot linktype ltext prec brk : Z) (errbuf : list Z) (header : pkthdr)
             (hdrsize : Z) (lsw : lenswap_t) (scl : sf_scale_t) (j : pcap_junk) (pad bs : list byte).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -1206,7 +1207,7 @@ Section NpCtxB.
     { apply implM_mget. cbn [eval_rdest fo_site fo_nop].
       replace (sites SiteDiscardBuf + 0)%Z with (bv_unsigned sp + -4192)%Z by (rewrite SITES; unfold sites_at, D_NEXT_PACKET; lia).
       eapply FREAD; [| exact HinF | reflexivity | reflexivity | reflexivity | reflexivity | lia | exact F1 | ].
-      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       right. rewrite Hsp. lia. }
     intros got ps6 ms6 PO. cbv beta in PO.
@@ -1282,7 +1283,7 @@ Section NpCtxB.
       do 2 step.
       apply evt_done. apply (implM_bind_assoc ssegs). apply (implM_bind_assoc ssegs). name_sp sp (-4208)%Z. eapply (implM_bind ssegs).
       { eapply FERROR; [| exact HinF | reflexivity].
-        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI6|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros r ps7 ms7 PO. cbv beta in PO. destruct PO as (av7 & m7 & E & MI7 & ST7 & AG7 & G7 & -> & -> & ERRNO).
       unfold hpost_regs in E. all: natfold_lits. destruct_exs E. subst ms7. rewrite Hsp in *. unname_sp.
@@ -1374,7 +1375,7 @@ Section NpCtxB.
       rewrite (GIo_addr HO K HAL _ _ _ _ _ _ _ _ G5 ltac:(apply in_or_app; left; apply in_or_app; right; right; left; reflexivity)).
       rewrite Z.add_0_r.
       eapply FREAD; [| exact HinF | reflexivity | reflexivity | reflexivity | reflexivity | lia | exact BD | ].
-      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       left. intros a Ha. apply in_block_app. right. unfold in_block. apply Exists_cons_tl, Exists_cons_hd. cbn [cb_addr cb_size fst snd]. lia. }
     intros got ps6 ms6 PO. cbv beta in PO.
@@ -1435,7 +1436,7 @@ Section NpCtxB.
       do 2 step.
       apply evt_done. apply (implM_bind_assoc ssegs). name_sp sp (-4208)%Z. eapply (implM_bind ssegs).
       { eapply FERROR; [| exact HinF | reflexivity].
-        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI6|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros r ps7 ms7 PO. cbv beta in PO. destruct PO as (av7 & m7 & E & MI7 & ST7 & AG7 & G7 & -> & -> & ERRNO).
       unfold hpost_regs in E. all: natfold_lits. destruct_exs E. subst ms7. rewrite Hsp in *. unname_sp.
@@ -1528,7 +1529,7 @@ Section NpCtxB.
       { replace (CLc ++ [(self, P, 664%Z); (buffer, B, bufalloc)]) with ((CLc ++ [(self, P, 664%Z)]) ++ (buffer, B, bufalloc) :: []) in G5
           by (rewrite <- app_assoc; reflexivity).
         eapply REALLOC; [| reflexivity | reflexivity | lia | exact BUF].
-        split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
+        split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [bq'|] ps6 ms6 PO; cbv beta iota in PO.
       + destruct PO as (av & m6 & E & OFr & MI6 & ST6 & AG6 & (A' & junk6 & -> & G6 & NEW)).
@@ -1734,7 +1735,7 @@ Section NpCtxB.
   Variables (self buffer f : hptr) (bufsize bufalloc : Z) (bufdata : list Z) (swapped : bool)
             (vmaj vmin snapshot linktype ltext prec brk : Z) (errbuf : list Z) (header : pkthdr)
             (hdrsize : Z) (lsw : lenswap_t) (scl : sf_scale_t) (j : pcap_junk) (pad bs : list byte).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -1859,7 +1860,7 @@ Section NpCtxB.
     { apply implM_mget. cbn [eval_rdest fo_site fo_nop].
       replace (sites SiteDiscardBuf + 0)%Z with (bv_unsigned sp + -4192)%Z by (rewrite SITES; unfold sites_at, D_NEXT_PACKET; lia).
       eapply FREAD; [| exact HinF | reflexivity | reflexivity | reflexivity | reflexivity | lia | exact F1 | ].
-      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       right. rewrite Hsp. lia. }
     intros got ps6 ms6 PO. cbv beta in PO.
@@ -1935,7 +1936,7 @@ Section NpCtxB.
       do 2 step.
       apply evt_done. apply (implM_bind_assoc usegs). apply (implM_bind_assoc usegs). name_sp sp (-4208)%Z. eapply (implM_bind usegs).
       { eapply FERROR; [| exact HinF | reflexivity].
-        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI6|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros r ps7 ms7 PO. cbv beta in PO. destruct PO as (av7 & m7 & E & MI7 & ST7 & AG7 & G7 & -> & -> & ERRNO).
       unfold hpost_regs in E. all: natfold_lits. destruct_exs E. subst ms7. rewrite Hsp in *. unname_sp.
@@ -2031,7 +2032,7 @@ Section NpCtxB.
       rewrite (GIo_addr HO K HAL _ _ _ _ _ _ _ _ G5 ltac:(apply in_or_app; left; apply in_or_app; right; right; left; reflexivity)).
       rewrite Z.add_0_r.
       eapply FREAD; [| exact HinF | reflexivity | reflexivity | reflexivity | reflexivity | lia | exact BD | ].
-      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       left. intros a Ha. apply in_block_app. right. unfold in_block. apply Exists_cons_tl, Exists_cons_hd. cbn [cb_addr cb_size fst snd]. lia. }
     intros got ps6 ms6 PO. cbv beta in PO.
@@ -2092,7 +2093,7 @@ Section NpCtxB.
       do 2 step.
       apply evt_done. apply (implM_bind_assoc usegs). name_sp sp (-4208)%Z. eapply (implM_bind usegs).
       { eapply FERROR; [| exact HinF | reflexivity].
-        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI6|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros r ps7 ms7 PO. cbv beta in PO. destruct PO as (av7 & m7 & E & MI7 & ST7 & AG7 & G7 & -> & -> & ERRNO).
       unfold hpost_regs in E. all: natfold_lits. destruct_exs E. subst ms7. rewrite Hsp in *. unname_sp.
@@ -2188,7 +2189,7 @@ Section NpCtxB.
       { replace (CLc ++ [(self, P, 664%Z); (buffer, B, bufalloc)]) with ((CLc ++ [(self, P, 664%Z)]) ++ (buffer, B, bufalloc) :: []) in G5
           by (rewrite <- app_assoc; reflexivity).
         eapply REALLOC; [| reflexivity | reflexivity | lia | exact BUF].
-        split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
+        split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [bq'|] ps6 ms6 PO; cbv beta iota in PO.
       + destruct PO as (av & m6 & E & OFr & MI6 & ST6 & AG6 & (A' & junk6 & -> & G6 & NEW)).
@@ -2428,7 +2429,7 @@ Section NpCtxC.
   Variables (self buffer f : hptr) (bufsize bufalloc : Z) (bufdata : list Z) (swapped : bool)
             (vmaj vmin snapshot linktype ltext prec brk : Z) (errbuf : list Z) (header : pkthdr)
             (hdrsize : Z).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -2916,7 +2917,7 @@ Section NpCtxC.
   Variables (self buffer f : hptr) (bufsize bufalloc : Z) (bufdata : list Z) (swapped : bool)
             (vmaj vmin snapshot linktype ltext prec brk : Z) (errbuf : list Z) (header : pkthdr)
             (hdrsize : Z).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -3548,7 +3549,7 @@ Section NpCtxD.
   Variables (self buffer f : hptr) (bufsize bufalloc : Z) (bufdata : list Z) (swapped : bool)
             (vmaj vmin snapshot linktype ltext prec brk : Z) (errbuf : list Z) (header : pkthdr)
             (hdrsize : Z).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -3731,7 +3732,7 @@ Section NpCtxD.
     { apply implM_mget. cbn [eval_rdest fo_site fo_nop].
       replace (sites SiteSfHdr + 0)%Z with (bv_unsigned sp + -96)%Z by (rewrite SITES; unfold sites_at, D_NEXT_PACKET; lia).
       eapply FREAD; [| exact HinF | reflexivity | reflexivity | reflexivity | reflexivity | lia | exact F1 | ].
-      { split; [exact G0|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      { split; [exact G0|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [eassumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       right. rewrite Hsp. lia. }
     intros got ps2 ms2 PO. cbv beta in PO.
@@ -3773,7 +3774,7 @@ Section NpCtxD.
       hide FR.
       apply evt_done. name_sp sp (-4208)%Z. eapply (implM_bind ssegs).
       { eapply FERROR; [| exact HinF | reflexivity].
-        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI2|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros r ps3 ms3 PO. cbv beta in PO. destruct PO as (av3 & m3 & E & MI3 & ST3 & AG3 & G3 & -> & -> & ERRNO).
       unfold hpost_regs in E. all: natfold_lits. destruct_exs E. subst ms3. rewrite Hsp in *. unname_sp.
@@ -4000,7 +4001,7 @@ Section NpCtxD.
   Variables (self buffer f : hptr) (bufsize bufalloc : Z) (bufdata : list Z) (swapped : bool)
             (vmaj vmin snapshot linktype ltext prec brk : Z) (errbuf : list Z) (header : pkthdr)
             (hdrsize : Z).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -4191,7 +4192,7 @@ Section NpCtxD.
     { apply implM_mget. cbn [eval_rdest fo_site fo_nop].
       replace (sites SiteSfHdr + 0)%Z with (bv_unsigned sp + -96)%Z by (rewrite SITES; unfold sites_at, D_NEXT_PACKET; lia).
       eapply FREAD; [| exact HinF | reflexivity | reflexivity | reflexivity | reflexivity | lia | exact F1 | ].
-      { split; [exact G0|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      { split; [exact G0|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [eassumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       right. rewrite Hsp. lia. }
     intros got ps2 ms2 PO. cbv beta in PO.
@@ -4233,7 +4234,7 @@ Section NpCtxD.
       hide FR.
       apply evt_done. name_sp sp (-4208)%Z. eapply (implM_bind usegs).
       { eapply FERROR; [| exact HinF | reflexivity].
-        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G2|]. split; [rewrite Hsp; exact ST2|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI2|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros r ps3 ms3 PO. cbv beta in PO. destruct PO as (av3 & m3 & E & MI3 & ST3 & AG3 & G3 & -> & -> & ERRNO).
       unfold hpost_regs in E. all: natfold_lits. destruct_exs E. subst ms3. rewrite Hsp in *. unname_sp.

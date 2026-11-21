@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, walks lifted to the run's segments, the launch input's kernel build): changed fuzz_json_cursor_both_base_scfg, pm_cboth_half, pm_cboth_tgt and 1 more. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Pm10DrvLibL Pm10Heap
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import AsanAcct HeapIfaceA PmHeapIfaceA IcptIfaceA PmIcptIfaceA Pm9IcptLayout PmLibIfaceA AsanInitK Pm9DefsK
   Pm9ArtFsInv Pm9ArtIfaceInst Pm9ArtIfaceInstX Pm9DrvG Pm9DrvLibL Pm9DrvLibInit Pm9MainPhaseA Pm9InstA Pm9DrvMain Pm9DiagArms Pm9UsageEntry Pm9UsageArm.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require PropExec.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.Common.Cfg Require SRomStable.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -46,12 +48,25 @@ Abbreviation IMG_tgt :=
 Section FPX_1.
 #[local] Existing Instance PropExec.fx0.
 
+(* STATEMENT CHANGED, old beside new (tree-local; no Statements.v/Shapes.v closure names it):
+     OLD  .. valid_sp sp -> valid_brk .. -> valid_mmap_base mbase -> entry_stack_fits .. ->
+          valid_argv -> valid_envp -> valid_fs -> valid_creds -> valid_hwcap -> in_va_size inp = Sv48 -> ..
+     NEW  the same, plus the facts [Run.valid_input_abort] / [Run.valid_input] and
+          [Run.valid_entry_sv48] supply at LPS 75d69e00 and the asan lane's startup reads:
+          [valid_launch inp] (valid_input's 13th conjunct), [entry_launch_ok_va Sv48 ..]
+          (valid_entry's 5th), and the input's fixed flags channel_reader / sigpipe_terminal and
+          [in_kernel inp = recorded_kernel (in_kernel inp)], which make [inp] an [AsanInitK.inp]
+          instance at the input's own SIGPIPE disposition (left free by [Run.valid_input] at
+          LPS 727298f3, so no premise on [in_sigpipe_default]).  The conclusion is unchanged. *)
 Definition pm_cboth_tgt_stmt (scfg : SpuriousCfg) : Prop :=
   forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk AsanUbsan.M.loaded_segments brk -> valid_mmap_base mbase ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp -> valid_hwcap (in_hwcap inp) ->
     in_va_size inp = Sv48 ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
+    in_channel_reader inp = true -> in_sigpipe_terminal inp = false ->
+    in_kernel inp = recorded_kernel (in_kernel inp) ->
     srealizes AsanUbsan.M.loaded_segments scfg
       (init_config AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rdraw target_alloc_limit inp)
       (spec (in_argv inp) (in_fs inp)).
@@ -67,20 +82,35 @@ Section Hyps.
 
   Let ICPTX : icptx_stmt cfg0 art_ILX BUDGET0 := as0_icptx cfg0 art_ILX BUDGET0 art_ILX_ok.
 
+  (* Proof, old beside new: the input is destructured at its 20 fields (was 15) and shown to
+     be [AsanInitK.inp] at kernel build [kk] (the record stores [recorded_kernel kk], equal to
+     [kk] by the last premise); [Pm9MainPhaseA.as0_realizes_spec_run] is restated over that
+     input and [apc], so it is reached by [eapply .. with] instead of positionally.  Its USAGE
+     argument is [Pm9UsageArm.as0_usage_closed], a closed theorem. *)
   Theorem pm_cboth_tgt : pm_cboth_tgt_stmt cfg0.
   Proof.
-    intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hva Hve Hvfs Hcreds Hhw Hsv.
-    destruct inp as [argv envp ifs0 stdin0 uid gid groups net nofile sigmask hw abt va urnd tmp0].
-    unfold in_fs in *. cbn [in_argv in_envp in_image_fs in_tmp in_uid in_hwcap in_va_size] in *. subst va.
+    intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hva Hve Hvfs Hcreds Hhw Hsv Hvl Hlau Hcr Hst Hrk.
+    (* field order at 75d69e00 (State.v:7321-7559): .. in_kernel in_execfn in_channel_reader in_sigpipe_default in_sigpipe_terminal *)
+    destruct inp as [argv envp ifs0 stdin0 uid gid groups net nofile sigmask hw abt va urnd tmp0 kk execfn cr sd st].
+    unfold in_fs in *.
+    cbn [in_argv in_envp in_image_fs in_tmp in_uid in_hwcap in_va_size in_sigpipe_default in_channel_reader in_sigpipe_terminal in_kernel] in *.
+    subst va cr st.
     destruct Hcreds as [Hu _]. cbn [in_uid] in Hu.
-    exact (as0_realizes_spec_run cfg0 eq_refl eq_refl art_L art_C art_IL art_LX art_ILX LayA LStA BUDGET0 BUDGET0_lo BUDGET0_hi
-             (as0_inst_ok cfg0 BUDGET0 eq_refl) (as0_free_null cfg0 BUDGET0) (as0_h4e BUDGET0)
-             (as0_icpt_ok cfg0 art_IL art_ILX BUDGET0 art_IL_ok art_ILX_ok ICPTX) (as0_sfree_ok cfg0 BUDGET0 eq_refl) LIBA
-             (as0_dla_ok cfg0 art_IL art_IL_ok) (as0_drv_consts art_IL art_IL_ok)
-             (as0_drv_main_closed cfg0 art_L art_C art_IL LayA LStA DLLA DLCA BUDA)
-             (as0_usage cfg0 art_L art_C art_IL art_ILX BUDGET0 BUDGET0_lo BUDGET0_hi (as0_inst_ok cfg0 BUDGET0 eq_refl) (as0_free_null cfg0 BUDGET0) (as0_h4e BUDGET0)
-                (as0_icpt_ok cfg0 art_IL art_ILX BUDGET0 art_IL_ok art_ILX_ok ICPTX) (as0_dla_ok cfg0 art_IL art_IL_ok) (as0_drv_consts art_IL art_IL_ok) (dg_usage_ok cfg0 art_L art_C art_IL))
-             sp brk mbase rdraw argv envp (fs_seed_tmp ifs0 tmp0) stdin0 uid gid hw groups net nofile sigmask abt ifs0 urnd tmp0 Hsp Hbrk Hva Hve Hfit Hu Hhw Hvfs eq_refl).
+    assert (EI : mkProcInput_full argv envp ifs0 stdin0 uid gid groups net nofile sigmask hw abt Sv48 urnd tmp0 kk execfn true sd false
+                 = AsanInitK.inp argv envp ifs0 stdin0 uid gid hw groups net nofile sigmask abt urnd tmp0 kk execfn sd)
+      by (unfold AsanInitK.inp; rewrite <- Hrk; reflexivity).
+    rewrite EI in *.
+    eapply as0_realizes_spec_run with (L := art_L) (C := art_C) (IL := art_IL) (LX := art_LX) (ILX := art_ILX)
+                                      (Lay := LayA) (LSt := LStA) (BUDGET := BUDGET0) (fs := fs_seed_tmp ifs0 tmp0);
+      first [ reflexivity | exact BUDGET0_lo | exact BUDGET0_hi | eassumption
+            | exact (as0_inst_ok cfg0 BUDGET0 eq_refl) | exact (as0_free_null cfg0 BUDGET0) | exact (as0_h4e BUDGET0)
+            | exact (as0_icpt_ok cfg0 art_IL art_ILX BUDGET0 art_IL_ok art_ILX_ok ICPTX) | exact (as0_sfree_ok cfg0 BUDGET0 eq_refl) | exact LIBA
+            | exact (as0_dla_ok cfg0 art_IL art_IL_ok) | exact (as0_drv_consts art_IL art_IL_ok)
+            | exact (as0_drv_main_closed cfg0 art_L art_C art_IL LayA LStA DLLA DLCA BUDA)
+            | exact (as0_usage_closed cfg0 art_L art_C art_IL art_ILX BUDGET0 BUDGET0_lo BUDGET0_hi (as0_inst_ok cfg0 BUDGET0 eq_refl)
+                       (as0_free_null cfg0 BUDGET0) (as0_h4e BUDGET0) (as0_icpt_ok cfg0 art_IL art_ILX BUDGET0 art_IL_ok art_ILX_ok ICPTX)
+                       (as0_dla_ok cfg0 art_IL art_IL_ok) (as0_drv_consts art_IL art_IL_ok))
+            | (vm_compute; reflexivity) ].
   Qed.
 
   Theorem pm_cboth_half : forall en_t inp,
@@ -89,10 +119,21 @@ Section Hyps.
   Proof.
     intros [sp brk mb rnd] inp Hen Hvalid.
     pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _).
+    (* OLD destructs: [Hsp [Hbrk [Hmb Hfit]]] and (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _);
+       NEW: valid_entry's 5th conjunct (the launch) and valid_input_abort's 17 conjuncts at 75d69e00. *)
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    (* valid_input_abort BY SHAPE (PmFinalSan.via_*, Run.valid_input_abort_recorded_kernel),
+       was a 17-binder positional destruct. *)
     apply PmFinalSan.half_ok_of_srealizes.
-    - exact (pm_cboth_tgt sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds Hhw Hsv48).
+    - (* the run reads the binary's segments with the run's vDSO appended
+         ([Run.run_segments]); [SRomStable.srun_init] lifts the walk over the binary's own
+         segments ([vdso_image] of them is [None] by computation) *)
+      apply (SRomStable.srun_init cfg0 AsanUbsan.M.loaded_segments inp sp mb _ _ _ _ _ _ eq_refl).
+      exact (pm_cboth_tgt sp brk mb rnd inp Hsp Hbrk Hmb Hfit
+               (PmFinalSan.via_argv _ Hvalid) (PmFinalSan.via_envp _ Hvalid) (PmFinalSan.via_fs _ Hvalid)
+               (PmFinalSan.via_creds _ Hvalid) (PmFinalSan.via_hwcap _ Hvalid) Hsv48 (PmFinalSan.via_launch _ Hvalid) Hlau
+               (PmFinalSan.via_channel_reader _ Hvalid)
+               (PmFinalSan.via_sigpipe_terminal _ Hvalid) (valid_input_abort_recorded_kernel _ Hvalid)).
     - apply Safe_init_big. exact nbr_limit_target.
     - apply kill_free_spec.
   Qed.
@@ -124,10 +165,24 @@ Section Hyps.
     intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid.
     pose proof (valid_input_va_size _ Hvalid) as Hsv48.
     rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-    destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-    destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _).
-    specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
-    specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds Hhw Hsv48).
+    (* OLD: entries destructed to four conjuncts and valid_input to nine; SRC took the old
+       src_realizes_stmt2_lim arity (.. Hrfit Hargv Henvp Hfs Hcreds) -- PRE-EXISTING breakage
+       against the already-ported Pm10DrvMain, found while porting this file.  NEW at
+       75d69e00: the launch conjunct of each entry; valid_input read through the model's
+       BY-NAME accessors (Run.valid_input_argv .. valid_input_recorded_kernel), so the next
+       inserted conjunct does not break it; and src_realizes_stmt2_lim's new arity. *)
+    destruct Hens as [Hrsp [Hrbrk [Hrmb [Hrfit Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [Hafit Halau]]]].
+    pose proof (valid_input_argv _ Hvalid) as Hargv. pose proof (valid_input_envp _ Hvalid) as Henvp.
+    pose proof (valid_input_fs _ Hvalid) as Hfs. pose proof (valid_input_creds _ Hvalid) as Hcreds.
+    pose proof (valid_input_hwcap _ Hvalid) as Hhw. pose proof (valid_input_launch _ Hvalid) as Hvl.
+    pose proof (valid_input_channel_reader _ Hvalid) as Hcr.
+    pose proof (valid_input_sigpipe_terminal _ Hvalid) as Hst. pose proof (valid_input_recorded_kernel _ Hvalid) as Hrk.
+    specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hcr).
+    specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds Hhw Hsv48 Hvl Halau Hcr Hst Hrk).
+    (* both walks are over the binaries' own segments; the run reads them with the run's vDSO
+       appended, so [SRomStable.srun_init] lifts each ([vdso_image] [None] by computation) *)
+    apply (SRomStable.srun_init cfg0 Plain.M.loaded_segments inp rsp rmb _ _ _ _ _ _ eq_refl) in SRC.
+    apply (SRomStable.srun_init cfg0 AsanUbsan.M.loaded_segments inp asp amb _ _ _ _ _ _ eq_refl) in TGT.
     split; [| split].
     - eapply srealizes_error_free_big; [exact SRC | exact nbr_limit_source].
     - eapply srealizes_error_free_big; [exact TGT | exact nbr_limit_target].

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the generic part of proofs/cgif/cgif_file_fuzzer/lib/A/ACjr.v (equal, after the mapping, to the generic part of lib/YC4c.v) for libreac/fuzz_disco's program walk, over fuzz_disco's listing; mres_range states fuzz_disco.asan's image range as YImgTop's IMG_LO and IMG_TOP in place of cgif's literals; cgif's PC_INIT, lzw_MR, lzw_tabs and the kept_ctx/kept_ctx_m tactics of cgif's 72-byte LZW context block are left out; module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Prog/DiscoACjr.v, with its module paths changed; 136 of its 271 lines of code are new or changed and 109 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, program part: the after-call step kit of the program walks, the ONE copy (WalkS7b of h-rw-pre-5;
    every walk lane imports it). A PORT, not a re-authoring: the generic part of cgif's lib/A/AC8j.v
    (origin/ossv/recipes, proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v) restated over preset's journal YCbqG.v ajournal_x
@@ -336,8 +337,8 @@ eapply (region_kept_stack_ajx _ _ _ _ _);
 Ltac kept_intrin Hfr Hpres2 AG Usp :=
 eapply region_kept_aview; [cbn [ew ewset Nat.eqb]; rewrite ?(AG 2%nat) by lia; exact Usp | intros a Ha; apply Hfr; unfold ESTACK; lia | exact Hpres2].
 
-(* AC8j :249-256 reshok_bx / reshok are NOT ported: their shok_auto lived in Reusable/YC81.v, which the kit removed at
-   2d523216ac5 (the cgif GIF-encoder listing island), and no walk used the port (reshok_sv, removed here). A walk
+(* AC8j :249-256 reshok_bx / reshok are NOT ported: their shok_auto lived in Reusable/YC81.v, which the kit removed
+    (the cgif GIF-encoder listing island), and no walk used the port (reshok_sv, removed here). A walk
    re-seats its shadow tokens with its own sh_ok lemma. *)
 
 (* AC8j :257-273 *)

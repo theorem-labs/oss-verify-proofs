@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK1j.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput and its premises; the top-anchored stack strings). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -57,18 +58,25 @@ rewrite code_read_none_no_ro_exec by exact Hro. reflexivity.
 Qed.
 Definition mem_clear (m : word -> option byte) (lo hi : Z) : Prop :=
 forall a : word, (lo <= bv_unsigned a < hi)%Z -> m a = None.
-Lemma mem_clear_wrap : forall ph (sp : word) argv envp lo hi uid hw rnd,
+Lemma mem_clear_wrap :
+forall v inp mbase ph entry (sp brk : word) draw lo hi,
+entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
 (hi <= bv_unsigned sp - stack_max_size)%Z ->
-mem_clear (wrap_mem ph sp argv envp uid hw rnd) lo hi.
+mem_clear (wrap_mem inp mbase ph entry sp draw) lo hi.
 Proof.
-intros ph sp argv envp lo hi uid hw rnd Hhi a Ha.
+intros v inp mbase ph entry sp brk draw lo hi Hlaunch Hhi a Ha.
+pose proof (launch_sp_le_ed_top v inp mbase sp brk draw Hlaunch) as Htop.
 unfold wrap_mem, stack_to_mem.
 unfold stack_max_size in Hhi.
 assert (Hblo : Z.leb (bv_unsigned sp) (bv_unsigned a) = false)
 by (apply Z.leb_gt; lia).
 rewrite Hblo.
-assert (Hwlo : Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned a) = false)
-by (apply Z.leb_gt; unfold stack_max_size; lia).
+assert (Hwlo : Z.leb (stack_window_lo (in_kernel inp) mbase draw)
+(bv_unsigned a) = false).
+{ apply Z.leb_gt. unfold stack_window_lo.
+pose proof (Z.le_max_l (bv_unsigned (ed_top draw) - stack_max_size)
+(bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))).
+unfold stack_max_size in *. lia. }
 rewrite Hwlo. reflexivity.
 Qed.
 Lemma mem_clear_wbytes : forall m (addr : word) bs lo hi,

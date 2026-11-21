@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the step relation's new vDSO arms; the vvar read arm). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
@@ -139,7 +140,8 @@ Proof.
   induction 1 as [c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|n a k1 k2 Hk IH|n a v k1 k2 Hk IH]; intros m; cbn [interp_eff_accesses res_eqv];
     try exact I.
   - cbn [res_eqv accessed_ranges access_value fst snd]. split; [reflexivity|]. split; [reflexivity|exact H].
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+    [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (IH (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k1 _) m) as [r1| |], (interp_eff_accesses segs (k2 _) m) as [r2| |];
       cbn in IH |- *; try contradiction; try exact I.
@@ -244,12 +246,69 @@ Definition st_eqv (s1 s2 : step_to) : Prop :=
   | _, _ => False
   end.
 
+Lemma set_reg_eqv : forall ms1 ms2 r v, ms_eqv ms1 ms2 -> ms_eqv (set_reg ms1 r v) (set_reg ms2 r v).
+Proof.
+  intros ms1 ms2 r v H. unfold set_reg. destruct (bv_eqb r 0); [exact H|].
+  destruct H as (HR & Hf & Hp & Hs & Hrv & Hfc & Hm & Hrom). cbn.
+  repeat split; auto. apply regs_eqv_set, HR.
+Qed.
+
+Lemma vdso_write_regs_eqv : forall rs vs ms1 ms2, ms_eqv ms1 ms2 ->
+  ms_eqv (vdso_write_regs ms1 rs vs) (vdso_write_regs ms2 rs vs).
+Proof.
+  induction rs as [|r rs IH]; intros [|v vs] ms1 ms2 H; cbn; try exact H.
+  apply IH, set_reg_eqv, H.
+Qed.
+
+Lemma vdso_tail_eqv : forall ms1 ms2 m eff ra, ms_eqv ms1 ms2 ->
+  ms_eqv (vdso_set_pc (apply_effect (vdso_with_mem ms1 m) eff) ra)
+         (vdso_set_pc (apply_effect (vdso_with_mem ms2 m) eff) ra).
+Proof.
+  intros ms1 ms2 m eff ra H. destruct H as (HR & Hf & Hp & Hs & Hrv & Hfc & Hm & Hrom).
+  unfold vdso_set_pc, apply_effect, vdso_with_mem, set_reg. cbn.
+  destruct (bv_eqb 10 0); cbn; rewrite ?Hf, ?Hrv, ?Hfc, ?Hrom; repeat split; auto.
+  apply regs_eqv_set, HR.
+Qed.
+
+Lemma vdso_post_eqv : forall ms1 ms2 model f eff, ms_eqv ms1 ms2 ->
+  ms_eqv (vdso_post segs ms1 model f eff) (vdso_post segs ms2 model f eff).
+Proof.
+  intros ms1 ms2 model f eff H. pose proof H as H0. destruct H as (HR & Hf & Hp & Hs & Hrv & Hfc & Hm & Hrom).
+  assert (Esp : ms_sp ms1 = ms_sp ms2).
+  { unfold ms_sp. apply HR. intros Hc. apply (f_equal (@bv_unsigned 5)) in Hc. vm_compute in Hc. discriminate Hc. }
+  assert (Erg : vdso_read_regs ms1 = vdso_read_regs ms2).
+  { unfold vdso_read_regs. apply map_ext. intros r. apply ms_reg_eqv, H0. }
+  assert (Erb : ms_read_byte ms1 = ms_read_byte ms2).
+  { unfold ms_read_byte. rewrite Hm, Hrom. reflexivity. }
+  unfold vdso_post. cbv zeta. rewrite (ms_reg_eqv ms1 ms2 1 H0), Esp, Erg, Erb.
+  match goal with
+  | |- ms_eqv (vdso_set_pc (apply_effect (vdso_with_mem (vdso_write_regs ms1 ?rs ?vs) _) _) _) _ =>
+      pose proof (vdso_write_regs_eqv rs vs ms1 ms2 H0) as Hw
+  end.
+  pose proof Hw as Hw0. destruct Hw as (_ & _ & _ & _ & _ & _ & Hwm & _).
+  rewrite Hwm. apply vdso_tail_eqv, Hw0.
+Qed.
+
+Lemma vdso_call_unmodeled_eqv : forall ms1 ms2 model fn, ms_eqv ms1 ms2 ->
+  vdso_call_unmodeled segs ms2 model fn -> vdso_call_unmodeled segs ms1 model fn.
+Proof.
+  intros ms1 ms2 model fn H Hun. unfold vdso_call_unmodeled in *.
+  destruct Hun as [Hun | [(k & Hk & Hsp) | (k & e & m' & ev & Hk & Hsp & Hor)]].
+  - left; exact Hun.
+  - right; left. exists k. rewrite (sys_input_eqv ms1 ms2 _ H). exact (conj Hk Hsp).
+  - right; right. exists k, e, m', ev. rewrite (sys_input_eqv ms1 ms2 _ H). exact (conj Hk (conj Hsp Hor)).
+Qed.
+
 Lemma sstep_eqv : forall c1 c2 evs st2, cfg_eqv c1 c2 -> sstep segs c2 evs st2 ->
   exists st1, sstep segs c1 evs st1 /\ st_eqv st1 st2.
 Proof.
   intros [ms1 model1] c2 evs st2 [Hms Hmo] H. cbn [cfg_ms cfg_model] in *. subst model1.
   pose proof Hms as Hms0. destruct Hms as (HR & Hf & Hp & Hs & Hrv & Hfc & Hm & Hrom).
-  inversion H as [ms model ms' model' Hh Hsvc Hacc | ms model Hh Hsvc Hacc | ms model Hh Hsvc Hacc
+  assert (Epc : ms_pc ms1 = ms_pc c2.(cfg_ms)) by (unfold ms_pc; exact Hp).
+  inversion H as [ms model ms' model' Hh Hsvc Hacc | ms model Hh Hsvc Hacc | ms model Hh Hsvc Hacc Hfn0
+                 | ms model fn n eff model' model'' evs' Hh Hsvc Hacc Hfn Hno Hspec Hret Hh' Hmat
+                 | ms model fn n eff model' evs' Hh Hsvc Hacc Hfn Hno Hspec Hret Hh' Hmat
+                 | ms model fn Hh Hsvc Hacc Hfn Hun
                  | ms model x8 eff model' model'' evs' Hh Hsvc Hspec Hh' Hmat
                  | ms model x8 eff model' evs' Hh Hsvc Hspec Hh' Hmat
                  | ms model x8 eff model' evs' code Hh Hsvc Hspec Hh' Hk
@@ -264,7 +323,26 @@ Proof.
     exists SError. split; [apply sstep_instr_fault; auto; rewrite Hs; exact Hsvc| exact I].
   - pose proof (mi_account_step_eqv ms1 ms model Hms0) as HA. rewrite Hacc in HA.
     destruct (mi_account_step segs ms1 model) as [[a1 m1]| |] eqn:E1; try contradiction.
-    exists SError. split; [apply sstep_instr_unmodeled; auto; rewrite Hs; exact Hsvc| exact I].
+    exists SError. split; [|exact I].
+    apply sstep_instr_unmodeled; [exact Hh | rewrite Hs; exact Hsvc | exact E1 | rewrite Epc; exact Hfn0].
+  - pose proof (mi_account_step_eqv ms1 ms model Hms0) as HA. rewrite Hacc in HA.
+    destruct (mi_account_step segs ms1 model) as [[a1 m1]| |] eqn:E1; try contradiction.
+    exists (SNext (mkCfg (vdso_post segs ms1 model (vdso_frame segs) eff) (with_vdso_bump model''))). split.
+    + eapply sstep_vdso_call with (fn := fn) (n := n) (model' := model').
+      all: first [ eassumption | rewrite Hs; exact Hsvc | rewrite Epc; exact Hfn
+                 | rewrite (sys_input_eqv ms1 ms _ Hms0); exact Hspec ].
+    + cbn. split; [apply vdso_post_eqv, Hms0 | reflexivity].
+  - pose proof (mi_account_step_eqv ms1 ms model Hms0) as HA. rewrite Hacc in HA.
+    destruct (mi_account_step segs ms1 model) as [[a1 m1]| |] eqn:E1; try contradiction.
+    exists SError. split; [|exact I].
+    eapply sstep_vdso_materialization_fault with (fn := fn) (n := n) (eff := eff) (model' := model') (evs := evs').
+    all: first [ eassumption | rewrite Hs; exact Hsvc | rewrite Epc; exact Hfn
+               | rewrite (sys_input_eqv ms1 ms _ Hms0); exact Hspec ].
+  - pose proof (mi_account_step_eqv ms1 ms model Hms0) as HA. rewrite Hacc in HA.
+    destruct (mi_account_step segs ms1 model) as [[a1 m1]| |] eqn:E1; try contradiction.
+    exists SError. split; [|exact I].
+    apply sstep_vdso_unmodeled with (fn := fn);
+      [exact Hh | rewrite Hs; exact Hsvc | exact E1 | rewrite Epc; exact Hfn | exact (vdso_call_unmodeled_eqv ms1 ms model fn Hms0 Hun)].
   - exists (SNext (mkCfg (advance_past_svc (apply_effect ms1 eff)) model'')). split.
     + eapply sstep_syscall; eauto; [rewrite Hs; exact Hsvc | rewrite (sys_input_eqv ms1 ms x8 Hms0); exact Hspec].
     + cbn. split; [apply apply_effect_eqv, Hms0 | reflexivity].

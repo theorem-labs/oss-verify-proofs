@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/FMgxaSeamReadyX.v, with its module paths and addresses changed; 556 of its 1022 lines of code are new or changed and 292 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v (a working branch 3242941dc96); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 8 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables-3242941dc96/reply-B/FMgxaSeamReady.table); by hand (numerals.py BY_HAND, reason in the table): 0x20d00 -> 0x20eb0; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v, AF0m->YF0m, AF0x->YF0x. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 8 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamReady.table); by hand (numerals.py BY_HAND, reason in the table): 0x20d00 -> 0x20eb0; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v, AF0m->YF0m, AF0x->YF0x. *)
 (* READINESS OF THE THREE INTERCEPTORS FROM LOCAL SHADOW FACTS, for the GXA seam at musl vfprintf
    (FMgxaSeam.v READY, :317-328).
 
-   The interceptors' range check chk_ok (lib/A/Bz/A/I_qck.v:31) reads, for a range [p, p + n):
+   The interceptors' range check chk_ok (lib/A/Bz/A/I_qck.v:32) reads, for a range [p, p + n):
    - the shadow byte of each byte (acc), which GXA's pf_rng gives (AsanFacts.v:64-68 addr_byte);
    - for 1 <= n <= 64, the two 8-byte ALIGNED shadow words at al8 (shad p) and al8 (shad (p + n - 1))
      (qc_words), which pf_rng does not give: those words also hold the shadow bytes of the bytes
@@ -57,10 +58,10 @@
       - seam_ready_holds: READY at fm's three predicates, for every R that carves out the
         destination and the stack window and whose hulls the harness sees.
 
-   THE DOCUMENTED CONTROL AGAINST THE OLD set_ready.  Before 3899f140f93, FMgxa_mem.set_ready asked
-   sp < 2 ^ 63 at every n (FMgxa_mem.v:219-224 at 8c70fb561b7).  Against that set_ready this file
-   proved the two lemmas below (proofs at e36171fe839, lib/A/FMgxaSeamReady.v:419-440; SG is
-   lib/A/FMgxaSeamGuard.v); cbe21760a93 removed them:
+   THE DOCUMENTED CONTROL AGAINST THE OLD set_ready.  Before, FMgxa_mem.set_ready asked
+   sp < 2 ^ 63 at every n (FMgxa_mem.v:219-224).  Against that set_ready this file
+   proved the two lemmas below (proofs at lib/A/FMgxaSeamReady.v:420-441; SG is
+   lib/A/FMgxaSeamGuard.v); removed them:
 
      Lemma seam_calls_ready_false : forall (m : word -> option byte) (q lo Fp CK D : Z) (dn : nat),
        ~ SG.seam_calls_ready FMM.copy_ready FMM.set_ready RSN.strn_ready m q lo Fp CK D dn.
@@ -457,7 +458,7 @@ End N.
 (* ===================================================================================== *)
 
 (* ---- the runtime's fixed cells as the interceptors read them.  bz_mrd_mbyte .. cells_cons8 are
-   cold/port-fm-walkvsn 3b35fff5df2 lib/A/FMrt_pre.v:77-233 (that file is not on this branch), proofs
+   lib/A/FMrt_pre.v:77-233 (that file is not on this branch), proofs
    unchanged up to module names and FMupoison.wz for its u64z ---- *)
 Lemma bz_mrd_mbyte : forall (m : word -> option byte) a, BzM.mrd BzI.asegs m (BzM.wa a) = mbyte tfibsegs m a.
 Proof. intros m a. reflexivity. Qed.

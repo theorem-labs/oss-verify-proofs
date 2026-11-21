@@ -3,7 +3,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1o.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (31 numerals; per-numeral report). *)
-(* Modified by Theorem Labs, 2026-10: bss_zero_shadow states the Tfib_zero_shadow range at the end of the image, (0x5d90e0, 0x5fc000 - 0x5d90e0) (B/YF0m.v), and bss_shadow_facts takes p >= 0x5d9100 (the first 64-byte-aligned address in it, as the donor's 0xa2fa0 for its 0xa2f60); the donor's range from the end of asan_globals to the image end is false on fuzz_reply.asan-ubsan (poisoned global redzones from 0x5d8cc8). Its one user, STDOUT_BUFA 0x5fa100, is in the range. As lib/A/AD1o.v (RelocA cbfc350e749). *)
+(* Modified by Theorem Labs, 2026-10: bss_zero_shadow states the Tfib_zero_shadow range at the end of the image, (0x5d90e0, 0x5fc000 - 0x5d90e0) (B/YF0m.v), and bss_shadow_facts takes p >= 0x5d9100 (the first 64-byte-aligned address in it, as the donor's 0xa2fa0 for its 0xa2f60); the donor's range from the end of asan_globals to the image end is false on fuzz_reply.asan-ubsan (poisoned global redzones from 0x5d8cc8). Its one user, STDOUT_BUFA 0x5fa100, is in the range. As lib/A/AD1o.v (RelocA). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -114,8 +115,15 @@ replace s with (shadow_of_addr SHADOW_OFF 0x5d90e0 + (s - shadow_of_addr SHADOW_
 rewrite (HZ (s - shadow_of_addr SHADOW_OFF 0x5d90e0)); [discriminate|].
 unfold shadow_of_addr, SHADOW_OFF in *. change (6131936 / 8) with 766492. change ((6275072 - 6131936) / 8) with 17892. lia.
 Qed.
-Lemma fdchan_stdout : forall md, (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> fdchan (Z_to_bv 64 1) ch_stdout md.
-Proof. intros md Hf. unfold fdchan. rewrite (Hf (Z_to_bv 64 1)). split; [vm_compute; reflexivity | reflexivity]. Qed.
+(* [fdchan] has three conjuncts at LPS 727298f3: the descriptor, the channel's [w_is0]
+   gate and the model's channel reader.  The fds premise cannot give the third, so the
+   lemma takes it; the driver discharges it from the hand-off ([cs_ok]'s [co_rdr]). *)
+Lemma fdchan_stdout : forall md, (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) ->
+m_channel_reader md = true -> fdchan (Z_to_bv 64 1) ch_stdout md.
+Proof.
+intros md Hf Hcr. unfold fdchan. rewrite (Hf (Z_to_bv 64 1)).
+split; [vm_compute; reflexivity | split; [reflexivity | exact Hcr]].
+Qed.
 Lemma printf_pre_facts : forall ly S Hp_cf W regs mem md, printf_pre B ly S Hp_cf W regs mem md ->
 ecall_pre_cf tfibsegs B ly S Hp_cf W regs mem md /\
 sp_window_lo - 2400 <= spZ regs /\ spZ regs + 32 <= 2 ^ 47 /\ ly_stk_lo ly + VPI_STK <= spZ regs /\ spZ regs mod 16 = 0 /\ YK0s.ret_ok (getr regs 1) /\
@@ -199,11 +207,12 @@ xst k' (w_H W) mem2 ->
 AI tfibsegs (w_H W) (w_A W) md2 ->
 srealizes tfibsegs (cfg_at tfibsegs (raZ regs1) regs2 mem2 md2) T) ->
 srealizes tfibsegs (cfg_at tfibsegs A_vfprintf regs1 mem1 md1) TT),
-printf_pre B ly S Hp_cf W regs mem md -> (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> AI tfibsegs (w_H W) (w_A W) md ->
+printf_pre B ly S Hp_cf W regs mem md -> (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) ->
+m_channel_reader md = true -> AI tfibsegs (w_H W) (w_A W) md ->
 printf_post B xst ly S Hp_cf W regs mem md k' T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_vprintf regs mem md) TT.
 Proof.
-intros ly S Hp_cf W regs mem md T k' TT REAL HPRE Hfds HAI HPOST.
+intros ly S Hp_cf W regs mem md T k' TT REAL HPRE Hfds Hcr HAI HPOST.
 pose proof (printf_pre_facts ly S _ W regs mem md HPRE) as (HEPRE & Hsp44 & Hsphi & Hstk & Hal & Hret & Hra & Hpres & HRO & G10 & G11 & Harg).
 pose proof (proj1 HEPRE) as HAR. pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). unfold sp_window_lo in Hsp44.
 assert (HPF : PF_STK = 9216) by reflexivity. assert (HVP : VPI_STK = 9200) by reflexivity. assert (HVF : VF_STK = 9104) by reflexivity.
@@ -230,7 +239,7 @@ intros x Hx. apply MEQ1. unfold IMG_RO_LO, IMG_RO_HI, VP_WIN in *. lia.
 - exact (proj2 (bss_shadow_facts ly S _ W mem1 md1 STDOUT_BUFA STDOUT_BSZ HAR1 ltac:(lia) ltac:(lia) ltac:(lia))).
 - exact (proj1 (rodata_shadow_facts B HB LAWS ly S _ W mem1 md1 FMT_d 4 HAR1 ltac:(unfold FMT_d; lia) ltac:(unfold FMT_d; lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts B HB LAWS ly S _ W mem1 md1 FMT_d 4 HAR1 ltac:(unfold FMT_d; lia) ltac:(unfold FMT_d; lia) ltac:(lia))).
-- eapply fdchan_sbm; [exact (fdchan_stdout md Hfds) | exact MF1].
+- eapply fdchan_sbm; [exact (fdchan_stdout md Hfds Hcr) | exact MF1].
 - exact HAI1.
 - exact AV1.
 -
@@ -259,11 +268,11 @@ apply (same_but_materialized_frame md2 _ Hsbm3).
 Qed.
 Theorem tfib_printf_first : printf_first_tfa B xst.
 Proof.
-intros ly S Hp_cf W regs mem md T HPRE Himg Hfds HAI HPOST.
+intros ly S Hp_cf W regs mem md T HPRE Himg Hfds Hcr HAI HPOST.
 assert (HFO : F_STDOUT = 0xa2698) by reflexivity. assert (HFS : FILE_SZ = 232) by reflexivity.
 assert (HBA : STDOUT_BUFA = 0x5fa100) by reflexivity. assert (HBS : STDOUT_BSZ = 1024) by reflexivity. assert (HVW : VP_WIN = 2432) by reflexivity.
 assert (LN : line0 = map (Z_to_bv 8) [48; 10]) by (vm_compute; reflexivity). rewrite LN.
-refine (printf_site ly S _ W regs mem md T 1%nat _ _ HPRE Hfds HAI HPOST).
+refine (printf_site ly S _ W regs mem md T 1%nat _ _ HPRE Hfds Hcr HAI HPOST).
 intros regs1 mem1 md1 HPRE1 R1sp Q10 Q11 Q12 Hband Harg Hown Hgot Hro Hra_b Hhull_b Hra_f Hhull_f Hch HAI1 AV1 HK.
 pose proof (printf_pre_facts ly S _ W regs mem md HPRE) as (_ & Hsp44 & Hsphi & Hstk & Hal & _).
 destruct (canary_readable (w_H W) mem1) as (cval & Hcan & Hcv).
@@ -295,10 +304,10 @@ replace (STDOUT_BUFA + 2 * (Z.of_nat 1 - 1)) with STDOUT_BUFA by lia. exact HMID
 Qed.
 Theorem tfib_printf_next : printf_next_tfa B xst.
 Proof.
-intros ly S Hp_cf W regs mem md T k HPRE (Hk1 & Hkb & HMID & HPEND) Hk Hfds HAI HPOST.
+intros ly S Hp_cf W regs mem md T k HPRE (Hk1 & Hkb & HMID & HPEND) Hk Hfds Hcr HAI HPOST.
 assert (HFO : F_STDOUT = 0xa2698) by reflexivity. assert (HFS : FILE_SZ = 232) by reflexivity.
 assert (HBA : STDOUT_BUFA = 0x5fa100) by reflexivity. assert (HBS : STDOUT_BSZ = 1024) by reflexivity. assert (HVW : VP_WIN = 2432) by reflexivity.
-refine (printf_site ly S _ W regs mem md T (Datatypes.S k) T _ HPRE Hfds HAI HPOST).
+refine (printf_site ly S _ W regs mem md T (Datatypes.S k) T _ HPRE Hfds Hcr HAI HPOST).
 intros regs1 mem1 md1 HPRE1 R1sp Q10 Q11 Q12 Hband Harg Hown Hgot Hro Hra_b Hhull_b Hra_f Hhull_f Hch HAI1 AV1 HK.
 pose proof (printf_pre_facts ly S _ W regs mem md HPRE) as (_ & Hsp44 & Hsphi & Hstk & Hal & _).
 destruct (canary_readable (w_H W) mem1) as (cval & Hcan & Hcv).

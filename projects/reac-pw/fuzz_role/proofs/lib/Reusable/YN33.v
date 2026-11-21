@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN33.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's ENOMEM answer filtered under ACFG; munmap in the allocation-budget system calls). *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -21,8 +22,10 @@ Definition src0_API : AllocAPI src0_msyms :=
 {| aa_MR := MRx src0_msyms;
 aa_laws := MRx_laws src0_msyms;
 aa_init := fun mem md sec H Hs => MRx_init src0_msyms mem md sec src0_syms_ok H Hs;
-aa_malloc := fun fx => @src0_malloc_realizes fx rc Cfg.AcfgMode (AMH fx) (MSH fx);
-aa_free := fun fx => @src0_free_realizes fx rc Cfg.AcfgMode (@src0_ntfree_of_A fx rc Cfg.AcfgMode (NTA fx));
+(* 08b1429: both carry `@amf AM = false ->` (215 joined [alloc_mark_sysnos]); the mode is pinned here,
+   so the premise is [eq_refl] (as reac-pw/fuzz_pin's YN33). *)
+aa_malloc := fun fx => @src0_malloc_realizes fx rc Cfg.AcfgMode eq_refl (AMH fx) (MSH fx);
+aa_free := fun fx => @src0_free_realizes fx rc Cfg.AcfgMode eq_refl (@src0_ntfree_of_A fx rc Cfg.AcfgMode (NTA fx));
 aa_free_null := fun fx => @src0_free_null fx Cfg.AcfgMode;
 aa_calloc := fun fx => CAL fx |}.
 End b.

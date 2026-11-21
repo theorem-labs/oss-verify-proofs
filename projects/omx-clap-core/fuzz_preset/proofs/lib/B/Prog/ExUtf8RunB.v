@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* RELOCATED B -> B' (h-pre-b3's #102 row, 2026-10-29): the walk of origin/cold/h-pre-b3-exstring-b 5f62ea0b5c45 (OLD
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* RELOCATED B -> B' (h-pre-b3's #102 row, 2026-10-29): the walk (OLD
    pin f8f98a95, unstripped twin 3b5e1a09) moved to the #102 pin B' (asan-ubsan d663f82d7f48, unstripped twin
-   c90d4fa54d43, facts 8f3e7e1a07f1) by alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9), on int102 with the kit
-   decff67d721f. ex_string, ex_hex4 and ex_utf8 have equal instruction words on B and B' up to pc-relative fields,
+   c90d4fa54d43, facts) by alreloc c4338d099cfb8025, on int102 with the kit.
+   ex_string, ex_hex4 and ex_utf8 have equal instruction words on B and B' up to pc-relative fields,
    and every pc-relative target names the same symbol + offset. Every address in this file, in a comment or in a term, is the B' image's; a mention of the record image
    f8f98a95 below names the donor's image. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B (asan-ubsan, record image f8f98a95bc524311faf7a8b817fa91103ed12ec8f5802da61a604ab84b493485;
@@ -34,7 +35,7 @@
        SHADOW_OFF (o + i) 1` (saddr_ok's two disjuncts) that the run of exu_i_<arm>_<zone> leaves and exu_ob
        discharges from the premise range_addressable o n.
    REUSED (rule 24; proof-index v5 16:10Z / lemma index 16:30Z: ex_utf8 has no released proof; a census-1 cold/*
-   sweep found the earlier B walk origin/cold/h-hpreset-7-walk-S8b dafa4151f913 lib/B/Prog/ExUtf8B.v + lib/A/Prog/ExUtf8W.v,
+   sweep found the earlier B walk lib/B/Prog/ExUtf8B.v + lib/A/Prog/ExUtf8W.v,
    which proves ex_utf8 under afn_pre_x with o inside a live block and an older engine (AR_laws_x without HL): its
    image-free helpers are PORTED below (exu_arm1..4, exu_low_byte_mod .. exu_garr8_cons, exu_srlw16_U, exu_c3, the entry
    state's shape, exu_entry's region proofs), its block-only premise and shadow-entry form are not usable here).
@@ -63,7 +64,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B Require Import Img0 Listin
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PjGrammar.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Prog Require Import ExsB_Callee.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YI5b.
-(* the PLAIN build's sink head must never fill SK here (YC1fP.v:23-33): every SK below is passed explicitly *)
+(* the PLAIN build's sink head must never fill SK here (YC1fP.v:24-34): every SK below is passed explicitly *)
 #[global] Remove Hints YI5b.src0_sink_head : typeclass_instances.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -73,7 +74,7 @@ Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(tr
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- the model's four arms (ExUtf8W.v u8_arm1..4, dafa4151f913) ---- *)
+(* ---- the model's four arms (ExUtf8W.v u8_arm1..4) ---- *)
 Lemma exu_arm1 : forall cp, 0 <= cp < 128 -> PjGrammar.utf8 cp = [cp].
 Proof. intros cp H. unfold PjGrammar.utf8. rewrite (proj2 (Z.ltb_lt _ _) (proj2 H)). reflexivity. Qed.
 Lemma exu_arm2 : forall cp, 128 <= cp < 2048 -> PjGrammar.utf8 cp = [192 + cp / 64; 128 + cp mod 64].
@@ -118,7 +119,7 @@ Ltac exu_lia :=
   unfold EXU_Z1, EXU_Z2, EXU_Z3, EXU_Z4, exu_zin, EXU_STK in *; cbn [fst snd] in *;
   unfold kLowShadowBeg, kHighMemBeg, SHADOW_OFF in *; lia.
 
-(* ---- image-free helpers, ported from ExUtf8W.v (dafa4151f913; there from h-verbs-1's put_utf8_xw.v cfcf4ad0554) ---- *)
+(* ---- image-free helpers, ported from ExUtf8W.v (there from h-verbs-1's put_utf8_xw.v) ---- *)
 Lemma exu_low_byte_mod : forall u n k, 0 <= u -> (k < n)%nat ->
   Z_to_bv 8 (Z.shiftr (u mod 2 ^ (8 * Z.of_nat n)) (8 * Z.of_nat k)) = Z_to_bv 8 (Z.shiftr u (8 * Z.of_nat k)).
 Proof.

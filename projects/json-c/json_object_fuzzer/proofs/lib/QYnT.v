@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer: RT_CHECKS over the four main-entry states in HSCLASS_S; the launch's ProcInput in RTconst_at_main: apc, mbase, ifs, stdin, gid, groups, kb, execfn and the rest; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -85,31 +86,31 @@ RT_L1 ++ [ (A_INSTANCE + 32, [C8 (wz (Q6sh.al_space_beg (ae_L RE))); C4 (wz 0xff
 ++ RT_L4 ++ [ (0x642ea0, [C8 band_guard]) ] ++ RT_L5.
 Proof. intros RE X. reflexivity. Qed.
 
-Definition E_SB : expr := EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 208)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 209))) (ELit 65536).
-Definition E_RI : expr := EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 208)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 209))) (ELit 137439019008).
+Definition E_SB : expr := EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 212)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 213))) (ELit 65536).
+Definition E_RI : expr := EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 212)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 213))) (ELit 137439019008).
 Definition E_PG (v : nat) : expr := EMd Instr.M_MUL (ELit 4096) (EVar v).
 Definition E_ST : expr := EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EMd Instr.M_MUL (ELit 4096) (EVar 10)).
 Definition E_SBOT : expr := EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EMd Instr.M_MUL (ELit 4096) (EVar 10))) (ELit (-8388608)).
 
 Definition RT_SYM_FACTS : list kentry :=
 [ KWord (SA (ELit 0) 967864) 8 E_SB; KWord (SA (ELit 0) 967880) 8 E_RI;
-KWord (SA (ELit 0) 967904) 8 (E_PG 236); KWord (SA (ELit 0) 967912) 8 (E_PG 236);
-KWord (SA (ELit 0) 6570624) 8 (E_PG 238); KWord (SA (ELit 0) 6434400) 8 (E_PG 406); KWord (SA (ELit 0) 6434408) 8 (E_PG 330);
-KWord (SA (ELit 0) 6565536) 8 (EVar 45);
+KWord (SA (ELit 0) 967904) 8 (E_PG 240); KWord (SA (ELit 0) 967912) 8 (E_PG 240);
+KWord (SA (ELit 0) 6570624) 8 (E_PG 242); KWord (SA (ELit 0) 6434400) 8 (E_PG 412); KWord (SA (ELit 0) 6434408) 8 (E_PG 336);
+KWord (SA (ELit 0) 6565536) 8 (EVar 49);
 
-KWord (SA (E_PG 237) 0) 8 (E_PG 238); KWord (SA (E_PG 237) 8) 8 E_ST; KWord (SA (E_PG 237) 16) 8 E_SBOT;
-KWord (SA (E_PG 237) 24) 8 (ELit 0); KWord (SA (E_PG 237) 32) 8 (ELit 0); KWord (SA (E_PG 237) 40) 1 (ELit 0);
-KZero (SA (E_PG 237) 41) (ELit 7);
-KWord (SA (E_PG 237) 48) 8 (ELit 0x623598); KWord (SA (E_PG 237) 56) 8 (ELit 0x623680); KWord (SA (E_PG 237) 64) 8 (ELit 0x622e68);
-KWord (SA (E_PG 237) 72) 8 (E_PG 406);
+KWord (SA (E_PG 241) 0) 8 (E_PG 242); KWord (SA (E_PG 241) 8) 8 E_ST; KWord (SA (E_PG 241) 16) 8 E_SBOT;
+KWord (SA (E_PG 241) 24) 8 (ELit 0); KWord (SA (E_PG 241) 32) 8 (ELit 0); KWord (SA (E_PG 241) 40) 1 (ELit 0);
+KZero (SA (E_PG 241) 41) (ELit 7);
+KWord (SA (E_PG 241) 48) 8 (ELit 0x623598); KWord (SA (E_PG 241) 56) 8 (ELit 0x623680); KWord (SA (E_PG 241) 64) 8 (ELit 0x622e68);
+KWord (SA (E_PG 241) 72) 8 (E_PG 412);
 
-KWord (SA (E_PG 238) 8) 4 (ELit 0); KWord (SA (E_PG 238) 152) 8 (E_PG 237);
+KWord (SA (E_PG 242) 8) 4 (ELit 0); KWord (SA (E_PG 242) 152) 8 (E_PG 241);
 
-KWord (SA (E_PG 330) 24) 8 (ELit 6434400);
+KWord (SA (E_PG 336) 24) 8 (ELit 6434400);
 
-KRange (EVar 237) 1 34359736319; KRange (EVar 238) 1 34359736304; KRange (EVar 330) 1 34359736319;
-KRange (EVar 406) 1 34359733495; KRange (EVar 236) 1 34359734272; KRange (EVar 208) 4295491576 34326181871;
-KRange (EVar 209) 0 15; KRange (EVar 0) 4294901760 4294967295; KRange (EVar 10) 0 8 ].
+KRange (EVar 241) 1 34359736319; KRange (EVar 242) 1 34359736304; KRange (EVar 336) 1 34359736319;
+KRange (EVar 412) 1 34359733495; KRange (EVar 240) 1 34359734272; KRange (EVar 212) 4295491576 34326181871;
+KRange (EVar 213) 0 15; KRange (EVar 0) 4294901760 4294967295; KRange (EVar 10) 0 8 ].
 
 Definition kspanR (K : kentry) : option (Z * Z) :=
 match K with
@@ -139,7 +140,7 @@ forallb (fun ac => kn_cellsR k (fst ac) (snd ac)) (RT_L1 ++ RT_L2 ++ RT_L3 ++ RT
 && kn_cellsR k (A_INSTANCE + 64) [C8 (wz 0x1000)] && kn_cellsR k (A_INSTANCE + 88) [C8 (wz 0x800000); C8 (wz 0x1a35f)]
 && kn_has_all RT_SYM_FACTS k.
 
-Lemma RT_CHECKS : forall w ch, HSCLASS_S w ch -> rt_checks (kn_view ch) = true.  Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Lemma RT_CHECKS : forall w ch, HSCLASS_S w ch -> rt_checks (kn_view ch) = true.  Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Lemma ro_cells_cons1 : forall m A c cs,
 ro_cells asegs m A [c] -> ro_cells asegs m (A + Z.of_nat (csize c)) cs -> ro_cells asegs m A (c :: cs).
@@ -198,67 +199,67 @@ apply andb_prop in CK' as [CK' _]. apply andb_prop in CK' as [CK' C88]. apply an
 apply andb_prop in CK' as [CK' C56]. apply andb_prop in CK' as [CK' C40]. apply andb_prop in CK' as [CL CRW].
 rewrite !forallb_app in CL. apply andb_prop in CL as [CL1 CL]. apply andb_prop in CL as [CL2 CL]. apply andb_prop in CL as [CL3 CL].
 apply andb_prop in CL as [CL4 CL5].
-rng 237%nat 1 34359736319. rng 238%nat 1 34359736304. rng 330%nat 1 34359736319.
-rng 406%nat 1 34359733495. rng 236%nat 1 34359734272. rng 208%nat 4295491576 34326181871.
-rng 209%nat 0 15. rng 0%nat 4294901760 4294967295. rng 10%nat 0 8.
+rng 241%nat 1 34359736319. rng 242%nat 1 34359736304. rng 336%nat 1 34359736319.
+rng 412%nat 1 34359733495. rng 240%nat 1 34359734272. rng 212%nat 4295491576 34326181871.
+rng 213%nat 0 15. rng 0%nat 4294901760 4294967295. rng 10%nat 0 8.
 unfold RTconst. split; [| split; [| split; [| split; [| split]]]].
 -
 rewrite rt_img_cells_split.
 repeat (apply Forall_app; split); try (eapply Forall_cells_of_checks; [exact KO| assumption]).
 +
 constructor; [| constructor; [| constructor]]; cbn [fst snd].
-* kw (KWord (SA (ELit 0) 967864) 8 E_SB) 0 (4096 * bv_unsigned (ev E 208) + (-4096) * bv_unsigned (ev E 209) + 65536) K1.
-kw (KWord (SA (ELit 0) 967880) 8 E_RI) 0 (4096 * bv_unsigned (ev E 208) + (-4096) * bv_unsigned (ev E 209) + 137439019008) K2.
+* kw (KWord (SA (ELit 0) 967864) 8 E_SB) 0 (4096 * bv_unsigned (ev E 212) + (-4096) * bv_unsigned (ev E 213) + 65536) K1.
+kw (KWord (SA (ELit 0) 967880) 8 E_RI) 0 (4096 * bv_unsigned (ev E 212) + (-4096) * bv_unsigned (ev E 213) + 137439019008) K2.
 change (Q6sh.al_space_beg (ae_L (RE_main sp w E))) with (SB E). change (region_info (RE_main sp w E)) with (SB E + 2^37).
-replace (SB E) with (4096 * bv_unsigned (ev E 208) + (-4096) * bv_unsigned (ev E 209) + 65536) by (unfold SB, PRES; lia).
-replace (4096 * bv_unsigned (ev E 208) + -4096 * bv_unsigned (ev E 209) + 65536 + 2 ^ 37) with (4096 * bv_unsigned (ev E 208) + (-4096) * bv_unsigned (ev E 209) + 137439019008) by lia.
+replace (SB E) with (4096 * bv_unsigned (ev E 212) + (-4096) * bv_unsigned (ev E 213) + 65536) by (unfold SB, PRES; lia).
+replace (4096 * bv_unsigned (ev E 212) + -4096 * bv_unsigned (ev E 213) + 65536 + 2 ^ 37) with (4096 * bv_unsigned (ev E 212) + (-4096) * bv_unsigned (ev E 213) + 137439019008) by lia.
 apply ro_cells_cons1; [exact K1|]. cbn [csize].
 apply (proj2 (ro_cells_app asegs m _ [C4 (wz 4294967295); C4 (wz 0)] _)). split; [exact (kn_cellsR_sound E m kn KO _ _ C40)|]. cbn [cells_size csize Nat.add].
 apply ro_cells_cons1; [exact K2|]. cbn [csize]. exact (kn_cellsR_sound E m kn KO _ _ C56).
-* kw (KWord (SA (ELit 0) 967904) 8 (E_PG 236)) 0 (4096 * bv_unsigned (ev E 236)) K3.
-change (ptrarr_lo (RE_main sp w E)) with (4096 * bv_unsigned (ev E 236)).
+* kw (KWord (SA (ELit 0) 967904) 8 (E_PG 240)) 0 (4096 * bv_unsigned (ev E 240)) K3.
+change (ptrarr_lo (RE_main sp w E)) with (4096 * bv_unsigned (ev E 240)).
 apply (proj2 (ro_cells_app asegs m _ [C8 (wz 4096)] _)). split; [exact (kn_cellsR_sound E m kn KO _ _ C64)| exact K3].
 +
-kw (KWord (SA (ELit 0) 6570624) 8 (E_PG 238)) 0 (4096 * bv_unsigned (ev E 238)) K4.
-kw (KWord (SA (ELit 0) 6434400) 8 (E_PG 406)) 0 (4096 * bv_unsigned (ev E 406)) K5.
-kw (KWord (SA (ELit 0) 6434408) 8 (E_PG 330)) 0 (4096 * bv_unsigned (ev E 330)) K6.
+kw (KWord (SA (ELit 0) 6570624) 8 (E_PG 242)) 0 (4096 * bv_unsigned (ev E 242)) K4.
+kw (KWord (SA (ELit 0) 6434400) 8 (E_PG 412)) 0 (4096 * bv_unsigned (ev E 412)) K5.
+kw (KWord (SA (ELit 0) 6434408) 8 (E_PG 336)) 0 (4096 * bv_unsigned (ev E 336)) K6.
 constructor; [exact K4|]. constructor; [exact K5|]. constructor; [exact K6|]. constructor.
 +
-kw (KWord (SA (ELit 0) 967912) 8 (E_PG 236)) 0 (4096 * bv_unsigned (ev E 236)) K7.
-constructor; [| constructor]. cbn [fst snd]. change (ptrarr_lo (RE_main sp w E)) with (4096 * bv_unsigned (ev E 236)).
+kw (KWord (SA (ELit 0) 967912) 8 (E_PG 240)) 0 (4096 * bv_unsigned (ev E 240)) K7.
+constructor; [| constructor]. cbn [fst snd]. change (ptrarr_lo (RE_main sp w E)) with (4096 * bv_unsigned (ev E 240)).
 apply ro_cells_cons1; [exact K7|]. exact (kn_cellsR_sound E m kn KO _ _ C88).
 +
 constructor; [| constructor]. cbn [fst snd]. rewrite HG. unfold guard_main.
-exact (kn_word8_den E m kn 6565536 (EVar 45) KO (sym_fact' (KWord (SA (ELit 0) 6565536) 8 (EVar 45)) ltac:(vm_compute; reflexivity)) ltac:(lia) ltac:(lia)).
+exact (kn_word8_den E m kn 6565536 (EVar 49) KO (sym_fact' (KWord (SA (ELit 0) 6565536) 8 (EVar 49)) ltac:(vm_compute; reflexivity)) ltac:(lia) ltac:(lia)).
 -
-change (rl_T (X_main E)) with (4096 * bv_unsigned (ev E 237)). unfold rt_T_cells.
-change (rl_ctx (X_main E)) with (4096 * bv_unsigned (ev E 238)). change (ae_stack_top (RE_main sp w E)) with (st_main E).
-change (ae_fs_base (RE_main sp w E)) with (4096 * bv_unsigned (ev E 406)). unfold ae_stack_bottom. change (ae_stack_top (RE_main sp w E)) with (st_main E). unfold st_main.
-kw (KWord (SA (E_PG 237) 0) 8 (E_PG 238)) (4096 * bv_unsigned (ev E 237)) (4096 * bv_unsigned (ev E 238)) T0.
-kw (KWord (SA (E_PG 237) 8) 8 E_ST) (4096 * bv_unsigned (ev E 237)) (32768 * bv_unsigned (ev E 0) + 4096 * bv_unsigned (ev E 10)) T1.
-kw (KWord (SA (E_PG 237) 16) 8 E_SBOT) (4096 * bv_unsigned (ev E 237)) (32768 * bv_unsigned (ev E 0) + 4096 * bv_unsigned (ev E 10) - 8388608) T2.
-kw (KWord (SA (E_PG 237) 24) 8 (ELit 0)) (4096 * bv_unsigned (ev E 237)) 0 T3.
-kw (KWord (SA (E_PG 237) 32) 8 (ELit 0)) (4096 * bv_unsigned (ev E 237)) 0 T4.
-kw (KWord (SA (E_PG 237) 40) 1 (ELit 0)) (4096 * bv_unsigned (ev E 237)) 0 T5.
-pose proof (kn_zero_ro E m kn KO _ 41 7 (4096 * bv_unsigned (ev E 237)) (sym_fact' (KZero (SA (E_PG 237) 41) (ELit 7)) ltac:(vm_compute; reflexivity))
-eq_refl ltac:(lia) ltac:(lia) (4096 * bv_unsigned (ev E 237) + 41) [CB 7 (repeat (b8 0) 7)] eq_refl ltac:(lia) ltac:(cbn; lia)) as T6.
-kw (KWord (SA (E_PG 237) 48) 8 (ELit 0x623598)) (4096 * bv_unsigned (ev E 237)) 0x623598 T7.
-kw (KWord (SA (E_PG 237) 56) 8 (ELit 0x623680)) (4096 * bv_unsigned (ev E 237)) 0x623680 T8.
-kw (KWord (SA (E_PG 237) 64) 8 (ELit 0x622e68)) (4096 * bv_unsigned (ev E 237)) 0x622e68 T9.
-kw (KWord (SA (E_PG 237) 72) 8 (E_PG 406)) (4096 * bv_unsigned (ev E 237)) (4096 * bv_unsigned (ev E 406)) T10.
+change (rl_T (X_main E)) with (4096 * bv_unsigned (ev E 241)). unfold rt_T_cells.
+change (rl_ctx (X_main E)) with (4096 * bv_unsigned (ev E 242)). change (ae_stack_top (RE_main sp w E)) with (st_main E).
+change (ae_fs_base (RE_main sp w E)) with (4096 * bv_unsigned (ev E 412)). unfold ae_stack_bottom. change (ae_stack_top (RE_main sp w E)) with (st_main E). unfold st_main.
+kw (KWord (SA (E_PG 241) 0) 8 (E_PG 242)) (4096 * bv_unsigned (ev E 241)) (4096 * bv_unsigned (ev E 242)) T0.
+kw (KWord (SA (E_PG 241) 8) 8 E_ST) (4096 * bv_unsigned (ev E 241)) (32768 * bv_unsigned (ev E 0) + 4096 * bv_unsigned (ev E 10)) T1.
+kw (KWord (SA (E_PG 241) 16) 8 E_SBOT) (4096 * bv_unsigned (ev E 241)) (32768 * bv_unsigned (ev E 0) + 4096 * bv_unsigned (ev E 10) - 8388608) T2.
+kw (KWord (SA (E_PG 241) 24) 8 (ELit 0)) (4096 * bv_unsigned (ev E 241)) 0 T3.
+kw (KWord (SA (E_PG 241) 32) 8 (ELit 0)) (4096 * bv_unsigned (ev E 241)) 0 T4.
+kw (KWord (SA (E_PG 241) 40) 1 (ELit 0)) (4096 * bv_unsigned (ev E 241)) 0 T5.
+pose proof (kn_zero_ro E m kn KO _ 41 7 (4096 * bv_unsigned (ev E 241)) (sym_fact' (KZero (SA (E_PG 241) 41) (ELit 7)) ltac:(vm_compute; reflexivity))
+eq_refl ltac:(lia) ltac:(lia) (4096 * bv_unsigned (ev E 241) + 41) [CB 7 (repeat (b8 0) 7)] eq_refl ltac:(lia) ltac:(cbn; lia)) as T6.
+kw (KWord (SA (E_PG 241) 48) 8 (ELit 0x623598)) (4096 * bv_unsigned (ev E 241)) 0x623598 T7.
+kw (KWord (SA (E_PG 241) 56) 8 (ELit 0x623680)) (4096 * bv_unsigned (ev E 241)) 0x623680 T8.
+kw (KWord (SA (E_PG 241) 64) 8 (ELit 0x622e68)) (4096 * bv_unsigned (ev E 241)) 0x622e68 T9.
+kw (KWord (SA (E_PG 241) 72) 8 (E_PG 412)) (4096 * bv_unsigned (ev E 241)) (4096 * bv_unsigned (ev E 412)) T10.
 rewrite Z.add_0_r in T0.
 repeat (apply ro_cells_cons1; [assumption| cbn [csize]; rewrite <- ?Z.add_assoc; cbn [Z.add Pos.add Pos.succ Z.of_nat Pos.of_succ_nat]]).
 constructor; [exact I|]. split; [lia|]. split; [cbn; lia|]. intros i Hi; cbn in Hi; lia.
-- kw (KWord (SA (E_PG 238) 8) 4 (ELit 0)) (4096 * bv_unsigned (ev E 238)) 0 KC1. exact KC1.
-- kw (KWord (SA (E_PG 238) 152) 8 (E_PG 237)) (4096 * bv_unsigned (ev E 238)) (4096 * bv_unsigned (ev E 237)) KC2. exact KC2.
-- kw (KWord (SA (E_PG 330) 24) 8 (ELit 6434400)) (4096 * bv_unsigned (ev E 330)) 6434400 KC3. exact KC3.
+- kw (KWord (SA (E_PG 242) 8) 4 (ELit 0)) (4096 * bv_unsigned (ev E 242)) 0 KC1. exact KC1.
+- kw (KWord (SA (E_PG 242) 152) 8 (E_PG 241)) (4096 * bv_unsigned (ev E 242)) (4096 * bv_unsigned (ev E 241)) KC2. exact KC2.
+- kw (KWord (SA (E_PG 336) 24) 8 (ELit 6434400)) (4096 * bv_unsigned (ev E 336)) 6434400 KC3. exact KC3.
 - rewrite forallb_forall in CRW. apply Forall_forall. intros ac Hin. exact (kn_rw_cellsR_sound E m kn (fst ac) (snd ac) KO (CRW ac Hin)).
 Qed.
 End RT.
 
 Theorem RTconst_at_main : at_main_stmt (fun BAND sp w E m => @RTconst BAND (RE_main sp w E) (X_main E) m).
 Proof.
-intros sp rdraw brk0 argv envp fs uid hw E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
+intros sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
 apply (RTconst_main_of_kn sp w E _ (kn_view ch)); [| exact (RT_CHECKS w ch HCL) | exact HG].
-exact (main_know_view sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS).
+exact (main_know_view sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS).
 Qed.

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at a529a88a618 (pa_i_memset_at, as
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (pa_i_memset_at, as
    hbp_i_memset_at; pa_i_bv5_cases, pa_i_cs, pa_i_pres and pa_i_mod16_sub, as hbp_i_*; pa_int7's route, one engine state
-   up to each call and a fresh one after it) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v at a529a88a618
+   up to each call and a fresh one after it) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
    (pa_piece_int7, as hbp_piece_int7) for reac-pw/fuzz_headamp's image B: the block walked new against image B's own
    instructions (the scope stores of e, __asan_memset of e's body, the two header words, the out-of-line pod_write_ent
    under PweSpec.pod_write_ent_specX, the restores of the loop's three values), the cut states of lib/AU/HPgSeg.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgPropInt.v; 145 of its 201 lines of code are new or changed and 905 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Dig.v at 97ea9c9eafa; for reac-pw/fuzz_headamp image A: module paths, the rs_ / rl_ / rm_ / RS_ / RM_ prefixes renamed to hs_ / hd_ / hm_ / HS_ / HM_; the real frame's cell R+0xf8 -> R+0x118; F's object window [F+0x20, F+0x158); the real frame of 0x1e0 bytes; the frame for locals of class 4 (1024 bytes, 128 shadow bytes); hs_pre at the start pattern and hd_seg_pre's conjunct order (R mod 32, pp's block from hd_fresh_block); hm_sh's sixth scope flag (x) out of scope. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Dig.v; for reac-pw/fuzz_headamp image A: module paths, the rs_ / rl_ / rm_ / RS_ / RM_ prefixes renamed to hs_ / hd_ / hm_ / HS_ / HM_; the real frame's cell R+0xf8 -> R+0x118; F's object window [F+0x20, F+0x158); the real frame of 0x1e0 bytes; the frame for locals of class 4 (1024 bytes, 128 shadow bytes); hs_pre at the start pattern and hd_seg_pre's conjunct order (R mod 32, pp's block from hd_fresh_block); hm_sh's sixth scope flag (x) out of scope. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; addresses measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a): lib/A/HPgEnt0Def.v r7_dig_stmt, the DIG block of

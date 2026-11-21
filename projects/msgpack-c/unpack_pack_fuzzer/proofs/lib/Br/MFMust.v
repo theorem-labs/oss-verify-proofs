@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the mmap inversions take the placement-declined premise (place_declined_b_null), the two not-refusable lemmas the grant's page-aligned length (grant_len_aligned), the ceiling bound on the address comes from its placement (place_admissible'), and mprotect's nsafe has an eighth conjunct. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -40,23 +41,25 @@ Proof.
     apply tpath_mbind_inv in H as (ans & s2 & mo2 & H1 & H2).
     apply tpath_msys_inv in H1 as (-> & rsp & Hst & Hdec).
     apply tpath_mret_inv in H2 as [E ->]. inversion E; subst z s1. clear E.
-    apply (proj1 (nstep_mmap_rw_inv 0 len mo rsp mo2 [] Hw)) in Hst as [_ Hst]. rewrite HlenU in Hst. fold (mmap_len len) in Hst.
-    destruct Hst as [(e & HIn & _ & _) | (a & (E1 & E2 & E3 & E4 & E5) & -> & ->)].
-    + exfalso. rewrite (room_grant_not_refusable mo j (mmap_len len) R Hj Hmo Hck ltac:(lia)) in HIn. exact HIn.
+    apply (proj1 (nstep_mmap_rw_inv 0 len mo rsp mo2 [] Hw ltac:(apply place_declined_b_null; vm_compute; reflexivity))) in Hst as [_ Hst]. rewrite HlenU in Hst. fold (mmap_len len) in Hst.
+    destruct Hst as [(e & HIn & _ & _) | (a & (Hpl & _) & -> & ->)].
+    + exfalso. rewrite (room_grant_not_refusable mo j (mmap_len len) R Hj Hmo Hck ltac:(lia) (grant_len_aligned len)) in HIn. exact HIn.
     + unfold dec_mmap in Hdec. cbn [eff_copies eff_copyins] in Hdec.
       destruct (bv_eqb a a && bv_eqb (Z_to_bv 64 (mmap_len len)) (Z_to_bv 64 (mmap_len len)) && mmap_addr_ok len [] (bv_unsigned a)); [| discriminate].
       inversion Hdec; subst ans. unfold ceil_ok in Hck.
+      destruct (place_admissible' _ _ _ (mmap_len len) a ltac:(lia) (grant_len_aligned len) Hpl) as (_ & _ & E3 & _).
       apply (is_err_below_ceiling (bv_unsigned a) (mmap_len len)); [lia| lia|]. pose proof (bv_unsigned_in_range 64 a). lia.
   - change (Malloc.PROT_NONE =? 0) with true in H. cbn iota in H.
     apply tpath_mbind_inv in H as (ans & s2 & mo2 & H1 & H2).
     apply tpath_msys_inv in H1 as (-> & rsp & Hst & Hdec).
     apply tpath_mret_inv in H2 as [E ->]. inversion E; subst z s1. clear E.
-    apply (proj1 (nstep_mmap_none_inv 0 len mo rsp mo2 [] Hw)) in Hst as [_ Hst]. rewrite HlenU in Hst. fold (mmap_len len) in Hst.
-    destruct Hst as [(e & HIn & _ & _) | (a & (E1 & E2 & E3 & E4) & -> & ->)].
-    + exfalso. rewrite (room_reserve_not_refusable mo j (mmap_len len) R Hj Hmo Hck ltac:(lia)) in HIn. exact HIn.
+    apply (proj1 (nstep_mmap_none_inv 0 len mo rsp mo2 [] Hw ltac:(apply place_declined_b_null; vm_compute; reflexivity))) in Hst as [_ Hst]. rewrite HlenU in Hst. fold (mmap_len len) in Hst.
+    destruct Hst as [(e & HIn & _ & _) | (a & Hpl & -> & ->)].
+    + exfalso. rewrite (room_reserve_not_refusable mo j (mmap_len len) R Hj Hmo Hck ltac:(lia) (grant_len_aligned len)) in HIn. exact HIn.
     + unfold dec_mmap_none in Hdec. cbn [eff_copies eff_copyins] in Hdec.
       destruct (bv_eqb a a && bv_eqb (Z_to_bv 64 (mmap_len len)) (Z_to_bv 64 (mmap_len len)) && mmap_addr_ok len [] (bv_unsigned a)); [| discriminate].
       inversion Hdec; subst ans. unfold ceil_ok in Hck.
+      destruct (place_admissible' _ _ _ (mmap_len len) a ltac:(lia) (grant_len_aligned len) Hpl) as (_ & _ & E3 & _).
       apply (is_err_below_ceiling (bv_unsigned a) (mmap_len len)); [lia| lia|]. pose proof (bv_unsigned_in_range 64 a). lia.
 Qed.
 
@@ -67,12 +70,12 @@ Proof.
   intros L a len prot s mo z s1 mo1 j Hpre HK R Hj Hmo H.
   pose proof (ev_step_spec L (EMprotect a len prot) GT s frame_ok_GT Hpre s mo (conj eq_refl (conj HK I))) as W.
   pose proof (ev_step_nsafe _ s mo _ (NMprotect a len prot) W eq_refl) as Hs.
-  cbn [nsafe] in Hs. cbv zeta in Hs. destruct Hs as (C1 & C2 & C3 & C4 & C5 & C6 & C7).
+  cbn [nsafe] in Hs. cbv zeta in Hs. destruct Hs as (C1 & C2 & C3 & C4 & C5 & C8 & C6 & C7).
   unfold ev_step in H.
   apply tpath_mbind_inv in H as (ans & s2 & mo2 & H1 & H2).
   apply tpath_msys_inv in H1 as (-> & rsp & Hst & Hdec).
   apply tpath_mret_inv in H2 as [E ->]. inversion E; subst z s1. clear E.
-  pose proof (nstep_mprotect_inv a len prot mo rsp mo2 []) as INV. cbv zeta in INV. specialize (INV C1 C2 C3 C4 C5 C6 C7).
+  pose proof (nstep_mprotect_inv a len prot mo rsp mo2 []) as INV. cbv zeta in INV. specialize (INV C1 C2 C3 C4 C5 C8 C6 C7).
   apply (proj1 INV) in Hst as [_ [(e & HIn & _ & _) | (_ & -> & _)]]; clear INV.
   - exfalso. rewrite (room_mprotect_not_refusable mo j _ _ R Hj Hmo) in HIn. exact HIn.
   - unfold dec_mprotect_rw, dec_mprotect in Hdec. cbn [eff_copies eff_copyins] in Hdec.

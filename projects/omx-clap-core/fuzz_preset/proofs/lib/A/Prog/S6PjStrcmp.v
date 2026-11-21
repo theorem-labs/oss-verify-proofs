@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 214 of its 271 lines of code are new or changed and 721 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S6 (BPjGet of h-rw-pre-5, for WalkS6's image-A pj_get and image B's): the IMAGE-FREE pieces of
    pj_get's member loop, generic over the program listing {L}, its image facts {PA : PAImg L}, the generated image
    record {PI : PrhImg} and the allocator relation ARx with its laws at the harness head (LAWS : AR_laws_x .. cf_head).
@@ -11,9 +12,9 @@
    (3) the tree facts: the i-th member's key word, key string and node (pjs_mems_nth, plain lib/Prog/pj_get.v:123
        gp_mems_nth restated over pj_memsR), the harness block facts (pjs_lam_blk), and the two prhPj_get_res
        assemblies (pjs_res_found, pjs_res_none).
-   Kit: the kit texts as the kit's cut 7cdbb61b5fa0 carries them (first fitted at the walk kit
+   Kit: the kit texts as the kit's cut carries them (first fitted at the walk kit
    (the #102 kit tip): the m-form posts over YAkMemnorm; the Batch-2 ledger prh_ledger .. most own, which pjs_lam_blk /
-   pjs_key_strcmp_pre / section (4) carry; re-fit 2026-10-29 from the walk kit PREVIEW 04388d628fb), which keep
+   pjs_key_strcmp_pre / section (4) carry; re-fit 2026-10-29 from the walk kit PREVIEW), which keep
    the pj_cstrR of preset-tree-at-2026-10-29T10-39-06Z.tsv (sha256 1452ee1ee024; internal record) (PRH_Reader.v 4266e709561a :113-116 at the cut) with the reader's name bound
    `Z.of_nat (length s) + 1 < 2 ^ 32` (h-hpreset-7 ruling 09:19Z): pjs_key_strcmp_pre takes the strcmp rule's member-key
    bound from it. Section (4) at the end: tpj_get_specXP, tpj_get_str_specXP and their conversions to the texts.
@@ -283,7 +284,7 @@ End c.
 
 (* ======== (4) the keep of a memory invariant P (2026-10-29, the layering hold: the m-form over a generic P) ======== *)
 (* tpj_get_specXP / tpj_get_str_specXP: the tpj_get_specX / tpj_get_str_specX (PRH_FnPj.v:1289-1319 on this tree; blob 5aca5cbe2cfb :810-840 at
-   the kit's cut 7cdbb61b5fa0; first stated at walk kit preview 2d523216ac5) with `fpostm .. Q` = `fpost .. (fQmn mem Q)`
+   the kit's cut; first stated at walk kit preview) with `fpostm .. Q` = `fpost .. (fQmn mem Q)`
    generalised to
    `fpost .. (fun .. => Q .. /\ (P mem -> P mem'))`: a generalisation of the kit's text, equal to it by conversion at
    P := the memnorm of fQmn (tpj_get_specX_of_P / tpj_get_str_specX_of_P, at the kit's YAk spelling, walk kit
@@ -327,7 +328,7 @@ Definition tpj_get_str_specXP (P : (word -> option byte) -> Prop) : Prop :=
         o <> 0 /\ pj_nodeR segs (rdW W' mem') (prh_lin Lam) o t D /\
         exists z, getr regs' 10 = w64 z /\ prhPj_get_str_res (rdW W' mem') (prh_lin Lam) o t D kname z)) /\
       (P mem -> P mem'))).
-(* The kit's texts are the instances at fQmn's invariant (PRH_Base.v ef7c8ca98529 at the kit's cut 7cdbb61b5fa0, fQmn over
+(* The kit's texts are the instances at fQmn's invariant (PRH_Base.v ef7c8ca98529 at the kit's cut, fQmn over
    YAkMemnorm.memnorm), by conversion *)
 Lemma tpj_get_specX_of_P : tpj_get_specXP (YAkMemnorm.memnorm segs) -> tpj_get_specX B ARx SK.
 Proof. intros H. exact H. Qed.

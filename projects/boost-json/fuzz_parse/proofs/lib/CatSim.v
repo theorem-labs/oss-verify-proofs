@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -62,7 +63,9 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition fd1chan : ltac2:(zQ "10!hsc>5model$0P") := ltac2:(zQ "a0!h9!ht4!hte!hu8!m6!o3!huf!hsc!hvb!ig7\5model$7@3$5@1$4$1@2$8@1$9^1@2$2@1$0#k0+1@2$3$1@1$6@2$2@1$0#k0+1").
+Definition fd1chan (model : Model) : Prop :=
+  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+  /\ m_channel_reader model = true.
 
 (* [comment removed for export] *)
 Definition buf_modeled : ltac2:(zQ "30!l9!h9!jc>1b@1$0@1$2@1$1#8P") := ltac2:(zQ "70!h9!jc!igf!l9!ikc!in4!ina\1b@1$3@1$1@1$0#8@2$5@1$6@2$2@1$1@1$0#8^1$4").

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YC7z.v, with its module paths and module names changed; 18 of its 41 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_ignore_file_c.v; 25 of its 55 lines of code are new or changed and 11 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_role (reac_segconf.c:533-541; fuzz_segconf.asan 0x895f0, 200 bytes, 50 instructions; frame 32
    bytes, no side-stack frame): the contract of the ASan build's code, in plugin-hostd/fuzz_command's lib/A/Prog
    form (afn_pre at the entry, SRr of apost_base at the return).
@@ -58,8 +59,8 @@
    image cell are parameters (or fields of B).
    The WALK takes as Section hypotheses: reac_segconf_find_contract (lib/A/Prog/reac_segconf_find_c.v) at find's
    entry and stack. It calls no runtime entry itself (find's walk takes RtString.astrcmp_realizes, row 17 of
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626), accepted v1 5e0b8a44fdc;
-   at e45889d6935a strcmp is that file's DECISION 2, option (b)). They are NOT premises of this contract: the
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md, accepted v1;
+   strcmp is that file's DECISION 2, option (b)). They are NOT premises of this contract: the
    statement does not mention them. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.

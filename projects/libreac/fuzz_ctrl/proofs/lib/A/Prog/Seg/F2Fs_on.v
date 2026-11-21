@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2065 of its 2181 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3.v, with its module paths and module names changed; 1051 of its 1229 lines of code are new or changed and 2003 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F2.v; 74 of its 187 lines of code are new or changed and 1116 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F2Fs_on.v -- route (C) twin of F2Fs.f2_evt_Fs (the len > 0 stretch of segment F2 of fuzz_ctrl
    image A's LLVMFuzzerTestOneInput, libreac v1.9.0, 0x81da4 -> the checked memcpy at 0x81dcc -> 0x81dd0).  Written by
    a Theorem Labs lane (GO from a Theorem Labs lane 12:5xZ, F2Fs.v (not in this delivery) being a Theorem Labs lane's own file), in a NEW file: Seg/F2Fs.v
@@ -14,7 +15,7 @@
    WHY.  Route (C) (a Theorem Labs lane DECISION 09:20Z): the walk's cut carries A.ACtlRtC.ctl_rt_C, the shadow of the cut's own
    state and of the image only, not the universal AsanRT.shadow_rw.  f2_evt_Fs takes `shadow_rw m`, which the glue
    (lib/A/ACtlG/F2.v) can no longer give.  Its callee has a route (C) form: a Theorem Labs lane's asan_memcpy_contract_F_on
-   (asan_memcpy_cF_on.v, 83ab88c3325, signed a Theorem Labs lane 11:16Z), proved by asan_memcpyF_on.asan_memcpy_holds_F_on.
+   (asan_memcpy_cF_on.v, signed a Theorem Labs lane 11:16Z), proved by asan_memcpyF_on.asan_memcpy_holds_F_on.
 
    WHAT CHANGED against F2Fs.f2_evt_Fs (statement and proof otherwise verbatim):
    - the callee premise asan_memcpy_contract_F -> asan_memcpy_contract_F_on;
@@ -30,7 +31,7 @@
    shadow_rw_on_mono (R is the callee's R at the literal register words); the post's shadow conjunct as above.
    Names: F2Fs.v's two family-ambiguous proof uses (MState.unsigned_lit, Cells.cbytes) are written in full path to
    the copy they bind (A.Tk.UL.MState / A.Tk.UL.Cells, by Locate in this file's context, the same binding as in
-   F2Fs.v's context; F2Fs.v is not in this delivery), as a Theorem Labs lane's fold 4bae33fdf54 does in F2F.v (a Theorem Labs lane 08:56Z copy-per-occurrence rule). *)
+   F2Fs.v's context; F2Fs.v is not in this delivery), as a Theorem Labs lane's fold does in F2F.v (a Theorem Labs lane 08:56Z copy-per-occurrence rule). *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -61,12 +62,12 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState M
 (* Last: StepF's step / if_true_by (evtF goals) shadow Step's (evt goals); RngBytes for rng_bytes. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF RngBytes.
 Import ListNotations.
-(* fully qualified, as F2F.v:50: StepF's require-closure loads lib/Reusable/YK11.v too, and a bare `Import YK11`
+(* fully qualified, as F2F.v:51: StepF's require-closure loads lib/Reusable/YK11.v too, and a bare `Import YK11`
    would take that one, whose seg_rom is a second constant (F2F.v's statements name lib/A/Reusable/YK11's). *)
 Import OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Reusable.YK11.
 Open Scope Z_scope.
 
-(* F2F.v:57-58's aliases, the two the proof uses, and the route (C) modules *)
+(* F2F.v:58-59's aliases, the two the proof uses, and the route (C) modules *)
 Module LP := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.PropExec.
 Module LM := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.MState.
 Module SRO := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.ShadowRwOn.
@@ -75,7 +76,7 @@ Module SWO := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.sh_word_on.
 Module MCO := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.asan_memcpy_c_on.
 Module MCFO := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.asan_memcpy_cF_on.
 
-(* F2F.v:74's hint (a Local redefinition there, so not exported by its Require): the two spill stores' accesses
+(* F2F.v:75's hint (a Local redefinition there, so not exported by its Require): the two spill stores' accesses
    from their rng premises, by F2F.v's own f2_accF. *)
 Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.acc_hint ::= F2F.f2_accF.
 

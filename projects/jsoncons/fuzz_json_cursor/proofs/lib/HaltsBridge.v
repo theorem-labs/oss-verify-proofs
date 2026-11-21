@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed srealizes_must_exit_fo, srealizes_must_exit_gen, srealizes_must_exit_init and 1 more. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -59,8 +60,8 @@ Theorem srealizes_must_exit_gen : forall c T,
   must_exit_in_at_cfg scfg segs S c.
 Proof.
   intros c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                 | c Hsite Hal Hspin Hh | c T T' H IH Heq | c T Hbr Hlt HT0];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                 | c Hsite Hal Hspin Hh | c T T' H IH Heq | c T Hbr Hrr Hlt HT0];
     intros Hsafe Hns Hhalt Hcodes Hnk.
   -
     destruct Hnode as [Hsteps Hsound].
@@ -116,33 +117,41 @@ Proof.
   intros c T Hsr Hsafe Hfo. apply (srealizes_must_exit_gen c T Hsr Hsafe). intros _ Hal. rewrite Hfo in Hal. discriminate Hal.
 Qed.
 
-Theorem srealizes_must_exit_init_fo : forall pc ph sp brk0 mbase rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp) T ->
-  Safe segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp) ->
-  sc_alloc scfg = false ->
-  codes_ok T -> nokill T ->
-  must_exit_in_scfg scfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
-Proof.
-  intros pc ph sp brk0 mbase rnd lim inp T Hsr Hsafe Hfo Hc Hk.
-  cbn [must_exit_in_scfg].
-  apply (srealizes_must_exit_fo _ T Hsr Hsafe Hfo); [| exact Hc | exact Hk].
-  left. reflexivity.
-Qed.
-
-Theorem srealizes_must_exit_init : forall pc ph sp brk0 mbase rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp) T ->
-  Safe segs scfg (init_config segs pc ph sp brk0 mbase rnd lim inp) ->
-  ~ spin_site_present segs ->
-  codes_ok T -> nokill T ->
-  must_exit_in_scfg scfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
-Proof.
-  intros pc ph sp brk0 mbase rnd lim inp T Hsr Hsafe Hns Hc Hk.
-  cbn [must_exit_in_scfg].
-  apply (srealizes_must_exit _ T Hsr Hsafe Hns); [| exact Hc | exact Hk].
-  left. reflexivity.
-Qed.
-
 End WithSegs.
+
+(* At 08b1429 [must_exit_in_scfg] runs over [run_segments segs inp sp mbase]
+   (Run.v run_segments: the binary's segments followed by the vDSO pair), so
+   the realization it consumes is the one over that list. *)
+Theorem srealizes_must_exit_init_fo : forall segs scfg S pc ph sp brk0 mbase rnd lim inp T,
+  srealizes (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) T ->
+  Safe (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) ->
+  sc_alloc scfg = false ->
+  codes_ok S T -> nokill T ->
+  must_exit_in_scfg scfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
+Proof.
+  intros segs scfg S pc ph sp brk0 mbase rnd lim inp T Hsr Hsafe Hfo Hc Hk.
+  cbn [must_exit_in_scfg].
+  apply (srealizes_must_exit_fo _ scfg S _ T Hsr Hsafe Hfo); [| exact Hc | exact Hk].
+  left. reflexivity.
+Qed.
+
+Theorem srealizes_must_exit_init : forall segs scfg S pc ph sp brk0 mbase rnd lim inp T,
+  srealizes (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) T ->
+  Safe (run_segments segs inp sp mbase) scfg
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) ->
+  ~ spin_site_present (run_segments segs inp sp mbase) ->
+  codes_ok S T -> nokill T ->
+  must_exit_in_scfg scfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
+Proof.
+  intros segs scfg S pc ph sp brk0 mbase rnd lim inp T Hsr Hsafe Hns Hc Hk.
+  cbn [must_exit_in_scfg].
+  apply (srealizes_must_exit _ scfg S _ T Hsr Hsafe Hns); [| exact Hc | exact Hk].
+  left. reflexivity.
+Qed.
+
 
 Lemma refusal_decided_classic : forall cfg i m, refusal_decided cfg i m.
 Proof.

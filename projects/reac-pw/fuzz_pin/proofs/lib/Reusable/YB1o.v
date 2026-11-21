@@ -7,7 +7,8 @@
    `python3 yb1o_find.py` (sha256 07b47f19b9a5..), which matches each whole run of words
    against the two pinned fuzz_knock binaries (asan, asan-ubsan) and maps the hit through the PT_LOAD headers.
    The W_<addr> NAMES are cgif's addresses, kept as names only; no knock address is stated in this file. *)
-(* Modified by Theorem Labs, 2026-10: copied for reac-pw/fuzz_pin from proofs/libreac/fuzz_knock/lib/Reusable/YB1o.v at origin/ossv/recipes 6ebe35ba632, module paths changed. Image-independent in reac-pw/fuzz_pin too: the file states no address, and both runs of words are present, byte for byte, in both fuzz_pin pins: the 28-word run at 0x63fb8 (asan 3e4859aed23f, = internal_strncpy's start in its unstripped twin 435309a6b12c) / 0x63fb8 (asan-ubsan d6f83d301522), the 87-word run at 0x518dc / 0x518dc (Sort<ioctl_desc>'s start). A/AB16.v Requires it. *)
+(* Modified by Theorem Labs, 2026-10: copied for reac-pw/fuzz_pin from proofs/libreac/fuzz_knock/lib/Reusable/YB1o.v, module paths changed. Image-independent in reac-pw/fuzz_pin too: the file states no address, and both runs of words are present, byte for byte, in both fuzz_pin pins: the 28-word run at 0x63fb8 (asan 3e4859aed23f, = internal_strncpy's start in its unstripped twin 435309a6b12c) / 0x63fb8 (asan-ubsan d6f83d301522), the 87-word run at 0x518dc / 0x518dc (Sort<ioctl_desc>'s start). A/AB16.v Requires it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

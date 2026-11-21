@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TRB hole section takes the mmap base and the launch premises valid_launch and entry_launch_ok_va in place of entry_stack_fits, with SINV0, argH0, E0 and wrap_mem over the run's ProcInput in place of its argv, envp, uid and hwcap fields, and the inst tactic specialising the new hypotheses; the hand-off premise over the hand-off states computed from the run at the run's own CONFIG_RSEQ flag, YB01r.v; the fresh variables its data and proofs name are the computed hand-off states' own numbers in place of the recorded states' (109 to 518, and 391), read from this unit's hand-off probe). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -9,7 +10,7 @@ From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import AsanUbsan.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YK11 YQ0b YK00 YK05 YA0i YA0l YK0h
 YK0d YK0e YK0f YK0g YK0a YA01 YA0c YA0e YA0d YA02 YA0j
-YB11 YB1g YB12 YB01
+YB11 YB1g YB12 YB01r
 YG00 YG01 YG0h YG10 YG0u YG0x YG0b YF9j YN05 YD1e YD1d YD2e
 YD1a.
 Import ListNotations.
@@ -22,25 +23,31 @@ Section b. Context {fx : YK11.FPState}.
 Section c.
 Variable B : asyms.
 Hypothesis HB : TrbSyms B.
-Variables (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput).
+Variables (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+(* #38: [entry_stack_fits] is gone from YA02's section - YA02.v:47-56 lists the
+   hypotheses it now has and that is not among them - and every layout fact is
+   taken off the launch instead, as YD1d.v:267-271. *)
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp.
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_trb h = Some ch.
+Hypothesis Hch : HS_trb_r (APC.rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
-#[local] Notation uid := (in_uid inp).
-#[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* #38: YA02's section is over the run's [inp] (YA02.v:47-56), so
+   [SINV0]/[argH0]/[E0] discharge as YD1d.v:281-287 spells them, and [wrap_mem]
+   takes the run, the mmap base and the entry word.  [uid] and [hw] leave: they
+   come off [inp] now. *)
+#[local] Notation SINV := (YA02.SINV0 TRB TPH sp rdraw brk mbase inp).
+#[local] Notation argH := (YA02.argH0 sp rdraw inp).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
 Hypothesis HC : cs_ok TSEGS TRB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
-Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk argv envp uid hw) n.
-Hypothesis HM : forall a, argH E a = true -> FULL a = wrap_mem TPH sp argv envp uid hw rdraw a.
+Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk inp) n.
+Hypothesis HM : forall a, argH E a = true -> FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (a_entry TRB)) sp rdraw a.
 Context {rc : YN05.RunCeil}.
 Hypothesis Hceil : YN05.ceil_of_top (bv_unsigned sp - stack_max_size).
 #[local] Notation HID := (hid TRB TOP argH E ch model).
@@ -49,8 +56,8 @@ Hypothesis Hceil : YN05.ceil_of_top (bv_unsigned sp - stack_max_size).
 #[local] Notation V n := (bv_unsigned (ev E n)).
 #[local] Notation vm := (vm_maps (m_vmmaps model)).
 #[local] Notation ly0 := (YD1d.ly0 ch E model).
-Ltac inst H := try specialize (H B); try specialize (H HB); try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
-try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h); try specialize (H ch);
+Ltac inst H := try specialize (H B); try specialize (H HB); try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp);
+try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hvl); try specialize (H Hlau); try specialize (H h); try specialize (H ch);
 try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H HC);
 try specialize (H HE); try specialize (H HM); try specialize (H rc); try specialize (H Hceil).
 Ltac get L := let H := fresh "L" in pose proof L as H; inst H; exact H.
@@ -216,19 +223,19 @@ In z (static_extents ly0 ++ vis0_zones ly0) -> fst z = u (epg n) -> len <= snd z
 { intros n len [zl zn] Hpe Hu Hlen Hin Hz1 Hz2. cbn [fst snd] in Hz1, Hz2. subst zl.
 apply (ZONE p (u (epg n)) zn B12 Hin (AL8 n Hu) ltac:(pose proof (uE_bound E (epg n)); lia)); rewrite Hpe; cbn [fst snd]; [lia|]. rewrite uE_litv by lia. lia. }
 destruct H13 as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]].
-*   eapply (PG 518%nat 4096 (wzp (dGV E)) eq_refl HGV ltac:(lia) (EXTRA _ GV_extra)); rewrite VGV; cbn [fst snd]; [reflexivity | lia].
-*   eapply (PG 501%nat 8388608 (wzp (dSB E)) eq_refl HSBv ltac:(lia)); [apply STATIC; cbn; tauto | rewrite VSB; reflexivity | rewrite VSB; cbn [snd]; lia].
-*   eapply (PG 500%nat 1048576 (wzp (dNB E)) eq_refl HNB ltac:(lia)); [apply STATIC; cbn; tauto | rewrite VNB; reflexivity | rewrite VNB; cbn [snd]; lia].
-*   eapply (PG 424%nat 11571200 (wzp (dF E)) eq_refl HFv ltac:(lia)); [apply STATIC; cbn; tauto | rewrite VF; reflexivity | rewrite VF; cbn [snd]; lia].
-*   eapply (PG 357%nat 4096 (u eD, 4096) eq_refl HD ltac:(lia)); [apply VIS0; unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
-*   eapply (PG 292%nat 4096 (wzp (d292 E)) eq_refl H292 ltac:(lia) (EXTRA _ e292_extra)); rewrite V292; cbn [fst snd]; [reflexivity | lia].
-*   eapply (PG 275%nat 65536 (u eC, 65536) eq_refl HCc ltac:(lia)); [apply VIS0; unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
-*   eapply (PG 274%nat 4096 (u eT, 4096) eq_refl HT ltac:(lia)); [apply VIS0; unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
+*   eapply (PG 524%nat 4096 (wzp (dGV E)) eq_refl HGV ltac:(lia) (EXTRA _ GV_extra)); rewrite VGV; cbn [fst snd]; [reflexivity | lia].
+*   eapply (PG 507%nat 8388608 (wzp (dSB E)) eq_refl HSBv ltac:(lia)); [apply STATIC; cbn; tauto | rewrite VSB; reflexivity | rewrite VSB; cbn [snd]; lia].
+*   eapply (PG 506%nat 1048576 (wzp (dNB E)) eq_refl HNB ltac:(lia)); [apply STATIC; cbn; tauto | rewrite VNB; reflexivity | rewrite VNB; cbn [snd]; lia].
+*   eapply (PG 430%nat 11571200 (wzp (dF E)) eq_refl HFv ltac:(lia)); [apply STATIC; cbn; tauto | rewrite VF; reflexivity | rewrite VF; cbn [snd]; lia].
+*   eapply (PG 363%nat 4096 (u eD, 4096) eq_refl HD ltac:(lia)); [apply VIS0; unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
+*   eapply (PG 296%nat 4096 (wzp (d292 E)) eq_refl H292 ltac:(lia) (EXTRA _ e292_extra)); rewrite V292; cbn [fst snd]; [reflexivity | lia].
+*   eapply (PG 279%nat 65536 (u eC, 65536) eq_refl HCc ltac:(lia)); [apply VIS0; unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
+*   eapply (PG 278%nat 4096 (u eT, 4096) eq_refl HT ltac:(lia)); [apply VIS0; unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
 *   pose proof rinfo_val as (F1 & F2 & F3 & F4 & F5).
 apply (ZONE RINFO_P (u eSp + kRegionInfoOff) 4096 B12); [apply VIS0; unfold VZ; cbn; tauto | | unfold kRegionInfoOff; lia | rewrite F1; unfold kRegionInfoOff; lia | rewrite F1, F2; unfold kRegionInfoOff; lia].
 unfold kRegionInfoOff. apply Z.mod_divide in S2 as [q Hq]; [|lia]. rewrite Hq. replace (q * 65536 + 2 ^ 37) with ((8192 * q + 2 ^ 34) * 8) by lia. apply Z_mod_mult.
-*   eapply (PG 254%nat 3727360 (wzp (d254 E)) eq_refl H254 ltac:(lia) (EXTRA _ e254_extra)); rewrite V254; cbn [fst snd]; [reflexivity | lia].
-*   eapply (PG 109%nat 65536 (wzp (d109 E)) eq_refl H109 ltac:(lia) (EXTRA _ e109_extra)); rewrite V109; cbn [fst snd]; [reflexivity | lia].
+*   eapply (PG 258%nat 3727360 (wzp (d254 E)) eq_refl H254 ltac:(lia) (EXTRA _ e254_extra)); rewrite V254; cbn [fst snd]; [reflexivity | lia].
+*   eapply (PG 113%nat 65536 (wzp (d109 E)) eq_refl H109 ltac:(lia) (EXTRA _ e109_extra)); rewrite V109; cbn [fst snd]; [reflexivity | lia].
 *   apply (ZONE IMG_P 0x10000 0x5f0000 B12); [apply STATIC; cbn; tauto | reflexivity | lia | |];
 unfold IMG_P; cbn [fst snd]; rewrite ?uE_litv by lia; lia.
 *   pose proof stk_val as [F1 F2]. unfold sh_lo in B1. change (shadow_off TRB) with SHADOW_OFF in B1. rewrite F1 in B1.

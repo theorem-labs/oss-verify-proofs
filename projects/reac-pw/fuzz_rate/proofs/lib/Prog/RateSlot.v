@@ -3,10 +3,11 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 574 lines of code are new or changed and 410 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 215 of its 252 lines of code are new or changed and 537 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot of reac-pw/fuzz_rate LLVMFuzzerTestOneInput (plain build) from its segment lemmas, and plain_halts from
    the frame. Taken from reac-pw/fuzz_role's Prog/RoleSlot.v, itself
    reac-pw/fuzz_pin's Prog/PinSlot.v and libreac/fuzz_ctrl's released Prog/Seg/Slot.v (Section Bridge and Bundle)
-   and Prog/Seg/SlotLink.v (Section Link) (origin/ossv/recipes 25e3d17bdb50), with rate's code and cuts:
+   and Prog/Seg/SlotLink.v (Section Link), with rate's code and cuts:
    - the n >= 2^26 run (early_evt): 0x12fc0 `addi sp,sp,-0x220`, the thirteen saves ra, s0 .. s11 (0x12fc4 ..
      0x12ff4), 0x12ff8 `srli a2,a1,26`, 0x12ffc `beqz a2` not taken, 0x13000 `j 0x14564`: `mv a0,zero`, the
      thirteen restores, `addi sp,sp,0x220`, `ret` (0x14564 .. 0x145a0); outside GV (n < 2^26), so the slot runs it

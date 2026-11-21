@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the input's channel-reader fact (vie_reader) is passed to the agreement proof. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -44,7 +45,8 @@ Proof.
   destruct (run_of_tree usegs Ubsan.M.init_pc Ubsan.M.phdrs target_alloc_limit
               (the_prog usegs ustage inp en) (epost the_post) en inp (HU en inp He Hi) Hl
               (tsafe_conj nstep nsafe unforced _ _ Hs
-                 (tsafe_mono nstep no_enomem unforced _ _ no_enomem_unforced (prog_no_enomem_U en inp He Hi))))
+                 (tsafe_mono nstep no_enomem unforced _ _ no_enomem_unforced (prog_no_enomem_U en inp He Hi)))
+              (vie_reader _ Hi))
     as (t' & Hres & Htr & Herr & _).
   split; [| exact Herr].
   intros tr. rewrite (Htr tr). exact (prog_det_U prog_no_enomem_U en inp He Hi t' Hres tr).

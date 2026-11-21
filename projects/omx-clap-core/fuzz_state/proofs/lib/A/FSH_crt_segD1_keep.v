@@ -1,4 +1,4 @@
-(* rule 24: proves no function (kind: helper lemmas of check_round_trip's D1 segment lemma, PORTED from a working branch d25a984c903 check_round_trip_sd16.v / sd17.v / sd18.v)
+(* rule 24: proves no function (kind: helper lemmas of check_round_trip's D1 segment lemma, PORTED from a working branch check_round_trip_sd16.v / sd17.v / sd18.v)
    This file holds the separation facts the D1 segment lemma (segments 30-33) needs at its frees and its decode call:
    two different live blocks are apart, a block of the walk's own list is not one of the entry's blocks, and the
    footprints of one fuzz_free call and of one preset_base64_decode call meet no other live block, no live frame byte

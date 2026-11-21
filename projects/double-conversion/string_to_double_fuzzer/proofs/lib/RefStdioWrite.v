@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -706,6 +707,13 @@ Section Loop.
   Hypothesis Fhi : (f + 232 <= 0xe4b88)%Z.
   Hypothesis FD : (0 < fd < 2147483648)%Z.
   Hypothesis Hfd : fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+  (* #38 gave rz_writev1_wall a SIGPIPE guard: LibWritev.v:605 inserts
+     `m_channel_reader model = true` BETWEEN the fd_lookup premise and `0 < fd < 2^31`, which is
+     why FD lands in the reader's slot at :858.  The ASan path already carries the same premise
+     (AsanNodesArgAsan.v:437, AsanAcctNoLazy.v:574 etc.) and dc's own cs_ok carries it as a field
+     (AsanPlanSound.v:342 co_rdr), so this is the Ref path adopting a fact the rest of the unit
+     already states.  Same class as json-c's QwNp/QSpR repair on this branch's sibling unit. *)
+  Hypothesis Hrdr : m_channel_reader model = true.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hret : ret_ok ret.
@@ -817,7 +825,7 @@ Section Loop.
   Proof. apply bv_eq; vm_compute; reflexivity. Qed.
 
   (* [comment removed for export] *)
-  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop1 : forall n regs m (k : nat) (b : word) (bs : list byte),
+  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop1 : forall n regs m (k : nat) (b : word) (bs : list byte),
     (length bs <= n)%nat ->
     RI regs -> LM m ->
     getr regs 10 = Z_to_bv 64 (Z.of_nat k) ->
@@ -855,7 +863,7 @@ Section Loop.
     eapply (rz_writev1_wall RSEGS regs1 (0x9bb44 : word) m' model W_9bb44 fd
               (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b + Z.of_nat k))
               (Z_to_bv 64 (Z.of_nat (length bs) - Z.of_nat k)) (skipn k bs) K);
-      [ exact F_9bb44 | exact E_9bb44 | exact Hh | exact Hlazy | exact Hfd | exact FD
+      [ exact F_9bb44 | exact E_9bb44 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
       | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | exact HKnil | ].
     - subst m'. rdn_solve.
     - subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -915,7 +923,7 @@ Section Loop.
 
 
   (* [comment removed for export] *)
-  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop2 : forall n regs m (k : nat) (b0 : word) (bs0 : list byte) (b1 : word) (bs1 : list byte),
+  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop2 : forall n regs m (k : nat) (b0 : word) (bs0 : list byte) (b1 : word) (bs1 : list byte),
     (length bs0 + length bs1 <= n)%nat ->
     RI regs -> LM m ->
     getr regs 10 = Z_to_bv 64 (Z.of_nat k) ->
@@ -962,7 +970,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 104)) (Z_to_bv 64 (bv_unsigned b0 + Z.of_nat k))
                 (Z_to_bv 64 (Z.of_nat (length bs0) - Z.of_nat k))
                 b1 (Z_to_bv 64 (Z.of_nat (length bs1))) (skipn k bs0) bs1 K);
-        [ exact F_9bb44 | exact E_9bb44 | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_9bb44 | exact E_9bb44 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. rdn_solve.
@@ -1052,7 +1060,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b1 + Z.of_nat (k - length bs0)))
                 (Z_to_bv 64 (Z.of_nat (length bs1) - Z.of_nat (k - length bs0)))
                 (skipn (k - length bs0) bs1) K);
-        [ exact F_9bb44 | exact E_9bb44 | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_9bb44 | exact E_9bb44 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -1160,6 +1168,11 @@ Proof. apply bv_eq; vm_compute; reflexivity. Qed.
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* #38's SIGPIPE guard: LibWritev.v:605 puts [m_channel_reader model = true]
+     between the fd_lookup premise and the fd range, and loop1/loop2 below take
+     it in that slot.  The rest of this unit already states the same fact
+     (AsanPlanSound.v:342 co_rdr), so this is the Ref path adopting it. *)
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   (0 <= wb <= wp)%Z -> (wp <= 0x800000000000)%Z ->   (* [comment removed for export] *)
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -1186,7 +1199,7 @@ Proof. apply bv_eq; vm_compute; reflexivity. Qed.
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
 Proof.
   intros regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K
-         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hh Hlazy WBP WPhi
+         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hrdr Hh Hlazy WBP WPhi
          LENP LENE MAX M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
   pose proof (u64_range s) as Hs. pose proof (u64_range l) as Hl.
   pose proof SWF as SWF'. pose proof SSP as SSP'.
@@ -1240,11 +1253,11 @@ Proof.
   pose proof (loop1 su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 model K
-                SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
+                SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
   pose proof (loop2 su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 model K
-                SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
+                SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
   pose proof (LM_refl su mem1) as LM1.
   destruct (Z.eq_dec wb wp) as [EQ|NEQ].
   - (* [comment removed for export] *)
@@ -1281,7 +1294,7 @@ Proof.
     + (* [comment removed for export] *)
       eapply (rz_writev1_wall RSEGS regs1 (0x9babc : word) mem1 model W_9babc fd
                 (Z_to_bv 64 (su - 88)) s l (x0 :: extra') K);
-        [ exact F_9babc | exact E_9babc | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_9babc | exact E_9babc | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | | | | | | | exact HKnil | ].
       * u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. exact M80.
       * unfold word_to_nat. rewrite LENE, Nat2Z.id. exact Be.
@@ -1330,7 +1343,7 @@ Proof.
     { unfold RI. repeat split; assumption. }
     eapply (rz_writev2_wall RSEGS regs1 (0x9babc : word) mem1 model W_9babc fd
               (Z_to_bv 64 (su - 104)) (Z_to_bv 64 wb) (Z_to_bv 64 (wp - wb)) s l pending extra K);
-      [ exact F_9babc | exact E_9babc | exact Hh | exact Hlazy | exact Hfd | exact FD
+      [ exact F_9babc | exact E_9babc | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
       | exact R17 | exact R10 | exact R11 | exact R12 | exact M104 | | | | | | | | | | | | exact HKnil | ].
     + u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. exact M96.
     + u_norm. replace (su - 104 + 16)%Z with (su - 88)%Z by lia. exact M88.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *) (* Modified by Theorem Labs, 2026-10: the donor subdirectory modules R/Cfg, R/Place and Z/Placement are kept files of this unit and live under lib/Reusable, not lib/B *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE3e.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: libreac/fuzz_grant's adaptation carried (commit 59a4233e661: the line diff of fuzz_grant's own A/AE3e.v, numerals masked, placed by provenance/core-reloc/B/pgcarry/pgcarry_b.py): wl_done uses realizes_emit_nil, as this release's realizes has no realizes_nonempty. *)
+(* Modified by Theorem Labs, 2026-10: libreac/fuzz_grant's adaptation carried (the line diff of fuzz_grant's own A/AE3e.v, numerals masked, placed by provenance/core-reloc/B/pgcarry/pgcarry_b.py): wl_done uses realizes_emit_nil, as this release's realizes has no realizes_nonempty. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed rz_writev_dep). *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -100,6 +101,7 @@ assert (Hr : (1 <= Z.to_nat (bv_unsigned ret))%nat /\ (Z.to_nat (bv_unsigned ret
 exists (exist _ (Z.to_nat (bv_unsigned ret)) Hr). unfold ef, writev_eff; cbn [proj1_sig].
 rewrite Z2Nat.id by lia. rewrite Z_to_bv_bv_unsigned, Hci. auto.
 + exact (fun _ => acfg_nonspurious_no _ _ _ _ _ _ Hno eq_refl).
++ exact (writev_rob_pend segs regs pc mem rom model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb).
 - intros [n [Hn1 Hn2]]. unfold ef; cbn [proj1_sig]. rewrite adv_pend.
 rewrite effmem_writev_eff. unfold writev_eff; cbn [eff_ret]. apply Hc; assumption.
 Qed.

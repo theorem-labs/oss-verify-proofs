@@ -12,7 +12,7 @@
    9. the counters at the loop head (a3f_cnt_start);
    10. the empty cur_name buffer (a3f_nm_nil).
 
-   4 and 5 follow the plain-build walk owner's lib/Prog/pf_p1.v at 04f2be60e018 (pf1_fld_* and pf1_enc_reading /
+   4 and 5 follow the plain-build walk owner's lib/Prog/pf_p1.v (pf1_fld_* and pf1_enc_reading /
    pf1_enc_gen, its lines 88-180): the same seg_spec.rconf_enc, the old bytes split at the field and put back
    together around the new field. The rest is written new; L_parse_start_holds and pf_cnt_start come from
    lib/Prog/pfA_facts.v (Required, not re-proved).

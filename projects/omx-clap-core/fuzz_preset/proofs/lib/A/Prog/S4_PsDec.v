@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -38,6 +38,7 @@
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v, with its module names changed; 310 of its 359 lines of code are new or changed and 477 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4: parse_string's DECODE stretch (part C of WalkS4's split, 08:2xZ), the theorem
    ps_seg_dec of S4_PsBase.v. The loop at PS_DEC (offset 328) is walked by the symbolic engine from the cut ps_at_dec
    (dec_entry) through one turn: the success tail (offset 1352: ps_seg_retok), the free cut (offset 1276:
@@ -48,9 +49,9 @@
    HYPOTHESES (Section): the slice's cut statements ps_seg_retok (S4_PsBase.v), ps_seg_free and ps_seg_u
    (S4_PsDecKit.v; WalkS4's split, proved by the free and \u stretches); LAWS / PST_ok (S4_PsBase.v's own Section
    hypotheses, same text); HW (the kit's prh_head_wide, discharged at the preset instance by a Theorem Labs lane's preset_head_wide).
-   FILE SET: as the kit's cut 7cdbb61b5fa0 carries it (WalkS4's base of record at the merge was
-   a working branch 844c6152eb9 on the kit walkkit preview 0687b776b39, engine / YCbqG 63997a07aa6).
-   THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; base 44a91d58bb5, S4_PsBase.v
+   FILE SET: as the kit's cut carries it (WalkS4's base of record at the merge was
+   a working branch on the kit walkkit preview, engine / YCbqG).
+   THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; base, S4_PsBase.v
    a59ce5bfcbe3): Section c proves ps_seg_dec_holdsP : ps_seg_decP .. P over an ABSTRACT invariant P with its laws PLAW
    (srr_inv_laws segs P; the stretch makes no call, so no srr_inv_call), from the P-form cut statements HRETOK /
    HFREEC / HU. Every run goes through YSRrMemnorm's runner twin (paj_run_x_inv / paj_run_to_x_inv at P, PLAW;

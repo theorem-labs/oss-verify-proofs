@@ -37,9 +37,9 @@
    over entries i ..); inside entry i it is the rest of entry i's key run (gkrest) followed by grest (S i).
 
    COMPOSITION NOTE (snprintf).  ASNPRINTF (W_sites.v asnprintf_realizes, a Theorem Labs lane's RtFormat statement at our
-   addresses, SRr form) is discharged ONCE at the top: lib/A/RT_pf_vf.v snprintf_chain_ok (commit 9067b7156f9; the
-   evt-level chain, RT_pf_stmt.v snprintf_icpt_stmt), then a Theorem Labs lane's evt -> SRr bridge (commit
-   efa2842e125).  No walk file imports the CJ / Bz tree.  The chain's stack requirement at __wrap_snprintf is
+   addresses, SRr form) is discharged ONCE at the top: lib/A/RT_pf_vf.v snprintf_chain_ok (the
+   evt-level chain, RT_pf_stmt.v snprintf_icpt_stmt), then a Theorem Labs lane's evt -> SRr bridge.
+   No walk file imports the CJ / Bz tree.  The chain's stack requirement at __wrap_snprintf is
    K = 8208 bytes (glue 2608 + GXA's 48 + VF_DEPTH 5552), inside asnprintf_realizes' 3 * ESTACK window, and it
    needs GXA's frm0 (rounding mode 0) on fcsr: TOP's walk carries the stack window (ecall_pre_stk (3 * ESTACK))
    at 0x82e04, and the bridge owner takes frm0 from the start-up FP state (fcsr = 0, lib/Reusable/YK11.v:16) or the
@@ -48,14 +48,14 @@
    STATEMENT GAPS (facts the machine has that the first text lacked; each found at a prover's unprovable goal, each
    fixed by stating the fact and discharging it at PB_fr / fr_globals by vm_compute, never by weakening):
    - GLIVE own = [] (RigTail, aj_flag_store_pi / aj_stack_malloc_pres_at): the fake frame read as an ENTRY frame; now
-     own = [(1, fpos)] (6322e1c462a).
+     own = [(1, fpos)].
    - HH44 / HH45 (RigPro, the slots 72(sp) / 40(sp) and s6): the abstract PI leaves VAL (A_HI 44 / 45) -
-     VAL (A_OBJ 7 / 8) open (W_rebase.v:7-15) (d700f304923).
-   - key slack (W_rep.v bounded it only from below; W8's ruling-(A) W_rep.v removes it) (ead5de7cc24).
+     VAL (A_OBJ 7 / 8) open (W_rebase.v:7-15).
+   - key slack (W_rep.v bounded it only from below; W8's ruling-(A) W_rep.v removes it).
    - HRGP / HRGI (RigTail, rig_post's aout_at / arelay_at after the unlock): counter-case rg_send_max = rg_lock + 4
-     with mx = 16; four cells not placed in the image could sit in F, its shadow or the stack (eab4b19b11c).
+     with mx = 16; four cells not placed in the image could sit in F, its shadow or the stack.
    - HROMO and HRGI's not-owned-static half (RigPro, rom_view and aout_at across __asan_stack_malloc_1, which keeps
-     only bytes that are not aowned) (cd96cd63ec8).
+     only bytes that are not aowned).
    - WHY ASNPRINTF'S STACK PREMISE IS DISCHARGED AT 0x82e04 (asked by a Theorem Labs lane for the snprintf chain's guarded
      route, K = 8208): sp there is gsp1 = entry sp - 224 (gregs_base), and GBASE's afn_pre gives RIG_STK_x = 17200
      bytes below the entry sp (W_rig_pro.v rgp_entry, by reflexivity), so 16976 bytes lie below the call;
@@ -65,7 +65,7 @@
      rig_key_stmt too (ruling: a Theorem Labs lane, fix (1)).  rr_all_stmt checked: SCANS is fed by SCAN, every premise used.
    - a Theorem Labs lane's relay_remove findings, checked here: Q2 ROOM applied under the sum form (gesture_end's ge_roomb with
      a send that does not grow g_out: rig_spec and GBASE took cap < MMAX and blocks_bytes + tr_alloc + 4 * max cap
-     tr_max <= LIVE_MAX, 1744b876fbd).  C3 (475b8a2b569, the peak form) REMOVED both: ge_room is stated over
+     tr_max <= LIVE_MAX).  C3 (the peak form) REMOVED both: ge_room is stated over
      gesture_end's own trace, so rig_spec and GBASE take blocks_bytes + tr_peak tr <= LIVE_MAX (tr_max tr < MMAX and
      the meter unchanged), and gbud's room over the remaining trace tl is blocks_bytes S1 + tr_peak tl <= LIVE_MAX
      (was + tr_alloc tl).  Q3: HEND5 (W4's text) for ge_spec's END5 literal.  Q6: rig_lift_DR / rig_lift_SL in this file.
@@ -80,10 +80,10 @@
      so HEND5 (W4's text) and azs over "%s %d " / "param_gesture" could not be discharged.  ge_spec / gse_spec need
      only the bytes (HEND5L + rom_view); the literal predicate (now glit_at_x) carries W3's ashp (range_addressable over exactly [a, a + n) and
      the shadow hull).  Delete-and-rebuild check: no Qed piece used HEND5 or the azs conjunct.
-   CONSUMER NOTE (W8's ARM_gone, LLVMFuzzerTestOneInput's call of relay_instance_gone): since C3 (475b8a2b569) rig_spec's
+   CONSUMER NOTE (W8's ARM_gone, LLVMFuzzerTestOneInput's call of relay_instance_gone): since C3 rig_spec's
    room premise at the call is `blocks_bytes S + tr_peak tr <= LIVE_MAX` (was `+ tr_alloc tr`), with tr = rig_tr c mx
-   |O| cap ID es hs; the two premises 1744b876fbd added (`cap < MMAX`, `blocks_bytes S + tr_alloc tr + 4 * Z.max cap
-   (tr_max tr) <= LIVE_MAX`) are GONE.  (The canary-presence premise 6a1bcf9f403 added is GONE again:
+   |O| cap ID es hs; the two premises added (`cap < MMAX`, `blocks_bytes S + tr_alloc tr + 4 * Z.max cap
+   (tr_max tr) <= LIVE_MAX`) are GONE.  (The canary-presence premise added is GONE again:
    the canary's bytes are image bytes, HCANR, so nothing about them is carried.)
 
    SNPRINTF'S GUARD AND LITERALS (k3's RigTop, a Theorem Labs lane's request): ASNPRINTF asks aguard_ok W mem FR_GOT_GUARD
@@ -91,9 +91,9 @@
    the top by lib/A/AE22.v got_canary_of_AR (TfibSyms B: the word is the const cell z8 0x9e658 0x5f94b0 of
    Tfib_const_abs; am_const, NOT rom_view: the word is writable).  Its second half (the canary is readable) holds in
    every state because the canary's bytes are image bytes (HCANR: seg_rom [0x5f94b0, +8) = Some 0, aview falls back to
-   seg_rom); nothing is carried from the entry (a Theorem Labs lane's ruling, superseding 6a1bcf9f403's carried presence).  The two literals snprintf and strlen read, the
+   seg_rom); nothing is carried from the entry (a Theorem Labs lane's ruling, superseding's carried presence).  The two literals snprintf and strlen read, the
    format "%s %d " (.str.8, A_OBJ 20) and "param_gesture" (.str.5, A_OBJ 21), are HLIT20 / HLIT21 in W7's dlit_at
-   form (W_drain_cx.v:220; W7's HLIT5 is the same fact for A_OBJ 21).
+   form (W_drain_cx.v:221; W7's HLIT5 is the same fact for A_OBJ 21).
 
    ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the RIG_x round): converted IN PLACE to any
    allocator relation ARx with its laws and the room record RP (W_journal_x.v Record roomp).  Section c takes
@@ -102,19 +102,20 @@
    in their _x forms, the runtime entries and callees in their _x room forms (W_sites_x.v, W_contract_x.v,
    W_journal_x.v Section hc), ALLOC_TAIL and HGOTG over ARx, the literals' shadow by W_contract_x.ashp_x, and two facts
    on the program statics PST that the journal's image clause exempts (PSTR, PSTG; both hold at PST = []), as the
-   template lib/A/W_relay_finish_h.v (commit 3d17f490d56) does.  The entry record gcx gains the entry's head set gxHp
+   template lib/A/W_relay_finish_h.v does.  The entry record gcx gains the entry's head set gxHp
    and room budget gxkr; GBASE is rig_spec_x's premises exactly (W_contract_x.v :975), gPOST rig_post_x; GLIVE's
    journal is ajournal_gx_x from gxHp to the cut's head set Hp1 (existential, beside fpos); gbud takes the cut's
    layout and carries, beside the meter, the room the requests still owed need on top of gxkr
    (rp_RM RP S1 (Z.to_nat (tr_cost MT_rk tl) + gxkr cx)) and the live counts plus rig_pk's shape over those requests
    (cnt_ok_pk RP (fun P => Z.to_nat (tr_peakP P tl) + 3) (ablocks B ly1 S1)); at the entry (tl = gtr cx) both are
    GBASE's, by conversion.  rig_all_stmt concludes rig_spec_x.
-   THE STACK BUDGET (W8's DRAIN_STK_x ruling, commit b9052387bcb, W_contract_x.v): rig_spec_x's pre and post journal
+   THE STACK BUDGET (W8's DRAIN_STK_x ruling, W_contract_x.v): rig_spec_x's pre and post journal
    take RIG_STK_x = RIG_STK + 128 and dr_spec_x's DRAIN_STK_x = DRAIN_STK + 128 (the strndup interceptor's inner malloc
    below the drain's frame), so GBASE's afn_pre_x and GLIVE's journal are at RIG_STK_x, the drain call at
    DRAIN_STK_x (RIG_STK_x = RIG_FRAME + DRAIN_STK_x still holds), and the segments' stack arithmetic uses both.  The
    bridge rig_spec_x_AR0 is false at RIG_STK_x and was deleted with that ruling, so the family proves only the generic
    pb_relay_instance_gone_x (a Theorem Labs lane's ruling, option 1): the AR theorem and its re-derivation are deleted. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -254,7 +255,7 @@ aview SEGS (w_H W) mem a <> None.
 (* the runtime entries relay_instance_gone calls, at their SIGMA pcs, over ARx (W_sites_x.v / W_contract_x.v /
    W_journal_x.v Section hc; the free rule at the room record RP).  snprintf: a Theorem Labs lane's statement at fuzz_reply's
    addresses (W_sites.v asnprintf_realizes, its twin W_sites_x.v asnprintf_realizes_x), which the snprintf chain
-   (commit 9067b7156f9, lib/A/RT_pf_vf.v snprintf_chain_ok, through a Theorem Labs lane's evt -> SRr bridge) discharges. *)
+   (lib/A/RT_pf_vf.v snprintf_chain_ok, through a Theorem Labs lane's evt -> SRr bridge) discharges. *)
 Hypothesis ALOCK : alock_realizes_x B ARx (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes_x B ARx (SIGMA WS_pthread_mutex_unlock).
 Hypothesis AFREE : afree_cf_rule_c_x SEGS B PST ARx MT RP CTX_AFREE.
@@ -277,10 +278,10 @@ Hypothesis HGOTG : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
    through mbyte's seg_rom fallback: aguard_ok's second half needs nothing carried (a Theorem Labs lane's ruling; a Theorem Labs lane's
    pin measurement).  PB_fr decides it by vm_compute. *)
 Hypothesis HCANR : forall a, FR_GUARD <= a < FR_GUARD + 8 -> seg_rom SEGS (Z_to_bv 64 a) <> None.
-(* the two literals of the snprintf call, in W7's dlit_at form (W_drain_cx.v:220): the bytes in .rodata, read-only,
+(* the two literals of the snprintf call, in W7's dlit_at form (W_drain_cx.v:221): the bytes in .rodata, read-only,
    zero shadow, and the shadow hull visible in every ARx state *)
 Definition RIG_FMT : list Z := [37; 115; 32; 37; 100; 32].   (* "%s %d " *)
-(* ashp is RomOutPlace's lib/A/W_shadow_pin.v (commit 209a71e66fe), the unit's one definition: range_addressable over
+(* ashp is RomOutPlace's lib/A/W_shadow_pin.v, the unit's one definition: range_addressable over
    exactly [a, a + n) and the shadow hull, in every allocator state; glit_at_x states it over ARx (W_contract_x.v
    ashp_x).  (The AR text glit_at served only the AR re-derivation, deleted with it.) *)
 Definition glit_at_x (i : nat) (l : list Z) : Prop :=
@@ -298,7 +299,7 @@ Hypothesis HLIT21 : glit_at_x 21 (RelayModel.K_GESTURE ++ [0]).
 (* the two literals lie in .rodata below the GOT word FR_GOT_GUARD = 0x9e658, |"%s %d "| + 1 = 7 and
    |"param_gesture"| + 1 + 8 = 22 bytes: the location premises M1 / M3 of the narrowed asnprintf_realizes_x
    (W_sites_x.v), which this abstract placement does not fix.  PB_fr decides it by vm_compute: SnpNarrowSites.v
-   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (commit 2f48fc47493's hypothesis, carried here). *)
+   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (a commit's hypothesis, carried here). *)
 Hypothesis HLITGOT : VAL (A_OBJ 20) + 7 <= FR_GOT_GUARD /\ VAL (A_OBJ 21) + 22 <= FR_GOT_GUARD.
 (* " end\0" (.str.4, A_lit_end5 = A_OBJ 31) in the same form, for gesture_end's / gestures_end's garr8 premise and its
    ashp (instance: W_shadow_pin_fr.v ashp_end5_5_fr): bytes, in_rom, ashp, the granule's tail; HEND5L above gives the
@@ -665,21 +666,21 @@ Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md
 Hypothesis AFREE_R : afree_cf_rule_c_xR SEGS B PST ARx MT RP RO CTX_AFREE R.
 Hypothesis DRAIN_R : dr_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_drain).
 Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end).
-(* W_relay_instance_gone_cx.v:322 rig_lift_DR at R *)
+(* W_relay_instance_gone_cx.v:323 rig_lift_DR at R *)
 Lemma rig_lift_DR_xR : forall XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_DR B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
 Proof. intros. eapply ajournal_gx_G_mono_xR; [exact rig_G_DR_RIG | eassumption]. Qed.
-(* W_relay_instance_gone_cx.v:326 rig_lift_SL at R *)
+(* W_relay_instance_gone_cx.v:327 rig_lift_SL at R *)
 Lemma rig_lift_SL_xR : forall XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_SL B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
 Proof. intros. eapply ajournal_gx_G_mono_xR; [exact rig_G_SL_RIG | eassumption]. Qed.
-(* W_relay_instance_gone_cx.v:360 gPOST at R *)
+(* W_relay_instance_gone_cx.v:361 gPOST at R *)
 Definition gPOST_xR (cx : gcx) : world SEGS -> config -> Prop :=
 rig_post_xR B PST ARx R MT RP RG (gxregs cx) (gxly cx) (gxS cx) (gxHp cx) (gxW cx) (gxmem cx) (gxmd cx)
   (gxG0 cx) (gxID cx) (gxes cx) (gxhs cx) (gxc cx) (gxO cx) (gxmx cx) (gxcap cx) (gxout cx) (gxkr cx).
-(* W_relay_instance_gone_cx.v:427 GLIVE at R *)
+(* W_relay_instance_gone_cx.v:428 GLIVE at R *)
 Definition GLIVE_xR (cx : gcx) (F FL : Z) (ly1 : alayout) (S1 : astate) (W1 : world SEGS) (m1 : word -> option byte)
 (md1 : Model) (k1 : Z) : Prop :=
 exists fpos Hp1,
@@ -688,7 +689,7 @@ ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx)
 rom_view SEGS W1 m1 /\ apres_kept B (gxW cx) (gxmem cx) W1 m1 /\
 g_frame cx fpos F FL ly1 W1 m1 /\
 alock_at RG W1 m1 true.
-(* W_relay_instance_gone_cx.v:527 RGO at R *)
+(* W_relay_instance_gone_cx.v:528 RGO at R *)
 Definition RGO_xR (cx : gcx) (i : nat) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd c2 O2 cap2 out2 spent,
 c1 = cfg_at SEGS (BASE + A_rig_outer) regs1 m1 md1 /\
@@ -698,7 +699,7 @@ getr regs1 22 = w64 (rg_src RG + RIG_HI_SRC) /\ getr regs1 14 = w64 (Z.of_nat i)
 (i < length (gxes cx))%nat /\
 GLIVE_xR cx F FL ly1 S1 W1 m1 md1 k1 /\ g_lslots cx F W1 m1 /\
 GOUT cx i qd c2 O2 cap2 out2 spent ly1 S1 W1 m1.
-(* W_relay_instance_gone_cx.v:541 RGI at R *)
+(* W_relay_instance_gone_cx.v:542 RGI at R *)
 Definition RGI_xR (cx : gcx) (i n r : nat) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd cB OB capB e1 h1 ev LB c2' O1 cap1 ks Ed f c2 O2 cap2 out2 spent,
 c1 = cfg_at SEGS (BASE + A_rig_inner) regs1 m1 md1 /\
@@ -711,7 +712,7 @@ val_mem SEGS (arm W1 m1) (gsp1 cx + 32) 8 ((gSA cx i + 48) mod 8 + 3) /\
 val_mem SEGS (arm W1 m1) (gsp1 cx + 88) 8 (Z.of_nat i) /\
 GLIVE_xR cx F FL ly1 S1 W1 m1 md1 k1 /\ g_lslots cx F W1 m1 /\
 GIN cx i n r F qd cB OB capB e1 h1 ev LB c2' O1 cap1 ks Ed f c2 O2 cap2 out2 spent ly1 S1 W1 m1.
-(* W_relay_instance_gone_cx.v:555 RGE at R *)
+(* W_relay_instance_gone_cx.v:556 RGE at R *)
 Definition RGE_xR (cx : gcx) (i : nat) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd c2 O2 cap2 out2 spent,
 c1 = cfg_at SEGS (BASE + A_rig_step) regs1 m1 md1 /\
@@ -720,28 +721,28 @@ val_mem SEGS (arm W1 m1) (gsp1 cx + 88) 8 (Z.of_nat i) /\
 (i < length (gxes cx))%nat /\
 GLIVE_xR cx F FL ly1 S1 W1 m1 md1 k1 /\ g_lslots cx F W1 m1 /\
 GOUT cx (S i) qd c2 O2 cap2 out2 spent ly1 S1 W1 m1.
-(* W_relay_instance_gone_cx.v:565 RGU at R *)
+(* W_relay_instance_gone_cx.v:566 RGU at R *)
 Definition RGU_xR (cx : gcx) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd c2 O2 cap2 out2 spent,
 c1 = cfg_at SEGS (BASE + A_rig_unlock) regs1 m1 md1 /\
 gregs_base cx regs1 /\ getr regs1 21 = w64 (shadow_addr F) /\
 GLIVE_xR cx F FL ly1 S1 W1 m1 md1 k1 /\
 GOUT cx (length (gxes cx)) qd c2 O2 cap2 out2 spent ly1 S1 W1 m1.
-(* W_relay_instance_gone_cx.v:577 rig_pro_stmt at R *)
+(* W_relay_instance_gone_cx.v:578 rig_pro_stmt at R *)
 Definition rig_pro_stmt_xR : Prop :=
 forall cx,
 GBASE cx ->
 (forall W2 c2, RGO_xR cx 0 W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 (forall W2 c2, RGU_xR cx W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R (gxW cx) (cfg_at SEGS A_rig_entryP (gxregs cx) (gxmem cx) (gxmd cx)) (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:589 rig_top_stmt at R *)
+(* W_relay_instance_gone_cx.v:590 rig_top_stmt at R *)
 Definition rig_top_stmt_xR : Prop :=
 forall cx i W1 c1,
 GBASE cx -> RGO_xR cx i W1 c1 ->
 (forall r W2 c2, RGI_xR cx i 0 r W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 (forall W2 c2, RGE_xR cx i W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:603 rig_key_stmt at R *)
+(* W_relay_instance_gone_cx.v:604 rig_key_stmt at R *)
 Definition rig_key_stmt_xR : Prop :=
 forall cx i n r W1 c1,
 GBASE cx -> GCTX cx -> RGI_xR cx i n r W1 c1 ->
@@ -749,33 +750,33 @@ GBASE cx -> GCTX cx -> RGI_xR cx i n r W1 c1 ->
 (forall r' W2 c2, r = S r' -> RGI_xR cx i n r' W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 (forall W2 c2, RGE_xR cx i W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:612 rig_keys_stmt at R *)
+(* W_relay_instance_gone_cx.v:613 rig_keys_stmt at R *)
 Definition rig_keys_stmt_xR : Prop :=
 rig_key_stmt_xR ->
 forall cx i n r W1 c1,
 GBASE cx -> GCTX cx -> RGI_xR cx i n r W1 c1 ->
 (forall W2 c2, RGE_xR cx i W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:621 rig_step_stmt at R *)
+(* W_relay_instance_gone_cx.v:622 rig_step_stmt at R *)
 Definition rig_step_stmt_xR : Prop :=
 forall cx i W1 c1,
 GBASE cx -> RGE_xR cx i W1 c1 ->
 (forall W2 c2, RGO_xR cx (S i) W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 (forall W2 c2, RGU_xR cx W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:629 rig_outer_stmt at R *)
+(* W_relay_instance_gone_cx.v:630 rig_outer_stmt at R *)
 Definition rig_outer_stmt_xR : Prop :=
 rig_top_stmt_xR -> rig_key_stmt_xR -> rig_keys_stmt_xR -> rig_step_stmt_xR ->
 forall cx i W1 c1,
 GBASE cx -> GCTX cx -> RGO_xR cx i W1 c1 ->
 (forall W2 c2, RGU_xR cx W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:638 rig_tail_stmt at R *)
+(* W_relay_instance_gone_cx.v:639 rig_tail_stmt at R *)
 Definition rig_tail_stmt_xR : Prop :=
 forall cx W1 c1,
 GBASE cx -> RGU_xR cx W1 c1 ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:644 rig_all_stmt at R *)
+(* W_relay_instance_gone_cx.v:645 rig_all_stmt at R *)
 Definition rig_all_stmt_xR : Prop :=
 rig_pro_stmt_xR -> rig_top_stmt_xR -> rig_key_stmt_xR -> rig_step_stmt_xR -> rig_keys_stmt_xR -> rig_outer_stmt_xR -> rig_tail_stmt_xR ->
 rig_spec_xR B PST ARx R MT RP MMAX RG CTX_AFREE A_rig_entryP.

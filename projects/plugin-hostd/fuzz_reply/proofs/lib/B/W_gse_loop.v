@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the loop-body segment of fuzz_reply's gestures_end walk on IMAGE B
-   (asan-ubsan), lane W4.  A NEW WALK after lib/A/W_gse_loop.v (a working branch f958b1a14b3): B's
+   (asan-ubsan), lane W4.  A NEW WALK after lib/A/W_gse_loop.v (a working branch): B's
    code allocates registers differently and inserts UBSan trap branches to `unimp` (0x827b0). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* gse_loop_at (W_gse_cut.v, FROZEN) at B's loop head 0x82694, i < nheld, s5 = 8i, s6 = i, s7 = shadow (s1), s8 = 3;
    by induction on the keys left (gsl_loop_x), each pass:
      0x82694  load8 check of s->held (decided by gsl_SH), held + 8i, the four UBSan trap edges, held[i]'s load8 check
@@ -469,8 +470,8 @@ Hypothesis HOUTG : forall r a, In r (aout_fp B RG 0 0) -> fst r <= a < snd r -> 
    is FALSE at the instance (partial granule: shadow byte 5 at 0x7fffc1e0, W3's measurement) and was never needed. *)
 Hypothesis HEND5I : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 -> in_img SEGS a.
 (* HEND5G holds for EXACTLY [VAL A_lit_end5, VAL A_lit_end5 + 5) = [0x20f00, 0x20f05) on both images and MUST NOT BE
-   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch
-   5fab70f4113; ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
+   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch;
+   ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
    (0x20f05, 0x1b) - the literal's two redzones - end and start exactly at its edges.  One byte more on either side,
    or rounding the range to 8 bytes or an aligned word, makes that clause FALSE. *)
 Hypothesis HEND5G : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 ->
@@ -1871,8 +1872,8 @@ Hypothesis HOUTG : forall r a, In r (aout_fp B RG 0 0) -> fst r <= a < snd r -> 
    is FALSE at the instance (partial granule: shadow byte 5 at 0x7fffc1e0, W3's measurement) and was never needed. *)
 Hypothesis HEND5I : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 -> in_img SEGS a.
 (* HEND5G holds for EXACTLY [VAL A_lit_end5, VAL A_lit_end5 + 5) = [0x20f00, 0x20f05) on both images and MUST NOT BE
-   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch
-   5fab70f4113; ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
+   WIDENED: its `~ owned_static` clause is TRUE (StartupTrace's tfib_lit_end5_not_owned_static, a working branch;
+   ZeroGlobals and W1Verify measured the same rows) only because owned_static's rows (0x20ee1, 0x1f) and
    (0x20f05, 0x1b) - the literal's two redzones - end and start exactly at its edges.  One byte more on either side,
    or rounding the range to 8 bytes or an aligned word, makes that clause FALSE. *)
 Hypothesis HEND5G : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + 5 ->

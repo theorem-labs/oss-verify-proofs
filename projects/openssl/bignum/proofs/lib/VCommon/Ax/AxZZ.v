@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the entry region). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -34,10 +34,10 @@ Definition xb_is0 (b : xb) : bool := match b with BL x => (x =? 0)%uint63 | _ =>
 Section WithSegs.
 Variable segs : list Segment.
 
-Fixpoint find_entry (A : list region) : option PhdrInfo :=
+Fixpoint find_entry (A : list region) : option (bool * PhdrInfo) :=
   match A with
   | [] => None
-  | R :: A' => match rg_kind R with KEntry ph => Some ph | _ => find_entry A' end
+  | R :: A' => match rg_kind R with KEntry r ph => Some (r, ph) | _ => find_entry A' end
   end.
 
 Definition a_load3 (s : store) (A : list region) (v : xv) (n : nat) : option (list xb) :=
@@ -46,7 +46,7 @@ Definition a_load3 (s : store) (A : list region) (v : xv) (n : nat) : option (li
   | None => match xaddr v with
             | Some (ts, o) => if lexists (fun R => zz_fits s R ts o (Z.of_nat n)) A then Some (repeat (BL 0%uint63) n) else
                 match find_entry A with
-                | Some ph => match eb_load ph s v n with Some l => if Nat.eqb (length l) n then Some l else None | None => None end
+                | Some (r, ph) => match eb_load r ph s v n with Some l => if Nat.eqb (length l) n then Some l else None | None => None end
                 | None => None
                 end
             | None => None
@@ -138,11 +138,12 @@ Proof.
   unfold rv in Hb. rewrite Hb. rewrite wz_succ. rewrite <- Z.add_assoc. rewrite IH by lia. reflexivity.
 Qed.
 
-Lemma find_entry_spec (A : list region) (ph : PhdrInfo) : find_entry A = Some ph -> exists R, In R A /\ rg_kind R = KEntry ph.
+Lemma find_entry_spec (A : list region) (r : bool) (ph : PhdrInfo) :
+  find_entry A = Some (r, ph) -> exists R, In R A /\ rg_kind R = KEntry r ph.
 Proof.
   induction A as [|R A IH]; cbn [find_entry]; [discriminate|].
   destruct (rg_kind R) eqn:Ek; try (intros H; destruct (IH H) as [R1 [H1 H2]]; exists R1; split; [right; exact H1 | exact H2]).
-  intros H. injection H as <-. exists R. split; [left; reflexivity | exact Ek].
+  intros H. injection H as <- <-. exists R. split; [left; reflexivity | exact Ek].
 Qed.
 
 Lemma a_load3_sound (ρ : valuation) (s : store) (A : list region) (m : word -> option byte) (v : xv) (a : bv 64) (n : nat) (l : list xb) :
@@ -154,13 +155,13 @@ Proof.
   - destruct (xaddr v) as [[ts o]|] eqn:Ea; [|discriminate].
     rewrite lexists_eq in H. destruct (existsb (fun R => zz_fits s R ts o (Z.of_nat n)) A) eqn:Ez.
     2:{
-      destruct (find_entry A) as [ph|] eqn:Efe; [|discriminate].
-      destruct (eb_load ph s v n) as [l1|] eqn:Eeb; [|discriminate].
+      destruct (find_entry A) as [[r ph]|] eqn:Efe; [|discriminate].
+      destruct (eb_load r ph s v n) as [l1|] eqn:Eeb; [|discriminate].
       destruct (Nat.eqb (length l1) n); [|discriminate]. injection H as <-.
-      destruct (find_entry_spec A ph Efe) as [R [HIn Ek]].
+      destruct (find_entry_spec A r ph Efe) as [R [HIn Ek]].
       destruct HM as [_ HR]. rewrite Forall_forall in HR. pose proof (HR R HIn) as HRR. unfold RRegion in HRR. rewrite Ek in HRR.
       pose proof HRR as [_ [Hb _]]. rewrite Hb in HRR.
-      exact (eb_load_sound segs ph ρ s m _ v a n l1 Hs HRR Hv Eeb). }
+      exact (eb_load_sound segs r ph ρ s m _ v a n l1 Hs HRR Hv Eeb). }
     injection H as <-.
     apply existsb_exists in Ez as [R [HIn Hz]].
     destruct HM as [Hok HR]. rewrite Forall_forall in HR. pose proof (HR R HIn) as HRR.
@@ -192,7 +193,6 @@ Proof.
       destruct HIn as [<-|HIn]; [exact W | apply IH; assumption]. }
     destruct (zz_fits_addr ρ s R ts o (Z.of_nat (length nb)) a ltac:(lia) Hs Hwf Hz (xaddr_val ρ v a ts o Hv Ea)) as [Hk [Hc [off [H0 [H1 Ha]]]]].
     pose proof (Forall2_length Hf) as Hlen.
-
     assert (Hbz : forall k b, nth_error bs k = Some b -> b = Z_to_bv 8 0).
     { intros k b Hk2. rewrite forallb_forall in Hz0.
       assert (Hkl : (k < length bs)%nat) by (apply nth_error_Some; rewrite Hk2; discriminate).
@@ -222,13 +222,13 @@ Proof.
       - pose proof (smod_range ρ (rg_ts R) (rg_bo R)). unfold rbase in *. lia.
       - destruct Hwf as [W1 _]. rewrite <- Hlen. unfold two64 in *. lia. }
     split.
-    +
+    + (* [comment removed for export] *)
       rewrite Haw. replace (wz (rbase ρ R + off)) with (wz (rbase ρ R + to_Z (of_Z off))) by (rewrite of_Z_spec, Z.mod_small; [reflexivity | destruct Hwf as [_ [H47 _]]; change wB with (2^63); lia]).
       apply store_ok_range with (ρ := ρ) (R := R); [rewrite <- RRegion_ne by (unfold is_entry; destruct Hk as [Hk|Hk]; rewrite Hk; reflexivity); exact HRR | destruct Hk as [Hk|Hk]; rewrite Hk; reflexivity | |destruct Hwf as [_ [H47 _]]; exact H47].
       rewrite of_Z_spec, Z.mod_small by (destruct Hwf as [_ [H47 _]]; change wB with (2^63); lia). lia.
     + split; [exact Hok|]. apply Forall_forall. intros R2 HIn2.
       destruct (is_entry R2) eqn:Ee2.
-      {
+      { (* [comment removed for export] *)
         assert (Hne : R2 <> R) by (intros ->; unfold is_entry in Ee2; destruct Hk as [Hk|Hk]; rewrite Hk in Ee2; discriminate).
         destruct (In_nth_error A R HIn) as [i Hi]. destruct (In_nth_error A R2 HIn2) as [j Hj].
         assert (Hij : i <> j) by (intros ->; rewrite Hi in Hj; injection Hj as ->; exact (Hne eq_refl)).
@@ -251,9 +251,8 @@ Proof.
       fold z in Hb, Hw. unfold rv in Hb |- *. unfold wview in Hw |- *.
       destruct (Z_lt_le_dec z (rbase ρ R + off)) as [Hlo|Hlo]; [|destruct (Z_lt_le_dec z (rbase ρ R + off + Z.of_nat (length bs))) as [Hhi|Hhi]].
       * rewrite !(Hout (wz z)) by (rewrite Hz64; lia). split; [exists b; split; assumption | exact Hw].
-      *
+      * (* [comment removed for export] *)
         rewrite !(Hrange (wz z)) by (rewrite Hz64; lia).
-
         destruct (zz_region_bytes ρ m R HRR Hk Hc Hwf (z - rbase ρ R) ltac:(rewrite <- Hlen in *; lia)) as [Hold _].
         replace (rbase ρ R + (z - rbase ρ R)) with z in Hold by ring. unfold rv in Hold.
         split.
@@ -271,7 +270,7 @@ Proof.
   - intros H. injection H as <-. exact (a_load2_length segs s A v n l0 E).
   - destruct (xaddr v) as [[ts o]|]; [|discriminate]. destruct (lexists _ A).
     + intros H. injection H as <-. apply repeat_length.
-    + destruct (find_entry A) as [ph|]; [|discriminate]. destruct (eb_load ph s v n) as [l1|]; [|discriminate].
+    + destruct (find_entry A) as [[r ph]|]; [|discriminate]. destruct (eb_load r ph s v n) as [l1|]; [|discriminate].
       destruct (Nat.eqb (length l1) n) eqn:El; [|discriminate]. intros H. injection H as <-. apply Nat.eqb_eq. exact El.
 Qed.
 
@@ -292,7 +291,6 @@ Fixpoint rel2 (s0 : store) (s : list fact) (c : Z) (ts : terms) : option ivl :=
       | Some (x, a) =>
           if a =? 0 then rest else
           let b := coef_of ts x in
-
           let resid := tadd (tscale a ts) (tscale (- b) tf) in
           match tbox s0 resid with
           | Some (bl, bh) =>
@@ -398,13 +396,24 @@ Qed.
 
 Definition lrange3 (s : store) (f : lin) : option ivl := imeet (lrange s f) (rel3 2 s (st_facts s) (fst f) (snd f)).
 
-Definition hs_beg : Z := 2201439137792.
-Definition hs_hi : Z := 17594333495296.
+Lemma lrange3_sound (ρ : valuation) (s : store) (f : lin) :
+  sat ρ s -> forall i, lrange3 s f = Some i -> fst i <= leval ρ f <= snd i.
+Proof.
+  intros Hs. unfold lrange3. apply imeet_sound.
+  - intros i Hi. exact (lrange_sound ρ s f Hs i Hi).
+  - intros i Hi. unfold leval. exact (rel3_sound ρ s 2 Hs (st_facts s) (fst f) (snd f) (proj2 Hs) i Hi).
+Qed.
+
+Definition hs_beg : Z := 2201439137792.     (* [comment removed for export] *)
+Definition hs_hi : Z := 17594333495296.     (* [comment removed for export] *)
 
 Definition is_shadow (R : region) : bool := match rg_kind R with KShadow => true | _ => false end.
 
-Definition ls_beg : Z := 2147450880.
-Definition ls_end : Z := 2415882240.
+Definition ls_beg : Z := 2147450880.        (* [comment removed for export] *)
+Definition ls_end : Z := 2415882240.        (* [comment removed for export] *)
+
+Lemma entry_not_shadow (R : region) : is_entry R = true -> is_shadow R = false.
+Proof. unfold is_entry, is_shadow. destruct (rg_kind R); first [reflexivity | discriminate]. Qed.
 
 Lemma RRegion_sh (ρ : valuation) (m : word -> option byte) (R : region) : is_shadow R = true -> RRegion segs ρ m R -> RRegion0 segs ρ m R.
 Proof. intros Hs. rewrite RRegion_ne; [exact (fun X => X)|]. unfold is_shadow, is_entry in *. destruct (rg_kind R); first [reflexivity | discriminate Hs]. Qed.
@@ -425,6 +434,12 @@ Definition plain_mode (A : list region) : Prop :=
 
 Definition hs_ok (ρ : valuation) (A : list region) (m : word -> option byte) : Prop := plain_mode A \/ hs_old ρ A m.
 
+Lemma hs_old_ok (ρ : valuation) (A : list region) (m : word -> option byte) : hs_old ρ A m -> hs_ok ρ A m.
+Proof. intros H. right. exact H. Qed.
+
+Lemma plain_ok (ρ : valuation) (A : list region) (m : word -> option byte) : plain_mode A -> hs_ok ρ A m.
+Proof. intros H. left. exact H. Qed.
+
 Lemma hs_old_of_pos (ρ : valuation) (A : list region) (m : word -> option byte) :
   (forall R, In R A -> 0 < to_Z (rg_n R)) -> hs_ok ρ A m -> hs_old ρ A m.
 Proof. intros Hpos [[[R [HR Hn]] _]|H]; [specialize (Hpos R HR); lia | exact H]. Qed.
@@ -440,7 +455,6 @@ Definition written_in (ρ : valuation) (A : list region) (a n : Z) : Prop :=
   exists R, In R A /\ rbase ρ R <= a /\ a + n <= rbase ρ R + to_Z (rg_n R).
 
 Definition off_range (s : store) (d : lin) (n N : Z) : option ivl :=
-
   if rbetween 3 s d N 4611686018427387903 then Some (N, 4611686018427387903)
   else if rbetween 3 s d (-4611686018427387903) (- n) then Some (-4611686018427387903, - n)
   else lrange2 s d.
@@ -485,6 +499,15 @@ Fixpoint havoc_all (s : store) (ts : terms) (o : w64) (n : Z) (A : list region) 
 
 Definition tgcd (ts : terms) : Z := fold_right (fun p g => Z.gcd (snd p) g) 0 ts.
 
+Lemma tgcd_div (ρ : valuation) (ts : terms) : (tgcd ts | teval ρ ts).
+Proof.
+  induction ts as [|[x a] r IH]; cbn [tgcd fold_right teval snd].
+  - exists 0. reflexivity.
+  - apply Z.divide_add_r.
+    + apply Z.divide_mul_l. apply Z.gcd_divide_l.
+    + eapply Z.divide_trans; [apply Z.gcd_divide_r | exact IH].
+Qed.
+
 Definition gran (f : lin) (r : option ivl) : option ivl :=
   match r with
   | Some (lo, hi) =>
@@ -492,6 +515,19 @@ Definition gran (f : lin) (r : option ivl) : option ivl :=
       if g <=? 1 then r else Some (fst f - g * ((fst f - lo) / g), fst f + g * ((hi - fst f) / g))
   | None => None
   end.
+
+Lemma gran_sound (ρ : valuation) (f : lin) (r : option ivl) :
+  (forall i, r = Some i -> fst i <= leval ρ f <= snd i) -> forall i, gran f r = Some i -> fst i <= leval ρ f <= snd i.
+Proof.
+  intros Hr i H. destruct r as [[lo hi]|]; [|discriminate]. cbn [gran] in H.
+  specialize (Hr _ eq_refl). cbn [fst snd] in Hr.
+  destruct (Z.leb_spec (tgcd (snd f)) 1) as [Hg|Hg]; [injection H as <-; exact Hr|].
+  injection H as <-. cbn [fst snd]. destruct (tgcd_div ρ (snd f)) as [q Hq].
+  set (g := tgcd (snd f)) in *. unfold leval in *. rewrite Hq in *. clearbody g.
+  assert (H1 : (hi - fst f) / g >= q) by (apply Z.le_ge, Z.div_le_lower_bound; lia).
+  assert (H2 : (fst f - lo) / g >= - q) by (apply Z.le_ge, Z.div_le_lower_bound; lia).
+  split; nia.
+Qed.
 
 Definition in_hs_l (s : store) (ts : terms) (o : w64) (n : Z) : bool :=
   match lrange s (wS o, ts) with
@@ -734,9 +770,9 @@ Proof.
   intros Hs Hwf HRR Hdis Hf Hf1 Hf2 Hn Hin Hout H.
   pose proof Hwf as [W1 [W2 [W3 [W4 W5]]]].
   destruct (is_entry R) eqn:Ee.
-  {
-    assert (Ek : exists ph, rg_kind R = KEntry ph) by (unfold is_entry in Ee; destruct (rg_kind R); try discriminate; eexists; reflexivity).
-    destruct Ek as [ph Ek]. unfold havoc_one in H. rewrite Ek in H. injection H as <-.
+  { (* [comment removed for export] *)
+    assert (Ek : exists rq ph, rg_kind R = KEntry rq ph) by (unfold is_entry in Ee; destruct (rg_kind R); try discriminate; eexists; eexists; reflexivity).
+    destruct Ek as (rq & ph & Ek). unfold havoc_one in H. rewrite Ek in H. injection H as <-.
     apply (RRegion_mframe segs ρ m m' R Hwf); [|exact HRR].
     intros y Hy. apply Hout. rewrite u_wz by (pose proof (smod_range ρ (rg_ts R) (rg_bo R)); unfold rbase in *; unfold two64 in *; lia).
     intros Hc. apply (Hdis ltac:(unfold is_shadow; rewrite Ek; reflexivity) y); [unfold in_rg; lia | right; unfold hs_beg, hs_hi in *; lia]. }
@@ -744,7 +780,6 @@ Proof.
   assert (Hy64 : forall x : int, to_Z x < to_Z (rg_n R) -> bv_unsigned (wz (rbase ρ R + to_Z x)) = rbase ρ R + to_Z x).
   { intros x Hx. apply u_wz. pose proof (to_Z_bounded x). change wB with (2 ^ 63) in *.
     pose proof (smod_range ρ (rg_ts R) (rg_bo R)). unfold rbase in *. unfold two64 in *. lia. }
-
   assert (Hkeep : (forall x : int, to_Z x < to_Z (rg_n R) -> ~ (f <= rbase ρ R + to_Z x < f + n)) -> RRegion segs ρ m' R).
   { intros Hno. rewrite (RRegion_ne segs ρ m' R Ee). intros x Hx. destruct (HRR x Hx) as [[b [Hb Hab]] Hw].
     assert (Eq : m' (wz (rbase ρ R + to_Z x)) = m (wz (rbase ρ R + to_Z x))) by (apply Hout; rewrite Hy64 by exact Hx; apply Hno; exact Hx).
@@ -755,14 +790,12 @@ Proof.
     | | injection H as <-; apply Hkeep; intros x Hx Hc; apply (Hdis ltac:(unfold is_shadow; rewrite Ek; reflexivity) (rbase ρ R + to_Z x)); [unfold in_rg; pose proof (to_Z_bounded x); lia | right; lia]
     | injection H as <-; apply Hkeep; intros x Hx Hc; apply (Hdis ltac:(unfold is_shadow; rewrite Ek; reflexivity) (rbase ρ R + to_Z x)); [unfold in_rg; pose proof (to_Z_bounded x); lia | right; lia]
     | exfalso; unfold is_entry in Ee; rewrite Ek in Ee; discriminate].
-
   assert (Hwritten : forall x : int, to_Z x < to_Z (rg_n R) -> f <= rbase ρ R + to_Z x < f + n ->
             m' (wz (rbase ρ R + to_Z x)) = Some (Z_to_bv 8 0)).
   { intros x Hx Hc. apply Hin. rewrite Hy64 by exact Hx. exact Hc. }
   assert (Hunw : forall x : int, to_Z x < to_Z (rg_n R) -> ~ (f <= rbase ρ R + to_Z x < f + n) ->
             m' (wz (rbase ρ R + to_Z x)) = m (wz (rbase ρ R + to_Z x))).
   { intros x Hx Hc. apply Hout. rewrite Hy64 by exact Hx. exact Hc. }
-
   assert (Hbyte : forall R0 : region, rg_n R0 = rg_n R -> rbase ρ R0 = rbase ρ R -> rk_writable (rg_kind R0) = true ->
             (forall x : int, to_Z x < to_Z (rg_n R) -> f <= rbase ρ R + to_Z x < f + n -> xb_z ρ (rbyte segs R0 x) 0) ->
             (forall x : int, to_Z x < to_Z (rg_n R) -> ~ (f <= rbase ρ R + to_Z x < f + n) -> forall z, xb_z ρ (rbyte segs R x) z -> xb_z ρ (rbyte segs R0 x) z) ->
@@ -780,7 +813,7 @@ Proof.
       destruct (HRR x Hx) as [[b [Hb Hab]] Hw]. unfold rv, wview in *. rewrite (Hunw x Hx Hc).
       split; [exists b; split; [exact Hb | exact (Hk0 x Hx Hc _ Hab)] | intros _; apply Hw; rewrite Ek; reflexivity]. }
   destruct (rg_cells R) eqn:Ec.
-  -
+  - (* [comment removed for export] *)
     injection H as <-. apply Hbyte; try reflexivity; [rewrite Ek; reflexivity | | intros x _ _ z Hz; exact Hz].
     intros x _ _. rewrite rbyte_zz by first [right; exact Ek | exact Ec]. cbn [xb_z]. reflexivity.
   - destruct (off_range s (lsub (wS o, ts) (wS (rg_bo R), rg_ts R)) n (to_Z (rg_n R))) as [[lo hi]|] eqn:El; [|discriminate].
@@ -949,7 +982,6 @@ Proof.
     replace ((bv_unsigned a <=? z) && (z <? bv_unsigned a + Z.of_nat (length bs))) with false; [reflexivity|].
     symmetry. apply Bool.not_true_iff_false. intros Hc. apply andb_prop in Hc as [E1 E2]. apply Z.leb_le in E1. apply Z.ltb_lt in E2. lia. }
   assert (Hss64 : forall z, in_ss z -> 0 <= z < two64) by (intros z Hz; unfold in_ss, ls_beg, ls_end, hs_beg, hs_hi, two64 in *; lia).
-
   assert (Hwss : forall z, in_ss z -> bv_unsigned a <= z < bv_unsigned a + Z.of_nat (length bs) -> is_shadow R = true).
   { intros z Hss Hz. destruct (is_shadow R) eqn:Es; [reflexivity|]. exfalso. apply (P1 R HRin Es z); [unfold in_rg; lia | exact Hss]. }
   split; [|split; [|split]].
@@ -1040,7 +1072,6 @@ Proof.
       apply Hy. lia. }
     assert (Hold : hs_old ρ A m) by (destruct (hs_wit_ex s A Esh) as (W & HW & HWs & _); exact (hs_old_of_sh ρ A m W HW HWs Hhs)).
     destruct Hold as [P1 [P2 [P3 P4]]].
-
     assert (HSm : forall z, hs_beg <= z < hs_hi -> m (wz z) <> None).
     { apply hs_wit_ex in Esh as (R & HRin & Hsh & Hpos & Hb).
       destruct (in_hs_l_ex ρ s _ _ _ Hs Hb) as (lb & hb & Hrb & Hb1 & Hb2).

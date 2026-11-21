@@ -16,9 +16,10 @@
      0x89fb4 and 0x89fec (a + 56i < a, b + 56i < b unsigned) and 0x8a064, 0x8a068 (~(a[i].args) < 8k, ~(b[i].args) < 8k)
      are refuted at the branch from the values of their operands. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_calls_equal.v, with its module paths and module names changed; 511 of its 639 lines of code are new or changed and 1464 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_add on fuzz_segconf.asan-ubsan (image B, entry BASE + AF_reac_declared_vlan_add = 0x8a514, 177
    instructions, 112-byte frame, no side-stack frame): segment 0 of the walk of lib/B/Prog/reac_declared_vlan_add_c.v,
-   the image-B port of lib/A/Prog/reac_declared_vlan_add_s0.v (commit fcd2fa03dd27). Written for
+   the image-B port of lib/A/Prog/reac_declared_vlan_add_s0.v. Written for
    the image-B G4 + G5 walks, in the form of plugin-hostd/fuzz_command's released lib/B/Prog walks (the symbolic
    executor over the position-abstract listing, the inline checks removed by the shadow tokens, the loop cut at its
    head and re-seeded there, each UBSan trap branch refuted at the branch).

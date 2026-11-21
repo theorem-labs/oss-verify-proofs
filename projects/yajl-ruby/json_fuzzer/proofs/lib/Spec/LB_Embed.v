@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the continuation premise over nstep_cfg acfg, with nstep_cfg_sub feeding each li_ lemma but li_munmap, which takes the nstep_cfg step itself). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
-From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState ITree Nodes Decode.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState ITree Nodes NodesCfg Decode.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Spec Require Import Prelim Monad MSafe STree Malloc RawAlloc KInv KLink KStep LB_Kernel.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -17,7 +18,12 @@ Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCei
 Lemma vis_flat_L {A} n (k : resp -> itree node (exc A)) mo (Q : A -> Model -> Prop) (R : A -> Model -> Prop) :
   (forall rsp, match k rsp with Ret _ => True | Vis _ _ => False end) ->
   etwf (Vis n k) mo Q ->
-  (forall rsp mo' evs a, nstep n mo rsp mo' evs -> k rsp = Ret (Ok a) -> Q a mo' -> R a mo') ->
+  (* LPS 75d69e00: [nstep_cfg acfg], matching the [etwf] above, which MSafe.v
+     now states over the same relation. The [li_*] lemmas below take plain
+     [nstep], fed through [nstep_cfg_sub] (Lib/NodesCfg.v:81), except
+     [li_munmap], which is FALSE over plain [nstep] at LPS 727298f3 (munmap's
+     ENOMEM refusal) and takes the [nstep_cfg acfg] step itself. *)
+  (forall rsp mo' evs a, nstep_cfg acfg n mo rsp mo' evs -> k rsp = Ret (Ok a) -> Q a mo' -> R a mo') ->
   etwf (Vis n k) mo (fun a mo' => Q a mo' /\ R a mo').
 Proof.
   intros Hf H HR. cbn in H |- *. destruct H as [Hs Hk]. split; [exact Hs|]. intros rsp mo' evs Hst. specialize (Hk rsp mo' evs Hst). specialize (Hf rsp).
@@ -52,7 +58,7 @@ Proof.
       destruct Hpre as [[_ Hph]|[(cur & Hph & E)|(b & l & Hph & Hreg & E)]].
       2:{ exfalso. pose proof (kl_phase _ _ _ HK) as P. rewrite Hph in P. destruct P as (Ecur & _). pose proof (kl_start _ _ _ HK) as (S1 & _). pose proof (round_up_pg_ge cur). unfold PGSZ in *. lia. }
       2:{ exfalso. pose proof (kl_brkreg _ _ _ HK b l Hreg) as (R1 & R2 & R3 & _). unfold PGSZ in *. lia. }
-      pose proof (li_brk0 L (ps_brk s0) mo rsp mo' evs z HK HLI Hph Hst) as HL'.
+    pose proof (li_brk0 L (ps_brk s0) mo rsp mo' evs z HK HLI Hph (nstep_cfg_sub _ _ _ _ _ _ Hst)) as HL'.
       change (event_post L (EBrk 0) z) with (set_brkph (BPQueried z) L). exact HL'.
     + flat_shape W. eapply vis_flat_L; [| exact W|].
       { intros rsp. destruct (dec_brk (ps_brk s0) req rsp) as [[|]|]; reflexivity. }
@@ -60,7 +66,7 @@ Proof.
       destruct (dec_brk (ps_brk s0) req rsp) as [x|] eqn:Hd; cbn in Ek; [| discriminate].
       assert (Ez : z = match x with BrkGrown => req | BrkSame => ps_brk s0 end) by (destruct x; cbn in Ek; congruence).
       destruct Hpre as [[E _]|Hpre]; [exfalso; exact (NZ E)|].
-      pose proof (li_brk_grow L (ps_brk s0) mo rsp mo' evs req x HK HLI Hpre Hst Hd) as HL'. rewrite <- Ez in HL'.
+    pose proof (li_brk_grow L (ps_brk s0) mo rsp mo' evs req x HK HLI Hpre (nstep_cfg_sub _ _ _ _ _ _ Hst) Hd) as HL'. rewrite <- Ez in HL'.
       exact HL'.
   - (* [comment removed for export] *)
     unfold ev_step in W |- *.
@@ -72,19 +78,19 @@ Proof.
         intros rsp mo' evs [z s'] Hst Ek [Hans HP]. cbn [fst snd] in *.
         destruct (dec_mmap_none len [] rsp) as [x|] eqn:Hd; cbn in Ek; [| discriminate].
         assert (Ez : z = mm_val x) by (destruct x; cbn; congruence). subst z.
-        pose proof (li_mmap_none L (ps_brk s0) mo rsp mo' evs len x HK HLI Hlen Hst Hd) as HL'.
+        pose proof (li_mmap_none L (ps_brk s0) mo rsp mo' evs len x HK HLI Hlen (nstep_cfg_sub _ _ _ _ _ _ Hst) Hd) as HL'.
         exact HL'.
       * change (PROT_RW =? 0) with false in *. cbn iota in W |- *. flat_shape W. eapply vis_flat_L; [| exact W|].
         { intros rsp. destruct (dec_mmap len [] rsp); reflexivity. }
         intros rsp mo' evs [z s'] Hst Ek [Hans HP]. cbn [fst snd] in *.
         destruct (dec_mmap len [] rsp) as [x|] eqn:Hd; cbn in Ek; [| discriminate].
         assert (Ez : z = mm_val x) by (destruct x; cbn; congruence). subst z.
-        pose proof (li_mmap_rw L (ps_brk s0) mo rsp mo' evs len x HK HLI Hlen Hst Hd) as HL'.
+        pose proof (li_mmap_rw L (ps_brk s0) mo rsp mo' evs len x HK HLI Hlen (nstep_cfg_sub _ _ _ _ _ _ Hst) Hd) as HL'.
         exact HL'.
     + change (negb (Z.land MAPFX MAP_FIXED_Z =? 0)) with true in *. cbn iota in W |- *. flat_shape W. eapply vis_flat_L; [| exact W|].
       { intros rsp. destruct (dec_mmap_fixed (round_up_pg cur) PGSZ rsp); reflexivity. }
       intros rsp mo' evs [z s'] Hst Ek [Hans HP]. cbn [fst snd] in *.
-      pose proof (li_mmap_fixed L (ps_brk s0) mo rsp mo' evs cur z HK HLI Hph Hst) as HL'.
+    pose proof (li_mmap_fixed L (ps_brk s0) mo rsp mo' evs cur z HK HLI Hph (nstep_cfg_sub _ _ _ _ _ _ Hst)) as HL'.
       exact HL'.
   - (* [comment removed for export] *)
     unfold ev_step in W |- *. destruct Hpre as (Hq & l0 & Hin & Hlen). flat_shape W. eapply vis_flat_L; [| exact W|].
@@ -96,7 +102,7 @@ Proof.
     unfold ev_step in W |- *. destruct Hpre as (Hq & -> & -> & b & l & k & Hin & -> & Hk). flat_shape W. eapply vis_flat_L; [| exact W|].
     { intros rsp. destruct (dec_mprotect_rw (b + (1 + k) * PGSZ) PGSZ rsp); reflexivity. }
     intros rsp mo' evs [z s'] Hst Ek [Hans HP]. cbn [fst snd] in *.
-    pose proof (li_mprotect L (ps_brk s0) mo rsp mo' evs b l k z HK HLI Hin Hk Hst) as HL'.
+    pose proof (li_mprotect L (ps_brk s0) mo rsp mo' evs b l k z HK HLI Hin Hk (nstep_cfg_sub _ _ _ _ _ _ Hst)) as HL'.
     exact HL'.
 Qed.
 

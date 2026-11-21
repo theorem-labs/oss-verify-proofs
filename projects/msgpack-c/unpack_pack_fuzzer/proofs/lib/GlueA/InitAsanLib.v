@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's readable-range fact MRd normalised as NRd, readable bytes, with every other fact kind named in norm_fact; the readable-range check rd_chk, the same-word check copy_chk, and based_region_ok_slots, a based region from its slots proved one by one). *)
 From Stdlib Require Import ZArith NArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -91,7 +92,7 @@ Proof.
     rewrite Z.mod_add by lia. reflexivity.
 Qed.
 
-Inductive nkind := NWord | NZero | NZeroS | NImg | NOther.
+Inductive nkind := NWord | NZero | NZeroS | NImg | NOther | NRd.
 Record nfact := NF { nf_kind : nkind; nf_a : lin; nf_n : Z; nf_v : lin }.
 
 Definition norm_fact (f : MX.mfact) : nfact :=
@@ -106,7 +107,9 @@ Definition norm_fact (f : MX.mfact) : nfact :=
   | MX.MImg lo hi => NF NImg (lconst lo) (hi - lo) (lconst 0)
   | MX.MZeroS a n =>
       match lin_of kv a, lin_of kv n with Some la, Some ln => NF NZeroS la 0 ln | _, _ => NF NOther (lconst 0) 0 (lconst 0) end
-  | _ => NF NOther (lconst 0) 0 (lconst 0)
+  | MX.MRd a n =>
+      match lin_of kv a with Some la => NF NRd la n (lconst 0) | None => NF NOther (lconst 0) 0 (lconst 0) end
+  | MX.MFill _ _ _ | MX.MWr _ _ | MX.MWrS _ _ => NF NOther (lconst 0) 0 (lconst 0)
   end.
 
 Definition nfact_ok (f : nfact) : Prop :=
@@ -116,6 +119,7 @@ Definition nfact_ok (f : nfact) : Prop :=
   | NZeroS => forall i, 0 <= i < leval V (nf_v f) -> rb segs m (leval V (nf_a f) + i) = Some (Z_to_bv 8 0)
   | NImg => forall i, 0 <= i < nf_n f -> m (Z_to_bv 64 (leval V (nf_a f) + i)) = None
   | NOther => True
+  | NRd => forall i, 0 <= i < nf_n f -> rb segs m (leval V (nf_a f) + i) <> None
   end.
 
 Lemma cellw_bytes_at : forall a w z, MX.is_cellw w = true ->
@@ -134,7 +138,7 @@ Qed.
 
 Lemma norm_fact_sound : forall f, MX.mfact_ok segs V m f -> nfact_ok (norm_fact f).
 Proof.
-  intros f Hf. destruct f as [a w v|a n|a w v|a n|a n c|lo hi|a n|a n|a n]; cbn [norm_fact]; try exact I.
+  intros f Hf. destruct f as [a w v|a n|a w v|a n|a n c|lo hi|a n|a n|a n|a n]; cbn [norm_fact]; try exact I.
   -   destruct (lin_of kv a) as [la|] eqn:Ea; [|exact I]. destruct (lin_of kv v) as [lv|] eqn:Ev; [|exact I].
     destruct (MX.is_cellw w) eqn:Hw; [|exact I]. unfold nfact_ok. cbn [nf_kind nf_a nf_n nf_v]. cbn [MX.mfact_ok] in Hf.
     rewrite <- (lin_of_sound V kv Hkv a la Ea), <- (lin_of_sound V kv Hkv v lv Ev).
@@ -153,6 +157,9 @@ Proof.
   -   destruct (lin_of kv a) as [la|] eqn:Ea; [|exact I]. destruct (lin_of kv n) as [ln|] eqn:En; [|exact I].
     unfold nfact_ok. cbn [nf_kind nf_a nf_n nf_v]. cbn [MX.mfact_ok] in Hf.
     rewrite <- (lin_of_sound V kv Hkv a la Ea), <- (lin_of_sound V kv Hkv n ln En). intros i Hi. unfold rb. unfold AM.wa in Hf. rewrite (Hf i Hi). reflexivity.
+  -   destruct (lin_of kv a) as [la|] eqn:Ea; [|exact I]. unfold nfact_ok. cbn [nf_kind nf_a nf_n nf_v]. cbn [MX.mfact_ok] in Hf.
+    rewrite <- (lin_of_sound V kv Hkv a la Ea). intros i Hi. unfold rb. unfold AM.wa in Hf. specialize (Hf i Hi).
+    match goal with |- context [m ?x] => destruct (m x) as [b|] eqn:Hm end; [discriminate| contradiction].
 Qed.
 
 Definition img_chk (ca w cv : Z) : bool :=
@@ -200,6 +207,7 @@ Proof.
     unfold rb. rewrite Hf. unfold img_byte in X. destruct (rom_of segs (Z_to_bv 64 (ca + i))) as [b|]; [|discriminate X].
     apply Z.eqb_eq in X. f_equal. apply bv_eq. exact X.
   - discriminate.
+  - discriminate.
 Qed.
 
 Variable NFS : list nfact.
@@ -224,6 +232,57 @@ Proof.
   pose proof (fact_cell_sound _ _ _ f (proj1 (Forall_forall _ _) HNF f Hin) Hf i Hi) as R.
   rewrite leval_ladd, leval_lconst, <- (base_of_sound k b Eb) in R.
   rewrite (lin_sv_sound _ _ Ev). rewrite <- R. f_equal. lia.
+Qed.
+
+(* a based region's bytes [lo, hi) are readable: a readable-range fact covers them *)
+Definition rd_chk (k : int) (lo hi : Z) : bool :=
+  match base_of B k with
+  | Some b => existsb (fun f => match nf_kind f with
+                                | NRd => match ldiff (ladd b (lconst lo)) (nf_a f) with
+                                         | Some d => (0 <=? d) && (d + (hi - lo) <=? nf_n f)
+                                         | None => false end
+                                | _ => false end) NFS
+  | None => false
+  end.
+Lemma rd_chk_sound : forall k lo hi, rd_chk k lo hi = true ->
+  forall a, bv_unsigned (ev E k) + lo <= a < bv_unsigned (ev E k) + hi -> rb segs m a <> None.
+Proof.
+  intros k lo hi H a Ha. unfold rd_chk in H.
+  destruct (base_of B k) as [b|] eqn:Eb; [|discriminate].
+  apply existsb_exists in H as (f & Hin & H). pose proof (proj1 (Forall_forall _ _) HNF f Hin) as Hf.
+  cbv beta in H. unfold nfact_ok in Hf. destruct (nf_kind f); try discriminate.
+  destruct (ldiff (ladd b (lconst lo)) (nf_a f)) as [d|] eqn:D; [|discriminate].
+  apply andb_prop in H as [H1 H2]. apply Z.leb_le in H1, H2.
+  pose proof (ldiff_sound V _ _ d D) as X. rewrite leval_ladd, leval_lconst, <- (base_of_sound k b Eb) in X.
+  specialize (Hf (a - leval V (nf_a f)) ltac:(lia)).
+  replace (leval V (nf_a f) + (a - leval V (nf_a f))) with a in Hf by lia. exact Hf.
+Qed.
+
+(* the eight bytes at offset [o1] of a based region are the eight at [o2]: one word fact at [o2] and a fact
+   giving the same word at [o1] *)
+Definition copy_chk (k : int) (o1 o2 : Z) : bool :=
+  match base_of B k with
+  | Some b => existsb (fun f => match nf_kind f with
+                                | NWord => lin_eqb (nf_a f) (ladd b (lconst o2)) && (nf_n f =? 8)
+                                           && existsb (fact_cell (ladd b (lconst o1)) 8 (nf_v f)) NFS
+                                | _ => false end) NFS
+  | None => false
+  end.
+Lemma copy_chk_sound : forall k o1 o2, copy_chk k o1 o2 = true -> exists W : word,
+  (forall i, 0 <= i < 8 -> rb segs m (bv_unsigned (ev E k) + o2 + i) = Some (byte_of W i)) /\
+  (forall i, 0 <= i < 8 -> rb segs m (bv_unsigned (ev E k) + o1 + i) = Some (byte_of W i)).
+Proof.
+  intros k o1 o2 H. unfold copy_chk in H. destruct (base_of B k) as [b|] eqn:Eb; [|discriminate].
+  apply existsb_exists in H as (f & Hin & H). pose proof (proj1 (Forall_forall _ _) HNF f Hin) as Hf.
+  exists (Z_to_bv 64 (leval V (nf_v f))).
+  cbv beta in H. unfold nfact_ok in Hf. destruct (nf_kind f); try discriminate.
+  apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2]. apply Z.eqb_eq in H2.
+  apply existsb_exists in H3 as (f1 & Hin1 & Hf1).
+  split.
+  - intros i Hi. pose proof (lin_eqb_sound V _ _ H1) as A.
+    rewrite leval_ladd, leval_lconst, <- (base_of_sound k b Eb) in A. rewrite <- A. apply Hf. lia.
+  - intros i Hi. pose proof (fact_cell_sound _ _ _ f1 (proj1 (Forall_forall _ _) HNF f1 Hin1) Hf1 i Hi) as R.
+    rewrite leval_ladd, leval_lconst, <- (base_of_sound k b Eb) in R. exact R.
 Qed.
 
 Fixpoint slot_sortedb (s : slot) : bool :=
@@ -533,6 +592,33 @@ Proof.
   - intros o Ho _ Hunc. rewrite Hhi in Ho. specialize (Ho K). rewrite (Hbg o Ho), Hev.
     pose proof (ro_bg _ _ _ _ _ _ RO o (fun _ => Ho) (fun K' => ltac:(rewrite K in K'; discriminate K')) Hunc) as X.
     destruct (bg_byte segs E k r o) as [b|]; [|exact I]. rewrite <- X. apply (Hag (bv_unsigned (ev E k) + o)). lia.
+Qed.
+
+(* a based region whose slots are proved one by one (a slot no computed check covers, such as a cell holding
+   another word of the same region) *)
+Theorem based_region_ok_slots : forall priv E m k r (lo hi : Z),
+  PrimInt63.eqb k 0%uint63 = false -> IMap.bst (rg_cells r) ->
+  loZ r = lo -> hiZ E r = hi ->
+  0 <= bv_unsigned (ev E k) + lo -> bv_unsigned (ev E k) + hi < two64 ->
+  (forall a, bv_unsigned (ev E k) + lo <= a < bv_unsigned (ev E k) + hi ->
+     rb segs m a <> None /\ (rg_w r = true -> wb segs m a = true) /\ find_segment segs a 1 = None) ->
+  (forall g gr, IMap.find g (rg_cells r) = Some gr ->
+     slot_ok segs E m (bv_unsigned (ev E k) + 8 * keyZ g) (g_cells gr) /\ forallb (cell_inb lo hi g) (g_cells gr) = true) ->
+  (forall o, lo <= o < hi -> uncovered r o ->
+     match bg_byte segs E k r o with Some b => rb segs m (bv_unsigned (ev E k) + o) = Some b | None => True end) ->
+  region_ok segs priv E m k r.
+Proof.
+  intros priv E m k r lo hi K Hbst Hlo Hhi R1 R2 Hval G Hbgp.
+  constructor.
+  - exact Hbst.
+  - intros _. rewrite Hlo, Hhi. split; assumption.
+  - intros _ a Ha. rewrite Hlo, Hhi in Ha. exact (Hval a Ha).
+  - intros g gr F. exact (proj1 (G g gr F)).
+  - intros g gr c i F Hin Hi. cbv zeta. split; [|intros K'; rewrite K in K'; discriminate K'].
+    intros _. pose proof (proj2 (G g gr F)) as X.
+    pose proof (proj1 (forallb_forall _ _) X c Hin) as Y. unfold cell_inb in Y. apply andb_prop in Y as [Y1 Y2].
+    apply Z.leb_le in Y1, Y2. rewrite Hlo, Hhi. lia.
+  - intros o Ho _ Hunc. rewrite Hlo, Hhi in Ho. exact (Hbgp o (Ho K) Hunc).
 Qed.
 
 Fixpoint sv_okb (P : int -> bool) (v : sv) : bool :=

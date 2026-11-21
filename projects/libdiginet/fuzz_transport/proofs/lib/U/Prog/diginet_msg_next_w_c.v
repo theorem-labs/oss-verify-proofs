@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_msg_next_w_c.v at bb3053036017d1d92db6eca9e973ce610be16c08 to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_msg_next_w_c.v to fuzz_transport's images *)
 (* Wide contract of diginet_msg_next in fuzz_transport.ubsan (0x18844), for a cursor whose body is
    0 with no bytes. diginet_body_check (body, len) puts its body in the cursor
    (diginet_cursor_init) and calls diginet_msg_next (0x1872c); a caller of diginet_frame_build

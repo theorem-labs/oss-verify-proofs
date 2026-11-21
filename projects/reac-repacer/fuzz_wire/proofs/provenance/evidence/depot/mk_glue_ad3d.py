@@ -4,7 +4,7 @@
 A/AD3d.v (knock donor) Requires knock's A/AF0r.v for ONE name, env_agree_Ereg_app; AF0r (knock's class-1 fake-stack walk)
 stays out by ruling (B), and the grant lineage this unit carries has no lemma with that statement (searched: the unit's
 lib holds env_agree_havoc_ge and env_agree_le only). So that lemma's text, statement and proof, is copied VERBATIM from
-KNOCK_AF0R (proofs/libreac/fuzz_knock/lib/A/AF0r.v at 88154566652a, lines 312-318) into its own file, with knock's
+KNOCK_AF0R (proofs/libreac/fuzz_knock/lib/A/AF0r.v, lines 312-318) into its own file, with knock's
 Requires of the kernel modules it reads (YP0m: env / ew; YI04: Ereg, ew_Ereg_extra; YP06:
 env_agree) with
 module paths mapped to this unit. Above the Require lines it copies KNOCK_AF0R's own Copyright and SPDX lines (its

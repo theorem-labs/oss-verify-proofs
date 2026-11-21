@@ -9,10 +9,11 @@
      of lib/B/YCeg.v in_ro_tfa), segs := decodesegsB0 (DecodeBClose.v:92).
    dec_HB_SINK_KEPT is HB_SINK_KEPT with the premise `~ YI16.sink_open_fp FP ->` after the journal premise (the amended
    form: HB_SINK_KEPT as typed is refuted by lib/B/DecodeBSinkRoProbe.v HB_SINK_KEPT_false); it and dec_HB_META_KEPT are
-   a Theorem Labs lane's asink_none_kept / ameta_inv_kept (lib/B/YE01.v:85 / :156) over dec_HB_SINK_IMG_LAWS, which is the core's
-   tfib_AIL (lib/B/YD1u.v:43) at TfibB. dec_HB_RO_BELOW_OFL and dec_HB_ROM_NO_ERRNO are computations over the image's
+   a Theorem Labs lane's asink_none_kept / ameta_inv_kept (lib/B/YE01.v:86 / :157) over dec_HB_SINK_IMG_LAWS, which is the core's
+   tfib_AIL (lib/B/YD1u.v:44) at TfibB. dec_HB_RO_BELOW_OFL and dec_HB_ROM_NO_ERRNO are computations over the image's
    loaded segments: every read-only segment ends at or below musl's ofl_head 0x5f49d0 and none meets errno's four bytes
    at TFIB_ERRNO 0x5d4234 (lib/B/YF0m.v), which lie in a writable segment. The A twin is lib/A/DecodeASinkRo.v. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

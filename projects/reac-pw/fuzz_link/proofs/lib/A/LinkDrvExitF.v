@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1w.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. lib_site_x (donor AD1w.v:80-105) RESTATED over pcap's program contract (lib/A/Prog/PcapEntry.v tfib_lib_post_x, porter a Theorem Labs lane rulings 1-3): the callee's journal is W_journal.v's ajournal_gx at the harness globals G_HARNESS (PcapEntry.v:36) with no out window (XO = 0, OUT = []), in place of cgif's YCbq.ajournal, and the callee's output is PWalk.OUT pl (PcapEntry.v:73) in place of cgif's []; FINV is lib/A/AD1u.v's, over pcap's source pcap_KS. The sink head is the Section's SK (no global instance; PcapSinkHeads.v). The fd-names conjunct (Namei.fd_names_path ... YI16.sink_path = false, donor AD1w.v:89, :101, :203) is carried as the donor carries it: sink_path is cgif's literal, inert (no open of it); HOOK: a Theorem Labs lane's image-generic inertness lemma (a working branch lib/Reusable, cited by path once it lands) discharges it. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1w.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. lib_site_x (donor AD1w.v:80-105) RESTATED over pcap's program contract (lib/A/Prog/PcapEntry.v tfib_lib_post_x, porter a Theorem Labs lane rulings 1-3): the callee's journal is W_journal.v's ajournal_gx at the harness globals G_HARNESS (PcapEntry.v:36) with no out window (XO = 0, OUT = []), in place of cgif's YCbq.ajournal, and the callee's output is PWalk.OUT pl (PcapEntry.v:73) in place of cgif's []; FINV is lib/A/AD1u.v's, over pcap's source pcap_KS. The sink head is the Section's SK (no global instance; PcapSinkHeads.v). The fd-names conjunct (Namei.fd_names_path ... YI16.sink_path = false, donor AD1w.v:89, :101, :203) is carried as the donor carries it: sink_path is cgif's literal, inert (no open of it); HOOK: a Theorem Labs lane's image-generic inertness lemma (a working branch lib/Reusable, cited by path once it lands) discharges it. rule 24: no function proved anew. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/A/AD1w.v, with its module paths and module names changed; 201 of its 228 lines of code are new or changed and 236 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise; the launch's channel-reader flag carried through exf_mid (sbm_rdr)); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -122,7 +123,7 @@ val_mem tfibsegs (mrestrict (w_H W) mem) A_canary 8 cval /\ 0 <= cval < 2 ^ 64 /
 val_mem tfibsegs (mrestrict (w_H W) mem) (F_STDERR + 40) 8 sew /\
 val_mem tfibsegs (mrestrict (w_H W) mem) (F_STDERR + 56) 8 sew /\ 0 <= sew < 2 ^ 64 /\
 ((k = 0%nat /\ stdout_img (w_H W) mem) \/ ((1 <= k)%nat /\ xst k (w_H W) mem)) /\
-(forall fd, fd_lookup (m_fds md) fd = fd_lookup APSG.fds_std fd) /\ m_fs md = fs /\
+(forall fd, fd_lookup (m_fds md) fd = fd_lookup APSG.fds_std fd) /\ m_channel_reader md = true /\ m_fs md = fs /\
 amf_gi tfibsegs link_amf [(f, AMF_BLOCK)] (mrestrict (w_H W) mem) /\
 4096 <= f /\ f mod 16 = 0 /\ f + AMF_BLOCK <= 2 ^ 47 /\ exf_noar W mem usp f.
 
@@ -138,7 +139,7 @@ mem_ok tfibsegs E' (mrestrict (w_H W) mem) IMG_L ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly S W mem md -> top_ok usp ly -> st_nev S < EV_MAX ->
 ((k = 0%nat /\ stdout_img (w_H W) mem) \/ ((1 <= k)%nat /\ xst k (w_H W) mem)) ->
-(forall j, fd_lookup (m_fds md) j = fd_lookup APSG.fds_std j) -> m_fs md = fs ->
+(forall j, fd_lookup (m_fds md) j = fd_lookup APSG.fds_std j) -> m_channel_reader md = true -> m_fs md = fs ->
 FINV [(f, AMF_BLOCK)] (w_H W) mem -> In (f, AMF_BLOCK) (ablocks B ly S) ->
 SRr tfibsegs W (cfg_at tfibsegs A_EXIT regs mem md)
  (fun W' c' => W' = W /\ exists regs1 mem1 md1 tid cval sew,
@@ -178,6 +179,13 @@ Lemma sbm_fds_fs : forall md md', same_but_materialized md md' ->
 m_fds md' = m_fds md /\ m_fs md' = m_fs md.
 Proof.
 intros md md' H. rewrite (same_but_materialized_wvb md md' H). split; destruct md; reflexivity.
+Qed.
+
+(* ... and the launch's channel-reader flag (LPS 727298f3), which [fdchan] reads *)
+Lemma sbm_rdr : forall md md', same_but_materialized md md' ->
+m_channel_reader md' = m_channel_reader md.
+Proof.
+intros md md' H. rewrite (same_but_materialized_wvb md md' H). destruct md; reflexivity.
 Qed.
 
 (* the FILE's fixed words the loop body reads, from the GI conjunct *)
@@ -231,7 +239,7 @@ SRr tfibsegs W (cfg_at tfibsegs A_SX_LOOP regs mem md)
 Proof.
 intros W regs mem md usp code f k fs tid cval sew wpos wbase MID G8 V40 V56 Heq Rp Rb.
 pose proof MID as (Msp & M16 & Musp & Mgp & Mtp & Mtpx & Mpres & Mcode & Mc02 & Mra & Mra2 &
-  Mcells & Mtid & Mtidr & Mgot & Mcan & Mcanr & Msew1 & Msew2 & Msewr & Mso & Mfds & Mfs & Mgi & Mf4 & Mf16 & Mfh &
+  Mcells & Mtid & Mtidr & Mgot & Mcan & Mcanr & Msew1 & Msew2 & Msewr & Mso & Mfds & Mcr & Mfs & Mgi & Mf4 & Mf16 & Mfh &
   Mnoar).
 destruct (exf_file_fixed W mem f Mgi) as (V72 & V140 & V8 & V16 & V112).
 eapply SRr_bind; [exact (xf_head W regs mem md f wpos wbase G8 Mf4 Mfh Mf16 V40 V56 V72 V140 Rp Rb)|].
@@ -260,19 +268,20 @@ split; [exact Mtid|]. split; [exact Mtidr|]. split; [exact Mgot|]. split; [exact
 split; [exact Mcanr|]. split; [exact Msew1|]. split; [exact Msew2|]. split; [exact Msewr|].
 split; [exact Mso|].
 split; [intros fd; rewrite (proj1 (sbm_fds_fs md md2 SB)); exact (Mfds fd)|].
+split; [rewrite (sbm_rdr md md2 SB); exact Mcr|].
 split; [rewrite (proj2 (sbm_fds_fs md md2 SB)); exact Mfs|].
 split; [exact Mgi|]. split; [exact Mf4|]. split; [exact Mf16|]. split; [exact Mfh | exact Mnoar].
 Qed.
 
 Theorem tfib_exit_file : exit_file_tfa B xst.
 Proof.
-intros E' W regs mem md ly S usp fs code k f E0 U U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hfs HFI Hblk.
+intros E' W regs mem md ly S usp fs code k f E0 U U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hcr Hfs HFI Hblk.
 change (mkCfg (mkst regs (w64 A_EXIT) mem (seg_rom tfibsegs)) md)
   with (cfg_at tfibsegs A_EXIT regs mem md).
 apply (SRr_srealizes tfibsegs W (cfg_at tfibsegs A_EXIT regs mem md) _ _
-  (EXFH E' W regs mem md ly S usp fs code k f E0 U U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hfs HFI Hblk) HAI).
+  (EXFH E' W regs mem md ly S usp fs code k f E0 U U16 Htid Ra0 Hc02 Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hcr Hfs HFI Hblk) HAI).
 intros W1 c1 _ HAI1 (-> & regs1 & mem1 & md1 & tid & cval & sew & -> & G8 & MID).
-pose proof MID as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Mgi & _ & _ & Mfh & _).
+pose proof MID as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Mgi & _ & _ & Mfh & _).
 destruct (exf_file_win W mem1 f Mgi Mfh) as (wpos & wbase & V40 & V56 & Rp & Rb).
 destruct (Z.eq_dec wpos wbase) as [Heq | Hne].
 - apply (SRr_srealizes tfibsegs W (cfg_at tfibsegs A_SX_LOOP regs1 mem1 md1) _ _

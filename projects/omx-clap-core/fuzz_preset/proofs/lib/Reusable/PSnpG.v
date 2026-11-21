@@ -10,15 +10,16 @@
    HarnessDesign's asnprintf_realizes (FMH_Rt.v) from the chain's contracts. Written new (no released proof names
    __interceptor_snprintf). *)
 (* Modified by Theorem Labs, 2026-10: restated over the engine's generic ARx with the ghost list Hp fixed (route (a),
-   c-omx-hpreset 10:51Z), from origin/cold/port-fm-rtprintf-param 7e395de08f5 proofs/omx-clap-core/fuzz_manifest/lib/A/
+   c-omx-hpreset 10:51Z), proofs/omx-clap-core/fuzz_manifest/lib/A/
    FMsnprintfG.v; image-free (segs, B, ARx are Section variables; the fm addresses above are the source's comment, no
    numeral of them appears below). Only the five items the four roots' closure (snp_ok / svsni_ok / svsn_ok / svfi_ok)
    reaches are kept: sn_facts0 (:33), reg_is (:49), KEPT (:53), st_ok_take1 (:174-183) unchanged, and
-   stack_zero_shadow (:101-138) as stack_zero_shadow_x, re-proved from the engine law alx_zshadow_byte (YCbqG.v:113-116,
+   stack_zero_shadow (:101-138) as stack_zero_shadow_x, re-proved from the engine law alx_zshadow_byte (YCbqG.v:114-117,
    AR_laws_x field 13) over the real memory: ARx reads mem itself, so the U form's move through `unpoison U`
    (ARU_view_out, ARU_shadow_out_block, ARU_stack_not_block) and its layout facts (am_layout's lo_top) go away. The
    symbolic run of __interceptor_snprintf, snk_base_entry, snk_dest_entry, g_frame_run2, g_frame_mono,
    snprintf_of_vsni and snprintf_realizesU are on the HarnessDesign route, not reached by the roots, and not ported. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

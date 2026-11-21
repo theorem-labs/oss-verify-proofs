@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (two proofs case on the new range_meets_vvar and vdso_text_at tests of the load and fetch paths). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -119,7 +120,7 @@ Proof.
     try discriminate HI.
   - injection HI as <-. cbn. exact HS.
   - cbn [eff_shaped] in HS.
-    destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate HI].
+    destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate HI].
     destruct (interp_eff_accesses segs (k _) m) as [r'| |] eqn:E; try discriminate HI.
     injection HI as <-. cbn. eapply IH; [apply HS| exact E].
   - cbn [eff_shaped] in HS.
@@ -149,7 +150,7 @@ Proof.
       [ destruct (decode_exec_accesses segs ms w) as [r| |] eqn:E; try discriminate H;
         cbn [drop_access_report] in H; injection H as <-; eapply decode_exec_shaped; eassumption |]
   end.
-  unfold fetch_failure in H. destruct (negb _); [discriminate H|]. cbv zeta in H.
+  unfold fetch_failure in H. destruct (vdso_text_at segs (ms_pc ms)); [discriminate H|]. destruct (negb _); [discriminate H|]. cbv zeta in H.
   lazymatch type of H with context [if ?b then _ else _] => destruct b end; discriminate H.
 Qed.
 

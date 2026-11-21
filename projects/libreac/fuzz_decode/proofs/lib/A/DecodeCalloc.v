@@ -3,7 +3,7 @@
    as_calloc = Some 0x51f68: check_round_trip calls calloc, so its TFIB_T walk needs this contract where
    cgif_file_fuzzer's needs only malloc and free.
 
-   Addresses (ORIGINAL binaries, FACTS f0e6eb38667, read with capstone from
+   Addresses (ORIGINAL binaries, FACTS, read with capstone from
    fuzz_decode.{asan,asan-ubsan};
    the twins' loaded PROGBITS equal the published, stripped pins of harness.yaml):
 

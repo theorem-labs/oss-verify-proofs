@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the load cases the overlay cannot read also test range_meets_vvar, the model's new vvar check on loads). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
@@ -94,7 +95,8 @@ Lemma interp_leaves : forall (P : core -> Prop) t m report,
 Proof.
   intros P t. induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m report HP H; cbn in H; try discriminate.
   - injection H as <-. exact HP.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r| |] eqn:Hr; try discriminate.
     injection H as <-. cbn [access_value]. exact (IH _ m r (HP _) Hr).
   - destruct (store_ok segs m a (width_bytes n)) eqn:SO; [|discriminate].
@@ -216,7 +218,8 @@ Lemma interp_leaves : forall (P : core -> Prop) t m report,
 Proof.
   intros P t. induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m report HP H; cbn in H; try discriminate.
   - injection H as <-. exact HP.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r| |] eqn:Hr; try discriminate.
     injection H as <-. cbn [access_value]. exact (IH _ m r (HP _) Hr).
   - destruct (store_ok segs m a (width_bytes n)) eqn:SO; [|discriminate].

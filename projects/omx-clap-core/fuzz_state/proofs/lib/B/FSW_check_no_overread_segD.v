@@ -11,6 +11,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread_top.v, with its addresses changed; 716 of its 798 lines of code are new or changed and 1334 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread_segf.v, with its module paths and module names changed; 1057 of its 1146 lines of code are new or changed and 709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread_segd.v, with its module paths and addresses changed; 21 of its 1150 lines of code are new or changed and 17 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan: the span segD of the walk, `segD : segD_T B`
    (lib/B/FSW_check_no_overread_inv.v): from the machine INV_D1 at the first preset_base64_decode call (0x81444) to the
    machine INV_F1 at the first fuzz_free call (0x814cc). Owner of this file: a Theorem Labs lane. Rule 24: this file proves PART
@@ -46,7 +47,7 @@
    keeps the whole memory (segd_mem_eq); the bytes a call keeps come from its cno_ret clauses (zone, blocks) and
    cno_dec_strs.
    TEMPLATE (text only; no byte offset is copied, B's bytes differ): lib/A/FSW_check_no_overread_segd.v at
-   a working branch 6bc81abea90 (A's control flow is the same instruction for instruction at A's
+   a working branch (A's control flow is the same instruction for instruction at A's
    addresses). The length bound of a decode is the plain lib/Prog/SlotStepD.v dec_len (same WriterSpec.b64_dec),
    restated here (cno_dec_len) because that file imports the plain line's modules, which this file must not load. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

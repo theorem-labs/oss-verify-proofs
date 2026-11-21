@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (getrandom's access_okb premise on the seed buffer, from heap_iface's hi_top_task). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -303,7 +304,13 @@ assert (GV1 : rw_cells rsegs m1 GVDSO4 [C8 (Z_to_bv 64 vf)]) by (eapply rw_cells
 unfold gr_ecall_pc.
 eapply (lbw_getrandom_k rsegs) with (buflen := 4) (wf := gr_wf);
 [ vm_compute; reflexivity | vm_compute; reflexivity | exact (proj1 MOK) | exact (proj2 MOK)
-| reflexivity | reflexivity | lia | lia | right; reflexivity | | | ].
+| reflexivity | reflexivity | lia | lia | right; reflexivity |
+| (* LPS 727298f3: getrandom's [access_okb] on the seed buffer, below the stack top ([hi_top_task]) *)
+  cbn [getr bv_eqb reg_get mkR]; pose proof (hi_top_task S4L HIx) as HTT; pose proof alloc_ceiling_pos as ACP;
+  change (access_okb (Z_to_bv 64 (G + 16)) 4 = true);
+  unfold access_okb; rewrite (unsigned_lit (G + 16)) by lia;
+  apply andb_true_iff; split; apply Z.leb_le; unfold TASK_SIZE in *; lia
+| | ].
 -
 unfold grs_frame in FRg1. cbn [app] in FRg1.
 pose proof (proj2 (proj1 (rw_cells_app rsegs m1 G [CB 16 junk16] _) FRg1)) as FRb. cbn [cells_size csize Nat.add] in FRb.

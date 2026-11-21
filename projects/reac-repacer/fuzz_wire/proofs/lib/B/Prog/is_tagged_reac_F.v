@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* The footprint walk of reac-repacer/fuzz_wire's is_tagged_reac in image B, against the frozen
    lib/B/Prog/is_tagged_reac_F_c.v is_tagged_reac_contract_F (= lib/B/Prog/is_tagged_reac_cg.v
    wire_is_tagged_reac_holds_stmt). The script is this unit's lib/B/Prog/rp_ret_accept_FW.v, itself
-   libreac/fuzz_decode's released lib/B/Prog/reac_frame_is_reac_F_nosh.v (recipes commit 98c99a85e4): StepF's step, one
+   libreac/fuzz_decode's released lib/B/Prog/reac_frame_is_reac_F_nosh.v (recipes): StepF's step, one
    rng fact per access, each shadow byte read from the `addressable` premise, the bytes of f and the two cells carried
    over the frame store by the munch fact of the frame. is_tagged_reac has no early exit before its loads: it checks
    f == NULL and the wrap of f + 12 (UBSan) and then reads four bytes, f[12], f[13], f[16], f[17], each after the
@@ -12,7 +13,7 @@
    guard, the walk steps over the five UBSan checks with `if_false`, and it splits only on the three byte tests that
    return 0. Each of the four shadow checks has two paths that meet again at the byte load (they differ only in the
    register the slow path writes); the lemmas ck_<pc> below join them, in the form of reac-repacer/fuzz_uci's released
-   lib/B/Prog/rp_hot_clamp_FW.v ck_<pc> (recipes commit 0295462466b2) for a one-byte access, so the walk is one path
+   lib/B/Prog/rp_hot_clamp_FW.v ck_<pc> (recipes) for a one-byte access, so the walk is one path
    per byte test. The GOT word and the cell are image B's (624760 = 0x98878 and 657400 = 0xa07f8). *)
 (* is_tagged_reac of fuzz_wire.asan-ubsan (the listing of image B; entry 0x8103c, 0x108 bytes):
      0x8103c `addi sp, sp, -0x10`, 0x81040 `sd ra, 8(sp)`;

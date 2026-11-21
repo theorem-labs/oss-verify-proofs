@@ -6,7 +6,8 @@
 (* Kit for the snprintf walks in the donor's symbolic engine: a call step that resumes a symbolic walk after a callee
    whose effect is given as an SRr fact (the donor's A/AE3h.v vf_icpt_xcall, with the callee's post handed in instead
    of fixed, and the regions after the stack region constrained by what they must avoid instead of by their base). *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a), c-omx-hpreset 10:51Z) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfK.v at origin/cold/port-fm-rtprintf-param 7e395de08f5: module paths fuzz_manifest -> fuzz_preset, over preset's own lib/A image modules of the same names (image A's tfibsegs); the file has no U and no numeral. Appended: st_ok_fx and kcall_fx from FMsnprintfSk.v there (:62-149), unchanged, which are over tfibsegs and kafter and so stay with this file rather than with the image-free lib/Reusable/PSnpSk.v. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a), c-omx-hpreset 10:51Z) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfK.v: module paths fuzz_manifest -> fuzz_preset, over preset's own lib/A image modules of the same names (image A's tfibsegs); the file has no U and no numeral. Appended: st_ok_fx and kcall_fx from FMsnprintfSk.v there (:62-149), unchanged, which are over tfibsegs and kafter and so stay with this file rather than with the image-free lib/Reusable/PSnpSk.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

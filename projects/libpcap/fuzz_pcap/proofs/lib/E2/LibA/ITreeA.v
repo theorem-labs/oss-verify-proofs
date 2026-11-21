@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: node_soundA gains nsA_rob (a node's system call reads the same over a larger backing, RomBase.sys_rob) and sil_soundA yields sys_rob too, for the premise srz_silent1 and srz_node now take. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Import PropExec MState Mem Exec ITree.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require Import AcctCore ExecF.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim2__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require SpinAlg.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import Exc.
@@ -145,14 +147,18 @@ Record node_soundA : Prop := {
   (* [comment removed for export] *)
   nsA_peek : forall n f ms mo, npeek n = Some f -> nstep n mo (f ms) mo [];
   (* [comment removed for export] *)
-  nsA_peek_at : forall n f RNG ms, npeek n = Some f -> ~ at_node n RNG ms
+  nsA_peek_at : forall n f RNG ms, npeek n = Some f -> ~ at_node n RNG ms;
+  (* LPS 727298f3: a node's system call reads the same over a larger backing
+     ([SpinAlg.srz_node]'s premise) *)
+  nsA_rob : forall n RNG ms mo_, at_node n RNG ms -> RomBase.sys_rob segs (mkCfg ms mo_)
 }.
 
 (* [comment removed for export] *)
 Definition sil_soundA : Prop := forall RNG A ms ms' mo mo_,
   sil RNG ms ms' -> m_halted mo = None -> minv mo ->
   footprint_ok (m_vm_lazy mo) A RNG -> mrel A mo mo_ -> ainv (m_vm_lazy mo) A NMAX mo_ ->
-  exists mo_', OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AllocSim2__Common.ShapeAlg.cnode_ok segs (mkCfg ms mo_) unit (fun _ => []) (fun _ => mkCfg ms' mo_') /\ mrel A mo mo_'.
+  exists mo_', OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AllocSim2__Common.ShapeAlg.cnode_ok segs (mkCfg ms mo_) unit (fun _ => []) (fun _ => mkCfg ms' mo_') /\ mrel A mo mo_'
+    /\ RomBase.sys_rob segs (mkCfg ms mo_).
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -371,12 +377,12 @@ Proof.
     assert (MR1 : mrel A mo mo1) by (eapply mrel_after; eauto).
     destruct (IH HQ mo1 MR1) as (msx & mox & HQx & MRx & K).
     exists msx, mox. split; [exact HQx|]. split; [exact MRx|].
-    intros T H. eapply SpinAlg.srz_silent1; [apply cstep_cnode_ok; exact C1| apply K; exact H].
+    intros T H. eapply SpinAlg.srz_silent1; [apply cstep_cnode_ok; exact C1| exact (RomBase.sys_rob_instr segs (mkCfg ms0 mo_) (proj1 (proj2 C1))) | apply K; exact H].
   - pose proof (mrel_ainv RNG A mo mo_ ACC MR) as INV.
-    destruct (SS RNG A ms0 ms1 mo mo_ SL Hh Hinv (proj1 ACC) MR INV) as (mo1 & CN & MR1).
+    destruct (SS RNG A ms0 ms1 mo mo_ SL Hh Hinv (proj1 ACC) MR INV) as (mo1 & CN & MR1 & ROB).
     destruct (IH HQ mo1 MR1) as (msx & mox & HQx & MRx & K).
     exists msx, mox. split; [exact HQx|]. split; [exact MRx|].
-    intros T H. eapply SpinAlg.srz_silent1; [exact CN| apply K; exact H].
+    intros T H. eapply SpinAlg.srz_silent1; [exact CN| exact ROB | apply K; exact H].
 Qed.
 
 (* [comment removed for export] *)
@@ -531,10 +537,10 @@ Section NodeCase.
     destruct (nsA_progress NS n RNG A ms1 mo mo1_ Hat Hh Hinv NSF FOK MR INV1) as [(rsp & mo' & evs & Hst)|(code & mo' & Hex)].
     - destruct (nsA_sound NS n RNG A ms1 mo mo1_ rsp mo' evs Hat Hh Hinv NSF FOK MR INV1 Hst) as (_ & _ & mo_' & Hss & _).
       apply (SpinAlg.srz_node segs c1 succ s_evs s_nx (fun i => obsc (s_nx i)) (exist _ (mkCfg (nret ms1 rsp) mo_', evs) Hss)
-               succ_node_ok succ_srealizes).
+               succ_node_ok (nsA_rob NS n RNG ms1 mo1_ Hat) succ_srealizes).
     - destruct (nsA_exit NS n RNG A ms1 mo mo1_ code mo' Hat Hh Hinv NSF MR Hex) as (_ & mo_' & Hss & _).
       apply (SpinAlg.srz_node segs c1 succ s_evs s_nx (fun i => obsc (s_nx i)) (exist _ (mkCfg ms1 mo_', [ExitEv code (m_fs mo')]) Hss)
-               succ_node_ok succ_srealizes).
+               succ_node_ok (nsA_rob NS n RNG ms1 mo1_ Hat) succ_srealizes).
   Qed.
 
   #[using="at_node sil minv nsafe fstep NMAX Q RNG A NS SS Hat Hk Hl Hh Hinv Hsf MR IH"] Lemma node_adequate : adequate (Vis n k) mo c1.

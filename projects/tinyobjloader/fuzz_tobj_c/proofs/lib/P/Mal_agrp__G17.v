@@ -1,10 +1,11 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact in the exit hypotheses EXIT0 and EXITR and as a section hypothesis of the exit section, whose post builds MInvIR by minvir_split; MInvIR taken apart by minvir_dest). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "eq"; "and"; "or"; "not"; "ex"; "iff"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "N"; "Zpos"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sv"; "SLit"; "sobj"; "sprop"; "SVar"; "cell"; "SAlu"; "rw"; "eval"; "mkCell"; "sstate"; "SPUle"; "reg_sv"; "obj_holds"; "smatch"; "ob_base"; "ob_cells"; "sv_eqb"; "rl"; "swf"; "odefault"; "ob_dflt"; "ob_hi"; "ob_lo"; "obj_range"; "mkSS"; "ss_objs"; "rm"; "ss_lenient"; "ss_next"; "DUnknown"; "ss_pc"; "ss_facts"; "valuation"; "FcsrFrm0"; "ss_fcsr"; "ss_fregs"; "ss_regs"; "ss_resv"; "SPAlign"; "SPBranch"; "SPNot"; "c_off"; "c_val"; "c_width"; "mkObj"; "rd"; "soff"; "sprop_eqb"; "SMd"; "enc_bytes"; "mkVal"; "ro_addr"; "rom_ok"; "tfact"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "lt"; "pow"; "mul"; "sub"; "eqb"; "modulo"; "div"; "of_nat"; "land"; "leb"; "shiftr"; "to_nat"; "opp"; "@Corelib.Init.Datatypes"; "cons"; "bool"; "pair"; "list"; "option"; "true"; "Some"; "andb"; "prod"; "false"; "nat"; "app"; "nil"; "None"; "length"; "fst"; "orb"; "negb"; "snd"; "S"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "sptr"; "mslot"; "class_size"; "padd"; "am_avail"; "am_freed"; "am_last"; "MFree"; "UNIT"; "stride_of"; "IB"; "am_mem"; "slot_start"; "slotst"; "am_maplen"; "astate"; "st_free_meta_head"; "usage_of"; "MUsed"; "am_next"; "am_prev"; "ameta"; "frame"; "nth_slot"; "PGSZ"; "am_sc"; "am_slots"; "slot_junk"; "sptr_eqb"; "FGroup"; "META_SIZE"; "MRaw"; "alloc_group"; "am_aidx"; "kreq"; "mkFrame"; "mkSlot"; "size_to_class"; "ss_fr"; "st_active"; "st_mmap_counter"; "st_usage"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G1.Mal_agrp_I"; "od2"; "zr2"; "zl2"; "rho2"; "obj_of2"; "icnt0"; "zA"; "ia_sc"; "ia_X"; "D_act0"; "D_got"; "D_guard"; "D_usg"; "ia_U"; "itotal"; "live"; "od2_entry"; "D0"; "D_m"; "ia_R"; "ij"; "isize"; "sp0"; "D_ctr"; "D_sct"; "ia_L"; "ia_gd"; "ia_m"; "ia_req"; "ia_s"; "lv_MI"; "mkInstA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G17.Mal_agrp_IN.IN"; "iaN"; "mWN"; "rhoK'"; "nidx"; "nstrd"; "zg"; "zgm"; "zp"; "nbits"; "bzN"; "SNok1"; "SNok3"; "DIFF"; "NEWV"; "dsN"; "nfN"; "SNok2"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.ExampleMemcpy"; "segsP"; "NF"; "pre_fregs"; "@Stdlib.Lists.List"; "In"; "forallb"; "existsb"; "tl"; "@stdpp.bitvector.definitions"; "bv"; "Z_to_bv"; "bv_unsigned"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "mcell"; "image"; "LMem"; "MT"; "MCell"; "cell_holds"; "loc_addr"; "Inv"; "keys"; "mc_loc"; "mc_w"; "usedX"; "VP"; "VZ"; "active_hd"; "ly_ctx"; "meta_bits"; "CTX_active"; "CTX_SIZE"; "LCtx"; "footprint"; "memb"; "user_blocks"; "CTX_free_meta_head"; "CTX_usage"; "META_avail"; "META_bits"; "META_freed"; "META_mem"; "META_next"; "META_prev"; "alloc_owned"; "group_cells"; "group_ok"; "le_byte"; "loc"; "optr"; "yields"; "zseq"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G17.Mal_agrp_NP.NP"; "post"; "amN'"; "ne_am'"; "ne_p"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_get_meta"; "v";
 "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G17.Mal_agrp_NP.NP.LeafN"; "LfS"; "dsF"; "mA"; "in3"; "ops"; "mF"; "rhoA"; "dsC"; "objsD"; "tl3"; "touched"; "oactj"; "Lf1"; "ogm"; "rhoX"; "stkF"; "av"; "bvv"; "fv"; "stkc"; "touchedD"; "HagA"; "HdsF_N"; "gmeets"; "Cmatch"; "EmA"; "HSF_objs"; "HdsC_sub"; "HsmA"; "rhoR"; "rhoS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G17.Mal_agrp_IN"; "iaN"; "nstrd"; "zp"; "mWN"; "nidx"; "dsN"; "zg"; "HiN"; "nokR"; "NEWV"; "nbits"; "zgm"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_P"; "addr_of"; "byteview_of"; "topL"; "blocks"; "mc_errno"; "holds"; "mc_ctx"; "vm_ok"; "mc_chk_guard"; "mc_chk_guard_got"; "mc_ctz_tab"; "mc_img_hi"; "mc_img_lo"; "mc_libc"; "mc_lock"; "mc_med_cnt_tab"; "mc_replaced"; "mc_size_classes"; "mc_small_cnt_tab"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ZEval"; "zeval"; "zholds"; "zsupported"; "psupported"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "event"; "m_vmmaps"; "VmMaps"; "Model"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G4.Mal_agrp_R"; "dlo2"; "dhi2"; "DS2"; "rhoR"; "changed2"; "oStkF"; "dcond2b"; "drom2"; "od2_semb"; "rngD"; "dcells2"; "fill12"; "od2_eqb"; "Hzl2"; "Hzr2"; "cellsD"; "cellsInD"; "dcond2"; "dunkD"; "fill2"; "range64D"; "semD"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Glue"; "rd_of"; "wok_of"; "@Corelib.Lists.ListDef"; "map"; "Forall"; "nth"; "firstn"; "skipn"; "repeat"; "@LinuxProcessSemantics.Riscv.Instr"; "aluop"; "ALU_ADD"; "ALU_AND"; "mulop"; "ALU_SLL"; "ALU_SRL"; "BC_EQ"; "M_MUL"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G1.Mal_agrp_St"; "m1v"; "LK"; "e_cx"; "NXA"; "O_stk"; "F_G"; "F_M"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocFooter"; "footer_cells"; "trailing_cell"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "leaf"; "mkLeaf"; "sym_run"; "RsSymJump"; "RsCut"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.Glue3"; "with_mem"; "state_diff"; "list_eqb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "mkMA"; "MA"; "layout_extends"; "ma_s"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G17.Mal_agrp_F"; "E1"; "CF0"; "CFR"; "SF0"; "XF0"; "XFR"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G17.Mal_agrp_NP"; "e_hdr16"; "e_hdr3"; "has_cell"; "cell_lookup"; "e_bitsN"; "hdr_eqb"; "pslot_cell_ok"; "cells_eqb"; "e_availN"; "resym"; "D_mN"; "afb_of"; "aidx_shape"; "dsC_N"; "e_usgN"; "nleaf_chk"; "resym_chk"; "svp_eqb"; "aidx_junk"; "drop3"; "dsC_chk"; "e_pslotZ"; "resym_diffs"; "@Corelib.Init.Peano"; "lt"; "le"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI"; "IEC_P"; "L_as_ok"; "tier"; "AS_D"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.WalkLink"; "agrees"; "in_vars"; "below200"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G1.Mal_agrp_St3"; "O_gmeta"; "e_pslot"; "Z_actj"; "NXN"; "SN3s"; "S_actj"; "S_pslot"; "factsN3s"; "nstride"; "regsN3s"; "F_NT"; "Z_pslot"; "e_cj"; "nj"; "objsN3s";
-"@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G14.Mal_agrp_M"; "stk_only"; "m1_hi"; "m1_lo"; "ods_eqb"; "stk_shape"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Zones2"; "cmeets"; "xraw"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "ms_mem"; "machine_state"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "rho_set_rl"; "state_has_rl"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.WalkReab"; "m'"; "objs_matchb"; "touched"; "cell_from_od"; "m'_in"; "m'_out"; "touched_dec"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G15.Mal_agrp_NCdefs"; "SNok"; "@Corelib.Init.Specif"; "sumbool"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "obj_vars_all"; "state_vars_all"; "sv_vars_all"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "V_RES"; "client_addr"; "F_depth"; "F_sp_aligned"; "F_sp_high"; "alloc_static"; "errno_range"; "mem_kept"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ReprGlue"; "cellZ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G3.Mal_agrp_rK"; "CUTS_K"; "SF0_a"; "SF0_b"; "SF0_c"; "SF0_d"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail"; "entails"; "cell_eqb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymFrame"; "in_ranges"; "wsub_get"; "wsub_id_below"; "wsub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractG"; "QG"; "canary_bytes"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIfaceI"; "MInvG"; "MInvI"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.TRRulesK"; "tr_rules"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G1.Mal_agrp_St2"; "mkSKF"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G15.Mal_agrp_K"; "EK"; "dsM23"; "@Stdlib.PArith.BinPos.Pos"; "lt"; "eqb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.AllocGroupNest"; "amN"; "ne_am"; "ne_p"; "post"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.AllocGroupPost"; "ne_post"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.FreeNtImage"; "not_used"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfArith"; "need"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfFrame"; "ub_same"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfGroup"; "group_post"; "heads_below"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ObjBytes"; "release_mem"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G16.Mal_agrp_NC"; "contN_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G16.Mal_agrp_Pv"; "prov"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G4.Mal_agrp_W"; "K_ia"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G4.Mal_agrp_rF"; "CF0_a"; "CF0_b"; "CF0_c"; "CF0_d"; "CFR_a"; "CFR_b"; "CFR_c"; "CFR_d"; "E1_a"; "E1_b"; "E1_c"; "E1_d"; "XF0_a"; "XF0_b"; "XF0_c"; "XF0_d"; "XFR_a"; "XFR_b"; "XFR_c"; "XFR_d"; "mkCF0"; "mkCFR"; "@Stdlib.Arith.PeanoNat.Nat"; "eqb"].
+"@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G14.Mal_agrp_M"; "stk_only"; "m1_hi"; "m1_lo"; "ods_eqb"; "stk_shape"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Zones2"; "cmeets"; "xraw"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "ms_mem"; "machine_state"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "rho_set_rl"; "state_has_rl"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.WalkReab"; "m'"; "objs_matchb"; "touched"; "cell_from_od"; "m'_in"; "m'_out"; "touched_dec"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G15.Mal_agrp_NCdefs"; "SNok"; "@Corelib.Init.Specif"; "sumbool"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "obj_vars_all"; "state_vars_all"; "sv_vars_all"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "V_RES"; "client_addr"; "F_depth"; "F_sp_aligned"; "F_sp_high"; "alloc_static"; "errno_range"; "mem_kept"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ReprGlue"; "cellZ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G3.Mal_agrp_rK"; "CUTS_K"; "SF0_a"; "SF0_b"; "SF0_c"; "SF0_d"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail"; "entails"; "cell_eqb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymFrame"; "in_ranges"; "wsub_get"; "wsub_id_below"; "wsub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractG"; "QG"; "canary_bytes"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIfaceI"; "MInvG"; "MInvI"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.TRRulesK"; "tr_rules"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G1.Mal_agrp_St2"; "mkSKF"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G15.Mal_agrp_K"; "EK"; "dsM23"; "@Stdlib.PArith.BinPos.Pos"; "lt"; "eqb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.AllocGroupNest"; "amN"; "ne_am"; "ne_p"; "post"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.AllocGroupPost"; "ne_post"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.FreeNtImage"; "not_used"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfArith"; "need"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfFrame"; "ub_same"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfGroup"; "group_post"; "heads_below"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ObjBytes"; "release_mem"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G16.Mal_agrp_NC"; "contN_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G16.Mal_agrp_Pv"; "prov"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G4.Mal_agrp_W"; "K_ia"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_agrp__G4.Mal_agrp_rF"; "CF0_a"; "CF0_b"; "CF0_c"; "CF0_d"; "CFR_a"; "CFR_b"; "CFR_c"; "CFR_d"; "E1_a"; "E1_b"; "E1_c"; "E1_d"; "XF0_a"; "XF0_b"; "XF0_c"; "XF0_d"; "XFR_a"; "XFR_b"; "XFR_c"; "XFR_d"; "mkCF0"; "mkCFR"; "@Stdlib.Arith.PeanoNat.Nat"; "eqb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "vdso_ok"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 Require Stdlib.ZArith.ZArith.
 Require Stdlib.NArith.NArith.
@@ -182,7 +183,7 @@ Lemma NF0 : ltac2:(tb__ "0|3|
 S1S41Vsc;Z17A2S1S41Z2S93Via;A1A2S1S1S41Z0M0S9cVia;A1M1A2S41G1Z7fcA2A2S1S1S43Vsc;Vj;A2S41Vj;Z18A2A2S1S1S41G0Vj;A2S43Vj;Z30A2A2S1S41S42G1S6eA2S66Vj;A1M2A2S43S66Vsc;A1G2A2A2A2A2A2A2A2").
 Proof using Hi Hnest Htier. exact (N_facts ia Hi Hnest Htier). Qed.
 Lemma HI2 : ltac2:(tb__ "0|0|
-Sd0S50S64Vm;VX;A3S56S58S64S6A2S52S64S6Vg;Sb1A4A2VU;Vs2;A4"). Proof using NK. exact (mig_I (nk_MI _ _ _ _ _ _ NK)). Qed.
+Sd0S50S64Vm;VX;A3S56S58S64S6A2S52S64S6Vg;Sb1A4A2VU;Vs2;A4"). Proof using NK. exact (mig_I (proj1 (nk_MI _ _ _ _ _ _ NK))). Qed.
 Lemma Mg : ltac2:(tb__ "0|0|
 S0S54S65A1SccVs2;Vg;A2S56S65S76Vamg;A1A2A3").
 Proof using NK. exact (proj1 (usedX_MT _ _ _ _ (nk_used _ _ _ _ _ _ NK))). Qed.
@@ -215,8 +216,10 @@ Proof using Hi Hnest Htier NK U j.
   pose proof NF0 as (_ & _ & _ & F4 & _). pose proof (iok_sc ia Hi) as SC.
   pose proof (nk_hb _ _ _ _ _ _ NK sc ltac:(unfold sc, j in *; lia)) as E. unfold s2. rewrite E. exact (iok_hd ia Hi).
 Qed.
-Lemma HL2 : layout_ok L2 s2. Proof using NK. exact (mig_layout (nk_MI _ _ _ _ _ _ NK)). Qed.
-Lemma ctx2 : ly_ctx L2 = 0x59c90. Proof using NK. exact (mig_ctx (nk_MI _ _ _ _ _ _ NK)). Qed.
+(* LPS 727298f3: [nk_MI] is an [MInvIR] (Malloc/ContractI.v: [MInvI] and the vDSO fact); the
+   invariant's projections read its first half. *)
+Lemma HL2 : layout_ok L2 s2. Proof using NK. exact (mig_layout (proj1 (nk_MI _ _ _ _ _ _ NK))). Qed.
+Lemma ctx2 : ly_ctx L2 = 0x59c90. Proof using NK. exact (mig_ctx (proj1 (nk_MI _ _ _ _ _ _ NK))). Qed.
 
 Lemma m_addr2 : ltac2:(tb__ "0|0|
 S0S6S121VL2;Vm;A2S94Via;Vm;A2A3").
@@ -229,7 +232,7 @@ Qed.
 Lemma gu_R : ltac2:(tb__ "0|8|
 S1S41Z1000M0Sb3A2S1S41S42Sb3Z28A2M1S123VL2;A1M2A2S1S0S6S48Sb3Z8A2Z0M3A3S1S2S41G1Z10000M4A2S41Z5b000M5Sb3A2A2S1S41G0Sb4A2S1S41S42S42Sb4S6cA2S45Sb2S42S6aVamg;A1M6Z1A2A2A2G2A2S1S0S6S48Sb4Z10M7A2G3A3S1S2S41S42Sb4G7A2G4A2S41G5Sb4A2A2S41G3G6A2A2A2A2A2A2A2A2A2").
 Proof using Hi Hnest Htier NK.
-  pose proof (nk_MI _ _ _ _ _ _ NK) as HM.
+  pose proof (proj1 (nk_MI _ _ _ _ _ _ NK)) as HM.
   pose proof (RingFacts.used_addrs (m :: X) (Some (g, nidx)) U s2 HI2 C_P L2 (m_vmmaps mdK) HL2 (mig_vm HM) (mig_ledger HM) g amg (nk_used _ _ _ _ _ _ NK)) as H.
   rewrite stride_j in H. cbn [mc_img_lo mc_img_hi C_P] in H. pose proof G_ok as ((Glast & _) & _).
   unfold zg, zgm, META_SIZE, PGSZ, UNIT in *. repeat split; try lia.
@@ -258,7 +261,7 @@ Proof using Htier NK U X j m s2 sc.
   pose proof G_ok as (_ & Gml & _ & _ & Gmp & _). split; [exact Gml|].
   destruct (Z_lt_dec 0 (am_maplen amg)) as [Hpos|Hz]; [|lia].
   destruct (Gmp Hpos) as (r & rg & Em & Hr & K & Lv & Len & _).
-  pose proof (mig_vm (nk_MI _ _ _ _ _ _ NK)) as HV. destruct HV as (_ & _ & _ & _ & _ & _ & _ & V8 & _).
+  pose proof (mig_vm (proj1 (nk_MI _ _ _ _ _ _ NK))) as HV. destruct HV as (_ & _ & _ & _ & _ & _ & _ & V8 & _).
   pose proof (V8 r rg Hr Lv) as [A B]. rewrite Len in B. top_ranges. unfold PGSZ in *. lia.
 Qed.
 Lemma nbits_range : 0 <= nbits < 2 ^ 64.
@@ -319,7 +322,7 @@ Proof using Herv Hervh Hi Hnest Htier NK.
   - exact hd2_sc.
   - exact m_key2.
   - exact m_raw2.
-  - pose proof (nk_MI _ _ _ _ _ _ NK) as HM. unfold MInvIR in HM. rewrite rd_of_CG, wok_of_CG in HM. exact HM.
+  - pose proof (nk_MI _ _ _ _ _ _ NK) as HM. minvir_dest HM. rewrite rd_of_CG, wok_of_CG in HM. exact HM.
   - exact I9.
   - exact Herv.
   - rewrite E10. exact I11.
@@ -826,7 +829,7 @@ Qed.
 Lemma pslot_R : ltac2:(tb__ "0|5|
 S1S2S41S42Z59c90M0Z3a0A2S46Sb5Z4A2M1A2S41S42Sb5Sb2A2M2G0A2A2S1S2S41G2Z10000A2S41Z5b000G1A2A2S1S41G2S123VL2;A1A2S1S41S42Z1000ZcA2G1A2S1S2S41S42S94Via;Vm;A2M3Z28M4A2G1A2S41G2G3A2A2S2S41S42Sb3G4A2G1A2S41G2Sb3A2A2A2A2A2A2A2").
 Proof using Herv Hi Hnest Htier NK.
-  pose proof (nk_MI _ _ _ _ _ _ NK) as HM. pose proof ctx2 as HCX. pose proof nidx_range as (I1 & _). pose proof nstrd_range as SR. pose proof gu_R as (_ & _ & _ & _ & M1 & _).
+  pose proof (proj1 (nk_MI _ _ _ _ _ _ NK)) as HM. pose proof ctx2 as HCX. pose proof nidx_range as (I1 & _). pose proof nstrd_range as SR. pose proof gu_R as (_ & _ & _ & _ & M1 & _).
   destruct (group_range (m :: X) (Some (g, nidx)) U s2 L2 HI2 HL2 C_P (m_vmmaps mdK) g amg (nk_used _ _ _ _ _ _ NK) (mig_vm HM) (mig_ledger HM)) as (GR1 & GR2 & GR3 & GR4).
   fold L2 in GR4. rewrite HCX in GR4. cbn [mc_img_lo mc_img_hi C_P] in GR3.
   pose proof G_ok as ((Glast & _) & _).
@@ -1016,10 +1019,10 @@ Lemma m_not_linked q a b : ltac2:(tb__ "0|0|
 S0S54S65A1SccVcur;Vq;A2S56S65S6bS56S64Va;A2S56S64Vb;A2A2A2A3S3S0S64Vq;Vm;A3A1F_;").
 Proof using HLV L vm. intros M E. subst q. unfold m in M. destruct (lv_raw ia cur L mWc vm HLV) as [E|E]; rewrite E in M; discriminate M. Qed.
 
-Hypothesis EXIT0 : ltac2:(tb__ "0|1|
-S2bS53S13aA1M0S1b6S13dS0S54S64A1S74Vcur;A1S5dS64A1A3S19cS91Via;VmWc;A2R5A2S18SbfR6S17dVx;A1S52G0S138R5S139R4R3A2A4A4VKc;R6R4A2S0S13cS13bR5A1Vvm;A3VQ;S52G0S138R8S139R7R6A2A4A1F_;F_;F_;F_;F_;Fmd';Fms';Ftr';Frho6;").
-Hypothesis EXITR : ltac2:(tb__ "0|8|
-S2bS53S13aA1M0S1b6S13dS64S64S64S64S0S54S64A1S74Vcur;A1S56S64R4A2M1A3S0S54S65A1M2SccVcur;R5A2M3S56S65S6bG1S56S64R3A2M4A2A2A3S0G2G3S56S65S6bG4S56S64R6A2A2A2A3S19cS91Via;VmWc;A2RbA2S0Sc6Q40M5A1M6S11RcPffA2Sc7G5S121VL;R8A2A2M7A3S0G6S11RdP100A2G7A3S18SbfReS17eVx;A1S52G0S138RdS139RcRbA2A4A4VKc;ReRcA2S0S13cS13bRdA1Vvm;A3VQ;S52G0S138R10S139RfReA2A4A1F_;F_;F_;F_;F_;F_;F_;F_;F_;Fpr2;Fnx;Fhp;Ffm;Fmd';Fms';Ftr';Frho6;").
+Hypothesis EXIT0 : ltac2:(tb__ "0|0|
+S2bS53S13aA1S1b6S13dS0S54S64A1S74Vcur;A1S5dS64A1A3S19cS91Via;VmWc;A2R5A2S18SbfR6S17dVx;A1S52S53S13aA1S138R5S139R4R3A2A4A4VKc;R6R4A2S1S0S13cS13bR5A1Vvm;A3S209R5A1A2VQ;S52S53S13aA1S138R8S139R7R6A2A4A1F_;F_;F_;F_;F_;Fmd';Fms';Ftr';Frho6;").
+Hypothesis EXITR : ltac2:(tb__ "0|0|
+S2bS53S13aA1S1b6S13dS64S64S64S64S0S54S64A1S74Vcur;A1S56S64R4A2A3S0S54S65A1SccVcur;R5A2S56S65S6bS56S64R4A2S56S64R3A2A2A2A3S0S54S65A1SccVcur;R5A2S56S65S6bS56S64R3A2S56S64R6A2A2A2A3S19cS91Via;VmWc;A2RbA2S0Sc6Q40A1S11RcPffA2Sc7Q40S121VL;R8A2A2A3S0Sc6Q40A1S11RdP100A2Sc7Q40S121VL;R8A2A2A3S18SbfReS17eVx;A1S52S53S13aA1S138RdS139RcRbA2A4A4VKc;ReRcA2S1S0S13cS13bRdA1Vvm;A3S209RdA1A2VQ;S52S53S13aA1S138R10S139RfReA2A4A1F_;F_;F_;F_;F_;F_;F_;F_;F_;Fpr2;Fnx;Fhp;Ffm;Fmd';Fms';Ftr';Frho6;").
 
 Lemma hold_cell1 rho ms c z base (b off : Z) (e : sv) : ltac2:(tb__ "0|5|
 S3fSbfVms;A2Sc2Sc9Vc;ScaVcur;A1A3S0S54S6A1S1cdVL;Vc;A2S56S6Vz;A2A3S0S5aSd3Vc;A1U8A3S0S6ScfVL;Sd2Vc;A1A2S42Vb;Voff;A2M0A3S0S6Sc8Q40M1S12Vrho;Vbase;A2A2Vb;A3S0Sc6G1A1S12Vrho;Ve;A2Sc7G1Vz;A2A3S41Z0M2Voff;A2S41G2Vb;A2S43S42G0Z8M3A2S44Z2Z3eA2A2S17SbfVrho;S172Vms;VmWc;A2S37Vbase;SbVoff;A1M4SbS42Voff;G3A2A1S50SfS13G4G3Ve;A3S5cSfA1A3S28A5A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;").
@@ -1576,10 +1579,10 @@ Lemma post_L : layout_ok L2 post.
 Proof using NK. pose proof HL2 as (A1 & A2' & A3 & A4). split; [exact A1|]. split; [exact A2'|]. rewrite post_fp. split; [exact A3 | exact A4]. Qed.
 Lemma post_V : ltac2:(tb__ "0|0|
 S128VL2;Sf0Vvm2;A3").
-Proof using NK. exact (mig_vm (nk_MI _ _ _ _ _ _ NK)). Qed.
+Proof using NK. exact (mig_vm (proj1 (nk_MI _ _ _ _ _ _ NK))). Qed.
 Lemma post_B : bounded post.
 Proof using Herv Hi Hnest Htier NK PV vm2.
-  pose proof (nk_MI _ _ _ _ _ _ NK) as HM.
+  pose proof (proj1 (nk_MI _ _ _ _ _ _ NK)) as HM.
   apply (bounded_usage C_P X (Some (m, 0)) U s2 post L2 vm2 (mig_bounded HM) post_I post_L post_V (mig_ledger HM)).
   - intros c. rewrite <- pU. exact (iok_U0 ia Hi c).
   - reflexivity. - reflexivity. - reflexivity. - reflexivity.
@@ -1697,6 +1700,7 @@ S0S51S1d7VsT;Sc0A2S55A3").
 Hypothesis SRES : ltac2:(tb__ "0|0|
 S0SaS1d6VsT;S1c5A2SbZ0A1A3").
 Variables (rho' : valuation) (tr : list event) (msF : machine_state) (md : Model).
+Context {Hvd : Contract.vdso_ok md}.
 Hypothesis Hag : ltac2:(tb__ "0|0|
 S19cS91S114Via;VrhoK;VmdK;VA2;Vg;Vamg;Verv;A7S117VrhoK;A1A2Vrho';A2").
 Hypothesis HsmL0 : ltac2:(tb__ "0|0|
@@ -2588,7 +2592,7 @@ Qed.
 
 Theorem exit_post : ltac2:(tb__ "0|0|
 S1daSbfS120S198VNf;VOg;VX;VU;VA;VKc;Vrho0;S52S53S13aA1S138Vtr;S139VmsF;Vmd;A2A4Ab").
-Proof using CHK ENT HKc HOg Hag Herv Hervh Hi Hmd Hnest HsmL0 Htier I' L2 NK PV RCHK SID SRES bv0 bv1 bvA j req rv0 rv1 rvA s1 s2.
+Proof using CHK ENT HKc HOg Hag Herv Hervh Hi Hmd Hnest HsmL0 Htier Hvd I' L2 NK PV RCHK SID SRES bv0 bv1 bvA j req rv0 rv1 rvA s1 s2.
   exists (L_as_ok IEC_P), (JLg_okG segsP C_P Og X U A Kc), rhoX.
   split; [right; left; reflexivity|].
   split; [split; [intros i Hi0; symmetry; exact (rwX i Hi0) | intros l; symmetry; exact (rlX l)]|].
@@ -2596,7 +2600,7 @@ Proof using CHK ENT HKc HOg Hag Herv Hervh Hi Hmd Hnest HsmL0 Htier I' L2 NK PV 
   cbn [w_tr w_cfg cfg_model]. unfold JLg_okG. split; [exact HOg|]. unfold JLg_ok. cbn zeta. rewrite <- !pSC. change (bv_unsigned (rw rho0 13%positive)) with (bv_unsigned (rw rho0 13%positive)). rewrite <- !pREQ.
   split; [exact resX|].
   exists (mkMA post L2), m, amN'. pose proof post_group as (G1 & G2 & G3 & G4). pose proof post_hb as [HB UB].
-  split. { unfold MInvIR, MInvI. change (m_vmmaps (cfg_model (w_cfg (tr, mkCfg msF md)))) with (m_vmmaps md). rewrite rmX. rewrite Hmd. rewrite rd_of_CG, wok_of_CG. exact MI'. }
+  split. { minvir_split; unfold MInvI. change (m_vmmaps (cfg_model (w_cfg (tr, mkCfg msF md)))) with (m_vmmaps md). rewrite rmX. rewrite Hmd. rewrite rd_of_CG, wok_of_CG. exact MI'. }
   split; [exact post_X|].
   split; [cbn [ma_L]; exact (layout_extends_trans_le' (ma_L A) (ia_L ia) L2 _ _ (pv_ext ia X U A rho0 PV) (nk_ext _ _ _ _ _ _ NK) (pv_nreg ia X U A rho0 PV))|].
   split; [exact G4|]. split; [exact (proj1 post_used)|]. split; [exact G1|]. split; [exact G2|]. split; [exact G3|].
@@ -2610,7 +2614,7 @@ End LeafN.
 Theorem leaf_NP : ltac2:(tb__ "0|1|
 S14S1d8S2bS0S51S18fVsc;R3A2S55A3S0S51S18eVsc;Vcnt0;S188R4A1A3S55A3S0S51S1d3S1aeS188R5A1A1S199S198A1R4A3S55A3S0S51S1d7R5Sc0A2S55A3S0SaS1d6R6S1c5A2SbZ0A1A3S19cS91S114Via;VrhoK;VmdK;VA2;Vg;Vamg;Verv;A7M0S117VrhoK;A1A2R6A2VTR;VkB;S1d9SbfS1f1VKc;G0A2R9R7A4S1daSbfS120S198VNf;VOg;VX;VU;VA;VKc;Vrho0;AaA3F_;F_;F_;F_;F_;F_;Frho';FsT;FLf;").
 Proof using HOg Herv Hervh Hi HkB Hnest Htier NK PV RR.
-  intros Lf sT rho' RC CK EN SI SR Hag. (apply (trr_skip RR); [lia|]). intros [tr [msF md]] [Hsm [HK Hmd]]. cbn [w_tr w_cfg cfg_model fst snd] in HK, Hmd.
+  intros Lf sT rho' RC CK EN SI SR Hag. (apply (trr_skip RR); [lia|]). intros [tr [msF md]] [Hsm [HK [Hmd VDm]]]. cbn [w_tr w_cfg cfg_model fst snd] in HK, Hmd.
   exact (exit_post Lf sT RC CK EN SI SR rho' tr msF md Hag Hsm HK Hmd).
 Qed.
 End NP.

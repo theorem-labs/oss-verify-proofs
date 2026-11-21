@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif1m.v at 95e6f1d72b6 (sha256 a8ba029fc832) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), with its module paths changed and its image numerals moved to fuzz_decode.asan-ubsan (pin sha256 5d05689fd5b1) by symbol + offset (alreloc 9b786608301; KEEP, regenerated and resolved values per proofs/libreac/fuzz_decode/provenance/alloc-reloc/B/resolve.txt); later the model labels became the model's tags (202260 -> 3, 449860 -> 12). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif1m.v (sha256 a8ba029fc832) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), with its module paths changed and its image numerals moved to fuzz_decode.asan-ubsan (pin sha256 5d05689fd5b1) by symbol + offset (alreloc; KEEP, regenerated and resolved values per proofs/libreac/fuzz_decode/provenance/alloc-reloc/B/resolve.txt); later the model labels became the model's tags (202260 -> 3, 449860 -> 12). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/AGif1m.v, with its module paths, module names and addresses changed; 112 of its 186 lines of code are new or changed and 367 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B: the ARU refill lift [fs_refill_U], the premise H_refill_U of lib/B/FSReallocAG.v (:272-273) at
    rtree := refill_tree (the value lib/B/AGif1m.iface_cgif_m fixes, :503-505), at the B relocation's image instances
    AGif2cgif.AImg_cgif / AGif0cgif.AGImg_cgif (a Theorem Labs lane, 2026-10-29).
@@ -235,7 +236,7 @@ Proof. intros B TS HSP Up. exact (refill_U_cgif B TS HSP Up). Qed.
 Theorem fs_refill_U_ok : fs_refill_U_stmt.
 Proof. exact fs_refill_U. Qed.
 
-(* CLOSED (a Theorem Labs lane's in-place refill-leaf fix, a working branch 7a8987cb974, taken by path:
+(* CLOSED (a Theorem Labs lane's in-place refill-leaf fix, a working branch, taken by path:
    lib/B FSupoisonAllocR / Rf / Rt / Mm): FSupoisonAllocR.refill_leafU now carries RAW-TEXT.md's raw conjunct last, so
    FSupoisonAllocR.tfib_refill_specU B IS tfib_refill_specURaw B by conversion, and a Theorem Labs lane's re-proved
    FSupoisonAllocRt.tfib_refill_okU discharges the premise. The image-B twin of a Theorem Labs lane's lib/A fs_refill_U_closed. *)

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract of __asan_stack_malloc_0 (FakeStack class 0) on
    fuzz_reply.asan at 0x3d168, YG0d.v's astack_malloc_realizes at class 0, which W_frame.v (palf_sm0) and the core
-   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch c8e8b0fa5ec
+   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch
    proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0Tbl.v (module SM0Tbl below) and StackMalloc0.v (the rest),
    themselves ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF9p.v + YF9q.v (trb_stack_malloc_0) into
    cgif_file_fuzzer's vocabulary.  fuzz_grant's 93 words at 0x3cda4 equal fuzz_reply's at 0x3d168 except the eight
@@ -15,7 +15,8 @@
    end 6266880 -> 6270976 (TFIB_IMG_END 0x5fb000) in the low-zone bounds, GrantSyms -> TfibSyms, module paths;
    the code table adds class 0's range on top of AF0r.tbl_fs, which (unlike fuzz_grant's) does not hold it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/RT_asan_stack_malloc_0.v, with its module paths and module names changed; 524 of its 591 lines of code are new or changed and 903 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMpoisonW.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMpoisonW.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

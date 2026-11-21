@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 635 of its 665 lines of code are new or changed and 322 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsRet.v, with its module names changed; 1162 of its 1245 lines of code are new or changed and 582 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4 (parse_string): the stretch PS_SCAN (offset 132) .. PS_DEC (offset 328).
    The scan loop, the fuzz_malloc call at 200 and its three arms. Contract: lib/A/Prog/S4_PsBase.v
    (ps_pre / ps_at_scanP / ps_seg_scanP / ps_at_decP / ps_at_ret0P / ps_postP, and their stable P := True forms); the
    stretch takes the other cuts as Section hypotheses, so it composes by `apply`.
-   KIT: the kit's cut 7cdbb61b5fa0 (earlier the old-pin acceptance kit of record a working branch
-   a941cee76c3f + engine a Theorem Labs lane s1b 459129c18903 + listing v4; S4 working branch
-   322e57164236). Blob ids as the kit's cut 7cdbb61b5fa0 carries them: lib/A/PRH_Base.v ef7c8ca98529,
+   KIT: the kit's cut (earlier the old-pin acceptance kit of record a working branch
+   + engine a Theorem Labs lane s1b + listing v4; S4 working branch).
+   Blob ids as the kit's cut carries them: lib/A/PRH_Base.v ef7c8ca98529,
    lib/A/PRH_FnReader.v f1ae32e3b2cd, lib/A/PRH_FnAlloc.v 4d8aeba047e5, lib/Reusable/YGcfRoomLive.v edc1017de99c;
    this row's S4_PsBase.v and S4_PsSrc.v; the engine set (YCbqG 219748197d6b, YC80x 14f84f225e8f with srr_inv_laws and
    the _inv runner lemmas, YC1fPx 7814b594066f with paj_run_x_inv / paj_run_to_x_inv, YCbqGcall c1fcd07d2537);

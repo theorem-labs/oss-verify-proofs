@@ -3,12 +3,13 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 265 of its 295 lines of code are new or changed and 544 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment M01 of reac-pw/fuzz_rate LLVMFuzzerTestOneInput (plain): [0x13158, 0x141e4), K13158 -> K141e4
    (Prog/LLVMFuzzerTestOneInput_c.v's S_M01).
    Ported from reac-pw/fuzz_role's Prog/Seg/M01.v at rate's addresses,
    registers and frame cells. The body is rate_build_contract's evt (the inlined pod builder of pod.h:382-449),
    taken as a Section hypothesis and run on the normalized memory with Tac_slot.sl_run, as libreac/fuzz_ctrl's
-   released Prog/Seg/F02.v (origin/ossv/recipes 25e3d17bdb50) runs f02_evt. Its premises come from FR at K13158:
+   released Prog/Seg/F02.v runs f02_evt. Its premises come from FR at K13158:
    the input after the 7-byte header g_rest at g_src (the input block's bytes, unchanged since ENTRY by FR's
    entry-block clause and GV's blk_data; for the empty input the cursor is `empty`, which lies in an image segment
    and so apart from the pp block), the seven header values of Inv_K13158 (s6, s9, s10, s7, the cell sp + 0x30,

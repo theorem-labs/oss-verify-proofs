@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 3124 of its 3235 lines of code are new or changed and 900 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F4.v, with its module paths and module names changed; 2763 of its 3239 lines of code are new or changed and 2759 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F9.v, with its addresses changed; 107 of its 220 lines of code are new or changed and 3126 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17; measured against this image only;
    source runs: lib/B/Prog/Seg/F9.v f9_evtA (:297), f9_evtB_n (:552), f9_evtB (:786) at
-     a working branch 3803efccea0 (blob 72e9d4aaf4b6386730fc37f834619c224d530832);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob 72e9d4aaf4b6386730fc37f834619c224d530832);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    split (parent 23:50Z: split at EVERY call, never state a callee contract locally):
      - f9_evtA has no call: f9_evtA_F is the whole run 0x82180 -> 0x821e0, same script with StepF `step`;
      - f9_evtB_n and f9_evtB are the SAME run 0x821e0 -> 0x821ec through the one call of

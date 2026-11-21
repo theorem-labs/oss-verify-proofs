@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the section takes the input's fields (apc, mbase, kb, execfn and the other QpvH.inp fields) with QpvH.launch_ok in place of entry_stack_fits, and SINV0 / argH0 over them; the CONFIG_RSEQ flag of the start-up layer: the checks over the four main-entry states of HSCLASS_S, with the shadow-image checks of the states at CONFIG_RSEQ value 1; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -39,15 +40,22 @@ Lemma SHIMG_HS2sA_1_ok : shimg_check HS2sA_1 = true.  Proof. vm_compute. reflexi
 Lemma SHIMG_HS2sA_2_ok : shimg_check HS2sA_2 = true.  Proof. vm_compute. reflexivity. Qed.
 Lemma SHIMG_HS2sB_3_ok : shimg_check HS2sB_3 = true.  Proof. vm_compute. reflexivity. Qed.
 Lemma SHIMG_HS2sB_4_ok : shimg_check HS2sB_4 = true.  Proof. vm_compute. reflexivity. Qed.
+(* the same checks on the main-entry states of the run at CONFIG_RSEQ value 1 *)
+Lemma SHIMG_HS2sA_1R_ok : shimg_check HS2sA_1R = true.  Proof. vm_compute. reflexivity. Qed.
+Lemma SHIMG_HS2sA_2R_ok : shimg_check HS2sA_2R = true.  Proof. vm_compute. reflexivity. Qed.
+Lemma SHIMG_HS2sB_3R_ok : shimg_check HS2sB_3R = true.  Proof. vm_compute. reflexivity. Qed.
+Lemma SHIMG_HS2sB_4R_ok : shimg_check HS2sB_4R = true.  Proof. vm_compute. reflexivity. Qed.
 Lemma SHIMG_CHECKS : forall w ch, HSCLASS_S w ch -> shimg_check ch = true.
-Proof. intros [|] ch [-> | ->]; [exact SHIMG_HS2sA_1_ok | exact SHIMG_HS2sA_2_ok | exact SHIMG_HS2sB_3_ok | exact SHIMG_HS2sB_4_ok]. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]];
+[exact SHIMG_HS2sA_1_ok | exact SHIMG_HS2sA_2_ok | exact SHIMG_HS2sA_1R_ok | exact SHIMG_HS2sA_2R_ok
+|exact SHIMG_HS2sB_3_ok | exact SHIMG_HS2sB_4_ok | exact SHIMG_HS2sB_3R_ok | exact SHIMG_HS2sB_4R_ok]. Qed.
 
 Lemma REGS_EQ {RC__ : Q6q3.RunConsts} : QZsi.hl_reg_globals Qwm6.Mq4.A4L = REGSJ.
 Proof. change (QZsi.hl_reg_globals Qwm6.Mq4.A4L) with QGcC.tokA_reg_globals. vm_compute. reflexivity. Qed.
 
-Definition CANc : list scell := [SCw 8 (EVar 45)].
+Definition CANc : list scell := [SCw 8 (EVar 49)].
 Lemma CAN_CHECKS : forall w ch, HSCLASS_S w ch -> cells_check JOB6SEGS (kn_view ch) (ELit 0) 0x625510 CANc = true.
-Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Section Stat.
 Variable sp : word.
@@ -56,18 +64,32 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation m := (view LV mo FULL).
 #[local] Notation usp := (bv_unsigned sp).
 
@@ -126,7 +148,7 @@ Proof.
 destruct (MV4 small_bytes) as ([B _] & _).
 replace [Z_to_bv 8 0] with (sc_bytes JOB6SEGS E 0x6457b3 (NLc w)); [exact B|]. destruct w; vm_compute; reflexivity.
 Qed.
-Theorem canary_copy_main : QZDE.bytes_at JOB6SEGS m 0x625510 (QZDE.le8 (ev E 45)).
+Theorem canary_copy_main : QZDE.bytes_at JOB6SEGS m 0x625510 (QZDE.le8 (ev E 49)).
 Proof.
 pose proof (cells_check_sound JOB6SEGS E m (kn_view ch) (MV4 main_know_view) CANc (ELit 0) 0x625510 (CAN_CHECKS w ch HCL)) as X. cbv zeta in X.
 change (bv_unsigned (edenot E (ELit 0))) with 0 in X. rewrite Z.add_0_l in X. specialize (X ltac:(lia) ltac:(cbn; lia)).
@@ -135,7 +157,7 @@ Qed.
 
 Section StatA.
 Context {RC__ : Q6q3.RunConsts}.
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 Theorem stat_main : QPUe.STAT_A Qwm6.Mq4.A4L (atopE E + 4096) (usp - 32)
 QrOY.jo_STATC m.
 Proof.
@@ -215,15 +237,22 @@ Lemma SHIMG_HS2sA_1_ok : shimg_check HS2sA_1 = true.  Proof. vm_compute. reflexi
 Lemma SHIMG_HS2sA_2_ok : shimg_check HS2sA_2 = true.  Proof. vm_compute. reflexivity. Qed.
 Lemma SHIMG_HS2sB_3_ok : shimg_check HS2sB_3 = true.  Proof. vm_compute. reflexivity. Qed.
 Lemma SHIMG_HS2sB_4_ok : shimg_check HS2sB_4 = true.  Proof. vm_compute. reflexivity. Qed.
+(* the same checks on the main-entry states of the run at CONFIG_RSEQ value 1 *)
+Lemma SHIMG_HS2sA_1R_ok : shimg_check HS2sA_1R = true.  Proof. vm_compute. reflexivity. Qed.
+Lemma SHIMG_HS2sA_2R_ok : shimg_check HS2sA_2R = true.  Proof. vm_compute. reflexivity. Qed.
+Lemma SHIMG_HS2sB_3R_ok : shimg_check HS2sB_3R = true.  Proof. vm_compute. reflexivity. Qed.
+Lemma SHIMG_HS2sB_4R_ok : shimg_check HS2sB_4R = true.  Proof. vm_compute. reflexivity. Qed.
 Lemma SHIMG_CHECKS : forall w ch, HSCLASS_S w ch -> shimg_check ch = true.
-Proof. intros [|] ch [-> | ->]; [exact SHIMG_HS2sA_1_ok | exact SHIMG_HS2sA_2_ok | exact SHIMG_HS2sB_3_ok | exact SHIMG_HS2sB_4_ok]. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]];
+[exact SHIMG_HS2sA_1_ok | exact SHIMG_HS2sA_2_ok | exact SHIMG_HS2sA_1R_ok | exact SHIMG_HS2sA_2R_ok
+|exact SHIMG_HS2sB_3_ok | exact SHIMG_HS2sB_4_ok | exact SHIMG_HS2sB_3R_ok | exact SHIMG_HS2sB_4R_ok]. Qed.
 
 Lemma REGS_EQ {RC__ : Q6q3.RunConsts} : QZsi.hl_reg_globals Qwm6.Mq0.A4L = REGSJ.
 Proof. change (QZsi.hl_reg_globals Qwm6.Mq0.A4L) with QGcC.Mq0.tokA_reg_globals. vm_compute. reflexivity. Qed.
 
-Definition CANc : list scell := [SCw 8 (EVar 45)].
+Definition CANc : list scell := [SCw 8 (EVar 49)].
 Lemma CAN_CHECKS : forall w ch, HSCLASS_S w ch -> cells_check JO6SEGS (kn_view ch) (ELit 0) 0x622e50 CANc = true.
-Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Section Stat.
 Variable sp : word.
@@ -232,18 +261,32 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation m := (view LV mo FULL).
 #[local] Notation usp := (bv_unsigned sp).
 
@@ -302,7 +345,7 @@ Proof.
 destruct (MV4 small_bytes) as ([B _] & _).
 replace [Z_to_bv 8 0] with (sc_bytes JO6SEGS E 0x6430f3 (NLc w)); [exact B|]. destruct w; vm_compute; reflexivity.
 Qed.
-Theorem canary_copy_main : QZDE.bytes_at JO6SEGS m 0x622e50 (QZDE.le8 (ev E 45)).
+Theorem canary_copy_main : QZDE.bytes_at JO6SEGS m 0x622e50 (QZDE.le8 (ev E 49)).
 Proof.
 pose proof (cells_check_sound JO6SEGS E m (kn_view ch) (MV4 main_know_view) CANc (ELit 0) 0x622e50 (CAN_CHECKS w ch HCL)) as X. cbv zeta in X.
 change (bv_unsigned (edenot E (ELit 0))) with 0 in X. rewrite Z.add_0_l in X. specialize (X ltac:(lia) ltac:(cbn; lia)).
@@ -311,7 +354,7 @@ Qed.
 
 Section StatA.
 Context {RC__ : Q6q3.RunConsts}.
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 Theorem stat_main : QPUe.STAT_A Qwm6.Mq0.A4L (atopE E + 4096) (usp - 32)
 QrOY.Mq0.jo_STATC m.
 Proof.

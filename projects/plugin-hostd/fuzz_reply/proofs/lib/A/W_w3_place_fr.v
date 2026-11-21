@@ -17,7 +17,8 @@
    [0x53f2c; 0x8562c]], TRACES_list_drop [[0x53f2c; 0x85874]]; the *_trace_fr remarks check each against its TRACES
    row), and each singleton [ra] is a row of ACk0.v CTX_AFREE (its edges (CTX_check_no_loss, 0x85ac0, CTX_AFREE,
    K0Lit), (CTX_check_shape_ends, 0x8551c / 0x8562c, CTX_AFREE, K0Lit), (CTX_list_drop, 0x85874, CTX_AFREE, K0Lit)).
-   ACej.v and ACk0.v here are byte-identical to a working branch ed7e2968f0d's. *)
+   ACej.v and ACk0.v here are byte-identical to a working branch. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -89,7 +90,7 @@ exact (conj (apart_of_b G _ _ He a Ha) (conj (apart_of_b G _ _ H0 a Ha) (apart_o
 Qed.
 
 (* ------------------------------------------------------------------ check_no_loss (W_check_no_loss.v Section c) *)
-(* CNLAP (W_check_no_loss.v:340) *)
+(* CNLAP (W_check_no_loss.v:341) *)
 Lemma check_no_loss_CNLAP_fr : cnl_objs_apart (PI := PB_fr).
 Proof.
 unfold cnl_objs_apart. cbv zeta. w3_vals.
@@ -98,15 +99,15 @@ repeat match goal with |- _ /\ _ => split; [lia|] end.
 intros a Ha Hr. apply W_rom_place_fr.fr_rom_range in Hr. lia.
 Qed.
 
-(* HGR (W_check_no_loss.v:342) *)
+(* HGR (W_check_no_loss.v:343) *)
 Lemma check_no_loss_HGR_fr : gx_ok SEGS TfibB (cnl_ro (PI := PB_fr)).
 Proof. apply w3_gx_ok_b; vm_compute; reflexivity. Qed.
 
-(* HGRR (W_check_no_loss.v:343) *)
+(* HGRR (W_check_no_loss.v:344) *)
 Lemma check_no_loss_HGRR_fr : gx_rt (PI := PB_fr) TfibB (cnl_ro (PI := PB_fr)).
 Proof. apply w3_gx_rt_b; vm_compute; reflexivity. Qed.
 
-(* ROMNS (W_check_no_loss.v:346): no read-only byte is errno's (_G.v c_rom_noerr), and an owned read-only byte is
+(* ROMNS (W_check_no_loss.v:347): no read-only byte is errno's (_G.v c_rom_noerr), and an owned read-only byte is
    pinned (_G.v c_rom_pinned, over AF0m's Tfib_const_abs cells) *)
 Lemma check_no_loss_ROMNS_fr : forall a, in_rom SEGS a -> ~ (as_errno TfibB <= a < as_errno TfibB + 4) /\
   (Exists (in_zr a) (as_owned_static TfibB) -> rom_pinned SEGS TfibB a).
@@ -114,7 +115,7 @@ Proof.
 intros a Ha. split; [exact (proj1 (c_rom_noerr TfibB w3_tfib_errno a Ha)) | exact (c_rom_pinned TfibB TfibB_syms a Ha)].
 Qed.
 
-(* HCTX_cnl_free (W_check_no_loss.v:360): the free at 0x85abc returns to 0x85ac0 = check_no_loss + 0x168 *)
+(* HCTX_cnl_free (W_check_no_loss.v:361): the free at 0x85abc returns to 0x85ac0 = check_no_loss + 0x168 *)
 Lemma check_no_loss_HCTX_cnl_free_fr : In [BASE + AF_fr_check_no_loss + 0x168] CTX_AFREE.
 Proof.
 assert (E : [BASE + AF_fr_check_no_loss + 0x168] = [0x85ac0]) by (vm_compute; reflexivity).

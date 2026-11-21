@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan harness walk of LLVMFuzzerTestOneInput
    (fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118): SEGMENT S5 MID,
-   pc 0x7f1c4-0x7f218, from ss_M to ss_C (both lib/A/APgLoop0.v).  Modelled on proofs/cgif/cgif_file_fuzzer/lib/A at
-   c8557374ad2e: ACfe.v:67-70 (the segment lemma), :155-212 (the call site: the ra / s0 words of the stack region, the
+   pc 0x7f1c4-0x7f218, from ss_M to ss_C (both lib/A/APgLoop0.v).  Modelled on proofs/cgif/cgif_file_fuzzer/lib/A:
+   ACfe.v:67-70 (the segment lemma), :155-212 (the call site: the ra / s0 words of the stack region, the
    frame chain through rt_chain, the zero shadow bytes of the callee's object), :228-273 (the call through SRr_bind and
    the callee contract), :274-316 (its post, reseatL and the kept-region cases); ACf6.v:52-62 (rt_region_kept_eq);
    ACf9.v:252-282 (the dead-register havoc of ra_join_win, reused as havoc_deads). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* THE CODE (A image)
      0x7f1c4 andi a0,s7,2; beqz a0,0x7f21c                     (no STEP call)
@@ -19,13 +20,13 @@
      0x7f21c (ss_C)
 
    Knock-specific changes:
-   - the callee is reac_knock_step at 0x7f570 through a Theorem Labs lane's tknock_step_specX (lib/A/APgCSpec.v:142-158) at
+   - the callee is reac_knock_step at 0x7f570 through a Theorem Labs lane's tknock_step_specX (lib/A/APgCSpec.v:143-159) at
      segs := tfibsegs, in place of read_frameconfig through trfc_specX;
    - its object is k = F+32 (40 bytes) in the class-1 harness frame: afobj comes from the frame and the 5 zero shadow
      bytes of k (chunks 4-8 of the frame's shadow region), obj_at from the 7 chunks of the k region (s5_kf);
    - the k region is the one region not kept over the call; after it, it is rebuilt from kn_post_step's obj_at with
      fresh atoms N_stC / N_dueC / N_gC (341-343) for state / due / granted;
-   - s5_step_facts reads knock_step_f (APgCSpec.v:26-31) against inv_knock and gives the facts that kill the five
+   - s5_step_facts reads knock_step_f (APgCSpec.v:27-32) against inv_knock and gives the facts that kill the five
      aborts to 0x7f3cc (A1 r not in {0,1}; A2 r = 1 with d <> 0; A3 r = 1 with granted = 0; A4 r = 1 with
      now - quiet <= 499999999; A5 r = 0, d = 0 with now - quiet >= 500000000; plain proof
      lib/Prog/LLVMFuzzerTestOneInput.v:207-240, lib/Prog/reac_knock_step_c.v:11-18); U_sub_atoms reads `sub` in the

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value: the SHADOW of EXB's text, scratch and Lam tree nodes at ANY
    allocator state, re-derived from the allocator laws (EXV_HYP's eh_laws, YCbqG's AR_laws_x at hl = cf_head) and the
    ledger. Every segment that makes a program call needs it: ajournal_x keeps no shadow byte of a heap block (the
@@ -27,7 +28,7 @@ Local Open Scope Z_scope.
 
 #[local] Existing Instance prh_img_B.
 
-(* the hull is closed under sub-ranges (YGcfHeadSh.v:93 shadow_hull_vis_sub_cf, restated: that file is the cf layer) *)
+(* the hull is closed under sub-ranges (YGcfHeadSh.v:94 shadow_hull_vis_sub_cf, restated: that file is the cf layer) *)
 Lemma exv_hull_sub : forall rd x n x' n',
   shadow_hull_vis rd x n -> x <= x' -> x' + n' <= x + n -> shadow_hull_vis rd x' n'.
 Proof.

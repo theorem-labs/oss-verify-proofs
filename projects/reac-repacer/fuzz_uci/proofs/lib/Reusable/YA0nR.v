@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: kit companion of YA0n.v (target-independent; copy with the module path changed).
    A footprint run whose footprint avoids the world's hidden memory is a silent prefix of a world walk: YK04R's
    fsteps_restrict turns it into a run of the restricted state, and YA0n.SRr_msteps lifts that run. *)
-(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YA0nR.v at 88154566652a310ff96f54a5442e5c73fdaad090 for reac-repacer/fuzz_uci; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
+(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YA0nR.v for reac-repacer/fuzz_uci; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -8,12 +8,12 @@
    72 bytes, 18 instructions, a 16-byte frame, no side-stack frame): reac_box_catalogue_contract of
    lib/A/Prog/reac_box_catalogue_c.v at image A's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at
    the entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}`).
-   Ported from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v at origin/ossv/recipes 501c0d516c69, the
+   Ported from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, the
    same 18 instructions: its entry seed (cat_entry: the count cell, the frame, the shadow base's GOT word and cell as
    regions, one shadow entry for the 8-byte cell) and its one token run to the ret, restated from identity's
    caller-journal statement (its IdentCJ.v) in the afn_pre / apost_base form with the cell in the footprint; the
    object the code returns is listing object 77, fuzz_catalogue, where identity's is BOX_CATALOGUE. The c = 0 run is
-   new (the logic of libreac/fuzz_ctrl's lib/A/Prog/reac_box_catalogue.v:24-37 at 09c6822d886): a0 is pinned to 0, so
+   new (the logic of libreac/fuzz_ctrl's lib/A/Prog/reac_box_catalogue.v:24-37): a0 is pinned to 0, so
    the beqz at 0x8a108 is taken and the run goes through 0x8a130 to the ret without the store.
    c <> 0: the instrumented check of the 8-byte cell (a load of the shadow byte at (c >> 3) + the shadow base, lbu
    0x8a120, and a compare, bnez 0x8a124) reads 0, because the contract's sa_addr gives the cell addressable; so the
@@ -23,6 +23,7 @@
    contract premise.
    Image A's numbers of the statement: the entry BASE + AF_reac_box_catalogue (the image-A owner's 16:54Z ruling), cat =
    SegInstA.catA, STK = SegInstA.STK_reac_box_catalogue (16, the frame; lib/A/Prog/SegInstA.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

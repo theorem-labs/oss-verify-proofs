@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of stack_malloc_4 at 0x3d244 of libreac/fuzz_grant: class-4 frame constants (1024-byte frames, 128 shadow bytes, hint at +32, flags at +0x8800, frames at +0x409000), image numbers; module names; TfibSyms renamed GrantSyms. *)
 (* Modified by Theorem Labs, 2026-10: the walk of __asan_stack_malloc_4 (0x3fdb8) of plugin-hostd/fuzz_command's ASan build: module paths; GrantSyms becomes CmdBSyms; the image's thread words and its image end 0x606000; the shared YF0v is this tree's Reusable one; the corollary is named cmd_stack_malloc4_contract. *)
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtSM4.v at 2d2ff01bb6f; the walk of __asan_stack_malloc_4 (0x3ccac) of reac-pw/fuzz_headamp's ASan build: module paths; CmdBSyms becomes TfibSyms and the corollary is named stack_malloc4_contract; the image end 0x5fa000 and the thread words of the start-up table; the class-4 entry lemma for the symbol record and the Print Assumptions lines added at the end. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtSM4.v; the walk of __asan_stack_malloc_4 (0x3ccac) of reac-pw/fuzz_headamp's ASan build: module paths; CmdBSyms becomes TfibSyms and the corollary is named stack_malloc4_contract; the image end 0x5fa000 and the thread words of the start-up table; the class-4 entry lemma for the symbol record and the Print Assumptions lines added at the end. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

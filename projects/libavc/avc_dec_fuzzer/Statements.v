@@ -22,9 +22,12 @@
     input bytes 6-8, decodes the header, allocates output buffers, then up to
     100 decode calls advancing by bytes consumed (min 4); resolution changes
     reset the codec and re-feed. Return codes and decoded pictures are never
-    checked.  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    checked.  The harness makes no check of its own beyond not crashing.  Its
+    halts statements say only that the code it calls never crashes, hangs or
+    trips a sanitizer.  Its agreement statements say only that the code never
+    crashes or trips a sanitizer, and allow a run that never ends.  Its bound
+    statements say only how often its builds may disagree.  Its decidability
+    statements say only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

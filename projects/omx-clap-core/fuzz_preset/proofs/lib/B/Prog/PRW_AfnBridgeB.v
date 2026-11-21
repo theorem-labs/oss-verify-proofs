@@ -5,11 +5,11 @@
    not in the kit: afn_spec_cf is the cf INSTANCE's vocabulary and no lib/Reusable file may Require lib/A or lib/AU.
    rule 24: no function proved. The accessor citations below cite the Qed walks of lib/B/Prog/PwAllocSurfB.v; this
    file proves only the adapter and its instances.
-   RELOCATED AND RE-FIT 2026-10-29 from the old-pin file (a working branch 5f6a2b85e1b9, blob de6140b5ae50,
+   RELOCATED AND RE-FIT 2026-10-29 from the old-pin file (a working branch, blob de6140b5ae50,
    image f8f98a95). This file names no address: its entries are pa_sigma of PI_prog_B, checked against the
    interface's by vm_compute (a wrong-image constant fails there), so the relocation is the image under it. The
    re-fit is to two texts of this tree:
-   - THE KIT OF RECORD f97c8b2f046b (lib/A/PRH_Base.v blob fdb45545469b, lib/A/PRH_FnAlloc.v blob 740f4d11d144,
+   - THE KIT OF RECORD (lib/A/PRH_Base.v blob fdb45545469b, lib/A/PRH_FnAlloc.v blob 740f4d11d144,
      lib/A/PRH_FnCheck.v blob 9ecd8eb167c6). (i) fpre (PRH_Base.v :588-610) has FIVE conjuncts: afn_pre_x, the
      read-only view, the stack gap, `raZ regs < YM05.alloc_ceiling` and FRM0-ENTRY's `frm_zero (fp_csr fx)`. So
      prw_text takes all five, and afn_spec_cf_of_text passes the record's raZ bound and afn_spec_cf's own frm_zero

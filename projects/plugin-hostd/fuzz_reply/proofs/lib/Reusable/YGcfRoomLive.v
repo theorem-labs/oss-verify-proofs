@@ -1,13 +1,14 @@
-(* CARRIED from commit 13dada94373d48ba230c171e98126b88ba98118e,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfRoomLive.v, sha256 3d92559e6c03e79235d4af2e203e40cfd74f97de2762a667b408edab85a46856 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30 (free_cf's size test, Quarantine::Put): rl_free_rff and c24_free cover free_cf's recycle side (rff_rchunk / rk_rchunk_fr); statements unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the NON-PRIMARY ROOM AS A STATE
    INVARIANT, room_live_cf. Model and invariant lemmas only; no function is proved (rule 24). No address.
-   WHY: ROOM_cf_k S k (YGcfRoomKeep.v:30-32) charges a whole kUserMapSize map of class kBatchClass per remaining call,
+   WHY: ROOM_cf_k S k (YGcfRoomKeep.v:31-33) charges a whole kUserMapSize map of class kBatchClass per remaining call,
    so it is false for k > K_INIT = 14,335 in every state, while one LLVMFuzzerTestOneInput call charges at least
    9,696 and the harness runs it 1 to 4 times; a SUMMED per-call budget is unsatisfiable, so the non-primary room
    (the secondary count, the error buffer, the batch class) is a state invariant that each allocator call keeps.
@@ -22,12 +23,12 @@
        exhausted byte, which clear_exh_cf re-opens at the end of every successful populate_cf. It is still bounded:
        a refusal needs rg_mapped_user = kFreeArrayOffset (need * class_size <= 65,536 < kUserMapSize, and both are
        multiples of kUserMapSize: rl_full_of_refusal), and populate_cf carves ALL the uncarved room
-       (new_cnt = (mapped - alloc) / size, YG00cf.v:197), so a full class has at most one more success and at most
+       (new_cnt = (mapped - alloc) / size, YG00cf.v:198), so a full class has at most one more success and at most
        2 reports. Hence 2 reports x 30 reporting classes (class kBatchClass keeps cgif's arm and never reports)
        x 100 B. The brief's bound 100 * (31 + sum_c (kUserMapSize + kMaxSize) / class_size c), about 2.19 MB,
        was true but loose: it assumed one record per later success, while a success carves every uncarved record.
    (c) rg_mapped_user (reg S kBatchClass) + 3 * kUserMapSize <= kFreeArrayOffset: the class-24 HIGH-WATER mark that
-       ROOM_cf's batch_room_cf reads (YG00cf.v:367-368); it never falls. Class kBatchClass maps only with an empty
+       ROOM_cf's batch_room_cf reads (YG00cf.v:368-369); it never falls. Class kBatchClass maps only with an empty
        cache, an empty free array and no uncarved record (its refill target is max_cached 24 / 2 = 1), so by
        Compl0 the new mapped size is below kBatchBytes * (n24 S + 1) + kUserMapSize, n24 = the class's chunk
        records + the quarantine's batch objects at the call's start (m24_bound); under Wf_cf + qtight,

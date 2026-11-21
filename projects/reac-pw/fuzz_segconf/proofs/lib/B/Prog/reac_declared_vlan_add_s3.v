@@ -9,10 +9,11 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths and module names changed; 239 of its 313 lines of code are new or changed and 1417 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_add on fuzz_segconf.asan-ubsan (image B): segment 3 of the walk of
    lib/B/Prog/reac_declared_vlan_add_c.v, after the search (0x8a614 .. 0x8a654). It adapts the checked memset step of
-   lib/A/Prog/reac_segconf_init.v (commit 64746c036e80: aj_intrin_atS with OSet) and the seeds and
-   branches of lib/A/Prog/reac_declared_vlan_add_s0.v (commit fcd2fa03dd27, vad_lt_seed and
+   lib/A/Prog/reac_segconf_init.v (aj_intrin_atS with OSet) and the seeds and
+   branches of lib/A/Prog/reac_declared_vlan_add_s0.v (vad_lt_seed and
    vad_latch; image A has no lemma for this stretch). A seed at 0x8a614 from the AFT cut; `bge s9,s5` taken
    (count >= max) -> the epilogue with s4 = -1 and the table kept (vad_keep); not taken: the two UBSan tests of
    tab + 18 count (0x8a624 beqz, 0x8a638 the overflow test, both refuted), memset(tab + 18 count, 0, 18) by

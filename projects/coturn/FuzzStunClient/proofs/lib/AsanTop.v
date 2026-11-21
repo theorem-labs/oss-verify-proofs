@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the main trees are one per launch rseq layout, and asan_halts_T5 gives the halting statement through Corpus/HaltsKitFO.v from the trees' dead-arm checks. *)
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
 Require OSSVerify.coturn.FuzzStunClient.images.Plain.
@@ -8,11 +9,16 @@ Require OSSVerify.coturn.FuzzStunClient.images.Asan.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import RefMain VFC_asan.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Asan Require Import AxSymExec3 AsanPlan AsanMainLib MainGlueDefs MainGlue StartupHSMainAsan
   ItabAsan MainTreeAsan AsanTopGlue AsanTopE.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Asan Require Import DeadArm.
+Require OSSVerify.Core.Shapes.
+Require OSSVerify.Proofs.coturn.FuzzStunClient.lib.Corpus.HaltsKitFO.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import AP.   (* [rseq_z], as AsanTopE reads it *)
 
 Section T5.
-  Variable TREE5 : mtree.
-  Hypothesis TREE5_ok : mtree_ok 0%nat 400000%nat 5000%nat IT_asan 0%nat 0%nat (HSA HS_mainA 0%nat) (root_class 5) TREE5 = true.
+  (* one main tree per rseq layout; asan_spec_E takes the launch's. *)
+  Variable TREE5 : bool -> mtree.
+  Hypothesis TREE5_ok : forall rsb, mtree_ok (rsb := rsb) 0%nat 400000%nat 5000%nat IT_asan 0%nat 0%nat (HSA rsb (HS_mainA (rseq_z rsb)) 0%nat) (root_class 5) (TREE5 rsb) = true.
 
   Theorem asan_base_T5 :
     strong_universal_error_free_T_budgets SanitizerBudgets.lim_source SanitizerBudgets.lim_target
@@ -24,6 +30,23 @@ Section T5.
                OSSVerify.coturn.FuzzStunClient.images.Asan.M.phdrs).
   Proof.
     exact (asan_base_of_specs ref_realizes_spec_san
-             (asan_spec_E fc_asan 0%nat 400000%nat 5000%nat IT_asan IT_asan_ok (TREE_asan TREE5) (TREES_asan TREE5 TREE5_ok))).
+             (asan_spec_E fc_asan 0%nat 400000%nat 5000%nat IT_asan IT_asan_ok (fun rsb => TREE_asan (rsb := rsb) (TREE5 rsb)) (fun rsb => TREES_asan (TREE5 rsb) (TREE5_ok rsb)))).
+  Qed.
+
+  (* The halting statement: the same trees at the flag [true], with the fifth tree's
+     dead-arm check; the other five are computed in [Asan/MainTreeAsan.TREES_asan_dead]. *)
+  Hypothesis TREE5_dead : forall rsb, mtree_dead hf26 (TREE5 rsb) = true.
+
+  Theorem asan_halts_T5 :
+    OSSVerify.Core.Shapes.halts_within_budget OSSVerify.Core.Shapes.Budgets.Standard.lim_source
+      OSSVerify.Core.Shapes.Exits.ok_or_refused
+      (mkImage OSSVerify.coturn.FuzzStunClient.images.Asan.M.loaded_segments
+               OSSVerify.coturn.FuzzStunClient.images.Asan.M.init_pc
+               OSSVerify.coturn.FuzzStunClient.images.Asan.M.phdrs).
+  Proof.
+    exact (HaltsKitFO.asan_halts_of_spec
+             (asan_spec_T fc_asan 0%nat 400000%nat 5000%nat IT_asan IT_asan_ok (fun rsb => TREE_asan (rsb := rsb) (TREE5 rsb))
+                (fun rsb => TREES_asan (TREE5 rsb) (TREE5_ok rsb))
+                (fun rsb => TREES_asan_dead (rsb := rsb) (TREE5 rsb) (TREE5_ok rsb) (TREE5_dead rsb)))).
   Qed.
 End T5.

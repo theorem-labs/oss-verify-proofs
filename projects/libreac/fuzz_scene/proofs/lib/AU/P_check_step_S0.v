@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and addresses changed; 154 of its 220 lines of code are new or changed and 300 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment lemma cs_S0 of check_step's asan-ubsan walk (a Theorem Labs lane, 2026-10-29), proved against the cut statement of
    lib/AU/P_check_step_cut.v. Rule 24 is met: this file proves one segment of the walk, not the function.
 
    Segment S0 of the ASan walk of check_step in fuzz_scene.asan-ubsan (sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f): 0x83294 .. 0x833f4.
-   prologue, UAR-flag and shadow-base loads, fake-frame decision (the real-stack arm excluded by the UAR flag = 1 from al_const and by SMP with the frames bound), __asan_stack_malloc_2(224) through aj_stack_malloc_atS (AU/Prog/YC85.v:293), frame setup by P_check_step_frame.frame_setup at class 2, frame header, frame poison. Donor: cgif_file_fuzzer A/ACk1.v:111-283 (ng_mainX, class 1).
+   prologue, UAR-flag and shadow-base loads, fake-frame decision (the real-stack arm excluded by the UAR flag = 1 from al_const and by SMP with the frames bound), __asan_stack_malloc_2(224) through aj_stack_malloc_atS (AU/Prog/YC85.v:294), frame setup by P_check_step_frame.frame_setup at class 2, frame header, frame poison. Donor: cgif_file_fuzzer A/ACk1.v:111-283 (ng_mainX, class 1).
    Pre: the cut state at its first pc; post: cs_st1 at the next cut pc
    (P_check_step_cut.v).
    The proof is a Theorem Labs lane's lib/A proof to the cut, over lib.AU.Prog (the S0 block text is the asan text

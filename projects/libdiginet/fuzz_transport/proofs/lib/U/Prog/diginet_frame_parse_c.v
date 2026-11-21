@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_parse_c.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images; the caller named is fuzz_frame's (its pcs dropped) *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_parse_c.v to fuzz_transport's images; the caller named is fuzz_frame's (its pcs dropped) *)
 (* Contract of diginet_frame_parse in fuzz_transport.ubsan, the twin of
    Prog/diginet_frame_parse_c.v (fuzz_transport.plain).
    Source: src/diginet_frame.c:60-91 at 835f336c. The binary inlines rd16. It calls memcpy

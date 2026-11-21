@@ -1,15 +1,15 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v at 37d45827ae9e, ported to reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v, ported to reac-pw/fuzz_rate
    image A: module paths and the prefix (rm_ -> rtm_, RPgBase's rl_ -> RtPgBase's rt_) changed; the frame for locals is
    rate's (seven objects, 56 shadow bytes, fifteen store sites); risk 2 is shown at rate's site 0x808f0, where the
    region route is also run through the symbolic engine (rtm_A_808f0_step, new); the lemmas for an n-byte access
    inside one granule (rtm_ra_cell_n, rtm_ra_slow_n_bv, rtm_ra_cell4) and for a block's partial last granule
    (rtm_blk_last) are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgMem.v at 03123c602bdd, ported to image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgMem.v, ported to image B
    (fuzz_rate.asan-ubsan): prefix rtm_ -> rtmb_ (rtm_A_ -> rtmb_B_), image B's segments and record (RtPgImgB); the frame
    for locals is image B's (class 4, seven objects t ch r e e42 e62 hz, 88 shadow bytes, sixteen store groups; no asked
    objects); the real-frame range R+0x198 (16); risk 2 at image B's site 0x809d8 and the slow-block variant at 0x80fcc
    (rtmb_B_80fcc_step, new); the asked[] cell lemmas rtmb_ask_join / rtmb_ask_split are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgMemB.v at dda1ad05d6e, ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgMemB.v, ported to
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role; prefix rtmb_ -> rm_
    (rtmb_B_ -> rm_B_, the object hz -> role), RtPgBase's rt_ -> RPgBase's rl_, the segments lib/AU/Img0.v rsegs; every
    address is role B's (the frame description, the prologue and scope-store sites, the real frame of 0x200 bytes);

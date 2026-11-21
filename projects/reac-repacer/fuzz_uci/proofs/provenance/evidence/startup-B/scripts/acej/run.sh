@@ -1,14 +1,14 @@
 #!/bin/sh
 # fuzz_uci image B (asan-ubsan): lib/B/YCej.v, the allocation-trace universe, and YCej.universe.json (af0m's
 # --universe input). Image B twin of the image-A run (uci-sg/acej/run.sh, sha256 a573ce23a396),
-# which is fuzz_decode's method (commit 1148f2311f82,
+# which is fuzz_decode's method (
 # proofs/libreac/fuzz_decode/provenance/startup-gen/A/acej); the json step is fuzz_decode B's
-# (7eb81ddb186 proofs/libreac/fuzz_decode/provenance/startup-gen/B/acej/ycej_json.py). rule 24: no function proved;
+# (proofs/libreac/fuzz_decode/provenance/startup-gen/B/acej/ycej_json.py). rule 24: no function proved;
 # no statement or contract text.
 # Differences from a9's run.sh (each also in REPORT.md): image B's inputs (image, ipc, return addresses, planted pcs,
 # header); cgif's released lib/YCej.v as a second emitter control; fuzz_grant B's release (commit
-# 4f87de75d67 lib/B/YCej.v, YF0m.v) as a second tool / checker / members / reloc control; fuzz_decode B's committed
-# lib/B/YCej.v (7eb81ddb186) as a third checker control; the lib/B namespace gate (nsB.py --grant-twin YCej) with a
+# lib/B/YCej.v, YF0m.v) as a second tool / checker / members / reloc control; fuzz_decode B's committed
+# lib/B/YCej.v as a third checker control; the lib/B namespace gate (nsB.py --grant-twin YCej) with a
 # negative control; YCej.universe.json and af0m's DRV_TRACES derivation from it, each with a control and the latter
 # with a negative control; the controls run before the gates they control; a wall time on every gate line.
 #

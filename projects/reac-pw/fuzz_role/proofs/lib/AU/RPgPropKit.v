@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v at a529a88a618 for reac-pw/fuzz_headamp image A: every address relocated (role image A -> headamp image A), the block pcs, the code table's range (1573 words: headamp's out-of-line slow blocks are four instructions long), module paths; kept_run from proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at a529a88a618 (role's cfg functions have no twin in headamp; same_io_wvb is HPgSteps'). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v for reac-pw/fuzz_headamp image A: every address relocated (role image A -> headamp image A), the block pcs, the code table's range (1573 words: headamp's out-of-line slow blocks are four instructions long), module paths; kept_run from proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (role's cfg functions have no twin in headamp; same_io_wvb is HPgSteps'). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgPropKit.v, with its module paths, module names, addresses and numbers changed; 8 of its 103 lines of code are new or changed and 34 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v at a529a88a6181 for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v for reac-pw/fuzz_rate
    image A: rate's pcs and table range; the block post is lib/A/RtPgSteps.v rts_post (the same clauses as role's
-   pa_post); kept_run is proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v's at a529a88a6181; same_io_wvb, the image's
+   pa_post); kept_run is proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v; same_io_wvb, the image's
    wx and segs_low facts are RtPgSteps' (same_io_wvb, rts_wx, rts_segs_low). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgPropKit.v at 4725a2583bb7 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgPropKit.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs and table range (0x80fb4 .. 0x82684), the image module AsanUbsan, the block
    post lib/AU/RtPgStepsB.v rtsb_post; pa_ becomes pab_ and kept_run pab_kept_run. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgPropBKit.v at 6aea585e8b5b for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgPropBKit.v for
    reac-pw/fuzz_role image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v
    rsegs; role B's pcs and table range (0x80770 .. 0x81e6c); the block post lib/AU/RPgSteps.v rl_wpost and its
    regs_kept_of_st_ok; pab_ becomes pa_ (PAB_ -> PA_, PABBx -> PABx, PABspan -> PAspan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address below is measured on its unstripped
    twin sha256 dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): one turn of the

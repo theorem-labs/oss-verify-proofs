@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_grant/lib/A/AGrantT.v (a working branch
-   7d31e8f3534; itself from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v) for libreac/fuzz_disco's ASan build: module paths
+(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_grant/lib/A/AGrantT.v (a working branch;
+   itself from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v) for libreac/fuzz_disco's ASan build: module paths
    changed, B := AD2l.TfibB, the library shape DiscoAsanTop.disco_shape (= Reusable/DiscoShape.v disco_lib_shape, the
    same term), the read-only range lib/A/Prog/DiscoImg.v disco_relro_lo / disco_relro_hi, the floating-point state
    quantified across the driver's calls where lib/A/AD1q.v quantifies it (AFREE, PF1, PFN, EXS), and the program
    contract taken with the read-only facts its walks use (H_RO) as its antecedent. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the closing passes the launch's entry_launch_ok_va to A/AD1q.v's tfib_srealizesX. *)
 (* The lower closing file of fuzz_disco's ASan build (rule 24: no function proved; this file is assembly).
    Every input of lib/A/AD1q.v tfib_srealizesX except the program contract is a proved lemma of the landed core
-   (a working branch f0d1f4eacff), plugged in below as a Let: the start-up (AB1n tfib_startup_T1 over AB01 HS_tfib
+   (a working branch), plugged in below as a Let: the start-up (AB1n tfib_startup_T1 over AB01 HS_tfib
    and AB12 TFIB, used inside tfib_srealizesX), the symbol table (AD2l TfibB / TfibB_syms), both allocator realizes
    (AF0w, AF0q), the memcpy interceptor and the read check (AD2m), and the driver's stdio sites (AD1k, AD1o, AD1l,
    AD1j). The Section hypotheses are ONLY the program contract LIBX_ALL (lib/A/Prog/DiscoLibX.v disco_lib_x_all,
@@ -44,7 +45,7 @@ Local Notation segs := OSSVerify.libreac.fuzz_disco.images.Asan.M.loaded_segment
 Lemma valid_sp_windowX : forall sp, valid_sp sp -> (sp_window_lo <= bv_unsigned sp <= sp_window_hi)%Z.
 Proof. intros sp (H1 & H2 & _). split; [exact H1 | exact H2]. Qed.
 
-(* The read-only facts the part's walks take (row A9 of proofs/libreac/fuzz_disco/lib/A/OBLIGATIONS.md at a working branch 37e11e67676d), a Theorem Labs lane's
+(* The read-only facts the part's walks take (row A9 of proofs/libreac/fuzz_disco/lib/A/OBLIGATIONS.md at a working branch), a Theorem Labs lane's
    lib/A/Prog/DiscoEntBodyStmt.v:72 d_ro_hyps at TfibB and the asan image: the read-only ranges the walks READ hold
    no owned static and no errno byte (DiscoRo.disco_ro_unowned), the registered globals are marked in the shadow
    (globs_marked) and the image's shadow is mapped (img_shadow_vis). It replaces the ROSTAT form
@@ -103,30 +104,32 @@ Let EXS : forall fq : YK11.FPState, exit_site_tfa (fx := fq) B est xst :=
 Lemma disco_srealizesX_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX (LS:=LS) inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
   change target_alloc_limit with YA02.LIMIT.
   exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK ameter_triv (fun _ => 0) (fun _ => 0)
     DiscoImg.disco_relro_lo DiscoImg.disco_relro_hi MT_FREE RO_IN LIBX xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS
-    sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+    sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 (* donor lib/A/AD2o.v:75-84 tfib_srealizesX_top (fuzz_grant AGrantT.v:75-82): the run's ceiling taken at the stack pointer. *)
 Theorem disco_srealizesX_top : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX (LS:=LS) inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   exact (@disco_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 (* donor lib/A/AD2o.v:75-84 TFIB_T_of_partsXF (fuzz_grant AGrantT.v:83-84); AZ03.TFIB_T is DiscoAsanTop.ASAN_T. *)
 Theorem TFIB_T_of_lib : AZ03.TFIB_T.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
-  exact (disco_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp).
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+  exact (disco_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau).
 Qed.
 End b.

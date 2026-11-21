@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mwf_maps_subtract_exact added: on a well-formed ledger that holds the entry, munmap's exact cut maps_subtract is map_remove; SysSpec imported). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics State.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc Require Import MallocModel MallocInv MallocLayout.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require SysSpec.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -209,4 +211,26 @@ Proof.
     - apply Z.div_lt_upper_bound; lia. }
   destruct (Hcov k Hk1) as (e & He & E1 & E2).
   destruct (Hfree e He) as [D|D]; lia.
+Qed.
+
+(* LPS 08b1429 (in 727298f3): munmap's exact arm cuts the request out of [vm_maps] with
+   [maps_subtract].  On a well-formed ledger (every entry of positive size, the entries pairwise
+   disjoint) that holds the entry [(a, n)], the cut is [map_remove]: the premises of
+   [SysSpec.maps_subtract_exact] follow from [mwf]. *)
+Lemma mwf_maps_subtract_exact (l : list (word * word)) (a n : word) :
+  mwf l -> In (a, n) l ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  intros Hwf Hin.
+  pose proof (mwf_In_pos l (a, n) Hwf Hin) as Hn. cbn [snd] in Hn.
+  apply SysSpec.maps_subtract_exact; [exact Hn | | |].
+  - intros b s H. exact (mwf_In_pos l (b, s) Hwf H).
+  - intros b s H Eb. subst b. destruct (decide (s = n)) as [E|E]; [exact E|exfalso].
+    assert (Hne : (a, n) <> (a, s)) by (intros X; injection X as X; apply E; symmetry; exact X).
+    pose proof (mwf_In_ne_wdisj l (a, n) (a, s) Hwf Hin H Hne) as D.
+    exact (wdisj_base_ne (a, n) (a, s) D Hn (mwf_In_pos l (a, s) Hwf H) eq_refl).
+  - intros b s H Hb.
+    assert (Hne : (a, n) <> (b, s)) by (intros X; injection X as X _; apply Hb; symmetry; exact X).
+    pose proof (mwf_In_ne_wdisj l (a, n) (b, s) Hwf Hin H Hne) as D.
+    unfold wdisj in D. cbn [fst snd] in D. lia.
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/SpecHalts.v at commit c395a1e0dfa (its EXS and NK predicates, their closure lemmas and the two theorems built from them, lines 15-140), restated for skcms/iccprofile_info's Info.Spec.spec and Info.ShapeAlg trace algebra; the case analysis follows this harness's spec, not from_chars's. *)
+(* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/SpecHalts.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8 (its EXS and NK predicates, their closure lemmas and the two theorems built from them, lines 15-140), restated for skcms/iccprofile_info's Info.Spec.spec and Info.ShapeAlg trace algebra; the case analysis follows this harness's spec, not from_chars's. *)
+(* Modified by Theorem Labs, 2026-11: the cited source commit is named by its public id, theorem-labs/oss-verify-proofs@c5665593c2d8. *)
 (** The two facts about the plain harness's trace set that a halting proof
     consumes: every exit status it admits is 0 or 2, and it never dies by a
     signal.  Both are read straight off [Info.Spec.spec]. *)

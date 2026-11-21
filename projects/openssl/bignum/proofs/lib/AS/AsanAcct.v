@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list and the vDSO). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -369,7 +370,7 @@ Proof.
     apply ranges_avoid_nil.
   -
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -450,6 +451,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -473,6 +475,48 @@ Proof.
   exists (@mkAccessReport _ (unrestrict H (ms_mem ms) msr') rs).
   split; [exact Hfull|]. split; [reflexivity|]. split; [exact Hrs|]. split; [exact Hcl|].
   apply restrict_unrestrict_clean. exact Hcl.
+Qed.
+
+(* [comment removed for export] *)
+Corollary step_restrict_step : forall ms msr',
+  RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
+  RiscvSemantics.step segs ms = MachineOk (unrestrict H (ms_mem ms) msr').
+Proof.
+  intros ms msr' Hs.
+  destruct (step_restrict_sound ms msr' Hs) as (rep & Hsa & Hv & _).
+  unfold RiscvSemantics.step, drop_access_report. rewrite Hsa, Hv. reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+Lemma step_accesses_ecall_shape : forall ms msr' rs',
+  step_accesses segs ms = MachineOk (@mkAccessReport _ msr' rs') ->
+  ms_svc_pending msr' <> None ->
+  rs' = [] /\ ms_mem msr' = ms_mem ms /\ ms_regs msr' = ms_regs ms
+  /\ ms_svc_pending msr' = Some (ms_reg ms 17).
+Proof.
+  intros ms msr' rs' Hs Hsvc.
+  assert (Hdec : forall w, decode_exec_accesses segs ms w = MachineOk (@mkAccessReport _ msr' rs') ->
+            rs' = [] /\ ms_mem msr' = ms_mem ms /\ ms_regs msr' = ms_regs ms
+            /\ ms_svc_pending msr' = Some (ms_reg ms 17)).
+  { intros w Hd. unfold decode_exec_accesses in Hd.
+    destruct (is_ecall w).
+    - injection Hd as <- <-. cbn. repeat split; reflexivity.
+    - destruct (decode_any w) as [[i isz]|]; [|destruct (is_defined_illegal w); discriminate].
+      destruct (interp_eff_accesses segs _ _) as [[[c1 m1] rs1]| |]; try discriminate.
+      cbn [access_value accessed_ranges] in Hd. injection Hd as <- <-. cbn in Hsvc.
+      exfalso. apply Hsvc. reflexivity. }
+  unfold step_accesses in Hs.
+  destruct (fetch_word segs (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
+  destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
+  destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
+  exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
+  unfold fetch_failure in Hf.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
+  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
+            || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
+               | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
+               | None => false end); discriminate.
 Qed.
 
 End ISA.
@@ -997,7 +1041,8 @@ Proof.
 Qed.
 
 Variable P : config -> Prop.
-Hypothesis P_silent1 : forall c c',
+(* LPS 08b1429: an instruction node (no pending system call), so [RomBase.sys_rob] holds *)
+Hypothesis P_silent1 : forall c c', ms_svc_pending (cfg_ms c) = None ->
   node_ok c unit (fun _ => []) (fun _ => c') -> P c' -> P c.
 
 Theorem rz_msteps_restricted : forall A msr0 msr',
@@ -1018,7 +1063,7 @@ Proof.
   - rewrite restrict_svc_pending in Hsvc.
     destruct (node_instr_restricted A ms msr1 model Hcov Hwf Hinv Hh Hsvc Hstep)
       as (model1 & Hinv1 & Hsame1 & Hcl1 & _ & Hnode).
-    apply (P_silent1 _ _ Hnode).
+    apply (P_silent1 (mkCfg ms model) _ Hsvc Hnode).
     pose proof (same_but_materialized_frame model model1 Hsame1) as Hfr.
     apply (IH (unrestrict H (ms_mem ms) msr1) model1).
     + symmetry. apply restrict_unrestrict_clean. exact Hcl1.

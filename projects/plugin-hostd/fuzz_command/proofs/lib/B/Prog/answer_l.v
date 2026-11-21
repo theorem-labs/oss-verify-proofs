@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the loop segment of answer's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan, entry 0x8aa10): syntax_instantiate's loop from its head HEAD (0x8abcc) to JOIN (0x8aca4),
    an_head_ok : AN_JOIN_stmt -> AN_HEAD_stmt (lib/B/Prog/answer_s1.v), by strong induction on the bytes of the shape
-   left; the B re-walk of lib/A/Prog/answer_l.v (a working branch d28426fbb96) over B's own code of the loop
+   left; the B re-walk of lib/A/Prog/answer_l.v (a working branch) over B's own code of the loop
    (a Theorem Labs lane's gen/dis/answer.s 0x8abcc .. 0x8aca0 and 0x8ac68 .. 0x8ad50): the shape byte is loaded by `lbu t0,1(a2)`
    (a2 = s3 - 1) while the inline load check reads the shadow of s3, the depth is 32-bit (`addiw`), and five UBSan trap
    sites go to `unimp` 0x8ad30. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

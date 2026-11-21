@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the four DMOD destructurings take its new channel-reader field, and the dheap_model call for the FDS3 file entry discharges its new kernel-equality premise. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -135,7 +136,7 @@ Section S.
     intros until t6. intros IV IH IHb.
     (nelim IV 21%nat; intros ST MI FR DS CJ [e ER] IFL SOF SEF BY DH RP PD DM FL BLK [stj RSC] [k CAP] LEN1 LEN2 CAP2).
     pose proof RSN_Z as HRSN. pose proof PRS_eq as HPRS.
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (dheap_block_range _ _ _ _ _ (p, A, cap) DH ltac:(left; reflexivity)) as BR. cbn [blk_addr blk_size fst snd] in BR.
     (nelimp BR 5%nat; intros BR1 BR2 BR3 BR4 BR5). unfold alloc_ceiling in BR4.
     pose proof (pow2_ge1 k) as K2.   (* [comment removed for export] *)
@@ -275,7 +276,7 @@ Section S.
     intros until want. intros IV IH LT WANT.
     (nelim IV 21%nat; intros ST MI FR DS CJ [e ER] IFL SOF SEF BY DH RP PD DM FL BLK [stj RSC] [k CAP] LEN1 LEN2 CAP2).
     pose proof RSN_Z as HRSN. pose proof PRS_eq as HPRS.
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (dheap_block_range _ _ _ _ _ (p, A, cap) DH ltac:(left; reflexivity)) as BR. cbn [blk_addr blk_size fst snd] in BR.
     (nelimp BR 5%nat; intros BR1 BR2 BR3 BR4 BR5). unfold alloc_ceiling in BR4.
     pose proof (pow2_ge1 k) as K2.   (* [comment removed for export] *)
@@ -314,7 +315,8 @@ Section S.
     xport FR MU2 WM2 FR2. xport DS MU2 WM2 DS2. xport CJ MU2 WM2 CJ2. xport IFL MU2 WM2 IFL2. xport SOF MU2 WM2 SOF2. xport SEF MU2 WM2 SEF2. xport BY MU2 WM2 BY2.
     xport BLK MU2 WM2 BLK2. xport RSCb MU2 WM2 RSCb2.
     assert (DH2 : DHEAP cs [(p, A, cap)] SPB m2 (with_fds (FDS3 (FdFile path (Z_to_bv 64 (len + n)))) mo)).
-    { apply (dheap_model cs _ SPB m2 mo); [| reflexivity| destruct MOK' as [Hh _]; exact Hh].
+    (* kernel slot, as at P/Drv_hdr.v:528: with_fds touches only m_fds. *)
+    { apply (dheap_model cs _ SPB m2 mo); [| reflexivity| reflexivity| destruct MOK' as [Hh _]; exact Hh].
       eapply dheap_frame_ext; [exact DH| exact MU2| exact WM2|].
       solve_Forall ltac:(first [drv_write_ok_tac| unfold PRS; drv_write_ok_tac]). }
     assert (DM2 : DMOD fs (FDS3 (FdFile path (Z_to_bv 64 (len + n)))) (with_fds (FDS3 (FdFile path (Z_to_bv 64 (len + n)))) mo)).
@@ -429,7 +431,7 @@ Section S.
   Proof.
     intros until t6. intros IV IH LT.
     (nelimp IV 21%nat; intros _ _ _ _ _ _ _ _ _ _ DH _ _ DM _ _ _ [k CAP] LEN1 LEN2 CAP2).
-    pose proof DM as [MOK' _ _].
+    pose proof DM as [MOK' _ _ _].
     unfold wz.
     eapply rz_step_evt; [exact MOK'|].
     step. rewrite (unsigned_lit len) by lia. do 2 step. if_cases K; zify_cond K.

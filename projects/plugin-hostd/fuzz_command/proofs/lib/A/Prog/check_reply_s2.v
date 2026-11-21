@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the second segment of check_reply's walk (fuzz_command.asan, 0x86d78), from the
    memchr call 0x86ef8 to the return of sup_reply_code 0x86f18, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's call steps: cl_callS, the state
-   after the return) at c8557374ad2e.
+   after the return).
 
    The pieces: 0x86ef8 jal memchr (the reply holds no NUL, so the wrapper returns 0: the not-found contract
    through PaArt.v's aj_art_at); 0x86efc bnez a0 (not taken); 0x86f00 mv a0,s3; 0x86f04 jal check_reply_answer
@@ -13,6 +13,7 @@
    After each call the mid-walk invariant cr_mid and the registers cr_regs_at are rebuilt from the callee's journal
    (the frame (1, pos) is among the caller's frames, the saved registers lie above the callee's stack pointer, g_rec
    is a program static), and the walk is seeded again with check_reply_sd.v's cr_seed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the proof of cpg_stack_malloc_keep_io is the text of lib/Reusable/YC85.v's
-   aj_stack_malloc_atS (copied there from proofs/libreac/fuzz_knock/lib/Reusable/YC85.v, origin/ossv/recipes
-   4b6f0df50aa7), with the runtime contract's kept-memory clause and the model clause carried to the post, for
+   aj_stack_malloc_atS (copied there from proofs/libreac/fuzz_knock/lib/Reusable/YC85.v),
+   with the runtime contract's kept-memory clause and the model clause carried to the post, for
    libdiginet/fuzz_codec's ASan build (image A); the rest of the file is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The side-stack frame plumbing of the image-A walks of codec's own functions.
    - The request: cpg_stack_malloc_keep is aj_stack_malloc_atS with the runtime contract's own kept-memory clause
      (every byte owned neither before nor after the call and off the call's window is kept); cpg_stack_malloc_keep_io

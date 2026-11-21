@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the HEAD of the image-B (fuzz_reply.asan-ubsan) walk of check_shape_ends, a NEW
    walk over lib/B/W_listing.v (B's body is not A's: VERDICT.md (sha256 810ca1df9ca9; internal record)), after lib/A/W_check_shape_ends.v
-   (a working branch d6e8218b728: cshe_entry, cshe_head, cshe_l1_state / cshe_l1_run / cshe_l1_loop, cshe_to_tst,
+   (a working branch: cshe_entry, cshe_head, cshe_l1_state / cshe_l1_run / cshe_l1_loop, cshe_to_tst,
    cshe_gone_l2 / cshe_gone_l3, cshe_n0 and their helpers, ported to B's registers, frame and traps), in the form of
    lib/B/W_check_bounded.v (a B loop with traps: a fresh symbolic state at the loop head, by induction on the
    records left) and lib/B/W_check_shape_event.v (an internal call with the frame kept). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Proves no function (kind: segment lemma of check_shape_ends's image-B walk, one of three pieces; the composition is
    lib/B/W_check_shape_ends.v).  check_shape_ends at 0x85770 (B), from its entry to the three cut points of
    lib/B/W_cshe_epi.v's interface:
@@ -69,7 +70,7 @@ Context {PI : PAImg fr_prog_listing}.
 
 Section c.
 Variable B : asyms.
-(* ARx conversion (route (b); A's lib/A/W_check_shape_ends.v Section c on a working branch 4f281bf9308): the
+(* ARx conversion (route (b); A's lib/A/W_check_shape_ends.v Section c on a working branch): the
    generic allocator relation ARx with its laws, the placement PST, the room record RP; HP0 (every ghost list is []),
    IMGC (the image's cover) and BLKN (a block's size is >= 0) as W_check_no_loss.v's Section c takes them *)
 Variable PST : list (Z * Z).

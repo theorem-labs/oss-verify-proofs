@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/QPgMain3.v (reseatQ) and QPgRt.v (U_offx) at
-   160c9b4d5750, and proofs/libreac/fuzz_knock/lib/A/APgMain4.v (reseatK), APgStep.v and APgRt.v (upd_aboveW) at
-   6ebe35ba632; adapted to the row loop of reac_box_pin_parse (the strlen and strncmp wrapper calls). *)
+   160c9b4d5750, and proofs/libreac/fuzz_knock/lib/A/APgMain4.v (reseatK), APgStep.v and APgRt.v (upd_aboveW);
+   adapted to the row loop of reac_box_pin_parse (the strlen and strncmp wrapper calls). *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/PPgParse2L.v of this library, for image B
    (fuzz_pin.asan-ubsan, reac_box_pin_parse at 0x80ba4). What differs: the image modules are image B's lib/AU twins,
    the cut states are image B's (lib/AU/PPgParseCx.v; ss_PN here at 0x80da8), the addresses are image B's, and the
@@ -16,6 +16,7 @@
    0x80d64 from two conditions the walk adds to the state at the loop head, proved from i <= 10 and pin_cat_ok's
    cat + 3256 <= 2 ^ 47 - 1 (pl_trap_wrap, pl_trap_mulh). The row's address register pair is s7 (the check) and s9
    (the load) where the A image has s7 and s8. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -260,7 +261,7 @@ pose proof (st_ok_add_cond tfibsegs Ev ssx msx BC_EQ pl_mulov (SLit 0) HS
 clear HS; rename HS3 into HS; norm_ss HS end end end.
 
 (* a byte outside every writable window of the state is unchanged by a run [knock A/APgRt.v's upd_aboveW,
-   lib/A/ACep.v:60-66 aview_kept_frame with one address] *)
+   lib/A/ACep.v:61-67 aview_kept_frame with one address] *)
 Lemma pl_aview_frame : forall E rs (H : word -> bool) (m m' : word -> option byte) a,
 frame_of E rs (mrestrict H m) (mrestrict H m') -> 0 <= a < 2 ^ 64 -> ~ in_wrange E rs a ->
 aview tfibsegs H m' a = aview tfibsegs H m a.

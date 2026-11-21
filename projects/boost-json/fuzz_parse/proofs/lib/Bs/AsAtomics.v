@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -115,7 +116,7 @@ Ltac astep_core segs R F pc fc rv m ro :=
       | Some (?i, ?sz) =>
         eapply evt_step;
         [ split; [reflexivity|];
-          rewrite (step_gen segs R F (Z_to_bv 64 pc) fc rv m ro w i sz) by (vm_compute; reflexivity);
+          eapply (step_gen_ok segs R F (Z_to_bv 64 pc) fc rv m ro w i sz); [vm_compute; reflexivity|vm_compute; reflexivity|vm_compute; reflexivity|];
           exec_cbv; simp_is_x0; simp_regs;
           first [ rewrite amo_aligned_lit by (cbn [amo_bytes]; first [assumption | lia | (Z.div_mod_to_equations; lia)])
                 | match goal with |- context [amo_aligned ?wd ?a] =>

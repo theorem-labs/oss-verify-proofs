@@ -1,6 +1,6 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgNearS.v at 92636bfca57b; the module paths name reac-pw/fuzz_rate, and the image is reac-pw/fuzz_rate's image A (fuzz_rate.asan). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgNearS.v at b089f28d962e; the image is reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan, lib/AU/Img0.v). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgNearSB.v at 7e722b95884; relocated to reac-pw/fuzz_role's ASan image B (fuzz_role.asan-ubsan, lib/AU/Img0.v): the module paths name reac-pw/fuzz_role. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgNearS.v; the module paths name reac-pw/fuzz_rate, and the image is reac-pw/fuzz_rate's image A (fuzz_rate.asan). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgNearS.v; the image is reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan, lib/AU/Img0.v). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgNearSB.v; relocated to reac-pw/fuzz_role's ASan image B (fuzz_role.asan-ubsan, lib/AU/Img0.v): the module paths name reac-pw/fuzz_role. *)
 (* The seam of reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0) between the lib/Lib walks over the image
    lib/AU/Img0.v rsegs and the call-site form the harness continues from (SRr, lib/Reusable/YA0n.v).
@@ -23,7 +23,7 @@
      reflexivity), so a view equation becomes a lib/Lib `bytes_at` and an 8-byte cell value becomes `le8`.
 
    These are short generic lemmas; the shapes follow proofs/libreac/fuzz_boxreg/lib/A/FMgxa_bridge.v and
-   proofs/libreac/fuzz_boxreg/lib/A/Rt/FMgxaSeamNorm.v at 781f46bc05c, and the le8 / le_byte digit bridges
+   proofs/libreac/fuzz_boxreg/lib/A/Rt/FMgxaSeamNorm.v, and the le8 / le_byte digit bridges
    follow this unit's lib/KindBGlue.v (word_mem_le8, bytes_at_le8_word). *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.

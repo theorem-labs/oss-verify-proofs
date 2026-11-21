@@ -1,5 +1,5 @@
 GENERATED START-UP FILES REGENERATED IN COMMIT 8. The scripts, the generator versions and the controls are in the unit's
-internal record, commit 28b9fcfd2c90, directories records/startup-tools/gen_ad2/ and records/startup-tools/af0m/ (each has a
+internal record, directories records/startup-tools/gen_ad2/ and records/startup-tools/af0m/ (each has a
 README.md with every sha256 and the exact option strings of the run):
   af0m/run.sh (af0m.py f8201f503394, unchanged; the recipe's af0m2 arguments), gen_ad2/run-ad2.sh, gen_ad2/regen.sh
   (ab12 / ad2 / ad1k / ae3i, the four recipe steps that read lib/A/AF0m.v; run with TSEGS=own), gen_ad2/regen-ab0103.sh
@@ -47,5 +47,5 @@ GENERATOR: gen_ad2.py sha256 8e0a1d365e8328c64afe185e9961afe0055955c175da747bf0d
   splits a run at the RELRO page 0xa1000 (119 regions; R_A1cu .. R_A1cz -> R_A2b .. R_A2g, R_A1da + R_A2 -> R_A2h,
   R_A2a new; AD1k follows).
   Self-test known answers for all three rules run on every invocation.
-CALLER TEXT: the regenerated files name the start-up tool set of record by its commit, d9aa42da992; AB05 AB1m (not
+CALLER TEXT: the regenerated files name the start-up tool set of record by its commit; AB05 AB1m (not
   regenerated) keep their text.

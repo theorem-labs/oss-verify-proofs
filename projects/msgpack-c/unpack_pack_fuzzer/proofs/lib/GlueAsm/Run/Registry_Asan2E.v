@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the registry tables' new valid_launch hypothesis, carried in the table's _USE tuple; no row of this table reads it). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -116,6 +117,7 @@ Variables (sp : word) (rnd : EntryDraw).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
 Let p1 : list byte := AsanDrun.p1 inp.
 Let file : list byte := AsanDrun.file inp.
 Let MP : Model -> Prop := AsanDrun.MP inp.
@@ -173,7 +175,7 @@ Local Ltac ra_21 := (eapply (OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.U
 Local Ltac ra_22 := (eapply (OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA.FfSound.fake_free_sound AIu2 AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT UNIV Cw OPSA AIu_fake (AsanRun.OPSA_holds1 AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) (AsanRun.OPSA_fp1 AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) (AsanRun.OPSA_cov1 AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) F1Cw.Cw_ghost_free_f (AsanRun.OPSA_frame_other AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) (AsanRun.OPSA_fp_other AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) AsanRun.OTHERA (AsanRun.OPSA_mo_other AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) (AsanRun.OPSA_cov0_img AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file) MP PB AsanAcct.NMAX (Acct.ACCT_frng AsanAcct.NMAX AsanAcct.SHFIX) (Acct.ACCT_frame_out AsanAcct.NMAX AsanAcct.HLIM MP MINV AsanRun.OTHERA (AcctPlug.MP_relx inp) AcctPlug.OTHER_relx MINV_intro AsanAcct.SHFIX Op.is_fake Op.lb_del Op.lb_del_In (fun id Aaddr sz FK => Op.heap_not_fake (HB id Aaddr sz) (ex_intro _ id eq_refl) FK))); first [reflexivity | vm_compute; reflexivity | (apply (DrvLib.DrvLib.ecall_atb_sound asegs); vm_compute; reflexivity)]).
 Local Ltac ra_23 := (eapply (OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.UnpA.UnpInstA.UnpInstA.gviewgc_sound asegs OPSA MP PB); first [reflexivity | vm_compute; reflexivity | (apply (DrvLib.DrvLib.ecall_atb_sound asegs); vm_compute; reflexivity)]).
 Local Ltac ra_24 := (eapply (OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp.GUnrealign.GUnrealign.gunrealign_sound _ _ asegs OPSA MP PB); first [reflexivity | vm_compute; reflexivity | (apply (DrvLib.DrvLib.ecall_atb_sound asegs); vm_compute; reflexivity)]).
-Definition ctab_Asan2E := let _USE := (Hva, Hsp, Hfit, ACCT_led, ACCT_cov, ACCT_cov_sh, ACCT_mat, AI_frame_top, ACCT_fds) in
+Definition ctab_Asan2E := let _USE := (Hva, Hsp, Hfit, Hvl, ACCT_led, ACCT_cov, ACCT_cov_sh, ACCT_mat, AI_frame_top, ACCT_fds) in
 
   (ltac:(apply (DrvLib.DrvLib.ctab_ok_of_list asegs RAx); repeat (apply Forall_cons || apply Forall_nil); cbn [snd];
     [ first [ ra_0 | fail 1 "registry row cid 400 (amalloc_c): no census theorem applies" ]

@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfPcFirst.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfPcFirst.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* musl printf_core (fm.asan 0x8f278), first pass printf_core (0, fmt, &ap2, nl_arg, nl_type) for fm's seven snprintf
    formats: one engine run from the entry to the `ret` at 0x900a0 (the first conversion returns 0, nothing is called),
    then the return. Only the stack window [sp0 - SNK_STK, sp0 + OSP_PC) changes. *)

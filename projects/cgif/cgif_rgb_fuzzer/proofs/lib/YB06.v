@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TRA and TFB tables record the vDSO pair: n_resx 2 and p_resx 20). *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK0a.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations. Import APC.
 Open Scope Z_scope.
 Definition TRA : atable :=
-{| img_lo := 0x10000; img_hi := 0x5ff000; n_res := 4; shadow_off := 0x7fff8000;
+{| img_lo := 0x10000; img_hi := 0x5ff000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
 a_entry := 0x306d8; rw_lo := 0xa3000; rw_len := 0x55c000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
 x_imemset := 0x64484; x_imemcpy := 0x64408; x_memset := 0x9b894; x_memcpy := 0x9b490; x_memiszero := 0x649b4;
 x_istrncpy := 0x648b0; x_sealed := 0x1182d; x_popfree := 0x36cd0;
@@ -18,7 +19,7 @@ stops_more := [0x34944; 0x35f68; 0x54790; 0x5ab48; 0x5ab5c; 0x5ab70; 0x60500; 0x
 Definition TRA_TEXT_LO : Z := 0x306d8.
 Definition TRA_TEXT_N : nat := 110892.
 Definition TFB : atable :=
-{| img_lo := 0x10000; img_hi := 0x5da000  ; n_res := 4; shadow_off := 0x7fff8000;
+{| img_lo := 0x10000; img_hi := 0x5da000  ; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
 a_entry := 0x30710; rw_lo := 0xa3000  ; rw_len := 0x53b000  ; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
 x_imemset := 0x64490 + 0x28; x_imemcpy := 0x64414 + 0x28; x_memset := 0x99d50 + 0x614; x_memcpy := 0x9994c + 0x614; x_memiszero := 0x649c0 + 0x28;
 x_istrncpy := 0x648bc + 0x28; x_sealed := 0x1182d  ; x_popfree := 0x36ce0 + 0x28;

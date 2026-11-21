@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the statements carry the flag of the flagged relation SpinAlg.srealizesM, the argument strings follow the table's rseq layout and end at TOP + 8, and the write path takes the channel reader (m_channel_reader). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -395,6 +396,7 @@ Qed.
 (* [comment removed for export] *)
 
 Section NodesArg.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
   (* [comment removed for export] *)
   Variable SEGS : list Segment.
   Variable A : atable.
@@ -446,13 +448,15 @@ Section NodesArg.
   (* [comment removed for export] *)
   Definition arg_ok (i : nat) : Prop := match i with O => True | _ => 2 <= argc end.
 
+  (* The NUL is below TOP, so [TOP + 8 <= 2^47] gives TOPNUL exactly.
+     Alignment is consumed separately by [win_len_bounds]'s rounded read. *)
   Hypothesis Lay : 0x7fff80000000 <= usp /\ usp + 176 <= STR0 /\ STR0 + L0 + 1 <= TOP
                    /\ (2 <= argc -> STR1 + L1 + 1 <= TOP)
-                   /\ TOP mod 8 = 0 /\ TOP + 16 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
+                   /\ TOP mod 8 = 0 /\ TOP + 8 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
   Hypothesis Hnz : forall i j, (j < length (ARG i))%nat -> bv_unsigned (byte_at (ARG i) j) <> 0.
 
   Hypothesis SINV_vals : forall E M, SINV E M ->
-    uE E e_sp0 = usp /\ uE E e_str0 = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
+    uE E e_sp0 = usp /\ uE E (e_str0 A) = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
     /\ edenot E (EVar V_ARGC) = Z_to_bv 64 argc /\ edenot E (EVar V_L1) = Z_to_bv 64 L1
     /\ eb E 1%nat = argv0 /\ eb E 2%nat = argv1.
   (* [comment removed for export] *)
@@ -494,17 +498,17 @@ Section NodesArg.
     Lemma u_len : forall i, uE E (len_e i) = LEN i.
     Proof. intros i. unfold uE. rewrite val_len. pose proof (LEN_le i). pose proof (Zle_0_nat (length (ARG i))). unfold LEN in *. apply u64_lit. lia. Qed.
 
-    Lemma u_str : forall i, uE E (str_e i) = STR i.
+    Lemma u_str : forall i, uE E (str_e A i) = STR i.
     Proof.
       destruct (SINV_vals E M HS) as (V0 & V1 & V3 & _). intros [|i]; cbn [str_e STR]; [exact V1|].
       unfold e_str1, eadd, eaddz, uE. rewrite !mkAlu_denot, V3, edenot_lit. rewrite !u_add64, !u64_lit by (unfold STR1 in *; lia).
       unfold uE in V1. rewrite V1. unfold STR1. rewrite (Z.mod_small (L0 + 1)) by lia. rewrite Z.mod_small by lia. lia.
     Qed.
 
-    Lemma val_str : forall i, edenot E (str_e i) = Z_to_bv 64 (STR i).
+    Lemma val_str : forall i, edenot E (str_e A i) = Z_to_bv 64 (STR i).
     Proof. intros i. rewrite <- (u_str i). unfold uE. symmetry. apply Z_to_bv_bv_unsigned. Qed.
 
-    Lemma u_nul : forall i, uE E (nul_e i) = STR i + LEN i.
+    Lemma u_nul : forall i, uE E (nul_e A i) = STR i + LEN i.
     Proof.
       intros i. unfold nul_e, eadd, uE. rewrite mkAlu_denot. cbn [edenot]. rewrite u_add64.
       pose proof (u_str i) as U1. pose proof (u_len i) as U2. unfold uE in U1, U2. rewrite U1, U2.
@@ -545,9 +549,10 @@ Section NodesArg.
   Proof. intros E M e lo hi H. cbn [kentry_ok]. unfold uE in H. exact H. Qed.
 
   Lemma str_facts_ok : forall E M0 M k i, SINV E M0 -> know_ok SEGS E M k -> arg_ok i ->
-    know_ok SEGS E M (str_facts k i).
+    know_ok SEGS E M (str_facts A k i).
   Proof.
     intros E M0 M k i HS HK Hi. unfold str_facts. pose proof (STR_range i Hi) as [R1 R2]. pose proof Lay as LAY.
+    assert (NULHI : STR i + LEN i <= 2 ^ 47 - 9) by lia.
     repeat apply Forall_cons; [| |apply Forall_nil].
     - apply kr_sound. rewrite (u_str E M0 HS). unfold str_hi, STRLO, TOPNUL.
       destruct (xlo k (len_e i)) as [lo|] eqn:Hlo.
@@ -565,9 +570,10 @@ Section NodesArg.
   Qed.
 
   Lemma srl_facts_ok : forall E M0 M k i, SINV E M0 -> know_ok SEGS E M k -> arg_ok i ->
-    know_ok SEGS E M (srl_facts k i).
+    know_ok SEGS E M (srl_facts A k i).
   Proof.
     intros E M0 M k i HS HK Hi. unfold srl_facts. pose proof (STR_range i Hi) as [R1 R2]. pose proof Lay as LAY.
+    assert (NULHI : STR i + LEN i <= 2 ^ 47 - 9) by lia.
     pose proof (Zle_0_nat (length (ARG i))) as HL. unfold LEN in *.
     repeat apply Forall_cons; [| |apply Forall_nil]; apply kr_sound; rewrite (srl3_val E M k _ HK).
     - rewrite (u_str E M0 HS). unfold str_hi, STRLO, TOPNUL.
@@ -590,11 +596,11 @@ Section NodesArg.
   Qed.
 
   Lemma strlen_facts_ok : forall E M0 M k i, SINV E M0 -> know_ok SEGS E M k -> arg_ok i ->
-    let k1 := strlen_facts1 k i ++ k in
-    know_ok SEGS E M (strlen_facts2 k1 i ++ k1).
+    let k1 := strlen_facts1 A k i ++ k in
+    know_ok SEGS E M (strlen_facts2 A k1 i ++ k1).
   Proof.
     intros E M0 M k i HS HK Hi. cbv zeta.
-    assert (K1 : know_ok SEGS E M (strlen_facts1 k i ++ k)).
+    assert (K1 : know_ok SEGS E M (strlen_facts1 A k i ++ k)).
     { apply know_ok_app; [|exact HK]. unfold strlen_facts1.
       apply know_ok_app; [eapply len_fact_ok; exact HS|]. apply know_ok_app; [|eapply str_facts_ok; eauto; exact I].
       destruct i; [apply Forall_nil | eapply str_facts_ok; eauto]. }
@@ -608,12 +614,12 @@ Section NodesArg.
   (* [comment removed for export] *)
 
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-  Theorem xn_sound_argstrlen : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => node_argstrlen A cs args).
+  Theorem xn_sound_argstrlen : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => node_argstrlen A cs args).
   Proof.
     intros args cs cs' E R FULL model T HC _ Hn Hk. unfold node_argstrlen in Hn.
     destruct (arg_idx args) as [i|] eqn:Hai; [|discriminate].
     destruct (ret_lit cs) as [ret|] eqn:Hret; [|discriminate].
-    destruct (Z.eqb (pc cs) (g_istrlen (argtab_of A)) && eeq (kn cs) (reg cs 10) (str_e i) && argc_ok (kn cs) i)%bool eqn:Hc; [|discriminate].
+    destruct (Z.eqb (pc cs) (g_istrlen (argtab_of A)) && eeq (kn cs) (reg cs 10) (str_e A i) && argc_ok (kn cs) i)%bool eqn:Hc; [|discriminate].
     injection Hn as <-.
     apply andb_prop in Hc as [Hc Hargc]. apply andb_prop in Hc as [Hpc Heq]. apply Z.eqb_eq in Hpc. fold G in Hpc.
     pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as HS.
@@ -676,7 +682,7 @@ Section NodesArg.
   (* [comment removed for export] *)
 
 
-  Theorem xn_sound_argnul : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => node_argnul SEGS cs args).
+  Theorem xn_sound_argnul : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => node_argnul SEGS A cs args).
   Proof.
     intros args cs cs' E R FULL model T HC _ Hn Hk. unfold node_argnul in Hn.
     destruct (arg_idx args) as [i|] eqn:Hai; [|discriminate].
@@ -687,7 +693,7 @@ Section NodesArg.
     destruct ins; try discriminate. destruct sz0; try discriminate. destruct signed; try discriminate.
     rename rd into rd'. rename rs1 into rs. rename imm into imm'.
     destruct sz as [|p|p]; try discriminate. do 3 (destruct p as [p|p|]; try discriminate).
-    destruct (negb (bv_eqb rd' 0%bv) && negb (bv_eqb rs 0%bv) && eeq (kn cs) (eaddz (reg cs (ridx rs)) (bv_signed imm')) (nul_e i))%bool eqn:Hc2;
+    destruct (negb (bv_eqb rd' 0%bv) && negb (bv_eqb rs 0%bv) && eeq (kn cs) (eaddz (reg cs (ridx rs)) (bv_signed imm')) (nul_e A i))%bool eqn:Hc2;
       [|discriminate].
     injection Hn as <-.
     apply andb_prop in Hc as [Hc Hargc]. apply andb_prop in Hc as [Hp0 Hp4]. apply Z.leb_le in Hp0. apply Z.ltb_lt in Hp4.
@@ -759,8 +765,8 @@ Section NodesArg.
     (forall a, hid A argH E cs model a = true -> FULL' a = FULL a) ->
     (forall E' R' FULL'' model',
         env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> CSOK E' cs' R' FULL'' model' -> m_fs model' = m_fs model ->
-        srealizes SEGS (cfg_of SEGS R' (pc cs') FULL'' model') T) ->
-    srealizes SEGS (cfg_of SEGS R (pc cs) FULL model) T.
+        srealizesM SEGS sfl (cfg_of SEGS R' (pc cs') FULL'' model') T) ->
+    srealizesM SEGS sfl (cfg_of SEGS R (pc cs) FULL model) T.
   Proof.
     intros cs cs' E R FULL model T ret rv k' regs' M2' HC Hac Hms Hkept Hrv FULL' HK' Hhid Hk.
     unfold after_call in Hac.
@@ -865,7 +871,7 @@ Section NodesArg.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
   Qed.
 
-  Theorem xn_sound_argmemchr : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => node_argmemchr A nx0 cs args).
+  Theorem xn_sound_argmemchr : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => node_argmemchr A nx0 cs args).
   Proof.
     intros args cs cs' E R FULL model T HC _ Hn Hk. unfold node_argmemchr in Hn.
     destruct (arg_idx args) as [i|] eqn:Hai; [|discriminate].
@@ -931,7 +937,7 @@ Section NodesArg.
         [exact X|]. unfold in_hull. rewrite u64_lit by (unfold KHI in HU; lia). apply andb_true_intro; split; [apply Z.leb_le|apply Z.ltb_lt]; lia. }
     { exact Hrok. } { exact H1. } { exact H10. } { exact H11. } { exact H12. }
     (* [comment removed for export] *)
-    eapply (call_node_sound_vis cs cs' E R FULL model T ret (Some (nul_e i)) (kn cs) regs' M2 HC Hn).
+    eapply (call_node_sound_vis cs cs' E R FULL model T ret (Some (nul_e A i)) (kn cs) regs' M2 HC Hn).
     - rewrite Hpc. exact Hms.
     - exact Hkept.
     - cbv beta iota. replace (Z_to_bv 5 10) with (10%bv : bv 5) by (apply bv_eq; reflexivity).
@@ -1055,7 +1061,7 @@ Section NodesArg.
     rewrite map_nth, seq_nth by exact Hn. cbn [Nat.add]. apply nth_lt_byte_at. exact Hn.
   Qed.
 
-  Theorem xn_sound_memcpyarg : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => node_memcpyarg A nx0 cs args).
+  Theorem xn_sound_memcpyarg : forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => node_memcpyarg A nx0 cs args).
   Proof.
     intros args cs cs' E R FULL model T HC _ Hn Hk. unfold node_memcpyarg in Hn.
     destruct (arg_idx args) as [i|] eqn:Hai; [|discriminate].
@@ -1399,6 +1405,9 @@ Section NodesArg.
     rdn SEGS mem (Z_to_bv 64 (g_canary G)) 8 = Some (word_to_le_bytes 8 can) ->
     0 < fd < 2147483648 ->
     fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+    (* LPS 08b1429: the write path's channel reader, in the same position as the twin hypothesis
+       in AsanNodesEmitSound.v and as AsanStdioWriteS.v:811-812 — reader, then halted. *)
+    m_channel_reader model = true ->
     m_halted model = None ->
     0 <= wb <= wp -> wp <= 2 ^ 47 -> wp - wb = Z.of_nat (length pending) -> bv_unsigned l = Z.of_nat (length extra) ->
     Z.of_nat (length pending) + Z.of_nat (length extra) <= 2 ^ 30 ->
@@ -1419,8 +1428,8 @@ Section NodesArg.
        rdn SEGS mem' (Z_to_bv 64 (f + 32)) 8 = Some (word_to_le_bytes 8 (v_add bufp bufsz)) ->
        rdn SEGS mem' (Z_to_bv 64 (f + 40)) 8 = Some (word_to_le_bytes 8 bufp) ->
        rdn SEGS mem' (Z_to_bv 64 (f + 56)) 8 = Some (word_to_le_bytes 8 bufp) ->
-       srealizes SEGS (mkCfg (mkst regs' ret mem' (seg_rom SEGS)) model) K) ->
-    srealizes SEGS (mkCfg (mkst regs (Z_to_bv 64 (g_stdio_write G)) mem (seg_rom SEGS)) model)
+       srealizesM SEGS sfl (mkCfg (mkst regs' ret mem' (seg_rom SEGS)) model) K) ->
+    srealizesM SEGS sfl (mkCfg (mkst regs (Z_to_bv 64 (g_stdio_write G)) mem (seg_rom SEGS)) model)
              (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
   Hypothesis Gfile : img_lo A <= g_file_lo G /\ g_file_hi G <= img_hi A /\ img_lo A <= g_canary_got G /\ g_canary_got G + 8 <= img_hi A
                      /\ img_lo A <= g_canary G /\ g_canary G + 8 <= img_hi A.
@@ -1529,7 +1538,7 @@ Section NodesArg.
   (* [comment removed for export] *)
   Lemma extra_pieces_sound : forall E cs model FULL k s l ps,
     SINV E FULL -> know_ok SEGS E (Mr A argH E cs model FULL) k ->
-    extra_pieces SEGS k s l = Some ps ->
+    extra_pieces SEGS A k s l = Some ps ->
     exists extra, pbytes E ps = extra
       /\ rdn SEGS FULL (edenot E s) (length extra) = Some extra
       /\ bv_unsigned (edenot E l) = Z.of_nat (length extra)
@@ -1543,8 +1552,8 @@ Section NodesArg.
     (* [comment removed for export] *)
     assert (GEN : forall lz,
       (forall z, lz = Some z -> bv_unsigned (edenot E l) = z /\ 0 < z < two64) ->
-      (if (eeq k s (str_e 0) && eeq k l (len_e 0))%bool then Some [SPBlob (blob_of 0)]
-       else if (eeq k s (str_e 1) && eeq k l (len_e 1) && argc_ok k 1)%bool then Some [SPBlob (blob_of 1)]
+      (if (eeq k s (str_e A 0) && eeq k l (len_e 0))%bool then Some [SPBlob (blob_of 0)]
+       else if (eeq k s (str_e A 1) && eeq k l (len_e 1) && argc_ok k 1)%bool then Some [SPBlob (blob_of 1)]
        else let '(sb, sk) := split_lit s in
             match find_blob k sb sk with
             | Some (n, b) => if eeq k n l then Some [SPBlob b] else None
@@ -1562,7 +1571,7 @@ Section NodesArg.
         /\ (extra = [] \/ (exists i, arg_ok i /\ bv_unsigned (edenot E s) = STR i /\ extra = ARG i)
             \/ rdn SEGS MR (edenot E s) (length extra) = Some extra)).
     { intros lz LZ HH.
-      assert (ARGCASE : forall i, eeq k s (str_e i) = true -> eeq k l (len_e i) = true -> arg_ok i -> ps = [SPBlob (blob_of i)] ->
+      assert (ARGCASE : forall i, eeq k s (str_e A i) = true -> eeq k l (len_e i) = true -> arg_ok i -> ps = [SPBlob (blob_of i)] ->
         exists extra, pbytes E ps = extra
           /\ rdn SEGS FULL (edenot E s) (length extra) = Some extra
           /\ bv_unsigned (edenot E l) = Z.of_nat (length extra)
@@ -1577,9 +1586,9 @@ Section NodesArg.
         rewrite !u64_lit by lia. split; [reflexivity|]. split; [|split; [reflexivity|split; [lia| right; left; exists i; auto]]].
         rewrite <- (map_byte_at' (ARG i)) at 2. apply rdn_of_nth; rewrite u64_lit by lia; [lia|].
         intros j Hj. apply rdn1_overlay. apply (SINV_str E FULL i j HS Hi). lia. }
-      destruct (eeq k s (str_e 0) && eeq k l (len_e 0))%bool eqn:C0.
+      destruct (eeq k s (str_e A 0) && eeq k l (len_e 0))%bool eqn:C0.
       { apply andb_prop in C0 as [Es El]. injection HH as <-. apply (ARGCASE 0%nat Es El I eq_refl). }
-      destruct (eeq k s (str_e 1) && eeq k l (len_e 1) && argc_ok k 1)%bool eqn:C1.
+      destruct (eeq k s (str_e A 1) && eeq k l (len_e 1) && argc_ok k 1)%bool eqn:C1.
       { apply andb_prop in C1 as [C1 Hac]. apply andb_prop in C1 as [Es El]. injection HH as <-.
         apply (ARGCASE 1%nat Es El (arg_ok_of E FULL MR k 1 HS HK Hac) eq_refl). }
       destruct (split_lit s) as [sb sk] eqn:Hsp.
@@ -1669,6 +1678,6 @@ Section NodesArg.
   Proof. intros E off H. rewrite adenot_SA'. unfold estart. cbn [a_base a_off]. rewrite edenot_lit, u64_lit by lia. f_equal. Qed.
 
   (* [comment removed for export] *)
-  Definition emit_stmt' : Prop := emit_stmt SEGS A nx0 LIMIT (xe SEGS A nx0) SINV argH FS0.
+  Definition emit_stmt' (fl : bool) : Prop := emit_stmt SEGS A nx0 LIMIT (xe SEGS A nx0) SINV argH FS0 fl.
 
 End NodesArg.

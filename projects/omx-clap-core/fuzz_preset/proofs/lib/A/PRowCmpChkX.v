@@ -16,13 +16,13 @@
        of the overlay is new (prk_memnorm_keep_win);
    (5) POSTr states ARx at hps and ends with the keep (YAkMemnorm.memnorm tfibsegs mem -> YAkMemnorm.memnorm tfibsegs mem');
    (6) the theorem is mcmpx_check_srr_x.
-   The helpers prk_memnorm_keep_win / prk_rodata_ok_cc are lane RowsCpy's (Reusable/PRowKit.v, A/PRowKitA.v), merged
-   from 532cf8bd849e.
+   The helpers prk_memnorm_keep_win / prk_rodata_ok_cc are lane RowsCpy's (Reusable/PRowKit.v, A/PRowKitA.v), merged.
+   
    rule 24: proves no row by itself (kind: restatement over ARx + memnorm keep of preset's A/AE6z.v walk, a part of
    the memcmp and bcmp rows; CONFIRM the internal file bcmpcpy-CONFIRM.md). Image numerals: AE6z.v's (image A').
-   #102 A' (c-libc-stdio rows102-cmp): this file is origin/cold/c-libc-stdio-rows-cmp 2d9da94a5737's
+   #102 A' (c-libc-stdio rows102-cmp): this file is a commit's
    lib/A/PRowCmpChkX.v (blob c450a5aa740e), relocated A (asan d83eb25d, twin f0d2e8d4) -> A' (asan 1be0f53d96cb, twin
-   bff8519bbe3e) by the frozen alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9), --assume-source: 18 numerals
+   bff8519bbe3e) by the frozen alreloc c4338d099cfb8025, --assume-source: 18 numerals
    moved by symbol + offset, each the same symbol + offset on both twins: the return address
    __asan_region_is_poisoned+0x174 349064 -> 349212 (decimal, an address, 16 times, as A/AE6z.v of this tree states
    it) and the two header pcs MemcmpInterceptorCommon+0x74 / +0xc4; the 18 instruction words (icpt_ld8 operands
@@ -37,6 +37,7 @@
    (alx_const_cells) it may read asan_inited, replace_intrin_cached, asan_flags_dont_use_directly+0x48 (8 bytes),
    __asan_shadow_memory_dynamic_address, kHighMemEnd, kMidMemBeg, kMidMemEnd, real_memcpy, real_memset: on both twins the
    same symbol + offset, and the same pinned values in the old and the #102 AE2y. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

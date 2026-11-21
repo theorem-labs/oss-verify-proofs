@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the recorder and journal facts of pins_set's ASan+UBSan walk (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan; tpins_set_spec of lib/B/Prog/pins_set_c.v, statement from a Theorem Labs lane 917ca7ac6b1).
+   fuzz_command.asan-ubsan; tpins_set_spec of lib/B/Prog/pins_set_c.v, statement from a Theorem Labs lane).
    - the representation's kept lemmas and the store of g_rec.state: lib/A/Prog/pins_set_s2.v of
-     a working branch 3cc8391594b (ps_*_kept, arep_kept, arep_set_state), with the module paths of image B;
-   - the program-static and block lemmas of the B walk lib/B/Prog/socket_send.v (a working branch
-     a470f91dbfb, module SSRecB);
+     a working branch (ps_*_kept, arep_kept, arep_set_state), with the module paths of image B;
+   - the program-static and block lemmas of the B walk lib/B/Prog/socket_send.v (a working branch,
+     module SSRecB);
    - the walk's own facts: the footprint, the strings at any later state of the walk, the block bookkeeping
      through record() and arg_s(), the read-only facts and the stack at a call. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

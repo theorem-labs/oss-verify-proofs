@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the hand-off states are read from the start-up certificate that computes them instead of the recorded ones. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -14,7 +15,7 @@ From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import Image
 From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Spec Require Import Prelim Canon Stdio Prog.
 From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.AS Require Import ShapeAlg.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Fs Run.
-From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan StartupHSAsan.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_implementations.lib Require Import ProofBase TopLevelA.
 From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import Cfg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.

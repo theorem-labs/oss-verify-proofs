@@ -72,7 +72,7 @@
      (lib/B/YG0n.v:193-196; the route lib/B/Prog/reac_segconf_role_c.v:25-28 takes for its real-stack out),
      which with X mod 8 = 0 gives sa_addr rd c 8. No premise of m_file_c.v is added.
    - the values: s0 and e0 point into m_file's text block t (a heap block: m_file_pre's sa_heap, sa_addr and sa_str
-     of t, lib/B/Prog/m_file_c.v:218-219, image B's copy of the image-A owner's FINAL 6f783602b5e3) with
+     of t, lib/B/Prog/m_file_c.v:218-219, image B's copy of the image-A owner's FINAL) with
      t <= s0 <= e0 <= t + |text|, which gives sa_bytes, sa_addr, sa_loc (its heap arm) and 0 < s0 (t <> 0, sa_addr's
      0 <= t). The block lies below alloc_ceiling and the real frame above it: sa_disj of the bytes and each cell.
    - 0x864c0 (c:285, the line after the comment cut): a0 = s1 + 176 (`sd s10,176(s1)` 0x86384, the line start), a1 =
@@ -90,7 +90,7 @@
    image B: A_strip = 0x879cc (twin .symtab); STK_strip = 16 (its frame; the error path is dead).
    IMAGE-INDEPENDENT: no image module is Required; A_strip and STK_strip are parameters, and the shadow-base cells
    are fields of B.
-   KIT: image B's copies (the segconf porter's image-B kit derivation, commit 694f3575dda2, and
+   KIT: image B's copies (the segconf porter's image-B kit derivation, and
    the image-B kit name map): YA0n YG0f YG0n YG0d YCbq from lib.B, SegPgBase / SegABase from
    lib.B.Prog; no lib/A file and none of the 44 B kit modules from lib.Reusable.
    The WALK takes no runtime entry as a Section hypothesis: the function calls none on its good path. *)

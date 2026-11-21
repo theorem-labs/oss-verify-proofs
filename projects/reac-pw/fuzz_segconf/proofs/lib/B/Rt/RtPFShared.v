@@ -27,6 +27,7 @@
    on musl vsnprintf's FILE (musl vfprintf: the same interface), and ASan's printf_common (fuzz_manifest's text).
    ff_stable / ff_mono are what a family gives the format-generic chain. *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/A/Rt/RtPFShared.v for fuzz_command.asan-ubsan: module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -151,7 +152,7 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\
@@ -186,7 +187,7 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\
@@ -222,7 +223,7 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\
@@ -256,7 +257,7 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\
@@ -292,7 +293,7 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\
@@ -326,7 +327,7 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\
@@ -366,7 +367,7 @@ dest_ok segs B ly S W regs mem s0 (sn_len n0 T) -> amem_range s0 (sn_len n0 T) -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF s0 (sn_len n0 T) ->
 shadow_hull_vis (aview segs (w_H W) mem) s0 (sn_len n0 T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (s0, sn_len n0 T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\
@@ -404,7 +405,7 @@ dest_ok segs B ly S W regs mem s0 (sn_len n0 T) -> amem_range s0 (sn_len n0 T) -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF s0 (sn_len n0 T) ->
 shadow_hull_vis (aview segs (w_H W) mem) s0 (sn_len n0 T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (s0, sn_len n0 T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\

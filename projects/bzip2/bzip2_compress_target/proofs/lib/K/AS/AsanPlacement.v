@@ -1,12 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the free gap as Linux's own placement (Placement.linux_place)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.K.AS Require Import AsanCeil PlacementSearch.  (* [comment removed for export] *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -189,19 +192,21 @@ Proof.
   rewrite IH, Nat2Z.inj_succ. lia.
 Qed.
 
-Theorem free_gap_of_totals : forall (h : VmMaps) nZ tot,
-  0 <= nZ ->
+Theorem free_gap_of_totals : forall (h : VmMaps) (thp : bool) nZ tot,
+  0 < nZ -> nZ mod page_size = 0 ->
+  alloc_ceiling <= alloc_top h ->
   gw_sizes (vm_reserved h ++ vm_maps h) <= tot ->
   bottomup_floor + nZ + tot + Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (nZ + 4095) <= alloc_ceiling ->
-  exists g, g mod page_size = 0 /\ bottomup_floor <= g /\ g + nZ <= alloc_ceiling
-            /\ region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true
-            /\ hint_placement_ok_b (Z_to_bv 64 0) h g nZ = true.
+  exists g, linux_place h thp (Z_to_bv 64 0) nZ g.
 Proof.
-  intros h nZ tot HnZ Htot Hband.
-  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ HnZ) as (g & Hal & Hfl & Hc & Hfree).
+  intros h thp nZ tot HnZ HnAl Htop Htot Hband.
+  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ ltac:(lia))
+    as (g & Hal & Hfl & Hc & Hfree).
   { rewrite gap_weight_sizes. lia. }
-  exists g. split; [exact Hal|]. split; [exact Hfl|]. split; [exact Hc|]. split; [exact Hfree|].
-  apply hint_placement_ok_b_of_floor. exact Hfl.
+  apply (Placement.linux_place_exists h thp (Z_to_bv 64 0) nZ HnZ HnAl).
+  exists g. right. unfold gap_fits.
+  pose proof bottomup_floor_val as Hfv.
+  repeat split; [exact Hal | unfold task_unmapped_base; lia | lia | exact Hfree].
 Qed.
 
 (* [comment removed for export] *)

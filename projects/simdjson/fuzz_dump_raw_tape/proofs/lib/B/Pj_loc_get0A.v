@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/Pj_loc_get0A.v, lines 48, 95, 153. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -44,7 +45,7 @@ Definition classic_postA (Σ : rts RT) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s
 
 Lemma classic_aevt : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo : Z) (canary : word),
-  stk bsegs m lo (bv_unsigned sp) -> (lo + 576 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z ->
+  stk bsegs m lo (bv_unsigned sp) -> (lo + 576 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z ->
   (bv_unsigned sp + 16 <= USTACK_TOP)%Z -> (bv_unsigned sp mod 16 = 0)%Z -> (bv_unsigned sp < 2^62)%Z ->
   rw_cells bsegs m 0x6aa628 imp0_A ->
   rw_cells bsegs m 0x6aa800 [C8 (Z_to_bv 64 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0)] ->
@@ -91,7 +92,7 @@ Definition locale_ctor_postA (Σ : rts RT) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 
 
 Lemma locale_ctor0_aevt : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo D : Z) (j : list byte) (canary : word),
-  stk bsegs m lo (bv_unsigned sp) -> (lo + 608 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z ->
+  stk bsegs m lo (bv_unsigned sp) -> (lo + 608 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z ->
   (bv_unsigned sp + 16 <= USTACK_TOP)%Z -> (bv_unsigned sp mod 16 = 0)%Z -> (bv_unsigned sp < 2^62)%Z ->
   LOC0A m -> rw_cells bsegs m D [CB 8 j] -> (0 <= D)%Z -> (D + 8 <= lo \/ bv_unsigned sp <= D)%Z -> (D + 8 <= 0x6aa628 \/ 0x6cc15c <= D)%Z ->
   (forall i, 0 <= i < 8 -> aclient (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) (D + i))%Z ->
@@ -149,7 +150,7 @@ Qed.
 
 Theorem locale_ctor_aevt : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo D : Z) (j : list byte) (canary : word),
-  stk bsegs m lo (bv_unsigned sp) -> (lo + 608 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z ->
+  stk bsegs m lo (bv_unsigned sp) -> (lo + 608 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z ->
   (bv_unsigned sp + 16 <= USTACK_TOP)%Z -> (bv_unsigned sp mod 16 = 0)%Z -> (bv_unsigned sp < 2^62)%Z ->
   pj_locA m -> rw_cells bsegs m D [CB 8 j] -> (0 <= D)%Z -> (D + 8 <= lo \/ bv_unsigned sp <= D)%Z -> (D + 8 <= 0x6aa628 \/ 0x6cc15c <= D)%Z ->
   (forall i, 0 <= i < 8 -> aclient (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) (D + i))%Z ->

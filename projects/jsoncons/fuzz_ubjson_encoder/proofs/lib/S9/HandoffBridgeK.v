@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the SIGPIPE disposition as a launch variable; the new launch (process input, auxv, group id, exec file name); the CONFIG_RSEQ flag; imports; unused lemmas removed; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/HandoffBridgeK.v, lines 609-629, 635, 642, 687-703, 752-762. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import PropExec AgentLib AsanAcct.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import PropExec CatExec AgentLib AsanAcct.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import BackingAlgebra.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import AsanPlacement AxSymExec3K AxSymExec3SoundK AxSymRun3K AsanPlanCoreK AsanPlanK AsanPlanSoundK AsanInitK.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -232,9 +232,6 @@ Proof.
   unfold amapZ, amap_den, B, S. cbn [fst snd].
   rewrite (hb_lin E cs R FULL model _ HC H1), (hb_lin E cs R FULL model _ HC H2). reflexivity.
 Qed.
-
-Lemma hb_res : forall E cs R FULL model, CSOK E cs R FULL model -> vm_reserved (m_vmmaps model) = segments_reserved SEGS.
-Proof. intros E cs R FULL model HC. exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 
 Lemma hb_limit : forall E cs R FULL model, CSOK E cs R FULL model -> vm_limit (m_vmmaps model) = LIMIT.
 Proof. intros E cs R FULL model HC. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
@@ -527,19 +524,42 @@ Hypothesis MAPSLIN : forall h, (h < 2)%nat -> amaps_lin (kn (HSc h)) (a_maps (HS
 Hypothesis VISLIN : forall h, (h < 2)%nat -> vis_lin (kn (HSc h)) (a_vis (HSc h) ++ a_ghost (HSc h)) = true.
 Hypothesis BRKLIN : forall h, (h < 2)%nat -> lin_nowrapR (kn (HSc h)) (a_brk (HSc h)) = true.
 Hypothesis FDSTD : forall h, (h < 2)%nat -> a_fd (HSc h) = FdStd.
-
-Variables (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs).
+(* [AsanInitK]'s [Section Init] is parameterised by the full
+   [State.mkProcInput_full] field list, so [SINV0]/[argH0]/[E0]/[uE0] discharge
+   all fifteen of [AsanInitK.inp]'s arguments plus [mbase] and [apc].  This
+   Section carried the pre-widening eight, which is why :620 reported
+   "the term ph has type PhdrInfo while it is expected to have type word" --
+   [argH0]'s first argument is now [sp].  The argument lists below are COPIED
+   from the telescopes printed by two build rounds
+   off the built AsanInitK.vo; they are not
+   derived, because they differ per lemma in which of ph/brk0/mbase/apc they
+   keep and a uniform rewrite gets three of the seven wrong. *)
+Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs).
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abrt : bool.
+Variable ur : InputStream.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variable sdf : bool.
+Variable apc : N.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk SEGS brk0.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+  (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
 
-#[local] Notation SINV := (SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 ph sp rdraw argv envp uid hw).
+#[local] Notation SINV := (SINV0 ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc).
+#[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
 #[local] Notation CSOK := (cs_ok SEGS A AsanInitK.LIMIT SINV argH fs).
 
-Let argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a := argH0_high ph sp rdraw argv envp uid hw Hsp Hva.
+Let argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a :=
+  argH0_high sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva.
 
 Lemma hbi_ch : forall h ch, HSf h = Some ch -> ch = HSc h /\ (h < 2)%nat.
 Proof.
@@ -574,14 +594,29 @@ Lemma hbi_fds : forall h E R FULL model, (h < 2)%nat -> CSOK E (HSc h) R FULL mo
 Proof. intros h E R FULL model Hh HC. exact (hb_fds_std SEGS A _ _ _ _ E _ R FULL model HC (FDSTD h Hh)). Qed.
 
 Lemma hbi_E0 : forall E cs R FULL model, CSOK E cs R FULL model ->
-  forall n, (n < NX0)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n.
+  forall n, (n < NX0)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) n.
 Proof. intros E cs R FULL model HC. exact (proj1 (hb_sinv SEGS A _ _ _ _ E cs R FULL model HC)). Qed.
 
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation argc := (Z.of_nat (length argv)).
 #[local] Notation envc := (Z.of_nat (length envp)).
-
-Definition Wsb : Z := (Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)) - 16 - (8 * argc + 8 * envc + 184)) / 8.
+(* [AsanInitK]'s own input, so the two sides of every [SINV0]/[argH0] fact are
+   the same term by conversion. *)
+#[local] Notation INP := (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+#[local] Notation rseq := (kb_rseq (in_kernel INP)).
+#[local] Notation top := (ed_top rdraw).
+#[local] Notation utop := (bv_unsigned top).
+#[local] Notation entryw := (Z_to_bv 64 (Z.of_N apc)).
+#[local] Notation STR0 := (usp + Z.of_nat (cat_string_off rseq sp top argv envp execfn)).
+(* V_W CHANGED MEANING at this revision, it did not merely change value: it is
+   the [arch_align_stack] pad in BYTES ([StackLayout.block_pad_len]), because
+   the strings moved ABOVE the AT_RANDOM bytes.  The old
+   [(|build_stack_bytes| - 16 - (8*argc + 8*envc + 184)) / 8] counted string
+   WORDS just above the auxv and is FALSE here, exactly as
+   [AsanInitK.v:188-200] records; and [build_stack_bytes] now leads with a
+   [LaunchAuxv], which is what :688 reported.  Value copied from
+   [AsanInitK]'s own [W], so [hbi_vals]'s [VZ E 4 = Wsb] stays a conversion. *)
+Definition Wsb : Z := Z.of_nat (block_pad_len rseq sp top argv envp execfn).
 
 Lemma hbi_vals : forall E cs R FULL model, CSOK E cs R FULL model ->
   VZ E 0   = usp / 32768 /\ VZ E 6   = (usp mod 4096) / 16
@@ -591,9 +626,9 @@ Lemma hbi_vals : forall E cs R FULL model, CSOK E cs R FULL model ->
   /\ ev E 9   = hw /\ VZ E 10   = (usp mod 32768) / 4096.
 Proof.
   intros E cs R FULL model HC. pose proof (hbi_E0 E cs R FULL model HC) as HE.
-  pose proof (uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (U1 & U2 & U3 & U4 & U5 & U6 & U7).
-  pose proof (uE0_L1 ph sp rdraw brk0 argv envp uid hw Hva) as U8.
-  pose proof (uE0_s2a ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U9.
+  pose proof (uE0 ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau) as (U1 & U2 & U3 & U4 & U5 & U6 & U7).
+  pose proof (uE0_L1 sp rdraw brk0 argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc Hva) as U8.
+  pose proof (uE0_s2a ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva Hve Hfit Hlau) as U9.
   unfold APSK.uE in *. cbn [edenot] in U1, U2, U3, U4, U5, U6, U7, U8, U9.
   unfold V_S1, V_S2, V_S2A, V_ARGC, V_ENVC, V_L0, V_L1, V_W, V_BRK, V_UID, V_HW in *. unfold VZ. rewrite !HE by (unfold NX0; lia).
   repeat split; try assumption; try reflexivity.
@@ -618,7 +653,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Lemma hbi_brk0 : forall E cs R FULL model, CSOK E cs R FULL model -> 4096 * VZ E 5 = bv_unsigned brk0.
 Proof.
   intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (_ & _ & _ & _ & _ & _ & _ & U & _). rewrite U.
-  pose proof (brk_range SEGS A ph sp rdraw brk0 argv envp uid hw IMG Hbrk) as [_ Hm].
+  pose proof (brk_range SEGS A ph sp rdraw brk0 argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc IMG Hbrk) as [_ Hm].
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
@@ -627,15 +662,16 @@ Lemma hbi_sp_range : sp_window_lo <= usp <= sp_window_hi /\ usp mod 16 = 0.
 Proof. pose proof Hsp as (H1 & H2 & H3). auto. Qed.
 
 Lemma hbi_argblock : forall E cs R FULL model, CSOK E cs R FULL model ->
-  forall a : word, argH E a = true -> FULL a = wrap_mem ph sp argv envp uid hw rdraw a.
+  forall a : word, argH E a = true -> FULL a = wrap_mem INP mbase ph entryw sp rdraw a.
 Proof. intros E cs R FULL model HC. exact (proj2 (hb_sinv SEGS A _ _ _ _ E cs R FULL model HC)). Qed.
 
+(* [argH0] went from three disjuncts to two: the string area is ONE range at
+   the top of the stack VMA now ([STR0 .. utop]), and the old middle range
+   (the strings just above the auxv) and the dead page-tail range are gone
+   with it.  Shape copied from [AsanInitK.v:230-240]. *)
 Lemma hbi_argH : forall E (a : word),
   argH E a = ((uE E e_sp0 <=? bv_unsigned a) &&
               (((usp + 24 <=? bv_unsigned a) && (bv_unsigned a <? usp + 8 * argc + 8 * envc + 24))
-              || ((usp + 8 * argc + 8 * envc + 184 <=? bv_unsigned a) && (bv_unsigned a <? usp + 8 * argc + 8 * envc + 184 + 8 * Wsb))
-              || ((usp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)) <=? bv_unsigned a)
-                  && (bv_unsigned a <? usp + Z.of_nat (length (entry_stack_image ph sp argv envp uid hw rdraw))))))%bool.
+              || ((STR0 <=? bv_unsigned a) && (bv_unsigned a <? utop))))%bool.
 Proof. reflexivity. Qed.
 End Image.
-

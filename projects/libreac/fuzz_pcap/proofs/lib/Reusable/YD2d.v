@@ -2,8 +2,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2d.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD2d.v (a working branch 9700d736a50): every hunk of that file against the donor's A file is mirrored here, each address re-measured on the asan-ubsan image (keyed by symbol + offset or section + offset, never by a delta from the asan value); a Theorem Labs lane's hunks there are relocation (the read-only window: start of .data.rel.ro 0x99198 / end of .got 0x9a3f0, the RW page 0x99000, the stderr FILE range start oft_arg0 = 646280 = Reusable/YD2j.v R_A3's low bound; R_A3's one image chunk is CImg 840 here, [oft_arg0, __start_asan_globals) = [0x9dc88, 0x9dfd0) (a Theorem Labs lane's asan chunk is 832; the staged relocation still had 832, corrected)) and the dropped Require of cgif's YE2k. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2d.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD2d.v (a working branch): every hunk of that file against the donor's A file is mirrored here, each address re-measured on the asan-ubsan image (keyed by symbol + offset or section + offset, never by a delta from the asan value); a Theorem Labs lane's hunks there are relocation (the read-only window: start of .data.rel.ro 0x99198 / end of .got 0x9a3f0, the RW page 0x99000, the stderr FILE range start oft_arg0 = 646280 = Reusable/YD2j.v R_A3's low bound; R_A3's one image chunk is CImg 840 here, [oft_arg0, __start_asan_globals) = [0x9dc88, 0x9dfd0) (a Theorem Labs lane's asan chunk is 832; the staged relocation still had 832, corrected)) and the dropped Require of cgif's YE2k. *)
 (* Modified by Theorem Labs, 2026-10: the event-budget side conditions use the lower bound YG06Free.ev_max_floor in place of the value of EV_MAX. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed run_QM_tfa, EL, tfib_run_Q_empty, tfib_run_Q_at, tfib_run_Q). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YG06Free.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -74,11 +75,16 @@ Proof. vm_compute. split; reflexivity. Qed.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YD1u.
 Section e. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
 Definition run_QM_tfa (B : asyms) : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
-(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z)
+(rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
+valid_fs (in_fs inp) ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data -> 0 < payload_len data ->
-let E3 := E_P (edset (havoc (YP08.E0 sp [a0; p] (in_envp inp) xw xd) K_M1 ws) 2 data) data (sptr_addr B ly pb + 2 + config_len data) in
+let E3 := E_P (edset (havoc (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+[a0; p] (in_envp inp) (in_execfn inp) xw xd) K_M1 ws) 2 data) data (sptr_addr B ly pb + 2 + config_len data) in
 tail_at B (if config_len data =? 0 then sPM0 else sPM1 (Z.of_nat (calls data))) E3 sp inp a0 p data W ms md ly S pb cap ->
 bv_unsigned (ew E3 K_PP) = sptr_addr B ly pb + 2 + config_len data ->
 srealizes tfibsegs (mkCfg ms md) (run_shape (payload data) (calls data) (in_fs inp)).
@@ -89,13 +95,23 @@ Hypothesis ARL : AR_laws tfibsegs B.
 Variable xst : nat -> (word -> bool) -> (word -> option byte) -> Prop.
 Hypothesis LOOPL : loop_L_x B xst.
 Hypothesis RUNQM : run_QM_tfa B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+(* Shape copied from the in-tree ported donor YD1v.v:119-125 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is DROPPED: implied by [entry_launch_ok_va]
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722); this section never carried it. *)
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 Hypothesis Hvfs : valid_fs (in_fs inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210). *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
@@ -257,7 +273,7 @@ bv_unsigned (ew E3 K_PP) = sptr_addr B ly pb + 2 + config_len data ->
 srealizes tfibsegs (mkCfg ms md) (run_shape (payload data) (calls data) (in_fs inp)).
 Proof.
 intros ws W ms md ly S data pb cap Hlk Hok Hpl0 E3 HT E60.
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI).
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI & Hcr).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (buf := sptr_addr B ly pb) in *. set (c0 := config_len data =? 0) in *. set (k := Z.of_nat (calls data)) in *.
@@ -291,7 +307,7 @@ assert (Hwin : forall a, usp - 65536 <= a < usp -> apresent (w_H W) (ms_mem ms1)
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms1) (ss_mem (sPE1 k))); [exact HMB | left; reflexivity | exact E3_0 | lia | lia | cbn; lia].
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms1) (ss_mem (sPE1 k))); [exact HMB | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia]. }
 change (run_shape (payload data) (calls data) (in_fs inp)) with (loop_tgt (payload data) (calls data) 0%nat (calls data) (in_fs inp)).
-apply (LOOPL sp inp xw xd E4 W ms1 (with_vm_backing (m_vm_lazy md) mat1 md) ly S a0 p data pb PNull cap 0 0%nat (calls data) (in_fs inp) Hargv Hsp Hva Hve Hvfs Hlk
+apply (LOOPL sp brk mbase inp xw xd E4 W ms1 (with_vm_backing (m_vm_lazy md) mat1 md) ly S a0 p data pb PNull cap 0 0%nat (calls data) (in_fs inp) rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk
 ltac:(unfold dlen; lia)).
 - intros j Hj. rewrite E4old by (unfold K_L, K_M1 in *; lia). subst E3. rewrite E_P_old by (unfold K_M1 in Hj; lia). cbn [ew edset]. apply ew_havoc_old. exact Hj.
 - change (ed E4 2) with (ed E3 2). exact Ed2.
@@ -320,7 +336,7 @@ rewrite E3_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin a Ha)).
 - exact HRO.
 -   exact (finv_run B ly S W (ms_mem ms) md (w_H W) E3 _ _ _ usp HAR HFr1 WOK E3_0 Ulo Uhi HTOP HFI).
 -   split; [intros k0; rewrite wvb_fds', Hfds; reflexivity|]. split; [rewrite wvb_fds', Hfds; reflexivity|].
-split; [rewrite wvb_fs'; exact Hfs | exact (proj1 Hvfs)].
+split; [rewrite wvb_fs'; exact Hfs|]. split; [exact (proj1 Hvfs) | exact Hcr].
 Qed.
 Lemma pm_run : forall (c0 : bool) k E (W : world tfibsegs) ms md,
 st_ok tfibsegs E (add_cond (sQ c0 k) cond_PL1) (restrict (w_H W) ms) ->
@@ -341,7 +357,7 @@ srealizes tfibsegs (mkCfg ms md) (run_shape (payload data) (calls data) (in_fs i
 Proof.
 intros ws W ms md ly S data pb cap Hlk Hok E3 HT E60.
 destruct (Z.eqb_spec (payload_len data) 0) as [Hpl0 | Hpl1]; [exact (tfib_run_Q_empty ws W ms md ly S data pb cap Hlk Hok Hpl0 HT E60)|].
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI).
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI & Hcr).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (buf := sptr_addr B ly pb) in *. set (c0 := config_len data =? 0) in *. set (k := Z.of_nat (calls data)) in *.
@@ -371,11 +387,14 @@ assert (Hwin : forall a, usp - 65536 <= a < usp -> apresent (w_H W) (ms_mem ms1)
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms1) (ss_mem sPM0)); [exact HM2 | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia].
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms1) (ss_mem (sPM1 k))); [exact HM2 | left; reflexivity | exact E3_0 | lia | lia | cbn; lia].
 - eapply (win_present sp Hsp E3 (w_H W) (ms_mem ms1) (ss_mem (sPM1 k))); [exact HM2 | right; left; reflexivity | exact E3_0 | lia | lia | cbn; lia]. }
-apply (RUNQM sp inp xw xd ws W ms1 _ ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk ltac:(unfold dlen; lia) Hplpos); [| exact E60].
+apply (RUNQM sp brk mbase inp xw xd ws W ms1 _ ly S a0 p data pb cap rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk ltac:(unfold dlen; lia) Hplpos); [| exact E60].
 fold buf E3. change (if config_len data =? 0 then sPM0 else sPM1 (Z.of_nat (calls data))) with (if c0 then sPM0 else sPM1 k).
 split; [exact HS2|]. split; [exact E41|]. split; [exact E42|]. split.
-{ eapply (runs_at_frame E3 (ss_facts (if c0 then sPM0 else sPM1 k)) (ss_mem (sQ c0 k)));
-[exact (st_ok_facts_ok tfibsegs E3 _ _ HS2) | | exact HFr1 | rewrite E3_0; lia | exact HR].
+(* [tail_at]'s [runs_at] conjunct is EXISTENTIAL at 75d69e00 (YD1w.v:67-68).  This is a
+   CONSTRUCTION site: the witness comes out of the consumed [HR] and goes straight back. *)
+{ destruct HR as (rnd0 & HR0). exists rnd0.
+eapply (runs_at_frame E3 (ss_facts (if c0 then sPM0 else sPM1 k)) (ss_mem (sQ c0 k)));
+[exact (st_ok_facts_ok tfibsegs E3 _ _ HS2) | | exact HFr1 | rewrite E3_0; lia | exact HR0].
 subst c0. unfold sQ. pose proof wbs_PM as [WQ0 WQ1]. destruct (config_len data =? 0); [exact WQ0 | exact (WQ1 k)]. }
 split; [exact HAI1|]. split.
 { apply (AR_after_run B HB ARL ly S W E3 _ (ms_mem ms) (ms_mem ms1) md mat1 HAR WOK); [rewrite E3_0; exact Ulo | rewrite E3_0; exact HCT | exact HF1 |].
@@ -383,13 +402,14 @@ rewrite E3_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin a Ha)). }
 split; [exact HTOP|]. split; [exact Hbl|]. split; [exact Hnev|]. split; [exact Hcap|]. split; [unfold dlen; lia|]. split.
 { unfold dlen. apply (blk_of_frame_r _ _ _ _ _ buf (Z.of_nat (length data)) data usp HFr1 WOK E3_0 Ulo); [intros a Ha; apply NIMG; lia | lia | lia | exact HBLK]. }
 split; [rewrite wvb_fs'; exact Hfs |]. split; [rewrite wvb_fds'; exact Hfds |]. split; [exact Hminv|].
-exact (finv_run B ly S W (ms_mem ms) md (w_H W) E3 _ _ _ usp HAR HFr1 WOK E3_0 Ulo Uhi HTOP HFI).
+split; [exact (finv_run B ly S W (ms_mem ms) md (w_H W) E3 _ _ _ usp HAR HFr1 WOK E3_0 Ulo Uhi HTOP HFI) | exact Hcr].
 Qed.
 End g.
 Theorem tfib_run_Q (B : asyms) (HB : PcapSyms B) (ARL : AR_laws tfibsegs B) (xst : nat -> (word -> bool) -> (word -> option byte) -> Prop)
 (LOOPL : loop_L_x B xst) (RUNQM : run_QM_tfa B) : run_Q_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk Hok E3 HT E60.
-exact (tfib_run_Q_at B HB ARL xst LOOPL RUNQM sp inp xw xd a0 p Hargv Hsp Hva Hve Hvfs ws W ms md ly S data pb cap Hlk Hok HT E60).
+intros sp brk mbase inp xw xd ws W ms md ly S a0 p data pb cap rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk Hok E3 HT E60.
+exact (tfib_run_Q_at B HB ARL xst LOOPL RUNQM sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau Hvi Hvfs ws W ms md ly S data pb cap Hlk Hok HT E60).
 Qed.
 End e.

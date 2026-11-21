@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
-(* B's out-buffer conjunct: ReplyLS3o.v's fr_OUT (A, row B1c) ported to B's fr_LS (lib/B/ReplyLSB.v:182-189), with
+(* B's out-buffer conjunct: ReplyLS3o.v's fr_OUT (A, row B1c) ported to B's fr_LS (lib/B/ReplyLSB.v:183-190), with
    the twin of every B rule that concludes LS, and the instance at CR := YCfn_cf.CALL_ROOM_B.
    proves no function (kind: invariant lemma).
 
@@ -10,12 +11,12 @@
      MASS m      := sum over the relay's entries of (|re_U e| + sum over its keys of (|key| + 7)) + pend_bytes m
      fr_OUT OM cx t m ly S := 0 <= lm_cap m /\ 0 <= XB /\ lm_cap m <= XB + OM /\ MASS m <= 65535 * t
    OM is a parameter, as A keeps it; a Theorem Labs lane's ruled value is OUT_MAX4 = 4 * (OPS_MAX - 1) * 65,535 =
-   133,953,540 (2026-10-30 01:47Z; a8's 66,976,770 of ACfn_cf.v:57 at a389032ec36 is OUT_MAX3 here, kept for the
+   133,953,540 (2026-10-30 01:47Z; a8's 66,976,770 of ACfn_cf.v:57 is OUT_MAX3 here, kept for the
    citation).  A key counts at |key| + 7, the cost of the BEGIN line that made it: ou_gesture_begin_key reads
    RelayModel.gesture, which B shares with A (lib/Prog/RelayModel.v), so the key model's fact ports unchanged.
 
-   THE RULES.  B's LS-concluding rules at this tree (k3's 61e610e6176) are the two heads (ReplyLSB.v:291, :293),
-   the prologue (ReplyLSB.v:243 fr_LS_pro_b) and the event step (ReplyLSBArms.v:267 LS_event_step_T, instance
+   THE RULES.  B's LS-concluding rules at this tree (k3) are the two heads (ReplyLSB.v:292, :294),
+   the prologue (ReplyLSB.v:244 fr_LS_pro_b) and the event step (ReplyLSBArms.v:268 LS_event_step_T, instance
    :695 LS_event_step_B).  B has no drain / remove / gone LS step yet, so this file has no twin for those; when
    they land, A's lib/A/ReplyLS3o.v twins (fr_OUT_drain_step_p, fr_OUT_rm_step_p) and lib/A/ReplyLS3oGn.v
    (fr_OUT_gone_end) are the texts to port. *)
@@ -63,8 +64,8 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 Local Notation zsum l := (fold_right Z.add 0 l).
 
-(* ================================================================== the constants (A ReplyLS3o.v:95-105) *)
-(* a8's value, a working branch a389032ec36 lib/A/ACfn_cf.v:57 *)
+(* ================================================================== the constants (A ReplyLS3o.v:96-106) *)
+(* a8's value, a working branch lib/A/ACfn_cf.v:57 *)
 Definition OUT_MAX3 : Z := 66976770.
 (* a Theorem Labs lane's ruling 2026-10-30 01:47Z, after row B1c found a8's too small for the remove / gone arms *)
 Definition OUT_MAX4 : Z := 133953540.
@@ -75,7 +76,7 @@ Proof. reflexivity. Qed.
 Lemma OUT_MAX4_src : OUT_MAX4 = 4 * (OPS_MAX - 1) * WMAX.
 Proof. reflexivity. Qed.
 
-(* ================================================================== the key model (A ReplyLS3o.v:110-150) *)
+(* ================================================================== the key model (A ReplyLS3o.v:111-151) *)
 Definition kw7 (x : list Z) : Z := Z.of_nat (length x) + 7.
 Definition kw7s (T : list (list Z)) : Z := zsum (map kw7 T).
 Lemma kw7_nonneg : forall x, 0 <= kw7 x.
@@ -173,14 +174,14 @@ Proof.
   - unfold MASS, MASSe, pend_bytes. rewrite E1, E2. lia.
 Qed.
 
-(* ---------------------------------------------------------------- SEG_HEAD's two (ReplyLSB.v:291, :293) *)
+(* ---------------------------------------------------------------- SEG_HEAD's two (ReplyLSB.v:292, :294) *)
 Lemma fr_OUT_head_nout_b : forall cx t m ly S, fr_OUT cx t m ly S -> fr_OUT cx t (lm_clear_O m) ly S.
 Proof. intros cx t m ly S H. apply (fr_OUT_k_only cx t t m _ ly S); try reflexivity; try lia; exact H. Qed.
 Lemma fr_OUT_head_skip_b : forall cx t m ly S,
   fr_OUT cx t m ly S -> fr_OUT cx (t + 1) (lm_set_k m (hd_k' cx m)) ly S.
 Proof. intros cx t m ly S H. apply (fr_OUT_k_only cx t (t + 1) m _ ly S); try reflexivity; try lia; exact H. Qed.
 
-(* ---------------------------------------------------------------- the first head (ReplyLSB.v:243 fr_LS_pro_b) *)
+(* ---------------------------------------------------------------- the first head (ReplyLSB.v:244 fr_LS_pro_b) *)
 Lemma fr_OUT_pro_b : forall cx q T' pj c O cap out ly S,
   0 <= cap -> 0 <= OM ->
   (exists T0 rest0, Permutation (ablocks B (c_ly cx) (c_S cx))
@@ -210,7 +211,7 @@ Proof.
   destruct (T0 =? 0); repeat split; lia.
 Qed.
 
-(* ---------------------------------------------------------------- the event arm's step (ReplyLSBArms.v:267) *)
+(* ---------------------------------------------------------------- the event arm's step (ReplyLSBArms.v:268) *)
 (* one event sends one line of at most 65,536 bytes (fuzz_u16), so g_out grows to at most 131,072 *)
 Lemma bo_ev_len : forall cx m e, ev_evt cx m e -> re_len e <= 65536.
 Proof.

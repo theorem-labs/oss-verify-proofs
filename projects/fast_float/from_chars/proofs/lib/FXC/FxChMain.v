@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith Znumtheory List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Run Specs Fs.
@@ -1605,20 +1606,33 @@ with mfind (ks : @mks N) (L : sst) (M : smodel) (FS : fstate) (sh : shp) (a : A)
   end.
 End Check.
 
-(* [comment removed for export] *)
+(* [comment removed for export]
+   At 75d69e00 [read_cstr_aux] tests [access_okb] on every byte before reading it ([strncpy_from_user]'s
+   clamp), so a string read succeeds only when it ends below TASK_SIZE: the last premise. *)
 Lemma read_cstr_aux_ok : forall mp (bs : list byte) a k,
   (length bs < k)%nat -> Forall (fun b => b <> Z_to_bv 8 0) bs ->
   (forall j, (j <= length bs)%nat -> mp (woff a j) = Some (nth j (bs ++ [Z_to_bv 8 0]) (Z_to_bv 8 0))) ->
+  bv_unsigned a + Z.of_nat (length bs) < TASK_SIZE ->
   read_cstr_aux mp a k = CstrOk bs.
 Proof.
-  intros mp bs. induction bs as [|b bs IH]; intros a k Hk Hnz Hm; destruct k as [|k]; cbn [length] in Hk; try lia; cbn [read_cstr_aux].
+  intros mp bs. induction bs as [|b bs IH]; intros a k Hk Hnz Hm Ht; destruct k as [|k]; cbn [length] in Hk, Ht; try lia; cbn [read_cstr_aux].
+  all: assert (Hacc : access_okb a 1 = true)
+         by (unfold access_okb, TASK_SIZE in *; apply andb_true_intro; split; apply Z.leb_le; lia).
+  all: rewrite Hacc; cbn [negb].
   - rewrite <- (woff_0 a). rewrite (Hm O ltac:(cbn; lia)). cbn [nth app]. rewrite bv_eqb_refl. reflexivity.
   - rewrite <- (woff_0 a). rewrite (Hm O ltac:(cbn; lia)). cbn [nth app].
     inversion Hnz as [|? ? Hb Hnz']; subst.
     destruct (bv_eqb b (Z_to_bv 8 0)) eqn:Eb; [apply bv_eqb_eq in Eb; exfalso; exact (Hb Eb)|].
-    rewrite woff_0. rewrite (IH (a + 1)%bv k ltac:(lia) Hnz'); [reflexivity|].
-    intros j Hj. rewrite woff_succ. exact (Hm (Datatypes.S j) ltac:(cbn; lia)).
+    rewrite woff_0. rewrite (IH (a + 1)%bv k ltac:(lia) Hnz'); [reflexivity| |].
+    + intros j Hj. rewrite woff_succ. exact (Hm (Datatypes.S j) ltac:(cbn; lia)).
+    + pose proof (bv_unsigned_in_range _ a) as Hr. change (bv_modulus 64) with 18446744073709551616 in Hr.
+      rewrite bv_add_unsigned. change (bv_unsigned (1%bv : bv 64)) with 1. rewrite bv_wrap_small.
+      * unfold TASK_SIZE in *. lia.
+      * change (bv_modulus 64) with 18446744073709551616. unfold TASK_SIZE in *. lia.
 Qed.
+
+Lemma path_nonempty_len : forall p, path_eqb p [] = false -> (1 <= length p)%nat.
+Proof. intros [|x r] H; [vm_compute in H; discriminate H | cbn [length]; lia]. Qed.
 
 Section Sound.
 Variable segs : list Segment.
@@ -1797,18 +1811,27 @@ Proof. LiaFast.lf_pins (fun (path0 data0 Hp4 : LiaFast.U) => LiaFast.u0).
   pose proof (bv_unsigned_in_range _ off). pose proof (bv_unsigned_in_range _ count). lia.
 Qed.
 
+(* as [read_cstr_aux_ok]: at 75d69e00 every byte is [access_okb]-tested first, so the string must end below TASK_SIZE *)
 #[using="path0 data0 Hp4"] Lemma cstr_access_len_ok : forall mp (bs : list byte) a k,
   (length bs < k)%nat -> Forall (fun b => b <> Z_to_bv 8 0) bs ->
   (forall j, (j <= length bs)%nat -> mp (woff a j) = Some (nth j (bs ++ [Z_to_bv 8 0]) (Z_to_bv 8 0))) ->
+  bv_unsigned a + Z.of_nat (length bs) < TASK_SIZE ->
   cstr_access_len_aux mp a k = Datatypes.S (length bs).
 Proof. LiaFast.lf_pins (fun (path0 data0 Hp4 : LiaFast.U) => LiaFast.u0).
-  intros mp bs. induction bs as [|b bs IH]; intros a k Hk Hnz Hm; destruct k as [|k]; cbn [length] in Hk; try lia; cbn [cstr_access_len_aux].
+  intros mp bs. induction bs as [|b bs IH]; intros a k Hk Hnz Hm Htk; destruct k as [|k]; cbn [length] in Hk, Htk; try lia; cbn [cstr_access_len_aux].
+  all: assert (Hacc : access_okb a 1 = true)
+         by (unfold access_okb, TASK_SIZE in *; apply andb_true_intro; split; apply Z.leb_le; lia).
+  all: rewrite Hacc; cbn [negb].
   - rewrite <- (woff_0 a). rewrite (Hm O ltac:(cbn; lia)). cbn [nth app]. rewrite bv_eqb_refl. reflexivity.
   - rewrite <- (woff_0 a). rewrite (Hm O ltac:(cbn; lia)). cbn [nth app].
     inversion Hnz as [|? ? Hb Hnz']; subst.
     destruct (bv_eqb b (Z_to_bv 8 0)) eqn:Eb; [apply bv_eqb_eq in Eb; exfalso; exact (Hb Eb)|].
-    rewrite woff_0. rewrite (IH (a + 1)%bv k ltac:(lia) Hnz'); [reflexivity|].
-    intros j Hj. rewrite woff_succ. exact (Hm (Datatypes.S j) ltac:(cbn; lia)).
+    rewrite woff_0. rewrite (IH (a + 1)%bv k ltac:(lia) Hnz'); [reflexivity| |].
+    + intros j Hj. rewrite woff_succ. exact (Hm (Datatypes.S j) ltac:(cbn; lia)).
+    + pose proof (bv_unsigned_in_range _ a) as Hr. change (bv_modulus 64) with 18446744073709551616 in Hr.
+      rewrite bv_add_unsigned. change (bv_unsigned (1%bv : bv 64)) with 1. rewrite bv_wrap_small.
+      * unfold TASK_SIZE in *. lia.
+      * change (bv_modulus 64) with 18446744073709551616. unfold TASK_SIZE in *. lia.
 Qed.
 
 #[using="data0 FLlo FLhi HFL"] Lemma t_alt2_same : forall T, t_eq (t_alt2 T T) T.
@@ -1873,7 +1896,9 @@ Definition INV (mem0 : word -> option byte) (E : valu) (S : sst) (M : smodel) (F
   end /\
   fd_lookup (m_fds model0) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\
   fd_lookup (m_fds model0) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) /\
-  hv_inv E S.
+  hv_inv E S /\
+  (* the launch's channels have a reader ([Run.valid_input_channel_reader]); writev reads it *)
+  m_channel_reader model0 = true.
 
 (* [comment removed for export] *)
 #[using="Hp4"] Lemma INV_agree : forall mem0 E E' S S' M M' FS model0,
@@ -1881,7 +1906,7 @@ Definition INV (mem0 : word -> option byte) (E : valu) (S : sst) (M : smodel) (F
   sm_wf (s_next S) M = true -> INV mem0 E' S' M' FS model0.
 Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
   intros mem0 E E' S S' M M' FS model0 Hi Ha Hle Hfz Hwf.
-  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv).
+  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv & Hrdr0).
   assert (Hpv' : lden E' pv = lden E pv) by exact (lden_agree_wf _ E E' pv Hpv Ha).
   pose proof (sm_wf_frz _ M Hwf) as Hwz.
   split; [exact (lwf_mono _ _ _ Hle Hpv)|]. split.
@@ -1898,15 +1923,16 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
     rewrite Forall_forall in Hwz. destruct (Hwz p Hp) as [W1 W2]. unfold uE in *.
     rewrite (lden_agree_wf _ E E' _ W1 Ha), (lden_agree_wf _ E E' _ W2 Ha). exact Hr. }
   split; [rewrite Hpv'; exact Hlen|]. split; [exact Hlk|]. split; [exact Hfs0|].
-  split; [|split; [exact Hc1 | split; [exact Hc2 | exact (hv_inv_step E E' S S' Hdv Ha Hle)]]].
+  split; [|split; [exact Hc1 | split; [exact Hc2 | split; [exact (hv_inv_step E E' S S' Hdv Ha Hle) | exact Hrdr0]]]].
   destruct FS as [|off FL| | |off FL]; [exact Hfds| |exact I|exact Hfds|];
   cbn [fs_wf] in Hfsw; apply andb_prop in Hfsw as [W1 W2];
   rewrite (lden_agree_wf _ E E' _ W1 Ha), (lden_agree_wf _ E E' _ W2 Ha); exact Hfds.
 Qed.
 #[using="Type"] Lemma INV_same : forall mem0 E S S' M FS model0, INV mem0 E S M FS model0 -> s_next S' = s_next S -> INV mem0 E S' M FS model0.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros mem0 E S S' M FS model0 Hi Hn. destruct Hi as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11).
+  intros mem0 E S S' M FS model0 Hi Hn. destruct Hi as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11 & H12).
   split; [rewrite Hn; exact H1|]. split; [rewrite Hn; exact H2|]. repeat (split; [assumption|]).
+  split; [|exact H12].
   unfold hv_inv in *. destruct hv as [h|]; [rewrite Hn; exact H11 | exact I].
 Qed.
 
@@ -2022,9 +2048,11 @@ Proof. LiaFast.lf_pins (fun (Hp3 Hp4 Hp5 : LiaFast.U) => LiaFast.u0).
             in_mem (sys_input segs (svc_set ms) (ms_reg ms 17)) (woff (lden E pv) j) = Some (nth j (path0 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0))).
   { intros j Hj. destruct (Hfr Hdr j Hj) as (p & Hp & Hr). destruct (Hfrz p Hp _ Hr) as (_ & _ & Hm).
     unfold woff. cbn [in_mem sys_input]. unfold ms_read_byte. cbn [svc_set ms_mem]. rewrite Hm, (proj1 Hm0 Hdr j Hj). reflexivity. }
+  (* INV's fifth conjunct: the path ends below 2^47 = TASK_SIZE *)
+  assert (Hts : bv_unsigned (lden E pv) + Z.of_nat (length path0) < TASK_SIZE) by (unfold TASK_SIZE; exact Hlen).
   split.
-  - unfold read_cstr. exact (read_cstr_aux_ok _ path0 (lden E pv) path_max Hp4 Hp5 Hmp).
-  - rewrite (cstr_access_len_ok _ path0 (lden E pv) path_max Hp4 Hp5 Hmp).
+  - unfold read_cstr. exact (read_cstr_aux_ok _ path0 (lden E pv) path_max Hp4 Hp5 Hmp Hts).
+  - rewrite (cstr_access_len_ok _ path0 (lden E pv) path_max Hp4 Hp5 Hmp Hts).
     apply ranges_avoid_cons; [|apply ranges_avoid_nil]. intros k Hk.
     assert (Hk' : (k <= length path0)%nat) by lia.
     destruct (Hfr Hdr k Hk') as (p & Hp & Hr). destruct (dn_frz _ _ _ _ _ _ _ _ _ Hd1 p Hp _ Hr) as (Htp & _ & _).
@@ -2048,7 +2076,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hfs Hect Hp1 Hp2 Hp3 Hp4 Hp5 HFL HFLhi awf_mono
   apply andb_prop in Hoa as [Hoa Hpvl]. apply andb_prop in Hoa as [Hoa Hldiff]. apply andb_prop in Hoa as [H56 Hdfd].
   apply Z.eqb_eq in H56, Hldiff. apply bv_eqb_eq in Hdfd. apply lin_eqb_eq in Hpvl. subst c7.
   pose proof Hi as Hi0.
-  destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hal & Hfree) & Hc1 & Hc2 & Hdv).
+  destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hal & Hfree) & Hc1 & Hc2 & Hdv & Hrdr0).
   apply (den_ecall segs cfg LIMIT model0 mem0 Hwx t E S M ms model _ Hect Hx Hd). intros model1 Hd1.
   destruct (open_path_ok mem0 model0 E S M ms model model1 FSClosed Hdr Hd Hd1 Hi) as [Hcstr Hav].
   rewrite <- Hpvl in Hcstr, Hav.
@@ -2114,7 +2142,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hfs Hect Hp1 Hp2 Hp3 Hp4 Hp5 HFL HFLhi awf_mono
       split; [intros Hdr'; unfold model0'; rewrite with_fds_fs; exact (Hlk Hdr')|]. split; [unfold model0'; rewrite with_fds_fs; exact Hfs0|].
       split; [|split; [unfold model0'; rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); assumption|]].
       2: { split; [unfold model0'; rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); assumption|].
-           exact (hv_inv_step E E' S (open_postH FLlo FLhi hv S) Hdv Ha ltac:(rewrite Hn1; lia)). }
+           split; [exact (hv_inv_step E E' S (open_postH FLlo FLhi hv S) Hdv Ha ltac:(rewrite Hn1; lia)) | exact Hrdr0]. }
       unfold model0'. rewrite with_fds_fds, fd_lookup_insert_same. rewrite lden_lconst. split; [reflexivity|]. split; [exact (proj2 (flv_ok E S Hdv _ Hv64))|].
       rewrite u_small64 by (unfold two64; lia). lia. }
     rewrite <- (shp_den_agree (s_next S) E E' sb Hwb Ha).
@@ -2136,7 +2164,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp4 : LiaFast.U) => LiaFast.u0).
   all: apply andb_prop in Hb as [Hx Hca]; apply is_ecall_ok in Hx.
   all: unfold close_args_ok in Hca; destruct (a7c S) as [c7|] eqn:H7; [|discriminate]; destruct (arg S 0) as [c0|] eqn:H0; [|discriminate].
   all: apply andb_prop in Hca as [H57 H3]; apply Z.eqb_eq in H57, H3; subst c7 c0.
-  all: pose proof Hi as Hi0; destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hfd & HFL' & Hoff') & Hc1 & Hc2 & Hdv).
+  all: pose proof Hi as Hi0; destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hfd & HFL' & Hoff') & Hc1 & Hc2 & Hdv & Hrdr0).
   all: apply (den_ecall segs cfg LIMIT model0 mem0 Hwx t E S M ms model _ Hect Hx Hd); intros model1 Hd1.
   all: apply (den_close segs cfg LIMIT mem0 model0 E S M ms model1 _ 3 (FdFile path0 (lden E off)) Hd1 H7 H0 ltac:(rewrite fd32_3; exact Hfd)).
   all: intros ms' m'' Hd''.
@@ -2145,7 +2173,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp4 : LiaFast.U) => LiaFast.u0).
              split; [intros Hdr'; rewrite with_fds_fs; exact (Hlk Hdr')|]; split; [rewrite with_fds_fs; exact Hfs0|]; split; [exact I|];
              rewrite fd32_3; split; [rewrite with_fds_fds, fd_lookup_remove_other by (first [exact w3_ne1 | exact w3_ne2]); assumption|];
              split; [rewrite with_fds_fds, fd_lookup_remove_other by (first [exact w3_ne1 | exact w3_ne2]); assumption|];
-             exact (hv_inv_step E E S (ret_post S (lconst 0)) Hdv (agree_refl _ _) ltac:(cbn [ret_post s_next]; lia))).
+             split; [exact (hv_inv_step E E S (ret_post S (lconst 0)) Hdv (agree_refl _ _) ltac:(cbn [ret_post s_next]; lia)) | exact Hrdr0]).
   all: apply (IH _ _ _ _ _ finals Hck _ mem0 E ms' m'' Hd'' Hi' (HAX_same E S _ M a mem0 HX eq_refl) Hw); exact Hk.
 Qed.
 
@@ -2158,7 +2186,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect : LiaFast.U) => LiaFast.u0).
   destruct (arg S 1) as [c1|] eqn:H1; [|discriminate].
   apply andb_prop in Hia as [Hia Htty]. apply andb_prop in Hia as [Hia Hc1']. apply andb_prop in Hia as [Hia H12].
   apply andb_prop in Hia as [H29 Hc0']. apply Z.eqb_eq in H29, Hc0', Hc1'. subst c7 c0 c1.
-  pose proof Hi as Hi0. destruct Hi0 as (_ & _ & _ & _ & _ & _ & _ & _ & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (_ & _ & _ & _ & _ & _ & _ & _ & Hch1 & Hch2 & Hdv & Hrdr0).
   assert (Hch : fd_lookup (m_fds model0) (fd32 (Z_to_bv 64 fd)) = Some (FdChannel (Z_to_bv 64 fd))).
   { apply orb_prop in H12 as [H12|H12]; apply Z.eqb_eq in H12; subst fd; rewrite fd32_id by (rewrite u_small64 by (unfold two64; lia); lia); assumption. }
   apply (den_ecall segs cfg LIMIT model0 mem0 Hwx t E S M ms model _ Hect Hx Hd). intros model1 Hd1.
@@ -2210,7 +2238,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp3 Hp4 HFLhi Hseg : LiaFast.U) => LiaFast
          end.
   subst c7 c0.
   assert (Hwc : lwf (s_next S) c = true) by assumption.
-  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hfd & HFL' & Hoff') & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hfd & HFL' & Hoff') & Hch1 & Hch2 & Hdv & Hrdr0).
   pose proof (bv_unsigned_in_range _ (lden E FL)) as XFL. unfold bv_modulus in XFL. change (2 ^ Z.of_N 64) with two64 in XFL. rewrite HFL' in XFL.
   cbn [fs_wf] in Hfsw. apply andb_prop in Hfsw as [Hwoff HwFL].
   assert (Hkd : rg_kind R = RW \/ rg_kind R = RZ).
@@ -2274,7 +2302,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp3 Hp4 HFLhi Hseg : LiaFast.U) => LiaFast
       rewrite fd32_3.
       split; [|split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch1|]].
       2: { split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch2|].
-           exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite add_fact_next, Hn1; lia)). }
+           split; [exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite add_fact_next, Hn1; lia)) | exact Hrdr0]. }
       rewrite with_fds_fds, fd_lookup_insert_same. split; [|split; [exact HFL' | lia]].
       f_equal. f_equal. unfold rem. rewrite lden_lsub. apply bv_eq. rewrite bv_add_unsigned, bv_sub_unsigned. unfold bv_wrap.
       rewrite Zplus_mod_idemp_r.
@@ -2308,7 +2336,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp3 Hp4 HFLhi Hseg : LiaFast.U) => LiaFast
       rewrite fd32_3.
       split; [|split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch1|]].
       2: { split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch2|].
-           exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite add_fact_next, Hn1; lia)). }
+           split; [exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite add_fact_next, Hn1; lia)) | exact Hrdr0]. }
       rewrite with_fds_fds, fd_lookup_insert_same. rewrite lden_ladd.
       split; [reflexivity|]. split; [exact HFL'|].
       rewrite bv_add_unsigned. fold cnt. unfold bv_wrap.
@@ -2419,7 +2447,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp3 Hp4 HFLhi Hseg : LiaFast.U) => LiaFast
          end.
   subst c7 c0.
   assert (Hwc : lwf (s_next S) c = true) by assumption.
-  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hfd & HFL' & Hoff') & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hfd & HFL' & Hoff') & Hch1 & Hch2 & Hdv & Hrdr0).
   pose proof (bv_unsigned_in_range _ (lden E FL)) as XFL. unfold bv_modulus in XFL. change (2 ^ Z.of_N 64) with two64 in XFL. rewrite HFL' in XFL.
   assert (Hdv' : forall j, (j < 16)%nat -> (j < length data0)%nat -> E (dvar h j) = Z_to_bv 64 (bv_unsigned (nth j data0 (Z_to_bv 8 0)))).
   { unfold hv_inv in Hdv. rewrite <- Hhv in Hdv. exact (proj1 (proj2 Hdv)). }
@@ -2486,7 +2514,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp3 Hp4 HFLhi Hseg : LiaFast.U) => LiaFast
       rewrite fd32_3.
       split; [|split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch1|]].
       2: { split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch2|].
-           exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite add_fact_next, Hn1; lia)). }
+           split; [exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite add_fact_next, Hn1; lia)) | exact Hrdr0]. }
       rewrite with_fds_fds, fd_lookup_insert_same. split; [|split; [exact HFL' | lia]].
       f_equal. f_equal. unfold rem. rewrite lden_lsub. apply bv_eq. rewrite bv_add_unsigned, bv_sub_unsigned. unfold bv_wrap.
       rewrite Zplus_mod_idemp_r.
@@ -2530,7 +2558,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp3 Hp4 HFLhi Hseg : LiaFast.U) => LiaFast
       rewrite fd32_3.
       split; [|split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch1|]].
       2: { split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch2|].
-           exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite add_fact_next, Hn1; lia)). }
+           split; [exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite add_fact_next, Hn1; lia)) | exact Hrdr0]. }
       rewrite with_fds_fds, fd_lookup_insert_same. rewrite lden_ladd.
       split; [reflexivity|]. split; [exact HFL'|].
       rewrite bv_add_unsigned. fold cnt. unfold bv_wrap.
@@ -2638,7 +2666,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree : LiaFast.U) =>
   assert (Hwoff : lwf (s_next S) off = true) by assumption.
   assert (Hwiov : lwf (s_next S) iov = true) by assumption.
   cbn [shp_wf forallb pend_wf pd_src pd_off] in Hw. apply andb_prop in Hw as [_ Hwr].
-  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv & Hrdr0).
   apply (den_ecall segs cfg LIMIT model0 mem0 Hwx t E S M ms model _ Hect Hx Hd). intros model1 Hd1.
   set (H1 := Hof E M model1).
   destruct (sden_0 _ _ _ _ (dn_sden _ _ _ _ _ _ _ _ _ Hd1)) as (_ & _ & _ & _ & HG0 & _ & HF0 & _).
@@ -2682,7 +2710,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree : LiaFast.U) =>
   eapply rzc_conseq; [|cbn [shp_den List.map concat]; rewrite Hpe; apply t_eq_sym; apply t_emit_app].
   fold REST.
   assert (Hfch : fd_lookup (m_fds model0) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))) by (destruct Hch as [->| ->]; assumption).
-  apply (den_writev segs cfg LIMIT mem0 model0 E S M ms model1 K ch (laddc off B0) (laddc (lneg off) n) bsr n Hd1 H7 H0 H2 Hch Hfch
+  apply (den_writev segs cfg LIMIT mem0 model0 E S M ms model1 K ch (laddc off B0) (laddc (lneg off) n) bsr n Hd1 H7 H0 H2 Hch Hfch Hrdr0
            ltac:(fold iov; rewrite Hra'; f_equal; rewrite Hva; symmetry; exact (ld8_bytes _ Hl8a))
            ltac:(fold iov; rewrite <- Hiov8; rewrite Hrb'; f_equal; rewrite Hvb; symmetry; exact (ld8_bytes _ Hl8b))
            ltac:(rewrite HbE; rewrite Hlr; exact Hrm')
@@ -2792,7 +2820,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
   intros mem0 E S P M FS FP model0 n0 Hi Hn Hpf Hpvk Hwf0 Hfe Hfw Hn1. unfold pv_okb in Hpvk. apply andb_prop in Hpvk as [Hpv0 Hhv0].
   set (σ := match_st S P) in *. set (E0 := ecomp E σ).
   assert (Ha : agree n0 E E0) by exact (agree_params n0 E σ Hpf).
-  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv).
+  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv & Hrdr0).
   assert (Hpv' : lden E0 pv = lden E pv) by exact (lden_agree_wf _ E E0 pv Hpv0 Ha).
   pose proof (sm_wf_frz _ M Hwf0) as Hwz.
   split; [exact (lwf_mono _ _ _ Hn1 Hpv0)|]. split; [exact Hfw|].
@@ -2807,7 +2835,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
     rewrite Forall_forall in Hwz. destruct (Hwz p Hp) as [W1 W2]. unfold uE in *.
     rewrite (lden_agree_wf _ E E0 _ W1 Ha), (lden_agree_wf _ E E0 _ W2 Ha). exact Hr. }
   split; [rewrite Hpv'; exact Hlen|]. split; [exact Hlk|]. split; [exact Hfs0|].
-  split; [|split; [exact Hc1 | split; [exact Hc2 | exact (hv_inv_agree n0 E E0 S P Hdv Ha Hhv0 Hn1)]]].
+  split; [|split; [exact Hc1 | split; [exact Hc2 | split; [exact (hv_inv_agree n0 E E0 S P Hdv Ha Hhv0 Hn1) | exact Hrdr0]]]].
   destruct FS as [|off FL| | |off FL]; destruct FP as [|off' FL'| | |off' FL']; cbn [fs_ent] in Hfe; try discriminate; [exact Hfds| |exact I|exact Hfds| ];
   (apply andb_prop in Hfe as [Ho Hf]; apply lin_eqb_eq in Ho, Hf;
    unfold E0; rewrite <- !lden_lsubst; rewrite <- Ho, <- Hf; exact Hfds).
@@ -2931,7 +2959,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
   intros mem0 E S P M FS FP model0 n0 Hi Hpf Hpvk Hwf0 Hfe Hfw Hn1. unfold pv_okb in Hpvk. apply andb_prop in Hpvk as [Hpv0 Hhv0].
   set (σ := match_st S P) in *. set (E0 := ecomp E σ).
   assert (Ha : agree n0 E E0) by exact (agree_params n0 E σ Hpf).
-  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv).
+  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv & Hrdr0).
   assert (Hpv' : lden E0 pv = lden E pv) by exact (lden_agree_wf _ E E0 pv Hpv0 Ha).
   pose proof (sm_wf_frz _ M Hwf0) as Hwz.
   split; [exact (lwf_mono _ _ _ Hn1 Hpv0)|]. split; [exact Hfw|].
@@ -2946,7 +2974,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
     rewrite Forall_forall in Hwz. destruct (Hwz p Hp) as [W1 W2]. unfold uE in *.
     rewrite (lden_agree_wf _ E E0 _ W1 Ha), (lden_agree_wf _ E E0 _ W2 Ha). exact Hr. }
   split; [rewrite Hpv'; exact Hlen|]. split; [exact Hlk|]. split; [exact Hfs0|].
-  split; [|split; [exact Hc1 | split; [exact Hc2 | exact (hv_inv_agree n0 E E0 S P Hdv Ha Hhv0 Hn1)]]].
+  split; [|split; [exact Hc1 | split; [exact Hc2 | split; [exact (hv_inv_agree n0 E E0 S P Hdv Ha Hhv0 Hn1) | exact Hrdr0]]]].
   destruct FS as [|off FL| | |off FL]; destruct FP as [|off' FL'| | |off' FL']; cbn [fs_ent] in Hfe; try discriminate; [exact Hfds| |exact I|exact Hfds| ];
   (apply andb_prop in Hfe as [Ho Hf]; apply lin_eqb_eq in Ho, Hf;
    unfold E0; rewrite <- !lden_lsubst; rewrite <- Ho, <- Hf; exact Hfds).
@@ -3188,10 +3216,11 @@ Qed.
 (* [comment removed for export] *)
 #[using="Himg path0 data0 Hp4"] Lemma dir_path_ok : forall mem0 model0 E S M ms model1,
   DEN segs LIMIT model0 mem0 E S M ms model1 -> lbytes_ok img (s_facts S) (s_rgs S) pv dot_z 0 = true ->
+  bv_unsigned (lden E pv) + 1 < TASK_SIZE ->
   read_cstr (in_mem (sys_input segs (svc_set ms) (ms_reg ms 17))) (lden E pv) = CstrOk [Z_to_bv 8 46] /\
   ranges_avoid (Hof E M model1) [(lden E pv, cstr_access_len_aux (in_mem (sys_input segs (svc_set ms) (ms_reg ms 17))) (lden E pv) path_max)].
 Proof. LiaFast.lf_pins (fun (Himg path0 data0 Hp4 : LiaFast.U) => LiaFast.u0).
-  intros mem0 model0 E S M ms model1 Hd Hlb.
+  intros mem0 model0 E S M ms model1 Hd Hlb Hpvb.
   destruct (sden_0 _ _ _ _ (dn_sden _ _ _ _ _ _ _ _ _ Hd)) as (_ & _ & _ & _ & HG0 & _ & HF0 & _).
   pose proof (dn_hoff _ _ _ _ _ _ _ _ _ Hd) as Hhoff. pose proof (dn_rom _ _ _ _ _ _ _ _ _ Hd) as Hrom.
   cbn [restrict ms_mem] in HG0.
@@ -3209,13 +3238,13 @@ Proof. LiaFast.lf_pins (fun (Himg path0 data0 Hp4 : LiaFast.U) => LiaFast.u0).
   { constructor; [|constructor]. intros Hc. apply (f_equal bv_unsigned) in Hc. discriminate. }
   assert (Hk : (length [Z_to_bv 8 46] < path_max)%nat) by (cbn [length]; unfold path_max; lia).
   split.
-  - unfold read_cstr. exact (read_cstr_aux_ok _ [Z_to_bv 8 46] (lden E pv) path_max Hk Hnz (fun j Hj => proj1 (Hmp j Hj))).
-  - rewrite (cstr_access_len_ok _ [Z_to_bv 8 46] (lden E pv) path_max Hk Hnz (fun j Hj => proj1 (Hmp j Hj))).
+  - unfold read_cstr. exact (read_cstr_aux_ok _ [Z_to_bv 8 46] (lden E pv) path_max Hk Hnz (fun j Hj => proj1 (Hmp j Hj)) ltac:(cbn [length]; lia)).
+  - rewrite (cstr_access_len_ok _ [Z_to_bv 8 46] (lden E pv) path_max Hk Hnz (fun j Hj => proj1 (Hmp j Hj)) ltac:(cbn [length]; lia)).
     apply ranges_avoid_cons; [|apply ranges_avoid_nil]. intros kk Hkk. exact (proj2 (Hmp kk ltac:(cbn [length] in *; lia))).
 Qed.
 
-#[using="Hwx Hfs Himg Hect Hp4 awf_mono HA_agree"] Lemma Pm_opendir : forall kerr kok, Pm kerr -> Pm kok -> Pm (MOpenDir kerr kok).
-Proof. LiaFast.lf_pins (fun (Hwx Hfs Himg Hect Hp4 awf_mono HA_agree : LiaFast.U) => LiaFast.u0).
+#[using="Hwx Hfs Himg Hect Hp1 Hp4 awf_mono HA_agree"] Lemma Pm_opendir : forall kerr kok, Pm kerr -> Pm kok -> Pm (MOpenDir kerr kok).
+Proof. LiaFast.lf_pins (fun (Hwx Hfs Himg Hect Hp1 Hp4 awf_mono HA_agree : LiaFast.U) => LiaFast.u0).
   intros kerr kok IHe IHo S M FS sh a finals Hck model0 mem0 E ms model Hd Hi HX Hw Hk. cbn [mcheck] in Hck.
   destruct FS as [|off FL| | |off FL]; try discriminate. destruct sh as [po kc|sa sb|lq loq hiq sa sb|lq jq sa sb]; try discriminate.
   destruct (dr && is_ecall t (s_pc S) && open_args_ok S pv && lbytes_ok img (s_facts S) (s_rgs S) pv dot_z 0)%bool eqn:Hb; [|discriminate].
@@ -3230,9 +3259,11 @@ Proof. LiaFast.lf_pins (fun (Hwx Hfs Himg Hect Hp4 awf_mono HA_agree : LiaFast.U
   apply andb_prop in Hoa as [Hoa Hpvl]. apply andb_prop in Hoa as [Hoa Hldiff]. apply andb_prop in Hoa as [H56 Hdfd].
   apply Z.eqb_eq in H56, Hldiff. apply bv_eqb_eq in Hdfd. apply lin_eqb_eq in Hpvl. subst c7.
   pose proof Hi as Hi0.
-  destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hal & Hfree) & Hc1 & Hc2 & Hdv).
+  destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hal & Hfree) & Hc1 & Hc2 & Hdv & Hrdr0).
   apply (den_ecall segs cfg LIMIT model0 mem0 Hwx t E S M ms model _ Hect Hx Hd). intros model1 Hd1.
-  destruct (dir_path_ok mem0 model0 E S M ms model1 Hd1 Hlb) as [Hcstr Hav].
+  assert (Hpvb : bv_unsigned (lden E pv) + 1 < TASK_SIZE).
+  { pose proof (path_nonempty_len path0 Hp1) as Hl1. unfold TASK_SIZE. lia. }
+  destruct (dir_path_ok mem0 model0 E S M ms model1 Hd1 Hlb Hpvb) as [Hcstr Hav].
   rewrite <- Hpvl in Hcstr, Hav.
   apply (den_openat_dirref segs cfg LIMIT mem0 Hfs model0 E S M ms model1 _ _ c0 fl [Z_to_bv 8 46] (Z_to_bv 64 3) Hd1 H7 H0 Hdfd H2a Hldiff
            Hcstr eq_refl eq_refl eq_refl Hal Hfree ltac:(rewrite u_small64 by (unfold two64; lia); lia) Hav).
@@ -3261,7 +3292,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hfs Himg Hect Hp4 awf_mono HA_agree : LiaFast.U
       split; [unfold model0'; rewrite with_fds_fds, fd_lookup_insert_same; reflexivity|].
       split; [unfold model0'; rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); assumption|].
       split; [unfold model0'; rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); assumption|].
-      exact (hv_inv_step E E S (ret_post S (lconst 3)) Hdv (agree_refl _ _) ltac:(cbn [ret_post s_next]; lia)). }
+      split; [exact (hv_inv_step E E S (ret_post S (lconst 3)) Hdv (agree_refl _ _) ltac:(cbn [ret_post s_next]; lia)) | exact Hrdr0]. }
     apply (IHo _ _ _ _ _ f2 H2 model0' mem0 E ms' m'' Hd'' Hi' (HAX_same E S _ M a mem0 HX eq_refl) Hwb).
     intros S'' M'' FS'' sh'' a'' model0'' mem0'' E'' ms'' model'' Hin'' Hd''' Hi'' Hx'' Hw'' Ha''.
     exact (Hk S'' M'' FS'' sh'' a'' model0'' mem0'' E'' ms'' model'' (in_or_app _ _ _ (or_intror Hin'')) Hd''' Hi'' Hx'' Hw'' Ha'').
@@ -3326,7 +3357,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree : LiaFast.U) =>
   assert (Hwoff : lwf (s_next S) off = true) by assumption.
   assert (Hwiov : lwf (s_next S) iov = true) by assumption.
   cbn [shp_wf forallb pend_wf pd_src pd_off] in Hw. apply andb_prop in Hw as [_ Hwr].
-  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv & Hrdr0).
   apply (den_ecall segs cfg LIMIT model0 mem0 Hwx t E S M ms model _ Hect Hx Hd). intros model1 Hd1.
   set (H1 := Hof E M model1).
   destruct (sden_0 _ _ _ _ (dn_sden _ _ _ _ _ _ _ _ _ Hd1)) as (_ & _ & _ & _ & HG0 & _ & HF0 & _).
@@ -3382,7 +3413,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree : LiaFast.U) =>
   eapply rzc_conseq; [|cbn [shp_den List.map concat]; rewrite Hpe; apply t_eq_sym; apply t_emit_app].
   fold REST.
   assert (Hfch : fd_lookup (m_fds model0) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))) by (destruct Hch as [->| ->]; assumption).
-  apply (den_writev2 segs cfg LIMIT mem0 model0 E S M ms model1 K ch (ladd off B0) (laddc (lneg off) n) bsr n Hd1 H7 H0 H2 Hch Hfch
+  apply (den_writev2 segs cfg LIMIT mem0 model0 E S M ms model1 K ch (ladd off B0) (laddc (lneg off) n) bsr n Hd1 H7 H0 H2 Hch Hfch Hrdr0
            ltac:(fold iov; rewrite Hra'; f_equal; rewrite Hva; symmetry; exact (ld8_bytes _ Hl8a))
            ltac:(fold iov; rewrite <- Hiov8; rewrite Hrb'; f_equal; rewrite Hvb; symmetry; exact (ld8_bytes _ Hl8b))
            ltac:(fold iov; rewrite <- Hiov16; rewrite Hrc'; f_equal; rewrite <- (lden_lconst E 0), Hvc; symmetry; exact (ld8_bytes _ Hl8c))
@@ -3563,13 +3594,13 @@ Qed.
   INV mem0 E S M (concr_fs (s_facts S) FS) model0.
 Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
   intros mem0 E S M FS model0 HF Hi. destruct FS as [|off FL| | |off FL]; try exact Hi; cbn [concr_fs].
-  all: destruct Hi as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11).
+  all: destruct Hi as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11 & H12).
   all: assert (Hc : lden E (concr_lin (s_facts S) off) = lden E off) by exact (concr_lin_den E _ off HF).
   all: split; [exact H1|]; split;
     [cbn [fs_wf] in H2 |- *; apply andb_prop in H2 as [H2a H2b]; rewrite H2b, andb_true_r;
      unfold concr_lin; destruct (irange (s_facts S) off) as [lo hi]; destruct (Z.eqb lo hi); [apply lwf_lconst | exact H2a]
     | split; [exact H3|]; split; [exact H4|]; split; [exact H5|]; split; [exact H6|]; split; [exact H7|];
-      split; [|split; [exact H9 | split; [exact H10 | exact H11]]]; rewrite Hc; exact H8].
+      split; [|split; [exact H9 | split; [exact H10 | split; [exact H11 | exact H12]]]]; rewrite Hc; exact H8].
 Qed.
 (* [comment removed for export] *)
 #[using="Hp4 awf_mono aeqb_eq HA_agree"] Lemma Pm_joinS : forall body jpc shj k, Pm body -> Pm k -> Pm (MJoinS body jpc shj k).
@@ -3645,7 +3676,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hfs Hect Hp1 Hp2 Hp3 Hp4 Hp5 HFL awf_mono HA_ag
   apply andb_prop in Hoa as [Hoa Hpvl]. apply andb_prop in Hoa as [Hoa Hldiff]. apply andb_prop in Hoa as [H56 Hdfd].
   apply Z.eqb_eq in H56, Hldiff. apply bv_eqb_eq in Hdfd. apply lin_eqb_eq in Hpvl. subst c7.
   pose proof Hi as Hi0.
-  destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hal & Hfree) & Hc1 & Hc2 & Hdv).
+  destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hal & Hfree) & Hc1 & Hc2 & Hdv & Hrdr0).
   apply (den_ecall segs cfg LIMIT model0 mem0 Hwx t E S M ms model _ Hect Hx Hd). intros model1 Hd1.
   destruct (open_path_ok mem0 model0 E S M ms model model1 FSClosed Hdr Hd Hd1 Hi) as [Hcstr Hav].
   rewrite <- Hpvl in Hcstr, Hav.
@@ -3676,7 +3707,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hfs Hect Hp1 Hp2 Hp3 Hp4 Hp5 HFL awf_mono HA_ag
       split; [intros Hdr'; unfold model0'; rewrite with_fds_fs; exact (Hlk Hdr')|]. split; [unfold model0'; rewrite with_fds_fs; exact Hfs0|].
       split; [|split; [unfold model0'; rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); assumption|]].
       2: { split; [unfold model0'; rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); assumption|].
-           exact (hv_inv_step E E S (ret_post S (lconst 3)) Hdv (agree_refl _ _) ltac:(cbn [ret_post s_next]; lia)). }
+           split; [exact (hv_inv_step E E S (ret_post S (lconst 3)) Hdv (agree_refl _ _) ltac:(cbn [ret_post s_next]; lia)) | exact Hrdr0]. }
       unfold model0'. rewrite with_fds_fds, fd_lookup_insert_same. rewrite !lden_lconst. split; [reflexivity|].
       rewrite !u_small64 by (unfold two64; lia). split; [lia | exact (proj1 HFL)]. }
     apply (IHo _ _ _ _ _ f2 H2 model0' mem0 E ms' m'' Hd'' Hi' (HAX_same E S _ M a mem0 HX eq_refl) Hwb).
@@ -3713,7 +3744,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp3 Hp4 HFLhi Hseg : LiaFast.U) => LiaFast
          end.
   subst c7 c0.
   assert (Hwc : lwf (s_next S) c = true) by assumption.
-  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hfd & HoB & HBd) & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & (Hfd & HoB & HBd) & Hch1 & Hch2 & Hdv & Hrdr0).
   cbn [fs_wf] in Hfsw. apply andb_prop in Hfsw as [Hwoff HwB].
   assert (Hkd : rg_kind R = RW \/ rg_kind R = RZ).
   { match goal with Hk' : rk_is_rwz (rg_kind R) = true |- _ => destruct (rg_kind R); try discriminate; auto end. }
@@ -3763,7 +3794,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Hect Hp3 Hp4 HFLhi Hseg : LiaFast.U) => LiaFast
     rewrite fd32_3.
     split; [|split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch1|]].
     2: { split; [rewrite with_fds_fds, fd_lookup_insert_other by (first [exact w3_ne1 | exact w3_ne2]); exact Hch2|].
-         exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite Hn1; lia)). }
+         split; [exact (hv_inv_step E E S _ Hdv (agree_refl _ _) ltac:(rewrite Hn1; lia)) | exact Hrdr0]. }
     rewrite with_fds_fds, fd_lookup_insert_same. rewrite lden_ladd.
     split; [reflexivity|]. split; [|exact HBd].
     rewrite bv_add_unsigned. fold cnt. unfold bv_wrap.
@@ -3903,7 +3934,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree HA_copy : LiaFa
   assert (Hwiov : lwf (s_next S) iov = true) by assumption.
   assert (Hwlj : lwf (s_next S) lj = true) by assumption.
   cbn [shp_wf forallb pend_wf pd_src pd_off] in Hw. apply andb_prop in Hw as [_ Hwr].
-  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv & Hrdr0).
   destruct HX as [Haw HHA]. pose proof (HA_copy E M a mem0 HHA) as Hrec. fold recs in Hrec.
   pose proof (len_rec_sound E mem0 recs lj j Hrec Hlr) as HLj.
   assert (HPl : P < 2 ^ 20) by (unfold P in *; lia).
@@ -3957,7 +3988,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree HA_copy : LiaFa
     assert (Hfch : fd_lookup (m_fds model0) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))) by (destruct Hch as [->| ->]; assumption).
     assert (Hwl0 : lwf (s_next S) l0 = true) by assumption.
     assert (Hl1 : (1 <= length bs0)%nat) by (rewrite Hlen0; lia).
-    apply (den_writev segs cfg LIMIT mem0 model0 E S M ms model1 K ch b0 l0 bs0 1073741824 Hd1 H7 H0 H2 Hch Hfch
+    apply (den_writev segs cfg LIMIT mem0 model0 E S M ms model1 K ch b0 l0 bs0 1073741824 Hd1 H7 H0 H2 Hch Hfch Hrdr0
              ltac:(fold iov; rewrite Hra'; f_equal; rewrite Hva; symmetry; exact (ld8_bytes _ Hl8a))
              ltac:(fold iov; replace (bv_unsigned (lden E iov) + 16 - 8) with (bv_unsigned (lden E iov) + 8) by (clear; lia); rewrite <- Hiov8; rewrite Hrb'; f_equal; rewrite Hvb; symmetry; exact (ld8_bytes _ Hl8b))
              ltac:(rewrite Hlen0; exact Hbuf0')
@@ -4056,7 +4087,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree HA_copy : LiaFa
       rewrite map_app, <- app_assoc; apply t_eq_sym; apply t_emit_app].
     fold K.
     assert (Hfch : fd_lookup (m_fds model0) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))) by (destruct Hch as [->| ->]; assumption).
-    apply (den_writevG2 segs cfg LIMIT mem0 model0 E S M ms model1 K ch b0 l0 b1 l1 (ladd l0 l1) bs0 bs1 1073741824 Hd1 H7 H0 H2 Hch Hfch
+    apply (den_writevG2 segs cfg LIMIT mem0 model0 E S M ms model1 K ch b0 l0 b1 l1 (ladd l0 l1) bs0 bs1 1073741824 Hd1 H7 H0 H2 Hch Hfch Hrdr0
              ltac:(fold iov; rewrite Hra'; f_equal; rewrite Hva; symmetry; exact (ld8_bytes _ Hl8a))
              ltac:(fold iov; rewrite <- Hiov8; rewrite Hrb'; f_equal; rewrite Hvb; symmetry; exact (ld8_bytes _ Hl8b))
              ltac:(fold iov; rewrite <- Hiov16; rewrite Hrc'; f_equal; rewrite Hvc; symmetry; exact (ld8_bytes _ Hl8c))
@@ -4157,7 +4188,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree : LiaFast.U) =>
   assert (Hwiov : lwf (s_next S) iov = true) by assumption.
   assert (Hwlj : lwf (s_next S) lj = true) by assumption.
   cbn [shp_wf forallb pend_wf pd_src pd_off] in Hw. apply andb_prop in Hw as [_ Hwr].
-  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv & Hrdr0).
   destruct HX as [Haw HHA]. assert (Hrec : Forall (sbytes_ok sarg0 E mem0) recs) by (rewrite Hrecs; constructor).
   assert (HLj : uE E lj = Z.of_nat (length (sarg0 j))) by (rewrite Hlj; unfold uE; rewrite lden_lconst; reflexivity).
   assert (HPl : P < 2 ^ 20) by (unfold P in *; lia).
@@ -4211,7 +4242,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree : LiaFast.U) =>
     assert (Hfch : fd_lookup (m_fds model0) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))) by (destruct Hch as [->| ->]; assumption).
     assert (Hwl0 : lwf (s_next S) l0 = true) by assumption.
     assert (Hl1 : (1 <= length bs0)%nat) by (rewrite Hlen0; lia).
-    apply (den_writev segs cfg LIMIT mem0 model0 E S M ms model1 K ch b0 l0 bs0 1073741824 Hd1 H7 H0 H2 Hch Hfch
+    apply (den_writev segs cfg LIMIT mem0 model0 E S M ms model1 K ch b0 l0 bs0 1073741824 Hd1 H7 H0 H2 Hch Hfch Hrdr0
              ltac:(fold iov; rewrite Hra'; f_equal; rewrite Hva; symmetry; exact (ld8_bytes _ Hl8a))
              ltac:(fold iov; replace (bv_unsigned (lden E iov) + 16 - 8) with (bv_unsigned (lden E iov) + 8) by (clear; lia); rewrite <- Hiov8; rewrite Hrb'; f_equal; rewrite Hvb; symmetry; exact (ld8_bytes _ Hl8b))
              ltac:(rewrite Hlen0; exact Hbuf0')
@@ -4308,7 +4339,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 awf_mono HA_agree : LiaFast.U) =>
       rewrite map_app, <- app_assoc; apply t_eq_sym; apply t_emit_app].
     fold K.
     assert (Hfch : fd_lookup (m_fds model0) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))) by (destruct Hch as [->| ->]; assumption).
-    apply (den_writevG2 segs cfg LIMIT mem0 model0 E S M ms model1 K ch b0 l0 b1 l1 (ladd l0 l1) bs0 bs1 1073741824 Hd1 H7 H0 H2 Hch Hfch
+    apply (den_writevG2 segs cfg LIMIT mem0 model0 E S M ms model1 K ch b0 l0 b1 l1 (ladd l0 l1) bs0 bs1 1073741824 Hd1 H7 H0 H2 Hch Hfch Hrdr0
              ltac:(fold iov; rewrite Hra'; f_equal; rewrite Hva; symmetry; exact (ld8_bytes _ Hl8a))
              ltac:(fold iov; rewrite <- Hiov8; rewrite Hrb'; f_equal; rewrite Hvb; symmetry; exact (ld8_bytes _ Hl8b))
              ltac:(fold iov; rewrite <- Hiov16; rewrite Hrc'; f_equal; rewrite Hvc; symmetry; exact (ld8_bytes _ Hl8c))
@@ -4415,7 +4446,7 @@ Proof. LiaFast.lf_pins (fun (Hwx Himg Hect Hp4 : LiaFast.U) => LiaFast.u0).
          | Hx' : lin_eqb _ _ = true |- _ => apply lin_eqb_eq in Hx'
          end.
   subst c2 l.
-  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv).
+  pose proof Hi as Hi0. destruct Hi0 as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hch1 & Hch2 & Hdv & Hrdr0).
   assert (Hfch : fd_lookup (m_fds model0) (Z_to_bv 64 c0) = Some (FdChannel (Z_to_bv 64 c0))) by (destruct Hch as [->| ->]; assumption).
   apply (den_ecall segs cfg LIMIT model0 mem0 Hwx t E S M ms model _ Hect Hx Hd). intros model1 Hd1.
   set (H1 := Hof E M model1).
@@ -4561,7 +4592,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
   intros mem0 E S P MP σ FS FP model0 n0 Hi Hpf Hpvk Hfe Hfw Hn1 HnS. unfold pv_okb in Hpvk. apply andb_prop in Hpvk as [Hpv0 Hhv0].
   set (E0 := ecomp E σ).
   assert (Ha : agree n0 E E0) by exact (agree_params n0 E σ Hpf).
-  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv).
+  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv & Hrdr0).
   assert (Hpv' : lden E0 pv = lden E pv) by exact (lden_agree_wf _ E E0 pv Hpv0 Ha).
   split; [exact (lwf_mono _ _ _ Hn1 Hpv0)|]. split; [exact Hfw|].
   split.
@@ -4574,7 +4605,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
     unfold msubst in Hp. cbn [sm_frz] in Hp. apply in_map_iff in Hp as (q & <- & Hq). exists q. split; [exact Hq|].
     unfold ppsubst in Hr. cbn [fst snd] in Hr. unfold E0. rewrite !uE_sub. exact Hr. }
   split; [rewrite Hpv'; exact Hlen|]. split; [exact Hlk|]. split; [exact Hfs0|].
-  split; [|split; [exact Hc1 | split; [exact Hc2 | exact (hv_inv_agree n0 E E0 S P Hdv Ha Hhv0 Hn1)]]].
+  split; [|split; [exact Hc1 | split; [exact Hc2 | split; [exact (hv_inv_agree n0 E E0 S P Hdv Ha Hhv0 Hn1) | exact Hrdr0]]]].
   destruct FS as [|off FL| | |off FL]; destruct FP as [|off' FL'| | |off' FL']; cbn [fs_ent] in Hfe; try discriminate; [exact Hfds| |exact I|exact Hfds| ];
   (apply andb_prop in Hfe as [Ho Hf]; apply lin_eqb_eq in Ho, Hf;
    unfold E0; rewrite <- !lden_lsubst; rewrite <- Ho, <- Hf; exact Hfds).
@@ -4731,10 +4762,10 @@ Qed.
 Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
   intros mem0 E S S' M M' FS model0 BL Hi Hn Hfz Hwf.
   pose proof (INV_agree mem0 E E S S' M M' FS model0 Hi (agree_refl _ _) ltac:(rewrite Hn; apply Pos.le_refl) Hfz Hwf) as Hi'.
-  destruct Hi' as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11).
+  destruct Hi' as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11 & H12).
   assert (Hf : m_fds (with_blob BL model0) = m_fds model0) by reflexivity.
   assert (Hs : m_fs (with_blob BL model0) = m_fs model0) by reflexivity.
-  unfold INV. rewrite Hf, Hs. repeat (split; [assumption|]). exact H11.
+  unfold INV. rewrite Hf, Hs. repeat (split; [assumption|]). exact H12.
 Qed.
 #[using="Hp4 awf_mono HA_agree HA_mod"] Lemma Pm_blobnil : forall i k, Pm k -> Pm (MBlobNil i k).
 Proof. LiaFast.lf_pins (fun (Hp4 awf_mono HA_agree HA_mod : LiaFast.U) => LiaFast.u0).
@@ -4870,7 +4901,7 @@ Qed.
   frz_same E M mem0 mem0' -> INV mem0' E' S' M' FS model0.
 Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
   intros mem0 mem0' E E' S S' M M' FS model0 Hi Ha Hle Hcov Hfsm.
-  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv).
+  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv & Hrdr0).
   assert (Hpv' : lden E' pv = lden E pv) by exact (lden_agree_wf _ E E' pv Hpv Ha).
   split; [exact (lwf_mono _ _ _ Hle Hpv)|]. split.
   { destruct FS as [|off FL| | |off FL]; [reflexivity| |reflexivity|reflexivity|]; (cbn [fs_wf] in Hfsw |- *; apply andb_prop in Hfsw as [H1 H2];
@@ -4883,7 +4914,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
     intros Hdr w Hw. rewrite Hpv' in Hw. destruct (proj2 Hm0 Hdr w Hw) as [(p & Hp & Hr) Hne]. split; [|rewrite (Hfsm p Hp _ Hr); exact Hne].
     destruct (Hcov p Hp) as (p' & Hp' & H1 & H2). exists p'. split; [exact Hp'|]. rewrite H1, H2. exact Hr. }
   split; [rewrite Hpv'; exact Hlen|]. split; [exact Hlk|]. split; [exact Hfs0|].
-  split; [|split; [exact Hc1 | split; [exact Hc2 | exact (hv_inv_step E E' S S' Hdv Ha Hle)]]].
+  split; [|split; [exact Hc1 | split; [exact Hc2 | split; [exact (hv_inv_step E E' S S' Hdv Ha Hle) | exact Hrdr0]]]].
   destruct FS as [|off FL| | |off FL]; [exact Hfds| |exact I|exact Hfds|];
   cbn [fs_wf] in Hfsw; apply andb_prop in Hfsw as [W1 W2];
   rewrite (lden_agree_wf _ E E' _ W1 Ha), (lden_agree_wf _ E E' _ W2 Ha); exact Hfds.
@@ -4948,7 +4979,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
   intros mem0 E S P MP σ FS FP model0 n0 Hi Hpf Hpvk Hfe Hfw Hn1. unfold pv_okb in Hpvk. apply andb_prop in Hpvk as [Hpv0 Hhv0].
   set (E0 := ecomp E σ).
   assert (Ha : agree n0 E E0) by exact (agree_params n0 E σ Hpf).
-  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv).
+  destruct Hi as (Hpv & Hfsw & Hfr & Hm0 & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv & Hrdr0).
   assert (Hpv' : lden E0 pv = lden E pv) by exact (lden_agree_wf _ E E0 pv Hpv0 Ha).
   split; [exact (lwf_mono _ _ _ Hn1 Hpv0)|]. split; [exact Hfw|].
   split.
@@ -4961,7 +4992,7 @@ Proof. LiaFast.lf_pins (fun (Hp4 : LiaFast.U) => LiaFast.u0).
     unfold msubst in Hp. cbn [sm_frz] in Hp. apply in_map_iff in Hp as (q & <- & Hq). exists q. split; [exact Hq|].
     unfold ppsubst in Hr. cbn [fst snd] in Hr. unfold E0. rewrite !uE_sub. exact Hr. }
   split; [rewrite Hpv'; exact Hlen|]. split; [exact Hlk|]. split; [exact Hfs0|].
-  split; [|split; [exact Hc1 | split; [exact Hc2 | exact (hv_inv_agree n0 E E0 S P Hdv Ha Hhv0 Hn1)]]].
+  split; [|split; [exact Hc1 | split; [exact Hc2 | split; [exact (hv_inv_agree n0 E E0 S P Hdv Ha Hhv0 Hn1) | exact Hrdr0]]]].
   destruct FS as [|off FL| | |off FL]; destruct FP as [|off' FL'| | |off' FL']; cbn [fs_ent] in Hfe; try discriminate; [exact Hfds| |exact I|exact Hfds| ];
   (apply andb_prop in Hfe as [Ho Hf]; apply lin_eqb_eq in Ho, Hf;
    unfold E0; rewrite <- !lden_lsubst; rewrite <- Ho, <- Hf; exact Hfds).

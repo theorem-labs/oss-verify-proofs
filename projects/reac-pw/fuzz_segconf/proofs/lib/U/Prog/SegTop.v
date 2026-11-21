@@ -1,6 +1,6 @@
 (* ubsan_halts of reac-pw/fuzz_segconf (UBSan build): U/Prog/SegEnd.ubsan_halts_of_callees at the cut
    record CPseg, every premise discharged by a proved walk, and each walk's own callee contracts by the leaf proofs, as
-   reac-pw/fuzz_pin's U/Prog/PinTop.v (commit aa56e9780de) does for pin. The twin of
+   reac-pw/fuzz_pin's U/Prog/PinTop.v does for pin. The twin of
    lib/Prog/SegTop.v over the UBSan walks and contracts (lib/U/Prog, same names). No premise is left.
    The composition tree (each contract premise of a _holds discharged by another _holds):
    - segments: E01, M01, L01, L03, X01 by U/Prog/Seg/<SEG>.seg_<SEG>_holds, M02 and V01 by

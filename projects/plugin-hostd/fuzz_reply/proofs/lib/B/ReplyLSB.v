@@ -1,7 +1,7 @@
 (* proves no function (rule 24; kind: model instance + model rules): fr_LS for image B and SEG_HEAD's two LS rules *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) twin of lib/A/ReplyLS.v at f57b3e2d0ca
+(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) twin of lib/A/ReplyLS.v
    (a working branch): fr_LS, the concrete live-state invariant LS of the entry walk of
    LLVMFuzzerTestOneInput (the Section variable `LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop` of
    lib/B/W_LLVMFuzzerTestOneInput_cut.v :617 and lib/B/W_LLVMFuzzerTestOneInput_head.v :241), typed over lib/B's
@@ -17,11 +17,11 @@
    PHI) see A's header, A :7-36; the text of fr_LS is A's, conjunct for conjunct.
    The last Section states SEG_HEAD's premises LS_head_nout (lib/B/W_LLVMFuzzerTestOneInput_head.v :275) and
    LS_head_skip (:281) word for word, at LS := fr_LS B CALL_ROOM_B, and closes each by its lemma.
-   A -> B SWAPS (A at f57b3e2d0ca; B at cb5e14dbcf9):
+   A -> B SWAPS (A at a commit of its working branch; B at an earlier commit of this tree):
    - ACfn_cf.CALL_ROOM (lib/A/ACfn_cf.v :47, := 2 ^ 33) -> the Section variable CALL_ROOM_B.  A's value comes from the
      cf driver: ACfn_cf.v :14-18 (a Theorem Labs lane's ruling of 2026-10-29) and lib/A/AD1r_heap_cf.v :59 H_live and :74
      H_bytes, which give fr_live_pre (blocks_bytes S + CALL_ROOM <= LIVE_MAX) at every call of the cf driver loop.
-     At cb5e14dbcf9 image B has no such derivation: no lib/B/YCfn_cf.v (B's _cut.v :211 names it; the file is absent),
+     At that earlier commit, image B has no such derivation: no lib/B/YCfn_cf.v (B's _cut.v :211 names it; the file is absent),
      no cf driver heap file, and lib/B/YCfn.v :26 LIVE_LIB = 2 ^ 33 is the room of the NON-cf contract, which
      lib/B/YD1r.v :647 discharges from the donor's `Permutation (ablocks B ly S) [(buf, cap)]` split (false for
      fuzz_reply after its first call, AD1r_heap_cf.v :1-4).  So CALL_ROOM_B stays a Section variable (a Theorem Labs lane's
@@ -35,7 +35,7 @@
    - lib/A W_rep W_contract W_sites W_frame -> lib/B's files of the same names (AREC :57, APARTIAL :61, ATABLE :60 of
      lib/B/W_rep.v; model_blks reads asrc_blks :277, aentry_blks :325, aout_blks :408; ra_new is lib/B/W_contract.v
      :1085, A's text);
-   - lib/A W_op_add -> NOT loaded: lib/B/W_op_add.v does not compile at cb5e14dbcf9 (line 1239: "Expects a
+   - lib/A W_op_add -> NOT loaded: lib/B/W_op_add.v does not compile (line 1239: "Expects a
      disjunctive pattern with 1 branch or a conjunctive pattern made of 2 patterns"); the one name A reads from it,
      oa_new_src (B W_op_add.v :148-149), is copied verbatim below as ls_new_src;
    - lib/A W_LLVMFuzzerTestOneInput_cut -> lib/B W_LLVMFuzzerTestOneInput_cut (OPS_MAX :197, lfcx :320, lf_base :323,
@@ -46,21 +46,21 @@
      MT is a universally quantified argument: the lemma holds at EVERY MT : ameter_ops of the record
      lib/Reusable/YC5d.v :17 (the one lib/B/W_LLVMFuzzerTestOneInput_cut.v :136 imports), so at the meter B's cf
      contract names, and it is not a witness at ameter_triv.  (fr_LS does not read MT, and the proof reads only
-     lf_base's input-range and fr_live_pre conjuncts, never mo_ok.  At cb5e14dbcf9 that record's only instance is
+     lf_base's input-range and fr_live_pre conjuncts, never mo_ok.  At B's earlier commit, that record's only instance is
      ameter_triv, lib/Reusable/YCbp.v :17-18, which lib/B/W_asm.v :64 names.  lib/B/YCbp.v :20 ameter_triv, which
      lib/B/W_asm.v :160 and lib/B/ReplyTFIBBParts.v :60, :66 pass, is an instance of a DIFFERENT record,
      lib/B/YC5d.v :18, and is not a value of this MT.)  fr_live_pre is ACfn_cf.fr_live_pre's text
      (lib/A/ACfn_cf.v :49) at CALL_ROOM_B.  The Context adds {SK : YI16.sink_head}: lib/B/ReplyGuardB.v removes the
      sink classes' hints, so lf_base's sink argument comes from the Context (as _head.v :137).
    Not loaded (the definitions here read nothing from them): A's lib/Reusable YCbp (ameter_triv: MT is quantified
-   here), lib/A W_LLVMFuzzerTestOneInput_small / _write / _add (no lib/B file at cb5e14dbcf9) and ACfn_cf (absent
+   here), lib/A W_LLVMFuzzerTestOneInput_small / _write / _add (no lib/B file) and ACfn_cf (absent
    for B).  Not ported: slot_open (A :91), the list and measure helpers (A :105-116, :142-217) that only the other
    rules use, fr_LS_room / fr_LS_k / ROOM_SPARE (A :79, :230-242) and fr_LS_pro_oa (A :549-561), which read
    CALL_ROOM's value, and the rules of the other arms (A :266-289, :293-314, :327-548, :611-683), which read B segment
    files that do not exist yet.
    CONSTANT-SWAP TABLE: every constant this file's text reads.  Each B value is read from image B's own binary
    (fuzz_reply.asan-ubsan, sha256 10ffb5f9202ae2bd..., through its fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record)) or
-   from a file at cb5e14dbcf9; none is A's value plus an offset.
+   from a file; none is A's value plus an offset.
      name                       | A value  | B value   | where B's value comes from
      CALL_ROOM | A 2^33 (ACfn_cf.v:47) | B: Section variable | consumer must supply
      LIVE_MAX                   | 2 ^ 34   | 2 ^ 34    | no image value: lib/Reusable/YG01.v :332, the allocator kit both
@@ -81,6 +81,7 @@
                                 |          |           | `srli a0,s5,0x1a`, 0x84530 `bnez a0,85014` (the size refusal)
      MB_K, MB_C, W_P, W_H       | 65, 2 ^ 26, 64, 4    | the same: no image value, the potential's own constants
                                 |          |           | (A :75-78) over the model both images share *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -229,11 +230,11 @@ Qed.
 
 (* ------------------------------------------------------------------ the prologue: LS at the first head (A :562-608) *)
 (* The source op_add opens: a VERBATIM COPY of lib/B/W_op_add.v :148-149 oa_new_src, which this file cannot load (that
-   file does not compile at cb5e14dbcf9, see the header); replace it by W_op_add.oa_new_src when W_op_add.v builds. *)
+   file does not compile, see the header); replace it by W_op_add.oa_new_src when W_op_add.v builds. *)
 Definition ls_new_src (fd q : Z) (pj : list byte) : hsrc :=
 HS fd 1 0 0 empty_list 0 q pj 0 0 [] empty_list empty_list.
-(* the model at the first head (A :562-564: pro_m of lib/A/W_LLVMFuzzerTestOneInput_pro.v, a working branch
-   fff279dd36e; B has no _pro.v at cb5e14dbcf9, and the prologue is the same C code, fuzz_reply.c:681-684) *)
+(* the model at the first head (A :562-564: pro_m of lib/A/W_LLVMFuzzerTestOneInput_pro.v, a working branch;
+   B has no _pro.v, and the prologue is the same C code, fuzz_reply.c:681-684) *)
 Definition ls_pro_m (q T' : Z) (pj : list byte) (c : ctl) (O : list byte) (cap out : Z) : lmod :=
   LM 0 [Some (ls_new_src 100 q pj); None; None; None] T' [ra_new 100] c O 0 cap out 0 1.
 (* LS at the first head, AT A'S PROPOSED TEXT (A :565-570): the premise is the entry split (the entry's input, its

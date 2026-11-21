@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap rule's place_declined_b premise carried through). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sstate"; "valuation"; "@Corelib.Init.Logic"; "and"; "False"; "True"; "eq"; "iff"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "jpost"; "LQP"; "@Corelib.Init.Datatypes"; "list"; "fst"; "prod"; "pair"; "snd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.TRRulesS.AngelicS"; "roomwS"; "jroomS"; "posts_roomS"; "TR_angS"; "proomS"; "@Corelib.Lists.ListDef"; "map"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "triple"; "w_cfg"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.RoomS"; "vm_roomS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "ok_frameJ"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "@Corelib.Numbers.BinNums"; "Z"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "cfg_model"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "ok_pframeJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "ok_sideK"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.TRRulesK"; "implJ"; "tr_rules"].
@@ -128,14 +129,14 @@ Proof using HS.
       apply (triple1_mmap_rwJ_forced segs ok (jroomS J (r + k)) (fun _ _ _ => False) (fun a => jroomS (Jo a) (r + ko)) S rho OF OP Hi H17).
       intros tr ms md Hsp [HJx HR].
       destruct (pending_args segs rho S tr ms md Hsp) as (G0 & G1 & G2 & G3 & G4 & G5).
-      destruct (HP tr ms md Hsp HJx) as (Hlen & Hmod & Hnr & _ & Hall).
+      destruct (HP tr ms md Hsp HJx) as (Hdecl & Hlen & Hmod & Hnr & _ & Hall).
       assert (Hpos : 0 < bv_unsigned (ms_gpr ms 1)).
       { pose proof (urange (ms_gpr ms 1)) as U.
         destruct (Z.eq_dec (bv_unsigned (ms_gpr ms 1)) 0) as [E|NE]; [|lia].
         exfalso. apply Hlen. apply bv_eq. rewrite E. reflexivity. }
       rewrite G1 in *.
-      split; [exact Hlen|]. split; [exact Hmod|]. split; [exact Hnr|]. split.
-      *   intros Hrf. exact (vm_roomS_rw_refused_False md (r + k) len (ms_gpr ms 3) HR Hpos ltac:(lia) Hnr Hrf).
+      split; [exact Hdecl|]. split; [exact Hlen|]. split; [exact Hmod|]. split; [exact Hnr|]. split.
+      *   intros Hrf. exact (vm_roomS_rw_refused_False md (r + k) len (ms_gpr ms 3) _ HR Hpos ltac:(lia) Hnr Hrf).
       * intros a Hpl. destruct (Hall a Hpl) as (Hdisj & Hnro & HJo).
         split; [exact Hdisj|]. split; [exact Hnro|]. split; [exact HJo|].
         eapply vm_roomS_mono; [|exact (vm_roomS_grant_rw md (r + k) len a (ms_gpr ms 0) (ms_gpr ms 3) HR Hpos ltac:(lia) Hpl)]. lia.

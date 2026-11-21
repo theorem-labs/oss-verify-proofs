@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract astrrchr_realizes (lib/A/W_sites.v) proved for
    fuzz_reply.asan-ubsan's strrchr interceptor, entered at the trampoline __interceptor_trampoline_strrchr 0x421fc. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strrchr.v at commit debcdf3fa6a, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (19 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strrchr.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (19 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Route (R2Cmp, a Theorem Labs lane, 2026-10-29): the body walk is lib/A/Bz/A/I_strrchr.v istrrchr_spec (new: no other pinned
    binary has this code), with its two Section hypotheses met by R_isPoisoned.rip_proof and FRsl.sl_proof; the bridge
    is R1's RT_kit / RT_post, as in RT_strlen.v.  rchr_fn reads the walk's answer (the last index of c among the k + 1

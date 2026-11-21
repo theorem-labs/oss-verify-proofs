@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed has_window, has_window_nth, stack_ok_of_window; added vmc_refl, wseg_bb000, wseg_c2000; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm10DrvLib.v, lines 20, 51-53, 147-157, 175-176. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -21,6 +22,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
 
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
@@ -58,6 +60,11 @@ Section DrvLayout.
   Proof. vm_compute. reflexivity. Qed.
 
   (* [comment removed for export] *)
+  Lemma wseg_bb000 : wseg_ok RSEGS (Z_to_bv 64 0xc0000) 28672 = true.
+  Proof. vmc_refl. Qed.
+  Lemma wseg_c2000 : wseg_ok RSEGS (Z_to_bv 64 0xc7000) 212992 = true.
+  Proof. vmc_refl. Qed.
+
   Definition CPm (LB : list (Z * Z)) (sp : Z) (a : Z) : Prop := client_addr L LB sp (hl_stack L) a /\ ~ in_errno L a.
   Definition SCm (sp : Z) (a : Z) : Prop := sp - hl_stack L <= a < sp.
 
@@ -155,9 +162,17 @@ Section DrvLayout.
     rewrite u_small in W by lia. exact W.
   Qed.
 
-  Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (-8388608)) 8388608)) kn.
+  (* THE ZERO-FILLED WINDOW, old beside new: [KWr (SA (EVar 0) (-8388608)) 8388608] ->
+     [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN], DRV_ZWIN = 6144513 = StoreOk.stack_window_depth
+     (Pm6MainEntry).  The 8 MiB row is FALSE at LPS 75d69e00 (wrap_mem zero-fills only to
+     MemSplit.wok_lo sp0 = sp0 - 6144513), and [Pm6MainEntry.kn_stack] already carries the narrow
+     row, so this is also what [has_window] must match.  Every consumer below needs at most
+     [2 ^ 22 + 16384] ([stack_ok_of_window]'s [- 2 ^ 22 <= so] and [hl_stack L <= 16384]).
+     [bv_unsigned sp0 - 8388608] in this file's [hz] and [CPstk] is the [hl_ceil] /
+     [stack_max_size] homonym, not this window; it stays. *)
+  Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN)) kn.
 
-  Lemma has_window_nth : forall kn, has_window kn = true -> exists i, nth_error kn i = Some (KWr (SA (EVar 0) (-8388608)) 8388608).
+  Lemma has_window_nth : forall kn, has_window kn = true -> exists i, nth_error kn i = Some (KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN).
   Proof.
     intros kn H. unfold has_window in H. apply existsb_exists in H as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
     apply In_nth_error in Hin. exact Hin.
@@ -175,13 +190,13 @@ Section DrvLayout.
     unfold stack_ok. rewrite TOP. split; [|split; [lia|split; [lia|split; [lia|]]]].
     { rewrite Z.add_mod, Hal, Hsoal by lia. reflexivity. }
     intros d m Hd Hm.
-    pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (so - hl_stack L + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
+    (* old: [... (EVar 0) (-8388608) 8388608 ...]; [so - hl_stack L + d >= - 2 ^ 22 - 16384 = -4210688 >= - DRV_ZWIN] *)
+    pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (so - hl_stack L + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
     unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
     rewrite (dl_segs L sp0 DL).
     replace (bv_unsigned sp0 + so - hl_stack L + d) with (bv_unsigned sp0 + (so - hl_stack L + d)) by lia. exact W.
   Qed.
 
-  (* [comment removed for export] *)
   Lemma kn_blk_ok : forall vals ebs M' v n A,
     let E := Env (vals_ev vals) ebs in
     vals_ev vals v = Z_to_bv 64 A -> vals_ev vals 0 = sp0 ->

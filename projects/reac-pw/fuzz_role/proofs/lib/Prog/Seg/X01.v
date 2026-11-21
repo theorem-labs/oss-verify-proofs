@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths changed; 532 of its 580 lines of code are new or changed and 97 lines of the source are left out. *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v at fuzz_wire's
    module paths; lf_guard_img reads this image's __stack_chk_guard GOT slot 0x1cef0; lf_fr_call_x is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 455 of its 574 lines of code are new or changed and 461 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 214 of its 251 lines of code are new or changed and 537 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/RoleSlot.v, with its module paths, addresses and numbers changed; 162 of its 208 lines of code are new or changed and 205 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/Prog/Seg/E01.v, with its module names changed; 151 of its 178 lines of code are new or changed and 181 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment X01 of reac-pw/fuzz_role LLVMFuzzerTestOneInput (plain): [0x14158, 0x141a4], the two frees and the
    epilogue. K14158 -> RET (Prog/LLVMFuzzerTestOneInput_c.v's S_X01).
    The cut is at its own FP state (Tac_b8.b8_cut_open): every step below runs at it. 0x14158 `mv a0,s1`,
@@ -17,8 +18,8 @@
    FR with hb = []; then 0x14168 `mv a0,zero`, the thirteen restores ra, s0 .. s11 from the saved bytes at S - 104
    (0x1416c .. 0x1419c), 0x141a0 `addi sp,sp,0x1f0`, 0x141a4 `ret`: Post by Tac_b8.b8_post_FR at the cut's FP state
    (rounding mode 0 from CUTST). The callee-saved registers: sp, gp, tp from FR, s0 .. s11 from the saved bytes.
-   Adapted from reac-pw/fuzz_pin's Prog/Seg/X01.v (libreac/fuzz_ctrl's released Seg/C05.v and Seg/X02.v,
-   origin/ossv/recipes 25e3d17bdb50). *)
+   Adapted from reac-pw/fuzz_pin's Prog/Seg/X01.v (libreac/fuzz_ctrl's released Seg/C05.v and Seg/X02.v).
+   *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

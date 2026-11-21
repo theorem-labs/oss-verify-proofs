@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap arm states the model's exact cut: maps_subtract equals map_remove). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "and"; "or"; "eq"; "ex"; "@Stdlib.ZArith.BinInt.Z"; "add"; "le"; "lt"; "mul"; "of_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Model"; "sec_chunk"; "sc_map_beg"; "aa_geom"; "aa_sec"; "sc_map_size"; "aa_Kf"; "aa_Km"; "aa_V"; "aa_cache_inited"; "aa_cls"; "aa_depot"; "aa_fs_busy"; "aa_fs_hint"; "aa_internal_inited"; "aa_live"; "aa_ptr_committed"; "aa_q_global"; "aa_q_thread"; "ag_pab"; "mkAA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Inv"; "SEC_INST"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Geometry"; "Sh"; "@Corelib.Init.Datatypes"; "Some"; "length"; "option"; "@Corelib.Init.Nat"; "sub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.SegQ_wf4"; "set_sec"; "swap_remove"; "@Stdlib.Lists.List"; "nth_error"].
@@ -63,7 +64,10 @@ Record KQ_sec (K : AA -> jpredA) : Prop := mkKQS {
       let a := Z_to_bv 64 (sc_map_beg ch) in let n := Z_to_bv 64 (sc_map_size ch) in
       map_has (vm_maps (m_vmmaps md)) a n = true
       /\ (forall s, In (a, s) (vm_maps (m_vmmaps md)) -> s = n)
-      /\ region_free (map_remove (vm_maps (m_vmmaps md)) a) a n = true;
+      /\ region_free (map_remove (vm_maps (m_vmmaps md)) a) a n = true
+      (* LPS 08b1429 (in 727298f3): munmap's exact cut (Fw/SysSpec.v [maps_subtract_exact]). *)
+      /\ maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+         = map_remove (vm_maps (m_vmmaps md)) a;
 
   ks_madvise_ok : forall A rho tp tr md, K A rho tp tr md -> forall (a : word) (n : Z),
       bv_unsigned a mod PG = 0 -> n mod PG = 0 -> 0 < n ->

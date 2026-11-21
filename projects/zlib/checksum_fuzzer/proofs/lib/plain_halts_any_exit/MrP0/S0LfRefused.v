@@ -1,0 +1,611 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11. *)
+(* reloc14 *)
+From OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit Require Import RunCtx.
+From Stdlib Require ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State.
+From LinuxProcessSemantics.Riscv Require Prelude Instr.
+From OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.World Require Import Src_zlib_checksum_fuzzer_repro.
+From OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit Require PropExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX RefMemcpyLib S0MainEntry SymDriveH4 S0LibStdioCall .
+From OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit Require LiaFast.
+From Stdlib Require ZArith NArith List Lia Bool String.
+From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
+From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+Require LinuxProcessSemantics.LinuxProcessSem.Checks.ExecutableSpecs.
+Require LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.DispatchCompute.
+From LinuxProcessSemantics.Riscv Require Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit Require PropExec CatExec CatSim SeqExec StoreOk ShapeAlg Nodes Hoare Frame SpecConsts MmapSim AllocSim FileSim AgentLib SymExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX SymDriveH4 Spec ShapeLaws LibWritev S0ExitBase S0StdioDefs S0Exit S0LibStdioCall RefMemcpyLib S0MemcpyBase S0Memcpy S0MainEntry LibTail S0ReadBase S0World .
+From OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.MrP0 Require S0LfReadErr_defs S0LfReadErr.
+From OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.MrP0 Require Import S0LfBase.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+#[local] Existing Instance PropExec.fx0.
+
+Module S0Refused_defs.
+Import Stdlib.ZArith.ZArith Stdlib.NArith.NArith Stdlib.Lists.List Stdlib.micromega.Lia Stdlib.Bool.Bool.
+Import LinuxProcessSemantics.LinuxProcessSem.BvBase LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics LinuxProcessSemantics.LinuxProcessSem.MemImageType LinuxProcessSemantics.LinuxProcessSem.State.
+Import LinuxProcessSemantics.Riscv.Prelude LinuxProcessSemantics.Riscv.Instr.
+Import OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.PropExec OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymExec2 OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymExec2Sound OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymRun OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymDrive OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymDriveX OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.RefMemcpyLib OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0MainEntry OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymDriveH4 OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0LibStdioCall OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.MrP0.S0LfReadErr_defs.
+Import OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.LiaFast.
+Import ListNotations. Import SX2. Import SX2S.
+
+Definition KEPT_RF : list nat := [2; 3; 4]%nat.
+Definition srRF0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEPT_RF 6.
+
+Definition ssB0 : sym_state := SS 0x13f98 srRF0 [] knLF0 39.
+Definition rB {RCa1 : RunCtx}  := Eval vm_compute in run scr0 ssB0.
+Definition srB {RCa1 : RunCtx}  : list expr := Eval vm_compute in s_regs (fst (fst rB)).
+Definition knB {RCa1 : RunCtx}  : list kentry := Eval vm_compute in kn_after rB knLF0.
+Definition logM1 : list sentry :=
+  [SE (SA (EVar 0) (-548)) 2 (ELit 8253);
+   SE (SA (EVar 0) (-552)) 4 (ELit 1042314357);
+   SE (SA (EVar 0) (-560)) 8 (ELit 8101528366825958499)].
+Definition knC0 {RCa1 : RunCtx}  : list kentry := Eval vm_compute in fst (fst (carry logM1 knB [])).
+Definition srC0 {RCa1 : RunCtx}  : list expr := Eval vm_compute in sr_after_call_j srB KEPT_MC 39.
+
+Definition ssC0 {RCa1 : RunCtx}  : sym_state := SS 0x17dbc srC0 [] knC0 71.
+Definition rC {RCa1 : RunCtx}  := Eval vm_compute in run scr0 ssC0.
+Definition srC {RCa1 : RunCtx}  : list expr := Eval vm_compute in s_regs (fst (fst rC)).
+Definition knC {RCa1 : RunCtx}  : list kentry := Eval vm_compute in kn_after rC knC0.
+Definition srD0 {RCa1 : RunCtx}  : list expr := Eval vm_compute in sr_after_call_j srC KEPT_MC 71.
+
+Definition ssD0 {RCa1 : RunCtx}  : sym_state := SS 0x17dbc srD0 [] knC 103.
+Definition rD {RCa1 : RunCtx}  := Eval vm_compute in run scr0 ssD0.
+Definition srD {RCa1 : RunCtx}  : list expr := Eval vm_compute in s_regs (fst (fst rD)).
+Definition knD {RCa1 : RunCtx}  : list kentry := Eval vm_compute in kn_after rD knC.
+Definition srE0 {RCa1 : RunCtx}  : list expr := Eval vm_compute in sr_after_call_j srD KEPT_MC 103.
+
+Definition ssE0 {RCa1 : RunCtx}  : sym_state := SS 0x17dbc srE0 [] knD 135.
+Definition rE {RCa1 : RunCtx}  := Eval vm_compute in run scr0 ssE0.
+Definition srE {RCa1 : RunCtx}  : list expr := Eval vm_compute in s_regs (fst (fst rE)).
+Definition knE {RCa1 : RunCtx}  : list kentry := Eval vm_compute in kn_after rE knD.
+Definition logM4 : list sentry := [SE (SA (EVar 0) (-546)) 8 (ELit 3762256352692483894)].
+Definition knF0 {RCa1 : RunCtx}  : list kentry := Eval vm_compute in fst (fst (carry logM4 knE [])).
+Definition srF0 {RCa1 : RunCtx}  : list expr := Eval vm_compute in sr_after_call_j srE KEPT_MC 135.
+
+Definition ssF0 {RCa1 : RunCtx}  : sym_state := SS 0x17dbc srF0 [] knF0 167.
+Definition rF {RCa1 : RunCtx}  := Eval vm_compute in run scr0 ssF0.
+Definition srF {RCa1 : RunCtx}  : list expr := Eval vm_compute in s_regs (fst (fst rF)).
+Definition knF {RCa1 : RunCtx}  : list kentry := Eval vm_compute in kn_after rF knF0.
+Definition logM5 : list sentry :=
+  [SE (SA (EVar 0) (-530)) 8 (ELit 748834984615634290);
+   SE (SA (EVar 0) (-538)) 8 (ELit 2318354787771965984)].
+Definition knG0 {RCa1 : RunCtx}  : list kentry := Eval vm_compute in fst (fst (carry logM5 knF [])).
+Definition srG0 {RCa1 : RunCtx}  : list expr := Eval vm_compute in sr_after_call_j srF KEPT_MC 167.
+
+Definition ssG0 {RCa1 : RunCtx}  : sym_state := SS 0x17dbc srG0 [] knG0 199.
+Definition rG {RCa1 : RunCtx}  := Eval vm_compute in run scr0 ssG0.
+Definition srG {RCa1 : RunCtx}  : list expr := Eval vm_compute in s_regs (fst (fst rG)).
+Definition knG {RCa1 : RunCtx}  : list kentry := Eval vm_compute in kn_after rG knG0.
+Definition scRF {RCa1 : RunCtx}  : stdio_res := Eval vm_compute in
+  match stdio_call 199 srG knG with Some r => r | None => SCR_ 0 0 0 (ELit 0) (ELit 0) (ELit 0) (ELit 0) (ELit 0) (ELit 0) (ELit 0) [] [] end.
+Definition srH0 {RCa1 : RunCtx}  : list expr := Eval vm_compute in sc_sr scRF.
+Definition knH0 {RCa1 : RunCtx}  : list kentry := Eval vm_compute in sc_kn scRF.
+
+Definition ssH0 {RCa1 : RunCtx}  : sym_state := SS (sc_ret scRF) srH0 [] knH0 231.
+Definition rH {RCa1 : RunCtx}  := Eval vm_compute in run scr0 ssH0.
+Definition srH {RCa1 : RunCtx}  : list expr := Eval vm_compute in s_regs (fst (fst rH)).
+Definition knH {RCa1 : RunCtx}  : list kentry := Eval vm_compute in kn_after rH knH0.
+
+Lemma itinerary_rf {RCa1 : RunCtx}  :
+  (s_pc (fst (fst rB)), snd (fst rB)) = (0x1cd04%Z, [])
+  /\ (s_pc (fst (fst rC)), snd (fst rC)) = (0x1cd04%Z, [])
+  /\ (s_pc (fst (fst rD)), snd (fst rD)) = (0x1cd04%Z, [])
+  /\ (s_pc (fst (fst rE)), snd (fst rE)) = (0x1cd04%Z, [])
+  /\ (s_pc (fst (fst rF)), snd (fst rF)) = (0x1cd04%Z, [])
+  /\ (s_pc (fst (fst rG)), snd (fst rG)) = (0x1810c%Z, [])
+  /\ stdio_call 199 srG knG = Some scRF
+  /\ (sc_ret scRF, sc_f scRF, sc_fd scRF) = (0x1846c%Z, 0x1f7c0%Z, 2%Z)
+  /\ (sc_wb scRF, sc_wp scRF, sc_l scRF) = (EAlu ALU_ADD (EVar 0) (ELit (-560)), EAlu ALU_ADD (EVar 0) (ELit (-522)), ELit 0)
+  /\ (s_pc (fst (fst rH)), snd (fst rH)) = (0x15b84%Z, []).
+Proof.
+  repeat apply conj; lazymatch goal with |- @eq ?T ?x ?y => vm_cast_no_check (@eq_refl T y) end.
+Qed.
+End S0Refused_defs.
+
+Import Stdlib.ZArith.ZArith Stdlib.NArith.NArith Stdlib.Lists.List Stdlib.micromega.Lia Stdlib.Bool.Bool Stdlib.Strings.String.
+Import LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
+Import LinuxProcessSemantics.LinuxProcessSem.BvBase LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics LinuxProcessSemantics.LinuxProcessSem.MemImageType LinuxProcessSemantics.LinuxProcessSem.StackLayout LinuxProcessSemantics.LinuxProcessSem.Fs LinuxProcessSemantics.LinuxProcessSem.State LinuxProcessSemantics.LinuxProcessSem.Monad LinuxProcessSemantics.LinuxProcessSem.Specs LinuxProcessSemantics.LinuxProcessSem.Run.
+Import LinuxProcessSemantics.LinuxProcessSem.Checks.ExecutableSpecs.
+Import LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.DispatchCompute.
+Import LinuxProcessSemantics.Riscv.Prelude LinuxProcessSemantics.Riscv.Instr LinuxProcessSemantics.Riscv.Decode LinuxProcessSemantics.Riscv.DecodeC LinuxProcessSemantics.Riscv.Sem.
+Import OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.PropExec OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.CatExec OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.CatSim OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SeqExec OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.StoreOk OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.ShapeAlg OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.Nodes OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.Hoare OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.Frame OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SpecConsts OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.MmapSim OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.AllocSim OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.FileSim OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.AgentLib OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymExec OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymExec2 OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymExec2Sound OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymRun OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymDrive OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymDriveX OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.SymDriveH4 OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.Spec OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.ShapeLaws OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.LibWritev OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0ExitBase OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0StdioDefs OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0Exit OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0LibStdioCall OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.RefMemcpyLib OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0MemcpyBase OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0Memcpy OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0MainEntry OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.LibTail OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0ReadBase OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.S0World OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.MrP0.S0LfReadErr_defs OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.MrP0.S0LfReadErr.S0ReadErr_tail OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.MrP0.S0LfReadErr.
+Import OSSVerify.Proofs.zlib.checksum_fuzzer.lib.plain_halts_any_exit.LiaFast.
+Import S0Refused_defs.
+Import ListNotations.
+Open Scope bv_scope.
+Import SX2. Import SX2S.
+
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+
+Definition PRE14 : list byte := s2b "cli: input >= "%string.
+Definition DIG8 : list byte := s2b "67108864"%string.
+Definition SUF16 : list byte := s2b " bytes, refused"%string ++ [Z_to_bv 8 10].
+
+Lemma msg_refused_split : msg_refused = PRE14 ++ DIG8 ++ SUF16.
+Proof. reflexivity. Qed.
+
+Lemma PRE14_words :
+  word_to_le_bytes 8 (Z_to_bv 64 8101528366825958499) ++ word_to_le_bytes 4 (Z_to_bv 64 1042314357)
+  ++ word_to_le_bytes 2 (Z_to_bv 64 8253) = PRE14.
+Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
+Lemma DIG8_word : word_to_le_bytes 8 (Z_to_bv 64 3762256352692483894) = DIG8.
+Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
+Lemma DIG8_bytes :
+  word_to_le_bytes 1 (Z_to_bv 64 54) ++ word_to_le_bytes 1 (Z_to_bv 64 55) ++ word_to_le_bytes 1 (Z_to_bv 64 49)
+  ++ word_to_le_bytes 1 (Z_to_bv 64 48) ++ word_to_le_bytes 1 (Z_to_bv 64 56) ++ word_to_le_bytes 1 (Z_to_bv 64 56)
+  ++ word_to_le_bytes 1 (Z_to_bv 64 54) ++ word_to_le_bytes 1 (Z_to_bv 64 52) = DIG8.
+Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
+Lemma SUF16_words :
+  word_to_le_bytes 8 (Z_to_bv 64 2318354787771965984) ++ word_to_le_bytes 8 (Z_to_bv 64 748834984615634290) = SUF16.
+Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
+Lemma pre14_img {RCa1 : RunCtx}  : rdn (run_segments RSEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 0x104bb) 14 = Some PRE14.
+Proof. vm_compute. reflexivity. Qed.
+Lemma suf16_img {RCa1 : RunCtx}  : rdn (run_segments RSEGS rc_inp rc_sp rc_mb) (fun _ => None) (Z_to_bv 64 0x104cb) 16 = Some SUF16.
+Proof. vm_compute. reflexivity. Qed.
+Lemma PRE14_len : length PRE14 = 14%nat. Proof. reflexivity. Qed.
+Lemma DIG8_len : length DIG8 = 8%nat. Proof. reflexivity. Qed.
+Lemma SUF16_len : length SUF16 = 16%nat. Proof. reflexivity. Qed.
+
+Section Refused.
+Context {RCa1 : RunCtx}.
+  Variable sp0 : word.
+  Ltac at_addr k H :=
+    lazymatch goal with |- rdn _ _ (Z_to_bv 64 ?a) _ = _ => replace a with (bv_unsigned sp0 + k)%Z by lia; exact H end.
+  Variable BL : list (list byte).
+  Variable model : Model.
+  Hypothesis Hvsp : valid_sp sp0.
+  Hypothesis Hh : m_halted model = None.
+  Hypothesis Hlazy : m_vm_lazy model = [].
+  Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.
+
+  Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
+  Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
+  Let T : TSet := t_emit (W 2 msg_refused) (t_exit (exit_code 2) (m_fs model)).
+
+  Lemma rf_segH : forall vals R M,
+    length vals = 231%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV BL vals) srH0 R -> know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M knH0 ->
+    realizes (run_segments RSEGS rc_inp rc_sp rc_mb) (mkCfg (mkst R (Z_to_bv 64 0x1846c) M (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb))) model)
+               (t_exit (exit_code 2) (m_fs model)).
+  Proof.
+    intros vals R M HL P0 HR HK.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    run_blk scr0 231%nat.
+    apply (rz_conseq (run_segments RSEGS rc_inp rc_sp rc_mb) _ (t_emit (W 1 []) (t_exit (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) (m_fs model)))).
+    2:{ cbn [W map].
+        replace (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) with (exit_code 2) by (apply bv_eq; reflexivity).
+        apply t_eq_sym. apply t_emit_nil_exit. }
+    apply ref_exit_Z.
+    pose proof (know_nth (run_segments RSEGS rc_inp rc_sp rc_mb) _ _ knH ltac:(let i := kidx knH (is_krange (EVar 5)) in exact i) _ HK eq_refl)
+      as Ktid; cbn [kentry_ok edenot ev ENV] in Ktid.
+    exists (Z_to_bv 64 (bv_unsigned sp0 - 128)), (Z_to_bv 64 0x2fb00), (bv_unsigned (vals_ev vals 5)),
+           (Z_to_bv 64 0), (Z_to_bv 64 0).
+    split; [|split; [exact Hh|split; [exact Hlazy|]]].
+    + constructor.
+      * regv HR (2 : reg). rewrite edenot_add_lit. unfold adenot, v_addi. cbn [a_base a_off edenot ev ENV].
+        rewrite P0. f_equal; lia.
+      * regv HR (4 : reg). reflexivity.
+      * regv HR (10 : reg). reflexivity.
+      * rewrite u_small by lia. lia.
+      * rewrite u_small by lia. lia.
+      * rewrite u_small by lia.
+        pose proof (kwr_store_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) _ knH ltac:(let i := kidx knH (is_kwr_cov (EVar 0) (-272) 144) in exact i)
+                      _ _ _ (-272) 144 HK eq_refl ltac:(lia) ltac:(cbn; lia)) as Hst.
+        unfold adenot, v_addi in Hst. cbn [a_base a_off edenot ev ENV] in Hst. rewrite P0 in Hst.
+        replace (bv_unsigned sp0 - 128 - 144)%Z with (bv_unsigned sp0 + -272)%Z by lia. exact Hst.
+      * lit_u. lia.
+      * lit_u. lia.
+      * lia.
+      * lit_u. change (195328 - 168)%Z with 0x2fa58%Z.
+        krd HK 0x2fa58%Z 4%nat Htc. rewrite Htc. cbn [ev ENV].
+        rewrite ext_val_zx_id by (change (2 ^ (8 * Z.of_nat 4))%Z with 4294967296%Z; lia).
+        rewrite Z_to_bv_bv_unsigned. reflexivity.
+      * krd_solve HK.
+      * krd_solve HK.
+      * krd_solve HK.
+      * krd_solve HK.
+      * krd_solve HK.
+      * krd_solve HK.
+      * krd_solve HK.
+      * exists (Z_to_bv 64 0x1f798). krd_solve HK.
+      * left. split; krd_solve HK.
+      * repeat split; krd_solve HK.
+      * repeat split; krd_solve HK.
+    + left. split; [reflexivity|].
+      exists (Z_to_bv 64 0), (Z_to_bv 64 0). repeat split; krd_solve HK.
+  Qed.
+
+  Lemma rf_segG : forall vals R M,
+    length vals = 199%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV BL vals) srG0 R -> know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M knG0 ->
+    realizes (run_segments RSEGS rc_inp rc_sp rc_mb) (mkCfg (mkst R (Z_to_bv 64 0x17dbc) M (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb))) model) T.
+  Proof.
+    intros vals R M HL P0 HR HK.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    run_blk scr0 199%nat.
+    krdv HK 0%nat (-560)%Z 8%nat Hw0. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-552)%Z 4%nat Hw1. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-548)%Z 2%nat Hw2. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-546)%Z 8%nat Hw3. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-538)%Z 8%nat Hw4. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-530)%Z 8%nat Hw5. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    unfold adenot, v_addi in Hw0, Hw1, Hw2, Hw3, Hw4, Hw5.
+    cbn [a_base a_off edenot ev ENV] in Hw0, Hw1, Hw2, Hw3, Hw4, Hw5.
+    rewrite P0 in Hw0, Hw1, Hw2, Hw3, Hw4, Hw5.
+    assert (MSG : rdn (run_segments RSEGS rc_inp rc_sp rc_mb) M (Z_to_bv 64 (bv_unsigned sp0 + -560)) ((8 + (4 + 2)) + (8 + (8 + 8)))
+                  = Some msg_refused).
+    { rewrite msg_refused_split, <- PRE14_words, <- DIG8_word, <- SUF16_words.
+      apply rdn_app_Z; [ | | lia | lia].
+      - apply rdn_app_Z; [exact Hw0 | | lia | lia].
+        apply rdn_app_Z; [at_addr (-552)%Z Hw1 | at_addr (-548)%Z Hw2 | lia | lia].
+      - apply rdn_app_Z; [at_addr (-546)%Z Hw3 | | lia | lia].
+        apply rdn_app_Z; [at_addr (-538)%Z Hw4 | at_addr (-530)%Z Hw5 | lia | lia]. }
+    unfold T.
+    replace (W 2 msg_refused) with (map (WriteEv (Z_to_bv 64 2)) (msg_refused ++ []))
+      by (unfold W; rewrite app_nil_r; reflexivity).
+    pose proof itinerary_rf as (_ & _ & _ & _ & _ & _ & SC & _).
+    lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
+    apply (stdio_call_sound vals (blobs_ev BL) srG knG Rc Mc model scRF msg_refused []
+             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srG knG) HL) SC));
+      cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scRF];
+      change (@length byte msg_refused) with 38%nat; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ] end.
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
+    - cbn [edenot]. reflexivity.
+    - lia.
+    - right. ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
+    - left. ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
+    - cbn [edenot]. unorm. lia.
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. unfold TASK_SIZE. lia.
+    - cbn [edenot]. unorm. unfold TASK_SIZE. lia.
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm.
+      change 38%nat with ((8 + (4 + 2)) + (8 + (8 + 8)))%nat. exact MSG.
+    - reflexivity.
+    - exact Hfd2.
+    - exact Hrdr.
+    - exact Hh.
+    - exact Hlazy.
+    - apply t_exit_has_nil.
+    -
+      clear HR HK. intros R2 M2 HR HK.
+      eapply (rf_segH (vals ++ junk_vals R2));
+        [ rewrite length_app, junk_vals_length, HL; reflexivity
+        | rewrite vals_ev_app_l by (rewrite HL; lia); exact P0
+        | exact HR | exact HK ].
+  Qed.
+
+
+  Lemma memcpy1_denot : forall vals M, vals_ev vals 0 = sp0 ->
+    mem_denot (ENV BL vals) M logM1 = wbytes M (Z_to_bv 64 (bv_unsigned sp0 - 560)) PRE14.
+  Proof.
+    intros vals M P0. pose proof SPlo. pose proof SPhi.
+    rewrite <- PRE14_words. cbn [mem_denot logM1]. rewrite !wbytes_app.
+    unfold adenot, v_addi, at_. cbn [a_base a_off edenot ev ENV length Z.of_nat Pos.of_succ_nat Pos.succ]. rewrite P0.
+    rewrite !length_N_to_le_bytes. cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. unorm.
+    repeat (f_equal; try (f_equal; lia)).
+  Qed.
+  Lemma memcpy4_denot : forall vals M, vals_ev vals 0 = sp0 ->
+    mem_denot (ENV BL vals) M logM4 = wbytes M (Z_to_bv 64 (bv_unsigned sp0 - 546)) DIG8.
+  Proof.
+    intros vals M P0. pose proof SPlo. pose proof SPhi.
+    rewrite <- DIG8_word. cbn [mem_denot logM4].
+    unfold adenot, v_addi. cbn [a_base a_off edenot ev ENV]. rewrite P0.
+    repeat (f_equal; try (f_equal; lia)).
+  Qed.
+  Lemma memcpy5_denot : forall vals M, vals_ev vals 0 = sp0 ->
+    mem_denot (ENV BL vals) M logM5 = wbytes M (Z_to_bv 64 (bv_unsigned sp0 - 538)) SUF16.
+  Proof.
+    intros vals M P0. pose proof SPlo. pose proof SPhi.
+    rewrite <- SUF16_words. cbn [mem_denot logM5]. rewrite !wbytes_app.
+    unfold adenot, v_addi, at_. cbn [a_base a_off edenot ev ENV length Z.of_nat Pos.of_succ_nat Pos.succ]. rewrite P0.
+    rewrite !length_N_to_le_bytes. cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. unorm.
+    repeat (f_equal; try (f_equal; lia)).
+  Qed.
+
+  Ltac after_memcpy HL Hms Hkeep :=
+    replace (Z_to_bv 64 118020) with (0x1cd04 : word) by (apply bv_eq; reflexivity);
+    eapply rz_msteps; [exact Hh | exact Hlazy | exact Hms |]; clear Hms;
+    replace (0x17dbc : word) with (Z_to_bv 64 0x17dbc) by (apply bv_eq; reflexivity);
+    lazymatch goal with H : regs_ok ?E ?sr ?Rc |- realizes _ (mkCfg (mkst ?R2 _ _ _) _) _ =>
+      pose proof (regs_after_keeps _ (blobs_ev BL) sr Rc R2 callee_kept
+                    ltac:(rewrite HL; vm_compute; reflexivity) H Hkeep callee_kept_no0) as HR2;
+      rewrite HL in HR2; clear H Hkeep; rename HR2 into HR
+    end.
+
+  Lemma rf_segF : forall vals R M,
+    length vals = 167%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV BL vals) srF0 R -> know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M knF0 ->
+    realizes (run_segments RSEGS rc_inp rc_sp rc_mb) (mkCfg (mkst R (Z_to_bv 64 0x17dbc) M (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb))) model) T.
+  Proof.
+    intros vals R M HL P0 HR HK.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    run_blk scr0 167%nat.
+    set (dst := Z_to_bv 64 (bv_unsigned sp0 - 538)).
+    assert (Hsrc : rdn (run_segments RSEGS rc_inp rc_sp rc_mb) M (Z_to_bv 64 0x104cb) 16 = Some SUF16).
+    { rewrite (kimg_rdn (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) _ knF ltac:(let i := kidx knF (is_kimg_cov 0x104cb 16) in exact i)
+                 _ _ 0x104cb 16 HK eq_refl) by (cbn; lia). apply suf16_img. }
+    assert (Hdst : store_ok (run_segments RSEGS rc_inp rc_sp rc_mb) M dst 16 = true).
+    { pose proof (kwr_store_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) _ knF ltac:(let i := kidx knF (is_kwr_cov (EVar 0) (-538) 16) in exact i)
+                    _ _ _ (-538) 16 HK eq_refl ltac:(lia) ltac:(cbn; lia)) as Hst.
+      unfold adenot, v_addi in Hst. cbn [a_base a_off edenot ev ENV] in Hst. rewrite P0 in Hst.
+      subst dst. replace (bv_unsigned sp0 - 538)%Z with (bv_unsigned sp0 + -538)%Z by lia. exact Hst. }
+    assert (MC : mcH M dst (Z_to_bv 64 0x104cb) 16 SUF16).
+    { constructor; subst dst; rewrite ?u_small by lia; try (cbn; lia).
+      - exact Hsrc.
+      - exact Hdst. }
+    lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
+      assert (A1 : getr Rc 1 = (0x17dbc : word)) by (regv HR (1 : reg); apply bv_eq; reflexivity);
+      assert (A10 : getr Rc 10 = dst)
+        by (regv HR (10 : reg); subst dst; ed_lin ltac:(cbn [ev ENV]; rewrite ?P0); f_equal; lia);
+      assert (A11 : getr Rc 11 = Z_to_bv 64 0x104cb) by (regv HR (11 : reg); reflexivity);
+      assert (A12 : getr Rc 12 = Z_to_bv 64 16) by (regv HR (12 : reg); reflexivity);
+      destruct (ref_memcpy M dst (Z_to_bv 64 0x104cb) 16 _ (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb)) MC Rc (0x17dbc : word)
+                  ltac:(apply ret_ok_even; reflexivity) A1 A10 A11 A12) as (R2 & Hms & Hkeep);
+      clear A1 A10 A11 A12
+    end.
+    after_memcpy HL Hms Hkeep.
+    assert (HK2 : know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) (wbytes M dst SUF16) knG0).
+    { subst dst. rewrite <- (memcpy5_denot vals M P0).
+      eapply (carry_after (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M logM5 knF [] knG0 [] []);
+        [vm_compute; reflexivity | | exact HK | constructor].
+      cbn [log_flat logM5].
+      repeat match goal with
+             | |- flat _ _ _ => apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia
+             | |- (_ <= _)%nat => lia
+             | |- True => exact I
+             | |- _ /\ _ => split
+             end. }
+    clear HK.
+    pose proof (env_app_know (run_segments RSEGS rc_inp rc_sp rc_mb) vals (junk_vals R2) (blobs_ev BL) (wbytes M dst SUF16) knG0
+                  ltac:(rewrite HL; vm_compute; reflexivity) HK2) as HK.
+    clear HK2.
+    set (vals1 := vals ++ junk_vals R2) in *.
+    assert (HL1 : length vals1 = 199%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
+    assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
+    clearbody vals1.
+    change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
+    eapply (rf_segG vals1); eassumption.
+  Qed.
+
+  Lemma rf_segE : forall vals R M,
+    length vals = 135%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV BL vals) srE0 R -> know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M knD ->
+    realizes (run_segments RSEGS rc_inp rc_sp rc_mb) (mkCfg (mkst R (Z_to_bv 64 0x17dbc) M (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb))) model) T.
+  Proof.
+    intros vals R M HL P0 HR HK.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    run_blk scr0 135%nat.
+    set (dst := Z_to_bv 64 (bv_unsigned sp0 - 546)).
+    set (src := Z_to_bv 64 (bv_unsigned sp0 - 952)).
+    krdv HK 0%nat (-952)%Z 1%nat Hd0. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-951)%Z 1%nat Hd1. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-950)%Z 1%nat Hd2. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-949)%Z 1%nat Hd3. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-948)%Z 1%nat Hd4. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-947)%Z 1%nat Hd5. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-946)%Z 1%nat Hd6. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    krdv HK 0%nat (-945)%Z 1%nat Hd7. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
+    unfold adenot, v_addi in Hd0, Hd1, Hd2, Hd3, Hd4, Hd5, Hd6, Hd7.
+    cbn [a_base a_off edenot ev ENV] in Hd0, Hd1, Hd2, Hd3, Hd4, Hd5, Hd6, Hd7.
+    rewrite P0 in Hd0, Hd1, Hd2, Hd3, Hd4, Hd5, Hd6, Hd7.
+    assert (Hsrc : rdn (run_segments RSEGS rc_inp rc_sp rc_mb) M src (1 + (1 + (1 + (1 + (1 + (1 + (1 + 1))))))) = Some DIG8).
+    { subst src. replace (bv_unsigned sp0 - 952)%Z with (bv_unsigned sp0 + -952)%Z by lia. rewrite <- DIG8_bytes.
+      apply rdn_app_Z; [exact Hd0 | | lia | lia].
+      apply rdn_app_Z; [at_addr (-951)%Z Hd1 | | lia | lia].
+      apply rdn_app_Z; [at_addr (-950)%Z Hd2 | | lia | lia].
+      apply rdn_app_Z; [at_addr (-949)%Z Hd3 | | lia | lia].
+      apply rdn_app_Z; [at_addr (-948)%Z Hd4 | | lia | lia].
+      apply rdn_app_Z; [at_addr (-947)%Z Hd5 | | lia | lia].
+      apply rdn_app_Z; [at_addr (-946)%Z Hd6 | at_addr (-945)%Z Hd7 | lia | lia]. }
+    assert (Hdst : store_ok (run_segments RSEGS rc_inp rc_sp rc_mb) M dst 8 = true).
+    { pose proof (kwr_store_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) _ knE ltac:(let i := kidx knE (is_kwr_cov (EVar 0) (-546) 8) in exact i)
+                    _ _ _ (-546) 8 HK eq_refl ltac:(lia) ltac:(cbn; lia)) as Hst.
+      unfold adenot, v_addi in Hst. cbn [a_base a_off edenot ev ENV] in Hst. rewrite P0 in Hst.
+      subst dst. replace (bv_unsigned sp0 - 546)%Z with (bv_unsigned sp0 + -546)%Z by lia. exact Hst. }
+    assert (MC : mcH M dst src 8 DIG8).
+    { constructor; subst dst src; rewrite ?u_small by lia; try (cbn; lia).
+      - exact Hsrc.
+      - exact Hdst. }
+    lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
+      assert (A1 : getr Rc 1 = (0x17dbc : word)) by (regv HR (1 : reg); apply bv_eq; reflexivity);
+      assert (A10 : getr Rc 10 = dst)
+        by (regv HR (10 : reg); subst dst; ed_lin ltac:(cbn [ev ENV]; rewrite ?P0); f_equal; lia);
+      assert (A11 : getr Rc 11 = src)
+        by (regv HR (11 : reg); subst src; ed_lin ltac:(cbn [ev ENV]; rewrite ?P0); f_equal; lia);
+      assert (A12 : getr Rc 12 = Z_to_bv 64 8) by (regv HR (12 : reg); reflexivity);
+      destruct (ref_memcpy M dst src 8 _ (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb)) MC Rc (0x17dbc : word)
+                  ltac:(apply ret_ok_even; reflexivity) A1 A10 A11 A12) as (R2 & Hms & Hkeep);
+      clear A1 A10 A11 A12
+    end.
+    after_memcpy HL Hms Hkeep.
+    assert (HK2 : know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) (wbytes M dst DIG8) knF0).
+    { subst dst. rewrite <- (memcpy4_denot vals M P0).
+      eapply (carry_after (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M logM4 knE [] knF0 [] []);
+        [vm_compute; reflexivity | | exact HK | constructor].
+      cbn [log_flat logM4].
+      repeat match goal with
+             | |- flat _ _ _ => apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia
+             | |- (_ <= _)%nat => lia
+             | |- True => exact I
+             | |- _ /\ _ => split
+             end. }
+    clear HK.
+    pose proof (env_app_know (run_segments RSEGS rc_inp rc_sp rc_mb) vals (junk_vals R2) (blobs_ev BL) (wbytes M dst DIG8) knF0
+                  ltac:(rewrite HL; vm_compute; reflexivity) HK2) as HK.
+    clear HK2.
+    set (vals1 := vals ++ junk_vals R2) in *.
+    assert (HL1 : length vals1 = 167%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
+    assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
+    clearbody vals1.
+    change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
+    eapply (rf_segF vals1); eassumption.
+  Qed.
+
+  Ltac memcpy0_step HL P0 srcZ :=
+    let dst := fresh "dst" in
+    set (dst := Z_to_bv 64 (bv_unsigned sp0 - 546));
+    lazymatch goal with HR : regs_ok _ _ ?Rc |- realizes _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
+      assert (MC : mcH Mc dst (Z_to_bv 64 srcZ) 0 [])
+        by (constructor; subst dst; rewrite ?u_small by lia; cbn [length]; try lia; reflexivity);
+      assert (A1 : getr Rc 1 = (0x17dbc : word)) by (regv HR (1 : reg); apply bv_eq; reflexivity);
+      assert (A10 : getr Rc 10 = dst)
+        by (regv HR (10 : reg); subst dst; ed_lin ltac:(cbn [ev ENV]; rewrite ?P0); f_equal; lia);
+      assert (A11 : getr Rc 11 = Z_to_bv 64 srcZ) by (regv HR (11 : reg); reflexivity);
+      assert (A12 : getr Rc 12 = Z_to_bv 64 0) by (regv HR (12 : reg); reflexivity);
+      destruct (ref_memcpy Mc dst (Z_to_bv 64 srcZ) 0 _ (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb)) MC Rc (0x17dbc : word)
+                  ltac:(apply ret_ok_even; reflexivity) A1 A10 A11 A12) as (R2 & Hms & Hkeep);
+      clear A1 A10 A11 A12 MC;
+      after_memcpy HL Hms Hkeep;
+      change (wbytes Mc dst []) with Mc
+    end.
+
+  Lemma rf_segD : forall vals R M,
+    length vals = 103%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV BL vals) srD0 R -> know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M knC ->
+    realizes (run_segments RSEGS rc_inp rc_sp rc_mb) (mkCfg (mkst R (Z_to_bv 64 0x17dbc) M (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb))) model) T.
+  Proof.
+    intros vals R M HL P0 HR HK.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    run_blk scr0 103%nat.
+    memcpy0_step HL P0 0x10298%Z.
+    lazymatch goal with |- realizes _ (mkCfg (mkst ?R2 _ ?Mc _) _) _ =>
+      pose proof (env_app_know (run_segments RSEGS rc_inp rc_sp rc_mb) vals (junk_vals R2) (blobs_ev BL) Mc knD ltac:(rewrite HL; vm_compute; reflexivity) HK) as HK2;
+      clear HK; rename HK2 into HK;
+      set (vals1 := vals ++ junk_vals R2) in *
+    end.
+    assert (HL1 : length vals1 = 135%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
+    assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
+    clearbody vals1.
+    change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
+    eapply (rf_segE vals1); eassumption.
+  Qed.
+
+  Lemma rf_segC : forall vals R M,
+    length vals = 71%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV BL vals) srC0 R -> know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M knC0 ->
+    realizes (run_segments RSEGS rc_inp rc_sp rc_mb) (mkCfg (mkst R (Z_to_bv 64 0x17dbc) M (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb))) model) T.
+  Proof.
+    intros vals R M HL P0 HR HK.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    run_blk scr0 71%nat.
+    memcpy0_step HL P0 0x104c9%Z.
+    lazymatch goal with |- realizes _ (mkCfg (mkst ?R2 _ ?Mc _) _) _ =>
+      pose proof (env_app_know (run_segments RSEGS rc_inp rc_sp rc_mb) vals (junk_vals R2) (blobs_ev BL) Mc knC ltac:(rewrite HL; vm_compute; reflexivity) HK) as HK2;
+      clear HK; rename HK2 into HK;
+      set (vals1 := vals ++ junk_vals R2) in *
+    end.
+    assert (HL1 : length vals1 = 103%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
+    assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
+    clearbody vals1.
+    change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
+    eapply (rf_segD vals1); eassumption.
+  Qed.
+
+  Lemma rf_segB : forall vals R M,
+    length vals = 39%nat -> vals_ev vals 0 = sp0 ->
+    regs_ok (ENV BL vals) srRF0 R -> know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M knLF0 ->
+    realizes (run_segments RSEGS rc_inp rc_sp rc_mb) (mkCfg (mkst R (Z_to_bv 64 0x13f98) M (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb))) model) T.
+  Proof.
+    intros vals R M HL P0 HR HK.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    run_blk scr0 39%nat.
+    set (dst := Z_to_bv 64 (bv_unsigned sp0 - 560)).
+    assert (Hsrc : rdn (run_segments RSEGS rc_inp rc_sp rc_mb) M (Z_to_bv 64 0x104bb) 14 = Some PRE14).
+    { rewrite (kimg_rdn (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) _ knB ltac:(let i := kidx knB (is_kimg_cov 0x104bb 14) in exact i)
+                 _ _ 0x104bb 14 HK eq_refl) by (cbn; lia). apply pre14_img. }
+    assert (Hdst : store_ok (run_segments RSEGS rc_inp rc_sp rc_mb) M dst 14 = true).
+    { pose proof (kwr_store_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) _ knB ltac:(let i := kidx knB (is_kwr_cov (EVar 0) (-560) 14) in exact i)
+                    _ _ _ (-560) 14 HK eq_refl ltac:(lia) ltac:(cbn; lia)) as Hst.
+      unfold adenot, v_addi in Hst. cbn [a_base a_off edenot ev ENV] in Hst. rewrite P0 in Hst.
+      subst dst. replace (bv_unsigned sp0 - 560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hst. }
+    assert (MC : mcH M dst (Z_to_bv 64 0x104bb) 14 PRE14).
+    { constructor; subst dst; rewrite ?u_small by lia; try (cbn; lia).
+      - exact Hsrc.
+      - exact Hdst. }
+    lazymatch goal with |- realizes _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
+      assert (A1 : getr Rc 1 = (0x17dbc : word)) by (regv HR (1 : reg); apply bv_eq; reflexivity);
+      assert (A10 : getr Rc 10 = dst)
+        by (regv HR (10 : reg); subst dst; ed_lin ltac:(cbn [ev ENV]; rewrite ?P0); f_equal; lia);
+      assert (A11 : getr Rc 11 = Z_to_bv 64 0x104bb) by (regv HR (11 : reg); reflexivity);
+      assert (A12 : getr Rc 12 = Z_to_bv 64 14) by (regv HR (12 : reg); reflexivity);
+      destruct (ref_memcpy M dst (Z_to_bv 64 0x104bb) 14 _ (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb)) MC Rc (0x17dbc : word)
+                  ltac:(apply ret_ok_even; reflexivity) A1 A10 A11 A12) as (R2 & Hms & Hkeep);
+      clear A1 A10 A11 A12
+    end.
+    after_memcpy HL Hms Hkeep.
+    assert (HK2 : know_ok (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) (wbytes M dst PRE14) knC0).
+    { subst dst. rewrite <- (memcpy1_denot vals M P0).
+      eapply (carry_after (run_segments RSEGS rc_inp rc_sp rc_mb) (ENV BL vals) M logM1 knB [] knC0 [] []);
+        [vm_compute; reflexivity | | exact HK | constructor].
+      cbn [log_flat logM1].
+      repeat match goal with
+             | |- flat _ _ _ => apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia
+             | |- (_ <= _)%nat => lia
+             | |- True => exact I
+             | |- _ /\ _ => split
+             end. }
+    clear HK.
+    pose proof (env_app_know (run_segments RSEGS rc_inp rc_sp rc_mb) vals (junk_vals R2) (blobs_ev BL) (wbytes M dst PRE14) knC0
+                  ltac:(rewrite HL; vm_compute; reflexivity) HK2) as HK.
+    clear HK2.
+    set (vals1 := vals ++ junk_vals R2) in *.
+    assert (HL1 : length vals1 = 71%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
+    assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
+    clearbody vals1.
+    change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
+    eapply (rf_segC vals1); eassumption.
+  Qed.
+
+
+  Variables (tid : Z) (R : bvmap 5 word) (M : word -> option byte).
+  Hypothesis Rsp : getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128).
+  Hypothesis Rgp : getr R 3 = Z_to_bv 64 0x10800.
+  Hypothesis Rtp : getr R 4 = Z_to_bv 64 0x2fb00.
+  Hypothesis Mstack : stack_writable M sp0.
+  Hypothesis Mimg : Forall (fun iv => img_clear M (fst iv) (snd iv)) lf_ivs.
+  Hypothesis Mtid : cell M 0x2fa58 4 tid.
+  Hypothesis Htid : (0 < tid < 2 ^ 22)%Z.
+  Variable cw : Z.
+  Hypothesis Mgot : cell M 0x1e780 8 0x4fd70.
+  Hypothesis Mcanary : cell M 0x4fd70 8 cw.
+  Hypothesis Mnl : cell M 0x4fd93 1 0.
+
+  Let E : env := ENV BL (valsRE sp0 sp0 tid R cw).
+
+  Lemma evRF_junk : forall i, (i < 32)%nat -> ev E (6 + i) = getr R (Z_to_bv 5 (Z.of_nat i)).
+  Proof. intros i Hi. apply (evRE_junk sp0 BL sp0 tid R cw i Hi). Qed.
+
+  Ltac reg_caseRF :=
+    cbn [nth srRF0 all_regs];
+    first [ lazymatch goal with |- _ = edenot _ (EVar ?n) =>
+              change (edenot E (EVar n)) with (ev E n);
+              first [ rewrite (evRF_junk (n - 6)) by lia; reflexivity | idtac ]
+            | |- _ => cbn [edenot] end ];
+    first [ reflexivity
+          | exact Rgp | exact Rtp
+          | rewrite Rsp, alu_add; change (ev E 0) with sp0; unfold v_add; apply bv_eq;
+            rewrite !Z_to_bv_unsigned, !bv_wrap64_mod, Zplus_mod_idemp_r; f_equal; lia
+          | idtac ].
+
+  Lemma regs_okRF : regs_ok E srRF0 R.
+  Proof.
+    pose proof SPlo. pose proof SPhi.
+    apply regs_ok_by_index.
+    intros i Hi.
+    destruct i as [|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|i]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]; [ .. | lia]; reg_caseRF.
+  Qed.
+
+  Theorem ref_refused_tail :
+    realizes (run_segments RSEGS rc_inp rc_sp rc_mb) (mkCfg (mkst R (Z_to_bv 64 0x13f98) M (seg_rom (run_segments RSEGS rc_inp rc_sp rc_mb))) model)
+               (t_die msg_refused (m_fs model)).
+  Proof.
+    pose proof SPlo. pose proof SPhi.
+    unfold t_die.
+    eapply (rf_segB (valsRE sp0 sp0 tid R cw) R M (valsRE_len sp0 sp0 tid R cw) eq_refl regs_okRF).
+    apply (know_okLF sp0 BL Hvsp sp0 tid R M cw Mstack Mimg Mtid Htid Mgot Mcanary Mnl); lia.
+  Qed.
+End Refused.
+
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

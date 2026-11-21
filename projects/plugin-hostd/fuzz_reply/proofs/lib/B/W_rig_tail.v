@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: SEGMENT TAIL of the IMAGE-B walk of fuzz_reply's relay_instance_gone
    (fuzz_reply.asan-ubsan 0x8312c .. 0x8321c), the statement lib/B/W_relay_instance_gone_cx.v rig_tail_stmt: from the
    cut RGU (every entry done, g_lock held) to rig_post.  The B run is read from B's objdump; only the proof's form is
-   lib/A/W_rig_tail.v's (a working branch 21cefe10fbe).
+   lib/A/W_rig_tail.v's (a working branch).
 
    0x8312c  a0 = &g_lock (A_OBJ 3); jal pthread_mutex_unlock    (seat 1: no region; W_sites_x.v aunlock_realizes_x
                                                                lifted by aj_gx_entry_at_x: the lock word 16 -> 0)
@@ -18,12 +18,13 @@
    F + 0 .. + 8, F's shadow and the flag cell, so every byte the table, the output stream and the sources are
    represented over is kept (the cx premises HRGP / HRGI place the globals; the blocks are apart from the frame, its
    shadow and its flag by the allocator's laws).
-   ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is the RIG_x round, commit f4cd818e98d):
+   ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is the RIG_x round):
    over any allocator relation ARx with its laws and the room record RP, at W_relay_instance_gone_cx.v's generic
    Section c (its list copied verbatim).  The journal is ajournal_gx_x at the kit's RIG_STK_x from the entry's head
    set gxHp to the cut's Hp1, which the unlock and the release keep; rig_post_x's room `rp_RM RP S' kr` is gbud's room
    at the empty remaining trace (grest at |es|), through the release by RPF_stack_free; the meter's MO_FR is taken at
    the release's set_fs.  The AR-free helpers below (tinb .. tl_kept_trans) keep their statements. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

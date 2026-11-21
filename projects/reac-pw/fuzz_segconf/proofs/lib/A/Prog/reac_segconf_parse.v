@@ -19,10 +19,11 @@
    state and are used at the entry's fx (pass 4b); astack_pres is gone (pass 5): socket_send's chain at s0 =
    the text (a heap block) is achain_low, the free wrapper's chain_pre is achain_chain_pre on afn_pre's chain. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/reply.v, with its module paths and module names changed; 366 of its 450 lines of code are new or changed and 291 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_parse (reac_segconf.c:327-332) on reac-pw/fuzz_segconf's ASan image A (fuzz_segconf.asan,
    0x891d0, 72 bytes, 18 instructions, frame 32 bytes, no inline check, no side-stack frame): the walk proving
    reac_segconf_parse_contract (lib/A/Prog/reac_segconf_parse_c.v) at image A's numbers (SegInstA.v), in
-   plugin-hostd/fuzz_command's released image-A walk form (origin/ossv/recipes 501c0d516c69, its lib/A/Prog/reply.v
+   plugin-hostd/fuzz_command's released image-A walk form (its lib/A/Prog/reply.v
    and check_refusal.v: the verified symbolic executor over the position-abstract listing, a program call through
    PaFx.v's cl_callSF because both callees return at an FP state of their own (apost_baseF), the state after the
    call rebuilt by jafter_call_keep_hi and carried to the returned FP state by st_ok_pi_restrict_xfx, the return by
@@ -46,7 +47,7 @@
   the two sa_noalloc tails composed.
   Section hypotheses: PF, CC (the callee contracts), SIGP, OBJ, VRO (the listing's facts over the abstract
   instance), SSPX (the stack-protector cells at every AR state; see its comment). Closed against the G3
-  contracts FINAL at 6f783602b5e3. *)
+  contracts FINAL. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

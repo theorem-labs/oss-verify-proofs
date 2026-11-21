@@ -22,7 +22,7 @@
    put_utf8) needs a backslash in a string, and literal / parse_number (pf.c:289-292) need a value that is not a
    string or an object. FS_DOC_STRS excludes both.
 
-   THE STATICS IN FP (owner's 21:23Z form change; S0 7dd4849273a lib/A/FSPstat.v). ajournal's image clause spares
+   THE STATICS IN FP (owner's 21:23Z form change; S0 lib/A/FSPstat.v). ajournal's image clause spares
    inFP FP, and fuzz/alloc.c's statics (g_fail_at, g_live, g_peak, g_count) are FS_PSTAT_FP. Every function that writes
    them, directly or through a callee, states its post with its block footprint ++ FS_PSTAT_FP. These are the eight
    specs that allocate or free: parse_string (fuzz_malloc 0x85180), pj_string (fuzz_strdup 0x83c40), pj_free
@@ -32,7 +32,7 @@
    (__asan_memset only) reach no allocator (dis, both images, a Theorem Labs lane) and carry no FS_PSTAT_FP. The shared-kit FP
    clause (FP composition, RELOC's YCbq / YC85 port) is not stated here; walks that need it wait for that port.
 
-   FS_DOC_STRS (PROVED, not a hypothesis): lib/A/Prog/FSDocStrs.v FS_DOC_STRS (c3ed10a9332 on this branch), for every
+   FS_DOC_STRS (PROVED, not a hypothesis): lib/A/Prog/FSDocStrs.v FS_DOC_STRS (on this branch), for every
    body bs with bytes_ok bs: (i) STRUCTURE fs_doc_values (fs_doc (b64_enc bs)), every value of the document
    fs.c:237-248 builds is a string or an object; (ii) CHARACTERS fs_doc_strings (fs_doc (b64_enc bs)), every key and
    string is plain_bytes (no byte below 0x20, no 0x22, no 0x5c). The narrow forms of pj_parse,
@@ -47,7 +47,7 @@
      fuzz_malloc_spec, fuzz_free_spec, fuzz_strdup_spec, fuzz_realloc_spec
                         owner ALLOC (a Theorem Labs lane), U form (FSupoisonU fs_heads): parse_string (fuzz_malloc), pj_string
                         and pj_set (fuzz_strdup), grow (fuzz_realloc), pj_free (fuzz_free).
-     FS_AREALLOC_A      owner ALLOC (a Theorem Labs lane), lib/A/FSH_ReallocModel.v (54d232882e6):
+     FS_AREALLOC_A      owner ALLOC (a Theorem Labs lane), lib/A/FSH_ReallocModel.v:
                         arealloc_realizes_all at __wrap_realloc 0x53078 / trace ipc 0x535b0 (the malloc_context_size
                         = 30 branch, a Theorem Labs lane's correction on the originals; not 0x53594), for grow's two
                         fuzz_realloc calls. Open there (a Theorem Labs lane owns the n < 64513 sizes).
@@ -97,9 +97,9 @@
    (owner's ruling 2026-10-29 05:05Z via a Theorem Labs lane: that premise is unsatisfiable in a reachable state, and here it
    only fed allocator calls' CTX clauses, which now rest on C5's universe-or-budget disjunct).
 
-   Ported from: a Theorem Labs lane's lib/A/FMH_Fn.v (form, a working branch a1902517c68 via S0); S0 a working branch
-   0433af44ccd (names and numerals); fs released plain contracts lib/Prog/{pj_parse,parse_value,parse_items,
-   parse_string,pj_set,grow,pj_free,pj_get,pj_get_str,pj_string,pj_object}_c.v at c8557374ad2 (functional premises and
+   Ported from: a Theorem Labs lane's lib/A/FMH_Fn.v (form, a working branch via S0); S0 a working branch
+   (names and numerals); fs released plain contracts lib/Prog/{pj_parse,parse_value,parse_items,
+   parse_string,pj_set,grow,pj_free,pj_get,pj_get_str,pj_string,pj_object}_c.v (functional premises and
    posts, NAMED: PjStruct.pj_node / pj_fd / pj_hdr / pj_slots_at / pj_zero / pj_cbytes, PjIn.pj_in_ok, ReaderRes.*,
    pj_set_c.set_trace); inputs a Theorem Labs lane's slice/reader5-posts.md (pj_free, pj_get, pj_get_str, pj_string, pj_object;
    the pobj proposal), (internal path) section 4 (parse_string plain-byte post,
@@ -128,8 +128,8 @@ Fail Definition probe_SH : Reusable.YI14.sink_syms := _.
    (FSH_Gen.v: EV_fuzz_malloc = 1, EV_fuzz_free = 1, EV_fuzz_realloc = 3). An EAlloc is a fuzz_malloc (through
    fuzz_strdup for a string), 1. An EGrow carries its OLD request m: m = 0 is a fuzz_realloc of NULL, which tail-calls
    fuzz_malloc (fs.asan fuzz_realloc 0x829e8 `beqz a0` at 0x82a10 -> 0x82a50 -> `j 0x828ac` = fuzz_malloc), 1, and its
-   room premise is the p = 0 arm of fuzz_realloc_spec (FSH_Fn_alloc.v, paired with a working branch
-   4fa86c2ed0b); m <> 0 is a true reallocation, which ticks three times, 3. An EFree is one fuzz_free, 1. An EFail is a
+   room premise is the p = 0 arm of fuzz_realloc_spec (FSH_Fn_alloc.v, paired with a working branch);
+   m <> 0 is a true reallocation, which ticks three times, 3. An EFree is one fuzz_free, 1. An EFail is a
    refusal inside failing() before any tick (EV_check_reject_clean_starved, FSH_Gen.v:82), charged the dearest call as
    an upper bound. *)
 Definition rd_ev (tr : list PjGrammar.ev) : Z :=

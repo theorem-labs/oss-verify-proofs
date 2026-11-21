@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's CONFIG_RSEQ flag; the launch's group id; the vDSO's mappings and steps): changed V_HW, NX0G, init_kn_g, init_acs_of_g; added V_GID. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith List Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -707,16 +708,25 @@ end
 | _, _, _ => None
 end.
 End G.
-Definition V_HW : nat := 9.
-Definition NX0G : nat := 10.
-Definition init_kn_g (A : atable) : list kentry :=
-KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7
-:: init_kn A ++ KRange (EVar V_HW) 0x112D 0x20112D :: auxw 3 16 (EVar V_HW).
+Definition V_HW : nat := 10.
+(* AT_GID/AT_EGID (pairs 21, 22) are in the 727298f3 vector, and musl's [__init_libc]
+   compares [aux[AT_GID]] with [aux[AT_EGID]], so both values are the one launch variable
+   [V_GID], appended after [V_HW] (bzip2's [K/AS/AsanPlanCore.v] NX0 12 has it too). *)
+Definition V_GID : nat := 11.
+Definition NX0G : nat := 12.
+(* [r] is the CONFIG_RSEQ flag as [YK09.rseq_z] writes it, 0 or 1; it reaches the
+   auxv geometry through [YK09.init_kn].  AT_HWCAP is pair 10 and AT_GID/AT_EGID are
+   pairs 21 and 22, all below the conditional pair at 26, so the rows appended here need
+   no flag of their own. *)
+Definition init_kn_g (r : Z) (A : atable) : list kentry :=
+KRange e_atr8 0xFFFF0000001 (0xFFFFFFFFFC5 - 4 * r)
+:: init_kn r A ++ (KRange (EVar V_HW) 0x112D 0x20112D :: auxw 10 16 (EVar V_HW))
+++ auxw 21 13 (EVar V_GID) ++ auxw 22 14 (EVar V_GID).
 Definition STACK_VIS : Z := 0x80800000.
 Definition init_vis_g (A : atable) : list (expr * expr) :=
 [(ELit (img_lo A), ELit (img_hi A - img_lo A)); stack_side].
-Definition init_acs_of_g (A : atable) : acs :=
-ACS (mk_ss (a_entry A) init_regs (init_kn_g A) NX0G) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis_g A) []
+Definition init_acs_of_g (r : Z) (A : atable) : acs :=
+ACS (mk_ss (a_entry A) init_regs (init_kn_g r A) NX0G) [] (img_hi A - img_lo A + resx_bytes A) (MBASE_MIN - resx_bytes A) 0 (init_vis_g A) []
 (vis_cost (img_hi A - img_lo A) + vis_cost STACK_VIS) (escale 4096 (EVar V_BRK)) FdStd false.
 Fixpoint cover_sweep (l : list (word * word)) (z hi : Z) (fuel : nat) : bool :=
 match fuel with

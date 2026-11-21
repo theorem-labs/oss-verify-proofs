@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -39,7 +40,7 @@ Proof.
   exists f, c. split; [exact Hin|]. split; [exact F1|]. change (8 * ((504 + 7) / 8)) with 504. exact F2.
 Qed.
 
-Lemma fframe_obj_facts : forall Σ m X n lo, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> X mod 8 = 0 -> 0 <= n -> n mod 8 = 0 ->
+Lemma fframe_obj_facts : forall Σ m X n lo, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> X mod 8 = 0 -> 0 <= n -> n mod 8 = 0 ->
   (exists f c, In (f, c) (rt_frames RT Σ) /\ f <= X /\ X + n <= f + fs_size c - 8) ->
   0x676000 <= X /\ X + n <= lo
   /\ (X + n <= X / 8 + 2147450880 \/ X / 8 + 2147450880 + n / 8 <= X)
@@ -59,7 +60,7 @@ Proof using AF.
   - assert (0 <= X / 8) by (apply Z.div_pos; lia). lia.
 Qed.
 
-Lemma abig_facts : forall Σ m X bs len lo, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> abig_raw Σ m X bs len ->
+Lemma abig_facts : forall Σ m X bs len lo, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> abig_raw Σ m X bs len ->
   0x676000 <= X /\ X + 504 <= lo
   /\ (X + 504 <= X / 8 + 2147450880 \/ X / 8 + 2147450880 + 63 <= X)
   /\ 0 <= X / 8 + 2147450880 /\ X / 8 + 2147450880 + 63 <= lo.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start ledger's reserved entries beyond the image's, at most two of at most 20 pages, kept apart from the mappings). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -12,6 +13,17 @@ From OSSVerify.Proofs.pupnp.FuzzHttp.lib.A0.ZAA Require Import LJ ALinkPg ALinkV
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+(* each entry of a ledger is at most its total size *)
+Lemma sum_sizes_in : forall l (e : word * word), In e l -> bv_unsigned (snd e) <= AsanPlanSound.APS.sum_sizes l.
+Proof.
+  induction l as [|e0 l IH]; intros e He; [destruct He|]. cbn [AsanPlanSound.APS.sum_sizes].
+  pose proof (bv_unsigned_in_range 64 (snd e0)) as R0.
+  assert (P : 0 <= AsanPlanSound.APS.sum_sizes l).
+  { clear. induction l as [|e1 l IH]; cbn [AsanPlanSound.APS.sum_sizes]; [lia|].
+    pose proof (bv_unsigned_in_range 64 (snd e1)). lia. }
+  destruct He as [<-|He]; [lia|]. pose proof (IH e He). lia.
+Qed.
 
 Section Init.
 Context {HC : HasCeiling}.
@@ -98,7 +110,16 @@ Proof.
   - exact init_vmwf.
   - exact init_pos.
   - exact init_cuts.
-  - rewrite moE_vmmaps. exact (am_reserved _ _ _ _ AM).
+  - unfold resx_small. rewrite moE_vmmaps.
+    destruct (am_reserved _ _ _ _ AM) as (rx & Erx & _ & Rlen & Rsum).
+    exists rx. split; [exact Erx|]. split.
+    + refine (Nat.le_trans _ _ _ Rlen _). vm_compute. lia.
+    + apply Forall_forall. intros e He. cbv beta. unfold vsz.
+      eapply Z.le_trans; [exact (sum_sizes_in rx e He)|].
+      eapply Z.le_trans; [exact Rsum|]. vm_compute. discriminate.
+  - unfold res_apart. rewrite moE_vmmaps.
+    eapply Forall_impl; [| exact (am_mres _ _ _ _ AM)]. cbv beta. intros [b s] Hd. cbn [fst snd].
+    apply region_free_of_apart. exact Hd.
   - rewrite moE_vmmaps. exact (am_limit _ _ _ _ AM).
   - rewrite moE_vmmaps. unfold alloc_top. rewrite (am_top _ _ _ _ AM), CEIL. reflexivity.
   - rewrite moE_vmmaps. apply Permutation_refl.

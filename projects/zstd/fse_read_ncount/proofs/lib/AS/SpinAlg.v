@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adds srz_silent_all: a node whose answers are all silent srealizes T when every successor does; node_munmap re-proved through munmap_node_cfg, as munmap (215) is now an injected syscall; srz_node takes RomBase.sys_rob, so srz_silent1 and srz_silent_all take it too and the inductions over srealizes and realizes name it; imports RomBase). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -8,6 +9,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import
 SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Section WithSegs.
@@ -16,6 +18,7 @@ Inductive srealizes : config -> TSet -> Prop :=
 | srz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
 (T : I -> TSet) (i0 : I),
 node_ok segs c I evs nx ->
+    sys_rob segs c ->   (* LPS 727298f3: see [ShapeAlg.rz_node] *)
 (forall i, srealizes (nx i) (T i)) ->
 srealizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | srz_halt : forall c,
@@ -27,8 +30,8 @@ srealizes c T -> t_eq T T' -> srealizes c T'.
 realizes segs c T -> srealizes c T.
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-- exact (srz_node c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (srz_node c I evs nx T i0 Hnode Hrob IH).
 - exact (srz_halt c Hh).
 - exact (srz_conseq c T T' IH Heq).
 Qed.
@@ -36,15 +39,15 @@ Qed.
 srealizes c T -> realizes segs c T.
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-- exact (rz_node segs c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (rz_node segs c I evs nx T i0 Hnode Hrob IH).
 - exact (rz_halt segs c Hh).
 - exact (rz_conseq segs c T T' IH Heq).
 Qed.
 #[using="Type"] Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c T T' H IH Heq].
 - exists i0. left. apply is_prefix_nil.
 - reflexivity.
@@ -54,7 +57,7 @@ Qed.
 forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c T T' H IH Heq];
 intros tr tr' HT Hp.
 - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
@@ -69,7 +72,7 @@ Qed.
 forall tr c', star_cfg segs ACFG c tr c' -> T tr.
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c T T' H IH Heq];
 intros tr c' Hstar.
 - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
@@ -86,7 +89,7 @@ Qed.
 forall tr, T tr -> obs_trace_cfg segs ACFG c tr.
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c T T' H IH Heq];
 intros tr HT.
 - destruct Hnode as [Hcomp _].
@@ -112,7 +115,7 @@ Qed.
 srealizes c T -> sstep_cfg segs ACFG c e (SNext c') -> exists T', srealizes c' T'.
 Proof.
 intros c T e c' H; revert e c';
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c T T' H IH Heq];
 intros e c' Hss.
 - destruct Hnode as [_ Hsound].
@@ -125,7 +128,7 @@ Qed.
 srealizes c T -> ~ sstep_cfg segs ACFG c e SError.
 Proof.
 intros c T e H; revert e;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c T T' H IH Heq];
 intros e Hss.
 - destruct Hnode as [_ Hsound].
@@ -148,13 +151,13 @@ destruct (srz_path_star c tr c' Hstar (ex_intro _ T H)) as [T' HT'].
 exact (srealizes_no_sserror c' T' evs HT' Herr).
 Qed.
 #[using="Type"] Lemma srz_silent1 : forall c c' T,
-node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  node_ok segs c unit (fun _ => []) (fun _ => c') -> sys_rob segs c ->
 srealizes c' T ->
 srealizes c T.
 Proof.
-intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
 apply (srz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-- apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
 intros []; exact Hc.
 - eapply t_eq_trans;
 [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -170,6 +173,21 @@ Proof.
 intros ms model x8 Hh Hsvc Hx8.
 apply srealizes_of_realizes. apply (rz_exit segs ms model x8); assumption.
 Qed.
+Lemma srz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok segs c I (fun _ => []) nx -> sys_rob segs c ->
+  (forall i, srealizes (nx i) T) ->
+  srealizes c T.
+Proof.
+  intros c I nx T i0 Hnode Hrob HT.
+  assert (HT0 : T []) by (eapply srealizes_nonempty; apply (HT i0)).
+  apply (srz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (srz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode Hrob).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
+
 #[using="Type"] Lemma node_munmap : forall ms model x8,
 m_halted model = None ->
 m_vm_lazy model = [] ->
@@ -181,20 +199,15 @@ node_ok segs (mkCfg ms model) unit (fun _ => [])
 (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
 model)).
 Proof.
+(* 215 (munmap) joined Run.injected_table at #38, so [alloc_no_b 215] is now TRUE and the
+   old route through [transparent_nonalloc_no ... ; reflexivity] cannot close: the goal
+   [alloc_no_b 215 = false] is FALSE at this model, not merely unproved.  The right route
+   is the one this unit's own AS/MmapSim.v:296 already takes -- [munmap_node_cfg] discharges
+   [injected_family_off ACFG (sys_input segs ms x8) = true] at :320 and goes through
+   [node_chk_grant_cfg], i.e. the family-OFF side.  zstd/simple_decompress's AS/SpinAlg.v:393
+   states this proof verbatim and compiled there.  AS/MmapSim.v builds in this unit on the
+   same test. *)
 intros ms model x8 Hh Hlazy Hsvc Hno Hargs.
-apply node_ok_of_pnode; [apply (transparent_nonalloc_no segs ms model x8 215 Hsvc Hno); reflexivity |]. split.
-- intros []. apply (sstep_syscall segs ms model x8 (munmap_eff ms)
-(munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
-(munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
-+ exact Hh.
-+ exact Hsvc.
-+ apply munmap_ok; assumption.
-+ rewrite munmap_model_halted; exact Hh.
-+ apply materialize_model_accesses_no_lazy.
-exact (munmap_model_no_lazy _ _ _ Hlazy).
-- intros e st Hss.
-destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
-as [-> ->].
-exists tt. split; reflexivity.
+exact (munmap_node_cfg segs ms model x8 Hh Hlazy Hsvc Hno Hargs).
 Qed.
 End WithSegs.

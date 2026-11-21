@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ASan strnlen checks read the string area's end alignment, [Regen.STR_END], where they read [FAlign 12 3], false at this revision). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType State.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import W64 Val IMap Mem Instr State Step Plan.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Regen.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Ctr Require Import Lib DefsA.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Bridge Require Import Actr.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA Require Import FprintfSC.
@@ -34,7 +36,7 @@ Definition astrnlen_apply (st : sstate) : option (list sstate) :=
                      && known_leu fs H (VL m)
                      && known_leu fs (VP CtrA.STRS_ID wzero) (VP ks wzero)
                      && known_leu fs (sv_alu ALU_ADD (VP ks wzero) H) (sv_alu ALU_ADD (VP CtrA.STRS_ID wzero) (CtrA.SZ 15%uint63))
-                     && aligned fs (VP CtrA.STRS_ID wzero) 3%uint63
+                     && has_fact Regen.Regen.STR_END fs
                   then
                     let L := sv_alu ALU_SUB H (VL wone) in
                     let st2 := addfact (addfact (addfact (setr (clobber st1) X10 L) (FULt L H)) (FULt L (VL m)))
@@ -86,7 +88,7 @@ Definition astrnlen_apply (st : sstate) : option (list sstate) :=
                      && known_leu fs H (VL m)
                      && known_leu fs (VP CtrA.STRS_ID wzero) (VP ks wzero)
                      && known_leu fs (sv_alu ALU_ADD (VP ks wzero) H) (sv_alu ALU_ADD (VP CtrA.STRS_ID wzero) (CtrA.SZ 15%uint63))
-                     && aligned fs (VP CtrA.STRS_ID wzero) 3%uint63
+                     && has_fact Regen.Regen.STR_END fs
                   then
                     let L := sv_alu ALU_SUB H (VL wone) in
                     let st2 := addfact (addfact (addfact (setr (clobber st1) X10 L) (FULt L H)) (FULt L (VL m)))

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO call's state and register writes; read_cstr asks access_ok below TASK_SIZE). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -48,6 +49,8 @@ Definition leaf_openat_err (IM : fimage) (F : fstate) (r : stop) : bool :=
                          && negb (path_eqb (bytes_of l) devnull_path)
                          && negb (path_eqb (bytes_of l) urandom_path)   (* [comment removed for export] *)
                          && match tmp_name (bytes_of l) with None => true | Some _ => false end
+                         (* LPS 08b1429: /proc/self/fd/N is a modeled arm of openat_sep_spec *)
+                         && match proc_self_fd (bytes_of l) with None => true | Some _ => false end
              | None => false
              end
       end
@@ -71,14 +74,22 @@ Proof.
     + destruct (is_defined_illegal w); discriminate.
 Qed.
 
+(* LPS 08b1429/75d69e00: [fetch_failure] answers only Fault or Unmodeled (the vDSO text
+   arm included), never a successor state. *)
+Lemma fetch_failure_not_ok m a st' : fetch_failure segs m a <> MachineOk st'.
+Proof.
+  unfold fetch_failure. cbv zeta.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; discriminate.
+Qed.
+
 Lemma step_rom st st' : RiscvSemantics.step segs st = MachineOk st' -> ms_rom st' = ms_rom st.
 Proof.
   unfold RiscvSemantics.step, step_accesses.
   destruct (fetch_word segs (ms_pc st)) as [w|]; [apply decode_exec_rom|].
   destruct (fetch_word_ov segs (ms_mem st) (ms_pc st)) as [w|]; [apply decode_exec_rom|].
   destruct (fetch_tail_any segs (ms_mem st) (ms_pc st)) as [w|]; [apply decode_exec_rom|].
-  unfold fetch_failure.
-  destruct (negb _); [discriminate|]. cbv zeta. destruct (_ || _ || _)%bool; discriminate.
+  destruct (fetch_failure _ _) as [st0| |] eqn:Ef;
+    [exfalso; exact (fetch_failure_not_ok _ _ _ Ef) | cbn; discriminate ..].
 Qed.
 
 Lemma rsteps_rom : forall n ms ms', rsteps segs n ms = MachineOk ms' -> ms_rom ms' = ms_rom ms.
@@ -95,12 +106,47 @@ Variable cfg : SpuriousCfg.
 Lemma apply_effect_rom ms eff : ms_rom (advance_past_svc (apply_effect ms eff)) = ms_rom ms.
 Proof. reflexivity. Qed.
 
+(* LPS 75d69e00: [sstep_cfg] gained three vDSO arms (Run.v:2244-2271) and ONE of them,
+   [sstep_cfg_vdso_call], concludes [SNext] -- so the inversion below acquires a second successor
+   case, which is why this proof stopped closing. Its successor state is [vdso_post], and
+   [vdso_write_regs] is a Fixpoint on a value list of unknown length (Run.v), so the [ms_rom]
+   projection does not reduce through it and [reflexivity] cannot finish. Each step below is a
+   definitional equality on a named head, so none of them depends on that reduction. *)
+Lemma set_reg_rom ms r v : ms_rom (set_reg ms r v) = ms_rom ms.
+(* A compile round named this line: "Unable to unify `ms_rom ms` with
+   `ms_rom (set_reg ms r v)`". [set_reg] (RiscvSemantics.v:125) is `if bv_eqb r 0 then st else {|…|}`,
+   so on an abstract [r] the `if` blocks the projection; the `then` branch is the identity and the
+   `else` branch carries [ms_rom st] verbatim. One destruct, both branches by reflexivity. *)
+Proof. unfold set_reg. destruct (bv_eqb r 0); reflexivity. Qed.
+
+Lemma vdso_write_regs_rom : forall rs vs ms, ms_rom (vdso_write_regs ms rs vs) = ms_rom ms.
+Proof.
+  induction rs as [|r rs IH]; intros [|v vs] ms; try reflexivity.
+  cbn [vdso_write_regs]. rewrite IH. apply set_reg_rom.
+Qed.
+
+Lemma vdso_set_pc_rom ms p : ms_rom (vdso_set_pc ms p) = ms_rom ms.
+Proof. reflexivity. Qed.
+Lemma vdso_with_mem_rom ms m : ms_rom (vdso_with_mem ms m) = ms_rom ms.
+Proof. reflexivity. Qed.
+Lemma apply_effect_rom_raw ms eff : ms_rom (apply_effect ms eff) = ms_rom ms.
+Proof. reflexivity. Qed.
+
+Lemma vdso_post_rom ms model f eff :
+  ms_rom (vdso_post segs ms model f eff) = ms_rom ms.
+Proof.
+  unfold vdso_post. cbv zeta.
+  rewrite vdso_set_pc_rom, apply_effect_rom_raw, vdso_with_mem_rom.
+  apply vdso_write_regs_rom.
+Qed.
+
 Lemma sstep_cfg_rom c e c' :
   sstep_cfg segs cfg c e (SNext c') -> ms_rom (cfg_ms c') = ms_rom (cfg_ms c).
 Proof.
   intros H. inversion H; subst; cbn [cfg_ms]; try reflexivity.
   - match goal with Hs : mi_account_step _ _ _ = MachineOk _ |- _ =>
       apply mi_account_step_projects in Hs; exact (step_rom _ _ Hs) end.
+  - apply vdso_post_rom.
 Qed.
 
 Lemma star_cfg_rom c tr c' :
@@ -123,8 +169,8 @@ Hypothesis Hcode : code_ok segs code.
 Hypothesis Halloc : sc_alloc cfg = false.
 Variable R0 : list (word * word).
 Variable Rb Rc Lim : Z.
-Hypothesis HRb : live_bytes R0 <= Rb.
-Hypothesis HRc : Z.of_nat (length R0) <= Rc.
+Hypothesis HRb : res_cost R0 <= Rb.
+Hypothesis HRc : Z.of_nat (res_count R0) <= Rc.
 Variable rl : role.
 Variable keep : list int.
 Variable mem0 : word -> option byte.
@@ -132,6 +178,9 @@ Variable XI : (int -> word) -> Model -> Prop.
 Variable xtags : list int.
 Hypothesis XI_rho : forall rho rho' m, (forall t, In t xtags -> rho' t = rho t) -> XI rho m -> XI rho' m.
 Hypothesis XI_vm : forall rho m m', same_but_vm m m' -> XI rho m -> XI rho m'.
+(* LPS 08b1429: see [FxDrive.XI_vdso] *)
+Hypothesis XI_vdso : forall rho m, XI rho m ->
+  incl (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) R0.
 Variable xsys : fstate -> fledger -> int -> option dres.
 Hypothesis xsys_sound : forall n rho F L ms m res,
   xsys F L n = Some res -> DInv cfg segs IM R0 Lim rl keep mem0 XI xtags n rho F L ms m ->
@@ -156,7 +205,7 @@ Theorem drive_existential_leaf : forall p bp k, (k <= 61)%nat -> forall fuel n r
 Proof.
   intros p bp k Hk fuel n rho F L ms m HD Hall.
   destruct (drive_existential cfg segs IM code Hcode Halloc R0 Rb Rc Lim HRb HRc rl keep mem0 XI xtags
-              XI_rho XI_vm xsys xsys_sound xask bp k Hk fuel n rho F L ms m HD)
+              XI_rho XI_vm XI_vdso xsys xsys_sound xask bp k Hk fuel n rho F L ms m HD)
     as (F' & L' & n' & r & rho' & ms' & m' & Hleaf & Hstar & HD' & Hec).
   exists F', L', n', r, rho', ms', m'.
   split; [exact (tree_all_leaf p _ F' L' n' r Hall Hleaf)|].
@@ -170,9 +219,12 @@ Lemma openat_err_leaf_reaches : forall n rho F L r ms m,
   DI n rho F L ms m ->
   (r = SEcall -> RiscvSemantics.step segs ms = MachineOk (ms_pend ms)) ->
   ms_rom ms = seg_rom segs ->
+  (* LPS 08b1429: read_cstr asks access_ok of each byte of the path up to the NUL *)
+  (forall t off l, FxState.rget F 11%uint63 = FV t (W64 0 off) -> fx_cstring IM (f_mem F) t off = Some l ->
+     forall i, (i <= length (bytes_of l))%nat -> bv_unsigned (aoff (dv rho (FV t (W64 0 off))) i) < TASK_SIZE) ->
   reaches_error_cfg segs cfg (mkCfg ms m).
 Proof.
-  intros n' rho' F' L' r ms' m' Hp HD' Hec Hrom.
+  intros n' rho' F' L' r ms' m' Hp HD' Hec Hrom Htop.
   destruct HD' as (HRn & H0 & Hh & Hnl & _).
   unfold leaf_openat_err in Hp. destruct r; try discriminate.
   destruct (FxState.rget F' 17%uint63) as [t7 w7] eqn:E17.
@@ -182,16 +234,19 @@ Proof.
   repeat match type of Hp with (_ && _ = true) =>
     let H := fresh "Hc" in apply andb_true_iff in Hp as [Hp H] end.
   destruct (fx_cstring IM (f_mem F') t off) as [l|] eqn:Estr; [|discriminate].
+  apply andb_true_iff in Hc as [Hc Hpsf].
   apply andb_true_iff in Hc as [Hc Htmp]. apply andb_true_iff in Hc as [Hc Hur].
   apply andb_true_iff in Hc as [Hc Hdn]. apply andb_true_iff in Hc as [Hsl Hlt].
   apply negb_true_iff in Hlt, Hdn, Hur.
   assert (Htmp' : tmp_name (bytes_of l) = None) by (destruct (tmp_name (bytes_of l)); [discriminate Htmp | reflexivity]).
+  assert (Hpsf' : proc_self_fd (bytes_of l) = None) by (destruct (proc_self_fd (bytes_of l)); [discriminate Hpsf | reflexivity]).
   apply Uint63.eqb_spec in Hp, Hc4, Hc2, Hc0. subst t7 t0 t2 top.
   apply w_eqb_true_iff in Hc5, Hc3. rewrite wZ_w_of_int in Hc5, Hc3. rewrite wZ_w_zext32 in Hc3.
   pose proof (R_svc _ _ _ _ _ (HRn rho' (agree_refl n' rho' H0))) as Hsvc.
   apply (reaches_error_cfg_star cfg segs _ [] (mkCfg (ms_pend ms') m')).
   { apply (rsteps_star_cfg cfg segs 1 ms' m' (ms_pend ms') Hh (proj1 Hnl)).
     cbn [rsteps]. rewrite Hsvc, (Hec eq_refl). reflexivity. }
+  pose proof (Htop t off l ltac:(first [exact E11 | reflexivity]) ltac:(first [exact Estr | reflexivity])) as Htop'.
   apply (fx_openat_sep_error_Rn segs IM cfg n' rho' F' ms' m' w7 w0' w2 t off l HRn H0); assumption.
 Qed.
 
@@ -200,13 +255,17 @@ Theorem drive_reaches_openat_error : forall bp k, (k <= 61)%nat -> forall fuel n
   DI n rho F L ms m ->
   ms_rom ms = seg_rom segs ->
   tree_all (leaf_openat_err IM) (drv bp k fuel F L n) = true ->
+  (forall n' rho' F' L' ms' m', DI n' rho' F' L' ms' m' ->
+     forall t off l, FxState.rget F' 11%uint63 = FV t (W64 0 off) -> fx_cstring IM (f_mem F') t off = Some l ->
+     forall i, (i <= length (bytes_of l))%nat -> bv_unsigned (aoff (dv rho' (FV t (W64 0 off))) i) < TASK_SIZE) ->
   reaches_error_cfg segs cfg (mkCfg ms m).
 Proof.
-  intros bp k Hk fuel n rho F L ms m HD Hrom Hall.
+  intros bp k Hk fuel n rho F L ms m HD Hrom Hall Htop.
   destruct (drive_existential_leaf (leaf_openat_err IM) bp k Hk fuel n rho F L ms m HD Hall)
     as (F' & L' & n' & r & rho' & ms' & m' & Hp & Hstar & HD' & Hec & Hrom').
   apply (reaches_error_cfg_star cfg segs _ [] (mkCfg ms' m') Hstar).
-  apply (openat_err_leaf_reaches n' rho' F' L' r ms' m' Hp HD' Hec). rewrite Hrom'. exact Hrom.
+  apply (openat_err_leaf_reaches n' rho' F' L' r ms' m' Hp HD' Hec); [rewrite Hrom'; exact Hrom|].
+  exact (Htop n' rho' F' L' ms' m' HD').
 Qed.
 
 (* [comment removed for export] *)
@@ -221,7 +280,7 @@ Theorem drive_universal_leaves : forall p bp k, (k <= 61)%nat -> forall fuel n r
 Proof.
   intros p bp k Hk fuel n rho F L ms m T HD Hall Hk0.
   apply (drive_universal cfg segs IM code Hcode Halloc R0 Rb Rc Lim HRb HRc rl keep mem0 XI xtags
-           XI_rho XI_vm xsys xsys_sound xask bp k Hk fuel n rho F L ms m T HD).
+           XI_rho XI_vm XI_vdso xsys xsys_sound xask bp k Hk fuel n rho F L ms m T HD).
   intros F' L' n' r Hleaf rho' ms' m' HD' Hec.
   exact (Hk0 F' L' n' r rho' ms' m' (tree_all_leaf p _ F' L' n' r Hall Hleaf) HD' Hec).
 Qed.
@@ -251,7 +310,7 @@ Theorem drive_existential_leafX : forall p bp k, (k <= 61)%nat -> forall fuel n 
 Proof.
   intros p bp k Hk fuel n rho F L ms m HD Hall.
   destruct (drive_existentialX cfg segs IM code Hcode Halloc R0 Rb Rc Lim HRb HRc rl keep mem0 XI xtags
-              XI_rho XI_vm xsys xask xsys_soundX fr0 fc0 rom0 hi bp k Hk fuel n rho F L ms m HD)
+              XI_rho XI_vm XI_vdso xsys xask xsys_soundX fr0 fc0 rom0 hi bp k Hk fuel n rho F L ms m HD)
     as (F' & L' & n' & r & rho' & ms' & m' & Hleaf & Hstar & HD' & Hext & Hec).
   exists F', L', n', r, rho', ms', m'.
   split; [exact (tree_all_leaf p _ F' L' n' r Hall Hleaf)|].
@@ -269,7 +328,7 @@ Theorem drive_universal_leavesX : forall p bp k, (k <= 61)%nat -> forall fuel n 
 Proof.
   intros p bp k Hk fuel n rho F L ms m T HD Hall Hk0.
   apply (drive_universalX cfg segs IM code Hcode Halloc R0 Rb Rc Lim HRb HRc rl keep mem0 XI xtags
-           XI_rho XI_vm xsys xask xsys_soundX fr0 fc0 rom0 hi bp k Hk fuel n rho F L ms m T HD).
+           XI_rho XI_vm XI_vdso xsys xask xsys_soundX fr0 fc0 rom0 hi bp k Hk fuel n rho F L ms m T HD).
   intros F' L' n' r Hleaf rho' ms' m' HD' Hext Hec.
   exact (Hk0 F' L' n' r rho' ms' m' (tree_all_leaf p _ F' L' n' r Hall Hleaf) HD' Hext Hec).
 Qed.

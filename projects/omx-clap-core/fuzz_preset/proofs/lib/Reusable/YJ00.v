@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YJ00.v, with its module paths changed; realizes_must_exit_at and realizes_exit_verdict removed, because fuzz_grant's realizes (YK15.v) has a cut at a budget refusal and nothing here uses them. *)
-(* Modified by Theorem Labs, 2026-10: copied for omx-clap-core/fuzz_preset from proofs/libreac/fuzz_grant/lib/Reusable/YJ00.v (cold/port-grant 0bed23e5b69), with its module paths changed; fuzz_preset's lib/Reusable/YK15.v equals fuzz_grant's but for module paths, so fuzz_grant's adaptation applies unchanged. *)
+(* Modified by Theorem Labs, 2026-10: copied for omx-clap-core/fuzz_preset from proofs/libreac/fuzz_grant/lib/Reusable/YJ00.v, with its module paths changed; fuzz_preset's lib/Reusable/YK15.v equals fuzz_grant's but for module paths, so fuzz_grant's adaptation applies unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool Classical.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs Monad State Specs Run.

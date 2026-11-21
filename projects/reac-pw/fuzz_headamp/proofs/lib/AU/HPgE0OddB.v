@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0OddB.v at 97ea9c9eafa; image B of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0OddB.v; image B of
    fuzz_headamp's table (0x9c560) and strings (0x21180 .. 0x21340, lib/AU/HPgImgB.v headamp_B_cells / headamp_B_strs /
    headamp_B_globs), o_tail_img dropped (HPgBase.hd_cstr carries the NUL word's tail), the strings' range and the
    division constant's read-only bytes added. *)

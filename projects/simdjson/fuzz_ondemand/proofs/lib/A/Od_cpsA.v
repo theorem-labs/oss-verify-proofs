@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -96,7 +97,7 @@ Record od_rt (Σ : rts RT) (E : oaenv) (mL : mem) : Prop := mkOdRt {
   ort_sb : In (o_SB E, o_CAP E) (rt_live RT Σ);
   ort_impl : In (o_IMPL E, 96) (rt_live RT Σ);
   ort_idx : In (o_IDX E, 4 * Z.of_nat (o_icap E)) (rt_live RT Σ);
-  ort_lo : rt_sp0 RT Σ - STACK_WIN <= o_lo E;
+  ort_lo : rt_sp0 RT Σ - STACK_SPAN <= o_lo E;
   ort_shp : bytes_at asegs (o_m0 E) (oa_F E / 8 + 2147450880 + 12) (repeat (Z_to_bv 8 0) 7);
   ort_shd : bytes_at asegs (o_m0 E) (oa_F E / 8 + 2147450880 + 24) (repeat (Z_to_bv 8 0) 8);
   ort_keep : rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) (oa_S1 E + 352) (od_Wk E) mL (o_m0 E);

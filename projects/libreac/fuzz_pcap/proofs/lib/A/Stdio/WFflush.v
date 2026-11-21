@@ -1,6 +1,7 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the walk of musl fflush (0x8e43c) on libreac/fuzz_pcap's v1.9.0 ASan image, for the
    fmemopen READ stream: PFflush.v's afflush_source_spec at the musl entry PFFLUSH_MUSL.
 
@@ -60,23 +61,23 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    the AddrHashMap acquire 0x47b2c / release 0x4834c -> ret). Between them the musl entry above is called with
    stack budget 1840 - 80 = 1760 (afn_pre_at), and the two journals compose with YC85G.ajournal_sub_tok.
    THIS FILE THEREFORE IMPORTS AE2f and its closure (Required at the top). On its working branch, before this
-   file and that closure entered this tree together (commit 5098883da0b3, 2026-10-29), it built only in a union
+   file and that closure entered this tree together (2026-10-29), it built only in a union
    tree, and the union was EXACTLY these pushed commits and nothing else:
      this file's own working branch
-     004a9600bc1   (build tree only, never merged here)
-     d4691bce0fe   (build tree only; it carries the generated AF0m and AB1v,
-                   which left the 004a9600bc1 branch after e8bb946b7e4 and which the Require
+     (build tree only, never merged here)
+     (build tree only; it carries the generated AF0m and AB1v,
+                   which left the branch after and which the Require
                    line below needs, so a union on that branch at or after
-                   f63608fbea3 MUST name this one too)
-     f32ecdd3a2b
-     7a2b36f5950   (ACej / YCej come from here)
+                   MUST name this one too)
+     
+     (ACej / YCej come from here)
    The Stdio files of this branch win, except lib/A/Stdio/PFmemopenISpec.v, PFreadISpec.v, PFreadM.v and
-   PFmemopenM.v, which come from f32ecdd3a2b by sha (one source per statement file).
+   PFmemopenM.v, which come by sha (one source per statement file).
    What the two lemmas need and where it comes from:
      if_cells  REAL(fflush)/REAL(fclose) at 0x9b5f0/0x9b5f8 (pcap_icells, asil_icells), the meta pointer
                0xa1100 (asil_meta_ptr), and 0x103a0 = 0xafffff00000fffff, which is an OWNED-STATIC row
                (AF0m.Tfib_owned_static (0x103a0, 8)) and so NOT covered by arodata_okS: it comes from AR's
-               const cells, AF0m.Tfib_const_abs via PcapSyms.ts_const (an AF0m value, AF0m.v:140). All four are
+               const cells, AF0m.Tfib_const_abs via PcapSyms.ts_const (an AF0m value, AF0m.v:141). All four are
                re-derived from AR at each state, so no frame argument is needed for them.
      ro_img    the unowned read-only chunks of [0x10000, 0x2ee40), among them 0x103b8..0x10420 (the words
                0x103d0 / 0x103d8): arodata_okS at entry, kept to the tail by the journal (image clause).
@@ -128,7 +129,7 @@ Lemma wff_tbl_ok : table_ok psegs wff_tbl.
 Proof. rewrite wff_tbl_eq. apply build_table_ok0. unfold PFFLUSH_MUSL. lia. Qed.
 Lemma wff_psegs_wx : wx_segs_nowrap psegs.
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.
-(* Copied from a Theorem Labs lane's pcap_asan_segs_low (WMclose.v (sha256 a106fee2a193; internal record), a working branch 7f0097a2). *)
+(* Copied from a Theorem Labs lane's pcap_asan_segs_low (WMclose.v (sha256 a106fee2a193; internal record), a working branch). *)
 Lemma wff_psegs_low : forall a, in_img psegs a -> 0 <= a < kLowMemEnd.
 Proof.
   intros a (sg & Hin & Hlo & Hhi).
@@ -998,7 +999,7 @@ Section I.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} (SK : YI16.sink_head).
 Variable B : asyms.
 Let LAWSI : AR_laws AB1v.tfibsegs B := YG0q.AR_laws_ok AB1v.tfibsegs B.
-(* The ASan symbol record (a Theorem Labs lane's AF0m, gated PASS A+B at c061542723f / 731386609e0). *)
+(* The ASan symbol record (a Theorem Labs lane's AF0m, gated PASS A+B). *)
 Hypothesis TB : AF0m.PcapSyms B.
 Hypothesis ASILI : asource_img_laws SK AB1v.tfibsegs B pcap_KS.
 (* mseek's contract, NAMED: a Theorem Labs lane (lib/A/Stdio/WMseek.v). PMSEEK = as_seek pcap_KS. *)

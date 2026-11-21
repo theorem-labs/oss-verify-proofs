@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: unfolded the Section SE wrappers of relayA_regs and drv_targetA into plain lemmas (drv_targetA with a #[using] attribute) and renamed section variable p0 to auxvp in target_k, lh_valsA and hdr_valsA uses; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvD.v, 8 lines within its lines 112-479. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -87,17 +88,11 @@ Qed.
 Definition shared_posD : list nat := [2; 3; 4; 8; 20; 21; 22; 23; 24; 25; 26; 27]%nat.
 Definition relay_ok_bD (sr : list expr) : bool :=
 forallb (fun i => expr_eqb (nth i sr (ELit 0)) (nth i srLHA (ELit 0)) && expr_vars_lt 82 (nth i sr (ELit 0))) shared_posD.
-Section SE.
-Local Abbreviation SEC_T_relayA_regs := (forall ebs vals sr R W, (82 <= length vals)%nat -> relay_ok_bD sr = true ->
+Lemma relayA_regs : forall ebs vals sr R W, (82 <= length vals)%nat -> relay_ok_bD sr = true ->
 regs_ok (Env (vals_ev vals) ebs) sr R ->
-regs_ok (Env (vals_ev (relayA vals R W)) ebs) srLHA R) (only parsing).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_relayA_regs) 0%nat 0%nat).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_relayA_regs) 1%nat 0%nat).
-Variable sr : ltac:(sec_ty2 constr:(SEC_T_relayA_regs) 2%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_relayA_regs) 3%nat 0%nat).
-Variable W : ltac:(sec_ty2 constr:(SEC_T_relayA_regs) 4%nat 0%nat).
-Lemma relayA_regs : ltac:(sec_stmt2 constr:(SEC_T_relayA_regs) 5%nat 0%nat).
+regs_ok (Env (vals_ev (relayA vals R W)) ebs) srLHA R.
 Proof.
+intros ebs vals sr R W.
 intros HL Hokb HR.
 unfold relay_ok_bD in Hokb. rewrite forallb_forall in Hokb.
 assert (SH : forall i, In i shared_posD -> getr R (Z_to_bv 5 (Z.of_nat i)) = edenot (Env (vals_ev (relayA vals R W)) ebs) (nth i srLHA (ELit 0))).
@@ -111,7 +106,6 @@ getr R (Z_to_bv 5 (Z.of_nat r)) = edenot (Env (vals_ev (relayA vals R W)) ebs) (
 { intros r k Hr Hk. rewrite Hr. cbn [edenot ev]. unfold relayA. rewrite vals_hiA by lia. symmetry. exact Hk. }
 do 32 (destruct i as [|i]; [first [lia | apply SH; cbn; tauto | eapply JK; reflexivity] |]). lia.
 Qed.
-End SE.
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
 Section DrvD.
@@ -128,7 +122,7 @@ Hypothesis Hal : bv_unsigned sp0 mod 16 = 0.
 Hypothesis DL : drv_layoutA L ar IL sp0.
 Variable fs0 : Fs.Fs.
 Variable fdata : list byte.
-Variables p0 p1 can : word.
+Variables auxvp p1 can : word.
 Variable M0 : word -> option byte.
 Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
 Variable LK0 : list fframe.
@@ -143,7 +137,7 @@ Let LEN : Z := Z.of_nat (length fdata).
 Let CFG : Z := CFGA fdata.
 Let PL : Z := PLA fdata.
 Let B2 : Z := B2A fdata.
-Let target_k := target_kA scfg ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC.
+Let target_k := target_kA scfg ar HI sp0 fs0 fdata auxvp p1 can M0 LK0 A0 CAP crC.
 Hypothesis Hok : 6 + CFG <= LEN.
 Hypothesis Hcr1 : 0 < PL -> acredit_ok L crC PL.
 Definition CALLSA : Z := if CFG =? 0 then 1 else B2 mod 4 + 1.
@@ -156,7 +150,7 @@ Proof. clear Hcr1. subst PL CFG LEN. unfold PLA in *. pose proof (CFGA_range sp0
 #[using="sp0 Hsp B2"] Lemma payloadA_len : length payloadA = Z.to_nat PL.
 Proof. clear Hcr1. unfold payloadA. rewrite length_skipn. subst PL LEN CFG. unfold PLA in *. pose proof (CFGA_range sp0 fdata). lia. Qed.
 Definition lh_valsA (vals : list word) (A1 PTR OWN k : Z) : Prop :=
-length vals = 102%nat /\ hdr_valsA sp0 p0 p1 can vals
+length vals = 102%nat /\ hdr_valsA sp0 auxvp p1 can vals
 /\ vals_ev vals 48 = Z_to_bv 64 A1 /\ vals_ev vals 70 = Z_to_bv 64 LEN
 /\ vals_ev vals 73 = Z_to_bv 64 CFG /\ vals_ev vals 79 = Z_to_bv 64 PL
 /\ vals_ev vals 81 = Z_to_bv 64 k /\ vals_ev vals 82 = Z_to_bv 64 PTR /\ vals_ev vals 83 = Z_to_bv 64 OWN.
@@ -206,7 +200,7 @@ apply (store_ok_window ASEGS _ (Z_to_bv 64 0x690b10) _ 544%nat m 0x690b10 0x690d
 Qed.
 #[using="fx C IL HIok Hsp DL HCAP target_k"] Lemma pl0_to_lhA : forall K (fx' : PropExec.FPState) vals1 srX R' M' (model' : Model) A (A1 : Z),
 lh1_kA K ->
-length vals1 = 82%nat -> hdr_valsA sp0 p0 p1 can vals1 ->
+length vals1 = 82%nat -> hdr_valsA sp0 auxvp p1 can vals1 ->
 vals_ev vals1 48 = Z_to_bv 64 A1 -> vals_ev vals1 70 = Z_to_bv 64 LEN -> vals_ev vals1 73 = Z_to_bv 64 CFG ->
 vals_ev vals1 79 = Z_to_bv 64 PL -> vals_ev vals1 81 = Z_to_bv 64 CALLSA ->
 regs_ok (ENVG vals1) srX R' -> relay_ok_bD (sr_upd srX (ridx 21) (EVar 81)) = true ->
@@ -249,11 +243,9 @@ eapply ksubl_sound; [exact HK' | vm_compute; reflexivity].
 - exact F1.
 - exact F2.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_drv_targetA := (forall K, lh1_kA K -> K [] -> target_k K) (only parsing).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_drv_targetA) 0%nat 0%nat).
-Theorem drv_targetA : ltac:(sec_stmt2 constr:(SEC_T_drv_targetA) 1%nat 0%nat).
-Proof using C IL HIok ICok Hsp Hal DL M0_def HCAP HLEN Hok Hcr1 K.
+#[using="C IL HIok ICok Hsp Hal DL M0_def HCAP HLEN Hok Hcr1"] Theorem drv_targetA : forall K, lh1_kA K -> K [] -> target_k K.
+Proof.
+intros K.
 intros HLH HK0.
 unfold target_k, target_kA.
 intros vals R M model A A1 HL HV P48 P70 P71 P72 P73 P79 P80 HR HK HC DI HINC F1 F2.
@@ -275,7 +267,7 @@ assert (V81 : vals_ev vals1 81 = Z_to_bv 64 CALLSA).
 { subst vals1. rewrite <- HL, <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity. }
 assert (VL : forall j x, (j < 81)%nat -> vals_ev vals j = x -> vals_ev vals1 j = x).
 { intros j x Hj Hx. subst vals1. rewrite vals_ev_app_l by (rewrite HL; exact Hj). exact Hx. }
-assert (WV : hdr_valsA sp0 p0 p1 can vals1) by (subst vals1; apply (hdr_appA sp0 fdata); [exact HV | rewrite HL; lia]).
+assert (WV : hdr_valsA sp0 auxvp p1 can vals1) by (subst vals1; apply (hdr_appA sp0 fdata); [exact HV | rewrite HL; lia]).
 pose proof WV as (W0 & _).
 pose proof (VL 48%nat _ ltac:(lia) P48) as W48. pose proof (VL 70%nat _ ltac:(lia) P70) as W70.
 pose proof (VL 73%nat _ ltac:(lia) P73) as W73. pose proof (VL 79%nat _ ltac:(lia) P79) as W79. pose proof (VL 80%nat _ ltac:(lia) P80) as W80.
@@ -376,7 +368,7 @@ pose proof (hzA_of_block_range L ar IL sp0 DL _ _ HBR2) as HZ2. pose proof HZ2 a
 assert (NEQ : u <> A1).
 { specialize (HAP (A1, CAP) ltac:(left; reflexivity)). cbn [fst snd] in HAP. lia. }
 assert (X0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W0).
-assert (XV : hdr_valsA sp0 p0 p1 can vals2) by (subst vals2; apply (hdr_appA sp0 fdata); [exact WV | rewrite HL1; lia]).
+assert (XV : hdr_valsA sp0 auxvp p1 can vals2) by (subst vals2; apply (hdr_appA sp0 fdata); [exact WV | rewrite HL1; lia]).
 assert (X48 : vals_ev vals2 48 = Z_to_bv 64 A1) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W48).
 assert (X73 : vals_ev vals2 73 = Z_to_bv 64 CFG) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W73).
 assert (X79 : vals_ev vals2 79 = Z_to_bv 64 PL) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W79).
@@ -438,7 +430,7 @@ destruct (model_rt_fds _ _ HRT3) as (F1 & F2). rewrite G1 in F1. rewrite G2 in F
 set (vals3 := vals2 ++ junk_vals R3) in *.
 change (Env (vals_ev vals3) (blobs_ev [[]; []; []; []; fdata])) with (ENVG vals3) in HR3, HK3.
 assert (Y0 : vals_ev vals3 0 = sp0) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL'; lia); exact X0).
-assert (YV : hdr_valsA sp0 p0 p1 can vals3) by (subst vals3; apply (hdr_appA sp0 fdata); [exact XV | rewrite HL'; lia]).
+assert (YV : hdr_valsA sp0 auxvp p1 can vals3) by (subst vals3; apply (hdr_appA sp0 fdata); [exact XV | rewrite HL'; lia]).
 assert (Y92 : vals_ev vals3 92 = Z_to_bv 64 u) by (subst vals3; rewrite vals_ev_app_l by (rewrite HL'; lia); exact HA2).
 assert (YL : forall j, (j < 82)%nat -> vals_ev vals3 j = vals_ev vals1 j).
 { intros j Hj. subst vals3 vals2. rewrite !vals_ev_app_l by (rewrite ?length_app, ?junk_vals_length, HL1; lia). reflexivity. }
@@ -474,6 +466,5 @@ eapply ksubl_sound; [exact HK | vm_compute; reflexivity].
 + exact G1.
 + exact G2.
 Qed.
-End SE.
 End DrvD.
 End FPX_1.

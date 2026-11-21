@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_grant. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse of fuzz_scene's ASan+UBSan build (fuzz_scene.asan-ubsan, sha256
    e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f), the walk from cut B (0x84224) to cut J (0x84448)
    for the frames of class 4 (pz_P4: frame type cd ea, link 4, the record container), by its three sub-classes
-   (pz_cases4): CtrlParseTail4a/b/c.v. Ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseTail4.v at 603e40683a4
-   (CtrlParseTail4.v (sha256 3109508cb8b4; internal record), the same at 7e98c198edd) as the asan-ubsan twin of lib/A/Prog/CtrlParseTail4.v: the listing modules are
+   (pz_cases4): CtrlParseTail4a/b/c.v. Ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseTail4.v
+   (CtrlParseTail4.v (sha256 3109508cb8b4; internal record), the same) as the asan-ubsan twin of lib/A/Prog/CtrlParseTail4.v: the listing modules are
    lib.AU.Prog's and YCbq lib.AU's (MERGE-GATES 6o), Grant* -> Scene*, grant_listing -> scene_listing,
    KindOfLink1 -> P_kind_of_link1, and the contract's names are P_reac_ctrl_parse.v's; the sink head SK is passed
    explicitly to the cut predicates in pz_tail4's statement and to the three sub-class lemmas it applies. The join only composes

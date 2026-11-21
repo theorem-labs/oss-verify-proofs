@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader bit in mm_answer, check_mmap_fixed_overflow, at_node_rob, and the place_declined_b premise of mmap's safety lemma). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -28,7 +29,8 @@ Section RC__1.
 Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
 Definition mm_answer (mo : Model) (eff : resp) (mo' : Model) (evs : list event) : Prop :=
   vm_only mo mo' /\ alloc_top (m_vmmaps mo') = alloc_top (m_vmmaps mo)     (* [comment removed for export] *)
-  /\ evs = [] /\ eff_copyins eff = [] /\ eff_writes eff = [].
+  /\ evs = [] /\ eff_copyins eff = [] /\ eff_writes eff = []
+  /\ m_channel_reader mo' = m_channel_reader mo.   (* LPS 08b1429: no mm call writes the reader bit *)
 
 Lemma vm_only_refl : forall m, vm_only m m. Proof. intros; repeat split; reflexivity. Qed.
 Lemma vm_only_trans : forall m1 m2 m3, vm_only m1 m2 -> vm_only m2 m3 -> vm_only m1 m3.
@@ -87,13 +89,16 @@ Ltac mm_answer_done :=
                  | apply vm_only_with_mmap_destroyed
                  | apply vm_only_with_vmmaps ]
          | split; [ rewrite ?m_vmmaps_with_mmap_backing, ?m_vmmaps_with_mmap_replacement, ?m_vmmaps_with_mmap_destroyed, ?m_vmmaps_with_vmmaps; reflexivity
-                  | split; [reflexivity| split; reflexivity] ] ].
+                  | split; [reflexivity| split; [reflexivity| split; [reflexivity|
+                      first [ reflexivity
+                            | try unfold with_mmap_replacement; unfold with_mmap_backing;
+                              destruct (mmap_noreserve_b _); reflexivity ] ]]] ] ].
 
 Section RC__2.
 Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
 Lemma check_mmap_only : forall addr len prot flags fd off eff m m' evs,
   check_mmap addr len prot flags fd off eff m = CheckOk m' evs -> mm_answer m eff m' evs.
-Proof. intros until evs; intros H. unfold check_mmap in H. crush_checkA H; mm_answer_done. Qed.
+Proof. intros until evs; intros H. unfold check_mmap, check_mmap_fixed_overflow in H. crush_checkA H; mm_answer_done. Qed.
 
 Lemma check_munmap_only : forall addr len eff m m' evs,
   check_munmap addr len eff m = CheckOk m' evs -> mm_answer m eff m' evs.
@@ -104,10 +109,10 @@ Lemma materialize_model_accesses_nil : forall m, materialize_model_accesses m []
 Proof. intros m. unfold materialize_model_accesses, materialize_accesses. cbn. rewrite with_vm_backing_id. reflexivity. Qed.
 
 Lemma mm_answer_accesses : forall mo eff mo' evs, mm_answer mo eff mo' evs -> syscall_effect_accesses eff = [].
-Proof. intros mo eff mo' evs (_ & _ & _ & Hc & Hw). unfold syscall_effect_accesses. rewrite Hc, Hw. reflexivity. Qed.
+Proof. intros mo eff mo' evs (_ & _ & _ & Hc & Hw & _). unfold syscall_effect_accesses. rewrite Hc, Hw. reflexivity. Qed.
 
 Lemma mm_answer_minvA : forall mo eff mo' evs, mm_answer mo eff mo' evs -> minvA mo -> minvA mo'.
-Proof. intros mo eff mo' evs ((Hf & Hs & _ & Ht & _) & Ha & _) H. eapply minvA_by_fields; [exact Hf| exact Hs| exact Ht| exact Ha| exact H]. Qed.
+Proof. intros mo eff mo' evs ((Hf & Hs & _ & Ht & _) & Ha & _ & _ & _ & Hr) H. eapply minvA_by_fields; [exact Hf| exact Hs| exact Ht| exact Ha| exact Hr| exact H]. Qed.
 
 Lemma mm_answer_halted : forall mo eff mo' evs, mm_answer mo eff mo' evs -> m_halted mo' = m_halted mo.
 Proof. intros mo eff mo' evs ((_ & _ & Hh & _) & _). exact Hh. Qed.
@@ -299,6 +304,8 @@ Proof.
         { rewrite Er. apply check_syscall_ok_iff in Hs2. rewrite Hchk in Hs2.
           apply (NRF eff2 m2); [exact Hs2| exact Hns2]. }
         exists (exist _ (eff, mo') (conj Hc Hr)). split; reflexivity.
+    + (* LPS 08b1429: [Nodes.at_node_rob] *)
+      exact (at_node_rob segs n ms1 mo1 Hat (minvA_io mo1 Hmi1)).
     + intros [[eff mo'] [Hc Hr]]; cbn [fst snd] in *; cbn.
       destruct (HALL _ _ Hc Hr) as (a & D & S' & N' & EB' & HLI' & HPS' & CONT).
       specialize (Hcont eff). rewrite D in Hcont. cbn in Hcont.
@@ -323,9 +330,13 @@ End MM.
 (* [comment removed for export] *)
 Lemma mmap_unmodeled_free : forall addr len prot flags mo mo1,
   magree mo mo1 ->
+  (mmap_modeled_b (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 0) = true \/
+   mmap_noaccess_b (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 0) = true ->
+   place_declined_b (m_kernel mo1) (m_vmmaps mo1) (Z_to_bv 64 addr)
+     (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = false) ->
   mmap_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 0) (m_vmmaps mo) = true ->   (* [comment removed for export] *)
   forall eff, check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo1 <> CheckUnmodeled.
-Proof. intros addr len prot flags mo mo1 Hag Hs eff. apply mmap_safe_no_unmodeled. rewrite (magree_vmmaps _ _ Hag). exact Hs. Qed.
+Proof. intros addr len prot flags mo mo1 Hag Hdecl Hs eff. apply mmap_safe_no_unmodeled; [exact Hdecl|]. rewrite (magree_vmmaps _ _ Hag). exact Hs. Qed.
 
 Lemma munmap_unmodeled_free : forall addr len mo mo1,
   magree mo mo1 ->

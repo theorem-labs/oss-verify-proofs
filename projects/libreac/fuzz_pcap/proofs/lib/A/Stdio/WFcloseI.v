@@ -1,6 +1,7 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fclose at the ASan INTERCEPTOR entry on libreac/fuzz_pcap's v1.9.0 ASan image, for the
    fmemopen READ stream: PFclose.v's afclose_source_spec at IC_ENTRY = __interceptor_trampoline_fclose 0x415cc.
 
@@ -12,7 +13,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      iclose_tail    0x46838 -> `ret` at 0x468e8, on the path s3 = 0 (no metadata entry for f).
    This file composes them with musl fclose's contract, taken as the ONE callee hypothesis
    afclose_source_spec_musl (proved by a Theorem Labs lane in WFclose.v), in the interface a Theorem Labs lane ruled with
-   a working branch a710f30ec77 (PFclose.v's afclose_source_spec_stk / PFCLOSE_MUSL_STK / PFCLOSE_MUSL):
+   a working branch (PFclose.v's afclose_source_spec_stk / PFCLOSE_MUSL_STK / PFCLOSE_MUSL):
      afclose_source_spec_stk SK segs B K PFCLOSE_MUSL_STK PFCLOSE_MUSL 0x8e2b8 0x8e2c0 rlo rhi.
    The two free return addresses are the SAME at both entries: the frees happen inside musl fclose
    (0x8e2b4 / 0x8e2bc), so the trace prefixes [pc_free_ra0; 0x8e2b8] and [pc_free_ra0; 0x8e2c0] pass through.
@@ -43,18 +44,18 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    The symbol record is pcap_KS (PSourceK.v): K = pcap_KS, as a Theorem Labs lane's lemma takes it.
 
    THE BUILD TREE, by EXACT pushed sha, never "or newer": this file Requires lib/A/AF0m.v and lib/A/AB1v.v,
-   which left the branch of e8bb946b7e4 at f63608fbea3 for the branch of d4691bce0fe, so a head of the first at
+   which left the branch for the branch, so a head of the first at
    or after that one builds this file only together with the second. It is checked in a LOCAL union, never
    pushed, of exactly the members of ONE of these two rows (both built, cb rc=0):
      OLD BASE  a working branch (this branch)
-               a working branch  e8bb946b7e4   (carries AF0m / AB1v itself)
-               a working branch  410f35f9863
-               a working branch  7a2b36f5950
+               a working branch   (carries AF0m / AB1v itself)
+               a working branch
+               a working branch
      NEW BASE  a working branch (this branch)
-               a working branch  004a9600bc1
-               a working branch  d4691bce0fe   (AF0m / AB1v after the move)
-               a working branch  410f35f9863
-               a working branch  7a2b36f5950
+               a working branch
+               a working branch   (AF0m / AB1v after the move)
+               a working branch
+               a working branch
    Every member above is BUILD TREE ONLY: none is merged into this branch.
    One source per statement file (a Theorem Labs lane): lib/A/Stdio's PSource* / PFclose / PFmopsM /
    PFflush and this file come from a working branch; PFmemopenISpec / PFreadISpec / PFmemopenM /
@@ -145,7 +146,7 @@ Qed.
 
 (* ---------------------------------------------------------------------------------------------- *)
 (* 2. The stream predicate across a change that keeps its bytes. Copied from a Theorem Labs lane's     *)
-(*    lib/A/Stdio/WFflush.v (a working branch ad383186b6f): vm_fr, head_env_addr, env_tr,      *)
+(*    lib/A/Stdio/WFflush.v (a working branch): vm_fr, head_env_addr, env_tr,      *)
 (*    asource_at_tr. None of them needs the stream's image laws.                                    *)
 (* ---------------------------------------------------------------------------------------------- *)
 Section T.

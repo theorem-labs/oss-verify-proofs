@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: adds a section variable rz and threads it through node_pnscan, node_layout, init_acs_of and both node_mmap2 calls in the planner's node dispatch and mmap checks; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanPlanK.v, lines 33, 127-128, 153, 269, 277. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -21,6 +22,7 @@ Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Inductive snode : Type :=
 | YMunmap
 | YBrk
@@ -99,8 +101,8 @@ match x with
 | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
 | XMemIsZero => summary_miz A nx0 cs
 | XEnvScan => node_envscan A cs
-| XPnScan => node_pnscan A nx0 cs
-| XLayout => node_layout cs args
+| XPnScan => node_pnscan A nx0 rz cs
+| XLayout => node_layout rz cs args
 | XIStrncpy => summary_istrncpy A nx0 cs
 | XPopFree => summary_popfree A nx0 cs args
 | XSniff => None
@@ -115,7 +117,7 @@ Variable KC : nat.
 Variable bfuel : nat.
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
 match css with
-| [] => CErr 3 k (init_acs_of A)
+| [] => CErr 3 k (init_acs_of rz A)
 | cs0 :: rest =>
 match chk cs0 k with
 | COk s0 =>
@@ -225,14 +227,14 @@ end
 else CErr 2 p cs
 | PMmap ka kb =>
 if is_ecall_at segs cs then
-match node_mmap2 A nx0 LIMIT false cs with
+match node_mmap2 A nx0 LIMIT rz false cs with
 | Some (csa, csb) => check f csb kb
 | None => CErr 3 p cs
 end
 else CErr 2 p cs
 | PMmapLH ka kb =>
 if is_ecall_at segs cs then
-match node_mmap2 A nx0 LIMIT true cs with
+match node_mmap2 A nx0 LIMIT rz true cs with
 | Some (csa, csb) =>
 if kn_contra (kn csa) then check f csb kb
 else if kn_contra (kn csb) then check f csa ka

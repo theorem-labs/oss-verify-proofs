@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstDrainCg.v (commit 67deba317dfb, blob 53e0b3c69368) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstDrainCg.v (blob 53e0b3c69368) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -147,11 +148,16 @@ Qed.
 
 Lemma cgp_reserved : region_free (vm_reserved (m_vmmaps md)) (w64 fadr) (w64 kUserMapSize) = true.
 Proof.
-rewrite (alc_reserved _ _ _ _ cgp_LED). pose proof cgp_slot as (S1 & S2 & S3).
-apply region_free_reserved; [exact (RL.al_img_env_cf im_segs ly X md cgp_LO cgp_LED) | | unfold kUserMapSize; lia |].
-- unfold kImgEnd, kHighMemBeg in *. lia.
-- pose proof (lo_high _ cgp_LO) as IP. unfold in_high in IP. cbn [fst snd] in IP. pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as CR.
-  unfold ASAN_CEIL in *. lia.
+destruct (alc_reserved _ _ _ _ cgp_LED) as (rx & Hrx & _ & _ & _ & RP). rewrite Hrx, YG0h.region_free_app.
+pose proof cgp_slot as (S1 & S2 & S3).
+pose proof (lo_high _ cgp_LO) as IP. unfold in_high in IP. cbn [fst snd] in IP. pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as CR.
+apply andb_true_intro. split.
+- apply region_free_reserved; [exact (RL.al_img_env_cf im_segs ly X md cgp_LO cgp_LED) | | unfold kUserMapSize; lia |].
+  + unfold kImgEnd, kHighMemBeg in *. lia.
+  + unfold ASAN_CEIL in *. lia.
+- (* the reservation tail misses the primary reservation (YG0n.res_tail_ok), which holds the slot *)
+  apply (YG0h.region_free_within rx (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact RP | |]; unfold YG0h.uw;
+  rewrite !YG0h.w64_unsigned by (unfold ASAN_CEIL, kUserMapSize, kPrimResvSize, kHighMemBeg in *; lia); lia.
 Qed.
 
 Lemma cgp_nohole : forall a, ~ prim_hole_at ly X a.

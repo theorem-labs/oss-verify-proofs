@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ex_ws_x.v, with its module paths and module names changed; 1951 of its 2020 lines of code are new or changed and 807 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S7b (WalkS7b.S7bPutString): the program walk of put_string (A 0x8836c, 221 instructions)
    over the ONE image-A program listing (lib/A/Listing_prog.v, a Theorem Labs lane), generic in the image facts (Context PAImg)
    and in the allocator relation ARx (LAWS : AR_laws_x), concluding the kit's text tput_string_specX
    (lib/A/PRH_FnWriter.v) in srealizes / SRr form.
-   KIT: the kit's cut 7cdbb61b5fa0 (re-fitted on the batch kit's tip 44123abafeb7, merged forward unchanged: PRH_FnWriter.v d89d3c67b78c, PRH_Base.v
+   KIT: the kit's cut (re-fitted on the batch kit's tip, merged forward unchanged: PRH_FnWriter.v d89d3c67b78c, PRH_Base.v
    ef7c8ca98529; S7a_WriterRet.v 8c237bd1fbb4): the ledger carries `most own`; fpre's last conjunct is frm_zero
    (FRM0-ENTRY); the text takes its consumer window prh_cons_from and its per-event live room prh_live_evs at entry
    (put's are supplied by S7a_WriterRet's prhWriter_cons_at / prhWriter_live_evs_at in ps_put_step), and posts the
@@ -18,7 +19,7 @@
    frame's shadow run on this file's tokenless port of cgif YC44.v (SRr_run_to_pi_AJx).
    Rule 24: not in released set (proof-index put_string, 2026-10-28T23:37Z: released hits are the plain / UBSan
    images' put_string, control-flow references only).
-   structural reference only: a working branch e09c6006f5b lib/A/Prog/put_string.v, put_string_esc.v,
+   structural reference only: a working branch lib/A/Prog/put_string.v, put_string_esc.v,
    put_string_open.v (ORIGINAL image, old framework; read for control flow, nothing cited or copied).
    Numerals: 208 (LENGTH: put_string's frame, the kit's pi_frame); offsets inside the function (116, 276, 384, 672: slot
    deltas times 4, from Listing_prog). No address literal: put_string's entry and the literals are by name (A_prog_slot,
@@ -1363,7 +1364,7 @@ destruct Hk as [(b & m & Hin & Hb & Hp) | [(_ & Hlo & Hhi & Hall) | (Hlo & Hhi &
   assert (Hne : b <> buf').
   { intros Eb. rewrite EL in Hnd. cbn [map fst] in Hnd. inversion Hnd as [|x0 l0 Hnin Hnd0].
     apply Hnin. rewrite <- Eb. pose proof (in_map fst (l1 ++ l2) (b, m) Hin12) as Hx. cbn [fst] in Hx.
-    first [ exact Hx | apply list_elem_of_In; exact Hx | apply elem_of_list_In; exact Hx ]. }
+    first [ exact Hx | apply list_elem_of_In; exact Hx | apply list_elem_of_In; exact Hx ]. }
   assert (HinL' : In (b, m) Lam') by (rewrite EL; right; exact Hin12).
   pose proof (ledger_blocks_disj ly' S' Hp' W' mem' md' Lam' peak' cnt fail ran b m buf' (WriterApp.w_cap st')
     HAR Hled HinL' HinB' Hne) as Hdj.
@@ -1473,9 +1474,9 @@ destruct Hk as [(b & m & Hin & Hb & Hpe) | [(_ & _ & _ & Hro) | (_ & _ & Hro)]].
       destruct Hin as [Heq | Hin]; destruct Hbuf as [Heq' | Hbuf].
       - congruence.
       - exfalso. apply Hn1. injection Heq as E1 E2. subst x. pose proof (in_map fst t (buf, cap) Hbuf) as Hx.
-        cbn [fst] in Hx. first [ exact Hx | apply list_elem_of_In; exact Hx | apply elem_of_list_In; exact Hx ].
+        cbn [fst] in Hx. first [ exact Hx | apply list_elem_of_In; exact Hx | apply list_elem_of_In; exact Hx ].
       - exfalso. apply Hn1. injection Heq' as E1 E2. subst x. pose proof (in_map fst t (buf, m) Hin) as Hx.
-        cbn [fst] in Hx. first [ exact Hx | apply list_elem_of_In; exact Hx | apply elem_of_list_In; exact Hx ].
+        cbn [fst] in Hx. first [ exact Hx | apply list_elem_of_In; exact Hx | apply list_elem_of_In; exact Hx ].
       - apply IH; assumption. }
     subst m. clear - Hb Hpe Hd Hc0 Hn. lia.
   + pose proof (ledger_blocks_disj ly S Hp W mem md Lam peak cnt fail ran b m buf cap HAR Hled Hin Hbuf Hne) as Hdj.

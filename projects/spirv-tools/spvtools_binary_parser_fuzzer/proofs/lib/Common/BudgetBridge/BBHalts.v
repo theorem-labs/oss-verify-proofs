@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segments, run_segments, in place of the image's segments). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -47,7 +48,14 @@ Theorem must_exit_in_scfg_budget_down : forall cfg S img en inp L1 L2, L1 <= L2 
   must_exit_in_scfg cfg S img L2 en inp -> must_exit_in_scfg cfg S img L1 en inp.
 Proof.
   intros cfg S [segs pc ph] [sp brk mb rnd] inp L1 L2 HL Hn H. cbn [must_exit_in_scfg run_scfg_budget_refused] in *.
-  apply (must_exit_relim_down segs cfg S L2 _ H (init_config segs pc ph sp brk mb rnd L1 inp)).
+  (* [must_exit_in_scfg] and [run_scfg_budget_refused] unfold to the RUN
+     segments, not the image's: both hypotheses this proof already holds carry
+     [run_segments segs inp sp mb] (the farm prints them that way at :50), and
+     only the two segment arguments written here were still the bare [segs].
+     Nothing else in the proof changes - the four bullets below are segment-
+     polymorphic. *)
+  apply (must_exit_relim_down (run_segments segs inp sp mb) cfg S L2 _ H
+           (init_config (run_segments segs inp sp mb) pc ph sp brk mb rnd L1 inp)).
   - symmetry. apply init_config_relim.
   - rewrite init_config_limit. exact HL.
   - exact Hn.

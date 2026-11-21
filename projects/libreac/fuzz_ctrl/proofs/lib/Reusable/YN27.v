@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN27.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed vm_kill, ledger_ok_munmap). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -11,10 +12,12 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import
 YO0i YO0f YO0g YO0d.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN03 YN2b.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Lemma live_bytes_app l1 l2 : State.live_bytes (l1 ++ l2) = State.live_bytes l1 + State.live_bytes l2.
 Proof. induction l1 as [|[a n] l1 IH]; cbn; [lia|]. rewrite IH. lia. Qed.
 Lemma live_bytes_nonneg l : 0 <= State.live_bytes l.
@@ -136,8 +139,28 @@ vm_brk (m_vmmaps md_kill) = vm_brk (m_vmmaps md) /\
 m_halted md_kill = m_halted md /\ m_vm_lazy md_kill = [] /\ m_vm_materialized md_kill = [].
 Proof.
 destruct Hmd as [H1 H2]. pose proof Ebase as EB. pose proof Elen as EL.
+(* 08b1429: munmap_model cuts with maps_subtract; on an exact mapping disjoint from the others
+   that is map_remove (YK0v.maps_subtract_exact, the model's MmapSim helper). *)
+assert (VM : vm_maps (m_vmmaps md_kill) = map_remove (vm_maps (m_vmmaps md)) (w64 base)).
+{ transitivity (maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (w64 base))
+(bv_unsigned (w64 base) + bv_unsigned (w64 len))); [reflexivity|].
+apply maps_subtract_exact.
+- rewrite EL. exact (proj1 len_pos).
+- intros b s Hbs. exact (proj1 (lx_maps _ _ _ LX _ Hbs)).
+- intros b s Hbs Eb. subst b.
+destruct (lx_disj _ _ _ LX _ _ Hbs entry_in) as [E|D]; [injection E as ->; reflexivity|].
+exfalso. unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D.
+pose proof (proj1 (lx_maps _ _ _ LX _ Hbs)) as Hs. unfold iv_len in Hs. cbn [snd] in Hs.
+rewrite EL in D. pose proof len_pos. lia.
+- intros b s Hbs Hne.
+destruct (lx_disj _ _ _ LX _ _ Hbs entry_in) as [E|D]; [injection E as -> _; exfalso; exact (Hne eq_refl)|].
+unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D. rewrite EL in D. lia. }
+split; [exact VM|].
+split.
+{ transitivity (maps_subtract (vm_noaccess (m_vmmaps md)) (bv_unsigned (w64 base))
+(bv_unsigned (w64 base) + bv_unsigned (w64 len))); [reflexivity|]. rewrite EB, EL. reflexivity. }
 unfold md_kill, munmap_model, with_mmap_destroyed, vm_forget_range, with_vm_backing, with_vmmaps. cbn.
-rewrite EB, EL, H1, H2. cbn. repeat split; reflexivity.
+rewrite ?H1, ?H2. cbn. repeat split; reflexivity.
 Qed.
 Lemma other_base k rg' : k <> r -> region_of A k = Some rg' -> rg_live rg' = true -> rg_kind rg' <> RkBrk ->
 w64 (ly_reg L k) <> w64 base /\ 0 < rg_len rg' /\
@@ -215,12 +238,12 @@ destruct (lx_maps _ _ _ LX e He) as [Pe _]. unfold iv_len, iv_lo in *. rewrite E
 - rewrite VS. apply LG.
 - rewrite Hbrk, VB. apply LG.
 - intros k rg' Hk' Hl'. destruct (OTHER k rg' Hk' Hl') as [_ HkA]. exact (lg_placed _ _ _ _ LG k rg' HkA Hl').
-- rewrite VM. pose proof (lg_count _ _ _ _ LG) as C.
+- intros Eaf. rewrite VM. pose proof (lg_count _ _ _ _ LG Eaf) as C.
 pose proof (length_map_remove_lt _ (w64 base) _ EIN eq_refl) as LT.
 assert (NS : nslots A' = nslots A - 1); [| lia].
 unfold nslots. apply (nslots_kill_lists _ _ r rg); assumption.
-- rewrite VM. apply Forall_forall. intros e He. apply In_map_remove in He as [He Hne].
-destruct (lx_in _ _ _ LX e He) as (k & rg' & Hk' & Hl' & G1 & G2).
+- intros Eaf. rewrite VM. apply Forall_forall. intros e He. apply In_map_remove in He as [He Hne].
+destruct (lx_in _ _ _ LX Eaf e He) as (k & rg' & Hk' & Hl' & G1 & G2).
 destruct (Nat.eq_dec k r) as [->|Hkr].
 + rewrite Hr in Hk'. injection Hk' as <-. exfalso.
 destruct (lx_disj _ _ _ LX e _ He EIN) as [-> | DD]; [apply Hne; reflexivity|].
@@ -228,13 +251,17 @@ unfold ranges_disjoint, iv_lo, iv_len in DD. cbn [fst snd] in DD. rewrite Ebase,
 destruct (lx_maps _ _ _ LX e He) as [Pe _]. unfold iv_lo, iv_len, base, len in *. lia.
 + assert (Hk'' : region_of A' k = Some rg') by (rewrite HA'; replace (Nat.eqb k r) with false by (symmetry; apply Nat.eqb_neq; exact Hkr); exact Hk').
 pose proof (live_bytes_ge k rg' Hk'' Hl'). unfold iv_lo, iv_len in *. lia.
-- pose proof vm_kill as (_ & _ & _ & _ & _ & _ & _ & VLZ & VMT).
+- intros Eaf. pose proof vm_kill as (_ & _ & _ & _ & _ & _ & _ & VLZ & VMT).
 unfold vm_backing_used. rewrite VLZ, VMT. cbn [length Z.of_nat maps_subtract_all Z.mul]. rewrite Z.add_0_r.
 unfold vm_backed_maps. rewrite VM.
 pose proof (live_bytes_maps_subtract_all (vm_noaccess (m_vmmaps md_kill)) (map_remove (vm_maps (m_vmmaps md)) (w64 base))).
 pose proof (live_bytes_map_remove _ _ _ EIN) as LR. rewrite Elen in LR.
-pose proof (lx_lb _ _ _ LX). rewrite (live_bytes_kill A A' r rg Hr Hl HA'). unfold len in *. lia.
+pose proof (lx_lb _ _ _ LX Eaf). rewrite (live_bytes_kill A A' r rg Hr Hl HA'). unfold len in *. lia.
 -   exact (lg_ceil _ _ _ _ LG).
+- pose proof (mres_incl (m_vmmaps md) (m_vmmaps md_kill) VR
+    ltac:(intros x Hx; rewrite VM in Hx; apply In_map_remove in Hx; tauto) (lg_mres _ _ _ _ LG)) as MR.
+  unfold mres_ok in MR. exact MR.
+- rewrite VR. exact (lg_vin _ _ _ _ LG).
 Qed.
 Lemma md_kill_facts : m_halted md_kill = m_halted md /\ m_vm_lazy md_kill = [] /\ m_vm_materialized md_kill = [] /\
 exists vm', md_kill = with_vmmaps vm' md.

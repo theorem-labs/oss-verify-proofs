@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the in-place mremap continuation's region_free condition is over maps_subtract of the old range in place of map_remove). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -53,7 +54,7 @@ Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)
 (forall mem',
 mremap_post_mem mem mem' (bv_unsigned old) (bv_unsigned old_n) (bv_unsigned old) (bv_unsigned new_n) ->
 bv_unsigned old + bv_unsigned new_n <= alloc_top (m_vmmaps model) ->
-region_free (vm_reserved (m_vmmaps model) ++ map_remove (vm_maps (m_vmmaps model)) old) old new_n = true
+region_free (vm_reserved (m_vmmaps model) ++ maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) old new_n = true
 \/ bv_unsigned new_n < bv_unsigned old_n ->
 Kont 1 (mkCfg (mkst (regupd regs 10 old) (v_addi pc 4) mem' rom)
 (mremap_model_next model old old_n old new_n))) ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO; the run's segments (RomBase.sys_rob)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,12 +16,15 @@ Open Scope Z_scope.
 Section TargetSide.
 Variables (tsegs : list Segment) (tpc : N) (tph : PhdrInfo).
 
-(* [comment removed for export] *)
+(* LPS 08b1429: a run is against [Run.run_segments], the image's segments
+   followed by the launch's vDSO pair, and [Run.init_config] reads that list. *)
 Definition S3s_stmt : Prop :=
   forall en inp,
     valid_entry (mkImage tsegs tpc tph) en inp -> valid_input inp ->
-    srealizes tsegs (init_config tsegs tpc tph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en)
-                                 target_alloc_limit inp)
+    srealizes (run_segments tsegs inp (en_sp en) (en_mmap_base en))
+              (init_config (run_segments tsegs inp (en_sp en) (en_mmap_base en)) tpc tph
+                           (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en)
+                           target_alloc_limit inp)
               (canonT (argv_Z (in_argv inp)) (in_fs inp)).
 
 Theorem T_canon : S3s_stmt ->
@@ -33,8 +37,8 @@ Proof.
   intros HS en inp He Hi. pose proof (HS en inp He Hi) as Hr.
   destruct en as [sp brk mb rnd]. cbn [Run.run_scfg bh_traces bh_errors en_sp en_brk en_mmap_base en_draw] in *.
   split.
-  - intros tr. exact (srealizes_obs_iff tsegs _ _ Hr tr).
-  - exact (srealizes_no_error tsegs _ _ Hr).
+  - intros tr. exact (srealizes_obs_iff _ _ _ Hr tr).
+  - exact (srealizes_no_error _ _ _ Hr).
 Qed.
 
 End TargetSide.

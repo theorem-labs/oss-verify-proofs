@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 asan 1be0f53d, unstripped twin bff8519b), ex_value piece 5
    (ev_number), sub-piece A of S8aNumCut.v: ev_A (ev_A_stmt), EV_NUM (+0x2c4, 0x83568) -> CT (+0x9f4) | CL (+0x364).
    Code walked: +0x2c4 .. +0x360 (0x83568-0x83604, 40 instructions) and the slow arms of its two shadow checks,
    +0xbac (0x83e50-0x83e54) and +0xc6c (0x83f10-0x83f14), which the engine absorbs (YCbn.v slow_block).
-   fuzz_preset.c @0b89c6c1bd :216-226 (ex_number up to the scan).
+   fuzz_preset.c :216-226 (ex_number up to the scan).
    Engine: YC80x / YC1fPx (paj_run_to_x, as YSRrMemnorm's twin paj_run_to_x_inv) over YCbqG's ajournal_x, at
    L := A_prog_listing with a generic PA : PAImg A_prog_listing and a generic PrhImg (ev_img_ok bounds ex_value's
    frame), the float state of the cut (fxc) as the engine's fx.

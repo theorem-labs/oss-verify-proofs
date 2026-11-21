@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN1d.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed inlist). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -29,7 +30,6 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Notation B := src0_msyms.
 Ltac inlist := cbn; repeat (first [left; reflexivity | right]).
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Lemma mbyte_ext1 : forall m m' a, m' (Z_to_bv 64 a) = m (Z_to_bv 64 a) -> mbyte src0segs m' a = mbyte src0segs m a.
 Proof. intros m m' a E. unfold mbyte. rewrite E. reflexivity. Qed.
 Lemma writable_ext1 : forall m m' a, m' (Z_to_bv 64 a) = m (Z_to_bv 64 a) -> writable_at src0segs m a -> writable_at src0segs m' a.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AF0x.v, with its module paths changed; 18 of its 75 lines of code are new or changed and 515 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBase.v at 95e6f1d72b6 (sha256 c766f9ab19a5) into lib/Reusable (shared by both images), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBase.v (sha256 c766f9ab19a5) into lib/Reusable (shared by both images), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-free base of the R2 interfaces (AGif0n / AGif2 / AGif4 / DGif0 / DMiface / DMspec).
 
    - [AImg]: ONE class that holds every fact about the binary's image the interfaces name.  An interface takes it as

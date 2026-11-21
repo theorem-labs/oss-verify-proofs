@@ -1,6 +1,6 @@
 (* fs.asan-ubsan (build B): the symbolic runs of __asan_poison_memory_region (h, 16) and
    __asan_unpoison_memory_region (h, 16), the B twin of lib/A/FSpoisonR.v.
-   Ported from: lib/A/FSpoisonR.v at a working branch 6e79fac25a0 (itself a Theorem Labs lane's FMpoisonR.v), moved from
+   Ported from: lib/A/FSpoisonR.v at a working branch (itself a Theorem Labs lane's FMpoisonR.v), moved from
    fs.asan to the pinned fuzz_state.asan-ubsan (sha256 5ac5ce0954f87e2d...). Changed: the A core modules -> their B twins
    (AB1v -> YB1v, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x, AE2y -> YE2y, AB1w -> YB1w, A/FSH_Base ->
    B/FSH_Base), and the walk's literals, each A literal moved to B by capstone 5.0.7 disassembly (RV64, no compressed)
@@ -10,7 +10,7 @@
      instruction except 10 each: the three GOT `ld` offsets and the seven string `addi` operands of the dead Printf /
      CHECK paths.
   - musl memset: A AB1w.tfib_A_memset 0x98e24 -> B YB1w.tfib_A_memset 0x99340 (`beqz a2,0xf4`; 62 instructions
-    identical to A's, `ret` at 0x99434). In the by-name YB1w (a working branch 5794df9fd3b) the plain name is MUSL memset; the
+    identical to A's, `ret` at 0x99434). In the by-name YB1w (a working branch) the plain name is MUSL memset; the
     interceptor is tfib_A___wrap_memset / tfib_A___interceptor_trampoline_memset 0x51d88.
    - MemToShadow: `jal -0x194` at 0x5495c and `jal -0x1a8` at 0x54970 (poison), `jal -0x334` at 0x54afc and
      `jal -0x344` at 0x54b0c (unpoison) land on 0x547c8 (A 0x54758), in B's relocated tbl_icpt (B/YE34.v, (0x547c8, 79)).

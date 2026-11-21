@@ -1,6 +1,6 @@
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43): the
-   walk of parse_string (PSB_Top.v parse_string_holds_B, the KIT TEXT tparse_string_specX of the announced the kit cut
-   7cdbb61b5fa0, PRH_FnReader.v f1ae32e3b2cd) at the B' INSTANCE, with every static
+   walk of parse_string (PSB_Top.v parse_string_holds_B, the KIT TEXT tparse_string_specX of the announced the kit cut,
+   PRH_FnReader.v f1ae32e3b2cd) at the B' INSTANCE, with every static
    image premise DISCHARGED. Lane PstrBp of a Theorem Labs lane.
    rule 24: no function proved. rule 24: proves no function (kind: merge).
    parse_string_holds_B_inst is parse_string_holds_B at
@@ -19,7 +19,7 @@
      (vm_compute: PI_prog_B's pa_lo / pa_hi ARE CfImg_B's cf_img_lo / cf_img_top, lib/AU/CfImgB.v); the fact itself is
      a Theorem Labs lane's tfib_img_shadow_vis_cf_B (lib/AU/AImgShadowVisCfB.v 18b6de6fa4e8, in the cut) at SEGS TB from
      YD2l.TfibB_syms;
-   - HHEX4 by the hex4 B' row (a Theorem Labs lane, a working branch a155ed742e1c; lib/B/Prog/S3_Hex4Bridge.v
+   - HHEX4 by the hex4 B' row (a Theorem Labs lane, a working branch; lib/B/Prog/S3_Hex4Bridge.v
      277864a3be81, in the cut): its generic hex4_holds_B at THIS relation ARcfx with LAWS / TL / HW as below (its
      instance corollary hex4_holds_Bp is stated at ARcf alone, so the generic theorem is the one that fits ARcfx);
    - HPUTU by a Theorem Labs lane's pb_put_utf8X_Bp (lib/B/Prog/ExUtf8WB.v 0f95856d9f20, a working branch
@@ -30,7 +30,7 @@
      psbi_pst_errno_check (vm_compute: prh_img_B's statics miss TfibB's owned statics and its errno word) and its
      pal_unpoison by psbi_unpoison (vm_compute: the listing's __asan_unpoison_memory_region entry is CfImg_B's
      cf_pc_unpoison). Its AUNPOISON (aunpoison_realizes_cf, YGcfHp.v) by a Theorem Labs lane's preset_aunpoison_cf_B102
-     (lib/AU/CfPoisonB102.v 7fda7f2b8c56 of the landing base 415c6c3e2969, on a Theorem Labs lane's
+     (lib/AU/CfPoisonB102.v 7fda7f2b8c56 of the landing base, on a Theorem Labs lane's
      combine6 preset-tree-at-2026-10-30T06-33-29Z.tsv (sha256 77f91e8d2d45; internal record) = the cut + int102 preset-tree-at-2026-10-30T06-08-22Z.tsv (sha256 6794eb3075a2; internal record), which carries the lib/A/CfApiPreset.v 52dd4f5cf200 it
      Requires and its YGcfHp.v cdd6715c8029 / YG0scf.v cfa6d6d22fb1 from int102; the cut preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record) does not, so
      this citation lands with combine6): no stand-in left, at TfibB from

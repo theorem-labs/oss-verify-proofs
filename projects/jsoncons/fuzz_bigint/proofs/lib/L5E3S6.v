@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells are read in the launch's layout (auxv_cells with the CONFIG_RSEQ flag's fact) and that fact is passed to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -293,7 +294,7 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES9 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9.
-  pose proof (auxv_cells M9 av uid rnd hw S_13) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
+  pose proof (auxv_cells M9 av uid rnd hw S_13 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
   assert (WUW: L5.writable RSEGS M9 459617 6). { apply (writable_img M9 UW_FLAGS 6 wseg_uwflags); unfold UW_FLAGS; kl. }
   assert (WUC: L5.writable RSEGS M9 456960 4). { apply (writable_img M9 EH_UNCAUGHT 4 wseg_uncaught); unfold EH_UNCAUGHT; kl. }
   assert (STEP10: exists (fx10 : FPState) (R10 : bvmap 5 word) (M10 : word -> option byte),
@@ -330,7 +331,7 @@ Proof.
   { destruct fl.
     - idtac.
       destruct S_5 as (U_0 & U_1 & U_2 & U_3 & U_4 & U_5).
-      unshelve epose proof (e3t_v1_conc fx9 R9 M9 (S - 896) (A + 128) av canary uid rnd hw w856 w864 w872 w784 w488 w504 w512 w520 w528 w536 w544 w552 w560 w568 (U R0 9) (U R0 18) (U R0 19) (U R0 20) (U R0 21) (U R0 22) (U R0 23) (U R0 24) (U R0 25) (U R0 26) (U R0 27) (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
+      unshelve epose proof (e3t_v1_conc X_r fx9 R9 M9 (S - 896) (A + 128) av canary uid rnd hw w856 w864 w872 w784 w488 w504 w512 w520 w528 w536 w544 w552 w560 w568 (U R0 9) (U R0 18) (U R0 19) (U R0 20) (U R0 21) (U R0 22) (U R0 23) (U R0 24) (U R0 25) (U R0 26) (U R0 27) (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
         as (fxv & Rv & Mv & MSv & Kv & REST).
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
@@ -386,20 +387,6 @@ Proof.
       { (* [comment removed for export] *) kl LY LYX HIok SLO SHI STOP AVTOP AVLO AVHI B0_A B1_A B3_A B4_A. }
       { (* [comment removed for export] *) kl LY LYX HIok SLO SHI STOP AVTOP AVLO AVHI. }
       { (* [comment removed for export] *) kl LY LYX HIok SLO SHI STOP AVTOP AVLO AVHI B0_A B1_A B3_A B4_A. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
@@ -466,7 +453,7 @@ Proof.
       decompose [and] REST; repeat split; assumption.
     - idtac.
       destruct S_5 as (U_0 & U_2 & U_4).
-      unshelve epose proof (e3t_v0_conc fx9 R9 M9 (S - 896) (A + 128) av canary uid rnd hw w856 w864 w872 w784 w488 w504 w512 w520 w528 w536 w544 w552 w560 w568 (U R0 9) (U R0 18) (U R0 19) (U R0 20) (U R0 21) (U R0 22) (U R0 23) (U R0 24) (U R0 25) (U R0 26) (U R0 27) (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
+      unshelve epose proof (e3t_v0_conc X_r fx9 R9 M9 (S - 896) (A + 128) av canary uid rnd hw w856 w864 w872 w784 w488 w504 w512 w520 w528 w536 w544 w552 w560 w568 (U R0 9) (U R0 18) (U R0 19) (U R0 20) (U R0 21) (U R0 22) (U R0 23) (U R0 24) (U R0 25) (U R0 26) (U R0 27) (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
         as (fxv & Rv & Mv & MSv & Kv & REST).
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
@@ -522,20 +509,6 @@ Proof.
       { (* [comment removed for export] *) kl LY LYX HIok SLO SHI STOP AVTOP AVLO AVHI B0_A B1_A B3_A B4_A. }
       { (* [comment removed for export] *) kl LY LYX HIok SLO SHI STOP AVTOP AVLO AVHI. }
       { (* [comment removed for export] *) kl LY LYX HIok SLO SHI STOP AVTOP AVLO AVHI B0_A B1_A B3_A B4_A. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
@@ -722,7 +695,7 @@ Proof.
     split. exact C10_15. split. exact C10_16. split. exact C10_17. split. exact C10_18. split. exact C10_19. split. exact C10_20.
     split. eapply (tr64 M9 M10 _ _ _ (AG10 _ 8)); [lia | exact S_6]. split. eapply (tr64 M9 M10 _ _ _ (AG10 _ 8)); [lia | exact S_7]. split. eapply (tr64 M9 M10 _ _ _ (AG10 _ 8)); [lia | exact S_8]. split. eapply (tr64 M9 M10 _ _ _ (AG10 _ 8)); [lia | exact S_9].
     split. exact S_10. split. exact S_11. split. exact S_12.
-    split. { intros j Hj. eapply (tr64 M9 M10 _ _ _ (AG10 _ 8)); [lia | apply S_13; exact Hj]. }
+    split. { apply (L5PS.auxv_ok_agree M9 M10 av uid rnd hw S_13); [lia |]. intros i Hi. destruct (AG10 i 1 ltac:(lia)) as [AGi _]. exact (AGi i ltac:(lia)). }
     split. exact S_14. split. exact S_15. split. exact S_16. split. exact S_17.
     destruct (AG10 65536 (390760 - 65536) ltac:(lia)) as [AGI _].
     split. { intros i Hi. rewrite (AGI i) by lia. apply S_18. exact Hi. }
@@ -761,7 +734,7 @@ Proof.
     constructor. eapply L5PK.wr_declared. left; reflexivity. lia. lia.
     constructor. eapply L5PK.wr_declared. right; left; reflexivity. lia. lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG10 FR10 MS10. try clear STAT10. try clear K9.
   try clear c9_Sm840. try clear c9_Sm848. try clear c9_Sm856. try clear c9_Sm864. try clear c9_Sm872. try clear c9_Sm776. try clear c9_Sm784. try clear c9_Sm792. try clear c9_Sm800. try clear c9_Sm472. try clear c9_Sm480. try clear c9_Sm488. try clear c9_Sm496. try clear c9_Sm504. try clear c9_Sm512. try clear c9_Sm520. try clear c9_Sm528. try clear c9_Sm536. try clear c9_Sm544. try clear c9_Sm552. try clear c9_Sm560. try clear c9_Sm568. try clear c9_Sm424. try clear c9_Sm432. try clear c9_Sm360. try clear c9_Sm368. try clear c9_Sm376. try clear c9_Sm56. try clear c9_Sm64. try clear c9_Sm72. try clear c9_Sm80. try clear c9_Sm88. try clear c9_Sm96. try clear c9_Sm104. try clear c9_Sm112. try clear c9_Sm120. try clear c9_Sm128. try clear c9_Sm136. try clear c9_Sm144. try clear c9_Sm152. try clear c9_Sm8. try clear c9_Sm16. try clear c9_Sm696w1. try clear c9_Sm664w1. try clear c9_Sm640. try clear c9_Sm648. try clear c9_Sm632w1. try clear c9_Sm608. try clear c9_Sm616. try clear c9_Sm600w1. try clear c9_Sm464w1. try clear c9_Sm408w1. try clear c9_Sm280w1. try clear c9_Sm248w1. try clear c9_Sm216w1. try clear c9_Sm192. try clear c9_Sm200. try clear c9_Sm184w1. try clear c9_Sm160. try clear c9_Sm168. try clear c9_Sm48w1. try clear c9_Om128z8. try clear c9_Om80z12. try clear c9_Sm912. try clear c9_Sm904. try clear c9_Gp41w1. try clear c9_Gp0. try clear c9_Gp8. try clear c9_Gp16. try clear c9_Gp24. try clear c9_Gp32. try clear c9_Gp40w1. try clear c9_Sm880. try clear c9_Sm888. try clear c9_Sm896. try clear c9_Sm976. try clear c9_Sm968. try clear c9_Sm952. try clear c9_Sm944. try clear c9_Sm936. try clear c9_Sm928. try clear c9_Sm920. try clear c9_Op0. try clear c9_Op8. try clear c9_Fp24. try clear c9_Fp32. try clear c9_Fp40. try clear c9_Fp48. try clear c9_Fp56. try clear c9_Fp64w1. try clear c9_Fp65w1. try clear c9_Fp16w4. try clear c9_Fp8. try clear c9_Fp0. try clear R9_1. try clear R9_2. try clear R9_3. try clear R9_4. try clear R9_8. try clear R9_9. try clear R9_10. try clear R9_11. try clear R9_12. try clear R9_18. try clear R9_19. try clear R9_20. try clear DEF9. try clear HH9. try clear HQ9. try clear ES9. try clear DEFref_9. try clear DEFmsg_9. try clear DEFA_9. try clear DEFd1_9. try clear DEFd2_9. try clear DEFd3_9. try clear DEFd4_9.
   eapply (seg7 fx10 R0 R R10 M M10 model model8 K LB1 cr gd fl S av uid rnd canary hw d1 d2 d3 d4 w856 w864 w872 w784 w488 w504 w512 w520 w528 w536 w544 w552 w560 w568 fb696 fb664 fb632 fb600 fb464 fb408 fb280 fb248 fb216 fb184 fb48 A msg ref u0_9 u3_19 u3_18 HK0 H02 H03 H04 A16 SLO SHI STOP AVTOP LBWF CR144 CR48 CR66 Hr_fb696 Hb_fb696 Hr_fb664 Hb_fb664 Hr_fb632 Hb_fb632 Hr_fb600 Hb_fb600 Hr_fb464 Hb_fb464 Hr_fb408 Hb_fb408 Hr_fb280 Hb_fb280 Hr_fb248 Hb_fb248 Hr_fb216 Hb_fb216 Hr_fb184 Hb_fb184 Hr_fb48 Hb_fb48 Ww856 Ww864 Ww872 Ww784 Ww488 Ww504 Ww512 Ww520 Ww528 Ww536 Ww544 Ww552 Ww560 Ww568 Wu0_9 Wu3_19 Wu3_18 R10_1 R10_2 R10_3 R10_4 R10_8 R10_9 R10_10 R10_11 R10_12 R10_18 R10_19 R10_20 c10_Sm840 c10_Sm848 c10_Sm856 c10_Sm864 c10_Sm872 c10_Sm776 c10_Sm784 c10_Sm792 c10_Sm800 c10_Sm472 c10_Sm480 c10_Sm488 c10_Sm496 c10_Sm504 c10_Sm512 c10_Sm520 c10_Sm528 c10_Sm536 c10_Sm544 c10_Sm552 c10_Sm560 c10_Sm568 c10_Sm424 c10_Sm432 c10_Sm360 c10_Sm368 c10_Sm376 c10_Sm56 c10_Sm64 c10_Sm72 c10_Sm80 c10_Sm88 c10_Sm96 c10_Sm104 c10_Sm112 c10_Sm120 c10_Sm128 c10_Sm136 c10_Sm144 c10_Sm152 c10_Sm8 c10_Sm16 c10_Sm696w1 c10_Sm664w1 c10_Sm640 c10_Sm648 c10_Sm632w1 c10_Sm608 c10_Sm616 c10_Sm600w1 c10_Sm464w1 c10_Sm408w1 c10_Sm280w1 c10_Sm248w1 c10_Sm216w1 c10_Sm192 c10_Sm200 c10_Sm184w1 c10_Sm160 c10_Sm168 c10_Sm48w1 c10_Om128z8 c10_Om80z12 c10_Gp41w1 c10_Gp0 c10_Gp8 c10_Gp16 c10_Gp24 c10_Gp32 c10_Gp40w1 c10_Sm880 c10_Sm888 c10_Sm896 c10_Op0 c10_Op8 c10_Fp24 c10_Fp32 c10_Fp40 c10_Fp48 c10_Fp56 c10_Fp64w1 c10_Fp65w1 c10_Fp16w4 c10_Fp8 c10_Fp0 c10_Om8 c10_Om40 c10_Om48 c10_Om56 c10_Om64 c10_Om68w4 c10_Om16 c10_Om120 c10_Om24 c10_Om32 c10_Om88 c10_Om104 c10_Om112 c10_Om96 ES10 DEF10 DEFref_10 DEFmsg_10 DEFA_10 DEFd1_10 DEFd2_10 DEFd3_10 DEFd4_10 BR_ref BR_msg BR_A BR_d1 BR_d2 BR_d3 BR_d4 AP_ref_msg AP_ref_A AP_ref_d1 AP_ref_d2 AP_ref_d3 AP_ref_d4 AP_msg_A AP_msg_d1 AP_msg_d2 AP_msg_d3 AP_msg_d4 AP_A_d1 AP_A_d2 AP_A_d3 AP_A_d4 AP_d1_d2 AP_d1_d3 AP_d1_d4 AP_d2_d3 AP_d2_d4 AP_d3_d4 FRSH_ref FRSH_msg FRSH_A HH10 MOK8 MBV8 HQ10 KE).

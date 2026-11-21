@@ -1,4 +1,4 @@
-(* lib/A/Prog/TwBack.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), re-run over the
+(* lib/A/Prog/TwBack.v (RtStr's port, unchanged), re-run over the
    local-shadow TW_ASAN / TW_STATIC / twoway post and wrapper contracts (FMss_TwAsan.v, FMss_TwSetup_c.v,
    FMss_twoway_strstr_c.v, FMss_memchr_wrap_c.v, FMss_memcmp_wrap_c.v).  Changed lines: the imports, MCW/MPW's
    types, the memcmp unfold, the memcmp call's shadow premise (shvis_prefix / shvis_sub of the needle's, as the

@@ -22,7 +22,7 @@
    so no `trap_<shape>` lemma of lib/B/W_traps.v is cited here and the runner decides every branch it meets.
 
    ------------------------------------------------------------------ what this walk carries, and B's differences
-   from image A's twin lib/A/W_LLVMFuzzerTestOneInput_drain.v (a86c2788a94, dc_stA..dc_stF / dc_calls), whose
+   from image A's twin lib/A/W_LLVMFuzzerTestOneInput_drain.v (dc_stA..dc_stF / dc_calls), whose
    structure this file ports:
      - &g_lock lives in s7 (reg 23), not in the frame cell F+40: dc_regs carries `getr regs 23 = w64 s7v` with
        s7v = rg_lock fr_RG before 0x84910 and s7v = 1 after it (`li s7,1`), which is what lregs_common asks of
@@ -32,9 +32,9 @@
        frame's 128 bytes.
      - the arm has no join block: 0x84934 jumps straight to the latch, s9 (= t, reg 25) and s4 (= the cursor,
        reg 20) are never reloaded, so dc_stF lands on INV_K itself.
-     - check_no_loss is the kit's cnl_spec, lib/B/W_contract.v:2054 (cnl_post :1967, CNL_STK :1966 = 16640,
+     - check_no_loss is the kit's cnl_spec, lib/B/W_contract.v:2055 (cnl_post :1967, CNL_STK :1966 = 16640,
        Section w3n), taken at G = [(HA + 64, 32)], the drained slot's two list headers.
-     - drain's aothers_at compares the fds modulo 2 ^ 32 (lib/B/W_contract.v:969, the machine's `beq a1,a4`),
+     - drain's aothers_at compares the fds modulo 2 ^ 32 (lib/B/W_contract.v:970, the machine's `beq a1,a4`),
        where image A compares them outright.
      - ablocks_sep's second clause is over the block's REQUEST size already (lib/B/W_LLVMFuzzerTestOneInput_cut.v
        :412-416), so no widening step (image A's FP_REQ) appears at the two calls that name a footprint.
@@ -43,13 +43,14 @@
    on is lib/B/W_LLVMFuzzerTestOneInput_drain_defs.v (the arm's addresses, DLK, dr_env and the model notions);
    the arm's first stage (0x8489c-0x84900) and the closing file are other lanes'. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_LLVMFuzzerTestOneInput_drain_calls.v, with its module paths and module names changed; 13 of its 51 lines of code are new or changed and 3361 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (kind: segment lemma): the gone arm's model notions and its three LS-side obligation texts at
    image B, for the v3 LS layer's gone half; cited from lib/B/W_LLVMFuzzerTestOneInput_gone_base.v, not copied *)
 (* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3cTopxDefs.v (sha256
-   4012d84d8b61; internal record) at 1318828167d3, row G-BLS3-port (the gone half).
+   4012d84d8b61; internal record), row G-BLS3-port (the gone half).
    A's file COPIES the gone arm's model notions and the texts GN_LS_rig / GN_RI_step / GN_RI_end from the integration's
-   lib/A/W_LLVMFuzzerTestOneInput_gone_base.v (a working branch bb9dae5d905), which A's tree did not have.
-   Image B has its own gone_base (lib/B/W_LLVMFuzzerTestOneInput_gone_base.v, sha256 ee4640813df8 (internal record) at aa2172009cc9), so
+   lib/A/W_LLVMFuzzerTestOneInput_gone_base.v (a working branch), which A's tree did not have.
+   Image B has its own gone_base (lib/B/W_LLVMFuzzerTestOneInput_gone_base.v, sha256 ee4640813df8 (internal record)), so
    this file copies NOTHING: it re-exports B's gone_base, and every name of A's file is the gone_base name of the same
    spelling (A's names kept; the owners' rule for this port: cite B's gone_base, never copy it).
    Same text as A's copy (comments removed and whitespace collapsed, compared by a script on 2026-10-30), B gone_base
@@ -65,7 +66,7 @@
      equal by delta).
    - GN_RI_end (B :581-593; A's copy A :170-175): B adds `gn_op cx t m`, the same Forall and
      `(lm_gn m = 0 \/ lm_gn m = 1)` after `RINV cx t m`, and the same block tie after `mo_le MT S Sx cst`.
-   Both B texts are image A's gone_base texts at d3a30b1562c6, the A text before A's REQ1-REQ5.
+   Both B texts are image A's gone_base texts, the A text before A's REQ1-REQ5.
    Arguments: A's copies take MT LS RINV (MMAX) (A's Section gcopy).  B's Section g declares B first, so the two
    texts that read B are `GN_RI_step B MT LS RINV MMAX` and `GN_RI_end B MT LS RINV`; `GN_LS_rig MT LS RINV MMAX`
    reads no B and takes A's arguments.  The Checks at the end state these three applications.

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YC7z.v, with its module paths and module names changed; 18 of its 41 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_ignore_file_c.v; 30 of its 58 lines of code are new or changed and 13 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_provenance (fuzz_segconf.c:485-500; fuzz_segconf.asan 0x872e0, 232 bytes, 58 instructions; frame 32
    bytes): the contract of the ASan build's code, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return). Functional content: the plain contract
@@ -31,7 +32,7 @@
      sa_ostr (sa_strz plus sa_tail) where the plain contract had ocstrz_at; the fields' tails lie inside the mseg
      entry, whose 256 bytes sa_mseg fixes (cstr_enc 96 at 0x3c and at 0x9c end by 0x9c and 0xfc).
    - length + 1 < 2 ^ 32 for each argument: the row's range check, aread_ok, asks it (fuzz_command
-     lib/A/Rt/RtDefs.v:35-36 at 501c0d516c69); sa_addr bounds it only by 2 ^ 63.
+     lib/A/Rt/RtDefs.v:35-36); sa_addr bounds it only by 2 ^ 63.
    - sa_heap of want (in m = calloc(1, 0x2414)) and of each argument (seg_spec.role_file_ptr / ignore_file_ptr,
      fields of the reader's block c = malloc(0x40e8); PREMISES-A section 2.3) in place of the plain
      `apart _ _ lo sp`: a live heap block lies outside the stack window and outside the interceptor's scratch.
@@ -54,8 +55,8 @@
    the strcmp row asks).
    Call site: LLVMFuzzerTestOneInput 0x85568 (provenance/evidence/image-tables/callsites.asan.tsv).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); rows 16-19 were added by the
-   accepted v1, 5e0b8a44fdc):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; rows 16-19 were added by the
+   accepted v1):
      RtString.astrcmp_realizes (row 17) at the strcmp trampoline (image A 0x43a14), for both calls.
    It is NOT a premise of this contract: the statement does not mention it. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

@@ -1,6 +1,6 @@
 # AUDIT: measured acceptances of fuzz_uci memchr-A, memchr-B and strlen-A (cmpkit 4bbd3a74be89)
 
-Fresh reviewer, 2026-10-30, as the unit owner 15:20Z requires. Scope: `acceptances.tsv` of `memchr-A`, `memchr-B` (`this branch` 764959497e9c) and `strlen-A` (same branch, head 5a9d6ea6f4e; it changes no memchr-A/B file). Includes the full-target-list check (the unit owner 15:40Z, a sister lane's finding). I did not change the evidence. I measured again from the images with my own code. The only kit call I made is strictcmp2's `tcmp`, from a copy of the kit, for the full-target-list check and to reproduce `chain.tsv`.
+Fresh reviewer, 2026-10-30, as the unit owner 15:20Z requires. Scope: `acceptances.tsv` of `memchr-A`, `memchr-B` (`this branch`) and `strlen-A` (same branch, head; it changes no memchr-A/B file). Includes the full-target-list check (the unit owner 15:40Z, a sister lane's finding). I did not change the evidence. I measured again from the images with my own code. The only kit call I made is strictcmp2's `tcmp`, from a copy of the kit, for the full-target-list check and to reproduce `chain.tsv`.
 
 ## Top line
 
@@ -141,7 +141,7 @@ Bounds are read from the code. For every row: U and R are equal over all entries
 
 memchr-B has the same table addresses as memchr-A, except `GetHandleSignalMode`: 0x96ce8 \| 0x98e98, equal.
 
-## strlen-A (scope addition; head 5a9d6ea6f4e)
+## strlen-A (scope addition; head)
 
 - **Inputs:**
   - `strlen-A/MANIFEST.md`, `tables/{acceptances,members,chain,jtcheck,closure}`, `scripts/mk_evidence_strlen_kit.py`.

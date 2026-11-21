@@ -23,9 +23,10 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 792 of its 874 lines of code are new or changed and 4971 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): segment B6 of
    reac_segconf_parse_file's walk (0x87e38), its LONG half: b6_long_ok : forall f0 n, HA_REF3 B n -> H_LONG (fx := f0) B n,
-   the first conjunct of S_B6 (lib/B/Prog/pf_pieces.v:925) with HA_REF3 for HA_TAIL (the REF3 half, H_REF3 from HA_TAIL,
+   the first conjunct of S_B6 (lib/B/Prog/pf_pieces.v:926) with HA_REF3 for HA_TAIL (the REF3 half, H_REF3 from HA_TAIL,
    is the lane's other file). The B6 segment lane of the image-B G3 walk owner, prover a B6 sub-lane, 2026-10-30.
    proves no function (kind: segment piece of reac_segconf_parse_file's image-B walk; the function's rule-24 record is
    the rule-24 lookup record: no released proof, ADAPTED from the image-A and UBSan walks).
@@ -78,7 +79,7 @@
    from pf_st; s1, s4 (SHADOW_OFF), gp, tp, s0 from pf_fi's registers; s11 = at, s7 = len, s6 = ln + 1 from INV_LONG's
    registers; the window and the call's stack from pf_cx's afn_pre (b6_geo); lead <= len from pfA_facts.O2_strspn_rest.
    SECTION HYPOTHESES: STRSPN (RtString.astrspn_realizes at the listing's strspn trampoline, gotwA, guardA, at every FP
-   state, pf_pieces.v:849), SIGP (SegObj.seg_sig_prog) and VRO (SegObj.seg_val_relro), both as the lane's brief names
+   state, pf_pieces.v:850), SIGP (SegObj.seg_sig_prog) and VRO (SegObj.seg_val_relro), both as the lane's brief names
    them and neither used by this half's proof, and TL (SegPaLib.PALib B: aj_art_at's errno cell, pal_env; agreed with
    the B6 segment lane, 2026-10-30, as the B5 and B9 siblings take it). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
@@ -268,7 +269,7 @@ Section d. Context {rc : YM05.RunCeil} {SK : YI16.sink_head} {PI : PAImg seg_lis
 #[local] Notation SIG s := (@pa_sigma _ seg_listing PI s).
 #[local] Notation rdW W mem := (aview SEGS (w_H W) mem).
 Variable B : asyms.
-(* the strspn entry at the listing's trampoline (pf_pieces.v:849), at every FP state *)
+(* the strspn entry at the listing's trampoline (pf_pieces.v:850), at every FP state *)
 Hypothesis STRSPN : forall fx0 : YK11.FPState,
   @RtString.astrspn_realizes fx0 rc SEGS B (pa_sigma SS___interceptor_trampoline_strspn) gotwA guardA.
 Hypothesis SIGP : seg_sig_prog (PI := PI).

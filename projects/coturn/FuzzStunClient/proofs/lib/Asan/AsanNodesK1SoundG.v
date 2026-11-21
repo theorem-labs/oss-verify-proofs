@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -128,6 +129,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -178,7 +180,7 @@ Proof.
 Qed.
 
 Theorem node_clz_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => K1N.node_clz SEGS nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => K1N.node_clz SEGS nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -299,7 +301,7 @@ Lemma store_ok8_bytes_g : forall m (a : Z),
 Proof. intros m a Ha Hw H. apply store_ok_bytes_g; [exact Ha | cbn; lia | exact H]. Qed.
 
 Theorem node_bysizelog_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => K1N.node_bysizelog nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => K1N.node_bysizelog nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -418,7 +420,7 @@ Proof.
   repeat (apply Forall_cons; [lia|]). apply Forall_nil.
 Qed.
 Theorem node_initcache_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => K1N.node_initcache nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => K1N.node_initcache nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -486,6 +488,7 @@ Qed.
 End Sound.
 
 Section Table.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -505,7 +508,7 @@ Variable FS0 : Fs.Fs.
 Hypothesis SEGS_wr : segs_wr_ok SEGS.
 Hypothesis CSPEC : clz_spec SEGS T.
 Hypothesis BSPEC : bsl_spec SEGS T.
-Theorem k1_xn_sound : ext_stmt SEGS A nx0 LIMIT (K1N.xn SEGS nx0 T) SINV argH FS0.
+Theorem k1_xn_sound : ext_stmt SEGS A nx0 LIMIT (K1N.xn SEGS nx0 T) SINV argH FS0 sfl.
 Proof.
   intros id args. unfold K1N.xn.
   destruct (Nat.eqb id 111); [apply node_clz_sound; assumption|].

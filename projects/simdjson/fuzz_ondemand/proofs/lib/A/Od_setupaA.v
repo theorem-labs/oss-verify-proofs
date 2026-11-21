@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -48,7 +49,7 @@ Lemma aevt_splitinto :
   Z.of_nat (length (rt_live RT Σ)) + 4 <= LIVE_MAX -> 1 + vcost_pushes (length (poffs d)) 0 0 <= rt_credit RT Σ ->
   (length (rt_frames RT Σ) + 1 < FRAMES_MAX2)%nat ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + ATPA_SPLITINTO_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + ATPA_SPLITINTO_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   (forall (Σ' : rts RT) (A' : Z) v t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m', frm0 fc' ->
      rt_after_f RT Σ' (bv_unsigned sp) lo m m' ->
@@ -82,7 +83,7 @@ Lemma aevt_empl :
   size + 1 <= 2^24 -> fobj RT Σ m V 24 ->
   Z.of_nat (length L0) + 4 <= LIVE_MAX -> vcost_push cap size <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + ATPA_PUSH_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + ATPA_PUSH_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   (forall (Σ' : rts RT) (A' : Z) v t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m', frm0 fc' ->
      rt_after_f RT Σ' (bv_unsigned sp) lo m m' ->
@@ -111,7 +112,7 @@ Lemma od_cutA_intro : forall (Σ0 Σx : rts RT) (m0 mx : mem) (usp S1 f lo D act
     (cra cs0 cs1 cs2 cs3 cs4 cs5 cs6 cs7 cs8 cs9 cs10 cs11 : word) (x376 x384 : word) (z392 : byte)
     (j0 j192 j216 j224 j248 j352 j393 j400 h3 jd jp tS : list byte) (h0 h1 h2 : word),
   usp mod 16 = 0 -> usp + 16 <= USTACK_TOP -> S1 mod 32 = 0 -> usp - 528 <= S1 <= usp - 512 ->
-  rt_sp0 RT Σ0 - STACK_WIN <= lo -> lo + FUZZ_STACK <= usp -> f mod 64 = 0 -> 0 < f ->
+  rt_sp0 RT Σ0 - STACK_SPAN <= lo -> lo + FUZZ_STACK <= usp -> f mod 64 = 0 -> 0 < f ->
   rt_frames RT Σ0 = [] -> (forall p n, In (p, n) (rt_live RT Σ0) -> 0 < n) ->
   Z.of_nat (length (rt_live RT Σ0)) + FUZZ_LIVE <= LIVE_MAX -> FUZZ_COST <= rt_credit RT Σ0 ->
   ART RT Σx mx -> mem_inv asegs mx -> stk asegs mx lo S1 -> rt_frames RT Σx = [(f, 3%nat)] -> rt_sp0 RT Σx = rt_sp0 RT Σ0 ->
@@ -328,7 +329,7 @@ Proof using LIB_loc AF FDO MST RTF SPL EMP.
     end end. }
   cbv beta. intros ms3 (m3 & -> & MU3 & WM3 & MI3 & FRl3 & FH3 & FS3).
   apply evt_done. unfold oa_W1h in MU3. fold S in MU3, FS3.
-  assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+  assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
   assert (FPW : fp_ok RT Σ1 lo [(S1, S1 + 408); (f, f + 24); (S, S + 36)]).
   { repeat apply Forall_cons; [| | | apply Forall_nil]; cbn [fst snd].
     - left. ul.
@@ -553,7 +554,7 @@ Proof using LIB_loc AF FDO MST RTF SPL EMP.
   rt_transport_nw m5 m6 AG56 ltac:(intros x Hx; cbn [cells_size csize Nat.add length] in Hx; cbv beta; clear - Hx S1R; lia).
   clear AG56 ACL.
 
-  assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP6; exact LOW1).
+  assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP6; exact LOW1).
   assert (INF2 : In (f, 3%nat) (rt_frames RT Σ2)) by (rewrite FRS6; left; reflexivity).
   apply (aevt_evt RT AF PMc MST).
   eapply evt_cut.

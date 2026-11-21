@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzAdaptP.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzAdaptP.v; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/RtBzAdaptP.v of this library by derive_y.py b7b132fb12a7: module paths lib.A -> lib.AU, the image module Asan -> AsanUbsan and Img0 -> Img0U, addresses moved from fuzz_headamp's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/RtBzAdaptP.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 (* The post side of the adapter (G3, the write posts): a lib/A/Bz body walk run on the cleaned store
    (RtBzClean.clean), read at a call site of this tree's contracts as RtDefs.art_post with a write set E.
@@ -12,7 +12,7 @@
      is kept, and on E the view is the walk's own store, read through the walks' reader (BM.mrd).
    - the store only grows along a walk (evt_grows, from YI04.msteps_mem_grows), which is what keeps every visible
      byte visible and every present byte present across the call - the two clauses art_post and the donor's frame
-     law (YG0d.v:447 al_frame) ask for.
+     law (YG0d.v:448 al_frame) ask for.
    Each byte of E must be outside the model's owned set (awrite_ok gives that for a destination), not a dropped
    address (RtBzClean.Dc: the cleaned store holds nothing at a read-only image address, so a walk cannot write
    there) and not hidden (RtBzAdapt.wH_false_of_writable gives that from awrite_ok). *)

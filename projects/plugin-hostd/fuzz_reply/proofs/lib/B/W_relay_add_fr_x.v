@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30 (G-BRA, B top_x row 21 RA_x): the B top's RA_x at its cf instance.
 
-   fr_relay_add_x is the B top's RA_x (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:220, with the room record RP after MT as
+   fr_relay_add_x is the B top's RA_x (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:221, with the room record RP after MT as
    the room kit's ra_spec_g_x states it, lib/B/W_contract_x.v Section w5g) at B := TfibB, PST := [], ARx := ARX_ra
    (top_x.v:154-155's ARX, the same body), RG := fr_globals, CTX := YCk0.CTX_AREALLOC, from lib/B/W_relay_add_x.v's
    pb_relay_add_x.  Its Section hypotheses are top_x's own texts (TL, TLF, MLAW, FFL, HRO, ALOCK, AUNLOCK, the realloc
@@ -11,6 +11,7 @@
    0x824d0).  Every other walk premise is discharged here: the cf laws as top_x.v:610-648 derives them, wake by
    lib/B/W_wake_x.v pb_wake_x, the placement facts by lib/B/W_relay_add_cut.v Section fr / W_wake_x.v wk_hv8_fr, and
    the image facts by computation at TfibB.  It holds at any meter MT with MLAW and MO_FR (top_x's meter Variable). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -48,7 +49,7 @@ Import ListNotations.
 Local Unset Lia Cache. Local Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
-(* ---- THE INSTANCE: the B top's cf relation (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:154-155), TfibB, fr_globals, the K0 realloc table ---- *)
+(* ---- THE INSTANCE: the B top's cf relation (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:155-156), TfibB, fr_globals, the K0 realloc table ---- *)
 Section inst.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Abbreviation segs := (@pa_segs _ fr_prog_listing PB_fr).

@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image range set to libreac/fuzz_boxreg's own (Reusable/YImgTop.v IMG_LO, IMG_TOP). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YCbq.v, with its module paths and module names changed; 234 of its 308 lines of code are new or changed and 2888 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_frame.v, with its module names changed; 294 of its 333 lines of code are new or changed and 269 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_strkit.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_strkit.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs's string kit: a C string carried across a program call in U form, for every fs walk that keeps a string across a
    call (ALLOC fuzz_strdup first; FSW_K imports this file by path, a Theorem Labs lane 21:40Z). The callee's journal runs over the
    memories with U's shadow bytes read as 0 (FSH_Gen.v afn_preU / fpostU), so the string is carried on that reading and
@@ -27,7 +28,7 @@
    Ported from: a Theorem Labs lane's lib/A/FMW_kitS.v:21-114 (cstr_ok_kept, cstr_ok_kept_blk, cstr_kept_kept, shadow_hull_vis_sub,
    word_end_mono) and lib/A/FMW_kit.v:113-168 (block_word_tail_vis, fmw_word_end_le, fmw_extent_mod8), a working branch,
    restated in fs's U form. Renamed fmw_* -> fsk_*; fm's cstr_ok carries a 32-bit clause, fs's (S0
-   7dd4849273a FSH_Gen.v cstr_ok) a length bound and amem_range over len + 8: the conjunct pattern follows fs's.
+   FSH_Gen.v cstr_ok) a length bound and amem_range over len + 8: the conjunct pattern follows fs's.
    fsk_segs_img is FSW_K.fs_segs_img restated (same proof) so that this file does not import FSW_K, which imports it.
    No Section hypothesis: IMG is a premise of the lemmas that use it. Rule 24: no function proved here. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

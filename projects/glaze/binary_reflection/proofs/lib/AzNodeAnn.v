@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the co_rdr goal at the post model, from nmodel's channel-reader conjunct). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -247,7 +248,7 @@ Proof. pose proof sfloor_ge as SFG_.
       destruct (KS z ltac:(unfold beg, uE in *; lia)) as (b & Hb & Hv). exists b. split; [|exact Hv].
       rewrite <- Hb. unfold MR. symmetry. apply (SHV E cs model M z eq_refl). unfold beg, n, uE in *. lia.
   - (* [comment removed for export] *)
-    intros fx' R' M' mdl' HFX' Hkept Hfr Hdef Hadr Hscr HAINV' (Hh' & Hfs' & Hfds').
+    intros fx' R' M' mdl' HFX' Hkept Hfr Hdef Hadr Hscr HAINV' (Hh' & Hfs' & Hfds' & Hrdr').
     set (E' := ext_call E v R').
     assert (Hag : env_agree v E E') by apply ext_call_agree.
     assert (HLcE : blocks_den E' (a_vis cs) = Lc) by (unfold Lc; eapply blocks_den_agree; [exact Hag | exact (pairs_vars_lt_app_l _ _ _ Fallow)]).
@@ -337,6 +338,9 @@ Proof. pose proof sfloor_ge as SFG_.
       * rewrite (uE_agree v E E' (a_meter cs) Hag Fmt). exact (co_kcap HC).
       * rewrite (uE_agree v E E' (a_fbud cs) Hag Ffb). exact (co_fbud HC).
       * eapply GPS.floor_sem_agree; [exact Hag | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+      * (* [co_rdr] (AzGPS.v:244) at the POST model: [nmodel]'s new last conjunct
+           (AzNSpec.v:92) transports the caller's own reader. *)
+        rewrite Hrdr'. exact (co_rdr HC).
     + exact Hfs'.
 Qed.
 End Sound.

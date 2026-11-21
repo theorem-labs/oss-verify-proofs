@@ -1,6 +1,6 @@
 (* Walk of fuzz_lock's LLVMFuzzerTestOneInput (fuzz_lock.c:181-207) in fuzz_lock.plain, 0x12b78, against
-   LLVMFuzzerTestOneInput_sr_contract, in the form of libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput.v (release
-   25e3d17bdb50). check_no_overread and check_lookup are taken through their contracts (Section hypotheses CNO and
+   LLVMFuzzerTestOneInput_sr_contract, in the form of libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput.v (release).
+   check_no_overread and check_lookup are taken through their contracts (Section hypotheses CNO and
    CL, discharged in LLVMFuzzerTestOneInput_link.v). Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

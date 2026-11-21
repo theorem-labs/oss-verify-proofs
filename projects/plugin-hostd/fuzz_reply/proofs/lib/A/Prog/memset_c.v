@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/R_memset.v. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/libreac/fuzz_scene/lib/Prog/memset_c.v, with its module paths and addresses changed. *)
-(* Port-from: origin/cold/c-asan-rt-stateio-n 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Prog/memset_c.v.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Port-from: proofs/omx-clap-core/fuzz_state/lib/A/Prog/memset_c.v.
    Changes (PfCalls, 2026-10-29): module path fuzz_state -> fuzz_reply; 1 fuzz_state.asan address numerals moved to
    fuzz_reply.asan (1 code, 0 data cell), each paired by code (instruction by instruction, pc-relative
    fields masked) or, for a data cell, by the auipc pair that loads it (table: lib/A/RT_gxa_mem_Tbl.v); 0 geometry

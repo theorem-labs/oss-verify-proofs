@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (module paths qualified against the K5 twins). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -13,7 +14,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.leptonica.jpegiostub_fuzzer.images Require Import Asan.
 From OSSVerify.Proofs.leptonica.jpegiostub_fuzzer.lib.K5.AS Require Import PropExec CatExec CatSim SeqExec StoreOk Hoare RefMemcpyLib.
 From OSSVerify.Proofs.leptonica.jpegiostub_fuzzer.lib.K5.AS Require Import PropExec.  (* [comment removed for export] *)
-Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
+Local Instance asanreflect_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 From OSSVerify.Proofs.leptonica.jpegiostub_fuzzer.lib.K5.AS Require Import SumsLib.
 From OSSVerify.Proofs.leptonica.jpegiostub_fuzzer.lib.K5.AS16 Require Import AsanIMemset AsanIMemcpy AsanMemIsZero.
 From OSSVerify.Proofs.leptonica.jpegiostub_fuzzer.lib.K5.AS Require Import MemsetLib.

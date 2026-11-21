@@ -5,10 +5,11 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module names changed; 276 of its 311 lines of code are new or changed and 219 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A), segment S_MF_KEYA: the key's back strip, L2 0x86440 .. J2 0x86550
    (m_file_s_keya_d.v ka_l2 : KA_J2_stmt n -> KA_L2_stmt n), by strong induction on b - a, one iteration per step
    re-seeded with a light state, in the form of m_file_s_keya_l1.v (the front strip) and plugin-hostd/fuzz_command's
-   lib/A/Prog/answer_l.v (origin/ossv/recipes 501c0d516c69):
+   lib/A/Prog/answer_l.v:
      0x86440  srli a3,a1,3; add a3,a3,s2; lb a3,0(a3); bnez a3 -> slow  the instrumented check of the byte at a1
      0x86450  addi a3,a2,-1; lbu a4,0(a3); bltu s3,a4 -> J2             the byte at a2 - 1 above ' ': not blank, stop
      0x8645c  srl a4,s9,a4; andi a4,a4,1; beqz a4 -> J2                 the blank mask: not blank, stop

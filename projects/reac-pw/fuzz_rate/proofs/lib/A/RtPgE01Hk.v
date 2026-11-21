@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths, module names and addresses changed; 1418 of its 1528 lines of code are new or changed and 904 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgW3a.v; 527 of its 606 lines of code are new or changed and 1449 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, same loaded bytes): the kit of part HDR of
@@ -16,7 +17,7 @@
    Templates (ported by edit): lib/A/RtPgRoute808.v (the region route of the instrumented 1-byte checks: the
    metadata byte as a one-byte read-only region at an extra atom, reached through alias facts); lib/A/RtPgSteps.v
    PART 2 (one symbolic state per input-length arm, the length register pinned to a literal); the role walk
-   proofs/reac-pw/fuzz_role/lib/A/RPgW3a.v at commit 67b6b93ee241 (the input bytes as a region
+   proofs/reac-pw/fuzz_role/lib/A/RPgW3a.v (the input bytes as a region
    at the cursor's atom, the real frame's cells as a write window at s1's atom, reading the last state's registers
    and chunks: w3_reg_atom, w3_slot, w3_chunk8, w3_keep_run, w3_nz); the released libreac/fuzz_boxreg
    lib/A/Prog/BoxLxEntry.v at origin/ossv/recipes (eb_arodata: the read-only view kept by a journal whose

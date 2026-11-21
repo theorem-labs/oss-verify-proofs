@@ -30,7 +30,7 @@ SUBS = [
     (r'\(reac-repacer/fuzz_uci asan-ubsan, pau-pipeline-next3 ORIGINAL\)', '(the reac-repacer/fuzz_uci asan-ubsan pin)'),
     (r'\(pau-pipeline-next3 reac-repacer result/bin/fuzz_uci\)', '(the reac-repacer/fuzz_uci asan-ubsan pin)'),
     (r'; generator h-[a-z]+-[a-z0-9]+ [\w-]+/sub/exitdrv/gen_exitB\.py\.', '; generator provenance/evidence/startup-B/exitdrv/gen_exitB.py.'),
-    # second pass (on the text of 44d69bf53aa): frozen / third-party tools are named by sha256 only (their copies hold
+    # second pass (on the text): frozen / third-party tools are named by sha256 only (their copies hold
     # host-path regexes and cannot ship in provenance/evidence/); this lane's own writer lives in its evidence slice
     (r'provenance/evidence/tools/(atable|gen_ad2|gen_ad1k|af0m|ae3i)\.py \(frozen', r'\1.py (frozen'),
     (r'provenance/evidence/tools/(gen_ab1hk|boxb1)\.py \(sha256', r'\1.py (sha256'),

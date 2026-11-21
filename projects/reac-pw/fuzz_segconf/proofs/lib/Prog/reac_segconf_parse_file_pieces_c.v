@@ -54,10 +54,10 @@ Open Scope Z_scope.
     The pieces (counts: instructions / conditional branches / calls), the callee
     contracts each walk takes as premises, its call sites and where each argument comes from. Callee contracts:
     snprintf 0x19078 (snprintf_c.v: printf_env, the
-    format in .rodata, the %s argument's slack); strchr 0x1eadc and strncasecmp 0x1ecc0 (commit
-    d8911fcbf9ff); strlen 0x1ec30, memcpy 0x1e52c, memset 0x1e930, bcmp 0x1e42c (this directory's
-    strlen_c.v, memcpy_c.v, memset_c.v, bcmp_c.v); strspn 0x1efcc and strcmp 0x1ebf8 (commit
-    06702a5f1f22, strspn_c.v, strcmp_c.v); strcasecmp 0x1ea28; trim
+    format in .rodata, the %s argument's slack); strchr 0x1eadc and strncasecmp 0x1ecc0;
+    strlen 0x1ec30, memcpy 0x1e52c, memset 0x1e930, bcmp 0x1e42c (this directory's
+    strlen_c.v, memcpy_c.v, memset_c.v, bcmp_c.v); strspn 0x1efcc and strcmp 0x1ebf8 (
+    strspn_c.v, strcmp_c.v); strcasecmp 0x1ea28; trim
     0x15660 and refuse 0x15558 (trim_c.v, refuse_c.v, family F2); reac_box_catalogue_by_token 0x15e04 and
     reac_box_catalogue 0x15dec (reac_box_catalogue_by_token_c.v, reac_box_catalogue_c.v). Every string argument in
     buf (sp + 0x158 .. 0x357), cur_name, known or low lies in the frame, above the callee's sp and apart from c; its
@@ -117,8 +117,8 @@ Open Scope Z_scope.
 
     Notes on the statement (each with the reason):
     - The counters. reader_pre's first text bounded c->refused only by 2^31, and refuse_pre asked for the same at
-      every call, while one file can make 65535 refusals: fixed at
-      commit 3e75bf1c5aa6 (the u32 bounds: reader_pre + 2^17, refuse_pre + 1). pf_cnt carries the
+      every call, while one file can make 65535 refusals: fixed
+       (the u32 bounds: reader_pre + 2^17, refuse_pre + 1). pf_cnt carries the
       room per byte left.
     - That cur_name holds seg[i].name is not a cut fact: the spine carries cur_name (nm) beside cur,
       as the C does, and no piece reads the relation.

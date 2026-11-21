@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the proof runs the image against run_segments, lifted by RomStable.srun_init with the new vdso_none_hsegs lemma, and reads the revision's extra launch and valid_input conjuncts; RomStable imported; asan_realizes_spec_stmt takes the mmap base check, the launch, the channel reader and the entry-launch check, which the start-up reads and the proof passes from valid_entry and valid_input). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType StackLayout State Run.
 From OSSVerify.mbedtls.fuzz_pkcs7.images Require Import Asan.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import ShapeAlg.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require SpinAlg SrzHaltsB.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require SpinAlg SrzHaltsB RomStable.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Spec Require Spec SpecExits.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.LimSim Require Import LimSimSys.
 Import ListNotations.
@@ -17,12 +18,18 @@ Definition asan_img : Image :=
 (* [comment removed for export] *)
 Definition HSEGS : list Segment := Asan.M.loaded_segments.
 
+(* The image carries no vDSO text mapping of its own ([ABoot.RomStable.srun_init]'s side condition). *)
+Lemma vdso_none_hsegs : RiscvSemantics.vdso_image HSEGS = None.
+Proof. reflexivity. Qed.
+
 (* [comment removed for export] *)
 Definition asan_realizes_spec_stmt : Prop :=
   forall (sp brk0 mbase : word) (rdraw : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk HSEGS brk0 ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     valid_id (in_uid inp) -> in_abort_terminal inp = false -> in_va_size inp = Sv48 -> valid_hwcap (in_hwcap inp) ->
+    valid_mmap_base mbase -> valid_launch inp -> in_channel_reader inp = true ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
     SpinAlg.srealizes HSEGS
       (init_config HSEGS Asan.M.init_pc Asan.M.phdrs sp brk0 mbase rdraw target_alloc_limit inp)
       (Spec.spec (in_argv inp) (in_fs inp)).
@@ -35,11 +42,16 @@ Proof.
   intros REAL [asp abrk amb arnd] inp Hent Hvalid.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. cbn [asan_img] in Hent.
-  destruct Hent as [Vsp [Vbrk [Vmb Vfit]]].
-  pose proof Hvalid as (Va & Ve & Vfs & Vrel & [Vuid Vgid] & Vnf & Vsm & Vhw & Vab & Vva & _).   (* [comment removed for export] *)
+  destruct Hent as [Vsp [Vbrk [Vmb [Vfit Vlau]]]].
+  pose proof Hvalid as (Va & Ve & Vfs & Vrel & Vreal & [Vuid Vgid] & Vnf & Vsm & Vhw & Vab & Vva & _).   (* valid_input's conjuncts, as TopAsan.v:113 reads them *)
+  pose proof (Run.valid_input_channel_reader inp Hvalid) as Vrd. pose proof (Run.valid_input_launch inp Hvalid) as Vvl.
   unfold asan_img.
-  apply (SrzHaltsB.srealizes_must_exit_in_scfg HSEGS SpecExits.codes02 _ _ _ _ _ _ _ _ (Spec.spec (in_argv inp) (in_fs inp))).
-  - exact (REAL asp abrk amb arnd inp Vsp Vbrk Va Ve Vfit Vuid Vab Vva Vhw).
+  (* LPS revision (run_segments): [must_exit_in_scfg] runs the image against
+     [run_segments HSEGS inp asp amb]; the walk over HSEGS lifts by [ABoot.RomStable.srun_init]. *)
+  apply (SrzHaltsB.srealizes_must_exit_in_scfg (run_segments HSEGS inp asp amb) SpecExits.codes02 HSEGS
+           _ _ _ _ _ _ _ _ (Spec.spec (in_argv inp) (in_fs inp)) eq_refl).
+  - apply ABoot.RomStable.srun_init; [exact vdso_none_hsegs |].
+    exact (REAL asp abrk amb arnd inp Vsp Vbrk Va Ve Vfit Vuid Vab Vva Vhw Vmb Vvl Vrd Vlau).
   - apply SpecExits.exits_in_spec.
 Qed.
 

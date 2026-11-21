@@ -20,8 +20,8 @@ Open Scope Z_scope.
 
 (* reac-pw/fuzz_segconf's ubsan_agrees (Statements.v: agrees_in Env.alloc_forced_only lim_source lim_target
    Images.plain Images.ubsan) by the frame's AgreeFrame.ubsan_agrees_of_slots at the agreement shape
-   ag_shape checksum_shape (sb_cap = CAP_AG), in the form of reac-pw/fuzz_pin's AgreePin.v (commit
-   a2a7540da98), with segconf's G and GI in both builds (G = frame_G = longl, plain 0x32ac0 / UBSan 0x33460, 121
+   ag_shape checksum_shape (sb_cap = CAP_AG), in the form of reac-pw/fuzz_pin's AgreePin.v,
+   with segconf's G and GI in both builds (G = frame_G = longl, plain 0x32ac0 / UBSan 0x33460, 121
    bytes; GI = GI_SLOT: longl[120] = 0):
    - the plain slot in its halts (realizes) form at the agreement shape (Prog/SegSlotAG.slot_of_lemmas_ag over the
      plain segment lemmas, Prog/SegEnd.segs_holds, taken at the halts shape checksum_shape);
@@ -32,7 +32,7 @@ Open Scope Z_scope.
      and the cut-free calloc (CallocHolds.calloc_cf_holds) give malloc_contract_cfg and
      calloc_contract_cfg (room_ag: room_slots, sb_cap <= CAP_AG, sb_bytes + n <= 2^29) under the zlib run-limit law
      2^34 <= vm_limit (AgreeZlib.zlib_limit): malloc_cfg_of_cf (pin's) and calloc_cfg_of_cf (libreac/fuzz_decode's
-     U/Prog/LLVMFuzzerTestOneInput_cfb.v calloc_ag_of_cf, commit 25e3d17bdb50, at the big cap);
+     U/Prog/LLVMFuzzerTestOneInput_cfb.v calloc_ag_of_cf, at the big cap);
    - the room of the driver's calls at SBD_AG for every payload: AgreeShape.ag_room_calls.
    ubsan_agrees_of_callees is the agreement modulo the segment statements of both builds (the plain walks' SegEnd
    statements, the UBSan cut-free statements of E01, L01, L03, M02, X01 and the UBSan evt statements of M01, L02,

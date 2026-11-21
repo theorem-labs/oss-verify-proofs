@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv facts are stated one word per slot of the revision's auxv layout, where ARCH_DLINFO's ten pairs come first, instead of one contiguous run of the released model's ten pairs, and AT_NULL is not named because its index moves with the kernel's rseq flag. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -28,14 +29,39 @@ Proof.
 Qed.
 Definition EL_AT_PHDR : Z := 0x10040.
 
-Definition el_auxv_words (x16 x11 rnd : Z) : list Z :=
-  [3; EL_AT_PHDR; 4; 56; 5; 11; 16; x16; 6; 4096; 11; x11; 12; x11; 23; 0; 25; rnd; 0; 0].
+(* LPS 727298f3: the auxv facts at the revision's auxv layout
+   (theories/LinuxProcessSem/StackLayout.v [auxv_entries] at 727298f3): ARCH_DLINFO's ten
+   pairs come first, so pair k's KEY is at byte 16*k off the auxv pointer and its VALUE
+   at 16*k + 8.  The old spec was the ten pairs of the released model's vector laid out
+   contiguously from av, AT_PHDR first; the payloads are unchanged and only the indices
+   moved:
+     AT_HWCAP  48/56   -> 160/168     AT_UID    80/88   -> 304/312
+     AT_PAGESZ 64/72   -> 176/184     AT_EUID   96/104  -> 320/328
+     AT_PHDR    0/8    -> 208/216     AT_SECURE 112/120 -> 368/376
+     AT_PHENT  16/24   -> 224/232     AT_RANDOM 128/136 -> 384/392
+     AT_PHNUM  32/40   -> 240/248
+   One fact per WORD rather than one contiguous run, because the revision's pairs 0..9,
+   12, 16..18, 21, 22 and 25 sit between the ones named here.  The old AT_NULL words are
+   not carried over: AT_NULL is pair 26 + 2*r with r the kernel's rseq flag, so a literal
+   index would pin that flag.  The same form as simdjson/fuzz_element's A/D_auxv.v. *)
+Definition el_auxv_word (m : mem) (a v : Z) : Prop := bytes_at asegs m a (le8 (Z_to_bv 64 v)).
+
+Definition el_auxv_at (m : mem) (av x16 x11 rnd : Z) : Prop :=
+  el_auxv_word m (av + 160) 16 /\ el_auxv_word m (av + 168) x16
+  /\ el_auxv_word m (av + 176) 6 /\ el_auxv_word m (av + 184) 4096
+  /\ el_auxv_word m (av + 208) 3 /\ el_auxv_word m (av + 216) EL_AT_PHDR
+  /\ el_auxv_word m (av + 224) 4 /\ el_auxv_word m (av + 232) 56
+  /\ el_auxv_word m (av + 240) 5 /\ el_auxv_word m (av + 248) 11
+  /\ el_auxv_word m (av + 304) 11 /\ el_auxv_word m (av + 312) x11
+  /\ el_auxv_word m (av + 320) 12 /\ el_auxv_word m (av + 328) x11
+  /\ el_auxv_word m (av + 368) 23 /\ el_auxv_word m (av + 376) 0
+  /\ el_auxv_word m (av + 384) 25 /\ el_auxv_word m (av + 392) rnd.
 
 Definition el_auxvA (lo : Z) (m : mem) : Prop :=
   exists av x16 x11 rnd,
     ro_cells asegs m EL_AUXV_CELL [C8 (Z_to_bv 64 av)]
-    /\ bytes_at asegs m av (u64s (map (Z_to_bv 64) (el_auxv_words x16 x11 rnd)))
-    /\ lo <= av /\ av + 160 <= USTACK_TOP /\ av mod 8 = 0 /\ 0 <= x16 < 2^64 /\ 0 <= x11 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ el_auxv_at m av x16 x11 rnd
+    /\ lo <= av /\ av + 400 <= USTACK_TOP /\ av mod 8 = 0 /\ 0 <= x16 < 2^64 /\ 0 <= x11 < 2^64 /\ 0 <= rnd < 2^64.
 
 Definition auxc (x : Z) : Prop := EL_AUXV_CELL <= x < EL_AUXV_CELL + 8.
 
@@ -49,8 +75,16 @@ Lemma el_auxv_agree : forall lo m m', el_auxvA lo m ->
 Proof.
   intros lo m m' (av & x16 & x11 & rnd & C & B & H) AGC AGS. exists av, x16, x11, rnd. split; [| split; [| exact H]].
   - apply (ro_cells_agree asegs m m' _ _ C). intros x Hx. apply AGC. unfold auxc. cbn [cells_size csize Nat.add] in Hx. lia.
-  - apply (bytes_at_agree asegs m m' _ _ B). intros x Hx. apply AGS. cbv beta.
-    rewrite u64s_length, length_map in Hx. unfold el_auxv_words in Hx. cbn [length Nat.mul Nat.add Z.of_nat Pos.of_succ_nat Pos.succ] in Hx. lia.
+  - destruct H as (Hlo & Hhi & _).
+    assert (AW : forall a v, lo <= a -> a + 8 <= USTACK_TOP -> el_auxv_word m a v -> el_auxv_word m' a v).
+    { intros a v Ha Hb Hv. apply (bytes_at_agree asegs m m' _ _ Hv). intros x Hx. apply AGS. cbv beta.
+      first [rewrite length_le8 in Hx | rewrite Mem.length_le8 in Hx | rewrite length_N_to_le_bytes in Hx].
+      try (change (Z.of_nat 8) with 8 in Hx). lia. }
+    unfold el_auxv_at in B |- *.
+    destruct B as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 & B9 & B10 & B11 & B12 & B13 & B14 & B15 & B16 & B17 & B18).
+    (* Exactly 17 splits, not [repeat apply conj]: [el_auxv_word] unfolds to [bytes_at],
+       which is itself a conjunction, so [repeat] would split the words apart too. *)
+    do 17 (apply conj; [apply AW; [lia| lia| assumption]|]). apply AW; [lia| lia| assumption].
 Qed.
 
 Lemma auxc_client_static : forall x, auxc x -> client_static x.

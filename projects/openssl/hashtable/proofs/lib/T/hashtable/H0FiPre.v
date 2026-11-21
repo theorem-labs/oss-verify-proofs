@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 ([res_bounds_vm]: the reservation bounds for the whole reserved ledger, the binary's reservations and the vDSO/vvar pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63.
@@ -75,3 +76,10 @@ Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 Lemma res_bounds : live_bytes (segments_reserved RSEGS) <= RB /\ Z.of_nat (length (segments_reserved RSEGS)) <= RC
   /\ chain_cover (res_pairs (segments_reserved RSEGS)) (to_Z (ioz 0x10000)) (to_Z (ioz 0x30e000)) = true.
 Proof. vm_compute. repeat split; congruence. Qed.
+
+(* LPS 727298f3: the same for the whole reserved ledger, the binary's reservations and the
+   vDSO/vvar pair *)
+Lemma res_bounds_vm : forall VM, res_vm VM ->
+  live_bytes (vm_reserved VM) <= RB /\ Z.of_nat (length (vm_reserved VM)) <= RC
+  /\ chain_cover (res_pairs (vm_reserved VM)) (to_Z (ioz 0x10000)) (to_Z (ioz 0x30e000)) = true.
+Proof. intros VM H. rewrite (res_vm_list VM H). vm_compute. repeat split; congruence. Qed.

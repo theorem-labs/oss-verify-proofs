@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap cuts vm_maps with maps_subtract; munmap_vmmaps and the secondary-chunk free proof follow). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -33,7 +34,7 @@ Lemma filter_all : forall {A} (f : A -> bool) l, (forall x, In x l -> f x = true
 Proof. induction l as [|x t IH]; intros H; [reflexivity|]. (lazymatch goal with |- ?G => let G' := eval cbn [List.filter] in G in change_no_check G' end). rewrite (H x (or_introl eq_refl)). f_equal. apply IH. intros y Hy. apply H. right. exact Hy. Qed.
 
 (* [comment removed for export] *)
-Lemma munmap_vmmaps : forall addr n m, vm_maps (m_vmmaps (munmap_model addr n m)) = map_remove (vm_maps (m_vmmaps m)) addr
+Lemma munmap_vmmaps : forall addr n m, vm_maps (m_vmmaps (munmap_model addr n m)) = maps_subtract (vm_maps (m_vmmaps m)) (u addr) (u addr + u n)
   /\ vm_noaccess (m_vmmaps (munmap_model addr n m)) = maps_subtract (vm_noaccess (m_vmmaps m)) (u addr) (u addr + u n)
   /\ vm_reserved (m_vmmaps (munmap_model addr n m)) = vm_reserved (m_vmmaps m) /\ vm_brk (m_vmmaps (munmap_model addr n m)) = vm_brk (m_vmmaps m)
   /\ vm_start_brk (m_vmmaps (munmap_model addr n m)) = vm_start_brk (m_vmmaps m) /\ vm_mmap_base (m_vmmaps (munmap_model addr n m)) = vm_mmap_base (m_vmmaps m)
@@ -154,7 +155,18 @@ Section SecFree.
     Proof.
       destruct sec_lits as (L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8).
       destruct (sbm_vmmaps _ mdl' SBM') as [E3 E4]. destruct (munmap_vmmaps addr n mdlk) as (V1 & V2 & _).
-      rewrite E3, E4, V1, V2, munmap_lazy, EKV, EKL, L7, L8. repeat split; reflexivity.
+      (* munmap cuts vm_maps with maps_subtract (08b1429); the secondary chunk is
+         exactly one ledger entry, apart from the rest, so the cut is map_remove *)
+      assert (HAP : forall bb ss, In (bb, ss) (vm_maps (m_vmmaps mdl)) ->
+                (bb = addr /\ ss = n)
+                \/ (0 < u ss /\ (u bb + u ss <= u addr \/ u addr + u n <= u bb))).
+      { destruct sec_rest as (REST & PM & AP). intros bb ss Hin.
+        apply (Permutation_in _ PM) in Hin. destruct Hin as [E | Hin].
+        - left. injection E as E1 E2. subst bb ss. split; reflexivity.
+        - right. destruct (AP _ Hin) as [P A]. cbn [fst snd] in P, A. rewrite L7, L8. split; [exact P | lia]. }
+      rewrite E3, E4, V1, V2, munmap_lazy, EKV, EKL.
+      rewrite (maps_subtract_exact (vm_maps (m_vmmaps mdl)) addr n ltac:(rewrite L8; lia) HAP).
+      rewrite L7, L8. repeat split; reflexivity.
     Qed.
 
     Lemma secfree_perm : Permutation ((addr, n) :: vm_maps (m_vmmaps mdl')) (vm_maps (m_vmmaps mdl)).

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS1s), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8v.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS1s.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 1s of the sweep phase of fuzz_grant's entry function on IMAGE B:
    0x81390 .. 0x813dc on the admitted path (the two bytes of `a` are the box the input
    asked for, malloc of the sweep buffer at 0x813d0, `mv s11,a0` at 0x813d8), and
@@ -10,7 +11,7 @@
    straight to the hand-built allocation). Five branches into the abort block 0x81d98
    are refuted here: 0x813a0, 0x813a8, 0x813b4, 0x813bc and 0x813d4.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS1s.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepS1s.v (a working branch, blob
    1314c624c, 671 lines), which carries no licence header of its own.
    Image B holds `a`'s address in s8 (image A: s2),
    the base in s4 and the width in s7 (image A: s7 and s10), reloads the table from

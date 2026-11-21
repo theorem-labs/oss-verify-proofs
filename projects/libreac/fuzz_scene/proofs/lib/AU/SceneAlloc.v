@@ -14,12 +14,13 @@
      lib/AU/YF0w.v:44 tfib_amalloc_realizes, lib/AU/YF0q.v:11 afree_realizes_closed; each is
      `forall B, TfibSyms B -> (forall t, as_dhash B t = tfib_dhash t) -> ..._realizes tfibsegs B`.
    The premises and the bridge, each closed:
-   - TfibSyms TfibB: YD2l.TfibB_syms (lib/AU/YD2l.v:101).
-   - as_dhash TfibB t = tfib_dhash t: TfibB's as_dhash field is tfib_dhash (YD2l.v:61), so `eq_refl`.
-   - SEGS: PI_scene's pa_segs is scene_segs (lib/AU/Prog/SceneImg.v:57) = AsanUbsan.M.loaded_segments
-     (lib/AU/Prog/SceneCode.v:18), which is tfibsegs (lib/AU/YB1v.v:12); the two are equal by conversion (`change`).
+   - TfibSyms TfibB: YD2l.TfibB_syms (lib/AU/YD2l.v:102).
+   - as_dhash TfibB t = tfib_dhash t: TfibB's as_dhash field is tfib_dhash (YD2l.v:62), so `eq_refl`.
+   - SEGS: PI_scene's pa_segs is scene_segs (lib/AU/Prog/SceneImg.v:58) = AsanUbsan.M.loaded_segments
+     (lib/AU/Prog/SceneCode.v:19), which is tfibsegs (lib/AU/YB1v.v:12); the two are equal by conversion (`change`).
    The rows name no symbol through SIGMA: the malloc / free pcs are fields of as_code B (pc_wrap_malloc,
    pc_malloc_ra0, pc_wrap_free, pc_free_ra0; Tfib_code, lib/AU/YF0l.v:10-11), which TfibSyms fixes. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YK11 YM05.

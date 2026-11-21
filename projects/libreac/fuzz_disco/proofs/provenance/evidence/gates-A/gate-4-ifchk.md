@@ -29,7 +29,7 @@ own xcell (`--ad1g`) and the run refuses without `--ad1g`. Run through `startup-
 KIMG-BSS rule), 33100 by the image (662 cells). Image A sha256 `5e39150dd810…`.
 
 (The earlier record read 1379 cells / 1460 = sym 22 + abs 771 + shadow 586 × 50; the base AF0m.v has one more abs cell —
-the REAL(vsnprintf) pin added by a22072733a16 — so 772 abs, 1380 cells; still 0 different. The abs / shadow split
+the REAL(vsnprintf) pin added — so 772 abs, 1380 cells; still 0 different. The abs / shadow split
 matches the 662 file-backed cells of gate 5 and the 586 shadow cells of shadowcheck.)
 
 ## Planted control (must fire)

@@ -5,15 +5,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 2169 of its 2293 lines of code are new or changed and 887 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F30.v, with its module paths and module names changed; 801 of its 920 lines of code are new or changed and 2174 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/X12.v, with its module paths and module names changed; 154 of its 271 lines of code are new or changed and 803 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved.
    Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
      image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
        sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
      source runs: lib/B/Prog/Seg/X12.v x12_store_evt (:303), x12_b_evt (:360), x12_a_evt (:393),
-       x12_x2_evt (:503) at a working branch 3803efccea0
+       x12_x2_evt (:503) at a working branch
        (blob 9385278636c06c8f9da345e5de1b118e2e6f17b4);
-     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
      compare: x12_store_evt_of_F, x12_b_evt_of_F, x12_x2_evt_of_F (evtF_evt + rng_all) re-derive the source
        statements verbatim.  x12_a_evt calls the memchr wrapper and is split at that call and carries no callee
        contract: x12_a_pre_F re-runs X12.v:442-449 (0x82eac ld a0,176(s1); lbu a0,20(a0); beqz not taken;

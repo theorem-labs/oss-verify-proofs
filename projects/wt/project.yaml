@@ -43,10 +43,10 @@ build:
   builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
 assets:
   bin:
-    release: v2026.10.0
+    release: v2026.11.3
     file: wt-bin.tar.zst
-    bytes: 84562314
-    sha256: e194828eaf2c76a460c21982bb93979dccfa11a2271738d1eb8d6bde0038c449
+    bytes: 84252803
+    sha256: cb97779392028c8075f25d5682ed1c2b1b6fa5b2266bebcf7ebb64bb2ff2fced
     recipe:
       release: v2026.10.0-src
       file: recipe.tar.zst

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE37.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to omx-clap-core/fuzz_manifest's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: exit-path data regenerated from fuzz_manifest.asan-ubsan by gen_ye37.py (a Theorem Labs lane's AE37 rule, e5e6a6bc457): the descriptor words of its 16 instrumented globals in x2_rodata, their shadow windows x2_shw, nonzero shadow runs x2_shw_const and zero shadow bytes x2_zbytes; the other x2_rodata rows relocated by symbol and re-read from the image (or, in .bss, from ReusableB/YF0m.v); shw_ok proved by computation over them, as fm's lib/A/AE37.v. *)
+(* Modified by Theorem Labs, 2026-10: exit-path data regenerated from fuzz_manifest.asan-ubsan by gen_ye37.py (a Theorem Labs lane's AE37 rule): the descriptor words of its 16 instrumented globals in x2_rodata, their shadow windows x2_shw, nonzero shadow runs x2_shw_const and zero shadow bytes x2_zbytes; the other x2_rodata rows relocated by symbol and re-read from the image (or, in .bss, from ReusableB/YF0m.v); shw_ok proved by computation over them, as fm's lib/A/AE37.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

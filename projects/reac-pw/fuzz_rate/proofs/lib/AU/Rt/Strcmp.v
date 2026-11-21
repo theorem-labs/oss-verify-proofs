@@ -1,14 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (origin/cold/h-rw-cmd-7-rt 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (
    proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp.v, owner h-rw-cmd-7) to libreac/fuzz_identity's ASan build (image A) by
    an address map recorded by the porting lane: every code address of the walk moves by
    +0x5c, the common_flags GOT slot and the two flag cells move to the ones fuzz_identity.asan gives, the module
    paths change, GrantSyms becomes TfibSyms, the trampoline word is stated in StrcmpTbl.v instead of being
    taken from A/YE34.v's trampoline range, and the trampoline theorem is restated at lib/A/Rt/StrcmpDef.v's
    STRCMP_ENTRY, the name identity's callers cite. The proof script is h-rw-cmd-7's, unchanged. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Rt/Strcmp.v at eace7ccc610b, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/Rt/Strcmp.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/Rt/Strcmp.v keeps its donor's comment text) is kept as lib/A/Rt/Strcmp.v writes it. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/Strcmp.v at origin/ossv/recipes 2d2ff01bb6f2 (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_rate's ASan build (fuzz_rate.asan sha256 22bc8613d780) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strcmp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Rt/Strcmp.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/Rt/Strcmp.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/Rt/Strcmp.v keeps its donor's comment text) is kept as lib/A/Rt/Strcmp.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/Strcmp.v (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_rate's ASan build (fuzz_rate.asan sha256 22bc8613d780) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strcmp.tsv). *)
 (* libreac/fuzz_identity, build asan (image A): the shared-core contract of the ASan strcmp interceptor,
    Reusable/AStrcmpDef.v's astrcmp_realizes, for ___interceptor_strcmp (0x42748) and for the one-instruction
    trampoline __interceptor_trampoline_strcmp = __wrap_strcmp (0x42194, `j 0x42748`), which is lib/A/Rt/StrcmpDef.v's
@@ -51,6 +51,7 @@
    __asan::TryAsanInitFromRtl 40 words (1 immediate-only: grant's `mv s0,a0` is identity's `addi s0,a0,1060`, which
    is identity's asan_inited address 0xa5c98). No other word differs. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

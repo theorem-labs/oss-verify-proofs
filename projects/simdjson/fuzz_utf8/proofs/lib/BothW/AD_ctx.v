@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the main phase's stack floor ALO is one page above the 0x5D0000-byte stack span the start guarantees mapped below sp (the model's zero-filled window), not 8 MiB below it; taken in part from projects/simdjson/fuzz_minifyimpl/proofs/lib/BothW/AD_ctx.v, lines 45-48, 173, 553. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
@@ -39,7 +40,10 @@ Section CTX.
   (* [comment removed for export] *)
   Variables (S0 S1 S2 S3 S4 S5 S6 S7 : word) (J8 : list byte).
 
-  Definition ALO : Z := usp - 8388608 + 4096.
+  (* LPS 727298f3: the main phase's stack floor is one page above the stack span the start
+     guarantees mapped below sp (MainEntry.STACK_SPAN = 0x5D0000, below the model's 6144513-byte
+     window); the allocator ceiling ATOP = usp - 8 MiB is unchanged. *)
+  Definition ALO : Z := usp - 6094848 + 4096.
 
   Definition AMFRAME (mm : amem) : Prop :=
     rw_cells bsegs mm (usp + -128) [CB 8 J8; C8 S7; C8 S6; C8 S5; C8 S4; C8 S3; C8 S2; C8 S1; C8 S0; C8 (Z_to_bv 64 ASTAGE2_RET)].
@@ -164,7 +168,7 @@ Section CTX.
     /\ (exists errv, rw_cells bsegs mm (errno_addr (Z_to_bv 64 ATP)) [C4 errv])
     /\ stdout_file mm so.
 
-  Lemma geo : ATOP <= ALO /\ ALO + 8388608 - 4096 = usp /\ KHIGH <= ALO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
+  Lemma geo : ATOP <= ALO /\ ALO + 6094848 - 4096 = usp /\ KHIGH <= ALO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
   Proof. unfold ALO, KHIGH in *. repeat split; lia. Qed.
 
   Lemma errno_addr_ATP : errno_addr (Z_to_bv 64 ATP) = 0x6afa64.
@@ -540,7 +544,7 @@ Section CTX.
         destruct CSM as (V & HIN & CV & CVEC & _). right. exists p, V. split; [reflexivity|]. split; [reflexivity|]. split; [exact HIN|]. split; [exact CVEC| exact CV].
       - destruct CS0 as (ATR & ATX & _). exists TBL_MAIN. split; [exact ATX|]. left. split; [exact HN| left; reflexivity]. }
     destruct TB as (tbl & ATX & ARM).
-    unfold aat_exit, aat_exitU2. do 33 eexists. exists m, (usp - 8388608 + 4096), TID, cdt, thr, sec, tm1, dso, canary, tbl, L, LB, RSTK.
+    unfold aat_exit, aat_exitU2. do 33 eexists. exists m, (usp - 6094848 + 4096), TID, cdt, thr, sec, tm1, dso, canary, tbl, L, LB, RSTK.
     split; [reflexivity|]. rewrite !unsigned_lit by lia.
     repeat match goal with |- _ /\ _ => split end;
       first [ assumption | reflexivity | lia | exact ARM | unfold AEXITU2_STACK; lia

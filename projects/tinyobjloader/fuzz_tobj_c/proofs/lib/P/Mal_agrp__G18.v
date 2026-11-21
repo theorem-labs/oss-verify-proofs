@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact in the alloc-group walk's world predicate and in the exit section's MInvIR). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -513,6 +514,7 @@ S0S42S198VsT;ScdA2S43A3").
 Hypothesis SRES : ltac2:(tb__ "0|0|
 S0SaS199VsT;S1a0A2SbZ0A1A3").
 Variables (rho' : valuation) (tr : list event) (msF : machine_state) (md : Model).
+Context {Hvd : Contract.vdso_ok md}.
 Hypothesis Hag : ltac2:(tb__ "0|0|
 S16aS71Via';VmZ;A2Vrho';A2").
 Hypothesis HsmL : ltac2:(tb__ "0|0|
@@ -1140,7 +1142,7 @@ Qed.
 
 Theorem exit_post : ltac2:(tb__ "0|0|
 S1a5SccSd1S165VNf;VOg;VX;VU;VA;VKc;Vrho0;S41S44S17fA1S17dVtr;S17eVmsF;Vmd;A2A4Ab").
-Proof using CHK2 Ccond CdsC Cgot Cguard Clen Cmatch Comap Csem Cswf Cvars ELf1 ENT EO Ecur Estk HE HKc HOg Hag Harm Hgr Hi2 Hmd HsmL Hx I' LMI PV SID SRES bv1 bvA rv1 rvA.
+Proof using CHK2 Ccond CdsC Cgot Cguard Clen Cmatch Comap Csem Cswf Cvars ELf1 ENT EO Ecur Estk HE HKc HOg Hag Harm Hgr Hi2 Hmd HsmL Hvd Hx I' LMI PV SID SRES bv1 bvA rv1 rvA.
   exists (L_as_ok IEC_P), (JLg_okG segsP C_P Og X U A Kc), rhoX.
   split; [right; left; reflexivity|].
   split; [split; [intros i Hi0; symmetry; exact (rwX i Hi0) | intros l; symmetry; exact (rlX l)]|].
@@ -1148,7 +1150,7 @@ Proof using CHK2 Ccond CdsC Cgot Cguard Clen Cmatch Comap Csem Cswf Cvars ELf1 E
   cbn [w_tr w_cfg cfg_model]. unfold JLg_okG. split; [exact HOg|]. unfold JLg_ok. cbn zeta. rewrite <- !pSC, <- !pREQ.
   split; [exact resX|].
   exists (mkMA post L'), m, amL. pose proof post_group as (G1 & G2 & G3 & G4). pose proof post_hb as [HB UB]. pose proof CF as (_ & _ & F3 & _).
-  split. { unfold MInvIR, MInvI. change (m_vmmaps (cfg_model (w_cfg (tr, mkCfg msF md)))) with (m_vmmaps md). rewrite rmX. rewrite Hmd. rewrite rd_of_CG, wok_of_CG. exact MI'. }
+  split. { minvir_split; unfold MInvI. change (m_vmmaps (cfg_model (w_cfg (tr, mkCfg msF md)))) with (m_vmmaps md). rewrite rmX. rewrite Hmd. rewrite rd_of_CG, wok_of_CG. exact MI'. }
   split; [exact post_X|].
   split; [cbn [ma_L]; apply (layout_extends_trans_le (ma_L A) L L' _ (nr_id cur) (pv_ext ia X U A rho0 PV) (Lext_extends L (nr_id cur) za));
           unfold nr_id; rewrite F3; exact (pv_nreg ia X U A rho0 PV)|].
@@ -1191,7 +1193,7 @@ Theorem leaf_TP : ltac2:(tb__ "0|0|
 Se8S27Sb1Se8R2S1b6Vx;A1A3S16aS71Via';VmZ;A2R2A2VTR;VkB;S162SccVKN;Se9R4A1R3A4VQ;A3F_;F_;Frho';FLf;").
 Proof using Ecur HE HOg Harm Hgr Hi2 HkB Hx LMI Nf PV RR len m req vmN.
   intros Lf rho' Hin Hag. rewrite LW_single in Hin. destruct Hin as [<-|[]]. cbn [lf_state].
-  (apply (trr_skip RR); [lia|]). intros [tr [msF md]] [Hsm [HK Hmd]]. cbn [w_tr w_cfg cfg_model fst snd] in HK, Hmd.
+  (apply (trr_skip RR); [lia|]). intros [tr [msF md]] [Hsm [HK [Hmd VDm]]]. cbn [w_tr w_cfg cfg_model fst snd] in HK, Hmd.
   exact (exit_post x (LWc x) (sTx x) Hx (chk_x x) (chk2_x x) (ent_x x) (sid_x x) (sres_x x) rho' tr msF md Hag Hsm HK Hmd).
 Qed.
 
@@ -2031,7 +2033,7 @@ Theorem nt_entry tr ms : ltac2:(tb__ "0|2|
 S20SccVrhoK;S1c4S41S44S17fA1S17dVtr;S17eVms;VmdK;A2A4M0A4VKc;Vtr;VmdK;A2S162SccS17aVKc;S13cVia;VrhoK;VmdK;VA2;Vg;Vamg;Verv;A7M1A2S136S13eVamg;A1A1S71G1S13dVrhoK;A1A2G0A5F_;F_;").
 Proof using Herv Hervh Hi Hnest Htier NK.
   intros Hsm HKc. split; [exact (smatch_SN3s ia Hi Hnest Htier rhoK mdK A2 g amg NK erv Herv Hervh tr ms Hsm)|].
-  cbn [w_tr w_cfg cfg_model]. split; [exact HKc | reflexivity].
+  cbn [w_tr w_cfg cfg_model]. split; [exact HKc | split; [reflexivity | exact (proj2 (nk_MI _ _ _ _ _ _ NK))]].
 Qed.
 
 Theorem lit_N (S' : sstate) (d : list (sv * sv)) (nf : list sprop) (b : bool) w : ltac2:(tb__ "0|7|

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's munmap (errno arm, cut, allocation mark); mremap's new answers). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -19,15 +20,20 @@ Variable segs : list Segment.
 Lemma knode_mremap : forall regs pc mem rom model snap (r : nat) (ol nl : Z) (Kont : Z -> config -> Prop),
 m_halted model = None ->
 mremap_args regs model ->
+(* LPS 08b1429: check_mremap refuses a new length past TASK_SIZE with EINVAL before it looks at
+   any VMA, and mremap_errnos is the model's [ENOMEM], so the refusal is its own arm. *)
+(TASK_SIZE < bv_unsigned (getr regs 12) ->
+Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret EINVAL)) (v_addi pc 4) mem rom) model)) ->
 (forall e, In e mremap_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (forall eff m',
 mremap_chk_body (getr regs 10) (getr regs 11) (getr regs 12) model eff = CheckOk m' [] ->
 errno_ret_in mremap_errnos (eff_ret eff) = false ->
+bv_unsigned (getr regs 12) <= TASK_SIZE ->
 Kont 1 (mkCfg (mkst (regupd regs 10 (eff_ret eff)) (v_addi pc 4) (effmem mem eff) rom) m')) ->
 knode segs (mkCfg (pend_at regs pc mem rom) model) (KMremap r ol nl) snap Kont.
 Proof.
-intros regs pc mem rom model snap r ol nl Kont Hh HA HK0 HK1.
+intros regs pc mem rom model snap r ol nl Kont Hh HA HKev HK0 HK1.
 destruct (mremap_J_inh segs regs pc mem rom model HA) as [j0].
 apply (knode_fallible segs _ (KMremap r ol nl) snap Kont _
 (mremap_nx segs regs pc mem rom model) (mremap_bit segs regs pc mem rom model) j0).
@@ -37,24 +43,36 @@ apply (knode_fallible segs _ (KMremap r ol nl) snap Kont _
 - apply mremap_bit_01.
 - intros Hm. exfalso. exact Hm.
 - intros [[eff m'] [Hk Hns0]]. unfold mremap_bit, mremap_nx. cbn [proj1_sig fst snd] in *.
-destruct (errno_ret_in mremap_errnos (eff_ret eff)) eqn:Her.
-+
+destruct (TASK_SIZE <? bv_unsigned (getr regs 12))%Z eqn:HTS.
++ unfold mremap_chk_body in Hk. cbv zeta in Hk. rewrite HTS in Hk.
+destruct eff as [er ws zs us cs ci]. unfold check_ret_only in Hk.
+destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct us; [|discriminate].
+destruct cs; [|discriminate]. destruct ci; [|discriminate].
+destruct (bv_eqb er (errno_ret EINVAL)) eqn:Her; [|discriminate].
+apply bv_eqb_eq in Her. subst er. injection Hk as <-.
+cbn [eff_ret]. rewrite effmem_unmaps. cbn [apply_unmaps]. apply HKev. apply Z.ltb_lt. exact HTS.
++ destruct (errno_ret_in mremap_errnos (eff_ret eff)) eqn:Her.
+*
 destruct (mremap_ok_cases (getr regs 10) (getr regs 11) (getr regs 12) model eff m' (ma_neq _ _ HA) Hk)
-as [(e & He & -> & ->) | (Hno & _)].
-* cbn [eff_ret]. rewrite effmem_unmaps. cbn [apply_unmaps]. apply HK0. exact He.
-* cbn [fst] in Hno. congruence.
-+ apply HK1; assumption.
+as [(HT & _ & _) | [(e & He & -> & ->) | (Hno & _)]].
+-- exfalso. apply Z.ltb_ge in HTS. lia.
+-- cbn [eff_ret]. rewrite effmem_unmaps. cbn [apply_unmaps]. apply HK0. exact He.
+-- cbn [fst] in Hno. congruence.
+* apply HK1; [assumption | assumption | apply Z.ltb_ge; exact HTS].
 Qed.
 Lemma knode_mremap_cases : forall regs pc mem rom model snap (r : nat) (ol nl : Z) (Kont : Z -> config -> Prop),
 m_halted model = None ->
 mremap_args regs model ->
 let old := getr regs 10 in let old_n := getr regs 11 in let new_n := getr regs 12 in
+(TASK_SIZE < bv_unsigned new_n ->
+Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret EINVAL)) (v_addi pc 4) mem rom) model)) ->
 (forall e, In e mremap_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (forall mem',
 mremap_post_mem mem mem' (bv_unsigned old) (bv_unsigned old_n) (bv_unsigned old) (bv_unsigned new_n) ->
 bv_unsigned old + bv_unsigned new_n <= alloc_top (m_vmmaps model) ->
-region_free (vm_reserved (m_vmmaps model) ++ map_remove (vm_maps (m_vmmaps model)) old) old new_n = true
+region_free (vm_reserved (m_vmmaps model) ++ maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned old)
+  (bv_unsigned old + bv_unsigned old_n)) old new_n = true
 \/ bv_unsigned new_n < bv_unsigned old_n ->
 Kont 1 (mkCfg (mkst (regupd regs 10 old) (v_addi pc 4) mem' rom)
 (mremap_model_next model old old_n old new_n))) ->
@@ -66,11 +84,13 @@ Kont 1 (mkCfg (mkst (regupd regs 10 dst) (v_addi pc 4) mem' rom)
 (mremap_model_next model old old_n dst new_n))) ->
 knode segs (mkCfg (pend_at regs pc mem rom) model) (KMremap r ol nl) snap Kont.
 Proof.
-intros regs pc mem rom model snap r ol nl Kont Hh HA old old_n new_n HK0 HKin HKmv.
-apply knode_mremap; [exact Hh | exact HA | exact HK0 |].
-intros eff m' Hk Hno.
+intros regs pc mem rom model snap r ol nl Kont Hh HA old old_n new_n HKev HK0 HKin HKmv.
+apply knode_mremap; [exact Hh | exact HA | exact HKev | exact HK0 |].
+intros eff m' Hk Hno HTS.
 destruct (mremap_ok_cases old old_n new_n model eff m' (ma_neq _ _ HA) Hk)
-as [(e & He & -> & ->) | (_ & [(Hlt & -> & ->) | [(Hlt & Hg & -> & ->) | (dst & Hlt & Hne & Hf & -> & ->)]])].
+as [(HT & _ & _) | [(e & He & -> & ->) |
+(_ & [(Hlt & -> & ->) | [(Hlt & Hg & -> & ->) | (dst & Hlt & Hne & Hf & -> & ->)]])]].
+- exfalso. unfold new_n in *. lia.
 - exfalso. cbn [eff_ret] in Hno. rewrite (errno_ret_in_intro _ _ He) in Hno. discriminate.
 - cbn [eff_ret]. apply HKin.
 + apply (mremap_mem_shrink (m_vmmaps model)); [exact Hlt | exact (ma_ceiling _ _ HA)].

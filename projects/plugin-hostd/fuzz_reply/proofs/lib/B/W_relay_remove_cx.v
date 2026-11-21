@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the SEGMENT INTERFACE of the IMAGE-B walk of fuzz_reply's relay_remove
    (fuzz_reply.asan-ubsan 0x841fc .. 0x84408, 131 instructions), the twin of lib/A/W_relay_remove_cx.v (lib/A input:
-   a working branch 6a1bcf9f403).  Hand-written, not generated: image B's relay_remove is a different function
+   a working branch).  Hand-written, not generated: image B's relay_remove is a different function
    (UBSan trap mode), so only the FORM carries over (W_kit.v header: the kit relocates, the walks do not).  Nothing is
    proved here: the file fixes the Section hypotheses, the entry context, the cut predicates over concrete machine
    states and the statement of every segment, so that the segments are proved in parallel.
@@ -33,9 +33,9 @@
      TAIL   RRU oi -> rr_post                                 unlock, the epilogue, the tail call of wake
    Every segment concludes `SRr SEGS W1 c1 (rPOST cx)` and takes its continuations in the same form.
 
-   STATEMENT TEXT: RBASE is exactly the kit's rr_spec premise list (lib/B/W_contract.v at bkit 416c8ab2a27, from
-   kitin c0b1d3382c2, which carries rg_place and lib/A 1744b876fbd's capacity conjuncts).  C3 (the peak form, the
-   image-A twin's 475b8a2b569) removed both capacity conjuncts (`rxcap cx < MMAX` and `blocks_bytes + tr_alloc +
+   STATEMENT TEXT: RBASE is exactly the kit's rr_spec premise list (lib/B/W_contract.v at bkit, from
+   kitin, which carries rg_place and lib/A's capacity conjuncts).  C3 (the peak form, the
+   image-A twin) removed both capacity conjuncts (`rxcap cx < MMAX` and `blocks_bytes + tr_alloc +
    4 * max cap tr_max <= LIVE_MAX`): the callees' room premises (dr_spec, ge_room, gse_room) are stated over their
    traces' peak (W_contract.v tr_peak), so rr_spec asks only tr_max tr < MMAX and blocks_bytes S + tr_peak tr <=
    LIVE_MAX, and RBASE, RHELD and W_rr_match_cx.v rmbud carry the peak form (the kit is W_tr_peak.v).
@@ -43,7 +43,7 @@
    `blocks_bytes S + tr_peak tr <= LIVE_MAX`, with tr = rr_tr c mx |O| cap FD es h; the two premises `cap < MMAX` and
    `blocks_bytes S + tr_alloc tr + 4 * Z.max cap (tr_max tr) <= LIVE_MAX` are gone. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)) in the room form, the
-   image-A twin's (a Theorem Labs lane, commit f4cd818e98d, lib/A/W_relay_remove_cx.v) over image B's walk (lane RRX): the
+   image-A twin's (a Theorem Labs lane, lib/A/W_relay_remove_cx.v) over image B's walk (lane RRX): the
    segment interface over ANY allocator relation ARx with its laws, IN PLACE (the AR theorem is dropped, a Theorem Labs lane
    10:34Z).  Section c takes the generic relation (PST / ARx / hl / LAWS / HP0), the frame twins' hypotheses of
    W_frame_x.v (IMGC at image B's top 0x5fc000, BLKN, OWNLOW, WFx / WFL, SFREE, SMALLOC, ASMP / ASF / FFL: wake's fake
@@ -59,6 +59,7 @@
    the current blocks; RDONE (RRU (Some i)) what is left after the last free, rp_RM RP S1 kr.  Image B against the
    image-A twin: no HV4 (image B reads g_wake[1] in wake, W_wake_x.v's HV8 / HWK / HERRS, taken by W_relay_remove.v);
    HH53 / HH54 are B's listing slots of A's HH59 / HH60; RCTX is B's closed singleton. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -127,7 +128,7 @@ Definition rr_gcells (B : asyms) (RG : rep_globals) : list (Z * Z) :=
  (as_errno B, as_errno B + 4)].
 
 (* ---- THE GENERIC WALK (route (b), step 3): relay_remove over any allocator relation ARx with its laws, stated as
-   W_contract_x.rr_spec_x.  The Section is the image-A twin's (lib/A/W_relay_remove_cx.v at f4cd818e98d) with image
+   W_contract_x.rr_spec_x.  The Section is the image-A twin's (lib/A/W_relay_remove_cx.v) with image
    B's names for image B's objects: HH53 / HH54 (A's HH59 / HH60), IMGC at image B's top 0x5fc000 (W_wake_x.v,
    W_gestures_end.v), no HV4, and WAKE (image B tail-calls wake). ---- *)
 Section c.

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10-30 (G-BRA): the ENT segment of the image-B walk of fuzz_reply's relay_add over a
    GENERIC allocator relation ARx (route (b), CONVERSION.md (sha256 1015972e02a9; internal record)), in the ROOM form:
    pb_rb_ent_x : rb_ent_stmt B PST ARx MT RP G RG CTX (lib/B/W_relay_add_cut_x.v).  Converted from the AR segment
-   lib/B/W_relay_add_ent.v (pb_ra_ent : ra_ent_stmt, a working branch 22c3862876d), whose machine-code
+   lib/B/W_relay_add_ent.v (pb_ra_ent : ra_ent_stmt, a working branch), whose machine-code
    account holds unchanged: the entry 0x82af4, the prologue 0x82af4-0x82b14 (sp -= 64; ra, s0 .. s6 saved at
    56(sp) .. 0(sp)), s1 = -1, the test `bltz a0` 0x82b1c, and then either
 
@@ -26,6 +26,7 @@
    errno's four bytes keep their view: they lie below kLowMemEnd, so outside the frame (the runs' only write window)
    and outside the lock call's scratch, and off g_lock's lock word (ra_spec_x's premise that RA_G excludes errno),
    the one byte range the lock call writes. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

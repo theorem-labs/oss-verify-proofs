@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the diagnostic printf carries the channel-reader premise and reads its argument with 8 bytes of slack (it passes seven on), not 16. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -255,7 +256,7 @@ Proof. intros []; reflexivity. Qed.
 (* [comment removed for export] *)
 Lemma str_range_ok : forall (m : word -> option byte) a n,
   bytes_at rsegs m (sh alloc_ceiling) (zeros (Z.to_nat ((2^47 - alloc_ceiling) / 8))) ->
-  alloc_ceiling + 64 <= a -> 1 <= n -> a + n + 16 <= 2^47 -> range_ok m a n.
+  alloc_ceiling + 64 <= a -> 1 <= n -> a + n + 8 <= 2^47 -> range_ok m a n.
 Proof.
   (* [comment removed for export] *)
   intros m a n ZS H1 H3 H2. pose proof alloc_ceiling_val as CV. pose proof alloc_ceiling_mod16 as CM.
@@ -268,7 +269,7 @@ Proof.
   set (K := Z.to_nat (17592186044416 - 2 * q)) in ZS. assert (HK : Z.of_nat K = 17592186044416 - 2 * q) by (subst K; apply Z2Nat.id; lia).
   set (B := 2 * q + 2147450880) in ZS.
   assert (S1 : B + 8 <= sha a) by (subst B; unfold sha, shadow_off; mlia).
-  assert (S2 : sha (a + n - 1) + 3 <= 17594333495296) by (unfold sha, shadow_off; mlia).
+  assert (S2 : sha (a + n - 1) + 2 <= 17594333495296) by (unfold sha, shadow_off; mlia).
   assert (S3 : sha a <= sha (a + n - 1)) by (unfold sha, shadow_off; mlia).
   assert (BK : B + Z.of_nat K = 17594333495296) by (rewrite HK; subst B; lia).
   split. { right. lia. }
@@ -432,7 +433,8 @@ Section Leaves.
   Hypothesis NIN : ~ In (Z_to_bv 8 0) arg.
   Hypothesis PALO : alloc_ceiling <= pa.
   Hypothesis PAHI : pa + Z.of_nat (length arg) + 1 + Z.of_nat (length slack) <= 2^47.
-  Hypothesis SL16 : 16 <= Z.of_nat (length slack).
+  (* LPS 727298f3: 8 bytes of slack, not 16 (the name is kept for [hot_lia_cut]) *)
+  Hypothesis SL16 : 8 <= Z.of_nat (length slack).
   Hypothesis SPP : bv_unsigned sp <= pa.
   Hypothesis PADc : (- (pa + Z.of_nat (length arg) + 1)) mod 8 <= Z.of_nat (length slack).
   Hypothesis N17 : Z.of_nat (length arg) <= 131072.
@@ -441,6 +443,7 @@ Section Leaves.
   Hypothesis SOK : stderr_ok fe.
   Hypothesis SBUFPx : exists j8, rw_cells rsegs v STDERR_BUFP [CB 8 j8].
   Hypothesis FDL : fd_lookup (m_fds md) (wz 2) = Some (FdChannel (wz 2)).
+  Hypothesis RDR : m_channel_reader md = true.   (* 08b1429: channel-reader-premise *)
   Hypothesis CANx : exists g, ro_cells rsegs v SSP_GUARD [C8 g].
   Hypothesis GOT : ro_cells rsegs v SSP_GOT [C8 (wz SSP_GUARD)].
   Hypothesis ST : stk rsegs v lo (bv_unsigned sp).
@@ -456,7 +459,7 @@ Section Leaves.
               /\ wmono rsegs v (aview A m') /\ mem_inv rsegs (aview A m') /\ stk rsegs (aview A m') lo (bv_unsigned sp)) ->
           srealizes rsegs (mkCfg ms' md') K.
 
-  #[using="HKONT HK CEIL LO ST GOT CANx FDL SBUFPx SOK FILE ZSH N17 SPP SL16 PAHI PALO NIN SB A2 A1 A0 MI AINV D3 lo fe pa slack A AI Clg"] Lemma fprintf_diag_s_go :
+  #[using="HKONT HK CEIL LO ST GOT CANx FDL RDR SBUFPx SOK FILE ZSH N17 SPP SL16 PAHI PALO NIN SB A2 A1 A0 MI AINV D3 lo fe pa slack A AI Clg"] Lemma fprintf_diag_s_go :
       srealizes rsegs (mkCfg (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
                                  F (wz FPRINTF_ICPT_ENTRY) fc None m rom) md)
                 (t_emit (W 2 (s3_L1 d ++ arg ++ s3_L2 d)) K).
@@ -492,11 +495,13 @@ Section Leaves.
     unfold file_at, file_cells in FILE. cbn_mfp_in FILE.
     assert (SB0 : bytes_at rsegs (aview A m) pa (arg ++ [Z_to_bv 8 0])).
     { apply (bytes_at_prefix rsegs _ pa (arg ++ [Z_to_bv 8 0]) slack). rewrite <- app_assoc. exact SB. }
-    assert (SB15 : bytes_at rsegs (aview A m) pa (arg ++ Z_to_bv 8 0 :: firstn 15 slack)).
-    { apply (bytes_at_prefix rsegs _ pa (arg ++ Z_to_bv 8 0 :: firstn 15 slack) (skipn 15 slack)).
+    (* LPS 727298f3: seven slack bytes go on, not fifteen: they cover the word the NUL ends in
+       ([padP] needs at most 7) and keep the string's end strictly below 2^47 *)
+    assert (SB15 : bytes_at rsegs (aview A m) pa (arg ++ Z_to_bv 8 0 :: firstn 7 slack)).
+    { apply (bytes_at_prefix rsegs _ pa (arg ++ Z_to_bv 8 0 :: firstn 7 slack) (skipn 7 slack)).
       rewrite <- app_assoc. cbn [app]. rewrite firstn_skipn. exact SB. }
-    assert (SL15 : Z.of_nat (length (firstn 15 slack)) = 15) by (rewrite length_firstn; lia).
-    assert (PAD15 : padP pa n (Z.of_nat (length (firstn 15 slack)))) by (unfold padP; rewrite SL15; try (generalize alloc_ceiling_val); clear -PADc; Z.div_mod_to_equations; lia).
+    assert (SL15 : Z.of_nat (length (firstn 7 slack)) = 7) by (rewrite length_firstn; lia).
+    assert (PAD15 : padP pa n (Z.of_nat (length (firstn 7 slack)))) by (unfold padP; rewrite SL15; try (generalize alloc_ceiling_val); clear -PADc; Z.div_mod_to_equations; lia).   (* padP's bound holds at 7: (-(pa+n+1)) mod 8 <= 7 *)
     assert (SF0 : sfS AF la (bv_unsigned sp - 464) 80 (sh alloc_ceiling) (Z.to_nat ((2^47 - alloc_ceiling) / 8))
                       (bv_unsigned sp - 480 - PC2_DEPTH) (bv_unsigned sp - 480 + 96) pa (n + 1) (aview A m)).
     { unfold sfS, sfF, PC2_DEPTH. replace (bv_unsigned sp - 480 - 4928) with (bv_unsigned sp - 5408) by lia.
@@ -560,7 +565,7 @@ Section Leaves.
     assert (R2 : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -112 + -368)) + 368 <= bv_unsigned sp + -48) by (rewrite unsigned_lit by lia; lia).
     assert (R3 : IMG_LO <= AF) by (unfold IMG_LO; lia).
     assert (R4 : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -112 + -368)) + 368 <= pa) by (rewrite unsigned_lit by lia; lia).
-    assert (R5 : pa + n + 1 + Z.of_nat (length (firstn 15 slack)) < 2^47) by lia.
+    assert (R5 : pa + n + 1 + Z.of_nat (length (firstn 7 slack)) < 2^47) by lia.
     assert (R6 : n <= 2^17) by lia.
     lazymatch type of FILE2 with file_at ?mx _ ?f1 =>
     assert (G1 : mf_flags f1 = 5) by reflexivity;
@@ -589,7 +594,7 @@ Section Leaves.
     lazymatch type of FILE2 with file_at _ _ ?f1 =>
     lazymatch type of JB2 with rw_cells _ _ _ [CB 80 ?jb] =>
     icall (pcs_head (Z_to_bv 64 VF_PC2_RET) (Z_to_bv 64 (bv_unsigned sp + -112 + -368)) gp tp (Z_to_bv 64 0xad928) (Z_to_bv 64 AF) (Z_to_bv 64 6325272) (Z_to_bv 64 1) (Z_to_bv 64 (mf_buf f0)) (Z_to_bv 64 5) s6 s7 s8 s9 s10 s11 F fc
-             d lo AF 0xad928 (bv_unsigned sp + -48) pa g f1 [] jb arg (firstn 15 slack) [a3; a4; a5; a6; a7]
+             d lo AF 0xad928 (bv_unsigned sp + -48) pa g f1 [] jb arg (firstn 7 slack) [a3; a4; a5; a6; a7]
              (sh alloc_ceiling) (Z.to_nat ((2^47 - alloc_ceiling) / 8))
              fwritex_fit_ok D3 R1 H2 R2 R3 H4 G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 F6 G12 G13 G14 G15 R4 R5 NIN PAD15 R6 G16
              _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ mx eq_refl eq_refl eq_refl EA3 EA4)
@@ -613,7 +618,7 @@ Section Leaves.
     replace (bv_unsigned sp + -48 + 8) with (bv_unsigned sp + -40) in APC3 by lia.
     lazymatch type of RST3 with rw_cells _ _ _ [CB _ (skipn ?k ?jb)] => rewrite <- (length_skipn k jb) in RST3 end.
     unfold pc_lits in FRo3. unfold pc_saved in FRs3. rewrite ?unsigned_lit in FRo3 by lia.
-    assert (SRCA : forall mq, bytes_at rsegs mq pa (arg ++ Z_to_bv 8 0 :: firstn 15 slack) -> bytes_at rsegs mq pa arg).
+    assert (SRCA : forall mq, bytes_at rsegs mq pa (arg ++ Z_to_bv 8 0 :: firstn 7 slack) -> bytes_at rsegs mq pa arg).
     { intros mq Hq. exact (bytes_at_prefix rsegs mq pa arg _ Hq). }
     (* [comment removed for export] *)
     destruct (Z.le_gt_cases (l1 + n) 80) as [FIT1 | FL1].
@@ -653,7 +658,7 @@ Section Leaves.
       lazymatch goal with Rq : rw_cells rsegs mx _ [CB _ (skipn _ ?jb)] |- _ =>
       let RM := fresh "RM" in assert (RM : Z.of_nat (@length byte []) + l1 <= mf_bufsize fx) by (cbn_mfp; cbn [length Z.of_nat]; lia);
       pcall (pcs_mid (Z_to_bv 64 VF_PC2_RET) (Z_to_bv 64 (bv_unsigned sp + -112 + -368)) gp tp (Z_to_bv 64 0xad928) (Z_to_bv 64 AF) (Z_to_bv 64 6325272) (Z_to_bv 64 1) (Z_to_bv 64 (mf_buf f0)) (Z_to_bv 64 5) s6 s7 s8 s9 s10 s11 F fc
-               d lo AF 0xad928 pa g fx [] jb arg (firstn 15 slack) D3 R3 H4 RM F6 R6
+               d lo AF 0xad928 pa g fx [] jb arg (firstn 7 slack) D3 R3 H4 RM F6 R6
                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ mx _ _ _ fx)
         by (first [ rewrite ?unsigned_lit by lia; mf_easm | split; mf_easm | cbn_mfp; reflexivity
                   | lazymatch goal with |- rw_cells _ _ _ (CB 40 _ :: pc_lits _) => unfold pc_lits; rewrite ?unsigned_lit by lia; mf_easm end
@@ -701,7 +706,7 @@ Section Leaves.
         lazymatch goal with Rq : rw_cells rsegs mx _ [CB _ (skipn _ ?jb)] |- _ =>
         let RM := fresh "RM" in assert (RM : Z.of_nat (@length byte []) + l1 <= mf_bufsize fx) by (cbn_mfp; cbn [length Z.of_nat]; lia);
         pcall (pcs_tail (Z_to_bv 64 VF_PC2_RET) (Z_to_bv 64 (bv_unsigned sp + -112 + -368)) gp tp (Z_to_bv 64 0xad928) (Z_to_bv 64 AF) (Z_to_bv 64 6325272) (Z_to_bv 64 1) (Z_to_bv 64 (mf_buf f0)) (Z_to_bv 64 5) s6 s7 s8 s9 s10 s11 F fc
-                 d lo AF 0xad928 pa g fx [] jb arg (firstn 15 slack) D3 R1 H4 RM F6 R6
+                 d lo AF 0xad928 pa g fx [] jb arg (firstn 7 slack) D3 R1 H4 RM F6 R6
                  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ mx _ _ _)
           by (first [ rewrite ?unsigned_lit by lia; mf_easm | split; mf_easm
                     | lazymatch goal with |- rw_cells _ _ _ (CB 40 _ :: pc_lits _) => unfold pc_lits; rewrite ?unsigned_lit by lia; mf_easm end
@@ -734,6 +739,7 @@ Section Leaves.
                               | right; subst f0; cbn_mfp; unfold stderr0; cbn [mf_fd]; reflexivity
                               | unfold img_client; cbn [cl_rw_lo cl_image_hi LPA]; split; [cbn; lia| split; [cbn; lia| intros aa Ha; cbn [cl_static cl_shared LPA]; unfold pa_static, pa_shared; lia]]
                               | subst f0; cbn_mfp; unfold stderr0; cbn [mf_fd]; rewrite FDS1; exact FDL
+                              | rewrite (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
                               | cbn_mfp; rewrite ?length_app, ?Nat2Z.inj_add; cbn [length Z.of_nat]; first [reflexivity | f_equal; lia | lia]
                               | cbn_mfp; bytes_from_hyp
                               | apply bytes_at_nil; lia
@@ -747,7 +753,7 @@ Section Leaves.
         unfold STDIO_WRITE_STACK in MU2, ST9. rewrite ?unsigned_lit in MU2 by lia. rewrite ?unsigned_lit in ST9 by lia.
         cbn_mfp_in FILE9.
         try (pose proof OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.KDrop.KdMark as kdm_FRs3); transport_after_call rsegs (aview A m1) (aview A m2) MU2 WM2. clear MU2 WM2 MI8.
-        (first [ dand3 IO2 as FS2 FDS2 _ | destruct IO2 as (FS2 & FDS2 & _) ]).
+        (first [ dand4 IO2 as FS2 FDS2 _ RDR2 | destruct IO2 as (FS2 & FDS2 & _ & RDR2) ]).
 
         (* [comment removed for export] *)
         pose proof (munch_refl [(bv_unsigned sp - 8192, bv_unsigned sp); (0xad928, 0xad928 + 152)] (aview A m2)) as MUe.
@@ -789,8 +795,9 @@ Section Leaves.
         astopx AINV2 MUe WMe CFe. rename m0 into mz. rename md0 into mdz. rename AINV0 into AINVz.
         pose proof (as_minv LPA A mz mdz AINVz) as [_ HHz].
         (first [ pose proof ((sbm_io _ mdz SBM0)) as dR_5; dand3 dR_5 as FSz FDSz _ | pose proof (sbm_io _ mdz SBM0) as (FSz & FDSz & _) ]).
+        pose proof (sbm_reader _ _ SBM0) as RDRz. pose proof (sbm_reader _ _ SBM) as RDR1.   (* 08b1429: channel-reader-premise *)
         lazymatch type of FILEy with file_at _ _ ?fz => eapply (HKONT mz mdz fz _ AINVz) end.
-        { split; [| split; [| exact HHz]]; congruence. }
+        { split; [| split; [| split; [exact HHz |]]]; congruence. }
         { lazymatch goal with |- stderr_ok ?fz => eexists w0, _; split; [| left; reflexivity]; subst f0; norm_mf_eq; reflexivity end. }
         { exact FILEy. }
         hot_eexists_all. split; [reflexivity|].
@@ -817,6 +824,7 @@ Section Leaves.
                               | subst f0; cbn_mfp; unfold stderr0; cbn [mf_write]; reflexivity
                               | unfold img_client; cbn [cl_rw_lo cl_image_hi LPA]; split; [cbn; lia| split; [cbn; lia| intros aa Ha; cbn [cl_static cl_shared LPA]; unfold pa_static, pa_shared; lia]]
                               | subst f0; cbn_mfp; unfold stderr0; cbn [mf_fd]; rewrite FDS1; exact FDL
+                              | rewrite (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
                               | cbn_mfp; rewrite ?length_app, ?Nat2Z.inj_add; cbn [length Z.of_nat]; first [reflexivity | f_equal; lia | lia]
                               | cbn_mfp; bytes_from_hyp
                               | eexists; mf_easm
@@ -832,7 +840,7 @@ Section Leaves.
         cbn_mfp_in FILE9.
         lazymatch type of MU2 with munch _ (aview A ?ma) (aview A ?mb) => transport_after_call rsegs (aview A ma) (aview A mb) MU2 WM2 end. clear MU2 WM2.
         try match goal with H : mem_inv rsegs (aview A ?mq), H2 : mem_inv rsegs (aview A m2) |- _ => lazymatch mq with m2 => fail | _ => clear H end end.
-        (first [ dand3 IO2 as FS2 FDS2 _ | destruct IO2 as (FS2 & FDS2 & _) ]).
+        (first [ dand4 IO2 as FS2 FDS2 _ RDR2 | destruct IO2 as (FS2 & FDS2 & _ & RDR2) ]).
         (* [comment removed for export] *)
         ago AINV2. fold_cl_segs. fix_retpc.
         sp_nest (bv_unsigned sp + -112 + -368) (-544).
@@ -841,7 +849,7 @@ Section Leaves.
         lazymatch goal with Rq : rw_cells rsegs mx _ [CB _ (skipn _ ?jb)] |- _ =>
         let RM := fresh "RM" in assert (RM : Z.of_nat (@length byte []) + l1 <= mf_bufsize fx) by (cbn_mfp; cbn [length Z.of_nat]; lia);
         pcall (pcs_tail (Z_to_bv 64 VF_PC2_RET) (Z_to_bv 64 (bv_unsigned sp + -112 + -368)) gp tp (Z_to_bv 64 0xad928) (Z_to_bv 64 AF) (Z_to_bv 64 6325272) (Z_to_bv 64 1) (Z_to_bv 64 (mf_buf f0)) (Z_to_bv 64 5) s6 s7 s8 s9 s10 s11 F fc
-                 d lo AF 0xad928 pa g fx [] jb arg (firstn 15 slack) D3 R1 H4 RM F6 R6
+                 d lo AF 0xad928 pa g fx [] jb arg (firstn 7 slack) D3 R1 H4 RM F6 R6
                  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ mx _ _ _)
           by (first [ rewrite ?unsigned_lit by lia; mf_easm | split; mf_easm
                     | lazymatch goal with |- rw_cells _ _ _ (CB 40 _ :: pc_lits _) => unfold pc_lits; rewrite ?unsigned_lit by lia; mf_easm end
@@ -882,7 +890,7 @@ Section Leaves.
         cbn_mfp_in FILE9.
         try (pose proof OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.KDrop.KdMark as kdm_FRs3); lazymatch type of MUb with munch _ (aview A ?ma) (aview A ?mb) => transport_after_call rsegs (aview A ma) (aview A mb) MUb WMb end. clear MUb WMb.
         try match goal with H : mem_inv rsegs (aview A ?mq), H2 : mem_inv rsegs (aview A m4) |- _ => lazymatch mq with m4 => fail | _ => clear H end end.
-        (first [ dand3 IO4 as FS4 FDS4 _ | destruct IO4 as (FS4 & FDS4 & _) ]).
+        (first [ dand4 IO4 as FS4 FDS4 _ RDR4 | destruct IO4 as (FS4 & FDS4 & _ & RDR4) ]).
 
         (* [comment removed for export] *)
         pose proof (munch_refl [(bv_unsigned sp - 8192, bv_unsigned sp); (0xad928, 0xad928 + 152)] (aview A m4)) as MUe.
@@ -924,8 +932,9 @@ Section Leaves.
         astopx AINV4 MUe WMe CFe. rename m0 into mz. rename md0 into mdz. rename AINV0 into AINVz.
         pose proof (as_minv LPA A mz mdz AINVz) as [_ HHz].
         (first [ pose proof ((sbm_io _ mdz SBM1)) as dR_10; dand3 dR_10 as FSz FDSz _ | pose proof (sbm_io _ mdz SBM1) as (FSz & FDSz & _) ]).
+        pose proof (sbm_reader _ _ SBM1) as RDRz. pose proof (sbm_reader _ _ SBM0) as RDR3. pose proof (sbm_reader _ _ SBM) as RDR1.   (* 08b1429: channel-reader-premise *)
         lazymatch type of FILEy with file_at _ _ ?fz => eapply (HKONT mz mdz fz _ AINVz) end.
-        { split; [| split; [| exact HHz]]; congruence. }
+        { split; [| split; [| split; [exact HHz |]]]; congruence. }
         { lazymatch goal with |- stderr_ok ?fz => eexists w0, _; split; [| left; reflexivity]; subst f0; norm_mf_eq; reflexivity end. }
         { exact FILEy. }
         hot_eexists_all. split; [reflexivity|].
@@ -950,6 +959,7 @@ Section Leaves.
                             | subst f0; cbn_mfp; unfold stderr0; cbn [mf_write]; reflexivity
                             | unfold img_client; cbn [cl_rw_lo cl_image_hi LPA]; split; [cbn; lia| split; [cbn; lia| intros aa Ha; cbn [cl_static cl_shared LPA]; unfold pa_static, pa_shared; lia]]
                             | subst f0; cbn_mfp; unfold stderr0; cbn [mf_fd]; rewrite FDS1; exact FDL
+                            | rewrite (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
                             | cbn_mfp; rewrite ?length_app, ?Nat2Z.inj_add; cbn [length Z.of_nat]; first [reflexivity | f_equal; lia | lia]
                             | cbn_mfp; bytes_from_hyp
                             | apply SRCA; assumption
@@ -966,7 +976,7 @@ Section Leaves.
         cbn_mfp_in FILE9.
         lazymatch type of MU2 with munch _ (aview A ?ma) (aview A ?mb) => transport_after_call rsegs (aview A ma) (aview A mb) MU2 WM2 end. clear MU2 WM2.
         try match goal with H : mem_inv rsegs (aview A ?mq), H2 : mem_inv rsegs (aview A m2) |- _ => lazymatch mq with m2 => fail | _ => clear H end end.
-        (first [ dand3 IO2 as FS2 FDS2 _ | destruct IO2 as (FS2 & FDS2 & _) ]).
+        (first [ dand4 IO2 as FS2 FDS2 _ RDR2 | destruct IO2 as (FS2 & FDS2 & _ & RDR2) ]).
       (* [comment removed for export] *)
       pose proof (munch_refl [(bv_unsigned sp - 8192, bv_unsigned sp); (0xad928, 0xad928 + 152)] (aview A m2)) as MU5.
       pose proof (wmono_refl rsegs (aview A m2)) as WM5.
@@ -983,7 +993,7 @@ Section Leaves.
       lazymatch goal with Rq : rw_cells rsegs mx _ [CB _ (skipn _ ?jb)] |- _ =>
       let RM := fresh "RM" in assert (RM : Z.of_nat (@length byte []) + l1 <= mf_bufsize fx) by (cbn_mfp; cbn [length Z.of_nat]; lia);
       pcall (pcs_mid (Z_to_bv 64 VF_PC2_RET) (Z_to_bv 64 (bv_unsigned sp + -112 + -368)) gp tp (Z_to_bv 64 0xad928) (Z_to_bv 64 AF) (Z_to_bv 64 6325272) (Z_to_bv 64 1) (Z_to_bv 64 (mf_buf f0)) (Z_to_bv 64 5) s6 s7 s8 s9 s10 s11 F fc
-               d lo AF 0xad928 pa g fx [] jb arg (firstn 15 slack) D3 R3 H4 RM F6 R6
+               d lo AF 0xad928 pa g fx [] jb arg (firstn 7 slack) D3 R3 H4 RM F6 R6
                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ mx _ _ _ fx)
         by (first [ rewrite ?unsigned_lit by lia; mf_easm | split; mf_easm | cbn_mfp; reflexivity
                   | lazymatch goal with |- rw_cells _ _ _ (CB 40 _ :: pc_lits _) => unfold pc_lits; rewrite ?unsigned_lit by lia; mf_easm end
@@ -1037,7 +1047,7 @@ Section Leaves.
       lazymatch type of JBL with length ?jb = _ =>
       let RM := fresh "RM" in assert (RM : Z.of_nat (@length byte []) + l1 <= mf_bufsize fx) by (cbn_mfp; cbn [length Z.of_nat]; lia);
       pcall (pcs_tail (Z_to_bv 64 VF_PC2_RET) (Z_to_bv 64 (bv_unsigned sp + -112 + -368)) gp tp (Z_to_bv 64 0xad928) (Z_to_bv 64 AF) (Z_to_bv 64 6325272) (Z_to_bv 64 1) (Z_to_bv 64 (mf_buf f0)) (Z_to_bv 64 5) s6 s7 s8 s9 s10 s11 F fc
-               d lo AF 0xad928 pa g fx [] jb arg (firstn 15 slack) D3 R1 H4 RM F6 R6
+               d lo AF 0xad928 pa g fx [] jb arg (firstn 7 slack) D3 R1 H4 RM F6 R6
                _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ mx _ _ _)
         by (first [ rewrite ?unsigned_lit by lia; mf_easm | split; mf_easm
                   | lazymatch goal with |- rw_cells _ _ _ (CB 40 _ :: pc_lits _) => unfold pc_lits; rewrite ?unsigned_lit by lia; mf_easm end
@@ -1070,6 +1080,7 @@ Section Leaves.
                             | right; subst f0; cbn_mfp; unfold stderr0; cbn [mf_fd]; reflexivity
                             | unfold img_client; cbn [cl_rw_lo cl_image_hi LPA]; split; [cbn; lia| split; [cbn; lia| intros aa Ha; cbn [cl_static cl_shared LPA]; unfold pa_static, pa_shared; lia]]
                             | subst f0; cbn_mfp; unfold stderr0; cbn [mf_fd]; rewrite FDS3, FDS2, FDS1; exact FDL
+                            | rewrite (sbm_reader _ _ SBM0), RDR2, (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
                             | cbn_mfp; rewrite ?length_app, ?Nat2Z.inj_add; cbn [length Z.of_nat]; first [reflexivity | f_equal; lia | lia]
                             | cbn_mfp; bytes_from_hyp
                             | apply bytes_at_nil; lia
@@ -1085,7 +1096,7 @@ Section Leaves.
         cbn_mfp_in FILE9.
         try (pose proof OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.KDrop.KdMark as kdm_FRs3); lazymatch type of MUb with munch _ (aview A ?ma) (aview A ?mb) => transport_after_call rsegs (aview A ma) (aview A mb) MUb WMb end. clear MUb WMb.
         try match goal with H : mem_inv rsegs (aview A ?mq), H2 : mem_inv rsegs (aview A m4) |- _ => lazymatch mq with m4 => fail | _ => clear H end end.
-        (first [ dand3 IO4 as FS4 FDS4 _ | destruct IO4 as (FS4 & FDS4 & _) ]).
+        (first [ dand4 IO4 as FS4 FDS4 _ RDR4 | destruct IO4 as (FS4 & FDS4 & _ & RDR4) ]).
 
         (* [comment removed for export] *)
         pose proof (munch_refl [(bv_unsigned sp - 8192, bv_unsigned sp); (0xad928, 0xad928 + 152)] (aview A m4)) as MUe.
@@ -1127,8 +1138,9 @@ Section Leaves.
         astopx AINV4 MUe WMe CFe. rename m0 into mz. rename md0 into mdz. rename AINV0 into AINVz.
         pose proof (as_minv LPA A mz mdz AINVz) as [_ HHz].
         (first [ pose proof ((sbm_io _ mdz SBM1)) as dR_15; dand3 dR_15 as FSz FDSz _ | pose proof (sbm_io _ mdz SBM1) as (FSz & FDSz & _) ]).
+        pose proof (sbm_reader _ _ SBM1) as RDRz. pose proof (sbm_reader _ _ SBM0) as RDR3. pose proof (sbm_reader _ _ SBM) as RDR1.   (* 08b1429: channel-reader-premise *)
         lazymatch type of FILEy with file_at _ _ ?fz => eapply (HKONT mz mdz fz _ AINVz) end.
-        { split; [| split; [| exact HHz]]; congruence. }
+        { split; [| split; [| split; [exact HHz |]]]; congruence. }
         { lazymatch goal with |- stderr_ok ?fz => eexists w0, _; split; [| left; reflexivity]; subst f0; norm_mf_eq; reflexivity end. }
         { exact FILEy. }
         hot_eexists_all. split; [reflexivity|].
@@ -1156,6 +1168,7 @@ Section Leaves.
   Hypothesis SOK : stderr_ok fe.
   Hypothesis SBUFPx : exists j8, rw_cells rsegs v STDERR_BUFP [CB 8 j8].
   Hypothesis FDL : fd_lookup (m_fds md) (wz 2) = Some (FdChannel (wz 2)).
+  Hypothesis RDR : m_channel_reader md = true.   (* 08b1429: channel-reader-premise *)
   Hypothesis CANx : exists g, ro_cells rsegs v SSP_GUARD [C8 g].
   Hypothesis GOT : ro_cells rsegs v SSP_GOT [C8 (wz SSP_GUARD)].
   Hypothesis ST : stk rsegs v lo (bv_unsigned sp).
@@ -1183,7 +1196,7 @@ Section Leaves.
   Lemma U_len : Z.of_nat (length U_MSG) = 38.
   Proof. reflexivity. Qed.
 
-  #[using="HKONT HK SPHI CEIL LO ST GOT CANx FDL SBUFPx SOK FILE ZSH A2 A1 A0 MI AINV lo fe A AI Clg"] Lemma fprintf_diag_u_go :
+  #[using="HKONT HK SPHI CEIL LO ST GOT CANx FDL RDR SBUFPx SOK FILE ZSH A2 A1 A0 MI AINV lo fe A AI Clg"] Lemma fprintf_diag_u_go :
       srealizes rsegs (mkCfg (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
                                  F (wz FPRINTF_ICPT_ENTRY) fc None m rom) md)
                 (t_emit (W 2 msg_refused) K).
@@ -1348,6 +1361,7 @@ Section Leaves.
                           | right; subst f0; cbn_mfp; unfold stderr0; cbn [mf_fd]; reflexivity
                           | unfold img_client; cbn [cl_rw_lo cl_image_hi LPA]; split; [cbn; lia| split; [cbn; lia| intros aa Ha; cbn [cl_static cl_shared LPA]; unfold pa_static, pa_shared; lia]]
                           | subst f0; cbn_mfp; unfold stderr0; cbn [mf_fd]; rewrite FDS1; exact FDL
+                          | rewrite (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
                           | cbn_mfp; rewrite ?U_len; cbn [length Z.of_nat]; first [reflexivity | f_equal; lia | lia]
                           | cbn_mfp; bytes_from_hyp
                           | apply bytes_at_nil; lia
@@ -1361,7 +1375,7 @@ Section Leaves.
     unfold STDIO_WRITE_STACK in MU2, ST9. rewrite ?unsigned_lit in MU2 by lia. rewrite ?unsigned_lit in ST9 by lia.
     cbn_mfp_in FILE9.
     transport_after_call rsegs (aview A m1) (aview A m2) MU2 WM2. clear MU2 WM2 MI8.
-    (first [ dand3 IO2 as FS2 FDS2 _ | destruct IO2 as (FS2 & FDS2 & _) ]).
+    (first [ dand4 IO2 as FS2 FDS2 _ RDR2 | destruct IO2 as (FS2 & FDS2 & _ & RDR2) ]).
     (* [comment removed for export] *)
     pose proof (munch_refl [(bv_unsigned sp - 8192, bv_unsigned sp); (0xad928, 0xad928 + 152)] (aview A m2)) as MUe.
     pose proof (wmono_refl rsegs (aview A m2)) as WMe.
@@ -1402,8 +1416,9 @@ Section Leaves.
     astopx AINV2 MUe WMe CFe. rename m0 into mz. rename md0 into mdz. rename AINV0 into AINVz.
     pose proof (as_minv LPA A mz mdz AINVz) as [_ HHz].
     (first [ pose proof ((sbm_io _ mdz SBM0)) as dR_19; dand3 dR_19 as FSz FDSz _ | pose proof (sbm_io _ mdz SBM0) as (FSz & FDSz & _) ]).
+    pose proof (sbm_reader _ _ SBM0) as RDRz. pose proof (sbm_reader _ _ SBM) as RDR1.   (* 08b1429: channel-reader-premise *)
     lazymatch type of FILEy with file_at _ _ ?fz => eapply (HKONT mz mdz fz _ AINVz) end.
-    { split; [| split; [| exact HHz]]; congruence. }
+    { split; [| split; [| split; [exact HHz |]]]; congruence. }
     { lazymatch goal with |- stderr_ok ?fz => eexists w0, _; split; [| left; reflexivity]; subst f0; norm_mf_eq; reflexivity end. }
     { exact FILEy. }
     hot_eexists_all. split; [reflexivity|].
@@ -1416,7 +1431,7 @@ Section Leaves.
   Theorem fprintf_diag_ok : fprintf_diag_stmt.
   Proof.
     unfold fprintf_diag_stmt. intros until K. cbv zeta.
-    intros AINV MI TP A0 A1 DM N17 ZSH FILE SOK SBUFPx FDL CANx GOT ST LO CEIL SP16 SPHI HK HKONT.
+    intros AINV MI TP A0 A1 DM N17 ZSH FILE SOK SBUFPx FDL RDR CANx GOT ST LO CEIL SP16 SPHI HK HKONT.
     destruct d.
     - (first [ dand8 DM as A2 SB NIN PALO PAHI SL16 SPP PADc | destruct DM as (A2 & SB & NIN & PALO & PAHI & SL16 & SPP & PADc) ]). rewrite (s3_msg DF_usage arg I).
       eapply (fprintf_diag_s_go DF_usage); first [exact I | mf_easm].

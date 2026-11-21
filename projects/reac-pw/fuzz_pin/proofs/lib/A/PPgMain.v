@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_pin's ASan harness walk from
-   proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632 (lines 126-243: the journal facts and
+   proofs/libreac/fuzz_knock/lib/A/APgLib.v (lines 126-243: the journal facts and
    the proof of the harness contract from the walk), with its module paths changed and pin's walk (lib/A/PPgMain0 ..
    PPgMain5.v) in place of knock's S0 .. S7; knock's links and closed form (lines 245-313) are left out, because
    pin's close is P5's. rule 24: this file closes the walk of LLVMFuzzerTestOneInput (0x806b4).
@@ -28,6 +28,7 @@
        TROW fuzz_catalogue_row 0x80eb4 (0x80a1c), TPARSE reac_box_pin_parse 0x80b44 (0x80900),
        TKNOWN check_known 0x80aa4 (0x8090c), TCROW check_row 0x80acc (0x8091c), TCLAB check_label 0x80aec (0x80928);
      the read-only objects' durable fact FCAT : pin_ro_law (PPgCSpec F-RO-LAW). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

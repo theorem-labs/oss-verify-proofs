@@ -1,7 +1,8 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v (commit 97c611eec86, file sha256 df262e182c54; donor not released), with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v (file sha256 df262e182c54; donor not released), with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_pcap's v1.9.0 ASan build: the byte loop of ___interceptor_strcmp,
    as a plain machine walk (msteps), in the form of A/AE3a.v's byte loop (mc_tail). MEASURED on
    fuzz_pcap.asan with rvelf.py:

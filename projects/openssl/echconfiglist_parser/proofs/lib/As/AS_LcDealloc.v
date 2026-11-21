@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-ledger premise RESF covers the class's primary region only, the range it is applied to, since the launch's vDSO/vvar pair is reserved above AHI_LO). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -129,7 +130,8 @@ Section LcDealloc.
   Hypothesis FARR : u32arr asegs m FAB (wlist (rev fl)).
   Hypothesis FAJ : stk asegs m (FAB + 4 * nf) (FAB + mfa).
   (* [comment removed for export] *)
-  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
+  (* LPS 727298f3: the reserved ledger is free on the class's region only ([AS_Refill2]) *)
+  Hypothesis RESF : forall (a k : word), rbeg <= bv_unsigned a -> bv_unsigned a + bv_unsigned k <= rbeg + 2^32 -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
   Hypothesis PRIM : forall (a k : word), rbeg <= bv_unsigned a -> bv_unsigned a + bv_unsigned k <= rbeg + 2^32 -> map_contains (vm_maps (m_vmmaps mo)) a k = true.
   Hypothesis NW : entries_nowrap (vm_maps (m_vmmaps mo)). Hypothesis NWA : entries_nowrap (vm_noaccess (m_vmmaps mo)).
   Hypothesis NOV : nooverlap (vm_maps (m_vmmaps mo)).
@@ -246,7 +248,7 @@ Section LcDealloc.
     { destruct THA as [T16]. split. rewrite EP, ECA. clear - T16; try acb. Z.div_mod_to_equations. tlia. }
     { destruct PLC as [PLCq]. unfold kSpaceSize in PLCq. split. rewrite EP, ECA. unfold kFreeArraySize, kFreeArrayOffset, kSpaceSize.
       clear - BND BNDL NR1 CB EQ MCR NFR HC ERB PLCq; try acb. rewrite ERB in BNDL. repeat split; tlia. }
-    { intros a k Ha. rewrite (same_but_materialized_vmmaps _ _ SBM1). apply RESF. exact Ha. }
+    { intros a k H1 H2. rewrite (same_but_materialized_vmmaps _ _ SBM1). apply RESF; assumption. }
     { intros a k H1 H2. rewrite (same_but_materialized_vmmaps _ _ SBM1). apply PRIM; assumption. }
     { rewrite (same_but_materialized_vmmaps _ _ SBM1). exact NW. }
     { rewrite (same_but_materialized_vmmaps _ _ SBM1). exact NWA. }

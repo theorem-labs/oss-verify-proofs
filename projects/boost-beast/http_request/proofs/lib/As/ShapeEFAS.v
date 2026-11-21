@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -18,12 +19,13 @@ Section WithCfg.
 Context {SC : StepCfg}.
 
 Lemma srealizes_not_dies : forall segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   kill_free T ->
   ~ dies_by_signal (run_scfg the_scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp T Hrz HK (tr & sig & fs & Htr & Hin).
-  cbn in Htr. apply (srealizes_obs_iff segs _ T Hrz tr) in Htr.
+  cbn in Htr. apply (srealizes_obs_iff (run_segments segs inp sp mb) _ T Hrz tr) in Htr.
   pose proof (HK tr Htr _ Hin) as Hk. discriminate Hk.
 Qed.
 
@@ -31,10 +33,10 @@ Theorem shape_strong_equiv_ef_abort_s :
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  srealizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  srealizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   kill_free T ->
   strong_equiv_error_free_budgets_scfg_abort the_scfg rlim alim
     (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
@@ -49,11 +51,11 @@ Proof.
   - cbn. eapply srealizes_no_error; exact Htarget.
   - eapply srealizes_not_dies; eassumption.
   - intros H. cbn in H |- *.
-    apply (srealizes_obs_iff target_segs _ T Htarget tr).
-    apply (realizes_obs_iff source_segs _ T Hsource tr). exact H.
+    apply (srealizes_obs_iff (run_segments target_segs inp asp amb) _ T Htarget tr).
+    apply (realizes_obs_iff (run_segments source_segs inp rsp rmb) _ T Hsource tr). exact H.
   - intros H. cbn in H |- *.
-    apply (realizes_obs_iff source_segs _ T Hsource tr).
-    apply (srealizes_obs_iff target_segs _ T Htarget tr). exact H.
+    apply (realizes_obs_iff (run_segments source_segs inp rsp rmb) _ T Hsource tr).
+    apply (srealizes_obs_iff (run_segments target_segs inp asp amb) _ T Htarget tr). exact H.
 Qed.
 
 (* [comment removed for export] *)
@@ -61,10 +63,10 @@ Corollary shape_strong_equiv_ef_abort_s_eq :
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T T' : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  srealizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T' ->
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  srealizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T' ->
   t_eq T T' ->
   kill_free T ->
   strong_equiv_error_free_budgets_scfg_abort the_scfg rlim alim

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (prog_model_ok's reserved-ledger premise now leaves room for the vDSO pair: live bytes plus 20 pages within 2^30, and a new bound reserved_top + brk_aslr_max + 4 pages + 4096 + 20 pages <= mmap_base_min; the proof passes the channel-reader fact and the mmap-base fact to GI_init; GI_init's state is moved to the run's initial model (init_model with the vDSO draw installed) by GI_with_vdso). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -13,23 +14,25 @@ Import ListNotations.
 Import ITree.Exc.
 Open Scope Z_scope.
 Theorem prog_model_ok : forall segs rs pc ph lim en inp,
-0 < reserved_top (segments_reserved segs) ->
-reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo ->
-reserved_top (segments_reserved segs) + brk_aslr_max + 2^34 + 8 * PGSZ <= FLOOR ->
-live_bytes (segments_reserved segs) <= 2^30 -> 2^31 <= lim ->
-valid_entry (mkImage segs pc ph) en inp -> valid_input_either inp ->
-leaves_unreachable_m nstep (Prog.prog segs rs inp en) (mo0 segs lim en inp)
-/\ tsafe nstep nsafe (Prog.prog segs rs inp en) (mo0 segs lim en inp).
+  0 < reserved_top (segments_reserved segs) ->
+  reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo ->
+  reserved_top (segments_reserved segs) + brk_aslr_max + 2^34 + 8 * PGSZ <= FLOOR ->
+  (live_bytes (segments_reserved segs) + 20 * page_size <= 2^30
+   /\ reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ + 4096 + 20 * page_size <= mmap_base_min) -> 2^31 <= lim ->
+  valid_entry (mkImage segs pc ph) en inp -> valid_input_either inp ->
+  leaves_unreachable_m nstep (Prog.prog segs rs inp en) (mo0 segs lim en inp)
+  /\ tsafe nstep nsafe (Prog.prog segs rs inp en) (mo0 segs lim en inp).
 Proof.
-intros segs rs pc ph lim en inp Hpos Hceil Hfloor Hresv Hlim Hen Hinp.
-pose proof (never_forced segs rs pc ph lim en inp Hpos Hceil Hfloor Hresv Hlim Hen Hinp) as HNF.
-destruct en as [sp brk0 mbase dr]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hinp) in Hen.
-destruct Hen as ((HspL & HspH & _) & Hbrk & _ & _). destruct Hinp as (Hargv & _ & _ & _).
-revert HNF. unfold prog, prog_itree, mo0, entry_atop. cbn [en_brk en_mmap_base en_sp]. intros HNF.
-apply (mspecP_program (GI []) (prog_with rs (argv_Z (in_argv inp)))).
-- apply prog_with_GIP. apply argv_Z_short. exact Hargv.
-- eapply GI_init; [exact Hbrk| exact Hpos| split; [exact HspL| exact HspH]| reflexivity| exact Hceil].
-- exact HNF.
+  intros segs rs pc ph lim en inp Hpos Hceil Hfloor Hresv Hlim Hen Hinp.
+  pose proof (never_forced segs rs pc ph lim en inp Hpos Hceil Hfloor Hresv Hlim Hen Hinp) as HNF.
+  destruct en as [sp brk0 mbase dr]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hinp) in Hen.
+  pose proof (valid_input_either_reader _ Hinp) as Hrdr.
+  destruct Hen as ((HspL & HspH & _) & Hbrk & Hmb & _). destruct Hinp as (Hargv & _ & _ & _).
+  revert HNF. unfold prog, prog_itree, mo0, entry_atop. cbn [en_brk en_mmap_base en_sp]. intros HNF.
+  apply (mspecP_program (GI []) (prog_with rs (argv_Z (in_argv inp)))).
+  - apply prog_with_GIP. apply argv_Z_short. exact Hargv.
+  - apply GI_with_vdso. eapply GI_init; [exact Hbrk| exact Hpos| split; [exact HspL| exact HspH]| reflexivity| exact Hceil| exact Hrdr| exact Hmb| exact Hresv].
+  - exact HNF.
 Qed.
 Theorem prog_model_ok_plain : forall rs en inp,
 valid_entry (mkImage psegs p_init_pc p_phdrs) en inp -> valid_input_either inp ->

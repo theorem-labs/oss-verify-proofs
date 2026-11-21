@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedSetupC), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AD27.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedSetupC.v, with its module paths and module names changed; 1421 of its 1480 lines of code are new or changed and 596 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pcap_source_next (fuzz_pcap.asan-ubsan 0x815b8) on the ASan+UBSan build of libreac v1.9.0: the skip phase, the
    walk of 0x81814 .. 0x818b4 (the cut pcs NP_sk1, NP_sk0, NP_sk_ra, NP_empty of lib/B's PcapSourceNextDefs.v).
 
@@ -87,7 +88,7 @@ Qed.
 
 
 (* The record at q ends the call (KBig0, KCutBig): the model does not go on from q. lib/A's nxs_chain_nbig /
-   nxs_exit_model (lib/A/Prog/PcapSourceNextSkip.v:72-105, a working branch da0818b5f51), image-free. *)
+   nxs_exit_model (lib/A/Prog/PcapSourceNextSkip.v:72-105, a working branch), image-free. *)
 Lemma nxs_chain_nbig : forall sw F cap f q lh,
   PSN.kind sw F cap q = PSN.KBig0 \/ PSN.kind sw F cap q = PSN.KCutBig ->
   PSN.chain sw F cap (S f) q lh = (q, [], Some q).

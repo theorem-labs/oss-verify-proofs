@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (two proofs close node_ok's new third conjunct, sys_rob, with RomBase.sys_rob_instr). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -165,6 +166,7 @@ Proof.
   - intros e st Hs. destruct (sstep_acc_inv _ _ _ _ _ _ Hsvc Hacc Hs) as [-> ->]. split; [reflexivity| congruence].
   - intros e c' Hs. destruct (sstep_acc_inv _ _ _ _ _ _ Hsvc Hacc Hs) as [_ E]. inversion E; subst.
     apply K; assumption.
+  - apply RomBase.sys_rob_instr. exact Hsvc.
 Qed.
 
 #[using="LAWS"] Lemma aevt_mstepsA : ltac2:(CDefT.buildp (gd_tbl_AEvtA ()) "PCS,P,$4.SpPQ,P,$2>.SpPms,$10.Pms',$10.Pmo,$25.P,A2.VAI,R5.R1.P,(23.R6.R4.R3.)P,Pmo',$25.P,A2.VAI,R8.R1.P,(2=.R5.R2.)(2?.Vsegs,R9.(2:.R7.R3.))(2?.Vsegs,R7.(2:.R6.R4.))")
@@ -198,6 +200,7 @@ Proof.
   - intros e st Hs. destruct (sstep_acc_inv _ _ _ _ _ _ Hsvc Hacc Hs) as [-> ->]. split; [reflexivity| congruence].
   - intros e c' Hs. destruct (sstep_acc_inv _ _ _ _ _ _ Hsvc Hacc Hs) as [_ E]. inversion E; subst.
     left. apply K; assumption.
+  - apply RomBase.sys_rob_instr. exact Hsvc.
 Qed.
 
 #[using="LAWS"] Lemma aevtS_mstepsA : ltac2:(CDefT.buildp (gd_tbl_AEvtA ()) "PCS,P,$4.SpPQ,P,$2>.SpPms,$10.Pms',$10.Pmo,$25.P,A2.VAI,R5.R1.P,(23.R6.R4.R3.)P,Pmo',$25.P,A2.VAI,R8.R1.P,(2=.R5.R2.)(32.Vsegs,R9.(2:.R7.R3.))(32.Vsegs,R7.(2:.R6.R4.))")

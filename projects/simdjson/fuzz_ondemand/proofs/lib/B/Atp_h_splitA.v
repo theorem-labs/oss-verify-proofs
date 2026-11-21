@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -300,7 +301,7 @@ Definition sp_static (Σ : rts RT) (PMc : Model -> Prop) (usp lo V D pk nk : Z) 
   fdfs_only PMc /\ mat_stable PMc /\ Forall (fun c => 0 <= c < 256) d /\ 1 <= zlength d < 2^26 /\ 0 < D
   /\ In (pk, nk) (rt_live RT Σ) /\ pk <= D /\ D + zlength d <= pk + nk /\ (forall p n, In (p, n) (rt_live RT Σ) -> 0 < n)
   /\ Z.of_nat (length (rt_live RT Σ)) + 4 <= LIVE_MAX /\ vcost_pushes (length (poffs d)) 0 0 <= rt_credit RT Σ
-  /\ rt_sp0 RT Σ - STACK_WIN <= lo /\ lo + ATPA_SPLIT_STACK <= usp /\ usp + 16 <= USTACK_TOP /\ usp mod 16 = 0
+  /\ rt_sp0 RT Σ - STACK_SPAN <= lo /\ lo + ATPA_SPLIT_STACK <= usp /\ usp + 16 <= USTACK_TOP /\ usp mod 16 = 0
   /\ 0 < V /\ V + 24 <= lo.
 
 Lemma split_tail : forall (Σ Σi : rts RT) PMc (T : TSet) (usp lo V D pk nk : Z) (d : list Z) (m0 m1 : mem) (done : list (nat * nat)) (Ai o : Z) (j0 : list byte) (ca cb : cell)
@@ -414,7 +415,7 @@ Proof using AF FIND PUSHR PUSHC.
   pose proof VR1 as (ELS & SZC & CAPB & A0 & AH & SV & BLK).
 
   assert (FPT : fp_client RT Σi lo [(usp - 96, usp - 80); (usp - 72, usp - 56)]) by (constructor; [left; cbn [fst snd]; ul| constructor; [left; cbn [fst snd]; ul| constructor]]).
-  assert (LOWi : rt_sp0 RT Σi - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+  assert (LOWi : rt_sp0 RT Σi - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
   pose proof (af_client_consts RT AF Σi m1 ART1) as (G1 & G2 & _).
   assert (XSH1 : x_shz [(usp - 96, usp - 80); (usp - 72, usp - 56)] m1 (usp - 56) 16).
   { intros m' MU WM. apply (shz_stackv RT AF Σi m'); [exact (art_fp_client RT AF Σi m1 m' lo _ ART1 LOWi FPT MU WM)| ul| lia| ul]. }
@@ -453,7 +454,7 @@ Proof using AF FIND PUSHR PUSHC.
   destruct (ASTA_unpack_f RT Σ2 _ _ c2 Hc2 FC2) as (ms2 & (r2 & m2 & RS2 & (ART2 & MI2 & ST2) & PRES2 & VR2) & FRM2 & Hc2'). clear Hc2.
   destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
   cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2. rewrite (ret_pc_even 0x9ccc4) in Hc2' by lia.
-  assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2, SP1; exact LOW).
+  assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2, SP1; exact LOW).
   assert (AG2 : forall a : word, usp - 80 <= bv_unsigned a < usp -> m2 a = m1' a).
   { intros a Ha. apply PRES2; [left; ul|]. cbn [outside]. split; [ul| exact I]. }
   assert (FRl2 : rw_cells bsegs m2 (usp + -80) (sf_locals j0 (C8 (Z_to_bv 64 (D + o))) (C8 (Z_to_bv 64 pos)) (C8 (Z_to_bv 64 (D + o))) (C8 (Z_to_bv 64 (L - o))))).

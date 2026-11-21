@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the entry-state shape of proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at 5afd8b87436 (its regions, atom facts, assumed branch conditions and alias fact) for reac-pw/fuzz_rate's image B: the four states are pod_write_ent's own, measured on its code. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweStates.v at d75b4b9c245; module paths fuzz_rate -> fuzz_role, every address and .got cell moved from fuzz_rate.asan-ubsan to fuzz_role.asan-ubsan by symbol + offset and checked on fuzz_role.asan-ubsan's .symtab and words; ledger provenance/evidence/reloc/AU-Pwe.tsv. *)
+(* Modified by Theorem Labs, 2026-10: the entry-state shape of proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (its regions, atom facts, assumed branch conditions and alias fact) for reac-pw/fuzz_rate's image B: the four states are pod_write_ent's own, measured on its code. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweStates.v; module paths fuzz_rate -> fuzz_role, every address and .got cell moved from fuzz_rate.asan-ubsan to fuzz_role.asan-ubsan by symbol + offset and checked on fuzz_role.asan-ubsan's .symtab and words; ledger provenance/evidence/reloc/AU-Pwe.tsv. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The four engine states of pod_write_ent's walk on image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0). Proves no function (kind: statement text):
    this file only names the states; lib/AU/PweWalk.v proves the function against them.

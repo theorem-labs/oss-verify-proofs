@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply): reply's UNIT FACTS at
    image B (fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
    rule 24: no function proved (kind: statement text; the unit-hypothesis rows of the cf layer, wired from their proved
@@ -9,7 +10,7 @@
    (CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) Table 1 and Table 4) that is proved at this image, each field's statement the row lemma's
    own statement (the layer text at reply's instances AImg_reply, AGImg_reply, AImgS_reply, DImg_reply, CfImg_B).
    reply_unit_facts_B gives the record for every B with the image's symbol facts (TfibSyms B), each field closed by
-   `exact` from its row lemma (lib/B/ReplyImg_*.v and lib/B/ReplyImgRowsB.v at lane W's head 6f1cb063e69).  The record
+   `exact` from its row lemma (lib/B/ReplyImg_*.v and lib/B/ReplyImgRowsB.v at lane W's head).  The record
    holds ONLY proved rows; a row that is not proved at this image is in the gap list below, never a field.
    Notes on single fields:
    - uf_HTSD (`as_tsd B = im_tsd`) and uf_universe_ok (`universe_ok (as_universe B)`, the tree's universe_ok) are
@@ -85,12 +86,12 @@ Record ReplyUnitFactsB (B : asyms) : Prop := MkReplyUnitFactsB {
   uf_HSHB : @ImgBaseAG.ag_shadow AImg_reply AGImg_reply = SHADOW_OFF;
   (* ReplyImg_hdzo.hdzo_B *)
   uf_HDZO : forall ly' a, @ImgBaseAG.ag_dzone AImg_reply AGif0reply.AGImg_reply ly' a -> Exists (in_zr a) (as_owned_static B) \/ (ly_NB ly' <= a < ly_NB ly' + kNodesBlockSize) \/ (ly_SB ly' <= a < ly_SB ly' + kStoreBlockSize);
-  (* ReplyImg_hdzx.hdzx_B: HDZX (YGcfInstHit.v:154-155 at commit ee95275bccbf) *)
+  (* ReplyImg_hdzx.hdzx_B: HDZX (YGcfInstHit.v:154-155) *)
   uf_HDZX : forall ly' a, layout_ok ly' -> @im_img_cover AImg_reply ly' ->
     @ImgBaseAG.ag_dzone AImg_reply AGif0reply.AGImg_reply ly' a ->
     ~ (as_inst B <= a < as_inst B + 3632) /\ ~ (as_ialloc_lo B <= a < as_ialloc_hi B) /\
     ~ (as_ialloc_flag B <= a < as_ialloc_flag B + 2);
-  (* ReplyImg_hcw.hcw_B: HCW (YGcfInstHit.v:160-162 at commit ee95275bccbf) *)
+  (* ReplyImg_hcw.hcw_B: HCW (YGcfInstHit.v:160-162) *)
   uf_HCW : forall ly' c j cl', layout_ok ly' -> @im_img_cover AImg_reply ly' -> ly_tsd ly' = as_tsd B ->
     In c (as_const B ly') -> 0 <= j < Z.max 1 (Z.of_nat (c_w c)) -> 1 <= cl' <= 31 ->
     ~ ImgBaseAG.WINT ly' cl' (aeval B ly' (c_at c) + j);
@@ -126,7 +127,7 @@ Record ReplyUnitFactsB (B : asyms) : Prop := MkReplyUnitFactsB {
   uf_SB_CONST : forall ly, In (ACell (AInst o_space) 8 (AV (ASp 0))) (@im_const AImg_reply ly);
   (* ReplyImg_constapart.CONST_APART_B *)
   uf_CONST_APART : forall ly c, (layout_ok ly /\ ly_tsd ly = as_tsd B /\ Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B)) -> In c (@im_const AImg_reply ly) -> (aeval B ly (c_at c) = as_inst B + o_q_cmutex + 2 /\ c_w c = 2%nat /\ c_val c = AV (ANum 0)) \/ (forall k, 0 <= k < Z.max 1 (Z.of_nat (c_w c)) -> ~ DMiface.qhdr (as_inst B) ly (aeval B ly (c_at c) + k) /\ ~ (ly_prim ly <= aeval B ly (c_at c) + k < ly_prim ly + kPrimResvSize));
-  (* ReplyImg_qapart.IMG_QAPART_B: IMG_QAPART, four clauses (YGcfInstDrainX.v:65-68 at commit 8b12df2b772) *)
+  (* ReplyImg_qapart.IMG_QAPART_B: IMG_QAPART, four clauses (YGcfInstDrainX.v:65-68) *)
   uf_IMG_QAPART : forall a, ((as_inst B + o_quar + 152 <= a < as_inst B + o_quar + 156) \/ (as_inst B + o_quar + 160 <= a < as_inst B + o_quar + 192)) -> ~ (as_depot B <= a < as_depot B + 4 * 2 ^ 20 + 32) /\ ~ (as_store B <= a < as_store B + 32) /\ ~ (as_ialloc_lo B <= a < as_ialloc_hi B) /\ ~ (as_ialloc_flag B <= a < as_ialloc_flag B + 2);
   (* ReplyImg_fvzones.fv_ial_img *)
   uf_FV_IAL : forall (W : world im_segs) (m : word -> option byte), @dg_ial_post AImg_reply DImg_reply W m <-> (let m' := mrestrict (w_H W) m in val_mem im_segs m' (as_ialloc_flag B) 1 1 /\ val_mem im_segs m' (as_ialloc_flag B + 1) 1 0 /\ val_mem im_segs m' (as_ialloc_w B) 8 4096 /\ val_mem im_segs m' (as_ialloc_w B + 8) 8 (as_ialloc_w B + 16) /\ (forall a, as_ialloc_lo B <= a < as_ialloc_w B \/ as_ialloc_w B + 16 <= a < as_ialloc_hi B -> mbyte im_segs m' a = Some (Z_to_bv 8 0)));
@@ -154,12 +155,12 @@ Record ReplyUnitFactsB (B : asyms) : Prop := MkReplyUnitFactsB {
   uf_IMG_SAPART : forall a, ((as_inst B + 680 <= a < as_inst B + 684) \/ (as_inst B + 120 <= a < as_inst B + 129) \/ (as_inst B + 144 <= a < as_inst B + 160) \/ (as_inst B + 704 <= a < as_inst B + 720)) -> ~ (as_depot B <= a < as_depot B + 4 * 2 ^ 20 + 32) /\ ~ (as_store B <= a < as_store B + 32) /\ ~ (as_ialloc_lo B <= a < as_ialloc_hi B) /\ ~ (as_ialloc_flag B <= a < as_ialloc_flag B + 2);
   (* ReplyImgRowsB.img_junk_B *)
   uf_IMG_JUNK : forall ly r0, layout_ok ly -> In r0 (as_junk B ly) -> forall j, 0 <= j < snd r0 -> exists sg, In sg (@im_segs AImg_reply) /\ Z.of_N (seg_base sg) <= aeval B ly (fst r0) + j < Z.of_N (seg_base sg) + Z.of_N (seg_size sg);
-  (* ERRB_SEP_t (YGcfErrbSep.v:25-28 at commit 76362ece943) = ERRB_QAPART (YGcfImgRows.v:22-23) /\ the rest:
+  (* ERRB_SEP_t (YGcfErrbSep.v:25-28) = ERRB_QAPART (YGcfImgRows.v:23-24) /\ the rest:
      ReplyImg_errbqapart.ERRB_QAPART_B and the last four conjuncts of ReplyImgRowsB.errb_sep_B *)
   uf_ERRB_SEP : (forall B, @im_syms AImg_reply B -> forall a, @cf_errbuf_obj CfImg_B <= a < @cf_errbuf_obj CfImg_B + 56 -> ~ (as_inst B <= a < as_inst B + 3632)) /\
     forall ly a, layout_ok ly -> @im_img_cover AImg_reply ly -> ly_tsd ly = as_tsd B -> @cf_errbuf_obj CfImg_B <= a < @cf_errbuf_obj CfImg_B + 56 ->
     a <> as_oom_byte B /\ ~ (as_errno B <= a < as_errno B + 4) /\ ~ ims_dzone ly a /\ ~ ag_dzone ly a;
-  (* ReplyImgRowsB.exh_off_B: EXH_OFF_t (YGcfImgRows.v:25 at commit 76362ece943) *)
+  (* ReplyImgRowsB.exh_off_B: EXH_OFF_t (YGcfImgRows.v:25) *)
   uf_EXH_OFF : @cf_exh_off CfImg_B = 68;
   (* ReplyImg_relro.silent_img_B *)
   uf_RELRO_silent : val_mem tfibsegs (fun _ => None) ReplyImg_relro.C_SILENT_B 8 1;

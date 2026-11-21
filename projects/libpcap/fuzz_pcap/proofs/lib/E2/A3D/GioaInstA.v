@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the IN_ARGS hypothesis names args_comp over the stack image's length less 8 (was less 16), in both copies. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -55,7 +56,7 @@ Section Inst.
   Hypothesis SB_16 : 16 <= Z.of_nat (length SB).
   Hypothesis USP_hi : USP + Z.of_nat (length SB) <= 2^47.
   Hypothesis CI_RS : exists iv, In iv CI /\ fst iv <= READ_STAGE /\ READ_STAGE + 65537 <= snd iv.
-  Hypothesis IN_ARGS : In (args_comp USP (Z.of_nat (length SB) - 16)) cs.
+  Hypothesis IN_ARGS : In (args_comp USP (Z.of_nat (length SB) - 8)) cs.
   Hypothesis IN_UNP : In unp_comp cs.
 
   #[using="CSOK USP_lo SB_16 USP_hi CI_RS IN_ARGS IN_UNP"] Theorem GD_inst : gia_drv_laws GIOA USP SB.
@@ -145,7 +146,7 @@ Section Inst.
   Hypothesis SB_16 : 16 <= Z.of_nat (length SB).
   Hypothesis USP_hi : USP + Z.of_nat (length SB) <= 2^47.
   Hypothesis CI_RS : exists iv, In iv CI /\ fst iv <= READ_STAGE /\ READ_STAGE + 65537 <= snd iv.
-  Hypothesis IN_ARGS : In (args_comp USP (Z.of_nat (length SB) - 16)) cs.
+  Hypothesis IN_ARGS : In (args_comp USP (Z.of_nat (length SB) - 8)) cs.
   Hypothesis IN_UNP : In unp_comp cs.
 
   #[using="CSOK USP_lo SB_16 USP_hi CI_RS IN_ARGS IN_UNP"] Theorem GD_inst : gia_drv_laws GIOA USP SB.

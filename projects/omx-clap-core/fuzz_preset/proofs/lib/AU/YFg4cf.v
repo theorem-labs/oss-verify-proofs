@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/YFg4cf.v (commit 3cae605a900a, file sha256 cd2cf2778978) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 2 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/YFg4cf.v (file sha256 cd2cf2778978) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 2 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator
-   ReallocPrimary): the RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg4.v at c5 30a1993588f (Enqueue's ROOM
+   ReallocPrimary): the RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg4.v at c5 theorem-labs/oss-verify-proofs@6b32741d849a (Enqueue's ROOM
    arm), ported from cgif's AR / enq_pre to the cf instance's ARX_cf / enq_pre_cf, as A/AFf0cf.v ported AFf0.v.
    Kept, with these changes only: the Section's call premise is YGcfInstEnq.enq_pre_cf at the layer's walk relation
    YGcfInstBase.ARX_cf B IOK Hp (IOK, Hp, inst become Section Variables); M / Hk / Hst / Hnq / HSP / IMG read it
@@ -14,10 +14,11 @@
    state from YGcfInstEnqG.enq_room_wf_cf (the tick's two lower bounds are spent there, nothing else).
    ALSO PORTED (below, :155-:301): of the walk half, FH_ok (as FH_ok_cf, :200) and last_cells, bsz_range, slot_present,
    chunk_atom8 (:162-:198); fh_Hnn (YFgp.v:98, 1 <= nn <= kQuarantineMax) is YFfqcf.u_facts_cf's 1 <= nn and enq_pre_cf's guard
-   (:228).  NOT HERE: tfib_enqueue_room_arm / tfib_enqueue_room; the unit's walk YFh3.segP takes FH_ok_cf (AU/YGcfInstEnqMisspreset.v:343-345).
+   (:228).  NOT HERE: tfib_enqueue_room_arm / tfib_enqueue_room; the unit's walk YFh3.segP takes FH_ok_cf (AU/YGcfInstEnqMisspreset.v:344-346).
    IMAGE-SPECIFIC (cgif_file's image, TfibSyms): each unit relocates this file to its own image (preset A' / B':
    A11; reply A / B: lane W), as A/AFf0cf.v was.
    rule 24: no function proved (kind: relational transport of the allocator relation over Enqueue's room arm). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -153,7 +154,7 @@ unfold zdisjoint in PT, PC, PD, PSTK, TC, TD, TSTK, CD, CSTK, DSTK. cbn [fst snd
 destruct C12 as [C1 C2]. destruct D12 as [D1 D2]. splits; assumption.
 Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The walk's entry hypotheses (YFg4.v:86-221, ported): YFgp.free_hyps (at commit de1e889fb0f: fh_Hnn reads the      *)
+(* The walk's entry hypotheses (YFg4.v:86-221, ported): YFgp.free_hyps (fh_Hnn reads the      *)
 (* caller's inclusive guard nn <= kQuarantineMax) from enq_pre_cf at ARX_cf, through YFfqcf's memory facts.          *)
 Lemma HQL : qloose X.
 Proof. destruct ENQ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & QL & _). exact QL. Qed.

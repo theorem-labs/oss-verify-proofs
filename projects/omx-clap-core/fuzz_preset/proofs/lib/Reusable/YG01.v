@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG01.v, with its module paths changed; its addresses are still cgif_file_fuzzer.asan's. *)
 (* Modified by Theorem Labs, 2026-10: the trace carrier over Univ (YG00.v): universe_ok, depot_fits and admits replace the list universe (universe_ok over a list, wf_depot's NoDup /\ incl). Two names are chosen on purpose: the admission predicate is `admits`, because the repository's proof lint (tools/oft/lint.py, FORBIDDEN_IN_PROOFS) refuses the word `admit` anywhere in a proof; and the depot invariant is `depot_fits`, because `depot_ok` is already YG0n.v's reader-level depot predicate (ARm's am_depot), which would shadow it in every importer. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a.
 Import ListNotations.
@@ -220,7 +221,7 @@ Proof.
   intros U tr s (_ & HF & _) H. split; [split; [exact (proj1 (Forall_forall _ _) HF tr H) | left; exact H]|].
   right. left. apply mem_trace_In. exact H.
 Qed.
-(* a put of the same trace keeps it admitted (realloc_tree_with passes one trace to its three calls, ReallocP.v:28-35; free / free_cf on PNull return before depot_put, YG00.v:553-554, YG00cf.v:343-344, so at most two puts) *)
+(* a put of the same trace keeps it admitted (realloc_tree_with passes one trace to its three calls, ReallocP.v:28-35; free / free_cf on PNull return before depot_put, YG00.v:553-554, YG00cf.v:344-345, so at most two puts) *)
 Lemma admits_keep : forall U tr s s', admits U tr s ->
   (st_depot s' = st_depot s \/ st_depot s' = st_depot s ++ [tr]) -> admits U tr s'.
 Proof.

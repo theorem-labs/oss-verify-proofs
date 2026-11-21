@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2f.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the harness globals' hull [G_HARNESS_B_LO, G_HARNESS_B_HI) (lib/B/TransportGB.v) is clipped out of IMG_L, IMG_LC and L_pieces, outermost, after STDOUT and SOBUF, because the program call writes G_HARNESS_B; region_avoids_G / region_avoids_G_sound (pcap's Reusable/YD1y.v:220-230, here because this unit's YD1y.v is a generated start-up file) and the vm_compute lemma L_mem_avoids_G (end of file) state the side condition YD1r.v needs. libreac/fuzz_pcap's G form (Reusable/YD2f.v:183-188, 214, 321-325 at origin/ossv/recipes 198234fa4d3, DRV_G_LO / DRV_G_HI there). *)
-(* Relocated from proofs/libreac/fuzz_decode/lib/YD2f.v at 88154566652a by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-10: the harness globals' hull [G_HARNESS_B_LO, G_HARNESS_B_HI) (lib/B/TransportGB.v) is clipped out of IMG_L, IMG_LC and L_pieces, outermost, after STDOUT and SOBUF, because the program call writes G_HARNESS_B; region_avoids_G / region_avoids_G_sound (pcap's Reusable/YD1y.v:220-230, here because this unit's YD1y.v is a generated start-up file) and the vm_compute lemma L_mem_avoids_G (end of file) state the side condition YD1r.v needs. libreac/fuzz_pcap's G form (Reusable/YD2f.v:183-188, 214, 321-325, DRV_G_LO / DRV_G_HI there). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_decode/lib/YD2f.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

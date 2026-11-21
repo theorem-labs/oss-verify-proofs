@@ -1,0 +1,400 @@
+(* reloc-zl14c *)
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Fpu Sem.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.Lib Require Import Tac Image. From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Lib Require Import ZBridge Arr.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.U Require Import Z_ikit.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import ZIface InflateState InflateArms Inflate RefInflateSafeD RefInflateSafeTY. From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.UnpW.Z Require Import RefInflateArmLib.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope Z_scope.
+Local Notation wz := (Z_to_bv 64).
+Definition Z_INFLATE : Z := 0x1f270.
+Definition PC_DISPATCH : Z := 0x1f3e0.
+Definition PC_LEAVE : Z := 0x2186c.
+Definition PC_EPILOGUE : Z := 0x21a58.
+Definition PC_TRAP : Z := 0x21abc.
+Definition A_JUMPTAB : Z := 0x12540.
+Definition INF_FRAME : Z := 256.
+Definition PC_HEAD : Z := 0x1f414.     Definition PC_DICTID : Z := 0x1f560.   Definition PC_DICT : Z := 0x1f810.
+Definition PC_TYPE : Z := 0x1f84c.     Definition PC_TYPEDO : Z := 0x1f85c.   Definition PC_STORED : Z := 0x1f5d8.
+Definition PC_COPY_ : Z := 0x1f948.    Definition PC_COPY : Z := 0x1f950.     Definition PC_TABLE : Z := 0x1f6dc.
+Definition PC_LENLENS : Z := 0x1f544.  Definition PC_CODELENS : Z := 0x1fc4c. Definition PC_LEN_ : Z := 0x20d58.
+Definition PC_LEN : Z := 0x20d60.      Definition PC_LENEXT : Z := 0x1f4c0.   Definition PC_DIST : Z := 0x21078.
+Definition PC_DISTEXT : Z := 0x1f554.  Definition PC_MATCH : Z := 0x213a8.    Definition PC_LIT : Z := 0x1f480.
+Definition PC_CHECK : Z := 0x1f744.    Definition PC_LENGTH : Z := 0x20884.   Definition PC_DONE : Z := 0x21854.
+Definition PC_BAD : Z := 0x2186c.      Definition PC_MEM : Z := 0x218b4.
+Record ictx : Type := mkIX {
+  ix_L : ilay; ix_flush : Z; ix_lo : Z; ix_input : arr; ix_rest0 : list byte; ix_hasw : bool; ix_m0 : mem;
+  ix_sp : word; ix_ra : word; ix_gp : word; ix_tp : word;
+  ix_s0 : word; ix_s1 : word; ix_s2 : word; ix_s3 : word; ix_s4 : word; ix_s5 : word;
+  ix_s6 : word; ix_s7 : word; ix_s8 : word; ix_s9 : word; ix_s10 : word; ix_s11 : word;
+  ix_F : bvmap 5 word; ix_fc : bv 32
+}.
+Definition ix_W (X : ictx) : list ivl :=
+  [(ix_lo X, bv_unsigned (ix_sp X)); (il_S (ix_L X), il_S (ix_L X) + 112); (il_As (ix_L X), il_As (ix_L X) + ZI_SIZE);
+   (il_NO (ix_L X), il_NO (ix_L X) + Z.of_nat (length (ix_rest0 X)))].
+Notation ix_nin X := (arr_len (ix_input X)) (only parsing).
+Record ix_ok (X : ictx) : Prop := mkIXok {
+  xo_stack : ix_lo X <= bv_unsigned (ix_sp X) - 1024 /\ 0x5f000 <= ix_lo X /\ bv_unsigned (ix_sp X) <= il_S (ix_L X)
+             /\ il_S (ix_L X) + 112 < 2^63 /\ il_S (ix_L X) mod 8 = 0;
+  xo_state : 0 < il_As (ix_L X) /\ il_As (ix_L X) + ZI_SIZE <= ix_lo X;
+  xo_ni : 0 < il_NI (ix_L X) /\ 0 <= ix_nin X /\ il_NI (ix_L X) + ix_nin X <= ix_lo X;
+  xo_no : 0 < il_NO (ix_L X) /\ il_NO (ix_L X) + Z.of_nat (length (ix_rest0 X)) <= ix_lo X;
+  xo_io : apart (il_NI (ix_L X)) (ix_nin X) (il_NO (ix_L X)) (Z.of_nat (length (ix_rest0 X)));
+  xo_is : apart (il_NI (ix_L X)) (ix_nin X) (il_As (ix_L X)) ZI_SIZE;
+  xo_os : apart (il_NO (ix_L X)) (Z.of_nat (length (ix_rest0 X))) (il_As (ix_L X)) ZI_SIZE;
+  xo_win : ix_hasw X = true -> 0 < il_Aw (ix_L X) /\ il_Aw (ix_L X) + ZI_WIN <= ix_lo X;
+  xo_iw : ix_hasw X = true -> apart (il_NI (ix_L X)) (ix_nin X) (il_Aw (ix_L X)) ZI_WIN;
+  xo_ow : ix_hasw X = true -> apart (il_NO (ix_L X)) (Z.of_nat (length (ix_rest0 X))) (il_Aw (ix_L X)) ZI_WIN;
+  xo_sw : ix_hasw X = true -> apart (il_As (ix_L X)) ZI_SIZE (il_Aw (ix_L X)) ZI_WIN;
+  xo_al : il_As (ix_L X) mod 16 = 0
+}.
+Definition iframe_cells (X : ictx) (r : iregs) (retw : word) (j0 j : list byte) : list cell :=
+  [CB 8 j0;
+   C8 (wz (il_As (ix_L X) + 140)); C8 (wz (il_As (ix_L X) + 136)); C8 (wz (il_As (ix_L X) + 1384)); C8 (wz (il_As (ix_L X) + 808));
+   C8 (wz (il_As (ix_L X) + 160)); C8 (wz (ix_flush X + -5)); C8 (wz (il_As (ix_L X) + 7160));
+   C8 (wz (ir_in r)); C8 retw; C8 (wz 16209); C8 (wz (ir_out r)); C8 (wz (ir_left r)); C8 (wz 75072);
+   C8 (wz 18446744073709535436); C8 (wz (Z.lxor (il_As (ix_L X) + 168) 18446744073709551615)); C8 (wz (il_As (ix_L X) + 168)); C8 (wz (ix_flush X)); CB 8 j;
+   C8 (ix_s11 X); C8 (ix_s10 X); C8 (ix_s9 X); C8 (ix_s8 X); C8 (ix_s7 X); C8 (ix_s6 X); C8 (ix_s5 X); C8 (ix_s4 X);
+   C8 (ix_s3 X); C8 (ix_s2 X); C8 (ix_s1 X); C8 (ix_s0 X); C8 (ix_ra X)].
+Definition iframe (X : ictx) (r : iregs) (m : mem) : Prop :=
+  exists j0 j, rw_cells usegs m (bv_unsigned (ix_sp X) + -256) (iframe_cells X r (wz (ir_ret r)) j0 j).
+Definition iframeL (X : ictx) (r : iregs) (m : mem) : Prop :=
+  exists retw j0 j, rw_cells usegs m (bv_unsigned (ix_sp X) + -256) (iframe_cells X r retw j0 j).
+Definition iin (m : mem) (X : ictx) : Prop :=
+  u8ro usegs m (il_NI (ix_L X)) (av8 (ix_input X) (arr_len (ix_input X))).
+Definition iout_bytes (rest0 : list byte) (c : icall) (put : Z) : list byte :=
+  av8 (ic_outbuf c) put ++ skipn (Z.to_nat put) rest0.
+Definition iout (m : mem) (L : ilay) (rest0 : list byte) (c : icall) (put : Z) : Prop :=
+  u8arr usegs m (il_NO L) (iout_bytes rest0 c put).
+Lemma iout_bytes_length : forall rest0 c put, 0 <= put <= Z.of_nat (length rest0) -> length (iout_bytes rest0 c put) = length rest0.
+Proof. intros rest0 c put H. unfold iout_bytes. rewrite length_app, av8_length, length_skipn. lia. Qed.
+Lemma iout_bytes_store : forall rest0 c put v, 0 <= put < Z.of_nat (length rest0) -> put < arr_len (ic_outbuf c) ->
+  upd (iout_bytes rest0 c put) (Z.to_nat put) (Z_to_bv 8 v)
+  = iout_bytes rest0 (icset_outbuf c (arr_set (ic_outbuf c) put v)) (put + 1).
+Proof.
+  intros rest0 c put v Hp Ha. apply list_ext_nth.
+  - rewrite upd_length, !iout_bytes_length by lia. reflexivity.
+  - intros k Hk. rewrite upd_length, iout_bytes_length in Hk by lia.
+    unfold iout_bytes. cbn [ic_outbuf icset_outbuf].
+    destruct (Nat.eq_dec k (Z.to_nat put)) as [E|NE].
+    + subst k. rewrite nth_error_upd_same by (rewrite length_app, av8_length, length_skipn; lia).
+      rewrite nth_error_app1 by (rewrite av8_length; lia).
+      rewrite (av8_nth _ (put + 1) put) by lia. rewrite arr_get_set_same by lia. reflexivity.
+    + rewrite nth_error_upd_other by (intros E; apply NE; symmetry; exact E).
+      destruct (Nat.lt_ge_cases k (Z.to_nat put)) as [Hlt|Hge].
+      * rewrite !nth_error_app1 by (rewrite av8_length; lia).
+        replace k with (Z.to_nat (Z.of_nat k)) by lia.
+        rewrite (av8_nth _ put (Z.of_nat k)), (av8_nth _ (put + 1) (Z.of_nat k)) by lia.
+        rewrite arr_get_set_other by lia. reflexivity.
+      * rewrite !nth_error_app2 by (rewrite av8_length; lia). rewrite !av8_length, !nth_error_skipn.
+        f_equal. lia.
+Qed.
+Lemma iout_bytes_0 : forall rest0 c, iout_bytes rest0 c 0 = rest0.
+Proof. intros. unfold iout_bytes, av8. reflexivity. Qed.
+Lemma iout_bytes_nth : forall rest0 c put i, 0 <= i < put ->
+  nth_error (iout_bytes rest0 c put) (Z.to_nat i) = Some (Z_to_bv 8 (arr_get (ic_outbuf c) i)).
+Proof. intros rest0 c put i Hi. unfold iout_bytes. rewrite nth_error_app1 by (rewrite av8_length; lia). apply av8_nth. lia. Qed.
+Lemma iout_bytes_ext : forall rest0 c' c put, ic_outbuf c' = ic_outbuf c -> iout_bytes rest0 c' put = iout_bytes rest0 c put.
+Proof. intros rest0 c' c put E. unfold iout_bytes. rewrite E. reflexivity. Qed.
+Global Opaque iout_bytes.
+Definition IMEMg (fr : ictx -> iregs -> mem -> Prop) (X : ictx) (w : iw) (m : mem) : Prop :=
+  fr X (w_r w) m
+  /\ stk usegs m (ix_lo X) (bv_unsigned (ix_sp X) + -256)
+  /\ IREP m (ix_L X) (w_s w) (w_c w)
+  /\ iin m X
+  /\ iout m (ix_L X) (ix_rest0 X) (w_c w) (ir_put (w_r w))
+  /\ mem_inv usegs m /\ munch (ix_W X) (ix_m0 X) m /\ wmono usegs (ix_m0 X) m.
+Definition IMEM := IMEMg iframe.
+Definition IMEML := IMEMg iframeL.
+Definition ILOOP (X : ictx) (w : iw) (pc : Z) (x26 x12 : word) : machine_state -> Prop :=
+  fun ms => exists x5 x6 x7 x14 x15 x16 x17 x19 x20 x21 x23 x28 x29 x30 x31 m,
+    ms = MS (mkR (wz 16209) (wz (bv_unsigned (ix_sp X) + -256)) (ix_gp X) (ix_tp X) x5 x6 x7 (wz (il_As (ix_L X))) (wz (il_S (ix_L X))) (wz (-2)) (wz (ix_flush X)) x12 (wz (il_S (ix_L X))) x14 x15 x16 x17 (wz (ir_bits (w_r w))) (wz (il_NO (ix_L X) + ir_put (w_r w))) (wz (ir_hold (w_r w))) x19 x23 x21 (wz (ir_have (w_r w))) x20 (wz (il_NI (ix_L X) + ir_next (w_r w))) x26 x28 x29 x30 x31)
+            (ix_F X) (wz pc) (ix_fc X) None m (seg_rom usegs)
+    /\ IMEM X w m.
+Definition ILEAVE (X : ictx) (w : iw) : machine_state -> Prop :=
+  fun ms => exists x1 x5 x6 x7 x10 x12 x14 x15 x16 x17 x19 x20 x21 x23 x28 x29 x30 x31 m,
+    ms = MS (mkR x1 (wz (bv_unsigned (ix_sp X) + -256)) (ix_gp X) (ix_tp X) x5 x6 x7 (wz (il_As (ix_L X))) (wz (il_S (ix_L X))) x10 (wz (ix_flush X)) x12 (wz (il_S (ix_L X))) x14 x15 x16 x17 (wz (ir_bits (w_r w))) (wz (il_NO (ix_L X) + ir_put (w_r w))) (wz (ir_hold (w_r w))) x19 x23 x21 (wz (ir_have (w_r w))) x20 (wz (il_NI (ix_L X) + ir_next (w_r w))) (wz (ir_ret (w_r w))) x28 x29 x30 x31)
+            (ix_F X) (wz PC_LEAVE) (ix_fc X) None m (seg_rom usegs)
+    /\ IMEML X w m.
+Definition RST (w : iw) : Prop :=
+  ic_next_in (w_c w) = ir_next (w_r w) /\ ic_avail_in (w_c w) = ir_have (w_r w) /\ ic_next_out (w_c w) = ir_put (w_r w)
+  /\ ic_avail_out (w_c w) = ir_left (w_r w) /\ ir_put (w_r w) = 0.
+Definition IRET (X : ictx) (rc : Z) (w : iw) : machine_state -> Prop :=
+  fun ms => exists x1 x5 x6 x7 x8 x9 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 m,
+    ms = MS (mkR x1 (wz (bv_unsigned (ix_sp X) + -256)) (ix_gp X) (ix_tp X) x5 x6 x7 x27 x9 (wz rc) x11 x12 x13 x14 x15 x16 x17 x8 x18 x19 x20 x21 x24 x23 x22 x25 x26 x28 x29 x30 x31)
+            (ix_F X) (wz PC_EPILOGUE) (ix_fc X) None m (seg_rom usegs)
+    /\ IMEML X w m /\ (rc = Z_NEED_DICT -> RST w).
+Lemma ILOOP_intro : forall X w pc x26 x12 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x27 x28 x29 x30 x31 F fc m,
+  x1 = wz 16209 -> x2 = wz (bv_unsigned (ix_sp X) + -256) -> x3 = ix_gp X -> x4 = ix_tp X ->
+  x8 = wz (il_S (ix_L X)) -> x9 = wz (il_NO (ix_L X) + ir_put (w_r w)) -> x10 = wz (-2) -> x11 = wz (ix_flush X) ->
+  x13 = wz (il_S (ix_L X)) -> x18 = wz (ir_bits (w_r w)) -> x22 = wz (ir_hold (w_r w)) -> x24 = wz (ir_have (w_r w)) ->
+  x25 = wz (il_NI (ix_L X) + ir_next (w_r w)) -> x27 = wz (il_As (ix_L X)) -> F = ix_F X -> fc = ix_fc X ->
+  IMEM X w m ->
+  ILOOP X w pc x26 x12 (MS (mkR x1 x2 x3 x4 x5 x6 x7 x27 x8 x10 x11 x12 x13 x14 x15 x16 x17 x18 x9 x22 x19 x23 x21 x24 x20 x25 x26 x28 x29 x30 x31)
+                          F (wz pc) fc None m (seg_rom usegs)).
+Proof. intros. subst. unfold ILOOP. do 16 eexists. split; [reflexivity| assumption]. Qed.
+Lemma ILEAVE_intro : forall X w x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 F fc m,
+  x2 = wz (bv_unsigned (ix_sp X) + -256) -> x3 = ix_gp X -> x4 = ix_tp X ->
+  x8 = wz (il_S (ix_L X)) -> x9 = wz (il_NO (ix_L X) + ir_put (w_r w)) -> x11 = wz (ix_flush X) -> x13 = wz (il_S (ix_L X)) ->
+  x18 = wz (ir_bits (w_r w)) -> x22 = wz (ir_hold (w_r w)) -> x24 = wz (ir_have (w_r w)) ->
+  x25 = wz (il_NI (ix_L X) + ir_next (w_r w)) -> x26 = wz (ir_ret (w_r w)) -> x27 = wz (il_As (ix_L X)) -> F = ix_F X -> fc = ix_fc X ->
+  IMEML X w m ->
+  ILEAVE X w (MS (mkR x1 x2 x3 x4 x5 x6 x7 x27 x8 x10 x11 x12 x13 x14 x15 x16 x17 x18 x9 x22 x19 x23 x21 x24 x20 x25 x26 x28 x29 x30 x31)
+                 F (wz PC_LEAVE) fc None m (seg_rom usegs)).
+Proof. intros. subst. unfold ILEAVE. do 19 eexists. split; [reflexivity| assumption]. Qed.
+Lemma IRET_intro : forall X rc w x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 F fc m,
+  x2 = wz (bv_unsigned (ix_sp X) + -256) -> x3 = ix_gp X -> x4 = ix_tp X -> x10 = wz rc -> F = ix_F X -> fc = ix_fc X ->
+  IMEML X w m -> (rc = Z_NEED_DICT -> RST w) ->
+  IRET X rc w (MS (mkR x1 x2 x3 x4 x5 x6 x7 x27 x9 x10 x11 x12 x13 x14 x15 x16 x17 x8 x18 x19 x20 x21 x24 x23 x22 x25 x26 x28 x29 x30 x31)
+                  F (wz PC_EPILOGUE) fc None m (seg_rom usegs)).
+Proof. intros. subst. unfold IRET. do 28 eexists. split; [reflexivity|]. split; assumption. Qed.
+Record iscrh : Type := mkSH {
+  h5 : word; h6 : word; h7 : word; h9 : word; h10 : word; h11 : word; h12 : word; h13 : word; h14 : word; h15 : word; h16 : word;
+  h17 : word; h18 : word; h19 : word; h20 : word; h21 : word; h22 : word; h23 : word; h24 : word; h25 : word; h26 : word;
+  h28 : word; h29 : word; h30 : word; h31 : word }.
+Definition ILOOPh (X : ictx) (w : iw) (pc : Z) (q : iscrh) : machine_state -> Prop :=
+  fun ms => exists m,
+    ms = MS (mkR (wz 16209) (wz (bv_unsigned (ix_sp X) + -256)) (ix_gp X) (ix_tp X) (h5 q) (h6 q) (h7 q) (wz (il_As (ix_L X))) (wz (il_S (ix_L X))) (h10 q) (h11 q) (h12 q) (h13 q) (h14 q) (h15 q) (h16 q) (h17 q) (h18 q) (h9 q) (h22 q) (h19 q) (h23 q) (h21 q) (h24 q) (h20 q) (h25 q) (h26 q) (h28 q) (h29 q) (h30 q) (h31 q))
+            (ix_F X) (wz pc) (ix_fc X) None m (seg_rom usegs)
+    /\ IMEM X w m.
+Lemma ILOOPh_intro : forall X w pc x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 F fc m,
+  x1 = wz 16209 -> x2 = wz (bv_unsigned (ix_sp X) + -256) -> x3 = ix_gp X -> x4 = ix_tp X ->
+  x8 = wz (il_S (ix_L X)) -> x27 = wz (il_As (ix_L X)) -> F = ix_F X -> fc = ix_fc X ->
+  IMEM X w m ->
+  ILOOPh X w pc (mkSH x5 x6 x7 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x28 x29 x30 x31)
+         (MS (mkR x1 x2 x3 x4 x5 x6 x7 x27 x8 x10 x11 x12 x13 x14 x15 x16 x17 x18 x9 x22 x19 x23 x21 x24 x20 x25 x26 x28 x29 x30 x31)
+             F (wz pc) fc None m (seg_rom usegs)).
+Proof. intros. subst. unfold ILOOPh. eexists. split; [reflexivity| assumption]. Qed.
+Ltac hred := cbn [h5 h6 h7 h9 h10 h11 h12 h13 h14 h15 h16 h17 h18 h19 h20 h21 h22 h23 h24 h25 h26 h28 h29 h30 h31].
+Ltac hred_in H := cbn [h5 h6 h7 h9 h10 h11 h12 h13 h14 h15 h16 h17 h18 h19 h20 h21 h22 h23 h24 h25 h26 h28 h29 h30 h31] in H.
+Definition hhome (X : ictx) (r : iregs) (q : iscrh) : Prop :=
+  h9 q = wz (il_NO (ix_L X) + ir_put r) /\ h10 q = wz (-2) /\ h11 q = wz (ix_flush X) /\ h13 q = wz (il_S (ix_L X))
+  /\ h18 q = wz (ir_bits r) /\ h22 q = wz (ir_hold r) /\ h24 q = wz (ir_have r) /\ h25 q = wz (il_NI (ix_L X) + ir_next r).
+Lemma ILOOPh_of_ILOOP : forall X w pc x26 x12 ms, ILOOP X w pc x26 x12 ms ->
+  exists q, ILOOPh X w pc q ms /\ h26 q = x26 /\ h12 q = x12 /\ hhome X (w_r w) q.
+Proof.
+  intros X w pc x26 x12 ms (x5 & x6 & x7 & x14 & x15 & x16 & x17 & x19 & x20 & x21 & x23 & x28 & x29 & x30 & x31 & m & -> & HM).
+  eexists (mkSH x5 x6 x7 _ _ _ x12 _ x14 x15 x16 x17 _ x19 x20 x21 _ x23 _ _ x26 x28 x29 x30 x31).
+  split; [|cbn [h9 h10 h11 h12 h13 h18 h22 h24 h25 h26]; unfold hhome; cbn; repeat split; reflexivity]. exists m. split; [reflexivity| exact HM].
+Qed.
+Definition IPOST (X : ictx) {A} (res : ares A) : machine_state -> Prop :=
+  match res with
+  | ARun _ w' => fun ms => exists x26 x12, ILOOP X w' PC_DISPATCH x26 x12 ms
+  | ALeave w' => ILEAVE X w'
+  | ARet rc w' => IRET X rc w'
+  end.
+Definition ISR (s : inflate_state) : Prop :=
+  (is_last s = 0 \/ is_last s = 1)
+  /\ (is_havedict s = 0 \/ is_havedict s = 1).
+Definition NOPUTb (m put : Z) : bool := ((m =? DICTID) || (m =? DICT) || (m =? MEM)) && negb (put =? 0).
+Definition OBYT (X : ictx) (w : iw) : Prop :=
+  (forall i, 0 <= i < ir_put (w_r w) -> 0 <= arr_get (ic_outbuf (w_c w)) i < 256)
+  /\ (forall i, 0 <= i < arr_len (is_window (w_s w)) -> 0 <= arr_get (is_window (w_s w)) i < 256)
+  /\ 0 <= ir_out (w_r w) - ir_left (w_r w) <= ir_put (w_r w)
+  /\ NOPUTb (is_mode (w_s w)) (ir_put (w_r w)) = false
+  /\ (ix_hasw X = true -> is_window_blk (w_s w) <> None).
+Lemma NOPUTb_false : forall m put, NOPUTb m put = false -> m = DICTID \/ m = DICT \/ m = MEM -> put = 0.
+Proof.
+  intros m put H Hm. unfold NOPUTb in H. apply andb_false_iff in H. destruct H as [H|H].
+  - exfalso. destruct Hm as [-> | [-> | ->]]; discriminate H.
+  - apply negb_false_iff in H. apply Z.eqb_eq in H. exact H.
+Qed.
+Lemma bkmax_le : forall m, bkmax m <= 1050.
+Proof. intros m. unfold bkmax. destruct (m =? LENEXT); [lia|]. destruct (m =? DIST); [lia|]. destruct (m =? DISTEXT); lia. Qed.
+Ltac bk_keep := unfold bk_ok; cbn [is_back is_mode iset_mode iset_last iset_wrap iset_havedict iset_flags iset_dmax iset_check iset_total iset_head iset_wbits
+  iset_wsize iset_whave iset_wnext iset_window iset_window_blk iset_hold iset_bits iset_length iset_offset iset_extra iset_lencode iset_distcode iset_lenbits iset_distbits
+  iset_ncode iset_nlen iset_ndist iset_have iset_next iset_lens iset_work iset_codes iset_sane iset_back iset_was iset_self_blk fixedtables];
+  first [ intros HBK; exact HBK
+        | let HB1 := fresh "HBlo" in let HB2 := fresh "HBhi" in let H := fresh "HBM" in
+          intros [HB1 HB2];
+          lazymatch type of HB2 with _ <= bkmax ?m => pose proof (bkmax_le m) as H end;
+          unfold bkmax; cbn; lia ].
+Definition PATI (X : ictx) (w : iw) : Prop :=
+  let s := w_s w in let r := w_r w in
+  is_wrap s = 5 /\ is_wbits s = 15 /\ is_head s = 0
+  /\ (is_flags s = 0 \/ (is_flags s = -1 /\ (is_mode s = HEAD \/ is_mode s = BAD) /\ ir_put r = 0 /\ ir_out r = ir_left r))
+  /\ ~ (FLAGS <= is_mode s <= HCRC)
+  /\ (is_window_blk s <> None -> ix_hasw X = true)
+  /\ ic_input (w_c w) = ix_input X /\ arr_len (ix_input X) <= 1
+  /\ arr_len (ic_outbuf (w_c w)) = Z.of_nat (length (ix_rest0 X)) /\ (length (ix_rest0 X) <= 1)%nat
+  /\ ISR s
+  /\ OBYT X w
+  /\ bk_ok s.
+Ltac isep_with XO f := let H := fresh "SEP" in pose proof (f _ XO) as H; unfold apart in H; first [ clear - H; lia | lia ].
+Ltac k1i_isep_with_fast XO f := let H := fresh "SEP" in pose proof (f _ XO) as H; unfold apart in H; clear - H; lia.
+Ltac isep_win XO f :=
+  lazymatch goal with
+  | HASW : ix_hasw _ = true |- _ =>
+      let H := fresh "SEP" in let H2 := fresh "SEPW" in
+      pose proof (f _ XO HASW) as H; pose proof (xo_win _ XO HASW) as H2; unfold apart in H; first [ clear - H H2; lia | lia ]
+  end.
+Ltac k1i_isep_win_fast XO f :=
+  lazymatch goal with
+  | HASW : ix_hasw _ = true |- _ =>
+      let H := fresh "SEP" in let H2 := fresh "SEPW" in
+      pose proof (f _ XO HASW) as H; pose proof (xo_win _ XO HASW) as H2; unfold apart in H; clear - H H2; lia
+  end.
+Ltac isep :=
+  lazymatch goal with
+  | XO : ix_ok ?X |- _ =>
+      lazymatch goal with
+      | |- context [il_Aw (ix_L X)] =>
+          lazymatch goal with
+          | |- context [il_NO (ix_L X)] => isep_win XO xo_ow
+          | |- context [il_NI (ix_L X)] => isep_win XO xo_iw
+          | |- context [il_As (ix_L X)] => isep_win XO xo_sw
+          | |- _ => isep_win XO xo_sw
+          end
+      | |- context [il_NO (ix_L X)] =>
+          lazymatch goal with
+          | |- context [il_NI (ix_L X)] => isep_with XO xo_io
+          | |- context [il_As (ix_L X)] => isep_with XO xo_os
+          end
+      | |- context [il_NI (ix_L X)] =>
+          lazymatch goal with
+          | |- context [il_As (ix_L X)] => isep_with XO xo_is
+          end
+      end
+  end.
+Ltac k1i_isep_fast :=
+  lazymatch goal with
+  | XO : ix_ok ?X |- _ =>
+      lazymatch goal with
+      | |- context [il_Aw (ix_L X)] =>
+          lazymatch goal with
+          | |- context [il_NO (ix_L X)] => k1i_isep_win_fast XO xo_ow
+          | |- context [il_NI (ix_L X)] => k1i_isep_win_fast XO xo_iw
+          | |- context [il_As (ix_L X)] => k1i_isep_win_fast XO xo_sw
+          | |- _ => k1i_isep_win_fast XO xo_sw
+          end
+      | |- context [il_NO (ix_L X)] =>
+          lazymatch goal with
+          | |- context [il_NI (ix_L X)] => k1i_isep_with_fast XO xo_io
+          | |- context [il_As (ix_L X)] => k1i_isep_with_fast XO xo_os
+          end
+      | |- context [il_NI (ix_L X)] =>
+          lazymatch goal with
+          | |- context [il_As (ix_L X)] => k1i_isep_with_fast XO xo_is
+          end
+      end
+  end.
+Ltac k1i_side := first [ exact I | k1i_isep_fast | k1_zsep_fast | lia ].
+Ltac OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Lib.Step.slia ::=
+  first [ exact I | k1i_isep_fast | k1_zsep_fast
+        | solve [ repeat (match goal with |- _ /\ _ => split end);
+                  first [ exact I | k1i_isep_fast | k1_zsep_fast | lia | isep | zsep ] ]
+        | lia ].
+Ltac ix_open XO :=
+  let a := fresh "XSt" in let b := fresh "XAs" in let c := fresh "XNi" in let d := fresh "XNo" in let e := fresh "XAl" in
+  pose proof (xo_stack _ XO) as a; pose proof (xo_state _ XO) as b; pose proof (xo_ni _ XO) as c; pose proof (xo_no _ XO) as d;
+  pose proof (xo_al _ XO) as e.
+Definition ix_Wf (X : ictx) : list ivl :=
+  [(ix_lo X, bv_unsigned (ix_sp X)); (il_As (ix_L X), il_As (ix_L X) + 168);
+   (il_NO (ix_L X), il_NO (ix_L X) + Z.of_nat (length (ix_rest0 X)))].
+Definition ix_WfS (X : ictx) : list ivl := (il_S (ix_L X), il_S (ix_L X) + 112) :: ix_Wf X.
+Ltac iarm_open HL :=
+  let x5 := fresh "x5" in let x6 := fresh "x6" in let x7 := fresh "x7" in let x14 := fresh "x14" in
+  let x15 := fresh "x15" in let x16 := fresh "x16" in let x17 := fresh "x17" in let x19 := fresh "x19" in let x20 := fresh "x20" in
+  let x21 := fresh "x21" in let x23 := fresh "x23" in let x28 := fresh "x28" in let x29 := fresh "x29" in let x30 := fresh "x30" in
+  let x31 := fresh "x31" in let m := fresh "m" in let j0 := fresh "j0" in let jf := fresh "jf" in
+  let FRM := fresh "FRM" in let STK := fresh "STK" in let ZS := fresh "ZS" in let ST := fresh "ST" in let IN := fresh "IN" in
+  let OUT := fresh "OUT" in let MI := fresh "MI" in let MU := fresh "MU" in let WM := fresh "WM" in
+  destruct HL as (x5 & x6 & x7 & x14 & x15 & x16 & x17 & x19 & x20 & x21 & x23 & x28 & x29 & x30 & x31 & m & -> & (j0 & jf & FRM) & STK & [ZS ST] & IN & OUT & MI & MU & WM);
+  unfold iframe_cells in FRM; unfold iin in IN; unfold iout in OUT; unfold ix_W in MU; cbn [w_s w_c w_r] in *.
+Ltac iarm_openh HL :=
+  let m := fresh "m" in let j0 := fresh "j0" in let jf := fresh "jf" in
+  let FRM := fresh "FRM" in let STK := fresh "STK" in let ZS := fresh "ZS" in let ST := fresh "ST" in let IN := fresh "IN" in
+  let OUT := fresh "OUT" in let MI := fresh "MI" in let MU := fresh "MU" in let WM := fresh "WM" in
+  destruct HL as (m & -> & (j0 & jf & FRM) & STK & [ZS ST] & IN & OUT & MI & MU & WM);
+  unfold iframe_cells in FRM; unfold iin in IN; unfold iout in OUT; unfold ix_W in MU;
+  cbn [w_s w_c w_r h5 h6 h7 h9 h10 h11 h12 h13 h14 h15 h16 h17 h18 h19 h20 h21 h22 h23 h24 h25 h26 h28 h29 h30 h31] in *.
+Ltac iarm_openh_keep HL HMEM :=
+  let m := fresh "m" in let j0 := fresh "j0" in let jf := fresh "jf" in
+  let FRM := fresh "FRM" in let STK := fresh "STK" in let ZS := fresh "ZS" in let ST := fresh "ST" in let IN := fresh "IN" in
+  let OUT := fresh "OUT" in let MI := fresh "MI" in let MU := fresh "MU" in let WM := fresh "WM" in
+  destruct HL as (m & -> & HMEM);
+  pose proof HMEM as ((j0 & jf & FRM) & STK & [ZS ST] & IN & OUT & MI & MU & WM);
+  unfold iframe_cells in FRM; unfold iin in IN; unfold iout in OUT; unfold ix_W in MU;
+  cbn [w_s w_c w_r h5 h6 h7 h9 h10 h11 h12 h13 h14 h15 h16 h17 h18 h19 h20 h21 h22 h23 h24 h25 h26 h28 h29 h30 h31] in *.
+Ltac ifine m :=
+  let MUf := fresh "MUf" in let WMf := fresh "WMf" in
+  lazymatch goal with X : ictx |- _ =>
+    pose proof (munch_refl (ix_Wf X) m) as MUf; unfold ix_Wf in MUf; pose proof (wmono_refl usegs m) as WMf end.
+Ltac ifineS m :=
+  let MUf := fresh "MUf" in let WMf := fresh "WMf" in
+  lazymatch goal with X : ictx |- _ =>
+    pose proof (munch_refl (ix_WfS X) m) as MUf; unfold ix_WfS, ix_Wf in MUf; pose proof (wmono_refl usegs m) as WMf end.
+Ltac ireg :=
+  first [ reflexivity | f_equal; lia
+        | f_equal; rewrite ?bv_swrap32_id, ?wrap32_id, ?wrap64_id by lia; lia
+        | apply Z_to_bv_eqm; rewrite ?wrap64_mod, ?wrap32_mod, ?Z.mod_mod by lia; first [ reflexivity | Z.div_mod_to_equations; lia ] ].
+Lemma IMEMg_intro : forall fr X w m, fr X (w_r w) m -> stk usegs m (ix_lo X) (bv_unsigned (ix_sp X) + -256) ->
+  izs m (ix_L X) (w_c w) -> IST m (ix_L X) (w_s w) -> iin m X -> iout m (ix_L X) (ix_rest0 X) (w_c w) (ir_put (w_r w)) ->
+  mem_inv usegs m -> munch (ix_W X) (ix_m0 X) m -> wmono usegs (ix_m0 X) m -> IMEMg fr X w m.
+Proof. intros. unfold IMEMg, IREP. split; [assumption|]. split; [assumption|]. split; [split; assumption|]. repeat (split; [assumption|]). assumption. Qed.
+Definition IMEM_intro := IMEMg_intro iframe.
+Definition IMEML_intro := IMEMg_intro iframeL.
+Lemma IMEM_regs : forall X s c r r' m, IMEM X (mkW s c r) m ->
+  ir_in r' = ir_in r -> ir_out r' = ir_out r -> ir_ret r' = ir_ret r -> ir_put r' = ir_put r -> ir_left r' = ir_left r ->
+  IMEM X (mkW s c r') m.
+Proof.
+  intros X s c r r' m (HF & HR) E1 E2 E3 E4 E5. unfold IMEM, IMEMg in *. cbn [w_s w_c w_r] in *. rewrite E4. split; [|exact HR].
+  destruct HF as (j0 & j & HF). exists j0, j. unfold iframe_cells in *. rewrite E1, E2, E3, E5. exact HF.
+Qed.
+Lemma ILOOPh_regs : forall X s c r r' pc q ms, ILOOPh X (mkW s c r) pc q ms ->
+  ir_in r' = ir_in r -> ir_out r' = ir_out r -> ir_ret r' = ir_ret r -> ir_put r' = ir_put r -> ir_left r' = ir_left r ->
+  ILOOPh X (mkW s c r') pc q ms.
+Proof.
+  intros X s c r r' pc q ms (m & -> & HM) E1 E2 E3 E4 E5. exists m. cbn [w_r]. split; [reflexivity|].
+  eapply IMEM_regs; [exact HM| assumption..].
+Qed.
+Lemma IMEML_of_IMEM : forall X s c r r' m, IMEM X (mkW s c r) m ->
+  ir_in r' = ir_in r -> ir_out r' = ir_out r -> ir_put r' = ir_put r -> ir_left r' = ir_left r -> IMEML X (mkW s c r') m.
+Proof.
+  intros X s c r r' m (HF & HR) E1 E2 E3 E5. unfold IMEML, IMEMg in *. cbn [w_s w_c w_r] in *. rewrite E3. split; [|exact HR].
+  destruct HF as (j0 & j & HF). exists (wz (ir_ret r)), j0, j. unfold iframe_cells in *. rewrite E1, E2, E5. exact HF.
+Qed.
+Definition NBJq (X : ictx) (s : inflate_state) (c : icall) (r : iregs) (n : Z) (pcj : Z) (Q : iregs -> iscrh -> Prop) : machine_state -> Prop :=
+  fun ms' =>
+    (exists r1 q, NEEDBITS n (mkW s c r) = ARun tt (mkW s c r1)
+                  /\ ((r1 = r /\ n <= ir_bits r) \/ (r1 = pullr c r /\ 0 < ir_have r /\ ir_bits r < n <= ir_bits r + 8))
+                  /\ ILOOPh X (mkW s c r) pcj q ms' /\ Q r1 q)
+    \/ (exists r1, NEEDBITS n (mkW s c r) = ALeave (mkW s c r1) /\ (r1 = r \/ r1 = pullr c r) /\ ILEAVE X (mkW s c r1) ms').
+Definition NBJ (X : ictx) (s : inflate_state) (c : icall) (r : iregs) (n : Z) (pcj : Z) (x26 : word) : machine_state -> Prop :=
+  fun ms' =>
+    (exists r1 x12, NEEDBITS n (mkW s c r) = ARun tt (mkW s c r1)
+                    /\ ((r1 = r /\ n <= ir_bits r) \/ (r1 = pullr c r /\ 0 < ir_have r /\ ir_bits r < n <= ir_bits r + 8))
+                    /\ ILOOP X (mkW s c r1) pcj x26 x12 ms')
+    \/ (exists r1, NEEDBITS n (mkW s c r) = ALeave (mkW s c r1) /\ (r1 = r \/ r1 = pullr c r) /\ ILEAVE X (mkW s c r1) ms').
+Lemma PATI_regs : forall X s c r r1, PATI X (mkW s c r) ->
+  ir_put r1 = ir_put r -> ir_out r1 = ir_out r -> ir_left r1 = ir_left r -> PATI X (mkW s c r1).
+Proof. intros X s c r r1 H E1 E2 E3. unfold PATI, OBYT in *. cbn [w_s w_c w_r] in *. rewrite E1, E2, E3. exact H. Qed.
+Lemma PATI_step_out : forall X s c r s' c' r', PATI X (mkW s c r) ->
+  is_wrap s' = is_wrap s -> is_wbits s' = is_wbits s -> is_head s' = is_head s -> is_flags s' = 0 ->
+  ~ (FLAGS <= is_mode s' <= HCRC) -> is_window_blk s' = is_window_blk s ->
+  ic_input c' = ic_input c -> ic_outbuf c' = ic_outbuf c -> ir_put r' = ir_put r -> is_window s' = is_window s ->
+  0 <= ir_out r' - ir_left r' <= ir_put r' -> NOPUTb (is_mode s') (ir_put r') = false ->
+  ISR s' -> (bk_ok s -> bk_ok s') -> PATI X (mkW s' c' r').
+Proof.
+  intros X s c r s' c' r' (P1 & P2 & P3 & _ & _ & P6 & P7 & P8 & P9 & P10 & _ & (P12 & P13 & _ & _ & P16) & P17) E1 E2 E3 E4 NG E6 E7 E8 E9 E10 HO HN HI HBK.
+  unfold PATI, OBYT in *. cbn [w_s w_c w_r] in *. rewrite E1, E2, E3, E6, E7, E8, E10. rewrite E9 in *.
+  repeat (split; [first [assumption | left; assumption]|]). split; [|exact (HBK P17)]. repeat (split; [assumption|]). assumption.
+Qed.
+Lemma PATI_step : forall X s c r s' c' r', PATI X (mkW s c r) ->
+  is_wrap s' = is_wrap s -> is_wbits s' = is_wbits s -> is_head s' = is_head s -> is_flags s' = 0 ->
+  ~ (FLAGS <= is_mode s' <= HCRC) -> is_window_blk s' = is_window_blk s ->
+  ic_input c' = ic_input c -> ic_outbuf c' = ic_outbuf c -> ir_put r' = ir_put r -> is_window s' = is_window s ->
+  ir_out r' = ir_out r -> ir_left r' = ir_left r -> NOPUTb (is_mode s') (ir_put r') = false ->
+  ISR s' -> (bk_ok s -> bk_ok s') -> PATI X (mkW s' c' r').
+Proof.
+  intros X s c r s' c' r' HP E1 E2 E3 E4 NG E6 E7 E8 E9 E10 E11 E12 HN HI HBK.
+  eapply PATI_step_out; try eassumption. rewrite E9, E11, E12.
+  destruct HP as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & _ & H & _) & _). exact H.
+Qed.
+Lemma PATI_bk : forall X s c r, PATI X (mkW s c r) -> bk_ok s.
+Proof. intros X s c r (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & H). exact H. Qed.
+Definition arm_stmt (flush M PC : Z) (arm : AM unit) : Prop := forall X w x12 ms,
+  ix_flush X = flush -> ILOOP X w PC (wz (-3)) x12 ms -> ix_ok X -> WINV w -> ATY (w_s w) -> PATI X w -> is_mode (w_s w) = M ->
+  evt usegs (fun ms' => IPOST X (arm w) ms' /\ PATI X (wof (arm w))) ms.

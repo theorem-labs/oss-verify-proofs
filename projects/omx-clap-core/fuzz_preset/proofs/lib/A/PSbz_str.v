@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStrlenPort, c-libc-stdio lane): the shadow half of the bridge from cgif's call-site
    facts (`range_addressable` / `shadow_hull_vis` over `aview`) to the K kit's shadow premise `chk_ok`
-   (lib/K/A/I_qck.v:149, the asan half). rule 24: no function proved. PORTED, not new.
+   (lib/K/A/I_qck.v:150, the asan half). rule 24: no function proved. PORTED, not new.
 
-   DONOR: origin/cold/port-state-rt-str 17818dd9abc, proofs/omx-clap-core/fuzz_state/lib/A/FSbz_str.v (fuzz_state's
-   copy of port-fm's origin/cold/port-fm-rtscan cedf3d02589 proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v).
+   DONOR: proofs/omx-clap-core/fuzz_state/lib/A/FSbz_str.v (fuzz_state's
+   copy of port-fm's proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v).
    The lemmas the strlen composition (A/PSstrlen.v) needs, in the donor's order, with the donor's names and proofs:
      asegs_tfibsegs            FSbz_str.v:30-31
      FM_SHADOW_OFF             FSbz_str.v:33     (the name is fm's; the value 0x7fff8000 is preset's SHADOW_OFF too)
@@ -29,7 +30,7 @@
    list Hp of ARcf instead, and the strlen contract reads the shadow on `mem` itself).
 
    WHAT CHANGED: module paths fuzz_state -> fuzz_preset; the donor's kit lib/A/Bz (c-asan-rt's copy of bzip2's kit)
-   -> this tree's lib/K (bzip2's kit, proofs/bzip2/bzip2_compress_target/lib/K at origin/ossv/recipes c8557374ad2e,
+   -> this tree's lib/K (bzip2's kit, proofs/bzip2/bzip2_compress_target/lib/K,
    relocated to preset); the donor's image names (its AB1v.tfibsegs, Bz ImageA.asegs) -> preset's (lib/A/AB1v.v
    tfibsegs, lib/K/Lib/ImageA.v asegs, both Asan.M.loaded_segments); the FSupoison import and its Section variable B
    are dropped with chk_ok_of_ARU. The proof scripts are the donor's. No premise added, no image value. *)

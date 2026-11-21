@@ -21,10 +21,11 @@
      +0x2b4 addw a0,a0,s3
      +0x2b8 addi s11,s11,8
      +0x2bc bne  a0,s7        ntok + (64 - j) <> 67 -> KL at pass j + 1, else KD (+0x2c0)
-   The proof skeleton is the A walk's chain_words_s3.v (a working branch 5e2cdad423e) with B's
+   The proof skeleton is the A walk's chain_words_s3.v (a working branch) with B's
    registers and the three UBSan branches refuted at their branch; B computes the shadow address inline, so the
    shadow base is s8's atom (24) and &tok[2 + j] is pinned to atom 32 after +0x27c (the technique of
    lib/A/Prog/sup_remove_all_refit_s4.v, sra_pin_append). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

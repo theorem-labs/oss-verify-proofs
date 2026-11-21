@@ -24,12 +24,13 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 552 of its 667 lines of code are new or changed and 4938 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a1.v, with its module paths and module names changed; 154 of its 196 lines of code are new or changed and 625 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A: the mid-walk seed of segment A8b's cut JOIN (0x889b4) of
    reac_segconf_parse_file's walk, for a run of the token executor (lib/A/Prog/SegPaLib.v paj_run_to_tok) through
    JOIN's two inline checks #38 (load4 c->gen) and #39 (store4
    seg[i].seen_gen). Segment A8b's proof (the JOIN sub-walk), by the G3 walk owner, 2026-10-30.
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk): a seed and its helpers; the lane's
-   rule-24 record is the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md
+   rule-24 record is the unit's internal record, path records/segp/g3-lookup.md
    (reuse verdict: none, written new).
 
    THE SHAPE. Check #38 loads the shadow byte at a3 = shadow_addr (c + RC_GEN), a value INV_A8B_JOIN gives as a
@@ -37,7 +38,7 @@
    (x >> 3) + Bx (YCbn.v match_x), so the seed pins register 13 to the term pfq_sh 24 RC_GEN =
    ((s8 + RC_GEN) >> 3) + s6, with s8 = c (atom 24) and s6 = SHADOW_OFF (atom 22, Bx = pfq_Bx); pfq_sh_denot shows
    the term denotes w64 (shadow_addr (c + RC_GEN)) (the donor's cr_s10 / denot_s10 in
-   proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_sd.v at 501c0d516c69). Check #39 forms its address
+   proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_sd.v). Check #39 forms its address
    inline from s4 (atom 20) and s6, so it needs no
    pin. Both checked granules are covered by pfj_SH, so the run decides both checks with no obligation.
    The regions (pfj_regions): 0 the two spill slots the run reads, s1 + 0x40 = c + RC_GEN and s1 + 0x50 =

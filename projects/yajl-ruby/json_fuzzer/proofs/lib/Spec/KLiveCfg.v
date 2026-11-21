@@ -1,10 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the arena searched from MMAP_FLOOR, which is task_unmapped_base, and the grant at Linux's placement by linux_place_exists; the meta page apart from the vDSO/vvar pair (meta_page_vdso) for mprotect's vDSO gate). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState ITree Nodes NodesCfg NodesMat Decode.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Spec Require Import Prelim STree Malloc RawAlloc KArith KInv KLink KStep KLive KArena LB_Kernel.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -18,23 +21,30 @@ Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCei
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* LPS 727298f3: the NULL-hint grant is at Linux's own placement, which [Placement.linux_place_exists]
+   gives from a free range in the window from task_unmapped_base ([MMAP_FLOOR]) to the allocation top,
+   so the arena is searched from that floor. *)
+Definition MMAP_FLOOR : Z := 0x2aaaaab000.
+Lemma MMAP_FLOOR_eq : MMAP_FLOOR = Mmap.task_unmapped_base.
+Proof. reflexivity. Qed.
+
 Theorem KL_arena_lo : forall L pbrk mo len,
   KL L pbrk mo -> 0 < len ->
   let h := m_vmmaps mo in
   let n := mmap_len len in
-  n * (live_bytes (vm_maps h) / PGSZ + rcost (vm_reserved h) + 1) <= alloc_ceiling - PGSZ ->
-  exists r, (r mod 4096 = 0 /\ 0 < r /\ r + n <= alloc_ceiling)
+  n * (live_bytes (vm_maps h) / PGSZ + rcost (vm_reserved h) + 1) <= alloc_ceiling - MMAP_FLOOR ->
+  exists r, (r mod 4096 = 0 /\ 0 < r /\ r + n <= alloc_ceiling) /\ MMAP_FLOOR <= r
          /\ region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 r) (Z_to_bv 64 n) = true.
 Proof.
   intros L pbrk mo len HK Hlen h n Hnum.
-  assert (HF : 0 < PGSZ < alloc_ceiling) by (pose proof alloc_ceiling_ge; unfold PGSZ; lia).
-  destruct (KL_arena_gen PGSZ L pbrk mo len eq_refl HF HK Hlen Hnum) as (r & Hr & HFr & Hrf).
-  exists r. split; [exact Hr| exact Hrf].
+  assert (HF : 0 < MMAP_FLOOR < alloc_ceiling) by (pose proof alloc_ceiling_ge; unfold MMAP_FLOOR; lia).
+  destruct (KL_arena_gen MMAP_FLOOR L pbrk mo len eq_refl HF HK Hlen Hnum) as (r & Hr & HFr & Hrf).
+  exists r. split; [exact Hr| split; [exact HFr | exact Hrf]].
 Qed.
 
 (* [comment removed for export] *)
 Definition MMAP_ROOM (mo : Model) (len : Z) : Prop :=
-  mmap_len len * (live_bytes (vm_maps (m_vmmaps mo)) / PGSZ + rcost (vm_reserved (m_vmmaps mo)) + 1) <= alloc_ceiling - PGSZ
+  mmap_len len * (live_bytes (vm_maps (m_vmmaps mo)) / PGSZ + rcost (vm_reserved (m_vmmaps mo)) + 1) <= alloc_ceiling - MMAP_FLOOR
   /\ live_bytes (vm_maps (m_vmmaps mo)) + mmap_len len <= vm_limit (m_vmmaps mo).
 
 (* [comment removed for export] *)
@@ -61,12 +71,22 @@ Lemma ncan_mmap : forall L pbrk mo len prot,
 Proof.
   intros L pbrk mo len prot HK Hlen Hprot [Hwin Hbud]. pose proof alloc_ceiling_lt as Hcl.
   pose proof (mmap_len_ge len ltac:(lia)) as N1.
-  destruct (KL_arena_lo L pbrk mo len HK ltac:(lia) Hwin) as (r & (R1 & R2 & R3) & R5).
+  destruct (KL_arena_lo L pbrk mo len HK ltac:(lia) Hwin) as (r0 & (R1 & R2 & R3) & RF & R5).
+  (* LPS 727298f3: the grant is at Linux's own placement [a]; the free range [r0] at or above
+     task_unmapped_base is a gap [Placement.linux_place_exists] accepts. *)
+  assert (Np : 0 < mmap_len len /\ mmap_len len mod page_size = 0)
+    by (pose proof (mmap_len_aligned len); rewrite page_size_eq; lia).
+  destruct (Placement.linux_place_exists (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (mmap_len len) (proj1 Np) (proj2 Np))
+    as [r Hpl].
+  { exists r0. right. unfold Mmap.gap_fits. rewrite page_size_eq, (minv_alloc_top mo (kl_minv _ _ _ HK)).
+    try rewrite <- MMAP_FLOOR_eq. repeat split; first [lia | exact R5]. }
+  destruct (Placement.linux_place_admissible _ _ _ _ _ (proj1 Np) (proj2 Np) Hpl) as (B1 & B2 & B3 & _).
+  rewrite (minv_alloc_top mo (kl_minv _ _ _ HK)) in B3.
   pose proof (vm_backing_used_le_live mo (minv_lazy _ (kl_minv _ _ _ HK)) (kl_mat _ _ _ HK)) as U.
   destruct Hprot as [-> | ->].
-  - destruct (nstep_mmap_none_grant_can len r mo (kl_minv _ _ _ HK) ltac:(lia) (conj R1 (conj R2 R3)) R5) as (Hst & _).
+  - destruct (nstep_mmap_none_grant_can len r mo (kl_minv _ _ _ HK) ltac:(lia) Hpl) as (Hst & _).
     eexists _, _, []. split; [exact Hst|]. cbn [node_refusal eff_ret]. apply ret_in_errnos_lit; [reflexivity| lia].
-  - destruct (nstep_mmap_grant_can len r mo (kl_minv _ _ _ HK) ltac:(lia) (conj R1 (conj R2 R3)) R5 ltac:(lia)) as (Hst & _).
+  - destruct (nstep_mmap_grant_can len r mo (kl_minv _ _ _ HK) ltac:(lia) Hpl ltac:(lia)) as (Hst & _).
     eexists _, _, []. split; [exact Hst|]. cbn [node_refusal eff_ret]. apply ret_in_errnos_lit; [reflexivity| lia].
 Qed.
 
@@ -137,6 +157,20 @@ Section MPROTECT_META.
       rewrite (proj2 (Z.leb_le _ _)) by (clear -Hab Ak; unfold PGSZ in *; lia). rewrite (proj2 (Z.leb_le _ _)) by (clear -Hab Ak; unfold PGSZ in *; lia). reflexivity.
   Qed.
 
+  (* LPS 727298f3: the meta page is apart from the vDSO/vvar pair (kl_vdso puts the pair in the
+     reserved ledger; kl_metas_resv keeps every meta apart from the ledger) *)
+  Lemma meta_page_vdso : region_free (vdso_of mo) (Z_to_bv 64 a) (Z_to_bv 64 PGSZ) = true.
+  Proof.
+    pose proof alloc_ceiling_lt as Hcl.
+    pose proof (kl_metas _ _ _ HK b l k Hin) as (A1 & A2 & A3 & A4 & Ak & Ak1 & A5 & A6 & Ana).
+    pose proof Hk2 as Hk2'. rewrite round_up_pg_eq in Hk2'. fold (mmap_len l) in Hk2'. set (nb := mmap_len l) in *.
+    assert (Hab : b + PGSZ <= a /\ a + PGSZ <= b + nb) by (subst a; unfold PGSZ in *; nia).
+    assert (Ua : bv_unsigned (Z_to_bv 64 a) = a) by (apply unsigned_lit; unfold PGSZ in *; lia).
+    assert (Un : bv_unsigned (Z_to_bv 64 PGSZ) = PGSZ) by (apply unsigned_lit; unfold PGSZ; lia).
+    apply region_free_apart. intros e He. rewrite Ua, Un.
+    pose proof (kl_metas_resv _ _ _ HK b l k Hin e (kl_vdso _ _ _ HK e He)) as D. fold nb in D. lia.
+  Qed.
+
   Hypothesis Hbud : live_bytes (vm_maps (m_vmmaps mo)) + PGSZ <= vm_limit (m_vmmaps mo).
 
   Lemma meta_page_budget : mprotect_budget_ok mo (Z_to_bv 64 a) (Z_to_bv 64 PGSZ) = true.
@@ -153,7 +187,7 @@ Section MPROTECT_META.
   Lemma ncan_mprotect_meta : ncan (NMprotect a PGSZ PROT_RW) mo.
   Proof.
     destruct meta_page_facts as (Ha & Hcn & Hcm).
-    destruct (nstep_mprotect_grant_can a mo Ha Hcn Hcm meta_page_budget) as (Hst & _).
+    destruct (nstep_mprotect_grant_can a mo Ha Hcn Hcm meta_page_vdso meta_page_budget) as (Hst & _).
     eexists _, _, []. split; [exact Hst|]. cbn [node_refusal eff_ret]. apply ret_in_errnos_lit; [reflexivity| lia].
   Qed.
 
@@ -164,7 +198,7 @@ Section MPROTECT_META.
     intros rsp mo' evs Hcfg. destruct meta_page_facts as (Ha & Hcn & Hcm).
     destruct (nstep_cfg_succ_only acfg (NMprotect a PGSZ PROT_RW) mo rsp mo' evs eq_refl ncan_mprotect_meta Hcfg) as [Hst Hnr].
     cbn [node_refusal eff_ret] in Hnr. rewrite ret_in_errnos_errno_ret_in in Hnr.
-    apply nstep_mprotect_iff in Hst. rewrite (mprotect_gates a mo Ha Hcn Hcm) in Hst.
+    apply nstep_mprotect_iff in Hst. rewrite (mprotect_gates a mo Ha Hcn Hcm meta_page_vdso) in Hst.
     destruct rsp as [r ws zs us cs ci]. cbn [eff_ret] in Hnr.
     destruct ws; [|discriminate]. destruct us; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
     rewrite Hnr in Hst.

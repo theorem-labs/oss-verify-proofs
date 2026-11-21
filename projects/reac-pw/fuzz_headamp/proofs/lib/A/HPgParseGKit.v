@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the TAIL segment of sup_chain's walk on plugin-hostd/fuzz_command's ASan+UBSan
    build (fuzz_command.asan-ubsan), from the loop exit BASE + SCB_LEXIT = 0x8c444 to the return 0x8c558, against the
    interface lib/B/Prog/sup_chain_d.v (scb_lctx, scb_inv) and the helpers lib/B/Prog/sup_chain_aux.v. Statement from
-   a Theorem Labs lane 707acd856cb (lib/B/Prog/sup_chain_c.v, tsup_chain_spec). The block bookkeeping of the post is the pure lemma
+   a Theorem Labs lane (lib/B/Prog/sup_chain_c.v, tsup_chain_spec). The block bookkeeping of the post is the pure lemma
    scb4_final_blocks; the release segment 0x8c47c .. 0x8c558 is scb4_rel; scb_tail composes the four calls with both.
 
    The code: ld s2,8(s1) (the slot); arg_s(slot, list) 0x8c450; free(list) 0x8c458; rec_shape_of("chain", 5)
@@ -12,12 +12,13 @@
    0x8c47c .. 0x8c4e4 (the magic 0x45e0360e at F, f5 at the frame's 16 shadow bytes, the flag byte through the word
    at F + 120), the epilogue (the saved registers back, sp := s0 - 192 + 192) and `ret`. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_chain_s4.v, with its module paths and module names changed; 1163 of its 1234 lines of code are new or changed and 1980 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseBase.v at afaa3cb55c1 (lines 312-641:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseBase.v (lines 312-641:
    pre_pod, pre_stack, kept_view, pod_at_cut, shent_pod, cut_env, frame_region_ok, saved_of_frame_region, leaf_regs,
-   ppost_intro) and proofs/reac-pw/fuzz_headamp/lib/A/HPgCallsStr.v at a9577ae74c2 (hc_garr8_some, hc_garr8_of_aview,
+   ppost_intro) and proofs/reac-pw/fuzz_headamp/lib/A/HPgCallsStr.v (hc_garr8_some, hc_garr8_of_aview,
    hc_bytes_pos, hc_notin0, hc_awrap_of, hc_awrap_cstr, hc_hull_sub, hc_off_stack_sub, hc_awrap_sub), renamed with the
    prefix hk_ and restated for headamp's parse: the call record, premises, cut core and post of lib/A/HPgParseBase.v
    and the frame hole of lib/A/HPgHole.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp: the IMAGE-INDEPENDENT kit of reac_headamp_prop_parse_result's walks, image A
    (fuzz_headamp.asan 0x845b4) and image B (fuzz_headamp.asan-ubsan 0x849ac). No image numeral: every lemma is over
    segs (Section variable) with the one Section hypothesis segs_low. Proves no function (kind: segment lemma).

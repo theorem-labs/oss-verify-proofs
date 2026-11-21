@@ -2,30 +2,31 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YD1q.v (tfib_srealizesX),
    lib/YB1n.v (tfib_startup_T1, HS_ok) and lib/YD2o.v (TFIB_TB_of_partsXF), in the form of fuzz_pcap's closing side
-   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v in a version before its release, sha256 8881c977fa66, not in the published tree; at recipes commit 88154566652a that file has no Section hypothesis left), for libreac/fuzz_decode's
+   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v in a version before its release, sha256 8881c977fa66, not in the published tree; at recipes that file has no Section hypothesis left), for libreac/fuzz_decode's
    ASan+UBSan image: one named Section hypothesis per remaining part, module paths and names changed. *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v at 25e3d17bdb50 for fuzz_decode's lib/A/AsanTop.v (recipes commit 88154566652a), by way of fuzz_grant's lib/A/AsanTop.v at 4f87de75d67: the plain side is fuzz_decode's proved realization (built as its lib/AgreeFrame.v at 88154566652a builds it for the ubsan agreement, with the plain slot contract of its lib/Prog/LLVMFuzzerTestOneInput_gfr.v at 88154566652a, at decode_shape), the halting corollary takes srealizes, module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v for fuzz_decode's lib/A/AsanTop.v (recipes), by way of fuzz_grant's lib/A/AsanTop.v: the plain side is fuzz_decode's proved realization (built as its lib/AgreeFrame.v builds it for the ubsan agreement, with the plain slot contract of its lib/Prog/LLVMFuzzerTestOneInput_gfr.v, at decode_shape), the halting corollary takes srealizes, module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: adapted from lib/A/GrantTop.v for image B (fuzz_grant.asan-ubsan). *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_decode/lib/B/DecodeBClose.v and lib/A/AsanTop.v
-   (Section b) at recipes commit 88154566652a and proofs/libreac/fuzz_grant/lib/B/GrantBTop.v at recipes commit
-   4f87de75d67, for reac-repacer/fuzz_uci's ASan+UBSan image (fuzz_uci.asan-ubsan): the image-B core's closed walk
+   (Section b) at recipes and proofs/libreac/fuzz_grant/lib/B/GrantBTop.v at recipes,
+   for reac-repacer/fuzz_uci's ASan+UBSan image (fuzz_uci.asan-ubsan): the image-B core's closed walk
    lib/B/YD1q.v tfib_srealizesX takes the place of the donor's H_STARTUP / H_DRIVER pair; its slot lib/B/YCfn.v:140 is
    LIB_CONTRACT, composed from the six program walk statements of lib/B/Prog and their callees' contracts; one named
    Section hypothesis per program walk; the runtime, kit and computed rows are Lemmas citing lib/B/Rt, lib/B/Prog/
    LeafCgClose.v and lib/B/UciBFacts.v; the read-only range 0x96bc8 .. 0x97e20 and the memchr window 0x10350 ..
    0x10370 are image B's; module paths and names changed. *)
-(* WireBClose: made from reac-repacer/fuzz_uci's lib/B/UciBClose.v (recipes commit
-   0295462466b2; itself made from proofs/libreac/fuzz_decode/lib/B/DecodeBClose.v and lib/A/AsanTop.v at recipes commit
-   88154566652a and proofs/libreac/fuzz_grant/lib/B/GrantBTop.v) for reac-repacer/fuzz_wire's ASan+UBSan image
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput, mmap base and entry draw; the start-up hand-off states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
+(* WireBClose: made from reac-repacer/fuzz_uci's lib/B/UciBClose.v (recipes;
+   itself made from proofs/libreac/fuzz_decode/lib/B/DecodeBClose.v and lib/A/AsanTop.v at recipes
+    and proofs/libreac/fuzz_grant/lib/B/GrantBTop.v) for reac-repacer/fuzz_wire's ASan+UBSan image
    (fuzz_wire.asan-ubsan): the image-B core's closed walk lib/B/YD1q.v tfib_srealizesX takes the place of a start-up /
-   driver pair; its slot lib/B/YCfn.v:140 is LIB_CONTRACT, composed from the program statements of lib/B/Prog and their
+   driver pair; its slot lib/B/YCfn.v:141 is LIB_CONTRACT, composed from the program statements of lib/B/Prog and their
    callees' contracts; one row per program walk (H_PROG_<TAG> for a function in the caller-journal or realizes form,
    H_PROG_<TAG>_F for a leaf's footprint walk) and the two class contracts of __asan_stack_malloc_0 / _1; the runtime,
    kit and computed rows are Lemmas citing lib/B/WireBRtAlloc.v, lib/B/YD2m.v, lib/B/YE2q.v, lib/B/YE2s.v,
    lib/B/Rt/Memmove.v, lib/B/Prog/LeafCgClose.v and lib/B/WireBFacts.v; the read-only range 0x98318 .. 0x99570 is image
    B's; module paths and names changed. *)
 (* The image-B composition of fuzz_wire's two ASan+UBSan statements (proves no function). Image A's twin is
-   lib/A/WireClose.v. Every row and lemma is stated at the concrete record B := WireB (lib/B/YD2l.v:17).
+   lib/A/WireClose.v. Every row and lemma is stated at the concrete record B := WireB (lib/B/YD2l.v:18).
    Every row is a Lemma citing a landed proof: the 21 program walks of image B (LLVMFuzzerTestOneInput, the eight
    checks, the realizes-form rp_copy_untag and the leaves' footprint walks) and the runtime, kit, computed and core rows
    (the class-0 / class-1 stack_malloc contracts among them). No Section hypothesis remains: the tops
@@ -41,7 +42,7 @@ From OSSVerify.reac_repacer.fuzz_wire.images Require Plain.
 From OSSVerify.reac_repacer.fuzz_wire.images Require Import AsanUbsan.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YK11 YK15 YK18 YK0c YK0e.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YK09 YA0c YA0e YA01 YA02.
-From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB12 YB1h YB01 YB1n.
+From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB12 YB1h YB01r YB1n.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YG0f YG00 YG01 YG0n YG0d YG0q YK04 YA0i YA0n.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YCbq.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YI16.
@@ -168,7 +169,7 @@ Module BD1u := OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.B.YD1u.
    filled with the plain build's head. *)
 #[local] Remove Hints OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable.YI5b.src0_sink_head : typeclass_instances.
 #[local] Remove Hints OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable.YI5c.src0_sink : typeclass_instances.
-(* What a bare `sink_head` resolves to in this file: the ASan+UBSan image's own head (lib/B/YE2k.v:37). *)
+(* What a bare `sink_head` resolves to in this file: the ASan+UBSan image's own head (lib/B/YE2k.v:38). *)
 Definition sk_probe : YI16.sink_head := _.
 Lemma sk_probe_is_asan : sk_probe = BE2k.tfib_sink_head.
 Proof. reflexivity. Qed.
@@ -189,12 +190,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold UIm.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     UPl.M.loaded_segments UPl.M.init_pc UPl.M.phdrs sp brk mb rnd
     WBT.wiresegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=checksum_shape) inp) (SPECX (LS:=checksum_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIBB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIBB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem wire_asan_ubsan_halts_of_tfib : USt.asan_ubsan_halts.
@@ -206,8 +207,8 @@ Proof.
     AsanUbsan.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=checksum_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIBB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIBB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (UHS.SPECX_shape_ok inp).
 Qed.
 End b.
@@ -215,10 +216,10 @@ End b.
 Lemma valid_sp_windowW : forall sp, valid_sp sp -> (sp_window_lo <= bv_unsigned sp <= sp_window_hi)%Z.
 Proof. intros sp (H1 & H2 & _). split; [exact H1 | exact H2]. Qed.
 (* The values the core's closed walk and the rows are stated at; no Section Variable. segs =
-   AsanUbsan.M.loaded_segments (= lib/B/YB1v.v tfibsegs); B = lib/B/YD2l.v:17 WireB (WireB_syms :75); MT = the B
-   core's own lib/B/YCbp.v:19 ameter_triv; XL = lib/B/WireBFacts.v wire_XL0 (fun _ => 0); RLO = 0x98318
-   (lib/B/YB1w.v:17 tfib_data_rel_ro_lo, the second disjunct of lib/B/YCeg.v:50-52 in_ro_tfa); RHI = 0x99570
-   (lib/B/YB1w.v:18 tfib_got_hi); SK / KS = the B core's sink head and record lib/B/YE2k.v tfib_sink_head / tfib_K. *)
+   AsanUbsan.M.loaded_segments (= lib/B/YB1v.v tfibsegs); B = lib/B/YD2l.v:18 WireB (WireB_syms :75); MT = the B
+   core's own lib/B/YCbp.v:20 ameter_triv; XL = lib/B/WireBFacts.v wire_XL0 (fun _ => 0); RLO = 0x98318
+   (lib/B/YB1w.v:18 tfib_data_rel_ro_lo, the second disjunct of lib/B/YCeg.v:51-53 in_ro_tfa); RHI = 0x99570
+   (lib/B/YB1w.v:19 tfib_got_hi); SK / KS = the B core's sink head and record lib/B/YE2k.v tfib_sink_head / tfib_K. *)
 Local Notation segs := WBT.wiresegsB0.
 Local Notation B := BD2l.WireB.
 Local Notation MT := BCbp.ameter_triv.
@@ -247,7 +248,7 @@ Proof. exact WRC.rp_counter_holds_F. Qed.
    reac_frame_is_reac_holds_F_nosh. *)
 Lemma H_PROG_RISR_F : FIRn.reac_frame_is_reac_contract_F_nosh.
 Proof. exact FIRn.reac_frame_is_reac_holds_F_nosh. Qed.
-(* is_tagged_reac (0x8103c) and rp_fwd_class (0x80d9c): their footprint walks are landed, lib/B/Prog/is_tagged_reac_F.v:117
+(* is_tagged_reac (0x8103c) and rp_fwd_class (0x80d9c): their footprint walks are landed, lib/B/Prog/is_tagged_reac_F.v:118
    is_tagged_reac_holds_F and lib/B/Prog/rp_fwd_class_FW.v:153 rp_fwd_class_holds_F. *)
 Lemma H_PROG_ITR_F : FIT.is_tagged_reac_contract_F.
 Proof. exact WIT.is_tagged_reac_holds_F. Qed.
@@ -265,13 +266,13 @@ Proof. exact WCL.reac_frame_clean_len_holds_F. Qed.
    H_PROG_RCLN_F. *)
 Lemma H_PROG_RFCH_F : FFH.rp_frame_channels_contract_F.
 Proof. exact (WFH.rp_frame_channels_holds_F H_PROG_RCLN_F). Qed.
-(* rp_meter_counter (0x81144): its footprint walk is landed, lib/B/Prog/rp_meter_counter_FW.v:539
+(* rp_meter_counter (0x81144): its footprint walk is landed, lib/B/Prog/rp_meter_counter_FW.v:540
    rp_meter_counter_holds_F. *)
 Lemma H_PROG_RMET_F : FMC.rp_meter_counter_contract_F.
 Proof. exact WMC.rp_meter_counter_holds_F. Qed.
 (* check_forward (0x7fda4), check_ret (0x7ff2c) and check_counter (0x804c0): their walks are landed,
-   lib/B/Prog/check_forward_cgW.v:522 wire_check_forward_cg_holds, lib/B/Prog/check_ret_cgW.v:657
-   wire_check_ret_cg_holds and lib/B/Prog/check_counter_cgW.v:716 wire_check_counter_cg_holds. *)
+   lib/B/Prog/check_forward_cgW.v:522 wire_check_forward_cg_holds, lib/B/Prog/check_ret_cgW.v:658
+   wire_check_ret_cg_holds and lib/B/Prog/check_counter_cgW.v:717 wire_check_counter_cg_holds. *)
 Lemma H_PROG_CFWD : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PCF.wire_check_forward_holds_stmt fx rc B MT.
 Proof. intros fx rc. exact (@WCF.wire_check_forward_cg_holds fx rc B MT). Qed.
 Lemma H_PROG_CRET : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PCR.wire_check_ret_holds_stmt fx rc B MT.
@@ -285,7 +286,7 @@ Proof. intros fx rc. exact (@WRU.wire_rp_copy_untag_holds fx rc B). Qed.
 (* check_copy (0x80abc): its walk is landed, lib/B/Prog/check_copy_cgW.v:21 wire_check_copy_cg_holds. *)
 Lemma H_PROG_CCPY : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PCC.wire_check_copy_holds_stmt fx rc B MT.
 Proof. intros fx rc. exact (@WCC.wire_check_copy_cg_holds fx rc B MT). Qed.
-(* check_meter (0x8016c): its walk is landed, lib/B/Prog/check_meter_cgW.v:1497 wire_check_meter_holds. *)
+(* check_meter (0x8016c): its walk is landed, lib/B/Prog/check_meter_cgW.v:1498 wire_check_meter_holds. *)
 Lemma H_PROG_CMET : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PCM.wire_check_meter_holds_stmt fx rc B MT.
 Proof. intros fx rc. exact (@WCM.wire_check_meter_holds fx rc B MT). Qed.
 (* LLVMFuzzerTestOneInput (0x7fbf8), the slot form: its walk is landed, lib/B/Prog/LLVMFuzzerTestOneInput_walk.v:21
@@ -298,16 +299,16 @@ Proof. intros rc. exact (@WL.wire_llvmf_holds rc B MT XL RLO RHI). Qed.
 Lemma H_PROG_RSW_F : FSW.rp_slot_width_F_holds_stmt.
 Proof. exact WSW.rp_slot_width_holds_F. Qed.
 (* rp_slot_read (0x815ec) calls rp_slot_width: its walk's statement is a chain (lib/B/Prog/rp_slot_read_F_c.v
-   rp_slot_read_F_holds_stmt), landed as lib/B/Prog/rp_slot_read_F.v:626 rp_slot_read_holds_F and applied to
+   rp_slot_read_F_holds_stmt), landed as lib/B/Prog/rp_slot_read_F.v:627 rp_slot_read_holds_F and applied to
    rp_slot_width's footprint contract below. *)
 Lemma H_PROG_RSR_F : FSR.rp_slot_read_F_holds_stmt.
 Proof. exact WSR.rp_slot_read_holds_F. Qed.
 (* rp_ds_accept (0x80f84) tail-calls is_tagged_reac: its walk's statement (lib/B/Prog/rp_ds_accept_cg.v
-   wire_rp_ds_accept_holds_stmt) is over is_tagged_reac's footprint contract; landed as lib/B/Prog/rp_ds_accept_FW.v:284
+   wire_rp_ds_accept_holds_stmt) is over is_tagged_reac's footprint contract; landed as lib/B/Prog/rp_ds_accept_FW.v:285
    rp_ds_accept_holds_F and applied to H_PROG_ITR_F below. *)
 Lemma H_PROG_RDS_F : LDA.wire_rp_ds_accept_holds_stmt.
 Proof. exact WDA.rp_ds_accept_holds_F. Qed.
-(* check_downstream (0x7ffe8): its walk is landed, lib/B/Prog/check_downstream_cgW.v:647 wire_check_downstream_cg_holds. *)
+(* check_downstream (0x7ffe8): its walk is landed, lib/B/Prog/check_downstream_cgW.v:648 wire_check_downstream_cg_holds. *)
 Lemma H_PROG_CDS : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PCD.wire_check_downstream_holds_stmt fx rc B MT.
 Proof. intros fx rc. exact (@WCD.wire_check_downstream_cg_holds fx rc B MT). Qed.
 (* check_read (0x805f4): its walk is landed, lib/B/Prog/check_read_cgW.v:1424 wire_check_read_holds. *)
@@ -316,9 +317,9 @@ Proof. intros fx rc. exact (WCRd.wire_check_read_holds fx rc B MT). Qed.
 
 (* ===================================================================================================== *)
 (* The class-0 / class-1 fake stack (check_meter's call 0x801d8 -> 0x3c524, check_read's call 0x80668 ->     *)
-(* 0x3c698): lib/B/Rt/StackMalloc0.v:515 stack_malloc0_contract and lib/B/Rt/YF0s.v:515                    *)
+(* 0x3c698): lib/B/Rt/StackMalloc0.v:516 stack_malloc0_contract and lib/B/Rt/YF0s.v:516                    *)
 (* stack_malloc1_contract (forall B, AR_laws tfibsegs B -> WireSyms B -> astack_malloc_realizes tfibsegs B   *)
-(* c), applied at WireB with lib/Reusable/YG0q.v AR_laws_ok and lib/B/YD2l.v:75 WireB_syms.                 *)
+(* c), applied at WireB with lib/Reusable/YG0q.v AR_laws_ok and lib/B/YD2l.v:76 WireB_syms.                 *)
 (* ===================================================================================================== *)
 Lemma H_RT_STACK_MALLOC0 : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @astack_malloc_realizes fx rc segs B 0.
 Proof. intros rc fx. exact (@BSm0.stack_malloc0_contract fx rc B (AR_laws_ok tfibsegs B) BD2l.WireB_syms). Qed.
@@ -356,9 +357,9 @@ Proof. exact BF.HB_COST. Qed.
 (* ===================================================================================================== *)
 (* CORE lemmas, each one `exact` (or a short proof) of a landed core lemma at WireB.                      *)
 (* ===================================================================================================== *)
-(* H_RT_MALLOC / H_RT_FREE: lib/B/WireBRtAlloc.v:18 wireB_MALLOC / :21 wireB_FREE. H_RT_MEMCPY_WRAP: lib/B/YD2m.v:17
-   tfib_AICPY. H_RT_ASAN_MEMCPY: lib/B/YE2q.v:146 asan_memcpy_realizes at __asan_memcpy 0x50c14 (site-agnostic).
-   H_RT_BCMP: lib/B/YE2s.v:712 bcmp_icpt_contract at the bcmp trampoline 0x4155c (check_copy's call). H_RT_MEMMOVE:
+(* H_RT_MALLOC / H_RT_FREE: lib/B/WireBRtAlloc.v:19 wireB_MALLOC / :21 wireB_FREE. H_RT_MEMCPY_WRAP: lib/B/YD2m.v:18
+   tfib_AICPY. H_RT_ASAN_MEMCPY: lib/B/YE2q.v:147 asan_memcpy_realizes at __asan_memcpy 0x50c14 (site-agnostic).
+   H_RT_BCMP: lib/B/YE2s.v:713 bcmp_icpt_contract at the bcmp trampoline 0x4155c (check_copy's call). H_RT_MEMMOVE:
    lib/B/Rt/Memmove.v:148 asan_memmove_contract at __asan_memmove 0x510b0 (rp_copy_untag's call). *)
 Lemma H_RT_MALLOC : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @amalloc_realizes fx rc segs B.
 Proof. intros rc fx. exact (BAl.wireB_MALLOC fx rc). Qed.
@@ -376,7 +377,7 @@ Proof. intros rc fx. exact (@BE2s.bcmp_icpt_contract fx rc B (AR_laws_ok tfibseg
 Lemma H_RT_MEMMOVE : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @BMd.amemmove_realizes fx rc segs B (WAddr.wire_sigma WS___asan_memmove).
 Proof. intros rc fx. exact (@BMm.asan_memmove_contract fx rc B (AR_laws_ok tfibsegs B) BD2l.WireB_syms). Qed.
-(* HB_PC_WRAP_MALLOC / _FREE / HB_PC_STACK_MALLOC0 / _1: lib/B/YF0l.v:12-14 (0x52098 / 0x52094 / 0x3c524 / 0x3c698),
+(* HB_PC_WRAP_MALLOC / _FREE / HB_PC_STACK_MALLOC0 / _1: lib/B/YF0l.v:13-15 (0x52098 / 0x52094 / 0x3c524 / 0x3c698),
    by computation. *)
 Lemma HB_PC_WRAP_MALLOC : pc_wrap_malloc (as_code B) = WAddr.wire_sigma WS___interceptor_trampoline_malloc.
 Proof. reflexivity. Qed.
@@ -386,17 +387,17 @@ Lemma HB_PC_STACK_MALLOC0 : pc_stack_malloc (as_code B) PCM.CM_CID = WAddr.wire_
 Proof. reflexivity. Qed.
 Lemma HB_PC_STACK_MALLOC1 : pc_stack_malloc (as_code B) PCRd.CRD_CID = WAddr.wire_sigma WS___asan_stack_malloc_1.
 Proof. reflexivity. Qed.
-(* HB_UNIVERSE_OK: lib/B/YF0m.v:293 ts_universe at WireB_syms. HB_MODEL_LAWS: lib/Reusable/YG05.v:140 model_laws_ok. *)
+(* HB_UNIVERSE_OK: lib/B/YF0m.v:294 ts_universe at WireB_syms. HB_MODEL_LAWS: lib/Reusable/YG05.v:141 model_laws_ok. *)
 Lemma HB_UNIVERSE_OK : universe_ok (as_universe B).
 Proof. exact (ts_universe B BD2l.WireB_syms). Qed.
 Lemma HB_MODEL_LAWS : model_laws (as_universe B).
 Proof. exact (model_laws_ok (as_universe B) HB_UNIVERSE_OK). Qed.
-(* HB_METER_LAWS / HB_METER_FS_LAWS: lib/B/YCbp.v:24 ameter_triv_laws / :26 ameter_triv_fs_laws. *)
+(* HB_METER_LAWS / HB_METER_FS_LAWS: lib/B/YCbp.v:25 ameter_triv_laws / :26 ameter_triv_fs_laws. *)
 Lemma HB_METER_LAWS : ameter_laws MT.
 Proof. exact BCbp.ameter_triv_laws. Qed.
 Lemma HB_METER_FS_LAWS : ameter_fs_laws MT.
 Proof. exact BCbp.ameter_triv_fs_laws. Qed.
-(* HB_SMP / HB_ASF / HB_FFL: lib/Reusable/YG05.v:71 stack_malloc_progress, lib/Reusable/YG0t.v:497
+(* HB_SMP / HB_ASF / HB_FFL: lib/Reusable/YG05.v:72 stack_malloc_progress, lib/Reusable/YG0t.v:498
    astack_free_law_ok, and AR_laws' al_flag / al_client_img with the image cover (lib/B/Prog/WirePImg.v
    wire_img_cover). *)
 Lemma HB_SMP : stack_malloc_progressP B.
@@ -417,7 +418,7 @@ Proof.
   - split; [|exact Himg]. unfold app_addr, in_app, ASAN_CEIL in *. lia.
   - split; [exact H4096|]. split; [|exact Hceil]. unfold zone2, off_img, kLowShadowBeg, kHighMemBeg in *. lia.
 Qed.
-(* HB_SINK_IMG_LAWS: lib/B/YD1u.v:45 tfib_AIL at WireB. HB_SINK_KEPT / HB_META_KEPT: lib/B/YE01.v:86 asink_none_kept /
+(* HB_SINK_IMG_LAWS: lib/B/YD1u.v:46 tfib_AIL at WireB. HB_SINK_KEPT / HB_META_KEPT: lib/B/YE01.v:87 asink_none_kept /
    :157 ameta_inv_kept, specialised to one journal step, as the entry's statement takes them. *)
 Lemma HB_SINK_IMG_LAWS : @asink_img_laws SK segs B KS.
 Proof. exact (BD1u.tfib_AIL B BD2l.WireB_syms). Qed.
@@ -443,7 +444,7 @@ Lemma HB_API_ENV : api_env segs B.
 Proof. exact BF.HB_API_ENV. Qed.
 Lemma HB_RO_BELOW_OFL : @PB.ro_below_ofl segs RLO RHI SK.
 Proof. exact BF.HB_RO_BELOW_OFL. Qed.
-(* H_LINK_MALLOC04 / H_LINK_FREE04: the call-rule form a program walk consumes, lib/B/YCbp.v:32 amalloc04_rule_triv /
+(* H_LINK_MALLOC04 / H_LINK_FREE04: the call-rule form a program walk consumes, lib/B/YCbp.v:33 amalloc04_rule_triv /
    :46 afree04_rule_triv, at the image's segments (lib/B/Prog/WirePImg.v wire_segs_low), HB_API_ENV, AR_laws_ok and
    HB_MODEL_LAWS. *)
 Lemma H_LINK_MALLOC04 : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
@@ -468,7 +469,7 @@ Proof.
 Qed.
 
 (* ===================================================================================================== *)
-(* The composition: the callee contracts give the slot lib/B/YCfn.v:140, which the closed walk takes.      *)
+(* The composition: the callee contracts give the slot lib/B/YCfn.v:141, which the closed walk takes.      *)
 (* ===================================================================================================== *)
 Section RC. Context {rc : YM05.RunCeil}.
 
@@ -645,6 +646,7 @@ Qed.
 Lemma wire_srealizesX_rc : forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk segs brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
   srealizes segs (init_config segs AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS:=checksum_shape) inp).
@@ -668,9 +670,9 @@ End RC.
 
 Theorem wire_B_TFIB_T_of_parts : WBT.TFIB_T.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   exact (@wire_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowW sp Hsp)) sp rnd brk mbase inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 
 (* The two ASan+UBSan statements of record, closed: every part above is a Lemma. *)

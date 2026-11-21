@@ -3,7 +3,7 @@
 
    The step from the image's bytes to the form a contract asks for (garr8 / val_mem over a reader that satisfies
    arodata_okP) is image A's: lib/B/Prog/GrantCloseChk.v, the port of lib/A/Prog/GrantCloseChk.v at a working branch
-   af735a950e2 (arodata_garr8 :191, arodata_byte :175, arodata_aview :158, garr8_val_mem :210), with that file's
+   (arodata_garr8 :191, arodata_byte :175, arodata_aview :158, garr8_val_mem :210), with that file's
    two added lemmas arodata_garr8_rom / arodata_aview_tbl_rom, which take the image's bytes from a computation
    (rom_chk over image B's own segments and read-only range) and the two facts about the abstract B as premises:
      ro_free B a n : no byte of [a, a + n) is an owned static of B or a byte of B's errno cell.

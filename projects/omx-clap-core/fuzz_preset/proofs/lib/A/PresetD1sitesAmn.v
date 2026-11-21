@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29: the MEMNORM KEEP of the printf sites (lane CwSites, open row of the interface
-   a working branch 446222ec0601). The loop needs `memnorm tfibsegs mem -> memnorm tfibsegs mem'` across the
+   a working branch). The loop needs `memnorm tfibsegs mem -> memnorm tfibsegs mem'` across the
    driver's printf call, and no call rule can derive it from a post stated through views (YGcallMxmn.v header), so
    the walk itself must carry it. This file re-runs lib/A/AE3mcf.v's two vfprintf walks and lib/A/AE3hcf.v's two
    interceptor call lemmas with that conjunct, from the SAME proof text:
@@ -12,7 +13,7 @@
      continuation and the keep threaded step by step: a symbolic-runner phase by YGcallMxmn.memnorm_frame_of, the
      TIOCGWINSZ ioctl by its rule's `ms_mem ms' = ms_mem ms`, the writev by memnorm_frame_of_ecall (below, the
      st_ok_ecall twin of memnorm_frame_of, same proof), each interceptor call by the xm keep.
-   YGcallMxmn.v is taken by path from a working branch 8e33ecc4965b (blob 87de220caca2); YAkMemnorm.v
+   YGcallMxmn.v is taken by path from a working branch (blob 87de220caca2); YAkMemnorm.v
    comes with the interface commit. MN.memnorm = YAkMemnorm.memnorm.
    rule 24: proves function vfprintf (reuse search: the internal file idx-cfcopy-walks.txt / the internal file idx-fwrite-fprintf.txt exit=0; PORT of
    the released cgif walk via CwPreA's cf copy; checker IcptCheck 04:27Z CONFIRM)

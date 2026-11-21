@@ -5,8 +5,9 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 470 of its 507 lines of code are new or changed and 217 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A): the shared mid-walk seed of its ten segment lanes, after
-   plugin-hostd/fuzz_command's lib/A/Prog/check_reply_sd.v cr_seed (origin/ossv/recipes 501c0d516c69): from the cut
+   plugin-hostd/fuzz_command's lib/A/Prog/check_reply_sd.v cr_seed: from the cut
    facts of lib/A/Prog/m_file_m.v (mf_cx, mf_core, mf_cells, mf_np and the base registers) the symbolic state
    st_ok_pi at ANY listing offset pc after the frame call (0x85f30). The m_file cut-statement lane, the one writer of this file and
    of m_file_m.v. Statement text and its proof; no instruction is executed here.
@@ -19,7 +20,7 @@
      entry at any atom), mf_blk_app / mf_txt_app (the block's and the text's bytes are outside the shadow span),
      mf_txt_region (the HDRA segment lane's mf_seed_txt: region_ok of a read-only text-byte region at an atom, its
      all_disjoint from the seed's six regions, and the cursor atom's fact).
-   - 1: the first text (on commit 942fb04485a4, m_file_m.v CHANGE 3).
+   - 1: the first text (on m_file_m.v CHANGE 3).
 
    THE ATOMS (0..31 are the registers at pc; mfE regs1 v lyc pos cur np xs):
      32 SB = SHADOW_OFF     33 c (the mconf block)     34 FB = frame_addr lyc 1 pos (the side-stack frame)

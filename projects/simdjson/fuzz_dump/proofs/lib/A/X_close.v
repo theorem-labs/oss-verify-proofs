@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the close proof carries the fd predicate's new channel-reader flag. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -108,8 +109,8 @@ Proof using AF.
            (fun ms => nretA msA (eff0 (Z_to_bv 64 0)) = ms) (fun mo => ARTM RT Σ mo /\ PMfd (fd_remove F0 (Z_to_bv 64 fd)) fs0 mo) fd);
     [lia| exact (ASTA_PM_mat_stable RT AF Σ _ fs0)| | | exact Hc1'|].
   - intros ms <-. split; [reflexivity|]. split; reflexivity.
-  - intros mo (HAR & HF & HFS). rewrite HF. split; [exact HLK|].
-    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| exact HFS]].
+  - intros mo (HAR & HF & HFS & HRD). rewrite HF. split; [exact HLK|].
+    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| split; [exact HFS| exact HRD]]].
   - intros c2 Hc2.
     assert (EQ : nretA msA (eff0 (Z_to_bv 64 0)) = MS (mkR (Z_to_bv 64 0x15af04) (Z_to_bv 64 (usp + -16)) gp tp t0 t1 t2 s0 s1
                    (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0)

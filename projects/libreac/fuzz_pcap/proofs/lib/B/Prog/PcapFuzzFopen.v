@@ -5,9 +5,9 @@
    BASE + AF_pcap_source_open, AF = 0xa58), proving lib/A's image-generic contract tpcap_source_open_specX
    (lib/A/Prog/PcapSourceOpenDefs.v) at SEGS = pa_segs, rlo / rhi = pa_relro_lo / pa_relro_hi,
    apath / alen / afile = VAL (A_OBJ 3) / VAL (A_OBJ 4) / VAL (A_OBJ 2) (0x20d00 "<fuzz-input>", g_file_len
-   0x5d3e40, g_file 0x5d3e60), with FM_RA and roimg as parameters. At ossv/recipes 25e3d17bdb50 (2026-10-29), there was no released proof of this function at
-   this image (rule 24 lookup, a Theorem Labs lane, 22:35Z): the v1.8 ubsan proof (lib/U/Prog/pcap_source_open.v at
-   origin/ossv/recipes c8557374ad2e) serves only as the template for the UBSan guards.
+   0x5d3e40, g_file 0x5d3e60), with FM_RA and roimg as parameters. At (2026-10-29), there was no released proof of this function at
+   this image (rule 24 lookup, a Theorem Labs lane, 22:35Z): the v1.8 ubsan proof (lib/U/Prog/pcap_source_open.v)
+   serves only as the template for the UBSan guards.
 
    The code. Up to the fopen call it is lib/A's ASan code byte for byte at
    other pcs (asan 0x8145c.. = asan-ubsan 0x811e0..): the prologue saves ra, s0 .. s9 (0x811e0..0x81210) and
@@ -39,8 +39,8 @@
    range_addressable, and op_fopen_ret's FILE-block footprint fact for the fclose of the tail.
 
    The callee hypotheses, used at this image as Section hypotheses: FOPEN : tlibreac_fuzz_fopen_specX
-   (lib/A/Prog/PcapFuzzFopenDefs.v), AFREAD : afread_spec (lib/A/Stdio/PFreadISpec.v:138), AFCLOSE :
-   afclose_source_spec (lib/A/Stdio/PFclose.v:209), ASM1 : astack_malloc_realizes (lib/Reusable/YG0d.v:285),
+   (lib/A/Prog/PcapFuzzFopenDefs.v), AFREAD : afread_spec (lib/A/Stdio/PFreadISpec.v:139), AFCLOSE :
+   afclose_source_spec (lib/A/Stdio/PFclose.v:210), ASM1 : astack_malloc_realizes (lib/Reusable/YG0d.v:285),
    ASF : astack_free_law (lib/Reusable/YG0d.v:301) and FFL : frame_flag_lawP (lib/Reusable/YCbq.v:797), the meter laws MLAW / MLAWF /
    FM, ASIL : asource_img_laws, and the kit's LAWS / TL / TLF / ML. Four instance obligations beyond the kit:
    ROK (roimg reads only image bytes outside the runtime's statics, errno and the open-file list head; applied at
@@ -48,11 +48,12 @@
    literal's shadow, as a law of every AR state: the frame request's kept clauses do not keep a global's shadow,
    YG0n.v:241 makes it aowned; discharged by the instance through AR_zshadow_law, YG0d.v:435-438), HGX (g_file_len
    and g_file are image bytes outside the runtime's statics and errno; the gx_ok shape of
-   lib/A/Prog/PcapEntryDefs.v:366, 395, discharged by the harness), and RO : ro_below_ofl (as
+   lib/A/Prog/PcapEntryDefs.v:367, 395, discharged by the harness), and RO : ro_below_ofl (as
    lib/A/Prog/PcapHarnessTail.v:37). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapSourceOpen.v, with its module paths and module names changed; 477 of its 520 lines of code are new or changed and 1508 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: taken from a working branch d2efa2b83ff without its uncommitted DRAFT_fopen.v (sha256 c5819f1f77c8; internal record): the image facts (segments, read-only image) and the strcmp wrapper's contract are named Section hypotheses; the strcmp window is FO_WIN's ESTACK. *)
-(* Modified by Theorem Labs, 2026-10: lib/B twin of lib/A/Prog/PcapFuzzFopen.v (a working branch 25b1e6c030c, narrow FO_WIN; file unchanged since 71180e55168) for fuzz_pcap.asan-ubsan (v1.9.0, pin sha256 9e66f771f22af67aadc8b8ddcd7ee91f46c4c63442c694faaf2375f9c5b79321): the listing, its names, PAImg and the walk kit are lib/B's (PcapSyms, PcapList, PcapAddr, PcapPa, PcapPaLib, PcapFrame, YC1g, YC85); the statement is lib/A/Prog/PcapFuzzFopenDefs.v's tlibreac_fuzz_fopen_specX at this image's instance, not a copy; the image-generic Definitions of the lib/A walk (roimg_low, astrcmp_path_at, FopenImg) are restated here because that file is a walk over the ASan listing and is not Required; every image number is keyed on symbol + offset from each pin's own symtab (libreac_fuzz_fopen+0x0 = 0x80738 on asan, 0x80788 here); the address check at the end is this image's. *)
+(* Modified by Theorem Labs, 2026-10: taken from a working branch without its uncommitted DRAFT_fopen.v (sha256 c5819f1f77c8; internal record): the image facts (segments, read-only image) and the strcmp wrapper's contract are named Section hypotheses; the strcmp window is FO_WIN's ESTACK. *)
+(* Modified by Theorem Labs, 2026-10: lib/B twin of lib/A/Prog/PcapFuzzFopen.v (a working branch, narrow FO_WIN; file unchanged) for fuzz_pcap.asan-ubsan (v1.9.0, pin sha256 9e66f771f22af67aadc8b8ddcd7ee91f46c4c63442c694faaf2375f9c5b79321): the listing, its names, PAImg and the walk kit are lib/B's (PcapSyms, PcapList, PcapAddr, PcapPa, PcapPaLib, PcapFrame, YC1g, YC85); the statement is lib/A/Prog/PcapFuzzFopenDefs.v's tlibreac_fuzz_fopen_specX at this image's instance, not a copy; the image-generic Definitions of the lib/A walk (roimg_low, astrcmp_path_at, FopenImg) are restated here because that file is a walk over the ASan listing and is not Required; every image number is keyed on symbol + offset from each pin's own symtab (libreac_fuzz_fopen+0x0 = 0x80738 on asan, 0x80788 here); the address check at the end is this image's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* libreac_fuzz_fopen (fuzz_pcap.asan-ubsan v1.9.0, libreac_fuzz_fopen+0x0 = 0x80788, 36 instructions, 144 bytes; the
    same 36 instruction words as the ASan build's but for the low 12 bits of three auipc pairs, +0x20 / +0x50 / +0x5c,

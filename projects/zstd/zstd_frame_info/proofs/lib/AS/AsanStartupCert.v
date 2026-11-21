@@ -1,13 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-From Stdlib Require Import ZArith List Bool.
-From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanPlanImages AsanInit AsanNodesWJoin AsanStartup StartupPlanAsan StartupHSAsan StartupPlan2Asan StartupHS2Asan AsanCertDefs.
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the certificate is proved at each CONFIG_RSEQ value, for the plan renumbered by the probe-read map (segB's AT_RANDOM split chain rebuilt from probe-read values), against the hand-off states, counters and shape computed in the build). *)
+(* The Asan build's start-up certificate for plan A at AsanInit.LIMIT, per CONFIG_RSEQ value and joined;
+   its plan, start state, hand-off table and shape are computed in StartupRegenAsan.v (LPS 727298f3).
+   Written by gen_startup_regen.py. *)
+From Stdlib Require Import ZArith List Bool Lia.
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanImages
+  AsanInit AsanNodesWJoin AsanCertDefs StartupRegenAsan.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
 From Ltac2 Require Import Ltac2.
-
-Lemma startup_cert :
-  check ASEGS IT0 ASAN NX0 AsanInit.LIMIT (XNS ASEGS ASAN NX0 AsanInit.LIMIT) XE0 XB0 HS_asanA KC0 BFUEL FUEL None asan_init startup_plan = COk startup_shape.
-Proof. Time (vm_cert_refl constr:(COk startup_shape)). Time Qed.
+Lemma startup_cert_0 :
+check ASEGS IT0 ASAN NX0 AsanInit.LIMIT 0 (XNS ASEGS ASAN NX0 AsanInit.LIMIT) XEr XBr (hsA 0) KC0 BFUEL FUEL None (asan_init 0) (planA 0) = COk (shapeA 0).
+Proof. Time (vm_cert_refl constr:(COk (shapeA 0))). Time Qed.
+Lemma startup_cert_1 :
+check ASEGS IT0 ASAN NX0 AsanInit.LIMIT 1 (XNS ASEGS ASAN NX0 AsanInit.LIMIT) XEr XBr (hsA 1) KC0 BFUEL FUEL None (asan_init 1) (planA 1) = COk (shapeA 1).
+Proof. Time (vm_cert_refl constr:(COk (shapeA 1))). Time Qed.
+Lemma startup_cert : forall r, 0 <= r <= 1 ->
+check ASEGS IT0 ASAN NX0 AsanInit.LIMIT r (XNS ASEGS ASAN NX0 AsanInit.LIMIT) XEr XBr (hsA r) KC0 BFUEL FUEL None (asan_init r) (planA r) = COk (shapeA r).
+Proof. ltac1:(intros r Hr; assert (r = 0 \/ r = 1) as [-> | ->] by lia; [exact startup_cert_0 | exact startup_cert_1]). Qed.

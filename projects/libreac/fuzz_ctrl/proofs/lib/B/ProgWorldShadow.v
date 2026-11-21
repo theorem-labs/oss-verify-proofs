@@ -1,11 +1,11 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldShadow.v (a working branch
-   516f9e5a3d1, re-synced to a working branch 1d23ced37fd (= a working branch 1888d8b45bf): A's twin-module
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldShadow.v (a working branch,
+   re-synced to a working branch (= a working branch): A's twin-module
    comment above the Requires, Lib.Mem by its core path, and the global-shadow lemmas ctl_gshadow_of_AR_fixed /
    pwsh_addressable_app / ctl_global_shadow_of_AR_fixed, all of which B takes, under the same names; then to
-   a working branch fec8db0a380 (A's file from a Theorem Labs lane 87ed4849733): the two global-shadow lemmas take
+   a working branch (A's file from a Theorem Labs lane): the two global-shadow lemmas take
    ProgWorld's names, ctl_gshadow_of_AR / ctl_global_shadow_of_AR, stated as B.ProgWorld.ctl_gshadow_of_AR_stmt B /
    ctl_global_shadow_of_AR_stmt B (the same texts as the _fixed statements; the same proofs), and YP09 joins the
-   YK11 YM05 Require line, as A; then to a working branch 0e97fddfcea (A blob a10a774a57e): ctl_const_vis_of_AR,
+   YK11 YM05 Require line, as A; then to a working branch (A blob a10a774a57e): ctl_const_vis_of_AR,
    B.ProgWorld.ctl_const_vis_of_AR_stmt B with A's proof, and A's added Require line for ProgWorld_Fs / ProgWorldVisFrame):
    lib.A.ProgWorld -> lib.B.ProgWorld, lib.A.AsanRT -> lib.B.AsanRT, lib.A.Img0 -> lib.B.Img0, lib.A.AF0m ->
    lib.Reusable.YF0m (CtrlTSyms, ts_const, Tfib_const = Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow, the
@@ -168,9 +168,9 @@ Proof.
 Qed.
 
 (* ---- Global shadow: a Theorem Labs lane's ProgWorld statements ctl_gshadow_of_AR_stmt (AMENDED) and ctl_global_shadow_of_AR_stmt
-   (B twins at lib/B/ProgWorld.v Section CtlBase3, of A's ProgWorld.v (from a working branch 1d23ced37fd), at head lib/A/ProgWorld.v:1116-1123
-   / :1143-1154).  The a48c4068c6e text of ctl_gshadow_of_AR_stmt was FALSE (a Theorem Labs lane 05:47Z): image B's
-   Tfib_const_abs holds the asan_inited row `z1 (ANum 0xaa398) 0x1` (B.AsanRT.INITED, lib/Reusable/YF0m.v:81), so
+   (B twins at lib/B/ProgWorld.v Section CtlBase3, of A's ProgWorld.v (from a working branch), at head lib/A/ProgWorld.v:1116-1123
+   / :1143-1154).  The text of ctl_gshadow_of_AR_stmt was FALSE (a Theorem Labs lane 05:47Z): image B's
+   Tfib_const_abs holds the asan_inited row `z1 (ANum 0xaa398) 0x1` (B.AsanRT.INITED, lib/Reusable/YF0m.v:82), so
    g := 8 * (0xaa398 - 0x7fff8000) < 0 met every premise (shadow_addr g = 0xaa398, k = 1) while addressable needs
    0 <= g; the amended text adds the image bound kImgLo <= g, g + k <= kImgEnd (resp. g + n <= kImgEnd).  Sources:
    AR's am_const at as_const B ly = Tfib_const ly (CtrlTSyms' ts_const), the view -> mrd step pwsh_view_mrd,
@@ -237,8 +237,8 @@ Proof.
     exact (pwsh_addressable_app m g _ _ HZ HP).
 Qed.
 
-(* ---- Const-row visibility: a Theorem Labs lane's ProgWorld statement ctl_const_vis_of_AR_stmt (a working branch
-   e68ab922649, ProgWorld.v section ConstVis, item 19).  Route named there: the row holds over the view
+(* ---- Const-row visibility: a Theorem Labs lane's ProgWorld statement ctl_const_vis_of_AR_stmt (a working branch,
+   ProgWorld.v section ConstVis, item 19).  Route named there: the row holds over the view
    (ProgWorld_Fs.pw_row, AR's am_const at as_const B ly = Tfib_const ly), so the view reads byte a; a byte the view
    reads is visible (ProgWorldVisFrame.vis_of_aview, through w_Hoff); pw_z1_row gives the byte in bytes_at form. ---- *)
 Lemma ctl_const_vis_of_AR : B.ProgWorld.ctl_const_vis_of_AR_stmt B.

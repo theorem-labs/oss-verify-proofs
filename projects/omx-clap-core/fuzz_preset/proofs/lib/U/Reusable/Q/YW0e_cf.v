@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -214,18 +215,21 @@ ss_pc (S5 r t) = REALLOC_RET /\ ss_resv (S5 r t) = None /\ callee_view (S5 r t) 
 sr_get (ss_regs (S5 r t)) 10 = SOff aNP 0 /\
 ss_mem (S5 r t) = tail_mem_final aRET (stk2 r) t.
 Proof. intros r t. destruct r, t; vm_compute; repeat split; reflexivity. Qed.
-Definition S2no (r : rcase) : sstate :=
-let s2 := S2 r in resume s2 (SLit (2^64 - 12)) (ss_mem s2) (ss_facts s2).
-Definition S4 (r : rcase) : sstate := fst (sym_run_toN src0segs src0tbl FUEL src0_A_libc_malloc_impl (S2no r)).
-Lemma S4_run_ok : forall r, run_to_ok src0_A_libc_malloc_impl (S2no r) (S4 r).
-Proof. intros r. split; destruct r; vm_compute; reflexivity. Qed.
-Lemma S4_shape : forall r,
-ss_pc (S4 r) = src0_A_libc_malloc_impl /\ ss_resv (S4 r) = None /\
-view [1; 2; 3; 4; 8; 9; 10; 18; 23; 24; 25; 26; 27]%nat (S4 r)
+(* LPS 727298f3: mremap refuses with ENOMEM (e = 12) or, for a new length past TASK_SIZE, with EINVAL
+   (e = 22, YW00.v); the fallback runs from the state after the ecall with [2^64 - e] in a0, and
+   its runs are computed for both. *)
+Definition S2no (e : Z) (r : rcase) : sstate :=
+let s2 := S2 r in resume s2 (SLit (2^64 - e)) (ss_mem s2) (ss_facts s2).
+Definition S4 (e : Z) (r : rcase) : sstate := fst (sym_run_toN src0segs src0tbl FUEL src0_A_libc_malloc_impl (S2no e r)).
+Lemma S4_run_ok : forall e r, In e [12; 22]%Z -> run_to_ok src0_A_libc_malloc_impl (S2no e r) (S4 e r).
+Proof. intros e r He. destruct He as [<-|[<-|[]]]; split; destruct r; vm_compute; reflexivity. Qed.
+Lemma S4_shape : forall e r, In e [12; 22]%Z ->
+ss_pc (S4 e r) = src0_A_libc_malloc_impl /\ ss_resv (S4 e r) = None /\
+view [1; 2; 3; 4; 8; 9; 10; 18; 23; 24; 25; 26; 27]%nat (S4 e r)
 = [SLit RA_MALLOC; SOff 2 (-64); SOff 3 0; SOff 4 0; SOff aN 0; SOff aP 0; SOff aN 0; ENDR r; SOff 23 0; SOff 24 0; SOff 25 0; SOff 26 0; SOff 27 0] /\
-ss_mem (S4 r) = [reg_hdr0; reg_grp; reg_meta0; reg_area; reg_ctx; reg_nl; stk3 r; reg_got; reg_guard;
-mkRegion (Some aTP) (-164) (-160) (-164) (-160) [mkChunk (-164) (CVal 4 (SLit 12))]] ++ r_mem r.
-Proof. intros r. destruct r; vm_compute; repeat split; reflexivity. Qed.
+ss_mem (S4 e r) = [reg_hdr0; reg_grp; reg_meta0; reg_area; reg_ctx; reg_nl; stk3 r; reg_got; reg_guard;
+mkRegion (Some aTP) (-164) (-160) (-164) (-160) [mkChunk (-164) (CVal 4 (SLit e))]] ++ r_mem r.
+Proof. intros e r He. destruct He as [<-|[<-|[]]]; destruct r; vm_compute; repeat split; reflexivity. Qed.
 Definition junk (i : nat) : sv := SOff (64 + i) 0.
 Definition regs_after_malloc (res s2v : sv) : list sv :=
 [SLit 0; junk 1; SOff aSP (-64); SOff 3 0; SOff aTP 0; junk 5; junk 6; junk 7;
@@ -304,8 +308,8 @@ Lemma S2_run r : st_ok src0segs E (add_cond (S1 r) condNE) ms -> SR_cfv src0segs
 Proof. intros HS. exact (SR_run_ecall'' E _ _ ms model HS (proj1 (S2_run_ok r)) Hh Hlz). Qed.
 Lemma S3_run r t : st_ok src0segs E (S1eq r t) ms -> SR_cfv src0segs (mkCfg ms model) (to_state (S3 r t) (ss_mem (S1eq r t))).
 Proof. intros HS. exact (SR_run_to' REALLOC_RET E _ _ ms model HS (S3_run_ok r t) Hh Hlz). Qed.
-Lemma S4_run r : st_ok src0segs E (S2no r) ms -> SR_cfv src0segs (mkCfg ms model) (to_state (S4 r) (ss_mem (S2no r))).
-Proof. intros HS. exact (SR_run_to' src0_A_libc_malloc_impl E _ _ ms model HS (S4_run_ok r) Hh Hlz). Qed.
+Lemma S4_run e r : In e [12; 22]%Z -> st_ok src0segs E (S2no e r) ms -> SR_cfv src0segs (mkCfg ms model) (to_state (S4 e r) (ss_mem (S2no e r))).
+Proof. intros He HS. exact (SR_run_to' src0_A_libc_malloc_impl E _ _ ms model HS (S4_run_ok e r He) Hh Hlz). Qed.
 Lemma S5_run r t : st_ok src0segs E (S2ok r t) ms -> SR_cfv src0segs (mkCfg ms model) (to_state (S5 r t) (ss_mem (S2ok r t))).
 Proof. intros HS. exact (SR_run_to' REALLOC_RET E _ _ ms model HS (S5_run_ok r t) Hh Hlz). Qed.
 Lemma S7_run : st_ok src0segs E S6z ms -> SR_cfv src0segs (mkCfg ms model) (to_state S7 after_memR).

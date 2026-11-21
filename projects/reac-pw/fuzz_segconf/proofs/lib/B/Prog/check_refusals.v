@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of check_refusal's ASan walk (plugin-hostd/fuzz_command, 0x87f08), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (wcb_entry) and A/AChc.v: the symbolic entry state with the GOT words of g_rec and g_quitting, the two read fields of g_rec and the word g_quitting, the shadow entries that make the three inline checks vanish, and the seed lemma; plus the transport of the read-only facts across the function's own frame writes. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_refusal_s1.v, with its module paths and module names changed; 291 of its 372 lines of code are new or changed and 152 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/check_refusals.v (commit 3ecb113f2867): the ASan + UBSan walk
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/check_refusals.v: the ASan + UBSan walk
    of check_refusals on image B of reac-pw/fuzz_segconf (fuzz_segconf.asan-ubsan, BASE + AF_check_refusals =
    0x8736c, 64 instructions, 16-byte frame, no call, 4 inline checks of 4-byte loads, 1 UBSan trap branch), against
-   check_refusals_contract (lib/B/Prog/check_refusals_c.v, the B copy of FINAL 6f783602b5e3) at
+   check_refusals_contract (lib/B/Prog/check_refusals_c.v, the B copy of FINAL) at
    A_check_refusals := BASE + AF_check_refusals (the listing's entry) and STK_check_refusals :=
    SegInstB.STK_check_refusals (16: the frame `addi sp,sp,-16` at 0x8736c; the code calls nothing on a path that
    returns; image B's instance file lib/B/Prog/SegInstB.v). ADAPTED: B's code is

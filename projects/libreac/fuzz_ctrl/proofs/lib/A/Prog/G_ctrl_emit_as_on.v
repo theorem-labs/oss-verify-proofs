@@ -10,7 +10,7 @@
    (HBRF, TLAY, every other binder and the spec tctrl_emit_as_spec unchanged).
 
    Hypotheses of pb_ctrl_emit_as_on beyond the statement's binders:
-     HTS  : A.AF0m.CtrlTSyms B                   the bundle is ctrl's (AF0m.v:293); no binder of the statement gives it.
+     HTS  : A.AF0m.CtrlTSyms B                   the bundle is ctrl's (AF0m.v:294); no binder of the statement gives it.
      HRLO : RLO = PA_RLO,  HRHI : RHI = PA_RHI    TLAY is stated at PI_ctrl's read-only bounds, the spec at RLO / RHI.
    NO visible-zero-shadow premise: G_ctrl_emit_as.pb_ctrl_emit_as takes ProgWorld's core fact of that name only for
    the UNIVERSAL shadow_rw (A.ProgWorldCtlRt's run-state lemma). Here the run state comes from GE_rtC.ge_rtC_jrnl
@@ -30,7 +30,7 @@
    compares it; with the range addressable the check passes and the error path is not reached.
 
    Glue closure rule (two Theorem Labs lanes): the _F / _cF / _on files are Required qualified only; the six duplicated
-   modules (YI04 YI16 YK11 YK1b YM05 YO09) are written lib.Reusable.<X>. rule 24: At ossv/recipes c5e779efe8c (2026-10-31), no released proof of ctrl_emit_as outside this unit. *)
+   modules (YI04 YI16 YK11 YK1b YM05 YO09) are written lib.Reusable.<X>. rule 24: At (2026-10-31), no released proof of ctrl_emit_as outside this unit. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import GEbase.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.AF0m.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import GE_row GE_img GE_buf GE_jrnl.

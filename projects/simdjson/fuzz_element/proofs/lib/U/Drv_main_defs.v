@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack image is pimg, the run_ok premise is added, and the stack region's lower bound is 4 MiB below the entry sp instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -47,7 +48,7 @@ Section CTX.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid : word) (TID : Z).
   Notation usp0 := (bv_unsigned sp0).
 
-  Definition LO : Z := usp0 - 8388608.
+  Definition LO : Z := usp0 - 4194304.
 
   Definition MFRAME (mm : mem) (pad : list byte) (s7v s6v s5v s4v : word) : Prop :=
     rw_cells usegs mm (usp0 + -128)
@@ -78,7 +79,7 @@ Section CTX.
   Definition BASE (mm : mem) : Prop :=
     stk usegs mm LO (usp0 + -128) /\ mem_inv usegs mm /\ ESTAT mm /\ rauxv_ok mm usp0
     /\ ssp_cells mm rr_guard /\ lx_statics mm
-    /\ bytes_at usegs mm usp0 (build_stack_bytes pph sp0 argv envp uid run_hw run_draw).
+    /\ bytes_at usegs mm usp0 (pimg sp0 argv envp uid).
 
   Definition P1 (ms : machine_state) : Prop :=
     exists (t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (mm : mem) (pad : list byte),
@@ -97,14 +98,14 @@ End CTX.
 
 Definition main_to_P1_stmt : Prop :=
   forall (sp0 : word) (argv envp : list (list byte)) (uid : word) (ms : machine_state),
-    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp0 argv envp ->
+    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp0 argv envp -> run_ok sp0 argv envp ->
     Z.of_nat (length argv) = 2 ->
     at_main sp0 argv envp uid ms ->
     exists TID, 0 < TID < 4194304 /\ evt usegs (P1 sp0 argv envp uid TID) ms.
 
 Definition main_usage_stmt : Prop :=
   forall (sp0 : word) (argv envp : list (list byte)) (uid : word) (ms : machine_state),
-    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp0 argv envp ->
+    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp0 argv envp -> run_ok sp0 argv envp ->
     Z.of_nat (length argv) <> 2 ->
     at_main sp0 argv envp uid ms ->
     implM usegs (io_diag io (DUsage (nth 0 (argv_Z argv) [])) ;;; mret 2) (ps_init (reservedZ usegs))

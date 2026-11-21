@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -86,7 +87,7 @@ Definition lmb_stmt : Prop :=
   tp = Z_to_bv 64 B_TP -> frm0 fc ->
   (length (rt_frames RT Σ) < FRAMES_MAX)%nat -> 1 <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + LMB_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + LMB_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 ->
   bbig Σ m X bs len ->
   big_k Σ K ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 m X lo 1 (lmb_G len) ->
@@ -101,7 +102,7 @@ Definition p5b_stmt : Prop :=
   tp = Z_to_bv 64 B_TP -> frm0 fc ->
   (length (rt_frames RT Σ) < FRAMES_MAX)%nat -> 0 <= e < 135 * (cr + 1) -> 0 <= cr -> e < 2147483648 -> cr <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + P5B_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + P5B_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 ->
   bbig Σ m X bs len ->
   big_k Σ K ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 m X lo cr (p5b_G bs len e) ->
@@ -115,7 +116,7 @@ Definition shlb_stmt : Prop :=
          F fc (m : mem) (X n lo : Z) bs len,
   tp = Z_to_bv 64 B_TP -> frm0 fc -> 0 <= n < 18446744073709551616 ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + SHLB_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + SHLB_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 ->
   bbig Σ m X bs len ->
   big_k Σ K ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 m X lo 0 (shlb_G bs len n) ->
@@ -137,7 +138,7 @@ Definition pdcb_stmt : Prop :=
   tp = Z_to_bv 64 B_TP -> frm0 fc ->
   (length (rt_frames RT Σ) < FRAMES_MAX)%nat -> 0 <= e < 135 * (cr + 1) -> 0 <= cr -> e <= 328 -> cr <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PDCB_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + PDCB_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 ->
   bbig Σ m X bs len -> bignorm_b bs len -> len + 21 <= 62 ->
   dc_k Σ K ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 m X lo cr ->
@@ -151,7 +152,7 @@ Definition ndcb_stmt : Prop :=
   (length (rt_frames RT Σ) + 2 <= FRAMES_MAX)%nat -> 0 <= e < 135 * (cr + 1) -> 0 <= cr -> e <= NDCB_RANGE -> cr + 1 <= rt_credit RT Σ ->
   - NDCB_RANGE <= p2 <= NDCB_RANGE ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + NDCB_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + NDCB_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 ->
   abig Σ m X ->
   dc_k Σ K ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 m X lo (cr + 1) ->
@@ -165,7 +166,7 @@ Definition ffb_stmt : Prop :=
   tp = Z_to_bv 64 B_TP -> frm0 fc ->
   (length (rt_frames RT Σ) + FFB_FRAMES <= FRAMES_MAX)%nat -> FFB_CREDIT <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + FFB_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + FFB_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 ->
   In (p, n) (rt_live RT Σ) -> p mod 8 = 0 -> p <= A -> LAST + 8 <= p + n -> A + Z.of_nat (length txt) <= p + n ->
   bytes_at bsegs m A txt -> Z.of_nat (length txt) < 2147483648 -> A <= FIRST <= LAST -> LAST <= A + Z.of_nat (length txt) ->

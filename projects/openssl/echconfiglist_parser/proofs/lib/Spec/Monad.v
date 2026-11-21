@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (impl takes its new node post-state argument, fun _ => nret, on these trap nodes). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -48,7 +49,7 @@ Section Machine.
 Variable segs : list Segment.
 
 Definition implM {A} (c : M A) (s : St) (Q : A -> St -> machine_state -> Prop) (ms : machine_state) : Prop :=
-  impl segs (at_node segs) (c s) (epost (fun p => Q (fst p) (snd p))) ms.
+  impl segs (at_node segs) (fun _ => nret) (c s) (epost (fun p => Q (fst p) (snd p))) ms.
 
 Lemma implM_ret : forall {A} (a : A) s Q ms, evt segs (Q a s) ms -> implM (mret a) s Q ms.
 Proof. intros A a s Q ms H. unfold implM, mret. apply impl_ret_ok. exact H. Qed.

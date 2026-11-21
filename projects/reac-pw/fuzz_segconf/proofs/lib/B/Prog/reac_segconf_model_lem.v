@@ -1,6 +1,6 @@
 (* The reader-level facts of the image-B walk of reac_segconf_model on fuzz_segconf.asan-ubsan
-   (0x89e04). Adapted from image A's lib/A/Prog/reac_segconf_ignore_file_lem.v (commit
-   62181ed287a7), for the one field this function loads.
+   (0x89e04). Adapted from image A's lib/A/Prog/reac_segconf_ignore_file_lem.v,
+   for the one field this function loads.
 
    Two groups, both statement-level (no image module is Required, so the file is image-independent):
    - the field the function loads out of the entry reac_segconf_find returns: the 4-byte model_set flag at +0x3c,

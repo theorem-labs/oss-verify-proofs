@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ev_step_L's anonymous-mmap step: the gap argument allows one more band entry for the vDSO pair, and NF_mmap_anon now takes Linux's placement for the NULL hint (mmap_place_found), derived from a free band with gap_band_intro_N and place_found_of_band). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
@@ -76,7 +77,8 @@ assert (HNF : NF (NMmap 0 len prot MAPF) mo).
 { pose proof HLN as (CNT & (ST1 & ST2 & ST3) & _). pose proof (LI_elim _ _ HLI) as HLI'.
 pose proof (mmap_len_ge len ltac:(lia)) as ML. pose proof alloc_ceiling_lt as Hcl.
 assert (HGAP : vm_gap_available (m_vmmaps mo) (mmap_len len) = true).
-{ apply (vm_gap_available_intro_N (m_vmmaps mo) (mmap_len len) NMAX RMAX (2^35)); [lia| rewrite <- HKtop, CEIL_val; rewrite alloc_ceiling_lo_val in HKat; lia| | | apply band_arith].
+        { (* LPS 727298f3: the band may hold the vDSO pair besides the ledger's own entries *)
+          apply (vm_gap_available_intro_N (m_vmmaps mo) (mmap_len len) (NMAX + 1) RMAX (2^35)); [lia| rewrite <- HKtop, CEIL_val; rewrite alloc_ceiling_lo_val in HKat; lia| | | apply band_arith2].
 - pose proof (N_band_le L (ps_brk s0) mo HK HLN). pose proof (lcnt_le_len L). lia.
 - rewrite live_bytes_app. unfold vm_live_bytes in *. lia. }
 destruct (vm_gap_available_find _ _ HGAP) as [aw Hfind].
@@ -89,7 +91,25 @@ assert (PRE : gm L + BB L + mmap_len len <= B).
 specialize (HB AOK). rewrite (mm_post_eq L len prot _ Hprot), NER in HB.
 destruct Hprot as [-> | ->]; cbn [Z.eqb PROT_NONE PROT_RW Pos.eqb] in HB;
 [rewrite gm_add_meta, BB_set_metas in HB| rewrite gm_add_group, BB_set_groups in HB]; lia. }
-apply NF_mmap_anon; [lia| unfold RMAX in Q2; lia| exact Hprot| apply (minv_nolazy mo Hmi)| apply Hmi| lia| exact HGAP]. }
+        (* LPS 75d69e00: the same band argument gives the free base itself, at or above FLOOR,
+           where Linux's placement for the NULL hint succeeds. *)
+        assert (HBAND : exists g, g mod 4096 = 0 /\ FLOOR <= g /\ g + mmap_len len <= CEIL
+                  /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) (Z_to_bv 64 g) (Z_to_bv 64 (mmap_len len)) = true).
+        { apply (gap_band_intro_N (m_vmmaps mo) (mmap_len len) (NMAX + 1) RMAX (2^35)); [lia| rewrite <- HKtop, CEIL_val; rewrite alloc_ceiling_lo_val in HKat; lia| | | apply band_arith2].
+          - pose proof (N_band_le L (ps_brk s0) mo HK HLN). pose proof (lcnt_le_len L). lia.
+          - rewrite live_bytes_app. unfold vm_live_bytes in *. lia. }
+        assert (HCT : CEIL <= alloc_top (m_vmmaps mo))
+          by (rewrite <- HKtop, CEIL_val; rewrite alloc_ceiling_lo_val in HKat; lia).
+        destruct HBAND as (g & G1 & G2 & G3 & G4).
+        assert (HPF : mmap_place_found mo (Z_to_bv 64 0) (mmap_len len) = true).
+        { apply (place_found_of_band mo (Z_to_bv 64 0) (mmap_len len) g).
+          - lia.
+          - unfold mmap_len, page_round_up_Z. apply Z_mod_mult.
+          - exact G1.
+          - exact G2.
+          - lia.
+          - exact G4. }
+        apply NF_mmap_anon; [lia| unfold RMAX in Q2; lia| exact Hprot| apply (minv_nolazy mo Hmi)| apply Hmi| lia| exact HPF]. }
 destruct Hprot as [-> | ->].
 * change (PROT_NONE =? 0) with true in *. cbn iota in W |- *. flat_shape W. eapply vis_flat_L; [| exact W| exact HNF|].
 { intros rsp. destruct (dec_mmap_none (ld_atop L) len [] rsp); reflexivity. }

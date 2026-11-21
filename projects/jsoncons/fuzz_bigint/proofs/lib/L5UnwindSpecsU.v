@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv fact is the launch's vector (auxv_ok) in place of the ten-pair auxv20. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -84,7 +85,7 @@ Definition statics_landed (M : word -> option byte) (gd : bool) (av uid rnd cana
   /\ L5.u8_at RSEGS M (L5PSU.UW_FLAGS + 3) 0 /\ L5.u8_at RSEGS M (L5PSU.UW_FLAGS + 4) 1 /\ L5.u8_at RSEGS M (L5PSU.UW_FLAGS + 5) 0
   /\ L5.u64_at RSEGS M L5PSU.TD_LOCALE L5PSU.GLOBAL_LOCALE /\ L5.u64_at RSEGS M L5PSU.LOCALE_MSGCAT 0
   /\ L5.u64_at RSEGS M L5PSU.CANARY canary /\ L5.u64_at RSEGS M L5PSU.AUXVP av /\ av mod 8 = 0 /\ 2 ^ 40 <= av /\ av + 160 <= 2 ^ 47
-  /\ (forall j, (j < 20)%nat -> L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (L5PSU.auxv20 uid rnd hw) 0))
+  /\ L5PSU.auxv_ok M av uid rnd hw
   /\ 0 <= uid < 2 ^ 64 /\ 0 <= rnd < 2 ^ 64 /\ 0 <= canary < 2 ^ 64 /\ 0 <= hw < 2 ^ 64
   /\ L5.img_clear M 0x10000 0x60100 /\ L5.img_clear M 0x60128 0x60148 /\ L5.img_clear M 0x60158 0x60160.
 

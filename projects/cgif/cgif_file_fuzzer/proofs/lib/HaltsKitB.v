@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input): changed realizes_must_exit_in, halts_budgets_of_realizes. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Classical.
@@ -7,6 +8,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YK11 YK15 YO0i YO0f YM02 YJ00 YQ05.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.R Require Import Cfg.
+From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.Cfg Require Import RomStable.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -85,7 +87,7 @@ Theorem realizes_must_exit_in : forall c T,
 Proof using segs.
   intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros S Hnone Hx.
-  - destruct Hnode as [Hsound Hinv].
+  - destruct Hnode as [Hsound [Hinv _]].
     apply must_exit_in_at_cfg_running.
     + exact Hnone.
     + eexists _, _. exact (Hsound i0).
@@ -116,12 +118,15 @@ Theorem halts_budgets_of_realizes : forall cfg S segs pc ph (Lbig Lsmall : Z),
   (forall sp brk mb rnd inp,
       valid_entry (mkImage segs pc ph) (mkEntry sp brk mb rnd) inp -> valid_input inp ->
       exists T, realizes segs (init_config segs pc ph sp brk mb rnd Lbig inp) T /\ shape_ok S T) ->
+  vdso_image segs = None ->
   halts_allowed_T_scfg_budgets cfg Lsmall S (mkImage segs pc ph).
 Proof.
-  intros cfg S segs pc ph Lbig Lsmall HLE Hle H [sp brk mb rnd] inp Hen Hinp SWB.
+  intros cfg S segs pc ph Lbig Lsmall HLE Hle H Hvi [sp brk mb rnd] inp Hen Hinp SWB.
   apply (must_exit_in_scfg_relim_closed cfg S (mkImage segs pc ph) Lbig Lsmall (mkEntry sp brk mb rnd) inp HLE SWB).
   apply (must_exit_in_scfg_mono cfg ACFG); [exact Hle | apply run_decided_classic |].
   cbn [must_exit_in_scfg].
   destruct (H sp brk mb rnd inp Hen Hinp) as (T & HR & HS).
-  exact (realizes_must_exit_in segs _ _ HR S (init_config_not_halted _ _ _ _ _ _ _ _ _) HS).
+  (* LPS 08b1429: the run starts from [init_config (run_segments ..) ..] ([Cfg.RomStable.run_init]) *)
+  exact (realizes_must_exit_in _ _ _ (run_init segs inp sp mb pc ph brk rnd Lbig T Hvi HR) S
+    (init_config_not_halted _ _ _ _ _ _ _ _ _) HS).
 Qed.

@@ -3,28 +3,29 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3501 of its 3539 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_ctrl_parseF.v, with its module paths, module names, addresses and numbers changed; 5648 of its 6995 lines of code are new or changed and 2192 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The footprint twin of reac_ctrl_parse_x_holds (reac_ctrl_parse.v, not in this delivery), asan build (A): the same run as an ExecF.evtF
    under a footprint RNG (reac_ctrl_parse_contract_x_F of reac_ctrl_parse_c.v: the EXACT metadata of the window), by
    the script of lib/A/Prog/reac_ctrl_parse.v over StepF's step. Main theorem: reac_ctrl_parse_x_F_holds.
    Provenance. This file is the image-A footprint run that a Theorem Labs lane wrote in fuzz_grant
-     git show 92c918924f0:proofs/libreac/fuzz_grant/lib/A/Prog/reac_ctrl_parseF.v   (rc=0 there)
-   moved back to this unit by alreloc.py of record (a working branch f7ad5277b9f) with --src libreac/fuzz_grant
-   --ref 92c918924f0 --unit libreac/fuzz_ctrl --build asan: 126 pcs of reac_ctrl_parse, each by +0x14b0
+     git show:proofs/libreac/fuzz_grant/lib/A/Prog/reac_ctrl_parseF.v   (rc=0 there)
+   moved back to this unit by alreloc.py of record (a working branch) with --src libreac/fuzz_grant
+   --unit libreac/fuzz_ctrl --build asan: 126 pcs of reac_ctrl_parse, each by +0x14b0
    (0x82000 -> 0x834b0 = REAC_CTRL_PARSE, reac_ctrl_parse+off on both sides), __asan_memset 0x51c98 -> 0x524c4,
    .str.4 135200 -> 135648 (= REAC_CTRL_PARSE_BC 0x211e0), the image bound 0x5ea000 -> 0x5ee000 (= IMG_LEN of
    reac_ctrl_parse_c.v); the side-stack offsets 1085440 / 2134016 kept by 23 identity --resolve lines (25 numerals), 1048576 and
    131072 kept (SIZES_KEEP); 0 UNMAPPED. Every moved pc was checked back against fuzz_ctrl.debug's symbol table and
    against this unit's lib/A/Prog/reac_ctrl_parse.v. The fuzz_grant file is itself the port of this unit's image-A
-   proof lib/A/Prog/reac_ctrl_parse.v (a working branch 3848e05c646, here by path), in the manner of
+   proof lib/A/Prog/reac_ctrl_parse.v (a working branch, here by path), in the manner of
    lib/B/Prog/reac_ctrl_parseF.v.
    Changes to the moved text (none moves an address):
    - the callees are this unit's image-A footprint forms: the bcmp wrapper's is its owner's published
      bcmp_wrap_contract_F (lib/A/Prog/bcmp_wrap_c.v); __asan_memset and __asan_memcpy are a Theorem Labs lane's shared texts
      asan_memset_contract_F / asan_memcpy_contract_F (lib/A/Prog/asan_memset_cF.v / asan_memcpy_cF.v of
-     a working branch 78b8d116a58, with IMG_LO / IMG_HI of lib/A/Prog/ImgBounds.v and sh_word_rng of
+     a working branch, with IMG_LO / IMG_HI of lib/A/Prog/ImgBounds.v and sh_word_rng of
      lib/A/Prog/rng_asan.v; imported before reac_ctrl_parse_c.v, whose sh_lo / sh_len the statement uses);
      __asan_stack_malloc_1 is a Theorem Labs lane's asan_stack_malloc_1_contract_F (lib/A/Prog/asan_stack_malloc_cF.v), the
-     NARROW form (a Theorem Labs lane's asan_stack_malloc_contract_F_narrow, a working branch 062bf770c5b
+     NARROW form (a Theorem Labs lane's asan_stack_malloc_contract_F_narrow, a working branch
      fuzz_knock lib/A/Prog/asan_stack_malloc_F.v:694-721) with image A's constants; kind_of_link1 by kind_of_link1F.v
      (proved, used). Each call site discharges its callee's premises in that callee's order: the buffers' 8-aligned
      shadow word covers from the quantified covers (shkov), the runtime words [RT_LO, RT_HI) inside the image;
@@ -41,7 +42,7 @@
    rule 24 (proof-index lookup 2026-10-28, briefs/lookup-parsexf.txt): the 12 released files named
    reac_ctrl_parse are plain / UBSAN builds of other units (no asan runtime, no footprint form); none is portable.
    Donor header follows. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -83,11 +84,11 @@ Local Open Scope Z_scope.
    two buffers and the 8-ALIGNED shadow word cover of each, written 8 * (y / 8). *)
 
 (* __asan_stack_malloc_1 in footprint form: a Theorem Labs lane's asan_stack_malloc_1_contract_F of
-   lib/A/Prog/asan_stack_malloc_cF.v 9fb4a9d0c85 (the blob this tree had at release c5e779efe8c) (a working branch af764b88895, imported above), the
+   lib/A/Prog/asan_stack_malloc_cF.v 9fb4a9d0c85 (the blob this tree had at release) (a working branch, imported above), the
    text of record of fs_shadow_area / asan_stack_malloc_contract_F (a Theorem Labs lane 12:16Z), not a local copy.  It is the NARROW
    text, asan_stack_malloc_contract_F_narrow at lines 694-721 of
-     git show 062bf770c5b:proofs/libreac/fuzz_knock/lib/A/Prog/asan_stack_malloc_F.v
-   (the canonical wide text of 31a0b55aa13 fuzz_scene asan_stack_malloc_cF.v with its one side-stack premise
+     git show:proofs/libreac/fuzz_knock/lib/A/Prog/asan_stack_malloc_F.v
+   (the canonical wide text fuzz_scene asan_stack_malloc_cF.v with its one side-stack premise
    rng RNG FS FS_SIZE replaced by two pieces) with image A's names.
    The premises of asan_stack_malloc_contract are unchanged, then one rng premise per region the call reads or writes:
    the image [IMG_LO, IMG_HI); the stack window [S0 - K, S0); the five runtime pointer cells read through DT, TS, C, T
@@ -4412,7 +4413,7 @@ Qed.
    carried between the calls are `shadow_rw_on R` (body_rt by ShadowRwOnK.fl_shadow_rw_on, the callees' posts at
    P := R); the post's `forall P, shadow_rw_on P m -> shadow_rw_on P m'` (Qp, aJ, aJ_free, Wex_free) by
    shadow_rw_mono_on from m. rule 24: proof-index reac_ctrl_parse (2026-10-29 00:3xZ, exit 0): 12 named files +
-   8 lemma rows, plain / ubsan builds of fuzz_disco / fuzz_grant / fuzz_scene; checker a Theorem Labs lane: CONFIRM. At ossv/recipes c5e779efe8c (2026-10-31),
+   8 lemma rows, plain / ubsan builds of fuzz_disco / fuzz_grant / fuzz_scene; checker a Theorem Labs lane: CONFIRM. At (2026-10-31),
    released ASan proofs of reac_ctrl_parse exist in fuzz_grant, fuzz_disco and fuzz_scene. ==== *)
 Module ParseFOn.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed INV_fixed_aok_high, INV_grant_aok, INV_madvise_aok and 2 more; removed INV_resv_hi, region_free_above. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -121,16 +122,6 @@ Proof.
   rewrite Z.div_add_l by lia. change (4095 / 4096) with 0. lia.
 Qed.
 
-Lemma region_free_above : forall l (a n : Z) R,
-  Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= R) l -> R <= a -> 0 <= a -> a + n < 2^64 -> 0 <= n ->
-  region_free l (Z_to_bv 64 a) (Z_to_bv 64 n) = true.
-Proof.
-  induction l as [|[b s] l IH]; intros a n R Hf HR Ha Han Hn; [reflexivity|].
-  apply Forall_cons_iff in Hf as [H1 Hf]. cbn [region_free]. rewrite (IH a n R Hf HR Ha Han Hn).
-  unfold iv_overlap. rewrite !unsigned_lit by lia. cbn [fst snd] in H1.
-  replace (a <? bv_unsigned b + bv_unsigned s) with false by (symmetry; apply Z.ltb_ge; lia). reflexivity.
-Qed.
-
 Lemma CH_wf : forall pc pb st, AINV pc pb st -> Forall (fun e => 0 <= snd e < 2^64) (CH pc pb st).
 Proof.
   intros pc pb st (_ & Hwf & _). unfold CH. induction (all_chunks pc pb st) as [|ch l IH]; [constructor|].
@@ -171,10 +162,6 @@ Proof.
     unfold EAGER0, CBMAX, K_FREEARR_OFF, K_FREEARR_MAX, K_CHUNKS_BLOCK in *. lia.
 Qed.
 
-Lemma INV_resv_hi : forall pc pb st mo, INV pc pb st mo ->
-  Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (vm_reserved (m_vmmaps mo)).
-Proof. intros pc pb st mo [_ HM]. destruct HM as (_ & _ & M3 & _). exact M3. Qed.
-
 (* [comment removed for export] *)
 Lemma INV_fixed_aok_high : forall pc pb st mo E a len,
   INV pc pb st mo -> In E (vm_maps (m_vmmaps mo)) -> B E <= a -> a + len <= B E + S E -> RES_HI <= a ->
@@ -186,7 +173,8 @@ Proof.
   assert (HEok : bv_unsigned (fst E) + bv_unsigned (snd E) <= ATOP) by (destruct (proj1 (Forall_forall _ _) M6 E HinE) as (_ & _ & _ & ?); assumption).
   unfold ACEIL, ATOP_MAX in T1, T2. unfold B, S in HE1, HE2. unfold RES_HI in HR.
   apply (INV_fixed_aok pc pb st mo E a len HI HinE); unfold B, S; auto; try lia.
-  apply (region_free_above _ a len RES_HI M3); unfold RES_HI in *; lia.
+  (* LPS 727298f3: the range is inside the map [E], which is apart from every reservation *)
+  apply (region_free_of_wsep_in _ E a len (proj1 (Forall_forall _ _) M3 E HinE)); lia.
 Qed.
 
 Lemma INV_recommit_aok : forall pc pb st mo E a len,
@@ -203,7 +191,7 @@ Proof.
   cbn [AsanNodeSem.aok]. split; [reflexivity|]. split; [lia|]. split; [exact T3|].
   replace (a =? 0) with false by (symmetry; apply Z.eqb_neq; lia).
   rewrite ML. split; [right; reflexivity|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [|split].
-  - apply (region_free_above _ a len 0x7fff7000); auto; try lia.
+  - apply (region_free_of_wsep_in _ E a len (proj1 (Forall_forall _ _) M3 E HinE)); lia.
   - apply (map_contains_In _ E); auto; rewrite !unsigned_lit by lia; lia.
   - apply mmap_fixed_rw_budget_ok_recommit_intro; [reflexivity| exact Hwf| | | | |];
       rewrite ?unsigned_lit by lia; unfold page_size; try lia.
@@ -218,7 +206,10 @@ Proof.
   intros pc pb st mo mb ms [HA HM] Hin Hmb Hal Hms Hml Hce.
   pose proof HM as (M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & MT & MN & L0 & HP & HS & HB).
   assert (ML : mmap_len ms = ms) by (apply mmap_len_id; lia).
+  (* LPS 75d69e00: [aok]'s unmap arm also asks for the ledger facts the kept [munmap] arm's
+     [maps_subtract] rebuild needs; [AMI] carries both, as its sixth and ninth conjuncts. *)
   cbn [AsanNodeSem.aok]. rewrite ML. split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|].
+  split; [| split; [exact M9| exact M6]].
   apply map_has_In. eapply Permutation_in; [apply Permutation_sym; exact HP|]. apply in_app_iff. right.
   change (Z_to_bv 64 mb, Z_to_bv 64 ms) with (went (mb, ms)). apply in_map. exact Hin.
 Qed.
@@ -242,7 +233,13 @@ Proof.
     apply Z_mod_mult. }
   cbn [AsanNodeSem.aok]. rewrite Z.eqb_refl. rewrite ML. split; [reflexivity|]. split; [lia|]. split; [exact T3|]. split; [reflexivity|]. split.
   - rewrite M2. unfold LIMIT. pose proof (INV_backing_bound _ _ _ _ HI). unfold EAGER0, CBMAX, K_FREEARR_OFF, K_FREEARR_MAX, K_CHUNKS_BLOCK in *. lia.
-  - apply (vm_gap_available_intro_N _ _ (LEN0 + LEN0 + 16000) (2^30 + 2^20) (RTOT0 + TOT0 + 2^35)); [lia| | | |].
+  - (* LPS 75d69e00: the anonymous arm places by Linux's search; the same counting places it. *)
+    assert (NA : sec_map_size n mod 4096 = 0).
+    { unfold sec_map_size, rup, PG.
+      match goal with |- ?x mod 4096 = 0 => replace x with ((((needed_size n + 4096 - 1) / 4096) + 1) * 4096) by lia end.
+      apply Z_mod_mult. }
+    apply place_found_of_place; [lia| unfold page_size; exact NA|].
+    apply (vm_place_intro_N _ _ _ _ (LEN0 + LEN0 + 16000) (2^30 + 2^20) (RTOT0 + TOT0 + 2^35)); [lia| | | | | exact NA].
     + (* [comment removed for export] *) rewrite T3. unfold ACEIL in T1. rewrite CEIL_val. exact T1.
     + eapply Z.le_trans. { apply inj_le. apply length_filter_le. }
       rewrite length_app, Nat2Z.inj_add. fold (zlen (vm_reserved (m_vmmaps mo))). fold (zlen (vm_maps (m_vmmaps mo))).
@@ -723,7 +720,8 @@ Proof.
   cbn [AsanNodeSem.aok]. rewrite ML.
   split; [lia|]. split; [lia|]. split; [unfold PG in R3; exact R3|]. split; [lia|]. split; [exact M1|].
   unfold madvise_dontneed_ok. apply andb_true_iff. split; [apply andb_true_iff; split|].
-  - apply (region_free_above _ pbeg (pend - pbeg) 0x7fff7000); auto; try lia. unfold SHADOW_OFF in *. lia.
+  - apply (region_free_of_wsep_in _ (went (lo, sz)) pbeg (pend - pbeg) (proj1 (Forall_forall _ _) M3 _ HinE));
+      unfold went; cbn [fst snd]; rewrite ?unsigned_lit by lia; lia.
   - apply (map_contains_In _ (went (lo, sz))); [exact HinE| |]; unfold went; cbn [fst snd]; rewrite !unsigned_lit by lia; lia.
   - apply (region_free_sub _ lo sz pbeg (pend - pbeg) HNA); lia.
 Qed.

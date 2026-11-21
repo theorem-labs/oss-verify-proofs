@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoGS.v (a working branch 30a1993588f, c5 + memnorm; file sha256 a5b0e58a7e95) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoGS.v (a working branch, c5 + memnorm; file sha256 a5b0e58a7e95) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The secondary path's errno add-ons: ErrnoG.v's restatements of AGif4.AIfaceS's fields with errno kept.
 
    Moved here from ErrnoG.v, names and statements unchanged: aes_depot_t, aes_post_grant_v_t, aes_post_grant_t and

@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Lib/FP.v; 609 of its 651 lines of code are new or changed and 349 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/Prog/crtA_conv.v; 206 of its 430 lines of code are new or changed and 427 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* crtA_loop: the footprint (lib/Lib/ExecF.v evtF) twin of the convert loop of check_round_trip in image A
    (fuzz_decode.asan), for the cgif-form walk of lib/A/Prog/check_round_trip_cg.v.  It states crt_loop_stmt_F and
    proves it as crt_loop_holds_F.
 
    PORT of the record of the same function,
-   a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_loopF.v:1-470 (the walk) and
-   a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_iface_F.v:25-61 (the statement
+   a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_loopF.v:1-470 (the walk) and
+   a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_iface_F.v:25-61 (the statement
    crt_loop_stmt_F, which the record keeps in a separate interface file and which stands here at the head of the
    file that proves it).  Every lemma name, every proof and every comment is the record's.  Four things are not:
      - the ASan address predicates come from lib/A/AsanCells.v, not from the record's lib/A/AsanRT.v, which is not
@@ -52,7 +53,7 @@ Local Ltac Lia.lia ::=
 Local Ltac Lia.nia ::= Zify.zify; xnia zchecker.
 
 (* The statement crt_loop_stmt_F is in lib/A/Prog/crtA_loop_stmt.v (ported from
-   a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_iface_F.v:25-61), so that its
+   a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_iface_F.v:25-61), so that its
    user lib/A/Prog/crtA_w_mid.v states against a committed text independent of this proof. *)
 
 (* Footprint twin of the convert loop of check_round_trip (A image, +0xd4 -> +0x1f0): crt_loop_holds_F proves

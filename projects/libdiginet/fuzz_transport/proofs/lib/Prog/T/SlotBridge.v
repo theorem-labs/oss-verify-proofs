@@ -20,7 +20,7 @@
    passes it through; whoever applies the slot contract discharges it from FrameAPI.v frame_plain: the symbol
    values, AllocExtra, errno_addr B + 4 <= alloc_ceiling (a clause of the frame; ms_tp + ms_errno_off lies far below
    CEIL_MIN), and its world clause by Prog/T/GI.v frame_G_clause (frame_G_world: in_globals frame_G is
-   h_world), and its RELRO clause from the frame's frame_RELRO clause (FrameAPI.v:46-48, :75-77: TContract.v's
+   h_world), and its RELRO clause from the frame's frame_RELRO clause (FrameAPI.v:47-49, :76-78: TContract.v's
    [RELRO_BASE, RELRO_BASE + RELRO_LEN) lies inside frame_RELRO's first block). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

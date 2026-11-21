@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the depot bound in the P'' form (depot_fits / depot_len_bound, YG01.v:153 / :176), as fuzz_preset's YFix / YFjb / YFju do at commit 116f6c4dab1. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the depot bound in the P'' form (depot_fits / depot_len_bound, YG01.v:154 / :177), as fuzz_preset's YFix / YFjb / YFju do. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjy.v (a working branch 84ee52cd012, file sha256 d40e0d1bd22a) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 29 image addresses moved by code-verified function pairs (26 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); 7 hand maps (the internal file agreloc-resolve-A.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at d1f93c50c87) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc 0474699fc83547e0 (a working branch 83209f9d9cd8), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 22 numerals changed. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's P'' delta to proofs/cgif/cgif_file_fuzzer/lib/AGjy.v (84ee52cd012 -> a working branch a9d93b8c304 = cf layer ae2fa80b0325 + lanes H / M, file sha256 5f38f42badba) applied at A' by a 3-way merge: base = the 84ee52cd012 text relocated cgif -> A', theirs = the a9d93b8c304 text relocated the same way, ours = this file; 2 lines changed, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjy.v (a working branch, file sha256 d40e0d1bd22a) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 29 image addresses moved by code-verified function pairs (26 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); 7 hand maps (the internal file agreloc-resolve-A.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc 0474699fc83547e0 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 22 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's P'' delta to proofs/cgif/cgif_file_fuzzer/lib/AGjy.v (-> a working branch = cf layer + lanes H / M, file sha256 5f38f42badba) applied at A' by a 3-way merge: base = the text relocated cgif -> A', theirs = the text relocated the same way, ours = this file; 2 lines changed, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -180,7 +181,7 @@ Variables (B : asyms) (S : astate).
 Hypothesis TS : TfibSyms B.
 Hypothesis HTSD : ly_tsd ly = TFIB_TSD.
 Hypothesis HARm : ARm B ly S (aview tfibsegs (w_H W) mem0).
-(* The walk's instance (register 10, a0 = this, at Allocate's entry, i.e. register 11 of the virtual regs0: INSTv :79, A/AGj0.v:119 HU10) is the model's allocator instance. *)
+(* The walk's instance (register 10, a0 = this, at Allocate's entry, i.e. register 11 of the virtual regs0: INSTv :79, A/AGj0.v:120 HU10) is the model's allocator instance. *)
 Hypothesis Hinst_eq : as_inst B = INSTv.
 Hypothesis Hgp : getr regs0 3 = w64 (as_gp B).
 Hypothesis Hidx_def : idx = Z.of_nat (length (st_sec_arr S)).

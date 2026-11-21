@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_string.v; 2571 of its 2712 lines of code are new or changed and 1460 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_free.v, with its addresses changed; 800 of its 941 lines of code are new or changed and 2571 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_free 0x83570 (pf.c:334-350) on fs.asan (sha256 64b53ff86172...), the TAIL SEGMENT 0x83654 .. 0x836a0: the three
    exit calls fuzz_free (kids) 0x83668, fuzz_free (keys) 0x83680, fuzz_free (str) 0x8369c, each with its inline ASan
    shadow check decided UNTAKEN by the kit's token run, ending at 0x836a0 where lib/A/FSW_pj_free.v's pjf_end_memset
    closes the goal.  0x83654 is reached from the loop exit (bltu 0x83650) and from the entry when n = 0 (beqz 0x835d8).
-   rule 24: the function's released plain proof exists (lib/Prog/pj_free.v @ c8557374ad2e); no released ASan-image proof
+   rule 24: the function's released plain proof exists (lib/Prog/pj_free.v); no released ASan-image proof
    of any fs function exists (ossv proof index v5; a Theorem Labs lane's (internal path)).
    The Section shape, pjf_inv / pjf_regs / pjf_reseat / pjf_end_memset and the data lemmas belong to
    lib/A/FSW_pj_free.v and lib/A/FSW_pj_free_dat.v (the pj_free walk lane); this file adds the tail segment only, and

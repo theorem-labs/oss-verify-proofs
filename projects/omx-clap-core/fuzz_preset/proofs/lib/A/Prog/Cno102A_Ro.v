@@ -4,13 +4,14 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0n.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YP0n.v, with its module paths and module names changed; 967 of its 1043 lines of code are new or changed and 1914 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_Base.v, with its module paths and module names changed; 702 of its 797 lines of code are new or changed and 948 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c): the SHARED STEP KIT of the re-walk of
    check_no_overread (cno) against the text tcheck_no_overread_specX, by a Theorem Labs lane (a sub-lane of another lane, under a Theorem Labs session;
    plan, the internal file PLAN-cno-caw-102.md 5.1, segments CA6-CA8 use it, CA9 (walked by a Theorem Labs lane) cites it at
    its fuzz_alloc_ran_out call 0x81ec4 and its two `same` calls).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    Qed on the f97c kit before this re-fit (by a Theorem Labs lane); re-fit to the cut below.
-   INPUTS AT THE CUT 7cdbb61b5fa0 (by path, the cut's blobs): the contract lib/A/Prog/Cno102A_Base.v ba76a7bc31c9;
+   INPUTS AT THE CUT (by path, the cut's blobs): the contract lib/A/Prog/Cno102A_Base.v ba76a7bc31c9;
    the texts lib/A/PRH_FnAlloc.v 4d8aeba047e5 (tfuzz_alloc_ran_out_specX :175-183: most / own in the ledger, S' = S),
    lib/A/PRH_Base.v ef7c8ca98529 (fpre :988-1010), lib/A/PRH_FnCheck.v c40cf3fdcd2a, lib/A/PRH_Reader.v 4266e709561a
    (pj_nodeR_frame, pj_zeroR_frame), lib/A/PRH_PjOrder.v e5917626b82b (pj_foR_frame); listing lib/A/Listing_prog.v
@@ -34,8 +35,8 @@
      image clause with cn_img's cni_pst_rw);
    - cn_ro_call: the call to fuzz_alloc_ran_out at the callee entry (aj_call_xW, the text HRO for any float state,
      fpre's raZ bound from pa_slot_lt_ceil_b, P across by srr_inv_call at the text's memnorm keep).
-   RE-FIT TO THE KIT CUT 7cdbb61b5fa0 (by a Theorem Labs lane; contract lib/A/Prog/Cno102A_Base.v blob ba76a7bc31c9 at
-   a working branch 4b59cadb07a1): cn_pre has no run-word list DW and is read by its projections
+   RE-FIT TO THE KIT CUT (by a Theorem Labs lane; contract lib/A/Prog/Cno102A_Base.v blob ba76a7bc31c9 at
+   a working branch): cn_pre has no run-word list DW and is read by its projections
    (cn_pre_fpre); cn_base takes the wild budget wk LAST and cn_J is the journal at that budget (exists WS,
    ajournal_xw .. WS /\ wbudget [] wk WS), read by the ajx_* projections. fuzz_alloc_ran_out (PRH_FnAlloc.v
    4d8aeba047e5, tfuzz_alloc_ran_out_specX unchanged from f97c: a plain fpostm, no wild site) adds no wild trace, so

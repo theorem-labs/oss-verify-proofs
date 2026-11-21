@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag of the mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,9 +34,9 @@ Fixpoint tsall {A : Type} (W : wmode) (t : itree A) (P : A -> mstate -> Prop) : 
   | TBrk req vm kf ko =>
       (* [comment removed for export] *)
       (brk_grow_ok_vm vm req req = false -> tsall W kf P) /\ (W = WAll -> brk_grow_ok_vm vm req req = true -> tsall W ko P)
-  | TMmap k len vm kf ko =>
-      ((forall a, mmap_grant_ok k vm a (mm_len len) = false) -> tsall W kf P) /\
-      (W <> WFail -> forall a, mmap_grant_ok k vm a (mm_len len) = true -> tsall W (ko a) P)
+  | TMmap k thp len vm kf ko =>
+      ((forall a, mmap_grant_ok k thp vm a (mm_len len) = false) -> tsall W kf P) /\
+      (W <> WFail -> forall a, mmap_grant_ok k thp vm a (mm_len len) = true -> tsall W (ko a) P)
   | TMmapFixed addr len k1 k2 k3 =>
       (W <> WFail -> tsall W k2 P)
   | TMprot addr len vm kf ko =>
@@ -201,25 +202,25 @@ Section Nodes.
     tsall W (TBrk req vm kf ko) P.
   Proof. intros req vm kf ko P Hf Ho. cbn. split; [intros _; exact Hf | exact Ho]. Qed.
 
-  Lemma tw_mmap : forall k len vm (kf : itree A) (ko : word -> itree A) P,
-    ((W <> WOk \/ forall a, mmap_grant_ok k vm a (mm_len len) = false) -> tsall W kf P) ->
-    (W <> WFail -> forall a, mmap_grant_ok k vm a (mm_len len) = true -> tsall W (ko a) P) ->
-    tsall W (TMmap k len vm kf ko) P.
-  Proof. intros k len vm kf ko P Hf Ho. cbn. split; [intros Hng; apply Hf; right; exact Hng | exact Ho]. Qed.
+  Lemma tw_mmap : forall k thp len vm (kf : itree A) (ko : word -> itree A) P,
+    ((W <> WOk \/ forall a, mmap_grant_ok k thp vm a (mm_len len) = false) -> tsall W kf P) ->
+    (W <> WFail -> forall a, mmap_grant_ok k thp vm a (mm_len len) = true -> tsall W (ko a) P) ->
+    tsall W (TMmap k thp len vm kf ko) P.
+  Proof. intros k thp len vm kf ko P Hf Ho. cbn. split; [intros Hng; apply Hf; right; exact Hng | exact Ho]. Qed.
 
   (* [comment removed for export] *)
-  Lemma tw_mmap04 : forall k len vm (kf : itree A) (ko : word -> itree A) P,
-    ((forall a, mmap_grant_ok k vm a (mm_len len) = false) -> tsall W kf P) ->
-    (W <> WFail -> forall a, mmap_grant_ok k vm a (mm_len len) = true -> tsall W (ko a) P) ->
-    tsall W (TMmap k len vm kf ko) P.
-  Proof. intros k len vm kf ko P Hf Ho. cbn. split; [exact Hf | exact Ho]. Qed.
+  Lemma tw_mmap04 : forall k thp len vm (kf : itree A) (ko : word -> itree A) P,
+    ((forall a, mmap_grant_ok k thp vm a (mm_len len) = false) -> tsall W kf P) ->
+    (W <> WFail -> forall a, mmap_grant_ok k thp vm a (mm_len len) = true -> tsall W (ko a) P) ->
+    tsall W (TMmap k thp len vm kf ko) P.
+  Proof. intros k thp len vm kf ko P Hf Ho. cbn. split; [exact Hf | exact Ho]. Qed.
 
   (* [comment removed for export] *)
-  Lemma tw_mmap_both : forall k len vm (kf : itree A) (ko : word -> itree A) P,
+  Lemma tw_mmap_both : forall k thp len vm (kf : itree A) (ko : word -> itree A) P,
     tsall W kf P ->
-    (forall a, mmap_grant_ok k vm a (mm_len len) = true -> tsall W (ko a) P) ->
-    tsall W (TMmap k len vm kf ko) P.
-  Proof. intros k len vm kf ko P Hf Ho. cbn. split; [intros _; exact Hf | intros _; exact Ho]. Qed.
+    (forall a, mmap_grant_ok k thp vm a (mm_len len) = true -> tsall W (ko a) P) ->
+    tsall W (TMmap k thp len vm kf ko) P.
+  Proof. intros k thp len vm kf ko P Hf Ho. cbn. split; [intros _; exact Hf | intros _; exact Ho]. Qed.
 
   Lemma tw_mmap_fixed : forall addr len (k1 k2 k3 : itree A) P,
     (W <> WOk -> tsall W k1 P) -> (W <> WFail -> tsall W k2 P) -> (W = WAll -> tsall W k3 P) ->
@@ -276,9 +277,9 @@ Section SysW.
   (* [comment removed for export] *)
   Lemma tw_sys_mmap : forall mk (len : word) s (K : word -> M R) P,
     0 < bv_unsigned len -> bv_unsigned len < 2^62 ->
-    ((W <> WOk \/ forall a, mmap_grant_ok mk (ms_vm s) a (mm_len len) = false) ->
+    ((W <> WOk \/ forall a, mmap_grant_ok mk (ms_thp s) (ms_vm s) a (mm_len len) = false) ->
        tsall W ((set_errno ENOMEM ;; K MAP_FAILED) s) P) ->
-    (W <> WFail -> forall a, mmap_grant_ok mk (ms_vm s) a (mm_len len) = true ->
+    (W <> WFail -> forall a, mmap_grant_ok mk (ms_thp s) (ms_vm s) a (mm_len len) = true ->
        tsall W (K a (match mk with
                      | MMrw => upd s (zfill a (page_round_up len) (ms_mem s)) (vm_mmap a (page_round_up len) (ms_vm s))
                      | MMnone => upd s (unfill a (page_round_up len) (ms_mem s)) (vm_noacc a (page_round_up len) (ms_vm s))
@@ -295,9 +296,9 @@ Section SysW.
   (* [comment removed for export] *)
   Lemma tw_sys_mmap04 : forall mk (len : word) s (K : word -> M R) P,
     0 < bv_unsigned len -> bv_unsigned len < 2^62 ->
-    ((forall a, mmap_grant_ok mk (ms_vm s) a (mm_len len) = false) ->
+    ((forall a, mmap_grant_ok mk (ms_thp s) (ms_vm s) a (mm_len len) = false) ->
        tsall W ((set_errno ENOMEM ;; K MAP_FAILED) s) P) ->
-    (W <> WFail -> forall a, mmap_grant_ok mk (ms_vm s) a (mm_len len) = true ->
+    (W <> WFail -> forall a, mmap_grant_ok mk (ms_thp s) (ms_vm s) a (mm_len len) = true ->
        tsall W (K a (match mk with
                      | MMrw => upd s (zfill a (page_round_up len) (ms_mem s)) (vm_mmap a (page_round_up len) (ms_vm s))
                      | MMnone => upd s (unfill a (page_round_up len) (ms_mem s)) (vm_noacc a (page_round_up len) (ms_vm s))

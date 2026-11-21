@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1g.v, with its module paths changed, names TfibSyms -> GrantSyms and its addresses moved to libreac/fuzz_grant's ASan build; the runtime's mapped regions start at or above page 1530 (fuzz_grant.asan's image top 0x5fa000 >> 12), as the collected hand-off states bound them, not cgif_file_fuzzer.asan's 1531. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed Zify, eP, eSp1, eQ, eF, eGV and 40 more; removed SINV). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -9,7 +10,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.libreac.fuzz_grant.images Require Import Asan.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.libreac.fuzz_grant.lib.A Require Import AB12 AB1h AB13 AB01.
+From OSSVerify.Proofs.libreac.fuzz_grant.lib.A Require Import AB12 AB1h AB13 AB01r.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YG00 YG01 YG0f YG0v YG0n YG0r.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.A Require Import AF0m.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YM05 YD1h.
@@ -19,15 +20,21 @@ Local Set Warnings "-abstract-large-number".
 Import AX2. Import AX2B. Import AX2S. Import APC. Import APG. Import APSG.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 Open Scope Z_scope.
+(* LPS 727298f3: the start-up variables these checks name, renumbered to the hand-off states A/AB01r.v
+   computes: 109 -> 113, 254, 255, 256 -> 258, 259, 260, 273, 274, 275 -> 277, 278, 279, 292 -> 296,
+   357, 358 -> 363, 364, 391 -> 397, 424 -> 430, 500, 501 -> 506, 507, 518 -> 524.  Read at both CONFIG_RSEQ
+   flags from the probe A/ZZ_grhole2.v: marker ZZGH2_MAPS0 (each map's base and the ghost, beside the recorded
+   state's, ZZGH2_MAPS_REC0) and marker ZZGH2_RANGES0 (each range, the recorded variable's own bounds; 391's
+   is the one range in 0..8), notes/probe-libreac__fuzz_grant.md. *)
 Definition epg (v : nat) : expr := EMd M_MUL (ELit 4096) (EVar v).
-Definition eP : expr := epg 255.
-Definition eSp1 : expr := EAlu ALU_ADD eP (EMd M_MUL (ELit (-4096)) (EVar 256)).
+Definition eP : expr := epg 259.
+Definition eSp1 : expr := EAlu ALU_ADD eP (EMd M_MUL (ELit (-4096)) (EVar 260)).
 Definition eSp : expr := EAlu ALU_ADD eSp1 (ELit 65536).
-Definition eQ : expr := epg 273.    Definition eT : expr := epg 274.    Definition eC : expr := epg 275.
-Definition eF : expr := epg 424.    Definition eNB : expr := epg 500.   Definition eSB : expr := epg 501.
-Definition eGV : expr := epg 518.   Definition eD : expr := epg 357.    Definition e292 : expr := epg 292.
-Definition e254 : expr := epg 254.  Definition e109 : expr := epg 109.
-Definition eTop : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 4096) (EVar 391)).
+Definition eQ : expr := epg 277.    Definition eT : expr := epg 278.    Definition eC : expr := epg 279.
+Definition eF : expr := epg 430.    Definition eNB : expr := epg 506.   Definition eSB : expr := epg 507.
+Definition eGV : expr := epg 524.   Definition eD : expr := epg 363.    Definition e292 : expr := epg 296.
+Definition e254 : expr := epg 258.  Definition e109 : expr := epg 113.
+Definition eTop : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 4096) (EVar 397)).
 Definition eSp0 : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6)).
 Definition mk (b : expr) (len : Z) (k : mkind) : amap := {| am_base := b; am_len := ELit len; am_kind := k |}.
 Definition TFIB_HEAD3 : list amap := [ mk eGV 4096 KRW; mk eSB 8388608 KRWLAZY; mk eNB 1048576 KRW ].
@@ -80,18 +87,18 @@ all: split; [lia|].
 all: split; [exact X1 | left; reflexivity].
 Qed.
 Definition TFIB_RANGES : list kentry :=
-[ KRange (EVar 255) 4295491576 34326181871; KRange (EVar 256) 0 15;
-KRange (EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 256)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 255)) (ELit 65535))) 0 0;
-KRange (EVar 273) 1530 34359734272; KRange (EVar 274) 1 34359736319; KRange (EVar 275) 1530 34359736304;
-KRange (EVar 424) 1530 34359733495; KRange (EVar 500) 1530 34359736064; KRange (EVar 501) 1530 34359734272;
-KRange (EVar 518) 1 34359736319; KRange (EVar 357) 1 34359736319; KRange (EVar 292) 1 34359736319;
-KRange (EVar 254) 1530 34359735410; KRange (EVar 109) 1530 34359736304;
+[ KRange (EVar 259) 4295491576 34326181871; KRange (EVar 260) 0 15;
+KRange (EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 260)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 259)) (ELit 65535))) 0 0;
+KRange (EVar 277) 1530 34359734272; KRange (EVar 278) 1 34359736319; KRange (EVar 279) 1530 34359736304;
+KRange (EVar 430) 1530 34359733495; KRange (EVar 506) 1530 34359736064; KRange (EVar 507) 1530 34359734272;
+KRange (EVar 524) 1 34359736319; KRange (EVar 363) 1 34359736319; KRange (EVar 296) 1 34359736319;
+KRange (EVar 258) 1530 34359735410; KRange (EVar 113) 1530 34359736304;
 KRange (EVar 0) 4294901760 4294967295; KRange (EVar 6) 0 2047;
 KRange eSp0 140735340871680 140737488355136;
-KRange (EVar 358) 1 34359736319 ].
+KRange (EVar 364) 1 34359736319 ].
 Definition eTopT : expr :=
-EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 16) (EVar 6)) (EMd M_MUL (ELit (-4096)) (EVar 391))) (ELit 3935).
-Definition TFIB_GHOST : list (expr * expr) := [(epg 358, ELit 4096)].
+EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 16) (EVar 6)) (EMd M_MUL (ELit (-4096)) (EVar 397))) (ELit 3935).
+Definition TFIB_GHOST : list (expr * expr) := [(epg 364, ELit 4096)].
 Definition BRK_GHOST : expr * expr := (epg 5, ELit 4096).
 Definition BRK_BAND_DISJ : kentry := KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 5) 0) (ELit 8192).
 Definition RINFO_P : expr * expr := (EAlu ALU_ADD eSp1 (ELit 137439019008), ELit 4096).
@@ -137,21 +144,21 @@ apply expr_eqb_eq in H'. subst b1. apply Z.leb_le in H1. apply Z.leb_le in H2. a
 exists k, n. repeat split; try lia.
 Qed.
 Definition top_class (ch : acs) : bool :=
-((kn_range_within ch (EVar 391) 0 0 && kn_range_within ch eTopT 0 4095)
-|| (kn_range_within ch (EVar 391) 1 7 && kn_range_within ch eTopT 0 4095)
-|| (kn_range_within ch (EVar 391) 8 8 && kn_range_within ch (EVar 6) 1803 2047))%bool.
+((kn_range_within ch (EVar 397) 0 0 && kn_range_within ch eTopT 0 4095)
+|| (kn_range_within ch (EVar 397) 1 7 && kn_range_within ch eTopT 0 4095)
+|| (kn_range_within ch (EVar 397) 8 8 && kn_range_within ch (EVar 6) 1803 2047))%bool.
 Definition hole_chk (ch : acs) : bool :=
 (list_eqb amap_eqb (a_maps ch) (TFIB_HEAD3 ++ musl_maps ch ++ TFIB_TAIL12))
 && (Nat.leb (length (musl_maps ch)) 2)
 && forallb (musl_map_ok ch) (musl_maps ch)
 && forallb (fun K => kn_mem K ch) TFIB_RANGES
-&& kn_range_within ch (EVar 391) 0 8 && top_class ch
+&& kn_range_within ch (EVar 397) 0 8 && top_class ch
 && (list_eqb pair_eqb (a_ghost ch) TFIB_GHOST || (list_eqb pair_eqb (a_ghost ch) (TFIB_GHOST ++ [BRK_GHOST]) && kn_mem BRK_BAND_DISJ ch))
 && (match a_fd ch with FdStd => true | _ => false end)
 && (a_abytes ch <=? 2461292544) && (a_eager ch <=? 16515072) && (23112583966720 <=? a_ylo ch)
 && forallb (avis_ok ch) (a_vis ch) && existsb (pair_eqb STK_P) (a_vis ch)
-&& kn_mem (KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 358) 0) (ELit 4096)) ch.
-Lemma tfib_holes_chk : forallb hole_chk HS_tfib_list = true.
+&& kn_mem (KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 364) 0) (ELit 4096)) ch.
+Lemma tfib_holes_chk : forallb hole_chk HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 Section g.
 Variable E : env.
@@ -269,18 +276,24 @@ Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* Keep the stack invariant abstract. YA02's rseq abbreviation retains the reconstructed
+   input fields, so its argument predicates use this input's projections in Section order. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
-Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk argv envp uid hw) n.
-Hypothesis HM : forall a, argH E a = true -> FULL a = wrap_mem TPH sp argv envp uid hw rdraw a.
+Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) n.
 #[local] Notation MR := (Mr TFIB TOP argH E ch model FULL).
 #[local] Notation HID := (hid TFIB TOP argH E ch model).
 #[local] Notation u := (uE E).
@@ -303,17 +316,25 @@ Qed.
 Lemma ceil_of_top : YM05.ceil_of_top (usp - stack_max_size).
 Proof. exact Hceil. Qed.
 Let TOPok : top_ok TOP := YA02.top_ok0 sp Hsp.
-Let ARGH : forall E0 (a : word), argH E0 a = true -> TOP <= bv_unsigned a := YA02.argH0_high TPH sp rdraw argv envp uid hw Hsp Hva.
+Let ARGH : forall E0 (a : word), argH E0 a = true -> TOP <= bv_unsigned a.
+Proof.
+  (* [YA02.argH0_high] also abstracts the entry pc [apc], which its statement does not read;
+     the idiom of libreac/fuzz_decode's A/AD1g.v leaves the trailing arguments to [eapply]. *)
+  intros E0 a H. unshelve eapply (YA02.argH0_high sp rdraw argv envp
+    (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+    (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp)
+    (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)); try exact H; try exact Hva; try exact Hsp; try exact 0%N.
+Qed.
 Lemma CHK : hole_chk ch = true.
-Proof. exact (proj1 (forallb_forall _ _) tfib_holes_chk ch (HS_tfib_In h ch Hch)). Qed.
+Proof. exact (proj1 (forallb_forall _ _) tfib_holes_chk ch (HS_tfib_r_In _ h ch Hch)). Qed.
 Lemma hole_facts :
 a_maps ch = TFIB_HEAD3 ++ musl_maps ch ++ TFIB_TAIL12
 /\ (length (musl_maps ch) <= 2)%nat /\ Forall (fun m => musl_map_ok ch m = true) (musl_maps ch)
-/\ forallb (fun K => kn_mem K ch) TFIB_RANGES = true /\ (kn_range_within ch (EVar 391) 0 8 = true /\ top_class ch = true)
+/\ forallb (fun K => kn_mem K ch) TFIB_RANGES = true /\ (kn_range_within ch (EVar 397) 0 8 = true /\ top_class ch = true)
 /\ (a_ghost ch = TFIB_GHOST \/ (a_ghost ch = TFIB_GHOST ++ [BRK_GHOST] /\ kn_mem BRK_BAND_DISJ ch = true)) /\ a_fd ch = FdStd
 /\ a_abytes ch <= 2461292544 /\ a_eager ch <= 16515072 /\ 23112583966720 <= a_ylo ch
 /\ forallb (avis_ok ch) (a_vis ch) = true /\ In STK_P (a_vis ch)
-/\ kn_mem (KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 358) 0) (ELit 4096)) ch = true.
+/\ kn_mem (KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 364) 0) (ELit 4096)) ch = true.
 Proof.
 pose proof CHK as H. unfold hole_chk in H.
 apply andb_prop in H as [H H14]. apply andb_prop in H as [H H13]. apply andb_prop in H as [H H12]. apply andb_prop in H as [H H11].
@@ -330,7 +351,7 @@ repeat split; assumption.
 Qed.
 Lemma tfib_hole_avis : forallb (avis_ok ch) (a_vis ch) = true.   Proof. pose proof hole_facts; tauto. Qed.
 Lemma tfib_hole_stk : In STK_P (a_vis ch).   Proof. pose proof hole_facts; tauto. Qed.
-Lemma tfib_hole_ghostdisj : kn_mem (KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 358) 0) (ELit 4096)) ch = true.   Proof. pose proof hole_facts; tauto. Qed.
+Lemma tfib_hole_ghostdisj : kn_mem (KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 364) 0) (ELit 4096)) ch = true.   Proof. pose proof hole_facts; tauto. Qed.
 Lemma tfib_hole_maps : a_maps ch = TFIB_HEAD3 ++ musl_maps ch ++ TFIB_TAIL12.   Proof. exact (proj1 hole_facts). Qed.
 Lemma tfib_hole_ranges : forallb (fun K => kn_mem K ch) TFIB_RANGES = true.   Proof. exact (proj1 (proj2 (proj2 (proj2 hole_facts)))). Qed.
 Lemma tfib_hole_ghost : a_ghost ch = TFIB_GHOST \/ (a_ghost ch = TFIB_GHOST ++ [BRK_GHOST] /\ kn_mem BRK_BAND_DISJ ch = true).   Proof. exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 hole_facts)))))). Qed.
@@ -361,7 +382,7 @@ apply Z.leb_le in H2. apply Z.leb_le in H3.
 assert (X : lo' <= u e <= hi') by (apply Hrange; unfold kn_mem; apply existsb_exists; exists (KRange e lo' hi'); split; [exact HK | cbn [kentry_eqb]; rewrite kx_expr_eqb_refl, !Z.eqb_refl; reflexivity]).
 lia.
 Qed.
-Lemma u391 : 0 <= V 391 <= 8.
+Lemma u391 : 0 <= V 397 <= 8.
 Proof. rewrite <- uE_var. apply range_within. exact (proj1 (proj1 (proj2 (proj2 (proj2 (proj2 hole_facts)))))). Qed.
 Lemma tfib_top_class : top_class ch = true.   Proof. exact (proj2 (proj1 (proj2 (proj2 (proj2 (proj2 hole_facts)))))). Qed.
 Lemma u_epg : forall n lo hi, rng_of (EVar n) = Some (lo, hi) -> 0 <= lo -> hi <= 2 ^ 51 ->
@@ -372,46 +393,46 @@ assert (Hu : u (epg n) = 4096 * V n) by (unfold epg; rewrite uE_mul_lit; [rewrit
 rewrite Hu. lia.
 Qed.
 #[local] Ltac upg n := let H := fresh in pose proof (u_epg n _ _ eq_refl ltac:(lia) ltac:(lia)) as H; revert H.
-Lemma uP : u eP = 4096 * V 255 /\ 4096 * 4295491576 <= u eP <= 4096 * 34326181871.    Proof. unfold eP. upg 255%nat. tauto. Qed.
-Lemma uQ : u eQ = 4096 * V 273 /\ 4096 * 1530 <= u eQ <= 4096 * 34359734272.          Proof. unfold eQ. upg 273%nat. tauto. Qed.
-Lemma uT : u eT = 4096 * V 274 /\ 4096 * 1 <= u eT <= 4096 * 34359736319.             Proof. unfold eT. upg 274%nat. tauto. Qed.
-Lemma uC : u eC = 4096 * V 275 /\ 4096 * 1530 <= u eC <= 4096 * 34359736304.          Proof. unfold eC. upg 275%nat. tauto. Qed.
-Lemma uD : u eD = 4096 * V 357 /\ 4096 * 1 <= u eD <= 4096 * 34359736319.             Proof. unfold eD. upg 357%nat. tauto. Qed.
-Lemma uF : u eF = 4096 * V 424 /\ 4096 * 1530 <= u eF <= 4096 * 34359733495.          Proof. unfold eF. upg 424%nat. tauto. Qed.
-Lemma uNB : u eNB = 4096 * V 500 /\ 4096 * 1530 <= u eNB <= 4096 * 34359736064.       Proof. unfold eNB. upg 500%nat. tauto. Qed.
-Lemma uSB : u eSB = 4096 * V 501 /\ 4096 * 1530 <= u eSB <= 4096 * 34359734272.       Proof. unfold eSB. upg 501%nat. tauto. Qed.
-Lemma uGV : u eGV = 4096 * V 518 /\ 4096 * 1 <= u eGV <= 4096 * 34359736319.          Proof. unfold eGV. upg 518%nat. tauto. Qed.
-Lemma u292 : u e292 = 4096 * V 292 /\ 4096 * 1 <= u e292 <= 4096 * 34359736319.       Proof. unfold e292. upg 292%nat. tauto. Qed.
-Lemma u254 : u e254 = 4096 * V 254 /\ 4096 * 1530 <= u e254 <= 4096 * 34359735410.    Proof. unfold e254. upg 254%nat. tauto. Qed.
-Lemma u109 : u e109 = 4096 * V 109 /\ 4096 * 1530 <= u e109 <= 4096 * 34359736304.    Proof. unfold e109. upg 109%nat. tauto. Qed.
+Lemma uP : u eP = 4096 * V 259 /\ 4096 * 4295491576 <= u eP <= 4096 * 34326181871.    Proof. unfold eP. upg 259%nat. tauto. Qed.
+Lemma uQ : u eQ = 4096 * V 277 /\ 4096 * 1530 <= u eQ <= 4096 * 34359734272.          Proof. unfold eQ. upg 277%nat. tauto. Qed.
+Lemma uT : u eT = 4096 * V 278 /\ 4096 * 1 <= u eT <= 4096 * 34359736319.             Proof. unfold eT. upg 278%nat. tauto. Qed.
+Lemma uC : u eC = 4096 * V 279 /\ 4096 * 1530 <= u eC <= 4096 * 34359736304.          Proof. unfold eC. upg 279%nat. tauto. Qed.
+Lemma uD : u eD = 4096 * V 363 /\ 4096 * 1 <= u eD <= 4096 * 34359736319.             Proof. unfold eD. upg 363%nat. tauto. Qed.
+Lemma uF : u eF = 4096 * V 430 /\ 4096 * 1530 <= u eF <= 4096 * 34359733495.          Proof. unfold eF. upg 430%nat. tauto. Qed.
+Lemma uNB : u eNB = 4096 * V 506 /\ 4096 * 1530 <= u eNB <= 4096 * 34359736064.       Proof. unfold eNB. upg 506%nat. tauto. Qed.
+Lemma uSB : u eSB = 4096 * V 507 /\ 4096 * 1530 <= u eSB <= 4096 * 34359734272.       Proof. unfold eSB. upg 507%nat. tauto. Qed.
+Lemma uGV : u eGV = 4096 * V 524 /\ 4096 * 1 <= u eGV <= 4096 * 34359736319.          Proof. unfold eGV. upg 524%nat. tauto. Qed.
+Lemma u292 : u e292 = 4096 * V 296 /\ 4096 * 1 <= u e292 <= 4096 * 34359736319.       Proof. unfold e292. upg 296%nat. tauto. Qed.
+Lemma u254 : u e254 = 4096 * V 258 /\ 4096 * 1530 <= u e254 <= 4096 * 34359735410.    Proof. unfold e254. upg 258%nat. tauto. Qed.
+Lemma u109 : u e109 = 4096 * V 113 /\ 4096 * 1530 <= u e109 <= 4096 * 34359736304.    Proof. unfold e109. upg 113%nat. tauto. Qed.
 Lemma uSp1 : u eSp1 = u eP - u eP mod 65536.
 Proof.
-pose proof uP as [HP HPr]. pose proof (RNG (EVar 256) _ _ eq_refl) as H222. rewrite uE_var in H222.
-pose proof (RNG (EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 256)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 255)) (ELit 65535))) _ _ eq_refl) as HX.
-assert (HA : u (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 255)) (ELit 65535)) = u eP mod 65536).
-{ rewrite uE_and_lit by lia. change (EMd M_MUL (ELit 4096) (EVar 255)) with eP. change 65535 with (Z.ones 16). rewrite Z.land_ones by lia. reflexivity. }
-assert (HMm : u (EMd M_MUL (ELit (-4096)) (EVar 256)) = (2 ^ 64 - 4096 * V 256) mod 2 ^ 64).
-{ pose proof (uE_bound E (EMd M_MUL (ELit (-4096)) (EVar 256))) as Hb.
+pose proof uP as [HP HPr]. pose proof (RNG (EVar 260) _ _ eq_refl) as H222. rewrite uE_var in H222.
+pose proof (RNG (EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 260)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 259)) (ELit 65535))) _ _ eq_refl) as HX.
+assert (HA : u (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 259)) (ELit 65535)) = u eP mod 65536).
+{ rewrite uE_and_lit by lia. change (EMd M_MUL (ELit 4096) (EVar 259)) with eP. change 65535 with (Z.ones 16). rewrite Z.land_ones by lia. reflexivity. }
+assert (HMm : u (EMd M_MUL (ELit (-4096)) (EVar 260)) = (2 ^ 64 - 4096 * V 260) mod 2 ^ 64).
+{ pose proof (uE_bound E (EMd M_MUL (ELit (-4096)) (EVar 260))) as Hb.
 apply eqm_small_eq; [| exact Hb | apply Z.mod_pos_bound; lia].
 eapply eqm_trans; [unfold uE; cbn [edenot]; apply u_mul_eqm|].
 eapply eqm_trans; [apply eqm_mul_r; apply eqm_u_lit|]. eapply eqm_trans; [|apply eqm_sym; apply eqm_mod]. exists (-1). lia. }
-assert (HS : (u (EMd M_MUL (ELit (-4096)) (EVar 256)) + u (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 255)) (ELit 65535))) mod 2 ^ 64 = 0).
-{ pose proof (uE_bound E (EMd M_MUL (ELit (-4096)) (EVar 256))) as B1. pose proof (uE_bound E (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 255)) (ELit 65535))) as B2.
+assert (HS : (u (EMd M_MUL (ELit (-4096)) (EVar 260)) + u (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 259)) (ELit 65535))) mod 2 ^ 64 = 0).
+{ pose proof (uE_bound E (EMd M_MUL (ELit (-4096)) (EVar 260))) as B1. pose proof (uE_bound E (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 259)) (ELit 65535))) as B2.
 destruct HX as [_ HX].
-pose proof (uE_add_eqm E (EMd M_MUL (ELit (-4096)) (EVar 256)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 255)) (ELit 65535))) as [q Hq].
-pose proof (uE_bound E (EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 256)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 255)) (ELit 65535)))) as B3.
-assert (Hs : u (EMd M_MUL (ELit (-4096)) (EVar 256)) + u (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 255)) (ELit 65535)) = (- q) * 2 ^ 64) by lia.
+pose proof (uE_add_eqm E (EMd M_MUL (ELit (-4096)) (EVar 260)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 259)) (ELit 65535))) as [q Hq].
+pose proof (uE_bound E (EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 260)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 259)) (ELit 65535)))) as B3.
+assert (Hs : u (EMd M_MUL (ELit (-4096)) (EVar 260)) + u (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 259)) (ELit 65535)) = (- q) * 2 ^ 64) by lia.
 rewrite Hs. apply Z_mod_mult. }
 rewrite HA, HMm in HS.
-assert (HEq : 4096 * V 256 = u eP mod 65536).
+assert (HEq : 4096 * V 260 = u eP mod 65536).
 { pose proof (Z.mod_pos_bound (u eP) 65536 ltac:(lia)).
-destruct (Z.eq_dec (V 256) 0) as [Z0|NZ].
+destruct (Z.eq_dec (V 260) 0) as [Z0|NZ].
 - rewrite Z0 in HS. rewrite Z.sub_0_r, Z.mod_same, Z.add_0_l in HS by lia. rewrite Z.mod_small in HS by lia. lia.
-- rewrite (Z.mod_small (2 ^ 64 - 4096 * V 256)) in HS by lia.
-replace (2 ^ 64 - 4096 * V 256 + u eP mod 65536) with ((u eP mod 65536 - 4096 * V 256) + 1 * 2 ^ 64) in HS by lia.
+- rewrite (Z.mod_small (2 ^ 64 - 4096 * V 260)) in HS by lia.
+replace (2 ^ 64 - 4096 * V 260 + u eP mod 65536) with ((u eP mod 65536 - 4096 * V 260) + 1 * 2 ^ 64) in HS by lia.
 rewrite Z.mod_add in HS by lia.
-destruct (Z.lt_ge_cases (u eP mod 65536 - 4096 * V 256) 0) as [Hn|Hp].
-+ replace (u eP mod 65536 - 4096 * V 256) with ((u eP mod 65536 - 4096 * V 256 + 2 ^ 64) + (-1) * 2 ^ 64) in HS by lia.
+destruct (Z.lt_ge_cases (u eP mod 65536 - 4096 * V 260) 0) as [Hn|Hp].
++ replace (u eP mod 65536 - 4096 * V 260) with ((u eP mod 65536 - 4096 * V 260 + 2 ^ 64) + (-1) * 2 ^ 64) in HS by lia.
 rewrite Z.mod_add, Z.mod_small in HS by lia. lia.
 + rewrite Z.mod_small in HS by lia. lia. }
 unfold eSp1. rewrite uE_add_negmul; [| lia | rewrite uE_var; pose proof (Z.mod_le (u eP) 65536); lia]. rewrite uE_var. fold eP. lia.
@@ -431,14 +452,14 @@ assert (Hu : u eSp0 = 32768 * V 0 + 16 * V 6).
 { unfold eSp0. rewrite uE_add; rewrite !uE_mul_lit; rewrite ?uE_var; lia. }
 rewrite Hu in *. lia.
 Qed.
-Lemma uTop : u eTop = 32768 * V 0 + 4096 * V 391 /\ 140735340871680 <= u eTop /\ u eTop <= 2 ^ 47 /\ u eTop mod 4096 = 0.
+Lemma uTop : u eTop = 32768 * V 0 + 4096 * V 397 /\ 140735340871680 <= u eTop /\ u eTop <= 2 ^ 47 /\ u eTop mod 4096 = 0.
 Proof.
 rng (EVar 0). pose proof u391 as H1. intros H3. rewrite !uE_var in *.
-assert (Hu : u eTop = 32768 * V 0 + 4096 * V 391).
+assert (Hu : u eTop = 32768 * V 0 + 4096 * V 397).
 { unfold eTop. rewrite uE_add; rewrite !uE_mul_lit; rewrite ?uE_var; lia. }
 rewrite Hu. split; [reflexivity|]. split; [lia|]. split.
 -   lia.
-- replace (32768 * V 0 + 4096 * V 391) with ((8 * V 0 + V 391) * 4096) by lia. apply Z_mod_mult.
+- replace (32768 * V 0 + 4096 * V 397) with ((8 * V 0 + V 397) * 4096) by lia. apply Z_mod_mult.
 Qed.
 Definition dmm (m : amap) : word * word := amap_den E m.
 Definition dm (b : expr) (len : Z) (k : mkind) : word * word := dmm (mk b len k).
@@ -521,7 +542,7 @@ Lemma eSp0_e_sp0 : eSp0 = e_sp0.
 Proof. reflexivity. Qed.
 Lemma uS0 : u eSp0 = usp.
 Proof.
-pose proof (YA02.SINV0_sp0 TPH sp rdraw brk argv envp uid hw Hsp Hva Hve Hfit E FULL (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC)) as X.
+pose proof (SINV_sp0 E FULL (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC)) as X.
 rewrite eSp0_e_sp0. unfold YA02.TOP in X. lia.
 Qed.
 Lemma usp_range : 140735340871680 <= usp <= 140737488355136 /\ usp mod 16 = 0.
@@ -671,11 +692,11 @@ Lemma tfib_band_not_ghost : forall z, 2147446784 <= z < 2147446784 + 17592186048
 Proof.
 intros z Hz. unfold in_ghost.
 pose proof (ho_disj TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC _ _ _ _ tfib_hole_ghostdisj) as D.
-unfold estart, elenZ in D. cbn [a_base a_off] in D. fold (u (ELit 2147446784)) in D. fold (u (ELit 17592186048512)) in D. fold (u (epg 358)) in D. fold (u (ELit 4096)) in D.
+unfold estart, elenZ in D. cbn [a_base a_off] in D. fold (u (ELit 2147446784)) in D. fold (u (ELit 17592186048512)) in D. fold (u (epg 364)) in D. fold (u (ELit 4096)) in D.
 rewrite (uE_litv E 2147446784), (uE_litv E 17592186048512), (uE_litv E 4096) in D by lia.
-assert (G1 : ((uE E (epg 358) <=? z) && (z <? uE E (epg 358) + uE E (ELit 4096)))%bool = false).
+assert (G1 : ((uE E (epg 364) <=? z) && (z <? uE E (epg 364) + uE E (ELit 4096)))%bool = false).
 { rewrite (uE_litv E 4096) by lia. apply andb_false_iff.
-destruct (Z.leb_spec (u (epg 358)) z); [right; apply Z.ltb_ge; unfold u in *; lia | left; reflexivity]. }
+destruct (Z.leb_spec (u (epg 364)) z); [right; apply Z.ltb_ge; unfold u in *; lia | left; reflexivity]. }
 destruct tfib_hole_ghost as [-> | [-> HB5]]; unfold TFIB_GHOST, BRK_GHOST; cbn [existsb app fst snd]; rewrite G1; cbn [orb]; [reflexivity|].
 pose proof (ho_disj TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC _ _ _ _ HB5) as D5.
 unfold estart, elenZ in D5. cbn [a_base a_off] in D5. fold (u (ELit 2147446784)) in D5. fold (u (ELit 17592186048512)) in D5. fold (u (epg 5)) in D5. fold (u (ELit 8192)) in D5.
@@ -959,9 +980,9 @@ Proof.
 intros z Hz. pose proof uT as [HT HTr]. pose proof uC as [HCc HCr]. pose proof uD as [HD HDr]. pose proof uSp as (S1 & S2 & S3 & S4). pose proof uP as [_ HPr].
 unfold VZ in Hz. apply in_app_iff in Hz as [Hz|Hz].
 - destruct Hz as [<-|[<-|[<-|[<-|[]]]]]; cbn [fst snd].
-+ split; [unfold vis0_zones; cbn [ly0 ly_T]; left; reflexivity|]. rewrite HT. split; [replace (4096 * V 274) with ((512 * V 274) * 8) by lia; apply Z_mod_mult|]. repeat split; try reflexivity; lia.
-+ split; [unfold vis0_zones; cbn [ly0 ly_C]; do 4 right; left; reflexivity|]. rewrite HCc. split; [replace (4096 * V 275) with ((512 * V 275) * 8) by lia; apply Z_mod_mult|]. repeat split; try reflexivity; lia.
-+ split; [unfold vis0_zones; cbn [ly0 ly_D]; do 5 right; left; reflexivity|]. rewrite HD. split; [replace (4096 * V 357) with ((512 * V 357) * 8) by lia; apply Z_mod_mult|]. repeat split; try reflexivity; lia.
++ split; [unfold vis0_zones; cbn [ly0 ly_T]; left; reflexivity|]. rewrite HT. split; [replace (4096 * V 278) with ((512 * V 278) * 8) by lia; apply Z_mod_mult|]. repeat split; try reflexivity; lia.
++ split; [unfold vis0_zones; cbn [ly0 ly_C]; do 4 right; left; reflexivity|]. rewrite HCc. split; [replace (4096 * V 279) with ((512 * V 279) * 8) by lia; apply Z_mod_mult|]. repeat split; try reflexivity; lia.
++ split; [unfold vis0_zones; cbn [ly0 ly_D]; do 5 right; left; reflexivity|]. rewrite HD. split; [replace (4096 * V 363) with ((512 * V 363) * 8) by lia; apply Z_mod_mult|]. repeat split; try reflexivity; lia.
 + split; [unfold vis0_zones; cbn [ly0 ly_space]; do 7 right; left; reflexivity|]. unfold kRegionInfoOff.
 split; [| repeat split; try reflexivity; lia]. apply Z.mod_divide in S2 as [q Hq]; [|lia]. rewrite Hq.
 replace (q * 65536 + 2 ^ 37) with ((8192 * q + 2 ^ 34) * 8) by lia. apply Z_mod_mult.
@@ -990,9 +1011,9 @@ Proof.
 pose proof uTop as (T1 & _). pose proof uSp0 as [S0 _]. rewrite uS0 in S0. pose proof ceil_le_TOP as CT. pose proof ceil_ge_TOP as [CG CA].
 unfold YA02.TOP in CT, CG. rng (EVar 0). rng (EVar 6). pose proof u391 as R391. intros R6 R0. rewrite !uE_var in R0, R6.
 pose proof (Z.div_mod (@ASAN_CEIL rc) 4096 ltac:(lia)) as DC. rewrite CA, Z.add_0_r in DC.
-assert (TT : forall lo hi, kn_range_within ch eTopT lo hi = true -> 0 <= lo -> hi <= 4095 -> 0 <= 16 * V 6 - 4096 * V 391 + 3935 <= 4095).
+assert (TT : forall lo hi, kn_range_within ch eTopT lo hi = true -> 0 <= lo -> hi <= 4095 -> 0 <= 16 * V 6 - 4096 * V 397 + 3935 <= 4095).
 { intros lo hi Hk Hlo Hhi. apply range_within in Hk.
-assert (Q : eqm (u eTopT) (16 * V 6 + (-4096) * V 391 + 3935)).
+assert (Q : eqm (u eTopT) (16 * V 6 + (-4096) * V 397 + 3935)).
 { unfold eTopT. eapply eqm_trans; [apply uE_add_eqm|]. rewrite (uE_litv E 3935) by lia. apply eqm_add; [|apply eqm_refl].
 eapply eqm_trans; [apply uE_add_eqm|]. apply eqm_add.
 - rewrite uE_mul_lit by (rewrite ?uE_var; lia). rewrite uE_var. apply eqm_refl.
@@ -1062,7 +1083,7 @@ kNodesBlockSize, kStoreBlockSize, kHighMemEnd, kStackSpan, TFIB_TSD, kCtxMapSize
 - rewrite HF. rewrite Z.mul_comm. apply Z_mod_mult.
 - rewrite HNB. rewrite Z.mul_comm. apply Z_mod_mult.
 - rewrite HSB. rewrite Z.mul_comm. apply Z_mod_mult.
-- rewrite HCc. replace (4096 * V 275) with ((512 * V 275) * 8) by lia. apply Z_mod_mult.
+- rewrite HCc. replace (4096 * V 279) with ((512 * V 279) * 8) by lia. apply Z_mod_mult.
 - reflexivity.
 -   exact LH.
 -   exact IA.
@@ -1106,7 +1127,7 @@ match a with
 | AStore o => Some (ELit 0, TFIB_STORE + o) | ATp o => Some (ELit 0, TFIB_TP + o) | AIal o => Some (ELit 0, TFIB_IAL_LO + o)
 | AD o => Some (eD, o)
 | ASh (ANum z) => if 0 <=? z then Some (ELit 0, SHADOW_OFF + z / 8) else None
-| ASh (AF o) => if ((0 <=? o) && (o mod 8 =? 0))%bool then Some (EMd M_MUL (ELit 512) (EVar 424), SHADOW_OFF + o / 8) else None
+| ASh (AF o) => if ((0 <=? o) && (o mod 8 =? 0))%bool then Some (EMd M_MUL (ELit 512) (EVar 430), SHADOW_OFF + o / 8) else None
 | _ => None
 end.
 Definition xval (v : aexp) : option expr :=
@@ -1142,7 +1163,7 @@ destruct a; try discriminate H.
 apply andb_prop in Hb as [H1 H2]. apply Z.leb_le in H1. apply Z.eqb_eq in H2.
 pose proof uF as [HF HFr]. cbn [aeval ly0 ly_F]. unfold shadow_addr. rewrite HF.
 rewrite uE_mul_lit by (rewrite ?uE_var; lia). rewrite uE_var. apply Z.mod_divide in H2 as [q Hq]; [|lia]. rewrite Hq.
-replace (4096 * V 424 + q * 8) with ((512 * V 424 + q) * 8) by lia. rewrite !Z.div_mul by lia. lia.
+replace (4096 * V 430 + q * 8) with ((512 * V 430 + q) * 8) by lia. rewrite !Z.div_mul by lia. lia.
 Qed.
 Lemma xval_sound : forall v e, xval v = Some e -> aeval B ly0 v = u e.
 Proof.
@@ -1269,7 +1290,7 @@ forallb (xzero ch0) IF_ZERO && forallb (xvis ch0) IF_VIS && forallb (xcell ch0) 
 && forallb (xcell ch0) (IF_CELLS_H (HHc ch0)) && forallb (xzero ch0) (IF_ZERO_H (HHc ch0))
 && forallb (xcell ch0) TFIB_CONST
 && kn_mem (KZero STKZ_A STKZ_N) ch0.
-Lemma tfib_holes_if : forallb if_chk HS_tfib_list = true.
+Lemma tfib_holes_if : forallb if_chk HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 Lemma xowned_all : forallb xowned TFIB_CONST = true.
 Proof. vm_compute. reflexivity. Qed.
@@ -1316,7 +1337,7 @@ Proof. intros rdx a v H k Hk. exact (H k Hk). Qed.
 Lemma cell_rd64 : forall rdx a v, cell_holds B ly0 rdx (z8 a v) -> rd64 rdx (aeval B ly0 a) v.
 Proof. intros rdx a v H k Hk. exact (H k Hk). Qed.
 Lemma IFC : if_chk ch = true.
-Proof. exact (proj1 (forallb_forall _ _) tfib_holes_if ch (HS_tfib_In h ch Hch)). Qed.
+Proof. exact (proj1 (forallb_forall _ _) tfib_holes_if ch (HS_tfib_r_In _ h ch Hch)). Qed.
 Lemma HH2 : (HH < 2)%nat.
 Proof. unfold HH, HHc. destruct (kn_mem _ ch); lia. Qed.
 Lemma HSZ : kn_mem (KZero STKZ_A STKZ_N) ch = true.

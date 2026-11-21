@@ -6,6 +6,7 @@
    continued by a second SRr run) reaches image A from proofs/cgif/cgif_file_fuzzer/lib/A/AF0w.v and A/AFij.v,
    where cgif composes its malloc wrapper's walk the same way; the walk of lib/A/DecodeCallocWrapB.v is re-run
    here with a stronger post (see WHY walk_C2XB below). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The top of libreac/fuzz_decode's ASan calloc chain in image B (fuzz_decode.asan-ubsan): the wrapper's
    EPILOGUE, and the composition that closes the kit's phase-1 claim [DecodeCalloc.decode_acalloc_of_allocate_B].
 
@@ -48,7 +49,7 @@
         Allocate's `ly_bot ly < sp` at ITS entry, which is the claim's [cdepth] premise
         `ly_bot ly + DEC_CALLOC_DEPTH < spZ regs` at the wrapper's entry (DEC_CALLOC_DEPTH = 2192 = the
         wrapper's 2144-byte frame plus asan_calloc's 48);
-     3. the epilogue (SRr) on every leaf, by DecodeCallocEntryB.v:373 amreal_post_SRrB;
+     3. the epilogue (SRr) on every leaf, by DecodeCallocEntryB.v:374 amreal_post_SRrB;
      4. the leaf: YGCalloc.v's [calloc_leaf_with] at the cgif instance = YG0d.v:244 malloc_leaf (the allocator
         post, the layout and world order, the callee-saved registers, same_io, the memory frame, the stack
         window, a0 = the block, qtight) and YGCalloc.v's [calloc_zeroed] (every byte of [a0, a0 + n) reads 0).

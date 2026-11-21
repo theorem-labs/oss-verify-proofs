@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_ctrl image B (asan-ubsan, libreac v1.9.0): reac_ctrl_build_as (0x8528c), the cgif caller-journal contract
    `treac_ctrl_build_as_spec` and its proof `pb_reac_ctrl_build_as`.
    reac_ctrl_build_as writes its own 80-byte frame, calls reac_box_model_upstream_width (a leaf; inside the lifted
    stretch on its proved _F), and TAIL-JUMPS to ctrl_emit_as (0x85388 -> 0x853c4) with a0 = o passed through, so it
-   hands its caller's write right on [o, o + len) on: cgif's caller-journal form (cgif lib/YC20.v:311-365 of
-   c8557374ad2e). Draft of record: reac_ctrl_build_as-B-draft.md (a working note, not in this delivery),
+   hands its caller's write right on [o, o + len) on: cgif's caller-journal form (cgif lib/YC20.v:311-365).
+   Draft of record: reac_ctrl_build_as-B-draft.md (a working note, not in this delivery),
    section 2.1, under a Theorem Labs lane's decisions (decisions.md (a working note, not in this delivery)). Deltas from the draft text, each forced:
    - the premises on d, s, md, the name and the output carry what ctrl_emit_as's spec of record takes for the same
-     ranges (a working branch 270764f2f38 C_ctrl_emit_as.v: shadow_hull_vis, in_app +
+     ranges (a working branch C_ctrl_emit_as.v: shadow_hull_vis, in_app +
      tctrl_emit_as_home for d and s; tctrl_emit_as_ro, the registered read-only global over GLOBS, for md and the
      name (a Theorem Labs lane 08:37Z); the output frame of class 2 or more; decision 129's frame-home premise on o, passed
      on under o <> 0, decision 136 (decisions.md (a working note, not in this delivery))), since the call hands them on at the tail jump;
@@ -43,13 +44,13 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require reac_ctrl_build_as_c re
 (* the glue's proof-internal library (named statements of the Section hypotheses; Qed lemmas) and the kit bridge *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require C_reac_ctrl_build_asLib CtrlRo.
 (* a Theorem Labs lane's ProgWorld statements, image B's real file (ajournal_of_fsteps, arodata_okP_of_S), and a Theorem Labs lane's VIS-free
-   ctl_rt_C_of_AR (lib/B/ProgWorldCtlRtC.v ca0e3717187 (the blob this tree had at release c5e779efe8c) = a working branch db8a86df2da): the
+   ctl_rt_C_of_AR (lib/B/ProgWorldCtlRtC.v ca0e3717187 (the blob this tree had at release) = a working branch): the
    runtime cells and the read-only bytes from AR with no AR_states_vis0_shadow *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require ProgBridge ProgWorld ProgWorldCtlRtC.
-(* a Theorem Labs lane's discharge of the image shadow cover (ACtlCutC.v (at head lib/B/ACtlCutC.v:273; from a working branch d2c835124b3)) *)
+(* a Theorem Labs lane's discharge of the image shadow cover (ACtlCutC.v (at head lib/B/ACtlCutC.v:273; from a working branch)) *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require ACtlCutC.
 (* the lifted stretch and its in-stretch leaf callee, image B's own _F runs in their route (C) _on form (a Theorem Labs lane:
-   a working branch 26e8a9dd8b0 reac_ctrl_build_asF.v, a working branch f44cd47cb9a
+   a working branch reac_ctrl_build_asF.v, a working branch
    reac_box_model_upstream_widthF.v; Required qualified, glue brief :89 (1) (a working note, not in this delivery)) *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require reac_ctrl_build_asF reac_box_model_upstream_widthF.
 Import ListNotations.
@@ -70,7 +71,7 @@ Definition A_reac_ctrl_build_asP : Z := 0x8528c.
 
 (* ---------------------------------------------------------------------------------------------------------
    STAND-IN for ctrl_emit_as's cgif spec, a Theorem Labs lane: lib/B/Prog/C_ctrl_emit_as.v,
-   from a working branch 00f1b4fabb9, its lines (at head lib/B/Prog/C_ctrl_emit_as.v:59-222) word for word outside comments (GLOBS and the
+   from a working branch, its lines (at head lib/B/Prog/C_ctrl_emit_as.v:59-222) word for word outside comments (GLOBS and the
    read-only-global premise tctrl_emit_as_ro, g fixed to 0, the sink head a Context, RLO RHI B GLOBS).  That file Imports lib.Prog's
    model files and the core's YI00; the local abbreviations below resolve the same names to the same constants
    without importing anything.  When C_ctrl_emit_as.v lands, this module is deleted and that file Required. *)
@@ -94,12 +95,12 @@ Module EmitB.
 #[local] Notation has := RcSynth.has.
 #[local] Notation rname := RcSynth.rname.
 #[local] Notation name_ok := RcBox.name_ok.
-(* --- verbatim outside comments from here (C_ctrl_emit_as.v (at head lib/B/Prog/C_ctrl_emit_as.v:59-222; from a working branch 00f1b4fabb9)) --- *)
+(* --- verbatim outside comments from here (C_ctrl_emit_as.v (at head lib/B/Prog/C_ctrl_emit_as.v:59-222; from a working branch)) --- *)
 (* The entry: a constant (decisions.md item 3); = lib/B/Prog/ctrl_emit_as_c.v:11 (A twin 0x849d8). *)
 Definition CTRL_EMIT_AS : Z := 0x853c4.
 
 (* The stack the call needs (decisions.md item 4): the proved run's window CTRL_EMIT_AS_K = 4640 = 128 + 4512
-   (ctrl_emit_as_c.v:14) and 128 + ctrl_lay_block's CTRL_LAY_BLOCK_STK = 4512 (C_ctrl_lay_block.v, 33d01bf4f85). *)
+   (ctrl_emit_as_c.v:14) and 128 + ctrl_lay_block's CTRL_LAY_BLOCK_STK = 4512 (C_ctrl_lay_block.v). *)
 Definition CTRL_EMIT_AS_STK : Z := Z.max 4640 (128 + 4512).
 
 (* No allocator event: no malloc / free; the fake-stack events are ctrl_lay_block's and keep st_nev. *)
@@ -128,8 +129,8 @@ Variable B : asyms.
    reac_box_model_block's). *)
 Variable GLOBS : list (Z * Z).
 
-(* A range of a registered read-only image global: word for word ctrl_lay_block's tctrl_lay_block_ro RLO RHI B GLOBS
-   (079649851ae). *)
+(* A range of a registered read-only image global: word for word ctrl_lay_block's tctrl_lay_block_ro RLO RHI B GLOBS.
+   *)
 Definition tctrl_emit_as_ro (q n : Z) : Prop :=
   (exists q0 sz, In (q0, sz) GLOBS /\ q0 <= q /\ q + n <= q0 + sz) /\
   CtrlRo.IMG_LO + 64 <= q /\ q + n + 64 <= CtrlRo.IMG_HI /\
@@ -260,7 +261,7 @@ Definition tctrl_emit_as_spec : Prop :=
 End e.
 End b.
 (* --- end verbatim --- *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 End EmitB.
 Import EmitB.
 (* ---------------------------------------------------------------- end of the ctrl_emit_as stand-in ---- *)
@@ -410,12 +411,12 @@ Variable B : asyms.
 Variable GLOBS : list (Z * Z).
 (* the core's laws of the bundle (frames_bounds, the zero-shadow and client-image laws); composer *)
 Hypothesis LAWS : AR_laws SEGS B.
-(* image B's bundle tables (Reusable/YF0m.v of 6e42f7692c3, a Theorem Labs lane's re-emitted set); composer, from B's asyms instance.
+(* image B's bundle tables (Reusable/YF0m.v, a Theorem Labs lane's re-emitted set); composer, from B's asyms instance.
    ctl_rt_C_of_AR takes it; it also discharges decision 10's image facts by computation *)
 Hypothesis TS : lib.Reusable.YF0m.CtrlTSyms B.
 (* the one cut: ctrl_emit_as's cgif spec (a Theorem Labs lane, lib/B/Prog/C_ctrl_emit_as.v), at this file's sink head *)
 Hypothesis EMIT : tctrl_emit_as_spec (SK := SK) RLO RHI B GLOBS.
-(* the registered globals are marked usable (lib/B/Prog/CtrlRo.v:117, the start-up certificate); composer *)
+(* the registered globals are marked usable (lib/B/Prog/CtrlRo.v:118, the start-up certificate); composer *)
 Hypothesis GM : lib.B.Prog.CtrlRo.globs_marked SEGS B GLOBS.
 (* CTRL_FRAMES (0xa0600, 264), the table whose rows 3..9 build_as hands to ctrl_emit_as, is a listed global; composer *)
 Hypothesis GLOBS_FR : In (0xa0600, 264) GLOBS.

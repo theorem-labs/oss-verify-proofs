@@ -12,7 +12,7 @@
    T1's four image stand-ins and BOK are discharged inside crt102_topB_TfibB by their witnesses.
    DISCHARGED: all twenty-one of crt102_topB_TfibB's Section hypotheses, each at the instance, CTX0 := iface_ctx0 and
    every float state. The recipes of lib/AU/Prog/Ent102DrvTopB2.v / Ent102DrvTopB3.v (their drv2_ / drv3_ lemmas)
-   are copied as local ctiB_ lemmas, not Required, so that the drivers can cite this corollary for their H_txt_check_round_trip_B (Ent102DrvTopB.v:80, Ent102DrvTopB2.v:171, Ent102DrvTopB3.v:315) without a Require cycle.
+   are copied as local ctiB_ lemmas, not Required, so that the drivers can cite this corollary for their H_txt_check_round_trip_B (Ent102DrvTopB.v:81, Ent102DrvTopB2.v:172, Ent102DrvTopB3.v:315) without a Require cycle.
      LAWS YGcallcf.AR_laws_x_xs; OWNLOW YGcallcf.ARx_owned_low_law_xs; ASM3 FCxmCfxB.stack_malloc3_contract_xm_cfx_B;
      AMS AU/PRowSet.prow_asan_memset_xm_B (pc: ctiB_memset_pc); ASFX YGcallScf.astack_free_x_xs; FFLX
      YGcallScf.frame_flag_x_xs; SFX YGcallScf.stack_free_x_any; FFLP YG0scf.AR_flag_law_ok_cf (its first conjunct);
@@ -690,9 +690,9 @@ split; [|split; [|split]].
   apply in_or_app. right. apply in_or_app. right.
   vm_compute. repeat (first [left; reflexivity | right]).
 Qed.
-(* THE PIN of the literal's address: ctiB_litnl computes on the value RTT_LITNL_B has (lib/B/Prog/Rtt102TB.v:105,
+(* THE PIN of the literal's address: ctiB_litnl computes on the value RTT_LITNL_B has (lib/B/Prog/Rtt102TB.v:106,
    B_prog_val (A_OBJ 2) + 70112). This check states that value, 0x211e0, the image B' (asan-ubsan, pin
-   d663f82d7f48) address of `.str.19 "\n"` in .rodata (B_prog_val (A_OBJ 2) is 0x10000, lib/B/PAImg_prog.v:193), so a
+   d663f82d7f48) address of `.str.19 "\n"` in .rodata (B_prog_val (A_OBJ 2) is 0x10000, lib/B/PAImg_prog.v:194), so a
    definition of RTT_LITNL_B with another value fails here *)
 Lemma ctiB_litnl_pin : @RTB.RTT_LITNL_B rc = 0x211e0.
 Proof. vm_compute. reflexivity. Qed.

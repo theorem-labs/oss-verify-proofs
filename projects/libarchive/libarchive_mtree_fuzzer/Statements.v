@@ -20,11 +20,19 @@
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
     WHAT THE HARNESS CHECKS.  Reads the input as an mtree spec (mtree:checkfs
-    option, all filters); per entry calls pathname, size, mtime, mode, uid, gid,
-    uname, gname, symlink, fflags_text and drains archive_read_data. Every
-    return value is discarded.  The harness makes no check of its own beyond not
-    crashing, so a statement about it says only that the code it calls never
-    crashes, hangs or trips a sanitizer.
+    option, all filters). It returns early if archive_read_new returns NULL or
+    archive_read_open does not return ARCHIVE_OK. While archive_read_next_header
+    returns ARCHIVE_OK, it calls pathname, size, mtime, mode, uid, gid, uname,
+    gname, symlink and fflags_text, then reads the data while archive_read_data
+    returns more than 0. It drops every other result and the data read. If
+    allocating its data buffer throws std::bad_alloc, it frees the archive and
+    returns 0. Each call first ignores SIGPIPE, as bsdtar and bsdcpio do.  The
+    harness makes no check of its own beyond not crashing.  Its halts statements
+    say only that the code it calls never crashes, hangs or trips a sanitizer.
+    Its agreement statements say only that the code never crashes or trips a
+    sanitizer, and allow a run that never ends.  Its bound statements say only
+    how often its builds may disagree.  Its decidability statements say only
+    that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

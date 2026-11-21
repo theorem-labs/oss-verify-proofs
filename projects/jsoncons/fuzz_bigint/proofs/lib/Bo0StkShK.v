@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the stack-shadow checks hold for the entry states computed for each CONFIG_RSEQ flag in place of the recorded ones, and the sections take the full launch input that AsanInitK's start state reads with the launch fact entry_launch_ok_va. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -10,7 +11,7 @@ From OSSVerify.jsoncons.fuzz_bigint.images Require Import AsanUbsan.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import AsanAcct.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec AgentLib AxSymExec3K AxSymExec3SoundK AxSymRun3K
   AsanPlanCoreK AsanPlanK AsanPlanSoundK AsanInitK Bo0DefsK Bo0PlanImagesK HandoffBridgeK HandoffLedgerK HandoffBInvK HandoffCellsK HandoffRolesK
-  Bo0HandoffK Bo0HSK_0 Bo0HSK_1 Bo0MainTableK Bo0HandoffInstK Bo0ArtHandoffK Bo0ArtHandoffInstK.
+  Bo0HandoffK Bo0CertK_202 Bo0HandoffInstK Bo0ArtHandoffK Bo0ArtHandoffInstK.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import HeapIface HeapIfaceA.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -25,8 +26,8 @@ Definition K_STKSH : kentry := KZero (SA E_SHB 2146402304) E_SHL.
 Definition stksh_chk (cs : acs) : bool :=
   let k := kn cs in (existsb (kentry_eqb K_STKSH) k && lin_nowrapR k E_SHB && lin_nowrapR k E_SHL)%bool.
 
-Lemma stksh_chk_0 : stksh_chk HS_0 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma stksh_chk_1 : stksh_chk HS_1 = true.   Proof. vm_compute. reflexivity. Qed.
+Lemma stksh_chk_HSA : forall r h, (h < 2)%nat -> stksh_chk (HSA r h) = true.
+Proof. intros r [|[|h]] H; [| |lia]; unfold HSA; destruct (Z.eqb r 1); vm_compute; reflexivity. Qed.
 
 Section StkSh.
   Variable sp brk0 : word.
@@ -34,12 +35,31 @@ Section StkSh.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
   Variable fs : Fs.Fs.
+  (* [AsanInitK]'s [Section Init] is parameterised by the full
+     [State.mkProcInput_full] field list, so [SINV0]/[argH0] discharge all
+     sixteen of [AsanInitK.inp]'s arguments plus [mbase] and [apc].  Same block
+     as [HandoffBridgeK.v:614-624]. *)
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variables abrt sdf : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable apc : N.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  (* [Run.valid_entry_va]'s fifth conjunct ([727298f3:theories/LinuxProcessSem/Run.v:3750],
+     [valid_entry_sv48] at :3767), which [hbi_sp0] carries; the unit's top
+     binder has it, so it is not a new assumption. *)
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn).
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn).
   #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
   #[local] Notation usp := (bv_unsigned sp).
 
@@ -70,8 +90,8 @@ Section StkSh.
     unfold estart, elenZ in Hz. cbn [a_base a_off] in Hz.
     remember (bv_unsigned (edenot E E_SHB)) as shb eqn:Eb. remember (bv_unsigned (edenot E E_SHL)) as shl eqn:El.
     LINEQS E_SHB L1. rewrite <- Eb in L1. LINEQS E_SHL L2. rewrite <- El in L2.
-    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit E cs R FULL model HC) as U0.
-    destruct (geo_stk sp brk0 rdraw argv envp uid hw fs cs GCHK E R FULL model HC) as (_ & _ & _ & _ & TOP).
+    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp uid hw fs stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva Hve Hfit Hlau E cs R FULL model HC) as U0.
+    destruct (geo_stk sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc cs GCHK E R FULL model HC) as (_ & _ & _ & _ & TOP).
     assert (SR : 0x7fff80000000 <= usp <= 2 ^ 47) by (destruct Hsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
     pose proof (Z.ge_le _ _ (Z.le_ge _ _ (proj1 (u64_range (ev E 6))))) as V6. change (bv_unsigned (ev E 6)) with (VZ E 6) in V6.
     unfold in_shadow_of, S, SB in Hx.
@@ -95,8 +115,8 @@ Section StkSh.
     unfold estart, elenZ in Hz. cbn [a_base a_off] in Hz.
     remember (bv_unsigned (edenot E E_SHB)) as shb eqn:Eb. remember (bv_unsigned (edenot E E_SHL)) as shl eqn:El.
     LINEQS E_SHB L1. rewrite <- Eb in L1. LINEQS E_SHL L2. rewrite <- El in L2.
-    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit E cs R FULL model HC) as U0.
-    destruct (geo_stk sp brk0 rdraw argv envp uid hw fs cs GCHK E R FULL model HC) as (_ & _ & _ & _ & TOP).
+    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp uid hw fs stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva Hve Hfit Hlau E cs R FULL model HC) as U0.
+    destruct (geo_stk sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc cs GCHK E R FULL model HC) as (_ & _ & _ & _ & TOP).
     assert (SR : 0x7fff80000000 <= usp <= 2 ^ 47) by (destruct Hsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
     pose proof (Z.ge_le _ _ (Z.le_ge _ _ (proj1 (u64_range (ev E 6))))) as V6. change (bv_unsigned (ev E 6)) with (VZ E 6) in V6.
     unfold in_shadow_of, S, SB in Hx.
@@ -113,25 +133,27 @@ End StkSh.
 
 (* [comment removed for export] *)
 Theorem as0_stksh_main :
-  forall sp brk0 rdraw argv envp uid hw fs, valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  forall h, (h < 2)%nat -> forall E R FULL model,
-    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 argv envp uid hw) (argH0 APH0 sp rdraw argv envp uid hw) fs E (HSA h) R FULL model ->
-    forall x, in_shadow_of (bv_unsigned sp - 8388608) (Z.max (bv_unsigned sp) (APSK.uE E (topE (HSA h))) - (bv_unsigned sp - 8388608)) x -> byte_at FULL x 0.
+  forall sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc,
+  valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+  (* Premise: [Run.valid_entry_va]'s fifth conjunct ([727298f3:theories/LinuxProcessSem/Run.v:3750]),
+     which [hbi_sp0] carries. *)
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn) ->
+  forall r h, (h < 2)%nat -> forall E R FULL model,
+    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc) (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn) fs E (HSA r h) R FULL model ->
+    forall x, in_shadow_of (bv_unsigned sp - 8388608) (Z.max (bv_unsigned sp) (APSK.uE E (topE (HSA r h))) - (bv_unsigned sp - 8388608)) x -> byte_at FULL x 0.
 Proof.
-  intros sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit h Hh E R FULL model HC.
-  destruct h as [|[|h]]; [| |lia].
-  - exact (stksh_main sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit HS_0 stksh_chk_0 geo_chk_0 E R FULL model HC).
-  - exact (stksh_main sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit HS_1 stksh_chk_1 geo_chk_1 E R FULL model HC).
+  intros sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva Hve Hfit Hlau r h Hh E R FULL model HC.
+  exact (stksh_main sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva Hve Hfit Hlau (HSA r h) (stksh_chk_HSA r h Hh) (geo_chk_HSA r h Hh) E R FULL model HC).
 Qed.
 
 Theorem as0_stksh_main_hi :
-  forall sp brk0 rdraw argv envp uid hw fs, valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  forall h, (h < 2)%nat -> forall E R FULL model,
-    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 argv envp uid hw) (argH0 APH0 sp rdraw argv envp uid hw) fs E (HSA h) R FULL model ->
+  forall sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc,
+  valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn) ->
+  forall r h, (h < 2)%nat -> forall E R FULL model,
+    APSK.cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc) (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn) fs E (HSA r h) R FULL model ->
     forall x, in_shadow_of (bv_unsigned sp - 8388608) (2 ^ 47 - (bv_unsigned sp - 8388608)) x -> byte_at FULL x 0.
 Proof.
-  intros sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit h Hh E R FULL model HC.
-  destruct h as [|[|h]]; [| |lia].
-  - exact (stksh_main_hi sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit HS_0 stksh_chk_0 geo_chk_0 E R FULL model HC).
-  - exact (stksh_main_hi sp brk0 rdraw argv envp uid hw fs Hsp Hva Hve Hfit HS_1 stksh_chk_1 geo_chk_1 E R FULL model HC).
+  intros sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva Hve Hfit Hlau r h Hh E R FULL model HC.
+  exact (stksh_main_hi sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva Hve Hfit Hlau (HSA r h) (stksh_chk_HSA r h Hh) (geo_chk_HSA r h Hh) E R FULL model HC).
 Qed.

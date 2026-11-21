@@ -1,6 +1,6 @@
 (* ctrl_emit_as (0x853c4) of fuzz_ctrl's ASan+UBSan build (image B, libreac v1.9.0): its contract in cgif's
-   CALLER-JOURNAL form (CONVENTIONS.md section 2 (a working note, not in this delivery); cgif lib/YC20.v:311-365 on origin/ossv/recipes
-   c8557374ad2e), because the call writes its caller's output [o, o + len) (an object of a caller frame) besides its own
+   CALLER-JOURNAL form (CONVENTIONS.md section 2 (a working note, not in this delivery); cgif lib/YC20.v:311-365),
+   because the call writes its caller's output [o, o + len) (an object of a caller frame) besides its own
    128-byte machine-stack frame.  It takes no fake frame itself.  Draft of record:
    ctrl_emit_as-B-draft.md section 2.1 (a working note, not in this delivery), under a Theorem Labs lane's B
    decisions (decisions.md items 1-29 (a working note, not in this delivery)): segment term Reusable.YB1v.tfibsegs (item 16 / a Theorem Labs lane 03:06Z),
@@ -11,8 +11,8 @@
    lib/B/Reusable are named qualified (a Theorem Labs lane 04:03Z); only the core's are Imported.
 
    Differences from the draft text, each forced by the consumed ctrl_lay_block contract of record
-   (a working branch 079649851ae, C_ctrl_lay_block.v) or by the proved run's premises
-   (ctrl_emit_asF.v, a Theorem Labs lane e7748203ba4):
+   (a working branch, C_ctrl_lay_block.v) or by the proved run's premises
+   (ctrl_emit_asF.v, a Theorem Labs lane):
    - f 24, md 296, the name and the template are ranges of registered read-only image globals:
      `tctrl_emit_as_ro q n`, word for word ctrl_lay_block's tctrl_lay_block_ro over the same list GLOBS (one global
      of GLOBS, 64 bytes off the image ends, every byte in_roP, neither allocator-owned nor errno; a Theorem Labs lane
@@ -22,7 +22,7 @@
      its per-byte non-writable-segment conjunct (the run's ro_bytes);
    - d 6, s 6 carry `shadow_hull_vis`, `in_app` and `tctrl_emit_as_home` (apart from the side stack for frames, or
      inside one caller frame of class 2 or more);
-   - g is 0 (a7 = 0), as in A's spec (lib/A/Prog/C_ctrl_emit_as.v (at head lib/A/Prog/C_ctrl_emit_as.v:157; from a working branch 9fabd8a4264);
+   - g is 0 (a7 = 0), as in A's spec (lib/A/Prog/C_ctrl_emit_as.v (at head lib/A/Prog/C_ctrl_emit_as.v:157; from a working branch);
      a Theorem Labs lane 08:05Z, replacing a decision of decisions.md (a working note, not in this delivery)): the post is taken at g = 0, gb = [];
    - the output's caller frame has class 2 or more, and the output carries `shadow_hull_vis`; the 1492-byte buffer
      at o lies in one caller frame of class 2 or more also when nothing is emitted (E = false; A's twin premise,
@@ -60,7 +60,7 @@ Open Scope Z_scope.
 Definition CTRL_EMIT_AS : Z := 0x853c4.
 
 (* The stack the call needs (decisions.md item 4): the proved run's window CTRL_EMIT_AS_K = 4640 = 128 + 4512
-   (ctrl_emit_as_c.v:14) and 128 + ctrl_lay_block's CTRL_LAY_BLOCK_STK = 4512 (C_ctrl_lay_block.v, 33d01bf4f85). *)
+   (ctrl_emit_as_c.v:14) and 128 + ctrl_lay_block's CTRL_LAY_BLOCK_STK = 4512 (C_ctrl_lay_block.v). *)
 Definition CTRL_EMIT_AS_STK : Z := Z.max 4640 (128 + 4512).
 
 (* No allocator event: no malloc / free; the fake-stack events are ctrl_lay_block's and keep st_nev. *)
@@ -89,8 +89,8 @@ Variable B : asyms.
    reac_box_model_block's). *)
 Variable GLOBS : list (Z * Z).
 
-(* A range of a registered read-only image global: word for word ctrl_lay_block's tctrl_lay_block_ro RLO RHI B GLOBS
-   (079649851ae). *)
+(* A range of a registered read-only image global: word for word ctrl_lay_block's tctrl_lay_block_ro RLO RHI B GLOBS.
+   *)
 Definition tctrl_emit_as_ro (q n : Z) : Prop :=
   (exists q0 sz, In (q0, sz) GLOBS /\ q0 <= q /\ q + n <= q0 + sz) /\
   CtrlRo.IMG_LO + 64 <= q /\ q + n + 64 <= CtrlRo.IMG_HI /\
@@ -417,7 +417,7 @@ Variable B : asyms.
 Hypothesis LAWS : AR_laws SEGS B.
 
 (* A byte the caller lets the call write is not image memory (the twin of a Theorem Labs lane's A/Prog/GE_jrnl.v
-   ge_awr_not_img, a working branch 8b0fc309e6f). *)
+   ge_awr_not_img, a working branch). *)
 Lemma ce_awr_not_img : forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc (W : world SEGS) memc mdc k a,
   ajournal SEGS B STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k ->
   awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own a -> ~ in_img SEGS a.
@@ -495,17 +495,17 @@ End g1.
      segment [0x9f000, 0xa2000)); a stretch writes no image byte, so arodata_okS RLO RHI survives it;
    No ProgWorld fact is a hypothesis.  The ProgWorld statements are CITED, proved (a Theorem Labs lane):
    ProgWorldCtlRt.asan_cells_of_AR / ro_agree_of_AR, ProgWorldOwnedRo.AR_states_owned_ro_of_AR,
-   ProgWorld_Fs.ctl_fp_of_AR (a working branch d2c835124b3, merged), ProgWorldTlsApart.fp_tls_apart
-   (d5f1e30d857, by path), ProgWorldTlsOwned.fp_tls_owned (14f42b38487, by path).  The run's shadow premise is the
-   route (C) one: ctrl_emit_asF.aentry_k_on / alay_ret_on (a working branch
-   26e8a9dd8b0, by path) take no universal shadow_rw; aentry_k_on takes shadow_rw_on over the shadow words of f 24,
+   ProgWorld_Fs.ctl_fp_of_AR (a working branch, merged), ProgWorldTlsApart.fp_tls_apart
+   (by path), ProgWorldTlsOwned.fp_tls_owned (by path).  The run's shadow premise is the
+   route (C) one: ctrl_emit_asF.aentry_k_on / alay_ret_on (a working branch,
+   by path) take no universal shadow_rw; aentry_k_on takes shadow_rw_on over the shadow words of f 24,
    md 296, d 6, s 6 and (when E) the output, which ce_srw_hull reads off the statement's own shadow_hull_vis
    premises of those five ranges (m_fRV / m_mRV for the two read-only globals), and alay_ret_on takes none;
    - GM: the composer's CtrlRo.globs_marked SEGS B GLOBS (a fact of the composer's list GLOBS; the same one
      ctrl_lay_block's proof takes).  ISV, CtrlRo.img_shadow_vis SEGS B, is CITED, proved from HTS and AR_laws_B:
      ACtlCutC.ctrl_img_shadow_vis (a Theorem Labs lane's cform, on this base);
    - tctrl_lay_block_spec (with its tctrl_lay_block_ro / tctrl_lay_block_home): a Theorem Labs lane's consumed contract
-     (a working branch 079649851ae, lib/B/Prog/C_ctrl_lay_block.v
+     (a working branch, lib/B/Prog/C_ctrl_lay_block.v
      `tctrl_lay_block_spec RLO RHI B GLOBS` at this glue's RLO RHI), its text with CTRL_LAY_BLOCK /
      CTRL_LAY_BLOCK_STK / EV_CTRL_LAY_BLOCK as the numerals 0x86104 / 4512 / 0.
    ================================================================================================================= *)
@@ -542,13 +542,13 @@ Hypothesis AR_laws_B : AR_laws SEGS B.
 #[local] Notation TLSOWN := (lib.B.ProgWorldTlsOwned.fp_tls_owned B).
 
 Variable GLOBS : list (Z * Z).
-(* The composer's start-up certificate for the registered globals (lib/B/Prog/CtrlRo.v:117), the one ctrl_lay_block's
+(* The composer's start-up certificate for the registered globals (lib/B/Prog/CtrlRo.v:118), the one ctrl_lay_block's
    proof takes: every listed global's shadow is marked at every AR state.  Every shadow byte of the image's read range
-   is mapped (CtrlRo.v:45): proved, ACtlCutC.ctrl_img_shadow_vis. *)
+   is mapped (CtrlRo.v:46): proved, ACtlCutC.ctrl_img_shadow_vis. *)
 Hypothesis GM : CtrlRo.globs_marked SEGS B GLOBS.
 #[local] Notation ISV := (lib.B.ACtlCutC.ctrl_img_shadow_vis B HTS AR_laws_B).
 
-(* The consumed callee contract: a Theorem Labs lane's tctrl_lay_block_spec (a working branch 079649851ae,
+(* The consumed callee contract: a Theorem Labs lane's tctrl_lay_block_spec (a working branch,
    lib/B/Prog/C_ctrl_lay_block.v, `tctrl_lay_block_spec RLO RHI B GLOBS`) at this glue's RLO RHI, its text
    with its CTRL_LAY_BLOCK / CTRL_LAY_BLOCK_STK / EV_CTRL_LAY_BLOCK as the numerals 0x86104 / 4512 / 0 and its post
    written out; its tctrl_lay_block_ro and tctrl_lay_block_home are restated here word for word.
@@ -878,7 +878,7 @@ Qed.
 
 (* The side stack is above the image: the image's last segment ends at ASAN_GT = 0x5fe000 inside ly_img (ALedger's
    al_img), and layout_ok keeps (ly_F, kFakeStackSize) apart from ly_img (YG0s.owned_extents_bound).  The B twin of
-   a Theorem Labs lane's A/ProgWorld_Fs.v pw_F_above (a working branch a48c4068c6e :242-264). *)
+   a Theorem Labs lane's A/ProgWorld_Fs.v pw_F_above (a working branch :242-264). *)
 Lemma ce_F_above : forall ly S (W : world SEGS) m md, AR SEGS B ly S W m md ->
   lib.B.Prog.asan_stack_malloc_c.ASAN_GT <= ly_F ly.
 Proof.

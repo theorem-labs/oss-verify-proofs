@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the two auxiliary-vector cases of the rbytes_at_magree proofs close by lia without computing auxv_list's length, which is now a flat_map over auxv_entries whose length depends on CONFIG_RSEQ. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -88,7 +89,13 @@ Proof using TLSFACTS. all: natfold_lits. pin_using (fun (TLSFACTS : unit) => tt)
   exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rrw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
   - eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold auxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.
+    (* [auxv_list] is [flat_map] over [auxv_entries] at the revision, not a
+       twenty-element literal, so [map_length] no longer applies and the old
+       [cbn] would unfold a vector whose length is [2 * auxv_count rseq] with
+       [rseq] free.  The contradiction never needed the length: [Ha] gives
+       [av <= a], [Y] gives [a < B] and [H] carries [B <= av].  The length term
+       stays an opaque nonneg atom for [lia], so [kb_rseq] is not pinned. *)
+    lia.
   - eapply rbytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.   (* [comment removed for export] *)
 Qed.
 
@@ -1318,7 +1325,10 @@ Proof using TLSFACTS. all: natfold_lits. pin_using (fun (TLSFACTS : unit) => tt)
   exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rrw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
   - eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold auxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.
+    (* see the Plain-kit copy above: the length is not needed, and [auxv_list]
+       is no longer a [map] over a literal.  [av <= a] (Ha), [a < B] (Y) and
+       [B <= av] (in H) close it with [rseq] left free. *)
+    lia.
   - eapply rbytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.   (* [comment removed for export] *)
 Qed.
 

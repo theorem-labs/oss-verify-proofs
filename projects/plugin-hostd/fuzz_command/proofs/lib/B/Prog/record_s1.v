@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the last segment of record's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan): from the meet of record()'s two arms (0x8a7ac) to the return (0x8a7f8) and the
-   statement's post, after A's spa_meet (lib/A/Prog/sup_pin_accept_s4.v, a working branch 3cc8391594b), which
+   statement's post, after A's spa_meet (lib/A/Prog/sup_pin_accept_s4.v, a working branch), which
    continued into the inlined arg_s; B returns, so the segment ends at `ret` with paj_ret_at. The run decides the
    UBSan alignment trap 0x8a7b0 by the slot atom's alignment fact (rcb_facts, from rcb_rec_slot_ok) and both inline
    checks (0x8a7c0 and 0x8a7d8, whose report calls are 0x8a80c and 0x8a81c) by the slot's shadow entry (record_s0.v
    rcb_shok); neither report path is stepped. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.B.Prog Require Import record_aux record_s0.
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.

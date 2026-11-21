@@ -13,8 +13,8 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.U.Prog.CF Require Import SRC
 Local Open Scope Z_scope.
 
 (* round_trip_text of the #102 ubsan twin (0x15334), CF form: the contract from the walk's stage statements (RttBase.v)
-   and the stage lemmas; the mirror of P6-u's U top (lib/U/Prog/round_trip_text.v, origin/cold/h-rw-ide-20-p102-P6-u
-   ee95a2850612) with CF Requires and SRCF.  rtt_entry_holds proves the prologue and pj_write up to stg_tx1's pre; the
+   and the stage lemmas; the mirror of P6-u's U top (lib/U/Prog/round_trip_text.v)
+   with CF Requires and SRCF.  rtt_entry_holds proves the prologue and pj_write up to stg_tx1's pre; the
    other stages chain through their own NEXT premises: tx1 -> txv -> nl -> cmp -> {oom (ran out: a0 = 1) | ff -> same ->
    end (a0 = 0)}.  The Section hypotheses are the callees' contracts the stage lemmas step over: free (ms_free B =
    0x18250, free in the symtab of the #102 ubsan twin 27566683, = lib/U/FrameAPI.v frame_ubsan; round_trip_text calls

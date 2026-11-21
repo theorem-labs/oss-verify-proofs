@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes: sys_rob_instr at the silent and back steps, sys_rob_memfree at the getrandom node; the reservation advance_past_svc clears, in post and postm; the access_okb premise of getrandom). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Specs Run.
@@ -32,7 +33,7 @@ Variable segs : list Segment.
 model_ok md -> mstep segs ms ms' -> lbw segs V T p (mkCfg ms' md) -> lbw segs V T p (mkCfg ms md).
 Proof.
 intros V T p ms ms' md [Hh Hl] [Hsvc Hst] H.
-eapply lbw_silent1; [apply node_instr; eassumption | exact H].
+eapply lbw_silent1; [apply node_instr; eassumption | apply Cfg.RomBase.sys_rob_instr; exact Hsvc | exact H].
 Qed.
 
 #[using="Type"] Lemma lbw_evt : forall V T p (Q : machine_state -> Prop) ms md,
@@ -49,7 +50,7 @@ model_ok md -> mstep segs ms ms1 -> msteps segs ms1 msV -> V (mkCfg msV md) -> l
 Proof.
 intros V T ms ms1 msV md MOK H1 STEPS. revert ms H1.
 induction STEPS as [ms0 | ms0 msa msb Ha Hb IH]; intros ms H1 HV.
-- destruct MOK as [Hh Hl]. destruct H1 as [Hsvc Hst]. eapply lbw_back1; [apply node_instr; eassumption | exact HV].
+- destruct MOK as [Hh Hl]. destruct H1 as [Hsvc Hst]. eapply lbw_back1; [apply node_instr; eassumption | apply Cfg.RomBase.sys_rob_instr; exact Hsvc | exact HV].
 - eapply lbw_mstep; [exact MOK | exact H1 | apply IH; [exact Ha | exact HV]].
 Qed.
 
@@ -105,9 +106,10 @@ Hypothesis Hlazy : m_vm_lazy model = [].
 
 Let pre : machine_state := MS R F pc fc rv m (seg_rom segs).
 Let ms : machine_state := MSsvc R F pc (getr R 17) fc rv m (seg_rom segs).
-Let post (r : word) : machine_state := MS (regupd R 10 r) F (v_addi pc 4) fc rv m (seg_rom segs).
+(* LPS 727298f3: [advance_past_svc] clears the reservation (Run.v), as in QuJV's [postm] *)
+Let post (r : word) : machine_state := MS (regupd R 10 r) F (v_addi pc 4) fc None m (seg_rom segs).
 Let postm (r : word) (m' : word -> option byte) : machine_state :=
-MS (regupd R 10 r) F (v_addi pc 4) fc rv m' (seg_rom segs).
+MS (regupd R 10 r) F (v_addi pc 4) fc None m' (seg_rom segs).
 
 Variable buflen : Z.
 Hypothesis H17 : getr R 17 = Z_to_bv 64 278.
@@ -116,8 +118,10 @@ Hypothesis Hbl : (1 <= buflen)%Z.
 Hypothesis Hblmax : (buflen <= 256)%Z.
 Hypothesis H12 : getr R 12 = Z_to_bv 64 0 \/ getr R 12 = Z_to_bv 64 GRND_NONBLOCK.
 Hypothesis Hok : store_ok segs m (getr R 10) (Z.to_nat buflen) = true.
+(* LPS 727298f3: getrandom asks the destination through [copy_bytes_map] (QuJV's [Hacc]) *)
+Hypothesis Hacc : access_okb (getr R 10) buflen = true.
 
-#[using="w HF HE Hh Hlazy ms H17 H11 Hbl Hblmax H12 Hok"] Lemma lbw_getrandom_k : forall (V : config -> Prop) (T : TSet) (p : bool) (wf : list byte -> bool),
+#[using="w HF HE Hh Hlazy ms H17 H11 Hbl Hblmax H12 Hok Hacc"] Lemma lbw_getrandom_k : forall (V : config -> Prop) (T : TSet) (p : bool) (wf : list byte -> bool),
 (forall bs, Z.of_nat (length bs) = buflen ->
 lbw segs V T (wf bs) (mkCfg (postm (len_word bs) (wbytes m (getr R 10) bs)) model)) ->
 (p = true -> exists bs0, Z.of_nat (length bs0) = buflen /\ wf bs0 = true) ->
@@ -125,9 +129,11 @@ lbw segs V T p (mkCfg pre model).
 Proof.
 intros V T p wf HB Hw.
 eapply ncl_ecall; [apply nclosed_lbw | exact Hh | exact Hlazy | exact HF | exact HE |]. fold ms.
-apply (lbw_node segs V T p (mkCfg ms model) (getrandom_I buflen) (getrandom_nx segs R F pc fc rv m model buflen)
+apply (lbw_node segs V T p (mkCfg ms model) (getrandom_I buflen) _
 (fun i => match i with exist _ bs _ => Some (wf bs) end)
-(node_getrandom segs R F pc fc rv m model Hh Hlazy buflen H17 H11 Hbl Hblmax H12 Hok)).
+(node_getrandom segs R F pc fc rv m model Hh Hlazy buflen H17 H11 Hbl Hblmax H12 Hok Hacc)
+(Cfg.RomBase.sys_rob_memfree segs ms model (getr R 17) eq_refl
+  ltac:(rewrite H17; exact Cfg.RomBase.memfree_278))).
 - intros [bs Hb] q Hq; injection Hq as <-; cbn [getrandom_nx]. apply HB; assumption.
 - intros [bs Hbs] Hq; discriminate Hq.
 - intros Hp. destruct (Hw Hp) as (bs0 & H1 & H3). exists (exist _ bs0 H1). rewrite H3. reflexivity.

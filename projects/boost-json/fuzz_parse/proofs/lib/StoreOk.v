@@ -1,32 +1,300 @@
-(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
-(* [comment removed for export] *)
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the run's segment list (run_segments). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase MemImageType RiscvSemantics StackLayout State Run.
+From LinuxProcessSemantics.Riscv Require Import DecodeC.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import PropExec CatExec StepTac StreamSim AllocSim Footprint.
-Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshf2bv37Corelib4Init9Datatypesk16optionk14None37Corelib4Init5Logicm92eqm93not79OSSVerify6Proofsaboost_jsonafuzz_parse3lib7StoreOk4FPX1~~~~~~o89mem_grows3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticst35wviewk14list3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypehh97Segmentk14boolk14truet38store_okk13nat69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7CatExec~~~~~~hn86wbytesk14prod3h5LinuxProcessSemanticsfLinuxProcessSem3Runhs3bapply_zerost3cwrite_to_memhs3capply_writeshfbbv_unsigned46Stdlib6ZArith6BinInt1Ziib3addiib2leiib6of_natm93andiib2ltiib3pow69OSSVerify6Proofsaboost_jsonafuzz_parse3lib9StreamSim~~~~~~imd7wseg_ok01Zk14Somem92ex3h5LinuxProcessSemanticsfLinuxProcessSem5Stateis3eread_bytes_aux" s.
 Import ListNotations.
 Local Open Scope Z_scope.
-Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 (* [comment removed for export] *)
-Section FPX1. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
-Definition mem_grows : ltac2:(zQ "31!h9!jc!l9&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1m~0>2m'~0P") := ltac2:(zQ "61!h9!jc!l9!m2!nd!o2&>0@1$1@1$0#k0@1$2@1$1@1$0#8\1m~0\2m'~0>1x@1$1@1$0#k0>0@1$5@3$4@1$2@1$1@1$0#8@1^3^1@1$3@1$1@1$0#8@1$5@3$4@1$2@1$1@1$0#8@1^3^2@1$3@1$1@1$0#8").
+Section FPW1. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma find_segment_app_prefix : forall segs tail addr n,
+  find_segment segs addr n <> None ->
+  find_segment (segs ++ tail) addr n = find_segment segs addr n.
+Proof.
+  induction segs as [|seg rest IH]; intros tail addr n Hhit; [cbn in Hhit; congruence|].
+  cbn [find_segment app] in Hhit |- *.
+  destruct (Z.leb (Z.of_N (seg_base seg)) addr
+            && Z.leb (addr + n) (Z.of_N (seg_base seg) + Z.of_N (seg_size seg)))%bool;
+    [reflexivity | apply IH; exact Hhit].
+Qed.
+End FPW1.
 
-Lemma mem_grows_refl : ltac2:(zQ "40!h9!jc!l9!s7>1m>0@1$1@1$0#k0@1$2@1$1@1$0#8@2$3^1^1").
+(* [comment removed for export] *)
+Section FPW2. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma find_segment_run_segments : forall segs inp (sp mbase : word) addr n,
+  find_segment segs addr n <> None ->
+  find_segment (run_segments segs inp sp mbase) addr n = find_segment segs addr n.
+Proof.
+  intros segs inp sp mbase addr n Hhit.
+  unfold run_segments. apply find_segment_app_prefix. exact Hhit.
+Qed.
+End FPW2.
+
+(* Step transfer onto [segs ++ tail] when no segment of [tail] is executable
+   (the vDSO pair [Run.vdso_segments] is "r--"): a machine step that succeeds
+   over the binary's segments succeeds the same way over the run's list. *)
+Section FPW3. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma find_segment_app : forall segs tail addr n,
+  find_segment (segs ++ tail) addr n
+  = match find_segment segs addr n with
+    | Some s => Some s
+    | None => find_segment tail addr n
+    end.
+Proof.
+  induction segs as [|seg rest IH]; intros tail addr n; [reflexivity|].
+  cbn [find_segment app].
+  destruct (Z.leb (Z.of_N (seg_base seg)) addr
+            && Z.leb (addr + n) (Z.of_N (seg_base seg) + Z.of_N (seg_size seg)))%bool;
+    [reflexivity | apply IH].
+Qed.
+End FPW3.
+
+Section FPW4. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma find_segment_in : forall segs addr n s,
+  find_segment segs addr n = Some s -> In s segs.
+Proof.
+  induction segs as [|seg rest IH]; intros addr n s H; [discriminate H|].
+  cbn [find_segment] in H.
+  destruct (Z.leb (Z.of_N (seg_base seg)) addr
+            && Z.leb (addr + n) (Z.of_N (seg_base seg) + Z.of_N (seg_size seg)))%bool.
+  - injection H as <-. left. reflexivity.
+  - right. exact (IH _ _ _ H).
+Qed.
+End FPW4.
+
+Section AppNx.
+  Variables segs tail : list Segment.
+  Hypothesis Hnx : forall s, In s tail -> seg_executable s = false.
+
+  Section FPW5. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma code_read_app_nx : forall a n,
+    code_read (segs ++ tail) a n = code_read segs a n.
+  Proof.
+    intros a n. unfold code_read. rewrite find_segment_app.
+    destruct (find_segment segs (bv_unsigned a) (Z.of_N n)) as [s|]; [reflexivity|].
+    destruct (find_segment tail (bv_unsigned a) (Z.of_N n)) as [s|] eqn:E; [|reflexivity].
+    rewrite (Hnx s (find_segment_in _ _ _ _ E)). reflexivity.
+  Qed.
+  End FPW5.
+
+  Section FPW6. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma code_read_ov_app_nx : forall m a n,
+    code_read_ov (segs ++ tail) m a n = code_read_ov segs m a n.
+  Proof.
+    intros m a n. unfold code_read_ov. rewrite find_segment_app.
+    destruct (find_segment segs (bv_unsigned a) (Z.of_N n)) as [s|]; [reflexivity|].
+    destruct (find_segment tail (bv_unsigned a) (Z.of_N n)) as [s|] eqn:E; [|reflexivity].
+    rewrite (Hnx s (find_segment_in _ _ _ _ E)). reflexivity.
+  Qed.
+  End FPW6.
+
+  Section FPW7. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma fetch_word_app_nx : forall a,
+    fetch_word (segs ++ tail) a = fetch_word segs a.
+  Proof. intros a. unfold fetch_word. rewrite code_read_app_nx. reflexivity. Qed.
+  End FPW7.
+
+  Section FPW8. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma fetch_word_ov_app_nx : forall m a,
+    fetch_word_ov (segs ++ tail) m a = fetch_word_ov segs m a.
+  Proof. intros m a. unfold fetch_word_ov. rewrite code_read_ov_app_nx. reflexivity. Qed.
+  End FPW8.
+
+  Section FPW9. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma fetch_half_any_app_nx : forall m a,
+    fetch_half_any (segs ++ tail) m a = fetch_half_any segs m a.
+  Proof.
+    intros m a. unfold fetch_half_any, fetch_half, fetch_half_ov.
+    rewrite code_read_app_nx, code_read_ov_app_nx. reflexivity.
+  Qed.
+  End FPW9.
+
+  Section FPW10. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma fetch_tail_any_app_nx : forall m a,
+    fetch_tail_any (segs ++ tail) m a = fetch_tail_any segs m a.
+  Proof.
+    intros m a. unfold fetch_tail_any. rewrite !fetch_half_any_app_nx. reflexivity.
+  Qed.
+  End FPW10.
+
+  Section FPW11. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma memory_read_app_nx : forall a n bs,
+    memory_read segs a n = Some bs -> memory_read (segs ++ tail) a n = Some bs.
+  Proof.
+    intros a n bs. unfold memory_read. rewrite find_segment_app.
+    destruct (find_segment segs (bv_unsigned a) (Z.of_N n)) as [s|];
+      [intro H; exact H | intro H; discriminate H].
+  Qed.
+  End FPW11.
+
+  Section FPW12. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma ov_read_bytes_app_nx : forall n m a bs,
+    ov_read_bytes segs m a n = Some bs -> ov_read_bytes (segs ++ tail) m a n = Some bs.
+  Proof.
+    induction n as [|n IH]; intros m a bs; cbn [ov_read_bytes]; [intro H; exact H|].
+    destruct (m a) as [b|].
+    - destruct (ov_read_bytes segs m (a + 1) n) as [rest|] eqn:E; [|intro H; discriminate H].
+      rewrite (IH _ _ _ E). intro H; exact H.
+    - destruct (memory_read segs a 1) as [[|b rest0]|] eqn:Em;
+        [intro H; discriminate H | | intro H; discriminate H].
+      rewrite (memory_read_app_nx _ _ _ Em).
+      destruct (ov_read_bytes segs m (a + 1) n) as [rest|] eqn:E; [|intro H; discriminate H].
+      rewrite (IH _ _ _ E). intro H; exact H.
+  Qed.
+  End FPW12.
+
+  Section FPW13. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma wview_app_nx : forall m a b,
+    wview segs m a = Some b -> wview (segs ++ tail) m a = Some b.
+  Proof.
+    intros m a b. unfold wview. destruct (m a) as [b'|]; [intro H; exact H|].
+    rewrite find_segment_app.
+    destruct (find_segment segs (bv_unsigned a) 1) as [s|];
+      [intro H; exact H | intro H; discriminate H].
+  Qed.
+  End FPW13.
+
+  Section FPW14. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma store_ok_app_nx : forall n m a,
+    store_ok segs m a n = true -> store_ok (segs ++ tail) m a n = true.
+  Proof.
+    induction n as [|n IH]; intros m a; cbn [store_ok]; [intro H; exact H|].
+    destruct (wview segs m a) as [b|] eqn:E; [|intro H; discriminate H].
+    rewrite (wview_app_nx _ _ _ E). apply IH.
+  Qed.
+  End FPW14.
+
+  Section FPW15. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma interp_eff_accesses_app_nx : forall t m r,
+    interp_eff_accesses segs t m = MachineOk r ->
+    interp_eff_accesses (segs ++ tail) t m = MachineOk r.
+  Proof.
+    induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m r;
+      cbn [interp_eff_accesses]; try (intro H; exact H).
+    - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|] eqn:E.
+      + rewrite (ov_read_bytes_app_nx _ _ _ _ E).
+        match goal with
+        | |- context [interp_eff_accesses segs ?t' ?m'] =>
+            destruct (interp_eff_accesses segs t' m') as [rep| |] eqn:E2;
+              [| intro H; discriminate H | intro H; discriminate H]
+        end.
+        rewrite (IH _ _ _ E2). intro H; exact H.
+      + destruct (range_meets_vvar segs a (width_bytes n)); intro H; discriminate H.
+    - destruct (store_ok segs m a (width_bytes n)) eqn:E; [|intro H; discriminate H].
+      rewrite (store_ok_app_nx _ _ _ E).
+      match goal with
+      | |- context [interp_eff_accesses segs k ?m'] =>
+          destruct (interp_eff_accesses segs k m') as [rep| |] eqn:E2;
+            [| intro H; discriminate H | intro H; discriminate H]
+      end.
+      rewrite (IH _ _ E2). intro H; exact H.
+  Qed.
+  End FPW15.
+
+  Section FPW16. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma decode_exec_accesses_app_nx : forall st w st',
+    drop_access_report (decode_exec_accesses segs st w) = MachineOk st' ->
+    drop_access_report (decode_exec_accesses (segs ++ tail) st w) = MachineOk st'.
+  Proof.
+    intros st w st'. unfold decode_exec_accesses.
+    destruct (is_ecall w); [intro H; exact H|].
+    destruct (decode_any w) as [[i isz]|]; [|intro H; exact H].
+    match goal with
+    | |- context [interp_eff_accesses segs ?t ?m] =>
+        destruct (interp_eff_accesses segs t m) as [rep| |] eqn:E;
+          [rewrite (interp_eff_accesses_app_nx _ _ _ E); intro H; exact H
+          | intro H; discriminate H | intro H; discriminate H]
+    end.
+  Qed.
+  End FPW16.
+
+  Section FPW17. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma step_app_nx : forall st st',
+    RiscvSemantics.step segs st = MachineOk st' ->
+    RiscvSemantics.step (segs ++ tail) st = MachineOk st'.
+  Proof.
+    intros st st'. unfold RiscvSemantics.step, step_accesses.
+    rewrite fetch_word_app_nx, fetch_word_ov_app_nx, fetch_tail_any_app_nx.
+    destruct (fetch_word segs (ms_pc st)) as [w|]; [apply decode_exec_accesses_app_nx|].
+    destruct (fetch_word_ov segs (ms_mem st) (ms_pc st)) as [w|];
+      [apply decode_exec_accesses_app_nx|].
+    destruct (fetch_tail_any segs (ms_mem st) (ms_pc st)) as [w|];
+      [apply decode_exec_accesses_app_nx|].
+    destruct (fetch_failure segs (ms_mem st) (ms_pc st)) eqn:Ef;
+      [| intro H; discriminate H | intro H; discriminate H].
+    exfalso. revert Ef. unfold fetch_failure. cbv zeta.
+    repeat match goal with |- context [if ?b then _ else _] => destruct b end;
+      intro Ef; discriminate Ef.
+  Qed.
+  End FPW17.
+End AppNx.
+
+Section VdsoNx.
+Local Transparent vdso_segments.
+Section FPW18. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma vdso_segments_nx : forall kb (sp mbase : word) s,
+  In s (vdso_segments kb sp mbase) -> seg_executable s = false.
+Proof.
+  intros kb sp mbase s H. unfold vdso_segments in H. cbv zeta in H.
+  match type of H with In _ (if ?b then _ else _) => destruct b end;
+    [destruct H|].
+  destruct H as [<-|[<-|[]]]; reflexivity.
+Qed.
+End FPW18.
+End VdsoNx.
+
+Section FPW19. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma step_run_segments : forall segs inp (sp mbase : word) st st',
+  RiscvSemantics.step segs st = MachineOk st' ->
+  RiscvSemantics.step (run_segments segs inp sp mbase) st = MachineOk st'.
+Proof.
+  intros segs inp sp mbase st st' H. unfold run_segments.
+  apply step_app_nx; [apply vdso_segments_nx | exact H].
+Qed.
+End FPW19.
+
+Section FPW20. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma fetch_word_run_segments : forall segs inp (sp mbase : word) a,
+  fetch_word (run_segments segs inp sp mbase) a = fetch_word segs a.
+Proof.
+  intros segs inp sp mbase a. unfold run_segments.
+  apply fetch_word_app_nx. apply vdso_segments_nx.
+Qed.
+End FPW20.
+
+(* [comment removed for export] *)
+Section FPW21. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Definition mem_grows (m m' : word -> option byte) : Prop :=
+  forall x, m x <> None -> m' x <> None.
+End FPW21.
+
+Section FPW22. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma mem_grows_refl : forall m, mem_grows m m.
 Proof. intros m x H. exact H. Qed.
+End FPW22.
 
-Lemma mem_grows_trans : ltac2:(zQ "41!h9!jc!l9!s7&>0@1$1@1$0#k0@1$2@1$1@1$0#8>2m1~0>2m2~0>2m3~0>0@2$3^3^2>0@2$3^3^2@2$3^5^3").
+Section FPW23. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma mem_grows_trans : forall m1 m2 m3,
+  mem_grows m1 m2 -> mem_grows m2 m3 -> mem_grows m1 m3.
 Proof. intros m1 m2 m3 H12 H23 x Hx. apply H23, H12, Hx. Qed.
+End FPW23.
 
 (* [comment removed for export] *)
-Lemma wview_grows : ltac2:(zQ "a1!h9!jc!l9!m2!nd!o2!hga!hh2!hke!s7&>0@1$1@1$0#k0@1$2@1$1@1$0#8>4segs@1$7$8>1m~0>2m'~0>1x@1$1@1$0#k0>0@2$9^3^2>0@1$5@3$4@1$2@1$1@1$0#8@3$6^5^4^2@1$3@1$1@1$0#8@1$5@3$4@1$2@1$1@1$0#8@3$6^6^4^3@1$3@1$1@1$0#8").
+Section FPW24. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma wview_grows : forall segs m m' x,
+  mem_grows m m' ->
+  wview segs m x <> None -> wview segs m' x <> None.
 Proof.
   intros segs m m' x Hg Hx. unfold wview in *.
   destruct (m' x) as [b'|] eqn:Hm'; [discriminate|].
@@ -34,8 +302,12 @@ Proof.
   - exfalso. apply (Hg x); [rewrite Hm; discriminate|exact Hm'].
   - exact Hx.
 Qed.
+End FPW24.
 
-Lemma store_ok_mono : ltac2:(zQ "b1!h9!jc!hl9!l9!hm0!nd!hm7!hh2!hn2!hke!s7&>0@1$1@1$0#k0@1$3@1$1@1$0#8>4segs@1$7$9>1n$8>1m~0>2m'~0>1a@1$1@1$0#k0>0@2$a^3^2>0@3$5$2@4$6^6^4^2^5$4@3$5$2@4$6^7^4^3^6$4").
+Section FPW25. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_mono : forall segs n m m' a,
+  mem_grows m m' ->
+  store_ok segs m a n = true -> store_ok segs m' a n = true.
 Proof.
   intros segs n; induction n as [|n IH]; intros m m' a Hg H; [reflexivity|].
   cbn [store_ok] in *.
@@ -44,40 +316,63 @@ Proof.
   - apply (IH m m'); assumption.
   - exfalso. apply (wview_grows segs m m' a Hg); [rewrite Hv; discriminate|exact Hv'].
 Qed.
+End FPW25.
 
 (* [comment removed for export] *)
 
-Lemma wbytes_grows : ltac2:(zQ "60!h9!jc!hh2!l9!hr2!s7>2bs@1$2@1$1@1$0#8>1m>0@1$1@1$0#k0@1$3@1$1@1$0#8>1a@1$1@1$0#k0@2$5^2@3$4^2^1^3").
+Section FPW26. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma wbytes_grows : forall bs m a, mem_grows m (wbytes m a bs).
 Proof.
   induction bs as [|b rest IH]; intros m a x Hx; [exact Hx|].
   cbn [wbytes]. apply IH.
   destruct (bv_eqb x a); [discriminate|exact Hx].
 Qed.
+End FPW26.
 
-Lemma apply_zeros_grows : ltac2:(zQ "70!h9!jc!hh2!l9!hrc!huf!s7>2zs@1$2@2$4@1$1@1$0#k0@1$1@1$0#k0>1m>0@1$1@1$0#k0@1$3@1$1@1$0#8@2$6^1@2$5^1^2").
+Section FPW27. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma apply_zeros_grows : forall zs m, mem_grows m (apply_zeros m zs).
 Proof.
   intros zs m x Hx. unfold apply_zeros.
   destruct zs as [|z zs']; [exact Hx|].
   destruct (zeros_cover (z :: zs') x); [discriminate|exact Hx].
 Qed.
+End FPW27.
 
-Lemma write_to_mem_grows : ltac2:(zQ "60!h9!jc!hh2!l9!hve!s7>2bs@1$2@1$1@1$0#8>1m>0@1$1@1$0#k0@1$3@1$1@1$0#8>1a@1$1@1$0#k0@2$5^2@3$4^2^1^3").
+Section FPW28. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma zmem_grows : forall m b l, mem_grows m (zmem m b l).
+Proof.
+  intros m b l x Hx. unfold zmem.
+  destruct (Z.leb _ _ && Z.ltb _ _)%bool; [discriminate|exact Hx].
+Qed.
+End FPW28.
+
+Section FPW29. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma write_to_mem_grows : forall bs m a, mem_grows m (write_to_mem m a bs).
 Proof.
   induction bs as [|b rest IH]; intros m a x Hx; [exact Hx|].
   cbn [write_to_mem]. apply IH.
   destruct (bv_eqb x a); [discriminate|exact Hx].
 Qed.
+End FPW29.
 
-Lemma apply_writes_grows : ltac2:(zQ "70!h9!jc!hh2!l9!hrc!igd!s7>2ws@1$2@2$4@1$1@1$0#k0@1$2@1$1@1$0#8>1m>0@1$1@1$0#k0@1$3@1$1@1$0#8@2$6^1@2$5^1^2").
+Section FPW30. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma apply_writes_grows : forall ws m, mem_grows m (apply_writes m ws).
 Proof.
   induction ws as [|w ws' IH]; intros m x Hx.
   - exact Hx.
   - destruct w as [a bs]. cbn [apply_writes].
     apply IH. apply write_to_mem_grows. exact Hx.
 Qed.
+End FPW30.
 
 (* [comment removed for export] *)
-Lemma store_ok_of_all : ltac2:(zQ "h40!h9!jc!ihd!l9!nd!ik3!ika!il0!m2!hl9!hh2!hn2!hm0!ila!o2!hke!hm7!hga!im0!im6>4segs@1$a$f>1n$b>1m>0@1$1@1$0#k0@1$3@1$1@1$0#8>1a@1$1@1$0#k0>0@2$6@2$5@2$2@1$0#k0^1@1$7^3@2$h3+2+k0>0>1x@1$1@1$0#k0>0@2$d@2$6@2$2@1$0#k0^3@2$2@1$0#k0^1@2$h2@2$2@1$0#k0^1@2$5@2$2@1$0#k0^3@1$7^5@1$e@3$4@1$3@1$1@1$0#8@3$h1^7^5^2@1$8@1$1@1$0#8@3$4$9@4$h0^6^4^3^5$c").
+Section FPW31. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_of_all : forall segs n m a,
+  bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+  (forall x : word,
+      bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n ->
+      wview segs m x <> None) ->
+  store_ok segs m a n = true.
 Proof.
   intros segs n; induction n as [|n IH]; intros m a Hnw Hall; [reflexivity|].
   cbn [store_ok].
@@ -93,21 +388,313 @@ Proof.
   - intros x Hx. rewrite Hu1 in Hx. apply Hall.
     rewrite Nat2Z.inj_succ. lia.
 Qed.
+End FPW31.
 
 (* [comment removed for export] *)
+Section FPW32. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma wrap_mem_window_defined :
+  forall inp mbase ph entry sp (x : word) draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned x ->
+  bv_unsigned x < bv_unsigned sp ->
+  wrap_mem inp mbase ph entry sp draw x <> None.
+Proof.
+  intros inp mbase ph entry sp x draw Hlo Hhi. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|]; [discriminate|].
+  rewrite (proj2 (Z.leb_le _ _) Hlo), (proj2 (Z.ltb_lt _ _) Hhi).
+  cbn. discriminate.
+Qed.
+End FPW32.
+
+Section FPW33. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_wrap_window :
+  forall segs inp mbase ph entry sp a n draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+  store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
+Proof.
+  intros segs inp mbase ph entry sp a n draw Hlo Hhi.
+  assert (Hsp : bv_unsigned sp < 2 ^ 64) by apply bv_unsigned_in_range.
+  apply store_ok_of_all; [lia|].
+  intros x Hx. unfold wview.
+  destruct (wrap_mem inp mbase ph entry sp draw x) as [b|] eqn:Hw;
+    [discriminate|].
+  exfalso. revert Hw. apply wrap_mem_window_defined; lia.
+Qed.
+End FPW33.
 
 (* [comment removed for export] *)
+Section FPW34. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Definition stack_window_reach : Z := 2244095.
+End FPW34.
 
 (* [comment removed for export] *)
+Section FPW35. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Definition stack_window_depth : Z := stack_max_size - stack_window_reach.
+End FPW35.
+
+Section FPW36. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma stack_window_depth_val : stack_window_depth = 6144513.
+Proof. vm_compute. reflexivity. Qed.
+End FPW36.
 
 (* [comment removed for export] *)
+Section FPW37. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma page_round_up_Z_aligned : forall n,
+  (n mod page_size = 0)%Z -> page_round_up_Z n = n.
+Proof.
+  intros n Hn. unfold page_round_up_Z, page_size in *.
+  apply Z.mod_divide in Hn; [|lia]. destruct Hn as [k Hk]. subst n.
+  replace (k * 4096 + 4096 - 1)%Z with (k * 4096 + 4095)%Z by lia.
+  rewrite Z.div_add_l by lia.
+  replace (4095 / 4096)%Z with 0%Z by reflexivity. lia.
+Qed.
+End FPW37.
 
 (* [comment removed for export] *)
+Section FPW38. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma mmap_gap_sv48 : forall kb,
+  mmap_gap Sv48 kb
+  = (let g := (stack_max_size + (stack_guard_gap_bytes kb
+                 + if kb_aslr kb then stack_rnd_max else 0))%Z in
+     if (g <? mmap_min_gap)%Z then mmap_min_gap else g).
+Proof.
+  intros kb. pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+  unfold mmap_gap. cbv zeta.
+  rewrite Z.mod_small
+    by (unfold two_pow_64, stack_max_size, stack_rnd_max;
+        destruct (kb_aslr kb); lia).
+  assert (Hmax : mmap_max_gap Sv48 = 117281240296105%Z)
+    by (vm_compute; reflexivity).
+  rewrite !Hmax.
+  unfold mmap_min_gap in *. rewrite !Z.gtb_ltb.
+  (* [comment removed for export] *)
+  destruct (kb_aslr kb); cbv beta iota delta [andb];
+  [ destruct (stack_max_size
+              <? stack_max_size + (stack_guard_gap_bytes kb + stack_rnd_max))%Z
+      eqn:Ein
+  | destruct (stack_max_size
+              <? stack_max_size + (stack_guard_gap_bytes kb + 0))%Z
+      eqn:Ein ];
+  try apply Z.ltb_lt in Ein; try apply Z.ltb_ge in Ein;
+  cbv beta iota delta [andb];
+  repeat (match goal with
+          | |- context [(?x <? ?y)%Z] =>
+              let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+              [ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+          end;
+          cbv beta iota delta [andb]);
+  unfold stack_max_size, stack_rnd_max in *; lia.
+Qed.
+End FPW38.
+
+Section FPW39. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma mmap_gap_sv48_mod : forall kb,
+  (mmap_gap Sv48 kb mod page_size = 0)%Z.
+Proof.
+  intros kb.
+  assert (H4096 : forall x : Z, ((4096 * x) mod 4096 = 0)%Z)
+    by (intro x; rewrite Z.mul_comm; apply Z_mod_mult).
+  rewrite mmap_gap_sv48. cbv zeta.
+  unfold stack_guard_gap_bytes, mmap_min_gap, stack_max_size,
+    stack_rnd_max, page_size.
+  destruct (_ <? _)%Z;
+    [ replace (128 * 1024 * 1024)%Z with (4096 * 32768)%Z by reflexivity;
+      apply H4096 |].
+  destruct (kb_aslr kb);
+    [ replace (8 * 1024 * 1024
+               + (4096 * stack_guard_gap_pages kb + 1073737728))%Z
+        with (4096 * (264191 + stack_guard_gap_pages kb))%Z by lia
+    | replace (8 * 1024 * 1024 + (4096 * stack_guard_gap_pages kb + 0))%Z
+        with (4096 * (2048 + stack_guard_gap_pages kb))%Z by lia ];
+    apply H4096.
+Qed.
+End FPW39.
 
 (* [comment removed for export] *)
+Section FPW40. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma stack_window_lo_ge_sp : forall inp (sp brk0 mbase : word) draw,
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  (bv_unsigned sp - stack_max_size
+   <= stack_window_lo (in_kernel inp) mbase draw)%Z.
+Proof.
+  intros inp sp brk0 mbase draw (_ & Hsp & _).
+  pose proof (launch_sp_le_top inp (ed_top draw) sp Hsp).
+  unfold stack_window_lo.
+  apply Z.le_trans with (bv_unsigned (ed_top draw) - stack_max_size)%Z;
+    [lia | apply Z.le_max_l].
+Qed.
+End FPW40.
 
 (* [comment removed for export] *)
-Lemma store_ok_wseg : ltac2:(zQ "b0!h9!jc!hl9!hm0!nd!hh2!hn2!l9!hke!hm7!iq9>4segs@1$5$8>1m>0@1$1@1$0#k0@1$7@1$1@1$0#8>1a@1$1@1$0#k0>1n$6>0@3$4$2@3$a^4^2^1$3@3$4$2@4$9^5^4^3^2$3").
+Section FPW41. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma launch_base_gap_le : forall kb mbase,
+  valid_launch_base Sv48 kb mbase ->
+  (bv_unsigned mbase + stack_guard_gap_bytes kb
+   <= va_stack_top Sv48
+      - (if kb_aslr kb then 0x407ff000 else 8 * 1024 * 1024))%Z.
+Proof.
+  intros kb mbase (r & Hr & _ & _ & Heq).
+  pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+  rewrite Heq. unfold mmap_base_of.
+  assert (Hdiv : (page_size
+                  | va_stack_top Sv48 - mmap_gap Sv48 kb - page_size * r)%Z).
+  { apply Z.divide_sub_r; [apply Z.divide_sub_r|].
+    - exists 34359738368%Z. vm_compute. reflexivity.
+    - apply Z.mod_divide; [unfold page_size; lia|]. apply mmap_gap_sv48_mod.
+    - exists r. unfold page_size. lia. }
+  rewrite page_round_up_Z_aligned
+    by (apply Z.mod_divide; [unfold page_size; lia | exact Hdiv]).
+  rewrite mmap_gap_sv48. cbv zeta.
+  unfold mmap_min_gap, va_stack_top, sp_window_hi, stack_max_size,
+    stack_rnd_max, page_size in *.
+  destruct (kb_aslr kb); cbv beta iota;
+  repeat (match goal with
+          | |- context [(?x <? ?y)%Z] =>
+              let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+              [ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+          end;
+          cbv beta iota);
+  lia.
+Qed.
+End FPW41.
+
+(* [comment removed for export] *)
+Section FPW42. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma stack_window_lo_valid : forall inp (sp brk0 mbase : word) draw,
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  stack_window_lo (in_kernel inp) mbase draw
+  <= bv_unsigned sp + stack_window_reach - stack_max_size.
+Proof.
+  intros inp sp brk0 mbase draw Hlaunch (Htop & Hsp & Hbase).
+  pose proof (launch_top_minus_sp inp (ed_top draw) sp Hlaunch Hsp) as Hd.
+  pose proof (launch_base_gap_le (in_kernel inp) mbase Hbase) as Hg.
+  destruct Htop as (_ & Hhi & Hlo).
+  unfold stack_window_lo, stack_window_reach, stack_max_size,
+    va_stack_top, sp_window_hi, stack_rnd_max, page_size in *.
+  destruct (kb_aslr (in_kernel inp)); cbv beta iota in Hg, Hlo;
+    apply Z.max_lub; lia.
+Qed.
+End FPW42.
+
+(* [comment removed for export] *)
+Section FPW43. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_wrap_window_valid :
+  forall segs inp mbase ph entry (sp brk0 : word) a n draw,
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  bv_unsigned sp + stack_window_reach - stack_max_size <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+  store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
+Proof.
+  intros segs inp mbase ph entry sp brk0 a n draw Hvl Hlau Hlo Hhi.
+  apply store_ok_wrap_window; [|exact Hhi].
+  pose proof (stack_window_lo_valid inp sp brk0 mbase draw Hvl Hlau). lia.
+Qed.
+End FPW43.
+
+(* [comment removed for export] *)
+Section FPW44. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_zeros_hit : forall segs m zs a n,
+  zs <> [] ->
+  bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+  (forall x : word,
+      bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n ->
+      zeros_cover zs x = true) ->
+  store_ok segs (apply_zeros m zs) a n = true.
+Proof.
+  intros segs m zs a n Hne Hnw Hcov.
+  apply store_ok_of_all; [exact Hnw|].
+  intros x Hx. unfold wview, apply_zeros.
+  destruct zs as [|z zs']; [contradiction|].
+  rewrite (Hcov x Hx). discriminate.
+Qed.
+End FPW44.
+
+(* [comment removed for export] *)
+Section FPW45. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_zmem : forall segs m (b l a : word) (n : nat),
+  bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+  bv_unsigned b <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= bv_unsigned b + bv_unsigned l ->
+  store_ok segs (zmem m b l) a n = true.
+Proof.
+  intros segs m b l a n Hnw Hlo Hhi.
+  apply store_ok_of_all; [exact Hnw|].
+  intros x Hx. unfold wview, zmem.
+  rewrite (proj2 (Z.leb_le _ _)) by lia.
+  rewrite (proj2 (Z.ltb_lt _ _)) by lia.
+  cbn. discriminate.
+Qed.
+End FPW45.
+
+(* [comment removed for export] *)
+Section FPW46. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Definition store_grant_ok (segs : list Segment) (m : word -> option byte)
+                    (b l : word) : Prop :=
+  forall (a : word) (n : nat),
+    bv_unsigned b <= bv_unsigned a ->
+    bv_unsigned a + Z.of_nat n <= bv_unsigned b + bv_unsigned l ->
+    store_ok segs m a n = true.
+End FPW46.
+
+Section FPW47. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_grant_zmem : forall segs m b l,
+  bv_unsigned b + bv_unsigned l <= 2 ^ 64 ->
+  store_grant_ok segs (zmem m b l) b l.
+Proof.
+  intros segs m b l Hnw a n Hlo Hhi. apply store_ok_zmem; lia.
+Qed.
+End FPW47.
+
+(* [comment removed for export] *)
+Section FPW48. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_grant_zmem_prefix : forall segs m b logical physical,
+  (bv_unsigned logical <= bv_unsigned physical)%Z ->
+  (bv_unsigned b + bv_unsigned physical <= 2 ^ 64)%Z ->
+  store_grant_ok segs (zmem m b physical) b logical.
+Proof.
+  intros segs m b logical physical Hle Hnw a n Hlo Hhi.
+  apply store_ok_zmem; lia.
+Qed.
+End FPW48.
+
+Section FPW49. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_grant_mono : forall segs m m' b l,
+  mem_grows m m' -> store_grant_ok segs m b l -> store_grant_ok segs m' b l.
+Proof.
+  intros segs m m' b l Hg H a n Hlo Hhi.
+  eapply store_ok_mono; [exact Hg|]. apply H; assumption.
+Qed.
+End FPW49.
+
+(* [comment removed for export] *)
+Section FPW50. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_seg_writable : forall segs m a n,
+  bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+  (forall x : word,
+      bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n ->
+      exists seg,
+        find_segment segs (bv_unsigned x) 1 = Some seg /\
+        seg_writable seg = true /\
+        segment_byte_at (seg_bytes seg)
+                    (Z.to_N (bv_unsigned x - Z.of_N (seg_base seg))) <> None) ->
+  store_ok segs m a n = true.
+Proof.
+  intros segs m a n Hnw Hall.
+  apply store_ok_of_all; [exact Hnw|].
+  intros x Hx. unfold wview.
+  destruct (m x) as [b|]; [discriminate|].
+  destruct (Hall x Hx) as [seg [Hfind [Hw Hb]]].
+  rewrite Hfind, Hw. exact Hb.
+Qed.
+End FPW50.
+
+(* [comment removed for export] *)
+Section FPW51. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_wseg : forall segs m a n,
+  wseg_ok segs a n = true -> store_ok segs m a n = true.
 Proof.
   intros segs m a n; revert a m; induction n as [|n IH]; intros a m H; [reflexivity|].
   cbn [wseg_ok] in H.
@@ -121,9 +708,16 @@ Proof.
   destruct (m a) as [b0|]; [apply IH, Hrec|].
   rewrite Hseg, Hwr, Hb. apply IH, Hrec.
 Qed.
+End FPW51.
 
 (* [comment removed for export] *)
-Lemma store_ok_all : ltac2:(zQ "h40!h9!jc!ihd!l9!nd!ik3!ika!il0!m2!hl9!hh2!hn2!hm0!ila!o2!hke!hm7!hga!im0!im6>4segs@1$a$f>1m>0@1$1@1$0#k0@1$3@1$1@1$0#8>1n$b>1a@1$1@1$0#k0>0@2$6@2$5@2$2@1$0#k0^1@1$7^2@2$h3+2+k0>0@3$4$9@4$h0^5^4^2^3$c>1x@1$1@1$0#k0>0@2$d@2$6@2$2@1$0#k0^4@2$2@1$0#k0^1@2$h2@2$2@1$0#k0^1@2$5@2$2@1$0#k0^4@1$7^5@1$e@3$4@1$3@1$1@1$0#8@3$h1^8^7^2@1$8@1$1@1$0#8").
+Section FPW52. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_all : forall segs m n a,
+  bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+  store_ok segs m a n = true ->
+  forall x : word,
+    bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n ->
+    wview segs m x <> None.
 Proof.
   intros segs m n; induction n as [|n IH]; intros a Hnw H x Hx;
     [cbn in Hx; lia|].
@@ -139,27 +733,47 @@ Proof.
   (* [comment removed for export] *)
   eapply IH; [ | exact H | ]; lia.
 Qed.
+End FPW52.
 
-Lemma store_ok_sub : ltac2:(zQ "f0!h9!ihd!jc!ik3!ika!il0!hl9!hn2!hm0!nd!hm7!hh2!l9!hke!im6>4segs@1$b$d>1m>0@1$2@1$0#k0@1$c@1$2@1$0#8>2lo@1$2@1$0#k0>1a@1$2@1$0#k0>1N$7>1n$7>0@2$4@2$3@2$1@1$0#k0^4@1$5^2@2$e+2+k0>0@3$9$6@4$a^7^6^5^3$8>0@2$4@2$1@1$0#k0^6@2$1@1$0#k0^5>0@2$4@2$3@2$1@1$0#k0^6@1$5^4@2$3@2$1@1$0#k0^7@1$5^5@3$9$6@4$a^a^9^7^5$8").
+Section FPW53. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_sub : forall segs m (lo a : word) (N n : nat),
+  bv_unsigned lo + Z.of_nat N <= 2 ^ 64 ->
+  store_ok segs m lo N = true ->
+  bv_unsigned lo <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= bv_unsigned lo + Z.of_nat N ->
+  store_ok segs m a n = true.
 Proof.
   intros segs m lo a N n Hnw Hok Hl Hh.
   apply store_ok_of_all; [lia|].
   intros x Hx. apply (store_ok_all segs m N lo Hnw Hok). lia.
 Qed.
+End FPW53.
 
 (* [comment removed for export] *)
-Lemma store_ok_window : ltac2:(zQ "h10!h9!nd!ir4!jc!ika!ihd!hl9!hn2!hm0!ik3!il0!hh2!l9!hke!hm7!iq9!im6>4segs@1$b$d>1m>0@1$3@1$0#k0@1$c@1$3@1$0#8>2lo@1$3@1$0#k0>1a@1$3@1$0#k0>1N$7>1n$7>4base$2>2hi$2>0@3$1$2@2$5@1$0#k0^6^2>0@3$1$2@2$9^3@1$a^5^2>0@2$4^3@2$h0+2+k0>0@3$1$6@3$f^b^9^7$8>0@2$4^6@2$5@1$0#k0^9>0@2$4@2$9@2$5@1$0#k0^a@1$a^8^6@3$1$6@4$e^e^d^b^9$8").
+Section FPW54. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_window : forall segs m (lo a : word) (N n : nat) (base hi : Z),
+  bv_unsigned lo = base ->
+  base + Z.of_nat N = hi ->
+  hi <= 2 ^ 64 ->
+  wseg_ok segs lo N = true ->
+  base <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= hi ->
+  store_ok segs m a n = true.
 Proof.
   intros segs m lo a N n base hi Hbase Htop Hnw Hw Hl Hh.
   eapply store_ok_sub; [ | apply store_ok_wseg, Hw | | ]; lia.
 Qed.
+End FPW54.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Lemma store_ok_read_aux : ltac2:(zQ "e0!h9!jc!hh2!l9!nd!ir7!hl9!hn2!hm0!ire!hke!hm7!hga!iv1>4segs@1$2$a>1m>0@1$1@1$0#k0@1$3@1$1@1$0#8>1n$7>1a@1$1@1$0#k0>0@3$4$6@4$b^4^3^1^2$8@2$9@1$2@1$1@1$0#8\1w@1$2@1$1@1$0#8@3$4@1$3@1$2@1$1@1$0#8@3$d@2$c^6^5^3^4@2$5@1$2@1$1@1$0#8^1").
+Section FPW55. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_read_aux : forall segs m n (a : word),
+  store_ok segs m a n = true ->
+  exists w, read_bytes_aux (wview segs m) a n = Some w.
 Proof.
   intros segs m n; induction n as [|n IH]; intros a H.
   - exists []. reflexivity.
@@ -167,17 +781,83 @@ Proof.
     destruct (wview segs m a) as [b|] eqn:Hv; [|discriminate].
     destruct (IH (a + 1)%bv H) as [w Hw]. rewrite Hw. exists (b :: w). reflexivity.
 Qed.
+End FPW55.
+
+Section FPW56. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_ok_wbuf : forall segs ms (buf cnt : word),
+  store_ok segs (ms_mem ms) buf (word_to_nat cnt) = true ->
+  exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
+Proof.
+  intros segs ms buf cnt H.
+  rewrite read_bytes_map_eq. unfold ms_writable_byte.
+  apply store_ok_read_aux. exact H.
+Qed.
+End FPW56.
 
 (* [comment removed for export] *)
+Section FPW57. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma of_nat_word_to_nat : forall w : word,
+  Z.of_nat (word_to_nat w) = bv_unsigned w.
+Proof.
+  intro w. unfold word_to_nat. pose proof (u64_range w). lia.
+Qed.
+End FPW57.
 
 (* [comment removed for export] *)
+Section FPW58. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma store_grant_wbuf : forall segs ms (b l buf cnt : word),
+  store_grant_ok segs (ms_mem ms) b l ->
+  bv_unsigned b <= bv_unsigned buf ->
+  bv_unsigned buf + bv_unsigned cnt <= bv_unsigned b + bv_unsigned l ->
+  exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
+Proof.
+  intros segs ms b l buf cnt Hg Hlo Hhi.
+  apply store_ok_wbuf, Hg; rewrite ?of_nat_word_to_nat; lia.
+Qed.
+End FPW58.
 
 (* [comment removed for export] *)
+Section FPW59. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma heap_rg_wbuf : forall segs ms (b l buf cnt : word) (cur : Z),
+  store_grant_ok segs (ms_mem ms) b l ->
+  cur <= bv_unsigned b + bv_unsigned l - bv_unsigned b ->
+  covers (heap_rg b cur) buf (word_to_nat cnt) ->
+  exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
+Proof.
+  intros segs ms b l buf cnt cur Hg Hcur Hc.
+  destruct Hc as [Hlo Hhi]. cbn [heap_rg rg_lo rg_hi] in Hlo, Hhi.
+  rewrite of_nat_word_to_nat in Hhi.
+  eapply store_grant_wbuf; [exact Hg | lia | lia].
+Qed.
+End FPW59.
 
 (* [comment removed for export] *)
+Section FPW60. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma zmem_wbuf : forall segs ms m (b l buf cnt : word),
+  mem_grows (zmem m b l) (ms_mem ms) ->
+  bv_unsigned b + bv_unsigned l <= 2 ^ 64 ->
+  bv_unsigned b <= bv_unsigned buf ->
+  bv_unsigned buf + bv_unsigned cnt <= bv_unsigned b + bv_unsigned l ->
+  exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
+Proof.
+  intros segs ms m b l buf cnt Hgr Hnw Hlo Hhi.
+  eapply store_grant_wbuf; [ | exact Hlo | exact Hhi ].
+  eapply store_grant_mono; [exact Hgr|]. apply store_grant_zmem. exact Hnw.
+Qed.
+End FPW60.
 
 (* [comment removed for export] *)
-End FPX1.
+Example drain_buffer_in_grant : forall segs ms m (b l buf cnt : word) a bs,
+  ms_mem ms = wbytes (zmem m b l) a bs ->
+  bv_unsigned b + bv_unsigned l <= 2 ^ 64 ->
+  bv_unsigned b <= bv_unsigned buf ->
+  bv_unsigned buf + bv_unsigned cnt <= bv_unsigned b + bv_unsigned l ->
+  exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
+Proof.
+  intros segs ms m b l buf cnt a bs Hm Hnw Hlo Hhi.
+  eapply zmem_wbuf;
+    [ rewrite Hm; apply wbytes_grows | exact Hnw | exact Hlo | exact Hhi ].
+Qed.
 
 (* [comment removed for export] *)
 Ltac store_ok_peel :=
@@ -188,12 +868,41 @@ Ltac store_ok_peel :=
     | eapply store_ok_mono; [apply apply_writes_grows|] ].
 
 (* [comment removed for export] *)
+Ltac store_ok_base :=
+  first
+    [ eapply store_ok_wrap_window_valid;
+      [ eassumption | eassumption
+      | unfold stack_window_reach, stack_max_size; u_norm; lia
+      | u_norm; lia ]
+    | eapply store_ok_zeros_hit;
+      [ discriminate | u_norm; lia | intros; u_norm; lia ]
+    | apply store_ok_zmem; u_norm; lia ].
 
 (* [comment removed for export] *)
+Ltac solve_store_ok :=
+  store_ok_peel;
+  first [ store_ok_base
+        | eapply store_ok_mono; [apply zmem_grows|];
+          store_ok_peel; store_ok_base ].
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Create HintDb store_ok_db.
 
+Ltac store_ok_grows := solve [ eauto with store_ok_db ].
+
+Ltac solve_store_ok_inv :=
+  first [ solve_store_ok
+        | store_ok_peel;
+          eapply store_ok_mono; [ store_ok_grows | ]; solve_store_ok ].
+
 (* [comment removed for export] *)
-(* [comment removed for export] *)
+Ltac solve_mem_grows :=
+  repeat first
+    [ solve [ eauto with store_ok_db ]
+    | apply mem_grows_refl
+    | eapply mem_grows_trans; [ | apply wbytes_grows ]
+    | eapply mem_grows_trans; [ | apply zmem_grows ]
+    | eapply mem_grows_trans; [ | apply write_to_mem_grows ]
+    | eapply mem_grows_trans; [ | apply apply_zeros_grows ]
+    | eapply mem_grows_trans; [ | apply apply_writes_grows ] ].

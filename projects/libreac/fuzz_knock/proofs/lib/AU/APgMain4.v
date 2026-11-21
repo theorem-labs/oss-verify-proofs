@@ -6,7 +6,7 @@
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82), pc 0x7f1ec-0x7f218, from ss_T to ss_M
    (lib/AU/APgStates.v; invariants lib/AU/APgLoop0.v), with the optional call of reac_knock_heard at 0x7f210.
    The proof is lib/A/APgMain4.v's (donor model
-   proofs/cgif/cgif_file_fuzzer/lib/A at c8557374ad2e: ACfe.v:228-285, ACfc.v:110-183, ACfe.v:181-208, :294-318,
+   proofs/cgif/cgif_file_fuzzer/lib/A: ACfe.v:228-285, ACfc.v:110-183, ACfe.v:181-208, :294-318,
    ACf9.v:364-388, ACf6.v:52-61), with the module paths of the lib/AU twins and the asan-ubsan pcs.  The twelve words
    of the segment are the asan words up to the call (internal path,
    section 2, row S4): only the pcs move (+0x58) and the callee entry is reac_knock_heard at 0x7f520 (RA 0x7f214).
@@ -23,6 +23,7 @@
    Section hypotheses: MTL, TL, LAWS, ML (as every segment) and HEARD : tknock_heard_specX (SK := SK) tfibsegs B MT
    A_reac_knock_heard (a Theorem Labs lane's contract lib/A/APgCSpec.v at segs := tfibsegs of lib/AU/AWalkFw0.v and the
    asan-ubsan entry 0x7f520).  rule 24: no function proved. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -123,10 +124,10 @@ assert (Hf : afact_ok Ev n f) by
      ltac:(vm_compute; repeat (first [left; reflexivity | right]))) as Hm;
    unfold afact_ok in Hm |- *; replace (ew Ev n) with (ew Ev m) by vtac; exact Hm);
 pose proof (st_ok_add_fact tfibsegs Ev ssx msx n f HS Hf) as HS3; clear HS Hf; rename HS3 into HS end.
-(* [DONOR A/ACf9.v:364-388 reseatL, as lib/A/AWalkFw2.v:190-214 carries it], with the junk-atom floor K a parameter
+(* [DONOR A/ACf9.v:364-388 reseatL, as lib/A/AWalkFw2.v:191-215 carries it], with the junk-atom floor K a parameter
    instead of the state's atom bound: the call's clobbered registers get atoms K.., which must stay clear of the
    ss_M havoc window 720..735 that the join writes.  The re-based facts' side conditions are closed numerals, so
-   nat_side closes them (as rebaseE, lib/AU/AWalkFw1.v:56); AG2's need only Hnn.  A whole-context lia there took
+   nat_side closes them (as rebaseE, lib/AU/AWalkFw1.v:57); AG2's need only Hnn.  A whole-context lia there took
    about 8 minutes of rt_S4. *)
 Ltac reseatK HS K HJ2 HP2 keep AG kept_tac :=
 let HS2 := fresh "HS2" in

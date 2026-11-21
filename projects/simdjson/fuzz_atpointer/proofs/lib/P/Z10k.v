@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -134,14 +135,67 @@ Proof.
   unfold init_ssp_post, rtd_cells. sfinish.
 Qed.
 
-Definition auxv20 (rnd uid hw : word) : list word :=
-  [Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
-   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; z64;
-   Z_to_bv 64 25; rnd; z64; z64].
+(* The auxv the default kernel lays ([Run.launch_auxv] with [kb_rseq] true):
+   ARCH_DLINFO's ten entries, [create_elf_tables]' sixteen, the CONFIG_RSEQ
+   pair and AT_NULL.  Keys and the image's own PhdrInfo are literal; the rest
+   are the launch's values. *)
+Definition auxv29 (la : LaunchAuxv) (hw ent uid gid rnd efn : word) : list word :=
+  [Z_to_bv 64 33; la_sysinfo_ehdr la;
+   Z_to_bv 64 40; cw_l1i_size (la_cache la); Z_to_bv 64 41; cw_l1i_geom (la_cache la);
+   Z_to_bv 64 42; cw_l1d_size (la_cache la); Z_to_bv 64 43; cw_l1d_geom (la_cache la);
+   Z_to_bv 64 44; cw_l2_size (la_cache la); Z_to_bv 64 45; cw_l2_geom (la_cache la);
+   Z_to_bv 64 46; cw_l3_size (la_cache la); Z_to_bv 64 47; cw_l3_geom (la_cache la);
+   Z_to_bv 64 51; la_minsigstksz la;
+   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 17; Z_to_bv 64 100;
+   Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
+   Z_to_bv 64 7; z64; Z_to_bv 64 8; z64; Z_to_bv 64 9; ent;
+   Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 13; gid; Z_to_bv 64 14; gid;
+   Z_to_bv 64 23; z64; Z_to_bv 64 25; rnd; Z_to_bv 64 31; efn;
+   Z_to_bv 64 27; Z_to_bv 64 28; Z_to_bv 64 28; Z_to_bv 64 32; z64; z64].
 
-Lemma auxv20_auxv_words : forall sp argv envp uid hw,
-  auxv_words Plain.M.phdrs sp argv envp uid hw = auxv20 (Z_to_bv 64 (rnd_addr sp argv envp)) uid hw.
+Lemma auxv29_length : forall la hw ent uid gid rnd efn, length (auxv29 la hw ent uid gid rnd efn) = 58%nat.
 Proof. reflexivity. Qed.
+
+Lemma auxv29_auxv_words : forall la entry sp top argv envp execfn uid gid hw,
+  la_rseq la = true ->
+  auxv_words la Plain.M.phdrs entry sp top argv envp execfn uid gid hw
+  = auxv29 la hw entry uid gid (Z_to_bv 64 (rnd_addr true sp argv envp)) (Z_to_bv 64 (xfn_base top argv envp execfn)).
+Proof. intros la entry sp top argv envp execfn uid gid hw Hr. unfold auxv_words, auxv_entries. rewrite Hr. reflexivity. Qed.
+
+(* The SAME auxv for a kernel built WITHOUT CONFIG_RSEQ: [Run.auxv_entries]
+   (75d69e00 theories/LinuxProcessSem/StackLayout.v:229) appends the rseq pair
+   between the twenty-six common entries and AT_NULL, conditional on
+   [la_rseq la], so the rseq-off table is this one with the four words
+   [27; 28; 28; 32] removed and AT_NULL's [z64; z64] kept.  54 words, matching
+   [Run.auxv_count false = 27] and [auxv_size false = 432]
+   (StackLayout.v:276-277).
+
+   Added 2026-11-06 for the kernel de-pin: [Run.valid_input_either] leaves
+   [kb_rseq] free, so a start-up walk must cover both tables.  The two lemmas
+   below are [auxv29_length] and [auxv29_auxv_words] with the other boolean --
+   same statements, same proofs, [Hr : la_rseq la = false]. *)
+Definition auxv27 (la : LaunchAuxv) (hw ent uid gid rnd efn : word) : list word :=
+  [Z_to_bv 64 33; la_sysinfo_ehdr la;
+   Z_to_bv 64 40; cw_l1i_size (la_cache la); Z_to_bv 64 41; cw_l1i_geom (la_cache la);
+   Z_to_bv 64 42; cw_l1d_size (la_cache la); Z_to_bv 64 43; cw_l1d_geom (la_cache la);
+   Z_to_bv 64 44; cw_l2_size (la_cache la); Z_to_bv 64 45; cw_l2_geom (la_cache la);
+   Z_to_bv 64 46; cw_l3_size (la_cache la); Z_to_bv 64 47; cw_l3_geom (la_cache la);
+   Z_to_bv 64 51; la_minsigstksz la;
+   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 17; Z_to_bv 64 100;
+   Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
+   Z_to_bv 64 7; z64; Z_to_bv 64 8; z64; Z_to_bv 64 9; ent;
+   Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 13; gid; Z_to_bv 64 14; gid;
+   Z_to_bv 64 23; z64; Z_to_bv 64 25; rnd; Z_to_bv 64 31; efn;
+   z64; z64].
+
+Lemma auxv27_length : forall la hw ent uid gid rnd efn, length (auxv27 la hw ent uid gid rnd efn) = 54%nat.
+Proof. reflexivity. Qed.
+
+Lemma auxv27_auxv_words : forall la entry sp top argv envp execfn uid gid hw,
+  la_rseq la = false ->
+  auxv_words la Plain.M.phdrs entry sp top argv envp execfn uid gid hw
+  = auxv27 la hw entry uid gid (Z_to_bv 64 (rnd_addr false sp argv envp)) (Z_to_bv 64 (xfn_base top argv envp execfn)).
+Proof. intros la entry sp top argv envp execfn uid gid hw Hr. unfold auxv_words, auxv_entries. rewrite Hr. reflexivity. Qed.
 
 Lemma envp_count_loop : forall (ws : list word) (Q : machine_state -> Prop)
     ra sp gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6

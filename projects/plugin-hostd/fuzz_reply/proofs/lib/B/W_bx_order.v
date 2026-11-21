@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, image B's (fuzz_reply.asan-ubsan) block `order` of SEG_EXIT of
    LLVMFuzzerTestOneInput: lx_order, the statement lib/B/W_bx_defs.v lx_order_S fixes.  Ported from the proved A donor
-   b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v:574-1781 (the lxo_ table lemmas, the
+   lib/A/W_LLVMFuzzerTestOneInput_exit.v:575-1782 (the lxo_ table lemmas, the
    lxk_ kept lemmas of :679-1078, lxo_loop and lx_order), with every register, offset, object and fact re-read from
    B's objdump (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record), 0x84e64-0x84f00):
      0x84e64  auipc a0 / lw s3 = g_nsrc (B's listing: PHi 81 / PLdHi x19 x10 81, object A_OBJ 4; no g_nsrc high half
@@ -20,6 +20,7 @@
    SB is in s11 (x27).  The traps' facts (g_src not null, 16-aligned, g_src + 56 i <= g_src + 896 below the
    allocation ceiling) come from the table block: arelay_at names (g_src, ATABLE) a live block, so AR's al_blocks
    bounds it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane WalkB2; integrator ReallocPrimary).
    rule 24: no function proved here (instance lemmas for an interface; the free interceptor walk itself is A2's
    WrapFreeA* text, to be relocated from its sha of record).
@@ -10,9 +11,9 @@
    relation (WrapFreeATop.v Section k: Variable ARX; Hypotheses HXI / HXA / HXF; WrapFreeARet.wf_ret_gen over
    ARX_ARcf + HXF).  This file gives the instance lemmas at ARXq_cf.
 
-   HXA and HXF are here; HXF is stated against A2's type at f6c2b01c2457 (WrapFreeATop.v:86-90), which has the
+   HXA and HXF are here; HXF is stated against A2's type (WrapFreeATop.v:87-91), which has the
    view-equality premise (A2's alc_xs rebase keeps it).  HXI is NOT stated yet, on purpose: on this base ARXq_cf's
-   conjuncts exh_cell_cf / errb_cells_cf (YGcfInstBase.v:95-98) are memory-cell facts that ARcf does not give
+   conjuncts exh_cell_cf / errb_cells_cf (YGcfInstBase.v:96-99) are memory-cell facts that ARcf does not give
    (region_cells_cf drops the exhausted byte; the errbuf cells are ARX_cf's own), and acall_pre_cf
    (Reusable/YG0dcf.v:57-80) carries neither, so HXI's ARX at Deallocate's entry would be unprovable.  Main's decision
    (2026-10-30, option (i)): the two cells become ARcf / ALedger_cf fields (AbudgetRestate's field round 2),
@@ -39,16 +40,16 @@ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : Cf
 (* The unit's instance-object predicate (preset's and F2a's IOK). *)
 Definition IOK_reply (B : asyms) : Z -> Prop := fun i => i = as_inst B.
 
-(* HXA: the call-site relation gives ARcf (A2's WrapFreeATop.v:85 / WrapFreeARet.wf_ret_gen's ARX_ARcf premise). At
+(* HXA: the call-site relation gives ARcf (A2's WrapFreeATop.v:86 / WrapFreeARet.wf_ret_gen's ARX_ARcf premise). At
    AImg_reply, im_segs is tfibsegs by delta, so ARXq_cf is an ARXh_t tfibsegs. *)
 Lemma ARXq_reply_HXA : forall (B : asyms) (IOK : Z -> Prop),
   ARX_ARcf tfibsegs B (YGcfInstBase.ARXq_cf B IOK).
 Proof. intros B IOK Hp inst ly S W mem md [[_ [A _]] _]. exact A. Qed.
 
-(* HXF: the call-site relation survives a view-equal memory and the materialization (A2's WrapFreeATop.v:86-90 at
-   f6c2b01c2457, the second premise being the view equality, the third ARcf at the new memory).  IOK and qtight do not
+(* HXF: the call-site relation survives a view-equal memory and the materialization (A2's WrapFreeATop.v:87-91,
+   the second premise being the view equality, the third ARcf at the new memory).  IOK and qtight do not
    read memory; ARcf is given; xs_mapped_cf moves through with_vm_backing (YGcfXsMapped.xs_mapped_cf_wvb).  On fu1
-   b70f01ca629 ARX_cf has no cell conjuncts (they are ARcf's fields amc_exh_cell / amc_errb_cells, YGcfInstBase.v:72-79),
+   ARX_cf has no cell conjuncts (they are ARcf's fields amc_exh_cell / amc_errb_cells, YGcfInstBase.v:73-80),
    so the given ARcf carries them. *)
 Lemma ARXq_reply_HXF : forall (B : asyms) (IOK : Z -> Prop) Hp inst ly S W mem md mem' mat,
   YGcfInstBase.ARXq_cf B IOK Hp inst ly S W mem md ->

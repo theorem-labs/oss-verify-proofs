@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs: the secondary-request count of drain's request trace (drain_b_c.drain_tr, W_contract.dr_tr). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfTr.v, with its module paths changed; 10 of its 324 lines of code are new or changed and 8 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfTr.v, with its module paths and module names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* KF-COUNT row #5, drain: the count nsec_tr (ReplyKfNsecB.v) of the requests one drain makes, in the form agreed for
    the drains: the bytes the drain consumes pay for its begins.  proves no function (kind: segment lemma).
-   The image-B (asan-ubsan) twin of lib/A/ReplyKfTr.v at 88de4270740 (F6): the same text over lib/B/W_contract.v and
+   The image-B (asan-ubsan) twin of lib/A/ReplyKfTr.v (F6): the same text over lib/B/W_contract.v and
    lib/B/W_rep.v (the drain model, Prog/drain_b_c.v, is shared).
    - A drain's secondary requests are of three kinds (Prog/drain_b_c.v):
      (a) gesture_seen's held-array realloc to (|H| + 1) * 8 and the key's strndup, on a begin line not held
@@ -395,7 +396,7 @@ Proof.
   unfold W_rep.APARTIAL in HU6. split; [exact HC | lia].
 Qed.
 
-(* kf_dr from dr_spec_x's own premises (lib/B/W_contract_x.v:756-778: aentry_ok :764, asrc_at :765, tr_max (dr_tr ..)
+(* kf_dr from dr_spec_x's own premises (lib/B/W_contract_x.v:757-779: aentry_ok :764, asrc_at :765, tr_max (dr_tr ..)
    < MMAX :772), and MMAX <= 2 ^ 30 (CfParamsReplyB.reply_HMMAX at fr_MMAX, lib/B/CfParamsReplyB.v:129) *)
 Lemma kf_dr_at : forall ly S W mem HA c mx no cap e h MMAX,
   W_rep.asrc_at B ly S W mem HA h -> W_rep.aentry_ok B ly S W mem e ->

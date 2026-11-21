@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only the contract of the shadow-fill entries (__asan_set_shadow_XX), restated over the asan-state definitions of the cgif_file_fuzzer proof as libreac/fuzz_identity holds them; module names. *)
-(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a working branch a1ee3c81405) to libreac/fuzz_identity: module names only (this file states no image address). *)
+(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a working branch) to libreac/fuzz_identity: module names only (this file states no image address). *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_identity/proofs/lib/A/Rt/SetShadowDef.v (donor image sha256 c954b804786c), with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/SetShadowDef.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/SetShadowDef.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/SetShadowDef.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/SetShadowDef.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

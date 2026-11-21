@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AllocGtopM.v (commit 30a1993588f, c5 + memnorm; file sha256 90d534c545e6) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AllocGtopM.v at commit 789778cb16f, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AllocGtopM.v (c5 + memnorm; file sha256 90d534c545e6) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AllocGtopM.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, full Allocate): the memnorm-kept twin of AllocGtopE: MemnormT.aalloc_realizes_em
    (every size n < nmax) from its two cases, the primary (MemnormT.aalloc_prim_realizes_em, n <= 64512) and the
    secondary ([aalloc_sec_realizes_em], 64513 <= n).  Image-free, like AllocGtopE: the case split is on n alone.  The
@@ -24,7 +25,7 @@ Local Open Scope Z_scope.
 
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Section b.
-(* AllocG's section variables, in AllocG's order (copy of AllocGtopE.v:22-37). *)
+(* AllocG's section variables, in AllocG's order (copy of AllocGtopE.v:23-38). *)
 Variable segs : list Segment.
 Variable B : asyms.
 Variable U : list Z -> astate -> Prop.
@@ -49,7 +50,7 @@ alloc_pre segs B U ARX rpre nmax lmax al atp cf inst so bp ly S W regs mem md n 
 amreal segs (mt n tr S) W (cfg_at segs pcA regs mem md)
 (MemnormT.alloc_leaf_em segs B mt ARX AOX lpost oomb inst ly S W regs mem md n tr).
 
-(* copy of AllocGtopE.v:45-54, at the memnorm-kept forms; part 3b: the prim case reads MP, the sec case drops it *)
+(* copy of AllocGtopE.v:46-55, at the memnorm-kept forms; part 3b: the prim case reads MP, the sec case drops it *)
 Lemma aalloc_realizes_em_of_prim_sec_em :
 MemnormT.aalloc_prim_realizes_em segs B U mt ARX AOX rpre nmax lmax lpost pcA oomb al atp cf MP ->
 aalloc_sec_realizes_em ->

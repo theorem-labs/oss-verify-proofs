@@ -5,14 +5,14 @@ The scripts, logs and gate inputs in this directory cite internal working commit
 rule 24: proves no function (kind: start-up facts). This slice lets a reader re-derive every number of the 19 image-B
 start-up files `proofs/reac-repacer/fuzz_wire/lib/B/{YB01,YB03,YB05,YB12,YB13,YB1h,YB1k,YB1l,YB1m,YB1v,YCej,YD1k,YD1y,YD2i,YD2j,YE23,YE37,YE3i,YF0m}.v`
 from the pinned image (`fuzz_wire.asan-ubsan`, sha256 af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6,
-the value `projects/reac-repacer/fuzz_wire/harness.yaml` pins at commit 25e3d17bdb50) and the donor
-`proofs/cgif/cgif_file_fuzzer/lib` at commit 25e3d17bdb50. Generation logs are not part of it; they stay with the lane's
+the value `projects/reac-repacer/fuzz_wire/harness.yaml` pins) and the donor
+`proofs/cgif/cgif_file_fuzzer/lib`. Generation logs are not part of it; they stay with the lane's
 provenance. Frozen tools are cited by sha256 and commit:path, never copied in.
 
 ## Environment the writers read
 Every writer takes its paths from the environment, never from a literal: `W` (lane directory), `WK` (its work tree),
 `UB` / `UBs` (the asan-ubsan pin and its unstripped twin), `UA` / `UAs` (the asan pin and twin), `CB` / `CA` (the donor's
-asan-ubsan / asan pins), `DLIB` (the donor clone's lib), `DLIBC` (a clean export of the donor lib at 25e3d17bdb50), `TR`
+asan-ubsan / asan pins), `DLIB` (the donor clone's lib), `DLIBC` (a clean export of the donor lib), `TR`
 (the unit's trunk clone), `LT` (local scratch), `FT` (the start-up tool set below, extracted), `FR3` (`bash $FT/frozen-run.sh
 <the set's tsv>`), `HUB` (the git hub), `LR` (the fuzz_grant / fuzz_decode images used by controls), `S`
 (the start-up tools directory holding colrun / itabranges / replyscratch / frozen-run.sh), `KIT` (the ASan comparison
@@ -54,7 +54,7 @@ kit), `MAPTOOL` / `RELOCTOOL` (the kit's image address-map tool and plan-relocat
 | `gates/mk_results.py` | writes the `Gate run of record` section of `GATES-wireB.md` from the run log |
 
 ## Tools cited, not copied
-The start-up tool set of record, by sha256 and not in the published tree except ColA.v (the main line holds it, since commit a4e873577f2c, at projects/libreac/fuzz_boxreg/proofs/provenance/evidence/startup-AB/inputs/set/frozen/ColA.v.frozen-d198e5a14160) (af0m 238598b380f1, atable 42e18a7eef50,
+The start-up tool set of record, by sha256 and not in the published tree except ColA.v (the main line holds it, at projects/libreac/fuzz_boxreg/proofs/provenance/evidence/startup-AB/inputs/set/frozen/ColA.v.frozen-d198e5a14160) (af0m 238598b380f1, atable 42e18a7eef50,
 gen_ad2 979c52cd71c6, gen_ad1k 43a0cf0abc67, hsform a6de3be38c53, plantail f8aa639d5cc7, codeptr 12348302dfd2, pins
 4778073f01be, keyset f050b43e480e, ifchk f5cde600cc18, universe 8510965be502, coq/ColA.v d198e5a14160); port_core.py
 0e4e065eab9f, gen_traces.py a78026af1ae2 and resolve_code.py 81803218fe79 (by sha256; none is in the published
@@ -64,6 +64,6 @@ colrun.py 59778df6f00b, itabranges.py 6bd6b8036747, replyscratch.py cf47e327b300
 `GATES-wireB.md`.
 
 `provenance/evidence/MANIFEST.md` and the machine manifest `provenance/evidence/MANIFEST` (beside this slice) are
-GENERATED, in one run, by their one writer, mk_top_manifest.py, the registered copy of record cited at commit
-47ad23906df6 `tools/mk_top_manifest/3d332f497626/mk_top_manifest.py` (sha256
+GENERATED, in one run, by their one writer, mk_top_manifest.py, the registered copy of record cited
+ `tools/mk_top_manifest/3d332f497626/mk_top_manifest.py` (sha256
 3d332f4976269a3664554725544ad098892cbff1b2d2b2590530e191192340cc) and run from there over `provenance/evidence/`.

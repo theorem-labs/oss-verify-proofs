@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Entry_r1.v, with its module paths and module names changed; 1673 of its 1709 lines of code are new or changed and 261 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): segment X1 of the walk of check_reject_clean_starved against K0's text
    tcheck_reject_clean_starved_specX. On the kit
    (lib/A/Prog/CrsKitAp.v: DW gone, the strtod model keyed to ReaderRes.jr_strtod, crs_core's
@@ -15,7 +16,7 @@
    (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved). This
    file is one SEGMENT of that walk (kind: segment lemma); it is new.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
    - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1 listings v3,
      objects numbered by name). Entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved). X1 is slots 834 .. 848.
    - The texts: tfuzz_alloc_fail_specX (lib/A/PRH_FnAlloc.v), tcheck_reject_clean_specX
@@ -144,7 +145,7 @@ Ltac hpost := intros; hcanon; hsig; rewrite ?h_vaddi0; hgetr.
 
 (* ======================================================================================================== *)
 (* ---- a tree's block predicate matters only on its own blocks (Cno102_FKit.v pjf_*_lblk, lane CnoA102f,
-   a working branch 574c27759c8, moved here by path under the x_ prefix; this file does not Require Cno102_FKit.v) *)
+   a working branch, moved here by path under the x_ prefix; this file does not Require Cno102_FKit.v) *)
 Section pjl.
 Variable segs : list Segment.
 Lemma x_cstrR_lblk : forall m lblk lblk' a k s, pj_cstrR segs m lblk a k s -> (lblk a k -> lblk' a k) ->

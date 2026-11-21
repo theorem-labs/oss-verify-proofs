@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-entry fact hypotheses HMF, HMFw and HPF, in both sections, are stated over MainEntry's kept fact lists AMKN, AMKNW and APKN: the recorded lists, with each fact not in every one of the remade start-up lists replaced by a trivially true one). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -25,9 +26,9 @@ Section AtMain2.
 Context {rc : runConstT}.
 Variables (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem).
 Hypothesis HV : forall n, 0 <= V n < 2 ^ 64.
-Hypothesis HMF : Forall (ME.mfact_ok asegs V m) MF.asan_mem_facts.
-Hypothesis HMFw : Forall (ME.mfact_ok asegs V m) (MA.asan_mem_facts_w w).
-Hypothesis HPF : Forall (ME.pfact_ok V) MF.asan_pure_facts.
+Hypothesis HMF : Forall (ME.mfact_ok asegs V m) MA.AMKN.
+Hypothesis HMFw : Forall (ME.mfact_ok asegs V m) (MA.AMKNW w).
+Hypothesis HPF : Forall (ME.pfact_ok V) MA.APKN.
 Hypothesis MINV : mem_inv asegs m.
 Hypothesis HUSP : usp_pin V.
 Hypothesis HSH0 : MA.ashadow0 V m.
@@ -789,9 +790,9 @@ Section AtMain2.
 Context {rc : runConstT}.
 Variables (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem).
 Hypothesis HV : forall n, 0 <= V n < 2 ^ 64.
-Hypothesis HMF : Forall (ME.mfact_ok bsegs V m) MF.both_mem_facts.
-Hypothesis HMFw : Forall (ME.mfact_ok bsegs V m) (MA.both_mem_facts_w w).
-Hypothesis HPF : Forall (ME.pfact_ok V) MF.both_pure_facts.
+Hypothesis HMF : Forall (ME.mfact_ok bsegs V m) MA.AMKN.
+Hypothesis HMFw : Forall (ME.mfact_ok bsegs V m) (MA.AMKNW w).
+Hypothesis HPF : Forall (ME.pfact_ok V) MA.APKN.
 Hypothesis MINV : mem_inv bsegs m.
 Hypothesis HUSP : usp_pin V.
 Hypothesis HSH0 : MA.bshadow0 V m.

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/Reusable/YL0j_cfw.v. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/libreac/fuzz_scene/lib/AgreeWalk.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput, entry and allocation limit carried to the walk). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
@@ -49,8 +50,10 @@ Hypothesis LIMLAW : forall L A mem md, aa_MR API L A mem md -> SRC_LIM_MIN <= vm
 Theorem plain_walk_crealizes : forall sp brk mbase rnd lim inp,
   valid_sp sp -> valid_brk src0segs brk -> valid_mmap_base mbase ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   valid_input inp -> SRC_LIM_MIN <= lim ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
+  YM05.rc_lim = lim ->
   crealizes src0_msyms (init_config src0segs Plain_init_pc Plain_phdrs sp brk mbase rnd lim inp) (SPECX inp).
 Proof using AX GIL GI0 LIBXc DOB DRV FCF TBL RIres MRC FRC LIMLAW.
   exact (src0_realizes_specX_cf API AX GI RI OUT GIL GI0 LIBXc DOB DRV FCF TBL RIres MRC FRC LIMLAW).

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YG0dHc.v, with its module paths changed; 6 of its 234 lines of code are new or changed. *)
-(* CARRIED from commit 65bdc7eaf4ea59c40acad896e39a3abc5c53dc95,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG0dHc.v, sha256 a2cc2922316155f817779e0963e7b6c5e532d6b2270e2da6be951590781db9d9 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -209,7 +210,7 @@ repeat (split; [assumption|]); intros i Hi; eapply IH; [apply Hk; apply N3 | exa
 - exact AM.
 Qed.
 
-(* YFfy.v:32 amreal_ask_depot (there at tfibsegs). *)
+(* YFfy.v:33 amreal_ask_depot (there at tfibsegs). *)
 Lemma amrealG_ask_depot {R} : forall trc s (k : Z -> itree astate R) Wx c Q,
 SRrG segs Rel Wx c (fun W1 c1 => exists z, aok s (KDepot trc) z /\ amrealG segs Rel (k z) W1 c1 Q) ->
 amrealG segs Rel (IAsk (KDepot trc) s k) Wx c Q.

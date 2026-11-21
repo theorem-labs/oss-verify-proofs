@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section hypotheses entry_launch_ok_va Sv48 and valid_launch in place of entry_stack_fits, which rz_file_asan_top passes to the Run theorem; the contract tables and library node of the file family's certificates for the start state with CONFIG_RSEQ, passed to the Run theorem through hypsFR). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -20,6 +21,12 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Bridge Require Import Led
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA Require RootAsan2 AsanRun AsanImgx AsanDrun AsanApart.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp Require Ops ClientX TdOps TdInst.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.AsanU Require UnivAsan.
+(* The CONFIG_RSEQ copies first: their short names are shadowed by the in-place ones below, and are used only
+   through the full-path aliases after the imports. *)
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2FR Require T_Asan2F.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2LR Require T_Asan2L.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2ER Require T_Asan2E.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR Require Asan_r12.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2F Require T_Asan2F.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2L Require T_Asan2L.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2E Require T_Asan2E.
@@ -36,6 +43,10 @@ Module AM := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib.Mem.
 Module ME := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS.MainEntry.
 Module R2 := RootAsan2.RootAsan2.
 Module OUR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common.ShapeAlg.
+Module TFR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2FR.T_Asan2F.
+Module TLR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2LR.T_Asan2L.
+Module TER := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2ER.T_Asan2E.
+Module L12R := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR.Asan_r12.LibRunAsan_r12.
 
 Section TopAsanF.
 Context {rc : runConstT}.
@@ -62,8 +73,9 @@ Variables (en : ExecEntry) (inp : ProcInput).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hsp : valid_sp (en_sp en).
-Hypothesis Hfit : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
+Hypothesis Hlau : entry_launch_ok_va Sv48 en inp.
 Hypothesis Hhw : valid_hwcap (in_hwcap inp).
+Hypothesis Hvl : valid_launch inp.
 Hypothesis Hargc2 : length (in_argv inp) = 2%nat.
 Let p1 := AsanDrun.p1 inp.
 Let file := AsanDrun.file inp.
@@ -77,6 +89,12 @@ Hypothesis cL : ctab_ok asegs RAx T_Asan2L.CONTRACTS.
 Hypothesis cE : ctab_ok asegs RAx T_Asan2E.CONTRACTS.
 Hypothesis G0 : forall E0 K, r_PB RAx (Val.eb E0) -> LNODE asegs RAx Asan_r12.LibRunAsan_r12.N E0 K (t_st T_Asan2F.R_LIBGEN_r12_RET) ->
   LNODE asegs RAx Asan_r12.LibRunAsan_r12.N E0 K (t_st T_Asan2L.T_G0_r31o5n0o1n63o7n1o15n2o10n0o11n0o12n0o13n0o14n1o16n0o17n0).
+(* the same contract tables and library node for the certificates of the start state with CONFIG_RSEQ *)
+Hypothesis cFR : ctab_ok asegs RAx TFR.CONTRACTS.
+Hypothesis cLR : ctab_ok asegs RAx TLR.CONTRACTS.
+Hypothesis cER : ctab_ok asegs RAx TER.CONTRACTS.
+Hypothesis G0R : forall E0 K, r_PB RAx (Val.eb E0) -> LNODE asegs RAx L12R.N E0 K (t_st TFR.R_LIBGEN_r12_RET) ->
+  LNODE asegs RAx L12R.N E0 K (t_st TLR.T_G0_r31o5n0o1n63o7n1o15n2o10n0o11n0o12n0o13n0o14n1o16n0o17n0).
 
 Lemma CW0 : forall m ws, Forall (fun w => w_kind w = K_STACK) ws -> cw_holds Cw 0 [] [] ws m.
 Proof.
@@ -97,9 +115,11 @@ Theorem rz_file_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta : a
 Proof.
   intros ms mo L RNG sta HM USP AH AC HU LZ APR. pose proof (@AsanApart.IMGX_A_apart2 rc) as IMGAP.
   exact (RunAsanF.rz_file_asan AsanImgx.IMGX_A AsanImgx.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivAsan.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw Hargc2
+           AsanImgx.IMGX_A_rs3 AsanImgx.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl Hargc2
            (TopHypsAsanF.hypsF inp (en_sp en) (en_draw en) Hva ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat AI_frame_top ACCT_fds
               Hfile p1_noslash Hndir Hne Hshort cF cL cE G0)
+           (TopHypsAsanF.hypsFR inp (en_sp en) (en_draw en) Hva ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat AI_frame_top ACCT_fds
+              Hfile p1_noslash Hndir Hne Hshort cFR cLR cER G0R)
            Hfile Hndir Hne Hshort ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) IMGAP).
 Qed.
 End TopAsanF.

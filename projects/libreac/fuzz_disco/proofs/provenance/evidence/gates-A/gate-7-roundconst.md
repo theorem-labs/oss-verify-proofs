@@ -97,7 +97,7 @@ twins, all 1402 the same size); every start-up file header states how it was mad
 | IMAGE-SHADOW | 2 | 8192 = IMG_LO / 8 beside the shadow offset |
 
 Hand rows (4): `AD1g.v:1070` (4096 in the dead second arm `|| (change 6217728 with (1482 * 4096); …)`; the series code
-commit ac99185f1f10 removes that arm), `AD2a.v:363` (the 4096-byte path limit), `AFjq.v:709` and `:799` (ASan's malloc
+removes that arm), `AD2a.v:363` (the 4096-byte path limit), `AFjq.v:709` and `:799` (ASan's malloc
 fill of 4096 bytes, fill byte 190, at the call returning to 0x327d0 in `__asan::Allocator::Allocate`).
 
 No row is a real kept donor quantity. The count recompute (gate 8) covers what this gate cannot see by value.

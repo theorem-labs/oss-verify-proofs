@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rebound onto the old-pin kit (base cold/h-rw-pre-7-b-ex_value-rebind 88c5348fe7fc, kit 4f18c75d4900): the post is
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rebound onto the old-pin kit (base, kit): the post is
    fpostWFm; its memnorm keep comes from EXB's exv_rm keep and exx_memnorm_keep across the run (the run writes only bytes
    the cut's memory defines), its room from exv_room_free. Does not rest on tex_word_specX; makes no call. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan), ex_value: SEGMENT CX (EXIT) of the walk, B 0x83fa8

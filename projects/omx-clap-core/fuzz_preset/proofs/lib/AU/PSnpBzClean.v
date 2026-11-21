@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 343 of its 455 lines of code are new or changed and 1146 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* A lib/A/Bz body walk run on the CLEANED store, carried back to the real one.
    Every Bz walk takes `Mem.mem_inv asegs m` (A/Bz/Lib/Mem.v:96-102): the store holds no byte at a read-only image
    address and none at or above 2^47.  AR does not say that of the real store (it reads memory only through `aview`).
@@ -15,7 +16,7 @@
    The step-level proof follows lib/Reusable/YK04.v (step_accesses_restrict for the lazy-page hidden set), with the
    read side by value agreement (`ragree`) instead of avoidance.  Entry point: srr_of_clean_bz; post side:
    clean_window; premise side: mem_inv_clean, bytes_at_clean, ro_cells_clean, stk_clean, chk_ok_clean. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_clean.v at origin/cold/port-fm-rtprintf-param 7e395de08f5: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; rom_eq_of_views and the four items over FMH_Base's rom_viewN / rom_viewO (mrd_clean_views, srr_of_clean_bz, bz_run_clean, lib_run_clean) are replaced by rom_eq_of_consts over PSnpShared.consts_view; Section w (rt_post_ro_win_clean over AR_laws) is left out, unreached by the printf_common contract. No numeral changes. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_clean.v: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; rom_eq_of_views and the four items over FMH_Base's rom_viewN / rom_viewO (mrd_clean_views, srr_of_clean_bz, bz_run_clean, lib_run_clean) are replaced by rom_eq_of_consts over PSnpShared.consts_view; Section w (rt_post_ro_win_clean over AR_laws) is left out, unreached by the printf_common contract. No numeral changes. *)
 (* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpBzClean.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): module paths lib/A/PSnpBz -> lib/AU/PSnpBz (alreloc's image-B relocation), the image-A core A<x> -> image B's Y<x> (lib/Reusable), lib/A/Img0 -> lib/B/Img0, the PSnp glue lib/A -> lib/AU. Sentences above that name image A describe the A twin. *)
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -145,7 +146,7 @@ Proof.
   induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
     intros m c mr' rs HR Hi; cbn [interp_eff_accesses] in Hi |- *; try discriminate.
   - injection Hi as <- <- <-. exists m. split; [reflexivity|]. split; [reflexivity|]. intros; reflexivity.
-  - destruct (ov_read_bytes segs (mrestrict D m) a (width_bytes n)) as [bs|] eqn:Hrd; [|discriminate].
+  - destruct (ov_read_bytes segs (mrestrict D m) a (width_bytes n)) as [bs|] eqn:Hrd; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     rewrite (ov_read_bytes_clean _ m a bs HR Hrd).
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict D m))
       as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
@@ -234,7 +235,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_clean ms w msr' rs' HR Hs). }
   exfalso. unfold fetch_failure in Hs.
-  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
                | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)

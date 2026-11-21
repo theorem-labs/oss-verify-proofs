@@ -16,6 +16,7 @@
    dclr (dgrow s1), because ds_eintr (dgrow s1) reduces to ds_eintr s1. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_drain_tophead.v, with its module paths and module names changed; 2374 of its 2506 lines of code are new or changed and 4077 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/read_members.v, with its module paths and module names changed; 598 of its 674 lines of code are new or changed and 2430 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (asan-ubsan, harness fix #102: pin sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b):
    check_as_written's segment WB1 (row R7-2 of the #102 re-walk; the NULL arm, NEW in #102) in the continuation
    form of lib/B/Prog/Caw102B.v (re-fitted to the f97c re-keyed base by the #102 re-walk for
@@ -34,7 +35,7 @@
    trap 0x8207c is WB0's (refuted there); the abort tail 0x82080 is WB5's.
    On the kit's cut of the #102 batch, preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record) (prepared at preset-tree-at-2026-10-30T02-53-02Z.tsv (sha256 477c088a7ad3; internal record) on the batch tip preset-tree-at-2026-10-30T02-01-18Z.tsv (sha256 a12cae64b2b5; internal record)).
    BASE OF RECORD (statements, not edited here): this row's lib/B/Prog/Caw102B.v, statements of blob 5a8082469eb1
-   (caw_pre: the text's 25 premises at that blob, 27 now with the hull budget and HPOS (Caw102B.v:139-165), read BY NAME through caw_pre_fpre .. caw_pre_frm0;
+   (caw_pre: the text's 25 premises at that blob, 27 now with the hull budget and HPOS (Caw102B.v:140-166), read BY NAME through caw_pre_fpre .. caw_pre_frm0;
    caw_cnt, the conjunction of the two count premises (caw_pre_cnt); caw_prog, caw_ev1, caw_evs, caw_dead,
    caw_run_at_nth; cut_mal / caw_K_mal, cut_ev / caw_K_ev, cut_end / caw_K_end; caw_ledger (the LAST conjunct of every
    cut); caw_req, caw_hblock, caw_chain, caw_scr_new), on the kit's cut of the #102 batch,
@@ -53,7 +54,7 @@
    the batch text c40cf3fdcd2a.
    - NO RUN-WORD LIST (:841): prh_univ_closure takes CTX0 only (PRH_Base.v :1203) and cawB has no c_DW, so w1_trace
      drops its DW binder and the malloc's trace HTR is read off caw_pre_univ at c_CTX0 C alone.
-   - THE ROOM COUNTS ARE ENTRY PREMISES (:862-863): caw_pre now has 27 conjuncts (the hull budget and HPOS follow, Caw102B.v:139-165); caw_WB1 still takes caw_cnt C right
+   - THE ROOM COUNTS ARE ENTRY PREMISES (:862-863): caw_pre now has 27 conjuncts (the hull budget and HPOS follow, Caw102B.v:140-166); caw_WB1 still takes caw_cnt C right
      after caw_pre (the top supplies caw_pre_cnt). NO STATEMENT CHANGE.
    - caw_pre IS READ BY NAME: the positional destruct (it would now mis-bind: ck_frm0 moved by four) is replaced by the
      base's projections caw_pre_fpre .. caw_pre_frm0, under the same hypothesis names.
@@ -388,7 +389,7 @@ Hypothesis AMALLOC : forall fz, YGcfMallocComposeKeep.amalloc_realizes_cf_keep (
 (* image facts, discharged at PI_prog_B: the unit's image binding of B (pal_malloc, pal_env); alloc.c's and the
    harness's statics are image bytes, off the owned statics and errno, writable (S1ImgB.v pst_in_img_B / pst_writable_B
    at PI_prog_B; Hpst as Caw102B_WB3.v); the malloc's return site is the generated pi_ret_caw_malloc (B' 0x81fc0);
-   13 = g_own_ran_out in listing d42e123915ae (as Caw102B_WB4.v); the store's auipc base is the listing's alias row
+   13 = g_own_ran_out in listing (as Caw102B_WB4.v); the store's auipc base is the listing's alias row
    (SOff (A_HI 10) (-624), SOff (A_OBJ 13) 0) of B_alias_hints (PAImg_prog.v B_alias_hints_ok) *)
 Hypothesis PAL : PALib B.
 Hypothesis Hpst : forall a, Exists (in_zr a) prh_pst ->

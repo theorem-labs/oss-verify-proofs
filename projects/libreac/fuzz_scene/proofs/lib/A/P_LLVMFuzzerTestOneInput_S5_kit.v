@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the LANE KIT of SEGMENT S5 of the ASan walk of libreac/fuzz_scene's
    LLVMFuzzerTestOneInput (fuzz_scene.asan, sha256
    43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026).  (rule 24: no function is proved here.) *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 
 (*   S5 is the cut C5 (0x82eb0) to the cut C6 (0x83020) of lib/A/P_LLVMFuzzerTestOneInput_seg.v; its walk is
    lib/A/P_LLVMFuzzerTestOneInput_S5.v (`scene_seg_S5`, which proves `seg_S5_stmt`).  This file holds the image-free
@@ -17,7 +18,7 @@
      `s5_spills_at` / `_kept`    the six spill words the block reloads -- [s1+0x18] expect, [s1+0x20] shF+0x1c,
                                  [s1+0x28] F, [s1+0x30] mac, [s1+0x38] n'', [s1+0x58] body -- and their transport
                                  across a step that keeps [sp1+24, sp1+96).
-     `s5_entry`                  the block entry after a call: `pa_entry_st_ok_full` (A/Prog/ScenePaLib.v:71) over
+     `s5_entry`                  the block entry after a call: `pa_entry_st_ok_full` (A/Prog/ScenePaLib.v:72) over
                                  `Eimg (Ereg regs (s5_extra body nn))` and the single read-only spill region.
                                  MEASURED: the spills are s1-relative (s1 = x9), so the region's base atom is 9.
      `s5_rk` / `_pres` / `_kept` the callee-saved registers the whole block relies on: sp = s1 = sp1, s0 = sp0,
@@ -57,7 +58,7 @@ Open Scope Z_scope.
 
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Section f.
-(* The walk is over scene's concrete image instance PI_scene (A/Prog/SceneImg.v:56): the cut pcs of
+(* The walk is over scene's concrete image instance PI_scene (A/Prog/SceneImg.v:57): the cut pcs of
    `scene_geom_asan` (P_LLVMFuzzerTestOneInput_seg.v) are stated over it, as is the entry file's SEGS. *)
 #[local] Notation PI := PI_scene.
 #[local] Notation SEGS := (@pa_segs _ scene_listing PI).

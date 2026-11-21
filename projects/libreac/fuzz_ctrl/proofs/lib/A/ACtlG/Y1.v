@@ -54,7 +54,7 @@
      (al_frames, al_flag) and the release law take it.  Not new.
    CITED BY NAME (no longer a hypothesis): YTailF.stack_free_6_F_on_gen : forall RNG, stack_free_6_F_on RNG, the
      route (C) footprint contract of __asan_stack_free_6 at a GENERAL footprint (Seg/YTailF.v,
-     a working branch 8165843863a; proved from lib/A/Prog/asan_stack_freeF.v's asan_stack_free_6_holds_F_on).
+     a working branch; proved from lib/A/Prog/asan_stack_freeF.v's asan_stack_free_6_holds_F_on).
      Before route (C) the same place cited stack_free_6_F_gen (universal shadow_rw premise), which had replaced a
      Section hypothesis HSF6F.
    CITED BY NAME (no longer stand-ins; all three on the glue base since Batch3's twelve ProgWorld files):
@@ -70,7 +70,7 @@
    the munch), ajournal_exec (the release law steps the journal).
 
    CUT TEXT: this file reads FRAHC's trailer word `q64 m (fr + 4088) (Reusable.YG0f.flag_addr (c_ly cx) 6
-   (c_fpos cx))`, on the glue base since a Theorem Labs lane's Batch3 (d36efc6152d, ACtlCutP.v FRAHC's LAST conjunct; a Theorem Labs lane's
+   (c_fpos cx))`, on the glue base since a Theorem Labs lane's Batch3 (ACtlCutP.v FRAHC's LAST conjunct; a Theorem Labs lane's
    finding: y1_evt_F needs the word at fr + fs_B 6 - 8, which ctrl's FRA carried as FSREC, SlotInv.v:309-312, and
    which AR / ajournal / ctl_rt never pin).  The ONLY place this file restates FRAHC's text is G1's positional
    destruct of FRAHC (the `destruct HFRAHC as (Asp & sp & ...)` line), which names the trailer as the LAST conjunct

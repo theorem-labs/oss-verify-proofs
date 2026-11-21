@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: WfP_cf gains wfc_qsize, every quarantined item is at most kQuarantineMax
    (free_cf's enqueue arm, YG00cf.free_cf's size test); WfP_cf_of_WfP derives it from cgif's MALLOC_MAX. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG01cf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG01cf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the STATE INVARIANT.
-   Wf_cf is cgif's Wf (YG01.v:324-347) re-keyed on LIVE state, so that it holds at preset's event counts
+   Wf_cf is cgif's Wf (YG01.v:325-348) re-keyed on LIVE state, so that it holds at preset's event counts
    (about 3.0e7 allocator events per harness call, where cgif's regime admits at most 8,192).
    cgif's YG01.v is NOT edited and NOT weakened: Wf_cf_of_Wf below shows cgif's invariant implies this one.
    No address: every numeral here is a cgif content constant (YG00.v:10-43) or a cf constant of YGcfNames.v. *)
@@ -20,7 +21,7 @@ Section WFCF.
 Context {cp : CfParams}.
 Variable U : Univ.
 
-(* cgif's cls_ok (YG01.v:260-274), one field re-based.
+(* cgif's cls_ok (YG01.v:261-275), one field re-based.
    wr_mapped_bound (:273) is `rg_mapped_user r <= kUserMapSize * EV_MAX` = 2 GiB per class.
    Preset's class 17 maps 3,584 MiB (measured, findings note, the internal file omx-clap-core-2.md:27-47), so that field is
    FALSE before the class even fills. wrc_mapped_bound is the bound the real class-full arm maintains:
@@ -40,7 +41,7 @@ wrc_runs : Forall (fun f => match f with FRun lo k => 1 <= k | FOne _ => True en
 wrc_nodup : NoDup (fa_elems (class_size c) (rg_free r) ++ pc_chunks p ++ ko ++ bo);
 wrc_elems : Forall (fun o => 0 <= o < rg_alloc_user r /\ o mod class_size c = 0)
 (fa_elems (class_size c) (rg_free r) ++ pc_chunks p ++ ko ++ bo);
-(* cgif's wr_holes (YG01.v:271) has hole_ok = False. A cf class may carry ONE hole: the sentinel
+(* cgif's wr_holes (YG01.v:272) has hole_ok = False. A cf class may carry ONE hole: the sentinel
    (EXH_HOLE, 0) of YG00cf.v, which encodes the class's exhausted byte. *)
 wrc_holes : Forall (fun h => h = (EXH_HOLE, 0)) (rg_holes r) /\ NoDup (rg_holes r);
 wrc_cache : if inited then pc_max p = max_cached c /\ Z.of_nat (length (pc_chunks p)) <= max_cached c else p = pclass0;
@@ -50,21 +51,21 @@ wrc_mapped_bound : rg_mapped_user r <= kFreeArrayOffset
 Definition wf_class_cf (s : astate) (c : Z) : Prop :=
 cls_ok_cf c (reg s c) (cache s c) (st_cache_inited s) (chunk_offs s c) (batch_offs s c).
 
-(* NO free-array room field. cgif's wf_fa_room (YG01.v:342-343) asserts the free array is mapped for
+(* NO free-array room field. cgif's wf_fa_room (YG01.v:343-344) asserts the free array is mapped for
    EVERY record of a class plus 2 * (EV_MAX - st_nev) spare slots. That is kept only by the event term or
    by regime_big's record cap, both gone here, and it is FALSE on reachable states: populate's
    ensure_free_array maps only 4 * (fa_len + new_cnt), the FREE entries (YG00.v:263-266), as the real
    EnsureFreeArraySpace sizes on num_freed_chunks. (Class 32 B, malloc with nothing free: each populate
    carves 8,192 with fa_len <= 8, rg_mapped_fa stays 262,144 = 65,536 entries, and after the 8th
    populate the class holds 65,536 records.) What ensure_free_array DOES keep is cls_ok_cf's own
-   wrc_fa_len (4 * fa_len <= rg_mapped_fa, cgif's wr_fa_len YG01.v:267), and the growth's capacity check
+   wrc_fa_len (4 * fa_len <= rg_mapped_fa, cgif's wr_fa_len YG01.v:268), and the growth's capacity check
    (new_mapped <= kFreeArrayMax, YG00.v:267) follows from nrec_bound_cf below, since kFreeArrayMax = 2 ^ 29
    is a multiple of kFreeArrayMapSize = 2 ^ 18. The free path may therefore GROW the free array
    (return_to_allocator, YG00.v:453-458, spin_on_fail = true): a real KMapFreeArray, granted or refused
    (a spin, which atok permits). cgif's regime_big lemmas (ml_malloc_big / ml_free_big, YG0d.v:523-526)
    carry the caps this instance drops and must NEVER be cited. *)
 
-(* cgif's wf_sec (YG01.v:301-309) with ONE clause re-based: ws_lens caps every secondary
+(* cgif's wf_sec (YG01.v:302-310) with ONE clause re-based: ws_lens caps every secondary
    at SEC_LEN_MAX = 2 ^ 28 + 2 ^ 14, which fuzz_reply's 2 ^ 29 request exceeds. The cf cap
    is cf_nob, the placement lemma's own bound, so a new secondary closes straight from
    CfParams' cf_sizes_ok (sec_map_size n <= cf_nob) with no monotonicity lemma.
@@ -104,7 +105,7 @@ intros s H. constructor.
 pose proof cf_nob_sec_len. unfold SEC_LEN_MAX in *. lia.
 Qed.
 
-(* cgif's chunk_ok (YG01.v:280-289) opens with `0 <= ck_req k < MALLOC_MAX`, so a chunk
+(* cgif's chunk_ok (YG01.v:281-290) opens with `0 <= ck_req k < MALLOC_MAX`, so a chunk
    of a request at or above 2 ^ 28 would break Wf_cf. The cf form replaces that one
    conjunct by cf_malloc_max and keeps the rest verbatim. *)
 Definition chunk_ok_cf (s : astate) (k : chunk) : Prop :=
@@ -127,7 +128,7 @@ intros s k H. unfold chunk_ok, chunk_ok_cf in *. destruct H as [H1 H2].
 split; [pose proof cf_malloc_max_ge; unfold MALLOC_MAX in *; lia | exact H2].
 Qed.
 
-(* cgif's WfP (YG01.v:324-346). KEPT VERBATIM: the four event fields, which are LOWER bounds on st_nev
+(* cgif's WfP (YG01.v:325-347). KEPT VERBATIM: the four event fields, which are LOWER bounds on st_nev
    (wf_chunks_ev :331, wf_prim_ev :332, wf_batches_ev :335, wf_secs_ev :344) and so stay true as events grow.
    DROPPED: wf_regime (:345), an UPPER bound on st_nev, and wf_fa_room (:342), which is false on live state
    (see above). CHANGED: wf_classes (:328) to wf_class_cf, wf_chunks to chunk_ok_cf, wf_secondary to

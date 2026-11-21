@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v (origin/ossv/recipes 88154566652a) for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
+(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths and module names changed; 275 of its 352 lines of code are new or changed and 444 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the walk of reac-repacer/fuzz_uci's check_value in image A, proving the frozen statement
    lib/A/Prog/check_value_cg.v uci_check_value_cg_holds_stmt, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/
-   crtA_walk.v, crtA_w_head.v, crtA_w_tail.v, crtA_encw.v, crtA_w_mid.v and crtA_close.v (origin/ossv/recipes
-   88154566652a): footprint runs carried into SRr, an inner journal over the call's stack window, each call cut by its
+   crtA_walk.v, crtA_w_head.v, crtA_w_tail.v, crtA_encw.v, crtA_w_mid.v and crtA_close.v:
+   footprint runs carried into SRr, an inner journal over the call's stack window, each call cut by its
    callee contract, and the helpers of those files (crtA_run, crtA_ms_shape, crtA_ms_reg, crtT_regs_of, crtA_trace0,
    crtT_chain_nil, crtA_byte_eq, crtT_rw_cells_ext, crtA_rng_vis, crtT_aj_md, crtT_not_old, crtT_perm_rm,
    crtA_addressable, crtA_rng_hull, crtA_vis_hull) restated at this unit's image. *)
 (* Modified by Theorem Labs, 2026-10: the image-free helpers, the runtime-cell, aview / garr8, footprint-range and shadow lemmas of that walk (cv_u64 .. cv_stk_present, without its allocator-trace, int and permutation lemmas) taken for libdiginet/fuzz_frame's walk of diginet_frame_parse in image A: module paths changed, cv_ renamed fp_, the image's frame_seg_covers and frame_cells in place of uci_seg_covers and uci_cells. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* diginet_frame_parse_kit: the helpers lib/A/Prog/diginet_frame_parse_walk.v uses at fuzz_frame.asan's image:
    footprint runs carried into SRr (fp_run), the registers of the state a run reaches (fp_regs_of), aview read as
    mrd and garr8, the two runtime cells the walk reads (fp_cells2), and the shadow facts of a range (fp_addressable,

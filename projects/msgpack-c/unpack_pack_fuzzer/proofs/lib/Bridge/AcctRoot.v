@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's vdso/vvar pair at the end of the reserved ledger: the new lemmas vdso_len_le2, vdso_live_le and vdso_start_hi bound it, and both ACCT_root proofs count it in the ledger's bounds, length and total and in the coverage steps; the PTR_SZ block's region_free and the mappings' apartness from the ledger come from MainEntry's am_mres and bm_mres, and FIXZ_main's pair apart from the fake-stack mapping likewise; the pure facts and the total are MainEntry's kept APKN and ATOTSZ, read through MA.keep_facts). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
@@ -23,11 +24,37 @@ Module MA := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS.MainEntry.
 
 Definition wE (b n : Z) : word * word := (wa b, wa n).
 
+(* LPS 727298f3: the launch's vdso/vvar pair at the end of the reserved ledger ([State.init_reserved]):
+   at most two entries, at most twenty pages, starting above [KHIGH] (its top is at or above the mmap
+   base's floor, [MA.am_vtop]) *)
+Lemma vdso_len_le2 : forall kb top, (length (vdso_reserved kb top) <= 2)%nat.
+Proof. intros kb top. unfold vdso_reserved. cbv zeta. destruct ((top - vdso_len kb) <? page_size)%Z; cbn [length]; lia. Qed.
+Lemma vdso_live_le : forall kb top, live_bytes (vdso_reserved kb top) <= 20 * 4096.
+Proof.
+  intros kb top. pose proof (vdso_text_pages_pos kb). pose proof (vdso_text_pages_le kb).
+  unfold vdso_reserved. cbv zeta.
+  destruct ((top - vdso_len kb) <? page_size)%Z; cbn [live_bytes]; [lia|].
+  rewrite !bv_unsigned_Z_to_bv_u64 by (unfold vdso_vvar_pages, page_size, two_pow_64; lia).
+  unfold vdso_vvar_pages, page_size. lia.
+Qed.
+Lemma vdso_start_hi : forall mo e, 0x154555557000 <= vdso_top (m_vmmaps mo) ->
+  In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) -> KHIGH <= bv_unsigned (fst e).
+Proof.
+  intros mo [a n] Htop Hin. cbn [fst].
+  assert (Hlt : vdso_top (m_vmmaps mo) < two_pow_64).
+  { pose proof (alloc_top_lt (m_vmmaps mo)). unfold vdso_top, mmap_top.
+    pose proof (page_round_down_Z_le (alloc_top (m_vmmaps mo))).
+    pose proof (page_round_down_Z_le (Z.min (bv_unsigned (vm_mmap_base (m_vmmaps mo))) (page_round_down_Z (alloc_top (m_vmmaps mo))))).
+    lia. }
+  destruct (vdso_reserved_above _ _ a n Hlt Hin) as [H1 _].
+  pose proof (vdso_len_bounds (m_kernel mo)). unfold KHIGH, page_size in *. lia.
+Qed.
+
 Section Root.
 Context {rc : runConstT}.
 Variables (V : nat -> Z) (w : bool) (U : list (list Z)) (sp : word) (fs : Fs.Fs) (mo : Model).
 Hypothesis HV : forall n, 0 <= V n < 2 ^ 64.
-Hypothesis HPF : Forall (ME.pfact_ok V) MF.asan_pure_facts.
+Hypothesis HPF : Forall (ME.pfact_ok V) MA.APKN.
 Hypothesis HUSP : usp_pin V.
 Hypothesis HU : univ_ok U.
 Hypothesis AMO : MA.amodel V sp fs mo.
@@ -207,13 +234,15 @@ Proof.
   unfold al_ptr_array in *. cbn [al_V L0 VL] in *. pose proof atop_range as AR.
   split. { exists (4096 * V 208%nat). unfold PRIM_SZ, KHIGH. split; [apply maps_In_known; cbn; tauto| lia]. }
   split; [apply maps_In_known; cbn; tauto|]. split; [unfold PTR_SZ; lia|].
-  split. { rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. unfold PTR_SZ.
-           apply (region_free_above _ _ _ 0x62f000); [| unfold iclr, AIMG_LO, AIMG_HI in P5; lia| lia| lia| lia].
-           repeat (apply Forall_cons; [cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil. }
+  split. { pose proof (MA.am_mres V sp fs mo AMO) as MR. rewrite Forall_forall in MR.
+           match goal with |- region_free _ (Z_to_bv 64 ?p) (Z_to_bv 64 PTR_SZ) = true =>
+             assert (HinP : In (went (p, PTR_SZ)) maps) by (apply maps_In_known; cbn; tauto);
+             apply (region_free_rsep _ (went (p, PTR_SZ))); [exact (MR _ HinP) | idtac ..] end;
+           unfold went, PTR_SZ; cbn [fst snd]; rewrite ?unsigned_lit by lia; lia. }
   split; [apply maps_In_known; cbn; tauto|]. split; [apply maps_In_known; cbn; tauto|]. split; [apply maps_In_known; cbn; tauto|].
   destruct maps_shape as (fog & FL & FS & EQ).
   split. { rewrite EQ. unfold zlen, LEN0. rewrite !length_app. cbn [length KNOWN_hi KNOWN_lo]. lia. }
-  split. { pose proof (MA.am_totsz V sp fs mo AMO) as T. unfold MF.asan_totsz in T. unfold TOT0.
+  split. { pose proof (MA.am_totsz V sp fs mo AMO) as T. unfold MA.ATOTSZ in T. unfold TOT0.
            assert (LE : forall l1 l2, live_bytes l2 <= ME.ivs_sum (l1 ++ l2)).
            { intros l1 l2. induction l1 as [|iv l1 IH]; cbn.
              - induction l2 as [|[a b] l2 IH2]; cbn; [lia|]. lia.
@@ -224,10 +253,10 @@ Proof.
   hpf 12%nat B78. hpf 13%nat B207. hpf 14%nat B208. hpf 16%nat B226. hpf 17%nat B227. hpf 18%nat B228.
   hpf 19%nat B245. hpf 20%nat B310. hpf 24%nat B377. hpf 32%nat B453. hpf 33%nat B454. hpf 34%nat B471.
   set (R4 := [(Z_to_bv 64 65536, Z_to_bv 64 176128); (Z_to_bv 64 241664, Z_to_bv 64 598016); (Z_to_bv 64 839680, Z_to_bv 64 24576); (Z_to_bv 64 864256, Z_to_bv 64 5619712)]).
-  assert (KB : forall b n lo hi, In (wE b n) maps -> 0 <= b -> 0 <= n -> b + n < 2 ^ 64 -> b <= lo -> hi <= b + n -> rcov (R4 ++ maps) (lo, hi)).
+  assert (KB : forall b n lo hi, In (wE b n) maps -> 0 <= b -> 0 <= n -> b + n < 2 ^ 64 -> b <= lo -> hi <= b + n -> rcov ((R4 ++ vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ++ maps) (lo, hi)).
   { intros b n lo hi Hin Hb Hn Hbn H1 H2. exists (wE b n). split; [apply in_or_app; right; exact Hin|]. unfold wE. cbn [fst snd]. rewrite !wa_unsigned by lia. lia. }
-  assert (KR : forall b n lo hi, In (Z_to_bv 64 b, Z_to_bv 64 n) R4 -> 0 <= b < 2 ^ 64 -> 0 <= n < 2 ^ 64 -> b <= lo -> hi <= b + n -> rcov (R4 ++ maps) (lo, hi)).
-  { intros b n lo hi Hin Hb Hn H1 H2. exists (Z_to_bv 64 b, Z_to_bv 64 n). split; [apply in_or_app; left; exact Hin|]. cbn [fst snd]. rewrite !unsigned_lit by lia. lia. }
+  assert (KR : forall b n lo hi, In (Z_to_bv 64 b, Z_to_bv 64 n) R4 -> 0 <= b < 2 ^ 64 -> 0 <= n < 2 ^ 64 -> b <= lo -> hi <= b + n -> rcov ((R4 ++ vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ++ maps) (lo, hi)).
+  { intros b n lo hi Hin Hb Hn H1 H2. exists (Z_to_bv 64 b, Z_to_bv 64 n). split; [apply in_or_app; left; apply in_or_app; left; exact Hin|]. cbn [fst snd]. rewrite !unsigned_lit by lia. lia. }
 
   apply Forall_cons; [apply (KR 65536 176128); [unfold R4; cbn; tauto| lia| lia| lia| lia]|].
   apply Forall_cons; [apply (KR 241664 598016); [unfold R4; cbn; tauto| lia| lia| lia| lia]|].
@@ -263,16 +292,17 @@ Proof.
   unfold AMI, canon. rewrite !m_vmmaps_MX, !m_vm_lazy_MX, m_vm_materialized_MX. pose proof atop_range as AR. pose proof (bv_unsigned_in_range _ sp) as SPR.
   split; [reflexivity|].
   split; [rewrite (MA.am_limit V sp fs mo AMO); reflexivity|].
-  split. { rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. unfold RES_HI. repeat (apply Forall_cons; [cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil. }
-  split. { rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. unfold zlen, LEN0. cbn [length Z.of_nat]. lia. }
-  split. { rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. unfold RTOT0. cbn [live_bytes]. rewrite !unsigned_lit by lia. lia. }
+  split. { rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. apply Forall_app. split.
+           - unfold RES_HI. repeat (apply Forall_cons; [left; cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil.
+           - apply Forall_forall. intros e He. right. exact (vdso_start_hi mo e (MA.am_vtop V sp fs mo AMO) He). }
+  split. { rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. unfold zlen, LEN0. rewrite length_app.
+           pose proof (vdso_len_le2 (m_kernel mo) (vdso_top (m_vmmaps mo))). cbn [length]. lia. }
+  split. { rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. unfold RTOT0. rewrite live_bytes_app. cbn [live_bytes].
+           rewrite !unsigned_lit by lia. pose proof (vdso_live_le (m_kernel mo) (vdso_top (m_vmmaps mo))). lia. }
   split. { eapply Forall_impl; [| exact (MA.am_bounds V sp fs mo AMO)]. cbn. intros iv (B1 & B2 & B3 & B4 & B5 & B6). unfold entry_ok. rewrite USP in B6. lia. }
   split. { split; [| exact noacc_sep_main]. apply (ivs_wf_of_bound _ (2 ^ 64)); [exact (MA.am_noaccess_wf V sp fs mo AMO)| lia]. }
   split. { apply (ivs_wf_of_bound _ (bv_unsigned sp - 8388608)); [| lia]. eapply Forall_impl; [| exact (MA.am_lazy_bounds V sp fs mo AMO)]. cbn. intros iv [_ X]. exact X. }
-  split. { split; [apply seps_of_ivs_sep; exact (MA.am_sep V sp fs mo AMO)|].
-           unfold rsep. eapply Forall_impl; [| exact (MA.am_bounds V sp fs mo AMO)]. cbn. intros iv (B1 & B2 & B3 & B4 & B5 & B6).
-           rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. unfold MA.AIMG_LO, MA.AIMG_HI in B5.
-           repeat (apply Forall_cons; [cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil. }
+  split. { split; [apply seps_of_ivs_sep; exact (MA.am_sep V sp fs mo AMO)|]. exact (MA.am_mres V sp fs mo AMO). }
   split. { split; [unfold atop_ok, ACEIL, AsanInv.ATOP_MAX; lia|]. unfold alloc_top. rewrite (MA.am_top V sp fs mo AMO). unfold stack_max_size. lia. }
   exists maps. split; [rewrite app_nil_r; apply Permutation_refl|]. split; [exact START_main|].
   split. { rewrite commit_bytes_st0, (sum_count_Pm (MX mo [])) by reflexivity. pose proof (MA.am_nonlazy V sp fs mo AMO) as NL. unfold MF.asan_eager in NL. unfold EAGER0. lia. }
@@ -552,8 +582,17 @@ Qed.
 Theorem FIXZ_main : FIXZ L (canon mo).
 Proof.
   unfold FIXZ, canon. rewrite m_vmmaps_MX, m_vm_lazy_MX, m_halted_MX. split; [| split; [| split]].
-  - rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. unfold ABase.AIMG_HI.
-    repeat (apply Forall_cons; [cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil.
+  - rewrite (MA.am_reserved V sp fs mo AMO), segments_reserved_asan. apply Forall_app. split.
+    + unfold ABase.AIMG_HI.
+      repeat (apply Forall_cons; [left; cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil.
+    + (* the launch's vdso/vvar pair: apart from the fake-stack mapping, as every mapping is apart from the
+         ledger ([MA.am_mres]) *)
+      apply Forall_forall. intros e He. right. pose proof atop_range as AR.
+      pose proof (ao_fake L ALO) as (F0 & F1 & F2 & _). rewrite al_fake_eq in F0, F1, F2 |- *.
+      assert (HinF : In (wE (4096 * V 377%nat) 11571200) maps) by (apply maps_In_known; cbn; tauto).
+      pose proof (proj1 (Forall_forall _ _) (MA.am_mres V sp fs mo AMO) _ HinF) as MR.
+      pose proof (proj1 (Forall_forall _ _) MR e ltac:(rewrite (MA.am_reserved V sp fs mo AMO); apply in_or_app; right; exact He)) as X.
+      unfold wE, wa in X. cbn [fst snd] in X. rewrite !unsigned_lit in X by lia. lia.
   - intros z Hz. apply FKEAGER. rewrite al_fake_eq in Hz. exact Hz.
   - exact (MA.am_halted V sp fs mo AMO).
   - intros z Hz. rewrite m_vm_lazy_MX. apply lazy_shape_main. unfold C0A in Hz. exact Hz.
@@ -591,7 +630,7 @@ Proof.
   intros UNIV SHFIX KSH NMAX en inp ms mo aw HU HSH HK HN HM USP Haw.
   destruct HM as (w & V & m & Hms & HV & PIN & HMFall & HPFall & MINV & STK & HID & SH0 & AMO).
   destruct PIN as (_ & _ & _ & P3 & _).
-  apply Forall_app in HMFall as [HMF HMFw]. apply Forall_app in HPFall as [HPF _].
+  destruct (MA.keep_facts _ V m _ w HMFall HPFall) as (HMF & HMFw & HPF).
   assert (HUSP : usp_pin V) by (unfold usp_pin; lia).
   pose proof (ACCT_root V w UNIV (en_sp en) (in_fs inp) mo HV HPF HUSP HU AMO USP SHFIX KSH HSH HK NMAX HN aw Haw) as AC.
   eexists (L0 V w UNIV), _, (st0 V w UNIV).
@@ -631,7 +670,7 @@ Section Root.
 Context {rc : runConstT}.
 Variables (V : nat -> Z) (w : bool) (U : list (list Z)) (sp : word) (fs : Fs.Fs) (mo : Model).
 Hypothesis HV : forall n, 0 <= V n < 2 ^ 64.
-Hypothesis HPF : Forall (ME.pfact_ok V) MF.both_pure_facts.
+Hypothesis HPF : Forall (ME.pfact_ok V) MA.APKN.
 Hypothesis HUSP : usp_pin V.
 Hypothesis HU : univ_ok U.
 Hypothesis AMO : MA.bmodel V sp fs mo.
@@ -811,13 +850,15 @@ Proof.
   unfold al_ptr_array in *. cbn [al_V L0 VL] in *. pose proof atop_range as AR.
   split. { exists (4096 * V 208%nat). unfold PRIM_SZ, KHIGH. split; [apply maps_In_known; cbn; tauto| lia]. }
   split; [apply maps_In_known; cbn; tauto|]. split; [unfold PTR_SZ; lia|].
-  split. { rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. unfold PTR_SZ.
-           apply (region_free_above _ _ _ 0x631000); [| unfold iclr, AIMG_LO, AIMG_HI in P5; lia| lia| lia| lia].
-           repeat (apply Forall_cons; [cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil. }
+  split. { pose proof (MA.bm_mres V sp fs mo AMO) as MR. rewrite Forall_forall in MR.
+           match goal with |- region_free _ (Z_to_bv 64 ?p) (Z_to_bv 64 PTR_SZ) = true =>
+             assert (HinP : In (went (p, PTR_SZ)) maps) by (apply maps_In_known; cbn; tauto);
+             apply (region_free_rsep _ (went (p, PTR_SZ))); [exact (MR _ HinP) | idtac ..] end;
+           unfold went, PTR_SZ; cbn [fst snd]; rewrite ?unsigned_lit by lia; lia. }
   split; [apply maps_In_known; cbn; tauto|]. split; [apply maps_In_known; cbn; tauto|]. split; [apply maps_In_known; cbn; tauto|].
   destruct maps_shape as (fog & FL & FS & EQ).
   split. { rewrite EQ. unfold zlen, LEN0. rewrite !length_app. cbn [length KNOWN_hi KNOWN_lo]. lia. }
-  split. { pose proof (MA.bm_totsz V sp fs mo AMO) as T. unfold MF.both_totsz in T. unfold TOT0.
+  split. { pose proof (MA.bm_totsz V sp fs mo AMO) as T. unfold MA.ATOTSZ in T. unfold TOT0.
            assert (LE : forall l1 l2, live_bytes l2 <= ME.ivs_sum (l1 ++ l2)).
            { intros l1 l2. induction l1 as [|iv l1 IH]; cbn.
              - induction l2 as [|[a b] l2 IH2]; cbn; [lia|]. lia.
@@ -828,10 +869,10 @@ Proof.
   hpf 12%nat B78. hpf 13%nat B207. hpf 14%nat B208. hpf 16%nat B226. hpf 17%nat B227. hpf 18%nat B228.
   hpf 19%nat B245. hpf 20%nat B310. hpf 24%nat B377. hpf 32%nat B453. hpf 33%nat B454. hpf 34%nat B471.
   set (R4 := [(Z_to_bv 64 65536, Z_to_bv 64 180224); (Z_to_bv 64 245760, Z_to_bv 64 602112); (Z_to_bv 64 847872, Z_to_bv 64 24576); (Z_to_bv 64 872448, Z_to_bv 64 5619712)]).
-  assert (KB : forall b n lo hi, In (wE b n) maps -> 0 <= b -> 0 <= n -> b + n < 2 ^ 64 -> b <= lo -> hi <= b + n -> rcov (R4 ++ maps) (lo, hi)).
+  assert (KB : forall b n lo hi, In (wE b n) maps -> 0 <= b -> 0 <= n -> b + n < 2 ^ 64 -> b <= lo -> hi <= b + n -> rcov ((R4 ++ vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ++ maps) (lo, hi)).
   { intros b n lo hi Hin Hb Hn Hbn H1 H2. exists (wE b n). split; [apply in_or_app; right; exact Hin|]. unfold wE. cbn [fst snd]. rewrite !wa_unsigned by lia. lia. }
-  assert (KR : forall b n lo hi, In (Z_to_bv 64 b, Z_to_bv 64 n) R4 -> 0 <= b < 2 ^ 64 -> 0 <= n < 2 ^ 64 -> b <= lo -> hi <= b + n -> rcov (R4 ++ maps) (lo, hi)).
-  { intros b n lo hi Hin Hb Hn H1 H2. exists (Z_to_bv 64 b, Z_to_bv 64 n). split; [apply in_or_app; left; exact Hin|]. cbn [fst snd]. rewrite !unsigned_lit by lia. lia. }
+  assert (KR : forall b n lo hi, In (Z_to_bv 64 b, Z_to_bv 64 n) R4 -> 0 <= b < 2 ^ 64 -> 0 <= n < 2 ^ 64 -> b <= lo -> hi <= b + n -> rcov ((R4 ++ vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ++ maps) (lo, hi)).
+  { intros b n lo hi Hin Hb Hn H1 H2. exists (Z_to_bv 64 b, Z_to_bv 64 n). split; [apply in_or_app; left; apply in_or_app; left; exact Hin|]. cbn [fst snd]. rewrite !unsigned_lit by lia. lia. }
 
   apply Forall_cons; [apply (KR 65536 180224); [unfold R4; cbn; tauto| lia| lia| lia| lia]|].
   apply Forall_cons; [apply (KR 245760 602112); [unfold R4; cbn; tauto| lia| lia| lia| lia]|].
@@ -867,16 +908,17 @@ Proof.
   unfold AMI, canon. rewrite !m_vmmaps_MX, !m_vm_lazy_MX, m_vm_materialized_MX. pose proof atop_range as AR. pose proof (bv_unsigned_in_range _ sp) as SPR.
   split; [reflexivity|].
   split; [rewrite (MA.bm_limit V sp fs mo AMO); reflexivity|].
-  split. { rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. unfold RES_HI. repeat (apply Forall_cons; [cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil. }
-  split. { rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. unfold zlen, LEN0. cbn [length Z.of_nat]. lia. }
-  split. { rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. unfold RTOT0. cbn [live_bytes]. rewrite !unsigned_lit by lia. lia. }
+  split. { rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. apply Forall_app. split.
+           - unfold RES_HI. repeat (apply Forall_cons; [left; cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil.
+           - apply Forall_forall. intros e He. right. exact (vdso_start_hi mo e (MA.bm_vtop V sp fs mo AMO) He). }
+  split. { rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. unfold zlen, LEN0. rewrite length_app.
+           pose proof (vdso_len_le2 (m_kernel mo) (vdso_top (m_vmmaps mo))). cbn [length]. lia. }
+  split. { rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. unfold RTOT0. rewrite live_bytes_app. cbn [live_bytes].
+           rewrite !unsigned_lit by lia. pose proof (vdso_live_le (m_kernel mo) (vdso_top (m_vmmaps mo))). lia. }
   split. { eapply Forall_impl; [| exact (MA.bm_bounds V sp fs mo AMO)]. cbn. intros iv (B1 & B2 & B3 & B4 & B5 & B6). unfold entry_ok. rewrite USP in B6. lia. }
   split. { split; [| exact noacc_sep_main]. apply (ivs_wf_of_bound _ (2 ^ 64)); [exact (MA.bm_noaccess_wf V sp fs mo AMO)| lia]. }
   split. { apply (ivs_wf_of_bound _ (bv_unsigned sp - 8388608)); [| lia]. eapply Forall_impl; [| exact (MA.bm_lazy_bounds V sp fs mo AMO)]. cbn. intros iv [_ X]. exact X. }
-  split. { split; [apply seps_of_ivs_sep; exact (MA.bm_sep V sp fs mo AMO)|].
-           unfold rsep. eapply Forall_impl; [| exact (MA.bm_bounds V sp fs mo AMO)]. cbn. intros iv (B1 & B2 & B3 & B4 & B5 & B6).
-           rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. unfold MA.BIMG_LO, MA.BIMG_HI in B5.
-           repeat (apply Forall_cons; [cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil. }
+  split. { split; [apply seps_of_ivs_sep; exact (MA.bm_sep V sp fs mo AMO)|]. exact (MA.bm_mres V sp fs mo AMO). }
   split. { split; [unfold atop_ok, ACEIL, AsanInv.ATOP_MAX; lia|]. unfold alloc_top. rewrite (MA.bm_top V sp fs mo AMO). unfold stack_max_size. lia. }
   exists maps. split; [rewrite app_nil_r; apply Permutation_refl|]. split; [exact START_main|].
   split. { rewrite commit_bytes_st0, (sum_count_Pm (MX mo [])) by reflexivity. pose proof (MA.bm_nonlazy V sp fs mo AMO) as NL. unfold MF.both_eager in NL. unfold EAGER0. lia. }
@@ -1156,8 +1198,16 @@ Qed.
 Theorem FIXZ_main : FIXZ L (canon mo).
 Proof.
   unfold FIXZ, canon. rewrite m_vmmaps_MX, m_vm_lazy_MX, m_halted_MX. split; [| split; [| split]].
-  - rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. unfold ABase.TwinB.AIMG_HI.
-    repeat (apply Forall_cons; [cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil.
+  - rewrite (MA.bm_reserved V sp fs mo AMO), segments_reserved_asan. apply Forall_app. split.
+    + unfold ABase.TwinB.AIMG_HI.
+      repeat (apply Forall_cons; [left; cbn [fst snd]; rewrite !unsigned_lit by lia; lia|]). apply Forall_nil.
+    + (* as the module above, with [MA.bm_mres] *)
+      apply Forall_forall. intros e He. right. pose proof atop_range as AR.
+      pose proof (ao_fake L ALO) as (F0 & F1 & F2 & _). rewrite al_fake_eq in F0, F1, F2 |- *.
+      assert (HinF : In (wE (4096 * V 377%nat) 11571200) maps) by (apply maps_In_known; cbn; tauto).
+      pose proof (proj1 (Forall_forall _ _) (MA.bm_mres V sp fs mo AMO) _ HinF) as MR.
+      pose proof (proj1 (Forall_forall _ _) MR e ltac:(rewrite (MA.bm_reserved V sp fs mo AMO); apply in_or_app; right; exact He)) as X.
+      unfold wE, wa in X. cbn [fst snd] in X. rewrite !unsigned_lit in X by lia. lia.
   - intros z Hz. apply FKEAGER. rewrite al_fake_eq in Hz. exact Hz.
   - exact (MA.bm_halted V sp fs mo AMO).
   - intros z Hz. rewrite m_vm_lazy_MX. apply lazy_shape_main. unfold C0A in Hz. exact Hz.
@@ -1195,7 +1245,7 @@ Proof.
   intros UNIV SHFIX KSH NMAX en inp ms mo aw HU HSH HK HN HM USP Haw.
   destruct HM as (w & V & m & Hms & HV & PIN & HMFall & HPFall & MINV & STK & HID & SH0 & AMO).
   destruct PIN as (_ & _ & _ & P3 & _).
-  apply Forall_app in HMFall as [HMF HMFw]. apply Forall_app in HPFall as [HPF _].
+  destruct (MA.keep_facts _ V m _ w HMFall HPFall) as (HMF & HMFw & HPF).
   assert (HUSP : usp_pin V) by (unfold usp_pin; lia).
   pose proof (ACCT_root V w UNIV (en_sp en) (in_fs inp) mo HV HPF HUSP HU AMO USP SHFIX KSH HSH HK NMAX HN aw Haw) as AC.
   eexists (L0 V w UNIV), _, (st0 V w UNIV).

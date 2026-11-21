@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC85.v at c8557374ad2e, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/Reusable/YC85.v at origin/ossv/recipes 6ebe35ba632; module paths changed to reac-pw/fuzz_pin, the Section j (cl_callS over a PAImg listing) and its two imports YI0w YC4a left out, so the file is the journal-threaded allocator, intrinsic and side-stack call rules only. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC85.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/Reusable/YC85.v; module paths changed to reac-pw/fuzz_pin, the Section j (cl_callS over a PAImg listing) and its two imports YI0w YC4a left out, so the file is the journal-threaded allocator, intrinsic and side-stack call rules only. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/PPgMainCall.v of this library, for reac-pw/fuzz_pin's
    image B (fuzz_pin.asan-ubsan, sha256 d6f83d30152279dadae39fc626707a0037090a8909a186dac3c362b12088201f). What differs:
    nothing in the text. The file loads only lib/Reusable modules and names no image address (the journal-threaded
    malloc, free, intrinsic and side-stack call rules are stated over any segment list and symbol record), so image B's
    walk (lib/AU/PPgMain0 .. PPgMain5.v) loads this copy and image A's walk keeps its own. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

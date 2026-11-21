@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the string read-ahead slack of 9; addresses and numbers; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DiagStrnlen.v, lines 85, 103. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.LeanFeed.
 (* [comment removed for export] *)
@@ -88,7 +89,7 @@ Section SN.
   Hypothesis HW : L5.writable RSEGS M (s - 4400) 4400.
   Hypothesis HD : L5.defined M (s - 4400) 4400.
   Hypothesis HIMG : L5.img_clear M 65536 1286144.
-  Hypothesis Hp : s <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+  Hypothesis Hp : s <= p /\ p + n + 1 + 9 <= 2 ^ 47.
   Hypothesis Hn : n <= 131071.
   Hypothesis HSTR : cstr M p bs t8.
   Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
@@ -103,7 +104,7 @@ Section SN.
       /\ mem_grows M M'.
 Proof.
 pose proof HC as (C1 & C2 & C3 & CG & C5 & C6).
-assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+assert (Pr : 140735332552704 <= p <= 140737488355318) by lia.
 assert (Nr : 0 <= n <= 131071) by lia.
 cfeed P (sC1_conc fx R M (fun j => match j with 2%nat => s | 33%nat => p | 34%nat => n | _ => 0 end)) ltac:(first [apply UR | apply U_to | sc]).
 destruct P as (fx1 & R1 & M1 & MG1 & aFR & aFZ & (aMS & aKS & aR1 & aR2 & aR8 & aR9 & aR11 & aR12 & aR13 & aR18 & aR19 & aR20 & aC1 & aC2 & aC3 & aC4 & aC5 & aC6 & aC7 & aC8 & aC9 & aC10 & aC11 & aC12 & aC13 & aC14 & aC15 & aC16 & aC17 & aC18 & aD1 & aD2 & aD3)).

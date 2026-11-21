@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract of __asan_stack_malloc_0 (FakeStack class 0) on
    fuzz_reply.asan at 0x3d168, YG0d.v's astack_malloc_realizes at class 0, which W_frame.v (palf_sm0) and the core
-   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch c8e8b0fa5ec
+   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch
    proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0Tbl.v (module SM0Tbl below) and StackMalloc0.v (the rest),
    themselves ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF9p.v + YF9q.v (trb_stack_malloc_0) into
    cgif_file_fuzzer's vocabulary.  fuzz_grant's 93 words at 0x3cda4 equal fuzz_reply's at 0x3d168 except the eight
@@ -15,12 +15,13 @@
    end 6266880 -> 6270976 (TFIB_IMG_END 0x5fb000) in the low-zone bounds, GrantSyms -> TfibSyms, module paths;
    the code table adds class 0's range on top of AF0r.tbl_fs, which (unlike fuzz_grant's) does not hold it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/RT_asan_stack_malloc_0.v, with its module paths, module names and numbers changed; 521 of its 590 lines of code are new or changed and 901 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs.asan-ubsan (build B): tfib_poison16 / tfib_unpoison16, proofs of B/FSpoisonS.v's fs_poison16 / fs_unpoison16
    (presence conjunct included) at __asan_poison_memory_region 0x54904 / __asan_unpoison_memory_region 0x54aa4
    (B/FSpoisonR.PO_ENTRY / UP_ENTRY = B/FSH_Base.PC_poison / PC_unpoison; disassembly evidence in B/FSpoisonR.v's
    header), over the B core (B/YE34 tbl_icpt, B/YE2y icpt_rodata, B/YF0m Tfib_const, B/YF0x at fs.asan-ubsan) and the
    pinned fuzz_state.asan-ubsan image.
-   Ported from: lib/A/FSpoisonW.v at a working branch 6e79fac25a0 (tfib_poison16 / tfib_unpoison16 over image A).
+   Ported from: lib/A/FSpoisonW.v at a working branch (tfib_poison16 / tfib_unpoison16 over image A).
    Changed: the A core modules -> their B twins (AB1v -> YB1v, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x,
    AE2y -> YE2y, AB1w -> YB1w; the qualified names AF0x. / AE2y. / AB1w. -> YF0x. / YE2y. / YB1w.), FSpoisonR -> B's
    twin; the two theorems are stated as B/FSpoisonS.v's fs_poison16 tfibsegs B / fs_unpoison16 tfibsegs B, and each

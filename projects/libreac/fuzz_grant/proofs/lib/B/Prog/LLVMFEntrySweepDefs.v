@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepDefs), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACeg.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepDefs.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The SWEEP phase of fuzz_grant's entry function on IMAGE B (fuzz_grant.asan-ubsan):
    listing slots 0x954 .. 0xde0 (addresses 0x81390 .. 0x8181c), fuzz_grant.c:285-361 —
    the sweep an admitted box builds, which the harness checks row by row, and its free.
@@ -11,7 +12,7 @@
    This file states the invariant at every cut inside the phase; the segments between
    the cuts are proved in LLVMFEntrySweepS1 .. S4.v, and LLVMFEntrySweep.v composes them.
 
-   Adapted from lib/A/Prog/GrantEntrySweepDefs.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepDefs.v (a working branch, blob
    f14e00ba6, 207 lines), which carries no licence header of its own.
    Every pc, register, spill slot and loop bound is
    read from image B; image B calls `want_of` where image A inlines it, keeps the sweep

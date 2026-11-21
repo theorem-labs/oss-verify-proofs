@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/LLVMFuzzerTestOneInput_cg.v (commit ba35beec1417; itself Section h of proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_cg.v at recipes commit 88154566652a) for reac-repacer/fuzz_uci's image B: the slot is the B core's lib/B/YCfn.v tfib_lib_contract_x_all, the sink names the B core's lib/B/YE2k.v, the journal and sink files lib/B/YCbq.v / YC5d.v / YE01.v, the listing modules lib/B/Prog's; the three return addresses and every address in the comments measured on fuzz_uci.asan-ubsan. *)
+(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/LLVMFuzzerTestOneInput_cg.v (itself Section h of proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_cg.v at recipes) for reac-repacer/fuzz_uci's image B: the slot is the B core's lib/B/YCfn.v tfib_lib_contract_x_all, the sink names the B core's lib/B/YE2k.v, the journal and sink files lib/B/YCbq.v / YC5d.v / YE01.v, the listing modules lib/B/Prog's; the three return addresses and every address in the comments measured on fuzz_uci.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_cg: the statement of the walk of fuzz_uci.asan-ubsan's LLVMFuzzerTestOneInput (uci_text of
    lib/B/Prog/UciPAddr.v, AF_LLVMFuzzerTestOneInput = 0 of lib/B/Prog/UciPList.v; YCfn.A_LLVMF = 0x7f2e8), as a
    STATEMENT only (no proof): the callee contracts give the core's slot.

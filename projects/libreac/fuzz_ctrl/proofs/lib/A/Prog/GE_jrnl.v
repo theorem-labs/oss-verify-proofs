@@ -11,7 +11,7 @@
    - `ge_jrnl`: the journal survives a run that writes inside WR, when every byte of WR is one the caller
      lets the call write (`awr_byte`).
    - `ge_jrnl_win`: the same, for WR = the stretch's own stack window and the output buffer [q, q + len).
-   - `ge_ro_keep`: the read-only data (`arodata_okS`, Reusable/YE01.v:189) survives a run that writes no
+   - `ge_ro_keep`: the read-only data (`arodata_okS`, Reusable/YE01.v:190) survives a run that writes no
      image byte.
 
    Why `mem_grows` needs the journal. `wmono` speaks of `wview`, which reads a writable segment's initial byte

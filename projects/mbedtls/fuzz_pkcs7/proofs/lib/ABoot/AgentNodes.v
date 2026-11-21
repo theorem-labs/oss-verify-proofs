@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rz_write_chan written out in plain text instead of its encoded CDefT form, with two new premises: the model has a channel reader, and the write range passes access_ok). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -92,13 +93,28 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Lemma rz_write_chan : ltac2:(CDefT.buildp (gd_tbl_AgentNodes ()) "Psegs,(7.$8.)Pregs,(9.&5.(4.&40.))Ppc,(4.&40.)Pmem,P,(4.&40.)(:.(4.&8.))Pmodel,$26.Pfd,(4.&40.)Pch,(4.&40.)Pn,$24.Pbs,(7.(4.&8.))PT,$27.P,(;.(:.(4.&40.))(28.R6.)(5.(4.&40.)))P,(;.(7.(22.(4.&40.)(4.&40.)))(29.R7.)(21.(22.(4.&40.)(4.&40.))))P,(;.$2<.(2=.&40.(16.R;.(17.&5.+11.$18.)))+40.)P,(;.(4.&40.)(16.R<.(17.&5.+:.$18.))R8.)P,(2>.(2=.&40.R9.)(2?.+2.+20.))P,(;.(:.$30.)(31.(32.R;.)R:.)(3.$30.(33.R9.)))P,(;.$=.(34.R:.)$35.)P,(;.(4.&40.)(16.R10.(17.&5.+<.$18.))(36.&40.(37.R:.)))P,(38.#1.R;.)P,(39.(37.R<.)$3:.)P,(2>.(37.R=.)(2?.+2.+40.))P,(;.(:.(7.(4.&8.)))(3;.R15.R12.(16.R14.(17.&5.+;.$18.))R>.)(3.(7.(4.&8.))R=.))P,Pk,$24.P,(38.#1.R1.)P,(38.R2.R11.)(2:.R19.(2;.(13.$2.(1=.R18.(17.&5.+:.$18.)(36.&40.(37.R3.)))(1>.R17.+4.)R16.(3<.R19.))R15.)R10.)(2:.R17.(2;.(15.R16.R15.R14.(3<.R17.)(16.R16.(17.&5.+11.$18.)))R13.)(3=.R11.R?.R>.))")
-(* [comment removed for export] *).
+Lemma rz_write_chan : forall segs regs pc mem model fd ch n bs T,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  bv_unsigned (getr regs 17) = 64%Z ->
+  getr regs 10 = fd -> (bv_unsigned fd < 2 ^ 32)%Z ->
+  fd_lookup (m_fds model) fd = Some (FdChannel ch) -> w_is0 ch = false ->
+  m_channel_reader model = true ->
+  getr regs 12 = Z_to_bv 64 (Z.of_nat n) ->
+  (1 <= n)%nat -> (Z.of_nat n <= rw_bytes_max)%Z -> (Z.of_nat n < 2 ^ 64)%Z ->
+  rdn segs mem (getr regs 11) n = Some bs ->
+  (* the range [vfs_write]'s [access_ok] accepts on the count [n]; see
+     [CatSim.write1_check_n] *)
+  access_okb (getr regs 11) (Z.of_nat n) = true ->
+  (forall k, (1 <= k)%nat -> (k <= n)%nat ->
+     realizes segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 (Z.of_nat k))) (v_addi pc 4) mem (seg_rom segs)) model) T) ->
+  realizes segs (mkCfg (epend regs pc mem (seg_rom segs) (getr regs 17)) model)
+           (t_write_ch ch bs T).
 Proof.
-  intros segs regs pc mem model fd ch n bs T Hh Hlazy Hno Hfd Hfd32 Hlk Hch Hcnt Hn1 Hmax Hn64 Hrd Hc.
+  intros segs regs pc mem model fd ch n bs T Hh Hlazy Hno Hfd Hfd32 Hlk Hch Hrdr Hcnt Hn1 Hmax Hn64 Hrd Hok Hc.
   pose proof (rdn_length segs mem n (getr regs 11) bs Hrd) as Hlen.
   eapply (rz_write_ch segs _ model fd ch (getr regs 17) bs T Hh Hlazy).
-  - unfold fdchan. split; [exact Hlk | exact Hch].
+  - unfold fdchan. split; [exact Hlk | split; [exact Hch | exact Hrdr]].
   - apply fd32_id. exact Hfd32.
   - reflexivity.
   - exact Hno.
@@ -106,6 +122,7 @@ Proof.
   - rewrite ms_gpr_epend1, ms_gpr_epend2, Hcnt.
     rewrite (ms_read_bytes_rdn segs) by reflexivity. cbn [ms_mem epend].
     unfold word_to_nat. rewrite u64_lit by lia. rewrite Nat2Z.id. exact Hrd.
+  - rewrite ms_gpr_epend1, ms_gpr_epend2, Hcnt, u64_lit by lia. exact Hok.
   - unfold buf_modeled. rewrite Hlen. exact Hmax.
   - rewrite Hlen. exact Hn1.
   - intros k Hk1 Hk2. rewrite adv_set_epend.

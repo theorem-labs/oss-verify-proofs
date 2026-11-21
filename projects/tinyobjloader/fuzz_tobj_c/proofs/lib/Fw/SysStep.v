@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a system call's return clears the reservation; unmodeled_at's new vDSO-call arm; the write steps take the channel reader and the buffer below TASK_SIZE, the writev steps the channel reader, LPS 08b1429; the mmap steps the decline premise place_declined_b, except the two mmap inversions wstep_mmap_inv and wstep_mmap_none_inv, which derive it from the step's answer; refusability at the hint and Linux's address; the munmap steps the exact cut; mprotect the range missing the vDSO pair; write_rob and the writev _rob lemmas added, LPS 75d69e00). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -10,9 +11,17 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Refusable.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec.
+(* LPS 75d69e00: [ok_pframe] gained a [RomBase.sys_rob] premise.  For the numbers whose check
+   READS [in_mem] -- 64 (write) and 66 (writev) here -- that premise is not [RomBase.rob_auto]'s:
+   [RomBase.memfree] quantifies over an ARBITRARY replacement memory and is FALSE at those
+   numbers.  The [*_rob] lemmas at the end of this file discharge it the right way, through
+   [RomBase.sys_rob_of_mem_ext], so this file Requires (but does not Import) RomBase.  RomBase
+   depends on the model only, so there is no cycle. *)
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -60,9 +69,11 @@ Create HintDb sys_input.
 #[export] Hint Rewrite sys_input_sysno sys_input_arg0 sys_input_arg1 sys_input_arg2
   sys_input_arg3 sys_input_arg4 sys_input_arg5 sys_input_mem sys_input_wmem : sys_input.
 
+(* LPS 08b1429: [advance_past_svc] clears the LR/SC reservation ([ms_resv := None]), following Linux's
+   [ret_from_exception]; see recipes/svc-clears-resv.md. *)
 Definition after_sys_mem (ms : machine_state) (r : word) (mem : word -> option byte)
     : machine_state := ltac2:(tb__ "0|3|
-S13Sc7Q5M0S15Q40M1A1M2S17G0ZaA2Vr;SbVms;A1A5S10Vms;A1S18G1ScVms;A1S17G1Z4A2A3S2fG2A1S11Vms;A1SfVms;A1Vmem;S12Vms;A1A8").
+S13Sc7Q5M0S15Q40M1A1M2S17G0ZaA2Vr;SbVms;A1A5S10Vms;A1S18G1ScVms;A1S17G1Z4A2A3S2fG2A1S2fG2A1SfVms;A1Vmem;S12Vms;A1A8").
 
 Definition after_sys (ms : machine_state) (r : word) : machine_state := ltac2:(tb__ "0|0|
 S7fVms;Vr;SaVms;A1A3").
@@ -147,8 +158,8 @@ Proof. reflexivity. Qed.
 Lemma after_sys_fcsr : ltac2:(tb__ "0|1|
 S7S15Q40A1M0G0S28S15Q8A1A1F_;S0S15Q20A1SfS7fR3R2R1A3A1SfR3A1A3Fmem;Fr;Fms;").
 Proof. reflexivity. Qed.
-Lemma after_sys_resv : ltac2:(tb__ "0|1|
-S7S15Q40A1M0G0S28S15Q8A1A1F_;S0S28G0A1S11S7fR3R2R1A3A1S11R3A1A3Fmem;Fr;Fms;").
+Lemma after_sys_resv : forall (ms : machine_state) (r : word) (mem : word -> option byte),
+  ms_resv (after_sys_mem ms r mem) = None.
 Proof. reflexivity. Qed.
 
 Lemma after_sys_a0 : ltac2:(tb__ "0|1|
@@ -293,7 +304,8 @@ S7S37S15Q40A1M0S29S36A1S0S28G0A1S8R4A1S2aG0R2A2A3S87S1bVsegs;R5R3A3R4A2S2S1eVseg
   Lemma pending_not_unmodeled_at : ltac2:(tb__ "0|1|
 S7S37S15Q40A1M0S0S28G0A1S8R3A1S2aG0R1A2A3S87S1bVsegs;R4R2A3R3A2S2S24Vsegs;S19R5R4A2A2A1F_;F_;Fx8;Fm;Fms;").
   Proof using .
-    intros ms m x8 Hp [Hok _] [_ [[Hn _] | (x & Hx & Hs)]]; cbn in *; [congruence|].
+    (* LPS 08b1429: [unmodeled_at] has three arms; the two instruction arms need no pending syscall. *)
+    intros ms m x8 Hp [Hok _] [_ [[Hn _] | [[Hn _] | (x & Hx & Hs)]]]; cbn in *; [congruence|congruence|].
     rewrite Hp in Hx. inversion Hx; subst. exact (Hok Hs).
   Qed.
 
@@ -512,40 +524,90 @@ S7S37S0Sa1S3fS89R2R1A2A1S3fR1A1A3Fm;Fms;").
 S29S36A1M0S7S7S37S78S2S79Vsegs;S27G0S1aR5S19R3S89R4R2A2A2A4R1A3A1Fw';Fm;Fms';Fms;Ftr;").
   Proof using . intros. eapply halted_no_wstep. apply exited_halted. Qed.
 
-  Lemma wstep_write_inv : ltac2:(tb__ "0|8|
-S29S36A1M0S7S37S15Q40M1A1M2G2S29S15Q8A1M3A1M4S78S0S28G2A1S8R6A1S2aG2R4A2A3S77R6A1S0S76S16G1R6A2Z40A3S0S28S38A1S3dS3bR8A1S84S6R9U0A2A1A2S2aS38S49R6A1A2A3S2S0G2R7S17G1Z0M5A2A3A1S0S28G4A1S4eS9RbA1S6RbU1M6A2S6RbU2M7A2A3S2aG4R7A2A3S8fG5S16G1S6RcG7A2A2A2S8dS16G1S6RdG7A2A2SbdA2S79Vsegs;S27G0S1aRfS19ReRdA2A4R9A3S4S33S33S1S1SbcG6R1A2SbcR1S34G3RcA2A2A2S0S78RbS27G0S1aS32S36R11Sc0G3S36S5eRdA1Sc1G3R1RcA3A4A3S19S7eR10S17G1S92R1A1A2A2RfA2A4A3A2Lk;A2F_;F_;F_;F_;F_;F_;F_;F_;F_;Fw';Fbs;Fch;Fx8;Fm;Fms;Ftr;").
+  Lemma rd_access_ok : ltac2:(tb__ "0|3|
+S15Q40M0A1M1G1S8dS90S16G0R2A2M2S16G0R1A2A2S4aA2S0S2bS69R3G2A2S30A3F_;Fcount;Fbuf;").
+  Proof using . intros buf count H. apply access_okb_intro. exact H. Qed.
+
+  (* LPS 08b1429: [check_write] tests vfs_write's [access_ok] on the buffer (taken here, as for writev,
+     as the bound [buf + count <= TASK_SIZE], see [rd_access_ok]) and raises SIGPIPE on a nonempty write
+     to a channel with no reader ([m_channel_reader]). *)
+  Lemma wstep_write_inv : forall tr ms m x8 ch bs w',
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 64%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+    (0 < bv_unsigned (ms_gpr ms 2))%Z ->
+    (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
+    (bv_unsigned (ms_gpr ms 1) + bv_unsigned (ms_gpr ms 2) <= TASK_SIZE)%Z ->
+    m_channel_reader m = true ->
+    wstep (tr, mkCfg ms m) w' ->
+    exists k, (1 <= k <= length bs)%nat
+      /\ w' = (tr ++ map (WriteEv ch) (firstn k bs), mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) m).
   Proof using .
-    intros tr ms m x8 ch bs w' Hp [Hh Hl] Hno Hfd Hch Hbuf Hpos Hmax Hw.
+    intros tr ms m x8 ch bs w' Hp [Hh Hl] Hno Hfd Hch Hbuf Hpos Hmax Hok Hrdr Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    apply (@write_inv (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax) in Hspec.
+    apply (@write_inv (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax Hrdr (rd_access_ok _ _ Hok))
+      in Hspec.
     destruct Hspec as (k & Hk & E). unfold is_ret_ci in E. inversion E; subst.
     exists k. split; [exact Hk|].
     destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hc & _)]; [|congruence].
     mat_id Hm Hl. reflexivity.
   Qed.
 
-  Lemma wstep_write_intro_prefix : ltac2:(tb__ "0|8|
-S29S36A1M0S7S37S15Q40M1A1M2G2S29S15Q8A1M3A1M4S33S0S28G2A1S8R6A1S2aG2R4A2A3S77R6A1S0S76S16G1R6A2Z40A3S0S28S38A1S3dS3bR8A1S84S6R9U0A2A1A2S2aS38S49R6A1A2A3S2S0G2R7S17G1Z0M5A2A3A1S0S28G4A1S4eS9RbA1S6RbU1M6A2S6RbU2M7A2A3S2aG4R7A2A3S8fG5S16G1S6RcG7A2A2A2S8dS16G1S6RdG7A2A2SbdA2S1SbcG6R9A2SbcR9S34G3RaA2A2A2S79Vsegs;S27G0S1aR10S19RfReA2A4S27G0S1aS32S36R10Sc0G3S36S5eRcA1Sc1G3RaRbA3A4A3S19S7eRfS17G1S92RaA1A2A2ReA2A4A3F_;F_;F_;F_;F_;F_;F_;F_;F_;Fk;Fbs;Fch;Fx8;Fm;Fms;Ftr;").
+  Lemma wstep_write_intro_prefix : forall tr ms m x8 ch bs k,
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 64%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+    (0 < bv_unsigned (ms_gpr ms 2))%Z ->
+    (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
+    (bv_unsigned (ms_gpr ms 1) + bv_unsigned (ms_gpr ms 2) <= TASK_SIZE)%Z ->
+    m_channel_reader m = true ->
+    (1 <= k <= length bs)%nat ->
+    wstep (tr, mkCfg ms m)
+          (tr ++ map (WriteEv ch) (firstn k bs), mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) m).
   Proof using .
-    intros tr ms m x8 ch bs k Hp Hi Hno Hfd Hch Hbuf Hpos Hmax Hk.
+    intros tr ms m x8 ch bs k Hp Hi Hno Hfd Hch Hbuf Hpos Hmax Hok Hrdr Hk.
     refine (@wstep_retci_intro tr _ _ _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
-    exact (@write_intro_prefix (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax k Hk).
+    exact (@write_intro_prefix (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax Hrdr
+             (rd_access_ok _ _ Hok) k Hk).
   Qed.
 
-  Lemma wstep_write_intro : ltac2:(tb__ "0|7|
-S29S36A1M0S7S37S15Q40M1A1M2G2S29S15Q8A1M3A1M4S0S28G2A1S8R5A1S2aG2R3A2A3S77R5A1S0S76S16G1R5A2Z40A3S0S28S38A1S3dS3bR7A1S84S6R8U0A2A1A2S2aS38S49R5A1A2A3S2S0G2R6S17G1Z0M5A2A3A1S0S28G4A1S4eS9RaA1S6RaU1A2S6RaU2M6A2A3S2aG4R6A2A3S8fG5S16G1S6RbG6A2A2A2S8dS16G1S6RcG6A2A2SbdA2S79Vsegs;S27G0S1aReS19RdRcA2A4S27G0S1aS32S36ReSc0G3S36S5eRaA1R9A4A3S19S7eRdS6RdG6A2A2RcA2A4A3F_;F_;F_;F_;F_;F_;F_;F_;Fbs;Fch;Fx8;Fm;Fms;Ftr;").
+  Lemma wstep_write_intro : forall tr ms m x8 ch bs,
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 64%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+    (0 < bv_unsigned (ms_gpr ms 2))%Z ->
+    (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
+    (bv_unsigned (ms_gpr ms 1) + bv_unsigned (ms_gpr ms 2) <= TASK_SIZE)%Z ->
+    m_channel_reader m = true ->
+    wstep (tr, mkCfg ms m) (tr ++ map (WriteEv ch) bs, mkCfg (after_sys ms (ms_gpr ms 2)) m).
   Proof using .
-    intros tr ms m x8 ch bs Hp Hi Hno Hfd Hch Hbuf Hpos Hmax.
+    intros tr ms m x8 ch bs Hp Hi Hno Hfd Hch Hbuf Hpos Hmax Hok Hrdr.
     refine (@wstep_retci_intro tr _ _ _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
-    exact (@write_intro (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax).
+    exact (@write_intro (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax Hrdr (rd_access_ok _ _ Hok)).
   Qed.
 
-  Lemma write_only_ok : ltac2:(tb__ "0|5|
-S7S37S15Q40M0A1M1G1S29S15Q8A1A1M2S77R4A1S0S76S16G0R4A2Z40A3S0S28S38A1S3dS3bR6A1S84S6R7U0A2A1A2S2aS38S49R4A1A2A3S2S0G1R5S17G0Z0M3A2A3A1S0S28G2A1S4eS9R9A1S6R9U1A2S6R9U2M4A2A3S2aG2R5A2A3S8fG3S16G0S6RaG4A2A2A2S8dS16G0S6RbG4A2A2SbdA2S87S1bVsegs;RcRaA3RbA2F_;F_;F_;F_;F_;F_;F_;Fbs;Fch;Fx8;Fm;Fms;").
+  Lemma write_only_ok : forall ms m x8 ch bs,
+    model_idle m ->
+    bv_unsigned x8 = 64%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+    (0 < bv_unsigned (ms_gpr ms 2))%Z ->
+    (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
+    (bv_unsigned (ms_gpr ms 1) + bv_unsigned (ms_gpr ms 2) <= TASK_SIZE)%Z ->
+    m_channel_reader m = true ->
+    only_ok (sys_input segs ms x8) m.
   Proof using .
-    intros ms m x8 ch bs [Hh Hl] Hno Hfd Hch Hbuf Hpos Hmax.
+    intros ms m x8 ch bs [Hh Hl] Hno Hfd Hch Hbuf Hpos Hmax Hok Hrdr.
     eapply only_ok_of_inv;
-      [intros R; exact (@write_inv (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax R)| |].
+      [intros R; exact (@write_inv (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax Hrdr
+                          (rd_access_ok _ _ Hok) R)| |].
     - intros (k & _ & E). unfold is_ret_ci in E. discriminate.
     - intros eff m' evs (k & _ & E) _. unfold is_ret_ci in E. inversion E; subst. exact Hl.
   Qed.
@@ -716,14 +778,15 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length (bs1 ++ bs2)) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     wstep (tr, mkCfg ms m) w' ->
     exists k, (1 <= k <= length (bs1 ++ bs2))%nat
       /\ w' = (tr ++ map (WriteEv ch) (firstn k (bs1 ++ bs2)), mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) m).
   Proof using .
-    intros tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 w' Hp [Hh Hl] Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hw.
+    intros tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 w' Hp [Hh Hl] Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hrdr Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
     apply (@writev2_inv (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2
-             Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen) in Hspec.
+             Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hrdr) in Hspec.
     destruct Hspec as (k & Hk & E). unfold is_ret_ci in E. inversion E; subst.
     exists k. split; [exact Hk|].
     destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hc & _)]; [|congruence].
@@ -746,14 +809,15 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length (bs1 ++ bs2)) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     (1 <= k <= length (bs1 ++ bs2))%nat ->
     wstep (tr, mkCfg ms m)
           (tr ++ map (WriteEv ch) (firstn k (bs1 ++ bs2)), mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) m).
   Proof using .
-    intros tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 k Hp Hi Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hk.
+    intros tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 k Hp Hi Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hrdr Hk.
     refine (@wstep_retci_intro tr _ _ _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
     exact (@writev2_intro_prefix (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2
-             Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen k Hk).
+             Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hrdr k Hk).
   Qed.
 
   Lemma wstep_writev2_intro : forall tr ms m x8 ch b1 l1 b2 l2 bs1 bs2,
@@ -772,13 +836,14 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length (bs1 ++ bs2)) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     wstep (tr, mkCfg ms m)
           (tr ++ map (WriteEv ch) (bs1 ++ bs2), mkCfg (after_sys ms (len_word (bs1 ++ bs2))) m).
   Proof using .
-    intros tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 Hp Hi Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen.
+    intros tr ms m x8 ch b1 l1 b2 l2 bs1 bs2 Hp Hi Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hrdr.
     refine (@wstep_retci_intro tr _ _ _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
     exact (@writev2_intro (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2
-             Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen).
+             Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hrdr).
   Qed.
 
   Lemma writev2_only_ok : forall ms m x8 ch b1 l1 b2 l2 bs1 bs2,
@@ -797,12 +862,13 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length (bs1 ++ bs2)) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     only_ok (sys_input segs ms x8) m.
   Proof using .
-    intros ms m x8 ch b1 l1 b2 l2 bs1 bs2 [Hh Hl] Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen.
+    intros ms m x8 ch b1 l1 b2 l2 bs1 bs2 [Hh Hl] Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hrdr.
     eapply only_ok_of_inv;
       [intros R; exact (@writev2_inv (sys_input segs ms x8) m ch b1 l1 b2 l2 bs1 bs2
-                          Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen R)| |].
+                          Hno Hfd Hch Hcnt H1 H2 H3 H4 Hb1 Hb2 Hiok Hok1 Hok2 Hlen Hrdr R)| |].
     - intros (k & _ & E). unfold is_ret_ci in E. discriminate.
     - intros eff m' evs (k & _ & E) _. unfold is_ret_ci in E. inversion E; subst. exact Hl.
   Qed.
@@ -819,13 +885,14 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
     (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length bs1) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     wstep (tr, mkCfg ms m) w' ->
     exists k, (1 <= k <= length bs1)%nat
       /\ w' = (tr ++ map (WriteEv ch) (firstn k bs1), mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) m).
   Proof using .
-    intros tr ms m x8 ch b1 l1 bs1 w' Hp [Hh Hl] Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hw.
+    intros tr ms m x8 ch b1 l1 bs1 w' Hp [Hh Hl] Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hrdr Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    apply (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen) in Hspec.
+    apply (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hrdr) in Hspec.
     destruct Hspec as (k & Hk & E). unfold is_ret_ci in E. inversion E; subst.
     exists k. split; [exact Hk|].
     destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hc & _)]; [|congruence].
@@ -844,13 +911,14 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
     (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length bs1) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     (1 <= k <= length bs1)%nat ->
     wstep (tr, mkCfg ms m)
           (tr ++ map (WriteEv ch) (firstn k bs1), mkCfg (after_sys ms (Z_to_bv 64 (Z.of_nat k))) m).
   Proof using .
-    intros tr ms m x8 ch b1 l1 bs1 k Hp Hi Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hk.
+    intros tr ms m x8 ch b1 l1 bs1 k Hp Hi Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hrdr Hk.
     refine (@wstep_retci_intro tr _ _ _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
-    exact (@writev1_intro_prefix (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen k Hk).
+    exact (@writev1_intro_prefix (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hrdr k Hk).
   Qed.
 
   Lemma wstep_writev1_intro : forall tr ms m x8 ch b1 l1 bs1,
@@ -865,12 +933,13 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
     (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length bs1) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     wstep (tr, mkCfg ms m)
           (tr ++ map (WriteEv ch) bs1, mkCfg (after_sys ms (len_word bs1)) m).
   Proof using .
-    intros tr ms m x8 ch b1 l1 bs1 Hp Hi Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen.
+    intros tr ms m x8 ch b1 l1 bs1 Hp Hi Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hrdr.
     refine (@wstep_retci_intro tr _ _ _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
-    exact (@writev1_intro (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen).
+    exact (@writev1_intro (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hrdr).
   Qed.
 
   Lemma writev1_only_ok : forall ms m x8 ch b1 l1 bs1,
@@ -885,11 +954,12 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
     (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
     (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
     (1 <= Z.of_nat (length bs1) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
     only_ok (sys_input segs ms x8) m.
   Proof using .
-    intros ms m x8 ch b1 l1 bs1 [Hh Hl] Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen.
+    intros ms m x8 ch b1 l1 bs1 [Hh Hl] Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hrdr.
     eapply only_ok_of_inv;
-      [intros R; exact (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen R)| |].
+      [intros R; exact (@writev1_inv (sys_input segs ms x8) m ch b1 l1 bs1 Hno Hfd Hch Hcnt H1 H2 Hb1 Hiok Hok1 Hlen Hrdr R)| |].
     - intros (k & _ & E). unfold is_ret_ci in E. discriminate.
     - intros eff m' evs (k & _ & E) _. unfold is_ret_ci in E. inversion E; subst. exact Hl.
   Qed.
@@ -897,10 +967,6 @@ S7S37S15Q40M0A1M1G1S77R3A1S0S76S16G0R3A2Z60A3S0S28G1A1S52R5A1S2aG1R3A2A3S87S1bVs
   Lemma with_fds_idle : ltac2:(tb__ "0|0|
 S29S2dS15Q40A1S38A2A1S37S77R1A1S77S58R3R2A2A1F_;Fm;Ff;").
   Proof using . intros f m [H1 H2]. split; assumption. Qed.
-
-  Lemma rd_access_ok : ltac2:(tb__ "0|3|
-S15Q40M0A1M1G1S8dS90S16G0R2A2M2S16G0R1A2A2S4aA2S0S2bS69R3G2A2S30A3F_;Fcount;Fbuf;").
-  Proof using . intros buf count H. apply access_okb_intro. exact H. Qed.
 
   Lemma wstep_read_file_inv : ltac2:(tb__ "0|b|
 S29S36A1M0S7S37S15Q40M1A1M2S9fG2S29S15Q8A1M3A1M4G4S78S0S28G2A1S8R8A1S2aG2R6A2A3S77R8A1S0S76S16G1R8A2Z3fA3S0S28S38A1S3dS3bRaA1S84S6RbU0M5A2A1A2S2aS38S55R8R7A2A2A3S0S28G4A1M6S9eS3fRbA1R9A2S2aG4R7A2M7A3S0G6S4eSdVsegs;RdA2S6RdU1M8A2S6RdU2M9A2A3G7A3S8dS16G1S6ReG9A2A2S5dA2S8dS90S16G1S6RfG8A2A2S16G1S6RfG9A2A2A2S4aA2Sa0RbRcS6R10G9A2A3G4S79Vsegs;S27G0S1aR12S19R11R10A2A4RaA3S0S78RbS27G0S1aR13S19S7fR12Sc5G3R2A2MaSeSaR12A1S6R12G8A2R2A3A3S58S65S3bR11A1S84S6R12G5A2A1S55RfS18G1ReGaA3A2A3R11A2A2A4A3F_;Tbs;F_;F_;F_;F_;F_;F_;F_;F_;Fw';Fwdst;Fdata;Foff;Fp;Fx8;Fm;Fms;Ftr;").
@@ -1158,12 +1224,26 @@ S7S37S15Q40M0A1M1S29S15Q8A1A1S77R3A1S0S76S16G0R3A2Z38A3S0S76S8eS16G0S6R6U2A2A2S9
     - intros eff m' evs [(e & _ & E) | (_ & E)] _; unfold is_ret_ci in E; inversion E; subst; exact Hl.
   Qed.
 
-  Lemma wstep_mmap_inv : ltac2:(tb__ "0|6|
-S29S36A1M0S7S37S15Q40M1A1M2S78S0S28G2A1S8R4A1S2aG2R2A2A3S77R4A1S0S76S16G1R4A2ZdeA3S2S0G2S6R7U1M3A2S17G1Z0A2A3A1S0S2bSa3S6R8U2A2S6R8U3M4A2S6R8U5A2A3S30A3S0S2bSa2S6R9G4A2A1S31A3S79Vsegs;S27G0S1aRbS19RaR9A2A4R7A3S3S0S78R8S27G0S1aRcS19S7eRbS3cS4bA1A2RaA2A4A3S4G2G2S1Sb5S6RcU0A2S6RcG4A2RbS6RcG3A2M5R1A5S0S78R9S27G0S1aRdS19S7fRcR1S81SaRcA1R1SaeG5A1A3A3S54Sb7S41RbA1G5R1A3RbA2A2A4A3A2La;A2A2F_;F_;F_;F_;F_;F_;F_;Fw';Fx8;Fm;Fms;Ftr;").
+  (* LPS 727298f3: the statement was decoded from this file's [tbs__] table and written out.
+     Section MmapRW's decline fact [Hdecl] (Fw/SysSpec.v), [place_declined_b ... = false], is
+     not a premise: the step's [Ok] answer implies it, and [mmap_rw_ok_not_declined] derives it
+     from that answer (c3 clause 2). *)
+  Lemma wstep_mmap_inv : forall tr ms m x8 (w' : world),
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 222%Z ->
+    ms_gpr ms 1 <> Z_to_bv 64 0 ->
+    mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true ->
+    mmap_noreserve_b (ms_gpr ms 3) = false ->
+    wstep (tr, mkCfg ms m) w' ->
+    w' = (tr, mkCfg (after_sys ms (errno_ret ENOMEM)) m)
+    \/ exists a, mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) m (ms_gpr ms 1) a
+         /\ w' = (tr, mkCfg (after_sys_mem ms a (zero_range (ms_mem ms) a (mmap_n (ms_gpr ms 1))))
+                            (with_vmmaps (mmap_rw_vm (m_vmmaps m) (ms_gpr ms 1) a) m)).
   Proof using .
     intros tr ms m x8 w' Hp [Hh Hl] Hno Hlen Hsh Hnr Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    apply (@mmap_rw_inv (sys_input segs ms x8) m Hno Hlen Hsh) in Hspec.
+    pose proof (@mmap_rw_ok_not_declined (sys_input segs ms x8) m eff m' evs0 Hno Hlen Hsh Hspec) as Hdecl.
+    apply (@mmap_rw_inv (sys_input segs ms x8) m Hno Hlen Hsh Hdecl) in Hspec.
     destruct Hspec as [E | (a & Hpl & E)]; unfold is_ret in E; inversion E; subst.
     - left. destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hcd & _)]; [|congruence].
       mat_id Hm Hl. now rewrite app_nil_r.
@@ -1174,42 +1254,82 @@ S29S36A1M0S7S37S15Q40M1A1M2S78S0S28G2A1S8R4A1S2aG2R2A2A3S77R4A1S0S76S16G1R4A2Zde
       mat_id Hm Hl. now rewrite app_nil_r.
   Qed.
 
-  Lemma wstep_mmap_intro_fail : ltac2:(tb__ "0|5|
-S29S36A1M0S7S37S15Q40M1A1M2S0S28G2A1S8R3A1S2aG2R1A2A3S77R3A1S0S76S16G1R3A2ZdeA3S2S0G2S6R6U1M3A2S17G1Z0A2A3A1S0S2bSa3S6R7U2A2S6R7U3M4A2S6R7U5A2A3S30A3S0S2bSa9S6R8G4A2R7SabS6R8G3A2A1A3S30A3S79Vsegs;S27G0S1aRaS19R9R8A2A4S27G0S1aRaS19S7eR9S3cS4bA1A2R8A2A4A3F_;F_;F_;F_;F_;F_;Fx8;Fm;Fms;Ftr;").
+  (* LPS 08b1429: refusability is asked at the hint [a0], and a grant needs Linux's address
+     ([linux_place_is]), not only the four placement tests. *)
+  Lemma wstep_mmap_intro_fail : forall tr ms m x8,
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 222%Z ->
+    ms_gpr ms 1 <> Z_to_bv 64 0 ->
+    mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true ->
+    mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) m (mmap_nZ (ms_gpr ms 1)) = true ->
+    place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+    wstep (tr, mkCfg ms m) (tr, mkCfg (after_sys ms (errno_ret ENOMEM)) m).
   Proof using .
-    intros tr ms m x8 Hp Hi Hno Hlen Hsh Hrf.
+    intros tr ms m x8 Hp Hi Hno Hlen Hsh Hrf Hdecl.
     refine (@wstep_ret_intro0 tr _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
-    exact (@mmap_rw_intro_fail (sys_input segs ms x8) m Hno Hlen Hsh Hrf).
+    exact (@mmap_rw_intro_fail (sys_input segs ms x8) m Hno Hlen Hsh Hdecl Hrf).
   Qed.
 
-  Lemma wstep_mmap_intro_ok : ltac2:(tb__ "0|6|
-S29S36A1M0S7S37S15Q40M1A1M2G2S0S28G2A1S8R4A1S2aG2R2A2A3S77R4A1S0S76S16G1R4A2ZdeA3S2S0G2S6R7U1M3A2S17G1Z0A2A3A1S0S2bSa3S6R8U2A2S6R8U3M4A2S6R8U5A2A3S30A3S0S2bSa2S6R9G4A2A1S31A3Sb5S6RaU0A2S6RaG4A2R9S6RaG3A2R7A5S79Vsegs;S27G0S1aRcS19RbRaA2A4S27G0S1aRcS19S7fRbR8S81SaRbA1R8SaeS6RbG3A2M5A1A3A3S54Sb7S41RaA1G5R8A3RaA2A2A4A3F_;F_;F_;F_;F_;F_;F_;Fa;Fx8;Fm;Fms;Ftr;").
+  Lemma wstep_mmap_intro_ok : forall tr ms m x8 a,
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 222%Z ->
+    ms_gpr ms 1 <> Z_to_bv 64 0 ->
+    mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true ->
+    mmap_noreserve_b (ms_gpr ms 3) = false ->
+    mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) m (ms_gpr ms 1) a ->
+    linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) (ms_gpr ms 0) (mmap_nZ (ms_gpr ms 1)) a = true ->
+    place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+    wstep (tr, mkCfg ms m)
+          (tr, mkCfg (after_sys_mem ms a (zero_range (ms_mem ms) a (mmap_n (ms_gpr ms 1))))
+                     (with_vmmaps (mmap_rw_vm (m_vmmaps m) (ms_gpr ms 1) a) m)).
   Proof using .
-    intros tr ms m x8 a Hp Hi Hno Hlen Hsh Hnr Hpl.
-    pose proof (@mmap_rw_intro_ok (sys_input segs ms x8) m Hno Hlen Hsh a Hpl) as Hs.
+    intros tr ms m x8 a Hp Hi Hno Hlen Hsh Hnr Hpl Hlp Hdecl.
+    pose proof (@mmap_rw_intro_ok (sys_input segs ms x8) m Hno Hlen Hsh Hdecl a Hpl Hlp) as Hs.
     unfold mmap_rw_model in Hs. change (in_arg (sys_input segs ms x8) 3) with (ms_gpr ms 3) in Hs.
     rewrite (with_mmap_backing_plain _ _ _ _ Hnr) in Hs.
     refine (@wstep_pending_run0 tr _ _ _ _ _ Hp (model_idle_halted Hi) Hs _).
     destruct Hi as [H1 H2]; split; assumption.
   Qed.
 
-  Lemma mmap_only_ok : ltac2:(tb__ "0|3|
-S7S37S15Q40M0A1M1S77R2A1S0S76S16G0R2A2ZdeA3S2S0G1S6R5U1A2S17G0Z0A2A3A1S0S2bSa3S6R6U2A2S6R6U3M2A2S6R6U5A2A3S30A3S0S2bSa2S6R7G2A2A1S31A3S87S1bVsegs;R8R6A3R7A2F_;F_;F_;F_;F_;Fx8;Fm;Fms;").
+  Lemma mmap_only_ok : forall ms m x8,
+    model_idle m ->
+    bv_unsigned x8 = 222%Z ->
+    ms_gpr ms 1 <> Z_to_bv 64 0 ->
+    mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true ->
+    mmap_noreserve_b (ms_gpr ms 3) = false ->
+    place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+    only_ok (sys_input segs ms x8) m.
   Proof using .
-    intros ms m x8 [Hh Hl] Hno Hlen Hsh Hnr.
-    eapply only_ok_of_inv; [intros R; exact (@mmap_rw_inv (sys_input segs ms x8) m Hno Hlen Hsh R)| |].
+    intros ms m x8 [Hh Hl] Hno Hlen Hsh Hnr Hdecl.
+    eapply only_ok_of_inv; [intros R; exact (@mmap_rw_inv (sys_input segs ms x8) m Hno Hlen Hsh Hdecl R)| |].
     - intros [E | (a & _ & E)]; unfold is_ret in E; discriminate.
     - intros eff m' evs [E | (a & _ & E)] _; unfold is_ret in E; inversion E; subst; [exact Hl|].
       unfold mmap_rw_model. change (in_arg (sys_input segs ms x8) 3) with (ms_gpr ms 3).
       rewrite (with_mmap_backing_plain _ _ _ _ Hnr). exact Hl.
   Qed.
 
-  Lemma wstep_mmap_none_inv : ltac2:(tb__ "0|8|
-S29S36A1M0S7S37S15Q40M1A1M2S78S0S28G2A1S8R4A1S2aG2R2A2A3S77R4A1S0S76S16G1R4A2ZdeA3S2S0G2S6R7U1M3A2S17G1Z0A2A3A1S0S2bSa4S6R8U2M4A2S6R8U3M5A2S6R8U5M6A2A3S30A3S0S2bSa3S6R9G4A2S6R9G5A2S6R9G6A2A3S31A3S0S2bSa2S6RaG5A2A1S31A3S79Vsegs;S27G0S1aRcS19RbRaA2A4R8A3S3S0S78R9S27G0S1aRdS19S7eRcS3cS4bA1A2RbA2A4A3S4G2G2S1Sb6S6RdU0A2RcS6RdG3A2M7R1A4S0S78RaS27G0S1aReS19S7fRdR1S80SaRdA1R1SaeG7A1A3A3S54Sb4S41RcA1G7R1A3RcA2A2A4A3A2La;A2A2F_;F_;F_;F_;F_;F_;F_;F_;Fw';Fx8;Fm;Fms;Ftr;").
+  (* The same for PROT_NONE: [mmap_none_ok_not_declined] derives the decline fact from the
+     step's [Ok] answer, so it is not a premise (c3 clause 2). *)
+  Lemma wstep_mmap_none_inv : forall tr ms m x8 (w' : world),
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 222%Z ->
+    ms_gpr ms 1 <> Z_to_bv 64 0 ->
+    mmap_noaccess_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true ->
+    mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = false ->
+    mmap_noreserve_b (ms_gpr ms 3) = false ->
+    wstep (tr, mkCfg ms m) w' ->
+    w' = (tr, mkCfg (after_sys ms (errno_ret ENOMEM)) m)
+    \/ exists a, mmap_place_ok_none (ms_gpr ms 0) m (ms_gpr ms 1) a
+         /\ w' = (tr, mkCfg (after_sys_mem ms a (unmap_range (ms_mem ms) a (mmap_n (ms_gpr ms 1))))
+                            (with_vmmaps (mmap_none_vm (m_vmmaps m) (ms_gpr ms 1) a) m)).
   Proof using .
     intros tr ms m x8 w' Hp [Hh Hl] Hno Hlen Hsh Hnrw Hnr Hw.
     destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    apply (@mmap_none_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnrw) in Hspec.
+    pose proof (@mmap_none_ok_not_declined (sys_input segs ms x8) m eff m' evs0 Hno Hlen Hsh Hnrw Hspec) as Hdecl.
+    apply (@mmap_none_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hdecl) in Hspec.
     destruct Hspec as [E | (a & Hpl & E)]; unfold is_ret in E; inversion E; subst.
     - left. destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hcd & _)]; [|congruence].
       mat_id Hm Hl. now rewrite app_nil_r.
@@ -1220,31 +1340,59 @@ S29S36A1M0S7S37S15Q40M1A1M2S78S0S28G2A1S8R4A1S2aG2R2A2A3S77R4A1S0S76S16G1R4A2Zde
       mat_id Hm Hl. now rewrite app_nil_r.
   Qed.
 
-  Lemma wstep_mmap_none_intro_fail : ltac2:(tb__ "0|7|
-S29S36A1M0S7S37S15Q40M1A1M2S0S28G2A1S8R3A1S2aG2R1A2A3S77R3A1S0S76S16G1R3A2ZdeA3S2S0G2S6R6U1M3A2S17G1Z0A2A3A1S0S2bSa4S6R7U2M4A2S6R7U3M5A2S6R7U5M6A2A3S30A3S0S2bSa3S6R8G4A2S6R8G5A2S6R8G6A2A3S31A3S0S2bSaaR8SabS6R9G3A2A1A2S30A3S79Vsegs;S27G0S1aRbS19RaR9A2A4S27G0S1aRbS19S7eRaS3cS4bA1A2R9A2A4A3F_;F_;F_;F_;F_;F_;F_;Fx8;Fm;Fms;Ftr;").
+  Lemma wstep_mmap_none_intro_fail : forall tr ms m x8,
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 222%Z ->
+    ms_gpr ms 1 <> Z_to_bv 64 0 ->
+    mmap_noaccess_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true ->
+    mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = false ->
+    mmap_reserve_refusable (ms_gpr ms 0) m (mmap_nZ (ms_gpr ms 1)) = true ->
+    place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+    wstep (tr, mkCfg ms m) (tr, mkCfg (after_sys ms (errno_ret ENOMEM)) m).
   Proof using .
-    intros tr ms m x8 Hp Hi Hno Hlen Hsh Hnrw Hrf.
+    intros tr ms m x8 Hp Hi Hno Hlen Hsh Hnrw Hrf Hdecl.
     refine (@wstep_ret_intro0 tr _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
-    exact (@mmap_none_intro_fail (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hrf).
+    exact (@mmap_none_intro_fail (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hdecl Hrf).
   Qed.
 
-  Lemma wstep_mmap_none_intro_ok : ltac2:(tb__ "0|8|
-S29S36A1M0S7S37S15Q40M1A1M2G2S0S28G2A1S8R4A1S2aG2R2A2A3S77R4A1S0S76S16G1R4A2ZdeA3S2S0G2S6R7U1M3A2S17G1Z0A2A3A1S0S2bSa4S6R8U2M4A2S6R8U3M5A2S6R8U5M6A2A3S30A3S0S2bSa3S6R9G4A2S6R9G5A2S6R9G6A2A3S31A3S0S2bSa2S6RaG5A2A1S31A3Sb6S6RbU0A2RaS6RbG3A2R8A4S79Vsegs;S27G0S1aRdS19RcRbA2A4S27G0S1aRdS19S7fRcR9S80SaRcA1R9SaeS6RcG3A2M7A1A3A3S54Sb4S41RbA1G7R9A3RbA2A2A4A3F_;F_;F_;F_;F_;F_;F_;F_;Fa;Fx8;Fm;Fms;Ftr;").
+  Lemma wstep_mmap_none_intro_ok : forall tr ms m x8 a,
+    ms_svc_pending ms = Some x8 -> model_idle m ->
+    bv_unsigned x8 = 222%Z ->
+    ms_gpr ms 1 <> Z_to_bv 64 0 ->
+    mmap_noaccess_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true ->
+    mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = false ->
+    mmap_noreserve_b (ms_gpr ms 3) = false ->
+    mmap_place_ok_none (ms_gpr ms 0) m (ms_gpr ms 1) a ->
+    linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) (ms_gpr ms 0) (mmap_nZ (ms_gpr ms 1)) a = true ->
+    place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+    wstep (tr, mkCfg ms m)
+          (tr, mkCfg (after_sys_mem ms a (unmap_range (ms_mem ms) a (mmap_n (ms_gpr ms 1))))
+                     (with_vmmaps (mmap_none_vm (m_vmmaps m) (ms_gpr ms 1) a) m)).
   Proof using .
-    intros tr ms m x8 a Hp Hi Hno Hlen Hsh Hnrw Hnr Hpl.
-    pose proof (@mmap_none_intro_ok (sys_input segs ms x8) m Hno Hlen Hsh Hnrw a Hpl) as Hs.
+    intros tr ms m x8 a Hp Hi Hno Hlen Hsh Hnrw Hnr Hpl Hlp Hdecl.
+    pose proof (@mmap_none_intro_ok (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hdecl a Hpl Hlp) as Hs.
     unfold mmap_none_model in Hs. change (in_arg (sys_input segs ms x8) 3) with (ms_gpr ms 3) in Hs.
     rewrite (with_mmap_backing_plain _ _ _ _ Hnr) in Hs.
     refine (@wstep_pending_run0 tr _ _ _ _ _ Hp (model_idle_halted Hi) Hs _).
     destruct Hi as [H1 H2]; split; assumption.
   Qed.
 
-  Lemma mmap_none_only_ok : ltac2:(tb__ "0|5|
-S7S37S15Q40M0A1M1S77R2A1S0S76S16G0R2A2ZdeA3S2S0G1S6R5U1A2S17G0Z0A2A3A1S0S2bSa4S6R6U2M2A2S6R6U3M3A2S6R6U5M4A2A3S30A3S0S2bSa3S6R7G2A2S6R7G3A2S6R7G4A2A3S31A3S0S2bSa2S6R8G3A2A1S31A3S87S1bVsegs;R9R7A3R8A2F_;F_;F_;F_;F_;F_;Fx8;Fm;Fms;").
+  Lemma mmap_none_only_ok : forall ms m x8,
+    model_idle m ->
+    bv_unsigned x8 = 222%Z ->
+    ms_gpr ms 1 <> Z_to_bv 64 0 ->
+    mmap_noaccess_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true ->
+    mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = false ->
+    mmap_noreserve_b (ms_gpr ms 3) = false ->
+    place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+    only_ok (sys_input segs ms x8) m.
   Proof using .
-    intros ms m x8 [Hh Hl] Hno Hlen Hsh Hnrw Hnr.
+    intros ms m x8 [Hh Hl] Hno Hlen Hsh Hnrw Hnr Hdecl.
     eapply only_ok_of_inv;
-      [intros R; exact (@mmap_none_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnrw R)| |].
+      [intros R; exact (@mmap_none_inv (sys_input segs ms x8) m Hno Hlen Hsh Hnrw Hdecl R)| |].
     - intros [E | (a & _ & E)]; unfold is_ret in E; discriminate.
     - intros eff m' evs [E | (a & _ & E)] _; unfold is_ret in E; inversion E; subst; [exact Hl|].
       unfold mmap_none_model. change (in_arg (sys_input segs ms x8) 3) with (ms_gpr ms 3).
@@ -1358,33 +1506,51 @@ S77Vm;A1S77Sb1Vm;Vaddr;Vn;A3A1F_;").
       - apply m_vm_lazy_vm_forget_range. exact Hl.
     Qed.
 
-    Lemma wstep_munmap_exact_inv : ltac2:(tb__ "0|3|
-S29S36A1M0S78S0S28S15Q40M1A1M2A1S8Vms;A1S2aG2Vx8;A2A3S77Vm;A1S0S2bS53S46Vh;A1Vaddr;Vn;A3S30A3S79Vsegs;S27G0S1aR5S19Vms;Vm;A2A4R4A3S0S78R5S27G0S1aR6S19S7fVms;S17G1Z0A2S80SaVms;A1Vaddr;Vn;A3A3Sb1Vm;Vaddr;Vn;A3A2A4A3F_;F_;F_;F_;Fw';Ftr;").
+    (* LPS 08b1429: the exact arm cuts with [maps_subtract]; [Hrm] says the cut removes exactly the
+       entry (see [SysSpec.maps_subtract_exact]), so the post-state is [munmap_model].  Its -ENOMEM is
+       a spurious refusal for the filtered step [wstep], so it has one successor there. *)
+    Lemma wstep_munmap_exact_inv : forall tr w',
+      ms_svc_pending ms = Some x8 -> model_idle m ->
+      map_has (vm_maps h) addr n = true ->
+      maps_subtract (vm_maps h) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)%Z
+        = map_remove (vm_maps h) addr ->
+      wstep (tr, mkCfg ms m) w' ->
+      w' = (tr, mkCfg (after_sys_mem ms (Z_to_bv 64 0) (unmap_range (ms_mem ms) addr n)) (munmap_model m addr n)).
     Proof using Halign Hlen Hno Htask.
-      intros tr w' Hp Hi Hhas Hw. pose proof Hi as [Hh Hl].
-      destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-      apply (@munmap_exact_inv (sys_input segs ms x8) m Hno Halign Hlen Htask _ Hhas) in Hspec.
+      intros tr w' Hp Hi Hhas Hrm Hw. pose proof Hi as [Hh Hl].
+      destruct (wstep_pending_inv_ns Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
+      apply (@munmap_exact_inv_ns (sys_input segs ms x8) m Hno Halign Hlen Htask _ Hhas Hrm) in Hspec.
       inversion Hspec; subst.
       destruct (munmap_model_idle Hi) as [Hh1 Hl1].
       destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hcd & _)]; [|msimp Hcd; congruence].
       mat_id Hm Hl1. now rewrite app_nil_r.
     Qed.
 
-    Lemma wstep_munmap_exact_intro : ltac2:(tb__ "0|3|
-S29S36A1M0S0S28S15Q40M1A1M2A1S8Vms;A1S2aG2Vx8;A2A3S77Vm;A1S0S2bS53S46Vh;A1Vaddr;Vn;A3S30A3S79Vsegs;S27G0S1aR4S19Vms;Vm;A2A4S27G0S1aR4S19S7fVms;S17G1Z0A2S80SaVms;A1Vaddr;Vn;A3A3Sb1Vm;Vaddr;Vn;A3A2A4A3F_;F_;F_;Ftr;").
+    Lemma wstep_munmap_exact_intro : forall tr,
+      ms_svc_pending ms = Some x8 -> model_idle m ->
+      map_has (vm_maps h) addr n = true ->
+      maps_subtract (vm_maps h) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)%Z
+        = map_remove (vm_maps h) addr ->
+      wstep (tr, mkCfg ms m)
+            (tr, mkCfg (after_sys_mem ms (Z_to_bv 64 0) (unmap_range (ms_mem ms) addr n)) (munmap_model m addr n)).
     Proof using Halign Hlen Hno Htask.
-      intros tr Hp Hi Hhas.
-      pose proof (@munmap_exact_intro (sys_input segs ms x8) m Hno Halign Hlen Htask Hhas) as Hs.
+      intros tr Hp Hi Hhas Hrm.
+      pose proof (@munmap_exact_intro (sys_input segs ms x8) m Hno Halign Hlen Htask Hhas Hrm) as Hs.
       exact (@wstep_pending_run0 tr _ _ _ _ _ Hp (model_idle_halted Hi) Hs (munmap_model_idle Hi)).
     Qed.
 
-    Lemma munmap_exact_only_ok : ltac2:(tb__ "0|0|
-S77Vm;A1S0S2bS53S46Vh;A1Vaddr;Vn;A3S30A3S87S1bVsegs;Vms;Vx8;A3Vm;A2F_;F_;").
+    Lemma munmap_exact_only_ok :
+      model_idle m ->
+      map_has (vm_maps h) addr n = true ->
+      maps_subtract (vm_maps h) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)%Z
+        = map_remove (vm_maps h) addr ->
+      only_ok (sys_input segs ms x8) m.
     Proof using Halign Hlen Hno Htask.
-      intros Hi Hhas. eapply only_ok_of_inv;
-        [intros R; exact (@munmap_exact_inv (sys_input segs ms x8) m Hno Halign Hlen Htask R Hhas)| |].
-      - discriminate.
-      - intros eff m' evs E _. inversion E; subst. exact (model_idle_lazy (munmap_model_idle Hi)).
+      intros Hi Hhas Hrm. eapply only_ok_of_inv;
+        [intros R; exact (@munmap_exact_inv (sys_input segs ms x8) m Hno Halign Hlen Htask R Hhas Hrm)| |].
+      - intros [E|E]; discriminate E.
+      - intros eff m' evs [E|E] _; inversion E; subst;
+          [exact (model_idle_lazy Hi) | exact (model_idle_lazy (munmap_model_idle Hi))].
     Qed.
 
     Lemma wstep_munmap_free_inv : ltac2:(tb__ "0|3|
@@ -1422,6 +1588,8 @@ S0S76S91S16Q40Vaddr;A2S60A2Z0A3").
     Hypothesis Hlen : len <> Z_to_bv 64 0.
     Hypothesis Hwrap : ltac2:(tb__ "0|0|
 S8fS90S16Q40Vaddr;A2SabVlen;A1A2S74A2").
+    (* LPS 08b1429: mprotect over the vDSO/vvar pair is unmodeled ([SysSpec]'s Section Mprotect). *)
+    Hypothesis Hvd : region_free (vdso_reserved (m_kernel m) (vdso_top h)) addr n = true.
 
     Lemma mprotect_model_next_idle : ltac2:(tb__ "0|0|
 S77Vm;A1S77Sc4Vm;Vaddr;Vn;A3A1F_;").
@@ -1429,10 +1597,10 @@ S77Vm;A1S77Sc4Vm;Vaddr;Vn;A3A1F_;").
 
     Lemma wstep_mprotect_expose_inv : ltac2:(tb__ "0|3|
 S29S36A1M0S78S0S28S15Q40M1A1M2A1S8Vms;A1S2aG2Vx8;A2A3S77Vm;A1S0S2bS45S4fVh;A1Vaddr;Vn;A3S30A3S0S2bS45S46Vh;A1Vaddr;Vn;A3S30A3S79Vsegs;S27G0S1aR6S19Vms;Vm;A2A4R5A3S3S0S78R6S27G0S1aR7S19S7eVms;S3cS4bA1A2Vm;A2A4A3S1S0S2bSc3Vm;Vaddr;Vn;A3S30A3S0S78R6S27G0S1aR7S19S7fVms;S17G1Z0A2S81SaVms;A1Vaddr;Vn;A3A3Sc4Vm;Vaddr;Vn;A3A2A4A3A2A2F_;F_;F_;F_;F_;Fw';Ftr;").
-    Proof using Halign Hlen Hno Hprot Hwrap.
+    Proof using Halign Hlen Hno Hprot Hvd Hwrap.
       intros tr w' Hp Hi Hna Hmp Hw. pose proof Hi as [Hh Hl].
       destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-      apply (@mprotect_expose_inv (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hna Hmp) in Hspec.
+      apply (@mprotect_expose_inv (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hvd Hna Hmp) in Hspec.
       destruct Hspec as [E | (Hb & E)]; unfold is_ret in E; inversion E; subst.
       - left. destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hcd & _)]; [|congruence].
         mat_id Hm Hl. now rewrite app_nil_r.
@@ -1443,24 +1611,24 @@ S29S36A1M0S78S0S28S15Q40M1A1M2A1S8Vms;A1S2aG2Vx8;A2A3S77Vm;A1S0S2bS45S4fVh;A1Vad
 
     Lemma wstep_mprotect_expose_intro_ok : ltac2:(tb__ "0|3|
 S29S36A1M0S0S28S15Q40M1A1M2A1S8Vms;A1S2aG2Vx8;A2A3S77Vm;A1S0S2bS45S4fVh;A1Vaddr;Vn;A3S30A3S0S2bS45S46Vh;A1Vaddr;Vn;A3S30A3S0S2bSc3Vm;Vaddr;Vn;A3S30A3S79Vsegs;S27G0S1aR6S19Vms;Vm;A2A4S27G0S1aR6S19S7fVms;S17G1Z0A2S81SaVms;A1Vaddr;Vn;A3A3Sc4Vm;Vaddr;Vn;A3A2A4A3F_;F_;F_;F_;F_;Ftr;").
-    Proof using Halign Hlen Hno Hprot Hwrap.
+    Proof using Halign Hlen Hno Hprot Hvd Hwrap.
       intros tr Hp Hi Hna Hmp Hb.
-      pose proof (@mprotect_expose_intro_ok (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hna Hmp Hb) as Hs.
+      pose proof (@mprotect_expose_intro_ok (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hvd Hna Hmp Hb) as Hs.
       exact (@wstep_pending_run0 tr _ _ _ _ _ Hp (model_idle_halted Hi) Hs (mprotect_model_next_idle Hi)).
     Qed.
 
     Lemma wstep_mprotect_expose_intro_fail : ltac2:(tb__ "0|2|
 S29S36A1M0S0S28S15Q40A1M1A1S8Vms;A1S2aG1Vx8;A2A3S77Vm;A1S0S2bS45S4fVh;A1Vaddr;Vn;A3S30A3S0S2bS45S46Vh;A1Vaddr;Vn;A3S30A3S0S2bSc3Vm;Vaddr;Vn;A3S31A3S79Vsegs;S27G0S1aR6S19Vms;Vm;A2A4S27G0S1aR6S19S7eVms;S3cS4bA1A2Vm;A2A4A3F_;F_;F_;F_;F_;Ftr;").
-    Proof using Halign Hlen Hno Hprot Hwrap.
+    Proof using Halign Hlen Hno Hprot Hvd Hwrap.
       intros tr Hp Hi Hna Hmp Hb. refine (@wstep_ret_intro0 tr _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
-      exact (@mprotect_expose_intro_fail (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hna Hmp Hb).
+      exact (@mprotect_expose_intro_fail (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hvd Hna Hmp Hb).
     Qed.
 
     Lemma mprotect_expose_only_ok : ltac2:(tb__ "0|0|
 S77Vm;A1S0S2bS45S4fVh;A1Vaddr;Vn;A3S30A3S0S2bS45S46Vh;A1Vaddr;Vn;A3S30A3S87S1bVsegs;Vms;Vx8;A3Vm;A2F_;F_;F_;").
-    Proof using Halign Hlen Hno Hprot Hwrap.
+    Proof using Halign Hlen Hno Hprot Hvd Hwrap.
       intros Hi Hna Hmp. pose proof Hi as [Hh Hl]. eapply only_ok_of_inv;
-        [intros R; exact (@mprotect_expose_inv (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap
+        [intros R; exact (@mprotect_expose_inv (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hvd
                             Hna Hmp R)| |].
       - intros [E | (_ & E)]; unfold is_ret in E; discriminate.
       - intros eff m' evs [E | (_ & E)] _; unfold is_ret in E; inversion E; subst;
@@ -1469,24 +1637,24 @@ S77Vm;A1S0S2bS45S4fVh;A1Vaddr;Vn;A3S30A3S0S2bS45S46Vh;A1Vaddr;Vn;A3S30A3S87S1bVs
 
     Lemma wstep_mprotect_noop_inv : ltac2:(tb__ "0|4|
 S29S36A1M0S78S0S28S15Q40M1A1M2A1S8Vms;A1S2aG2Vx8;A2A3S77Vm;A1S0S2bS45S4fVh;A1M3Vaddr;Vn;A3S31A3S0S2bS45S46Vh;A1Vaddr;Vn;A3S30A3S0S2bS56G3Vaddr;Vn;A3S30A3S79Vsegs;S27G0S1aR7S19Vms;Vm;A2A4R6A3S0S78R7S27G0S1aR8S19S7eVms;S17G1Z0A2A2Vm;A2A4A3F_;F_;F_;F_;F_;F_;Fw';Ftr;").
-    Proof using Halign Hlen Hno Hprot Hwrap.
+    Proof using Halign Hlen Hno Hprot Hvd Hwrap.
       intros tr w' Hp Hi Hna Hmp Hrf Hw. refine (@wstep_ret_inv0 _ _ _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi Hw).
-      intros R. exact (@mprotect_noop_inv (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap
+      intros R. exact (@mprotect_noop_inv (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hvd
                          Hna Hmp Hrf R).
     Qed.
 
     Lemma wstep_mprotect_noop_intro : ltac2:(tb__ "0|4|
 S29S36A1M0S0S28S15Q40M1A1M2A1S8Vms;A1S2aG2Vx8;A2A3S77Vm;A1S0S2bS45S4fVh;A1M3Vaddr;Vn;A3S31A3S0S2bS45S46Vh;A1Vaddr;Vn;A3S30A3S0S2bS56G3Vaddr;Vn;A3S30A3S79Vsegs;S27G0S1aR6S19Vms;Vm;A2A4S27G0S1aR6S19S7eVms;S17G1Z0A2A2Vm;A2A4A3F_;F_;F_;F_;F_;Ftr;").
-    Proof using Halign Hlen Hno Hprot Hwrap.
+    Proof using Halign Hlen Hno Hprot Hvd Hwrap.
       intros tr Hp Hi Hna Hmp Hrf. refine (@wstep_ret_intro0 tr _ _ _ _ _ Hp (model_idle_halted Hi) _ Hi).
-      exact (@mprotect_noop_intro (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hna Hmp Hrf).
+      exact (@mprotect_noop_intro (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hvd Hna Hmp Hrf).
     Qed.
 
     Lemma mprotect_noop_only_ok : ltac2:(tb__ "0|1|
 S77Vm;A1S0S2bS45S4fVh;A1M0Vaddr;Vn;A3S31A3S0S2bS45S46Vh;A1Vaddr;Vn;A3S30A3S0S2bS56G0Vaddr;Vn;A3S30A3S87S1bVsegs;Vms;Vx8;A3Vm;A2F_;F_;F_;F_;").
-    Proof using Halign Hlen Hno Hprot Hwrap.
+    Proof using Halign Hlen Hno Hprot Hvd Hwrap.
       intros Hi Hna Hmp Hrf. eapply only_ok_ret;
-        [intros R; exact (@mprotect_noop_inv (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap
+        [intros R; exact (@mprotect_noop_inv (sys_input segs ms x8) m Hno Hprot Halign Hlen Hwrap Hvd
                             Hna Hmp Hrf R)| exact Hi].
     Qed.
   End MprotectW.
@@ -1555,6 +1723,178 @@ S7S37S15Q40M0A1S77R2A1S0S76S16G0R2A2Zd6A3S8dS16G0S57S41R4A1M1A1A2S16G0S47G1A1A2A
     eapply only_ok_of_inv; [intros R; exact (@brk_grow_inv (sys_input segs ms x8) m R Hno Hsb Hlt)| |].
     - intros [(_ & E) | E]; unfold is_ret in E; discriminate.
     - intros eff m' evs [(_ & E) | E] _; unfold is_ret in E; inversion E; subst; exact Hl.
+  Qed.
+
+  (** ** [RomBase.sys_rob] for the numbers whose check reads [in_mem]
+
+      [RomBase.rob_auto] cannot serve 64 and 66 and must not be made to: [RomBase.memfree no]
+      (RomBase.v:88-90) quantifies over an ARBITRARY replacement memory, and write's buffer and
+      writev's iovec array are both read out of [in_mem], so [memfree_64] and [memfree_66]
+      would be FALSE lemmas.  [RomBase.sys_rob] asks for strictly less: the check must agree
+      between [ms] and [wrom ms r] for an [rom_ext]-LARGER [r], and a read that SUCCEEDED under
+      the smaller view returns the same bytes under the larger one.  That is RomBase.v:126-199,
+      and [RomBase.sys_rob_of_mem_ext] (:267) is the bridge.
+
+      Both checks reach a right-hand side that mentions the input only through [in_sysno] and
+      [in_arg], which [RomBase.with_mem] leaves alone, so once the memory hypotheses are
+      transported the two sides are convertible. *)
+
+  Lemma read_iovec_entry_ext : forall mp mp' a b l,
+    RomBase.mem_ext mp mp' ->
+    read_iovec_entry mp a = IovEntry b l -> read_iovec_entry mp' a = IovEntry b l.
+  Proof using .
+    intros mp mp' a b l Hx H. unfold read_iovec_entry in *.
+    destruct (read_u64 mp a) as [x|] eqn:E1; [|discriminate H].
+    destruct (read_u64 mp (a + 8)) as [y|] eqn:E2; [|discriminate H].
+    rewrite (RomBase.read_u64_ext _ _ _ _ Hx E1), (RomBase.read_u64_ext _ _ _ _ Hx E2). exact H.
+  Qed.
+
+  Lemma iovecs_at_ext : forall iovs mp mp' a,
+    RomBase.mem_ext mp mp' -> iovecs_at mp a iovs -> iovecs_at mp' a iovs.
+  Proof using .
+    induction iovs as [|[b l] r IH]; intros mp mp' a Hx H; [exact I|].
+    destruct H as (He & Hl & Hr). cbn [iovecs_at].
+    split; [exact (@read_iovec_entry_ext mp mp' a b l Hx He)|].
+    split; [exact Hl | exact (@IH mp mp' (a + 16) Hx Hr)].
+  Qed.
+
+  Lemma iovecs_readable_ext : forall iovs mp mp' bs,
+    RomBase.mem_ext mp mp' -> iovecs_readable mp iovs bs -> iovecs_readable mp' iovs bs.
+  Proof using .
+    induction iovs as [|[b l] r IH]; intros mp mp' bs Hx H; [exact H|].
+    destruct H as (bs1 & bs2 & H1 & H2 & ->).
+    exists bs1, bs2. split; [exact (RomBase.read_bytes_map_ext _ _ _ _ _ Hx H1)|].
+    split; [exact (@IH mp mp' bs2 Hx H2) | reflexivity].
+  Qed.
+
+  (** write (64).  The hypothesis list is [write_only_ok]'s, with [model_idle] replaced by the
+      pending register -- nothing here needs the model to be idle. *)
+  Lemma write_rob : forall ms m x8 ch bs,
+    ms_svc_pending ms = Some x8 ->
+    bv_unsigned x8 = 64%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+    (0 < bv_unsigned (ms_gpr ms 2))%Z ->
+    (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
+    (bv_unsigned (ms_gpr ms 1) + bv_unsigned (ms_gpr ms 2) <= TASK_SIZE)%Z ->
+    m_channel_reader m = true ->
+    RomBase.sys_rob segs (mkCfg ms m).
+  Proof using .
+    intros ms m x8 ch bs Hp Hno Hfd Hch Hbuf Hpos Hmax Hok Hrdr.
+    eapply RomBase.sys_rob_of_mem_ext; [exact Hp|]. intros mp Hx eff.
+    rewrite (@write_check (RomBase.with_mem (sys_input segs ms x8) mp) m ch bs Hno Hfd Hch
+               (RomBase.read_bytes_map_ext _ _ _ _ _ Hx Hbuf) Hpos Hmax Hrdr
+               (rd_access_ok _ _ Hok)).
+    rewrite (@write_check (sys_input segs ms x8) m ch bs Hno Hfd Hch Hbuf Hpos Hmax Hrdr
+               (rd_access_ok _ _ Hok)).
+    reflexivity.
+  Qed.
+
+  (** writev (66), at Section [Writev]'s own hypothesis list. *)
+  Lemma writev_rob : forall ms m x8 ch iovs bs,
+    ms_svc_pending ms = Some x8 ->
+    bv_unsigned x8 = 66%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    bv_unsigned (ms_gpr ms 2) = Z.of_nat (length iovs) ->
+    (1 <= Z.of_nat (length iovs) <= IOV_MAX)%Z ->
+    iovecs_at (ms_read_byte ms) (ms_gpr ms 1) iovs ->
+    iovecs_readable (ms_read_byte ms) iovs bs ->
+    access_okb (ms_gpr ms 1) (16 * Z.of_nat (length iovs)) = true ->
+    iovs_access_okb iovs = true ->
+    (1 <= Z.of_nat (length bs) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
+    RomBase.sys_rob segs (mkCfg ms m).
+  Proof using .
+    intros ms m x8 ch iovs bs Hp Hno Hfd Hch Hcnt Hcnt1 Hiov Hrd Hiovok Hbok Hlen Hrdr.
+    eapply RomBase.sys_rob_of_mem_ext; [exact Hp|]. intros mp Hx eff.
+    rewrite (@writev_check (RomBase.with_mem (sys_input segs ms x8) mp) m ch iovs bs
+               Hno Hfd Hch Hcnt Hcnt1
+               (@iovecs_at_ext iovs (ms_read_byte ms) mp (ms_gpr ms 1) Hx Hiov)
+               (@iovecs_readable_ext iovs (ms_read_byte ms) mp bs Hx Hrd)
+               Hiovok Hbok Hlen Hrdr).
+    rewrite (@writev_check (sys_input segs ms x8) m ch iovs bs
+               Hno Hfd Hch Hcnt Hcnt1 Hiov Hrd Hiovok Hbok Hlen Hrdr).
+    reflexivity.
+  Qed.
+
+  (** writev with one descriptor: [writev1_only_ok]'s hypothesis list. *)
+  Lemma writev1_rob : forall ms m x8 ch b1 l1 bs1,
+    ms_svc_pending ms = Some x8 ->
+    bv_unsigned x8 = 66%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    ms_gpr ms 2 = Z_to_bv 64 1 ->
+    read_u64 (ms_read_byte ms) (ms_gpr ms 1) = Some b1 ->
+    read_u64 (ms_read_byte ms) (ms_gpr ms 1 + 8) = Some l1 ->
+    read_bytes_map (ms_read_byte ms) b1 l1 = Some bs1 ->
+    (bv_unsigned (ms_gpr ms 1) + 16 <= TASK_SIZE)%Z ->
+    (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
+    (1 <= Z.of_nat (length bs1) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
+    RomBase.sys_rob segs (mkCfg ms m).
+  Proof using .
+    intros ms m x8 ch b1 l1 bs1 Hp Hno Hfd Hch Hcnt Hv1 Hv2 Hb1 T0 T1 Hlen Hrdr.
+    apply (@writev_rob ms m x8 ch [(b1, l1)] bs1);
+      [ exact Hp | exact Hno | exact Hfd | exact Hch
+      | cbn [length]; rewrite Hcnt; reflexivity
+      | cbn [length]; unfold IOV_MAX; lia
+        (* [writev1_iovecs_at] and [writev1_readable] cannot be [eapply]d here: their [i] is a
+           Section variable and appears only under [in_mem]/[in_arg], which unification cannot
+           invert against [ms_read_byte ms].  Their proof bodies are three lines each. *)
+      | pose proof (read_bytes_map_length _ _ _ _ Hb1) as L1; unfold MAX_RW_COUNT in Hlen;
+        cbn [iovecs_at]; unfold read_iovec_entry; rewrite Hv1, Hv2;
+        rewrite !(proj2 (Z.leb_gt _ _)) by lia;
+        repeat split; try reflexivity; lia
+      | cbn [iovecs_readable]; exists bs1, (@nil byte);
+        split; [exact Hb1|]; split; [reflexivity|]; now rewrite app_nil_r
+      | apply access_okb_of_le; cbn [length]; lia
+      | unfold iovs_access_okb; cbn [forallb fst snd];
+        rewrite (access_okb_intro _ _ T1); reflexivity
+      | exact Hlen | exact Hrdr ].
+  Qed.
+
+  (** writev with two descriptors: [writev2_only_ok]'s hypothesis list. *)
+  Lemma writev2_rob : forall ms m x8 ch b1 l1 b2 l2 bs1 bs2,
+    ms_svc_pending ms = Some x8 ->
+    bv_unsigned x8 = 66%Z ->
+    fd_lookup (m_fds m) (fd32 (ms_gpr ms 0)) = Some (FdChannel ch) ->
+    ch <> Z_to_bv 64 0 ->
+    ms_gpr ms 2 = Z_to_bv 64 2 ->
+    read_u64 (ms_read_byte ms) (ms_gpr ms 1) = Some b1 ->
+    read_u64 (ms_read_byte ms) (ms_gpr ms 1 + 8) = Some l1 ->
+    read_u64 (ms_read_byte ms) (ms_gpr ms 1 + 16) = Some b2 ->
+    read_u64 (ms_read_byte ms) (ms_gpr ms 1 + 16 + 8) = Some l2 ->
+    read_bytes_map (ms_read_byte ms) b1 l1 = Some bs1 ->
+    read_bytes_map (ms_read_byte ms) b2 l2 = Some bs2 ->
+    (bv_unsigned (ms_gpr ms 1) + 32 <= TASK_SIZE)%Z ->
+    (bv_unsigned b1 + bv_unsigned l1 <= TASK_SIZE)%Z ->
+    (bv_unsigned b2 + bv_unsigned l2 <= TASK_SIZE)%Z ->
+    (1 <= Z.of_nat (length (bs1 ++ bs2)) <= MAX_RW_COUNT)%Z ->
+    m_channel_reader m = true ->
+    RomBase.sys_rob segs (mkCfg ms m).
+  Proof using .
+    intros ms m x8 ch b1 l1 b2 l2 bs1 bs2 Hp Hno Hfd Hch Hcnt Hv1 Hv2 Hv3 Hv4 Hb1 Hb2
+           T0 T1 T2 Hlen Hrdr.
+    apply (@writev_rob ms m x8 ch [(b1, l1); (b2, l2)] (bs1 ++ bs2));
+      [ exact Hp | exact Hno | exact Hfd | exact Hch
+      | cbn [length]; rewrite Hcnt; reflexivity
+      | cbn [length]; unfold IOV_MAX; lia
+      | pose proof (read_bytes_map_length _ _ _ _ Hb1) as L1;
+        pose proof (read_bytes_map_length _ _ _ _ Hb2) as L2;
+        rewrite length_app, Nat2Z.inj_add in Hlen; unfold MAX_RW_COUNT in Hlen;
+        cbn [iovecs_at]; unfold read_iovec_entry; rewrite Hv1, Hv2, Hv3, Hv4;
+        rewrite !(proj2 (Z.leb_gt _ _)) by lia;
+        repeat split; try reflexivity; lia
+      | cbn [iovecs_readable]; exists bs1, bs2;
+        split; [exact Hb1|]; split; [|reflexivity];
+        exists bs2, (@nil byte);
+        split; [exact Hb2|]; split; [reflexivity|]; now rewrite app_nil_r
+      | apply access_okb_of_le; cbn [length]; lia
+      | unfold iovs_access_okb; cbn [forallb fst snd];
+        rewrite (access_okb_intro _ _ T1), (access_okb_intro _ _ T2); reflexivity
+      | exact Hlen | exact Hrdr ].
   Qed.
 
 End WithImage.

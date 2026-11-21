@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the call of YO2m.ledger_same passes one more eq_refl, for its new premise that the Model's kernel field is unchanged). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -190,7 +191,7 @@ destruct (LOWc x Hx) as [Hlo|Hc]; [lia|]. apply NI. apply (so_ctx_img _ SO). cha
 - intros p x H. discriminate.
 - intros c Hc. destruct (CELLS c Hc) as [[Hc1 HW]|Hm]; [left | right; exact Hm]. split; [exact Hc1|].
 intros k Hk. destruct (In_ctx_cells A1 c Hc1) as (off & El & _). change (ms_ctx B) with CTX. unfold ctx_off in HW. rewrite El in HW |- *. exact (HW k Hk). }
-pose proof (YO2m.ledger_same B L1 A1 md1 (mid_ledger _ _ _ _ _ MID1) (mid_ledgerx _ _ _ _ _ MID1) A2 md1 ER EB eq_refl eq_refl eq_refl) as [LG2 LX2].
+pose proof (YO2m.ledger_same B L1 A1 md1 (mid_ledger _ _ _ _ _ MID1) (mid_ledgerx _ _ _ _ _ MID1) A2 md1 ER EB eq_refl eq_refl eq_refl eq_refl) as [LG2 LX2].
 split.
 - exact SO.
 - exact MR'.

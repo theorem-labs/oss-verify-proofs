@@ -1,4 +1,4 @@
-(* Copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v of a working branch ca2ec2ecd18; module paths re-keyed to fuzz_ctrl, IMG_HI changed from 0x5fa000 to fuzz_ctrl.asan's 0x5fe000, the list of fuzz_grant globals in the partial-granule note replaced by the general statement, and :15's attribution of the fact to a Theorem Labs lane replaced by the citation of ctrl's own proof. *)
+(* Copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v of a working branch; module paths re-keyed to fuzz_ctrl, IMG_HI changed from 0x5fa000 to fuzz_ctrl.asan's 0x5fe000, the list of fuzz_grant globals in the partial-granule note replaced by the general statement, and :15's attribution of the fact to a Theorem Labs lane replaced by the citation of ctrl's own proof. *)
 (* The image's read-only data is marked usable, in every state.
 
    The memory-checking runtime registers the program's globals at start-up and

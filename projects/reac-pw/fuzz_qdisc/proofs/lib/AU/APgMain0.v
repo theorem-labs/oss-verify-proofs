@@ -4,8 +4,8 @@
    theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc image A (fuzz_qdisc.asan, sha256
    980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
-   proofs/libreac/fuzz_knock/lib/A/APgMain0.v (its harness entry segment knock_lib_A_seg, lines 162-382)
-   at origin/ossv/recipes 6ebe35ba632, with its module paths changed and knock's fake-frame block removed.
+   proofs/libreac/fuzz_knock/lib/A/APgMain0.v (its harness entry segment knock_lib_A_seg, lines 162-382),
+   with its module paths changed and knock's fake-frame block removed.
    rule 24 (reuse): no function is proved here; this is SEGMENT S0, the entry of
    LLVMFuzzerTestOneInput's walk. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/QPgMain0.v of this library, for fuzz_qdisc's
@@ -53,6 +53,7 @@
      path 0x7e888 and the report call at 0x7e890 are never reached.
    The only writes of the segment are the twelve `sd` of the prologue, all inside [sp0-96, sp0), paid by
    APgRt.awrRT's stack case. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

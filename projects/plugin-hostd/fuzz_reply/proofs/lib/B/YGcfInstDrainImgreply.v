@@ -9,7 +9,7 @@
    (the values are reply B's own tables, computed there):
    - SB_CONST_reply_B    = ReplyImg_sbconst.SB_CONST_B
    - IMG_QAPART_reply_B  = ReplyImg_qapart.IMG_QAPART_B
-   - CONST_APART_reply_B = ReplyImg_constapart.CONST_APART_B (a Theorem Labs lane's case split, 195ad575801) *)
+   - CONST_APART_reply_B = ReplyImg_constapart.CONST_APART_B (a Theorem Labs lane's case split) *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

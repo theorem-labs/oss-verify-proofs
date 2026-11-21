@@ -28,7 +28,9 @@ Qed.
 
 Definition CAPMAX : Z := 296960.
 
-Definition CAP29 : Z := 174080.
+(* 727298f3: [PlaceCap.slot_cap] now leaves [PLACE_FLOOR] out of the ceiling, which costs
+   about 340 slots at this request size; 174080 no longer fits [CAPOK_huge]. *)
+Definition CAP29 : Z := 173056.
 
 Definition CAP30 : Z := 86016.
 

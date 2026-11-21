@@ -8,7 +8,7 @@ table; its docstring defines the measure and every verdict. Run it from the repo
 
 ```
 python3 projects/libreac/fuzz_identity/proofs/provenance/evidence/notice_claims.py \
-    --repo . --unit projects/libreac/fuzz_identity --rev HEAD --base 1aeda8ab8602 > notice-claims.tsv
+    --repo . --unit projects/libreac/fuzz_identity --rev HEAD > notice-claims.tsv
 ```
 
 `--base` is the commit this series starts from. The last two columns compare each notice with the same notice at
@@ -38,14 +38,14 @@ from their donor only in numerals, and 42 declare their changes in words; a prog
 ## Where these notices come from
 
 Every one of the base's 1622 notices had, at the base, the same text it had when its file first came into the
-repository with the unit's proofs (commit `84b1ffc6d7d` for the plain and ubsan proofs, `cffeac4df63` for the
+repository with the unit's proofs (for the plain and ubsan proofs, for the
 asan and asan-ubsan proofs), except for the path layout of the donor. So the 409 defects came with the port. Up
 to the base, no change was made to them. This series reworded 7 of them (the 5 in "The 7 notices this series
 rewrote first" below, and `lib/Reusable/YG00.v` and `YG03.v`, whose allocator-model labels it renumbered), and in
 the other 402 it changed only the donor path, to the `projects/<p>/<t>/proofs/` layout, until `notice_fix.py`
 rewrote the 96 of them that are ours (next section).
 
-Before that run, at `fc7687b9b1f7`, 406 rows were `counts differ`, `donor holds under half` or `omits changes`:
+Before that run, 406 rows were `counts differ`, `donor holds under half` or `omits changes`:
 those 402, the `Modified by Rares Buhai` notices of `lib/Reusable/YL0s.v` and its `lib/U` copy (both agreed at the
 base), and the 2 added notices of `lib/Reusable/YL06.v:5` and its `lib/U` copy (the section after next). 98 of the
 406 are our own lines (`Modified by Theorem Labs`), and the next section says how each was made true. The other
@@ -66,8 +66,8 @@ A third run wrote again only the figures of `lib/A/AB1w.v:4` and `lib/ReusableB/
 removed" in `address-cell-labels.md`).
 A fourth run wrote the figures of the same two lines again, after the cell `tfib_D_environ_musl` was removed from
 those files ("The cell tfib_D_environ_musl, removed" in `address-cell-labels.md`).
-Each version of it was committed alone before the run that used it: the first (`89e0cc675420`), and the one at
-this head (`c06d19b04f21`). After those runs, one line of its header was reworded to drop an internal reference
+Each version of it was committed alone before the run that used it: the first, and the one at
+this head. After those runs, one line of its header was reworded to drop an internal reference
 the repository lint keeps out of shipped files, so the file here is not byte-equal to the one that ran; the
 change is in the header text only, and every rule, check and output of the four runs is unchanged. A reader
 found that the first version copied the `categories` column into each new body, and that column only repeats what
@@ -76,8 +76,8 @@ changed, while their `lib/A` twins, with the same changes and counts, said "modu
 keeps a category only when the measure needs it: a category is dropped when the measure without it gives the
 row's `matched`.
 
-The run of this version started from the state before the first run. The 98 lines were put back to their text at
-`fc7687b9b1f7`, and the script read that commit's table (sha256 `9898c06fb310...`). It changed one line for each
+The run of this version started from the state before the first run. The 98 lines were put back to their text,
+and the script read that commit's table (sha256 `9898c06fb310...`). It changed one line for each
 of the 98 rows:
 
 - 96 rows (`omits changes`, each a "copied from" notice that gives no figures) now say "made from <donor>, with its
@@ -99,7 +99,7 @@ Against the text of the first run, this run changed 15 lines, the 15 above, and 
 It refused no row, changed no other line and added no line, so no line number that cites these files moves. Its
 checks: each of the 98 changed lines is the line of one row, and each row has one changed line; each of the 98
 files, with its comments removed, is byte-equal to the file before; each of the 669 contributor lines is
-byte-equal to its line at `0a3a06762f6b`, and equals its line at the merge base `1aeda8ab8602` once the donor path
+byte-equal to its line, and equals its line at the merge base once the donor path
 is moved to the new layout (item 17 above). The table was then generated again with the command above: each of
 the 98 rows agrees.
 

@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS1c), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS1c.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ground the segments of the sweep phase share, on IMAGE B: a cut's machine state
    as the engine's symbolic state (the spill slots, the bytes of the frame on the side
    stack), what a call of the memory-checking runtime's wrappers for malloc and free
    keeps of a cut's memory, the blocks of the phase being distinct, and the range of
    the row count the input names.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS1c.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepS1c.v (a working branch, blob
    c9ced7d79, 631 lines), which carries no licence header of its own.
    The walk layer comes from lib/B/Prog, and the
    free segment's seat reads image B's spill slots 48, 64, 104 and 152 where image A's

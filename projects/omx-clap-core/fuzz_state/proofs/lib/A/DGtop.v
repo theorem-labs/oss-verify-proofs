@@ -1,7 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGtop.v (a working branch 84ee52cd012, file sha256 6b9a7e54f057) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGtop.v (a working branch, file sha256 6b9a7e54f057) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): fs C5 - the two cgif corollaries take DIface / DIfaceR at the instance's trace premise tr_admit (as_universe B) S tr and give DeallocGcgif's contracts at FS_U (In tr (as_universe B) \/ st_nev S < EV_MAX), bridging dealloc_pre with DeallocGcgif.dealloc_pre_admit. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The frame-generic Deallocate contract from the four arms, in both forms, and its cgif_file corollaries.
 
    DeallocG.adealloc_realizes frames the memory on the view ([aview]), as the released callee contracts state it;

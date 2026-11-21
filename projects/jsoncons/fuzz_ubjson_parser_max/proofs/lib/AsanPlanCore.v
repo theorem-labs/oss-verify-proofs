@@ -1,18 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: replaced TCodec-encoded lemma statements and Section SE blocks with plain Rocq statements (vkey_inj, run_block_eq, the *B_eqf and kn_*M_eq lemmas, node_munmap_eq), dropped the tcn__AsanPlanCore table and imported StackLayout; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanPlanCore.v, 99 lines within its lines 11-3414. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
-BvBase RiscvSemantics MemImageType State Run.
+BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import PropExec.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AxSymExec3 AxSymExec3B.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import SecKit.
 Import ListNotations.
 Open Scope Z_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__AsanPlanCore () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanCore.APC.WithSegs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3.AX2."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3B.AX2B."; "Stdlib.Lists.List."], [["1andb"; "1bool"; "1list"; "1nat"; "1nil"; "1option"; "1prod"; "1unit"; "2eq"; "3Z"; "3positive"; "0K"; "0P"; "4acs"; "4all_live"; "4amap"]; ["4amap_match"; "4amap_matchB"; "4copy_facts"; "4copy_factsB"; "4cs_gc"; "4cs_gc_ref"; "4cutout1"; "4cutout1B"; "4cutout1p"; "4cutout1pB"; "4expr_all_live_t"; "4expr_vars"; "4expr_vars_t"; "4find_containing"; "4find_containingB"; "4fixed_in_args"]; ["4fixed_in_args_ref"; "4fixed_in_arm"; "4flat_x"; "4flat_xB"; "4grant_keep_b"; "4grant_keep_bB"; "4havoc1"; "4havoc1B"; "4havoc1p"; "4havoc1pB"; "4img_cov"; "4img_covB"; "4inside_maps"; "4inside_mapsB"; "4kentry_apart_b"; "4kentry_apart_bB"]; ["4kentry_apart_bp"; "4kentry_apart_bpB"; "4kfill_x"; "4kfill_xB"; "4kn_cutout"; "4kn_cutoutB"; "4kn_cutoutM"; "4kn_grant_filter"; "4kn_grant_filterB"; "4kn_havoc"; "4kn_havocB"; "4kn_havocM"; "4kn_rezero"; "4kn_rezeroB"; "4kn_rezeroM"; "4kn_unfill"]; ["4kn_unfillB"; "4kn_unfillM"; "4kread8e"; "4kread8eB"; "4kreadZ"; "4kreadZB"; "4kread_bytes"; "4kread_bytesB"; "4kwr_cut"; "4kwr_cutB"; "4kwritable"; "4kwritableB"; "4kwritable_x"; "4kwritable_xB"; "4kzero_x"; "4kzero_xB"]; ["4len_eqb"; "4len_eqbB"; "4live_agree"; "4live_vars"; "4live_vars_t"; "4mkind"; "4mmap_destroyed_with"; "4mmap_destroyed_with_ref"; "4mmap_fixed_in"; "4mmap_fixed_in_ref"; "4mmap_len"; "4mmap_len_ref"; "4node_mprotect"; "4node_mprotect_ref"; "4node_munmap"; "4node_munmap_ref"]; ["4node_shdisj"; "4node_shdisj_ref"; "4node_unvis"; "4node_unvis_ref"; "4off_image_x"; "4off_image_xB"; "4page_aligned"; "4page_alignedB"; "4run_block"; "4run_block_ref"; "4safe_range"; "4safe_rangeB"; "4shadow_facts"; "4shadow_factsB"; "4shadow_of"; "4shadow_ofB"]; ["4summary_copy"; "4summary_copy_ref"; "4summary_fill"; "4summary_fill_ref"; "4summary_istrncpy"; "4summary_istrncpy_ref"; "4summary_miz"; "4summary_miz_ref"; "4summary_sniff"; "4summary_sniff_ref"; "4vis_add"; "4vis_add_ref"; "4vkey"; "4xb2"; "4xb2B"; "4xhi1"]; ["4xhi1B"; "4xhi2"; "4xhi2B"; "4xlo1"; "4xlo1B"; "4xlo2"; "4xlo2B"; "5expr"; "5kentry"; "5ptree"; "5sprep"; "6mkbc"; "7forallb"; "0a"; "0acc"; "0arm"]; ["0b"; "0b1"; "0b2"; "0c"; "0cmax"; "0cs"; "0db"; "0dk"; "0e"; "0entry"; "0fk"; "0fuel"; "0hole"; "0k"; "0kb"; "0kinds"]; ["0kk"; "0len"; "0lne"; "0m"; "0ms"; "0n"; "0n1"; "0n2"; "0ne"; "0off"; "0rne"; "0sb"; "0sk"; "0sp"; "0stops"; "0t"]; ["0ub"; "0uk"; "0un"]]).
 Module APC.
 Import AX2.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import AX2B.
@@ -218,7 +217,7 @@ let live := live_vars_t cs in
 set_kn cs (List.filter (kn_gc_entry_t spb spk live) (kn cs)).
 Definition live_agree (acc : list nat) (t : ptree unit) : Prop :=
 forall v, existsb (Nat.eqb v) acc = in_live_t t v.
-Lemma vkey_inj : ltac2:(TCodec.tc2 tcn__AsanPlanCore ">'3'8':&SLr2%211r1%411%73631r3%93:16p031pY2<1pXL=1").
+Lemma vkey_inj : forall a b, vkey a = vkey b -> a = b.
 Proof. intros a b H. unfold vkey in H. apply (f_equal Pos.to_nat) in H. rewrite !Pnat.SuccNat2Pos.id_succ in H. congruence. Qed.
 Lemma live_agree_var : forall acc t n,
 live_agree acc t -> live_agree (if existsb (Nat.eqb n) acc then acc else n :: acc) (pt_set (vkey n) tt t).
@@ -231,7 +230,7 @@ fold (in_live_t t v). rewrite <- (H v).
 destruct (existsb (Nat.eqb n) acc); [reflexivity|]. cbn [existsb].
 destruct (Nat.eqb_spec v n); [contradiction|]. reflexivity.
 Qed.
-Lemma live_agree_expr : ltac2:(TCodec.tc2 tcn__AsanPlanCore "F'T7'2'3%211'T9'7%211&RBr2r1%3221&Kr4r3%3221&L%1248%:231p081p[0=1pXNA1pYBE1").
+Lemma live_agree_expr : forall e acc t, live_agree acc t -> live_agree (expr_vars e acc) (expr_vars_t e t).
 Proof.
 induction e; intros acc t H; cbn [expr_vars expr_vars_t]; try exact H; try (apply live_agree_var; exact H); auto.
 Qed.
@@ -239,7 +238,7 @@ Lemma live_agree_fold : forall (X : Type) (f : X -> list nat -> list nat) (g : X
 (forall a acc t, live_agree acc t -> live_agree (f a acc) (g a t)) ->
 live_agree acc t -> live_agree (fold_right f acc l) (fold_right g t l).
 Proof. intros X f g l acc t Hfg H. induction l as [|a r IH]; [exact H|]. cbn [fold_right]. apply Hfg. exact IH. Qed.
-Lemma live_vars_agree : ltac2:(TCodec.tc2 tcn__AsanPlanCore "9'=&RB&RCr1%211&RD%113%6231pY<81").
+Lemma live_vars_agree : forall cs, live_agree (live_vars cs) (live_vars_t cs).
 Proof.
 intros cs. unfold live_vars, live_vars_t.
 apply live_agree_expr.
@@ -257,7 +256,8 @@ apply live_agree_fold; [intros a acc t H; destruct a as [[] ? ?|[] ?|[] ? ?| | |
 apply live_agree_fold; [intros; repeat apply live_agree_expr; assumption|].
 exact A0.
 Qed.
-Lemma forallb_expr_vars : ltac2:(TCodec.tc2 tcn__AsanPlanCore "I'3'1p021'T7'2%115'8&T<r3&Kr2r1%3221%63=51&0(4%11@%8271%;3B:1%<3C;8%6221%?3D81pXNA1pYBD1pJF1").
+Lemma forallb_expr_vars : forall P e acc,
+forallb P (expr_vars e acc) = (forallb P (expr_vars e []) && forallb P acc)%bool.
 Proof.
 intros P e. induction e; intros acc; cbn [expr_vars]; try reflexivity.
 - destruct (existsb (Nat.eqb n) acc) eqn:E; cbn [existsb forallb].
@@ -272,7 +272,7 @@ pose proof (proj1 (forallb_forall P acc) F n Hx) as C. rewrite Pn in C. discrimi
 - rewrite IHe1, IHe2, (IHe1 (expr_vars e2 [])). rewrite Bool.andb_assoc. reflexivity.
 - apply IHe.
 Qed.
-Lemma expr_all_live_t_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "G'2'3%211'T9'7%211'T7&RBr3r2%3221'8'1&J%1265&>r4%2218%73641p091pYB>1p[0@1pXND1").
+Lemma expr_all_live_t_eq : forall acc t e, live_agree acc t -> expr_all_live_t t e = all_live acc e.
 Proof.
 intros acc t e H. unfold all_live. induction e; cbn [expr_all_live_t expr_vars existsb forallb]; try reflexivity.
 - rewrite <- (H n). cbn. rewrite Bool.andb_true_r. destruct (Nat.ltb n nx0); reflexivity.
@@ -282,7 +282,7 @@ intros acc t e H. unfold all_live. induction e; cbn [expr_all_live_t expr_vars e
 - rewrite forallb_expr_vars, IHe1, IHe2. destruct (forallb _ (expr_vars e1 [])); reflexivity.
 - exact IHe.
 Qed.
-Lemma cs_gc_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "9'='8&Dr1%211&E%113%63731pY<81").
+Lemma cs_gc_eq : forall cs, cs_gc cs = cs_gc_ref cs.
 Proof.
 intros cs. unfold cs_gc, cs_gc_ref. destruct (split_lit (reg cs 2)) as [spb spk].
 f_equal. apply filter_ext. intros K.
@@ -354,7 +354,7 @@ match carryK bc (s_log ss') (s_know ss') [] with
 | _ => None
 end
 else None.
-Lemma run_block_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "E'3'2'9%211'='8'5%113&S8r4r3r2r1%544321&S9%146543%;3931pY<=1pZN?1pYHC1pHD1").
+Lemma run_block_eq : forall K fuel stops cs, run_block K fuel stops cs = run_block_ref K fuel stops cs.
 Proof.
 intros. unfold run_block, run_block_ref. destruct (fresh_ok cs); [|reflexivity]. cbv zeta.
 rewrite (sym_execTXBI_eq segs (s_know (a_ss cs))) by reflexivity.
@@ -419,7 +419,7 @@ match K with
 | KFill (SA b k) l _ => ranges_apart_xB bc ub uk un b k l
 | KUnk (SA b k) l => ranges_apart_xB bc ub uk un b k l
 end.
-Lemma kentry_apart_bB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "D'2'T8%211'8'T7'9'1pH61p[641p[441p[261&Q?&T;r1%211%411&Q>%114%?3831pYFA1").
+Lemma kentry_apart_bB_eqf : forall fk, kentry_apart_bB (mkbc fk) = kentry_apart_b fk.
 Proof. intros. bcfe. unfold kentry_apart_bB, kentry_apart_b. (repeat first [ rewrite ranges_apart_xB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kentry_apart_bB_eqf : bceq.
 Definition kentry_apart_bp (allkn : list kentry) (sp : sprep) (ub : expr) (uk : Z) (un : expr) (K : kentry) : bool :=
@@ -448,7 +448,7 @@ match K with
 | KFill (SA b k) l _ => ranges_apart_pB bc sp ub uk un b k l
 | KUnk (SA b k) l => ranges_apart_pB bc sp ub uk un b k l
 end.
-Lemma kentry_apart_bpB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "F'2'T8%211'8'T:'T7'9'1pH71p[641p[441p[261pZL81&QA&T;r1%211%411&Q@%114%A3831pYFC1").
+Lemma kentry_apart_bpB_eqf : forall fk, kentry_apart_bpB (mkbc fk) = kentry_apart_bp fk.
 Proof. intros. bcfe. unfold kentry_apart_bpB, kentry_apart_bp. (repeat first [ rewrite ranges_apart_pB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kentry_apart_bpB_eqf : bceq.
 Definition kimg_b (K : kentry) : bool := match K with KImg _ _ => true | _ => false end.
@@ -458,11 +458,11 @@ List.filter (fun K => kimg_b K || kentry_apart_bp k sp ub uk un K) k.
 Definition kn_unfillB (bc : bctx) (ub : expr) (uk : Z) (un : expr) : list kentry :=
 let sp := mk_sprepB bc ub uk un in
 List.filter (fun K => kimg_b K || kentry_apart_bpB bc sp ub uk un K) (bc_fk bc).
-Lemma kn_unfillB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'T7'9p[624p[421p[241&R0&T;r1%211%411&QO%114%=3831pYF?1").
+Lemma kn_unfillB_eqf : forall fk, kn_unfillB (mkbc fk) = kn_unfill fk.
 Proof. intros. bcfe. unfold kn_unfillB, kn_unfill. (repeat first [ rewrite bc_fk_mkbc | rewrite mk_sprepB_eqf | rewrite kentry_apart_bpB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kn_unfillB_eqf : bceq.
 Definition kn_unfillM (k : list kentry) := kn_unfillB (mkbc k).
-Lemma kn_unfillM_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "='8'2'T8%211'T7'9p[623p[421p[241pYL61&R1&QO%<3321"). Proof. apply functional_extensionality; intros k. unfold kn_unfillM. apply kn_unfillB_eqf. Qed.
+Lemma kn_unfillM_eq : kn_unfillM = kn_unfill. Proof. apply functional_extensionality; intros k. unfold kn_unfillM. apply kn_unfillB_eqf. Qed.
 Definition kwr_b (K : kentry) : bool := match K with KWr _ _ => true | _ => false end.
 Definition havoc1 (k : list kentry) (ub : expr) (uk : Z) (un : expr) (K : kentry) : list kentry :=
 if (kwr_b K || kentry_apart_b k ub uk un K)%bool then [K]
@@ -480,7 +480,7 @@ else match K with
 | KUnk (SA kb kk) len => kunk_cutB bc ub uk un kb kk len
 | _ => []
 end.
-Lemma havoc1B_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "C'2'T8%211'8'T7'9pH54p[631p[431p[251&Q7&T;r1%211%411&Q6%114%>3831pYF@1").
+Lemma havoc1B_eqf : forall fk, havoc1B (mkbc fk) = havoc1 fk.
 Proof. intros. bcfe. unfold havoc1B, havoc1. (repeat first [ rewrite kzero_cutB_eqf | rewrite kfill_cutB_eqf | rewrite kunk_cutB_eqf | rewrite kentry_apart_bB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite havoc1B_eqf : bceq.
 Definition havoc1p (k : list kentry) (sp : sprep) (ub : expr) (uk : Z) (un : expr) (K : kentry) : list kentry :=
@@ -499,7 +499,7 @@ else match K with
 | KUnk (SA kb kk) len => kunk_cutB bc ub uk un kb kk len
 | _ => []
 end.
-Lemma havoc1pB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "E'2'T8%211'8'T:'T7'9pH65p[631p[431p[251pZL71&Q9&T;r1%211%411&Q8%114%@3831pYFB1").
+Lemma havoc1pB_eqf : forall fk, havoc1pB (mkbc fk) = havoc1p fk.
 Proof. intros. bcfe. unfold havoc1pB, havoc1p. (repeat first [ rewrite kzero_cutB_eqf | rewrite kfill_cutB_eqf | rewrite kunk_cutB_eqf | rewrite kentry_apart_bpB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite havoc1pB_eqf : bceq.
 Definition kn_havoc (k : list kentry) (ub : expr) (uk : Z) (un : expr) : list kentry :=
@@ -508,16 +508,16 @@ List.flat_map (havoc1p k sp ub uk un) k.
 Definition kn_havocB (bc : bctx) (ub : expr) (uk : Z) (un : expr) : list kentry :=
 let sp := mk_sprepB bc ub uk un in
 List.flat_map (havoc1pB bc sp ub uk un) (bc_fk bc).
-Lemma kn_havocB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'T7'9p[624p[421p[241&QJ&T;r1%211%411&QI%114%=3831pYF?1").
+Lemma kn_havocB_eqf : forall fk, kn_havocB (mkbc fk) = kn_havoc fk.
 Proof. intros. bcfe. unfold kn_havocB, kn_havoc. (repeat first [ rewrite bc_fk_mkbc | rewrite mk_sprepB_eqf | rewrite havoc1pB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kn_havocB_eqf : bceq.
 Definition kn_havocM (k : list kentry) := kn_havocB (mkbc k).
-Lemma kn_havocM_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "='8'2'T8%211'T7'9p[623p[421p[241pYL61&QK&QI%<3321"). Proof. apply functional_extensionality; intros k. unfold kn_havocM. apply kn_havocB_eqf. Qed.
+Lemma kn_havocM_eq : kn_havocM = kn_havoc. Proof. apply functional_extensionality; intros k. unfold kn_havocM. apply kn_havocB_eqf. Qed.
 Definition kwr_cut (k : list kentry) (ub : expr) (uk : Z) (un : expr) (kb : expr) (kk : Z) (len : expr) : list kentry :=
 kcut KWr k ub uk un kb kk len.
 Definition kwr_cutB (bc : bctx) (ub : expr) (uk : Z) (un : expr) (kb : expr) (kk : Z) (len : expr) : list kentry :=
 kcutB bc KWr ub uk un kb kk len.
-Lemma kwr_cutB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "E'2'T8%211'8'T7'9pZ424pZ221pYN41p[651p[451p[271&R9&T;r1%211%411&R8%114%@3831pYFB1").
+Lemma kwr_cutB_eqf : forall fk, kwr_cutB (mkbc fk) = kwr_cut fk.
 Proof. intros. bcfe. unfold kwr_cutB, kwr_cut. (repeat first [ rewrite kcutB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kwr_cutB_eqf : bceq.
 Definition cutout1 (k : list kentry) (ub : expr) (uk : Z) (un : expr) (K : kentry) : list kentry :=
@@ -538,7 +538,7 @@ else match K with
 | KWr (SA kb kk) len => kwr_cutB bc ub uk un kb kk len
 | _ => []
 end.
-Lemma cutout1B_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "C'2'T8%211'8'T7'9pH54p[631p[431p[251&G&T;r1%211%411&F%114%>3831pYF@1").
+Lemma cutout1B_eqf : forall fk, cutout1B (mkbc fk) = cutout1 fk.
 Proof. intros. bcfe. unfold cutout1B, cutout1. (repeat first [ rewrite kzero_cutB_eqf | rewrite kfill_cutB_eqf | rewrite kunk_cutB_eqf | rewrite kentry_apart_bB_eqf | rewrite kwr_cutB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite cutout1B_eqf : bceq.
 Definition cutout1p (k : list kentry) (sp : sprep) (ub : expr) (uk : Z) (un : expr) (K : kentry) : list kentry :=
@@ -559,7 +559,7 @@ else match K with
 | KWr (SA kb kk) len => kwr_cutB bc ub uk un kb kk len
 | _ => []
 end.
-Lemma cutout1pB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "E'2'T8%211'8'T:'T7'9pH65p[631p[431p[251pZL71&I&T;r1%211%411&H%114%@3831pYFB1").
+Lemma cutout1pB_eqf : forall fk, cutout1pB (mkbc fk) = cutout1p fk.
 Proof. intros. bcfe. unfold cutout1pB, cutout1p. (repeat first [ rewrite kzero_cutB_eqf | rewrite kfill_cutB_eqf | rewrite kunk_cutB_eqf | rewrite kentry_apart_bpB_eqf | rewrite kwr_cutB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite cutout1pB_eqf : bceq.
 Definition kn_cutout (k : list kentry) (ub : expr) (uk : Z) (un : expr) : list kentry :=
@@ -568,11 +568,11 @@ List.flat_map (cutout1p k sp ub uk un) k.
 Definition kn_cutoutB (bc : bctx) (ub : expr) (uk : Z) (un : expr) : list kentry :=
 let sp := mk_sprepB bc ub uk un in
 List.flat_map (cutout1pB bc sp ub uk un) (bc_fk bc).
-Lemma kn_cutoutB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'T7'9p[624p[421p[241&QE&T;r1%211%411&QD%114%=3831pYF?1").
+Lemma kn_cutoutB_eqf : forall fk, kn_cutoutB (mkbc fk) = kn_cutout fk.
 Proof. intros. bcfe. unfold kn_cutoutB, kn_cutout. (repeat first [ rewrite bc_fk_mkbc | rewrite mk_sprepB_eqf | rewrite cutout1pB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kn_cutoutB_eqf : bceq.
 Definition kn_cutoutM (k : list kentry) := kn_cutoutB (mkbc k).
-Lemma kn_cutoutM_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "='8'2'T8%211'T7'9p[623p[421p[241pYL61&QF&QD%<3321"). Proof. apply functional_extensionality; intros k. unfold kn_cutoutM. apply kn_cutoutB_eqf. Qed.
+Lemma kn_cutoutM_eq : kn_cutoutM = kn_cutout. Proof. apply functional_extensionality; intros k. unfold kn_cutoutM. apply kn_cutoutB_eqf. Qed.
 Definition kn_keep (k : list kentry) (ws : list (expr * expr)) : list kentry :=
 let wss := map (fun w => (split_lit (fst w), xlo k (snd w))) ws in
 let test (b : expr) (o : Z) (n : option Z) : bool :=
@@ -613,7 +613,7 @@ match know_lookupB segs bc b off n false [] [] with
 | LHit (ELit z) [] _ => Some (z mod two64)
 | _ => None
 end.
-Lemma kreadZB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "E'2'T8%211'8'T7'9'3'5%113pZ<31pZD51pY271&R5&T;r1%211%411&R4%114%@3831pYFB1").
+Lemma kreadZB_eqf : forall fk, kreadZB (mkbc fk) = kreadZ fk.
 Proof. intros. bcfe. unfold kreadZB, kreadZ. (repeat first [ rewrite know_lookupB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kreadZB_eqf : bceq.
 Definition kread8e (k : list kentry) (b : expr) (off : Z) : option expr :=
@@ -626,7 +626,7 @@ match know_lookupB segs bc b off 8 false [] [] with
 | LHit v [] _ => Some v
 | _ => None
 end.
-Lemma kread8eB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "C'2'T8%211'8'T7'9'5%113pZD31pY251&R3&T;r1%211%411&R2%114%>3831pYF@1").
+Lemma kread8eB_eqf : forall fk, kread8eB (mkbc fk) = kread8e fk.
 Proof. intros. bcfe. unfold kread8eB, kread8e. (repeat first [ rewrite know_lookupB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kread8eB_eqf : bceq.
 Fixpoint kwritable (allkn k : list kentry) (b : expr) (off n : Z) : bool :=
@@ -653,7 +653,7 @@ else if (Z.leb 0 n && Z.ltb n two64 && xinsideB bc b off (ELit n) wb wk wn)%bool
 else kwritableB bc rest b off n
 | _ :: rest => kwritableB bc rest b off n
 end.
-Lemma kwritableB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "D'2'T8%211'8'T7'9'1pZ<21pZD31pY251pYL81&R;&T;r1%211%411&R:%114%?3831pYFA1").
+Lemma kwritableB_eqf : forall fk, kwritableB (mkbc fk) = kwritable fk.
 Proof.
 intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n.
 revert b off n. induction k as [|K rest IH]; intros; bcfe; [reflexivity|].
@@ -690,7 +690,7 @@ else if xinsideB bc b off n wb wk wn then true
 else kwritable_xB bc rest b off n
 | _ :: rest => kwritable_xB bc rest b off n
 end.
-Lemma kwritable_xB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "D'2'T8%211'8'T7'9'1pZ<31pZD31pY251pYL81&R=&T;r1%211%411&R<%114%?3831pYFA1").
+Lemma kwritable_xB_eqf : forall fk, kwritable_xB (mkbc fk) = kwritable_x fk.
 Proof.
 intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n.
 revert b off n. induction k as [|K rest IH]; intros; bcfe; [reflexivity|].
@@ -727,7 +727,7 @@ else if xinsideB bc b off n zb zk zn then true
 else kzero_xB bc rest b off n
 | _ :: rest => kzero_xB bc rest b off n
 end.
-Lemma kzero_xB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "D'2'T8%211'8'T7'9'1pZ<31pZD31pY251pYL81&R?&T;r1%211%411&R>%114%?3831pYFA1").
+Lemma kzero_xB_eqf : forall fk, kzero_xB (mkbc fk) = kzero_x fk.
 Proof.
 intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n.
 revert b off n. induction k as [|K rest IH]; intros; bcfe; [reflexivity|].
@@ -764,7 +764,7 @@ else if (Z.eqb (c' mod 256) (c mod 256) && xinsideB bc b off n zb zk zn)%bool th
 else kfill_xB bc rest b off n c
 | _ :: rest => kfill_xB bc rest b off n c
 end.
-Lemma kfill_xB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "E'2'T8%211'8'T7'9'1pY821pZ<41pZD41pY261pYL91&QC&T;r1%211%411&QB%114%@3831pYFB1").
+Lemma kfill_xB_eqf : forall fk, kfill_xB (mkbc fk) = kfill_x fk.
 Proof.
 intros fk. apply functional_extensionality; intros k. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros n. apply functional_extensionality; intros c.
 revert b off n c. induction k as [|K rest IH]; intros; bcfe; [reflexivity|].
@@ -775,7 +775,7 @@ Definition off_image_x (k : list kentry) (b : expr) (off : Z) (n : expr) : bool 
 ranges_apart_x k b off n (ELit 0) (img_lo A) (ELit (img_hi A - img_lo A)).
 Definition off_image_xB (bc : bctx) (b : expr) (off : Z) (n : expr) : bool :=
 ranges_apart_xB bc b off n (ELit 0) (img_lo A) (ELit (img_hi A - img_lo A)).
-Lemma off_image_xB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "C'2'T8%211'8'T7'9'1pZ<31pZD31pY251&S5&T;r1%211%411&S4%114%>3831pYF@1").
+Lemma off_image_xB_eqf : forall fk, off_image_xB (mkbc fk) = off_image_x fk.
 Proof. intros. bcfe. unfold off_image_xB, off_image_x. (repeat first [ rewrite ranges_apart_xB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite off_image_xB_eqf : bceq.
 Definition flat_x (k : list kentry) (b : expr) (off : Z) (n : expr) : bool :=
@@ -788,7 +788,7 @@ match base_rangeB bc b, xloB bc n, xhiB bc n with
 | Some (lo, hi), Some nl, Some nh => (Z.leb 0 (lo + off) && Z.leb (hi + off + nh) two64 && Z.ltb 0 nl)%bool
 | _, _, _ => false
 end.
-Lemma flat_xB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "C'2'T8%211'8'T7'9'1pZ<31pZD31pY251&Q3&T;r1%211%411&Q2%114%>3831pYF@1").
+Lemma flat_xB_eqf : forall fk, flat_xB (mkbc fk) = flat_x fk.
 Proof. intros. bcfe. unfold flat_xB, flat_x. (repeat first [ rewrite base_rangeB_eqf | rewrite xloB_eqf | rewrite xhiB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite flat_xB_eqf : bceq.
 Definition ehi (k : list kentry) (e : expr) : option Z := xhi k e.
@@ -797,7 +797,7 @@ Definition len_eqb (k : list kentry) (n m : expr) : bool :=
 expr_eqb n m || (lin_ge0 k [(n, 0%Z)] [(m, 0%Z)] && lin_ge0 k [(m, 0%Z)] [(n, 0%Z)]).
 Definition len_eqbB (bc : bctx) (n m : expr) : bool :=
 expr_eqb n m || (lin_ge0B bc [(n, 0%Z)] [(m, 0%Z)] && lin_ge0B bc [(m, 0%Z)] [(n, 0%Z)]).
-Lemma len_eqbB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "A'2'T8%211'8'T7'1pZ821pZ<31&RA&T;r1%211%411&R@%114%<3831pYF>1").
+Lemma len_eqbB_eqf : forall fk, len_eqbB (mkbc fk) = len_eqb fk.
 Proof. intros. bcfe. unfold len_eqbB, len_eqb. (repeat first [ rewrite lin_ge0B_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite len_eqbB_eqf : bceq.
 Definition lit_diff (e f : expr) : option Z :=
@@ -812,7 +812,7 @@ match e with
 | ELit z => Z.eqb (z mod 4096) 0
 | _ => Z.leb 12 (ealignB bc e)
 end.
-Lemma page_alignedB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "@'2'T8%211'8'T7'1pYB21&S7&T;r1%211%411&S6%114%;3831pYF=1").
+Lemma page_alignedB_eqf : forall fk, page_alignedB (mkbc fk) = page_aligned fk.
 Proof. intros. bcfe. unfold page_alignedB, page_aligned. (repeat first [ rewrite ealignB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite page_alignedB_eqf : bceq.
 Definition kn_contra (k : list kentry) : bool :=
@@ -888,7 +888,7 @@ match e with
 | None, None => match lin_srangeB bc e with Some (lo, _) => Some lo | None => None end
 end
 end.
-Lemma xlo1B_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'T7'5'9%211pYB41&T4&T;r1%211%411&T3%114%=3831pYF?1").
+Lemma xlo1B_eqf : forall fk, xlo1B (mkbc fk) = xlo1 fk.
 Proof. intros. bcfe. unfold xlo1B, xlo1. (repeat first [ rewrite erangeB_eqf | rewrite lin_srangeB_eqf | rewrite lin_brangeB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite xlo1B_eqf : bceq.
 Definition xhi1 (k : list kentry) (e : expr) : option Z :=
@@ -911,7 +911,7 @@ match e with
 | None, None => match lin_srangeB bc e with Some (_, hi) => Some hi | None => None end
 end
 end.
-Lemma xhi1B_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'T7'5'9%211pYB41&T0&T;r1%211%411&SO%114%=3831pYF?1").
+Lemma xhi1B_eqf : forall fk, xhi1B (mkbc fk) = xhi1 fk.
 Proof. intros. bcfe. unfold xhi1B, xhi1. (repeat first [ rewrite erangeB_eqf | rewrite lin_srangeB_eqf | rewrite lin_brangeB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite xhi1B_eqf : bceq.
 Fixpoint deand (e : expr) : expr * Z :=
@@ -953,17 +953,17 @@ end
 else plain
 | _, _ => plain
 end.
-Lemma xb2B_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "D'2'T8%211'8'T7'5'6'9%2211%411pYB61&SN&T;r1%211%411&SM%114%?3831pYFA1").
+Lemma xb2B_eqf : forall fk, xb2B (mkbc fk) = xb2 fk.
 Proof. intros. bcfe. unfold xb2B, xb2. (repeat first [ rewrite xlo1B_eqf | rewrite xhi1B_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite xb2B_eqf : bceq.
 Definition xlo2 (k : list kentry) (e : expr) : option Z := match xb2 k e with Some (lo, _) => Some lo | None => None end.
 Definition xlo2B (bc : bctx) (e : expr) : option Z := match xb2B bc e with Some (lo, _) => Some lo | None => None end.
-Lemma xlo2B_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'T7'5'9%211pYB41&T6&T;r1%211%411&T5%114%=3831pYF?1").
+Lemma xlo2B_eqf : forall fk, xlo2B (mkbc fk) = xlo2 fk.
 Proof. intros. bcfe. unfold xlo2B, xlo2. (repeat first [ rewrite xb2B_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite xlo2B_eqf : bceq.
 Definition xhi2 (k : list kentry) (e : expr) : option Z := match xb2 k e with Some (_, hi) => Some hi | None => None end.
 Definition xhi2B (bc : bctx) (e : expr) : option Z := match xb2B bc e with Some (_, hi) => Some hi | None => None end.
-Lemma xhi2B_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'T7'5'9%211pYB41&T2&T;r1%211%411&T1%114%=3831pYF?1").
+Lemma xhi2B_eqf : forall fk, xhi2B (mkbc fk) = xhi2 fk.
 Proof. intros. bcfe. unfold xhi2B, xhi2. (repeat first [ rewrite xb2B_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite xhi2B_eqf : bceq.
 Definition fact_ok (k : list kentry) (K : kentry) : bool :=
@@ -993,12 +993,12 @@ match fuel with
 | _, _ => None
 end
 end.
-Lemma kread_bytesB_eqf' : ltac2:(TCodec.tc2 tcn__AsanPlanCore "G'2'T8%211'3'8'T7'9'5%812%211pZD41pY261&R7&T;r2%211r1%5221&R6%1235%@3931pYHB1pYFD1").
+Lemma kread_bytesB_eqf' : forall fk fuel, kread_bytesB (mkbc fk) fuel = kread_bytes fuel fk.
 Proof.
 intros fk fuel. induction fuel as [|f IH]; bcfe; [reflexivity|].
 cbn [kread_bytesB kread_bytes]. rewrite IH. (repeat first [ rewrite kreadZB_eqf ]). reflexivity.
 Qed.
-Lemma kread_bytesB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "H'2'T8%211'8'3'T7'9'5%812%211pZD41pY261pYH81&R7&T;r1%211%411&R6r2%2251qYHA1%C3:51pYFE1").
+Lemma kread_bytesB_eqf : forall fk, kread_bytesB (mkbc fk) = (fun fuel => kread_bytes fuel fk).
 Proof. intros fk. apply functional_extensionality; intros fuel. apply kread_bytesB_eqf'. Qed.
 #[local] Hint Rewrite kread_bytesB_eqf' kread_bytesB_eqf : bceq.
 Definition node_join (cs : acs) (b : expr) (off : Z) (n : nat) : option acs :=
@@ -1076,14 +1076,14 @@ Definition find_containing (k : list kentry) (ms : list amap) (kinds : list mkin
 List.find (fun m => negb (is_fog m) && existsb (mkind_eqb (am_kind m)) kinds && xinside k b off n (am_base m) 0 (am_len m)) ms.
 Definition find_containingB (bc : bctx) (ms : list amap) (kinds : list mkind) (b : expr) (off : Z) (n : expr) : option amap :=
 List.find (fun m => negb (is_fog m) && existsb (mkind_eqb (am_kind m)) kinds && xinsideB bc b off n (am_base m) 0 (am_len m)) ms.
-Lemma find_containingB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "J'2'T8%211'8'?%511'RE%711'T7'9'5%117pZ<41pZD41pY261pZ081pZ:;1&N&T;r1%211%411&M%114%E3831pYFG1").
+Lemma find_containingB_eqf : forall fk, find_containingB (mkbc fk) = find_containing fk.
 Proof. intros. bcfe. unfold find_containingB, find_containing. (repeat first [ rewrite xinsideB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite find_containingB_eqf : bceq.
 Definition shadow_of (k : list kentry) (b n : expr) : expr * Z * expr :=
 let '(sb, sk) := split_lit (eadd (mkSrl k b 3) (ELit (shadow_off A))) in (sb, sk, mkSrl k n 3).
 Definition shadow_ofB (bc : bctx) (b n : expr) : expr * Z * expr :=
 let '(sb, sk) := split_lit (eadd (mkSrlB bc b 3) (ELit (shadow_off A))) in (sb, sk, mkSrlB bc n 3).
-Lemma shadow_ofB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "D'2'T8%211'8'T7'6'9%2231%3214pZ<51pY261&S?&T;r1%211%411&S>%114%?3831pYFA1").
+Lemma shadow_ofB_eqf : forall fk, shadow_ofB (mkbc fk) = shadow_of fk.
 Proof. intros. bcfe. unfold shadow_ofB, shadow_of. (repeat first [ rewrite mkSrlB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite shadow_ofB_eqf : bceq.
 Definition shadow_facts (k : list kentry) (ms : list amap) (b n : expr) : list kentry :=
@@ -1098,7 +1098,7 @@ match find_containingB bc ms [KRWLAZY] sb sk sn with
 | Some _ => [KWr (SA sb sk) sn; KZero (SA sb sk) sn]
 | None => []
 end.
-Lemma shadow_factsB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "C'2'T8%211'8'?%511'T7pZ<15pY221pZ:41&S=&T;r1%211%411&S<%114%>3831pYF@1").
+Lemma shadow_factsB_eqf : forall fk, shadow_factsB (mkbc fk) = shadow_facts fk.
 Proof. intros. bcfe. unfold shadow_factsB, shadow_facts. (repeat first [ rewrite find_containingB_eqf | rewrite shadow_ofB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite shadow_factsB_eqf : bceq.
 Definition vis_cost (nhi : Z) : Z := nhi + nhi / 8 + 16384.
@@ -1142,7 +1142,7 @@ then Some (ACS (mk_ss (pc cs) (s_regs (a_ss cs)) (shadow_factsB bc (a_maps cs) b
 else None
 | None => None
 end.
-Lemma vis_add_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "E'='T7'2'T8%211'8'5%117&SJr4r3r2r1%544321&SK%146543%;3931pYL=1pZ<A1pY2B1pY<D1").
+Lemma vis_add_eq : forall cs b n k, vis_add cs b n k = vis_add_ref cs b n k.
 Proof. intros. unfold vis_add, vis_add_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?flat_xB_eqf, ?ranges_apart_xB_eqf, ?shadow_factsB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf. reflexivity. Qed.
 Fixpoint find_disj (k : list kentry) (b1 b2 : expr) : option (expr * Z * expr * expr * Z * expr) :=
 match k with
@@ -1192,7 +1192,7 @@ if (Z.leb 3 (ealignB bc b1) && Z.leb 3 (ealignB bc n1) && Z.leb 3 (ealignB bc b2
 && ranges_apart_xB bc c1 o1 n1 c2 o2 n2)%bool
 then Some (add_kn cs [KDisj (SA sb1 sk1) sn1 (SA sb2 sk2) sn2])
 else None.
-Lemma node_shdisj_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "D'='T7'8'5%114&S0r5r4r3r2r1%6554321&S1%1576543%<3:31pZ@>1pY6?1pZ>@1pY4A1pY<C1").
+Lemma node_shdisj_eq : forall cs b1 n1 b2 n2, node_shdisj cs b1 n1 b2 n2 = node_shdisj_ref cs b1 n1 b2 n2.
 Proof. intros. unfold node_shdisj, node_shdisj_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?flat_xB_eqf, ?ranges_apart_xB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf. reflexivity. Qed.
 Definition mmap_len_ref (cs : acs) : option (expr * Z * Z) :=
 match reg_lit cs 11 with
@@ -1216,7 +1216,7 @@ if (Z.ltb 0 lo && Z.leb 12 (ealignB bc le) && Z.leb hi (2 ^ 46))%bool then Some 
 | _, _ => None
 end
 end.
-Lemma mmap_len_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "@'='8'5'6'T7'9%3221%4212%611&RJr1%211&RK%113%=3631pY<?1").
+Lemma mmap_len_eq : forall cs, mmap_len cs = mmap_len_ref cs.
 Proof. intros. unfold mmap_len, mmap_len_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?xhiB_eqf, ?xloB_eqf. reflexivity. Qed.
 Fixpoint inside_maps (k : list kentry) (ms : list amap) (b : expr) (off : Z) (len : expr) : bool :=
 match ms with
@@ -1228,7 +1228,7 @@ match ms with
 | [] => false
 | m :: rest => (negb (is_fog m) && xinsideB bc b off len (am_base m) 0 (am_len m)) || inside_mapsB bc rest b off len
 end.
-Lemma inside_mapsB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "F'2'T8%211'8'?%511'T7'9'1pZ431pZD31pY251pZ:71&Q=&T;r1%211%411&Q<%114%A3831pYFC1").
+Lemma inside_mapsB_eqf : forall fk, inside_mapsB (mkbc fk) = inside_maps fk.
 Proof.
 intros fk. apply functional_extensionality; intros ms. apply functional_extensionality; intros b. apply functional_extensionality; intros off. apply functional_extensionality; intros len.
 revert b off len. induction ms as [|m rest IH]; intros; bcfe; [reflexivity|].
@@ -1249,7 +1249,7 @@ Definition safe_rangeB (bc : bctx) (ms : list amap) (b : expr) (off : Z) (len : 
 || (Z.leb (img_lo A) (lo + off) && Z.leb (hi + off + lh) (img_hi A))
 | _, _ => false
 end) || inside_mapsB bc ms b off len)%bool.
-Lemma safe_rangeB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "F'2'T8%211'8'?%511'T7'9'1pZ431pZD31pY251pZ:71&S;&T;r1%211%411&S:%114%A3831pYFC1").
+Lemma safe_rangeB_eqf : forall fk, safe_rangeB (mkbc fk) = safe_range fk.
 Proof. intros. bcfe. unfold safe_rangeB, safe_range. (repeat first [ rewrite base_rangeB_eqf | rewrite xhiB_eqf | rewrite inside_mapsB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite safe_rangeB_eqf : bceq.
 Definition grant_keep_b (k : list kentry) (ms : list amap) (K : kentry) : bool :=
@@ -1278,14 +1278,14 @@ match K with
 | KFill (SA b o) l _ => safe_rangeB bc ms b o l
 | KUnk (SA b o) l => safe_rangeB bc ms b o l
 end.
-Lemma grant_keep_bB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'?%511'1pH61pZ:31&Q5&T;r1%211%411&Q4%114%=3831pYF?1").
+Lemma grant_keep_bB_eqf : forall fk, grant_keep_bB (mkbc fk) = grant_keep_b fk.
 Proof. intros. bcfe. unfold grant_keep_bB, grant_keep_b. (repeat first [ rewrite safe_rangeB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite grant_keep_bB_eqf : bceq.
 Definition kn_grant_filter (k : list kentry) (ms : list amap) : list kentry :=
 kimg_clip (List.filter (grant_keep_b k ms) k).
 Definition kn_grant_filterB (bc : bctx) (ms : list amap) : list kentry :=
 kimg_clip (List.filter (grant_keep_bB bc ms) (bc_fk bc)).
-Lemma kn_grant_filterB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "@'2'T8%211'8'?%511pZ:14&QH&T;r1%211%411&QG%114%;3831pYF=1").
+Lemma kn_grant_filterB_eqf : forall fk, kn_grant_filterB (mkbc fk) = kn_grant_filter fk.
 Proof. intros. bcfe. unfold kn_grant_filterB, kn_grant_filter. (repeat first [ rewrite bc_fk_mkbc | rewrite grant_keep_bB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kn_grant_filterB_eqf : bceq.
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
@@ -1393,11 +1393,11 @@ List.filter (fun K => match K with
 | KWord _ _ _ | KBlob _ _ _ | KFill _ _ _ => kentry_apart_bpB bc sp ub uk un K
 | _ => true
 end) (bc_fk bc).
-Lemma kn_rezeroB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "B'2'T8%211'8'T7'9p[624p[421p[241&QM&T;r1%211%411&QL%114%=3831pYF?1").
+Lemma kn_rezeroB_eqf : forall fk, kn_rezeroB (mkbc fk) = kn_rezero fk.
 Proof. intros. bcfe. unfold kn_rezeroB, kn_rezero. (repeat first [ rewrite bc_fk_mkbc | rewrite mk_sprepB_eqf | rewrite kentry_apart_bpB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite kn_rezeroB_eqf : bceq.
 Definition kn_rezeroM (k : list kentry) := kn_rezeroB (mkbc k).
-Lemma kn_rezeroM_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "='8'2'T8%211'T7'9p[623p[421p[241pYL61&QN&QL%<3321"). Proof. apply functional_extensionality; intros k. unfold kn_rezeroM. apply kn_rezeroB_eqf. Qed.
+Lemma kn_rezeroM_eq : kn_rezeroM = kn_rezero. Proof. apply functional_extensionality; intros k. unfold kn_rezeroM. apply kn_rezeroB_eqf. Qed.
 Definition rekind (ms : list amap) (m : amap) : list amap :=
 map (fun m' => if amap_eqb m' m then AM (am_base m') (am_len m') KRW else m') ms.
 Inductive fixed_in_arm := ArmE | ArmF | ArmG.
@@ -1425,7 +1425,7 @@ if (expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) (reg cs 10))%bool then Som
 end
 | None => None
 end.
-Lemma fixed_in_args_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "G'='Q1'8'5'6'T7'9%3221%4213%5213%6214'?%8221%:11&Or2r1%3221&Q0%1243%B3731pY0D1pY<F1").
+Lemma fixed_in_args_eq : forall cs arm, fixed_in_args cs arm = fixed_in_args_ref cs arm.
 Proof. intros. unfold fixed_in_args, fixed_in_args_ref. unfold ehi, elo. rewrite ?find_containingB_eqf. reflexivity. Qed.
 Definition mmap_fixed_in_ref (cs : acs) (arm : fixed_in_arm) : option acs :=
 match fixed_in_args cs arm with
@@ -1467,7 +1467,7 @@ match arm with ArmE => vis_add cs1 (reg cs 10) ne (KWr (SA b off) ne :: KZero (S
 else None
 | None => None
 end.
-Lemma mmap_fixed_in_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore ">'='Q1'8'5%114&RHr2r1%3221&RI%1243%93731pY0;1pY<=1").
+Lemma mmap_fixed_in_eq : forall cs arm, mmap_fixed_in cs arm = mmap_fixed_in_ref cs arm.
 Proof. intros. unfold mmap_fixed_in, mmap_fixed_in_ref. unfold ehi, elo. rewrite ?kn_cutoutB_eqf, ?kn_rezeroB_eqf, ?kn_unfillB_eqf. reflexivity. Qed.
 Definition ENOMEM_RET : Z := two64 - 12.
 Definition refuse (cs : acs) : acs := set_pc (set_reg cs 10 (ELit ENOMEM_RET)) (pc cs + 4).
@@ -1501,7 +1501,7 @@ ACS (mk_ss (pc cs + 4) (sr_upd (s_regs ss) 10 (ELit ENOMEM_RET))
 (dest_lfact a mb lne :: dest_rfact a ne mb ml rne :: kimg_clip (kn_cutoutB bc b off ne)) (s_next ss))
 (hp ++ replace_entry (a_maps cs) m (lp ++ rp)) (a_totsz cs) (a_ylo cs) (a_eager cs)
 (a_vis cs) (a_ghost cs) (a_abytes cs) (a_brk cs) (a_fd cs) (a_tidset cs).
-Lemma mmap_destroyed_with_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "K'1'='T7'9'?'8&RFr8r7r6r5r4r3r2r1%9887654321&RG%18:9876543%=3A31pZFC1pZ6D1pZ8A1pZBD1pZDD1pY2F1pY<H1pYJJ1").
+Lemma mmap_destroyed_with_eq : forall hole cs b off ne m lne rne, mmap_destroyed_with hole cs b off ne m lne rne = mmap_destroyed_with_ref hole cs b off ne m lne rne.
 Proof. intros. unfold mmap_destroyed_with, mmap_destroyed_with_ref. unfold ehi, elo. rewrite ?kn_cutoutB_eqf. reflexivity. Qed.
 Definition dest_cases (cs : acs) (ne : expr) (m : amap) : list (bool * bool) :=
 let k := kn cs in
@@ -1600,7 +1600,7 @@ else None
 end
 | _, _, _ => None
 end.
-Lemma node_mprotect_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore ";'='8'5%113&RLr1%211&RM%113%83631pY<:1").
+Lemma node_mprotect_eq : forall cs, node_mprotect cs = node_mprotect_ref cs.
 Proof. intros. unfold node_mprotect, node_mprotect_ref. unfold ehi, elo. rewrite ?find_containingB_eqf, ?kn_unfillB_eqf. reflexivity. Qed.
 Definition node_mprotect2 (cs : acs) : option (acs * acs) :=
 match node_mprotect cs with Some csG => Some (refuse cs, csG) | None => None end.
@@ -1608,7 +1608,7 @@ Definition amap_match (k : list kentry) (b : expr) (n : expr) (m : amap) : bool 
 (negb (is_fog m) && expr_eqb b (am_base m) && len_eqb k n (am_len m))%bool.
 Definition amap_matchB (bc : bctx) (b : expr) (n : expr) (m : amap) : bool :=
 (negb (is_fog m) && expr_eqb b (am_base m) && len_eqbB bc n (am_len m))%bool.
-Lemma amap_matchB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "C'2'T8%211'8'T7'?'1pZ821pZ<41pY251&A&T;r1%211%411&@%114%>3831pYF@1").
+Lemma amap_matchB_eqf : forall fk, amap_matchB (mkbc fk) = amap_match fk.
 Proof. intros. bcfe. unfold amap_matchB, amap_match. (repeat first [ rewrite len_eqbB_eqf ]). reflexivity. Qed.
 #[local] Hint Rewrite amap_matchB_eqf : bceq.
 Definition node_munmap_ref (cs : acs) : option acs :=
@@ -1655,14 +1655,11 @@ Some (ACS (mk_ss (pc cs + 4) (sr_upd (s_regs ss) 10 (ELit 0)) k1 (s_next ss))
 else None
 | _, _ => None
 end.
-Section SE.
-Local Abbreviation SEC_T_node_munmap_eq := (ltac2:(TCodec.tc2 tcn__AsanPlanCore ";'='8'5%113&RNr1%211&RO%113%83631pY<:1")) (only parsing).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_node_munmap_eq) 0%nat 0%nat).
-Lemma node_munmap_eq : ltac:(sec_stmt2 constr:(SEC_T_node_munmap_eq) 1%nat 0%nat).
+Lemma node_munmap_eq : forall cs, node_munmap cs = node_munmap_ref cs.
 Proof.
+intros cs.
 intros.
 unfold node_munmap, node_munmap_ref. unfold ehi, elo. rewrite ?amap_matchB_eqf, ?ealignB_eqf, ?flat_xB_eqf, ?kn_unfillB_eqf, ?kzero_xB_eqf, ?page_alignedB_eqf, ?ranges_apart_xB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf, ?xinsideB_eqf, ?kn_unfillM_eq. reflexivity. Qed.
-End SE.
 Definition brk_req (cs : acs) : option Z :=
 match lit_diff (reg cs 10) (a_brk cs) with
 | Some d => if (Z.ltb 0 d && Z.eqb (d mod 4096) 0 && Z.leb d (2 ^ 40))%bool then Some d else None
@@ -1809,7 +1806,7 @@ Some (ACS (mk_ss (s_pc ss) (s_regs ss) k2 (s_next ss))
 else None
 | _, _ => None
 end.
-Lemma node_unvis_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "@'='T7'8'5%114&S2r3r2r1%43321&S3%13543%:3831pZ<<1pY2=1pY<?1").
+Lemma node_unvis_eq : forall cs b n, node_unvis cs b n = node_unvis_ref cs b n.
 Proof. intros. unfold node_unvis, node_unvis_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?flat_xB_eqf, ?kn_unfillB_eqf, ?kzero_xB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf, ?kn_unfillM_eq. reflexivity. Qed.
 Definition node_havocbrk (cs : acs) (lo hi : Z) : option acs :=
 match xlo (kn cs) (a_brk cs), xhi (kn cs) (a_brk cs) with
@@ -1891,7 +1888,7 @@ else None
 end
 | _, _ => None
 end.
-Lemma summary_fill_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore "@'='9'8'5%114&SBr3r2r1%43321&SC%13543%:3831pY:<1pYD=1pY<?1").
+Lemma summary_fill_eq : forall cs entry cmax, summary_fill cs entry cmax = summary_fill_ref cs entry cmax.
 Proof. intros. unfold summary_fill, summary_fill_ref. unfold ehi, elo. rewrite ?kwritable_xB_eqf, ?kzero_xB_eqf, ?off_image_xB_eqf, ?xhiB_eqf, ?xloB_eqf, ?kn_havocM_eq. reflexivity. Qed.
 Fixpoint copy_facts (fuel : nat) (k : list kentry) (sb : expr) (sk : Z) (db : expr) (dk : Z) (n : Z)
 : option (list kentry) :=
@@ -1941,12 +1938,12 @@ match know_lookupB segs bc sb sk 1 false [] [], copy_factsB bc f sb (sk + 1) db 
 end
 else Some []
 end.
-Lemma copy_factsB_eqf' : ltac2:(TCodec.tc2 tcn__AsanPlanCore "I'2'T8%211'3'8'T7'9'5%116pZ<31pY@41pY>61pZJ61pZH81&C&T;r2%211r1%5221&B%1235%B3931pYHD1pYFF1").
+Lemma copy_factsB_eqf' : forall fk fuel, copy_factsB (mkbc fk) fuel = copy_facts fuel fk.
 Proof.
 intros fk fuel. induction fuel as [|f IH]; bcfe; [reflexivity|].
 cbn [copy_factsB copy_facts]. rewrite IH. (repeat first [ rewrite know_lookupB_eqf | rewrite kread8eB_eqf | rewrite kread_bytesB_eqf' ]). reflexivity.
 Qed.
-Lemma copy_factsB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "J'2'T8%211'8'3'T7'9'5%116pZ<31pY@41pY>61pZJ61pZH81pYH:1&C&T;r1%211%411&Br2%2251qYHC1%E3:51pYFG1").
+Lemma copy_factsB_eqf : forall fk, copy_factsB (mkbc fk) = (fun fuel => copy_facts fuel fk).
 Proof. intros fk. apply functional_extensionality; intros fuel. apply copy_factsB_eqf'. Qed.
 #[local] Hint Rewrite copy_factsB_eqf' copy_factsB_eqf : bceq.
 Definition kblob_prefix (k : list kentry) (sb : expr) (sk : Z) (db : expr) (dk : Z) (nlo : Z) : list kentry :=
@@ -2037,15 +2034,11 @@ else None
 end
 | None => None
 end.
-Section SE.
-Local Abbreviation SEC_T_summary_copy_eq := (ltac2:(TCodec.tc2 tcn__AsanPlanCore ">'='9'8'5%114&S@r2r1%3221&SA%1243%93731pYD;1pY<=1")) (only parsing).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_summary_copy_eq) 0%nat 0%nat).
-Variable entry : ltac:(sec_ty2 constr:(SEC_T_summary_copy_eq) 1%nat 0%nat).
-Lemma summary_copy_eq : ltac:(sec_stmt2 constr:(SEC_T_summary_copy_eq) 2%nat 0%nat).
+Lemma summary_copy_eq : forall cs entry, summary_copy cs entry = summary_copy_ref cs entry.
 Proof.
+intros cs entry.
 intros.
 unfold summary_copy, summary_copy_ref. unfold ehi, elo. rewrite ?copy_factsB_eqf, ?flat_xB_eqf, ?kwritable_xB_eqf, ?kzero_xB_eqf, ?off_image_xB_eqf, ?ranges_apart_xB_eqf, ?xhiB_eqf, ?xloB_eqf, ?kn_havocM_eq. reflexivity. Qed.
-End SE.
 Definition summary_miz_ref (cs : acs) : option acs :=
 let k := kn cs in
 if negb (Z.eqb (pc cs) (x_memiszero A)) then None else
@@ -2086,13 +2079,13 @@ else None
 end
 | None => None
 end.
-Lemma summary_miz_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore ";'='8'5%113&SFr1%211&SG%113%83631pY<:1").
+Lemma summary_miz_eq : forall cs, summary_miz cs = summary_miz_ref cs.
 Proof. intros. unfold summary_miz, summary_miz_ref. unfold ehi, elo. rewrite ?kn_havocB_eqf, ?kwritableB_eqf, ?kzero_xB_eqf, ?ranges_apart_xB_eqf, ?xhiB_eqf, ?xloB_eqf. reflexivity. Qed.
 Definition img_cov (k : list kentry) (a b : Z) : bool :=
 existsb (fun K => match K with KImg lo hi => Z.leb lo a && Z.leb b hi | _ => false end) k.
 Definition img_covB (bc : bctx) (a b : Z) : bool :=
 existsb (fun K => match K with KImg lo hi => Z.leb lo a && Z.leb b hi | _ => false end) (bc_fk bc).
-Lemma img_covB_eqf : ltac2:(TCodec.tc2 tcn__AsanPlanCore "A'2'T8%211'8'9'1pY221pXL31&Q;&T;r1%211%411&Q:%114%<3831pYF>1").
+Lemma img_covB_eqf : forall fk, img_covB (mkbc fk) = img_cov fk.
 Proof. intros. bcfe. unfold img_covB, img_cov. (repeat first [ rewrite bc_fk_mkbc ]). reflexivity. Qed.
 #[local] Hint Rewrite img_covB_eqf : bceq.
 Definition SEALED_W : Z := 0x3e64656c6165733c.
@@ -2146,7 +2139,7 @@ end
 end
 | _, _, _ => None
 end.
-Lemma summary_istrncpy_eq : ltac2:(TCodec.tc2 tcn__AsanPlanCore ";'='8'5%113&SDr1%211&SE%113%83631pY<:1").
+Lemma summary_istrncpy_eq : forall cs, summary_istrncpy cs = summary_istrncpy_ref cs.
 Proof. intros. unfold summary_istrncpy, summary_istrncpy_ref. unfold ehi, elo. rewrite ?kwritable_xB_eqf, ?off_image_xB_eqf, ?ranges_apart_xB_eqf, ?xhiB_eqf, ?kn_havocM_eq. reflexivity. Qed.
 Definition popfree_facts (lb : expr) (lk : Z) (cnt c s : Z) (K : nat) : list kentry :=
 map (fun t => KWord (SA lb (lk + 4 * (cnt - 1 - Z.of_nat t))) 4 (ELit ((c + Z.of_nat t * s) / 16))) (seq 0 K).
@@ -2281,14 +2274,11 @@ else None
 end
 | None => None
 end.
-Section SE.
-Local Abbreviation SEC_T_summary_sniff_eq := (ltac2:(TCodec.tc2 tcn__AsanPlanCore ";'='8'5%113&SHr1%211&SI%113%83631pY<:1")) (only parsing).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_summary_sniff_eq) 0%nat 0%nat).
-Lemma summary_sniff_eq : ltac:(sec_stmt2 constr:(SEC_T_summary_sniff_eq) 1%nat 0%nat).
+Lemma summary_sniff_eq : forall cs, summary_sniff cs = summary_sniff_ref cs.
 Proof.
+intros cs.
 intros.
 unfold summary_sniff, summary_sniff_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?erangeB_eqf, ?extKB_eqf, ?flat_xB_eqf, ?img_covB_eqf, ?kn_havocB_eqf, ?kn_readableB_eqf, ?know_lookupB_eqf, ?kwritableB_eqf, ?lin_ge0B_eqf, ?mkSrlB_eqf, ?ranges_apart_xB_eqf, ?xhiB_eqf, ?xloB_eqf. reflexivity. Qed.
-End SE.
 Definition V_S1 : nat := 0.
 Definition V_ARGC : nat := 1.
 Definition V_ENVC : nat := 2.
@@ -2298,25 +2288,32 @@ Definition V_BRK : nat := 5.
 Definition V_S2 : nat := 6.
 Definition V_L1 : nat := 7.
 Definition V_UID : nat := 8.
+Definition V_G : nat := 9.
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
+Definition AUXSZ (r : Z) : Z := 432 + 32 * r.
+Lemma AUXSZ_of : forall b, AUXSZ (rseq_z b) = Z.of_nat (StackLayout.auxv_size b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 Definition e_sp0 : expr := eadd (escale 32768 (EVar V_S1)) (escale 16 (EVar V_S2)).
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition e_str0 : expr := eaddz e_auxv 160.
-Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
+Definition e_atrandom (r : Z) : expr := eadd (eaddz e_auxv (AUXSZ r)) (escale 8 (EVar V_G)).
+Definition e_str0 (r : Z) : expr := eadd (eaddz (e_atrandom r) 16) (EVar V_W).
+Definition e_str1 (r : Z) : expr := eadd (e_str0 r) (eaddz (EVar V_L0) 1).
 Definition e_atr8 : expr :=
-eadd (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
-Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
+eadd (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_G))).
+Definition e_argv1w (r : Z) : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) (e_str1 r).
 Definition node_envscan (cs : acs) : option acs :=
 let k := kn cs in
 if (Z.eqb (pc cs) (x_envscan A) && len_eqb k (reg cs 9) e_envp)%bool then
 Some (set_pc (set_reg (set_reg cs 9 (eadd (reg cs 9) (eadd (escale 8 (EVar V_ENVC)) (ELit 8)))) 10 (ELit 0)) (x_envscan_k A))
 else None.
-Definition node_pnscan (cs : acs) : option acs :=
+Definition node_pnscan (r : Z) (cs : acs) : option acs :=
 let k := kn cs in
 match reg_lit cs 10, reg_lit cs 12 with
 | Some p, Some 47 =>
-if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz e_str0 1)
+if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz (e_str0 r) 1)
 && kwritable k k (ELit 0) p 8 && Z.leb (img_lo A) p && Z.leb (p + 8) (img_hi A) && fresh_ok cs)%bool then
 let v := nxt cs in
 let k' := kn_havoc (kimg_cut k p 8) (ELit 0) p (ELit 8) in
@@ -2326,13 +2323,13 @@ else None
 | _, _ => None
 end.
 Definition kw_argv1 (v : expr) : kentry := KWord (SA e_sp0 16) 8 v.
-Definition node_layout (cs : acs) (args : list expr) : option acs :=
+Definition node_layout (r : Z) (cs : acs) (args : list expr) : option acs :=
 let k := kn cs in
-if negb (existsb (kentry_eqb (kw_argv1 e_argv1w)) k) then None else
-let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) k in
+if negb (existsb (kentry_eqb (kw_argv1 (e_argv1w r))) k) then None else
+let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w r)) K)) k in
 match args with
 | [ELit 1] => match xlo k (EVar V_ARGC) with
-| Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 e_str1 :: k')) else None
+| Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 (e_str1 r) :: k')) else None
 | None => None
 end
 | [ELit 0] => match xhi k (EVar V_ARGC) with
@@ -2734,38 +2731,40 @@ end.
 Definition mk_itab_ranges (rs : list (Z * nat)) : itab := mk_itab_ranges_acc rs PTLeaf.
 End WithSegs.
 Definition BRK_ASLR : Z := 0x80000000.
-Definition NX0 : nat := 9.
+Definition NX0 : nat := 10.
 Definition K_RND : nat := 25.
 Definition e_auxb : expr * Z := split_lit e_auxv.
-Definition e_atrb : expr * Z := split_lit e_atrandom.
+Definition e_atrb (r : Z) : expr * Z := split_lit (e_atrandom r).
 Definition auxw (i : Z) (ty : Z) (v : expr) : list kentry :=
 [KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty); KWord (SA (fst e_auxb) (snd e_auxb + 16 * i + 8)) 8 v].
-Definition init_kn_with (atr : kentry) (A : atable) : list kentry :=
+Definition init_kn_with (r : Z) (atr : kentry) (A : atable) : list kentry :=
 [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 2047;
-KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE9;
+KRange (eaddz (e_atrandom r) 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 (0xFFFFFFFFFC5 - 4 * r);
 KRange e_sp0 0x7fff80000000 0x7fffffffff40;
 KRange (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) 0xFFFF0000000 0xFFFFFFFFFE8;
 KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
 KRange (EVar V_UID) 0 0xFFFFFFFE;
-KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+KRange (EVar V_W) 0 4110; KRange (EVar V_G) 0 1;
+KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
 KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
-KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
-++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 4 6 (ELit 4096)
-++ auxw 5 11 (EVar V_UID) ++ auxw 6 12 (EVar V_UID) ++ auxw 7 23 (ELit 0) ++ auxw 8 25 e_atrandom ++ auxw 9 0 (ELit 0)
+KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 (e_str0 r); kw_argv1 (e_argv1w r)]
+++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 11 6 (ELit 4096)
+++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 (e_atrandom r)
+++ auxw (26 + 2 * r) 0 (ELit 0)
 ++ [atr;
 KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
-Definition atr_entry : kentry := KBlob (SA (fst e_atrb) (snd e_atrb)) (ELit 16) K_RND.
-Definition atr_entry_zero : kentry := KZero (SA (fst e_atrb) (snd e_atrb)) (ELit 16).
-Definition init_kn (A : atable) : list kentry := init_kn_with atr_entry A.
-Definition init_kn_zero (A : atable) : list kentry := init_kn_with atr_entry_zero A.
+Definition atr_entry (r : Z) : kentry := KBlob (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16) K_RND.
+Definition atr_entry_zero (r : Z) : kentry := KZero (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16).
+Definition init_kn (r : Z) (A : atable) : list kentry := init_kn_with r (atr_entry r) A.
+Definition init_kn_zero (r : Z) (A : atable) : list kentry := init_kn_with r (atr_entry_zero r) A.
 Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
 Definition init_vis (A : atable) : list (expr * expr) :=
 [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (ELit CEIL, ELit (2^47 - CEIL))].
 Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
 ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis A) []
 (vis_cost (img_hi A - img_lo A) + vis_cost (2^47 - CEIL)) (escale 4096 (EVar V_BRK)) FdStd false.
-Definition init_acs_of (A : atable) : acs := init_acs_of_with (init_kn A) A.
-Definition init_acs_of_zero (A : atable) : acs := init_acs_of_with (init_kn_zero A) A.
+Definition init_acs_of (r : Z) (A : atable) : acs := init_acs_of_with (init_kn r A) A.
+Definition init_acs_of_zero (r : Z) (A : atable) : acs := init_acs_of_with (init_kn_zero r A) A.
 Definition ASAN : atable :=
 {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
 a_entry := 0x4ba64; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
@@ -2776,7 +2775,7 @@ x_envscan := 0x10d5e4; x_envscan_k := 0x10d5f0; x_pnscan := 0x10d6a8; x_pnscan_k
 stops_more := [0x506e4; 0x51d08; 0xddd88; 0xee070; 0xee200] |}.
 Definition ASAN_TEXT_LO : Z := 0x4ba64.
 Definition ASAN_TEXT_N : nat := 252263.
-Definition asan_init : acs := init_acs_of ASAN.
+Definition asan_init (r : Z) : acs := init_acs_of r ASAN.
 Definition BOTH : atable :=
 {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
 a_entry := 0x4ba54; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
@@ -2787,5 +2786,5 @@ x_envscan := 0x10d5d4; x_envscan_k := 0x10d5e0; x_pnscan := 0x10d698; x_pnscan_k
 stops_more := [0x506d4; 0x51cf8; 0xddd78; 0xee060; 0xee1f0] |}.
 Definition BOTH_TEXT_LO : Z := 0x4ba54.
 Definition BOTH_TEXT_N : nat := 252267.
-Definition both_init : acs := init_acs_of BOTH.
+Definition both_init (r : Z) : acs := init_acs_of r BOTH.
 End APC.

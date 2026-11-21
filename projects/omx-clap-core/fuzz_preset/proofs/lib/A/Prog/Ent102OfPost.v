@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset (both images; generic over the listing and the PAImg, as lib/A/Ent102CutsA.v is): THE
    CONSUMER'S _of_post BRIDGE for check_no_overread (the kit owner's ruling 01:50Z, measure-then-decide; harness fix #102). It
    derives the walk's ENTRY-KEYED callee text from the batch kit's POST-FORM text PRH_FnCheck.tcheck_no_overread_specX
-   (lib/A/PRH_FnCheck.v:738 at the batch kit's cdde0ed15730), so the interface's pcc_* callee contract is discharged at
+   (lib/A/PRH_FnCheck.v:738 at the batch kit), so the interface's pcc_* callee contract is discharged at
    the seam. Both texts are cited by qualified name; no body of the batch kit's is restated.
    WHAT DOES NOT CLOSE, AND WHY (measured): Ent102CutsA.l1_tcno_exactX (Ent102CutsA.v:145-190 at eee068f42333) is
-   STRONGER than the kit's text in two places, both from the kit's WILD BUDGET (465fa40e163, after PRH_OfPost.v's Qed at
-   8ba304fe2f93):
+   STRONGER than the kit's text in two places, both from the kit's WILD BUDGET (after PRH_OfPost.v's Qed):
+   
    (W1) the batch kit's text takes `YCbqGwild.wild_room (as_universe B) [] (prh_wk F_check_no_overread) (st_depot S)` at entry
         (PRH_FnCheck.v:770); l1_tcno_exactX has no such premise, and none of its premises gives it.
    (W2) the batch kit's post is `fpostFbm B ARx SK (YCbqGwild.wbudget [] (prh_wk F_check_no_overread)) ..` (:786): the journal
@@ -30,7 +31,7 @@
    rp_i <= length (hruns ..), and below it the flags are the earlier calls' (false on their P1 reading segments): no
    premise of the text gives the window there (no counterexample was built). With R1 kept, Qed with no other
    premise (tcheck_no_overread_grantedXb_R1_of_post).
-   THE ROUTE (PRH_OfPost.v's header at 8ba304fe2f93 :14-26): the run hypothesis at os := rp_os ++ [(o1, o2, o0)]
+   THE ROUTE (PRH_OfPost.v's header :14-26): the run hypothesis at os := rp_os ++ [(o1, o2, o0)]
    from the consumer's `forall o1 o2 o0` run premise (PRH_FnCheck.ck_cno_evs_call, PRH_Base.prh_run_at_app_iff), the
    entry position lifted to that os (ofc_room_pos_snoc), the two room counts from the lifted position along the
    all-granted list (PresetRoomCounts.peak_sec_of_room_pos / peak_c24_of_room_pos: PresetLiveSec.live_sec /
@@ -149,7 +150,7 @@ Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte
 Variable SK : YI16.sink_head.
 #[local] Notation ck_frm0 := (@PRH_FnCheck.ck_frm0 fx).
 
-(* l1_tcno_exactX_wb: Ent102CutsA.l1_tcno_exactX (Ent102CutsA.v:145-190, eee068f42333) WORD FOR WORD with three
+(* l1_tcno_exactX_wb: Ent102CutsA.l1_tcno_exactX (Ent102CutsA.v:146-191, eee068f42333) WORD FOR WORD with three
    changes, all the batch kit's (PRH_FnCheck.v:770, :786; the hull :803): (W1) the wild room after `ck_frm0 ->`; (W2) the
    budgeted post `fpostFbm B ARx SK (YCbqGwild.wbudget [] (prh_wk F_check_no_overread))` in place of
    `fpostFm B ARx SK`; (W3) the hull budget after (W1), with the text's SRr' segs RZ_cf in place of SRr. *)
@@ -261,7 +262,7 @@ Proof.
 Qed.
 
 
-(* tcheck_no_overread_grantedXb_R1: Ent102GrantA.tcheck_no_overread_grantedX (Ent102GrantA.v:186-233, blob
+(* tcheck_no_overread_grantedXb_R1: Ent102GrantA.tcheck_no_overread_grantedX (Ent102GrantA.v:187-234, blob
    478c607a4fe1) WORD FOR WORD with the same changes (W1) / (W2) / (W3), R1 KEPT (the measurement: R1 suffices; the
    header says why it is needed) *)
 Definition tcheck_no_overread_grantedXb_R1 (CTX0 : list (list Z)) : Prop :=
@@ -435,7 +436,7 @@ Definition tparse_noting_exactXb (CTX0 : list (list Z)) : Prop :=
            pj_zeroR segs (rdW W' mem') doc
        end)).
 
-(* the budgeted float post is monotone in its Q (ofp_fpostm_mono's twin, PRH_OfPost.v :99-109 at 8ba304fe2f93) *)
+(* the budgeted float post is monotone in its Q (ofp_fpostm_mono's twin, PRH_OfPost.v :99-109) *)
 Lemma ofpp_fpostFbm_mono : forall P STK FP regs ly S Hp W mem md
   (Q Q' : alayout -> astate -> list Z -> world segs -> bvmap 5 word -> (word -> option byte) -> Model -> Prop),
   (forall ly' S' Hp' W' regs' mem' md', Q ly' S' Hp' W' regs' mem' md' -> Q' ly' S' Hp' W' regs' mem' md') ->
@@ -451,7 +452,7 @@ Proof.
 Qed.
 
 (* THE GRANTED TWIN (LlvmWalk's 02:0xZ measurement order): lib/A/Prog/Ent102GrantA.v tparse_noting_grantedX
-   (GrantA:59-128 at eddc5db39b43, blob 478c607a4fe1) is E with `ran' = 0` in place of `(ran' <> 0 -> res = None)`
+   (GrantA:59-128, blob 478c607a4fe1) is E with `ran' = 0` in place of `(ran' <> 0 -> res = None)`
    (GrantA:104), every other line E's. The fact that gives ran' = 0 from K under E's premises is K's OWN outcome
    clause (FnCheck:672-681), whose FIRST conjunct is `ran' = 0` (:678) under exactly the four hypotheses E already
    takes: the entry position (CutsA:211), the run at the all-granted events (:213), the consumer window prh_cons_from
@@ -603,8 +604,8 @@ Proof.
   exact (tparse_noting_grantedXb_of_post CTX0 HK).
 Qed.
 
-(* ---- THE THIRD BRIDGE (row LL3): the batch kit's PRH_FnCheck.tcheck_as_written_specX (FnCheck:832-902 at b1ed4e6c944d) gives
-   the walk's lib/A/Prog/Ent102GrantA.v tcheck_as_written_grantX (GrantA:136-186 at b1ed4e6c944d). The two texts,
+(* ---- THE THIRD BRIDGE (row LL3): the batch kit's PRH_FnCheck.tcheck_as_written_specX (FnCheck:832-902) gives
+   the walk's lib/A/Prog/Ent102GrantA.v tcheck_as_written_grantX (GrantA:136-186). The two texts,
    line by line - every other line is the same bytes (the binders ly .. most, fpre .. prh_ledger, ran = 0 .. frames,
    room_live_cf S, the hull budget of the scratch pair, and the post's head: SRr', fpostFm STK_check_as_written [],
    room_live_cf S' /\ Hp' = Hp /\ ablocks, own', the ledger, bytes_at, r and its register):

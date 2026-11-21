@@ -11,9 +11,9 @@
    lib/B/FSH_Rt.v's fr_memcpy field; RUNTIME), IMG (fs_img_facts, lib/B/FSH_Rt.v; RELOC / RUNTIME), HREALLOC
    (fuzz_realloc_spec, lib/B/FSH_Fn_alloc.v; ALLOC). No CTX.
 
-   TAKEN FROM: lib/A/FSW_put_holds.v at a working branch 860b2fb1188 (the same blob is on
-   a working branch f0e2574c33c), unchanged in form; the failed and fast arms are lib/B/FSW_put.v's (a Theorem Labs
-   lane, a working branch d74cdfc8a9d).
+   TAKEN FROM: lib/A/FSW_put_holds.v at a working branch (the same blob is on
+   a working branch), unchanged in form; the failed and fast arms are lib/B/FSW_put.v's (a Theorem Labs
+   lane, a working branch).
 
    RULE-24: proves function put (omx-clap-core/fuzz_state, image B = asan-ubsan, entry 0x8449c; grow arm and
    put_holds) (reuse search: proof-index put_holds / put_close_grow / fsw_pg_loop / pgt_run / fsw_pg_entry_run,

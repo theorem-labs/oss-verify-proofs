@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 639 of its 687 lines of code are new or changed and 451 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs ASan, group ALLOC: the walk of fuzz_free (A 0x82d40, alloc.c:107-116 with disown() :51-59 inlined), proving
    fuzz_free_spec of lib/A/FSH_Fn_alloc.v over fs.asan (image tfibsegs).
 
@@ -24,10 +25,10 @@
    a call-relative journal (FP = the freed block) composed back by ajournal_sub, fs_glob by FSW_statics.fs_glob_of_TS.
    Kit rules R1 (per-goal `first [solve ..]`, computing alternatives guarded by goal shape) and R2 are followed.
 
-   TEMPLATES (no import): the pre-ruling bespoke ASan proof of the same code, a working branch 7c4897eaa4b
+   TEMPLATES (no import): the pre-ruling bespoke ASan proof of the same code, a working branch
    lib/A/Prog/fuzz_free.v (its segment cut at the unpoison call, the invariants carried across it: the frame, g_live,
    the head's shadow; the post's footprint {g_live, the head's shadow, the frame} and the tail call with a0 = p - 16);
-   and a Theorem Labs lane's ASan walk of the byte-identical fm code, a working branch 8ff81300fd2 lib/A/FMW_fuzz_free.v
+   and a Theorem Labs lane's ASan walk of the byte-identical fm code, a working branch lib/A/FMW_fuzz_free.v
    (its head reassembly expression and the lemmas that evaluate it, ff_lor_shl .. ff_U_live below, ported with the
    head atom 41 and the g_live atom 35 of this walk's resumed state). Relocated files: none. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -57,7 +58,7 @@ Fail Definition probe_SH : Reusable.YI14.sink_syms := _.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The head's 8 bytes, read back by 8 `lbu` and or-ed together (0x82d9c .. 0x82df8), as the walk computes them, and  *)
-(* their value. Ported from: a Theorem Labs lane's FMW_fuzz_free.v ffb0 .. ff_U_live (8ff81300fd2), head atom 33 -> 41, g_live atom   *)
+(* their value. Ported from: a Theorem Labs lane's FMW_fuzz_free.v ffb0 .. ff_U_live, head atom 33 -> 41, g_live atom   *)
 (* 34 -> 35; proofs unchanged.                                                                                       *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
@@ -194,7 +195,7 @@ Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
 (* awr_ok sees a region list only through its skeleton (base and write window). Ported from: a Theorem Labs lane's
-   fm_awr_skel (a working branch 1e530cd69f6 lib/A/FSW_fuzz_malloc.v), same statement and proof. *)
+   fm_awr_skel (a working branch lib/A/FSW_fuzz_malloc.v), same statement and proof. *)
 Lemma ff_awr_skel : forall segs B E rs rs' STK sp0 FP bl0 blc ly own fr0,
   skeleton rs' = skeleton rs ->
   awr_ok segs B E rs STK sp0 FP bl0 blc ly own fr0 -> awr_ok segs B E rs' STK sp0 FP bl0 blc ly own fr0.
@@ -393,7 +394,7 @@ Hypothesis ML : model_laws (as_universe B).
 (* __wrap_free in ARU form at its measured pc: FSH_Rt.FsRt's fr_free field (pc pin and POISON-U's afree_realizesU) *)
 Hypothesis AFREE : pc_wrap_free (as_code B) = PC_free /\ FSupoisonU.afree_realizesU tfibsegs B.
 (* __asan_unpoison_memory_region (h, 16) at PC_unpoison 0x54a34 (POISON-U's FS_AUNPOISON16_A row; proved as
-   FSpoisonW.tfib_unpoison16 on a working branch 646ee89c004, not in this tree) *)
+   FSpoisonW.tfib_unpoison16 on a working branch, not in this tree) *)
 Hypothesis FS_AUNPOISON : aunpoison16_realizes tfibsegs B PC_unpoison.
 Let LAWS : AR_laws tfibsegs B := AR_laws_ok tfibsegs B.
 Let FS_GOT_SHADOW : as_got_shadow B = tfib_D_GOT_asan_shadow_memory_dynamic_address := proj1 SHS.

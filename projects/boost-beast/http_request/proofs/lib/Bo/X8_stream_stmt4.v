@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the buffer prepares take the caller's stack floor, inside the stack window the launch maps, as their last premise, for the wild free they reach). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -117,6 +118,7 @@ Definition fb_prepare_stmt : Prop :=
     stack0 m lo shi -> bv_unsigned sp <= shi ->
     fbp_chain cm m (bv_unsigned s0) (bv_unsigned ra) (bv_unsigned sp) -> 0 <= bv_unsigned s0 < 2^64 ->
     fbp_cost FB n (fbp_wild cm) <= as_AL H s ->
+    hceil + 2244096 <= lo ->      (* LPS 727298f3: the stack floor the wild free (AsIface7) takes *)
     as_SR H (fb_prepare_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc s LB LF fb n lo B shi FB ds cm m mo)
       (mkCfg msF mo).
 End W1.
@@ -174,6 +176,7 @@ Definition dbp_fb_stmt : Prop :=
     as_RFS H LF m -> (length LF < AFS_MAXLIVE)%nat -> ACONST m ->
     stack0 m lo shi -> bv_unsigned sp <= shi ->
     fbp_cost H FB n true <= as_AL H s ->
+    hceil + 2244096 <= lo ->      (* LPS 727298f3: the stack floor the wild free (AsIface7) takes *)
     as_SR H (dbp_fb_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc s LB LF OPT fb n ec lo B shi FB ds oj m mo)
       (mkCfg msF mo).
 End W2.

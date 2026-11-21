@@ -1,18 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v, RPgM02KeyI.v and RPgM02KeyV.v
-   at 595d8c5dd1b5 (the value language of the value entry's address and of a `lw`, the expect_value cases, the
+   (the value language of the value entry's address and of a `lw`, the expect_value cases, the
    shadow entry over the value entry, the value dispatch, the Int arm and the value tail),
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v at 7e8cf15c304a (the Float arm: the size test, the `flw` and
-   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v at 22306b8175e6 (the pairs of the scan across a
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v (the Float arm: the size test, the `flw` and
+   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v (the pairs of the scan across a
    key) for reac-pw/fuzz_rate image A: role's pcs become rate's, the shadow base is rate's s2 (atom 18), role's Role
    answers become Rate.expect_value / Rate.rate_of_pairs, role's value tail (a bound test and check_role) becomes
    rate's check_rate on the hz cell, the out cell is R+0x158, the `flw` is stepped by YA0n.SRr_step, and the key
    compare (the spills, the strcmp wrapper, the mismatch exit to O) is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v at 48d3cf0d8e40; m2k_jn_walk,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v; m2k_jn_walk,
    m2k_join and m2k_val ported to image B (fuzz_rate.asan-ubsan). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02KeyVB.v at f07713e8e823 (its value
-   readers m2kb_val) and proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyI.v at 887bee7c56d (role's Int answer: the value is
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02KeyVB.v (its value
+   readers m2kb_val) and proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyI.v (role's Int answer: the value is
    a role when it is 0 or 1) for reac-pw/fuzz_role image B (fuzz_role.asan-ubsan): image B's pcs (KV 0x823d8, FLT
    0x8247c, JN 0x824dc, MAL 0x824f8); the cuts and the shared layer are lib/AU/RPgSeg.v's, lib/AU/RPgM02Base.v's and
    lib/AU/RPgM02KeyBase.v's; the shadow base is s11 (atom 27); the value readers load the flags byte, F and pp from
@@ -21,6 +21,7 @@
    pp + s7 + [R+0x120], which the engine's alias facts m2ki_alias turn into atom 10 plus a constant; every exit's cut
    is rs_cut_T (fuzz_rate: its A cut), and the join's interface carries role's value tail (the body word as a
    sign-extended word, a role when it is 0 or 1). The join itself is lib/AU/RPgM02KeyV.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role, image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, the same loaded bytes). Proves no function

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1da.v (cold/c-asan-realloc-c5 ced28ed2383, file sha256 921e43ac5e57) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 5 image addresses moved by code-verified function pairs (5 port_addr_check 0767e70e074a MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1da.v (file sha256 921e43ac5e57) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 5 image addresses moved by code-verified function pairs (5 port_addr_check 0767e70e074a MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: the states of cgif_file's released DoRecycle walk (YFhd.v) restated for the
    recycle callees' contracts of DGif0.DIface (di_rchunk / di_cdealloc: stack window KSTACK_CF = 2048 below the callee's
    sp, and a raw-memory frame): the stack window below DoRecycle's entry sp grows from DRSTACK = 2048 to DRSTACK_X =
    2176 (DoRecycle's frame 112 plus the callee's 2048), and the accumulated frame [acc] gets a raw-memory clause. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* DoRecycle (0x347c4) with a raw frame, for the drain of cgif_file's DIface instance (DGif1d.v (removed in this series)).
 
    The contract: [dr_pre_x] is the released YFeu.dr_pre plus the larger stack window; [dr_leaf_x] is the released

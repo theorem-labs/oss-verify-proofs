@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (write_file_tail's optional post-states). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -24,7 +25,17 @@ Lemma mlim_setL : forall L m, mlim (setL L m) = L.
 Proof. intros. reflexivity. Qed.
 Lemma setL_eq_of_mlim : forall L m, mlim m = L -> setL L m = m.
 Proof. intros L m <-. apply setL_id. Qed.
+Lemma omap_omap {A} : forall L1 L2 (o : outcome A), omap L2 (omap L1 o) = omap L2 o.
+Proof. intros L1 L2 [x m evs|]; reflexivity. Qed.
+Lemma m_halted_setL : forall L m, m_halted (setL L m) = m_halted m.
+Proof. reflexivity. Qed.
+Lemma m_killed_setL : forall L m, m_killed (setL L m) = m_killed m.
+Proof. reflexivity. Qed.
+Lemma m_fs_setL : forall L m, m_fs (setL L m) = m_fs m.
+Proof. reflexivity. Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Definition lim_blind {A} (c : Sys A) : Prop :=
   forall i m o, c i m o -> (forall L, c i (setL L m) (omap L o)) /\ opres m o.
 
@@ -62,7 +73,7 @@ Proof.
     + left. exact (proj1 (Hc i m _ H) L).
     + right. exists x, (setL L m1), evs1. split; [exact (proj1 (Hc i m _ H1) L) | exact (proj1 (Hk x i m1 _ H2) L)].
 Qed.
-
+(* [comment removed for export] *)
 Lemma lim_blind_get_model {A} (k : Model -> Sys A) :
   (forall L m, k (setL L m) = k m) -> (forall m, lim_blind (k m)) -> lim_blind (bind get_model k).
 Proof.
@@ -75,8 +86,9 @@ Proof. intros Hf Hp i m o H. hnf in H. subst o. split; [intros L; unfold modify;
 Lemma lim_blind_arm {A} (F : SyscallInput -> Sys A) : (forall j, lim_blind (F j)) -> lim_blind (fun i => F i i).
 Proof. intros H i m o Ho. exact (H i i m o Ho). Qed.
 
+(* [comment removed for export] *)
 Ltac head_of t := lazymatch t with ?f _ => head_of f | _ => t end.
-
+(* [comment removed for export] *)
 Ltac lim_unsetL :=
   repeat match goal with |- context [?p (setL ?L ?m)] => progress change (p (setL L m)) with (p m) end.
 Ltac lim_fun_side_with h :=
@@ -127,6 +139,14 @@ Ltac lim_step :=
   | |- lim_blind (alt _ _) => apply lim_blind_alt
   | |- lim_blind get_fds => apply lim_blind_get_fds
   | |- lim_blind (modify _) => lim_modify
+  | |- lim_blind (match ?e with Some _ => _ | None => _ end) =>
+      (* 08b1429: write_file_tail takes its fault and place post-states as
+         [option (Sys _ -> Sys _)]; unfold the producer rather than destruct
+         the option into an opaque continuation. *)
+      first [ lazymatch type of e with
+              | option (_ -> _) => let h := head_of e in progress (unfold h; cbv beta iota zeta)
+              end
+            | deep_destruct e ]
   | |- lim_blind (match ?s with _ => _ end) => deep_destruct s
   | |- lim_blind (if ?s then _ else _) => deep_destruct s
   | |- lim_blind (fun i => ?c) => idtac

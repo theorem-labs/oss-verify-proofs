@@ -44,18 +44,19 @@
        preset_lib_x_stmt);
    (3) the alloc.c ledger cells are NOT owned statics: the journal exempts them once, through its PST argument
        (a Theorem Labs lane's lib/Reusable/YCbqG.v ajournal_x, PST := prh_pst, alloc.c's six statics and fuzz_preset.c's g_own_ran_out); this closure never names them.
-   On the interface of IfacePort 3f83c075b61f (re-cut by lane CwD2): the frame names ablocks_cf / afn_pre_cf /
+   On the interface of IfacePort (re-cut by lane CwD2): the frame names ablocks_cf / afn_pre_cf /
    ajournal_cf / apost_base_cf are the interface's constants (abbreviations of YCbqG's journal layer at ARcf) and
    fregs_kept_x is YCbqG's, so none is a parameter; N_LLVMF is gone with the per-call room sum; the interface's run
    room parameters sm (the harness model's) and iface_room_np (PROVISIONAL, the non-primary room) are universally
    quantified with PresetCfnA.v's Section v types. The closure uses none of their bodies.
-   #102 (no-DW interface, PresetCfnA.v, first at commit 8259b94c42ee; on the kit's batch):
+   #102 (no-DW interface, PresetCfnA.v, first; on the kit's batch):
    the interface's slot takes ONE record of callee contracts, preset_callee_contracts (PresetCfnA.v section 6: the kit's
    sixteen texts at the record's ARx := iface_ARx, RL := prh_room_live_a8, PI := preset_prh_img, sink head and
    context iface_ctx0, plus the frame-area allocation pcc_stack_malloc and its release pcc_stack_free), and the harness
    walk preset_lib_x_stmt takes that record at every float state. So the closure's parts are the record and the walk;
    the fourteen afn_spec_cf records of the old pins (and A_pj_parse / pj_get / pj_get_str, gone from LLVMFuzzerTestOneInput
    on #102) are gone, and so is the run's data-word list DW (the kit's batch: clause 4a / 4b). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

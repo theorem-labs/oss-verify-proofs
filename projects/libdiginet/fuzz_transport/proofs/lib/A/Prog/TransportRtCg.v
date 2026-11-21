@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only the contract of the strlen wrapper of libreac/fuzz_identity.asan (trampoline 0x4218c -> ___interceptor_strlen 0x4221c -> musl strlen 0x94c64), restated from cgif_file_fuzzer lib/YG0d.v:401-419 astrnlen_realizes without the n bound (no `getr regs 11 = w64 n`, no `0 <= n < 2 ^ 63`, no `k + 8 <= n`; the string ends at the NUL at x + k, so first_byte is stated at k + 1), and with `rom_view segs W mem` replaced by `aro_unowned segs B (aview segs (w_H W) mem)` (lib/A/Rt/WrapRo.v: only the unowned read-only bytes, which a caller can carry across __asan_stack_malloc_<c>); module names. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Rt/StrlenDef.v, with its module paths changed; 32 of its 67 lines of code are new or changed and 3 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* TransportRtCg: the callee TEXTS of three runtime entries that the image-A program-walk statements of
    libdiginet/fuzz_transport (fuzz_transport.asan e89be137db17) assume, as STATEMENTS only (no proof). No contract of
    these entries is on this unit's base: lib/Reusable has no SetShadowDef.v, no landed file states the release
@@ -35,7 +36,7 @@ From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
 Import ListNotations.
 Open Scope Z_scope.
-(* Source: libreac/fuzz_identity lib/A/Rt/WrapRo.v at origin/ossv/recipes (1aeda8ab8602): the read-only premise of
+(* Source: libreac/fuzz_identity lib/A/Rt/WrapRo.v at origin/ossv/recipes: the read-only premise of
    astrlen_realizes below, every unowned byte of a read-only segment outside errno read as the image holds it. *)
 Definition aro_unowned (segs : list Segment) (B : asyms) (rd : reader) : Prop :=
 forall a, in_rom segs a -> ~ Exists (in_zr a) (as_owned_static B) -> ~ (as_errno B <= a < as_errno B + 4) ->
@@ -81,7 +82,7 @@ a <> flag_addr ly cid pos -> ~ (spZ regs - ESTACK <= a < spZ regs) ->
 aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, spZ regs - ESTACK <= a < spZ regs -> apresent (w_H W) mem' a)).
 
-(* Source: libreac/fuzz_identity lib/A/Rt/StrlenDef.v at origin/ossv/recipes (1aeda8ab8602). *)
+(* Source: libreac/fuzz_identity lib/A/Rt/StrlenDef.v at origin/ossv/recipes. *)
 Definition astrlen_realizes (pc : Z) : Prop :=
 forall ly S W regs mem md x k,
 ecall_pre segs B ly S W regs mem md ->

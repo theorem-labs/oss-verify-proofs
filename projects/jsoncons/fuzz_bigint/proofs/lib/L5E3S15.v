@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells, which these steps do not use, are no longer read (auxv_cells). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -222,7 +223,6 @@ Proof.
   assert (R26_10: getr R26 (reg 10) = Z_to_bv 64 u26_10) by (unfold u26_10, U; symmetry; apply lit_of_word). clearbody u26_10.
   pose proof ES26 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M26 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   unshelve epose proof (e3p5b_conc fx25 R26 M26 (S - 896) (A + 128) u26_10 fb184 d4 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx27 & R27 & M27 & MS27 & K27 & R27_1 & R27_2 & R27_10 & R27_11 & FR27 & GR27).
   { (* [comment removed for export] *) pr. }
@@ -349,7 +349,7 @@ Proof.
     exact GR27.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG27 FR27 MS27. try clear STAT27. try clear K26.
   try clear c26_Sm56. try clear c26_Sm64. try clear c26_Sm72. try clear c26_Sm80. try clear c26_Sm88. try clear c26_Sm96. try clear c26_Sm104. try clear c26_Sm112. try clear c26_Sm120. try clear c26_Sm128. try clear c26_Sm136. try clear c26_Sm144. try clear c26_Sm152. try clear c26_Sm8. try clear c26_Sm16. try clear c26_Sm280w1. try clear c26_Sm248w1. try clear c26_Sm216w1. try clear c26_Sm192. try clear c26_Sm200. try clear c26_Sm184w1. try clear c26_Sm160. try clear c26_Sm168. try clear c26_Sm48w1. try clear c26_Om128z8. try clear c26_Om80z12. try clear c26_Op0. try clear c26_Op8. try clear c26_Fp24. try clear c26_Fp32. try clear c26_Fp40. try clear c26_Fp48. try clear c26_Fp56. try clear c26_Fp64w1. try clear c26_Fp65w1. try clear c26_Fp16w4. try clear c26_Fp8. try clear c26_Fp0. try clear c26_Om8. try clear c26_Om40. try clear c26_Om48. try clear c26_Om56. try clear c26_Om64. try clear c26_Om68w4. try clear c26_Om16. try clear c26_Om120. try clear c26_Om24. try clear c26_Om32. try clear c26_Om88. try clear c26_Om104. try clear c26_Om112. try clear c26_Om96. try clear R26_2. try clear R26_3. try clear R26_4. try clear R26_8. try clear R26_9. try clear R26_18. try clear R26_19. try clear R26_20. try clear R26_21. try clear R26_22. try clear R26_23. try clear R26_24. try clear R26_25. try clear R26_26. try clear R26_27. try clear R26_10. try clear DEF26. try clear HH26. try clear HQ26. try clear ES26. try clear DEFref_26. try clear DEFA_26. try clear DEFd4_26.
   (* [comment removed for export] *)

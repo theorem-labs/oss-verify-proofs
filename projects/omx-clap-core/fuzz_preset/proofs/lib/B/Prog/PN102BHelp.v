@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994): the SUPPORT LEMMAS of the walk of parse_noting
    (the B' twin of row N10-PNA; cut table lib/B/Prog/PN102BCuts.v). No function is proved here: the concrete step rules over the
@@ -9,11 +10,11 @@
    callee.
    rule 24: proves function parse_noting (fuzz_preset, image B') (preparation; proof-index 03:20Z: 0 named / 0 by
    address / 0 released; the rule-24 parse_noting check CONFIRM 03:25Z; PORT of a Theorem Labs lane's image-A' file of the same role,
-   a working branch 41f83d5b57f8, at PI_prog_B / prh_img_B). This file: support lemmas of that
+   a working branch, at PI_prog_B / prh_img_B). This file: support lemmas of that
    walk only.
    TAKEN BY PATH (image-free; each restated under a pn_ name):
    - pn_step_addi / pn_step_call / pn_pc4: lib/A/Prog/Ent102L6AfLem.v l6f_step_addi / l6f_step_call / l6f_pc4
-     (a working branch b1bc025047ea), at the listing instance PL_prog_B in place of PL_102_A;
+     (a working branch), at the listing instance PL_prog_B in place of PL_102_A;
    - pn_step_branch: lib/A/Prog/Ent102CallA.v ec_step_branch (same branch), at PL_prog_B;
    - pn_call / pn_callF: lib/A/Prog/Ent102L2AHelp.v l2_call / l2_callF (same branch), at a caller budget WS0 through
      YCbqGwild.afn_pre_x_at_w and YCbqG.ajournal_xw_sub; pn_callFb: the same with YCbqGwild.v aj_call_xbF's budget;

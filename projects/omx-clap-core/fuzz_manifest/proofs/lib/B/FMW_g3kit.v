@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v, with its module paths and module names changed; 211 of its 274 lines of code are new or changed and 1310 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_g3kit.v on a working branch e2e59892bef: relocated A->B by symbol (b_reloc.py, revcheck rc 0 vs pin ca61e5c9eabc0050). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_g3kit.v on a working branch: relocated A->B by symbol (b_reloc.py, revcheck rc 0 vs pin ca61e5c9eabc0050). *)
 (* G3's walk kit for lv2_locate_manifest_names / _readings at fm.asan addresses: image facts, the registers a symbolic
    state keeps, and the transfer of memory facts (C strings, statics, the relro view) across a step that leaves every
    byte below alloc_ceiling unchanged. *)
@@ -314,7 +315,7 @@ End r.
    relocated: GOT 0x99c98 -> __asan_shadow_memory_dynamic_address 0xa2078 -> 0x7fff8000, fm-fn-measure.md 2) *)
 Definition g3_cells (B : asyms) : Prop := as_got_shadow B = 0x99c98 /\ as_shadow_cell B = 0xa2078.
 
-(* cstr_kept is closed under suffixes (FMH_Fn.v cstr_kept, hdesign cce35be4cf7 / 7d12534e1ca) *)
+(* cstr_kept is closed under suffixes (FMH_Fn.v cstr_kept, hdesign) *)
 Lemma g3_cstr_kept_suffix : forall B ly S p l k, cstr_kept B ly S p l -> (k <= length l)%nat ->
   cstr_kept B ly S (p + Z.of_nat k) (skipn k l).
 Proof.

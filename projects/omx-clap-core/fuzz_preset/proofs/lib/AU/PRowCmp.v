@@ -12,17 +12,17 @@
    AU/PRowCmpChkY.v. The byte compare (the internal file relocB.py --check) finds every function of the closure equal modulo pc-relative
    immediates, each pc-relative target on the same symbol + offset. Relocation table: the commit message.
    The texts and every change from the donors are A/PRowCmp.v's (header there); memcmp's text is c-omx-alloc's
-   YGcallCmp.amemcmp_realizes_xm (Reusable/YGcallCmp.v from 21532034015b).
+   YGcallCmp.amemcmp_realizes_xm (Reusable/YGcallCmp.v).
    The rows: pr_memcmp_xm_B (YGcallCmp.amemcmp_realizes_xm at 0x42e14) and pr_bcmp_xm_B (YGcallMxmn.abcmp_realizes_xm at 0x42e18), for
    every ARx with AR_laws_x and every B with TfibSyms B (Reusable/YF0m.v); pr_memcmp_xm_B_pc / pr_bcmp_xm_B_pc at
    pc_wrap_memcmp / pc_wrap_bcmp (as_code B) (Reusable/YF0l.v Tfib_code).
-   The helpers prk_memnorm_keep_win / prk_rodata_ok_cc are lane RowsCpy's (Reusable/PRowKit.v, AU/PRowKitA.v), merged
-   from 532cf8bd849e.
+   The helpers prk_memnorm_keep_win / prk_rodata_ok_cc are lane RowsCpy's (Reusable/PRowKit.v, AU/PRowKitA.v), merged.
+   
    rule 24: proves function memcmp / bcmp interceptors (fuzz_preset, image B) po_memcmp_cf / po_bcmp_cf (kind:
    restatement over ARx + memnorm keep of preset's AE2z / AE2s walk, relocated A -> B; CONFIRM the internal file bcmpcpy-CONFIRM.md).
-   #102 B' (c-libc-stdio rows102-cmp): this file is origin/cold/c-libc-stdio-rows-cmp 2d9da94a5737's lib/AU/PRowCmp.v
+   #102 B' (c-libc-stdio rows102-cmp): this file is a commit's lib/AU/PRowCmp.v
    (blob e35bdd248590), relocated B (asan-ubsan f8f98a95, twin 3b5e1a09) -> B' (asan-ubsan d663f82d7f48, twin
-   c90d4fa54d43) by the frozen alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9), --build asan-ubsan
+   c90d4fa54d43) by the frozen alreloc c4338d099cfb8025, --build asan-ubsan
    --assume-source (input staged at lib/B/AU, same blob): 58 numerals moved by symbol + offset, each the same symbol +
    offset on both twins and, where the internal file b-to-bprime.tsv 5a684bb2 lists it, its value: __wrap_memcmp -> 0x42e14 (also its
    decimal 273688 -> 273940), __wrap_bcmp -> 0x42e18, ___interceptor_memcmp -> 0x44468, ___interceptor_bcmp ->
@@ -45,6 +45,7 @@
    kMidMemEnd, real_memcpy, real_memset, the .got slot of common_flags_dont_use, common_flags_dont_use+0xf8 (8 bytes,
    0x0101010101010101) and real_memcmp / real_bcmp: on both twins the same symbol + offset, and the same pinned values
    in the old and the #102 cells. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,7 +1,7 @@
 (* LeafCgKit: the ONE shared interface for decode image B's program-leaf translations (footprint walk ->
    cgif_file leaf form). Port of fuzz_decode to the released cgif_file_fuzzer structure (the port recipe,
    sec. 3).
-   * cgif names are Section Variables named exactly as in cgif_file_fuzzer (origin/ossv/recipes c8557374ad2e,
+   * cgif names are Section Variables named exactly as in cgif_file_fuzzer (
      proofs/cgif/cgif_file_fuzzer/lib/<file>:<line> in the comments); when a Theorem Labs lane's relocated core lands they become
      the core's names (a rename).
    * Small cgif definitions are copied verbatim (marked), at segs := rsegs and the unit's asyms B.
@@ -60,7 +60,7 @@ Variable world : Type.                                                (* YA0n.v:
 Variable w_H : world -> word -> bool.                                 (* YA0n.v:18 field w_H *)
 Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:34 *)
 Variable alayout : Type.                                              (* YG0f.v:42 *)
-Variable astate : Type.                                               (* YG00.v:153 *)
+Variable astate : Type.                                               (* YG00.v:154 *)
 Variable AR : alayout -> astate -> world -> (word -> option byte) -> Model -> Prop.  (* YG0n.v:489, at B *)
 Variable aview : (word -> bool) -> (word -> option byte) -> Z -> option Z.          (* YG0n.v:17 *)
 Variable same_but_materialized : Model -> Model -> Prop.              (* YK04.v:538 *)
@@ -96,7 +96,7 @@ Definition dleaf_post (ly : alayout) (S : astate) (W : world) (regs : bvmap 5 wo
     X mem'.
 
 (* ---- the cgif facts, stated once ---- *)
-(* SRr_fevt (a Theorem Labs lane, lib/Reusable/YA0nR.v on a working branch eea54967566) with its fsteps run read
+(* SRr_fevt (a Theorem Labs lane, lib/Reusable/YA0nR.v on a working branch) with its fsteps run read
    as decode's ExecF.mstepsF (ExecF.mstepF is YK04R.fstep's body; glue fsteps_of_mstepsF / fevt_of_evtF). *)
 Definition bridge_evtF_stmt : Prop :=
   forall (W : world) ms model (RNG : ExecF.footprint) (P : machine_state -> Prop) (Q : world -> config -> Prop),

@@ -1,30 +1,42 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Import RelSpec MmapSim.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* 08b1429: a PROT_NONE grant lands where Linux puts it ([Placement.linux_place_is],
+   as in the model's [Common/RefNodes.grant_ok_na]); the admissibility part is kept
+   for the consumers that read a grant as a placement. *)
 Definition grant_ok_na (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  place_ok (m_vmmaps m) a n.
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a && place_ok (m_vmmaps m) a n.
 
 Lemma grant_ok_grant_ok_na : forall hint m a n,
   grant_ok hint m a n = true -> grant_ok_na hint m a n = true.
-Proof. intros hint m a n H. exact (grant_ok_place hint m a n H). Qed.
+Proof.
+  intros hint m a n H. unfold grant_ok_na.
+  rewrite (grant_ok_place hint m a n H), (grant_ok_place_ok hint m a n H). reflexivity.
+Qed.
+
+Lemma grant_ok_na_place_ok : forall hint m a n,
+  grant_ok_na hint m a n = true -> place_ok (m_vmmaps m) a n = true.
+Proof. intros hint m a n H. unfold grant_ok_na in H. apply andb_true_iff in H as [_ H]. exact H. Qed.
 
 Lemma grant_ok_na_unpack : forall hint m a n,
   grant_ok_na hint m a n = true ->
   bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\
   bv_unsigned a + n <= alloc_top (m_vmmaps m) /\
   region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true.
-Proof. intros hint m a n H. exact (place_ok_unpack _ _ _ H). Qed.
+Proof. intros hint m a n H. exact (place_ok_unpack _ _ _ (grant_ok_na_place_ok hint m a n H)). Qed.
 
 Lemma u64_lit_gap : forall z, 0 <= z -> z < 2 ^ 64 -> bv_unsigned (Z_to_bv 64 z) = z.
 Proof.
@@ -130,90 +142,6 @@ Proof.
   apply andb_false_iff. destruct (Z_lt_le_dec a (bv_unsigned b + bv_unsigned s)).
   - right. apply Z.ltb_ge. lia.
   - left. apply Z.ltb_ge. lia.
-Qed.
-
-(* [comment removed for export] *)
-Lemma grant_exists_na_gen : forall hint (m : Model) (N n C : Z),
-  0 < N -> N mod page_size = 0 -> 0 <= n <= N ->
-  Forall (fun p => bv_unsigned (snd p) <= N) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) ->
-  Z.of_nat (length (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= C ->
-  gap_floor + C * (2 * N) + N <= alloc_top (m_vmmaps m) ->
-  exists a, grant_ok_na hint m a n = true /\ gap_floor <= bv_unsigned a.
-Proof.
-  intros hint m N n C HN HNal Hn Hsz Hcnt Hband.
-  pose proof (alloc_top_lt (m_vmmaps m)) as Htop. unfold two_pow_64 in Htop.
-  set (l := vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) in *.
-  destruct (pick_candidate N n l (seq 0 (S (length l))) Hn Hsz (List.seq_NoDup _ _) ltac:(rewrite length_seq; lia))
-    as (j & Hj & Hfree).
-  apply in_seq in Hj.
-  exists (Z_to_bv 64 (cand N j)).
-  pose proof gap_floor_val as Hfv.
-  assert (Hc : gap_floor <= cand N j <= gap_floor + C * (2 * N)) by (unfold cand; nia).
-  unfold grant_ok_na, place_ok. rewrite !u64_lit_gap by lia. split; [|lia].
-  assert (E1 : cand N j mod page_size = 0).
-  { unfold cand. rewrite Hfv. unfold page_size in *. rewrite Z.add_mod, Z.mul_assoc, Z.mul_mod, HNal by lia.
-    rewrite Z.mul_0_r. reflexivity. }
-  rewrite (proj2 (Z.eqb_eq _ _) E1), (proj2 (Z.ltb_lt 0 _)) by lia.
-  rewrite (proj2 (Z.leb_le _ _)) by lia.
-  fold l. rewrite (region_free_of_noconflict l (cand N j) n) by (first [lia | exact Hfree]).
-  reflexivity.
-Qed.
-
-(* [comment removed for export] *)
-Lemma grant_exists_gen : forall hint (m : Model) (N n C : Z),
-  0 < N -> N mod page_size = 0 -> 0 <= n <= N ->
-  Forall (fun p => bv_unsigned (snd p) <= N) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) ->
-  Z.of_nat (length (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= C ->
-  gap_floor + C * (2 * N) + N <= alloc_top (m_vmmaps m) ->
-  vm_backing_used m + n <= vm_limit (m_vmmaps m) ->
-  exists a, grant_ok hint m a n = true /\ gap_floor <= bv_unsigned a.
-Proof.
-  intros hint m N n C HN HNal Hn Hsz Hcnt Hband Hlive.
-  destruct (grant_exists_na_gen hint m N n C HN HNal Hn Hsz Hcnt Hband) as (a & Ha & Hfl).
-  exists a. split; [|exact Hfl]. apply grant_ok_intro; [exact Ha | exact Hlive].
-Qed.
-
-(* [comment removed for export] *)
-Lemma grant_exists : forall hint (m : Model) (n : Z),
-  0 <= n <= 2 ^ 30 ->
-  Forall (fun p => bv_unsigned (snd p) <= 2 ^ 30) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) ->
-  Z.of_nat (length (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= 40000 ->
-  alloc_top_min <= alloc_top (m_vmmaps m) ->
-  vm_backing_used m + n <= vm_limit (m_vmmaps m) ->
-  exists a, grant_ok hint m a n = true /\ gap_floor <= bv_unsigned a.
-Proof.
-  intros hint m n Hn Hsz Hcnt Htop Hlive.
-  apply (grant_exists_gen hint m (2 ^ 30) n 40000); try assumption; try lia.
-  - reflexivity.
-  - unfold alloc_top_min, gap_floor in *. lia.
-Qed.
-
-Lemma grant_exists_na : forall hint (m : Model) (n : Z),
-  0 <= n <= 2 ^ 30 ->
-  Forall (fun p => bv_unsigned (snd p) <= 2 ^ 30) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) ->
-  Z.of_nat (length (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= 40000 ->
-  alloc_top_min <= alloc_top (m_vmmaps m) ->
-  exists a, grant_ok_na hint m a n = true /\ gap_floor <= bv_unsigned a.
-Proof.
-  intros hint m n Hn Hsz Hcnt Htop.
-  apply (grant_exists_na_gen hint m (2 ^ 30) n 40000); try assumption; try lia.
-  - reflexivity.
-  - unfold alloc_top_min, gap_floor in *. lia.
-Qed.
-
-(* [comment removed for export] *)
-Lemma grant_exists_big : forall hint (m : Model) (n : Z),
-  0 <= n <= 2 ^ 35 ->
-  Forall (fun p => bv_unsigned (snd p) <= 2 ^ 35) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) ->
-  Z.of_nat (length (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= 1000 ->
-  alloc_top_min <= alloc_top (m_vmmaps m) ->
-  vm_backing_used m + n <= vm_limit (m_vmmaps m) ->
-  exists a, grant_ok hint m a n = true /\ gap_floor <= bv_unsigned a.
-Proof.
-  intros hint m n Hn Hsz Hcnt Htop Hlive.
-  apply (grant_exists_gen hint m (2 ^ 35) n 1000); try assumption; try lia.
-  - reflexivity.
-  - unfold alloc_top_min, gap_floor in *. lia.
 Qed.
 
 (* [comment removed for export] *)

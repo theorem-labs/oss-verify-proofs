@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match.v, with its module paths, module names, addresses and numbers changed; 2488 of its 3291 lines of code are new or changed and 2298 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 1288 of its 1531 lines of code are new or changed and 2314 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F1 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan build of libreac v1.9.0, image B): the frame-loop
    turn j from the loop head 0x81ec4 to the allocation call `jal wrapper_malloc` at 0x81f4c, which returns to
    0x81f50 (the entry of F2).  With q = p + c_j the input cursor and left = n - c_j the bytes left:
@@ -39,7 +40,7 @@
    sl_malloc_cls, Bc := Bc_of BE); f1_malloc_keep moves FRA across it (Tac_slot.sl_mid_perm: the contract
    appends the new block, FRA prepends it) and gives the bytes and shadow bytes the exit reads, f1_ent_call moves
    ENT (lib/B/Prog/Seg/R7.v's r7_ent_call).  Cuts: the official SlotInv.v Inv_B81ec4_at (entry, pc 0x81ec4) and
-   Inv_B81f50_at (exit, pc 0x81f50), named by their v1.9 pcs (217aa9d4cd9, a Theorem Labs lane's
+   Inv_B81f50_at (exit, pc 0x81f50), named by their v1.9 pcs (a Theorem Labs lane's
    v190-cutnames-B.tsv (a working note, not in this delivery)).  The exit Inv_B82eac (pc 0x82eac) of S_F1 is not reached: LI's 1 <= left_j
    makes `bnez s9` at 0x81ec4 taken.
    rule 24: no function proved. *)
@@ -779,7 +780,7 @@ Proof.
   apply andb_true_iff in H as (H1 & H2). apply Z.leb_le in H1, H2. lia.
 Qed.
 
-(* ---- local views of the generated allocator laws (v1.9.0 Contract.v, a working branch 48004cf7bfc) ----
+(* ---- local views of the generated allocator laws (v1.9.0 Contract.v, a working branch) ----
    a Theorem Labs lane's rule (15:18Z / 15:32Z): the generator may add conjuncts to a law at any nesting level, so a law's
    conjunct list is taken apart once, here, by a position-free proof (decompose, then match each conjunct by its
    type), and every site of F1-F6 uses these views.  The views state the v1.9.0 laws' content; a later generation

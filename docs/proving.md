@@ -13,7 +13,11 @@ ends in a theorem named after the statement:
 
 A bound proof names its bound, `Theorem asan_disagrees_at_most_holds :
 Statements.asan_disagrees_at_most (1 # 1000).`, and records it in `proof.yaml`
-as `bound: 1/1000`. A refutation is a `Refutation.v` ending in
+as `bound: 1/1000`. The bound is below 1: `b = 1` holds of every program, so
+the rules refuse a proof that names 1 or more for every statement that takes a
+bound (a bound statement, a classifier-bound statement, and a classifier-maybe
+statement of a harness with a distribution). A refutation is a
+`Refutation.v` ending in
 `Theorem plain_halts_refuted : ~ Statements.plain_halts.`, with `refutes:`
 instead of `proves:`.
 
@@ -76,6 +80,39 @@ target's builds, and a name that the build's `Symbols.v` does not define. A
 numeral that no section holds (a count, a size, an offset, the image's base, a
 division's magic multiplier, a stack bound) passes, and so does one that is not
 an integer.
+
+A proof file whose numerals were read out of a published binary says so in a
+comment of its own, which the start-up tools write:
+
+```
+(* Read from: <file> (<project>/<harness> <build>) sha256 <hex>; unstripped twin sha256 <hex> *)
+```
+
+`oft lint` (its `read-from` rule) holds that comment to the facts: `<file>` is
+the `file` of a build the fuzz target's own `harness.yaml` records, and every
+SHA-256 the comment holds is the one `harness.yaml` pins for that build, beside
+the size. A digest that is not the pin is a finding naming the file, the line
+and both digests; a comment that names a binary that is no build of this fuzz
+target, or that holds no digest of the binary at all, is a finding too.
+
+Two digests are not read. The unstripped twin's: it is the same link without
+`--strip-all`, read for its symbol names, and no `harness.yaml` pins it, so its
+clause is cut out of the comment first. And a withheld build's, since
+`harness.yaml` shows none for one. A build record's copy of someone else's
+proof text (`provenance/recipe/`, `provenance/port/`) is not read either: it
+ships as it is and describes the donor's image.
+
+A proof relocated from another fuzz target keeps the donor's `Read from:` line
+and adds one of its own: rewriting the donor's line would make the file say
+something false to satisfy a check. The donor's line names another fuzz
+target's binary, and it passes only where the same file also carries a
+`Read from:` naming a build of its **own** fuzz target whose name and SHA-256
+are the pin that unit's `harness.yaml` gives in the tree being linted. A name
+that is no build of any fuzz target the facts record is still a finding, a
+donor line with no line of this fuzz target's own beside it is still a finding,
+and a pin that cannot be read clears nothing. `oft lint` counts the lines it
+exempts and prints them, one line per fuzz target with its count, or each one
+with `--list-donors`.
 
 ## Where to start
 

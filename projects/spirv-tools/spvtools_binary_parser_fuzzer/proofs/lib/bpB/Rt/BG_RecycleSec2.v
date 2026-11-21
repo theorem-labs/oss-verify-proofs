@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant's new entries_nonzero conjunct; the reserved ledger now holds the launch's vDSO/vvar pair: the kernel invariant's launch-pair half carried over). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BW_0Gc.
@@ -103,11 +104,11 @@ Section RSModel.
 
     Theorem amodelx_after_rs : AMODELX s2 mo2 /\ depot_cov d mo2.
     Proof.
-      destruct AMX as [AM AK]. destruct AM as (AIL & ASV & AB). destruct AIL as (A1 & A2 & A3 & NOV & NW & NWA).
+      destruct AMX as [AM AK]. destruct AM as (AIL & ASV & AB). destruct AIL as (A1 & A2 & A3 & NOV & NW & NWA & NZM).
       pose proof MO as M; unfold rs_model in M; cbv beta iota zeta in M. destruct M as (NV & VM2 & VR2 & VL2 & VB2 & VK2 & VS2 & VA2 & EAG2).
       fold hh h2 in VM2, VR2, VL2, VB2, VK2, VS2, VA2.
       pose proof BND as B. bands_as (BT & _ & BP & _ & _ & BA & BS & BF & _).
-      pose proof AK as AK'. destruct AK' as (K1 & (K2a & K2c) & K3 & K4a & K4b & K4c & K5a & K5b & K5c & K6a & K6b & K7 & K8a & K8b & K8c & K9 & K10 & K11). fold hh in K1, K2a, K2c, K3, K4a, K4b, K4c, K6a, K6b, K7, K8a, K8b, K9, K10, K11.
+      pose proof (proj1 AK) as AK'. destruct AK' as (K1 & (K2a & K2c) & K3 & K4a & K4b & K4c & K5a & K5b & K5c & K6a & K6b & K7 & K8a & K8b & K8c & K9 & K10 & K11). fold hh in K1, K2a, K2c, K3, K4a, K4b, K4c, K6a, K6b, K7, K8a, K8b, K9, K10, K11.
       assert (SHLO : sh AHI_LO = 0x2008fff7000) by (rewrite <- AHSB_eq; reflexivity). pose proof sh_ceiling_range as SCV.
       assert (WA : bv_unsigned (wz a) = a) by (unfold wz; apply unsigned_lit; clear - B; try acb; lia).
       assert (WM : bv_unsigned (wz msz) = msz) by (unfold wz; apply unsigned_lit; clear - B; try acb; lia).
@@ -183,7 +184,8 @@ Section RSModel.
             destruct (in_rangesb x L2) eqn:E; [| reflexivity]. rewrite (SUBL x E) in Q2. discriminate Q2. }
           split.
           { intros sc x Hin Hx. pose proof (A3 sc x (SUB1 sc Hin) Hx) as Q. destruct (in_rangesb x L2) eqn:E; [| reflexivity]. rewrite (SUBL x E) in Q. discriminate Q. }
-          unfold h2 in VM2 |- *. rewrite VM2. split; [apply nooverlap_map_remove; exact NOV|]. split; [apply entries_nowrap_map_remove; exact NW| exact NWA2]. }
+          unfold h2 in VM2 |- *. rewrite VM2. split; [apply nooverlap_map_remove; exact NOV|]. split; [apply entries_nowrap_map_remove; exact NW|].
+          split; [exact NWA2|]. intros b n Hin. exact (NZM b n (proj1 (map_remove_In _ _ _ Hin))). }
         split.
         {
           destruct ASV as [V1 V2]. unfold ashadow_visible. change (a_st s2) with st2. change (a_S s2) with (a_S s). change (as_sec st2) with l1.
@@ -192,7 +194,9 @@ Section RSModel.
         destruct AB as [AB0 AB1]. unfold ABUDGET. change (a_AL s2) with (a_AL s). change (a_S s2) with (a_S s). change (m_vmmaps mo2) with h2. rewrite VL2.
         rewrite (aPhi_regions s s2) by reflexivity. split; [exact AB0|]. fold hh in AB1. clear - AB1 EAG2 B; try acb. lia. }
 
-      unfold akernel. change (m_vmmaps mo2) with h2. change (a_thr s2) with T. change (a_ctx s2) with CTX. change (a_sb s2) with sb.
+      (* LPS 727298f3: [akernel_resx] carries over: the step keeps the ledger and the two bases. *)
+      unfold akernel. split; [| exact (akernel_resx_same s s2 mo mo2 eq_refl eq_refl VR2 (proj2 AK))].
+      change (m_vmmaps mo2) with h2. change (a_thr s2) with T. change (a_ctx s2) with CTX. change (a_sb s2) with sb.
       change (a_pa s2) with pa. change (a_fsb s2) with (a_fsb s). change (a_Zr s2) with (a_Zr s). change (a_L s2) with L2. change (a_st s2) with st2. change (as_sec st2) with l1.
       fold T CTX sb pa in K3, K4b, K5a, K5b. destruct PNEW as (N1 & N2 & N3 & N4 & N5 & _). unfold disj in N1, N2, N3, N4, N5.
       rewrite VR2, VL2.

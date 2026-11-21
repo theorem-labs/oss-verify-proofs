@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch input ProcInput; the m_channel_reader premise; the walk lifted to the run's segment list). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -13,6 +14,7 @@ From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.Spec Require Canon Prog
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.Top Require TopLevelA.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.Top Require Import SpecCanonBridge.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.Common.Cfg Require Import RomStable.
 Import ListNotations.
 
 Section Pre.
@@ -30,13 +32,17 @@ Section Pre.
     destruct (TopLevelA.T_canon _ _ _ S3B ent inp Hvt Hvi) as [HtrT HerrT].
     pose proof (valid_input_va_size _ Hvi) as Hsv.
     rewrite (valid_entry_sv48 _ _ _ Hsv) in Hvs.
-    destruct Hvs as (Hsps & Hbrks & _ & Hfits).
+    destruct Hvs as (Hsps & Hbrks & _ & Hfits & Hlaus).
+    pose proof (valid_input_channel_reader _ Hvi) as Hrd. pose proof (valid_input_launch _ Hvi) as Hvl.
     destruct Hvi as (Hva & Hve & _).
-    assert (Hsrc : realizes Plain.M.loaded_segments
-                     (init_config Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs
+    (* the run reads the binary against its segments and the vDSO pair: [RomStable.run_init] *)
+    assert (Hsrc : realizes (run_segments Plain.M.loaded_segments inp sps mbs)
+                     (init_config (run_segments Plain.M.loaded_segments inp sps mbs)
+                        Plain.M.init_pc Plain.M.phdrs
                         sps brks mbs draws SanitizerBudgets.lim_source inp)
                      (spec (in_argv inp) (in_fs inp))).
-    { apply (@O23Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption. apply Z.le_refl. }
+    { apply run_init; [reflexivity |].
+      apply (@O23Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption. apply Z.le_refl. }
     destruct (realizes_source_within_budget _ _ _ _ _ _ _ _ _ _ Hsrc Hwb) as [Hef Htr].
     split; [| split].
     - exact Hef.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (impl takes its new node post-state argument, fun _ => nret, on these trap nodes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -95,7 +96,7 @@ Definition rbrk_regs (a0 : word) : _ :=
 
 (* [comment removed for export] *)
 Lemma ram_brk0_node :
-  impl usegs (at_node usegs) (enode (NBrk 0) dec_brk0)
+  impl usegs (at_node usegs) (fun _ => nret) (enode (NBrk 0) dec_brk0)
        (epost (fun r ms' => ms' = MS (rbrk_regs (Z_to_bv 64 r)) F (Z_to_bv 64 0x2b691c) fc None m (seg_rom usegs) /\ 0 <= r < 2^64))
        (MS (rbrk_regs (Z_to_bv 64 0)) F (Z_to_bv 64 0x2b6918) fc None m (seg_rom usegs)).
 Proof. try hcb. try hsb.
@@ -108,7 +109,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma ram_brk_node_at (pc : Z) :
   (pc = 0x2b6900 \/ pc = 0x2b693c) -> forall cur req, req <> 0 ->
-  impl usegs (at_node usegs) (enode (NBrk req) (dec_brk cur req))
+  impl usegs (at_node usegs) (fun _ => nret) (enode (NBrk req) (dec_brk cur req))
        (epost (fun a ms' => ms' = MS (rbrk_regs (Z_to_bv 64 (brk_res cur req a))) F (Z_to_bv 64 (pc + 4)) fc None (brk_mem m cur req a) (seg_rom usegs)))
        (MS (rbrk_regs (Z_to_bv 64 req)) F (Z_to_bv 64 pc) fc None m (seg_rom usegs)).
 Proof. try hcb. try hsb.

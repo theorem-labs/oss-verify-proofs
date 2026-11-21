@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: acall_pre_cf_intro's stack-bottom premise is A7d's `ly_bot ly + ACALL_PREFIX < spZ regs` (a3e599d9f79e Reusable/YGcfRoomPre.v:38), following acall_pre_cf (YG0dcf.v). *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRoomPre.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: acall_pre_cf_intro's stack-bottom premise is A7d's `ly_bot ly + ACALL_PREFIX < spZ regs` (Reusable/YGcfRoomPre.v:39), following acall_pre_cf (YG0dcf.v). *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRoomPre.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the INPUT-DRIVEN ROOM.
    acall_pre_cf (YG0dcf.v) carries five conjuncts beyond cgif's call form. Two are free: qmeter_cf follows
    from qtight and Wf_cf (mroom_cf_of_live, YG08cf.v), and the free path's FA_GROW headroom from

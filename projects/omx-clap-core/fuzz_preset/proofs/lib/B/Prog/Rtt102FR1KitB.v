@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module names changed; 299 of its 346 lines of code are new or changed and 731 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Rtt102FR1KitA.v; 35 of its 346 lines of code are new or changed and 35 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* B' TWIN (asan-ubsan d663f82d7f488d30, unstripped twin c90d4fa54d43160b) of lib/A/Prog/Rtt102FR1KitA.v, by a name map:
    round_trip_text's body on image B is image A's instruction sequence with only pc-relative immediates changed
    (capstone over both twins' symtab bodies; every call site at the same offset), so the twin is the A' file with
@@ -16,7 +17,7 @@
    the image facts the generic kit Rtt102FR1Kit.v takes as Section hypotheses, discharged at A'.
    rule 24: proves no function (kind: segment lemma helpers); the function-level lookup is the brief's.
    1. fr_addi / fr_jal / fr_beqz_tk / fr_beqz_ft: H5RttS4.v s4_addi / s4_jal / s4_beqz_tk / s4_beqz_ft
-      (the H2H5 walk head 1934271f1f40), this lane's copy over YC4aP's classes. A stretch that writes no byte
+      (the H2H5 walk head), this lane's copy over YC4aP's classes. A stretch that writes no byte
       needs neither the symbolic runner's write premise nor its shadow tokens.
       fr_bnez_tk / fr_bnez_ft / fr_auipc / fr_ld / fr_lw / fr_lbu: the same over YK11.v's step_bne_* / step_auipc /
       step_ld / step_lw / step_lbu, a load's bytes read off a value cell by YN2e.v rdn_cell / bytes_le_to_Z_le_list.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -45,6 +46,17 @@ Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 ([rseq_z]).  [x_stmt] reads it through
+   [node_x ASEGS ASAN_B nx0 RZ x args] (AS/Z33.v:2118, AS/Z2y.v:33,125); the
+   XHeapSort branch is [summary_hsort] (AS/Z2y.v:136), which does not use the
+   flag, so the proof is unchanged.  Declared immediately after [LIMIT], the
+   slot AS/Z33.v:115 puts it in, so the discharged form is
+   [asan_node_x_sound_XHeapSort nx0 LIMIT RZ SINV argH ... FS0]; the one
+   consumer, AS/Z3e.v:73, applies it with [eapply ...; eassumption], so [RZ] is
+   fixed by unification and that line does not change.  A section [Variable]
+   and not a [Let]: nothing here derives the flag, and a literal would pin it
+   when both values are reachable.  Image A's twin is AS/Z1h.v. *)
+Variable RZ : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> AP.CEIL <= bv_unsigned a.
@@ -53,7 +65,7 @@ Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a)
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
 
-Theorem asan_node_x_sound_XHeapSort : APS.x_stmt ASEGS ASAN_B nx0 LIMIT SINV argH FS0 AP.XHeapSort.
+Theorem asan_node_x_sound_XHeapSort : APS.x_stmt ASEGS ASAN_B nx0 LIMIT RZ SINV argH FS0 AP.XHeapSort.
 Proof. eapply APSX.node_x_sound_XHeapSort; try eassumption; try apply asan_segs_wr; try apply asan_wx; try apply asan_in_hull;
        try apply asan_res_len; try apply asan_hull_ok. apply asan_hsort_spec. Qed.
 End AsanNodes.

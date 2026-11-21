@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the helper lemmas of sup_worker_list's walk on plugin-hostd/fuzz_command.asan-ubsan
    (image B), taken from the ASan walk lib/A/Prog/sup_worker_list.v, sup_worker_list_s1.v and sup_worker_list_s2.v
-   (a working branch 80a82462f87) and restated at B's addresses and over B's listing (lib/B/Prog, a Theorem Labs lane
-   917ca7ac6b1). *)
+   (a working branch) and restated at B's addresses and over B's listing (lib/B/Prog, a Theorem Labs lane).
+   *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* sup_worker_list on image B (recorder.c:390-393; entry BASE + AF_sup_worker_list = 0x8bb2c, 68 bytes,
    17 instructions, measured with capstone from fuzz_command.asan-ubsan's .symtab):
@@ -72,7 +73,7 @@ intros rd a l1 l2 H i Hi. rewrite (H i) by (rewrite length_app; lia). rewrite ap
 Qed.
 
 (* the conjunct of a long conjunction that holds the literal address [a]: drops the leading conjuncts of H in place
-   (Wb_sup_lv2_worker_set's slw_projz, a working branch 5c04ebe0308), so no conjunct is unified
+   (Wb_sup_lv2_worker_set's slw_projz, a working branch), so no conjunct is unified
    with the goal and no nested proj2 term is retyped *)
 Local Ltac swl_projz H a :=
   repeat lazymatch type of H with

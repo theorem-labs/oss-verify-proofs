@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adds bsegs_nk, no segment a seg_kernel_map, for ex_mem_inv; ARTM_A's reserved clause takes the ledger's tail, apartness from mr_disj; the channel reader from mr_rdr; the entry block's rseq flag reaches argc_len; fin_core checks the stack from sp0 - STACK_WOK, the entry state's zero region, instead of from the heap ceiling LB_ACEIL); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -30,13 +31,20 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma asegs_low : segs_low bsegs.
 Proof. exact (img_low BDA_SEGS BDA_PC bda_img_ok). Qed.
 
-(* [comment removed for export] *)
+(* [in_segs_reserved] (VCommon/Ax/AxGrant.v:92) and AxExportI's Section ExportI take this
+   as a premise rather than deriving it: [img_ok]'s [seg_ok1] names no kernel field, and
+   [segs] is abstract there.  [bsegs] is this unit's own ELF image, so here it is concrete
+   and closes by computation -- the same shape as openssl/bignum's
+   BgAxBdA/BdAParams.v:46. *)
+Lemma bsegs_nk : forallb (fun s => negb (seg_kernel_map s)) bsegs = true.
+Proof. vm_cast_no_check (eq_refl true). Qed.
+
 Definition fin_core (F : bforms) (B : AST) : bool :=
   fin_model a_main SEGTOP_A B && fin_win2 target_alloc_limit B
   && lay_ok B (win_of B) JUNK F && stksh_ok B && atop_hi_ok B
   && reg_lit B 1 MAIN_RA && reg_form B 2 (laddc (bf_sp0 F) (- 48)) && reg_lit B 4 TP_A
   && reg_form B 10 (0, [(v_argc, 1)]) && reg_form B 11 (laddc (bf_sp0 F) 8)
-  && chk_stk B (win_of B) F SEGTOP_A (SA LB_ACEIL 0, SA LB_sp0 (- 48)).
+  && chk_stk B (win_of B) F SEGTOP_A (SA LB_sp0 (- STACK_WOK), SA LB_sp0 (- 48)).
 
 Section BridgeA.
 Variable OUT_rep : Stdio.stdout_st -> mem -> Prop.
@@ -44,7 +52,6 @@ Variable ERR_rep : mem -> Prop.
 Variable XENV : mem -> Prop.
 Variable LIB : mem -> Prop.
 
-(* [comment removed for export] *)
 Variable Σ0 : layoutA -> Z -> rtsA.       (* [comment removed for export] *)
 Variable h1_of : bforms -> AST -> Z.      (* [comment removed for export] *)
 Hypothesis Σ0_lay : forall L h, lay (Σ0 L h) = L.
@@ -82,23 +89,21 @@ Proof.
   apply andb_prop in Hcore as [Kfm Kfw].
   set (W := win_of B) in *. set (L := Lm ρ W JUNK F (vm_maps (m_vmmaps model))) in *.
   set (m := mM ρ ms model W JUNK F (vm_maps (m_vmmaps model))) in *.
-  destruct (ex_layout_ok fs0 _ ρ B ms model HR W JUNK F RES_A RES_A_ok eq_refl Klay) as (Hlay & Hat & Esp & Heb).
+  destruct (ex_layout_ok fs0 _ ρ B ms model HR W JUNK F RES_A RES_A_ok eq_refl Klay) as (Hlay & Hat & Esp & [rq Heb]).
   fold L in Hlay, Hat, Esp.
   destruct (lay_ok_parts B W JUNK F Klay) as [Hent Hwb].
   destruct (Hart fs0 ρ B ms model F HR Hcore0 Hfa Hlay) as [HART HCLX]. fold L in HART. fold m in HART, HCLX.
   destruct (sp0_bounds ρ B model F Hlay) as [(S1 & S2) EAC]. fold W L in S1, S2, EAC.
   destruct (hz_parts B a_main Kfm Kfw) as (Hpos & HwL & HwH).
-  (* [comment removed for export] *)
   assert (Hfm := Kfm). unfold fin_model in Hfm. apply andb_prop in Hfm as [Hfm Hbj]. apply andb_prop in Hfm as [Hfm Hbt].
   apply andb_prop in Hfm as [Hfm Hrv]. apply andb_prop in Hfm as [Hfm Hfd]. apply andb_prop in Hfm as [Hfm Hsh].
   apply andb_prop in Hfm as [Hpc Hout]. apply Z.leb_le in Hbj.
   assert (Erv : a_resv B = RNone) by (destruct (a_resv B); [reflexivity | discriminate Hrv | discriminate Hrv]).
   assert (Efd : am_fd (a_model B) = FDStd) by (destruct (am_fd (a_model B)); first [reflexivity | discriminate Hfd]).
-  (* [comment removed for export] *)
   set (usp := l_sp0 L - 48).
   assert (Eusp : leval ρ (laddc (bf_sp0 F) (- 48)) = usp) by (rewrite leval_laddc; unfold usp, L, Lm, L_of; cbn [l_sp0]; lia).
   assert (Eap : leval ρ (laddc (bf_sp0 F) 8) = l_sp0 L + 8) by (rewrite leval_laddc; unfold L, Lm, L_of; cbn [l_sp0]; lia).
-  pose proof (argc_len ρ Heb) as Eargc.
+  pose proof (argc_len ρ rq Heb) as Eargc.
   assert (Ea0 : leval ρ (0, [(v_argc, 1)]) = Z.of_nat (length (dec_argvB ρ))) by (rewrite Eargc; unfold leval; cbn [fst snd teval]; lia).
   assert (Hargc : 1 <= ρ v_argc <= 1024) by (destruct Heb as (X & _); exact X).
   exists (mkCfg (canon_ms ms) model). split; [exact (canon_cfg_eqv ms model)|].
@@ -128,17 +133,35 @@ Proof.
       reflexivity.
     + split.
       * (* [comment removed for export] *)
+        (* M1's type moved with the revision: ex_misc's first conjunct is now mr_res's own
+           append form (AxA/AxExportM.v, VCommon/Ax/AxModelRel.v:48-51), while ARTM_A
+           (B/RT_rep.v) still pins [vm_reserved (m_vmmaps mo) = segments_reserved bsegs] on
+           the nose, which the revision makes false whenever init_reserved's tail is
+           non-empty.  Closing the [exact M1] below needs ARTM_A restated in the B cone; it
+           is reported, not guessed. *)
         destruct (ex_misc bsegs fs0 _ ρ B ms model HR) as (M1 & M2 & _ & _).
         unfold ARTM_A. split; [unfold S0; rewrite Σ0_maps; change (l_maps0 L) with (vm_maps (m_vmmaps model));
                                rewrite (filter_vpos_id _ (ex_maps_pos bsegs fs0 _ ρ B ms model HR)); apply Permutation_refl|].
-        split; [exact M1|]. split; [exact M2|].
+        (* ARTM_A's reserved clause now admits a tail, so M1 goes in whole and the
+           apartness half is proved here.  Hunk from bignum BgAxB/BridgeB.v, itself
+           openssl/ct; names checked at both ends. *)
+        split.
+        { destruct M1 as (rx & Hres & Hcnt & Hbyt & _).
+          exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hbyt|].
+          apply Forall_forall. intros e He. apply Forall_forall. intros q Hq.
+          assert (Hin : In q (vm_reserved (m_vmmaps model)))
+            by (rewrite Hres; apply in_or_app; right; exact Hq).
+          pose proof (mr_disj bsegs fs0 ρ _ model (r_model _ _ _ _ _ _ _ HR) e q He Hin) as D.
+          unfold iv_disj, bas, bsz in D. unfold iv_apart. exact D. }
+        split; [exact M2|].
         split; [pose proof (ex_eager bsegs fs0 _ ρ B ms model HR); pose proof (Σ0_eager L (h1_of F B)); unfold S0, E0_MAX, JUNK in *; lia|].
         exact (ex_artm_sys fs0 ρ B ms model HR F a_main Kfm Kfw Hlay Hat S0 (Σ0_lay L (h1_of F B))).
       * (* [comment removed for export] *)
         destruct (ex_fds bsegs fs0 _ ρ B ms model HR Efd) as [Hfds _]. destruct (ex_misc bsegs fs0 _ ρ B ms model HR) as (_ & _ & M3 & _).
-        split; [exact Hfds | exact M3].
-  - (* [comment removed for export] *)
-    exact (ex_mem_inv bsegs BDA_PC bda_img_ok fs0 _ ρ B ms model HR _ Kath).
+        (* the channel reader at the launch, carried by MR ([Run.valid_input_channel_reader]) *)
+        split; [exact Hfds | split; [exact M3 | exact (mr_rdr bsegs fs0 ρ _ model (r_model _ _ _ _ _ _ _ HR))]].
+  -
+    exact (ex_mem_inv bsegs BDA_PC bda_img_ok bsegs_nk fs0 _ ρ B ms model HR _ Kath).
   - (* [comment removed for export] *)
     rewrite Esp. apply (ex_argv_rep fs0 _ ρ B ms model HR W JUNK (allow_main L)).
     + exact Hent.
@@ -146,7 +169,7 @@ Proof.
   - (* [comment removed for export] *)
     pose proof (chk_stk_sound asegs_low fs0 _ ρ B ms model HR W JUNK F (vm_maps (m_vmmaps model)) HwL HwH ltac:(fold L; lia) SEGTOP_A _ Kstk) as Hs.
     unfold stk_fact in Hs. cbn [fst snd den_addr den_base] in Hs. fold L in Hs. fold m in Hs.
-    cbn [rt_sp0 RTA]. unfold rtA_sp0, S0. rewrite Σ0_lay. unfold usp. replace (l_sp0 L - STACK_WIN) with (l_ACEIL L + 0) by (unfold l_ACEIL; lia).
+    cbn [rt_sp0 RTA]. unfold rtA_sp0, S0. rewrite Σ0_lay. unfold usp. replace (l_sp0 L - STACK_WOK) with (l_sp0 L + - STACK_WOK) by lia.
     replace (l_sp0 L - 48) with (l_sp0 L + -48) by lia. exact Hs.
   - (* [comment removed for export] *)
     destruct (Σ0_live L (h1_of F B)) as (L1 & L2 & L3). unfold sigma0_ok. cbn [rt_live rt_frames rt_credit rt_sp0 RTA].
@@ -154,7 +177,7 @@ Proof.
   - (* [comment removed for export] *)
     unfold usp. destruct Hlay as (_ & H16 & _). clear - H16. Z.div_mod_to_equations. lia.
   - unfold usp. lia.
-  - cbn [rt_sp0 RTA]. unfold rtA_sp0, S0. rewrite Σ0_lay. unfold usp, STACK_WIN. lia.
+  - cbn [rt_sp0 RTA]. unfold rtA_sp0, S0. rewrite Σ0_lay. unfold usp, STACK_WOK. lia.
 Qed.
 
 End BridgeA.

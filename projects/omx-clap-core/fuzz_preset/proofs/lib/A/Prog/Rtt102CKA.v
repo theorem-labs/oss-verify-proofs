@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Loop_kitQ.v, with its module paths and module names changed; 1902 of its 1944 lines of code are new or changed and 154 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, program walk of round_trip_text on the #102 pins, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped
    twin bff8519bbe3ea0e4, entry A' 0x8496c): STRETCH CK of the cut layer lib/A/Prog/Rtt102Cut.v (lane WalkRtt102.RttX
    for the text owner): RTT_SEG_CK = rtt_seg RT_X rtt_at_x -> rtt_seg RT_CK rtt_at_ck.
@@ -15,16 +16,16 @@
    event from the cut's free-order conjunct (rtt_rb: pj_free's order list at back, requests fo t) and the model's
    HBulk (fo t) at RT_K_T; the class-24 bound by ck_ccnt24); `mv s5, zero; j X` (+0x1e0) with rtt_Qx's r = 0 arm.
    The register-only instructions are single concrete steps (Rtt102FR1KitA.v fr_addi / fr_jal /
-   fr_beqz_* of lane RttFR1, built green at 31b52895a2f, copied here under ck_ names: they are H5RttS4.v s4_* of
-   the H2H5 walk head 1934271f1f40); a call is fr_call_at (YCbqGcall.v aj_call_x_sp from a concrete
+   fr_beqz_* of lane RttFR1, built green, copied here under ck_ names: they are H5RttS4.v s4_* of
+   the H2H5 walk head); a call is fr_call_at (YCbqGcall.v aj_call_x_sp from a concrete
    state), copied as ck_call_at; the frame-pointer chain at a call is rtt_chain_at, copied as ck_chain_at.
-   AT THE BATCH KIT'S CUT (Rtt102Cut.v at 80a1d52c32c7): DW is gone; rtt_J is the journal from the DEPOT-MOVED entry, so each
+   AT THE BATCH KIT'S CUT (Rtt102Cut.v): DW is gone; rtt_J is the journal from the DEPOT-MOVED entry, so each
    call here is made from rtt_J at the call state and returns the caller journal rtt_Jc, which ck_carry_keep turns back
    into rtt_J (rtt_J_of_Jc) and across which rtt_carry's last conjunct rtt_wild is kept (rtt_wild_Jc); same's text
    gained the guarded live-stack premise, false here (doc lies below alloc_ceiling <= sp); rtt_rb gained back's free
    order at every depth bound and K0-CAP (pj_ncapR), which `*copy = back` moves to copy as it moves pj_nodeR
    (ck_foR_move, ck_ncapR_move) for rtt_Qx's two new conjuncts.
-   AT THE R CUT (Rtt102Cut.v at 448ecd157e57): every statement concludes YA0nH.SRr' SEGS RZ_cf and every journal is
+   AT THE R CUT (Rtt102Cut.v): every statement concludes YA0nH.SRr' SEGS RZ_cf and every journal is
    at RZW := YA0nH.wle' SEGS RZ_cf. The steps are YSRrG.SRrG_step; ck_call_at takes an SRr' callee at apost_base_xR
    RZW (as Rtt102FR1Kit.v fr_call_at); same's text is still a plain SRr, lifted (YA0nH.SRr_SRr',
    YCbqG.apost_base_x_R_lift); pj_free's text concludes SRr' with the W-post fpostWmR at RZW, read at d = 0 by
@@ -80,7 +81,7 @@ Local Set Warnings "-notation-for-abbreviation".
 #[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 Open Scope bv_scope.
 Open Scope Z_scope.
-(* a runaway sentence fails at its own line instead of holding the VM (build 83048a40cf2 ran past 3600 s) *)
+(* a runaway sentence fails at its own line instead of holding the VM (build ran past 3600 s) *)
 
 
 (* ======================================================================================================== *)
@@ -237,7 +238,7 @@ intros t. induction t as [| | | txt bits | s | items IH | members IH] using PjTr
 Qed.
 
 (* the tree moved: *copy = back copies the 56-byte root, the subtree hangs off D's blocks, so the same tree stands at the
-   new place when those blocks keep their bytes (H5RttS4.v s4_val_move .. s4_nodeR_move at 1934271f1f40, restated over
+   new place when those blocks keep their bytes (H5RttS4.v s4_val_move .. s4_nodeR_move, restated over
    this tree's PRH_Reader.v frame lemmas) *)
 Lemma ck_val_move : forall m m' a a' n v, val_mem segs m a n v ->
   (forall k, (k < n)%nat -> mbyte segs m' (a' + Z.of_nat k) = mbyte segs m (a + Z.of_nat k)) ->
@@ -422,7 +423,7 @@ Qed.
 End tr.
 
 (* ======================================================================================================== *)
-(* ---- 2. concrete steps of register-only code (Rtt102FR1KitA.v :57-164 at 31b52895a2f, = H5RttS4.v's s4_ steps), and the
+(* ---- 2. concrete steps of register-only code (Rtt102FR1KitA.v :57-164, = H5RttS4.v's s4_ steps), and the
    two forms that file lacks: `bnez` not taken and the unlinked `j` ---- *)
 Section stp. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {L : ptable asym} {PL : PAListing L} {PI : PAImg L}.
@@ -579,7 +580,7 @@ eapply (YSRrG.SRrG_step SEGS (YA0nH.wle' SEGS YGcfRehidePost.RZ_cf) pa_wx W); [r
 Qed.
 End stp.
 
-(* ---- pure helpers (Rtt102FR1KitA.v :168-204 at 31b52895a2f) ---- *)
+(* ---- pure helpers (Rtt102FR1KitA.v :168-204) ---- *)
 Lemma ck_rdword_of_val_mem : forall segs H mem a v,
   val_mem segs (mrestrict H mem) a 8 v -> 0 <= v < 2 ^ 64 -> rdword (aview segs H mem) a = Some v.
 Proof.
@@ -621,9 +622,9 @@ Proof.
 intros segs H mem a [Hh [b Hb]]. unfold aview, mbyte, mrestrict. rewrite Hh, Hb. discriminate.
 Qed.
 
-(* ---- the class-24 bound from the run position: the driver interface owner's PresetCfnA.v:456-484 (iface_hruns_big, counts_of_room_pos,
+(* ---- the class-24 bound from the run position: the driver interface owner's PresetCfnA.v:457-485 (iface_hruns_big, counts_of_room_pos,
    counts_of_room_pos_rl), restated over the same two lemmas it cites: PresetCfnA.v Requires the plain image's
-   lib/ZImage.v, which does not build on the #102 pins (pins102 build 2de0f514036: "Unable to unify zpc0 with
+   lib/ZImage.v, which does not build on the #102 pins (pins102 build: "Unable to unify zpc0 with
    Z.of_N Plain.M.init_pc"); PresetLiveSec and CfRoomLivePreset do not need it ---- *)
 Lemma ck_hruns_big : forall sm x os, PresetReqAt.MAXB < Z.of_nat (length x) -> PresetRun.hruns sm x os = [].
 Proof.
@@ -726,8 +727,8 @@ Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 Hypothesis HW : prh_head_wide.
 
 Section r. Context {fx : YK11.FPState}.
-(* ---- 3. a call of a program text from a concrete state (Rtt102FR1Kit.v fr_call_at at 448ecd157e57, =
-   YCbqGcall.v:107 aj_call_x_sp without its symbolic-state premise), at RZW: the callee concludes SRr' with its
+(* ---- 3. a call of a program text from a concrete state (Rtt102FR1Kit.v fr_call_at, =
+   YCbqGcall.v:108 aj_call_x_sp without its symbolic-state premise), at RZW: the callee concludes SRr' with its
    journal at RZW (apost_base_xR) ---- *)
 Lemma ck_call_at : forall W regs memc STK0 sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k STK1 FP1 (o : Z) raw ch1 pc
   (Q : alayout -> astate -> list Z -> world SEGS -> bvmap 5 word -> (word -> option byte) -> Model -> Prop),
@@ -785,7 +786,7 @@ Section m. Context {fx : YK11.FPState}.
 #[local] Notation SEGX := (@RTT_SEG_X fx rc ci cp prh_img_A RL A_prog_listing PA B ARx SK CTX0).
 
 (* ---- 4. the chain at a call in round_trip_text's body (Rtt102FR1KitA.v rtt_keep_above / rtt_chain_at /
-   rtt_lyF / rtt_fa_eq at 31b52895a2f, = H5RttS4.v s4_chain) ---- *)
+   rtt_lyF / rtt_fa_eq, = H5RttS4.v s4_chain) ---- *)
 Lemma ck_keep_above : forall D ly S Hp W mem md k pos, RJ D ly S Hp W mem md k pos ->
   forall a, ri_sp D <= a < 2 ^ 64 -> aview SEGS (w_H W) mem a = aview SEGS (w_H (ri_W D)) (ri_mem D) a.
 Proof.
@@ -858,7 +859,7 @@ Qed.
 
 (* ---- 5. frame and shadow facts ---- *)
 (* EVERY FAKE FRAME OF A NON-NEGATIVE CLASS IS 64-ALIGNED (lane RttO2CK's rtt_frame_al64, Rtt102O2A.v at
-   the O2 / CK lane at 6a734ed1713, on WalkRtt102's derivation; restated): frame_addr ly cid pos =
+   the O2 / CK lane, on WalkRtt102's derivation; restated): frame_addr ly cid pos =
    ly_F ly + kFakeFramesOff + cid * 2 ^ kStackSizeLog + pos * fs_frame_bytes cid, ly_F page aligned by layout_ok's
    lo_F_al, the layout ok by AR_laws_x's field 18 *)
 Lemma ck_frame_al64 : forall ly S Hp W mem md cid pos, ARx ly S Hp W mem md -> 0 <= cid ->
@@ -906,11 +907,11 @@ exact (proj1 (Fsh (s - shadow_addr F) ltac:(rewrite EsF; lia))).
 Qed.
 
 (* ---- 6. the callee texts, cited (the brief's category (a)) ---- *)
-(* The kit's same text at nesting DOC_D (PRH_FnEx.v tsame_specX, blob 45ddb7a7d5ae at walkkit-next de5e947c224b; owned by the kit),
+(* The kit's same text at nesting DOC_D (PRH_FnEx.v tsame_specX, blob 45ddb7a7d5ae at walkkit-next; owned by the kit),
    at any float state (the call is at fxc) *)
 Hypothesis TSAME : forall fx' : YK11.FPState, tsame_specX (fx := fx') (PI := prh_img_A) (PA := PA) B ARx SK DOC_D.
 (* The kit's pj_free text at nesting DOC_D, the post-implication form with the exact advance (PRH_FnPj.v tpj_free_specX,
-   blob 12fa597dc74c at walkkit-next de5e947c224b; owned by the kit), at any float state *)
+   blob 12fa597dc74c at walkkit-next; owned by the kit), at any float state *)
 Hypothesis TPJF : forall fx' : YK11.FPState,
   tpj_free_specX (fx := fx') (PI := prh_img_A) (PA := PA) B ARx SK CTX0 DOC_D.
 (* the memcpy interceptor's text with the memnorm keep (YGcallMxmn.v aintrin_realizes_xm, the memcpy row of its
@@ -1040,7 +1041,7 @@ intros a [(sg & Hin & _ & Hr) | Hr]; [exists sg; split; [exact Hin | exact Hr] |
 Qed.
 
 (* ---- 8. what a call keeps (Rtt102FR1KitA.v rtt_kept / rtt_kept_of_journal of lane RttFR1,
-   the RttFR1 lane at ec69f124f67, restated) and the write-set bound of this stretch ---- *)
+   the RttFR1 lane, restated) and the write-set bound of this stretch ---- *)
 Definition ck_kept (lyc : alayout) (Sc : astate) (Wc : world SEGS) (memc : word -> option byte)
   (ly2 : alayout) (S2 : astate) (W2 : world SEGS) (mem2 : word -> option byte)
   (slo shi : Z) (E : Z -> Prop) (P : list (Z * Z)) : Prop :=
@@ -1139,7 +1140,7 @@ exact (conj HFX (conj HJ (conj HFR (conj HSV (conj (ck_cregs_upd D ly regs pos r
 Qed.
 
 (* ---- 9. THE CARRIED STATE ACROSS A CALL whose keeps are ck_kept and whose write set misses ck_off
-   (Rtt102FR1KitA.v rtt_carry_keep at ec69f124f67, restated with the finer bound) ---- *)
+   (Rtt102FR1KitA.v rtt_carry_keep, restated with the finer bound) ---- *)
 Lemma ck_carry_keep : forall D fxc lyc Sc Hpc Wc regsc memc mdc kc pos ly2 S2 Hp2 W2 regs2 mem2 md2 k2 slo shi E P
   Lamc peakc cntc failc ranc mostc ownc Lam2 peak2 cnt2 fail2 ran2 most2 own2,
   PRE D ->
@@ -1484,7 +1485,7 @@ unfold rtt_at_x. split.
 Qed.
 
 (* +868 j +880, then the tail, in a small context (the same step inside ck_arm1's context ran past a 240 s sentence
-   timeout at its first vm_compute, builds a9fb6693e55 and 3e18a45b064) *)
+   timeout at its first vm_compute, builds) *)
 Lemma ck_tail868 : forall D fxc ly S Hp W regs mem md k pos,
   PRE D -> SEGX -> RC D fxc ly S Hp W regs mem md k pos -> rtt_Qx (PI := prh_img_A) B D ly S Hp W mem 0 ->
   YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf W

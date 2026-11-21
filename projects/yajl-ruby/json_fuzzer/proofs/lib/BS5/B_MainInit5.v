@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch's whole ProcInput, mmap base and kernel build, with launch_ok, the recorded kernel and entry_launch_ok_va, and reaches AsanInit's lemmas through iax/iap; rcase0, init_totsz's ledger bound and the entry-state checks over the eight main-phase entry states, computed in the build per CONFIG_RSEQ value, with the start-up's fresh variables renumbered by the probe-read map; the reserved ledger read from the model, with the launch's vDSO/vvar pair; init_minvA reads the channel reader from cs_ok's co_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -32,7 +33,8 @@ Definition pgv (E : env) (v : nat) : Z := 4096 * bv_unsigned (ev E v).
 Definition pgE (v : nat) : expr := EMd Instr.M_MUL (ELit 4096) (EVar v).
 
 (* [comment removed for export] *)
-Definition rcase0 (hs : acs) : bool := Nat.eqb (length (kn hs)) (length (kn HS_s2_00)) || Nat.eqb (length (kn hs)) (length (kn HS_s2_10)).
+Definition rcase0 (hs : acs) : bool := Nat.eqb (length (kn hs)) (length (kn HS_s2_00)) || Nat.eqb (length (kn hs)) (length (kn HS_s2_10))
+  || Nat.eqb (length (kn hs)) (length (kn HS_s2_00R)) || Nat.eqb (length (kn hs)) (length (kn HS_s2_10R)).
 Definition keys0_of (hs : acs) : list (list Z) := if rcase0 hs then [[0x3fbe4; 0x40f34]] else [[0x3fbe4]].
 Definition frames0_of (hs : acs) : Z := if rcase0 hs then 3 else 2.
 
@@ -41,8 +43,8 @@ Definition A_IMG : Z * Z := (0x10000, 0x5f3000).
 
 (* [comment removed for export] *)
 Definition reserved_of (E : env) : list (Z * Z) :=
-  [ (pgv E 245, 4096); (pgv E 246, 65536); (pgv E 438, 11571200); (pgv E 515, 8388608); (pgv E 514, 1048576);
-    (pgv E 244, 8388608); (pgv E 226, 0x2000011000); (pgv E 340, 4096); (pgv E 275, 4096); (pgv E 532, 4096);
+  [ (pgv E 245, 4096); (pgv E 246, 65536); (pgv E 440, 11571200); (pgv E 517, 8388608); (pgv E 516, 1048576);
+    (pgv E 244, 8388608); (pgv E 226, 0x2000011000); (pgv E 342, 4096); (pgv E 275, 4096); (pgv E 534, 4096);
     (pgv E 225, 3727360); (pgv E 95, 65536);
     (0x7fff7000, 268435456); (0x8fff7000, 2199023255552); (0x2008fff7000, 15392894357504); A_IMG ].
 
@@ -54,27 +56,27 @@ Definition aenv_of (hs : acs) (E : env) : AsanState.aenv :=
      AsanState.ae_space_beg := pgv E 226 - pgv E 227 + 0x10000;
      AsanState.ae_resv_beg := pgv E 226;
      AsanState.ae_ptr_array := pgv E 244;
-     AsanState.ae_depot_nodes := pgv E 514;
-     AsanState.ae_store_blk := pgv E 515;
+     AsanState.ae_depot_nodes := pgv E 516;
+     AsanState.ae_store_blk := pgv E 517;
      AsanState.ae_keys0 := keys0_of hs;
      AsanState.ae_frames0 := frames0_of hs;
      AsanState.ae_reserved := reserved_of E;
-     AsanState.ae_fs_beg := pgv E 438;
+     AsanState.ae_fs_beg := pgv E 440;
      AsanState.ae_fs_len := 11571200;
      AsanState.ae_iarena := pgv E 246;
      AsanState.ae_img := A_IMG |}.
 
-Definition fsbase_of (E : env) : Z := pgv E 438.
+Definition fsbase_of (E : env) : Z := pgv E 440.
 
 (* [comment removed for export] *)
 Definition plumb_of (E : env) : BF_fakestack_rep.fs_plumb :=
-  BF_fakestack_rep.mkFsPlumb (pgv E 246) (pgv E 340) 0x5e1550 0x5e1c88 0x5e1d64.
+  BF_fakestack_rep.mkFsPlumb (pgv E 246) (pgv E 342) 0x5e1550 0x5e1c88 0x5e1d64.
 
 (* [comment removed for export] *)
 Definition l0_head (E : env) : list (word * word) :=
-  [ (Z_to_bv 64 (pgv E 532), Z_to_bv 64 4096); (Z_to_bv 64 (pgv E 515), Z_to_bv 64 8388608); (Z_to_bv 64 (pgv E 514), Z_to_bv 64 1048576) ].
+  [ (Z_to_bv 64 (pgv E 534), Z_to_bv 64 4096); (Z_to_bv 64 (pgv E 517), Z_to_bv 64 8388608); (Z_to_bv 64 (pgv E 516), Z_to_bv 64 1048576) ].
 Definition l0_tail (E : env) : list (word * word) :=
-  [ (Z_to_bv 64 (pgv E 438), Z_to_bv 64 11571200); (Z_to_bv 64 (pgv E 340), Z_to_bv 64 4096); (Z_to_bv 64 (pgv E 275), Z_to_bv 64 4096);
+  [ (Z_to_bv 64 (pgv E 440), Z_to_bv 64 11571200); (Z_to_bv 64 (pgv E 342), Z_to_bv 64 4096); (Z_to_bv 64 (pgv E 275), Z_to_bv 64 4096);
     (Z_to_bv 64 (pgv E 246), Z_to_bv 64 65536); (Z_to_bv 64 (pgv E 245), Z_to_bv 64 4096); (Z_to_bv 64 (pgv E 244), Z_to_bv 64 8388608);
     (Z_to_bv 64 (pgv E 226), Z_to_bv 64 0x2000011000); (Z_to_bv 64 (pgv E 225), Z_to_bv 64 3727360); (Z_to_bv 64 (pgv E 95), Z_to_bv 64 65536);
     (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 15392894357504); (Z_to_bv 64 0x8fff7000, Z_to_bv 64 2199023255552); (Z_to_bv 64 0x7fff7000, Z_to_bv 64 268435456) ].
@@ -94,13 +96,44 @@ Section MainInit.
   Variable argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variable uid : word.
+  Variable mbase : word.
+  Variable ifs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kbld : KernelBuild.
+  Variable execfn : list byte.
+  Variables rdr sgd sgt : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hfit : AsanInit.launch_ok sp brk0 mbase rdraw (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  Let Hfes : entry_stack_fits sp argv envp := proj1 Hfit.
+  Let Hkernel : in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) = recorded_kernel (in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt)) := proj1 (proj2 Hfit).
+  Let Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) := proj2 (proj2 (proj2 Hfit)).
+  #[local] Ltac iax X := first [ exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau)
+                              | exact (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) ].
+  #[local] Ltac iap X H := first [ pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                 | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) as H ].
+  #[local] Notation IA X := (X BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp).
 
-  #[local] Notation SINV := (SINV0 BPH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 BPH sp rdraw argv envp uid hw).
+  #[local] Notation SINV := (SINV0 BPH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kbld execfn).
   #[local] Notation LIM := AsanInit.LIMIT.
 
   Variable E : env.
@@ -111,7 +144,7 @@ Section MainInit.
   Hypothesis Hhs : HS_MAIN hs.
   Hypothesis HC : cs_ok BSEGS BOTH5 LIM SINV argH fs E hs R FULL model.
 
-  #[local] Notation FACT := (B_MainFacts.fact_sound sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC).
+  #[local] Notation FACT := (B_MainFacts.fact_sound sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC).
   #[local] Notation MR := (Mr BOTH5 argH E hs model FULL).
   Let usp := bv_unsigned sp.
 
@@ -143,11 +176,11 @@ Section MainInit.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma R532 : 4096 * 1 <= pgv E 532 <= 4096 * 34359736319.           Proof. apply pgv_range. vm_compute. reflexivity. Qed.
-  Lemma R515 : 4096 * 1539 <= pgv E 515 <= 4096 * 34359734272.        Proof. apply pgv_range. vm_compute. reflexivity. Qed.
-  Lemma R514 : 4096 * 1539 <= pgv E 514 <= 4096 * 34359736064.        Proof. apply pgv_range. vm_compute. reflexivity. Qed.
-  Lemma R438 : 4096 * 1539 <= pgv E 438 <= 4096 * 34359733495.        Proof. apply pgv_range. vm_compute. reflexivity. Qed.
-  Lemma R340 : 4096 * 1 <= pgv E 340 <= 4096 * 34359736319.           Proof. apply pgv_range. vm_compute. reflexivity. Qed.
+  Lemma R532 : 4096 * 1 <= pgv E 534 <= 4096 * 34359736319.           Proof. apply pgv_range. vm_compute. reflexivity. Qed.
+  Lemma R515 : 4096 * 1539 <= pgv E 517 <= 4096 * 34359734272.        Proof. apply pgv_range. vm_compute. reflexivity. Qed.
+  Lemma R514 : 4096 * 1539 <= pgv E 516 <= 4096 * 34359736064.        Proof. apply pgv_range. vm_compute. reflexivity. Qed.
+  Lemma R438 : 4096 * 1539 <= pgv E 440 <= 4096 * 34359733495.        Proof. apply pgv_range. vm_compute. reflexivity. Qed.
+  Lemma R340 : 4096 * 1 <= pgv E 342 <= 4096 * 34359736319.           Proof. apply pgv_range. vm_compute. reflexivity. Qed.
   Lemma R275 : 4096 * 1 <= pgv E 275 <= 4096 * 34359736319.           Proof. apply pgv_range. vm_compute. reflexivity. Qed.
   Lemma R246 : 4096 * 1539 <= pgv E 246 <= 4096 * 34359736304.        Proof. apply pgv_range. vm_compute. reflexivity. Qed.
   Lemma R245 : 4096 * 1 <= pgv E 245 <= 4096 * 34359736319.           Proof. apply pgv_range. vm_compute. reflexivity. Qed.
@@ -159,31 +192,29 @@ Section MainInit.
 
   (* [comment removed for export] *)
   Lemma init_halted : m_halted model = None.
-  Proof. exact (main_halted sp rdraw brk0 hw argv envp fs uid E R FULL model hs HC). Qed.
+  Proof. exact (main_halted sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs HC). Qed.
   Lemma init_limit : vm_limit (m_vmmaps model) = target_alloc_limit.
-  Proof. exact (main_limit sp rdraw brk0 hw argv envp fs uid E R FULL model hs HC). Qed.
+  Proof. exact (main_limit sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs HC). Qed.
   Lemma init_eager : eager_used model <= A_EB0.
   Proof.
     pose proof (co_eager _ _ _ _ _ _ _ _ _ _ _ HC) as H. unfold A_EB0.
-    assert (X : a_eager hs <= 16515072) by (destruct Hhs as [-> | [-> | [-> | ->]]]; vm_compute; discriminate). lia.
+    assert (X : a_eager hs <= 16515072) by (hs_cases Hhs; vm_compute; discriminate). lia.
   Qed.
   Lemma init_fds : m_fds model = fds_std.
-  Proof. exact (main_fds sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC). Qed.
+  Proof. exact (main_fds sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC). Qed.
   Lemma init_tid : exists t, m_tid model = Some t /\ 0 < bv_unsigned t < PID_MAX_ENVELOPE.
   Proof.
-    apply (co_tidv _ _ _ _ _ _ _ _ _ _ _ HC). destruct Hhs as [-> | [-> | [-> | ->]]]; reflexivity.
+    apply (co_tidv _ _ _ _ _ _ _ _ _ _ _ HC). hs_cases Hhs; reflexivity.
   Qed.
-  Lemma init_res : vm_reserved (m_vmmaps model) = segments_reserved BSEGS.
-  Proof. exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
   Lemma init_alloc_top : alloc_top (m_vmmaps model) = usp - 8388608.
   Proof.
     pose proof (cs_top BSEGS BOTH5 LIM SINV argH fs E hs R FULL model HC) as (_ & _ & T3).
-    rewrite T3, (uE_sp0 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs HC). reflexivity.
+    rewrite T3, (uE_sp0 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs HC). reflexivity.
   Qed.
   (* [comment removed for export] *)
   Let pusp := usp - usp mod 4096.
   Lemma u_psp0 : uE E e_psp0 = pusp.
-  Proof. unfold pusp. rewrite (co_psp0 _ _ _ _ _ _ _ _ _ _ _ HC), (uE_sp0 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs HC). reflexivity. Qed.
+  Proof. unfold pusp. rewrite (co_psp0 _ _ _ _ _ _ _ _ _ _ _ HC), (uE_sp0 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs HC). reflexivity. Qed.
   Lemma ptop_eq : ptop (m_vmmaps model) = pusp - 8388608.
   Proof. pose proof (cs_ptop BSEGS BOTH5 LIM SINV argH fs E hs R FULL model HC) as (_ & _ & P3 & _). rewrite P3, u_psp0. reflexivity. Qed.
   Lemma pusp_le : pusp <= usp /\ usp < pusp + 4096 /\ 0x7fff80000000 <= pusp /\ pusp mod 4096 = 0.
@@ -191,13 +222,13 @@ Section MainInit.
 
   (* [comment removed for export] *)
   Lemma hs_maps : a_maps hs = a_maps HS_s2_00.
-  Proof. destruct Hhs as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
+  Proof. hs_cases Hhs; vm_compute; reflexivity. Qed.
   Lemma hs_vis : a_vis hs = a_vis HS_s2_00.
-  Proof. destruct Hhs as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
+  Proof. hs_cases Hhs; vm_compute; reflexivity. Qed.
 
   Lemma init_lazy_hull : forall e, In e (m_vm_lazy model) ->
     0 < bv_unsigned (snd e) /\
-    (  (pgv E 515 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= pgv E 515 + 8388608)
+    (  (pgv E 517 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= pgv E 517 + 8388608)
     \/ (pgv E 244 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= pgv E 244 + 8388608)
     \/ (pgv E 226 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= pgv E 226 + 0x2000011000)
     \/ (0x2008fff7000 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 0x2008fff7000 + 15392894357504)
@@ -212,7 +243,7 @@ Section MainInit.
     | Exists _ [] => apply Exists_nil in X; destruct X
     end;
     cbn [am_kind am_base am_len lz_kind] in X; destruct X as (Hk & L1 & L2); try discriminate Hk;
-    change (EMd Instr.M_MUL (ELit 4096) (EVar 515)) with (pgE 515) in *;
+    change (EMd Instr.M_MUL (ELit 4096) (EVar 517)) with (pgE 517) in *;
     change (EMd Instr.M_MUL (ELit 4096) (EVar 244)) with (pgE 244) in *;
     change (EMd Instr.M_MUL (ELit 4096) (EVar 226)) with (pgE 226) in *;
     rewrite ?edenot_pg in L1 by lia; rewrite ?edenot_pg in L2 by lia;
@@ -221,7 +252,7 @@ Section MainInit.
 
   (* [comment removed for export] *)
   Lemma lazy_clear_of : forall x n,
-    x + n <= pgv E 515 \/ pgv E 515 + 8388608 <= x ->
+    x + n <= pgv E 517 \/ pgv E 517 + 8388608 <= x ->
     x + n <= pgv E 244 \/ pgv E 244 + 8388608 <= x ->
     x + n <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= x ->
     x + n <= 0x7fff7000 \/ 0x10007fff8000 <= x ->
@@ -340,9 +371,9 @@ Section MainInit.
     pose proof R532. pose proof R515. pose proof R514. pose proof R438. pose proof R340. pose proof R275. pose proof R246.
     pose proof R245. pose proof R244. pose proof R226. pose proof R225. pose proof R95.
     cbn [a_maps HS_s2_00 maps_match is_fog is_tok_kind am_kind] in MM.
-    change (EMd Instr.M_MUL (ELit 4096) (EVar 532)) with (pgE 532) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 515)) with (pgE 515) in MM.
-    change (EMd Instr.M_MUL (ELit 4096) (EVar 514)) with (pgE 514) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 438)) with (pgE 438) in MM.
-    change (EMd Instr.M_MUL (ELit 4096) (EVar 340)) with (pgE 340) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 275)) with (pgE 275) in MM.
+    change (EMd Instr.M_MUL (ELit 4096) (EVar 534)) with (pgE 534) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 517)) with (pgE 517) in MM.
+    change (EMd Instr.M_MUL (ELit 4096) (EVar 516)) with (pgE 516) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 440)) with (pgE 440) in MM.
+    change (EMd Instr.M_MUL (ELit 4096) (EVar 342)) with (pgE 342) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 275)) with (pgE 275) in MM.
     change (EMd Instr.M_MUL (ELit 4096) (EVar 246)) with (pgE 246) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 245)) with (pgE 245) in MM.
     change (EMd Instr.M_MUL (ELit 4096) (EVar 244)) with (pgE 244) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 226)) with (pgE 226) in MM.
     change (EMd Instr.M_MUL (ELit 4096) (EVar 225)) with (pgE 225) in MM. change (EMd Instr.M_MUL (ELit 4096) (EVar 95)) with (pgE 95) in MM.
@@ -359,8 +390,8 @@ Section MainInit.
       - exists [iv1; iv2], l5. repeat split; [constructor; [exact S1 | constructor; [exact S2 | constructor]] | cbn; lia | exact MM]. }
     destruct FOGS as (fog & rest & -> & FS & FL & MR). exists fog.
     cbn [skipn a_maps HS_s2_00 maps_match is_fog is_tok_kind am_kind] in MR.
-    change (EMd Instr.M_MUL (ELit 4096) (EVar 438)) with (pgE 438) in MR.
-    change (EMd Instr.M_MUL (ELit 4096) (EVar 340)) with (pgE 340) in MR. change (EMd Instr.M_MUL (ELit 4096) (EVar 275)) with (pgE 275) in MR.
+    change (EMd Instr.M_MUL (ELit 4096) (EVar 440)) with (pgE 440) in MR.
+    change (EMd Instr.M_MUL (ELit 4096) (EVar 342)) with (pgE 342) in MR. change (EMd Instr.M_MUL (ELit 4096) (EVar 275)) with (pgE 275) in MR.
     change (EMd Instr.M_MUL (ELit 4096) (EVar 246)) with (pgE 246) in MR. change (EMd Instr.M_MUL (ELit 4096) (EVar 245)) with (pgE 245) in MR.
     change (EMd Instr.M_MUL (ELit 4096) (EVar 244)) with (pgE 244) in MR. change (EMd Instr.M_MUL (ELit 4096) (EVar 226)) with (pgE 226) in MR.
     change (EMd Instr.M_MUL (ELit 4096) (EVar 225)) with (pgE 225) in MR. change (EMd Instr.M_MUL (ELit 4096) (EVar 95)) with (pgE 95) in MR.
@@ -387,10 +418,10 @@ Section MainInit.
     - inversion S as [|p l F S']; subst. exact (IH S').
   Qed.
 
-  Lemma init_totsz : sum_sizes (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) <= 17729664598016.
+  Lemma init_totsz : sum_sizes (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) <= 17729664679936.
   Proof.
     pose proof (co_totsz _ _ _ _ _ _ _ _ _ _ _ HC) as T.
-    assert (X : a_totsz hs = 17729664598016) by (destruct Hhs as [-> | [-> | [-> | ->]]]; reflexivity). lia.
+    assert (X : a_totsz hs = 17729664679936) by (hs_cases Hhs; reflexivity). lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -401,7 +432,7 @@ Section MainInit.
       in_ivs z (vm_maps (m_vmmaps model)) = true /\ in_ivs z (vm_noaccess (m_vmmaps model)) = false /\ FULL (Z_to_bv 64 z) <> None.
   Proof.
     intros be off l HK Hlo Hhull Hhi z Hz. pose proof (FACT _ HK) as [_ HW]. unfold A_IMG_LO, A_IMG_HI in Hhull.
-    pose proof (usp_lo sp Hsp) as UL. pose proof (usp_hi BPH sp rdraw argv envp uid hw Hva Hve Hfit) as UH. pose proof pusp_le as PU.
+    pose proof (usp_lo sp Hsp) as UL. assert (UH : bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi. pose proof pusp_le as PU.
     pose proof ptop_eq as PT.
     unfold estart, elenZ in HW. cbn [a_base a_off edenot] in HW. change (bv_unsigned (edenot E be)) with (uE E be) in HW.
     rewrite u64_lit in HW by (unfold usp in *; lia).
@@ -424,7 +455,7 @@ Section MainInit.
     forall z, pgv E v <= z < pgv E v + l ->
       in_ivs z (vm_maps (m_vmmaps model)) = true /\ in_ivs z (vm_noaccess (m_vmmaps model)) = false /\ FULL (Z_to_bv 64 z) <> None.
   Proof.
-    intros v l HK Hhull Hhi z Hz. pose proof (usp_hi BPH sp rdraw argv envp uid hw Hva Hve Hfit) as UH. pose proof pusp_le as PU.
+    intros v l HK Hhull Hhi z Hz. assert (UH : bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi. pose proof pusp_le as PU.
     assert (U : uE E (pgE v) = pgv E v) by (apply u_pg; unfold usp in *; lia).
     pose proof (kwr_pointwise (pgE v) 0 l HK) as X. rewrite U, !Z.add_0_r in X. pose proof R532.
     apply X; [unfold pgv; pose proof (u64_range (ev E v)); lia | exact Hhull | exact Hhi | exact Hz].
@@ -479,91 +510,91 @@ Section MainInit.
   Proof. pose proof R245. apply pg_apart_zone; [vm_compute; reflexivity | lia | lia]. Qed.
   Lemma Z246 : pgv E 246 + 65536 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 246.
   Proof. pose proof R246. apply pg_apart_zone; [vm_compute; reflexivity | lia | lia]. Qed.
-  Lemma Z438 : pgv E 438 + 11571200 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 438.
+  Lemma Z438 : pgv E 440 + 11571200 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 440.
   Proof. pose proof R438. apply pg_apart_zone; [vm_compute; reflexivity | lia | lia]. Qed.
-  Lemma Z515 : pgv E 515 + 8388608 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 515.
+  Lemma Z515 : pgv E 517 + 8388608 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 517.
   Proof. pose proof R515. apply pg_apart_zone; [vm_compute; reflexivity | lia | lia]. Qed.
-  Lemma Z514 : pgv E 514 + 1048576 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 514.
+  Lemma Z514 : pgv E 516 + 1048576 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 516.
   Proof. pose proof R514. apply pg_apart_zone; [vm_compute; reflexivity | lia | lia]. Qed.
   Lemma Z244 : pgv E 244 + 8388608 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 244.
   Proof. pose proof R244. apply pg_apart_zone; [vm_compute; reflexivity | lia | lia]. Qed.
-  Lemma Z340 : pgv E 340 + 4096 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 340.
+  Lemma Z340 : pgv E 342 + 4096 <= 0x7fff7000 \/ 0x10007fff8000 <= pgv E 342.
   Proof. pose proof R340. apply pg_apart_zone; [vm_compute; reflexivity | lia | lia]. Qed.
   Lemma S245 : pgv E 245 + 4096 <= pusp - 8388608.
   Proof. pose proof R245. destruct (pg_apart_stack 245 4096 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
   Lemma S246 : pgv E 246 + 65536 <= pusp - 8388608.
   Proof. pose proof R246. destruct (pg_apart_stack 246 65536 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
-  Lemma S438 : pgv E 438 + 11571200 <= pusp - 8388608.
-  Proof. pose proof R438. destruct (pg_apart_stack 438 11571200 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
-  Lemma S515 : pgv E 515 + 8388608 <= pusp - 8388608.
-  Proof. pose proof R515. destruct (pg_apart_stack 515 8388608 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
-  Lemma S514 : pgv E 514 + 1048576 <= pusp - 8388608.
-  Proof. pose proof R514. destruct (pg_apart_stack 514 1048576 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
+  Lemma S438 : pgv E 440 + 11571200 <= pusp - 8388608.
+  Proof. pose proof R438. destruct (pg_apart_stack 440 11571200 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
+  Lemma S515 : pgv E 517 + 8388608 <= pusp - 8388608.
+  Proof. pose proof R515. destruct (pg_apart_stack 517 8388608 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
+  Lemma S514 : pgv E 516 + 1048576 <= pusp - 8388608.
+  Proof. pose proof R514. destruct (pg_apart_stack 516 1048576 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
   Lemma S244 : pgv E 244 + 8388608 <= pusp - 8388608.
   Proof. pose proof R244. destruct (pg_apart_stack 244 8388608 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
-  Lemma S340 : pgv E 340 + 4096 <= pusp - 8388608.
-  Proof. pose proof R340. destruct (pg_apart_stack 340 4096 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
+  Lemma S340 : pgv E 342 + 4096 <= pusp - 8388608.
+  Proof. pose proof R340. destruct (pg_apart_stack 342 4096 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
   Lemma S226 : pgv E 226 + 0x2000011000 <= pusp - 8388608.
   Proof. pose proof R226. destruct (pg_apart_stack 226 0x2000011000 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)); lia. Qed.
   Lemma I245 : pgv E 245 + 4096 <= 0x10000 \/ 0x603000 <= pgv E 245.
   Proof. pose proof R245. apply pg_apart_img; [vm_compute; reflexivity | lia | lia]. Qed.
-  Lemma I340 : pgv E 340 + 4096 <= 0x10000 \/ 0x603000 <= pgv E 340.
+  Lemma I340 : pgv E 342 + 4096 <= 0x10000 \/ 0x603000 <= pgv E 342.
   Proof. pose proof R340. apply pg_apart_img; [vm_compute; reflexivity | lia | lia]. Qed.
   (* [comment removed for export] *)
   #[local] Ltac pga v1 l1 v2 l2 := apply (pg_apart v1 l1 v2 l2); [vm_compute; reflexivity | lia | lia | lia | lia].
   Lemma D226_245 : pgv E 226 + 0x2000011000 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 226.   Proof. pose proof R226; pose proof R245. pga 226%nat 0x2000011000 245%nat 4096. Qed.
   Lemma D244_245 : pgv E 244 + 8388608 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 244.        Proof. pose proof R244; pose proof R245. pga 244%nat 8388608 245%nat 4096. Qed.
-  Lemma D515_245 : pgv E 515 + 8388608 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 515.        Proof. pose proof R515; pose proof R245. pga 515%nat 8388608 245%nat 4096. Qed.
-  Lemma D226_514 : pgv E 226 + 0x2000011000 <= pgv E 514 \/ pgv E 514 + 1048576 <= pgv E 226. Proof. pose proof R226; pose proof R514. pga 226%nat 0x2000011000 514%nat 1048576. Qed.
-  Lemma D244_514 : pgv E 244 + 8388608 <= pgv E 514 \/ pgv E 514 + 1048576 <= pgv E 244.     Proof. pose proof R244; pose proof R514. pga 244%nat 8388608 514%nat 1048576. Qed.
-  Lemma D515_514 : pgv E 515 + 8388608 <= pgv E 514 \/ pgv E 514 + 1048576 <= pgv E 515.     Proof. pose proof R515; pose proof R514. pga 515%nat 8388608 514%nat 1048576. Qed.
-  Lemma D515_226 : pgv E 515 + 8388608 <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= pgv E 515. Proof. pose proof R515; pose proof R226. pga 515%nat 8388608 226%nat 0x2000011000. Qed.
-  Lemma D515_244 : pgv E 515 + 8388608 <= pgv E 244 \/ pgv E 244 + 8388608 <= pgv E 515.     Proof. pose proof R515; pose proof R244. pga 515%nat 8388608 244%nat 8388608. Qed.
-  Lemma D245_514 : pgv E 245 + 4096 <= pgv E 514 \/ pgv E 514 + 1048576 <= pgv E 245.        Proof. pose proof R245; pose proof R514. pga 245%nat 4096 514%nat 1048576. Qed.
+  Lemma D515_245 : pgv E 517 + 8388608 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 517.        Proof. pose proof R515; pose proof R245. pga 517%nat 8388608 245%nat 4096. Qed.
+  Lemma D226_514 : pgv E 226 + 0x2000011000 <= pgv E 516 \/ pgv E 516 + 1048576 <= pgv E 226. Proof. pose proof R226; pose proof R514. pga 226%nat 0x2000011000 516%nat 1048576. Qed.
+  Lemma D244_514 : pgv E 244 + 8388608 <= pgv E 516 \/ pgv E 516 + 1048576 <= pgv E 244.     Proof. pose proof R244; pose proof R514. pga 244%nat 8388608 516%nat 1048576. Qed.
+  Lemma D515_514 : pgv E 517 + 8388608 <= pgv E 516 \/ pgv E 516 + 1048576 <= pgv E 517.     Proof. pose proof R515; pose proof R514. pga 517%nat 8388608 516%nat 1048576. Qed.
+  Lemma D515_226 : pgv E 517 + 8388608 <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= pgv E 517. Proof. pose proof R515; pose proof R226. pga 517%nat 8388608 226%nat 0x2000011000. Qed.
+  Lemma D515_244 : pgv E 517 + 8388608 <= pgv E 244 \/ pgv E 244 + 8388608 <= pgv E 517.     Proof. pose proof R515; pose proof R244. pga 517%nat 8388608 244%nat 8388608. Qed.
+  Lemma D245_514 : pgv E 245 + 4096 <= pgv E 516 \/ pgv E 516 + 1048576 <= pgv E 245.        Proof. pose proof R245; pose proof R514. pga 245%nat 4096 516%nat 1048576. Qed.
   Lemma D244_226 : pgv E 244 + 8388608 <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= pgv E 244. Proof. pose proof R244; pose proof R226. pga 244%nat 8388608 226%nat 0x2000011000. Qed.
-  Lemma D438_226 : pgv E 438 + 11571200 <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= pgv E 438. Proof. pose proof R438; pose proof R226. pga 438%nat 11571200 226%nat 0x2000011000. Qed.
-  Lemma D438_245 : pgv E 438 + 11571200 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 438.       Proof. pose proof R438; pose proof R245. pga 438%nat 11571200 245%nat 4096. Qed.
-  Lemma D438_244 : pgv E 438 + 11571200 <= pgv E 244 \/ pgv E 244 + 8388608 <= pgv E 438.    Proof. pose proof R438; pose proof R244. pga 438%nat 11571200 244%nat 8388608. Qed.
-  Lemma D438_515 : pgv E 438 + 11571200 <= pgv E 515 \/ pgv E 515 + 8388608 <= pgv E 438.    Proof. pose proof R438; pose proof R515. pga 438%nat 11571200 515%nat 8388608. Qed.
-  Lemma D438_514 : pgv E 438 + 11571200 <= pgv E 514 \/ pgv E 514 + 1048576 <= pgv E 438.    Proof. pose proof R438; pose proof R514. pga 438%nat 11571200 514%nat 1048576. Qed.
-  Lemma D438_246 : pgv E 438 + 11571200 <= pgv E 246 \/ pgv E 246 + 65536 <= pgv E 438.      Proof. pose proof R438; pose proof R246. pga 438%nat 11571200 246%nat 65536. Qed.
+  Lemma D438_226 : pgv E 440 + 11571200 <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= pgv E 440. Proof. pose proof R438; pose proof R226. pga 440%nat 11571200 226%nat 0x2000011000. Qed.
+  Lemma D438_245 : pgv E 440 + 11571200 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 440.       Proof. pose proof R438; pose proof R245. pga 440%nat 11571200 245%nat 4096. Qed.
+  Lemma D438_244 : pgv E 440 + 11571200 <= pgv E 244 \/ pgv E 244 + 8388608 <= pgv E 440.    Proof. pose proof R438; pose proof R244. pga 440%nat 11571200 244%nat 8388608. Qed.
+  Lemma D438_515 : pgv E 440 + 11571200 <= pgv E 517 \/ pgv E 517 + 8388608 <= pgv E 440.    Proof. pose proof R438; pose proof R515. pga 440%nat 11571200 517%nat 8388608. Qed.
+  Lemma D438_514 : pgv E 440 + 11571200 <= pgv E 516 \/ pgv E 516 + 1048576 <= pgv E 440.    Proof. pose proof R438; pose proof R514. pga 440%nat 11571200 516%nat 1048576. Qed.
+  Lemma D438_246 : pgv E 440 + 11571200 <= pgv E 246 \/ pgv E 246 + 65536 <= pgv E 440.      Proof. pose proof R438; pose proof R246. pga 440%nat 11571200 246%nat 65536. Qed.
   Lemma D245_244 : pgv E 245 + 4096 <= pgv E 244 \/ pgv E 244 + 8388608 <= pgv E 245.        Proof. pose proof R245; pose proof R244. pga 245%nat 4096 244%nat 8388608. Qed.
   Lemma D246_226 : pgv E 246 + 65536 <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= pgv E 246.   Proof. pose proof R246; pose proof R226. pga 246%nat 65536 226%nat 0x2000011000. Qed.
-  Lemma D246_514 : pgv E 246 + 65536 <= pgv E 514 \/ pgv E 514 + 1048576 <= pgv E 246.      Proof. pose proof R246; pose proof R514. pga 246%nat 65536 514%nat 1048576. Qed.
-  Lemma D246_515 : pgv E 246 + 65536 <= pgv E 515 \/ pgv E 515 + 8388608 <= pgv E 246.      Proof. pose proof R246; pose proof R515. pga 246%nat 65536 515%nat 8388608. Qed.
+  Lemma D246_514 : pgv E 246 + 65536 <= pgv E 516 \/ pgv E 516 + 1048576 <= pgv E 246.      Proof. pose proof R246; pose proof R514. pga 246%nat 65536 516%nat 1048576. Qed.
+  Lemma D246_515 : pgv E 246 + 65536 <= pgv E 517 \/ pgv E 517 + 8388608 <= pgv E 246.      Proof. pose proof R246; pose proof R515. pga 246%nat 65536 517%nat 8388608. Qed.
   Lemma D246_245 : pgv E 246 + 65536 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 246.         Proof. pose proof R246; pose proof R245. pga 246%nat 65536 245%nat 4096. Qed.
   Lemma D246_244 : pgv E 246 + 65536 <= pgv E 244 \/ pgv E 244 + 8388608 <= pgv E 246.      Proof. pose proof R246; pose proof R244. pga 246%nat 65536 244%nat 8388608. Qed.
-  Lemma D246_438 : pgv E 246 + 65536 <= pgv E 438 \/ pgv E 438 + 11571200 <= pgv E 246.     Proof. pose proof R246; pose proof R438. pga 246%nat 65536 438%nat 11571200. Qed.
-  Lemma D340_226 : pgv E 340 + 4096 <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= pgv E 340.   Proof. pose proof R340; pose proof R226. pga 340%nat 4096 226%nat 0x2000011000. Qed.
-  Lemma D340_438 : pgv E 340 + 4096 <= pgv E 438 \/ pgv E 438 + 11571200 <= pgv E 340.      Proof. pose proof R340; pose proof R438. pga 340%nat 4096 438%nat 11571200. Qed.
-  Lemma D340_515 : pgv E 340 + 4096 <= pgv E 515 \/ pgv E 515 + 8388608 <= pgv E 340.       Proof. pose proof R340; pose proof R515. pga 340%nat 4096 515%nat 8388608. Qed.
-  Lemma D340_244 : pgv E 340 + 4096 <= pgv E 244 \/ pgv E 244 + 8388608 <= pgv E 340.       Proof. pose proof R340; pose proof R244. pga 340%nat 4096 244%nat 8388608. Qed.
-  Lemma D340_514 : pgv E 340 + 4096 <= pgv E 514 \/ pgv E 514 + 1048576 <= pgv E 340.       Proof. pose proof R340; pose proof R514. pga 340%nat 4096 514%nat 1048576. Qed.
-  Lemma D340_245 : pgv E 340 + 4096 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 340.          Proof. pose proof R340; pose proof R245. pga 340%nat 4096 245%nat 4096. Qed.
-  Lemma D340_246 : pgv E 340 + 4096 <= pgv E 246 \/ pgv E 246 + 65536 <= pgv E 340.         Proof. pose proof R340; pose proof R246. pga 340%nat 4096 246%nat 65536. Qed.
+  Lemma D246_438 : pgv E 246 + 65536 <= pgv E 440 \/ pgv E 440 + 11571200 <= pgv E 246.     Proof. pose proof R246; pose proof R438. pga 246%nat 65536 440%nat 11571200. Qed.
+  Lemma D340_226 : pgv E 342 + 4096 <= pgv E 226 \/ pgv E 226 + 0x2000011000 <= pgv E 342.   Proof. pose proof R340; pose proof R226. pga 342%nat 4096 226%nat 0x2000011000. Qed.
+  Lemma D340_438 : pgv E 342 + 4096 <= pgv E 440 \/ pgv E 440 + 11571200 <= pgv E 342.      Proof. pose proof R340; pose proof R438. pga 342%nat 4096 440%nat 11571200. Qed.
+  Lemma D340_515 : pgv E 342 + 4096 <= pgv E 517 \/ pgv E 517 + 8388608 <= pgv E 342.       Proof. pose proof R340; pose proof R515. pga 342%nat 4096 517%nat 8388608. Qed.
+  Lemma D340_244 : pgv E 342 + 4096 <= pgv E 244 \/ pgv E 244 + 8388608 <= pgv E 342.       Proof. pose proof R340; pose proof R244. pga 342%nat 4096 244%nat 8388608. Qed.
+  Lemma D340_514 : pgv E 342 + 4096 <= pgv E 516 \/ pgv E 516 + 1048576 <= pgv E 342.       Proof. pose proof R340; pose proof R514. pga 342%nat 4096 516%nat 1048576. Qed.
+  Lemma D340_245 : pgv E 342 + 4096 <= pgv E 245 \/ pgv E 245 + 4096 <= pgv E 342.          Proof. pose proof R340; pose proof R245. pga 342%nat 4096 245%nat 4096. Qed.
+  Lemma D340_246 : pgv E 342 + 4096 <= pgv E 246 \/ pgv E 246 + 65536 <= pgv E 342.         Proof. pose proof R340; pose proof R246. pga 342%nat 4096 246%nat 65536. Qed.
 
   (* [comment removed for export] *)
   Context {RC__ : RunCeiling.RunCeiling}.
   Hypothesis RCSP : RunCeiling.rc_sp = usp.
   Lemma ceil_eq : RunCeiling.alloc_ceiling = usp - 8388608.
   Proof.
-    pose proof (usp_lo sp Hsp). pose proof (usp_hi BPH sp rdraw argv envp uid hw Hva Hve Hfit).
+    pose proof (usp_lo sp Hsp). assert (bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi.
     unfold RunCeiling.alloc_ceiling. rewrite RCSP. unfold usp in *. lia.
   Qed.
 
   Theorem init_akern : AsanKern.AKern (aenv_of hs E) (AsanState.astate0 (aenv_of hs E)) model.
   Proof.
     pose proof R515 as R515'. pose proof R514 as R514'. pose proof R245 as R245'. pose proof R244 as R244'. pose proof R226 as R226'. pose proof R227 as R227'.
-    pose proof (usp_hi BPH sp rdraw argv envp uid hw Hva Hve Hfit) as UH. pose proof (usp_lo sp Hsp) as UL. pose proof ceil_eq as CE. pose proof pusp_le as PU.
+    assert (UH : bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi. pose proof (usp_lo sp Hsp) as UL. pose proof ceil_eq as CE. pose proof pusp_le as PU.
     assert (IN226 := amap_in_maps (pgE 226) (ELit 137439023104) KMIX ltac:(vm_compute; reflexivity) eq_refl).
     assert (IN244 := amap_in_maps (pgE 244) (ELit 8388608) KNONELAZY ltac:(vm_compute; reflexivity) eq_refl).
     assert (IN245 := amap_in_maps (pgE 245) (ELit 4096) KRW ltac:(vm_compute; reflexivity) eq_refl).
-    assert (IN514 := amap_in_maps (pgE 514) (ELit 1048576) KRW ltac:(vm_compute; reflexivity) eq_refl).
-    assert (IN515 := amap_in_maps (pgE 515) (ELit 8388608) KRWLAZY ltac:(vm_compute; reflexivity) eq_refl).
+    assert (IN514 := amap_in_maps (pgE 516) (ELit 1048576) KRW ltac:(vm_compute; reflexivity) eq_refl).
+    assert (IN515 := amap_in_maps (pgE 517) (ELit 8388608) KRWLAZY ltac:(vm_compute; reflexivity) eq_refl).
     rewrite !edenot_pg in IN226, IN244, IN245, IN514, IN515 by (unfold usp in *; lia). cbn [edenot] in IN226, IN244, IN245, IN514, IN515.
     pose proof (kwr_pg_pointwise 245 4096 ltac:(vm_compute; reflexivity) ltac:(unfold A_IMG_LO, A_IMG_HI; pose proof I245; lia) S245) as W245.
-    pose proof (kwr_pg_pointwise 514 1048576 ltac:(vm_compute; reflexivity) ltac:(unfold A_IMG_LO, A_IMG_HI; lia) S514) as W514.
-    pose proof (kwr_pg_pointwise 515 8388608 ltac:(vm_compute; reflexivity) ltac:(unfold A_IMG_LO, A_IMG_HI; lia) S515) as W515.
+    pose proof (kwr_pg_pointwise 516 1048576 ltac:(vm_compute; reflexivity) ltac:(unfold A_IMG_LO, A_IMG_HI; lia) S514) as W514.
+    pose proof (kwr_pg_pointwise 517 8388608 ltac:(vm_compute; reflexivity) ltac:(unfold A_IMG_LO, A_IMG_HI; lia) S515) as W515.
     pose proof u_rib as URI.
     pose proof (kwr_pointwise e_rib 137439019008 4096 ltac:(vm_compute; reflexivity) ltac:(rewrite URI; lia) ltac:(rewrite URI; unfold A_IMG_LO, A_IMG_HI; lia) ltac:(rewrite URI; pose proof S226; lia)) as WRI.
     rewrite URI in WRI.
@@ -593,10 +624,10 @@ Section MainInit.
     - (* [comment removed for export] *) split; [apply (INS (pgv E 245) 4096); try lia; exact IN245|]. split.
       + apply clear_ofp_of_pointwise; [lia|]. intros z Hz. apply (proj1 (proj2 (W245 z Hz))).
       + apply lazy_clear_of; lia.
-    - (* [comment removed for export] *) split; [apply (INS (pgv E 514) 1048576); try lia; exact IN514|]. split.
+    - (* [comment removed for export] *) split; [apply (INS (pgv E 516) 1048576); try lia; exact IN514|]. split.
       + apply clear_ofp_of_pointwise; [lia|]. intros z Hz. apply (proj1 (proj2 (W514 z Hz))).
       + apply lazy_clear_of; lia.
-    - (* [comment removed for export] *) split; [apply (INS (pgv E 515) 8388608); try lia; exact IN515|].
+    - (* [comment removed for export] *) split; [apply (INS (pgv E 517) 8388608); try lia; exact IN515|].
       apply clear_ofp_of_pointwise; [lia|]. intros z Hz. apply (proj1 (proj2 (W515 z Hz))).
     - (* [comment removed for export] *) intros b Hb. destruct Hb.
     - (* [comment removed for export] *) intros b Hb. destruct Hb.
@@ -614,10 +645,10 @@ Section MainInit.
   Qed.
 
   (* [comment removed for export] *)
-  Theorem init_kvm : B_slack5.KVM (l0_of E) (segments_reserved BSEGS) model (AsanState.astate0 (aenv_of hs E)).
+  Theorem init_kvm : B_slack5.KVM (l0_of E) (vm_reserved (m_vmmaps model)) model (AsanState.astate0 (aenv_of hs E)).
   Proof.
     pose proof ceil_eq as CE. pose proof pusp_le as PU.
-    unfold B_slack5.KVM. split; [exact init_res|]. split.
+    unfold B_slack5.KVM. split; [reflexivity|]. split.
     - destruct init_vm_maps as (fog & Hvm & Hsz & Hlen). exists fog. split; [| exact (conj Hsz Hlen)].
       rewrite Hvm, B_bundle.amaps_init, app_nil_r. unfold l0_of. rewrite <- app_assoc. apply Permutation_app_head. apply Permutation_app_comm.
     - split.
@@ -659,7 +690,7 @@ Section MainInit.
     split; [intros k p off Hk; destruct (LK k _ Hk) as (c' & Hc & _); discriminate Hc|].
     split; [intros k e Hk; destruct (LK k _ Hk) as (c' & -> & _); exact I|].
     split; [intros t' Ht'; rewrite Ht in Ht'; injection Ht' as <-; exact Htr|].
-    rewrite init_alloc_top, ceil_eq. reflexivity.
+    rewrite init_alloc_top, ceil_eq. split; [reflexivity | exact (co_rdr _ _ _ _ _ _ _ _ _ _ _ HC)].
   Qed.
 
   (* [comment removed for export] *)
@@ -667,7 +698,7 @@ Section MainInit.
                                              (Z_to_bv 64 0xa5000, Z_to_bv 64 0x2000); (Z_to_bv 64 0xa7000, Z_to_bv 64 0x55c000)].
   Proof. vm_compute. reflexivity. Qed.
 
-  Theorem init_l0_ok : B_benv5.l0_ok5 (aenv_of hs E) (l0_of E) (segments_reserved BSEGS).
+  Theorem init_l0_ok_segs : B_benv5.l0_ok5 (aenv_of hs E) (l0_of E) (segments_reserved BSEGS).
   Proof.
     pose proof R532. pose proof R515. pose proof R514. pose proof R438. pose proof R340. pose proof R275. pose proof R246.
     pose proof R245. pose proof R244. pose proof R226. pose proof R225. pose proof R95.
@@ -675,7 +706,7 @@ Section MainInit.
     split; [unfold l0_of, l0_tail; apply in_app_iff; right; cbn [In]; inlist|].
     split; [unfold l0_of, l0_tail; apply in_app_iff; right; cbn [In]; inlist|].
     split; [unfold l0_of, l0_tail; apply in_app_iff; right; cbn [In]; inlist|].
-    split; [repeat (apply Forall_cons; [cbn [fst snd]; rewrite !u64_lit by lia; lia|]); apply Forall_nil|].
+    split; [repeat (apply Forall_cons; [unfold B_benv5.res0_ok, AsanKern.elo, AsanKern.ehi; left; cbn [fst snd]; rewrite !u64_lit by lia; lia|]); apply Forall_nil|].
     split.
     { intros x Hx.
       destruct (Z_lt_le_dec x 0x31000); [exists (Z_to_bv 64 0x10000, Z_to_bv 64 0x21000); split; [cbn [In]; inlist | cbn [fst snd]; rewrite !u64_lit by lia; lia]|].
@@ -689,14 +720,14 @@ Section MainInit.
       repeat (destruct Hrr as [<-|Hrr]; [cbn [fst snd] in Hx|]).
       - l0w (pgv E 245) 4096.
       - l0w (pgv E 246) 65536.
-      - l0w (pgv E 438) 11571200.
-      - l0w (pgv E 515) 8388608.
-      - l0w (pgv E 514) 1048576.
+      - l0w (pgv E 440) 11571200.
+      - l0w (pgv E 517) 8388608.
+      - l0w (pgv E 516) 1048576.
       - l0w (pgv E 244) 8388608.
       - l0w (pgv E 226) 0x2000011000.
-      - l0w (pgv E 340) 4096.
+      - l0w (pgv E 342) 4096.
       - l0w (pgv E 275) 4096.
-      - l0w (pgv E 532) 4096.
+      - l0w (pgv E 534) 4096.
       - l0w (pgv E 225) 3727360.
       - l0w (pgv E 95) 65536.
       - l0w 0x7fff7000 268435456.
@@ -709,6 +740,25 @@ Section MainInit.
         exists (Z_to_bv 64 0xa7000, Z_to_bv 64 0x55c000); split; [apply in_app_iff; left; cbn [In]; inlist | cbn [fst snd]; rewrite !u64_lit by lia; lia].
       - destruct Hrr. }
     cbn [AsanState.ae_reserved aenv_of]. unfold reserved_of, A_IMG. repeat (apply Forall_cons; [cbn [snd]; lia|]). apply Forall_nil.
+  Qed.
+
+  (* LPS 08b1429: the ledger at main is the image's reservations plus the launch's vDSO/vvar
+     pair (co_resx); the pair is above the high shadow (resx_entry_ok) and, like every
+     reservation, apart from every mapping (co_mres), the kernel's two regions included. *)
+  Theorem init_l0_ok : B_benv5.l0_ok5 (aenv_of hs E) (l0_of E) (vm_reserved (m_vmmaps model)).
+  Proof.
+    pose proof (co_resx _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hrx & Hrxok & _).
+    pose proof (co_mres _ _ _ _ _ _ _ _ _ _ _ HC) as MR.
+    pose proof init_akern as AK.
+    rewrite Hrx. apply B_benv5.l0_ok5_ext; [exact init_l0_ok_segs|].
+    apply Forall_forall. intros e He.
+    pose proof (proj1 (Forall_forall _ _) Hrxok e He) as (_ & _ & _ & _ & K5 & _).
+    assert (Hres : In e (vm_reserved (m_vmmaps model))) by (rewrite Hrx; apply in_app_iff; right; exact He).
+    pose proof (proj1 (Forall_forall _ _) (proj1 (Forall_forall _ _) MR _ (AsanKern.ak_resv _ _ _ AK)) e Hres) as D1.
+    pose proof (proj1 (Forall_forall _ _) (proj1 (Forall_forall _ _) MR _ (AsanKern.ak_ptr _ _ _ AK)) e Hres) as D2.
+    unfold iv_disjoint in D1, D2. unfold KHI in K5.
+    unfold B_benv5.res0_ok, B_benv5.res_apart, AsanKern.elo, AsanKern.ehi.
+    right. split; [lia|]. split; lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -726,9 +776,9 @@ Section MainInit.
 
   Lemma stack_top_range : 0 <= AsanState.ae_stack_bottom (aenv_of hs E) /\ AsanState.ae_stack_bottom (aenv_of hs E) < AsanState.ae_stack_top (aenv_of hs E) <= 2 ^ 47.
   Proof.
-    pose proof (usp_lo sp Hsp) as UL. pose proof (usp_hi BPH sp rdraw argv envp uid hw Hva Hve Hfit) as UH.
+    pose proof (usp_lo sp Hsp) as UL. assert (UH : bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi.
     unfold AsanState.ae_stack_bottom, AsanState.ae_stack_top. cbn [AsanState.ae_sp0 aenv_of].
-    change (bv_unsigned (edenot E e_sp0)) with (uE E e_sp0). rewrite (uE_sp0 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs HC).
+    change (bv_unsigned (edenot E e_sp0)) with (uE E e_sp0). rewrite (uE_sp0 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs HC).
     unfold AsanSizeClass.round_up, AsanConsts.kStackAnchorDelta, AsanConsts.kStackSizeForThread, AsanSizeClass.kPageSize. unfold usp in *.
     Z.div_mod_to_equations. lia.
   Qed.
@@ -775,7 +825,7 @@ Section MainInit.
     pose proof D246_226 as Da. pose proof D246_438 as Db. pose proof D246_515 as Dc. pose proof D246_244 as Dd. pose proof D246_514 as De.
     resv_tac RR CE PU S Z I Da Db Dc Dd De.
   Qed.
-  Lemma resv_dtls : B_benv5.resv_range_ok (aenv_of hs E) (pgv E 340) 4096.
+  Lemma resv_dtls : B_benv5.resv_range_ok (aenv_of hs E) (pgv E 342) 4096.
   Proof.
     pose proof R340 as RR. pose proof ceil_eq as CE. pose proof pusp_le as PU. pose proof S340 as S. pose proof Z340 as Z. pose proof I340 as I.
     pose proof D340_226 as Da. pose proof D340_438 as Db. pose proof D340_515 as Dc. pose proof D340_244 as Dd. pose proof D340_514 as De.
@@ -793,7 +843,7 @@ Section MainInit.
     pose proof D246_245 as Da. pose proof D340_245 as Db. pose proof D340_246 as Dc.
     unfold B_benv5.pl0_ok5. cbn [BF_fakestack_rep.fp_ctx BF_fakestack_rep.fp_dtls AsanState.ae_thread AsanState.ae_iarena plumb_of aenv_of]. unfold AsanRep.kIArenaLen.
     split; [exists (pgv E 246), 65536; split; [exact resv_iarena | clear; lia]|].
-    split; [exists (pgv E 340), 4096; split; [exact resv_dtls | clear; lia]|].
+    split; [exists (pgv E 342), 4096; split; [exact resv_dtls | clear; lia]|].
     split; [exact resv_thread|]. split; [lia1 Da|]. split; [lia1 Db|]. split; [lia1 Dc|]. clear; lia.
   Qed.
 

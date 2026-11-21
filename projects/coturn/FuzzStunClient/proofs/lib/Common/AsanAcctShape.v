@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the silent steps take the pending-syscall fact that RomBase.sys_rob_instr turns into the read-only-backing premise, and the sanitizer lemmas carry the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,8 +27,9 @@ Let P_of (T : TSet) : config -> Prop := fun c => realizes segs c T.
 
 Let P_of_silent1 (T : TSet) : forall c c',
     AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+    ms_svc_pending (cfg_ms c) = None ->
     P_of T c' -> P_of T c :=
-  fun c c' Hn Hr => rz_silent1 segs c c' T Hn Hr.
+  fun c c' Hn Hsvc Hr => rz_silent1 segs c c' T Hn (RomBase.sys_rob_instr segs c Hsvc) Hr.
 
 Theorem rz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -56,37 +58,41 @@ Proof.
   exact (rz_msteps_restricted' segs H HH Hwx (P_of T) (P_of_silent1 T) A ms msr' model).
 Qed.
 (* [comment removed for export] *)
-Let SP_of (T : TSet) : config -> Prop := fun c => srealizes segs c T.
+Let SP_of (b : bool) (T : TSet) : config -> Prop := fun c => srealizesM segs b c T.
 
-Let SP_of_silent1 (T : TSet) : forall c c',
+(* the srealizes side takes the same shape so it can share [rz_step_restricted]; (B2):
+   [srz_node] asks [RomBase.sys_rob] too, discharged from the svc fact exactly as
+   [P_of_silent1] does *)
+Let SP_of_silent1 (b : bool) (T : TSet) : forall c c',
     AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
-    SP_of T c' -> SP_of T c :=
-  fun c c' Hn Hr => srz_silent1 segs c c' T Hn Hr.
+    ms_svc_pending (cfg_ms c) = None ->
+    SP_of b T c' -> SP_of b T c :=
+  fun c c' Hn Hsvc Hr => srz_silent1 segs c c' T Hn (RomBase.sys_rob_instr segs c Hsvc) Hr.
 
-Theorem srz_step_restricted_T : forall A ms msr' model T,
+Theorem srz_step_restricted_T {b : bool} : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   m_halted model = None ->
   ms_svc_pending ms = None ->
   RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
   (forall model', MInv A model' -> same_but_materialized model model' ->
-                  srealizes segs (mkCfg (unrestrict H (ms_mem ms) msr') model') T) ->
-  srealizes segs (mkCfg ms model) T.
+                  srealizesM segs b (mkCfg (unrestrict H (ms_mem ms) msr') model') T) ->
+  srealizesM segs b (mkCfg ms model) T.
 Proof.
   intros A ms msr' model T.
-  exact (rz_step_restricted segs H HH Hwx (SP_of T) (SP_of_silent1 T) A ms msr' model).
+  exact (rz_step_restricted segs H HH Hwx (SP_of b T) (SP_of_silent1 b T) A ms msr' model).
 Qed.
 
-Theorem srz_msteps_restricted_T : forall A ms msr' model T,
+Theorem srz_msteps_restricted_T {b : bool} : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   m_halted model = None ->
   msteps segs (restrict H ms) msr' ->
   (forall model',
       MInv A model' -> same_but_materialized model model' ->
       hclean H msr' ->
-      srealizes segs (mkCfg (unrestrict H (ms_mem ms) msr') model') T) ->
-  srealizes segs (mkCfg ms model) T.
+      srealizesM segs b (mkCfg (unrestrict H (ms_mem ms) msr') model') T) ->
+  srealizesM segs b (mkCfg ms model) T.
 Proof.
   intros A ms msr' model T.
-  exact (rz_msteps_restricted' segs H HH Hwx (SP_of T) (SP_of_silent1 T) A ms msr' model).
+  exact (rz_msteps_restricted' segs H HH Hwx (SP_of b T) (SP_of_silent1 b T) A ms msr' model).
 Qed.
 End WithSegs.

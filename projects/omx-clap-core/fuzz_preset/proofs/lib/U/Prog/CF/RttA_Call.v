@@ -36,7 +36,7 @@ Let FG : forall L A mem md a, aa_MR API L A mem md -> in_globals frame_G a -> ~ 
   rtt_FG B API HSEG FA.
 
 (* #102: tx_put (CF tx_put_c.TX_PUT 0x154b8) called from the round_trip_text frame of 112 bytes (struct text at S-112;
-   CF RttBase, the mirror of plain RttBase 1a5309005128); the walk's write set is rtt_writes 0 (rtt_inv). *)
+   CF RttBase, the mirror of plain RttBase); the walk's write set is rtt_writes 0 (rtt_inv). *)
 Lemma ra_put : (forall fx' : YK11.FPState, @tx_put_contract fx' rc B API F) ->
   forall L0 A0 regs0 mem0 md0 Lam0 peak0 cnt0 b0 doc pretty copy t D
     fx1 L A mem md X Lam peak cnt bnd q want len cap txt regs1 s n src (Pc : config -> Prop),

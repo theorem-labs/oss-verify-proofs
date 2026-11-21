@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv at __auxv is the launch's whole vector of 27 or 29 pairs (auxv_ok over LibIface.auxv_vec) in place of the old ten-pair auxv20, and it is kept by any step that leaves its 464 bytes alone (auxv_ok_agree). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require StackLayout.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.jsoncons.fuzz_bigint.images Require Import Plain.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec CatExec CatSim StoreOk Hoare ShapeAlg SpinAlg HeapIface LibIface
@@ -191,8 +193,40 @@ Definition ERRNO : Z := 0x70394.
 Definition CANARY : Z := 0x906a8.         (* [comment removed for export] *)
 Definition AUXVP : Z := 0x906d0.          (* [comment removed for export] *)
 
-(* [comment removed for export] *)
-Definition auxv20 (uid rnd hw : Z) : list Z := [3; 0x10040; 4; 56; 5; 10; 16; hw; 6; 4096; 11; uid; 12; uid; 23; 0; 25; rnd; 0; 0].
+(* The auxiliary vector at [av] (the value of [__auxv]), as the LPS 727298f3
+   launch writes it: [LibIface.auxv_vec], i.e. [StackLayout.auxv_entries]
+   flattened, 27 pairs or 29 under CONFIG_RSEQ.  The launch's own auxv facts,
+   entry, gid and AT_EXECFN pointer are witnesses; the program headers are
+   this image's ([Plain.M.phdrs]: 0x10040, 56, 10). *)
+Definition auxv_ok (M : word -> option byte) (av uid rnd hw : Z) : Prop :=
+  exists (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (entry gid ae : word),
+    Z.of_N (ph_addr ph) = 0x10040 /\ Z.of_N (ph_ent ph) = 56 /\ Z.of_N (ph_num ph) = 10
+    /\ av + 16 * Z.of_nat (StackLayout.auxv_count (StackLayout.la_rseq la)) <= 2 ^ 47
+    /\ (forall j, (j < 2 * StackLayout.auxv_count (StackLayout.la_rseq la))%nat ->
+          L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (auxv_vec la ph entry gid ae uid rnd hw) 0)).
+
+(* The vector's type words, in [StackLayout.auxv_entries]' order: AT_SYSINFO_EHDR,
+   the eight cache words (40-47), AT_MINSIGSTKSZ, AT_HWCAP, AT_PAGESZ, AT_CLKTCK,
+   AT_PHDR, AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY, AT_UID, AT_EUID,
+   AT_GID, AT_EGID, AT_SECURE, AT_RANDOM, AT_EXECFN, the CONFIG_RSEQ pair, AT_NULL. *)
+Definition auxv_types (r : bool) : list Z :=
+  [33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]
+  ++ (if r then [27; 28] else []) ++ [0].
+
+(* The auxv invariant is kept by any step that leaves [av, av + 464) alone:
+   464 = 16 * 29 bytes, the longest vector ([StackLayout.auxv_count true]). *)
+Lemma auxv_ok_agree M M' av uid rnd hw :
+  auxv_ok M av uid rnd hw -> 0 <= av ->
+  (forall i, av <= i < av + 464 -> M' (Z_to_bv 64 i) = M (Z_to_bv 64 i)) ->
+  auxv_ok M' av uid rnd hw.
+Proof.
+  intros (la & ph & entry & gid & ae & P1 & P2 & P3 & B & W) Hav K.
+  exists la, ph, entry, gid, ae. do 4 (split; [assumption|]).
+  assert (Hc : (StackLayout.auxv_count (StackLayout.la_rseq la) <= 29)%nat)
+    by (unfold StackLayout.auxv_count; destruct (StackLayout.la_rseq la); cbn; Lia.lia).
+  intros j Hj. eapply (L5C.u64_at_agree RSEGS); [| Lia.lia | Lia.lia | apply W; exact Hj].
+  intros i Hi. apply K. Lia.lia.
+Qed.
 
 (* [comment removed for export] *)
 Definition e1_statics (M : word -> option byte) (gd fl : bool) (av uid rnd canary hw : Z) : Prop :=
@@ -203,7 +237,7 @@ Definition e1_statics (M : word -> option byte) (gd fl : bool) (av uid rnd canar
       else L5.u8_at RSEGS M UW_FLAGS 0 /\ L5.u8_at RSEGS M (UW_FLAGS + 2) 0 /\ L5.u8_at RSEGS M (UW_FLAGS + 4) 0)
   /\ L5.u64_at RSEGS M TD_LOCALE GLOBAL_LOCALE /\ L5.u64_at RSEGS M LOCALE_MSGCAT 0
   /\ L5.u64_at RSEGS M CANARY canary /\ L5.u64_at RSEGS M AUXVP av /\ av mod 8 = 0 /\ 2 ^ 40 <= av /\ av + 160 <= 2 ^ 47
-  /\ (forall j, (j < 20)%nat -> L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (auxv20 uid rnd hw) 0))
+  /\ auxv_ok M av uid rnd hw
   /\ 0 <= uid < 2 ^ 64 /\ 0 <= rnd < 2 ^ 64 /\ 0 <= canary < 2 ^ 64 /\ 0 <= hw < 2 ^ 64
   (* [comment removed for export] *)
   /\ L5.img_clear M 0x10000 0x5f608 /\ L5.img_clear M 0x5f630 0x5f650 /\ L5.img_clear M 0x5f660 0x5f668.
@@ -216,7 +250,7 @@ Definition e1_statics_landed (M : word -> option byte) (av uid rnd canary hw : Z
   /\ L5.u8_at RSEGS M (UW_FLAGS + 3) 0 /\ L5.u8_at RSEGS M (UW_FLAGS + 4) 1 /\ L5.u8_at RSEGS M (UW_FLAGS + 5) 0
   /\ L5.u64_at RSEGS M TD_LOCALE GLOBAL_LOCALE /\ L5.u64_at RSEGS M LOCALE_MSGCAT 0
   /\ L5.u64_at RSEGS M CANARY canary /\ L5.u64_at RSEGS M AUXVP av
-  /\ (forall j, (j < 20)%nat -> L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (auxv20 uid rnd hw) 0))
+  /\ auxv_ok M av uid rnd hw
   /\ L5.img_clear M 0x10000 0x5f608 /\ L5.img_clear M 0x5f630 0x5f650 /\ L5.img_clear M 0x5f660 0x5f668.
 
 (* [comment removed for export] *)

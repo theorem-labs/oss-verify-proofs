@@ -5,6 +5,7 @@
    projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC05.v:110-141, 221-225, 227-235, 264-270 [Apache-2.0 OR MIT], for
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module paths, module names and numbers changed; 223 of its 252 lines of code are new or changed and 1051 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): put's GROW arm (preset_file.c:454-476, A_put 0x8449c, 612 bytes), the case
    `failed = 0 /\ cap < len + n + 1`, where put must enlarge the buffer before it copies. The image-B twin of
    lib/A/FSW_put_grow.v.
@@ -30,8 +31,8 @@
      side returns to 542052 with regs fsw_pg_regs2, the same ss_mem and the same atom facts; its BC_GEU side stops at
      the FETCH of 535492 = A_fuzz_realloc (fsw_pg_ssc below).
 
-   TAKEN FROM: lib/A/FSW_put_grow.v at a working branch 860b2fb1188 (the same blob is on
-   a working branch f0e2574c33c): the state definitions with B's registers and pcs, fsw_pg_sll1 / 2,
+   TAKEN FROM: lib/A/FSW_put_grow.v at a working branch (the same blob is on
+   a working branch): the state definitions with B's registers and pcs, fsw_pg_sll1 / 2,
    fsw_pg_backedge, pg_run_mem and fsw_pg_loop unchanged in form (B's table fsw_put_tbl for A's fsw_wr_tbl).
 
    Kit used by path, never copied: lib/B/FSW_K.v, lib/B/FSW_put.v (fsw_put_tbl, fsw_pf_SH, fsw_pf_o_region,

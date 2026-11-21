@@ -6,8 +6,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/AFjg.v, with its module paths and module names changed; 624 of its 753 lines of code are new or changed and 281 lines of the source are left out. *)
 (* Malloc PRIMARY hit-k walk (n <= 48) under ARU, any UP: threads lib/A/AFil.v (malloc_hitk) over AFjg.v (D1w, tail_inner, hitk_inner), AFjb.v (D1W_ok, LEAF_ok), AFjf.v (AR_transport, AR_final, LEAF_final), AFje.v (SEED_ok), AFjc.v (junk_values, KPRES, SKPRES, PB250, shadow250), AFi1.v (SS0K, REG0K), AFj6.v (zone facts), with lib/A/FSupoison.v, FSupoisonU.v, FSupoisonAllocR.v and FSupoisonAllocMp1.v. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* The trace premises follow S0 946ad86dc9f: Htr is areq_ok S (KDepot tr) in section e (as AFjb / AFjg) and tr_admit (as_universe B) S tr in malloc_hitkU (as AFil); hitk_innerU gets the trace length (tr_admit_len). *)
-(* Modified by Theorem Labs, 2026-10: image-B port (fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d) of lib/A/FSupoisonAllocMp3.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), the kit is lib/B/FSupoisonAllocR / Rf / Rt, every statement is over B's tfibsegs (lib/B/YB1v.v); the entry, return and depot-call pcs are named (PC_WRAP_MALLOC, PC_MALLOC_RA0, RA_DEPOT_PUT). *)
+(* The trace premises follow S0: Htr is areq_ok S (KDepot tr) in section e (as AFjb / AFjg) and tr_admit (as_universe B) S tr in malloc_hitkU (as AFil); hitk_innerU gets the trace length (tr_admit_len). *)
+(* Modified by Theorem Labs, 2026-10: image-B port (fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d) of lib/A/FSupoisonAllocMp3.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), the kit is lib/B/FSupoisonAllocR / Rf / Rt, every statement is over B's tfibsegs (lib/B/YB1v.v); the entry, return and depot-call pcs are named (PC_WRAP_MALLOC, PC_MALLOC_RA0, RA_DEPOT_PUT). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

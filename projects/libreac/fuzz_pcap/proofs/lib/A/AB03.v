@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance, MEASURED: this is pass 1's own join state (JSDUMP -> hsform.py js), unchanged -- pass1.md (sha256 ec4529da9277; internal record), delivered as AB03.v (sha256 ef8ce856c735; internal record).  Nothing is filled; codeptr c0ce606ed1fa (startup-set 2026-10-29): 0 findings / 0 stale on every file, with 20 declarations carrying their measured reasons in declarations-20.sh (sha256 880286aef98b; internal record); AB1m / YB1m UNMEASURED (no address literal; BFUEL is %nat); logs final20.txt (sha256 b2b70d12a063; internal record) / final20.no-b1m.txt (sha256 be056cbfc3b7; internal record) (a Theorem Labs lane); an independent run by a second lane agrees (asan.declared.out (sha256 13db518b2b18; internal record)).  The earlier `codeptr.py: 0 FINDINGS` here was made with codeptr 32adc9be054c, which reported 0 on a file it never measured. *)
-(* gated: a Theorem Labs lane PASS A+B at c061542723f / 731386609e0 *)
+(* gated: a Theorem Labs lane PASS A+B *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool.

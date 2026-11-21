@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (room_numbers over Mmap.task_unmapped_base with room for the start reservations; the THP flag in the gap proofs; the vDSO reservation premise and the mmap-base equation in the allocator glue; the Mmap import). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.Common Require Import
   PropExec CatExec CatSim Hoare StoreOk MmapSim AllocSim ShapeAlg PureModel VmLedger VmGap AllocIface AsanCeil.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.Common.Mallocng Require Import RefStep RefStmts.
@@ -132,11 +134,12 @@ Context {HT : HeapTop}.
 Lemma room_numbers : forall (backed areas xm maps len : Z),
   0 <= backed <= ROOM_BCAP -> 0 <= areas <= ROOM_AMAX -> 0 <= xm <= ROOM_NMAX + 4115 ->
   0 <= maps <= ROOM_CMAX + ROOM_AMAX -> 0 < len <= ROOM_LMAX ->
-  2^32 + (backed + 4096 * (areas + 1) + 48 * (4096 * (areas + 50)) + xm) + maps * (len + 4095) + len <= alloc_ceiling.
+  Mmap.task_unmapped_base + (backed + 4096 * (areas + 1) + 48 * (4096 * (areas + 50)) + xm) + maps * (len + 4095) + len
+    + (0x14000 + 2 * (len + 4095)) <= alloc_ceiling.
 Proof.
   intros backed areas xm maps len Hb Ha Hx Hm Hl. pose proof alloc_ceiling_range as HC.
   assert (P : maps * (len + 4095) <= (ROOM_CMAX + ROOM_AMAX) * (ROOM_LMAX + 4095)) by (apply Z.mul_le_mono_nonneg; lia).
-  unfold ROOM_LMAX, ROOM_BCAP, ROOM_AMAX, ROOM_NMAX, ROOM_CMAX, ROOM_KMAX in *. lia.
+  unfold Mmap.task_unmapped_base, ROOM_LMAX, ROOM_BCAP, ROOM_AMAX, ROOM_NMAX, ROOM_CMAX, ROOM_KMAX in *. lia.
 Qed.
 
 Lemma pow2_block : forall sh, 0 <= sh -> 0 < 2 ^ (sh + 13) /\ 2 ^ (sh + 13) mod 4096 = 0.
@@ -159,9 +162,9 @@ Proof.
   assert (Bk0 : 0 <= vm_backed_bytes h) by (unfold vm_backed_bytes; apply VmGap.live_bytes_nonneg).
   assert (HA1 : Z.of_nat (length (a_areas A1)) <= ROOM_AMAX) by (unfold ROOM_MCAP, ROOM_KMAX, ROOM_AMAX in *; lia).
   assert (NUM : forall len, 0 < len <= ROOM_LMAX ->
-     2^32 + (vm_backed_bytes h1 + 4096 * (Z.of_nat (length (a_areas A1)) + 1)
+     Mmap.task_unmapped_base + (vm_backed_bytes h1 + 4096 * (Z.of_nat (length (a_areas A1)) + 1)
              + 48 * (4096 * (Z.of_nat (length (a_areas A1)) + 50)) + lsum (a_xmaps A1))
-       + Z.of_nat (length (vm_maps h1)) * (len + 4095) + len <= alloc_ceiling).
+       + Z.of_nat (length (vm_maps h1)) * (len + 4095) + len + (0x14000 + 2 * (len + 4095)) <= alloc_ceiling).
   { intros len Hlen. apply room_numbers; [lia | lia | lia | unfold ROOM_CMAX in *; lia | exact Hlen]. }
   destruct HD as [NR | (len & L1 & L2 & L3 & L4)].
   - (* [comment removed for export] *)
@@ -170,11 +173,12 @@ Proof.
     destruct (Z.eq_dec (a_ctx A1 KAac) 0) as [E0 | NE]; [right | left; lia].
     pose proof (wf_ctx_nonneg A1 HW1 KShift) as Hsh. destruct (pow2_block (a_ctx A1 KShift) Hsh) as [P1 P2].
     pose proof (next_block_le A1 HW1 E0) as NB.
-    apply (node_gap_na A1 h1 _ HW1 HV1 P1 P2). apply NUM. unfold ROOM_AMAX, ROOM_LMAX, ROOM_NMAX in *. lia.
+    intros thp. apply (node_gap_na A1 h1 _ thp HW1 HV1 P1 P2). apply NUM. unfold ROOM_AMAX, ROOM_LMAX, ROOM_NMAX in *. lia.
   - (* [comment removed for export] *)
     assert (Hlen : 0 < len <= ROOM_LMAX) by (unfold ROOM_LMAX, ROOM_NMAX in *; lia).
     assert (Hbud : vm_backed_bytes h1 + len <= vm_limit h1) by (rewrite G6; lia).
-    destruct (node_gap A1 h1 len HW1 HV1 (proj1 L1) L2 (NUM len Hlen) Hbud) as (a & Ha).
+    destruct L4 as [thp L4].
+    destruct (node_gap A1 h1 len thp HW1 HV1 (proj1 L1) L2 (NUM len Hlen) Hbud) as (a & Ha).
     specialize (L4 a). cbn [mmap_grant_ok] in L4. rewrite Ha in L4. discriminate L4.
 Qed.
 
@@ -228,44 +232,44 @@ Section Sure.
       abstract (intros h0 k b IL Hlim Hk Hb; exact (g_room_init h0 k b (il_maps h0 IL) (il_noaccess h0 IL) Hlim Hk Hb)).
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_malloc_g malloc_okX malloc_refines fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 GR _;
-        apply (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11);
+        intros fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_malloc_g malloc_okX malloc_refines fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR _;
+        apply (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12);
         intros k b HR Hk Hb; exact (g_room_malloc A A' _ vm' n k b (proj1 Hn) GR HR Hk Hb)).
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs p ret sp0 argv envp S HG Hpure Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_free_g free_okX free_refines fx A m md regs p ret sp0 argv envp S HG Hpure Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR;
-        apply (HK A' m' vm' regs' X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12);
+        intros fx A m md regs p ret sp0 argv envp S HG Hpure Hvd Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_free_g free_okX free_refines fx A m md regs p ret sp0 argv envp S HG Hpure Hvd Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 GR;
+        apply (HK A' m' vm' regs' X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13);
         intros k b HR; exact (g_room_free A A' _ vm' k b GR HR)).
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_calloc_g calloc_okX calloc_refines fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 GR _;
-        apply (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11);
+        intros fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_calloc_g calloc_okX calloc_refines fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR _;
+        apply (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12);
         intros k b HR Hk Hb; exact (g_room_malloc A A' _ vm' (cnt * sz) k b (proj1 Hn) GR HR Hk Hb)).
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs n k b ret sp0 argv envp S HG Hpure Henv H10 Hn HR Hk Hb Hmax H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_malloc_g malloc_okX malloc_refines fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 GR NR;
+        intros fx A m md regs n k b ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn HR Hk Hb Hmax H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_malloc_g malloc_okX malloc_refines fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR NR;
         destruct X4 as [(E0 & _) | (Hnz & F1 & F2 & F3 & F4)];
         [ exfalso; apply (g_noroom_absurd A m (m_vmmaps md) n k b HG (conj (proj1 Hn) Hmax) HR Hk Hb);
           apply NR; rewrite E0; reflexivity
-        | apply (HK A' m' vm' regs' res X1 X2 X3 Hnz F1 F2 F3 F4 X5 X6 X7 X8 X9 X10 X11);
+        | apply (HK A' m' vm' regs' res X1 X2 X3 Hnz F1 F2 F3 F4 X5 X6 X7 X8 X9 X10 X11 X12);
           exact (g_room_malloc A A' _ vm' n k b (proj1 Hn) GR HR Hk Hb) ]).
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs cnt sz k b ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn HR Hk Hb Hmax H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_calloc_g calloc_okX calloc_refines fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 GR NR;
+        intros fx A m md regs cnt sz k b ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn HR Hk Hb Hmax H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_calloc_g calloc_okX calloc_refines fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR NR;
         destruct X4 as [(E0 & _) | (Hnz & F1 & F2 & F3 & F4 & F5)];
         [ exfalso; apply (g_noroom_absurd A m (m_vmmaps md) (cnt * sz) k b HG (conj (proj1 Hn) Hmax) HR Hk Hb);
           apply NR; rewrite E0; reflexivity
-        | apply (HK A' m' vm' regs' res X1 X2 X3 Hnz F1 F2 F3 F4 F5 X5 X6 X7 X8 X9 X10 X11);
+        | apply (HK A' m' vm' regs' res X1 X2 X3 Hnz F1 F2 F3 F4 F5 X5 X6 X7 X8 X9 X10 X11 X12);
           exact (g_room_malloc A A' _ vm' (cnt * sz) k b (proj1 Hn) GR HR Hk Hb) ]).
   Defined.
 

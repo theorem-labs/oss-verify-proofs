@@ -1,4 +1,4 @@
-(* The image-B port of lib/A/Prog/check_model_lem.v (commit beed74b30c04): the pure facts the
+(* The image-B port of lib/A/Prog/check_model_lem.v: the pure facts the
    image-B walk of check_model (lib/B/Prog/check_model.v, fuzz_segconf.asan-ubsan) reads off its contract's
    encodings, over image B's kit copies (lib.B YG0f YG0n YG0d) and contract base (lib.B.Prog.SegABase). The
    statements and proofs are the A file's; only the Require lines differ. No image, no listing. *)

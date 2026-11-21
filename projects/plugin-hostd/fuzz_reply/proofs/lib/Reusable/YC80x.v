@@ -1,5 +1,5 @@
-(* reply-own since QMm W0' (a Theorem Labs lane 2026-10-30, the YCbqG grant); lineage: carried from a working branch
-   9d080dc19ee7bf550e1d0ef68328c9cf18ff1605, proofs/omx-clap-core/fuzz_preset/lib/Reusable/YC80x.v, sha256
+(* reply-own since QMm W0' (a Theorem Labs lane 2026-10-30, the YCbqG grant); lineage: carried from a working branch,
+   proofs/omx-clap-core/fuzz_preset/lib/Reusable/YC80x.v, sha256
    60a68820a8c42f20233bb276819df697e03dd71fbaf5aadb99af0f7d928ee5e8, with the module prefix
    OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
    QMm W0' (a Theorem Labs lane): sections j and e take YCbqG's PST_nk (PST holds no kept byte) for ajournal_x_pst_write. *)
@@ -7,12 +7,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the position-abstract-listing runner of
-   proofs/cgif/cgif_file_fuzzer/lib/YC80.v (origin/ossv/recipes c8557374ad2e :52-140) restated over YCbqG.v's journal
+   proofs/cgif/cgif_file_fuzzer/lib/YC80.v (theorem-labs/oss-verify-proofs@6b32741d849a :52-140) restated over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp threaded as YCbqG.v's SRr_chain_tok_AJx does,
    program statics PST); plus mixed-write twins (suffix m) whose write premise also admits the program's own statics PST,
    from the journal lemma ajournal_x_exec_mixed below. Generic: no image class, no address, no ledger.
    SK (YI16.sink_head) is a Context parameter of every lemma here. Global sink_head instances exist in this tree
    (YI5b.v src0_sink_head, YE2k.v / AE2k.v tfib_sink_head): pass SK explicitly at every use, never let it be inferred. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -61,7 +62,7 @@ Hypothesis PST_nk : forall a, Exists (in_zr a) PST -> ~ kept_x segs B a.
 (* YCbqG.v's ajournal_x_exec (:365) with a write set Wr that may also cover the program's own statics PST: a function's
    straight-line code writes its own frame and its statics between two calls. The memory change splits at an
    intermediate memory memi (memc' off PST, memc on PST): memc -> memi is ajournal_x_exec over Wr minus PST, and
-   memi -> memc' is ajournal_x_pst_write (YCbqG.v:798). No premise beyond ajournal_x_exec's and PST_ok. *)
+   memi -> memc' is ajournal_x_pst_write (YCbqG.v:799). No premise beyond ajournal_x_exec's and PST_ok. *)
 Lemma ajournal_x_exec_mixed : forall STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc' mdc' (Wr : Z -> Prop),
 ajournal_x segs B PST ARx STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
 (forall x : word, ~ Wr (bv_unsigned x) -> mrestrict (w_H Wc) memc' x = mrestrict (w_H Wc) memc x) ->

@@ -6,12 +6,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths changed; 842 of its 961 lines of code are new or changed and 2438 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/A4.v, with its module paths and module names changed; 83 of its 193 lines of code are new or changed and 851 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/A4.v blob d44831231112 at 6a74d5929d2.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/A4.v blob d44831231112.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: a4_evt_of_F re-derives A4.a4_evt at ExecF.RNG_all; a4_evt_of_F_verbatim checks by constr_eq that its
    type is the type of A4.a4_evt. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -25,7 +26,7 @@
                                      0x81318-0x813fc)
    The two `stk` premises get NO rng premise: the run performs no access in [lo, hi) (they are carried to the post
    through munch), and the window [S3 + 255, S3 + 392) of the second one is the shadow region above.
-   A4.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 1 of its code lines changed or removed, 1 added. a4_evt_of_F re-derives it at ExecF.RNG_all.
+   A4.v's code is unchanged since release (comments edited); it differs from the source blob above: 1 of its code lines changed or removed, 1 added. a4_evt_of_F re-derives it at ExecF.RNG_all.
 
    A4.v's run is on the UL engine (lib/A/Tk/UL), with the UL copies of `rw_cells` / `cell` in its statement, while
    the re-run is stepped by lib.Lib's StepF on the lib.Lib machine state. So, as Seg/F10F.v does:

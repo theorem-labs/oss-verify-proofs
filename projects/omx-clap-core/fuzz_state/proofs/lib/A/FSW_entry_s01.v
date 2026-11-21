@@ -7,6 +7,7 @@
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v, with its addresses and numbers changed; 231 of its 326 lines of code are new or changed and 2591 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, lane ENTRY, segments S0 + S1 (+ the dead S1') of the LLVMFuzzerTestOneInput walk (fs.asan
    0x80f1c-0x80f88, plan entry-walk-plan.md): fe_seg01, from the entry configuration to the resume after
    __asan_stack_malloc_0 (FSW_entry_defs.v ss_B2 / INV_B2), in the form fe_enter. rule 24: no function proved (fs's own
@@ -21,7 +22,7 @@
    The walk's footprint is the closed FS_PSTAT_FP, so the model step is same_io (YCbq.aos_step_closed_same_io); the
    statics' fs_stat is kept by the run (stack writes only, FSW_K fs_glob_below) and by the call (its image clause,
    acall_kept, given the statics are neither runtime-owned nor errno: fs_img_facts' first conjunct, IMG).
-   Ported from: a working branch c4bfd3bc057 lib/A/FSH_check_reject_clean_starved.v crcs_ss0,
+   Ported from: a working branch lib/A/FSH_check_reject_clean_starved.v crcs_ss0,
    crcs_ss1, crcs_entry, crcs_seg0, crcs_sm_site, crcs_glob_img, crcs_glob_keep (here at the 96-byte frame of the
    entry and FS_PSTAT_FP); the steps are FSW_K's (fsw_entryT_args, fsw_uar_regions_ok, fsw_aj_run_toU, fsw_realign_val)
    and FSW_frame's (fsw_stack_malloc_atU). *)

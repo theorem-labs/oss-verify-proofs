@@ -1,10 +1,11 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG05cf.v, sha256 ffa25e2673326a09f5ab2584a1a110bcd915a94677198800731509aabb10a996.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
-   Plus the P'' (Univ trace carrier) delta of commit 94ab015e127b for cgif/cgif_file_fuzzer/lib/YG05cf.v, taken 3-way (base d94d29d53c8). *)
+   Plus the P'' (Univ trace carrier) delta for cgif/cgif_file_fuzzer/lib/YG05cf.v, taken 3-way. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the fake-stack laws.
    cgif's YG05.v (stack_malloc_progress :70, Wf_push_frame :86, stack_malloc_ok :99, stack_free_ok :127)
    restated over Wf_cf (YG01cf.v). The state-only lemmas of YG05.v (fs_probe_some, fs_probe_none,

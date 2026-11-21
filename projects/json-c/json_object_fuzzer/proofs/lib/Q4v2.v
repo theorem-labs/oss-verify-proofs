@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: memappend_A_tail takes it after alloc_ceiling <= lo). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -87,7 +88,7 @@ bpos + n + 1 <= cap -> 0 <= n < 2^31 ->
 bytes_at asegs m b src -> Z.of_nat (length src) = n -> 0 <= b -> b + n <= alloc_ceiling ->
 (0 < n -> unpoisoned asegs m A_SB b n) -> (n <= 64 \/ app_mem b n) ->
 (b + n <= buf \/ buf + cap <= b) ->
-stk asegs m lo (bv_unsigned sp + -112) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -112 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -112) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -112 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m (bv_unsigned sp + -112) [CB 8 fjunk; C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -104,7 +105,7 @@ AJ5 A4L HIx A T md
 x18 x19 (Z_to_bv 64 A_SB) (Z_to_bv 64 (pb / 8 + 1 + A_SB)) (Z_to_bv 64 (pb / 8)) x23 x24 x25 x26 x27 t3 t4 t5 t6)
 F (Z_to_bv 64 0x9a24c) fc None m (seg_rom asegs)).
 Proof.
-intros until fjunk. intros HP PBX ROOM Hn SRC SRCL Hb0 Hbn UPS AMS BSEP ST LO LOS SPA HT FR ERR RA VM0 HPR BB BD CAPE Ebpos Epre K.
+intros until fjunk. intros HP PBX ROOM Hn SRC SRCL Hb0 Hbn UPS AMS BSEP ST LO HBT LOS SPA HT FR ERR RA VM0 HPR BB BD CAPE Ebpos Epre K.
 destruct PBX as (Hbp & Hcap & Hlen & PBS & PBUF).
 unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -340,7 +341,7 @@ bpos + n + 1 <= cap -> 0 <= n < 2^31 ->
 bytes_at asegs m b src -> Z.of_nat (length src) = n -> 0 <= b -> b + n <= alloc_ceiling ->
 (0 < n -> unpoisoned asegs m A_SB b n) -> (n <= 64 \/ app_mem b n) ->
 (b + n <= buf \/ buf + cap <= b) ->
-stk asegs m lo (bv_unsigned sp + -112) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -112 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -112) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -112 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m (bv_unsigned sp + -112) [CB 8 fjunk; C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -357,7 +358,7 @@ AJ5 A4L HIx A T md
 x18 x19 (Z_to_bv 64 A_SB) (Z_to_bv 64 (pb / 8 + 1 + A_SB)) (Z_to_bv 64 (pb / 8)) x23 x24 x25 x26 x27 t3 t4 t5 t6)
 F (Z_to_bv 64 0x9b704) fc None m (seg_rom asegs)).
 Proof.
-intros until fjunk. intros HP PBX ROOM Hn SRC SRCL Hb0 Hbn UPS AMS BSEP ST LO LOS SPA HT FR ERR RA VM0 HPR BB BD CAPE Ebpos Epre K.
+intros until fjunk. intros HP PBX ROOM Hn SRC SRCL Hb0 Hbn UPS AMS BSEP ST LO HBT LOS SPA HT FR ERR RA VM0 HPR BB BD CAPE Ebpos Epre K.
 destruct PBX as (Hbp & Hcap & Hlen & PBS & PBUF).
 unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.

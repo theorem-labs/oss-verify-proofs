@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: la_callS is ported from the w4 lane's gx_callS, itself the cgif donor's
    cl_callS (proofs/cgif/*/lib/YC85.v:383, Anthropic PBC); the rest is new. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The first half of the LINEA segment of fuzz_reply's drain ASan walk
    (fuzz_reply.asan 0x836bc .. 0x836f0 and 0x8373c .. 0x83744): the skip / overlong test of a found line and
    the PROGRAM CALL send_line, ending at the cut DLS of W_drain_lineb_cx.v (0x83748).  The statement is
@@ -625,7 +626,7 @@ Qed.
 
 (* THE LIVENESS BRIDGE.  send_line_c.v:21-22 makes liveness depend on the length only through `len =? 0`
    (send_off cl br len = (cl <? 0) || (br =? 1) || (len =? 0); send_live = negb send_off && (dd =? 0)), and
-   W_drain_cx.v:408 dctl only moves br to dd and clears ei once the stream is off.  So the controller at the
+   W_drain_cx.v:409 dctl only moves br to dd and clears ei once the stream is off.  So the controller at the
    cut sends the next line exactly when the drain as a whole is live - EXCEPT in one configuration: the
    drain's reference stream has no line at all (dr_tot (dxh cx) = 0) while the controller is otherwise live
    (cl >= 0, br <> 1, dd = 0).  There the machine's send IS live and the model's is not.  That configuration
@@ -651,7 +652,7 @@ destruct (Z.eqb_spec (ct_dd (dxc cx)) 0) as [Hdd|Hdd].
 - rewrite !andb_false_r. reflexivity.
 Qed.
 
-(* THE CONTROLLER ADVANCES.  send_line's own controller step (W_contract.v:763 sl_ctl) applied to the
+(* THE CONTROLLER ADVANCES.  send_line's own controller step (W_contract.v:764 sl_ctl) applied to the
    controller after `tot` bytes is the controller after tot + len, because `off` depends on the length only
    through `len =? 0` and dctl already moved br to dd and cleared ei once the stream was off. *)
 Lemma la_ctl_step : forall (cx : dcx) tot ev len, 0 <= tot -> 0 < len ->
@@ -1820,7 +1821,7 @@ pose proof HEOK as (_ & Hskip & _). destruct Hskip as [Hsk0|Hsk1].
         split; [exact HPRs|].
         exists out2. split; [exists k2; eexists; exact HJ2|].
         split; [exact HAK2|]. split; [exact HMO2|]. split; [exact HPm2|]. split; [exact HO2 | exact HOFF2].
-      - (* The callee's footprint is the CURRENT g_out block, the journal's (dFP cx, W_contract.v:984) the
+      - (* The callee's footprint is the CURRENT g_out block, the journal's (dFP cx, W_contract.v:985) the
            ENTRY's.  A g_out block that is not one of the entry's blocks is a tmp block (YCbq.v:345).  One
            that is, is by DBASE's entry permutation the table block or a dxrest block - both impossible,
            since the current permutation lists them apart from g_out and ablocks has no duplicate - or an
@@ -3864,7 +3865,7 @@ pose proof HEOK as (_ & Hskip & _). destruct Hskip as [Hsk0|Hsk1].
         exists out2. split; [exists k2; eexists; exact HJ2|].
         split; [exact HAK2|]. split; [exact HMO2|]. split; [exact HRM2|]. split; [exact HPm2|].
         split; [exact HO2 | exact HOFF2].
-      - (* The callee's footprint is the CURRENT g_out block, the journal's (dFP cx, W_contract.v:984) the
+      - (* The callee's footprint is the CURRENT g_out block, the journal's (dFP cx, W_contract.v:985) the
            ENTRY's.  A g_out block that is not one of the entry's blocks is a tmp block (YCbq.v:345).  One
            that is, is by DBASE's entry permutation the table block or a dxrest block - both impossible,
            since the current permutation lists them apart from g_out and ablocks has no duplicate - or an

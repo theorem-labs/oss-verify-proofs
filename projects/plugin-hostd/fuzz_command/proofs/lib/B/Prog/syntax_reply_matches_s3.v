@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the walk through a
-   runtime entry: cmp_tail and aj_memcmp_at) and lib/A/AC8b.v at c8557374ad2e: the walk of syntax_reply_matches on
+   runtime entry: cmp_tail and aj_memcmp_at) and lib/A/AC8b.v: the walk of syntax_reply_matches on
    fuzz_command.asan, the comparison of an item with no '<' and the reply word: NOLT (0x886f0: length test, the bcmp
    wrapper's call) and RET2 (0x88704: its result). *)
-(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s3.v (a working branch
-   db7d4effe38) for fuzz_command.asan-ubsan: NOLT 0x88a2c compares the item length a2 with the word length s5
+(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s3.v (a working branch)
+   for fuzz_command.asan-ubsan: NOLT 0x88a2c compares the item length a2 with the word length s5
    directly and hands s3 (the item's start) to the bcmp wrapper; RET2 0x88a3c; the reply's set kept in s11. *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 713692f1e0c (statement pass 4b): ABCMP holds at every FP
+(* Modified by Theorem Labs, 2026-10: onto a working branch (statement pass 4b): ABCMP holds at every FP
    state, as the statement has it; the bcmp call takes it at fx. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

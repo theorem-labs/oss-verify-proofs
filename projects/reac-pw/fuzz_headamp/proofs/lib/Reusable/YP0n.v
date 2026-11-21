@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0n.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the model's mmap decline; the vvar/vDSO pair in the initial model and its reservations; munmap's ENOMEM refusal arm; Linux's mmap placement for the NULL hint; the run_segments robustness facts of the syscall nodes; the launch's channel-reader fact for fdchan's third conjunct; the model's mmap grant test; the allocator ledger's new fields; the mprotect gate over the reservations). *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -14,7 +15,10 @@ From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import YK16 YK0n
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import YM00.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable.Z Require Import Placement.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable.R Require Import Place Cfg.
+From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import RomBase RomWritev.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+(* Not imported: its page_round_up_Z_aligned would shadow the one this file uses. *)
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -115,6 +119,26 @@ Proof using.
 intros segs ms x8 n m eff Hno Hb. apply mcfg_nonspurious.
 change (in_sysno (sys_input segs ms x8)) with x8. rewrite Hno. apply alloc_no_b_false. exact Hb.
 Qed.
+(* LPS 08b1429: a larger read-only backing extends the view [pend_at] reads through, and
+   leaves a path read that does not fault (and its copy-in record) as it was. *)
+Lemma pend_mem_ext : forall regs pc mem rom rom', rom_ext rom rom' ->
+mem_ext (ms_read_byte (pend_at regs pc mem rom)) (ms_read_byte (pend_at regs pc mem rom')).
+Proof.
+intros regs pc mem rom rom' Hr a b. unfold ms_read_byte, pend_at. cbn [ms_mem ms_rom].
+destruct (mem a); [intro E; exact E | apply Hr].
+Qed.
+Lemma pend_cstr_ext : forall regs pc mem rom rom' a, rom_ext rom rom' ->
+read_cstr (ms_read_byte (pend_at regs pc mem rom)) a <> CstrFault ->
+read_cstr (ms_read_byte (pend_at regs pc mem rom')) a = read_cstr (ms_read_byte (pend_at regs pc mem rom)) a.
+Proof. intros regs pc mem rom rom' a Hr Hnf. apply read_cstr_ext; [apply pend_mem_ext; exact Hr | exact Hnf]. Qed.
+Lemma pend_oci_ext : forall regs pc mem rom rom', rom_ext rom rom' ->
+read_cstr (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) <> CstrFault ->
+open_copyins (pend_at regs pc mem rom') = open_copyins (pend_at regs pc mem rom).
+Proof.
+intros regs pc mem rom rom' Hr Hnf. unfold open_copyins. rewrite !pend_gpr1.
+rewrite (cstr_access_len_aux_ext path_max _ _ (getr regs 11) (pend_mem_ext regs pc mem rom rom' Hr) Hnf).
+reflexivity.
+Qed.
 Section g.
 Variable segs : list Segment.
 Lemma node_chk_cfg : forall ms model x8 (I : Type) (i0 : I)
@@ -128,10 +152,11 @@ ms_svc_pending ms = Some x8 ->
 (exists i, eff = ef i /\ m' = md i /\ evs = ev i)
 \/ (spurious_refusal_cfg mcfg (sys_input segs ms x8) model eff /\ m_halted m' = None)) ->
 (forall i, ~ spurious_refusal_cfg mcfg (sys_input segs ms x8) model (ef i)) ->
+sys_rob segs (mkCfg ms model) ->
 node_ok segs (mkCfg ms model) I ev
 (fun i => mkCfg (advance_past_svc (apply_effect ms (ef i))) (md i)).
 Proof.
-intros ms model x8 I i0 ef md ev Hh Hsvc Hok Hhl Hlz Hinv Hns. split.
+intros ms model x8 I i0 ef md ev Hh Hsvc Hok Hhl Hlz Hinv Hns Hrob. split; [| split; [| exact Hrob]].
 - intro i. apply (sstep_cfg_syscall segs mcfg ms model x8 (ef i) (md i) (md i) (ev i) Hh Hsvc).
 + apply check_syscall_ok_iff. apply Hok.
 + apply Hns.
@@ -205,12 +230,30 @@ ms_svc_pending ms = Some x8 ->
 (forall eff m' evs, check_syscall (sys_input segs ms x8) eff model = CheckOk m' evs ->
 exists i, eff = ef i /\ m' = md i /\ evs = ev i) ->
 (forall i, ~ spurious_refusal_cfg mcfg (sys_input segs ms x8) model (ef i)) ->
+sys_rob segs (mkCfg ms model) ->
 node_ok segs (mkCfg ms model) I ev
 (fun i => mkCfg (advance_past_svc (apply_effect ms (ef i))) (md i)).
 Proof.
-intros ms model x8 I i0 ef md ev Hh Hsvc Hok Hhl Hlz Hinv Hns.
-apply (node_chk_cfg ms model x8 I i0 ef md ev Hh Hsvc Hok Hhl Hlz); [|exact Hns].
+intros ms model x8 I i0 ef md ev Hh Hsvc Hok Hhl Hlz Hinv Hns Hrob.
+apply (node_chk_cfg ms model x8 I i0 ef md ev Hh Hsvc Hok Hhl Hlz); [| exact Hns | exact Hrob].
 intros eff m' evs Hk. left. exact (Hinv eff m' evs Hk).
+Qed.
+(* [sys_rob] at a [pend_at] node: the check is the same for every larger backing. *)
+Lemma rob_pend : forall regs pc mem rom model,
+(forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff model) ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model).
+Proof.
+intros regs pc mem rom model H. apply sys_rob_of_check.
+intros r x8 Hr Hs eff. change (Some (getr regs 17) = Some x8) in Hs. injection Hs as <-.
+exact (H r Hr eff).
+Qed.
+Lemma rob_pend_mf : forall regs pc mem rom model,
+memfree (bv_unsigned (getr regs 17)) -> sys_rob segs (mkCfg (pend_at regs pc mem rom) model).
+Proof.
+intros regs pc mem rom model Hmf.
+exact (sys_rob_memfree segs (pend_at regs pc mem rom) model (getr regs 17) eq_refl Hmf).
 Qed.
 Lemma rz_alt3 : forall c (IA IB IC : Type) (nx : IA + (IB + IC) -> config)
 (A B C : TSet) (a0 : IA) (b0 : IB) (c0 : IC),
@@ -240,11 +283,12 @@ m_halted m' = None -> m_vm_lazy m' = [] ->
 (forall eff2 m2 evs2,
 check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff2 model
 = CheckOk m2 evs2 -> eff2 = eff /\ m2 = m' /\ evs2 = evs) ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 realizes segs (mkCfg (mkst (regupd regs 10 (eff_ret eff)) (v_addi pc 4)
 (effmem mem eff) rom) m') T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) (t_emit evs T).
 Proof.
-intros regs pc mem rom model eff m' evs T Hh Hlz Hok Hh' Hlz' Huniq Hc.
+intros regs pc mem rom model eff m' evs T Hh Hlz Hok Hh' Hlz' Huniq Hrob Hc.
 eapply rz_emit1.
 - apply (node_chk (pend_at regs pc mem rom) model (getr regs 17) unit tt
 (fun _ => eff) (fun _ => m') (fun _ => evs) Hh eq_refl
@@ -252,6 +296,7 @@ eapply rz_emit1.
 + intros eff2 m2 evs2 H2. exists tt. apply Huniq. exact H2.
 + intros []. apply nonspurious_of_unique. intros eff2 m2 evs2 Hs2.
 apply check_syscall_ok_iff in Hs2. apply Huniq in Hs2 as (-> & _ & _). reflexivity.
++ exact Hrob.
 - cbn. rewrite adv_pend. exact Hc.
 Qed.
 Lemma rz_chk1_silent : forall regs pc mem rom model eff m' T,
@@ -262,11 +307,12 @@ m_halted m' = None -> m_vm_lazy m' = [] ->
 (forall eff2 m2 evs2,
 check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff2 model
 = CheckOk m2 evs2 -> eff2 = eff /\ m2 = m' /\ evs2 = []) ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 realizes segs (mkCfg (mkst (regupd regs 10 (eff_ret eff)) (v_addi pc 4)
 (effmem mem eff) rom) m') T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof using.
-intros regs pc mem rom model eff m' T Hh Hlz Hok Hh' Hlz' Huniq Hc.
+intros regs pc mem rom model eff m' T Hh Hlz Hok Hh' Hlz' Huniq Hrob Hc.
 eapply rz_silent1.
 - apply (node_chk (pend_at regs pc mem rom) model (getr regs 17) unit tt
 (fun _ => eff) (fun _ => m') (fun _ => []) Hh eq_refl
@@ -274,6 +320,7 @@ eapply rz_silent1.
 + intros eff2 m2 evs2 H2. exists tt. apply Huniq. exact H2.
 + intros []. apply nonspurious_of_unique. intros eff2 m2 evs2 Hs2.
 apply check_syscall_ok_iff in Hs2. apply Huniq in Hs2 as (-> & _ & _). reflexivity.
++ exact Hrob.
 - cbn. rewrite adv_pend. exact Hc.
 Qed.
 Lemma check_ret_only_uniq : forall eff2 r m1 evs1 m2 evs2,
@@ -288,15 +335,17 @@ m_halted model = None -> m_vm_lazy model = [] ->
 (forall eff, check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff model
 = check_ret_only eff r m' evs) ->
 m_halted m' = None -> m_vm_lazy m' = [] ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 realizes segs (mkCfg (mkst (regupd regs 10 r) (v_addi pc 4) mem rom) m') T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) (t_emit evs T).
 Proof.
-intros regs pc mem rom model r m' evs T Hh Hlz Hchk Hh' Hlz' Hc.
+intros regs pc mem rom model r m' evs T Hh Hlz Hchk Hh' Hlz' Hrob Hc.
 apply (rz_chk1 regs pc mem rom model (mkEffect r [] []) m' evs T Hh Hlz).
 - rewrite Hchk. apply check_ret_only_self.
 - exact Hh'.
 - exact Hlz'.
 - intros eff2 m2 evs2 H2. rewrite Hchk in H2. apply check_ret_only_uniq. exact H2.
+- exact Hrob.
 - cbn [eff_ret]. rewrite effmem_ret_only. exact Hc.
 Qed.
 Lemma rz_ret_only_silent : forall regs pc mem rom model r m' T,
@@ -304,15 +353,17 @@ m_halted model = None -> m_vm_lazy model = [] ->
 (forall eff, check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff model
 = check_ret_only eff r m' []) ->
 m_halted m' = None -> m_vm_lazy m' = [] ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 realizes segs (mkCfg (mkst (regupd regs 10 r) (v_addi pc 4) mem rom) m') T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof using.
-intros regs pc mem rom model r m' T Hh Hlz Hchk Hh' Hlz' Hc.
+intros regs pc mem rom model r m' T Hh Hlz Hchk Hh' Hlz' Hrob Hc.
 apply (rz_chk1_silent regs pc mem rom model (mkEffect r [] []) m' T Hh Hlz).
 - rewrite Hchk. apply check_ret_only_self.
 - exact Hh'.
 - exact Hlz'.
 - intros eff2 m2 evs2 H2. rewrite Hchk in H2. apply check_ret_only_uniq. exact H2.
+- exact Hrob.
 - cbn [eff_ret]. rewrite effmem_ret_only. exact Hc.
 Qed.
 Lemma effmem_copyins_ret_only : forall mem reads r,
@@ -323,15 +374,17 @@ m_halted model = None -> m_vm_lazy model = [] ->
 (forall eff, check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff model
 = check_ret_only_copyins reads eff r m' evs) ->
 m_halted m' = None -> m_vm_lazy m' = [] ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 realizes segs (mkCfg (mkst (regupd regs 10 r) (v_addi pc 4) mem rom) m') T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) (t_emit evs T).
 Proof.
-intros regs pc mem rom model reads r m' evs T Hh Hlz Hchk Hh' Hlz' Hc.
+intros regs pc mem rom model reads r m' evs T Hh Hlz Hchk Hh' Hlz' Hrob Hc.
 apply (rz_chk1 regs pc mem rom model (with_copyins reads (mkEffect r [] [])) m' evs T Hh Hlz).
 - rewrite Hchk. apply check_ret_only_copyins_refl.
 - exact Hh'.
 - exact Hlz'.
 - intros eff2 m2 evs2 H2. rewrite Hchk in H2. apply check_ret_only_copyins_ok_iff. exact H2.
+- exact Hrob.
 - cbn [eff_ret with_copyins]. rewrite effmem_copyins_ret_only. exact Hc.
 Qed.
 Lemma rz_ret_only_copyins_silent : forall regs pc mem rom model reads r m' T,
@@ -339,15 +392,17 @@ m_halted model = None -> m_vm_lazy model = [] ->
 (forall eff, check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff model
 = check_ret_only_copyins reads eff r m' []) ->
 m_halted m' = None -> m_vm_lazy m' = [] ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 realizes segs (mkCfg (mkst (regupd regs 10 r) (v_addi pc 4) mem rom) m') T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof using.
-intros regs pc mem rom model reads r m' T Hh Hlz Hchk Hh' Hlz' Hc.
+intros regs pc mem rom model reads r m' T Hh Hlz Hchk Hh' Hlz' Hrob Hc.
 apply (rz_chk1_silent regs pc mem rom model (with_copyins reads (mkEffect r [] [])) m' T Hh Hlz).
 - rewrite Hchk. apply check_ret_only_copyins_refl.
 - exact Hh'.
 - exact Hlz'.
 - intros eff2 m2 evs2 H2. rewrite Hchk in H2. apply check_ret_only_copyins_ok_iff. exact H2.
+- exact Hrob.
 - cbn [eff_ret with_copyins]. rewrite effmem_copyins_ret_only. exact Hc.
 Qed.
 Lemma rz_exit_at : forall regs pc mem rom model,
@@ -375,17 +430,20 @@ bv_unsigned (getr regs 17) = 64%Z ->
 fdchan fd ch model -> fd32 fd = fd ->
 getr regs 10 = fd ->
 ms_read_bytes (pend_at regs pc mem rom) (getr regs 11) (getr regs 12) = Some buf ->
+(* 08b1429: write_spec checks access_ok on the buffer (vfs_write) *)
+access_okb (getr regs 11) (bv_unsigned (getr regs 12)) = true ->
 buf_modeled buf -> (1 <= length buf)%nat ->
 (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
 realizes segs (mkCfg (mkst (regupd regs 10 (len_word (firstn n buf))) (v_addi pc 4) mem rom)
 model) T) ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) (t_write_ch ch buf T).
 Proof.
-intros regs pc mem rom model fd ch buf T Hh Hlz Hno Hfdc H32 Hfd Hr Hbm Hnb Hc.
+intros regs pc mem rom model fd ch buf T Hh Hlz Hno Hfdc H32 Hfd Hr Hok Hbm Hnb Hc.
 apply (rz_write_ch segs (pend_at regs pc mem rom) model fd ch (getr regs 17) buf T
 Hh Hlz Hfdc H32 eq_refl Hno).
 - rewrite pend_gpr0. exact Hfd.
 - rewrite pend_gpr1, pend_gpr2. exact Hr.
+- rewrite pend_gpr1, pend_gpr2. exact Hok.
 - exact Hbm.
 - exact Hnb.
 - intros n Hn1 Hn2. rewrite adv_pend_set. apply Hc; assumption.
@@ -434,6 +492,7 @@ cbn [andb] in Hk. inversion Hk; subst.
 apply Z.ltb_lt in E1. apply Z.ltb_lt in E2.
 exists (exist _ r (conj E1 E2)). cbn [proj1_sig]. auto.
 + exact (fun _ => mcfg_nonspurious_no _ _ _ _ _ _ Hno eq_refl).
++ exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_96)).
 - intros [tid Ht]. cbn [proj1_sig]. rewrite adv_pend. cbn [eff_ret].
 rewrite effmem_ret_only. apply Hc. exact Ht.
 Qed.
@@ -455,6 +514,7 @@ unfold check_set_tid_address in Hk. rewrite Htid in Hk.
 destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct us; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
 destruct (bv_eqb r t) eqn:E; [|discriminate]. apply bv_eqb_eq in E. subst r.
 inversion Hk; subst. auto.
+- exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_96)).
 - cbn [eff_ret]. rewrite effmem_ret_only. exact Hc.
 Qed.
 Lemma chk57 : forall regs pc mem rom model eff,
@@ -482,6 +542,7 @@ apply (rz_ret_only_silent regs pc mem rom model (Z_to_bv 64 0)
 rewrite Hlk. reflexivity.
 - exact Hh.
 - exact Hlz.
+- exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_57)).
 - exact Hc.
 Qed.
 Lemma rz_close_badf : forall regs pc mem rom model fd T,
@@ -498,12 +559,13 @@ apply (rz_ret_only_silent regs pc mem rom model (errno_ret EBADF) model T Hh Hlz
 rewrite Hlk. reflexivity.
 - exact Hh.
 - exact Hlz.
+- exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_57)).
 - exact Hc.
 Qed.
 Lemma chk29 : forall regs pc mem rom model eff,
 bv_unsigned (getr regs 17) = 29%Z ->
 check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff model
-= check_ioctl (fd32 (getr regs 10)) (cmd32 (getr regs 11)) eff model.
+= check_ioctl (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) (fd32 (getr regs 10)) (cmd32 (getr regs 11)) eff model.
 Proof.
 intros regs pc mem rom model eff Hno.
 rewrite (DispatchCompute.check_syscall_ioctl _ eff model) by (rewrite si_sysno; exact Hno).
@@ -522,11 +584,15 @@ realizes segs (mkCfg (mkst (regupd regs 10 (errno_ret ENOTTY)) (v_addi pc 4) mem
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
 intros regs pc mem rom model fd e T Hh Hlz Hno Hfd H32 Hlk Hnd Hcmd Hc.
-apply (rz_ret_only_silent regs pc mem rom model (errno_ret ENOTTY) model T Hh Hlz).
-- intro eff. rewrite chk29 by exact Hno. rewrite Hfd, H32, Hcmd. unfold check_ioctl.
-rewrite Hlk. change (tty_only_request TIOCGWINSZ) with true. destruct e; try reflexivity. exfalso; eapply (Hnd true true); reflexivity.
+assert (Hchk : forall rom' eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only eff (errno_ret ENOTTY) model []).
+{ intros rom' eff. rewrite chk29 by exact Hno. rewrite Hfd, H32, Hcmd. unfold check_ioctl.
+rewrite Hlk. change (tty_only_request TIOCGWINSZ) with true. destruct e; try (exfalso; eapply (Hnd true true); reflexivity); reflexivity. }
+apply (rz_ret_only_silent regs pc mem rom model (errno_ret ENOTTY) model T Hh Hlz (Hchk rom)).
 - exact Hh.
 - exact Hlz.
+- apply rob_pend. intros rom' _ eff. rewrite (Hchk rom'), (Hchk rom). reflexivity.
 - exact Hc.
 Qed.
 Lemma chk56 : forall regs pc mem rom model eff,
@@ -559,13 +625,22 @@ model) T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
 intros regs pc mem rom model T Hh Hlz Hno Hfl Hp Hc.
+assert (Hnf : read_cstr (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) <> CstrFault)
+by (rewrite Hp; discriminate).
+assert (Hchk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only_copyins (open_copyins (pend_at regs pc mem rom)) eff (errno_ret ENAMETOOLONG) model []).
+{ intros rom' Hr eff. rewrite <- (pend_oci_ext regs pc mem rom rom' Hr Hnf).
+pose proof (pend_cstr_ext regs pc mem rom rom' (getr regs 11) Hr Hnf) as Hp'. rewrite Hp in Hp'.
+apply (openat_toolong_check segs (pend_at regs pc mem rom') (getr regs 17) model Hno).
++ rewrite pend_gpr2. exact Hfl.
++ rewrite pend_gpr1. exact Hp'. }
 apply (rz_ret_only_copyins_silent regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
 (errno_ret ENAMETOOLONG) model T Hh Hlz).
-- intro eff. apply (openat_toolong_check segs (pend_at regs pc mem rom) (getr regs 17) model Hno).
-+ rewrite pend_gpr2. exact Hfl.
-+ rewrite pend_gpr1. exact Hp.
+- exact (Hchk rom (rom_ext_refl rom)).
 - exact Hh.
 - exact Hlz.
+- apply rob_pend. intros rom' Hr eff. rewrite (Hchk rom' Hr), (Hchk rom (rom_ext_refl rom)). reflexivity.
 - exact Hc.
 Qed.
 Lemma rz_openat_fault : forall regs pc mem rom model T,
@@ -575,9 +650,12 @@ modeled_open_flags (getr regs 12) = true ->
 read_cstr (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) = CstrFault ->
 realizes segs (mkCfg (mkst (regupd regs 10 (errno_ret EFAULT)) (v_addi pc 4) mem rom)
 model) T ->
+(* LPS 08b1429: not derivable here; see [Cfg.RomStable]'s header (a path read that faults over the
+   binary's segments may read vDSO bytes over the run's) *)
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
-intros regs pc mem rom model T Hh Hlz Hno Hfl Hp Hc.
+intros regs pc mem rom model T Hh Hlz Hno Hfl Hp Hc Hrob.
 apply (rz_ret_only_copyins_silent regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
 (errno_ret EFAULT) model T Hh Hlz).
 - intro eff. rewrite chk56 by exact Hno. unfold check_openat.
@@ -589,6 +667,7 @@ destruct (check_ret_only (clear_copyins eff) (errno_ret EFAULT) model []) eqn:Hq
 destruct (access_ranges_eqb _ _); reflexivity.
 - exact Hh.
 - exact Hlz.
+- exact Hrob.
 - exact Hc.
 Qed.
 Lemma rz_openat_empty : forall regs pc mem rom model T,
@@ -601,18 +680,28 @@ model) T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
 intros regs pc mem rom model T Hh Hlz Hno Hfl Hp Hc.
-apply (rz_ret_only_copyins_silent regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
-(errno_ret ENOENT) model T Hh Hlz).
-- intro eff. rewrite chk56 by exact Hno. unfold check_openat.
+assert (Hnf : read_cstr (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) <> CstrFault)
+by (rewrite Hp; discriminate).
+assert (Hchk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only_copyins (open_copyins (pend_at regs pc mem rom)) eff (errno_ret ENOENT) model []).
+{ intros rom' Hr eff. rewrite <- (pend_oci_ext regs pc mem rom rom' Hr Hnf).
+pose proof (pend_cstr_ext regs pc mem rom rom' (getr regs 11) Hr Hnf) as Hp'. rewrite Hp in Hp'.
+clear Hp. rename Hp' into Hp.
+rewrite chk56 by exact Hno. unfold check_openat.
 rewrite Hfl. cbn [negb]. unfold Prelude.check_copyins_after, Open.check_openat_body.
 rewrite si_mem, Hp. change (path_eqb [] []) with true. cbv beta iota.
 unfold check_ret_only_copyins, check_copyins, open_copyins.
 rewrite pend_gpr1. cbn [ms_read_byte pend_at ms_mem ms_rom].
 destruct (check_ret_only (clear_copyins eff) (errno_ret ENOENT) model []) eqn:Hq;
 [reflexivity| |reflexivity].
-destruct (access_ranges_eqb _ _); reflexivity.
+destruct (access_ranges_eqb _ _); reflexivity. }
+apply (rz_ret_only_copyins_silent regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
+(errno_ret ENOENT) model T Hh Hlz).
+- exact (Hchk rom (rom_ext_refl rom)).
 - exact Hh.
 - exact Hlz.
+- apply rob_pend. intros rom' Hr eff. rewrite (Hchk rom' Hr), (Hchk rom (rom_ext_refl rom)). reflexivity.
 - exact Hc.
 Qed.
 Lemma rz_openat_absent : forall regs pc mem rom model p T,
@@ -630,9 +719,15 @@ Proof.
 intros regs pc mem rom model p T Hh Hlz Hno Hdir Hfl Hp Hne Hnd Hfs Hc.
 pose proof (openat_plain_name_noslash _ Hnd) as Hsl.
 apply openat_plain_name_nodirref in Hnd.
-apply (rz_ret_only_copyins_silent regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
-(errno_ret ENOENT) model T Hh Hlz).
-- intro eff. rewrite chk56 by exact Hno. unfold check_openat.
+assert (Hnf : read_cstr (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) <> CstrFault)
+by (rewrite Hp; discriminate).
+assert (Hchk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only_copyins (open_copyins (pend_at regs pc mem rom)) eff (errno_ret ENOENT) model []).
+{ intros rom' Hr eff. rewrite <- (pend_oci_ext regs pc mem rom rom' Hr Hnf).
+pose proof (pend_cstr_ext regs pc mem rom rom' (getr regs 11) Hr Hnf) as Hp'. rewrite Hp in Hp'.
+clear Hp. rename Hp' into Hp.
+rewrite chk56 by exact Hno. unfold check_openat.
 rewrite (modeled_open_flags_rd _ Hfl). cbn [negb].
 unfold Prelude.check_copyins_after, Open.check_openat_body. rewrite si_mem, Hp.
 rewrite (path_eqb_neq _ _ Hne). rewrite Hdir, fd32_AT_FDCWD, bv_eqb_refl. cbn [negb].
@@ -643,9 +738,13 @@ unfold check_ret_only_copyins, check_copyins, open_copyins.
 rewrite pend_gpr1. cbn [ms_read_byte pend_at ms_mem ms_rom].
 destruct (check_ret_only (clear_copyins eff) (errno_ret ENOENT) model []) eqn:Hq;
 [reflexivity| |reflexivity].
-destruct (access_ranges_eqb _ _); reflexivity.
+destruct (access_ranges_eqb _ _); reflexivity. }
+apply (rz_ret_only_copyins_silent regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
+(errno_ret ENOENT) model T Hh Hlz).
+- exact (Hchk rom (rom_ext_refl rom)).
 - exact Hh.
 - exact Hlz.
+- apply rob_pend. intros rom' Hr eff. rewrite (Hchk rom' Hr), (Hchk rom (rom_ext_refl rom)). reflexivity.
 - exact Hc.
 Qed.
 Lemma rz_open_core : forall regs pc mem rom model reads (mk : word -> Model) A B,
@@ -654,6 +753,7 @@ m_halted model = None -> m_vm_lazy model = [] ->
 = check_open_result_copyins reads eff model mk) ->
 (forall fd, m_halted (mk fd) = None) -> (forall fd, m_vm_lazy (mk fd) = []) ->
 fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 (forall e, In e openat_errnos ->
 realizes segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) A) ->
 realizes segs (mkCfg (mkst (regupd regs 10 (alloc_fd (m_fds model))) (v_addi pc 4) mem rom)
@@ -661,7 +761,7 @@ realizes segs (mkCfg (mkst (regupd regs 10 (alloc_fd (m_fds model))) (v_addi pc 
 alloc_no_b (bv_unsigned (getr regs 17)) = false ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) (t_alt2 A B).
 Proof.
-intros regs pc mem rom model reads mk A B Hh Hlz Hchk Hmk Hmkl Hfree HA HB Hna.
+intros regs pc mem rom model reads mk A B Hh Hlz Hchk Hmk Hmkl Hfree Hrob HA HB Hna.
 pose (IA := {e : Z | In e openat_errnos}).
 pose (ef := fun i : IA + unit =>
 match i with
@@ -685,6 +785,7 @@ destruct Hk as [(e & He & -> & -> & ->) | (fd & _ & -> & -> & -> & ->)].
 * exists (inl (exist _ e He)). unfold ef, md; cbn [proj1_sig]. auto.
 * exists (inr tt). unfold ef, md. auto.
 + exact (fun _ => mcfg_nonspurious_no _ _ _ _ _ _ eq_refl Hna).
++ exact Hrob.
 - intros [e He]. unfold ef, md; cbn [proj1_sig]. rewrite adv_pend. cbn [eff_ret with_copyins].
 rewrite effmem_copyins_ret_only. apply HA. exact He.
 - intros []. unfold ef, md. rewrite adv_pend. cbn [eff_ret with_copyins].
@@ -707,20 +808,29 @@ realizes segs (mkCfg (mkst (regupd regs 10 (alloc_fd (m_fds model))) (v_addi pc 
 realizes segs (mkCfg (pend_at regs pc mem rom) model) (t_alt2 A B).
 Proof.
 intros regs pc mem rom model p d A B Hh Hlz Hno Hdir Hfl Hp Hne Hnd Hfs Hfree HA HB.
-apply (rz_open_core regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
-(fun fd => with_fds (fd_insert (m_fds model) fd (FdFile p (Z_to_bv 64 0))) model)
-A B Hh Hlz).
-- intro eff.
-apply (openat_rd_check segs (pend_at regs pc mem rom) (getr regs 17) model p d Hno).
+assert (Hnf : read_cstr (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) <> CstrFault)
+by (rewrite Hp; discriminate).
+assert (Hchk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_open_result_copyins (open_copyins (pend_at regs pc mem rom)) eff model
+(fun fd => with_fds (fd_insert (m_fds model) fd (FdFile p (Z_to_bv 64 0))) model)).
+{ intros rom' Hr eff. rewrite <- (pend_oci_ext regs pc mem rom rom' Hr Hnf).
+pose proof (pend_cstr_ext regs pc mem rom rom' (getr regs 11) Hr Hnf) as Hp'. rewrite Hp in Hp'.
+apply (openat_rd_check segs (pend_at regs pc mem rom') (getr regs 17) model p d Hno).
 + rewrite pend_gpr0. exact Hdir.
-+ rewrite pend_gpr1. exact Hp.
++ rewrite pend_gpr1. exact Hp'.
 + apply path_eqb_neq. exact Hne.
 + rewrite pend_gpr2. exact Hfl.
 + exact Hnd.
-+ exact Hfs.
++ exact Hfs. }
+apply (rz_open_core regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
+(fun fd => with_fds (fd_insert (m_fds model) fd (FdFile p (Z_to_bv 64 0))) model)
+A B Hh Hlz).
+- exact (Hchk rom (rom_ext_refl rom)).
 - intro fd. exact Hh.
 - intro fd. exact Hlz.
 - exact Hfree.
+- apply rob_pend. intros rom' Hr eff. rewrite (Hchk rom' Hr), (Hchk rom (rom_ext_refl rom)). reflexivity.
 - exact HA.
 - exact HB.
 - rewrite Hno; reflexivity.
@@ -739,9 +849,16 @@ realizes segs (mkCfg (mkst (regupd regs 10 (alloc_fd (m_fds model))) (v_addi pc 
 realizes segs (mkCfg (pend_at regs pc mem rom) model) (t_alt2 A B).
 Proof.
 intros regs pc mem rom model A B Hh Hlz Hno Hdir Hfl Hp Hfree HA HB.
-apply (rz_open_core regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
-(fun fd => with_fds (fd_insert (m_fds model) fd FdDir) model) A B Hh Hlz).
-- intro eff. rewrite chk56 by exact Hno. unfold check_openat.
+assert (Hnf : read_cstr (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) <> CstrFault)
+by (rewrite Hp; discriminate).
+assert (Hchk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_open_result_copyins (open_copyins (pend_at regs pc mem rom)) eff model
+(fun fd => with_fds (fd_insert (m_fds model) fd FdDir) model)).
+{ intros rom' Hr eff. rewrite <- (pend_oci_ext regs pc mem rom rom' Hr Hnf).
+pose proof (pend_cstr_ext regs pc mem rom rom' (getr regs 11) Hr Hnf) as Hp'. rewrite Hp in Hp'.
+clear Hp. rename Hp' into Hp.
+rewrite chk56 by exact Hno. unfold check_openat.
 rewrite (modeled_open_flags_rd _ Hfl). cbn [negb].
 unfold Prelude.check_copyins_after, Open.check_openat_body. rewrite si_mem, Hp.
 change (path_eqb dot_path []) with false.
@@ -752,10 +869,14 @@ change (path_eqb dot_path dot_path) with true. cbv beta iota.
 unfold check_open_result_copyins, open_copyins.
 rewrite pend_gpr1. cbn [ms_read_byte pend_at ms_mem ms_rom].
 destruct (check_open_result (clear_copyins eff) model _) eqn:Hq; try reflexivity.
-exfalso. exact (check_open_result_never_unmodeled _ _ _ Hq).
+exfalso. exact (check_open_result_never_unmodeled _ _ _ Hq). }
+apply (rz_open_core regs pc mem rom model (open_copyins (pend_at regs pc mem rom))
+(fun fd => with_fds (fd_insert (m_fds model) fd FdDir) model) A B Hh Hlz).
+- exact (Hchk rom (rom_ext_refl rom)).
 - intro fd. exact Hh.
 - intro fd. exact Hlz.
 - exact Hfree.
+- apply rob_pend. intros rom' Hr eff. rewrite (Hchk rom' Hr), (Hchk rom (rom_ext_refl rom)). reflexivity.
 - exact HA.
 - exact HB.
 - rewrite Hno; reflexivity.
@@ -811,6 +932,7 @@ destruct bs as [|b bs'].
 - apply (rz_ret_only_silent regs pc mem rom model (Z_to_bv 64 0) m' T Hh Hlz Hchk).
 + exact Hh.
 + exact Hlz.
++ exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_63)).
 + exact Hc.
 - apply (rz_chk1_silent regs pc mem rom model
 (mkEffect (len_word (b :: bs')) [(getr regs 11, b :: bs')] []) m' T Hh Hlz).
@@ -826,6 +948,7 @@ destruct (listN_eqb bsx (b :: bs')) eqn:E2; [|discriminate].
 destruct (bv_eqb r (len_word (b :: bs'))) eqn:E3; [|discriminate].
 cbn [andb] in Hk. inversion Hk; subst.
 apply bv_eqb_eq in E1. apply listN_eqb_eq in E2. apply bv_eqb_eq in E3. subst. auto.
++ exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_63)).
 + cbn [eff_ret]. rewrite effmem_write1. exact Hc.
 Qed.
 Lemma wview_overlay : forall mem (x : word) b, mem x = Some b -> wview segs mem x = Some b.
@@ -878,6 +1001,7 @@ apply (rz_ret_only_silent regs pc mem rom model (errno_ret EISDIR) model T Hh Hl
 - intro eff. rewrite chk63 by exact Hno. unfold check_read. rewrite Hfd, H32, Hlk, Hdr. reflexivity.
 - exact Hh.
 - exact Hlz.
+- exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_63)).
 - exact Hc.
 Qed.
 Lemma chk66 : forall regs pc mem rom model eff,
@@ -958,7 +1082,7 @@ else CheckReject
 | _ => CheckReject
 end.
 Proof.
-intros regs pc mem rom model fd ch iovs bs Hno [Hlk Hch] H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb eff.
+intros regs pc mem rom model fd ch iovs bs Hno [Hlk [Hch Hrd]] H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb eff.
 pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
 assert (HMv : MAX_RW_COUNT = 0x7ffff000%Z) by reflexivity.
 assert (Hiov : (IOV_MAX <? bv_unsigned (getr regs 12))%Z = false) by (apply Z.ltb_ge; lia).
@@ -983,6 +1107,9 @@ rewrite chk66 by exact Hno. rewrite Hfd, H32. unfold check_writev.
 rewrite ?E32, Hlk, Hch, si_mem, Himp'.
 rewrite cap_iovecs_id by lia. cbv zeta.
 replace (iovs_total iovs =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia).
+(* 08b1429: writev_spec's channel arm tests the reader after the zero-aggregate test (fdchan's
+   third conjunct, recipes/sigpipe-write.md). *)
+rewrite Hrd.
 unfold writev_gathered. rewrite cap_iovecs_id by lia. rewrite (gather_prefix_full _ _ _ Hg).
 replace (Nat.eqb (length bs) 0) with false by (symmetry; apply Nat.eqb_neq; lia).
 assert (Herr : addr_is_error_b (len_word bs) = false).
@@ -993,6 +1120,96 @@ destruct ws; [|reflexivity]. destruct zs; [|reflexivity].
 destruct us; [|reflexivity]. destruct cs; [|reflexivity].
 destruct (((1 <=? bv_unsigned ret)%Z && (bv_unsigned ret <=? Z.of_nat (length bs))%Z) &&
 negb (addr_is_error_b ret)); reflexivity.
+Qed.
+(* LPS 08b1429: a writev node is robust to a larger backing: the reads [writev_chk_canon]
+   names succeed over every larger view with the same bytes (Cfg.RomWritev), so its closed form
+   is the same there, copy-in record included. *)
+Lemma writev_rob_pend : forall regs pc mem rom model fd ch iovs bs,
+bv_unsigned (getr regs 17) = 66%Z ->
+fdchan fd ch model -> fd32 fd = fd -> getr regs 10 = fd ->
+w_is0 (iovcnt32 (getr regs 12)) = false ->
+(bv_unsigned (getr regs 12) <= IOV_MAX)%Z ->
+copy_iovecs_aux (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11)
+(word_to_nat (iovcnt32 (getr regs 12))) = ImpOk iovs ->
+access_okb (getr regs 11) (16 * bv_unsigned (getr regs 12)) = true ->
+iovs_access_okb iovs = true ->
+gather_iovecs (ms_read_byte (pend_at regs pc mem rom)) iovs = Some bs ->
+(iovs_total iovs <= MAX_RW_COUNT)%Z ->
+(1 <= length bs)%nat ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model).
+Proof.
+intros regs pc mem rom model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb.
+apply rob_pend. intros rom' Hr eff.
+pose proof (pend_mem_ext regs pc mem rom rom' Hr) as Hx.
+rewrite (writev_chk_canon regs pc mem rom' model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax
+(copy_iovecs_aux_ext _ _ _ _ _ Hx Himp) Hiok Hbok (gather_iovecs_ext _ _ _ _ Hx Hg) Htot Hnb eff).
+rewrite (writev_chk_canon regs pc mem rom model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax
+Himp Hiok Hbok Hg Htot Hnb eff).
+unfold writev_copyins.
+pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
+assert (HMv : MAX_RW_COUNT = 0x7ffff000%Z) by reflexivity.
+assert (Hiov : (IOV_MAX <? bv_unsigned (getr regs 12))%Z = false) by (apply Z.ltb_ge; lia).
+assert (E32 : iovcnt32 (getr regs 12) = getr regs 12)
+by (apply iovcnt32_small; unfold IOV_MAX in Hmax; lia).
+rewrite E32 in Hcnt, Himp.
+assert (Himp' : import_iovecs (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) (getr regs 12) = ImpOk iovs).
+{ unfold import_iovecs.
+destruct (bv_eqb (getr regs 12) (Z_to_bv 64 1)) eqn:E1.
+- apply bv_eqb_eq in E1. rewrite E1 in Himp, Hiok.
+change (16 * bv_unsigned (Z_to_bv 64 1))%Z with 16%Z in Hiok. rewrite Hiok. cbn [negb].
+change (word_to_nat (Z_to_bv 64 1)) with 1%nat in Himp. cbn [copy_iovecs_aux] in Himp.
+destruct (read_iovec_entry (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11)) as [base len| |] eqn:Er;
+try discriminate.
+injection Himp as <-. cbn [iovs_access_okb forallb fst snd] in Hbok. rewrite andb_true_r in Hbok.
+cbn [iovs_total] in Htot.
+rewrite Z.min_l by lia. rewrite Hbok. reflexivity.
+- destruct (bv_eqb (getr regs 12) (Z_to_bv 64 0)) eqn:E0.
++ apply bv_eqb_eq in E0. rewrite E0 in Hcnt. discriminate.
++ rewrite Hiov, Hiok. cbn [negb]. rewrite Himp, Hbok. reflexivity. }
+rewrite ?E32.
+rewrite (import_iovecs_accesses_ext _ _ (getr regs 11) (getr regs 12) iovs Hx Himp').
+reflexivity.
+Qed.
+(* The copy-in record of a writev whose iovec array reads succeed is the same over every larger
+   backing. *)
+Lemma writev_copyins_ext : forall regs pc mem rom rom' iovs bs n, rom_ext rom rom' ->
+w_is0 (iovcnt32 (getr regs 12)) = false ->
+(bv_unsigned (getr regs 12) <= IOV_MAX)%Z ->
+copy_iovecs_aux (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11)
+(word_to_nat (iovcnt32 (getr regs 12))) = ImpOk iovs ->
+access_okb (getr regs 11) (16 * bv_unsigned (getr regs 12)) = true ->
+iovs_access_okb iovs = true ->
+gather_iovecs (ms_read_byte (pend_at regs pc mem rom)) iovs = Some bs ->
+(iovs_total iovs <= MAX_RW_COUNT)%Z ->
+writev_copyins (ms_read_byte (pend_at regs pc mem rom')) (getr regs 11) (getr regs 12) iovs n
+= writev_copyins (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) (getr regs 12) iovs n.
+Proof.
+intros regs pc mem rom rom' iovs bs n Hr Hcnt Hmax Himp Hiok Hbok Hg Htot.
+pose proof (pend_mem_ext regs pc mem rom rom' Hr) as Hx.
+unfold writev_copyins.
+pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
+assert (HMv : MAX_RW_COUNT = 0x7ffff000%Z) by reflexivity.
+assert (Hiov : (IOV_MAX <? bv_unsigned (getr regs 12))%Z = false) by (apply Z.ltb_ge; lia).
+assert (E32 : iovcnt32 (getr regs 12) = getr regs 12)
+by (apply iovcnt32_small; unfold IOV_MAX in Hmax; lia).
+rewrite E32 in Hcnt, Himp.
+assert (Himp' : import_iovecs (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11) (getr regs 12) = ImpOk iovs).
+{ unfold import_iovecs.
+destruct (bv_eqb (getr regs 12) (Z_to_bv 64 1)) eqn:E1.
+- apply bv_eqb_eq in E1. rewrite E1 in Himp, Hiok.
+change (16 * bv_unsigned (Z_to_bv 64 1))%Z with 16%Z in Hiok. rewrite Hiok. cbn [negb].
+change (word_to_nat (Z_to_bv 64 1)) with 1%nat in Himp. cbn [copy_iovecs_aux] in Himp.
+destruct (read_iovec_entry (ms_read_byte (pend_at regs pc mem rom)) (getr regs 11)) as [base len| |] eqn:Er;
+try discriminate.
+injection Himp as <-. cbn [iovs_access_okb forallb fst snd] in Hbok. rewrite andb_true_r in Hbok.
+cbn [iovs_total] in Htot.
+rewrite Z.min_l by lia. rewrite Hbok. reflexivity.
+- destruct (bv_eqb (getr regs 12) (Z_to_bv 64 0)) eqn:E0.
++ apply bv_eqb_eq in E0. rewrite E0 in Hcnt. discriminate.
++ rewrite Hiov, Hiok. cbn [negb]. rewrite Himp, Hbok. reflexivity. }
+rewrite ?E32.
+rewrite (import_iovecs_accesses_ext _ _ (getr regs 11) (getr regs 12) iovs Hx Himp').
+reflexivity.
 Qed.
 Lemma rz_writev : forall regs pc mem rom model fd ch iovs bs T,
 m_halted model = None -> m_vm_lazy model = [] ->
@@ -1048,6 +1265,7 @@ assert (Hr : (1 <= Z.to_nat (bv_unsigned ret))%nat /\ (Z.to_nat (bv_unsigned ret
 exists (exist _ (Z.to_nat (bv_unsigned ret)) Hr). unfold ef, writev_eff; cbn [proj1_sig].
 rewrite Z2Nat.id by lia. rewrite Z_to_bv_bv_unsigned, Hci. auto.
 + exact (fun _ => mcfg_nonspurious_no _ _ _ _ _ _ Hno eq_refl).
++ exact (writev_rob_pend regs pc mem rom model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb).
 - intros [n [Hn1 Hn2]]. unfold ef; cbn [proj1_sig]. rewrite adv_pend.
 rewrite effmem_writev_eff. unfold writev_eff; cbn [eff_ret]. apply Hc; assumption.
 Qed.
@@ -1233,24 +1451,31 @@ destruct H1 as [H1|H1]; apply bv_eqb_eq in H1; subst; auto.
 + rewrite bv_eqb_refl, orb_true_r, Gb. reflexivity.
 + rewrite bv_eqb_refl, G. reflexivity.
 Qed.
+(* 08b1429: a grow records the pages Linux installs, brk_page_range (PAGE_ALIGN old) (PAGE_ALIGN
+   req); for an aligned break and an aligned step that is the one range (old, n). *)
 Lemma brk_model_grow : forall req m (n : Z),
 let h := m_vmmaps m in
 req <> Z_to_bv 64 0 ->
 (0 < bv_unsigned (vm_brk h))%Z -> (bv_unsigned req = bv_unsigned (vm_brk h) + n)%Z -> (0 < n)%Z ->
+(bv_unsigned (vm_brk h) mod page_size = 0)%Z -> (n mod page_size = 0)%Z ->
 brk_model req req m
 = with_vmmaps (mkVmMapsFull (vm_reserved h) ((vm_brk h, Z_to_bv 64 n) :: vm_maps h)
 (vm_noaccess h) (vm_start_brk h) req (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m.
 Proof.
-intros req m n h Hreq0 Hb Hreq Hn. subst h. unfold brk_model, with_brk_next. cbv zeta.
+intros req m n h Hreq0 Hb Hreq Hn Hbal Hnal. subst h. unfold brk_model, with_brk_next. cbv zeta.
 remember (m_vmmaps m) as h eqn:Eh.
 rewrite (brk_unmaps_grow req (vm_brk h)) by lia. cbn [forget_vm_ranges].
 unfold brk_model_next, brk_maps_next.
 rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned (vm_brk h)))) by lia.
 rewrite andb_false_r. rewrite brk_grants_grow; [| exact Hreq0 | lia | lia].
 rewrite (brk_unmaps_grow req (vm_brk h)) by lia. cbn [maps_subtract_ranges fold_left app].
-replace (req - vm_brk h) with (Z_to_bv 64 n); [reflexivity|].
-apply bv_eq. rewrite bv_sub_unsigned_nowrap by lia. rewrite Z_to_bv_unsigned, bv_wrap64_mod.
-pose proof (u64_range req). rewrite Z.mod_small; lia.
+assert (Hru : page_round_up_Z (bv_unsigned req) = bv_unsigned req).
+{ rewrite Hreq. apply page_round_up_Z_aligned; [lia|].
+unfold page_size in *. rewrite Z.add_mod, Hnal, Hbal by lia. reflexivity. }
+rewrite (page_round_up_Z_aligned (bv_unsigned (vm_brk h))) by lia. rewrite Hru.
+unfold brk_page_range. rewrite (proj2 (Z.ltb_lt _ _)) by lia. cbn [app].
+rewrite Z_to_bv_bv_unsigned.
+replace (bv_unsigned req - bv_unsigned (vm_brk h))%Z with n by lia. reflexivity.
 Qed.
 Lemma brk_grow_ok_unfold : forall m req (n : Z),
 let h := m_vmmaps m in
@@ -1262,7 +1487,9 @@ Mmap.brk_grow_ok m req req
 && region_free (vm_reserved h ++ vm_maps h) (vm_brk h) (Z_to_bv 64 (n + page_size))
 && (vm_backing_used m + n <=? vm_limit h)%Z)%bool.
 Proof.
-intros m req n h Hreq0 Hb Hbal Hreq Hn Hnal. subst h. unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok. cbv zeta.
+intros m req n h Hreq0 Hb Hbal Hreq Hn Hnal. subst h.
+(* 08b1429: the budget counts brk_grow_bytes, the page-rounded growth *)
+unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok, Mmap.brk_grow_bytes. cbv zeta.
 remember (m_vmmaps m) as h eqn:Eh.
 rewrite (proj2 (Z.ltb_lt 0 _) Hb), (proj2 (Z.ltb_lt _ _)) by lia. cbn [andb].
 assert (Hru : page_round_up_Z (bv_unsigned req) = (bv_unsigned (vm_brk h) + n)%Z).
@@ -1271,25 +1498,25 @@ unfold page_size in *. rewrite Z.add_mod, Hnal, Hbal by lia. reflexivity. }
 rewrite (page_round_up_Z_aligned (bv_unsigned (vm_brk h))) by lia. rewrite Hru.
 rewrite (proj2 (Z.ltb_lt _ _)) by lia.
 replace (bv_unsigned (vm_brk h) + n + page_size - bv_unsigned (vm_brk h))%Z with (n + page_size)%Z by lia.
-rewrite Z_to_bv_bv_unsigned. rewrite bv_sub_unsigned_nowrap by lia. rewrite Hreq.
-replace (bv_unsigned (vm_brk h) + n - bv_unsigned (vm_brk h))%Z with n by lia. reflexivity.
+rewrite Z_to_bv_bv_unsigned.
+replace (Z.max 0 (bv_unsigned (vm_brk h) + n - bv_unsigned (vm_brk h)))%Z with n by lia. reflexivity.
 Qed.
+(* 08b1429: the grant is Linux's address, so the refusability test takes the hint, and the
+   witness needs the length facts (the callers have them from mmap_grant_len_ok). *)
 Definition mmap_rw_J04 (hint : word) (model : Model) (nZ : Z) : Type :=
-({e : Z | In e mmap_errnos /\ (if @amf AM then True else mmap_grant_refusable (Z_to_bv 64 34) model nZ = true)}
+({e : Z | In e mmap_errnos /\ (if @amf AM then True else mmap_grant_refusable (Z_to_bv 64 34) hint model nZ = true)}
 + {a : word | grant_ok hint model a nZ = true})%type.
-Lemma mmap_rw_wit04 : forall hint model nZ, mmap_rw_J04 hint model nZ.
+Lemma mmap_rw_wit04 : forall hint model nZ, (0 < nZ)%Z -> (nZ mod page_size = 0)%Z -> mmap_rw_J04 hint model nZ.
 Proof.
-intros hint model nZ. unfold mmap_rw_J04.
-destruct (mmap_grant_refusable (Z_to_bv 64 34) model nZ) eqn:Hrf.
+intros hint model nZ Hn Hnal. unfold mmap_rw_J04.
+destruct (mmap_grant_refusable (Z_to_bv 64 34) hint model nZ) eqn:Hrf.
 - left. exists ENOMEM. split; [apply ENOMEM_in_mmap_errnos | apply if_amf_intro; intros _; reflexivity].
 - right. unfold mmap_grant_refusable in Hrf. apply Bool.orb_false_iff in Hrf as [Hb Hg].
 apply Bool.negb_false_iff in Hb. apply Bool.negb_false_iff in Hg.
-destruct (vm_find_base (m_vmmaps model) nZ) as [a|] eqn:Hf;
-[| unfold vm_gap_available in Hg; rewrite Hf in Hg; discriminate Hg].
-exists a. destruct (vm_find_base_sound _ _ _ Hf) as (H1 & H2 & H3 & H4).
-unfold grant_ok. rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2), (proj2 (Z.leb_le _ _) H3), H4.
+exists (vm_place_pick (m_vmmaps model) (kb_thp (m_kernel model)) hint nZ).
+apply (grant_ok_intro _ _ _ _ Hn Hnal (vm_place_pick_ok _ _ _ _ Hn Hnal Hg)).
 unfold mmap_noreserve_backed_ok in Hb.
-change (mmap_noreserve_b (Z_to_bv 64 34)) with false in Hb. cbv iota in Hb. rewrite Hb. reflexivity.
+change (mmap_noreserve_b (Z_to_bv 64 34)) with false in Hb. cbv iota in Hb. now apply Z.leb_le.
 Qed.
 Definition mmap_rw_ef04 (regs : bvmap 5 word) (model : Model)
 (i : mmap_rw_J04 (getr regs 10) model (page_round_up_Z (bv_unsigned (getr regs 11)))) : SyscallEffect :=
@@ -1308,40 +1535,54 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 3 ->
 getr regs 13 = Z_to_bv 64 34 -> getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+(* 727298f3 (#146): the spec declines a hint whose placement runs into the
+stack's guard gap, so the node's outcome set is the real one only when the
+call is not declined.  Discharged at the walk, where the hint is the
+literal 0 ([YK0v.place_declined_b_null]). *)
+place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+(page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 node_ok segs (mkCfg (pend_at regs pc mem rom) model)
 (mmap_rw_J04 (getr regs 10) model (page_round_up_Z (bv_unsigned (getr regs 11)))) (fun _ => [])
 (fun i => mkCfg (advance_past_svc (apply_effect (pend_at regs pc mem rom) (mmap_rw_ef04 regs model i)))
 (mmap_rw_md04 regs model i)).
 Proof.
-intros regs pc mem rom model Hh Hlz Hno Hlen Hprot Hflags Hfdm Hoff.
+intros regs pc mem rom model Hh Hlz Hno Hlen Hprot Hflags Hfdm Hoff Hdecl.
 assert (Hargs : mmap_args_ok (pend_at regs pc mem rom)).
 { unfold mmap_args_ok. rewrite pend_gpr1, pend_gpr2, pend_gpr3, pend_gpr4, pend_gpr5. auto. }
-split.
+assert (Hdeclms : place_declined_b (m_kernel model) (m_vmmaps model)
+(ms_gpr (pend_at regs pc mem rom) 0)
+(page_round_up_Z (bv_unsigned (ms_gpr (pend_at regs pc mem rom) 1))) = false)
+by (rewrite pend_gpr0, pend_gpr1; exact Hdecl).
+split; [| split; [| exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_222))]].
 - intros [[e [He Hrf]] | [a Ha]]; unfold mmap_rw_ef04, mmap_rw_md04; cbn [proj1_sig].
 + apply (sstep_cfg_syscall segs mcfg (pend_at regs pc mem rom) model (getr regs 17) (mkEffect (errno_ret e) [] []) model model []);
 [exact Hh | reflexivity | | | exact Hh | apply materialize_model_accesses_no_lazy; exact Hlz].
 * destruct (mmap_args_ok_gates _ Hargs) as [Ho [Han [Hl Hmb]]].
 apply (proj2 (syscall_spec_mmap segs _ _ _ _ Hno)). apply check_mmap_sound_ok.
-unfold check_mmap. cbv beta. rewrite Ho, Han, Hl, Hmb. cbn [negb]. cbv beta iota zeta.
+unfold check_mmap, check_mmap_fixed_overflow. cbv beta. rewrite Ho, Han, Hl, Hmb. cbn [negb]. cbv beta iota zeta.
+(* the decline stands between this arm and its [CheckOk] too, not only on the
+grant side: a kit round stopped here at YP0n.v:1560 without it. *)
+rewrite Hdeclms. cbv beta iota zeta.
 rewrite (errno_ret_in_intro _ _ He). reflexivity.
-* apply nonspurious_m. intros E. apply (if_amf_elim _ E) in Hrf. rewrite <- (pend_gpr1 regs pc mem rom) in Hrf.
+* apply nonspurious_m. intros E. apply (if_amf_elim _ E) in Hrf. rewrite <- (pend_gpr0 regs pc mem rom), <- (pend_gpr1 regs pc mem rom) in Hrf.
 exact (mmap_refusable_forced segs (pend_at regs pc mem rom) (getr regs 17) model _ Hno Hargs Hrf).
 + rewrite <- (pend_gpr1 regs pc mem rom) in Ha |- *.
 apply (sstep_cfg_syscall segs mcfg (pend_at regs pc mem rom) model (getr regs 17) _
 (mmap_model a (page_round_up (ms_gpr (pend_at regs pc mem rom) 1)) model)
 (mmap_model a (page_round_up (ms_gpr (pend_at regs pc mem rom) 1)) model) []);
-[exact Hh | reflexivity | apply mmap_succ_ok; [exact Hno | exact Hargs | rewrite pend_gpr0; exact Ha]
+[exact Hh | reflexivity | apply mmap_succ_ok; [exact Hno | exact Hargs | exact Hdeclms | rewrite pend_gpr0; exact Ha]
 | apply nonspurious_m; intros _; apply mmap_grant_nonspurious; [exact Hno | rewrite pend_gpr0; exact Ha]
 | rewrite mmap_model_halted; exact Hh
 | apply materialize_model_accesses_no_lazy; exact (eq_trans (mmap_model_lazy _ _ _) Hlz)].
 - intros e st Hst.
-destruct (sstep_mmap_inv_m segs (pend_at regs pc mem rom) model (getr regs 17) e st Hh Hlz eq_refl Hno Hargs Hst)
+destruct (sstep_mmap_inv_m segs (pend_at regs pc mem rom) model (getr regs 17) e st Hh Hlz eq_refl Hno Hargs Hdeclms Hst)
 as (-> & [(err & Herr & Hrf & ->) | (a & Ha & ->)]).
-+ rewrite pend_gpr1 in Hrf. exists (inl (exist _ err (conj Herr Hrf))). split; [reflexivity|].
++ rewrite pend_gpr0, pend_gpr1 in Hrf. exists (inl (exist _ err (conj Herr Hrf))). split; [reflexivity|].
 unfold mmap_rw_ef04, mmap_rw_md04; cbn [proj1_sig]. rewrite apply_effect_no_write. reflexivity.
 + rewrite pend_gpr0, pend_gpr1 in Ha. exists (inr (exist _ a Ha)). split; [reflexivity|].
 unfold mmap_rw_ef04, mmap_rw_md04; cbn [proj1_sig]. rewrite pend_gpr1. reflexivity.
 Qed.
+
 Lemma rz_munmap_exact : forall regs pc mem rom model T,
 m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 215%Z ->
@@ -1349,14 +1590,19 @@ bv_unsigned (getr regs 17) = 215%Z ->
 getr regs 11 <> Z_to_bv 64 0 ->
 (bv_unsigned (getr regs 10) + page_round_up_Z (bv_unsigned (getr regs 11)) <= TASK_SIZE)%Z ->
 map_has (vm_maps (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
+(* 08b1429: under a may-fail mode munmap may answer an errno of munmap_errnos, which this fork's
+   [YK15.rz_munmap] asks the caller to walk ([amf = true]); at [AcfgMode] the premise is vacuous *)
+(amf = true -> forall e, In e munmap_errnos ->
+   realizes segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) T) ->
 realizes segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4)
 (apply_unmaps mem [(getr regs 10, page_round_up (getr regs 11))]) rom)
 (munmap_model (getr regs 10) (page_round_up (getr regs 11)) model)) T ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
-intros regs pc mem rom model T Hh Hlz Hno Hal Hlen Hnw Hhas Hc.
+intros regs pc mem rom model T Hh Hlz Hno Hal Hlen Hnw Hhas Hfail Hc.
 apply (rz_munmap segs (pend_at regs pc mem rom) model (getr regs 17) T Hh Hlz eq_refl Hno).
 - unfold munmap_args_ok. rewrite pend_gpr0, pend_gpr1. auto.
+- intros Ham e He. rewrite adv_pend_set. exact (Hfail Ham e He).
 - unfold munmap_eff. rewrite pend_gpr0, pend_gpr1, adv_pend. cbn [eff_ret].
 rewrite effmem_unmaps. exact Hc.
 Qed.
@@ -1401,43 +1647,46 @@ Lemma mmap_none_model_fds : forall a n m, m_fds (mmap_none_model a n m) = m_fds 
 Proof. reflexivity. Qed.
 Lemma mmap_none_model_fs : forall a n m, m_fs (mmap_none_model a n m) = m_fs m.
 Proof. reflexivity. Qed.
+(* 08b1429: check_mmap's noaccess arm tests exactly Linux's placement, so place_ok is that test;
+   the four old facts follow from it given the length facts (place_ok_unpack). *)
 Definition place_ok (hint : word) (m : Model) (a : word) (nZ : Z) : bool :=
-(bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
-&& (bv_unsigned a + nZ <=? alloc_top (m_vmmaps m))%Z
-&& region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ).
-Lemma place_not_errno : forall hint m a nZ,
-(0 <= nZ)%Z -> place_ok hint m a nZ = true -> errno_ret_in mmap_errnos a = false.
+Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ a.
+Lemma place_ok_unpack : forall hint m a nZ,
+(0 < nZ)%Z -> (nZ mod page_size = 0)%Z -> place_ok hint m a nZ = true ->
+(bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
+/\ (bv_unsigned a + nZ <= alloc_top (m_vmmaps m))%Z
+/\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true.
 Proof.
-intros hint m a nZ Hn H. unfold place_ok in H.
-apply andb_prop in H as [H _]. apply andb_prop in H as [H Hc]. apply Z.leb_le in Hc.
+intros hint m a nZ Hn Hnal H. exact (Checks.Placement.linux_place_is_admissible _ _ _ _ _ Hn Hnal H).
+Qed.
+Lemma place_not_errno : forall hint m a nZ,
+(0 < nZ)%Z -> (nZ mod page_size = 0)%Z -> place_ok hint m a nZ = true -> errno_ret_in mmap_errnos a = false.
+Proof.
+intros hint m a nZ Hn Hnal H. destruct (place_ok_unpack _ _ _ _ Hn Hnal H) as (_ & _ & Hc & _).
 apply errno_ret_in_below; [reflexivity|]. alloc_top_bounds. unfold two_pow_64 in *. lia.
 Qed.
 Lemma grant_ok_place_ok : forall hint m a nZ, grant_ok hint m a nZ = true -> place_ok hint m a nZ = true.
 Proof.
 intros hint m a nZ H. unfold grant_ok in H. unfold place_ok.
-apply andb_prop in H as [H _]. exact H.
+rewrite !andb_true_iff in H. tauto.
 Qed.
 Lemma place_ok_not_refusable : forall hint m a nZ,
-place_ok hint m a nZ = true -> mmap_reserve_refusable m nZ = false.
+place_ok hint m a nZ = true -> mmap_reserve_refusable hint m nZ = false.
 Proof.
-intros hint m a nZ H. unfold place_ok in H. rewrite !andb_true_iff in H. destruct H as [[[H1 H2] H3] H4].
-unfold mmap_reserve_refusable. rewrite (vm_find_base_complete (m_vmmaps m) nZ a); [reflexivity|].
-unfold vm_base_ok. rewrite H1, H2, H3, H4. reflexivity.
+intros hint m a nZ H. unfold place_ok in H. unfold mmap_reserve_refusable.
+rewrite (linux_place_is_available _ _ _ _ _ H). reflexivity.
 Qed.
 Definition mmap_none_J04 (hint : word) (model : Model) (nZ : Z) : Type :=
-({e : Z | In e mmap_errnos /\ (if @amf AM then True else mmap_reserve_refusable model nZ = true)}
+({e : Z | In e mmap_errnos /\ (if @amf AM then True else mmap_reserve_refusable hint model nZ = true)}
 + {a : word | place_ok hint model a nZ = true})%type.
-Lemma mmap_none_wit04 : forall hint model nZ, mmap_none_J04 hint model nZ.
+Lemma mmap_none_wit04 : forall hint model nZ, (0 < nZ)%Z -> (nZ mod page_size = 0)%Z -> mmap_none_J04 hint model nZ.
 Proof.
-intros hint model nZ. unfold mmap_none_J04.
-destruct (mmap_reserve_refusable model nZ) eqn:Hrf.
+intros hint model nZ Hn Hnal. unfold mmap_none_J04.
+destruct (mmap_reserve_refusable hint model nZ) eqn:Hrf.
 - left. exists ENOMEM. split; [apply ENOMEM_in_mmap_errnos | apply if_amf_intro; intros _; reflexivity].
 - right. unfold mmap_reserve_refusable in Hrf. apply Bool.negb_false_iff in Hrf.
-destruct (vm_find_base (m_vmmaps model) nZ) as [a|] eqn:Hf;
-[| unfold vm_gap_available in Hrf; rewrite Hf in Hrf; discriminate Hrf].
-exists a. destruct (vm_find_base_sound _ _ _ Hf) as (H1 & H2 & H3 & H4).
-unfold place_ok. rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2), (proj2 (Z.leb_le _ _) H3), H4.
-reflexivity.
+exists (vm_place_pick (m_vmmaps model) (kb_thp (m_kernel model)) hint nZ).
+exact (vm_place_pick_ok _ _ _ _ Hn Hnal Hrf).
 Qed.
 Definition mmap_none_ef04 (regs : bvmap 5 word) (model : Model)
 (i : mmap_none_J04 (getr regs 10) model (page_round_up_Z (bv_unsigned (getr regs 11)))) : SyscallEffect :=
@@ -1455,6 +1704,11 @@ Lemma chk_mmap_none04 : forall regs pc mem rom model,
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 34 ->
 getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+(* 727298f3 (#146): the decline sits ahead of the [alt] in the NOACCESS arm
+too (Sys/Mm/Mmap.v:2174, Checks/Sys/Mm/Mmap.v:135), not only in the
+modeled one. *)
+place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+(page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 forall eff,
 check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff model
 = match eff with
@@ -1467,14 +1721,15 @@ then CheckOk (mmap_none_model r (page_round_up (getr regs 11)) model) [] else Ch
 | _ => CheckReject
 end.
 Proof.
-intros regs pc mem rom model Hno H1 H2 H3 H4 H5 eff.
-rewrite chk222 by exact Hno. unfold check_mmap.
+intros regs pc mem rom model Hno H1 H2 H3 H4 H5 Hdecl eff.
+rewrite chk222 by exact Hno. unfold check_mmap, check_mmap_fixed_overflow.
 rewrite H2, H3, ?H4, H5.
 change (negb (mmap_off_aligned_b (Z_to_bv 64 0))) with false.
 change (negb (mmap_anon_b (Z_to_bv 64 34))) with false.
 replace (w_is0 (getr regs 11)) with false by (symmetry; unfold w_is0; apply bv_eqb_neq; exact H1).
 change (mmap_modeled_b (Z_to_bv 64 0) (Z_to_bv 64 34) (Z_to_bv 64 0)) with false.
 change (mmap_noaccess_b (Z_to_bv 64 0) (Z_to_bv 64 34) (Z_to_bv 64 0)) with true.
+rewrite Hdecl.
 cbv beta iota. destruct eff as [r ws zs us cs ci].
 destruct ws; [|reflexivity]. destruct zs; [|reflexivity].
 destruct cs; [|reflexivity]. destruct ci; [|reflexivity]. cbv zeta.
@@ -1486,21 +1741,23 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 34 ->
 getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+(page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 node_ok segs (mkCfg (pend_at regs pc mem rom) model)
 (mmap_none_J04 (getr regs 10) model (page_round_up_Z (bv_unsigned (getr regs 11)))) (fun _ => [])
 (fun i => mkCfg (advance_past_svc (apply_effect (pend_at regs pc mem rom) (mmap_none_ef04 regs model i)))
 (mmap_none_md04 regs model i)).
 Proof.
-intros regs pc mem rom model Hh Hlz Hno H1 H2 H3 H4 H5.
+intros regs pc mem rom model Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl.
 set (nZ := page_round_up_Z (bv_unsigned (getr regs 11))) in *.
 set (n := page_round_up (getr regs 11)) in *.
 assert (HnZ : (0 <= nZ)%Z).
 { unfold nZ. apply page_round_up_Z_nonneg. pose proof (u64_range (getr regs 11)). lia. }
-pose proof (chk_mmap_none04 regs pc mem rom model Hno H1 H2 H3 H4 H5) as Hchk. fold nZ n in Hchk.
+assert (Hn0 : (0 < nZ)%Z /\ (nZ mod page_size = 0)%Z).
+{ unfold nZ. apply mmap_grant_len_ok. unfold w_is0. apply bv_eqb_neq. exact H1. }
+pose proof (chk_mmap_none04 regs pc mem rom model Hno H1 H2 H3 H4 H5 Hdecl) as Hchk. fold nZ n in Hchk.
 assert (Hbelow : forall a, place_ok (getr regs 10) model a nZ = true -> errno_ret_in mmap_errnos a = false).
-{ intros a Ha. apply errno_ret_in_below; [reflexivity|].
-unfold place_ok in Ha; rewrite !andb_true_iff in Ha; destruct Ha as [[[_ _] Hc] _].
-apply Z.leb_le in Hc; alloc_top_bounds; unfold two_pow_64 in *; lia. }
+{ intros a Ha. exact (place_not_errno _ _ _ _ (proj1 Hn0) (proj2 Hn0) Ha). }
 assert (Hgrant : forall a, place_ok (getr regs 10) model a nZ = true ->
 check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) (mkEffectU a [] [] [(a, n)] [] []) model
 = CheckOk (mmap_none_model a n model) []).
@@ -1509,7 +1766,7 @@ assert (Hrb : forall r, refusal_b (sys_input segs (pend_at regs pc mem rom) (get
 = errno_ret_in mmap_errnos r).
 { intros r. rewrite (refusal_b_222 (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) model _ Hno). reflexivity. }
 apply (node_chk_cfg (pend_at regs pc mem rom) model (getr regs 17) (mmap_none_J04 (getr regs 10) model nZ)
-(mmap_none_wit04 (getr regs 10) model nZ) (mmap_none_ef04 regs model) (mmap_none_md04 regs model)
+(mmap_none_wit04 (getr regs 10) model nZ (proj1 Hn0) (proj2 Hn0)) (mmap_none_ef04 regs model) (mmap_none_md04 regs model)
 (fun _ => []) Hh eq_refl).
 - intros [[e [He Hrf]] | [a Ha]]; unfold mmap_none_ef04, mmap_none_md04; cbn [proj1_sig].
 + rewrite Hchk. rewrite (errno_ret_in_intro _ _ He). reflexivity.
@@ -1524,13 +1781,13 @@ destruct (errno_ret_in mmap_errnos r) eqn:Her.
 apply errno_ret_in_true in Her. destruct Her as (e & He & ->).
 injection Hk as <- <-.
 destruct (@amf AM) eqn:E.
-* left. assert (Ht : if @amf AM then True else mmap_reserve_refusable model nZ = true) by (rewrite E; exact I).
+* left. assert (Ht : if @amf AM then True else mmap_reserve_refusable (getr regs 10) model nZ = true) by (rewrite E; exact I).
 exists (inl (exist _ e (conj He Ht))). unfold mmap_none_ef04, mmap_none_md04; cbn [proj1_sig]. auto.
-* destruct (mmap_reserve_refusable model nZ) eqn:Hrf.
+* destruct (mmap_reserve_refusable (getr regs 10) model nZ) eqn:Hrf.
 -- left. exists (inl (exist _ e (conj He (if_amf_intro _ (fun _ => Hrf))))).
 unfold mmap_none_ef04, mmap_none_md04; cbn [proj1_sig]. auto.
 -- right. split; [|exact Hh]. apply (spurious_m _ _ _ E).
-destruct (mmap_none_wit04 (getr regs 10) model nZ) as [[e' [_ Hrf']] | [a Ha]];
+destruct (mmap_none_wit04 (getr regs 10) model nZ (proj1 Hn0) (proj2 Hn0)) as [[e' [_ Hrf']] | [a Ha]];
 [apply (if_amf_elim _ E) in Hrf'; rewrite Hrf in Hrf'; discriminate Hrf'|].
 apply (refusal_spurious_of_grant ACFG _ model _ (mkEffectU a [] [] [(a, n)] [] []) (mmap_none_model a n model) []).
 ++ apply acfg_family_off_222. exact Hno.
@@ -1551,7 +1808,9 @@ destruct (errno_ret_in mmap_errnos r) eqn:Her; [reflexivity|].
 destruct (place_ok (getr regs 10) model r nZ) eqn:Hg; [|discriminate].
 exfalso. rewrite (place_ok_not_refusable _ _ _ _ Hg) in Hrf. discriminate Hrf.
 + apply spurious_refusal_not_refusal. cbn [eff_ret]. rewrite Hrb. apply Hbelow. exact Ha.
+- exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_222)).
 Qed.
+
 Definition mmap_fixed_model (a n : word) (m : Model) : Model :=
 with_mmap_replacement (Z_to_bv 64 50) a n
 (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
@@ -1639,7 +1898,7 @@ intros regs pc mem rom model Hno H1 H2 H3 H4 H5 Hal Hpos Hceil Hfree Hcont eff.
 set (addr := getr regs 10) in *.
 set (nZ := page_round_up_Z (bv_unsigned (getr regs 11))) in *.
 pose proof (alloc_top_room (m_vmmaps model)) as Hroom. pose proof stack_max_size_val as Hsms.
-rewrite chk222 by exact Hno. fold addr. unfold check_mmap.
+rewrite chk222 by exact Hno. fold addr. unfold check_mmap, check_mmap_fixed_overflow.
 rewrite H2, H3, ?H4, H5.
 change (negb (mmap_off_aligned_b (Z_to_bv 64 0))) with false.
 change (negb (mmap_anon_b (Z_to_bv 64 50))) with false.
@@ -1762,6 +2021,7 @@ apply (refusal_spurious_of_grant ACFG _ model _ (fixed_ef04 regs (inr (inl tt)))
 -- cbn [fixed_ef04 eff_ret]. rewrite Hrb. exact Hnot.
 - intros i. apply nonspurious_m. intros E. rewrite (fixed_of_false04 E i).
 apply spurious_refusal_not_refusal. cbn [fixed_ef04 eff_ret]. rewrite Hrb. exact Hnot.
+- exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_222)).
 Qed.
 Definition mprotect_model (a n : word) (m : Model) : Model := mprotect_model_next m a n.
 Lemma mprotect_model_halted : forall a n m, m_halted (mprotect_model a n m) = m_halted m.
@@ -1810,6 +2070,10 @@ getr regs 11 <> Z_to_bv 64 0 ->
 getr regs 12 = Z_to_bv 64 3 ->
 map_contains (vm_noaccess (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
 map_contains (vm_maps (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
+(* 08b1429: check_mprotect answers unmodeled when the range meets the vDSO/vvar pair
+   ([YK13.mprotect_check]); the walk discharges it from the ledger's lg_vdso and lg_rfree. *)
+region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+  (getr regs 10) (page_round_up (getr regs 11)) = true ->
 forall eff,
 check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff model
 = match eff with
@@ -1823,7 +2087,7 @@ else CheckReject
 | _ => CheckReject
 end.
 Proof.
-intros regs pc mem rom model Hno Hal Hlen Hnw Hprot Hna Hma eff.
+intros regs pc mem rom model Hno Hal Hlen Hnw Hprot Hna Hma Hvd eff.
 set (addr := getr regs 10) in *.
 set (nZ := page_round_up_Z (bv_unsigned (getr regs 11))) in *.
 rewrite chk226 by exact Hno. fold addr. rewrite Hprot. unfold check_mprotect.
@@ -1832,7 +2096,8 @@ change (mprotect_modeled_b (Z_to_bv 64 3)) with true.
 rewrite (proj2 (Z.eqb_eq _ _) Hal). unfold w_is0 at 1. rewrite (bv_eqb_neq _ _ Hlen).
 cbn [negb]. fold nZ. rewrite (proj2 (Z.leb_gt _ _) Hnw). cbv beta iota zeta. fold nZ.
 unfold page_round_up in Hna, Hma |- *. fold nZ in Hna. fold nZ in Hma. fold nZ.
-rewrite Hna, Hma. cbn [andb].
+rewrite Hna, Hma.
+unfold page_round_up in Hvd. fold nZ in Hvd. rewrite Hvd. cbn [andb].
 destruct eff as [r ws zs us cs ci]. destruct ws; [|reflexivity].
 destruct us; [|reflexivity]. destruct cs; [|reflexivity]. destruct ci; [|reflexivity].
 unfold mprotect_model. reflexivity.
@@ -1846,13 +2111,15 @@ getr regs 11 <> Z_to_bv 64 0 ->
 getr regs 12 = Z_to_bv 64 3 ->
 map_contains (vm_noaccess (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
 map_contains (vm_maps (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
+region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+  (getr regs 10) (page_round_up (getr regs 11)) = true ->
 node_ok segs (mkCfg (pend_at regs pc mem rom) model)
 (mprotect_J04 model (getr regs 10) (page_round_up (getr regs 11))) (fun _ => [])
 (fun i => mkCfg (advance_past_svc (apply_effect (pend_at regs pc mem rom) (mprotect_ef04 regs model i)))
 (mprotect_md04 regs model i)).
 Proof.
-intros regs pc mem rom model Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma.
-pose proof (chk_mprotect_rw04 regs pc mem rom model Hno Hal Hlen Hnw Hprot Hna Hma) as Hchk.
+intros regs pc mem rom model Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd.
+pose proof (chk_mprotect_rw04 regs pc mem rom model Hno Hal Hlen Hnw Hprot Hna Hma Hvd) as Hchk.
 assert (Hrb : forall r, refusal_b (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) model r
 = errno_ret_in mprotect_errnos r).
 { intros r. rewrite (refusal_b_226 (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) model _ Hno). reflexivity. }
@@ -1910,6 +2177,7 @@ destruct cs; [|destruct zs; discriminate]. destruct ci; [|destruct zs; discrimin
 destruct (errno_ret_in mprotect_errnos r) eqn:Her; [reflexivity|].
 rewrite Hb in Hs. cbn [andb] in Hs. discriminate Hs.
 + apply spurious_refusal_not_refusal. cbn [eff_ret]. rewrite Hrb. exact Hz.
+- exact (rob_pend_mf regs pc mem rom model ltac:(rewrite Hno; exact memfree_226)).
 Qed.
 End g.
 Lemma pend_read_byte_mrb : forall segs regs pc mem,
@@ -1990,6 +2258,8 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 3 ->
 getr regs 13 = Z_to_bv 64 34 -> getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+(page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 (forall a, grant_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true ->
 realizes segs (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4)
 (apply_zeros mem [(a, page_round_up (getr regs 11))]) rom)
@@ -1997,9 +2267,9 @@ realizes segs (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4)
 (exists a, grant_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true) ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) B.
 Proof using.
-intros regs pc mem rom model B Hh Hlz Hno Hlen Hprot Hflags Hfdm Hoff HB [a0 Ha0].
+intros regs pc mem rom model B Hh Hlz Hno Hlen Hprot Hflags Hfdm Hoff Hdecl HB [a0 Ha0].
 apply (rz_silent_allI segs (mkCfg (pend_at regs pc mem rom) model) _ _ (inr (exist _ a0 Ha0)) B
-(node_mmap_rw04 segs regs pc mem rom model Hh Hlz Hno Hlen Hprot Hflags Hfdm Hoff)).
+(node_mmap_rw04 segs regs pc mem rom model Hh Hlz Hno Hlen Hprot Hflags Hfdm Hoff Hdecl)).
 intros [[e [He Hrf]] | [a Ha]]; unfold mmap_rw_ef04, mmap_rw_md04; cbn [proj1_sig].
 - exfalso. rewrite (grant_ok_not_refusable _ _ _ _ Ha0) in Hrf. discriminate Hrf.
 - rewrite adv_pend. cbn [eff_ret]. rewrite effmem_zeros. apply HB. exact Ha.
@@ -2009,6 +2279,8 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 34 ->
 getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+(page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 (forall a, place_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true ->
 realizes segs
 (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4)
@@ -2017,9 +2289,9 @@ realizes segs
 (exists a, place_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true) ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) B.
 Proof using.
-intros regs pc mem rom model B Hh Hlz Hno H1 H2 H3 H4 H5 HB [a0 Ha0].
+intros regs pc mem rom model B Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl HB [a0 Ha0].
 apply (rz_silent_allI segs (mkCfg (pend_at regs pc mem rom) model) _ _ (inr (exist _ a0 Ha0)) B
-(node_mmap_none04 segs regs pc mem rom model Hh Hlz Hno H1 H2 H3 H4 H5)).
+(node_mmap_none04 segs regs pc mem rom model Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl)).
 intros [[e [He Hrf]] | [a Ha]]; unfold mmap_none_ef04, mmap_none_md04; cbn [proj1_sig].
 - exfalso. rewrite (place_ok_not_refusable _ _ _ _ Ha0) in Hrf. discriminate Hrf.
 - rewrite adv_pend. cbn [eff_ret]. rewrite effmem_unmaps. apply HB. exact Ha.
@@ -2056,6 +2328,8 @@ getr regs 11 <> Z_to_bv 64 0 ->
 getr regs 12 = Z_to_bv 64 3 ->
 map_contains (vm_noaccess (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
 map_contains (vm_maps (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
+region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+  (getr regs 10) (page_round_up (getr regs 11)) = true ->
 mprotect_budget_ok model (getr regs 10) (page_round_up (getr regs 11)) = true ->
 realizes segs
 (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4)
@@ -2063,9 +2337,9 @@ realizes segs
 (mprotect_model (getr regs 10) (page_round_up (getr regs 11)) model)) B ->
 realizes segs (mkCfg (pend_at regs pc mem rom) model) B.
 Proof using.
-intros regs pc mem rom model B Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hbud HB.
+intros regs pc mem rom model B Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd Hbud HB.
 apply (rz_silent_allI segs (mkCfg (pend_at regs pc mem rom) model) _ _ (inr (exist _ tt Hbud)) B
-(node_mprotect_rw04 segs regs pc mem rom model Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma)).
+(node_mprotect_rw04 segs regs pc mem rom model Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd)).
 intros [[e [He Hb]] | [[] Hb]]; unfold mprotect_ef04, mprotect_md04; cbn [proj1_sig].
 - exfalso. rewrite Hbud in Hb. discriminate Hb.
 - rewrite adv_pend. cbn [eff_ret]. rewrite effmem_zeros. exact HB.

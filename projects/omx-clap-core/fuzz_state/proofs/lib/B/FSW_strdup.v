@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pitems_dev.v, with its module paths and module names changed; 149 of its 179 lines of code are new or changed and 512 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_epi.v
-   (a working branch 2ed11a3c43f), the same names over B's own code (B listing: capstone over the
+   (a working branch), the same names over B's own code (B listing: capstone over the
    unstripped twin of fs.asan-ubsan, whose instructions 0x8164c .. 0x81b5c equal the pinned image's).
    check_as_written over fs.asan-ubsan, the epilogue (B 0x81aa4 .. 0x81ad0): from the state FSW_caw_back.cawb_mid gives
    at the bcmp return 0x81aa4 (a0 = 0, equal bytes) or at the join 0x81aa8, to check_as_written_spec's post cawb_post:
@@ -19,39 +19,40 @@
    Section hypotheses: FSW_caw_back.v's Section W, by name (of the runtime, RTf only). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_caw_epi.v; 813 of its 871 lines of code are new or changed and 121 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_back.v
-   (a working branch 2ed11a3c43f), the same names over B's own code. Every B literal below is from
+   (a working branch), the same names over B's own code. Every B literal below is from
    B's listing (capstone over the unstripped twin of fs.asan-ubsan, (internal path), whose
    instructions 0x8164c .. 0x81b5c equal the pinned image's, sha256 5ac5ce0954f8...) or from B's constants (lib/B/FSH_Base.v
    PC_free 0x530e0, PC_bcmp 0x426d8, FRAME_check_as_written = 64). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_caw_back.v, with its module names changed; 1171 of its 1260 lines of code are new or changed and 782 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_front.v
-   (a working branch 98acdce1d16), re-walked on B's own listing (capstone over the unstripped twin
+   (a working branch), re-walked on B's own listing (capstone over the unstripped twin
    of fs.asan-ubsan, sha256 b1566a1c..., whose bytes 0x8164c .. 0x81b5c equal the pinned image's, sha256
    5ac5ce0954f8...). The image imports point at lib/B; the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay
    lib/A's (as lib/B/FSW_K.v imports them); the shared B states (caw_tbl, caw_stk, caw_ss1, caw_ss810) are
    lib/B/FSW_caw_defs.v's and the scan loop's premises (caw_static, caw_memf, caw_six, caw_atoms) lib/B/FSW_caw_scan.v's,
-   both taken BY NAME (a working branch a0658ed93a0). *)
+   both taken BY NAME (a working branch). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_caw_front.v; 1071 of its 1191 lines of code are new or changed and 1140 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_strdup.v (a working branch
-   1b683f7df0d), same lemma names and proof; B's addresses and stack numerals, imports point at lib/B's image files
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_strdup.v (a working branch),
+   same lemma names and proof; B's addresses and stack numerals, imports point at lib/B's image files
    (YB1v, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_alloc) and lib/B's kit (FSW_K, FSW_K3, FSW_rres, FSW_strkit,
    FSW_fuzz_strdup_tbl); the image-agnostic FSupoison, FSupoisonU, FSH_YC20 and FSH_Gen stay lib/A's, as lib/B's kit
    imports them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (*   rule 24: proves function fuzz_strdup (image B, 0x82d60). The brief's line (a Theorem Labs lane,
    src/resume/brief-B-walks.md), verbatim:
      proves function fuzz_malloc (B 0x82a58), own (B 0x82acc), fuzz_strdup (B 0x82d60), fuzz_alloc_live (B 0x82eec),
      fuzz_alloc_peak (B 0x82ef8), fuzz_alloc_peak_reset (B 0x82f04), fuzz_alloc_fail (B 0x82f18) (reuse search:
-     proof-index on main@c4c03c57ba1 / ossv/recipes@e5e7eba2cc0 / ossv/candidates@ee89628c997 /
-     release/pau-projects-recipes@b6a0088adcb + lemma index over 11131 working branches + live working heads; by
+     proof-index on main / ossv/recipes / ossv/candidates /
+     release/pau-projects-recipes + lemma index over 11131 working branches + live working heads; by
      address on the four release refs / `proof-index fuzz_strdup fuzz_alloc_live fuzz_alloc_peak
      fuzz_alloc_peak_reset fuzz_alloc_fail own`, `git grep -l -i -e <addr> <ref> -- proofs/omx-clap-core/fuzz_state`).
      fuzz_malloc B's own search: brief-AllocMallocFree.md (B 0x82a58 included, 0 hits).
    Result: none: written new (B image), porting ALLOC's A proof (the template above).
    CONFIRM (a Theorem Labs lane, 2026-10-29T07:41Z, before the walk was pushed): `proof-index fuzz_strdup` (index v5 built
-   2026-10-29T07:26:27Z, main@c4c03c57ba1 / ossv/recipes@cbd08981406 / ossv/candidates@ee89628c997 /
-   release/pau-projects-recipes@b6a0088adcb) lists for fs only the released plain 0x1416c / ubsan 0x14320 proofs
+   2026-10-29T07:26:27Z, main / ossv/recipes / ossv/candidates /
+   release/pau-projects-recipes) lists for fs only the released plain 0x1416c / ubsan 0x14320 proofs
    (lib/Prog, lib/U/Prog); `git grep -l -i -e 0x82d60 <ref> -- proofs/omx-clap-core/fuzz_state` on those four refs:
-   0 files each. One UNRELEASED B text, a working branch 016f6411b008 lib/B/Prog/fuzz_strdup.v, proves a
+   0 files each. One UNRELEASED B text, a working branch lib/B/Prog/fuzz_strdup.v, proves a
    different statement in a different model (fuzz_strdup_contract over SR and aledger, not
    FSH_Fn_alloc.fuzz_strdup_spec): not a drop-in, not used. Result unchanged.
    fuzz_strdup B 0x82d60 (fuzz/alloc.c:97-105) over fs.asan-ubsan: the walk of lib/B/FSH_Fn_alloc.v's fuzz_strdup_spec
@@ -65,8 +66,8 @@
    max(STK_RT_ALLOC, STK_own) = 16400 (lib/B/FSH_Base.v: B's fuzz_malloc frame is 16 and own() is out of line).
 
    port-from (as lib/A/FSW_strdup.v):
-   - control flow and the two arms: fs's released plain proof lib/Prog/fuzz_strdup_c.v:29-60 (ossv/recipes
-     c8557374ad2e, plain 0x1416c): strlen, ONE fuzz_malloc, memcpy only on the non-NULL arm; the NULL arm returns 0
+   - control flow and the two arms: fs's released plain proof lib/Prog/fuzz_strdup_c.v:29-60 (
+     plain 0x1416c): strlen, ONE fuzz_malloc, memcpy only on the non-NULL arm; the NULL arm returns 0
      with nothing copied and the statics' failing() update (fuzz_strdup_c.v:52-55); the non-NULL arm returns the new
      block holding cs ++ [0] (:56-62); the string home premise (:36-38) is cstr_kept here.
    - the walk's shape (entry state, runs, the program call, the return): a Theorem Labs lane's lib/A/FMW_check_as_written.v

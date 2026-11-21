@@ -4,15 +4,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and addresses changed; 2105 of its 2257 lines of code are new or changed and 859 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A5.v; 504 of its 841 lines of code are new or changed and 1920 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/A5.v b_ld_evt :156, b_hd_ld_evt :226, b_z_evt :259, b_tail_evt :304, b_mode_evt :379,
-     b_cat_evt :456, b_any_ld_evt :790.  A5.v is not in a working branch 3803efccea0: it is
-     a Theorem Labs lane's WIP d574f6c66de (blob 0e65829571e0303b907755eee8035d04c36236c7), taken by path onto 3803efccea0 on
-     a working branch f9a9f80d79e (unchanged, same blob) and built there (-s ours type-check rc=0);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     b_cat_evt :456, b_any_ld_evt :790.  A5.v is not in a working branch: it is
+     a Theorem Labs lane's WIP (blob 0e65829571e0303b907755eee8035d04c36236c7), taken by path onto on
+     a working branch (unchanged, same blob) and built there (-s ours type-check rc=0);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: b_ld_evt_of_F, b_hd_ld_evt_of_F, b_z_evt_of_F, b_tail_evt_of_F, b_mode_evt_of_F, b_any_ld_evt_of_F
      (evtF_evt + rng_all) re-derive the source statements, each checked by conversion against A5's lemma
      (the Definitions named <run>_src_check).  b_cat_evt calls reac_box_catalogue at 0x815f8, so it is split there:

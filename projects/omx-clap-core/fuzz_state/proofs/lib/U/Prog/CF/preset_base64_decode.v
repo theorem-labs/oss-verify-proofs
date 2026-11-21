@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/TxGlue.v, with its module paths and module names changed; 647 of its 739 lines of code are new or changed and 330 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/U/Prog/WriterRet.v, with its module paths and module names changed; 1101 of its 1204 lines of code are new or changed and 636 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/put_string.v, with its module paths and module names changed; 1314 of its 1437 lines of code are new or changed and 1081 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (auxv_pre's CONFIG_RSEQ flag witness and its auxv type table). *)
 From Stdlib Require Import ZArith NArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -580,7 +581,7 @@ Qed.
 Lemma auxv_high : forall L A mem mem' md sec lo lo' hi, aa_MR API L A mem md -> auxv_pre B sec lo mem ->
   munch [(lo', hi)] mem mem' -> alloc_ceiling <= lo' -> hi <= lo -> lo' <= lo -> auxv_pre B sec lo' mem'.
 Proof.
-  intros L A mem mem' md sec lo lo' hi HM (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) MU Hlo' Hhi Hle.
+  intros L A mem mem' md sec lo lo' hi HM (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) MU Hlo' Hhi Hle. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
   pose proof ceil_val as HC.
   assert (K : forall a v, 0 <= a -> a + 8 <= lo' \/ hi <= a -> a + 8 <= 2 ^ 64 ->
     word_mem (ms_segs B) mem a v -> word_mem (ms_segs B) mem' a v).
@@ -589,7 +590,7 @@ Proof.
   assert (LB : 0 <= ms_libc B + 8 /\ ms_libc B + 16 <= alloc_ceiling).
   { pose proof (owned_low L A mem md (ms_libc B + 8) HM ltac:(right; unfold static_owned; lia)).
     pose proof (owned_low L A mem md (ms_libc B + 15) HM ltac:(right; unfold static_owned; lia)). lia. }
-  exists av, ar. split; [apply K; [lia | lia | lia | exact H1]|].
+  exists rs, av, ar. try unfold AUXV_RAND_K. split; [apply K; [lia | lia | lia | exact H1]|].
   split; [intros k Hk; apply K; [lia | lia | lia | apply H2; exact Hk]|].
   split; [apply K; [lia | lia | lia | exact H3]|].
   split; [apply K; [lia | lia | lia | exact H4]|].

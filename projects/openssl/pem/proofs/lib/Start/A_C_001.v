@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the level's certificate moved beside its computed hand-off table). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
@@ -18,7 +19,3 @@ Lemma A_IT_001_ok : itab_sound A_SEGS A_IT_001.
 Proof. apply APS.mk_itab_ranges_sound. Qed.
 Definition A_shape_001 : shape := SCase (EVar 6) 10 (SHole 0) (SHole 0).
 
-Lemma A_cert_001 :
-  check A_SEGS A_IT_001 A_T NX0 AsanInit.LIMIT A_XN0 A_XE0 A_XB0 (HS_one A_HS_001) 0%nat 400000%nat 40000%nat None A_HS_000 A_plan_001
-  = COk A_shape_001.
-Proof. ltac2:(cert_refl_vm constr:(COk A_shape_001)). Qed.

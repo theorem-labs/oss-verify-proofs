@@ -1,7 +1,7 @@
 (* The per-call invariant of the cf driver loop (lib/A/AD1w_cf.v fr_LI = 0 <= ci <= 4 /\ W8's fr_gi) against the two
    statements AD1w_cf.v names for it: fr_lib_inv_stable (it survives what the driver does between calls) and
    fr_lib_inv_init (it holds at the first call).  Both are proved here, at fr_gi's writability text (W8's ruling G4,
-   a working branch ec4dd616ed1 W_LLVMFuzzerTestOneInput_cut.v:148).
+   a working branch W_LLVMFuzzerTestOneInput_cut.v:149).
    - fr_lib_inv_stable_ok: every conjunct of fr_gi is carried through W_rep.v's frame lemmas (akept_*, *_kept): the
      globals' bytes are G_fr_c B's, the table's and g_out's are fr_FP's (ACfn_cf.v), read through g_src / g_out /
      g_capout with W_frame.rdword_of_val_mem.  That reading needs the blocks' addresses inside the address space and
@@ -309,7 +309,7 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------ why fr_blk_ok *)
-(* AD1w_cf.v's fr_lib_inv_stable as it was at 3e82d89e10a, without fr_blk_ok: false at the real instance. *)
+(* AD1w_cf.v's fr_lib_inv_stable as it was, without fr_blk_ok: false at the real instance. *)
 Definition fr_lib_inv_stable_v0 : Prop :=
   forall ci0 regs ly S (W : world segs) mem ly' S' (W' : world segs) mem',
   fr_LI B ci0 ly S W mem ->

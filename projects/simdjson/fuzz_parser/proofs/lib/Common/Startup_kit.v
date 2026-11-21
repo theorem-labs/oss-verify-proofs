@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: envp_addr and auxv_addr are removed; the model's InitMem gives them. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
@@ -157,15 +158,4 @@ Ltac hyp_by_addr :=
   | |- mem_inv _ _ => match goal with H : mem_inv _ _ |- _ => exact H end
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Section StackAddrs.
-  Variables (sp0 : word) (argv envp : list (list byte)).
-  Notation usp0 := (bv_unsigned sp0).
-  (* [comment removed for export] *)
-  Definition envp_addr : Z := (usp0 + 8 * (argc argv + 2))%Z.
-  (* [comment removed for export] *)
-  Definition auxv_addr : Z := (usp0 + 8 * (argc argv + envc envp + 3))%Z.
-End StackAddrs.
+(* [envp_addr] and [auxv_addr] are [InitMem]'s. *)

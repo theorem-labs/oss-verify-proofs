@@ -4,6 +4,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1w.v, with its module paths changed; its address literals moved to omx-clap-core/fuzz_preset's ASan build where h-mani-a2's maps/reloc-cgif-preset.A.tsv maps them; the literals it does not map are still cgif_file_fuzzer.asan's (listed in the commit that moved them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -25,7 +26,19 @@ Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
 Context {ci : YGcfNames.CfImg} {cp : YGcfNames.CfParams}.
 
 Variable B : asyms.
-#[local] Notation ELV sp a0 p inp xw xd := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210): entry-draw top,
+   the run's own [kb_rseq] flag, and the execfn.  Every Prop below therefore carries the draw.
+   Shape copied from the in-tree ported donor AD1v.v:33-34 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is DROPPED rather than kept: it is implied by [entry_launch_ok_va]
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722).  MEASURED: this file consumed it
+   nowhere -- grep for [entry_stack_fits] over AD1w.v returns no hit.  Firing control for
+   that zero: the same query fires on AD2i.v:264 and AD2i.v:754, two genuine direct
+   consumptions, in a section that is not one of these Props. *)
+#[local] Notation ELV sp rnd a0 p inp xw xd :=
+(YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 Lemma blk_shift : forall H m buf len data off,
 blk H m buf len data -> 0 <= off <= len -> blk H m (buf + off) (len - off) (skipn (Z.to_nat off) data).
 Proof.
@@ -50,32 +63,40 @@ Definition tail_at (ss : sstate) (E : YP0m.env) (sp : word) (inp : ProcInput) (a
 (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (pb : sptr) (cap : Z) : Prop :=
 st_ok tfibsegs E ss (restrict (w_H W) ms) /\
 bv_unsigned (ew E A_BUF) = sptr_addr B ly pb /\ bv_unsigned (ew E A_LEN) = dlen data /\
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) /\
+(* the entry draw is existential here, as in the core's AD1w.tail_at (same arity) *)
+(exists rnd : EntryDraw, runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms))
+(runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp))) /\
 AI tfibsegs (w_H W) (w_A W) md /\ ARcf tfibsegs B ly S Hp W (ms_mem ms) md /\ top_ok (bv_unsigned sp) ly /\
 blocks S = [(pb, cap)] /\ 65536 <= cap <= 2 ^ 26 /\ dlen data < cap /\
 blk (w_H W) (ms_mem ms) (sptr_addr B ly pb) (dlen data) data /\
 m_fs md = in_fs inp /\ m_fds md = APSG.fds_std /\ drv_minv S cap (dlen data) /\
 FINV ly (w_H W) (ms_mem ms)    .
 Definition short_leaf_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
-(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb : sptr) (cap : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb : sptr) (cap : Z) (rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp -> valid_fs (in_fs inp) ->
 fs_lookup (in_fs inp) p = Some data -> dlen data <= 5 ->
-tail_at S_SHORT (havoc (ELV sp a0 p inp xw xd) K_M1 ws) sp inp a0 p data W ms md ly S Hp pb cap ->
+tail_at S_SHORT (havoc (ELV sp rnd a0 p inp xw xd) K_M1 ws) sp inp a0 p data W ms md ly S Hp pb cap ->
 srealizes tfibsegs (mkCfg ms md) (diag msg_short (in_fs inp)).
 Definition overrun_leaf_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
-(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb : sptr) (cap : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb : sptr) (cap : Z) (rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp -> valid_fs (in_fs inp) ->
 fs_lookup (in_fs inp) p = Some data -> 6 <= dlen data < 6 + config_len data ->
-tail_at S_OVR (edset (havoc (ELV sp a0 p inp xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S Hp pb cap ->
+tail_at S_OVR (edset (havoc (ELV sp rnd a0 p inp xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S Hp pb cap ->
 srealizes tfibsegs (mkCfg ms md) (diag msg_overrun (in_fs inp)).
 Definition post_P_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
-(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb : sptr) (cap : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb : sptr) (cap : Z) (rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp -> valid_fs (in_fs inp) ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data ->
-tail_at S_P (edset (havoc (ELV sp a0 p inp xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S Hp pb cap ->
+tail_at S_P (edset (havoc (ELV sp rnd a0 p inp xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S Hp pb cap ->
 srealizes tfibsegs (mkCfg ms md) (run_shape (payload data) (calls data) (in_fs inp)).
 Definition lib_pre (ly : alayout) (S : astate) (Hp : list Z) (W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) : Prop :=
 ARcf tfibsegs B ly S Hp W mem md /\ YK0s.ret_ok (getr regs 1%bv) /\ raZ regs = RA_LLVMF /\
@@ -178,11 +199,13 @@ AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly S Hp W mem md -> top_ok usp
 (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> m_fs md = fs ->
 srealizes tfibsegs (mkCfg (mkst regs (w64 A_EXIT) mem (seg_rom tfibsegs)) md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 Definition run_Q_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
-(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb : sptr) (cap : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb : sptr) (cap : Z) (rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp -> valid_fs (in_fs inp) ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data ->
-let E3 := E_P (edset (havoc (ELV sp a0 p inp xw xd) K_M1 ws) 2 data) data (sptr_addr B ly pb + 2 + config_len data) in
+let E3 := E_P (edset (havoc (ELV sp rnd a0 p inp xw xd) K_M1 ws) 2 data) data (sptr_addr B ly pb + 2 + config_len data) in
 tail_at (sQ (config_len data =? 0) (Z.of_nat (calls data))) E3 sp inp a0 p data W ms md ly S Hp pb cap ->
 bv_unsigned (ew E3 K_PP) = sptr_addr B ly pb + 2 + config_len data ->
 srealizes tfibsegs (mkCfg ms md) (run_shape (payload data) (calls data) (in_fs inp)).
@@ -214,12 +237,14 @@ m_fs md = fs /\ Fs.fs_sorted fs = true.
 Definition loop_tgt (pl : list byte) (ncalls j r : nat) (fs : Fs) : TSet :=
 match j with O => run_shape pl r fs | S _ => lib_iter pl r (run_tail (ncalls - 1)) fs end.
 Definition loop_L_x : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (E : YP0m.env)
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (E : YP0m.env)
 (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (Hp : list Z) (a0 p data : list byte) (pb pq : sptr) (cap q : Z)
-(j r : nat) (fs : Fs),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+(j r : nat) (fs : Fs) (rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp -> valid_fs (in_fs inp) ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data ->
-(forall k, (k < K_M1)%nat -> ew E k = ew (ELV sp a0 p inp xw xd) k) -> ed E 2 = data ->
+(forall k, (k < K_M1)%nat -> ew E k = ew (ELV sp rnd a0 p inp xw xd) k) -> ed E 2 = data ->
 bv_unsigned (ew E A_BUF) = sptr_addr B ly pb -> bv_unsigned (ew E A_LEN) = dlen data ->
 bv_unsigned (ew E 161) = sptr_addr B ly pb + 2 + config_len data ->
 bv_unsigned (ew E 162) = payload_len data -> bv_unsigned (ew E 163) = (if payload_len data =? 0 then A_EMPTY_tfa else q) ->

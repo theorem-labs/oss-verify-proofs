@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v (419c9d7c02f), lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v (8da615a239d) and lib/B/ReplyRINVB.v (f908a004fd1), restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
+(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v, lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v and lib/B/ReplyRINVB.v, restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyRINVB_exit.v, with its module paths changed; 156 of its 206 lines of code are new or changed and 888 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B composition ReplyBTop at route R: its Section hypotheses GSE_R (gestures_end's contract at R) and GE_R
    (gesture_end's, its callee; btrg_GE_R, plug `exact (btrg_GE_R rc fx)`), closed.
    btrg_GSE_R's statement is GSE_R's Context type in lib/B/ReplyBTop.v, word for word, under ReplyBTop's notations
@@ -11,7 +12,7 @@
    ARX, R := wle' tfibsegs RZ_cf, MT := MT_sec nsec_cf cf_kmax, RP := RP_cf, MMAX := fr_MMAX, RG := fr_RG), as image A's
    top_x.v:1983 closes its GSE_R. Its premises:
    - the instance and the placements: top_x's facts (ARX_laws, ARX_hp0, GX_ok, top_HOWN, top_apart_ok, top_HEV), _G's
-     G_fr_c facts, and computation, as top_x's strict GSE_x block (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:1200-1260) discharges them;
+     G_fr_c facts, and computation, as top_x's strict GSE_x block (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:1201-1261) discharges them;
    - GE_R, gesture_end at R: W_gesture_end.pb_gesture_end_xR at the same instance, its send_line at R
      ReplyBTopR_RE.btr_SL_R, its strlen TopX_RT_B2.topx_ASTRLEN_B_W;
    - the free rules at R: ReplyBTopR_EXIT.btrx_AFREE_R / btrx_AFREEN_R AF; RO := arodata_ok_cf, RO_ARx by ARX's third
@@ -100,7 +101,7 @@ Ltac btrg_inst rc fx :=
         | exact (YA0nH.wle'_trans tfibsegs (@YGcfRehidePost.RZ_cf rc))
         | exact (YA0nH.wle_wle' tfibsegs (@YGcfRehidePost.RZ_cf rc)) ].
 
-(* G_SL inside G_fr_c; its rom_out; the image cover; the end5 literal and g_out's footprint (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:1202-1255) *)
+(* G_SL inside G_fr_c; its rom_out; the image cover; the end5 literal and g_out's footprint (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:1203-1256) *)
 Lemma btrg_HG : forall (rc : YM05.RunCeil), gx_ok (@pa_segs rc fr_prog_listing (@PB_fr rc)) TfibB (G_SL TfibB fr_RG).
 Proof. intros rc. apply (W_journal.gx_ok_sub _ TfibB _ (G_fr_c TfibB)); [exact (c_HG_SL TfibB) | exact W_LLVMFuzzerTestOneInput_top_x.GX_ok]. Qed.
 

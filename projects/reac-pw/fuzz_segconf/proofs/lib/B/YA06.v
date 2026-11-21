@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA06.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/YA06.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the sys_rob conjunct of node_ok). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,6 +13,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK16 YK0n YK11 YK0h YK0i YK14 YK1c YK0v YK02 YK0p YK15 YK18 YK0y YK1b YK00 YK01 YK13 YP0n YK04 YK05 YA0i.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YA0n.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YA05 YK0g.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -192,7 +194,8 @@ change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hz. lia. }
 pose proof (fun eff => eq_trans (madvise_check ms (getr regs 17) md eff Hno) (madvise_check_modeled ms md eff Hargs)) as Hchk. rewrite H0, Hpr in Hchk.
 rewrite <- ZF.
 apply (node_det_noacc segs ms md (getr regs 17) (mkEffectU (Z_to_bv 64 0) [] [(a, n)] [] [] []) (madvise_dontneed_next md a n) []);
-[exact Hh | reflexivity | | | rewrite madvise_next_halted; exact Hh | reflexivity].
+[exact Hh | reflexivity | | | rewrite madvise_next_halted; exact Hh | reflexivity
+| exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_233))].
 - intros eff m' evs. split.
 + intros Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
 destruct ws; [|discriminate]. destruct us; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].

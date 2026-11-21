@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap grant proves its robustness fact by RomBase.sys_rob_memfree; span_ok_shape takes segs). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import
   W64 ITrie FxSpec FxInstr FxState FxMem FxExec FxRel FxKind FxMemSound FxValSound FxStepSound FxStepMain FxRun FxRn
   FxLazy FxSys FxDrive FxCellFrame FxDrive3 FxDrive3N FxDrive3S.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
@@ -283,6 +285,7 @@ Proof.
                 (ms_pend_svc ms) Hx8 Hargs) as Hiff. cbv zeta in Hiff. rewrite Ha0 in Hiff. fold addr nZ m' in Hiff.
   specialize (Hiff Hbudget).
   set (ms' := sysret (ms_pend ms) addr (apply_zeros (ms_mem (ms_pend ms)) [(addr, Z_to_bv 64 nZ)])) in *.
+  split; [eapply RomBase.sys_rob_memfree; [reflexivity | rewrite Hx8; exact RomBase.memfree_222] |].
   exists unit, tt, (fun _ => mkCfg ms' m').
   split.
   { intros e st. rewrite Hiff. split.
@@ -530,7 +533,7 @@ Proof.
       intros Hc. exact (Hno0 t rg rf_get0 (Hin_rg _ Hc)).
     - exact Hcovs.
     - intros t1 rg1 Hg1. destruct (same_shape_get _ _ _ _ Hshape Hg1) as (rg10 & Hg10 & _).
-      exact (span_ok_shape R0 rho _ _ t1 rg10 rg1 Hshape Hkinds Hg10 Hg1 (Hsp t1 rg10 Hg10)).
+      exact (span_ok_shape segs R0 rho _ _ t1 rg10 rg1 Hshape Hkinds Hg10 Hg1 (Hsp t1 rg10 Hg10)).
     - exact Hexc. }
   exact (xpart_node _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HX Hne Fbrk).
 Qed.

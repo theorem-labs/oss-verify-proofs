@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the growth half of a data round of fuzz_reply's send_line loop on IMAGE B
-   (fuzz_reply.asan-ubsan).  Structure ported from image A's lib/A/W_send_line_grow.v (a working branch
-   a78a220dc8e: sl_grow, its seat and its block / byte lemmas), with the run tactics of W_send_line_loop.v. *)
+   (fuzz_reply.asan-ubsan).  Structure ported from image A's lib/A/W_send_line_grow.v (a working branch:
+   sl_grow, its seat and its block / byte lemmas), with the run tactics of W_send_line_loop.v. *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, row G-BSL-b):
    the ARx-generic room-form twin of W_send_line_grow.v: sl_grow_x over ARx with the caller-context realloc rule
    (the B twin of a Theorem Labs lane's lib/A/W_send_line_grow_x.v) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-generic twin of lib/B/W_send_line_grow.v (that file is not edited), in
    the room form, by the conversion image A's lib/A/W_send_line_grow.v -> W_send_line_grow_x.v underwent
-   (a0c781b35e6 -> ac6af80e649): W_send_line_grow_cx_x.v sl_grow_stmt_x, from SLN_x at N = 0x829cc (A_sl_n) to the
+   (->): W_send_line_grow_cx_x.v sl_grow_stmt_x, from SLN_x at N = 0x829cc (A_sl_n) to the
    join J = 0x82a08 (A_sl_join), where the continuation takes SLM_x:
      run 1  0x829cc PLdHi s4 <- g_nout (through s6 = hi23); ld a0,16(sp) (the spilled hi24); ld a0,1976(a0)
             (g_capout); add s4,s3,s4; 0x829dc bgeu a0,s4 (taken: refuted by SLN_x's capN < no + sent + n);
@@ -88,7 +89,7 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* W_send_line_cx_x.v's header (W_send_line_cx.v:97-140 over ARx, LAWS, PST, RP, HP0) *)
+(* W_send_line_cx_x.v's header (W_send_line_cx.v:98-141 over ARx, LAWS, PST, RP, HP0) *)
 Hypothesis HG : gx_ok SEGS B (G_SL B RG).
 Hypothesis HGR : forall a, inG (G_SL B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_SL B RG).
@@ -99,7 +100,7 @@ Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, YCk0.v:34, holds [0x829f4]; YCk0.v:169 is send_line's edge to it); send_line hands the rule a cut
-   chain (ch = []), so the trace is the return address alone (image A's a0c781b35e6..0828d5d79f5 form). *)
+   chain (ch = []), so the trace is the return address alone (image A.. form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x1a0] CTX_R.   (* realloc returns to 0x829f4 *)
@@ -648,7 +649,7 @@ Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CT
 Let RUNG := paj_run_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let BRR := paj_branch_xR (PI := PI) (R := R).
-(* W_send_line_grow_x.v:626 sl_grow_x at R *)
+(* W_send_line_grow_x.v:627 sl_grow_x at R *)
 Theorem sl_grow_xR : sl_grow_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 unfold sl_grow_stmt_xR. intros regsE ly S HpE W mem md c O mx no cap out line Bl WN regsN memN mdN sent n kr HN K.

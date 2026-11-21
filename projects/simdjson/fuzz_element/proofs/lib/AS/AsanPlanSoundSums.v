@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run's CONFIG_RSEQ flag RZ added as a section variable and passed to x_stmt; the proofs are unchanged; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/AS/AsanPlanSoundSums.v, lines 608-619, 1584-1608, 1806. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -604,6 +605,18 @@ Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 ([rseq_z]).  [x_stmt] reads it through
+   [node_x SEGS A nx0 RZ x args] (AS/AsanPlanSound.v:2118, AS/AsanPlan.v:33,125), so the eight
+   [x_stmt] theorems below carry it.  Declared immediately after [LIMIT], the
+   slot AS/AsanPlanSound.v:115 puts it in, so the discharged form is
+   [x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 x] -- what AS/AsanNodesStartX.v:189,
+   AS/AsanNodesStartXAsan.v:52 and AS/AsanStartup.v:57 already spell.  A section [Variable] and not a
+   [Let]: nothing in this section derives the flag, and a literal would pin it
+   when both values are reachable.  Nothing else in this section mentions it,
+   so no other export's argument list moves.  Without it [SINV] landed in the
+   [Z] slot: "The term SINV has type env -> (word -> option byte) -> Prop
+   while it is expected to have type Z". *)
+Variable RZ : Z.
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
 
@@ -1568,31 +1581,31 @@ Proof.
 Qed.
 
 Theorem node_x_sound_XIMemset :
-  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIMemset.
+  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XIMemset.
 Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 Theorem node_x_sound_XMemset :
-  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemset.
+  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XMemset.
 Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 Theorem node_x_sound_XIMemcpy :
-  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIMemcpy.
+  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XIMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 Theorem node_x_sound_XMemcpy :
-  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemcpy.
+  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 Theorem node_x_sound_XMemIsZero :
-  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemIsZero.
+  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XMemIsZero.
 Proof. intros SUM args. exact (summary_miz_sound SUM). Qed.
 
 Theorem node_x_sound_XIStrncpy :
-  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIStrncpy.
+  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XIStrncpy.
 Proof. intros SUM args. exact (summary_istrncpy_sound SUM). Qed.
 
 Theorem node_x_sound_XPopFree :
-  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XPopFree.
+  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XPopFree.
 Proof. intros SUM args. exact (summary_popfree_sound SUM args). Qed.
 
 Lemma know_bytes_lit_length : forall k b o n zs, know_bytes_lit SEGS k b o n = Some zs -> length zs = n.
@@ -1790,7 +1803,7 @@ Proof.
 Qed.
 
 Theorem node_x_sound_XHeapSort :
-  AsanHeapSort.hsort_spec SEGS (x_hsort A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XHeapSort.
+  AsanHeapSort.hsort_spec SEGS (x_hsort A) -> x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XHeapSort.
 Proof. intros SUM args. exact (summary_hsort_sound SUM). Qed.
 
 End Sound.

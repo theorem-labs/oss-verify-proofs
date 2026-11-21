@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Sections First and Plain take the channel-reader hypothesis and walk the run's segment list RSEGS ++ rt_tail, through rz_run_lf_rt and stdio_call_sound_post_gen). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
   PropExec CatExec CatSim SeqExec StoreOk ShapeAlg Nodes AgentLib SpecConsts Frame StreamSim FileSim
   SymExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX LibKnowFrame SymAux
   Hoare RefExitBase RefStdioDefs RefStdioWrite LibStdioCall RefNodes RefPrintfBufBase LibTail LibDiagKn.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RunTail.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
@@ -136,6 +138,12 @@ Section First.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd1 : fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  (* 08b1429: a write to a channel without a reader is SIGPIPE; init_model seeds the reader and no step writes it *)
+  Hypothesis Hrdr : m_channel_reader model = true.
+  (* the first printf lies inside the harness loop, whose later iterations call the target
+     (time() reads the vDSO): its walk is over the run's list *)
+  Context {RT : RunTail}.
+  Local Notation VS := (RSEGS ++ rt_tail) (only parsing).
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev []).
 
@@ -169,8 +177,8 @@ Section First.
        regs_ok (ENV (vals ++ junk_vals Rj)) p1_srF R' ->
        know_ok RSEGS (ENV (vals ++ junk_vals Rj)) M' p1_knF ->
        frame_mod M M' p1_regions_w ->
-       realizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 0xddca8) M' (seg_rom RSEGS)) model) K) ->
-    realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0xddd60) M (seg_rom RSEGS)) model)
+       realizes VS (mkCfg (mkst R' (Z_to_bv 64 0xddca8) M' (seg_rom VS)) model) K) ->
+    realizes VS (mkCfg (mkst R (Z_to_bv 64 0xddd60) M (seg_rom VS)) model)
              (t_emit [WriteEv (Z_to_bv 64 1) (Z_to_bv 8 48); WriteEv (Z_to_bv 64 1) (Z_to_bv 8 10)] K).
   Proof.
     intros vals R M K HL P0 HR HK HKnil HCONT.
@@ -179,8 +187,8 @@ Section First.
     pose proof (p1_regions_flat vals P0 ltac:(lia) ltac:(lia)) as RF.
     pose proof (p1_regions_denot vals P0 ltac:(lia)) as RD.
     (* [comment removed for export] *)
-    eapply (rz_run_lf RSEGS FUEL1 STOPS1 scr0 0xddd60 p1_sr p1_kn 34 (fst (fst p1_rA)) (snd (fst p1_rA)) (snd p1_rA)
-              (fst (fst p1_cA)) (snd (fst p1_cA)) (snd p1_cA) (ENV vals) M (seg_rom RSEGS) R model);
+    eapply (rz_run_lf_rt RSEGS FUEL1 STOPS1 scr0 0xddd60 p1_sr p1_kn 34 (fst (fst p1_rA)) (snd (fst p1_rA)) (snd p1_rA)
+              (fst (fst p1_cA)) (snd (fst p1_cA)) (snd p1_cA) (ENV vals) M (seg_rom VS) R model);
       [ vm_cast_no_check (@eq_refl _ p1_rA) | vm_cast_no_check (@eq_refl _ p1_cA)
       | exact HR | exact HK | constructor | constructor | exact Hh | exact Hlazy | ].
     clear HR HK. intros RA MA HR HK EQA LFA.
@@ -188,8 +196,8 @@ Section First.
     change (s_regs (fst (fst p1_rA))) with p1_srA in HR. change (fst (fst p1_cA)) with p1_knA in HK.
     change (s_pc (fst (fst p1_rA))) with 0x273950%Z.
     (* [comment removed for export] *)
-    eapply (rz_ioctl_winsz RSEGS _ _ _ model ECALLW (Z_to_bv 64 1) (FdChannel (Z_to_bv 64 1)));
-      [ vm_compute; reflexivity | apply is_ecall_ECALLW | exact Hh | exact Hlazy
+    eapply (rz_ioctl_winsz VS _ _ _ model ECALLW (Z_to_bv 64 1) (FdChannel (Z_to_bv 64 1)));
+      [ rewrite rt_fetch_word; vm_compute; reflexivity | apply is_ecall_ECALLW | exact Hh | exact Hlazy
       | regv HR (17 : reg); reflexivity | regv HR (10 : reg); reflexivity
       | change (bv_unsigned (Z_to_bv 64 1)) with 1%Z; lia | exact Hfd1
       | regv HR (11 : reg); reflexivity | ].
@@ -198,8 +206,8 @@ Section First.
                   ltac:(cbn [edenot]; apply bv_eq; reflexivity)) as HR'.
     clear HR. change (sr_upd p1_srA (ridx 10) (ELit (2 ^ 64 - 25)%Z)) with p1_srA' in HR'.
     (* [comment removed for export] *)
-    eapply (rz_run_lf RSEGS FUEL1 STOPS1 scr0 0x273954 p1_srA' p1_knA 34 (fst (fst p1_rB)) (snd (fst p1_rB)) (snd p1_rB)
-              (fst (fst p1_cB)) (snd (fst p1_cB)) (snd p1_cB) (ENV vals) MA (seg_rom RSEGS) _ model);
+    eapply (rz_run_lf_rt RSEGS FUEL1 STOPS1 scr0 0x273954 p1_srA' p1_knA 34 (fst (fst p1_rB)) (snd (fst p1_rB)) (snd p1_rB)
+              (fst (fst p1_cB)) (snd (fst p1_cB)) (snd p1_cB) (ENV vals) MA (seg_rom VS) _ model);
       [ vm_cast_no_check (@eq_refl _ p1_rB) | vm_cast_no_check (@eq_refl _ p1_cB)
       | exact HR' | exact HK | constructor | constructor | exact Hh | exact Hlazy | ].
     clear HR' HK. intros RB MB HR HK EQB LFB.
@@ -208,7 +216,8 @@ Section First.
     change (s_pc (fst (fst p1_rB))) with 0x272e44%Z.
     (* [comment removed for export] *)
     pose proof p1_itinerary as (_ & _ & _ & _ & _ & _ & SC & _).
-    apply (stdio_call_sound_post vals (blobs_ev []) p1_srB p1_knB RB MB model p1_sc [Z_to_bv 8 48] [Z_to_bv 8 10] K
+    apply (stdio_call_sound_post_gen VS (rt_msteps_sym RSEGS) (rt_fetch_word RSEGS) (rdn_app_rt RSEGS)
+             vals (blobs_ev []) p1_srB p1_knB RB MB model p1_sc [Z_to_bv 8 48] [Z_to_bv 8 10] K
              HR HK (eq_trans (f_equal (fun n => stdio_call n p1_srB p1_knB) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn p1_sc length edenot ev ENV Z.of_nat Pos.of_succ_nat Pos.succ].
     - change (bv_unsigned (Z_to_bv 64 3211104)) with 3211104%Z. change (bv_unsigned (Z_to_bv 64 3211105)) with 3211105%Z. lia.
@@ -223,6 +232,7 @@ Section First.
     - (* [comment removed for export] *) change (bv_unsigned (Z_to_bv 64 3211104)) with 3211104%Z. krd_solve HK.
     - (* [comment removed for export] *) krd_solve HK.
     - exact Hfd1.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - exact HKnil.
@@ -237,8 +247,8 @@ Section First.
       pose proof (p1_regions_flat vals' P0' ltac:(lia) ltac:(lia)) as RF'.
       pose proof (p1_regions_denot vals' P0' ltac:(lia)) as RD'.
       change (Env (vals_ev vals') (blobs_ev [])) with (ENV vals') in HR, HK.
-      eapply (rz_run_lf RSEGS FUEL1 STOPS1 scr0 0x273974 (sc_sr p1_sc) (sc_kn p1_sc) 66 (fst (fst p1_rC)) (snd (fst p1_rC)) (snd p1_rC)
-                (fst (fst p1_cC)) (snd (fst p1_cC)) (snd p1_cC) (ENV vals') MC (seg_rom RSEGS) _ model);
+      eapply (rz_run_lf_rt RSEGS FUEL1 STOPS1 scr0 0x273974 (sc_sr p1_sc) (sc_kn p1_sc) 66 (fst (fst p1_rC)) (snd (fst p1_rC)) (snd p1_rC)
+                (fst (fst p1_cC)) (snd (fst p1_cC)) (snd p1_cC) (ENV vals') MC (seg_rom VS) _ model);
         [ vm_cast_no_check (@eq_refl _ p1_rC) | vm_cast_no_check (@eq_refl _ p1_cC)
         | exact HR | exact HK | constructor | constructor | exact Hh | exact Hlazy | ].
       clear HR HK. intros RC MF HR HK EQC LFC.
@@ -260,6 +270,11 @@ Section Plain.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd1 : fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  (* 08b1429: Section Plain consumes Section First's p1_sound, whose signature gained Hrdr *)
+  Hypothesis Hrdr : m_channel_reader model = true.
+  (* [printf0_first]'s continuation runs on to the target's later calls: over the run's list *)
+  Context {RT : RunTail}.
+  Local Notation VS := (RSEGS ++ rt_tail) (only parsing).
 
   (* [comment removed for export] *)
   Record p1H (regs : bvmap 5 word) (mem : word -> option byte) (sp : word) (can : Z) : Prop := P1H {
@@ -350,14 +365,14 @@ Section Plain.
     p1H regs mem sp can ->
     K [] ->
     (forall regs' mem', p1Post regs mem sp can regs' mem' ->
-       realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0xddca8) mem' (seg_rom RSEGS)) model) K) ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xddd60) mem (seg_rom RSEGS)) model)
+       realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0xddca8) mem' (seg_rom VS)) model) K) ->
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xddd60) mem (seg_rom VS)) model)
              (t_emit [WriteEv (Z_to_bv 64 1) (Z_to_bv 8 48); WriteEv (Z_to_bv 64 1) (Z_to_bv 8 10)] K).
   Proof.
     intros regs mem sp can K PH HKnil HCONT.
     pose proof (p1_regs_ok regs mem sp can PH) as HR. pose proof (p1_know_ok regs mem sp can PH) as HK.
     destruct PH. pose proof (u64_range sp) as Hsp.
-    apply (p1_sound sp model Hh Hlazy Hfd1 (p1_vals regs sp can) regs mem K);
+    apply (p1_sound sp model Hh Hlazy Hfd1 Hrdr (p1_vals regs sp can) regs mem K);
       [ unfold p1_vals; rewrite length_app, junk_vals_length; reflexivity | reflexivity | exact HR | exact HK | exact HKnil |].
     clear HR HK. intros Rj R' M' HR HK FM.
     set (vals' := p1_vals regs sp can ++ junk_vals Rj) in *.

@@ -1,15 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded end state, kept as es6end_rec0 with its total-size bound also counting the vDSO/vvar pair's reserved bytes, is moved to the numbering and launch layout of the run at 727298f3 by the fixed rule in AsPlanRegen.relaunch, computed in the build; the two shadow words time()'s __vdsosym strings occupy (AsConst ASHW_VWNAME, ASHW_VWVER) are claimed zero at the end state, which the leaf's knowledge check derives from the hand-off state's zero over the image shadow, no store of the hole touching them; the whole pages [sp0 - 6144000, sp0) of the launch's writable stack window [sp0 - 6144513, sp0) are claimed writable at the end state too, which the same check derives). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AxSymExec3 AsanPlanCore AsanPlan.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsCert Require Import AsImages.
 Import ListNotations. Import AX2. Import AP.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
-Definition es6end0 : acs :=
+Definition es6end_rec0 : acs :=
  {| a_ss := SS 2047476
   [(ELit 0);
    (ELit 5392444);
@@ -1182,6 +1184,7 @@ Definition es6end0 : acs :=
    (KRange (EVar 4) 0 280000);
    (KRange (EVar 5) 3024 527312);
    (KWr {| a_base := (EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 6)) (EMd M_MUL (ELit 16) (EVar 10)))); a_off := (-8388608) |} (ELit 8388608));
+   (KWr {| a_base := (EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 6)) (EMd M_MUL (ELit 16) (EVar 10)))); a_off := (-6144000) |} (ELit 6144000));
    (KZero {| a_base := (EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 6)) (EMd M_MUL (ELit 16) (EVar 10)))); a_off := (-80) |} (ELit 8));
    (KWord {| a_base := (EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 6)) (EMd M_MUL (ELit 16) (EVar 10)))); a_off := 0 |} 8 (EVar 1));
    (KWord {| a_base := (EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 6)) (EMd M_MUL (ELit 16) (EVar 10)))); a_off := 8 |} 8 (EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EAlu ALU_ADD (EMd M_MUL (ELit 8) (EVar 1)) (EAlu ALU_ADD (EMd M_MUL (ELit 8) (EVar 2)) (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 6)) (EMd M_MUL (ELit 16) (EVar 10)))))) (ELit 184)));
@@ -1289,6 +1292,8 @@ Definition es6end0 : acs :=
    (KImg 12384768 12386304);
    (KWr {| a_base := (ELit 0); a_off := 5472256 |} (ELit 6914048));
    (KZero {| a_base := (ELit 0); a_off := 2148971296 |} (ELit 8200));
+   (KZero {| a_base := (ELit 0); a_off := 2147462816 |} (ELit 8));
+   (KZero {| a_base := (ELit 0); a_off := 2147484632 |} (ELit 8));
    (KZero {| a_base := (ELit 0); a_off := 2147466072 |} (ELit 8));
    (KZero {| a_base := (ELit 0); a_off := 2147467856 |} (ELit 16));
    (KZero {| a_base := (ELit 0); a_off := 2147474944 |} (ELit 16));
@@ -1521,8 +1526,23 @@ Definition es6end0 : acs :=
    (KUnk {| a_base := (ELit 0); a_off := 2147459072 |} (ELit 1540096))]
   478%nat;
  a_maps := [{| am_base := (EMd M_MUL (ELit 4096) (EVar 465)); am_len := (ELit 65536); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 462)); am_len := (ELit 65536); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 460)); am_len := (ELit 65536); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 458)); am_len := (ELit 65536); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 457)); am_len := (ELit 4096); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 456)); am_len := (ELit 8388608); am_kind := KRWLAZY |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 455)); am_len := (ELit 1048576); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 409)); am_len := (ELit 4096); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 5)); am_len := (ELit 8192); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 392)); am_len := (ELit 11571200); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 326)); am_len := (ELit 4096); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 261)); am_len := (ELit 4096); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 244)); am_len := (ELit 65536); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 243)); am_len := (ELit 4096); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 242)); am_len := (ELit 8388608); am_kind := KNONELAZY |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 224)); am_len := (ELit 137439023104); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 223)); am_len := (ELit 3727360); am_kind := KRW |}; {| am_base := (EMd M_MUL (ELit 4096) (EVar 94)); am_len := (ELit 65536); am_kind := KRW |}; {| am_base := (ELit 2201439137792); am_len := (ELit 15392894357504); am_kind := KRWLAZY |}; {| am_base := (ELit 2415882240); am_len := (ELit 2199023255552); am_kind := KNONELAZY |}; {| am_base := (ELit 2147446784); am_len := (ELit 268435456); am_kind := KRWLAZY |}];
- a_totsz := 17729671004160; a_ylo := 23112583335936; a_eager := 16838656;
+ (* LPS 727298f3: the reserved ledger holds the launch's vDSO/vvar pair beside the image's reservations, and
+    the leaf check counts it ([Br3Leaf.same3_chk]: live_bytes R0 + resx_bytes + S' <= a_totsz); the bound
+    recorded before the pair existed grows by the same [APC.resx_bytes ASAN_H] (20 pages). *)
+ a_totsz := 17729671004160 + APC.resx_bytes ASAN_H; a_ylo := 23112583335936; a_eager := 16838656;
  a_vis := [((EMd M_MUL (ELit 4096) (EVar 465)), (ELit 65536)); ((EMd M_MUL (ELit 4096) (EVar 462)), (ELit 65536)); ((EMd M_MUL (ELit 4096) (EVar 460)), (ELit 65536)); ((EMd M_MUL (ELit 4096) (EVar 458)), (ELit 65536)); ((EMd M_MUL (ELit 4096) (EVar 457)), (ELit 4096)); ((EMd M_MUL (ELit 4096) (EVar 456)), (ELit 8388608)); ((EMd M_MUL (ELit 4096) (EVar 455)), (ELit 1048576)); ((EMd M_MUL (ELit 4096) (EVar 409)), (ELit 4096)); ((EMd M_MUL (ELit 4096) (EVar 5)), (ELit 8192)); ((EMd M_MUL (ELit 4096) (EVar 392)), (ELit 11571200)); ((EMd M_MUL (ELit 4096) (EVar 326)), (ELit 4096)); ((EMd M_MUL (ELit 4096) (EVar 261)), (ELit 4096)); ((EMd M_MUL (ELit 4096) (EVar 244)), (ELit 65536)); ((EMd M_MUL (ELit 4096) (EVar 243)), (ELit 4096)); ((EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 224)) (EMd M_MUL (ELit (-4096)) (EVar 225))) (ELit 137439019008)), (ELit 4096)); ((EMd M_MUL (ELit 4096) (EVar 223)), (ELit 3727360)); ((EMd M_MUL (ELit 4096) (EVar 94)), (ELit 65536)); ((ELit 65536), (ELit 12320768)); ((EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 4096) (EVar 6))) (ELit (-8388608))), (EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit (-32768)) (EVar 0)) (EMd M_MUL (ELit (-4096)) (EVar 6))) (ELit 140737496743936)))];
  a_ghost := [((EMd M_MUL (ELit 4096) (EVar 464)), (ELit 32768)); ((EMd M_MUL (ELit 4096) (EVar 463)), (ELit 16384)); ((EMd M_MUL (ELit 4096) (EVar 461)), (ELit 8192)); ((EMd M_MUL (ELit 4096) (EVar 459)), (ELit 4096)); ((EMd M_MUL (ELit 4096) (EVar 327)), (ELit 4096))];
  a_abytes := 2467991040; a_brk := (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 5)) (ELit 8192)); a_fd := FdStd; a_tidset := true;
  a_vmops := [(VUnmap (EMd M_MUL (ELit 4096) (EVar 464)) (ELit 32768)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 465)) (ELit 65536)); (VUnmap (EMd M_MUL (ELit 4096) (EVar 463)) (ELit 16384)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 464)) (ELit 32768)); (VUnmap (EMd M_MUL (ELit 4096) (EVar 461)) (ELit 8192)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 463)) (ELit 16384)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 462)) (ELit 65536)); (VUnmap (EMd M_MUL (ELit 4096) (EVar 459)) (ELit 4096)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 461)) (ELit 8192)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 460)) (ELit 65536)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 459)) (ELit 4096)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 458)) (ELit 65536)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 457)) (ELit 4096)); (VNew KRWLAZY (EMd M_MUL (ELit 4096) (EVar 456)) (ELit 8388608)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 455)) (ELit 1048576)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 409)) (ELit 4096)); (VFixIn false true (EMd M_MUL (ELit 4096) (EVar 5)) (ELit 4096)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 392)) (ELit 11571200)); (VUnmap (EMd M_MUL (ELit 4096) (EVar 327)) (ELit 4096)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 327)) (ELit 4096)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 326)) (ELit 4096)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 261)) (ELit 4096)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 244)) (ELit 65536)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 243)) (ELit 4096)); (VNew KNONELAZY (EMd M_MUL (ELit 4096) (EVar 242)) (ELit 8388608)); (VFixIn false false (EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 224)) (EMd M_MUL (ELit (-4096)) (EVar 225))) (ELit 137439019008)) (ELit 4096)); (VNew KNONELAZY (EMd M_MUL (ELit 4096) (EVar 224)) (ELit 137439023104)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 223)) (ELit 3727360)); (VNew KRW (EMd M_MUL (ELit 4096) (EVar 94)) (ELit 65536)); (VNew KRWLAZY (ELit 2201439137792) (ELit 15392894357504)); (VNew KNONELAZY (ELit 2415882240) (ELit 2199023255552)); (VNew KRWLAZY (ELit 2147446784) (ELit 268435456))] |}.
+
+(* LPS 727298f3: the end state in the numbering and launch layout of the run at 727298f3, by OSSV-509's fixed rule
+   for recorded states no run reaches (its run record, "Hand-off states filtered by a fixed rule", addition of
+   2026-11-13T07:05Z), as the one function [AsPlanRegen.relaunch]: [es6end_rec0] above (the recorded state) and
+   the start it was recorded against, renumbered by the probe-read map [ES6Start.vsh_hand]; the facts carried from
+   the old launch layout that the computed start lacks dropped, the computed start's facts the leaf check takes as
+   carried added, the size bounds moved with the start's; computed here, re-checked by [ES6Hole0]'s trans3h_chk. *)
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require AsPlanRegen.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsHole Require Import ES6Img ES6Start ES6Data0.
+Definition es6end0 : acs := Eval vm_compute in
+  AsPlanRegen.relaunch (carried3 IM ASAN_H TT classes START d bs) (AsPlanRegen.ash vsh_hand s6start_rec0) START
+                       (AsPlanRegen.ash vsh_hand es6end_rec0).

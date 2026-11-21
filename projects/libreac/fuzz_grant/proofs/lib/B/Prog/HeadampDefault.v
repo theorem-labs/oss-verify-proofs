@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry seat, the run and the return adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v for libreac/fuzz_grant's reac_headamp_default; the contract and the value lemma are new. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampDefault.v, ported from a working branch d98082bd58b: the same text over image B's listing and walk layer (lib/B/Prog). Image B's reac_headamp_default (0x85bf0) is byte-identical to image A's 0x84e54, all 4 words. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampDefault.v, ported from a working branch: the same text over image B's listing and walk layer (lib/B/Prog). Image B's reac_headamp_default (0x85bf0) is byte-identical to image A's 0x84e54, all 4 words. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_default (image B fuzz_grant.asan-ubsan 0x85bf0; code-identical to fuzz_grant.asan 0x84e54, 4 instructions): the contract of the
    ASan build's code and its walk. The function reads no memory and has no frame: it
    returns Pau's dflt of a0 (32 for the SENS parameter 2, else 0) in a0. *)

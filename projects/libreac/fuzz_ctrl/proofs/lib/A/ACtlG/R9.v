@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v, with its module paths and module names changed; 624 of its 667 lines of code are new or changed and 802 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R9.v -- GLUE for stage seg_R9 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:680).
    Written by a Theorem Labs lane (piece W2a); single writer.  rule 24: no function proved (stage
    glue of a walk; proves no function, kind: segment lemma).  Pattern: (internal path)
@@ -58,7 +59,7 @@
    SECTION HYPOTHESES (exact text below)
    - RELRO_IMG, LAWS, TFIB_SYMS: ACtl.v's own Section hypotheses (ACtl.v:179, :183, :191), same text.
    - TPARSE: ACtl.v's own (ACtl.v:315, same text): a Theorem Labs lane's callee spec treac_ctrl_parse_spec
-     (lib/A/Prog/C_reac_ctrl_parse.v:63), the split rule's cgif-form callee contract.
+     (lib/A/Prog/C_reac_ctrl_parse.v:64), the split rule's cgif-form callee contract.
    - Route (C): AR_VIS0 / AR_OWNED_RO are gone (the exit's ctl_rt_C is ProgWorldCtlRtC.ctl_rt_C_of_AR); the one
      frame-shadow read is cut_shadow's (F) disjunct of the owned class-6 frame.
    - (no longer a hypothesis) CTL_BLOCK_SHADOW is a Theorem Labs lane's PROVED A.ProgWorldShadow.ctl_block_shadow_of_AR B,
@@ -70,7 +71,7 @@
    Kit (kit_wx, kit_frac_move), YCbq (frames_bounds, sep_block_frame, asan_consts), YG0d (al_frames, al_blocks).
 
    STAND-IN VALUES: only through ctl_rt_C_of_AR's Tfib_const_abs rows; each checked against the record AF0m
-   (a working branch e56483f863b): same address, width and value.  No ts_zsh.  as_gp B is
+   (a working branch): same address, width and value.  No ts_zsh.  as_gp B is
    passed through symbolically (P4), never read as a value.
 
    CLOSURE: every Require is qualified; the six twin modules and lib/Lib are named by absolute path; no statement
@@ -239,7 +240,7 @@ Hypothesis TPARSE : A.Prog.C_reac_ctrl_parse.treac_ctrl_parse_spec (SK := A.AE2k
    ctl_rt_C comes from A.ProgWorldCtlRtC.ctl_rt_C_of_AR, which needs neither. *)
 
 (* ProgWorld.ctl_block_shadow_of_AR_stmt B (ProgWorld.v:849-855), unfolded: no longer a hypothesis, a Theorem Labs lane's PROVED
-   A.ProgWorldShadow.ctl_block_shadow_of_AR (on the glue base since 29ddfc3ea99), named locally. *)
+   A.ProgWorldShadow.ctl_block_shadow_of_AR (on the glue base), named locally. *)
 Let CTL_BLOCK_SHADOW : Reusable.YG0d.AR_laws segs B ->
   forall ly S (W : Reusable.YA0n.world segs) (m : word -> option byte) md p n lo len,
     Reusable.YG0n.AR segs B ly S W m md ->

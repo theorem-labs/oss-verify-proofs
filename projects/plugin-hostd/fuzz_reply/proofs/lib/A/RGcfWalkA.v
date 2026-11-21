@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-31 (a Theorem Labs lane, for a Theorem Labs lane's reply-A realloc row): reply image A's realloc walk records,
-   relocated from fuzz_preset's lib/A/RGcfWalkA.v (a working branch dc970db26dad; only the module
+   relocated from fuzz_preset's lib/A/RGcfWalkA.v (a working branch; only the module
    prefixes change, the texts carry no image constant) and extended with the PRIMED record reply's realloc top takes:
      wrap_realloc_walk_cf_A        : YGcfReallocCompose.wrap_realloc_walk_cf (unprimed), from RGcfS1.rw_pre_A and the
                                      other fields (RGcfSegs.walk_of_pre);

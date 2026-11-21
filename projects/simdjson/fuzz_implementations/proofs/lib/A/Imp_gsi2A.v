@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -276,7 +277,7 @@ Notation aevt := (aevt RT PMc).
 
 Lemma pushbackA : forall Σ (K : config -> Prop) (usp lo : Z) (ra gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) F fc (m : mem),
   ART RT Σ m -> mem_inv asegs m -> stk asegs m lo usp ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 160 + RT_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 160 + RT_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 ->
   tp = wz TPV_A ->
   Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX -> mcost 8 <= rt_credit RT Σ ->
   rw_cells asegs m IMP_VEC_OBJ_A [C8 (wz 0); C8 (wz 0); C8 (wz 0)] -> rw_cells asegs m IMP_AVP_ARR_A [C8 (wz SJ_SINGLETON)] ->

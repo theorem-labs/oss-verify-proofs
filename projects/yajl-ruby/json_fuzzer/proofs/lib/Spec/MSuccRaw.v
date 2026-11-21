@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (window_numerics against alloc_ceiling - MMAP_FLOOR, and the in_channel_reader, mmap-base and brk-gap premises of HEADc_init and HEADc_init_lim, the last two for QI_init's vDSO/vvar pair; mspec_vmc reads the configured step as nstep by nstep_cfg_sub; the initial ledger's cost bound counts the vDSO/vvar pair's two entries, at most 24 (rcost_vdso_reserved), so the rcost premise of HEADc_init and HEADc_init_lim leaves that room; HEADc_init and HEADc_init_lim state the run's with_vdso start model, by QI_with_vdso). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
@@ -48,9 +49,9 @@ Lemma VMINc_val : VMINc = 2109163520.
 Proof. unfold VMINc. rewrite LMAXc_val. reflexivity. Qed.
 
 (* [comment removed for export] *)
-Lemma window_numerics : ABLKc * (LMAXc / PGSZ + RCMAXc + 1) <= alloc_ceiling - PGSZ.
+Lemma window_numerics : ABLKc * (LMAXc / PGSZ + RCMAXc + 1) <= alloc_ceiling - MMAP_FLOOR.
 Proof.
-  rewrite LMAXc_val, ABLKc_val. unfold RCMAXc, PGSZ. pose proof alloc_ceiling_ge.
+  rewrite LMAXc_val, ABLKc_val. unfold RCMAXc, PGSZ, MMAP_FLOOR. pose proof alloc_ceiling_ge.
   change (1974933504 / 4096) with 482161. lia.
 Qed.
 
@@ -141,7 +142,7 @@ Proof.
   assert (W : forall {R} (t : itree node R) mo (P0 : R -> Model -> Prop), twf t mo P0 -> vmc mo = v -> twf t mo (fun r mo' => P0 r mo' /\ vmc mo' = v)).
   { intros R t. induction t as [r|n k IH]; intros mo0 P0 HT Hv0; cbn in *; [auto|].
     destruct HT as [Hs Hk]. split; [exact Hs|]. intros rsp mo' evs Hst. apply IH; [exact (Hk _ _ _ Hst)|].
-    rewrite (vmc_nstep _ _ _ _ _ Hst). exact Hv0. }
+    rewrite (vmc_nstep _ _ _ _ _ (nstep_cfg_sub _ _ _ _ _ _ Hst)). exact Hv0. }
   eapply twf_mono; [apply (W _ (m s) mo _ (H s mo HP) Hv)|]. intros [|[a s1]] mo1; cbn; tauto.
 Qed.
 
@@ -297,26 +298,56 @@ Proof. intros c. unfold P16. lia. Qed.
 Lemma PHI_P16_budget : PHI P16 <= LBUDGET.
 Proof. rewrite PHI16_val. unfold LBUDGET. lia. Qed.
 
+(* LPS 727298f3: the initial reserved ledger ends with the launch's vDSO/vvar pair (State.v [init_reserved]),
+   two entries of at most 20 pages together ([vdso_len_bounds]), so of cost at most 20 + 2 * 2. *)
+Lemma rcost_app : forall R1 R2, rcost (R1 ++ R2) = rcost R1 + rcost R2.
+Proof. induction R1 as [|e R1 IH]; intros R2; cbn [app rcost]; [lia | rewrite IH; lia]. Qed.
+
+Lemma rcost_vdso_reserved : forall kb top, rcost (vdso_reserved kb top) <= 24.
+Proof.
+  intros kb top. unfold vdso_reserved. cbv zeta.
+  destruct (top - vdso_len kb <? page_size)%Z; [cbn; lia|].
+  cbn [rcost]. unfold ecostR. cbn [snd].
+  pose proof (vdso_len_bounds kb) as VL. unfold vdso_len in VL.
+  pose proof (vdso_text_pages_pos kb) as TP.
+  assert (U : forall z, 0 <= z < 2 ^ 64 -> bv_unsigned (Z_to_bv 64 z) = z).
+  { intros z Hz. rewrite Z_to_bv_unsigned. apply bv_wrap_small. unfold bv_modulus. cbn. lia. }
+  unfold vdso_vvar_pages, page_size, PGSZ in *.
+  rewrite !U by lia. rewrite !Z.div_mul by lia. lia.
+Qed.
+
+(* LPS 727298f3: the run's initial model is [init_model] with the launch's vDSO draw installed (Lib/RunInit.mo0);
+   [with_vdso] rebuilds only the vDSO run state, which neither KL nor LI reads (the method of
+   zstd/simple_decompress's Spec/LB_Init.v QI_with_vdso). *)
+Lemma QI_with_vdso : forall X P s mo v, QI X P s mo -> QI X P s (with_vdso v mo).
+Proof.
+  intros X P s mo v [(st & L & BL & LS & Es & INV & SI & HAQ & HK & HL & HP & HLV) HB]. split; [| exact HB].
+  exists st, L, BL, LS. split; [exact Es|]. split; [exact INV|]. split; [exact SI|]. split; [exact HAQ|].
+  split; [destruct HK; constructor; assumption|]. split; [exact HL| split; [exact HP| exact HLV]].
+Qed.
+
 (* [comment removed for export] *)
-Theorem HEADc_init_lim : forall segs brk0 mbase sp lim inp (t : word),
+Theorem HEADc_init_lim : forall segs brk0 mbase sp lim inp (t : word) v,
   bv_unsigned sp = rc_sp -> sp_window_lo <= rc_sp <= sp_window_hi ->
   valid_brk segs brk0 -> 0 < reserved_top (segments_reserved segs) ->
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling ->
+  in_channel_reader inp = true ->
+  mmap_base_min <= bv_unsigned mbase ->
+  reserved_top (segments_reserved segs) + brk_aslr_max + 32 * PGSZ <= mmap_base_min ->
   VMINc <= lim ->
-  rcost (segments_reserved segs) <= RCMAXc ->
+  rcost (segments_reserved segs) + 24 <= RCMAXc ->
   (0 < bv_unsigned t < PID_MAX_ENVELOPE)%Z ->
-  HEADc [] (ps_init (reservedZ segs)) (with_tid t (init_model (segments_reserved segs) brk0 mbase sp lim inp)).
+  HEADc [] (ps_init (reservedZ segs)) (with_tid t (with_vdso v (init_model (segments_reserved segs) brk0 mbase sp lim inp))).
 Proof.
-  intros segs brk0 mbase sp lim inp t Hsp Hspw Hv Hpos Hceil Hlim Hrc Ht.
+  intros segs brk0 mbase sp lim inp t v Hsp Hspw Hv Hpos Hceil Hch Hmb Hgap Hlim Hrc Ht.
   split; [| split].
   - split; [| split; [rewrite NHELDc_val; cbn; lia| constructor]].
-    apply QI_with_tid; [exact Ht|]. apply QI_init; auto using P16_nonneg, PHI_P16_budget.
-  - replace (m_vmmaps (with_tid t (init_model (segments_reserved segs) brk0 mbase sp lim inp))) with
-      (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)) by (symmetry; apply m_vmmaps_with_tid).
+    apply QI_with_tid; [exact Ht|]. apply QI_with_vdso. apply QI_init; auto using P16_nonneg, PHI_P16_budget.
+  - rewrite m_vmmaps_with_tid, m_vmmaps_with_vdso.
     rewrite m_vmmaps_init_model. cbn [vm_limit]. exact Hlim.
-  - replace (m_vmmaps (with_tid t (init_model (segments_reserved segs) brk0 mbase sp lim inp))) with
-      (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)) by (symmetry; apply m_vmmaps_with_tid).
-    rewrite m_vmmaps_init_model. cbn [vm_reserved]. exact Hrc.
+  - rewrite m_vmmaps_with_tid, m_vmmaps_with_vdso.
+    rewrite m_vmmaps_init_model. cbn [vm_reserved]. unfold init_reserved. rewrite rcost_app.
+    match goal with |- context [rcost (vdso_reserved ?k ?tp)] => pose proof (rcost_vdso_reserved k tp) end. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -328,16 +359,19 @@ Lemma VMINc_le_target : VMINc <= target_alloc_limit.
 Proof. rewrite VMINc_val. unfold target_alloc_limit. lia. Qed.
 
 (* [comment removed for export] *)
-Theorem HEADc_init : forall segs brk0 mbase sp lim inp (t : word),
+Theorem HEADc_init : forall segs brk0 mbase sp lim inp (t : word) v,
   bv_unsigned sp = rc_sp -> sp_window_lo <= rc_sp <= sp_window_hi ->
   valid_brk segs brk0 -> 0 < reserved_top (segments_reserved segs) ->
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling ->
+  in_channel_reader inp = true ->
+  mmap_base_min <= bv_unsigned mbase ->
+  reserved_top (segments_reserved segs) + brk_aslr_max + 32 * PGSZ <= mmap_base_min ->
   (lim = source_alloc_limit \/ lim = target_alloc_limit) ->
-  rcost (segments_reserved segs) <= RCMAXc ->
+  rcost (segments_reserved segs) + 24 <= RCMAXc ->
   (0 < bv_unsigned t < PID_MAX_ENVELOPE)%Z ->
-  HEADc [] (ps_init (reservedZ segs)) (with_tid t (init_model (segments_reserved segs) brk0 mbase sp lim inp)).
+  HEADc [] (ps_init (reservedZ segs)) (with_tid t (with_vdso v (init_model (segments_reserved segs) brk0 mbase sp lim inp))).
 Proof.
-  intros segs brk0 mbase sp lim inp t Hsp Hspw Hv Hpos Hceil Hlim Hrc Ht.
+  intros segs brk0 mbase sp lim inp t v Hsp Hspw Hv Hpos Hceil Hch Hmb Hgap Hlim Hrc Ht.
   apply HEADc_init_lim; try assumption.
   destruct Hlim as [-> | ->]; [apply VMINc_le_source | apply VMINc_le_target].
 Qed.

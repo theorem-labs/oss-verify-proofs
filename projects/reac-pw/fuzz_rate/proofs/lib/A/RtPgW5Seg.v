@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Seg.v at dae3dba91f37 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Seg.v for reac-pw/fuzz_rate's
    image A: module paths changed; the cut vocabulary is rate's (lib/A/RtPgSeg.v, rt_ / q_ names); the segment's start
    is rate's rt_seg_pre (real frame 0x1e0 bytes) and the read-only image at a cut (w5_rom_now) is added. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256

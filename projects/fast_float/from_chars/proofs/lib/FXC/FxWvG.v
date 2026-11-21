@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev; RomBase.sys_rob at the system-call nodes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -125,6 +126,7 @@ Proof. LiaFast.lf_pins (fun (Hfs : LiaFast.U) => LiaFast.u0).
     + intros []. apply lazy_cover_mkH_app; intros x Hx'; exact Hx'.
     + intros []. exact Hminv.
     + intros []. unfold ret_ci, syscall_effect_accesses; cbn [eff_copyins eff_writes write_accesses]; rewrite app_nil_r; exact Hav.
+    + exact (RomWrite.openat_rob segs ms1 model x8 (svc_set_pending ms) Hno ltac:(rewrite Hg1; intros Hf; destruct Hnf as [(_ & p0 & Hc0 & _)|[(Hc0 & _)|(Hc0 & _)]]; discriminate (eq_trans (eq_sym Hc0) Hf))).
     + intros [] m'' Hinv'' Hsb''. exact (HcA m'' Hinv'' Hsb'').
   - apply (t_alt_const_nil unit tt A).
     exact (realizes_cfg_nonempty segs cfg _ _ (HcA model Hminv (same_but_materialized_refl _))).
@@ -164,6 +166,7 @@ Qed.
   DEN segs LIMIT model0 mem0 E L M ms model ->
   a7c L = Some 66 -> arg L 0 = Some ch -> arg L 2 = Some 2 -> (ch = 1 \/ ch = 2) ->
   fd_lookup (m_fds model0) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch)) ->
+  m_channel_reader model0 = true ->
   rdn segs (ms_mem ms) (lden E (argl L 1)) 8 = Some (word_to_le_bytes 8 (lden E b0)) ->
   rdn segs (ms_mem ms) (Z_to_bv 64 (bv_unsigned (lden E (argl L 1)) + 8)) 8 = Some (word_to_le_bytes 8 (lden E l0)) ->
   rdn segs (ms_mem ms) (Z_to_bv 64 (bv_unsigned (lden E (argl L 1)) + 16)) 8 = Some (word_to_le_bytes 8 (lden E b1)) ->
@@ -183,7 +186,7 @@ Qed.
      realizes_cfg segs cfg (mkCfg ms' m'') (t_emit (map (WriteEv (Z_to_bv 64 ch)) (skipn (Z.to_nat (bv_unsigned (E' (s_next L)))) (bs0 ++ bs1))) K)) ->
   realizes_cfg segs cfg (mkCfg (svc_set ms) model) (t_emit (map (WriteEv (Z_to_bv 64 ch)) (bs0 ++ bs1)) K).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros model0 E L M ms model K ch b0 l0 b1 l1 len bs0 bs1 n Hd H7 H0 H2 Hch Hfd0 Hi0 Hi1 Hi2 Hi3 Hbuf0 Hbuf1 Hlen0 Hlen1 Hlen
+  intros model0 E L M ms model K ch b0 l0 b1 l1 len bs0 bs1 n Hd H7 H0 H2 Hch Hfd0 Hrdr0 Hi0 Hi1 Hi2 Hi3 Hbuf0 Hbuf1 Hlen0 Hlen1 Hlen
     Hnb Hn Hn30 Hiok Hbok0 Hbok1 Havi Havb0 Havb1 Hwl HK0 Hk.
   set (bs := bs0 ++ bs1) in *.
   assert (Hlbs : length bs = (length bs0 + length bs1)%nat) by (unfold bs; apply length_app).
@@ -209,6 +212,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   { cbn [length iovs]. change (Z.of_nat 2) with 2%Z. rewrite <- Hg2. transitivity (getr (ms_regs ms) (Z_to_bv 5 (10 + Z.of_nat 2))); [reflexivity|]. exact (getr_gpr ms 2 ltac:(lia)). }
   assert (R17 : getr regs 17 = Z_to_bv 64 66) by exact Hx8.
   assert (Hfm : m_fds model = m_fds model0) by (destruct Hvmo as (H1' & _); unfold m_fds; rewrite H1'; reflexivity).
+  assert (Hrd : m_channel_reader model = true) by (unfold m_channel_reader; rewrite Hproc; destruct (m_tid model); exact Hrdr0).
   assert (Hch32 : fd32 (getr regs 10) = Z_to_bv 64 ch) by (rewrite R10; apply fd32_id; rewrite u_small64 by (unfold two64; lia); lia).
   assert (Hfd : fd_lookup (m_fds model) (fd32 (getr regs 10)) = Some (FdChannel (Z_to_bv 64 ch))) by (rewrite Hch32, Hfm; exact Hfd0).
   assert (Hw0 : w_is0 (Z_to_bv 64 ch) = false) by (unfold w_is0, bv_eqb; destruct Hch as [->| ->]; reflexivity).
@@ -229,7 +233,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hiok' : bv_unsigned (getr regs 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE) by (rewrite R11; unfold iovs; cbn [length]; lia).
   pose proof (writev_ch_ok_iff segs regs (ms_pc_val ms) (ms_mem ms) model (Z_to_bv 64 ch) iovs bss) as Hspec.
   pose proof (writev_ch_no_unmodeled segs regs (ms_pc_val ms) (ms_mem ms) model (Z_to_bv 64 ch) iovs bss R17 Hfd Hw0 R12
-                ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia) ltac:(rewrite Htot; lia)) as Hnu.
+                ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia) ltac:(rewrite Htot; lia) Hrd) as Hnu.
   rewrite <- (sys_input_pend segs ms (getr regs 17) Hrom) in Hnu.
   assert (Hx8' : getr regs 17 = x8) by reflexivity. rewrite Hx8' in Hnu.
   set (CA := import_iovecs_accesses (mrb segs (ms_mem ms)) (getr regs 11) (Z_to_bv 64 (Z.of_nat (length iovs)))).
@@ -238,7 +242,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hspr : forall eff m' evs, syscall_spec (sys_input segs ms1 x8) model (Ok eff m' evs) <->
             exists j : wr_index bs, eff = EF j /\ m' = model /\ evs = map (WriteEv (Z_to_bv 64 ch)) (firstn (proj1_sig j) bs)).
   { intros eff m' evs. unfold ms1. rewrite (sys_input_pend segs ms x8 Hrom). fold regs. rewrite <- Hx8'.
-    rewrite (Hspec eff m' evs R17 Hfd Hw0 R12 ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia) ltac:(rewrite Htot; lia)).
+    rewrite (Hspec eff m' evs R17 Hfd Hw0 R12 ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia) ltac:(rewrite Htot; lia) Hrd).
     rewrite Hcb. split.
     - intros (k & Hk' & -> & -> & ->). exists (exist _ k Hk'). unfold EF. cbn [proj1_sig]. auto.
     - intros ([k Hk'] & -> & -> & ->). exists k. unfold EF. cbn [proj1_sig]. auto. }
@@ -249,10 +253,10 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     rewrite u_small64 by (unfold two64; lia). replace (IOV_MAX <? 2)%Z with false by reflexivity.
     destruct (negb (access_okb (getr regs 11) (16 * 2))); [apply ranges_avoid_nil|].
     change (word_to_nat (Z_to_bv 64 2)) with 2%nat. cbn [copy_iovecs_accesses].
-    apply ranges_avoid_cons; [rewrite R11; exact (ra_le H iov 32 16 ltac:(lia) Havi)|].
+    apply ranges_avoid_app; [apply iovec_entry_avoid; rewrite R11; exact (ra_le H iov 32 16 ltac:(lia) Havi)|].
     destruct (read_iovec_entry (mrb segs (ms_mem ms)) (getr regs 11)); try apply ranges_avoid_nil.
-    apply ranges_avoid_cons; [|destruct (read_iovec_entry (mrb segs (ms_mem ms)) (getr regs 11 + 16)%bv); apply ranges_avoid_nil].
-    rewrite R11. intros kk Hkk. replace (woff (iov + 16)%bv kk) with (woff iov (16 + kk)); [apply Havi; lia|].
+    apply ranges_avoid_app; [|destruct (read_iovec_entry (mrb segs (ms_mem ms)) (getr regs 11 + 16)%bv); apply ranges_avoid_nil].
+    apply iovec_entry_avoid. rewrite R11. intros kk Hkk. replace (woff (iov + 16)%bv kk) with (woff iov (16 + kk)); [apply Havi; lia|].
     unfold woff. apply bv_eq. rewrite !Z_to_bv_unsigned. rewrite bv_add_unsigned. unfold bv_wrap.
     change (bv_unsigned (16 : word)) with 16. rewrite Zplus_mod_idemp_l. f_equal. lia. }
   assert (Hacc : forall j : wr_index bs, ranges_avoid H (syscall_effect_accesses (EF j))).
@@ -273,6 +277,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + intros _. apply lazy_cover_mkH_app. intros x Hx'. exact Hx'.
     + intros _. exact Hminv.
     + exact Hacc.
+    + exact (rob_writev_state segs ms1 model iovs bss (svc_set_pending ms) Hrom R17 R12 ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Hbb ltac:(rewrite Htot; lia)).
     + intros [k Hk'] m'' Hinv'' Hsb''. cbn [proj1_sig].
       set (w := Z_to_bv 64 (Z.of_nat k)).
       assert (Hwu : bv_unsigned w = Z.of_nat k) by (unfold w; apply u_small64; unfold two64; lia).
@@ -415,7 +420,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (HCA : ranges_avoid H CA).
   { unfold CA, import_iovecs_accesses. unfold iovs. cbn [length]. change (Z.of_nat 1) with 1%Z. rewrite bv_eqb_refl.
     destruct (negb (access_okb (getr regs 11) 16)); [apply ranges_avoid_nil|].
-    apply ranges_avoid_cons; [rewrite R11; exact Havi | apply ranges_avoid_nil]. }
+    apply iovec_entry_avoid. rewrite R11. exact Havi. }
   assert (Hwv : lwf (s_next L) (lconst 0) = true) by reflexivity.
   assert (Hcont : forall m'', MInv (AM model0 E M) m'' -> same_but_materialized model m'' ->
      realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms1 (ret_ci (Z_to_bv 64 0) CA))) m'') K).
@@ -433,6 +438,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + intros _. apply lazy_cover_mkH_app. intros x Hx'. exact Hx'.
     + intros _. exact Hminv.
     + intros _. unfold ret_ci, syscall_effect_accesses. cbn [eff_copyins eff_writes]. rewrite app_nil_r. exact HCA.
+    + exact (rob_writev_state_zero segs ms1 model iovs (svc_set_pending ms) Hrom R17 R12 ltac:(unfold iovs; cbn; lia) Hiok' Harr Hbo Htot).
     + intros _ m'' Hinv'' Hsb''. exact (Hcont m'' Hinv'' Hsb'').
   - apply t_alt_const_nil; [exact tt|].
     exact (realizes_cfg_nonempty segs cfg _ _ (Hcont model Hminv (same_but_materialized_refl _))).

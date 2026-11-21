@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AFeu.v, with its module paths changed; 74 of its 98 lines of code are new or changed and 258 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v (a working branch 30a1993588f, c5 + memnorm; file sha256 9ec73d89c58a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v (a working branch, c5 + memnorm; file sha256 9ec73d89c58a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-free base of the Deallocate interface DGif0.DIface and its drain contract (DMspec / DMiface), beside
    ImgBase.
 
@@ -58,7 +59,7 @@ End i.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* Copies of image-free names from image files.                                                                     *)
 Module DGbaseC.
-(* copy of DGbase.v:26, remove when DGbase.v is ported *)
+(* copy of DGbase.v:27, remove when DGbase.v is ported *)
 Definition DFSTACK : Z := 8192.
 End DGbaseC.
 
@@ -112,37 +113,37 @@ Variables (ly : alayout).
 Variables (p nn : Z) (q : qcache) (lastb : batch).
 Let T : Z := ly_T ly.
 Let SB : Z := ly_space ly.
-(* copy of DGgi.v:63, remove when DGgi.v is ported *)
-Definition SPv : Z := SHADOW_OFF + p / 8.
 (* copy of DGgi.v:64, remove when DGgi.v is ported *)
-Definition N8v : Z := (nn + 7) / 8 * 8.
+Definition SPv : Z := SHADOW_OFF + p / 8.
 (* copy of DGgi.v:65, remove when DGgi.v is ported *)
-Definition CNT8v : Z := N8v / 8.
+Definition N8v : Z := (nn + 7) / 8 * 8.
 (* copy of DGgi.v:66, remove when DGgi.v is ported *)
-Definition Bv : Z := SB + b_self lastb.
+Definition CNT8v : Z := N8v / 8.
 (* copy of DGgi.v:67, remove when DGgi.v is ported *)
-Definition BBv : Z := b_bytes lastb.
+Definition Bv : Z := SB + b_self lastb.
 (* copy of DGgi.v:68, remove when DGgi.v is ported *)
-Definition BCv : Z := Z.of_nat (length (b_items lastb)).
+Definition BBv : Z := b_bytes lastb.
 (* copy of DGgi.v:69, remove when DGgi.v is ported *)
-Definition SLOTv : Z := Bv + 24 + 8 * BCv.
+Definition BCv : Z := Z.of_nat (length (b_items lastb)).
 (* copy of DGgi.v:70, remove when DGgi.v is ported *)
-Definition QSv : Z := Z.of_nat (length (qc_list q)).
+Definition SLOTv : Z := Bv + 24 + 8 * BCv.
 (* copy of DGgi.v:71, remove when DGgi.v is ported *)
-Definition QFv : Z := match qc_list q with [] => 0 | b :: _ => SB + b_self b end.
+Definition QSv : Z := Z.of_nat (length (qc_list q)).
 (* copy of DGgi.v:72, remove when DGgi.v is ported *)
+Definition QFv : Z := match qc_list q with [] => 0 | b :: _ => SB + b_self b end.
+(* copy of DGgi.v:73, remove when DGgi.v is ported *)
 Definition QBv : Z := qc_bytes q.
-(* copy of DGgi.v:113, remove when DGgi.v is ported *)
+(* copy of DGgi.v:114, remove when DGgi.v is ported *)
 Definition PSTATIC : Prop := forall a, p - 16 <= a < p + N8v ->
 ~ (ly_stk_lo ly <= a < ly_stk_hi ly) /\ ~ (T <= a < T + kThreadObjSize) /\ ~ (ly_C ly <= a < ly_C ly + 256) /\
 ~ (ly_NB ly <= a < ly_NB ly + kNodesBlockSize) /\ ~ (ly_SB ly <= a < ly_SB ly + kStoreBlockSize) /\
 ~ (ly_D ly <= a < ly_D ly + 4096)  .
-(* copy of DGgi.v:117, remove when DGgi.v is ported *)
+(* copy of DGgi.v:118, remove when DGgi.v is ported *)
 Definition PBDISJ : Prop := Bv + kBatchBytes <= p - 16 \/ p + N8v <= Bv.
-(* copy of DGgi.v:344, remove when DGgi.v is ported *)
+(* copy of DGgi.v:345, remove when DGgi.v is ported *)
 Definition WINT (a : Z) : Prop :=
 (T + t_qc <= a < T + t_qc + 32) \/ (T + t_unwinding <= a < T + t_unwinding + 1) \/ (T + t_stats + 24 <= a < T + t_stats + 40).
-(* copy of DGgi.v:346, remove when DGgi.v is ported *)
+(* copy of DGgi.v:347, remove when DGgi.v is ported *)
 Definition WINB (a : Z) : Prop := (p - 16 <= a < p - 8) \/ (p <= a < p + 8) \/ (Bv + 8 <= a < Bv + 24) \/ (SLOTv <= a < SLOTv + 8).
 End WF.
 End DGgiC.
@@ -153,9 +154,9 @@ Section WF.
 Variables (ly : alayout).
 Variables (p : Z).
 Let T : Z := ly_T ly.
-(* copy of DGgm.v:331, remove when DGgm.v is ported *)
-Definition WINT (a : Z) : Prop := (T + t_unwinding <= a < T + t_unwinding + 1) \/ (T + t_stats + 24 <= a < T + t_stats + 40).
 (* copy of DGgm.v:332, remove when DGgm.v is ported *)
+Definition WINT (a : Z) : Prop := (T + t_unwinding <= a < T + t_unwinding + 1) \/ (T + t_stats + 24 <= a < T + t_stats + 40).
+(* copy of DGgm.v:333, remove when DGgm.v is ported *)
 Definition WINB (a : Z) : Prop := (p - 16 <= a < p - 8) \/ (p <= a < p + 8).
 End WF.
 End DGgmC.

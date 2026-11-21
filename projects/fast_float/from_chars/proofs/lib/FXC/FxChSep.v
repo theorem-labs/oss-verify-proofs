@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -140,6 +141,20 @@ Proof.
   intros res lo hi x H Hx. unfold in_res_b in H. apply existsb_exists in H as (p & Hp & Hc). apply andb_prop in Hc as [C1 C2].
   apply Z.leb_le in C1, C2. unfold covered. apply existsb_exists. exists p. split; [exact Hp|]. unfold in_iv, in_rng, B, S.
   apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
+Qed.
+(* a check passed against the image's segments alone still passes against the launch ledger, whose
+   segments come first and the vDSO/vvar pair after ([State.init_reserved]) *)
+Lemma in_res_b_app : forall res x lo hi, in_res_b res lo hi = true -> in_res_b (res ++ x) lo hi = true.
+Proof. intros res x lo hi H. unfold in_res_b in *. rewrite existsb_app, H. reflexivity. Qed.
+Lemma sep_res_b_app : forall res x R, sep_res_b res R = true -> sep_res_b (res ++ x) R = true.
+Proof.
+  intros res x R H. unfold sep_res_b in *. destruct (is_const (rg_base R)), (is_const (rg_size R)); try discriminate.
+  apply andb_prop in H as [H1 H2]. rewrite H1, (in_res_b_app _ _ _ _ H2). reflexivity.
+Qed.
+Lemma sep_pres_b_app : forall res x R, sep_pres_b res R = true -> sep_pres_b (res ++ x) R = true.
+Proof.
+  intros res x R H. unfold sep_pres_b in *. destruct (is_const (rg_base R)), (is_const (rg_size R)); try discriminate.
+  apply andb_prop in H as [H1 H2]. rewrite H1, (in_res_b_app _ _ _ _ H2). reflexivity.
 Qed.
 Definition sep_band_b (fs : list fact) (sp : lin) (R : region) : bool :=
   if Z.leb (snd (irange fs (lsub sp (rg_base R)))) 8388608 then true else Z.ltb (snd (irange fs (lsub (rg_base R) sp))) 4611686018427387904.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the case splits over the main-entry fact kinds cover the new defined-span fact (MDefS). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -29,7 +30,7 @@ Lemma byte_fact_sound : forall V (m : word -> option byte) l A b, Forall (mfact_
 Proof.
   intros V m l A b HM HE. apply existsb_exists in HE as (f & Hin & Hf).
   pose proof (proj1 (Forall_forall _ _) HM f Hin) as K.
-  destruct f as [a w v|a n|a w v|a n|a n c|l' h|a n|a n|a n|a n]; cbn [byte_factb] in Hf; try discriminate.
+  destruct f as [a w v|a n|a w v|a n|a n c|l' h|a n|a n|a n|a n|a n]; cbn [byte_factb] in Hf; try discriminate.
   - destruct a as [z| | | | |]; try discriminate. destruct w as [|[|w]]; try discriminate. destruct v as [vz| | | | |]; try discriminate.
     apply andb_prop in Hf as [H1 H2]. apply Z.eqb_eq in H1. apply Z.eqb_eq in H2. subst.
     cbn [mfact_ok zv cellw] in K. destruct K as [[_ B] _]. destruct B as (_ & _ & B). specialize (B 0%nat ltac:(cbn; lia)).

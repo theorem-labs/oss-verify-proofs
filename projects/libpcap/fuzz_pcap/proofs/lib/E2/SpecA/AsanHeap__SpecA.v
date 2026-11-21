@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the mmap witness comes from grant_place_witness and linux_place_admissible, munmap_answers reads maps_subtract as map_remove (mu_seps_In2, mu_maps_subtract_exact_seps added) and rules out the new ENOMEM refusal, aok's unmap arm carries seps and entry_ok, INV_fixed_aok_high reads the ledger's freedom off the mapping that holds the request (AMI's mappings miss the ledger, which now holds the vDSO pair), and INV_resv_hi, a bound on every ledger entry that the pair breaks and nothing uses, is removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -372,14 +373,18 @@ Proof.
   assert (Hnr : mmap_grant_refusable (Z_to_bv 64 F_ANON) mo (mmap_len len) = false).
   { unfold mmap_grant_refusable. rewrite Hgap. unfold mmap_noreserve_backed_ok.
     change (mmap_noreserve_b (Z_to_bv 64 F_ANON)) with false. cbv iota. rewrite (proj2 (Z.leb_le _ _) Hbud). reflexivity. }
-  destruct (grant_witness _ _ _ (band_le_top mo Htop) Hnr) as (a & A1 & A2 & A3 & A4 & A5).
+  assert (Hl0 : w_is0 (Z_to_bv 64 len) = false) by (rewrite w_is0_lit by lia; apply Z.eqb_neq; lia).
+  (* LPS 727298f3: the placed address is [linux_place]'s answer, which exists because the
+     search finds a gap; the NULL hint is never declined. *)
+  destruct (len_round_pos _ Hl0) as [Hn1 Hn2]. rewrite mmap_len_eq in Hn1, Hn2 by lia.
+  destruct (grant_place_witness _ _ (Z_to_bv 64 0) _ Hn1 Hn2 (band_le_top mo Htop) Hnr) as (a & Hpl & Hnb).
+  destruct (Placement.linux_place_admissible _ _ _ _ _ Hn1 Hn2 Hpl) as (_ & _ & A3 & _).
   eexists (mkEffect a [] [(a, Z_to_bv 64 (mmap_len len))]), _, [].
   split; [reflexivity|]. cbn [node_input]. split.
   - rewrite syscall_spec_222 by reflexivity. cbn [in_arg in_args pure_input nth].
-    assert (Hl0 : w_is0 (Z_to_bv 64 len) = false) by (rewrite w_is0_lit by lia; apply Z.eqb_neq; lia).
     apply (proj2 (mmap_rw_outcome (Z_to_bv 64 0) (Z_to_bv 64 len) (Z_to_bv 64 PROT_RW) (Z_to_bv 64 F_ANON) (Z_to_bv 64 (-1)) (Z_to_bv 64 0)
-                    _ mo _ eq_refl eq_refl Hl0 eq_refl)).
-    right. exists a. rewrite mmap_len_eq by lia. split; [repeat split; assumption| reflexivity].
+                    _ mo _ eq_refl eq_refl Hl0 eq_refl (place_declined_b_null _ _ _))).
+    right. exists a. rewrite mmap_len_eq by lia. split; [split; assumption| reflexivity].
   - intros (_ & Hr & _). rewrite refusal_b_222 in Hr. cbn [eff_ret] in Hr.
     rewrite (ret_in_mmap_small a) in Hr; [discriminate|]. eapply grant_not_errno; [| exact A3]. lia.
 Qed.
@@ -413,7 +418,7 @@ Definition mm_input (addr len flags : Z) : SyscallInput :=
   = CheckOk (with_mmap_replacement (Z_to_bv 64 flags) (Z_to_bv 64 addr) n (with_vmmaps (mmap_fixed_rw_next (m_vmmaps mo) (Z_to_bv 64 addr) n) mo)) [].
 Proof.
   intros addr len flags mo Hfl Hlen Ha Hal Htop Hce n Hrf Hmc Hbud.
-  unfold check_mmap. rewrite G_off, (G_anon flags ltac:(tauto)).
+  unfold check_mmap, check_mmap_fixed_overflow. rewrite G_off, (G_anon flags ltac:(tauto)).
   rewrite w_is0_lit by lia. replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia).
   destruct (fixed_shape flags Hfl) as (S1 & S2 & S3 & S4). rewrite S1, S2, S3, S4. cbv iota beta.
   rewrite mmap_len_eq by lia. pose proof (mmap_len_bounds len ltac:(lia)) as ML. rewrite (unsigned_lit addr) by lia.
@@ -441,7 +446,7 @@ Proof.
   intros addr len flags mo rsp mo' evs Hfl Hlen Ha Hal Htop Hce n Hrf Hmc Hbud Hst. unfold nstepA in Hst.
   pose proof (fixed_check_grant addr len flags mo Hfl Hlen Ha Hal Htop Hce Hrf Hmc Hbud) as HG. fold n in HG.
   destruct (nstep_mmap_spec _ _ _ _ _ _ _ _ Hst) as (-> & Hsp & Hns). split; [reflexivity|].
-  apply (check_mmap_complete_ok _ _ _ _ _ _ _ _ _ _ _) in Hsp. unfold check_mmap in Hsp.
+  apply (check_mmap_complete_ok _ _ _ _ _ _ _ _ _ _ _) in Hsp. unfold check_mmap, check_mmap_fixed_overflow in Hsp.
   rewrite G_off, (G_anon flags ltac:(tauto)) in Hsp.
   rewrite w_is0_lit in Hsp by lia. replace (len =? 0) with false in Hsp by (symmetry; apply Z.eqb_neq; lia).
   destruct (fixed_shape flags Hfl) as (S1 & S2 & S3 & S4). rewrite S1, S2, S3, S4 in Hsp. cbv iota beta in Hsp.
@@ -518,18 +523,70 @@ Proof.
     unfold mm_input. rewrite refusal_b_222. cbn [eff_ret]. apply ret_in_mmap_small. rewrite unsigned_lit by lia. lia.
 Qed.
 
+(* 08b1429: the revision's kept [munmap] arm rebuilds [vm_maps] with
+   [maps_subtract] over the request (through [Mmap.mmap_fixed_destroyed_next]),
+   where [AsanInv.munmap_model] names [map_remove].  [Decode.mu_maps_subtract_exact]
+   is the bridge, and it asks for a primitive well-formedness triple about the
+   ledger around the request.  These two lemmas read that triple off the two
+   ledger facts [AsanInv.AMI] already carries -- [seps] and
+   [Forall (entry_ok ATOP)] -- so [aok] can carry those two rather than a
+   hand-spelled premise, and [AsanTotal.INV_munmap_aok] discharges both by
+   projection.  [AsanTotal.seps_In2] says the same thing as [mu_seps_In2] but
+   is declared further down this file, past both users here. *)
+#[using="Type"] Lemma mu_seps_In2 : forall l x y, seps l -> In x l -> In y l -> x <> y -> wsep x y.
+Proof.
+  intros l x y Hs. induction Hs as [|p l HF Hs IH]; intros Hx Hy Hne; [destruct Hx|].
+  rewrite Forall_forall in HF. destruct Hx as [<-|Hx], Hy as [<-|Hy].
+  - congruence.
+  - apply HF. exact Hy.
+  - apply wsep_sym. apply HF. exact Hx.
+  - apply IH; assumption.
+Qed.
+
+#[using="Type"] Lemma mu_maps_subtract_exact_seps : forall l (a n : word),
+  seps l -> Forall (entry_ok atop) l -> map_has l a n = true ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  intros l a n Hs Hent Hmh.
+  assert (Hin : In (a, n) l).
+  { unfold map_has in Hmh. apply existsb_exists in Hmh as ([b0 s0] & Hin0 & He0). cbn in He0.
+    apply andb_true_iff in He0 as [H1 H2]. apply bv_eqb_eq in H1. apply bv_eqb_eq in H2. subst b0 s0. exact Hin0. }
+  assert (Hpos : forall p, In p l -> 0 < bv_unsigned (snd p))
+    by (intros p Hp; exact (proj1 (proj1 (Forall_forall _ _) Hent p Hp))).
+  pose proof (Hpos (a, n) Hin) as Hnp. cbn [snd] in Hnp.
+  apply (mu_maps_subtract_exact l a n Hnp).
+  - intros b s Hbs. exact (Hpos (b, s) Hbs).
+  - intros b s Hbs Hba. subst b.
+    destruct (bv_eqb s n) eqn:E; [apply bv_eqb_eq in E; exact E|]. exfalso.
+    assert (Hne : (a, s) <> (a, n)).
+    { intros Eq. apply (f_equal snd) in Eq. cbn [snd] in Eq. subst s. rewrite bv_eqb_refl in E. discriminate. }
+    pose proof (mu_seps_In2 l (a, s) (a, n) Hs Hbs Hin Hne) as W.
+    pose proof (Hpos (a, s) Hbs) as Hsp. cbn [snd] in Hsp.
+    unfold wsep in W. cbn [fst snd] in W. clear - W Hsp Hnp. lia.
+  - intros b s Hbs Hba.
+    assert (Hne : (b, s) <> (a, n)).
+    { intros Eq. apply (f_equal fst) in Eq. cbn [fst] in Eq. exact (Hba Eq). }
+    pose proof (mu_seps_In2 l (b, s) (a, n) Hs Hbs Hin Hne) as W.
+    unfold wsep in W. cbn [fst snd] in W. exact W.
+Qed.
+
 (* [comment removed for export] *)
 #[using="Hatop atop_lt"] Lemma munmap_answers : forall addr len mo rsp mo' evs,
   0 < len <= 2^40 -> 0 <= addr -> addr mod 4096 = 0 -> addr + mmap_len len <= atop ->
   let n := Z_to_bv 64 (mmap_len len) in
   map_has (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) n = true ->
+  (* 08b1429: the kept arm's [maps_subtract] rebuild only agrees with
+     [munmap_model]'s [map_remove] on a separated ledger whose entries are
+     nonempty; these are [AMI]'s own two conjuncts, carried here through [aok]. *)
+  seps (vm_maps (m_vmmaps mo)) ->
+  Forall (entry_ok atop) (vm_maps (m_vmmaps mo)) ->
   nstepA (NMunmap addr len) mo rsp mo' evs ->
   evs = [] /\ adec_munmap addr len rsp = Some 0
   /\ mo' = munmap_model mo addr (mmap_len len).
 Proof.
-  intros addr len mo rsp mo' evs Hlen Ha Hal Hce n Hmh Hst. unfold nstepA in Hst.
+  intros addr len mo rsp mo' evs Hlen Ha Hal Hce n Hmh Hsep Hent Hst. unfold nstepA in Hst.
   pose proof (mmap_len_bounds len ltac:(lia)) as ML.
-  destruct Hst as (-> & Hsp & _). split; [reflexivity|]. cbn [node_input] in Hsp.
+  destruct Hst as (-> & Hsp & Hns). split; [reflexivity|]. cbn [node_input] in Hsp, Hns.
   rewrite syscall_spec_215 in Hsp by reflexivity. cbn [in_arg in_args pure_input nth] in Hsp.
   apply munmap_exact_outcome in Hsp;
     [| rewrite unsigned_lit by lia; exact Hal
@@ -537,9 +594,27 @@ Proof.
      | rewrite !unsigned_lit by lia; fold (mmap_len len); unfold TASK_SIZE; lia
      | rewrite unsigned_lit by lia; exact Hmh ].
   rewrite (unsigned_lit len) in Hsp by lia. fold (mmap_len len) in Hsp. fold n in Hsp.
+  (* 08b1429: 215 joined the injected allocation family, so [munmap_exact_outcome]
+     now also offers an ENOMEM refusal beside the unmap.  That arm is inadmissible:
+     the exact unmap answers 0, which [refusal_b] does not read as a refusal, so the
+     ENOMEM answer is spurious and the third component of [nstepA] rules it out. *)
+  destruct Hsp as [(e & He & Hsp) | Hsp].
+  { exfalso. apply Ok_inj in Hsp as (-> & -> & _). apply Hns. split; [reflexivity|]. split.
+    - rewrite refusal_b_215. cbn [eff_ret]. apply ret_in_errnos_in. exact He.
+    - eexists _, _, _. split.
+      + rewrite syscall_spec_215 by reflexivity. cbn [in_arg in_args pure_input nth].
+        apply (proj2 (munmap_exact_outcome (Z_to_bv 64 addr) (Z_to_bv 64 len) _ mo _
+                        ltac:(rewrite unsigned_lit by lia; exact Hal)
+                        ltac:(rewrite w_is0_lit by lia; apply Z.eqb_neq; lia)
+                        ltac:(rewrite !unsigned_lit by lia; fold (mmap_len len); unfold TASK_SIZE; lia)
+                        ltac:(rewrite unsigned_lit by lia; exact Hmh))).
+        right. reflexivity.
+      + rewrite refusal_b_215. reflexivity. }
   apply Ok_inj in Hsp as (-> & -> & _). split.
   - unfold adec_munmap, dec_munmap. cbn [core]. fold n. rewrite (unsigned_lit 0) by lia. cbn [Z.eqb andb]. rewrite !bv_eqb_refl. reflexivity.
-  - unfold munmap_model. fold n. subst n. rewrite (unsigned_lit (mmap_len len)) by lia. rewrite (unsigned_lit addr) by lia. reflexivity.
+  - unfold munmap_model, mmap_fixed_destroyed_next.
+    rewrite (mu_maps_subtract_exact_seps (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) n Hsep Hent Hmh).
+    fold n. subst n. rewrite (unsigned_lit (mmap_len len)) by lia. rewrite (unsigned_lit addr) by lia. reflexivity.
 Qed.
 
 #[using="Hatop atop_lt"] Lemma munmap_exists : forall addr len mo,
@@ -557,8 +632,10 @@ Proof.
                     ltac:(rewrite w_is0_lit by lia; apply Z.eqb_neq; lia)
                     ltac:(rewrite !unsigned_lit by lia; fold (mmap_len len); unfold TASK_SIZE; lia)
                     ltac:(rewrite unsigned_lit by lia; exact Hmh))).
-    reflexivity.
-  - intros (Hoff & _). rewrite family_on_215 in Hoff. discriminate Hoff.
+    right. reflexivity.
+  (* 08b1429: 215 is now an injected arm, so [family_on_215] is gone and the
+     non-spurious obligation is real: the 0 answer is not a refusal. *)
+  - apply spurious_refusal_not_refusal. rewrite refusal_b_215. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -589,6 +666,14 @@ Definition aok (e : aev) (mo : Model) : Prop :=
   | AMunmap addr len =>
       0 < len <= 2^40 /\ 0 <= addr /\ addr mod 4096 = 0 /\ addr + mmap_len len <= atop
       /\ map_has (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 (mmap_len len)) = true
+      (* 08b1429: the kept [munmap] arm rebuilds [vm_maps] with [maps_subtract],
+         which agrees with [munmap_model]'s [map_remove] only on a separated
+         ledger of nonempty entries.  Both conjuncts are [AMI]'s own
+         ([AsanInv.AMI], the [seps] and [Forall (entry_ok ATOP)] fields), so the
+         only producer of this arm, [AsanTotal.INV_munmap_aok], hands them over
+         by projection. *)
+      /\ seps (vm_maps (m_vmmaps mo))
+      /\ Forall (entry_ok atop) (vm_maps (m_vmmaps mo))
       /\ sh_apart addr (mmap_len len)
   | _ => False
   end.
@@ -623,9 +708,9 @@ Proof.
       * apply (fixed_exists addr len flags mo); auto.
       * intros code mo' Hx. exact Hx.
   - (* [comment removed for export] *)
-    cbn [aok] in Hok. destruct Hok as (Hlen & Ha & Hal & Hce & Hmh & _).
+    cbn [aok] in Hok. destruct Hok as (Hlen & Ha & Hal & Hce & Hmh & Hsep & Hent & _).
     exists (NMunmap addr len), (adec_munmap addr len). split; [reflexivity|]. split; [|split].
-    + intros rsp mo' evs Hst. destruct (munmap_answers addr len mo rsp mo' evs Hlen Ha Hal Hce Hmh Hst) as (-> & Hd & ->).
+    + intros rsp mo' evs Hst. destruct (munmap_answers addr len mo rsp mo' evs Hlen Ha Hal Hce Hmh Hsep Hent Hst) as (-> & Hd & ->).
       split; [reflexivity|]. exists 0. split; [exact Hd|]. cbn [apost]. split; reflexivity.
     + apply (munmap_exists addr len mo); auto.
     + intros code mo' Hx. exact Hx.
@@ -928,10 +1013,6 @@ Proof.
     unfold EAGER0, CBMAX, K_FREEARR_OFF, K_FREEARR_MAX, K_CHUNKS_BLOCK in *. lia.
 Qed.
 
-#[using="Type"] Lemma INV_resv_hi : forall pc pb st mo, INV pc pb st mo ->
-  Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (vm_reserved (m_vmmaps mo)).
-Proof. intros pc pb st mo [_ HM]. destruct HM as (_ & _ & M3 & _). exact M3. Qed.
-
 (* [comment removed for export] *)
 #[using="Type"] Lemma INV_fixed_aok_high : forall pc pb st mo E a len,
   INV pc pb st mo -> In E (vm_maps (m_vmmaps mo)) -> B E <= a -> a + len <= B E + S E -> KHIGH <= a ->
@@ -943,7 +1024,8 @@ Proof.
   assert (HEok : bv_unsigned (fst E) + bv_unsigned (snd E) <= ATOP) by (destruct (proj1 (Forall_forall _ _) M6 E HinE) as (_ & _ & _ & ?); assumption).
   unfold ACEIL, ATOP_MAX in T1, T2. unfold B, S in HE1, HE2. unfold KHIGH in HR.
   apply (INV_fixed_aok pc pb st mo E a len HI HinE); unfold B, S; auto; try lia; [| right; unfold KHIGH; lia].
-  apply (region_free_above _ a len RES_HI M3); unfold RES_HI in *; lia.
+  pose proof (bv_unsigned_in_range 64 (fst E)) as HE0.
+  apply (region_free_sub _ (bv_unsigned (fst E)) (bv_unsigned (snd E))); [rewrite !Z_to_bv_bv_unsigned; exact (M3 E HinE) | lia | lia | lia | lia | lia].
 Qed.
 
 (* [comment removed for export] *)
@@ -957,7 +1039,9 @@ Proof.
   intros pc pb st mo mb ms [HA HM] Hin Hmb Hal Hms Hml Hce HSH.
   pose proof HM as (M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & MT & L0 & HP & HS & HB).
   assert (ML : mmap_len ms = ms) by (apply mmap_len_id; lia).
-  cbn [OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.SpecA.AsanHeap__SpecA.AsanNodeSem.aok]. rewrite ML. split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [| exact HSH].
+  (* 08b1429: [aok]'s unmap arm now also asks for the ledger facts the kept
+     [munmap] arm's [maps_subtract] rebuild needs; [AMI] already carries both. *)
+  cbn [OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.SpecA.AsanHeap__SpecA.AsanNodeSem.aok]. rewrite ML. split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [| split; [exact M9| split; [exact M6| exact HSH]]].
   apply map_has_In. eapply Permutation_in; [apply Permutation_sym; exact HP|]. apply in_app_iff. right.
   change (Z_to_bv 64 mb, Z_to_bv 64 ms) with (went (mb, ms)). apply in_map. exact Hin.
 Qed.

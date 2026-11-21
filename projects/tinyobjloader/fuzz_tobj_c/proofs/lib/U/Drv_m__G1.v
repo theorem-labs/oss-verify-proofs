@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch model's channel reader as a premise of the writev paths, carried by the driver's frame Kd0, written as plain text, LPS 08b1429; the states to the first malloc per CONFIG_RSEQ and their join after the launch objects are dropped and the stack is split at the call's frame, the one stack word that differs by flag, below that frame, left to an unknown default; the auxv facts over the launch's 27 or 29 pairs; DrvTail1's new layout). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -156,181 +157,306 @@ S0SaS50S13A2M0S1S50S13P18S18P1aA1A4S2G0A1A3").
 
 Definition F_top4 : list sprop := ltac2:(tb__ "0|3|
 S0S16S19S18P1eA1M0S1aS5bS18P1A1M1S12N800000A1A3M2A2S0S16S19G2G0A2S0S16S19S12Z7fff7f800000A1G0A2S0S16S19G0S12Z7fffff800000A1A2S0S16S19G1S18P4A1A2S0S16S19G1S18P6A1A2S2S16A1A3A3A3A3A3A3").
-Local Definition MEMO_1 := subst_state sTP S_M 31%positive.
-Definition S_Ms : sstate := ltac:(let x := eval vm_compute in (MEMO_1) in exact x).
-Local Lemma MEMO_1_c : MEMO_1 = S_Ms. Proof. vm_cast_no_check (@eq_refl _ MEMO_1). Qed.
-Local Lemma MEMO_1_e : ltac2:(tb__ "0|0|
-S4aS1cSfcS9eSffP1fA3S84A3").
-Proof. exact (@eq_trans _ (subst_state sTP S_M 31%positive) MEMO_1 (S_Ms) (@eq_refl _ (subst_state sTP S_M 31%positive)) MEMO_1_c). Qed.
-Lemma S_Ms_eq : ltac2:(tb__ "0|0|
-S4aS1cSfcS9eSffP1fA3S84A3"). Proof. exact MEMO_1_e. Qed.
-Lemma swf_S_Ms : swf S_Ms = true. Proof. vm_cast_no_check (@eq_refl _ true). Qed.
-Local Definition MEMO_2 := add_facts F_top4 S_Ms.
-Definition S_Mt : sstate := ltac:(let x := eval vm_compute in (MEMO_2) in exact x).
-Local Lemma MEMO_2_c : MEMO_2 = S_Mt. Proof. vm_cast_no_check (@eq_refl _ MEMO_2). Qed.
-Local Lemma MEMO_2_e : ltac2:(tb__ "0|0|
-S4aS1cS101S9fS84A2S79A3").
-Proof. exact (@eq_trans _ (add_facts F_top4 S_Ms) MEMO_2 (S_Mt) (@eq_refl _ (add_facts F_top4 S_Ms)) MEMO_2_c). Qed.
-Lemma S_Mt_eq : ltac2:(tb__ "0|0|
-S4aS1cS101S9fS84A2S79A3"). Proof. exact MEMO_2_e. Qed.
-Lemma swf_S_Mt : swf S_Mt = true. Proof. vm_cast_no_check (@eq_refl _ true). Qed.
-Lemma fb_top4 : ltac2:(tb__ "0|0|
-S4aS7S12dS16S3bS23S84A1A1S9fA3S3A3"). Proof. vm_cast_no_check (@eq_refl _ true). Qed.
-Lemma S_M_no2630 : ltac2:(tb__ "0|0|
-S4aS7S12cS50SfSeS120R1P1aA2A1SeS120R1P1eA2A1A2Lx;SffA2S3A3"). Proof. vm_cast_no_check (@eq_refl _ true). Qed.
-Lemma S_Ms_objs : ltac2:(tb__ "0|1|
-S4bS4aS5S17A1S20S84A1S20S79A1A3S4bS4aS50S23S79A1P1fM0A3S4aS50S23S84A1G0A3A2A2"). Proof. repeat split; reflexivity. Qed.
-Local Definition MEMO_3 := obj_subst sTP O_dataM.
-Definition O_dataMt : sobj := ltac:(let x := eval vm_compute in (MEMO_3) in exact x).
-Local Lemma MEMO_3_c : MEMO_3 = O_dataMt. Proof. vm_cast_no_check (@eq_refl _ MEMO_3). Qed.
-Local Lemma MEMO_3_e : ltac2:(tb__ "0|0|
-S4aS17SfaS9eS100A2S7aA3").
-Proof. exact (@eq_trans _ (obj_subst sTP O_dataM) MEMO_3 (O_dataMt) (@eq_refl _ (obj_subst sTP O_dataM)) MEMO_3_c). Qed.
-Lemma O_dataMt_eq : ltac2:(tb__ "0|0|
-S4aS17SfaS9eS100A2S7aA3"). Proof. exact MEMO_3_e. Qed.
-Lemma O_dataM_no2630 : ltac2:(tb__ "0|0|
-S4aS7S128S50SfSeS120R1P1aA2A1SeS120R1P1eA2A1A2Lx;S100A2S3A3"). Proof. vm_cast_no_check (@eq_refl _ true). Qed.
+(* LPS 727298f3: the main phase starts from [S_M r] (Drv_open_states), one state per CONFIG_RSEQ value
+   [r] of the run's kernel.  Every state below up to [S_Mbr r] is made per [r] in the build, as
+   U/StartStates.v does: [X_0]/[X_1] are the former definitions at [false]/[true], [X r] picks one, and
+   each lemma is proved for both values.  [S_Mr6r r] has dropped the six launch objects (the auxv,
+   object 3 of [S_Mt r], among them) and [S_Mbr r] has split the stack at the call's frame; [S_Mb]
+   joins the two states by the fixed rule [join_ss] below, so the malloc call and every state after it
+   are single. *)
+Definition S_Ms_0 : sstate := Eval vm_compute in subst_state sTP (S_M false) 31%positive.
+Definition S_Ms_1 : sstate := Eval vm_compute in subst_state sTP (S_M true) 31%positive.
+Definition S_Ms (r : bool) : sstate := if r then S_Ms_1 else S_Ms_0.
+Lemma S_Ms_eq : forall r, subst_state sTP (S_M r) 31%positive = S_Ms r.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma swf_S_Ms : forall r, swf (S_Ms r) = true.
+Proof. intros [|]; vm_cast_no_check (@eq_refl bool true). Qed.
+Definition S_Mt_0 : sstate := Eval vm_compute in add_facts F_top4 S_Ms_0.
+Definition S_Mt_1 : sstate := Eval vm_compute in add_facts F_top4 S_Ms_1.
+Definition S_Mt (r : bool) : sstate := if r then S_Mt_1 else S_Mt_0.
+Lemma S_Mt_eq : forall r, add_facts F_top4 (S_Ms r) = S_Mt r.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma swf_S_Mt : forall r, swf (S_Mt r) = true.
+Proof. intros [|]; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma fb_top4 : forall r, forallb (sprop_below (ss_next (S_Ms r))) F_top4 = true.
+Proof. intros [|]; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma S_M_no2630 : forall r,
+  state_vars_all (fun x : positive => negb (Pos.eqb x 26) && negb (Pos.eqb x 30)) (S_M r) = true.
+Proof. intros [|]; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma S_Ms_objs : forall r,
+  ss_objs (S_Ms r) = ss_objs (S_Mt r) /\ ss_next (S_Mt r) = 31%positive /\ ss_next (S_Ms r) = 31%positive.
+Proof. intros [|]; repeat split; reflexivity. Qed.
+Definition O_dataMt_0 : sobj := Eval vm_compute in obj_subst sTP (O_dataM false).
+Definition O_dataMt_1 : sobj := Eval vm_compute in obj_subst sTP (O_dataM true).
+Definition O_dataMt (r : bool) : sobj := if r then O_dataMt_1 else O_dataMt_0.
+Lemma O_dataMt_eq : forall r, obj_subst sTP (O_dataM r) = O_dataMt r.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma O_dataM_no2630 : forall r,
+  obj_vars_all (fun x : positive => negb (Pos.eqb x 26) && negb (Pos.eqb x 30)) (O_dataM r) = true.
+Proof. intros [|]; vm_cast_no_check (@eq_refl bool true). Qed.
 
-Local Definition MEMO_4 : ltac2:(tb__ "0|0|
-S17") := ltac2:(tb__ "0|0|
-Sd2S7aSdeSddA3").
-Definition W1a : sobj := ltac:(let x := eval vm_compute in (MEMO_4) in exact x).
-Local Definition MEMO_5 : ltac2:(tb__ "0|0|
-S17") := ltac2:(tb__ "0|0|
-Sd2S7aSe0SdfA3").
-Definition W1b : sobj := ltac:(let x := eval vm_compute in (MEMO_5) in exact x).
-Local Definition MEMO_6 : ltac2:(tb__ "0|0|
-S17") := ltac2:(tb__ "0|0|
-Sd2S7aSe2Se1A3").
-Definition W2 : sobj := ltac:(let x := eval vm_compute in (MEMO_6) in exact x).
-Local Definition MEMO_7 : ltac2:(tb__ "0|0|
-S17") := ltac2:(tb__ "0|0|
-Sd2S7aSe4Se3A3").
-Definition W3 : sobj := ltac:(let x := eval vm_compute in (MEMO_7) in exact x).
-Local Lemma MEMO_4_c : MEMO_4 = W1a. Proof. vm_cast_no_check (@eq_refl _ MEMO_4). Qed.
-Local Lemma MEMO_4_e : ltac2:(tb__ "0|0|
-S4aS17Sd2S7aSdeSddA3S92A3").
-Proof. exact (@eq_trans _ (subwin O_dataMt w1a_lo w1a_hi) MEMO_4 (W1a) (@eq_refl _ (subwin O_dataMt w1a_lo w1a_hi)) MEMO_4_c). Qed.
-Lemma W1a_eq : ltac2:(tb__ "0|0|
-S4aS17Sd2S7aSdeSddA3S92A3"). Proof. exact MEMO_4_e. Qed.
-Local Lemma MEMO_5_c : MEMO_5 = W1b. Proof. vm_cast_no_check (@eq_refl _ MEMO_5). Qed.
-Local Lemma MEMO_5_e : ltac2:(tb__ "0|0|
-S4aS17Sd2S7aSe0SdfA3S93A3").
-Proof. exact (@eq_trans _ (subwin O_dataMt w1b_lo w1b_hi) MEMO_5 (W1b) (@eq_refl _ (subwin O_dataMt w1b_lo w1b_hi)) MEMO_5_c). Qed.
-Lemma W1b_eq : ltac2:(tb__ "0|0|
-S4aS17Sd2S7aSe0SdfA3S93A3"). Proof. exact MEMO_5_e. Qed.
-Local Lemma MEMO_6_c : MEMO_6 = W2. Proof. vm_cast_no_check (@eq_refl _ MEMO_6). Qed.
-Local Lemma MEMO_6_e : ltac2:(tb__ "0|0|
-S4aS17Sd2S7aSe2Se1A3S94A3").
-Proof. exact (@eq_trans _ (subwin O_dataMt w2_lo w2_hi) MEMO_6 (W2) (@eq_refl _ (subwin O_dataMt w2_lo w2_hi)) MEMO_6_c). Qed.
-Lemma W2_eq : ltac2:(tb__ "0|0|
-S4aS17Sd2S7aSe2Se1A3S94A3"). Proof. exact MEMO_6_e. Qed.
-Local Lemma MEMO_7_c : MEMO_7 = W3. Proof. vm_cast_no_check (@eq_refl _ MEMO_7). Qed.
-Local Lemma MEMO_7_e : ltac2:(tb__ "0|0|
-S4aS17Sd2S7aSe4Se3A3S95A3").
-Proof. exact (@eq_trans _ (subwin O_dataMt w3_lo w3_hi) MEMO_7 (W3) (@eq_refl _ (subwin O_dataMt w3_lo w3_hi)) MEMO_7_c). Qed.
-Lemma W3_eq : ltac2:(tb__ "0|0|
-S4aS17Sd2S7aSe4Se3A3S95A3"). Proof. exact MEMO_7_e. Qed.
-Lemma W_ok : ltac2:(tb__ "0|0|
-S4bS4aS7Sd3S7aSdeSddA3S3A3S4bS4aS7Sd3S7aSe0SdfA3S3A3S4bS4aS7Sd3S7aSe2Se1A3S3A3S4aS7Sd3S7aSe4Se3A3S3A3A2A2A2").
-Proof. repeat split; vm_cast_no_check (@eq_refl _ true). Qed.
+Definition W1a_0 : sobj := Eval vm_compute in subwin O_dataMt_0 w1a_lo w1a_hi.
+Definition W1a_1 : sobj := Eval vm_compute in subwin O_dataMt_1 w1a_lo w1a_hi.
+Definition W1a (r : bool) : sobj := if r then W1a_1 else W1a_0.
+Definition W1b_0 : sobj := Eval vm_compute in subwin O_dataMt_0 w1b_lo w1b_hi.
+Definition W1b_1 : sobj := Eval vm_compute in subwin O_dataMt_1 w1b_lo w1b_hi.
+Definition W1b (r : bool) : sobj := if r then W1b_1 else W1b_0.
+Definition W2_0 : sobj := Eval vm_compute in subwin O_dataMt_0 w2_lo w2_hi.
+Definition W2_1 : sobj := Eval vm_compute in subwin O_dataMt_1 w2_lo w2_hi.
+Definition W2 (r : bool) : sobj := if r then W2_1 else W2_0.
+Definition W3_0 : sobj := Eval vm_compute in subwin O_dataMt_0 w3_lo w3_hi.
+Definition W3_1 : sobj := Eval vm_compute in subwin O_dataMt_1 w3_lo w3_hi.
+Definition W3 (r : bool) : sobj := if r then W3_1 else W3_0.
+Lemma W1a_eq : forall r, subwin (O_dataMt r) w1a_lo w1a_hi = W1a r.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma W1b_eq : forall r, subwin (O_dataMt r) w1b_lo w1b_hi = W1b r.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma W2_eq : forall r, subwin (O_dataMt r) w2_lo w2_hi = W2 r.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma W3_eq : forall r, subwin (O_dataMt r) w3_lo w3_hi = W3 r.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma W_ok : forall r,
+  subwin_ok (O_dataMt r) w1a_lo w1a_hi = true /\ subwin_ok (O_dataMt r) w1b_lo w1b_hi = true
+  /\ subwin_ok (O_dataMt r) w2_lo w2_hi = true /\ subwin_ok (O_dataMt r) w3_lo w3_hi = true.
+Proof. intros [|]; repeat split; vm_cast_no_check (@eq_refl bool true). Qed.
 Lemma W_in_data : ltac2:(tb__ "0|0|
 S4bS53Se5SdeA2S4bS53SdeSddA2S4bS53SddSe0A2S4bS53Se0SdfA2S4bS53SdfSe2A2S4bS53Se2Se1A2S4bS53Se1Se4A2S4bS53Se4Se3A2S4bS53Se3Se6A2S4bS53Se6S109A2S53Z0Se5A2A2A2A2A2A2A2A2A2A2A2").
 Proof. unf; lia. Qed.
-Definition S_Mw1 : sstate := ltac:(let x := eval vm_compute in (app_objs S_Mt [W1a] 31%positive) in exact x).
-Definition S_Mw2 : sstate := ltac:(let x := eval vm_compute in (app_objs S_Mw1 [W1b] 31%positive) in exact x).
-Definition S_Mw3 : sstate := ltac:(let x := eval vm_compute in (app_objs S_Mw2 [W2] 31%positive) in exact x).
-Definition S_Mw4 : sstate := ltac:(let x := eval vm_compute in (app_objs S_Mw3 [W3] 31%positive) in exact x).
-Lemma S_Mw1_eq : ltac2:(tb__ "0|0|
-S4aS1cSf0S79S0S17S92S2S17A1A3P1fA3S9bA3"). Proof. reflexivity. Qed.
-Lemma S_Mw2_eq : ltac2:(tb__ "0|0|
-S4aS1cSf0S9bS0S17S93S2S17A1A3P1fA3S9cA3"). Proof. reflexivity. Qed.
-Lemma S_Mw3_eq : ltac2:(tb__ "0|0|
-S4aS1cSf0S9cS0S17S94S2S17A1A3P1fA3S9dA3"). Proof. reflexivity. Qed.
-Lemma S_Mw4_eq : ltac2:(tb__ "0|0|
-S4aS1cSf0S9dS0S17S95S2S17A1A3P1fA3S87A3"). Proof. reflexivity. Qed.
-Lemma swf_S_Mw : ltac2:(tb__ "0|0|
-S4bS4aS7S34S9bA1S3A3S4bS4aS7S34S9cA1S3A3S4bS4aS7S34S9dA1S3A3S4aS7S34S87A1S3A3A2A2A2").
-Proof. repeat split; vm_cast_no_check (@eq_refl _ true). Qed.
-Lemma miss_w : ltac2:(tb__ "0|2|
-S4bS4aS7S112S65S22S79A1M0S2SaS13S13A2A1M1SdeSddS20S79A1A6S3A3S4bS4aS7S112S65G0G1Se0SdfS20S9bA1A6S3A3S4bS4aS7S112S65G0G1Se2Se1S20S9cA1A6S3A3S4aS7S112S65G0G1Se4Se3S20S9dA1A6S3A3A2A2A2").
-Proof. repeat split; vm_cast_no_check (@eq_refl _ true). Qed.
-Lemma S_Mw_facts : ltac2:(tb__ "0|2|
-S4bS4aS5S16A1M0S22S9bA1S22S79A1M1A3S4bS4aG0S22S9cA1G1A3S4bS4aG0S22S9dA1G1A3S4bS4aG0S22S87A1G1A3S4aS50S23S79A1P1fA3A2A2A2A2").
-Proof. repeat split; reflexivity. Qed.
+Definition S_Mw1_0 : sstate := Eval vm_compute in app_objs S_Mt_0 [W1a_0] 31%positive.
+Definition S_Mw1_1 : sstate := Eval vm_compute in app_objs S_Mt_1 [W1a_1] 31%positive.
+Definition S_Mw1 (r : bool) : sstate := if r then S_Mw1_1 else S_Mw1_0.
+Definition S_Mw2_0 : sstate := Eval vm_compute in app_objs S_Mw1_0 [W1b_0] 31%positive.
+Definition S_Mw2_1 : sstate := Eval vm_compute in app_objs S_Mw1_1 [W1b_1] 31%positive.
+Definition S_Mw2 (r : bool) : sstate := if r then S_Mw2_1 else S_Mw2_0.
+Definition S_Mw3_0 : sstate := Eval vm_compute in app_objs S_Mw2_0 [W2_0] 31%positive.
+Definition S_Mw3_1 : sstate := Eval vm_compute in app_objs S_Mw2_1 [W2_1] 31%positive.
+Definition S_Mw3 (r : bool) : sstate := if r then S_Mw3_1 else S_Mw3_0.
+Definition S_Mw4_0 : sstate := Eval vm_compute in app_objs S_Mw3_0 [W3_0] 31%positive.
+Definition S_Mw4_1 : sstate := Eval vm_compute in app_objs S_Mw3_1 [W3_1] 31%positive.
+Definition S_Mw4 (r : bool) : sstate := if r then S_Mw4_1 else S_Mw4_0.
+Lemma S_Mw1_eq : forall r, app_objs (S_Mt r) [W1a r] 31%positive = S_Mw1 r.
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mw2_eq : forall r, app_objs (S_Mw1 r) [W1b r] 31%positive = S_Mw2 r.
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mw3_eq : forall r, app_objs (S_Mw2 r) [W2 r] 31%positive = S_Mw3 r.
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mw4_eq : forall r, app_objs (S_Mw3 r) [W3 r] 31%positive = S_Mw4 r.
+Proof. intros [|]; reflexivity. Qed.
+Lemma swf_S_Mw : forall r,
+  swf (S_Mw1 r) = true /\ swf (S_Mw2 r) = true /\ swf (S_Mw3 r) = true /\ swf (S_Mw4 r) = true.
+Proof. intros [|]; repeat split; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma miss_w : forall r,
+  robjs_missT C_U (ss_facts (S_Mt r)) [] w1a_lo w1a_hi (ss_objs (S_Mt r)) = true
+  /\ robjs_missT C_U (ss_facts (S_Mt r)) [] w1b_lo w1b_hi (ss_objs (S_Mw1 r)) = true
+  /\ robjs_missT C_U (ss_facts (S_Mt r)) [] w2_lo w2_hi (ss_objs (S_Mw2 r)) = true
+  /\ robjs_missT C_U (ss_facts (S_Mt r)) [] w3_lo w3_hi (ss_objs (S_Mw3 r)) = true.
+Proof. intros [|]; repeat split; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma S_Mw_facts : forall r,
+  ss_facts (S_Mw1 r) = ss_facts (S_Mt r) /\ ss_facts (S_Mw2 r) = ss_facts (S_Mt r)
+  /\ ss_facts (S_Mw3 r) = ss_facts (S_Mt r) /\ ss_facts (S_Mw4 r) = ss_facts (S_Mt r)
+  /\ ss_next (S_Mt r) = 31%positive.
+Proof. intros [|]; repeat split; reflexivity. Qed.
 
 Definition xs_x : list xform := ltac2:(tb__ "0|0|
 S0SbcSc1S0S9U0S0S9U7S0S9U8S0S9U9S0S9UaS0S9U1S0S9U2S0S9U3S0S9U4S0S9U5S0S9U6S2S9A1A3A3A3A3A3A3A3A3A3A3A3A1S2SbcA1A3").
-Local Definition MEMO_8 := apply_xforms S_Mw4 xs_x.
-Local Definition MEMO_8__f := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.apply_xforms_fast S_Mw4 xs_x.
-Definition S_Mx : sstate := ltac:(let x := eval vm_compute in (xget S_Mw4 (MEMO_8__f)) in exact x).
-Local Lemma MEMO_8_c : MEMO_8 = Some S_Mx. Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.fast_memo MEMO_8 MEMO_8__f. Qed.
-Local Lemma MEMO_8_e : ltac2:(tb__ "0|0|
-S4aS4S1cA1SbdS87Sa3A2S6S1cS8fA2A3").
-Proof. exact (@eq_trans _ (apply_xforms S_Mw4 xs_x) MEMO_8 (Some S_Mx) (@eq_refl _ (apply_xforms S_Mw4 xs_x)) MEMO_8_c). Qed.
-Lemma xs_x_ok : ltac2:(tb__ "0|0|
-S4aS4S1cA1SbdS87Sa3A2S6S1cS8fA2A3"). Proof. exact MEMO_8_e. Qed.
-Definition S_Mr1 : sstate := ltac:(let x := eval vm_compute in (drop_last S_Mx) in exact x).
-Definition S_Mr2 : sstate := ltac:(let x := eval vm_compute in (drop_last S_Mr1) in exact x).
-Definition S_Mr3 : sstate := ltac:(let x := eval vm_compute in (drop_last S_Mr2) in exact x).
-Definition S_Mr4 : sstate := ltac:(let x := eval vm_compute in (drop_last S_Mr3) in exact x).
-Definition S_Mr5 : sstate := ltac:(let x := eval vm_compute in (drop_last S_Mr4) in exact x).
-Definition S_Mr6 : sstate := ltac:(let x := eval vm_compute in (drop_last S_Mr5) in exact x).
-Lemma S_Mx_objs : ltac2:(tb__ "0|0|
-S4aS5S17A1S20S8fA1SdS17S20S96A1S0S17S7bS79U6A2S2S17A1A3A3A3"). Proof. reflexivity. Qed.
-Lemma S_Mr1_objs : ltac2:(tb__ "0|0|
-S4aS5S17A1S20S96A1SdS17S20S97A1S0S17S7bS79U5A2S2S17A1A3A3A3"). Proof. reflexivity. Qed.
-Lemma S_Mr2_objs : ltac2:(tb__ "0|0|
-S4aS5S17A1S20S97A1SdS17S20S98A1S0S17S7bS79U4A2S2S17A1A3A3A3"). Proof. reflexivity. Qed.
-Lemma S_Mr3_objs : ltac2:(tb__ "0|0|
-S4aS5S17A1S20S98A1SdS17S20S99A1S0S17S7bS79U3A2S2S17A1A3A3A3"). Proof. reflexivity. Qed.
-Lemma S_Mr4_objs : ltac2:(tb__ "0|0|
-S4aS5S17A1S20S99A1SdS17S20S9aA1S0S17S7bS79U2A2S2S17A1A3A3A3"). Proof. reflexivity. Qed.
-Lemma S_Mr5_objs : ltac2:(tb__ "0|0|
-S4aS5S17A1S20S9aA1SdS17S20S86A1S0S17S7bS79U1A2S2S17A1A3A3A3"). Proof. reflexivity. Qed.
-Lemma S_Mr1_eq : ltac2:(tb__ "0|0|
-S4aS1cS96SabS8fS20S96A1A2A3"). Proof. reflexivity. Qed.
-Lemma S_Mr2_eq : ltac2:(tb__ "0|0|
-S4aS1cS97SabS96S20S97A1A2A3"). Proof. reflexivity. Qed.
-Lemma S_Mr3_eq : ltac2:(tb__ "0|0|
-S4aS1cS98SabS97S20S98A1A2A3"). Proof. reflexivity. Qed.
-Lemma S_Mr4_eq : ltac2:(tb__ "0|0|
-S4aS1cS99SabS98S20S99A1A2A3"). Proof. reflexivity. Qed.
-Lemma S_Mr5_eq : ltac2:(tb__ "0|0|
-S4aS1cS9aSabS99S20S9aA1A2A3"). Proof. reflexivity. Qed.
-Lemma S_Mr6_eq : ltac2:(tb__ "0|0|
-S4aS1cS86SabS9aS20S86A1A2A3"). Proof. reflexivity. Qed.
-Lemma S_Mr6_objs : ltac2:(tb__ "0|0|
-S4aS5S17A1S20S86A1S0S17S7bS79U0A2S0S17S92S0S17S93S0S17S94S0S17S95S2S17A1A3A3A3A3A3A3"). Proof. reflexivity. Qed.
+Local Definition MEMO_8_0 := apply_xforms S_Mw4_0 xs_x.
+Local Definition MEMO_8_0__f := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.apply_xforms_fast S_Mw4_0 xs_x.
+Definition S_Mx_0 : sstate := ltac:(let x := eval vm_compute in (xget S_Mw4_0 (MEMO_8_0__f)) in exact x).
+Local Lemma MEMO_8_0_c : MEMO_8_0 = Some S_Mx_0. Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.fast_memo MEMO_8_0 MEMO_8_0__f. Qed.
+Local Definition MEMO_8_1 := apply_xforms S_Mw4_1 xs_x.
+Local Definition MEMO_8_1__f := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.apply_xforms_fast S_Mw4_1 xs_x.
+Definition S_Mx_1 : sstate := ltac:(let x := eval vm_compute in (xget S_Mw4_1 (MEMO_8_1__f)) in exact x).
+Local Lemma MEMO_8_1_c : MEMO_8_1 = Some S_Mx_1. Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.fast_memo MEMO_8_1 MEMO_8_1__f. Qed.
+Definition S_Mx (r : bool) : sstate := if r then S_Mx_1 else S_Mx_0.
+Lemma xs_x_ok : forall r, apply_xforms (S_Mw4 r) xs_x = Some (S_Mx r).
+Proof. intros [|]; [exact MEMO_8_1_c | exact MEMO_8_0_c]. Qed.
+Definition S_Mr1_0 : sstate := Eval vm_compute in drop_last S_Mx_0.
+Definition S_Mr1_1 : sstate := Eval vm_compute in drop_last S_Mx_1.
+Definition S_Mr1 (r : bool) : sstate := if r then S_Mr1_1 else S_Mr1_0.
+Definition S_Mr2_0 : sstate := Eval vm_compute in drop_last S_Mr1_0.
+Definition S_Mr2_1 : sstate := Eval vm_compute in drop_last S_Mr1_1.
+Definition S_Mr2 (r : bool) : sstate := if r then S_Mr2_1 else S_Mr2_0.
+Definition S_Mr3_0 : sstate := Eval vm_compute in drop_last S_Mr2_0.
+Definition S_Mr3_1 : sstate := Eval vm_compute in drop_last S_Mr2_1.
+Definition S_Mr3 (r : bool) : sstate := if r then S_Mr3_1 else S_Mr3_0.
+Definition S_Mr4_0 : sstate := Eval vm_compute in drop_last S_Mr3_0.
+Definition S_Mr4_1 : sstate := Eval vm_compute in drop_last S_Mr3_1.
+Definition S_Mr4 (r : bool) : sstate := if r then S_Mr4_1 else S_Mr4_0.
+Definition S_Mr5_0 : sstate := Eval vm_compute in drop_last S_Mr4_0.
+Definition S_Mr5_1 : sstate := Eval vm_compute in drop_last S_Mr4_1.
+Definition S_Mr5 (r : bool) : sstate := if r then S_Mr5_1 else S_Mr5_0.
+Definition S_Mr6r_0 : sstate := Eval vm_compute in drop_last S_Mr5_0.
+Definition S_Mr6r_1 : sstate := Eval vm_compute in drop_last S_Mr5_1.
+Definition S_Mr6r (r : bool) : sstate := if r then S_Mr6r_1 else S_Mr6r_0.
+Lemma S_Mx_objs : forall r, ss_objs (S_Mx r) = ss_objs (S_Mr1 r) ++ [obj (S_Mt r) 6].
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr1_objs : forall r, ss_objs (S_Mr1 r) = ss_objs (S_Mr2 r) ++ [obj (S_Mt r) 5].
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr2_objs : forall r, ss_objs (S_Mr2 r) = ss_objs (S_Mr3 r) ++ [obj (S_Mt r) 4].
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr3_objs : forall r, ss_objs (S_Mr3 r) = ss_objs (S_Mr4 r) ++ [obj (S_Mt r) 3].
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr4_objs : forall r, ss_objs (S_Mr4 r) = ss_objs (S_Mr5 r) ++ [obj (S_Mt r) 2].
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr5_objs : forall r, ss_objs (S_Mr5 r) = ss_objs (S_Mr6r r) ++ [obj (S_Mt r) 1].
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr1_eq : forall r, S_Mr1 r = set_objs (S_Mx r) (ss_objs (S_Mr1 r)).
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr2_eq : forall r, S_Mr2 r = set_objs (S_Mr1 r) (ss_objs (S_Mr2 r)).
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr3_eq : forall r, S_Mr3 r = set_objs (S_Mr2 r) (ss_objs (S_Mr3 r)).
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr4_eq : forall r, S_Mr4 r = set_objs (S_Mr3 r) (ss_objs (S_Mr4 r)).
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr5_eq : forall r, S_Mr5 r = set_objs (S_Mr4 r) (ss_objs (S_Mr5 r)).
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr6_eq : forall r, S_Mr6r r = set_objs (S_Mr5 r) (ss_objs (S_Mr6r r)).
+Proof. intros [|]; reflexivity. Qed.
+Lemma S_Mr6_objs : forall r, ss_objs (S_Mr6r r) = [obj (S_Mt r) 0; W1a r; W1b r; W2 r; W3 r].
+Proof. intros [|]; reflexivity. Qed.
 
-Lemma objs_S_M : ltac2:(tb__ "0|c|
-S4bS4aS17S7bS79U1A2S1bS18P1M0A1M1S12Z0A1M2S12Z10A1M3S0S14S15G2Z8M4S12Z2A1A3S0S14S15S12G4A1M5G4S18P4A1M6A3S2S14A1M7A3A3S1fA5A3S4bS4aS17S7bS79U2A2S1bS1aS5bG1S12Z20A1A3G2S1aS5bS1aS5cS18P3A1S12Z3A1A3M8G5A3G7S2aG0A1A5A3S4bS4aS13S35S7bS79U3A2M9A1S1aS5bS1aS5bS1aS5bG1G3A3G8A3S12Z18A1MaA3A3S4bS4aS13S38G9A1G2A3S4bS4aS13S37G9A1S12Za0A1A3S4bS4aS39S36G9A1S1fA3S4bS4aS17S7bS79U4A2S1bG6G2S1aS5bS18P5A1S12Z1A1A3G7S2aP2A1A5A3S4bS4aS17S7bS79U5A2S1bS18P6A1G2G3S0S14S15G2G4S18P9A1A3S0S14S15G5G4S18PaA1A3G7A3A3S1fA5A3S4bS4aS17S7bS79U6A2S1bG1G3GaS0S14S15G3G4S18P19A1A3G7A3S1fA5A3S4aS17S7bS79U0A2MbS1bG1S12N100000A1G2S26GbA1S2cA5A3A2A2A2A2A2A2A2A2A2").
-Proof. repeat split; reflexivity. Qed.
+(* The launch objects of [S_Mt r]: 1 the header, 2 envp, 3 the auxv ([ContractI.AM_AUXV_BYTES r]
+   bytes: 432, or 464 with CONFIG_RSEQ), 4 argv[0]'s string, 5 the random bytes, 6 argv[1]'s pointer;
+   0 is the free stack. *)
+Lemma objs_S_M : forall r,
+  obj (S_Mt r) 1 = mkObj (SVar 1) (SLit 0) (SLit 16) [mkCell (SLit 0) 8 (SLit 2); mkCell (SLit 8) 8 (SVar 4)] DUnknown
+  /\ obj (S_Mt r) 2 = mkObj (SAlu ALU_ADD (SVar 1) (SLit 32)) (SLit 0) (SAlu ALU_ADD (SAlu ALU_SLL (SVar 3) (SLit 3)) (SLit 8)) [] (DList 1)
+  /\ ob_base (obj (S_Mt r) 3) = SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_ADD (SVar 1) (SLit 16)) (SAlu ALU_SLL (SVar 3) (SLit 3))) (SLit 24)
+  /\ ob_lo (obj (S_Mt r) 3) = SLit 0
+  /\ ob_hi (obj (S_Mt r) 3) = SLit (ContractI.AM_AUXV_BYTES r)
+  /\ ob_dflt (obj (S_Mt r) 3) = DUnknown
+  /\ obj (S_Mt r) 4 = mkObj (SVar 4) (SLit 0) (SAlu ALU_ADD (SVar 5) (SLit 1)) [] (DList 2)
+  /\ obj (S_Mt r) 5 = mkObj (SVar 6) (SLit 0) (SLit 16) [mkCell (SLit 0) 8 (SVar 9); mkCell (SLit 8) 8 (SVar 10)] DUnknown
+  /\ obj (S_Mt r) 6 = mkObj (SVar 1) (SLit 16) (SLit 24) [mkCell (SLit 16) 8 (SVar 25)] DUnknown
+  /\ obj (S_Mt r) 0 = mkObj (SVar 1) (SLit (-1048576)) (SLit 0) (ob_cells (obj (S_Mt r) 0)) DZero.
+Proof. intros [|]; repeat split; vm_compute; reflexivity. Qed.
+Lemma objs_vars : forall r,
+  obj_vars_all (fun _ => true) (obj (S_Mt r) 3) = true /\ obj_vars_all (fun _ => true) (obj (S_Mt r) 5) = true.
+Proof. intros [|]; split; vm_cast_no_check (@eq_refl bool true). Qed.
 
-Lemma aux_cells : ltac2:(tb__ "0|6|
-S9S114R1UaA2S4bS4aS4S14A1M0Sd5S26S7bS79U3A2A1M1S56Z10M2S55R2A1A2M3A2S6S14S15S12G3A1Z8M4S12SeeS51R2S135Z0A4A1A3A2A3S4eS13S13S4aG0Sd5G1S52S56G2S55R3A1A2G4A2M5A2S6S14S15S12G5A1G4R1A3A2A3Lv;A2A2F_;Fj;").
+(* [find_cell] below is Lib/DrvPristine.v's (the cell at an offset, [option cell]); the imported
+   Musl_wl_err module has a [find_cell] of its own (the value at an offset). *)
+Local Notation find_cell := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvPristine.find_cell (only parsing).
+(* The auxv object's cells (object 3 of [S_Mt r]), checked per flag against the keys the launch lays
+   ([ContractI.am_auxv_keys r], computed from [InitState.O_aux]): each key a literal cell at [16 j], and
+   each value word either a cell at [16 j + 8] or no cell at all (a value musl never reads, held by
+   the object's unknown default). *)
+Definition aux_key_ok (cells : list cell) (keys : list Z) (j : nat) : bool :=
+  match find_cell cells (16 * Z.of_nat j) with
+  | Some c => OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail.cell_eqb c (mkCell (SLit (16 * Z.of_nat j)) 8 (SLit (nth j keys 0)))
+  | None => false
+  end.
+Definition aux_val_ok (cells : list cell) (j : nat) : bool :=
+  match find_cell cells (16 * Z.of_nat j + 8) with
+  | Some c => Z.eqb (c_width c) 8
+  | None => cells_clear cells (16 * Z.of_nat j + 8) 8
+  end.
+Lemma aux_cells : forall (r : bool) (j : nat), (j < ContractI.AM_AUXV_N r)%nat ->
+  find_cell (ob_cells (obj (S_Mt r) 3)) (16 * Z.of_nat j)
+    = Some (mkCell (SLit (16 * Z.of_nat j)) 8 (SLit (nth j (ContractI.am_auxv_keys r) 0)))
+  /\ ((exists v, find_cell (ob_cells (obj (S_Mt r) 3)) (16 * Z.of_nat j + 8) = Some (mkCell (SLit (16 * Z.of_nat j + 8)) 8 v))
+      \/ cells_clear (ob_cells (obj (S_Mt r) 3)) (16 * Z.of_nat j + 8) 8 = true).
 Proof.
-  intros j Hj.
-  destruct j as [|[|[|[|[|[|[|[|[|[|j]]]]]]]]]]; [| | | | | | | | | | lia]; (split; [vm_compute; reflexivity | eexists; vm_compute; reflexivity]).
+  intros r j Hj.
+  assert (HK : forallb (aux_key_ok (ob_cells (obj (S_Mt r) 3)) (ContractI.am_auxv_keys r)) (seq 0 (ContractI.AM_AUXV_N r)) = true)
+    by (destruct r; vm_cast_no_check (@eq_refl bool true)).
+  assert (HV : forallb (aux_val_ok (ob_cells (obj (S_Mt r) 3))) (seq 0 (ContractI.AM_AUXV_N r)) = true)
+    by (destruct r; vm_cast_no_check (@eq_refl bool true)).
+  assert (Hin : In j (seq 0 (ContractI.AM_AUXV_N r))) by (apply in_seq; lia).
+  pose proof (proj1 (forallb_forall _ _) HK j Hin) as K. pose proof (proj1 (forallb_forall _ _) HV j Hin) as V.
+  clear HK HV Hin. set (cs := ob_cells (obj (S_Mt r) 3)) in *. unfold aux_key_ok in K. unfold aux_val_ok in V.
+  split.
+  - revert K. destruct (find_cell cs (16 * Z.of_nat j)) as [c|]; intros K; [|discriminate].
+    apply OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail.cell_eqb_sound in K. rewrite K. reflexivity.
+  - revert V. destruct (find_cell cs (16 * Z.of_nat j + 8)) as [c|] eqn:E; intros V.
+    + left. destruct c as [co cw cv]. destruct (find_cell_In _ _ _ E) as [_ Ho]. cbn [c_off c_width] in V, Ho.
+      apply Z.eqb_eq in V. subst co cw. exists cv. reflexivity.
+    + right. exact V.
 Qed.
-Lemma aux_cell_rand : ltac2:(tb__ "0|1|
-S4aS4S14A1Sd5S26S7bS79U3A2A1Z88M0A2S6S14S15S12G0A1Z8S18P6A1A3A2A3"). Proof. reflexivity. Qed.
+Lemma aux_lit62 : forall r, cells_lit62 (ob_cells (obj (S_Mt r) 3)) = true.
+Proof. intros [|]; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma aux_cell_rand : forall r,
+  find_cell (ob_cells (obj (S_Mt r) 3)) (ContractI.AM_AUXV_RANDOFF r)
+    = Some (mkCell (SLit (ContractI.AM_AUXV_RANDOFF r)) 8 (SVar 6)).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
-Lemma rand_cell0 : ltac2:(tb__ "0|1|
-S4aS4S14A1Sd5S26S7bS79U5A2A1Z0M0A2S6S14S15S12G0A1Z8S18P9A1A3A2A3"). Proof. reflexivity. Qed.
-Lemma rand_cell1 : ltac2:(tb__ "0|1|
-S4aS4S14A1Sd5S26S7bS79U5A2A1Z8M0A2S6S14S15S12G0A1G0S18PaA1A3A2A3"). Proof. reflexivity. Qed.
+Lemma rand_cell0 : forall r, find_cell (ob_cells (obj (S_Mt r) 5)) 0 = Some (mkCell (SLit 0) 8 (SVar 9)).
+Proof. intros [|]; reflexivity. Qed.
+Lemma rand_cell1 : forall r, find_cell (ob_cells (obj (S_Mt r) 5)) 8 = Some (mkCell (SLit 8) 8 (SVar 10)).
+Proof. intros [|]; reflexivity. Qed.
 
+(* THE JOIN (LPS 727298f3).  After the drops the two flags' states differ in one stack word only: at
+   [SVar 1 - 440], each holds the address just past its own auxv (the auxv's base + 432, or + 464 with
+   CONFIG_RSEQ).  That word lies below the malloc call's frame boundary [SVar 1 - 128], so the join
+   comes right after the split at that boundary ([xs_Mb], per flag): object 0 of [S_Mbr r] is the free
+   stack below the frame, and the call's precondition [PreM] takes it as its stack window
+   ([Contract.stack_win]: no cells, unknown default), so no later state reads that word.  The fixed
+   rule [join_ss]: object by object (the lists in order), the joined object takes the r = false
+   object's base and bounds and the cells both objects hold; its default is the r = false object's when
+   both objects hold the same cells, else the unknown default [DUnknown]; the joined facts are those
+   both states hold; the pc, registers, next variable and the rest are the r = false state's.
+   [join_ok] checks the rule's side conditions (the two states agree on the pc, the registers, the
+   float registers, the fcsr, the reservation, the next variable, the lenient flag, the object count
+   and each object's base, bounds and default); [S_Mb_join] checks that each flag's state entails the
+   join with the empty substitution, so [entails_sound] carries a run's own state to [S_Mb] keeping
+   the run's memory (the valuation becomes [rho_sub rho []], with the same [rm]). *)
+Definition jm_cells (a b : list cell) : list cell :=
+  List.filter (fun c => existsb (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail.cell_eqb c) b) a.
+Definition jm_same (a b : list cell) : bool :=
+  forallb (fun c => existsb (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail.cell_eqb c) b) a
+  && forallb (fun c => existsb (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail.cell_eqb c) a) b.
+Definition jm_obj (o p : sobj) : sobj :=
+  mkObj (ob_base o) (ob_lo o) (ob_hi o) (jm_cells (ob_cells o) (ob_cells p))
+    (if jm_same (ob_cells o) (ob_cells p) then ob_dflt o else DUnknown).
+Fixpoint jm_objs (l k : list sobj) : list sobj :=
+  match l, k with
+  | o :: l', p :: k' => jm_obj o p :: jm_objs l' k'
+  | _, _ => l
+  end.
+Definition join_ss (A B : sstate) : sstate :=
+  mkSS (ss_pc A) (ss_regs A) (ss_fregs A) (ss_fcsr A) (ss_resv A) (jm_objs (ss_objs A) (ss_objs B))
+    (List.filter (fun p => existsb (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState.sprop_eqb p) (ss_facts B)) (ss_facts A))
+    (ss_next A) (ss_lenient A).
+Fixpoint jm_svs_eqb (a b : list sv) : bool :=
+  match a, b with
+  | [], [] => true
+  | x :: a', y :: b' => OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState.sv_eqb x y && jm_svs_eqb a' b'
+  | _, _ => false
+  end.
+Definition jm_shape_eqb (o p : sobj) : bool :=
+  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState.sv_eqb (ob_base o) (ob_base p)
+  && OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState.sv_eqb (ob_lo o) (ob_lo p)
+  && OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState.sv_eqb (ob_hi o) (ob_hi p)
+  && OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail.odefault_eqb (ob_dflt o) (ob_dflt p).
+Fixpoint jm_shapes_eqb (l k : list sobj) : bool :=
+  match l, k with
+  | [], [] => true
+  | o :: l', p :: k' => jm_shape_eqb o p && jm_shapes_eqb l' k'
+  | _, _ => false
+  end.
+Definition join_ok (A B : sstate) : bool :=
+  Z.eqb (ss_pc A) (ss_pc B) && jm_svs_eqb (ss_regs A) (ss_regs B) && jm_svs_eqb (ss_fregs A) (ss_fregs B)
+  && OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.Glue3.sfcsr_eqb (ss_fcsr A) (ss_fcsr B)
+  && OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.Glue3.osv_eqb (ss_resv A) (ss_resv B)
+  && Pos.eqb (ss_next A) (ss_next B) && Bool.eqb (ss_lenient A) (ss_lenient B)
+  && jm_shapes_eqb (ss_objs A) (ss_objs B).
 Definition xs_Mb : list xform := [XSplit 0 (SLit (-128))].
-Local Definition MEMO_9 := apply_xforms S_Mr6 xs_Mb.
-Local Definition MEMO_9__f := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.apply_xforms_fast S_Mr6 xs_Mb.
-Definition S_Mb : sstate := ltac:(let x := eval vm_compute in (xget S_Mr6 (MEMO_9__f)) in exact x).
-Local Lemma MEMO_9_c : MEMO_9 = Some S_Mb. Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.fast_memo MEMO_9 MEMO_9__f. Qed.
-Local Lemma MEMO_9_e : ltac2:(tb__ "0|0|
-S4aS4S1cA1SbdS86Sa1A2S6S1cS8eA2A3").
-Proof. exact (@eq_trans _ (apply_xforms S_Mr6 xs_Mb) MEMO_9 (Some S_Mb) (@eq_refl _ (apply_xforms S_Mr6 xs_Mb)) MEMO_9_c). Qed.
-Lemma xs_Mb_ok : ltac2:(tb__ "0|0|
-S4aS4S1cA1SbdS86Sa1A2S6S1cS8eA2A3"). Proof. exact MEMO_9_e. Qed.
+Local Definition MEMO_9_0 := apply_xforms S_Mr6r_0 xs_Mb.
+Local Definition MEMO_9_0__f := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.apply_xforms_fast S_Mr6r_0 xs_Mb.
+Definition S_Mbr_0 : sstate := ltac:(let x := eval vm_compute in (xget S_Mr6r_0 (MEMO_9_0__f)) in exact x).
+Local Lemma MEMO_9_0_c : MEMO_9_0 = Some S_Mbr_0. Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.fast_memo MEMO_9_0 MEMO_9_0__f. Qed.
+Local Definition MEMO_9_1 := apply_xforms S_Mr6r_1 xs_Mb.
+Local Definition MEMO_9_1__f := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.apply_xforms_fast S_Mr6r_1 xs_Mb.
+Definition S_Mbr_1 : sstate := ltac:(let x := eval vm_compute in (xget S_Mr6r_1 (MEMO_9_1__f)) in exact x).
+Local Lemma MEMO_9_1_c : MEMO_9_1 = Some S_Mbr_1. Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.fast_memo MEMO_9_1 MEMO_9_1__f. Qed.
+Definition S_Mbr (r : bool) : sstate := if r then S_Mbr_1 else S_Mbr_0.
+Lemma xs_Mbr_ok : forall r, apply_xforms (S_Mr6r r) xs_Mb = Some (S_Mbr r).
+Proof. intros [|]; [exact MEMO_9_1_c | exact MEMO_9_0_c]. Qed.
+Definition S_Mb : sstate := Eval vm_compute in join_ss S_Mbr_0 S_Mbr_1.
+Lemma S_Mb_join_ok : join_ok S_Mbr_0 S_Mbr_1 = true.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma S_Mb_join : forall r, entails (S_Mbr r) S_Mb [] = true.
+Proof. intros [|]; vm_cast_no_check (@eq_refl bool true). Qed.
 Local Definition MEMO_10 := unbase_obj_at S_Mb 0 (-128).
 Local Definition MEMO_10__f := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.XformFast.unbase_obj_at_fast S_Mb 0 (-128).
 Definition S_Md : sstate := ltac:(let x := eval vm_compute in (xget S_Mb (MEMO_10__f)) in exact x).
@@ -340,38 +466,52 @@ S4aS4S1cA1S133S8eU0N80A3S6S1cS7cA2A3").
 Proof. exact (@eq_trans _ (unbase_obj_at S_Mb 0 (-128)) MEMO_10 (Some S_Md) (@eq_refl _ (unbase_obj_at S_Mb 0 (-128))) MEMO_10_c). Qed.
 Lemma S_Md_ok : ltac2:(tb__ "0|0|
 S4aS4S1cA1S133S8eU0N80A3S6S1cS7cA2A3"). Proof. exact MEMO_10_e. Qed.
-Lemma S_Md_next : ltac2:(tb__ "0|1|
-S4bS4aS50S23S7cA1P1fM0A3S4aS50S23S8fA1G0A3A2"). Proof. split; reflexivity. Qed.
-Lemma S_Md_facts : ltac2:(tb__ "0|2|
-S4bS4aS5S16A1M0S22S7cA1S22S79A1M1A3S4aG0S22S8fA1G1A3A2"). Proof. split; reflexivity. Qed.
-Lemma S_Md_objs_tl : ltac2:(tb__ "0|1|
-S4bS4aS5S17A1S12eS17S20S7cA1A2S0S17S7bS8eU1A2M0S0S17S92S0S17S93S0S17S94S0S17S95S2S17A1A3A3A3A3A3A3S4aS17G0S1bS18P1A1S12N80A1S12Z0A1S26G0A1S2cA5A3A2").
+Lemma S_Md_next : ss_next S_Md = 31%positive /\ ss_next S_Mb = 31%positive.
+Proof. split; reflexivity. Qed.
+Lemma S_Md_facts : ss_facts S_Md = ss_facts S_Mb /\ (forall r, ss_facts (S_Mx r) = ss_facts (S_Mt r)).
+Proof. split; [reflexivity | intros [|]; reflexivity]. Qed.
+Lemma S_Md_objs_tl :
+  tl (ss_objs S_Md) = [obj S_Mb 1; obj S_Mb 2; obj S_Mb 3; obj S_Mb 4; obj S_Mb 5]
+  /\ obj S_Mb 1 = mkObj (SVar 1) (SLit (-128)) (SLit 0) (ob_cells (obj S_Mb 1)) DZero.
 Proof. split; reflexivity. Qed.
 
-Lemma dataM_shape : ltac2:(tb__ "0|0|
-S4bS4aS13S35S7aA1S12Z0A1A3S4bS4aS13S38S7aA1S12Se5A1A3S4bS4aS13S37S7aA1S12Se6A1A3S4bS4aS39S36S7aA1S21A3S4bS4aS7SdaS26S7aA1A1S3A3S4aS7S128S50S3L_;S7aA2S3A3A2A2A2A2A2").
-Proof. repeat split; try reflexivity; vm_cast_no_check (@eq_refl _ true). Qed.
-Lemma dataM_clear : ltac2:(tb__ "0|2|
-S4bS4aS7Sd6S26S7aA1M0S6aS65A1S134A3S3A3S4bS4aS7Sd6G0S6bS65A1Z4M1A3S3A3S4bS4aS7Sd6G0S6cS65A1G1A3S3A3S4bS4aS7Sd6G0S72S65A1Z1A3S3A3S4aS7Sd6G0S69S65A1Z8A3S3A3A2A2A2A2").
-Proof. repeat split; vm_cast_no_check (@eq_refl _ true). Qed.
+Lemma dataM_shape : forall r,
+  ob_base (O_dataMt r) = SLit 0 /\ ob_lo (O_dataMt r) = SLit dataM_lo /\ ob_hi (O_dataMt r) = SLit dataM_hi
+  /\ ob_dflt (O_dataMt r) = DImage /\ cells_lit62 (ob_cells (O_dataMt r)) = true
+  /\ obj_vars_all (fun _ => true) (O_dataMt r) = true.
+Proof. intros [|]; repeat split; try reflexivity; vm_cast_no_check (@eq_refl bool true). Qed.
+Lemma dataM_clear : forall r,
+  cells_clear (ob_cells (O_dataMt r)) (mc_ctx C_U) CTX_SIZE = true
+  /\ cells_clear (ob_cells (O_dataMt r)) (mc_lock C_U) 4 = true
+  /\ cells_clear (ob_cells (O_dataMt r)) (mc_replaced C_U) 4 = true
+  /\ cells_clear (ob_cells (O_dataMt r)) (mc_need_locks C_U) 1 = true
+  /\ cells_clear (ob_cells (O_dataMt r)) (mc_chk_guard_got C_U) 8 = true.
+Proof. intros [|]; repeat split; vm_cast_no_check (@eq_refl bool true). Qed.
 Lemma dataM_statics_in : ltac2:(tb__ "0|8|
 S51S4dS4bS53S6aS65A1M0R1A2S54R1S52G0S134A2A2A2S4dS4bS53S6bS65A1M1R1A2S54R1S52G1Z4M2A2A2A2S4dS4bS53S6cS65A1M3R1A2S54R1S52G3G2A2A2A2S4dS4bS53S70S65A1M4R1A2S54R1S52G4Z38A2A2A2S4dS4bS53S69S65A1M5R1A2S54R1S52G5Z8M6A2A2A2S4bS53S68S65A1M7R1A2S54R1S52G7G6A2A2A2A2A2A2A2A2S4bS4bS53Se5R2A2S54R2Se6A2A2S4bS4cS4bS53SdeR2A2S54R2SddA2A2A1S4bS4cS4bS53Se0R2A2S54R2SdfA2A2A1S4bS4cS4bS53Se2R2A2S54R2Se1A2A2A1S4cS4bS53Se4R2A2S54R2Se3A2A2A1A2A2A2A2F_;Fa;").
 Proof. intros a. unf; lia. Qed.
-Lemma prm_fp_cases : ltac2:(tb__ "0|0|
-S51S51S51Sd8S65R3R2R1A4S4dS4bS4bS53Se5R2A2S54R2Se6A2A2S4bS4cS4bS53SdeR2A2S54R2SddA2A2A1S4bS4cS4bS53Se0R2A2S54R2SdfA2A2A1S4bS4cS4bS53Se2R2A2S54R2Se1A2A2A1S4cS4bS53Se4R2A2S54R2Se3A2A2A1A2A2A2A2S4dS4bS53Z0R2A2S54R2Se5A2A2S4dS4bS53R4R2A2S54R2S52R4Za0A2A2A2S4bS53S52R3Z8A2R2A2S54R2S52R3Z10A2A2A2A2A2A2F_;Fa;Fq;Fav;").
-Proof. intros av q a H. unfold prm_fp in H. unf; lia. Qed.
+Lemma prm_fp_cases : forall (r : bool) (av q a : Z), prm_fp C_U r av q a ->
+  ((dataM_lo <= a < dataM_hi) /\ ~ (w1a_lo <= a < w1a_hi) /\ ~ (w1b_lo <= a < w1b_hi)
+     /\ ~ (w2_lo <= a < w2_hi) /\ ~ (w3_lo <= a < w3_hi))
+  \/ (0 <= a < dataM_lo) \/ (av <= a < av + ContractI.AM_AUXV_BYTES r) \/ (q + 8 <= a < q + 16).
+Proof. intros r av q a H. unfold prm_fp in H. unf; lia. Qed.
 Lemma tables_low : ltac2:(tb__ "0|4|
 S51S4dS4bS53S74S65A1M0R1A2S54R1S52G0Z60A2A2A2S4dS4bS53S75S65A1M1R1A2S54R1S52G1Z1bA2A2A2S4dS4bS53S71S65A1M2R1A2S54R1S52G2Z4A2A2A2S4bS53S6fS65A1M3R1A2S54R1S52G3Z20A2A2A2A2A2A2S4bS53Z0R2A2S54R2Se5A2A2F_;Fa;").
 Proof. intros a. unf; lia. Qed.
-Lemma cell_pgsz : ltac2:(tb__ "0|1|
-S4aS4S14A1Sd5S26S7aA1S73S65A1M0A2S6S14S15S12G0A1Z8S12Z1000A1A3A2A3"). Proof. vm_cast_no_check (@eq_refl _ (Some (mkCell (SLit (mc_page_size C_U)) 8 (SLit 4096)))). Qed.
-Lemma cell_auxv : ltac2:(tb__ "0|1|
-S4aS4S14A1Sd5S26S7aA1S6eS65A1M0A2S6S14S15S12G0A1Z8S1aS5bS1aS5bS1aS5bS18P1A1S12Z10A1A3S1aS5cS18P3A1S12Z3A1A3A3S12Z18A1A3A3A2A3").
-Proof. vm_cast_no_check (@eq_refl _ (Some (mkCell (SLit (mc_auxv C_U)) 8 (SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_ADD (SVar 1) (SLit 16)) (SAlu ALU_SLL (SVar 3) (SLit 3))) (SLit 24))))). Qed.
+Lemma cell_pgsz : forall r,
+  find_cell (ob_cells (O_dataMt r)) (mc_page_size C_U) = Some (mkCell (SLit (mc_page_size C_U)) 8 (SLit 4096)).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma cell_auxv : forall r,
+  find_cell (ob_cells (O_dataMt r)) (mc_auxv C_U)
+    = Some (mkCell (SLit (mc_auxv C_U)) 8 (SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_ADD (SVar 1) (SLit 16)) (SAlu ALU_SLL (SVar 3) (SLit 3))) (SLit 24))).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
-Lemma cells_guard : ltac2:(tb__ "0|9|
-S4bS4eS13S13S4aS4S14A1M0Sd5S26S7aA1M1S68S65A1M2A2S6S14S15S12G2A1Z1M3R1A3A2A3Lv;A2S4bS4eS13S13S4aG0Sd5G1S52G2G3A2M4A2S6S14S15S12G4A1G3R1A3A2A3Lv;A2S4bS4eS13S13S4aG0Sd5G1S52G2Z2M5A2M6A2S6S14S15S12G6A1G5R1A3A2A3Lv;A2S4eS13S13S4aG0Sd5G1S52G2Z4M7A2M8A2S6S14S15S12G8A1G7R1A3A2A3Lv;A2A2A2A2").
-Proof. repeat split; eexists; vm_compute; reflexivity. Qed.
+Lemma cells_guard : forall r,
+  (exists v, find_cell (ob_cells (O_dataMt r)) (mc_chk_guard C_U) = Some (mkCell (SLit (mc_chk_guard C_U)) 1 v))
+  /\ (exists v, find_cell (ob_cells (O_dataMt r)) (mc_chk_guard C_U + 1) = Some (mkCell (SLit (mc_chk_guard C_U + 1)) 1 v))
+  /\ (exists v, find_cell (ob_cells (O_dataMt r)) (mc_chk_guard C_U + 2) = Some (mkCell (SLit (mc_chk_guard C_U + 2)) 2 v))
+  /\ (exists v, find_cell (ob_cells (O_dataMt r)) (mc_chk_guard C_U + 4) = Some (mkCell (SLit (mc_chk_guard C_U + 4)) 4 v)).
+Proof. intros [|]; repeat split; eexists; vm_compute; reflexivity. Qed.
 
 Definition PreM : sstate := Pre_malloc EC_U.
 Definition s_m : wsub := ltac:(let x := eval vm_compute in
@@ -398,8 +538,12 @@ S4aS5S17A1S7eS12eS17S20S7cA1A2A3"). Proof. reflexivity. Qed.
 Lemma R_m_hi_img : ltac2:(tb__ "0|0|
 S4aS7SdbSebS65S22S7cA1S7eA4S3A3"). Proof. vm_cast_no_check (@eq_refl _ true). Qed.
 
-Lemma R_m_shapes : ltac2:(tb__ "0|1|
-S4aS5S17A1S7eS0S17S1bS18P1A1S12N80A1S12Z0A1M0S26S7bS8eU1A2A1S2cA5S0S17S1bG0S12SdeA1S12SddA1S26S92A1S21A5S0S17S1bG0S12Se0A1S12SdfA1S26S93A1S21A5S0S17S1bG0S12Se2A1S12Se1A1S26S94A1S21A5S0S17S1bG0S12Se4A1S12Se3A1S26S95A1S21A5S2S17A1A3A3A3A3A3A3").
+Lemma R_m_shapes : R_m =
+  [mkObj (SVar 1) (SLit (-128)) (SLit 0) (ob_cells (obj S_Mb 1)) DZero;
+   mkObj (SLit 0) (SLit w1a_lo) (SLit w1a_hi) (ob_cells (obj S_Mb 2)) DImage;
+   mkObj (SLit 0) (SLit w1b_lo) (SLit w1b_hi) (ob_cells (obj S_Mb 3)) DImage;
+   mkObj (SLit 0) (SLit w2_lo) (SLit w2_hi) (ob_cells (obj S_Mb 4)) DImage;
+   mkObj (SLit 0) (SLit w3_lo) (SLit w3_hi) (ob_cells (obj S_Mb 5)) DImage].
 Proof. reflexivity. Qed.
 Lemma s_m_vals : ltac2:(tb__ "0|2|
 S4bS4aS13Sf9S7fPcA2M0S12Z10000A1A3S4bS4aS13Sf9S7fPaA2S1aS5bS18P1A1S12N80A1A3A3S4bS4aS13Sf9S7fPfA2S12Nfff80A1A3S4bS4aS7S49S23S7cA1M1G0A2S3A3S4aS13Sf9S12aS7fS13cSccScbA1G1A4ScfA2S18S12bG1UaA2A1A3A2A2A2A2").
@@ -616,12 +760,46 @@ Proof.
   rewrite Z_to_bv_small; [lia|]. rewrite two64. lia.
 Qed.
 
-Lemma auxv_keys_range : ltac2:(tb__ "0|2|
-S9S4bS53Z0M0SeeS51R1S135G0A4M1A2S54G1S57Z2Z40A2A2A2Fk;").
+Lemma auxv_keys_range : forall r k, 0 <= nth k (am_auxv_keys r) 0 < 2 ^ 64.
 Proof.
-  intros k. destruct (le_lt_dec 10 k) as [Hk|Hk].
-  - rewrite nth_overflow by (cbn; lia). lia.
-  - do 10 (destruct k as [|k]; [cbn; lia|]). lia.
+  intros r k.
+  assert (H : forallb (fun z => (0 <=? z) && (z <? 2 ^ 64)) (am_auxv_keys r) = true)
+    by (destruct r; vm_cast_no_check (@eq_refl bool true)).
+  destruct (Nat.lt_ge_cases k (length (am_auxv_keys r))) as [Hk|Hk].
+  - pose proof (proj1 (forallb_forall _ _) H _ (nth_In _ 0 Hk)) as X. cbn beta in X.
+    apply andb_prop in X as [X1 X2]. apply Z.leb_le in X1. apply Z.ltb_lt in X2. lia.
+  - rewrite nth_overflow by exact Hk. lia.
+Qed.
+
+(* The per-flag auxv numbers (ContractI's [am_auxv_vals]): the AT_RANDOM value at offset 392, the
+   auxv 432 or 464 bytes long, sixteen bytes a pair, and as long as the launch lays it. *)
+Lemma auxv_nums : forall r,
+  AM_AUXV_RANDOFF r = 392 /\ 432 <= AM_AUXV_BYTES r <= 464
+  /\ AM_AUXV_BYTES r = 16 * Z.of_nat (AM_AUXV_N r) /\ AM_AUXV_BYTES r = Z.of_nat (auxv_size r).
+Proof.
+  intros r. destruct (am_auxv_vals r) as (EN & _ & EO & EB). rewrite EO, EB, EN.
+  unfold auxv_size, auxv_count. destruct r; cbn; lia.
+Qed.
+
+(* A word of an object with an unknown default and no cell over it: its bytes are readable (the
+   default's own fact), so it reads some value. *)
+Lemma held_unknown_reads : forall (rho : valuation) (ms : machine_state) (m : word -> option byte) (o : sobj) (b lo hi off : Z),
+  obj_holds segs rho ms o -> bv_unsigned (eval rho (ob_base o)) = b -> rom_ok segs ms ->
+  ob_lo o = SLit lo -> ob_hi o = SLit hi -> ob_dflt o = DUnknown ->
+  cells_clear (ob_cells o) off 8 = true -> cells_lit62 (ob_cells o) = true ->
+  - 2 ^ 62 <= lo -> hi <= 2 ^ 62 -> lo <= off -> off + 8 <= hi ->
+  (forall x, b + off <= x < b + off + 8 -> m (wz x) = ms_mem ms (wz x)) ->
+  exists v, reads segs m (b + off) 8 v.
+Proof.
+  intros rho ms m o b lo hi off Hoh Hb Hrom Hlo Hhi Hd Hcl Hlit L1 L2 O1 O2 Hm.
+  destruct (reads8_of_bytes segs m (b + off)) as (v & Hv & _); [|exists v; exact Hv].
+  intros k Hk. unfold wz.
+  rewrite (crd_of_eq_rd segs ms m (Z_to_bv 64 (b + off + Z.of_nat k)) Hrom) by (apply (Hm (b + off + Z.of_nat k)); lia).
+  destruct Hoh as (Hrng & _ & _ & Hdf & _). unfold obj_lo_of, obj_hi_of in Hdf, Hrng. rewrite Hlo, Hhi, Hd in Hdf. rewrite Hlo, Hhi in Hrng.
+  rewrite !soff_lit_small in Hdf, Hrng by lia. rewrite Hb in Hdf, Hrng.
+  specialize (Hdf (off + Z.of_nat k) ltac:(lia)
+                (cells_clear_sound rho _ off 8 (off + Z.of_nat k) Hcl ltac:(lia) (cells_lit62_sound _ Hlit))).
+  cbn [dflt_holds] in Hdf. replace (b + (off + Z.of_nat k)) with (b + off + Z.of_nat k) in Hdf by lia. exact Hdf.
 Qed.
 
 Section M.
@@ -642,6 +820,9 @@ Hypothesis Hargc : length argv = 2%nat.
 Variable md0 : Model.
 Hypothesis Hfds0 : m_fds md0 = std_fds.
 Hypothesis Hfs : m_fs md0 = fs.
+(* LPS 08b1429: the launch model's channel reader ([Run.valid_input_either] pins it true; no step
+   writes it). A nonempty writev needs it ([writev_spec]'s SIGPIPE arm). *)
+Hypothesis Hrdr0 : m_channel_reader md0 = true.
 Let mdo : Model := md_open md0 argv1.
 Variable ok : world -> Prop.
 Let SpecT : list event -> Prop := Spec inp.
@@ -654,28 +835,48 @@ Hypothesis Hokh : ok_halted ok SpecT.
 Ltac mcv := unfold mc_need_locks, mc_auxv, mc_page_size, mc_errno, CTX_SIZE; cbn [mc_ctx mc_lock mc_replaced mc_libc mc_chk_guard_got mc_chk_guard mc_size_classes mc_small_cnt_tab mc_med_cnt_tab mc_ctz_tab mc_tp mc_img_lo mc_img_hi C_U].
 
 Lemma Hsp : valid_sp sp. Proof using Hent. exact (proj1 Hent). Qed.
+Lemma Hlaunch : entry_launch_ok_va Sv48 (mkEntry sp brk mb draw) inp.
+Proof using Hent. destruct Hent as (_ & _ & _ & _ & H). exact H. Qed.
 Lemma Hargc2 : (2 <= length argv)%nat. Proof using Hargc. unfold argv in *. lia. Qed.
-Let STR := Z.of_nat (str_off argv envp).
-Let RND := Z.of_nat (rand_off argv envp).
-Let LEN := Z.of_nat (img_len argv envp).
+(* LPS 727298f3: the entry-stack layout of Lib/InitLayout.v: the random bytes at [rand_off] end the
+   head, below the pad and the strings at [str_off]; the auxv is laid for the run's CONFIG_RSEQ [rq]. *)
+Let STR := Z.of_nat (str_off inp sp draw).
+Let RND := Z.of_nat (rand_off inp).
+Let LEN := Z.of_nat (img_len inp sp draw).
 Let ENVC := Z.of_nat (length envp).
-Let A1 : Z := A1 sp inp.
-Let tail1 : list byte := DrvTail1.tail1 draw inp.
-Let L3 : Z := ltac2:(tb__ "0|0|
-S58VLEN;S52S52VSTR;S55SbS77Q8A1Vargv0;A2A1A2Z1A2A2").
+Let A1 : Z := InitArg1.A1 sp draw inp.
+Let tail1 : list byte := DrvTail1.tail1 inp.
+Let L3 : Z := LEN - (STR + Z.of_nat (length argv0) + 1).
+Let rq : bool := kb_rseq (in_kernel inp).
 
 Let rnd0 : word := InitState.rnd0 draw.
 Let rnd1 : word := InitState.rnd1 draw.
 Definition wtop : word := Z_to_bv 64 (bv_unsigned sp - 8388608).
 
-Lemma NU : ltac2:(tb__ "0|5|
-S4bS4bS53Z7fff80000000S76Q40Vsp;A2M0A2S53G0Z800000000000A2A2S4bS4aS51VSTR;S52Zc8S56Z8VENVC;A2A2A3S4bS4bS53Z0VENVC;A2S53VENVC;Z100A2A2S4bS53S52S52S52S55SbS77Q8A1M1Vargv0;A2A1M2Z1M3A2S55SbG1Vargv1;A2A1A2G3A2S55S13aVargv;A1A1M4A2S4bS53S52VSTR;G4A2VRND;A2S4bS4aS51VLEN;S52VRND;Z10A2A3S4bS54VLEN;S57Z2Z16A2A2S4bS4aS51VA1;S52S52S52G0VSTR;A2G2A2G3A2A3S4bS4aS51S55SbG1Vtail1;A2A1VL3;A3S54S118S64A1G0A2A2A2A2A2A2A2A2A2A2").
+Lemma NU :
+  (140735340871680 <= bv_unsigned sp <= 140737488355328)
+  /\ 40 + 8 * ENVC + AM_AUXV_BYTES rq <= RND
+  /\ (0 <= ENVC <= 256)
+  /\ Z.of_nat (length argv0) + 1 + Z.of_nat (length argv1) + 1 <= Z.of_nat (tab argv)
+  /\ RND + 16 <= STR
+  /\ STR + Z.of_nat (tab argv) + Z.of_nat (tab envp) + 9 <= LEN
+  /\ LEN < 2 ^ 22
+  /\ A1 = bv_unsigned sp + STR + Z.of_nat (length argv0) + 1
+  /\ Z.of_nat (length tail1) = L3
+  /\ A1 + Z.of_nat (length tail1) = bv_unsigned sp + LEN
+  /\ segs_top segs < bv_unsigned sp
+  /\ bv_unsigned sp + LEN <= 140737488355328
+  /\ 432 <= AM_AUXV_BYTES rq <= 464.
 Proof using Hargc Hent Hinp envp.
-  pose proof (NUMS1 sp inp Hsp Hinp Hargc2) as N1. pose proof (InitStrs.NUMS sp inp Hsp Hinp) as N2.
-  pose proof (DrvTail1.length_tail1 sp draw inp Hsp Hinp Hargc) as LT. unfold DrvTail1.L3 in LT.
+  pose proof (DrvTail1.NU pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc) as N1.
+  pose proof (nums pcU phU sp brk mb draw inp Hsp Hinp Hlaunch) as N2.
+  pose proof (DrvTail1.length_tail1 pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc) as LT.
+  pose proof (DrvTail1.A1_eq sp draw inp) as AE.
+  pose proof (auxv_nums rq) as (_ & AB & _ & AS).
+  unfold DrvTail1.L3 in LT. cbv zeta in N1, N2, LT, AE.
   assert (E : Z.of_nat (length (in_argv inp)) = 2) by (unfold argv in Hargc; rewrite Hargc; reflexivity).
   change (segs_top segs) with (segs_top segsU). rewrite segs_topU.
-  unfold STR, RND, LEN, ENVC, A1, L3, tail1, InitArg1.A1 in *. unfold argv0, argv1 in *. unfold argv, envp in *. rewrite E in N1. lia.
+  unfold STR, RND, LEN, ENVC, A1, L3, tail1, rq in *. unfold argv0, argv1 in *. unfold argv, envp in *. lia.
 Qed.
 
 Lemma wtop_val : ltac2:(tb__ "0|1|
@@ -709,30 +910,29 @@ Proof using . clear -sp inp. intros r (_ & _ & _ & _ & _ & H30). exact H30. Qed.
 
 Section Vals.
 Variable rho : valuation.
-Hypothesis HV : ltac2:(tb__ "0|0|
-Sf2Vsp;Vdraw;Vinp;Vrho;A4").
+Hypothesis HV : Jvars sp mb draw inp rho.
 
 Lemma V1 : ltac2:(tb__ "0|1|
 S4aS51S76Q40M0S29Vrho;S18P1A1A2A2S76G0Vsp;A2A3").
-Proof using HV. cbn [eval]. rewrite (jv_sp _ _ _ _ HV). reflexivity. Qed.
+Proof using HV. cbn [eval]. rewrite (jv_sp _ _ _ _ _ HV). reflexivity. Qed.
 Lemma V3 : ltac2:(tb__ "0|0|
 S4aS51S76Q40S29Vrho;S18P3A1A2A2VENVC;A3").
-Proof using A1 HV Hargc Hent Hinp L3 RND argv1 tail1. cbn [eval]. rewrite (jv_envc _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
+Proof using A1 HV Hargc Hent Hinp L3 RND argv1 tail1. cbn [eval]. rewrite (jv_envc _ _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
 Lemma V4 : ltac2:(tb__ "0|1|
 S4aS51S76Q40M0S29Vrho;S18P4A1A2A2S52S76G0Vsp;A2VSTR;A2A3").
-Proof using A1 ENVC HV Hargc Hent Hinp L3 RND argv1 tail1. cbn [eval]. rewrite (jv_argv0 _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
+Proof using A1 ENVC HV Hargc Hent Hinp L3 RND argv1 tail1. cbn [eval]. rewrite (jv_argv0 _ _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
 Lemma V5 : ltac2:(tb__ "0|0|
 S4aS51S76Q40S29Vrho;S18P5A1A2A2S55SbS77Q8A1Vargv0;A2A1A3").
-Proof using A1 ENVC HV Hargc Hent Hinp L3 RND argv1 tail1. cbn [eval]. rewrite (jv_len0 _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
+Proof using A1 ENVC HV Hargc Hent Hinp L3 RND argv1 tail1. cbn [eval]. rewrite (jv_len0 _ _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
 Lemma V6 : ltac2:(tb__ "0|1|
 S4aS51S76Q40M0S29Vrho;S18P6A1A2A2S52S76G0Vsp;A2VRND;A2A3").
-Proof using A1 ENVC HV Hargc Hent Hinp L3 argv1 tail1. cbn [eval]. rewrite (jv_rand _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
+Proof using A1 ENVC HV Hargc Hent Hinp L3 argv1 tail1. cbn [eval]. rewrite (jv_rand _ _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
 Lemma V10 : ltac2:(tb__ "0|0|
 S4aS77Q40A1S29Vrho;S18PaA1A2Vrnd1;A3").
-Proof using HV. cbn [eval]. exact (jv_rnd1 _ _ _ _ HV). Qed.
+Proof using HV. cbn [eval]. exact (jv_rnd1 _ _ _ _ _ HV). Qed.
 Lemma V25 : ltac2:(tb__ "0|0|
 S4aS51S76Q40S29Vrho;S18P19A1A2A2VA1;A3").
-Proof using ENVC HV Hargc Hent Hinp L3 RND argv1 tail1. cbn [eval]. rewrite (jv_arg1 _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
+Proof using ENVC HV Hargc Hent Hinp L3 RND argv1 tail1. cbn [eval]. rewrite (jv_arg1 _ _ _ _ _ HV). pose proof NU. apply U_addr. lia. Qed.
 Lemma Vlit : ltac2:(tb__ "0|0|
 S51S4bS53Z0R1A2S54R1S57Z2Z40A2A2A2S4aS51S76Q40S29Vrho;S12R2A1A2A2R2A3F_;Fz;").
 Proof using . intros. cbn [eval]. apply U_addr. assumption. Qed.
@@ -775,61 +975,53 @@ Proof using A1 ENVC HV Hargc Hent Hinp L3 RND argv1 tail1.
   erewrite Vadd; [| apply V5 | apply Vlit; lia | | |]; try lia. apply snorm_id. unfold smin, smax. lia.
 Qed.
 
-Lemma rng_hdr : ltac2:(tb__ "0|1|
-S4aSaS51S51A2S30Vrho;S7bS79U1A2A2S1S51S51S76Q40Vsp;A2M0S52G0Z10A2A4A3").
-Proof using A1 ENVC HV Hargc L3 RND. rewrite (proj1 objs_S_M). unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi]. rewrite V1, !soff_lit_small by lia. f_equal; lia. Qed.
-Lemma rng_env : ltac2:(tb__ "0|1|
-S4aSaS51S51A2S30Vrho;S7bS79U2A2A2S1S51S51S52S76Q40Vsp;A2M0Z20A2S52S52G0Z28A2S56Z8VENVC;A2A2A4A3").
+Lemma rng_hdr : obj_range rho (obj (S_Mt rq) 1) = (bv_unsigned sp, bv_unsigned sp + 16).
+Proof using A1 ENVC HV Hargc L3 RND. rewrite (proj1 (objs_S_M rq)). unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi]. rewrite V1, !soff_lit_small by lia. f_equal; lia. Qed.
+Lemma rng_env : obj_range rho (obj (S_Mt rq) 2) = (bv_unsigned sp + 32, bv_unsigned sp + 40 + 8 * ENVC).
 Proof using A1 HV Hargc Hent Hinp L3 RND argv1 tail1.
-  pose proof NU. rewrite (proj1 (proj2 objs_S_M)). unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi].
+  pose proof NU. rewrite (proj1 (proj2 (objs_S_M rq))). unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi].
   rewrite Venv, soff_lit_small, Vsoff_envhi by lia. f_equal; lia.
 Qed.
-Lemma rng_aux : ltac2:(tb__ "0|2|
-S4aSaS51S51A2S30Vrho;S7bS79U3A2A2S1S51S51S52S52S76Q40Vsp;A2M0Z28A2S56Z8VENVC;A2M1A2S52S52G0Zc8A2G1A2A4A3").
+Lemma rng_aux : obj_range rho (obj (S_Mt rq) 3)
+  = (bv_unsigned sp + 40 + 8 * ENVC, bv_unsigned sp + 40 + 8 * ENVC + AM_AUXV_BYTES rq).
 Proof using A1 HV Hargc Hent Hinp L3 RND argv1 tail1.
-  pose proof NU. destruct objs_S_M as (_ & _ & Hb & Hlo & Hhi & _).
+  pose proof NU. destruct (objs_S_M rq) as (_ & _ & Hb & Hlo & Hhi & _).
   unfold obj_range, obj_lo_of, obj_hi_of. rewrite Hb, Hlo, Hhi. fold aux_e. rewrite Vaux, !soff_lit_small by lia. f_equal; lia.
 Qed.
-Lemma rng_str0 : ltac2:(tb__ "0|0|
-S4aSaS51S51A2S30Vrho;S7bS79U4A2A2S1S51S51S52S76Q40Vsp;A2VSTR;A2VA1;A4A3").
+Lemma rng_str0 : obj_range rho (obj (S_Mt rq) 4) = (bv_unsigned sp + STR, A1).
 Proof using ENVC HV Hargc Hent Hinp L3 RND argv1 tail1.
-  pose proof NU. destruct objs_S_M as (_ & _ & _ & _ & _ & _ & E & _). rewrite E.
+  pose proof NU. destruct (objs_S_M rq) as (_ & _ & _ & _ & _ & _ & E & _). rewrite E.
   unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi]. rewrite V4, soff_lit_small, Vsoff_str0hi by lia. f_equal; lia.
 Qed.
-Lemma rng_rand : ltac2:(tb__ "0|1|
-S4aSaS51S51A2S30Vrho;S7bS79U5A2A2S1S51S51S52S76Q40Vsp;A2VRND;A2M0S52G0Z10A2A4A3").
+Lemma rng_rand : obj_range rho (obj (S_Mt rq) 5) = (bv_unsigned sp + RND, bv_unsigned sp + RND + 16).
 Proof using A1 ENVC HV Hargc Hent Hinp L3 argv1 tail1.
-  pose proof NU. destruct objs_S_M as (_ & _ & _ & _ & _ & _ & _ & E & _). rewrite E.
+  pose proof NU. destruct (objs_S_M rq) as (_ & _ & _ & _ & _ & _ & _ & E & _). rewrite E.
   unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi]. rewrite V6, !soff_lit_small by lia. f_equal; lia.
 Qed.
-Lemma rng_arg1 : ltac2:(tb__ "0|1|
-S4aSaS51S51A2S30Vrho;S7bS79U6A2A2S1S51S51S52S76Q40Vsp;A2M0Z10A2S52G0Z18A2A4A3").
+Lemma rng_arg1 : obj_range rho (obj (S_Mt rq) 6) = (bv_unsigned sp + 16, bv_unsigned sp + 24).
 Proof using A1 ENVC HV Hargc Hent Hinp L3 RND argv1 tail1.
-  pose proof NU. destruct objs_S_M as (_ & _ & _ & _ & _ & _ & _ & _ & E & _). rewrite E.
+  pose proof NU. destruct (objs_S_M rq) as (_ & _ & _ & _ & _ & _ & _ & _ & E & _). rewrite E.
   unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi]. rewrite V1, !soff_lit_small by lia. f_equal; lia.
 Qed.
 End Vals.
 
-Lemma Jvars_rm : ltac2:(tb__ "0|4|
-S1dS77Q40M0A1M1S4S77Q8A1A1M2Fx;Sf2Vsp;Vdraw;Vinp;R2A4G1S4cS4bS53S11eS76G0R1A2M3A2S54G3S11dA2A2A1S4aG2R4R2A1S27R5R2A2A3F_;Fa;Sf2Vsp;Vdraw;Vinp;S122R4R3A2A4F_;F_;Fm;Frho;").
+Lemma Jvars_rm : forall (rho : valuation) (m : word -> option byte), Jvars sp mb draw inp rho ->
+  (forall a : word, ~ (dataU_lo <= bv_unsigned a < dataU_hi) -> m a = rm rho a) -> Jvars sp mb draw inp (set_rm rho m).
 Proof using .
   intros rho m HV Hm. destruct HV; constructor; cbn [set_rm rw rl rm]; try assumption.
   intros a Ha. rewrite (Hm a Ha). revert a Ha. assumption.
 Qed.
 
-Lemma tail_frame : ltac2:(tb__ "0|2|
-S1dSf2Vsp;Vdraw;Vinp;R1A4S9S114R1SbS77Q8M0A1M1Vtail1;A2A2S4aS4G1A1S27R4S66S52VA1;S55R2A1A2A1A2S6G1SeeG1R2Vtail1;S78G0Z0A2A4A2A3F_;Fj;F_;Frho;").
+(* LPS 727298f3: the bytes after argv[0] are argv[1], the envp strings, AT_EXECFN's name and the closing
+   zero bytes (Lib/DrvTail1.v); the random bytes lie below the strings, outside this tail. *)
+Lemma tail_frame : forall rho : valuation, Jvars sp mb draw inp rho ->
+  forall j : nat, (j < length tail1)%nat -> rm rho (wz (A1 + Z.of_nat j)) = Some (nth j tail1 (Z_to_bv 8 0)).
 Proof using Hargc Hent Hinp.
   intros rho HV j Hj. pose proof NU as N.
-  unfold wz. rewrite (jv_mem _ _ _ _ HV).
-  2:{ rewrite Z_to_bv_small; [unfold dataU_lo, dataU_hi, L3 in *; lia | rewrite mod64; unfold L3 in *; lia]. }
-  replace (A1 + Z.of_nat j) with (bv_unsigned sp + (Z.of_nat (str_off argv envp + (length argv0 + 1)) + Z.of_nat j)) by (unfold STR in N; lia).
-  exact (ms0_mem_region segs pcU phU sp draw inp Hsp Hinp _ tail1 j (DrvTail1.region_tail1 phU sp draw inp Hsp Hinp Hargc) Hj).
+  unfold wz. rewrite (jv_mem _ _ _ _ _ HV).
+  2:{ rewrite Z_to_bv_small; [unfold dataU_lo, dataU_hi; lia | rewrite mod64; lia]. }
+  exact (DrvTail1.tail1_ms0 segs pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc j Hj).
 Qed.
-
-Lemma tail_rand : ltac2:(tb__ "0|4|
-S9S114R1SbS77Q8M0A1M1Vtail1;A2A2S53S52S76Q40Vsp;A2VRND;A2M2S52VA1;S55R2A1A2A2S4aG1SeeG1R3Vtail1;S78G0Z0A2M3A4SeeG1S59S58S52VA1;S55R3A1A2G2A2A1S139Vdraw;A1G3A4A3F_;F_;Fj;").
-Proof using ENVC Hargc Hent Hinp L3 argv1. intros j Hj Hr. exact (DrvTail1.tail1_rand sp draw inp Hsp Hinp Hargc j Hj Hr). Qed.
 
 Definition data_in (a : Z) : Prop := ltac2:(tb__ "0|0|
 S4bS53S11eVa;A2S54Va;S11dA2A2").
@@ -842,74 +1034,79 @@ Proof using .
   intros rho m ms o Hv H. eapply (obj_holds_agree_vars segs (fun _ => true) (set_rm rho m) rho ms o); [intros; reflexivity | intros; reflexivity | exact Hv | exact H].
 Qed.
 
-Lemma carve4 : ltac2:(tb__ "0|0|
-S1dSaS5Sb1A1S10fA2Sf7S2dS64R3S79R2A4Sd4S64R4R2S7aSc9A5S2dS64R5S87R4A4F_;F_;FmsD;Fw;Frho;").
-Proof using A1 ENVC Hargc L3 RND.
-  intros rho w msD Hsm WF.
+Lemma carve4 : forall (r : bool) (rho : valuation) (w : list event * config) (msD : machine_state),
+  smatch segs rho (S_Mt r) w -> win_facts segs rho msD (O_dataMt r) data_in -> smatch segs rho (S_Mw4 r) w.
+Proof using A1 ENVC Hargc L3 LEN RND STR argv argv0 draw envp inp sp.
+  intros r rho w msD Hsm WF.
   pose proof W_in_data as WD. unfold aceil in WD. destruct data_consts as [DLO DHI].
   pose proof (smatch_facts_hold segs _ _ _ Hsm) as HF.
   assert (HG : tv_geo C_U rho []) by (intros t Ht; destruct Ht).
-  destruct W_ok as (OK1 & OK2 & OK3 & OK4). destruct miss_w as (MS1 & MS2 & MS3 & MS4). destruct swf_S_Mw as (SW1 & SW2 & SW3 & SW4).
-  assert (Hw1 : smatch segs rho S_Mw1 w).
-  { rewrite <- S_Mw1_eq, <- W1a_eq.
-    apply (smatch_carve_subwin segs rho S_Mt _ msD O_dataMt data_in w1a_lo w1a_hi 31 Hsm WF OK1).
+  destruct (W_ok r) as (OK1 & OK2 & OK3 & OK4). destruct (miss_w r) as (MS1 & MS2 & MS3 & MS4).
+  destruct (swf_S_Mw r) as (SW1 & SW2 & SW3 & SW4).
+  rewrite <- (S_Mw1_eq r) in SW1. rewrite <- (S_Mw2_eq r) in SW2. rewrite <- (S_Mw3_eq r) in SW3. rewrite <- (S_Mw4_eq r) in SW4.
+  assert (Hw1 : smatch segs rho (S_Mw1 r) w).
+  { rewrite <- (S_Mw1_eq r), <- (W1a_eq r).
+    apply (smatch_carve_subwin segs rho (S_Mt r) _ msD (O_dataMt r) data_in w1a_lo w1a_hi 31 Hsm WF OK1).
     - intros a Ha. unfold data_in. rewrite <- DLO, <- DHI. lia.
-    - exact (robjs_missT_sound C_U (fun _ : valuation => True) (ss_facts S_Mt) [] _ _ _ rho HG HF MS1).
-    - rewrite W1a_eq. exact SW1. }
-  assert (Hw2 : smatch segs rho S_Mw2 w).
-  { rewrite <- S_Mw2_eq, <- W1b_eq.
-    apply (smatch_carve_subwin segs rho S_Mw1 _ msD O_dataMt data_in w1b_lo w1b_hi 31 Hw1 WF OK2).
+    - exact (robjs_missT_sound C_U (fun _ : valuation => True) (ss_facts (S_Mt r)) [] _ _ _ rho HG HF MS1).
+    - rewrite (W1a_eq r). exact SW1. }
+  assert (Hw2 : smatch segs rho (S_Mw2 r) w).
+  { rewrite <- (S_Mw2_eq r), <- (W1b_eq r).
+    apply (smatch_carve_subwin segs rho (S_Mw1 r) _ msD (O_dataMt r) data_in w1b_lo w1b_hi 31 Hw1 WF OK2).
     - intros a Ha. unfold data_in. rewrite <- DLO, <- DHI. lia.
-    - exact (robjs_missT_sound C_U (fun _ : valuation => True) (ss_facts S_Mt) [] _ _ _ rho HG HF MS2).
-    - rewrite W1b_eq. exact SW2. }
-  assert (Hw3 : smatch segs rho S_Mw3 w).
-  { rewrite <- S_Mw3_eq, <- W2_eq.
-    apply (smatch_carve_subwin segs rho S_Mw2 _ msD O_dataMt data_in w2_lo w2_hi 31 Hw2 WF OK3).
+    - exact (robjs_missT_sound C_U (fun _ : valuation => True) (ss_facts (S_Mt r)) [] _ _ _ rho HG HF MS2).
+    - rewrite (W1b_eq r). exact SW2. }
+  assert (Hw3 : smatch segs rho (S_Mw3 r) w).
+  { rewrite <- (S_Mw3_eq r), <- (W2_eq r).
+    apply (smatch_carve_subwin segs rho (S_Mw2 r) _ msD (O_dataMt r) data_in w2_lo w2_hi 31 Hw2 WF OK3).
     - intros a Ha. unfold data_in. rewrite <- DLO, <- DHI. lia.
-    - exact (robjs_missT_sound C_U (fun _ : valuation => True) (ss_facts S_Mt) [] _ _ _ rho HG HF MS3).
-    - rewrite W2_eq. exact SW3. }
-  rewrite <- S_Mw4_eq, <- W3_eq.
-  apply (smatch_carve_subwin segs rho S_Mw3 _ msD O_dataMt data_in w3_lo w3_hi 31 Hw3 WF OK4).
+    - exact (robjs_missT_sound C_U (fun _ : valuation => True) (ss_facts (S_Mt r)) [] _ _ _ rho HG HF MS3).
+    - rewrite (W2_eq r). exact SW3. }
+  rewrite <- (S_Mw4_eq r), <- (W3_eq r).
+  apply (smatch_carve_subwin segs rho (S_Mw3 r) _ msD (O_dataMt r) data_in w3_lo w3_hi 31 Hw3 WF OK4).
   - intros a Ha. unfold data_in. rewrite <- DLO, <- DHI. lia.
-  - exact (robjs_missT_sound C_U (fun _ : valuation => True) (ss_facts S_Mt) [] _ _ _ rho HG HF MS4).
-  - rewrite W3_eq. exact SW4.
+  - exact (robjs_missT_sound C_U (fun _ : valuation => True) (ss_facts (S_Mt r)) [] _ _ _ rho HG HF MS4).
+  - rewrite (W3_eq r). exact SW4.
 Qed.
 
+(* What the six drops leave known about the released bytes, at the run's own flag [rq]: the auxv's
+   [AM_AUXV_BYTES rq] bytes and the random bytes still read as the machine's, and nothing at or above
+   argv[1] (the tail, LPS 727298f3: all of it above the released objects) changed. *)
 Record rel_facts (rho : valuation) (ms : machine_state) (m : word -> option byte) : Prop := mkRF {
   rf_low : forall a, bv_unsigned a < bv_unsigned sp -> m a = rm rho a;
-  rf_tail : forall a, A1 <= bv_unsigned a -> ~ (bv_unsigned sp + RND <= bv_unsigned a < bv_unsigned sp + RND + 16) -> m a = rm rho a;
-  rf_aux : forall a, bv_unsigned sp + 40 + 8 * ENVC <= bv_unsigned a < bv_unsigned sp + 200 + 8 * ENVC -> m a = ms_mem ms a;
+  rf_tail : forall a, A1 <= bv_unsigned a -> m a = rm rho a;
+  rf_aux : forall a, bv_unsigned sp + 40 + 8 * ENVC <= bv_unsigned a < bv_unsigned sp + 40 + 8 * ENVC + AM_AUXV_BYTES rq -> m a = ms_mem ms a;
   rf_rand : forall a, bv_unsigned sp + RND <= bv_unsigned a < bv_unsigned sp + RND + 16 -> m a = ms_mem ms a;
-  rf_oh3 : obj_holds segs rho ms (obj S_Mt 3);
-  rf_oh5 : obj_holds segs rho ms (obj S_Mt 5);
+  rf_oh3 : obj_holds segs rho ms (obj (S_Mt rq) 3);
+  rf_oh5 : obj_holds segs rho ms (obj (S_Mt rq) 5);
   rf_rom : rom_ok segs ms }.
 
-Lemma releases6 : ltac2:(tb__ "0|2|
-S1dS5Sb1A1M0Sf7Sb2Sf2Vsp;Vdraw;Vinp;R4A4S2dS64R5S87S1G0S10fR4S110R3R2A2A4A4S4eS77Q40A1S4S77Q8A1A1F_;M1G1S4bS2dS64S122R7R1A2S86S1G0S10fR6S110R5R4A2A4A4ScaR7R5R1A3A2Lm;A2F_;F_;Fmd;Fms;Ftr;Frho;").
+Lemma releases6 : forall (rho : valuation) (tr : list event) (ms : machine_state) (md : Model),
+  Jvars sp mb draw inp rho -> smatch segs rho (S_Mw4 rq) (tr, mkCfg ms md) ->
+  exists m : word -> option byte, smatch segs (set_rm rho m) (S_Mr6r rq) (tr, mkCfg ms md) /\ rel_facts rho ms m.
 Proof using Hargc Hent Hinp.
   intros rho tr ms md HV Hw4. pose proof NU as N.
-  pose proof (smatch_xforms segs xs_x rho S_Mw4 S_Mx _ xs_x_ok Hw4) as Hx.
+  pose proof (smatch_xforms segs xs_x rho (S_Mw4 rq) (S_Mx rq) _ (xs_x_ok rq) Hw4) as Hx.
   pose proof (smatch_swf segs _ _ _ Hx) as WFx.
-  destruct (smatch_release_obj segs rho S_Mx _ (ss_objs S_Mr1) (obj S_Mt 6) (ss_next S_Mx) Hx S_Mx_objs
-              (swf_drop_objs _ _ _ S_Mx_objs WFx)) as (m1 & Hs1 & Out1 & In1 & Oh1 & ROM).
-  change (smatch segs (set_rm rho m1) S_Mr1 (tr, mkCfg ms md)) in Hs1.
-  destruct (smatch_release_obj segs (set_rm rho m1) S_Mr1 _ (ss_objs S_Mr2) (obj S_Mt 5) (ss_next S_Mr1) Hs1 S_Mr1_objs
-              (swf_drop_objs _ _ _ S_Mr1_objs (smatch_swf segs _ _ _ Hs1))) as (m2 & Hs2 & Out2 & In2 & Oh2 & _).
-  change (smatch segs (set_rm (set_rm rho m1) m2) S_Mr2 (tr, mkCfg ms md)) in Hs2.
-  destruct (smatch_release_obj segs (set_rm (set_rm rho m1) m2) S_Mr2 _ (ss_objs S_Mr3) (obj S_Mt 4) (ss_next S_Mr2) Hs2 S_Mr2_objs
-              (swf_drop_objs _ _ _ S_Mr2_objs (smatch_swf segs _ _ _ Hs2))) as (m3 & Hs3 & Out3 & In3 & Oh3 & _).
-  change (smatch segs (set_rm (set_rm (set_rm rho m1) m2) m3) S_Mr3 (tr, mkCfg ms md)) in Hs3.
-  destruct (smatch_release_obj segs (set_rm (set_rm (set_rm rho m1) m2) m3) S_Mr3 _ (ss_objs S_Mr4) (obj S_Mt 3) (ss_next S_Mr3) Hs3 S_Mr3_objs
-              (swf_drop_objs _ _ _ S_Mr3_objs (smatch_swf segs _ _ _ Hs3))) as (m4 & Hs4 & Out4 & In4 & Oh4 & _).
-  change (smatch segs (set_rm (set_rm (set_rm (set_rm rho m1) m2) m3) m4) S_Mr4 (tr, mkCfg ms md)) in Hs4.
-  destruct (smatch_release_obj segs (set_rm (set_rm (set_rm (set_rm rho m1) m2) m3) m4) S_Mr4 _ (ss_objs S_Mr5) (obj S_Mt 2) (ss_next S_Mr4) Hs4 S_Mr4_objs
-              (swf_drop_objs _ _ _ S_Mr4_objs (smatch_swf segs _ _ _ Hs4))) as (m5 & Hs5 & Out5 & In5 & Oh5 & _).
-  change (smatch segs (set_rm (set_rm (set_rm (set_rm (set_rm rho m1) m2) m3) m4) m5) S_Mr5 (tr, mkCfg ms md)) in Hs5.
-  destruct (smatch_release_obj segs (set_rm (set_rm (set_rm (set_rm (set_rm rho m1) m2) m3) m4) m5) S_Mr5 _ (ss_objs S_Mr6) (obj S_Mt 1) (ss_next S_Mr5) Hs5 S_Mr5_objs
-              (swf_drop_objs _ _ _ S_Mr5_objs (smatch_swf segs _ _ _ Hs5))) as (m6 & Hs6 & Out6 & In6 & Oh6 & _).
-  change (smatch segs (set_rm rho m6) S_Mr6 (tr, mkCfg ms md)) in Hs6.
-  exists m6. split; [exact Hs6|].
-  clear Hs1 Hs2 Hs3 Hs4 Hs5 Hs6 Hx Hw4 WFx Oh1 Oh3 Oh5 Oh6.
+  destruct (smatch_release_obj segs rho (S_Mx rq) _ (ss_objs (S_Mr1 rq)) (obj (S_Mt rq) 6) (ss_next (S_Mx rq)) Hx (S_Mx_objs rq)
+              (swf_drop_objs _ _ _ (S_Mx_objs rq) WFx)) as (m1 & Hs1 & Out1 & In1 & Oh1 & ROM).
+  assert (Hs1' : smatch segs (set_rm rho m1) (S_Mr1 rq) (tr, mkCfg ms md)) by (rewrite (S_Mr1_eq rq); exact Hs1).
+  destruct (smatch_release_obj segs (set_rm rho m1) (S_Mr1 rq) _ (ss_objs (S_Mr2 rq)) (obj (S_Mt rq) 5) (ss_next (S_Mr1 rq)) Hs1' (S_Mr1_objs rq)
+              (swf_drop_objs _ _ _ (S_Mr1_objs rq) (smatch_swf segs _ _ _ Hs1'))) as (m2 & Hs2 & Out2 & In2 & Oh2 & _).
+  assert (Hs2' : smatch segs (set_rm (set_rm rho m1) m2) (S_Mr2 rq) (tr, mkCfg ms md)) by (rewrite (S_Mr2_eq rq); exact Hs2).
+  destruct (smatch_release_obj segs (set_rm (set_rm rho m1) m2) (S_Mr2 rq) _ (ss_objs (S_Mr3 rq)) (obj (S_Mt rq) 4) (ss_next (S_Mr2 rq)) Hs2' (S_Mr2_objs rq)
+              (swf_drop_objs _ _ _ (S_Mr2_objs rq) (smatch_swf segs _ _ _ Hs2'))) as (m3 & Hs3 & Out3 & In3 & Oh3 & _).
+  assert (Hs3' : smatch segs (set_rm (set_rm (set_rm rho m1) m2) m3) (S_Mr3 rq) (tr, mkCfg ms md)) by (rewrite (S_Mr3_eq rq); exact Hs3).
+  destruct (smatch_release_obj segs (set_rm (set_rm (set_rm rho m1) m2) m3) (S_Mr3 rq) _ (ss_objs (S_Mr4 rq)) (obj (S_Mt rq) 3) (ss_next (S_Mr3 rq)) Hs3' (S_Mr3_objs rq)
+              (swf_drop_objs _ _ _ (S_Mr3_objs rq) (smatch_swf segs _ _ _ Hs3'))) as (m4 & Hs4 & Out4 & In4 & Oh4 & _).
+  assert (Hs4' : smatch segs (set_rm (set_rm (set_rm (set_rm rho m1) m2) m3) m4) (S_Mr4 rq) (tr, mkCfg ms md)) by (rewrite (S_Mr4_eq rq); exact Hs4).
+  destruct (smatch_release_obj segs (set_rm (set_rm (set_rm (set_rm rho m1) m2) m3) m4) (S_Mr4 rq) _ (ss_objs (S_Mr5 rq)) (obj (S_Mt rq) 2) (ss_next (S_Mr4 rq)) Hs4' (S_Mr4_objs rq)
+              (swf_drop_objs _ _ _ (S_Mr4_objs rq) (smatch_swf segs _ _ _ Hs4'))) as (m5 & Hs5 & Out5 & In5 & Oh5 & _).
+  assert (Hs5' : smatch segs (set_rm (set_rm (set_rm (set_rm (set_rm rho m1) m2) m3) m4) m5) (S_Mr5 rq) (tr, mkCfg ms md)) by (rewrite (S_Mr5_eq rq); exact Hs5).
+  destruct (smatch_release_obj segs (set_rm (set_rm (set_rm (set_rm (set_rm rho m1) m2) m3) m4) m5) (S_Mr5 rq) _ (ss_objs (S_Mr6r rq)) (obj (S_Mt rq) 1) (ss_next (S_Mr5 rq)) Hs5' (S_Mr5_objs rq)
+              (swf_drop_objs _ _ _ (S_Mr5_objs rq) (smatch_swf segs _ _ _ Hs5'))) as (m6 & Hs6 & Out6 & In6 & Oh6 & _).
+  exists m6. split; [rewrite (S_Mr6_eq rq); exact Hs6|].
+  clear Hs1 Hs1' Hs2 Hs2' Hs3 Hs3' Hs4 Hs4' Hs5 Hs5' Hs6 Hx Hw4 WFx Oh1 Oh3 Oh5 Oh6.
   repeat rewrite obj_range_set_rm in Out2. repeat rewrite obj_range_set_rm in In2.
   repeat rewrite obj_range_set_rm in Out3. repeat rewrite obj_range_set_rm in In3.
   repeat rewrite obj_range_set_rm in Out4. repeat rewrite obj_range_set_rm in In4.
@@ -922,13 +1119,12 @@ Proof using Hargc Hent Hinp.
   clear In1 In3 In5 In6.
   constructor.
   - intros a Ha. rewrite Out6, Out5, Out4, Out3, Out2, Out1 by lia. reflexivity.
-  - intros a Ha Hr. rewrite Out6, Out5, Out4, Out3, Out2, Out1 by lia. reflexivity.
+  - intros a Ha. rewrite Out6, Out5, Out4, Out3, Out2, Out1 by lia. reflexivity.
   - intros a Ha. rewrite Out6, Out5 by lia. apply In4. exact Ha.
   - intros a Ha. rewrite Out6, Out5, Out4, Out3 by lia. apply In2. exact Ha.
-  - assert (OV : obj_vars_all (fun _ => true) (obj S_Mt 3) = true) by reflexivity.
-    apply (obj_holds_rm _ m1 _ _ OV). apply (obj_holds_rm _ m2 _ _ OV). apply (obj_holds_rm _ m3 _ _ OV). exact Oh4.
-  - assert (OV : obj_vars_all (fun _ => true) (obj S_Mt 5) = true) by reflexivity.
-    apply (obj_holds_rm _ m1 _ _ OV). exact Oh2.
+  - apply (obj_holds_rm _ m1 _ _ (proj1 (objs_vars rq))). apply (obj_holds_rm _ m2 _ _ (proj1 (objs_vars rq))).
+    apply (obj_holds_rm _ m3 _ _ (proj1 (objs_vars rq))). exact Oh4.
+  - apply (obj_holds_rm _ m1 _ _ (proj2 (objs_vars rq))). exact Oh2.
   - exact ROM.
 Qed.
 
@@ -938,23 +1134,27 @@ S4aS51S10dVri;A1S76Q40Vrnd1;A2A3").
 Hypothesis Htop : ltac2:(tb__ "0|0|
 S4aS51S10eVri;A1S58S76Q40Vsp;A2Z800000A2A3").
 
-Lemma prm_intro : ltac2:(tb__ "0|4|
-S1dSf7Sf7S77Q40M0A1M1S4S77Q8A1A1M2F_;Sf2Vsp;Vdraw;Vinp;R4A4G1Sc9S76G0R1A2A1S4aG2S27R7R2A2Sf8R6R2A2A3F_;Fa;S2fS64R6R5S7aA4S3aS64R6A2ScaR8R6R5A3Sd7S64S65R6Vri;S52S52S76G0Vsp;A2M3Z28A2S56Z8VENVC;A2A2S52G3VRND;A2A6F_;F_;F_;F_;F_;Fm;Fms;FmsD;Frho;").
+Lemma prm_intro : forall (rho : valuation) (msD ms : machine_state) (m : word -> option byte),
+  Jvars sp mb draw inp rho ->
+  (forall a : word, data_in (bv_unsigned a) -> rm rho a = ms_mem msD a) ->
+  obj_holds segs rho msD (O_dataMt rq) -> rom_ok segs msD -> rel_facts rho ms m ->
+  PRm segs C_U rq m ri (bv_unsigned sp + 40 + 8 * ENVC) (bv_unsigned sp + RND).
 Proof using Hargc Hent Hinp Hsec Htop.
   intros rho msD ms m HV HD1 HD2 HD3 [LOW TAIL AUX RAND Oh3 Oh5 ROM].
   pose proof NU as N. pose proof W_in_data as WD. unfold aceil in WD. destruct data_consts as [DLO DHI].
+  pose proof (auxv_nums rq) as (RO & BB & BN & _).
   set (av := bv_unsigned sp + 40 + 8 * ENVC). set (q := bv_unsigned sp + RND).
   assert (INW : forall a, data_in a -> bv_unsigned (wz a) = a).
   { intros a Ha. unfold wz. apply Z_to_bv_small. rewrite mod64. unfold data_in, dataU_lo, dataU_hi in Ha. lia. }
   assert (DATA : forall a, data_in a -> m (wz a) = ms_mem msD (wz a)).
   { intros a Ha. rewrite LOW by (rewrite (INW a Ha); unfold data_in, dataU_hi in Ha; lia). apply HD1. rewrite (INW a Ha). exact Ha. }
-  destruct dataM_shape as (DB & DL & DH & DD & DLIT & _). destruct dataM_clear as (CL1 & CL2 & CL3 & CL4 & CL5).
+  destruct (dataM_shape rq) as (DB & DL & DH & DD & DLIT & _). destruct (dataM_clear rq) as (CL1 & CL2 & CL3 & CL4 & CL5).
   assert (STAT : forall a,
     (mc_ctx C_U <= a < mc_ctx C_U + CTX_SIZE \/ mc_lock C_U <= a < mc_lock C_U + 4 \/ mc_replaced C_U <= a < mc_replaced C_U + 4
      \/ mc_libc C_U <= a < mc_libc C_U + 56 \/ mc_chk_guard_got C_U <= a < mc_chk_guard_got C_U + 8 \/ mc_chk_guard C_U <= a < mc_chk_guard C_U + 8) ->
     m (wz a) = ms_mem msD (wz a)).
   { intros a Ha. destruct (dataM_statics_in a Ha) as (D0 & _). apply DATA. unfold data_in. rewrite <- DLO, <- DHI. exact D0. }
-  assert (UNT : forall lo n, cells_clear (ob_cells O_dataMt) lo n = true ->
+  assert (UNT : forall lo n, cells_clear (ob_cells (O_dataMt rq)) lo n = true ->
                 (forall a, lo <= a < lo + n ->
                    (mc_ctx C_U <= a < mc_ctx C_U + CTX_SIZE \/ mc_lock C_U <= a < mc_lock C_U + 4 \/ mc_replaced C_U <= a < mc_replaced C_U + 4
                     \/ mc_libc C_U <= a < mc_libc C_U + 56 \/ mc_chk_guard_got C_U <= a < mc_chk_guard_got C_U + 8 \/ mc_chk_guard C_U <= a < mc_chk_guard C_U + 8)) ->
@@ -962,7 +1162,7 @@ Proof using Hargc Hent Hinp Hsec Htop.
   { intros lo n Hcl Hin Hn.
     destruct (dataM_statics_in lo (Hin lo ltac:(lia))) as (D0 & _).
     destruct (dataM_statics_in (lo + n - 1) (Hin (lo + n - 1) ltac:(lia))) as (D0' & _).
-    eapply (held_image_untouched segs rho msD m O_dataMt lo n dataM_lo dataM_hi HD2 DB DL DH DD Hcl DLIT); try lia.
+    eapply (held_image_untouched segs rho msD m (O_dataMt rq) lo n dataM_lo dataM_hi HD2 DB DL DH DD Hcl DLIT); try lia.
     intros a Ha. apply STAT. exact (Hin a Ha). }
   assert (TAB : forall lo n,
     (forall a, lo <= a < lo + n -> mc_size_classes C_U <= a < mc_size_classes C_U + 96 \/ mc_small_cnt_tab C_U <= a < mc_small_cnt_tab C_U + 27
@@ -971,8 +1171,8 @@ Proof using Hargc Hent Hinp Hsec Htop.
   { intros lo n Hin a Ha. pose proof (tables_low a (Hin a Ha)) as Hlow.
     assert (AW : bv_unsigned (wz a) = a) by (unfold wz; apply Z_to_bv_small; rewrite mod64; unfold dataM_lo in Hlow; lia).
     rewrite LOW by (rewrite AW; unfold dataM_lo in Hlow; lia).
-    rewrite (jv_mem _ _ _ _ HV) by (rewrite AW; rewrite <- DLO; lia).
-    apply (ms0_mem_low segs pcU phU sp draw inp). rewrite AW, stack_max_size_val. unfold dataM_lo in Hlow. lia. }
+    rewrite (jv_mem _ _ _ _ _ HV) by (rewrite AW; rewrite <- DLO; lia).
+    apply (ms0_mem_low segs pcU phU sp brk mb draw inp Hlaunch). rewrite AW, stack_max_size_val. unfold dataM_lo in Hlow. lia. }
   unfold PRm.
   split; [apply (UNT _ _ CL1); [intros; lia | mcv; lia]|].
   split; [apply (UNT _ _ CL2); [intros; lia | lia]|].
@@ -982,19 +1182,19 @@ Proof using Hargc Hent Hinp Hsec Htop.
   split; [apply (UNT _ _ CL5); [intros; lia | lia]|].
   split.
   {
-    apply (held_cell_reads segs rho msD m O_dataMt (mc_page_size C_U) 8 4096 HD2 DB HD3 cell_pgsz); try (mcv; lia).
+    apply (held_cell_reads segs rho msD m (O_dataMt rq) (mc_page_size C_U) 8 4096 HD2 DB HD3 (cell_pgsz rq)); try (mcv; lia).
     intros a Ha. apply STAT. revert Ha. mcv. lia. }
   split.
   {
-    destruct cells_guard as ([g0 G0] & [g1 G1] & [g2 G2] & [g4 G4]).
+    destruct (cells_guard rq) as ([g0 G0] & [g1 G1] & [g2 G2] & [g4 G4]).
     assert (R0 : reads segs m (mc_chk_guard C_U) 1 (bv_unsigned (eval rho g0))).
-    { apply (held_cell_reads_sv segs rho msD m O_dataMt _ 1 g0 HD2 DB HD3 G0); try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
+    { apply (held_cell_reads_sv segs rho msD m (O_dataMt rq) _ 1 g0 HD2 DB HD3 G0); try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
     assert (R1 : reads segs m (mc_chk_guard C_U + 1) 1 (bv_unsigned (eval rho g1))).
-    { apply (held_cell_reads_sv segs rho msD m O_dataMt _ 1 g1 HD2 DB HD3 G1); try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
+    { apply (held_cell_reads_sv segs rho msD m (O_dataMt rq) _ 1 g1 HD2 DB HD3 G1); try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
     assert (R2 : reads segs m (mc_chk_guard C_U + 2) 2 (bv_unsigned (eval rho g2))).
-    { apply (held_cell_reads_sv segs rho msD m O_dataMt _ 2 g2 HD2 DB HD3 G2); try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
+    { apply (held_cell_reads_sv segs rho msD m (O_dataMt rq) _ 2 g2 HD2 DB HD3 G2); try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
     assert (R4 : reads segs m (mc_chk_guard C_U + 4) 4 (bv_unsigned (eval rho g4))).
-    { apply (held_cell_reads_sv segs rho msD m O_dataMt _ 4 g4 HD2 DB HD3 G4); try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
+    { apply (held_cell_reads_sv segs rho msD m (O_dataMt rq) _ 4 g4 HD2 DB HD3 G4); try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
     destruct (reads8_of_bytes segs m (mc_chk_guard C_U)) as (gd & Hgd & _); [|exists gd; exact Hgd].
     intros k Hk.
     assert (CASES : (k = 0 \/ k = 1 \/ (2 <= k < 4) \/ (4 <= k < 8))%nat) by lia.
@@ -1005,32 +1205,38 @@ Proof using Hargc Hent Hinp Hsec Htop.
     - eexists. replace (mc_chk_guard C_U + Z.of_nat k) with (mc_chk_guard C_U + 4 + Z.of_nat (k - 4)) by lia. exact (R4 (k - 4)%nat ltac:(lia)). }
   split.
   {
-    pose proof (held_cell_reads_sv segs rho msD m O_dataMt (mc_auxv C_U) 8 _ HD2 DB HD3 cell_auxv) as R.
+    pose proof (held_cell_reads_sv segs rho msD m (O_dataMt rq) (mc_auxv C_U) 8 _ HD2 DB HD3 (cell_auxv rq)) as R.
     fold (aux_e) in R. rewrite (Vaux rho HV) in R. subst av.
     replace (bv_unsigned sp + 40 + 8 * ENVC) with (bv_unsigned sp + 16 + 8 * ENVC + 24) by lia.
     apply R; try (mcv; lia). intros a Ha. apply STAT. revert Ha. mcv. lia. }
   rewrite Htop.
-  split; [subst av; lia|]. split; [subst av; lia|]. split; [subst q; lia|]. split; [subst q; unfold L3 in *; lia|].
-  assert (B3 : bv_unsigned (eval rho (ob_base (obj S_Mt 3))) = av).
-  { destruct objs_S_M as (_ & _ & Hb & _). rewrite Hb. fold aux_e. rewrite (Vaux rho HV). subst av. lia. }
+  split; [subst av; lia|]. split; [subst av; lia|]. split; [subst q; lia|]. split; [subst q; lia|].
+  assert (B3 : bv_unsigned (eval rho (ob_base (obj (S_Mt rq) 3))) = av).
+  { destruct (objs_S_M rq) as (_ & _ & Hb & _). rewrite Hb. fold aux_e. rewrite (Vaux rho HV). subst av. lia. }
   split.
-  { intros j Hj. destruct (aux_cells j Hj) as [Hc _].
-    pose proof (held_cell_reads_b segs rho ms m (obj S_Mt 3) av (16 * Z.of_nat j) 8 _ Oh3 B3 ROM Hc) as R.
+  { intros j Hj. destruct (aux_cells rq j Hj) as [Hc _].
+    pose proof (held_cell_reads_b segs rho ms m (obj (S_Mt rq) 3) av (16 * Z.of_nat j) 8 _ Oh3 B3 ROM Hc) as R.
     cbn [eval] in R. rewrite U_addr in R by apply auxv_keys_range.
     apply R; try lia. intros a Ha. apply AUX. unfold wz; rewrite Z_to_bv_small by (rewrite mod64; subst av; lia). subst av; lia. }
   split.
-  { intros j Hj. destruct (aux_cells j Hj) as [_ [v Hc]].
-    exists (bv_unsigned (eval rho v)). replace (av + 16 * Z.of_nat j + 8) with (av + (16 * Z.of_nat j + 8)) by lia.
-    apply (held_cell_reads_b segs rho ms m (obj S_Mt 3) av (16 * Z.of_nat j + 8) 8 v Oh3 B3 ROM Hc); try lia.
-    intros a Ha. apply AUX. unfold wz; rewrite Z_to_bv_small by (rewrite mod64; subst av; lia). subst av; lia. }
+  { intros j Hj. destruct (objs_S_M rq) as (_ & _ & _ & Hlo & Hhi & Hdf & _).
+    replace (av + 16 * Z.of_nat j + 8) with (av + (16 * Z.of_nat j + 8)) by lia.
+    destruct (aux_cells rq j Hj) as [_ [[v Hc] | Hcl]].
+    - exists (bv_unsigned (eval rho v)).
+      apply (held_cell_reads_b segs rho ms m (obj (S_Mt rq) 3) av (16 * Z.of_nat j + 8) 8 v Oh3 B3 ROM Hc); try lia.
+      intros a Ha. apply AUX. unfold wz; rewrite Z_to_bv_small by (rewrite mod64; subst av; lia). subst av; lia.
+    - apply (held_unknown_reads rho ms m (obj (S_Mt rq) 3) av 0 (AM_AUXV_BYTES rq) (16 * Z.of_nat j + 8)
+               Oh3 B3 ROM Hlo Hhi Hdf Hcl (aux_lit62 rq)); try lia.
+      intros x Hx. apply AUX. unfold wz; rewrite Z_to_bv_small by (rewrite mod64; subst av; lia). subst av; lia. }
   split.
-  { pose proof (held_cell_reads_b segs rho ms m (obj S_Mt 3) av 136 8 (SVar 6) Oh3 B3 ROM aux_cell_rand) as R.
-    rewrite (V6 rho HV) in R. subst q. apply R; try lia. intros a Ha. apply AUX. unfold wz; rewrite Z_to_bv_small by (rewrite mod64; subst av; lia). subst av; lia. }
-  { destruct objs_S_M as (_ & _ & _ & _ & _ & _ & _ & E5 & _).
-    assert (B5 : bv_unsigned (eval rho (ob_base (obj S_Mt 5))) = q) by (rewrite E5; cbn [ob_base]; subst q; exact (V6 rho HV)).
-    pose proof (held_cell_reads_b segs rho ms m (obj S_Mt 5) q 8 8 (SVar 10) Oh5 B5 ROM rand_cell1) as R.
-    rewrite (V10 rho HV) in R. rewrite Hsec. apply R; try (subst q; unfold L3 in *; lia).
-    intros x Hx. apply RAND. unfold wz; rewrite Z_to_bv_small by (rewrite mod64; subst q; unfold L3 in *; lia). subst q; lia. }
+  { pose proof (held_cell_reads_b segs rho ms m (obj (S_Mt rq) 3) av (AM_AUXV_RANDOFF rq) 8 (SVar 6) Oh3 B3 ROM (aux_cell_rand rq)) as R.
+    rewrite (V6 rho HV) in R. subst q. apply R; try lia.
+    intros a Ha. apply AUX. unfold wz; rewrite Z_to_bv_small by (rewrite mod64; subst av; lia). subst av; lia. }
+  { destruct (objs_S_M rq) as (_ & _ & _ & _ & _ & _ & _ & E5 & _).
+    assert (B5 : bv_unsigned (eval rho (ob_base (obj (S_Mt rq) 5))) = q) by (rewrite E5; cbn [ob_base]; subst q; exact (V6 rho HV)).
+    pose proof (held_cell_reads_b segs rho ms m (obj (S_Mt rq) 5) q 8 8 (SVar 10) Oh5 B5 ROM (rand_cell1 rq)) as R.
+    rewrite (V10 rho HV) in R. rewrite Hsec. apply R; try (subst q; lia).
+    intros x Hx. apply RAND. unfold wz; rewrite Z_to_bv_small by (rewrite mod64; subst q; lia). subst q; lia. }
 Qed.
 
 Definition rhoT (rho : valuation) : valuation := ltac2:(tb__ "0|1|
@@ -1062,8 +1268,13 @@ Proof using .
   - cbn [eval]. apply Pos.eqb_neq in E. rewrite rhoT_rw; [reflexivity | exact E | exact H26 | exact H30].
 Qed.
 
-Lemma tp_rename : ltac2:(tb__ "0|6|
-S1dSaS5Sb1A1S10fA2Sf7Sf2Vsp;Vdraw;Vinp;R3A4S77Q40M0A1M1S4bS53S11eS76G0R1A2M2A2S54G2S11dA2A2M3S4aS4S77Q8A1A1M4S27R6R2A2Sf8R4R2A2A3F_;Fa;S2fS64R5R3S100A4S2dS64R6SffR5A4S4bSf2Vsp;Vdraw;Vinp;Sc4R7A1M5A4S4bG1G3S4aG4S27Sc4R9A1R2A2Sf8R7R2A2A3F_;Fa;S4bS2fS64G5R5S7aA4S2dS64G5S84R6A4A2A2A2F_;F_;F_;F_;FmsD;Fw;Frho;").
+Lemma tp_rename : forall (rho : valuation) (w : list event * config) (msD : machine_state),
+  Jvars sp mb draw inp rho ->
+  (forall a : word, dataU_lo <= bv_unsigned a < dataU_hi -> rm rho a = ms_mem msD a) ->
+  obj_holds segs rho msD (O_dataM rq) -> smatch segs rho (S_M rq) w ->
+  Jvars sp mb draw inp (rhoT rho)
+  /\ (forall a : word, dataU_lo <= bv_unsigned a < dataU_hi -> rm (rhoT rho) a = ms_mem msD a)
+  /\ obj_holds segs (rhoT rho) msD (O_dataMt rq) /\ smatch segs (rhoT rho) (S_Ms rq) w.
 Proof using .
   intros rho w msD HV HD1 HD2 Hsm.
   assert (AGw : forall v, negb (Pos.eqb v 26) && negb (Pos.eqb v 30) = true -> rw rho v = rw (rho_sub (rhoT rho) sTP) v).
@@ -1075,66 +1286,60 @@ Proof using .
   - destruct HV; constructor; try (rewrite rhoT_rw by discriminate; assumption); try (rewrite rhoT_rl; assumption).
     intros a Ha. rewrite rhoT_rm. auto.
   - intros a Ha. rewrite rhoT_rm. apply HD1. exact Ha.
-  - rewrite <- O_dataMt_eq. apply obj_holds_subst.
-    exact (obj_holds_agree_vars segs (fun x => negb (Pos.eqb x 26) && negb (Pos.eqb x 30)) rho _ msD O_dataM AGw AGl O_dataM_no2630 HD2).
-  - rewrite <- S_Ms_eq. apply smatch_subst_intro; [rewrite S_Ms_eq; exact swf_S_Ms|].
-    exact (smatch_agree_vars segs (fun x => negb (Pos.eqb x 26) && negb (Pos.eqb x 30)) rho _ S_M w AGw AGl AGm S_M_no2630 Hsm).
+  - rewrite <- (O_dataMt_eq rq). apply obj_holds_subst.
+    exact (obj_holds_agree_vars segs (fun x => negb (Pos.eqb x 26) && negb (Pos.eqb x 30)) rho _ msD (O_dataM rq) AGw AGl (O_dataM_no2630 rq) HD2).
+  - rewrite <- (S_Ms_eq rq). apply smatch_subst_intro; [rewrite (S_Ms_eq rq); exact (swf_S_Ms rq)|].
+    exact (smatch_agree_vars segs (fun x => negb (Pos.eqb x 26) && negb (Pos.eqb x 30)) rho _ (S_M rq) w AGw AGl AGm (S_M_no2630 rq) Hsm).
 Qed.
 
-Lemma top4_holds : ltac2:(tb__ "0|0|
-S1dSf2Vsp;Vdraw;Vinp;R1A4S4aS77Q40A1S24R2P1eA2Sc3A3SefS16S42R3A1S9fA3F_;F_;Frho;").
+Lemma top4_holds : forall rho : valuation, Jvars sp mb draw inp rho -> rw rho 30 = wtop ->
+  Forall (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState.holds rho) F_top4.
 Proof using Hargc Hent Hinp.
   intros rho HV H30. pose proof NU as N. pose proof wtop_val as WT.
   assert (E1 : bv_unsigned (eval rho (SAlu ALU_ADD (SVar 1) (SLit (-8388608)))) = bv_unsigned sp - 8388608).
-  { cbn [eval]. rewrite (jv_sp _ _ _ _ HV). unfold alu64, alu. rewrite bv_add_unsigned, Z_to_bv_unsigned. unfold bv_wrap. rewrite !mod64.
+  { cbn [eval]. rewrite (jv_sp _ _ _ _ _ HV). unfold alu64, alu. rewrite bv_add_unsigned, Z_to_bv_unsigned. unfold bv_wrap. rewrite !mod64.
     clear - N. Z.to_euclidean_division_equations; lia. }
   assert (E30 : bv_unsigned (eval rho (SVar 30)) = bv_unsigned sp - 8388608) by (cbn [eval]; rewrite H30; exact WT).
   pose proof (V1 rho HV) as X1. pose proof (V4 rho HV) as X4. pose proof (V6 rho HV) as X6.
   unfold F_top4. repeat constructor; cbn [holds]; rewrite ?E1, ?E30, ?X1, ?X4, ?X6, ?(Vlit rho) by lia; lia.
 Qed.
 
-Theorem Md_intro : ltac2:(tb__ "0|2|
-S1dSaS5Sb1A1S10fA2Sf4Vsp;Vdraw;Vinp;R2A4S2dS64R3SffR2A4S4eS1dS1dS4bS2dS64R1S7cR4A4S4bSc2R1A1S4bSd7S64S65S27R1A1Vri;S52S52S76Q40M0Vsp;A2M1Z28A2S56Z8VENVC;A2A2S52G1VRND;A2A6S50S4cS4aS50R1P18A3A1S4cS4aS50R2P1aA3A1S4cS4aS50R3P1eA3A1S4aS77G0A1S24R5R4A2S24R9R4A2A3F_;F_;F_;Fi;A2A2A2Lrho';A2F_;F_;Fw;Frho;").
+(* The main phase's start state to the malloc call's pre-state [S_Md], at the run's own CONFIG_RSEQ
+   [rq]: the per-flag chain to [S_Mr6r rq] and the split to [S_Mbr rq], then the join [S_Mb]
+   ([S_Mb_join], [entails_sound]: the valuation becomes [rho_sub _ []], with the same memory), then
+   the single [S_Md].  The auxv facts ([PRm] at [rq]) are memory facts, so they reach the call through
+   the join. *)
+Theorem Md_intro : forall (rho : valuation) (w : list event * config),
+  JM sp mb draw inp rho -> smatch segs rho (S_M rq) w ->
+  exists rho' : valuation, smatch segs rho' S_Md w /\ P0 rho'
+    /\ PRm segs C_U rq (rm rho') ri (bv_unsigned sp + 40 + 8 * ENVC) (bv_unsigned sp + RND)
+    /\ (forall i : positive, i <> 24%positive -> i <> 26%positive -> i <> 30%positive -> rw rho' i = rw rho i).
 Proof using Hargc Hent Hinp Hsec Htop.
   intros rho0 [tr [ms md]] [HV0 (msD & HD10 & HD20 & HD3)] Hsm0.
   destruct (tp_rename rho0 _ msD HV0 HD10 HD20 Hsm0) as (HV & HD1 & HD2 & Hsms).
   set (rho := rhoT rho0) in *.
   pose proof NU as N.
-  assert (Hsm : smatch segs rho S_Mt (tr, mkCfg ms md)).
-  { rewrite <- S_Mt_eq. apply smatch_add_facts; [exact Hsms | | exact fb_top4]. apply (top4_holds rho HV). subst rho. apply rhoT_30. }
-  assert (WF : win_facts segs rho msD O_dataMt data_in) by (split; [exact HD1 | split; [exact HD2 | exact HD3]]).
-  pose proof (carve4 rho _ msD Hsm WF) as Hw4.
-  destruct (releases6 rho tr ms md HV Hw4) as (m & Hs6 & RF).
-  pose proof (smatch_xforms segs xs_Mb (set_rm rho m) S_Mr6 S_Mb _ xs_Mb_ok Hs6) as Hb.
-  pose proof (smatch_unbase segs (set_rm rho m) S_Mb 0 (-128) S_Md _ S_Md_ok Hb) as Hd.
-  exists (set_rm rho m).
-  split; [exact Hd|]. split; [|split; [exact (prm_intro rho msD ms m HV HD1 HD2 HD3 RF) | intros i Hi Hi' Hi''; cbn [set_rm rw]; subst rho; apply rhoT_rw; assumption]].
-
+  assert (Hsm : smatch segs rho (S_Mt rq) (tr, mkCfg ms md)).
+  { rewrite <- (S_Mt_eq rq). apply smatch_add_facts; [exact Hsms | | exact (fb_top4 rq)]. apply (top4_holds rho HV). subst rho. apply rhoT_30. }
+  assert (WF : win_facts segs rho msD (O_dataMt rq) data_in) by (split; [exact HD1 | split; [exact HD2 | exact HD3]]).
+  pose proof (carve4 rq rho _ msD Hsm WF) as Hw4.
+  destruct (releases6 rho tr ms md HV Hw4) as (m & Hs6r & RF).
+  pose proof (smatch_xforms segs xs_Mb _ (S_Mr6r rq) (S_Mbr rq) _ (xs_Mbr_ok rq) Hs6r) as Hbr.
+  pose proof (entails_sound segs (S_Mbr rq) S_Mb [] (set_rm rho m) (tr, mkCfg ms md) (S_Mb_join rq) Hbr) as Hb.
+  pose proof (smatch_unbase segs _ S_Mb 0 (-128) S_Md _ S_Md_ok Hb) as Hd.
+  assert (RW : forall i, rw (rho_sub (set_rm rho m) []) i = rw rho i) by (intros i; reflexivity).
+  assert (RM : rm (rho_sub (set_rm rho m) []) = m) by reflexivity.
+  exists (rho_sub (set_rm rho m) []). rewrite RM.
+  split; [exact Hd|].
+  split; [|split; [exact (prm_intro rho msD ms m HV HD1 HD2 HD3 RF) | intros i Hi Hi' Hi''; rewrite RW; subst rho; apply rhoT_rw; assumption]].
   destruct RF as [LOW TAIL AUX RAND Oh3 Oh5 ROM].
-  unfold P0. cbn [set_rm rw rm].
-  split; [exact (jv_sp _ _ _ _ HV)|]. split; [rewrite (jv_envc _ _ _ _ HV); reflexivity|]. split; [rewrite (jv_arg1 _ _ _ _ HV); reflexivity|].
+  unfold P0. rewrite !RW, RM.
+  split; [exact (jv_sp _ _ _ _ _ HV)|]. split; [rewrite (jv_envc _ _ _ _ _ HV); reflexivity|]. split; [rewrite (jv_arg1 _ _ _ _ _ HV); reflexivity|].
   split; [|split; [subst rho; apply rhoT_24 | subst rho; apply rhoT_30]].
   intros j Hj.
   assert (AJ : bv_unsigned (wz (A1 + Z.of_nat j)) = A1 + Z.of_nat j).
-  { unfold wz. apply Z_to_bv_small. rewrite mod64. unfold L3 in *. lia. }
-  destruct (Z_lt_le_dec (A1 + Z.of_nat j) (bv_unsigned sp + RND)) as [Hlt|Hge].
-  + rewrite TAIL by (rewrite AJ; lia). exact (tail_frame rho HV j Hj).
-  + rewrite RAND by (rewrite AJ; unfold L3 in *; lia). rewrite (tail_rand j Hj Hge).
-    destruct objs_S_M as (_ & _ & _ & _ & _ & _ & _ & E5 & _).
-    assert (B5 : bv_unsigned (eval rho (ob_base (obj S_Mt 5))) = bv_unsigned sp + RND) by (rewrite E5; cbn [ob_base]; exact (V6 rho HV)).
-    set (t := A1 + Z.of_nat j - (bv_unsigned sp + RND)).
-    assert (Ht : 0 <= t < 16) by (subst t; unfold L3 in *; lia).
-    destruct (Z_lt_le_dec t 8) as [T8|T8].
-    * rewrite (held_cell_mem rho ms (obj S_Mt 5) (bv_unsigned sp + RND) 0 8 (SVar 9) (A1 + Z.of_nat j) Oh5 B5 ROM rand_cell0); try (unfold L3 in *; lia).
-      f_equal. cbn [eval]. rewrite (jv_rnd0 _ _ _ _ HV). fold t.
-      pose proof (InitStrs.rand_bytes_nth draw inp 0 (Z.to_nat t) ltac:(lia) ltac:(lia)) as RB. cbn [nth Nat.mul Nat.add] in RB.
-      replace (Z.to_nat (A1 + Z.of_nat j - (bv_unsigned sp + RND + 0))) with (Z.to_nat t) by lia.
-      change (Z.to_nat 8) with 8%nat. rewrite <- RB. reflexivity.
-    * rewrite (held_cell_mem rho ms (obj S_Mt 5) (bv_unsigned sp + RND) 8 8 (SVar 10) (A1 + Z.of_nat j) Oh5 B5 ROM rand_cell1); try (unfold L3 in *; lia).
-      f_equal. cbn [eval]. rewrite (jv_rnd1 _ _ _ _ HV). fold t.
-      pose proof (InitStrs.rand_bytes_nth draw inp 1 (Z.to_nat t - 8) ltac:(lia) ltac:(lia)) as RB. cbn [nth] in RB.
-      replace (Z.to_nat (A1 + Z.of_nat j - (bv_unsigned sp + RND + 8))) with (Z.to_nat t - 8)%nat by lia.
-      change (Z.to_nat 8) with 8%nat. rewrite <- RB. f_equal. lia.
+  { unfold wz. apply Z_to_bv_small. rewrite mod64. lia. }
+  rewrite TAIL by (rewrite AJ; lia). exact (tail_frame rho HV j Hj).
 Qed.
 
 Hypothesis Hmay : open_may_succeed argv1 fs.
@@ -1143,21 +1348,23 @@ Sd9S65Vri;Vmd0;A3").
 
 Hypothesis MIS : malloc_init_S_U.
 
-Definition Kd0 : list event -> Model -> Prop := ltac2:(tb__ "0|1|
-S5Sb1A1M0Sb2S4bS4aG0R2S2Sb1A1A3S4bS4aS5SaS77Q40A1Sb3A2A1Sb4R1A1Sb4Vmdo;A1A3S4aS137SbbR1A1Vfs;A3A2A2Lmd;Ltr;").
+Definition Kd0 : list event -> Model -> Prop :=
+  fun tr md => tr = [] /\ m_fds md = m_fds mdo /\ m_fs md = fs /\ m_channel_reader md = true.
 
 Lemma mdo_fds : ltac2:(tb__ "0|1|
 S4aS5SaS77Q40M0A1Sb3A2A1Sb4Vmdo;A1Sb9Sf6S78G0Z3A2Sf5Vargv1;A1A3A3").
 Proof using Hfds0 argv. unfold mdo, md_open, md_open_of. autorewrite with model. rewrite Hfds0. reflexivity. Qed.
 Lemma mdo_fs : m_fs mdo = fs.
 Proof using Hfs argv1. unfold mdo, md_open, md_open_of. autorewrite with model. exact Hfs. Qed.
+Lemma mdo_rdr : m_channel_reader mdo = true.
+Proof using Hrdr0 argv1. exact Hrdr0. Qed.
 Lemma mdo_vm : ltac2:(tb__ "0|0|
 S4aSb8Sb6Vmdo;A1Sb6Vmd0;A1A3").
 Proof using argv1. unfold mdo, md_open, md_open_of. autorewrite with model. reflexivity. Qed.
 
 Lemma Kd0_of_Kx : ltac2:(tb__ "0|0|
 S5Sb1A1Sb2Sf3S2Sb1A1Vmdo;R2R1A4Sc6R3R2A2F_;Fmd;Ftr;").
-Proof using Hfs. intros tr md [-> ->]. split; [reflexivity|]. split; [reflexivity | exact mdo_fs]. Qed.
+Proof using Hfs Hrdr0. intros tr md [-> ->]. split; [reflexivity|]. split; [reflexivity|]. split; [exact mdo_fs | exact mdo_rdr]. Qed.
 
 Lemma cannot_open_in_spec : ltac2:(tb__ "0|0|
 VSpecT;S13fVfs;S140Vargv1;A1A2A1").
@@ -1166,7 +1373,10 @@ Proof using Hargc Hmay. unfold SpecT, Spec. apply spec_cannot_open. exact Hargc.
 Lemma Kd0_tcons : K_tcons SpecT Kd0.
 Proof using Hargc Hmay. intros tr md (-> & _ & _). exists (die fs (msg_cannot_open argv1)). split; [exact cannot_open_in_spec | apply is_prefix_nil]. Qed.
 Lemma Kd0_vmi : vm_insensitive Kd0.
-Proof using . split; [intros tr md vm (A & B & D) | intros tr md lz mt (A & B & D)]; (split; [exact A|]; split; autorewrite with model; assumption). Qed.
+Proof using . split; [intros tr md vm (A & B & D & R) | intros tr md lz mt (A & B & D & R)];
+  (split; [exact A|]; split; [autorewrite with model; assumption|]; split; [autorewrite with model; assumption | exact R]). Qed.
+Lemma Kd0_rdr : forall tr md, Kd0 tr md -> m_channel_reader md = true.
+Proof using . intros tr md (_ & _ & _ & R). exact R. Qed.
 Lemma okside0 : ok_sideK segs ok Kd0.
 Proof using Hargc Hmay HokK HokP. split; [apply HokK, Kd0_tcons|]. split; [apply HokP, Kd0_tcons | exact Kd0_vmi]. Qed.
 Lemma fd2_Kd0 : ltac2:(tb__ "0|1|
@@ -1220,11 +1430,12 @@ Proof using Hargc Hent Hinp.
   - right. rewrite LIT in Hr by (unfold aceil in WD; lia). cbn [fst snd] in Hr. lia.
 Qed.
 
-Lemma prm_fp_miss : ltac2:(tb__ "0|2|
-S1dS51S51S51Sc2R4A1S53S76Q40Vsp;A2M0R4A2S53S52R5Za0A2S57Z2Z40A2M1A2S53G0S52R5Z8A2A2S53S52R6Z10A2G1A2Sd8S65R8R7R6A4S4cSfdRaS7eS66R7A1A3A1F_;F_;F_;F_;F_;F_;Fa;Fq;Fav;Fr;").
+Lemma prm_fp_miss : forall (r : valuation) (av q a : Z), P0 r ->
+  bv_unsigned sp <= av -> av + AM_AUXV_BYTES rq <= 2 ^ 64 -> bv_unsigned sp <= q + 8 -> q + 16 <= 2 ^ 64 ->
+  prm_fp C_U rq av q a -> ~ in_ranges r R_m (wz a).
 Proof using Hargc Hent Hinp.
   intros r av q a HP Hav Hav' Hq Hq' Hfp (o & Hin & Hr). pose proof NU as N. pose proof W_in_data as WD.
-  pose proof (prm_fp_cases av q a Hfp) as CA.
+  pose proof (prm_fp_cases rq av q a Hfp) as CA.
   assert (A64 : 0 <= a < 2 ^ 64) by (unfold aceil in WD; lia).
   assert (AW : bv_unsigned (wz a) = a) by (unfold wz; apply Z_to_bv_small; rewrite mod64; exact A64).
   pose proof (R_m_ranges r o (bv_unsigned (wz a)) HP Hin Hr) as RR. rewrite AW in RR.
@@ -1248,9 +1459,12 @@ Lemma L_null_ok_differ : ltac2:(tb__ "0|0|
 S4cS4aS1cSccScbA1ScdScbA1A3A1").
 Proof using . intros E. apply (f_equal ss_pc) in E. cbv in E. discriminate. Qed.
 
-Lemma m0_call_ex : ltac2:(tb__ "0|2|
-S51S1dS117OF_;Sc2R2A1Sd7S64S65S27R3A1Vri;S52S52S76Q40Vsp;A2M0Z28A2S56Z8VENVC;A2A2S52G0VRND;A2A6S4bS11cVmdo;R5A2S53S119R5A2A2S1dS115S64S104S64Sc5Sc6R6S0SaS13S13A2M1S1S13S13S18P29A1S12Z10000A1A4S2G1A1A3Sc7R7A1A4S89R1A4R5A3Frho';S115S64S104S64S1dSf3S2Sb1A1Vmdo;A2L_;S7cR6A4R5A3F_;F_;F_;F_;FQ;Frho;FX;").
-Proof using Hargc Hent Hfs Hinp Hvm0 MIX Htop.
+Lemma m0_call_ex : forall (X : Z) (rho : valuation) (Q : world -> Prop), P0 rho ->
+  PRm segs C_U rq (rm rho) ri (bv_unsigned sp + 40 + 8 * ENVC) (bv_unsigned sp + RND) ->
+  vm_room mdo X /\ init_cost <= X ->
+  (forall rho' : valuation, etriple segs (SPJ segs (JD Kd0 rho [(SVar 41, SLit 65536)] (Dok X)) T_ok rho') Q) ->
+  etriple segs (SPJ segs (fun _ : valuation => Kx [] mdo) S_Md rho) Q.
+Proof using Hargc Hent Hfs Hrdr0 Hinp Hvm0 MIX Htop.
   intros X rho Q HP HPR Hroom Tok. pose proof NU as N.
   set (av := bv_unsigned sp + 40 + 8 * ENVC) in *. set (q := bv_unsigned sp + RND) in *.
   destruct s_m_vals as (S12 & S10 & S15 & SB12 & SRES). destruct S_Md_next as [NX _].
@@ -1268,15 +1482,15 @@ Proof using Hargc Hent Hfs Hinp Hvm0 MIX Htop.
   - reflexivity.
   -
     intros tr ms md Hsm [-> ->] HTP.
-    assert (PR1 : PRm segs C_U (rm (rho_sub (rho_absorb rho R_m ms) s_m)) ri av q).
+    assert (PR1 : PRm segs C_U rq (rm (rho_sub (rho_absorb rho R_m ms) s_m)) ri av q).
     { eapply PRm_ext; [|exact HPR]. intros a Ha. apply (rm_absorb_out rho R_m ms s_m).
       apply (prm_fp_miss rho av q a HP); try assumption; subst av q; unfold L3 in *; lia. }
     assert (PRQ : pristine_req segs C_U ri (rho_sub (rho_absorb rho R_m ms) s_m) mdo).
-    { apply (PRm_pristine segs C_U ri _ mdo av q PR1); [|exact HTP]. unfold PRvm. rewrite mdo_vm. exact Hvm0. }
+    { apply (PRm_pristine segs C_U rq ri _ mdo av q PR1); [|exact HTP]. unfold PRvm. rewrite mdo_vm. exact Hvm0. }
     assert (AUXV : auxv_init segs C_U (ma_L (MA_init C_U ri)) (rho_sub (rho_absorb rho R_m ms) s_m)).
-    { apply (auxv_init_of_PRm segs C_U _ (ma_L (MA_init C_U ri)) ri av q PR1).
+    { apply (auxv_init_of_PRm segs C_U rq _ (ma_L (MA_init C_U ri)) ri av q PR1).
       - subst av. pose proof Hsp as (_ & _ & M16). clear - M16. Z.to_euclidean_division_equations. lia.
-      - subst q. pose proof (rand_off_mod8 argv envp) as M8. pose proof Hsp as (_ & _ & M16). unfold RND. clear - M8 M16. Z.to_euclidean_division_equations. lia.
+      - subst q. pose proof (rand_off_mod8 inp) as M8. pose proof Hsp as (_ & _ & M16). unfold RND. clear - M8 M16. Z.to_euclidean_division_equations. lia.
       - rewrite rw_call', S10. cbn [eval]. unfold alu64, alu. rewrite bv_add_unsigned, (proj1 HP), Z_to_bv_unsigned. unfold bv_wrap. rewrite !mod64.
         subst av. clear - N. Z.to_euclidean_division_equations. lia.
       - subst av q. clear - N. lia.
@@ -1303,9 +1517,12 @@ Qed.
 Definition DokS (X : Z) : MA -> Model -> Prop := ltac2:(tb__ "0|0|
 S10aSb2S4bS11bS65S11aR2A3S136R1S58VX;S119A2A2A2Lmd;LA;").
 
-Lemma m0_call_S : ltac2:(tb__ "0|3|
-S51S1dSc2R1A1Sd7S64S65S27R2A1Vri;S52S52S76Q40Vsp;A2M0Z28A2S56Z8VENVC;A2A2S52G0VRND;A2A6S136Vmdo;R4A2S53S119R5A2S1dS116S64Vok;S104S64Sc5Sc6R6S0SaS13S13A2M1S1S13S13S18P29A1S12Z10000A1A4S2G1A1A3Sc8R7A1A4S89R1A4S117S4fL_;M2A4Frho';S116S64Vok;S104S64S1dSf3S2Sb1A1Vmdo;A2L_;S7cR6A4G2A4F_;F_;F_;F_;F_;Frho;FX;").
-Proof using Hargc Hent Hfs Hinp Hmay HokK HokP Hvm0 MIS Htop.
+Lemma m0_call_S : forall (X : Z) (rho : valuation), P0 rho ->
+  PRm segs C_U rq (rm rho) ri (bv_unsigned sp + 40 + 8 * ENVC) (bv_unsigned sp + RND) ->
+  vm_roomS mdo X -> init_cost <= X ->
+  (forall rho' : valuation, triple segs ok (SPJ segs (JD Kd0 rho [(SVar 41, SLit 65536)] (DokS X)) T_ok rho') (fun _ : world => False)) ->
+  triple segs ok (SPJ segs (fun _ : valuation => Kx [] mdo) S_Md rho) (fun _ : world => False).
+Proof using Hargc Hent Hfs Hrdr0 Hinp Hmay HokK HokP Hvm0 MIS Htop.
   intros X rho HP HPR HroomS HX Tok. pose proof NU as N.
   set (av := bv_unsigned sp + 40 + 8 * ENVC) in *. set (q := bv_unsigned sp + RND) in *.
   destruct s_m_vals as (S12 & S10 & S15 & SB12 & SRES). destruct S_Md_next as [NX _].
@@ -1323,15 +1540,15 @@ Proof using Hargc Hent Hfs Hinp Hmay HokK HokP Hvm0 MIS Htop.
   - reflexivity.
   -
     intros tr ms md Hsm [-> ->] HTP.
-    assert (PR1 : PRm segs C_U (rm (rho_sub (rho_absorb rho R_m ms) s_m)) ri av q).
+    assert (PR1 : PRm segs C_U rq (rm (rho_sub (rho_absorb rho R_m ms) s_m)) ri av q).
     { eapply PRm_ext; [|exact HPR]. intros a Ha. apply (rm_absorb_out rho R_m ms s_m).
       apply (prm_fp_miss rho av q a HP); try assumption; subst av q; unfold L3 in *; lia. }
     assert (PRQ : pristine_req segs C_U ri (rho_sub (rho_absorb rho R_m ms) s_m) mdo).
-    { apply (PRm_pristine segs C_U ri _ mdo av q PR1); [|exact HTP]. unfold PRvm. rewrite mdo_vm. exact Hvm0. }
+    { apply (PRm_pristine segs C_U rq ri _ mdo av q PR1); [|exact HTP]. unfold PRvm. rewrite mdo_vm. exact Hvm0. }
     assert (AUXV : auxv_init segs C_U (ma_L (MA_init C_U ri)) (rho_sub (rho_absorb rho R_m ms) s_m)).
-    { apply (auxv_init_of_PRm segs C_U _ (ma_L (MA_init C_U ri)) ri av q PR1).
+    { apply (auxv_init_of_PRm segs C_U rq _ (ma_L (MA_init C_U ri)) ri av q PR1).
       - subst av. pose proof Hsp as (_ & _ & M16). clear - M16. Z.to_euclidean_division_equations. lia.
-      - subst q. pose proof (rand_off_mod8 argv envp) as M8. pose proof Hsp as (_ & _ & M16). unfold RND. clear - M8 M16. Z.to_euclidean_division_equations. lia.
+      - subst q. pose proof (rand_off_mod8 inp) as M8. pose proof Hsp as (_ & _ & M16). unfold RND. clear - M8 M16. Z.to_euclidean_division_equations. lia.
       - rewrite rw_call', S10. cbn [eval]. unfold alu64, alu. rewrite bv_add_unsigned, (proj1 HP), Z_to_bv_unsigned. unfold bv_wrap. rewrite !mod64.
         subst av. clear - N. Z.to_euclidean_division_equations. lia.
       - subst av q. clear - N. lia.
@@ -1366,21 +1583,27 @@ Proof using Hroom0 argv1. apply (vm_room_frame md0 mdo X0 mdo_vm mdo_vm_mat Hroo
 Lemma roomS_mdo : vm_roomS mdo XS.
 Proof using HroomS0 argv1. apply (vm_roomS_frame md0 mdo XS mdo_vm mdo_vm_mat HroomS0). Qed.
 
-Theorem m_safe_S : ltac2:(tb__ "0|2|
-S1dS1dSc2R2A1S116S64Vok;S104S64Sc5Sc6R3S0SaS13S13A2M0S1S13S13S18P29A1S12Z10000A1A4S2G0A1A3Sc8VXS;A1A4S89R2A4S117S4fL_;M1A4F_;Frho';Fr0;S1dSf4Vsp;Vdraw;Vinp;R1A4S116S64Vok;S105S64Sf3S2Sb1A1Vmdo;A2SffR2A4G1A4F_;Frho;F_;").
-Proof using Hargc Hent Hfds0 Hfs Hinp Hmay HokK HokP Hokh Hvm0 MIS HroomS0 HXS Hsec Htop.
+Theorem m_safe_S :
+  (forall r0 rho' : valuation, P0 r0 ->
+     triple segs ok (SPJ segs (JD Kd0 r0 [(SVar 41, SLit 65536)] (DokS XS)) T_ok rho') (fun _ : world => False)) ->
+  forall rho : valuation, JM sp mb draw inp rho ->
+  triple segs ok (SP segs (Kx [] mdo) (S_M rq) rho) (fun _ : world => False).
+Proof using Hargc Hent Hfds0 Hfs Hrdr0 Hinp Hmay HokK HokP Hokh Hvm0 MIS HroomS0 HXS Hsec Htop.
   intros Tok rho HJM.
-  apply (triple_from ok _ (fun r w => (P0 r /\ PRm segs C_U (rm r) ri (bv_unsigned sp + 40 + 8 * ENVC) (bv_unsigned sp + RND)) /\ SPJ segs (fun _ => Kx [] mdo) S_Md r w)).
+  apply (triple_from ok _ (fun r w => (P0 r /\ PRm segs C_U rq (rm r) ri (bv_unsigned sp + 40 + 8 * ENVC) (bv_unsigned sp + RND)) /\ SPJ segs (fun _ => Kx [] mdo) S_Md r w)).
   { intros w [Hsm Hk]. destruct (Md_intro rho w HJM Hsm) as (r & A & B & C & _). exists r. split; [auto|]. split; [exact A | exact Hk]. }
   intros r. apply triple_pure. intros [HP HPR].
   apply (m0_call_S XS r HP HPR roomS_mdo HXS). intros rho'. apply Tok. exact HP.
 Qed.
 
-Theorem m_exists_ok : ltac2:(tb__ "0|1|
-S117OF_;S1dS1dSc2R2A1S115S64S104S64Sc5Sc6R3S0SaS13S13A2M0S1S13S13S18P29A1S12Z10000A1A4S2G0A1A3Sc7VX0;A1A4S89R2A4R4A3F_;Frho';Fr0;S1dSf4Vsp;Vdraw;Vinp;R1A4S115S64S105S64Sf3S2Sb1A1Vmdo;A2SffR2A4R4A3F_;Frho;F_;FQ;").
-Proof using HX0 Hargc Hent Hfs Hinp Hroom0 Hvm0 MIX Hsec Htop.
+Theorem m_exists_ok : forall Q : world -> Prop,
+  (forall r0 rho' : valuation, P0 r0 ->
+     etriple segs (SPJ segs (JD Kd0 r0 [(SVar 41, SLit 65536)] (Dok X0)) T_ok rho') Q) ->
+  forall rho : valuation, JM sp mb draw inp rho ->
+  etriple segs (SP segs (Kx [] mdo) (S_M rq) rho) Q.
+Proof using HX0 Hargc Hent Hfs Hrdr0 Hinp Hroom0 Hvm0 MIX Hsec Htop.
   intros Q Tok rho HJM.
-  apply (etriple_from _ (fun r w => (P0 r /\ PRm segs C_U (rm r) ri (bv_unsigned sp + 40 + 8 * ENVC) (bv_unsigned sp + RND)) /\ SPJ segs (fun _ => Kx [] mdo) S_Md r w)).
+  apply (etriple_from _ (fun r w => (P0 r /\ PRm segs C_U rq (rm r) ri (bv_unsigned sp + 40 + 8 * ENVC) (bv_unsigned sp + RND)) /\ SPJ segs (fun _ => Kx [] mdo) S_Md r w)).
   { intros w [Hsm Hk]. destruct (Md_intro rho w HJM Hsm) as (r & A & B & C & _). exists r. split; [auto|]. split; [exact A | exact Hk]. }
   intros r w [[HP HPR] Hw].
   apply (m0_call_ex X0 r _ HP HPR); [split; [exact room_mdo | exact HX0] | intros rho'; apply Tok; exact HP | exact Hw].

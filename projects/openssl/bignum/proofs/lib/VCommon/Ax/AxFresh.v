@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the entry region). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -86,7 +86,7 @@ Lemma RRegion_agree (m : word -> option byte) (R : region) :
   entry_var v = false -> region_occ v R = false -> RRegion segs ρ m R -> RRegion segs ρ' m R.
 Proof.
   intros He Ho HR. destruct (region_occ_parts R Ho) as [Ht Hc]. unfold RRegion in *. rewrite (rbase_agree R Ht).
-  destruct (rg_kind R) as [| | |w i|ph] eqn:Ek; try exact (eb_rel_agree ph ρ ρ' m _ _ (agree_entry v ρ ρ' Hag He) HR).
+  destruct (rg_kind R) as [| | |w i|r ph] eqn:Ek; try exact (eb_rel_agree r ph ρ ρ' m _ _ (agree_entry v ρ ρ' Hag He) HR).
   all: intros y Hy; rewrite (rbase_agree R Ht); destruct (HR y Hy) as [[b [Hb Hx]] Hw]; (split; [|exact Hw]); exists b; (split; [exact Hb|]);
     exact (xb_z_agree v ρ ρ' _ _ Hag (rbyte_occ R y Hc) Hx).
 Qed.
@@ -116,15 +116,15 @@ Proof.
   assert (Hrg : forall R0 z, In R0 (a_mem A) -> (in_rg ρ' R0 z <-> in_rg ρ R0 z)).
   { intros R0 z HIn. unfold in_rg. rewrite (rbase_agree v ρ ρ' Hag R0 (Hts R0 HIn)). tauto. }
   constructor; try assumption.
-  -   intros r. specialize (H4 r). unfold aget in *. destruct (ri r =? 0)%uint63; [exact H4|].
+  - (* [comment removed for export] *) intros r. specialize (H4 r). unfold aget in *. destruct (ri r =? 0)%uint63; [exact H4|].
     destruct (iget 5 (a_regs A) (ri r)) as [x|] eqn:E; [|exact H4].
     exact (xv_val_agree v ρ ρ' x _ Hag (inone_iget _ _ _ _ _ Hregs E) H4).
-  -   destruct (a_resv A) as [|x|]; cbn [RResv rsv_occ] in *; try exact H5.
+  - (* [comment removed for export] *) destruct (a_resv A) as [|x|]; cbn [RResv rsv_occ] in *; try exact H5.
     destruct H5 as [a [Ea Hx]]. exists a. split; [exact Ea | exact (xv_val_agree v ρ ρ' x a Hag Hrsv Hx)].
-  -   destruct H7 as [Hok HF]. split; [exact (regions_ok_agree v ρ ρ' Hag _ Hts Hok)|].
+  - (* [comment removed for export] *) destruct H7 as [Hok HF]. split; [exact (regions_ok_agree v ρ ρ' Hag _ Hts Hok)|].
     rewrite Forall_forall in *. intros R0 HIn. exact (RRegion_agree segs v ρ ρ' Hag _ R0 He (mem_occ_in v _ R0 Hmem HIn) (HF R0 HIn)).
-  -   exact (MR_agree v ρ ρ' _ _ Hag Hm H8).
-  -   destruct H11 as [Hb Hf]. unfold store_occ in Hst. apply orb_false_iff in Hst as [S1 S2]. split.
+  - (* [comment removed for export] *) exact (MR_agree v ρ ρ' _ _ Hag Hm H8).
+  - (* [comment removed for export] *) destruct H11 as [Hb Hf]. unfold store_occ in Hst. apply orb_false_iff in Hst as [S1 S2]. split.
     + intros x i Hx Hi. destruct (x =? v)%uint63 eqn:E.
       * apply Uint63.eqb_spec in E. subst x. assert (L : (v <? 65536)%uint63 = true) by (apply Uint63.ltb_spec; exact Hx).
         rewrite L, Hi in S1. discriminate S1.
@@ -135,10 +135,10 @@ Proof.
         assert (X : existsb (fact_occ v) (st_facts (a_facts A)) = true) by (apply existsb_exists; exists fc; split; [exact Hfc | exact E]).
         rewrite X in S2. discriminate S2. }
       unfold fact_sat in *. rewrite Efc. exact Hf.
-  -   destruct H12 as [Hpl|(P1 & P2 & P3 & P4)]; [left; exact Hpl | right]. split; [|split; [|split]]; try assumption.
+  - (* [comment removed for export] *) destruct H12 as [Hpl|(P1 & P2 & P3 & P4)]; [left; exact Hpl | right]. split; [|split; [|split]]; try assumption.
     + intros R0 HIn Hs z Hz. apply (P1 R0 HIn Hs z). apply Hrg; assumption.
     + intros z Hz Hmiss. apply (P2 z Hz). intros R0 HIn Hs Hr. apply (Hmiss R0 HIn Hs). apply Hrg; assumption.
-  -   intros R0 HIn Hs z Hz. apply (H14 R0 HIn Hs z). apply Hrg; assumption.
-  -   destruct H15 as (N1 & N2 & N3). split; [exact N1|]. split; [exact N2|].
+  - (* [comment removed for export] *) intros R0 HIn Hs z Hz. apply (H14 R0 HIn Hs z). apply Hrg; assumption.
+  - (* [comment removed for export] *) destruct H15 as (N1 & N2 & N3). split; [exact N1|]. split; [exact N2|].
     intros R0 HIn Hs z Hz. apply (N3 R0 HIn Hs z). apply Hrg; assumption.
 Qed.

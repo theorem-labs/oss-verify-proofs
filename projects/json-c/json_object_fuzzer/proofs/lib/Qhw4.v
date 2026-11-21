@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer: PRIM_CHECKS over the four main-entry states in HSCLASS_S; the launch's ProcInput: the section takes apc, mbase, kb, execfn and the rest, SINV0 and argH0 over them, and the launch premise QpvH.launch_ok in place of entry_stack_fits; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -70,16 +71,16 @@ Local Notation b8 := (Z_to_bv 8).
 
 Definition E_PG (v : nat) : expr := EMd Instr.M_MUL (ELit 4096) (EVar v).
 
-Definition E_RIB : expr := EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 208)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 209)).
+Definition E_RIB : expr := EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 212)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 213)).
 
 Definition PRIM_FACTS : list kentry :=
-[ KZero (SA (E_PG 237) 80) (ELit 3088); KWr (SA (E_PG 237) 0) (ELit 4096);
+[ KZero (SA (E_PG 241) 80) (ELit 3088); KWr (SA (E_PG 241) 0) (ELit 4096);
 KZero (SA E_RIB 0x2000010000) (ELit 4096);
-KRange (EVar 237) 1 34359736319; KRange (EVar 208) 4295491576 34326181871; KRange (EVar 209) 0 15 ].
+KRange (EVar 241) 1 34359736319; KRange (EVar 212) 4295491576 34326181871; KRange (EVar 213) 0 15 ].
 
 Definition prim_checks (k : list kentry) : bool :=
 kn_has_all PRIM_FACTS k && img_wn A_ERRNO 4 && img_wn 0x171d60 1.
-Lemma PRIM_CHECKS : forall w ch, HSCLASS_S w ch -> prim_checks (kn_view ch) = true.  Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Lemma PRIM_CHECKS : forall w ch, HSCLASS_S w ch -> prim_checks (kn_view ch) = true.  Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Lemma rw_cells_CB0 : forall m a k (bs : list byte), k = 0%nat -> bs = [] -> 0 <= a <= 2^64 -> rw_cells asegs m a [CB k bs].
 Proof.
@@ -102,22 +103,36 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 Hypothesis HB : band_lo = atopE E.
 #[local] Notation LV := (LV_J E).
 #[local] Notation m := (view (LV_J E) mo FULL).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB) (only parsing).
 
 Let KO : know_ok asegs E m (kn_view ch) := MV4 main_know_view.
 
@@ -127,31 +142,31 @@ intros K HK. pose proof (PRIM_CHECKS w ch HCL) as CK. unfold prim_checks in CK. 
 unfold kn_has_all in H. rewrite forallb_forall in H. apply H. apply kn_has_In. exact HK.
 Qed.
 
-Let T : Z := 4096 * bv_unsigned (ev E 237).
-Let RIB : Z := 4096 * bv_unsigned (ev E 208) + (-4096) * bv_unsigned (ev E 209).
+Let T : Z := 4096 * bv_unsigned (ev E 241).
+Let RIB : Z := 4096 * bv_unsigned (ev E 212) + (-4096) * bv_unsigned (ev E 213).
 
-Lemma B240 : 1 <= bv_unsigned (ev E 237) <= 34359736319.
-Proof. exact (kn_range_var E m (kn_view ch) KO 237 _ _ (pfact (KRange (EVar 237) 1 34359736319) eq_refl)). Qed.
-Lemma B221 : 4295491576 <= bv_unsigned (ev E 208) <= 34326181871.
-Proof. exact (kn_range_var E m (kn_view ch) KO 208 _ _ (pfact (KRange (EVar 208) 4295491576 34326181871) eq_refl)). Qed.
-Lemma B222 : 0 <= bv_unsigned (ev E 209) <= 15.
-Proof. exact (kn_range_var E m (kn_view ch) KO 209 _ _ (pfact (KRange (EVar 209) 0 15) eq_refl)). Qed.
+Lemma B240 : 1 <= bv_unsigned (ev E 241) <= 34359736319.
+Proof. exact (kn_range_var E m (kn_view ch) KO 241 _ _ (pfact (KRange (EVar 241) 1 34359736319) eq_refl)). Qed.
+Lemma B221 : 4295491576 <= bv_unsigned (ev E 212) <= 34326181871.
+Proof. exact (kn_range_var E m (kn_view ch) KO 212 _ _ (pfact (KRange (EVar 212) 4295491576 34326181871) eq_refl)). Qed.
+Lemma B222 : 0 <= bv_unsigned (ev E 213) <= 15.
+Proof. exact (kn_range_var E m (kn_view ch) KO 213 _ _ (pfact (KRange (EVar 213) 0 15) eq_refl)). Qed.
 
 Lemma T_oh : T + 4096 <= 0x10000 \/ 0x645000 <= T.
 Proof.
-pose proof ((LA obj_facts) (237%nat, 4096) ltac:(inw)) as (_ & _ & _ & _ & OH & _). cbn [fst snd] in OH. unfold T. lia.
+pose proof ((LA obj_facts) (241%nat, 4096) ltac:(inw)) as (_ & _ & _ & _ & OH & _). cbn [fst snd] in OH. unfold T. lia.
 Qed.
 
 Lemma T_zero_rw : forall a cs, zcells cs = true -> T + 80 <= a -> a + Z.of_nat (cells_size cs) <= T + 3168 -> rw_cells asegs m a cs.
 Proof.
 intros a cs Z1 H1 H2. pose proof B240 as B. pose proof T_oh as OH. unfold T in *.
-apply (kn_zero_rw E m (kn_view ch) KO (E_PG 237) 80 3088 (4096 * bv_unsigned (ev E 237)) (pfact (KZero (SA (E_PG 237) 80) (ELit 3088)) eq_refl)
+apply (kn_zero_rw E m (kn_view ch) KO (E_PG 241) 80 3088 (4096 * bv_unsigned (ev E 241)) (pfact (KZero (SA (E_PG 241) 80) (ELit 3088)) eq_refl)
 eq_refl ltac:(lia) ltac:(lia) a cs Z1); lia.
 Qed.
 Lemma T_zero_some : forall a, T + 80 <= a < T + 3168 -> exists b, m (wa a) = Some b.
 Proof.
 intros a Ha. pose proof B240 as B. unfold T in *.
-apply (kn_zero_some E m (kn_view ch) KO (E_PG 237) 80 3088 (4096 * bv_unsigned (ev E 237)) (pfact (KZero (SA (E_PG 237) 80) (ELit 3088)) eq_refl)
+apply (kn_zero_some E m (kn_view ch) KO (E_PG 241) 80 3088 (4096 * bv_unsigned (ev E 241)) (pfact (KZero (SA (E_PG 241) 80) (ELit 3088)) eq_refl)
 eq_refl ltac:(lia) ltac:(lia) a). lia.
 Qed.
 Lemma T_hjunk : forall lo hi, T + 80 <= lo -> lo <= hi -> hi <= T + 3168 -> hjunk m lo hi.
@@ -164,7 +179,7 @@ Lemma RI_zero_rw : forall a cs, zcells cs = true -> RIB + 0x2000010000 <= a -> a
 rw_cells asegs m a cs.
 Proof.
 intros a cs Z1 H1 H2. pose proof B221 as B1. pose proof B222 as B2. unfold RIB in *.
-apply (kn_zero_rw E m (kn_view ch) KO E_RIB 0x2000010000 4096 (4096 * bv_unsigned (ev E 208) + (-4096) * bv_unsigned (ev E 209))
+apply (kn_zero_rw E m (kn_view ch) KO E_RIB 0x2000010000 4096 (4096 * bv_unsigned (ev E 212) + (-4096) * bv_unsigned (ev E 213))
 (pfact (KZero (SA E_RIB 0x2000010000) (ELit 4096)) eq_refl) eq_refl ltac:(lia) ltac:(lia) a cs Z1); lia.
 Qed.
 
@@ -207,21 +222,21 @@ unfold SH, A_SHADOW_OFS in Hx.
 assert (X1 : 0x2008fff7000 <= x < 0x10007fff8000).
 { pose proof (SH_div_le (0x10007fff8000) (SB E + 4294967296) ltac:(lia)). pose proof (SH_div_le (SB E + 137438953472) 0x7fffff800000 ltac:(lia)). lia. }
 
-assert (OBJ : forall o d len, In o (OBJS_W w) -> o <> (208%nat, 137439023104) -> 0 <= d -> 0 <= len -> d + len <= snd o ->
+assert (OBJ : forall o d len, In o (OBJS_W w) -> o <> (212%nat, 137439023104) -> 0 <= d -> 0 <= len -> d + len <= snd o ->
 forall lo n, lo = 4096 * bv_unsigned (ev E (fst o)) + d -> n = len ->
 ((lo <=? x) && (x <? lo + n))%bool = false
 /\ ((shadow_off AJO6 + lo / 8 <=? x) && (x <? shadow_off AJO6 + (lo + n) / 8))%bool = false).
 { intros o d len Ho Hne D0 L0' DL lo n -> ->. pose proof (PRES_O_in w) as Hp.
 pose proof ((LA obj_facts) o Ho) as (_ & _ & L0 & LH & _ & _). pose proof ((LA obj_disj) o _ Ho Hp Hne) as D.
 cbn [shadow_off AJO6]. cbn [fst snd] in D. unfold PRES in S1, S2, S3, S4, S5, S6.
-set (ob := 4096 * bv_unsigned (ev E (fst o))) in *. set (pr := 4096 * bv_unsigned (ev E 208)) in *.
+set (ob := 4096 * bv_unsigned (ev E (fst o))) in *. set (pr := 4096 * bv_unsigned (ev E 212)) in *.
 split.
 - apply andb_false_iff. destruct (Z.lt_ge_cases x (ob + d)) as [LT|GE]; [left; apply Z.leb_gt; exact LT| right; apply Z.ltb_ge].
 destruct LH as [LH|LH]; lia.
 - apply andb_false_iff. destruct D as [D|D].
 + right. apply Z.ltb_ge. pose proof (SH_div_le (ob + d + len) (SB E + 4294967296) ltac:(lia)). lia.
 + left. apply Z.leb_gt. pose proof (SH_div_le (SB E + 137438953472) (ob + d) ltac:(lia)). lia. }
-assert (OV : forall o, In o (OBJS_W w) -> o <> (208%nat, 137439023104) ->
+assert (OV : forall o, In o (OBJS_W w) -> o <> (212%nat, 137439023104) ->
 ((uE E (fst (ov o)) <=? x) && (x <? uE E (fst (ov o)) + uE E (snd (ov o))))%bool = false
 /\ ((sh_lo AJO6 E (ov o) <=? x) && (x <? sh_hi AJO6 E (ov o)))%bool = false).
 { intros o Ho Hne. pose proof ((LA obj_facts) o Ho) as (_ & _ & L0 & _).
@@ -241,7 +256,7 @@ unfold in_allow, in_vis, in_sh. rewrite (MA VIS_eq).
 assert (ALL : forall p, In p (VIS_W w) ->
 ((uE E (fst p) <=? x) && (x <? uE E (fst p) + uE E (snd p)))%bool = false /\ ((sh_lo AJO6 E p <=? x) && (x <? sh_hi AJO6 E p))%bool = false).
 { intros p Hp.
-assert (C : (exists o, In o (OBJS_W w) /\ o <> (208%nat, 137439023104) /\ p = ov o) \/ p = PRES_PAGE_J \/ p = HULL_J \/ (w = false /\ p = PAGE2_B) \/ p = (e_stacklo, e_stacklen)).
+assert (C : (exists o, In o (OBJS_W w) /\ o <> (212%nat, 137439023104) /\ p = ov o) \/ p = PRES_PAGE_J \/ p = HULL_J \/ (w = false /\ p = PAGE2_B) \/ p = (e_stacklo, e_stacklen)).
 { destruct w; cbn [VIS_W app In] in Hp;
 repeat (destruct Hp as [<-|Hp];
 [ first [ left; eexists (_, _); split; [ | split; [ | reflexivity ] ]; [cbn; tauto | discriminate]
@@ -255,13 +270,13 @@ split; apply andb_false_iff; left; apply Z.leb_gt; [lia|]. pose proof (SH_div_le
 - unfold sh_lo, sh_hi, HULL_J. cbn [shadow_off AJO6 fst snd]. rewrite HL1, HL2.
 split; apply andb_false_iff; right; apply Z.ltb_ge; lia.
 -
-assert (Ho : In (423%nat, 8192) (OBJS_W w)) by (rewrite Hw; cbn; tauto).
+assert (Ho : In (429%nat, 8192) (OBJS_W w)) by (rewrite Hw; cbn; tauto).
 pose proof ((MA pv_bound) _ Ho) as PB. cbn [fst] in PB.
-assert (U1 : uE E (fst PAGE2_B) = 4096 * bv_unsigned (ev E 423) + 4096).
+assert (U1 : uE E (fst PAGE2_B) = 4096 * bv_unsigned (ev E 429) + 4096).
 { unfold PAGE2_B, uE. cbn [fst edenot]. rewrite u_add64, u_mul64, !u64_lit by lia. rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity. }
 assert (U2 : uE E (snd PAGE2_B) = 4096) by (unfold PAGE2_B, uE; cbn [snd edenot]; rewrite u64_lit by lia; reflexivity).
 unfold sh_lo, sh_hi. rewrite U1, U2.
-exact (OBJ (423%nat, 8192) 4096 4096 Ho ltac:(discriminate) ltac:(lia) ltac:(lia) ltac:(cbn; lia) _ _ eq_refl eq_refl).
+exact (OBJ (429%nat, 8192) 4096 4096 Ho ltac:(discriminate) ltac:(lia) ltac:(lia) ltac:(cbn; lia) _ _ eq_refl eq_refl).
 - unfold sh_lo, sh_hi. cbn [shadow_off AJO6 fst snd]. rewrite US1, US2.
 split; apply andb_false_iff; left; apply Z.leb_gt; [lia|].
 pose proof (SH_div_le (SB E + 137438953472) (TOPP (bv_unsigned sp) - 8388608) ltac:(lia)). lia. }
@@ -282,14 +297,14 @@ assert (WX : bv_unsigned (wa x) = x) by (apply wa_unsigned; lia).
 pose proof (PRES_O_in w) as HPO.
 assert (Hvis : hidden LV mo (wa x) = false).
 { unfold hidden. apply negb_false_iff. rewrite WX.
-apply (MA inside_allowed (ov (208%nat, 137439023104)) x (MA obj_inside (208%nat, 137439023104) HPO)).
+apply (MA inside_allowed (ov (212%nat, 137439023104)) x (MA obj_inside (212%nat, 137439023104) HPO)).
 apply orb_true_iff. right. unfold sh_lo, sh_hi. cbn [shadow_off AJO6].
-change (uE E (fst (ov (208%nat, 137439023104)))) with (bv_unsigned (fst (obj_e E (208%nat, 137439023104)))).
-change (uE E (snd (ov (208%nat, 137439023104)))) with (bv_unsigned (snd (obj_e E (208%nat, 137439023104)))).
-rewrite ((MA u_obj_base) (208%nat, 137439023104) HPO), ((MA u_obj_len) (208%nat, 137439023104) HPO). cbn [fst snd].
+change (uE E (fst (ov (212%nat, 137439023104)))) with (bv_unsigned (fst (obj_e E (212%nat, 137439023104)))).
+change (uE E (snd (ov (212%nat, 137439023104)))) with (bv_unsigned (snd (obj_e E (212%nat, 137439023104)))).
+rewrite ((MA u_obj_base) (212%nat, 137439023104) HPO), ((MA u_obj_len) (212%nat, 137439023104) HPO). cbn [fst snd].
 unfold PRES in *. unfold SH, A_SHADOW_OFS in Hx.
-pose proof (SH_div_le (4096 * bv_unsigned (ev E 208)) (SB E + 4294967296) ltac:(lia)).
-pose proof (SH_div_le (SB E + 137438953472) (4096 * bv_unsigned (ev E 208) + 137439023104) ltac:(lia)).
+pose proof (SH_div_le (4096 * bv_unsigned (ev E 212)) (SB E + 4294967296) ltac:(lia)).
+pose proof (SH_div_le (SB E + 137438953472) (4096 * bv_unsigned (ev E 212) + 137439023104) ltac:(lia)).
 apply andb_true_intro. split; [apply Z.leb_le| apply Z.ltb_lt]; lia. }
 rewrite (view_visible LV mo FULL (wa x) Hvis).
 
@@ -298,7 +313,7 @@ assert (Hb : in_bands LV (wa x) = true).
 apply orb_true_iff. right. apply orb_true_iff. left. apply andb_true_intro. split; [apply Z.leb_le| apply Z.ltb_lt]; lia. }
 destruct ((MA band_kinds) (wa x) Hb) as (Hm & Hna & Hlz & Hbz).
 assert (Hal : in_allow AJO6 E ch (bv_unsigned (wa x)) = false) by (rewrite WX; exact (vis_apart x Hx)).
-assert (Hh : hid AJO6 (bv_unsigned sp) (argH0 JO6PH sp rdraw argv envp uid hw) E ch mo (wa x) = true).
+assert (Hh : hid AJO6 (bv_unsigned sp) (argH0 sp rdraw argv envp kb execfn) E ch mo (wa x) = true).
 { unfold hid. apply orb_true_iff. right. apply negb_true_iff. unfold vis. rewrite Hm, Hna, Hlz, Hal. cbn [negb andb orb].
 unfold in_hull. cbn [img_lo img_hi AJO6]. rewrite WX.
 replace ((65536 <=? x) && (x <? 6574080))%bool with false by (symmetry; apply andb_false_iff; right; apply Z.ltb_ge; lia).
@@ -335,7 +350,7 @@ unfold ri_addr. rewrite LRI. apply RI_zero_rw; [reflexivity| unfold RIB; lia| cb
 apply T_zero_rw; [reflexivity| unfold T; lia| cbn [cells_size csize pc_cells Nat.add]; unfold T; lia].
 + exists (repeat (wz 0) 16). unfold pc_addr. change (rl_T (X_main E)) with T. split; [| split; [apply repeat_length| intros j Hj; cbn in Hj; lia]].
 unfold T in *.
-apply (kn_zero_u32arr E m (kn_view ch) KO (E_PG 237) 80 3088 (4096 * bv_unsigned (ev E 237)) (pfact (KZero (SA (E_PG 237) 80) (ELit 3088)) eq_refl) eq_refl
+apply (kn_zero_u32arr E m (kn_view ch) KO (E_PG 241) 80 3088 (4096 * bv_unsigned (ev E 241)) (pfact (KZero (SA (E_PG 241) 80) (ELit 3088)) eq_refl) eq_refl
 ltac:(lia) ltac:(lia)); cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia.
 -
 cbn [Q6sh.c_num_freed Q6sh.c_count Q6sh.c_mapped_fa Q6sh.c_alloc_user Q6sh.c_mapped_user Q6sh.cst0 length Z.of_nat G_main count_tag filter].
@@ -378,8 +393,8 @@ RStats (RE_main sp w E) (X_main E) m
 
 Theorem prim_at_main : at_main_stmt (fun BAND sp w E m => @prim_main BAND sp w E m).
 Proof.
-intros sp rdraw brk0 argv envp fs uid hw E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
-split; [exact (RStats_main sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB)|].
-split; [exact (RPrim_main sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB)|].
-exact (RChunks_main sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB).
+intros sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
+split; [exact (RStats_main sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB)|].
+split; [exact (RPrim_main sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB)|].
+exact (RChunks_main sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB).
 Qed.

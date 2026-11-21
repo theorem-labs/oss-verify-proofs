@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (GI_init takes the in_channel_reader premise; the initial reserved list is the image's segments followed by the vDSO pair, so kl_resv, kl_resv_top and the new kl_vdso are reproved; prog_model_ok runs from the run's initial model with the vDSO draw through GI_fds). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
@@ -576,16 +577,36 @@ Lemma GI_init : forall segs brk0 mbase sp lim inp,
   valid_brk segs brk0 -> 0 < reserved_top (segments_reserved segs) ->
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling ->
   bv_unsigned sp - stack_max_size = alloc_ceiling ->     (* [comment removed for export] *)
+  in_channel_reader inp = true ->
   GI [] (ps_init (reservedZ segs)) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-  intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop. unfold GI, OWN. split; [|split; [apply List.NoDup_nil| unfold Gso, so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia]].
+  intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop Hrd. unfold GI, OWN. split; [|split; [apply List.NoDup_nil| unfold Gso, so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia]].
   exists (led_init (reservedZ segs)). split; [apply creach_init|]. split; [|intros c []].
   constructor; rewrite ?m_vmmaps_init_model; cbn -[Z.pow Z.mul Z.add init_model].
-  - apply minv_init.
+  - apply minv_init. exact Hrd.
   - reflexivity.
   - split; [intros e []| apply pwdisj_nil].
-  - reflexivity.
-  - intros e Hin. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia.
+  (* [KInv.KL]'s [kl_resv] is an inclusion at the revision: [init_model]'s reserved list
+     is the image's segments FOLLOWED BY the vDSO/vvar pair ([State.init_reserved]). *)
+  - unfold init_reserved; rewrite map_app; apply incl_appl, incl_refl.
+  (* [kl_resv_top]'s witness is [State.vdso_reserved] at [init_reserved]'s top: at most
+     two entries of at most 20 pages; every other reserved entry is a segment, below the
+     break. *)
+  - exists (vdso_reserved (in_kernel inp)
+              (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)))).
+    split; [|split].
+    + unfold vdso_reserved; cbv zeta; destruct (_ <? _); cbn [length]; lia.
+    + pose proof (vdso_len_bounds (in_kernel inp)) as HB.
+      pose proof (vdso_text_pages_pos (in_kernel inp)) as HPP.
+      pose proof (vdso_text_pages_le (in_kernel inp)) as HL.
+      unfold vdso_reserved, vdso_len, vdso_vvar_pages, page_size in *; cbv zeta.
+      destruct (_ <? 4096); cbn [live_bytes]; [lia|].
+      rewrite !bv_unsigned_Z_to_bv_u64 by (unfold two_pow_64 in *; lia); lia.
+    + intros e Hin. unfold init_reserved in Hin. apply in_app_or in Hin as [Hseg|Hvd].
+      * left. pose proof (reserved_top_ge _ _ Hseg). unfold ehi. lia.
+      * right. exact Hvd.
+  (* [kl_vdso]: [init_model] has no tracked maps *)
+  - intros r _ e [].
   - unfold PGSZ in *. unfold page_size in Hal. lia.
   - intros b l [].
   - intros b l k [].
@@ -633,12 +654,15 @@ Theorem prog_model_ok : forall segs rstage pc ph lim en inp,
   /\ tsafe nstep nsafe (prog segs rstage (in_argv inp)) (mo0 segs lim en inp).
 Proof.
   intros segs rstage pc ph lim [sp brk0 mbase] inp Hsegs Hve Hvi Htop.
-  destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _).
+  destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _ & _ & Hrd & _).
   unfold prog, mo0. cbn [en_brk en_mmap_base en_sp] in *.
   apply (mspec_program (GI []) (prog_with rstage (argv_Z (in_argv inp)))).
   - apply prog_with_GI; [apply argv_Z_short| apply argv_Z_paths]; exact Hargv.
-  - unfold reservedZ. cbn [img_segments] in Hbrk.
-    apply (GI_init segs); [exact Hbrk| exact (proj1 Hsegs)| exact (ceil_low segs Hsegs)| exact Htop].
+  - (* the run's model is the ledger's with the launch's vDSO draw; GI reads none of it *)
+    apply (GI_fds [] _ (init_model (segments_reserved segs) brk0 mbase sp lim inp));
+      [| reflexivity | exact (minv_init (segments_reserved segs) brk0 mbase sp lim inp Hrd) | reflexivity].
+    unfold reservedZ. cbn [img_segments] in Hbrk.
+    apply (GI_init segs); [exact Hbrk| exact (proj1 Hsegs)| exact (ceil_low segs Hsegs)| exact Htop| exact Hrd].
 Qed.
 
 End WithCeiling.

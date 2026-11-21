@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A (asan, pin 1be0f53d96cb), the two parameters at which the
    image-A malloc interceptor walk discharges a Theorem Labs lane's Record wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v
    :149, blob e929a4c12d5b):
-   - ARXh_A, the allocator relation: the exact text of YGcfDIface.ARXs_cf (YGcfDIface.v:73-77 at the base, already
+   - ARXh_A, the allocator relation: the exact text of YGcfDIface.ARXs_cf (YGcfDIface.v:74-78 at the base, already
      indexed by the ghost set Hp), at the segments tfibsegs. Isolated here so that the swap to AIfaceSA's ARXs_A
      (AllocReloc's alloc8, a Theorem Labs lane) is a one-line change; ARXh_A_ARXs_cf below states that it IS ARXs_cf.
    - K_A, the invariant from the call segment (WrapMallocACall.seg_call) to the return segment (WrapMallocARet):
@@ -29,7 +30,7 @@ Local Open Scope Z_scope.
 Section G. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Variable B : asyms.
 
-(* YGcfDIface.v:73-77 at the OLD base, ARXs_cf's body, at tfibsegs. On the #102 base ARXs_cf drops the last conjunct
+(* YGcfDIface.v:74-78 at the OLD base, ARXs_cf's body, at tfibsegs. On the #102 base ARXs_cf drops the last conjunct
    xs_placed_cf, which ARcf now implies (ARmcf's last field amc_xs_placed, YG0ncf.xs_placed_of_ARcf), so the two
    relations are still equivalent (ARXh_A_ARXs_cf). *)
 Definition ARXh_A : YGcfMallocCompose.ARXh_t tfibsegs := fun Hp inst ly S W mem md =>

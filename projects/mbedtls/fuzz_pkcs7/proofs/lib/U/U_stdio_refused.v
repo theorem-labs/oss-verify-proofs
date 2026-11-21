@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise Hrdr, which the revision's writev reads, added to the section and passed to the segment lemmas and ref_refused_tail). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -61,6 +62,8 @@ Section Refused.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev reads the channel reader (recipes/channel-reader-premise.md) *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -122,7 +125,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segG : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#<7.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$1<.R4.)P,(11.$12.(?.VBL,R6.)R4.$1=.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segG : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#<7.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$1<.R4.)P,(11.$12.(?.VBL,R6.)R4.$1=.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
 (* [comment removed for export] *).
   Proof.
     intros vals R M HL P0 HR HK.
@@ -169,6 +172,9 @@ Section Refused.
       change 38%nat with ((8 + (4 + 2)) + (8 + (8 + 8)))%nat. exact MSG.
     - reflexivity.
     - exact Hfd2.
+
+    - exact Hrdr.
+
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -226,7 +232,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segF : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#:7.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$25.R4.)P,(11.$12.(?.VBL,R6.)R4.$26.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segF : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#:7.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$25.R4.)P,(11.$12.(?.VBL,R6.)R4.$26.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
 (* [comment removed for export] *).
   Proof.
     intros vals R M HL P0 HR HK.
@@ -282,7 +288,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segE : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#87.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$27.R4.)P,(11.$12.(?.VBL,R6.)R4.$28.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segE : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#87.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$27.R4.)P,(11.$12.(?.VBL,R6.)R4.$28.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
 (* [comment removed for export] *).
   Proof.
     intros vals R M HL P0 HR HK.
@@ -377,7 +383,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segD : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#67.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$29.R4.)P,(11.$12.(?.VBL,R6.)R4.$2:.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segD : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#67.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$29.R4.)P,(11.$12.(?.VBL,R6.)R4.$2:.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
 (* [comment removed for export] *).
   Proof.
     intros vals R M HL P0 HR HK.
@@ -399,7 +405,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segC : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#47.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$2;.R4.)P,(11.$12.(?.VBL,R6.)R4.$2<.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segC : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#47.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$2;.R4.)P,(11.$12.(?.VBL,R6.)R4.$2<.)(14.$12.(15.(16.$17.R6.(5.&40.+41=64.)R5.(18.$12.))Vmodel,)VT,)")
 (* [comment removed for export] *).
   Proof.
     intros vals R M HL P0 HR HK.
@@ -421,7 +427,7 @@ Section Refused.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segB : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#27.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$2=.R4.)P,(11.$12.(?.VBL,R6.)R4.$2>.)(14.$12.(15.(16.$17.R6.(5.&40.+1=494.)R5.(18.$12.))Vmodel,)VT,)")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segB : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "Pvals,(1.(2.&40.))PR,(9.&5.(2.&40.))PM,P,(2.&40.)(:.(2.&8.))P,(0.$;.(<.(2.&40.)R3.)#27.)P,(0.(2.&40.)(=.R4.#0.)Vsp0,)P,(>.(?.VBL,R5.)$2=.R4.)P,(11.$12.(?.VBL,R6.)R4.$2>.)(14.$12.(15.(16.$17.R6.(5.&40.+1=494.)R5.(18.$12.))Vmodel,)VT,)")
 (* [comment removed for export] *).
   Proof.
     intros vals R M HL P0 HR HK.
@@ -519,7 +525,7 @@ Section Refused.
     destruct i as [|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|i]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]; [ .. | lia]; reg_caseRF.
   Qed.
 
-  #[using="sp0 BL Hvsp Hh Hlazy Hfd2 SPlo SPhi T tid canw Rsp Rgp Rtp Mstack Mimg Mgot Mcomp Mtid Htid Mlock Mcanary Mneedlocks Mstdin Mofl E"] Theorem ref_refused_tail : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "(14.$12.(15.(16.$17.VR,(5.&40.+1=494.)VM,(18.$12.))Vmodel,)(2?.$30.(1;.Vmodel,)))")
+  #[using="sp0 BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi T tid canw Rsp Rgp Rtp Mstack Mimg Mgot Mcomp Mtid Htid Mlock Mcanary Mneedlocks Mstdin Mofl E"] Theorem ref_refused_tail : ltac2:(CDefT.buildp (gd_tbl_P_stdio_refused ()) "(14.$12.(15.(16.$17.VR,(5.&40.+1=494.)VM,(18.$12.))Vmodel,)(2?.$30.(1;.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     pose proof SPlo. pose proof SPhi.

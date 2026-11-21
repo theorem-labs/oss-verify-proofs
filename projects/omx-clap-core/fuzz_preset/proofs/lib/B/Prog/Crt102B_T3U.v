@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1535 of its 1608 lines of code are new or changed and 441 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -61,7 +62,7 @@ Context {RL : PrhRoomLive} {SK : YI16.sink_head} {PA : PAImg B_prog_listing}.
 #[local] Notation PST := (@prh_pst prh_img_B).
 #[local] Notation STKC := (@STK_check_round_trip prh_img_B).
 #[local] Notation PL := PL_B102.
-(* THE IMAGE: Crt102Img.v's Section b hypotheses, verbatim (B' values in Crt102Img.v:1002-1013). Owner: the image-B
+(* THE IMAGE: Crt102Img.v's Section b hypotheses, verbatim (B' values in Crt102Img.v:1003-1014). Owner: the image-B
    instance; each is a vm_compute at PI_prog_B once lib/B/PAImg_prog.v builds (its :160 waits for the instance
    owner's IMG_TOP_B = 0x601000). *)
 Hypothesis HB_base : BASE = B_prog_base.
@@ -79,9 +80,9 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 #[local] Notation AJW := (ajournal_xwR (SK := SK) SEGS B PST ARx (YA0nH.wle' SEGS YGcfRehidePost.RZ_cf)).
 (* the allocator's engine laws at hl = cf_head (at the instance: AR_laws_x_cf of the instance owner's ARcf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the two image facts walk S4's lanes carry (S4_PsSrc.v:116-119): the image's zero-shadow ranges are granule-aligned
+(* the two image facts walk S4's lanes carry (S4_PsSrc.v:117-120): the image's zero-shadow ranges are granule-aligned
    (asyms_ok's aso_zshadow, YG0f.v:191), and IMAGE B's shadow bytes are present: Crt102B_T3Base.crt3_img_shadow_vis_B,
-   the instance owner's YGcfAmx2.img_shadow_vis_cf (YGcfAmx2.v:47-49) at image B's CfImgB.CfImg_B, over
+   the instance owner's YGcfAmx2.img_shadow_vis_cf (YGcfAmx2.v:48-50) at image B's CfImgB.CfImg_B, over
    [IMG_LO_B, IMG_TOP_B), with ARcf -> ARx (crt3_img_shadow_vis_B_a8: at ARx := ARcf (ci := CfImg_B) it is the
    instance owner's definition). Never image A's IMG_LO / IMG_TOP. Owner: the instance owner (the instance's
    supply of img_shadow_vis_cf at CfImg_B). *)
@@ -119,7 +120,7 @@ Variables (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS) (regs : bvm
   (Lam : list (Z * Z)) (peak cnt ran most : Z).
 #[local] Notation sp0 := (spZ regs).
 #[local] Notation sp1 := (CRT_sp1 (regs := regs)).
-(* crt_side / crt_live take no rp_* since 11c39f7e88b7 (the position is crt_pos, on the r = 0 path only) *)
+(* crt_side / crt_live take no rp_* (the position is crt_pos, on the r = 0 path only) *)
 #[local] Notation liveB := (crt_live (rc := rc) (PI := prh_img_B) (RL := RL) (SK := SK) (L := B_prog_listing)
   (PA := PA) (B := B) (ARx := ARx)
   (ly := ly) (S := S) (Hp := Hp) (W := W) (regs := regs) (mem := mem) (md := md) (doc := doc) (t := t) (D := D)
@@ -586,7 +587,7 @@ cbv [YO0f.le_byte]. change (8 * Z.of_nat 1) with 8. change (8 * Z.of_nat 0) with
 unfold bv_wrap. change (bv_modulus 8) with 256. rewrite !Z.mod_small; lia.
 Qed.
 (* the hull is IMAGE B's, [IMG_LO_B, IMG_TOP_B), in the allocator lane's FuzzStrdupB form
-   (commit e8c226ad89c3, lib/B/Prog/FuzzStrdupB.v:131-135 sd_hull_img): never image A's
+   (lib/B/Prog/FuzzStrdupB.v:131-135 sd_hull_img): never image A's
    IMG_LO / IMG_TOP *)
 Lemma crt3U_hull_img : forall p nn s, 0 < nn -> IMG_LO_B + 64 <= p -> p + nn + 64 <= IMG_TOP_B ->
   shadow_addr p / 8 * 8 <= s < shadow_addr (p + nn - 1) / 8 * 8 + 8 ->

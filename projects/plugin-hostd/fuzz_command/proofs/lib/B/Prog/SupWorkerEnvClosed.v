@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for sup_worker_env's
    image-B walk (lib/B/Prog/sup_worker_env.v, tsup_worker_env_holds): a Theorem Labs lane's tsup_worker_env_spec
-   (lib/B/Prog/sup_worker_env_c.v, a working branch fc8bcbd8b42) at the pinned image (lib/B/Prog/CmdImg.v's instance
+   (lib/B/Prog/sup_worker_env_c.v, a working branch) at the pinned image (lib/B/Prog/CmdImg.v's instance
    PB_cmd, whose segments are B's tfibsegs, and B's sink head YE2k.tfib_sink_head), with the per-binary record
    hypotheses the walk names discharged by a Theorem Labs lane's lemmas of the same names, as A's
-   lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch e84227c9553) and a Theorem Labs lane's lib/A/Prog/RecBClosed.v
-   (a working branch f349bdaedba) do: VOBJS is CmdRecRest.cmd_val_objs_PB, cmd_sig_prog_PB is
+   lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch) and a Theorem Labs lane's lib/A/Prog/RecBClosed.v
+   (a working branch) do: VOBJS is CmdRecRest.cmd_val_objs_PB, cmd_sig_prog_PB is
    CmdRecRest.cmd_sig_prog_PB, cmd_img_facts_tfib is CmdRecImg.cmd_img_facts_tfib; LAWS is the core's AR_laws_ok
    inside the walk. What remains is the callees' contracts at every FP state, HB and MTL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

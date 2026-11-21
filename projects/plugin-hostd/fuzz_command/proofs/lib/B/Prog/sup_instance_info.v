@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_instance_info (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch
-   2ba4488ce71: a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
-   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch 0de7ca03d26: the
+   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch:
+   a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
+   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch: the
    recorder's chain through record, arg_s, rec_shape_of and answer and the post), re-derived on B's code, against
-   a Theorem Labs lane's statement (a working branch f490061c104). The snprintf step through the shared contract and the change of FP
-   state after it follow a working branch 07b554c4785 (lib/B/Prog/answer_code.v:943-1070), the release
-   by the flag store answer_code.v's end, the post's block algebra a working branch b5e1a22725a
-   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch c79a9f2daf7. *)
+   a Theorem Labs lane's statement (a working branch). The snprintf step through the shared contract and the change of FP
+   state after it follow a working branch (lib/B/Prog/answer_code.v:944-1071), the release
+   by the flag store answer_code.v's end, the post's block algebra a working branch
+   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation Znumtheory.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -86,13 +87,13 @@ Qed.
 Lemma sii_denot_off0 : forall E n, sv_denot E (SOff n 0) = ew E n.
 Proof. intros E n. cbn [sv_denot]. rewrite Z.add_0_r. apply Z_to_bv_bv_unsigned. Qed.
 
-(* a byte the reader shows is in [0, 256) (answer_code.v:49 ac_aview_rng) *)
+(* a byte the reader shows is in [0, 256) (answer_code.v:50 ac_aview_rng) *)
 Lemma sii_aview_rng : forall (sg : list Segment) H mem a v, aview sg H mem a = Some v -> 0 <= v < 256.
 Proof.
 intros sg H mem a v Hv. unfold aview in Hv. destruct (mbyte sg (mrestrict H mem) a) as [b|]; [|discriminate].
 cbn in Hv. injection Hv as <-. pose proof (bv_unsigned_in_range 8 b) as R. change (bv_modulus 8) with 256 in R. lia.
 Qed.
-(* the recorder's answer field holds 0 or the start of one of its blocks (sup_reset.v:227-237) *)
+(* the recorder's answer field holds 0 or the start of one of its blocks (sup_reset.v:228-238) *)
 Definition sii_old (Q : rlay) : Z := match l_answer Q with Some pn => fst pn | None => 0 end.
 
 Lemma sii_old_at : forall bl rd R Q, arep_at bl rd A_G_REC A_REC_SPILL R Q ->
@@ -120,8 +121,8 @@ cbn in H. destruct (decide _) as [Hd | Hd] in H.
 Qed.
 
 (* the read-only ranges the snprintf chain names (RtPFCmd.CMD_SNP_CR): low image addresses (decided on the closed
-   list; a working branch 07b554c4785 answer_code.v:56 ac_snp_rng; bound 0x606000 since a Theorem Labs lane's FR_cmd
-   mirror 0934cb146c3, whose CMD_SNP_CR is the two non-writable load segments, as CmdSnText's snt_cr_in) *)
+   list; a working branch answer_code.v:57 ac_snp_rng; bound 0x606000 since a Theorem Labs lane's FR_cmd
+   mirror, whose CMD_SNP_CR is the two non-writable load segments, as CmdSnText's snt_cr_in) *)
 Lemma sii_snp_rng : forall r, In r RtPFCmd.CMD_SNP_CR -> 0x10000 <= fst r /\ fst r + snd r <= 0x606000 /\ 0 <= snd r.
 Proof.
 intros r Hr.
@@ -131,7 +132,7 @@ pose proof (proj1 (forallb_forall _ _) H r Hr) as Hb. cbn beta in Hb.
 apply andb_prop in Hb as [Hb H3]. apply andb_prop in Hb as [H1 H2]. apply Z.leb_le in H1, H2, H3. lia.
 Qed.
 (* a low object (in the image hull) is apart from the snprintf chain's outputs: the scratch window below sp and the
-   destination, which lies off the image hull (answer_code.v:78 ac_lo_disj) *)
+   destination, which lies off the image hull (answer_code.v:79 ac_lo_disj) *)
 Lemma sii_lo_disj : forall a n K sp d w, 0 <= n -> 0x10000 <= a -> a + n <= 0x606000 -> a + n <= sp - K -> 0 <= K ->
 (d + w <= 0x10000 \/ 0x606000 <= d) -> Forall (zdisjoint (a, n)) (snp_out K sp d w).
 Proof.
@@ -150,7 +151,7 @@ Qed.
 
 (* the write windows of the six regions the walk carries from the frame setup on (the frame's shadow, its flag
    word, its header, two pieces of the own stack frame, the realigned stack word), class 0's sizes
-   (answer_code.v:690 awr6) *)
+   (answer_code.v:691 awr6) *)
 Ltac sii_awr6 fpos sp1 regs FS Vs Vf V2 V34 EFA :=
 eapply (YCbq.awr_ok_cons_gen _ _) with (k := 1041%nat); [reflexivity | exact Vs |
 intros a Ha; cbn [YP09.r_wlo YP09.r_whi] in Ha; right; right; right; left; exists 0, fpos; split; [left; reflexivity|];
@@ -197,7 +198,7 @@ Hypothesis MTLF : ameter_fs_laws MT.
 (* a Theorem Labs lane states it only at PI := PB_cmd (CmdRecRest.v cmd_sig_prog_PB), so it is a Section
    hypothesis under that lemma's name *)
 Hypothesis cmd_sig_prog_PB : cmd_sig_prog.
-(* the per-binary record facts: a Theorem Labs lane's B CmdRecFacts groups (a working branch 707acd856cb, lib/B/Prog/CmdRec*.v)
+(* the per-binary record facts: a Theorem Labs lane's B CmdRecFacts groups (a working branch, lib/B/Prog/CmdRec*.v)
    prove them for any segs / B from LAWS, HB and this one record, so the walk carries only it *)
 Hypothesis cmd_img_facts_tfib : forall B0, CmdBSyms B0 -> @cmd_img_facts SK SEGS B0.
 (* the side-stack frame's flag law: a Theorem Labs lane states it at tfibsegs (CmdRecRest.v cmd_frame_flag_law), so it is a
@@ -240,7 +241,7 @@ intros a Ha. apply Exists_exists. exists (0x5e3760, 56). split; [right; left; re
 unfold in_zr, A_REC_SPILL, SC_SIZE in *. cbn [fst snd]. lia.
 Qed.
 
-(* ---- what a callee's journal keeps (sup_reset.v:434-469, c79a9f2daf7) ---- *)
+(* ---- what a callee's journal keeps (sup_reset.v:435-470) ---- *)
 Lemma sii_keep_img : forall STK1 sp1 FP1 lyc Sc (Wc : world SEGS) memc mdc own ly2 S2 (W2 : world SEGS) mem2 md2 k1 a,
 ajournal SEGS B STK1 sp1 FP1 lyc Sc Wc memc mdc own ly2 S2 W2 mem2 md2 k1 ->
 Forall (fun r => 0 < fst r) FP1 -> ~ inFP FP1 a ->
@@ -271,7 +272,7 @@ intros STK1 sp1 FP1 lyc Sc Wc memc mdc own ly2 S2 W2 mem2 md2 k1 b m i HJ H1 H2 
 pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & F2 & _). exact (F2 b m i H1 H2 Hi Hn).
 Qed.
 
-(* the bytes of a string argument decide astr_argA's reader part (sup_reset.v:543) *)
+(* the bytes of a string argument decide astr_argA's reader part (sup_reset.v:544) *)
 Lemma sii_argA_kept : forall ly1 S1 (rd rd' : reader) ro O1 p v, astr_argA B ly1 S1 rd ro O1 p (Some v) ->
 (forall i, 0 <= i < Z.of_nat (length v) + 1 -> rd' (p + i) = rd (p + i)) -> astr_argA B ly1 S1 rd' ro O1 p (Some v).
 Proof.
@@ -280,8 +281,8 @@ split; [exact H0|]. split; [|split; [exact Hl | exact Hr]].
 apply (sii_astr_kept rd); [exact Hs|]. intros x Hx. replace x with (p + (x - p)) by lia. apply K. lia.
 Qed.
 
-(* ---- the blocks of the walk's points and the statement's post (descriptors_panel_get_aux.v:943-1088,
-   a working branch b5e1a22725a, for sup_instance_info's model) ---- *)
+(* ---- the blocks of the walk's points and the statement's post (descriptors_panel_get_aux.v:944-1089,
+   a working branch, for sup_instance_info's model) ---- *)
 Lemma siq_req_ge : forall x, 0 <= x -> 1 <= req_size x /\ x <= req_size x.
 Proof. exact req_size_pos. Qed.
 
@@ -1026,7 +1027,7 @@ assert (ZS5 : forall j, 4 <= j < 6 -> rdW W4 (ms_mem ms5) (SB + F / 8 + j) = Som
 (* the call of the snprintf wrapper (0x8bc8c): snprintf(b = F + 32, 16, "%d", id) at the entry's FP state, through
    the shared contract (asnprintf_realizes = RtPFCmd.asnprintf_sh at FR_cmd, window CMD_SNP_K = 2 * ESTACK); the
    text T = pf_dec id is 1 .. 11 bytes, so all of it and its terminator are written (copied from
-   a working branch 07b554c4785 lib/B/Prog/answer_code.v:943-1070) *)
+   a working branch lib/B/Prog/answer_code.v:944-1071) *)
 set (T := PF.pf_dec id).
 assert (HTL : (1 <= length T <= 11)%nat)
   by (unfold T; rewrite (sii_dec_len id Hid); exact (dec_length id Hid)).
@@ -1098,7 +1099,7 @@ eapply SRr_bind.
       rewrite <- (Zmod_div_mod (2 ^ 32) (2 ^ 64) id); [reflexivity | lia | lia | exists (2 ^ 32); reflexivity].
     + exact (PAI.ai_text id).
     + unfold PAI.AI_PS. cbn. trivial.
-    + (* fr_lit_ok (a working branch 40ec8c3d85c, PASS4-REFIT.md E.0.4): "%d" at 0x21f40 in the image, no %s *)
+    + (* fr_lit_ok (a working branch, PASS4-REFIT.md E.0.4): "%d" at 0x21f40 in the image, no %s *)
       vm_compute. reflexivity.
   - clear - Hes. lia.
   - clear - HTL. lia.
@@ -1110,7 +1111,7 @@ eapply SRr_bind.
   - rewrite HSL. intros a Ha. destruct (HFpres5 a ltac:(clear - Ha HTL; lia)) as [Hp Hno].
     split; [apply (apresent_writable SEGS); exact Hp|]. split; [exact Hno|]. rewrite Qsp5, Hes. rewrite FS in Hslo.
     clear - Ha HTL HFceil Hceil Hslo Hsp1r. lia.
-  - (* the shared contract's slack word (a Theorem Labs lane 55f29e496f6: GXA's range check reads 8 bytes past the
+  - (* the shared contract's slack word (a Theorem Labs lane: GXA's range check reads 8 bytes past the
        destination): b = F + 32 holds at most 12 bytes, so 8 more still lie in the 64-byte frame *)
     rewrite HSL. exact (amem_range_sub_app F 64 (F + 32) (Z.of_nat (length T) + 1 + 8) HFapp HFceil
       ltac:(clear - Hes; lia) ltac:(clear - HTL; lia) ltac:(clear - HTL; lia)).

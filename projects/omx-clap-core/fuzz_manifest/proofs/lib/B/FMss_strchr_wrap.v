@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_strchr_wrap.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
-(* lib/A/Prog/strchr_wrap.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8), re-run against the
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_strchr_wrap.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* lib/A/Prog/strchr_wrap.v (a Theorem Labs lane's port, unchanged from a working branch), re-run against the
    local-shadow statement FMss_strchr_wrap_c.v: the range check comes from chk_ok_of_loc (FMss_shv.v) and the post's
    shadow fact from shvis_kept; every other line is the original's. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -7,7 +7,7 @@
    PALibB; none is assumed.
 
    THE STAND-INS AND THEIR WITNESSES (texts: Crt102EntryB's Section f hypotheses, lib/B/Prog/Crt102EntryB.v
-   27ad45449ff3 at commit 9179085e57d, :193 / :196 / :202; zs_aligned as
+   27ad45449ff3, :193 / :196 / :202; zs_aligned as
    lib/A/Prog/Crt102Top.v 0d349525589f :356 states it):
      PAL            : PALib (L := B_prog_listing) (PI := PA) B          crt102_PAL_TfibB, = PALibB.exvi_eh_palib (every
                                                                          field by vm_compute at TfibB, PALibB.v :58)
@@ -23,8 +23,8 @@
    pal_stack_malloc3 is Crt102AF0lCheckB.crt102_stack_malloc3_TfibB (the code record). img_shadow_vis_x is NOT witnessed
    here: it reads the allocator state ARx, which the contract keeps free.
 
-   INPUTS OF RECORD (by path; blobs of the base commit 100c8e45583c unless named):
-   - TAKEN BY PATH from the integration commit bedf6e890875 (image / generated files only; each one's base blob beside
+   INPUTS OF RECORD (by path; blobs of the base unless named):
+   - TAKEN BY PATH from the integration (image / generated files only; each one's base blob beside
      it): lib/B/PALibB.v 5baa19c890f7 (new on the lane), lib/Reusable/YD2l.v 0d0bc856b447 (base 4deb698ee695: the old
      pin's shadow / uar / GOT cells and junk; the integration's is the #102 B' record), lib/Reusable/YCej.v ae866e8addb2
      (base 9d858604e7c0: the old pin's traces, under which TfibB_syms' DRV_TRACES membership and PALibB's pal_env do not

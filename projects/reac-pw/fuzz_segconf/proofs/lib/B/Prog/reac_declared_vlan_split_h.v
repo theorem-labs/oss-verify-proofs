@@ -1,5 +1,5 @@
 (* reac_declared_vlan_split on fuzz_segconf image B (fuzz_segconf.asan-ubsan): the image-B port of
-   lib/A/Prog/reac_declared_vlan_split_h.v (commit ceb7e39832b2), module paths only.
+   lib/A/Prog/reac_declared_vlan_split_h.v, module paths only.
    Facts about the objects of the entry (the segment, parent, the vid cell) that every segment of the walk reads at
    a later state: bounds, the journal's permission to write a destination of the footprint, its shadow at a later
    state, and the frame's saved words across a run. *)

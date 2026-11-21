@@ -6,8 +6,8 @@
      0x8494c  ld a0,208(s1); jal check_shape_done      a0 = at = |O|, the value of g_nout (the error path is not reached)
      0x84954  ld s8,96(s1); li a0,-8; sb a0,4..9(s8)    prefix[48]'s six shadow bytes go back to 0xf8
      0x84974  ld s9,104(s1); li s4,10; ld s6,40(s1); j 84490
-   check_shape_done is TAKEN FROM W3's PUBLISHED CONTRACT (CSD : csd_spec, W_contract.v:130 on the W8 lane head
-   a3c72093c22, over aleaf_post :102), not re-walked.
+   check_shape_done is TAKEN FROM W3's PUBLISHED CONTRACT (CSD : csd_spec, W_contract.v:131 on the W8 lane head,
+   over aleaf_post :102), not re-walked.
    What this file proves besides the phase:
    - the transport kit of W_LLVMFuzzerTestOneInput_latch.v (its lt_ lemmas, via _gone_tk.v's gk_ copy) over the
      bytes W3's post keeps: a cell of the model (gn_cells, base), errno, or a byte of a live block (g6_ib).
@@ -21,6 +21,7 @@
    api_env (errno lies in the image, below kLowMemEnd); CSD, the callee contract; and the base's model
    obligations HGCELLS : GN_HGcells G_fr and HROMPIN : GN_ROM_PIN B, already hypotheses of lf_arm_gone (p3 / p4 /
    p5 take them), for the model's cells and for rom_view / jt_rom across the call. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -512,7 +513,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 Hypothesis TL : PALib B.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* check_shape_done (0x85734): W_contract.v csd_spec (:130) on the W8 lane head a3c72093c22, verbatim (lf_arm_gone's
+(* check_shape_done (0x85734): W_contract.v csd_spec (:130) on the W8 lane head, verbatim (lf_arm_gone's
    CSD; _remove.v:403 takes the same text) *)
 Hypothesis CSD : csd_spec B (BASE + AF_fr_check_shape_done).
 (* what carries the model and the read-only image across that call (base GN_HGcells / GN_ROM_PIN, as p4 / p5 take

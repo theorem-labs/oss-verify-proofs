@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/Sj_stage2_adapt.v, lines 111, 316, 327, 429, 475, 743. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -107,7 +108,7 @@ Section Adapt.
   Hypothesis HIWL : blen bs + 4 <= Z.of_nat (length iws).
   Hypothesis HIWM : Z.of_nat (length iws) < 2^40.
   Hypothesis ART0 : ART RT Σ m.
-  Hypothesis LOR : rt_sp0 RT Σ - STACK_WIN <= lo.
+  Hypothesis LOR : rt_sp0 RT Σ - STACK_SPAN <= lo.
   Hypothesis ROOM : lo + S2A_STACK <= bv_unsigned sp.
   Hypothesis TOP : bv_unsigned sp + 16 <= USTACK_TOP.
   Hypothesis SP16 : bv_unsigned sp mod 16 = 0.
@@ -312,7 +313,7 @@ Section Adapt.
   Proof using All.
     intros w kk HG m' MU WM. pose proof (good_fp w kk HG) as FP. pose proof (good_fpc w kk HG) as FPC. destruct HG as (G1 & G2 & G3 & G4 & G5 & G6 & G7).
     change (e_m0 (wE w)) with (fst w) in MU, WM. change (s2_W (wE w)) with (s2_W E0) in MU.
-    assert (LOR' : rt_sp0 RT (snd w) - STACK_WIN <= lo) by (rewrite G4; exact LOR).
+    assert (LOR' : rt_sp0 RT (snd w) - STACK_SPAN <= lo) by (rewrite G4; exact LOR).
     pose proof (art_of_munch RT AF (snd w) (fst w) m' lo (s2_W E0) G1 LOR' FP MU WM) as ART'.
     change (shz_all (wE w) m') with (shz_all E0 m').
     apply (shz_all_gen (snd w) m' ART'); [intros e He; rewrite G3; exact He|].
@@ -323,7 +324,7 @@ Section Adapt.
   Proof using All.
     intros w kk HG m' MU WM. pose proof (good_fp w kk HG) as FP. destruct HG as (G1 & G2 & G3 & G4 & G5 & G6 & G7).
     change (e_m0 (wE w)) with (fst w) in MU, WM. change (s2_W (wE w)) with (s2_W E0) in MU.
-    assert (LOR' : rt_sp0 RT (snd w) - STACK_WIN <= lo) by (rewrite G4; exact LOR).
+    assert (LOR' : rt_sp0 RT (snd w) - STACK_SPAN <= lo) by (rewrite G4; exact LOR).
     pose proof (art_of_munch RT AF (snd w) (fst w) m' lo (s2_W E0) G1 LOR' FP MU WM) as ART'.
     destruct (af_client_consts RT AF (snd w) m' ART') as (C1 & C2 & _). exact (conj C1 C2).
   Qed.
@@ -425,7 +426,7 @@ Section Adapt.
     change (s2_W (Sj_stage2_main.wE E0 WDt (@wm RT) w)) with (s2_W E0) in MU. change (wm RT w) with (fst w) in *. change (wm RT w') with (fst w') in *.
     change (e_spa E0) with spa in *. change (e_lo E0) with lo in *.
     pose proof (mcost_nonneg (blen bs + 64) ltac:(pose proof (blen_nonneg bs); lia)) as MC.
-    assert (LOR' : rt_sp0 RT (snd w) - STACK_WIN <= lo) by (rewrite G4; exact LOR).
+    assert (LOR' : rt_sp0 RT (snd w) - STACK_SPAN <= lo) by (rewrite G4; exact LOR).
     unfold good. split; [exact (proj1 RA)|]. split; [rewrite EF; exact G2|]. split; [rewrite EL; exact G3|]. split; [rewrite ES; exact G4|].
     split. { clear - G5 EC Hk NL MC. unfold NUMA_CREDIT in *. destruct (kk <=? 0); destruct (kk + 1 <=? 0) eqn:K2; lia. }
     split.
@@ -471,7 +472,7 @@ Section Adapt.
     change (e_spa (wE w)) with spa in *. change (e_sp (wE w)) with sp in *. change (e_gp (wE w)) with gp. change (e_tp (wE w)) with tp.
     change (e_FF (wE w)) with f in *. change (e_lo (wE w)) with lo in *. change (e_THIS (wE w)) with THIS in *.
     change (e_m0 (wE w)) with (fst w) in *. change (s2_W (wE w)) with (s2_W E0) in MU'.
-    assert (LOR' : rt_sp0 RT (snd w) - STACK_WIN <= lo) by (rewrite G4; exact LOR).
+    assert (LOR' : rt_sp0 RT (snd w) - STACK_SPAN <= lo) by (rewrite G4; exact LOR).
     pose proof (art_of_munch RT AF (snd w) (fst w) m' lo (s2_W E0) G1 LOR' (good_fp w kk HG) MU' WM') as ART'.
     pose proof (bv_unsigned_in_range 64 sp) as SPR. unfold bv_modulus in SPR. cbn in SPR.
     assert (SPAR : 0 <= spa < 2^64) by (pose proof (stk_lo_nonneg _ _ _ _ ST'); clear - SPA1 SPR ROOM H; unfold S2A_STACK, NUMA_STACK, RT_STACK in ROOM; lia).
@@ -739,7 +740,7 @@ Proof.
                      [exact F0 | clear - FTOP; unfold USTACK_TOP in FTOP; lia | clear - TR LOR ROOM TOP; unfold STACK_WIN, USTACK_TOP, S2A_STACK, NUMA_STACK, RT_STACK in *; lia | exact W1 | exact W2 | exact MI2] |].
   intros ms3 (y1 & y5 & y6 & y7 & y11 & y12 & y13 & y16 & y17 & y18 & y22 & y23 & y25 & y27 & y28 & y29 & y30 & y31 & m3 & -> & MU3 & WM3 & MI3).
 
-  assert (LOR1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite ESP; exact LOR).
+  assert (LOR1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite ESP; exact LOR).
   assert (FP3 : fp_ok RT Σ1 lo [(f, f + 24); (Z.shiftr f 3 + 2147450880, Z.shiftr f 3 + 2147450880 + 164)]).
   { constructor; [right; right; left; exists f, 5%nat; split; [exact INF|]; cbn [fst snd]; change (fs_size 5) with 2048; clear; lia|].
     constructor; [right; right; right; exists f, 5%nat; split; [exact INF|]; cbn [fst snd]; change (fs_size 5) with 2048; rewrite SHF, SHF2; clear; lia| constructor]. }

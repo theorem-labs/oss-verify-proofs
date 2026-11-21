@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the frame-area interface of fuzz_preset's walks, image-free.
    The walks of __asan_stack_malloc_{0,1,3} and __asan_set_shadow_f5 are written over a relation
    ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop,
@@ -9,7 +10,7 @@
    - astack_malloc_realizes_x = YG0d.v astack_malloc_realizes (:285-300), the same substitution, Hp quantified.
    - aset_shadow_realizes_x   = cgif_rgb_fuzzer lib/YG0e.v aset_shadow_realizes (:48-59), the same substitution,
      plus ONE final conjunct `forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a` (presence never
-     shrinks), mirrored from fuzz_state's SetShadowDef / SetShadowDefU (origin/cold/port-state-rt 5c02ddf4dee,
+     shrinks), mirrored from fuzz_state's SetShadowDef / SetShadowDefU (
      h-rw-sta-1), in FSupoisonU.aintrin_realizesU's spelling and position. It cannot be derived from the aview
      clause, because apresent_transfer needs `~ in_img a`: on image bytes aview reads the rom, so aview-equality
      says nothing about presence there. Callers that run the contract (aj_set_shadow_at_x) need it for the
@@ -124,7 +125,7 @@ apresent (w_H W) mem (shadow_addr (frame_addr ly cid pos) + i) /\
 (* What the walks read from AR. The comment on each field names the cgif AR piece it projects
    (YG0n.v:490 AR = ARm /\ ALedger /\ abudget_ok /\ amwf /\ ahs) and the donor line that reads it. *)
 Record fs_iface : Prop := {
-(* am_wf -> wf_fakestack -> wfs_hints (YG01.v:311); AF0s.v:57 *)
+(* am_wf -> wf_fakestack -> wfs_hints (YG01.v:312); AF0s.v:57 *)
 fi_hints : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
 length (fs_hint (st_fs S)) = 11%nat /\ Forall (fun h => 0 <= h) (fs_hint (st_fs S));
 (* am_layout (YG0n.v:209); AF0s.v:61, :87-101 *)

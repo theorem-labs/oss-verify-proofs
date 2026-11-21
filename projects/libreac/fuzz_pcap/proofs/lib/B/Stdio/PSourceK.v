@@ -1,7 +1,8 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): new file, written for libreac/fuzz_pcap -- asan-ubsan twin of lib/A/Stdio/PSourceK.v (a working branch 6622be68f03), ported from that file: pcap_KS for the asan-ubsan image (KS_U, obligation row 6), the VALUE of lib/A's generic PSource.asource_syms (it Requires lib/A PSource; a lib/B copy of PSource would be a second, incompatible type). 22 image numerals relocated on the pinned v1.9.0 images by symbol + offset, each containing symbol pair VERIFIED equal (code: mnemonic + registers; data: bytes; pointer cells by the relocated target they hold; GOT cells by the relocated word they hold). Unchanged in asan-ubsan (verified): "rb\0" 0x20d40 and "rwa\0" 0x20026 (PCAP_RWA, the new as_rwa field). cgif's own addresses cited in comments (0x5f9221 / 0x5f9223) are not this image's and are unchanged. *)
+(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): new file, written for libreac/fuzz_pcap -- asan-ubsan twin of lib/A/Stdio/PSourceK.v (a working branch), ported from that file: pcap_KS for the asan-ubsan image (KS_U, obligation row 6), the VALUE of lib/A's generic PSource.asource_syms (it Requires lib/A PSource; a lib/B copy of PSource would be a second, incompatible type). 22 image numerals relocated on the pinned v1.9.0 images by symbol + offset, each containing symbol pair VERIFIED equal (code: mnemonic + registers; data: bytes; pointer cells by the relocated target they hold; GOT cells by the relocated word they hold). Unchanged in asan-ubsan (verified): "rb\0" 0x20d40 and "rwa\0" 0x20026 (PCAP_RWA, the new as_rwa field). cgif's own addresses cited in comments (0x5f9221 / 0x5f9223) are not this image's and are unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: pcap_KS, the CONCRETE asource_syms for libreac/fuzz_pcap's v1.9.0 ASan
    image -- row 6 of the port's obligation set
    (OBLIGATIONS.md (sha256 781e8f81f164; internal record), a Theorem Labs lane 22:00Z), and the
@@ -9,7 +10,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 
    IMAGE ROOT: the ORIGINAL v1.9.0 set, which is what the statements target --
    the pinned fuzz_pcap images and their unstripped twins,
-   statements ed6b6b7b0ab. NOT the toolchain-N images.
+   statements. NOT the toolchain-N images.
 
    EVERY FIELD IS MEASURED, each with the line it came from. Symbols are from the image's own
    nm dump fuzz_pcap.nm.txt (sha256 21120db6ab2e; internal record); the words are read out of the ELF's

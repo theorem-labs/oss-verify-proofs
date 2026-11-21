@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch's whole ProcInput, mmap base and kernel build, with launch_ok, the recorded kernel and entry_launch_ok_va, and reaches AsanInit's lemmas through iax/iap; the eight main-phase entry states, computed in the build per CONFIG_RSEQ value, with the start-up's fresh variables renumbered by the probe-read map; the reserved ledger with the launch's vDSO/vvar pair (co_resx); the stack window of 6,144,513 bytes below sp; main_aimg reads main's two argument words from the entry state's facts at the run's own CONFIG_RSEQ value (hs_argv_ok, a section hypothesis) and the two strings from the launch's entry block, in the string area the start-up keeps hidden). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -53,7 +54,7 @@ Qed.
 
 (* [comment removed for export] *)
 Definition e_stop : expr :=
-  EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 10)) (EMd Instr.M_MUL (ELit 4096) (EVar 374))).
+  EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 10)) (EMd Instr.M_MUL (ELit 4096) (EVar 380))).
 Definition e_sbot : expr := EAlu Instr.ALU_ADD e_stop (ELit (-8388608)).
 Definition e_anchor : expr :=
   EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 32768) (EVar 0)) (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 16) (EVar 6)) (EMd Instr.M_MUL (ELit 4096) (EVar 10)))) (ELit (-160)).
@@ -66,12 +67,12 @@ Definition e_stksh : expr := EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EV
 Definition e_stkshlen : expr := EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 0)) (EMd Instr.M_MUL (ELit (-512)) (EVar 10))) (ELit 17592187092992).
 (* [comment removed for export] *)
 Definition VIS : list (expr * expr) :=
-  [ (pgE 532, ELit 4096); (pgE 515, ELit 8388608); (pgE 514, ELit 1048576); (pgE 438, ELit 11571200); (pgE 340, ELit 4096);
-    (pgE 275, ELit 4096); (pgE 246, ELit 65536); (pgE 245, ELit 4096); (e_ri, ELit 4096);
-    (pgE 225, ELit 3727360); (pgE 95, ELit 65536); (ELit 65536, ELit 6238208); (e_stk, e_stklen) ].
+  [ (pgE 538, ELit 4096); (pgE 521, ELit 8388608); (pgE 520, ELit 1048576); (pgE 444, ELit 11571200); (pgE 346, ELit 4096);
+    (pgE 279, ELit 4096); (pgE 250, ELit 65536); (pgE 249, ELit 4096); (e_ri, ELit 4096);
+    (pgE 229, ELit 3727360); (pgE 99, ELit 65536); (ELit 65536, ELit 6238208); (e_stk, e_stklen) ].
 Definition G1 : list (expr * expr) :=
-  [ (pgE 341, ELit 4096); (pgE 455, ELit 4096); (EAlu Instr.ALU_ADD (pgE 456) (ELit 4096), ELit 4096); (pgE 457, ELit 4096);
-    (pgE 455, ELit 4096); (EAlu Instr.ALU_ADD (pgE 456) (ELit 4096), ELit 4096); (pgE 457, ELit 4096) ].
+  [ (pgE 347, ELit 4096); (pgE 461, ELit 4096); (EAlu Instr.ALU_ADD (pgE 462) (ELit 4096), ELit 4096); (pgE 463, ELit 4096);
+    (pgE 461, ELit 4096); (EAlu Instr.ALU_ADD (pgE 462) (ELit 4096), ELit 4096); (pgE 463, ELit 4096) ].
 Definition G0 : list (expr * expr) := firstn 4 G1 ++ (pgE 5, ELit 8192) :: skipn 4 G1.
 #[local] Notation SOFF := 0x7fff8000.
 Lemma range_false : forall lo hi x, hi <= x \/ x < lo -> ((lo <=? x) && (x <? hi))%bool = false.
@@ -79,14 +80,6 @@ Proof. intros lo hi x H. apply Bool.andb_false_iff. destruct (Z.le_gt_cases lo x
 Ltac dlia := first [lia | Z.div_mod_to_equations; lia].
 
 
-(* [comment removed for export] *)
-Definition val_at (off : Z) : expr :=
-  match List.find (fun K => match K with KWord (SA b o) 8%nat _ => saddr_eqb (SA b o) (SA e_sp0 off) | _ => false end) (kn HS_s2_00)
-  with Some (KWord _ _ v) => v | _ => ELit 0 end.
-Definition V8 : expr := Eval vm_compute in val_at 8.
-Definition V16 : expr := Eval vm_compute in val_at 16.
-Lemma F8 : hs_fact (KWord (SA e_sp0 8) 8 V8) = true. Proof. vm_compute. reflexivity. Qed.
-Lemma F16 : hs_fact (KWord (SA e_sp0 16) 8 V16) = true. Proof. vm_compute. reflexivity. Qed.
 
 Lemma bytes_at_memeq : forall m m' a bs, Mem.bytes_at ASEGS m a bs ->
   (forall x : word, a <= bv_unsigned x < a + Z.of_nat (length bs) -> m' x = m x) -> Mem.bytes_at ASEGS m' a bs.
@@ -101,13 +94,13 @@ Proof. intros base [|s0 [|s1 r]] Hl; cbn -[Mem.le8 Z.add Z.of_nat]; [cbn in Hl; 
 
 (* [comment removed for export] *)
 Definition hr0_apps (sp : word) (E : env) : list (Z * Z) :=
-  [ (pgv E 532, 4096); (pgv E 514, 1048576); (pgv E 438, 11571200); (pgv E 340, 4096); (pgv E 275, 4096); (pgv E 246, 65536);
-    (pgv E 245, 4096); (pgv E 225, 3727360); (pgv E 95, 65536);
-    (pgv E 341, 4096); (pgv E 455, 4096); (pgv E 456 + 4096, 4096); (pgv E 457, 4096); (pgv E 5, 8192) ].
+  [ (pgv E 538, 4096); (pgv E 520, 1048576); (pgv E 444, 11571200); (pgv E 346, 4096); (pgv E 279, 4096); (pgv E 250, 65536);
+    (pgv E 249, 4096); (pgv E 229, 3727360); (pgv E 99, 65536);
+    (pgv E 347, 4096); (pgv E 461, 4096); (pgv E 462 + 4096, 4096); (pgv E 463, 4096); (pgv E 5, 8192) ].
 Definition hr0_shs (sp : word) (E : env) : list (Z * Z) :=
-  [ (pgv E 532, 4096); (pgv E 515, 8388608); (pgv E 514, 1048576); (pgv E 340, 4096); (pgv E 275, 4096); (pgv E 246, 65536);
-    (pgv E 245, 4096); (pgv E 226 - pgv E 227 + 137439019008, 4096); (pgv E 225, 3727360); (pgv E 95, 65536);
-    (pgv E 341, 4096); (pgv E 455, 4096); (pgv E 456 + 4096, 4096); (pgv E 457, 4096); (pgv E 5, 8192) ].
+  [ (pgv E 538, 4096); (pgv E 521, 8388608); (pgv E 520, 1048576); (pgv E 346, 4096); (pgv E 279, 4096); (pgv E 250, 65536);
+    (pgv E 249, 4096); (pgv E 230 - pgv E 231 + 137439019008, 4096); (pgv E 229, 3727360); (pgv E 99, 65536);
+    (pgv E 347, 4096); (pgv E 461, 4096); (pgv E 462 + 4096, 4096); (pgv E 463, 4096); (pgv E 5, 8192) ].
 Definition appiv (bl : Z * Z) : Z * Z := (fst bl, fst bl + snd bl).
 Definition shiv (bl : Z * Z) : Z * Z := (A_policy5.pgdn (A_bundle.sh (fst bl)), A_policy5.pgup (A_bundle.sh (fst bl + snd bl))).
 Definition stack_slack (sp : word) : Z * Z :=
@@ -155,26 +148,57 @@ Section MainBridge.
   Variable argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variable uid : word.
+  Variable mbase : word.
+  Variable ifs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kbld : KernelBuild.
+  Variable execfn : list byte.
+  Variables rdr sgd sgt : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hfit : AsanInit.launch_ok sp brk0 mbase rdraw (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  Let Hfes : entry_stack_fits sp argv envp := proj1 Hfit.
+  Let Hkernel : in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) = recorded_kernel (in_kernel (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt)) := proj1 (proj2 Hfit).
+  Let Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) := proj2 (proj2 (proj2 Hfit)).
+  #[local] Ltac iax X := first [ exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau)
+                               | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau)
+                              | exact (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) ].
+  #[local] Ltac iap X H := first [ pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                 | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hkernel Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve Hfes kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hva Hve kbld execfn rdr sgd sgt Hlau) as H
+                                | pose proof (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp Hva Hve kbld execfn rdr sgd sgt Hlau) as H ].
+  #[local] Notation IA X := (X APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp).
   Variable E : env.
   Variable R : bvmap 5 word.
   Variable FULL : word -> option byte.
   Variable model : Model.
   Variable hs : acs.
   Hypothesis Hhs : HS_MAIN hs.
-  Hypothesis HC : cs_ok ASEGS ASAN5 AsanInit.LIMIT (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw) fs E hs R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN5 AsanInit.LIMIT (SINV0 APH Asan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt) (argH0 sp rdraw argv envp kbld execfn) fs E hs R FULL model.
 
   #[local] Notation E0m := (aenv_of hs E).
-  #[local] Notation CXRW := (cxs_rw sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC).
-  #[local] Notation CXS := (cxs_sound sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC).
-  #[local] Notation PG := (pgv_range sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC).
-  #[local] Notation FACT := (A_MainFacts.fact_sound sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC).
-  #[local] Notation MR := (Mr ASAN5 (argH0 APH sp rdraw argv envp uid hw) E hs model FULL).
-  #[local] Notation MRSOME := (Mr_some0 sp rdraw hw argv envp uid E FULL model hs).
-  #[local] Notation SX X := (X sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC).
+  #[local] Notation CXRW := (cxs_rw sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC).
+  #[local] Notation CXS := (cxs_sound sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC).
+  #[local] Notation PG := (pgv_range sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC).
+  #[local] Notation FACT := (A_MainFacts.fact_sound sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC).
+  #[local] Notation MR := (Mr ASAN5 (argH0 sp rdraw argv envp kbld execfn) E hs model FULL).
+  #[local] Notation MRSOME := (Mr_some0 sp rdraw argv envp kbld execfn E FULL model hs).
+  #[local] Notation SX X := (X sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC).
   Let usp := bv_unsigned sp.
   Let pusp := usp - usp mod 4096.
 
@@ -192,21 +216,21 @@ Section MainBridge.
     exact (proj1 (Forall_forall _ _) (co_know _ _ _ _ _ _ _ _ _ _ _ HC) K Hin).
   Qed.
 
-  Lemma R226' : 4096 * 4295491576 <= pgv E 226 <= 4096 * 34326181871. Proof. exact (R226 sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC). Qed.
-  Lemma R227' : 4096 * 0 <= pgv E 227 <= 4096 * 15.                   Proof. exact (R227 sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC). Qed.
-  Lemma R245' : 4096 * 1 <= pgv E 245 <= 4096 * 34359736319.          Proof. exact (R245 sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC). Qed.
-  Lemma R244' : 4096 * 1539 <= pgv E 244 <= 4096 * 34359734272.       Proof. exact (R244 sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC). Qed.
-  Lemma R514' : 4096 * 1539 <= pgv E 514 <= 4096 * 34359736064.       Proof. exact (R514 sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC). Qed.
-  Lemma R515' : 4096 * 1539 <= pgv E 515 <= 4096 * 34359734272.       Proof. exact (R515 sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC). Qed.
+  Lemma R226' : 4096 * 4295491576 <= pgv E 230 <= 4096 * 34326181871. Proof. exact (R226 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC). Qed.
+  Lemma R227' : 4096 * 0 <= pgv E 231 <= 4096 * 15.                   Proof. exact (R227 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC). Qed.
+  Lemma R245' : 4096 * 1 <= pgv E 249 <= 4096 * 34359736319.          Proof. exact (R245 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC). Qed.
+  Lemma R244' : 4096 * 1539 <= pgv E 248 <= 4096 * 34359734272.       Proof. exact (R244 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC). Qed.
+  Lemma R514' : 4096 * 1539 <= pgv E 520 <= 4096 * 34359736064.       Proof. exact (R514 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC). Qed.
+  Lemma R515' : 4096 * 1539 <= pgv E 521 <= 4096 * 34359734272.       Proof. exact (R515 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC). Qed.
 
   (* [comment removed for export] *)
-  Lemma u_sb : uE E e_sb = pgv E 226 - pgv E 227 + 65536.
+  Lemma u_sb : uE E e_sb = pgv E 230 - pgv E 231 + 65536.
   Proof.
     pose proof R226' as R226. pose proof R227' as R227.
     unfold uE, e_sb. cbn [edenot]. rewrite !u_add64, !u_mul64, !u64_lit by lia.
     replace (bv_unsigned (Z_to_bv 64 (-4096))) with (2 ^ 64 - 4096) by (vm_compute; reflexivity).
-    unfold pgv in *. pose proof (u64_range (ev E 226%nat)) as Ra. pose proof (u64_range (ev E 227%nat)) as Rb.
-    set (u1 := bv_unsigned (ev E 226%nat)) in *. set (u2 := bv_unsigned (ev E 227%nat)) in *.
+    unfold pgv in *. pose proof (u64_range (ev E 230%nat)) as Ra. pose proof (u64_range (ev E 231%nat)) as Rb.
+    set (u1 := bv_unsigned (ev E 230%nat)) in *. set (u2 := bv_unsigned (ev E 231%nat)) in *.
     rewrite <- (Z.add_mod (4096 * u1) ((2 ^ 64 - 4096) * u2) (2 ^ 64)) by lia.
     replace (4096 * u1 + (2 ^ 64 - 4096) * u2) with ((4096 * u1 - 4096 * u2) + u2 * 2 ^ 64) by lia.
     assert (M0 : 2 ^ 64 <> 0) by (cbv; discriminate).
@@ -214,10 +238,10 @@ Section MainBridge.
     rewrite u64_lit by lia. apply Z.mod_small. lia.
   Qed.
 
-  Lemma u_rib' : uE E e_rib = pgv E 226 - pgv E 227.
-  Proof. exact (u_rib sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC). Qed.
+  Lemma u_rib' : uE E e_rib = pgv E 230 - pgv E 231.
+  Proof. exact (u_rib sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC). Qed.
 
-  Lemma u_ri' : uE E e_ri = pgv E 226 - pgv E 227 + 137439019008.
+  Lemma u_ri' : uE E e_ri = pgv E 230 - pgv E 231 + 137439019008.
   Proof.
     pose proof R226' as R226. pose proof R227' as R227. pose proof u_rib' as U.
     unfold uE, e_ri in *. cbn [edenot]. rewrite u_add64, U, u64_lit by lia. apply Z.mod_small. lia.
@@ -242,8 +266,8 @@ Section MainBridge.
   (* [comment removed for export] *)
   Lemma pusp_sum' : pusp = 32768 * bv_unsigned (ev E 0%nat) + 4096 * bv_unsigned (ev E 10%nat) /\ 0x7fff80000000 <= pusp /\ pusp + 4096 <= 2 ^ 47.
   Proof.
-    pose proof u_sp0_sum as (USP & R0 & R6 & R10). pose proof (uE_sp0 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs HC) as U.
-    unfold uE in U. rewrite U in USP. pose proof (usp_lo sp Hsp). pose proof (usp_hi APH sp rdraw argv envp uid hw Hva Hve Hfit). subst pusp usp. split; [| dlia].
+    pose proof u_sp0_sum as (USP & R0 & R6 & R10). pose proof (uE_sp0 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs HC) as U.
+    unfold uE in U. rewrite U in USP. pose proof (usp_lo sp Hsp). assert (bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi. subst pusp usp. split; [| dlia].
     rewrite USP. replace (32768 * bv_unsigned (ev E 0%nat) + 16 * bv_unsigned (ev E 6%nat) + 4096 * bv_unsigned (ev E 10%nat))
       with (16 * bv_unsigned (ev E 6%nat) + (8 * bv_unsigned (ev E 0%nat) + bv_unsigned (ev E 10%nat)) * 4096) by lia.
     rewrite Z.mod_add by lia. rewrite Z.mod_small by lia. lia.
@@ -289,7 +313,7 @@ Section MainBridge.
     pose proof (CatExec.length_N_to_le_bytes w (Z_to_bv 64 val)) as LEN.
     pose proof (LibBridge.rdn_bytes_at MR (word_to_le_bytes w (Z_to_bv 64 val)) (pgv E v + off) ltac:(lia) ltac:(rewrite LEN; lia)) as BA.
     rewrite LEN in BA. specialize (BA Hr).
-    pose proof (high_bytes_at sp rdraw hw argv envp uid E FULL model hs (pgv E v + off) _ ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) ltac:(rewrite LEN; lia) BA) as [X Y].
+    pose proof (high_bytes_at sp rdraw argv envp kbld execfn E FULL model hs (pgv E v + off) _ ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) ltac:(rewrite LEN; lia) BA) as [X Y].
     rewrite LEN in Y. exact (conj X Y).
   Qed.
 
@@ -353,12 +377,12 @@ Section MainBridge.
 
   Theorem init_fsrep : AF_fakestack_rep.FSRep AImages.asegs E0m (fsbase_of E) AsanFakeStack.fsstate0 [] FULL.
   Proof.
-    pose proof (SX R438) as R438. pose proof (SX Z438) as Z438. pose proof (S438 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S438.
-    pose proof (ceil_eq sp rdraw brk0 argv envp uid Hsp Hva Hve Hfit RCSP) as CE.
-    pose proof (pusp_le sp Hsp) as PU. pose proof (usp_hi APH sp rdraw argv envp uid hw Hva Hve Hfit) as UH.
-    pose proof (pg_zero_bytes 438 0 88 ltac:(vm_compute; reflexivity) ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) ltac:(subst pusp usp; lia) ltac:(lia) ltac:(subst pusp usp; lia)) as Z0.
-    pose proof (pg_zero_bytes 438 96 11571104 ltac:(vm_compute; reflexivity) ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) ltac:(subst pusp usp; lia) ltac:(lia) ltac:(subst pusp usp; lia)) as Z96.
-    pose proof (pg_word_bytes 438 88 8 20 ltac:(vm_compute; reflexivity) ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) ltac:(subst pusp usp; lia) ltac:(subst pusp usp; lia)) as [W88 W88w].
+    pose proof (SX R438) as R438. pose proof (SX Z438) as Z438. pose proof (S438 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S438.
+    assert (CE : RunCeiling.alloc_ceiling = usp - 8388608) by (eapply ceil_eq; eassumption).
+    pose proof (pusp_le sp Hsp) as PU. assert (UH : bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi.
+    pose proof (pg_zero_bytes 444 0 88 ltac:(vm_compute; reflexivity) ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) ltac:(subst pusp usp; lia) ltac:(lia) ltac:(subst pusp usp; lia)) as Z0.
+    pose proof (pg_zero_bytes 444 96 11571104 ltac:(vm_compute; reflexivity) ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) ltac:(subst pusp usp; lia) ltac:(lia) ltac:(subst pusp usp; lia)) as Z96.
+    pose proof (pg_word_bytes 444 88 8 20 ltac:(vm_compute; reflexivity) ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) ltac:(subst pusp usp; lia) ltac:(subst pusp usp; lia)) as [W88 W88w].
     assert (NF : forall cid, 0 <= cid <= 1 -> 0 < AsanFakeStack.fs_nframes cid <= 16384 /\ 64 <= AsanFakeStack.fs_frame_bytes cid <= 128
                  /\ AsanFakeStack.fs_frame_bytes cid * AsanFakeStack.fs_nframes cid = 1048576 /\ True).
     { pose proof fs_sizes as (S1 & S2 & S3 & S4). intros cid Hc. assert (cid = 0 \/ cid = 1) as [-> | ->] by lia; rewrite ?S1, ?S2, ?S3, ?S4; lia. }
@@ -368,21 +392,21 @@ Section MainBridge.
     split. { (* [comment removed for export] *) intros cid Hc. exists (Z_to_bv 64 0). unfold AF_fakestack_rep.kFsClasses in Hc.
       apply high_rw_cells; [unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia | cbn; subst pusp usp; lia | cbn; exact (conj I I) |]. intros i Hi. cbn in Hi.
       cbn [Cells.cells_bytes Cells.cbytes app]. unfold Mem.wa.
-      match goal with |- FULL (Z_to_bv 64 ?a) = _ => replace a with (pgv E 438 + 0 + (8 * cid + Z.of_nat i)) by lia end.
+      match goal with |- FULL (Z_to_bv 64 ?a) = _ => replace a with (pgv E 444 + 0 + (8 * cid + Z.of_nat i)) by lia end.
       rewrite (Z0 (8 * cid + Z.of_nat i)) by lia.
       do 8 (destruct i as [|i]; [reflexivity|]). cbn in Hi. lia. }
     split. { (* [comment removed for export] *) split; [split; [cbn; exact (conj I I)|]|]; cbn [Cells.cells_bytes Cells.cbytes Cells.cells_size app Z.of_nat Pos.of_succ_nat Pos.succ].
       - rewrite app_nil_r. exact W88. - exact W88w. }
     split. { (* [comment removed for export] *) apply high_rw_cells; [unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia | cbn; subst pusp usp; lia | cbn; exact (conj I I) |]. intros i Hi. cbn in Hi.
       destruct i as [|i]; [|lia]. cbn. unfold Mem.wa.
-      match goal with |- FULL (Z_to_bv 64 ?a) = _ => replace a with (pgv E 438 + 96 + 0) by lia end. rewrite (Z96 0) by lia. reflexivity. }
+      match goal with |- FULL (Z_to_bv 64 ?a) = _ => replace a with (pgv E 444 + 96 + 0) by lia end. rewrite (Z96 0) by lia. reflexivity. }
     split. { (* [comment removed for export] *) intros cid pos [Hc Hp]. pose proof (NF cid Hc) as (N1 & N2 & N3 & N4).
       unfold AsanFakeStack.fs_flag_addr, AsanFakeStack.fs_flags_base, AsanFakeStack.fs_flags_off, AsanFakeStack.kFsFlagsOffset.
       assert (FO : 0 <= (if cid =? 0 then 0 else AsanFakeStack.fs_nframes 0) <= 16384).
       { pose proof fs_sizes as (S1 & _). rewrite S1. destruct (cid =? 0); lia. }
       apply high_rw_cells; [unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia | cbn; subst pusp usp; lia | cbn; exact (conj I I) |]. intros i Hi. cbn in Hi. destruct i as [|i]; [|lia].
       unfold AF_fakestack_rep.flag_byte, AF_fakestack_rep.lf_mem. cbn. unfold Mem.wa.
-      match goal with |- FULL (Z_to_bv 64 ?a) = _ => replace a with (pgv E 438 + 96 + (a - pgv E 438 - 96)) by lia end.
+      match goal with |- FULL (Z_to_bv 64 ?a) = _ => replace a with (pgv E 444 + 96 + (a - pgv E 444 - 96)) by lia end.
       rewrite Z96 by lia. reflexivity. }
     split. { (* [comment removed for export] *) intros cid pos [Hc Hp]. pose proof (NF cid Hc) as (N1 & N2 & N3 & N4).
       unfold AsanFakeStack.fs_frame_addr, AsanFakeStack.fs_frames_base, AsanFakeStack.kFsFlagsOffset, AF_fakestack_rep.fs_shadow, AF_fakestack_rep.FS_SB.
@@ -391,14 +415,14 @@ Section MainBridge.
                    /\ 4096 + 32768 + cid * 1048576 + AsanFakeStack.fs_frame_bytes cid * pos + AsanFakeStack.fs_frame_bytes cid <= 11571200) by nia.
       split.
       - apply high_stk; [unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia | subst pusp usp; lia |]. intros a Ha. exists (Z_to_bv 8 0). unfold Mem.wa.
-        replace a with (pgv E 438 + 96 + (a - pgv E 438 - 96)) by lia. apply Z96. lia.
+        replace a with (pgv E 444 + 96 + (a - pgv E 444 - 96)) by lia. apply Z96. lia.
       - apply high_stk; [unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; clear - FR R438 Z438 N2; Z.div_mod_to_equations; lia | clear - FR R438 S438 PU UH N2; Z.div_mod_to_equations; lia |].
         intros a Ha. exists (Z_to_bv 8 0). unfold Mem.wa.
         (* [comment removed for export] *)
-        assert (HX : exists g, pgv E 438 <= 8 * g < pgv E 438 + 11571200 /\ a = 2147450880 + g).
+        assert (HX : exists g, pgv E 444 <= 8 * g < pgv E 444 + 11571200 /\ a = 2147450880 + g).
         { exists (a - 2147450880). unfold pgv in *. clear - Ha FR N2 R438. Z.div_mod_to_equations. nia. }
         destruct HX as (g & Hg & ->).
-        apply (shadow_zero_pg 438 11571200); [vm_compute; reflexivity | lia | reflexivity | lia | exact Hg]. }
+        apply (shadow_zero_pg 444 11571200); [vm_compute; reflexivity | lia | reflexivity | lia | exact Hg]. }
     split; [constructor|]. intros N ff [].
   Qed.
 
@@ -416,9 +440,9 @@ Section MainBridge.
     /\ Step.rw_cells AImages.asegs FULL (AF_fakestack_rep.fp_ctx (plumb_of E) + 8) [Cells.C4 (Z_to_bv 64 0)].
   Proof.
     pose proof (SX R245) as R245. pose proof (SX R246) as R246.
-    assert (U245 : uE E (pgE 245) = pgv E 245) by (apply u_pg'; lia). assert (U246 : uE E (pgE 246) = pgv E 246) by (apply u_pg'; lia).
-    change (AsanState.ae_thread E0m) with (pgv E 245). change (AF_fakestack_rep.fp_ctx (plumb_of E)) with (pgv E 246).
-    split. { cx (pgE 245) 0 [CX8 (XS (pgE 246))]. } cx (pgE 246) 8 [CX4 0].
+    assert (U245 : uE E (pgE 249) = pgv E 249) by (apply u_pg'; lia). assert (U246 : uE E (pgE 250) = pgv E 250) by (apply u_pg'; lia).
+    change (AsanState.ae_thread E0m) with (pgv E 249). change (AF_fakestack_rep.fp_ctx (plumb_of E)) with (pgv E 250).
+    split. { cx (pgE 249) 0 [CX8 (XS (pgE 250))]. } cx (pgE 250) 8 [CX4 0].
   Qed.
 
   (* [comment removed for export] *)
@@ -466,8 +490,14 @@ Section MainBridge.
     change (AsanState.ae_keys0 E0m) with (keys0_of hs). unfold keys0_of, AsanOps.zlen, AsanConsts.kDepotNodesPerBlock.
     destruct (rcase0 hs); (split; [cbn [List.map]; apply List.NoDup_cons; [intros [] | apply List.NoDup_nil] | cbn; lia]).
   Qed.
-  Lemma init_hstot : AsanGap.gw_sizes (segments_reserved ASEGS ++ l0_of E) <= 2 ^ 46 /\ (length (segments_reserved ASEGS ++ l0_of E) <= 256)%nat.
+  Lemma init_hstot : AsanGap.gw_sizes (vm_reserved (m_vmmaps model) ++ l0_of E) <= 2 ^ 46 /\ (length (vm_reserved (m_vmmaps model) ++ l0_of E) <= 256)%nat.
   Proof.
+    (* LPS 08b1429: the ledger carries the launch's vDSO/vvar pair (co_resx: at most 2 entries, 20 pages) *)
+    pose proof (co_resx _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hrx & _ & Hlen & Hsum).
+    assert (GS : AsanGap.gw_sizes rx = sum_sizes rx) by (clear; induction rx as [|[b z] rx IH]; cbn; [reflexivity| rewrite IH; reflexivity]).
+    pose proof (AsanGap.gw_sizes_nonneg rx) as G0.
+    unfold resx_bytes in Hsum. change (n_resx ASAN5) with 2%nat in Hlen. change (p_resx ASAN5) with 20%nat in Hsum.
+    rewrite Hrx, <- app_assoc, !AsanGap.gw_sizes_app, !length_app.
     rewrite res0_val. unfold l0_of, l0_head, l0_tail. cbn [app length AsanGap.gw_sizes fst snd].
     rewrite !u64_lit by lia. split; [lia | lia].
   Qed.
@@ -485,12 +515,12 @@ Section MainBridge.
   Proof.
     pose proof (SX R515) as R515. pose proof (SX R438) as R438. pose proof (SX R226) as R226.
     pose proof (SX Z515) as Z515. pose proof (SX Z438) as Z438.
-    pose proof (S515 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S515.
-    pose proof (S438 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S438.
-    pose proof (D438_515 sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC) as D.
-    pose proof (ceil_eq sp rdraw brk0 argv envp uid Hsp Hva Hve Hfit RCSP) as CE. pose proof (pusp_le sp Hsp) as PU.
-    change (AsanState.ae_store_blk E0m) with (pgv E 515). change (AsanState.ae_resv_beg E0m) with (pgv E 226).
-    change (AsanState.ae_fs_beg E0m) with (pgv E 438). change (AsanState.ae_fs_len E0m) with 11571200. change (AsanState.ae_img E0m) with A_IMG.
+    pose proof (S515 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S515.
+    pose proof (S438 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S438.
+    pose proof (D438_515 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC) as D.
+    assert (CE : RunCeiling.alloc_ceiling = usp - 8388608) by (eapply ceil_eq; eassumption). pose proof (pusp_le sp Hsp) as PU.
+    change (AsanState.ae_store_blk E0m) with (pgv E 521). change (AsanState.ae_resv_beg E0m) with (pgv E 230).
+    change (AsanState.ae_fs_beg E0m) with (pgv E 444). change (AsanState.ae_fs_len E0m) with 11571200. change (AsanState.ae_img E0m) with A_IMG.
     change (AsanState.ae_reserved E0m) with (reserved_of E). unfold fsbase_of, AF_fakestack_rep.kFsBytes, AsanLayout.app_mem. rewrite CE.
     rewrite AsanLayout.kLowAppEnd_val, AsanSizeClass.kHighMemBeg_val. cbn [A_IMG fst snd].
     split; [clear - R515 Z515 S515 PU; lia|]. split; [clear - S515 PU; lia|].
@@ -506,21 +536,21 @@ Section MainBridge.
   Proof.
     intros a b Hab. destruct (Mem.ro_addr AImages.asegs a) eqn:Hro; [| reflexivity]. exfalso.
     pose proof (asan_ro_addr_range a Hro) as Ra.
-    pose proof (A_MainFacts.hull_img sp rdraw brk0 hw argv envp fs uid Hsp Hva E R FULL model hs Hhs HC 65536 682088 ltac:(vm_compute; reflexivity)
+    pose proof (A_MainFacts.hull_img sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva E R FULL model hs Hhs HC 65536 682088 ltac:(vm_compute; reflexivity)
                   ltac:(unfold A_MainFacts.A_IMG_LO; lia) ltac:(unfold A_MainFacts.A_IMG_HI, A_ImgZero5.A_IMG_HI; lia) (bv_unsigned a) ltac:(lia)) as Hn.
     rewrite Z_to_bv_bv_unsigned in Hn. congruence.
   Qed.
 
-  (* [comment removed for export] *)
-  Theorem main_stk : Frame.stk AImages.asegs FULL (usp - 8388608) (usp + -48).
+  (* LPS 08b1429: the launch's stack window below sp is 6144513 bytes (the start state's KWr fact) *)
+  Theorem main_stk : Frame.stk AImages.asegs FULL (usp - 6144513) (usp + -48).
   Proof.
-    pose proof (usp_lo sp Hsp) as UL. pose proof (usp_hi APH sp rdraw argv envp uid hw Hva Hve Hfit) as UH.
-    pose proof (FACT (KWr (SA e_sp0 (-8388608)) (ELit 8388608)) ltac:(vm_compute; reflexivity)) as [_ HW].
-    unfold estart, elenZ in HW. cbn [a_base a_off] in HW. change (edenot E (ELit 8388608)) with (Z_to_bv 64 8388608) in HW.
-    rewrite (edenot_sp0 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs HC) in HW. rewrite u64_lit in HW by lia.
+    pose proof (usp_lo sp Hsp) as UL. assert (UH : bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi.
+    pose proof (FACT (KWr (SA e_sp0 (-6144513)) (ELit 6144513)) ltac:(vm_compute; reflexivity)) as [_ HW].
+    unfold estart, elenZ in HW. cbn [a_base a_off] in HW. change (edenot E (ELit 6144513)) with (Z_to_bv 64 6144513) in HW.
+    rewrite (edenot_sp0 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs HC) in HW. rewrite u64_lit in HW by lia.
     split; [subst usp; lia|]. split; [subst usp; lia|]. intros a Ha.
-    specialize (HW (a - (usp - 8388608)) 1%nat ltac:(subst usp; lia) ltac:(subst usp; cbn; lia)).
-    cbn [store_ok] in HW. replace (bv_unsigned sp + -8388608 + (a - (usp - 8388608))) with a in HW by (subst usp; lia).
+    specialize (HW (a - (usp - 6144513)) 1%nat ltac:(subst usp; lia) ltac:(subst usp; cbn; lia)).
+    cbn [store_ok] in HW. replace (bv_unsigned sp + -6144513 + (a - (usp - 6144513))) with a in HW by (subst usp; lia).
     assert (OUT : bv_unsigned (Mem.wa a) + 1 <= 0x10000 \/ 0x603000 <= bv_unsigned (Mem.wa a)).
     { unfold Mem.wa. rewrite u64_lit by (subst usp; lia). right. subst usp; lia. }
     change (Z_to_bv 64 a) with (Mem.wa a) in HW. change ASEGS with AImages.asegs in HW.
@@ -531,89 +561,76 @@ Section MainBridge.
     - exists b. unfold Mem.mrd. rewrite Hm. reflexivity.
   Qed.
 
-  (* [comment removed for export] *)
+  (* LPS 727298f3: main's two argument words and the strings they point to.  The words at sp+8 and sp+16 are
+     facts of the entry state at the run's own CONFIG_RSEQ value ([Hargv], HS2Asan.hs_argv_ok), and their
+     values are the launch's ([AsanInit.u_e_str0], [AsanInit.u_e_str1]) through the start-up's agreement on the
+     launch variables; the strings and the bytes after them lie in the block's string area, from
+     [InitMem.str_base] (AsanInit's STR0) to the block's top, which the start-up never writes ([argH0]), so
+     they are read off the launch's entry block (Lib/InitMem.init_argv_string), as ADrv_ctx.AIMG_of_image
+     reads them. *)
+  Hypothesis Hargv : hs_argv_ok (rseq_z (kb_rseq kbld)) hs = true.
   Let argc := Z.of_nat (length argv).
   Let envc := Z.of_nat (length envp).
-  Let bsb := build_stack_bytes APH sp argv envp uid hw rdraw.
-  Let m0 := PropExec.wrap_mem APH sp argv envp uid hw rdraw.
-  #[local] Notation E0a := (E0 APH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation INP := (AsanInit.inp argv envp ifs stdin uid gid hw groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt).
+  #[local] Notation ENTRYW := (Z_to_bv 64 (Z.of_N Asan.M.init_pc)).
+  #[local] Notation RZb := (rseq_z (kb_rseq kbld)).
+  #[local] Notation E0a := (E0 sp rdraw brk0 argv envp uid gid hw kbld execfn).
+  Let Hvl : valid_launch INP := proj1 (proj2 (proj2 Hfit)).
+  Let m0 := wrap_mem INP mbase APH ENTRYW sp rdraw.
+  Let IMGB := build_stack_bytes (launch_auxv INP sp mbase) APH ENTRYW sp (ed_top rdraw) argv envp execfn uid gid hw rdraw.
 
-  (* [comment removed for export] *)
-  Lemma hidden_init : forall a : word,
-    usp + 8 * argc + 8 * envc + 184 <= bv_unsigned a < usp + Z.of_nat (length bsb) - 16 -> FULL a = m0 a.
+  (* the block's head and pad end where its strings start: [InitMem.str_base] *)
+  Lemma PADz : Z.of_nat (block_head_size (kb_rseq kbld) argv envp)
+               + Z.of_nat (block_pad_len (kb_rseq kbld) sp (ed_top rdraw) argv envp execfn)
+               = bv_unsigned (ed_top rdraw) - 8 - InitMem.lstr argv envp execfn - bv_unsigned sp.
+  Proof.
+    destruct (InitMem.launch_facts INP sp brk0 mbase rdraw Hvl Hlau) as (_ & PADOK & _).
+    change (kb_rseq (in_kernel INP)) with (kb_rseq kbld) in PADOK.
+    change (in_argv INP) with argv in PADOK. change (in_envp INP) with envp in PADOK. change (in_execfn INP) with execfn in PADOK.
+    assert (PAD : Z.of_nat (block_pad_len (kb_rseq kbld) sp (ed_top rdraw) argv envp execfn)
+                  = (bv_unsigned (ed_top rdraw) - 8 - InitMem.lstr argv envp execfn - bv_unsigned sp - InitMem.hsz (kb_rseq kbld) argv envp)%Z).
+    { unfold block_pad_len. unfold InitMem.hsz, InitMem.lstr in *. rewrite Z2Nat.id by lia. reflexivity. }
+    unfold InitMem.hsz in PAD. lia.
+  Qed.
+
+  Lemma head_ge : 8 * argc + 8 * envc + 40 <= Z.of_nat (block_head_size (kb_rseq kbld) argv envp).
+  Proof.
+    pose proof (InitMem.hsz_eq (kb_rseq kbld) argv envp) as HS. unfold InitMem.hsz, InitMem.argc, InitMem.envc in HS.
+    pose proof (Nat2Z.is_nonneg (InitMem.gap_len argv envp)). pose proof (Nat2Z.is_nonneg (auxv_count (kb_rseq kbld))).
+    subst argc envc. lia.
+  Qed.
+
+  (* the string area is the start-up's hidden launch memory *)
+  Lemma hidden_str : forall a : word,
+    InitMem.str_base (ed_top rdraw) argv envp execfn <= bv_unsigned a < bv_unsigned (ed_top rdraw) -> FULL a = m0 a.
   Proof.
     intros a Ha. apply (proj2 (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC)).
-    pose proof (W_range APH sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3).
-    unfold argH0. apply orb_true_intro. right. apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; subst usp argc envc bsb; lia.
+    pose proof PADz as P. unfold InitMem.str_base in Ha.
+    unfold argH0. apply orb_true_intro. right. apply andb_true_intro.
+    split; [apply Z.leb_le | apply Z.ltb_lt]; cbv zeta; lia.
   Qed.
 
   Lemma Mr_stack_lo : forall a : word, usp <= bv_unsigned a < usp + 8 * argc + 16 -> MR a = FULL a.
   Proof.
     intros a Ha. unfold Mr, mrestrict, hid. pose proof (usp_lo sp Hsp) as UL.
-    replace (argH0 APH sp rdraw argv envp uid hw E a) with false.
-    2: { symmetry. unfold argH0. pose proof (len_av APH sp rdraw argv envp uid hw Hva). pose proof (len_ev APH sp rdraw argv envp uid hw Hve).
-         apply orb_false_intro; apply andb_false_iff; [left|left]; apply Z.leb_gt; subst usp argc envc; lia. }
-    unfold vis. rewrite (ptop_eq sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs HC).
+    replace (argH0 sp rdraw argv envp kbld execfn E a) with false.
+    2: { symmetry. unfold argH0. pose proof (proj1 Hva). pose proof (proj1 Hve). pose proof head_ge as HG.
+         pose proof (Nat2Z.is_nonneg (block_pad_len (kb_rseq kbld) sp (ed_top rdraw) argv envp execfn)).
+         apply orb_false_intro; apply andb_false_iff; [left|left]; apply Z.leb_gt; cbv zeta; subst usp argc envc; lia. }
+    unfold vis. rewrite (ptop_eq sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs HC).
     replace (bv_unsigned sp - bv_unsigned sp mod 4096 - 8388608 <=? bv_unsigned a) with true by (symmetry; apply Z.leb_le; pose proof (Z.mod_pos_bound (bv_unsigned sp) 4096); subst usp; lia).
     rewrite orb_true_r. reflexivity.
   Qed.
 
-  (* [comment removed for export] *)
-  Lemma evE : bv_unsigned (ev E 0%nat) = usp / 32768 /\ bv_unsigned (ev E 6%nat) = (usp mod 4096) / 16 /\ bv_unsigned (ev E 1%nat) = argc
-    /\ bv_unsigned (ev E 2%nat) = envc /\ bv_unsigned (ev E 3%nat) = Z.of_nat (length (nth 0 argv [])) /\ bv_unsigned (ev E 10%nat) = (usp mod 32768) / 4096.
-  Proof.
-    pose proof (uE0 APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (U1 & U2 & U3 & U4 & U5 & _ & _).
-    pose proof (uE0_pg APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U10. unfold uE in *. cbn [edenot] in *.
-    #[local] Ltac ei n := rewrite (ev_init sp rdraw brk0 hw argv envp fs uid E R FULL model hs HC n ltac:(unfold NX0; cbv; lia)).
-    ei 0%nat. ei 6%nat. ei 1%nat. ei 2%nat. ei 3%nat. ei 10%nat.
-    change V_S1 with 0%nat in U1. change V_S2 with 6%nat in U2. change V_ARGC with 1%nat in U3. change V_ENVC with 2%nat in U4. change V_L0 with 3%nat in U5. change V_PG with 10%nat in U10.
-    subst usp argc envc. repeat split; assumption.
-  Qed.
-
-  Let str0 := usp + 8 * argc + 8 * envc + 184.
-  Let L0 := Z.of_nat (length (nth 0 argv [])).
-  (* [comment removed for export] *)
-  #[local] Ltac modflat := repeat match goal with |- context [?x mod 2 ^ 64] =>
-    lazymatch x with context [_ mod 2 ^ 64] => fail | _ => rewrite (Z.mod_small x (2 ^ 64)) by lia end end.
-
-  Lemma usp_split : usp = 32768 * (usp / 32768) + 4096 * ((usp mod 32768) / 4096) + 16 * ((usp mod 4096) / 16)
-    /\ 0 <= usp / 32768 < 2 ^ 32 /\ 0 <= (usp mod 32768) / 4096 <= 7 /\ 0 <= (usp mod 4096) / 16 <= 255.
-  Proof.
-    pose proof (usp_lo sp Hsp) as UL. pose proof (usp_hi APH sp rdraw argv envp uid hw Hva Hve Hfit) as UH. pose proof (usp_al sp Hsp) as AL.
-    subst usp. generalize dependent (bv_unsigned sp). intros u UL UH AL. Z.div_mod_to_equations. lia.
-  Qed.
-
-  Lemma V8den : uE E V8 = str0.
-  Proof.
-    pose proof (len_av APH sp rdraw argv envp uid hw Hva) as LA. pose proof (len_ev APH sp rdraw argv envp uid hw Hve) as LE.
-    pose proof (usp_hi APH sp rdraw argv envp uid hw Hva Hve Hfit) as UH.
-    pose proof evE as (U0 & U6 & U1 & U2 & U3 & U10). pose proof usp_split as (US & Q1 & Q2 & Q3).
-    unfold uE. cbn [edenot V8]. rewrite !u_add64, !u_mul64, !u64_lit by lia. rewrite U0, U6, U1, U2, U10.
-    subst str0 usp argc envc. modflat. lia.
-  Qed.
-
-  Lemma V16den : 2 <= argc -> uE E V16 = str0 + L0 + 1.
-  Proof.
-    intros A2.
-    pose proof (len_av APH sp rdraw argv envp uid hw Hva) as LA. pose proof (len_ev APH sp rdraw argv envp uid hw Hve) as LE.
-    pose proof (usp_hi APH sp rdraw argv envp uid hw Hva Hve Hfit) as UH.
-    assert (HL0 : 0 <= L0 <= 131071).
-    { subst L0. pose proof (valid_argv_str_len argv 0 Hva ltac:(destruct Hva as [Hl _]; subst argc; lia)). lia. }
-    pose proof evE as (U0 & U6 & U1 & U2 & U3 & U10). pose proof usp_split as (US & Q1 & Q2 & Q3).
-    unfold uE. cbn [edenot V16]. rewrite !u_mul64, !u_sltu64, !u_add64, !u_mul64, !u64_lit by lia. rewrite U0, U6, U1, U2, U3, U10.
-    subst str0 L0 usp argc envc. replace (1 <? Z.of_nat (length argv)) with true by (symmetry; apply Z.ltb_lt; lia).
-    modflat. lia.
-  Qed.
-
-  (* [comment removed for export] *)
-  Lemma word8_at : forall off v, hs_fact (KWord (SA e_sp0 off) 8 v) = true -> 0 <= off -> off + 8 <= 8 * argc + 16 ->
+  (* a word fact of the entry state, read in FULL *)
+  Lemma word8_at : forall off v, existsb (kentry_eqb (KWord (SA e_sp0 off) 8 v)) (kn hs) = true -> 0 <= off -> off + 8 <= 8 * argc + 16 ->
     Mem.bytes_at ASEGS FULL (usp + off) (Mem.le8 (edenot E v)).
   Proof.
-    intros off v HK H0 H1. pose proof (usp_lo sp Hsp) as UL. pose proof (usp_hi APH sp rdraw argv envp uid hw Hva Hve Hfit) as UH.
-    pose proof (len_av APH sp rdraw argv envp uid hw Hva) as LA.
-    pose proof (FACT _ HK) as (_ & _ & Hr).
+    intros off v HK H0 H1. pose proof (usp_lo sp Hsp) as UL. assert (UH : bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi.
+    pose proof (proj1 Hva) as LA.
+    pose proof (fact_sound1' _ HK) as (_ & _ & Hr).
     remember (edenot E v) as w eqn:Ew. clear Ew.
-    unfold adenot in Hr. cbn [a_base a_off] in Hr. rewrite (edenot_sp0 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs HC) in Hr.
+    unfold adenot in Hr. cbn [a_base a_off] in Hr. rewrite (edenot_sp0 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs HC) in Hr.
     unfold v_addi in Hr.
     rewrite (rdn_ext ASEGS 8 MR FULL) in Hr.
     2: { rewrite u64_lit; subst usp argc; lia. }
@@ -623,65 +640,103 @@ Section MainBridge.
     rewrite Mem.length_le8. unfold Mem.wa. exact Hr.
   Qed.
 
+  (* the launch variables' values under E are their values under the start env E0 (co_sinv) *)
+  Let Ezb : env := Env (ev E) (eb E0a).
+  Lemma Ezb_agree : env_agree NX0 E0a Ezb.
+  Proof. split; [intros n Hn; symmetry; exact (proj1 (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) n Hn) | reflexivity]. Qed.
+  Lemma uE_launch : forall e, AP.expr_vars_lt NX0 e = true -> edenot E e = edenot Ezb e -> uE E e = uE E0a e.
+  Proof. intros e Hv He. unfold uE. rewrite He. f_equal. symmetry. exact (edenot_agree' NX0 E0a Ezb e Ezb_agree Hv). Qed.
+
+  Lemma uE_str0v : uE E (e_str0 RZb) = InitMem.str_base (ed_top rdraw) argv envp execfn.
+  Proof.
+    rewrite (uE_launch (e_str0 RZb)) by (destruct (kb_rseq kbld); reflexivity).
+    iap u_e_str0 U. cbv zeta in U. rewrite U. pose proof PADz as P. unfold InitMem.str_base. lia.
+  Qed.
+  Lemma uE_str1v : uE E (e_str1 RZb) = InitMem.str_base (ed_top rdraw) argv envp execfn + Z.of_nat (length (nth 0 argv [])) + 1.
+  Proof.
+    rewrite (uE_launch (e_str1 RZb)) by (destruct (kb_rseq kbld); reflexivity).
+    (* AsanInit.u_e_str1 also rests on the launch's string bound (valid_launch), so its arguments are inferred *)
+    etransitivity; [first [eapply (u_e_str1 APH Asan.M.init_pc) | eapply u_e_str1]; first [eassumption | exact Hvl | exact Hlau] |].
+    cbv zeta. pose proof PADz as P. unfold InitMem.str_base. lia.
+  Qed.
+  Lemma uE_argv1wv : 2 <= argc -> uE E (e_argv1w RZb) = uE E (e_str1 RZb).
+  Proof.
+    intros A2.
+    assert (UA : bv_unsigned (ev E V_ARGC) = argc).
+    { rewrite (proj1 (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) V_ARGC ltac:(unfold V_ARGC, NX0; lia)).
+      unfold E0. cbn [ev]. unfold vals0. cbn [nth V_ARGC]. pose proof (proj1 Hva). rewrite u64_lit; subst argc; lia. }
+    unfold uE, e_argv1w. cbn [edenot].
+    rewrite u_mul64, u_sltu64, u64_lit, UA by lia.
+    pose proof (u64_range (edenot E (e_str1 RZb))).
+    destruct (1 <? argc) eqn:E1; [rewrite Z.mul_1_l, Z.mod_small by lia; reflexivity | apply Z.ltb_ge in E1; lia].
+  Qed.
+
   Lemma APH_a_phdrs : AImages.a_phdrs = APH. Proof. reflexivity. Qed.
 
-  Theorem main_aimg : ADrv_ctx.AIMG sp argv envp uid hw rdraw FULL.
+  Theorem main_aimg : ADrv_ctx.AIMG sp argv envp rdraw execfn FULL.
   Proof.
-    unfold ADrv_ctx.AIMG. rewrite APH_a_phdrs. fold bsb.
-    pose proof (usp_lo sp Hsp) as UL. pose proof (usp_hi APH sp rdraw argv envp uid hw Hva Hve Hfit) as UH. pose proof (usp_al sp Hsp) as AL.
-    pose proof (len_av APH sp rdraw argv envp uid hw Hva) as LA. pose proof (len_ev APH sp rdraw argv envp uid hw Hve) as LE.
-    pose proof (usp_fit APH sp rdraw argv envp uid hw Hfit) as UF. pose proof (bsb_ge APH sp rdraw argv envp uid hw) as [BG BM].
-    pose proof (InitMem.build_stack_bytes_length APH sp argv envp uid hw rdraw) as BL. pose proof (InitMem.raw_len_nonneg APH sp argv envp uid hw rdraw) as RN.
-    pose proof (InitMem.flatten_strings_length argv) as L1. pose proof (InitMem.flatten_strings_length envp) as L2.
-    fold bsb in UF, BG, BM, BL.
-    split.
-    - (* [comment removed for export] *)
+    pose proof (usp_lo sp Hsp) as UL. assert (UH : bv_unsigned sp + 192 <= 2 ^ 47) by iax usp_hi.
+    pose proof (proj1 Hva) as LA. pose proof (proj1 Hve) as LE.
+    destruct (InitMem.launch_facts INP sp brk0 mbase rdraw Hvl Hlau) as (_ & PADOK & TS & TOPb & LOWa & LOWb).
+    change (kb_rseq (in_kernel INP)) with (la_rseq (launch_auxv INP sp mbase)) in PADOK.
+    change (in_argv INP) with argv in PADOK. change (in_envp INP) with envp in PADOK. change (in_execfn INP) with execfn in PADOK.
+    pose proof stack_max_size_val as SMS.
+    assert (IMG0 : Mem.bytes_at ASEGS m0 (bv_unsigned sp) IMGB).
+    { pose proof (entry_stack_image_no_wrap Sv48 INP mbase APH ENTRYW sp brk0 rdraw Hlau) as NW.
+      unfold InitMem.im_stack_depth in LOWa.
+      first [ exact (InitMem.init_stack_bytes ASEGS INP mbase APH ENTRYW sp rdraw ltac:(lia) ltac:(lia) ltac:(lia)) | exact (InitMem.init_stack_bytes ASEGS INP mbase APH ENTRYW sp rdraw ltac:(lia) ltac:(lia)) | exact (InitMem.init_stack_bytes ASEGS INP mbase APH ENTRYW sp rdraw ltac:(lia)) ]. }
+    pose proof (InitMem.build_stack_bytes_length_top (launch_auxv INP sp mbase) APH ENTRYW sp (ed_top rdraw) argv envp execfn uid gid hw rdraw PADOK) as BL.
+    pose proof (InitMem.hsz_eq (la_rseq (launch_auxv INP sp mbase)) argv envp) as HS. pose proof (InitMem.lstr_eq argv envp execfn) as HL.
+    pose proof (InitMem.total_arg_bytes_nonneg argv). pose proof (InitMem.total_arg_bytes_nonneg envp).
+    pose proof (Nat2Z.is_nonneg (InitMem.gap_len argv envp)). pose proof (Nat2Z.is_nonneg (auxv_count (la_rseq (launch_auxv INP sp mbase)))).
+    pose proof (Nat2Z.is_nonneg (length execfn)).
+    unfold InitMem.argc, InitMem.envc in HS.
+    assert (SBR : bv_unsigned sp + 24 <= InitMem.str_base (ed_top rdraw) argv envp execfn).
+    { unfold InitMem.str_base. lia. }
+    unfold ADrv_ctx.AIMG. split.
+    - (* the two pointer words: entry-state facts *)
+      pose proof Hargv as HW. unfold hs_argv_ok in HW. apply andb_prop in HW as [HW0 HW1].
       unfold InitMem.argv_ptrs. rewrite firstn2_ptrs by lia.
       apply (proj2 (Mem.bytes_at_app ASEGS FULL _ _ _)). split.
-      + pose proof (word8_at 8 V8 F8 ltac:(lia) ltac:(subst argc; lia)) as W8.
-        replace (edenot E V8) with (Z_to_bv 64 (InitMem.str_base sp argv envp)) in W8; [exact W8|].
-        rewrite <- (Z_to_bv_bv_unsigned 64 (edenot E V8)). f_equal. change (bv_unsigned (edenot E V8)) with (uE E V8).
-        rewrite V8den. unfold InitMem.str_base, InitMem.struct_size, InitMem.argc, InitMem.envc. subst str0 usp argc envc. lia.
+      + pose proof (word8_at 8 (e_str0 RZb) HW0 ltac:(lia) ltac:(subst argc; lia)) as W8.
+        replace (edenot E (e_str0 RZb)) with (Z_to_bv 64 (InitMem.str_base (ed_top rdraw) argv envp execfn)) in W8; [exact W8|].
+        rewrite <- (Z_to_bv_bv_unsigned 64 (edenot E (e_str0 RZb))). f_equal. change (bv_unsigned (edenot E (e_str0 RZb))) with (uE E (e_str0 RZb)).
+        rewrite uE_str0v. reflexivity.
       + rewrite Mem.length_le8. destruct (Nat.leb_spec0 2 (length argv)) as [A2|A2].
-        * rewrite app_nil_r. pose proof (word8_at 16 V16 F16 ltac:(lia) ltac:(subst argc; lia)) as W16.
+        * rewrite app_nil_r.
+          assert (V1 : exists v, existsb (kentry_eqb (KWord (SA e_sp0 16) 8 v)) (kn hs) = true
+                                 /\ uE E v = InitMem.str_base (ed_top rdraw) argv envp execfn + Z.of_nat (length (nth 0 argv [])) + 1).
+          { apply orb_prop in HW1 as [HW1|HW1].
+            - exists (e_str1 RZb). split; [exact HW1| exact uE_str1v].
+            - exists (e_argv1w RZb). split; [exact HW1|]. rewrite uE_argv1wv by (subst argc; lia). exact uE_str1v. }
+          destruct V1 as (v & HV & UV).
+          pose proof (word8_at 16 v HV ltac:(lia) ltac:(subst argc; lia)) as W16.
           replace (bv_unsigned sp + 8 + Z.of_nat 8) with (usp + 16) by (subst usp; lia).
-          replace (edenot E V16) with (Z_to_bv 64 (InitMem.str_base sp argv envp + Z.of_nat (length (nth 0 argv [])) + 1)) in W16; [exact W16|].
-          rewrite <- (Z_to_bv_bv_unsigned 64 (edenot E V16)). f_equal. change (bv_unsigned (edenot E V16)) with (uE E V16).
-          rewrite V16den by (subst argc; lia). unfold InitMem.str_base, InitMem.struct_size, InitMem.argc, InitMem.envc. subst str0 L0 usp argc envc. lia.
+          replace (Z_to_bv 64 (InitMem.str_base (ed_top rdraw) argv envp execfn + Z.of_nat (length (nth 0 argv [])) + 1)) with (edenot E v); [exact W16|].
+          rewrite <- (Z_to_bv_bv_unsigned 64 (edenot E v)). f_equal. exact UV.
         * apply Mem.bytes_at_nil. subst usp; lia.
-    - (* [comment removed for export] *)
-      intros i s Hi Hn.
-      destruct (InitMem.str_ptrs_nth argv (InitMem.str_base sp argv envp) i s Hn) as (off & Hp & Ho & Ht & Hf).
-      set (p := InitMem.str_base sp argv envp + off).
-      set (e := p + Z.of_nat (length s) + 1).
+    - (* the strings: the launch's, in the hidden string area *)
+      intros i s0 Hi Hn.
+      destruct (InitMem.init_argv_string ASEGS m0 (launch_auxv INP sp mbase) APH ENTRYW sp (ed_top rdraw) argv envp execfn uid gid hw rdraw IMG0 PADOK i s0 Hn)
+        as (p & Hp & P1 & P2 & STR).
+      set (e := p + Z.of_nat (length s0) + 1).
       set (k := (- e) mod 8).
       assert (HK : 0 <= k < 8) by (subst k; apply Z.mod_pos_bound; lia).
-      assert (SB : InitMem.str_base sp argv envp = str0).
-      { unfold InitMem.str_base, InitMem.struct_size, InitMem.argc, InitMem.envc. subst str0 usp argc envc. lia. }
-      assert (TOP : e + k <= usp + Z.of_nat (length bsb) - 16).
-      { subst k. apply ADrv_ctx.ceil8_le.
-        - subst usp bsb argc envc. clear - AL BM BG. Z.div_mod_to_equations. lia.
-        - subst e p. rewrite SB. subst str0 usp bsb argc envc. rewrite BL.
-          pose proof (Z.mod_pos_bound (8 - InitMem.raw_len argv envp mod 8) 8 ltac:(lia)).
-          unfold InitMem.raw_len, InitMem.pad_len, InitMem.struct_size, InitMem.argc, InitMem.envc in *. lia. }
-      exists p, (firstn (Z.to_nat k) (skipn (Z.to_nat (e - usp)) bsb)).
-      split; [unfold InitMem.argv_ptrs; rewrite nth_error_map, Hp; reflexivity|]. split; [subst p; lia|].
-      assert (LS : length (firstn (Z.to_nat k) (skipn (Z.to_nat (e - usp)) bsb)) = Z.to_nat k).
-      { rewrite length_firstn, length_skipn. subst e p. subst bsb usp. lia. }
-      rewrite LS. split; [subst k e p; subst bsb usp; lia|].
-      split; [| split; [subst k e p; rewrite Z2Nat.id by lia; apply Z.le_refl | subst k e p; subst bsb usp; lia]].
-      (* [comment removed for export] *)
-      assert (IMG0 : Mem.bytes_at ASEGS m0 usp bsb).
-      { apply InitMem.init_stack_bytes; subst usp bsb; [unfold stack_max_size; lia | lia]. }
-      destruct (ADrv_ctx.stack_pieces sp argv envp uid hw rdraw m0 IMG0) as (_ & _ & _ & _ & B6 & _).
-      pose proof (InitMem.bytes_at_slice ASEGS APH sp argv envp uid hw rdraw m0 (InitMem.str_base sp argv envp) (flatten_strings argv) (Z.to_nat off) (length s + 1) B6 ltac:(lia)) as BS.
-      rewrite Hf in BS. replace (InitMem.str_base sp argv envp + Z.of_nat (Z.to_nat off)) with p in BS by (subst p; lia).
-      pose proof (InitMem.bytes_at_slice ASEGS APH sp argv envp uid hw rdraw m0 usp bsb (Z.to_nat (e - usp)) (Z.to_nat k) IMG0 ltac:(subst e p; subst bsb usp; lia)) as BK.
-      replace (usp + Z.of_nat (Z.to_nat (e - usp))) with (p + Z.of_nat (length (s ++ [Z_to_bv 8 0]))) in BK by (rewrite length_app; cbn [length]; subst e p; subst usp; lia).
-      pose proof (proj2 (Mem.bytes_at_app ASEGS m0 p _ _) (conj BS BK)) as BB. rewrite <- app_assoc in BB. cbn [app] in BB.
-      (* [comment removed for export] *)
-      apply (bytes_at_memeq m0 FULL _ _ BB). intros x Hx. apply hidden_init.
-      rewrite length_app in Hx. cbn [length] in Hx. rewrite LS in Hx. fold str0. rewrite <- SB. subst e p k. subst usp bsb. lia.
+      assert (PE : e + 9 <= bv_unsigned (ed_top rdraw)).
+      { subst e. unfold InitMem.env_base, InitMem.str_base in P2. lia. }
+      assert (PL : bv_unsigned sp + 24 <= p) by lia.
+      exists p, (firstn (Z.to_nat k) (skipn (Z.to_nat (e - bv_unsigned sp)) IMGB)).
+      assert (LS : length (firstn (Z.to_nat k) (skipn (Z.to_nat (e - bv_unsigned sp)) IMGB)) = Z.to_nat k).
+      { rewrite length_firstn, length_skipn. subst IMGB. lia. }
+      rewrite LS. split; [exact Hp|]. split; [exact PL|]. split; [subst e; lia|].
+      (* the euclidean flag is off in this file, so [mod] is an atom: unfold k and e first, as main did *)
+      split; [| split; [subst k e; rewrite Z2Nat.id by lia; apply Z.le_refl | subst e; lia]].
+      pose proof (InitMem.bytes_at_slice ASEGS m0 (bv_unsigned sp) _ (Z.to_nat (e - bv_unsigned sp)) (Z.to_nat k) IMG0 ltac:(subst IMGB; lia)) as BK.
+      replace (bv_unsigned sp + Z.of_nat (Z.to_nat (e - bv_unsigned sp))) with (p + Z.of_nat (length (s0 ++ [Z_to_bv 8 0]))) in BK
+        by (rewrite length_app; cbn [length]; subst e; lia).
+      pose proof (proj2 (Mem.bytes_at_app ASEGS m0 p _ _) (conj STR BK)) as BB. rewrite <- app_assoc in BB. cbn [app] in BB.
+      apply (bytes_at_memeq m0 FULL _ _ BB). intros x Hx. apply hidden_str.
+      rewrite length_app in Hx. cbn [length] in Hx. rewrite LS in Hx. subst e. lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -698,15 +753,15 @@ Section MainBridge.
 
   Lemma S0_list : A_bundle.S0_ivs5 E0m (fsbase_of E) =
     [ (0x7fff7000, 0x8fff7000);
-      (A_policy5.pgdn (A_bundle.sh (pgv E 226 - pgv E 227 + 0x10000)), A_policy5.pgup (A_bundle.sh (pgv E 226 - pgv E 227 + 0x10000 + 2^37)));
+      (A_policy5.pgdn (A_bundle.sh (pgv E 230 - pgv E 231 + 0x10000)), A_policy5.pgup (A_bundle.sh (pgv E 230 - pgv E 231 + 0x10000 + 2^37)));
       (A_policy5.pgdn (A_bundle.sh RunCeiling.alloc_ceiling), AsanSizeClass.kHighMemBeg);
-      (A_policy5.pgdn (A_bundle.sh (pgv E 438)), A_policy5.pgup (A_bundle.sh (pgv E 438 + AF_fakestack_rep.kFsBytes)));
-      (pgv E 515, pgv E 515 + 2^23);
-      (pgv E 226 - pgv E 227 + 0x10000 + 2^37, pgv E 226 - pgv E 227 + 0x10000 + 2^37 + 4096) ].
+      (A_policy5.pgdn (A_bundle.sh (pgv E 444)), A_policy5.pgup (A_bundle.sh (pgv E 444 + AF_fakestack_rep.kFsBytes)));
+      (pgv E 521, pgv E 521 + 2^23);
+      (pgv E 230 - pgv E 231 + 0x10000 + 2^37, pgv E 230 - pgv E 231 + 0x10000 + 2^37 + 4096) ].
   Proof. reflexivity. Qed.
 
   Lemma vis_ghost_val : (a_vis hs ++ a_ghost hs = VIS ++ G0 /\ existsb (kentry_eqb (KRange (EVar 5) 1539 524277)) (kn hs) = true) \/ a_vis hs ++ a_ghost hs = VIS ++ G1.
-  Proof. pose proof Hhs as [-> | [-> | [-> | ->]]]; [left|left|right|right]; vm_compute; repeat split; reflexivity. Qed.
+  Proof. pose proof Hhs as Hx; hs_cases Hx; [left|left|right|right|left|left|right|right]; vm_compute; repeat split; reflexivity. Qed.
 
   (* [comment removed for export] *)
   #[local] Ltac inlist := first [left; reflexivity | right; inlist].
@@ -732,15 +787,15 @@ Section MainBridge.
     pose proof (SX R532) as R532. pose proof (SX R515) as R515. pose proof (SX R514) as R514. pose proof (SX R438) as R438. pose proof (SX R340) as R340.
     pose proof (SX R275) as R275. pose proof (SX R246) as R246. pose proof (SX R245) as R245. pose proof (SX R244) as R244. pose proof (SX R226) as R226.
     pose proof (SX R227) as R227. pose proof (SX R225) as R225. pose proof (SX R95) as R95.
-    assert (R341 : 4096 * 1 <= pgv E 341 <= 4096 * 34359736319) by (apply PG; vm_compute; reflexivity).
-    assert (R455 : 4096 * 1 <= pgv E 455 <= 4096 * 34359736319) by (apply PG; vm_compute; reflexivity).
-    assert (R456 : 4096 * 1 <= pgv E 456 <= 4096 * 34359736319) by (apply PG; vm_compute; reflexivity).
-    assert (R457 : 4096 * 1 <= pgv E 457 <= 4096 * 34359736319) by (apply PG; vm_compute; reflexivity).
-    pose proof (S515 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S515.
-    pose proof (S244 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S244.
-    pose proof (S226 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S226.
+    assert (R341 : 4096 * 1 <= pgv E 347 <= 4096 * 34359736319) by (apply PG; vm_compute; reflexivity).
+    assert (R455 : 4096 * 1 <= pgv E 461 <= 4096 * 34359736319) by (apply PG; vm_compute; reflexivity).
+    assert (R456 : 4096 * 1 <= pgv E 462 <= 4096 * 34359736319) by (apply PG; vm_compute; reflexivity).
+    assert (R457 : 4096 * 1 <= pgv E 463 <= 4096 * 34359736319) by (apply PG; vm_compute; reflexivity).
+    pose proof (S515 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S515.
+    pose proof (S244 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S244.
+    pose proof (S226 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S226.
     pose proof pusp_sum' as (PP & PL & PH).
-    pose proof (ceil_eq sp rdraw brk0 argv envp uid Hsp Hva Hve Hfit RCSP) as CE. pose proof (pusp_le sp Hsp) as PU.
+    assert (CE : RunCeiling.alloc_ceiling = usp - 8388608) by (eapply ceil_eq; eassumption). pose proof (pusp_le sp Hsp) as PU.
     pose proof u_ri' as URI. pose proof u_stk' as USTK. pose proof u_stklen' as USTKL.
     apply Forall_forall. intros p Hp.
     pose proof (N2 p Hp) as AL. change page_size with 4096 in AL.
@@ -748,7 +803,7 @@ Section MainBridge.
     apply andb_prop in Hb as [Hb1 Hb2]. apply Z.leb_le in Hb1. apply Z.leb_le in Hb2. change page_size with 4096 in Hb2.
     pose proof (N4 p Hp) as PL'. unfold page_in_ranges in PL'. apply existsb_exists in PL' as (liv & Hliv & Hlb).
     apply andb_prop in Hlb as [Hlb1 Hlb2]. apply Z.leb_le in Hlb1. apply Z.leb_le in Hlb2. change page_size with 4096 in Hlb2.
-    pose proof (init_lazy_hull sp rdraw brk0 hw argv envp fs uid E R FULL model hs Hhs HC liv Hliv) as [_ LZ].
+    pose proof (init_lazy_hull sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt E R FULL model hs Hhs HC liv Hliv) as [_ LZ].
     set (pp := bv_unsigned p) in *. split; [exact AL|].
     unfold allowA in Hiv. rewrite S0_list.
     (* [comment removed for export] *)
@@ -767,32 +822,32 @@ Section MainBridge.
         change (shadow_off ASAN5) with 0x7fff8000 in *;
         rewrite ?URI, ?USTK, ?USTKL in Hb1; rewrite ?URI, ?USTK, ?USTKL in Hb2;
         rewrite ?u_pg' in Hb1 by lia; rewrite ?u_pg' in Hb2 by lia; rewrite ?u_lit'' in Hb1 by lia; rewrite ?u_lit'' in Hb2 by lia.
-      + by_app (pgv E 532) 4096 Hb1 Hb2.
-      + by_sh (pgv E 532) 4096 Hb1 Hb2.
-      + (* [comment removed for export] *) exists (pgv E 515, pgv E 515 + 2 ^ 23). split; [apply in_or_app; left; cbn [In]; inlist|]. cbn [fst snd].
+      + by_app (pgv E 538) 4096 Hb1 Hb2.
+      + by_sh (pgv E 538) 4096 Hb1 Hb2.
+      + (* [comment removed for export] *) exists (pgv E 521, pgv E 521 + 2 ^ 23). split; [apply in_or_app; left; cbn [In]; inlist|]. cbn [fst snd].
         unfold pagedown, pageup in Hb1, Hb2. unfold pgv in *. clear - Hb1 Hb2. Z.div_mod_to_equations. lia.
-      + by_sh (pgv E 515) 8388608 Hb1 Hb2.
-      + by_app (pgv E 514) 1048576 Hb1 Hb2.
-      + by_sh (pgv E 514) 1048576 Hb1 Hb2.
-      + by_app (pgv E 438) 11571200 Hb1 Hb2.
-      + (* [comment removed for export] *) exists (A_policy5.pgdn (A_bundle.sh (pgv E 438)), A_policy5.pgup (A_bundle.sh (pgv E 438 + AF_fakestack_rep.kFsBytes))).
+      + by_sh (pgv E 521) 8388608 Hb1 Hb2.
+      + by_app (pgv E 520) 1048576 Hb1 Hb2.
+      + by_sh (pgv E 520) 1048576 Hb1 Hb2.
+      + by_app (pgv E 444) 11571200 Hb1 Hb2.
+      + (* [comment removed for export] *) exists (A_policy5.pgdn (A_bundle.sh (pgv E 444)), A_policy5.pgup (A_bundle.sh (pgv E 444 + AF_fakestack_rep.kFsBytes))).
         split; [apply in_or_app; left; cbn [In]; inlist|]. cbn [fst snd]. rewrite pgdn_eq, pgup_eq. unfold A_bundle.sh, AF_fakestack_rep.kFsBytes. rewrite A_bundle.A_SB_val. clear - Hb1 Hb2; lia.
-      + by_app (pgv E 340) 4096 Hb1 Hb2.
-      + by_sh (pgv E 340) 4096 Hb1 Hb2.
-      + by_app (pgv E 275) 4096 Hb1 Hb2.
-      + by_sh (pgv E 275) 4096 Hb1 Hb2.
-      + by_app (pgv E 246) 65536 Hb1 Hb2.
-      + by_sh (pgv E 246) 65536 Hb1 Hb2.
-      + by_app (pgv E 245) 4096 Hb1 Hb2.
-      + by_sh (pgv E 245) 4096 Hb1 Hb2.
-      + (* [comment removed for export] *) exists (pgv E 226 - pgv E 227 + 0x10000 + 2 ^ 37, pgv E 226 - pgv E 227 + 0x10000 + 2 ^ 37 + 4096).
+      + by_app (pgv E 346) 4096 Hb1 Hb2.
+      + by_sh (pgv E 346) 4096 Hb1 Hb2.
+      + by_app (pgv E 279) 4096 Hb1 Hb2.
+      + by_sh (pgv E 279) 4096 Hb1 Hb2.
+      + by_app (pgv E 250) 65536 Hb1 Hb2.
+      + by_sh (pgv E 250) 65536 Hb1 Hb2.
+      + by_app (pgv E 249) 4096 Hb1 Hb2.
+      + by_sh (pgv E 249) 4096 Hb1 Hb2.
+      + (* [comment removed for export] *) exists (pgv E 230 - pgv E 231 + 0x10000 + 2 ^ 37, pgv E 230 - pgv E 231 + 0x10000 + 2 ^ 37 + 4096).
         split; [apply in_or_app; left; cbn [In]; inlist|]. cbn [fst snd]. change (2 ^ 37) with 137438953472. clear - Hb1 Hb2 R226 R227.
         unfold pagedown, pageup in Hb1, Hb2. unfold pgv in *. Z.div_mod_to_equations. lia.
-      + by_sh (pgv E 226 - pgv E 227 + 137439019008) 4096 Hb1 Hb2.
-      + by_app (pgv E 225) 3727360 Hb1 Hb2.
-      + by_sh (pgv E 225) 3727360 Hb1 Hb2.
-      + by_app (pgv E 95) 65536 Hb1 Hb2.
-      + by_sh (pgv E 95) 65536 Hb1 Hb2.
+      + by_sh (pgv E 230 - pgv E 231 + 137439019008) 4096 Hb1 Hb2.
+      + by_app (pgv E 229) 3727360 Hb1 Hb2.
+      + by_sh (pgv E 229) 3727360 Hb1 Hb2.
+      + by_app (pgv E 99) 65536 Hb1 Hb2.
+      + by_sh (pgv E 99) 65536 Hb1 Hb2.
       + (* [comment removed for export] *) exfalso. lit_pages Hb1. lit_pages Hb2. clear - Hb1 Hb2 Hlb1 Hlb2 LZ R515 R244 R226. lia.
       + (* [comment removed for export] *) exists (0x7fff7000, 0x8fff7000). split; [apply in_or_app; left; cbn [In]; inlist|]. cbn [fst snd].
         lit_pages Hb1. lit_pages Hb2. clear - Hb1 Hb2; lia.
@@ -811,13 +866,13 @@ Section MainBridge.
         destruct Hivq as [<- | [<- | []]]; cbn [fst snd] in Hb1, Hb2; unfold sh_lo, sh_hi in *; cbn [fst snd] in Hb1, Hb2;
         change (shadow_off ASAN5) with 0x7fff8000 in *;
         rewrite ?u_pg_off'' in Hb1 by lia; rewrite ?u_pg_off'' in Hb2 by lia; rewrite ?u_pg' in Hb1 by lia; rewrite ?u_pg' in Hb2 by lia; rewrite ?u_lit'' in Hb1 by lia; rewrite ?u_lit'' in Hb2 by lia.
-      + by_app (pgv E 341) 4096 Hb1 Hb2. + by_sh (pgv E 341) 4096 Hb1 Hb2.
-      + by_app (pgv E 455) 4096 Hb1 Hb2. + by_sh (pgv E 455) 4096 Hb1 Hb2.
-      + by_app (pgv E 456 + 4096) 4096 Hb1 Hb2. + by_sh (pgv E 456 + 4096) 4096 Hb1 Hb2.
-      + by_app (pgv E 457) 4096 Hb1 Hb2. + by_sh (pgv E 457) 4096 Hb1 Hb2.
-      + by_app (pgv E 455) 4096 Hb1 Hb2. + by_sh (pgv E 455) 4096 Hb1 Hb2.
-      + by_app (pgv E 456 + 4096) 4096 Hb1 Hb2. + by_sh (pgv E 456 + 4096) 4096 Hb1 Hb2.
-      + by_app (pgv E 457) 4096 Hb1 Hb2. + by_sh (pgv E 457) 4096 Hb1 Hb2.
+      + by_app (pgv E 347) 4096 Hb1 Hb2. + by_sh (pgv E 347) 4096 Hb1 Hb2.
+      + by_app (pgv E 461) 4096 Hb1 Hb2. + by_sh (pgv E 461) 4096 Hb1 Hb2.
+      + by_app (pgv E 462 + 4096) 4096 Hb1 Hb2. + by_sh (pgv E 462 + 4096) 4096 Hb1 Hb2.
+      + by_app (pgv E 463) 4096 Hb1 Hb2. + by_sh (pgv E 463) 4096 Hb1 Hb2.
+      + by_app (pgv E 461) 4096 Hb1 Hb2. + by_sh (pgv E 461) 4096 Hb1 Hb2.
+      + by_app (pgv E 462 + 4096) 4096 Hb1 Hb2. + by_sh (pgv E 462 + 4096) 4096 Hb1 Hb2.
+      + by_app (pgv E 463) 4096 Hb1 Hb2. + by_sh (pgv E 463) 4096 Hb1 Hb2.
     - (* [comment removed for export] *) subst q.
       assert (U5 : uE E (pgE 5) = pgv E 5) by (apply u_pg'; lia).
       destruct Hivq as [<- | [<- | []]]; cbn [fst snd] in Hb1, Hb2; unfold sh_lo, sh_hi in *; cbn [fst snd] in Hb1, Hb2;
@@ -829,15 +884,15 @@ Section MainBridge.
   Theorem init_fsenv : AF_fakestack_rep.FSEnv AImages.asegs E0m (fsbase_of E) (plumb_of E) FULL.
   Proof.
     pose proof (SX R245) as R245. pose proof (SX R246) as R246. pose proof (SX R340) as R340. pose proof (SX R438) as R438.
-    pose proof (S245 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S245.
-    pose proof (S246 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S246.
-    pose proof (S340 sp rdraw brk0 hw argv envp fs uid Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S340.
-    pose proof (ceil_eq sp rdraw brk0 argv envp uid Hsp Hva Hve Hfit RCSP) as CE. pose proof (pusp_le sp Hsp) as PU.
-    assert (U245 : uE E (pgE 245) = pgv E 245) by (apply u_pg'; lia). assert (U246 : uE E (pgE 246) = pgv E 246) by (apply u_pg'; lia).
-    assert (U340 : uE E (pgE 340) = pgv E 340) by (apply u_pg'; lia).
+    pose proof (S245 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S245.
+    pose proof (S246 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S246.
+    pose proof (S340 sp rdraw brk0 hw argv envp fs uid mbase ifs stdin gid groups net nofile sigmask urnd tmp kbld execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL model hs Hhs HC) as S340.
+    assert (CE : RunCeiling.alloc_ceiling = usp - 8388608) by (eapply ceil_eq; eassumption). pose proof (pusp_le sp Hsp) as PU.
+    assert (U245 : uE E (pgE 249) = pgv E 249) by (apply u_pg'; lia). assert (U246 : uE E (pgE 250) = pgv E 250) by (apply u_pg'; lia).
+    assert (U340 : uE E (pgE 346) = pgv E 346) by (apply u_pg'; lia).
     unfold AF_fakestack_rep.FSEnv.
-    change (AsanState.ae_thread E0m) with (pgv E 245). change (AF_fakestack_rep.fp_ctx (plumb_of E)) with (pgv E 246).
-    change (AF_fakestack_rep.fp_dtls (plumb_of E)) with (pgv E 340). change (AF_fakestack_rep.fp_dtv1 (plumb_of E)) with 0x5e0b10.
+    change (AsanState.ae_thread E0m) with (pgv E 249). change (AF_fakestack_rep.fp_ctx (plumb_of E)) with (pgv E 250).
+    change (AF_fakestack_rep.fp_dtls (plumb_of E)) with (pgv E 346). change (AF_fakestack_rep.fp_dtv1 (plumb_of E)) with 0x5e0b10.
     change (AF_fakestack_rep.fp_tlsb (plumb_of E)) with 0x5e1248. change (AF_fakestack_rep.fp_tlse (plumb_of E)) with 0x5e1324.
     unfold fsbase_of, AF_fakestack_rep.FS_TP, AF_fakestack_rep.FS_CF, AF_fakestack_rep.FS_VB, AF_fakestack_rep.FS_DTO. cbn beta.
     split. { cx (ELit 0) 0xa5690 [CX8 (XL 1); CX8 (XL 0xfffffffffffff800)]. }
@@ -845,18 +900,18 @@ Section MainBridge.
     split. { cx (ELit 0) 0xae858 [CX1 1]. }
     split. { cx (ELit 0) 0x5e0b08 [CX8 (XL 0x5e0b30)]. }
     split. { cx (ELit 0) 0x5e0b38 [CX8 (XL 0x5e1310)]. }
-    split. { cx (ELit 0) 0x5e0b10 [CX8 (XS (pgE 438))]. }
+    split. { cx (ELit 0) 0x5e0b10 [CX8 (XS (pgE 444))]. }
     split. { cx (ELit 0) 0xad3e0 [CX1 1]. }
     split. { cx (ELit 0) 0xad3e4 [CX4 0]. }
     split. { cx (ELit 0) 0x5e0ab8 [CX8 (XL 0x601eb8)]. }
-    split. { cx (ELit 0) 0x601eb8 [CX8 (XS (pgE 246))]. }
-    split. { cx (pgE 246) 152 [CX8 (XS (pgE 245))]. }
-    split. { cx (pgE 245) 48 [CX8 (XL 0x5e1248); CX8 (XL 0x5e1324)]. }
+    split. { cx (ELit 0) 0x601eb8 [CX8 (XS (pgE 250))]. }
+    split. { cx (pgE 250) 152 [CX8 (XS (pgE 249))]. }
+    split. { cx (pgE 249) 48 [CX8 (XL 0x5e1248); CX8 (XL 0x5e1324)]. }
     split. { exists 0x13f6a8, 0x13d618, 8.
              split; [cx (ELit 0) 0xa49a0 [CX8 (XL 0x13f6a8)]|]. split; [cx (ELit 0) (0x13f6a8 + 137) [CX1 1]|].
              split; [cx (ELit 0) 0xa4a00 [CX8 (XL 0x13d618)]|]. split; [cx (ELit 0) 0x13d618 [CX4 0]|].
-             split; [cx (ELit 0) 0xa56a0 [CX8 (XL 8)]|]. split; [cx (ELit 0) (8 + 0x5e0b10) [CX8 (XS (pgE 340))]|]. lia. }
-    split. { cx (pgE 340) 24 [CX8 (XL 0x5e0b10)]. }
+             split; [cx (ELit 0) 0xa56a0 [CX8 (XL 8)]|]. split; [cx (ELit 0) (8 + 0x5e0b10) [CX8 (XS (pgE 346))]|]. lia. }
+    split. { cx (pgE 346) 24 [CX8 (XL 0x5e0b10)]. }
     split; [lia|]. split; [lia|]. rewrite CE.
     split; [lia|]. split; [clear - S340 PU; lia|]. split; [unfold pgv; clear; Z.div_mod_to_equations; lia|].
     split; [lia|]. split; [clear - S246 PU; lia|]. split; [unfold pgv; clear; Z.div_mod_to_equations; lia|].

@@ -1,6 +1,7 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodySeed.v, sha256 598d4728a2d5; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodySeed.v, sha256 598d4728a2d5; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the SEED of the malloc interceptor BODY walk (omx-clap-core/fuzz_preset image A, asan,
    pin 1be0f53d96cb): lib/A/WrapMallocASeed.v (the wrapper's seed) with three changes, nothing else:
    - the start pc is pc_malloc Tfib_code (___interceptor_malloc, A 0x53910, AF0l.v:10) for pc_wrap_malloc

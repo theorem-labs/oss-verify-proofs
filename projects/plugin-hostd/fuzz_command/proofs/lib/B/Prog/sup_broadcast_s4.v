@@ -6,8 +6,9 @@
    ra, s0, s1 saved at sp + 24, 16, 8; `mv s0,a0`; `li a0,5`), the state it reaches (sbb_at_rec), the call of
    record through the kit's call rule for a callee whose footprint holds program statics (PaCallPg.v cl_callS_pg,
    with record_c.v's contract at the walk's FP state), and the state at record's return (0x8b50c, sbb_ret_rec).
-   The run is the shape of a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s6.v, _s8.v at a5a5ff08765) with the head's
+   The run is the shape of a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s6.v, _s8.v) with the head's
    record() body moved into the callee. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

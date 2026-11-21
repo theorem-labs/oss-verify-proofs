@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s6.v, with its module paths, module names and numbers changed; 293 of its 399 lines of code are new or changed and 656 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the walk of
    the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0): segment S21, from the cut K85ec8 (0x85ec8) to
    the cut RET (0x85fc8), and the return from RET to the function's post. The statements are lt_seg_S21_stmt and
-   lt_seg_RET_stmt of LLVMFuzzerTestOneInput_defs.v (image B's cut-statement commit ea8f5f93fe57).
+   lt_seg_RET_stmt of LLVMFuzzerTestOneInput_defs.v (image B's cut-statement).
 
-   The image-B twin of image A's lib/A/Prog/LLVMFuzzerTestOneInput_s25.v (image A's S21 / ret commit 187a26673c08),
+   The image-B twin of image A's lib/A/Prog/LLVMFuzzerTestOneInput_s25.v (image A's S21 / ret),
    lemma for lemma (lt_seg_RET, lt_seg_S21), renamed by the B map's section 11 (PLAN-asanubsan-main.md: K85c44 ->
    K85ec8, RET 0x85d40 -> 0x85fc8, frame 320 -> 352, the return address of the fill 0x85c64 -> 0x85ee8) and with the
    one change the image-B code makes: SH(FR) is not in a register at K85ec8 (image A: s5) but in the slot 184(s1)
@@ -22,7 +23,7 @@
    and no instrumented check lies in S21 (map section 2.3 row S21: 65 instructions, no check, no trap).
 
    The walk (the form of plugin-hostd/fuzz_command's lib/B/Prog/chain_words_s6.v:497-844 and of its harness walk's
-   LLVMFuzzerTestOneInput_s90.v, origin/ossv/recipes 3abc3740de97): one symbolic run from K85ec8 to the call of
+   LLVMFuzzerTestOneInput_s90.v): one symbolic run from K85ec8 to the call of
    meta_fill_f5 (PaCallRun.v's SRr_run_pi_AJ_call), the call step aj_set_shadow_atS (LLVMFuzzerTestOneInput_s25k.v),
    a re-seat of the symbolic state over the call (PaLibH.v's jafter_call_keep_hi) with the three regions the release
    reads and writes, one run from the return of the fill to the ret under PaLibF.v's aj_flag_store_pi (the flag

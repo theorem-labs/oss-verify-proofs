@@ -2,8 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_drain of the ASan+UBSan walk (image B) of fuzz_reply's LLVMFuzzerTestOneInput
    over the GENERIC allocator relation ARx - the interface of the arm's ARx conversion: the ARx twin of
-   lib/B/W_LLVMFuzzerTestOneInput_drain_defs.v (a Theorem Labs lane's AR interface, a working branch
-   af5c712458a), which is NOT edited.  Template: AddX's lib/A/W_LLVMFuzzerTestOneInput_drain_x.v (W8 integ).
+   lib/B/W_LLVMFuzzerTestOneInput_drain_defs.v (a Theorem Labs lane's AR interface, a working branch),
+   which is NOT edited.  Template: AddX's lib/A/W_LLVMFuzzerTestOneInput_drain_x.v (W8 integ).
    Proves no function (kind: segment walk - the interface of a segment of the entry function).
    The method (W8Entry-2's add_x method): this file Requires the AR file and CITES every item of it that reads no AR
    and no Section variable (the addresses, the model notions dr_k' / dr_at_op / dr_pick / dr_skip / dr_step /
@@ -17,12 +17,13 @@
                   families verbatim (LS -> LSx), and two fields the AR proof read off AR itself, as on image A
                   (AddX's HPST / BLKR): the image is off PST, and a live block's request is in [0, 2 ^ 30).
    The Section header is cut_x's Section w header (B .. RINV), the arm's MMAX and the room round's RP / dr_cnl_pk.
-   THE ROOM ROUND (an internal work row, the image-B twin of W8's A re-fit a working branch
-   b5892edd1cb): DLK carries the cut's NP after LSx; dr_env_x takes the room record RP (dre_RP_NP ties its rp_RM to
+   THE ROOM ROUND (an internal work row, the image-B twin of W8's A re-fit a working branch):
+   DLK carries the cut's NP after LSx; dr_env_x takes the room record RP (dre_RP_NP ties its rp_RM to
    NP), DRAIN / CNL at RP, the count rules dre_DR_CNT_grow / dre_DR_CNT_cnl and dre_LS_cnt (at the parameter
    dr_cnl_pk), LS_drain_pre's peak form, and LS_cnl_pre / LS_drain_step at a Theorem Labs lane's TX_LS_cnl_pre /
    TX_LS_drain_step_t texts (image A's words, restated here with the step rules' model bundles).  dre_RI_drain_step is
-   the B top_x's restated text (a Theorem Labs lane's RI_drain_step_btop_restated, a working branch 713767bda40). *)
+   the B top_x's restated text (a Theorem Labs lane's RI_drain_step_btop_restated, a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -68,7 +69,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_LLVMFuzzerT
    rules' bundles of ReplyLSDrain3.v / ReplyLS3Arms.v, image A) are restated below (msz_ok, dr3_epre ..), and
    check_no_loss's peak after the drain is the parameter dr_cnl_pk, as on image A *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ReplyCnt.
-(* the drain's functional half dr_dfun and dr_cap1 (lib/B/W_LLVMFuzzerTestOneInput_drain_calls.v:102 / :125, no AR, no
+(* the drain's functional half dr_dfun and dr_cap1 (lib/B/W_LLVMFuzzerTestOneInput_drain_calls.v:103 / :126, no AR, no
    Section variable), which the room round's count rule dre_DR_CNT_grow reads *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_LLVMFuzzerTestOneInput_drain_calls.
 (* LAST, so the names this file cites from the AR file are not shadowed by a kit file's *)
@@ -82,10 +83,10 @@ Open Scope Z_scope.
 (* the cut's own Local Notation, which does not leave its file *)
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- the step rules' bundles, a Theorem Labs lane's texts restated word for word (image A's drain arm b5892edd1cb
+(* ---- the step rules' bundles, a Theorem Labs lane's texts restated word for word (image A's drain arm
    restates them the same way; the top's TX_LS_drain_step / TX_LS_cnl_pre name the originals, which unfold to these):
-   dr3_epre / dr3_hpre / dr3_epost / dr3_hpost are lib/A/ReplyLSDrain3.v:80-100, ls3_kh / ls3_hn / ls3_dpost /
-   ls3_cpost are lib/A/ReplyLS3Arms.v:306-328, at meet 393c0b2cb2a (image A; lib/B/W_rep.v is lib/A/W_rep.v's kit twin,
+   dr3_epre / dr3_hpre / dr3_epost / dr3_hpost are lib/A/ReplyLSDrain3.v:81-101, ls3_kh / ls3_hn / ls3_dpost /
+   ls3_cpost are lib/A/ReplyLS3Arms.v:307-329, at meet (image A; lib/B/W_rep.v is lib/A/W_rep.v's kit twin,
    the clause numbers below are its) ---- *)
 (* LS_cnt's guard, lib/A/ReplyLSCntM.v:49-54: the model's sizes (amodel_at gives them, dr_msz_x) *)
 Definition texts_ok (l : hlist) : Prop := Forall (fun r => Z.of_nat (length (snd r)) <= APARTIAL) (hl_recs l).
@@ -147,7 +148,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -318,7 +319,7 @@ Record dr_env_x : Prop := mk_dr_env_x {
   (* ---- the allocator-state facts the two calls take, read off LSx ---- *)
   (* the peak form (a Theorem Labs lane's ROOM-ROUND row #19; dr_spec's byte premise is the drain trace's byte PEAK, C3), image A's
      text: conjunct 5 is s5-r1d's fr_LS_drain_pre_c5p (lib/A/ReplyTrPeak.v:942 on image A), and the three premises
-     after re_eof are the ones its rows take (fr_LS3_drain_pre_c4 lib/A/ReplyLS3Arms.v:790, fr_LS_drain_pre_c5p):
+     after re_eof are the ones its rows take (fr_LS3_drain_pre_c4 lib/A/ReplyLS3Arms.v:791, fr_LS_drain_pre_c5p):
      dc_regs' Ht, aentry_ok's |re_U| bound and the drained blocks' sizes (dc_stB's HXP).  The sum form (tr_alloc) was
      FALSE at reachable states. *)
   dre_LS_drain_pre : forall cx t m ly S si h j,
@@ -338,12 +339,12 @@ Record dr_env_x : Prop := mk_dr_env_x {
       <= LIVE_MAX /\
     mo_ok MT S (dr_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (nth j (lm_es m) dr_e0) h);
   (* after the drain: what check_no_loss takes of the state it is called in.  A Theorem Labs lane's TX_LS_cnl_pre
-     (commit d0d75bf92db, lib/A/ReplyLS3cTopxPost.v:146 on image A; proved as ReplyLS3Arms.v:841 fr_LS3_cnl_pre_p),
+     (lib/A/ReplyLS3cTopxPost.v:146 on image A; proved as ReplyLS3Arms.v:842 fr_LS3_cnl_pre_p),
      as image A's drain arm states it: the binders e' cap' out' and nine premises after the old ten, each held at
      dr_stage_calls (dc_regs' Ht, dr_at_op's lm_O m = [], and dc_stB's dcB_out: the cut's entry and source at the
      call, dr_post's frame and its entry / source clauses); and, last in the conclusion, check_no_loss's memmove
      bound `AREC * capb .. < 2 ^ 32`, as the B top_x's LS_cnl_pre states it (a Theorem Labs lane's TX_LS_cnl_pre,
-     lib/B/ReplyB3LS3cTopxPost.v:173-201 at a working branch 92b82c11331) *)
+     lib/B/ReplyB3LS3cTopxPost.v:174-202 at a working branch) *)
   dre_LS_cnl_pre : forall cx t m ly S (ly' : alayout) (S' : astate) si h j h'' e' cap' out',
     LSx cx t m ly S -> RINV cx t m -> dr_pick cx m si h ->
     (j < length (lm_es m))%nat -> re_fd (nth j (lm_es m) dr_e0) = hs_fd h ->
@@ -375,11 +376,11 @@ Record dr_env_x : Prop := mk_dr_env_x {
   dre_LS_drain_skip : forall cx t m ly S,
     LSx cx t m ly S -> LSx cx (t + 1) (dr_skip m (dr_k' cx m)) ly S;
   (* the drain charges the meter dr_cost of the entry and source it was called with (S to S1), check_no_loss
-     cnl_cost of the lists it was called with (S1 to S').  A Theorem Labs lane's TX_LS_drain_step (commit d0d75bf92db,
-     lib/A/ReplyLS3cTopxPost.v:118 on image A; proved as ReplyLS3cArms.v:118 fr_LS3c_drain_step_p), as image A's drain
+     cnl_cost of the lists it was called with (S1 to S').  A Theorem Labs lane's TX_LS_drain_step (
+     lib/A/ReplyLS3cTopxPost.v:118 on image A; proved as ReplyLS3cArms.v:119 fr_LS3c_drain_step_p), as image A's drain
      arm states it: the binders ly1 h1 E' H' and twenty premises after the old five, each held at dr_stage_calls (the
      drain's and check_no_loss's frames, dcB_out and dc_stE's exports); and, last, dc_regs' `0 <= t < OPS_MAX`, as
-     s5-r1d's TX_LS_drain_step_t (1318828167d lib/A/ReplyLSI.v:134, its LS instance's lsi_LS_drain_step :509) *)
+     s5-r1d's TX_LS_drain_step_t (lib/A/ReplyLSI.v:135, its LS instance's lsi_LS_drain_step :509) *)
   dre_LS_drain_step : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
       si h j h'' e' c' O' cap' out' (E H : hlist) (ly1 : alayout) (h1 : hsrc) (E' H' : hlist),
     LSx cx t m ly S -> dr_pick cx m si h -> (j < length (lm_es m))%nat ->
@@ -416,8 +417,8 @@ Record dr_env_x : Prop := mk_dr_env_x {
     hs_held h'' = hs_held h ->
     (Z.to_nat (ReplyCnt.tr_peakP P (cnl_tr (hs_expected h'') (hs_held h''))) <= dr_cnl_pk h P)%nat;
   (* the live counts at the cut leave room for the arm's peak (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), CORRECTION 2):
-     a Theorem Labs lane's row fr_LS3cp_cnt_drain (commit ba8e99b5bd2, lib/A/ReplyLScnt.v:371 on image A) with its guards,
-     over the room record's count fields.  Its peak is the row's pk_drain m h j (ReplyLScnt.v:151) with
+     a Theorem Labs lane's row fr_LS3cp_cnt_drain (lib/A/ReplyLScnt.v:371 on image A) with its guards,
+     over the room record's count fields.  Its peak is the row's pk_drain m h j (ReplyLScnt.v:152) with
      check_no_loss's part the parameter dr_cnl_pk: drain's trace peak + check_no_loss's peak over the drained lines
      + 2, which covers dr_spec's count premise (dr_pk) at the cut and cnl_spec's (cnl_pk) at the state the drain
      leaves (dre_DR_CNT_grow, dre_DR_CNT_cnl) *)
@@ -574,7 +575,7 @@ Record dr_env_xR : Prop := mk_dr_env_xR {
   (* ---- the allocator-state facts the two calls take, read off LSx ---- *)
   (* the peak form (a Theorem Labs lane's ROOM-ROUND row #19; dr_spec's byte premise is the drain trace's byte PEAK, C3), image A's
      text: conjunct 5 is s5-r1d's fr_LS_drain_pre_c5p (lib/A/ReplyTrPeak.v:942 on image A), and the three premises
-     after re_eof are the ones its rows take (fr_LS3_drain_pre_c4 lib/A/ReplyLS3Arms.v:790, fr_LS_drain_pre_c5p):
+     after re_eof are the ones its rows take (fr_LS3_drain_pre_c4 lib/A/ReplyLS3Arms.v:791, fr_LS_drain_pre_c5p):
      dc_regs' Ht, aentry_ok's |re_U| bound and the drained blocks' sizes (dc_stB's HXP).  The sum form (tr_alloc) was
      FALSE at reachable states. *)
   dreR_LS_drain_pre : forall cx t m ly S si h j,
@@ -594,12 +595,12 @@ Record dr_env_xR : Prop := mk_dr_env_xR {
       <= LIVE_MAX /\
     mo_ok MT S (dr_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (nth j (lm_es m) dr_e0) h);
   (* after the drain: what check_no_loss takes of the state it is called in.  A Theorem Labs lane's TX_LS_cnl_pre
-     (commit d0d75bf92db, lib/A/ReplyLS3cTopxPost.v:146 on image A; proved as ReplyLS3Arms.v:841 fr_LS3_cnl_pre_p),
+     (lib/A/ReplyLS3cTopxPost.v:146 on image A; proved as ReplyLS3Arms.v:842 fr_LS3_cnl_pre_p),
      as image A's drain arm states it: the binders e' cap' out' and nine premises after the old ten, each held at
      dr_stage_calls (dc_regs' Ht, dr_at_op's lm_O m = [], and dc_stB's dcB_out: the cut's entry and source at the
      call, dr_post's frame and its entry / source clauses); and, last in the conclusion, check_no_loss's memmove
      bound `AREC * capb .. < 2 ^ 32`, as the B top_x's LS_cnl_pre states it (a Theorem Labs lane's TX_LS_cnl_pre,
-     lib/B/ReplyB3LS3cTopxPost.v:173-201 at a working branch 92b82c11331) *)
+     lib/B/ReplyB3LS3cTopxPost.v:174-202 at a working branch) *)
   dreR_LS_cnl_pre : forall cx t m ly S (ly' : alayout) (S' : astate) si h j h'' e' cap' out',
     LSx cx t m ly S -> RINV cx t m -> dr_pick cx m si h ->
     (j < length (lm_es m))%nat -> re_fd (nth j (lm_es m) dr_e0) = hs_fd h ->
@@ -631,11 +632,11 @@ Record dr_env_xR : Prop := mk_dr_env_xR {
   dreR_LS_drain_skip : forall cx t m ly S,
     LSx cx t m ly S -> LSx cx (t + 1) (dr_skip m (dr_k' cx m)) ly S;
   (* the drain charges the meter dr_cost of the entry and source it was called with (S to S1), check_no_loss
-     cnl_cost of the lists it was called with (S1 to S').  A Theorem Labs lane's TX_LS_drain_step (commit d0d75bf92db,
-     lib/A/ReplyLS3cTopxPost.v:118 on image A; proved as ReplyLS3cArms.v:118 fr_LS3c_drain_step_p), as image A's drain
+     cnl_cost of the lists it was called with (S1 to S').  A Theorem Labs lane's TX_LS_drain_step (
+     lib/A/ReplyLS3cTopxPost.v:118 on image A; proved as ReplyLS3cArms.v:119 fr_LS3c_drain_step_p), as image A's drain
      arm states it: the binders ly1 h1 E' H' and twenty premises after the old five, each held at dr_stage_calls (the
      drain's and check_no_loss's frames, dcB_out and dc_stE's exports); and, last, dc_regs' `0 <= t < OPS_MAX`, as
-     s5-r1d's TX_LS_drain_step_t (1318828167d lib/A/ReplyLSI.v:134, its LS instance's lsi_LS_drain_step :509) *)
+     s5-r1d's TX_LS_drain_step_t (lib/A/ReplyLSI.v:135, its LS instance's lsi_LS_drain_step :509) *)
   dreR_LS_drain_step : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
       si h j h'' e' c' O' cap' out' (E H : hlist) (ly1 : alayout) (h1 : hsrc) (E' H' : hlist),
     LSx cx t m ly S -> dr_pick cx m si h -> (j < length (lm_es m))%nat ->
@@ -672,8 +673,8 @@ Record dr_env_xR : Prop := mk_dr_env_xR {
     hs_held h'' = hs_held h ->
     (Z.to_nat (ReplyCnt.tr_peakP P (cnl_tr (hs_expected h'') (hs_held h''))) <= dr_cnl_pk h P)%nat;
   (* the live counts at the cut leave room for the arm's peak (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), CORRECTION 2):
-     a Theorem Labs lane's row fr_LS3cp_cnt_drain (commit ba8e99b5bd2, lib/A/ReplyLScnt.v:371 on image A) with its guards,
-     over the room record's count fields.  Its peak is the row's pk_drain m h j (ReplyLScnt.v:151) with
+     a Theorem Labs lane's row fr_LS3cp_cnt_drain (lib/A/ReplyLScnt.v:371 on image A) with its guards,
+     over the room record's count fields.  Its peak is the row's pk_drain m h j (ReplyLScnt.v:152) with
      check_no_loss's part the parameter dr_cnl_pk: drain's trace peak + check_no_loss's peak over the drained lines
      + 2, which covers dr_spec's count premise (dr_pk) at the cut and cnl_spec's (cnl_pk) at the state the drain
      leaves (dreR_DR_CNT_grow, dreR_DR_CNT_cnl) *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nstep_dec_mmap and nstep_dec_mmap_none discharge the place_declined_b premise of nstep_mmap_rw_inv and nstep_mmap_none_inv for the literal NULL hint (place_declined_b_null) and take the grant's bounds from Linux's placement (place_admissible); nstep_dec_munmap states munmap's cut of the maps as maps_subtract of the range, not map_remove; nstep_dec_mprotect takes a premise that the range is clear of the vDSO pair (vdso_reserved)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Lib Require Import RelSpec.
@@ -147,12 +148,20 @@ Proof.
   intros len avoid mo rsp mo' evs h Hlen Hlen2 Hceil Hcov H.
   pose proof (mmap_len_bound len Hlen) as Hb.
   assert (Hl0 : w_is0 (Z_to_bv 64 len) = false) by (rewrite w_is0_lit by lia; apply Z.eqb_neq; lia).
-  apply (nstep_mmap_rw_inv 0 len mo rsp mo' evs Hl0) in H as [-> H]. split; [reflexivity|].
-  fold h in H. rewrite (unsigned_lit len) in H by lia. fold (mmap_len len) in H.
-  destruct H as [(e & HIn & -> & ->)|(a & (E1 & E2 & E3 & E4 & E5) & -> & ->)].
-  -   match type of HIn with In _ (?f ?c) => destruct c end; cbn in HIn; [|destruct HIn]. destruct HIn as [<-|[]]. split; [vm_only_done|].
+  (* the hint is the literal 0 of [NMmap 0 len ...], so the decline is
+     DISCHARGED, not assumed *)
+  apply (nstep_mmap_rw_inv 0 len mo rsp mo' evs Hl0
+           ltac:(apply place_declined_b_null; vm_compute; reflexivity)) in H as [-> H].
+  split; [reflexivity|].
+  destruct H as [H|(a & (Hpl & _) & -> & ->)].
+  - fold h in H. rewrite (unsigned_lit len) in H by lia. fold (mmap_len len) in H.
+    destruct H as (e & HIn & -> & ->).
+    match type of HIn with In _ (?f ?c) => destruct c end; cbn in HIn; [|destruct HIn]. destruct HIn as [<-|[]]. split; [vm_only_done|].
     exists (MmErr ENOMEM). split; [|auto]. unfold dec_mmap; cbn [eff_copies eff_copyins]. rewrite errno_of_errno_ret by (unfold ENOMEM; lia). reflexivity.
-  - split; [vm_only_done|].
+  - destruct (place_admissible len _ _ _ a Hl0 Hpl) as (E1 & E2 & E3 & E4). clear Hpl.
+    fold h in E3, E4 |- *. rewrite (unsigned_lit len) in E3, E4 by lia. rewrite (unsigned_lit len) by lia.
+    fold (mmap_len len) in E3, E4 |- *.
+    split; [vm_only_done|].
     assert (Hok : mmap_addr_ok len avoid (bv_unsigned a) = true).
     { unfold mmap_addr_ok. assert (E3' : (bv_unsigned a + mmap_len len <= alloc_ceiling)%Z).
       { apply (ceil_page_le h); [exact Hceil| |exact E3]. unfold mmap_len, page_round_up_Z. change page_size with 4096%Z in E1 |- *.
@@ -184,12 +193,18 @@ Proof.
   intros len avoid mo rsp mo' evs h Hlen Hlen2 Hceil Hcov H.
   pose proof (mmap_len_bound len Hlen) as Hb.
   assert (Hl0 : w_is0 (Z_to_bv 64 len) = false) by (rewrite w_is0_lit by lia; apply Z.eqb_neq; lia).
-  apply (nstep_mmap_none_inv 0 len mo rsp mo' evs Hl0) in H as [-> H]. split; [reflexivity|].
-  fold h in H. rewrite (unsigned_lit len) in H by lia. fold (mmap_len len) in H.
-  destruct H as [(e & HIn & -> & ->)|(a & (E1 & E2 & E3 & E4) & -> & ->)].
-  -   match type of HIn with In _ (?f ?c) => destruct c end; cbn in HIn; [|destruct HIn]. destruct HIn as [<-|[]]. split; [vm_only_done|].
+  apply (nstep_mmap_none_inv 0 len mo rsp mo' evs Hl0
+           ltac:(apply place_declined_b_null; vm_compute; reflexivity)) in H as [-> H].
+  split; [reflexivity|].
+  destruct H as [H|(a & Hpl & -> & ->)].
+  - fold h in H. rewrite (unsigned_lit len) in H by lia. fold (mmap_len len) in H.
+    destruct H as (e & HIn & -> & ->).
+    match type of HIn with In _ (?f ?c) => destruct c end; cbn in HIn; [|destruct HIn]. destruct HIn as [<-|[]]. split; [vm_only_done|].
     exists (MmErr ENOMEM). split; [|auto]. unfold dec_mmap_none; cbn [eff_copies eff_copyins]. rewrite errno_of_errno_ret by (unfold ENOMEM; lia). reflexivity.
-  - split; [vm_only_done|].
+  - destruct (place_admissible len _ _ _ a Hl0 Hpl) as (E1 & E2 & E3 & E4). clear Hpl.
+    fold h in E3, E4 |- *. rewrite (unsigned_lit len) in E3, E4 by lia. rewrite (unsigned_lit len) by lia.
+    fold (mmap_len len) in E3, E4 |- *.
+    split; [vm_only_done|].
     assert (Hok : mmap_addr_ok len avoid (bv_unsigned a) = true).
     { unfold mmap_addr_ok. assert (E3' : (bv_unsigned a + mmap_len len <= alloc_ceiling)%Z).
       { apply (ceil_page_le h); [exact Hceil| |exact E3]. unfold mmap_len, page_round_up_Z. change page_size with 4096%Z in E1 |- *.
@@ -215,7 +230,7 @@ Lemma nstep_dec_munmap : forall addr len mo rsp mo' evs,
   | RgErr e => e = EINVAL /\ mo' = mo
   | RgDone false => mo' = mo /\ map_has (vm_maps h) a n = false
   | RgDone true => map_has (vm_maps h) a n = true
-      /\ m_vmmaps mo' = mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) a)
+      /\ m_vmmaps mo' = mkVmMapsFull (vm_reserved h) (maps_subtract (vm_maps h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
                                     (maps_subtract (vm_noaccess h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
                                     (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)
   end.
@@ -238,6 +253,7 @@ Lemma nstep_dec_mprotect : forall addr len mo rsp mo' evs,
   (0 <= addr < 2^64)%Z -> (0 < len)%Z -> (mmap_len len < 2^64)%Z ->
 
   (addr mod 4096 = 0)%Z -> (addr + mmap_len len < 2^64)%Z ->
+  region_free (vdso_reserved (m_kernel mo) (vdso_top h)) a n = true ->
   map_contains (vm_noaccess h) a n = true -> map_contains (vm_maps h) a n = true ->
   nstep (NMprotect addr len (PROT_READ + PROT_WRITE)) mo rsp mo' evs ->
   evs = [] /\ vm_only mo mo' /\
@@ -251,13 +267,13 @@ Lemma nstep_dec_mprotect : forall addr len mo rsp mo' evs,
                                     (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)
   end.
 Proof.
-  intros addr len mo rsp mo' evs h a n Ha Hlen Hlen2 Hal Hnw Hcn Hcm H.
+  intros addr len mo rsp mo' evs h a n Ha Hlen Hlen2 Hal Hnw Hvd Hcn Hcm H.
   pose proof (mmap_len_bound len Hlen) as Hb.
   assert (Hl0 : w_is0 (Z_to_bv 64 len) = false) by (rewrite w_is0_lit by lia; apply Z.eqb_neq; lia).
   assert (Ua : bv_unsigned a = addr) by (subst a; apply unsigned_lit; lia).
   pose proof (nstep_mprotect_inv addr len (PROT_READ + PROT_WRITE) mo rsp mo' evs) as INV. cbv zeta in INV.
   rewrite (unsigned_lit len) in INV by lia. fold (mmap_len len) in INV. fold a n h in INV.
-  apply (INV eq_refl ltac:(rewrite Ua; change page_size with 4096%Z; exact Hal) Hl0 ltac:(rewrite Ua; unfold two_pow_64; lia) eq_refl Hcn Hcm) in H as [-> H]. clear INV.
+  apply (INV eq_refl ltac:(rewrite Ua; change page_size with 4096%Z; exact Hal) Hl0 ltac:(rewrite Ua; unfold two_pow_64; lia) eq_refl Hvd Hcn Hcm) in H as [-> H]. clear INV.
   split; [reflexivity|].
   destruct H as [(e & HIn & -> & ->)|(Hbud & -> & ->)].
   -   match type of HIn with In _ (?f ?c) => destruct c end; cbn in HIn; [|destruct HIn]. destruct HIn as [<-|[]]. split; [vm_only_done|].

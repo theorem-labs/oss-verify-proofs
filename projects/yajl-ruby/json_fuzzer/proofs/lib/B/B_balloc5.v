@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ATOK_window gives the free-range slack above task_unmapped_base, where the model's NULL-hint placement looks). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -105,7 +106,7 @@ Proof.
   eapply (OSL_grant aEBc aNzc R s mo _ _ nZ L); [apply AHK_aN_bound; exact HR0_ok| exact O2| exact HnZ].
 Qed.
 Lemma ATOK_window : forall R R' s mo nZ, ATOK R R' s mo -> 0 <= nZ <= NMAXA ->
-  page_size + nZ + gap_weight nZ (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= alloc_top (m_vmmaps mo).
+  Mmap.task_unmapped_base + nZ + gap_weight nZ (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= alloc_top (m_vmmaps mo).
 Proof.
   chyps.
   intros R R' s mo nZ (K & _ & _ & _ & KV & [P1 P2]) HnZ. apply (PSL_window R'); [exact P2| exact P1| exact HnZ|].

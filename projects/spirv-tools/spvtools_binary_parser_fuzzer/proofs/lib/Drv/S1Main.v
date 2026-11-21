@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base; the model's channel reader as a premise of the writes; recorded proofs re-encoded or written as text where the change reaches them). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -35,11 +36,46 @@ Section Main.
   Theorem main_body : forall (sp : word) (a0s path : list byte) (envv : list (list byte)) (tid : word) (rdraw : EntryDraw)
                              (regs : bvmap 5 word) (mem : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream),
     valid_argv [a0s; path] -> valid_envp envv -> valid_sp sp -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
-    main_entry sp rdraw [a0s; path] envv a_uid a_hwcap tid regs mem -> valid_brk RSEGS brk ->
+    (* LPS 75d69e00: [S1Start.main_entry] takes the run's whole ProcInput and the mmap
+       base in place of (argv, envp, uid, hwcap).  The input named here is the one this
+       theorem's OWN conclusion already runs, two lines below -- [in_argv]/[in_envp]/
+       [in_uid]/[in_hwcap] of it reduce to exactly the four the old spelling named -- and
+       [mbase] is this theorem's own binder, so this is the same premise, not a narrower
+       one. *)
+    main_entry sp rdraw (mkProcInputC [a0s; path] envv fs0 stdin0) mbase tid regs mem ->
+    (* LPS 727298f3: the launch's channel reader; every path writes to fd 2 or fd 1 *)
+    a_channel_reader = true -> valid_brk RSEGS brk ->
     alloc_ceiling = bv_unsigned sp - 8388608 -> rr_canary = bv_unsigned (canary rdraw) -> rr_secret = rr_secret_of (ed_random rdraw) ->
     srealizes RSEGS (mkCfg (@mkst fx0 regs (0x655e8%bv : word) mem (seg_rom RSEGS))
-                           (with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp source_alloc_limit (mkProcInputC [a0s; path] envv fs0 stdin0))))
+                           (with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rdraw)) (init_model (segments_reserved RSEGS) brk mbase sp source_alloc_limit (mkProcInputC [a0s; path] envv fs0 stdin0)))))
               (spec [a0s; path] fs0).
 Proof.
-ltac2:(KReplay.run1 (kr_t_S1Main ()) ["Main"] "p'0h02E0h12E1h21Hh31bi001bh41Eh52HFh64Hpneh76Hshorth83Hvah92MEh:2Hah;4__x1h<2b1h=2b2h>1nh?1ph@4pathhA1qhB3HAChC3HRRhD3HRShE4HbrkhF5HlonghG5HplenhH4HpndhI7Hshort0hJ4HtidhK3HvehL4HvsphM7__arithhN4__ffhO7__sat45hP7__sat46hQ8__varmaphR5__withS3a0shT2b0hU3brkhV7contenthW4cstrhX1ehY4envvhZ3fs0h[5mbaseh\3memh]1oi011oh^5rdrawh_4regsh`2spha6stdin0hb3tidi024datai031li041xp%0p&0p;1p;2p;9p;3p;5p;Ep;4p;6p;Mp;;p;8p;7p;Vp;Hp;<g0000j16Tg000Uj1STg0013j1@Tg001Vj1VTg00Agj19Tg00BLk205Tg00C8R0j1XTg002ij1PTg00CZj1UTg00DQj1cTg00EHj1`Tg009\j2?Tg00F=R1j2ITg00FYj1HTg00G7k20GTg008DR2k20FTg00GTk10<Tg00HBk104Tg00I2l9RTg00Iok202Tg00Jej1wTg00Kaj2sTg0026j32Tg00L>j1pTg00M6j1nTg00N0j1mTg00Nhj1lTg00Ofj1jTg00Paj11Tg00Q@j2;Tg00Q`j2_Tg00RER3j2NTg00R_R4j2ETg00S7j2^Tg00SWR5k30KTg00T;k30JTg00T^k10ITg00USk10HTg00VQj5>Tg006Fj24Tg00WFj2MTg00XBj28Tg00Y6j2<Tg00Ykj2LTg00ZcmE0;Tg003Ij2CTg00[nj2QTg00\nmE03Tg00^7j4ZTg004^j6KTg005:k201Tg00^Rj1OTg004>j3FTg00:Fj3vTg00^kj2uTg00_QlMtTg00`Ll;rTg00`jR6j1TTg00aJR7j2GTg00afj4yTg00bMj1oTg00c2j2zTg00cZj3{Tg00d>j2|Tg00d\j1}Tg00e:j1~Tg00eek200Tg00fHj2WTg00fkj4YTg00gVj1\Tg00h8j8kTg00h\k206Tg00i>k207Tg00ijk308Tg00jIj4iTg00k;k409Tg00kfk20:Tg00lHj7gTg00mLlVfTg00nEmH0=Tg00oOk20>Tg010Ck50?Tg0115k10@Tg0124k20ATg012ik60BTg013bk20CTg014Yk20DTg015Nk30ETg016Hl<]Tg016mj7aTf0R8#6#6p=3f4R9f3R:f2R;f1R<;F83Fp=5%18#1p=h%18#1#1#1p=e%18#1#1#1#1#1#1#1p=d%18#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=b%18#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=0%98#9p=Dg017QR=P:P;P<P8I0?p=B&0@<00A8p=7g018BR>,48p=Ag019:R?f7S00f6R@f5RAP9P:P;g01:oRBP<J0B+0C+0D<0E8p==g00=QRCg00>1RD728p=:g00?TRE92C8p=Jg01<0RFg00>QRGP3P6P7g01<OPAP9P:P;P<P8M<]p=qPFPGP4P6P1g01=1PAP9P:P;P<P8M<]p=xP<g01=SS01g01>2R1P1g01>RR6P8g01?2Fap=[g00>oR4#6RF#3R7#6#3R3#SRH#@RI%S7#@R7#VRJ%VJg01?R%9FRK#S005I%X7\Ig01@Rg01A@PJf:RLPJf9RM%PJRND5#U%cMf=RO#`g01B<RP1?HLRQ'I%HFRF%9K#6#HRK+0GRR,IQ+0Ff?RQPLPJf>RSPJPOPND5f<RTp,3AMBRU$0<RV&04URWf;RXPMf8RYM9R202?Yp,2ACRZ#wfAR[,?H%33#3#3R3#6#3#3#3#3#3#H's52Gp,4RRNDR\#p%nO,?H52G%m\%lS#j52Gg01BZ#1#h#e#d#b#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0R]#1R^fBR_,;7R`'_1N^`1E`^1^^`40KfCR`,;7,^^PCP5fDR5,;7Ra,N^1Ea^P_%94#3#9#6#9#6#9#6#D#D#6#9#6#3#HRag00@mRb60JHRcP[&0I?RdCBP5&0H?R?f@RePQfHRfPUPJfGRgPJfFRhPND5fERiPSPOD>PCg01C9RjP<17hSRkPCPj%P7Rl,4hRmPkPCPj%Ah1MhS,8kP0PJPj1<Sh17gQ1L8Q'8Pkn10110400021010200n0100000020000n0100000020000n0100000020000G=P<1;7iRk,N^P=PUPfPgPhPiP5P`P_P[PePQPSPOPBPTPXPLPMPYP8NE0;WFP8O11Ek^PmPC1CC8Rm14gl=2C8PCfIRk/4l=2C8PhPcPiPdCBPfP?P5P`fLRnPUPJfKRoPJfJRpPND5PkP_P[D>PCPjP<17p_RqPCPj%ApRr1Mp_,8qP0PJPj1<_p17o`1L8`'8Pqn10110400021010200n0100000020000n0100000020000G=]0P<14flRq#:P214<8#:A2J;<[RsA2J<814;<#:Rt[A2J:;\t1Q<8P<n2001000000120000000XAJX?JRtPs^AJ^?JRsP8PpPlP<O3A2JplRuP=PUfMRvPnPoPpPkPfPgPhPiP5P`P_PBP[PePQPSPOP8NE03b0b2W0%JqA2JklRq14pl#:RQA2Jol[14olRw#:\u1QplP8CZPQPCPw%J8X3CS02P;PDP8EKA2CDES03PCPDPCp-0P8g00@QRwg00@4RQn0110000020000XXCPbPEP8EKPQ201Q8b2S04b0b4W4%OqRqePqPrPCPm%Ao=2C8PC%Av=2C8PpPcPkPdCBPnP?PfPgfPRmPUPJfORrPJfNRqPND5PvPhPiD>PCPjP<17qhRQ1Mqh'8P0PJPj1<hq17rg1L8g'8PQn10110400021010200n0100000020000G=]1P<%AnRQ#:PtPsP8PqP>P<O3A2Jq>RsPJP>PJfQRtPJP8PND5#UfSREPqPJfRRbPJP<PND5PmPVPWPrPvPnM9R1;7;/E^14:l#JA2J9l#OPtPcPmPdCBPEP?PrPqfWRuPUPJfVRxPJPAPND5fTRyPvPnD>17Av1MAv'8G=]6]0]7]9]8X@JAFJ>NRz9FJm#UPbPvAFJtzPrPVPWPqPnPoM9R1;7>/E^14>l#JA2J>l#Og00AIRl%@8RW%@<RVP2%@;?2<81?:;1?:<52GR2[1?;<1?;852G%@:?2;<[R{%@9?2:;\2Av;<8P8n2001000000120000000W=W<W>P{^=V^<W^>lP8PH1uHaRaPc1?Hc,CGO4b2S05PcPIeS0692IaRHPIPaPbP8PtPdCBRlPyP?PmPrfXRWPUAFJuzfURzPqPvD>17>q1M>q'8G=X3IPZP\P=PUp,2MIRVp,5AINV0R{p,5TIGHTR2p,7FRESH44R|p,2DMR}PuPxPyPEPbPtPmPrPqPvPnPAPpPkPfP9PhPiP5P`MMtPcP8EKb2W6W0W7W9W8PrP8PiP[PMP@PAM;rb1b2W1%JQA2Jv>RQ%Aq#:RAA2Jr>[%ArR~#:\s1Qq>P8CZPAPCP~Q02P;PDP8EKQ03Q04b1b4W4%OQRQePQ1;7qRQ/N]R~%TQRA%94#D#D#D#D#D#HR>'GPQPA1CGARsP]P>1CG>Eq1EQ^%H3R3,IAR]PQPAPsP^P31CG3ExPYCyP]1;7rR]#o%T],GP1zFK1IPF1GPK1IPR[[1GPFR]A{FK<VwW:1GPR\w^:]g01CkR]#P%V]1|G<%}G%~GR]Q01P1P1P6PG200G4R4g01DW1WG3CY,[]%\1PGP4g01E>1WG>CY,[]Gk206]6P8P;1CCD2078;#:dB08GP<CibNbQbRX;G1I831G<>[^;GP81;7E#TP9O2bMbObPbWbIH09P~1<gr%XJR~1C~81<fm=2~8P0PJ1<pb=2~8PrPcPqPdCBPtP?PvPnPzPUPJPyPJPEPND5PbPoPpD>P0PJPjP<17yn1L8n'817Eon10110400021010200G=]5P<1<oE20:J852~Q05PHPIPaPlPyP?PmPrPWPUPJPuPJPxPND5PzPqPvD>17xq1L:q'8G=X3IPZP\P=PUPVP{P2P|P}p,3LIBPZP\PUPVP{P2P|FgPuPxPzPyPEPbPtPmPrPqPvPnP;PoPpPkPfPgPhP<PXQ00P@g01EePiP5P`MVfPcP8EKb2W5XVJP8O11<kt%\J52~P=PUPyPEPbPtPmPrPqPvPnPoPpPkPBPfPgPhPiP5P:PYP9P8NH0=W5n10110100021110300P8O1b5b]bGbHW1n0110000020101P8O1b1b3b6W0n0110000020001P8O1b0b3W7P8O1n211210000000021100011000bTb3PSQ06POPdCBPeP?PTPXP5PUPJP`PJP_PND5RNP[PLPMD>20>NLG=eWDWCWBWEW9WJWLWKW8WaWZX[IXUIW\W_W^XbIWYX@JWSW`o"). Qed.
+  (* The four cases of [spec]; each is the tail lemma of its Section, applied at this
+     theorem's binders.  (LPS 727298f3: text in place of the recorded proof, whose
+     callees gained the launch draw, the vDSO model and the channel reader.) *)
+  intros sp a0s path envv tid rdraw regs mem brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hrdr Hbrk HAC HRR HRS.
+  assert (EPC : (0x655e8%bv : word) = Z_to_bv 64 0x655e8) by (apply bv_eq; reflexivity).
+  unfold spec.
+  destruct (Nat.leb_spec 4096 (length path)) as [Hlong|Hshort].
+  { exact (ref_open_fail_toolong_w sp a0s path envv tid rdraw regs mem brk mbase fs0 stdin0 source_alloc_limit
+             Hva Hve Hvsp Htid ME Hrdr Hlong). }
+  destruct (list_byte_eqb path []) eqn:E0.
+  { apply list_byte_eqb_eq in E0.
+    exact (ref_open_fail_empty_w sp a0s path envv tid rdraw regs mem brk mbase fs0 stdin0 source_alloc_limit
+             Hva Hve Hvsp Htid ME Hrdr E0). }
+  assert (Hpne : path <> []) by (intros E; subst path; discriminate E0).
+  assert (Hplen : (length path <= 4095)%nat) by lia.
+  destruct (list_byte_eqb path dot_path) eqn:E1.
+  { apply list_byte_eqb_eq in E1. subst path. rewrite EPC.
+    exact (dir_body MI AINV0 TIGHT FRESH44 DM sp a0s envv tid rdraw regs mem brk mbase fs0 stdin0
+             Hva Hve Hvsp Htid ME Hrdr Hbrk HAC HRR HRS). }
+  assert (Hpnd : path <> dot_path) by (intros E; subst path; discriminate E1).
+  destruct (fs_lookup fs0 path) as [content|] eqn:HF.
+  { rewrite EPC.
+    exact (file_body MI AINV0 TIGHT FRESH44 DM LIB (s1_target_phase MI AINV0 TIGHT FRESH44)
+             sp a0s path envv tid rdraw regs mem brk mbase fs0 stdin0 content
+             Hva Hve Hvsp Htid ME Hrdr Hbrk HF Hpne Hpnd Hplen fp_frm_zero_fx0 HAC HRR HRS). }
+  exact (ref_open_fail_absent_w sp a0s path envv tid rdraw regs mem brk mbase fs0 stdin0 source_alloc_limit
+           Hva Hve Hvsp Htid ME Hrdr Hplen Hpne Hpnd HF).
+Qed.
 End Main.

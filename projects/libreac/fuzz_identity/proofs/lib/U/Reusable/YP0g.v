@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YP0g.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed SR_mmap_rw, SR_mmap_none, SR_mprotect_rw). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -123,6 +124,8 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 3 ->
 getr regs 13 = Z_to_bv 64 34 -> getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+Mmap.place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+  (page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 (forall e, In e mmap_errnos ->
 SR segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) Q) ->
 (forall a, grant_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true ->
@@ -132,8 +135,8 @@ SR segs (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4)
 (exists a, grant_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true) ->
 SR segs (mkCfg (pend_at regs pc mem rom) model) Q.
 Proof.
-intros regs pc mem rom model Q Hh Hlz Hno H1 H2 H3 H4 H5 HA HB Hex T HK.
-apply (rz_mmap_rw_ok segs regs pc mem rom model T Hh Hlz Hno H1 H2 H3 H4 H5); [|exact Hex].
+intros regs pc mem rom model Q Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl HA HB Hex T HK.
+apply (rz_mmap_rw_ok segs regs pc mem rom model T Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl); [|exact Hex].
 intros a Ha. exact (HB a Ha T HK).
 Qed.
 Lemma SR_mmap_none : forall regs pc mem rom model Q,
@@ -141,6 +144,8 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 34 ->
 getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+Mmap.place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+  (page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 (forall e, In e mmap_errnos ->
 SR segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) Q) ->
 (forall a, place_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true ->
@@ -150,8 +155,8 @@ SR segs (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4)
 (exists a, place_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true) ->
 SR segs (mkCfg (pend_at regs pc mem rom) model) Q.
 Proof.
-intros regs pc mem rom model Q Hh Hlz Hno H1 H2 H3 H4 H5 HA HB Hex T HK.
-apply (rz_mmap_none_ok segs regs pc mem rom model T Hh Hlz Hno H1 H2 H3 H4 H5); [|exact Hex].
+intros regs pc mem rom model Q Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl HA HB Hex T HK.
+apply (rz_mmap_none_ok segs regs pc mem rom model T Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl); [|exact Hex].
 intros a Ha. exact (HB a Ha T HK).
 Qed.
 Lemma SR_mmap_fixed_none : forall regs pc mem rom model Q,
@@ -187,6 +192,8 @@ getr regs 11 <> Z_to_bv 64 0 ->
 getr regs 12 = Z_to_bv 64 3 ->
 map_contains (vm_noaccess (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
 map_contains (vm_maps (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
+region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+  (getr regs 10) (page_round_up (getr regs 11)) = true ->
 mprotect_budget_ok model (getr regs 10) (page_round_up (getr regs 11)) = true ->
 (forall e, In e mprotect_errnos ->
 SR segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) Q) ->
@@ -195,8 +202,8 @@ SR segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4)
 (mprotect_model (getr regs 10) (page_round_up (getr regs 11)) model)) Q ->
 SR segs (mkCfg (pend_at regs pc mem rom) model) Q.
 Proof.
-intros regs pc mem rom model Q Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hbud HA HB T HK.
-apply (rz_mprotect_rw_ok segs regs pc mem rom model T Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hbud).
+intros regs pc mem rom model Q Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd Hbud HA HB T HK.
+apply (rz_mprotect_rw_ok segs regs pc mem rom model T Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd Hbud).
 exact (HB T HK).
 Qed.
 Lemma SR_munmap_exact : forall regs pc mem rom model Q,

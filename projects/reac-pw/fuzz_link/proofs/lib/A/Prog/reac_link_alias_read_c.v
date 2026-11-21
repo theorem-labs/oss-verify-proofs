@@ -110,7 +110,7 @@
    `inG`, of the blocks by `in_tmp_block`); own = [(4, p4)], frames S = [], so `aside_room Sc [(1, 1); (9, 1)]` is
    0 + 1 <= 8192 and 0 + 1 <= 32 (fs_frames c = 2 ^ (14 - c), YG00.v:565); the read set (the name and the 64 table
    strings, in g_names and .rodata, through their NULs) is `akb` by the image clause: the instance's
-   as_owned_static (AF0m.v Tfib_owned_static at 4a315fd508ce) meets none of those bytes, nor g_nl or errno (its rows
+   as_owned_static (AF0m.v Tfib_owned_static) meets none of those bytes, nor g_nl or errno (its rows
    by the odd strings start right after each NUL: the redzones); `st_nev S + k <= EV_MAX` as in link-a/form/WITNESS.md
    (internal record, sha256 b8aaf8151f7f) section 1.
 

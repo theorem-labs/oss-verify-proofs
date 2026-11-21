@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proof terms re-threaded to the revision's definitions. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Bool Lia.
@@ -433,12 +434,29 @@ ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "##Fzp'0h01vi001vh11Eh22o'h34_
 Lemma rd16_prun {R} st p (k : Z -> M R) o :
   exists o' v, (prun pans pupd) o (rd16 st p k) = (prun pans pupd) o' (k v).
 Proof.
-ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "##>lp'0h02b1h11vh22o'h32b0h41Hh51Rh61eh71kh81mh91oh:1ph;2sth<2o1h=2o2h>2v1h?2v2i001xp;1p;2p;5p;4p;6p;3p200R0g007ZR1p6084111000p8P0g0043R2p4p71!s7&6Q=R3p60851!sN/69HR4!sN0RIR5!s7+2j1<Tg00[kj1BTg00i<j17Tg00]`j2:Tg00\Ij23TP3j5>TP4j46TP1j60Tg06?0R1j25Tg00oGj2CTg00WLj2E!sC$Jj4ATg002Mj6?TP5j4DTg00Yij2@Tg00g]j3=Tf4R5f3R4f2R3f1R2'Cf0R6C6p=11@26#<p=8f7R7f6R8f5R9P5P4P3P2E0;=6p=;g00XnR:/56p=21@43#<?=26p=4P!sR+P6E09=78p=9g00WfR;g0068R<%<4\:R=p,1OR>!sT&!s\$g00m<R?#BR@P4%7?#7!s$0BR?/:6RA,32RBO1X0:D1X3:P6D>18>8RCP>p,4pansRDp,4pupdREP8P3P8!t-$7!s-$@P9P!sd'RFX3:RGC6P>PDPEP8P2PGP6O1E0G;X1:#2X2>,5>P1P>P>P7!sM&7P4!ss%f8RG!s0$@P8P!ta-C6E0!sR+2PFE0C4!su'P>PG!sB&GP5P!sf$f9RF!s0$@P7!tk,H!sp1GP2P9!tk%!st,,5>P6P>PF!sK&FP9P!sq$f:RI!s0$@PG!sy,J!sy1FP2PH!su+P1P:P>PI!sC&IP8P!si$f;RH!s0$@PF!u\:IP3PJ!so&f<RJ,8>RK!sB&JPGPJPHPIf=RLPJ1CH@RMPH!sp&C6!sp&RN!sV+2PFP6O1G9!u\1KP!sI,5!sy%P@PI!ta+G918>L!sn+LP9PLPJPMPH133A!sK$RKC6E0f@RO,8>RPP3!sR&OP2PL!tB4X8N!sh&KP9D>P>f?!uL+KP7PKf>RMPLP@PL135AO1RNX0:RQD1!v7+KP2PQ!w{71P>PP!tL+GPOPKPMP@PM139!tz%D1!tk-N!zP/P>fA!u]+NPFPN!se$@PK138AO1RK!se$!tS+NP2PM!yP:fBR!tU'PPIPP!sr$@PO137AO1RO!sp1PP2PK!yG2fCR!tx'1PHP1!sj$@PN13G!u?'!sf+1P3PO!y>'E!wL%!{t'OPLPOfDRNP1P@P113I!se,!w=+OP2PP!y37GP!sI,5PP13FAO1G9fFRP!zK/PP9P11:?2,3IRIO1E0R1P>fIRG!xz+G!t1'!vL2X8KP>P>fH!u$+GP7PO1:?4,3JO1!}_0O!sg3P9!vJ$G!sc-8PN1:?3,3H!sc08PN!sc-PI1EK1CACA!u8+MPPPO!w&'H!w&-6E?W4X?:P2P6O2n20010!s#$121!s0%W4X=>!sE=b6!|J+F!{`$HPM!s-$@PJ!~X4!t<%>!t<A<!t<AC!#6w'!#7K&4CD!#73,4!#735eX9>X7=X:<X;;X50!#9f+O5W9W7W:W;X50o"). Qed.
+  (* OLD: ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "##>lp'0h02b1h11vh22o'…").
+     The decoded term stopped type-checking at Qed at 75d69e00:
+       Illegal application: eq_ind_r … "M (O * R1)" : "Type@{M.u1}"
+       which should be a subtype of "Type@{eq_ind_r.u0}"
+     -- M's universe moved in the revision, so the replayed TERM no longer checks while a
+     tactic proof re-elaborates.  NEW is openssl/pem's written proof of the byte-identical
+     statement, ported per hunk: projects/openssl/pem/proofs/lib/Spec/MallocCtrl.v:539-542. *)
+  unfold rd16. destruct (rd8_prun st p (fun b0 => rd8 st (aadd p 1) (fun b1 => k (b0 + 256 * b1))) o) as (o1 & v1 & ->).
+  destruct (rd8_prun st (aadd p 1) (fun b1 => k (v1 + 256 * b1)) o1) as (o2 & v2 & ->). eauto.
+Qed.
 
 Lemma enframe_read_off_prun {R} st g idx n ctr (k : Z -> M R) o :
   exists o' off, (prun pans pupd) o (enframe_read_off st g idx n ctr k) = (prun pans pupd) o' (k off).
 Proof.
-ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "##KIp'0h03o16h12o'h23offh32b3h41vh51Hh61Rh73ctrh81eh91gh:3idxh;1kh<1mh=1nh>1oh?2sth@1bi001bhA2o1hB2o2i011xp;1p;2p;5p;4p;6p;3p;7g0068R0p4p70p200R1p8p100L:!s9$P1p8P1g007ZR2p6084111000!s<&43R3p4p71!s7&6Q=R4p60851!sN/6SMR5!s=50A4R6!se+3j16Tg019lj21Tg00[Fj1>Tg014Pj1O!s/$nj2STg015Kj1RTg00i<j1V!sS$kj1QTg00\Ij2HTg017Jj2NTg01<=j1=TP4j5WTg06TZj2;Tg06Uej25Tg069Hj4?TP2j60Tg06?0R2j28Tg00oGj2:Tg00g]j3ETP5j5UTg00WLj2M!sR$Jj4DTg002Mj6LTg06RIj4ITP6j7TTg00njj2F!tf$fj2KTg00Yij2PTf2R6f1R5';f0R4':p=Jg01AER3,F5/F4p=@g013LR7,K4,55p=Cf5R8f4R9f3R:/;6/:5P4CIp=9%=5/F3/F4/K7p=41N65/54p=31P54#6p=<P9P:1:6!sW&Bf7R7f6R3P8P9P:P6P5E0;E4p=Ag00XnR;/84p=21P:6#6?E54p=7!sR,P4E09E73p=Gg00WfR<%63\;R=p,1OR>P7P31138g00m<R?#>R@#ORA7J9g00j?RBf9RC#6g00iaRD,S4#RREf8RFP71173RGP8%V?#ORHP:%Q?R?,H4%>@#>!s$+QR@'NRI11F7RJ#=/@8'CO1X0;E9P614G993:@O1n010!s#$20000X3;P4DW1<>CRGP>p,4pansRKp,4pupdRLPCP6PCPFAJJ3APBf;RJ#6PEf:RMPC11CFRN/;7ROPHP811MCRP/47RQ,5I!tJ$DBP914N3938!tJ4RNX3;RRC?P>PKPLPCP5PRP4O1E0GAX4;#2X1>,8>P2P>P>PM!sM&MP:PMPC1:OAPBf<RO#6PEPJPM1;PFRPPHP311JMRR/4FRS!tW-8A33@Q!ux6C?E0!t'+5PNE0C7!tN'P>PJ!sB&JP9!t5$:PAPBf=RP!tG$OPJ1;RCRRPHP711OJRN/4C!ux03A37@S!uu4S!tI1JP5P8!uu%C7X2!uu,4P>PO!sK&OP8!t@$:RAPBf>RR!tR$PPO1;NMRNPHPF11PORT/4MRU!tR-7A3F!us5RQ!tR1OP5PS!uu+P2P;P>PP!sC&PP3!t8$:NAPBf?RN!tJ$RPPPTPJPHPC11RPRT/4J!w=,E9PFA3C@U!w=APP6PQ!tF&1<>NRQ!s?&NPFPNPR1;TORT/:APBfARU#6RVPEf@RWPN11NRRX/;PRYPHPJ11WNRZ/4PR[!ut,R\PM14XORX93J@O1R]!t[8R^!tD+5PCP4O1GG!wO1QP!sI,9PB%6WPEPNPRPTPHPM15IX!w6'CA3M!xb5GG1<>WRS!sk&WP8PBPV1S5D#RRDP\P!tg2E0fCR],<>R\!sY&]P5PP!y<%RV7E6!tn-X<SPDPBPBfDRD,<>!t5+DPCPBfERX#6P6PDP]fBRT,1]R^PUPHPN11D]RQ#=/@U,C!w~'R_PR14^WR^93N!}r4!t$+!}i/!vI0UPWAJZRHRZPO11UW/4RR`!wY'RaP3DUP!uK,FP]PT11TURbPWPHPR15I^O1R^X0;RcE9!ut-c!#3%:!ue/_!to-^!sS/P>PX!sB&XPMPXPDPQ!x+$W11XD!u|%T!u|$RM!u~$!zb+XP5PN!}V:fF!yR+^PJP^PXPQP]PHPU11^X!s|%]!s|%_!s|1^P5PM!}$2fGR2!sE&2POP2P^PQPDPHPT112^#=/@D!wn,!sp+2P6P_!sp&fIR_,<>!|U+_PRP_fHRM11M2RSP^PHPD11_MRc/4^Rd!}e,E0Re!s[+5P]!{l9!sI,9P]%=S/@X!t`$GGfJRS,<>!sk+SP8PD1H5??3@dRd!zv$DP>fMRQP6!sJ&QP5P2!vx6X<eP>P>fL!u>+QP7P^1H:?fKRf/1S/4M73@O1!u{+QP5P^!sq3P8P;P>Pf!sJ&fP3PX1H6?11S_/42R?!sj1!sF$!sj-Pd1MeDCDCD!uJ+NPSP_PcP2PHPX15I?!wS,4ELW5X4;P5P4O2n20!|F'1211!s2$W5XB>!sE=b8P>!|$0P14bN93R@O1PV!|u,P3!uL$T!sP&TP7POA3P@`!uA-!s;$!uA-A3O@[R[1<>U!sH&UP3PJP[O1R[E0'MCDCDn01!tb%20100b@!#4['CPWPN1:YAPB%6TPEPUPWPZPaCIP[!#8+8!v'%3!v'AA!v'AG!#>]'6PCPFP7P!#C$%FT!#>w,:!#445eX>>X;=X7;X=;X:;X90X?<X61!sj,!#C@$O8W>W;!sN/W?X61o"). Qed.
+  (* OLD: ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "##KIp'0h03o16h12o'…"), red
+     for the same reason as rd16_prun above, which this proof calls.  NEW is
+     projects/openssl/pem/proofs/lib/Spec/MallocCtrl.v:546-552, statement byte-identical. *)
+  unfold enframe_read_off.
+  match goal with |- exists o' off, (prun pans pupd) o (rd8 ?s ?q ?kk) = _ => destruct (rd8_prun s q kk o) as (o1 & b3 & ->) end.
+  destruct (negb (b3 =? 0)).
+  - match goal with |- exists o' off, (prun pans pupd) o1 (rd16 ?s ?q ?kk) = _ => destruct (rd16_prun s q kk o1) as (o2 & v & ->) end. eauto.
+  - eauto.
+Qed.
 
 Lemma enframe_at_ptr : ltac2:(zQ "b0!oc!j9!qa!kh7!s7!hh8!jk7!msb!mt0!mt7!mv6>2st$2>1g$0>3idx$1>1n$1>3off$1@2$7@3$4$0@3$3$2$0@5$5^5^4^3^2^1@3$6^5^4^3@3$4$0@3$3$2$0@5$5^5^4^3^2^1@2$9@3$6^5^4^3@2$a$8^1").
 Proof.
@@ -460,7 +478,32 @@ ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "##NNp'0h02H1h11Hh21ah32t2h42H
 (* [comment removed for export] *)
 Theorem malloc_control : ltac2:(zQ "d0!il2!qa!j9!ioc!h8!nhf!mvd!nb!ni9!q2!nj2!kt3!lh8>2st$1>1n$2>1o?1O@7$c$7$2@2$0?1O@2$0$1$3@2$0$1@1$4$6$a@6$b?1O?4pans?4pupd@2$0$1$3^1@2$8^3^2@2$5@1$9^3^2").
 Proof.
-ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "#$5;p'0h03offh11pi001ph23st2h31Eh42Eah51mi011mh61Hh74__x1h84__x2h94__x3h:4__x4h;2r2h<3x__h=2H1h>2Hph?2S'h@7__arithhA4__ffhB8__varmaphC5__withD4__x5hE2o'hF2r'hG1xi021xhH2HShI2HrhJ1ShK1ehL1gi031ghM3idxi043idxhN1nhO1oi051ohP2o1hQ2o2hR1ri061rhS2r1hT2sthU3st1i07!s,%81ai091ci0:4x__0i0;1zp%0p&0p;2p;1p;3p;7p;6p;:p;5p;4p;8p;>p,1OR0p4p300R1p106Ymp608311004p8P1g06^AR1!s;+2p8g00YiR2j2ATg01`HR3j1nTg00^=k10NTg06_Qk10>!s0$ok20WTg05kJk302Tg0000k30TTg00B_j7:Tg02_oj1xTg00:Fj2XTg007Zj6;Tg002kk20UTg00<Lj3ITg00Zij33Tg00VGj11Tg00?1m:0MTg06\Dk50KTg00WLj2ZTg06a7k50FTg061QR4j2bTg00cdj47Tg00g]j32Tg02lLj2PTg0043k101Tg01?]j54Tg06bKk80VTg06?0R5k20!tM$h7j3kTg01n\j3WTg065OR6j2VTg01DNk50STg0016j6`Tg06cdj1~!uJ$Mj6[j8wTg06e3k30PTg019lj2J!s/$Pk10OTg01<=j1MTg00\Ij26Tg06fBk50LTg00oGj2fTg06@\S00j2eTg00]`j2UTg06B8k10G!vL$Ik10E!s:$Xj2hTg06gTk10DTg06h2j4aTg06C6k10C!s0$Tk10BTg06Dbj2YTg00i<j1tTg00[Fj1s!s^$Pj3dTg06i3j3^!sS$?k20ATg06EEj4rTg06F0k20@!s0$Rk20=Tg06G>k30<!s0$]k40?!vr$Jj4q!v]$4j4_Tg02iok20!xm$A4j7vTg00=Nm>09TP1m:08!tH$Vk20ITg06j\k20!vX$IMj1yTg05B;j1zTg06Xik60!xW$54j8oTg03?;j7}Tg01;8k106Tg00M>k505Tg06INk70Q!t[$jk80RTg063nk404Tf0R1#y#zp={g0068R7/P1p=cf5R8g00WfR9f4R:f3R;f2R<f1R=3kP1C7'Xp=0P9P<P=P1C7p=Hg03AGR>g00XnR?P;!sA%J07p=mP>P?P8P:!s<'Gop=5AW<=1,P7p==!so,,X;p=|P>P?f7R@f6RAP8P:AI;<!s]&D!sr$;P<g06kcRBP=P1F}p=E!t-&!sp+C7p=9AI9=1p=T%1==291p=KA3!s8$N!sm$:P;PBP<1X=!sj$?P9P<%1!uH&RPA!u&'%y=#zP1Fvp=C203?1p=>P7P?!us'lP9P7!s3']!tR%1P7!s5$jg00j_RC?I?1p=8A2C=1p=SA3C?1p=Qg013LRD/U1p=GA3C?=/61p=LA2?=1p=@A29=1p>00AI971p=i!vd'&061I05p=F1U=1,6Dp=OA3!sJ$gA27=1p=BPC!tr,<16D1,6=p>0HP=g06K^g06L=REPEg06L]S01P1g06M=K0Qp=p!v@/P=P1L0Rp=u!s<$=P1H04p=\P9P:Ak!wc$C7p>0:P>P?g00L:RE,A9RF,A0S02g00TTS03#nRG,A9S04PBP0p,4pansRHp,4pupdRIPFP11A7?RJ#nRK,A9RL%n7RM,A9RNg05=V&0N<$0>00W<RO<02=RPP2P9PKB0T>?NRQP1P3PJPQP1P2!wi$QP1PNP:P=P1P@%{:RRPNPMP1f9RSP=%c1RTE0X17X29F:n2001100000120103104%x7RU9HM=S05,XNRVn101106000210!sS$RW!s_&:!s_'7106X<LRXCmE;RY1A0LRZ1A0NR[P020U0HR\PIPLP1PPE5R]P0P\PIPNAI0L1R^!uJ%P!uD@f8R_P!uC':R`P=P!u@BP!u16!u/:A30L1RaO1E5XGZCmRbPLPNg05>^%1<S06!wB$c!tv-NPM%1=!t}$M!t}+MP1A=:=1!t\8U!t\5C|Rd!vi;eC!#3N$!vH%LPNP1PPPXN:0MP>P?Q02PYPbI0Ke!sM$ZPLP[PNP4PBP]Pc!w#'P!vz,aP!w}8!uh$Pe!yG$OQ06%1O,Z9I0FP2P0PL1b=1!t#$!sw'0PLP<!s{'A30L<!z@>`!wx+<RO!wxmGD!uL+=P!v`8RdCE[^;L!td$9PK!u,$;P=C7/b!uF50PLP:P<C7Re!uP/e!zL>>Re!uR+@RW!uRp!u27@PKP;P<E9!u6;_AHK:;RaC7!|^,A30L^!u;>BR^!u;+DRc!u;tP1!ti$`PKPAP8E9AHK=1'bP6P0PLf;R6PKP@PAE9930LRd,TKAHK<=R],TK'K1NKd1NK]52K!uh8OPKP_P@E9R]!ug/]!ug>FR]!ug+HRd!ugpN%1;S07!~q&<!~q/A!~qM5HMD?!vV%f=RBPKPSP_!v?%,TK1TKa'!y#%ePKP`PS!sA&NKAHK8:,NK52K!s@$!vP7WPKPOP6E9Ra!vP/a!vP>JRa!vP+LR4!vPYR>!vR9RbPN!#6A6`!vNM9RM@D?XFKP9%16RY!un$!s},6!s}/;!s}P1D?X?9!sn$!vj=1E9Rb!vj/bP>!y6=OS08#1S09!uk5f?R>#1?=!y@S`!si&!tq7^PKPe1PJ!ts6!x_<P4!x]+NRb!|/se!ug,%1W!ud;5R!{j%NfARX!tc$a%{X!u7$7&01NRPP^P<P=fKRfP1D4!t~&MRg!t~%!sz&2!tN-0X0?fERhL0V&01[RiP0PHPIPNfGRjPNfCRkP;P<P4Pk!t6%PPPcP:P;Pg!t0-O!{g'!t07RlX0?RmFCE;!t''P=PmP1O1E;32X0?#>XE0-030P5P0!sJ+dPN!t9+c!tK+hP8P:Pb!tK-PRm!uU@!tG2lE;52i!tD'!y68jPKPk1l;<,PJE9Rl!y9/l!~r>QRl!y;+SRn!td%Ro!y=mkRpA=p;<!xw'!uL'aPNP]PAP8P4P]!vI+jP@PAPm!vI-RRp!wn>q!vK5!sq'!t''!sq+Pl!so=!w#,P5P?!st+fPN!ta+j!t$+dP_P@Pl!t$$o!x0G<Pq!t/'!x'8fPKPj1l@A!x'%q!x'/q!x'>URq!x'+WRo!~@sjR5A=5@A!x%3gPNfIR5PSP_PpP5!v6+aP`PSPn!w8-q!yf&r!vDG:!so+!t%'!xt,TRs!x'BPi!vu+8!t`4=D4RtP!tT8E5!wY$1PN%1fRrA=r6`!ug$X5iPt1A97Rt1Zt1PfP6P`PsP<D4=2t1!t2&gPBPOfVRgP:!s>&!tT'pPNPbPePBPoPb!t`+4P>PefXRr!uS-ZRu!uS%S0:!vG=5!t$+S!st+=!sh&YRv!v=>552i!z60`!sg+<Q!tA9E5PN%14R4A=4>e!v-$]3]4P=PmPWP>PvP@D41]=152t!s}+qPNPlPXPWPuPl!t1+pP^PXf[Rl!uh-]!#5TB!uc,O!sY$=PuP<%c=S0;E!uG0NPBAk<l;Rm=jM<R4C7Rw%1pRx#1RyAWx^X5jMRzA30FwRw9I9E1TGz'KR{P3P7p-0R|A39EwP3Q03P|%1nRw#1R}AWwk^5jM,NG%8=%81'S%Q<%G1R~,L='@X0?#>'VS0<g06NfS0=!|h%2!|h'900!sz&1NGzQ0=g06]IS0>!sN5!s82000S0?P9Q072001}X59P9Px1K:1X59!vn%PlPSI0S!s3,D4S07#i/KxPtPnPkP^f\S0@P`D4S0A%i1%1s'KX1tP11]:;R}P<E`%i}/KwP1b=b=Py%~pE[%1mB0P<l;E[P{eg01QiS0B1Jp^Q0B%8;1AC?R{P{&0O{RmPCP?g01@gg00iaRyC7RwP1DF#8'S%Q:P{P{PmPwP=DF%M=/Ok'L/6~!v\+W5!uD/LQ07#gS07AWp^XRX'BQ07%GS,fX'B'ePtQ0A%g1S0AAWsck!sG%A%G6S07!sJ&!uV$P!uR%g}R}AWnk^RX'B%G`,fX,B}'eQ00!tf'1JscR}DFRX#8S00%M}/Ok,LXRX'<,B:Q00Q07,6!s4%%88!s^,qhS00DFS07#8Rq'S%QA!sC,g]RXDFR}%MX/Oh'LRX!uk/P1Q07Q00#M/Oc'LS07,<q,B8P7%8}S00/<XS0APoPjP]f`R}PeD41]_!|x/Q0@PNPrPdPjfaRcPr!|{+vP5Pdf!#?Q-d!|yMk!|y&cPSQ!|v+%8<!uP,v5S0;DFS0@#8Rk'S%Q;!sC,uaRuDF%Mu/O5!xV1]3]4X17S0BPgP]Phf_PBD4S0CQ0A,]@!uP-PlPN!uq%P}Po!uM+!ua$Pc!uM-c!uMDS0A!#Y0,NPM!tx,ojRoDFRc#8S0D%Mo/O],LcS0E'<RcP}P_%cc!uu&!s[,rdRwDFS0F#8Rm/SmS0GQ0@#QS0@Q0;#MS0;/Ud+0HR{16{~R!uu%Rc#>1ZCmS0HP?PcPyg06OCRc$0GS0I&0EcS0JP?P?1h?:P<&0D?S0KCaS0LP=1h?;Ca&0C?S0M&0B?RcP?g00m<RC,Y?%tCR],Y?Ro%s!s6%],Y?5d?5^?5^?RCg06lkS0N20A?y9d?o9^?CCr'pQ01-0@cS01P1P<g00j?Rhg03BKRu'Z20=1<=2hudB0<?y=H0?RubAbBbCX7?X8?X9?X:?1U<;,6=,61Rh1U=y,6h'@^7?^8?^9?^:?P1PdQ0;PDQ0@O4b@CqC_Q0F%Mw/Oj'LRj,<m#8/Sm1<k{#Q/@~!yF&eW3W4PAP1P8P:GwW6P1O1!~k$O'6!|<'Q00%GB!}T$RXQ0BQ0C1]@X52tQ!xh3Q0DQ0E%Ge'6'<Re!xP%e!xP&Q0G%GW,6{R{!tP%Ri#>Q!wu$iP>Q0IQ0JP?Q0LP=!wl$8P;Q0KCaCaQ0MP?%s],Y?!v{'RCQ0NPCCr,pcQ01P!vU6XD?1U=:,6hRh/@h!vO/^D?P1PW!vT-5!vT%%G>,6!vMQ!|$$0!s#$2110!#D:%b>b>1Jx^20;p^E[Q0?eC_Du!#>\/B1\N4E51\NzCEe!sA2XN4E5PNPzD?!tE$X17XU9P=P1O2!#EH/1101108P1P<O2b4b!#AO+bPN!#Bw'a!~A+!#B=&!~A+Pg!~ADRgP1E[!tp$g!#fD$aRg#1A=g`SC|Rg!u530PLPbPKPa1l`S!#H:$`9I0LRS!#H@-`R`!#SZ=rPR!u&+8P<P=Pv!#K%HX0?Fv!#Hc^E5P!uH4!u/+P!u&BQ0:!#J7f!tR&W3X0?!xc-0!xc,2000W6XQ0!sE=bKXM?XL7!yL9810;X1JP1O!#dK&!x#%>PKP6%xJE9R>!w{$gPMP6PUE9Rr%1YR`=HMURSA30FrRr!#Cp%S'KRlP3P7P|A39Er!#Bq%Q09=HMU,NGQ0<Q!#CB@SQ0=Q!#C=HRGP9PYQ080001X591Z9YP`%~6E[Pleg06]ePG!}#5g!z</>R>!x8>5PR!y~$fP=PTI0:RT,\N!xG?Q05,\N!xKK1\NS!yy3!tl+P!tgB1XNT!yzjNPSD?e!sU%5!sU$!ss$1PAP=E`P8P1E`WIWH!yz7!s/%W6XFKX?!#4H21!#4H'5X;LXRKXJ!#4k<5X1LXP0!sF95100XSZN>09N:08Q02Q04!#R&%FP120I<=E;Q0600J=CEeXO0XN?XT9o"). Qed.
+  (* OLD: ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "#$5;p'0h03offh11pi001ph23st2…"),
+     red at 75d69e00 with `eruns_sbind` applied to a 6th term of type
+     "Type@{max(Set,aptr.u0,optr.u0)}" where "Type@{eruns_sbind.u0}" is wanted -- the same
+     universe family as rd16_prun above.  NEW is openssl/pem's written proof,
+     projects/openssl/pem/proofs/lib/Spec/MallocCtrl.v:583-599; the STATEMENT above is
+     untouched and still the encoded one, so the port is the proof hunk only. *)
+  (* the encoded statement keeps st, n and o as leading foralls, where pem's header binds
+     them, so the port needs this one extra line. *)
+  intros st n o.
+  unfold malloc, cmalloc.
+  eapply strel_steq_l. { unfold prun. apply eruns_sbind. }
+  eapply strel_sbind.
+  { apply (malloc_core_ctrl n o (set_tick (N.succ (s_tick st)) st)). reflexivity. }
+  intros [o1 [S r]] [S' r'] [HS Hr]; cbn in HS, Hr; subst r' S'.
+  destruct r as [[g idx]|].
+  - destruct (enframe_read_off_prun S g idx n (c_mmap_counter (ctx S))
+               (fun off => let '(st1, p) := enframe_at S g idx n off in ret (havoc p n st1, Some p)) o1) as (o2 & off & E).
+    unfold enframe_full. cbn [fst snd]. unfold prun in E |- *. rewrite E.
+    destruct (enframe_at S g idx n off) as [st1 p] eqn:Ea. unfold prun, ret; cbn [eruns psel]. constructor.
+    split; cbn.
+    + rewrite strip_havoc, strip_strip. pose proof (strip_enframe_at S g idx n off) as H1. rewrite Ea in H1. exact H1.
+    + rewrite ?get_meta_rec_strip. pose proof (enframe_at_ptr S g idx n off) as Hp. rewrite Ea in Hp.
+      unfold slot_of, slot_start', aadd in Hp. cbn [fst snd] in Hp.
+      destruct Hp as [-> | ->]; cbn [fst snd]; [split; [reflexivity| exists 0; lia] | split; [reflexivity | exists off; lia]].
+  - unfold prun, ret; cbn [eruns psel]. constructor. split; cbn; [rewrite strip_strip; reflexivity | exact I].
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -478,7 +521,21 @@ Definition hdr_ok : ltac2:(zQ "30!oc!mvd!qa>2st$2>1p$0>1c$1P") := ltac2:(zQ "i11
 (* [comment removed for export] *)
 Theorem free_control : ltac2:(zQ "e0!qa!o6!oc!mvd!il2!j9!np0!nb!np8!q2!npf!nq7!kt3!lh8>2st$0>1p$2>1c$3>1o?1O>0@3$b^4^3^2@7$d$7$5@2$4?1O$0$0$a@6$c?1O?4pans?4pupd$0^2@2$8^5@2$1$2^4@2$6@1$9^5@2$1$3^3").
 Proof.
-ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "##OMp'0h01oi001oh11Hh23idxi013idxh31gi021gh41xi031xh51ri041rh63st1i053st1h72HSh82Hch92Hhh:2Hsh;2Hth<1Sh=2S'h>1ah?1bh@1chA1mi061mhB2o1hC1pi071phD2sthE3x__hF1yi081yi092p0i0:2p1p;3p;2p;1p;4p;6p;5p;8p;:p;7p;<g071:j3nTg00YiR0j2ETg01`HR1j1WTg0043j1VTg072Dj23Tg00VGR2j10Tg01Ocj4^Tg01PAj6]Tg00R]j4[Tg00@;j4mTg00Zij3OTg00GMj1fTg00HTj1`Tg06?0R3j2@Tg073Lj2<Tg074Pj2?Tg06mRj41Tg01WJj1BTg0000j3\Tg00:Fj2GTg03=1j1ZTg03@Aj5lTg002kj2kTg0054j8YTg00<Lj3jTg00?1l:iTg06\Dj5hTg075UR4j2gTg00cdj4C!sg$Mj6NTg06^Al:cTg05]oj1aTg02lLj2ITg063nj4bTg007Zj6HTg00g]j3DTg03?;j7KTg03f5j6PTg065OR5j2JTg06Xij6MTg06Yml<_Tg00WfR6g0068R7f1R8f0R9CCp=9g03AGR:g00XnR;f7R<f6R=f5R>f4R?f3R@f2RAP;P8P9CC'ICCCbp=;P=P>P?P@PAP8EH=D<9p=:AD689p=5P7!sV',IAp=6P<!sU$6!sW'P9C1EHp=dP:P;P=P6!sr,P9C1FKp=Xg00TTRB!t6'%BAEP=D<8/J9p=41J89,JAp=A1I79p=!sf'6P8P9EHp=81IB9p==!t0$AP6P4P8P9FKp=2!s9$<P6!u9+6!u;%!sE%7AD6A!t4%UPB!u[-P=D=9p=T!sx+8P9EMp=SPB!u3,EPp=R!sH$6!sH,L!s7$!to-GYp=F!s;$!s]'Mp=Q!s7$>!s_$?P4P2!sC'M<_p=ep,1OR2An@A8P3P61E67RC/E;RD#WRE,E2RF#VRGP2p,4pansRHp,4pupdRIPEP9f8RJ/3<PFP2PEP9PDPC19@AP8G;RKG:^02%0ARL%0<'51E7;RM#WRNPMP7g00j_ROg01MdRPP;g00lERQC^RRPOPPg01N=P;PQg00l^E]RQPMC[RPP7PRPQPMCmRQP>P<A6M89RR1E26ROAO268#0%09RS'5RTXF6X4ORUP2PHPIP9%f6RV!uv%GdRW%`6RX%0JRYPAP8FX^02G43AX2;,@;X37,@7X66!sc&A%>?,<>D8%0>RZ%=@'?52OP9PG!sG&EP9f:R[f9R\'3P!us'\RK,5LPNPMPPPQP<P\PRPOPUPWPX%0[RW!tI<P3P7!t'0;RL/3[!w11?!w1$!t:&@/5W!t8+JP[!t8&!us&PVP?PAP8C1PX%0L!s1%G7!tH3!sU&=%>J,<\D8%=<,?K!ua5=RWf<R]'3!t_1=!t_/]R^,5Z!ta+[P]!ta4=!ta,WRR!tc8P3P;!tI0>R3/3W!tF1<@!tF-=/5R!tD+LPWA6MA9!tG2<P@!tG'3!s1%!tE/!sO&[%>],<WD8%=L,?R!u|5@R@f?R<!u|3\>!t\-<RZ,5Y!t^+W!zs$?!t^3\P>!t^'@RY!s3%!t`+P5!tD0AR_/3@!tA1[=PA!tA&!t9+3P@A6M>8!t92[P=PA!t9%_R`!s3%!t9&9UKY!sP&3%>@,<_!xp&`!ur5CR`fBR@!ur3]JP?!ur+`!tZ+_P`A6MJ?!tZ2WP\P>C1PXfDR?#0RY!s6%!t]&5U^P515R!v\,@P?A6M\>!sm23P[P=!sm$ER>!sm$!s6$!sm&!sO&@!}y+=`,?Y!uH$fFRY#0!zd/>fGRZA6M]J!t22_PWP\!t2$HR]#0!s4%!t0'5!sf+Y%B]A6MW\FT!sg2@P3P[!sg$IR5#0RJ!s6%!si$!sM&Y!z/$5D8%=Z,?J!w;%!t$']fJR]#BA6M<L!t'4>P_PWC1R<PXfLRL!t,$!s8%Z!t/%P%BLR!xK']fMR[/3LP1PDA\:;6R`P9P0PCP;P!s0%6P7P`P8PVP8P9PAC1n200110:000120105102!s:&9!s:':101RVfNR?,G6R=n101104000210!sM$X5ERR5SED8R^P1PM%V6RK!uU%fKRaP9DRP0P7P;PKP9PXfP#0!#=S$1G6SXE6Rb'L!tC&8!tC'2101Rc!#;d$g03T^#Z%0?,G6V;DlR?!tS%3!tS'80052OX3PPNA6M_WP1PM!t;$cP!sQ692O^X0N!t'$OP6P!ya'513LaR4P1PD!vN$V1G6[RN!ug9^!ug%?PFPO!sp$21k2HRc!|V$5P4GYRKP2PcPIAj2E9RdPRAO2E9RRO1DFX4FCQRe1LZbRf!se%P!sa%6P5P4P^M:i!tn&?PeDhePG!}G&5!}G%>_PWG;RW!tM$9!sd&d!u1&RPVP!wn6!tE&PX%0[P@P3C1/Lb52OXAG!z6&cPIP5P<DFPZP9P5O1P0P2P6%08,gA\T^?6!t:$6PAP8CC9O26#0/5SP9W7X=6X<6XB2P8P9O!y['7!x>'0106X>OEe!u#$W!u#6N!u#<=2OfePKP\P5O1ENA2OefeM:c!|P'PYDRP8EN%BJ%aLEN!x='%>a,<LD8%=]!},%eW;W8!tn-0!s#$12!s/&W1W:!sD@9!sD?X2;!sE7!z9%W1X37!sE@66!sE?W0X@BXC7XD6o"). Qed.
+  (* OLD: ltac2:(KReplay.run1z (kr_t_MallocCtrl ()) ["TOP"] "##OMp'0h01oi001oh11Hh23idx…").
+     NEW is openssl/pem's written proof of the same theorem,
+     projects/openssl/pem/proofs/lib/Spec/MallocCtrl.v:633-639.  The STATEMENT above is
+     untouched and still the encoded one, so the port is the proof hunk only. *)
+  (* the encoded statement keeps st, p, c and o as leading foralls, where pem's header
+     binds them. *)
+  intros st p c o.
+  intros (st1 & g & idx & Hh & Hs & Hc & Ht).
+  unfold free, cfree. rewrite s_slots_strip, Hc.
+  eapply strel_steq_l. { unfold prun. apply eruns_sbind. }
+  unfold prun in Hh, Ht |- *. rewrite Hh. cbn [sbind fst snd].
+  change (x__ <-- free_tail dec_slots (strip st) g idx;; ret (strip x__))
+    with (smap strip (free_tail dec_slots (strip st) g idx)).
+  apply (strel_smap_r _ _ _ _ _ (Ht o)). intros [o1 S] S' HS. exact HS.
+Qed.
 
 (* [comment removed for export] *)
 Lemma free_tail_slots_control : ltac2:(zQ "c0!qa!q2!il2!j9!ltc!nja!kh7!s7!oc!nb!kt3!lh8>2st$0>1g$8>3idx$3>1o?1O@7$b$9$3@2$2?1O$0$0\1x@2$2?1O$0\1y$0@3$7$0@1$1@3$6?1O$0^2@1$1^1@6$a?1O?4pans?4pupd$0^1@4$5@1$4$0^4^3^2@4$5@1$4$0@1$1^4^3^2").

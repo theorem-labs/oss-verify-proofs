@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanLoop.v at 45269e15197c for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanLoop.v for image B
    (fuzz_role.asan-ubsan): the cut file is lib/AU/RPgSeg.v and the model facts lib/AU/RPgScanF.v instead of
    lib/A's; the closure itself is image A's. *)
 (* reac-pw/fuzz_role, the image-B walk of LLVMFuzzerTestOneInput: THE CLOSURE OF THE TWO SCAN LOOPS of M02, the

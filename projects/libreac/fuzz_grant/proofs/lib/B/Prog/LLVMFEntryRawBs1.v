@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySetDefs), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySetDefs.v, with its module paths, module names and numbers changed; 404 of its 477 lines of code are new or changed and 1012 lines of the source are left out. *)
-(* Ported from lib/A/Prog/GrantEntryRawBs1.v of a working branch 7c8c67da870 (blob d091ad6fd87). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryRawBs1.v of a working branch (blob d091ad6fd87). *)
 (* The hand-built allocation phase of LLVMFuzzerTestOneInput on image B, segment Bs1: the
    slots 0x818cc .. 0x818e0 (GR_bs1 .. GR_fit of LLVMFEntryRawDefs.v).
 

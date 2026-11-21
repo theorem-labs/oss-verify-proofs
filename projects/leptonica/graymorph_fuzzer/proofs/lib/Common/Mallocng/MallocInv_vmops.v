@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (VMcore's vc_res is the reservation ledger res_ok, with res_ok_in, res_ok_seg, res_ok_mono and res_ok_contains added and a reserved-free premise on VMcore_add_map and VMcore_add_noacc; grant_ok_vm_spec and grant_ok_na_vm_spec over Linux's mmap placement (transparent-huge-page flag and hint), now one-way, with grant_ok_vm_res and grant_ok_na_vm_res added; mmap_grant_facts, mmap_rw_ok and mmap_none_ok over the mstate's flag and a null hint; brk_grow_facts and brk_grow_state for brk's page-aligned grow). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -112,7 +113,7 @@ Record VMcore (A : astate) (h : VmMaps) : Prop := {
      0 < mt_maplen mt ->
      In (Z_to_bv 64 (mt_mem mt), Z_to_bv 64 (grp_map_len mt)) (vm_maps h) /\
      region_free (vm_noaccess h) (Z_to_bv 64 (mt_mem mt)) (Z_to_bv 64 (grp_map_len mt)) = true;
-  vc_res : vm_reserved h = segments_reserved ml_segs;
+  vc_res : res_ok h;
   vc_brk_valid : 0 < u (vm_brk h) /\ u (vm_start_brk h) <= u (vm_brk h) /\
                  page_aligned (u (vm_brk h)) /\ u (vm_brk h) <= alloc_ceiling;
   vc_pw : maps_pw (vm_maps h);
@@ -133,6 +134,30 @@ Definition VMall (A : astate) (h : VmMaps) : Prop :=
           bv_unsigned b = mt_mem mt /\ bv_unsigned sz = grp_map_len mt)
       \/ (bv_unsigned (vm_start_brk h) <= bv_unsigned b /\ bv_unsigned b + bv_unsigned sz <= bv_unsigned (vm_brk h))
       \/ (exists c l, In (c, l) (a_mblocks A ++ a_xmaps A) /\ c <= bv_unsigned b /\ bv_unsigned b + bv_unsigned sz <= c + l).
+
+(** [res_ok] tools *)
+Lemma res_ok_in : forall h b sz, res_ok h -> In (b, sz) (vm_maps h) -> region_free (vm_reserved h) b sz = true.
+Proof. intros h b sz (_ & H) Hin. exact (H b sz Hin). Qed.
+
+Lemma res_ok_seg : forall h a n, res_ok h -> region_free (vm_reserved h) a n = true ->
+  region_free (segments_reserved ml_segs) a n = true.
+Proof.
+  intros h a n ((E & _) & _) H. rewrite E in H. apply (proj2 (region_free_spec _ a n)). intros b sz Hin.
+  apply (proj1 (region_free_spec _ a n) H). apply in_or_app. left. exact Hin.
+Qed.
+
+Lemma res_ok_mono : forall h h', vm_reserved h' = vm_reserved h -> res_ok h ->
+  (forall b' sz', In (b', sz') (vm_maps h') -> region_free (vm_reserved h) b' sz' = true) -> res_ok h'.
+Proof.
+  intros h h' E (X & _) Hf. unfold res_ok. rewrite E. split; [exact X|]. intros b sz Hin. exact (Hf b sz Hin).
+Qed.
+
+Lemma res_ok_contains : forall h a n, res_ok h -> map_contains (vm_maps h) a n = true ->
+  region_free (vm_reserved h) a n = true.
+Proof.
+  intros h a n HR Hc. apply map_contains_mcov in Hc. destruct Hc as (b & sz & Hin & H1 & H2).
+  apply (region_free_sub _ b sz); [exact (res_ok_in h b sz HR Hin) | llia | llia].
+Qed.
 
 Lemma VMok_all : forall A h, VMok A h -> VMall A h.
 Proof. intros A h HV. exact (vm_all A h HV). Qed.
@@ -233,14 +258,15 @@ Qed.
 Lemma VMcore_add_map : forall A h (a n b' : word),
   VMcore A h ->
   0 < u n -> u a + u n <= alloc_ceiling -> 0x1000 <= u a -> (u a + u n <= IMG_LO \/ IMG_HI <= u a) ->
-  region_free (vm_maps h) a n = true ->
+  region_free (vm_maps h) a n = true -> region_free (vm_reserved h) a n = true ->
   0 < u b' -> u (vm_start_brk h) <= u b' -> page_aligned (u b') -> u b' <= alloc_ceiling ->
   VMcore A (mkVmMapsFull (vm_reserved h) ((a, n) :: vm_maps h) (vm_noaccess h) (vm_start_brk h) b' (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
 Proof.
-  intros A h a n b' [Vg Vres Vbv Vpw Vmw Vna Vac Vpc Vtop] Hn Hce Hlo Himg Hfree Hb1 Hb2 Hb3 Hb4.
+  intros A h a n b' [Vg Vres Vbv Vpw Vmw Vna Vac Vpc Vtop] Hn Hce Hlo Himg Hfree Hres Hb1 Hb2 Hb3 Hb4.
   constructor; cbn [vm_maps vm_noaccess vm_reserved vm_brk vm_start_brk vm_limit vm_init_sp alloc_top].
   - intros ma mt aib slots Hma Hr Hml. destruct (Vg ma mt aib slots Hma Hr Hml) as [H1 H2]. split; [right; exact H1 | exact H2].
-  - exact Vres.
+  - apply (res_ok_mono h); [reflexivity | exact Vres |]. intros b0 sz0 Hin0. cbn [vm_maps] in Hin0.
+    destruct Hin0 as [E | Hin0]; [injection E as <- <-; exact Hres | exact (res_ok_in h b0 sz0 Vres Hin0)].
   - repeat split; assumption.
   - split; [exact Hfree | exact Vpw].
   - intros b sz [E | Hin]; [injection E as <- <-; repeat split; try assumption; llia | exact (Vmw b sz Hin)].
@@ -254,10 +280,10 @@ Qed.
 Lemma VMcore_add_noacc : forall A h (a n : word),
   VMcore A h ->
   0 < u n -> u a + u n <= alloc_ceiling -> 0x1000 <= u a -> (u a + u n <= IMG_LO \/ IMG_HI <= u a) ->
-  region_free (vm_maps h) a n = true ->
+  region_free (vm_maps h) a n = true -> region_free (vm_reserved h) a n = true ->
   VMcore A (mkVmMapsFull (vm_reserved h) ((a, n) :: vm_maps h) ((a, n) :: vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
 Proof.
-  intros A h a n HV Hn Hce Hlo Himg Hfree. pose proof HV as [Vg Vres Vbv Vpw Vmw Vna Vac Vpc Vtop].
+  intros A h a n HV Hn Hce Hlo Himg Hfree Hres. pose proof HV as [Vg Vres Vbv Vpw Vmw Vna Vac Vpc Vtop].
   pose proof (proj1 (region_free_spec _ a n) Hfree) as FREE.
   assert (DISJ : forall x k, mcov (vm_maps h) x k -> 0 < k -> region_free [(a, n)] (Z_to_bv 64 x) (Z_to_bv 64 k) = true ->
             region_free ((a, n) :: vm_noaccess h) (Z_to_bv 64 x) (Z_to_bv 64 k) = region_free (vm_noaccess h) (Z_to_bv 64 x) (Z_to_bv 64 k)).
@@ -273,7 +299,8 @@ Proof.
     assert (Hc : mcov (vm_maps h) (u (Z_to_bv 64 (mt_mem mt))) (u (Z_to_bv 64 (grp_map_len mt)))) by (exists (Z_to_bv 64 (mt_mem mt)), (Z_to_bv 64 (grp_map_len mt)); split; [exact Hin | llia]).
     pose proof (ONE _ _ Hc W1 ltac:(llia) ltac:(llia)) as X. rewrite !Z_to_bv_bv_unsigned in X.
     change ((a, n) :: vm_noaccess h) with ([(a, n)] ++ vm_noaccess h). rewrite region_free_app, X, H2. reflexivity.
-  - exact Vres.
+  - apply (res_ok_mono h); [reflexivity | exact Vres |]. intros b0 sz0 Hin0. cbn [vm_maps] in Hin0.
+    destruct Hin0 as [E | Hin0]; [injection E as <- <-; exact Hres | exact (res_ok_in h b0 sz0 Vres Hin0)].
   - exact Vbv.
   - split; [exact Hfree | exact Vpw].
   - intros b sz [E | Hin]; [injection E as <- <-; repeat split; try assumption; llia | exact (Vmw b sz Hin)].
@@ -391,18 +418,34 @@ Qed.
 Lemma page_round_up_Z_mod : forall z, page_round_up_Z z mod 4096 = 0.
 Proof. intros z. unfold page_round_up_Z, page_size. apply Z.mod_mul. llia. Qed.
 
-Lemma grant_ok_vm_spec : forall h a n, grant_ok_vm h a n = true <->
+Lemma grant_ok_vm_spec : forall thp hint h a n, grant_ok_vm thp hint h a n = true ->
   (u a mod 4096 = 0 /\ 0 < u a /\ u a + n <= alloc_top h /\
    region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 n) = true /\ vm_backed_bytes h + n <= vm_limit h).
 Proof.
-  intros h a n. unfold grant_ok_vm, page_size. rewrite !andb_true_iff, Z.eqb_eq, Z.ltb_lt, !Z.leb_le. tauto.
+  intros thp hint h a n. unfold grant_ok_vm, page_size. rewrite !andb_true_iff, Z.eqb_eq, Z.ltb_lt, !Z.leb_le. tauto.
 Qed.
 
-Lemma grant_ok_na_vm_spec : forall h a n, grant_ok_na_vm h a n = true <->
+Lemma grant_ok_na_vm_spec : forall thp hint h a n, grant_ok_na_vm thp hint h a n = true ->
   (u a mod 4096 = 0 /\ 0 < u a /\ u a + n <= alloc_top h /\
    region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 n) = true).
 Proof.
-  intros h a n. unfold grant_ok_na_vm, page_size. rewrite !andb_true_iff, Z.eqb_eq, Z.ltb_lt, !Z.leb_le. tauto.
+  intros thp hint h a n. unfold grant_ok_na_vm, page_size. rewrite !andb_true_iff, Z.eqb_eq, Z.ltb_lt, !Z.leb_le. tauto.
+Qed.
+
+Lemma grant_ok_vm_res : forall thp hint h a n, grant_ok_vm thp hint h a n = true ->
+  region_free (vm_reserved h) a (Z_to_bv 64 n) = true.
+Proof.
+  intros thp hint h a n Hg. apply grant_ok_vm_spec in Hg. destruct Hg as (_ & _ & _ & G4 & _).
+  apply (proj2 (region_free_spec _ _ _)). intros b sz Hin.
+  apply (proj1 (region_free_spec _ _ _) G4). apply in_or_app. left. exact Hin.
+Qed.
+
+Lemma grant_ok_na_vm_res : forall thp hint h a n, grant_ok_na_vm thp hint h a n = true ->
+  region_free (vm_reserved h) a (Z_to_bv 64 n) = true.
+Proof.
+  intros thp hint h a n Hg. apply grant_ok_na_vm_spec in Hg. destruct Hg as (_ & _ & _ & G4).
+  apply (proj2 (region_free_spec _ _ _)). intros b sz Hin.
+  apply (proj1 (region_free_spec _ _ _) G4). apply in_or_app. left. exact Hin.
 Qed.
 
 Lemma map_contains_cons : forall e l a n, map_contains l a n = true -> map_contains (e :: l) a n = true.
@@ -467,7 +510,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma mmap_grant_facts : forall sp0 argv envp cb A s (a len : word),
   IS sp0 argv envp cb A s -> VMcore A (ms_vm s) -> 0 < u len -> u len < 2^62 ->
-  grant_ok_vm (ms_vm s) a (page_round_up_Z (u len)) = true ->
+  grant_ok_vm (ms_thp s) (Z_to_bv 64 0) (ms_vm s) a (page_round_up_Z (u len)) = true ->
   u (page_round_up len) = page_round_up_Z (u len) /\
   u len <= page_round_up_Z (u len) /\
   u a mod 4096 = 0 /\ 0x1000 <= u a /\ u a + page_round_up_Z (u len) <= alloc_ceiling /\
@@ -486,7 +529,7 @@ Proof.
   assert (EnZ : u (page_round_up len) = page_round_up_Z (u len)) by (unfold page_round_up; apply uZ; llia).
   assert (En : Z_to_bv 64 (page_round_up_Z (u len)) = page_round_up len) by reflexivity.
   rewrite En in G4. rewrite region_free_app in G4. apply andb_true_iff in G4. destruct G4 as [Gr Gm].
-  pose proof (region_free_image a (page_round_up len) ltac:(rewrite <- (vc_res A _ HV); exact Gr) ltac:(rewrite EnZ; llia)) as Himg.
+  pose proof (region_free_image a (page_round_up len) ltac:(exact (res_ok_seg _ _ _ (vc_res A _ HV) Gr)) ltac:(rewrite EnZ; llia)) as Himg.
   rewrite EnZ in Himg.
   pose proof (proj1 (region_free_spec _ _ _) Gm) as FREE. rewrite EnZ in FREE.
   pose proof (aligned_ge_page (u a) G1 G2) as Hlo.
@@ -507,7 +550,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma mmap_rw_ok : forall sp0 argv envp cb A s (a len : word),
   IS sp0 argv envp cb A s -> VMok A (ms_vm s) -> 0 < u len -> u len < 2^62 ->
-  grant_ok_vm (ms_vm s) a (page_round_up_Z (u len)) = true ->
+  grant_ok_vm (ms_thp s) (Z_to_bv 64 0) (ms_vm s) a (page_round_up_Z (u len)) = true ->
   let A' := xadd A (u a) (page_round_up_Z (u len)) in
   IS sp0 argv envp cb A' (upd s (zfill a (page_round_up len) (ms_mem s)) (vm_mmap a (page_round_up len) (ms_vm s))) /\
   VMok A' (vm_mmap a (page_round_up len) (ms_vm s)).
@@ -530,6 +573,7 @@ Proof.
   - pose proof HVo as [Vg Vb Va Vres Vbv Vpw Vmw Vna Vac Vpc Vall Vspan Vtop].
     apply VMcore_ok; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_mmap a_ctx a_areas xadd set_xmaps].
     + apply VMcore_set_xmaps. unfold vm_mmap. destruct (vc_brk_valid A _ HV) as (K1 & K2 & K3 & K4).
+      assert (Gres : region_free (vm_reserved (ms_vm s)) a n = true) by exact (grant_ok_vm_res _ _ _ _ _ Hg).
       apply (VMcore_add_map A (ms_vm s) a n (vm_brk (ms_vm s)) HV); rewrite ?EnZ; try assumption; llia.
     + unfold vm_mmap. rewrite <- EnZ. apply VMall_xadd; [exact Vall | reflexivity].
     + exact Vspan.
@@ -540,7 +584,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma mmap_none_ok : forall sp0 argv envp cb A s (a len : word),
   IS sp0 argv envp cb A s -> VMok A (ms_vm s) -> 0 < u len -> u len < 2^62 ->
-  grant_ok_vm (ms_vm s) a (page_round_up_Z (u len)) = true ->
+  grant_ok_vm (ms_thp s) (Z_to_bv 64 0) (ms_vm s) a (page_round_up_Z (u len)) = true ->
   let A' := xadd A (u a) (page_round_up_Z (u len)) in
   IS sp0 argv envp cb A' (upd s (unfill a (page_round_up len) (ms_mem s)) (vm_noacc a (page_round_up len) (ms_vm s))) /\
   VMok A' (vm_noacc a (page_round_up len) (ms_vm s)).
@@ -562,7 +606,9 @@ Proof.
     + intros x Hx Hm. exfalso. apply Hm. apply unfill_in. rewrite EnZ. exact Hx.
   - pose proof HVo as [Vg Vb Va Vres Vbv Vpw Vmw Vna Vac Vpc Vall Vspan Vtop].
     apply VMcore_ok; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_noacc a_ctx a_areas xadd set_xmaps].
-    + apply VMcore_set_xmaps. unfold vm_noacc. apply (VMcore_add_noacc A (ms_vm s) a n HV); rewrite ?EnZ; try assumption; llia.
+    + apply VMcore_set_xmaps. unfold vm_noacc.
+      assert (Gres : region_free (vm_reserved (ms_vm s)) a n = true) by exact (grant_ok_vm_res _ _ _ _ _ Hg).
+      apply (VMcore_add_noacc A (ms_vm s) a n HV); rewrite ?EnZ; try assumption; llia.
     + unfold vm_noacc. rewrite <- EnZ. apply VMall_xadd; [exact Vall | reflexivity].
     + exact Vspan.
     + exact Vb.
@@ -578,13 +624,13 @@ Lemma brk_grow_facts : forall A h (req : word),
 Proof.
   intros A h req HV Hok Hlt Hal. destruct (vc_brk_valid A h HV) as (K1 & K2 & K3 & K4).
   pose proof (u64_range req). pose proof (u64_range (vm_brk h)).
-  unfold brk_grow_ok_vm in Hok.
+  unfold brk_grow_ok_vm, Mmap.brk_grow_bytes in Hok.
   rewrite (proj2 (Z.ltb_lt 0 _) K1), (proj2 (Z.ltb_lt _ _) Hlt) in Hok. cbn [andb] in Hok.
   unfold page_aligned in *.
   rewrite !page_round_up_Z_aligned in Hok by (unfold page_size; llia).
   rewrite (proj2 (Z.ltb_lt _ _) Hlt) in Hok.
   apply andb_true_iff in Hok. destruct Hok as [H1 H3]. apply andb_true_iff in H1. destruct H1 as [H1 H2].
-  apply Z.leb_le in H1. apply Z.leb_le in H3. rewrite u_sub_small in H3 by llia.
+  apply Z.leb_le in H1. apply Z.leb_le in H3. rewrite Z.max_r in H3 by llia.
   rewrite Z_to_bv_bv_unsigned in H2. rewrite (vc_top A h HV) in H1. unfold page_size in H2.
   split; [exact H1|]. split; [| exact H3].
   apply (region_free_sub _ (vm_brk h) (Z_to_bv 64 (u req + 4096 - u (vm_brk h)))); [exact H2 | lia |].
@@ -615,11 +661,11 @@ Proof.
   set (b := vm_brk (ms_vm s)) in *. set (n := Z_to_bv 64 (u req - u b)) in *.
   assert (En : u n = u req - u b) by (unfold n; apply uZ; llia).
   rewrite region_free_app in F2. apply andb_true_iff in F2. destruct F2 as [Fr Fm].
-  pose proof (region_free_image b n ltac:(rewrite <- (vc_res A _ HV); exact Fr) ltac:(rewrite En; llia)) as Himg. rewrite En in Himg.
+  pose proof (region_free_image b n ltac:(exact (res_ok_seg _ _ _ (vc_res A _ HV) Fr)) ltac:(rewrite En; llia)) as Himg. rewrite En in Himg.
   pose proof (proj1 (region_free_spec _ _ _) Fm) as FREE. rewrite En in FREE.
   unfold page_aligned in *. pose proof (aligned_ge_page (u b) K3 K1) as Hlo.
   assert (Esub : (req - b)%bv = n) by (apply bv_eq; rewrite u_sub_small by llia; rewrite En; reflexivity).
-  assert (Emaps : vm_maps (vm_brk_grow req (ms_vm s)) = (b, n) :: vm_maps (ms_vm s)) by (unfold vm_brk_grow; cbn [vm_maps]; fold b; rewrite Esub; reflexivity).
+  assert (Emaps : vm_maps (vm_brk_grow req (ms_vm s)) = (b, n) :: vm_maps (ms_vm s)) by (rewrite (vm_brk_grow_aligned req (ms_vm s)) by (unfold page_aligned, page_size in *; first [assumption | lia]); cbn [vm_maps]; fold b; rewrite Esub; reflexivity).
   assert (Ezs : brk_zeros req req b = [(b, n)]).
   { unfold n. rewrite brk_zeros_aligned_grow; unfold page_size; try llia.
     - rewrite page_round_up_Z_aligned by (unfold page_size; llia). reflexivity.
@@ -633,7 +679,7 @@ Proof.
   { intros x Hx Hd. pose proof (dom_mcov_core A (ms_vm s) x HW HV Hd) as Hc.
     destruct (mcov_free_disj _ x 1 b n Hc Fm); rewrite ?En in *; llia. }
   assert (HVg : VMcore A (vm_brk_grow req (ms_vm s))).
-  { unfold vm_brk_grow. fold b. rewrite Esub. apply (VMcore_add_map A (ms_vm s) b n req HV); rewrite ?En; try llia; [exact Fm | exact Hal]. }
+  { rewrite (vm_brk_grow_aligned req (ms_vm s)) by (unfold page_aligned, page_size in *; first [assumption | lia]). fold b. rewrite Esub. apply (VMcore_add_map A (ms_vm s) b n req HV); rewrite ?En; try llia; [exact Fm | exact Fr | exact Hal]. }
   split; [| split; [exact HVg | split; [exact Emaps | split; [| split; [| split; [exact ZIN | split; [exact ZOUT|]]]]]]].
   - apply (IS_region sp0 argv envp cb A s _ _ (u b) (u req - u b) HI).
     + intros x. assert (CASE : u b <= u x < u req \/ ~ (u b <= u x < u req)) by llia.

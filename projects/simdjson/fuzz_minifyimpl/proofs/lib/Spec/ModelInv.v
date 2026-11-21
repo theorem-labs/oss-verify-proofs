@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fd-stability lemmas also ask the kernel state unchanged, which the steps supply through nstep_kernel, and GI_init and GIo_init take the channel-reader premise and prove the new ledger fields (KL_resv_init, KL_vin_init). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
@@ -53,13 +54,14 @@ Hypothesis Hrun : forall X cfg payload, zlength payload <= MAX_INPUT -> mspecP (
 (* [comment removed for export] *)
 Hypothesis Hown_minv : forall X s mo, own X s mo -> minv mo /\ m_halted mo = None.
 Hypothesis Hown_fds : forall X s mo mo', own X s mo ->
-  m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> own X s mo'.
+  m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> own X s mo'.
 
 Lemma own_after_node : forall X s mo n rsp mo' evs,
   own X s mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo -> own X s mo'.
 Proof.
   intros X s mo n rsp mo' evs Ho Hst Hvm. destruct (Hown_minv _ _ _ Ho) as [Hmi Hh].
-  destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hst) as [Hh' Hmi']. eapply Hown_fds; eauto.
+  destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hst) as [Hh' Hmi']. pose proof (nstep_kernel _ _ _ _ _ Hst) as Hkn.
+  eapply Hown_fds; eauto.
 Qed.
 
 (* [comment removed for export] *)
@@ -250,17 +252,17 @@ Proof. intros s s' mo mo' Hfa Hso _ H. unfold Gso in *. rewrite Hso, Hfa. exact 
 Definition GI (X : list bptr) : assn PState := OWN X Gso.
 
 Lemma KL_fds : forall L pbrk mo mo',
-  KL L pbrk mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> KL L pbrk mo'.
+  KL L pbrk mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> KL L pbrk mo'.
 Proof.
-  intros L pbrk mo mo' K Hvm Hmi Hh. destruct K. constructor; try (rewrite Hvm); auto.
+  intros L pbrk mo mo' K Hvm Hkn Hmi Hh. destruct K. constructor; try rewrite Hvm; try rewrite Hkn; auto.
 Qed.
 
 Lemma GI_minv : forall X s mo, GI X s mo -> minv mo /\ m_halted mo = None.
 Proof. intros X s mo [(L & _ & K & _) _]. split; [exact (kl_minv _ _ _ K)| exact (kl_halt _ _ _ K)]. Qed.
 
-Lemma GI_fds : forall X s mo mo', GI X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> GI X s mo'.
+Lemma GI_fds : forall X s mo mo', GI X s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> GI X s mo'.
 Proof.
-  intros X s mo mo' [(L & Hc & K & Hi) [Hnd HG]] Hvm Hmi Hh. split; [|split; [exact Hnd| exact HG]].
+  intros X s mo mo' [(L & Hc & K & Hi) [Hnd HG]] Hvm Hkn Hmi Hh. split; [|split; [exact Hnd| exact HG]].
   exists L. split; [exact Hc|]. split; [eapply KL_fds; eauto| exact Hi].
 Qed.
 
@@ -271,7 +273,8 @@ Lemma GI_after_node : forall X s mo n rsp mo' evs,
   GI X s mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo -> GI X s mo'.
 Proof.
   intros X s mo n rsp mo' evs Ho Hst Hvm. destruct (GI_minv _ _ _ Ho) as [Hmi Hh].
-  destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hst) as [Hh' Hmi']. eapply GI_fds; eauto.
+  destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hst) as [Hh' Hmi']. pose proof (nstep_kernel _ _ _ _ _ Hst) as Hkn.
+  eapply GI_fds; eauto.
 Qed.
 
 Lemma GI_set_so : forall X s mo v, GI X s mo -> so_ok v -> GI X (set_so_ps v s) mo.
@@ -551,8 +554,8 @@ Qed.
 
 Lemma GIo_minv : forall X s mo, GIo X s mo -> minv mo /\ m_halted mo = None.
 Proof. intros X s mo [c H]. exact (GI_minv c _ _ _ H). Qed.
-Lemma GIo_fds : forall X s mo mo', GIo X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> GIo X s mo'.
-Proof. intros X s mo mo' [c H] Hvm Hmi Hh. exists c. eapply GI_fds; eauto. Qed.
+Lemma GIo_fds : forall X s mo mo', GIo X s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> GIo X s mo'.
+Proof. intros X s mo mo' [c H] Hvm Hkn Hmi Hh. exists c. eapply GI_fds; eauto. Qed.
 Lemma GIo_perm : forall X Y s mo, Permutation X Y -> GIo X s mo -> GIo Y s mo.
 Proof. intros X Y s mo HP H. eapply (TargetSafe.own_perm GI); [intros; eapply GI_perm; eauto| exact HP| exact H]. Qed.
 
@@ -627,22 +630,29 @@ Lemma GI_init : forall segs brk0 mbase sp lim inp atop,
   sp_window_lo <= bv_unsigned sp <= sp_window_hi ->            (* [comment removed for export] *)
   atop = bv_unsigned sp - stack_max_size ->                     (* [comment removed for export] *)
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo ->
+  in_channel_reader inp = true ->
   GI None [] (ps_init (reservedZ segs) atop) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-  intros segs brk0 mbase sp lim inp atop (Hlo & Hhi & Hal) Hpos Hsp Eatop Hceil. unfold GI, OWN.
+  intros segs brk0 mbase sp lim inp atop (Hlo & Hhi & Hal) Hpos Hsp Eatop Hceil Hrdr. unfold GI, OWN.
   pose proof alloc_ceiling_lo_val as Hclo.
   assert (Hat : 0 < atop <= atop_hi) by (unfold atop_hi, sp_window_lo, sp_window_hi, stack_max_size in *; lia).
   split; [|split; [apply List.NoDup_nil| split; [unfold so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia| reflexivity]]].
   exists (led_init (reservedZ segs) atop). split; [apply creach_init; exact Hat|]. split; [|intros c []].
+  (* LPS 08b1429: [init_model]'s ledger is the image's reservations followed by the vDSO pair. *)
   assert (Evm : m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)
-                = mkVmMapsFull (segments_reserved segs) [] [] brk0 brk0 lim mbase sp) by reflexivity.
+                = mkVmMapsFull (init_reserved (segments_reserved segs) mbase sp (in_kernel inp)) [] [] brk0 brk0 lim mbase sp)
+    by apply m_vmmaps_init_model.
   assert (Eh : m_halted (init_model (segments_reserved segs) brk0 mbase sp lim inp) = None) by reflexivity.
-  constructor; rewrite ?Evm; cbn -[Z.pow Z.mul Z.add Z.sub init_model alloc_top].
-  - apply minv_init. exact Hsp.
+  pose proof (KL_resv_init segs brk0 mbase sp lim inp (conj Hlo (conj Hhi Hal))) as [KR _].
+  constructor.
+  13:{ apply KL_vin_init. }
+  12:{ rewrite Evm. intros e []. }
+  4:{ destruct KR as (R0 & rx & E1 & E2 & E3 & E4 & E5). exists R0, rx.
+      split; [exact E1|]. split; [rewrite <- E2; reflexivity|]. split; [exact E3|]. split; assumption. }
+  all: rewrite ?Evm; cbn -[Z.pow Z.mul Z.add Z.sub init_model alloc_top init_reserved].
+  - apply minv_init; [exact Hsp | exact Hrdr].
   - exact Eh.
   - split; [intros e []| apply pwdisj_nil].
-  - reflexivity.
-  - intros e Hin. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia.
   - unfold PGSZ in *. unfold page_size in Hal. unfold alloc_ceiling_lo, sp_window_lo, stack_max_size in *. lia.
   - intros b l [].
   - intros b l k [].
@@ -657,6 +667,7 @@ Lemma GIo_init : forall segs brk0 mbase sp lim inp atop,
   sp_window_lo <= bv_unsigned sp <= sp_window_hi ->
   atop = bv_unsigned sp - stack_max_size ->
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo ->
+  in_channel_reader inp = true ->
   GIo [] (ps_init (reservedZ segs) atop) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof. intros. exists None. cbn [clb app]. eapply GI_init; eauto. Qed.
 

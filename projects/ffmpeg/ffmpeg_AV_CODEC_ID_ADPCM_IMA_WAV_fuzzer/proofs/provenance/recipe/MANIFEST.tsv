@@ -1,0 +1,16 @@
+path	sha256	bytes	mode	kind	why
+tools/build-body.sh	badd36d34270ce9ab7588272e59fa3f426e70dccde6f31c4bc20442c356883cd	23727	755	ours	the container build body: build_flavour feeds it to `sh -s` in every build container; our comments in what it writes into other files blanked here (2 here-documents; the build ran it with them: they are comments of the file written, so no byte built changes, and no line moves)
+tools/build-env.tsv	be808e57afa9ce987c1c6974fcfaa10cd2be71ac05f4d3f65e37d0deecd4ab31	1481	644	generated	the container's environment, read from build.sh
+tools/ossfuzz/recipes.sh	b5ab933ca8a32fc3604a5ba9f0b655058d5dec93a0f46e382d172effd3d16399	38250	644	ours	named under /work in targets/abseil-cpp-string_escape_fuzzer/pin (/work/tools/ossfuzz/recipes.sh); our comments in what it writes into other files blanked here (1 here-document; the build ran it with them: they are comments of the file written, so no byte built changes, and no line moves); 4 comments of ours that the release strip leaves (it empties full-line comments only) blanked here (THE INLINE-COMMENT RULE: bash reads the same program from both, so no byte built changes, and no line moves)
+UPSTREAM-CARRIED.tsv	7475141f34b086829736b241b636659b63794913882ed07bf2824b7b771d8d0c	38832	644	generated	the upstream files in the members of kind ours+upstream, each with its origin and licence
+src/cli.c	391d784f25f6f7f66b3d9943bce5c7278b91964bc5499f78e22a60373b772d68	11732	644	ours	named under /work in build.sh (the container body) (/work/src/cli.c)
+src/emit.h	6ad03a47e57d8b36d15e1b6ab8e9c83b5305dcb09efe7ac20e4aca7682d72fdd	3097	644	ours	#included by src/ossfuzz_adapter.h
+src/grow_buf.h	dc46eb15f981765a22e501c22d2a975f0106cebe5b28c3aad7edb5c4f592a1f0	872	644	ours	named under /work in build.sh (the container body) (/work/src/grow_buf.h)
+src/ossfuzz_adapter.h	b15ca27aef4dab0dcee3e83b1b619a6670d68100b4c9ac8243e7fae92e8c4370	19075	644	ours	#included by targets/abseil-cpp-string_escape_fuzzer/plugin.c
+src/rel_str.h	cae08a1f00f28a2d277841880b14301d98e15a3956135af794c5d45e287783df	2368	644	ours	#included by src/ossfuzz_adapter.h
+src/target.h	ccdea435b7b48a779d84cd8a1582d1d8002d6e6e6ed4dbf152dc8fa9a9a32f8e	2692	644	ours	named under /work in build.sh (the container body) (/work/src/target.h)
+src/wrap_getenv.c	27a93317fab886456dc07137af0787b06e8da1b8167dd5db70d94ef1640d06f9	2677	644	ours	named under /work in tools/ossfuzz/recipes.sh (/work/src/wrap_getenv.c)
+src/wrap_getpid.c	cdaab1decafa3b55ec3aa8d295ecb782b9533e2fe5262f623c1b026f6ee27362	3008	644	ours	named under /work in tools/ossfuzz/recipes.sh (/work/src/wrap_getpid.c)
+src/wrap_mkstemp.c	449c51bcdd0d7e1f4889e6e42234d12f4550ed508537cf9787dee13b57af8bb3	7382	644	ours	named under /work in tools/ossfuzz/recipes.sh (/work/src/wrap_mkstemp.c)
+targets/ffmpeg-ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/pin	40822e3c364d37436110ba409ce9fb7e8ce089a6683925cf1848367a62bccea5	2053	644	ours	the pin (trimmed: the variables only host tools read are left out)
+targets/ffmpeg-ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/plugin.c	fbccd6e863d92d7bb8d6985f19102578c4fb965677337b37f8a6a9399535e0d9	505	644	ours	named by the build as /work/targets/<t>/plugin.c

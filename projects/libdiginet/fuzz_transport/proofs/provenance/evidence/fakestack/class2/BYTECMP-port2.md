@@ -7,8 +7,8 @@ a run.sh that runs ../class1/run.sh with them, and the outputs (out-port2/).
 Pins: fuzz_transport.asan e89be137db17b720 (unstripped twin 86efc3a803149811), fuzz_transport.asan-ubsan
 41113a03c82fde82 (twin e217cb0a84f1e181), as projects/libdiginet/fuzz_transport/harness.yaml pins them on this branch.
 
-Donor: libreac/fuzz_ctrl at origin/ossv/recipes 2fceb489f4aa (every file used has the same blob at the recipes tip
-9b0ac6f0e678). Images: fuzz_ctrl.asan aac16e1fe728 (twin 78efaeda1de5), fuzz_ctrl.asan-ubsan 12136677c5cf (twin
+Donor: libreac/fuzz_ctrl (every file used has the same blob at the recipes tip).
+Images: fuzz_ctrl.asan aac16e1fe728 (twin 78efaeda1de5), fuzz_ctrl.asan-ubsan 12136677c5cf (twin
 ee07e2c38d94). The contract: `ctrl_stack_malloc2 : forall fq B, AR_laws tfibsegs B -> CtrlTSyms B ->
 astack_malloc_realizes (fx := fq) tfibsegs B 2` (lib/A/Rt/StackMalloc2.v:535, lib/B/Rt/StackMalloc2.v:535).
 

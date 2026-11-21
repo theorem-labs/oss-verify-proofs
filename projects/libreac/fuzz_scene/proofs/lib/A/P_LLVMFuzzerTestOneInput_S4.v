@@ -7,6 +7,7 @@
    loop over the S3 hypothesis, the got / declared checks, the bcmp at 0x82e9c, the free at 0x82ea8, and the
    no-transfer arm that jumps straight to C5.  rule 24: no function is proved here; this is one segment of one
    function's run. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   The walk is a CONCRETE machine walk: `SRr_step` (lib/Reusable/YA0n.v:133) over `RiscvSemantics.step`, with the
    instruction words taken from the position-abstract listing (lib/A/Prog/SceneList.v) through
@@ -672,7 +673,7 @@ Qed.
    returns 0 and the `bnez` is refuted; the free of `again` takes the block list back to a
    permutation of the entry's plus `body`, and `ld s8,8(s1)` reloads n' = 8904.  Lands at C5, ev = 3.
    The call discharges and the C5 rebuild follow the asan-ubsan twin's `s4_tail`
-   (at f9686f30a06, lib/AU/P_LLVMFuzzerTestOneInput_S4.v:271-791); the walk
+   (at lib/AU/P_LLVMFuzzerTestOneInput_S4.v:271-791); the walk
    itself is concrete, through this file's step lemmas, where the twin's is symbolic.
    ================================================================================================ *)
 Lemma s4_TX : forall cx POST,
@@ -1275,8 +1276,8 @@ Qed.
 
 (* ================================================================================================
    HELPERS FOR THE ENTRY BLOCK.  s4h_chain, s4h_garr8_moved, s4h_shadow_lo and s4h_open_idx are the
-   asan-ubsan twin's s4_chain / s4_garr8_moved / s4_shadow_lo / s4_open_idx (at
-   f9686f30a06, lib/AU/P_LLVMFuzzerTestOneInput_S4.v:133-174, :247-264), themselves cgif A/ACf5.v:172-186
+   asan-ubsan twin's s4_chain / s4_garr8_moved / s4_shadow_lo / s4_open_idx (
+   lib/AU/P_LLVMFuzzerTestOneInput_S4.v:133-174, :247-264), themselves cgif A/ACf5.v:172-186
    rt_chain; copied, not imported.
    ================================================================================================ *)
 Ltac s4hrg := repeat (rewrite getr_other by reg_neq_tac).

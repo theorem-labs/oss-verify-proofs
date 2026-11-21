@@ -6,7 +6,7 @@
    rule 24: no function proved here.  Released-proof lookup of record
    (`proof-index reac_ctrl_identity_reply reac_ctrl_identity_reply_contract_F`,
    lookup-reac_ctrl_identity_reply.txt (a working note, not in this delivery), checker CONFIRM in
-   lookup-check.md (a working note, not in this delivery)): At ossv/recipes c5e779efe8c (2026-10-31), no released proof outside this unit.  Written new.
+   lookup-check.md (a working note, not in this delivery)): At (2026-10-31), no released proof outside this unit.  Written new.
 
    WHAT IS HERE.  The pattern of C_reac_ctrl_identity_replyBase.rrB_SB_base for rrB_SB_lifted, for the two lifted
    entries of the shared tail (C_reac_ctrl_identity_replyRet.v):
@@ -125,7 +125,7 @@ Proof.
 Qed.
 
 (* At the -1 exit 0x84bdc: the end memory IS rBI's mc; the saved registers, the flag-pointer word and (rKEG's OUT fact,
-   kept by rrB_QSB since 128f44eab50) the OUT cells, read at the real end memory. *)
+   kept by rrB_QSB) the OUT cells, read at the real end memory. *)
 Lemma rrB_SBR_mem : forall (ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (mb mc m5 : word -> option byte)
     (fr len pa pp pn S FS G j : Z) (g : list byte),
   rBI ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 mb S FS G j 1 mc ->

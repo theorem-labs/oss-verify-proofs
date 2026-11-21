@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it; the recorded states are renumbered and carry the new launch facts and sizes; the plans are renumbered to the new numbering). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -8,6 +9,7 @@ From OSSVerify.openssl.hashtable.images Require Import AsanUbsan.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import PropExec ShapeAlg AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanInit CertRefl.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import CxRel CxPlan CxPlanSound CxGlue CxReblob CxOpt CxOptGen CxOptK CxRefront CxfL9 CxfFast HBPlanImage HBAtable HBArg HBCheckG HBChain HBHop HBUsageDefs HBParity
   HBVtHop BVG6T012Lit BFIEndK6A2.
+From OSSVerify.Proofs.openssl.hashtable.lib Require PlanRegen HBReg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AX2S. Import APC. Import CAP. Import CXS.
@@ -76,12 +78,18 @@ Definition vk_F_a2e6_ (_ : unit) : list kentry := [par_even].
 Abbreviation vk_F_a2e6 := (vk_F_a2e6_ tt).
 Definition vkpl_a2e6_ (_ : unit) : plan := PJoin (ELit 0) 12554992 8 (PExt 38 [EVar 6; ELit 6; ELit 6] (PExt 49 [ELit 456; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 80] (PExt 49 [ELit 458; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 88] (PExt 49 [ELit 460; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 72] (PExt 49 [ELit 911; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 56] (PExt 49 [ELit 913; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 64] (PExt 49 [ELit 915; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 48] (PExt 49 [ELit 954; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 32] (PExt 49 [ELit 956; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 40] (PExt 49 [ELit 958; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 24] (PExt 49 [ELit 1145; EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 43)) (ELit (-8)); ELit 10224] (PFact (KRange (EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 16) (EVar 6)) (EMd M_MUL (ELit (-4096)) (EVar 57))) (ELit 4096)) 0 4192) (PFact (KRange (ELit 0) 0 4096) (PFact (KRange (EVar 57) 0 1) (PFact (KRange (EVar 46) 1 34359736318) (PFact (KRange (ELit 1) 0 1) (PHandoff 1122))))))))))))))))).
 Abbreviation vkpl_a2e6 := (vkpl_a2e6_ tt).
-Definition htg_a2e6_ (_ : unit) : htgt := (vg6t012, vk_sig_a2e6, vk_F_a2e6).
+(* LPS c0dd863a: the signature names variables of the run from [fiendk6a2], whose recorded states are renumbered
+   by [HBReg.K_F] ([HBReg.mregk]); it is renumbered the same way here (its keys, the template's variables, stay), and the plan
+   where it is checked ([HBReg.mplank]).  The check re-runs on both. *)
+Definition vk_sig_a2e6n_ (_ : unit) : list (nat * expr) := Eval vm_compute in
+  map (fun q : nat * expr => (fst q, PlanRegen.esh HBReg.K_F (snd q))) vk_sig_a2e6.
+Abbreviation vk_sig_a2e6n := (vk_sig_a2e6n_ tt).
+Definition htg_a2e6_ (_ : unit) : htgt := (vg6t012, vk_sig_a2e6n, vk_F_a2e6).
 Abbreviation htg_a2e6 := (htg_a2e6_ tt).
 Lemma htok_a2e6 : ht_ok 100 htg_a2e6 = true. Proof. vm_compute. reflexivity. Qed.
 Lemma nxge_a2e6 : (NX0 <= 100)%nat. Proof. apply Nat.leb_le. vm_compute. reflexivity. Qed.
 Lemma nxspw_a2e6 : CAP.expr_vars_lt 100 e_spw = true. Proof. vm_compute. reflexivity. Qed.
-Lemma chk_a2e6 : CAP.check HASEGS vt_IT HAT 100 AsanInit.LIMIT (hag_XN 100) (hag_XE 100) hag_XB (HS_tg [(1122%nat, htg_a2e6)]) 0 true false true 400000 3000 None (with_facts fiendk6a2 [par_even]) vkpl_a2e6 = COk (SHole 1122).
+Lemma chk_a2e6 : CAP.check HASEGS vt_IT HAT 100 AsanInit.LIMIT (hag_XN 100) (hag_XE 100) hag_XB (HS_tg [(1122%nat, htg_a2e6)]) 0 true false true 400000 3000 None (with_facts fiendk6a2 [par_even]) (HBReg.mplank vkpl_a2e6) = COk (SHole 1122).
 Proof. apply CXFF.check_l_intro. ltac2:(cert_refl_vm constr:(COk (SHole 1122))). Qed.
 Section M.
   Variable sp : word.
@@ -90,13 +98,14 @@ Section M.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   Variable PHI : env -> Prop.
   Hypothesis PHI_agree : forall E E', env_agree NX0 E E' -> PHI E -> PHI E'.
@@ -108,6 +117,6 @@ Section M.
   Theorem vtail_a2e6 : piece (SVG PHI SV) argH ISP fs (with_facts fiendk6a2 [par_even]) T.
   Proof.
     exact (vt_hop sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit PHI PHI_agree T T_agree T_nil 100%nat nxge_a2e6 nxspw_a2e6
-             vg6t012 (with_facts fiendk6a2 [par_even]) vk_sig_a2e6 vk_F_a2e6 vt_IT vt_IT_ok vkpl_a2e6 1122%nat htok_a2e6 Htmpl chk_a2e6).
+             vg6t012 (with_facts fiendk6a2 [par_even]) vk_sig_a2e6n vk_F_a2e6 vt_IT vt_IT_ok (HBReg.mplank vkpl_a2e6) 1122%nat htok_a2e6 Htmpl chk_a2e6).
   Qed.
 End M.

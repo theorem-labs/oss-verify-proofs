@@ -9,7 +9,7 @@
    instruction; the malloc'd float buffers the loop writes are not modelled by the symbolic memory either.
 
    Control flow (offsets from the entry; the listing lib/A/Prog/DecodeList.v, slots AF_check_round_trip ..
-   AF_check_braid), from the record of the same function on a working branch at dc455613c81
+   AF_check_braid), from the record of the same function on a working branch
    (lib/A/Prog/crt_iface.v, crt_segs_F.v, crt_loopF.v), re-based here on the listing's own names:
      +0x000 entry, frame 96 bytes            +0x060 call malloc(4 nch ns), returns +0x064
      +0x06c call malloc(8 nch), ret +0x070   +0x084 call calloc(3 nch ns, 1), ret +0x088

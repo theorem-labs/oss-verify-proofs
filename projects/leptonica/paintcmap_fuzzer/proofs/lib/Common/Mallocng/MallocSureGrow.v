@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's maps_subtract cut in grow_munmap). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -57,9 +58,12 @@ Lemma grow_munmap : forall A A' h (a n : word),
   sgrow (-1) 0 0 A A' h (vm_munmap a n h).
 Proof.
   intros A A' h a n HV Hin Ea Hsp. pose proof (length_map_remove_lt (vm_maps h) a n Hin) as LT.
+  (* munmap cuts with [maps_subtract] at 08b1429; on this exact ledger it is [map_remove] *)
+  pose proof (munmap_exact_pw _ _ _ (vm_pw A h HV) (fun b sz Hb => proj1 (vm_maps_wf A h HV b sz Hb)) Hin) as Hx.
+  rewrite <- (maps_subtract_exact_remove _ _ _ Hx) in LT.
   constructor; cbn [vm_maps vm_init_sp vm_reserved vm_limit vm_munmap]; try reflexivity.
   - lia.
-  - pose proof (backed_munmap_le h a n (vm_maps_nw A h HV) (vm_na_nw A h HV) (maps_pw_pw' _ (vm_pw A h HV)) Hin). lia.
+  - pose proof (backed_munmap_le h a n (vm_maps_nw A h HV) (vm_na_nw A h HV) (maps_pw_pw' _ (vm_pw A h HV)) Hin Hx). lia.
   - rewrite Ea. lia.
   - unfold muse. rewrite Ea. lia.
   - rewrite Ea. lia.

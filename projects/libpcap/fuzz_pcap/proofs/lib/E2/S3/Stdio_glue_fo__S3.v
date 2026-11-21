@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the at_node proofs of fopen, unlink and remove close the pathname nodes' new arithmetic side goals with rewrite ?unsigned_lit and lia, in both copies, from client_range_lo's 2^47 bound on the name, which each proof now keeps; in fopen's every Z inequality goes to that lia and never to vm_compute, which does not terminate on the new bound over the free name; the keep_hyps lia steps that chain the stack floor with GIo's ceiling bound unfold rc_lo first, as that bound is now stated over the entry sp. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -569,6 +570,10 @@ Section GlueFo.
     { destruct NCR as [NCR | NCR].
       - destruct (client_range_lo R s CL FB m (bv_unsigned sp) NAME (Z.of_nat (length name) + 1) lo G NCR ltac:(lia) LOR ltac:(lia)) as (_ & C2 & _). exact C2.
       - left. lia. }
+    assert (N47 : NAME + (Z.of_nat (length name) + 1) <= 2^47).
+    { destruct NCR as [NCR | NCR].
+      - destruct (client_range_lo R s CL FB m (bv_unsigned sp) NAME (Z.of_nat (length name) + 1) lo G NCR ltac:(lia) LOR ltac:(lia)) as (_ & _ & C3 & _). exact C3.
+      - lia. }
     pose proof CT as (tlst & errv & _ & ERR & _).
     unfold s_fopen, Stdio.fopen.
     apply implM_sysk.
@@ -588,7 +593,9 @@ Section GlueFo.
     { destruct wr; cbn [open_name_ok] in NOK; rewrite FMV; at_node_solve__p0.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [exact NNUL | exact NOK | exact (proj1 NOK) | exact (proj2 NOK)   (* [comment removed for export] *)
-                 | rewrite unsigned_lit by lia; exact HNAME1 | vm_compute; reflexivity
+                 | rewrite unsigned_lit by lia; exact HNAME1
+                 | lazymatch goal with |- (_ <= _)%Z => first [rewrite ?unsigned_lit by lia; lia | idtac] end
+                 | vm_compute; reflexivity
                  | match goal with |- ?g => idtac "ATNODE:" g end]. }
     intros rsp a Hdec.
     assert (HD : match a with SErr e => rsp = efferr e /\ 1 <= e <= 4095 | SVal v => rsp = eff0 (Z_to_bv 64 v) /\ 3 <= v <= 4096 end).
@@ -618,7 +625,7 @@ Section GlueFo.
       destruct HD as [-> HFD].
       eapply implM_evt.
       { unfold eff0. sys_nret. eapply (fopen_S2_ok ra sp gp (rc_tp R) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc) with (lo := lo) (NAME := NAME) (MODE := MODE) (md := md) (slack := slack);
-            first [exact ROMD | exact FR1 | exact ERR1 | exact SSP1 | exact HFD | exact ST1 | exact MI1 | exact MU1 | exact WM1 | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack LOB LOR SPW SPM SP47 NB TPR TPLO TP200; lia)
+            first [exact ROMD | exact FR1 | exact ERR1 | exact SSP1 | exact HFD | exact ST1 | exact MI1 | exact MU1 | exact WM1 | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack LOB LOR SPW SPM SP47 NB TPR TPLO TP200; unfold rc_lo in *; lia)
                   | destruct wr; rewrite FMV; [right | left]; reflexivity
                   | match goal with |- ?g => idtac "S2OK side:" g end ]. }
       cbv beta. intros ms2 PO. destruct PO as (v0 & v1 & v2 & c1 & c2 & c3 & c4 & c5 & c6 & c7 & v3 & v4 & v5 & v6 & sv2 & j0 & m2 & -> & FRO2 & FRI2 & ERR2 & SSP2 & MU2 & WM2 & MI2 & ST2).
@@ -660,7 +667,7 @@ Section GlueFo.
         apply (proj1 (KST _ R _ _)) in HS3 as SR3.
         eapply implM_evt.
         { eapply (fopen_S6 ra sp gp (rc_tp R) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc) with (lo := lo) (P := A) (MODE := MODE) (md := md) (slack := slack);
-            first [exact ROMD | exact BLK | exact FRO3 | exact FRI3 | exact SSP3 | exact HFD | exact ST3 | exact MI3 | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack A LOB LOR SPW3 SPM SP47 TPLO A1 A5 A4; lia)
+            first [exact ROMD | exact BLK | exact FRO3 | exact FRI3 | exact SSP3 | exact HFD | exact ST3 | exact MI3 | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack A LOB LOR SPW3 SPM SP47 TPLO A1 A5 A4; unfold rc_lo in *; lia)
                   | match goal with |- ?g => idtac "S6 side:" g end ]. }
         cbv beta. intros ms4 PO4.
         destruct PO4 as (x1' & e0 & e1 & e2 & e4 & e5 & e6 & e7 & e8 & e9 & e10 & e11 & m4 & -> & FC4 & BLK4 & FRO4 & (sv2' & j0' & FRI4) & SSP4 & MU4 & WM4 & MI4 & ST4).
@@ -669,11 +676,11 @@ Section GlueFo.
         apply (proj1 (rw_cells_app ssegs m3 _ [_] _)) in LC3 as [_ LC3]. apply (proj1 (rw_cells_app ssegs m3 _ [_] _)) in LC3 as [THR3 LC3].
         apply (proj1 (rw_cells_app ssegs m3 _ [_] _)) in LC3 as [_ LC3]. apply (proj1 (rw_cells_app ssegs m3 _ [_] _)) in LC3 as [NL3 _].
         cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ Z.add Pos.add Pos.add_carry] in THR3, NL3.
-        assert (THR4 : rw_cells ssegs m4 0x53d29 [C1 (Z_to_bv 8 0)]) by (eapply rw_cells_transport; [exact THR3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; lia)]).
-        assert (NL4 : rw_cells ssegs m4 NEED_LOCKS [C1 (Z_to_bv 8 0)]) by (unfold NEED_LOCKS; eapply rw_cells_transport; [exact NL3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; lia)]).
+        assert (THR4 : rw_cells ssegs m4 0x53d29 [C1 (Z_to_bv 8 0)]) by (eapply rw_cells_transport; [exact THR3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; unfold rc_lo in *; lia)]).
+        assert (NL4 : rw_cells ssegs m4 NEED_LOCKS [C1 (Z_to_bv 8 0)]) by (unfold NEED_LOCKS; eapply rw_cells_transport; [exact NL3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; unfold rc_lo in *; lia)]).
         pose proof SR3 as (SO3 & SOI3 & SE3 & SEI3 & SIN3 & U13 & U23 & U33 & OL3 & OH3 & FS3 & ND3).
-        assert (OL4 : rw_cells ssegs m4 A_OFL_LOCK [C4 (Z_to_bv 64 0)]) by (unfold A_OFL_LOCK in *; eapply rw_cells_transport; [exact OL3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; lia)]).
-        assert (OH4 : rw_cells ssegs m4 A_OFL_HEAD [C8 (Z_to_bv 64 (hd_addr FB))]) by (unfold A_OFL_HEAD in *; eapply rw_cells_transport; [exact OH3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; lia)]).
+        assert (OL4 : rw_cells ssegs m4 A_OFL_LOCK [C4 (Z_to_bv 64 0)]) by (unfold A_OFL_LOCK in *; eapply rw_cells_transport; [exact OL3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; unfold rc_lo in *; lia)]).
+        assert (OH4 : rw_cells ssegs m4 A_OFL_HEAD [C8 (Z_to_bv 64 (hd_addr FB))]) by (unfold A_OFL_HEAD in *; eapply rw_cells_transport; [exact OH3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; unfold rc_lo in *; lia)]).
         (* [comment removed for export] *)
         pose proof BOK3 as [BO3 BA3].
         assert (HDF : hd_addr FB = 0 \/ (hd_addr FB <> 0 /\ (exists pvo : word, rw_cells ssegs m4 (hd_addr FB + 104) [C8 pvo])
@@ -689,7 +696,7 @@ Section GlueFo.
             pose proof (BAX (q, A, 1264) (q1, Ah, 1264) ltac:(left; reflexivity) ltac:(left; reflexivity)) as AP. unfold apart, cb_addr, cb_size in AP. cbn [fst snd] in AP. (keep_hyps CEILV sp R NAME MODE name md Ah slack A EA AP; lia). }
           unfold apart, cb_addr, cb_size, FILE_ALLOC in AP. cbn [fst snd] in AP.
           split; [lia|]. split.
-          { exists (Z_to_bv 64 0). eapply rw_cells_transport; [exact (FILE_R_prev_cell _ _ _ _ _ _ _ _ _ FR1h)| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md Ah slack A LOR SPW3 K4 AP; lia)]. }
+          { exists (Z_to_bv 64 0). eapply rw_cells_transport; [exact (FILE_R_prev_cell _ _ _ _ _ _ _ _ _ FR1h)| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md Ah slack A LOR SPW3 K4 AP; unfold rc_lo in *; lia)]. }
           unfold rc_lo in *. (keep_hyps CEILV sp R lo NAME MODE name md Ah slack A LOR SPW3 K4 K5 AP; lia). }
         assert (HDR : 0 <= hd_addr FB /\ hd_addr FB + 232 < 2^63).
         { destruct FB as [|[[q1 Ah] n1] FB']; cbn [hd_addr]; [lia|].
@@ -712,7 +719,7 @@ Section GlueFo.
           eapply evt_mono.
           { eapply (fopen_S7 ra sp gp (rc_tp R) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc) with (lo := lo) (hd := hd_addr FB) (m2 := m3) (fl := if mode_m0 md =? 114 then 8 else 4) (MODE := MODE) (md := md) (slack := slack);
               first [exact FC4 | exact BLK4 | exact FRO4 | exact FRI4 | exact SSP4 | exact THR4 | exact NL4 | exact OL4 | exact OH4 | exact HDF | exact MU4 | exact WM4 | exact ST4 | exact MI4
-                    | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | exact HFD | (keep_hyps CEILV sp R lo NAME MODE name md slack A LOB LOR SPW3 SPM SP47 TPLO A1 A5 A4 hptr FB HDR; lia)
+                    | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | exact HFD | (keep_hyps CEILV sp R lo NAME MODE name md slack A LOB LOR SPW3 SPM SP47 TPLO A1 A5 A4 hptr FB HDR; unfold rc_lo in *; lia)
                     | unfold sub_fp; cbn [outside]; intros x Hx; (keep_hyps CEILV hptr sp R FB lo NAME MODE name md slack A x Hx; lia)
                     | match goal with |- ?g => idtac "S7 side:" g end ]. }
           cbv beta. intros ms7 PO7.
@@ -1307,12 +1314,16 @@ Section GlueFo.
     { destruct NCR as [NCR | NCR].
       - destruct (client_range_lo R s CL FB m (bv_unsigned sp) NAME (Z.of_nat (length name) + 1) lo G NCR ltac:(lia) LOR ltac:(lia)) as (_ & C2 & _). exact C2.
       - left. lia. }
+    assert (N47 : NAME + (Z.of_nat (length name) + 1) <= 2^47).
+    { destruct NCR as [NCR | NCR].
+      - destruct (client_range_lo R s CL FB m (bv_unsigned sp) NAME (Z.of_nat (length name) + 1) lo G NCR ltac:(lia) LOR ltac:(lia)) as (_ & _ & C3 & _). exact C3.
+      - lia. }
     pose proof CT as (tlst & errv & _ & ERR & _).
     unfold s_fopen, Stdio.fopen.
     apply implM_sysk.
     eapply evt_cut.
     { eapply (fopen_S1 ra sp gp (rc_tp R) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc) with (lo := lo) (NAME := NAME) (MODE := MODE) (md := md) (slack := slack);
-        first [exact ROMD | exact ST | exact MI | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack LOB LOR SPW SPM SP47 NB TPR TPLO; lia)
+        first [exact ROMD | exact ST | exact MI | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack LOB LOR SPW SPM SP47 NB TPR TPLO; unfold rc_lo in *; lia)
               | match goal with |- ?g => idtac "S1 side:" g end]. }
     cbv beta. intros ms1 PO. destruct PO as (x1 & u0 & u1 & u2 & b4 & b5 & b6 & u3 & u4 & u5 & u6 & m1 & -> & FR1 & MU1 & WM1 & MI1 & ST1).
     assert (HNAME1 : bytes_at usegs m1 NAME (name ++ [Z_to_bv 8 0])).
@@ -1326,7 +1337,9 @@ Section GlueFo.
     { destruct wr; cbn [open_name_ok] in NOK; rewrite FMV; at_node_solve__p3.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [exact NNUL | exact NOK | exact (proj1 NOK) | exact (proj2 NOK)   (* [comment removed for export] *)
-                 | rewrite unsigned_lit by lia; exact HNAME1 | vm_compute; reflexivity
+                 | rewrite unsigned_lit by lia; exact HNAME1
+                 | lazymatch goal with |- (_ <= _)%Z => first [rewrite ?unsigned_lit by lia; lia | idtac] end
+                 | vm_compute; reflexivity
                  | match goal with |- ?g => idtac "ATNODE:" g end]. }
     intros rsp a Hdec.
     assert (HD : match a with SErr e => rsp = efferr e /\ 1 <= e <= 4095 | SVal v => rsp = eff0 (Z_to_bv 64 v) /\ 3 <= v <= 4096 end).
@@ -1356,7 +1369,7 @@ Section GlueFo.
       destruct HD as [-> HFD].
       eapply implM_evt.
       { unfold eff0. sys_nret. eapply (fopen_S2_ok ra sp gp (rc_tp R) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc) with (lo := lo) (NAME := NAME) (MODE := MODE) (md := md) (slack := slack);
-            first [exact ROMD | exact FR1 | exact ERR1 | exact SSP1 | exact HFD | exact ST1 | exact MI1 | exact MU1 | exact WM1 | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack LOB LOR SPW SPM SP47 NB TPR TPLO TP200; lia)
+            first [exact ROMD | exact FR1 | exact ERR1 | exact SSP1 | exact HFD | exact ST1 | exact MI1 | exact MU1 | exact WM1 | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack LOB LOR SPW SPM SP47 NB TPR TPLO TP200; unfold rc_lo in *; lia)
                   | destruct wr; rewrite FMV; [right | left]; reflexivity
                   | match goal with |- ?g => idtac "S2OK side:" g end ]. }
       cbv beta. intros ms2 PO. destruct PO as (v0 & v1 & v2 & c1 & c2 & c3 & c4 & c5 & c6 & c7 & v3 & v4 & v5 & v6 & sv2 & j0 & m2 & -> & FRO2 & FRI2 & ERR2 & SSP2 & MU2 & WM2 & MI2 & ST2).
@@ -1398,7 +1411,7 @@ Section GlueFo.
         apply (proj1 (KST _ R _ _)) in HS3 as SR3.
         eapply implM_evt.
         { eapply (fopen_S6 ra sp gp (rc_tp R) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc) with (lo := lo) (P := A) (MODE := MODE) (md := md) (slack := slack);
-            first [exact ROMD | exact BLK | exact FRO3 | exact FRI3 | exact SSP3 | exact HFD | exact ST3 | exact MI3 | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack A LOB LOR SPW3 SPM SP47 TPLO A1 A5 A4; lia)
+            first [exact ROMD | exact BLK | exact FRO3 | exact FRI3 | exact SSP3 | exact HFD | exact ST3 | exact MI3 | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | (keep_hyps CEILV sp R lo NAME MODE name md slack A LOB LOR SPW3 SPM SP47 TPLO A1 A5 A4; unfold rc_lo in *; lia)
                   | match goal with |- ?g => idtac "S6 side:" g end ]. }
         cbv beta. intros ms4 PO4.
         destruct PO4 as (x1' & e0 & e1 & e2 & e4 & e5 & e6 & e7 & e8 & e9 & e10 & e11 & m4 & -> & FC4 & BLK4 & FRO4 & (sv2' & j0' & FRI4) & SSP4 & MU4 & WM4 & MI4 & ST4).
@@ -1407,11 +1420,11 @@ Section GlueFo.
         apply (proj1 (rw_cells_app usegs m3 _ [_] _)) in LC3 as [_ LC3]. apply (proj1 (rw_cells_app usegs m3 _ [_] _)) in LC3 as [THR3 LC3].
         apply (proj1 (rw_cells_app usegs m3 _ [_] _)) in LC3 as [_ LC3]. apply (proj1 (rw_cells_app usegs m3 _ [_] _)) in LC3 as [NL3 _].
         cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ Z.add Pos.add Pos.add_carry] in THR3, NL3.
-        assert (THR4 : rw_cells usegs m4 0x544e9 [C1 (Z_to_bv 8 0)]) by (eapply rw_cells_transport; [exact THR3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; lia)]).
-        assert (NL4 : rw_cells usegs m4 NEED_LOCKS [C1 (Z_to_bv 8 0)]) by (unfold NEED_LOCKS; eapply rw_cells_transport; [exact NL3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; lia)]).
+        assert (THR4 : rw_cells usegs m4 0x544e9 [C1 (Z_to_bv 8 0)]) by (eapply rw_cells_transport; [exact THR3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; unfold rc_lo in *; lia)]).
+        assert (NL4 : rw_cells usegs m4 NEED_LOCKS [C1 (Z_to_bv 8 0)]) by (unfold NEED_LOCKS; eapply rw_cells_transport; [exact NL3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; unfold rc_lo in *; lia)]).
         pose proof SR3 as (SO3 & SOI3 & SE3 & SEI3 & SIN3 & U13 & U23 & U33 & OL3 & OH3 & FS3 & ND3).
-        assert (OL4 : rw_cells usegs m4 A_OFL_LOCK [C4 (Z_to_bv 64 0)]) by (unfold A_OFL_LOCK in *; eapply rw_cells_transport; [exact OL3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; lia)]).
-        assert (OH4 : rw_cells usegs m4 A_OFL_HEAD [C8 (Z_to_bv 64 (hd_addr FB))]) by (unfold A_OFL_HEAD in *; eapply rw_cells_transport; [exact OH3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; lia)]).
+        assert (OL4 : rw_cells usegs m4 A_OFL_LOCK [C4 (Z_to_bv 64 0)]) by (unfold A_OFL_LOCK in *; eapply rw_cells_transport; [exact OL3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; unfold rc_lo in *; lia)]).
+        assert (OH4 : rw_cells usegs m4 A_OFL_HEAD [C8 (Z_to_bv 64 (hd_addr FB))]) by (unfold A_OFL_HEAD in *; eapply rw_cells_transport; [exact OH3| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md slack A LOR SPW3 A5; unfold rc_lo in *; lia)]).
         (* [comment removed for export] *)
         pose proof BOK3 as [BO3 BA3].
         assert (HDF : hd_addr FB = 0 \/ (hd_addr FB <> 0 /\ (exists pvo : word, rw_cells usegs m4 (hd_addr FB + 104) [C8 pvo])
@@ -1427,7 +1440,7 @@ Section GlueFo.
             pose proof (BAX (q, A, 1264) (q1, Ah, 1264) ltac:(left; reflexivity) ltac:(left; reflexivity)) as AP. unfold apart, cb_addr, cb_size in AP. cbn [fst snd] in AP. (keep_hyps CEILV sp R NAME MODE name md Ah slack A EA AP; lia). }
           unfold apart, cb_addr, cb_size, FILE_ALLOC in AP. cbn [fst snd] in AP.
           split; [lia|]. split.
-          { exists (Z_to_bv 64 0). eapply rw_cells_transport; [exact (FILE_R_prev_cell _ _ _ _ _ _ _ _ _ FR1h)| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md Ah slack A LOR SPW3 K4 AP; lia)]. }
+          { exists (Z_to_bv 64 0). eapply rw_cells_transport; [exact (FILE_R_prev_cell _ _ _ _ _ _ _ _ _ FR1h)| exact MU4| exact WM4| cbn; (keep_hyps CEILV sp R lo NAME MODE name md Ah slack A LOR SPW3 K4 AP; unfold rc_lo in *; lia)]. }
           unfold rc_lo in *. (keep_hyps CEILV sp R lo NAME MODE name md Ah slack A LOR SPW3 K4 K5 AP; lia). }
         assert (HDR : 0 <= hd_addr FB /\ hd_addr FB + 232 < 2^63).
         { destruct FB as [|[[q1 Ah] n1] FB']; cbn [hd_addr]; [lia|].
@@ -1450,7 +1463,7 @@ Section GlueFo.
           eapply evt_mono.
           { eapply (fopen_S7 ra sp gp (rc_tp R) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc) with (lo := lo) (hd := hd_addr FB) (m2 := m3) (fl := if mode_m0 md =? 114 then 8 else 4) (MODE := MODE) (md := md) (slack := slack);
               first [exact FC4 | exact BLK4 | exact FRO4 | exact FRI4 | exact SSP4 | exact THR4 | exact NL4 | exact OL4 | exact OH4 | exact HDF | exact MU4 | exact WM4 | exact ST4 | exact MI4
-                    | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | exact HFD | (keep_hyps CEILV sp R lo NAME MODE name md slack A LOB LOR SPW3 SPM SP47 TPLO A1 A5 A4 hptr FB HDR; lia)
+                    | exact MDR | exact NONUL | exact PAD | exact M0 | exact NOPLUS | exact NOE | exact HFD | (keep_hyps CEILV sp R lo NAME MODE name md slack A LOB LOR SPW3 SPM SP47 TPLO A1 A5 A4 hptr FB HDR; unfold rc_lo in *; lia)
                     | unfold sub_fp; cbn [outside]; intros x Hx; (keep_hyps CEILV hptr sp R FB lo NAME MODE name md slack A x Hx; lia)
                     | match goal with |- ?g => idtac "S7 side:" g end ]. }
           cbv beta. intros ms7 PO7.
@@ -2264,7 +2277,7 @@ Section GlueFc.
       cbv beta. intros ms7 PO7. destruct PO7 as (a0'' & m7 & -> & FC7 & PVC7 & NXC7 & OH7 & ST7 & MU7 & WM7 & MI7).
       unfold fcW in MU7.
       assert (OL7 : rw_cells ssegs m7 A_OFL_LOCK [C4 (Z_to_bv 64 0)]).
-      { eapply rw_cells_transport; [exact OL3| exact MU7| exact WM7|]. cbn. unfold A_OFL_LOCK, A_OFL_HEAD. destruct (pv =? 0); destruct (nx =? 0); (keep_hyps CEILV sp R Af lo pv nx LOR LOB SPW PVF NXF; lia). }
+      { eapply rw_cells_transport; [exact OL3| exact MU7| exact WM7|]. cbn. unfold A_OFL_LOCK, A_OFL_HEAD. destruct (pv =? 0); destruct (nx =? 0); (keep_hyps CEILV sp R Af lo pv nx LOR LOB SPW PVF NXF; unfold rc_lo in *; lia). }
       eapply evt_cut. { eapply (fclose_S3e sp gp (rc_tp R) s4 s5 s6 s7 s8 s9 s10 s11 F fc Af lo); [lia| lia| lia| exact FC7| exact OL7| exact MI7]. }
       cbv beta. intros ms8 PO8. destruct PO8 as (b1 & b2 & b3 & b4 & b5 & ->). apply evt_done.
       (* [comment removed for export] *)
@@ -2312,7 +2325,7 @@ Section GlueFc.
       assert (FR7 : rw_cells ssegs m7 (bv_unsigned sp + -48) [CB 8 jk; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
       { eapply rw_cells_transport; [exact FR3| exact MU7| exact WM7|]. cbn. unfold A_OFL_HEAD.
         destruct (Z.eqb_spec pv 0) as [E|NE]; [| destruct (PVF NE) as (P1 & P2 & P3 & P4)];
-        destruct (Z.eqb_spec nx 0) as [E'|NE']; try destruct (NXF NE') as (N1 & N2 & N3 & N4); (keep_hyps CEILV sp R lo pv nx LOR LOB SPW E E' N2 P2; lia). }
+        destruct (Z.eqb_spec nx 0) as [E'|NE']; try destruct (NXF NE') as (N1 & N2 & N3 & N4); (keep_hyps CEILV sp R lo pv nx LOR LOB SPW E E' N2 P2; unfold rc_lo in *; lia). }
       name_sp sp (-48).
       eapply implM_post_evt.
       { pose proof FREE8K as FK. unfold free_stmt_8k in FK. unfold FREE_ENTRY'.
@@ -3061,7 +3074,7 @@ Section GlueFc.
       cbv beta. intros ms7 PO7. destruct PO7 as (a0'' & m7 & -> & FC7 & PVC7 & NXC7 & OH7 & ST7 & MU7 & WM7 & MI7).
       unfold fcW in MU7.
       assert (OL7 : rw_cells usegs m7 A_OFL_LOCK [C4 (Z_to_bv 64 0)]).
-      { eapply rw_cells_transport; [exact OL3| exact MU7| exact WM7|]. cbn. unfold A_OFL_LOCK, A_OFL_HEAD. destruct (pv =? 0); destruct (nx =? 0); (keep_hyps CEILV sp R Af lo pv nx LOR LOB SPW PVF NXF; lia). }
+      { eapply rw_cells_transport; [exact OL3| exact MU7| exact WM7|]. cbn. unfold A_OFL_LOCK, A_OFL_HEAD. destruct (pv =? 0); destruct (nx =? 0); (keep_hyps CEILV sp R Af lo pv nx LOR LOB SPW PVF NXF; unfold rc_lo in *; lia). }
       eapply evt_cut. { eapply (fclose_S3e sp gp (rc_tp R) s4 s5 s6 s7 s8 s9 s10 s11 F fc Af lo); [lia| lia| lia| exact FC7| exact OL7| exact MI7]. }
       cbv beta. intros ms8 PO8. destruct PO8 as (b1 & b2 & b3 & b4 & b5 & ->). apply evt_done.
       (* [comment removed for export] *)
@@ -3600,6 +3613,7 @@ Section GlueSys.
   #[local] Notation GIo_stdio_step_err := (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.S3.Stdio_glue_fo__S3.Stdio_glue_fo.GIo_stdio_step_err K KST HFL).
   #[local] Notation STDIOR_keep := (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.S3.Stdio_glue_fo__S3.Stdio_glue_fo.STDIOR_keep).
   #[local] Notation keeps_of_stdio_err := (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.S3.Stdio_glue_fo__S3.Stdio_glue_fo.keeps_of_stdio_err K).
+  #[local] Notation client_range_lo := (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.S3.F_sfpcapng_blk__S3.Stdio_glue.client_range_lo K).
 
   (* [comment removed for export] *)
   Definition client_bytes_keep__stmt : Prop := forall R (s : PS) (CL FB : list cblk) m m' W SP S (bs : list byte),
@@ -3696,6 +3710,8 @@ Section GlueSys.
     subst tp. unfold STDIO_STACK in *.
     pose proof (bv_unsigned_in_range 64 sp) as SPHI. unfold bv_modulus in SPHI. cbn in SPHI.
     pose proof (bytes_at_bound _ _ _ _ HNAME) as NB. rewrite length_app in NB. cbn [length] in NB.
+    assert (N47 : NAME + (Z.of_nat (length name) + 1) <= 2^47)
+      by (destruct (client_range_lo R s CL FB m (bv_unsigned sp) NAME (Z.of_nat (length name) + 1) lo G NCR ltac:(lia) LOR ltac:(lia)) as (_ & _ & C3 & _); exact C3).
     pose proof CT as (tlst & errv & _ & ERR & _).
     destruct NOK as (NS & ND1 & ND2 & NLM).
     unfold s_unlink, Stdio.unlink.
@@ -3714,6 +3730,7 @@ Section GlueSys.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME1
                  | intros E; apply (f_equal (@length byte)) in E; cbn in E; lia
+                 | (rewrite ?unsigned_lit by lia; lia)
                  | match goal with |- ?g => idtac "ATNODE:" g end]. }
     intros rsp a Hdec. unfold dec_unlink in Hdec. apply dec_plain_Some in Hdec.
     destruct a as [e|v].
@@ -3750,6 +3767,8 @@ Section GlueSys.
     subst tp. unfold STDIO_STACK in *.
     pose proof (bv_unsigned_in_range 64 sp) as SPHI. unfold bv_modulus in SPHI. cbn in SPHI.
     pose proof (bytes_at_bound _ _ _ _ HNAME) as NB. rewrite length_app in NB. cbn [length] in NB.
+    assert (N47 : NAME + (Z.of_nat (length name) + 1) <= 2^47)
+      by (destruct (client_range_lo R s CL FB m (bv_unsigned sp) NAME (Z.of_nat (length name) + 1) lo G NCR ltac:(lia) LOR ltac:(lia)) as (_ & _ & C3 & _); exact C3).
     pose proof CT as (tlst & errv & _ & ERR & _).
     destruct NOK as (NS & ND1 & ND2 & NLM).
     unfold s_remove, Stdio.remove.
@@ -3797,6 +3816,7 @@ Section GlueSys.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME
                  | intros E; apply (f_equal (@length byte)) in E; cbn in E; lia
+                 | (rewrite ?unsigned_lit by lia; lia)
                  | match goal with |- ?g => idtac "ATNODE1:" g end]. }
     intros rsp a Hdec. unfold dec_unlink in Hdec. apply dec_plain_Some in Hdec.
     destruct a as [e|v].
@@ -3812,6 +3832,7 @@ Section GlueSys.
           all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
           all: first [exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME
                      | intros E; apply (f_equal (@length byte)) in E; cbn in E; lia
+                     | (rewrite ?unsigned_lit by lia; lia)
                      | match goal with |- ?g => idtac "ATNODE2:" g end]. }
         intros rsp2 a2x Hdec2. unfold dec_unlink in Hdec2. apply dec_plain_Some in Hdec2.
         assert (HR2 : exists (r2 : word) (e2 : Z), (a2x = SErr e2 /\ r2 = errno_ret e2 /\ 1 <= e2 <= 4095) \/ (a2x = SVal 0 /\ r2 = Z_to_bv 64 0)).
@@ -3931,6 +3952,7 @@ Section GlueSys.
   #[local] Notation GIo_stdio_step_err := (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.S3.Stdio_glue_fo__S3.Stdio_glue_fo.TwB.GIo_stdio_step_err K KST HFL).
   #[local] Notation STDIOR_keep := (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.S3.Stdio_glue_fo__S3.Stdio_glue_fo.TwB.STDIOR_keep).
   #[local] Notation keeps_of_stdio_err := (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.S3.Stdio_glue_fo__S3.Stdio_glue_fo.TwB.keeps_of_stdio_err K).
+  #[local] Notation client_range_lo := (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.S3.F_sfpcapng_blk__S3.Stdio_glue.TwB.client_range_lo K).
 
   (* [comment removed for export] *)
   Definition client_bytes_keep__stmt : Prop := forall R (s : PS) (CL FB : list cblk) m m' W SP S (bs : list byte),
@@ -4027,6 +4049,8 @@ Section GlueSys.
     subst tp. unfold STDIO_STACK in *.
     pose proof (bv_unsigned_in_range 64 sp) as SPHI. unfold bv_modulus in SPHI. cbn in SPHI.
     pose proof (bytes_at_bound _ _ _ _ HNAME) as NB. rewrite length_app in NB. cbn [length] in NB.
+    assert (N47 : NAME + (Z.of_nat (length name) + 1) <= 2^47)
+      by (destruct (client_range_lo R s CL FB m (bv_unsigned sp) NAME (Z.of_nat (length name) + 1) lo G NCR ltac:(lia) LOR ltac:(lia)) as (_ & _ & C3 & _); exact C3).
     pose proof CT as (tlst & errv & _ & ERR & _).
     destruct NOK as (NS & ND1 & ND2 & NLM).
     unfold s_unlink, Stdio.unlink.
@@ -4045,6 +4069,7 @@ Section GlueSys.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME1
                  | intros E; apply (f_equal (@length byte)) in E; cbn in E; lia
+                 | (rewrite ?unsigned_lit by lia; lia)
                  | match goal with |- ?g => idtac "ATNODE:" g end]. }
     intros rsp a Hdec. unfold dec_unlink in Hdec. apply dec_plain_Some in Hdec.
     destruct a as [e|v].
@@ -4081,6 +4106,8 @@ Section GlueSys.
     subst tp. unfold STDIO_STACK in *.
     pose proof (bv_unsigned_in_range 64 sp) as SPHI. unfold bv_modulus in SPHI. cbn in SPHI.
     pose proof (bytes_at_bound _ _ _ _ HNAME) as NB. rewrite length_app in NB. cbn [length] in NB.
+    assert (N47 : NAME + (Z.of_nat (length name) + 1) <= 2^47)
+      by (destruct (client_range_lo R s CL FB m (bv_unsigned sp) NAME (Z.of_nat (length name) + 1) lo G NCR ltac:(lia) LOR ltac:(lia)) as (_ & _ & C3 & _); exact C3).
     pose proof CT as (tlst & errv & _ & ERR & _).
     destruct NOK as (NS & ND1 & ND2 & NLM).
     unfold s_remove, Stdio.remove.
@@ -4128,6 +4155,7 @@ Section GlueSys.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME
                  | intros E; apply (f_equal (@length byte)) in E; cbn in E; lia
+                 | (rewrite ?unsigned_lit by lia; lia)
                  | match goal with |- ?g => idtac "ATNODE1:" g end]. }
     intros rsp a Hdec. unfold dec_unlink in Hdec. apply dec_plain_Some in Hdec.
     destruct a as [e|v].
@@ -4143,6 +4171,7 @@ Section GlueSys.
           all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
           all: first [exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME
                      | intros E; apply (f_equal (@length byte)) in E; cbn in E; lia
+                     | (rewrite ?unsigned_lit by lia; lia)
                      | match goal with |- ?g => idtac "ATNODE2:" g end]. }
         intros rsp2 a2x Hdec2. unfold dec_unlink in Hdec2. apply dec_plain_Some in Hdec2.
         assert (HR2 : exists (r2 : word) (e2 : Z), (a2x = SErr e2 /\ r2 = errno_ret e2 /\ 1 <= e2 <= 4095) \/ (a2x = SVal 0 /\ r2 = Z_to_bv 64 0)).

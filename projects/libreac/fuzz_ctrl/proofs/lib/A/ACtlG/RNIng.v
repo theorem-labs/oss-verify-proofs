@@ -13,7 +13,7 @@
    whose rn_ing_evt_F stays byte-identical; its rn_ing_evt_of_F_bounded later changed only in module qualification).  Mirrors Seg/RNIng.v rn_ing_cont (:414), which plays the same role on ctrl's frame
    route.
 
-   ROUTE (C) (a working branch 1502cba0417; recipe L3-recipe.md (a working note, not in this delivery)):
+   ROUTE (C) (a working branch; recipe L3-recipe.md (a working note, not in this delivery)):
    rn_ing_evt_F_on takes the callee's NARROWED footprint contract reac_identity_ingest_contract_F_on (premise
    shadow_rw DROPPED; LANDED.md rows 24 / 54 (a working note, not in this delivery)) AS A PREMISE and its run spans the call, so this file SUPPLIES that
    premise with the proved A.Prog.reac_identity_ingestF.reac_identity_ingest_F_holds_on and lifts the WHOLE run
@@ -50,15 +50,15 @@
    - LAWS : the core's AR laws (YCbq Section a0's hypothesis), as A5.v and ACtl.v:237.
    - none other: the kit's helpers are cited by name from lib/A/ACtlG/Kit.v (A.ACtlG.Kit.kit_wx for
      SRr_fevt_hid, A.ACtlG.Kit.kit_segs_low for ajournal_exec and the stack window's not-image bytes).  (On the
-     glue base eb89fed7fac, where Kit.v did not compile, they were placeholders with the kit's text: commits
-     aa8ed9670fb / 18025d163cd.)
+     glue base, where Kit.v did not compile, they were placeholders with the kit's text: commits.)
+     
 
    CLOSURE: every project Require below is qualified; no statement names a frame-route identifier (the Seg/*
    lemmas cited are proof-internal, closed by Qed).  SHADOWED NAMES: getr / seg_rom / FPState / RunCeil are written
    lib.Reusable.YK11.* / lib.Reusable.YM05.* (the core's copies): the Seg/* closure loads the ASan-side
    lib/A/Reusable copies, to which the short names Reusable.YK11 / Reusable.YM05 then resolve.
 
-   BUILD STATE: on a working branch 1502cba0417 (no port_core_refused name in lib/A or lib/Reusable); the Require closure
+   BUILD STATE: on a working branch (no port_core_refused name in lib/A or lib/Reusable); the Require closure
    reaches no stand-in.  No Axiom, no Parameter, no unproved step. *)
 
 From Stdlib Require Import ZArith List Lia Permutation.

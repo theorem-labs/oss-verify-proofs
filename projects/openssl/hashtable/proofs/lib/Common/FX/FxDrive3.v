@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger holds the launch's vDSO/vvar pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -22,7 +23,7 @@ Definition BIG : Z := 2 ^ 62.
 Definition erase_vm (wb : word) (h : VmMaps) : VmMaps :=
   mkVmMapsFull (vm_reserved h) (vm_maps h) [] wb wb BIG (vm_mmap_base h) (vm_init_sp h).
 Definition erase (wb : word) (m : Model) : Model :=
-  mkModelOf (m_fd m) (mkVmState (erase_vm wb (m_vmmaps m)) [] [])
+  mkModelOf (m_fd m) (mkVmState (erase_vm wb (m_vmmaps m)) [] [] (m_kernel m) (m_vdso m))
             (m_io m) (m_fsys m) (m_proc m) (m_lim m) (m_time m).
 
 Lemma erase_vmmaps wb m : m_vmmaps (erase wb m) = erase_vm wb (m_vmmaps m).
@@ -40,7 +41,7 @@ Proof. repeat split; reflexivity. Qed.
 Lemma lazy_frame_same_but_vm m m' : lazy_frame m m' -> same_but_vm m m'.
 Proof. intros [mat' ->]. repeat split; reflexivity. Qed.
 Lemma same_but_vm_sym m m' : same_but_vm m m' -> same_but_vm m' m.
-Proof. intros (A1 & A2 & A3 & A4 & A5 & A6). repeat split; congruence. Qed.
+Proof. intros (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8). repeat split; congruence. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -505,8 +506,8 @@ Hypothesis Hcode : code_ok segs code.
 Hypothesis Halloc : sc_alloc cfg = false.
 Variable R0 : list (word * word).
 Variable Rb Rc Lim : Z.
-Hypothesis HRb : live_bytes R0 <= Rb.
-Hypothesis HRc : Z.of_nat (length R0) <= Rc.
+Hypothesis HRb : res_cost R0 <= Rb.
+Hypothesis HRc : Z.of_nat (res_count R0) <= Rc.
 Variable keep : list int.
 Variable mem0 : word -> option byte.
 Variable XI : (int -> word) -> Model -> Prop.
@@ -567,7 +568,9 @@ Definition span_ok (rho : int -> word) (M : itrie region) (t : int) (rg : region
       \/ (span_lo <= bv_unsigned (rho t) + to_Z (rg_lo rg)
           /\ bv_unsigned (rho t) + to_Z (rg_len rg) <= span_hi
           /\ forall y, bv_unsigned (rho t) + to_Z (rg_lo rg) <= y < bv_unsigned (rho t) + to_Z (rg_len rg) ->
-               exists p, In p R0 /\ e_lo p <= 8 * (y - to_Z shadow_K)
+               (* LPS 727298f3: [R0] is the whole reserved ledger, which also holds the launch's
+                  vDSO/vvar pair; the shadowed interval is one of the image's own. *)
+               exists p, In p R0 /\ In p (segments_reserved segs) /\ e_lo p <= 8 * (y - to_Z shadow_K)
                          /\ 8 * (y - to_Z shadow_K) + 8 <= e_hi p)
   | RK_shadow p =>
       t = (p + 1)%uint63

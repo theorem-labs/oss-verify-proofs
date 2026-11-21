@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells are read in the launch's layout (auxv_cells with the CONFIG_RSEQ flag's fact) and that fact is passed to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -257,7 +258,7 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES20 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M20 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
+  pose proof (auxv_cells M20 av uid rnd hw S_18 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
   unshelve epose proof (e3p3_conc fx20 R20 M20 (S - 896) (A + 128) fb464 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx21 & R21 & M21 & MS21 & K21 & R21_2 & R21_8 & R21_10 & R21_11 & FR21 & GR21).
   { (* [comment removed for export] *) pr. }
@@ -396,14 +397,14 @@ Proof.
     exact GR21.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG21 FR21 MS21. try clear STAT21. try clear K20.
   try clear c20_Sm472. try clear c20_Sm480. try clear c20_Sm488. try clear c20_Sm496. try clear c20_Sm504. try clear c20_Sm512. try clear c20_Sm520. try clear c20_Sm528. try clear c20_Sm536. try clear c20_Sm544. try clear c20_Sm552. try clear c20_Sm560. try clear c20_Sm568. try clear c20_Sm424. try clear c20_Sm432. try clear c20_Sm360. try clear c20_Sm368. try clear c20_Sm376. try clear c20_Sm56. try clear c20_Sm64. try clear c20_Sm72. try clear c20_Sm80. try clear c20_Sm88. try clear c20_Sm96. try clear c20_Sm104. try clear c20_Sm112. try clear c20_Sm120. try clear c20_Sm128. try clear c20_Sm136. try clear c20_Sm144. try clear c20_Sm152. try clear c20_Sm8. try clear c20_Sm16. try clear c20_Sm696w1. try clear c20_Sm664w1. try clear c20_Sm640. try clear c20_Sm648. try clear c20_Sm632w1. try clear c20_Sm608. try clear c20_Sm616. try clear c20_Sm600w1. try clear c20_Sm464w1. try clear c20_Sm408w1. try clear c20_Sm280w1. try clear c20_Sm248w1. try clear c20_Sm216w1. try clear c20_Sm192. try clear c20_Sm200. try clear c20_Sm184w1. try clear c20_Sm160. try clear c20_Sm168. try clear c20_Sm48w1. try clear c20_Om128z8. try clear c20_Om80z12. try clear c20_Op0. try clear c20_Op8. try clear c20_Fp24. try clear c20_Fp32. try clear c20_Fp40. try clear c20_Fp48. try clear c20_Fp56. try clear c20_Fp64w1. try clear c20_Fp65w1. try clear c20_Fp16w4. try clear c20_Fp8. try clear c20_Fp0. try clear c20_Om8. try clear c20_Om40. try clear c20_Om48. try clear c20_Om56. try clear c20_Om64. try clear c20_Om68w4. try clear c20_Om16. try clear c20_Om120. try clear c20_Om24. try clear c20_Om32. try clear c20_Om88. try clear c20_Om104. try clear c20_Om112. try clear c20_Om96. try clear R20_1. try clear R20_2. try clear R20_3. try clear R20_4. try clear R20_8. try clear R20_9. try clear R20_10. try clear R20_11. try clear R20_18. try clear R20_19. try clear R20_20. try clear R20_21. try clear R20_22. try clear R20_23. try clear R20_24. try clear R20_25. try clear R20_26. try clear R20_27. try clear DEF20. try clear HH20. try clear HQ20. try clear ES20. try clear DEFref_20. try clear DEFA_20. try clear DEFd3_20. try clear DEFd4_20.
   (* [comment removed for export] *)
   pose proof ES21 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M21 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
-  unshelve epose proof (e3r3_conc fx21 R21 M21 (S - 896) (A + 128) av canary uid rnd hw _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
+  pose proof (auxv_cells M21 av uid rnd hw S_18 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
+  unshelve epose proof (e3r3_conc X_r fx21 R21 M21 (S - 896) (A + 128) av canary uid rnd hw _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx22 & R22 & M22 & MS22 & K22 & R22_1 & R22_2 & R22_8 & R22_10 & R22_11 & FR22 & GR22).
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -434,20 +435,6 @@ Proof.
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) first [exact c21_Om16 | cellfix c21_Om16]. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -566,7 +553,7 @@ Proof.
     exact GR22.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG22 FR22 MS22. try clear STAT22. try clear K21.
   try clear c21_Sm536. try clear c21_Sm544. try clear c21_Sm552. try clear c21_Sm560. try clear c21_Sm568. try clear c21_Sm424. try clear c21_Sm432. try clear c21_Sm360. try clear c21_Sm368. try clear c21_Sm376. try clear c21_Sm56. try clear c21_Sm64. try clear c21_Sm72. try clear c21_Sm80. try clear c21_Sm88. try clear c21_Sm96. try clear c21_Sm104. try clear c21_Sm112. try clear c21_Sm120. try clear c21_Sm128. try clear c21_Sm136. try clear c21_Sm144. try clear c21_Sm152. try clear c21_Sm8. try clear c21_Sm16. try clear c21_Sm696w1. try clear c21_Sm664w1. try clear c21_Sm640. try clear c21_Sm648. try clear c21_Sm632w1. try clear c21_Sm608. try clear c21_Sm616. try clear c21_Sm600w1. try clear c21_Sm464w1. try clear c21_Sm408w1. try clear c21_Sm280w1. try clear c21_Sm248w1. try clear c21_Sm216w1. try clear c21_Sm192. try clear c21_Sm200. try clear c21_Sm184w1. try clear c21_Sm160. try clear c21_Sm168. try clear c21_Sm48w1. try clear c21_Om128z8. try clear c21_Om80z12. try clear c21_Op0. try clear c21_Op8. try clear c21_Fp24. try clear c21_Fp32. try clear c21_Fp40. try clear c21_Fp48. try clear c21_Fp56. try clear c21_Fp64w1. try clear c21_Fp65w1. try clear c21_Fp16w4. try clear c21_Fp8. try clear c21_Fp0. try clear c21_Om8. try clear c21_Om40. try clear c21_Om48. try clear c21_Om56. try clear c21_Om64. try clear c21_Om68w4. try clear c21_Om16. try clear c21_Om120. try clear c21_Om24. try clear c21_Om32. try clear c21_Om88. try clear c21_Om104. try clear c21_Om112. try clear c21_Om96. try clear R21_1. try clear R21_2. try clear R21_3. try clear R21_4. try clear R21_8. try clear R21_9. try clear R21_10. try clear R21_11. try clear R21_18. try clear R21_19. try clear R21_20. try clear R21_21. try clear R21_22. try clear R21_23. try clear R21_24. try clear R21_25. try clear R21_26. try clear R21_27. try clear DEF21. try clear HH21. try clear HQ21. try clear ES21. try clear DEFref_21. try clear DEFA_21. try clear DEFd3_21. try clear DEFd4_21.
   eapply (seg13 fx22 R0 R R22 M M22 model model18 K LB1 cr gd fl S av uid rnd canary hw d1 d2 d3 d4 w856 w864 w872 w784 w488 w504 w512 w520 w528 w536 w544 w552 w560 w568 fb696 fb664 fb632 fb600 fb464 fb408 fb280 fb248 fb216 fb184 fb48 A ref HK0 H02 H03 H04 A16 SLO SHI STOP AVTOP LBWF CR144 CR48 CR66 Hr_fb696 Hb_fb696 Hr_fb664 Hb_fb664 Hr_fb632 Hb_fb632 Hr_fb600 Hb_fb600 Hr_fb464 Hb_fb464 Hr_fb408 Hb_fb408 Hr_fb280 Hb_fb280 Hr_fb248 Hb_fb248 Hr_fb216 Hb_fb216 Hr_fb184 Hb_fb184 Hr_fb48 Hb_fb48 Ww856 Ww864 Ww872 Ww784 Ww488 Ww504 Ww512 Ww520 Ww528 Ww536 Ww544 Ww552 Ww560 Ww568 R22_1 R22_2 R22_3 R22_4 R22_8 R22_9 R22_10 R22_11 R22_18 R22_19 R22_20 R22_21 R22_22 R22_23 R22_24 R22_25 R22_26 R22_27 c22_Sm424 c22_Sm432 c22_Sm360 c22_Sm368 c22_Sm376 c22_Sm56 c22_Sm64 c22_Sm72 c22_Sm80 c22_Sm88 c22_Sm96 c22_Sm104 c22_Sm112 c22_Sm120 c22_Sm128 c22_Sm136 c22_Sm144 c22_Sm152 c22_Sm8 c22_Sm16 c22_Sm464w1 c22_Sm408w1 c22_Sm280w1 c22_Sm248w1 c22_Sm216w1 c22_Sm192 c22_Sm200 c22_Sm184w1 c22_Sm160 c22_Sm168 c22_Sm48w1 c22_Om128z8 c22_Om80z12 c22_Op0 c22_Op8 c22_Fp24 c22_Fp32 c22_Fp40 c22_Fp48 c22_Fp56 c22_Fp64w1 c22_Fp65w1 c22_Fp16w4 c22_Fp8 c22_Fp0 c22_Om8 c22_Om40 c22_Om48 c22_Om56 c22_Om64 c22_Om68w4 c22_Om16 c22_Om120 c22_Om24 c22_Om32 c22_Om88 c22_Om104 c22_Om112 c22_Om96 ES22 DEF22 DEFref_22 DEFA_22 DEFd3_22 DEFd4_22 BR_ref BR_A BR_d3 BR_d4 AP_ref_A AP_ref_d3 AP_ref_d4 AP_A_d3 AP_A_d4 AP_d3_d4 FRSH_ref FRSH_A HH22 MOK18 MBV18 HQ22 KE).

@@ -6,14 +6,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 176 of its 211 lines of code are new or changed and 361 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/Tac_b5.v, with its module paths and module names changed; 1788 of its 1832 lines of code are new or changed and 167 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F17.v; 115 of its 205 lines of code are new or changed and 1742 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F17.v (an earlier version, blob f83ca6832224, not in this delivery) written on a working branch d65d18383b1 (a Theorem Labs lane's v1.9
+   FACTS, PAU pau-libreac-v190. Source: Seg/F17.v (an earlier version, blob f83ca6832224, not in this delivery) written on a working branch (a Theorem Labs lane's v1.9
    proof, on this branch through a Theorem Labs lane's merge of a working branch), Lemma seg_F17 (:2007), the run bullet of its sl_run
    (:2032-2046).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: seg_F17's run is not a named lemma (it is the first bullet of the sl_run inside seg_F17's own proof), so
    no verbatim pin of the run is possible.  The COMPILED SOURCE TIE instead (auditor a Theorem Labs lane's condition for a
    no-pin extracted run; a Theorem Labs lane 04:52Z, a Theorem Labs lane 04:24Z): seg_F17_src has exactly the type of F17.seg_F17
@@ -28,7 +29,7 @@
    is that missing footprint run, cut from seg_F17's own script, with no new reasoning:
      0x8229c  bltz a0,82bf4   NOT taken: the entry cut C_A8229c_at carries a0 = v0 with 0 <= v0 < 2 ^ 63 (the
                               reac_identity_ingest result); the fall-through pc is 0x822a0.
-   The source states the same branch at F17.v:2032-2046 (`bltz a0,82b34`: F17.v writes the v1.8 abort address; the
+   The source states the same branch at F17.v:2033-2047 (`bltz a0,82b34`: F17.v writes the v1.8 abort address; the
    v1.9 listing's target is 0x82bf4, which the run never reaches).  The branch writes no register and no memory, and
    it makes no data access (an instruction fetch is not an access, ExecF.v:98-101), so the run has NO rng premise;
    F17Fs.rng.tsv has one row that says so.
@@ -44,7 +45,7 @@
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
-(* Seg/F17.v's import block (F17.v:12-24), verbatim. *)
+(* Seg/F17.v's import block (F17.v:13-25), verbatim. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Reusable Require Import YK11 YM05 YK0o YK0s YK15 YP09 YO0f YO0d YO09
   YL00 YL0g YL0i YI14 YI16 YL01 YM06.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import Mem Frame.
@@ -104,7 +105,7 @@ Lemma f17_bltz_F :
 Proof.
   intros RNG ra0 sp gp tp t0 t1 t2 s0 s1 a0v a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     Fr fc m v0 -> Hv0.
-  (* the branch condition, as F17.v:2041-2042 decides it *)
+  (* the branch condition, as F17.v:2042-2043 decides it *)
   assert (Hbltz : bv_lts (Z_to_bv 64 v0) (Z_to_bv 64 0) = false).
   { unfold bv_lts. rewrite (f17Fs_signed v0) by lia. rewrite (f17Fs_signed 0) by lia. apply Z.ltb_ge. lia. }
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.step. (* 0x8229c: bltz a0,82bf4 -- not taken *)
@@ -159,7 +160,7 @@ Proof.
   - intros ms' ->. exact HQ.
 Qed.
 
-(* seg_F17's Section (F17.v:475-481; its HMC, F17.v:486, is not used by seg_F17), with the twin modules named
+(* seg_F17's Section (F17.v:476-482; its HMC, F17.v:487, is not used by seg_F17), with the twin modules named
    A.Reusable.<X>, the copies Seg/F17.v imports. *)
 Section F17Src.
 Context {fx : A.Reusable.YK11.FPState} {LS : A.Reusable.YO09.lib_shape} {rc : A.Reusable.YM05.RunCeil}.
@@ -169,8 +170,8 @@ Context {SH : A.Reusable.YI16.sink_head} {SK : sink_syms}.
 Variables ra empty : Z.
 Hypothesis FF : frame_facts B APIf LS SH SK ra empty.
 
-(* F17.v:2007-2111, line for line, except: the bltz bullet (F17.v:2032-2046) is f17_bltz_ul; F17's Section lemmas
-   are cited as F17.<name> (to_exit_822a0 with this Section's arguments; the F17.v of record, a Theorem Labs lane's db985828094,
+(* F17.v:2008-2112, line for line, except: the bltz bullet (F17.v:2033-2047) is f17_bltz_ul; F17's Section lemmas
+   are cited as F17.<name> (to_exit_822a0 with this Section's arguments; the F17.v of record, a Theorem Labs lane,
    blob 2530d1eeed7, renames the older to_exit_821c4 to its v1.9 address); getr is written A.Reusable.YK11.getr. *)
 Lemma seg_F17_sec : forall j : nat,
   Hat B APIf ra (Inv_A822a0_at B APIf ra) j -> Hat B APIf ra (Inv_A8229c_at B APIf ra) j.

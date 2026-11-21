@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedTurnCr), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AF0s.v. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedTurnD), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACa1.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySchedTurnCr.v and lib/A/Prog/GrantEntrySchedTurnD.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B (UBSan) walk of segment Cr of the frame-loop turn of
    LLVMFuzzerTestOneInput, over image B's own addresses, registers, spill slots and UBSan guards; the shape is
    image A's.
    Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnCr.v and
-   proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnD.v at e6bd82f51c9. *)
+   proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnD.v. *)
 (* The frame-loop turn of LLVMFuzzerTestOneInput (image B, entry 0x80a3c), segment Cr: 0x81c1c (GP_effr, the
    return of reac_headamp_tx_effective) .. 0x81c48 (GP_scn), eleven slots (LLVMFEntrySchedTurnDefs.v):
 
@@ -274,7 +275,7 @@ Proof.
   { dm (c_sp1 cx) 32. dm (spZ (c_regs cx)) 16. dm (c_sp1 cx - spZ (c_regs cx)) 16. lia. }
   (* the two tables of the frame: lengths, and their place against the image, the stack and each other *)
   pose proof (SegSetModel.tables_end_inv (c_pl cx)) as (_ & Lws & Lst & _).
-  (* Image B's own image range, through YC1h.v:131 frm_off_imgB (image A's frm_off_imgP carries image A's
+  (* Image B's own image range, through YC1h.v:132 frm_off_imgB (image A's frm_off_imgP carries image A's
      top 0x5fa000; on the integration tree off_img is lib/B/YCbq.v's, over image B's top 0x5fb000; the walk does
      not depend on which). *)
   pose proof (frm_off_imgB B ly3 S3 W3 memT mdT GE_CID fp HAR3 Hfin) as HFo. rewrite EFA, fsb4 in HFo.

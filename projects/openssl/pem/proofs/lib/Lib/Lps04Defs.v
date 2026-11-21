@@ -1,8 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -15,15 +18,20 @@ Definition mmap_errnos_when (forced : bool) : list Z :=
 Definition mmap_destructive_errnos : list Z := [].
 
 (* [comment removed for export] *)
+(* At the revision Linux places a grant itself ([Mmap.linux_place]); a free
+   gap counts only where Linux's search looks.  The floor is the bottom of
+   its second window, [task_unmapped_base], so a gap found here is a
+   [Placement.gap_fits] for that window and Linux has an answer
+   ([vm_gap_available_place]). *)
 Definition vm_base_ok (h : VmMaps) (nZ : Z) (a : word) : bool :=
   (bv_unsigned a mod page_size =? 0)%Z
-  && (0 <? bv_unsigned a)%Z
+  && (task_unmapped_base <=? bv_unsigned a)%Z
   && (bv_unsigned a + nZ <=? alloc_top h)%Z
   && region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ).
 
 (* [comment removed for export] *)
 Definition vm_base_candidates (h : VmMaps) : list word :=
-  Z_to_bv 64 page_size
+  Z_to_bv 64 task_unmapped_base
   :: map (fun iv => Z_to_bv 64 (page_round_up_Z
                       (bv_unsigned (fst iv) + bv_unsigned (snd iv))))
          (vm_reserved h ++ vm_maps h).
@@ -38,7 +46,7 @@ Definition vm_gap_available (h : VmMaps) (nZ : Z) : bool :=
 Lemma vm_base_ok_sound : forall h nZ a,
   vm_base_ok h nZ a = true ->
   (bv_unsigned a mod page_size = 0)%Z
-  /\ (0 < bv_unsigned a)%Z
+  /\ (task_unmapped_base <= bv_unsigned a)%Z
   /\ (bv_unsigned a + nZ <= alloc_top h)%Z
   /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
@@ -46,7 +54,7 @@ Proof.
   apply andb_true_iff in H as [H Hfree].
   apply andb_true_iff in H as [H Htop].
   apply andb_true_iff in H as [Halign Hpos].
-  apply Z.eqb_eq in Halign. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
+  apply Z.eqb_eq in Halign. apply Z.leb_le in Hpos. apply Z.leb_le in Htop.
   repeat split; assumption.
 Qed.
 
@@ -54,7 +62,7 @@ Qed.
 Lemma vm_find_base_sound : forall h nZ a,
   vm_find_base h nZ = Some a ->
   (bv_unsigned a mod page_size = 0)%Z
-  /\ (0 < bv_unsigned a)%Z
+  /\ (task_unmapped_base <= bv_unsigned a)%Z
   /\ (bv_unsigned a + nZ <= alloc_top h)%Z
   /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
@@ -91,22 +99,22 @@ Proof.
   intros h nZ a Hok.
   pose proof (vm_base_ok_sound h nZ a Hok) as (Hal & Hpos & Htop & Hfree).
   pose proof (bv_unsigned_in_range 64 a) as [_ Ha]. unfold bv_modulus in Ha.
-  destruct (Z.eq_dec (bv_unsigned a) page_size) as [Heq|Hne].
+  destruct (Z.eq_dec (bv_unsigned a) task_unmapped_base) as [Heq|Hne].
   { left. left. rewrite <- Heq. apply Z_to_bv_bv_unsigned. }
-  assert (Hge : (2 * page_size <= bv_unsigned a)%Z).
-  { unfold page_size in *.
+  assert (Hge : (task_unmapped_base + page_size <= bv_unsigned a)%Z).
+  { unfold page_size, task_unmapped_base in *.
     pose proof (Z_div_mod_eq_full (bv_unsigned a) 4096). lia. }
   set (a' := Z_to_bv 64 (bv_unsigned a - page_size)).
   assert (Ua' : bv_unsigned a' = (bv_unsigned a - page_size)%Z).
   { subst a'. rewrite Z_to_bv_unsigned. apply bv_wrap_small.
-    unfold bv_modulus, page_size in *. lia. }
+    unfold bv_modulus, page_size, task_unmapped_base in *. lia. }
   destruct (vm_base_ok h nZ a') eqn:Hok'.
   { right. exists a'. split; [exact Ua'|exact Hok']. }
   left. unfold vm_base_ok in Hok'. rewrite Ua' in Hok'.
   assert (H1 : ((bv_unsigned a - page_size) mod page_size =? 0)%Z = true)
     by (apply Z.eqb_eq; rewrite Zminus_mod, Hal, Z_mod_same_full; reflexivity).
-  assert (H2 : (0 <? bv_unsigned a - page_size)%Z = true)
-    by (apply Z.ltb_lt; unfold page_size in *; lia).
+  assert (H2 : (task_unmapped_base <=? bv_unsigned a - page_size)%Z = true)
+    by (apply Z.leb_le; unfold page_size in *; lia).
   assert (H3 : (bv_unsigned a - page_size + nZ <=? alloc_top h)%Z = true)
     by (apply Z.leb_le; unfold page_size in *; lia).
   rewrite H1, H2, H3 in Hok'. cbn [andb] in Hok'.
@@ -136,7 +144,7 @@ Lemma vm_find_base_complete_aux : forall h nZ k a,
   exists c, In c (vm_base_candidates h) /\ vm_base_ok h nZ c = true.
 Proof.
   intros h nZ k. induction k as [|k IH]; intros a Hk Hok.
-  - pose proof (vm_base_ok_sound h nZ a Hok) as (_ & Hpos & _). cbn in Hk. lia.
+  - pose proof (vm_base_ok_sound h nZ a Hok) as (_ & Hpos & _). cbn in Hk. unfold task_unmapped_base in Hpos. lia.
   - destruct (vm_base_ok_step h nZ a Hok) as [Hin | (a' & Ua' & Hok')].
     + exists a. split; assumption.
     + apply (IH a'); [|exact Hok'].
@@ -162,7 +170,7 @@ Qed.
 Lemma vm_gap_available_iff : forall h nZ,
   vm_gap_available h nZ = true <->
   exists a, (bv_unsigned a mod page_size = 0)%Z
-            /\ (0 < bv_unsigned a)%Z
+            /\ (task_unmapped_base <= bv_unsigned a)%Z
             /\ (bv_unsigned a + nZ <= alloc_top h)%Z
             /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true.
 Proof.
@@ -171,8 +179,21 @@ Proof.
     exists a. exact (vm_find_base_sound h nZ a Ha).
   - intros (a & Hal & Hpos & Htop & Hfree).
     apply (vm_find_base_complete h nZ a). unfold vm_base_ok.
-    rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
+    rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.leb_le _ _) Hpos),
       (proj2 (Z.leb_le _ _) Htop), Hfree. reflexivity.
+Qed.
+
+(* Linux has an answer wherever a gap is available: the gap fits Linux's
+   second window ([Placement.linux_place_exists]). *)
+Lemma vm_gap_available_place : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_gap_available h nZ = true -> exists a, linux_place h thp hint nZ a.
+Proof.
+  intros h thp hint nZ Hn Hnal H.
+  apply vm_gap_available_iff in H as (a & Hal & Hlo & Htop & Hfree).
+  apply (Placement.linux_place_exists h thp hint nZ Hn Hnal).
+  exists (bv_unsigned a). right. unfold gap_fits.
+  rewrite Z_to_bv_bv_unsigned. repeat split; assumption.
 Qed.
 
 (* [comment removed for export] *)

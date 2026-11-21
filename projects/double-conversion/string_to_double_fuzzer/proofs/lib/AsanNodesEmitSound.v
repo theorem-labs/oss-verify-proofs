@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -85,9 +86,13 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
   (* [comment removed for export] *)
   #[local] Notation arg_ok := (AsanNodesArgSound.arg_ok argc).
 
+  (* TOP + 8, not TOP + 16: the twin of AsanNodesArgSound's Lay.  At #38 the strings sit at the
+     TOP of the stack VMA and only the eight-byte slot create_init_stack_vma skipped lies above
+     them, so TOP = utop - 8 and no caller can supply the sixteen.  Weakening a hypothesis
+     strengthens every lemma below it. *)
   Hypothesis Lay : 0x7fff80000000 <= usp /\ usp + 176 <= STR0 /\ STR0 + L0 + 1 <= TOP
                    /\ (2 <= argc -> STR1 + L1 + 1 <= TOP)
-                   /\ TOP mod 8 = 0 /\ TOP + 16 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
+                   /\ TOP mod 8 = 0 /\ TOP + 8 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
   Hypothesis Hnz : forall i j, (j < length (ARG i))%nat -> bv_unsigned (byte_at (ARG i) j) <> 0.
 
   Hypothesis SINV_vals : forall E M, SINV E M ->
@@ -123,6 +128,7 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
     rdn SEGS mem (Z_to_bv 64 (g_canary G)) 8 = Some (word_to_le_bytes 8 can) ->
     0 < fd < 2147483648 ->
     fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+    m_channel_reader model = true ->
     m_halted model = None ->
     0 <= wb <= wp -> wp < 0x800000000000 -> wp - wb = Z.of_nat (length pending) -> bv_unsigned l = Z.of_nat (length extra) ->   (* [comment removed for export] *)
     Z.of_nat (length pending) + Z.of_nat (length extra) <= 2 ^ 40 ->   (* [comment removed for export] *)
@@ -361,6 +367,7 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
     - exact Rcan.
     - apply orb_prop in Hfd12 as [X|X]; apply Z.eqb_eq in X; subst; lia.
     - exact FD.
+    - exact (co_rdr _ _ _ _ _ _ _ _ _ _ _ _ HC).
     - exact (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC).
     - lia.
     - lia.

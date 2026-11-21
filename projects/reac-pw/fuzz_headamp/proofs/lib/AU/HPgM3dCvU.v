@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM3dFlt.v at 0312b0cd6c6c; hvl_core_step,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM3dFlt.v; hvl_core_step,
    hvl_hc_core, hvl_mid with its run / float-step / call transports, hvl_at_kept, hvl_base_at, the cut builders,
    hvl_soff, hvl_ge3 / hvl_le3 and hvl_half_words restated for image B over lib/AU/HPgSeg.v / HPgSegM.v and
    lib/AU/HPgM3dBaseU.v's cut CV (the write zone is [R - T_SEG_STK, R) and [R+0x88, R+0x90), s2 and s8 are not
    kept, no float register is written); the six block lemmas of image B's step from cut CV and its chain are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, the same loaded bytes except .note.gnu.build-id): the step from cut CV of the

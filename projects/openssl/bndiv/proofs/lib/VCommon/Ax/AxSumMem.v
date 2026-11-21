@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mc_load and mc_load_sound take the rseq flag from find_entry for str_load and eb_of_R; placeholder comments dropped). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -20,11 +20,6 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition MCF_CLOB' : list reg :=
   [Z_to_bv 5 5; Z_to_bv 5 6; Z_to_bv 5 7; Z_to_bv 5 28; Z_to_bv 5 11; Z_to_bv 5 12; Z_to_bv 5 13; Z_to_bv 5 14; Z_to_bv 5 15;
    Z_to_bv 5 16; Z_to_bv 5 17].
@@ -38,7 +33,6 @@ Proof.
   destruct H as [X|[X|[X|[X|[X|[X|[X|[X|[X|[X|[X|[]]]]]]]]]]]]; rewrite <- X; vm_compute; discriminate.
 Qed.
 
-(* [comment removed for export] *)
 Definition mc_code_ok (segs : list Segment) (e : Z) : bool :=
   words_ok_f segs e MC_WORDS &&& words_ok_f segs e MCF_WORDS &&& (0 <=? e) &&& (e + 1028 <=? 140737488355328) &&& (e mod 4 =? 0).
 
@@ -50,7 +44,6 @@ Proof.
   constructor; [constructor; [exact H1 | repeat split; [exact H3 | exact H4 | exact H5]] | exact H2].
 Qed.
 
-(* [comment removed for export] *)
 Definition disj_ok (s : store) (f g : lin) (n : Z) : bool :=
   let a := lsub f g in let b := lsub g f in
   lr_ge s a n ||| lr_ge s b n ||| hole_far s a n ||| hole_far s b n ||| rprove_q 2 s a n ||| rprove_q 2 s b n.
@@ -69,7 +62,6 @@ Proof.
   - pose proof (rprove_q_sound ρ s 2 _ _ Hs H) as X. rewrite leval_lsub in X. right. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma addr_form_val' (ρ : valuation) (v : xv) (a : bv 64) (ts : terms) (o : w64) (B : Z) :
   xv_val ρ v a -> xaddr v = Some (ts, o) -> 0 <= leval ρ (wS o, ts) <= B -> B < FastWord.two64 -> bv_unsigned a = leval ρ (wS o, ts).
 Proof.
@@ -77,11 +69,6 @@ Proof.
   replace (teval ρ ts + wS o) with (leval ρ (wS o, ts)) by (unfold leval; cbn [fst snd]; ring). apply Z.mod_small. lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition xv_off (v : xv) (j : Z) : xv :=
   match v with
   | XL x => XL (w_add x (wofZ j))
@@ -113,9 +100,8 @@ Fixpoint load_bw (s : store) (A : list region) (v : xv) (j : Z) (k : nat) : opti
             end
   end.
 
-(* [comment removed for export] *)
 Definition mc_load (s : store) (A : list region) (v : xv) (n : nat) : option (list xb) :=
-  match (match find_entry A with Some _ => str_load s v n | None => None end) with
+  match (match find_entry A with Some (r, _) => str_load r s v n | None => None end) with
   | Some l => Some l
   | None =>
       match a_load4 segs s A v n with
@@ -150,9 +136,9 @@ Lemma mc_load_sound (ρ : valuation) (s : store) (A : list region) (m : word -> 
   exists bs, rdn segs m a n = Some bs /\ Forall2 (xb_bv ρ) l bs.
 Proof.
   intros Hs HM Hhs Hv Hx Hn H. unfold mc_load in H.
-  destruct (match find_entry A with Some _ => str_load s v n | None => None end) as [l1|] eqn:E1.
-  { injection H as <-. destruct (find_entry A) as [ph|] eqn:Efe; [|discriminate].
-    destruct (eb_of_R segs ρ A m ph HM Efe) as [nR Heb]. exact (str_load_sound segs ph ρ s m nR v a n l1 Hs Heb Hv E1). }
+  destruct (match find_entry A with Some (r, _) => str_load r s v n | None => None end) as [l1|] eqn:E1.
+  { injection H as <-. destruct (find_entry A) as [[r ph]|] eqn:Efe; [|discriminate].
+    destruct (eb_of_R segs ρ A m r ph HM Efe) as [nR Heb]. exact (str_load_sound segs ph ρ s m nR v a n l1 Hs Heb Hv E1). }
   destruct (a_load4 segs s A v n) as [l0|] eqn:E.
   - injection H as <-. exact (a_load4_sound segs ρ s A m v a n l0 Hlow Hs HM Hhs Hv Hn E).
   - destruct (load_bw_sound ρ s A m v a Hs HM Hhs Hv Hx n 0 l H) as [bs [Hr HF]]. exists bs. split; [|exact HF].
@@ -161,11 +147,6 @@ Qed.
 
 End Load.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition mc_mem (segs : list Segment) (s : store) (A : list region) (d sv : xv) (n : Z) : option (list region) :=
   if n =? 0 then Some A else
   match mc_load segs s A sv (Z.to_nat n) with
@@ -205,7 +186,6 @@ Section McSound.
 Variable segs : list Segment.
 Hypothesis Hlow : segs_low segs.
 
-(* [comment removed for export] *)
 Lemma copied_write (m m' : word -> option byte) (dst : bv 64) (bs : list byte) :
   bv_unsigned dst + Z.of_nat (length bs) <= 2 ^ 64 -> copied m' m (bv_unsigned dst) (Z.of_nat (length bs)) bs ->
   forall x, m' x = write_to_mem m dst bs x.
@@ -280,7 +260,6 @@ Proof.
   assert (Hsv : bv_unsigned src = leval ρ (wS osr, tsr)) by (apply (addr_form_val' ρ _ src tsr osr (2 ^ 47 - n) Hvs Esr); [lia | unfold FastWord.two64; lia]).
   pose proof (disj_ok_sound ρ _ _ _ n Hsat Hdj) as Hdisj. rewrite <- Hdv, <- Hsv in Hdisj.
   assert (Hxs : xaddr (aget (a_regs A) 11%uint63) <> None) by (rewrite Esr; discriminate).
-  (* [comment removed for export] *)
   assert (Hrdx : exists bs, rdn segs (ms_mem ms) src (Z.to_nat n) = Some bs).
   { destruct (Z.eq_dec n 0) as [->|Hnz]; [exists []; reflexivity|].
     unfold mc_mem in Emc. rewrite (proj2 (Z.eqb_neq n 0) Hnz) in Emc.
@@ -292,7 +271,6 @@ Proof.
   pose proof (wZ_range r) as Hrr.
   assert (Edst : dst = Z_to_bv 64 (bv_unsigned dst)) by (apply word_lit_w; reflexivity).
   assert (Esrc : src = Z_to_bv 64 (bv_unsigned src)) by (apply word_lit_w; reflexivity).
-  (* [comment removed for export] *)
   assert (Hok : store_ok segs (ms_mem ms) dst (Z.to_nat n) = true).
   { destruct (Z.eq_dec n 0) as [->|Hnz]; [reflexivity|].
     unfold mc_mem in Emc. rewrite (proj2 (Z.eqb_neq n 0) Hnz) in Emc.
@@ -352,10 +330,6 @@ Qed.
 
 End MemcpySound.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Definition ms_code_ok (segs : list Segment) (e : Z) : bool :=
   words_ok_f segs e MS_WORDS &&& (0 <=? e) &&& (e + 96 <=? 140737488355328) &&& (e mod 4 =? 0).
 
@@ -365,7 +339,6 @@ Proof.
   apply Z.leb_le in H2. apply Z.leb_le in H3. apply Z.eqb_eq in H4. apply words_ok_f_eq in H1. constructor; [exact H1 | repeat split; assumption].
 Qed.
 
-(* [comment removed for export] *)
 Definition MS_CLOB' : list reg := [Z_to_bv 5 11; Z_to_bv 5 12; Z_to_bv 5 13].
 
 Lemma MS_CLOB'_nz (r : reg) : In r MS_CLOB' -> bv_unsigned r <> 0.
@@ -379,7 +352,6 @@ Proof.
   - right. right. left. apply bv_eq. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Definition mset_mem (segs : list Segment) (s : store) (A : list region) (d : xv) (c n : Z) : option (list region) :=
   if n =? 0 then Some A else
   if n <? 1000 then a_store4 segs s A d (repeat (BL (of_Z c)) (Z.to_nat n)) else None.

@@ -1,4 +1,4 @@
-# mkAF audit at 4483a8de6e6f (the publication owner via the unit owner's ruling, 23:39Z)
+# mkAF audit (the publication owner via the unit owner's ruling, 23:39Z)
 Every `mkAF` (word) row of the lib, classified by mkaf_audit.py (git-archive export of the head, no edits).
 Total 1,250 rows in 210 lib files (the unit owner's count): 619 A-core (101 files), 631 trunk (a8, 109 files).
 (a) PROVED position: 1,227. All 619 A-core rows are (a) and 608 trunk rows. Of these, 876 sit in a premise every caller

@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACez.v, with its module paths and module names changed; 54 of its 77 lines of code are new or changed and 217 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgEnt0DigT2.v at 21da95a5fcd3; image B's token run 0x81540 .. 0x81608 (lib/AU/RtPgEnt0DigKB.v rt7bd_T_stmt, rt7bd_T_tac) in place of image A's; names rt7d_ -> rt7bd_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgEnt0DigT2B.v at cc5ce244897b for reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role; role B's token run 0x80cfc .. 0x80dc4 (lib/AU/RPgEnt0DigK.v r7bd_T_stmt, r7bd_T_tac); names rt7bd_ -> r7bd_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgEnt0DigT2.v; image B's token run 0x81540 .. 0x81608 (lib/AU/RtPgEnt0DigKB.v rt7bd_T_stmt, rt7bd_T_tac) in place of image A's; names rt7d_ -> rt7bd_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgEnt0DigT2B.v for reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role; role B's token run 0x80cfc .. 0x80dc4 (lib/AU/RPgEnt0DigK.v r7bd_T_stmt, r7bd_T_tac); names rt7bd_ -> r7bd_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the token runs of the DIG

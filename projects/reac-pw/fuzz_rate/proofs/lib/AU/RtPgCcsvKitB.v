@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/Reusable/YCbq.v at 7379c28ff70f
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/Reusable/YCbq.v
    [Apache-2.0 OR MIT] (SRr_run_AJ / SRr_run_to_AJ and the tactics aj_run / aj_run_to, here over the shadow-aware runs
    of YP0i; aj_stack_malloc_at, here with the conjunct S2 = set_fs f Sc added to its post), of
-   proofs/reac-pw/fuzz_rate/lib/A/RtPgSteps.v at 816e60e510b7 (rts_fbounds and the four frame write rights, here for
-   a general side-stack class) and of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88 [Apache-2.0] (rx_jF,
+   proofs/reac-pw/fuzz_rate/lib/A/RtPgSteps.v (rts_fbounds and the four frame write rights, here for
+   a general side-stack class) and of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v [Apache-2.0] (rx_jF,
    rx_ffacts, here for a general class), for reac-pw/fuzz_rate's image A. The [Apache-2.0 OR MIT] text is used under
    Apache-2.0. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvKit.v at b929052adf57; the same kit for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvKit.v; the same kit for
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan, the step kit lib/AU/RtPgStepsB.v (rts_segs_low,
    rts_wx, rts_fdiv become rtsb_segs_low, rtsb_wx, rtsb_fdiv); part (7), closed_list after the class-2 frame from
    RtPgCSpec.rt_img_facts at image B's record (the image-B form of lib/A/RtPgSiteA.v rate_A_i32_glob /
    rate_A_i32_unowned / rate_A_i32tab_at), is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address is measured on its unstripped twin
    sha256 a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): the engine kit of the walk of check_csv

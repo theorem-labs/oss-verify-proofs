@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the proofs that open or rebuild auxv_ok take its new witnesses, the CONFIG_RSEQ flag and the list of auxv values, in place of the old table's fixed pair values; the auxv bound closes by lia from B <= av, no longer by computing the old twenty-word length). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -59,11 +60,13 @@ Proof. intros H AG HC H0 H1. eapply A2.wr_at_agree; [exact H|]. intros a Ha. app
 Lemma auxv_ok_magree C m m' B :
   auxv_ok m B -> magree C m m' -> (forall a, C a -> a < B /\ ~ (AUXV_CELL <= a < AUXV_CELL + 8)) -> auxv_ok m' B.
 Proof.
-  intros (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) AG HC.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros (r & av & vals & rnd & AC & AL & RN & H) AG HC.
+  exists r, av, vals, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
   - eapply bytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold auxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.
+    (* [B <= av] in H and [a < B] in Y close this; the vector's length is no longer
+       a numeral, and never had to be -- it is [auxv_list_bytes_length]. *)
+    lia.
   - eapply bytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.
 Qed.
 

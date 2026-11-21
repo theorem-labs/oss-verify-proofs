@@ -2,7 +2,6 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract of the ASan strcmp interceptor (and of the one-`j` trampoline
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/AStrcmpDef.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
    __interceptor_trampoline_strcmp = __wrap_strcmp that enters it), in the form of abcmp_realizes
    (proofs/cgif/cgif_file_fuzzer/lib/YG0d.v) over the asan-state definitions of that proof as libreac/fuzz_grant holds
    them. The interceptor compares byte by byte up to the first index k where the bytes differ or s1's byte is 0, checks
@@ -12,6 +11,8 @@
    [sp - 2 ESTACK, sp). R2: not stated, because this interceptor does not touch the AddrHashMap metadata (no FILE
    object). It subsumes the literal instance of libreac/fuzz_pcap lib/A/Rt/StrcmpDef.v (x = y, k = the literal's
    length, c1 = c2 = 0, result 0). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/AStrcmpDef.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Registry (a Theorem Labs lane's final ruling, 2026-10-29 03:15Z): ONE strcmp text, lifted to user-poisoned heads:
    Reusable/AStrcmpDefU.v astrcmp_realizesU. This file's astrcmp_realizes is its U = [] instance
    (AStrcmpDefU.astrcmp_realizes_of_U) and stays as it is, so its consumers rebuild nothing. A unit with poisoned heads
@@ -67,4 +68,4 @@ Definition astrcmp_realizes (pc : Z) : Prop :=
 End c.
 End b.
 (* Donor (provenance of this file, origin first): libreac/fuzz_grant lib/Reusable/AStrcmpDef.v (file sha256 d277b0470b05; donor not released), copied, module paths changed. *)
-(* Its contract is stated in the form of abcmp_realizes of cgif/cgif_file_fuzzer lib/YG0d.v (released in 6eb657611b9d). *)
+(* Its contract is stated in the form of abcmp_realizes of cgif/cgif_file_fuzzer lib/YG0d.v (released). *)

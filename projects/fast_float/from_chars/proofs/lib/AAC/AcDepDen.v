@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -106,8 +107,8 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   intros E S M ms model a m0 Hd HA x Hx.
   pose proof (dn_res _ _ _ _ _ _ _ _ _ Hd) as Hres. pose proof (dn_maps _ _ _ _ _ _ _ _ _ Hd) as Hmaps. pose proof (dn_gsh _ _ _ _ _ _ _ _ _ Hd) as Hgsh.
   destruct HA as [_ _ _ _ (k1 & Hg1) (k2 & Hg2)]. destruct (downed_cases _ _ x Hx) as [D|[D|[D|D]]].
-  - left. split; [left; exact D|]. rewrite Hres. destruct dep_res as [R1 _]. exact (in_res_sound _ _ _ x R1 D).
-  - left. split; [right; exact D|]. rewrite Hres. destruct dep_res as [_ R2]. exact (in_res_sound _ _ _ x R2 D).
+  - left. split; [left; exact D|]. rewrite Hres. destruct dep_res as [R1 _]. rewrite covered_app, (in_res_sound _ _ _ x R1 D). reflexivity.
+  - left. split; [right; exact D|]. rewrite Hres. destruct dep_res as [_ R2]. rewrite covered_app, (in_res_sound _ _ _ x R2 D). reflexivity.
   - right. exists (fst (a_dep a), lconst 1048576, k1). split; [exact Hg1|]. unfold dD1 in D. cbn [fst snd]. split; [exact D|].
     split; [exact (grant_covered E _ M model _ Hmaps Hgsh Hg1 (is_mark_csize _ _ _) x D)|]. split; [intros He; injection He; intros; discriminate|]. left; reflexivity.
   - right. exists (snd (a_dep a), lconst 8388608, k2). split; [exact Hg2|]. unfold dB1 in D. cbn [fst snd]. split; [exact D|].
@@ -122,8 +123,8 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   intros E S M ms model a m0 Hd HA x Hx.
   pose proof (dn_res _ _ _ _ _ _ _ _ _ Hd) as Hres. pose proof (dn_maps _ _ _ _ _ _ _ _ _ Hd) as Hmaps. pose proof (dn_gsh _ _ _ _ _ _ _ _ _ Hd) as Hgsh.
   destruct HA as [_ _ _ _ (k1 & Hg1) (k2 & Hg2)]. unfold dcov in Hx. destruct Hx as [D|[D|[D|D]]].
-  - left. split; [left; exact D|]. rewrite Hres. destruct dep_res as [R1 _]. exact (in_res_sound _ _ _ x R1 D).
-  - left. split; [right; exact D|]. rewrite Hres. destruct dep_res as [_ R2]. exact (in_res_sound _ _ _ x R2 D).
+  - left. split; [left; exact D|]. rewrite Hres. destruct dep_res as [R1 _]. rewrite covered_app, (in_res_sound _ _ _ x R1 D). reflexivity.
+  - left. split; [right; exact D|]. rewrite Hres. destruct dep_res as [_ R2]. rewrite covered_app, (in_res_sound _ _ _ x R2 D). reflexivity.
   - right. exists (fst (a_dep a), lconst 1048576, k1). split; [exact Hg1|]. unfold dD1 in D. cbn [fst snd]. split; [exact D|].
     split; [exact (grant_covered E _ M model _ Hmaps Hgsh Hg1 (is_mark_csize _ _ _) x D)|]. split; [intros He; injection He; intros; discriminate|]. left; reflexivity.
   - right. exists (snd (a_dep a), lconst 8388608, k2). split; [exact Hg2|]. unfold dB1 in D. cbn [fst snd]. split; [exact D|].
@@ -227,7 +228,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + (* [comment removed for export] *)
       assert (Hw64 : 0 <= w < two64) by (unfold two64; lia). rewrite u_small64 in Hin by exact Hw64.
       destruct (Hfr w Hin) as [Hn1 _]. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd) in Hn1.
-      rewrite (in_res_sound _ _ _ w gq_res Hgq) in Hn1. discriminate.
+      rewrite covered_app, (in_res_sound _ _ _ w gq_res Hgq) in Hn1. discriminate.
 Qed.
 
 
@@ -372,6 +373,6 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - (* [comment removed for export] *)
     destruct (downed_covered E S M ms model a m0 Hd HA x Hdw) as [[Hr _]|(g' & _ & _ & Hc & _)].
     + unfold DT_LO, DT_HI, DF_LO, DF_HI in Hr. lia.
-    + pose proof (Hmres x Hc) as Hn. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd) in Hn. rewrite (in_res_sound _ _ _ x gq_res Hgq) in Hn. discriminate.
+    + pose proof (Hmres x Hc) as Hn. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd) in Hn. rewrite covered_app, (in_res_sound _ _ _ x gq_res Hgq) in Hn. discriminate.
 Qed.
 End DepDen.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -180,7 +181,10 @@ Definition exit_pre (regs : bvmap 5 word) (mem : word -> option byte) (model : M
     /\ ( (pending = [] /\ exists wp1 rp1, file_clean mem 0xb2d90 wp1 rp1)
        \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
               stdout_pending mem wb wp bufp bufsz rp1 can pending
-              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ).
+              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+              (* #38 SIGPIPE guard, paired with the fd_lookup exactly as
+                 CatSim.fd1chan pairs them: ref_stdio_write needs both. *)
+              /\ m_channel_reader model = true) ).
 
 Definition exit_pre1 (regs : bvmap 5 word) (mem : word -> option byte) (model : Model)
            (code : word) (pending : list byte) : Prop :=
@@ -190,6 +194,9 @@ Definition exit_pre1 (regs : bvmap 5 word) (mem : word -> option byte) (model : 
     /\ ( (pending = [] /\ exists wp1 rp1, file_clean mem 0xb2d90 wp1 rp1)
        \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
               stdout_pending mem wb wp bufp bufsz rp1 can pending
-              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ).
+              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+              (* #38 SIGPIPE guard, paired with the fd_lookup exactly as
+                 CatSim.fd1chan pairs them: ref_stdio_write needs both. *)
+              /\ m_channel_reader model = true) ).
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

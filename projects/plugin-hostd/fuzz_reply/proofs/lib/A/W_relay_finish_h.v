@@ -4,7 +4,7 @@
    walks of proofs/cgif/cgif_file_fuzzer/lib/A/ACk1.v (prologue, stack_malloc, exit), lib/A/AC8h.v (call sites) and
    lib/A/ACfj.v:157-163 (a loop closed by induction on its trip count). *)
 (* Modified by Theorem Labs, 2026-10: lane W5 relay_finish_h (a Theorem Labs lane): started from W_relay_finish.v's text at
-   a working branch 273def0a61d, which stops after the pthread_mutex_lock call; this file walks the rest. *)
+   a working branch, which stops after the pthread_mutex_lock call; this file walks the rest. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)), row C1 of
    a Theorem Labs lane's pool (a Theorem Labs lane): the walk is pb_relay_finish_h_x, stated over any allocator relation ARx with its laws
    (W_contract_x.v rf_spec_x; Section c below, the AR Section's hypotheses as their twins plus PST / ARx / hl / LAWS /
@@ -15,6 +15,7 @@
    takes RP and threads rf_spec_x's rp_RM budget (each round: the free's 1, then gestures_end's charge) and its
    cnt_ok_pk count premise to the free and to gestures_end; the fake frame's seat and release keep the room by roomp's
    law rp_RPF; the seat is W_frame_x.v's aj_stack_malloc_pres_at_raw_x, whose post states S2 = set_fs f Sc. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -83,7 +84,7 @@ Context {PI : PAImg fr_prog_listing}.
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PI A_TEXT).
 
 (* The spec rf_spec / rf_spec_g and its parts (RF_STK, rf_FP, rf_run, rf_cost, rf_room, rf_post, RF_G) are published
-   in W_contract.v Section w5f (W5Relay's push 80298a7d491, this lane's text). *)
+   in W_contract.v Section w5f (W5Relay's push, this lane's text). *)
 
 (* ---- THE WALK. ---- *)
 Definition A_relay_finish : Z := AF_fr_relay_finish.
@@ -140,12 +141,12 @@ Context {hl : Z}.
    - HROMG: no cell this walk writes is read-only, so rom_view survives the three stores and the unlock - the
      rom_view RFI carries, which gse_spec demands.
    - HE5R: the "end5" literal is read-only, so rom_view carries its five bytes - gse_spec's garr8 premise in RFI.
-   - HROMO: rom_out at G_SL in the corrected text of a Theorem Labs lane's 45a3cc9bdd0 - ajournal_gx_rom_view across
+   - HROMO: rom_out at G_SL in the corrected text of a Theorem Labs lane's - ajournal_gx_rom_view across
      gestures_end, and its last clauses for acall_kept_rom_view across the free.
    - HWSEGE: errno is writable in every memory - aout_at's awr at errno after the free, which the free's
      view-only errno clause does not give.
    - (none) the errno carry across the fake-frame seat is NOT a hypothesis: it comes from the root lemma
-     aj_stack_malloc_pres_at_raw and errno_not_aowned (W5's 5d3fbcd7529); see the history note before
+     aj_stack_malloc_pres_at_raw and errno_not_aowned (W5); see the history note before
      rf_writable_of_seg for the false stopgap and the proved lemma that preceded it.
    NO gx_rt: the note at HG says why taking it would make every goal of this walk closable. *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
@@ -173,9 +174,9 @@ Hypothesis ASM0 : astack_malloc_pres_x SEGS B ARx 0.
 Hypothesis ASF : astack_free_law_x SEGS B ARx.
 Hypothesis FFL : frame_flag_lawP_x SEGS B ARx.
 Hypothesis HG : gx_ok SEGS B G.
-(* NO gx_rt HERE.  The paused walk W_relay_finish.v:80 took `Hypothesis HGRT : gx_rt B G`, which says no byte of G
-   is errno (W_contract.v:505); rf_spec's own premise says G_SL B RG is inside G, and G_SL holds (as_errno B, 4)
-   (W_contract.v:775).  The two together are contradictory, so with HGRT every goal of this walk closes vacuously.
+(* NO gx_rt HERE.  The paused walk W_relay_finish.v:81 took `Hypothesis HGRT : gx_rt B G`, which says no byte of G
+   is errno (W_contract.v:506); rf_spec's own premise says G_SL B RG is inside G, and G_SL holds (as_errno B, 4)
+   (W_contract.v:776).  The two together are contradictory, so with HGRT every goal of this walk closes vacuously.
    Nothing here needs gx_rt, so it is dropped (a Theorem Labs lane 2026-10-29, after a Theorem Labs lane refused to write
    the vacuous proof).  A Theorem Labs lane's ruling (2026-10-29 09:2xZ): neither gx_rt nor G_SL changes - a _g form is
    sound only when its G provably EXCLUDES errno - so W_contract.v's re_spec_g and rf_spec_g are being DELETED,
@@ -248,8 +249,8 @@ inG (RF_G RG GL) a \/ inG (G_SL B RG) a \/
 Hypothesis HE5R : forall a, VAL A_lit_end5 <= a < VAL A_lit_end5 + Z.of_nat (length END5) -> in_rom SEGS a.
 (* NO "read-only bytes are not allocator statics" HERE: it is false on image A (408 owned-static bytes lie inside the
    read-only LOADs, a Theorem Labs lane 2026-10-29 08:46Z).  A rom_view carry across an allocator call goes through
-   W_journal.v's acall_kept_rom_view / rom_pinned (a Theorem Labs lane's 45a3cc9bdd0, cherry-picked onto this branch). *)
-(* rom_out at G_SL, in the corrected text of a Theorem Labs lane's 45a3cc9bdd0: no read-only byte is a cell gestures_end may
+   W_journal.v's acall_kept_rom_view / rom_pinned (a Theorem Labs lane, cherry-picked onto this branch). *)
+(* rom_out at G_SL, in the corrected text of a Theorem Labs lane: no read-only byte is a cell gestures_end may
    write, an owned static inside a read-only LOAD is pinned to its image value by AR's const table (rom_pinned), and
    no read-only byte is errno or the sink's overflow head.  It carries rom_view across gestures_end
    (ajournal_gx_rom_view), and its last three conjuncts are what acall_kept_rom_view needs across the free. *)
@@ -280,14 +281,14 @@ Hypothesis PSTO : forall a, (rg_send_max RG <= a < rg_send_max RG + 8) \/ (rg_no
      copied at cid 0, plus a QUANTIFIED keep clause (image bytes that are not owned-static), proved from ASM0's frame
      clause with only the law al_owned_image and segs_low - so no instance fact was needed in the lemma; the caller
      supplied "errno is not owned-static" from gx_ok on G_SL.
-   - from 11:1xZ: the ROOT carries it.  W5's working branch 5d3fbcd7529 (cherry-picked here, W_frame.v only)
+   - from 11:1xZ: the ROOT carries it.  W5's working branch (cherry-picked here, W_frame.v only)
      adds `aj_stack_malloc_pres_at_raw` - today's post plus the RAW frame clause (every byte that is neither aowned
      before nor after the call nor scratch keeps its view) - and `errno_not_aowned`.  The walk calls the raw lemma at
      the seat and takes errno's view from its raw clause with errno_not_aowned at both states, the owned-static fact
      for errno coming from HG (gx_ok SEGS B G) at errno, which is in G_SL and so in G.
    Corroborated by three hands from three directions (this prologue; W7's DropWhole, `HERRW`; a Theorem Labs lane's free,
    `free_leaf_cf_pres`): one root gap, now closed at the root. *)
-(* W6's lemma (W_relay_instance_gone.v:73): a byte the loaded image holds writable is writable in every memory that
+(* W6's lemma (W_relay_instance_gone.v:74): a byte the loaded image holds writable is writable in every memory that
    does not hide it *)
 Lemma rf_writable_of_seg : forall (H : word -> bool) (m : word -> option byte) a,
 H (Z_to_bv 64 a) = false -> wview SEGS (fun _ => None) (Z_to_bv 64 a) <> None -> writable_at SEGS (mrestrict H m) a.
@@ -2510,7 +2511,7 @@ assert (HFPC : ~ YI16.sink_open_fp (rf_FP T es cap out))
 by (unfold rf_FP; exact (sink_closed_ablocks_fp _ HPOS)).
 assert (WS : RF_STK = 16704) by reflexivity. assert (Hes : ESTACK = 4096) by reflexivity.
 (* the prologue writes no global: it runs on the donor's journal from the entry memory, which is packed into the
-   ajournal_gx with gagree_refl when the first global is written (W6's form, W_relay_instance_gone.v:346) *)
+   ajournal_gx with gagree_refl when the first global is written (W6's form, W_relay_instance_gone.v:347) *)
 pose proof (ajournal_x_init (SK := SK) SEGS B PST ARx RF_STK (rf_FP T es cap out) ly S Hp W regs mem md ch HPRE) as HJ.
 remember (Eimg (Ereg regs rf_extra)) as E eqn:HE. assert (HEI : img_env VAL A_LIM E) by (subst E; apply Eimg_env).
 assert (EE : forall n (r : bv 5), Z.of_nat n = bv_unsigned r -> ew E n = getr regs r)
@@ -2769,7 +2770,7 @@ match type of HS2 with ?ty -> _ => assert (HRK : ty); [|specialize (HS2 HRK); cl
 clear HS. rewrite <- restrict_mkst_fx in HS2. rename HS2 into HS.
 (* The token runner keeps its regions off the shadow span, so drop the fake frame's shadow region (the head of the
    state) for the rest of this segment: nothing from here to either cut point reads or writes it, and what the cut
-   points say about it is semantic (W_relay_add.v:1013-1021 drops it the same way). *)
+   points say about it is semantic (W_relay_add.v:1014-1022 drops it the same way). *)
 lazymatch type of HS with st_ok_pi _ _ ?Ex ?ssx ?msx =>
 lazymatch eval vm_compute in (ss_mem ssx) with
 | YP09.mkRegion (Some 513%nat) _ _ _ _ _ :: ?rest =>
@@ -2779,7 +2780,7 @@ end end.
 clear HS. rename HS3 into HS. norm_ss HS.
 (* ... and the fake frame itself read-only (an empty window): cells_safe_b asks every write window to be apart from
    the shadow span, and the fake frame's atom ranges over the whole app region.  Nothing of this segment writes it
-   (W_relay_add.v:1022-1031 does the same before its own token run). *)
+   (W_relay_add.v:1023-1032 does the same before its own token run). *)
 lazymatch type of HS with st_ok_pi _ _ ?Ex ?ssx ?msx =>
 lazymatch eval vm_compute in (ss_mem ssx) with
 | YP09.mkRegion (Some 38%nat) ?lo ?hi ?wlo ?whi ?cs :: ?rest =>
@@ -5299,7 +5300,7 @@ assert (HFPC : ~ YI16.sink_open_fp (rf_FP T es cap out))
 by (unfold rf_FP; exact (sink_closed_ablocks_fp _ HPOS)).
 assert (WS : RF_STK = 16704) by reflexivity. assert (Hes : ESTACK = 4096) by reflexivity.
 (* the prologue writes no global: it runs on the donor's journal from the entry memory, which is packed into the
-   ajournal_gx with gagree_refl when the first global is written (W6's form, W_relay_instance_gone.v:346) *)
+   ajournal_gx with gagree_refl when the first global is written (W6's form, W_relay_instance_gone.v:347) *)
 pose proof (ajournal_x_initR (SK := SK) SEGS B PST ARx R_refl RF_STK (rf_FP T es cap out) ly S Hp W regs mem md ch HPRE) as HJ.
 remember (Eimg (Ereg regs rf_extra)) as E eqn:HE. assert (HEI : img_env VAL A_LIM E) by (subst E; apply Eimg_env).
 assert (EE : forall n (r : bv 5), Z.of_nat n = bv_unsigned r -> ew E n = getr regs r)
@@ -5559,7 +5560,7 @@ match type of HS2 with ?ty -> _ => assert (HRK : ty); [|specialize (HS2 HRK); cl
 clear HS. rewrite <- restrict_mkst_fx in HS2. rename HS2 into HS.
 (* The token runner keeps its regions off the shadow span, so drop the fake frame's shadow region (the head of the
    state) for the rest of this segment: nothing from here to either cut point reads or writes it, and what the cut
-   points say about it is semantic (W_relay_add.v:1013-1021 drops it the same way). *)
+   points say about it is semantic (W_relay_add.v:1014-1022 drops it the same way). *)
 lazymatch type of HS with st_ok_pi _ _ ?Ex ?ssx ?msx =>
 lazymatch eval vm_compute in (ss_mem ssx) with
 | YP09.mkRegion (Some 513%nat) _ _ _ _ _ :: ?rest =>
@@ -5569,7 +5570,7 @@ end end.
 clear HS. rename HS3 into HS. norm_ss HS.
 (* ... and the fake frame itself read-only (an empty window): cells_safe_b asks every write window to be apart from
    the shadow span, and the fake frame's atom ranges over the whole app region.  Nothing of this segment writes it
-   (W_relay_add.v:1022-1031 does the same before its own token run). *)
+   (W_relay_add.v:1023-1032 does the same before its own token run). *)
 lazymatch type of HS with st_ok_pi _ _ ?Ex ?ssx ?msx =>
 lazymatch eval vm_compute in (ss_mem ssx) with
 | YP09.mkRegion (Some 38%nat) ?lo ?hi ?wlo ?whi ?cs :: ?rest =>

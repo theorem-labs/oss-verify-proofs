@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ex_ws_x.v, with its module paths and module names changed; 1951 of its 2020 lines of code are new or changed and 807 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/PRW_put_string_base.v; 1189 of its 1333 lines of code are new or changed and 1876 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S7b (WalkS7b.S7bPutString.PsEsc; #102 re-fit WalkS7bR.PutStringF.PsEscF): put_string's
    walk, the ESCAPE stretch, over PRW_put_string_base.v: from the escape join ps_esc (A 0x88518, the return of the run
    put) through the escape's write into u = F + 32 (__asan_memcpy of .str.20 / .str.19 / .str.21 for c = 9 / 10 / 13,
    else __wrap_snprintf with "\\%c" (c = 34 / 92) or "\\u%04x"), __wrap_strlen (u), put (o, u, len) (A 0x885b0) and
    `mv s10, s4`, to the re-poison join ps_next (A 0x885b8).
-   KIT: the kit's cut 7cdbb61b5fa0. The snprintf call is the engine's
+   KIT: the kit's cut. The snprintf call is the engine's
    ROW YGcallSnp.asnprintf_realizes_xrom (owner a Theorem Labs lane) at its instance, through YGcallSnpCk.snp_esc_of_xrom: the
    row returns at SOME float state fx' (f10 / fcsr free, fs0-fs11 kept, frm = 0), so everything after it (strlen, put,
    the re-poison join) runs at fx' (the internal file REFIT-WRITER.md's float-threading design): those stretches live in Section fl,
@@ -15,7 +16,7 @@
    (put's tput_specX, __wrap_strlen's astrlen_realizes_xrom) are Section hypotheses quantified over the float state.
    The memcpy arms keep the float state.
    THE ROW'S INSTANCE (WalkS7bR.SnpInstR, 2026-10-29): SNP is stated at the parameters that a Theorem Labs lane's row
-   instance snprintf_xrom_A (lib/A/PSnpSnpRoot.v:140, blob 4edc9be9a050 at the cut; first read at int102 19612fe2ec90) provides: the format family FF_esc IMG_LO
+   instance snprintf_xrom_A (lib/A/PSnpSnpRoot.v:141, blob 4edc9be9a050 at the cut; first read at int102) provides: the format family FF_esc IMG_LO
    gcan (its FF_preset_x lo got at lo := IMG_LO, got := gcan; the two families have the same body), the window
    STK_RT_PRINTF (>= its 8160), the canary cells gcan -> can, the image range [IMG_LO, IMG_TOP) and the read-only
    ranges ps_snp_cr (its PSnpPcom.PCM_CR, PSnpPcom.v:83-84: the same body over SEGS). SNPI is STATIC (ps_snp_img: image
@@ -172,7 +173,7 @@ Definition pe_csl : list (bv 5) :=
 Definition pe_u (X : psx) (pos : Z) (i : nat) (Wc : world SEGS) (memc : word -> option byte) : Prop :=
   forall j, (j < length (WriterSpec.esc (nth i (x_bs X) 0%Z) ++ [0%Z]))%nat ->
     aview SEGS (w_H Wc) memc (x_F X pos + 32 + Z.of_nat j) = Some (nth j (WriterSpec.esc (nth i (x_bs X) 0) ++ [0]) 0).
-(* ---- the snprintf row's instance (a Theorem Labs lane's snprintf_xrom_A, lib/A/PSnpSnpRoot.v:140, blob 4edc9be9a050 at the cut) ----
+(* ---- the snprintf row's instance (a Theorem Labs lane's snprintf_xrom_A, lib/A/PSnpSnpRoot.v:141, blob 4edc9be9a050 at the cut) ----
    the row's read-only ranges: each non-writable segment of the image as (base, size). This is the body of the
    instance's PSnpPcom.PCM_CR (PSnpPcom.v:83-84 there) over SEGS, so at PA := PI_prog_A it is that list. *)
 Definition ps_snp_cr : list (Z * Z) :=
@@ -982,7 +983,7 @@ Variables gcan can : Z.
    AImgCells.A_GOT_STACK_CHK_GUARD / A_STACK_CHK_GUARD: PRW_S7bWit.v s7bw_ps_snp_img) *)
 Hypothesis SNPI : ps_snp_img gcan can.
 (* the engine's snprintf ROW (YGcallSnp.v :94 asnprintf_realizes_xrom, owner a Theorem Labs lane) at __wrap_snprintf's entry,
-   at the CURRENT float state, at the parameters a Theorem Labs lane's snprintf_xrom_A (lib/A/PSnpSnpRoot.v:140, blob
+   at the CURRENT float state, at the parameters a Theorem Labs lane's snprintf_xrom_A (lib/A/PSnpSnpRoot.v:141, blob
    4edc9be9a050 at the cut) provides: rlo / rhi := pa_relro_lo / pa_relro_hi, FF_esc IMG_LO gcan (its FF_preset_x lo got at
    lo := IMG_LO, got := gcan; 0x10000 <= lo and got <= A_GOT_canary hold at the instance), K := STK_RT_PRINTF
    (8160 <= K), the canary cells gcan can, the image range [IMG_LO, IMG_TOP) (img_lo <= 65536, 0x600000 <= img_hi),

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stdout flush and the stderr writes give lrzt_stdio_writev both halves of chan_ok, and the ioctl only its channel half; a string argument's end plus 9 (was its end plus slack plus 16) is at most 2^47, what the launch's entry block gives for an argv string (the NUL that ends execfn and the 8-byte slot come after it, below ed_top <= 2^47); fprinti_s trims the string's slack to the padding before the next 8-byte boundary (fprinti_s_al), so the range it reads ends at most 8 bytes below 2^47. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -130,7 +131,7 @@ Section StdoutModel.
   Proof.
     intros s st mo g CH B. unfold stdout_stdio_write.
     eapply (lrzt_mbind_nil_l asegs _ _ _ _ _ _ (fun r => r = (st, st))); [apply lrzt_rd_so; reflexivity|]. intros so s' E. injection E as -> ->.
-    eapply lrzt_mbind_nil_r; [apply (lrzt_stdio_writev asegs st mo g 1 (so_buf st) s CH); exact B|].
+    eapply lrzt_mbind_nil_r; [apply (lrzt_stdio_writev asegs st mo g 1 (so_buf st) s (proj1 CH) (proj2 CH)); exact B|].
     intros [] s' E. cbn [snd] in E. subst s'. apply lrzt_upd_so. reflexivity.
   Qed.
 
@@ -146,7 +147,7 @@ Section StdoutModel.
       + eapply (lrzt_mbind_nil_l asegs _ _ _ _ _ _ (fun r => r = (tt, mkStdout act buf lbf false))); [apply lrzt_upd_so; reflexivity|].
         intros [] s1 E. injection E as ->.
         eapply (lrzt_mbind_nil_l asegs _ _ _ _ _ _ (fun r => (exists err, fst r = SErr err) /\ snd r = mkStdout act buf lbf false));
-          [eapply (lrzt_ioctl asegs); [exact CH| discriminate|]; intros err; split; [exists err; reflexivity| reflexivity] |].
+          [eapply (lrzt_ioctl asegs); [exact (proj1 CH)| discriminate|]; intros err; split; [exists err; reflexivity| reflexivity] |].
         intros r s1 [[err E1] E2]. cbn [fst snd] in E1, E2. subst r s1. apply lrzt_upd_so. reflexivity.
       + intros [] s1 E. cbn [snd] in E. subst s1.
         eapply lrzt_mono; [apply lrzt_stdout_stdio_write; [exact CH| cbn [so_buf]; exact B]|]. intros [[] s2] E2. exact E2.
@@ -399,7 +400,7 @@ Proof.
       exists ((buf ++ p) ++ e2), buf2. split; [cbn [app] in E2; rewrite E2, !app_assoc; reflexivity|]. split; [exact HB2|].
       rewrite to_bytes_app, map_app.
       eapply lrzt_mbind.
-      * apply (lrzt_stdio_writev asegs st mo g 2 buf p CH). unfold INTERNAL_BUFSIZ in *. lia.
+      * apply (lrzt_stdio_writev asegs st mo g 2 buf p (proj1 CH) (proj2 CH)). unfold INTERNAL_BUFSIZ in *. lia.
       * intros [] s' Hs. cbn [snd] in Hs. subst s'. exact RZ2.
     + destruct (IH (buf ++ p) st mo g CH SM ltac:(rewrite zlength_app'; lia)) as (e2 & buf2 & E2 & HB2 & RZ2).
       exists e2, buf2. split; [rewrite <- E2, app_assoc; reflexivity|]. split; [exact HB2| exact RZ2].
@@ -414,7 +415,7 @@ Proof.
   cbn [app] in E. rewrite E, to_bytes_app, map_app. unfold stderr_fprintf.
   eapply lrzt_mbind; [exact RZ|]. intros b s' Hs. injection Hs as -> ->.
   replace (to_bytes buf') with (to_bytes (buf' ++ [])) by (rewrite app_nil_r; reflexivity).
-  apply (lrzt_stdio_writev asegs st mo g 2 buf' [] CH).
+  apply (lrzt_stdio_writev asegs st mo g 2 buf' [] (proj1 CH) (proj2 CH)).
  unfold INTERNAL_BUFSIZ, zlength in *. cbn [length]. lia.
 Qed.
 
@@ -472,7 +473,7 @@ Section Fprinti.
       /\ assp_cells m' canary.
 
   (* [comment removed for export] *)
-  Lemma fprinti_s :
+  Lemma fprinti_s_al :
     forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
            (F : bvmap 5 word) (fc : bv 32) (m : mem) (st : St) (fa : Z) (fmt : list Z) (str slack : list byte) (ps : list (list Z)) (r : Z)
            (lo : Z) (canary : word),
@@ -482,8 +483,9 @@ Section Fprinti.
       bytes_at asegs m fa (zbl fmt) -> Forall (fun c => 0 <= c < 256) fmt -> pass1_ok fmt = true ->
       printf_pieces fmt [PA_s (map bv_unsigned str)] = Some (ps, r) -> fp_calls (length fmt) fmt [PA_s (map bv_unsigned str)] = [] ->
       bytes_at asegs m (bv_unsigned a2) (str ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) str ->
-      ((- (bv_unsigned a2 + zlength str + 1)) mod 8 <= zlength slack) -> (zlength str <= 2^20) ->
-      (bv_unsigned sp <= bv_unsigned a2) -> (bv_unsigned a2 + zlength str + 1 + zlength slack + 16 <= 2^47) ->
+      ((- (bv_unsigned a2 + zlength str + 1)) mod 8 <= zlength slack) ->
+      (zlength slack = (- (bv_unsigned a2 + zlength str + 1)) mod 8) -> (zlength str <= 2^20) ->
+      (bv_unsigned sp <= bv_unsigned a2) -> (bv_unsigned a2 + zlength str + 1 + 9 <= 2^47) ->
       stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo + FPRINTI_DEPTH <= bv_unsigned sp ->
       (bv_unsigned sp + 64 <= 2^47 - 1) ->
       assp_cells m canary -> mem_inv asegs m -> frm0 fc ->
@@ -493,11 +495,14 @@ Section Fprinti.
         (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
             F (Z_to_bv 64 AFPRINTF_T) fc None m (seg_rom asegs)).
   Proof.
-    intros until canary. intros PCS -> -> SEF FC MR LOW FBY HF P1 PP FPC BY NZ SLK LEN SA1 SA2 ST CEIL LO Q47 SSP MI FRM HFA1 HFA2 FNZ FSO.
+    intros until canary. intros PCS -> -> SEF FC MR LOW FBY HF P1 PP FPC BY NZ SLK SLKe LEN SA1 SA2 ST CEIL LO Q47 SSP MI FRM HFA1 HFA2 FNZ FSO.
     pose proof CEIL as CE. try rewrite alloc_ceiling_lit in CE. unfold FPRINTI_DEPTH, VF_DEPTH in LO. unfold STATIC_SPLIT in HFA2.
     pose proof (bv_unsigned_in_range 64 sp) as Rq. unfold bv_modulus in Rq. change (2 ^ Z.of_N 64)%Z with (2^64)%Z in Rq.
     pose proof (bytes_at_bound _ _ _ _ BY) as BB. rewrite length_app in BB. cbn [length] in BB.
     pose proof (bytes_at_bound _ _ _ _ FBY) as FB. unfold zlength in *.
+    (* the read range ends at the 8-byte boundary after the NUL, at most 8 bytes below 2^47 *)
+    assert (HE : bv_unsigned a2 + Z.of_nat (length str) + 1 + Z.of_nat (length slack) + 8 <= 2^47)
+      by (clear - SA2 SLKe; Z.div_mod_to_equations; lia).
     assert (LZB : length (zbl fmt) = length fmt) by (unfold OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.A.F_fmt_fp_lib.zb; apply length_map). rewrite LZB in FB.
     assert (FAR : app_range fa (Z.of_nat (length fmt))) by (left; unfold lowmem_range, KLOWSHADOW_BEG; lia).
     pose proof SSP as [SSP1 SSP2]. unfold AGOT_SSP, ASSP in SSP1, SSP2.
@@ -509,7 +514,7 @@ Section Fprinti.
     zs.
     (* [comment removed for export] *)
     assert (SPB' : lo + AFPI_STACK <= bv_unsigned sp) by (unfold AFPI_STACK; lia).
-    assert (SA2' : bv_unsigned a2 + Z.of_nat (length str) + 1 + 16 <= 2^47) by lia.
+    assert (SA2' : bv_unsigned a2 + Z.of_nat (length str) + 1 + 9 <= 2^47) by lia.
     eapply (fprintf_icpt_prefix_s ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m lo fa (Z_to_bv 64 ASTDERR) MI (fmt_vfi _ FC) LOW ST CEIL
               SPB' t0 t1 t2 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 str slack _ PCS (proj1 (MRT_ssz _ MR)) BY NZ SA1 SA2' LEN).
     unfold fprintf_icpt_K. intros u0 u1 u2 b4 b5 b6 b7 u3 u4 u5 u6 m1 uu MU2 WM2 MI1 VC1 ST1 FR1.
@@ -582,6 +587,45 @@ Section Fprinti.
     split; [exact ST4|]. split; [exact SF3|].
     destruct SSP3 as [G1 G2]. unfold got_ssp, ssp_guard in G1, G2. split; [exact G1| exact G2].
   Qed.
+
+  (* the string's slack trimmed to the padding to the next 8-byte boundary, so the range read ends at that
+     boundary, at most 8 bytes below 2^47 *)
+  Lemma fprinti_s :
+    forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+           (F : bvmap 5 word) (fc : bv 32) (m : mem) (st : St) (fa : Z) (fmt : list Z) (str slack : list byte) (ps : list (list Z)) (r : Z)
+           (lo : Z) (canary : word),
+      pcommon_s_stmt fa ->
+      a0 = Z_to_bv 64 ASTDERR -> a1 = Z_to_bv 64 fa ->
+      stderr_wfile m -> fmt_cells m -> MRT m -> lowsh_at m ->
+      bytes_at asegs m fa (zbl fmt) -> Forall (fun c => 0 <= c < 256) fmt -> pass1_ok fmt = true ->
+      printf_pieces fmt [PA_s (map bv_unsigned str)] = Some (ps, r) -> fp_calls (length fmt) fmt [PA_s (map bv_unsigned str)] = [] ->
+      bytes_at asegs m (bv_unsigned a2) (str ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) str ->
+      ((- (bv_unsigned a2 + zlength str + 1)) mod 8 <= zlength slack) -> (zlength str <= 2^20) ->
+      (bv_unsigned sp <= bv_unsigned a2) -> (bv_unsigned a2 + zlength str + 1 + 9 <= 2^47) ->
+      stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo + FPRINTI_DEPTH <= bv_unsigned sp ->
+      (bv_unsigned sp + 64 <= 2^47 - 1) ->
+      assp_cells m canary -> mem_inv asegs m -> frm0 fc ->
+      (65536 <= fa) -> (fa + zlength fmt <= STATIC_SPLIT) -> (0 < zlength fmt) -> shadow_ok m fa (zlength fmt) ->
+      Monad.implM asegs (outsk OUT_stderr ps (FLUSH_stderr (St:=St))) ([], st)
+        (fun _ bs ms' => fprinti_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F lo canary m (snd bs) ms')
+        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+            F (Z_to_bv 64 AFPRINTF_T) fc None m (seg_rom asegs)).
+  Proof.
+    intros until canary. intros PCS E0 E1 SEF FC MR LOW FBY HF P1 PP FPC BY NZ SLK LEN SA1 SA2 ST CEIL LO Q47 SSP MI FRM HFA1 HFA2 FNZ FSO.
+    set (k := Z.to_nat ((- (bv_unsigned a2 + zlength str + 1)) mod 8)).
+    assert (Kb : Z.of_nat k = (- (bv_unsigned a2 + zlength str + 1)) mod 8)
+      by (unfold k; rewrite Z2Nat.id; [reflexivity| pose proof (Z.mod_pos_bound (- (bv_unsigned a2 + zlength str + 1)) 8 ltac:(lia)); lia]).
+    assert (Kl : (k <= length slack)%nat) by (unfold zlength in SLK, Kb; lia).
+    assert (LK : zlength (firstn k slack) = Z.of_nat k) by (unfold zlength; rewrite length_firstn, Nat.min_l by exact Kl; reflexivity).
+    eapply fprinti_s_al with (slack := firstn k slack); try eassumption.
+    - rewrite <- (firstn_skipn k slack) in BY.
+      replace (str ++ Z_to_bv 8 0 :: firstn k slack ++ skipn k slack) with ((str ++ Z_to_bv 8 0 :: firstn k slack) ++ skipn k slack) in BY
+        by (rewrite <- app_assoc; reflexivity).
+      exact (proj1 (proj1 (bytes_at_app _ _ _ _ _) BY)).
+    - rewrite LK, Kb. lia.
+    - rewrite LK. exact Kb.
+  Qed.
+
 
   (* [comment removed for export] *)
   Lemma fprinti_u :
@@ -863,7 +907,7 @@ Lemma lrzt_stderr_fwrite : forall {St} (s : list Z) (st : St) mo g,
   lrzt (stderr_fwrite s st) mo g (map (WriteEv (Z_to_bv 64 2)) (to_bytes s)) (fun r => snd r = st).
 Proof.
   intros St s st mo g CH LEN. unfold stderr_fwrite. rewrite (proj2 (Z.ltb_lt 0 (zlength s))) by lia.
-  change (to_bytes s) with (to_bytes ([] ++ s)). apply (lrzt_stdio_writev asegs st mo g 2 [] s CH).
+  change (to_bytes s) with (to_bytes ([] ++ s)). apply (lrzt_stdio_writev asegs st mo g 2 [] s (proj1 CH) (proj2 CH)).
   unfold zlength in *. cbn [length]. lia.
 Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed LAWS, JX_unlink_node, JX_openat_node. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,6 +29,14 @@ Variable B : malloc_syms.
 Variable MR : MR_t.
 Hypothesis LAWS : MR_laws B MR.
 Context {SH : sink_head} {SK : sink_syms}.
+(* [YI19.stdio_env_path] now demands [0 <= sk_path_addr] and [sk_path_addr + 13 <= TASK_SIZE]
+   (75d69e00's third [read_cstr_of_rdn] premise, specialised to the path object).  [MR_laws]
+   bounds only owned addresses and [skl_env] only yields [in_img], so the bound comes from the
+   [skl_env_lt] law added to [sink_laws] in YI14.v.  [SL] is implicit, so the positional
+   callers of the two lemmas below (UN38.v:232, UN3k.v:106, YN38.v:232, YN3k.v:106) are
+   unchanged: instance resolution supplies [ubs0_sink_laws] / [src0_sink_laws] there, exactly
+   as it already does for their [skl_env ubs0_msyms] uses. *)
+Context {SL : sink_laws B}.
 Local Notation segs := (ms_segs B).
 Lemma JX_unlink_node : forall regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc TA TB,
 journal B MR STK sp0 FP L A mem md Lc Ac mem0 mdc ->
@@ -46,11 +55,11 @@ Proof.
 intros regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc TA TB HJ Hfp Henv Hfdn Hno Hdir Hfl Hpath HA HB.
 destruct (heap_model B MR LAWS _ _ _ _ (proj1 HJ)) as (Hh & Hlz & _).
 destruct sink_path_facts as (F1 & F2 & F3 & _ & _ & _ & F7 & F8). rewrite <- sink_path_eq in F1, F2, F3, F7.
-pose proof (stdio_env_path B regs pc mem0 Henv) as Hcstr. rewrite <- Hpath in Hcstr.
+pose proof (stdio_env_path B regs pc mem0 (skl_path_lo B) (skl_path_hi B) Henv) as Hcstr. rewrite <- Hpath in Hcstr.
 unfold unlink_shape.
 destruct (fs_under (m_fs mdc) sink_path) eqn:Hun.
 { apply (rz_unlink_tmp_isdir segs regs pc mem0 (seg_rom segs) mdc sink_path sink_name_bytes TA Hh Hlz Hno Hdir Hfl Hcstr F1 F2 F3 F7 F8 Hun Hfdn).
-apply HA. left. reflexivity. }
+intros e He. apply HA. apply unlink_type_errnos_sub. exact He. }
 destruct (fs_lookup (m_fs mdc) sink_path) as [d|] eqn:Hlk.
 - apply (rz_unlink_tmp_present segs regs pc mem0 (seg_rom segs) mdc sink_path sink_name_bytes d TA TB Hh Hlz Hno Hdir Hfl Hcstr F1 F2 F3 F7 F8 Hun Hlk Hfdn).
 + intros e He. apply HA. right. right. exact He.
@@ -83,7 +92,7 @@ Proof.
 intros regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc TA TB HJ Hfp Henv Hfree Hno Hdir Hfl Hpath HA HB.
 destruct (heap_model B MR LAWS _ _ _ _ (proj1 HJ)) as (Hh & Hlz & _).
 destruct sink_path_facts as (F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8). rewrite <- sink_path_eq in F1, F2, F3, F4, F5, F6, F7.
-pose proof (stdio_env_path B regs pc mem0 Henv) as Hcstr. rewrite <- Hpath in Hcstr.
+pose proof (stdio_env_path B regs pc mem0 (skl_path_lo B) (skl_path_hi B) Henv) as Hcstr. rewrite <- Hpath in Hcstr.
 unfold openat_shape.
 destruct (fs_under (m_fs mdc) sink_path) eqn:Hun.
 { apply (rz_openat_tmp_isdir segs regs pc mem0 (seg_rom segs) mdc sink_path sink_name_bytes TA Hh Hlz Hno Hdir Hfl Hcstr F1 F3 F4 F5 F6 F7 F8 Hun).

@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (lines 2155-2206) restated as w7_memcpy_at for image A's __asan_memcpy 0x510d4, with the wrapper's same_but_materialized kept in the post as same_io; the rest of the file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bKit.v at 25d4b718638e for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; RPgBase.rl_cstr and RPgMem.rm_nth_map are lib/A/RtPgBase.v rt_cstr and lib/A/RtPgMem.v rtm_nth_map; __asan_memcpy is rate's 0x51860 (lib/A/RtPgW7bBase.v W7_MEMCPY). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW7bKit.v at 7ef0f92b27f1 for the same unit's image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; RtPgMem.rtm_nth_map is lib/AU/RtPgMemB.v rtmb_nth_map; __asan_memcpy is image B's 0x518b8 (lib/AU/RtPgW7bBaseB.v W7B_MEMCPY); the prefix w7_ becomes w7b_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bKit.v for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; RPgBase.rl_cstr and RPgMem.rm_nth_map are lib/A/RtPgBase.v rt_cstr and lib/A/RtPgMem.v rtm_nth_map; __asan_memcpy is rate's 0x51860 (lib/A/RtPgW7bBase.v W7_MEMCPY). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW7bKit.v for the same unit's image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; RtPgMem.rtm_nth_map is lib/AU/RtPgMemB.v rtmb_nth_map; __asan_memcpy is image B's 0x518b8 (lib/AU/RtPgW7bBaseB.v W7B_MEMCPY); the prefix w7_ becomes w7b_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; addresses measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): the memory kit of the walk of

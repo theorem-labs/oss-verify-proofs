@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names changed; 1538 of its 1613 lines of code are new or changed and 509 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v, with its module names changed; 66 of its 123 lines of code are new or changed and 1556 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: proves no function (kind: inner boundary invariants of check_round_trip's D1 segment lemma, PORTED from
-   a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17
    :521 / St18 :535 - the holdings of the two fuzz_free stages, restated in the S0 form of FSH_crt_base.crt_inv).
 
    check_round_trip 0x81a9c, fs.asan (sha256 64b53ff86172bb07...), lane D1 (segments 30-33, a Theorem Labs lane): the THREE boundary

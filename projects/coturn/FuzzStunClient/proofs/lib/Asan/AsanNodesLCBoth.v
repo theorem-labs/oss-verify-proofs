@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the statements carry the flag of the flagged relation SpinAlg.srealizesM and use the shadow table of the launch's rseq layout (BOTH_at (rseq_z rsb)). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -20,17 +21,19 @@ Definition TP_BOTH : list TPL.tplp := [TPL.TP 2628 [912]; TPL.TP 2634 [912]; TPL
 Lemma both_lc_wf : forallb lc_wf LC_BOTH = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
 
-Lemma both_lc_chk :
-  forallb (fun PT : TPL.tplp * LCN.lctab => TPL.tpl_check BSEGS IT_both (shadow_off BOTH) (fst PT) (snd PT)) (combine TP_BOTH LC_BOTH) = true.
+Lemma both_lc_chk {rsb : bool} :
+  forallb (fun PT : TPL.tplp * LCN.lctab => TPL.tpl_check BSEGS IT_both (shadow_off (BOTH_at (rseq_z rsb))) (fst PT) (snd PT)) (combine TP_BOTH LC_BOTH) = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
 
-Lemma both_lc_specs : Forall (fun T => lc_wf T = true /\ lc_spec BSEGS (shadow_off BOTH) T) LC_BOTH.
+Lemma both_lc_specs {rsb : bool} : Forall (fun T => lc_wf T = true /\ lc_spec BSEGS (shadow_off (BOTH_at (rseq_z rsb))) T) LC_BOTH.
 Proof.
-  apply (tpl_all_sound BSEGS IT_both (shadow_off BOTH) IT_both_ok ltac:(vm_compute; split; [discriminate | reflexivity]) TP_BOTH LC_BOTH
+  apply (tpl_all_sound BSEGS IT_both (shadow_off (BOTH_at (rseq_z rsb))) IT_both_ok ltac:(vm_compute; split; [discriminate | reflexivity]) TP_BOTH LC_BOTH
            eq_refl both_lc_wf both_lc_chk).
 Qed.
 
 Section BothNode.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
+  Context {rsb : bool}.   (* the launch's kb_rseq; the table is ASAN_at/BOTH_at (rseq_z rsb) *)
 Variable nx0 : N.
 Variable LIMIT : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
@@ -42,9 +45,9 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis nx0_ge7 : APS.nx0_ok nx0.
 Variable FS0 : Fs.Fs.
 
-Theorem both_lc_ext_sound : ext_stmt BSEGS BOTH nx0 LIMIT (LCN.xn BSEGS BOTH nx0 LC_BOTH) SINV argH FS0.
+Theorem both_lc_ext_sound : ext_stmt BSEGS (BOTH_at (rseq_z rsb)) nx0 LIMIT (LCN.xn BSEGS (BOTH_at (rseq_z rsb)) nx0 LC_BOTH) SINV argH FS0 sfl.
 Proof.
-  eapply (lc_xn_sound BSEGS BOTH nx0 LIMIT); try eassumption;
+  eapply (lc_xn_sound BSEGS (BOTH_at (rseq_z rsb)) nx0 LIMIT); try eassumption;
     first [ exact both_wx | exact both_in_hull | exact both_hull_ok | exact both_segs_wr | exact both_shadow_ok | exact both_lc_specs | idtac ].
 Qed.
 End BothNode.

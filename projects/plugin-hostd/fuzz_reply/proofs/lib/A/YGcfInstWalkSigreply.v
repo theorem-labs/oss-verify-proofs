@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for lane W of a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply).
    reply's Allocate walk tops at image A (fuzz_reply.asan, pin 42c58610e125) assembled into YGcfInstWalkSig.WalkSigA at
    the instance YGcfInstAllocTop.v's Section hypothesis WS names: the reply twin of the cf layer's
-   YGcfInstWalkSigcgif.v (commit cb7d3c39603).
+   YGcfInstWalkSigcgif.v.
    rule 24: no function proved (kind: assembly of proved Allocate arms into WalkSigA).
 
-   The instance (YGcfInstAllocTop.v:49-50) at B := TfibB, cp := CfParams_reply (A/CfParamsReply.v): segs := im_segs (=
-   tfibsegs at AImg_reply, A/AGif2reply.v:24), U := U_cf TfibB, mt := malloc_cf, ARX := ARXq_cf TfibB IOK Hp,
+   The instance (YGcfInstAllocTop.v:50-51) at B := TfibB, cp := CfParams_reply (A/CfParamsReply.v): segs := im_segs (=
+   tfibsegs at AImg_reply, A/AGif2reply.v:25), U := U_cf TfibB, mt := malloc_cf, ARX := ARXq_cf TfibB IOK Hp,
    AOX := AOXm_cf TfibB, rpre := YGcfRmodel.rpre_cfr TfibB, nmax := cf_malloc_max, lmax := LIVE_MAX, lpost := qtight, cf.
    reply's entry is cf_pc_allocate = 0x31bd8 (A/CfImgA.v, this file's CfImg instance) = AGhy.A_Allocate.
    reply's arm tops are cgif's with that entry: MemnormHitG.ARM_HITG_em, MemnormHitK.ARM_HITK_em,
@@ -92,7 +93,7 @@ Section b.
 (* the unit's instance object (YGcfInstBase's IOK) *)
 Variable IOK : Z -> Prop.
 Hypothesis IOK_inst : IOK_ok TfibB IOK.
-(* the call site's can_fill (YGcfInstAllocTop.v:44-45) *)
+(* the call site's can_fill (YGcfInstAllocTop.v:45-46) *)
 Variable cf : Z.
 Hypothesis HCF : cf = 0 \/ cf = 1.
 
@@ -104,8 +105,8 @@ Proof. exact (YGcfRefillTopreply.refill_walk_cf_reply_closed TfibB IOK TfibB_sym
 Let TS : TfibSyms TfibB := TfibB_syms.
 Let UF := ReplyUnitFactsA.reply_unit_facts_A TfibB TfibB_syms.
 
-(* The secondary interface at the instance (AGioM.v:59 IFS at NMAXW := cf_malloc_max, NOBW := cf_nob, ROOMW := 2 ^ 32,
-   and AGioM.v:67 IFSE): CfInstSec's closers at reply A (lib/A/YGcfInstSecreply.v ifaceSw_A / ifaceSE_A), whose four
+(* The secondary interface at the instance (AGioM.v:60 IFS at NMAXW := cf_malloc_max, NOBW := cf_nob, ROOMW := 2 ^ 32,
+   and AGioM.v:68 IFSE): CfInstSec's closers at reply A (lib/A/YGcfInstSecreply.v ifaceSw_A / ifaceSE_A), whose four
    premises are TfibSyms, IOK_ok, IMG_COVER and reply's dhash (uf_dhash_img). *)
 Lemma IFS_reply : forall Hp, AGif4.AIfaceSw TfibB (U_cf TfibB) malloc_cf (ARXq_cf TfibB IOK Hp) (AOX_cf TfibB)
   (rpre_cf TfibB) cf_malloc_max LIVE_MAX qtight (YGcfInstHit.dpost_cf TfibB) cf_pc_malloc_max cf_pc_spin_shadow
@@ -139,7 +140,7 @@ destruct (proj1 (Forall_forall _ _) FA t Ht) as (_ & [I | (pw & sfx & HP & _)]);
 assert (EW : u_wild (as_universe TfibB) = []) by reflexivity. rewrite EW in HP. destruct HP.
 Qed.
 
-(* The depot field at the instance (YGcfInstDepot.if_depot_cf, YGcfInstDepot.v:201), from reply's image facts and CfF1's
+(* The depot field at the instance (YGcfInstDepot.if_depot_cf, YGcfInstDepot.v:202), from reply's image facts and CfF1's
    depot walk row YGcfInstDepotWreply.depot_spec_a_reply at reply's dhash (uf_dhash_img). *)
 Lemma HDEP_reply : forall Hp, CLdepot.depot_field im_segs ag_depot_put im_tp TfibB (ARXq_cf TfibB IOK Hp) (U_cf TfibB)
   ag_dzone (fun ly a => ag_dzone ly a \/ ag_czone ly a).
@@ -229,7 +230,7 @@ Local Ltac to_arm Hp inst so bp ly S W regs mem md n tr HPRE pc :=
     (MemnormT.alloc_leaf_em tfibsegs TfibB malloc_cf (ARXq_cf TfibB IOK Hp) (AOX_cf TfibB) qtight TFIB_OOM
       inst ly S W regs mem md n tr)).
 
-(* The walk signature at the instance YGcfInstAllocTop.v:49-50 names, at every ghost set. *)
+(* The walk signature at the instance YGcfInstAllocTop.v:50-51 names, at every ghost set. *)
 Theorem walksig_cf_reply : forall Hp, WalkSigA im_segs TfibB (U_cf TfibB) malloc_cf (ARXq_cf TfibB IOK Hp)
   (AOXm_cf TfibB) (YGcfRmodel.rpre_cfr TfibB) cf_malloc_max LIVE_MAX qtight cf.
 Proof.
@@ -265,7 +266,7 @@ intros Hp. apply Build_WalkSigA.
     inst so bp ly S W regs mem md n tr HPRE Hn).
 Qed.
 
-(* YGcfInstAllocTop's top (YGcfInstAllocTop.v:98) at reply, its WS given by walksig_cf_reply. *)
+(* YGcfInstAllocTop's top (YGcfInstAllocTop.v:99) at reply, its WS given by walksig_cf_reply. *)
 Theorem aalloc_realizes_cf_reply : aalloc_realizes_cf_em_m im_segs TfibB cf_malloc_max 8 1 cf (ARXq_cf TfibB IOK).
 Proof. exact (YGcfInstAllocTop.aalloc_realizes_cf_em_m_cf TfibB IOK cf HCF walksig_cf_reply). Qed.
 

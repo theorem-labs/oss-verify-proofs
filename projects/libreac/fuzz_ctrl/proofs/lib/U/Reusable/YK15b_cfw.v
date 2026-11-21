@@ -28,7 +28,12 @@ Qed.
 Lemma place_uniform_allI : forall c (I : Type) (nx : I -> config) T,
 node_ok segs c I (fun _ => []) nx -> (forall i, crealizes B (nx i) T) -> place_uniform segs c.
 Proof using.
-intros c I nx T [_ Hc] H x8 len _ e1 c1 e2 c2 H1 H2.
+(* A round's error at U/Reusable/YK15b_cfw.v:32, the twin's OWN error line, read
+   separately rather than mirrored: `Illegal application (Non-functional construction)`, same
+   printed type.  Audited: `U/Reusable/YK15.v` is a one-line `Require Export` of
+   `Reusable.YK15`, so this side sees the SAME three-conjunct `node_ok` (Reusable/YK15.v:190-196)
+   and the repair is justified by this file's own error, not by the A side's. *)
+intros c I nx T [_ [Hc _]] H x8 len _ e1 c1 e2 c2 H1 H2.
 destruct (Hc e1 _ H1) as (i & -> & E1). destruct (Hc e2 _ H2) as (j & -> & E2).
 injection E1 as ->. injection E2 as ->. split; [reflexivity|]. intros tr.
 rewrite (realizes_obs_iff segs (nx i) T (crealizes_realizes B _ _ (H i)) (crealizes_cut_free B _ _ (H i)) tr).

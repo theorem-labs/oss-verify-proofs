@@ -5,10 +5,11 @@
    lib/A/Prog/rp_hot_clamp_F_c.v rp_hot_clamp_contract_F. It follows lib/Prog/rp_hot_clamp.v (the plain walk: one
    continuation-style lemma per field; its f_pf .. f_sv, model_split, f_mn_range, sx32_int and lts_lit / ltu_lit reused
    by name, its mcase / br / join tactics copied, join extended to the walk's invariant) in the footprint style of
-   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v and reac_decode_F.v (origin/ossv/recipes 88154566652a:
+   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v and reac_decode_F.v (
    StepF's step, one rng fact per access; rd_all, addr_four, lts_sm and the one-byte shadow window copied from that
    unit's ReacDecodeLib.v and reac_decode_F.v; rw_cells_app from lib/Prog/check_clamp.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/rp_hot_clamp_FW.v, with its module paths, module names and numbers changed; 367 of its 442 lines of code are new or changed and 467 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The footprint walk of reac-repacer/fuzz_wire's rp_meter_counter in image B, against the frozen
    lib/B/Prog/rp_meter_counter_F_c.v rp_meter_counter_contract_F (= lib/B/Prog/rp_meter_counter_cg.v
    wire_rp_meter_counter_holds_stmt). No released ASan walk of this function exists. The form of the file is

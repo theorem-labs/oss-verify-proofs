@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YCbq.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: off_img's image bounds cite fuzz_knock's image (YImgTop.IMG_LO, YImgTop.IMG_TOP = 0x5f3000, both knock ASan builds) in place of cgif's 0x10000 and 0x5fb000. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/Reusable/YCbq.v, with its module paths and module names changed; 112 of its 162 lines of code are new or changed and 3110 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the call-site form of lib/Reusable/YCbq.v's aj_bcmp_at (lines 2262-2310), restated
    for the strcmp wrapper's contract astrcmp_realizes of lib/Reusable/AStrcmpDef.v (fuzz_identity's text, module paths
    changed): the same journal threading through ecall_pre_at and ajournal_after_write, with the strcmp contract's
    str_meet premise and its strcmp_res result in place of bcmp's n-byte compare. The string lemmas below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStrcmp.v at 77f59d02b018 for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStrcmp.v for reac-pw/fuzz_rate
    (image A): module paths changed; RPgBase's rl_cstr becomes RtPgBase's rt_cstr (the same text), so rl_cstr_args /
    cstr_at_of_rl_cstr become rt_cstr_args / cstr_at_of_rt_cstr; the comment names rate's callers. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate calls the strcmp wrapper (the 4-byte jump at 0x4219c of fuzz_rate.asan, unstripped sha256
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3) from two program functions: reac_rate_prop_parse
    (0x846fc, the key against "reac.cfg.rate") and check_code (0x83784, a string against a literal of the same text).

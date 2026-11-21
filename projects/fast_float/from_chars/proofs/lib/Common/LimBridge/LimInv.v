@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's placement rule; the model's mremap; the model's brk). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import SyscallTable.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect Mremap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common.LimBridge Require Import LimDefs LimFrame.
 Import ListNotations.
 Open Scope bv_scope.
@@ -71,6 +73,23 @@ Proof.
   pose proof (mremap_word_range a). pose proof (mremap_word_range r). unfold two_pow_64 in *.
   rewrite bv_sub_unsigned. unfold bv_wrap, bv_modulus. rewrite Z.mod_small by lia. lia.
 Qed.
+Lemma mis_brk_page_range : forall (a r : word), (0 < bv_unsigned a)%Z ->
+  maps_in_space (brk_page_range (page_round_up_Z (bv_unsigned a)) (page_round_up_Z (bv_unsigned r))).
+Proof.
+  intros a r Ha0. unfold brk_page_range.
+  destruct (Z.ltb_spec (page_round_up_Z (bv_unsigned a)) (page_round_up_Z (bv_unsigned r))) as [Hlt |]; [| constructor].
+  apply mis_cons; [| constructor]. unfold in_space. cbn [fst snd].
+  pose proof (mremap_word_range a) as Ha. pose proof (mremap_word_range r) as Hr. unfold two_pow_64 in *.
+  assert (Hlo : (bv_unsigned a <= page_round_up_Z (bv_unsigned a))%Z).
+  { unfold page_round_up_Z, page_size.
+    pose proof (Z.div_mod (bv_unsigned a + 4096 - 1) 4096 ltac:(lia)) as Hd.
+    pose proof (Z.mod_pos_bound (bv_unsigned a + 4096 - 1) 4096 ltac:(lia)) as Hm. lia. }
+  assert (Hhi : (page_round_up_Z (bv_unsigned r) <= 2 ^ 64)%Z).
+  { unfold page_round_up_Z, page_size.
+    assert ((bv_unsigned r + 4096 - 1) / 4096 <= (2 ^ 64 + 4096 - 2) / 4096)%Z by (apply Z.div_le_mono; lia).
+    replace ((2 ^ 64 + 4096 - 2) / 4096)%Z with (2 ^ 52)%Z in * by reflexivity. lia. }
+  rewrite !mremap_u64 by (unfold two_pow_64; lia). lia.
+Qed.
 
 (* [comment removed for export] *)
 Lemma mvm_with_vmmaps : forall h m, m_vmmaps (with_vmmaps h m) = h. Proof. reflexivity. Qed.
@@ -97,10 +116,10 @@ Proof.
   intros req i m eff m' evs H HI. unfold brk_spec in H. sys_inv_hyp H.
   unfold Inv, with_brk_next. autorewrite with mvm. unfold brk_model_next. cbn [vm_maps]. unfold brk_maps_next.
   destruct ((0 <? bv_unsigned (vm_brk (m_vmmaps m)))%Z && (bv_unsigned x <? bv_unsigned (vm_brk (m_vmmaps m)))%Z).
-  - apply mis_subtract. exact HI.
-  - apply mis_app; [| exact HI]. unfold brk_grants. destruct (brk_is_grow req x (vm_brk (m_vmmaps m))) eqn:E; [| constructor].
-    unfold brk_is_grow in E. apply andb_true_iff in E. destruct E as [_ E]. apply Z.ltb_lt in E.
-    apply mis_cons; [apply in_space_word_end; exact E | constructor].
+  - unfold brk_unmap_cut. cbv zeta. destruct (Z.ltb _ _); [apply mis_subtract |]; exact HI.
+  - apply mis_app; [| exact HI]. unfold brk_grants. destruct (brk_is_grow req x (vm_brk (m_vmmaps m))) eqn:Eg; [| constructor].
+    unfold brk_is_grow in Eg. apply andb_true_iff in Eg. destruct Eg as [Eg1 _]. apply andb_true_iff in Eg1. destruct Eg1 as [_ Eg2].
+    apply Z.ltb_lt in Eg2. apply mis_brk_page_range. exact Eg2.
 Qed.
 
 (* [comment removed for export] *)
@@ -126,11 +145,17 @@ Proof.
   apply andb_true_iff in E; destruct E as [E _]; apply andb_true_iff in E; destruct E as [E _]; apply andb_true_iff in E; destruct E as [E _].
   apply Z.leb_le in E. exact E.
 Qed.
+Lemma inplace_room_b_top : forall m old old_n new_n old_nZ new_nZ,
+  mremap_inplace_room_b m old old_n new_n old_nZ new_nZ = true -> (bv_unsigned old + new_nZ <= alloc_top (m_vmmaps m))%Z.
+Proof.
+  intros m old old_n new_n old_nZ new_nZ E. unfold mremap_inplace_room_b in E. cbv zeta in E.
+  apply andb_true_iff in E; destruct E as [E _]. apply Z.leb_le in E. exact E.
+Qed.
 Lemma inplace_grow_b_top : forall m old old_n new_n old_nZ new_nZ,
   mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ = true -> (bv_unsigned old + new_nZ <= alloc_top (m_vmmaps m))%Z.
 Proof.
-  intros m old old_n new_n old_nZ new_nZ E. unfold mremap_inplace_grow_b in E. cbv zeta in E.
-  apply andb_true_iff in E; destruct E as [E _]; apply andb_true_iff in E; destruct E as [E _]. apply Z.leb_le in E. exact E.
+  intros m old old_n new_n old_nZ new_nZ E. unfold mremap_inplace_grow_b in E.
+  apply andb_true_iff in E; destruct E as [E _]. exact (inplace_room_b_top _ _ _ _ _ _ E).
 Qed.
 Lemma fresh_b_top : forall m old_nZ new_nZ old old_n dst new_n,
   mremap_fresh_b m old_nZ new_nZ old old_n dst new_n = true -> (bv_unsigned dst + new_nZ <= alloc_top (m_vmmaps m))%Z.
@@ -144,11 +169,13 @@ Lemma mremap_inv : forall old old_size new_size flags i m eff m' evs,
 Proof.
   intros old old_size new_size flags i m eff m' evs H HI. unfold mremap_spec in H. sys_inv_hyp H.
   all: unfold Inv, mremap_model_next, mremap_maps_next in *; autorewrite with mvm; cbn [vm_maps]; try assumption.
-  all: apply mis_cons; [| apply mis_remove; assumption].
+  all: apply mis_cons; [| apply mis_subtract; assumption].
   all: pose proof (mremap_word_range new_size) as Hns; pose proof (mremap_word_range old_size) as Hos.
   all: apply (in_space_top (m_vmmaps m));
        [match goal with E : page_align_is0_b _ = false |- _ => exact (page_align_is0_false_pos _ E) end |].
   all: try solve [ match goal with E : mremap_fresh_b _ _ _ _ _ _ _ = true |- _ => exact (fresh_b_top _ _ _ _ _ _ _ E) end
+                  | match goal with E : mremap_dst_ok _ _ _ _ _ _ _ |- _ => exact (fresh_b_top _ _ _ _ _ _ _ (proj2 E)) end
+                  | match goal with E : mremap_inplace_room_b _ _ _ _ _ _ = true |- _ => exact (inplace_room_b_top _ _ _ _ _ _ E) end
                   | match goal with E : mremap_inplace_grow_b _ _ _ _ _ _ = true |- _ => exact (inplace_grow_b_top _ _ _ _ _ _ E) end ].
   all: match goal with E : negb (mremap_source_b _ _ _ _ && _) = false, E2 : (_ <? _)%Z = true |- _ =>
          apply negb_false_iff in E; apply andb_true_iff in E; destruct E as [E _]; apply source_b_top in E; apply Z.ltb_lt in E2; lia end.
@@ -156,6 +183,15 @@ Qed.
 
 (* [comment removed for export] *)
 Ltac top_fin :=
+  repeat match goal with H : _ /\ _ |- _ => destruct H end;
+  repeat match goal with
+  | E : linux_place ?h ?thp ?hint ?nZ ?a |- _ =>
+      let P := fresh "P" in
+      pose proof (Placement.linux_place_admissible h thp hint nZ a
+                    ltac:(match goal with W : w_is0 _ = false |- _ => exact (page_round_up_Z_pos _ (w_is0_false_pos _ W)) end)
+                    ltac:(unfold page_round_up_Z; apply Z_mod_mult) E) as P;
+      clear E
+  end;
   repeat match goal with H : _ /\ _ |- _ => destruct H end;
   repeat match goal with E : negb _ = false |- _ => apply negb_false_iff in E end;
   repeat match goal with E : (_ <=? _)%Z = true |- _ => apply Z.leb_le in E end;

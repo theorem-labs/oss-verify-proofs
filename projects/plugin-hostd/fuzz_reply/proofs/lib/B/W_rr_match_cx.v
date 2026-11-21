@@ -7,7 +7,7 @@
    rr_match.
 
    Proves no function (kind: segment interface of the B walk).  The FORM is the image-A twin's
-   (a working branch 30748eb0198 lib/A/W_rr_match_cx.v: the same inner cuts, the same rr_found
+   (a working branch lib/A/W_rr_match_cx.v: the same inner cuts, the same rr_found
    let-bindings, the same hop order); what differs is image B's:
    - no fake frame: RLIVE owns no frame (own = []), so the cuts carry no F / FL;
    - registers: s0 = fd, s1 = g_nsrc's register image, s2 = the shadow offset, s3 = 56 i, s4 = g_src's register image
@@ -34,11 +34,12 @@
    in rr_found's own terms (rmdrel, rmc1 / rmO1 / rmcap1 are rr_found's let-bindings, named), so that hop_cpy builds
    RDONE from RRC alone (the A twin's table, unchanged). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 in the room form (lane RRX, the image-A twin a Theorem Labs lane
-   f4cd818e98d lib/A/W_rr_match_cx.v): the hop interface over ANY allocator relation ARx, in place (Section c is
+   lib/A/W_rr_match_cx.v): the hop interface over ANY allocator relation ARx, in place (Section c is
    W_relay_remove_cx.v's generic block, verbatim).  The inner cuts' journal is RLIVE's ajournal_gx_x with the head set
    Hp1, and they carry the room budget: RRG rmbud's rp_RM RP S1 (Z.to_nat (tr_cost MT_rk tl) + kr) for the rest tl
    and gestures_end's count premise cnt_ok_pk RP gse_pk; RRF rp_RM RP S1 (1 + kr) (the buf free's 1) and the free's
    cnt_ok; RRC rp_RM RP S1 kr. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

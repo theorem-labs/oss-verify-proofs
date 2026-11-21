@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: GENERATED from lib/A/PresetD1preAxPf.v (lane CwPreA, a working branch a9e03801db9b) by port/a2b.py (sha256 e4f47803449f38c2) with its measured literal map (a table literal in code is written as its image-B cell name from lib/Reusable/YImgCellsB.v) and --map 0x10000=0x10000 0x20e00=0x20e00 0x20f40=0x20f40 (image B's first zero-shadow range is also (YImgTop.IMG_LO, 0x20f40 - YImgTop.IMG_LO), lib/Reusable/YF0m.v Tfib_zero_shadow). No hand edit. PENDING YF0m, as PresetD1preB.v. *)
+(* Theorem Labs, 2026-10: GENERATED from lib/A/PresetD1preAxPf.v (lane CwPreA, a working branch) by port/a2b.py (sha256 e4f47803449f38c2) with its measured literal map (a table literal in code is written as its image-B cell name from lib/Reusable/YImgCellsB.v) and --map 0x10000=0x10000 0x20e00=0x20e00 0x20f40=0x20f40 (image B's first zero-shadow range is also (YImgTop.IMG_LO, 0x20f40 - YImgTop.IMG_LO), lib/Reusable/YF0m.v Tfib_zero_shadow). No hand edit. PENDING YF0m, as PresetD1preB.v. *)
 (* Theorem Labs, 2026-10-29: relocated image B (asan-ubsan f8f98a95, twin 3b5e1a09) -> B' (#102 d663f82d, twin c90d4fa5) BY HAND (alreloc c4338d099cfb8025 writes the other 41 lane files and refuses this one: line 3 keeps the A -> B port's history value 0x20f40): the first zero-shadow range end 0x20f40 -> 0x20f60 (B' lib/Reusable/YF0m.v Tfib_zero_shadow, YD1k.v:210; B''s lowest asan global beg), its decimal twin 134976 -> 135008 with the derived quotient (135008 - 65536) / 8 = 8684; the hull bound 0x20e00 KEPT (a chosen bound below the zero-shadow end, 0x20e00 <= 0x20f60, every caller's p + n <= 0x20cc8 on B'); YImgTop.IMG_LO -> YImgTop.IMG_LO_B (B' rule, owner 19:20Z). *)
 (* Modified by Theorem Labs, 2026-10: the proofs of the interceptor site results stated in lib/AU/PresetD1preBx.v
    (fuzz_preset, asan-ubsan image), ported from the core's lib/Reusable (relocated from proofs/cgif/cgif_file_fuzzer/lib):
@@ -15,6 +15,7 @@
    The interceptor walks are the ARcf copies YE2xcf / YE2tcf / YE2ucf / YE2vcf / YE2wcf (port/cfcopy.py, rule 24: a
    port of the released walks) at a8's AR_laws_ok_cf. The AR-free image facts are YD1k.v's / YD1l.v's, cited.
    Rule 24: no function is proved here (composition / driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -170,7 +171,7 @@ Qed.
 (* YD1k.v:273-311. *)
 Lemma tfib_fwrite_site_cf_sec : (forall H m, YE2p.stderr_written (mrestrict H m) -> est H m) -> fwrite_site_tfa_cf B est.
 Proof.
-intros ESTW ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd HAI HPOST.
+intros ESTW ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts_cf ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as ([IR1a IR1b] & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
@@ -198,7 +199,9 @@ unfold stderr_fields, YE2p.stderr_fields, YE2p.F_STDERR, YE2pcf.F_STDERR. repeat
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts_cf ly S W mem md p len HAR ltac:(unfold YImgTop.IMG_LO_B; lia) ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts_cf ly S W mem md p len HAR ltac:(unfold YImgTop.IMG_LO_B; lia) ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+(* [fdchan]'s third conjunct at LPS 727298f3 is the model's channel reader, which the site takes beside the
+   descriptor (as the core's AD1k.v). *)
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -211,7 +214,7 @@ Qed.
 (* YD1k.v:314-345. *)
 Lemma tfib_refused_site_cf_sec : (forall H m, YE3h.stderr_after_vfprintf (mrestrict H m) -> est H m) -> refused_site_tfa_cf B est.
 Proof.
-intros ESTV ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd HAI HPOST.
+intros ESTV ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts_cf ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as (IR1 & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof msg_refused_eq as [ME ML].
@@ -231,7 +234,7 @@ unfold stderr_fields, YE2p.stderr_fields, YE2p.F_STDERR, YE2pcf.F_STDERR. repeat
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero_cf ly S W mem md); [exact HAR | unfold YImgTop.IMG_LO_B, YE3lcf.FMT_refused; lia | unfold YE3lcf.FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').
@@ -244,7 +247,7 @@ Qed.
 
 (* YD1l.v:99-146: the common body of the three fprintf %s sites. *)
 Local Ltac fps_site_cf ESTV FPE THM LITS FMTV :=
-intros ly S W regs mem md E s str T HPRE G10 G11 G12 Hlen Hnn Hs1 Hs2 HBr Htail HIMG Hfd HAI HPOST;
+intros ly S W regs mem md E s str T HPRE G10 G11 G12 Hlen Hnn Hs1 Hs2 HBr Htail HIMG Hfd Hcr HAI HPOST;
 change (cfg_at tfibsegs A_icpt_fprintf regs mem md) with (cfg_at tfibsegs FPE regs mem md);
 pose proof (icpt_pre_facts_cf ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres); pose proof (proj1 HEPRE) as HAR;
 pose proof HPRE as (_ & _ & _ & _ & _ & _ & _ & Hshi & _);
@@ -281,7 +284,7 @@ unfold stderr_fields, YE2p.stderr_fields, YE2p.F_STDERR, YE2pcf.F_STDERR; repeat
 | exact (u64_range (sv_denot E (SOff 41 0)))
 | exact (ro_img_of_IMG E _ HIMG)
 | apply (rodata_hull_zero_cf ly S W mem md); [exact HAR | unfold YImgTop.IMG_LO_B, FMTV; lia | unfold FMTV; lia | lia]
-| split; [exact Hfd | reflexivity]
+| split; [exact Hfd | split; [reflexivity | exact Hcr]]
 | exact HAI
 | intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI';
 apply (HPOST regs' mem' md' HAR' HP' Hsbm');

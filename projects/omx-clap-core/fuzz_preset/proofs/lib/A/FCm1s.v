@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0s.v (c8557374ad2e) for omx-clap-core/fuzz_preset's
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0s.v (theorem-labs/oss-verify-proofs@6b32741d849a) for omx-clap-core/fuzz_preset's
    ASan image A (rebuilt, sha256 f0d2e8d4..0b15): __asan_stack_malloc_1 realizes the class-1 malloc step. Restated over a relation
    ARx with the poisoned-head set Hp (FCiface): the premise `LAWS : AR_laws` and every read of cgif's AR become the fields of
    `I : fs_iface tfibsegs B ARx`, and the contract is FCiface.astack_malloc_realizes_x (Hp unchanged). The AR reads, one for one:
@@ -12,11 +12,12 @@
    imported (YCe5.apresent_writable -> AE2y.apresent_writable); cgif's image top (AF0s.v:80, :83, :243, :253-255, and the shadow
    bound at :254) is replaced by AF0x.TFIB_IMG_END (preset's top) and values computed from it; the cgif layout literals of
    FF and of the frame-area shadow length are computed from FS_FROFF / kFakeStackSize; the T+48 / T+56 words are FCm1r.T48 / T56. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Scope (c-asan, 2026-10-28 23:34Z): this is the fs_iface form, the statement of record for units whose allocator
    invariant is NOT cgif's AR (preset's ARcf, fuzz_state's ARU) and for classes with no released cgif walk. A unit
    whose invariant IS cgif's AR should take the released AR-form walk (cgif_file A/AF0s.v, AF0u.v and their kin,
    relocated) and, if it needs this shape, obtain it through FCiface.fs_iface_AR plus
-   FCiface.astack_malloc_realizes_of_x (FCiface.v:168-200, Qed), which yields the same fact. *)
+   FCiface.astack_malloc_realizes_of_x (FCiface.v:169-201, Qed), which yields the same fact. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

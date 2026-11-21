@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Ported by Theorem Labs, 2026-10-29: ajournal_fp_nil and srz_enter only, from cgif_file_fuzzer lib/A/ACfh.v (origin/ossv/recipes) to libreac fuzz_identity image B; module paths rebased, proofs unchanged. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -45,12 +46,12 @@ End d.
 (* Statement check: each lemma, closed, at the type of the binder it discharges. Each ascription type-checks only
    if the lemma's type and the binder's text agree. The binders state ajournal over lib/Reusable/YCbq.v (the
    module imported above), not over lib/ReusableB/YCbq.v. *)
-(* SKB := ident_asan_ubsan_sink_head (lib/B/Prog/IdentEntryLink.v:68, {| YI16.sk_ofl_head := 0x5f8948 |}). *)
+(* SKB := ident_asan_ubsan_sink_head (lib/B/Prog/IdentEntryLink.v:69, {| YI16.sk_ofl_head := 0x5f8948 |}). *)
 #[local] Abbreviation SKB := ({| YI16.sk_ofl_head := 0x5f8948 |} : YI16.sink_head).
 Section binder_check.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
-(* lib/B/Prog/LLVMFuzzerTestOneInput.v:320-322 AJ_FP_NIL and :328-331 SRZ_ENTER (also LLVMFuzzerTestOneInput_walk.v
-   :119-121, :125-128 and LLVMFuzzerTestOneInput_seg_L.v:157-159, same text), Section a/b/c: Context {fx} {rc} {SK},
+(* lib/B/Prog/LLVMFuzzerTestOneInput.v:321-323 AJ_FP_NIL and :328-331 SRZ_ENTER (also LLVMFuzzerTestOneInput_walk.v
+   :119-121, :125-128 and LLVMFuzzerTestOneInput_seg_L.v:158-160, same text), Section a/b/c: Context {fx} {rc} {SK},
    SEGS := @pa_segs _ identb_listing PI, Variable B. SEGS is a term of type list Segment, so the check is at any SEGS. *)
 Variable SEGS : list Segment.
 Variable B : asyms.
@@ -61,7 +62,7 @@ Check (srz_enter SEGS : forall (W : world SEGS) (c : config) (T : TSet),
 AI SEGS (w_H W) (w_A W) (cfg_model c) ->
 SRr SEGS W c (fun W' c' => AI SEGS (w_H W') (w_A W') (cfg_model c') -> srealizes SEGS c' T) ->
 srealizes SEGS c T).
-(* lib/B/Prog/IdentEntryLink.v:707-709 AJ_FP_NIL, Section L: SKB, SEGS := @pa_segs _ identb_listing (@PI_identb rc),
+(* lib/B/Prog/IdentEntryLink.v:708-710 AJ_FP_NIL, Section L: SKB, SEGS := @pa_segs _ identb_listing (@PI_identb rc),
    Variable IdentB (its SRZ_ENTER, :713-716, is the text checked above). *)
 Check (ajournal_fp_nil (SK := SKB) SEGS B : forall STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
 @ajournal rc SKB SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumE.v, with its module paths and module names changed; 815 of its 890 lines of code are new or changed and 1840 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (#102 asan, 1be0f53d / unstripped twin bff8519b): PIECE 4 of the walk of
    ex_value (A 0x832a4), ev_word: 0x83494-0x834a0 ('f'), 0x83554-0x83564 ('n'), 0x83748-0x83764 ('t'), 17
    instructions, from P_KIND (S8aIface.v ev_at_kind) at EV_WORD_F / EV_WORD_N / EV_WORD_T, through `jal ex_word` with
@@ -8,14 +9,14 @@
    (ev_string_spec, ev_word_spec; approved by the unit owner 05:04Z as sent) and the program-call kit both pieces use:
    ev_call_st (aj_call_xWF's symbolic-state premise at the journal's sp), ev_rod (fpre's read-only view at a call),
    ev_chain (the frame chain at a call), ev_mid_rt (ev_mid after a caller-window program call).
-   Base (#102, 2026-10-29): the S8a of record commit 6d4ad7fbfc10 (ec3ecbdf6a65 + int102
-   d7322b084da6, kit f97c8b2f046b, PRH_Base.v fdb45545469b). MOVED from the old-image proof of
-   commit b8ea5a686a5 by a Theorem Labs lane's alreloc c4338d099cfb8025 plus hand fixes (relocation
+   Base (#102, 2026-10-29): the S8a of record (+ int102,
+   kit, PRH_Base.v fdb45545469b). MOVED from the old-image proof
+    by a Theorem Labs lane's alreloc c4338d099cfb8025 plus hand fixes (relocation
    audit docs/S8A102-RELOC-AUDIT.md). RE-FIT to #102: the ledger's two new cells (ea_most / ea_own) and fpre's last
    conjunct frm_zero (FRM0-ENTRY), supplied at the ex_word call from ev_fx, as the S8a interface writer does at ex_string in
    S8aP7a. The caller-window call rule is the engine's YCbqGcallW.aj_call_xWF_d; ZSB_x is the engine's
    alx_zshadow_byte (AR_laws_x field 13); the frame chain at a call comes from ev_pre's prhex_ch_apart conjunct.
-   RE-PROVED (2026-10-29): the ev_word of commit 9d7dd411769 is WITHDRAWN (the unit owner): it took
+   RE-PROVED (2026-10-29): the ev_word is WITHDRAWN (the unit owner): it took
    WORDX = tex_word_specX, FALSE as stated then (v = 2 ^ 64 with a3 = 0 takes the NULL arm, and the post asked a store
    at q + 32 the binary never makes). The kit's tex_word_specX now asks `0 <= v /\ v + 4 <= 2 ^ 47` (PRH_FnEx.v);
    ev_word_call discharges it from the tree root's three homes (a heap block of Lam, a live fake frame, the real stack
@@ -23,7 +24,7 @@
    MEMNORM (S8aIface.v: ev_pre's and ev_mid's last conjunct): every runner segment keeps `YAkMemnorm.memnorm SEGS mem`
    by YC1fPx's _inv runners at P := that predicate (laws YSRrMemnorm.srr_inv_laws_memnorm_k); the call keeps it by the
    text's m-form post (fpostWm's keep `memnorm mem -> memnorm mem'`); ev_mid_rt takes it at the new memory.
-   HFHULL / HSTK64 (stand-ins at 9d7dd411769) are no longer hypotheses: ev_frame_hull / ev_stk64 derive them from
+   HFHULL / HSTK64 (stand-ins) are no longer hypotheses: ev_frame_hull / ev_stk64 derive them from
    AR_laws_x field 18 (alx_layout_ok, stk_aligned_x), as S8aEntry.v and pieces 7 + 8 do.
    EX-LIT-SHADOW (the literal's shadow at ex_word's call sites, the named gap PRH_FnEx.v:36-38) is CLOSED here: the
    stand-in LIT is DELETED and ev_lit_cstr proves it by a Theorem Labs lane's YGcallRoStr.ro_cstr_x with vm_compute witnesses
@@ -73,7 +74,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_Reader AF0m.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require S1ImgA.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YAkMemnorm YSRrMemnorm YGcallRoStr.
 (* the word-read lemma rdword_of_val_mem (cgif donor), cited by name: YCem builds on this base (log
-   the internal file build-20261029T170422Z.log); the flagged copy ev_rdword_of_vm of 9d7dd411769 is deleted. Nothing
+   the internal file build-20261029T170422Z.log); the flagged copy ev_rdword_of_vm is deleted. Nothing
    else of YCem / YCeh is cited (no image-B fact). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YCem.
 Import ListNotations.
@@ -189,16 +190,16 @@ Lemma ZSB_x : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> ly_stk_lo ly <=
 Proof. exact (alx_zshadow_byte SEGS B ARx LAWS). Qed.
 (* STAND-IN, Lam-block home and the text / scratch blocks: exactly AR_shadow_law_cf's text (YG0dcf.v:290) over ARx (=
    S8aNumber.v's HSHD, lane E's CUTFIX_shadow_hd): the shadow of a live block past its hidden head and the hull of the
-   whole block. DISCHARGE at the preset instance: AR_shadow_law_ok_cf (YG0sshcf.v:160, core 074d9f39628f). The
+   whole block. DISCHARGE at the preset instance: AR_shadow_law_ok_cf (YG0sshcf.v:160, core). The
    engine's alx_shadow (field 11) / alx_hshadow (field 14) do not give it for a generic hl. *)
 Hypothesis HSHD : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) ->
   block_shadow (aview SEGS (w_H W) mem) SHADOW_OFF (p + hd_skip Hp p) (req_size n - hd_skip Hp p) /\
   shadow_hull_vis (aview SEGS (w_H W) mem) p (req_size n).
-(* ---- the two hull facts the walk took as HFHULL / HSTK64 at 9d7dd411769, DERIVED here from AR_laws_x field 18
+(* ---- the two hull facts the walk took as HFHULL / HSTK64, DERIVED here from AR_laws_x field 18
    (alx_layout_ok, YCbqG.v) through named projections: COPIED (statements and proofs) from S8aEntry.v eve_granule_64 /
    eve_stk64 / eve_fs_cid / eve_frame_hull (S8aEntry's LAWS fixes the head length at cf_head and this file's is generic;
    the proofs never read it, so they are copied, not cited). Pieces 7 + 8 dropped the same two hypotheses the same way
-   (S8aItemsTop.v :93, commit f2bdcc4ec76). The real stack's top is 64-aligned
+   (S8aItemsTop.v :93). The real stack's top is 64-aligned
    (stk_aligned_x); a live fake frame of 56 bytes or more is 64-aligned (layout_ok's lo_F_al), so its shadow hull is
    its own fs_frame_bytes cid / 8 shadow bytes, present by field 3 (alx_frames). ---- *)
 Lemma ev_granule_64 : forall x, shadow_addr x / 8 * 8 = SHADOW_OFF + x / 64 * 8.
@@ -266,7 +267,7 @@ Qed.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
 (* STAND-IN: the ex_word walk (the kit's text tex_word_specX, PRH_FnEx.v; owner the unit owner's S8b lane), at every float
-   state (ex_word touches none; the unit owner ruled the forall fx1 form, Main 05:4xZ). Since kit old-pin bd0d3c3a486b
+   state (ex_word touches none; the unit owner ruled the forall fx1 form, Main 05:4xZ). Since kit old-pin
    the text asks `0 <= v /\ v + 4 <= 2 ^ 47` (the fix of its v = 2 ^ 64 counterexample); ev_word_call discharges it. *)
 Hypothesis WORDX : forall fx1, tex_word_specX (fx := fx1) (PI := PIA) (L := A_prog_listing) (PA := PA) B ARx SK.
 (* OWNER the final image instance (AD2l.v TfibB_syms, Qed): image A's symbol record (AF0m.v TfibSyms), the image
@@ -276,8 +277,8 @@ Hypothesis TS : AF0m.TfibSyms B.
 (* THE LITERALS "true" / "false" / "null" that ex_value passes to ex_word (A' 0x20f60 / 0x20f80 / 0x20fa0 =
    VAL (A_OBJ 2) + 0x10f60 / 0x10f80 / 0x10fa0, checked on the twin, see the header) are valid C strings at every
    ARx state that has fpre's read-only view. This was the stand-in LIT (EX-LIT-SHADOW, PRH_FnEx.v:36-38), which is
-   now DELETED. The proof is a Theorem Labs lane's engine lemma YGcallRoStr.ro_cstr_x (commit
-   9747e78ff620, blob 570a4a7a3251). Its premises: AR_laws_x (LAWS), ARx, arodata_okP (ev_rod), and the image
+   now DELETED. The proof is a Theorem Labs lane's engine lemma YGcallRoStr.ro_cstr_x (
+   blob 570a4a7a3251). Its premises: AR_laws_x (LAWS), ARx, arodata_okP (ev_rod), and the image
    premise ro_str_img. ro_str_img is DECIDED at image A' by ro_str_check over the instance's tables (ev_lit_img_A,
    vm_compute) and applied at B by ro_str_check_ok through TS (ev_lit_img). The tables' const cells are
    AF0m.Tfib_const_shadow, the layout-free tail of Tfib_const. *)
@@ -440,8 +441,8 @@ intros Hp b x H1 H2. unfold hd_skip. destruct (existsb (Z.eqb b) Hp) eqn:E; [|li
 apply existsb_exists in E as (h & Hin & Eh). apply Z.eqb_eq in Eh. subst h. exact (H2 Hin).
 Qed.
 
-(* a sub-range of a visible hull is visible: COPIED (statement and proof) from lane E's S8aNumE.v eve_hull_sub
-   (commit da73e1570f8), which no longer builds on this base *)
+(* a sub-range of a visible hull is visible: COPIED (statement and proof) from lane E's S8aNumE.v eve_hull_sub,
+   which no longer builds on this base *)
 Lemma ev_hull_sub : forall (rd : reader) p mm d n, shadow_hull_vis rd p mm -> p <= d -> d + n <= p + mm -> 0 < n ->
   shadow_hull_vis rd d n.
 Proof.
@@ -906,7 +907,7 @@ assert (Hvb : 0 <= ea_v a /\ ea_v a + 4 <= 2 ^ 47).
 { destruct Htree as [Hv0|(_ & Hhome & _)]; [rewrite Hv0; lia|].
   pose proof (ev_home_bound B ARx LAWS ly S Hp W mem md mem (ea_Lam a) (ea_regs a) (ea_v a) 56 _ _ _ _ _ _ HAR Hled
     ltac:(rewrite Eshi; exact H47) ltac:(lia) Hhome) as (Hvlo & Hvhi). lia. }
-(* PRH_Base.fpre's two conjuncts past the read-only view (walkkit old-pin be60d536d2af): ex_word's entry sp is the body's
+(* PRH_Base.fpre's two conjuncts past the read-only view (walkkit old-pin): ex_word's entry sp is the body's
    S1, 64 or more below the stack's top (S1 <= sp0 - 256 and fpre's sp0 + 64 <= ly_stk_hi at the activation); its ra
    is the jal's return pc, a listing literal below the ceiling's least value *)
 assert (HSPc : spZ regs + 64 <= ly_stk_hi ly).

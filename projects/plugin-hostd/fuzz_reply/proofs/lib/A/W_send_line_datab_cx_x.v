@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/A/W_send_line_datab_cx.v, the cut of send_line's data round at
-   the join 0x82850 (a Theorem Labs lane's step 1 of route (b), 2026-10-29), from its text at a working branch a78a220dc8e
+   the join 0x82850 (a Theorem Labs lane's step 1 of route (b), 2026-10-29), from its text at a working branch
    (sha256 dee427b63292; internal record, the kit's too). W_send_line_datab_cx.v is NOT edited.
    - The Section header is W_send_line_cx_x.v's (W_send_line_cx.v's over ARx, LAWS, PST).
    - sl_loop_at_x, SLM_x and sl_copy_stmt_x are the twins of sl_loop_at, SLM and sl_copy_stmt: the journal
@@ -13,7 +14,7 @@
    No statement difference is forced by ARx.
    THE ROOM FORM (a Theorem Labs lane, row A-SL_x, 2026-10-30), as W_send_line_cx_x.v's: `Variable RP : roomp` after MT, AREALLOC
    (caller-context form, CTX_R / HCTX_slr) at RP, HP0 (a Theorem Labs lane's HP0 ruling: the memcpy's range_addressable of a heap block needs it, W_journal_x
-   range_addressable_of_block_hp0_x), SLM_x with C3's peak (W_send_line_datab_cx.v SLM at 76be6190eff) and after
+   range_addressable_of_block_hp0_x), SLM_x with C3's peak (W_send_line_datab_cx.v SLM) and after
    frames the room budget of the rounds after this one (sl_cost_run at MT_rk, on top of kr) and the entry's
    cnt_ok_pk RP sl_pk; SLM_x, sl_loop_at_x and sl_copy_stmt_x take the post's kr last. The bridges are at RP := RP_AR. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -67,7 +68,7 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* a live block's request is below 2 ^ 30 (W_LLVMFuzzerTestOneInput_exit_x.v:236 BLKM's text; the top states it at ARX,
+(* a live block's request is below 2 ^ 30 (W_LLVMFuzzerTestOneInput_exit_x.v:237 BLKM's text; the top states it at ARX,
    top_x.v:972, from the cf instance's AR_blocks_law_cf): the memcpy at 0x82864 needs n < 2 ^ 32 (a Theorem Labs lane) *)
 Hypothesis BLKM : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 30.
 (* W_send_line_cx_x.v's header (W_send_line_datab_cx.v's is W_send_line_cx.v's) *)
@@ -81,12 +82,12 @@ Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, ACk0.v:45, holds [0x82844]); send_line hands the rule a cut chain (ch = []), so the trace is the
-   return address alone (W7's ccd62d4c6f6 form). *)
+   return address alone (W7's form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x110] CTX_R.   (* realloc returns to 0x82844 *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
-(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:189's form): the loop's errno
+(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:190's form): the loop's errno
    stores need range_addressable of errno at an ARx state (W_contract_x.azs_range_addressable_x) *)
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
@@ -175,14 +176,14 @@ Variable HA : alayout -> astate -> bvmap 5 word -> list (Z * Z * Z) -> Z -> Z ->
 Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md -> RO mem.
 Hypothesis HA_call : forall lyc Sc regsT ch p n, mo_ok MT Sc (mo_malloc MT n + mo_free MT) -> HA lyc Sc regsT ch p n.
 Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CTX_R R (SIGMA WS_realloc).
-(* W_send_line_datab_cx_x.v:113 sl_loop_at_x at R *)
+(* W_send_line_datab_cx_x.v:114 sl_loop_at_x at R *)
 Definition sl_loop_at_xR (n : nat) : Prop :=
 forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_xR B PST ARx MT RP MMAX RG R regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr ->
 2 * (Z.of_nat (length Bl) - sent) + eiL <= Z.of_nat n ->
 SRrG SEGS R WL (mkCfg (mkst regsL (Z_to_bv 64 (BASE + A_sl_loop)) memL (seg_rom SEGS)) mdL)
 (sl_post_xR B PST ARx R MT RP RG regsE ly S Hp W mem md c O mx no cap out Bl kr).
-(* W_send_line_datab_cx_x.v:121 SLM_x at R *)
+(* W_send_line_datab_cx_x.v:122 SLM_x at R *)
 Definition SLM_xR (regsE : bvmap 5 word) ly S (Hp : list Z) W mem md (c : ctl) (O : list byte) (mx no cap out line : Z)
 (Bl : list byte) (WM : world SEGS) (regsM : bvmap 5 word) (memM : word -> option byte) (mdM : Model) (sent n : Z)
 (kr : nat) : Prop :=
@@ -214,7 +215,7 @@ Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\ Permutation (ablocks
 frames SM = frames S /\
 rp_RM RP SM (Z.to_nat (sl_cost_run MT_rk (Z.to_nat (len - sent - n)) mx (no + sent + n) capM (len - sent - n)) + kr) /\
 cnt_ok_pk RP sl_pk (ablocks B ly S).
-(* W_send_line_datab_cx_x.v:153 sl_copy_stmt_x at R *)
+(* W_send_line_datab_cx_x.v:154 sl_copy_stmt_x at R *)
 Definition sl_copy_stmt_xR : Prop :=
 forall (n0 : nat) regsE ly S Hp W mem md c O mx no cap out line Bl WM regsM memM mdM sent n kr,
 sl_loop_at_xR n0 ->

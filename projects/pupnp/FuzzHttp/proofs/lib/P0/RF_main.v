@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -23,10 +24,11 @@ Open Scope mspec_scope.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 
 Definition rmain_pre_stmt {HGW : HasGuard} {HCEIL : HasCeiling} : Prop :=
-  forall (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (ms : machine_state),
-    valid_sp sp0 -> alloc_ceiling = LO sp0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp0 argv envp ->
+  forall (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (ms : machine_state),
+    valid_sp sp0 -> alloc_ceiling = bv_unsigned sp0 - 8388608 -> valid_argv argv -> valid_envp envp ->
+    stack_launch_ok inp argv envp sp0 mbase rnd ->
     guard_word = entry_guard rnd -> secret_word = entry_secret rnd ->
-    rat_main sp0 argv envp uid hw rnd ms ->
+    rat_main sp0 argv envp inp mbase rnd ms ->
     implM rsegs
       (drv_pre (io_S ps_so set_so_ps) raw_malloc raw_free RSV (argv_Z argv))
       (ps_init (reservedZ rsegs) alloc_ceiling)
@@ -43,39 +45,40 @@ Section Main.
   Hypothesis FWR : @fwrite_diag_stmt PState.
   Hypothesis TOW : towrite_stmt.
 
-  #[using="MALLOC FREE FPR EXK FWR TOW"] Lemma main_from_P1 : forall (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z) ms
+  #[using="MALLOC FREE FPR EXK FWR TOW"] Lemma main_from_P1 : forall (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z) ms
       (Q : at_parser (ptr:=bptr) -> PState -> machine_state -> Prop),
-    valid_sp sp0 -> alloc_ceiling = LO sp0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp0 argv envp -> argv = [arg0; arg1] -> 0 < TID < 4194304 ->
-    P1 sp0 argv envp uid hw rnd TID ms ->
+    valid_sp sp0 -> alloc_ceiling = bv_unsigned sp0 - 8388608 -> valid_argv argv -> valid_envp envp ->
+    stack_launch_ok inp argv envp sp0 mbase rnd -> argv = [arg0; arg1] -> 0 < TID < 4194304 ->
+    P1 sp0 argv envp inp mbase rnd TID ms ->
     (forall S4 S5 S6 S7 S8 S9 S10 S11 ap s1 ms1, rat_parser sp0 argv TID S4 S5 S6 S7 S8 S9 S10 S11 ap s1 ms1 -> Q ap s1 ms1) ->
     implM rsegs (ra <- read_all (io_S ps_so set_so_ps) raw_malloc raw_free RSV (map bv_unsigned arg1) ;;
                  match ra with RdExit => exit_k (io_S ps_so set_so_ps) 2 | RdDone buf content => main_rest buf content end)
           (ps_init (reservedZ rsegs) alloc_ceiling) Q ms.
   Proof.
-    intros sp0 argv envp uid hw rnd arg0 arg1 TID ms Q VSP CEIL VARGV VENVP ESF EARGV HT HP1 HQ.
+    intros sp0 argv envp inp mbase rnd arg0 arg1 TID ms Q VSP CEIL VARGV VENVP ESF EARGV HT HP1 HQ.
     destruct HP1 as (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & fc & mm & mpad
                      & -> & FR & BA & HP & CJ & ERR & FRM).
     eapply implM_bind.
-    { eapply (main_read_all sp0 argv envp uid hw rnd arg0 arg1 TID mpad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL VARGV VENVP ESF EARGV HT MALLOC FREE FPR FWR TOW);
+    { eapply (main_read_all sp0 argv envp inp mbase rnd arg0 arg1 TID mpad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL VARGV VENVP ESF EARGV HT MALLOC FREE FPR FWR TOW);
         [exact FR| exact BA| exact HP| exact CJ| exact ERR| exact FRM]. }
     cbv beta. intros ra s' ms' PB. destruct ra as [|buf content]; cbn [POSTB] in PB.
     - eapply implM_evt; [apply evt_done; exact PB| intros msx Hx; exact (EXK _ 2 _ Q msx Hx)].
-    - eapply (phaseC sp0 argv envp uid hw rnd TID mpad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL HT FREE EXK FWR TOW); [exact PB|].
+    - eapply (phaseC sp0 argv envp inp mbase rnd TID mpad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL HT FREE EXK FWR TOW); [exact PB|].
       intros DATA A cap cw L cfg sc s1 ms1 HC0 R0. rewrite HC0.
-      eapply (phaseT sp0 argv envp uid hw rnd arg0 arg1 TID mpad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL VARGV EARGV HT MALLOC FREE EXK); [first [exact R0 | eapply RUN0_atx; exact R0] ..|].
+      eapply (phaseT sp0 argv envp inp mbase rnd arg0 arg1 TID mpad s4 s5 s6 s7 s8 s9 s10 s11 VSP CEIL VARGV EARGV HT MALLOC FREE EXK); [first [exact R0 | eapply RUN0_atx; exact R0] ..|].
       intros ap s2 ms2 RP _. exact (HQ _ _ _ _ _ _ _ _ ap s2 ms2 RP).
   Qed.
 
   #[using="MALLOC FREE AUXINIT FPR EXK FWR TOW"] Theorem rmain_pre_proof : rmain_pre_stmt.
   Proof.
-    intros sp0 argv envp uid hw rnd ms VSP CEIL VARGV VENVP ESF GW GS AM.
-    destruct (Z.eq_dec (Z.of_nat (length argv)) 2) as [E2|NE2]; [| exact (main_usage sp0 argv envp uid hw rnd VSP CEIL VARGV VENVP ESF GW GS AUXINIT FPR EXK ms _ AM NE2)].
+    intros sp0 argv envp inp mbase rnd ms VSP CEIL VARGV VENVP ESF GW GS AM.
+    destruct (Z.eq_dec (Z.of_nat (length argv)) 2) as [E2|NE2]; [| exact (main_usage sp0 argv envp inp mbase rnd VSP CEIL VARGV VENVP ESF GW GS AUXINIT FPR EXK ms _ AM NE2)].
     destruct argv as [|arg0 [|arg1 [|x l]]] eqn:EARGV; cbn in E2; try lia. rewrite <- EARGV in *.
     rewrite (drv_pre_eq argv arg0 arg1 EARGV).
     eapply implM_evt.
-    { eapply (main_to_P1 sp0 argv envp uid hw rnd VSP CEIL VARGV VENVP GW GS AUXINIT arg0 arg1); [exact EARGV| exact AM|].
+    { eapply (main_to_P1 sp0 argv envp inp mbase rnd VSP CEIL VARGV VENVP ESF GW GS AUXINIT arg0 arg1); [exact EARGV| exact AM|].
       intros TID ms' HT HP1. apply evt_done.
-      eapply (main_from_P1 sp0 argv envp uid hw rnd arg0 arg1 TID ms'
+      eapply (main_from_P1 sp0 argv envp inp mbase rnd arg0 arg1 TID ms'
                 (fun ap s' ms' => exists (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word), 0 < TID < 4194304 /\ rat_parser sp0 argv TID S4 S5 S6 S7 S8 S9 S10 S11 ap s' ms')
                 VSP CEIL VARGV VENVP ESF EARGV HT HP1).
       intros S4 S5 S6 S7 S8 S9 S10 S11 ap s1 ms1 RP. cbv beta. exists TID, S4, S5, S6, S7, S8, S9, S10, S11. split; [exact HT| exact RP]. }

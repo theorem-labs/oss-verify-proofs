@@ -4,7 +4,8 @@
    strrchr interceptor, in the tree's own words (lib/A/Bz), composed from I_pck.v internal_strlen_spec, I_strlen.v
    istrlen_spec, R_small.v / I_ikit.v (the init gate) and I_consts.v rip_stmt. No other pinned binary has this code
    (EvBound), so it is written new, in the form of I_strlen.v / I_strlenw.v. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/Bz/A/I_strrchr.v at commit debcdf3fa6a, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (46 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/Bz/A/I_strrchr.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (46 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The code (fuzz_reply.asan-ubsan, objdump of fuzz_reply.debug):
    - __interceptor_trampoline_strrchr 0x421fc: `j 0x438b0`;
    - ___interceptor_strrchr 0x438b0 (184 insns, frame 2032 + 112, ra and s0..s7 saved at sp-8 .. sp-72): AsanInited,

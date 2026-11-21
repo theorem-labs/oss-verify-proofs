@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/ErrnoG.v, with its module paths and module names changed; 56 of its 102 lines of code are new or changed and 364 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DeallocG.v @ 2bd8ae006ef (c-asan, cold/c-asan-realloc-c5; byte-identical at c-asan's buildable snapshot 478a815d97c, cold/snap-c-asan-realloc-c5-20261029T0805), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DeallocG.v (c-asan, cold/c-asan-realloc-c5; byte-identical at c-asan's buildable snapshot, cold/snap-c-asan-realloc-c5-20261029T0805), module paths changed only. *)
 (* The frame-generic contract of __asan::Allocator::Deallocate.
 
    The run starts at Deallocate's first instruction [pcD] and ends at the [ret] that comes back to Deallocate's
@@ -44,6 +44,7 @@
    not part of this statement.  The proof is for the cgif_file asan-ubsan image: segs = tfibsegs, pcD = 0x3123c,
    atp = 1. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/DeallocG.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

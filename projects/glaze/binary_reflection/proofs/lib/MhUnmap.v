@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: preserved map/reserved separation through unmap and state transport. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -181,16 +182,26 @@ Section FPGen.
     unfold munmap_eff. rewrite H0, Hprw. unfold ms. rewrite adv_munmap. exact Hk.
   Qed.
 
-  (* [comment removed for export] *)
+  (* munmap at 08b1429 cuts [vm_maps] with [maps_subtract] (Mmap.mmap_fixed_destroyed_next);
+     when the range is one ledger entry, apart from every other entry, that is the old
+     [map_remove] (Common/MmapSim.v maps_subtract_exact) *)
   Lemma munmap_model_eq : forall (a n : word) m,
     m_vm_lazy m = [] -> m_vm_materialized m = [] ->
+    (0 < bv_unsigned n) ->
+    (forall bb ss, In (bb, ss) (vm_maps (m_vmmaps m)) ->
+       (bb = a /\ ss = n)
+       \/ (0 < bv_unsigned ss
+           /\ (bv_unsigned bb + bv_unsigned ss <= bv_unsigned a
+               \/ bv_unsigned a + bv_unsigned n <= bv_unsigned bb))) ->
     munmap_model a n m
     = with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m)) (map_remove (vm_maps (m_vmmaps m)) a)
                      (maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
                      (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
                    (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
   Proof.
-    intros a n m Hl Hm. destruct m as [fd [vmm lazy mat] io fsys proc lim tm].
+    intros a n m Hl Hm Hn Hx.
+    rewrite <- (maps_subtract_exact (vm_maps (m_vmmaps m)) a n Hn Hx).
+    destruct m as [fd [vmm lazy mat] io fsys proc lim tm].
     cbn in Hl, Hm. subst lazy mat. reflexivity.
   Qed.
 
@@ -199,6 +210,14 @@ Section FPGen.
     m_vm_lazy (with_vmmaps h m) = m_vm_lazy m /\ m_vm_materialized (with_vmmaps h m) = m_vm_materialized m /\
     m_fs (with_vmmaps h m) = m_fs m /\ m_fds (with_vmmaps h m) = m_fds m.
   Proof. intros h m. destruct m as [fd [vmm lazy mat] io fsys proc lim tm]. repeat split; reflexivity. Qed.
+
+  (* LPS 75d69e00: [m_channel_reader] is a projection of [m_proc] (State.v:4912-4913) and
+     [with_vmmaps] copies [m_proc] verbatim, so the reader survives every vm-map setter by
+     conversion.  Kept as its own lemma rather than a seventh conjunct of
+     [with_vmmaps_facts], so the existing [destruct ... as (MF1 & ... & MF6)] patterns at
+     its twelve call sites keep their arity. *)
+  Lemma with_vmmaps_rdr : forall h m, m_channel_reader (with_vmmaps h m) = m_channel_reader m.
+  Proof. intros h m. destruct m as [fd [vmm lazy mat] io fsys proc lim tm]. reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -320,7 +339,7 @@ Section FPGen.
                      (maps_subtract (vm_noaccess vm) b (b + len))
                      (vm_start_brk vm) (vm_brk vm) (vm_limit vm) (vm_mmap_base vm) (vm_init_sp vm)).
     Proof.
-      intros vm [LM LN LB LR LMB]. pose proof rg_rng as (R1 & R2 & R3 & R4 & R5). hsep; ceil; unfold HEAPLO in R1, R2.
+      intros vm [LM LN LB LR LMB LMR]. pose proof rg_rng as (R1 & R2 & R3 & R4 & R5). hsep; ceil; unfold HEAPLO in R1, R2.
       constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved].
       - (* [comment removed for export] *)
         unfold map_remove. eapply Permutation_trans.
@@ -370,6 +389,8 @@ Section FPGen.
       - rewrite EBRK. exact LB.
       - exact LR.
       - exact LMB.
+      - apply Forall_forall. intros iv Hin. unfold map_remove in Hin.
+        apply filter_In in Hin. exact (proj1 (Forall_forall _ _) LMR iv (proj1 Hin)).
     Qed.
 
     (* [comment removed for export] *)
@@ -377,6 +398,28 @@ Section FPGen.
     Proof.
       intros vm [LM _ _ _ _]. apply map_has_In. apply (Permutation_in _ (Permutation_sym LM)).
       apply in_map_iff. exists rg. split; [reflexivity | exact rg_in].
+    Qed.
+
+    (* the cut [munmap_model_eq] takes: the entry unmapped is the only one at [b], and every
+       other ledger entry is a nonempty region apart from it *)
+    Lemma rg_exact : forall vm, LEDGER st1 vm -> forall bb ss, In (bb, ss) (vm_maps vm) ->
+      (bb = Z_to_bv 64 b /\ ss = Z_to_bv 64 len)
+      \/ (0 < bv_unsigned ss
+          /\ (bv_unsigned bb + bv_unsigned ss <= bv_unsigned (Z_to_bv 64 b)
+              \/ bv_unsigned (Z_to_bv 64 b) + bv_unsigned (Z_to_bv 64 len) <= bv_unsigned bb)).
+    Proof.
+      intros vm [LM _ _ _ _] bb ss Hin. pose proof rg_rng as (R1 & R2 & R3 & R4 & R5).
+      hsep; ceil; unfold HEAPLO in R1, R2.
+      apply (Permutation_in _ LM) in Hin.
+      apply (Permutation_in _ (Permutation_map region_entry PERM)) in Hin.
+      cbn [map] in Hin. destruct Hin as [E | Hin].
+      - left. cbn [region_entry rg_base rg_len] in E. injection E as <- <-. split; reflexivity.
+      - right. apply in_map_iff in Hin. destruct Hin as (r & E & Hr).
+        destruct (reg'_old r Hr) as [Hr1 _].
+        destruct (wr_rng st1 (WF_regions st1 L1 HWF1) r Hr1) as (Q1 & Q2 & Q3 & Q4 & Q5).
+        pose proof (reg'_disj r Hr) as D. hsep; ceil; unfold HEAPLO in Q1, Q2.
+        destruct r as [rb rl rk]. cbn [region_entry rg_base rg_len] in E, Q1, Q2, Q4, D.
+        injection E as <- <-. rewrite !u_Z2bv by lia. split; lia.
     Qed.
   End Unmapped.
 
@@ -434,6 +477,6 @@ Section FPGen.
   (* [comment removed for export] *)
   Lemma LEDGER_same : forall st st' vm, s_regions st' = s_regions st -> s_brk st' = s_brk st -> LEDGER st vm -> LEDGER st' vm.
   Proof.
-    intros st st' vm ER EB [LM LN LB LR LMB]. constructor; unfold noacc_of; rewrite ?ER, ?EB; assumption.
+    intros st st' vm ER EB [LM LN LB LR LMB LMR]. constructor; unfold noacc_of; rewrite ?ER, ?EB; assumption.
   Qed.
 End FPGen.

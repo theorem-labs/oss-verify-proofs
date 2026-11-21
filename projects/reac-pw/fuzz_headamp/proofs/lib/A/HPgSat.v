@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSat.v at 0de5d668c87 for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSat.v for reac-pw/fuzz_headamp
    image A (fuzz_headamp.asan): module paths changed, the rl_ / role_ prefixes renamed to hd_ / headamp_, image A's
    segments read from lib/A/Img0.v (Img0.rsegs, no local copy). Role's boolean checkers and their soundness lemmas
    are taken as they stand; cstr_chk gains the two conjuncts headamp's string predicate HPgBase.hd_cstr adds (the

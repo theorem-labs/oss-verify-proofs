@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5CloseP.v at ada533759b23 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5CloseP.v for reac-pw/fuzz_rate's
    image A: module paths changed; rate's pcs (CL 0x82484 -> LATCH 0x82528), cut lists (lib/A/RtPgSeg.v: the cursor in
    R+0x100, the six header cells rs_Hc, the frame's 56 shadow bytes) and segment start (rs_start_M01 with its own
    rt_fsh and rt_cut conjuncts); rm_ / rl_ become rtm_ / rt_. *)

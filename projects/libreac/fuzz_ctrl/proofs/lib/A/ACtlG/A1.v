@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v; 350 of its 378 lines of code are new or changed and 817 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/A1.v -- GLUE for stage seg_A1 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    W0 prologue: ENTRY -> A80f54).  Written by a Theorem Labs lane; single writer.  The pattern is
    glue-pattern.md (a working note, not in this delivery) (steps G1-G5), the worked example lib/A/ACtlG/A5.v.
@@ -73,7 +74,7 @@
    - LAWS, TFIB_SYMS, TFIB_LIB: ACtl.v's own Section hypotheses, same names and texts (the top supplies them).
    NOT HYPOTHESES (cited by name): ASM6 (astack_malloc_realizes segs B 6, the frame request's rule) is a Let bound to
    a Theorem Labs lane's PROVED A.Rt.StackMalloc6.disco_stack_malloc6 fx B LAWS TFIB_SYMS (lib/A/Rt/StackMalloc6.v and the
-   files it needs, by path from a working branch 055c2ebca7f), so glue_seg_A1's type has no ASM6 premise;
+   files it needs, by path from a working branch), so glue_seg_A1's type has no ASM6 premise;
    PC6 is a1_pc6, from TFIB_LIB's tl_code (the interim AF0l keys class 6 at 0x3da58 = ASAN_STACK_MALLOC_6);
    ctl_rt_C_of_AR (ProgWorldCtlRtC.v) and ctl_block_shadow_of_AR (ProgWorldShadow.v: the input block's shadow at the
    exit).
@@ -238,8 +239,8 @@ Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 Hypothesis TFIB_SYMS : A.AF0m.CtrlTSyms B.
 Hypothesis TFIB_LIB : A.ACeh.TfibLib B.
 (* The class-6 fake-stack request's realizes fact at B: NOT a hypothesis.  a Theorem Labs lane's PROVED
-   A.Rt.StackMalloc6.disco_stack_malloc6 (lib/A/Rt/StackMalloc6.v, taken by path from a working branch
-   055c2ebca7f; a Theorem Labs lane signed 14:59Z), at this Section's fx, B, LAWS and TFIB_SYMS. *)
+   A.Rt.StackMalloc6.disco_stack_malloc6 (lib/A/Rt/StackMalloc6.v, taken by path from a working branch;
+   a Theorem Labs lane signed 14:59Z), at this Section's fx, B, LAWS and TFIB_SYMS. *)
 Let ASM6 : Reusable.YG0d.astack_malloc_realizes segs B 6 :=
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Rt.StackMalloc6.disco_stack_malloc6 fx B LAWS TFIB_SYMS.
 Lemma a1_pc6 :

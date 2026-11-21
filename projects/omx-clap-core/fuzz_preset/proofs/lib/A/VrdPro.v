@@ -23,6 +23,7 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 2971 of its 3154 lines of code are new or changed and 4870 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S5b, image A (asan): the BOUNDARY STATE of parse_value's entry segment -- the register save,
    the ASan frame, the white-space skip and the dispatch -- which the four arm lanes consume.
 
@@ -64,7 +65,7 @@
    window, to its own fake frame and that frame's shadow, and to the cursor's p word, and the plain awr_byte admits
    all of them. Every store to v belongs to an arm lane. When v lies in a CALLER's live fake frame (prhReader_at's
    third disjunct), the arm lane runs that row with YC80xf.paj_run_xf, whose write premise awr_ok_fr admits a byte
-   that the footprint rd_fp q v names inside a frame of the journal's entry state (YCbqG.v:522 wr_fp_frame). So no
+   that the footprint rd_fp q v names inside a frame of the journal's entry state (YCbqG.v:523 wr_fp_frame). So no
    lane narrows the node premise.
 
    THE CLASS-FULL ARM. When class 0 is full, frame_alloc_0 returns NULL, rows 33..43 build the frame on the REAL
@@ -89,16 +90,16 @@
    so it cannot be added afterwards. Each call-free segment lemma X has a twin X_inv
      forall (P : (word -> option byte) -> Prop), srr_inv_laws SEGS P -> <X's premises> -> P (the start memory) ->
        SRr SEGS W c (fun W' c' => <X's post> W' c' /\ P (ms_mem (cfg_ms c')))
-   (YSRrMemnorm.v, a working branch 161f89a71b4 blob a1c1ece77b14: the runs are its paj_run_x_inv /
+   (YSRrMemnorm.v, a working branch blob a1c1ece77b14: the runs are its paj_run_x_inv /
    paj_run_to_x_inv, the twins of the paj_run_x / paj_run_to_x this walk uses; no run here is an xf run, so
    YC80xf_inv.v is not needed), and X itself is the corollary at P := fun _ => True (vrd_true_laws, vrd_srr_drop), its
-   statement byte-identical to c773f2a0dde's. The two segments that cross the class-0 frame call (vrd_seg1, vrd_pro_a)
+   statement byte-identical to. The two segments that cross the class-0 frame call (vrd_seg1, vrd_pro_a)
    get a *_P lemma BESIDE the old one, not a corollary chain: P crosses the call by srr_inv_call through the memnorm
-   keep of YGcallMxmn.aj_stack_malloc_at_xm (a working branch 8e33ecc4965b blob 87de220caca2), and that
+   keep of YGcallMxmn.aj_stack_malloc_at_xm (a working branch blob 87de220caca2), and that
    rule needs the class-0 contract WITH the keep: the PROVED FCm01xm.stack_malloc0_contract_xm B ARx FSI TB, cited
    (lib/A/FCm01xm.v blob 0078db007a0f with the frame-class walks generalised over a memory predicate, FCm0s.v blob
-   1e98e4a49385 / FCm1s.v blob ecdb46b7cc62, all by path from a working branch d05d97a3600, on the
-   18-field engine pair the record texts 51daa1e80a99 carry). So the *_P lemmas have no premise beyond srr_inv_laws and
+   1e98e4a49385 / FCm1s.v blob ecdb46b7cc62, all by path from a working branch, on the
+   18-field engine pair the record texts carry). So the *_P lemmas have no premise beyond srr_inv_laws and
    srr_inv_call. The old vrd_seg1 / vrd_pro_a keep their proofs over the proved FCm0s.stack_malloc0_contract_x. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -253,7 +254,7 @@ Definition vrd_disp_body
      aview segs (w_H W) mem a = aview segs (w_H W0) mem0 a) /\
   fwin ly W regs0 mem e /\
   (* the frame, the saved registers, the register map. The CHAINS are the text's premises VERBATIM AT THE ENTRY STATE
-     (tparse_value_specX, the kit's cut 7cdbb61b5fa0, PRH_FnParse.v blob f0d92dcec7e9): the entry call chain up to its
+     (tparse_value_specX, the kit's cut, PRH_FnParse.v blob f0d92dcec7e9): the entry call chain up to its
      spine, the call-graph universe closure and the cursor's stop word named at entry, and the partitioned cursor
      chain (the cursor set CW, prh_cw_entry, in the slot the deleted sp - 8 arm of prh_cur_entry vacated, is APPENDED
      at the end below). A chain at the dispatch view is not derivable (the white-space loop stores [q, q+8), which the
@@ -324,7 +325,7 @@ Definition vrd_disp_body
   (* the read-only view rides on, and the float state has not moved (nothing reaches strtod yet) *)
   arodata_okP segs pa_relro_lo pa_relro_hi B (aview segs (w_H W) mem) /\
   frm_zero (@YK11.fp_csr fx) /\
-  (* THREE ENTRY FACTS OF THE KIT'S CUT 7cdbb61b5fa0 (PRH_FnParse.v blob f0d92dcec7e9), VERBATIM AT THE ENTRY STATE, APPENDED
+  (* THREE ENTRY FACTS OF THE KIT'S CUT (PRH_FnParse.v blob f0d92dcec7e9), VERBATIM AT THE ENTRY STATE, APPENDED
      at the END so that a positional destruct moves only its last name (which then fails loudly, as the cut's own
      rd_pre append does): (1) the cursor set CW, tparse_value_specX's prh_cw_entry, which the string arm turns into
      parse_string's prh_cw_ok and the container arm into parse_items' prh_cw_entry at their call states
@@ -503,7 +504,7 @@ Qed.
 (* SHAPE 1, vrd_call_W / vrd_call_WF premise 12: the chain from parse_value's entry sp at the CALL view. Its first
    record is parse_value's own (saved ra, saved s0); the rest is the ENTRY chain from s0Z regs0 (the text's plain
    premise, blob e21b8b02d69e) read off the call view by vrd_fpchain_keep.
-   prh_cur_entry's first conjunct (PRH_Base.v blob ee6c7a38d6b6, record texts a working branch 51daa1e80a99: no
+   prh_cur_entry's first conjunct (PRH_Base.v blob ee6c7a38d6b6, record texts a working branch: no
    entry chain from s0, in any layout, keeps a record at fp = q + 8) is what makes it hold: the text permits a caller
    chain record at fp = q + 8, whose SAVED-RA slot is the cursor's p word; the white-space loop stores p' there
    (row 95), so without it no call-view chain has spine raZ regs0 :: spine ch (bad_next cannot help: it is the ra, not
@@ -585,7 +586,7 @@ Qed.
 
 (* SHAPE 2, the callee's premise 4: the cursor premises at the CALL state (regsc, the call's registers, whose sp is
    below parse_value's frame), from the same premises at parse_value's ENTRY state: prh_cur_entry, and the cursor set
-   CW's prh_cw_entry (the kit's cut 7cdbb61b5fa0, PRH_Base.v blob ef7c8ca98529: prh_cur_entry's sp - 8 arm is DELETED and
+   CW's prh_cw_entry (the kit's cut, PRH_Base.v blob ef7c8ca98529: prh_cur_entry's sp - 8 arm is DELETED and
    prh_cw_entry states, for the same word, that the free's trace is in CW or the word is the code word). On image A
    both cursor functions keep s0 = q (pi_s0cur = Some 0, PRH_Img.v), so the two named words are at q - 8 and q - 16:
    window words outside the p word, or parse_value's own saved ra / s0 when q is spZ regs0 or spZ regs0 + 8, which
@@ -780,7 +781,7 @@ Proof.
 Qed.
 
 (* ---- the two pure facts the dispatch walk turns on. They are restatements, in this tree's vocabulary, of
-   pre338r2 45cffb16b86's parse_value_disp.mask_ws and lts_109 (READING AID ONLY: that branch is in the old
+   pre338r2's parse_value_disp.mask_ws and lts_109 (READING AID ONLY: that branch is in the old
    vocabulary and over the original images, nothing of it is merged, bridged or cited as evidence here). ---- *)
 
 (* the white-space mask the loop builds in a4: rows 87..89 are `lui a0, 0x800; addiw a0, a0, 0x13; slli a4, a0, 9`,
@@ -1989,7 +1990,7 @@ all: cbn [sv_denot] in Hc; rewrite ?E33, ?E34, ?Z.add_0_r in Hc; rewrite vrd_geu
   split; [rewrite Q13; reflexivity | rewrite Q14; reflexivity].
 Qed.
 
-(* the statement before the invariant (c773f2a0dde), byte-identical: vrd_seg2_inv at P := fun _ => True *)
+(* the statement before the invariant, byte-identical: vrd_seg2_inv at P := fun _ => True *)
 Lemma vrd_seg2 : forall regs2 md2 k,
   AJp mem2 md2 k ->
   getr regs2 10 = w64 F -> getr regs2 2 = w64 AF -> getr regs2 9 = w64 AF ->
@@ -2458,7 +2459,7 @@ all: cbn [sv_denot ew ewset Nat.eqb] in Hc; rewrite ?E32, ?Z.add_0_r in Hc; rewr
       vrd_mid_close HQn HJ KM Kc Fr HF0 HFq HSq Hq64 memc EVn. exact I.
 Qed.
 
-(* the statement before the invariant (c773f2a0dde), byte-identical: vrd_loop_step_inv at P := fun _ => True *)
+(* the statement before the invariant, byte-identical: vrd_loop_step_inv at P := fun _ => True *)
 Lemma vrd_loop_step : forall pcur W' c', vrd_lpP pcur W' c' ->
   SRr SEGS W' c' (fun W2 c2 => vrd_exQ W2 c2 \/
     exists pc', (0 <= text + len - pc' < text + len - pcur) /\ vrd_lpP pc' W2 c2).
@@ -2481,7 +2482,7 @@ intros W3 c3 _ ([HE | (pc' & Hm & HL')] & HP3); apply SRr_ret;
   [left; exact (conj HE HP3) | right; exists pc'; split; [exact Hm | exact (conj HL' HP3)]].
 Qed.
 
-(* the statement before the invariant (c773f2a0dde), byte-identical: vrd_loop_inv at P := fun _ => True *)
+(* the statement before the invariant, byte-identical: vrd_loop_inv at P := fun _ => True *)
 Lemma vrd_loop : forall pcur W' c', vrd_lpP pcur W' c' -> SRr SEGS W' c' vrd_exQ.
 Proof.
 intros pcur W' c' H.
@@ -2509,7 +2510,7 @@ intros W' c' _ ([(Hpe & Hm) | (Hpe & Hm)] & HP2).
 - apply (vrd_loop_inv P PLAW p); [split; [lia|]; split; [reflexivity | exact Hm] | exact HP2].
 Qed.
 
-(* the statement before the invariant (c773f2a0dde), byte-identical: vrd_seg23_inv at P := fun _ => True *)
+(* the statement before the invariant, byte-identical: vrd_seg23_inv at P := fun _ => True *)
 Lemma vrd_seg23 : forall regs2 md2 k,
   AJp mem2 md2 k ->
   getr regs2 10 = w64 F -> getr regs2 2 = w64 AF -> getr regs2 9 = w64 AF ->
@@ -3527,7 +3528,7 @@ all: cbn [sv_denot ew ewset Nat.eqb] in Hc; rewrite ?E32, ?E12, ?Z.add_0_r in Hc
     split; [rewrite U10, (EVn' 10%nat 10%bv ltac:(lia) eq_refl); exact B10 | vrd_reg_goal EVn']. }
 Qed.
 
-(* the statement before the invariant (c773f2a0dde), byte-identical: vrd_dispatch_inv at P := fun _ => True *)
+(* the statement before the invariant, byte-identical: vrd_dispatch_inv at P := fun _ => True *)
 Lemma vrd_dispatch : forall W' c', vrd_exQ W' c' ->
   SRr SEGS W' c' (vrd_disp_a B ARx SK ly S Hp W regs mem md ch CTX0 CW e q v text len p d tb Lam peak cnt fail ran
     most own).
@@ -3554,7 +3555,7 @@ eapply SRr_bind; [exact (vrd_seg23_inv P PLAW regs2 md2 k HJ R10 R2 R9 R8 R19 R2
 intros W' c' _ (HQ & HP2). exact (vrd_dispatch_inv P PLAW W' c' HQ HP2).
 Qed.
 
-(* the statement before the invariant (c773f2a0dde), byte-identical: vrd_post_inv at P := fun _ => True *)
+(* the statement before the invariant, byte-identical: vrd_post_inv at P := fun _ => True *)
 Lemma vrd_post : forall regs2 md2 k,
   AJp mem2 md2 k ->
   getr regs2 10 = w64 F -> getr regs2 2 = w64 AF -> getr regs2 9 = w64 AF ->
@@ -3572,8 +3573,8 @@ Qed.
 
 End post.
 
-(* ---- THE SEGMENT LEMMA: parse_value's entry segment, rows 1..130, from tparse_value_specX's premises (the kit's cut
-   7cdbb61b5fa0, PRH_FnParse.v blob f0d92dcec7e9; the two it does not use - memnorm and In (raZ regs :: spine ch) CTX -
+(* ---- THE SEGMENT LEMMA: parse_value's entry segment, rows 1..130, from tparse_value_specX's premises (the kit's cut,
+   PRH_FnParse.v blob f0d92dcec7e9; the two it does not use - memnorm and In (raZ regs :: spine ch) CTX -
    are left out) to the dispatch state vrd_disp_a. ---- *)
 Theorem vrd_pro_a : forall (d : nat) ly S Hp W regs mem md ch (CTX0 : list (list Z)) (CW : list (list Z))
     e q text len p (tb : list Z) v Lam peak cnt fail ran most own,

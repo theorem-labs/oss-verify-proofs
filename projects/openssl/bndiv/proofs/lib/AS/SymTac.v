@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the StreamSim, CatSim and WallSim names are qualified as AS.* because ShapeAlg now loads the VCommon copies after them, with a comment saying why). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -10,6 +11,20 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.openssl.bndiv.lib.AS Require Import
   ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim WallSim StreamSim
   DrainSim StoreOk Footprint SymExec StepTac ShapeAlg.
+(* [AS.ShapeAlg], last in the list above, reaches [VCommon.Cfg.RomWrite]
+   (ShapeAlg.v:13), which imports [VCommon.FileSim] (RomWrite.v:12), which
+   imports [VCommon.StreamSim] and with it [VCommon.CatSim] and
+   [VCommon.WallSim] (FileSim.v:10, VCommon/StreamSim.v:10).  Those loads
+   happen AFTER the AS copies are required here, so the one-segment
+   qualifications [StreamSim.], [CatSim.] and [WallSim.] below resolve to the
+   VCommon copies, not the AS ones this file is written against:
+   [VCommon/StreamSim.v:625] states [lh_next] over [VCommon/CatSim.v:483]'s
+   [msteps], while the unqualified [msteps] here is [AS/CatSim.v:483]'s, and
+   the two are distinct inductives.  That is what [msteps_lh_next] below hit:
+   Unable to unify [msteps ?segs ?ms ?ms''] with [CatSim.msteps segs ms m].
+   Spelling the prefix [AS.X] pins each one and is load-order independent;
+   [MmapSim.], [DrainSim.] and [ShapeAlg.] need no prefix because the VCommon
+   closure of RomWrite does not reach those three. *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -214,17 +229,17 @@ Qed.
 
 Lemma msteps_to_wr : forall segs LH bs ms ms',
   msteps segs ms ms' ->
-  StreamSim.to_wr segs LH bs ms' -> StreamSim.to_wr segs LH bs ms.
+  AS.StreamSim.to_wr segs LH bs ms' -> AS.StreamSim.to_wr segs LH bs ms.
 Proof.
   intros segs LH bs ms ms' H; induction H as [|ms ms1 ms2 Hp Hs Hms IH];
     [auto|].
-  intro Hw. eapply StreamSim.twr_step; eauto.
+  intro Hw. eapply AS.StreamSim.twr_step; eauto.
 Qed.
 
 (* [comment removed for export] *)
 Lemma msteps_lh_next : forall segs LH ms ms',
   msteps segs ms ms' ->
-  StreamSim.lh_next segs LH ms' -> StreamSim.lh_next segs LH ms.
+  AS.StreamSim.lh_next segs LH ms' -> AS.StreamSim.lh_next segs LH ms.
 Proof.
   intros segs LH ms ms' H (m & Hm & HL). exists m. split; [|exact HL].
   eapply msteps_trans; eauto.
@@ -252,14 +267,14 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 End WithFP10.
 Ltac chain_mst :=
-  first [ eapply CatSim.msteps_to_wexit
+  first [ eapply AS.CatSim.msteps_to_wexit
         | eapply MmapSim.msteps_twm
         | eapply MmapSim.msteps_twm_tail
         | eapply MmapSim.msteps_tmw
-        | eapply StreamSim.msteps_to_rd
+        | eapply AS.StreamSim.msteps_to_rd
         | eapply msteps_to_wr
-        | eapply WallSim.msteps_to_wall_tail
-        | eapply WallSim.msteps_to_wallexit
+        | eapply AS.WallSim.msteps_to_wall_tail
+        | eapply AS.WallSim.msteps_to_wallexit
         | eapply DrainSim.msteps_to_rd
         | eapply DrainSim.msteps_to_out
         | eapply msteps_to_exit

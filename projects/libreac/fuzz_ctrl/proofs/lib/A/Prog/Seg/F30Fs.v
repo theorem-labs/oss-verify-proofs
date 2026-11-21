@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2004 of its 2120 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F30.v; 526 of its 716 lines of code are new or changed and 1930 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F30.v acba01bfc56c (the blob this tree had at release c5e779efe8c) (the same blob at
-   a working branch 5b5db392755 and at the glue base a working branch 5f2b9fab28a).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F30.v acba01bfc56c (the blob this tree had at release) (the same blob at
+   a working branch and at the glue base a working branch).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Callee: the PLAIN contract reac_ctrl_classify_box_frame_contract of lib/A/Prog/reac_ctrl_classify_box_frame_c.v,
    built against the glue base's blob e726b412747 (a working branch has blob 4ea5f8974df: the same plain
    contract plus a contract_F block that this file does not use).
@@ -22,7 +23,7 @@
 (* SPLIT at the call of reac_ctrl_classify_box_frame, one of the eight cgif-form fake-stack callees: call pc 0x82794
    (jal), callee entry 0x831b8 (lib/A/Prog/reac_ctrl_classify_box_frame_c.v REAC_CTRL_CLASSIFY_BOX_FRAME), return pc
    0x82798. The walk's glue (a Theorem Labs lane, 03:5xZ) cites a Theorem Labs lane's cgif-form callee spec
-   treac_ctrl_classify_box_frame_spec (a working branch 987412bd10d; at 7025616996c in
+   treac_ctrl_classify_box_frame_spec (a working branch; in
    lib/A/Prog/C_reac_ctrl_classify_box_frame.v, entry A_reac_ctrl_classify_box_frameP = 0x80edc + 0x22dc = 0x831b8,
    ra = getr regs 1) at that entry with ra = 0x82798.
    - f30_evt_call_pre_F / f30_call_norm_pre_F: the binders and premises of F30.F30Call.f30_evt_call /

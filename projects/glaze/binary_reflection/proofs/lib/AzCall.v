@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader field co_rdr at the call node's cs_ok constructions). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -982,7 +983,7 @@ Proof.
   apply expr_eqb_eq in X.   (* [comment removed for export] *)
   destruct (s_log (a_ss t)) eqn:HL; [|discriminate].
   assert (HMR : Mr SHC VSH E t mdl M = Mr SHC VSH E t' mdl M) by (apply Mr_fields; assumption).
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; unfold kn in *; rewrite ?HMR, ?H, ?X10, ?X7, ?X6, ?X5, ?X4, ?X3, ?X2, ?X1, ?X0, ?X; try assumption.
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; unfold kn in *; rewrite ?HMR, ?H, ?X10, ?X7, ?X6, ?X5, ?X4, ?X3, ?X2, ?X1, ?X0, ?X; try assumption.
 Qed.
 
 Lemma is_ret_at_sound : forall p fx R M,
@@ -1274,7 +1275,21 @@ Proof. pose proof sfloor_ge as SFG_.
         pose proof (GPS.in_floor_sound SEGS E MR k (acs_floor (a_maps cs)) (a_brk cs) (a_ylo cs) (tsubst th f') 0 (ELit 1)
                       (edenot E (tsubst th f')) HK Hcf (co_floor HC)) as X.
         rewrite estart_SA, (APS.elenZ_lit E) in X by lia. apply X. lia.
-      + unfold TOPf in HTOPf |- *. rewrite HTOPf. unfold yf in Hspv. lia. }
+      + unfold TOPf in HTOPf |- *. rewrite HTOPf. unfold yf in Hspv. lia.
+    - (* [co_rdr] (AzGPS.v:244).  This [model] is the CALLER's own -- [node_call]
+         only rebinds the environment ([bind], [remove_pairs]); it never builds a
+         model -- so [HC]'s own reader field discharges it with no model-move fact.
+         an earlier commit added the field and patched this file's OTHER construction at
+         :2001 plus the four it enumerated (AzEntry.cs_ok_intro, :1941, AzOpNewTopA/B
+         entry_cs_ok, As/BoDrvMainBridgeA:787).  The [assert (HCf : GPS.cs_ok ...)]
+         at :1258 is a FIFTH construction site and its sweep did not reach it: the
+         sweep looked for 14-identifier destructure patterns, and this site builds
+         with [constructor] instead of destructuring.  Farm
+         round reported it as AzCall.v:1277 "This proof is
+         focused, but cannot be unfocused this way" -- chars 74-75 are the [}], i.e.
+         one goal more than the bullet list covers, which is the signature of a
+         record that gained a field. *)
+      exact (co_rdr HC). }
   (* [comment removed for export] *)
   exists th, keepblocks. split; [first [exact Hbind | reflexivity]|]. split; [first [exact Hrm | reflexivity]|].
   cbv zeta. fold Ef. fold PERMf TOPf. fold HIDf HIDFf B0f C0f. fold FTOPf.
@@ -1999,6 +2014,9 @@ Proof. pose proof sfloor_ge as SFG_.
         unfold cs2. cbn [a_fake a_fbud]. rewrite (uE_agree v E E'' (a_fbud cs) Hag'' (fresh_ok_parts3 nx0 cs Hfresh)). exact (co_fbud HC).
       * (* [comment removed for export] *)
         unfold cs2. cbn [a_ylo a_maps a_brk]. eapply GPS.floor_sem_agree; [exact Hag'' | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+      * (* co_rdr: the callee's own [cs_ok] carries the reader at [mdl'], and
+           [same_but_materialized] leaves [m_proc] alone (AsVocab.v:941). *)
+        rewrite (APS.rdr_sbm _ _ Hsame). exact (co_rdr HCo).
     + rewrite Hfs2, Hfs'. reflexivity.
 Qed.
 

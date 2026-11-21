@@ -1,26 +1,27 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/YD2o.v and YD2p.v at
-   c8557374ad2e; the asan-ubsan twin of lib/A/AD2o.v, equal to it up to module names and image constants. This file is
+   theorem-labs/oss-verify-proofs@6b32741d849a; the asan-ubsan twin of lib/A/AD2o.v, equal to it up to module names and image constants. This file is
    knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind: assembly): it instantiates
    KnockClose's asan_ubsan Section at closed parts, so fuzz_knock's two asan-ubsan statements rest on no Section hypothesis.
    cgif's YD2o keeps three program-walk hypotheses that its YD2p discharges; knock's program contract (lib/AU/APgLib.v
    knock_lib_x_all) takes none, so the closing is one file and there is no YD2p. *)
 (* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image B (fuzz_qdisc.asan-ubsan, sha256
-   eb657d77bd4b27038d93f75626dcc6b37a48be09c889fda664b4f451c6602062) from proofs/libreac/fuzz_knock/lib/AU/YD2o.v at
-   origin/ossv/recipes 88154566652, in the form of this library's lib/A/AD2o.v: it instantiates lib/A/QdiscClose.v's
+   eb657d77bd4b27038d93f75626dcc6b37a48be09c889fda664b4f451c6602062) from proofs/libreac/fuzz_knock/lib/AU/YD2o.v,
+   in the form of this library's lib/A/AD2o.v: it instantiates lib/A/QdiscClose.v's
    asan_ubsan Section; the program contract is lib/AU/APgLib.v's (qdisc_lib_contract_x_all_tfib over qdisc_lib_x_all, in
    the roles of knock's APgLib knock_* lemmas); the allocator parts are lib/AU/YQdiscAllocClose.v's; QdiscClose takes
    image B's trace tables as Section arguments (Tfib_universe_U, Tfib_universe_ok_U, Tfib_drv_traces_U,
    Tfib_universe_drv_U), which this file passes from lib/AU/YCej.v and lib/AU/YCejTfib.v; names knock_* -> qdisc_*,
    module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states made in the build per CONFIG_RSEQ flag); internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.reac_pw.fuzz_qdisc Require Statements.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib Require AgreeQdisc.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require Import YK11 YG00 YG01 YG0f YG0d YC5d YCbp YM05.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YG0q.
-From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.AU Require AWalkFw0 YB01 YB12 YB1n YCej YCejTfib YD2l YD2m YD1k YD1o YD1l YD1j YD1q.
+From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.AU Require AWalkFw0 YB01 YB01r YB12 YB1n YCej YCejTfib YD2l YD2m YD1k YD1o YD1l YD1j YD1q.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.AU Require APgLib YQdiscAllocClose.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.A Require QdiscAsanTop QdiscClose.
 Local Open Scope Z_scope.
@@ -50,7 +51,7 @@ Lemma qdisc_driver_TfibB_U : forall rc : YM05.RunCeil,
   (forall fx : YK11.FPState, @aintrin_realizes fx rc AU.AWalkFw0.tfibsegs YD2l.TfibB OCpy (pc_wrap_memcpy (as_code YD2l.TfibB))) ->
   universe_ok (as_universe YD2l.TfibB) ->
   (forall t, In t YCejTfib.Tfib_drv_traces -> In t (as_universe YD2l.TfibB)) ->
-  QdiscClose.drv_mainU YB01.HS_tfib YB12.TFIB rc.
+  QdiscClose.drv_mainU YB01r.HS_tfib_r YB12.TFIB rc.
 Proof.
   intros rc AM AF AI _ _.
   exact (@YD1q.DRV_MAINX rc YD2l.TfibB YD2l.TfibB_syms (AM YK11.fx0) (AF YK11.fx0) (AI YK11.fx0)
@@ -71,13 +72,13 @@ Proof.
 Qed.
 
 (* QdiscClose's asan_ubsan Section at its parts: HS_TBL_U / TFIB_TBL_U / H_STARTUP_U from the start-up certificate
-   (YB01.HS_tfib, YB12.TFIB, YB1n.tfib_startup_T1), B_U := YD2l.TfibB, the allocator parts from
+   (YB01r.HS_tfib_r, YB12.TFIB, YB1n.tfib_startup_T1), B_U := YD2l.TfibB, the allocator parts from
    lib/AU/YQdiscAllocClose.v, the trace tables from lib/AU/YCej.v (Tfib_universe, Tfib_universe_ok) with H_TRACES_B_U by
    reflexivity (YD2l.TfibB's as_universe is YCej.Tfib_universe) and lib/AU/YCejTfib.v (Tfib_drv_traces,
    Tfib_universe_drv), and H_DRIVER_U from qdisc_driver_TfibB_U. *)
 Theorem ASAN_UBSAN_T_closed : QdiscAsanTop.ASAN_UBSAN_T.
 Proof.
-  exact (QdiscClose.ASAN_UBSAN_T_of_parts YB01.HS_tfib YB12.TFIB YB1n.tfib_startup_T1 YD2l.TfibB
+  exact (QdiscClose.ASAN_UBSAN_T_of_parts YB01r.HS_tfib_r YB12.TFIB YB1n.tfib_startup_T1 YD2l.TfibB
     YQdiscAllocClose.qdisc_amalloc_closed_U YQdiscAllocClose.qdisc_afree_closed_U YQdiscAllocClose.qdisc_aicpy_closed_U
     YCej.Tfib_universe YCej.Tfib_universe_ok eq_refl YCejTfib.Tfib_drv_traces YCejTfib.Tfib_universe_drv
     qdisc_driver_TfibB_U).

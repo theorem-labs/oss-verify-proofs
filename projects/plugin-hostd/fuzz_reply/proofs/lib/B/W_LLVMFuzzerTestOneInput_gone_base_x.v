@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: KF-COUNT F3: GC1_x / GT0_x carry gn_cst (lib/A's text at 6151e809fb3) *)
+(* Modified by Theorem Labs, 2026-10-30: KF-COUNT F3: GC1_x / GT0_x carry gn_cst (lib/A's text) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's base on image B (lib/B/W_LLVMFuzzerTestOneInput_gone_base.v,
-   a Theorem Labs lane's, a working branch fee5272ac13, with our HB-clause fix at gn_stkr), for the conversion
+   a Theorem Labs lane's, a working branch, with our HB-clause fix at gn_stkr), for the conversion
    of ARM_gone to the cut invariants of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.  _gone_base.v is not edited; its AR-free
    definitions (gn_Bx, gframe, gn_kregs, gn_op, the model notions, the GN_* texts, gn_Gs, the cut points' addresses) are
    CITED from it.  What reads AR is restated here under its name + _x; template: SmallX's image-A twin
-   lib/A/W_LLVMFuzzerTestOneInput_gone_base_x.v (a working branch 95a5de32ab2), merged per item:
+   lib/A/W_LLVMFuzzerTestOneInput_gone_base_x.v (a working branch), merged per item:
    - the gx wrappers of W_frame_x's plain runs (SRr_run_pi_AJX0_x, SRr_run_to_pi_AJX0_x, SRr_run_pi_AJX0_call_x) over
      W_journal_x.ajournal_gx_x;
    - gn_nums_x, gn_shent_in_block_x over ARx at the ghost list [] (cut_x's HP0 makes every ghost list of the walk
@@ -366,8 +367,8 @@ Proof.
 Qed.
 
 (* A callee's afn_pre at sp = F (the cut's frame), from the cut's journal and the saved registers the prologue
-   stored: B's latch twin lt_afn_pre_at (a working branch ee519e5e2f5,
-   lib/B/W_LLVMFuzzerTestOneInput_latch.v:625-698), with the saved-register clause of aframe_at in place of the whole
+   stored: B's latch twin lt_afn_pre_at (a working branch,
+   lib/B/W_LLVMFuzzerTestOneInput_latch.v:626-699), with the saved-register clause of aframe_at in place of the whole
    frame, so that every call of the arm (relay_reads, relay_instance_gone, check_no_loss, check_shape_ends) names one
    lemma. *)
 (* @@ CONVERTED Lemma gn_afn_pre *)
@@ -480,8 +481,8 @@ Definition GJN_x (cx : lfcx) (t : Z) (m : lmod) : world segs -> config -> Prop :
 Variable MMAX : Z.                                   (* W6's / W7's request bound *)
 (* ---- the room round's count row of the arm (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c)).  RP is the room record the callees are taken at;
    gn_pk is the arm's peak (s5-r1d's pk_gone at the instance).  GN_LS_cnt_x: at the operation's LS state the live
-   counts plus the arm's peak stay under the bounds.  Its guards are s5-r1d's fr_LS3cp_cnt_gone's exactly (commit
-   29956454065, lib/A/ReplyLScntRP.v / ReplyLScnt.v), with RINV for fr_RINV and LSx for fr_LS3cp; the walk holds each
+   counts plus the arm's peak stay under the bounds.  Its guards are s5-r1d's fr_LS3cp_cnt_gone's exactly (
+   lib/A/ReplyLScntRP.v / ReplyLScnt.v), with RINV for fr_RINV and LSx for fr_LS3cp; the walk holds each
    at GRG and carries them to the loop in gdone ---- *)
 Variable RP : roomp.
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.

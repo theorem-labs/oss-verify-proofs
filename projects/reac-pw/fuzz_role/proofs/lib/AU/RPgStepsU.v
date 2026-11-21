@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95b (its hd_reg_is lemma and the run-to-the-call form of hd_A / hd_B) for reac-pw/fuzz_headamp image A, segment M04b (C8 0x83764 -> C9 0x83794); every pc, register, cell and callee is headamp's, and the three runs end in block posts (lib/A/HPgSteps.v hd_blk_post). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v (its hd_reg_is lemma and the run-to-the-call form of hd_A / hd_B) for reac-pw/fuzz_headamp image A, segment M04b (C8 0x83764 -> C9 0x83794); every pc, register, cell and callee is headamp's, and the three runs end in block posts (lib/A/HPgSteps.v hd_blk_post). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgM04b.v, with its module paths and module names changed; 816 of its 893 lines of code are new or changed and 399 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgStepsB.v at dda1ad05d6e (its PART 2, the
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgStepsB.v (its PART 2, the
    trap-step lemmas of the UBSan trap branches and the two trap sites it runs, and its PART 5, the pod_write_ent
    call adapter and the three site-premise lemmas) for reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module
    paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs, the prefix rtsb_ -> rl_ and rtb_ -> rlt_; every
    pc, table, register and literal is role B's; four more trap sites are run end to end (the alignment shape at
    0x80374, the equality shape at 0x822a4, and role B's own put32 / patch32 blocks), and the shared block kit
    (rl_blk_post, rl_wpost, rl_caller_saved, the class-4 frame lemmas) is taken from lib/AU/RPgSteps.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address below is measured on its
    unstripped twin sha256 dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, whose loaded bytes are

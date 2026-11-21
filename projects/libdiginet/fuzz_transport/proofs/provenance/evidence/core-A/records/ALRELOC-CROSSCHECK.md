@@ -19,8 +19,8 @@ that holds LIB minus every relocated file, then alreloc_compare.py and alreloc_d
 plants), the two seeded sweeps (`SWEEP="80 1"`, `SWEEP="120 2"`) and alreloc_record.py (records/record-tables.md, the
 generated tables). Each step's status and time: records/alreloc-gate.txt. Inputs, each sha256-checked by the scripts:
 fuzz_grant.asan c2c7559b29bd (twin 57c26f993615), fuzz_transport.asan e89be137db17 (twin 86efc3a80314), the model images
-fuzz_manifest.asan 0ba7e1695886 and cgif_file_fuzzer.asan 7093581aab04, the donor text at origin/ossv/recipes 25e3d17bdb50,
-`--unit-ref` a494a3cb4a09 (its harness.yaml pins asan e89be137db17).
+fuzz_manifest.asan 0ba7e1695886 and cgif_file_fuzzer.asan 7093581aab04, the donor text,
+`--unit-ref` (its harness.yaml pins asan e89be137db17).
 
 ## Result (records/xcheck.log)
 

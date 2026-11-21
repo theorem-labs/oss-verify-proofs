@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch): the generic cf layer's interface for Deallocate's big-block
-   arm, DGbigIF.DIfaceBig (PRIMED in place, a working branch 3711d297cf5a, DeallocNmaxA, ruling (A): dbg_rcs_t
+   arm, DGbigIF.DIfaceBig (PRIMED in place, a working branch, DeallocNmaxA, ruling (A): dbg_rcs_t
    is Recycle under the re-hide), at the layer's walk relation
    YGcfInstBase.ARX_cf and the recycle side of free_cf's size test (rpre := YGcfInstFreeModel.rpreD_big_cf, i.e.
    rpreD_free_cf and kQuarantineMax < req_size n).  rule 24: no function proved (kind: interface-instance discharge).
@@ -113,7 +114,7 @@ Local Notation rpre := (rpreD_big_cf B).
 Local Notation fpre := (fpre_hp_cf im_segs B Hp).
 Local Notation AOX := (aowned B).
 
-(* The two recycle fields of DGbigIF.DIfaceBig (the PRIMED text, a working branch 3711d297cf5a, ruling (A)),
+(* The two recycle fields of DGbigIF.DIfaceBig (the PRIMED text, a working branch, ruling (A)),
    by reference to their texts: dbg_rq_t (the cut relation and the recycle invariant for the one chunk at Recycle's
    call; a Theorem Labs lane's YGcfInstFreeBigRq.bext_rq_cf at the cf choice) and dbg_rcs_t (Recycle on the big chunk under the
    re-hide; dbg_rcs_of_sec_rh_cf below from the unit's primed walk SEC_rh_t). *)

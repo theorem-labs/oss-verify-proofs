@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 182 of its 195 lines of code are new or changed and 235 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block, image A (asan, entry 0x855f4): stretch k = 7 of the footprint (_F) re-run of its proved v1.9 run.
    Range 0x85884 -> 0x858ec; it ends at the CUT that is the inline class-1 flag release (ld a0,120(s2) at 0x858ec ;
    sb zero,0(a0) at 0x858f0), which the cgif-form glue covers with astack_free_law / frame_flag_lawP.  No call runs
@@ -22,15 +23,15 @@
    - ELF sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd
    - compare: fuzz_ctrl.objdump.txt (a working note, not in this delivery), ctrl_lay_block 0x855f4 .. 0x85988
      (this stretch: 0x85884 li a0,-8 .. 0x858e8 sb a0,11(s8), stopping before 0x858ec ld a0,120(s2))
-   - FACTS of record ed6b6b7b0ab (origin/regen/libreac-v190-on-338), PAU (internal path)
-   - the run is re-stepped from ctrl_lay_block.v at a working branch d69f7c708f6
+   - FACTS of record (origin/regen/libreac-v190-on-338), PAU (internal path)
+   - the run is re-stepped from ctrl_lay_block.v at a working branch
 
    ROUTE (a) CONDITIONS (lead 22:15-22:18Z, a Theorem Labs lane 22:20Z, via a Theorem Labs lane):
    1. Each _F is a MECHANICAL re-derivation of an already-PROVED v1.9 run: the same proof script over StepF, and no
       new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header and goes to the auditor a Theorem Labs lane
       who signs it against its proved run before it counts.
@@ -58,7 +59,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import ctrl_lay_block
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_cF asan_memcpy_cF.
 (* Last: StepF's step / if_false / finish / store_done (evtF goals) shadow the evt engine's. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
-(* Local copy of ctrl_lay_block.v:215's store hook: the base made it Local (a Theorem Labs lane; from a working branch c9390e308b8); this file's rd_mono steps need it. *)
+(* Local copy of ctrl_lay_block.v:216's store hook: the base made it Local (a Theorem Labs lane; from a working branch); this file's rd_mono steps need it. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>

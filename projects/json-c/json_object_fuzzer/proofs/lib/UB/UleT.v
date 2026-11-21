@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main_entry over the launch's ProcInput and entry point, the path facts from main_strN; the channel-reader premise on the stderr writes and the open-failure branch; the TASK_SIZE bound on the openat path reads). *)
 
 From Stdlib Require ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -66,12 +67,13 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 08b1429: the stderr write's channel reader *)
 
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
 Let SPal : (bv_unsigned sp0 mod 16 = 0)%Z := proj2 (proj2 Hvsp).
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma oom_sym : forall (pc : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma oom_sym : forall (pc : Z) vals R M,
 (pc = 0x20dec \/ pc = 0x20e2c)%Z ->
 length vals = 39%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srOOM0 R -> know_ok RSEGS (ENV BL vals) M knRE0 ->
@@ -90,7 +92,7 @@ realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 pc) M (seg_rom RSEGS)) model) T).
 - run_blk scr0 39%nat. apply HT; assumption. }
 apply STEP. clear STEP HR HK R M. intros R M HR HK.
 
-oom_stdio_exit HL P0 resB_eq Hfd2 (@eq_refl _ (m_fs model)).
+oom_stdio_exit HL P0 resB_eq Hfd2 Hrdr (@eq_refl _ (m_fs model)).
 Qed.
 
 Variables (tid : Z) (c : Z) (R : bvmap 5 word) (M : word -> option byte).
@@ -140,7 +142,7 @@ pose proof SPlo. pose proof SPhi.
 apply (know_okRE sp0 BL Hvsp sp0 tid c R M Mstack Mimg Mtid Htid Mself Mcanary Mpagesz); lia.
 Qed.
 
-#[using="sp0 BL Hvsp Hh Hlazy Hfd2 SPlo SPhi tid c Rsp Rgp Rtp Mstack Mimg Mtid Htid Mself Mcanary Mpagesz E"] Theorem ref_oom_tail : forall pc : Z, (pc = 0x20dec \/ pc = 0x20e2c)%Z ->
+#[using="sp0 BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi tid c Rsp Rgp Rtp Mstack Mimg Mtid Htid Mself Mcanary Mpagesz E"] Theorem ref_oom_tail : forall pc : Z, (pc = 0x20dec \/ pc = 0x20e2c)%Z ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 pc) M (seg_rom RSEGS)) model)
 (t_die msg_oom (m_fs model)).
 Proof.
@@ -215,6 +217,8 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+(* LPS 727298f3: writev to fd 2 needs a reader at the far end ([State.m_channel_reader]) *)
+Hypothesis Hrdr : m_channel_reader model = true.
 
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -273,7 +277,7 @@ rewrite Z_to_bv_bv_unsigned. reflexivity.
 exists (Z_to_bv 64 0), (Z_to_bv 64 0). repeat split; krd_solve HK.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segG : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segG : forall vals R M,
 length vals = 199%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srG0 R -> know_ok RSEGS (ENV BL vals) M knG0 ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x55024) M (seg_rom RSEGS)) model) T.
@@ -321,6 +325,7 @@ change (@length byte msg_refused) with 38%nat; cbn [length Z.of_nat Pos.of_succ_
 change 38%nat with ((8 + (4 + 2)) + (8 + (8 + 8)))%nat. exact MSG.
 - reflexivity.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -369,7 +374,7 @@ ltac:(rewrite HL; vm_compute; reflexivity) H Hkeep callee_kept_no0) as HR2;
 rewrite HL in HR2; clear H Hkeep; rename HR2 into HR
 end.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segF : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segF : forall vals R M,
 length vals = 167%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srF0 R -> know_ok RSEGS (ENV BL vals) M knF0 ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x55024) M (seg_rom RSEGS)) model) T.
@@ -424,7 +429,7 @@ change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
 eapply (rf_segG vals1); eassumption.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segE : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segE : forall vals R M,
 length vals = 135%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srE0 R -> know_ok RSEGS (ENV BL vals) M knD ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x55024) M (seg_rom RSEGS)) model) T.
@@ -517,7 +522,7 @@ after_memcpy HL Hms Hkeep;
 change (wbytes Mc dst []) with Mc
 end.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segD : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segD : forall vals R M,
 length vals = 103%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srD0 R -> know_ok RSEGS (ENV BL vals) M knC ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x55024) M (seg_rom RSEGS)) model) T.
@@ -538,7 +543,7 @@ change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
 eapply (rf_segE vals1); eassumption.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segC : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segC : forall vals R M,
 length vals = 71%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srC0 R -> know_ok RSEGS (ENV BL vals) M knC0 ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x55024) M (seg_rom RSEGS)) model) T.
@@ -559,7 +564,7 @@ change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
 eapply (rf_segD vals1); eassumption.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma rf_segB : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma rf_segB : forall vals R M,
 length vals = 39%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srRF0 R -> know_ok RSEGS (ENV BL vals) M knRE0 ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x20dcc) M (seg_rom RSEGS)) model) T.
@@ -651,7 +656,7 @@ intros i Hi.
 destruct i as [|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|i]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]; [ .. | lia]; reg_caseRF.
 Qed.
 
-#[using="sp0 BL Hvsp Hh Hlazy Hfd2 SPlo SPhi T tid c Rsp Rgp Rtp Mstack Mimg Mtid Htid Mself Mcanary Mpagesz E"] Theorem ref_refused_tail :
+#[using="sp0 BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi T tid c Rsp Rgp Rtp Mstack Mimg Mtid Htid Mself Mcanary Mpagesz E"] Theorem ref_refused_tail :
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x20dcc) M (seg_rom RSEGS)) model)
 (t_die msg_refused (m_fs model)).
 Proof.
@@ -714,6 +719,8 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+(* LPS 727298f3: writev to fd 2 needs a reader at the far end ([State.m_channel_reader]) *)
+Hypothesis Hrdr : m_channel_reader model = true.
 
 Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev []).
 
@@ -776,7 +783,7 @@ run_blk scr0 263%nat.
 close_exit_at HR HK P0 Hh Hlazy sp0 48%Z (-192)%Z.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma us_segG : forall (a0s : list byte) (L : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma us_segG : forall (a0s : list byte) (L : Z) vals R M,
 Z.of_nat (length a0s) = L -> (0 <= L <= 66)%Z ->
 length vals = 231%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 113 = Z_to_bv 64 L ->
 regs_ok (ENV vals) u_srG0 R -> know_ok RSEGS (ENV vals) M u_knG0 ->
@@ -830,6 +837,7 @@ cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn 
 replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact MSG.
 - reflexivity.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -848,7 +856,7 @@ regs_ok (ENV vals) u_srF0 R -> know_ok RSEGS (ENV vals) M u_knF0 ->
 rdn RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 553)) (length a0s) = Some a0s ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x55024) M (seg_rom RSEGS)) model) T.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma us_segF : forall (a0s : list byte) (L : Z), Z.of_nat (length a0s) = L -> (0 <= L <= 66)%Z ->
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma us_segF : forall (a0s : list byte) (L : Z), Z.of_nat (length a0s) = L -> (0 <= L <= 66)%Z ->
 atUF0 a0s L (t_emit (W 2 (msg_usage a0s)) (t_exit (exit_code 2) (m_fs model))).
 Proof.
 intros a0s L HP HPr vals R M HL P0 P112 HR HK SBp.
@@ -1231,7 +1239,7 @@ run_blk scr0 263%nat.
 close_exit_at HR HK P0 Hh Hlazy sp0 48%Z (-192)%Z.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma us_segG3 : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma us_segG3 : forall vals R M,
 length vals = 231%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV vals) u_srG30 R -> know_ok RSEGS (ENV vals) M u_knG30 ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x5576c) M (seg_rom RSEGS)) model)
@@ -1259,6 +1267,7 @@ cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn 
 - reflexivity.
 - reflexivity.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -1269,7 +1278,7 @@ eapply (us_segH3 (vals ++ junk_vals R2));
 | exact HR | exact HK ].
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma us_segF3 : forall (a0s : list byte) (L : Z), Z.of_nat (length a0s) = L -> (67 <= L <= 73)%Z ->
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma us_segF3 : forall (a0s : list byte) (L : Z), Z.of_nat (length a0s) = L -> (67 <= L <= 73)%Z ->
 atUF0 a0s L (t_emit (W 2 (msg_usage a0s)) (t_exit (exit_code 2) (m_fs model))).
 Proof.
 intros a0s L HP HPr vals R M HL P0 P112 HR HK SBp.
@@ -1314,6 +1323,7 @@ rewrite ?length_app, ?PRE7_len, ?SUF7_len end.
 replace (7 + length a0s)%nat with (7 + length a0s)%nat by lia. exact B80.
 - cbn [edenot]. exact Hsuf.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -1337,7 +1347,7 @@ run_blk scr0 263%nat.
 close_exit_at HR HK P0 Hh Hlazy sp0 48%Z (-192)%Z.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma us_segG4 : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma us_segG4 : forall vals R M,
 length vals = 231%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV vals) u_srG40 R -> know_ok RSEGS (ENV vals) M u_knG40 ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x55024) M (seg_rom RSEGS)) model)
@@ -1369,6 +1379,7 @@ rewrite ?SUF7_len end.
 replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hb.
 - reflexivity.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -1379,7 +1390,7 @@ eapply (us_segH4 (vals ++ junk_vals R2));
 | exact HR | exact HK ].
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma us_segEF4 : forall (a0s : list byte) (pp : word) (L : Z), Z.of_nat (length a0s) = L -> (74 <= L <= 131071)%Z ->
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma us_segEF4 : forall (a0s : list byte) (pp : word) (L : Z), Z.of_nat (length a0s) = L -> (74 <= L <= 131071)%Z ->
 (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + L + 8 <= bv_unsigned sp0 + 4194304)%Z ->
 (bv_unsigned pp + L <= 0x800000000000)%Z ->
 atUE0 a0s pp L (t_emit (W 2 (msg_usage a0s)) (t_exit (exit_code 2) (m_fs model))).
@@ -1429,6 +1440,7 @@ rewrite ?PRE7_len end.
 replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hw0.
 - cbn [edenot ev ENV LX]. rewrite P1. exact Hsrc.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_emit_has_nil.
@@ -1494,7 +1506,7 @@ change (Env (vals_ev vals2) (blobs_ev [])) with (ENV vals2) in HR, HK.
 eapply (us_segG4 vals2); [exact HL2 | exact Q0 | exact HR | exact HK].
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Theorem us_tail : forall (a0s : list byte) (pp : word) (t8 : list byte) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Theorem us_tail : forall (a0s : list byte) (pp : word) (t8 : list byte) vals R M,
 ~ In (Z_to_bv 8 0) a0s -> (Z.of_nat (length a0s) <= 131071)%Z ->
 length vals = 71%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 1 = pp ->
 (bv_unsigned sp0 <= bv_unsigned pp)%Z ->
@@ -1620,9 +1632,15 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv tid regs0 mem0.
+(* LPS 727298f3: [main_entry] takes the launch's input, the mmap base and the entry point. *)
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv tid regs0 mem0.
 
 Hypothesis Hfit : entry_stack_fits sp0 [a0s; path] envv.
+(* LPS 727298f3: the far end of fd 2 has a reader; the launch seeds [State.m_channel_reader] from
+   [in_channel_reader], which [Run.valid_input] pins to true *)
+Hypothesis Hrdr : a_channel_reader = true.
 
 Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev (blobs0 a0s path)).
 Definition model0 : Model :=
@@ -1637,6 +1655,8 @@ Proof. reflexivity. Qed.
 Proof. reflexivity. Qed.
 #[using="Type"] Lemma model0_fd2 : fd_lookup (m_fds model0) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
 Proof. reflexivity. Qed.
+#[using="Hrdr"] Lemma model0_rdr : m_channel_reader model0 = true.
+Proof. exact Hrdr. Qed.
 #[using="Type"] Lemma model0_fs : m_fs model0 = fs0.
 Proof. reflexivity. Qed.
 
@@ -1661,40 +1681,31 @@ rewrite Bool.orb_false_r.
 destruct (path_eqb path Uapi.dot_path) eqn:E; [| reflexivity]. exfalso. apply Hnd. apply path_eqb_eq. exact E.
 Qed.
 
-#[using="AMB tid regs0 Hva Hve Hvsp ME SPlo SPhi"] Lemma path_facts :
-rdn RSEGS mem0 (p1 sp0 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])
-/\ (bv_unsigned sp0 <= bv_unsigned (p1 sp0 a0s path envv))%Z
-/\ (bv_unsigned (p1 sp0 a0s path envv) <= bv_unsigned sp0 + 2107576)%Z
-/\ exists t8, rdn RSEGS mem0 (Z_to_bv 64 (bv_unsigned (p1 sp0 a0s path envv) + Z.of_nat (length path))) 8 = Some t8.
+#[using="Hva Hve Hvsp Htid ME"] Lemma path_facts :
+rdn RSEGS mem0 (p1 a0s path envv inp) (length path + 1) = Some (path ++ [Z_to_bv 8 0])
+/\ (bv_unsigned sp0 <= bv_unsigned (p1 a0s path envv inp))%Z
+/\ (bv_unsigned (p1 a0s path envv inp) <= bv_unsigned sp0 + 2107576)%Z
+/\ exists t8, rdn RSEGS mem0 (Z_to_bv 64 (bv_unsigned (p1 a0s path envv inp) + Z.of_nat (length path))) 8 = Some t8.
 Proof.
-pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-destruct (main_str sp0 a0s path envv tid regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
-cbn [nth] in Sr, Slo, Shi, Slen. unfold p1.
-split; [exact Sr|]. split; [exact Slo|]. split; [exact Shi|].
-pose proof (lay_bsb_nw RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd Hva Hve ltac:(unfold sp_window_hi; lia)) as Hnw.
-destruct (read_word_stack RPH RSEGS sp0 [a0s; path] envv 1 (length path) a_uid a_hwcap a_rnd ltac:(cbn; lia) ltac:(cbn; lia) Hnw)
-as (t8 & Hl8 & Hr8).
-exists t8. rewrite w_add_nat in Hr8.
-pose proof (u64_range (cat_argv_ptr sp0 [a0s; path] envv 1)).
-rewrite (main_entry_rdn_above sp0 [a0s; path] envv tid regs0 mem0 ME) by (rewrite u_small by lia; lia).
-pose proof (rdn_wmem_stack RSEGS RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd) as Hw. unfold wmem in Hw.
-rewrite Hw by (rewrite u_small by lia; lia). exact Hr8.
+(* LPS 727298f3: U1oC.Mq1.main_strN's facts for argv[1] (the strings at the top of the stack block) *)
+destruct (U1oC.Mq1.main_strN sp0 [a0s; path] envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 1%nat ltac:(cbn; lia))
+as (Sr & Slo & Shi & _ & (t8 & Ht8) & _).
+cbn [nth] in Sr, Slo, Shi, Ht8. unfold p1.
+split; [exact Sr|]. split; [exact Slo|]. split; [exact Shi|]. exists t8. exact Ht8.
 Qed.
 
-#[using="Hva Hve Hvsp Hfit SPlo SPhi"] Lemma path_fits : (bv_unsigned (p1 sp0 a0s path envv) + Z.of_nat (length path) + 1 <= 0x800000000000)%Z.
+#[using="Hva Hve Hvsp Htid ME"] Lemma path_fits : (bv_unsigned (p1 a0s path envv inp) + Z.of_nat (length path) + 1 <= 0x800000000000)%Z.
 Proof.
-pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-unfold p1. rewrite (u_cat_argv_ptr sp0 [a0s; path] envv Hva Hve ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) 1%nat ltac:(cbn; lia)).
-pose proof Hfit as HF. unfold entry_stack_fits, entry_stack_span, sp_window_hi in HF.
-pose proof (total_arg_bytes_nonneg envv) as He.
-cbn [firstn]. rewrite total_arg_bytes_cons. change (total_arg_bytes_nat []) with 0%nat.
-unfold cat_struct_size, auxv_size. cbn [length total_arg_bytes fold_right] in HF. unfold auxv_size in HF. cbn [length]. lia.
+(* LPS 727298f3: the string end bound of U1oC.Mq1.main_strN (from the launch fact, below the Sv48 stack top) *)
+destruct (U1oC.Mq1.main_strN sp0 [a0s; path] envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 1%nat ltac:(cbn; lia))
+as (_ & _ & _ & _ & _ & Send).
+cbn [nth] in Send. unfold p1. change (2 ^ 47)%Z with 0x800000000000%Z in Send. exact Send.
 Qed.
 
-#[using="regs0 Hva Hve Hvsp ME Hfit SPlo SPhi"] Theorem ref_open_fail_errno : forall e vals R M,
+#[using="regs0 Hva Hve Hvsp Htid ME Hfit Hrdr SPlo SPhi"] Theorem ref_open_fail_errno : forall e vals R M,
 (1 <= e <= 4095)%Z ->
 length vals = 40%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 39 = errno_ret e ->
-vals_ev vals 2 = p1 sp0 a0s path envv ->
+vals_ev vals 2 = p1 a0s path envv inp ->
 regs_ok (ENV vals) (sr_upd srA (ridx 10) (EVar 39)) R -> know_ok RSEGS (ENV vals) M knA ->
 (forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x6086c) M (seg_rom RSEGS)) model0)
@@ -1703,9 +1714,9 @@ Proof.
 intros e vals R M He HL P0 P38 P2 HR HK Habove.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof path_len as HPl.
 destruct path_facts as (Sr & Slo & Shi & t8 & Ht8).
-pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr.
+pose proof (u64_range (p1 a0s path envv inp)) as Hpr.
 rewrite <- model0_fs.
-eapply (of_tail sp0 (blobs0 a0s path) model0 Hvsp model0_halted model0_lazy model0_fd2 path (p1 sp0 a0s path envv) t8 vals);
+eapply (of_tail sp0 (blobs0 a0s path) model0 Hvsp model0_halted model0_lazy model0_fd2 model0_rdr path (p1 a0s path envv inp) t8 vals);
 try eassumption.
 - apply path_nonul.
 - rewrite P38. apply errno_ret_range. exact He.
@@ -1717,7 +1728,7 @@ Qed.
 
 #[using="Hva Hve Hvsp Htid ME SPlo SPhi"] Lemma of_blockA : forall T,
 (forall vals R M,
-length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 a0s path envv inp ->
 regs_ok (ENV vals) srA R -> know_ok RSEGS (ENV vals) M knA ->
 (forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x60868) M (seg_rom RSEGS)) model0) T) ->
@@ -1725,13 +1736,13 @@ realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x20b84) mem0 (seg_rom RSEGS)) mod
 Proof.
 intros T HA.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-pose proof (main_regs_ok sp0 a0s path envv tid regs0 mem0 Hvsp Htid ME) as HR.
-pose proof (main_know_ok sp0 a0s path envv tid regs0 mem0 Hva Hve Hvsp Htid ME) as HK.
-change (E0 sp0 a0s path envv tid regs0) with (ENV (vals0 sp0 a0s path envv tid regs0)) in HR, HK.
-set (vals := vals0 sp0 a0s path envv tid regs0) in *.
+pose proof (main_regs_ok sp0 a0s path envv tid regs0 mem0 inp mbase entry Hva Hve Hvsp Htid ME) as HR.
+pose proof (main_know_ok sp0 a0s path envv tid regs0 mem0 inp mbase entry Hva Hve Hvsp Htid ME) as HK.
+change (E0 sp0 a0s path envv tid regs0 inp) with (ENV (vals0 sp0 a0s path envv tid regs0 inp)) in HR, HK.
+set (vals := vals0 sp0 a0s path envv tid regs0 inp) in *.
 assert (HL : length vals = 39%nat) by (subst vals; unfold vals0; rewrite !length_app, junk_vals_length; reflexivity).
 assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-assert (P2 : vals_ev vals 2 = p1 sp0 a0s path envv) by reflexivity.
+assert (P2 : vals_ev vals 2 = p1 a0s path envv inp) by reflexivity.
 clearbody vals.
 pose proof model0_halted as Hh.
 run_blk_keep scr0 39%nat.
@@ -1741,8 +1752,8 @@ intros x Hx. rewrite EQM. apply (mem_denot_above (ENV vals) mem0 _ 0%nat 0x99000
 Qed.
 
 #[using="Type"] Lemma openat_regs : forall vals R,
-vals_ev vals 2 = p1 sp0 a0s path envv -> regs_ok (ENV vals) srA R ->
-getr R 17 = Z_to_bv 64 56 /\ getr R 10 = AT_FDCWD /\ getr R 11 = p1 sp0 a0s path envv
+vals_ev vals 2 = p1 a0s path envv inp -> regs_ok (ENV vals) srA R ->
+getr R 17 = Z_to_bv 64 56 /\ getr R 10 = AT_FDCWD /\ getr R 11 = p1 a0s path envv inp
 /\ Z.ldiff (bv_unsigned (getr R 12)) open_ignored_flags = 0%Z.
 Proof.
 intros vals R P2 HR. repeat split.
@@ -1752,9 +1763,9 @@ intros vals R P2 HR. repeat split.
 - regv HR (12 : reg). vm_compute. reflexivity.
 Qed.
 
-#[using="regs0 Hva Hve Hvsp ME Hfit SPlo SPhi"] Lemma after_openat_fail : forall e vals R M,
+#[using="regs0 Hva Hve Hvsp Htid ME Hfit Hrdr SPlo SPhi"] Lemma after_openat_fail : forall e vals R M,
 (1 <= e <= 4095)%Z ->
-length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 a0s path envv inp ->
 regs_ok (ENV vals) srA R -> know_ok RSEGS (ENV vals) M knA ->
 (forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->
 realizes RSEGS (mkCfg (mkst (regupd R 10 (errno_ret e)) (v_addi (Z_to_bv 64 0x60868) 4) M (seg_rom RSEGS)) model0)
@@ -1775,7 +1786,7 @@ eapply (ref_open_fail_errno e (vals ++ [errno_ret e])); try eassumption.
 rewrite <- HL, <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity.
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hfit SPlo SPhi"] Theorem ref_open_fail_toolong :
+#[using="Hva Hve Hvsp Htid ME Hfit Hrdr SPlo SPhi"] Theorem ref_open_fail_toolong :
 (4096 <= length path)%nat ->
 realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x20b84) mem0 (seg_rom RSEGS)) model0)
 (t_die (msg_cannot_open path) fs0).
@@ -1783,7 +1794,7 @@ Proof.
 intros Hlong. apply of_blockA. intros vals R M HL P0 P2 HR HK Habove.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
 destruct path_facts as (Sr & Slo & Shi & _).
-pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr. pose proof path_len as HPl.
+pose proof (u64_range (p1 a0s path envv inp)) as Hpr. pose proof path_len as HPl.
 destruct (openat_regs vals R P2 HR) as (A17 & A10 & A11 & A12).
 assert (HF : fetch_word RSEGS (Z_to_bv 64 0x60868) = Some ECALLW) by (vm_compute; reflexivity).
 eapply (rz_openat_toolong RSEGS R _ M model0 ECALLW HF is_ecall_ECALLW
@@ -1794,10 +1805,11 @@ by (rewrite firstn_app; replace (4096 - length path)%nat with 0%nat by lia; cbn 
 apply (rdn_firstn RSEGS M (length path + 1)); [| lia].
 rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by lia. lia.
 - intros Hin. apply path_nonul. eapply In_firstn. exact Hin.
+- rewrite A11. pose proof path_fits. unfold TASK_SIZE. lia.
 - apply (after_openat_fail ENAMETOOLONG vals); try assumption. unfold ENAMETOOLONG. lia.
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hfit SPlo SPhi"] Theorem ref_open_fail_empty :
+#[using="Hva Hve Hvsp Htid ME Hfit Hrdr SPlo SPhi"] Theorem ref_open_fail_empty :
 path = [] ->
 realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x20b84) mem0 (seg_rom RSEGS)) model0)
 (t_die (msg_cannot_open path) fs0).
@@ -1805,12 +1817,13 @@ Proof.
 intros Hnil. apply of_blockA. intros vals R M HL P0 P2 HR HK Habove.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
 destruct path_facts as (Sr & Slo & Shi & _).
-pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr.
+pose proof (u64_range (p1 a0s path envv inp)) as Hpr.
 destruct (openat_regs vals R P2 HR) as (A17 & A10 & A11 & A12).
 assert (HF : fetch_word RSEGS (Z_to_bv 64 0x60868) = Some ECALLW) by (vm_compute; reflexivity).
 eapply (rz_openat_empty RSEGS R _ M model0 ECALLW HF is_ecall_ECALLW
 model0_halted model0_lazy A17 A10 A12).
-- split; [cbn; lia|]. split; [intros [] |]. rewrite A11.
+- split; [cbn; lia|]. split; [intros [] |].
+split; [rewrite A11; pose proof path_fits; cbn [length Z.of_nat]; unfold TASK_SIZE; lia|]. rewrite A11.
 replace (length path + 1)%nat with 1%nat in Sr by (rewrite Hnil; reflexivity).
 replace (path ++ [Z_to_bv 8 0]) with [Z_to_bv 8 0] in Sr by (rewrite Hnil; reflexivity).
 cbn [length Nat.add app].
@@ -1818,7 +1831,7 @@ rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by li
 - apply (after_openat_fail ENOENT vals); try assumption. unfold ENOENT. lia.
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hfit SPlo SPhi"] Theorem ref_open_fail_absent :
+#[using="Hva Hve Hvsp Htid ME Hfit Hrdr SPlo SPhi"] Theorem ref_open_fail_absent :
 (length path <= 4095)%nat -> path <> [] -> path <> dot_path -> fs_lookup fs0 path = None ->
 realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x20b84) mem0 (seg_rom RSEGS)) model0)
 (t_die (msg_cannot_open path) fs0).
@@ -1826,12 +1839,13 @@ Proof.
 intros Hlen Hne Hnd Hfs. apply of_blockA. intros vals R M HL P0 P2 HR HK Habove.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
 destruct path_facts as (Sr & Slo & Shi & _).
-pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr. pose proof path_len as HPl.
+pose proof (u64_range (p1 a0s path envv inp)) as Hpr. pose proof path_len as HPl.
 destruct (openat_regs vals R P2 HR) as (A17 & A10 & A11 & A12).
 assert (HF : fetch_word RSEGS (Z_to_bv 64 0x60868) = Some ECALLW) by (vm_compute; reflexivity).
 eapply (rz_openat_absent RSEGS R _ M model0 ECALLW HF is_ecall_ECALLW
 model0_halted model0_lazy A17 A10 A12 path).
-- split; [exact Hlen|]. split; [apply path_nonul|]. rewrite A11.
+- split; [exact Hlen|]. split; [apply path_nonul|].
+split; [rewrite A11; pose proof path_fits; unfold TASK_SIZE; lia|]. rewrite A11.
 rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by lia. lia.
 - exact Hne.
 - exact path_noslash.
@@ -1840,7 +1854,7 @@ rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by li
 - apply (after_openat_fail ENOENT vals); try assumption. unfold ENOENT. lia.
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hfit SPlo SPhi"] Corollary ref_open_fail_toolong_w :
+#[using="Hva Hve Hvsp Htid ME Hfit Hrdr SPlo SPhi"] Corollary ref_open_fail_toolong_w :
 (4096 <= length path)%nat ->
 realizes RSEGS (mkCfg (mkst regs0 (0x20b84 : word) mem0 (seg_rom RSEGS)) model0)
 (t_die (msg_cannot_open path) fs0).
@@ -1849,7 +1863,7 @@ intros H. replace (0x20b84 : word) with (Z_to_bv 64 0x20b84) by (apply bv_eq; re
 apply ref_open_fail_toolong. exact H.
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hfit SPlo SPhi"] Corollary ref_open_fail_empty_w :
+#[using="Hva Hve Hvsp Htid ME Hfit Hrdr SPlo SPhi"] Corollary ref_open_fail_empty_w :
 path = [] ->
 realizes RSEGS (mkCfg (mkst regs0 (0x20b84 : word) mem0 (seg_rom RSEGS)) model0)
 (t_die (msg_cannot_open path) fs0).
@@ -1858,7 +1872,7 @@ intros H. replace (0x20b84 : word) with (Z_to_bv 64 0x20b84) by (apply bv_eq; re
 apply ref_open_fail_empty. exact H.
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hfit SPlo SPhi"] Corollary ref_open_fail_absent_w :
+#[using="Hva Hve Hvsp Htid ME Hfit Hrdr SPlo SPhi"] Corollary ref_open_fail_absent_w :
 (length path <= 4095)%nat -> path <> [] -> path <> dot_path -> fs_lookup fs0 path = None ->
 realizes RSEGS (mkCfg (mkst regs0 (0x20b84 : word) mem0 (seg_rom RSEGS)) model0)
 (t_die (msg_cannot_open path) fs0).

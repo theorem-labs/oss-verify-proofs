@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segs: the INTERFACE of the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput.
    It holds three things and no stepping:
    1. a state predicate at each of the walk's cut points, named llvm_a_st_<offset from DEC_A_LLVMF>;
    2. the nine segment statements llvm_a_<group>_stmt, each "from the previous cut point's state, the machine
       SRr-realizes the next cut point's state", over the callee contracts that segment discharges;
    3. the composition dec_llvmf_holds_of_segs, proved: the nine statements give dec_llvmf_holds_stmt
-      (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:210-245), in cgif_file_fuzzer's lib/A/ACfj.v:230-259 form
+      (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:211-246), in cgif_file_fuzzer's lib/A/ACfj.v:230-259 form
       (SRr_bind / SRr_mono / srz_enter, the last copied here as dec_srz_enter from cgif lib/A/ACfh.v:47).
 
    The cut points and the segment names are a Theorem Labs lane's image-B plan at image A's offsets
@@ -24,7 +25,7 @@
      llvm_a_exit    +0x86c..+0xa48  ends at ret                           post = the slot post
      llvm_a_trap    +0xa4c..+0xb60  no statement: every branch into it is refuted inside the segment that holds it
 
-   Where each predicate comes from. The released UBSAN walk of the same C function at 568db058c1d proves the same
+   Where each predicate comes from. The released UBSAN walk of the same C function proves the same
    block structure on another image; each predicate below names the released post it follows, clause by clause:
      lib/U/Prog/fd_segments_c.v:39-55  fd_inv        -> dec_a_core (the journal, the frame, sp, gp/tp, the payload)
      lib/U/Prog/fd_segments_c.v:56-61  fd_mode_ok    -> dec_a_mode_ok
@@ -117,7 +118,7 @@ Definition dec_a_uolen (nch : Z) : Z := if 0 <? nch then 36 * nch else 1.
 (* What the rest of the walk still spends, from each cut point. The sizes are the released bounds:
    the payload copy at most n bytes, the decode buffer at most 48387 (fd_down.v:25 olen_bounds), the upstream
    buffer at most 1440 (fd_up.v:38 up_olen_bounds), and each check_round_trip at most dec_crt_cost_max
-   (LLVMFuzzerTestOneInput_cg.v:204-205). *)
+   (LLVMFuzzerTestOneInput_cg.v:205-206). *)
 Definition dec_rest_86c (MT : ameter_ops) : Z := dec_crt_cost_max MT + mo_free MT + mo_free MT.
 Definition dec_rest_748 (MT : ameter_ops) : Z := mo_malloc MT 1440 + dec_rest_86c MT.
 Definition dec_rest_5fc (MT : ameter_ops) : Z := mo_free MT + dec_rest_748 MT.
@@ -136,7 +137,7 @@ Definition dec_spent_748 (MT : ameter_ops) (n : Z) : Z := dec_spent_5fc MT n + m
 Definition dec_spent_86c (MT : ameter_ops) (n : Z) : Z := dec_spent_748 MT n + mo_malloc MT 1440.
 Definition dec_spent_9a8 (MT : ameter_ops) (n : Z) : Z := dec_spent_86c MT n + dec_rest_86c MT.
 
-(* spent + rest is the cost the statement's premise bounds by XL (LLVMFuzzerTestOneInput_cg.v:206-208, :242). *)
+(* spent + rest is the cost the statement's premise bounds by XL (LLVMFuzzerTestOneInput_cg.v:207-209, :243). *)
 Lemma dec_cost_ladder : forall (MT : ameter_ops) (n : Z),
   dec_spent_074 MT + dec_rest_074 MT n = dec_llvmf_cost MT n /\
   dec_spent_234 MT n + dec_rest_234 MT = dec_llvmf_cost MT n /\
@@ -166,7 +167,7 @@ Definition dec_ev_9a8 : Z := 18.
 Lemma dec_ev_in_lib : dec_ev_9a8 <= DEC_EV_LIB.
 Proof. unfold dec_ev_9a8, DEC_EV_LIB. lia. Qed.
 Section seg. Context {rc : YM05.RunCeil}.
-(* The Section of lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:169-182, variable for variable, so that
+(* The Section of lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:170-183, variable for variable, so that
    dec_llvmf_holds_stmt can be stated here at the same arguments. *)
 Local Abbreviation tfib_sink_head := dec_A_sink_head.          (* cgif lib/A/AE2k.v:44 at fuzz_decode's sink head *)
 Variable asink_syms : Type.                                    (* a Theorem Labs lane's lib/Reusable/YE00.v:32 *)
@@ -184,7 +185,7 @@ Variables RLO RHI : Z.
 Local Abbreviation segs := decodesegs0.
 Local Abbreviation rd W mem := (mrestrict (w_H W) mem).
 
-(* The frozen statement (a Theorem Labs lane 774ffa170e8, cb1f9b4724e) states HSINK_KEPT / HMETA_KEPT as premises of
+(* The frozen statement (a Theorem Labs lane) states HSINK_KEPT / HMETA_KEPT as premises of
    dec_llvmf_holds_stmt (the composition intros them under those names and passes them to llvm_a_exit_stmt, the
    one segment that needs them) and puts rom_view (lib/Reusable/YG0d.v:382) into the slot pre dec_lib_pre_x.
    HROM is that conjunct: the entry configuration shows the image's read-only bytes as the image holds them, and
@@ -235,7 +236,7 @@ Definition d_body (cx : dctx) : list byte := skipn (Z.to_nat (dec_a_u (d_n cx)))
 (* The meter budget of one call. *)
 Definition d_T (cx : dctx) : Z := XL (d_n cx).
 
-(* The slot's pre at the entry configuration (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:102-116); cgif's rt_base,
+(* The slot's pre at the entry configuration (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:103-117); cgif's rt_base,
    lib/A/ACf5.v:52. Every segment but the entry takes it as a premise, as cgif's rt_from does. *)
 Definition dec_a_base (cx : dctx) : Prop :=
   @dec_lib_pre_x (d_fx cx) rc asink_syms tfib_K asink_none ameta_inv arodata_okS RA_LLVMF A_EMPTY B MT XL RLO RHI
@@ -343,7 +344,7 @@ Definition llvm_a_st_074 (cx : dctx) : world segs -> config -> Prop :=
    top 38 bits of the size, is not zero. The frame record and its poison are written, the local is still
    poisoned (its unpoison is at +0x148), and 112(s1) holds the frame.
    Follows: lib/U/Prog/LLVMFuzzerTestOneInput_early.v:15-16 llvm_early_cond (`2 ^ 26 <= u`) and :60 llvm_early.
-   dec_a_base pins 0 <= n < 2 ^ 26 (LLVMFuzzerTestOneInput_cg.v:107), so this state is unreachable from the
+   dec_a_base pins 0 <= n < 2 ^ 26 (LLVMFuzzerTestOneInput_cg.v:108), so this state is unreachable from the
    slot pre; the edge is kept as its own statement because the listing has it. *)
 Definition llvm_a_st_104 (cx : dctx) : world segs -> config -> Prop :=
   fun W' c' => exists (fx' : YK11.FPState) ly' S' regs' mem' md',
@@ -604,7 +605,7 @@ Definition llvm_a_st_9a8 (cx : dctx) : world segs -> config -> Prop :=
     dec_a_fr cx regs' /\
     dec_a_fsh cx (aview segs (w_H W') mem') DEC_SH_MID DEC_SH_MID.
 
-(* The slot's post at the return (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:139-144), at the one leaf
+(* The slot's post at the return (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:140-145), at the one leaf
    decode_shape's LIBK hands the continuation (lib/FrameSlotK.v:40: LIBK pl fs K = K (LL 0 fs [])). *)
 Definition dec_a_post (cx : dctx) : world segs -> config -> Prop :=
   fun W' c' => exists (fx' : YK11.FPState) ly' S' regs' mem' md' k,
@@ -772,14 +773,14 @@ Definition llvm_a_exit_stmt : Prop :=
   dec_ro_rd_unowned B -> dec_rom_no_errno B ->
   AR_laws segs B -> model_laws (as_universe B) -> ameter_laws MT -> ameter_fs_laws MT ->
   (* dec_a_post asks mo_le .. (XL n) and the walk spends dec_spent_9a8 MT n = dec_llvmf_cost MT n
-     (dec_cost_ladder); this is the statement's own bound between the two (LLVMFuzzerTestOneInput_cg.v:242). *)
+     (dec_cost_ladder); this is the statement's own bound between the two (LLVMFuzzerTestOneInput_cg.v:243). *)
   (forall nn, 0 <= nn -> dec_llvmf_cost MT nn <= XL nn) ->
   astack_free_law segs B -> frame_flag_lawP segs B ->
   (forall fx : YK11.FPState, @afree04_rule fx rc tfib_sink_head segs B MT) ->
   (forall fx : YK11.FPState,
      @dec_check_round_trip_cg fx rc B MT (decode_sigma DS_check_round_trip) (CTX_check_round_trip RA_LLVMF)) ->
   (forall fx : YK11.FPState, @dec_leaf_at rc B (@LCheckBraid.dec_check_braid_cg) fx) ->
-  (* HSINK_KEPT / HMETA_KEPT, in dec_llvmf_holds_stmt's own text (LLVMFuzzerTestOneInput_cg.v:231-236) *)
+  (* HSINK_KEPT / HMETA_KEPT, in dec_llvmf_holds_stmt's own text (LLVMFuzzerTestOneInput_cg.v:232-237) *)
   (forall STK sp0 FP ly S W0 mem0 md0 own ly' S' W' mem' md' k,
      @ajournal rc tfib_sink_head segs B STK sp0 FP ly S W0 mem0 md0 own ly' S' W' mem' md' k ->
      ~ YI16.sink_open_fp FP ->

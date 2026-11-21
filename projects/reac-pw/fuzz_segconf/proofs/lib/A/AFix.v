@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFix.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build, the low shadow band of the constant cells ending at 0x800b5000 (the page above the last constant shadow cell end 0x800b4790), depot_ids_bound taking depot_inv and giving 20481 (depot_inv_cap), depot_mem_ok_agree taking ids up to 20482 and Htr being areq_ok S (KDepot tr), the depot walk's trace-length premise. *)
-(* Relocated from proofs/plugin-hostd/fuzz_command/lib/A/AFix.v at 501c0d516c69 by port_core e0e94a04094b onto reac-pw/fuzz_segconf (asan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/plugin-hostd/fuzz_command/lib/A/AFix.v by port_core e0e94a04094b onto reac-pw/fuzz_segconf (asan). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

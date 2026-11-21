@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1137 of its 1175 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names and addresses changed; 1043 of its 1221 lines of code are new or changed and 1024 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment P6 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, libreac v1.9.0 image A): the run from the cut 0x81bd8 to
    the cut 0x81bf8 (v1.8 0x81b58 .. 0x81b78, IDENTICAL: every pc +0x80).  rule 24: no function proved (a slot
    segment).
@@ -410,7 +411,7 @@ Proof.
 Qed.
 
 (* ---- The call on the normalized memory (push 5d: no cut carries mem_inv). The transports below are Seg/A1.v's
-   (a Theorem Labs lane, commit 22448a01112): the image's segments all end at or below ASAN_GT = 0x5fe000, so no byte at or
+   (a Theorem Labs lane): the image's segments all end at or below ASAN_GT = 0x5fe000, so no byte at or
    above it is read-only and MemNorm.normalize leaves it alone; every fact the call reads or gives is about such
    bytes (the window, the side stack, the shadow) or is a bytes_at fact, which crosses mem_rel as it is. ---- *)
 

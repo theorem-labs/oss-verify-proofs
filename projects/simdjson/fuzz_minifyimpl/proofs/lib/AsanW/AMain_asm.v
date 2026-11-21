@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: moZ0_ok is given the input's channel-reader fact, and minvA_std_fds takes it from the model's am_reader. *)
 From OSSVerify.Proofs.simdjson.fuzz_minifyimpl.lib.Common Require Import RunDraw.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
@@ -151,12 +152,12 @@ Section Asm.
     split; [| exact HG'].
     split; [exact (ADRV rc en inp w V m ms mo Hv Hi HM HA)|].
     split. { (* [comment removed for export] *)
-      rewrite <- HA. destruct (moZ0_ok inp) as (MZ & HZ & FdZ & FsZ).
+      rewrite <- HA. destruct (moZ0_ok inp (valid_input_either_reader _ Hi)) as (MZ & HZ & FdZ & FsZ).
       destruct (equiv_ZA_asan ASTAGE ASTAGE V (en_sp en) inp mo (moZ0 inp) Hi HMOD HP HG' MZ HZ FdZ FsZ
                   (progZ_no_leaf inp (moZ0 inp) ASTAGE Hi MZ HZ FdZ FsZ)) as [_ HL].
       exact HL. }
     split. { rewrite m_halted_MX. exact (am_halted _ _ _ _ HMOD). }
-    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (am_fds _ _ _ _ HMOD) | reflexivity |].
+    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (am_fds _ _ _ _ HMOD) | reflexivity | | exact (am_reader _ _ _ _ HMOD)].
              rewrite m_vmmaps_MX, (am_top _ _ _ _ HMOD). pose proof (am_usp _ _ _ _ HMOD). unfold sp_window_lo, sp_window_hi. lia. }
     split. { exact HTS. }
     (* [comment removed for export] *)
@@ -181,12 +182,12 @@ Section Asm.
     split; [| exact HG'].
     split. { (* [comment removed for export] *)
       exact (ADRV rc en inp w V m ms (relimit target_alloc_limit mo) Hv Hi HM HA). }
-    split. { rewrite <- HA. destruct (moZ0_ok inp) as (MZ & HZ & FdZ & FsZ).
+    split. { rewrite <- HA. destruct (moZ0_ok inp (valid_input_either_reader _ Hi)) as (MZ & HZ & FdZ & FsZ).
       destruct (equiv_ZA_asanL L HLL ASTAGE ASTAGE V (en_sp en) inp mo (moZ0 inp) Hi HMOD HP HG' MZ HZ FdZ FsZ
                   (progZ_no_leaf inp (moZ0 inp) ASTAGE Hi MZ HZ FdZ FsZ)) as [_ HL].
       exact HL. }
     split. { rewrite m_halted_MX. exact (am_halted _ _ _ _ HMOD). }
-    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (am_fds _ _ _ _ HMOD) | reflexivity |].
+    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (am_fds _ _ _ _ HMOD) | reflexivity | | exact (am_reader _ _ _ _ HMOD)].
              rewrite m_vmmaps_MX, (am_top _ _ _ _ HMOD). pose proof (am_usp _ _ _ _ HMOD). unfold sp_window_lo, sp_window_hi. lia. }
     split. { exact HTS. }
     change (MX mo []) with (canon mo). apply mrel_canon.

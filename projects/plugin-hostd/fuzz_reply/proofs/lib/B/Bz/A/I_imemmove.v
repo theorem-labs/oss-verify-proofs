@@ -1,9 +1,9 @@
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_pcap/lib/A/Bz/A/I_imemmove.v
-   (commit eabce720039), with its module paths changed and its three code addresses moved
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_pcap/lib/A/Bz/A/I_imemmove.v,
+   with its module paths changed and its three code addresses moved
    from fuzz_pcap.asan's __sanitizer_internal_memmove (0x63c18) to fuzz_reply.asan's (0x651ac) in the lib/A source (of
    that source: the 22 words are identical, so each pc keeps its offset, +0x0, +0x10, +0x38), and from there to
    fuzz_reply.asan-ubsan's (0x65204), at the same offsets. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/Bz/A/I_imemmove.v at commit 8fe76247f18, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (4 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/Bz/A/I_imemmove.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (4 numerals; per-numeral report). *)
 (* Modified by Theorem Labs, 2026-10-30: comments only: the inherited header made true of this image-B file (the address
    named as fuzz_reply.asan-ubsan's); the inherited fuzz_pcap -> fuzz_reply.asan claim is kept and marked as about the
    lib/A source. *)

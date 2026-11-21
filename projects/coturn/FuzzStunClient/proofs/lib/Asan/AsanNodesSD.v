@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -68,6 +69,7 @@ End X.
 End SDN.
 
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -88,7 +90,7 @@ Proof.
 Qed.
 
 Lemma node_shdisjm_sound : forall b1 b2,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => SDN.node_shdisjm A cs b1 b2).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => SDN.node_shdisjm A cs b1 b2).
 Proof.
   intros b1 b2 cs cs' E R FULL model T HC _ Hn Hk.
   unfold SDN.node_shdisjm in Hn.
@@ -137,7 +139,7 @@ Proof.
   rewrite <- Hpc'. apply (Hk E R FULL model); [split; apply env_agree_refl | exact HC' | reflexivity].
 Qed.
 
-Theorem sd_xn_sound : ext_stmt SEGS A nx0 LIMIT (SDN.xn A) SINV argH FS0.
+Theorem sd_xn_sound : ext_stmt SEGS A nx0 LIMIT (SDN.xn A) SINV argH FS0 sfl.
 Proof.
   intros id args. destruct id as [|id]; [intros cs cs' E R FULL model T _ _ H; discriminate H|].
   do 119 (destruct id as [|id]; [intros cs cs' E R FULL model T _ _ H; discriminate H|]).

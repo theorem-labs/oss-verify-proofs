@@ -1,42 +1,43 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v (419c9d7c02f), lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v (8da615a239d) and lib/B/ReplyRINVB.v (f908a004fd1), restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
+(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v, lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v and lib/B/ReplyRINVB.v, restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, row G-BRI-exit-drain-event of a Theorem Labs lane's pool): six RI obligations of the
-   image-B composition lib/B/ReplyBTop.v (a Theorem Labs lane's head f908a004fd1), over lib/B/ReplyRINVB.v's fr_RINV.  Each
+   image-B composition lib/B/ReplyBTop.v (a Theorem Labs lane's head), over lib/B/ReplyRINVB.v's fr_RINV.  Each
    lemma `<name>_btop` below states its obligation's `Context (<name> : ...)` text of ReplyBTop.v word for word, so
    that `exact <name>_btop` closes that Context:
-     RI_pro_btop         ReplyBTop.v:84   A source: lib/A/ReplyTopXRI.v topx_RI_pro and lib/A/ReplyRINV.v RI_pro_core
-                                          (8da615a239d); here bx_pro_core is ReplyRINVB.v's RI_pro_holds_b body (:247-276)
+     RI_pro_btop         ReplyBTop.v:84   A source: lib/A/ReplyTopXRI.v topx_RI_pro and lib/A/ReplyRINV.v RI_pro_core;
+                                          here bx_pro_core is ReplyRINVB.v's RI_pro_holds_b body (:247-276)
                                           at W_LLVMFuzzerTestOneInput_pro.pro_m (oa_new_src for pro_new_src); stated at
                                           any MT / XM_LIB (a Theorem Labs lane's ReplyBTop.v) and over B top_x's ARX;
-     RI_exit_slots_btop  ReplyBTop.v:88   A source: lib/A/ReplyRINV_a12.v RI_exit_slots_holds and its helpers (419c9d7c02f
-                                          :85-129), with lib/A/ReplyRINV.v's fr_pair_of_open (8da615a239d :605-646);
-     RI_drain_skip_btop  ReplyBTop.v:98   A source: lib/A/ReplyRINV_a3.v RI_drain_skip_holds (8da615a239d :141-146);
+     RI_exit_slots_btop  ReplyBTop.v:88   A source: lib/A/ReplyRINV_a12.v RI_exit_slots_holds and its helpers (:
+                                          85-129), with lib/A/ReplyRINV.v's fr_pair_of_open (605-646);
+     RI_drain_skip_btop  ReplyBTop.v:98   A source: lib/A/ReplyRINV_a3.v RI_drain_skip_holds (141-146);
      RI_event_step_btop  ReplyBTop.v:140  A source: lib/A/ReplyRINV_a3.v RI_event_step_holds / RI_event_step_x (:122-138),
                                           with lib/A/ReplyRINV.v's fr_ctl_sl (:1203-1221).
    Two obligations are FALSE for fr_RINV as ReplyBTop.v states them; for each, this file proves the negation of that
    exact text (from any call context, as ReplyRINV_a12.v's `_false` lemmas) and the rule with the premises the B arm
    holds, as a separate lemma (the Context text is not changed here):
-     RI_exit_ends (ReplyBTop.v:89, = B W_LLVMFuzzerTestOneInput_top_x.v:367): the text before A's restatement
-       (a working branch 3f40808c334).  fr_RINV does not say lm_gn m is 0 or 1, nor that the held texts have no NUL
+     RI_exit_ends (ReplyBTop.v:89, = B W_LLVMFuzzerTestOneInput_top_x.v:368): the text before A's restatement
+       (a working branch).  fr_RINV does not say lm_gn m is 0 or 1, nor that the held texts have no NUL
        byte.  RI_exit_ends_btop_false (lm_gn m = 2: the check gives Some 0, not Some 6) and RI_exit_ends_btop_false_nul
        (a held text of one NUL byte: the check gives None) refute the text; ReplyRINV_a12.v RI_exit_ends_obl_false /
-       _false_nul (419c9d7c02f :271-283), over the same states (a12_ names as bx_ names).  RI_exit_ends_btop_restated
-       is A's restated text (A top_x.v:461-466 at c0513fdca72) at image B's names; ReplyRINV_a12.v RI_exit_ends_holds
+       _false_nul (271-283), over the same states (a12_ names as bx_ names).  RI_exit_ends_btop_restated
+       is A's restated text (A top_x.v:461-466) at image B's names; ReplyRINV_a12.v RI_exit_ends_holds
        and fr_exit_ends / fr_exit_ends_live (:390-658, :1076-1087); ExitB.bx_exit_ends_restated_sat: its premises
        hold together.
-     RI_drain_step (ReplyBTop.v:99, = B W_LLVMFuzzerTestOneInput_top_x.v:442): B's dr_step_ok
-       (W_LLVMFuzzerTestOneInput_drain_defs.v:224-249) is A's without three of its facts: the new entry's two paddings
+     RI_drain_step (ReplyBTop.v:99, = B W_LLVMFuzzerTestOneInput_top_x.v:443): B's dr_step_ok
+       (W_LLVMFuzzerTestOneInput_drain_defs.v:225-250) is A's without three of its facts: the new entry's two paddings
        (A's `length (re_pad1 e') = 4%nat /\ length (re_pad2 e') = 4%nat`) and check_no_loss's held capacity bound
-       (A's `hl_cap H' <= Z.max 8 (...)`), which fr_entry_ok (ReplyRINVB.v:165) and fr_pair_ok (ReplyRINVB.v:154)
+       (A's `hl_cap H' <= Z.max 8 (...)`), which fr_entry_ok (ReplyRINVB.v:166) and fr_pair_ok (ReplyRINVB.v:155)
        need; and the text lacks A's two restated premises (`0 <= t < OPS_MAX`, the held / begin bound < 2 ^ 22: A
-       ReplyRINV.v:203-213, top_x.v:381-388 at c0513fdca72).  RI_drain_step_btop_false_pad (e' with re_pad1 e' = []) and
+       ReplyRINV.v:203-213, top_x.v:381-388).  RI_drain_step_btop_false_pad (e' with re_pad1 e' = []) and
        RI_drain_step_btop_false_cap (hl_cap H' = 2 ^ 24) refute the text from a state that meets every premise.
        RI_drain_step_btop_restated adds the four premises; each is a fact the B arm has at its call
-       (W_LLVMFuzzerTestOneInput_drain_calls_x.v:3591): the t bound (DLK's dr_regs_call, drain_defs.v:197), the
-       held / begin bound (LS_cnl_pre, top_x.v:362), the paddings (dr_post's aentry_ok e', W_contract.v:1002, W_rep.v:125)
-       and the held capacity (cnl_post, W_contract.v:2036).  Its proof is lib/A/ReplyRINV.v RI_drain_step_fix_holds
-       (8da615a239d :1338-1534) with B's conjunct order of dr_step_ok; ExitB.bx_drain_step_restated_sat: its premises
+       (W_LLVMFuzzerTestOneInput_drain_calls_x.v:3592): the t bound (DLK's dr_regs_call, drain_defs.v:197), the
+       held / begin bound (LS_cnl_pre, top_x.v:362), the paddings (dr_post's aentry_ok e', W_contract.v:1003, W_rep.v:125)
+       and the held capacity (cnl_post, W_contract.v:2037).  Its proof is lib/A/ReplyRINV.v RI_drain_step_fix_holds
+       (1338-1534) with B's conjunct order of dr_step_ok; ExitB.bx_drain_step_restated_sat: its premises
        hold together.
    A -> B swaps: lib/A/ReplyRINV.v's fr_* -> lib/B/ReplyRINVB.v's (the same text, ReplyRINVB.v:3-60); A's _exit.v
    lx_* -> lib/B/W_bx_defs.v's (each definition the proofs read is byte-equal: lxo_e0, lx_ends_slot0, lx_ends_c1,
@@ -109,7 +110,7 @@ Import W_bx_defs W_LLVMFuzzerTestOneInput_drain_defs W_LLVMFuzzerTestOneInput_ar
 Section exitb.
 Context {rc : YM05.RunCeil}.
 
-(* ================================================================== lib/A/ReplyRINV.v's helpers (8da615a239d) *)
+(* ================================================================== lib/A/ReplyRINV.v's helpers *)
 (* :605 fr_Forall2_r *)
 Lemma bx_Forall2_r : forall (X Y : Type) (R : X -> Y -> Prop) l1 l2,
   Forall2 R l1 l2 -> forall y, In y l2 -> exists x, In x l1 /\ R x y.
@@ -248,7 +249,7 @@ Proof.
 Qed.
 
 (* ================================================================== RI_exit_slots (ReplyBTop.v:88) *)
-(* lib/A/ReplyRINV_a12.v (419c9d7c02f) :85-113: a row's cost is at most the table's; a key costs >= 5; the held list
+(* lib/A/ReplyRINV_a12.v :85-113: a row's cost is at most the table's; a key costs >= 5; the held list
    is no longer than the keys *)
 Lemma bx_sum_nonneg : forall (l : list (rentry * (hsrc * nat))),
   0 <= fold_right Z.add 0 (map (fun q => fr_pair_cost (fst q) (snd q)) l).
@@ -295,7 +296,7 @@ Proof.
 Qed.
 
 (* ================================================================== RI_drain_skip (ReplyBTop.v:98) *)
-(* lib/A/ReplyRINV_a3.v (8da615a239d) :141-146: no relay entry to drain for the picked source: only the cursor moves *)
+(* lib/A/ReplyRINV_a3.v :141-146: no relay entry to drain for the picked source: only the cursor moves *)
 Lemma bx_drain_skip : forall (cx : lfcx) t m si h, fr_RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->
   (dr_nomatch m h (Z.of_nat (length (lm_es m))) \/
    (exists j, (j < length (lm_es m))%nat /\ re_fd (nth j (lm_es m) dr_e0) = hs_fd h /\
@@ -611,7 +612,7 @@ Proof.
   destruct Hz as [<- | Hz]; [exists y; split; [left; reflexivity | exact Hxy]|].
   destruct (IH z Hz) as (y' & Hy' & HR). exists y'. split; [right; exact Hy' | exact HR].
 Qed.
-(* a12 :1076-1087 RI_exit_ends_holds: A's restated text (top_x.v:461-466 at c0513fdca72) at image B's names *)
+(* a12 :1076-1087 RI_exit_ends_holds: A's restated text (top_x.v:461-466) at image B's names *)
 Lemma bx_exit_ends_restated : forall (cx : lfcx) t m, fr_RINV cx t m -> (0 < length (lm_es m))%nat ->
   0 <= lm_gn m <= 1 ->
   (forall i h, nth i (lm_hs m) None = Some h -> Forall (fun r => ~ In (Z_to_bv 8 0) (snd r)) (hl_recs (hs_held h))) ->
@@ -785,7 +786,7 @@ Qed.
 Definition bx_ru (e : rentry) : rentry :=
   RE (re_fd e) (re_eof e) (re_skip e) (re_pad1 e) (re_buf e) (Z.of_nat (length (re_U e))) (re_cap e) (re_hp e)
      (re_kh e) (re_pad2 e) (re_keys e) (re_U e) (re_junk e).
-(* A ReplyRINV.v:1418-1534 RI_drain_step_fix_holds, at B's dr_step_ok (lib/B/W_LLVMFuzzerTestOneInput_drain_defs.v:224-249: A's conjuncts less the two
+(* A ReplyRINV.v:1419-1535 RI_drain_step_fix_holds, at B's dr_step_ok (lib/B/W_LLVMFuzzerTestOneInput_drain_defs.v:225-250: A's conjuncts less the two
    paddings and the held capacity, the expected capacity before the controller) with those three as premises *)
 Lemma bx_drain_step_restated : forall (cx : lfcx) t m si h j e' h' c' O' cap' out' ev' LB E' H',
   fr_RINV cx t m -> 0 <= t < OPS_MAX ->
@@ -1011,8 +1012,8 @@ Qed.
 End exitb.
 End ExitB.
 
-(* ================================================================== the obligations, at ReplyBTop.v's Context text
-   (f908a004fd1), word for word, except RI_pro_btop (MT / XM_LIB generic, as a Theorem Labs lane's ReplyBTop.v) *)
+(* ================================================================== the obligations, at ReplyBTop.v's Context text,
+   word for word, except RI_pro_btop (MT / XM_LIB generic, as a Theorem Labs lane's ReplyBTop.v) *)
 (* ReplyBTop.v:84 RI_pro: the first head's model meets fr_RINV from lf_base_x's input-length range (its sixth
    conjunct, B _cut_x.v:97, at the place of lf_base's, B _cut.v:261), at any meter MT and library bound XM_LIB *)
 Lemma RI_pro_btop : forall (rc : YM05.RunCeil) (fx : YK11.FPState) (MT : ameter_ops) (XM_LIB : Z -> Z), ∀ (cx : @lfcx rc) (Hp : list Z) (q T' : Z) (pj : list byte) (c : ctl) (O : list byte) (cap out : Z), @lf_base_x rc TfibB MT XM_LIB REPLYB_RO_LO REPLYB_RO_HI fr_live_pre_b (@LIBROOM_fr CfParams_reply) RLV (G_fr_c TfibB) (@W_LLVMFuzzerTestOneInput_top_x.ARX rc) cx Hp → (∃ (c0 : ctl) (mx0 : Z), @aout_at rc (@PB_fr rc) TfibB fr_RG (@c_ly rc cx) (@c_S rc cx) (@c_W rc cx) (@c_mem rc cx) c0 O mx0 (Z.of_nat (@length byte O)) cap out) → ct_cl c = 3 → ct_br c = 0 → ct_dd c = 0 → ct_ei c = 0 → @ReplyRINVB.fr_RINV rc cx 0 (W_LLVMFuzzerTestOneInput_pro.pro_m q T' pj c O cap out).
@@ -1049,14 +1050,14 @@ Proof.
   pose proof (Hobl rc fx _ _ _ (@ExitB.bx_RINV1 rc cx0 ExitB.bx_nul 0 eq_refl ltac:(lia)) ltac:(cbn; lia)) as Hc.
   revert Hc. vm_compute. intros Hc. discriminate Hc.
 Qed.
-(* the rule with the arm's premises (A's restated text, A top_x.v:461-466 at c0513fdca72, at B's names): lm_gn m is 0
+(* the rule with the arm's premises (A's restated text, A top_x.v:461-466, at B's names): lm_gn m is 0
    or 1 (agone_at in amodel_at, B W_rep.v), and the held texts have no NUL byte (a12 :1076 RI_exit_ends_holds) *)
 Lemma RI_exit_ends_btop_restated : forall (rc : YM05.RunCeil) (fx : YK11.FPState), ∀ (cx : @lfcx rc) (t : Z) (m : lmod), @ReplyRINVB.fr_RINV rc cx t m → (0 < @length rentry (lm_es m))%nat → 0 <= lm_gn m <= 1 → (∀ (i : nat) (h : hsrc), @nth (option hsrc) i (lm_hs m) (@None hsrc) = @Some hsrc h → @Forall (Z * list byte) (fun r : Z * list byte => ¬ @In byte (Z_to_bv 8 0) (snd r)) (hl_recs (hs_held h))) → W_bx_defs.lx_ends_run (lm_gn m) (W_bx_defs.lx_rf_O m) (W_bx_defs.lx_norder m) (W_bx_defs.lx_ord m) (lm_hs m) 0 = @Some Z (Z.of_nat (@length byte (W_bx_defs.lx_rf_O m))).
 Proof. intros rc fx. exact (@ExitB.bx_exit_ends_restated rc). Qed.
 
 (* ================================================================== ReplyBTop.v:99 RI_drain_step: FALSE for fr_RINV *)
 (* B's dr_step_ok says nothing of the new entry's first padding: at re_pad1 e' = [] the new table breaks fr_entry_ok's
-   `length (re_pad1 e) = 4%nat` (ReplyRINVB.v:165) *)
+   `length (re_pad1 e) = 4%nat` (ReplyRINVB.v:166) *)
 Lemma RI_drain_step_btop_false_pad : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @lfcx rc -> ¬ (forall (rc : YM05.RunCeil) (fx : YK11.FPState), ∀ (cx : @lfcx rc) (t : Z) (m : lmod) (si : nat) (h : hsrc) (j : nat) (e' : rentry) (h' : hsrc) (c' : ctl) (O' : list byte) (cap' out' ev' : Z) (LB : list byte) (E' H' : hlist), @ReplyRINVB.fr_RINV rc cx t m → @W_LLVMFuzzerTestOneInput_drain_defs.dr_at_op rc cx m → @W_LLVMFuzzerTestOneInput_drain_defs.dr_pick rc cx m si h → (j < @length rentry (lm_es m))%nat → re_fd (@nth rentry j (lm_es m) W_LLVMFuzzerTestOneInput_drain_defs.dr_e0) = hs_fd h → re_eof (@nth rentry j (lm_es m) W_LLVMFuzzerTestOneInput_drain_defs.dr_e0) = 0 → @W_LLVMFuzzerTestOneInput_drain_defs.dr_step_ok rc cx m si h j e' h' c' O' cap' out' ev' LB E' H' → @ReplyRINVB.fr_RINV rc cx (t + 1) (W_LLVMFuzzerTestOneInput_drain_defs.dr_step m (@W_LLVMFuzzerTestOneInput_drain_defs.dr_k' rc cx m) si (CheckRep.set_exp_held h' E' H') j e' c' O' cap' out')).
 Proof.
   intros rc fx cx0 Hobl.
@@ -1069,7 +1070,7 @@ Proof.
   apply Forall_inv in Hent. destruct Hent as (_ & Hp1 & _). cbn in Hp1. discriminate Hp1.
 Qed.
 (* B's dr_step_ok says nothing of the held list's capacity after check_no_loss: at hl_cap H' = 2 ^ 24 the drained row
-   breaks fr_pair_ok's `hl_cap (hs_held h) < 2 ^ 24` (ReplyRINVB.v:154) *)
+   breaks fr_pair_ok's `hl_cap (hs_held h) < 2 ^ 24` (ReplyRINVB.v:155) *)
 Lemma RI_drain_step_btop_false_cap : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @lfcx rc -> ¬ (forall (rc : YM05.RunCeil) (fx : YK11.FPState), ∀ (cx : @lfcx rc) (t : Z) (m : lmod) (si : nat) (h : hsrc) (j : nat) (e' : rentry) (h' : hsrc) (c' : ctl) (O' : list byte) (cap' out' ev' : Z) (LB : list byte) (E' H' : hlist), @ReplyRINVB.fr_RINV rc cx t m → @W_LLVMFuzzerTestOneInput_drain_defs.dr_at_op rc cx m → @W_LLVMFuzzerTestOneInput_drain_defs.dr_pick rc cx m si h → (j < @length rentry (lm_es m))%nat → re_fd (@nth rentry j (lm_es m) W_LLVMFuzzerTestOneInput_drain_defs.dr_e0) = hs_fd h → re_eof (@nth rentry j (lm_es m) W_LLVMFuzzerTestOneInput_drain_defs.dr_e0) = 0 → @W_LLVMFuzzerTestOneInput_drain_defs.dr_step_ok rc cx m si h j e' h' c' O' cap' out' ev' LB E' H' → @ReplyRINVB.fr_RINV rc cx (t + 1) (W_LLVMFuzzerTestOneInput_drain_defs.dr_step m (@W_LLVMFuzzerTestOneInput_drain_defs.dr_k' rc cx m) si (CheckRep.set_exp_held h' E' H') j e' c' O' cap' out')).
 Proof.
   intros rc fx cx0 Hobl.
@@ -1087,6 +1088,6 @@ Proof.
 Qed.
 (* the rule with the four premises the B arm has at its call (drain_calls_x.v:3415): the t bound (dr_regs_call,
    drain_defs.v:197), the held / begin bound (LS_cnl_pre, top_x.v:362), the new entry's paddings (dr_post's
-   aentry_ok e', W_contract.v:1002 with W_rep.v:125) and the held capacity (cnl_post, W_contract.v:2036) *)
+   aentry_ok e', W_contract.v:1003 with W_rep.v:125) and the held capacity (cnl_post, W_contract.v:2037) *)
 Lemma RI_drain_step_btop_restated : forall (rc : YM05.RunCeil) (fx : YK11.FPState), ∀ (cx : @lfcx rc) (t : Z) (m : lmod) (si : nat) (h : hsrc) (j : nat) (e' : rentry) (h' : hsrc) (c' : ctl) (O' : list byte) (cap' out' ev' : Z) (LB : list byte) (E' H' : hlist), @ReplyRINVB.fr_RINV rc cx t m → 0 <= t < OPS_MAX → hl_n (hs_held h') + Z.of_nat (CheckRep.count_begin (CheckRep.texts (hs_expected h'))) < 2 ^ 22 → @W_LLVMFuzzerTestOneInput_drain_defs.dr_at_op rc cx m → @W_LLVMFuzzerTestOneInput_drain_defs.dr_pick rc cx m si h → (j < @length rentry (lm_es m))%nat → re_fd (@nth rentry j (lm_es m) W_LLVMFuzzerTestOneInput_drain_defs.dr_e0) = hs_fd h → re_eof (@nth rentry j (lm_es m) W_LLVMFuzzerTestOneInput_drain_defs.dr_e0) = 0 → @W_LLVMFuzzerTestOneInput_drain_defs.dr_step_ok rc cx m si h j e' h' c' O' cap' out' ev' LB E' H' → @length byte (re_pad1 e') = 4%nat → @length byte (re_pad2 e') = 4%nat → hl_cap H' <= Z.max 8 (Z.max (hl_cap (hs_held h')) (2 * (hl_n (hs_held h') + Z.of_nat (CheckRep.count_begin (CheckRep.texts (hs_expected h')))))) → @ReplyRINVB.fr_RINV rc cx (t + 1) (W_LLVMFuzzerTestOneInput_drain_defs.dr_step m (@W_LLVMFuzzerTestOneInput_drain_defs.dr_k' rc cx m) si (CheckRep.set_exp_held h' E' H') j e' c' O' cap' out').
 Proof. intros rc fx. exact (@ExitB.bx_drain_step_restated rc). Qed.

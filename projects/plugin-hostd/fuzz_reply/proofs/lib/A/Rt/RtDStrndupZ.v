@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AE6z.v (ent2L, ent2H, finishR, path2L, path2H): __asan_region_is_poisoned of plugin-hostd/fuzz_command's ASan build (cgif_file_fuzzer's copy of the function) walked on its own from its entry to its return, for every size 0 < n < 2^32 whose start rounds up inside its memory band, through both ways of the first and last shadow bytes and of the shadow_end <= shadow_beg test, with a scratch window of any stk >= 72 and the art_post conclusion of lib/A/Rt/RtDefs.v; module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ported from proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtSRegion.v
-   (origin/ossv/recipes, sha256 d547441964ce, the same blob as a working branch 8aaeb29ab7b2; its theorem
+   (origin/ossv/recipes, sha256 d547441964ce, the same blob as a working branch; its theorem
    cmd_region_zero_stk) to plugin-hostd/fuzz_reply's ASan image (fuzz_reply.asan, __asan_region_is_poisoned at
    0x5595c): the addresses relocated by alreloc frozen-56664a20986eb62e (29 numerals by symbol; the cgif address in
    the header comment above taken out by hand), and the statements restated over fuzz_reply's cf allocator invariant

@@ -6,13 +6,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/joined_byte.v; 58 of its 188 lines of code are new or changed and 85 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/joined_byteF.v, with its numbers changed; 406 of its 444 lines of code are new or changed and 150 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/name_fieldF.v; 71 of its 401 lines of code are new or changed and 114 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* lib/B/Prog/name_fieldF_on.v -- route (C) (a Theorem Labs lane 09:20Z; wave lead a Theorem Labs lane): the PROOF of name_field_contract_F_on
    (statement in lib/B/Prog/name_field_c_on.v) from __asan_memset's _on footprint form asan_memset_contract_F_on
    (lib/B/Prog/asan_memset_cF_on.v). name_field_c.v, name_field.v and name_fieldF.v stay unchanged outside comments.
    rule 24: no function proved here that is not already proved: the run is name_fieldF.v's name_field_holds_F, re-run
-   by the same script. Section NFFon is Section NFF (name_fieldF.v:79-373) again, every lemma renamed with _on, with
+   by the same script. Section NFFon is Section NFF (name_fieldF.v:80-374) again, every lemma renamed with _on, with
    these changes only:
-     - the Hypothesis HSW : shadow_rw m (name_fieldF.v:94) is gone;
+     - the Hypothesis HSW : shadow_rw m (name_fieldF.v:95) is gone;
      - the post is name_field_post_on (QnF_on), so nfF_cells_on gives `forall P, shadow_rw_on P m -> shadow_rw_on P m'`
        by ShadowRwOnT.shadow_rw_on_kept (meta_kept from munch W0, and wmono) where nfF_cells (:159-163) gave
        shadow_rw m' by shadow_rw_kept; epiF_on closes the post's last conjunct with it.
@@ -365,7 +366,7 @@ Proof.
   step. step. step. step.
   match goal with |- evtF _ _ _ (MS _ _ _ _ _ ?mm _) => rename mm into mA end.
   pose proof (asan_cells_kept _ m mA HC MU DRT) as HCA.
-  (* the region premise, carried to the memory of the call (name_fieldF.v:410 carried shadow_rw) *)
+  (* the region premise, carried to the memory of the call (name_fieldF.v:411 carried shadow_rw) *)
   pose proof (B.ShadowRwOnT.shadow_rw_on_kept _ m mA HSW (munch_meta _ m mA MU AW) WM) as HSWA.
   pose proof (addressable_kept m mA _ _ ADN (munch_meta _ m mA MU AW)) as ADNA.
   pose proof HCA as (Hk & Hg & _).

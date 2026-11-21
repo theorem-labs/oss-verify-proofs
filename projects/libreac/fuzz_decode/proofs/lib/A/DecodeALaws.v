@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantClose.v:120-121 (grant_ML)
    and lib/A/Prog/GrantLibX.v:173, :211-212 (GX_XL0, grant_need) of a working branch, in the form of
    proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxClose.v (H_CORE_A's zero cost; H_RT_ALLOC_A's model_laws_ok) of
-   a working branch 5093e48ebf1, for libreac/fuzz_decode's ASan image. *)
+   a working branch, for libreac/fuzz_decode's ASan image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Three named hypotheses of lib/A/DecodeClose.v, each a Lemma of the same name whose statement is the hypothesis's
    type at the values the composition binds the Section variables to (rule 24: no function proved; these are generic
    law instances, no image numeral):

@@ -5,8 +5,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 1536 of its 1692 lines of code are new or changed and 1217 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_write_value.v, with its module paths and module names changed; 518 of its 589 lines of code are new or changed and 1621 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/ZZwv_cent.v, with its module names and numbers changed; 277 of its 354 lines of code are new or changed and 512 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_step.v (a working branch
-   1a5dc5b2e7c): same lemma names and statements, with image B's loop registers (ZZwvB_defs.wvc_Lregs, ZZwvB_inv.wvc_inv),
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_step.v (a working branch):
+   same lemma names and statements, with image B's loop registers (ZZwvB_defs.wvc_Lregs, ZZwvB_inv.wvc_inv),
    image B's s6 (reg 22 = addiw d 1, no add-0 wrapper: wvc_d1_U), the B frame (WVC_F = 192), and a stronger entry fact
    HE_kk (the loop states' atom facts on kids / keys, ZZwvB_defs.wvc_gfA / wvc_gfK); imports point at lib/B's image files,
    walk kit and the B pieces ZZwvB_*.
@@ -19,6 +19,7 @@
    call and its next body invariant).
    Rule 24 (proof-index, a Theorem Labs lane, unpiped): write_value has RELEASED proofs for fs's PLAIN and UBSAN
    builds only (lib/Prog, lib/U/Prog), none for an ASan image; 0x84010 is not in the released set. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

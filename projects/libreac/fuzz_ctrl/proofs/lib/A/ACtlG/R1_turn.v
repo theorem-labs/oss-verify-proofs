@@ -16,17 +16,17 @@
    G2  the run's premises from visible state: the frame (AR_frames_law at the cut's own frame, frame law,
        layout_le), its fake-stack position (am_wf's wf_fakestack and am_layout's lo_app give fr >= 6328320),
        the stack window (the journal's present window), the input block (the core's pre, the body's Permutation,
-       AR_blocks_law / AR_shadow_law / sep_block_frame), and the carried ctl_rt_C (route (C), a working branch 1899bed1aee),
+       AR_blocks_law / AR_shadow_law / sep_block_frame), and the carried ctl_rt_C (route (C), a working branch),
        of which the run reads only asan_cells: no run of the turn takes a shadow premise (shadow-rw-consumers-A.md (a working note, not in this delivery);
        the odd-mode arm's runs are R1F's `_on` forms, whose shadow premise is dropped).
    G3  ProgBridge.cfg_at_MS and Reusable.YA0nR.SRr_xregs_eqv move the walk to the canonical map mkR_of regs3.
    G4  the whole turn is ONE footprint run r1g_turn_run at RNG := ProgBridge.RNG_W (w_H W3), composed from
        a Theorem Labs lane's Seg/R1F.v twins r1_z_evt_F, r1_ld_evt_F, r1_mode_evt_F and the route (C) forms r1_spill_evt_F_on,
-       r1_shadow_evt_F_on, r1_call_evt_F_on (R1F.v at a working branch 71e9f40f70a, blob 2db2265bda2), and
+       r1_shadow_evt_F_on, r1_call_evt_F_on (R1F.v at a working branch, blob 2db2265bda2), and
        on the w = 0 mode arm the narrowed twin Seg/R1Fs.v r1_mode_evt_Fs (below); lifted once by
        Reusable.YA0nR.SRr_fevt_hid.  NO LIFT IS CITED: r1_call_evt_F_on carries reac_box_catalogue_contract_F_on as
        its own first premise and its run spans the call, so the glue supplies that premise with the callee's closed
-       theorem reac_box_catalogueF.reac_box_catalogue_F_holds_on (a Theorem Labs lane 330e60af39d) and lifts the
+       theorem reac_box_catalogueF.reac_box_catalogue_F_holds_on (a Theorem Labs lane) and lifts the
        WHOLE run (route (a), a Theorem Labs lane 04:10Z); the caller obligations are the contract's premises, which
        r1_call_evt_F_on's own premises pay.
    G5  the three exits, each by the exit cut's ctl_from at the run's end map R and memory m': the journal by
@@ -46,17 +46,17 @@
 
    SECTION HYPOTHESES: LAWS alone (the core's AR laws, YCbq Section a0's hypothesis), as ACtl.v:210 states it.
    No placeholder: the kit helpers are cited from A.ACtlG.Kit (kit_wx, kit_segs_low, kit_frac_move; Kit.v builds on
-   the glue base 46eb24cd4b3).  No _hid placeholder: SRr_fevt_hid's own continuation carries the hidden bytes.
+   the glue base).  No _hid placeholder: SRr_fevt_hid's own continuation carries the hidden bytes.
 
    NO LOCAL COPY OF A PROGWORLD FACT: the frame bound (a live fake frame lies above the image) is cited by name,
    A.ProgWorld_Fs.ctl_frame_above_img : A.ProgWorld.ctl_frame_above_img_stmt B (a Theorem Labs lane, premise-free, files taken
-   by path from a working branch fec8db0a380).  The r1g_* lemmas are this stage's own memory and geometry
+   by path from a working branch).  The r1g_* lemmas are this stage's own memory and geometry
    steps (zone transports, the journal step, ctl_rt across the turn).
 
    CLOSURE: every project Require is qualified, no Import of a project module.
    SHADOWED NAMES: getr / seg_rom are the core's YK11 (alias YK, full path), cfg_at is Reusable.YG0d.cfg_at.
 
-   BUILD STATE: on the stand-in-free glue base (5da74c9c931 merged) and a working branch 1899bed1aee; no stand-in
+   BUILD STATE: on the stand-in-free glue base (merged) and a working branch; no stand-in
    anywhere in the closure.  No value or bound here depends on a core numeral that differs between planning and record. *)
 
 From Coq Require Import ZArith List Lia Permutation.

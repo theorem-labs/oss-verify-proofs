@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb): ex_string's walk at EVERY float state, and
    the two A' stand-ins it discharges, each restated VERBATIM in its consumer's context (the consumers are not
-   imported: on the cut both are red by dependency, S8aStr.v through S8aDisp.v:312, S8aItemsTop.v through
-   S8aItemsWalk.v:618 / S8aP7b.v:461):
-   - STR  of lib/A/Prog/S8aItemsTop.v:103-104 (Section t: Context {fx rc ci cp}, `#[local] Existing Instance prh_img_A`,
+   imported: on the cut both are red by dependency, S8aStr.v through S8aDisp.v:313, S8aItemsTop.v through
+   S8aItemsWalk.v:618 / S8aP7b.v:462):
+   - STR  of lib/A/Prog/S8aItemsTop.v:104-105 (Section t: Context {fx rc ci cp}, `#[local] Existing Instance prh_img_A`,
      PA := @PI_prog_A rc, SEGS := pa_segs, Variables B ARx SK, Context {RL}, LAWS at cf_head);
-   - STRX of lib/A/Prog/S8aStr.v:121 (Section w: Context {fx rc ci cp RL}, PIA := prh_img_A, PA := @PI_prog_A rc,
+   - STRX of lib/A/Prog/S8aStr.v:122 (Section w: Context {fx rc ci cp RL}, PIA := prh_img_A, PA := @PI_prog_A rc,
      Variables B ARx SK, Context {hl}, LAWS at hl): its discharge here takes LAWS at cf_head, so it holds where the
      consumer's hl is cf_head (the composer's instance: S8aItemsTop.v's LAWS, S8aCompose.v).
    Both are the kit text tex_string_specX at L := A_prog_listing, PA := PI_prog_A, PI := prh_img_A and at the consumer's
@@ -60,7 +61,7 @@ intros fx. exact (ex_string_holds_A (fx := fx) B ARx SK LAWS HHEAD PAL).
 Qed.
 End h.
 
-(* ---- STR of lib/A/Prog/S8aItemsTop.v:103-104, in Section t's context ---- *)
+(* ---- STR of lib/A/Prog/S8aItemsTop.v:104-105, in Section t's context ---- *)
 Section t. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 #[local] Existing Instance prh_img_A.
 #[local] Notation PA := (@PI_prog_A rc).
@@ -78,7 +79,7 @@ Lemma es_STR_S8aItemsTop : forall fxc : YK11.FPState,
 Proof. exact (ex_string_holds_A_all B ARx SK LAWS HHEAD PAL). Qed.
 End t.
 
-(* ---- STRX of lib/A/Prog/S8aStr.v:121, in Section w's context (LAWS at cf_head: see the header) ---- *)
+(* ---- STRX of lib/A/Prog/S8aStr.v:122, in Section w's context (LAWS at cf_head: see the header) ---- *)
 Section w.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {RL : PrhRoomLive}.
 #[local] Notation PIA := prh_img_A.

@@ -1,18 +1,19 @@
 (* copy of cgif/cgif_file_fuzzer lib/MnRefill.v (file sha256 30e2d494441d; donor not released); do not edit. Only this line is added, lines 4-5 (the start of the header comment) are reworded, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-29 (p102 row N9-MNARM; task MEMNORM): statements (the contract definitions and two closed lemmas).
    rule 24: no function proved (kind: statements - the memnorm-keeping twin of the Allocate miss arms' REFILL
    callee, SizeClassAllocator64LocalCache::Refill at ag_refill).
 
    WHY.  The miss arms (AGim / AGin, their seeds AGiw / AGja) call the refill through AIfaceM.if_refill
-   (AGif0n.v:283-298).  Its post [rleaf] (AGif0n.v:253-268) frames the raw memory outside the owned sets at S0 and at
+   (AGif0n.v:284-299).  Its post [rleaf] (AGif0n.v:254-269) frames the raw memory outside the owned sets at S0 and at
    the result and the refill's stack window [spZ regs - RSTACK, spZ regs).  At cgif [aowned] meets the read-only
-   segment [0x10000, 0x30000) (YF0m.v:279-286), so rleaf's raw frame does not give the keep; the refill walk's own
+   segment [0x10000, 0x30000) (YF0m.v:280-287), so rleaf's raw frame does not give the keep; the refill walk's own
    windows do (CLrefillR's three routes: the uninit step YFkv / YFhn.refill_leaf_init, the inited B2 leaves YFkt /
    YFkz over YFko.WINR, the B3 leaves CLrefillB3.LEAF_std over YFkn's MEQ and YFkm.XC_owned).
 
-   WHAT, as ErrnoG.v:396-495 states the errno add-on of the same field (and in its order):
+   WHAT, as ErrnoG.v:397-496 states the errno add-on of the same field (and in its order):
    - [rleaf_em]: ErrnoG.rleaf_e with `memnorm mem -> memnorm mem'` right after errno, inside the same existential;
    - [amm_refill_t]: AIfaceM.if_refill over rleaf_em (ErrnoG.ame_refill_t's premises, byte for byte);
    - [amm_refill_e]: amm_refill_t gives ErrnoG.ame_refill_t (drop the keep; Qed);

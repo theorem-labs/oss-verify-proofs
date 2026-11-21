@@ -94,7 +94,7 @@ Definition reac_ctrl_build_as_contract : Prop :=
    The same run as an ExecF.evtF under a footprint RNG that holds every region the run and its callees read or
    write. An instruction fetch is not an access of ExecF, so only data accesses are covered. RNG is the FIRST
    binder (the binding convention of RECIPE.md (a working note, not in this delivery)). The footprint premises start with rng_bytes RNG: the
-   tail callee's ctrl_emit_as_contract_F carries it (a working branch 96c5aa3e60d,
+   tail callee's ctrl_emit_as_contract_F carries it (a working branch,
    lib/A/Prog/ctrl_emit_as_c.v), so this caller must too. A shadow cover is rounded out to whole 8-byte WORDS at
    both ends, in the shape that ctrl_emit_as_c.v's own footprint form uses. The regions, in the order of the rng
    premises below:
@@ -125,7 +125,7 @@ From Stdlib Require Import Lia.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF RngBytes.
 
 (* The 8-aligned word cover of the shadow bytes of [p, q] of application memory is inside RNG_all (the text of
-   ctrl_emit_as_c.v's rng_all_shcov, a Theorem Labs lane 96c5aa3e60d). *)
+   ctrl_emit_as_c.v's rng_all_shcov, a Theorem Labs lane). *)
 Lemma ba_rng_all_shcov : forall p q, 0 <= p -> q <= APPMEM_END ->
   rng RNG_all (shadow_addr p / 8 * 8) (shadow_addr q / 8 * 8 + 8 - shadow_addr p / 8 * 8).
 Proof.

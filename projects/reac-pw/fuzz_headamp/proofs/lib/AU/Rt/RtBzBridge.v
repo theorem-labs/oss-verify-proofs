@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YEvtSRr.v, with its module paths changed; 15 of its 48 lines of code are new or changed and 89 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzBridge.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzBridge.v; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/RtBzBridge.v of this library by derive_y.py b7b132fb12a7: module paths lib.A -> lib.AU, the image module Asan -> AsanUbsan and Img0 -> Img0U, addresses moved from fuzz_headamp's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/RtBzBridge.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The generic half of the bridge between a body walk written over the machine state alone
    (lib/A/Bz: `evt asegs Q ms`, that is "some step chain from ms reaches a state in Q") and the
    donor's call-site form (`SRr segs W (cfg_at segs pc regs mem md) POST`).
 
    Three facts make it one short file:
-   - the two trees name the same image: `asegs = tfibsegs` by reflexivity (RtBzStr.v:26);
-   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:16) is
+   - the two trees name the same image: `asegs = tfibsegs` by reflexivity (RtBzStr.v:27);
+   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:17) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the donor's `msteps` (lib/Reusable/YK0i.v:284-290) asks;
-   - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:148),
+   - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:149),
      and the donor's own walks of library code use it that way (cgif_file_fuzzer lib/YE6x.v:190).
 
    The shadow half of the bridge (chk_ok from the donor's range facts) is in RtBzStr.v. *)
@@ -45,7 +46,7 @@ Qed.
 
 (* a body walk that reaches Q, read at a donor call site: the walk runs on the restricted memory,
    and what it reaches is the configuration the donor continues from *)
-(* Hwx is the image's own W^X fact (lib/AU/YF0x.v:26 `Hwx_tfa`, which this file does not Require); it is
+(* Hwx is the image's own W^X fact (lib/AU/YF0x.v:27 `Hwx_tfa`, which this file does not Require); it is
    a premise here so that this bridge does not wait for it. *)
 (* `mkst` and `seg_rom` are written qualified: a Bz Lib module defines its own `mkst`, which empties the
    floating-point registers, while the donor's `cfg_at` uses YK11's over fx.  An import order that let the

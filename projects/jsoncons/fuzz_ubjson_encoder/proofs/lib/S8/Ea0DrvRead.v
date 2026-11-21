@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the channel-reader premise of writev; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DrvRead.v, line 380. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -371,7 +372,7 @@ Section DrvRead.
       assert (Hh3 : m_halted model3 = None) by (rewrite (sbm_halted_eq _ _ SBM3); exact Hh2).
       assert (EH3 : ahid A model3 = H) by (rewrite (ahid_sbm A model2 model3 SBM3); exact EH2).
       assert (DI3 : dinvA LB LK cr A M3 model3).
-      { apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M M3 model model3 DI); [ | exact GRW | exact EV3 | exact MI3 | exact Hh3].
+      { apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M M3 model model3 DI); [ | exact GRW | exact EV3 | exact MI3 | exact Hh3 | rewrite (sbm_rdrA _ _ SBM3); unfold model2; rewrite with_fds_rdr; exact (sbm_rdrA _ _ SBM1)].
         intros a Ha NC. apply FRM; [exact Ha | |]; intros Hr; apply NC; unfold CWA.
         - right. left. unfold s in Hr. lia.
         - right. right. exists 0x664050, 0x675a28. split; [unfold IMG_W_A; cbn [In]; tauto | lia]. }

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -660,8 +661,9 @@ r <- new_region RkMap (page_round needed) ;;
 step_seq ;;
 og <- alloc_meta ;;
 match og with
-| None => _ <- ask (KMunmap r needed) ;;
-upd_region r (fun rg => mkRegion RkMap (rg_len rg) [] false) ;;
+| None => ok2 <- ask (KMunmap r needed) ;;
+(* 08b1429: a refused munmap leaves the map in place; musl ignores the result, so the region stays live (leaked) *)
+(if ok2 then upd_region r (fun rg => mkRegion RkMap (rg_len rg) [] false) else ret tt) ;;
 ret None
 | Some g =>
 setm g (mkAMeta None None (SP r 0) 0 0 0 63 (page_round needed / 4096) 0 [slot_zero]) ;;
@@ -837,8 +839,9 @@ else
 mi <- nontrivial_free NEST_FUEL g i ;;
 match mi with
 | Some (r, len) =>
-_ <- ask (KMunmap r len) ;;
-upd_region r (fun rg => mkRegion RkMap (rg_len rg) [] false)
+ok2 <- ask (KMunmap r len) ;;
+(* 08b1429: a refused munmap leaves the map in place; musl ignores the result, so the region stays live (leaked) *)
+if ok2 then upd_region r (fun rg => mkRegion RkMap (rg_len rg) [] false) else ret tt
 | None => ret tt
 end
 end.

@@ -3,17 +3,18 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v; 712 of its 808 lines of code are new or changed and 2660 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81b9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan-ubsan (image
    tfibsegs = lib/B/YB1v.v, the pinned fuzz_state.asan-ubsan sha256
    5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204): the B twin of the ASan walk of lib/B/FSH_Fn_crt.v
    check_round_trip_spec, segment group D = segments 30-39 and the tail, from the return of pj_get_str at 0x823bc
    (0x823c0) to the final `ret` at 0x8261c, with the class-3 fake frame live (own = [(3, pos)]) until the epilogue's flag
    store releases it.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from ea635b4653a lib/A/FSH_crt_segD.v)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 1ab57ca7ad7) - the comment
-   over crt_set_shadow_fixed corrected as on A (a working branch 1ab57ca7ad7); no statement changed.
-   Port source: a working branch ea635b4653a proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD.v (blob
-   429b13fa2c3), CTX-free, itself PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD.v)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - the comment
+   over crt_set_shadow_fixed corrected as on A (a working branch); no statement changed.
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD.v (blob
+   429b13fa2c3), CTX-free, itself PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/
    Prog/ (the bespoke ASan proof of this function on fs.asan: stage cuts St20..St25, stdefs.v :521 .. :618, step proofs
    sd20.v .. sd25.v, sdglue.v's crt_keep_blk :612 / crt_spared_blk :659; checker a Theorem Labs lane CONFIRM 04:3xZ on
    (internal path)). Same Definition / Lemma names and statement shapes as the
@@ -307,9 +308,9 @@ Qed.
    aset_shadow_realizesU with the presence clause that FSupoisonU's aintrin_realizesU also states (FSupoisonU.v:263):
    `forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a`. The clause cannot be derived from the aview clause,
    because `aview` reads image bytes through the image and YCbq.apresent_transfer (YCbq.v:693) therefore needs
-   `~ in_img a`. S0 states the clause (SetShadowDefU.v:48, S0 5dbb8ce6286 "set_shadow contracts keep presence"), so
+   `~ in_img a`. S0 states the clause (SetShadowDefU.v:49, S0 "set_shadow contracts keep presence"), so
    crt_set_shadow_fixed below is S0's contract less one conjunct (the callee's stack window is present after the call,
-   SetShadowDefU.v:47). FSH_crt_setsh.v's crt_setsh_of_rt derives SETSH from S0's contract (the chain passes
+   SetShadowDefU.v:48). FSH_crt_setsh.v's crt_setsh_of_rt derives SETSH from S0's contract (the chain passes
    RT_SETSH) by dropping that conjunct. ---- *)
 Definition crt_set_shadow_fixed (pc v : Z) : Prop :=
   forall ly S U W regs mem md cid pos q n,

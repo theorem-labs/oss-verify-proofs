@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -50,7 +51,7 @@ Notation g_FS G := (fs_size (g_ffk G)).
 
 Record gctx_ok (G : gctx) : Prop := mkGok {
   go_q : g_q G mod 32 = 0 /\ 0 <= g_fsz G /\ g_usp G + 16 <= USTACK_TOP /\ g_lo G + 12800 + RT_STACK <= g_q G;
-  go_lo : 0x7fff7f800000 <= g_lo G /\ g_sp0 G - STACK_WIN <= g_lo G;
+  go_lo : 0x7fff7f800000 <= g_lo G /\ g_sp0 G - STACK_SPAN <= g_lo G;
   go_sp0 : SEGTOP_A + STACK_WIN <= g_sp0 G <= USTACK_TOP /\ 0x7fff80000000 <= g_sp0 G;
   go_F : 0 < g_F G /\ g_F G mod 64 = 0 /\ SEGTOP_A <= g_F G /\ g_F G + 512 <= g_lo G /\ In (g_F G, 3%nat) (g_rfr G)
          /\ (g_F G + 512 <= shad (g_F G) \/ shad (g_F G) + 64 <= g_F G) /\ shad (g_F G) + 65 <= g_lo G
@@ -317,7 +318,7 @@ Section G.
 
   Lemma GINVA_callctx : forall FL W FP fcs k Σ m, GINVA G FL W FP fcs k Σ m ->
     In (g_F G, 3%nat) (rt_frames RT Σ) /\ g_F G <= g_OS G /\ g_OS G + 288 <= g_F G + fs_size 3 - 8 /\ g_OS G mod 16 = 0
-    /\ os_hullA m (g_OS G) /\ rt_sp0 RT Σ - STACK_WIN <= g_lo G /\ g_q G + 16 <= USTACK_TOP /\ g_q G mod 16 = 0 /\ g_q G mod 32 = 0
+    /\ os_hullA m (g_OS G) /\ rt_sp0 RT Σ - STACK_SPAN <= g_lo G /\ g_q G + 16 <= USTACK_TOP /\ g_q G mod 16 = 0 /\ g_q G mod 32 = 0
     /\ Z.of_nat (length (rt_frames RT Σ)) = Z.of_nat (length (g_rfr G)) + 1.
   Proof using AF GOK.
     intros FL W FP fcs k Σ m (HA & MI & FRS & LV & SP0 & CR & ST & (fill & OX & FOK) & SHO & TPL & LB & (FR & FSZ) & WF1 & WF2 & REL).
@@ -509,7 +510,7 @@ Definition KLOOPA (D : dctx) (K : config -> Prop) (j c : Z) : Prop :=
 Lemma gctx_ok_intro : forall G Σ m,
   ART RT Σ m -> rt_frames RT Σ = g_fr G -> rt_live RT Σ = g_L G -> rt_sp0 RT Σ = g_sp0 G ->
   g_q G mod 32 = 0 -> 0 <= g_fsz G -> g_usp G + 16 <= USTACK_TOP -> g_lo G + 12800 + RT_STACK <= g_q G ->
-  0x7fff7f800000 <= g_lo G -> g_sp0 G - STACK_WIN <= g_lo G ->
+  0x7fff7f800000 <= g_lo G -> g_sp0 G - STACK_SPAN <= g_lo G ->
   In (g_F G, 3%nat) (g_rfr G) -> (g_ffk G = 0%nat \/ g_ffk G = 1%nat) ->
   gctx_ok G.
 Proof using AF.

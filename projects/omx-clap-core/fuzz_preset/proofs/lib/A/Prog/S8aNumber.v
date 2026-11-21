@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 asan pin 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4),
    ex_value PIECE 5 (ev_number):
    WalkS8a's ev_number_spec (S8aIface.v:331) PROVED, at image A's instance (L := A_prog_listing, PA := PI_prog_A), from
@@ -20,8 +21,8 @@
             runtime-owned), as lib/A/VrdNum.v and lib/B/Prog/ExvB_Stmt.v carry them
      (no memnorm hypothesis: memnorm is a STATE fact, ev_pre's and ev_mid's last conjunct (S8aIface.v), carried by
             the lanes through YSRrMemnorm.v's twins and the call texts' keeps; the refuted law HMEMNORM is deleted)
-     HOFFB HOFFF  strtod_site_x's image clauses (YStrtodRowX.v:348-349): a live block lies off [IMG_LO, IMG_TOP), a
-            live fake frame lies above IMG_TOP; AR_laws_x (YCbqG.v:149-166) has no such law
+     HOFFB HOFFF  strtod_site_x's image clauses (YStrtodRowX.v:349-350): a live block lies off [IMG_LO, IMG_TOP), a
+            live fake frame lies above IMG_TOP; AR_laws_x (YCbqG.v:150-167) has no such law
      HGOTC  strtod's GOT guard word is one of B's const cells (the image-A binding, A/AE22.v canary_cell_in:
             A_GOT_CANARY = STRTOD_GOT_GUARD, V_GOT_CANARY = STRTOD_GUARD); its rom bytes are derived (strtod_got_A)
      CPY CMP BCMP the __asan_memcpy / __wrap_strcmp / __wrap_bcmp call texts in their memnorm-keeping forms
@@ -70,8 +71,8 @@ Hypothesis HPST : forall z, Exists (in_zr z) prh_pst -> in_img SEGS z /\ ~ (as_e
 Hypothesis Htp : as_tp B = STRTOD_TP.
 Hypothesis Herrno : as_errno B = STRTOD_ERRNO.
 Hypothesis Hown : forall a, as_errno B <= a < as_errno B + 4 -> ~ Exists (in_zr a) (as_owned_static B).
-(* strtod_site_x's image clauses (YStrtodRowX.v:348-349) at image A's constants: AR_laws_x has no law that places a
-   live block or fake frame off the image band (at AR: YC1fP.v:334 blk_off_imgPI, from ALedger's pa_img_cover) *)
+(* strtod_site_x's image clauses (YStrtodRowX.v:349-350) at image A's constants: AR_laws_x has no law that places a
+   live block or fake frame off the image band (at AR: YC1fP.v:335 blk_off_imgPI, from ALedger's pa_img_cover) *)
 Hypothesis HOFFB : ev_blk_offimg B ARx strtod_img_A.
 Hypothesis HOFFF : ev_frm_offimg ARx strtod_img_A.
 (* strtod_site_x's GOT clause (ev_got_ok, the SEG_N form): the guard word is one of B's const cells, so AR_laws_x
@@ -87,10 +88,10 @@ Hypothesis BCMP : forall fx1, abcmp_realizes_xm (fx := fx1) SEGS B ARx (pa_sigma
      HBLK32 a block is below 2 ^ 32 bytes -> ARcf's AR_blocks_law_cf (n < cf_malloc_max = 2^29 - 2^20)
      HAMEM8 MARKED (the shared text, lib/B/Prog/ExvB_Stmt.v eh_blk_amem8, owner h-mani-a8 / c-omx-alloc): a live
             block lies in the runtime's 8-byte-margin application range, as YGcallMx's strcmp row asks
-            (YGcallMx.v:77-78, :160); alx_blocks gives only in_app (YG0f.v:277) *)
+            (YGcallMx.v:78-79, :161); alx_blocks gives only in_app (YG0f.v:277) *)
 Hypothesis HBLK32 : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 32.
 (* HAMEM8: PROVED at the allocator instance: h-mani-a8's YGcfBlockRange.v:46 block_amem_range8_cf
-   (origin/cold/h-mani-a8-preset-alloc 6c9f248bed97, from ARcf alone; k := n - 1 or the k-form at :59), discharged where
+   (from ARcf alone; k := n - 1 or the k-form at :59), discharged where
    ARx := ARcf; it is a hypothesis here only because this file is generic over ARx *)
 Hypothesis HAMEM8 : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) ->
   YGcallMx.amem_range8 p (req_size n).

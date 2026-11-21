@@ -4,12 +4,13 @@
    tfib_amalloc_realizes, lib/A/AF0q.v afree_realizes_closed, from cgif_file_fuzzer lib/A/AF0w.v:44 / AF0q.v:12 via
    fuzz_grant's Theorem Labs lane) at libreac/fuzz_decode's ASan image, in the form of lib/A/DecodeClose.v's H_RT_MALLOC (:227)
    and H_RT_FREE (:229). Rule 24: no function is proved here (no new walk); the walks are the core's. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Row D-A-rt-walks of a Theorem Labs lane's step 5b (the integrator, a Theorem Labs lane). Two forms per walk:
    - dec_A_rt_malloc / dec_A_rt_free: for every symbol record B that is GrantSyms with the image's depot hashes,
      the hypothesis' conclusion at B (for DecodeClose's free Variable B);
    - dec_A_rt_malloc_at / dec_A_rt_free_at: the same at the image's record lib/A/AD2l.v GrantB (premises discharged by
      GrantB_syms and eq_refl, as fuzz_boxreg's BoxClose.v:187-189 and fuzz_grant's GrantCloseAlloc.v:24-27 do).
-   segs is decodesegs0 (lib/A/DecodeTFIB.v:19), the same term as the core's tfibsegs (lib/A/AB1v.v:13): both are
+   segs is decodesegs0 (lib/A/DecodeTFIB.v:19), the same term as the core's tfibsegs (lib/A/AB1v.v:14): both are
    images.Asan.M.loaded_segments. *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YK11 YK04 YA0n YG00 YG0f YG0n YG0d YA00 YM05.

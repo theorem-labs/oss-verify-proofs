@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte init stack window and the vDSO pair in the reserved ledger). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -70,10 +71,21 @@ Definition mem_eq_outside (M M' : word -> option byte) (rs : list (word * Z)) : 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-(* [comment removed for export] *)
-Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
+(* LPS 75d69e00 (#38): the OLD span, 8 MiB below sp0, kept for reference and used by nothing.
+   It is FALSE for some launches: [store_ok] needs mapped bytes ([wview m a = Some _]), and
+   init maps only [stack_window_depth = stack_max_size - stack_window_reach = 6144513] bytes
+   below sp (S0MainEntry's [kn_stack] row; the tree says the same at K/A/RT_iface.v:43-45).
+   8388608 is the allocator ceiling [stack_max_size] (still [alloc_ceiling = sp0 - 8388608]),
+   not a writable span. *)
+Definition stack_writable_8M (M : word -> option byte) (sp0 : word) : Prop :=
   forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
     store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+
+(* The writable span below sp0 that #38's init guarantees: exactly [kn_stack]'s 6144513.
+   It is a constant of the model (no kernel field), so it pins nothing. *)
+Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
+  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 6144513)%Z ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144513 + d)) m = true.
 
 (* [comment removed for export] *)
 Definition group_writable (M : word -> option byte) (gm : word) : Prop :=
@@ -176,7 +188,9 @@ Definition model_post (VM : VmMaps) (stdin0 : AmbIn) (fs0 : Fs) (tid : word) : M
 
 (* [comment removed for export] *)
 Definition vm_pre (VM : VmMaps) (mb gm : word) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+  (* the reserved ledger at the revision: the segments and the vDSO/vvar
+     pair, none of it met by a mapping ([ModelAmb.res_ok]) *)
+  ModelAmb.res_ok (segments_reserved RSEGS) VM
   /\ vm_limit VM = target_alloc_limit
   /\ map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true
   /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z
@@ -242,7 +256,7 @@ Definition sr_RE : list expr :=
 (* [comment removed for export] *)
 Definition kn_RE_base : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;   (* #38: the init window, see [stack_writable] *)
    KAlign (EVar 3) 4096; KRange (EVar 3) 0x66000 0x7fffff7ef000;   (* [comment removed for export] *)
    KWr (SA (EVar 3) 0) 69632;
    KDisj (SA (EVar 0) (-8388608)) 8388608 (SA (EVar 3) 0) 69632;
@@ -317,7 +331,7 @@ Section EntrySym.
     - split; [lia | exact (proj2 Hsp)].
     - lia.
     - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 0) with sp0.
-      replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia. apply Hst; lia.
+      replace (bv_unsigned sp0 + -6144513 + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia. apply Hst; lia.
     - split; [lia | exact (proj2 (proj2 Hgm))].
     - lia.
     - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 3) with gm.

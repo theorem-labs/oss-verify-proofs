@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees, bridged to the runtime's own floor). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -62,7 +63,7 @@ Proof.
   intros T cf Hc Hkont. cbn [ART rt_frames rt_live rt_sp0 rt_credit RTA] in *. unfold rtA_frames, rtA_live, rtA_credit in *.
   pose proof CALL as (ST & LOW & LOR & SPT & SPA). cbn [rt_sp0 RTA] in LOW.
   set (usp := bv_unsigned sp) in *.
-  destruct (sm_pre Σ m 5%nat lo ART0 ltac:(lia) LOW) as (_ & _ & CF & _ & _ & _ & _ & _ & _ & _ & _ & M2S & FSOK & HLO & FSL & _).
+  destruct (sm_pre Σ m 5%nat lo ART0 ltac:(lia) ltac:(first [exact LOW | clear - LOW; cbn [rt_sp0 RTA] in LOW; unfold rtA_sp0 in *; lia])) as (_ & _ & CF & _ & _ & _ & _ & _ & _ & _ & _ & M2S & FSOK & HLO & FSL & _).
 
   destruct (rel_slot Σ m f 5 fr ART0 HF) as (_ & p & Hp & Hf & Hb). change (Z.of_nat 5) with 5 in *. rewrite NF_5 in Hp.
   pose proof (rel_flags_ok Σ m ART0 5%nat ltac:(lia)) as (Hlen & _). change (Z.of_nat 5) with 5 in Hlen. rewrite NF_5 in Hlen.

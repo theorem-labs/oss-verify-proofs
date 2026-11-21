@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a string argument's end plus 9 (was its end plus slack plus 16) is at most 2^47, what the launch's entry block gives for an argv string (the NUL that ends execfn and the 8-byte slot come after it, below ed_top <= 2^47). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -63,7 +64,7 @@ Definition main_two_stmt : Prop :=
     bytes_at asegs m P1 (path ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) path ->
     path_has_slash path = false -> path <> dotdot_path ->   (* [comment removed for export] *)
     (- (P1 + zlength path + 1)) mod 8 <= zlength slack -> zlength path <= 131071 -> bv_unsigned sp + 48 <= P1 ->
-    P1 + zlength path + 1 + zlength slack + 16 <= 2^47 ->
+    P1 + zlength path + 1 + 9 <= 2^47 ->
     LRZ asegs (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
                   F (wz AMAIN) fc None m (seg_rom asegs)) mo g
         (spec_path path fs).
@@ -87,7 +88,7 @@ Definition main_usage_stmt : Prop :=
     rw_cells asegs m (bv_unsigned sp + 56) [C8 (wz P0)] ->
     bytes_at asegs m P0 (argv0 ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) argv0 ->
     (- (P0 + zlength argv0 + 1)) mod 8 <= zlength slack -> zlength argv0 <= 131071 -> bv_unsigned sp + 48 <= P0 ->
-    P0 + zlength argv0 + 1 + zlength slack + 16 <= 2^47 ->
+    P0 + zlength argv0 + 1 + 9 <= 2^47 ->
     LRZ asegs (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
                   F (wz AMAIN) fc None m (seg_rom asegs)) mo g
         (t_die (msg_usage argv0) fs).
@@ -151,7 +152,7 @@ Proof. intros data fs cap. unfold Kloop. apply t_body_nil. Qed.
 Definition loop_side (sp tp : word) (fc : bv 32) (lo SPB P1 : Z) (tid : word) (path slack : list byte) : Prop :=
   tp = wz ATP /\ lo + 2^22 <= bv_unsigned sp + 80 /\ alloc_ceiling <= lo /\ bv_unsigned sp + 128 <= 2^47 /\ SPB = bv_unsigned sp + 80
   /\ 0 < bv_unsigned tid < 2^22 /\ frm0 fc /\ ~ In (Z_to_bv 8 0) path /\ (- (P1 + zlength path + 1)) mod 8 <= zlength slack
-  /\ zlength path <= 131071 /\ bv_unsigned sp + 128 <= P1 /\ P1 + zlength path + 1 + zlength slack + 16 <= 2^47 /\ bv_unsigned sp mod 16 = 0
+  /\ zlength path <= 131071 /\ bv_unsigned sp + 128 <= P1 /\ P1 + zlength path + 1 + 9 <= 2^47 /\ bv_unsigned sp mod 16 = 0
   /\ sp_window_lo <= bv_unsigned sp + 128 /\ ASTACK_BOTTOM (bv_unsigned sp + 128) <= lo.
 
 (* [comment removed for export] *)

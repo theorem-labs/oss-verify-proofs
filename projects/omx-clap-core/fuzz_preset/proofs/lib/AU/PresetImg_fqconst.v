@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_fqconst.v (commit ce1a656b52b7, file sha256 2a18fb71c368) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_fqconst.v (file sha256 2a18fb71c368) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-fqconst-B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the constant-cell table of reply's image B,
    fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
 
-   FQ_CONST, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeView.v:56-58 @ 587da63d252, with const_at
-   (YGcfInstFreeView.v:54-55 @ 587da63d252) unfolded: const_at ly a w v := exists e, In (ACell e w (AV (ANum v)))
+   FQ_CONST, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeView.v:56-58, with const_at
+   (YGcfInstFreeView.v:54-55) unfolded: const_at ly a w v := exists e, In (ACell e w (AV (ANum v)))
    (as_const B ly) /\
    aeval B ly e = a.  The layer states both over its Section's Variable B; its consumers hold TS : im_syms B.  Reply
    does not carry YGcfInstFreeView.v, so the Lemma states FQ_CONST's body, const_at unfolded, at a B with image B's
@@ -30,7 +31,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import ImgB
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import AGif2cgif.
 Open Scope Z_scope.
 
-(* FQ_CONST at image B: YGcfInstFreeView.v:57-58 @ 587da63d252, const_at unfolded. *)
+(* FQ_CONST at image B: YGcfInstFreeView.v:57-58, const_at unfolded. *)
 Lemma FQ_CONST_B : forall B, @im_syms AImg_cgif B -> forall ly,
   (exists e, In (ACell e 8 (AV (ANum kQuarantineMax))) (as_const B ly) /\ aeval B ly e = as_inst B + o_q_max) /\
   (exists e, In (ACell e 8 (AV (ANum kQuarantineCacheMax))) (as_const B ly) /\ aeval B ly e = as_inst B + o_q_maxcache) /\

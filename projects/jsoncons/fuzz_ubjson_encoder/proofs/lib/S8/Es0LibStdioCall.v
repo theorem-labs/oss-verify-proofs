@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the channel-reader premise of writev; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0LibStdioCall.v, 24 lines within its lines 37-528. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -24,23 +25,30 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 Variable scfg : SpuriousCfg.
 
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
 Definition SC_KEPT : list nat := [1; 2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27]%nat.
 
 Record stdio_res : Type := SCR_ {
-  sc_f : Z;
-  sc_fd : Z;
-  sc_ret : Z;
-  sc_wb : expr;
-  sc_wp : expr;
-  sc_bufp : expr;
-  sc_bufsz : expr;
-  sc_s : expr;
-  sc_l : expr;
-  sc_sp : expr;
-  sc_sr : list expr;
-  sc_kn : list kentry
+  sc_f : Z;            (* [comment removed for export] *)
+  sc_fd : Z;           (* [comment removed for export] *)
+  sc_ret : Z;          (* [comment removed for export] *)
+  sc_wb : expr;        (* [comment removed for export] *)
+  sc_wp : expr;        (* [comment removed for export] *)
+  sc_bufp : expr;      (* [comment removed for export] *)
+  sc_bufsz : expr;     (* [comment removed for export] *)
+  sc_s : expr;         (* [comment removed for export] *)
+  sc_l : expr;         (* [comment removed for export] *)
+  sc_sp : expr;        (* [comment removed for export] *)
+  sc_sr : list expr;   (* [comment removed for export] *)
+  sc_kn : list kentry  (* [comment removed for export] *)
 }.
 
+(* [comment removed for export] *)
 Definition hi_ok (kn : list kentry) (e : expr) : bool :=
   match erange kn e with Some (_, hi) => Z.leb hi 0x800000000000 | None => false end.
 
@@ -58,6 +66,7 @@ Definition lit_even_ret (e : expr) : option Z :=
   | _ => None
   end.
 
+(* [comment removed for export] *)
 Definition kimg_cut1 (a n : Z) (K : kentry) : list kentry :=
   match K with
   | KImg lo hi =>
@@ -103,6 +112,10 @@ Definition stdio_call (nv : nat) (sr : list expr) (kn : list kentry) : option st
   | _, _ => None
   end.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Definition inr (lo n : Z) (x : word) : bool := (Z.leb lo (bv_unsigned x) && Z.ltb (bv_unsigned x) (lo + n))%bool.
 
 Lemma inr_spec : forall lo n x, inr lo n x = true <-> (lo <= bv_unsigned x < lo + n)%Z.
@@ -111,6 +124,7 @@ Proof. intros lo n x. unfold inr. rewrite andb_true_iff, Z.leb_le, Z.ltb_lt. tau
 Lemma inr_false : forall lo n x, inr lo n x = false <-> ~ (lo <= bv_unsigned x < lo + n)%Z.
 Proof. intros lo n x. rewrite <- inr_spec. destruct (inr lo n x); split; congruence. Qed.
 
+(* [comment removed for export] *)
 Lemma know_ok_frame3 : forall E M M' kn b1 o1 n1 b2 o2 n2 b3 o3 n3,
   know_ok RSEGS E M kn ->
   flat E (SA b1 o1) n1 -> flat E (SA b2 o2) n2 -> flat E (SA b3 o3) n3 ->
@@ -245,10 +259,16 @@ Qed.
 Lemma length_sr_after_call_j : forall sr kept nv, length (sr_after_call_j sr kept nv) = 32%nat.
 Proof. intros. unfold sr_after_call_j. rewrite length_map, length_seq. reflexivity. Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Theorem stdio_call_sound_fr :
   forall (vals : list word) (ebs : nat -> list byte) (sr : list expr) (kn : list kentry)
          (R : bvmap 5 word) (M : word -> option byte) (model : Model) (res : stdio_res)
          (pending extra : list byte) (K : TSet),
+  (* 08b1429: writev_spec reads [m_channel_reader] (recipes/channel-reader-premise.md) *)
+  m_channel_reader model = true ->
   let E := Env (vals_ev vals) ebs in
   regs_ok E sr R -> know_ok RSEGS E M kn ->
   stdio_call (length vals) sr kn = Some res ->
@@ -277,7 +297,7 @@ Theorem stdio_call_sound_fr :
   srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa0ffc) M (seg_rom RSEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-  intros vals ebs sr kn R M model res pending extra K E HR HK Hc.
+  intros vals ebs sr kn R M model res pending extra K Hrdr E HR HK Hc.
   cbv beta delta [stdio_call] in Hc. cbv zeta in Hc.
   destruct (nth 10 sr (ELit 0)) as [f| | | | | | |] eqn:H10; try discriminate.
   destruct (lit_even_ret (nth 1 sr (ELit 0))) as [ret|] eqn:Hret; [|discriminate].
@@ -298,7 +318,7 @@ Proof.
   set (wb := bv_unsigned (edenot E wbe)) in *. set (wp := bv_unsigned (edenot E wpe)) in *.
   set (s := edenot E (nth 11 sr (ELit 0))) in *. set (l := edenot E (nth 12 sr (ELit 0))) in *.
   set (su := bv_unsigned (edenot E (nth 2 sr (ELit 0)))) in *.
-
+  (* [comment removed for export] *)
   apply andb_prop in Hcond as [Hcond Hlen32]. apply andb_prop in Hcond as [Hcond Hkv]. apply andb_prop in Hcond as [Hcond Hsv].
   apply andb_prop in Hcond as [Hcond Vbufsz]. apply andb_prop in Hcond as [Hcond Vbufp].
   apply andb_prop in Hcond as [Hcond Hclen].
@@ -308,7 +328,7 @@ Proof.
   apply andb_prop in Hcond as [Hf0 Hf232].
   apply Z.leb_le in Hf0. apply Z.leb_le in Hf232. apply Z.leb_le in Hsplo'. apply Z.leb_le in Hsphi'.
   apply Z.eqb_eq in Hcgv. apply Nat.eqb_eq in Hlen32.
-
+  (* [comment removed for export] *)
   assert (Hretv : (ret mod 2 = 0 /\ 0 <= ret < two64)%Z).
   { unfold lit_even_ret in Hret. destruct (nth 1 sr (ELit 0)); try discriminate.
     destruct ((z mod 2 =? 0) && (0 <=? z) && (z <? two64))%bool eqn:Hb; [|discriminate]. injection Hret as ->.
@@ -335,7 +355,7 @@ Proof.
   assert (Hq : su = (bv_unsigned (edenot E qb) + k0)%Z).
   { subst su. rewrite Hsqd. apply u64_lit. lia. }
   pose proof (u64_range sp) as Hspr2. fold su in Hspr2.
-
+  (* [comment removed for export] *)
   destruct (kindex_some _ _ _ _ Hki) as (KW & Hnth & HKW & _).
   destruct KW as [| | | | | |[cb ck] clen|]; try discriminate. cbn [is_kwr_cov] in HKW.
   apply andb_prop in HKW as [HKW Hc2]. apply andb_prop in HKW as [Hcb Hc1].
@@ -344,7 +364,7 @@ Proof.
   assert (Wst' : store_ok RSEGS M (Z_to_bv 64 (su - 112)) 112 = true).
   { unfold adenot, v_addi in Wst. cbn [a_base a_off] in Wst.
     replace (bv_unsigned (edenot E qb) + (k0 - 112))%Z with (su - 112)%Z in Wst by lia. exact Wst. }
-
+  (* [comment removed for export] *)
   assert (FL : forall off n, (0 <= off)%Z -> (0 < n)%Z -> (off + n <= 2 ^ 64)%Z -> flat E (SA (ELit 0) off) n).
   { intros off n A B C. apply flat_abs0; lia. }
   pose proof (kread_rdn RSEGS E M kn (ELit 0) (f + 120) 4 (ELit fd) HK Hfd ltac:(lia) ltac:(lia) ltac:(apply FL; lia)) as Rfd.
@@ -363,7 +383,7 @@ Proof.
   rewrite adenot_lit0 in Rfd, Rwp, Rwb, Rbufp, Rbufsz, Rcg, Rcan.
   pose proof (u64_range (edenot E wpe)) as Hwpr. pose proof (u64_range (edenot E wbe)) as Hwbr.
   fold wp in Hwpr. fold wb in Hwbr.
-
+  (* [comment removed for export] *)
   replace (Z_to_bv 64 0xa0ffc) with (0xa0ffc%bv : word) by (apply bv_eq; reflexivity).
   eapply (ref_stdio_write scfg R M model su f wb wp fd s l (edenot E bufp) (edenot E bufsz) canw (Z_to_bv 64 ret)
             pending extra K).
@@ -387,6 +407,7 @@ Proof.
     rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. unfold two64 in Hcgv. rewrite Hcgv. reflexivity.
   - apply orb_prop in Hfd12 as [H|H]; apply Z.eqb_eq in H; subst fd; lia.
   - exact Hfdlk.
+  - exact Hrdr.
   - exact Hh.
   - exact Hlz.
   - lia.
@@ -401,12 +422,12 @@ Proof.
   - exact Rextra.
   - apply ret_ok_even. rewrite u64_lit by (unfold two64 in Hretv; lia). lia.
   - exact HKnil.
-  -
+  - (* [comment removed for export] *)
     intros R' M' G10 G2 G1 G8 G9 G18 G19 G20 G21 G22 G23 G24 G25 G26 G27 G3 G4 HPOST.
     set (E' := Env (vals_ev (vals ++ junk_vals R')) ebs).
     assert (Hag : env_agree (length vals) E E') by apply vals_app_agree.
     apply HCONT.
-    +
+    + (* [comment removed for export] *)
       assert (HRj : regs_ok E' (sr_after_call_j sr SC_KEPT (length vals)) R').
       { apply (regs_after_call vals ebs sr R R' SC_KEPT Hsv HR).
         - intros i Hi. unfold SC_KEPT in Hi. cbn [In] in Hi.
@@ -442,7 +463,7 @@ Proof.
         replace (Z_to_bv 5 (Z.of_nat 10)) with (10%bv : bv 5) by (apply bv_eq; reflexivity). rewrite G10.
         apply (edenot_agree (length vals)); [exact Hag|]. apply sr_vars_lt_nth. exact Hsv.
       * rewrite nth_sr_upd_other by lia. reflexivity.
-    +
+    + (* [comment removed for export] *)
       destruct HPOST as [Pagree Pgrows Pwend Pwpos Pwbase].
       assert (HK' : know_ok RSEGS E' M kn) by (apply env_app_know; [exact Hkv | exact HK]).
       assert (HK0 : know_ok RSEGS E' M (kimg_cut (kimg_cut kn (f + 32) 16) (f + 56) 8)) by (apply kimg_cut_sound, kimg_cut_sound, HK').
@@ -465,13 +486,16 @@ Proof.
       * rewrite mkAlu_denot. cbn [edenot]. fold E. rewrite alu_add, Xb, Xs. exact Pwend.
       * rewrite Xb. exact Pwpos.
       * rewrite Xb. exact Pwbase.
-    +   exact HPOST.
+    + (* [comment removed for export] *) exact HPOST.
 Qed.
 
+(* [comment removed for export] *)
 Theorem stdio_call_sound :
   forall (vals : list word) (ebs : nat -> list byte) (sr : list expr) (kn : list kentry)
          (R : bvmap 5 word) (M : word -> option byte) (model : Model) (res : stdio_res)
          (pending extra : list byte) (K : TSet),
+  (* 08b1429: writev_spec reads [m_channel_reader] (recipes/channel-reader-premise.md) *)
+  m_channel_reader model = true ->
   let E := Env (vals_ev vals) ebs in
   regs_ok E sr R -> know_ok RSEGS E M kn ->
   stdio_call (length vals) sr kn = Some res ->
@@ -499,9 +523,9 @@ Theorem stdio_call_sound :
   srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa0ffc) M (seg_rom RSEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 (sc_fd res))) (pending ++ extra)) K).
 Proof.
-  intros vals ebs sr kn R M model res pending extra K E HR HK Hc wb wp s l su
+  intros vals ebs sr kn R M model res pending extra K Hrdr E HR HK Hc wb wp s l su
          H1 H1' H2 H3 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 HCONT.
-  apply (stdio_call_sound_fr vals ebs sr kn R M model res pending extra K HR HK Hc); try assumption.
+  apply (stdio_call_sound_fr vals ebs sr kn R M model res pending extra K Hrdr HR HK Hc); try assumption.
   intros R' M' A B C. apply HCONT; assumption.
 Qed.
 

@@ -2,8 +2,8 @@
 """donor_map.py UNIT_LIB KNOCK_LIB [--unit UNIT] [--image A|B] [--break FILE=CAUSE ...] -- the donor map of reac-repacer/fuzz_wire image A's core
 (the unit owner's (b'), file-level donor choice): every lib/A file of the unit -> knock | grant, with its measured reason.
 
-UNIT_LIB: the unit's lib (projects/reac-repacer/fuzz_wire/proofs/lib); KNOCK_LIB: libreac/fuzz_knock's released lib at
-origin/ossv/recipes 88154566652a (repository layout: A/, Reusable/).
+UNIT_LIB: the unit's lib (projects/reac-repacer/fuzz_wire/proofs/lib); KNOCK_LIB: libreac/fuzz_knock's released lib
+ (repository layout: A/, Reusable/).
 A file's donor is KNOCK when
   (1) its knock counterpart names the empty-depot form (DEPOT below: the switch, the knock-only kernel files, the empty-depot
       cells, the NB / SB sentinel lemmas, the first-Put layout growth), or
@@ -11,7 +11,7 @@ A file's donor is KNOCK when
   (3) it is in the Require closure of a knock-donor file and the unit's lib does not hold it ('Required by <file>';
       knock-only lib/A files and the knock-only kernel files KnBlockExt / KnLayoutGle / YC85).
 --exclude FILE=REASON keeps a knock file OUT (a ruling): it is not followed in the closure, and its Requirers are listed
-(each needs glue or a grant counterpart). Every other unit lib/A file keeps GRANT (fuzz_grant's release 4f87de75d67, the run of record) as its donor.
+(each needs glue or a grant counterpart). Every other unit lib/A file keeps GRANT (fuzz_grant's release, the run of record) as its donor.
 Output (stdout, TSV): unit and image (--unit, default reac-repacer/fuzz_wire; --image, default A: the key that lets another
 unit's rows, e.g. fuzz_egress's, sit in the same table), file, donor, reason, the image-B twin name (Y<x> in knock's lib/AU, measured by file existence;
 a kernel file is shared), and whether knock's lib/AU has it; then the size check: knock-donor files and lines over the unit's lib/A

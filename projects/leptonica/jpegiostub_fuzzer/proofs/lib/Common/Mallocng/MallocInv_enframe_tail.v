@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag: section hypothesis Hthpb, and enframe_tail's continuation takes ms_thp s' = ms_thp s). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -59,6 +60,7 @@ Section Tail.
   Hypothesis Hvmb : ms_vm s2 = ms_vm s.
   Hypothesis Hlob : ms_lo s2 = ms_lo s.
   Hypothesis Hhib : ms_hi s2 = ms_hi s.
+  Hypothesis Hthpb : ms_thp s2 = ms_thp s.
   Hypothesis HROb : rodata_clear (ms_mem s2).
   Hypothesis Hfrb : forall a : word, bv_unsigned a < p0 - 3 \/ e <= bv_unsigned a -> ms_mem s2 a = ms_mem s a.
   Hypothesis Hpayb : forall a : word, Pp <= bv_unsigned a < Pp + nn -> ms_mem s2 a = ms_mem s a.
@@ -102,7 +104,7 @@ Section Tail.
     (forall s',
       WF (slot_set A ma i (SLive OFF nn) L') ->
       Rep (slot_set A ma i (SLive OFF nn) L') (ms_mem s') ->
-      WIN s' -> ms_vm s' = ms_vm s -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
+      WIN s' -> ms_vm s' = ms_vm s -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s -> ms_thp s' = ms_thp s ->
       rodata_clear (ms_mem s') ->
       (forall a : word, bv_unsigned a < p0 - 3 \/ e <= bv_unsigned a -> ms_mem s' a = ms_mem s a) ->
       (forall a : word, Pp <= bv_unsigned a < Pp + nn -> ms_mem s' a = ms_mem s a) ->
@@ -110,7 +112,7 @@ Section Tail.
     tsafe ((y <- (c <- m_lbu (Z_to_bv 64 (Pp - 3)) ;;
                   m_sb (Z_to_bv 64 (Pp - 3)) (v_or (v_slli (Z_to_bv 64 CODE) 5) (v_andi c 31)) ;;
                   mret (Z_to_bv 64 Pp)) ;; k y) s2) P.
-  Proof using ECODE EMb EOFU EPp ERSV ES Ee Ep0 HOFF HOFU HR HROb HRSV HRb HS16 HSnn HW HWINb Hbf Hbi Hbo0 Hbo1 Hbz Hclear Hfrb Hhdrb Hheap Hhib Hi Hi0 Hi32 HiS Hlob Hma Hnn Hpayb Hr Hspan Hvmb MLok. pu_keep (ECODE, EMb, EOFU, EPp, ERSV, ES, Ee, Ep0, HOFF, HOFU, HR, HROb, HRSV, HRb, HS16, HSnn, HW, HWINb, Hbf, Hbi, Hbo0, Hbo1, Hbz, Hclear, Hfrb, Hhdrb, Hheap, Hhib, Hi, Hi0, Hi32, HiS, Hlob, Hma, Hnn, Hpayb, Hr, Hspan, Hvmb, MLok).
+  Proof using ECODE EMb EOFU EPp ERSV ES Ee Ep0 HOFF HOFU HR HROb HRSV HRb HS16 HSnn HW HWINb Hbf Hbi Hbo0 Hbo1 Hbz Hclear Hfrb Hhdrb Hheap Hhib Hthpb Hi Hi0 Hi32 HiS Hlob Hma Hnn Hpayb Hr Hspan Hvmb MLok. pu_keep (ECODE, EMb, EOFU, EPp, ERSV, ES, Ee, Ep0, HOFF, HOFU, HR, HROb, HRSV, HRb, HS16, HSnn, HW, HWINb, Hbf, Hbi, Hbo0, Hbo1, Hbz, Hclear, Hfrb, Hhdrb, Hheap, Hhib, Hthpb, Hi, Hi0, Hi32, HiS, Hlob, Hma, Hnn, Hpayb, Hr, Hspan, Hvmb, MLok).
     intros k P HK.
     assert (HCODE : 0 <= CODE <= 5) by (subst CODE; llia).
     assert (HPp : p0 <= Pp /\ Pp + nn <= e) by (subst; llia).
@@ -204,6 +206,7 @@ Section Tail.
     - exact Hvmb.
     - exact Hlob.
     - exact Hhib.
+    - exact Hthpb.
     - unfold mf. apply rodata_clear_wbytes; [exact HROb | llia | rewrite ?length_N_to_le_bytes; cbn [Z.of_nat]; llia | rewrite ?length_N_to_le_bytes; cbn [Z.of_nat]; llia].
     - exact Hmffr.
     - exact Hmfpay.

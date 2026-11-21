@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rebound 2026-10-29 onto the old-pin kit of record (4f18c75d4900: PRH_Base ee6c7a38d6b6, PRH_FnEx
-   ff16e926fb9e; base 88c5348fe7fc): memnorm carried from the entry memory as P m := memnorm (e_mem E) -> memnorm m
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rebound 2026-10-29 onto the old-pin kit of record (PRH_Base ee6c7a38d6b6, PRH_FnEx
+   ff16e926fb9e): memnorm carried from the entry memory as P m := memnorm (e_mem E) -> memnorm m
    (YSRrMemnorm.v), through the engine's _inv runners and the callees' m-form keeps (ex_string's fpostWm, strcmp's
    aj_strcmp_at_xrom); ex_string's Q has S' = S (exv_room Sc S2 by exv_room_refl); fpre's raZ < alloc_ceiling at the
    ex_string call from the jal's return pc. *)

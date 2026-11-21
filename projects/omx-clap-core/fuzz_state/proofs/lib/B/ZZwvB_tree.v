@@ -8,13 +8,13 @@
    (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACai.v:156-159. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v, with its module paths and module names changed; 1279 of its 1357 lines of code are new or changed and 927 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch
-   60d0985773d, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_K.v; 249 of its 295 lines of code are new or changed and 1311 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_tree.v (a working branch
-   1a5dc5b2e7c): same lemma names, statements and proofs; imports point at lib/B's image files (YB1v, YB1w) and walk
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_tree.v (a working branch):
+   same lemma names, statements and proofs; imports point at lib/B's image files (YB1v, YB1w) and walk
    kit (FSW_rd); the image-agnostic FSupoison, FSupoisonU, FSH_Gen stay lib/A's; FSH_Fn_reader is lib/B's (Required,
    used qualified: lib/B's FSH_Fn_writer states the root node with lib/B's FSH_Fn_reader.pobj).
    rule 24: proves no function (kind: segment lemma) - the container arms of write_value B.
@@ -33,6 +33,7 @@
    branches) plus this worktree's HEAD;
    no donor found in (1)-(3). The reusable parts of the two list splits are PjStruct's own pj_items_mono /
    pj_mems_mono shape (lib/Prog/PjStruct.v:264-304), followed here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -354,4 +355,4 @@ Proof.
 Qed.
 
 End T.
-(* rebuilt on the 50968be8342 statement set *)
+(* rebuilt statement set *)

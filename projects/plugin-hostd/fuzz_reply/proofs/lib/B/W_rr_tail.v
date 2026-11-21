@@ -8,7 +8,7 @@
    SHAPE from the image-A twin lib/A/W_rr_tail.v (a working branch) and lane W7's W_drain_epi.v (a fresh symbolic
    state seated at the cut); the instruction run is B's (no fake frame in B's relay_remove: wake keeps its byte in
    its own frame).  No trap edge in this segment. *)
-(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane f4cd818e98d
+(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane
    lib/A/W_rr_tail.v): TAIL over ANY allocator relation ARx in the room form, IN PLACE (the AR theorem is dropped).
    Section c is W_relay_remove_cx.v's generic block; the journal is W_journal_x.v ajournal_gx_x at RR_STK_x (the head
    set after each state), the laws and journal lemmas their _x twins (alx_*, ajournal_gx_nil_x / _pack_x / _inner_x /
@@ -18,6 +18,7 @@
    the cells of rr_gcells).  rr_tail_out carries wake's seat fact `exists f, S' = set_fs f S1` in place of the meter:
    MO_FR gives rr_post_x's meter and RPF_of its room rp_RM RP S' kr, from RRU (Some i)'s RDONE (rp_RM RP S1 kr) or
    from RRU None's RHELD (the whole budget, down to kr by RMM_of). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -946,7 +947,7 @@ eapply (SRrG_bind SEGS R R_trans).
       * intros Ho. destruct (LKI a ltac:(lia)) as (Hi & Hno & _).
         exact (Hno (proj1 (alx_owned_image _ _ _ LAWS _ _ _ _ _ _ a HARm Hi) Ho)).
       * rewrite HSPc. revert Ha HL3 Hslo Hceil C1 WS Hes. clear. intros. lia.
-    + (* QMm W1 (B engine 9015b6a6f732): the lock word is in G_RR, and gx_ok's kept clause puts it off as_kept *)
+    + (* QMm W1 (B engine): the lock word is in G_RR, and gx_ok's kept clause puts it off as_kept *)
       intros a Ha HK. exact (proj2 (proj2 (HG a ltac:(unfold G_RR, inG; apply Exists_cons_hd; unfold in_zr; cbn [fst snd]; lia))) (proj1 (proj2 HK))). }
 cbv beta. intros W3 c3 _ (-> & regs3 & mem3 & md3 & -> & HJ3 & HP3 & HPR3 & Hfr3 & Hpres3).
 (* ---- back at 0x843cc: s-registers kept, the caller-saved ones fresh atoms 48 .. 63; the slots kept ---- *)

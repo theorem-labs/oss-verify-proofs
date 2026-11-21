@@ -1,8 +1,8 @@
-INPUTS USED by port_addr_check.py --git $HUB --src a3c671fb9bb:proofs/plugin-hostd/fuzz_command/lib/A --dst a3c671fb9bb:proofs/plugin-hostd/fuzz_command/lib/B --src-image B=$IMG/cmd.A.pin:$IMG/cmd.A.twin --dst-image B=$IMG/cmd.B.pin:$IMG/cmd.B.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv --include A*.v --dst-include Y*.v --map A=Y
+INPUTS USED by port_addr_check.py --git $HUB:proofs/plugin-hostd/fuzz_command/lib/A:proofs/plugin-hostd/fuzz_command/lib/B --src-image B=$IMG/cmd.A.pin:$IMG/cmd.A.twin --dst-image B=$IMG/cmd.B.pin:$IMG/cmd.B.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv --include A*.v --dst-include Y*.v --map A=Y
   image src B  $IMG/cmd.A.pin  sha256 c0661b96b5bd  634904 bytes  symbols: symtab of cmd.A.twin 68db792d5fa7
   image dst B  $IMG/cmd.B.pin  sha256 bbe55d24d096  633720 bytes  symbols: symtab of cmd.B.twin 658cefbe806b
-  ref src  a3c671fb9bb:proofs/plugin-hostd/fuzz_command/lib/A  -> a3c671fb9bb455507907553d8d2013ed0fccc7f8  (git $HUB)
-  ref dst  a3c671fb9bb:proofs/plugin-hostd/fuzz_command/lib/B  -> a3c671fb9bb455507907553d8d2013ed0fccc7f8  (git $HUB)
+  ref src:proofs/plugin-hostd/fuzz_command/lib/A  ->  (git $HUB)
+  ref dst:proofs/plugin-hostd/fuzz_command/lib/B  ->  (git $HUB)
   count symbols of src B: 2256
   count symbols of dst B: 2257
   count src files read: 1316

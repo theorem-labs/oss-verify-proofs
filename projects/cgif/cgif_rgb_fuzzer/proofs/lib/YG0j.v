@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (In_segments_reserved over the filtered segments_reserved, and the primary reserve and the pointer array shown free of the reserved ledger through al_zres in place of the ledger being the image's reservations). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -55,12 +56,25 @@ rewrite IH by (intros e He; apply H; right; exact He).
 destruct (H (a, sz) (or_introl eq_refl)) as [D|D]; cbn [fst snd] in D; unfold uw in D; unfold iv_overlap;
 destruct (Z.ltb_spec (bv_unsigned lo) (bv_unsigned a + bv_unsigned sz)); destruct (Z.ltb_spec (bv_unsigned a) (bv_unsigned lo + bv_unsigned n)); cbn; try reflexivity; exfalso; lia.
 Qed.
+(* [segments_reserved] keeps the non-kernel-map segments with stdpp's [filter]
+   (Run.v:253-254 at 08b1429); stated over [segments_reserved] so the filter is the model's. *)
+Lemma In_segments_reserved : forall (l : list Segment) e,
+In e (segments_reserved l) -> exists sg, In sg l /\ segment_reservation sg = e.
+Proof.
+induction l as [|s t IH]; intros e H.
+- unfold segments_reserved in H. cbn in H. destruct H.
+- revert H. unfold segments_reserved. cbn.
+  match goal with |- context [if ?d then _ else _] => destruct d end; cbn; intros H.
+  + destruct H as [H|H]; [exists s; split; [left; reflexivity | exact H]|].
+    destruct (IH e H) as (sg & H1 & H2). exists sg. split; [right; exact H1 | exact H2].
+  + destruct (IH e H) as (sg & H1 & H2). exists sg. split; [right; exact H1 | exact H2].
+Qed.
 Lemma region_free_reserved : forall (sgs : list Segment) lo len,
 (forall sg, In sg sgs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 kImgEnd + 4096 <= lo -> 0 <= len -> lo + len < 2 ^ 64 ->
 region_free (segments_reserved sgs) (w64 lo) (w64 len) = true.
 Proof.
-intros sgs lo len IMG H1 H2 H3. apply region_free_intro. intros e He. unfold segments_reserved in He. apply in_map_iff in He as (sg & <- & Hsg).
+intros sgs lo len IMG H1 H2 H3. apply region_free_intro. intros e He. apply In_segments_reserved in He as (sg & Hsg & <-).
 destruct (IMG sg Hsg) as [G1 G2]. unfold segment_reservation. cbn [fst snd]. left.
 unfold page_round_up_Z, page_round_down_Z, page_size.
 set (b := Z.of_N (seg_base sg)) in *. set (z := Z.of_N (seg_size sg)) in *.
@@ -189,7 +203,7 @@ vm_maps (m_vmmaps md') = vm_maps (m_vmmaps md) ->
 eager_used md' <= eager_used md + n ->
 ALedger segs ly SUp md'.
 Proof.
-intros Hn VM EG. pose proof (filter_holes_id Hn) as FH. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
+intros Hn VM EG. pose proof (filter_holes_id Hn) as FH. pose proof (al_zres _ _ _ _ L) as [ZP0 ZQ0]. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16].
 assert (HOLES : forall c', 1 <= c' <= 31 -> rg_holes (reg SUp c') = rg_holes (reg S c')).
 { intros c' Hc'. unfold SUp. destruct (Z.eq_dec c' c) as [->|NE]; [rewrite reg_upd; cbn; unfold del_hole; exact FH | rewrite reg_upd_ne by lia; reflexivity]. }
 assert (MONO : forall c', 1 <= c' <= 31 -> rg_mapped_user (reg S c') <= rg_mapped_user (reg SUp c') /\ rg_mapped_fa (reg S c') <= rg_mapped_fa (reg SUp c')).
@@ -246,7 +260,7 @@ vm_maps (m_vmmaps md') = wiv (addrU, n) :: vm_maps (m_vmmaps md) ->
 eager_used md' <= eager_used md + n ->
 ALedger segs ly SUp md'.
 Proof.
-intros Hh VM EG. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15]. pose proof prim_bounds as (B1 & B2 & B3 & B4 & B5).
+intros Hh VM EG. pose proof (al_zres _ _ _ _ L) as [ZP0 ZQ0]. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16]. pose proof prim_bounds as (B1 & B2 & B3 & B4 & B5).
 pose proof mu_fa_facts as (M1 & M2 & M3 & M4).
 assert (HOLESc : rg_holes (reg SUp c) = del_hole offU (rg_holes r)) by (unfold SUp; rewrite reg_upd; reflexivity).
 assert (HOLESo : forall c', 1 <= c' <= 31 -> c' <> c -> rg_holes (reg SUp c') = rg_holes (reg S c')) by (intros c' Hc' NE; unfold SUp; rewrite reg_upd_ne by lia; reflexivity).
@@ -379,13 +393,13 @@ Lemma ALedger_user_place_piece :
 region_free (vm_reserved (m_vmmaps md)) (w64 addrU) (w64 n) = true /\
 map_contains (vm_maps (m_vmmaps md)) (w64 addrU) (w64 n) = true.
 Proof.
-intros Hn. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
+intros Hn. pose proof (al_zres _ _ _ _ L) as [ZP0 ZQ0]. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16].
 pose proof prim_bounds as (B1 & B2 & B3 & B4 & B5). pose proof prim_hi as [C1 C2].
 assert (R : ly_prim ly <= addrU /\ addrU + n <= ly_prim ly + kPrimResvSize /\ kImgEnd + 4096 <= addrU /\ addrU + n < 2 ^ 63).
 { clear - B1 B2 B3 B4 B5 C1 C2. unfold addrU, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
 split.
-- rewrite L3. apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia].
+- apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink _ (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact ZP0 | |]; rewrite ?w64_unsigned by (unfold kHighMemBeg, kPrimResvSize, kUserMapSize in *; lia); unfold kPrimResvSize, kUserMapSize in *; lia.
 - destruct L4 as (pieces & (P1 & P2 & P3) & P4).
 destruct (proj1 (Exists_exists _ _) (proj2 (P3 addrU ltac:(unfold kUserMapSize in *; lia)) (no_hole_in_range Hn addrU ltac:(unfold kUserMapSize; lia)))) as (P0 & HP & Hin).
 pose proof (proj1 (Forall_forall _ _) P1 P0 HP) as (Q0 & _ & QE). pose proof (no_cut_inside _ QE) as NC. unfold in_zr in Hin.
@@ -399,12 +413,12 @@ In (offU, n) (rg_holes r) -> sec_placed ly S ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> 0 < uw (snd e)) ->
 region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (w64 addrU) (w64 n) = true.
 Proof.
-intros Hh PL NZ. pose proof (zones_vs_prim PL) as ZP. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
+intros Hh PL NZ. pose proof (zones_vs_prim PL) as ZP. pose proof (al_zres _ _ _ _ L) as [ZP0 ZQ0]. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16].
 pose proof prim_bounds as (B1 & B2 & B3 & B4 & B5). pose proof prim_hi as [C1 C2].
 assert (R : ly_prim ly <= addrU /\ addrU + n <= ly_prim ly + kPrimResvSize /\ kImgEnd + 4096 <= addrU /\ addrU + n < 2 ^ 63).
 { clear - B1 B2 B3 B4 B5 C1 C2. unfold addrU, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
-rewrite region_free_app. apply andb_true_intro. split; [rewrite L3; apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia]|].
+rewrite region_free_app. apply andb_true_intro. split; [(apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink _ (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact ZP0 | |]; rewrite ?w64_unsigned by (unfold kHighMemBeg, kPrimResvSize, kUserMapSize in *; lia); unfold kPrimResvSize, kUserMapSize in *; lia)|].
 apply region_free_intro. intros e He. pose proof (L8 e He) as X. apply Exists_exists in X as (z & Hz & Z1 & Z2).
 pose proof (NZ e He) as Pe. pose proof (uw_range (fst e)) as U1. pose proof (uw_range (snd e)) as U2. unfold uw in *.
 rewrite !w64_unsigned by (clear - R1 R2 R4 B1; unfold kHighMemBeg, kUserMapSize in *; lia).
@@ -456,7 +470,7 @@ vm_maps (m_vmmaps md') = vm_maps (m_vmmaps md) ->
 eager_used md' <= eager_used md + n ->
 ALedger segs ly SFp md'.
 Proof.
-intros Hn VM EG. pose proof (filter_holes_idF Hn) as FH. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
+intros Hn VM EG. pose proof (filter_holes_idF Hn) as FH. pose proof (al_zres _ _ _ _ L) as [ZP0 ZQ0]. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16].
 assert (HOLES : forall c', 1 <= c' <= 31 -> rg_holes (reg SFp c') = rg_holes (reg S c')).
 { intros c' Hc'. unfold SFp. destruct (Z.eq_dec c' c) as [->|NE]; [rewrite reg_upd; cbn; unfold del_hole; exact FH | rewrite reg_upd_ne by lia; reflexivity]. }
 assert (MONO : forall c', 1 <= c' <= 31 -> rg_mapped_user (reg S c') <= rg_mapped_user (reg SFp c') /\ rg_mapped_fa (reg S c') <= rg_mapped_fa (reg SFp c')).
@@ -486,7 +500,7 @@ vm_maps (m_vmmaps md') = wiv (addrF, n) :: vm_maps (m_vmmaps md) ->
 eager_used md' <= eager_used md + n ->
 ALedger segs ly SFp md'.
 Proof.
-intros Hh VM EG. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15]. pose proof prim_boundsF as (B1 & B2 & B3 & B4 & B5).
+intros Hh VM EG. pose proof (al_zres _ _ _ _ L) as [ZP0 ZQ0]. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16]. pose proof prim_boundsF as (B1 & B2 & B3 & B4 & B5).
 pose proof mu_fa_facts as (M1 & M2 & M3 & M4).
 assert (HOLESc : rg_holes (reg SFp c) = del_hole offF (rg_holes r)) by (unfold SFp; rewrite reg_upd; reflexivity).
 assert (HOLESo : forall c', 1 <= c' <= 31 -> c' <> c -> rg_holes (reg SFp c') = rg_holes (reg S c')) by (intros c' Hc' NE; unfold SFp; rewrite reg_upd_ne by lia; reflexivity).
@@ -588,13 +602,13 @@ Lemma ALedger_fa_place_piece :
 region_free (vm_reserved (m_vmmaps md)) (w64 addrF) (w64 n) = true /\
 map_contains (vm_maps (m_vmmaps md)) (w64 addrF) (w64 n) = true.
 Proof.
-intros Hn. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
+intros Hn. pose proof (al_zres _ _ _ _ L) as [ZP0 ZQ0]. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16].
 pose proof prim_boundsF as (B1 & B2 & B3 & B4 & B5). pose proof prim_hiF as [C1 C2]. pose proof mu_fa_facts as (M1 & M2 & M3 & M4).
 assert (R : ly_prim ly <= addrF /\ addrF + n <= ly_prim ly + kPrimResvSize /\ kImgEnd + 4096 <= addrF /\ addrF + n < 2 ^ 63).
 { clear - B1 B2 B3 B4 B5 C1 C2 M3. unfold addrF, offF, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
 split.
-- rewrite L3. apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia].
+- apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink _ (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact ZP0 | |]; rewrite ?w64_unsigned by (unfold kHighMemBeg, kPrimResvSize, kUserMapSize in *; lia); unfold kPrimResvSize, kUserMapSize in *; lia.
 - destruct L4 as (pieces & (P1 & P2 & P3) & P4).
 destruct (proj1 (Exists_exists _ _) (proj2 (P3 addrF ltac:(unfold kUserMapSize in *; lia)) (no_hole_in_rangeF Hn addrF ltac:(unfold kUserMapSize; lia)))) as (P0 & HP & Hin).
 pose proof (proj1 (Forall_forall _ _) P1 P0 HP) as (Q0 & _ & QE). pose proof (no_cut_insideF _ QE) as NC. unfold in_zr in Hin.
@@ -608,12 +622,12 @@ In (offF, n) (rg_holes r) -> sec_placed ly S ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> 0 < uw (snd e)) ->
 region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (w64 addrF) (w64 n) = true.
 Proof.
-intros Hh PL NZ. pose proof (zones_vs_prim PL) as ZP. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
+intros Hh PL NZ. pose proof (zones_vs_prim PL) as ZP. pose proof (al_zres _ _ _ _ L) as [ZP0 ZQ0]. destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16].
 pose proof prim_boundsF as (B1 & B2 & B3 & B4 & B5). pose proof prim_hiF as [C1 C2]. pose proof mu_fa_facts as (M1 & M2 & M3 & M4).
 assert (R : ly_prim ly <= addrF /\ addrF + n <= ly_prim ly + kPrimResvSize /\ kImgEnd + 4096 <= addrF /\ addrF + n < 2 ^ 63).
 { clear - B1 B2 B3 B4 B5 C1 C2 M3. unfold addrF, offF, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
-rewrite region_free_app. apply andb_true_intro. split; [rewrite L3; apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia]|].
+rewrite region_free_app. apply andb_true_intro. split; [(apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink _ (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact ZP0 | |]; rewrite ?w64_unsigned by (unfold kHighMemBeg, kPrimResvSize, kUserMapSize in *; lia); unfold kPrimResvSize, kUserMapSize in *; lia)|].
 apply region_free_intro. intros e He. pose proof (L8 e He) as X. apply Exists_exists in X as (z & Hz & Z1 & Z2).
 pose proof (NZ e He) as Pe. pose proof (uw_range (fst e)) as U1. pose proof (uw_range (snd e)) as U2. unfold uw in *.
 rewrite !w64_unsigned by (clear - R1 R2 R4 B1; unfold kHighMemBeg, kUserMapSize in *; lia).

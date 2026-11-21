@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and addresses changed; 2105 of its 2257 lines of code are new or changed and 859 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A5.v, with its module paths and addresses changed; 1044 of its 1143 lines of code are new or changed and 2158 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R1.v blob 85e78d1dcc93 at 6a74d5929d2.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/R1.v blob 85e78d1dcc93.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives R1.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of R1.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -470,8 +471,8 @@ Qed.
 (* route (C) (a Theorem Labs lane 09:20Z; form a Theorem Labs lane 09:38Z, R amended 10:33Z): r1_spill_evt_F with its shadow_rw premise
    DROPPED and its post shadow_rw m' in the region form. R is empty: the run's six sd stores go to the spill cells
    [A + 48, A + 136), app memory that the rw_cells premises pay, and the run loads no shadow byte. The old proof used
-   shadow_rw m only to carry it to m'; that carry is now R1.v's local transport twin r1_shadow_rw_on (a Theorem Labs lane,
-   c5bc182745d). r1_spill_evt_F below is a corollary. *)
+   shadow_rw m only to carry it to m'; that carry is now R1.v's local transport twin r1_shadow_rw_on (a Theorem Labs lane).
+   r1_spill_evt_F below is a corollary. *)
 Lemma r1_spill_evt_F_on :
   forall (RNG : ExecF.footprint)
          (ra0 sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -642,7 +643,7 @@ Qed.
    rw_cells rsegs m (Sh + 332) [CB 1 sh1], not by shadow_rw (ASSIGN 11:45Z: drop where a rw_cells / wr_at premise
    pays each store), and the run loads no shadow byte. In the post, the byte at Sh + 332 is present in m' because the
    run stored it (r1_ba_rd); every other shadow byte is outside the munch region. The carry is R1.v's local transport
-   twin r1_shadow_rw_on (a Theorem Labs lane, c5bc182745d). r1_shadow_evt_F below is a corollary. *)
+   twin r1_shadow_rw_on (a Theorem Labs lane). r1_shadow_evt_F below is a corollary. *)
 Lemma r1_shadow_evt_F_on :
   forall (RNG : ExecF.footprint)
          (ra0 sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -799,12 +800,12 @@ Qed.
 (* ---------------------------------------------------------------- r1_call_evt *)
 
 (* route (C): r1_call_evt_F with the callee's _on contract RBC.reac_box_catalogue_contract_F_on (a Theorem Labs lane,
-   a working branch d68c95046c8, reac_box_catalogue_c.v blob d3c4f4d7f9d: the callee's shadow_rw premise
+   a working branch, reac_box_catalogue_c.v blob d3c4f4d7f9d: the callee's shadow_rw premise
    is DROPPED) and its own shadow_rw premise DROPPED. R is empty: the run stores the count cell [fr + 2656, fr + 2664)
    (app memory, paid by rw_cells) and the callee its frame [spv - 16, spv); the callee's one check reads the shadow
    byte shadow_addr (fr + 2656) = Sh + 332 through addressable m1 (fr + 2656) 8, which the run builds from the
    premise bytes_at rsegs m (Sh + 332) [Z_to_bv 8 0], not from shadow_rw. The carries are R1.v's local transport
-   twin r1_shadow_rw_on (a Theorem Labs lane, c5bc182745d). r1_call_evt_F below takes the plain callee contract, so it keeps
+   twin r1_shadow_rw_on (a Theorem Labs lane). r1_call_evt_F below takes the plain callee contract, so it keeps
    its own proof, byte-identical (a Theorem Labs lane 09:58Z). *)
 Lemma r1_call_evt_F_on : RBC.reac_box_catalogue_contract_F_on ->
   forall (RNG : ExecF.footprint)

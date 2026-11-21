@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 722 of its 760 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_blockF.v; 18 of its 37 lines of code are new or changed and 741 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* lib/A/Prog/asan_stack_malloc_c_on.v -- route (C) (a Theorem Labs lane 09:20Z; a Theorem Labs lane wave L1, writer a Theorem Labs lane): the ADDITIVE
    `_on` form of asan_stack_malloc_c.v's contract, STATEMENT ONLY. asan_stack_malloc_c.v stays byte-identical.
 
@@ -14,7 +15,7 @@
    [shadow_addr fr, shadow_addr fr + n), fr = fs_frame FS c j, 0 <= j < fs_M c). The class c is a PARAMETER of the
    contract, so a pre-call R names the shadow of the class-c BLOCK, which holds every frame the run can choose:
    R = [shadow_addr (fs_frame FS c 0), shadow_addr (fs_frame FS c 0) + 131072) (the block is fs_M c * fs_B c = 2^20
-   bytes, so its shadow is 2^20 / 8 = 131072 bytes, for every c). a Theorem Labs lane's walks Sm0/1/2.v (not in this delivery) and lib/A/Tk/AW/Sm6.v:105-108 use the
+   bytes, so its shadow is 2^20 / 8 = 131072 bytes, for every c). a Theorem Labs lane's walks Sm0/1/2.v (not in this delivery) and lib/A/Tk/AW/Sm6.v:106-109 use the
    premise only in shadow_stk over this range. Wave decision a Theorem Labs lane 10:57Z (report
    side-stack-shadow.md (a working note, not in this delivery)): the WHOLE side-stack shadow (the 10:2xZ form) is
    NOT dischargeable at a cut. Its first 4608 bytes shadow the header and flags, and AR does not make them present.

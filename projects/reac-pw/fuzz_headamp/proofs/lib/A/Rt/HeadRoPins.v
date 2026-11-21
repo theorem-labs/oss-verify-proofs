@@ -1,11 +1,11 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_pin/lib/A/Rt/PinRoPins.v at 90722657971 for reac-pw/fuzz_headamp image A; module paths changed; the lemma names pin_ro_* are hd_ro_*; no numeral (the check hd_ro_pins_ok runs over this unit's own lib/A/AF0m.v tables Tfib_owned_static / Tfib_const_abs and image A's segments, by vm_compute). The comments are pin's, verbatim apart from those names: "pin's own tables" are this unit's. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_pin/lib/A/Rt/PinRoPins.v for reac-pw/fuzz_headamp image A; module paths changed; the lemma names pin_ro_* are hd_ro_*; no numeral (the check hd_ro_pins_ok runs over this unit's own lib/A/AF0m.v tables Tfib_owned_static / Tfib_const_abs and image A's segments, by vm_compute). The comments are pin's, verbatim apart from those names: "pin's own tables" are this unit's. *)
 (* The comments in this file are reac-pw/fuzz_pin's lib/A/Rt/PinRoPins.v, unchanged apart from names and this unit's files, image and values. reac-pw/fuzz_headamp, image A (fuzz_headamp.asan f3e0669d2819): lib/A/Rt/StrncmpView.v's `ro_owned_pinned` for every
    symbol record B of the TfibSyms class: every runtime-owned byte (Tfib_owned_static) that lies in a loaded
    segment without write permission is held by a constant cell of Tfib_const_abs at a constant address, whose
    constant value is the image's little-endian word there. The fact is decided by ro_pins_ok, a boolean check over
    image A's own tables and segments (vm_compute), and ro_pins_sound reads it as the proposition.
    rule 24 (reuse): no function is proved here. The shape is libreac/fuzz_boxreg's lib/A/Rt/StrncmpViewInst.v
-   box_ro_owned_pinned (origin/ossv/recipes f26f9fbd8777), which takes the same fact from boxreg's AF0mCheck.v
+   box_ro_owned_pinned, which takes the same fact from boxreg's AF0mCheck.v
    gate; this unit has no such gate file, so the check is written here over StrncmpView.v's own ro_img_word. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia.

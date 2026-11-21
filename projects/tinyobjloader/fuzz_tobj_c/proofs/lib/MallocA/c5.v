@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VM state record's two new fields, the kernel build and the vDSO, in one rewrite). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -1594,7 +1595,7 @@ Proof.
 
   destruct HJ as (_ & _ & _ & _ & HK & _). unfold vm_forget_range. rewrite with_vm_backing_with_vm. apply HKc.
   match goal with |- Kc _ (with_vmmaps ?h ?m) =>
-    replace (with_vmmaps h m) with (with_vm (mkVmState h (m_vm_lazy m) (m_vm_materialized m)) m) by (destruct m; reflexivity) end.
+    replace (with_vmmaps h m) with (with_vm (mkVmState h (m_vm_lazy m) (m_vm_materialized m) (m_kernel m) (m_vdso m)) m) by (destruct m; reflexivity) end.
   apply HKc. exact HK.
 Qed.
 

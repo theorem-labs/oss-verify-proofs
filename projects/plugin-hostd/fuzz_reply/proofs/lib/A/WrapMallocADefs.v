@@ -1,10 +1,11 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocADefs.v, sha256 2b474fcdfa94; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocADefs.v, sha256 2b474fcdfa94; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A (asan, pin 1be0f53d96cb), the two parameters at which the
    image-A malloc interceptor walk discharges a Theorem Labs lane's Record wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v
    :149, sha256 c6515cb7094c; internal record):
-   - ARXh_A, the allocator relation: the exact text of YGcfDIface.ARXs_cf (YGcfDIface.v:73-77 at the base, already
+   - ARXh_A, the allocator relation: the exact text of YGcfDIface.ARXs_cf (YGcfDIface.v:74-78 at the base, already
      indexed by the ghost set Hp), at the segments tfibsegs. Isolated here so that the swap to AIfaceSA's ARXs_A
      (AllocReloc's alloc8, a Theorem Labs lane) is a one-line change; ARXh_A_ARXs_cf below states that it IS ARXs_cf.
    - K_A, the invariant from the call segment (WrapMallocACall.seg_call) to the return segment (WrapMallocARet):
@@ -30,7 +31,7 @@ Local Open Scope Z_scope.
 Section G. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Variable B : asyms.
 
-(* YGcfDIface.v:73-77 at the OLD base, ARXs_cf's body, at tfibsegs. On the #102 base ARXs_cf drops the last conjunct
+(* YGcfDIface.v:74-78 at the OLD base, ARXs_cf's body, at tfibsegs. On the #102 base ARXs_cf drops the last conjunct
    xs_placed_cf, which ARcf now implies (ARmcf's last field amc_xs_placed, YG0ncf.xs_placed_of_ARcf), so the two
    relations are still equivalent (ARXh_A_ARXs_cf). *)
 (* round-3 re-fit: the budget conjunct is ARXs_cf's new text (the free path's headroom with its shadow / 8). *)

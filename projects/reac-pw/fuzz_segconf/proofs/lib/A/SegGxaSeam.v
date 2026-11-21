@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/FMgxaSeamReadyX.v, with its module paths and module names changed; 317 of its 349 lines of code are new or changed and 726 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* THE GXA SEAM AT MUSL VFPRINTF FOR SEGCONF'S FORMATS: lib/A/FMgxaSeam.v fm_vfprintf_seamP over segconf's grammar
    (lib/A/Rt/RtPFSeg.v), closed as FMgxaSeamFm.v fm_vfprintf_seam_closedP and instantiated at this image's cells as
    FMsnprintfSeamI.v fm_seam_instP.
    - seg_family_ro is FMgxaSeamDef.v pf_family_ro over seg_parse / seg_text (no piece predicate: the model agreement
      SegGxaSeamPf.v covers every seg_piece);
    - seg_vfprintf_seam is fm_vfprintf_seamP's statement and proof, copied from this tree's relocated FMgxaSeam.v by
-     records/interceptors/printf/tools/gen_seg_seam.py of the internal record commit 72eb1296d954 (sha256 89a3f2d6af8d), with the lines that name the released grammar
+     records/interceptors/printf/tools/gen_seg_seam.py of the internal record (sha256 89a3f2d6af8d), with the lines that name the released grammar
      replaced: the family's destructuring, the model agreement (SegGxaSeamPf.seg_model_agree), the model's argument
      list (SegPfText.seg_pargs) and its shape (seg_pargs_shape_pt), the text's bytes (seg_text_bytes) and the format's
      bytes (SegPfStep.seg_parse_bytes0). Every other line, every image numeral included, is the relocated file's;

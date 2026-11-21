@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (place_of_counts: the counting bound gives Linux's placement above task_unmapped_base for the room predicate's NULL-hint grant; the launch's vDSO/vvar pair is in the reserved ledger, so both counting bounds sweep it with the mappings and leave room for it). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Import X1by X1bs X1c2 X1bn.
@@ -29,9 +30,25 @@ Proof.
 intros H. unfold vm_live_bytes. rewrite <- X1ad.zsumf_esz_live. apply X1ad.count_le_bytes. intros e He. exact (H e He).
 Qed.
 
+(* The sweep cost of the launch's vDSO/vvar pair: two entries, together at most
+   twenty pages ([State.vdso_len_bounds]). *)
+Lemma vdso_jcost : forall kb top nZ, 0 <= nZ ->
+X1ad.zsumf (X1ad.jcost nZ) (vdso_reserved kb top) <= 20 * 4096 + 2 * (nZ + 4095).
+Proof.
+intros kb top nZ HnZ.
+pose proof (vdso_text_pages_pos kb) as Hp. pose proof (vdso_text_pages_le kb) as Hl.
+unfold vdso_reserved. cbv zeta.
+destruct ((top - vdso_len kb) <? page_size)%Z.
+- unfold X1ad.zsumf. cbn [fold_right]. lia.
+- unfold X1ad.zsumf. cbn [fold_right]. unfold X1ad.jcost, X1ad.esz. cbn [snd].
+rewrite !unsigned_lit by (unfold vdso_vvar_pages, page_size in *; lia).
+unfold vdso_vvar_pages, page_size in *. lia.
+Qed.
+
 Theorem gap_of_counts : forall L pbrk mo nZ,
 KL L pbrk mo -> LI L mo -> 0 <= nZ ->
-2^40 + vm_live_bytes (m_vmmaps mo) + Z.of_nat (length (vm_maps (m_vmmaps mo))) * (nZ + 4095) + nZ <= alloc_ceiling_lo ->
+2^40 + vm_live_bytes (m_vmmaps mo) + Z.of_nat (length (vm_maps (m_vmmaps mo))) * (nZ + 4095)
++ 2 * (nZ + 4095) + 20 * 4096 + nZ <= alloc_ceiling_lo ->
 vm_gap_available (m_vmmaps mo) nZ = true.
 Proof.
 intros L pbrk mo nZ HK HL HnZ Hroom.
@@ -39,10 +56,41 @@ set (h := m_vmmaps mo) in *.
 pose proof (kl_start _ _ _ HK) as (S1 & S2 & S3 & S4). fold h in S1, S2, S3, S4.
 pose proof (proj1 (LI_sbk _ _ HL)) as SB. fold h in SB.
 pose proof (kl_ceil _ _ _ HK) as [Htop [Hlo _]]. fold h in Htop.
+pose proof (vdso_jcost (m_kernel mo) (vdso_top h) nZ HnZ) as Hvc.
 set (sb := bv_unsigned (vm_start_brk h)) in *.
-apply (X1ad.vm_gap_available_of_sum_from h nZ sb HnZ); [unfold PGSZ in *; lia| unfold PGSZ in *; exact S2| |].
-- intros e He. pose proof (kl_resv_top _ _ _ HK e He) as T. fold h sb in T. unfold ehi in T. unfold X1ad.elo, X1ad.esz. lia.
-- rewrite X1ad.zsumf_jcost, X1ad.zsumf_esz_live. unfold vm_live_bytes in Hroom. lia.
+apply (X1ad.vm_gap_available_of_sum_from_r h nZ sb (vdso_reserved (m_kernel mo) (vdso_top h)) HnZ);
+[unfold PGSZ in *; lia| unfold PGSZ in *; exact S2| |].
+- intros e He. destruct (kl_resv_top _ _ _ HK e He) as [T|T]; [left| right; exact T].
+fold h sb in T. unfold ehi in T. unfold X1ad.elo, X1ad.esz. lia.
+- rewrite X1ad.zsumf_app, (X1ad.zsumf_jcost nZ (vm_maps h)), X1ad.zsumf_esz_live.
+unfold vm_live_bytes in Hroom. lia.
+Qed.
+
+(* LPS 727298f3: a NULL-hint grant takes Linux's placement ([linux_place]), whose fallback searches
+   from [task_unmapped_base] up; the same counting gives a fit there, from the higher of the brk
+   start and that floor. *)
+Theorem place_of_counts : forall L pbrk mo nZ,
+KL L pbrk mo -> LI L mo -> 0 < nZ -> nZ mod 4096 = 0 ->
+2^40 + vm_live_bytes (m_vmmaps mo) + Z.of_nat (length (vm_maps (m_vmmaps mo))) * (nZ + 4095)
++ 2 * (nZ + 4095) + 20 * 4096 + nZ <= alloc_ceiling_lo ->
+vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) nZ = true.
+Proof.
+intros L pbrk mo nZ HK HL HnZ Hnal Hroom.
+set (h := m_vmmaps mo) in *.
+pose proof (kl_start _ _ _ HK) as (S1 & S2 & S3 & S4). fold h in S1, S2, S3, S4.
+pose proof (proj1 (LI_sbk _ _ HL)) as SB. fold h in SB.
+pose proof (kl_ceil _ _ _ HK) as [Htop [Hlo _]]. fold h in Htop.
+pose proof (vdso_jcost (m_kernel mo) (vdso_top h) nZ ltac:(lia)) as Hvc.
+set (sb := bv_unsigned (vm_start_brk h)) in *.
+set (t0 := Z.max sb 0x2aaaaab000).
+apply (X1ad.vm_place_available_of_sum_from_r h _ _ nZ t0 (vdso_reserved (m_kernel mo) (vdso_top h)) HnZ
+ltac:(change page_size with 4096; exact Hnal)).
+- match goal with |- ?t <= _ => change t with 0x2aaaaab000 end. unfold t0. lia.
+- unfold t0. destruct (Z.max_spec sb 0x2aaaaab000) as [[_ ->]|[_ ->]]; [reflexivity| unfold PGSZ in S2; exact S2].
+- intros e He. destruct (kl_resv_top _ _ _ HK e He) as [T|T]; [left| right; exact T].
+fold h sb in T. unfold ehi in T. unfold X1ad.elo, X1ad.esz, t0. lia.
+- rewrite X1ad.zsumf_app, (X1ad.zsumf_jcost nZ (vm_maps h)), X1ad.zsumf_esz_live.
+unfold vm_live_bytes in Hroom. unfold t0. lia.
 Qed.
 
 Lemma maps_count_le mo x : PGE mo -> vm_live_bytes (m_vmmaps mo) <= x ->
@@ -77,9 +125,10 @@ unfold ranges_free. apply forallb_forall. intros [lo m] Hin. cbn [fst snd]. unfo
 enough (a + n <= lo \/ lo + m <= a) as D.
 { destruct D as [D|D]; [rewrite (proj2 (Z.leb_le _ _) D); reflexivity| rewrite (proj2 (Z.leb_le _ _) D); apply orb_true_r]. }
 apply In_lranges in Hin as [H|[(b0 & l0 & H & E)|[(b0 & l0 & k & H & E)|(b0 & l0 & H & E)]]].
-- rewrite (kl_resv _ _ _ HK) in H.
+- destruct (kl_resv _ _ _ HK) as (rlo & rhi & Hrsp & Hld). rewrite Hld in H.
 apply in_map_iff in H as ([e sz] & E & H). unfold wwZ in E. cbn [fst snd] in E. injection E as <- <-.
-pose proof (region_free_disj _ _ _ (e, sz) Hrf (in_or_app _ _ _ (or_introl H))) as D. unfold elo, ehi in D. cbn [fst snd] in D. rewrite Ua, Un in D. exact D.
+assert (H' : In (e, sz) (vm_reserved h)) by (first [unfold h| idtac]; rewrite Hrsp; apply in_or_app; left; exact H).
+pose proof (region_free_disj _ _ _ (e, sz) Hrf (in_or_app _ _ _ (or_introl H'))) as D. unfold elo, ehi in D. cbn [fst snd] in D. rewrite Ua, Un in D. exact D.
 - injection E as -> ->. rewrite round_up_pg_eq. fold (mmap_len l0). apply Dgm. left; exact H.
 - injection E as -> ->. rewrite round_up_pg_eq. fold (mmap_len l0). apply Dgm. right; exists k; exact H.
 - injection E as -> ->. pose proof (kl_brkreg _ _ _ HK b0 l0 H) as (R1 & R2 & R3 & R4 & R5 & _).
@@ -126,7 +175,11 @@ assert (Hgap : vm_gap_available h n = true).
 { apply (gap_of_counts L pbrk mo n); [exact HK| exact HL| lia|].
 fold h k. unfold vm_live_bytes. rewrite Hfloor.
 assert (k * (n + 4095) <= k * (2^22 + 4095)) by (apply Z.mul_le_mono_nonneg_l; lia). nia. }
-split; [| exact Hgap].
+assert (Hpl : vm_place_available h (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n = true).
+{ apply (place_of_counts L pbrk mo n); [exact HK| exact HL| lia| exact (mmap_len_aligned len)|].
+fold h k. unfold vm_live_bytes. rewrite Hfloor.
+assert (k * (n + 4095) <= k * (2^22 + 4095)) by (apply Z.mul_le_mono_nonneg_l; lia). nia. }
+split; [| exact Hpl].
 destruct (vm_gap_available_find h n Hgap) as [aw Hfind].
 destruct (vm_find_base_sound h n aw Hfind) as (F1 & F2 & F3 & F4).
 pose proof (alloc_top_room h) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
@@ -139,7 +192,7 @@ assert (Herr : is_err (bv_unsigned aw) = false) by (unfold is_err, TWO64; apply 
 destruct (post_grant L len prot (bv_unsigned aw) Hp Herr) as [G1 G2]. rewrite G1, G2 in Hpost. fold n in Hpost. lia.
 -
 split; [lia|].
-apply (gap_of_counts L pbrk mo n HK HL ltac:(lia)). fold h k. unfold vm_live_bytes. rewrite Hfloor.
+apply (place_of_counts L pbrk mo n HK HL ltac:(lia) (mmap_len_aligned len)). fold h k. unfold vm_live_bytes. rewrite Hfloor.
 assert (E1 : 4096 * (k * (n + 4095)) <= (BMAX - n) * (n + 4095)).
 { unfold BMAX. assert (4096 * k <= 4357000000 - n) by lia. nia. }
 assert (E2 : (BMAX - n) * (n + 4095) <= (BMAX - 2^27) * (2^27 + 4095)).

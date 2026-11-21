@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a third pass of the linear test pins the stack's string-length terms). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1132,15 +1133,61 @@ Fixpoint sum_subst (fs : list sfact) (ts : list (Z * expr)) (lo hi : Z) (hit : b
       end
   end.
 
+(* LPS c0dd863a: the sum facts again, those with the most terms first (and in their own order among
+   equals), for a second substitution pass.  [sum_subst] takes the first fact that fits; at this
+   revision's launch layout a fact on fewer terms (the pointer arrays' distance to the stack's end)
+   comes first in the knowledge and takes the terms a more specific fact (a string's distance to
+   the stack's end) needs.  Every fact of the list is one of [fs], so the pass is as sound. *)
+Fixpoint sf_maxlen (fs : list sfact) : nat :=
+  match fs with [] => O | f :: r => Nat.max (List.length (fst f)) (sf_maxlen r) end.
+Fixpoint sf_from (n : nat) (fs : list sfact) : list sfact :=
+  match n with
+  | O => List.filter (fun f => Nat.eqb (List.length (fst f)) O) fs
+  | S m => List.filter (fun f => Nat.eqb (List.length (fst f)) n) fs ++ sf_from m fs
+  end.
+Definition sf_bylen (fs : list sfact) : list sfact := sf_from (sf_maxlen fs) fs.
+
+(* LPS c0dd863a: a third pass, for a form with terms the knowledge pins to one value: those terms are
+   replaced by their value first (as [sum_fact_pin] does for the sum facts), then the sum facts are
+   taken most terms first over the rest.  A form that still names a pinned term only fits the
+   less specific facts that also name it (an argument string's distance to the stack's end, with the
+   argument count pinned, needs the pinned fact on that string, not the one on the whole string
+   area).  Every fact is one of [fs] and a pinned term equals its value, so the pass is as sound. *)
 Definition lin_test_rel (kn : list kentry) (c : Z) (ts : list (Z * expr)) (test : Z -> Z -> bool) : bool :=
   match sum_facts kn kn with
   | [] => false
   | fs =>
+      if
       match sum_subst fs ts 0 0 false with
       | (ts', (lo0, hi0), true) =>
           match lin_range (erange kn) c ts' with
           | Some (lo, hi) => test (lo + lo0)%Z (hi + hi0)%Z
           | None => false
+          end
+      | _ => false
+      end
+      then true
+      else
+      if
+      match sum_subst (sf_bylen fs) ts 0 0 false with
+      | (ts', (lo0, hi0), true) =>
+          match lin_range (erange kn) c ts' with
+          | Some (lo, hi) => test (lo + lo0)%Z (hi + hi0)%Z
+          | None => false
+          end
+      | _ => false
+      end
+      then true
+      else
+      match pin_terms kn ts 0 0 with
+      | (tsp, (p0, _), true) =>
+          match sum_subst (sf_bylen fs) tsp 0 0 false with
+          | (ts', (lo0, hi0), true) =>
+              match lin_range (erange kn) (c - p0)%Z ts' with
+              | Some (lo, hi) => test (lo + lo0)%Z (hi + hi0)%Z
+              | None => false
+              end
+          | _ => false
           end
       | _ => false
       end

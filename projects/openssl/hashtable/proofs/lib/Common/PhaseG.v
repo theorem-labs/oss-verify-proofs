@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap's declined-placement gate; the old munmap model is gone). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -176,29 +177,6 @@ Section G.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma gg_munmap_raw : forall mode Q ms model x8 T,
-    m_halted model = None -> m_vm_lazy model = [] ->
-    ms_svc_pending ms = Some x8 ->
-    bv_unsigned x8 = 215%Z ->
-    munmap_args_ok ms model ->
-    GG mode Q T (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
-                       (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)) ->
-    GG mode Q T (mkCfg ms model).
-  Proof.
-    intros mode Q ms model x8 T Hh Hlazy Hsvc Hno Hargs Hc.
-    eapply gg_silent1; [| exact Hc]. split.
-    - intros []. apply (sstep_syscall segs ms model x8 (munmap_eff ms)
-                          (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
-                          (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
-      + exact Hh.
-      + exact Hsvc.
-      + apply munmap_ok; assumption.
-      + rewrite munmap_model_halted; exact Hh.
-      + apply materialize_model_accesses_no_lazy. exact (munmap_model_no_lazy _ _ _ Hlazy).
-    - intros e st Hss.
-      destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss) as [-> ->].
-      exists tt. split; reflexivity.
-  Qed.
 
   (* [comment removed for export] *)
   Lemma gg_mmap_raw : forall mode Q ms model x8 A B,
@@ -206,6 +184,8 @@ Section G.
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 222%Z ->
     mmap_args_ok ms ->
+    place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
     (mode = true -> forall e, In e mmap_errnos ->
        realizes segs (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model) A) ->
     (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
@@ -215,7 +195,7 @@ Section G.
     (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
     GG mode Q (t_alt2 A B) (mkCfg ms model).
   Proof.
-    intros mode Q ms model x8 A B Hh Hlazy Hsvc Hno Hargs HA HB Hex.
+    intros mode Q ms model x8 A B Hh Hlazy Hsvc Hno Hargs Hdecl HA HB Hex.
     set (n := page_round_up (ms_gpr ms 1)).
     set (nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1))).
     destruct Hex as [b0 Hb0].
@@ -247,7 +227,7 @@ Section G.
           -- apply materialize_model_accesses_no_lazy.
              exact (eq_trans (mmap_model_lazy _ _ _) Hlazy).
       + intros e st Hss.
-        destruct (sstep_mmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
+        destruct (sstep_mmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hdecl Hss)
           as [-> [(er & Her & ->) | (a & Ha & ->)]].
         * exists (inl (exist _ er Her)). split; reflexivity.
         * exists (inr (exist _ a Ha)). split; reflexivity.
@@ -328,6 +308,7 @@ Section G.
     getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = Z_to_bv 64 34 ->
     getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
     let n := page_round_up_Z len in
+    place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) n = false ->
     (exists a, grant_ok (getr regs 10) model a n = true) ->
     (mode = true -> forall e, In e mmap_errnos ->
        realizes segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem (seg_rom segs)) model) KA) ->
@@ -337,7 +318,7 @@ Section G.
                           (mmap_model a (Z_to_bv 64 n) model))) ->
     GG mode Q (t_alt2 KA KB) (mkCfg (mkst regs pc mem (seg_rom segs)) model).
   Proof.
-    intros mode Q regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Hex HA HB.
+    intros mode Q regs pc mem model w len KA KB HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Hdecl Hex HA HB.
     eapply gg_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
     set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
     assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len).
@@ -352,44 +333,13 @@ Section G.
       change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hc. lia. }
     assert (H0 : ms_gpr ms 0 = getr regs 10) by (unfold ms; rewrite ms_gpr_epend0; reflexivity).
     eapply (gg_mmap_raw mode Q ms model (getr regs 17) KA KB Hh Hlazy eq_refl
-              ltac:(rewrite H17; apply u64_lit; lia) Hargs).
+              ltac:(rewrite H17; apply u64_lit; lia) Hargs
+              ltac:(rewrite H0, Hu1; exact Hdecl)).
     - intros Hm e He. unfold ms. rewrite adv_set_epend. apply (HA Hm). exact He.
     - intros a Ha. rewrite Hpr. rewrite H0, Hu1 in Ha. unfold ms, epend. rewrite adv_mmap_grant. apply HB. exact Ha.
     - rewrite H0, Hu1. exact Hex.
   Qed.
 
-  Lemma gg_munmap : forall mode Q regs (pc : word) mem model w (a : word) (len : Z) K,
-    fetch_word segs pc = Some w -> is_ecall w = true ->
-    m_halted model = None -> m_vm_lazy model = [] ->
-    getr regs 17 = Z_to_bv 64 215 ->
-    getr regs 10 = a -> (bv_unsigned a mod page_size = 0)%Z ->
-    getr regs 11 = Z_to_bv 64 len -> (0 < len)%Z ->
-    (bv_unsigned a + page_round_up_Z len <= TASK_SIZE)%Z ->
-    map_has (vm_maps (m_vmmaps model)) a (Z_to_bv 64 (page_round_up_Z len)) = true ->
-    GG mode Q K (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4)
-                             (unfill a (Z_to_bv 64 (page_round_up_Z len)) mem) (seg_rom segs))
-                       (munmap_model a (Z_to_bv 64 (page_round_up_Z len)) model)) ->
-    GG mode Q K (mkCfg (mkst regs pc mem (seg_rom segs)) model).
-  Proof.
-    intros mode Q regs pc mem model w a len K HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw Hhas Hc.
-    assert (Hlen' : (len < two_pow_64)%Z).
-    { pose proof (page_round_up_Z_bounds len ltac:(lia)). pose proof (u64_range a).
-      unfold TASK_SIZE in Hnw. unfold two_pow_64. lia. }
-    eapply gg_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
-    assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len).
-    { unfold ms. rewrite ms_gpr_epend1, H11. apply u64_lit. unfold two_pow_64 in Hlen'. lia. }
-    assert (Hpr : page_round_up (ms_gpr ms 1) = Z_to_bv 64 (page_round_up_Z len)).
-    { unfold page_round_up. rewrite Hu1. reflexivity. }
-    assert (H0 : ms_gpr ms 0 = a) by (unfold ms; rewrite ms_gpr_epend0; exact H10).
-    assert (Hargs : munmap_args_ok ms model).
-    { unfold munmap_args_ok. rewrite H0, Hu1, Hpr. repeat split; try assumption.
-      intro Hz. apply (f_equal bv_unsigned) in Hz. rewrite Hu1 in Hz.
-      change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hz. lia. }
-    eapply (gg_munmap_raw mode Q ms model (getr regs 17));
-      [exact Hh | exact Hlazy | reflexivity | rewrite H17; apply u64_lit; lia | exact Hargs |].
-    unfold munmap_eff. rewrite H0, Hpr. unfold ms. rewrite adv_unmaps1_epend. exact Hc.
-  Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)

@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: segment E of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530 .. the jal of rec_clear at 0x86584: the frame, the size test, the shadow base), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s10.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (wcb_entry: the seed and the run from the entry) and A/ACh6.v (a segment closed by the statement of the point it leaves to). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_s10.v, with its module paths and module names changed; 460 of its 527 lines of code are new or changed and 343 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/check_model.v (commit beed74b30c04): the walk of fuzz_segconf's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/check_model.v: the walk of fuzz_segconf's
    check_model on image B (fuzz_segconf.asan-ubsan, 0x8718c = BASE + AF_check_model, 33 instructions), against
-   check_model_contract (lib/B/Prog/check_model_c.v, image B's copy of the FINAL contract 6f783602b5e3). ADAPTED: B's code is
+   check_model_contract (lib/B/Prog/check_model_c.v, image B's copy of the FINAL contract). ADAPTED: B's code is
    A's 30 instructions at other addresses plus UBSan's alignment test of want (`andi a2,a1,3; bnez a2`, 0x87194 /
    0x87198) and its trap word (`unimp`, 0x871f8); the A walk's text, with B's module paths, B's addresses and one more
    stretch and branch for the test.
@@ -159,7 +160,7 @@ Variable B : asyms.
    environment the wrapper call asks (fuzz_command's PALib, SegPaLib.v) *)
 Hypothesis TL : PALib B.
 (* the strcmp wrapper at its trampoline (0x43aa0 on image B; the image-A wrapper interface, row 17, in image B's copy
-   lib/B/Rt/RtString.v of commit 5b814360ea8f) *)
+   lib/B/Rt/RtString.v) *)
 Hypothesis ASTRCMP : forall fx0 : YK11.FPState, @astrcmp_realizes fx0 rc SEGS B (SIG SS___interceptor_trampoline_strcmp).
 
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.

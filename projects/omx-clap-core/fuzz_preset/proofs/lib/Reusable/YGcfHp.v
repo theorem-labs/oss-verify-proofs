@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the HIDDEN-HEAD layer.
    The ghost set Hp of YGcfNames.v section 3 (hidden block bases; a hidden head [p, p + cf_head) has shadow
    shUserPoison) moves only at the harness's two shadow calls. This file gives:
@@ -8,7 +9,7 @@
       fields cf_pc_poison / cf_pc_unpoison, never literals;
      - laws (a) - (e) of YGcfNames.v:278-293 (hp_malloc_cf, ahead_poison_law, ahead_unpoison_law,
        realloc_cf_hp_post_ok, realloc_cf_hp_post_null) as Definitions, each proved as <name>_proof.
-   Ported from port-fm's fuzz_manifest/lib/A/FMupoison.v and FMpoisonS.v at 8d043571f33: upoison_ok_one
+   Ported from port-fm's fuzz_manifest/lib/A/FMupoison.v and FMpoisonS.v: upoison_ok_one
    (:202) -> hp_live_one, ARU_poison_step (:263) -> ahead_poison_law, ARU_unpoison_step (:333) ->
    ahead_unpoison_law, apoison16_realizes / aunpoison16_realizes (FMpoisonS.v) -> the two contracts.
    port-fm's ARU reads cgif's AR over the memory with the user-poisoned shadow bytes read as 0, so cgif's
@@ -33,7 +34,7 @@ Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
 
 (* The poison / unpoison pcs are the per-image fields cf_pc_poison / cf_pc_unpoison of CfImg
-   (YGcfNames.v); the temporary class CfPoisonImg of 29c8b46b1cef is gone. *)
+   (YGcfNames.v); the temporary class CfPoisonImg is gone. *)
 
 Section H. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 
@@ -45,7 +46,7 @@ Variable segs : list Segment.
 Variable B : asyms.
 
 (* AR_head_frame_law_cf, the frame law with Hp moving, is defined in YG0dcf.v (moved there
-   verbatim from this file, 29c8b46b1cef :63-74) because it is the 15th field of AR_laws_cf. *)
+   verbatim from this file, :63-74) because it is the 15th field of AR_laws_cf. *)
 
 (* ---------------------------------------------------------------------------- *)
 (* 3. Laws (a) - (e) of YGcfNames.v:278-293.                                     *)
@@ -198,7 +199,7 @@ Proof.
 intros ly S q (k & Hk & Hs & -> & Hn). exists (ck_req k). split; [|exact Hn].
 apply ablocks_In_hp. exists k. repeat split; auto.
 Qed.
-(* Port of upoison_ok_one (FMupoison.v:202): a live block of at least cf_head bytes may be hidden. *)
+(* Port of upoison_ok_one (FMupoison.v:203): a live block of at least cf_head bytes may be hidden. *)
 Lemma hp_live_one : forall ly S p n, In (p, n) (ablocks B ly S) -> cf_head <= req_size n -> hp_live_cf B ly S p.
 Proof.
 intros ly S p n Hb Hn. apply ablocks_In_hp in Hb as (k & Hk & Hs & Hp & Hr). exists k. subst. unfold ck_n.

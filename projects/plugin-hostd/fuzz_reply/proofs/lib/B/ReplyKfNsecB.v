@@ -4,9 +4,10 @@
    allocator meter's tr_cost. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfNsec.v, with its module paths changed; 1 line of the source is left out. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfNsec.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* KF-COUNT: the one definition of the secondary count of a request trace, shared by the per-trace count files
    (ReplyKfTrB.v, ReplyKfTrRrB.v, ReplyKfTrRigB.v, ReplyKfTrSmB.v).  proves no function (kind: segment lemma).
-   The image-B (asan-ubsan) twin of lib/A/ReplyKfNsec.v at 747923a4ff8: the same text over lib/B/W_contract.v.
+   The image-B (asan-ubsan) twin of lib/A/ReplyKfNsec.v: the same text over lib/B/W_contract.v.
    - nsec_tr tr: the number of RMalloc n and RRealloc _ n _ events of tr with 64512 < n (a secondary request: ReplyCnt.v
      Psec, n >= 64,513).  Frees count 0.
    - tr_cost_sec: at a meter whose mo_malloc n is (if 64512 <? n then 1 else 0) and whose mo_free is 0 (the KF meter

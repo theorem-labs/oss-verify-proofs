@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 316 of its 361 lines of code are new or changed and 733 lines of the source are left out. *)
-(* kb round (the kb Glue c580eb0fe37c, the B' twin of Crt102Kit.crt102rw_at_X at the A' kb head a54cc6d36c2c):
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* kb round (the kb Glue, the B' twin of Crt102Kit.crt102rw_at_X at the A' kb head):
    crt_at_J_B's live state is at kb = prh_wk F_check_round_trip (66), its journal at a budget WS; X's run stores no
    wild trace (Crt102Kit.crt_run_to_xw_inv), so J_B is entered at the same budget, by identity. *)
 (* fuzz_preset, image B' (asan-ubsan, pin d663f82d7f488d30, twin c90d4fa54d43160b): THE X SEGMENT
@@ -18,7 +19,7 @@
    tree crosses the stores by PRH_PjOrder's pj_fdR_foR / pj_foR_frame / pj_foR_fdR (no image-free frame lemma of
    pj_fdR is on the B' side: Crt102Kit.v's crt102rw_fdR_frame lives in the A' file, whose Requires hold the A' image).
 
-   INPUTS OF RECORD (by path, on commit 100c8e45583c; blobs by `git rev-parse --short=12`):
+   INPUTS OF RECORD (by path; blobs by `git rev-parse --short=12`):
    - pins: B' asan-ubsan sha256 d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, its unstripped twin
      sha256 c90d4fa54d43160baf62e5aa387211a798dddbad13d2619d85acbf37aee0c175; this file is image B' only.
    - the glue lib/A/Prog/Crt102Glue.v d65f66b784a1: crt_at_X_B (fields crt_at_X_B_join / _back_open / _v_open),

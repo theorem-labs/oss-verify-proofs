@@ -7,15 +7,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/U/Prog/WriterRet.v, with its module paths and module names changed; 702 of its 749 lines of code are new or changed and 692 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Prog/pj_write.v, with its module paths and module names changed; 496 of its 536 lines of code are new or changed and 709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/ReaderKB.v, with its module paths and module names changed; 210 of its 234 lines of code are new or changed and 512 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/FMrt_lift.v at origin/ossv/recipes f26f9fbd8777; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/FMrt_lift.v to lib/A/Rt/FMrt_lift.v, and the Requires of the moved files follow; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/FMrt_lift.v; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/FMrt_lift.v to lib/A/Rt/FMrt_lift.v, and the Requires of the moved files follow; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fm's runtime contracts in the donor's form, the generic half (RtStr lane).
    - A walk proved over the machine state alone (lib/Lib `evt`, its registers written `mkR ...`) is
-     read at a donor call site (`SRr` from `cfg_at`, YG0d.v:213): the register map is moved with
+     read at a donor call site (`SRr` from `cfg_at`, YG0d.v:214): the register map is moved with
      lib/Lib/RegisterBridge.v (canonical_contract_transport), and each step of the walk is a step of
-     the donor's `msteps`, which `SRr_msteps` (YA0n.v:149) lifts.
+     the donor's `msteps`, which `SRr_msteps` (YA0n.v:150) lifts.
    - A walk that returns to ra with the callee-saved registers kept and changes nothing but a window
      of K <= STK bytes below sp gives the donor-form post `rt_post_ro` (FMH_Rt.v:88); AR is kept by
-     the donor's frame law (al_frame, YG0d.v:439), as cgif_file A/AE2j.v:142 keeps it.  Inside fm's
+     the donor's frame law (al_frame, YG0d.v:440), as cgif_file A/AE2j.v:142 keeps it.  Inside fm's
      user-poison window the same walk gives `rt_post_roU` (FMH_Rt.v:96), ARU kept by
      FMupoison.ARU_frame.
    - A body walk of lib/A/Bz (its own copy of `evt`) is read the same way (srr_of_canon_bz). *)
@@ -62,7 +63,7 @@ Qed.
 Open Scope Z_scope.
 
 (* the image's W^X fact: the same one-line computation as A/AF0x.v Hwx_tfa, which does not build on
-   this base (A/AF0m.v:340 syntax error, fixed on Reloc's branch); switch to AF0x.Hwx_tfa once it does *)
+   this base (A/AF0m.v:341 syntax error, fixed on Reloc's branch); switch to AF0x.Hwx_tfa once it does *)
 Lemma fm_wx : wx_segs_nowrap tfibsegs.
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adds STACK_WOK_val and win_le_wok, for the main-level stack floor STACK_WOK). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -10,6 +11,15 @@ From OSSVerify.Proofs.openssl.punycode.lib.A Require Import RT_iface.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
+
+(* STACK_WOK's value for [lia] (RT_iface spells it from StoreOk's constant, which is not
+   Imported here), and the side condition [rt_sp0 - STACK_WIN <= lo] of the D_iface /
+   D_libiface contracts at lo = rt_sp0 - STACK_WOK. *)
+Lemma STACK_WOK_val : STACK_WOK = 6144513.
+Proof. reflexivity. Qed.
+
+Lemma win_le_wok : forall z : Z, z - STACK_WIN <= z - STACK_WOK.
+Proof. intro z. pose proof STACK_WOK_val. unfold STACK_WIN. lia. Qed.
 
 Definition agree_on (P : Z -> Prop) (m m' : mem) : Prop := forall a : word, P (bv_unsigned a) -> m' a = m a.
 

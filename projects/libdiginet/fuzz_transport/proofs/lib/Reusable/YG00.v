@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG00.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: EV_MAX raised from 8192 to 11776, as in omx-clap-core/fuzz_manifest's copy of this file (fuzz_manifest needs up to 8403 allocator events per run). *)
-(* Relocated from proofs/libreac/fuzz_grant/lib/YG00.v at 25e3d17bdb50 by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_grant/lib/YG00.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan). *)
 From Stdlib Require Import ZArith List Bool Lia.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.

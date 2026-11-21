@@ -2,7 +2,7 @@
    FR, CUTST, Post, Hcut, and one Inv_<cut> per cut. Statement text: no function is proved here. The plain file
    (lib/Prog/SlotInv.v) with the UBSan numbers below; ctrl's U/Prog/SlotInv.v is the same text as its plain one but
    for the numerals, and so is this one.
-   Taken from libreac/fuzz_ctrl's released Prog/SlotInv.v (origin/ossv/recipes 25e3d17bdb50, lines 98-194 and
+   Taken from libreac/fuzz_ctrl's released Prog/SlotInv.v (lines 98-194 and
    318-393; ctrl's frame interface files are byte-identical to knock's, which pin's frame copies), with pin's numbers:
    - Frame (0x12cbc `addi sp,sp,-0x50`): SLOT_FRAME 80; the prologue saves ra, s0-s5 at S-8 .. S-56 (SLOT_SAVE 56;
      ctrl saved 13 registers at S - 104). s6-s11 are never written by the harness and every callee keeps them, so

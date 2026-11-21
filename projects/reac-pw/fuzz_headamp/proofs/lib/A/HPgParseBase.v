@@ -1,7 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/ParseModel.v at 3e9fc5c8969 (lines
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/ParseModel.v (lines
    57-58 walk_pairs, 76-80 vcell, 83-89 fold_after, 91-108 ha_fold_cons / parse_cell_vcell / walk_pairs_step) with
    module paths changed and the names prefixed hp_; the call record, the cut core and the model facts per cut are in
-   the form of proofs/reac-pw/fuzz_role/lib/A/RPgParseBase.v at afaa3cb55c1 (pctx, call_ok, PPOST, SAVED, FI),
+   the form of proofs/reac-pw/fuzz_role/lib/A/RPgParseBase.v (pctx, call_ok, PPOST, SAVED, FI),
    restated for headamp's contract (lib/A/HPgCSpec.v hd_parse_result_specX) and for the frame hole of lib/A/HPgHole.v
    (the core carries hjournal in place of ajournal). *)
 (* reac-pw/fuzz_headamp: the IMAGE-INDEPENDENT part of the cut states of reac_headamp_prop_parse_result's walks in

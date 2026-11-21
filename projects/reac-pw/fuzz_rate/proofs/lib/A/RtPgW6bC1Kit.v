@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: helpers adapted from proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v at
-   616508a91de2 (c2_notin, c2_nz, c2_af, c2_all256, c2_keep_step, c2_keep, c2_regv, c2_kio renamed c1_*; c2_kio uses
+(* Modified by Theorem Labs, 2026-10: helpers adapted from proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v
+    (c2_notin, c2_nz, c2_af, c2_all256, c2_keep_step, c2_keep, c2_regv, c2_kio renamed c1_*; c2_kio uses
    lib/A/RtPgSteps.v same_io_wvb) for reac-pw/fuzz_rate's image A; the rest of the file is new. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin

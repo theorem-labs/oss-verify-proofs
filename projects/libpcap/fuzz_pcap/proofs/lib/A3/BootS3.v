@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies the granted variable and env length move by +16 (26 to 42), EB', VB' and the M_E* models take mbase or draw, the M_E3 lemmas read through model0_of's with_vdso, and the new mfacts fields are proved (the shadow maps miss the reservations and the vDSO pair, and the kernel build and the channel reader are the launch's). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -24,7 +25,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Definition L13 : ledger := lgrant L_E6 26 65536.
+Definition L13 : ledger := lgrant L_E6 42 65536.
 Lemma DS_E6_eq : DS_std L_E6 = DS_E6. Proof. reflexivity. Qed.
 Lemma L13_incl : incl (l_maps L_E6) (l_maps L13). Proof. unfold L13, lgrant. cbn [l_maps]. apply incl_tl, incl_refl. Qed.
 
@@ -43,16 +44,16 @@ Section Theorems.
   Let usp := bv_unsigned sp.
 
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Type"] Lemma M_E3_fs : forall a tid, m_fs (M_E3 sp brk mbase lim inp a tid) = in_fs inp.
-  Proof. intros. unfold M_E3. rewrite m_fs_with_tid. apply m_fs_init_model. Qed.
-  #[using="Type"] Lemma M_E3_fds : forall a tid, m_fds (M_E3 sp brk mbase lim inp a tid) = FDS0.
-  Proof. intros. unfold M_E3. rewrite m_fds_with_tid, m_fds_init_model. reflexivity. Qed.
-  #[using="Type"] Lemma M_E3_tid : forall a tid, m_tid (M_E3 sp brk mbase lim inp a tid) = Some tid.
+  #[using="Type"] Lemma M_E3_fs : forall a tid, m_fs (M_E3 sp brk mbase draw lim inp a tid) = in_fs inp.
+  Proof. intros. unfold M_E3, model0_of. rewrite m_fs_with_tid. change (m_fs (with_vdso ?v ?m)) with (m_fs m). apply m_fs_init_model. Qed.
+  #[using="Type"] Lemma M_E3_fds : forall a tid, m_fds (M_E3 sp brk mbase draw lim inp a tid) = FDS0.
+  Proof. intros. unfold M_E3, model0_of. rewrite m_fds_with_tid. change (m_fds (with_vdso ?v ?m)) with (m_fds m). rewrite m_fds_init_model. reflexivity. Qed.
+  #[using="Type"] Lemma M_E3_tid : forall a tid, m_tid (M_E3 sp brk mbase draw lim inp a tid) = Some tid.
   Proof. intros. unfold M_E3. rewrite m_tid_with_tid. reflexivity. Qed.
 
   #[using="VI VE usp"] Lemma at_E6_bootS : forall a tid c pl js R M mdl,
@@ -67,8 +68,8 @@ Section Theorems.
     assert (EHI : HI_N = Z_to_bv 64 0xdfff0001000) by (apply bv_eq; rewrite HI_N_val; reflexivity).
     assert (EGAP : GAP_N = Z_to_bv 64 (2 ^ 41)) by (apply bv_eq; rewrite GAP_N_val; reflexivity).
     assert (ELO : LO_N = Z_to_bv 64 (2 ^ 28)) by (apply bv_eq; rewrite LO_N_val; reflexivity).
-    pose proof (M_E5g_post sp brk mbase lim inp a tid) as P5. pose proof (M_E4g_post sp brk mbase lim inp a tid) as P4.
-    pose proof (M_E3g_post sp brk mbase lim inp a tid) as P3. pose proof (M_E3_vm sp brk mbase lim inp a tid) as V3.
+    pose proof (M_E5g_post sp brk mbase draw lim inp a tid) as P5. pose proof (M_E4g_post sp brk mbase draw lim inp a tid) as P4.
+    pose proof (M_E3g_post sp brk mbase draw lim inp a tid) as P3. pose proof (M_E3_vm sp brk mbase draw lim inp a tid) as V3.
     constructor; try assumption.   (* [comment removed for export] *)
     - (* [comment removed for export] *) apply HC5_of_ZR5. exact G4.
     - (* [comment removed for export] *)
@@ -94,6 +95,27 @@ Section Theorems.
       + (* [comment removed for export] *)
         unfold na_clear. rewrite Svm, (gp_noacc _ _ _ _ _ P5), (gp_noacc _ _ _ _ _ P4), (gp_noacc _ _ _ _ _ P3), V3.
         cbn [kind_none vm_noaccess]. split; vm_compute; reflexivity.
+      + (* the three shadow maps miss the binary's reservations and the launch's vDSO pair *)
+        intros iv Hiv. rewrite ?Svm in Hiv |- *.
+        rewrite (gp_maps _ _ _ _ _ P5), (gp_maps _ _ _ _ _ P4), (gp_maps _ _ _ _ _ P3), V3 in Hiv.
+        rewrite (gp_res _ _ _ _ _ P5), (gp_res _ _ _ _ _ P4), (gp_res _ _ _ _ _ P3), V3.
+        cbn [vm_maps vm_reserved In] in Hiv |- *. unfold init_reserved.
+        pose proof (proj1 (proj2 (proj2 (VE48 sp brk mbase draw inp VI VE)))) as Hmb.
+        destruct Hiv as [<-|[<-|[<-|[]]]]; cbn [fst snd]; rewrite region_free_app; apply andb_true_intro; split.
+        * apply region_free_above_top. rewrite reserved_top_val, HI_A_val. unfold IMG_HI. lia.
+        * apply vdso_free_low; [exact Hmb | exact SL |]. rewrite HI_A_val, HI_N_val. lia.
+        * apply region_free_above_top. rewrite reserved_top_val, GAP_A_val. unfold IMG_HI. lia.
+        * apply vdso_free_low; [exact Hmb | exact SL |]. rewrite GAP_A_val, GAP_N_val. lia.
+        * apply region_free_above_top. rewrite reserved_top_val, ULO. unfold IMG_HI, SHB_LO. lia.
+        * apply vdso_free_low; [exact Hmb | exact SL |]. rewrite ULO, LO_N_val. unfold SHB_LO. lia.
+      + (* no boot step changes the launch's kernel build *)
+        assert (K5 : m_kernel (M_E5g sp brk mbase draw lim inp a tid) = in_kernel inp).
+        { unfold M_E5g, M_E4g, M_E3g, noreplace_model, with_mmap_backing. rewrite ?FL_NR_noreserve. reflexivity. }
+        unfold same_but_materialized in G6. rewrite G6. exact K5.
+      + (* the channel reader is the launch's: [init_model] seeds it and no boot step writes it *)
+        assert (R5 : m_channel_reader (M_E5g sp brk mbase draw lim inp a tid) = in_channel_reader inp).
+        { unfold M_E5g, M_E4g, M_E3g, noreplace_model, with_mmap_backing. rewrite ?FL_NR_noreserve. reflexivity. }
+        unfold same_but_materialized in G6. rewrite G6. exact R5.
     - (* [comment removed for export] *)
       pose proof img_hull as IH.
       unfold maps_ok, L_E6. cbn [l_maps]. unfold A_img_lo, A_img_hi, stack_max_size in *.
@@ -115,7 +137,7 @@ Section Theorems.
   Proof.
     intros a tid c pl js R M mdl K Hlim Hjs HE HK.
     pose proof (at_E6_bootS _ _ _ _ _ _ _ _ HE) as HB.
-    assert (LEN : length (VB sp draw inp a tid c pl js) = 26%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB sp mbase draw inp a tid c pl js) = 42%nat) by (rewrite length_VB, Hjs; reflexivity).
     rewrite fetch_internal_mmap_ret_prev in HK.
     eapply (bs_mmap_rw_spin sp brk mbase draw lim inp VI VE H2 A2 a tid c pl js SR_E6 KN_E6 L_E6 HC5 LZ5 65536 A_internal_mmap_ecall ECALLW
               R M mdl K HB fetch_internal_mmap_ecall is_ecall_ECALLW);
@@ -235,7 +257,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Definition L13 : ledger := lgrant L_E6 26 65536.
+Definition L13 : ledger := lgrant L_E6 42 65536.
 Lemma DS_E6_eq : DS_std L_E6 = DS_E6. Proof. reflexivity. Qed.
 Lemma L13_incl : incl (l_maps L_E6) (l_maps L13). Proof. unfold L13, lgrant. cbn [l_maps]. apply incl_tl, incl_refl. Qed.
 
@@ -254,16 +276,16 @@ Section Theorems.
   Let usp := bv_unsigned sp.
 
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="Type"] Lemma M_E3_fs : forall a tid, m_fs (M_E3 sp brk mbase lim inp a tid) = in_fs inp.
-  Proof. intros. unfold M_E3. rewrite m_fs_with_tid. apply m_fs_init_model. Qed.
-  #[using="Type"] Lemma M_E3_fds : forall a tid, m_fds (M_E3 sp brk mbase lim inp a tid) = FDS0.
-  Proof. intros. unfold M_E3. rewrite m_fds_with_tid, m_fds_init_model. reflexivity. Qed.
-  #[using="Type"] Lemma M_E3_tid : forall a tid, m_tid (M_E3 sp brk mbase lim inp a tid) = Some tid.
+  #[using="Type"] Lemma M_E3_fs : forall a tid, m_fs (M_E3 sp brk mbase draw lim inp a tid) = in_fs inp.
+  Proof. intros. unfold M_E3, model0_of. rewrite m_fs_with_tid. change (m_fs (with_vdso ?v ?m)) with (m_fs m). apply m_fs_init_model. Qed.
+  #[using="Type"] Lemma M_E3_fds : forall a tid, m_fds (M_E3 sp brk mbase draw lim inp a tid) = FDS0.
+  Proof. intros. unfold M_E3, model0_of. rewrite m_fds_with_tid. change (m_fds (with_vdso ?v ?m)) with (m_fds m). rewrite m_fds_init_model. reflexivity. Qed.
+  #[using="Type"] Lemma M_E3_tid : forall a tid, m_tid (M_E3 sp brk mbase draw lim inp a tid) = Some tid.
   Proof. intros. unfold M_E3. rewrite m_tid_with_tid. reflexivity. Qed.
 
   #[using="VI VE usp"] Lemma at_E6_bootS : forall a tid c pl js R M mdl,
@@ -278,8 +300,8 @@ Section Theorems.
     assert (EHI : HI_N = Z_to_bv 64 0xdfff0001000) by (apply bv_eq; rewrite HI_N_val; reflexivity).
     assert (EGAP : GAP_N = Z_to_bv 64 (2 ^ 41)) by (apply bv_eq; rewrite GAP_N_val; reflexivity).
     assert (ELO : LO_N = Z_to_bv 64 (2 ^ 28)) by (apply bv_eq; rewrite LO_N_val; reflexivity).
-    pose proof (M_E5g_post sp brk mbase lim inp a tid) as P5. pose proof (M_E4g_post sp brk mbase lim inp a tid) as P4.
-    pose proof (M_E3g_post sp brk mbase lim inp a tid) as P3. pose proof (M_E3_vm sp brk mbase lim inp a tid) as V3.
+    pose proof (M_E5g_post sp brk mbase draw lim inp a tid) as P5. pose proof (M_E4g_post sp brk mbase draw lim inp a tid) as P4.
+    pose proof (M_E3g_post sp brk mbase draw lim inp a tid) as P3. pose proof (M_E3_vm sp brk mbase draw lim inp a tid) as V3.
     constructor; try assumption.   (* [comment removed for export] *)
     - (* [comment removed for export] *) apply HC5_of_ZR5. exact G4.
     - (* [comment removed for export] *)
@@ -305,6 +327,25 @@ Section Theorems.
       + (* [comment removed for export] *)
         unfold na_clear. rewrite Svm, (gp_noacc _ _ _ _ _ P5), (gp_noacc _ _ _ _ _ P4), (gp_noacc _ _ _ _ _ P3), V3.
         cbn [kind_none vm_noaccess]. split; vm_compute; reflexivity.
+      + (* twin of the A3 copy's two bullets above *)
+        intros iv Hiv. rewrite ?Svm in Hiv |- *.
+        rewrite (gp_maps _ _ _ _ _ P5), (gp_maps _ _ _ _ _ P4), (gp_maps _ _ _ _ _ P3), V3 in Hiv.
+        rewrite (gp_res _ _ _ _ _ P5), (gp_res _ _ _ _ _ P4), (gp_res _ _ _ _ _ P3), V3.
+        cbn [vm_maps vm_reserved In] in Hiv |- *. unfold init_reserved.
+        pose proof (proj1 (proj2 (proj2 (VE48 sp brk mbase draw inp VI VE)))) as Hmb.
+        destruct Hiv as [<-|[<-|[<-|[]]]]; cbn [fst snd]; rewrite region_free_app; apply andb_true_intro; split.
+        * apply region_free_above_top. rewrite reserved_top_val, HI_A_val. unfold IMG_HI. lia.
+        * apply vdso_free_low; [exact Hmb | exact SL |]. rewrite HI_A_val, HI_N_val. lia.
+        * apply region_free_above_top. rewrite reserved_top_val, GAP_A_val. unfold IMG_HI. lia.
+        * apply vdso_free_low; [exact Hmb | exact SL |]. rewrite GAP_A_val, GAP_N_val. lia.
+        * apply region_free_above_top. rewrite reserved_top_val, ULO. unfold IMG_HI, SHB_LO. lia.
+        * apply vdso_free_low; [exact Hmb | exact SL |]. rewrite ULO, LO_N_val. unfold SHB_LO. lia.
+      + assert (K5 : m_kernel (M_E5g sp brk mbase draw lim inp a tid) = in_kernel inp).
+        { unfold M_E5g, M_E4g, M_E3g, noreplace_model, with_mmap_backing. rewrite ?FL_NR_noreserve. reflexivity. }
+        unfold same_but_materialized in G6. rewrite G6. exact K5.
+      + assert (R5 : m_channel_reader (M_E5g sp brk mbase draw lim inp a tid) = in_channel_reader inp).
+        { unfold M_E5g, M_E4g, M_E3g, noreplace_model, with_mmap_backing. rewrite ?FL_NR_noreserve. reflexivity. }
+        unfold same_but_materialized in G6. rewrite G6. exact R5.
     - (* [comment removed for export] *)
       pose proof img_hull as IH.
       unfold maps_ok, L_E6. cbn [l_maps]. unfold A_img_lo, A_img_hi, stack_max_size in *.
@@ -326,7 +367,7 @@ Section Theorems.
   Proof.
     intros a tid c pl js R M mdl K Hlim Hjs HE HK.
     pose proof (at_E6_bootS _ _ _ _ _ _ _ _ HE) as HB.
-    assert (LEN : length (VB sp draw inp a tid c pl js) = 26%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB sp mbase draw inp a tid c pl js) = 42%nat) by (rewrite length_VB, Hjs; reflexivity).
     rewrite fetch_internal_mmap_ret_prev in HK.
     eapply (bs_mmap_rw_spin sp brk mbase draw lim inp VI VE H2 A2 a tid c pl js SR_E6 KN_E6 L_E6 HC5 LZ5 65536 A_internal_mmap_ecall ECALLW
               R M mdl K HB fetch_internal_mmap_ecall is_ecall_ECALLW);

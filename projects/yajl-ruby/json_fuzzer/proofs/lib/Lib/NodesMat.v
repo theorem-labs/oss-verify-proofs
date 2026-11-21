@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap_maps_next's old length, check_mmap_fixed_overflow, and the FdStream, FdEventfd, FdDgram and FdAnon descriptor kinds). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -83,7 +84,7 @@ Lemma mat_shape_mremap_model_next : forall m old old_n dst new_n,
   mat_shape m (mremap_model_next m old old_n dst new_n).
 Proof.
   intros. unfold mremap_model_next.
-  eapply mat_shape_trans; [apply (mat_shape_with_vmmaps (mremap_maps_next (m_vmmaps m) old dst new_n))|].
+  eapply mat_shape_trans; [apply (mat_shape_with_vmmaps (mremap_maps_next (m_vmmaps m) old old_n dst new_n))|].
   apply mat_shape_vm_resize_backing.
 Qed.
 
@@ -116,7 +117,7 @@ Proof. intros req eff m m' evs H. unfold check_brk in H. crush_check H; mat_done
 
 Lemma check_mmap_mat : forall addr len prot flags fd off eff m m' evs,
   check_mmap addr len prot flags fd off eff m = CheckOk m' evs -> mat_shape m m'.
-Proof. intros until evs; intros H. unfold check_mmap in H. crush_check H; mat_done. Qed.
+Proof. intros until evs; intros H. unfold check_mmap, check_mmap_fixed_overflow in H. crush_check H; mat_done. Qed.
 
 Lemma check_munmap_mat : forall addr len eff m m' evs, check_munmap addr len eff m = CheckOk m' evs -> mat_shape m m'.
 Proof. intros until evs; intros H. unfold check_munmap in H. crush_check H; mat_done. Qed.
@@ -141,7 +142,7 @@ Proof.
     destruct (path_is_dirref _); [exact (OR _ H)|].
     destruct (fs_lookup _ _); [exact (OR _ H)| destruct H as [_ ->]; apply mat_shape_refl].
   - (* [comment removed for export] *) cbn [nstep] in H. destruct H as [_ H].
-    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[| p off | p off | p off | p off | | | | |]|]; try contradiction;
+    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[| p off | p off | p off | p off | | | | | | | | |]|]; try contradiction;
       try (destruct H as [_ ->]; apply mat_shape_refl).
     destruct (fs_lookup (m_fs mo) p); [|contradiction]. destruct H as [_ ->]. intros M; rewrite m_vm_materialized_with_fds; exact M.
   - (* [comment removed for export] *) cbn [nstep] in H. destruct H as (_ & _ & H).
@@ -222,7 +223,7 @@ Proof. intros req eff m m' evs H. unfold check_brk in H. crush_check H; vmc_done
 
 Lemma check_mmap_vmc : forall addr len prot flags fd off eff m m' evs,
   check_mmap addr len prot flags fd off eff m = CheckOk m' evs -> vmc_shape m m'.
-Proof. intros until evs; intros H. unfold check_mmap in H. crush_check H; vmc_done. Qed.
+Proof. intros until evs; intros H. unfold check_mmap, check_mmap_fixed_overflow in H. crush_check H; vmc_done. Qed.
 
 Lemma check_munmap_vmc : forall addr len eff m m' evs, check_munmap addr len eff m = CheckOk m' evs -> vmc_shape m m'.
 Proof. intros until evs; intros H. unfold check_munmap in H. crush_check H; vmc_done. Qed.
@@ -246,7 +247,7 @@ Proof.
     destruct (path_is_dirref _); [exact (OR _ H)|].
     destruct (fs_lookup _ _); [exact (OR _ H)| destruct H as [_ ->]; apply vmc_refl].
   - cbn [nstep] in H. destruct H as [_ H].
-    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[| p off | p off | p off | p off | | | | |]|]; try contradiction;
+    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[| p off | p off | p off | p off | | | | | | | | |]|]; try contradiction;
       try (destruct H as [_ ->]; apply vmc_refl).
     destruct (fs_lookup (m_fs mo) p); [|contradiction]. destruct H as [_ ->]. apply vmc_of_vmmaps; apply m_vmmaps_with_fds.
   - cbn [nstep] in H. destruct H as (_ & _ & H).

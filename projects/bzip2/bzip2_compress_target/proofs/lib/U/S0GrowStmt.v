@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise and the vDSO pair in the reserved ledger). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -21,8 +22,10 @@ Section ACeilS1. Context {ACEIL__ : ACeil} {RUNW__ : RunW}.
 
 
 (* [comment removed for export] *)
-Definition vm_small6 (VM : VmMaps) (gm : word) : Prop :=
-  vm_reserved VM = segments_reserved Ubsan.M.loaded_segments /\ vm_limit VM = target_alloc_limit
+Definition vm_small6 (kb : KernelBuild) (VM : VmMaps) (gm : word) : Prop :=
+  (* the vDSO/vvar pair the run's kernel maps is in the reserved ledger
+     ([State.init_reserved]) *)
+  incl (vdso_reserved kb (vdso_top VM)) (vm_reserved VM) /\ vm_limit VM = target_alloc_limit
   /\ (length (vm_maps VM) <= 4)%nat /\ In (gm, Z_to_bv 64 69632) (vm_maps VM)
   /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 69632)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) (vm_maps VM)
   /\ seps (vm_maps VM).
@@ -37,9 +40,12 @@ Definition big_file_stmt : Prop :=
     world0 area (bv_unsigned gm) brkv mas (bv_unsigned tid) hw M ->
     main_frame (bv_unsigned sp0) M ->
     vm_pre VM mb gm ->
-    vm_small6 VM gm ->
+    vm_small6 (ia_kernel stdin0) VM gm ->
     target_vmx (bv_unsigned sp0) (bv_unsigned gm) area brkv mas VM -> auxv0 (bv_unsigned sp0) M ->
     alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z ->
+    (* LPS 75d69e00: [S0TargetRun.run_cps] now needs [fds_ok], i.e. the far end of stdout reads
+       ([State.m_channel_reader]); [Run.valid_input]'s reader clause gives it at the top *)
+    ia_channel_reader stdin0 = true ->
     realizes Ubsan.M.loaded_segments
              (mkCfg (mkst R (Z_to_bv 64 0x135d4) M (seg_rom Ubsan.M.loaded_segments)) (model_pre path VM stdin0 fs0 tid))
              (t_body04 content fs0).   (* [comment removed for export] *)
@@ -50,6 +56,7 @@ Definition grow_entry_stmt (AI : AllocIface s0segs S0_layout) (AT : AllocTight s
     world0 area gm brkv mas tid hw M -> 0x7fff80000000 <= sp0 <= 0x800000000000 ->
     target_vm gm area VM -> target_vmx sp0 gm area brkv mas VM -> auxv0 sp0 M -> atop_ok VM ->   (* [comment removed for export] *)
     m_vmmaps MD = VM -> m_halted MD = None -> m_vm_lazy MD = [] -> m_vm_materialized MD = [] ->
+    incl (vdso_reserved (m_kernel MD) (vdso_top VM)) (vm_reserved VM) ->
     exists (s : ai_AS AI) (pb : bid),
       ai_inv AI s [(pb, gm + 32, 65536)] M MD /\ at_tight AT s [(pb, gm + 32, 65536)] MD /\ ai_aux AI M sp0.
 
@@ -75,6 +82,12 @@ Definition oom_tail_stmt : Prop :=
   forall (sp0 : word) (model : Model) (tid hw : Z) (R : bvmap 5 word) (M : word -> option byte) (pc : Z),
     valid_sp sp0 -> m_halted model = None -> m_vm_lazy model = [] ->
     fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    (* LPS 75d69e00: the die-tail writes the message on fd 2, and at the revision a
+       writev to a channel whose far end has gone raises SIGPIPE instead
+       ([State.m_channel_reader], as [RelSpec.writev_chan_outcome] now states it).
+       Without this the statement is false, so it is a premise, not a weakening of
+       what the old one said: every old instance where the far end reads is kept. *)
+    m_channel_reader model = true ->
     getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr R 3 = Z_to_bv 64 0x10800 -> getr R 4 = Z_to_bv 64 0x441e0 ->
     stack_writable M sp0 -> Forall (fun iv => img_clear M (fst iv) (snd iv)) gw_ivs ->
     cell M 0x44138 4 tid -> (0 < tid < 2 ^ 22)%Z -> cell M 0x44118 8 0x44118 ->
@@ -89,6 +102,8 @@ Definition refused_tail_stmt : Prop :=
   forall (sp0 : word) (model : Model) (tid hw : Z) (R : bvmap 5 word) (M : word -> option byte),
     valid_sp sp0 -> m_halted model = None -> m_vm_lazy model = [] ->
     fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    (* LPS 75d69e00: as [oom_tail_stmt] above - fd 2 needs a reader at the revision. *)
+    m_channel_reader model = true ->
     getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr R 3 = Z_to_bv 64 0x10800 -> getr R 4 = Z_to_bv 64 0x441e0 ->
     stack_writable M sp0 -> Forall (fun iv => img_clear M (fst iv) (snd iv)) gw_ivs ->
     cell M 0x44138 4 tid -> (0 < tid < 2 ^ 22)%Z -> cell M 0x44118 8 0x44118 ->

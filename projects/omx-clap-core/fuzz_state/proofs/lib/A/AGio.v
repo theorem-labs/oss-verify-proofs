@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGio.v (a working branch 57e82b93d43, file sha256 0a46493e54da) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 2 image addresses moved by code-verified function pairs (8 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGio.v (a working branch, file sha256 0a46493e54da) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 2 image addresses moved by code-verified function pairs (8 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The SECONDARY arm of the frame-generic Allocate contract (AllocG.alloc_leaf), over the interfaces AGif0n.AIface
    and AGif4.AIfaceS: the case 64513 <= n < nmax, where the per-class cache cannot serve the request and the
    allocator asks the kernel for an anonymous map (LargeMmapAllocator::Allocate).
@@ -78,7 +79,7 @@ Hypothesis HNOB : NMAXW + 4 * 4096 <= NOBW.
 Hypothesis HROOM : 2 * (NMAXW + 4 * 4096) + (NMAXW + 4 * 4096) / 8 + 8192 + 2 ^ 19 <= ROOMW.
 Hypothesis IFS : AGif4.AIfaceSw B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag NMAXW NOBW ROOMW.
 Hypothesis TS : TfibSyms B.
-(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:20). *)
+(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:21). *)
 Hypothesis Hnmax : nmax <= NMAXW.
 (* The call site's can_fill argument: 1 for malloc / realloc, 0 for calloc (AllocG's [cf]). *)
 Variable cf : Z.
@@ -249,7 +250,7 @@ Variables (mtag stag : Z).
 Hypothesis IF : AGif0n.AIface B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis IFS : AGif4.AIfaceS B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis TS : TfibSyms B.
-(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:20). *)
+(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:21). *)
 Hypothesis Hnmax : nmax <= MALLOC_MAX.
 (* The call site's can_fill argument: 1 for malloc / realloc, 0 for calloc (AllocG's [cf]). *)
 Variable cf : Z.

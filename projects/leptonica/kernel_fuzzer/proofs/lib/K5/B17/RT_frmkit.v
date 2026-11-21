@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of ast_mmap_anon_rw_f, and its room fact stated as place_gap). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -212,16 +213,18 @@ Lemma ast_mmap_anon_rw_f : forall A Pm PM (G : word -> Prop) (K : word -> machin
        /\ areg ms 12 = Z_to_bv 64 3 /\ areg ms 13 = Z_to_bv 64 34 /\ areg ms 15 = Z_to_bv 64 0
        /\ forall a, G a -> K a (nretA ms (mkEffect a [] [(a, Z_to_bv 64 (page_round_up_Z len))]))) ->
   (forall mo, PM mo -> model_ivs_wf mo /\ lazy_in_maps mo
-       /\ (exists a : word, (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
-             /\ (bv_unsigned a + page_round_up_Z len <= alloc_top (m_vmmaps mo))%Z
-             /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (page_round_up_Z len)) = true)
+       /\ place_gap (m_vmmaps mo) (page_round_up_Z len)
        /\ eager_used mo + page_round_up_Z len + A_bytes A <= vm_limit (m_vmmaps mo)
        /\ forall a, grant_ok34 mo (page_round_up_Z len) a -> G a /\ KM a (mdl_mmap_rw mo a (Z_to_bv 64 (page_round_up_Z len)))) ->
   (forall mo, PM mo -> alloc_top (m_vmmaps mo) <= 2^47) ->
+  (* LPS 727298f3: [ast_mmap_anon_rw]'s declined-placement obligation, carried. *)
+  (forall ms mo, Pm ms -> PM mo ->
+     place_declined_b (m_kernel mo) (m_vmmaps mo) (areg ms 10) (page_round_up_Z len) = false) ->
   cps segs (AST segtop A (frmW Pm) PM) (fun c => exists a, G a /\ AST segtop A (frmW (K a)) (KM a) c).
 Proof using Hwx Hsegs.
-  intros A Pm PM G K KM len H1 Hm HM HT.
-  apply (ast_mmap_anon_rw segs segtop Hwx Hsegs A (frmW Pm) PM G (fun a => frmW (K a)) KM len H1); [|exact HM | exact HT].
+  intros A Pm PM G K KM len H1 Hm HM HT Hdecl.
+  apply (ast_mmap_anon_rw segs segtop Hwx Hsegs A (frmW Pm) PM G (fun a => frmW (K a)) KM len H1);
+    [| exact HM | exact HT | intros ms mo [HP _] HPM; exact (Hdecl ms mo HP HPM)].
   intros ms [HP HF]. destruct (Hm ms HP) as (X1 & X2 & X3 & X4 & X5 & X6).
   repeat (split; [assumption|]). intros a Ga. split; [exact (X6 a Ga) | rewrite nretA_fcsr; exact HF].
 Qed.

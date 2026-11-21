@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1137 of its 1175 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its addresses changed; 1324 of its 1487 lines of code are new or changed and 1039 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment P3 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, libreac v1.9.0 image A): [0x81b14, 0x81b7c],
    Inv_A81b14 -> Inv_A81b80 (v1.8 [0x81abc, 0x81afc], Inv_A81abc -> Inv_A81b00).  rule 24: no function proved (a slot
    segment).  S_P3 is CHANGED (new-call, new-insert); its v1.9 walk, with s3 = S(fr) (the shadow byte of the frame
@@ -41,8 +42,8 @@
    both are in this tree; it could be folded back).  The allocator laws are taken apart once
    each, in p3_laws_store / p3_laws_fs_place / p3_laws_fs_ok / p3_laws_fs_store.  P3 imports MemMono (rd_of_stk)
    instead of reac_box_model_block.
-   v1.9 re-fit BUILT on v1.9 facts: rc=0 on a build machine workspace (internal path) (a copy of (internal path) at a working branch e3c0b7a9d6,
-   FACTS ed6b6b7b0ab) with the cut base a working branch cf5ad0d7203, 2026-10-28. *)
+   v1.9 re-fit BUILT on v1.9 facts: rc=0 on a build machine workspace (internal path) (a copy of (internal path) at a working branch,
+   FACTS) with the cut base a working branch, 2026-10-28. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes.

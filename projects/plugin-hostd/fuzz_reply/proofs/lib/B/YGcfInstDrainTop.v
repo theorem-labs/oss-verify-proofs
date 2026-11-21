@@ -1,4 +1,4 @@
-(* CARRIED from commit a16e328152b17fa1f2e52590679709ec976a3598,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainTop.v, sha256 b5759a681e6cf50059acb909e4d20c6a50fb96b8283bb476ee0456f419797336 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -8,6 +8,7 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (a working branch): the three facts the cf
    instance's drain field takes from this lane, stated image-generically (over the Section's {IM : AImg} /
    {DI : DImg}, like the other YGcfInstDrain* files), so the file carries to a unit's tree as one text.  The drain

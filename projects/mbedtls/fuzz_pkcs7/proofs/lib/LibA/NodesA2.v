@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (copy_iovecs_accesses_in restated for per-descriptor records of 16 or 8 bytes; the sys_rob premise on rz_ret_only_copyinsK_silent_chk and rz_openK, discharged at the writev and openat nodes with a new lemma open_robA; the channel-reader premise on the writev lemmas; path_atA, cstr_access_len_of_rdn and rz_openat_toolongA bound the path below TASK_SIZE; the changed encoded statements decoded to plain text; imports of RomBase, RomWrite and RomWritev). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -14,6 +15,8 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common Require Import SimInv ExitSi
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB Require Import Amb RelSpec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim ShapeX StoreOk AgentLib Hoare.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Sys Require Import Nodes AgentNodes SysNodes NodesDir LibWritev.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ALazy SRz AEvtS AEvtA NodesA.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require RomBase.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB Require RomWrite RomWritev.
 Import ListNotations.
 #[local] Existing Instance Lib.PropExec.fx0.
 Open Scope bv_scope.
@@ -26,22 +29,35 @@ Ltac2 gd_tbl_NodesA2 () : Init.string Init.list := ["stdpp.bitvector.definitions
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-(* [comment removed for export] *)
-Lemma copy_iovecs_accesses_in : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pmp,P,(0.&40.)(1.(0.&8.))Pk,$2.Pa,(0.&40.)Px,(0.&40.)Pn,$2.P,(3.(4.(0.&40.)$2.)(5.(0.&40.)$2.R2.R1.)(6.R5.R3.R4.))(7.(8.$2.R2.#10.)(9.$2.Li,$2.(7.(:.R1.R6.)(8.(0.&40.)R4.(;.&40.R5.(<.&40.(=.+10.(>.R1.))))))))")
-(* [comment removed for export] *).
+(* LPS revision: [copy_iovecs_accesses] records [iovec_entry_accesses mp a] per descriptor
+   (rocq-linux-process-semantics@75d69e00:theories/LinuxProcessSem/State.v:1713-1738): the 16
+   bytes when both fields read, only the length field [(a + 8, 8)] when the base faults.  The old
+   statement (n = 16 always) is false there; each recorded range is still inside its descriptor. *)
+Lemma copy_iovecs_accesses_in : forall (mp : word -> option byte) (k : nat) (a x : word) (n : nat),
+  In (x, n) (copy_iovecs_accesses mp a k) ->
+  exists i, (i < k)%nat /\
+    ((n = 16%nat /\ x = bv_add a (Z_to_bv 64 (16 * Z.of_nat i)))
+     \/ (n = 8%nat /\ x = bv_add a (Z_to_bv 64 (16 * Z.of_nat i + 8)))).
 Proof.
   intros mp k. induction k as [|k IH]; intros a x n Hin; cbn [copy_iovecs_accesses] in Hin.
   - destruct Hin.
-  - destruct Hin as [E | Hin].
-    + injection E as <- <-. split; [reflexivity|]. exists 0%nat. split; [lia|].
-      apply bv_eq. rewrite bv_add_unsigned, Z_to_bv_unsigned. cbn [Z.of_nat Z.mul]. change (bv_wrap 64 0) with 0%Z.
-      rewrite Z.add_0_r. symmetry. apply bv_wrap_small. apply bv_unsigned_in_range.
-    + destruct (read_iovec_entry mp a) as [? len| |]; [|destruct Hin|destruct Hin].   (* [comment removed for export] *)
-      destruct (IH _ _ _ Hin) as [-> (i & Hi & ->)]. split; [reflexivity|].
-      exists (S i). split; [lia|]. apply bv_eq.
-      rewrite !bv_add_unsigned, !Z_to_bv_unsigned. change (bv_unsigned (16 : word)) with 16%Z.
-      unfold bv_wrap. rewrite Zplus_mod_idemp_r, Zplus_mod_idemp_r, Zplus_mod_idemp_l.
-      f_equal. lia.
+  - apply in_app_or in Hin as [Hin | Hin].
+    + unfold iovec_entry_accesses in Hin.
+      destruct (read_u64 mp (a + 8)); [|destruct Hin].
+      destruct (read_u64 mp a); destruct Hin as [E | []]; injection E as <- <-;
+        exists 0%nat; (split; [lia|]).
+      * left. split; [reflexivity|].
+        apply bv_eq. rewrite bv_add_unsigned, Z_to_bv_unsigned. cbn [Z.of_nat Z.mul]. change (bv_wrap 64 0) with 0%Z.
+        rewrite Z.add_0_r. symmetry. apply bv_wrap_small. apply bv_unsigned_in_range.
+      * right. split; [reflexivity|].
+        apply bv_eq. rewrite !bv_add_unsigned, Z_to_bv_unsigned. f_equal.
+    + destruct (read_iovec_entry mp a) as [? len| |]; [|destruct Hin|destruct Hin].
+      destruct (IH _ _ _ Hin) as (i & Hi & [[-> ->] | [-> ->]]);
+        exists (S i); (split; [lia|]); [left | right]; (split; [reflexivity|]);
+        apply bv_eq;
+        rewrite !bv_add_unsigned, !Z_to_bv_unsigned; change (bv_unsigned (16 : word)) with 16%Z;
+        unfold bv_wrap; rewrite Zplus_mod_idemp_r, Zplus_mod_idemp_r, Zplus_mod_idemp_l;
+        f_equal; lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -73,13 +89,13 @@ Qed.
 (* [comment removed for export] *).
 Proof.
   intros mp iov cnt Hnw H z (a & n & Hin & Hz).
-  destruct (copy_iovecs_accesses_in _ _ _ _ _ Hin) as [-> (i & Hi & ->)].
-  pose proof (bv_unsigned_in_range 64 iov) as R. unfold bv_modulus in R.
-  rewrite bv_add_unsigned, Z_to_bv_unsigned in Hz. unfold bv_wrap in Hz.
-  assert (Hi16 : (0 <= 16 * Z.of_nat i /\ 16 * Z.of_nat i + 16 <= 16 * Z.of_nat cnt)%Z) by lia.
-  unfold bv_modulus in Hz.
-  rewrite Zplus_mod_idemp_r, Z.mod_small in Hz by (cbn in Hnw, R |- *; lia).
-  apply H. cbn [Z.of_nat] in Hz. lia.
+  destruct (copy_iovecs_accesses_in _ _ _ _ _ Hin) as (i & Hi & [[-> ->] | [-> ->]]);
+  pose proof (bv_unsigned_in_range 64 iov) as R; unfold bv_modulus in R;
+  rewrite bv_add_unsigned, Z_to_bv_unsigned in Hz; unfold bv_wrap in Hz;
+  (assert (Hi16 : (0 <= 16 * Z.of_nat i /\ 16 * Z.of_nat i + 16 <= 16 * Z.of_nat cnt)%Z) by lia);
+  unfold bv_modulus in Hz;
+  rewrite Zplus_mod_idemp_r, Z.mod_small in Hz by (cbn in Hnw, R |- *; lia);
+  apply H; cbn [Z.of_nat] in Hz; lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -127,7 +143,9 @@ Proof.
   destruct (bv_eqb n (Z_to_bv 64 1)) eqn:E1.
   - unfold bv_eqb in E1. apply Z.eqb_eq in E1. rewrite u64_lit in E1 by lia.
     assert (Hn : word_to_nat n = 1%nat) by (unfold word_to_nat; rewrite E1; reflexivity).
-    rewrite Hn. cbn [copy_iovecs_accesses]. destruct (negb _); [destruct H|]. destruct H as [H|[]]. left; exact H.
+    (* LPS revision: a one-entry import records [iovec_entry_accesses mp a] (State.v:1823-1830) *)
+    rewrite Hn. cbn [copy_iovecs_accesses]. destruct (negb (access_okb a 16)); [destruct H|].
+    apply in_or_app. left. exact H.
   - destruct (bv_eqb n (Z_to_bv 64 0)); [destruct H|]. destruct (IOV_MAX <? bv_unsigned n)%Z; [destruct H|].
     destruct (negb _); [destruct H|]. exact H.
 Qed.
@@ -142,12 +160,23 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="K_halted K_mat K_vmonly"] Lemma rz_ret_only_copyinsK_silent_chk : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pms,$29.Pmo,$1>.Px8,(0.&40.)Preads,(?.(4.(0.&40.)$2.))Pr,(0.&40.)Pm',$1>.PT,$2:.P,A1.VK,R6.P,(8.(1.(0.&40.))(2;.R8.)(20.(0.&40.)R6.))P,Peff,$2<.(8.$2=.(2>.(2?.Vsegs,R:.R8.)R1.R9.)(30.R7.R1.R6.R5.(31.$32.)))P,(33.R9.R5.)P,(1:.VAL,VCS,R8.)P,Pmo'',$1>.P,A1.VK,R1.P,(21.R9.R2.)(34.Vsegs,(35.(36.(37.R?.R;.))R3.)R9.)(34.Vsegs,(35.R=.R<.)R7.)")
-(* [comment removed for export] *).
+(* Was an encoded statement (CDefT.buildp); written out from its decode (cdeft_print.py), not
+   re-encoded, with one premise added, [RomBase.sys_rob segs (mkCfg ms mo)], for the node
+   [NodesA.rz_ret_only_copyinsK_silent] builds (LPS revision, run_segments). *)
+#[using="K_halted K_mat K_vmonly"] Lemma rz_ret_only_copyinsK_silent_chk : forall (ms : machine_state) (mo : Model)
+    (x8 : bv 64) (reads : list (bv 64 * nat)) (r : bv 64) (m' : Model) (T : TSet),
+  K mo ->
+  ms_svc_pending ms = Some x8 ->
+  (forall eff, check_syscall (sys_input segs ms x8) eff mo = check_ret_only_copyins reads eff r m' []) ->
+  vm_same mo m' ->
+  acc_ok AL CS reads ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
+  (forall mo'', K mo'' -> mo_mat m' mo'' -> srealizesJ segs (mkCfg (advance_past_svc (set_gpr0 ms r)) mo'') T) ->
+  srealizesJ segs (mkCfg ms mo) T.
 Proof.
-  intros ms mo x8 reads r m' T HK Hsvc Hchk VS OK Hc.
+  intros ms mo x8 reads r m' T HK Hsvc Hchk VS OK Hrob Hc.
   apply (rz_ret_only_copyinsK_silent segs AL CS K K_halted K_mat K_vmonly ms mo x8 reads r m' T HK Hsvc);
-    [| exact VS | exact OK | exact Hc].
+    [| exact VS | exact OK | exact Hrob | exact Hc].
   intros o. destruct o as [eff m'' evs|]; split.
   - intros Hs. apply check_syscall_ok_iff in Hs. rewrite Hchk in Hs.
     apply check_ret_only_copyins_ok_iff in Hs as (-> & -> & ->). reflexivity.
@@ -159,12 +188,14 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="K_halted K_mat"] Lemma rz_writev_pendingA : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pms,$29.Px8,(0.&40.)Pmo,$1>.Pfd,$17.Piov,(0.&40.)Piovs,(?.(4.(0.&40.)(0.&40.)))Pbss,(?.(?.(0.&8.)))PT,P,$2.$2:.P,(8.P,(0.&40.)(1.(0.&8.))(38.R8.)(39.Vsegs,))P,A1.VK,R7.P,(8.(1.(0.&40.))(2;.R:.)(20.(0.&40.)R9.))P,(8.(1.$3:.)(3;.(3<.R9.)(<.&40.R8.))(20.$3:.(3=.(<.&40.R8.))))P,(7.(18.=R9.)(18.R9.(16.+2.+1?.)))P,(8.$17.(15.&40.R<.)+42.)P,(8.(0.&40.)(3>.R>.#0.)(<.&40.R;.))P,(8.(0.&40.)(3>.R?.#1.)R;.)P,(8.(0.&40.)(3>.R10.#2.)(<.&40.(>.(3?.(4.(0.&40.)(0.&40.))R;.))))P,(7.(11.#1.(3?.(4.(0.&40.)(0.&40.))R<.))(11.(3?.(4.(0.&40.)(0.&40.))R<.)#400.))P,(13.(14.(15.&40.R>.)(=.+10.(>.(3?.(4.(0.&40.)(0.&40.))R=.))))$40.)P,(41.Vsegs,(42.R13.)R?.R>.)P,(43.R?.)P,(44.Vsegs,(42.R15.)R10.R?.)P,Pz,$17.P,(7.(13.(15.&40.R13.)R1.)(18.R1.(14.(15.&40.R13.)(=.+10.(>.(3?.(4.(0.&40.)(0.&40.))R12.))))))(19.VAL,VCS,R2.)P,(1;.(4.(0.&40.)(0.&40.))Lbl,(4.(0.&40.)(0.&40.))Pz,$17.P,(7.(13.(15.&40.(1<.(0.&40.)(0.&40.)R2.))R1.)(18.R1.(14.(15.&40.(1<.(0.&40.)(0.&40.)R2.))(15.&40.(1=.(0.&40.)(0.&40.)R2.)))))(19.VAL,VCS,R2.)R12.)Zbs,(?.(0.&8.))(45.(0.&8.)R12.)P,(13.+1.(46.R14.))P,(13.(46.R15.)(16.+2.+1>.))P,Pk,$2.P,(11.#1.R1.)P,(11.R2.(3?.(0.&8.)R5.))Pmo'',$1>.P,A1.VK,R1.P,(21.R1>.R2.)(34.Vsegs,(35.(36.(37.R21.(<.&40.(>.R6.))))R3.)A1.R1:.R6.)(34.Vsegs,(35.R1<.R1:.)(47.(48.R4.)Li,(48.R4.)(49.(4:.(0.&8.)$32.(4;.(<.&40.R1:.))(4<.(0.&8.)(4=.$2.Ln,$2.(7.(11.#1.R1.)(11.R1.(3?.(0.&8.)R6.)))R1.)R5.))A1.R16.(4=.$2.Ln,$2.(7.(11.#1.R1.)(11.R1.(3?.(0.&8.)R6.)))R1.))))")
+#[using="K_halted K_mat"] Lemma rz_writev_pendingA : 
+  (* plain text: the revision's writev needs the channel reader *)
+  (forall ms : @LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state, (forall x8 : (@stdpp.bitvector.definitions.bv 64%N), (forall mo : @LinuxProcessSemantics.LinuxProcessSem.State.Model, (forall fd : @Corelib.Numbers.BinNums.Z, (forall iov : (@stdpp.bitvector.definitions.bv 64%N), (forall iovs : (@Corelib.Init.Datatypes.list (@Corelib.Init.Datatypes.prod (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N))), (forall bss : (@Corelib.Init.Datatypes.list (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))), (forall T : (@Corelib.Init.Datatypes.nat -> @OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.TSet), ((@Corelib.Init.Logic.eq ((@stdpp.bitvector.definitions.bv 64%N) -> (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 8%N))) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_rom ms) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) -> ((K mo) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 64%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_svc_pending ms) (@Corelib.Init.Datatypes.Some (@stdpp.bitvector.definitions.bv 64%N) x8)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry)) (@LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup (@LinuxProcessSemantics.LinuxProcessSem.State.m_fds mo) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Init.Datatypes.Some (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry) (@LinuxProcessSemantics.LinuxProcessSem.State.FdChannel (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)))) -> ((@LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader mo = true) -> ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.lt 0%Z fd) (@Stdlib.ZArith.BinInt.Z.lt fd (@Stdlib.ZArith.BinInt.Z.pow 2%Z 31%Z))) -> ((@Corelib.Init.Logic.eq (@Corelib.Numbers.BinNums.Z) (@stdpp.bitvector.definitions.bv_unsigned 64%N x8) 66%Z) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_gpr ms 0%nat) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_gpr ms 1%nat) iov) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_gpr ms 2%nat) (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.of_nat (@Corelib.Init.Datatypes.length (@Corelib.Init.Datatypes.prod (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N)) iovs)))) -> ((@Corelib.Init.Logic.and (@Corelib.Init.Peano.le 1%nat (@Corelib.Init.Datatypes.length (@Corelib.Init.Datatypes.prod (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N)) iovs)) (@Corelib.Init.Peano.le (@Corelib.Init.Datatypes.length (@Corelib.Init.Datatypes.prod (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N)) iovs) 1024%nat)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) (@Stdlib.ZArith.BinInt.Z.mul 16%Z (@Stdlib.ZArith.BinInt.Z.of_nat (@Corelib.Init.Datatypes.length (@Corelib.Init.Datatypes.prod (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N)) iovs)))) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Sys.LibWritev.iov_array segs (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_mem ms) iov iovs) -> ((@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Sys.LibWritev.iov_bufs_ok iovs) -> ((@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Sys.LibWritev.iov_bufs segs (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_mem ms) iovs bss) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) (@Stdlib.ZArith.BinInt.Z.mul 16%Z (@Stdlib.ZArith.BinInt.Z.of_nat (@Corelib.Init.Datatypes.length (@Corelib.Init.Datatypes.prod (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N)) iovs)))))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((@Corelib.Lists.ListDef.Forall (@Corelib.Init.Datatypes.prod (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N)) (fun bl : (@Corelib.Init.Datatypes.prod (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N)) => (forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N (@Corelib.Init.Datatypes.fst (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N) bl)) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N (@Corelib.Init.Datatypes.fst (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N) bl)) (@stdpp.bitvector.definitions.bv_unsigned 64%N (@Corelib.Init.Datatypes.snd (@stdpp.bitvector.definitions.bv 64%N) (@stdpp.bitvector.definitions.bv 64%N) bl))))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z)))) iovs) -> (let bs : (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) := (@Stdlib.Lists.List.concat (@stdpp.bitvector.definitions.bv 8%N) bss) in ((@Stdlib.ZArith.BinInt.Z.le 1%Z (@LinuxProcessSemantics.LinuxProcessSem.State.iovs_total iovs)) -> ((@Stdlib.ZArith.BinInt.Z.le (@LinuxProcessSemantics.LinuxProcessSem.State.iovs_total iovs) (@Stdlib.ZArith.BinInt.Z.pow 2%Z 30%Z)) -> ((forall k : @Corelib.Init.Datatypes.nat, ((@Corelib.Init.Peano.le 1%nat k) -> ((@Corelib.Init.Peano.le k (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) bs)) -> (forall mo'' : @LinuxProcessSemantics.LinuxProcessSem.State.Model, ((K mo'') -> ((@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.mo_mat mo mo'') -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@LinuxProcessSemantics.LinuxProcessSem.Run.advance_past_svc (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.set_gpr0 ms (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.of_nat k)))) mo'') (T k)))))))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg ms mo) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_alt (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB.ShapeX.wr_index bs) (fun i : (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB.ShapeX.wr_index bs) => (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_emit (@Corelib.Lists.ListDef.map (@stdpp.bitvector.definitions.bv 8%N) (@LinuxProcessSemantics.LinuxProcessSem.State.event) (@LinuxProcessSemantics.LinuxProcessSem.State.WriteEv (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Lists.ListDef.firstn (@stdpp.bitvector.definitions.bv 8%N) (@Corelib.Init.Specif.proj1_sig (@Corelib.Init.Datatypes.nat) (fun n : @Corelib.Init.Datatypes.nat => (@Corelib.Init.Logic.and (@Corelib.Init.Peano.le 1%nat n) (@Corelib.Init.Peano.le n (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) bs)))) i) bs)) (T (@Corelib.Init.Specif.proj1_sig (@Corelib.Init.Datatypes.nat) (fun n : @Corelib.Init.Datatypes.nat => (@Corelib.Init.Logic.and (@Corelib.Init.Peano.le 1%nat n) (@Corelib.Init.Peano.le n (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) bs)))) i)))))))))))))))))))))))))))))))))))
 (* [comment removed for export] *).
 Proof.
-  intros ms x8 mo fd iov iovs bss T Hrom HK Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs AOKiov AOKbufs bs Ht1 Ht30 Hk.
+  intros ms x8 mo fd iov iovs bss T Hrom HK Hsvc Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs AOKiov AOKbufs bs Ht1 Ht30 Hk.
   pose proof (K_halted mo HK) as Hh.
-  destruct (writev_check segs ms x8 mo fd iov iovs bss Hrom Hfd Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30)
+  destruct (writev_check segs ms x8 mo fd iov iovs bss Hrom Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30)
     as [Hlen Hchk]. fold bs in Hlen, Hchk.
   set (tot := iovs_total iovs) in *.
   set (CA := import_iovecs_accesses (ms_read_byte ms) iov (Z_to_bv 64 (Z.of_nat (length iovs)))) in *.
@@ -211,7 +242,7 @@ Proof.
   assert (Hnode : node_ok segs (mkCfg ms mo) (wr_index bs)
                     (fun i => map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs))
                     (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (matK mo (accs i)))).
-  { split.
+  { split; [|split].
     - intros i. apply (sstep_of_spec_mat segs ms mo x8 (effs i) mo (matK mo (accs i)));
         [exact Hh | exact Hsvc | | exact Hh | rewrite Eacc; exact (proj1 (matK_spec mo (accs i) HK (OKi i)))].
       apply check_syscall_ok_iff.
@@ -233,17 +264,21 @@ Proof.
       + destruct (Hinv _ _ _ Hc) as (i & -> & -> & ->). congruence.
       + exfalso. rewrite Hchk in Hc. destruct eff as [ret ws zs us cs ci].
         destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct us; [|discriminate].
-        destruct cs; [|discriminate]. destruct (_ && _)%bool; [destruct (access_ranges_eqb _ _)|]; discriminate. }
-  destruct Hnode as [Hn1 Hn2]. split.
+        destruct cs; [|discriminate]. destruct (_ && _)%bool; [destruct (access_ranges_eqb _ _)|]; discriminate.
+    - exact (writev_rob segs ms x8 mo fd iov iovs bss Hrom Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Hiok Harr Hbok Hbufs Ht30). }
+  destruct Hnode as [Hn1 [Hn2 Hn3]]. split; [|split].
   - intros i. rewrite Enx. apply Hn1.
   - intros e st Hss. destruct (Hn2 e st Hss) as (i & -> & ->). exists i. rewrite Enx. split; reflexivity.
+  - exact Hn3.
 Qed.
 
 (* [comment removed for export] *)
-#[using="K_halted K_mat"] Lemma rz_writev2A : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pregs,(4>.&5.(0.&40.))Ppc,(0.&40.)Pmem,P,(0.&40.)(1.(0.&8.))Pmo,$1>.Pw,(0.&20.)Pfd,$17.Piov,(0.&40.)Pb1,(0.&40.)Pn1,(0.&40.)Pb2,(0.&40.)Pn2,(0.&40.)Pbs1,(?.(0.&8.))Pbs2,(?.(0.&8.))PT,P,$2.$2:.P,(8.(1.(0.&20.))(4?.Vsegs,R=.)(20.(0.&20.)R:.))P,(8.$50.(51.R;.)$52.)P,A1.VK,R=.P,(8.(1.$3:.)(3;.(3<.R>.)(<.&40.R<.))(20.$3:.(3=.(<.&40.R<.))))P,(7.(18.=R=.)(18.R=.(16.+2.+1?.)))P,(8.(0.&40.)(53.R13.(54.&5.+11.$55.))(<.&40.+42.))P,(8.(0.&40.)(53.R14.(54.&5.+:.$55.))(<.&40.R?.))P,(8.(0.&40.)(53.R15.(54.&5.+;.$55.))R?.)P,(8.(0.&40.)(53.R16.(54.&5.+<.$55.))(<.&40.+2.))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R15.R11.#8.)(20.(?.(0.&8.))(57.#8.R10.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R16.(<.&40.(14.(15.&40.R12.)+8.))#8.)(20.(?.(0.&8.))(57.#8.R10.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R17.(<.&40.(14.(15.&40.R13.)+10.))#8.)(20.(?.(0.&8.))(57.#8.R10.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R18.(<.&40.(14.(15.&40.R14.)+18.))#8.)(20.(?.(0.&8.))(57.#8.R10.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R19.R14.(12.R13.))(20.(?.(0.&8.))R10.))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R1:.R13.(12.R12.))(20.(?.(0.&8.))R10.))P,(13.(14.(15.&40.R17.)+20.)$40.)P,(13.(14.(15.&40.R17.)(15.&40.R16.))$40.)P,(13.(14.(15.&40.R16.)(15.&40.R15.))$40.)P,(13.+1.(14.(15.&40.R18.)(15.&40.R16.)))P,(13.(14.(15.&40.R19.)(15.&40.R17.))(16.+2.+1>.))P,Pz,$17.P,(7.(13.(15.&40.R1=.)R1.)(18.R1.(14.(15.&40.R1=.)+20.)))(19.VAL,VCS,R2.)P,Pz,$17.P,(7.(13.(15.&40.R1=.)R1.)(18.R1.(14.(15.&40.R1=.)(15.&40.R1<.))))(19.VAL,VCS,R2.)P,Pz,$17.P,(7.(13.(15.&40.R1<.)R1.)(18.R1.(14.(15.&40.R1<.)(15.&40.R1;.))))(19.VAL,VCS,R2.)P,Pk,$2.P,(11.#1.R1.)P,(11.R2.(3?.(0.&8.)(58.(0.&8.)R1<.R1;.)))Pmo'',$1>.P,A1.VK,R1.P,(21.R27.R2.)(34.Vsegs,(35.(59.$5:.(5;.R2;.(54.&5.+:.$55.)(<.&40.(>.R6.)))(5<.R2:.+4.)R29.(39.Vsegs,))R3.)A1.R1>.R6.)(34.Vsegs,(35.(59.$5:.R26.R25.R24.(39.Vsegs,))R23.)(47.(48.(58.(0.&8.)R1;.R1:.))Li,(48.(58.(0.&8.)R1;.R1:.))(49.(4:.(0.&8.)$32.(4;.(<.&40.R22.))(4<.(0.&8.)(4=.$2.Ln,$2.(7.(11.#1.R1.)(11.R1.(3?.(0.&8.)(58.(0.&8.)R1=.R1<.))))R1.)(58.(0.&8.)R1<.R1;.)))A1.R1:.(4=.$2.Ln,$2.(7.(11.#1.R1.)(11.R1.(3?.(0.&8.)(58.(0.&8.)R1=.R1<.))))R1.))))")
+#[using="K_halted K_mat"] Lemma rz_writev2A : 
+  (* plain text: the revision's writev needs the channel reader *)
+  (forall regs : (@LinuxProcessSemantics.Riscv.Prelude.bvmap 5%N (@stdpp.bitvector.definitions.bv 64%N)), (forall pc : (@stdpp.bitvector.definitions.bv 64%N), (forall mem : ((@stdpp.bitvector.definitions.bv 64%N) -> (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 8%N))), (forall mo : @LinuxProcessSemantics.LinuxProcessSem.State.Model, (forall w : (@stdpp.bitvector.definitions.bv 32%N), (forall fd : @Corelib.Numbers.BinNums.Z, (forall iov : (@stdpp.bitvector.definitions.bv 64%N), (forall b1 : (@stdpp.bitvector.definitions.bv 64%N), (forall n1 : (@stdpp.bitvector.definitions.bv 64%N), (forall b2 : (@stdpp.bitvector.definitions.bv 64%N), (forall n2 : (@stdpp.bitvector.definitions.bv 64%N), (forall bs1 : (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)), (forall bs2 : (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)), (forall T : (@Corelib.Init.Datatypes.nat -> @OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.TSet), ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 32%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.fetch_word segs pc) (@Corelib.Init.Datatypes.Some (@stdpp.bitvector.definitions.bv 32%N) w)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.bool) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.is_ecall w) (@Corelib.Init.Datatypes.true)) -> ((K mo) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry)) (@LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup (@LinuxProcessSemantics.LinuxProcessSem.State.m_fds mo) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Init.Datatypes.Some (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry) (@LinuxProcessSemantics.LinuxProcessSem.State.FdChannel (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)))) -> ((@LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader mo = true) -> ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.lt 0%Z fd) (@Stdlib.ZArith.BinInt.Z.lt fd (@Stdlib.ZArith.BinInt.Z.pow 2%Z 31%Z))) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 17%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N 66%Z)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 10%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 11%Z (@Corelib.Init.Logic.I))) iov) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 12%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N 2%Z)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem iov 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat b1))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 8%Z)) 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat n1))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 16%Z)) 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat b2))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 24%Z)) 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat n2))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem b1 (@LinuxProcessSemantics.LinuxProcessSem.BvBase.word_to_nat n1)) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) bs1)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem b2 (@LinuxProcessSemantics.LinuxProcessSem.BvBase.word_to_nat n2)) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) bs2)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 32%Z) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b2) (@stdpp.bitvector.definitions.bv_unsigned 64%N n2)) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le 1%Z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N n1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n2))) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N n1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n2)) (@Stdlib.ZArith.BinInt.Z.pow 2%Z 30%Z)) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 32%Z))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N b2) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b2) (@stdpp.bitvector.definitions.bv_unsigned 64%N n2)))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((forall k : @Corelib.Init.Datatypes.nat, ((@Corelib.Init.Peano.le 1%nat k) -> ((@Corelib.Init.Peano.le k (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2))) -> (forall mo'' : @LinuxProcessSemantics.LinuxProcessSem.State.Model, ((K mo'') -> ((@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.mo_mat mo mo'') -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.mkst (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.fx0) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.regupd regs (@stdpp.bitvector.definitions.BV 5%N 10%Z (@Corelib.Init.Logic.I)) (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.of_nat k))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.v_addi pc 4%Z) mem (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) mo'') (T k)))))))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.mkst (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.fx0) regs pc mem (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) mo) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_alt (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB.ShapeX.wr_index (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2)) (fun i : (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB.ShapeX.wr_index (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2)) => (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_emit (@Corelib.Lists.ListDef.map (@stdpp.bitvector.definitions.bv 8%N) (@LinuxProcessSemantics.LinuxProcessSem.State.event) (@LinuxProcessSemantics.LinuxProcessSem.State.WriteEv (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Lists.ListDef.firstn (@stdpp.bitvector.definitions.bv 8%N) (@Corelib.Init.Specif.proj1_sig (@Corelib.Init.Datatypes.nat) (fun n : @Corelib.Init.Datatypes.nat => (@Corelib.Init.Logic.and (@Corelib.Init.Peano.le 1%nat n) (@Corelib.Init.Peano.le n (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2))))) i) (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2))) (T (@Corelib.Init.Specif.proj1_sig (@Corelib.Init.Datatypes.nat) (fun n : @Corelib.Init.Datatypes.nat => (@Corelib.Init.Logic.and (@Corelib.Init.Peano.le 1%nat n) (@Corelib.Init.Peano.le n (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2))))) i)))))))))))))))))))))))))))))))))))))))))))))
 (* [comment removed for export] *).
 Proof.
-  intros regs pc mem mo w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE HK Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem mo w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE HK Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hiok Hb1 Hb2 Ht1 Ht30 AOKiov AOK1 AOK2 Hk.
   pose proof (K_halted mo HK) as Hh.
   eapply rz_sysA; [exact Hh | exact HF | exact HE |].
@@ -251,7 +286,7 @@ Proof.
   replace (bs1 ++ bs2) with (concat [bs1; bs2]) in * by (cbn; rewrite app_nil_r; reflexivity).
   eapply (rz_writev_pendingA (epend regs pc mem (seg_rom segs) (getr regs 17)) (getr regs 17) mo fd iov
             [(b1, n1); (b2, n2)] [bs1; bs2] T);
-    [reflexivity | exact HK | reflexivity | exact Hfd | exact Hfdr
+    [reflexivity | exact HK | reflexivity | exact Hfd | exact Hrdr | exact Hfdr
     | rewrite H17; apply u64_lit; lia
     | rewrite ms_gpr_epend0; exact H10 | rewrite ms_gpr_epend1; exact H11 | rewrite ms_gpr_epend2; exact H12
     | cbn; lia | change (Z.of_nat (length [(b1, n1); (b2, n2)])) with 2%Z; lia
@@ -268,10 +303,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="K_halted K_mat"] Lemma rz_writev1A : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pregs,(4>.&5.(0.&40.))Ppc,(0.&40.)Pmem,P,(0.&40.)(1.(0.&8.))Pmo,$1>.Pw,(0.&20.)Pfd,$17.Piov,(0.&40.)Pb1,(0.&40.)Pn1,(0.&40.)Pbs1,(?.(0.&8.))PT,P,$2.$2:.P,(8.(1.(0.&20.))(4?.Vsegs,R:.)(20.(0.&20.)R7.))P,(8.$50.(51.R8.)$52.)P,A1.VK,R:.P,(8.(1.$3:.)(3;.(3<.R;.)(<.&40.R9.))(20.$3:.(3=.(<.&40.R9.))))P,(7.(18.=R:.)(18.R:.(16.+2.+1?.)))P,(8.(0.&40.)(53.R10.(54.&5.+11.$55.))(<.&40.+42.))P,(8.(0.&40.)(53.R11.(54.&5.+:.$55.))(<.&40.R<.))P,(8.(0.&40.)(53.R12.(54.&5.+;.$55.))R<.)P,(8.(0.&40.)(53.R13.(54.&5.+<.$55.))(<.&40.+1.))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R12.R>.#8.)(20.(?.(0.&8.))(57.#8.R=.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R13.(<.&40.(14.(15.&40.R?.)+8.))#8.)(20.(?.(0.&8.))(57.#8.R=.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R14.R?.(12.R>.))(20.(?.(0.&8.))R=.))P,(13.(14.(15.&40.R11.)+10.)$40.)P,(13.(14.(15.&40.R11.)(15.&40.R10.))$40.)P,(13.+1.(15.&40.R11.))P,(13.(15.&40.R12.)(16.+2.+1>.))P,Pz,$17.P,(7.(13.(15.&40.R16.)R1.)(18.R1.(14.(15.&40.R16.)+10.)))(19.VAL,VCS,R2.)P,Pz,$17.P,(7.(13.(15.&40.R16.)R1.)(18.R1.(14.(15.&40.R16.)(15.&40.R15.))))(19.VAL,VCS,R2.)P,Pk,$2.P,(11.#1.R1.)P,(11.R2.(3?.(0.&8.)R16.))Pmo'',$1>.P,A1.VK,R1.P,(21.R1?.R2.)(34.Vsegs,(35.(59.$5:.(5;.R23.(54.&5.+:.$55.)(<.&40.(>.R6.)))(5<.R22.+4.)R21.(39.Vsegs,))R3.)A1.R19.R6.)(34.Vsegs,(35.(59.$5:.R1>.R1=.R1<.(39.Vsegs,))R1;.)(47.(48.R15.)Li,(48.R15.)(49.(4:.(0.&8.)$32.(4;.(<.&40.R1:.))(4<.(0.&8.)(4=.$2.Ln,$2.(7.(11.#1.R1.)(11.R1.(3?.(0.&8.)R17.)))R1.)R16.))A1.R15.(4=.$2.Ln,$2.(7.(11.#1.R1.)(11.R1.(3?.(0.&8.)R17.)))R1.))))")
+#[using="K_halted K_mat"] Lemma rz_writev1A : 
+  (* plain text: the revision's writev needs the channel reader *)
+  (forall regs : (@LinuxProcessSemantics.Riscv.Prelude.bvmap 5%N (@stdpp.bitvector.definitions.bv 64%N)), (forall pc : (@stdpp.bitvector.definitions.bv 64%N), (forall mem : ((@stdpp.bitvector.definitions.bv 64%N) -> (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 8%N))), (forall mo : @LinuxProcessSemantics.LinuxProcessSem.State.Model, (forall w : (@stdpp.bitvector.definitions.bv 32%N), (forall fd : @Corelib.Numbers.BinNums.Z, (forall iov : (@stdpp.bitvector.definitions.bv 64%N), (forall b1 : (@stdpp.bitvector.definitions.bv 64%N), (forall n1 : (@stdpp.bitvector.definitions.bv 64%N), (forall bs1 : (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)), (forall T : (@Corelib.Init.Datatypes.nat -> @OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.TSet), ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 32%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.fetch_word segs pc) (@Corelib.Init.Datatypes.Some (@stdpp.bitvector.definitions.bv 32%N) w)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.bool) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.is_ecall w) (@Corelib.Init.Datatypes.true)) -> ((K mo) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry)) (@LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup (@LinuxProcessSemantics.LinuxProcessSem.State.m_fds mo) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Init.Datatypes.Some (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry) (@LinuxProcessSemantics.LinuxProcessSem.State.FdChannel (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)))) -> ((@LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader mo = true) -> ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.lt 0%Z fd) (@Stdlib.ZArith.BinInt.Z.lt fd (@Stdlib.ZArith.BinInt.Z.pow 2%Z 31%Z))) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 17%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N 66%Z)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 10%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 11%Z (@Corelib.Init.Logic.I))) iov) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 12%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N 1%Z)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem iov 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat b1))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 8%Z)) 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat n1))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem b1 (@LinuxProcessSemantics.LinuxProcessSem.BvBase.word_to_nat n1)) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) bs1)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 16%Z) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le 1%Z (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)) -> ((@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N n1) (@Stdlib.ZArith.BinInt.Z.pow 2%Z 30%Z)) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 16%Z))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((forall k : @Corelib.Init.Datatypes.nat, ((@Corelib.Init.Peano.le 1%nat k) -> ((@Corelib.Init.Peano.le k (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) bs1)) -> (forall mo'' : @LinuxProcessSemantics.LinuxProcessSem.State.Model, ((K mo'') -> ((@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.mo_mat mo mo'') -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.mkst (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.fx0) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.regupd regs (@stdpp.bitvector.definitions.BV 5%N 10%Z (@Corelib.Init.Logic.I)) (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.of_nat k))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.v_addi pc 4%Z) mem (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) mo'') (T k)))))))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.mkst (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.fx0) regs pc mem (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) mo) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_alt (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB.ShapeX.wr_index bs1) (fun i : (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB.ShapeX.wr_index bs1) => (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_emit (@Corelib.Lists.ListDef.map (@stdpp.bitvector.definitions.bv 8%N) (@LinuxProcessSemantics.LinuxProcessSem.State.event) (@LinuxProcessSemantics.LinuxProcessSem.State.WriteEv (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Lists.ListDef.firstn (@stdpp.bitvector.definitions.bv 8%N) (@Corelib.Init.Specif.proj1_sig (@Corelib.Init.Datatypes.nat) (fun n : @Corelib.Init.Datatypes.nat => (@Corelib.Init.Logic.and (@Corelib.Init.Peano.le 1%nat n) (@Corelib.Init.Peano.le n (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) bs1)))) i) bs1)) (T (@Corelib.Init.Specif.proj1_sig (@Corelib.Init.Datatypes.nat) (fun n : @Corelib.Init.Datatypes.nat => (@Corelib.Init.Logic.and (@Corelib.Init.Peano.le 1%nat n) (@Corelib.Init.Peano.le n (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) bs1)))) i)))))))))))))))))))))))))))))))))))))
 (* [comment removed for export] *).
 Proof.
-  intros regs pc mem mo w fd iov b1 n1 bs1 T HF HE HK Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem mo w fd iov b1 n1 bs1 T HF HE HK Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hiok Hb1 Ht1 Ht30 AOKiov AOK1 Hk.
   pose proof (K_halted mo HK) as Hh.
   eapply rz_sysA; [exact Hh | exact HF | exact HE |].
@@ -280,7 +317,7 @@ Proof.
   replace bs1 with (concat [bs1]) by (cbn; rewrite app_nil_r; reflexivity).
   eapply (rz_writev_pendingA (epend regs pc mem (seg_rom segs) (getr regs 17)) (getr regs 17) mo fd iov
             [(b1, n1)] [bs1] T);
-    [reflexivity | exact HK | reflexivity | exact Hfd | exact Hfdr
+    [reflexivity | exact HK | reflexivity | exact Hfd | exact Hrdr | exact Hfdr
     | rewrite H17; apply u64_lit; lia
     | rewrite ms_gpr_epend0; exact H10 | rewrite ms_gpr_epend1; exact H11 | rewrite ms_gpr_epend2; exact H12
     | cbn; lia | change (Z.of_nat (length [(b1, n1)])) with 1%Z; lia
@@ -293,10 +330,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="K_halted K_mat"] Lemma rz_writev2_wallA : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pregs,(4>.&5.(0.&40.))Ppc,(0.&40.)Pmem,P,(0.&40.)(1.(0.&8.))Pmo,$1>.Pw,(0.&20.)Pfd,$17.Piov,(0.&40.)Pb1,(0.&40.)Pn1,(0.&40.)Pb2,(0.&40.)Pn2,(0.&40.)Pbs1,(?.(0.&8.))Pbs2,(?.(0.&8.))PKK,$2:.P,(8.(1.(0.&20.))(4?.Vsegs,R=.)(20.(0.&20.)R:.))P,(8.$50.(51.R;.)$52.)P,A1.VK,R=.P,(8.(1.$3:.)(3;.(3<.R>.)(<.&40.R<.))(20.$3:.(3=.(<.&40.R<.))))P,(7.(18.=R=.)(18.R=.(16.+2.+1?.)))P,(8.(0.&40.)(53.R13.(54.&5.+11.$55.))(<.&40.+42.))P,(8.(0.&40.)(53.R14.(54.&5.+:.$55.))(<.&40.R?.))P,(8.(0.&40.)(53.R15.(54.&5.+;.$55.))R?.)P,(8.(0.&40.)(53.R16.(54.&5.+<.$55.))(<.&40.+2.))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R15.R11.#8.)(20.(?.(0.&8.))(57.#8.R10.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R16.(<.&40.(14.(15.&40.R12.)+8.))#8.)(20.(?.(0.&8.))(57.#8.R10.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R17.(<.&40.(14.(15.&40.R13.)+10.))#8.)(20.(?.(0.&8.))(57.#8.R10.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R18.(<.&40.(14.(15.&40.R14.)+18.))#8.)(20.(?.(0.&8.))(57.#8.R10.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R19.R14.(12.R13.))(20.(?.(0.&8.))R10.))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R1:.R13.(12.R12.))(20.(?.(0.&8.))R10.))P,(13.(14.(15.&40.R17.)+20.)$40.)P,(13.(14.(15.&40.R17.)(15.&40.R16.))$40.)P,(13.(14.(15.&40.R16.)(15.&40.R15.))$40.)P,(13.+1.(14.(15.&40.R18.)(15.&40.R16.)))P,(13.(14.(15.&40.R19.)(15.&40.R17.))(16.+2.+1>.))P,Pz,$17.P,(7.(13.(15.&40.R1=.)R1.)(18.R1.(14.(15.&40.R1=.)+20.)))(19.VAL,VCS,R2.)P,Pz,$17.P,(7.(13.(15.&40.R1=.)R1.)(18.R1.(14.(15.&40.R1=.)(15.&40.R1<.))))(19.VAL,VCS,R2.)P,Pz,$17.P,(7.(13.(15.&40.R1<.)R1.)(18.R1.(14.(15.&40.R1<.)(15.&40.R1;.))))(19.VAL,VCS,R2.)P,A1.R18.(31.$32.)P,Pk,$2.P,(11.#1.R1.)P,(11.R2.(3?.(0.&8.)(58.(0.&8.)R1=.R1<.)))Pmo'',$1>.P,A1.VK,R1.P,(21.R28.R2.)(34.Vsegs,(35.(59.$5:.(5;.R2<.(54.&5.+:.$55.)(<.&40.(>.R6.)))(5<.R2;.+4.)R2:.(39.Vsegs,))R3.)(49.(4:.(0.&8.)$32.(4;.(<.&40.R27.))(5=.(0.&8.)R6.(58.(0.&8.)R21.R20.)))R1?.))(34.Vsegs,(35.(59.$5:.R27.R26.R25.(39.Vsegs,))R24.)(49.(4:.(0.&8.)$32.(4;.(<.&40.R22.))(58.(0.&8.)R1<.R1;.))R1:.))")
+#[using="K_halted K_mat"] Lemma rz_writev2_wallA : 
+  (* plain text: the revision's writev needs the channel reader *)
+  (forall regs : (@LinuxProcessSemantics.Riscv.Prelude.bvmap 5%N (@stdpp.bitvector.definitions.bv 64%N)), (forall pc : (@stdpp.bitvector.definitions.bv 64%N), (forall mem : ((@stdpp.bitvector.definitions.bv 64%N) -> (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 8%N))), (forall mo : @LinuxProcessSemantics.LinuxProcessSem.State.Model, (forall w : (@stdpp.bitvector.definitions.bv 32%N), (forall fd : @Corelib.Numbers.BinNums.Z, (forall iov : (@stdpp.bitvector.definitions.bv 64%N), (forall b1 : (@stdpp.bitvector.definitions.bv 64%N), (forall n1 : (@stdpp.bitvector.definitions.bv 64%N), (forall b2 : (@stdpp.bitvector.definitions.bv 64%N), (forall n2 : (@stdpp.bitvector.definitions.bv 64%N), (forall bs1 : (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)), (forall bs2 : (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)), (forall KK : @OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.TSet, ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 32%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.fetch_word segs pc) (@Corelib.Init.Datatypes.Some (@stdpp.bitvector.definitions.bv 32%N) w)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.bool) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.is_ecall w) (@Corelib.Init.Datatypes.true)) -> ((K mo) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry)) (@LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup (@LinuxProcessSemantics.LinuxProcessSem.State.m_fds mo) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Init.Datatypes.Some (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry) (@LinuxProcessSemantics.LinuxProcessSem.State.FdChannel (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)))) -> ((@LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader mo = true) -> ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.lt 0%Z fd) (@Stdlib.ZArith.BinInt.Z.lt fd (@Stdlib.ZArith.BinInt.Z.pow 2%Z 31%Z))) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 17%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N 66%Z)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 10%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 11%Z (@Corelib.Init.Logic.I))) iov) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 12%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N 2%Z)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem iov 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat b1))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 8%Z)) 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat n1))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 16%Z)) 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat b2))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 24%Z)) 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat n2))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem b1 (@LinuxProcessSemantics.LinuxProcessSem.BvBase.word_to_nat n1)) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) bs1)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem b2 (@LinuxProcessSemantics.LinuxProcessSem.BvBase.word_to_nat n2)) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) bs2)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 32%Z) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b2) (@stdpp.bitvector.definitions.bv_unsigned 64%N n2)) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le 1%Z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N n1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n2))) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N n1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n2)) (@Stdlib.ZArith.BinInt.Z.pow 2%Z 30%Z)) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 32%Z))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N b2) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b2) (@stdpp.bitvector.definitions.bv_unsigned 64%N n2)))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((KK (@Corelib.Init.Datatypes.nil (@LinuxProcessSemantics.LinuxProcessSem.State.event))) -> ((forall k : @Corelib.Init.Datatypes.nat, ((@Corelib.Init.Peano.le 1%nat k) -> ((@Corelib.Init.Peano.le k (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2))) -> (forall mo'' : @LinuxProcessSemantics.LinuxProcessSem.State.Model, ((K mo'') -> ((@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.mo_mat mo mo'') -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.mkst (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.fx0) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.regupd regs (@stdpp.bitvector.definitions.BV 5%N 10%Z (@Corelib.Init.Logic.I)) (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.of_nat k))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.v_addi pc 4%Z) mem (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) mo'') (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_emit (@Corelib.Lists.ListDef.map (@stdpp.bitvector.definitions.bv 8%N) (@LinuxProcessSemantics.LinuxProcessSem.State.event) (@LinuxProcessSemantics.LinuxProcessSem.State.WriteEv (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Lists.ListDef.skipn (@stdpp.bitvector.definitions.bv 8%N) k (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2))) KK)))))))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.mkst (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.fx0) regs pc mem (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) mo) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_emit (@Corelib.Lists.ListDef.map (@stdpp.bitvector.definitions.bv 8%N) (@LinuxProcessSemantics.LinuxProcessSem.State.event) (@LinuxProcessSemantics.LinuxProcessSem.State.WriteEv (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Init.Datatypes.app (@stdpp.bitvector.definitions.bv 8%N) bs1 bs2)) KK))))))))))))))))))))))))))))))))))))))))))
 (* [comment removed for export] *).
 Proof.
-  intros regs pc mem mo w fd iov b1 n1 b2 n2 bs1 bs2 KK HF HE HK Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem mo w fd iov b1 n1 b2 n2 bs1 bs2 KK HF HE HK Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hiok Hb1 Hb2 Ht1 Ht30 AOKiov AOK1 AOK2 HKK Hk.
   pose proof (rdn_length segs mem _ _ _ Rs1) as L1. pose proof (rdn_length segs mem _ _ _ Rs2) as L2.
   pose proof (u64_range n1). pose proof (u64_range n2).
@@ -305,10 +344,12 @@ Proof.
             (fun k => t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k (bs1 ++ bs2))) KK)); eassumption.
 Qed.
 
-#[using="K_halted K_mat"] Lemma rz_writev1_wallA : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pregs,(4>.&5.(0.&40.))Ppc,(0.&40.)Pmem,P,(0.&40.)(1.(0.&8.))Pmo,$1>.Pw,(0.&20.)Pfd,$17.Piov,(0.&40.)Pb1,(0.&40.)Pn1,(0.&40.)Pbs1,(?.(0.&8.))PKK,$2:.P,(8.(1.(0.&20.))(4?.Vsegs,R:.)(20.(0.&20.)R7.))P,(8.$50.(51.R8.)$52.)P,A1.VK,R:.P,(8.(1.$3:.)(3;.(3<.R;.)(<.&40.R9.))(20.$3:.(3=.(<.&40.R9.))))P,(7.(18.=R:.)(18.R:.(16.+2.+1?.)))P,(8.(0.&40.)(53.R10.(54.&5.+11.$55.))(<.&40.+42.))P,(8.(0.&40.)(53.R11.(54.&5.+:.$55.))(<.&40.R<.))P,(8.(0.&40.)(53.R12.(54.&5.+;.$55.))R<.)P,(8.(0.&40.)(53.R13.(54.&5.+<.$55.))(<.&40.+1.))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R12.R>.#8.)(20.(?.(0.&8.))(57.#8.R=.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R13.(<.&40.(14.(15.&40.R?.)+8.))#8.)(20.(?.(0.&8.))(57.#8.R=.)))P,(8.(1.(?.(0.&8.)))(56.Vsegs,R14.R?.(12.R>.))(20.(?.(0.&8.))R=.))P,(13.(14.(15.&40.R11.)+10.)$40.)P,(13.(14.(15.&40.R11.)(15.&40.R10.))$40.)P,(13.+1.(15.&40.R11.))P,(13.(15.&40.R12.)(16.+2.+1>.))P,Pz,$17.P,(7.(13.(15.&40.R16.)R1.)(18.R1.(14.(15.&40.R16.)+10.)))(19.VAL,VCS,R2.)P,Pz,$17.P,(7.(13.(15.&40.R16.)R1.)(18.R1.(14.(15.&40.R16.)(15.&40.R15.))))(19.VAL,VCS,R2.)P,A1.R13.(31.$32.)P,Pk,$2.P,(11.#1.R1.)P,(11.R2.(3?.(0.&8.)R17.))Pmo'',$1>.P,A1.VK,R1.P,(21.R20.R2.)(34.Vsegs,(35.(59.$5:.(5;.R24.(54.&5.+:.$55.)(<.&40.(>.R6.)))(5<.R23.+4.)R22.(39.Vsegs,))R3.)(49.(4:.(0.&8.)$32.(4;.(<.&40.R1?.))(5=.(0.&8.)R6.R1;.))R1:.))(34.Vsegs,(35.(59.$5:.R1?.R1>.R1=.(39.Vsegs,))R1<.)(49.(4:.(0.&8.)$32.(4;.(<.&40.R1:.))R16.)R15.))")
+#[using="K_halted K_mat"] Lemma rz_writev1_wallA : 
+  (* plain text: the revision's writev needs the channel reader *)
+  (forall regs : (@LinuxProcessSemantics.Riscv.Prelude.bvmap 5%N (@stdpp.bitvector.definitions.bv 64%N)), (forall pc : (@stdpp.bitvector.definitions.bv 64%N), (forall mem : ((@stdpp.bitvector.definitions.bv 64%N) -> (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 8%N))), (forall mo : @LinuxProcessSemantics.LinuxProcessSem.State.Model, (forall w : (@stdpp.bitvector.definitions.bv 32%N), (forall fd : @Corelib.Numbers.BinNums.Z, (forall iov : (@stdpp.bitvector.definitions.bv 64%N), (forall b1 : (@stdpp.bitvector.definitions.bv 64%N), (forall n1 : (@stdpp.bitvector.definitions.bv 64%N), (forall bs1 : (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)), (forall KK : @OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.TSet, ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@stdpp.bitvector.definitions.bv 32%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.fetch_word segs pc) (@Corelib.Init.Datatypes.Some (@stdpp.bitvector.definitions.bv 32%N) w)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.bool) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.is_ecall w) (@Corelib.Init.Datatypes.true)) -> ((K mo) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry)) (@LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup (@LinuxProcessSemantics.LinuxProcessSem.State.m_fds mo) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Init.Datatypes.Some (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry) (@LinuxProcessSemantics.LinuxProcessSem.State.FdChannel (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)))) -> ((@LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader mo = true) -> ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.lt 0%Z fd) (@Stdlib.ZArith.BinInt.Z.lt fd (@Stdlib.ZArith.BinInt.Z.pow 2%Z 31%Z))) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 17%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N 66%Z)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 10%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 11%Z (@Corelib.Init.Logic.I))) iov) -> ((@Corelib.Init.Logic.eq (@stdpp.bitvector.definitions.bv 64%N) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.getr regs (@stdpp.bitvector.definitions.BV 5%N 12%Z (@Corelib.Init.Logic.I))) (@stdpp.bitvector.definitions.Z_to_bv 64%N 1%Z)) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem iov 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat b1))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 8%Z)) 8%nat) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) (@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes 8%nat n1))) -> ((@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn segs mem b1 (@LinuxProcessSemantics.LinuxProcessSem.BvBase.word_to_nat n1)) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) bs1)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 16%Z) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)) (@LinuxProcessSemantics.LinuxProcessSem.State.TASK_SIZE)) -> ((@Stdlib.ZArith.BinInt.Z.le 1%Z (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)) -> ((@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N n1) (@Stdlib.ZArith.BinInt.Z.pow 2%Z 30%Z)) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N iov) 16%Z))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((forall z : @Corelib.Numbers.BinNums.Z, ((@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.le (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) z) (@Stdlib.ZArith.BinInt.Z.lt z (@Stdlib.ZArith.BinInt.Z.add (@stdpp.bitvector.definitions.bv_unsigned 64%N b1) (@stdpp.bitvector.definitions.bv_unsigned 64%N n1)))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.aok_addr AL CS z))) -> ((KK (@Corelib.Init.Datatypes.nil (@LinuxProcessSemantics.LinuxProcessSem.State.event))) -> ((forall k : @Corelib.Init.Datatypes.nat, ((@Corelib.Init.Peano.le 1%nat k) -> ((@Corelib.Init.Peano.le k (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) bs1)) -> (forall mo'' : @LinuxProcessSemantics.LinuxProcessSem.State.Model, ((K mo'') -> ((@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.mo_mat mo mo'') -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.mkst (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.fx0) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.regupd regs (@stdpp.bitvector.definitions.BV 5%N 10%Z (@Corelib.Init.Logic.I)) (@stdpp.bitvector.definitions.Z_to_bv 64%N (@Stdlib.ZArith.BinInt.Z.of_nat k))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.v_addi pc 4%Z) mem (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) mo'') (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_emit (@Corelib.Lists.ListDef.map (@stdpp.bitvector.definitions.bv 8%N) (@LinuxProcessSemantics.LinuxProcessSem.State.event) (@LinuxProcessSemantics.LinuxProcessSem.State.WriteEv (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) (@Corelib.Lists.ListDef.skipn (@stdpp.bitvector.definitions.bv 8%N) k bs1)) KK)))))))) -> (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.SRz.srealizesJ segs (@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.mkst (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.fx0) regs pc mem (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom segs)) mo) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Shape.t_emit (@Corelib.Lists.ListDef.map (@stdpp.bitvector.definitions.bv 8%N) (@LinuxProcessSemantics.LinuxProcessSem.State.event) (@LinuxProcessSemantics.LinuxProcessSem.State.WriteEv (@stdpp.bitvector.definitions.Z_to_bv 64%N fd)) bs1) KK))))))))))))))))))))))))))))))))))
 (* [comment removed for export] *).
 Proof.
-  intros regs pc mem mo w fd iov b1 n1 bs1 KK HF HE HK Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem mo w fd iov b1 n1 bs1 KK HF HE HK Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hiok Hb1 Ht1 Ht30 AOKiov AOK1 HKK Hk.
   pose proof (rdn_length segs mem _ _ _ Rs1) as L1. pose proof (u64_range n1).
   apply srzJ_wall; [unfold word_to_nat in L1; lia | exact HKK |].
@@ -335,26 +376,43 @@ Proof.
     rewrite (access_okb_of_le b1 0) by lia. reflexivity. }
   assert (Hacc : import_iovecs_accesses (ms_read_byte ms) iov (Z_to_bv 64 1) = [(iov, 16%nat)]).
   { unfold import_iovecs_accesses. rewrite (proj2 (bv_eqb_eq _ _) eq_refl).
-    rewrite (access_okb_of_le iov 16) by lia. reflexivity. }
-  eapply (rz_ret_only_copyinsK_silent_chk ms mo (getr regs 17) [(iov, 16%nat)] (Z_to_bv 64 0) mo);
-    [exact HK | reflexivity | | apply vm_same_refl | | unfold ms; rewrite adv_set_epend; exact Hc].
-  - intros eff.
-    rewrite (check_syscall_writev (sys_input segs ms (getr regs 17)) eff mo) by (rewrite in_sysno_si; exact Hno).
+    rewrite (access_okb_of_le iov 16) by lia.
+    exact (iovec_entry_accesses_of_array segs ms b1 (Z_to_bv 64 0) [] iov eq_refl Harr). }
+  assert (G0 : ms_gpr ms 0 = Z_to_bv 64 fd) by (unfold ms; rewrite ms_gpr_epend0; exact H10).
+  assert (G1 : ms_gpr ms 1 = iov) by (unfold ms; rewrite ms_gpr_epend1; exact H11).
+  assert (G2 : ms_gpr ms 2 = Z_to_bv 64 1) by (unfold ms; rewrite ms_gpr_epend2; exact H12).
+  (* the check, closed, for any state with these registers and these iovec reads: the node's own
+     state and every larger read-only backing of it (LPS revision: [RomBase.sys_rob]); the same
+     shape as Sys/LibWritev.rz_writev1_zero *)
+  assert (Hcl : forall ms0,
+     ms_gpr ms0 0 = Z_to_bv 64 fd -> ms_gpr ms0 1 = iov -> ms_gpr ms0 2 = Z_to_bv 64 1 ->
+     import_iovecs (ms_read_byte ms0) iov (Z_to_bv 64 1) = ImpOk [(b1, Z_to_bv 64 0)] ->
+     import_iovecs_accesses (ms_read_byte ms0) iov (Z_to_bv 64 1) = [(iov, 16%nat)] ->
+     forall eff, check_syscall (sys_input segs ms0 (getr regs 17)) eff mo
+                 = check_ret_only_copyins [(iov, 16%nat)] eff (Z_to_bv 64 0) mo []).
+  { intros ms0 F0 F1 F2 Himp0 Hacc0 eff.
+    rewrite (check_syscall_writev (sys_input segs ms0 (getr regs 17)) eff mo) by (rewrite in_sysno_si; exact Hno).
     rewrite in_arg0_si, in_arg1_si, in_arg2_si.
-    assert (G0 : ms_gpr ms 0 = Z_to_bv 64 fd) by (unfold ms; rewrite ms_gpr_epend0; exact H10).
-    assert (G1 : ms_gpr ms 1 = iov) by (unfold ms; rewrite ms_gpr_epend1; exact H11).
-    assert (G2 : ms_gpr ms 2 = Z_to_bv 64 1) by (unfold ms; rewrite ms_gpr_epend2; exact H12).
-    rewrite G0, G1, G2.
+    rewrite F0, F1, F2.
     rewrite fd32_id by (rewrite u64_lit; lia).
     unfold check_writev. rewrite Hfd.
     replace (w_is0 (Z_to_bv 64 fd)) with false by (symmetry; apply w_is0_pos; rewrite u64_lit; lia).
     change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
-    rewrite in_mem_si, Himp, Hacc.
+    rewrite in_mem_si, Himp0, Hacc0.
     unfold cap_iovecs. cbn [cap_iovecs_aux iovs_total].
     change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. rewrite Z.min_r by (unfold MAX_RW_COUNT; lia).
     change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. cbv beta iota zeta.
-    change ((0 + 0 =? 0)%Z) with true. cbv beta iota. reflexivity.
+    change ((0 + 0 =? 0)%Z) with true. cbv beta iota. reflexivity. }
+  assert (Hsv : ms_svc_pending ms = Some (getr regs 17)) by reflexivity.
+  eapply (rz_ret_only_copyinsK_silent_chk ms mo (getr regs 17) [(iov, 16%nat)] (Z_to_bv 64 0) mo);
+    [exact HK | exact Hsv | exact (Hcl ms G0 G1 G2 Himp Hacc) | apply vm_same_refl | |
+    | unfold ms; rewrite adv_set_epend; exact Hc].
   - intros z (a & n & [E|[]] & Hz). injection E as <- <-. apply AOKiov. cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in Hz. lia.
+  - apply (RomBase.sys_rob_of_check segs ms mo). intros r x8' Hr Hs' eff.
+    rewrite Hsv in Hs'. injection Hs' as <-.
+    pose proof (RomWritev.import_iovecs_wrom ms r _ _ _ Hr Himp) as Himp'.
+    pose proof (eq_trans (RomWritev.import_iovecs_accesses_wrom ms r _ _ _ Hr Himp) Hacc) as Hacc'.
+    rewrite (Hcl (RomBase.wrom ms r) G0 G1 G2 Himp' Hacc'), (Hcl ms G0 G1 G2 Himp Hacc). reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -364,7 +422,8 @@ Qed.
 (* [comment removed for export] *)
 #[using="Type"] Lemma cstr_access_len_le : forall mp a fuel, (cstr_access_len_aux mp a fuel <= fuel)%nat.
 Proof.
-  intros mp a fuel. revert a. induction fuel as [|fuel IH]; intros a; cbn; [lia|].
+  intros mp a fuel. revert a. induction fuel as [|fuel IH]; intros a; cbn [cstr_access_len_aux]; [lia|].
+  destruct (negb (access_okb a 1)); [lia|].
   destruct (mp a) as [b|]; [|lia]. destruct (bv_eqb b (Z_to_bv 8 0)); [lia|]. specialize (IH (a + 1)). lia.
 Qed.
 
@@ -377,21 +436,36 @@ Proof.
   injection H as <-. exists b, rest. repeat split; reflexivity.
 Qed.
 
-#[using="Type"] Lemma cstr_access_len_of_rdn : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pmem,P,(0.&40.)(1.(0.&8.))Pp,(?.(0.&8.))Pa,(0.&40.)Pfuel,$2.P,(8.(1.(?.(0.&8.)))(56.Vsegs,R4.R2.(61.(3?.(0.&8.)R3.)#1.))(20.(?.(0.&8.))(58.(0.&8.)R3.(5?.(0.&8.)(<.&8.=)(31.(0.&8.))))))P,(62.(3.(0.&8.)(<.&8.=)R4.))P,(11.(61.(3?.(0.&8.)R5.)#1.)R3.)(8.$2.(63.(60.Vsegs,R7.)R5.R4.)(61.(3?.(0.&8.)R6.)#1.))")
-(* [comment removed for export] *).
+(* At the revision [cstr_access_len_aux] stops at TASK_SIZE (the
+   [access_okb a 1] test it shares with [read_cstr_aux]), so the count is
+   the path's length only when the path ends below TASK_SIZE. *)
+#[using="Type"] Lemma cstr_access_len_of_rdn : forall (mem : word -> option byte) (p : list byte) (a : word) (fuel : nat),
+  rdn segs mem a (length p + 1)%nat = Some (p ++ [Z_to_bv 8 0]) ->
+  ~ In (Z_to_bv 8 0) p ->
+  (length p + 1 <= fuel)%nat ->
+  (bv_unsigned a + Z.of_nat (length p) < TASK_SIZE)%Z ->
+  cstr_access_len_aux (mrb segs mem) a fuel = (length p + 1)%nat.
 Proof.
-  intros mem p. induction p as [|c p IH]; intros a fuel Hrd Hnin Hf.
+  intros mem p. induction p as [|c p IH]; intros a fuel Hrd Hnin Hf Hts.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|].
     cbn [length Nat.add app] in Hrd. destruct (rdn_S_inv _ _ _ _ Hrd) as (b & rest & E & Hb & _).
-    injection E as <- <-. cbn [cstr_access_len_aux length Nat.add]. rewrite Hb. cbn. reflexivity.
+    injection E as <- <-. cbn [cstr_access_len_aux length Nat.add].
+    rewrite access_okb_one. cbn [length Z.of_nat] in Hts.
+    replace (bv_unsigned a <? TASK_SIZE)%Z with true by (symmetry; apply Z.ltb_lt; lia). cbn [negb].
+    rewrite Hb. cbn. reflexivity.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|].
     cbn [length app] in Hrd. rewrite Nat.add_succ_l in Hrd.
     destruct (rdn_S_inv _ _ _ _ Hrd) as (b & rest & E & Hb & Hrest). injection E as <- <-.
-    cbn [cstr_access_len_aux]. rewrite Hb.
+    cbn [length] in Hts. rewrite Nat2Z.inj_succ in Hts.
+    pose proof (bv_unsigned_in_range 64 a) as Ha.
+    cbn [cstr_access_len_aux].
+    rewrite access_okb_one. replace (bv_unsigned a <? TASK_SIZE)%Z with true by (symmetry; apply Z.ltb_lt; lia). cbn [negb].
+    rewrite Hb.
     destruct (bv_eqb c (Z_to_bv 8 0)) eqn:Ec.
     + exfalso. apply Hnin. left. unfold bv_eqb in Ec. apply Z.eqb_eq in Ec. apply bv_eq. exact Ec.
-    + cbn [length]. rewrite Nat.add_succ_l. f_equal. apply IH; [exact Hrest | | cbn [length] in Hf; lia].
-      intros Hin. apply Hnin. right. exact Hin.
+    + cbn [length]. rewrite Nat.add_succ_l. f_equal. apply IH; [exact Hrest | | cbn [length] in Hf; lia |].
+      * intros Hin. apply Hnin. right. exact Hin.
+      * rewrite bv_unsigned_succ_below_task_size by lia. lia.
 Qed.
 
 Section Openat.
@@ -424,6 +498,14 @@ Section Openat.
   #[using="Type"] Lemma open_in_memA : in_mem (sys_input segs ms (getr regs 17)) = mrb segs mem.
   Proof. cbv delta [ms]. rewrite in_mem_si, ms_read_byte_epend. reflexivity. Qed.
 
+  (* [RomBase.sys_rob] at an openat node whose path read does not fault ([BB.RomWrite.openat_rob]). *)
+  #[using="H17"] Lemma open_robA : read_cstr (mrb segs mem) (getr regs 11) <> CstrFault ->
+    RomBase.sys_rob segs (mkCfg ms mo).
+  Proof.
+    intros Hnf. apply (RomWrite.openat_rob segs ms mo (getr regs 17) eq_refl Hno56A).
+    cbv delta [ms]. rewrite ms_gpr_epend1, ms_read_byte_epend. exact Hnf.
+  Qed.
+
   #[using="Hfl"] Lemma open_flags_modeledA : modeled_open_flags (getr regs 12) = true.
   Proof. exact (modeled_open_flags_rd _ Hfl). Qed.
 
@@ -431,18 +513,22 @@ Section Openat.
   Proof. cbv delta [ms]. unfold open_reads, open_copyins. rewrite in_mem_si, ms_gpr_epend1. reflexivity. Qed.
 
   (* [comment removed for export] *)
-  Definition path_atA (p : list byte) : Prop := ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "(7.(11.(3?.(0.&8.)O1.)#???.)(7.(62.(3.(0.&8.)(<.&8.=)O1.))(8.(1.(?.(0.&8.)))(56.Vsegs,Vmem,(53.Vregs,(54.&5.+;.$55.))(61.(3?.(0.&8.)O1.)#1.))(20.(?.(0.&8.))(58.(0.&8.)O1.(5?.(0.&8.)(<.&8.=)(31.(0.&8.))))))))")
-(* [comment removed for export] *).
+  (* At the revision [read_cstr] refuses a byte at or above TASK_SIZE, so
+     the path must end below it (plain text: the old encoded definition
+     had three conjuncts). *)
+  Definition path_atA (p : list byte) : Prop :=
+    (length p <= 4095)%nat /\ ~ In (Z_to_bv 8 0) p
+    /\ rdn segs mem (getr regs 11) (length p + 1)%nat = Some (p ++ [Z_to_bv 8 0])
+    /\ (bv_unsigned (getr regs 11) + Z.of_nat (length p) < TASK_SIZE)%Z.
 
   #[using="Type"] Lemma path_atA_cstr : forall p, path_atA p -> read_cstr (mrb segs mem) (getr regs 11) = CstrOk p.
-  Proof. intros p (H1 & H2 & H3). apply read_cstr_of_rdn; assumption. Qed.
+  Proof. intros p (H1 & H2 & H3 & H4). apply read_cstr_of_rdn; assumption. Qed.
 
   (* [comment removed for export] *)
   #[using="Type"] Lemma open_copyins_path : forall p, path_atA p -> open_copyins ms = [(getr regs 11, (length p + 1)%nat)].
   Proof.
-    intros p (H1 & H2 & H3). unfold open_copyins. cbv delta [ms]. rewrite ms_gpr_epend1, ms_read_byte_epend.
-    rewrite (cstr_access_len_of_rdn mem p (getr regs 11) path_max H3 H2). reflexivity.
-    unfold path_max. lia.
+    intros p (H1 & H2 & H3 & H4). unfold open_copyins. cbv delta [ms]. rewrite ms_gpr_epend1, ms_read_byte_epend.
+    rewrite (cstr_access_len_of_rdn mem p (getr regs 11) path_max H3 H2); [reflexivity | unfold path_max; lia | exact H4].
   Qed.
 
   #[using="Type"] Lemma acc_ok_path : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pp,(?.(0.&8.))P,(69.R1.)P,Pz,$17.P,(7.(13.(15.&40.(53.Vregs,(54.&5.+;.$55.)))R1.)(18.R1.(14.(14.(15.&40.(53.Vregs,(54.&5.+;.$55.)))(>.(3?.(0.&8.)R3.)))+1.)))(19.VAL,VCS,R2.)(1:.VAL,VCS,(6:.Vms,))")
@@ -453,14 +539,22 @@ Section Openat.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="K_halted K_mat K_vmonly w HF HE HK H17 H10 Hfl ms Hh"] Lemma rz_openat_toolongA : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Pbs,(?.(0.&8.))PKK,$2:.P,(8.(1.(?.(0.&8.)))(56.Vsegs,Vmem,(53.Vregs,(54.&5.+;.$55.))#1000.)(20.(?.(0.&8.))R2.))P,(62.(3.(0.&8.)(<.&8.=)R3.))P,Pz,$17.P,(7.(13.(15.&40.(53.Vregs,(54.&5.+;.$55.)))R1.)(18.R1.(14.(15.&40.(53.Vregs,(54.&5.+;.$55.)))+1000.)))(19.VAL,VCS,R2.)P,Pmo'',$1>.P,A1.VK,R1.P,(21.Vmo,R2.)(34.Vsegs,(35.A1.Vpost,(6;.$6<.)R3.)R7.)(34.Vsegs,(35.(59.$5:.Vregs,Vpc,Vmem,(39.Vsegs,))Vmo,)R5.)")
-(* [comment removed for export] *).
+  (* Plain text: the revision's [read_cstr] needs the 4096 bytes below
+     TASK_SIZE (new premise after the NUL-free one). *)
+  #[using="K_halted K_mat K_vmonly w HF HE HK H17 H10 Hfl ms Hh"] Lemma rz_openat_toolongA : forall (bs : list byte) (KK : TSet),
+    rdn segs mem (getr regs 11) 4096%nat = Some bs ->
+    ~ In (Z_to_bv 8 0) bs ->
+    (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z ->
+    (forall z : Z, (bv_unsigned (getr regs 11) <= z < bv_unsigned (getr regs 11) + 4096)%Z -> aok_addr AL CS z) ->
+    (forall mo'' : Model, K mo'' -> mo_mat mo mo'' -> srealizesJ segs (mkCfg (post (errno_ret ENAMETOOLONG)) mo'') KK) ->
+    srealizesJ segs (mkCfg (mkst regs pc mem (seg_rom segs)) mo) KK.
   Proof.
-    intros bs KK Hrd Hnz AOK Hc. cbv delta [post] in *.
-    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hrd) as Hp.
+    intros bs KK Hrd Hnz Hts AOK Hc. cbv delta [post] in *.
+    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hts Hrd) as Hp.
     eapply rz_sysA; [exact Hh | exact HF | exact HE |].
     eapply (rz_ret_only_copyinsK_silent segs AL CS K K_halted K_mat K_vmonly);
-      [exact HK | reflexivity | | apply vm_same_refl | | cbv delta [ms]; rewrite adv_set_epend; exact Hc].
+      [exact HK | reflexivity | | apply vm_same_refl | | exact (open_robA ltac:(rewrite Hp; discriminate))
+      | cbv delta [ms]; rewrite adv_set_epend; exact Hc].
     - intros o. fold ms. rewrite openat_spec_headA.
       apply (openat_toolong_outcome _ _ _ _ mo open_flags_modeledA). rewrite open_in_memA. exact Hp.
     - unfold open_reads. cbv delta [ms]. rewrite in_mem_si, ms_read_byte_epend.
@@ -476,7 +570,8 @@ Section Openat.
     intros KK Hp AOK Hc. cbv delta [post] in *.
     eapply rz_sysA; [exact Hh | exact HF | exact HE |].
     eapply (rz_ret_only_copyinsK_silent segs AL CS K K_halted K_mat K_vmonly);
-      [exact HK | reflexivity | | apply vm_same_refl | | cbv delta [ms]; rewrite adv_set_epend; exact Hc].
+      [exact HK | reflexivity | | apply vm_same_refl | | exact (open_robA ltac:(rewrite (path_atA_cstr [] Hp); discriminate))
+      | cbv delta [ms]; rewrite adv_set_epend; exact Hc].
     - intros o. fold ms. rewrite openat_spec_headA.
       apply (openat_empty_outcome _ _ _ _ mo open_flags_modeledA). rewrite open_in_memA. exact (path_atA_cstr [] Hp).
     - apply (acc_ok_path [] Hp). intros z Hz. cbn [length] in Hz. replace z with (bv_unsigned (getr regs 11)) by lia. exact AOK.
@@ -489,7 +584,8 @@ Section Openat.
     intros p KK Hp Hne Hnd Hsl Hdd Hfs AOK Hc. cbv delta [post] in *.
     eapply rz_sysA; [exact Hh | exact HF | exact HE |].
     eapply (rz_ret_only_copyinsK_silent segs AL CS K K_halted K_mat K_vmonly);
-      [exact HK | reflexivity | | apply vm_same_refl | | cbv delta [ms]; rewrite adv_set_epend; exact Hc].
+      [exact HK | reflexivity | | apply vm_same_refl | | exact (open_robA ltac:(rewrite (path_atA_cstr p Hp); discriminate))
+      | cbv delta [ms]; rewrite adv_set_epend; exact Hc].
     - intros o. fold ms. rewrite openat_spec_headA.
       apply (openat_absent_outcome _ _ _ _ mo open_flags_modeledA eq_refl Hfl p);
         [rewrite open_in_memA; exact (path_atA_cstr p Hp) | exact Hne | exact Hnd | exact Hsl | exact Hdd | exact Hfs].
@@ -499,10 +595,22 @@ Section Openat.
   Hypothesis Hfree : fd_lookup fds (alloc_fd fds) = None.
 
   (* [comment removed for export] *)
-  #[using="K_halted K_mat K_vmonly HK Hh Hfree"] Lemma rz_openK : ltac2:(CDefT.buildp (gd_tbl_NodesA2 ()) "Preads,(?.(4.(0.&40.)$2.))Pmk,P,(0.&40.)$1>.PA,$2:.PB,$2:.P,Po,(64.$2<.)(65.(66.(2?.Vsegs,Vms,(53.Vregs,(54.&5.+11.$55.)))Vmo,R1.)(76.R5.Vmo,R4.R1.))P,Pfd,(0.&40.)(33.Vmo,A1.R5.R1.)P,(1:.VAL,VCS,R6.)P,Pe,$17.P,(3.$17.R1.$77.)Pmo'',$1>.P,A1.VK,R1.P,(21.Vmo,R2.)(34.Vsegs,(35.(36.(37.Vms,(6;.R5.)))R3.)R:.)P,Pmo'',$1>.P,A1.VK,R1.P,(21.A1.R9.(78.Vfds,)R2.)(34.Vsegs,(35.(36.(37.Vms,(78.Vfds,)))R3.)R8.)(34.Vsegs,(35.Vms,Vmo,)(79.R7.R6.))")
+  (* Was an encoded statement (CDefT.buildp); written out from its decode (cdeft_print.py), not
+     re-encoded, with one premise added, [RomBase.sys_rob segs (mkCfg ms mo)], for the open node. *)
+  #[using="K_halted K_mat K_vmonly HK Hh Hfree"] Lemma rz_openK : forall (reads : list (bv 64 * nat))
+      (mk : bv 64 -> Model) (A B : TSet),
+    (forall o, syscall_spec (sys_input segs ms (getr regs 17)) mo o <-> open_out reads mo mk o) ->
+    (forall fd, vm_same mo (mk fd)) ->
+    acc_ok AL CS reads ->
+    RomBase.sys_rob segs (mkCfg ms mo) ->
+    (forall e, In e openat_errnos -> forall mo'', K mo'' -> mo_mat mo mo'' ->
+       srealizesJ segs (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) mo'') A) ->
+    (forall mo'', K mo'' -> mo_mat (mk (alloc_fd fds)) mo'' ->
+       srealizesJ segs (mkCfg (advance_past_svc (set_gpr0 ms (alloc_fd fds))) mo'') B) ->
+    srealizesJ segs (mkCfg ms mo) (t_alt2 A B)
 (* [comment removed for export] *).
   Proof.
-    intros reads mk A B Hchk VS OK HA HB.
+    intros reads mk A B Hchk VS OK Hrob HA HB.
     pose (effs := fun i : open_I mo => match i with
             | inl (exist _ e _) => with_copyins reads (mkEffect (errno_ret e) [] [])
             | inr _ => with_copyins reads (mkEffect (alloc_fd fds) [] []) end).
@@ -518,7 +626,8 @@ Section Openat.
       - intros [[e He] | []]; [left; exists e; auto | right; auto].
       - intros o [(e & He & ->) | (Hlk & ->)]; [exists (inl (exist _ e He)) | exists (inr tt)]; reflexivity.
       - intros i. exact (K_halted _ (HKi i)).
-      - intros i. rewrite Eacc. unfold ms''. exact (proj1 (matK_spec (ms' i) reads (HKi i) OK)). }
+      - intros i. rewrite Eacc. unfold ms''. exact (proj1 (matK_spec (ms' i) reads (HKi i) OK)).
+      - exact Hrob. }
     apply (srzJ_alt2 segs (mkCfg ms mo) {e : Z | In e openat_errnos} unit
              (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms'' i)) A B
              (exist _ ENOMEM ENOMEM_in_openat_errnos) tt Hnode).
@@ -539,6 +648,7 @@ Section Openat.
       apply (openat_dot_outcome _ _ _ _ mo open_flags_modeledA eq_refl Hfl). rewrite open_in_memA. exact (path_atA_cstr _ Hp).
     - intros fd. apply vm_same_with_fds.
     - rewrite open_reads_msA. apply (acc_ok_path dot_path Hp). intros z Hz. apply AOK. unfold dot_path in Hz. cbn [length] in Hz. lia.
+    - exact (open_robA ltac:(rewrite (path_atA_cstr _ Hp); discriminate)).
     - intros e He mo'' HK'' MM. cbv delta [ms]. rewrite adv_set_epend. apply HA; assumption.
     - intros mo'' HK'' MM. cbv delta [ms]. rewrite adv_set_epend. apply HB; assumption.
   Qed.
@@ -555,6 +665,7 @@ Section Openat.
         [rewrite open_in_memA; exact (path_atA_cstr p Hp) | exact Hne | exact Hnd | exact Hsl | exact Hdd | exact Hfs].
     - intros fd. apply vm_same_with_fds.
     - rewrite open_reads_msA. exact (acc_ok_path p Hp AOK).
+    - exact (open_robA ltac:(rewrite (path_atA_cstr p Hp); discriminate)).
     - intros e He mo'' HK'' MM. cbv delta [ms]. rewrite adv_set_epend. apply HA; assumption.
     - intros mo'' HK'' MM. cbv delta [ms]. rewrite adv_set_epend. apply HB; assumption.
   Qed.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB13.v (commit 25e3d17bdb50) with its module paths changed and every image numeral recomputed from libdiginet/fuzz_codec's asan-ubsan image by the rule the donor's own numeral follows (decode's gen.py slots_AB13 + segment 1's base): its four PT_LOAD pages (bases, sizes, byte counts), the writable window 0x9d000..0x5fc000 and TFIB_BSS = (0xa36e0, 0x5fc000), the start of the image's zero suffix up to img_hi; the rules reproduce cgif's released text on cgif's image. *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB13.v (commit theorem-labs/oss-verify-proofs@6b32741d849a) with its module paths changed and every image numeral recomputed from libdiginet/fuzz_codec's asan-ubsan image by the rule the donor's own numeral follows (decode's gen.py slots_AB13 + segment 1's base): its four PT_LOAD pages (bases, sizes, byte counts), the writable window 0x9d000..0x5fc000 and TFIB_BSS = (0xa36e0, 0x5fc000), the start of the image's zero suffix up to img_hi; the rules reproduce cgif's released text on cgif's image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_codec.asan-ubsan (the libdiginet/fuzz_codec asan-ubsan pin) sha256 73109e32e77beff294d41ae6f16d607479ad1884485781b322645e6f8afa99c3; unstripped twin sha256 43feeaa314a42fe569b4443c710a74561e9077e617f7412cc54fbf4a6557b266 *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

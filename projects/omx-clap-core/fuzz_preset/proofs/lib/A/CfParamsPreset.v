@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's CfParams for the shared event-free allocator instance (YGcfNames.v).
    PER-UNIT file, not in the shared set. A Definition, NOT an exported Instance, for the same reason as
    CfImg_A (lib/A/CfImgA.v): a consumer names it, so inference can never pick another unit's parameters.
@@ -14,8 +15,9 @@
      Census of every allocation site (a Theorem Labs lane, the internal file ALLOC-SITE-CENSUS-102.md):
      largest request 352,321,524; findings F1-F4 there are obligations of the walks at those sites.
    - cf_nob = 2 ^ 29: cgif's NOB (YF06.v:133, :171); cf_sizes_ok shows every admissible request maps under it.
-   - cf_place_limit = 80,953: c-asan's LPS placement counting limit at NOB = 2 ^ 29
-     (a Theorem Labs lane frame note, the internal file LPS-PLACEMENT-REUSE.md section 5; 80,954 fails).
+   - cf_place_limit = 80,951: c-asan's LPS placement counting limit at NOB = 2 ^ 29
+     (a Theorem Labs lane frame note, the internal file LPS-PLACEMENT-REUSE.md section 5), 80,953 before 727298f3,
+     less the two entries of the reservation tail; preset_place_ok shows the counting condition, and 80,952 fails it.
    - cf_sec_live_max = 16,000: PresetOomRoom's walk-dischargeable bound is
      3 * floor(N / 1026) + 9 + floor(Q / 64513) = 13,367 at N = 3 MiB, Q = 256 MiB
      (a Theorem Labs lane oomroom note, the internal file SEC-PROOF.txt); 16,000 is above 13,367 + 1 (the call premise
@@ -25,7 +27,7 @@
    - cf_kmax = preset_kmax = 2 ^ 17 = 131,072: the bound on a run's user secondary entries N = nsec_cf S (YGcfNames.v
      cf_kmax), the count half of preset's meter cf_hull_ok. The worst measured run frees 49,356 secondaries per
      4-call run (the measured worst run); 2 ^ 17 is above it and within the field bound 2 ^ 24.
-   - cf_sec_live_place_lt: 16,000 < 80,953 (the field's own form).
+   - cf_sec_live_place_lt: 16,000 < 80,951 (the field's own form).
    - cf_T_max = preset_T_max = 2 ^ 36: the bound on T = sec_T_cf S, the mapped bytes of a run's user secondary
      entries, the other half of the meter; the measured run's T is at most 6,537,494,528 < 2 ^ 33;
      2 ^ 36 is within the field bound 2 ^ 38.
@@ -37,7 +39,7 @@
      (8 + 6), measured by c-libc-stdio (the pcs are CfImg_A's cf_pc_strcmp / cf_pc_strlen);
    - the harness's realloc sites abort() on a refusal (alloc.c), which is why
      malloc_cf_success_of_room is load-bearing for preset;
-   - placement: 80,953 is c-asan's counting limit at NOB = 2 ^ 29 (80,954 fails). *)
+   - placement: 80,951 is c-asan's counting limit at NOB = 2 ^ 29 with the reservation tail (80,952 fails). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG01 YG08 YGcfNames.
@@ -68,7 +70,7 @@ Proof. apply Z.leb_le. reflexivity. Qed.
 Lemma preset_sec_live_nonneg : 0 <= 16000.
 Proof. lia. Qed.
 
-Lemma preset_sec_live_ok : 16000 <= 80953.
+Lemma preset_sec_live_ok : 16000 <= 80951.
 Proof. lia. Qed.
 
 Lemma preset_nob_sec_len : SEC_LEN_MAX <= 2 ^ 29.
@@ -92,10 +94,10 @@ Proof. apply Z.leb_le. reflexivity. Qed.
 Lemma preset_nob_al : 2 ^ 29 mod 4096 = 0.
 Proof. reflexivity. Qed.
 
-(* c-asan's counting condition at NOB = 2 ^ 29 and limit 80,953 (SecGrantP.v, 820536849e5):
-   the left side is 140,734,446,088,192 against 0x7fff7f800000 = 140,735,332,483,072, a margin
-   of 886,394,880 < 2 ^ 30, so 80,954 fails. *)
-Lemma preset_place_ok : 0x2aaaaaaab000 + (257 * 25 + 80953) * (2 * 2 ^ 29) + 2 ^ 29 <= 0x7fff7f800000.
+(* c-asan's counting condition at NOB = 2 ^ 29 (SecGrantP.v), with the two entries of the
+   reservation tail that 727298f3 adds, at limit 80,951: the left side is 140,734,446,088,192 against
+   0x7fff7f800000 = 140,735,332,483,072, a margin of 886,394,880 < 2 ^ 30, so 80,952 fails. *)
+Lemma preset_place_ok : 0x2aaaaaaab000 + (257 * 25 + 80951 + 2) * (2 * 2 ^ 29) + 2 ^ 29 <= 0x7fff7f800000.
 Proof. apply Z.leb_le. vm_compute. reflexivity. Qed.
 
 Lemma preset_sec_live_pos : 0 < 16000.
@@ -107,7 +109,7 @@ Definition preset_kmax : Z := 2 ^ 17.
 Lemma preset_kmax_ok : 0 <= preset_kmax <= 2 ^ 24.
 Proof. unfold preset_kmax. lia. Qed.
 
-Lemma preset_sec_live_place_lt : 16000 < 80953.
+Lemma preset_sec_live_place_lt : 16000 < 80951.
 Proof. lia. Qed.
 
 (* cf_T_max: 2 ^ 36, above the measured run's T <= 6,537,494,528 B. *)
@@ -136,7 +138,7 @@ Proof. intros n. destruct (from_primary n); [lia | apply preset_sec_map_size_non
 Definition CfParams_preset : CfParams := {|
   cf_malloc_max := 2 ^ 28 + 2 ^ 27;
   cf_nob := 2 ^ 29;
-  cf_place_limit := 80953;
+  cf_place_limit := 80951;
   cf_sec_live_max := 16000;
   cf_fs_classes := [0; 1; 3];
   cf_head := 16;

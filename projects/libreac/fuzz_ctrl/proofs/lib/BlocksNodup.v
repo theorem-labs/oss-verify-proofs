@@ -2,6 +2,7 @@ From Stdlib Require Import ZArith List Lia.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Import Contract.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YM05.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YO0i YO0f YO0d YO0u YO10 YN03 YN2b.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Local Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -41,7 +42,7 @@ destruct (pairwise_map_In ranges_disjoint (crange L) (footprint A) _ _ PW Ip Iq
 ltac:(intros X; apply Hne; injection X; intros; assumption)) as [D|D];
 cbv [ranges_disjoint crange loc_addr fst snd] in D; unfold IB in *; lia.
 Qed.
-Lemma MRc_blocks_nodup : forall B L A mem md, MRc B L A mem md -> List.NoDup (map fst (blocks L A)).
+Lemma MRc_blocks_nodup {AM : AllocMode} : forall B L A mem md, MRc B L A mem md -> List.NoDup (map fst (blocks L A)).
 Proof using.
 intros B L A mem md HM. pose proof (mc_wf _ _ _ _ _ HM) as HW. pose proof (mc_layout _ _ _ _ _ HM) as HL.
 replace (map fst (blocks L A)) with (map (ptr_addr L) (map fst (user_blocks A)))
@@ -51,6 +52,7 @@ intros x y Hx Hy E. apply in_map_iff in Hx as ([p n] & <- & Hp). apply in_map_if
 exact (user_block_addr_inj L A p n q m HW HL Hp Hq E).
 Qed.
 Section c.
+Context {AM : AllocMode}.
 Variable B : malloc_syms.
 Variable API : AllocAPI B.
 Let MR := aa_MR API.

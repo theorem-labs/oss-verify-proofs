@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window facts are the launch's window in whole pages, H0Win.STK_W, not the old 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.Riscv Require Import Instr.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore CxPlan H0Atable.
+From OSSVerify.Proofs.openssl.hashtable.lib Require H0Win.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import CAP. Open Scope Z_scope.
 Definition K0B_ranges : list (Z * nat) := [(0xdc050, 4096%nat); (0xe2050, 1024%nat); (0xe4050, 1024%nat); (0xea050, 2048%nat); (0xf1050, 2048%nat); (0x26b050, 7168%nat); (0x274044, 1024%nat); (0x276044, 5120%nat)].
@@ -17,8 +19,9 @@ Definition K0B_kn : list kentry := [
   KRange (EVar V_P) 0 7;
   KRange e_sp0 0x7fff80000000 0x7fffffffff40;
   KRange (EVar V_BRK) (0x30e000 / 4096) ((0x30e000 + BRK_ASLR) / 4096);
-  KWr (SA e_spw (-8388608)) (ELit 8388608);
-  KUnk (SA e_sp0 (-8388608)) (ELit 8388400);
+  (* LPS c0dd863a: the stack window the launch gives, in whole pages (H0Win.STK_W) *)
+  KWr (SA e_spw (- H0Win.STK_W)) (ELit H0Win.STK_W);
+  KUnk (SA e_sp0 (- H0Win.STK_W)) (ELit (H0Win.STK_W - 208));
   KWr (SA (ELit 0) 0x27b000) (ELit 0x93000);
   KRange (EVar 12) 1 ((TOPMAX - 0x9000) / 4096);
   KRange (EVar 13) 1 ((TOPMAX - 0x1000) / 4096);

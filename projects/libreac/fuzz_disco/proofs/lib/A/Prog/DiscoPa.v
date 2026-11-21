@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v for libreac/fuzz_disco's program walk, taken from libreac/fuzz_grant's copy (lib/A/Prog/GrantPa.v, 3ac49e35db5): one listing (disco_listing over dsym), fuzz_disco.asan's image range IMG_LO..IMG_TOP (YImgTop) and its disco_nobj (68) objects (DiscoAddr), and pa_xcalls in place of PAImg2, fixing the addresses of the program functions the listing calls (disco_xcalls: the 35 dsym names with an AF_ offset in DiscoList, one pa_sigma lemma each); module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v for libreac/fuzz_disco's program walk, taken from libreac/fuzz_grant's copy (lib/A/Prog/GrantPa.v): one listing (disco_listing over dsym), fuzz_disco.asan's image range IMG_LO..IMG_TOP (YImgTop) and its disco_nobj (68) objects (DiscoAddr), and pa_xcalls in place of PAImg2, fixing the addresses of the program functions the listing calls (disco_xcalls: the 35 dsym names with an AF_ offset in DiscoList, one pa_sigma lemma each); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

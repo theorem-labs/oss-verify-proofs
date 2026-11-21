@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells, which these steps do not use, are no longer read (auxv_cells). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -256,7 +257,6 @@ Proof.
   assert (R16_10: getr R16 (reg 10) = Z_to_bv 64 u16_10) by (unfold u16_10, U; symmetry; apply lit_of_word). clearbody u16_10.
   pose proof ES16 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M16 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   unshelve epose proof (e3p2b_conc fx15 R16 M16 (S - 896) (A + 128) u16_10 fb632 d2 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx17 & R17 & M17 & MS17 & K17 & R17_1 & R17_2 & R17_10 & R17_11 & FR17 & GR17).
   { (* [comment removed for export] *) pr. }
@@ -406,7 +406,7 @@ Proof.
     exact GR17.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG17 FR17 MS17. try clear STAT17. try clear K16.
   try clear c16_Sm472. try clear c16_Sm480. try clear c16_Sm488. try clear c16_Sm496. try clear c16_Sm504. try clear c16_Sm512. try clear c16_Sm520. try clear c16_Sm528. try clear c16_Sm536. try clear c16_Sm544. try clear c16_Sm552. try clear c16_Sm560. try clear c16_Sm568. try clear c16_Sm424. try clear c16_Sm432. try clear c16_Sm360. try clear c16_Sm368. try clear c16_Sm376. try clear c16_Sm56. try clear c16_Sm64. try clear c16_Sm72. try clear c16_Sm80. try clear c16_Sm88. try clear c16_Sm96. try clear c16_Sm104. try clear c16_Sm112. try clear c16_Sm120. try clear c16_Sm128. try clear c16_Sm136. try clear c16_Sm144. try clear c16_Sm152. try clear c16_Sm8. try clear c16_Sm16. try clear c16_Sm696w1. try clear c16_Sm664w1. try clear c16_Sm640. try clear c16_Sm648. try clear c16_Sm632w1. try clear c16_Sm608. try clear c16_Sm616. try clear c16_Sm600w1. try clear c16_Sm464w1. try clear c16_Sm408w1. try clear c16_Sm280w1. try clear c16_Sm248w1. try clear c16_Sm216w1. try clear c16_Sm192. try clear c16_Sm200. try clear c16_Sm184w1. try clear c16_Sm160. try clear c16_Sm168. try clear c16_Sm48w1. try clear c16_Om128z8. try clear c16_Om80z12. try clear c16_Op0. try clear c16_Op8. try clear c16_Fp24. try clear c16_Fp32. try clear c16_Fp40. try clear c16_Fp48. try clear c16_Fp56. try clear c16_Fp64w1. try clear c16_Fp65w1. try clear c16_Fp16w4. try clear c16_Fp8. try clear c16_Fp0. try clear c16_Om8. try clear c16_Om40. try clear c16_Om48. try clear c16_Om56. try clear c16_Om64. try clear c16_Om68w4. try clear c16_Om16. try clear c16_Om120. try clear c16_Om24. try clear c16_Om32. try clear c16_Om88. try clear c16_Om104. try clear c16_Om112. try clear c16_Om96. try clear R16_2. try clear R16_3. try clear R16_4. try clear R16_8. try clear R16_9. try clear R16_18. try clear R16_19. try clear R16_20. try clear R16_10. try clear DEF16. try clear HH16. try clear HQ16. try clear ES16. try clear DEFref_16. try clear DEFA_16. try clear DEFd2_16. try clear DEFd3_16. try clear DEFd4_16.
   (* [comment removed for export] *)

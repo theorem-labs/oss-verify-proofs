@@ -1,8 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed read_cstr_aux_bytes_in, read_cstr_aux_toolong_bytes_in; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/CJ/Lib/Nodes.v, lines 107-125, 130-144, 218-229, 376, 411, 460. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs Progress.
@@ -14,13 +13,9 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma in_sysno_si : forall segs ms x8, in_sysno (sys_input segs ms x8) = x8.
 Proof. reflexivity. Qed.
-(* [comment removed for export] *)
+
 Definition areg (ms : machine_state) (r : bv 5) : word := reg_get (ms_regs ms) r.
 Lemma in_a0_si : forall segs ms x8, in_arg (sys_input segs ms x8) 0 = areg ms 10.
 Proof. reflexivity. Qed.
@@ -39,11 +34,6 @@ Proof. reflexivity. Qed.
 Lemma in_wmem_si : forall segs ms x8, in_wmem (sys_input segs ms x8) = ms_writable_byte segs ms.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition bytes_in (mp : word -> option byte) (a : Z) (bs : list byte) : Prop :=
   0 <= a /\ a + Z.of_nat (length bs) <= 2^64 /\
   forall i, (i < length bs)%nat -> mp (wa (a + Z.of_nat i)) = nth_error bs i.
@@ -113,38 +103,48 @@ Proof.
   intros. apply readable_bytes_full, read_bytes_map_bytes_in; assumption.
 Qed.
 
-(* [comment removed for export] *)
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (a + Z.of_nat (length str) < TASK_SIZE)%Z ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
+  induction str as [|b str IH]; intros fuel mp a Hf Hnz Hlo H; pose proof H as (Ha0 & _ & _).
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [read_cstr_aux]. rewrite Hb. reflexivity.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; cbn [length] in *; lia);
+          apply Z.ltb_lt; unfold TASK_SIZE in *; cbn [length] in *; lia).
+    rewrite Hb. reflexivity.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [read_cstr_aux]. rewrite Hb.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; cbn [length] in *; lia);
+          apply Z.ltb_lt; unfold TASK_SIZE in *; cbn [length] in *; lia).
+    rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-    intro Hin. apply Hnz. right. exact Hin.
+    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1));
+      [reflexivity| cbn in Hf; lia | intro Hin; apply Hnz; right; exact Hin | cbn [length] in Hlo; lia | exact H].
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
   (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (a + Z.of_nat fuel <= TASK_SIZE)%Z ->
   bytes_in mp a str ->
   read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
+  induction fuel as [|fuel IH]; intros str mp a Hf Hnz Hlo H; [reflexivity|].
+  pose proof H as (Ha0 & _ & _).
   destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-  cbn [read_cstr_aux]. rewrite Hb.
+  rewrite read_cstr_aux_accepted
+    by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; lia);
+        apply Z.ltb_lt; unfold TASK_SIZE in *; lia).
+  rewrite Hb.
   assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-  intro Hin. apply Hnz. right. exact Hin.
+  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1));
+    [reflexivity| cbn in Hf; lia | intro Hin; apply Hnz; right; exact Hin | lia | exact H].
 Qed.
 
-(* [comment removed for export] *)
 Definition iovec_bytes (iovs : list (word * word)) : list byte :=
   flat_map (fun p => le8 (fst p) ++ le8 (snd p)) iovs.
 
@@ -179,7 +179,6 @@ Proof.
   unfold iovec_bytes in IH. rewrite (IH _ _ H3). reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Definition iov_ok (mp : word -> option byte) (iov : word * word) (bs : list byte) : Prop :=
   snd iov = Z_to_bv 64 (Z.of_nat (length bs)) /\ Z.of_nat (length bs) < 2^64 /\ bytes_in mp (bv_unsigned (fst iov)) bs.
 
@@ -202,7 +201,6 @@ Proof.
   rewrite unsigned_lit by lia. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma read_bytes_aux_wr_at : forall segs m a n k,
   wr_at segs m a n -> Z.of_nat k <= n ->
   read_bytes_aux (wview segs m) (wa a) k <> None.
@@ -217,26 +215,20 @@ Proof.
   destruct (read_bytes_aux (wview segs m) (wa (a + 1)) k); [discriminate|]. exfalso; apply IH'; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Inductive node : Type :=
-| NWrite (fd : Z) (bs : list byte)                 (* [comment removed for export] *)
-| NWritev (fd : Z) (bufs : list (list byte))       (* [comment removed for export] *)
-| NOpen (path : list byte)                         (* [comment removed for export] *)
-| NRead (fd : Z) (buf : Z) (count : Z)             (* [comment removed for export] *)
-| NClose (fd : Z)                                  (* [comment removed for export] *)
-| NIoctl (fd : Z) (req : Z)                        (* [comment removed for export] *)
-| NSetTid                                          (* [comment removed for export] *)
-| NExit (code : Z)                                 (* [comment removed for export] *)
-| NBrk (req : Z)                                   (* [comment removed for export] *)
-| NMmap (addr len prot flags : Z)                  (* [comment removed for export] *)
-| NMunmap (addr len : Z)                           (* [comment removed for export] *)
-| NMprotect (addr len prot : Z).                   (* [comment removed for export] *)
+| NWrite (fd : Z) (bs : list byte)
+| NWritev (fd : Z) (bufs : list (list byte))
+| NOpen (path : list byte)
+| NRead (fd : Z) (buf : Z) (count : Z)
+| NClose (fd : Z)
+| NIoctl (fd : Z) (req : Z)
+| NSetTid
+| NExit (code : Z)
+| NBrk (req : Z)
+| NMmap (addr len prot flags : Z)
+| NMunmap (addr len : Z)
+| NMprotect (addr len prot : Z).
 
-(* [comment removed for export] *)
 Definition pure_input (no : Z) (args : list word) : SyscallInput :=
   mkInput (Z_to_bv 64 no) args (fun _ => None) (fun _ => None).
 
@@ -249,10 +241,6 @@ Definition node_input (n : node) : option SyscallInput :=
   | NMprotect addr len prot => Some (pure_input 226 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot])
   | _ => None
   end.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Section AtNode.
 Variable segs : list Segment.
@@ -326,7 +314,6 @@ Definition at_node (n : node) (ms : machine_state) : Prop :=
 
 End AtNode.
 
-(* [comment removed for export] *)
 Ltac at_node_red :=
   cbn [at_node]; unfold areg; cbn [ms_regs ms_svc_pending ms_rom ms_mem MSsvc MS];
   repeat match goal with
@@ -343,14 +330,9 @@ Ltac split_spine :=
   | |- _ => idtac
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Definition eff0 (r : word) : resp := mkEffect r [] [].
 Definition efferr (e : Z) : resp := eff0 (errno_ret e).
 
-(* [comment removed for export] *)
 Definition open_result (mo : Model) (ent : FdEntry) (eff : resp) (mo' : Model) : Prop :=
   (exists e, In e openat_errnos /\ eff = efferr e /\ mo' = mo)
   \/ (let fd := alloc_fd (m_fds mo) in
@@ -392,7 +374,7 @@ Definition nstep (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list 
       | Some _ => False
       end
   | NClose fd =>
-      evs = [] /\ 3 <= fd < 2^32 /\   (* [comment removed for export] *)
+      evs = [] /\ 3 <= fd < 2^32 /\
       match fd_lookup (m_fds mo) (Z_to_bv 64 fd) with
       | None => eff = efferr EBADF /\ mo' = mo
       | Some _ => eff = eff0 (Z_to_bv 64 0) /\ mo' = with_fds (fd_remove (m_fds mo) (Z_to_bv 64 fd)) mo
@@ -419,7 +401,6 @@ Definition nexit (n : node) (mo : Model) (code : word) (mo' : Model) : Prop :=
   | _ => False
   end.
 
-(* [comment removed for export] *)
 Definition minv (mo : Model) : Prop :=
   fd_lookup (m_fds mo) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
   fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\
@@ -428,7 +409,7 @@ Definition minv (mo : Model) : Prop :=
   (forall k p off, fd_lookup (m_fds mo) k = Some (FdFile p off) -> fs_lookup (m_fs mo) p <> None) /\
   (forall k p off, fd_lookup (m_fds mo) k <> Some (FdFileW p off)) /\
   (forall t, m_tid mo = Some t -> 0 < bv_unsigned t < PID_MAX_ENVELOPE) /\
-  m_vm_lazy mo = [].   (* [comment removed for export] *)
+  m_vm_lazy mo = [].
 
 Lemma minv_nolazy : forall mo, minv mo -> m_vm_lazy mo = [].
 Proof. intros mo H. exact (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 H))))))). Qed.
@@ -452,7 +433,6 @@ Proof.
     destruct (bv_eqb (Z_to_bv 64 2) k); discriminate.
 Qed.
 
-(* [comment removed for export] *)
 Definition munmap_safe_b (addr len : word) (h : VmMaps) : bool :=
   if negb (Z.eqb (bv_unsigned addr mod page_size) 0) || w_is0 len then true
   else
@@ -474,12 +454,11 @@ Definition mprotect_safe_b (addr len prot : word) (h : VmMaps) : bool :=
     || (map_contains (vm_maps h) addr n && region_free (vm_noaccess h) addr n)
   else false.
 
-(* [comment removed for export] *)
 Section CEIL_NODES.
 Context {RUNp : RunP}.
 
 Definition mmap_safe_b (addr len prot flags fd off : word) (h : VmMaps) : bool :=
-  mmap_modeled_b prot flags off            (* [comment removed for export] *)
+  mmap_modeled_b prot flags off
   || mmap_noaccess_b prot flags off
   || (if w_is0 len then mmap_plain_anon_b flags
       else if mmap_fixed_noaccess_b prot flags off then
@@ -503,7 +482,6 @@ Definition nsafe (n : node) (mo : Model) : Prop :=
 
 End CEIL_NODES.
 
-(* [comment removed for export] *)
 Definition vm_only (m m' : Model) : Prop :=
   m_fds m' = m_fds m /\ m_fs m' = m_fs m /\ m_halted m' = m_halted m /\
   m_tid m' = m_tid m /\ m_stdin m' = m_stdin m.

@@ -3,17 +3,18 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2f.v, with its module paths changed and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* ADAPTED by Theorem Labs, 2026-10 (a Theorem Labs lane), beyond relocation. Donor = cgif A/AD2f.v at
-   origin/ossv/recipes c8557374ad2e; "donor :N" is a donor line.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ADAPTED by Theorem Labs, 2026-10 (a Theorem Labs lane), beyond relocation. Donor = cgif A/AD2f.v;
+   "donor :N" is a donor line.
    1. ACfl -> Prog/PcapEntry + Prog/PcapEntryA (porter ruling 1): A_LLVMF / RA_LLVMF / A_EMPTY / LLVMF_STK /
       G_HARNESS now come from lib/A/Prog/PcapEntryA.v (the ASan image's constants), EV_LIB / LIVE_LIB from
       lib/A/Prog/PcapEntry.v. Donor :13.
-   2. The harness globals' hull [DRV_G_LO, DRV_G_HI) = [0x5d3f40, 0x5d3f80) (AD1y.v:19-20) is clipped out of
+   2. The harness globals' hull [DRV_G_LO, DRV_G_HI) = [0x5d3f40, 0x5d3f80) (AD1y.v:20-21) is clipped out of
       IMG_L, IMG_LC and L_pieces (donor :151-152, :178), outermost, after STDOUT and SOBUF, because the PROGRAM
-      call writes G_HARNESS (PcapEntryA.v:23) while the donor's call writes nothing outside its window; the new
+      call writes G_HARNESS (PcapEntryA.v:24) while the donor's call writes nothing outside its window; the new
       vm_compute lemma L_mem_avoids_G (end of file) states the side condition a Theorem Labs lane's AD1r needs.
-   COUNTS, re-derived from the start-up region list (lib/A/AD2j.v IMG_REGIONS, a working branch 6927e0d899c). pcap's
-   list has 14 R_A1* regions where cgif's has 15 (donor AD2j.v:154), and a Theorem Labs lane's cut of R_A5a around the hull
+   COUNTS, re-derived from the start-up region list (lib/A/AD2j.v IMG_REGIONS, a working branch). pcap's
+   list has 14 R_A1* regions where cgif's has 15 (donor AD2j.v:155), and a Theorem Labs lane's cut of R_A5a around the hull
    (R_A5a_1 = [0x5d3f10, 0x5d3f40), R_A5a_2 = [0x5d3f80, 0x5d47ec)) adds one, so IMG_REGIONS again has 33 regions
    and every length / skipn numeral is the donor's: length (ss_mem S_Pm) = 3 + 33 + 3 = 39, firstn 33 (skipn 3
    ...) = IMG_REGIONS, skipn 36 = RT_REGIONS (AD20.v:50, three regions). STDOUT [0x9def8, 0x9dfe0) lies strictly
@@ -42,7 +43,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require Import AB1v AF0m AD2j AD2i
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YO05.
 (* ADAPTED (porter ruling 1): cgif's A/ACfl.v is not ported; fuzz_pcap's entry-call constants (A_LLVMF
    0x807c8, RA_LLVMF 0x80634, A_EMPTY 0x5d3f20, LLVMF_STK and the harness globals G_HARNESS) are
-   lib/A/Prog/PcapEntryA.v's, EV_LIB and LIVE_LIB lib/A/Prog/PcapEntry.v's. Donor AD2f.v:13
+   lib/A/Prog/PcapEntryA.v's, EV_LIB and LIVE_LIB lib/A/Prog/PcapEntry.v's. Donor AD2f.v:14
    `Require Export ACeg ACfl`. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require Export ACeg.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require Export PcapEntry PcapEntryA.
@@ -184,9 +185,9 @@ Definition clip_out (lo hi : Z) (r : YP09.region) : list YP09.region :=
 if ((hi <=? r_lo r) || (r_hi r <=? lo))%bool then [r] else
 (if (r_lo r <? lo)%bool then [clip_region (r_lo r) lo r] else []) ++ (if (hi <? r_hi r)%bool then [clip_region hi (r_hi r) r] else []).
 (* ADAPTED (porter ruling 3): the image regions the loop state keeps across the PROGRAM call must also leave
-   out the harness globals' hull [DRV_G_LO, DRV_G_HI) = [0x5d3f40, 0x5d3f80) (AD1y.v:19-20), because the call
-   writes G_HARNESS (PcapEntryA.v:23) and the donor's harness writes nothing outside its window. The hull is
-   clipped out exactly the way STDOUT and SOBUF already are (donor AD2f.v:151-152). *)
+   out the harness globals' hull [DRV_G_LO, DRV_G_HI) = [0x5d3f40, 0x5d3f80) (AD1y.v:20-21), because the call
+   writes G_HARNESS (PcapEntryA.v:24) and the donor's harness writes nothing outside its window. The hull is
+   clipped out exactly the way STDOUT and SOBUF already are (donor AD2f.v:152-153). *)
 Definition IMG_L : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out DRV_G_LO DRV_G_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_B.
 Definition IMG_LC : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out DRV_G_LO DRV_G_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_E.
 Definition L_regs : list sv :=
@@ -323,6 +324,6 @@ Proof. vm_compute. repeat split; reflexivity. Qed.
 Lemma IMG_L_wf : regions_wf IMG_L = true. Proof. reflexivity. Qed.
 (* NEW (porter ruling 3, for lib/A/AD1r.v): every image region of the loop state avoids the harness globals'
    hull. `tl` drops the stack window [WIN208], whose base is Some 0 and which region_avoids_G passes anyway;
-   the lemma is stated over tl L_mem because that is the list AD1r walks. region_avoids_G: AD1y.v:220. *)
+   the lemma is stated over tl L_mem because that is the list AD1r walks. region_avoids_G: AD1y.v:221. *)
 Lemma L_mem_avoids_G : forallb region_avoids_G (tl L_mem) = true.
 Proof. vm_compute. reflexivity. Qed.

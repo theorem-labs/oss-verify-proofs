@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB1h.v at origin/ossv/recipes c8557374ad2e, with its module paths changed to libdiginet/fuzz_transport's split library and every image numeral recomputed from fuzz_transport.asan by the rule the donor's own numeral follows (the rule reproduces cgif's released text on cgif's image: the control). The image numerals are fuzz_transport.asan's PT_LOAD pages (segments_reserved, their sizes and sum, the img_hi hull and the writable window) and the 8 start-up fetch words, which are the same words as cgif's. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB1h.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed to libdiginet/fuzz_transport's split library and every image numeral recomputed from fuzz_transport.asan by the rule the donor's own numeral follows (the rule reproduces cgif's released text on cgif's image: the control). The image numerals are fuzz_transport.asan's PT_LOAD pages (segments_reserved, their sizes and sum, the img_hi hull and the writable window) and the 8 start-up fetch words, which are the same words as cgif's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_transport.asan (libdiginet/fuzz_transport asan) sha256 e89be137db17b720e0310addc2dcc601998945478a9102e6a9850b0566106350; unstripped twin sha256 86efc3a80314981197619c115e313dbde50e8b86a6c5fefad4e5cc420250c792 *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

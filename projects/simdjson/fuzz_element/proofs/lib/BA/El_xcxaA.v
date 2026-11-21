@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -118,7 +119,7 @@ Section CxaA.
     0 <= RA < 2^64 -> RA mod 2 = 0 ->
     Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX -> mcost EXC_SIZE <= rt_credit RT Σ ->
     ART RT Σ m -> mem_inv asegs m ->
-    stk asegs m lo usp -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 48 + RT_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 ->
+    stk asegs m lo usp -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 48 + RT_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 ->
     (forall (Σ' : rts RT) (p : Z) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
        ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' lo usp ->
        rt_pres (rt_live RT Σ) (rt_frames RT Σ) usp m m' ->

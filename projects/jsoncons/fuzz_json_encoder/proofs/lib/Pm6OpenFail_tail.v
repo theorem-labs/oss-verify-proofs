@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed of_segH; added Hrdr, vmc_refl; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm10OpenFail_tail.v, lines 4, 24, 33, 42, 163. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -9,6 +10,7 @@
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Require OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.GcFlush08.  (* [comment removed for export] *)
+Require OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.GcFlush08.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,6 +30,7 @@ Import ListNotations.
 Open Scope bv_scope.
 Import SX2. Import SX2S.
 
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
@@ -38,7 +41,7 @@ Variable scfg : SpuriousCfg.
 
 
 Section Tail.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable sp0 : word.
   Variable BL : list (list byte).          (* [comment removed for export] *)
   Variable model : Model.
@@ -46,6 +49,8 @@ Section Tail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev_spec reads [m_channel_reader] *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
@@ -134,9 +139,9 @@ Section Tail.
   Proof.
     intros path P vals R M HP HPr HL P0 P113 HR HK SBp SBn.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    (* [comment removed for export] *)
+
     run_blk_keep scr0 231%nat.
-    (* [comment removed for export] *)
+
     assert (WOK : win_ok (ENV vals) 0 BUF_LO BUF_HI IHI).
     { unfold win_ok, BUF_LO, BUF_HI, IHI. cbn [ev ENV]. rewrite P0. lia. }
     assert (SBp' : rdn RSEGS M0 (Z_to_bv 64 (bv_unsigned sp0 - 543)) (length path) = Some path).
@@ -147,8 +152,8 @@ Section Tail.
     { rewrite EQM, (rdn_mem_denot_out RSEGS (ENV vals) M _ 0 BUF_LO BUF_HI IHI);
         [exact SBn | vm_compute; reflexivity | exact WOK | cbn [ev ENV]; rewrite P0; unfold BUF_LO; rewrite u_small by lia; lia
         | cbn [ev ENV]; rewrite P0; unfold BUF_HI; rewrite u_small by lia; cbn; lia]. }
-    clear EQM SBp SBn. rename M0 into M'. 
-    (* [comment removed for export] *)
+    clear EQM SBp SBn. rename M0 into M'.
+
     krdv HK 0%nat (-560)%Z 8%nat Hw0. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
     krdv HK 0%nat (-552)%Z 8%nat Hw1. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
     krdv HK 0%nat (-544)%Z 1%nat Hw2. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
@@ -168,7 +173,7 @@ Section Tail.
       + replace (bv_unsigned sp0 + -560 + Z.of_nat 17)%Z with (bv_unsigned sp0 - 543)%Z by lia. exact SBp'.
       + replace (bv_unsigned sp0 + -560 + Z.of_nat 17 + Z.of_nat (length path))%Z
           with (bv_unsigned sp0 - 543 + P)%Z by lia. exact SBn'. }
-    (* [comment removed for export] *)
+
     assert (LEN : length (msg_cannot_open path) = (17 + (length path + 1))%nat)
       by (unfold msg_cannot_open; rewrite !length_app; reflexivity).
     replace (W 2 (msg_cannot_open path)) with (map (WriteEv (Z_to_bv 64 2)) (msg_cannot_open path ++ []))
@@ -176,10 +181,10 @@ Section Tail.
     pose proof itinerary_le62 as (_ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srH knH Rc Mc model scOF (msg_cannot_open path) []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srH knH) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n srH knH) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scOF]; rewrite ?LEN end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
     - cbn [edenot length]. reflexivity.
     - cbn [length Z.of_nat]. lia.
@@ -193,17 +198,13 @@ Section Tail.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
-    - (* [comment removed for export] *)
+    -
       clear HR HK. intros R2 M2 HR HK.
       eapply (of_segI (vals ++ junk_vals R2));
         [ rewrite length_app, junk_vals_length, HL; reflexivity
         | rewrite vals_ev_app_l by (rewrite HL; lia); exact P0
         | exact HR | exact HK ].
   Qed.
-
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
 
   Lemma nl_img : rdn RSEGS (fun _ => None) (Z_to_bv 64 0x12e07) 1 = Some [Z_to_bv 8 10].
   Proof. vm_compute. reflexivity. Qed.

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v at 37d45827ae9; module paths and the
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v; module paths and the
    rm_ / rl_ prefixes renamed (hm_ / hd_) for reac-pw/fuzz_headamp image A; sections 1-4, 7 and 9 as they stand;
    section 5 at headamp's real-frame check, section 6 restated for headamp's class-4 frame (80-byte P0, res and x,
    the 128 shadow bytes, the flag cell), section 8 at headamp's two first input reads, section 10 new. *)

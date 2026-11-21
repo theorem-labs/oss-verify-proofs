@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees, bridged to the runtime's own floor). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -17,7 +18,7 @@ Proof.
   destruct HC as [(p0 & k0 & Hin & H1 & H2)|[(f & k & Hin & H1 & H2)|[(H1 & H2)|(H1 & H2)]]].
   - destruct (vis_range_real (ann Σ) (live Σ) p0 k0 p n Hin H1 H2 Hn) as (n0 & Hin0 & H1' & H2'). exact (rta_shw_live Σ m HA p0 n0 p n Hin0 H1' H2' ltac:(lia)).
   - exact (rta_shw_frame Σ m HA f k p n Hin H1 H2 ltac:(lia)).
-  - exact (rta_shw_stack Σ m HA p n H1 H2 ltac:(lia)).
+  - exact (rta_shw_stack Σ m HA p n ltac:(clear - H1; cbn [rt_sp0 RTA] in H1; unfold rtA_sp0 in *; lia) H2 ltac:(clear - Hn; lia)).
   - exact (rta_shw_img Σ m HA p n H1 H2 ltac:(lia)).
 Qed.
 

@@ -11,7 +11,7 @@ Images, by sha256, as the record names them:
 - Y / D = `<decode-B-twin>` = `<decode-B-twin>`
   sha256 `6744989bb2e66ffa4fb48e042ecedff4a3b4ba2301f43c1217e76fd1b090d0a4`
 
-Both hashes re-computed here. The kit (`git archive 98e50c029045 tools/cmpkit/86da41d3ef68`) checks out: `sha256sum -c
+Both hashes re-computed here. The kit (`git archive tools/cmpkit/86da41d3ef68`) checks out: `sha256sum -c
 SHA256SUMS` 9 of 9 OK, and sha256(SHA256SUMS) = `86da41d3ef68abf071a843e599786e5eb0a6ed77c4a6b6eb645e7498bffbee60`, which
 is also the content of the record's `kit/SHA256SUMS`.
 

@@ -11,7 +11,7 @@ Result: **44 of 44 TRUE in each file, 0 FALSE, 0 UNSETTLED.** No cell is removed
 
 | what | sha256 | checked against |
 |---|---|---|
-| `lib/Reusable/YH03.v` (plain) and `lib/U/Reusable/YH03.v` (ubsan) | read at the series commit 5d8494b09e34 | - |
+| `lib/Reusable/YH03.v` (plain) and `lib/U/Reusable/YH03.v` (ubsan) | read at the series | - |
 | plain pin `PINNED_DIR/fuzz_decode.plain` | `556b61e63c44907b003aff8b1e8b926863db277b4f2897fdc58967a7beddc9cc` | `builds.plain` of `projects/libreac/fuzz_decode/harness.yaml` |
 | ubsan pin `PINNED_DIR/fuzz_decode.ubsan` | `ff70f30e22dcdcea42fe294ed23995ec278b6c66ace0ecade26d2a917657c1b9` | `builds.ubsan` of the same harness.yaml |
 | plain twin `TWIN_DIR/fuzz_decode.plain` | `3761f28504c43cd63b6f9ffeaa804ca776583cb46bfbca9036644d201f947325` | yh03check: the twin's 4 PT_LOADs equal the pin's |
@@ -35,7 +35,7 @@ target pass (`targets` of repin_check, through strictcmp3.py / drvcmp.py of cmpk
 
 The per-cell tables are `nosym-plain.tsv` and `nosym-ubsan.tsv`: file, line, cell, value, section, class, expected,
 found, verdict, readers. The readers are `nosym-readers.tsv` (`git grep -w src0_<cell>` over
-`proofs/libreac/fuzz_decode` at 5d8494b09e34, less the two YH03.v themselves).
+`proofs/libreac/fuzz_decode`, less the two YH03.v themselves).
 
 The scanner of record blocks one driver prefix outside `.v` files, so five cell names are written here and in the
 tables with that prefix replaced by `CODENAME` (`D_CODENAME_arg0`, `_argc`, `_argv`, `_in_callback`,

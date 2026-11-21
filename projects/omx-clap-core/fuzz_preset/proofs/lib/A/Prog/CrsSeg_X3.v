@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 881 of its 940 lines of code are new or changed and 392 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/CrsSeg_E.v, with its module names changed; 1196 of its 1301 lines of code are new or changed and 835 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins): segment X3 of the walk of check_reject_clean_starved (row CR-X3, h-w6u-rep's
    subagent CrsX3H3). Closing lemma crs_seg_X3 : the kit's crs_from_X3 (A' 0x825a4 .. the exits to F and R), from the
    instance fact HI_head (cf_head = PresetReqAt.HEAD; witness crs_seg_X3_HI_head_preset below), the callee texts of
@@ -18,7 +19,7 @@
    rule 24: proves function check_reject_clean_starved (reuse search: `proof-index check_reject_clean_starved 0x82160`, the internal file
    index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B,
    its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved).
-   INPUTS: pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   INPUTS: pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml);
    listing lib/A/Listing_prog.v + lib/A/PAImg_prog.v (listings v3); the #102 texts at the walk kit preset-tree-at-2026-10-29T18-51-23Z.tsv (sha256 c6f0aa3569e3; internal record)
    by path in kit v4 (PRH_Base.v fdb45545469b: fpre ends with frm_zero (fp_csr fx), supplied at each call from
    crs_base; PRH_FnAlloc.v 740f4d11d144; PRH_FnWriter.v; PRH_Supply.v); kit lib/A/Prog/CrsKitAp.v v4
@@ -69,7 +70,7 @@ Open Scope Z_scope.
 Lemma x3_rget : forall (regs : bvmap 5 word) l (r : bv 5) v, crs_regsat regs l -> In (r, v) l -> getr regs r = w64 v.
 Proof. intros regs l r v H Hin. unfold crs_regsat in H. rewrite Forall_forall in H. exact (H (r, v) Hin). Qed.
 
-(* S10Env.v ts_ap / ts_cs (cold/h-hpreset-7-crt102-tail 090d18ff610, lib/A/Prog/S10Env.v :385-389), restated *)
+(* S10Env.v ts_ap / ts_cs (lib/A/Prog/S10Env.v :385-389), restated *)
 Lemma x3_ap : forall rg rg' (r : bv 5), aregs_preserved rg rg' -> acallee_saved (bv_unsigned r) -> getr rg' r = getr rg r.
 Proof. intros rg rg' r HP Hr. pose proof (HP _ Hr) as Hq. rewrite Z_to_bv_bv_unsigned in Hq. exact Hq. Qed.
 Local Ltac x3_cs := unfold acallee_saved;
@@ -301,7 +302,7 @@ Qed.
    R (reflexive, transitive, containing wle): the state at the callee's entry the run reached, the boundary facts
    there, the kept registers, the return site; the callee's text at the fpre the call builds (m-form post, a plain
    text: it lifts to R by YA0nH.SRr_SRrG and YCbqG.apost_base_x_R_lift); the continuation gets the boundary facts at
-   the return, the callee's journal, the kept registers and the callee's Q (Crt102Kit.v:1153 crt102rw_call, the model,
+   the return, the callee's journal, the kept registers and the callee's Q (Crt102Kit.v:1154 crt102rw_call, the model,
    over YCbqGcall.aj_call_x_spR) ---- *)
 Lemma x3_call : forall (R : world SEGS -> world SEGS -> Prop) (Rr : forall W, R W W)
     (Rt : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) (Rw : forall W W', @wle SEGS W W' -> R W W')

@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx (generic allocator relation) conversion of image B's lx_ffexit
    (lib/B/W_bx_ffexit.v, the fake frame's release and the epilogue of fuzz_reply.asan-ubsan's LLVMFuzzerTestOneInput,
    0x85014 .. the ret 0x850f8): it proves lib/B/W_bx_defs_x.v's lx_ffexit_S_x.  The AR file is NOT edited.
    SOURCE: lib/B/W_bx_ffexit.v (lx_ffexit, Qed), converted step for step.  TEMPLATE: image A's conversion of the same
-   block, e60b29a425a lib/A/W_LLVMFuzzerTestOneInput_exit_x.v :4390-4610
-   (lx_ffexit_x), against its AR original b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v :7421-7645.
+   block, lib/A/W_LLVMFuzzerTestOneInput_exit_x.v :4390-4610
+   (lx_ffexit_x), against its AR original lib/A/W_LLVMFuzzerTestOneInput_exit.v :7421-7645.
    What changes against the AR proof, and nothing else:
    - the journal is ajournal_gx_x / ajournal_x over ARx with the ghost head list [] (frames_bounds_x, alx_frames,
      FFL at Hp = [], ajournal_gx_pack_x, ajournal_x_materialize);
-   - the flag run is lib/B/W_frame_x.v:401 aj_flag_store_pi_x (tactic paj_run_flag_sh_x), which takes the state
+   - the flag run is lib/B/W_frame_x.v:402 aj_flag_store_pi_x (tactic paj_run_flag_sh_x), which takes the state
      invariant WFx, its law WFL and the frame split SFREE in place of model_laws.
    The entry symbolic state is B's and AR-free, so it is CITED from the AR file: W_bx_ffexit.ss_bffexit,
    bfx_regions, bfx_saved, bfx_facts, bfx_PTR, bfx_extra (B's one extra region, the frame cell F+104 at s1 = atom 9,
@@ -68,7 +69,7 @@ Local Notation A_LLVMF := YCfn.A_LLVMF.
 Local Notation RA_LLVMF := YCfn.RA_LLVMF.
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -110,10 +111,10 @@ Hypothesis SFREE : forall s cid pos, WFx s -> In (cid, pos) (frames s) ->
   exists l1 l2, frames s = l1 ++ (cid, pos) :: l2 /\ frames (stack_free_state cid pos s) = l1 ++ l2.
 
 (* ================================================================== route R: the block at a world relation R (the
-   reply's shape, a working branch 7d2979ecc661 cut_x).  lx_ffexit_xR proves lib/B/W_bx_defs_x.v's
+   reply's shape, a working branch cut_x).  lx_ffexit_xR proves lib/B/W_bx_defs_x.v's
    lx_ffexit_S_xR (the journal ajournal_gx_x segs B PST ARx -> ajournal_gx_xR segs B PST ARx R, SRr segs -> SRrG segs
    R); the proof is the strict one, its flag run over the R journal (lib/B/W_frame_x.v aj_flag_store_pi_xR,
-   a Theorem Labs lane e09432f89001) and lifted to R by SRr_SRrG (the block moves no world).  At R := wle it is its strict
+   a Theorem Labs lane) and lifted to R by SRr_SRrG (the block moves no world).  At R := wle it is its strict
    text by conversion: lx_ffexit_x after the Section is lx_ffexit_xR at wle. *)
 Section wR.
 Variable R : world segs -> world segs -> Prop.

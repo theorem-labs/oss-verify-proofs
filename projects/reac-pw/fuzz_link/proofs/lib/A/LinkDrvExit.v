@@ -87,13 +87,13 @@ Variable B : asyms.
 Variable xst : nat -> (word -> bool) -> (word -> option byte) -> Prop.
 Lemma tfib_exit_leafT : exit_leaf0_tfa B xst -> exit_file_tfa B xst -> exit_leaf_tfa B xst.
 Proof.
-intros L0 LF E' W regs mem md ly S usp fs code k T E0 U U16 Htid Ra0 Hc Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hfs HFI Hinc.
+intros L0 LF E' W regs mem md ly S usp fs code k T E0 U U16 Htid Ra0 Hc Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hcr Hfs HFI Hinc.
 pose proof HFI as (HG & _ & _ & _).
 destruct HG as [(Hh0 & ->) | (f & _ & -> & _)].
 - apply (L0 E' W regs mem md ly S usp fs code k E0 U U16 Htid Ra0 Hc Hsp R3 R4); try assumption.
   apply mem_ok_L0_of_L; [exact HM|].
   pose proof (amf_heads_ofl tfibsegs link_amf _ 0 Hh0) as X. exact X.
-- apply (LF E' W regs mem md ly S usp fs code k f E0 U U16 Htid Ra0 Hc Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hfs HFI).
+- apply (LF E' W regs mem md ly S usp fs code k f E0 U U16 Htid Ra0 Hc Hsp R3 R4 HM Hwin HAI HAR HTOP Hnev HSO Hfds Hcr Hfs HFI).
   apply Hinc. left. reflexivity.
 Qed.
 End c.

@@ -1,7 +1,7 @@
 (* fm program part, statement base: fm.asan addresses, the per-function stack/event/live constants, the user-poison
    wrappers over the donor's afn_pre / apost_base, C-string premises, fm's static allocation counters (fuzz/alloc.c).
    Definitions only. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Base.v (a working branch 3e35620c52e) *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Base.v (a working branch) *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane, G9 row P8-A-base): fuzz_disco.asan's SUBSET of fm's file, the names
    the G9 snprintf route reads: PC_snprintf, FM_GOT_canary, FM_canary, ecall_pre_k,
    ecall_preU_k, cstr, cstr_ok, bytes_at, rom_viewN, rom_viewO. Each kept Definition is fm's text; module paths changed;
@@ -73,7 +73,7 @@ Definition bytes_at (W : world segs) (mem : word -> option byte) (p : Z) (l : li
    .rodata global redzones are owned statics (A/AF0m.v:557) that no AR clause pins (Integrate). The runtime walks read
    only non-owned read-only bytes (musl's word constants, the formats). *)
 (* (fuzz_disco: its .rodata redzones are owned statics too, and Tfib_const_abs already pins them, so both halves are
-   provable from AR: link-a/donor/rodata-R2.md (a working branch 88d3d5cd59df); fm's fmi_rom_viewO, with its tfib_rom_low bound 0x99000 -> 0x9f000, lands in
+   provable from AR: link-a/donor/rodata-R2.md (a working branch); fm's fmi_rom_viewO, with its tfib_rom_low bound 0x99000 -> 0x9f000, lands in
    G9 row P8-A-compose-cr, not here.) *)
 Definition rom_viewN (W : world segs) (mem : word -> option byte) : Prop :=
   forall a, in_rom segs a -> ~ Exists (in_zr a) (as_owned_static B) -> ~ (as_errno B <= a < as_errno B + 4) ->

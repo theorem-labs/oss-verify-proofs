@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's stack window, stack_window_lo and its reach under sp, bounded through the mmap base gap, in the wrap-window store lemmas; wrap_mem read from the launch's ProcInput; RomBase.sys_rob as the third part of node_ok, a premise of each node builder, for the lift to the run's segment list). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -74,6 +75,7 @@ Proof. apply Z.le_refl. Qed.
 End RunLim.
 Require LinuxProcessSemantics.LinuxProcessSem.StackLayout.
 Require OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CfgStep.
+Require OSSVerify.Proofs.glaze.binary_reflection.lib.Common.RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Module ShapeAlg.
 (* [comment removed for export] *)
@@ -217,38 +219,54 @@ Variable segs : list Segment.
 Definition node_ok (c : config) (I : Type)
     (evs : I -> list event) (nx : I -> config) : Prop :=
   (forall i, sstep_cfg segs kit_cfg c (evs i) (SNext (nx i)))
-  /\ (forall e st, sstep_cfg segs kit_cfg c e st -> exists i, e = evs i /\ st = SNext (nx i)).
+  /\ (forall e st, sstep_cfg segs kit_cfg c e st -> exists i, e = evs i /\ st = SNext (nx i))
+  (* LPS 727298f3: the node's system call reads no byte the run's backing adds
+     ([RomBase.sys_rob]; [RomStable.run_init] lifts a walk to the run's segment list) *)
+  /\ RomBase.sys_rob segs c.
 
-Lemma node_ok_is_c : forall c I evs nx, node_ok c I evs nx = node_ok_c segs kit_cfg c I evs nx.
-Proof. reflexivity. Qed.
+Lemma node_ok_is_c : forall c I evs nx,
+  node_ok c I evs nx <-> node_ok_c segs kit_cfg c I evs nx /\ RomBase.sys_rob segs c.
+Proof. intros c I evs nx. unfold node_ok, node_ok_c. tauto. Qed.
+
+(* Each builder below takes [RomBase.sys_rob segs c] just before its [node_ok_u] premise. *)
+Lemma node_ok_of_c : forall c (I : Type) evs nx,
+  node_ok_c segs kit_cfg c I evs nx -> RomBase.sys_rob segs c -> node_ok c I evs nx.
+Proof. intros c I evs nx [Hc Hs] Hr. exact (conj Hc (conj Hs Hr)). Qed.
 
 Lemma node_ok_of_u : forall c (I : Type) evs nx,
-  pending_on segs kit_cfg c -> node_ok_u segs c I evs nx -> node_ok c I evs nx.
-Proof. intros c I evs nx Hon H. exact (node_transfer_on segs kit_cfg c I evs nx Hon H). Qed.
+  pending_on segs kit_cfg c -> RomBase.sys_rob segs c -> node_ok_u segs c I evs nx ->
+  node_ok c I evs nx.
+Proof.
+  intros c I evs nx Hon Hr H.
+  exact (node_ok_of_c c I evs nx (node_transfer_on segs kit_cfg c I evs nx Hon H) Hr).
+Qed.
 
 Lemma node_ok_grants_r : forall c (IA IB : Type) evs nx (b0 : IB),
   pending_off segs kit_cfg c ->
+  RomBase.sys_rob segs c ->
   node_ok_u segs c (IA + IB) evs nx ->
   (forall a, child_refusal_b segs c (nx (inl a)) = true) ->
   (forall b, child_refusal_b segs c (nx (inr b)) = false) ->
   m_halted (cfg_model (nx (inr b0))) = None ->
   node_ok c IB (fun b => evs (inr b)) (fun b => nx (inr b)).
 Proof.
-  intros c IA IB evs nx b0 Hoff H HA HB Hh0.
-  exact (node_transfer_sum_r segs kit_cfg c IA IB evs nx b0 H Hoff HA HB Hh0).
+  intros c IA IB evs nx b0 Hoff Hr H HA HB Hh0.
+  exact (node_ok_of_c c IB _ _ (node_transfer_sum_r segs kit_cfg c IA IB evs nx b0 H Hoff HA HB Hh0) Hr).
 Qed.
 
 Lemma node_ok_forced : forall c (I : Type) evs nx,
+  RomBase.sys_rob segs c ->
   node_ok_u segs c I evs nx ->
   (forall i, m_halted (cfg_model (nx i)) = None) ->
   (forall i, child_refusal_b segs c (nx i) = true) ->
   node_ok c I evs nx.
 Proof.
-  intros c I evs nx H Hunh Hall.
-  exact (node_transfer_all_refusals segs kit_cfg c I evs nx H Hunh Hall).
+  intros c I evs nx Hr H Hunh Hall.
+  exact (node_ok_of_c c I evs nx (node_transfer_all_refusals segs kit_cfg c I evs nx H Hunh Hall) Hr).
 Qed.
 
 Lemma node_ok_sub : forall c (I J : Type) evs nx (f : J -> I) (j0 : J),
+  RomBase.sys_rob segs c ->
   node_ok_u segs c I evs nx ->
   pending_off segs kit_cfg c ->
   (forall j, child_refusal_b segs c (nx (f j)) = false) ->
@@ -257,19 +275,22 @@ Lemma node_ok_sub : forall c (I J : Type) evs nx (f : J -> I) (j0 : J),
      exists j, evs (f j) = evs i /\ nx (f j) = nx i) ->
   node_ok c J (fun j => evs (f j)) (fun j => nx (f j)).
 Proof.
-  intros c I J evs nx f j0 H Hoff Hkeep Hh0 Hsurj.
-  exact (node_transfer_sub segs kit_cfg c I J evs nx f j0 H Hoff Hkeep Hh0 Hsurj).
+  intros c I J evs nx f j0 Hr H Hoff Hkeep Hh0 Hsurj.
+  exact (node_ok_of_c c J _ _ (node_transfer_sub segs kit_cfg c I J evs nx f j0 H Hoff Hkeep Hh0 Hsurj) Hr).
 Qed.
 
 Lemma node_ok_no_refusals : forall c (I : Type) evs nx,
+  RomBase.sys_rob segs c ->
   node_ok_u segs c I evs nx ->
   (forall i, child_refusal_b segs c (nx i) = false) ->
   node_ok c I evs nx.
 Proof.
-  intros c I evs nx H Hnr. exact (node_transfer_no_refusals segs kit_cfg c I evs nx H Hnr).
+  intros c I evs nx Hr H Hnr.
+  exact (node_ok_of_c c I evs nx (node_transfer_no_refusals segs kit_cfg c I evs nx H Hnr) Hr).
 Qed.
 
 Lemma node_ok_exact : forall c (I : Type) evs nx,
+  RomBase.sys_rob segs c ->
   node_ok_u segs c I evs nx ->
   pending_off segs kit_cfg c ->
   (forall i, m_halted (cfg_model (nx i)) = None) ->
@@ -277,7 +298,8 @@ Lemma node_ok_exact : forall c (I : Type) evs nx,
                      \/ (forall j, child_refusal_b segs c (nx j) = true)}
           (fun k => evs (proj1_sig k)) (fun k => nx (proj1_sig k)).
 Proof.
-  intros c I evs nx H Hoff Hunh. exact (node_transfer_exact segs kit_cfg c I evs nx H Hoff Hunh).
+  intros c I evs nx Hr H Hoff Hunh.
+  exact (node_ok_of_c c _ _ _ (node_transfer_exact segs kit_cfg c I evs nx H Hoff Hunh) Hr).
 Qed.
 
 Lemma node_ok_sub_step : forall c e st,
@@ -285,14 +307,15 @@ Lemma node_ok_sub_step : forall c e st,
 Proof. intros c e st H. exact (sstep_cfg_sub segs kit_cfg c e st H). Qed.
 
 Lemma node_ok_of_u_unit : forall c evs0 c0,
+  RomBase.sys_rob segs c ->
   node_ok_u segs c unit (fun _ => evs0) (fun _ => c0) ->
   m_halted (cfg_model c0) = None ->
   node_ok c unit (fun _ => evs0) (fun _ => c0).
 Proof.
-  intros c evs0 c0 H Hh0.
+  intros c evs0 c0 Hr H Hh0.
   destruct (child_refusal_b segs c c0) eqn:E.
-  - apply node_ok_forced; [exact H | intros []; exact Hh0 | intros []; exact E].
-  - apply node_ok_no_refusals; [exact H | intros []; exact E].
+  - apply node_ok_forced; [exact Hr | exact H | intros []; exact Hh0 | intros []; exact E].
+  - apply node_ok_no_refusals; [exact Hr | exact H | intros []; exact E].
 Qed.
 
 (* [comment removed for export] *)
@@ -358,7 +381,7 @@ Proof.
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
-    + destruct Hnode as [_ Hsound].
+    + destruct Hnode as [_ [Hsound _]].
       destruct (Hsound e (SNext c2) Hss) as (i & -> & Heq2).
       inversion Heq2; subst c2.
       exists i. right. exists tr2. split; [reflexivity | eapply IH; exact Hstar2].
@@ -409,7 +432,7 @@ Proof.
   intros c T e c' H; revert e c';
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros e c' Hss.
-  - destruct Hnode as [_ Hsound].
+  - destruct Hnode as [_ [Hsound _]].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
     inversion Heq2; subst c'. exists (T i). apply Hcont.
   - exfalso. apply Hh. eapply sstep_cfg_halted_none; exact Hss.
@@ -422,7 +445,7 @@ Proof.
   intros c T e H; revert e;
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros e Hss.
-  - destruct Hnode as [_ Hsound].
+  - destruct Hnode as [_ [Hsound _]].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
   - apply Hh. eapply sstep_cfg_halted_none; exact Hss.
   - eapply IH; exact Hss.
@@ -551,7 +574,8 @@ Lemma node_instr : forall ms model ms',
   node_ok (mkCfg ms model) unit (fun _ => []) (fun _ => mkCfg ms' model).
 Proof.
   intros ms model ms' Hh Hlazy Hsvc Hstep.
-  apply node_ok_of_u; [kit_pending_on |]. apply node_instr_u; assumption.
+  apply node_ok_of_u; [kit_pending_on | apply RomBase.sys_rob_instr; exact Hsvc |].
+  apply node_instr_u; assumption.
 Qed.
 
 Lemma rz_step : forall ms model ms' T,
@@ -596,7 +620,8 @@ Proof.
   eapply (rz_emit1 (mkCfg ms model) (mkCfg ms (with_halted code model))).
   - apply node_ok_of_u;
       [destruct Hx8 as [Hx8' | Hx8'];
-       apply (kit_pending_on_sysno segs ms model x8 _ Hsvc Hx8'); reflexivity |].
+       apply (kit_pending_on_sysno segs ms model x8 _ Hsvc Hx8'); reflexivity
+      | exact (RomBase.sys_rob_exit segs ms model x8 Hsvc Hx8) |].
     split.
     + intros []. cbn.
       replace [ExitEv code (m_fs model)]
@@ -951,29 +976,196 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma wrap_mem_window_defined : forall ph sp argv envp (x : word) uid hw rnd,
-  bv_unsigned sp - stack_max_size <= bv_unsigned x ->
+Lemma wrap_mem_window_defined :
+  forall inp mbase ph entry sp (x : word) draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned x ->
   bv_unsigned x < bv_unsigned sp ->
-  wrap_mem ph sp argv envp uid hw rnd x <> None.
+  wrap_mem inp mbase ph entry sp draw x <> None.
 Proof.
-  intros ph sp argv envp x uid hw rnd Hlo Hhi. unfold wrap_mem.
-  destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|];
-    [discriminate|].
+  intros inp mbase ph entry sp x draw Hlo Hhi. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|]; [discriminate|].
   rewrite (proj2 (Z.leb_le _ _) Hlo), (proj2 (Z.ltb_lt _ _) Hhi).
   cbn. discriminate.
 Qed.
 
-Lemma store_ok_wrap_window : forall segs ph sp argv envp a n uid hw rnd,
-  bv_unsigned sp - stack_max_size <= bv_unsigned a ->
+Lemma store_ok_wrap_window :
+  forall segs inp mbase ph entry sp a n draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned a ->
   bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
-  store_ok segs (wrap_mem ph sp argv envp uid hw rnd) a n = true.
+  store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
 Proof.
-  intros segs ph sp argv envp a n uid hw rnd Hlo Hhi.
+  intros segs inp mbase ph entry sp a n draw Hlo Hhi.
   assert (Hsp : bv_unsigned sp < 2 ^ 64) by apply bv_unsigned_in_range.
   apply store_ok_of_all; [lia|].
   intros x Hx. unfold wview.
-  destruct (wrap_mem ph sp argv envp uid hw rnd x) as [b|] eqn:Hw; [discriminate|].
+  destruct (wrap_mem inp mbase ph entry sp draw x) as [b|] eqn:Hw;
+    [discriminate|].
   exfalso. revert Hw. apply wrap_mem_window_defined; lia.
+Qed.
+
+Definition stack_window_reach : Z := 2244095.
+
+(* NAMED APART FROM [Common/AllocSim.v:753]'s [page_round_up_Z_aligned], which is the
+   two-premise [0 <= z -> z mod page_size = 0 -> page_round_up_Z z = z].  A bare
+   [page_round_up_Z_aligned] in any file that imports StoreOk after AllocSim resolves
+   to whichever came last, and a one-premise twin under the same name silently turned
+   [apply page_round_up_Z_aligned; [..|..]] into a one-goal application in
+   AsAllocM8k, BoAllocM9i and AsRtFlushKI. *)
+Lemma page_round_up_Z_fixed : forall n,
+  (n mod page_size = 0)%Z -> page_round_up_Z n = n.
+Proof.
+  intros n Hn. unfold page_round_up_Z, page_size in *.
+  apply Z.mod_divide in Hn; [|lia]. destruct Hn as [k Hk]. subst n.
+  replace (k * 4096 + 4096 - 1)%Z with (k * 4096 + 4095)%Z by lia.
+  rewrite Z.div_add_l by lia.
+  replace (4095 / 4096)%Z with 0%Z by reflexivity. lia.
+Qed.
+
+Lemma mmap_gap_sv48 : forall kb,
+  mmap_gap Sv48 kb
+  = (let g := (stack_max_size + (stack_guard_gap_bytes kb
+                 + if kb_aslr kb then stack_rnd_max else 0))%Z in
+     if (g <? mmap_min_gap)%Z then mmap_min_gap else g).
+Proof.
+  intros kb. pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+  unfold mmap_gap. cbv zeta.
+  rewrite Z.mod_small
+    by (unfold two_pow_64, stack_max_size, stack_rnd_max;
+        destruct (kb_aslr kb); lia).
+  assert (Hmax : mmap_max_gap Sv48 = 117281240296105%Z)
+    by (vm_compute; reflexivity).
+  rewrite !Hmax.
+  unfold mmap_min_gap in *. rewrite !Z.gtb_ltb.
+  (* the kernel's own overflow guard [gap + pad > gap] first: [pad] is
+     never negative, so it decides the branch and the remaining tests
+     are between a closed form and literals *)
+  destruct (kb_aslr kb); cbv beta iota delta [andb];
+  [ destruct (stack_max_size
+              <? stack_max_size + (stack_guard_gap_bytes kb + stack_rnd_max))%Z
+      eqn:Ein
+  | destruct (stack_max_size
+              <? stack_max_size + (stack_guard_gap_bytes kb + 0))%Z
+      eqn:Ein ];
+  try apply Z.ltb_lt in Ein; try apply Z.ltb_ge in Ein;
+  cbv beta iota delta [andb];
+  repeat (match goal with
+          | |- context [(?x <? ?y)%Z] =>
+              let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+              [ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+          end;
+          cbv beta iota delta [andb]);
+  unfold stack_max_size, stack_rnd_max in *; lia.
+Qed.
+
+Lemma mmap_gap_sv48_mod : forall kb,
+  (mmap_gap Sv48 kb mod page_size = 0)%Z.
+Proof.
+  intros kb.
+  assert (H4096 : forall x : Z, ((4096 * x) mod 4096 = 0)%Z)
+    by (intro x; rewrite Z.mul_comm; apply Z_mod_mult).
+  rewrite mmap_gap_sv48. cbv zeta.
+  unfold stack_guard_gap_bytes, mmap_min_gap, stack_max_size,
+    stack_rnd_max, page_size.
+  destruct (_ <? _)%Z;
+    [ replace (128 * 1024 * 1024)%Z with (4096 * 32768)%Z by reflexivity;
+      apply H4096 |].
+  destruct (kb_aslr kb);
+    [ replace (8 * 1024 * 1024
+               + (4096 * stack_guard_gap_pages kb + 1073737728))%Z
+        with (4096 * (264191 + stack_guard_gap_pages kb))%Z by lia
+    | replace (8 * 1024 * 1024 + (4096 * stack_guard_gap_pages kb + 0))%Z
+        with (4096 * (2048 + stack_guard_gap_pages kb))%Z by lia ];
+    apply H4096.
+Qed.
+
+(* Model StepTac's lemma; glaze's StepTac copy lives in Mh32, above this file. *)
+Lemma launch_sp_le_top : forall inp (top sp : word),
+  valid_launch_sp top inp sp ->
+  (bv_unsigned sp <= bv_unsigned top)%Z.
+Proof.
+  intros inp top sp [_ [_ Hhi]].
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Nat2Z.is_nonneg
+    (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))) 16 ltac:(lia)).
+  lia.
+Qed.
+
+Lemma stack_window_lo_ge_sp : forall inp (sp brk0 mbase : word) draw,
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  (bv_unsigned sp - stack_max_size
+   <= stack_window_lo (in_kernel inp) mbase draw)%Z.
+Proof.
+  intros inp sp brk0 mbase draw (_ & Hsp & _).
+  pose proof (launch_sp_le_top inp (ed_top draw) sp Hsp).
+  unfold stack_window_lo.
+  apply Z.le_trans with (bv_unsigned (ed_top draw) - stack_max_size)%Z;
+    [lia | apply Z.le_max_l].
+Qed.
+
+Lemma launch_base_gap_le : forall kb mbase,
+  valid_launch_base Sv48 kb mbase ->
+  (bv_unsigned mbase + stack_guard_gap_bytes kb
+   <= va_stack_top Sv48
+      - (if kb_aslr kb then 0x407ff000 else 8 * 1024 * 1024))%Z.
+Proof.
+  intros kb mbase (r & Hr & _ & _ & Heq).
+  pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+  rewrite Heq. unfold mmap_base_of.
+  assert (Hdiv : (page_size
+                  | va_stack_top Sv48 - mmap_gap Sv48 kb - page_size * r)%Z).
+  { apply Z.divide_sub_r; [apply Z.divide_sub_r|].
+    - exists 34359738368%Z. vm_compute. reflexivity.
+    - apply Z.mod_divide; [unfold page_size; lia|]. apply mmap_gap_sv48_mod.
+    - exists r. unfold page_size. lia. }
+  rewrite page_round_up_Z_fixed
+    by (apply Z.mod_divide; [unfold page_size; lia | exact Hdiv]).
+  rewrite mmap_gap_sv48. cbv zeta.
+  unfold mmap_min_gap, va_stack_top, sp_window_hi, stack_max_size,
+    stack_rnd_max, page_size in *.
+  destruct (kb_aslr kb); cbv beta iota;
+  repeat (match goal with
+          | |- context [(?x <? ?y)%Z] =>
+              let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+              [ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+          end;
+          cbv beta iota);
+  lia.
+Qed.
+
+Lemma stack_window_lo_valid : forall inp (sp brk0 mbase : word) draw,
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  stack_window_lo (in_kernel inp) mbase draw
+  <= bv_unsigned sp + stack_window_reach - stack_max_size.
+Proof.
+  intros inp sp brk0 mbase draw Hlaunch (Htop & Hsp & Hbase).
+  pose proof (launch_top_minus_sp inp (ed_top draw) sp Hlaunch Hsp) as Hd.
+  pose proof (launch_base_gap_le (in_kernel inp) mbase Hbase) as Hg.
+  destruct Htop as (_ & Hhi & Hlo).
+  unfold stack_window_lo, stack_window_reach, stack_max_size,
+    va_stack_top, sp_window_hi, stack_rnd_max, page_size in *.
+  destruct (kb_aslr (in_kernel inp)); cbv beta iota in Hg, Hlo;
+    apply Z.max_lub; lia.
+Qed.
+
+Lemma store_ok_wrap_window_valid :
+  forall segs inp mbase ph entry (sp brk0 : word) a n draw,
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  bv_unsigned sp + stack_window_reach - stack_max_size <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+  store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
+Proof.
+  intros segs inp mbase ph entry sp brk0 a n draw Hvl Hlau Hlo Hhi.
+  apply store_ok_wrap_window; [|exact Hhi].
+  pose proof (stack_window_lo_valid inp sp brk0 mbase draw Hvl Hlau). lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -1111,7 +1303,10 @@ Ltac store_ok_peel :=
 (* [comment removed for export] *)
 Ltac store_ok_base :=
   first
-    [ apply store_ok_wrap_window; unfold stack_max_size; u_norm; lia
+    [ eapply store_ok_wrap_window_valid;
+      [ eassumption | eassumption
+      | unfold stack_window_reach, stack_max_size; u_norm; lia
+      | u_norm; lia ]
     | eapply store_ok_zeros_hit;
       [ discriminate | u_norm; lia | intros; u_norm; lia ]
     | apply store_ok_zmem; u_norm; lia ].

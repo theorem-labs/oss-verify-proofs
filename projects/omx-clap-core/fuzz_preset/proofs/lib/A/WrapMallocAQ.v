@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocAQ.v, with its module paths and module names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-31: omx-clap-core/fuzz_preset image A (asan, pin 1be0f53d96cb): the relation the A' malloc walk
    and the malloc body are stated at, ARXq_A B := YGcfInstBase.ARXq_cf B IOK at IOK := (fun i => i = as_inst B) and
    AImg_A (im_segs := tfibsegs). It is the relation of a Theorem Labs lane's A' Allocate contract aalloc_realizes_cf_em_m_A
-   (a working branch b43cbafb0c8, lib/A/AllocGtopPresetM.v:287 ARXc := ARXq_cf B IOK) at preset's
-   IOK (YGcfInstBase.v:589-593; IOK_ok by `fun i H => H`), so the walk composes with it with no bridge
+   (a working branch, lib/A/AllocGtopPresetM.v:288 ARXc := ARXq_cf B IOK) at preset's
+   IOK (YGcfInstBase.v:590-594; IOK_ok by `fun i H => H`), so the walk composes with it with no bridge
    (a Theorem Labs lane's ruling, 2026-10-31 03:33Z). The facts the walks need of it: the two hypotheses of the generic
    return segment (ARX_ARcf, the step's model change), ARX_xs, and its derivation from the walk-side ARXh_A at
    Allocate's entry. No Admitted / Axiom. *)

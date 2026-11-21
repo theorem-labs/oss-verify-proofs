@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Open_sh.v, with its module paths and module names changed; 1178 of its 1215 lines of code are new or changed and 43 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Caw102A_WA2.v, with its module paths and module names changed; 450 of its 533 lines of code are new or changed and 1132 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of check_as_written on image A' (ASan build): segment WA0 (lane CawA102R,
    h-rw-pre-5; first proved by CawA102WA0, re-proved on the caw_pst base by CawRWA0, on the ledger base by CawDWA0, on
-   the f97c re-keyed base by CawGWA0, on the batch kit's base by CawA102R.KWA0). INT102-READY on the kit's cut 7cdbb61b5fa0.
+   the f97c re-keyed base by CawGWA0, on the batch kit's base by CawA102R.KWA0). INT102-READY on the kit's cut.
    It proves Caw102A_Base.v's caw_seg_WA0 (caw_wa0_holds) for an abstract memory invariant P with srr_inv_laws and
    srr_inv_call (the segment crosses __wrap_malloc).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   THE BASE (statements, not edited here; their blobs as at a working branch 2f79e2e7d77e):
+   THE BASE (statements, not edited here; their blobs as at a working branch):
    lib/A/Prog/Caw102A_Base.v (caw_seg_WA0, caw_pre and its projections caw_pre_*, caw_cnt, caw_prog,
    caw_dead, caw_evs, caw_ev1, caw_run_at_nth, caw_at_X / caw_at_null, caw_k_X / caw_k_null, caw_ledger, caw_img with
    cwi_base / cwi_entry / cwi_pst_rw / cwi_pst_img / cwi_hi / cwi_pst_ok / cwi_pst_errno) and lib/A/Prog/Caw102A_Kit.v
@@ -21,7 +22,7 @@
        Section variable DW is removed, and caw_pre / caw_seg_WA0 / prh_univ_closure / prh_univ_closure_lit lose their DW
        argument here (wa0_entry, wa0_trace, caw_wa0_holds);
    (2) takes the room counts as entry premises (:862-863); with the hull budget and HPOS after them caw_pre now has 27
-       conjuncts (Caw102A_Base.v:229-256), and (3) caw_pre is read BY NAME: its positional destructs (in wa0_entry and
+       conjuncts (Caw102A_Base.v:230-257), and (3) caw_pre is read BY NAME: its positional destructs (in wa0_entry and
        caw_wa0_holds; they now mis-bind, ck_frm0 moved by four, 23rd to 27th) are the base's projections caw_pre_fpre ..
        caw_pre_frm0. caw_seg_WA0 still takes caw_cnt D (the top gives it by caw_pre_cnt), and wa0_counts reads it as before;
    (4) states THE OUTCOME (:879-888), which the base carries as caw_dead D, a new third conjunct of caw_at_null. It is
@@ -31,7 +32,7 @@
        position holds), Wf_cf from the entry's ARx by ARx_wf_law_xs (the Wf law the malloc rule is given).
    No statement of this file changed except the loss of DW.
    THE INPUTS, each by path: the listing of record #102 v3, lib/A/Listing_prog.v 7ed1529926bd (the re-emit
-   d42e123915ae's listing 1ab147923c5d; the walk is PARAMETRIC over {PA : PAImg A_prog_listing} with the base's tables
+   a commit's listing 1ab147923c5d; the walk is PARAMETRIC over {PA : PAImg A_prog_listing} with the base's tables
    PL_caw_A); the kit's cut: PRH_Base.v (fpre with frm_zero, prh_univ_closure CTX0,
    prh_ledger with most and own, prh_run_at, prh_cons_from), PRH_FnCheck.v c40cf3fdcd2a, PRH_Refute.v 23f7a37f01c9
    (prh_refute_at, prh_granted_null), PRH_Img.v 934516a622e8, PRH_Reader.v 4266e709561a, PRH_FnEx.v,
@@ -256,7 +257,7 @@ intros S C1 C2. split; split;
 Qed.
 
 (* chain_pre with the empty chain: s0 holds rc (an int, sign-extended), never a frame pointer above sp
-   (H2CawBase.v caw_chain, 1934271f1f4, verbatim) *)
+   (H2CawBase.v caw_chain, verbatim) *)
 Lemma wa0_chain : forall ly rd regs rc0, 4096 <= raZ regs -> getr regs 8 = w64 rc0 -> - 2 ^ 31 <= rc0 < 2 ^ 31 ->
   2 ^ 31 <= spZ regs -> ly_top ly <= 2 ^ 47 -> chain_pre ly rd regs [].
 Proof.

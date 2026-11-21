@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module names and numbers changed; 1538 of its 1659 lines of code are new or changed and 807 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image B (asan-ubsan), parse_value 0x8637c, SEGMENT N (the number arm), sub-piece D (lane PvnD /
    h-w6u-pre for h-hpreset-7): pnD_stmt of PvB_NCut.v, the cut M (B 0x86778, fuzz_malloc (m + 1) returned res) to the
    tail T (B 0x8688c, outcome (b): res = 0) or to R (B 0x8681c, strtod returned).
@@ -25,8 +26,8 @@
    P := YAkMemnorm.memnorm SEGS, laws srr_inv_laws_memnorm_k), __asan_memcpy by CPY's keep (YGcallMxmn.aj_intrin_at_xm),
    runs 2 and 3 (run 3 holds the NUL store) by YSRrMemnorm's paj_run_to_x_inv / paj_run_x_inv. It discharges
    strtod_site_x's `aj_memnorm` at the call and T's last conjunct (from run 1n); R's last conjunct is the strtod row's
-   post (aj_strtod_row's last conjunct `aj_memnorm mem2`, YStrtodRowX.v blob 10e84e44e24e by path from
-   origin/cold/h-verbs-1-preset-strtodB 29dd557e413d).
+   post (aj_strtod_row's last conjunct `aj_memnorm mem2`, YStrtodRowX.v blob 10e84e44e24e by path).
+   
    ROOM: M's room conjunct (PvB_NCut.v) goes to T's outcome (b) at res = 0 (its NULL half: rp_keep from the entry and
    pn_null_off, the NULL off the grant-all run)
    and to R at res <> 0 (its success half pn_rp1, the room post of EAlloc (S m)): neither the runs nor the memcpy /

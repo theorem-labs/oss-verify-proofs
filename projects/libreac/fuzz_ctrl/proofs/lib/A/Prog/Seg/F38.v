@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2962 of its 3089 lines of code are new or changed and 884 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F36.v, with its module names and numbers changed; 315 of its 421 lines of code are new or changed and 2983 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F38 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): 0x82940-0x82960, the frame-loop LATCH
    (plan-asan section 2 row F38; no call, no store; ubsan twin C06).
    rule 24: no function proved.
    v1.9 STATUS (2026-10-28): UNVERIFIED.  No build without probes has checked this file on v1.9.0.  It closed only
-   in an ITERATION-ONLY build on the v1.9 bytes (FACTS 0bfe9aa0d452) with lib/A/Tk/AW/SmLeaf.v's walks admitted.
+   in an ITERATION-ONLY build on the v1.9 bytes (FACTS) with lib/A/Tk/AW/SmLeaf.v's walks admitted.
    It waits for lib/A/Tk/AW Sm* on v1.9 and for Seg/Tac_slot.v / Tac_fsfree.v re-fit to the regenerated Contract.v
    and FrameAPI.v.
 
@@ -31,8 +32,8 @@
    The segment writes no memory and changes only a0 (10), s5 (21), s6 (22) and s9 (25), so FRA moves with
    sl_fra_move and ENT with ent_mat, and every memory fact of the entry cut is handed on unchanged.
 
-  Cuts: all official (SlotInv.v of a working branch e7f88fd06e7, push 14E; v1.9 names, pcs and bundles of
-  a working branch 0a1d413d7c3); this file defines no cut.
+  Cuts: all official (SlotInv.v of a working branch, push 14E; v1.9 names, pcs and bundles of
+  a working branch); this file defines no cut.
   - Entry Inv_A82940_at: LK, FLSF (s2 = len_j for `add s6,s6,s2` / `sub s9,a0,s2`; its FLSI gives the spills
     [A + 216] / [A + 224] the latch loads, f1_IN, [A + 248] and FLC) and LT = IFS g fr (S j).
   - Back edge 0x8295c: Inv_A81d40_at at turn j + 1.  LK, CUR and 1 <= left come from the latch's sums; IFS of

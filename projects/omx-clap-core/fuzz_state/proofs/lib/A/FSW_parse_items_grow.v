@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane (a Theorem Labs lane): parse_items' two grow calls, for the parse_items walk
    (a Theorem Labs lane's FSW_parse_items.v / FSW_pitems_dev.v compose these).
      pig_call_84b68 : the first member's grow call (jal at 0x84b68, ra 0x84b6c; pi_run_grow1 measures the stop);
@@ -17,7 +18,7 @@
    of the caller, premise pig_tmp; the statics: image bytes). pig_after_callT is FSW_K3.fsw_after_callFPU_args at a
    raised top ot (the frame [sf - f, sf) anywhere below ot), the T form of FSW_K3.fsw_after_callFPU_win.
    Section hypotheses: HSS : FsShadowSyms B (the shadow-base cells; FSrtcellsS0 discharges it) and HGROW : grow_spec
-   tfibsegs B (S0 30057674945 proves it: lib/A/Prog/FSW_grow_holds.v grow_holds). *)
+   tfibsegs B (S0 proves it: lib/A/Prog/FSW_grow_holds.v grow_holds). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -225,7 +226,7 @@ Section pig. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_hea
 Variable B : asyms.
 (* the shadow-base cells (FSH_Base.v); FSrtcellsS0 discharges it *)
 Hypothesis HSS : FsShadowSyms B.
-(* callee: grow (S0 30057674945, lib/A/Prog/FSW_grow_holds.v grow_holds) *)
+(* callee: grow (S0, lib/A/Prog/FSW_grow_holds.v grow_holds) *)
 Hypothesis HGROW : @grow_spec fx rc SK tfibsegs B.
 
 (* the call at ra r. Premises, in the walk's order: the caller's journal at the raised top ot and ARU / the rodata

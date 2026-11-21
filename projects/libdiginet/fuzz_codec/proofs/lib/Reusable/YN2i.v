@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2i.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pages; the reserved ledger with the vvar/vDSO pair; munmap's refusal under a may-fail allocator; the mmap-base premise). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,11 +13,13 @@ YO0i YO0f YO0g YO0z YO0d.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YN03 YN2b YN2c.
 From Stdlib Require Import List.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Lemma w64_u64 : forall w : word, Z_to_bv 64 (bv_unsigned w) = w.
 Proof. intros w. apply Z_to_bv_bv_unsigned. Qed.
 Lemma u64_w64 : forall z, 0 <= z < 2 ^ 64 -> bv_unsigned (Z_to_bv 64 z) = z.
@@ -178,21 +181,23 @@ Let N := length (st_regions A).
 Lemma ledger_same : forall A' md',
 st_regions A' = st_regions A -> st_brk A' = st_brk A ->
 m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md ->
+m_kernel md' = m_kernel md ->
 ledger_ok B L A' md' /\ ledger_x L A' md'.
 Proof.
-intros A' md' ER EB EV EL EM. split.
+intros A' md' ER EB EV EL EM EK. split.
 - assert (VB : vm_backing_used md' = vm_backing_used md) by (apply vm_backing_used_ext; assumption).
-split; unfold region_of, live_bytes, nslots; rewrite ?ER, ?EB, ?EV, ?VB; try apply LG.
+split; unfold region_of, live_bytes, nslots; rewrite ?ER, ?EB, ?EV, ?VB, ?EK; try apply LG.
 - eapply ledger_x_same_regions; [exact LX | exact ER | rewrite EV; reflexivity | rewrite EV; reflexivity].
 Qed.
 Lemma ledger_brk_dead : forall A' md',
 st_regions A' = st_regions A -> st_brk A' = BrkDead ->
 m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md ->
+m_kernel md' = m_kernel md ->
 ledger_ok B L A' md' /\ ledger_x L A' md'.
 Proof.
-intros A' md' ER EB EV EL EM. split.
+intros A' md' ER EB EV EL EM EK. split.
 - assert (VB : vm_backing_used md' = vm_backing_used md) by (apply vm_backing_used_ext; assumption).
-split; unfold region_of, live_bytes, nslots; rewrite ?ER, ?EB, ?EV, ?VB; try apply LG. exact I.
+split; unfold region_of, live_bytes, nslots; rewrite ?ER, ?EB, ?EV, ?VB, ?EK; try apply LG. exact I.
 - eapply ledger_x_same_regions; [exact LX | exact ER | rewrite EV; reflexivity | rewrite EV; reflexivity].
 Qed.
 Definition Lset (v : Z) : layout := Layout (ly_ctx L) (fun k => if Nat.eqb k N then v else ly_reg L k) (ly_brk0 L) (ly_sec L).
@@ -230,8 +235,8 @@ rewrite n_u in D. exact D.
 Qed.
 Lemma fresh_img : forall x, in_img B x -> ~ (bv_unsigned a <= x < bv_unsigned a + n).
 Proof.
-intros x [_ (sg & Hsg & Hx)] Hin. rewrite <- (lg_reserved _ _ _ _ LG) in Hsg.
-pose proof (region_free_In _ a (Z_to_bv 64 n) sg RF ltac:(apply in_app_iff; left; exact Hsg) ltac:(rewrite n_u; lia) ltac:(lia)) as D.
+intros x [_ (sg & Hsg & Hx)] Hin. pose proof (lg_in_reserved _ _ _ _ _ LG Hsg) as HsgR.
+pose proof (region_free_In _ a (Z_to_bv 64 n) sg RF ltac:(apply in_app_iff; left; exact HsgR) ltac:(rewrite n_u; lia) ltac:(lia)) as D.
 rewrite n_u in D. unfold ranges_disjoint in D. cbn [fst snd] in D. lia.
 Qed.
 Lemma fresh_region : forall k rg x, region_of A k = Some rg -> rg_live rg = true ->
@@ -250,8 +255,7 @@ ledger_x (Lset (bv_unsigned a)) A' (mmap_none_model a (Z_to_bv 64 n) md).
 Proof.
 intros A' a n Hn Hpg PL ER EB BR.
 pose proof (proj1 alloc_ceiling_val) as AC. pose proof (u64_range a) as Ua.
-unfold place_ok in PL. apply andb_prop in PL as [PL RF]. apply andb_prop in PL as [PL Htop].
-apply andb_prop in PL as [Hal Hpos]. apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
+destruct (place_ok_unpack (Z_to_bv 64 0) md a n Hn ltac:(unfold page_size; unfold PGSZ in Hpg; exact Hpg) PL) as (Hal & Hpos & Htop & RF).
 unfold page_size in Hal.
 assert (Hceil : bv_unsigned a + n <= alloc_ceiling).
 { apply (YM05.grant_below_ceil _ _ (lg_ceil _ _ _ _ LG)); [| exact Htop].
@@ -287,14 +291,21 @@ rewrite (Lset_lt _ r (BR r p eq_refl)). exact HB.
 * destruct (Nat.eqb_spec k N); [|discriminate]. injection Hk as <-. subst k. rewrite Lset_new. cbn [rg_len].
 split; [exact Hal|]. split; [apply Z.mod_divide in Hal; [destruct Hal as [q Hq]; lia | lia]|].
 split; [exact Hceil|]. intros x Hx Himg. exact (FI x Himg Hx).
-+ cbn [length]. rewrite NS. pose proof (lg_count _ _ _ _ LG). lia.
-+ rewrite LB. constructor.
++ intros Eaf. cbn [length]. rewrite NS. pose proof (lg_count _ _ _ _ LG Eaf). lia.
++ intros Eaf. rewrite LB. constructor.
 * cbn [snd]. rewrite NU. lia.
-* apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ LG) e He). cbn beta in *. lia.
-+ rewrite LB. destruct MD as (_ & ML & MM).
+* apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ LG Eaf) e He). cbn beta in *. lia.
++ intros Eaf. rewrite LB. destruct MD as (_ & ML & MM).
 pose proof (vm_backing_used_le_maps (mmap_none_model a (Z_to_bv 64 n) md) ltac:(rewrite mmap_none_model_lazy; exact ML) MM) as VB.
-rewrite VM in VB. cbn [State.live_bytes] in VB. rewrite NU in VB. pose proof (lx_lb _ _ _ LX). lia.
+rewrite VM in VB. cbn [State.live_bytes] in VB. rewrite NU in VB. pose proof (lx_lb _ _ _ LX Eaf). lia.
 +   exact (lg_ceil _ _ _ _ LG).
++ exact (lg_vdso _ _ _ _ LG).
++ intros k rg Hk Hl Hkind. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
+* rewrite (Lset_lt _ k H). exact (lg_rfree _ _ _ _ LG k rg Hk Hl Hkind).
+* destruct (Nat.eqb_spec k N); [|discriminate]. injection Hk as <-. subst k.
+  unfold w64. rewrite Lset_new, Z_to_bv_bv_unsigned. cbn [rg_len]. exact (rfree_app_l _ _ _ _ RF).
++ exact (lg_vdso_lo _ _ _ _ LG).
++ exact (lg_brk0_hi _ _ _ _ LG).
 - split; rewrite ?VM.
 + intros k rg x Hk Hl Hx. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
 * rewrite (Lset_lt _ k H) in Hx. destruct (lx_cov _ _ _ LX k rg x Hk Hl Hx) as (e & He & Hex). exists e. split; [right; exact He | exact Hex].
@@ -318,13 +329,13 @@ cbn [reg_lo rg_kind rg_len] in *. unfold ranges_disjoint; cbn [fst snd].
 pose proof (FRG k2 rg2 (ly_reg L k2 + reg_lo rg2) H2 Hl2 ltac:(lia)).
 pose proof (FRG k2 rg2 (bv_unsigned a) H2 Hl2). lia.
 * destruct (Nat.eqb_spec k1 N); [|discriminate]. destruct (Nat.eqb_spec k2 N); [|discriminate]. exfalso. apply Hne. lia.
-+ intros e [<- | He].
++ intros Eaf e [<- | He].
 * exists N, (mkRegion RkMetaRes n [] true). rewrite RO, Nat.ltb_irrefl, Nat.eqb_refl. split; [reflexivity|]. split; [reflexivity|].
 rewrite Lset_new. unfold iv_lo, iv_len; cbn [fst snd rg_len]. rewrite NU. lia.
-* destruct (lx_in _ _ _ LX e He) as (k & rg & Hk & Hl & G1 & G2). exists k, rg.
+* destruct (lx_in _ _ _ LX Eaf e He) as (k & rg & Hk & Hl & G1 & G2). exists k, rg.
 pose proof (region_of_lt _ _ _ Hk) as HkN. fold N in HkN.
 rewrite RO. rewrite (proj2 (Nat.ltb_lt k N) HkN). rewrite (Lset_lt _ k HkN). auto.
-+ rewrite LB. cbn [State.live_bytes]. rewrite NU. pose proof (lx_lb _ _ _ LX). lia.
++ intros Eaf. rewrite LB. cbn [State.live_bytes]. rewrite NU. pose proof (lx_lb _ _ _ LX Eaf). lia.
 +
 assert (RK : forall E k rg, rg_kind rg = RkMap ->
 (region_of A k = Some rg -> rg_live rg = true -> ranges_disjoint (iv_lo E, iv_len E) (ly_reg L k, rg_len rg)) ->
@@ -362,7 +373,7 @@ apply (lx_cov _ _ _ LX k rg x Hr); [congruence|]. unfold reg_lo in *. rewrite K1
 destruct (ISO k1 rg1' H1) as (rg1 & R1 & K11 & K12 & K13). destruct (ISO k2 rg2' H2) as (rg2 & R2 & K21 & K22 & K23).
 unfold reg_lo in *. rewrite <- K11, <- K12, <- K21, <- K22 in *.
 apply (lx_regs _ _ _ LX k1 k2 rg1 rg2 Hne R1 R2); try congruence; unfold reg_lo; assumption.
-- intros e He. destruct (lx_in _ _ _ LX e He) as (k & rg & Hk & Hl & G1 & G2).
+- intros Eaf e He. destruct (lx_in _ _ _ LX Eaf e He) as (k & rg & Hk & Hl & G1 & G2).
 destruct (ISO' k rg Hk) as (rg' & Hr' & K1 & K2 & K3). exists k, rg'. rewrite <- K2, <- K3. auto.
 - exact (lx_lb _ _ _ LX).
 - intros e He. destruct (EN e He) as (e0 & He0 & S1 & S2).
@@ -436,9 +447,14 @@ unfold reg_lo, ranges_disjoint in D. rewrite Hkind in D. cbn [rg_kind rg_len fst
 + intros k rg' Hk Hl. destruct (ISO k rg' Hk) as (rg & Hk0 & K1 & K2 & K3). rewrite <- K2. apply (lg_placed _ _ _ _ LG k rg Hk0). congruence.
 + exact (lg_count _ _ _ _ LG).
 + exact (lg_sizes _ _ _ _ LG).
-+ destruct MD as (_ & ML & MM).
-pose proof (vm_backing_used_le_maps md' ML MM) as VB. rewrite VM in VB. pose proof (lx_lb _ _ _ LX). lia.
++ intros Eaf. destruct MD as (_ & ML & MM).
+pose proof (vm_backing_used_le_maps md' ML MM) as VB. rewrite VM in VB. pose proof (lx_lb _ _ _ LX Eaf). lia.
 +   exact (lg_ceil _ _ _ _ LG).
++ exact (lg_vdso _ _ _ _ LG).
++ intros k rg' Hk Hl Hkind. destruct (ISO k rg' Hk) as (rg & Hk0 & K1 & K2 & K3).
+  rewrite <- K2. apply (lg_rfree _ _ _ _ LG k rg Hk0); congruence.
++ exact (lg_vdso_lo _ _ _ _ LG).
++ exact (lg_brk0_hi _ _ _ _ LG).
 - apply (ledger_x_iso A' md' ISO ISO' ELB VM).
 intros e He. rewrite VN in He. eapply In_maps_subtract_sub; [|exact He]. unfold PGSZ in *. lia.
 Qed.
@@ -453,10 +469,12 @@ vm_reserved (m_vmmaps md') = vm_reserved h -> vm_start_brk (m_vmmaps md') = vm_s
 bv_unsigned (vm_brk (m_vmmaps md')) = bv_unsigned b + PGSZ -> vm_limit (m_vmmaps md') = vm_limit h ->
 alloc_top (m_vmmaps md') = alloc_top h ->
 m_vm_lazy md' = [] -> m_vm_materialized md' = [] ->
+m_kernel md' = m_kernel md -> vm_mmap_base (m_vmmaps md') = vm_mmap_base h ->
 ledger_ok B L A' md' /\ ledger_x L A' md'.
 Proof.
-intros A' md' r p len rw h b Hbk Hr Hlen Hp Gceil Gfree ER EB VM VN VR VS VB VL VT ML' MM'.
+intros A' md' r p len rw h b Hbk Hr Hlen Hp Gceil Gfree ER EB VM VN VR VS VB VL VT ML' MM' EK EMB.
 pose proof (proj1 alloc_ceiling_val) as AC. pose proof (u64_range b) as Ub. subst h.
+assert (YTOP : vdso_top (m_vmmaps md') = vdso_top (m_vmmaps md)) by (apply vdso_top_ext; assumption).
 pose proof (lg_brk _ _ _ _ LG) as HB. rewrite Hbk in HB. destruct HB as [HB HB0]. change (vm_brk (m_vmmaps md)) with b in HB.
 pose proof (lg_brk0 _ _ _ _ LG) as (B1 & B2 & B3 & B4 & B5).
 pose proof (lg_placed _ _ _ _ LG r _ Hr eq_refl) as (Pal & Plo & Phi & Pimg). cbn [rg_len] in Phi, Pimg.
@@ -481,7 +499,7 @@ rewrite !Z.div_mul by lia. lia. }
 pose proof live_bytes_nonneg' as LNN.
 split.
 - split; rewrite ?VM, ?VN, ?VR, ?VS, ?VB, ?VL, ?ELB, ?ENS, ?EB.
-+ exact (lg_reserved _ _ _ _ LG).
++ rewrite EK, YTOP. exact (lg_reserved _ _ _ _ LG).
 + exact (lg_limit _ _ _ _ LG).
 + exact (lg_rclim _ _ _ _ LG).
 + intros k rg' Hk Hl Hkind. destruct (Nat.eq_dec k r) as [->|Hne]; [rewrite ROr in Hk; injection Hk as <-; exfalso; apply Hkind; reflexivity|].
@@ -497,13 +515,19 @@ intros x Hx Himg. destruct (Z_lt_le_dec x (ly_reg L r + len)).
 -- exact (Pimg x ltac:(lia) Himg).
 -- exact (FI x Himg ltac:(lia)).
 * rewrite (ROo k Hne) in Hk. exact (lg_placed _ _ _ _ LG k rg' Hk Hl).
-+ cbn [length]. pose proof (lg_count _ _ _ _ LG) as CNT. rewrite Nat2Z.inj_succ. lia.
-+ constructor.
++ intros Eaf. cbn [length]. pose proof (lg_count _ _ _ _ LG Eaf) as CNT. rewrite Nat2Z.inj_succ. lia.
++ intros Eaf. constructor.
 * cbn [snd]. rewrite E4. lia.
-* apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ LG) e He). cbn beta in *. lia.
-+ pose proof (vm_backing_used_le_maps md' ML' MM') as VBK. rewrite VM in VBK. cbn [State.live_bytes] in VBK. rewrite E4 in VBK.
-pose proof (lx_lb _ _ _ LX). lia.
+* apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ LG Eaf) e He). cbn beta in *. lia.
++ intros Eaf. pose proof (vm_backing_used_le_maps md' ML' MM') as VBK. rewrite VM in VBK. cbn [State.live_bytes] in VBK. rewrite E4 in VBK.
+pose proof (lx_lb _ _ _ LX Eaf). lia.
 +   rewrite VT. exact (lg_ceil _ _ _ _ LG).
++ rewrite EK, YTOP. exact (lg_vdso _ _ _ _ LG).
++ intros k rg' Hk Hl Hkind. destruct (Nat.eq_dec k r) as [->|Hne].
+* rewrite ROr in Hk. injection Hk as <-. exfalso. apply Hkind. reflexivity.
+* rewrite (ROo k Hne) in Hk. exact (lg_rfree _ _ _ _ LG k rg' Hk Hl Hkind).
++ rewrite YTOP. exact (lg_vdso_lo _ _ _ _ LG).
++ exact (lg_brk0_hi _ _ _ _ LG).
 - split; rewrite ?VM, ?ELB.
 + intros k rg' x Hk Hl Hx. destruct (Nat.eq_dec k r) as [->|Hne].
 * rewrite ROr in Hk. injection Hk as <-. cbn [reg_lo rg_kind rg_len] in Hx.
@@ -531,15 +555,15 @@ unfold ranges_disjoint in *. cbn [reg_lo rg_kind rg_len fst snd] in *.
 pose proof (FRG k1 rg1 (ly_reg L k1 + reg_lo rg1) H1 Hl1 ltac:(lia)).
 pose proof (FRG k1 rg1 (bv_unsigned b) H1 Hl1). lia.
 * rewrite (ROo k1 Hne1) in H1. rewrite (ROo k2 Hne2) in H2. exact (lx_regs _ _ _ LX k1 k2 rg1 rg2 Hne H1 H2 Hl1 Hl2 N1 N2).
-+ intros e [<- | He].
++ intros Eaf e [<- | He].
 * exists r, (mkRegion RkBrk (len + PGSZ) [] true). split; [exact ROr|]. split; [reflexivity|].
 unfold iv_lo, iv_len; cbn [fst snd rg_len]. rewrite E4. lia.
-* destruct (lx_in _ _ _ LX e He) as (k & rg & Hk & Hl & G1 & G2).
+* destruct (lx_in _ _ _ LX Eaf e He) as (k & rg & Hk & Hl & G1 & G2).
 destruct (Nat.eq_dec k r) as [->|Hnek].
 -- rewrite Hr in Hk. injection Hk as <-. cbn [rg_len] in G2. exists r, (mkRegion RkBrk (len + PGSZ) [] true).
 split; [exact ROr|]. split; [reflexivity|]. cbn [rg_len]. lia.
 -- exists k, rg. rewrite (ROo k Hnek). auto.
-+ cbn [State.live_bytes]. rewrite E4. pose proof (lx_lb _ _ _ LX). lia.
++ intros Eaf. cbn [State.live_bytes]. rewrite E4. pose proof (lx_lb _ _ _ LX Eaf). lia.
 +
 rewrite VN. intros e He. destruct (lx_noacc _ _ _ LX e He) as (E & HE & G1 & G2 & HR). exists E. split; [right; exact HE|].
 split; [exact G1|]. split; [exact G2|]. intros k rg Hk Hl Hkd Hpos.
@@ -564,9 +588,11 @@ vm_reserved (m_vmmaps md3) = vm_reserved h -> vm_start_brk (m_vmmaps md3) = vm_s
 bv_unsigned (vm_brk (m_vmmaps md3)) = bv_unsigned b + 2 * PGSZ -> vm_limit (m_vmmaps md3) = vm_limit h ->
 alloc_top (m_vmmaps md3) = alloc_top h ->
 m_vm_lazy md3 = [] -> m_vm_materialized md3 = [] ->
+m_kernel md3 = m_kernel md -> vm_mmap_base (m_vmmaps md3) = vm_mmap_base h ->
 ledger_ok B (Lset (bv_unsigned b)) A' md3 /\ ledger_x (Lset (bv_unsigned b)) A' md3.
 Proof.
-intros A' md3 h b Hbk Gfree ER EB VM VN VNX VR VS VB VL VT ML' MM'. subst h.
+intros A' md3 h b Hbk Gfree ER EB VM VN VNX VR VS VB VL VT ML' MM' EK EMB. subst h.
+assert (YTOP : vdso_top (m_vmmaps md3) = vdso_top (m_vmmaps md)) by (apply vdso_top_ext; assumption).
 pose proof (proj1 alloc_ceiling_val) as AC. pose proof (u64_range b) as Ub.
 pose proof (lg_brk _ _ _ _ LG) as HB. rewrite Hbk in HB. change (vm_brk (m_vmmaps md)) with b in HB.
 pose proof (lg_brk0 _ _ _ _ LG) as (B1 & B2 & B3 & B4 & B5).
@@ -588,7 +614,7 @@ bv_unsigned b <= iv_lo e0 /\ iv_lo e0 <= bv_unsigned b + 4096 /\ iv_lo e0 + iv_l
 destruct HEAD as ([e0a e0n] & VM0 & He0a & He0b & He0c). unfold iv_lo, iv_len in He0a, He0b, He0c. cbn [fst snd] in He0a, He0b, He0c.
 split.
 - split; rewrite ?VM0, ?VR, ?VS, ?VB, ?VL, ?LB, ?NS, ?EB.
-+ exact (lg_reserved _ _ _ _ LG).
++ rewrite EK, YTOP. exact (lg_reserved _ _ _ _ LG).
 + exact (lg_limit _ _ _ _ LG).
 + exact (lg_rclim _ _ _ _ LG).
 + intros k rg Hk Hl Hkind. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
@@ -615,13 +641,19 @@ exfalso. apply (K (bv_unsigned b) ltac:(lia)). lia.
 * rewrite (Lset_lt _ k H). exact (lg_placed _ _ _ _ LG k rg Hk Hl).
 * destruct (Nat.eqb_spec k N); [|discriminate]. injection Hk as <-. subst k. rewrite Lset_new. cbn [rg_len].
 rewrite HB. split; [exact B1|]. split; [exact B2|]. split; [exact B3|]. intros x Hx Himg. rewrite <- HB in Hx. exact (FI x Himg Hx).
-+ cbn [length]. pose proof (lg_count _ _ _ _ LG). rewrite Nat2Z.inj_succ. lia.
-+ constructor.
++ intros Eaf. cbn [length]. pose proof (lg_count _ _ _ _ LG Eaf). rewrite Nat2Z.inj_succ. lia.
++ intros Eaf. constructor.
 * cbn [snd]. lia.
-* apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ LG) e He). cbn beta in *. lia.
-+ pose proof (vm_backing_used_le_maps md3 ML' MM') as VBK. rewrite VM0 in VBK. cbn [State.live_bytes] in VBK.
-pose proof (lx_lb _ _ _ LX). lia.
+* apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ LG Eaf) e He). cbn beta in *. lia.
++ intros Eaf. pose proof (vm_backing_used_le_maps md3 ML' MM') as VBK. rewrite VM0 in VBK. cbn [State.live_bytes] in VBK.
+pose proof (lx_lb _ _ _ LX Eaf). lia.
 +   rewrite VT. exact (lg_ceil _ _ _ _ LG).
++ rewrite EK, YTOP. exact (lg_vdso _ _ _ _ LG).
++ intros k rg Hk Hl Hkind. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
+* rewrite (Lset_lt _ k H). exact (lg_rfree _ _ _ _ LG k rg Hk Hl Hkind).
+* destruct (Nat.eqb_spec k N); [|discriminate]. injection Hk as <-. exfalso. apply Hkind. reflexivity.
++ rewrite YTOP. exact (lg_vdso_lo _ _ _ _ LG).
++ exact (lg_brk0_hi _ _ _ _ LG).
 - split; rewrite ?VM0, ?LB.
 + intros k rg x Hk Hl Hx. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
 * rewrite (Lset_lt _ k H) in Hx. destruct (lx_cov _ _ _ LX k rg x Hk Hl Hx) as (e & He & Hex). exists e. split; [right; exact He | exact Hex].
@@ -645,13 +677,13 @@ cbn [reg_lo rg_kind rg_len] in *. unfold ranges_disjoint; cbn [fst snd].
 pose proof (FRG k2 rg2 (ly_reg L k2 + reg_lo rg2) H2 Hl2 ltac:(lia)).
 pose proof (FRG k2 rg2 (bv_unsigned b + PGSZ) H2 Hl2). unfold PGSZ in *. lia.
 * destruct (Nat.eqb_spec k1 N); [|discriminate]. destruct (Nat.eqb_spec k2 N); [|discriminate]. exfalso. apply Hne. lia.
-+ intros e [<- | He].
++ intros Eaf e [<- | He].
 * exists N, (mkRegion RkBrk (2 * PGSZ) [] true). rewrite RO, Nat.ltb_irrefl, Nat.eqb_refl. split; [reflexivity|]. split; [reflexivity|].
 rewrite Lset_new. unfold iv_lo, iv_len. cbn [rg_len fst snd]. unfold PGSZ in *. lia.
-* destruct (lx_in _ _ _ LX e He) as (k & rg & Hk & Hl & G1 & G2). exists k, rg.
+* destruct (lx_in _ _ _ LX Eaf e He) as (k & rg & Hk & Hl & G1 & G2). exists k, rg.
 pose proof (region_of_lt _ _ _ Hk) as HkN. fold N in HkN.
 rewrite RO. rewrite (proj2 (Nat.ltb_lt k N) HkN). rewrite (Lset_lt _ k HkN). auto.
-+ cbn [State.live_bytes]. pose proof (lx_lb _ _ _ LX). unfold PGSZ in *. lia.
++ intros Eaf. cbn [State.live_bytes]. pose proof (lx_lb _ _ _ LX Eaf). unfold PGSZ in *. lia.
 +
 assert (RK : forall E k rg, rg_kind rg = RkMap ->
 (region_of A k = Some rg -> rg_live rg = true -> ranges_disjoint (iv_lo E, iv_len E) (ly_reg L k, rg_len rg)) ->

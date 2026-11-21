@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed drv_piece; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvPiece.v, line 65. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -62,6 +63,7 @@ Proof.
     + exact (sbm_vml _ _ SBM).
     + exact MI1.
     + rewrite (sbm_halted_eq _ _ SBM). exact Hh.
+    + exact (sbm_rdrA _ _ SBM).
   - exact SBM.
   - rewrite AH. exact VIS.
   - exact FR1.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths changed; 96 of its 255 lines of code are new or changed. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMbz_str.table). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMbz_str.table). *)
 (* The shadow half of the bridge between the donor's ASan state and the string walks'
    memory vocabulary.  The walks ask for `chk_ok m p n` (lib/A/Bz/A/I_qck.v:31) - what the
    interceptors' range check reads - while the donor's call-site contracts carry
@@ -10,7 +11,7 @@
 
    It is stated over the reader `aview_of H mem`, which is `aview tfibsegs H mem` written
    out (YG0n.v:17), so that it does not depend on the part of the core that is still in
-   flight (YG0n -> YA0n -> YK18, which does not compile on a working branch bad0693aadc
+   flight (YG0n -> YA0n -> YK18, which does not compile on a working branch
    yet).  `aview_eq` closes that gap in one line as soon as it does.
 
    a Theorem Labs lane owns the rest of the bridge (lib/A/FMbz_bridge.v: evt/msteps -> SRr and the frame

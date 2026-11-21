@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    check_no_loss_read, a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation:
-   VERDICT.md (sha256 810ca1df9ca9; internal record)), after lib/A/W_check_no_loss_read.v (0040bb7650f), in the form of the
+   VERDICT.md (sha256 810ca1df9ca9; internal record)), after lib/A/W_check_no_loss_read.v, in the form of the
    cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v and lib/A/ACbk.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_loss_read(E) at 0x85dd4 (image B; 0x85904 in A) reads the four bytes at E+24 behind an ASan shadow
    check and aborts when they are a positive int.  E is &g_s[j], a .bss global: the shadow check is decided inside
    paj_run_tok from the shadow entry of the struct, whose shadow is zero because it lies in one of the instance's

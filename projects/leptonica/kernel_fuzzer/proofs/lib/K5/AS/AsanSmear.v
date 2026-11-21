@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (PropExec qualified as K5.AS.PropExec where a twin module shadows it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -12,7 +13,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Set Keyed Unification.
 
 Import ListNotations.
-Local Instance smear_fx : PropExec.FPState := PropExec.fx0.
+Local Instance smear_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)

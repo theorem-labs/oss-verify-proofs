@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair; the model's m_kernel field). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -67,12 +68,12 @@ Hypothesis Hsp : vm_init_sp (m_vmmaps model) = lden E sp.
 Hypothesis Hsphi : bv_unsigned (vm_init_sp (m_vmmaps model)) <= sp_window_hi.
 Hypothesis Hspok : init_sp_ok (m_vmmaps model).
 Hypothesis Hmres : forall x, covered (vm_maps (m_vmmaps model)) x = true -> covered (vm_reserved (m_vmmaps model)) x = false.
-Hypothesis Hres : vm_reserved (m_vmmaps model) = segments_reserved ASEGS.
+Hypothesis Hres : vm_reserved (m_vmmaps model) = segments_reserved ASEGS ++ vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)).
 
 #[using="Hres"] Lemma res_pts : forall x, (DT_LO <= x < DT_HI) \/ (DF_LO <= x < DF_HI) -> covered (vm_reserved (m_vmmaps model)) x = true.
 Proof. LiaFast.lf_pins (fun (Hres : LiaFast.U) => LiaFast.u0).
   intros x Hx. rewrite Hres. destruct dep_res as [R1 R2].
-  destruct Hx as [Hx|Hx]; [exact (in_res_sound _ _ _ x R1 Hx) | exact (in_res_sound _ _ _ x R2 Hx)].
+  destruct Hx as [Hx|Hx]; [rewrite covered_app, (in_res_sound _ _ _ x R1 Hx) | rewrite covered_app, (in_res_sound _ _ _ x R2 Hx)]; reflexivity.
 Qed.
 #[using="model BL HF Hmaps Hgsh Hsp Hsphi Hspok Hmres Hres"] Lemma img_sep_sym : forall j0 R, 0 <= rsz E R -> uE E (rg_base R) + rsz E R <= two64 ->
   (sep_grant_acc fs gs j0 O R || sep_band_b fs sp R || sep_shadow_b fs R)%bool = true ->

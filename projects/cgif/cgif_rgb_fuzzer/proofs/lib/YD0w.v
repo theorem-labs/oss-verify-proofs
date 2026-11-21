@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the entry draw, and E0 its top, the run's CONFIG_RSEQ flag and the execfn string; slot 6's bound is proved from valid_sp and valid_envp alone, for either CONFIG_RSEQ value, with no launch premise; tail_at carries the launch's channel-reader flag, which fdchan asks for at the revision). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -28,18 +29,25 @@ Section d.
 Variable B : asyms.
 Hypothesis HB : TraSyms B.
 Hypothesis ARL : AR_laws trasegs B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp : word) (inp : ProcInput) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv [a0; p].
 Hypothesis Hve : valid_envp (in_envp inp).
-#[local] Notation EL := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation EL := (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YQ0a.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
-unfold z_rand in *. rewrite u64_lit by lia. lia.
+(* #38: slot 6 is [z_rand zsp rs av ev] = zsp + block_head_size rs av ev - 16
+   (YQ0a.v:206,220), and the head is at least 16 bytes, so the bound is the
+   absence of wrap-around.  That needs only [valid_sp]'s upper bound and
+   [valid_envp]'s envc bound, so no launch premise is threaded here. *)
+cbn [ew YQ0a.E0].
+pose proof Hsp as (Ulo & Uhi & _). pose proof (proj1 Hve) as Hec.
+unfold sp_window_lo in Ulo. unfold sp_window_hi in Uhi.
+rewrite u64_lit;
+unfold z_rand, block_head_size, block_items, auxv_size, auxv_count;
+cbn [length]; destruct (kb_rseq (in_kernel inp)); lia.
 Qed.
 Lemma hdr_regions_ok : forall (E3 : YQ0j.env) (H : word -> bool) m data buf pP h,
 bv_unsigned (ew E3 A_BUF) = buf -> bv_unsigned (ew E3 161) = pP -> ed E3 2 = data -> ed E3 3 = skipn (Z.to_nat (2 + config_len data)) data ->
@@ -69,11 +77,11 @@ Theorem tra_to_P : forall ws (W : world trasegs) ms md ly S data (pb : sptr) cap
 let E' := edset (havoc EL K_M1 ws) 2 data in
 let buf := sptr_addr B ly pb in
 6 + config_len data <= dlen data ->
-tail_at B S_P E' sp inp a0 p data W ms md ly S pb cap ->
+tail_at B S_P E' sp inp rnd a0 p data W ms md ly S pb cap ->
 st_ok trasegs (E_P E' data (buf + 2 + config_len data)) (if config_len data =? 0 then ssP0 else ssP1) (restrict (w_H W) ms)
 /\ bv_unsigned (ew (E_P E' data (buf + 2 + config_len data)) K_PP) = buf + 2 + config_len data.
 Proof.
-intros ws W ms md ly S data pb cap E' buf Hok (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv).
+intros ws W ms md ly S data pb cap E' buf Hok (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hcr & Hminv).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YN05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YN05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 pose proof (config_len_bound data) as Hcl. fold buf in E41, HBLK. unfold dlen in *.

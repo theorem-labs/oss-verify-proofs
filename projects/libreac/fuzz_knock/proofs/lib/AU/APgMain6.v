@@ -5,7 +5,7 @@
    libreac/fuzz_knock's ASan harness walk of LLVMFuzzerTestOneInput in fuzz_knock.asan-ubsan (sha256
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82), pc 0x7f270-0x7f29c (12 instructions) plus the
    loop-head test 0x7f150, from ss_C to ss_L (the back edge, 0x7f154) or ss_X (the exit, 0x7f2c4).
-   The proof is lib/A/APgMain6.v's (donor proofs/cgif/cgif_file_fuzzer/lib/A/ACfe.v at c8557374ad2e: :41-45, :67-140,
+   The proof is lib/A/APgMain6.v's (donor proofs/cgif/cgif_file_fuzzer/lib/A/ACfe.v at theorem-labs/oss-verify-proofs@6b32741d849a: :41-45, :67-140,
    :340-352, :383-388, :389-395), with the module paths of the lib/AU twins and the asan-ubsan pcs.  The asan-ubsan
    code differs from the asan code (internal path, sections 2 and 4):
    - d is in s8 (asan s11): the two aborts compare against s8, and the back edge pins x24 to N_d;
@@ -39,6 +39,7 @@
    The `__asan_handle_no_return; abort` block at 0x7f3fc is never entered and needs no walk.
 
    rule 24: no function proved. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

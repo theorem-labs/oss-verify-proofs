@@ -3,8 +3,9 @@ project: cctz
 harness: fuzz_cctz
 rocq: OSSVerify.cctz.fuzz_cctz
 origin: oss-fuzz
-summary: load_time_zone(fuzzed name); cctz::parse(fuzzed format, fuzzed date); convert(civil_second(6
-  fuzzed uint32)); cctz::format(fuzzed format); every return value discarded.
+summary: load_time_zone(fuzzed name); only when it returns true, cctz::parse(fuzzed format, fuzzed date)
+  in the loaded zone, then convert(civil_second(6 fuzzed uint32)) in that zone, whose time goes to cctz::format(fuzzed
+  format). The parse result, the parsed time and the formatted string are dropped.
 entry: LLVMFuzzerTestOneInput
 source:
   files:

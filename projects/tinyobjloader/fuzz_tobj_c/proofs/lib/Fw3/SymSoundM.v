@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the load's soundness passes sym_load's vvar guard (segs_novvar); interp_load_fault and interp_eload_fault take segs_novvar, since a miss on the vvar page is MachineUnmodeled). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -1599,7 +1600,7 @@ Proof using .
   pose proof (smatch_facts _ _ _ _ Hsm) as Hfacts.
   assert (Hrom : rom_ok segs ms) by (destruct Hsm as (_ & _ & _ & _ & Hrom & _); exact Hrom).
   assert (Hroc : ro_clear segs ms) by (destruct Hsm as (_ & _ & _ & _ & _ & Hroc & _); exact Hroc).
-  unfold sym_load in Hload. lazy zeta in Hload.
+  unfold sym_load in Hload. destruct (segs_novvar segs) eqn:Hnv; [|discriminate Hload]. unfold sym_load0 in Hload. lazy zeta in Hload.
 
   revert Hload.
   destruct (match ae with SLit a => ro_load segs (a mod 2 ^ 64) (Z.to_nat k) | _ => None end) as [z|] eqn:Hro; intros Hload.
@@ -1771,14 +1772,16 @@ Proof using .
     eexists. split; [reflexivity|]. cbn [msz msize_bytes Z.to_N]. rewrite ext_low_64, extract_0_64. reflexivity.
 Qed.
 
-Lemma interp_load_fault : ltac2:(tb__ "0|5|
+(* LPS 08b1429: a miss that meets the vvar page is MachineUnmodeled, so the fault needs an image
+   with no vvar segment ([segs_novvar], which [sym_load] checks). *)
+Lemma interp_load_fault : segs_novvar segs = true -> ltac2:(tb__ "0|5|
 Sd4SbS66Q40A1M0G0Se0F_;G0SfS66Q8A1M1A1F_;M2S0SfScG1A1M3A1S7dVsegs;R1R3S71S8fR5A1A1A4S17G3A1A3S0S7cS12SdfG2A2M4A1SddVsegs;Se1R6R5R4R3A4R2A3S7eG4A1A3F_;Fm;Fkk;Fa;Fsgn;Fsz;").
 Proof using .
-  intros sz sgn a kk m H. destruct sz.
-  - change (Z.to_nat (msz SZ1)) with 1%nat in H. cbn [load_val interp_eff0 width_bytes]. rewrite H. reflexivity.
-  - change (Z.to_nat (msz SZ2)) with 2%nat in H. cbn [load_val interp_eff0 width_bytes]. rewrite H. reflexivity.
-  - change (Z.to_nat (msz SZ4)) with 4%nat in H. cbn [load_val interp_eff0 width_bytes]. rewrite H. reflexivity.
-  - change (Z.to_nat (msz SZ8)) with 8%nat in H. cbn [load_val interp_eff0 width_bytes]. rewrite H. reflexivity.
+  intros Hnv sz sgn a kk m H. destruct sz.
+  - change (Z.to_nat (msz SZ1)) with 1%nat in H. cbn [load_val interp_eff0 width_bytes]. rewrite H, (range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
+  - change (Z.to_nat (msz SZ2)) with 2%nat in H. cbn [load_val interp_eff0 width_bytes]. rewrite H, (range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
+  - change (Z.to_nat (msz SZ4)) with 4%nat in H. cbn [load_val interp_eff0 width_bytes]. rewrite H, (range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
+  - change (Z.to_nat (msz SZ8)) with 8%nat in H. cbn [load_val interp_eff0 width_bytes]. rewrite H, (range_meets_vvar_novvar segs _ _ Hnv). reflexivity.
 Qed.
 
 Lemma msz_cases : ltac2:(tb__ "0|1|
@@ -1796,14 +1799,16 @@ Lemma step_rel_strict : ltac2:(tb__ "0|0|
 S1fS1fS1cScS85A1S7bS86S0SbS43R6A1S14A3Sd0R7R6R5R4R3R2A6SdeVsegs;R8R7R6R5R4R3A7F_;F_;Fmd;Fms;Ftr;Frho;FS';FS;").
 Proof using . intros S S' rho tr ms md Hl [[Hl' _] | H]; [congruence | exact H]. Qed.
 
-Lemma interp_eload_fault : ltac2:(tb__ "0|5|
+Lemma interp_eload_fault : segs_novvar segs = true -> ltac2:(tb__ "0|5|
 SaS66Q40A1M0S66R2A1Se0F_;G0SfS66Q8A1M1A1F_;M2S0SfScG1A1M3A1S7dVsegs;R1R3S81R4A1A4S17G3A1A3S0S7cS12SdfG2A2M4A1SddVsegs;Se2R5R4R3A3R2A3S7eG4A1A3F_;Fm;Fkk;Fa;Fn;").
-Proof using . intros n a kk m H. cbn [interp_eff0]. rewrite H. reflexivity. Qed.
+Proof using . intros Hnv n a kk m H. cbn [interp_eff0]. rewrite H, (range_meets_vvar_novvar segs _ _ Hnv). reflexivity. Qed.
 
 Lemma case_load : ltac2:(tb__ "0|2|
 S1fSd4SbS66Q5A1M0G0S66QcA1S1aS1fS1cScS85A1M1S7bS86S0SfSd5A1Sa3Vsegs;S2eRcA1A2S10Sd5Sd6RbRaR9R8R7A5A2A3S0S8eS95Vsegs;RdS99Sa1RdR9A2Sa2R8A1A2S8fRcA1RbA5S8dR7R6A2A3S27Vsegs;R6ReS13G1S82R5S83R4R3A2A4A4Sd0RfSa7Sa8R8RcR9A3S6cS2eRfA1Z4A2A2R7R6R5R4A6F_;F_;F_;Fmd;Fms;Ftr;Frho;FS';Fv;Fimm;Frs1;Frd;Fsgn;Fsz;FS;").
 Proof using .
   intros S sz sgn rd rs1 imm v S' rho tr ms md Hi Hload Hsm.
+  assert (Hnv : segs_novvar segs = true)
+    by (unfold sym_load in Hload; destruct (segs_novvar segs); [reflexivity | discriminate Hload]).
   pose proof (smatch_swf _ _ _ _ Hsm) as Hwf.
   assert (Hae : sv_below (ss_next S) (mk_addk (get_reg S rs1) (immI imm)) = true).
   { apply mk_addk_below. apply get_reg_below. exact Hwf. }
@@ -1819,7 +1824,7 @@ Proof using .
     change (exec (Z_to_bv 64 4) (Load sz sgn rd rs1 imm) (core_of ms))
       with (load_val sz sgn (rget (core_of ms) rs1 + sext 64 imm)%bv
               (fun v0 => EDone (rset rd v0 (with_pc (c_pc (core_of ms) + Z_to_bv 64 4)%bv (core_of ms))))).
-    rewrite (interp_load_fault sz sgn _ _ (ms_mem ms) Hrd). reflexivity.
+    rewrite (interp_load_fault Hnv sz sgn _ _ (ms_mem ms) Hrd). reflexivity.
   - right.
     rewrite <- (ov_read_bytes_rd segs ms) in Hrd by exact Hrom.
     rewrite mk_addk_sound in Hrd. rewrite <- (rget_match segs rho S tr ms md rs1 Hsm) in Hrd.

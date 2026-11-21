@@ -2,7 +2,7 @@
    proof of it (lib/A/Prog/crtA_loop.v crt_loop_holds_F, or a port of image B's loop) and its user
    (lib/A/Prog/crtA_w_mid.v) state against one committed text.
 
-   Ported from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_iface_F.v:25-61,
+   Ported from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_iface_F.v:25-61,
    with every pc a name of lib/A/Prog/crtA_iface.v.  Footprint twin of the record's crt_loop_stmt of crt_iface.v:
    the convert loop of check_round_trip (A image), +0xd4 -> +0x1f0.  crt_loop_stmt_F states the loop with a
    footprint RNG: the run is an ExecF.evtF run, each step's data accesses lie in RNG, and RNG holds the ranges the

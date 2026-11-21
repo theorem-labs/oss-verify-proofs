@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of impl_realizes_f, discharged from PMfd). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -155,8 +156,9 @@ Proof using AF AF_ICPT.
              (fun _ => t_emit [] T)
              (entry_st ra (Z_to_bv 64 usp) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 sa) (Z_to_bv 64 len) (Z_to_bv 64 1)
                 (Z_to_bv 64 STDERR_FILE) a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_fwrite m) c
-             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| exact TOK| exact Hc| exact IMPL|].
+             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| | exact TOK| exact Hc| exact IMPL|].
     - intros mo fd (HAR & HF & _) Hin. cbn in Hin. destruct Hin as [<-|[]]. rewrite HF. exact HFD.
+    - intros mo (_ & _ & _ & HRD). exact HRD.
     - intros x ms' c' HQ Hc'.
       assert (R : realizes asegs c' T).
       { apply Hk. eapply ASTA_conseq; [exact Hc'|]. intros ms <-.

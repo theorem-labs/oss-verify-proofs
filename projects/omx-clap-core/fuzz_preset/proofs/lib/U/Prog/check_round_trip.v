@@ -23,7 +23,7 @@ Local Open Scope Z_scope.
 
 (* check_round_trip on the #102 ubsan twin (27566683952ebd54..., the unstripped twin of the pin 45b0357d18ff66cd...):
    FUNC 0x1408c size 1024 (check_round_trip_c.CHECK_ROUND_TRIP), fuzz_preset.c:772-781 of #102.  The walk follows
-   the template of base 9d764437e6be (the old twin's walk) segment by segment; the instruction-level segments are
+   the template of base (the old twin's walk) segment by segment; the instruction-level segments are
    check_round_trip_seg.v (re-walked) and check_round_trip_loop.v (the rewrite's loops, ported).  What #102 added:
    `copy = empty` (memset, st0), the `||` exits after each round_trip_text (st0: the ran-out arm -> stx -> pj_free of
    the still-empty copy; st1: the second call returns 0 when the flags are 0), the inlined round_trip_rewrite's three

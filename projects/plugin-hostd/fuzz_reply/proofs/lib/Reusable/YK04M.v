@@ -1,4 +1,4 @@
-(* CARRIED from commit d692856bfecbb98b2d89a0bba73b457c2098f96d,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YK04M.v, sha256 bd90e54b1f871b39608ae00931dbdfe655d3765cc836128ba2c3f806855f39b3 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -9,6 +9,7 @@
    materialize only adds accessed pages. LPS's materialize_model_accesses (State.v) sets the materialized-page ledger to
    newly_materialized_pages ++ the old ledger (or leaves it), and newly_materialized_pages is a filter of the accesses'
    pages, so every page of the new ledger is an old page or a page of one of the step's accesses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -670,8 +670,8 @@ Qed.
 (* ------------------------------------------------------------------------------------------------------------ *)
 (* Route (C) (a Theorem Labs lane 2026-10-29 09:20Z; wave lead a Theorem Labs lane; a Theorem Labs lane's brief dt1-on-B): build_dt1_single_holds_on
    proves the _on twin (build_dt1_single_c.v) from the _on contracts of its two callees, dt1_head (dt1_head_c.v,
-   premise-free) and __asan_memcpy (asan_memcpy_c_on.v). Image-B twin of A's (a working branch
-   ec2ad5b4f4f, lib/A/Prog/build_dt1_single.v blob e7a7c3c2726, Module BDAon); image B's run has the extra callee
+   premise-free) and __asan_memcpy (asan_memcpy_c_on.v). Image-B twin of A's (a working branch,
+   lib/A/Prog/build_dt1_single.v blob e7a7c3c2726, Module BDAon); image B's run has the extra callee
    dt1_head. The run is the one above. Module BDBon holds Section BDB again with these changes: HDT is dt1_head's _on
    contract, so its call (midb) no longer passes a shadow premise; HMC is the _on contract of __asan_memcpy; HSW is the
    region premise shadow_rw_on R m with R = build_dt1_single_shadow_R o d n; the shadow conjunct of Qb (given by bdb_rt)
@@ -679,10 +679,10 @@ Qed.
    bdb_so; at the call of __asan_memcpy (callb) its region at (o + 20, d, n) is R, carried from m to the memory of the
    call by bdb_rt. build_dt1_single_holds and every existing statement are unchanged (callee case: the old theorem
    keeps the old callee contracts, which do not give the _on ones).
-   The transport lemma is a Theorem Labs lane's lib/B/ShadowRwOnK.v (a working branch 2bfdc5c22cd, blob
+   The transport lemma is a Theorem Labs lane's lib/B/ShadowRwOnK.v (a working branch, blob
    cecf687f34d), the light file that Requires no MemNormTr / BzBridge, so this file and build_dt1_singleF.v stay
-   Bz-free (build_dt1_single_F_closed.v's header). It replaces this lane's earlier local copy bdb_shadow_rw_on_keep
-   (68e223499da), whose statement and script were byte-identical. *)
+   Bz-free (build_dt1_single_F_closed.v's header). It replaces this lane's earlier local copy bdb_shadow_rw_on_keep,
+   whose statement and script were byte-identical. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require ShadowRwOn ShadowRwOnK.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require asan_memcpy_c_on.
 

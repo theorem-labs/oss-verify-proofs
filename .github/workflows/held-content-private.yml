@@ -1,0 +1,383 @@
+# Copyright 2026 Theorem Labs, PBC
+# SPDX-License-Identifier: Apache-2.0
+name: held-content-private
+# WHAT THIS IS FOR. .github/workflows/held-content.yml scans a pull request with the patterns that
+# a public file may carry. The other patterns name what they look for, so they are in the Actions
+# secret HELD_CONTENT_RULES, pinned by row count and sha256 in
+# .github/held/private-detectors.sha256. A `pull_request` run of a fork's change gets no secret.
+# This workflow holds the secret. It scans each open pull request with every pattern, the rows of
+# the secret included, and posts one commit status named `held-content-private` on the head commit.
+#
+# WHY IT RUNS FROM main, ON workflow_run AND EVERY HOUR. GitHub starts a `workflow_run` run and a
+# `schedule` run from the default branch, so no pull request changes the file that reads the
+# secret. No step checks out, fetches or runs a file of a pull request, and no job downloads an
+# artifact. The scanner reads the pull request through the GitHub API alone: the commits between
+# the merge base and the head, the folders whose id differs between the two, and each changed
+# blob. The `workflow_run` trigger starts a scan when a `pull_request` run of `held-content`
+# completes. It finds the pull request by the head commit of that run in the list of open pull
+# requests, because the event of a fork's pull request lists no pull request. Three kinds of pull
+# request get no such run, or control it:
+#   - a pull request with a merge conflict starts no `pull_request` run
+#   - the runs of a first-time contributor wait until a person approves them
+#   - a pull request that edits held-content.yml runs its own copy of that file
+# The hourly run covers the three. It scans each head that has no `success` and no `failure` of
+# this workflow yet, and it scans a head with an `error` again.
+#
+# WHAT ITS LOG AND ITS STATUS MAY NAME. Both are public. They name the pull request numbers and
+# the head commit, and no other commit. A place is a number:
+#   - `commit K` is the K-th commit of `git log --reverse <merge base>..<head>`
+#   - `path K` is the K-th line of `git diff --raw --no-renames <merge base> <head>`
+#   - `path K line N` is line N of that path
+#   - `planted sample K` is the sample of the K-th pattern in a demonstration
+# A row of detectors.tsv is named by its name. A row of the secret is named `private row N`, N
+# being its line in the secret, and never by its name or its text. The log and the status never
+# hold a path or the text that matched: a path name can be the held content too. Run those git
+# commands on your own machine to find a place.
+#
+# THE STATUS. `success` means that no pattern matched. `failure` means that a pattern matched, and
+# the description lists the places by number. `error` means that the scan did not finish: the
+# secret is missing or differs from its pin, the patterns failed their self-test, the GitHub API
+# cut a listing short or refused a read, the scan reached its limit of requests or of time, or a
+# step failed. Each cause has one fixed description. GitHub keeps at most 1,000 statuses for one
+# commit and one name, and the hourly run scans a head with an `error` again. So the job does not
+# post an `error` when this workflow put the same `error` on the head after its newest `success`
+# or `failure` there. When this workflow put no `success` and no `failure` on the head, the same
+# `error` at any time counts. "After" and "newest" go by the time of a status and then by its id,
+# because GitHub gives whole seconds. So after a `success` or a `failure`, the job can post the
+# same `error` again. It posts no `pending` status. It posts nothing when the head of the pull
+# request moved during the scan: the run for the new head posts for it.
+#
+# HOW TO SEE IT FAIL. There are two ways, and neither pushes held content anywhere.
+#   - Put the label `prove-it-can-fail` on a pull request. The scan of that pull request then adds
+#     one fresh sample of every pattern, the rows of the secret included, after it read the pull
+#     request through the API. It posts `failure`, and never `success`.
+#   - Run this workflow by hand on main with `demonstrate_a_refusal`. The job `demonstrate` commits
+#     the same samples on top of main inside the runner, scans that commit, ends red, and posts
+#     nothing.
+# A run by hand on main without that input does what the hourly run does. Use it to see each
+# status at once after you set the secret.
+#
+# THE LIMIT OF THE REF CONDITION. On `workflow_dispatch`, each job runs only when `github.ref` is
+# `refs/heads/main`. So a run by hand on another ref runs no job, reads no secret and posts
+# nothing. But GitHub takes a `workflow_dispatch` run from the copy of this file on the ref that
+# the person chose, and a copy on another branch could drop that condition. Only a person with
+# write access to this repository can push such a branch and start such a run.
+# HELD_CONTENT_RULES is a repository secret, and GitHub gives a repository secret to each workflow
+# that such a person runs. So this condition stops a mistake. It does not stop that person.
+on:
+  workflow_run:
+    # By its name, which held-content.yml keeps fixed. No `branches` filter: the head branch of a
+    # pull request has any name.
+    workflows: [held-content]
+    types: [completed]
+  schedule:
+    # Once an hour, and not at minute 0, where GitHub can delay scheduled runs.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      demonstrate_a_refusal:
+        description: >-
+          Plant one fresh random sample per pattern, the rows of the secret included, in a commit
+          made inside the runner on top of main, scan it, and fail. It posts no status.
+        type: boolean
+        default: false
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  find:
+    # This file lives in BOTH repositories and runs in one. Each release goes through `ossv-gate`,
+    # which makes public main the tree that `oft release-tree` cuts from the internal tree, so a
+    # workflow that existed only on public main would be DELETED by the next release. So it lands
+    # internally too, and the first line of each job's condition keeps it inert there.
+    #
+    # The job acts on a `pull_request` run of the file held-content.yml, whatever its conclusion:
+    # the demonstration of that workflow ends red. It acts on the schedule. It acts on a run by
+    # hand on main without `demonstrate_a_refusal`.
+    if: >-
+      github.repository == 'theorem-labs/oss-verify-proofs'
+      && ((github.event_name == 'workflow_run'
+      && github.event.workflow_run.event == 'pull_request'
+      && github.event.workflow_run.path == '.github/workflows/held-content.yml')
+      || github.event_name == 'schedule'
+      || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+      && !inputs.demonstrate_a_refusal))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      # the list of open pull requests
+      pull-requests: read
+      # the statuses of each head, to leave out a head that has its answer
+      statuses: read
+    outputs:
+      count: ${{ steps.heads.outputs.count }}
+      matrix: ${{ steps.heads.outputs.matrix }}
+    steps:
+      - name: the heads to scan, each with its pull requests
+        id: heads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          RUN_HEAD: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+
+          REPO, EVENT, RUN_HEAD = (os.environ[name] for name in ("REPO", "EVENT", "RUN_HEAD"))
+          CONTEXT, BOT = "held-content-private", "github-actions[bot]"
+          # GitHub's limit for the jobs of one matrix. The other heads wait for the next hour.
+          MOST = 256
+
+
+          def listed(endpoint):
+              """Every item of a list, from every page. gh refuses --slurp together with --jq, so
+              Python makes the pages into one list. A read that fails stops the job."""
+              done = subprocess.run(["gh", "api", "--paginate", "--slurp", endpoint],
+                                    stdout=subprocess.PIPE, check=True)
+              pages = json.loads(done.stdout)
+              if not isinstance(pages, list) or not all(isinstance(page, list) for page in pages):
+                  raise SystemExit("a list did not come back as a list of pages")
+              return [item for page in pages for item in page]
+
+
+          def newest(head):
+              """The newest status of this workflow on head that GitHub Actions made, or None. A
+              status of another name or of another account does not count."""
+              ours = [status for status in
+                      listed("repos/%s/commits/%s/statuses?per_page=100" % (REPO, head))
+                      if status["context"] == CONTEXT
+                      and (status.get("creator") or {}).get("login") == BOT]
+              return max(ours, key=lambda status: (status["created_at"], status["id"]), default=None)
+
+
+          # Two open pull requests can have one head, into two branches. One job scans them both
+          # and posts one status, because a status is on the commit.
+          heads = {}
+          for pull in listed("repos/%s/pulls?state=open&per_page=100" % REPO):
+              heads.setdefault(pull["head"]["sha"], []).append(pull["number"])
+          print("%d open pull request(s), on %d head(s)."
+                % (sum(len(numbers) for numbers in heads.values()), len(heads)))
+          if EVENT == "workflow_run":
+              # The head of the run that completed. The event of a fork's pull request lists no
+              # pull request, so the head is what finds it.
+              keep = [RUN_HEAD] if RUN_HEAD in heads else []
+          else:
+              # Each head with no `success` and no `failure` yet. First the heads with no status,
+              # the oldest pull request first. Then the others, by the time of their newest
+              # status, the oldest first, so a head that gets a new `error` each hour keeps no
+              # other out. But a head whose scans give an `error` that it already has gets no new
+              # status. So the time of its newest status does not move, and each hour it sorts
+              # before the heads that got a newer status. That has an effect only when more than
+              # MOST heads are to scan in one run.
+              unjudged, again = [], []
+              for head, numbers in heads.items():
+                  status = newest(head)
+                  if status is None:
+                      unjudged.append((min(numbers), head))
+                  elif status["state"] not in ("success", "failure"):
+                      again.append((status["created_at"], min(numbers), head))
+              keep = [entry[-1] for entry in sorted(unjudged) + sorted(again)]
+              if len(keep) > MOST:
+                  print("%d head(s) wait for the next run." % (len(keep) - MOST))
+              keep = keep[:MOST]
+          # `numbers` is one string, so the scan job reads the same words from its matrix.
+          matrix = [{"head": head, "numbers": " ".join(str(n) for n in sorted(heads[head]))}
+                    for head in keep]
+          for entry in matrix:
+              print("To scan: head %s, pull request(s) %s." % (entry["head"], entry["numbers"]))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write("count=%d\nmatrix=%s\n" % (len(matrix), json.dumps(matrix)))
+          PY
+
+  scan:
+    needs: find
+    # A matrix with no entry fails, so the job runs only when there is a head to scan.
+    if: >-
+      github.repository == 'theorem-labs/oss-verify-proofs'
+      && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
+      && needs.find.outputs.count != '0'
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include: ${{ fromJSON(needs.find.outputs.matrix) }}
+    concurrency:
+      # One scan of one head at a time: a `workflow_run` run and the hourly run never scan the
+      # same head together. The later one waits. After the wait it reads no status before it
+      # scans, so it scans the head again and posts its own verdict. It does not post an `error`
+      # when the head has that same `error` of this workflow after the newest `success` or
+      # `failure` of this workflow, or at any time when the head has neither.
+      group: held-content-private-${{ matrix.head }}
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    # The scanner stops itself at 50 minutes and writes `error`, so the next step still posts.
+    timeout-minutes: 60
+    permissions:
+      # main's copy of the scanner, and the commits, trees and blobs of the pull request
+      contents: read
+      # the pull request: its base branch, its head and its labels
+      pull-requests: read
+      # the one status on the head
+      statuses: write
+    steps:
+      - name: main's copy of the scanner, and nothing of a pull request
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          # The commit this run started from: the tip of the default branch on `workflow_run` and
+          # `schedule`, and main on a run by hand. Never a ref of a pull request.
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: .github/held
+          sparse-checkout-cone-mode: false
+      - name: nothing these pull requests add is held content
+        # The one step of this job that holds the secret. The scanner reads the pull requests from
+        # the GitHub API itself, with the token in GH_TOKEN, and not through `gh api`: gh changes
+        # each control character of a JSON answer to its caret pair. The step writes its verdict
+        # to a file, and posts nothing.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HELD_CONTENT_RULES: ${{ secrets.HELD_CONTENT_RULES }}
+          REPO: ${{ github.repository }}
+          HEAD: ${{ matrix.head }}
+          NUMBERS: ${{ matrix.numbers }}
+        run: |
+          set -euo pipefail
+          read -r -a numbers <<< "$NUMBERS"
+          python3 .github/held/held_content_scan.py --pull-request "$REPO" "$HEAD" "${numbers[@]}" \
+            --verdict "$RUNNER_TEMP/verdict.json"
+      - name: one status on the head, when it is still the head
+        # Also after a step failed, so a scan that did not finish is an `error` on the head and
+        # not a silence. This step reads no file of the checkout, so it runs when the checkout
+        # failed too.
+        if: always() && !cancelled()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD: ${{ matrix.head }}
+          NUMBERS: ${{ matrix.numbers }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+
+          REPO, HEAD, RUN_URL = (os.environ[name] for name in ("REPO", "HEAD", "RUN_URL"))
+          NUMBERS = os.environ["NUMBERS"].split()
+          CONTEXT, BOT = "held-content-private", "github-actions[bot]"
+
+
+          def gh(*args):
+              done = subprocess.run(("gh", "api") + args, stdout=subprocess.PIPE, check=True)
+              return json.loads(done.stdout)
+
+
+          try:
+              with open(os.path.join(os.environ["RUNNER_TEMP"], "verdict.json")) as f:
+                  verdict = json.load(f)
+              state, description = verdict["state"], verdict["description"]
+              about = {str(number) for number in verdict["pull_requests"]}
+              if (state not in ("success", "failure", "error") or not isinstance(description, str)
+                      or len(description) > 140):
+                  raise ValueError("not a verdict")
+          except (OSError, ValueError, KeyError, TypeError):
+              state, description = "error", "a step failed before the scan finished"
+              about = set(NUMBERS)
+          print("The verdict on head %s is %s: %s" % (HEAD, state, description))
+
+          # The head can move during a scan. A status on a commit that is no longer the head of a
+          # pull request of this verdict says nothing, so none is posted.
+          still = {number for number in NUMBERS
+                   if gh("repos/%s/pulls/%s" % (REPO, number))["head"]["sha"] == HEAD}
+          if not still & about:
+              print("No pull request of this verdict has this head now. Nothing is posted.")
+          else:
+              same = False
+              if state == "error":
+                  # GitHub keeps at most 1,000 statuses for one commit and one name, and the hourly
+                  # run scans a head with an `error` again. So the job does not post an `error`
+                  # when the same `error` of this workflow is on the head after its newest
+                  # `success` or `failure`, or at any time when there is neither. The order is by
+                  # (created_at, id), not by the list: GitHub's times are whole seconds, so two
+                  # statuses can have one created_at.
+                  pages = gh("--paginate", "--slurp",
+                             "repos/%s/commits/%s/statuses?per_page=100" % (REPO, HEAD))
+                  ours = [status for page in pages for status in page
+                          if status["context"] == CONTEXT
+                          and (status.get("creator") or {}).get("login") == BOT]
+                  judged = [(status["created_at"], status["id"]) for status in ours
+                            if status["state"] in ("success", "failure")]
+                  since = max(judged, default=None)
+                  same = any(status["state"] == "error" and status["description"] == description
+                             and (since is None or (status["created_at"], status["id"]) > since)
+                             for status in ours)
+              if same:
+                  print("This head has this same error of this workflow, with no success and no"
+                        " failure of this workflow after it. Nothing is posted.")
+              else:
+                  gh("--method", "POST", "repos/%s/statuses/%s" % (REPO, HEAD),
+                     "-f", "state=" + state, "-f", "description=" + description,
+                     "-f", "context=" + CONTEXT, "-f", "target_url=" + RUN_URL)
+                  print("Posted the status %s on head %s." % (state, HEAD))
+          if state != "success":
+              print("::error::held-content-private: the verdict is %s, so this job is red." % state)
+              sys.exit(1)
+          PY
+
+  demonstrate:
+    # Only by hand, on main, with the input. It shows that the scan refuses a sample of every
+    # pattern. It calls no API and posts no status.
+    if: >-
+      github.repository == 'theorem-labs/oss-verify-proofs'
+      && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+      && inputs.demonstrate_a_refusal
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      # main's copy of the scanner
+      contents: read
+    steps:
+      - name: main's copy of the scanner, and nothing of a pull request
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: .github/held
+          sparse-checkout-cone-mode: false
+      - name: plant one fresh sample per pattern, and require a refusal
+        # The samples are drawn from /dev/urandom inside this job, committed to the runner's own
+        # clone on top of main, and pushed nowhere. The step holds the secret, because the rows
+        # of the secret get a sample too. It scans the new commit as held-content.yml scans a
+        # range of commits. It ends red whatever happens.
+        env:
+          HELD_CONTENT_RULES: ${{ secrets.HELD_CONTENT_RULES }}
+        run: |
+          set -euo pipefail
+          base=$(git rev-parse HEAD)
+          git config user.name 'held-content-private demonstration'
+          git config user.email held-content-private.invalid
+          python3 - <<'PY' > "$RUNNER_TEMP/planted.txt"
+          import importlib.util, sys
+          spec = importlib.util.spec_from_file_location("hcs", ".github/held/held_content_scan.py")
+          hcs = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(hcs)
+          public, private = hcs.load_detectors()
+          for _detector, text in hcs.fresh_canaries(public + private):
+              sys.stdout.buffer.write(text + b"\n")
+          PY
+          mkdir -p .github/held/demonstration
+          mv "$RUNNER_TEMP/planted.txt" .github/held/demonstration/planted.txt
+          git add -f .github/held/demonstration/planted.txt
+          git commit -q -m 'held-content-private: one planted sample per pattern, for this demonstration only'
+          head=$(git rev-parse HEAD)
+          status=0
+          python3 .github/held/held_content_scan.py --commits "$base" "$head" || status=$?
+          echo "The scan of the planted commit exited $status (3 is a refusal)."
+          [ "$status" = 3 ] || { echo "::error::the planted samples were NOT refused"; exit 1; }
+          echo "::error::demonstration: the check refused the planted samples, as it must. This run is red on purpose."
+          exit 1

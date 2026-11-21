@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_malloc_C.v (a working branch 7a6aa01e779). B outlines
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_malloc_C.v (a working branch). B outlines
    alloc.c's own() as `own` 0x81bfc (fuzz_malloc 0x81b88 tail-calls it): own keeps p in s0 and n in s1 (A: n in s0, b in
    s1), saves only ra, s0, s1 (A also s2), and checks `p + 16` with a UBSan pointer-overflow guard before the return:
    0x81cac li a0, -16 ; 0x81cb0 bgeu s0, a0 -> 0x81cf0 unimp (the trap). The trap arm is refuted here (fm_kill_trap,

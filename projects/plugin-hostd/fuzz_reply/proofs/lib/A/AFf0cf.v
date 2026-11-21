@@ -7,7 +7,8 @@
    the stack window is generalized from ASTACK to Variables (STK sp) with 0 <= STK and ly_stk_lo ly + STK <= sp <= ly_stk_hi ly, DS a := sp - STK <= a < sp (the consumer, Deallocate, uses DFSTACK = 8192);
    am_X -> amc_X, wf_X / wr_X -> wfc_X / wrc_X, chunk_facts / chunk_apart / own_* -> their YG0scf / YG0qcf _cf forms, mapped_user_bound (2 ^ 31) -> mapped_bound_cf (kFreeArrayOffset, still below a region's 2 ^ 32), acells -> acells_cf (region_cells_cf drops the exhausted byte), ajunk -> ajunk_cf, shadow_ok -> shadow_ok_cf, and the added field amc_hp_live;
    conclusions free_finn_ARmcf, D_owned_cf, S'_dtick, ALedger_cf_S', abudget_cf_S' (the cf budget has no event term, so it is unchanged), and after the Section the ARcf assembly free_finn_ARcf (AFg3.v's FINH, first bullet, with ALedger_same_cf and ahs_transfer_cf).
-   D_owned_cf finds the owned static area by value over the whole Tfib_owned_static table (ADIfaceImgA.covers_b), where AFf0.v:516-517 typed the area's address. *)
+   D_owned_cf finds the owned static area by value over the whole Tfib_owned_static table (ADIfaceImgA.covers_b), where AFf0.v:517-518 typed the area's address. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

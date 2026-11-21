@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the walk of rec_clear on fuzz_command.asan, in the shape of
    proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v .. ACh1.v (cgif_close): the seed of a symbolic state over the
    listing, paj_run_tok steps, cl_callS for the program callee and the 04 rules for the runtime entries. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 
 (* The walk of rec_clear (BASE + AF_rec_clear = 0x894d4, 26 instructions, one block, no instrumented check).
 
@@ -273,7 +274,7 @@ in_roP SEGS RLO RHI a -> in_img SEGS a /\ ~ Exists (in_zr a) recb_PG.
 (* the call target of every program function against the listing's base (lib/A/Prog/CmdObj.v) *)
 Hypothesis VSIG : cmd_sig_prog.
 
-(* AR_laws is not a hypothesis: lib/Reusable/YG0q.v's AR_laws_ok proves it (socket_send.v:92) *)
+(* AR_laws is not a hypothesis: lib/Reusable/YG0q.v's AR_laws_ok proves it (socket_send.v:93) *)
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.
 Let RUN := paj_run B LAWS. Let RUNTO := paj_run_to B LAWS.
 Let RET := paj_ret_at (PL := PL_cmd) (PI := PI).

@@ -10,7 +10,7 @@
    as_calloc = Some 0x51f68: check_round_trip calls calloc, so its TFIB_T walk needs this contract where
    cgif_file_fuzzer's needs only malloc and free.
 
-   Addresses (ORIGINAL binaries, FACTS f0e6eb38667, read with capstone from
+   Addresses (ORIGINAL binaries, FACTS, read with capstone from
    fuzz_decode.{asan,asan-ubsan};
    the twins' loaded PROGBITS equal the published, stripped pins of harness.yaml):
 
@@ -121,8 +121,8 @@
    | GOT slot holding &common_flags_dont_use (.got)        | 0x98d30   | 0x992d8   | code ___interceptor_calloc+0xd4/+0xd8; image | 0x9df88 (AB1w.v:568) |
    | __sanitizer::common_flags_dont_use (288 bytes, .bss)  | 0x1328e8  | 0x132e68  | sym; image (the GOT slot's content) | 0x137b28 |
    | builtin_tls (musl, 131280 bytes, .bss)                | 0x5d3c90  | 0x5d4210  | sym; code static_init_tls+0x1a0/+0x1b4 | 0x5d8ec8 |
-   | thread pointer tp of the main thread                  | 0x5d3d58  | 0x5d42d8  | builtin_tls + 200, below | 0x5d8f90 (AF0m.v:12 TFIB_TP) |
-   | __pthread_tsd_main (musl, 1024 bytes, .bss)           | 0x5f5100  | 0x5f5680  | sym; code __pthread_key_create+0x2c/+0x30, + 0x40 | 0x5fa338 (AF0m.v:12 TFIB_TSD) |
+   | thread pointer tp of the main thread                  | 0x5d3d58  | 0x5d42d8  | builtin_tls + 200, below | 0x5d8f90 (AF0m.v:13 TFIB_TP) |
+   | __pthread_tsd_main (musl, 1024 bytes, .bss)           | 0x5f5100  | 0x5f5680  | sym; code __pthread_key_create+0x2c/+0x30, + 0x40 | 0x5fa338 (AF0m.v:13 TFIB_TSD) |
 
    THE THREAD POINTER.  tp is not a cell: start-up code computes it and puts it in register 4.  musl's
    static_init_tls (A 0x88234) takes mem = builtin_tls (A 0x883d4 `auipc a3, 0x54c` + 0x883e8 `addi a0, a3,

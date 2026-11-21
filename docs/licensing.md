@@ -2,7 +2,11 @@
 
 ## What we wrote
 
-What this repository wrote is under the MIT licence ([LICENSE](../LICENSE)).
+What this repository wrote is under the MIT licence ([LICENSE](../LICENSE)),
+except the proof files of a project whose `project.yaml` says
+`release: private` and whose folder holds a `NOTICE`: those that we wrote are
+under that `NOTICE` and carry its two lines
+([adding-a-proof.md](adding-a-proof.md), requirement 7).
 That is the statements, `theories/`, `tools/`, the templates, `docs/`, the
 distribution modules, the proofs that we wrote, and the build recipes (the
 recipe archives that [release.yaml](../release.yaml) lists under `recipes`),
@@ -43,6 +47,25 @@ Apache-2.0 OR MIT:
   `projects/<project>/<harness>/proofs/provenance/PROVENANCE.md`, names these
   three files as the licence texts of its Anthropic-licensed files.
 
+## Proofs from other projects
+
+Some proof files come from another project's proofs and keep that project's
+licence. Each is a row of
+[tools/oft/third-party-proofs.yaml](../tools/oft/third-party-proofs.yaml),
+which pins its bytes by their SHA-256 and names the repository and commit it
+came from, and `oft lint` accepts such a file only while its bytes are the
+pinned ones ([adding-a-proof.md](adding-a-proof.md), requirement 7). Each
+keeps its upstream author's notice and the line
+`SPDX-License-Identifier: LGPL-2.1-or-later`, and a file that we changed has
+one more line under them that says so.
+
+- The files of the Huffman library that the table lists for the proofs of
+  `zlib/compress_fuzzer` come from coq-community/huffman and are under
+  LGPL-2.1-or-later. They come into the tree with their licence file,
+  `LICENSES/coq-community-huffman-LICENSE`, a copy, byte for byte, of the
+  `LICENSE` of that repository. [NOTICE](../NOTICE) and the
+  [README](../README.md#licence) name these files, their licence and its text.
+
 ## Harness copies and binaries
 
 Files under `projects/*/*/source/` are copies of fuzz targets exactly as they
@@ -65,7 +88,14 @@ the crates its fuzz target uses. The standard library's own crates are
 crates it vendors keep their own licences (for example `memchr`,
 `Unlicense OR MIT`, and `miniz_oxide`, `MIT OR Zlib OR Apache-2.0`), as each
 crate's `Cargo.toml` states; a Rust harness's build record lists each one. A
-Python binary holds CPython 3.11.13 (`Python-2.0`) with the third-party code
+licence that the Rust toolchain gives to one file of a crate adds to the
+licence that the crate's `Cargo.toml` states, when the build compiles that
+file. For example, the toolchain's `COPYRIGHT-library.html` gives
+`core/src/unicode/unicode_data.rs` the licence `Unicode-3.0`. Thus the build
+record gives `core` the licence `(MIT OR Apache-2.0) AND Unicode-3.0`, with
+the `Unicode-3.0` text. The record does not examine each binary for code of
+that file.
+A Python binary holds CPython 3.11.13 (`Python-2.0`) with the third-party code
 CPython incorporates (for example its copies of expat, `MIT`, and libmpdec,
 `BSD-2-Clause`), the standard-library modules its fuzz target imports, as
 bytecode, and the build image's libraries that CPython's built-in modules link
@@ -76,6 +106,19 @@ every component compiled into its binaries, copied verbatim, as
 `projects/<project>/bin/LICENSES/`. Each proof's build record also lists these
 components with their licence texts. No `harness.yaml` records the combined
 licence of its binaries yet (`licence: NOASSERTION`).
+
+The same holds for the classifiers and the originals a harness publishes
+(harness.yaml `classifiers`, `originals`; [facts.md](facts.md#classifiers)).
+An original is a build of the same recipe without the patches, so it links
+what its build links. A classifier is a static program of this repository
+that links the C library and the compiler's runtime libraries, under the
+licences above. Both go into the project's binary archive with the builds, and
+the copyleft rule below applies to a harness as soon as it publishes any of
+them. [NOTICE](../NOTICE) and the [README](../README.md#licence) say this of
+them in one sentence. While a harness publishes a classifier or an original,
+`oft lint` refuses a tree whose NOTICE does not hold that sentence
+(`NOTICE_IMAGES` in [tools/oft/lint.py](../tools/oft/lint.py), rule
+`licence`).
 
 ## Copyleft binaries
 
@@ -89,11 +132,13 @@ choice such as `MIT OR GPL-2.0` does not count. The source takes the project's
 source archive and manifest, then, for a recipe-built project, the build recipe
 its binary archive names, or, for a port-built one, the project's `assets.port`
 archive. The port archive contains the port's driver source as well as its
-build files. A project whose binaries wait for that source says so on its page,
-and their statements are withheld until then. Two parts are not in this
-release: the Dockerfile that adds the libraries of the builder image, and the
-source of the Alpine packages that the toolchain build installs
-([reproducing.md](reproducing.md)).
+build files. For a fuzz target whose `harness.yaml` says `source.modified:
+true`, the source also takes its `source/` copy: the fuzz harness as Theorem
+Labs changed it, which its binaries are built from. A project whose binaries
+wait for that source says so on its page, and their statements are withheld
+until then. Two parts are not in this release: the Dockerfile that adds the
+libraries of the builder image, and the source of the Alpine packages that the
+toolchain build installs ([reproducing.md](reproducing.md)).
 
 This project is not affiliated with or endorsed by Google or the OSS-Fuzz
 project. See [NOTICE](../NOTICE).

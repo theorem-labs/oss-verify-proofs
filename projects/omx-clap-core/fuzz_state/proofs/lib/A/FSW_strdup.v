@@ -4,8 +4,8 @@
    s2 := a0; `beqz a0` 0x82d10; a0, a1, a2 := s2, s0, s1; `jal __asan_memcpy` 0x82d20; 0x82d24: a0 := s2; epilogue; ret.
 
    port-from:
-   - control flow and the two arms: fs's released plain proof lib/Prog/fuzz_strdup_c.v:29-60 (ossv/recipes
-     c8557374ad2e, plain 0x1416c): strlen, ONE fuzz_malloc, memcpy only on the non-NULL arm; the NULL arm returns 0
+   - control flow and the two arms: fs's released plain proof lib/Prog/fuzz_strdup_c.v:29-60 (
+     plain 0x1416c): strlen, ONE fuzz_malloc, memcpy only on the non-NULL arm; the NULL arm returns 0
      with nothing copied and the statics' failing() update (fuzz_strdup_c.v:52-55); the non-NULL arm returns the new
      block holding cs ++ [0] (:56-62); the string home premise (:36-38) is cstr_kept here.
    - the walk's shape (entry state, runs, the program call, the return): a Theorem Labs lane's lib/A/FMW_check_as_written.v
@@ -1189,7 +1189,7 @@ Hypothesis FS_ASTRLEN_A : astrlen_realizesU tfibsegs B PC_strlen.
 Hypothesis FS_AMEMCPY_A : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 (* fuzz_malloc's contract (no CTX since stage 1 of the fold; the one call returns to 0x82d0c with an empty chain: s0
    holds the string pointer); owner a Theorem Labs lane (a Theorem Labs lane's ALLOC group), discharged at composition by
-   fuzz_malloc_holds (a working branch 8989ddd6cb6) *)
+   fuzz_malloc_holds (a working branch) *)
 Hypothesis FS_FUZZ_MALLOC_A : @fuzz_malloc_spec fx rc SK tfibsegs B.
 
 Theorem fuzz_strdup_holds : @fuzz_strdup_spec fx rc SK tfibsegs B.

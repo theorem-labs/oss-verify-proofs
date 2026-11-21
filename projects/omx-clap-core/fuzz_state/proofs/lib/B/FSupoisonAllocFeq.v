@@ -1,13 +1,13 @@
 (* fuzz_state: enqueue (lib/A/AFew.v) under ARU for ANY set UP of user-poisoned heads: tfib_enqueue_roomU, tfib_enqueue_nbU. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* The twins of the released cgif_file_fuzzer theorems tfib_enqueue_room (lib/A/AFg4.v:381) and tfib_enqueue_nb
+(* The twins of the released cgif_file_fuzzer theorems tfib_enqueue_room (lib/A/AFg4.v:382) and tfib_enqueue_nb
    (lib/A/AFg6.v:904). The donor walks are kept: their facts, their runs (AFh3.segP, AFh4.segQH, AFh5.segR1, AFh6.segT)
    and their leaf lemmas (AFg4.FINPH, AFg5.FINQH, AFg6.FINR) are applied unchanged, over FSupoison.unpoison UP mem where
    they read memory and over the real memory where the machine runs; FSupoisonAllocFeqR.v carries the two transfers.
    UP survives the call: enqueue keeps st_chunks (its leaf says so), so every UP range stays in a live block, and the
    new batch is a batch-class chunk, never a live block, so the run's write window stays in application memory, off
    UP's shadow. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFeq.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: PC_ENQ_RA. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFeq.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: PC_ENQ_RA. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -39,7 +39,7 @@ Local Set Warnings "-notation-for-abbreviation".
 Open Scope Z_scope.
 Local Open Scope am_scope.
 (* The pcs inside a function, by name: the entry is lib/B/YFeu.v / lib/B/YFew.v A_xxx or the lib/B/YB1w.v row, the offset is the B donor's pc minus that entry. *)
-(* the return address of Enqueue's new-batch call (lib/B/YFgr.v:128, SS0's pc; lib/B/YFg6.v:276 R_ra). *)
+(* the return address of Enqueue's new-batch call (lib/B/YFgr.v:129, SS0's pc; lib/B/YFg6.v:276 R_ra). *)
 Definition PC_ENQ_RA : Z := A_Enqueue + 0x154.
 Module FSP := OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A.FSupoison.
 Module FSU := OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A.FSupoisonU.
@@ -82,7 +82,7 @@ Lemma cfg_ret : forall (regs' : bvmap 5 word) (m0 : word -> option byte) (md' : 
 Proof. intros regs' m0 md'. unfold cfg_at, raZ, w64. rewrite Z_to_bv_bv_unsigned. reflexivity. Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 1. Room in the last batch (lib/B/YFg4.v:369 tfib_enqueue_room_arm).                                               *)
+(* 1. Room in the last batch (lib/B/YFg4.v:370 tfib_enqueue_room_arm).                                               *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Section room.
 Hypothesis HNB : need_new_batch (st_qthread X) = false.
@@ -137,7 +137,7 @@ Qed.
 End room.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 2. A new batch, taken from the batch-class cache (lib/B/YFg5.v:627 tfib_enqueue_hit_arm).                          *)
+(* 2. A new batch, taken from the batch-class cache (lib/B/YFg5.v:628 tfib_enqueue_hit_arm).                          *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Section hit.
 Hypothesis HNB : need_new_batch (st_qthread X) = true.
@@ -318,7 +318,7 @@ End miss.
 End e.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 4. The two exported contracts (lib/B/YFg4.v:379 and lib/B/YFg6.v:902), for any UP.                                 *)
+(* 4. The two exported contracts (lib/B/YFg4.v:380 and lib/B/YFg6.v:902), for any UP.                                 *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Theorem tfib_enqueue_roomU : forall B, AR_laws tfibsegs B -> TfibSyms B -> FK.tfib_enqueue_spec_nbU B false.
 Proof.

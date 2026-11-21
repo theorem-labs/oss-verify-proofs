@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (two more launch variables in the start-up bridge). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
@@ -23,17 +24,17 @@ Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 (* [comment removed for export] *)
-Definition idb17 (σ : tree lin) : bool := forallb (fun k => lin_eqb (svar σ (Pos.of_nat k)) (lvar (Pos.of_nat k))) (List.seq 1 16).
-Lemma idb17_sound : forall σ E x, idb17 σ = true -> (x < 17)%positive -> ecomp E σ x = E x.
+Definition idb19 (σ : tree lin) : bool := forallb (fun k => lin_eqb (svar σ (Pos.of_nat k)) (lvar (Pos.of_nat k))) (List.seq 1 18).
+Lemma idb19_sound : forall σ E x, idb19 σ = true -> (x < 19)%positive -> ecomp E σ x = E x.
 Proof.
-  intros σ E x H Hx. unfold idb17 in H. rewrite forallb_forall in H.
-  assert (Hin : In (Pos.to_nat x) (List.seq 1 16)) by (apply in_seq; lia).
+  intros σ E x H Hx. unfold idb19 in H. rewrite forallb_forall in H.
+  assert (Hin : In (Pos.to_nat x) (List.seq 1 18)) by (apply in_seq; lia).
   specialize (H _ Hin). rewrite Pos2Nat.id in H. apply lin_eqb_eq in H. unfold ecomp. rewrite H. apply lden_lvar.
 Qed.
 
 (* [comment removed for export] *)
 Definition bfin (a' : ast) (S3 : sst) (M3 : smodel) : bool :=
-  let σ := sig (S3, M3) TMAIN MMAIN in (entails S3 TMAIN σ && sm_eqb M3 (msubst σ MMAIN) && aeqb a' (asubst σ AMAIN) && idb17 σ && marks_ok σ (sm_maps MMAIN))%bool.
+  let σ := sig (S3, M3) TMAIN MMAIN in (entails S3 TMAIN σ && sm_eqb M3 (msubst σ MMAIN) && aeqb a' (asubst σ AMAIN) && idb19 σ && marks_ok σ (sm_maps MMAIN))%bool.
 Definition bridge_ok (F : sst * smodel) : bool :=
   match apost_convG (fst F) (snd F) ast0 with
   | Some (S', M', a') =>
@@ -81,7 +82,7 @@ Qed.
 (* [comment removed for export] *)
 #[using="Type"] Lemma bfin_ok : forall mem0 E S3 M3 a' ms model T, bfin a' S3 M3 = true ->
   DEN ASEGS LIM model0 mem0 E S3 M3 ms model -> HA E M3 a' mem0 ->
-  (forall E'', (forall x, (x < 17)%positive -> E'' x = E x) -> DEN ASEGS LIM model0 mem0 E'' TMAIN MMAIN ms model -> HA E'' MMAIN AMAIN mem0 ->
+  (forall E'', (forall x, (x < 19)%positive -> E'' x = E x) -> DEN ASEGS LIM model0 mem0 E'' TMAIN MMAIN ms model -> HA E'' MMAIN AMAIN mem0 ->
      realizes_cfg ASEGS cfg (mkCfg ms model) T) ->
   realizes_cfg ASEGS cfg (mkCfg ms model) T.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -91,14 +92,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   apply sm_eqb_eq in Hm. apply aeqb_eq in Ha.
   rewrite Hm in Hd, HHA. rewrite Ha in HHA.
   apply (Hk (ecomp E σ)).
-  - intros x Hx. exact (idb17_sound σ E x Hid Hx).
+  - intros x Hx. exact (idb19_sound σ E x Hid Hx).
   - exact (den_ent_M ASEGS LIM model0 mem0 E S3 TMAIN MMAIN ms model σ Hd Hent TMAIN_wf MMAIN_wf Hmk).
   - exact (HA_subst E σ MMAIN AMAIN mem0 AMAIN_ag HHA).
 Qed.
 
 #[using="Type"] Theorem tm_handoff : forall F, bridge_ok F = true -> forall mem0 E ms model T,
-  DEN ASEGS LIM model0 mem0 E (fst F) (snd F) ms model -> (17 <= s_next (fst F))%positive ->
-  (forall E'' mem0' ms' model', agree 17 E E'' -> frz_same E (snd F) mem0 mem0' ->
+  DEN ASEGS LIM model0 mem0 E (fst F) (snd F) ms model -> (19 <= s_next (fst F))%positive ->
+  (forall E'' mem0' ms' model', agree 19 E E'' -> frz_same E (snd F) mem0 mem0' ->
      DEN ASEGS LIM model0 mem0' E'' TMAIN MMAIN ms' model' -> HA E'' MMAIN AMAIN mem0' -> realizes_cfg ASEGS cfg (mkCfg ms' model') T) ->
   realizes_cfg ASEGS cfg (mkCfg ms model) T.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -108,7 +109,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   intros E' mem0' ms' model' Ha Hfs Hd' HHA'.
   pose proof (den_sep4 mem0' E' S' M' ms' model' Hd') as Hd1.
   (* [comment removed for export] *)
-  assert (Kont : forall E'', (forall x, (x < 17)%positive -> E'' x = E' x) -> DEN ASEGS LIM model0 mem0' E'' TMAIN MMAIN ms' model' ->
+  assert (Kont : forall E'', (forall x, (x < 19)%positive -> E'' x = E' x) -> DEN ASEGS LIM model0 mem0' E'' TMAIN MMAIN ms' model' ->
                    HA E'' MMAIN AMAIN mem0' -> realizes_cfg ASEGS cfg (mkCfg ms' model') T).
   { intros E'' Hid Hd'' HHA''. apply (Hk E'' mem0' ms' model'); [| exact Hfs | exact Hd'' | exact HHA''].
     intros x Hx. rewrite (Hid x Hx). apply Ha. lia. }

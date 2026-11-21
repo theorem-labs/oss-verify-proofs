@@ -1,6 +1,6 @@
 (* fuzz_lock.ubsan's LLVMFuzzerTestOneInput meets U/Prog/FrameRet.v's lib_contract_gr for the return lock_ret,
    from the contracts of check_no_overread and check_lookup: libreac/fuzz_decode's released
-   lib/U/Prog/LLVMFuzzerTestOneInput_end.v (25e3d17bdb50) at fuzz_lock's addresses. Written by Theorem Labs.
+   lib/U/Prog/LLVMFuzzerTestOneInput_end.v at fuzz_lock's addresses. Written by Theorem Labs.
    *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

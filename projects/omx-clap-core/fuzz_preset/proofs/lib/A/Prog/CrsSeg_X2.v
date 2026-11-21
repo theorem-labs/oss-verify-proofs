@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module names changed; 1109 of its 1189 lines of code are new or changed and 848 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): segment X2 of the walk of check_reject_clean_starved (row CR-X2).
    rule 24: proves function check_reject_clean_starved (reuse search: `proof-index
    check_reject_clean_starved 0x82160`, the internal file index-crcs-Aprime.out, and an internal record
@@ -8,7 +9,7 @@
    or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan
    Proof.v existed for check_reject_clean_starved). Written new.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
    - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (listings v3). Entry 0x82160
      = slot 736 (A_entry_check_reject_clean_starved).
    - The texts at the kit cut preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record), by path: tcheck_reject_clean_starved_specX (lib/A/PRH_FnCheck.v), the
@@ -225,7 +226,7 @@ Lemma crs_rod_kv : forall (W3 : world SEGS) mem3 (W4 : world SEGS) mem4,
   arodata_okP SEGS RLO RHI B (aview SEGS (w_H W4) mem4).
 Proof. intros W3 mem3 W4 mem4 H Hkv a Hro Ho He. rewrite (Hkv a Hro Ho He). exact (H a Hro Ho He). Qed.
 
-(* bytes agreeing in the view give the same garr8 (S10Env.v ts_garr_av, h-hpreset-7 walk-S10 88b4aea723f) *)
+(* bytes agreeing in the view give the same garr8 (S10Env.v ts_garr_av, h-hpreset-7 walk-S10) *)
 Lemma cx_garr_av : forall (H H' : word -> bool) m m' a l,
   (forall j, (j < length l)%nat -> aview SEGS H' m' (a + Z.of_nat j) = aview SEGS H m (a + Z.of_nat j)) ->
   garr8 SEGS (mrestrict H m) a l -> garr8 SEGS (mrestrict H' m') a l.
@@ -580,7 +581,7 @@ Qed.
 
 (* ---- THE CALL'S ENTRY FACTS: the frame-pointer chain (check_reject_clean_starved keeps s0 = its entry sp, with
    ra at s0 - 8 and the caller's s0 at s0 - 16, crs_saved's slots 120 / 112), and the fpre extras. The chain proof is
-   H2H5's crt_chain (lib/A/Prog/H5CrtS1.v, cold/h-hpreset-7-walk-H2H5 1934271f1f4) at this kit's names. ---- *)
+   H2H5's crt_chain (lib/A/Prog/H5CrtS1.v) at this kit's names. ---- *)
 Lemma cx_keep_above : forall R C ly3 S3 Hp3 W3 mem3 md3 k,
   crs_JR B ARx R C ly3 S3 Hp3 W3 mem3 md3 k ->
   forall a, spZ (c_regs C) <= a < 2 ^ 64 ->
@@ -712,7 +713,7 @@ unfold w64. rewrite m_remu by (rewrite unsigned_lit_small; lia). apply bv_eq.
 rewrite v_remu_small by (rewrite unsigned_lit_small; lia). rewrite !unsigned_lit_small by lia. reflexivity.
 Qed.
 
-(* callee-saved registers across a call (S10Env.v ts_ap, h-hpreset-7 walk-S10 88b4aea723f) *)
+(* callee-saved registers across a call (S10Env.v ts_ap, h-hpreset-7 walk-S10) *)
 Lemma cx_ap : forall rg rg' (r : bv 5), aregs_preserved rg rg' -> acallee_saved (bv_unsigned r) -> getr rg' r = getr rg r.
 Proof. intros rg rg' r HP Hr. pose proof (HP _ Hr) as Hq. rewrite Z_to_bv_bv_unsigned in Hq. exact Hq. Qed.
 Lemma cx_ap3 : forall rg rg', aregs_preserved rg rg' -> getr rg' 3 = getr rg 3.
@@ -783,7 +784,7 @@ intros C sp2 rg r v H Hv. unfold crs_rs in H. unfold crs_regsat in *. rewrite !a
 apply Forall_app. split; [exact H | constructor; [exact Hv | constructor]].
 Qed.
 
-(* an atom's value (S10Env.v ts_U0, h-hpreset-7 walk-S10 88b4aea723f) *)
+(* an atom's value (S10Env.v ts_U0, h-hpreset-7 walk-S10) *)
 Lemma cx_U0 : forall E n, U E (SOff n 0) = bv_unsigned (ew E n).
 Proof.
 intros E n. rewrite U_SOff, Z.add_0_r. apply YP0m.zcanon_small.

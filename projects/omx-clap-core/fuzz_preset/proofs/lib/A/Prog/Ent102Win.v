@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102Win.v, with its module paths changed; 28 of its 94 lines of code are new or changed and 1 line of the source is left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset (both images; IMAGE-FREE: lib/Spec and the kit's PRH_Base only): THE CONSUMER WINDOW of the
    walk of LLVMFuzzerTestOneInput, ONE shared lemma (owner's decision (A), 22:35Z). The batch kit's entry-keyed check texts
    (tcheck_round_trip_specX, tcheck_reject_clean_starved_specX) and the outcome clauses of its post-form texts
@@ -14,7 +15,7 @@
    e_i0 E + length (ec_cno_evs E trp ++ ..), and ec_ranout E trp = false on the r = 0 path.
    The A' and B' walks cite it alike (sm := e_sm E, x := e_x E, os := e_os E, (o1, o2, o0) := trp).
    SATISFIABILITY (owner's VERIFY rule 1): prh_cons_from alone is witnessed at the real model values by a Theorem Labs lane's
-   prh_cons_from_SAT (a working branch ef2d9b51785f, lib/A/zz_h8_cons.v blob 332a03a3ecc4: sm =
+   prh_cons_from_SAT (a working branch, lib/A/zz_h8_cons.v blob 332a03a3ecc4: sm =
    jr_strtod, x = the bytes of {"a":1}, os = [(None, None, None)], i = 27, k = 10, with prh_run_at at the same window;
    negative control ctrl_P1_window_false); its JOINT satisfiability with the rest of each pre is carried by the walk's
    own witnesses (lib/A/Ent102SatA.v / lib/A/Prog/Ent102SatGA.v).

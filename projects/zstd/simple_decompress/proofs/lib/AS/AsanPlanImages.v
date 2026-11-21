@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image facts' bound on the launch's extra reservations). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -139,4 +140,6 @@ Proof.
   - rewrite both_res_sizes. reflexivity.
   - cbn [rw_lo rw_len ASAN]. split; [lia|]. intros m x Hx. apply both_rw_window. lia.
   - exact both_shadow_ok.
+  - (* the launch's extra reservations: the vDSO pair, two intervals, at most twenty pages *)
+    cbn [n_resx p_resx ASAN]. lia.
 Qed.

@@ -1,8 +1,8 @@
 (* The image-B twin of lib/A/TopX_RT3.v's topx_ABCMP (a working branch): image B's bcmp contract
    AT B's top_x instance
-     ARX_B := lib/B/W_LLVMFuzzerTestOneInput_top_x.v:154-155's ARX, restated VERBATIM
+     ARX_B := lib/B/W_LLVMFuzzerTestOneInput_top_x.v:155-156's ARX, restated VERBATIM
               (fun ly S Hp W mem md => ARcf (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = []),
-   in the form lib/B/W_check_shape_event.v:83's `Hypothesis ABCMP : abcmp_realizes_x SEGS B ARx (SIGMA WS_bcmp)` takes:
+   in the form lib/B/W_check_shape_event.v:84's `Hypothesis ABCMP : abcmp_realizes_x SEGS B ARx (SIGMA WS_bcmp)` takes:
      topx_ABCMP_B : abcmp_realizes_x segs TfibB ARX_B (SIGMA WS_bcmp)        (W_sites_x.v abcmp_realizes_x)
    The proof is the generic one: lib/B/Rt/Bcmp.v bcmp_site_realizes_x over YE2y.icpt_laws_x and TfibSyms
    (YD2l.TfibB_syms); its IcptRealizesX.abcmp_realizes_x at tfibsegs is W_sites_x's at pa_segs PB_fr by conversion

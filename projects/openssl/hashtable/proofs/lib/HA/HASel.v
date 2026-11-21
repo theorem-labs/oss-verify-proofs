@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX]; the selector's length variable is the template's, renumbered by [HAReg.V_F]). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -9,13 +10,15 @@ From OSSVerify.openssl.hashtable.images Require Import Asan.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import PropExec ShapeAlg AgentLib AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanNodesIO AsanInit.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import CxRel CxPlan CxPlanSound CxGlue CxBatch.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import HAPlanImage HAAtable HAArg HACheckG HAChain HAHop HABatch HAFam2.
+From OSSVerify.Proofs.openssl.hashtable.lib Require HAReg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AX2S. Import APC. Import CAP. Import CXS.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)
-Definition LV : nat := 574%nat.                       (* [comment removed for export] *)
+(* the template's variable 574 (recorded numbering), renumbered as the VT templates are ([HAReg.V_F]) *)
+Definition LV : nat := Eval vm_compute in HAReg.V_F 574%nat.   (* [comment removed for export] *)
 Definition e_cl : expr := ION.CFGX 32.
 Definition e_n : expr := ION.XROOM 32 (EVar LV).
 Definition e_cm : expr := ION.XCM 32.
@@ -365,8 +368,9 @@ Section Drv.
   Variable rdraw : EntryDraw.
   Variables argv envp : list (list byte).
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Variable fs : Fs.Fs.
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   Variable SV : env -> (word -> option byte) -> Prop.
@@ -473,7 +477,7 @@ Section Drv.
     assert (SA : forall (P : env -> Prop), (forall E1 E2, env_agree NB E1 E2 -> P E1 -> P E2) -> forall E1 E2 M1, env_agree NB E1 E2 -> SVG P SV E1 M1 -> SVG P SV E2 M1).
     { intros P HP E1 E2 M1 A [X1 X2]. split; [exact (SV_agree E1 E2 M1 (env_agree_le NX0 NB E1 E2 A HNB0) X1) | exact (HP E1 E2 A X2)]. }
     assert (AA : forall E1 E2 (a : word), env_agree NB E1 E2 -> argH E1 a = argH E2 a).
-    { intros E1 E2 a A. exact (argH0_agree HAPH sp rdraw argv envp uid hw E1 E2 a (env_agree_le NX0 NB E1 E2 A HNB0)). }
+    { intros E1 E2 a A. exact (argH0_agree sp rdraw argv envp (lx_kb L) (lx_execfn L) E1 E2 a (env_agree_le NX0 NB E1 E2 A HNB0)). }
     pose proof (cs_ok_sinv HASEGS HAT LIM argH ISP fs (SVG PHIb SV) (SVG (fun _ => True) SV) E BASE R FULL model ltac:(intros [X _]; split; [exact X | exact I]) HC) as HC0.
     pose proof (cs_ok_agree HASEGS HAT NB LIM NB_spw (SVG (fun _ => True) SV) argH ISP AA (SA (fun _ => True) (fun _ _ _ _ => I)) fs E E' BASE R FULL model
                   ltac:(rewrite HNB; exact Hag) Hfresh HC0) as HC1.

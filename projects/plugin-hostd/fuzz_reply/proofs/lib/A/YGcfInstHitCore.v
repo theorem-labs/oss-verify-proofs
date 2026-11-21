@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    The model and memory facts behind the cf hit interfaces (YGcfInstHit.v), over the cf relation YG0ncf.ARcf at the
-   unit's segments ImgBase.im_segs, generic over CfImg / CfParams / AImg / AGImg.  The cf twin of c5 30a1993588f's
+   unit's segments ImgBase.im_segs, generic over CfImg / CfParams / AImg / AGImg.  The cf twin of c5
    AGiy.v (the hit view over ARm), AGix.v's owned set (hit_owned), AGjb.v (hit_owned_k) and AGif1.v's shape and uninit
    fields.  rule 24: no function proved (interface-instance discharge at a model relation; no machine walk is written).
    Every image fact enters as a named premise over the class fields; no numeral of any image; no event term. *)

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's phase p0 on image B (lib/B/W_LLVMFuzzerTestOneInput_gone_p0.v,
-   a Theorem Labs lane's, fee5272ac13: the arm's entry to the join), for the conversion of ARM_gone to the cut invariants of
+   a Theorem Labs lane: the arm's entry to the join), for the conversion of ARM_gone to the cut invariants of
    lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.  _gone_p0.v is not edited.
    - CITED from _gone_p0.v (they never read AR): the entry state's definitions (gp0_frA .. GP0_KEPT, outside its
      Section), gp0_byte, gp0_in_byte_rng, gp0_pres_grows, gp0_aframe_kept, gp0_kregs;
    - RESTATED here under their names + _x, merged per item with SmallX's image-A twin
-     lib/A/W_LLVMFuzzerTestOneInput_gone_p0_x.v (95a5de32ab2): gp0_entry_x, gp0_close_x (the join's predicate GJN_x),
+     lib/A/W_LLVMFuzzerTestOneInput_gone_p0_x.v: gp0_entry_x, gp0_close_x (the join's predicate GJN_x),
      gp0_entry_join_x (the phase lemma);
    - copied (they are Local in _gone_p0.v): the write-obligation tactics gp0_awr / gp0_nowr, over awr_ok_x.
    Every ghost list is [] (cut_x's HP0). *)

@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v, with its module paths changed; 33 of its 76 lines of code are new or changed and 2713 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B (fs.asan-ubsan) twin of lib/A/FSH_crt_cstr.v: cstr_ok of a heap string from the facts a crt boundary invariant
    carries: the string's bytes and NUL (zbytes_at), no NUL inside it, and the live block it lies in. Shared by every crt
    lane of the B walk (check_round_trip, build B). Owner: a Theorem Labs lane (lane CRT); B twin written by a Theorem Labs lane.
-   PORT SOURCE: a working branch e377e99a5c4 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_cstr.v (95 lines),
-   itself moved VERBATIM from a Theorem Labs lane's lib/A/FSH_crt_a23cstr.v at a working branch c2f01f092c5 (written by its
+   PORT SOURCE: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_cstr.v (95 lines),
+   itself moved VERBATIM from a Theorem Labs lane's lib/A/FSH_crt_a23cstr.v at a working branch (written by its
    sub-lane), renamed: a23_enc_nz -> crt_enc_nz, a23_cstr_blk -> crt_cstr_of_block, a23_cstr -> crt_cstr_of_rblock.
    Same Lemma names, same statements, same proofs, over image B. Imports: lib.A.X -> lib.B.X where lib/B/X.v exists
    (AB1v -> YB1v, and every FSH_* / FSW_* / FSPstat kit file); FSupoison, FSupoisonU, FSH_YC20 and FSH_Gen stay lib/A's,
@@ -17,15 +18,15 @@
                           memory (AR_blocks_law, FSW_rd.fsw_block_body_addressable, FSW_strkit.shadow_hull_vis_sub /
                           block_word_tail_vis / aview_unpoison_vis).
      crt_cstr_of_rblock : the same for a string that fills its block exactly, at (p - HEAD, n + HEAD).
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from e377e99a5c4 lib/A/FSH_crt_cstr.v)
-   (the A file's own line: PORTED from a working branch d25a984c903
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_cstr.v)
+   (the A file's own line: PORTED from a working branch
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd2.v - sd2_enc_nz :52 and the cstr_ok premises of
    sd2_tail :494). The function-level reuse search is crt-lane-head.md lines 6-21.
 
    A -> B TABLE: none. No name of this file carries a pc, and no statement or proof uses a pc, frame offset, register or
    image constant: the asyms B is a Section variable, and the image enters only through tfibsegs (lib/B/YB1v) and the
-   B kit's fsw_block_body_addressable (lib/B/FSW_rd.v:316) / shadow_hull_vis_sub, word_end_mono, aview_unpoison_vis,
-   block_word_tail_vis (lib/B/FSW_strkit.v:59, :70, :132, :227), whose statements are the A kit's word for word. *)
+   B kit's fsw_block_body_addressable (lib/B/FSW_rd.v:317) / shadow_hull_vis_sub, word_end_mono, aview_unpoison_vis,
+   block_word_tail_vis (lib/B/FSW_strkit.v:60, :71, :133, :228), whose statements are the A kit's word for word. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

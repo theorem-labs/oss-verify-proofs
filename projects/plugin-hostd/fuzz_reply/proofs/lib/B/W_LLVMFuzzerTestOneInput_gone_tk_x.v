@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's transport kit on image B
-   (lib/B/W_LLVMFuzzerTestOneInput_gone_tk.v, a Theorem Labs lane's, fee5272ac13), for the conversion of ARM_gone to cut_x's
+   (lib/B/W_LLVMFuzzerTestOneInput_gone_tk.v, a Theorem Labs lane), for the conversion of ARM_gone to cut_x's
    invariants.  _gone_tk.v is not edited; its AR-free names (GK_CEIL8, gk_fp_low and its lemmas, gk_akept_*,
    gk_sv8_kept, gk_rom_kept, gk_jt_kept, gk_low) are CITED from it.  Its lemmas that read AR are restated here under their
-   names + _x, merged per item with SmallX's image-A twin lib/A/W_LLVMFuzzerTestOneInput_gone_tk_x.v (95a5de32ab2), over
+   names + _x, merged per item with SmallX's image-A twin lib/A/W_LLVMFuzzerTestOneInput_gone_tk_x.v, over
    ARx at the ghost list [] (cut_x's HP0): gk_blk_x, gk_alist_x, gk_asrc_x, gk_aentry_x, gk_arelay_x, gk_aout_x,
    gk_amodel_kept_x, gk_ainput_kept_x (_gone_tk.v's two Sections are one here: they have the same variables).
    AR's al_blocks gives a live block's size bound 0 <= n, AR_laws_x's alx_blocks does not: it is the Section hypothesis

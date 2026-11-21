@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/Halts_tfib.v, by way of grant_asan_halts_of_tfib in proofs/libreac/fuzz_grant/lib/A/AsanTop.v (cold/port-grant 0bed23e5b69), for omx-clap-core/fuzz_preset: the halting theorem only, over fuzz_preset's asan image; the hypothesis gives the trace set and its exit lemma together (HaltsTFIB.v), so the witness lines of grant_asan_halts_of_tfib become one; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/Halts_tfib.v, by way of grant_asan_halts_of_tfib in proofs/libreac/fuzz_grant/lib/A/AsanTop.v, for omx-clap-core/fuzz_preset: the halting theorem only, over fuzz_preset's asan image; the hypothesis gives the trace set and its exit lemma together (HaltsTFIB.v), so the witness lines of grant_asan_halts_of_tfib become one; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* fuzz_preset's asan_halts from the ASan side TFIB_T (HaltsTFIB.v), its one hypothesis, in the form of
    proofs/cgif/cgif_file_fuzzer/lib/Halts_tfib.v: halts_budgets_of_srealizes (Reusable/HaltsKitB.v) over TFIB_T.
    Around TFIB_T this file discharges: the entry premises from valid_entry (valid_entry_sv48); the re-limit of the
@@ -48,7 +49,7 @@ Proof.
     target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp.
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-  exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+  exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
 Qed.
 End a.

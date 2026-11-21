@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -64,6 +65,7 @@ End X.
 End HSN.
 
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -75,7 +77,7 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis nx0_ge7 : APS.nx0_ok nx0.   (* [comment removed for export] *)
 Variable FS0 : Fs.Fs.
 
-Lemma node_forget8_sound : forall a lo hi, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => HSN.node_forget8 SEGS nx0 cs a lo hi).
+Lemma node_forget8_sound : forall a lo hi, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => HSN.node_forget8 SEGS nx0 cs a lo hi).
 Proof.
   intros a lo hi cs cs' E R FULL model T HC _ Hn Hk.
   unfold HSN.node_forget8 in Hn.
@@ -145,7 +147,7 @@ Proof.
   destruct (Z.ltb_spec (Z.lxor (bv_unsigned x) (bv_unsigned y)) 1); [lia|reflexivity].
 Qed.
 
-Lemma node_neq_reg_sound : forall r, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => HSN.node_neq_reg cs r).
+Lemma node_neq_reg_sound : forall r, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => HSN.node_neq_reg cs r).
 Proof.
   intros r cs cs' E R FULL model T HC _ Hn Hk.
   unfold HSN.node_neq_reg in Hn.
@@ -177,7 +179,7 @@ Proof.
   - reflexivity.
 Qed.
 
-Theorem hs_xn_sound : ext_stmt SEGS A nx0 LIMIT (HSN.xn SEGS nx0) SINV argH FS0.
+Theorem hs_xn_sound : ext_stmt SEGS A nx0 LIMIT (HSN.xn SEGS nx0) SINV argH FS0 sfl.
 Proof.
   intros id args. destruct id as [|id]; [intros cs cs' E R FULL model T _ _ H; discriminate H|].
   do 102 (destruct id as [|id]; [intros cs cs' E R FULL model T _ _ H; discriminate H|]).

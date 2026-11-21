@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1165 of its 1242 lines of code are new or changed and 437 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_E2.v, with its module paths and module names changed; 856 of its 961 lines of code are new or changed and 1137 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved *)
 (* rule 24: proves no function (kind: segment lemma) *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30): segments CB4 / CB5 / CB6 (Read1-3, the GUARD
    parts) of the re-walk of check_no_overread (cno, entry 0x819f0) against the kit's text tcheck_no_overread_specX. Sub-lane
    CnoB102rR.CutR4 of lane CnoB102r (a Theorem Labs lane, the internal file PLAN-cno-caw-102.md 5.2 rows CB4-CB6). The port of image A''s
-   Cno102A_R6.v (CA6-CA8, a working branch 41dfdb047827) to B'. Each segment ends at the parse_noting
+   Cno102A_R6.v (CA6-CA8, a working branch) to B'. Each segment ends at the parse_noting
    call state (cnb_ex_pn1 / pn2 / pn3, the `jal parse_noting`, which the PN steps take) or at the next cut.
-   INPUTS (by path): the contract lib/B/Prog/Cno102B_Base.v (a working branch 75415fdb6e76, blob
-   20c89a1d4da2: the kit CUT a working branch 7cdbb61b5fa0; cnb_pre CTX0 D without DW, cnb_base .. k wk over
+   INPUTS (by path): the contract lib/B/Prog/Cno102B_Base.v (a working branch, blob
+   20c89a1d4da2: the kit CUT a working branch; cnb_pre CTX0 D without DW, cnb_base .. k wk over
    the budgeted journal cnb_J D wk and their forms cnb_baseR / cnb_JR at a world relation R (cnb_baseR_mono between two
    relations), each cut X beside its form XR at R (cnb_at_read2R .. cnb_at_freeR, cnb_ex_read3R .. cnb_ex_freeR),
    cnb_cdead D, cnb_fo D W mem Lam o d st, the hull stage suffixes cnb_hrest_* and their split equations); the
@@ -24,7 +25,7 @@
    reads), YCbqG.v 219748197d6b (ajournal_xw read by its ajx_* projections, ajournal_xwR by its ajxR_* projections;
    ajournal_x_exec / ajournal_x_execR); YA0nH.v / YSRrG.v (SRrG, wle' and SRr', SRr'_bind / SRr'_ret), YC80x.v
    (SRr_step_invR); lib/Spec/PresetHullBudget.v (hull_budget, hull_budget_app, hull_used_refl).
-   Re-fit of the f97c file (b3de1968a565 / 2700059a3579) to the cut: the cuts' spent wild budget is 0 at read1 / pn1, 2
+   Re-fit of the f97c file to the cut: the cuts' spent wild budget is 0 at read1 / pn1, 2
    at read2 / pn2, 4 at read3 / pn3, 6 at cmp / free; these segments call only the FIXED-trace fuzz_alloc_ran_out, so the
    budget is kept along each stretch and raised by the kit's cnb_base_mono (CB4, r4_mono) / cnb_base_monoR (CB5 / CB6,
    r4_monoR) where a reading is skipped (read1 -> free 0 -> 6, read2 -> read3 2 -> 4, read3 -> cmp 4 -> 6). The rc-slot

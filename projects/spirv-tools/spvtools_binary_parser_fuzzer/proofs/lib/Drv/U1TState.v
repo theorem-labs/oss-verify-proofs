@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -232,7 +233,7 @@ Context {AC : AllocCeiling}.
       apply img_iff. pose proof (sx_region_img a Hs). lia.
     Qed.
 
-    Lemma core_stack_room : forall S, 0 <= S <= 8388608 - 208 -> stack_room RSEGS M (sp0 - 208) S.
+    Lemma core_stack_room : forall S, 0 <= S <= 6144513 - 208 -> stack_room RSEGS M (sp0 - 208) S.
     Proof.
       clear Hsp Hcap HL6. intros S HS. unfold stack_room.
       replace (Z_to_bv 64 (sp0 - 208 - S)) with (Z_to_bv 64 (sp0 - 8388608 + (8388608 - 208 - S))) by (f_equal; lia).

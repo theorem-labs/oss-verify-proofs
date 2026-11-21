@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (open's region10_ok also asks the facts for the pathname buffer's end at or below TASK_SIZE, P10_END and p10_end_ok, as openat now answers CstrFault on a pathname that reaches TASK_SIZE). *)
 From Stdlib Require Import ZArith Bool List.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -48,11 +49,30 @@ Definition STAGE_LEN : int := 65536%uint63.
 Definition AT_FDCWD_w : w64 := neg 100.
 Definition open_flags_ok (v : sv) : bool := is_lit v (wlit 32768%uint63) || is_lit v wzero.
 
+(* LPS 08b1429: [State.read_cstr_aux] now tests [State.access_okb a 1] before every
+   byte it steps (75d69e00 theories/LinuxProcessSem/State.v:1556), so openat answers
+   [CstrFault] on a pathname that reaches [TASK_SIZE].  The launch already proves the
+   buffer ends below it -- [Glue.InitLib.f_a1_end] -- and every root and certificate
+   fact table already carries that fact; this conjunct is what lets
+   [CtrSys.open_pre_facts] read it out of [s_facts]. *)
+Definition P10_END : sv := VAlu ALU_ADD (VP 10%uint63 wzero) SIZE10.
+
+(* Any literal bound at or below TASK_SIZE will do, and the tables carry two of them:
+   18 sites say 140737488355328 and the two ASan roots say 140737488355312.  Matching a
+   single literal would miss the tighter one, so test the value, the way
+   [Glue.DrvTop.ranged] does. *)
+Definition p10_end_ok (f : fact) : bool :=
+  match f with
+  | FULe a (VL c) => sv_eqb a P10_END && (w2Z c <=? 140737488355328)
+  | _ => false
+  end.
+
 Definition region10_ok (st : sstate) : bool :=
   match IMap.find 10%uint63 (s_regs st) with
   | Some (Region lo hi w (BGBlob j sh) cells) =>
       PrimInt63.eqb lo 0%uint63 && sv_eqb hi SIZE10 && negb w && PrimInt63.eqb j 3%uint63 && PrimInt63.eqb sh 0%uint63
       && match cells with IMap.Leaf => true | _ => false end
+      && fact_lookup (s_facts st) p10_end_ok
   | _ => false
   end.
 

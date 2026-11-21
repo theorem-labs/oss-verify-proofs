@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failed load is split on range_meets_vvar; step_accesses_sc_fail now says a failed sc reports only its store-permission probe at the address). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import bitvector.
@@ -80,7 +81,7 @@ Proof.
   intros S t Ht. induction Ht as [c | c | c | c | c | c | n a k HS Hk IH | n a v k HS Hk IH];
     intros m report H; cbn [interp_eff_accesses] in H; try discriminate H.
   - inversion H; subst. constructor.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs |]; [| discriminate H].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs |]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m)
       as [r0 | |] eqn:E; try discriminate H.
     inversion H; subst. cbn [accessed_ranges]. constructor; [exact HS | exact (IH _ m r0 E)].
@@ -107,6 +108,9 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+(* A failing sc is no longer access-free: the model probes the store
+   permission at [a] with a load and a store back of the same bytes, so
+   every range the step reports is that probe, at [a], of the sc's width. *)
 Theorem step_accesses_sc_fail : forall ms w wd x y rd rs1 rs2 isz report,
   fetch_word segs (ms_pc ms) = Some w -> is_ecall w = false ->
   decode_any w = Some (Sc wd x y rd rs1 rs2, isz) ->
@@ -116,14 +120,15 @@ Theorem step_accesses_sc_fail : forall ms w wd x y rd rs1 rs2 isz report,
   | None => false
   end = false ->
   step_accesses segs ms = MachineOk report ->
-  @accessed_ranges _ report = [].
+  Forall (fun r : word * nat =>
+            fst r = rget (lz_core ms) rs1
+            /\ snd r = match wd with AW => 4%nat | AD => 8%nat end)
+         (@accessed_ranges _ report).
 Proof.
   intros ms w wd x y rd rs1 rs2 isz report Hf He Hd Hal Hres H.
-  unfold step_accesses in H. rewrite Hf in H.
-  unfold decode_exec_accesses in H. rewrite He, Hd in H. fold (lz_core ms) in H.
-  cbn [exec] in H. cbv zeta in H. rewrite Hal in H. cbn [negb] in H.
-  change (c_resv (lz_core ms)) with (ms_resv ms) in H. rewrite Hres in H.
-  cbn [interp_eff_accesses] in H. inversion H; subst. reflexivity.
+  pose proof (step_accesses_exact ms w (Sc wd x y rd rs1 rs2) isz report Hf He Hd H) as HF.
+  eapply Forall_impl; [|exact HF]. intros r [E1 E2].
+  cbn [exec_addr exec_nbytes] in E1, E2. split; [exact E1 | exact E2].
 Qed.
 
 End WithSegs.

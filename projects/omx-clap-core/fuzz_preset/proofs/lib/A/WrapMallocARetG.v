@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A (asan, pin 1be0f53d96cb), field M2 (wm_ret) of
-   a Theorem Labs lane's Record wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v:165) over ANY allocator relation ARX that
+   a Theorem Labs lane's Record wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v:166) over ANY allocator relation ARX that
    ARcf frames (a Theorem Labs lane 2026-10-30 00:07Z: preset's AMALLOC assembly runs at a Theorem Labs lane's call-site relation ARXq_cf).
    wm_ret_gen is lib/A/WrapMallocARet.v's wm_ret_A with ARXh_A B replaced by a Section variable ARX and exactly two
    named hypotheses about it:
@@ -14,7 +15,7 @@
     (WrapMallocAQ.v: the layer's ARXq_cf at IOK := (fun i => i = as_inst B), AImg_A), the relation the A' walk lands at
     (wm_ret_q).
    The machine runs are WrapMallocARetM.m_null / m_blk; this file is the allocator-side glue, by the method of
-   plugin-hostd/fuzz_reply's lib/A/RGthinS6.v rt_seg_npost (a working branch 66a127cb11e): the same
+   plugin-hostd/fuzz_reply's lib/A/RGthinS6.v rt_seg_npost (a working branch): the same
    SRr / RGtop framework. Rule 24 and the relocation check: the internal file RULE24-W6PRE.md.
    What the glue does:
    - the stack is not in AOXm_cf at either layout (AR_stack_law_ok_cf for aowned; xs_placed_cf's disjointness from
@@ -22,7 +23,7 @@
      and the caller's window from memA to mem2;
    - on a block, malloc_cf_apath_success (YGcfApath.v:38) puts (q, n) in blocks S2 and block_user_range_cf
      (YGcfBlockRange.v:31) puts it below ASAN_CEIL, hence off the stack and non-zero;
-   - after the run, ARcf at mem' by AR_frame_law_ok_cf (YG0qcf.v:667): the run writes only the caller's stack window
+   - after the run, ARcf at mem' by AR_frame_law_ok_cf (YG0qcf.v:668): the run writes only the caller's stack window
      and errno, neither owned (errno is inside the image and not in Tfib_owned_static), and neither in_band_rw.
    No Admitted / Axiom. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

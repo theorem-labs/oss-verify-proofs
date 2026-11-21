@@ -13,7 +13,7 @@
    - fs_head_apart_rest: a head removed from a pairwise-disjoint U is apart from the rest (disown's premise).
    ONE COPY (ruling 23:1xZ): single writer a Theorem Labs lane; another imports it. Rule 24: grep of FSW_K, FSW_ret,
    FSW_rres, FSW_K3 and a Theorem Labs lane's kit branches (all working branches) for a block-shadow / shent setup found only
-   FSW_K.v:255-260's note (fs_Bx / fs_Bspan, "one shent per object", the donor's A/ACes.v:28-29); no lemma.
+   FSW_K.v:256-261's note (fs_Bx / fs_Bspan, "one shent per object", the donor's A/ACes.v:28-29); no lemma.
    Ported from: FSupoison.v's block_granule0 / ush16_out (a Theorem Labs lane's FMupoison), YG0v's block_shadow; the region_ok form of
    FSW_statics.v's fs_pstat_region. No rename. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

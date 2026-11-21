@@ -3,21 +3,22 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 1917 of its 1994 lines of code are new or changed and 2709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_put_grow_tail.v, with its module paths, module names and numbers changed; 2 of its 286 lines of code are new or changed and 1710 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): put's GROW arm, second half, the piece pgt_src_after: the source range
    [s, s + n) when fuzz_realloc returns to put (resume pc 542080 = 0x84580), over lib/B/FSW_put_grow_tail.v's Section
    data (copied below, same order).
    B FACTS this piece uses (it runs no code; it reasons on blocks and memory only):
-   - B's image is [0x10000, 0x5fd000) (lib/B/FSW_put.v:182 fsw_pf_in_img); every FS_RO_STRS literal, its NUL included,
+   - B's image is [0x10000, 0x5fd000) (lib/B/FSW_put.v:183 fsw_pf_in_img); every FS_RO_STRS literal, its NUL included,
      lies in it (:193 fsw_pf_ro_strs_img); the read-only image lies below the shadow (:202 fsw_pf_roP_low).
    - put's frame on B is 112 bytes (the call's sp is spZ regs - 112, HMF). The proof needs only 112 <= STK_put, which it
      computes; no STK value is pinned.
    - Of fs_img_facts' cstr_ok (lib/A/FSH_Gen.v) it reads the byte list, range_addressable and shadow_hull_vis over
-     length l + 1 only, never the alloc_ceiling bound (`+ 8` on c33a9d6a7d4, `+ 1` on a9edd281227): built green on both.
-   TAKEN FROM: lib/A/FSW_put_grow_tail.v:1606-1825 (pgt_src_after) at a working branch 860b2fb1188,
-   statement and proof text unchanged but the STK bound (A: 4208 <= STK_put). B kit: lib/B/FSW_put.v:182, :193, :202,
+     length l + 1 only, never the alloc_ceiling bound (`+ 8`, `+ 1`): built green on both.
+   TAKEN FROM: lib/A/FSW_put_grow_tail.v:1607-1826 (pgt_src_after) at a working branch,
+   statement and proof text unchanged but the STK bound (A: 4208 <= STK_put). B kit: lib/B/FSW_put.v:183, :194, :203,
    :230 fsw_pf_ush_out, :239 fsw_pf_ra_raw, :248 fsw_pf_hull_raw, :258 fsw_pf_blk_disj, :273 fsw_pf_heads_out,
-   :285 fsw_pf_img_out, :302 fsw_pf_unp; lib/B/FSW_rd.v:566 fsw_roP_img, :602 arodata_kept; lib/B/FSW_K.v:89 fsw_ARU,
-   :123 fsw_sp, :549 mbyte_below, :575 arodata_below; lib/B/FSW_put_grow_tail.v:213 pgt_pstat_img, :218 pgt_pstat_not_ro,
+   :285 fsw_pf_img_out, :302 fsw_pf_unp; lib/B/FSW_rd.v:567 fsw_roP_img, :602 arodata_kept; lib/B/FSW_K.v:90 fsw_ARU,
+   :123 fsw_sp, :549 mbyte_below, :575 arodata_below; lib/B/FSW_put_grow_tail.v:214 pgt_pstat_img, :218 pgt_pstat_not_ro,
    :232 pgt_same_start.
    rule 24: proves no function (kind: segment lemma). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -53,7 +54,7 @@ Variable B : asyms.
 Hypothesis HSS : FsShadowSyms B.
 Hypothesis RT_memcpy : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Hypothesis IMG : fs_img_facts tfibsegs B.
-(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path from dda8331bd25:
+(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path:
    CTX-free with its `cnt <> fail ->` room guards), discharged at composition. *)
 Hypothesis HREALLOC : fuzz_realloc_spec tfibsegs B.
 

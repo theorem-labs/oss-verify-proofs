@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a module path qualified against its K5.Common twin). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
@@ -169,7 +170,7 @@ Proof.
   - destruct (hk_hull a Hin) as [E1 E2]. rewrite E1, E2. reflexivity.
   - destruct (MR a) as [b|] eqn:Hm.
     + rewrite (hk_mr_some a ltac:(rewrite Hm; discriminate) Hlt), Hm. reflexivity.
-    + exfalso. apply Ha. unfold PropExec.seg_rom, memory_read. cbn [Z.of_N]. rewrite (SEGS_in_hull a Hin). reflexivity.
+    + exfalso. apply Ha. unfold K5.Common.PropExec.seg_rom, memory_read. cbn [Z.of_N]. rewrite (SEGS_in_hull a Hin). reflexivity.
 Qed.
 
 (* [comment removed for export] *)

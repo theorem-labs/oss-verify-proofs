@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* reac_ctrl_parse (0x83578) of fuzz_ctrl's ASan build (image A, libreac v1.9.0): its contract, in the caller-journal
    form (it writes the caller's `struct reac_ctrl_parsed` when o <> 0).  The function takes a side-stack frame of
    class 1, calls __asan_memset once, __asan_memcpy twice, the bcmp wrapper (through
@@ -31,8 +32,8 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 Section b. Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil}.
 Context {SK : lib.Reusable.YI16.sink_head}.
-(* The concrete image instance: `pa_segs PI_ctrl` reduces to `tfibsegs` (CtrlImg.v:82-83), so every SEGS of this
-   statement is written `tfibsegs` (AB1v.v:11) and CtrlCallerJ's tcj_* lemmas apply unchanged. *)
+(* The concrete image instance: `pa_segs PI_ctrl` reduces to `tfibsegs` (CtrlImg.v:83-84), so every SEGS of this
+   statement is written `tfibsegs` (AB1v.v:12) and CtrlCallerJ's tcj_* lemmas apply unchanged. *)
 #[local] Notation VAL := (@pa_val _ ctrl_listing PI_ctrl).
 #[local] Notation BASE := (@pa_val _ ctrl_listing PI_ctrl A_TEXT).
 (* The entry slot of reac_ctrl_parse on the position-abstract listing (AF_reac_ctrl_parse = 0x269c, CtrlList.v:17). *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PutB_Base.v, with its module names changed; 267 of its 318 lines of code are new or changed and 1354 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): the journals of this kit are the
    engine's R forms at R := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf (ajournal_xwR / ajournal_xR, the notations AJW / AJ),
    the relation of the glue's crt_live_journal. Statements otherwise and proofs unchanged (they read the journal by
@@ -18,8 +19,8 @@
    row's statement.
 
    MOVED, NOT RESTATED. Every statement below is copied character for character, and every proof too except the two
-   changes named after this list, from
-     commit 5e6329de569, proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Crt102B_T4.v,
+   changes named after this list,,
+     proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Crt102B_T4.v,
      blob bfc220939b38.
    The nine helpers, each with its line in that blob:
      cb4_fb :410, cb4_sp :628, cb4_ar0 :642, cb4_ff :646, cb4_doc_home :667, cb4_ro_img :702,
@@ -34,22 +35,22 @@
    TWO CHANGES SINCE THE MOVE (2026-10-30): (1) cb4_live_call's proof reads and builds crt_live /
    crt_frame by their Record fields (the glue's Records re-cut; its statement is unchanged); (2) cb_J_B_ccnt24 is NEW
    here (not moved): the class-24 bound at the B' join, for row T8, derived from crt_at_J_B (see its comment).
-   KB ROUND (the kb Glue c580eb0fe37c: crt_live carries a budget kb and its journal is `exists WS, AJW .. WS /\ wbudget
-   [] kb WS`), the B' twin of the A' kit at a54cc6d36c2c: cb4_ff and cb4_chain take the journal at any budget WS;
+   KB ROUND (the kb Glue: crt_live carries a budget kb and its journal is `exists WS, AJW .. WS /\ wbudget
+   [] kb WS`), the B' twin of the A' kit: cb4_ff and cb4_chain take the journal at any budget WS;
    cb4_live_call takes the live state at kbg and the caller's journal after the call at a WS2 within kbg', and gives the
    live state at kbg' (as Crt102Kit.crt102rw_live_call); cb4_live_mono is NEW, the budget step up kb <= kb' (as
    Crt102Arms.arms_live_mono).
 
-   BASE: commit 86b9958cfd5c - the contract texts and Spec
+   BASE: - the contract texts and Spec
    (PRH_Base fdb45545469b, PRH_FnCheck 9ecd8eb167c6, PresetReqAt 43c958024221, PresetRun 5ac818ab1fe6), S1Ledger
    8cf15eeb6311, the glue lib/A/Prog/Crt102Glue.v. No moved lemma reads a conjunct that the base changed:
-   cb4_live_call passes crt_side whole (its arguments are unchanged at the kit tip, Crt102Glue.v:223-225), and the
+   cb4_live_call passes crt_side whole (its arguments are unchanged at the kit tip, Crt102Glue.v:224-226), and the
    intro pattern of cb4_chain names HPRE's conjuncts after afn_pre_x by position; its last name, Hrac, which no step
    uses, now binds the conjunction that ends in the frm_zero conjunct the kit tip appended (PRH_Base.v:602-610).
    No moved lemma names crt_at_J_B, crt_at_C_B, crt_at_L3_B, crt_at_L0_B or prh_ledger (the new cb_J_B_ccnt24 reads
    crt_at_J_B's fields crt_at_J_B_r0 and crt_at_J_B_count).
 
-   build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1,
+   build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS,
    PAU pau-preset-102. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -122,7 +123,7 @@ Variables (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS) (regs : bvm
   (CTX0 : list (list Z)) (a_mod_at a_stamp : Z).
 #[local] Notation sp0 := (spZ regs).
 #[local] Notation sp1 := (@CRT_sp1 regs).
-(* crt_live / crt_side carry no room position since 11c39f7e88b7 (so they take no rp_* argument); the position
+(* crt_live / crt_side carry no room position (so they take no rp_* argument); the position
    travels as crt_pos on the r = 0-path boundaries only *)
 #[local] Notation liveB := (crt_live (rc := rc) (PI := prh_img_B) (RL := RL) (SK := SK) (L := B_prog_listing)
   (PA := PA) (B := B) (ARx := ARx) (ly := ly) (S := S) (Hp := Hp) (W := W) (regs := regs) (mem := mem) (md := md)
@@ -195,8 +196,8 @@ Qed.
 
 (* ======================================================================================================== *)
 (* SHARED CALL INFRASTRUCTURE of the W walk (every call of T4 is made at sp = s1 = CRT_sp1 with s0 = the entry sp).
-   B' twins of Crt102Arms.v 97a937b1e61 (arms_fregs_trans, arms_rdword_of_val_mem, arms_fpchain_keep, arms_chain,
-   arms_dregs_pres / _eq) and of Crt102Rewrite.v 370f759b180 (crt102rw_live_call), the register set B''s. *)
+   B' twins of Crt102Arms.v (arms_fregs_trans, arms_rdword_of_val_mem, arms_fpchain_keep, arms_chain,
+   arms_dregs_pres / _eq) and of Crt102Rewrite.v (crt102rw_live_call), the register set B''s. *)
 Lemma cb4_fregs_trans : forall f1 f2 f3, fregs_kept_x f1 f2 -> fregs_kept_x f2 f3 -> fregs_kept_x f1 f3.
 Proof. intros f1 f2 f3 H12 H23 r Hr. rewrite (H23 r Hr). exact (H12 r Hr). Qed.
 

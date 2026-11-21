@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the channel-reader premise of writev; the model's m_kernel field). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From Ltac2 Require Import Ltac2 Constr Std Control.
@@ -39,18 +40,27 @@ Lemma ag_lt : forall (S : sst) E1 E2 x, agree (s_next S) E1 E2 -> (502 <= s_next
 Proof. intros S E1 E2 x H Hn Hx. symmetry. apply H. lia. Qed.
 
 Section T4.
-Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry], [brk], with
+   [Hvl] and [Hlau]) as PDrvMain's Handoff section does; argv/envp are fields of
+   [inp] and the argv strings sit below the draw's [ed_top]. [Hfits] is kept so the
+   statement is unchanged, now stated over the [av]/[ev] notations. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
+Variables sp0 brk : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp0.
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Hfits : entry_stack_fits sp0 av ev.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 Hypothesis Hargc2 : length av = 2%nat.
 Variables IMG_LO IMG_END HTOP : Z.
 Variable STATIC : list ivl.
@@ -64,36 +74,36 @@ Hypothesis HCELL : forall hs m m' md, hi_Heap HI hs m md -> munch CELLS_NE m m' 
   (forall a, 0x63da0 <= a < 0x63da8 \/ 0x95e40 <= a < 0x95e48 -> mrd PSEGS m' (Z_to_bv 64 a) = mrd PSEGS m (Z_to_bv 64 a)) -> hi_Heap HI hs m' md.
 Hypothesis HNL : forall hs m md, hi_Heap HI hs m md -> NL m.
 Hypothesis HSTATI : forall x, ~ ioutside IMGIV x -> ioutside (CELLS_NE ++ ERRC) x -> ioutside STATIC x.
-Hypothesis HMV : forall hs m md md', hi_Heap HI hs m md -> m_vmmaps md' = m_vmmaps md -> m_halted md' = None -> m_vm_lazy md' = [] -> hi_Heap HI hs m md'.
+Hypothesis HMV : forall hs m md md', hi_Heap HI hs m md -> m_vmmaps md' = m_vmmaps md -> m_kernel md' = m_kernel md -> m_halted md' = None -> m_vm_lazy md' = [] -> hi_Heap HI hs m md'.
 Hypothesis HSTATR : forall x, RSX x -> ioutside STATIC x.
 Variable data : list byte.
 Variable fs0 : Fs.Fs.
 Hypothesis Hlk : fs_lookup fs0 (nth 1 av []) = Some data.
 
-Let E := E_main sp0 av ev tid (canary rdraw) regs.
-Local Notation MFXR' := (MFXR sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC).
-Local Notation TRHEAD' := (TRHEAD sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
+Let E := E_main inp sp0 (ed_top rdraw) tid (canary rdraw) regs.
+Local Notation MFXR' := (MFXR inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC).
+Local Notation TRHEAD' := (TRHEAD inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
 Local Notation CL := (Z.of_nat (config_len data)).
 Local Notation CALLS := (Z.of_nat (n_calls data)).
 
 
 
-Local Notation avoid_m2' := (avoid_m2 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATI).
-Local Notation mfxr_munch' := (mfxr_munch sp0 av ev tid rdraw regs mem Hsp Hargc2 IMG_LO IMG_END HTOP STATIC HI HOK).
-Local Notation ITHEAD' := (ITHEAD sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
+Local Notation avoid_m2' := (avoid_m2 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATI).
+Local Notation mfxr_munch' := (mfxr_munch inp sp0 tid rdraw regs mem Hsp Hargc2 IMG_LO IMG_END HTOP STATIC HI HOK).
+Local Notation ITHEAD' := (ITHEAD inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
 
 (* [comment removed for export] *)
 Definition TLHEAD (S : sst) (kc : Z) (E1 : valu) (ms : machine_state) (md : Model) (hs : hi_HS HI) (len cap buf : Z) : Prop :=
   agree 200 E E1 /\ sden PSEGS E1 S ms /\ ms_rom ms = seg_rom PSEGS /\ E1 N0 = Z_to_bv 64 len /\ E1 BUF = Z_to_bv 64 buf /\
   E1 CLV = Z_to_bv 64 CL /\ E1 RV = Z_to_bv 64 CALLS /\
   MFXR' (ms_mem ms) /\ hi_Heap HI hs (ms_mem ms) md /\ m_halted md = None /\ m_vm_lazy md = [] /\
-  m_fds md = FDS0 /\ m_fs md = fs0 /\ In (buf, cap) (hi_blocks HI hs) /\
+  m_fds md = FDS0 /\ m_fs md = fs0 /\ m_channel_reader md = true /\ In (buf, cap) (hi_blocks HI hs) /\
   len = Z.of_nat (length data) /\ 6 + CL <= len < cap /\ CAPOK cap /\ U md <= UT0 + kc * FUZZ_CHARGE.
 
 (* [comment removed for export] *)
 Definition EXHEAD (S : sst) (E1 : valu) (ms : machine_state) (md : Model) : Prop :=
   agree 200 E E1 /\ sden PSEGS E1 S ms /\ ms_rom ms = seg_rom PSEGS /\ E1 RV = Z_to_bv 64 CALLS /\
-  MFXR' (ms_mem ms) /\ NL (ms_mem ms) /\ m_halted md = None /\ m_vm_lazy md = [] /\ m_fds md = FDS0 /\ m_fs md = fs0.
+  MFXR' (ms_mem ms) /\ NL (ms_mem ms) /\ m_halted md = None /\ m_vm_lazy md = [] /\ m_fds md = FDS0 /\ m_fs md = fs0 /\ m_channel_reader md = true.
 
 (* [comment removed for export] *)
 Definition fr_tmpl (X : sst) (ra c : Z) (a0l : lin) (FFP : list fpr) : bool :=
@@ -126,18 +136,18 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-Local Notation seg_xfer' := (seg_xfer sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI).
-Local Notation invr_fx' := (invr_fx sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HIMG).
+Local Notation seg_xfer' := (seg_xfer inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI).
+Local Notation invr_fx' := (invr_fx inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HIMG).
 
 
-#[using="uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI"] Lemma it_fx : forall (S L : sst) kc E1 E2 ms1 ms2 md hs len cap buf al ow,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI"] Lemma it_fx : forall (S L : sst) kc E1 E2 ms1 ms2 md hs len cap buf al ow,
   ITHEAD' S kc E1 ms1 md hs len cap buf al ow -> agree (s_next S) E1 E2 -> sden PSEGS E2 L ms2 -> ms_rom ms2 = ms_rom ms1 ->
   (forall x, outside E1 (s_rgs S) x -> ms_mem ms2 x = ms_mem ms1 x) -> mem_grows (ms_mem ms1) (ms_mem ms2) ->
   shape (s_rgs S) = shape (s_rgs P_main2) -> cells_tmpl S = true -> cells_tmpl L = true -> (502 <= s_next S)%positive ->
   ITHEAD' L kc E2 ms2 md hs len cap buf al ow.
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI : LiaFast.U) => LiaFast.u0).
   intros S L kc E1 E2 ms1 ms2 md hs len cap buf al ow
-    (Ha1 & Hd1 & Hrom1 & HN1 & HB1 & HC1 & HR1 & HAV1 & HOV1 & Hm1 & Hh1 & Hhd & Hld & Hfd & Hfs & Hblk & HL & Hlen & Hcap & HU1 & Hpay)
+    (Ha1 & Hd1 & Hrom1 & HN1 & HB1 & HC1 & HR1 & HAV1 & HOV1 & Hm1 & Hh1 & Hhd & Hld & Hfd & Hfs & Hrd & Hblk & HL & Hlen & Hcap & HU1 & Hpay)
     Ha12 Hd2 Hrom2 Hfr Hgr Hsh Hc1 Hc2 Hnx.
   pose proof (capok_bounds cap Hcap) as Hcb.
   pose proof HOK as ((HB1' & HB2') & _ & _ & HFRAME & HBLK).
@@ -145,7 +155,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
   destruct (seg_xfer' E1 E2 S L ms1 ms2 hs md buf [] Ha1 Ha12 ltac:(lia) Hsh Hd1 Hd2 Hc1 Hc2 Hfr Hgr Hm1 Hh1
               ltac:(exists cap; split; [exact Hblk | cbn; lia]) ltac:(split; [destruct Hbr as [Hbr|Hbr]; lia | split; [cbn; pose proof (sp0_hi sp0 Hsp); destruct Hbr as [Hbr|Hbr]; lia | intros i Hi; cbn in Hi; lia]]))
     as (Ha2 & Hm2 & Hh2 & _).
-  refine (conj Ha2 (conj Hd2 (conj _ (conj _ (conj _ (conj _ (conj _ (conj _ (conj _ (conj Hm2 (conj Hh2 (conj Hhd (conj Hld (conj Hfd (conj Hfs (conj Hblk (conj HL (conj Hlen (conj Hcap (conj HU1 Hpay)))))))))))))))))))).
+  refine (conj Ha2 (conj Hd2 (conj _ (conj _ (conj _ (conj _ (conj _ (conj _ (conj _ (conj Hm2 (conj Hh2 (conj Hhd (conj Hld (conj Hfd (conj Hfs (conj Hrd (conj Hblk (conj HL (conj Hlen (conj Hcap (conj HU1 Hpay))))))))))))))))))))).
   - rewrite Hrom2. exact Hrom1.
   - rewrite (ag_lt S E1 E2) by (first [exact Ha12 | exact Hnx | vm_compute; reflexivity]). exact HN1.
   - rewrite (ag_lt S E1 E2) by (first [exact Ha12 | exact Hnx | vm_compute; reflexivity]). exact HB1.
@@ -155,14 +165,14 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
   - rewrite (ag_lt S E1 E2) by (first [exact Ha12 | exact Hnx | vm_compute; reflexivity]). exact HOV1.
 Qed.
 
-#[using="uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI"] Lemma tl_fx : forall (S L : sst) kc E1 E2 ms1 ms2 md hs len cap buf,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI"] Lemma tl_fx : forall (S L : sst) kc E1 E2 ms1 ms2 md hs len cap buf,
   TLHEAD S kc E1 ms1 md hs len cap buf -> agree (s_next S) E1 E2 -> sden PSEGS E2 L ms2 -> ms_rom ms2 = ms_rom ms1 ->
   (forall x, outside E1 (s_rgs S) x -> ms_mem ms2 x = ms_mem ms1 x) -> mem_grows (ms_mem ms1) (ms_mem ms2) ->
   shape (s_rgs S) = shape (s_rgs P_main2) -> cells_tmpl S = true -> cells_tmpl L = true -> (502 <= s_next S)%positive ->
   TLHEAD L kc E2 ms2 md hs len cap buf.
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI : LiaFast.U) => LiaFast.u0).
   intros S L kc E1 E2 ms1 ms2 md hs len cap buf
-    (Ha1 & Hd1 & Hrom1 & HN1 & HB1 & HC1 & HR1 & Hm1 & Hh1 & Hhd & Hld & Hfd & Hfs & Hblk & HL & Hlen & Hcap & HU1)
+    (Ha1 & Hd1 & Hrom1 & HN1 & HB1 & HC1 & HR1 & Hm1 & Hh1 & Hhd & Hld & Hfd & Hfs & Hrd & Hblk & HL & Hlen & Hcap & HU1)
     Ha12 Hd2 Hrom2 Hfr Hgr Hsh Hc1 Hc2 Hnx.
   pose proof (capok_bounds cap Hcap) as Hcb.
   pose proof HOK as ((HB1' & HB2') & _ & _ & HFRAME & HBLK).
@@ -170,7 +180,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
   destruct (seg_xfer' E1 E2 S L ms1 ms2 hs md buf [] Ha1 Ha12 ltac:(lia) Hsh Hd1 Hd2 Hc1 Hc2 Hfr Hgr Hm1 Hh1
               ltac:(exists cap; split; [exact Hblk | cbn; lia]) ltac:(split; [destruct Hbr as [Hbr|Hbr]; lia | split; [cbn; pose proof (sp0_hi sp0 Hsp); destruct Hbr as [Hbr|Hbr]; lia | intros i Hi; cbn in Hi; lia]]))
     as (Ha2 & Hm2 & Hh2 & _).
-  refine (conj Ha2 (conj Hd2 (conj _ (conj _ (conj _ (conj _ (conj _ (conj Hm2 (conj Hh2 (conj Hhd (conj Hld (conj Hfd (conj Hfs (conj Hblk (conj HL (conj Hlen (conj Hcap HU1))))))))))))))))).
+  refine (conj Ha2 (conj Hd2 (conj _ (conj _ (conj _ (conj _ (conj _ (conj Hm2 (conj Hh2 (conj Hhd (conj Hld (conj Hfd (conj Hfs (conj Hrd (conj Hblk (conj HL (conj Hlen (conj Hcap HU1)))))))))))))))))).
   - rewrite Hrom2. exact Hrom1.
   - rewrite (ag_lt S E1 E2) by (first [exact Ha12 | exact Hnx | vm_compute; reflexivity]). exact HN1.
   - rewrite (ag_lt S E1 E2) by (first [exact Ha12 | exact Hnx | vm_compute; reflexivity]). exact HB1.
@@ -178,15 +188,15 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
   - rewrite (ag_lt S E1 E2) by (first [exact Ha12 | exact Hnx | vm_compute; reflexivity]). exact HR1.
 Qed.
 
-#[using="uid hw Hsp Hva Hve Htid ME Hargc2 HIMG"] Lemma ex_fx : forall (S L : sst) E1 E2 ms1 ms2 md,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 HIMG"] Lemma ex_fx : forall (S L : sst) E1 E2 ms1 ms2 md,
   EXHEAD S E1 ms1 md -> agree (s_next S) E1 E2 -> sden PSEGS E2 L ms2 -> ms_rom ms2 = ms_rom ms1 ->
   (forall x, outside E1 (s_rgs S) x -> ms_mem ms2 x = ms_mem ms1 x) ->
   shape (s_rgs S) = shape (s_rgs P_main2) -> (502 <= s_next S)%positive ->
   EXHEAD L E2 ms2 md.
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 HIMG : LiaFast.U) => LiaFast.u0).
-  intros S L E1 E2 ms1 ms2 md (Ha1 & Hd1 & Hrom1 & HR1 & Hm1 & Hnl1 & Hhd & Hld & Hfd & Hfs) Ha12 Hd2 Hrom2 Hfr Hsh Hnx.
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 HIMG : LiaFast.U) => LiaFast.u0).
+  intros S L E1 E2 ms1 ms2 md (Ha1 & Hd1 & Hrom1 & HR1 & Hm1 & Hnl1 & Hhd & Hld & Hfd & Hfs & Hrd) Ha12 Hd2 Hrom2 Hfr Hsh Hnx.
   destruct (invr_fx' E1 S (ms_mem ms1) (ms_mem ms2) Ha1 Hsh Hfr (conj Hm1 Hnl1)) as [Hm2 Hnl2].
-  refine (conj _ (conj Hd2 (conj _ (conj _ (conj Hm2 (conj Hnl2 (conj Hhd (conj Hld (conj Hfd Hfs))))))))).
+  refine (conj _ (conj Hd2 (conj _ (conj _ (conj Hm2 (conj Hnl2 (conj Hhd (conj Hld (conj Hfd (conj Hfs Hrd)))))))))).
   - intros x Hx. etransitivity; [exact (Ha1 x Hx) | apply Ha12; lia].
   - rewrite Hrom2. exact Hrom1.
   - rewrite (ag_lt S E1 E2) by (first [exact Ha12 | exact Hnx | vm_compute; reflexivity]). exact HR1.
@@ -195,14 +205,14 @@ Qed.
 Definition FFP1 : list fpr := [(0%nat, 57136, 8192); (7%nat, 4, 4)].
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HSTATI"] Theorem free_owned_step : forall (X : sst) (kc : Z) E1 ms md hs len cap buf al ow T,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HSTATI"] Theorem free_owned_step : forall (X : sst) (kc : Z) E1 ms md hs len cap buf al ow T,
   fr_tmpl X 0x22a00 (-208) (lvar OV) FFP1 = true ->
   ITHEAD' X kc E1 ms md hs len cap buf al ow ->
   (forall E2 ms2 md2 hs2, TLHEAD (havoc_call X 0x22a00 KEEPH FFP1 None) kc E2 ms2 md2 hs2 len cap buf -> realizes PSEGS (mkCfg ms2 md2) T) ->
   realizes PSEGS (mkCfg ms md) T.
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HSTATI : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HSTATI : LiaFast.U) => LiaFast.u0).
   intros X kc E1 ms md hs len cap buf al ow T Hft
-    (Ha1 & Hd1 & Hrom1 & HN1 & HB1 & HC1 & HR1 & HAV1 & HOV1 & Hm1 & Hh1 & Hhd & Hld & Hfd & Hfs & Hblk & HL & Hlen & Hcap & HU1 & Hpay) K.
+    (Ha1 & Hd1 & Hrom1 & HN1 & HB1 & HC1 & HR1 & HAV1 & HOV1 & Hm1 & Hh1 & Hhd & Hld & Hfd & Hfs & Hrd & Hblk & HL & Hlen & Hcap & HU1 & Hpay) K.
   destruct (fr_tmpl_spec X 0x22a00 (-208) (lvar OV) FFP1 Hft) as (Gpc & Grv & G1 & G2 & G3 & G4 & G10 & Gok & Gln & G7 & G0b & G0k & G0s & Gsh & Gnx & Gev).
   pose proof (capok_bounds cap Hcap) as Hcb. destruct HIMG as [HI1 HI2].
   pose proof (sp0_lo sp0 Hsp) as SL. pose proof (sp0_hi sp0 Hsp) as SH. pose proof (sp0_al sp0 Hsp) as Al.
@@ -241,20 +251,20 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HSTATI 
       destruct Hpb as [(A & B) | (A & B)]; [lia|]. destruct (HBL ow (len - 6 - CL) A) as (_ & Hor & _).
       split; [destruct Hor as [Hor|Hor]; lia|]. destruct Hor as [Hor|Hor]; [right; left; lia | right; right; lia]. }
     split; [exact Hh2|]. split; [exact Hh2l|]. split; [exact Hl2l|].
-    split; [rewrite (vm_only_fds md md2 Hvo); exact Hfd|]. split; [rewrite (vm_only_fs md md2 Hvo); exact Hfs|].
+    split; [rewrite (vm_only_fds md md2 Hvo); exact Hfd|]. split; [rewrite (vm_only_fs md md2 Hvo); exact Hfs|]. split; [rewrite (vm_only_rdr md md2 Hvo); exact Hrd|].
     split.
     { destruct (ow =? 0) eqn:Hz; [apply Hdel; exact Hblk|]. apply Hdel. split; [exact Hblk|]. intros C. injection C as C1 C2. lia. }
     split; [exact HL|]. split; [lia|]. split; [exact Hcap | lia].
 Qed.
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HNL HSTATI"] Theorem free_buf_step : forall (B : sst) (kc : Z) E1 ms md hs len cap buf T,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HNL HSTATI"] Theorem free_buf_step : forall (B : sst) (kc : Z) E1 ms md hs len cap buf T,
   fr_tmpl B 0x22834 (-128) (lvar BUF) HFP = true ->
   TLHEAD B kc E1 ms md hs len cap buf ->
   (forall E2 ms2 md2, EXHEAD (havoc_call B 0x22834 KEEPH HFP None) E2 ms2 md2 -> realizes PSEGS (mkCfg ms2 md2) T) ->
   realizes PSEGS (mkCfg ms md) T.
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HNL HSTATI : LiaFast.U) => LiaFast.u0).
-  intros B kc E1 ms md hs len cap buf T Hft (Ha1 & Hd1 & Hrom1 & HN1 & HB1 & HC1 & HR1 & Hm1 & Hh1 & Hhd & Hld & Hfd & Hfs & Hblk & HL & Hlen & Hcap & HU1) K.
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HNL HSTATI : LiaFast.U) => LiaFast.u0).
+  intros B kc E1 ms md hs len cap buf T Hft (Ha1 & Hd1 & Hrom1 & HN1 & HB1 & HC1 & HR1 & Hm1 & Hh1 & Hhd & Hld & Hfd & Hfs & Hrd & Hblk & HL & Hlen & Hcap & HU1) K.
   destruct (fr_tmpl_spec B 0x22834 (-128) (lvar BUF) HFP Hft) as (Gpc & Grv & G1 & G2 & G3 & G4 & G10 & Gok & Gln & G7 & G0b & G0k & G0s & Gsh & Gnx & Gev).
   pose proof (capok_bounds cap Hcap) as Hcb. destruct HIMG as [HI1 HI2].
   pose proof (sp0_lo sp0 Hsp) as SL. pose proof (sp0_hi sp0 Hsp) as SH. pose proof (sp0_al sp0 Hsp) as Al.
@@ -287,7 +297,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HNL HST
       destruct Hx' as [Hx'|Hx']; [left; split; [destruct Hbr as [Hbr|Hbr]; lia|] | right; lia].
       destruct Hbr as [Hbr|Hbr]; [right; left; lia | right; right; lia]. }
     split; [exact (HNL hs2 (ms_mem ms2) md2 Hh2)|]. split; [exact Hh2l|]. split; [exact Hl2l|].
-    split; [rewrite (vm_only_fds md md2 Hvo); exact Hfd | rewrite (vm_only_fs md md2 Hvo); exact Hfs].
+    split; [rewrite (vm_only_fds md md2 Hvo); exact Hfd|]. split; [rewrite (vm_only_fs md md2 Hvo); exact Hfs | rewrite (vm_only_rdr md md2 Hvo); exact Hrd].
 Qed.
 
 End T4.

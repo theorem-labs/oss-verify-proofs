@@ -1,7 +1,7 @@
-(* Build B (asan-ubsan) port of lib/A/Prog/asan_memcpyF.v (a working branch, commit 33179c325da): the
+(* Build B (asan-ubsan) port of lib/A/Prog/asan_memcpyF.v (a working branch): the
    namespace lib.A -> lib.B only; the proof script is build A's unchanged. Build B's plain proof asan_memcpy_holds
-   (lib/B/Prog/asan_memcpy.v, from bf137c36c75) is lib/A/Prog/asan_memcpy.v modulo namespace, and build B's
-   statement lib/B/Prog/asan_memcpy_cF.v is build A's modulo namespace (d7cbfdfafb1).
+   (lib/B/Prog/asan_memcpy.v) is lib/A/Prog/asan_memcpy.v modulo namespace, and build B's
+   statement lib/B/Prog/asan_memcpy_cF.v is build A's modulo namespace.
 
    asan_memcpy_contract_F (form (D)) by route 1 (ROUTE1.md (a working note, not in this delivery)), in the shape of lib/B/Prog/asan_memsetF.v:
    the run of asan_memcpy_holds on the restricted memory normalize_P m, where P keeps the image [IMG_LO, IMG_HI),

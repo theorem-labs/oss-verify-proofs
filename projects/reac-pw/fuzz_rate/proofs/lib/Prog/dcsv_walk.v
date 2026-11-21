@@ -58,7 +58,7 @@ Proof. intros mask i H. rewrite csv_prefix_S, H. reflexivity. Qed.
 Lemma prefix_clr : forall mask i, Z.testbit mask (Z.of_nat i) = false -> csv_prefix mask (S i) = csv_prefix mask i.
 Proof. intros mask i H. rewrite csv_prefix_S, H. reflexivity. Qed.
 
-(* from 25e3d17bdb50:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:217-219 *)
+(*:proofs/libreac/fuzz_disco/lib/Prog/tj_lemmas.v:217-219 *)
 Ltac fp_tac := unfold sub_fp; let x := fresh "x" in let Hx := fresh "Hx" in intros x Hx; cbn [outside] in *;
   repeat split; try exact I; lia.
 Ltac dj_tac := cbn [disjoint_from cells_size csize Nat.add];

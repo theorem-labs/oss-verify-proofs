@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise, Hrdr and in_channel_reader; main_entry over the launch's ProcInput and entry point; the launch premises valid_launch and entry_launch_ok_va; the vDSO layer: the start configuration's vDSO state dropped by VdsoBridge.realizes_with_vdso_no_text). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.json_c.json_object_fuzzer.images Require Import Ubsan.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require VdsoBridge.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QXup.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QXup.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.UB Require UEQM.
@@ -66,52 +68,67 @@ Section Top.
 Context {AMB : Amb}.
 Context {SL : SrcLim}.
 Hypothesis TGT : target_P.
+(* LPS 727298f3: the far end of the standard channels reads (the launch's in_channel_reader) *)
+Hypothesis Hrdr : a_channel_reader = true.
 
-#[using="TGT"] Theorem drv_main_spec : forall (sp0 : word) (av envv : list (list byte)) (tid : word) (regs0 : bvmap 5 word)
-(mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream),
+#[using="TGT Hrdr"] Theorem drv_main_spec : forall (sp0 : word) (av envv : list (list byte)) (tid : word) (regs0 : bvmap 5 word)
+(mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream) (inp : ProcInput),
 valid_argv av -> valid_envp envv -> valid_sp sp0 -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
-main_entry sp0 av envv tid regs0 mem0 -> valid_brk RSEGS brk ->
+main_entry inp mbase (0x20a38 : word) sp0 av envv tid regs0 mem0 -> valid_brk RSEGS brk ->
 a_sp = sp0 -> entry_stack_fits sp0 av envv ->
 realizes RSEGS (mkCfg (mkst regs0 (0x20b84%bv : word) mem0 (seg_rom RSEGS))
 (with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputC av envv fs0 stdin0))))
 (spec av fs0).
 Proof.
-intros sp0 av envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk ASP Hfit.
+intros sp0 av envv tid regs0 mem0 brk mbase fs0 stdin0 inp Hva Hve Hvsp Htid ME Hbrk ASP Hfit.
 unfold spec.
 destruct av as [|a0s [|path [|x rest]]].
-- apply (UmsF.ref_usage_w sp0 [] envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid ME); [cbn; lia| exact Hfit].
-- apply (UmsF.ref_usage_w sp0 [a0s] envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid ME); [cbn; lia| exact Hfit].
+- apply (UmsF.ref_usage_w sp0 [] envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid inp (0x20a38 : word) ME); [cbn; lia| exact Hfit| exact Hrdr].
+- apply (UmsF.ref_usage_w sp0 [a0s] envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid inp (0x20a38 : word) ME); [cbn; lia| exact Hfit| exact Hrdr].
 - destruct (Nat.leb_spec 4096 (length path)) as [LONG|SHORT].
-+ apply (UleT.ref_open_fail_toolong_w sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid ME Hfit). exact LONG.
++ apply (UleT.ref_open_fail_toolong_w sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid inp (0x20a38 : word) ME Hfit Hrdr). exact LONG.
 + destruct (list_byte_eqb path []) eqn:EMP.
 * apply list_byte_eqb_eq in EMP.
-apply (UleT.ref_open_fail_empty_w sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid ME Hfit). exact EMP.
+apply (UleT.ref_open_fail_empty_w sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid inp (0x20a38 : word) ME Hfit Hrdr). exact EMP.
 * apply list_byte_eqb_false in EMP.
 destruct (list_byte_eqb path dot_path) eqn:DOT.
 -- apply list_byte_eqb_eq in DOT.
 replace (0x20b84%bv : word) with (Z_to_bv 64 0x20b84) by (apply bv_eq; reflexivity).
-apply (drv_main_dir sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk EMP ltac:(lia) eq_refl ASP Hfit DOT).
+apply (drv_main_dir sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid inp (0x20a38 : word) ME Hbrk EMP ltac:(lia) eq_refl ASP Hfit Hrdr DOT).
 -- apply list_byte_eqb_false in DOT.
 destruct (fs_lookup fs0 path) as [data|] eqn:FS.
 ++ replace (0x20b84%bv : word) with (Z_to_bv 64 0x20b84) by (apply bv_eq; reflexivity).
-apply (drv_main_file sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk EMP ltac:(lia) eq_refl ASP Hfit (TGT _ _) data DOT FS).
-++ apply (UleT.ref_open_fail_absent_w sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid ME Hfit); [lia| exact EMP| exact DOT| exact FS].
-- apply (UmsF.ref_usage_w sp0 (a0s :: path :: x :: rest) envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid ME); [cbn; lia| exact Hfit].
+apply (drv_main_file sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid inp (0x20a38 : word) ME Hbrk EMP ltac:(lia) eq_refl ASP Hfit Hrdr (TGT _ _) data DOT FS).
+++ apply (UleT.ref_open_fail_absent_w sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid inp (0x20a38 : word) ME Hfit Hrdr); [lia| exact EMP| exact DOT| exact FS].
+- apply (UmsF.ref_usage_w sp0 (a0s :: path :: x :: rest) envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid inp (0x20a38 : word) ME); [cbn; lia| exact Hfit| exact Hrdr].
 Qed.
 End Top.
+
+Lemma with_tid_with_vdso : forall t v m, with_tid t (with_vdso v m) = with_vdso v (with_tid t m).
+Proof. intros t v []. reflexivity. Qed.
 
 Theorem drv_start_spec_lim : forall (lim : Z) (sp brk mbase : word) (rnd : EntryDraw) (inp : ProcInput),
 2^31 <= lim ->
 target_P ->
 valid_sp sp -> valid_brk rsegs brk -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+(* LPS 727298f3: the launch (valid_input_either's valid_launch, valid_entry's fifth conjunct) *)
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+in_channel_reader inp = true ->
 realizes rsegs (init_config rsegs Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rnd lim inp) (spec (in_argv inp) (in_fs inp)).
 Proof.
-intros lim sp brk mbase rnd inp Hlim TGT Hsp Hbrk Hva Hve Hfit.
-apply (ref_startup sp brk mbase rnd lim inp _ Hsp); [exact Hbrk| exact Hva| exact Hve|].
+intros lim sp brk mbase rnd inp Hlim TGT Hsp Hbrk Hva Hve Hfit Hvl Hlau Hrdr.
+apply (ref_startup sp brk mbase rnd lim inp _ Hsp); [exact Hbrk| exact Hva| exact Hve| exact Hvl| exact Hlau|].
 intros tid regs mem Htid ME.
+(* the start configuration's model carries the launch's vDSO layer; the main phase is a walk over the binary's
+   segments, which have no vDSO text, so the layer is dropped by [VdsoBridge.realizes_with_vdso_no_text] *)
+unfold init_config. cbn [cfg_model].
+rewrite with_tid_with_vdso.
+refine (VdsoBridge.realizes_with_vdso_no_text rsegs eq_refl
+  (mkCfg (mkst regs (0x20b84 : word) mem (seg_rom rsegs)) (with_tid tid (init_model (segments_reserved rsegs) brk mbase sp lim inp)))
+  _ _ _).
 rewrite <- (init_model_C_of inp rnd sp Hsp).
-exact (@drv_main_spec (amb_of inp rnd sp Hsp) (mkSrcLim lim Hlim) TGT sp (in_argv inp) (in_envp inp) tid regs mem brk mbase (in_fs inp) (in_stdin inp)
+exact (@drv_main_spec (amb_of inp rnd sp Hsp) (mkSrcLim lim Hlim) TGT Hrdr sp (in_argv inp) (in_envp inp) tid regs mem brk mbase (in_fs inp) (in_stdin inp) inp
 Hva Hve Hsp Htid ME Hbrk (a_sp_of inp rnd sp Hsp) Hfit).
 Qed.
 
@@ -119,18 +136,21 @@ Theorem drv_realizes_P_lim : forall lim : Z, 2^31 <= lim -> target_P ->
 forall (sp brk mbase : word) (rnd : EntryDraw) (inp : ProcInput),
 valid_sp sp -> valid_brk Ubsan.M.loaded_segments brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 valid_input_either inp ->
 realizes Ubsan.M.loaded_segments
 (init_config Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rnd lim inp)
 (spec (in_argv inp) (in_fs inp)).
 Proof.
-intros lim Hlim TGT sp brk mbase rnd inp Hsp Hbrk _ Hfit (Hva & Hve & _). exact (drv_start_spec_lim lim sp brk mbase rnd inp Hlim TGT Hsp Hbrk Hva Hve Hfit).
+intros lim Hlim TGT sp brk mbase rnd inp Hsp Hbrk _ Hfit Hlau (Hva & Hve & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & Hrdr & _).
+exact (drv_start_spec_lim lim sp brk mbase rnd inp Hlim TGT Hsp Hbrk Hva Hve Hfit Hvl Hlau Hrdr).
 Qed.
 
 Theorem drv_realizes_P : target_P ->
 forall (sp brk mbase : word) (rnd : EntryDraw) (inp : ProcInput),
 valid_sp sp -> valid_brk Ubsan.M.loaded_segments brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 valid_input_either inp ->
 realizes Ubsan.M.loaded_segments
 (init_config Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rnd source_alloc_limit inp)
@@ -141,6 +161,7 @@ Theorem drv_realizes_P_san : target_P ->
 forall (sp brk mbase : word) (rnd : EntryDraw) (inp : ProcInput),
 valid_sp sp -> valid_brk Ubsan.M.loaded_segments brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 valid_input_either inp ->
 realizes Ubsan.M.loaded_segments
 (init_config Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rnd sanitizer_source_limit inp)

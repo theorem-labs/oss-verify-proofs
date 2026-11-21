@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstDrainCg.v (commit ce1a656b52b7, file sha256 2fc1ff0e0267) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstDrainCg.v (file sha256 2fc1ff0e0267) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b: the MODEL side of F11, the free-array growth arm of
    SizeClassAllocator64LocalCache::Deallocate (ReturnToAllocator -> EnsureFreeArraySpace -> a KMapFreeArray grant).
    rule 24: no function proved (kind: model-level facts of ensure_free_array's grant step).
@@ -113,7 +114,7 @@ unfold cgX, upd_reg. rewrite prim_committed_set_region by (lia || exact Hlenr). 
 unfold reg. lia.
 Qed.
 
-(* The budget at the grant: abudget_cf carries prim_committed / 8 (the primary's shadow, layer ae2fa80b0325), so a
+(* The budget at the grant: abudget_cf carries prim_committed / 8 (the primary's shadow, layer), so a
    free-array grant raises it by the map AND its shadow (lane F2b's second hand measured the text). *)
 Lemma cg_abudget : abudget_cf cgX = abudget_cf X + kFreeArrayMapSize + kFreeArrayMapSize / 8.
 Proof.
@@ -175,14 +176,20 @@ pose proof cgp_fa as [[F0 F1] _]. pose proof (region_in_prim ly c cgp_LO ltac:(l
 unfold fa_base, region_base in *. unfold kFreeArrayOffset, kFreeArrayMax, kUserMapSize, kFreeArrayMapSize in *. lia.
 Qed.
 
-(* The next free-array slot is not reserved by the image: only the image's segments are reserved (alc_reserved). *)
+(* The next free-array slot is not reserved: the image's segments are below it, and the reservation tail misses the
+   primary reservation that holds it (alc_reserved, YG0n.res_tail_ok). *)
 Lemma cgp_reserved : region_free (vm_reserved (m_vmmaps md)) (w64 fadr) (w64 kUserMapSize) = true.
 Proof.
-rewrite (alc_reserved _ _ _ _ cgp_LED). pose proof cgp_slot as (S1 & S2 & S3). 
-apply region_free_reserved; [exact (RL.al_img_env_cf im_segs ly X md cgp_LO cgp_LED) | | unfold kUserMapSize; lia |].
-- unfold kImgEnd, kHighMemBeg in *. lia.
-- pose proof (lo_high _ cgp_LO) as IP. unfold in_high in IP. cbn [fst snd] in IP. pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as CR.
-  unfold ASAN_CEIL in *. lia.
+destruct (alc_reserved _ _ _ _ cgp_LED) as (rx & Hrx & _ & _ & _ & RP). rewrite Hrx, YG0h.region_free_app.
+pose proof cgp_slot as (S1 & S2 & S3).
+pose proof (lo_high _ cgp_LO) as IP. unfold in_high in IP. cbn [fst snd] in IP. pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as CR.
+apply andb_true_intro. split.
+- apply region_free_reserved; [exact (RL.al_img_env_cf im_segs ly X md cgp_LO cgp_LED) | | unfold kUserMapSize; lia |].
+  + unfold kImgEnd, kHighMemBeg in *. lia.
+  + unfold ASAN_CEIL in *. lia.
+- (* the reservation tail misses the primary reservation (YG0n.res_tail_ok), which holds the slot *)
+  apply (YG0h.region_free_within rx (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact RP | |]; unfold YG0h.uw;
+  rewrite !YG0h.w64_unsigned by (unfold ASAN_CEIL, kUserMapSize, kPrimResvSize, kHighMemBeg in *; lia); lia.
 Qed.
 
 
@@ -312,7 +319,7 @@ destruct (cgp_zones_apart z Hz) as (Z0 & Z1 & DJ).
 unfold in_zr in Hav. exact (cgp_zone_apart z a Z0 Z1 DJ ltac:(lia) Ha).
 Qed.
 
-(* The new map's shadow bytes are present (FGtN.v:95). *)
+(* The new map's shadow bytes are present (FGtN.v:96). *)
 Lemma cgp_shadow : forall a, shadow_addr fadr <= a < shadow_addr fadr + 32768 -> mem (w64 a) <> None.
 Proof.
 intros a Ha. pose proof cgp_slot as (S1 & S2 & S3). destruct cgp_al8 as [q Hq].
@@ -345,7 +352,7 @@ Qed.
 Lemma cgp_amwf : amwf md. Proof. exact (proj1 (proj2 (proj2 (proj2 MR)))). Qed.
 Lemma cgp_top : YM05.ceil_of_top (alloc_top (m_vmmaps md)). Proof. exact (alc_top _ _ _ _ cgp_LED). Qed.
 
-(* The growth arm's premise side, as H3 asks it (DMcdR.rd_grow, commit 74b7ca9a0cc): everything but the byte budget,
+(* The growth arm's premise side, as H3 asks it (DMcdR.rd_grow): everything but the byte budget,
    which is the named OPEN premise FREE_ROOM_cf. *)
 Lemma cgp_rd_grow : FREE_ROOM_cf md W ->
 region_free (vm_reserved (m_vmmaps md)) (w64 fadr) (w64 kUserMapSize) = true /\

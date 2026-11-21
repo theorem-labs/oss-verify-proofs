@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFfu.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: IM8's witness is TFIB_IAL_LO / 8 = 0xa9140 / 8 = 86568; the relocation had moved cgif's quotient 85568 as an address (85616). *)
-(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 (5e580eb5ab5) bounds a class region's mapped user part by kFreeArrayOffset (YG0s cfacts, YG07 prim_chunk_off), not 2 ^ 31; the proofs unfold kFreeArrayOffset where lia needs its value. *)
+(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 bounds a class region's mapped user part by kFreeArrayOffset (YG0s cfacts, YG07 prim_chunk_off), not 2 ^ 31; the proofs unfold kFreeArrayOffset where lia needs its value. *)
 (* Modified by Theorem Labs, 2026-10: afree_common takes In (call_trace ...) (as_universe B) \/ st_nev S < EV_MAX and passes tr_admit (tr_admit_call) to the walk. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

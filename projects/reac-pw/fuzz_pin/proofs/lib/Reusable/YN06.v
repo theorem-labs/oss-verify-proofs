@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN06.v, with its module paths, addresses and numbers changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's ENOMEM refusal arm; the allocator ledger's new fields); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,6 +26,15 @@ Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+(* 08b1429: 215 joined [alloc_mark_sysnos], so [YN02.knode_munmap] now opens with
+   `@amf AM = false ->`: under a may-fail mode munmap may answer an errno of
+   [munmap_errnos] and the single-child node is an incomplete account.  This Section binds AM
+   abstractly, so the fact has to be assumed here and discharged where AM is pinned
+   ([YN33.v:25], [Cfg.AcfgMode]).  A Section Hypothesis rather than a premise on each lemma:
+   Rocq abstracts only the section variables a definition USES, so exactly [tail_some],
+   [slow_mreal] and [src0_free_realizes] gain the argument and the other 60-odd lemmas of this
+   Section are untouched. *)
+Hypothesis AMF : @amf AM = false.
 Lemma resume_ss_mem : forall ss rv rs G, ss_mem (resume ss rv rs G) = rs.
 Proof. reflexivity. Qed.
 Lemma chunk_ok_bytes xv m base off (w : N) e v :
@@ -674,6 +684,7 @@ split; rewrite ?ER, ?EL, ?EN; try apply LG.
 - intros k rg0 off Hk0. rewrite ER in Hk0. exact (lg_noaccess _ _ _ _ LG k rg0 off Hk0).
 - rewrite K2. exact (lg_brk _ _ _ _ LG).
 - intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_placed _ _ _ _ LG k rg0 Hk0).
+- intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_rfree _ _ _ _ LG k rg0 Hk0).
 Qed.
 Lemma ledger_f : ledger_ok B1 L Af mdf /\ ledger_x L Af mdf /\
 m_halted mdf = None /\ m_vm_lazy mdf = [] /\ m_vm_materialized mdf = [] /\ (exists vm', mdf = with_vmmaps vm' md).
@@ -938,7 +949,7 @@ eapply (knode_munmap src0segs regs3 (Z_to_bv 64 MUNMAP_ECALL) mem3 (seg_rom src0
 [exact Hh | exact Hlz | exact E17 | rewrite E10, Ebase; unfold page_size; exact B7
 | rewrite E11; intros E0; apply (f_equal bv_unsigned) in E0; rewrite Elen' in E0; change (bv_unsigned (Z_to_bv 64 0)) with 0 in E0; lia
 | rewrite E10, E11, Ebase, Elen', EPRZ; unfold TASK_SIZE; pose proof (proj1 alloc_ceiling_val); lia
-| rewrite E10, E11, EPR; apply map_has_In; exact B8 |].
+| rewrite E10, E11, EPR; apply map_has_In; exact B8 | exact AMF |].
 unfold munmap_nx. rewrite E10, E11, EPR. cbn beta.
 change (munmap_model (w64 (ly_reg L k)) (w64 (rg_len rgk)) md) with (md_kill L md k rgk).
 assert (Emdf' : mdf = md_kill L md k rgk) by (rewrite Emdf, EPR; reflexivity). rewrite <- Emdf'.

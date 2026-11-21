@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer; the start-up stack layout (the strings above the random bytes, up to ed_top)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run Specs Fs.
@@ -51,17 +52,21 @@ Definition MC : Type := @mchain hnode.
 Definition MK : Type := @mks hnode.
 
 (* [comment removed for export] *)
-Definition F0 : sst * smodel := List.nth 0 FINC (S0c 176 4080 5, M0).
+Definition F0 : sst * smodel := List.nth 0 FINC (S0c false 176 4080 5, M0).
 Definition S1 : sst := fst F0.
 Definition M1 : smodel := snd F0.
 Definition PV : lin := lvar 8.
 (* [comment removed for export] *)
 Definition RANDP16 : lin := {| l_c := 8; l_t := [(1%positive, 32768); (2%positive, 4096); (7%positive, 64); (15%positive, 8)] |}.
-Definition SZR : lin := lsub RANDP16 PV.
+(* 75d69e00: the strings sit ABOVE the random block and run to the stack top [ed_top]
+   (= 4096 * lvar 14); argv[1] .. ed_top is argv[1]'s bytes, the envp strings, the exec
+   name with its NUL, and the 8-byte slot, so at least 2 + 1 + 8 bytes. *)
+Definition TOPS : lin := lscale 4096 (lvar 14).
+Definition SZR : lin := lsub TOPS PV.
 Definition FARGC : fact := FRange (lvar 5) 2 2.
 Definition FV8 : fact := FRange PV 140735332483072 140737488355326.
 Definition FV8SP : fact := FRange (lsub PV (sm_sp M1)) 0 4194304.
-Definition FRND : fact := FRange SZR 18 2400000.
+Definition FRND : fact := FRange SZR 11 4194304.
 Definition FSR : list fact := [FARGC; FV8; FV8SP; FRND].
 Definition drop_rand (R : region) : bool := lin_eqb (rg_base R) (laddc RANDP16 (-16)).
 Definition SR0 : sst := conv_post S1 drop_rand FSR PV SZR [46; 0].

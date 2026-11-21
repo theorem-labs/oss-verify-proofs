@@ -1,5 +1,5 @@
 (* lib/B/TopX_INTRIN_memcpy.v: image B's (fuzz_reply.asan-ubsan) memcpy row of top_x group INTRIN, the image-B twin of the
-   memcpy row of a Theorem Labs lane's lib/A/TopX_INTRIN.v (sha256 bf3d08d5e5bf; internal record, last changed at 3333ca009fab; its memset row's B twin
+   memcpy row of a Theorem Labs lane's lib/A/TopX_INTRIN.v (sha256 bf3d08d5e5bf; internal record, last changed; its memset row's B twin
    is lib/B/TopX_INTRIN_memset.v).  The intrinsic contract of __asan_memcpy (B entry 0x52780) PROVED at image B's top_x
    instance
      AMEMCPY_x : aintrin_realizes_x segs TfibB ARX OCpy (pa_sigma WS_asan_memcpy)

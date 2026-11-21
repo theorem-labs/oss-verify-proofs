@@ -6,7 +6,7 @@
    ABSTRACT continuation: the loop, the call of fuzz_realloc and the tail are other segments' lemmas.
 
    MEASURED (token engine, VM workspace (internal path) on a build machine, over the pinned originals sha256
-   64b53ff8... fs.asan / 5ac5ce09... fs.asan-ubsan, base a working branch 3cd58aafb9b), Bx := FSW_K.fs_Bx,
+   64b53ff8... fs.asan / 5ac5ce09... fs.asan-ubsan, base a working branch), Bx := FSW_K.fs_Bx,
    Bspan := FSW_K.fs_Bspan, SH := FSW_put.fsw_pf_SH; every run sh_j = 0, sh_chk = true, sh_obls = [], so no
    __asan_report_* block is reached:
    - run 1 from fsw_pge_ss0 (run_K 36) stops at 541236 = 0x84234, SR_branch BC_GEU cap (n + 1 + len);
@@ -17,7 +17,7 @@
      regions with put's 14 saved words as chunks of the frame region (FSW_put_grow.fsw_pg_mem).
    The head state's atom 33 (buf) fact is mkAF 0 fsw_pf_CEIL 4 (FSW_put_grow.fsw_pg_gf), not fsw_pf_gf's 4096 lower
    bound: at cap = 0 wout_ok gives buf = 0. The entry state below uses the same fact list, so both sides start from
-   one state (agreed with a Theorem Labs lane, 2026-10-29, which owns FSW_put_grow.v; head state at b741ddecb30).
+   one state (agreed with a Theorem Labs lane, 2026-10-29, which owns FSW_put_grow.v; head state).
 
    Template: lib/A/FSW_put.v put_fast_run (the entry env :668-715, the journal :716-720, the shadow entry :721-755,
    run 1 and the need test :773-798, run 2 :800-816), shapes only; the state re-seat follows FSW_K.v
@@ -79,7 +79,7 @@ Qed.
 
 Section w. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 (* the loop head's re-seat: s6 (reg 22) holding the candidate c becomes the fresh atom 36, a1 (reg 11) holding 2 * c
-   is re-pinned to `c << 1`, and the facts are replaced by the head's (FSW_K.v:839-857 fsw_reseat_atom's steps) *)
+   is re-pinned to `c << 1`, and the facts are replaced by the head's (FSW_K.v:840-858 fsw_reseat_atom's steps) *)
 Lemma fsw_pge_seat : forall E ss ms c G,
   st_ok tfibsegs E ss ms -> ss_atoms_lt 36 ss = true ->
   getr (ms_regs ms) 22%bv = Z_to_bv 64 c -> getr (ms_regs ms) 11%bv = Z_to_bv 64 (2 * c) ->

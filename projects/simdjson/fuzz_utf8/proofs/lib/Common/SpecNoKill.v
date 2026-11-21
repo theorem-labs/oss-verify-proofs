@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed shape_strong_equiv_ss_unkilled. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -78,15 +79,30 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+(* LPS 75d69e00: [Run.run_scfg] runs over [Run.run_segments segs inp sp mbase], so
+   [SpinAlg.shape_strong_equiv_ss] (Common/SpinAlg.v:531) asks for the realization over THAT
+   list and at the configuration built from it.  The two hypotheses below said [source_segs]
+   and [init_config source_segs ...], which is the shorter list -- a build round
+   named it here, at this line:
+     The term "Hsource" has type "srealizes source_segs (init_config source_segs ...) T"
+     while it is expected to have type
+       "srealizes (run_segments source_segs inp rsp rmb)
+          (init_config (run_segments source_segs inp rsp rmb) ...) T".
+   Restated IN PLACE, in the form the consumer already requires.  This is a STRENGTHENING of
+   the hypotheses, not a weakening of the conclusions: [error_free_unkilled] and the trace
+   equivalence are untouched, and nothing is added to or removed from either.  The lift that
+   produces the stronger form from a walk over the binary's own list and start is
+   [Common/RomStable.srun_init] (the ROM half by [srealizes_wrom], the list half by
+   [SegLift.srealizes_run_segments]); [Thm_fuzz_utf8_ubsan] applies it to both suppliers. *)
 Theorem shape_strong_equiv_ss_unkilled :
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T : TSet) (inp : ProcInput),
   nokill T ->
-  srealizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  srealizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  srealizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  srealizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   error_free_unkilled (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free_unkilled (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))

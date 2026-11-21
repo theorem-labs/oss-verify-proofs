@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: thread vDSO reservation inclusion through malloc's slot and metadata-allocation consumers. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -503,7 +504,7 @@ Section Pristine.
     vm_maps vm = [] -> vm_noaccess vm = [] -> vm_brk vm = vm_start_brk vm ->
     bv_unsigned (vm_start_brk vm) mod 4096 = 0 -> IMG_HI <= bv_unsigned (vm_start_brk vm) ->
     bv_unsigned (vm_start_brk vm) + 8192 <= CEIL ->
-    vm_reserved vm = segments_reserved RSEGS -> page_floor (alloc_top vm) = CEIL ->
+    reserved_layout vm -> page_floor (alloc_top vm) = CEIL ->
     LEDGERX ST [] vm.
   Proof using.
     intros vm Hm Hn Hb Hal Hhi Hce Hres Htop. constructor; cbn.
@@ -512,6 +513,7 @@ Section Pristine.
     - repeat split; assumption.
     - exact Hres.
     - exact Htop.
+    - rewrite Hm. constructor.
   Qed.
 
   (* [comment removed for export] *)
@@ -576,11 +578,12 @@ Section Init.
     am_ok st L X sp regs MI mdl rom c' -> am_ok st L X sp regs M mdl rom c'.
   Proof using.
     intros st L X sp regs M MI mdl rom c' DIF
-      (st' & M' & mdl' & regs' & mm & E & X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 & X9 & X10 & X11 & X12 & X13 & X14 & X15 & X16 & X17 & X18 & X19 & X20 & FR & DF).
+      (st' & M' & mdl' & regs' & mm & E & X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 & X9 & X10 & X11 & X12 & X13 & X14 & X15 & X16 & X17 & X18 & X19 & X20 & X21 & X22 & FR & DF).
     exists st', M', mdl', regs', mm.
     split; [exact E|]. split; [exact X1|]. split; [exact X2|]. split; [exact X3|]. split; [exact X4|]. split; [exact X5|]. split; [exact X6|].
     split; [exact X7|]. split; [exact X8|]. split; [exact X9|]. split; [exact X10|]. split; [exact X11|]. split; [exact X12|]. split; [exact X13|].
     split; [exact X14|]. split; [exact X15|]. split; [exact X16|]. split; [exact X17|]. split; [exact X18|]. split; [exact X19|]. split; [exact X20|].
+    split; [exact X21|]. split; [exact X22|].
     split; [|exact DF].
     intros a Ha NE. destruct (decide (M' (Z_to_bv 64 a) = MI (Z_to_bv 64 a))) as [E1|NE1].
     - rewrite E1 in NE. left. destruct (DIF a Ha NE) as [W|W]; [left; exact W | right; left; exact W].
@@ -591,11 +594,12 @@ Section Init.
     am_fail st L X sp regs MI mdl rom c' -> am_fail st L X sp regs M mdl rom c'.
   Proof using.
     intros st L X sp regs M MI mdl rom c' DIF
-      (st' & M' & mdl' & regs' & E & X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 & X9 & X10 & X11 & X12 & X13 & X14 & X15 & X16 & X17 & X18 & X19 & FR & DF).
+      (st' & M' & mdl' & regs' & E & X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 & X9 & X10 & X11 & X12 & X13 & X14 & X15 & X16 & X17 & X18 & X19 & X20 & X21 & FR & DF).
     exists st', M', mdl', regs'.
     split; [exact E|]. split; [exact X1|]. split; [exact X2|]. split; [exact X3|]. split; [exact X4|]. split; [exact X5|]. split; [exact X6|].
     split; [exact X7|]. split; [exact X8|]. split; [exact X9|]. split; [exact X10|]. split; [exact X11|]. split; [exact X12|]. split; [exact X13|].
     split; [exact X14|]. split; [exact X15|]. split; [exact X16|]. split; [exact X17|]. split; [exact X18|]. split; [exact X19|].
+    split; [exact X20|]. split; [exact X21|].
     split; [|exact DF].
     intros a Ha NE. destruct (decide (M' (Z_to_bv 64 a) = MI (Z_to_bv 64 a))) as [E1|NE1].
     - rewrite E1 in NE. destruct (DIF a Ha NE) as [W|W]; [left; exact W | right; left; exact W].
@@ -605,7 +609,7 @@ Section Init.
   Theorem alloc_meta_init : AM_INIT.
   Proof using.
     intros F bi bo M mdl regs rom sp auxw avl HL Hside FE FI ENV Hh Hlz Hmat H2 Hra Hsplo Hsphi H4 DEF Hok Hfail.
-    destruct FE as [FEctx FEauxv FErng FEkeys FEend FErnd FEpg FElocks [canv FEcan] [FEmaps FEnoacc] (FB1 & FB2 & FB3 & FB4) FEres FEtop FElim].
+    destruct FE as [FEctx FEauxv FErng FEkeys FEend FErnd FEpg FElocks [canv FEcan] [FEmaps FEnoacc] (FB1 & FB2 & FB3 & FB4) [FEres HVDSO] FEtop FElim].
     destruct FI as [FIerr FIgot FIctz FIsc]. pose proof ENV as [SPa SPr].
     assert (Hsp : CEIL + AMSTK <= sp /\ sp < 2 ^ 64) by (split; assumption).
     assert (Hsp64 : CEIL + 64 <= sp /\ sp < 2 ^ 64) by (unfold AMSTK in Hsplo; lia).
@@ -692,7 +696,7 @@ Section Init.
         rewrite (AGL a) by lia. unfold mc0. rewrite wbytes_outZ by (wd_lenlit; rewrite ?length_N_to_le_bytes; cbn; lia). reflexivity.
       - rewrite am_frame_out by lia. reflexivity. }
     rewrite EMI at 1.
-    apply (UbMhAMetaC.arm_C2 (st_pristine can sec) [] [] MI mdl regs rom sp F bi HL PWF PREP PLG xok_nil Hh Hlz Hmat
+    apply (UbMhAMetaC.arm_C2 (st_pristine can sec) [] [] MI mdl regs rom sp F bi HL PWF PREP PLG xok_nil Hh Hlz Hmat HVDSO
              ltac:(intros _ _; cbn; unfold AREAMAX; lia) ltac:(cbn; lia) ltac:(change (XSUM [] + RSUM [] + 2 ^ 24 <= vm_limit (m_vmmaps mdl)); rewrite XSUM_nil; replace (RSUM []) with 0 by reflexivity; unfold VMLIM, MH_GBUDGET, MBASE in FElim; lia)
              H2 Hra Hsp H4
              ltac:(eapply defined_grows; [|exact DEF]; do 2 (eapply mem_grows_trans; [|apply wbytes_grows]); eapply mem_grows_trans; [|exact GRL]; unfold mc0; eapply mem_grows_trans; [|apply wbytes_grows]; unfold am_frame; do 7 (eapply mem_grows_trans; [|apply wbytes_grows]); apply mem_grows_refl)
@@ -752,7 +756,7 @@ Section Top.
     forall c', malloc_postk stk Lc n sp R M mdl (seg_rom RSEGS) c' -> malloc_ok AINV MSTK_M R M mdl Lc B C ret n sp c'.
   Proof using.
     intros stk R M mdl Lc B C ret n sp Hstk HB HC HV H1 Hn E2 Hsplo Hsphi SOK c' POST.
-    destruct POST as (R' & M' & mdl' & p & st' & -> & CS & P10 & P16 & Plo & Phi & Pimg & NIL & APL & FR & DF & DFp & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & X6).
+    destruct POST as (R' & M' & mdl' & p & st' & -> & CS & P10 & P16 & Plo & Phi & Pimg & NIL & APL & FR & DF & DFp & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & XR & XVDSO & X6).
     unfold MSTK_M in *. ceil.
     destruct CS as (Q2 & Q3 & Q4 & Q8 & Q9 & Q18 & Q19 & Q20 & Q21 & Q22 & Q23 & Q24 & Q25 & Q26 & Q27).
     assert (PU : bv_unsigned (Z_to_bv 64 p) = p) by (rewrite u_Z2bv by (unfold HEAPLO in *; lia); reflexivity).
@@ -800,7 +804,7 @@ Section Top.
     forall c', malloc_failk stk Lc sp R M mdl (seg_rom RSEGS) c' -> malloc_null AINV MSTK_M R M mdl Lc B C ret sp c'.
   Proof using.
     intros stk R M mdl Lc B C ret sp Hstk HB HC HV H1 E2 Hsplo Hsphi SOK c' POST.
-    destruct POST as (R' & M' & mdl' & st' & -> & CS & P10 & FR & DF & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & X6).
+    destruct POST as (R' & M' & mdl' & st' & -> & CS & P10 & FR & DF & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & XR & XVDSO & X6).
     unfold MSTK_M in *. ceil.
     destruct CS as (Q2 & Q3 & Q4 & Q8 & Q9 & Q18 & Q19 & Q20 & Q21 & Q22 & Q23 & Q24 & Q25 & Q26 & Q27).
     unfold malloc_null. rewrite H1. exists R', M', mdl'.
@@ -844,7 +848,7 @@ Section Top.
     kfx F bo (malloc_cfg R M mdl).
   Proof using HAM.
     intros F bo R M mdl Lc B C ret n sp st HL HWF HREP HLG NJ NL SIDE HBB HCC HV PRE Hok Hf.
-    destruct PRE as (Hh & Hlz & Hmat & H1 & Hret & Hret2 & H10 & Hn & H2 & Hsp16 & Hsplo & H4 & SOK & HB & HC).
+    destruct PRE as (Hh & Hlz & Hmat & H1 & Hret & Hret2 & H10 & Hn & H2 & Hsp16 & Hsplo & H4 & SOK & HB & HC & HVDSO).
     pose proof (u64_range (getr R 2)) as SPR. rewrite H2 in SPR.
     assert (E2 : getr R 2 = Z_to_bv 64 sp) by (apply bv_eq; rewrite u_Z2bv by lia; exact H2).
     pose proof (u64_range (getr R 10)) as NR. rewrite H10 in NR.
@@ -862,7 +866,7 @@ Section Top.
     destruct (Z.lt_ge_cases n MMAP_THRESHOLD) as [SMALL|BIG].
     - (* [comment removed for export] *)
       apply (malloc_small_kfx st Lc M mdl R (seg_rom RSEGS) n sp F bo HL (alloc_slot_run3 HAM) ltac:(intros Hbo; exact (SIDE Hbo SMALL))
-               HWF HREP HLG NJ NL Hh Hlz Hmat ltac:(unfold MBASE, MBLK in *; lia) ltac:(lia) ltac:(lia) E10 Hra E2 H4
+               HWF HREP HLG NJ NL Hh Hlz Hmat HVDSO ltac:(unfold MBASE, MBLK in *; lia) ltac:(lia) ltac:(lia) E10 Hra E2 H4
                ltac:(rewrite SSTK_val; lia) ltac:(intros y Hy; apply DEF; rewrite SSTK_val in Hy; lia) (fun _ => True)).
       + intros c' P'. apply Hok. exact (malloc_exit SSTK R M mdl Lc B C ret n sp ltac:(rewrite SSTK_val; unfold MSTK_M; lia) HBB HCC
                               ltac:(unfold VMLIM, MH_GBUDGET; exact HV) H1 ltac:(lia) E2 Hsplo ltac:(lia) SOK c' (postkX_postk _ _ _ _ _ _ _ _ _ _ P')).
@@ -875,7 +879,7 @@ Section Top.
       pose proof (areas_room st Lc [] HWF J ltac:(cbn; lia) ltac:(rewrite NL; cbn; lia)) as HCA.
       pose proof (rsum_MBASE st Lc [] HWF J ltac:(cbn; lia) ltac:(rewrite NL; cbn; lia)
                     ltac:(intros m off Hm _; exact (NJ m 0 off Hm ltac:(pose proof (glast_rng st m); lia)))) as RS.
-      apply (malloc_big_kfx st Lc M mdl R (seg_rom RSEGS) n sp F bo HL HAM HWF HREP HLG NJ NL Hh Hlz Hmat HCR HCA
+      apply (malloc_big_kfx st Lc M mdl R (seg_rom RSEGS) n sp F bo HL HAM HWF HREP HLG NJ NL Hh Hlz Hmat HVDSO HCR HCA
                ltac:(unfold MBASE, MBLK in *; lia) ltac:(lia) ltac:(unfold MMAP_THRESHOLD, MBLK in *; lia) E10 Hra E2 H4
                ltac:(unfold BSTK; lia) ltac:(intros y Hy; apply DEF; unfold BSTK in Hy; lia)).
       + intros c' P'. apply Hok. exact (malloc_exit BSTK R M mdl Lc B C ret n sp ltac:(unfold BSTK, MSTK_M; lia) HBB HCC
@@ -914,7 +918,7 @@ Section Top.
     forall c', malloc_postkR st stk Lc n sp R M mdl (seg_rom RSEGS) c' -> malloc_ok AINV_R MSTK_M R M mdl Lc B C ret n sp c'.
   Proof using.
     intros st stk R M mdl Lc B C ret n sp Hstk HB HC HV H1 Hn E2 Hsplo Hsphi SOK LONE c' POST.
-    destruct POST as (R' & M' & mdl' & p & st' & -> & CS & P10 & P16 & Plo & Phi & Pimg & NIL & APL & FR & DF & DFp & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & X6 & GK).
+    destruct POST as (R' & M' & mdl' & p & st' & -> & CS & P10 & P16 & Plo & Phi & Pimg & NIL & APL & FR & DF & DFp & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & XR & X6 & XVDSO & GK).
     unfold MSTK_M in *. ceil.
     destruct CS as (Q2 & Q3 & Q4 & Q8 & Q9 & Q18 & Q19 & Q20 & Q21 & Q22 & Q23 & Q24 & Q25 & Q26 & Q27).
     assert (PU : bv_unsigned (Z_to_bv 64 p) = p) by (rewrite u_Z2bv by (unfold HEAPLO in *; lia); reflexivity).
@@ -964,7 +968,7 @@ Section Top.
     forall c', malloc_failkR st stk Lc sp R M mdl (seg_rom RSEGS) c' -> malloc_null AINV_R MSTK_M R M mdl Lc B C ret sp c'.
   Proof using.
     intros st stk R M mdl Lc B C ret sp Hstk HB HC HV H1 E2 Hsplo Hsphi SOK LONE c' POST.
-    destruct POST as (R' & M' & mdl' & st' & -> & CS & P10 & FR & DF & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & X6 & GK).
+    destruct POST as (R' & M' & mdl' & st' & -> & CS & P10 & FR & DF & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & XR & X6 & XVDSO & GK).
     unfold MSTK_M in *. ceil.
     destruct CS as (Q2 & Q3 & Q4 & Q8 & Q9 & Q18 & Q19 & Q20 & Q21 & Q22 & Q23 & Q24 & Q25 & Q26 & Q27).
     unfold malloc_null. rewrite H1. exists R', M', mdl'.
@@ -1001,7 +1005,7 @@ Section Top.
   Proof using HAM.
     intros R M mdl Lc B C ret n sp BIG HA PRE F HL Hok Hf.
     pose proof HA as ((st & HWF & HREP & HLG & NJ & NL & LONE) & HBB & HCC & HV).
-    destruct PRE as (Hh & Hlz & Hmat & H1 & Hret & Hret2 & H10 & Hn & H2 & Hsp16 & Hsplo & H4 & SOK & HB & HC).
+    destruct PRE as (Hh & Hlz & Hmat & H1 & Hret & Hret2 & H10 & Hn & H2 & Hsp16 & Hsplo & H4 & SOK & HB & HC & HVDSO).
     pose proof (u64_range (getr R 2)) as SPR. rewrite H2 in SPR.
     assert (E2 : getr R 2 = Z_to_bv 64 sp) by (apply bv_eq; rewrite u_Z2bv by lia; exact H2).
     pose proof (u64_range (getr R 10)) as NR. rewrite H10 in NR.
@@ -1021,7 +1025,7 @@ Section Top.
     pose proof (areas_room st Lc [] HWF J ltac:(cbn; lia) ltac:(rewrite NL; cbn; lia)) as HCA.
     pose proof (rsum_MBASE st Lc [] HWF J ltac:(cbn; lia) ltac:(rewrite NL; cbn; lia)
                   ltac:(intros m off Hm _; exact (NJ m 0 off Hm ltac:(pose proof (glast_rng st m); lia)))) as RS.
-    apply (malloc_big_kfx st Lc M mdl R (seg_rom RSEGS) n sp F true HL HAM HWF HREP HLG NJ NL Hh Hlz Hmat HCR HCA
+    apply (malloc_big_kfx st Lc M mdl R (seg_rom RSEGS) n sp F true HL HAM HWF HREP HLG NJ NL Hh Hlz Hmat HVDSO HCR HCA
              ltac:(unfold MBASE, MBLK in *; lia) ltac:(lia) ltac:(unfold MMAP_THRESHOLD, MBLK in *; lia) E10 Hra E2 H4
              ltac:(unfold BSTK; lia) ltac:(intros y Hy; apply DEF; unfold BSTK in Hy; lia)).
     - intros c' P'. apply Hok. exact (malloc_exitR st BSTK R M mdl Lc B C ret n sp ltac:(unfold BSTK, MSTK_M; lia) HBB HCC
@@ -1163,7 +1167,7 @@ Section R0.
     forall c', malloc_postkX PXL SSTK [] n sp R M mdl (seg_rom RSEGS) c' -> malloc_ok AINV_R MSTK_M R M mdl [] 0 0 ret n sp c'.
   Proof using.
     intros R M mdl ret n sp HV H1 Hn E2 Hsplo Hsphi SOK c' POST.
-    destruct POST as (R' & M' & mdl' & p & st' & -> & CS & P10 & P16 & Plo & Phi & Pimg & NIL & APL & FR & DF & DFp & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & X6 & PX').
+    destruct POST as (R' & M' & mdl' & p & st' & -> & CS & P10 & P16 & Plo & Phi & Pimg & NIL & APL & FR & DF & DFp & W' & RP' & LG' & NJ' & NL' & X1 & X2 & X3 & X4 & X5 & XR & XVDSO & X6 & PX').
     rewrite SSTK_val in *. unfold MSTK_M in *. ceil.
     destruct CS as (Q2 & Q3 & Q4 & Q8 & Q9 & Q18 & Q19 & Q20 & Q21 & Q22 & Q23 & Q24 & Q25 & Q26 & Q27).
     assert (PU : bv_unsigned (Z_to_bv 64 p) = p) by (rewrite u_Z2bv by (unfold HEAPLO in *; lia); reflexivity).
@@ -1216,7 +1220,7 @@ Section R0.
   Theorem malloc_first_alt3 : MALLOC_FIRST_ALT3 MSTK_M.
   Proof using HAMI.
     intros R M mdl ret n sp auxw avl FE FI ENV PRE En F HL Hok Hf. subst n.
-    destruct PRE as (Hh & Hlz & Hmat & H1 & Hret & Hret2 & H10 & Hn & H2 & Hsp16 & Hsplo & H4 & SOK & HB & HC).
+    destruct PRE as (Hh & Hlz & Hmat & H1 & Hret & Hret2 & H10 & Hn & H2 & Hsp16 & Hsplo & H4 & SOK & HB & HC & HVDSO).
     pose proof FE as [Cctx Cauxv Cavr Cavk Cave Carnd Cpg Clk Ccan Cmaps Cbrk Cres Ctop Clim].
     pose proof (u64_range (getr R 2)) as SPR. rewrite H2 in SPR.
     assert (E2 : getr R 2 = Z_to_bv 64 sp) by (apply bv_eq; rewrite u_Z2bv by lia; exact H2).
@@ -1335,7 +1339,7 @@ Section R0.
     assert (FAILT : forall stX, s_limbo stX = [] -> forall c',
                     as_fail stX [] 44 0%nat spA r5 M1 mdl (seg_rom RSEGS) c' -> Kf F c').
     { intros stX ELX c' PF.
-      destruct PF as (s3 & M3 & mdl3 & r6' & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hlim3 & NJ3 & EL3 & Hcan3 &
+      destruct PF as (s3 & M3 & mdl3 & r6' & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hrdr3 & HVDSO3 & Hlim3 & NJ3 & EL3 & Hcan3 &
                       LM3 & MU3 & F10 & F2 & K6' & FRM3 & DEF3).
       rewrite D1. replace (Z_to_bv 64 422480) with (0x67250%bv : word) by (apply bv_eq; reflexivity).
       apply (kf_of_kat F HL).
@@ -1370,7 +1374,8 @@ Section R0.
         - rewrite E. apply DF1. lia.
         - destruct (FRM3 y ltac:(lia) NE3) as [A|[A|[A|A]]]; [apply DEF3; exact A | exfalso; ceil; unfold HEAPLO in A; lia | exfalso; unfold CTX_END, CTX in A; lia | exfalso; unfold A_ERRNO, TPV in A; lia]. }
       split; [exact W3|]. split; [exact RP3|]. split; [exact LG3|]. split; [exact NJ3|]. split; [unfold nolimbo; rewrite EL3; exact ELX|].
-      split; [exact Hh3|]. split; [exact Hlz3|]. split; [exact Hmat3|]. split; [exact Hfs3|]. split; [exact Hfds3|]. exact Hlim3. }
+      split; [exact Hh3|]. split; [exact Hlz3|]. split; [exact Hmat3|]. split; [exact Hfs3|]. split; [exact Hfds3|].
+      split; [exact Hrdr3|]. split; [exact HVDSO3|]. exact Hlim3. }
     (* [comment removed for export] *)
     assert (CANX : forall (Mx : mem) (sX : mst) (canX : Z),
               REP sX Mx -> s_canary sX = canX ->
@@ -1387,7 +1392,7 @@ Section R0.
              ltac:(rewrite G1r; apply ret_ok_even; reflexivity) ltac:(unfold AMSTK, spM, spA; lia) ltac:(unfold spM, spA; lia) R8_4 DEFm).
     - (* [comment removed for export] *)
       intros can sec c' POST.
-      destruct POST as (s2 & Mo & mdl2 & r9 & m & -> & W2 & RP2 & LG2 & Hh2 & Hlz2 & Hmat2 & Hfs2 & Hfds2 & Hvl2 &
+      destruct POST as (s2 & Mo & mdl2 & r9 & m & -> & W2 & RP2 & LG2 & Hh2 & Hlz2 & Hmat2 & Hfs2 & Hfds2 & Hrdr2 & HVDSO2 & Hvl2 &
                         Elim & Um & Zm & NLm2 & Efl & Eerr & KEEP & REG & F10 & F2 & K9 & MoW & DEFo).
       destruct KEEP as (Egrp & Eslot & Ealist & Eai & Ekind & Ecan & Eact & Eus & Ebn & Euq & Esq & Ectr & Esec & Emg & Elm2 & MU2).
       rewrite G1r. replace (Z_to_bv 64 423080) with (0x674a8%bv : word) by (apply bv_eq; reflexivity).
@@ -1443,7 +1448,9 @@ Section R0.
         + kept_rw K9. kept_rw K8. exact F21.
         + kept_rw K9. kept_rw K8. kept_rw K7. exact E22.
         + kept_rw K9. kept_rw K8. kept_rw K7. exact E23.
-        + eapply keeps_big; [exact K58 | exact K9 | reflexivity]. }
+        + eapply keeps_big; [exact K58 | exact K9 | reflexivity].
+        + (* p_rdr: the am layer was entered on [mdl] itself here. *) exact Hrdr2.
+        + exact HVDSO2. }
       (* [comment removed for export] *)
       assert (GCNT : UbMhASlotK.UbMhASlotKG.gcnt 44 s2 = 7).
       { unfold UbMhASlotK.UbMhASlotKG.gcnt. rewrite U0, scl44. change (16 * 4680) with 74880. cbn beta. rewrite gsel44. exact g4cnt44. }
@@ -1462,7 +1469,7 @@ Section R0.
         getr r 10 = Z_to_bv 64 idx ->
         kat RSEGS (mkCfg (mkst r (0x67b10%bv : word) Mc (seg_rom RSEGS)) mdl1) (kfx F false)).
       { intros s1 Mc mdl1 r g idx PE XN EL1 Hhd Hg Hgsc Hidx Hsl OJ Hstr Hbig B10.
-        pose proof PE as [W1' RP1' LG1' Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 Herr1 BL1 LM1 MU1 FR1 DFE SK1 Q2 Q20 KB1].
+        pose proof PE as [W1' RP1' LG1' Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 Herr1 BL1 LM1 MU1 FR1 DFE SK1 Q2 Q20 KB1 Hrdr1 HVDSO1].
         rewrite GCNT in XN. destruct XN as (XK & XS & XL & XM & XG). rewrite ECN in XL, XM. cbn [fst snd] in XL, XM.
         assert (ML17 : g_maplen s1 g = 17) by lia.
         assert (GL0 : g_lastidx s1 g = 0) by lia.
@@ -1504,7 +1511,7 @@ Section R0.
           all: try (eapply keeps_big; [exact KB1 | exact K' | reflexivity]).
           all: try (rewrite E2x, D2; reflexivity). all: rewrite ?E1x; reflexivity. }
         apply (UbMhMallocK.small_tail [] M mdl R (seg_rom RSEGS) 65536 sp F HL ltac:(cbn; unfold LMAX; lia) ltac:(unfold MMAP_THRESHOLD; lia) Hra E2 HspS PXL HOK0
-                 s1 Mc mdl1 r10 44 g idx W1' RP1' LG1' ltac:(rewrite EL1; reflexivity) Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hsc44
+                 s1 Mc mdl1 r10 44 g idx W1' RP1' LG1' ltac:(rewrite EL1; reflexivity) Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hrdr1 HVDSO1 Hlim1 Hsc44
                  ltac:(left; unfold UbMhMallocK.sc0; rewrite sc44; reflexivity) Hhd Hg Hgsc Hidx Hsl OJ ltac:(lia) FRx DFx STKx T19 T18
                  ltac:(kept_rw K10; rewrite E9x; exact D9) ltac:(kept_rw K10; rewrite E8x; kept_rw K5; exact C8) ltac:(kept_rw K10; rewrite E2x; reflexivity)).
         + eapply keeps_but_trans; [exact K14|].
@@ -1539,7 +1546,7 @@ Section R0.
         all: try exact GB. all: rewrite scl44; lia.
     - (* [comment removed for export] *)
       intros can sec c' PF.
-      destruct PF as (s2 & Mf & mdl2 & r9 & -> & W2 & RP2 & LG2 & Hh2 & Hlz2 & Hmat2 & Hfs2 & Hfds2 & Hvl2 &
+      destruct PF as (s2 & Mf & mdl2 & r9 & -> & W2 & RP2 & LG2 & Hh2 & Hlz2 & Hmat2 & Hfs2 & Hfds2 & Hrdr2 & HVDSO2 & Hvl2 &
                       Elim & Efl & Ear & Emeta & Eerr & KEEP & REG & F10 & F2 & K9 & MfW & DEFf).
       destruct KEEP as (Egrp & Eslot & Ealist & Eai & Ekind & Ecan & Eact & Eus & Ebn & Euq & Esq & Ectr & Esec & Emg & Elm2 & MU2).
       rewrite G1r. replace (Z_to_bv 64 423080) with (0x674a8%bv : word) by (apply bv_eq; reflexivity).
@@ -1579,6 +1586,8 @@ Section R0.
         * rewrite F2. exact R8_2.
         * kept_rw K9. kept_rw K8. kept_rw K7. exact E20.
         * eapply keeps_big; [exact K58 | exact K9 | reflexivity].
+        * (* f_rdr: the am layer was entered on [mdl] itself here. *) exact Hrdr2.
+        * exact HVDSO2.
       + intros x k o Hx. exfalso. unfold is_group in Hx. rewrite Egrp in Hx. cbn in Hx. exact Hx.
       + exact Elim.
       + exact F10.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-28 (PresetStr, c-libc-stdio lane): the strcmp and strlen interceptor contracts of the
    SECOND allocator instance, the text of record for AsanAPI_cf's strcmp and strlen fields. rule 24: no function
    is proved in this file; nothing is proved here at all.
@@ -19,7 +20,7 @@
    unstripped twins, asan f0d2e8d4..0b15 and asan-ubsan 3b5e1a09..3c58.)
 
    THE TEXTS. These are the shared texts with the instance swapped, and one premise strengthened:
-   - strcmp: the AR-form text of record is h-rw-cmd-7's AStrcmpDef (origin/cold/h-rw-cmd-7-rt 97c611eec86, the
+   - strcmp: the AR-form text of record is h-rw-cmd-7's AStrcmpDef (the
      PROVED head, with the walk lib/A/Rt/Strcmp.v grant_strcmp_icpt on fuzz_grant image A;
      proofs/libreac/fuzz_grant/lib/Reusable/AStrcmpDef.v; c-asan named it the shared strcmp text). Its
      strcmp_res / str_meet are copied below verbatim, and astrcmp_realizes_cf is its astrcmp_realizes over the
@@ -38,7 +39,7 @@
      own proof (fuzz_grant's symbolic walk) tracks each read, so it never needs rom_view. Our proof is a PORT of
      fuzz_state's kit composition (FSstrcmp.v), whose normalisation MemNorm.evt_normalize_cj needs ro_agree of the
      whole store (lib/MemNorm.v:861-862): the kit's mem_inv forbids stored bytes at read-only addresses
-     (lib/K5/Lib/Mem.v:106, :127-130) while data loads read the store first (Mem.v:57). ARcf has no read-only value
+     (lib/K5/Lib/Mem.v:107, :128-131) while data loads read the store first (Mem.v:57). ARcf has no read-only value
      clause, so it cannot supply that. The per-call rom_view is what the donor's astrcmp_realizesU, our
      astrlen_realizes_cf and c-omx-alloc's astrcmp_realizes_x all take, so the two contracts here are uniform with
      each other and with their consumer.
@@ -58,16 +59,16 @@
    ISTRCMP_DEPTH) and 2224 B (strlen, ISTRLEN_DEPTH) below sp, inside the 2 * ESTACK window of the texts.
 
    TAKEN FROM, one entry per callee (rule 24):
-   - strcmp interceptor: machine walk = leptonica/fhmtgen_fuzzer lib/K5/{A10,B10}/I_strcmp.v (origin/ossv/recipes
-     c8557374ad2e), ported as lib/K5; contract text = AStrcmpDef (origin/cold/h-rw-cmd-7-rt 97c611eec86), copied
-     verbatim and moved to ARcf; composition to the contract = fuzz_state's FSstrcmp.v (origin/cold/port-state-rt-str
-     17818dd9abc), in port.
-   - strlen interceptor: machine walk = bzip2/bzip2_compress_target lib/K/A/I_strlen.v (origin/ossv/recipes
-     c8557374ad2e), ported as lib/K, musl strlen walked inside it; contract text = YG0dcf.v astrnlen_realizes_cf
-     less its bound; composition = fuzz_state's FSstrlen.v (port-state-rt-str 17818dd9abc), in port.
-   - the pieces those compositions compose: the evt -> SRr bridge = port-fm's FMbz_bridge.v (origin/cold/port-fm-rtscan
-     10d0c5cd0be), ported as lib/Reusable/YEvtSRr.v; the shadow half = FMbz_str.v's chk_ok_of_view (via fuzz_state's
-     FSbz_str.v, from port-fm-rtscan cedf3d02589); the transports = c-asan-rt's MemNorm / RegisterBridge (already in
+   - strcmp interceptor: machine walk = leptonica/fhmtgen_fuzzer lib/K5/{A10,B10}/I_strcmp.v,
+     ported as lib/K5; contract text = AStrcmpDef, copied
+     verbatim and moved to ARcf; composition to the contract = fuzz_state's FSstrcmp.v,
+     in port.
+   - strlen interceptor: machine walk = bzip2/bzip2_compress_target lib/K/A/I_strlen.v (
+     theorem-labs/oss-verify-proofs@6b32741d849a), ported as lib/K, musl strlen walked inside it; contract text = YG0dcf.v astrnlen_realizes_cf
+     less its bound; composition = fuzz_state's FSstrlen.v (port-state-rt-str), in port.
+   - the pieces those compositions compose: the evt -> SRr bridge = port-fm's FMbz_bridge.v,
+     ported as lib/Reusable/YEvtSRr.v; the shadow half = FMbz_str.v's chk_ok_of_view (via fuzz_state's
+     FSbz_str.v, from port-fm-rtscan); the transports = c-asan-rt's MemNorm / RegisterBridge (already in
      this unit as lib/MemNorm.v, lib/Lib/RegisterBridge.v).
    - ruled out: r-identity's strcmp (origin/cold/h-rw-ide-6-id-wrap lib/A/Rt/Strcmp.v): not built, and its post is
      equality only. disco's proved strlen (libreac/fuzz_disco lib/A/Rt/Strlen.v, strlen_icpt_contract): a different
@@ -98,7 +99,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Variable segs : list Segment.
 Variable B : asyms.
 
-(* origin/cold/h-rw-cmd-7-rt 97c611eec86 proofs/libreac/fuzz_grant/lib/Reusable/AStrcmpDef.v, verbatim: the result
+(* proofs/libreac/fuzz_grant/lib/Reusable/AStrcmpDef.v, verbatim: the result
    (the interceptor's CharCmpX) and where the compare stops (the bytes before k equal and nonzero; at k they differ
    or s1's byte is 0). *)
 Definition strcmp_res (c1 c2 : Z) : Z := if c1 =? c2 then 0 else if c1 <? c2 then -1 else 1.
@@ -111,7 +112,7 @@ Definition str_meet (W : world segs) (mem : word -> option byte) (x y k c1 c2 : 
   (c1 <> c2 \/ c1 = 0).
 
 (* The ONE premise stronger than the texts above. It is exactly the walks' own `region_in_mem p n`
-   (lib/K/A/I_consts.v:52 and :148, lib/K5/{A10,B10}/I_consts.v:46, the same text in both kits:
+   (lib/K/A/I_consts.v:53 and :149, lib/K5/{A10,B10}/I_consts.v:46, the same text in both kits:
    (0 <= p /\ p + n + 8 <= 0x7fff7fff) \/ (0x10007fff7fff + 16 <= p /\ p + n + 8 <= 0x7fffffffffff)), which their
    shadow check `chk_ok` asks through `rng_ok`, written in YG0f.v's names. It implies YG0d.v's amem_range p n.
    Nothing in ARcf excludes a string ending in the last 8 bytes of a range, so the walks cannot be used without it.
@@ -120,7 +121,7 @@ Definition str_meet (W : world segs) (mem : word -> option byte) (x y k c1 c2 : 
    p + n <= kHighMemEnd - 1)`. The +8 (low upper), +15 (high lower) and +8 (high upper) serve no instruction:
    the shadow check reads no application byte, musl's aligned word over-read never leaves the NUL's own aligned
    word, and the layout tests run only for n >= 65. The margin is the ported kits' PROOF shape, spent at
-   lib/K/A/R_isPoisoned.v:243 and :249 (the addr_in_mem obligations of the two MemToShadow calls). Witnesses the
+   lib/K/A/R_isPoisoned.v:244 and :250 (the addr_in_mem obligations of the two MemToShadow calls). Witnesses the
    code accepts and this text rejects: p = 0x7fff7f00, n = 0xff; p = 0x10007fff8000, n = 8. It is kept because it
    is true at every caller (c-omx-alloc's decision, 07:16Z). (An earlier version of this comment gave a wrong
    reason, "application memory with 8 bytes to spare past the bytes read".) *)

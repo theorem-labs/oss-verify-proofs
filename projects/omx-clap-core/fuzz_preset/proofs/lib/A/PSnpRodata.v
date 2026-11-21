@@ -8,12 +8,13 @@
    Image numerals: none here; the image enters through the core's AF0x (TFIB_IMG_LO / TFIB_IMG_END, preset's top 0x600000 at image A'),
    AF0m (Tfib_const, TfibSyms) and the image's own segment list. *)
 (* Modified by Theorem Labs, 2026-10: for the snprintf chain restated over ARx (route (a), c-omx-hpreset 10:51Z), only
-   lib/A/FCxA.v:44-78 of origin/cold/c-omx-alloc-preset-s1b e47394d004f6 (const_lookup_sym_x, const_lookup_x,
+   lib/A/FCxA.v:44-78 (const_lookup_sym_x, const_lookup_x,
    rodata_ok_x; img_cover_x is not copied), renamed const_lookup_sym_lx / const_lookup_lx / rodata_ok_lx, with
    `Hypothesis I : fs_iface tfibsegs B ARx` and its `fi_const` replaced by the one engine law the proof reads,
-   `Hypothesis alx_const_cells : ARx_const_cells_law tfibsegs B ARx` (Reusable/YCbqG.v:139-141, AR_laws_x field
+   `Hypothesis alx_const_cells : ARx_const_cells_law tfibsegs B ARx` (Reusable/YCbqG.v:140-142, AR_laws_x field
    alx_const_cells), which has the same statement as fi_const. Port-fm's rodata_ok (A/AE2y.v) over `ARU_ARm` plus
    `ARU_mem_low` becomes this one lemma at ARx. No image numeral in this file; no '+ 8' range or presence form. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

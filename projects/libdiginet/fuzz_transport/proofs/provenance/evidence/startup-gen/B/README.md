@@ -172,3 +172,5 @@ lists every one with what it is); `regen.sh` refuses a SITE that leaves one unse
 it. Its `drivers` step runs the release scanner of record over this tree (SITE `SCANNER`; pinned by the sha256 of its
 directory's SHA256SUMS) after the scanner's own positive control and requires no uncleared hit; then a copy of this tree
 whose README names a worker of the roster (SITE `ROSTER`) must be flagged.
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

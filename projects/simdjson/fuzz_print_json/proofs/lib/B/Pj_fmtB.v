@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -63,7 +64,7 @@ Hypothesis NBF : fN <= fi_NB J /\ fi_NB J + 40 <= fN + fs_size kN - 8.
 Hypothesis NB8 : fi_NB J mod 8 = 0.
 Hypothesis P16 : fi_p J mod 16 = 0.
 Hypothesis NBSN : fi_NB J + 40 <= shad (fi_NB J) \/ shad (fi_NB J) + 5 <= fi_NB J.
-Hypothesis LOR : rt_sp0 RT Σ - STACK_WIN <= fi_lo J.
+Hypothesis LOR : rt_sp0 RT Σ - STACK_SPAN <= fi_lo J.
 
 Hypothesis HK : forall (e' : Z) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m' (nb' : list byte),
   ART RT Σ m' -> mem_inv bsegs m' -> stk bsegs m' lo p ->

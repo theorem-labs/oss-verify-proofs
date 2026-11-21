@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: OBL_MALLOC_N6 and OBL_FREE_N6 take it after alloc_ceiling <= lo (QZsi.hiA_bot of H6), and their calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -143,7 +144,7 @@ Hypothesis OBL_MALLOC_N6 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (n lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -167,7 +168,7 @@ Hypothesis OBL_FREE_N6 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (p lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -737,7 +738,7 @@ pose proof (QZsi.heapA_budget A4L H6 _ _ _ _ _ _ _ HP6) as (BB0 & BD0 & BN0 & BM
 pose proof RESTS6 as (RSa & RSb & RSc & RSd).
 assert (AC2 : acostA (cap * 2) = 3 * (cap * 2) + 45101) by (unfold acostA; destruct (Z.leb_spec (cap * 2) 64512); [lia | reflexivity]).
 eapply (OBL_MALLOC_N6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md _ A [(buf, cap)] LM0 [] B (cap * 2) LO errv UWptr HP6);
-[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
+[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | first [assumption | lia] | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; lia
 | exact ERR | reflexivity | reflexivity | lia
 | cbn [uw_pre]; rewrite !unsigned_lit by lia; left; lia
@@ -814,7 +815,7 @@ step. step.
 evt_done5.
 eapply (OBL_FREE_N6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m2 md' _ A' [(r, cap * 2); (buf, cap)] LM0 [] _ buf LO errv' UWptr HP26);
 [ right; exists cap; right; left; reflexivity
-| rewrite unsigned_lit by lia; exact ST2 | unfold alloc_ceiling; lia | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
+| rewrite unsigned_lit by lia; exact ST2 | unfold alloc_ceiling; lia | first [assumption | lia] | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; lia
 | exact ERR2 | reflexivity | reflexivity
 | split; [cbn [uw_pre]; rewrite !unsigned_lit by lia; left; lia
@@ -915,7 +916,7 @@ d5_enter.
 unfold RDENTRY_A. step. step. step.
 evt_done5.
 eapply (OBL_MALLOC_N6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md _ A [] LM0 [] B 65536 LO errv UWptr HP6);
-[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
+[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | first [assumption | lia] | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; lia
 | exact ERR | reflexivity | reflexivity | lia
 | cbn [uw_pre]; rewrite !unsigned_lit by lia; left; lia
@@ -1339,7 +1340,7 @@ Hypothesis OBL_MALLOC_N6 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (n lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -1363,7 +1364,7 @@ Hypothesis OBL_FREE_N6 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6
 (A : ASA A4L HIx) (LB LM : list blk) (FR : list frame) (B : bud6) (p lo : Z) (errv : word) (u : uwd),
 HEAPA6 A LB LM FR B m md ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> QZsi.hiA_bot A4L H6 <= lo -> lo <= bv_unsigned sp - hl_stack_A A4L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top A4L HIx + 64 ->
 rw_cells asegs m (hl_tp A4H - 164) [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp A4H) ->
@@ -1933,7 +1934,7 @@ pose proof (QZsi.heapA_budget A4L H6 _ _ _ _ _ _ _ HP6) as (BB0 & BD0 & BN0 & BM
 pose proof RESTS6 as (RSa & RSb & RSc & RSd).
 assert (AC2 : acostA (cap * 2) = 3 * (cap * 2) + 45101) by (unfold acostA; destruct (Z.leb_spec (cap * 2) 64512); [lia | reflexivity]).
 eapply (OBL_MALLOC_N6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md _ A [(buf, cap)] LM0 [] B (cap * 2) LO errv UWptr HP6);
-[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
+[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | first [assumption | lia] | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; lia
 | exact ERR | reflexivity | reflexivity | lia
 | cbn [uw_pre]; rewrite !unsigned_lit by lia; left; lia
@@ -2010,7 +2011,7 @@ step. step.
 evt_done5.
 eapply (OBL_FREE_N6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m2 md' _ A' [(r, cap * 2); (buf, cap)] LM0 [] _ buf LO errv' UWptr HP26);
 [ right; exists cap; right; left; reflexivity
-| rewrite unsigned_lit by lia; exact ST2 | unfold alloc_ceiling; lia | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
+| rewrite unsigned_lit by lia; exact ST2 | unfold alloc_ceiling; lia | first [assumption | lia] | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; lia
 | exact ERR2 | reflexivity | reflexivity
 | split; [cbn [uw_pre]; rewrite !unsigned_lit by lia; left; lia
@@ -2111,7 +2112,7 @@ d5_enter.
 unfold RDENTRY_A. step. step. step.
 evt_done5.
 eapply (OBL_MALLOC_N6 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m md _ A [] LM0 [] B 65536 LO errv UWptr HP6);
-[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
+[ rewrite unsigned_lit by lia; exact ST | unfold alloc_ceiling; lia | first [assumption | lia] | cbn [hl_stack_A A4L]; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; lia
 | exact ERR | reflexivity | reflexivity | lia
 | cbn [uw_pre]; rewrite !unsigned_lit by lia; left; lia

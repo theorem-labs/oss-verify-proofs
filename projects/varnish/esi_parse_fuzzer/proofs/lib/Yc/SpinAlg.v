@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok's third conjunct, srz_silent_all, and the spin_shape_strong_equiv theorems lifted to the run segment list through RomStable.run_scfg_walk0 under the premise that neither binary has a vDSO image). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require CatSim MmapSim BWorld
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.SimInv OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.CatSim.ExitSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.CatSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.MmapSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.BWorld OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.ShapeAlg.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require Divembc.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomStable.
 
 Module Lazy9wo.
 (* [comment removed for export] *)
@@ -221,7 +223,7 @@ Proof.
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
-    + destruct Hnode as [_ Hsound].
+    + destruct Hnode as [_ [Hsound _]].
       destruct (Hsound e (SNext c2) Hss) as (i & -> & Heq2).
       inversion Heq2; subst c2.
       exists i. right. exists tr2.
@@ -272,7 +274,7 @@ Proof.
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
                    | c Hspin Hh | c T T' H IH Heq];
     intros e c' Hss.
-  - destruct Hnode as [_ Hsound].
+  - destruct Hnode as [_ [Hsound _]].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
     inversion Heq2; subst c'. exists (T i). apply Hcont.
   - exfalso. apply Hh. eapply sstep_halted_none; exact Hss.
@@ -287,7 +289,7 @@ Proof.
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
                    | c Hspin Hh | c T T' H IH Heq];
     intros e Hss.
-  - destruct Hnode as [_ Hsound].
+  - destruct Hnode as [_ [Hsound _]].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
   - apply Hh. eapply sstep_halted_none; exact Hss.
   - destruct Hspin as [[] _].   (* [comment removed for export] *)
@@ -424,6 +426,20 @@ Proof.
   intros ms model x8 Hh Hsvc Hx8.
   apply srealizes_of_realizes. apply (rz_exit0 segs ms model x8); assumption.
 Qed.
+Lemma srz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok segs c I (fun _ => []) nx ->
+  (forall i, srealizes (nx i) T) ->
+  srealizes c T.
+Proof.
+  intros c I nx T i0 Hnode HT.
+  assert (HT0 : T []) by (eapply srealizes_nonempty; apply (HT i0)).
+  apply (srz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (srz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -463,20 +479,20 @@ Theorem spin_shape_strong_equiv_ef_w :
   srealizes target_segs
     (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
   never_excused (BW:=BWs) source_segs (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) ->
+  vdso_image source_segs = None -> vdso_image target_segs = None ->
   error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
                  (bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
   intros BWs source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    T inp Hsource Htarget Hne.
-  split; [| split].
-  - cbn. exact (realizes_no_error (BW:=BWs) source_segs _ T Hsource Hne).
-  - cbn. eapply srealizes_no_error; exact Htarget.
-  - intro tr. cbn.
-    rewrite (realizes_obs_iff (BW:=BWs) source_segs _ T Hsource Hne tr).
-    rewrite (srealizes_obs_iff target_segs _ T Htarget tr).
-    reflexivity.
+    T inp Hsource Htarget Hne Hvs Hvt.
+  destruct (RomStable.run_scfg_walk0 source_segs rpc rph rsp rbrk rmb rrnd rlim inp T Hvs
+              (rz_unwrap (BW:=BWs) source_segs _ T Hsource Hne)) as [Es Ts].
+  destruct (RomStable.run_scfg_walk0 target_segs apc aph asp abrk amb arnd alim inp T Hvt
+              (srealizes_realizes0 target_segs _ T Htarget)) as [Et Tt].
+  split; [exact Es | split; [exact Et |]].
+  intro tr. rewrite (Ts tr), (Tt tr). reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -488,15 +504,16 @@ Theorem spin_shape_strong_equiv_ef :
     (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
   srealizes target_segs
     (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  vdso_image source_segs = None -> vdso_image target_segs = None ->
   error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
                  (bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    T inp Hsource Htarget.
+    T inp Hsource Htarget Hvs Hvt.
   exact (spin_shape_strong_equiv_ef_w bw_pinned _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ T inp Hsource Htarget
-           (never_excused_pinned _ _)).
+           (never_excused_pinned _ _) Hvs Hvt).
 Qed.
 
 (* [comment removed for export] *)
@@ -509,15 +526,16 @@ Theorem spin_shape_strong_equiv_ef_budgets :
   srealizes target_segs
     (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
   ~ reaches_budget_refused_cfg source_segs ACFG (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) ->
+  vdso_image source_segs = None -> vdso_image target_segs = None ->
   error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
                  (bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    T inp Hsource Htarget Hprem.
+    T inp Hsource Htarget Hprem Hvs Hvt.
   exact (spin_shape_strong_equiv_ef_w (bw_premise rlim) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ T inp Hsource Htarget
-           (never_excused_of_premise rlim _ _ Hprem)).
+           (never_excused_of_premise rlim _ _ Hprem) Hvs Hvt).
 Qed.
 
 (* [comment removed for export] *)

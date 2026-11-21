@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only the side-stack contracts of cgif_rgb_fuzzer's lib/YG0e.v (astack_malloc_sz_realizes, astack_free_realizes), restated over the asan-state definitions of the cgif_file_fuzzer proof as plugin-hostd/fuzz_command holds them; module names; and one contract added for the classes that fill the whole frame's shadow (astack_free_cls_realizes). *)
 (* Modified by Theorem Labs, 2026-10: relocated to libdiginet/fuzz_transport's asan image by this unit's provenance/evidence/class5/run.sh (alreloc with the resolve lines of class5cmp.py); CmdBSyms becomes TransportSyms. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,7 +21,7 @@ Open Scope Z_scope.
 
    __asan_stack_malloc_0 0x3f908, _1 0x3fa7c, _3 0x3fc0c, _4 0x3fdb8, _5 0x3ff84: the shadow fill is a straight-line
      store sequence over the whole frame (class <= 6), so the size in a0 does not change what they write. Their
-     contract is cgif_file's own [astack_malloc_realizes segs B cid] (Reusable/YG0d.v:284); this file adds nothing
+     contract is cgif_file's own [astack_malloc_realizes segs B cid] (Reusable/YG0d.v:285); this file adds nothing
      for them.
    __asan_stack_malloc_7 0x40244: calls PoisonShadow(ptr, size, 0), so it zeroes size/8 shadow bytes only. Its
      contract is [astack_malloc_sz_realizes], the cgif_rgb form.

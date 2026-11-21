@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells are read in the launch's layout (auxv_cells with the CONFIG_RSEQ flag's fact), that fact is passed to the leaf lemmas, and the auxv fact carries over memory that agrees on it (auxv_ok_agree). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -76,7 +77,7 @@ Proof.
          O24 O16 O0 O8 W24 W32 W40 W16 W8 W0 Z0 Z48 HH10 MOK9 MBV09 BR0 BR1 BR2 BR4 BA RR0 RR1 RR2 RR4 BAr CR2 HP010 KE.
   pose proof MOK9 as (Mh9 & Ml9 & Mm9). assert (GPv: GP = 67584) by reflexivity. assert (TPv: TP = 462648) by reflexivity.
   pose proof ES10 as (S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9 & S10 & S11 & S12 & S13 & S14 & S15 & S16 & S17 & S18 & S19 & S20).
-  pose proof (auxv_cells M10 av uid rnd hw S13) as (X0 & X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 & X9 & X10 & X11 & X12 & X13 & X14 & X15 & X16 & X17 & X18 & X19).
+  pose proof (auxv_cells M10 av uid rnd hw S13 ltac:(lia)) as (Xr & X0 & X1 & X2 & X3 & X4 & X5 & X6).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S1, S2, S3, S4, S5, S6, S7, S8, S9.
   assert (WUW: L5.writable RSEGS M10 462433 6). { apply (writable_img M10 UW_FLAGS 6 wseg_uwflags); unfold UW_FLAGS; lia. }
   assert (WUC: L5.writable RSEGS M10 459776 4). { apply (writable_img M10 EH_UNCAUGHT 4 wseg_uncaught); unfold EH_UNCAUGHT; lia. }
@@ -98,7 +99,7 @@ Proof.
      /\ mem_grows M10 M11).
   { destruct fl.
     - destruct S5 as (U0 & U1 & U2 & U3 & U4 & U5).
-      destruct (e1tu_v1_conc fx10 R10 M10 (sp - 32) (A + 128) av canary uid rnd hw (bv_unsigned (getr R (reg 8))) (bv_unsigned (getr R (reg 9)))
+      destruct (e1tu_v1_conc Xr fx10 R10 M10 (sp - 32) (A + 128) av canary uid rnd hw (bv_unsigned (getr R (reg 8))) (bv_unsigned (getr R (reg 9)))
                   R10_1 R10_2 ltac:(rewrite (R10i 3%nat) by inl; rewrite H3, GPv; reflexivity) ltac:(rewrite (R10i 4%nat) by inl; rewrite H4, TPv; reflexivity)
                   R10_10 R10_11 R10_12 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) (wrange _) (wrange _) ltac:(lia)
                   ltac:(replace (sp - 32) with (sp + (-2) * 16) by lia; rewrite Z_mod_plus_full; exact A16)
@@ -107,7 +108,7 @@ Proof.
                   ltac:(replace (A + 128 - 128) with A by lia; apply (L5C.writable_of_defined RSEGS); [exact DEFA10 | lia | lia]) ltac:(replace (A + 128 - 128) with A by lia; exact DEFA10)
                   ltac:(lia) S10 ltac:(right; lia) ltac:(left; lia) ltac:(left; lia) ltac:(lia) S18 S19 S20
                   ltac:(rewrite Z.add_0_l; exact S2) ltac:(rewrite Z.add_0_l; exact S8) ltac:(rewrite Z.add_0_l; exact S9)
-                  X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 X14 X15 X16 X17 X18
+                  X1 X2 X3 X4 X5
                   ltac:(replace (sp - 32 + 24) with (sp - 8) by lia; exact F8) ltac:(replace (sp - 32 + 16) with (sp - 16) by lia; exact F16) ltac:(replace (sp - 32 + 8) with (sp - 24) by lia; exact F24)
                   ltac:(rewrite Z.add_0_l; exact U0) ltac:(rewrite Z.add_0_l; exact U1) ltac:(rewrite Z.add_0_l; exact U2) ltac:(rewrite Z.add_0_l; exact U3) ltac:(rewrite Z.add_0_l; exact U4) ltac:(rewrite Z.add_0_l; exact U5)
                   ltac:(rewrite Z.add_0_l; exact WUW) ltac:(rewrite Z.add_0_l; exact WUC))
@@ -115,7 +116,7 @@ Proof.
       exists fx11, R11, M11. split. unfold THROW, E1_LANDING. exact MS11. split. intros i Hi. apply K11. revert Hi. clear. intros Hi. exact Hi.
       decompose [and] REST. repeat split; assumption.
     - destruct S5 as (U0 & U2 & U4).
-      destruct (e1tu_v0_conc fx10 R10 M10 (sp - 32) (A + 128) av canary uid rnd hw (bv_unsigned (getr R (reg 8))) (bv_unsigned (getr R (reg 9)))
+      destruct (e1tu_v0_conc Xr fx10 R10 M10 (sp - 32) (A + 128) av canary uid rnd hw (bv_unsigned (getr R (reg 8))) (bv_unsigned (getr R (reg 9)))
                   R10_1 R10_2 ltac:(rewrite (R10i 3%nat) by inl; rewrite H3, GPv; reflexivity) ltac:(rewrite (R10i 4%nat) by inl; rewrite H4, TPv; reflexivity)
                   R10_10 R10_11 R10_12 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) (wrange _) (wrange _) ltac:(lia)
                   ltac:(replace (sp - 32) with (sp + (-2) * 16) by lia; rewrite Z_mod_plus_full; exact A16)
@@ -124,7 +125,7 @@ Proof.
                   ltac:(replace (A + 128 - 128) with A by lia; apply (L5C.writable_of_defined RSEGS); [exact DEFA10 | lia | lia]) ltac:(replace (A + 128 - 128) with A by lia; exact DEFA10)
                   ltac:(lia) S10 ltac:(right; lia) ltac:(left; lia) ltac:(left; lia) ltac:(lia) S18 S19 S20
                   ltac:(rewrite Z.add_0_l; exact S2) ltac:(rewrite Z.add_0_l; exact S8) ltac:(rewrite Z.add_0_l; exact S9)
-                  X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 X14 X15 X16 X17 X18
+                  X1 X2 X3 X4 X5
                   ltac:(replace (sp - 32 + 24) with (sp - 8) by lia; exact F8) ltac:(replace (sp - 32 + 16) with (sp - 16) by lia; exact F16) ltac:(replace (sp - 32 + 8) with (sp - 24) by lia; exact F24)
                   ltac:(rewrite Z.add_0_l; exact U0) ltac:(rewrite Z.add_0_l; exact U2) ltac:(rewrite Z.add_0_l; exact U4)
                   ltac:(rewrite Z.add_0_l; exact WUW) ltac:(rewrite Z.add_0_l; exact WUC))
@@ -190,7 +191,7 @@ Proof.
       rewrite !Z.add_0_l in V25, V26, V27, V28, V29, V30.
       split. exact V25. split. exact V26. split. exact V27. split. exact V28. split. exact V29. split. exact V30.
       split. t64 AG11 S6. split. t64 AG11 S7. split. t64 AG11 S8. split. t64 AG11 S9.
-      split. { intros j Hj. eapply (L5C.u64_at_agree RSEGS M10 M11). apply AG11; lia. lia. lia. apply S13. exact Hj. }
+      split. { apply (L5PSU.auxv_ok_agree M10 M11 av uid rnd hw S13); [lia |]. intros i Hi. assert (AGi : L5C.agree_on M10 M11 i 1) by (apply AG11; lia). exact (AGi i ltac:(lia)). }
       assert (AGI: L5C.agree_on M10 M11 65536 (393568 - 65536)) by (apply AG11; lia).
       split. { intros i Hi. rewrite (AGI i) by lia. apply S18. exact Hi. }
       split. { intros i Hi. rewrite (AGI i) by lia. apply S19. exact Hi. }

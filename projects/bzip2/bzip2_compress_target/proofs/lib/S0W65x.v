@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of mmap proved for the NULL hint, Linux's mmap placement, the launch input ProcInput, the CONFIG_RSEQ flag, the new auxv, the vDSO and the init stack window; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -77,12 +78,36 @@ Definition knB2 : list kentry := Eval vm_compute in fst (fst (carry [mc_store] k
 (* [comment removed for export] *)
 Definition srC0 : list expr := Eval vm_compute in sr_after_call_j srB (map ridx callee_kept) 38.
 
-(* [comment removed for export] *)
-Definition ssC0 : sym_state := SS 0x20174 srC0 [] knB2 70.
-Definition rC__t := run scr0 ssC0.
-Definition srC : list expr := Eval vm_compute in s_regs (fst (fst rC__t)).
-Definition rC := ltac:(SymFold.sf_def rC__t (srC, (knB2, tt))).
-Definition knC : list kentry := Eval vm_compute in kn_after rC knB2.
+(* Block C: from the AT_RANDOM memcpy's return (ra = 0x20174, set by [jal ra] at 0x20170)
+   to the brk(0) ecall at 0x2023c.  The scan reads pair 25 (AT_EXECFN) and then the
+   [kb_rseq]-dependent terminator (pairs 26..28 with CONFIG_RSEQ, pair 26 without), so C
+   runs once per value of that FREE kernel field, each arm with its terminator rows
+   ([kn_termT] / [kn_termF], S0MainEntry) appended.  Both arms reach 0x2023c with s0 = 4096
+   and a1 = 4095 produced by the walk (0x2019c ld s0,48(s0); 0x201a8 lui s0,1; 0x20238
+   addi a1,s0,-1), and they differ only in a2 (auxvp + 448 vs + 416), which the first
+   instruction of block D (0x20240 neg a2,a0) overwrites.  So D is shared.
+   All of this is measured (QWB3). *)
+Definition ssCT0 : sym_state := SS 0x20174 srC0 [] (knB2 ++ kn_termT) 70.
+Definition rCT__t := run scr0 ssCT0.
+Definition srCT : list expr := Eval vm_compute in s_regs (fst (fst rCT__t)).
+Definition rCT := ltac:(SymFold.sf_def rCT__t (srCT, (knB2, tt))).
+Definition knCT : list kentry := Eval vm_compute in kn_after rCT (knB2 ++ kn_termT).
+Definition ssCF0 : sym_state := SS 0x20174 srC0 [] (knB2 ++ kn_termF) 70.
+Definition rCF__t := run scr0 ssCF0.
+Definition srCF : list expr := Eval vm_compute in s_regs (fst (fst rCF__t)).
+Definition rCF := ltac:(SymFold.sf_def rCF__t (srCF, (knB2, tt))).
+Definition knCF : list kentry := Eval vm_compute in kn_after rCF (knB2 ++ kn_termF).
+(* What D starts from: the knowledge with the terminator rows dropped (the same list for
+   both arms, checked below), and the F arm's registers.  D's run from the T arm's
+   registers is the same run (a2 is dead).  [oom_segC] covers both arms. *)
+Definition not_term (K : kentry) : bool :=
+  match K with KWord (SA (EVar 3) o) _ _ => (o <? 416)%Z | _ => true end.
+Definition knC : list kentry := Eval vm_compute in List.filter not_term knCF.
+Lemma knC_T : List.filter not_term knCT = knC.
+Proof. vm_compute. reflexivity. Qed.
+Lemma knC_F : List.filter not_term knCF = knC.
+Proof. vm_compute. reflexivity. Qed.
+Definition srC : list expr := srCF.
 
 (* [comment removed for export] *)
 Definition b_expr : expr := EVar 70.
@@ -155,6 +180,7 @@ From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require CatSim. From OSSVe
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require SymHide.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require NatLitLia.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require CpsOpen.
+From LinuxProcessSemantics.LinuxProcessSem.Checks.Cases Require MmapBase.
 Module S0PilotOOM.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -209,12 +235,36 @@ Definition LIM : Z := source_alloc_limit.
 Lemma LIM_ge : (2 ^ 34 <= LIM)%Z.
 Proof. unfold LIM. rewrite source_alloc_limit_val. apply Z.leb_le. reflexivity. Qed.
 
+(* At the revision [init_model]'s reserved list is the binary's segments
+   followed by the vDSO/vvar pair ([State.init_reserved]). *)
+Notation RESX mb sp kb := (init_reserved (segments_reserved RSEGS) mb sp kb).
+
+Lemma segres_eq : segments_reserved RSEGS =
+  [(Z_to_bv 64 65536, Z_to_bv 64 12288); (Z_to_bv 64 77824, Z_to_bv 64 86016);
+   (Z_to_bv 64 163840, Z_to_bv 64 4096); (Z_to_bv 64 167936, Z_to_bv 64 208896)].
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma segres_small : Forall small_ent (segments_reserved RSEGS).
+Proof. rewrite segres_eq. unfold small_ent. repeat constructor; cbn [fst snd]; rewrite ?u_small by lia; lia. Qed.
+
+Lemma segres_below : forall a sz, In (a, sz) (segments_reserved RSEGS) ->
+  (bv_unsigned a + bv_unsigned sz <= 0x5c000)%Z.
+Proof.
+  intros a sz Hin. rewrite segres_eq in Hin. cbn [In] in Hin.
+  destruct Hin as [E|[E|[E|[E|[]]]]]; injection E as <- <-; rewrite ?u_small by lia; lia.
+Qed.
+
+Lemma segres_len : length (segments_reserved RSEGS) = 4%nat.
+Proof. rewrite segres_eq. reflexivity. Qed.
+
+Lemma RESX_seg_in : forall mbase sp kb e, In e (segments_reserved RSEGS) -> In e (RESX mbase sp kb).
+Proof. intros mbase sp kb e H. unfold init_reserved. apply in_or_app. left. exact H. Qed.
+
 Section Pilot.
   Context {ACEIL__ : ACeil}.   (* [comment removed for export] *)
   Variable sp0 : word.
   Variables a0s path : list byte.
   Variable envv : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
   Variable hw : word.    (* [comment removed for export] *)
   Variable rnd : EntryDraw.   (* [comment removed for export] *)
   Variable tid : word.
@@ -229,7 +279,7 @@ Section Pilot.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rnd tid regs0 mem0.
+  Hypothesis ME : main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0.
   Hypothesis Hbrk : valid_brk RSEGS brk.
   Hypothesis Hceil : alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z.   (* [comment removed for export] *)
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
@@ -245,11 +295,11 @@ Section Pilot.
      (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))].
   (* [comment removed for export] *)
   Definition model0 : Model :=
-    with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputA [a0s; path] envv fs0 stdin0)).
+    with_tid tid (with_vdso (ia_vdso stdin0) (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputA [a0s; path] envv fs0 stdin0))).
   (* [comment removed for export] *)
   Definition fds1g (fd3 : FdEntry) : list (word * FdEntry) := fd_insert fds0 (Z_to_bv 64 3) fd3.
   Definition model1g (fd3 : FdEntry) : Model :=
-    mkModelA (fds1g fd3) (mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk LIM mbase sp0) stdin0 fs0 None (Some tid) None.
+    mkModelA (fds1g fd3) (mkVmMapsFull (RESX mbase sp0 (ia_kernel stdin0)) [] [] brk brk LIM mbase sp0) stdin0 fs0 None (Some tid) None.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
@@ -260,8 +310,14 @@ Section Pilot.
   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
-  Lemma m1_vmmaps : forall fd3, m_vmmaps (model1g fd3) = mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk LIM mbase sp0.
+  Lemma m1_vmmaps : forall fd3, m_vmmaps (model1g fd3) = mkVmMapsFull (RESX mbase sp0 (ia_kernel stdin0)) [] [] brk brk LIM mbase sp0.
   Proof. intros. reflexivity. Qed.
+  (* the launch's mmap base is in the covered band ([Run.valid_mmap_base]) *)
+  Lemma mbase_lo : (mmap_base_min <= bv_unsigned mbase)%Z.
+  Proof.
+    destruct ME as (_ & _ & Hl & _). cbn [entry_launch_ok_va] in Hl. destruct Hl as (_ & _ & Hb).
+    exact (proj1 (MmapBase.valid_launch_base_sv48_in_band _ _ Hb)).
+  Qed.
   (* [comment removed for export] *)
   Lemma atop_sp0 : forall r m na sb b l mb, atop_ok (mkVmMapsFull r m na sb b l mb sp0).
   Proof. intros. unfold atop_ok, alloc_top. cbn [vm_init_sp]. rewrite Hceil. unfold stack_max_size. lia. Qed.
@@ -370,7 +426,7 @@ Section Pilot.
   Definition mmap_ok_branch_g (fd3 : FdEntry) (KB : TSet) : Prop :=
     forall vals R M (hint a : word),
       length vals = 71%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 70 = brk ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
       vals_ev vals 5 = tid ->
       regs_ok (ENV vals) srE R -> know_ok RSEGS (ENV vals) M knE -> above_sp0 M ->
       grant_ok_na hint (model1g fd3) a 8192 = true ->      (* [comment removed for export] *)
@@ -382,12 +438,12 @@ Section Pilot.
   Lemma oom_seg3 : forall fd3 KB vals R M,
     mmap_ok_branch_g fd3 KB ->
     length vals = 71%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 70 = brk ->
-    vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv -> vals_ev vals 5 = tid ->
+    vals_ev vals 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 5 = tid ->
     regs_ok (ENV vals) srE0 R -> know_ok RSEGS (ENV vals) M knD2 -> above_sp0 M ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x20264) M (seg_rom RSEGS)) (model1g fd3))
                KB.
   Proof.
-    intros fd3 KB vals R M HKB HL P0 P70 P1 P2 P5t HR HK HA.
+    intros fd3 KB vals R M HKB HL P0 P70 P1 P2 P3 P4 P5t HR HK HA.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     (* [comment removed for export] *)
@@ -409,14 +465,16 @@ Section Pilot.
     - regv HR (15 : reg). reflexivity.
     - (* [comment removed for export] *)
       change (page_round_up_Z 8192) with 8192%Z.
-      assert (Ers : segments_reserved RSEGS = [(Z_to_bv 64 65536, Z_to_bv 64 12288); (Z_to_bv 64 77824, Z_to_bv 64 86016);
-                                              (Z_to_bv 64 163840, Z_to_bv 64 4096); (Z_to_bv 64 167936, Z_to_bv 64 208896)])
-        by (vm_compute; reflexivity).
-      apply grant_exists_na; rewrite ?m1_vmmaps; cbn [vm_reserved vm_maps vm_limit]; rewrite ?Ers; cbn [app].
+      destruct (init_reserved_shape _ mbase sp0 (ia_kernel stdin0) mbase_lo ltac:(lia) segres_small) as [RS RL].
+      rewrite segres_len in RL.
+      apply grant_exists_na; rewrite ?m1_vmmaps; cbn [vm_reserved vm_maps vm_limit]; rewrite ?app_nil_r.
       + (* [comment removed for export] *) apply atop_sp0.
       + lia.
-      + repeat constructor; cbn [snd]; rewrite u_small by lia; lia.
-      + cbn [length app Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
+      + (* the length is a whole number of pages *) reflexivity.
+      + eapply Forall_impl; [|exact RS]. unfold small_ent. cbn beta. intros p [[X1 X2] X3]. lia.
+      + lia.
+    - (* LPS 727298f3 (#144/#146): the hint is this call's own a0, the literal NULL *)
+      regv HR (10 : reg). apply place_declined_b_null.
     - (* [comment removed for export] *)
       intros a Hg. rewrite v_addi_pc4 by lia. change (0x21374 + 4)%Z with 0x21378%Z.
       change (page_round_up_Z 8192) with 8192%Z in Hg |- *.
@@ -431,26 +489,182 @@ Section Pilot.
   Definition brk_ok_branch_g (fd3 : FdEntry) (KB : TSet) : Prop :=
     forall vals R M,
       length vals = 71%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 70 = brk ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
       vals_ev vals 5 = tid ->
       regs_ok (ENV vals) srD2 R -> know_ok RSEGS (ENV vals) M knD2 -> above_sp0 M ->
       realizes RSEGS
         (mkCfg (mkst (regupd R 10 (Z_to_bv 64 (bv_unsigned brk + 8192))) (Z_to_bv 64 0x20264)
                      (zfill brk (Z_to_bv 64 8192) M) (seg_rom RSEGS))
-               (mkModelA (fds1g fd3) (mkVmMapsFull (segments_reserved RSEGS) [(brk, Z_to_bv 64 8192)] [] brk
+               (mkModelA (fds1g fd3) (mkVmMapsFull (RESX mbase sp0 (ia_kernel stdin0)) [(brk, Z_to_bv 64 8192)] [] brk
                                             (Z_to_bv 64 (bv_unsigned brk + 8192)) LIM mbase sp0)
                         stdin0 fs0 None (Some tid) None)) KB.
   Definition brk_ok_branch : TSet -> Prop := brk_ok_branch_g (FdFile path (Z_to_bv 64 0)).
 
+  (* Knowledge-list plumbing for the block-C terminator split below. *)
+  Lemma w65_kn_app : forall segs E M k1 k2,
+    know_ok segs E M k1 -> know_ok segs E M k2 -> know_ok segs E M (k1 ++ k2).
+  Proof. intros segs E M k1 k2 H1 H2. unfold know_ok in *. apply Forall_app. split; assumption. Qed.
+  Lemma w65_kn_app_r : forall segs E M k1 k2, know_ok segs E M (k1 ++ k2) -> know_ok segs E M k2.
+  Proof. intros segs E M k1 k2 H. unfold know_ok in *. apply Forall_app in H. exact (proj2 H). Qed.
+  Lemma w65_kn_filter : forall segs E M f kn, know_ok segs E M kn -> know_ok segs E M (List.filter f kn).
+  Proof.
+    intros segs E M f kn H. unfold know_ok in *. apply List.Forall_forall. intros x Hx.
+    apply List.filter_In in Hx. exact (proj1 (List.Forall_forall _ _) H x (proj1 Hx)).
+  Qed.
+
+  (* An auxv a_type row read on the initial memory still holds on any later memory that
+     agrees with it above sp0: the auxv sits above sp0 and nothing the program stores
+     reaches there. *)
+  Lemma kw3_above : forall E E' M o t,
+    ev E' 3 = ev E 3 -> (bv_unsigned sp0 <= bv_unsigned (ev E 3))%Z -> (0 <= o)%Z -> above_sp0 M ->
+    kentry_ok RSEGS E mem0 (KWord (SA (EVar 3) o) 8 (ELit t)) ->
+    kentry_ok RSEGS E' M (KWord (SA (EVar 3) o) 8 (ELit t)).
+  Proof.
+    intros E E' M o t H3 Hsp Ho HA HK. cbn [kentry_ok] in HK |- *. destruct HK as (Hw & Hfl & Hrd).
+    unfold flat, estart in Hfl. cbn [a_base a_off edenot] in Hfl.
+    assert (Ha : adenot E' (SA (EVar 3) o) = adenot E (SA (EVar 3) o)).
+    { unfold adenot. cbn [a_base a_off edenot]. rewrite H3. reflexivity. }
+    assert (Hu : bv_unsigned (adenot E (SA (EVar 3) o)) = (bv_unsigned (ev E 3) + o)%Z).
+    { unfold adenot, v_addi. cbn [a_base a_off edenot]. apply u_small. lia. }
+    split; [exact Hw|]. split.
+    - unfold flat, estart. cbn [a_base a_off edenot]. rewrite H3. exact Hfl.
+    - rewrite Ha. cbn [edenot] in Hrd |- *. rewrite <- Hrd. apply rdn_agree.
+      intros j Hj. apply HA. rewrite Hu. rewrite u_small by lia. lia.
+  Qed.
+
+  Lemma kw3_list_above : forall E E' M kn,
+    ev E' 3 = ev E 3 -> (bv_unsigned sp0 <= bv_unsigned (ev E 3))%Z -> above_sp0 M ->
+    know_ok RSEGS E mem0 kn ->
+    Forall (fun K => exists o t, K = KWord (SA (EVar 3) o) 8 (ELit t) /\ (0 <= o)%Z) kn ->
+    know_ok RSEGS E' M kn.
+  Proof.
+    intros E E' M kn H3 Hsp HA HK Hs. unfold know_ok in *.
+    induction kn as [|K kn IH]; [constructor|].
+    inversion Hs as [|? ? (o & t & -> & Ho) Hs']; subst.
+    inversion HK as [|? ? HK1 HKr]; subst.
+    constructor; [eapply kw3_above; eassumption | apply IH; assumption].
+  Qed.
+
+  (* From the brk grow ecall at 0x20260 (after block D) on: shared by both terminator arms. *)
+  Lemma oom_segE : forall fd3 KBb KBm vals2 R M,
+    brk_ok_branch_g fd3 KBb -> (forall tr, KBm tr -> KBb tr) ->
+    length vals2 = 71%nat -> vals_ev vals2 0 = sp0 -> vals_ev vals2 70 = brk ->
+    vals_ev vals2 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals2 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals2 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals2 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
+    vals_ev vals2 5 = tid ->
+    regs_ok (ENV vals2) srD R -> know_ok RSEGS (ENV vals2) M knD -> above_sp0 M ->
+    realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x20260) M (seg_rom RSEGS)) (model1g fd3))
+               (t_alt2 KBm KBb).
+  Proof.
+    intros fd3 KBb KBm vals2 R M HKBb HKmb HL P0 P70 P1 P2 P3 P4 P5t HR HK HA.
+    pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
+    unfold sp_window_lo, sp_window_hi in *.
+    pose proof (regs_ok_esub (ENV vals2) ugly_b b_expr _ _ (ugly_b_sem vals2 P70) HR) as HR2.
+    pose proof (know_ok_ksub RSEGS (ENV vals2) _ ugly_b b_expr _ (ugly_b_sem vals2 P70) HK) as HK2.
+    clear HR HK. rename HR2 into HR. rename HK2 into HK.
+    lazymatch type of HR with regs_ok _ ?sr _ => let sr' := eval vm_compute in sr in change sr with sr' in HR end.
+    lazymatch type of HK with know_ok _ _ _ ?kn => let kn' := eval vm_compute in kn in change kn with kn' in HK end.
+    eapply (rz_brk_grow RSEGS _ _ _ (model1g fd3) ECALLW 8192).
+    - vm_compute. reflexivity.
+    - apply is_ecall_ECALLW.
+    - reflexivity.
+    - reflexivity.
+    - regv HR (17 : reg). reflexivity.
+    - rewrite m1_vmmaps; cbn [vm_brk]. exact brk_al.
+    - reflexivity.
+    - lia.
+    - rewrite m1_vmmaps; cbn [vm_brk]. pose proof brk_lo. lia.
+    - rewrite m1_vmmaps; cbn [vm_brk]. pose proof brk_hi. lia.
+    - rewrite m1_vmmaps; cbn [vm_brk vm_start_brk]. lia.
+    - rewrite m1_vmmaps; cbn [vm_brk]. regv HR (10 : reg). rewrite edenot_add_lit.
+      unfold adenot, v_addi. cbn [a_base a_off edenot b_expr ev ENV]. rewrite P70. reflexivity.
+    - rewrite m1_vmmaps. cbn [vm_brk]. unfold model1g.
+      apply (brk_grow_admissible_init_rf (RESX mbase sp0 (ia_kernel stdin0)) brk mbase sp0 LIM fs0 stdin0 (fds1g fd3) (Some tid) None 8192 (atop_sp0 _ _ _ _ _ _ _));
+        try (pose proof alloc_ceiling_range);
+        first [exact brk_al | reflexivity
+              | apply init_reserved_low_free;
+                  [exact mbase_lo | lia
+                  | intros ra rs Hin; pose proof (segres_below ra rs Hin); pose proof brk_lo; lia
+                  | unfold page_size; rewrite u_small by lia; pose proof brk_hi; lia]
+              | pose proof brk_lo; pose proof brk_hi; pose proof LIM_ge; lia].
+    - exact HKmb.
+    - rewrite v_addi_pc4 by lia. change (0x20260 + 4)%Z with 0x20264%Z.
+      rewrite m1_vmmaps; cbn [vm_brk vm_reserved vm_maps vm_noaccess vm_start_brk vm_limit vm_mmap_base vm_init_sp].
+      eapply (HKBb vals2); try eassumption.
+  Qed.
+
+  (* From the brk(0) ecall at 0x2023c, for either terminator arm's registers ([srCT] or
+     [srCF]).  The two differ only in a2, which block D's first instruction overwrites, so
+     D's run from either is the same run and lands in [oom_segE]. *)
+  Lemma oom_segC : forall fd3 KBb KBm srX vals1 R M,
+    In srX [srCT; srCF] ->
+    brk_ok_branch_g fd3 KBb -> (forall tr, KBm tr -> KBb tr) ->
+    length vals1 = 70%nat -> vals_ev vals1 0 = sp0 ->
+    vals_ev vals1 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals1 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals1 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals1 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
+    vals_ev vals1 5 = tid ->
+    regs_ok (ENV vals1) srX R -> know_ok RSEGS (ENV vals1) M knC -> above_sp0 M ->
+    realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x2023c) M (seg_rom RSEGS)) (model1g fd3))
+               (t_alt2 KBm KBb).
+  Proof.
+    intros fd3 KBb KBm srX vals1 R M HX HKBb HKmb HL P0 P1 P2 P3 P4 P5t HR HK HA.
+    pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
+    unfold sp_window_lo, sp_window_hi in *.
+    assert (Hsv : sr_vars_lt (length vals1) srX = true)
+      by (rewrite HL; destruct HX as [EX|[EX|[]]]; subst srX; vm_compute; reflexivity).
+    eapply (rz_brk_query RSEGS _ _ _ (model1g fd3) ECALLW).
+    - vm_compute. reflexivity.
+    - apply is_ecall_ECALLW.
+    - reflexivity.
+    - reflexivity.
+    - destruct HX as [EX|[EX|[]]]; subst srX; regv HR (17 : reg); reflexivity.
+    - destruct HX as [EX|[EX|[]]]; subst srX; regv HR (10 : reg); reflexivity.
+    - rewrite v_addi_pc4 by lia. change (0x2023c + 4)%Z with 0x20240%Z.
+      rewrite m1_vmmaps; cbn [vm_brk].
+      pose proof (env_app_regs vals1 [brk] _ srX R Hsv HR) as HR2.
+      lazymatch type of HK with know_ok _ _ ?Mc ?kn =>
+        pose proof (env_app_know RSEGS vals1 [brk] _ Mc kn ltac:(rewrite HL; vm_compute; reflexivity) HK) as HK2 end.
+      clear HR HK.
+      set (vals2 := vals1 ++ [brk]) in *.
+      assert (HL2 : length vals2 = 71%nat) by (subst vals2; rewrite length_app, HL; reflexivity).
+      assert (P0' : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
+      assert (P70 : vals_ev vals2 70 = brk).
+      { subst vals2. rewrite <- HL. rewrite <- (Nat.add_0_r (length vals1)). rewrite vals_ev_app_r. reflexivity. }
+      assert (P1' : vals_ev vals2 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
+      assert (P2' : vals_ev vals2 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+      assert (P3' : vals_ev vals2 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
+      assert (P4' : vals_ev vals2 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
+      assert (P5' : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5t).
+      clearbody vals2. clear HL P0 P1 P2 P3 P4 P5t. rename HL2 into HL. rename P0' into P0. rename P1' into P1. rename P2' into P2. rename P3' into P3. rename P4' into P4. rename P5' into P5t.
+      change (Env (vals_ev vals2) (blobs_ev (blobs0 a0s path hw rnd))) with (ENV vals2) in HR2, HK2.
+      pose proof (regs_set_a0 (ENV vals2) _ _ brk b_expr HR2 ltac:(cbn [edenot b_expr ev ENV]; exact P70)) as HR.
+      clear HR2.
+      lazymatch type of HK2 with know_ok _ _ ?Mc _ =>
+        assert (HK : know_ok RSEGS (ENV vals2) Mc knD0) end.
+      { unfold knD0. apply know_ok_cons; [|apply know_ok_cons; [|exact HK2]].
+        - apply kalign_intro; [lia|]. cbn [edenot b_expr ev ENV]. rewrite P70. exact brk_al.
+        - apply krange_intro. cbn [edenot b_expr ev ENV]. rewrite P70. pose proof brk_lo. pose proof brk_hi. lia. }
+      clear HK2.
+      (* block D, from either arm's registers *)
+      destruct HX as [EX|[EX|[]]]; subst srX.
+      all: run_block_keep scr0 71%nat.
+      all: refresh_above vals2 P0 HA.
+      all: clear R M.
+      all: name_state R M.
+      all: eapply (oom_segE fd3 KBb KBm vals2); eassumption.
+  Qed.
+
   Lemma oom_seg2 : forall fd3 KBb KBm vals R M,
     brk_ok_branch_g fd3 KBb -> mmap_ok_branch_g fd3 KBm -> (forall tr, KBm tr -> KBb tr) ->
     length vals = 38%nat -> vals_ev vals 0 = sp0 ->
-    vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv -> vals_ev vals 5 = tid ->
+    vals_ev vals 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 5 = tid ->
     regs_ok (ENV vals) srB0 R -> know_ok RSEGS (ENV vals) M knA -> above_sp0 M ->
+    (* the [kb_rseq]-split auxv terminator rows on the initial memory ([main_know_term]) *)
+    ((bv_unsigned sp0 <= bv_unsigned (auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0))%Z /\
+     exists E0e : env, ev E0e 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 /\
+       (know_ok RSEGS E0e mem0 kn_termT \/ know_ok RSEGS E0e mem0 kn_termF)) ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x27510) M (seg_rom RSEGS)) (model1g fd3))
                (t_alt2 KBm KBb).
   Proof.
-    intros fd3 KBb KBm vals R M HKBb HKBm HKmb HL P0 P1 P2 P5t HR HK HA.
+    intros fd3 KBb KBm vals R M HKBb HKBm HKmb HL P0 P1 P2 P3 P4 P5t HR HK HA HTF.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     (* [comment removed for export] *)
@@ -514,83 +728,43 @@ Section Pilot.
     set (vals1 := vals ++ junk_vals R2) in *.
     assert (HL1 : length vals1 = 70%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
     assert (P0' : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-    assert (P1' : vals_ev vals1 1 = p0 sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
-    assert (P2' : vals_ev vals1 2 = p1 sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (P1' : vals_ev vals1 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
+    assert (P2' : vals_ev vals1 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (P3' : vals_ev vals1 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
+    assert (P4' : vals_ev vals1 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
     assert (P5' : vals_ev vals1 5 = tid) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5t).
-    clearbody vals1. clear HL P0 P1 P2 P5t. rename HL1 into HL. rename P0' into P0. rename P1' into P1. rename P2' into P2. rename P5' into P5t.
+    clearbody vals1. clear HL P0 P1 P2 P3 P4 P5t. rename HL1 into HL. rename P0' into P0. rename P1' into P1. rename P2' into P2. rename P3' into P3. rename P4' into P4. rename P5' into P5t.
     change (Env (vals_ev vals1) (blobs_ev (blobs0 a0s path hw rnd))) with (ENV vals1) in HR, HK.
-    (* [comment removed for export] *)
-    run_block_keep scr0 70%nat.
-    refresh_above vals1 P0 HA. clear Hrd8 Hwr8 Hudst Husrc MC Krnd Kdj. clear R2 M. try clear R. name_state R M.
-    (* [comment removed for export] *)
-    eapply (rz_brk_query RSEGS _ _ _ (model1g fd3) ECALLW).
-    - vm_compute. reflexivity.
-    - apply is_ecall_ECALLW.
-    - reflexivity.
-    - reflexivity.
-    - regv HR (17 : reg). reflexivity.
-    - regv HR (10 : reg). reflexivity.
-    - rewrite v_addi_pc4 by lia. change (0x2023c + 4)%Z with 0x20240%Z.
-      rewrite m1_vmmaps; cbn [vm_brk].
-      (* [comment removed for export] *)
-      lazymatch type of HR with regs_ok _ ?sr ?Rc =>
-        pose proof (env_app_regs vals1 [brk] _ sr Rc ltac:(rewrite HL; vm_compute; reflexivity) HR) as HR2 end.
-      lazymatch type of HK with know_ok _ _ ?Mc ?kn =>
-        pose proof (env_app_know RSEGS vals1 [brk] _ Mc kn ltac:(rewrite HL; vm_compute; reflexivity) HK) as HK2 end.
-      clear HR HK.
-      set (vals2 := vals1 ++ [brk]) in *.
-      assert (HL2 : length vals2 = 71%nat) by (subst vals2; rewrite length_app, HL; reflexivity).
-      assert (P0' : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-      assert (P70 : vals_ev vals2 70 = brk).
-      { subst vals2. rewrite <- HL. rewrite <- (Nat.add_0_r (length vals1)). rewrite vals_ev_app_r. reflexivity. }
-      assert (P1' : vals_ev vals2 1 = p0 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
-      assert (P2' : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
-      assert (P5' : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5t).
-      clearbody vals2. clear HL P0 P1 P2 P5t. rename HL2 into HL. rename P0' into P0. rename P1' into P1. rename P2' into P2. rename P5' into P5t.
-      change (Env (vals_ev vals2) (blobs_ev (blobs0 a0s path hw rnd))) with (ENV vals2) in HR2, HK2.
-      pose proof (regs_set_a0 (ENV vals2) _ _ brk b_expr HR2 ltac:(cbn [edenot b_expr ev ENV]; exact P70)) as HR.
-      clear HR2.
-      (* [comment removed for export] *)
-      lazymatch type of HK2 with know_ok _ _ ?Mc _ =>
-        assert (HK : know_ok RSEGS (ENV vals2) Mc knD0) end.
-      { unfold knD0. apply know_ok_cons; [|apply know_ok_cons; [|exact HK2]].
-        - apply kalign_intro; [lia|]. cbn [edenot b_expr ev ENV]. rewrite P70. exact brk_al.
-        - apply krange_intro. cbn [edenot b_expr ev ENV]. rewrite P70. pose proof brk_lo. pose proof brk_hi. lia. }
-      clear HK2.
-      (* [comment removed for export] *)
-      run_block_keep scr0 71%nat.
-      refresh_above vals2 P0 HA. clear R M. name_state R M.
-      (* [comment removed for export] *)
-      pose proof (regs_ok_esub (ENV vals2) ugly_b b_expr _ _ (ugly_b_sem vals2 P70) HR) as HR2.
-      pose proof (know_ok_ksub RSEGS (ENV vals2) _ ugly_b b_expr _ (ugly_b_sem vals2 P70) HK) as HK2.
-      clear HR HK. rename HR2 into HR. rename HK2 into HK.
-      lazymatch type of HR with regs_ok _ ?sr _ => let sr' := eval vm_compute in sr in change sr with sr' in HR end.
-      lazymatch type of HK with know_ok _ _ _ ?kn => let kn' := eval vm_compute in kn in change kn with kn' in HK end.
-      (* [comment removed for export] *)
-      eapply (rz_brk_grow RSEGS _ _ _ (model1g fd3) ECALLW 8192).
-      + vm_compute. reflexivity.
-      + apply is_ecall_ECALLW.
-      + reflexivity.
-      + reflexivity.
-      + regv HR (17 : reg). reflexivity.
-      + rewrite m1_vmmaps; cbn [vm_brk]. exact brk_al.
-      + reflexivity.
-      + lia.
-      + rewrite m1_vmmaps; cbn [vm_brk]. pose proof brk_lo. lia.
-      + rewrite m1_vmmaps; cbn [vm_brk]. pose proof brk_hi. lia.
-      + rewrite m1_vmmaps; cbn [vm_brk vm_start_brk]. lia.
-      + rewrite m1_vmmaps; cbn [vm_brk]. regv HR (10 : reg). rewrite edenot_add_lit.
-        unfold adenot, v_addi. cbn [a_base a_off edenot b_expr ev ENV]. rewrite P70. reflexivity.
-      + rewrite m1_vmmaps. cbn [vm_brk]. unfold model1g.
-        apply (brk_grow_admissible_init (segments_reserved RSEGS) brk mbase sp0 LIM fs0 stdin0 (fds1g fd3) (Some tid) None 8192 (atop_sp0 _ _ _ _ _ _ _));
-          rewrite ?rtop; try (pose proof alloc_ceiling_range);
-          first [exact brk_al | reflexivity | pose proof brk_lo; pose proof brk_hi; pose proof LIM_ge; lia].
-      + (* [comment removed for export] *)
-        exact HKmb.
-      + (* [comment removed for export] *)
-        rewrite v_addi_pc4 by lia. change (0x20260 + 4)%Z with 0x20264%Z.
-        rewrite m1_vmmaps; cbn [vm_brk vm_reserved vm_maps vm_noaccess vm_start_brk vm_limit vm_mmap_base vm_init_sp].
-        eapply (HKBb vals2); try eassumption.
+    (* Block C, split on the FREE kernel field [kb_rseq] (never fixed): [main_know_term]
+       gives the terminator rows of whichever case holds, on the initial memory. They sit
+       above sp0, so [kw3_list_above] carries them to the current memory.  Each arm walks
+       to the brk(0) ecall at 0x2023c, drops its terminator rows ([knC_T] / [knC_F]) and
+       continues in [oom_segC]. *)
+    destruct HTF as (Hasp & E0e & HE3 & HT0).
+    assert (E3 : ev (ENV vals1) 3 = ev E0e 3) by (cbn [ev ENV]; rewrite P3, HE3; reflexivity).
+    assert (S3 : (bv_unsigned sp0 <= bv_unsigned (ev E0e 3))%Z) by (rewrite HE3; exact Hasp).
+    destruct HT0 as [HT0|HT0].
+    all: pose proof (kw3_list_above _ _ _ _ E3 S3 HA HT0
+                       ltac:(cbv [kn_termT kn_termF]; repeat apply Forall_cons; try apply Forall_nil;
+                             (do 2 eexists; split; [reflexivity | lia]))) as HT.
+    all: clear HT0.
+    all: pose proof (w65_kn_app _ _ _ _ _ HK HT) as HKt.
+    all: clear HK HT.
+    all: rename HKt into HK.
+    all: run_block_keep scr0 70%nat.
+    all: refresh_above vals1 P0 HA.
+    all: clear Hrd8 Hwr8 Hudst Husrc MC Krnd Kdj.
+    all: clear R2 M.
+    all: try clear R.
+    all: name_state R M.
+    - (* CONFIG_RSEQ: AT_NULL at pair 28 *)
+      change (know_ok RSEGS (ENV vals1) M knCT) in HK. apply (w65_kn_filter _ _ _ not_term) in HK.
+      rewrite knC_T in HK. change (regs_ok (ENV vals1) srCT R) in HR.
+      apply (oom_segC fd3 KBb KBm srCT vals1 R M ltac:(hnf; left; reflexivity)); assumption.
+    - (* no CONFIG_RSEQ: AT_NULL at pair 26 *)
+      change (know_ok RSEGS (ENV vals1) M knCF) in HK. apply (w65_kn_filter _ _ _ not_term) in HK.
+      rewrite knC_F in HK. change (regs_ok (ENV vals1) srCF R) in HR.
+      apply (oom_segC fd3 KBb KBm srCF vals1 R M ltac:(hnf; right; hnf; left; reflexivity)); assumption.
   Qed.
 
   (* [comment removed for export] *)
@@ -602,7 +776,7 @@ Section Pilot.
     forall e vals R M,
       In e openat_errnos ->
       length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 38 = errno_ret e ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
       vals_ev vals 5 = tid ->
       regs_ok (ENV vals) (sr_upd srA (ridx 10) (EVar 38)) R -> know_ok RSEGS (ENV vals) M knA ->
       (forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->
@@ -616,25 +790,42 @@ Section Pilot.
     intros KA KBb KBm HKA HKBb HKBm HKmb.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
-    pose proof (main_regs_ok sp0 a0s path envv uid hw rnd tid regs0 mem0 Hvsp Htid ME) as HR.
-    pose proof (main_know_ok sp0 a0s path envv uid hw rnd tid regs0 mem0 Hva Hve Hvsp Htid ME) as HK.
-    change (E0 sp0 a0s path envv hw rnd tid regs0) with (ENV (vals0 sp0 a0s path envv tid regs0)) in HR, HK.
-    set (vals := vals0 sp0 a0s path envv tid regs0) in *.
+    pose proof ME as (Hhw & Hvl & Hlau & ME').
+    assert (HR : regs_ok (E0 (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 a0s path rnd tid regs0) sr_main regs0)
+      by (eapply (main_regs_ok (mkProcInputA [a0s; path] envv fs0 stdin0) mbase (0x133fc : word) sp0 a0s path rnd tid regs0 mem0); try eassumption; reflexivity).
+    assert (HK : know_ok RSEGS (E0 (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 a0s path rnd tid regs0) mem0 kn_main)
+      by (eapply (main_know_ok (mkProcInputA [a0s; path] envv fs0 stdin0) mbase (0x133fc : word) sp0 brk a0s path rnd tid regs0 mem0); try eassumption; reflexivity).
+    assert (HTF : (bv_unsigned sp0 <= bv_unsigned (auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0))%Z /\
+                  exists E0e : env, ev E0e 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 /\
+                    (know_ok RSEGS E0e mem0 kn_termT \/ know_ok RSEGS E0e mem0 kn_termF)).
+    { edestruct (main_know_term (mkProcInputA [a0s; path] envv fs0 stdin0) mbase (0x133fc : word) sp0 brk a0s path rnd tid regs0 mem0)
+        as [Hasp HT0]; try eassumption; try reflexivity.
+      split; [exact Hasp|].
+      destruct HT0 as [HT0|HT0]; apply w65_kn_app_r in HT0;
+        lazymatch type of HT0 with know_ok _ ?E0e _ _ => exists E0e end;
+        (split; [reflexivity | first [left; exact HT0 | right; exact HT0]]). }
+    unfold E0 in HR, HK. rewrite Hhw in HR, HK.
+    change (Env (vals_ev (vals0 (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 rnd tid regs0)) (blobs_ev (blobs0 a0s path hw rnd))) with (ENV (vals0 (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 rnd tid regs0)) in HR, HK.
+    set (vals := vals0 (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 rnd tid regs0) in *.
     assert (HL : length vals = 38%nat) by (subst vals; unfold vals0; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0 sp0 a0s path envv) by reflexivity.
-    assert (P2 : vals_ev vals 2 = p1 sp0 a0s path envv) by reflexivity.
+    assert (P1 : vals_ev vals 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by reflexivity.
+    assert (P2 : vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by reflexivity.
+    assert (P3 : vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by reflexivity.
+    assert (P4 : vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by reflexivity.
     assert (P5t : vals_ev vals 5 = tid) by reflexivity.
-    cps_destruct (main_str sp0 a0s path envv uid hw rnd tid regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
-    cbn [nth] in Sr, Slo, Shi, Slen.
+    edestruct (main_str (mkProcInputA [a0s; path] envv fs0 stdin0) mbase (0x133fc : word) sp0 brk a0s path rnd tid regs0 mem0) as (Sr & Slo & Shi & Slen);
+      try eassumption; try reflexivity.
+    1:{ instantiate (1 := 1%nat). lia. }
+    cbn [nth in_argv in_envp in_execfn mkProcInputA] in Sr, Slo, Shi, Slen.
     clearbody vals.
     (* [comment removed for export] *)
     run_block_keep scr0 38%nat.
     (* [comment removed for export] *)
-    assert (Sr' : rdn RSEGS M (p1 sp0 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
-    { rewrite EQM. unfold p1. rewrite (rdn_mem_denot_above RSEGS (ENV vals) mem0 _ 0%nat 0x5c000);
+    assert (Sr' : rdn RSEGS M (p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
+    { rewrite EQM. unfold p1. cbn [in_argv in_envp in_execfn mkProcInputA]. rewrite (rdn_mem_denot_above RSEGS (ENV vals) mem0 _ 0%nat 0x5c000);
         [exact Sr | vm_compute; reflexivity | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia | lia
-        | pose proof (u64_range (cat_argv_ptr sp0 [a0s; path] envv 1)); lia]. }
+        | pose proof (u64_range (cat_argv_ptr (ed_top rnd) [a0s; path] envv (ia_execfn stdin0) 1)); lia]. }
     (* [comment removed for export] *)
     eapply (rz_openat_file RSEGS _ _ _ model0 ECALLW); try apply is_ecall_ECALLW.
     - vm_compute. reflexivity.
@@ -644,7 +835,12 @@ Section Pilot.
     - regv HR (10 : reg). apply bv_eq. reflexivity.
     - regv HR (12 : reg). vm_compute. reflexivity.
     - (* [comment removed for export] *) rewrite m0_fds. rewrite alloc_fd_fds0. apply fd_lookup_fds0_3.
-    - (* [comment removed for export] *) split; [exact Hplen|]. split; [apply path_nonul|].
+    - (* [comment removed for export] *) split; [exact Hplen|]. split; [apply path_nonul|]. split.
+      { (* the path lies below TASK_SIZE: argv strings end below the stack top *)
+        pose proof (argv_ptr_fits _ mbase sp0 brk rnd 1%nat Hlau ltac:(cbn; lia)) as Hf.
+        cbn [nth in_argv in_envp in_execfn mkProcInputA] in Hf.
+        regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. unfold p1.
+        cbn [nth in_argv in_envp in_execfn mkProcInputA]. unfold TASK_SIZE. lia. }
       regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. exact Sr'.
     - exact Hpne.
     - exact Hpnd.
@@ -662,6 +858,8 @@ Section Pilot.
       + rewrite <- HL, <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity.
       + rewrite vals_ev_app_l by (rewrite HL; lia). exact P1.
       + rewrite vals_ev_app_l by (rewrite HL; lia). exact P2.
+      + rewrite vals_ev_app_l by (rewrite HL; lia). exact P3.
+      + rewrite vals_ev_app_l by (rewrite HL; lia). exact P4.
       + rewrite vals_ev_app_l by (rewrite HL; lia). exact P5t.
       + apply regs_set_a0; [exact HR2|]. cbn [edenot ev ENV].
         rewrite <- HL, <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity.
@@ -687,7 +885,7 @@ Section Pilot.
     open_err_branch KA -> brk_ok_branch KBb -> mmap_ok_branch KBm -> (forall tr, KBm tr -> KBb tr) ->
     realizes RSEGS
       (mkCfg (mkst regs0 (Z_to_bv 64 0x13548) mem0 (seg_rom RSEGS))
-             (with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputA [a0s; path] envv fs0 stdin0))))
+             (with_tid tid (with_vdso (ia_vdso stdin0) (init_model (segments_reserved RSEGS) brk mbase sp0 LIM (mkProcInputA [a0s; path] envv fs0 stdin0)))))
       (t_alt2 KA (t_alt2 KBm KBb)).
   Proof. intros. apply oom_seg1; assumption. Qed.
 
@@ -1021,7 +1219,6 @@ Section World.
   Variable sp0 : word.
   Variables a0s path : list byte.
   Variable envv : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
   Variable hw : word.    (* [comment removed for export] *)
   Variable rnd : EntryDraw.   (* [comment removed for export] *)
   Variable tid : word.
@@ -1036,12 +1233,22 @@ Section World.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rnd tid regs0 mem0.
+  Hypothesis ME : main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0.
   Hypothesis Hbrk : valid_brk RSEGS brk.
   Hypothesis Hceil : alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z.   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Lemma atop_sp0 : forall r m na sb b l mb, atop_ok (mkVmMapsFull r m na sb b l mb sp0).
   Proof. intros. unfold atop_ok, alloc_top. cbn [vm_init_sp]. rewrite Hceil. unfold stack_max_size. lia. Qed.
+  (* the launch's own record ([main_launch]'s third part) *)
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) (mkProcInputA [a0s; path] envv fs0 stdin0).
+  (* the launch's mmap base is in the covered band ([Run.valid_mmap_base]) *)
+  Lemma mbase_lo : (mmap_base_min <= bv_unsigned mbase)%Z.
+  Proof.
+    pose proof Hlau as Hl. cbn [entry_launch_ok_va] in Hl. destruct Hl as (_ & _ & Hb).
+    exact (proj1 (MmapBase.valid_launch_base_sv48_in_band _ _ Hb)).
+  Qed.
+  Lemma sp0_lo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
+  Proof. exact (proj1 Hvsp). Qed.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
   Hypothesis Hpnd : openat_plain_name path = true.   (* [comment removed for export] *)
@@ -1055,7 +1262,20 @@ Section World.
 
   #[local] Notation ENVv := (ENV a0s path hw rnd).
   (* [comment removed for export] *)
-  #[local] Notation RES := (segments_reserved RSEGS).
+  (* the run's reserved ledger ([State.init_reserved]) *)
+  #[local] Notation RES := (init_reserved (segments_reserved RSEGS) mbase sp0 (ia_kernel stdin0)).
+  Lemma RES_shape : Forall small_ent RES /\ (length RES <= 6)%nat.
+  Proof.
+    destruct (init_reserved_shape _ mbase sp0 (ia_kernel stdin0) mbase_lo sp0_lo S0PilotOOM.segres_small) as [A B].
+    rewrite S0PilotOOM.segres_len in B. split; [exact A| lia].
+  Qed.
+  (* a window from the segments' top to 2^44 is free of the ledger *)
+  Lemma RES_low_free : forall b n : word, (0x5c000 <= bv_unsigned b)%Z -> (bv_unsigned b + bv_unsigned n <= 2 ^ 44)%Z ->
+    region_free RES b n = true.
+  Proof.
+    intros b n Hb Hn. apply init_reserved_low_free; [exact mbase_lo | exact sp0_lo | | exact Hn].
+    intros ra rs Hin. pose proof (S0PilotOOM.segres_below ra rs Hin). lia.
+  Qed.
 
   (* [comment removed for export] *)
   Ltac si_block HSI Rn Mn :=
@@ -1093,7 +1313,7 @@ Section World.
   Definition brk_ok_entry (KB : TSet) : Prop :=
     forall vals R M,
       length vals = 71%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 70 = brk ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
       vals_ev vals 5 = tid ->
       regs_ok (ENVv vals) srD2 R -> know_ok RSEGS (ENVv vals) M knD2 -> SI M ->
       realizes RSEGS
@@ -1106,7 +1326,7 @@ Section World.
   Definition mmap_ok_entry (KB : TSet) : Prop :=
     forall vals R M (hint a : word),
       length vals = 71%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 70 = brk ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
       vals_ev vals 5 = tid ->
       regs_ok (ENVv vals) srE R -> know_ok RSEGS (ENVv vals) M knE -> SI M ->
       grant_ok_na hint model1V a 8192 = true ->
@@ -1144,7 +1364,7 @@ Section World.
 
   Definition exitG_branch : Prop :=
     forall vals R M VM,
-      length vals = 105%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      length vals = 105%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
       vals_ev vals 70 = brk -> vals_ev vals 5 = tid ->
       regs_ok (ENVv vals) srZ R -> know_ok RSEGS (ENVv vals) M knZ ->
       vm_pre VM brk (vals_ev vals 72) -> w65_vm VM brk (vals_ev vals 72) -> w65_xG VM (vals_ev vals 72) -> SI M ->
@@ -1152,13 +1372,13 @@ Section World.
 
   Lemma w65_G : forall vals R M VM,
     exitG_branch ->
-    length vals = 73%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+    length vals = 73%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
     vals_ev vals 70 = brk -> vals_ev vals 5 = tid ->
     regs_ok (ENVv vals) srG0 R -> know_ok RSEGS (ENVv vals) M knG0 ->
     vm_pre VM brk (vals_ev vals 72) -> w65_vm VM brk (vals_ev vals 72) -> w65_xG VM (vals_ev vals 72) -> SI M ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x21378) M (seg_rom RSEGS)) (modelV VM)) K.
   Proof.
-    intros vals R M VM EXIT HL P0 P2 P70 P5 HR HK HVM HVS HVX HSI.
+    intros vals R M VM EXIT HL P0 P2 P3 P4 P70 P5 HR HK HVM HVS HVX HSI.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi. pose proof (brk_al brk Hbrk) as Bal.
@@ -1270,7 +1490,9 @@ Section World.
     set (vals2 := vals ++ junk_vals R2) in *.
     assert (HL2 : length vals2 = 105%nat) by (subst vals2; rewrite length_app, junk_vals_length, HL; reflexivity).
     assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-    assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (Q2 : vals_ev vals2 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (Q3 : vals_ev vals2 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
+    assert (Q4 : vals_ev vals2 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
     assert (Q70 : vals_ev vals2 70 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
     assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
     assert (Q72 : vals_ev vals2 72 = gm) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); reflexivity).
@@ -1285,7 +1507,7 @@ Section World.
     clear HK2 HK.
     change (Env (vals_ev (vals ++ junk_vals R2)) (blobs_ev (blobs0 a0s path hw rnd))) with (ENVv vals2) in HK3.
     change (mem_denot (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rnd))) M LOGE) with (mem_denot (ENVv vals) M LOGE) in HSI2.
-    apply (EXIT vals2 R2 _ VM HL2 Q0 Q2 Q70 Q5 HR3 HK3); [rewrite Q72; exact HVM | rewrite Q72; exact HVS | rewrite Q72; exact HVX | exact HSI2].
+    apply (EXIT vals2 R2 _ VM HL2 Q0 Q2 Q3 Q4 Q70 Q5 HR3 HK3); [rewrite Q72; exact HVM | rewrite Q72; exact HVS | rewrite Q72; exact HVX | exact HSI2].
   Qed.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -1301,9 +1523,6 @@ Section World.
                  (Z_to_bv 64 (bv_unsigned brk + 8192)) LIM mbase sp0.
   Definition vm_mid (VM : VmMaps) : Prop := VM = VMk \/ VM = VMo \/ VM = VMd.
 
-  Lemma RES_eq : RES = [(Z_to_bv 64 65536, Z_to_bv 64 12288); (Z_to_bv 64 77824, Z_to_bv 64 86016);
-                       (Z_to_bv 64 163840, Z_to_bv 64 4096); (Z_to_bv 64 167936, Z_to_bv 64 208896)].
-  Proof. vm_compute. reflexivity. Qed.
 
   Lemma vm_mid_shape : forall VM, vm_mid VM ->
     vm_reserved VM = RES /\ vm_limit VM = LIM
@@ -1327,8 +1546,11 @@ Section World.
     apply grant_exists.
     - (* [comment removed for export] *) rewrite mV_vmmaps. destruct HV as [-> | [-> | ->]]; apply atop_sp0.
     - lia.
-    - rewrite mV_vmmaps, Hr, Hm, RES_eq. repeat constructor; cbn [snd]; rewrite ?u64_lit by lia; lia.
-    - rewrite mV_vmmaps, Hr, Hm, RES_eq. cbn [length app Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
+    - (* the length is a whole number of pages *) reflexivity.
+    - rewrite mV_vmmaps, Hr, Hm. destruct RES_shape as [RS _]. apply Forall_app. split.
+      + eapply Forall_impl; [|exact RS]. unfold small_ent. cbn beta. intros p [[X1 X2] X3]. lia.
+      + destruct Hms as [[Hms1 _] | [Hms1 _]]; repeat constructor; cbn [snd]; lia.
+    - rewrite mV_vmmaps, Hr, Hm. destruct RES_shape as [_ RL]. rewrite length_app. cbn [length]. lia.
     - apply grant_budget_intro; [reflexivity | reflexivity |]. rewrite mV_vmmaps.
       unfold vm_live_bytes. rewrite Hm, Hl. cbn [live_bytes]. pose proof LIM_ge. lia.
   Qed.
@@ -1341,38 +1563,44 @@ Section World.
     (bv_unsigned a mod 4096 = 0 /\ 0x5c000 <= bv_unsigned a /\ bv_unsigned a + 69632 <= alloc_ceiling
      /\ (bv_unsigned brk + 8192 <= bv_unsigned a \/ bv_unsigned a + 69632 <= bv_unsigned brk + 4096))%Z
     /\ (forall mp ms, vm_maps VM = [(mp, ms)] ->
-          (bv_unsigned a + 69632 <= bv_unsigned mp \/ bv_unsigned mp + bv_unsigned ms <= bv_unsigned a)%Z).
+          (bv_unsigned a + 69632 <= bv_unsigned mp \/ bv_unsigned mp + bv_unsigned ms <= bv_unsigned a)%Z)
+    /\ region_free RES a (Z_to_bv 64 69632) = true.
   Proof.
     intros hint VM a HV Hg. pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi.
     cps_destruct (vm_mid_shape VM HV) as (Hr & Hl & mp & ms & Hm & Hms).
     cps_destruct (grant_ok_unpack _ _ _ _ Hg) as (Hal & Hpos & Hce & Hrf & Hlive).
-    rewrite mV_vmmaps in Hrf. rewrite Hr, Hm, RES_eq in Hrf. rewrite mV_vmmaps in Hce.
+    rewrite mV_vmmaps in Hrf. rewrite Hr, Hm in Hrf. rewrite mV_vmmaps in Hce.
+    assert (Grf : region_free RES a (Z_to_bv 64 69632) = true)
+      by (rewrite region_free_app_split in Hrf; apply andb_prop in Hrf; exact (proj1 Hrf)).
     pose proof (atop_ok_grant _ _ _ (vm_mid_atop VM HV) Hce) as Hce'. clear Hce. rename Hce' into Hce.
     pose proof alloc_ceiling_range as Hcr.
     unfold page_size in Hal. pose proof (u64_range a) as Ha.
     assert (Hn : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by (apply u64_lit; lia).
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 12288) Hrf ltac:(cbn [In app]; tauto)) as D1.
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 77824) (Z_to_bv 64 86016) Hrf ltac:(cbn [In app]; tauto)) as D2.   (* [comment removed for export] *)
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 167936) (Z_to_bv 64 208896) Hrf ltac:(cbn [In app]; tauto)) as D4.
-    pose proof (region_free_In _ _ _ mp ms Hrf ltac:(cbn [In app]; tauto)) as D5.
+    (* the segment entries sit first in the ledger *)
+    assert (RSin : forall e, In e (segments_reserved RSEGS) -> In e (RES ++ [(mp, ms)])).
+    { intros e He. apply in_or_app. left. apply S0PilotOOM.RESX_seg_in. exact He. }
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 12288) Hrf ltac:(apply RSin; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D1.
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 77824) (Z_to_bv 64 86016) Hrf ltac:(apply RSin; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D2.   (* [comment removed for export] *)
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 167936) (Z_to_bv 64 208896) Hrf ltac:(apply RSin; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D4.
+    pose proof (region_free_In _ _ _ mp ms Hrf ltac:(apply in_or_app; right; left; reflexivity)) as D5.
     rewrite Hn in D1, D2, D4, D5. rewrite !u64_lit in D1 by lia. rewrite !u64_lit in D2 by lia. rewrite !u64_lit in D4 by lia.
     assert (Ha4096 : (4096 <= bv_unsigned a)%Z).
     { destruct (proj1 (Z.mod_divide (bv_unsigned a) 4096 ltac:(lia)) Hal) as [q Hq]. lia. }
     pose proof (u64_range mp).
     split.
-    2:{ intros mp' ms' Hm'. rewrite Hm in Hm'. injection Hm' as <- <-. exact D5. }
+    2:{ split; [| exact Grf]. intros mp' ms' Hm'. rewrite Hm in Hm'. injection Hm' as <- <-. exact D5. }
     destruct Hms as [[Hms1 ->] | [Hms1 Hmp]]; rewrite ?Hms1, ?Hmp in D5; repeat split; lia.
   Qed.
 
   Lemma w65_mid : forall vals R M VM,
     exitG_branch ->
-    length vals = 72%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+    length vals = 72%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
     vals_ev vals 70 = brk -> vals_ev vals 5 = tid ->
     regs_ok (ENVv vals) srM R -> know_ok RSEGS (ENVv vals) M knM -> vm_mid VM -> SI M ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x20284) M (seg_rom RSEGS)) (modelV VM))
                K.
   Proof.
-    intros vals R M VM EXIT HL P0 P2 P70 P5 HR HK HV HSI.
+    intros vals R M VM EXIT HL P0 P2 P3 P4 P70 P5 HR HK HV HSI.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi. pose proof (brk_al brk Hbrk) as Bal.
@@ -1391,11 +1619,13 @@ Section World.
     - regv HR (13 : reg). reflexivity.
     - regv HR (14 : reg). apply bv_eq. reflexivity.
     - regv HR (15 : reg). reflexivity.
+    - (* LPS 727298f3 (#144/#146): the hint is this call's own a0, the literal NULL *)
+      regv HR (10 : reg). apply place_declined_b_null.
     - apply vm_mid_grant_exists. exact HV.
     - (* [comment removed for export] *)
       intros a Hg. rewrite v_addi_pc4 by lia. change (0x21374 + 4)%Z with 0x21378%Z.
       change (page_round_up_Z 69632) with 69632%Z in Hg |- *.
-      destruct (vm_mid_grant _ VM a HV Hg) as ((Gal & Glo & Ghi & Gdj) & Gsep).
+      destruct (vm_mid_grant _ VM a HV Hg) as ((Gal & Glo & Ghi & Gdj) & Gsep & Grf).
       (* [comment removed for export] *)
       lazymatch type of HR with regs_ok _ ?sr ?Rc =>
         pose proof (env_app_regs vals [a] _ sr Rc ltac:(rewrite HL; vm_compute; reflexivity) HR) as HR2 end.
@@ -1405,12 +1635,14 @@ Section World.
       set (vals2 := vals ++ [a]) in *.
       assert (HL2 : length vals2 = 73%nat) by (subst vals2; rewrite length_app, HL; reflexivity).
       assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-      assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+      assert (Q2 : vals_ev vals2 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+      assert (Q3 : vals_ev vals2 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
+      assert (Q4 : vals_ev vals2 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
       assert (Q70 : vals_ev vals2 70 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
       assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
       assert (Q72 : vals_ev vals2 72 = a).
       { subst vals2. rewrite <- HL. rewrite <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity. }
-      clearbody vals2. clear HL P0 P2 P70 P5 vals. rename HL2 into HL.
+      clearbody vals2. clear HL P0 P2 P3 P4 P70 P5 vals. rename HL2 into HL.
       change (Env (vals_ev vals2) (blobs_ev (blobs0 a0s path hw rnd))) with (ENVv vals2) in HR2, HK2.
       pose proof (regs_set_a0 (ENVv vals2) _ _ a gx HR2 ltac:(cbn [edenot gx ev ENV]; exact Q72)) as HR. clear HR2.
       (* [comment removed for export] *)
@@ -1430,7 +1662,7 @@ Section World.
                     ltac:(lia) ltac:(lia)) as HK.
       clear HK3.
       lazymatch type of HK with know_ok _ _ _ ?kn => replace kn with knG0 in HK by (vm_compute; reflexivity) end.
-      apply (w65_G vals2 _ _ _ EXIT HL Q0 Q2 Q70 Q5 HR HK).
+      apply (w65_G vals2 _ _ _ EXIT HL Q0 Q2 Q3 Q4 Q70 Q5 HR HK).
       4:{ si_fill HSI. }
       3:{ rewrite Q72. unfold w65_xG, mmap_model. rewrite ?with_vmmaps_vm, ?mV_vmmaps.
           destruct HV as [-> | [-> | ->]]; cbn [VMk VMo VMd vm_reserved vm_limit vm_maps vm_noaccess vm_start_brk vm_brk vm_mmap_base].
@@ -1449,7 +1681,13 @@ Section World.
       unfold vm_pre, mmap_model. rewrite ?with_vmmaps_vm, ?mV_vmmaps. cbn [vm_reserved vm_limit vm_maps vm_noaccess vm_start_brk vm_brk].
       rewrite Hr, Hl, Hm.
       assert (Hn : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by (apply u64_lit; lia).
-      split; [reflexivity|]. split; [reflexivity|]. split; [apply map_has_head|].
+      split.
+      { (* the ledger is the run's; the new grant and the break page miss it *)
+        apply (res_ok_init _ mbase sp0 (ia_kernel stdin0)); [exact mbase_lo | exact sp0_lo | exact S0PilotOOM.segres_small | reflexivity |].
+        intros e He. cbn [vm_maps In] in He. destruct He as [<- | [<- | []]]; cbn [fst snd].
+        - exact Grf.
+        - apply RES_low_free; destruct Hms as [[Hms1 ->] | [Hms1 Hmp]]; lia. }
+      split; [reflexivity|]. split; [apply map_has_head|].
       pose proof (u64_range mp) as Hmpr. pose proof (Gsep mp ms Hm) as Gsp.
       split.
       { constructor; [cbn [fst snd]; rewrite ?Hn; lia|]. constructor; [|constructor].
@@ -1469,7 +1707,7 @@ Section World.
   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
-  Ltac guard_tail EXIT HL P0 P1 P2 P70 P5 VMX HSI Rn Mn :=
+  Ltac guard_tail EXIT HL P0 P1 P2 P3 P4 P70 P5 VMX HSI Rn Mn :=
     run_blockW_keep scr0 71%nat; si_block HSI Rn Mn;
     lazymatch goal with
     | HR' : regs_ok _ ?sr ?R', HK' : know_ok _ _ ?M' ?kn |- _ =>
@@ -1483,7 +1721,9 @@ Section World.
         set (vals2 := vals ++ [getr R' 10]) in *;
         assert (HL2 : length vals2 = 72%nat) by (subst vals2; rewrite length_app, HL; reflexivity);
         assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0);
-        assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2);
+        assert (Q2 : vals_ev vals2 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2);
+        assert (Q3 : vals_ev vals2 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3);
+        assert (Q4 : vals_ev vals2 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4);
         assert (Q70 : vals_ev vals2 70 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70);
         assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5);
         assert (Q71 : vals_ev vals2 71 = getr R' 10)
@@ -1495,14 +1735,14 @@ Section World.
         lazymatch type of HR3 with regs_ok _ ?sr3 _ => replace sr3 with srM in HR3 by (vm_compute; reflexivity) end;
         pose proof (know_ok_sub RSEGS (ENVv vals2) M' kn knM ltac:(vm_compute; reflexivity) HK2) as HK3;
         clear HK2;
-        apply (w65_mid vals2 R' M' VMX EXIT HL2 Q0 Q2 Q70 Q5 HR3 HK3); [ | exact HSI ]
+        apply (w65_mid vals2 R' M' VMX EXIT HL2 Q0 Q2 Q3 Q4 Q70 Q5 HR3 HK3); [ | exact HSI ]
         end
       end
     end.
 
   Theorem brk_ok_worldV : exitG_branch -> brk_ok_entry K.
   Proof.
-    intros EXIT vals R M HL P0 P70 P1 P2 P5 HR HK HSI0.
+    intros EXIT vals R M HL P0 P70 P1 P2 P3 P4 P5 HR HK HSI0.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi. pose proof (brk_al brk Hbrk) as Bal.
@@ -1541,7 +1781,9 @@ Section World.
     - regv HR (13 : reg). reflexivity.
     - regv HR (14 : reg). apply bv_eq. reflexivity.
     - regv HR (15 : reg). reflexivity.
-    - rewrite mV_vmmaps. cbn [VMk vm_reserved]. apply region_free_above_top. rewrite rtop. lia.
+    - (* #38: the ledger is [init_reserved] (segments ++ vDSO pair), not the segments alone *)
+      rewrite mV_vmmaps. cbn [VMk vm_reserved]. try change (page_round_up_Z 4096) with 4096%Z.
+      apply RES_low_free; [lia | rewrite ?u64_lit by lia; lia].
     - rewrite mV_vmmaps. cbn [VMk vm_maps]. change (page_round_up_Z 4096) with 4096%Z.
       apply map_contains_head; rewrite ?u64_lit by lia; lia.
     - (* [comment removed for export] *)
@@ -1559,7 +1801,7 @@ Section World.
       change (fixed_noaccess_model brk (Z_to_bv 64 4096) (modelV VMk)) with (modelV VMo).
       lazymatch type of HK with know_ok _ _ ?Mc _ => assert (HSI2 : SI Mc) by si_fill HSI end.
       clear HSI. rename HSI2 into HSI.
-      guard_tail EXIT HL P0 P1 P2 P70 P5 VMo HSI R M. right. left. reflexivity.
+      guard_tail EXIT HL P0 P1 P2 P3 P4 P70 P5 VMo HSI R M. right. left. reflexivity.
   Qed.
 End World.
 
@@ -1620,15 +1862,17 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* the noaccess grant is now Linux's placement, and the four facts come
+   from it ([Placement.linux_place_is_admissible]) *)
 Lemma grant_ok_na_unpack : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
   grant_ok_na hint m a n = true ->
   (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z /\
   (bv_unsigned a + n <= alloc_top (m_vmmaps m))%Z /\
   region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true.
 Proof.
-  intros hint m a n H. unfold grant_ok_na in H.
-  rewrite !andb_true_iff in H. destruct H as [[[H1 H2] H3] H4].
-  apply Z.eqb_eq in H1. apply Z.ltb_lt in H2. apply Z.leb_le in H3. auto.
+  intros hint m a n Hn Hnal H.
+  exact (Placement.linux_place_is_admissible _ _ _ _ _ Hn Hnal H).
 Qed.
 
 Section World.
@@ -1636,7 +1880,6 @@ Section World.
   Variable sp0 : word.
   Variables a0s path : list byte.
   Variable envv : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
   Variable hw : word.    (* [comment removed for export] *)
   Variable rnd : EntryDraw.   (* [comment removed for export] *)
   Variable tid : word.
@@ -1651,12 +1894,26 @@ Section World.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rnd tid regs0 mem0.
+  Hypothesis ME : main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0.
   Hypothesis Hbrk : valid_brk RSEGS brk.
   Hypothesis Hceil : alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z.   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Lemma atop_sp0 : forall r m na sb b l mb, atop_ok (mkVmMapsFull r m na sb b l mb sp0).
   Proof. intros. unfold atop_ok, alloc_top. cbn [vm_init_sp]. rewrite Hceil. unfold stack_max_size. lia. Qed.
+  (* the launch's own record ([main_launch]'s third part) *)
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) (mkProcInputA [a0s; path] envv fs0 stdin0).
+  (* the launch's mmap base is in the covered band ([Run.valid_mmap_base]) *)
+  Lemma mbase_ok : valid_mmap_base mbase.
+  Proof.
+    pose proof Hlau as Hl. cbn [entry_launch_ok_va] in Hl. destruct Hl as (_ & _ & Hb).
+    exact (MmapBase.valid_launch_base_sv48_in_band _ _ Hb).
+  Qed.
+  Lemma mbase_lo : (mmap_base_min <= bv_unsigned mbase)%Z.
+  Proof. exact (proj1 mbase_ok). Qed.
+  Lemma mbase_al : (bv_unsigned mbase mod page_size = 0)%Z.
+  Proof. exact (proj2 (proj2 mbase_ok)). Qed.
+  Lemma sp0_lo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
+  Proof. exact (proj1 Hvsp). Qed.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
   Hypothesis Hpnd : openat_plain_name path = true.   (* [comment removed for export] *)
@@ -1668,7 +1925,15 @@ Section World.
 
   #[local] Notation ENVv := (ENV a0s path hw rnd).
   (* [comment removed for export] *)
-  #[local] Notation RES := (segments_reserved RSEGS).
+  (* the run's reserved ledger ([State.init_reserved]) *)
+  #[local] Notation RES := (init_reserved (segments_reserved RSEGS) mbase sp0 (ia_kernel stdin0)).
+  Lemma RES_shape : Forall small_ent RES /\ (length RES <= 6)%nat.
+  Proof.
+    destruct (init_reserved_shape _ mbase sp0 (ia_kernel stdin0) mbase_lo sp0_lo S0PilotOOM.segres_small) as [A B].
+    rewrite S0PilotOOM.segres_len in B. split; [exact A| lia].
+  Qed.
+  Lemma RES_seg_in : forall e l, In e (segments_reserved RSEGS) -> In e (RES ++ l).
+  Proof. intros e l He. apply in_or_app. left. apply S0PilotOOM.RESX_seg_in. exact He. Qed.
 
   #[local] Notation modelV := (modelV tid fs0 stdin0 fd3).
   #[local] Notation model1V := (model1V sp0 tid brk mbase fs0 stdin0 fd3).   (* [comment removed for export] *)
@@ -1704,23 +1969,23 @@ Section World.
   (* [comment removed for export] *)
   Definition exitT_branch : Prop :=
     forall vals R M VM,
-      length vals = 105%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      length vals = 105%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
       vals_ev vals 70 = brk -> vals_ev vals 5 = tid ->
       regs_ok (ENVv vals) srZm R -> know_ok RSEGS (ENVv vals) M knZm ->
-      vm_pre VM (vals_ev vals 71) (vals_ev vals 72) -> w65_vm VM (vals_ev vals 71) (vals_ev vals 72) ->
+      vm_pre VM (vals_ev vals 71) (vals_ev vals 72) -> w65_vm sp0 mbase stdin0 VM (vals_ev vals 71) (vals_ev vals 72) ->
       VM = mkVmMapsFull RES [(vals_ev vals 72, Z_to_bv 64 69632); (vals_ev vals 71, Z_to_bv 64 8192)] [(vals_ev vals 71, Z_to_bv 64 4096)] brk brk LIM mbase sp0 -> SI M ->
       realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1359c) M (seg_rom RSEGS)) (modelV VM)) K.
 
   Lemma w65_T : forall vals R M VM,
     exitT_branch ->
-    length vals = 73%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+    length vals = 73%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
     vals_ev vals 70 = brk -> vals_ev vals 5 = tid ->
     regs_ok (ENVv vals) srT0 R -> know_ok RSEGS (ENVv vals) M knT0 ->
-    vm_pre VM (vals_ev vals 71) (vals_ev vals 72) -> w65_vm VM (vals_ev vals 71) (vals_ev vals 72) ->
+    vm_pre VM (vals_ev vals 71) (vals_ev vals 72) -> w65_vm sp0 mbase stdin0 VM (vals_ev vals 71) (vals_ev vals 72) ->
       VM = mkVmMapsFull RES [(vals_ev vals 72, Z_to_bv 64 69632); (vals_ev vals 71, Z_to_bv 64 8192)] [(vals_ev vals 71, Z_to_bv 64 4096)] brk brk LIM mbase sp0 -> SI M ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x21378) M (seg_rom RSEGS)) (modelV VM)) K.
   Proof.
-    intros vals R M VM EXIT HL P0 P2 P70 P5 HR HK HVM HVS HVX HSI.
+    intros vals R M VM EXIT HL P0 P2 P3 P4 P70 P5 HR HK HVM HVS HVX HSI.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi. pose proof (brk_al brk Hbrk) as Bal.
@@ -1833,7 +2098,9 @@ Section World.
     set (vals2 := vals ++ junk_vals R2) in *.
     assert (HL2 : length vals2 = 105%nat) by (subst vals2; rewrite length_app, junk_vals_length, HL; reflexivity).
     assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-    assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (Q2 : vals_ev vals2 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (Q3 : vals_ev vals2 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
+    assert (Q4 : vals_ev vals2 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
     assert (Q70 : vals_ev vals2 70 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
     assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
     assert (Q71 : vals_ev vals2 71 = av) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); reflexivity).
@@ -1849,7 +2116,7 @@ Section World.
     clear HK2 HK.
     change (Env (vals_ev (vals ++ junk_vals R2)) (blobs_ev (blobs0 a0s path hw rnd))) with (ENVv vals2) in HK3.
     change (mem_denot (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rnd))) M LOGE) with (mem_denot (ENVv vals) M LOGE) in HSI2.
-    apply (EXIT vals2 R2 _ VM HL2 Q0 Q2 Q70 Q5 HR3 HK3);
+    apply (EXIT vals2 R2 _ VM HL2 Q0 Q2 Q3 Q4 Q70 Q5 HR3 HK3);
       [rewrite Q71, Q72; exact HVM | rewrite Q71, Q72; exact HVS | rewrite Q71, Q72; exact HVX | exact HSI2].
   Qed.
   (* [comment removed for export] *)
@@ -1864,9 +2131,6 @@ Section World.
   Definition VMt (a gm : word) : VmMaps :=
     mkVmMapsFull RES [(gm, Z_to_bv 64 69632); (a, Z_to_bv 64 8192)] [(a, Z_to_bv 64 4096)] brk brk LIM mbase sp0.
 
-  Lemma RES_eq' : RES = [(Z_to_bv 64 65536, Z_to_bv 64 12288); (Z_to_bv 64 77824, Z_to_bv 64 86016);
-                        (Z_to_bv 64 163840, Z_to_bv 64 4096); (Z_to_bv 64 167936, Z_to_bv 64 208896)].
-  Proof. vm_compute. reflexivity. Qed.
 
   Lemma VMp_grant_exists : forall hint a, exists g, grant_ok hint (modelV (VMp a)) g (page_round_up_Z 69632) = true.
   Proof.
@@ -1874,44 +2138,51 @@ Section World.
     apply grant_exists.
     - (* [comment removed for export] *) rewrite mV_vmmaps. apply atop_sp0.
     - lia.
-    - rewrite mV_vmmaps. cbn [VMp vm_reserved vm_limit vm_maps]. rewrite ?RES_eq'.
-      repeat constructor; cbn [snd]; rewrite ?u64_lit by lia; lia.
-    - rewrite mV_vmmaps. cbn [VMp vm_reserved vm_limit vm_maps]. rewrite ?RES_eq'.
-      cbn [length app Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
+    - (* the length is a whole number of pages *) reflexivity.
+    - rewrite mV_vmmaps. cbn [VMp vm_reserved vm_limit vm_maps]. destruct RES_shape as [RS _].
+      apply Forall_app. split.
+      + eapply Forall_impl; [|exact RS]. unfold small_ent. cbn beta. intros p [[X1 X2] X3]. lia.
+      + repeat constructor; cbn [snd]; rewrite ?u64_lit by lia; lia.
+    - rewrite mV_vmmaps. cbn [VMp vm_reserved vm_limit vm_maps]. destruct RES_shape as [_ RL].
+      rewrite length_app. cbn [length]. lia.
     - apply grant_budget_intro; [reflexivity | reflexivity |]. rewrite mV_vmmaps.
       unfold vm_live_bytes. cbn [VMp vm_maps vm_limit live_bytes]. rewrite ?u64_lit by lia. pose proof LIM_ge. lia.
   Qed.
 
   Lemma VMp_grant : forall hint a g, grant_ok hint (modelV (VMp a)) g 69632 = true ->
     (bv_unsigned g mod 4096 = 0 /\ 0x5c000 <= bv_unsigned g /\ bv_unsigned g + 69632 <= alloc_ceiling
-     /\ (bv_unsigned a + 8192 <= bv_unsigned g \/ bv_unsigned g + 69632 <= bv_unsigned a))%Z.
+     /\ (bv_unsigned a + 8192 <= bv_unsigned g \/ bv_unsigned g + 69632 <= bv_unsigned a))%Z
+    /\ region_free RES g (Z_to_bv 64 69632) = true.
   Proof.
     intros hint a g Hg.
     cps_destruct (grant_ok_unpack _ _ _ _ Hg) as (Hal & Hpos & Hce & Hrf & Hlive).
-    rewrite mV_vmmaps in Hrf. cbn [VMp vm_reserved vm_maps] in Hrf. rewrite RES_eq' in Hrf. rewrite mV_vmmaps in Hce.
+    rewrite mV_vmmaps in Hrf. cbn [VMp vm_reserved vm_maps] in Hrf. rewrite mV_vmmaps in Hce.
+    assert (Grf : region_free RES g (Z_to_bv 64 69632) = true)
+      by (rewrite region_free_app_split in Hrf; apply andb_prop in Hrf; exact (proj1 Hrf)).
     apply (atop_ok_grant _ _ _ (atop_sp0 _ _ _ _ _ _ _)) in Hce. pose proof alloc_ceiling_range as Hcr.
     unfold page_size in Hal. pose proof (u64_range g) as Hgr. pose proof (u64_range a) as Har.
     assert (Hn : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by (apply u64_lit; lia).
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 12288) Hrf ltac:(cbn [In app]; tauto)) as D1.
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 77824) (Z_to_bv 64 86016) Hrf ltac:(cbn [In app]; tauto)) as D2.   (* [comment removed for export] *)
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 167936) (Z_to_bv 64 208896) Hrf ltac:(cbn [In app]; tauto)) as D4.
-    pose proof (region_free_In _ _ _ a (Z_to_bv 64 8192) Hrf ltac:(cbn [In app]; tauto)) as D5.
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 12288) Hrf ltac:(apply RES_seg_in; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D1.
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 77824) (Z_to_bv 64 86016) Hrf ltac:(apply RES_seg_in; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D2.   (* [comment removed for export] *)
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 167936) (Z_to_bv 64 208896) Hrf ltac:(apply RES_seg_in; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D4.
+    pose proof (region_free_In _ _ _ a (Z_to_bv 64 8192) Hrf ltac:(apply in_or_app; right; left; reflexivity)) as D5.
     rewrite Hn in D1, D2, D4, D5. rewrite !u64_lit in D1 by lia. rewrite !u64_lit in D2 by lia. rewrite !u64_lit in D4 by lia. rewrite !u64_lit in D5 by lia.
     assert (Hg4096 : (4096 <= bv_unsigned g)%Z).
     { destruct (proj1 (Z.mod_divide (bv_unsigned g) 4096 ltac:(lia)) Hal) as [q Hq]. lia. }
-    repeat split; lia.
+    split; [repeat split; lia| exact Grf].
   Qed.
 
   Lemma w65_R : forall vals R M,
     exitT_branch ->
-    length vals = 72%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+    length vals = 72%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd -> vals_ev vals 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 -> vals_ev vals 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0 ->
     vals_ev vals 70 = brk -> vals_ev vals 5 = tid ->
     (0x1000 <= bv_unsigned (vals_ev vals 71))%Z -> (bv_unsigned (vals_ev vals 71) + 8192 <= alloc_ceiling)%Z ->
+    region_free RES (vals_ev vals 71) (Z_to_bv 64 8192) = true ->
     regs_ok (ENVv vals) srR0 R -> know_ok RSEGS (ENVv vals) M knR0 -> SI M ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x213d0) M (seg_rom RSEGS)) (modelV (VMp (vals_ev vals 71))))
                K.
   Proof.
-    intros vals R M EXIT HL P0 P2 P70 P5 Alo Ahi HR HK HSI.
+    intros vals R M EXIT HL P0 P2 P3 P4 P70 P5 Alo Ahi Arf HR HK HSI.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     set (av := vals_ev vals 71) in *.
@@ -1929,11 +2200,13 @@ Section World.
     - regv HR (13 : reg). reflexivity.
     - regv HR (14 : reg). apply bv_eq. reflexivity.
     - regv HR (15 : reg). reflexivity.
+    - (* LPS 727298f3 (#144/#146): the hint is this call's own a0, the literal NULL *)
+      regv HR (10 : reg). apply place_declined_b_null.
     - apply VMp_grant_exists.
     - (* [comment removed for export] *)
       intros g Hg. rewrite v_addi_pc4 by lia. change (0x21374 + 4)%Z with 0x21378%Z.
       change (page_round_up_Z 69632) with 69632%Z in Hg |- *.
-      cps_destruct (VMp_grant _ av g Hg) as (Gal & Glo & Ghi & Gdj).
+      cps_destruct (VMp_grant _ av g Hg) as ((Gal & Glo & Ghi & Gdj) & Grf).
       lazymatch type of HR with regs_ok _ ?sr ?Rc =>
         pose proof (env_app_regs vals [g] _ sr Rc ltac:(rewrite HL; vm_compute; reflexivity) HR) as HR2 end.
       lazymatch type of HK with know_ok _ _ ?Mc ?kn =>
@@ -1942,13 +2215,15 @@ Section World.
       set (vals2 := vals ++ [g]) in *.
       assert (HL2 : length vals2 = 73%nat) by (subst vals2; rewrite length_app, HL; reflexivity).
       assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-      assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+      assert (Q2 : vals_ev vals2 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+      assert (Q3 : vals_ev vals2 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
+      assert (Q4 : vals_ev vals2 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
       assert (Q70 : vals_ev vals2 70 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
       assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
       assert (Q71 : vals_ev vals2 71 = av) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); reflexivity).
       assert (Q72 : vals_ev vals2 72 = g).
       { subst vals2. rewrite <- HL. rewrite <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity. }
-      clearbody vals2. clearbody av. clear HL P0 P2 P70 P5 vals. rename HL2 into HL.
+      clearbody vals2. clearbody av. clear HL P0 P2 P3 P4 P70 P5 vals. rename HL2 into HL.
       change (Env (vals_ev vals2) (blobs_ev (blobs0 a0s path hw rnd))) with (ENVv vals2) in HR2, HK2.
       pose proof (regs_set_a0 (ENVv vals2) _ _ g gx HR2 ltac:(cbn [edenot gx ev ENV]; exact Q72)) as HR. clear HR2.
       lazymatch type of HK2 with know_ok _ _ ?Mc _ =>
@@ -1967,7 +2242,7 @@ Section World.
                     ltac:(lia) ltac:(lia)) as HK.
       clear HK3.
       lazymatch type of HK with know_ok _ _ _ ?kn => replace kn with knT0 in HK by (vm_compute; reflexivity) end.
-      apply (w65_T vals2 _ _ (VMt av g) EXIT HL Q0 Q2 Q70 Q5 HR HK).
+      apply (w65_T vals2 _ _ (VMt av g) EXIT HL Q0 Q2 Q3 Q4 Q70 Q5 HR HK).
       4:{ si_fill HSI. }
       3:{ rewrite Q71, Q72. reflexivity. }
       2:{ rewrite Q71, Q72. unfold w65_vm. cbn [vm_reserved vm_limit vm_maps VMt].
@@ -1976,7 +2251,11 @@ Section World.
       unfold vm_pre, mmap_model. rewrite ?with_vmmaps_vm, ?mV_vmmaps. cbn [VMt VMp vm_reserved vm_limit vm_maps vm_noaccess vm_start_brk vm_brk].
       assert (Hn : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by (apply u64_lit; lia).
       assert (H8 : bv_unsigned (Z_to_bv 64 8192) = 8192%Z) by (apply u64_lit; lia).
-      split; [reflexivity|]. split; [reflexivity|]. split; [apply map_has_head|].
+      split.
+      { (* the ledger is the run's; both grants miss it *)
+        apply (res_ok_init _ mbase sp0 (ia_kernel stdin0)); [exact mbase_lo | exact sp0_lo | exact S0PilotOOM.segres_small | reflexivity |].
+        intros e He. cbn [vm_maps In] in He. destruct He as [<- | [<- | []]]; cbn [fst snd]; assumption. }
+      split; [reflexivity|]. split; [apply map_has_head|].
       split.
       { constructor; [cbn [fst snd]; rewrite ?Hn; lia|]. constructor; [|constructor]. cbn [fst snd]. rewrite ?H8. lia. }
       split; [cbn; lia|].
@@ -1996,22 +2275,28 @@ Section World.
   Theorem mmap_ok_worldV : exitT_branch ->
     mmap_ok_entry sp0 a0s path envv hw rnd tid brk mbase fs0 stdin0 fd3 SI K.
   Proof.
-    intros EXIT vals R M hint a HL P0 P70 P1 P2 P5 HR HK HSI0 Hg.
+    intros EXIT vals R M hint a HL P0 P70 P1 P2 P3 P4 P5 HR HK HSI0 Hg.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
     unfold sp_window_lo, sp_window_hi in *.
     pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi. pose proof (brk_al brk Hbrk) as Bal.
     (* [comment removed for export] *)
-    cps_destruct (grant_ok_na_unpack _ _ _ _ Hg) as (Hal & Hpos & Hce & Hrf).
+    cps_destruct (grant_ok_na_unpack _ _ _ 8192 ltac:(lia) ltac:(reflexivity) Hg) as (Hal & Hpos & Hce & Hrf).
     unfold S7W65.model1V in Hrf, Hce. rewrite m_vmmaps_mkModelA in Hrf, Hce. cbn [vm_reserved vm_maps] in Hrf.
-    rewrite app_nil_r, RES_eq' in Hrf.
+    rewrite app_nil_r in Hrf.
+    (* the grant misses the whole ledger, the vDSO pair included *)
+    assert (HrfR : region_free RES a (Z_to_bv 64 8192) = true) by exact Hrf.
+    assert (HrfV : region_free (vdso_reserved (ia_kernel stdin0)
+                     (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size)))) a (Z_to_bv 64 8192) = true).
+    { pose proof HrfR as X. unfold init_reserved in X. rewrite region_free_app_split in X.
+      apply andb_prop in X. exact (proj2 X). }
     apply (atop_ok_grant _ _ _ (atop_sp0 _ _ _ _ _ _ _)) in Hce. pose proof alloc_ceiling_range as Hcr.
     unfold page_size in Hal. pose proof (u64_range a) as Har.
     change (page_round_up_Z 8192) with 8192%Z in Hce, Hrf.
     assert (H8 : bv_unsigned (Z_to_bv 64 8192) = 8192%Z) by (apply u64_lit; lia).
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 12288) Hrf ltac:(cbn [In app]; tauto)) as D1.
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 77824) (Z_to_bv 64 86016) Hrf ltac:(cbn [In app]; tauto)) as D2.
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 163840) (Z_to_bv 64 4096) Hrf ltac:(cbn [In app]; tauto)) as D3.
-    pose proof (region_free_In _ _ _ (Z_to_bv 64 167936) (Z_to_bv 64 208896) Hrf ltac:(cbn [In app]; tauto)) as D4.
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 65536) (Z_to_bv 64 12288) Hrf ltac:(apply S0PilotOOM.RESX_seg_in; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D1.
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 77824) (Z_to_bv 64 86016) Hrf ltac:(apply S0PilotOOM.RESX_seg_in; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D2.
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 163840) (Z_to_bv 64 4096) Hrf ltac:(apply S0PilotOOM.RESX_seg_in; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D3.
+    pose proof (region_free_In _ _ _ (Z_to_bv 64 167936) (Z_to_bv 64 208896) Hrf ltac:(apply S0PilotOOM.RESX_seg_in; rewrite S0PilotOOM.segres_eq; cbn [In]; tauto)) as D4.
     rewrite H8 in D1, D2, D3, D4.
     rewrite !u64_lit in D1 by lia. rewrite !u64_lit in D2 by lia. rewrite !u64_lit in D3 by lia. rewrite !u64_lit in D4 by lia.
     assert (Ha4096 : (4096 <= bv_unsigned a)%Z).
@@ -2027,12 +2312,14 @@ Section World.
     set (vals2 := vals ++ [a]) in *.
     assert (HL2 : length vals2 = 72%nat) by (subst vals2; rewrite length_app, HL; reflexivity).
     assert (Q0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-    assert (Q2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (Q2 : vals_ev vals2 2 = p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+    assert (Q3 : vals_ev vals2 3 = auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
+    assert (Q4 : vals_ev vals2 4 = rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
     assert (Q70 : vals_ev vals2 70 = brk) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
     assert (Q5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
     assert (Q71 : vals_ev vals2 71 = a).
     { subst vals2. rewrite <- HL. rewrite <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity. }
-    clearbody vals2. clear HL P0 P2 P70 P1 P5 vals. rename HL2 into HL.
+    clearbody vals2. clear HL P0 P2 P3 P4 P70 P1 P5 vals. rename HL2 into HL.
     change (Env (vals_ev vals2) (blobs_ev (blobs0 a0s path hw rnd))) with (ENVv vals2) in HR2, HK2.
     pose proof (regs_set_a0 (ENVv vals2) _ _ a ax HR2 ltac:(cbn [edenot ax ev ENV]; exact Q71)) as HR. clear HR2.
     lazymatch type of HR with regs_ok _ ?sr _ => replace sr with srP0 in HR by (vm_compute; reflexivity) end.
@@ -2074,6 +2361,11 @@ Section World.
     - lia.
     - change (page_round_up_Z 4096) with 4096%Z. unfold two_pow_64. rewrite u64_lit by lia. lia.
     - regv HR (12 : reg). reflexivity.
+    - (* the protected half lies in the grant, which misses the vDSO pair *)
+      change (m_kernel (modelV (VMn a))) with (ia_kernel stdin0). rewrite mV_vmmaps.
+      rewrite (vdso_top_launch (VMn a) mbase_al). cbn [VMn vm_mmap_base vm_init_sp].
+      change (page_round_up_Z 4096) with 4096%Z.
+      apply (region_free_within _ a (Z_to_bv 64 8192)); [exact HrfV | rewrite ?u64_lit by lia; lia | rewrite ?u64_lit by lia; lia].
     - rewrite mV_vmmaps. cbn [VMn vm_noaccess]. change (page_round_up_Z 4096) with 4096%Z.
       apply map_contains_head; rewrite ?u64_lit by lia; lia.
     - rewrite mV_vmmaps. cbn [VMn vm_maps]. change (page_round_up_Z 4096) with 4096%Z.
@@ -2105,7 +2397,7 @@ Section World.
         with (modelV (VMp a)).
       rewrite <- Q71.
       lazymatch type of HK with know_ok _ _ ?Mc _ => assert (HSI2 : SI Mc) by si_fill HSI end.
-      apply (w65_R vals2 _ _ EXIT HL Q0 Q2 Q70 Q5); rewrite ?Q71; [lia | lia | exact HR | exact HK | exact HSI2].
+      apply (w65_R vals2 _ _ EXIT HL Q0 Q2 Q3 Q4 Q70 Q5); rewrite ?Q71; [lia | lia | exact HrfR | exact HR | exact HK | exact HSI2].
   Qed.
 End World.
 
@@ -2372,7 +2664,7 @@ Definition is_kdisj_at (b1 : expr) (o1 : Z) (b2 : expr) (K : kentry) : bool :=
   end.
 
 (* [comment removed for export] *)
-Ltac kauxv HK kn P0 :=
+Ltac kauxv HK kn P0 P3 P4 AUXC :=
   let Xa := fresh "Xa" in let Xr := fresh "Xr" in let Da := fresh "Da" in let Dr := fresh "Dr" in
   pose proof (know_nth RSEGS _ _ kn ltac:(let i := kidx kn (is_krange (EVar 3)) in exact i) _ HK eq_refl) as Xa;
   cbn [kentry_ok edenot ev ENV ENVr] in Xa;
@@ -2385,8 +2677,13 @@ Ltac kauxv HK kn P0 :=
   lazymatch type of Xa with (_ <= bv_unsigned ?av <= _)%Z =>
   lazymatch type of Xr with (_ <= bv_unsigned ?rnd <= _)%Z =>
     exists (bv_unsigned av), (bv_unsigned rnd);
+    split; [kcell HK|];
+    split; [rewrite P3, P4; exact AUXC|];
     repeat match goal with |- _ /\ _ => split end;
-    first [ kcell HK | kzero HK | lia ]
+    first [ kcell HK | kzero HK | lia
+          | (* [pins] states the goal over [rndp]/[auxvp]; the range facts are over [vals_ev] *)
+            (let Xr4 := fresh "Xr4" in pose proof Xr as Xr4; rewrite ?P4 in Xr4;
+             let Xa3 := fresh "Xa3" in pose proof Xa as Xa3; rewrite ?P3 in Xa3; kcell HK) ]
   end end.
 
 (* [comment removed for export] *)
@@ -2426,12 +2723,85 @@ Ltac kreg HR :=
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* LPS 08b1429: the auxv of the main entry's memory, in [S0TargetPre.auxv_cells]' form, over
+   both CONFIG_RSEQ layouts (the launch's [kb_rseq] is case-split, never fixed). *)
+Lemma auxv_cells_launch : forall (a0s path : list byte) (envv : list (list byte)) fs0 stdin0
+    (hw mbase sp0 brk : word) (rnd : EntryDraw) (tid : word) regs0 (mem0 : word -> option byte),
+  valid_argv [a0s; path] -> valid_envp envv -> valid_sp sp0 ->
+  main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0 ->
+  auxv_cells mem0 (bv_unsigned (auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0))
+                  (bv_unsigned (rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0))
+  /\ (bv_unsigned sp0 <= bv_unsigned (auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0))%Z
+  /\ (bv_unsigned (auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0) + 464 <= 2 ^ 64)%Z.
+Proof.
+  intros a0s path envv fs0 stdin0 hw mbase sp0 brk rnd tid regs0 mem0 Hva Hve Hvsp ME.
+  destruct ME as (Hhw & Hvl & Hlau & ME').
+  set (inp := mkProcInputA [a0s; path] envv fs0 stdin0) in *.
+  assert (RD : forall j z a, (j < 2 * auxv_count (kb_rseq (in_kernel inp)))%nat ->
+     nth j (auxv_words (launch_auxv inp sp0 mbase) RPH (0x133fc : word) (in_uid inp) (in_gid inp) (in_hwcap inp)
+              (rndp inp sp0) (at_execfn_ptr (ed_top rnd) (in_execfn inp))) (Z_to_bv 64 0) = Z_to_bv 64 z ->
+     a = (bv_unsigned (auxvp inp sp0) + 8 * Z.of_nat j)%Z ->
+     cell mem0 a 8 z).
+  { intros j z a Hj Hw Ha. unfold cell.
+    (* [inp] given up front: otherwise the [in_argv ?inp = [?a0s; ?path]] premise comes first
+       with ?inp open and no alternative closes it (a run printed it) *)
+    eapply rd_auxv_main with (inp := inp);
+      first [ exact Hj | exact Hw | exact Ha | exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hvsp
+            | exact ME' | reflexivity | eassumption ]. }
+  assert (AB : (bv_unsigned sp0 <= bv_unsigned (auxvp inp sp0))%Z /\ (bv_unsigned (auxvp inp sp0) + 464 <= 2 ^ 64)%Z).
+  { eapply auxvp_bounds with (inp := inp);
+      first [ exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hvsp | exact ME' | reflexivity | eassumption ]. }
+  split; [|exact AB].
+  Ltac auxNTH := unfold auxv_words, auxv_entries; cbn [flat_map app nth fst snd]; reflexivity.
+  unfold auxv_cells.
+  split; [apply (RD 0%nat 33%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 2%nat 40%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 4%nat 41%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 6%nat 42%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 8%nat 43%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 10%nat 44%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 12%nat 45%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 14%nat 46%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 16%nat 47%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 18%nat 51%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 20%nat 16%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 22%nat 6%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 24%nat 17%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 26%nat 3%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 28%nat 4%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 30%nat 5%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 32%nat 7%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 34%nat 8%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 36%nat 9%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 38%nat 11%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 40%nat 12%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 42%nat 13%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 44%nat 14%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 46%nat 23%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 48%nat 25%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  split; [apply (RD 49%nat (bv_unsigned (rndp inp sp0)));
+          [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia
+          | unfold auxv_words, auxv_entries; cbn [flat_map app nth fst snd]; symmetry; apply Z_to_bv_bv_unsigned | lia]|].
+  split; [apply (RD 50%nat 31%Z); [unfold auxv_count; destruct (kb_rseq (in_kernel inp)); lia | auxNTH | lia]|].
+  (* [inp] / [mbase] are proof-local, so the Ltac takes them as arguments (an Ltac body cannot
+     name a proof's local variables: "The reference inp was not found",
+     as a run printed it). *)
+  Ltac auxNTHR ER inp mbase := unfold auxv_words, auxv_entries;
+    change (la_rseq (launch_auxv inp _ mbase)) with (kb_rseq (in_kernel inp)); rewrite ER;
+    cbn [flat_map app nth fst snd]; reflexivity.
+  destruct (kb_rseq (in_kernel inp)) eqn:ER; [left | right].
+  (* [destruct ... eqn:ER] also rewrote [RD]'s bound, so it may already read [auxv_count true] *)
+  - split; [apply (RD 52%nat 27%Z); [unfold auxv_count; try rewrite ER; lia | auxNTHR ER inp mbase | lia]|].
+    split; [apply (RD 54%nat 28%Z); [unfold auxv_count; try rewrite ER; lia | auxNTHR ER inp mbase | lia]|].
+    apply (RD 56%nat 0%Z); [unfold auxv_count; try rewrite ER; lia | auxNTHR ER inp mbase | lia].
+  - apply (RD 52%nat 0%Z); [unfold auxv_count; try rewrite ER; lia | auxNTHR ER inp mbase | lia].
+Qed.
+
 Section World.
   Context {ACEIL__ : ACeil} {RUNW__ : RunW}.   (* [comment removed for export] *)
   Variable sp0 : word.
   Variables a0s path : list byte.
   Variable envv : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
   Variable hw : word.    (* [comment removed for export] *)
   Variable rnd : EntryDraw.   (* [comment removed for export] *)
   Variable tid : word.
@@ -2446,7 +2816,7 @@ Section World.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rnd tid regs0 mem0.
+  Hypothesis ME : main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0.
   Hypothesis Hbrk : valid_brk RSEGS brk.
   Hypothesis Hceil : alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z.   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -2459,17 +2829,41 @@ Section World.
   Hypothesis Hpne : path <> [].
   Hypothesis Hpnd : openat_plain_name path = true.   (* [comment removed for export] *)
   Hypothesis Hplen : (length path <= 4095)%nat.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) (mkProcInputA [a0s; path] envv fs0 stdin0).
+  (* the launch's mmap base is page aligned ([Run.valid_mmap_base]) *)
+  Lemma mbase_al : (bv_unsigned mbase mod page_size = 0)%Z.
+  Proof.
+    pose proof Hlau as Hl. cbn [entry_launch_ok_va] in Hl. destruct Hl as (_ & _ & Hb).
+    exact (proj2 (proj2 (MmapBase.valid_launch_base_sv48_in_band _ _ Hb))).
+  Qed.
   Variable fd3 : FdEntry.      (* [comment removed for export] *)
   Variable SI : (word -> option byte) -> Prop.   (* [comment removed for export] *)
   Hypothesis SI_step : forall M M' : word -> option byte,
     (forall a : word, (bv_unsigned sp0 <= bv_unsigned a)%Z -> M' a = M a) -> SI M -> SI M'.
+  (* LPS 08b1429: [SI] keeps the memory above sp0 the launch's ([SymAbove.above_eq], which is how
+     every instance is built).  It carries the auxv, whose layout follows the kernel build, to the
+     malloc entry ([auxv_cells_SI]). *)
+  Hypothesis SI_above : forall M, SI M -> forall a : word, (bv_unsigned sp0 <= bv_unsigned a)%Z -> M a = mem0 a.
+
+  Lemma auxv_cells_SI : forall M, SI M ->
+    auxv_cells M (bv_unsigned (auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0))
+                 (bv_unsigned (rndp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0)).
+  Proof.
+    intros M HSI.
+    destruct (auxv_cells_launch a0s path envv fs0 stdin0 hw mbase sp0 brk rnd tid regs0 mem0 Hva Hve Hvsp ME)
+      as (AC & B1 & B2).
+    pose proof (u64_range (auxvp (mkProcInputA [a0s; path] envv fs0 stdin0) sp0)) as Hau.
+    apply (auxv_cells_agree mem0 M _ _ AC); [lia | exact B2 |].
+    intros i Hi. apply (SI_above M HSI). rewrite u64_lit by lia. lia.
+  Qed.
 
   #[local] Notation ENVv := (ENV a0s path hw rnd).
   #[local] Notation modelV := (modelV tid fs0 stdin0 fd3).
 
   (* [comment removed for export] *)
   Definition vm_small (VM : VmMaps) (gm : word) : Prop :=
-    vm_reserved VM = segments_reserved RSEGS /\ vm_limit VM = LIM
+    (* the run's vDSO/vvar pair is in the ledger ([State.init_reserved]) *)
+    incl (vdso_reserved (ia_kernel stdin0) (vdso_top VM)) (vm_reserved VM) /\ vm_limit VM = LIM
     /\ (length (vm_maps VM) <= 4)%nat
     /\ In (gm, Z_to_bv 64 69632) (vm_maps VM)
     /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 69632)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) (vm_maps VM)
@@ -2479,7 +2873,7 @@ Section World.
   Definition after_malloc (K : TSet) : Prop :=
     forall (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (mb gm : word) (area brkv mas : Z),
       area = (bv_unsigned mb + 4096)%Z ->
-      read_pre sp0 (p1 sp0 a0s path envv) mb gm R M ->
+      read_pre sp0 (p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) mb gm R M ->
       world0 area (bv_unsigned gm) brkv mas (bv_unsigned tid) (bv_unsigned hw) M ->
       main_frame (bv_unsigned sp0) M ->
       vm_pre VM mb gm -> vm_small VM gm ->
@@ -2491,7 +2885,7 @@ Section World.
   Definition after_malloc_gen (K : TSet) : Prop :=
     forall (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (mb gm : word) (area brkv mas : Z),
       area = (bv_unsigned mb + 4096)%Z ->
-      read_pre sp0 (p1 sp0 a0s path envv) mb gm R M ->
+      read_pre sp0 (p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) mb gm R M ->
       world0 area (bv_unsigned gm) brkv mas (bv_unsigned tid) (bv_unsigned hw) M ->
       main_frame (bv_unsigned sp0) M ->
       vm_pre VM mb gm -> vm_small VM gm ->
@@ -2503,19 +2897,19 @@ Section World.
   Proof. intros VM. reflexivity. Qed.
 
   (* [comment removed for export] *)
-  Lemma p1_range : (0x7fff80000000 <= bv_unsigned (p1 sp0 a0s path envv) <= 0x800000400000)%Z.
+  Lemma p1_range : (0x7fff80000000 <= bv_unsigned (p1 (mkProcInputA [a0s; path] envv fs0 stdin0) rnd) <= 0x800000400000)%Z.
   Proof.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. unfold sp_window_lo, sp_window_hi in *.
-    unfold p1. rewrite (u_cat_argv_ptr sp0 [a0s; path] envv Hva Hve) by (cbn; lia || (unfold sp_window_lo, sp_window_hi; cbn; lia)).
-    pose proof (struct_av_bound [a0s; path] envv Hva Hve).
-    pose proof (CatExec.total_arg_bytes_firstn_le 1 [a0s; path]). lia.
+    pose proof (argv_ptr_bounds Sv48 (mkProcInputA [a0s; path] envv fs0 stdin0) mbase sp0 brk rnd 1 Hlau ltac:(cbn; lia)) as [B1 _].
+    pose proof (argv_ptr_fits (mkProcInputA [a0s; path] envv fs0 stdin0) mbase sp0 brk rnd 1 Hlau ltac:(cbn; lia)) as B2.
+    unfold p1. lia.
   Qed.
 
   Variable K : TSet.
 
   Lemma w65_exitG : after_malloc_gen K -> exitG_branch sp0 a0s path envv hw rnd tid brk mbase fs0 stdin0 fd3 SI K.
   Proof.
-    intros AM vals R M VM HL P0 P2 P70 P5 HR HK HVM HVS HVX HSI.
+    intros AM vals R M VM HL P0 P2 P3 P4 P70 P5 HR HK HVM HVS HVX HSI.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *.
     pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi. pose proof (brk_al brk Hbrk) as Bal.
@@ -2551,7 +2945,7 @@ Section World.
       + lia.
       + lia.
       + lia.
-      + unfold stack_writable. apply (kwr_window (ENVv vals) M knZ (EVar 0) (-8388608) 8388608); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
+      + unfold stack_writable. apply (kwr_window (ENVv vals) M knZ (EVar 0) (-6144513) 6144513); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + unfold group_writable. apply (kwr_window (ENVv vals) M knZ gx 0 69632); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + unfold meta_writable. apply (kwr_window (ENVv vals) M knZ bx 4096 4096); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + cps_destruct (errno_some M) as (bs & Hbs & Hlen). exists (Z_to_bv 64 (bytes_le_to_Z bs)).
@@ -2598,8 +2992,10 @@ Section World.
       constructor. all: kcell HK.
     - exact HVM.
     - (* [comment removed for export] *)
-      cps_destruct HVS as (Hr & Hl & Hm). unfold vm_small. rewrite Hr, Hl.
-      split; [reflexivity|]. split; [reflexivity|].
+      cps_destruct HVS as (Hr & Hl & Hm). unfold vm_small.
+      split.
+      { pose proof HVX as (mx & nx & EVx & _). rewrite EVx. exact (vdso_in_init_reserved _ _ _ _ _ _ _ _ _ mbase_al). }
+      rewrite Hl. split; [reflexivity|].
       assert (U1 : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by reflexivity.
       assert (U2 : bv_unsigned (Z_to_bv 64 8192) = 8192%Z) by reflexivity.
       assert (U3 : bv_unsigned (Z_to_bv 64 4096) = 4096%Z) by reflexivity.
@@ -2612,16 +3008,17 @@ Section World.
         | apply seps_cons; [constructor; [unfold iv_disjoint; cbn [fst snd]; rewrite ?U1, ?U2, ?U3, ?u64_lit' by lia; lia | constructor]
                           | apply seps_cons; [constructor | apply seps_nil]] ].
     - (* [comment removed for export] *)
-      cps_destruct HVX as (maps & na & EVM & Hmn). exists brk, mbase. split; [exact Hbrk|]. left.
+      (* [target_vmx] gained the reserved list [rs] at #38; it is whatever [EVM] says *)
+      cps_destruct HVX as (maps & na & EVM & Hmn). exists brk, mbase. eexists. split; [exact Hbrk|]. left.
       split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
       exists maps, na. split; [rewrite !Z_to_bv_bv_unsigned; exact EVM| exact Hmn].
-    - (* [comment removed for export] *) kauxv HK knZ P0.
+    - (* [comment removed for export] *) kauxv HK knZ P0 P3 P4 (auxv_cells_SI _ HSI).
     - exact HSI.
   Qed.
 
   Lemma w65_exitT : after_malloc_gen K -> exitT_branch sp0 a0s path envv hw rnd tid brk mbase fs0 stdin0 fd3 SI K.
   Proof.
-    intros AM vals R M VM HL P0 P2 P70 P5 HR HK HVM HVS HVX HSI.
+    intros AM vals R M VM HL P0 P2 P3 P4 P70 P5 HR HK HVM HVS HVX HSI.
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *.
     pose proof (brk_lo brk Hbrk) as Blo. pose proof (brk_hi path brk Hbrk Hplen) as Bhi. pose proof (brk_al brk Hbrk) as Bal.
@@ -2666,7 +3063,7 @@ Section World.
       + lia.
       + lia.
       + lia.
-      + unfold stack_writable. apply (kwr_window (ENVv vals) M knZm (EVar 0) (-8388608) 8388608); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
+      + unfold stack_writable. apply (kwr_window (ENVv vals) M knZm (EVar 0) (-6144513) 6144513); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + unfold group_writable. apply (kwr_window (ENVv vals) M knZm gx 0 69632); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + unfold meta_writable. apply (kwr_window (ENVv vals) M knZm ax 4096 4096); [exact HK | vm_compute; reflexivity | cbn [edenot ev ENV ENVr gx bx ax]; pins; lia].
       + cps_destruct (errno_some M) as (bs & Hbs & Hlen). exists (Z_to_bv 64 (bytes_le_to_Z bs)).
@@ -2713,8 +3110,10 @@ Section World.
       constructor. all: kcell HK.
     - exact HVM.
     - (* [comment removed for export] *)
-      cps_destruct HVS as (Hr & Hl & Hm). unfold vm_small. rewrite Hr, Hl.
-      split; [reflexivity|]. split; [reflexivity|].
+      cps_destruct HVS as (Hr & Hl & Hm). unfold vm_small.
+      split.
+      { rewrite HVX. exact (vdso_in_init_reserved _ _ _ _ _ _ _ _ _ mbase_al). }
+      rewrite Hl. split; [reflexivity|].
       assert (U1 : bv_unsigned (Z_to_bv 64 69632) = 69632%Z) by reflexivity.
       assert (U2 : bv_unsigned (Z_to_bv 64 8192) = 8192%Z) by reflexivity.
       assert (U3 : bv_unsigned (Z_to_bv 64 4096) = 4096%Z) by reflexivity.
@@ -2727,10 +3126,12 @@ Section World.
         | apply seps_cons; [constructor; [unfold iv_disjoint; cbn [fst snd]; rewrite ?U1, ?U2, ?U3, ?u64_lit' by lia; lia | constructor]
                           | apply seps_cons; [constructor | apply seps_nil]] ].
     - (* [comment removed for export] *)
-      exists brk, mbase. split; [exact Hbrk|]. right.
+      (* [target_vmx] gained the reserved list [rs] at #38; it is whatever [HVX] says *)
+      lazymatch type of HVX with _ = mkVmMapsFull ?rs _ _ _ _ _ _ _ => exists brk, mbase, rs end.
+      split; [exact Hbrk|]. right.
       split; [reflexivity|]. split; [reflexivity|]. exists (vals_ev vals 71). split; [reflexivity|].
       rewrite !Z_to_bv_bv_unsigned. exact HVX.
-    - (* [comment removed for export] *) kauxv HK knZm P0.
+    - (* [comment removed for export] *) kauxv HK knZm P0 P3 P4 (auxv_cells_SI _ HSI).
     - exact HSI.
   Qed.
 
@@ -2750,12 +3151,14 @@ Theorem brk_ok_sem_g {ACEIL__ : ACeil} {RUNW__ : RunW} sp0 a0s path envv hw rnd 
   (Hvsp : valid_sp sp0) (Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z) (Hbrk : valid_brk RSEGS brk)
   (Hceil : alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z)
   (Hguard : run_guard = bv_unsigned (canary_w rnd)) (Hsec : run_secret = bv_unsigned (secret_word rnd))
-  (Hplen : (length path <= 4095)%nat) fd3 K :
-  after_malloc_gen sp0 a0s path envv hw tid fs0 stdin0 fd3 (above_eq sp0 mem0) K ->
+  (Hplen : (length path <= 4095)%nat)
+  (Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) (mkProcInputA [a0s; path] envv fs0 stdin0))
+  regs0 (ME : main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0) fd3 K :
+  after_malloc_gen sp0 a0s path envv hw rnd tid fs0 stdin0 fd3 (above_eq sp0 mem0) K ->
   brk_ok_branch_g sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0 fd3 K.
 Proof.
-  intros AM. exact (brk_ok_semV sp0 a0s path envv hw rnd tid brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk Hceil Hguard Hsec Hplen fd3
-                      (above_eq sp0 mem0) (above_eq_step sp0 mem0) K AM).
+  intros AM. exact (brk_ok_semV sp0 a0s path envv hw rnd tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk Hceil Hguard Hsec Hplen Hlau fd3
+                      (above_eq sp0 mem0) (above_eq_step sp0 mem0) (fun M H => H) K AM).
 Qed.
 
 Theorem mmap_ok_sem_g {ACEIL__ : ACeil} {RUNW__ : RunW} sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0
@@ -2763,12 +3166,14 @@ Theorem mmap_ok_sem_g {ACEIL__ : ACeil} {RUNW__ : RunW} sp0 a0s path envv hw rnd
   (Hvsp : valid_sp sp0) (Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z) (Hbrk : valid_brk RSEGS brk)
   (Hceil : alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z)
   (Hguard : run_guard = bv_unsigned (canary_w rnd)) (Hsec : run_secret = bv_unsigned (secret_word rnd))
-  (Hplen : (length path <= 4095)%nat) fd3 K :
-  after_malloc_gen sp0 a0s path envv hw tid fs0 stdin0 fd3 (above_eq sp0 mem0) K ->
+  (Hplen : (length path <= 4095)%nat)
+  (Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) (mkProcInputA [a0s; path] envv fs0 stdin0))
+  regs0 (ME : main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0) fd3 K :
+  after_malloc_gen sp0 a0s path envv hw rnd tid fs0 stdin0 fd3 (above_eq sp0 mem0) K ->
   mmap_ok_branch_g sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0 fd3 K.
 Proof.
-  intros AM. exact (mmap_ok_semV sp0 a0s path envv hw rnd tid brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk Hceil Hguard Hsec Hplen fd3
-                      (above_eq sp0 mem0) (above_eq_step sp0 mem0) K AM).
+  intros AM. exact (mmap_ok_semV sp0 a0s path envv hw rnd tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk Hceil Hguard Hsec Hplen Hlau fd3
+                      (above_eq sp0 mem0) (above_eq_step sp0 mem0) (fun M H => H) K AM).
 Qed.
 
 (* [comment removed for export] *)
@@ -2777,11 +3182,13 @@ Theorem brk_ok_sem {ACEIL__ : ACeil} {RUNW__ : RunW} sp0 a0s path envv hw rnd ti
   (Hvsp : valid_sp sp0) (Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z) (Hbrk : valid_brk RSEGS brk)
   (Hceil : alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z)
   (Hguard : run_guard = bv_unsigned (canary_w rnd)) (Hsec : run_secret = bv_unsigned (secret_word rnd))
-  (Hplen : (length path <= 4095)%nat) K :
-  after_malloc sp0 a0s path envv hw tid fs0 stdin0 K ->
+  (Hplen : (length path <= 4095)%nat)
+  (Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) (mkProcInputA [a0s; path] envv fs0 stdin0))
+  regs0 (ME : main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0) K :
+  after_malloc sp0 a0s path envv hw rnd tid fs0 stdin0 K ->
   brk_ok_branch sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0 K.
 Proof.
-  intros AM. apply (brk_ok_sem_g sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk Hceil Hguard Hsec Hplen).
+  intros AM. apply (brk_ok_sem_g sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk Hceil Hguard Hsec Hplen Hlau regs0 ME).
   intros R M VM mb gm area brkv mas EA RP W MF VP VS VX AX _. exact (AM R M VM mb gm area brkv mas EA RP W MF VP VS VX AX).
 Qed.
 
@@ -2790,10 +3197,12 @@ Theorem mmap_ok_sem {ACEIL__ : ACeil} {RUNW__ : RunW} sp0 a0s path envv hw rnd t
   (Hvsp : valid_sp sp0) (Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z) (Hbrk : valid_brk RSEGS brk)
   (Hceil : alloc_ceiling = (bv_unsigned sp0 - 8388608)%Z)
   (Hguard : run_guard = bv_unsigned (canary_w rnd)) (Hsec : run_secret = bv_unsigned (secret_word rnd))
-  (Hplen : (length path <= 4095)%nat) K :
-  after_malloc sp0 a0s path envv hw tid fs0 stdin0 K ->
+  (Hplen : (length path <= 4095)%nat)
+  (Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) (mkProcInputA [a0s; path] envv fs0 stdin0))
+  regs0 (ME : main_launch (mkProcInputA [a0s; path] envv fs0 stdin0) hw mbase sp0 brk rnd tid regs0 mem0) K :
+  after_malloc sp0 a0s path envv hw rnd tid fs0 stdin0 K ->
   mmap_ok_branch sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0 K.
 Proof.
-  intros AM. apply (mmap_ok_sem_g sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk Hceil Hguard Hsec Hplen).
+  intros AM. apply (mmap_ok_sem_g sp0 a0s path envv hw rnd tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk Hceil Hguard Hsec Hplen Hlau regs0 ME).
   intros R M VM mb gm area brkv mas EA RP W MF VP VS VX AX _. exact (AM R M VM mb gm area brkv mas EA RP W MF VP VS VX AX).
 Qed.

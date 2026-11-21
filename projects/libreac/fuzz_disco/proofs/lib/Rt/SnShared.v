@@ -1,6 +1,6 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v (a working branch 3e35620c52e), with its module paths changed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v (a working branch), with its module paths changed. *)
 (* The snprintf contracts every Pau target shares (statements): a Theorem Labs lane's proofs/libreac/fuzz_disco/lib/Rt/SnprintfDef.v and VsnprintfDef.v
-   (a working branch 4a8b5df89c3) restated over fm's library, with pieces, parser and renderer in
+   (a working branch) restated over fm's library, with pieces, parser and renderer in
    FMsnprintfPf.v. Kept as there: the arguments (va_words: a3..a7 then the caller's stack slots at sp; words_at ap for
    the v* entries), the read-only constants a run reads (consts_view cr), the stack-protector cells gc -> gv -> cval,
    the disjointness lists (no alloc_ceiling: the destination and the strings may lie on the machine stack outside the
@@ -16,7 +16,7 @@
      sn_bytes N T = firstn N T ++ [0] at d, N = n - 1 (the cookie's count), nothing else written outside the window;
    - every destination premise (the disjointness lists, dest_ok, amem_range, the shadow) is over the written part
      w = sn_len (n - 1) T = min (|T|, n - 1) + 1 only (GXA's dn; ASan's WRITE_RANGE (str, min (size, res + 1)));
-   - each contract is stated over a Theorem Labs lane's user-poisoned ranges U (proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v (a working branch 3e35620c52e): ecall_preU, ARU in the post; fm calls
+   - each contract is stated over a Theorem Labs lane's user-poisoned ranges U (proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v (a working branch): ecall_preU, ARU in the post; fm calls
      snprintf inside a poison window); a Theorem Labs lane's form (ecall_pre, AR) is its U = [] instance (sh_*_of_U).
    The entries are separate contracts: snprintf, the vsnprintf interceptor, musl vsnprintf, the vfprintf interceptor
    on musl vsnprintf's FILE (musl vfprintf: the same interface), and ASan's printf_common (a Theorem Labs lane's text).
@@ -35,7 +35,7 @@ From OSSVerify.Proofs.libreac.fuzz_disco.lib.Rt Require Import PfFacts.
 Import ListNotations.
 Local Open Scope Z_scope.
 
-(* ---- as in proofs/libreac/fuzz_disco/lib/Rt/SnprintfDef.v (a working branch 4a8b5df89c3) ---- *)
+(* ---- as in proofs/libreac/fuzz_disco/lib/Rt/SnprintfDef.v (a working branch) ---- *)
 Definition words_at (rd : reader) (p : Z) (ws : list Z) : Prop :=
 forall i, (i < length ws)%nat -> rdword rd (p + 8 * Z.of_nat i) = Some (nth i ws 0).
 Definition va_words (regs : bvmap 5 word) (rd : reader) (sp : Z) (xs ws : list Z) : Prop :=

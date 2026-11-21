@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, xfer_const takes the auxv at least 16 bytes above the stack top, and the auxv fact carries over memory that agrees on it (auxv_okA_agree). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -133,7 +134,7 @@ Proof.
   - intros (F0 & F1 & F2 & F3 & F4 & F5). repeat split; (eapply (xfer_u8 (6360113, 6) _ _ ltac:(right; right; left; reflexivity)); [| | | | | | eassumption]; cbn [fst snd]; try Lia.lia; intros X; apply EXCR in X; Lia.lia).
   - intros (F0 & F2 & F4). repeat split; (eapply (xfer_u8 (6360113, 6) _ _ ltac:(right; right; left; reflexivity)); [| | | | | | eassumption]; cbn [fst snd]; try Lia.lia; intros X; apply EXCR in X; Lia.lia).
 Qed.
-Lemma xfer_const av uid rnd canary hw : ar_sptop ar <= av -> L5USA.statics_const Ma av uid rnd canary hw -> L5USA.statics_const Mb av uid rnd canary hw.
+Lemma xfer_const av uid rnd canary hw : ar_sptop ar + 16 <= av -> L5USA.statics_const Ma av uid rnd canary hw -> L5USA.statics_const Mb av uid rnd canary hw.
 Proof.
   intros AVS. unfold L5USA.statics_const, L5USA.TD_LOCALE, L5USA.GLOBAL_LOCALE, L5USA.LOCALE_MSGCAT, L5USA.CANARY, L5USA.AUXVP, L5USA.SYSCAT_OBJ.
   intros (TDL & MSG & _ & CAN & AUXP & AV8 & AVLO & AVHI & AUXV & UIDR & RNDR & CANR & HWR & I1 & I2 & I3).
@@ -144,8 +145,7 @@ Proof.
   split. { apply (xfer_u64 (0x630d48, 8) _ _ ltac:(apply in_or_app; right; do 4 right; left; reflexivity)); cbn [fst snd]; try Lia.lia. intros i Hi; apply (NX 0x630d48); Lia.lia. exact CAN. }
   split. { apply (xfer_u64 (0x630fa0, 8) _ _ ltac:(apply in_or_app; right; do 5 right; left; reflexivity)); cbn [fst snd]; try Lia.lia. intros i Hi; apply (NX 0x630fa0); Lia.lia. exact AUXP. }
   split. exact AV8. split. exact AVLO. split. exact AVHI.
-  split. { intros j Hj. apply (L5C.u64_at_agree RSEGS Ma Mb). 4: exact (AUXV j Hj). 2: clear - AVLO; lia. 2: clear - AVHI Hj; lia.
-           intros i Hi. apply AGT. clear - Hi AVS AVHI Hj; lia. }
+  split. { apply (L5USA.auxv_okA_agree Ma Mb _ _ _ _ AUXV); [clear - AVLO; lia|]. intros i Hi1 Hi2. apply AGT. clear - Hi1 AVS; lia. }
   split. exact UIDR. split. exact RNDR. split. exact CANR. split. exact HWR.
   split. exact (AGI I1).
   split. { intros i Hi. rewrite (xfer_agr (0xd9f40, 32) i ltac:(apply in_or_app; right; left; reflexivity)). exact (I2 i Hi). cbn [fst snd]; clear - Hi; lia. clear - Hi; lia. apply (NX 0); clear - Hi; lia. }
@@ -153,7 +153,7 @@ Proof.
 Qed.
 (* [comment removed for export] *)
 Lemma statics_xfer gd av uid rnd canary hw :
-  L5USA.statics_landed Ma gd av uid rnd canary hw -> ar_sptop ar <= av ->
+  L5USA.statics_landed Ma gd av uid rnd canary hw -> ar_sptop ar + 16 <= av ->
   L5.u64_at RSEGS Mb L5USA.EH_CAUGHT 0 -> L5.u32_at RSEGS Mb L5USA.EH_UNCAUGHT 0 ->
   L5USA.xs_pre ar (L5USA.mkXS gd true av uid rnd canary hw) Mb.
 Proof.
@@ -819,7 +819,7 @@ Hypothesis HCR3 : forall c, 0 <= c -> L5USA.EXC23_SZ + L5USA.MSG3_SZ + L5USA.REF
 Lemma kfb_of (LX : list fframe) (W1 : list L5.range) M' gd av uid rnd canary hw :
   (length LX <= 1)%nat -> Forall (fun f => ff_class f = 1) LX -> dk L ar LB FF S SCRT M M' ->
   (forall a, L5.outside UNWW a -> L5.outside (CWF ++ W1) a) ->
-  ek L ar LB FF S SCRT W1 M M' -> L5USA.statics_landed M' gd av uid rnd canary hw -> ar_sptop ar <= av ->
+  ek L ar LB FF S SCRT W1 M M' -> L5USA.statics_landed M' gd av uid rnd canary hw -> ar_sptop ar + 16 <= av ->
   forall (fxf : FPState) Rf Mf modelf LKf Af crf,
       regs_preserved R Rf -> getr Rf (reg 10) = Z_to_bv 64 0 ->
       ahpres L ar LB FF S SCRT CWF (rebase W1 M M') Mf ->

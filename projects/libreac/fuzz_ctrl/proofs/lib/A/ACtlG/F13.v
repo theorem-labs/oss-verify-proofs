@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F13.v -- GLUE for stage seg_F13 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:782).  Written by a Theorem Labs lane (block of a Theorem Labs lane 03:48Z); single writer.
    rule 24: no function proved.  proves no function (kind: segment lemma).
@@ -18,11 +19,11 @@
    [A+256] / [A+264] / [A+272] and the call of reac_ctrl_identity_fragment at 0x82150, whose return lands at the
    exit cut 0x82154 with a0 = fg_ret of the fragment class (Seg/F13.v:755-819).
 
-   THE RUN.  Seg/F13F.v's f13_evt_ro_F_on (a Theorem Labs lane's route (C) twin of f13_evt_ro_F, a working branch
-   13c92b75539): the WHOLE segment, callee included, as one ExecF.evtF under a footprint RNG.  Its callee premise
+   THE RUN.  Seg/F13F.v's f13_evt_ro_F_on (a Theorem Labs lane's route (C) twin of f13_evt_ro_F, a working branch):
+   the WHOLE segment, callee included, as one ExecF.evtF under a footprint RNG.  Its callee premise
    reac_ctrl_identity_fragment_contract_F_on is discharged by the callee's PROVED CLOSED theorem
    A.Prog.reac_ctrl_identity_fragment_F_on.reac_ctrl_identity_fragment_F_holds_on_closed (a Theorem Labs lane,
-   a working branch 6db4ffd630a), NOT by an SRr_at.  No split: the run is lifted ONCE with
+   a working branch), NOT by an SRr_at.  No split: the run is lifted ONCE with
    Reusable.YA0nR.SRr_fevt_hid at RNG := ProgBridge.RNG_W (w_H W3).
 
    THE PROOF
@@ -41,7 +42,7 @@
        contract states them: the fragment bytes frg = phi (50) and their shadow cover under 50 <= len by
        ProgWorldVisHeap.heap_vis / heap_sh_vis, the record f = fragb fr (72), pa (2), pp (8), pn (8) and their
        shadow covers under the five pointers <> 0 by ProgWorldVisFrame.frame_vis; rng_bytes by
-       ProgBridge.rng_bytes_RNG_W.  ROUTE (C), a working branch 1899bed1aee: the cut gives ctl_rt_C B ly3 S3 mem3; the run's
+       ProgBridge.rng_bytes_RNG_W.  ROUTE (C), a working branch: the cut gives ctl_rt_C B ly3 S3 mem3; the run's
        asan_cells / ro_agree are its 1st / 4th parts, and its shadow premise shadow_rw_on (f13_evt_ro_shadow_R ..)
        comes from ctl_rt_C's cut_shadow by shadow_rw_on_mono and f13g_R_cover (record pieces in the owned frame's
        shadow, (F); fragment pieces in the live block phi's shadow-word cover, (L)).
@@ -62,7 +63,7 @@
    SECTION HYPOTHESES (exact text below)
    - LAWS : Reusable.YG0d.AR_laws segs B -- ACtl.v:183's own hypothesis (YCbq Section a0's).
    No other: Kit's kit_wx / kit_segs_low / kit_frac_move are Required from lib/A/ACtlG/Kit.v (it builds on glue
-   base 46eb24cd4b3), never copied.
+   base), never copied.
    No bound is a Section hypothesis: every bound is discharged at its use site from visible state.
 
    CLOSURE (the glue closure rule): every Require is qualified (no Import / Export of a project module); no
@@ -795,7 +796,7 @@ Proof.
       as Hz. unfold Reusable.YG0f.zdisjoint in Hz. cbn [fst snd] in Hz. rewrite <- Efr in Hz.
     change (Reusable.YG00.fs_frame_bytes 6) with 4096 in Hz.
     pose proof (Reusable.YCbq.req_size_pos (ACtlCut.c_n cx) ltac:(lia)) as [_ Hq]. lia. }
-  (* G2: the callee contract, by its proved closed theorem (route C: a Theorem Labs lane, 6db4ffd630a). *)
+  (* G2: the callee contract, by its proved closed theorem (route C: a Theorem Labs lane). *)
   pose proof A.Prog.reac_ctrl_identity_fragment_F_on.reac_ctrl_identity_fragment_F_holds_on_closed as HFRAG.
   (* The footprint lemmas of the cut-time world (ProgWorldVis*.v, PROVED). *)
   pose proof (A.ProgWorldVisWin.win_vis B) as WV.

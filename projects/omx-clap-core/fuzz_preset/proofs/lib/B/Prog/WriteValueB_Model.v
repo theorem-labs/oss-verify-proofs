@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d, twin c90d4fa54d43), lane WriteValueB
    (a Theorem Labs lane): the PURE writer-model lemmas the image-B' write_value walk composes, over the batch kit's writer texts (the
-   batch cut 7cdbb61b5fa0: lib/A/PRH_FnWriter.v, lib/A/PRH_Base.v). No machine state
+   batch cut: lib/A/PRH_FnWriter.v, lib/A/PRH_Base.v). No machine state
    is stepped and no image is named here.
-   PORTED from a Theorem Labs lane's WalkS7a files (a working branch 7819c4b4583: lib/A/Prog/S7a_WriterRet.v
+   PORTED from a Theorem Labs lane's WalkS7a files (a working branch: lib/A/Prog/S7a_WriterRet.v
    blob 29e79f90789a, lib/A/Prog/S7a_WriterLive.v blob 4a32ca8f73b9): the model's steps and the room count, the run
    events (prhW_evs_len, prhWriter_ev_at), the position along a run (prhWriter_put_pos, prhWriter_ret_pos, _nil,
    _step), the doubling-chain and text-length lemmas (:907-909).
@@ -638,7 +639,7 @@ Proof.
     assert (Hin : In (fst a) (map fst L)) by (rewrite EL; apply in_map; apply in_elt).
     cbn [map] in Hnd. inversion Hnd; subst.
     match goal with Hn : ~ _ |- _ => apply Hn end.
-    first [ exact Hin | apply list_elem_of_In; exact Hin | apply elem_of_list_In; exact Hin ].
+    first [ exact Hin | apply list_elem_of_In; exact Hin | apply list_elem_of_In; exact Hin ].
 Qed.
 
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {PI : PrhImg}.

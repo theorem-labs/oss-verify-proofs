@@ -10,7 +10,8 @@
    with the popped ones; ml_free_cf is free_cf's law, from YG03cf.v's ml_free_with_cf. *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: wfr_fields_d3 / wfr_easy_d3 carry the new field wfr_qsize; RI_merge_cf proves it
    (the merge keeps the items). *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG03dcf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG03dcf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From Stdlib Require Import Sorting.Permutation.
@@ -56,10 +57,10 @@ set_cache_inited set_internal_inited set_fs]; lia ] end
 | idtac ].
 
 (* ---------------------------------------------------------------------------- *)
-(* 1. merge_batches_cf (YG00cf.v:282-296).                                       *)
+(* 1. merge_batches_cf (YG00cf.v:283-297).                                       *)
 Definition bok_cf (b : batch) : Prop :=
 (1 <= length (b_items b) <= Z.to_nat kBatchSlots)%nat /\ Forall (fun k => 0 <= ck_n k) (b_items b).
-(* The shape wq_groups (YG01.v:299) gives the global list. *)
+(* The shape wq_groups (YG01.v:300) gives the global list. *)
 Definition qsegs_cf (l : list batch) : Prop :=
 exists F GS, l = F ++ concat GS /\ Forall bfull (removelast F) /\ Forall qgroup_ok GS.
 
@@ -185,7 +186,7 @@ destruct F as [|b F1].
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* 2. maybe_drain_cf (YG00cf.v:302-318), with its merge choice and its tail named. *)
+(* 2. maybe_drain_cf (YG00cf.v:303-319), with its merge choice and its tail named. *)
 Definition merge_choice_cf (g : qcache) : qcache * list batch :=
 let L := Z.of_nat (length (qc_list g)) in
 if (kBatchBytes * L <? qc_bytes g) && (qc_bytes g <? 2 * (kBatchBytes * L))

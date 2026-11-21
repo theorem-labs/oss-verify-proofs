@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window is the launch's 1500 pages below the stack pointer, not 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -111,7 +112,7 @@ Section R0.
     - lia.
     - lia.
     - subst L. lia.
-    - replace (bv_unsigned sp0 - 136)%Z with (bv_unsigned sp0 - 8388608 + (8388608 - 136))%Z by lia. apply Hst; lia.
+    - replace (bv_unsigned sp0 - 136)%Z with (bv_unsigned sp0 - 6144000 + (6144000 - 136))%Z by lia. apply Hst; lia.
     - replace (bv_unsigned gm + 32 + 0)%Z with (bv_unsigned gm + 32)%Z by lia. apply Hgr; lia.
     - exact Hsw.
     - intros HcL. exfalso. subst L. lia.
@@ -170,7 +171,7 @@ Section R0.
     - lia.
     - lia.
     - subst L. lia.
-    - replace (bv_unsigned sp0 - 136)%Z with (bv_unsigned sp0 - 8388608 + (8388608 - 136))%Z by lia. apply Hst; lia.
+    - replace (bv_unsigned sp0 - 136)%Z with (bv_unsigned sp0 - 6144000 + (6144000 - 136))%Z by lia. apply Hst; lia.
     - replace (bv_unsigned gm + 32 + 0)%Z with (bv_unsigned gm + 32)%Z by lia. apply Hgr; lia.
     - exact Hsw.
     - intros HcL R' M' (P2 & P9 & P19 & P22 & P23 & PK) PM. pose proof PM as [[EQ GR] RD]. apply Hk.
@@ -201,7 +202,7 @@ Section R0.
           - split; [lia | exact (proj2 Hsp)].
           - lia.
           - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 0) with sp0.
-            replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia. apply Hst; lia.
+            replace (bv_unsigned sp0 + -6144000 + d)%Z with (bv_unsigned sp0 - 6144000 + d)%Z by lia. apply Hst; lia.
           - lia.
           - split; [lia | exact (proj2 (proj2 Hb))].
           - lia.

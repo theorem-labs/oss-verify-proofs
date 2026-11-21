@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* LLVMFuzzerTestOneInput_segX_cmp_defs: the symbolic states, the atom numbering and the C-level index facts of
    the image-B cmp segment (lib/B/Prog/LLVMFuzzerTestOneInput_segF.v, llvm_b_cmp_stmt, +0x6f0 .. +0x83c).
    The shape is a Theorem Labs lane's walk of record (a working branch, lib/A/Prog/GrantEntrySweepS2.v: a symbolic state
@@ -154,7 +155,7 @@ Qed.
 Definition cm_Bx : sv := SOff 32 0.
 Definition cm_Bspan : Z * Z := (SHADOW_OFF, SHADOW_OFF + 2 ^ 44 - 1).
 (* alloc_ceiling is a field of the run's RunCeil (lib/Reusable/YM05.v:17-19), between CEIL_MIN and CEIL_MAX, so an
-   atom fact that vm_compute must see needs the literal bounds: a heap pointer is below CEIL_MAX (YC4b.v:27 PTR)
+   atom fact that vm_compute must see needs the literal bounds: a heap pointer is below CEIL_MAX (YC4b.v:28 PTR)
    and the realigned stack is above CEIL_MIN. *)
 Definition CM_BLK_HI : Z := 0x7fffff800000.
 Definition CM_SP_LO : Z := 0x7fff7f800000.

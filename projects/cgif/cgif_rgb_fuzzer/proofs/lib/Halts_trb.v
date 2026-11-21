@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new vdso_image premise of halts_budgets_of_srealizes is discharged by computation on the ASan+UBSan image, and the valid entry's added last conjunct, the launch check, is passed on to trb_srealizes_top). *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -19,11 +20,12 @@ Theorem halts_allowed_cgif_cgif_rgb_fuzzer_halts_both_closed :
   halts_allowed_T_scfg_budgets forced_only_cfg ShippedBudgets.lim_source codes02
     (mkImage AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs).
 Proof.
-  apply (halts_budgets_of_srealizes codes02 _ _ _ target_alloc_limit ShippedBudgets.lim_source trb_lim_source_le_target).
+  apply (halts_budgets_of_srealizes codes02 _ _ _ target_alloc_limit ShippedBudgets.lim_source trb_lim_source_le_target);
+    [first [reflexivity | unfold vdso_image, vdso_text_seg; vm_compute; reflexivity] |].
   intros sp brk mb rnd inp Hen Hinp. exists (CLOSED inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
     change AsanUbsan.M.loaded_segments with TSEGS.
-    exact (trb_srealizes_top sp rnd brk mb inp Hsp Hbrk Hmb Hfit Hinp).
+    exact (trb_srealizes_top sp rnd brk mb inp Hsp Hbrk Hmb Hfit Hlau Hinp).
   - apply CLOSED_shape_ok.
 Qed.

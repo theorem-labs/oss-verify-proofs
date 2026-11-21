@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6 MiB zero-filled stack window): changed stk_def, stk_wr; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvStdio.v, lines 93, 102. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -90,7 +91,7 @@ Section Stdio.
   (* [comment removed for export] *)
   Lemma stk_wr : forall vals ebs MV kn a n,
     know_ok ASEGS (Env (vals_ev vals) ebs) MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
-    usp - 8388608 <= a -> a + n <= usp ->
+    usp - 6144513 <= a -> a + n <= usp ->
     forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true.
   Proof.
     intros vals ebs MV kn a n HK Hw P0 Ha Hn d k Hd Hk.
@@ -99,7 +100,7 @@ Section Stdio.
   Qed.
   Lemma stk_def : forall vals ebs MV kn a n,
     know_ok ASEGS (Env (vals_ev vals) ebs) MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
-    usp - 8388608 <= a -> a + n <= usp ->
+    usp - 6144513 <= a -> a + n <= usp ->
     forall i, 0 <= i < n -> MV (Z_to_bv 64 (a + i)) <> None.
   Proof.
     intros vals ebs MV kn a n HK Hw P0 Ha Hn i Hi. pose proof Hsp.

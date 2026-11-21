@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: both sections take apc, mbase, kb, execfn and the rest, SINV0 and argH0 over them, and the launch premise QpvH.launch_ok in place of entry_stack_fits; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -50,29 +51,43 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 Context {RC__ : Q6q3.RunConsts}.
 Hypothesis HCEIL : Q6q3.rc_ceil = atopE E.
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 #[local] Notation LV := (LV_J E).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation m := (view LV mo FULL).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
 #[local] Instance BANDJ : Band := QBzu.Band_RC Q6q3.rc_canary.
 Lemma HBJ : band_lo = atopE E.  Proof. exact HCEIL. Qed.
 Lemma HGJ : band_guard = guard_main E.  Proof. exact HCAN. Qed.
-#[local] Notation AT L := (L sp rdraw brk0 argv envp fs uid hw E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BANDJ HBJ HGJ) (only parsing).
-#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HBJ) (only parsing).
+#[local] Notation AT L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BANDJ HBJ HGJ) (only parsing).
+#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HBJ) (only parsing).
 
-Definition REJ : QCrt.aentry := QCrt.mkAE usp (st_main E) (pg E 406) (LA_main w E).
+Definition REJ : QCrt.aentry := QCrt.mkAE usp (st_main E) (pg E 412) (LA_main w E).
 Lemma toRA_REJ : QBzu.toRA REJ = RE_main sp w E.  Proof. reflexivity. Qed.
 
 Variable FRH : list (Z * Z).
@@ -122,7 +137,7 @@ Qed.
 Lemma pg_mod8 : forall v, pg E v mod 8 = 0.
 Proof. intros v. unfold pg. rewrite Z.mul_comm. change 4096 with (512 * 8). rewrite Z.mul_assoc. apply Z.mod_mul. lia. Qed.
 Lemma rt_obj_misses : forall v len x,
-In (v, len) [(237%nat, 4096); (238%nat, 65536); (478%nat, 1048576); (479%nat, 8388608); (330%nat, 4096); (406%nat, 11571200)] ->
+In (v, len) [(241%nat, 4096); (242%nat, 65536); (484%nat, 1048576); (485%nat, 8388608); (336%nat, 4096); (412%nat, 11571200)] ->
 0 <= x < 2^64 -> QFQR.in_iv (pg E v, len) x \/ QFQR.in_sh (pg E v, len) x -> QgTJ.Mq1.Fof LV FRH (QCUT.wa x) = false.
 Proof.
 intros v len x Hin Hx Hz.
@@ -152,20 +167,20 @@ intros B [-> | ->].
 + pose proof ((LA obj_facts) _ META_O_in) as (_ & _ & _ & _ & OH & _). unfold pg. lia.
 -
 destruct (LA RE_main_unfold) as (_ & _ & _ & _ & _ & _ & U7). rewrite U7 in Ho. destruct o as [ob ol].
-assert (C : exists v, ob = pg E v /\ In (v, ol) [(237%nat, 4096); (238%nat, 65536); (478%nat, 1048576); (479%nat, 8388608); (330%nat, 4096); (406%nat, 11571200)]).
+assert (C : exists v, ob = pg E v /\ In (v, ol) [(241%nat, 4096); (242%nat, 65536); (484%nat, 1048576); (485%nat, 8388608); (336%nat, 4096); (412%nat, 11571200)]).
 { cbn [In] in Ho. destruct Ho as [Ho|[Ho|[Ho|[Ho|[Ho|[Ho|[]]]]]]]; injection Ho as <- <-;
-[exists 237%nat | exists 238%nat | exists 478%nat | exists 479%nat | exists 330%nat | exists 406%nat]; (split; [reflexivity| cbn; tauto]). }
+[exists 241%nat | exists 242%nat | exists 484%nat | exists 485%nat | exists 336%nat | exists 412%nat]; (split; [reflexivity| cbn; tauto]). }
 destruct C as (v & -> & Hin). exact (rt_obj_misses v ol x Hin Hx Hz).
 -
 destruct (LA RE_main_unfold) as (_ & _ & _ & U4 & _). rewrite U4 in Hz.
 assert (SB8 : SB E mod 8 = 0).
 { replace (SB E) with (SB E / 65536 * 8192 * 8) by (pose proof (Z.div_mod (SB E) 65536 ltac:(lia)); lia). apply Z.mod_mul. lia. }
-apply (obj_zone_misses (208%nat, 137439023104) (SB E) (2^37 + 0x1000) x (PRES_O_in w)); cbn [fst snd]; try exact Hz; try exact Hx; try exact SB8;
+apply (obj_zone_misses (212%nat, 137439023104) (SB E) (2^37 + 0x1000) x (PRES_O_in w)); cbn [fst snd]; try exact Hz; try exact Hx; try exact SB8;
 [ destruct w; discriminate | destruct w; discriminate | unfold pg, PRES in *; lia | unfold pg, PRES in *; lia | reflexivity | lia ].
 -
 destruct (LA RE_main_unfold) as (_ & _ & _ & _ & U5 & _). rewrite U5 in Hz.
-apply (obj_zone_misses (236%nat, 8388608) (PARR E) 0x800000 x (PARR_O_in w)); cbn [fst snd]; try exact Hz; try exact Hx;
-[ destruct w; discriminate | destruct w; discriminate | unfold PARR, pg; lia | unfold PARR, pg; lia | exact (pg_mod8 236) | reflexivity | lia ].
+apply (obj_zone_misses (240%nat, 8388608) (PARR E) 0x800000 x (PARR_O_in w)); cbn [fst snd]; try exact Hz; try exact Hx;
+[ destruct w; discriminate | destruct w; discriminate | unfold PARR, pg; lia | unfold PARR, pg; lia | exact (pg_mod8 240) | reflexivity | lia ].
 - destruct He.
 - destruct Hb.
 Qed.
@@ -241,29 +256,43 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 Context {RC__ : Q6q3.RunConsts}.
 Hypothesis HCEIL : Q6q3.rc_ceil = atopE E.
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 #[local] Notation LV := (LV_J E).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation m := (view LV mo FULL).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
 #[local] Instance BANDJ : Band := QuLP.Band_RC Q6q3.rc_canary.
 Lemma HBJ : band_lo = atopE E.  Proof. exact HCEIL. Qed.
 Lemma HGJ : band_guard = guard_main E.  Proof. exact HCAN. Qed.
-#[local] Notation AT L := (L sp rdraw brk0 argv envp fs uid hw E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BANDJ HBJ HGJ) (only parsing).
-#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HBJ) (only parsing).
+#[local] Notation AT L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BANDJ HBJ HGJ) (only parsing).
+#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HBJ) (only parsing).
 
-Definition REJ : QCrt.aentry := QCrt.mkAE usp (st_main E) (pg E 406) (LA_main w E).
+Definition REJ : QCrt.aentry := QCrt.mkAE usp (st_main E) (pg E 412) (LA_main w E).
 Lemma toRA_REJ : QuLP.toRA REJ = RE_main sp w E.  Proof. reflexivity. Qed.
 
 Variable FRH : list (Z * Z).
@@ -313,7 +342,7 @@ Qed.
 Lemma pg_mod8 : forall v, pg E v mod 8 = 0.
 Proof. intros v. unfold pg. rewrite Z.mul_comm. change 4096 with (512 * 8). rewrite Z.mul_assoc. apply Z.mod_mul. lia. Qed.
 Lemma rt_obj_misses : forall v len x,
-In (v, len) [(237%nat, 4096); (238%nat, 65536); (478%nat, 1048576); (479%nat, 8388608); (330%nat, 4096); (406%nat, 11571200)] ->
+In (v, len) [(241%nat, 4096); (242%nat, 65536); (484%nat, 1048576); (485%nat, 8388608); (336%nat, 4096); (412%nat, 11571200)] ->
 0 <= x < 2^64 -> QNwL.in_iv (pg E v, len) x \/ QNwL.in_sh (pg E v, len) x -> QgTJ.Mq1.Fof LV FRH (QCUT.wa x) = false.
 Proof.
 intros v len x Hin Hx Hz.
@@ -343,20 +372,20 @@ intros B [-> | ->].
 + pose proof ((LA obj_facts) _ META_O_in) as (_ & _ & _ & _ & OH & _). unfold pg. lia.
 -
 destruct (LA RE_main_unfold) as (_ & _ & _ & _ & _ & _ & U7). rewrite U7 in Ho. destruct o as [ob ol].
-assert (C : exists v, ob = pg E v /\ In (v, ol) [(237%nat, 4096); (238%nat, 65536); (478%nat, 1048576); (479%nat, 8388608); (330%nat, 4096); (406%nat, 11571200)]).
+assert (C : exists v, ob = pg E v /\ In (v, ol) [(241%nat, 4096); (242%nat, 65536); (484%nat, 1048576); (485%nat, 8388608); (336%nat, 4096); (412%nat, 11571200)]).
 { cbn [In] in Ho. destruct Ho as [Ho|[Ho|[Ho|[Ho|[Ho|[Ho|[]]]]]]]; injection Ho as <- <-;
-[exists 237%nat | exists 238%nat | exists 478%nat | exists 479%nat | exists 330%nat | exists 406%nat]; (split; [reflexivity| cbn; tauto]). }
+[exists 241%nat | exists 242%nat | exists 484%nat | exists 485%nat | exists 336%nat | exists 412%nat]; (split; [reflexivity| cbn; tauto]). }
 destruct C as (v & -> & Hin). exact (rt_obj_misses v ol x Hin Hx Hz).
 -
 destruct (LA RE_main_unfold) as (_ & _ & _ & U4 & _). rewrite U4 in Hz.
 assert (SB8 : SB E mod 8 = 0).
 { replace (SB E) with (SB E / 65536 * 8192 * 8) by (pose proof (Z.div_mod (SB E) 65536 ltac:(lia)); lia). apply Z.mod_mul. lia. }
-apply (obj_zone_misses (208%nat, 137439023104) (SB E) (2^37 + 0x1000) x (PRES_O_in w)); cbn [fst snd]; try exact Hz; try exact Hx; try exact SB8;
+apply (obj_zone_misses (212%nat, 137439023104) (SB E) (2^37 + 0x1000) x (PRES_O_in w)); cbn [fst snd]; try exact Hz; try exact Hx; try exact SB8;
 [ destruct w; discriminate | destruct w; discriminate | unfold pg, PRES in *; lia | unfold pg, PRES in *; lia | reflexivity | lia ].
 -
 destruct (LA RE_main_unfold) as (_ & _ & _ & _ & U5 & _). rewrite U5 in Hz.
-apply (obj_zone_misses (236%nat, 8388608) (PARR E) 0x800000 x (PARR_O_in w)); cbn [fst snd]; try exact Hz; try exact Hx;
-[ destruct w; discriminate | destruct w; discriminate | unfold PARR, pg; lia | unfold PARR, pg; lia | exact (pg_mod8 236) | reflexivity | lia ].
+apply (obj_zone_misses (240%nat, 8388608) (PARR E) 0x800000 x (PARR_O_in w)); cbn [fst snd]; try exact Hz; try exact Hx;
+[ destruct w; discriminate | destruct w; discriminate | unfold PARR, pg; lia | unfold PARR, pg; lia | exact (pg_mod8 240) | reflexivity | lia ].
 - destruct He.
 - destruct Hb.
 Qed.

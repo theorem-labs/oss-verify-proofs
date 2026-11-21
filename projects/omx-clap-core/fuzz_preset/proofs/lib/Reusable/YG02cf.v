@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: wfc_fields / wfc_easy carry WfP_cf's new field wfc_qsize. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG02cf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG02cf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), cgif's YG02.v restated over
    the cf invariant WfP_cf (YG01cf.v). cgif's YG02.v is NOT edited: its state-only lemmas (the field
    accessors of set_regions / set_cache / set_nev, prim_user_mapped_set_region, fold_mapped_ge_nth,
@@ -9,7 +10,7 @@
    What differs from cgif:
    - no regime conjunct: WfP_cf has no wf_regime, so WfP_cf_set_region drops cgif's premise
      `st_nev s <= EV_MAX \/ ...` (YG02.v:180), and a tick needs no side condition;
-   - no free-array room: WfP_cf has no wf_fa_room (YG01.v:342-343), so no lemma here carries an fa_room
+   - no free-array room: WfP_cf has no wf_fa_room (YG01.v:343-344), so no lemma here carries an fa_room
      premise, and cgif's wf_fa_room_ext (YG02.v:147-152) has no counterpart;
    - wfc_compl0 is a field, so every lemma that changes a class's region or cache takes the class's
      Compl0 equation for the new state as a premise (compl0_keep_cf discharges it when the region keeps

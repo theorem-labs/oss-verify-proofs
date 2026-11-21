@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan-ubsan image B, the cf allocator bridge, part 1 (row G-BCF): the
    trace-universe premise of the cf call-site rules from the caller-context premise of the `_x` journal rules. The B
-   twin of lib/A/CfRBridgeCtx.v at c6394a5bd7e (a Theorem Labs lane R), RE-PROVED at image B: the same names and the same
+   twin of lib/A/CfRBridgeCtx.v (a Theorem Labs lane R), RE-PROVED at image B: the same names and the same
    statements over image B's tables.
    A journal rule (lib/B/W_journal_x.v Section hc: amalloc_cf_rule_c_x, afree_cf_rule_c_x, afree_null_cf_rule_c_x,
    arealloc_cf_rule_c_x) gives `In (raZ regsT :: spine ch) CTX` at its own K0 table (lib/B/YCk0.v CTX_AMALLOC /

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -51,25 +52,33 @@ Proof.
 Qed.
 
 Section UO.
-Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry], [brk], with
+   [Hvl] and [Hlau]) as POpenCert's Handoff2 section does; argv/envp are fields of
+   [inp] and the argv strings sit below the draw's [ed_top]. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
+Variables sp0 brk : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp0.
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 Hypothesis Hargc2 : length av = 2%nat.
 Variable model : Model.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hl : m_vm_lazy model = [].
 Hypothesis Hfds : m_fds model = FDS0.
 
-Let E := E_main sp0 av ev tid (canary rdraw) regs.
-Local Notation p1 := (cat_argv_ptr sp0 av ev 1).
+Let E := E_main inp sp0 (ed_top rdraw) tid (canary rdraw) regs.
+Local Notation p1 := (cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 1).
 Local Notation a1s := (nth 1 av []).
 
 #[using="Hva Hargc2"] Lemma a1s_nonul : ~ In (Z_to_bv 8 0) a1s.
@@ -77,34 +86,34 @@ Proof. LiaFast.lf_pins (fun (Hva Hargc2 : LiaFast.U) => LiaFast.u0).
   destruct Hva as (_ & _ & _ & Hz & _). rewrite Forall_forall in Hz. apply Hz. apply nth_In. lia.
 Qed.
 
-#[using="sp0 ev uid tid hw rdraw regs mem Hva Htid ME Hargc2"] Lemma a1s_noslash : path_has_slash a1s = false.
-Proof. LiaFast.lf_pins (fun (sp0 ev uid tid hw rdraw regs mem Hva Htid ME Hargc2 : LiaFast.U) => LiaFast.u0).
+#[using="inp mbase entry sp0 tid rdraw regs mem Hva Htid ME Hargc2"] Lemma a1s_noslash : path_has_slash a1s = false.
+Proof. LiaFast.lf_pins (fun (inp mbase entry sp0 tid rdraw regs mem Hva Htid ME Hargc2 : LiaFast.U) => LiaFast.u0).
   destruct Hva as (_ & _ & _ & _ & Hs). rewrite Forall_forall in Hs.
   destruct av as [|a0 [|a1 [|? ?]]]; cbn in Hargc2; try discriminate. cbn [nth].
   exact (proj1 (Hs a1 ltac:(cbn; tauto))).
 Qed.
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve ME Hargc2"] Lemma path_bytes : forall E1 ms1, agree 200 E E1 -> sden PSEGS E1 L_O ms1 ->
+#[using="mbase entry brk tid regs mem Hsp Hva Hve Hvl Hlau ME Hargc2"] Lemma path_bytes : forall E1 ms1, agree 200 E E1 -> sden PSEGS E1 L_O ms1 ->
   (forall x, outside E (s_rgs P_main2) x -> ms_mem ms1 x = mem x) ->
   bytes_at PSEGS (ms_mem ms1) (bv_unsigned p1) (a1s ++ [Z_to_bv 8 0]).
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk tid regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 : LiaFast.U) => LiaFast.u0).
   intros E1 ms1 Ha1 Hd1 Hmf1.
-  pose proof (p1_bounds sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2) as (B1 & B2 & B3).
+  pose proof (p1_bounds inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2) as (B1 & B2 & B3).
   pose proof (sp0_lo sp0 Hsp) as L. pose proof (sp0_hi sp0 Hsp) as H.
   pose proof (valid_argv_str_len av 1 Hva ltac:(lia)) as SL1.
   assert (HE1 : forall x, (x < 200)%positive -> E1 x = E x) by (intros x Hx; symmetry; exact (Ha1 x Hx)).
-  pose proof (rdn_argv1 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2) as R.
+  pose proof (rdn_argv1 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2) as R.
   pose proof (bytes_at_of_rdn mem (bv_unsigned p1) (a1s ++ [Z_to_bv 8 0]) ltac:(lia) ltac:(rewrite length_app; cbn; unfold two64; lia)
                 ltac:(rewrite Z_to_bv_bv_unsigned, length_app; exact R)) as BM.
   apply bytes_at_app in BM as [BS _]. apply bytes_at_app. split.
   - apply (bytes_at_ext_m mem); [exact BS|]. intros x Hx. apply Hmf1.
-    apply (outside_main2_hi sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2); lia.
+    apply (outside_main2_hi inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2); lia.
   - apply bytes_at_of_rdn; [lia | cbn; unfold two64; lia|].
     assert (HA2 : bv_unsigned (lden E1 (rg_base (rgn L_O 2))) = bv_unsigned p1 + Z.of_nat (length a1s)).
     { replace (rg_base (rgn L_O 2)) with (ladd P1 X1) by (vm_compute; reflexivity).
       rewrite <- (lden_agree 200 E E1 (ladd P1 X1) ltac:(vm_compute; reflexivity) Ha1).
-      exact (u_P1X1 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2). }
+      exact (u_P1X1 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2). }
     pose proof (sden_rg _ _ _ _ _ _ Hd1 (rgn_eq L_O 2 ltac:(vm_compute; lia))) as HR2.
     pose proof (rg_rdn_gb PSEGS E1 _ _ 0 1 [BK 0] HR2 ltac:(lia) ltac:(vm_compute; reflexivity)) as X.
     rewrite HA2, Z.add_0_r in X. exact X.
@@ -145,7 +154,7 @@ Proof. LiaFast.lf_pins (fun (Hargc2 : LiaFast.U) => LiaFast.u0).
   rewrite <- U_ofd_eq. exact Hd'.
 Qed.
 
-#[using="uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfds"] Theorem open_node : forall E1 ms1, agree 200 E E1 -> sden PSEGS E1 L_O ms1 -> ms_rom ms1 = seg_rom PSEGS ->
+#[using="mbase entry brk tid regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 Hh Hl Hfds"] Theorem open_node : forall E1 ms1, agree 200 E E1 -> sden PSEGS E1 L_O ms1 -> ms_rom ms1 = seg_rom PSEGS ->
   (forall x, outside E (s_rgs P_main2) x -> ms_mem ms1 x = mem x) ->
   (forall E2 ms2, agree 200 E E2 -> sden PSEGS E2 U_oe ms2 -> ms_rom ms2 = seg_rom PSEGS ->
      (forall x, outside E (s_rgs P_main2) x -> ms_mem ms2 x = mem x) -> ms_mem ms2 = ms_mem ms1 ->
@@ -158,18 +167,19 @@ Qed.
      (forall x, outside E (s_rgs P_main2) x -> ms_mem ms2 x = mem x) -> ms_mem ms2 = ms_mem ms1 ->
      realizes PSEGS (mkCfg ms2 (with_fds (fd_insert FDS0 (Z_to_bv 64 3) (FdFile a1s (Z_to_bv 64 0))) model)) (t_body data (m_fs model))) ->
   realizes PSEGS (mkCfg ms1 model) (spec av (m_fs model)).
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfds : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk tid regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 Hh Hl Hfds : LiaFast.U) => LiaFast.u0).
   intros E1 ms1 Ha1 Hd1 Hrom1 Hmf1 KE KD KF.
   rewrite (spec_argc2 av _ Hargc2).
   pose proof (path_bytes E1 ms1 Ha1 Hd1 Hmf1) as BP.
-  pose proof (p1_bounds sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2) as (B1 & B2 & B3).
+  pose proof (p1_bounds inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2) as (B1 & B2 & B3).
   pose proof (valid_argv_str_len av 1 Hva ltac:(lia)) as SL1.
+  pose proof (argvk_top_launch inp mbase entry sp0 brk rdraw Hsp Hva Hvl Hlau 1 ltac:(lia)) as AT.
   assert (HE1 : forall x, (x < 200)%positive -> E1 x = E x) by (intros x Hx; symmetry; exact (Ha1 x Hx)).
   assert (R17 : getr (ms_regs ms1) 17 = Z_to_bv 64 56) by (apply (getr_leaf_c PSEGS E1 L_O); [exact Hd1 | vm_compute; reflexivity]).
   assert (R10 : getr (ms_regs ms1) 10 = Z_to_bv 64 18446744073709551516) by (apply (getr_leaf_c PSEGS E1 L_O); [exact Hd1 | vm_compute; reflexivity]).
   assert (R11 : getr (ms_regs ms1) 11 = p1).
   { rewrite (getr_leaf PSEGS E1 L_O ms1 11 (lvar 4) Hd1) by (vm_compute; reflexivity). rewrite lden_lvar, HE1 by lia.
-    exact (E_P1 sp0 av ev tid rdraw regs Hargc2). }
+    exact (E_P1 inp sp0 tid rdraw regs Hargc2). }
   assert (R12 : getr (ms_regs ms1) 12 = Z_to_bv 64 32768) by (apply (getr_leaf_c PSEGS E1 L_O); [exact Hd1 | vm_compute; reflexivity]).
   assert (HFD : fd32 (getr (ms_regs ms1) 10) = AT_FDCWD32) by (rewrite R10; vm_compute; reflexivity).
   assert (HFL : Z.ldiff (bv_unsigned (getr (ms_regs ms1) 12)) open_ignored_flags = 0) by (rewrite R12; vm_compute; reflexivity).
@@ -199,6 +209,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfds : LiaF
     + rewrite R11. apply (read_cstr_toolong_of_rdn PSEGS (ms_mem ms1) p1 (firstn 4096 a1s)).
       * rewrite length_firstn. lia.
       * intros Hin. apply a1s_nonul. rewrite <- (firstn_skipn 4096 a1s). apply in_or_app. left. exact Hin.
+      * lia.
       * pose proof (bytes_at_rdn PSEGS (ms_mem ms1) (bv_unsigned p1) (a1s ++ [Z_to_bv 8 0]) 0 4096 BP ltac:(rewrite length_app; cbn; lia)) as X.
         rewrite Z.add_0_r, skipn_O, firstn_app in X.
         replace (4096 - length a1s)%nat with 0%nat in X by lia. cbn [firstn] in X. rewrite app_nil_r in X. unfold wa in X.
@@ -206,7 +217,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfds : LiaF
     + apply KE'. unfold ENAMETOOLONG. lia.
   - apply Nat.leb_gt in HTL.
     assert (HC : read_cstr (mrb PSEGS (ms_mem ms1)) (getr (ms_regs ms1) 11) = CstrOk a1s).
-    { rewrite R11. apply read_cstr_of_rdn; [lia | exact a1s_nonul |].
+    { rewrite R11. apply read_cstr_of_rdn; [lia | exact a1s_nonul | lia |].
       pose proof (rdn_of_bytes_at _ _ _ BP) as X. rewrite Z_to_bv_bv_unsigned, length_app in X. exact X. }
     destruct (path_eqb a1s []) eqn:HE0.
     + (* [comment removed for export] *)

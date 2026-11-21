@@ -2,7 +2,7 @@
 
 Route letters in the file names below name relocation RUNS, not people or lanes: F6 is the run that made image A's core commit 1, and C3, C4, C5, C6, C7, C8a and C8 are the runs that made core commits 3, 4, 5, 6, 7, 8a and 8 (the record's INVOCATIONS.txt has one block per run, headed F6, F7 (commit 2), C3S, C4R, C5R, C6R, C7R, C8aR and the commit-8 run).
 
-The image-A core lane made this directory. The core of reac-pw/fuzz_segconf image A, lib/A, was relocated from plugin-hostd/fuzz_command, released at ossv/recipes 501c0d516c69. The tool was port_core 7a74e72920e6 (commit b25bb893cdb, tools/pg-reloc/7a74e72920e6, the registered tag).
+The image-A core lane made this directory. The core of reac-pw/fuzz_segconf image A, lib/A, was relocated from plugin-hostd/fuzz_command, released. The tool was port_core 7a74e72920e6 (tools/pg-reloc/7a74e72920e6, the registered tag).
 
 ## In this directory
 - `donor-table.tsv`: the donor of each relocated lib/A file and why. This is the lane's record, not a tool input, so its text names roles and commit shas.
@@ -11,7 +11,7 @@ The image-A core lane made this directory. The core of reac-pw/fuzz_segconf imag
 - `REGEN-STARTUP.txt`: the generated start-up files regenerated in core commit 8, the changed inputs and the controls, citing the scripts kept in the internal record by commit and path.
 
 ## Kept in the series' internal record, not in this tree
-These files are run inputs or as-run text. Their bytes are the evidence, so they are kept, byte for byte, on the series' internal record ref, at commit c175c43cd063000b5a5f0e7932c730e55217c577, under `reloc-A3seg/`, with the sha256 below, rather than reworded (that commit holds every file below; commits 1aa71a935196bb9c6369e6bacd3862d1bf7e37b1, e5f9ba36d67a2ad88d52314013aa8a1b3d7b6611 and e190098a9b3155149c3e4a543826ab6cd8f68087 hold the versions before core commits 8, 8a and 7). The pull request body names that ref. An `--override` TSV or a `--patch` file is port_core's input: rewording its reason column would change a run input, and a reworded input is no longer the input that produced the tree. The run script, the invocation log and the scan script and its output are as-run text.
+These files are run inputs or as-run text. Their bytes are the evidence, so they are kept, byte for byte, on the series' internal record ref, under `reloc-A3seg/`, with the sha256 below, rather than reworded (that commit holds every file below; commits hold the versions before core commits 8, 8a and 7). The pull request body names that ref. An `--override` TSV or a `--patch` file is port_core's input: rewording its reason column would change a run input, and a reworded input is no longer the input that produced the tree. The run script, the invocation log and the scan script and its output are as-run text.
 
 | file | sha256 | what it is |
 |---|---|---|
@@ -39,3 +39,5 @@ The binaries the runs read, by sha256:
 - fuzz_decode.asan: 5973b76807d8d2e14b82dc6afde70a2c882923658406aeca43681719cb4e8036
 - fuzz_knock.asan: 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118
 - fuzz_segconf.asan, the target's pin: 48c5355bdacbc5ba2e0a9ff843627969cb5d2913316654369904b549fc904ef8
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

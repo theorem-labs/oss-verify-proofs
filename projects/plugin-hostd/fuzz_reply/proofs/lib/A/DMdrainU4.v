@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU4.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 63c4d7ab56c5) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the drain's cut relation DMiface.dmem_q (DMiface.v:118-125) at
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU4.v (Quarantine::Drain walk set; file sha256 63c4d7ab56c5) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the drain's cut relation DMiface.dmem_q (DMiface.v:119-126) at
    the RECYCLE cut - Recycle's call of DoRecycle (0x33afc) - the twin of DMdrainTC.dmem_q_cut, which states the
    same relation at the return cut.  Two walk stages stand between the entry memory and this cut: Drain's entry
    walk (frame off YFgj.WIN, presence inside it) and the dequeue loop (frame off DMdeq.DW, presence off the
@@ -13,7 +14,7 @@
      covers the window, the frame covers the rest, and the loop's clause carries both to the cut.
    - [dmem_q_recyc]: DMiface.dmem_q at the recycle cut.
    No premise on the header's own presence: DMiface.dmem_q's presence clause is stated for 0 <= a < 2 ^ 64
-   (DMiface.v:122-126, the dmiface-wrap narrowing), and in that range it excludes the header words.
+   (DMiface.v:123-127, the dmiface-wrap narrowing), and in that range it excludes the header words.
    rule 24: no function proved (kind: the memory relation of a cut of segments already walked; the lane's reuse
    search is LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record), `proof-index MergeBatches Recycle QuarantineCallback_Recycle
    Drain` 2026-10-29T23:07:48Z exit 0, rule-24 check B1LookupCheck CONFIRM).
@@ -76,7 +77,7 @@ Variable F1 : Z -> Prop.
 Hypothesis HM1 : forall x : word, ~ F1 (bv_unsigned x) -> mem1 x = mem x.
 Hypothesis HF1 : forall a, F1 a -> dwin_q inst ly sp0 X S' P a.
 Hypothesis HPR1 : forall a, 0 <= a < 2 ^ 64 -> ~ qhdr inst ly a -> apresent (w_H W) mem a -> apresent (w_H W) mem1 a.
-(* stage 2: the dequeue loop (DMdeq.ATDR, DMdeq.v:198-199) *)
+(* stage 2: the dequeue loop (DMdeq.ATDR, DMdeq.v:199-200) *)
 Hypothesis HM2 : forall x : word,
   ~ (sp1 <= bv_unsigned x < sp1 + 32) ->
   ~ (A_QUAR + 152 <= bv_unsigned x < A_QUAR + 156) ->

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the table pattern of proofs/omx-clap-core/fuzz_state/lib/A/AB1k.v (RELOC's port of
    proofs/cgif/cgif_file_fuzzer/lib/A/AB1k.v), as in lane CRT's FSW_crt_tbl.v and the image-A twin
-   lib/A/FSW_pj_get_str_tbl.v (a working branch b3097a2a998), for pj_get_str's text range in IMAGE B. *)
+   lib/A/FSW_pj_get_str_tbl.v (a working branch), for pj_get_str's text range in IMAGE B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane (a Theorem Labs lane), image B (fs.asan-ubsan, sha256 5ac5ce0954f8...): the decode table of
    pj_get_str's own text, for the walk's symbolic runs (lib/B/FSW_K.v fsw_run_AJU / fsw_run_to_AJU take
    `table_ok tfibsegs tbl`). The range is lib/B/YB1w.v's names: tfib_A_pj_get_str = 0x83a54 .. tfib_E_pj_get_str =

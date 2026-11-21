@@ -2,7 +2,7 @@
    allocator facts of frame_facts_plain, malloc as a Kind B step (b1_malloc_call), FR across a run that writes the
    stack window and the live harness block (b1_fr_hb), and the live block's slack and absence from the image
    (b1_slack_ok, b1_blk_rom).
-   Adapted from libreac/fuzz_ctrl's released Prog/Seg/Tac_b1.v (origin/ossv/recipes 25e3d17bdb50): its generic
+   Adapted from libreac/fuzz_ctrl's released Prog/Seg/Tac_b1.v: its generic
    lemmas, with pin's numbers (frame 64, saved registers [S - 48, S), malloc at 0x13be8, the sink cells 0x4ea81,
    0x4eea8 .. 0x4eeac, 0x4eeb0 .. 0x4eeb8, the request bound 2^26 of SlotInv.resb_room); ctrl's model lemmas (RB,
    RS, rowb, names, u-cases) are not here. b1_slack_ok is libreac/fuzz_identity's slack_ok (Prog/Seg/Tac_si.v)

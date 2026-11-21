@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -68,7 +69,8 @@ Section Leaves.
       pose proof (op_sp _ _ _ _ _ _ _ _ _ _ PRE) as Q2. pose proof (op_gp _ _ _ _ _ _ _ _ _ _ PRE) as Q3.
       pose proof (op_tp _ _ _ _ _ _ _ _ _ _ PRE) as Q4. pose proof RM as QM. destruct (ra_mstd _ _ _ _ RA) as [Hh Hlz Hmat].
       rewrite <- (op_fs _ _ _ _ _ _ _ _ _ _ PRE).
-      apply (ref_refused_tail spw [] mo spw_valid Hh Hlz (op_fd2 _ _ _ _ _ _ _ _ _ _ PRE) tid rr_canary R M); try assumption.
+      apply (ref_refused_tail spw [] mo spw_valid Hh Hlz (op_fd2 _ _ _ _ _ _ _ _ _ _ PRE)
+             (op_rdr _ _ _ _ _ _ _ _ _ _ PRE) tid rr_canary R M); try assumption.
       - rewrite spw_u. exact Q2.
       - apply pre_stack.
       - apply pre_img.

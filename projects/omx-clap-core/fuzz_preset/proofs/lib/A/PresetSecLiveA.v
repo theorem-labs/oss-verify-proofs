@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset image A, row SEC-COUNT-102 (h-pre-b2): THE BRIDGE from the walk's facts at an
    allocator call to the engine's live-secondary call premise, YG0dcf.v:60 (acall_pre_cf's conjunct
    `Z.of_nat (length (st_sec_arr S)) < cf_sec_live_max`), at CfParams_preset (cf_sec_live_max = 16,000).
      sec_live_call_ok    : Wf_cf U S -> PresetCfnA.run_allocs_follow sm x H0 S -> premise;
      sec_live_call_ok_ar : the same with ARcf (the pre's first conjunct, YG0dcf.v:50) in place of Wf_cf (amc_wf);
      sec_live_of_pos     : the same from PresetRoomPos.iface_room_pos at any position i of the model run.
-   HOW. run_allocs_follow (PresetCfnA.v:562-564) is iface_room_pos at a position i of hruns plus the consumer
+   HOW. run_allocs_follow (PresetCfnA.v:563-565) is iface_room_pos at a position i of hruns plus the consumer
    allocation there. iface_room_pos carries (a) P8's live-set premise, the allocator's live requests = hlive (firstn i
    (hruns sm x os)) ++ at most DRV = 3 driver blocks, which PresetRoomCounts.counts_of_room_pos_rl turns into
    sec_cnt S <= LSEC + DRV (PresetLiveSec.live_sec_state, LSEC = 9,521; above MAXB the run is empty), and (b)
-   room_inv_cf S, which IS qtight S (YGcfRoom.v:51), the engine's quarantine byte cap. CfSecLivePreset.sec_live_of_cnt
+   room_inv_cf S, which IS qtight S (YGcfRoom.v:52), the engine's quarantine byte cap. CfSecLivePreset.sec_live_of_cnt
    then gives the premise: YGcfSecBound.sec_arr_bound_cf bounds st_sec_arr (live AND quarantined secondaries) by
    live_sec_blocks S + QSEC_MAX, QSEC_MAX = (2 ^ 28 + 2 ^ 20) / 64,513 = 4,177 from qtight (YGcfSecBound.qsec_bytes);
    9,521 + 3 + 4,177 = 13,701 < 16,000.
@@ -24,11 +25,11 @@
    YG0dcf.v:159-166, afree_realizes_cf :188-196, arealloc_realizes_cf YGcfRealloc.v:93-95):
      - the call pre itself: its conjuncts ARcf (:50, gives Wf_cf by amc_wf) and qmeter_cf (:56, gives qtight) are the
        bridge's state hypotheses; the live count is the walk's;
-     - Caw102A_Top.v:85 / Caw102A_WA0.v:131 (AMALLOC, the scratch malloc at the entry state cw_S D, Caw102A_WA0.v:402-423):
+     - Caw102A_Top.v:85 / Caw102A_WA0.v:132 (AMALLOC, the scratch malloc at the entry state cw_S D, Caw102A_WA0.v:403-424):
        the walk has ARcf, qtight and caw_cnt D's sec_cnt (cw_S D) <= LSEC + DRV (the named argument CAW_CNT), and NO
        model position (f97c's text dropped it), so run_allocs_follow is NOT supplied there; the state form
        CfSecLivePreset.sec_live_of_cnt takes exactly what it has;
-     - FuzzReallocAp.v:2244 (AREAL_cf, the realloc call at :2500-2521): the walk has ARcf (HAR), qtight (HQT) and
+     - FuzzReallocAp.v:2245 (AREAL_cf, the realloc call at :2500-2521): the walk has ARcf (HAR), qtight (HQT) and
        the text premise sec_cnt S <= LSEC + DRV (Hsec, PRH_FnAlloc.v:368), no position: sec_live_of_cnt again.
      Today both walks take the premise from room_live_cf (YGcfRoomLive.room_live_room -> QM_cf_of_room); the bridge
      needs no room_live_cf for this conjunct (QM_cf's ERRB_ROOM and batch_room_cf still come from it).
@@ -61,7 +62,7 @@ Proof.
 Qed.
 
 (* THE BRIDGE: at an allocator call that is a consumer allocation of the run (the walk's named fact
-   run_allocs_follow, PresetCfnA.v:562-564) *)
+   run_allocs_follow, PresetCfnA.v:563-565) *)
 Theorem sec_live_call_ok : forall U sm x H0 S, Wf_cf (cp := CfParams_preset) U S ->
   PresetCfnA.run_allocs_follow sm x H0 S ->
   Z.of_nat (length (st_sec_arr S)) < @cf_sec_live_max CfParams_preset.

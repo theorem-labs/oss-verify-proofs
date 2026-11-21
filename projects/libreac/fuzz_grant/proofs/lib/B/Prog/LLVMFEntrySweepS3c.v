@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS3c), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS3c.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* What segment 3 of the sweep phase of fuzz_grant's entry function on IMAGE B shares
    (0x815d0 .. 0x8173c: LLVMFEntrySweepS3.v, the two head comparisons, and the group-A
    segments S3d, S3a and S3b): the model facts about the sweep and the two frame arrays,
    seats with no regions, and the transfer of a cut's memory facts.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS3c.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepS3c.v (a working branch, blob
    6bd27280c, 488 lines), which carries no licence header of its own.
    Image B's cuts keep no register in `gsw_blk` and,
    on every cut of this phase, hold the box the input asked for in `a` (0x81394 took the

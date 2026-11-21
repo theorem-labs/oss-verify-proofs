@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -245,7 +246,7 @@ Definition a1z_live (Σ : rts RT) (E : s1env) : Prop :=
   /\ e_THIS E mod 8 = 0 /\ e_IDX E mod 8 = 0 /\ e_len E + 4 <= Z.of_nat (e_cap E).
 
 Lemma a1z_art_step : forall Σ (E : s1env) (m m' : mem), a1z_live Σ E -> ART RT Σ m ->
-  rt_sp0 RT Σ - STACK_WIN <= bv_unsigned (e_sp E) - 448 -> bv_unsigned (e_sp E) <= USTACK_TOP ->
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= bv_unsigned (e_sp E) - 448 -> bv_unsigned (e_sp E) <= USTACK_TOP ->
   munch (b1_W E) m m' -> wmono bsegs m m' -> ART RT Σ m'.
 Proof using AF.
   intros Σ E m m' (INT & INI & _) HA SPLO SPHI MU WM.
@@ -257,7 +258,7 @@ Proof using AF.
 Qed.
 
 Lemma a1z_shz_art : forall Σ (E : s1env), a1z_live Σ E -> ART RT Σ (e_m0 E) ->
-  rt_sp0 RT Σ - STACK_WIN <= bv_unsigned (e_sp E) - 448 -> bv_unsigned (e_sp E) <= USTACK_TOP -> 0 <= e_len E -> a1z_shz E.
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= bv_unsigned (e_sp E) - 448 -> bv_unsigned (e_sp E) <= USTACK_TOP -> 0 <= e_len E -> a1z_shz E.
 Proof using AF.
   intros Σ E LV HA SPLO SPHI LEN0 m' MU WM.
   pose proof (a1z_art_step Σ E _ m' LV HA SPLO SPHI MU WM) as HA'.
@@ -281,7 +282,7 @@ Definition stage1z_cps : Prop :=
   forall (Σ : rts RT) PMc (E : s1env) (t0 t1 t2 a4 a5 a6 a7 t3 t4 t5 t6 nsi nxt bufo leno : word) (ws0 : list word),
   fdfs_only PMc -> mat_stable PMc ->
   env_okz E -> a1z_live Σ E ->
-  rt_sp0 RT Σ - STACK_WIN <= e_lo E -> e_lo E + 448 + RT_STACK <= bv_unsigned (e_sp E) ->
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= e_lo E -> e_lo E + 448 + RT_STACK <= bv_unsigned (e_sp E) ->
   bv_unsigned (e_sp E) + 16 <= USTACK_TOP -> bv_unsigned (e_sp E) mod 16 = 0 ->
   ART RT Σ (e_m0 E) -> mem_inv bsegs (e_m0 E) -> stk bsegs (e_m0 E) (e_lo E) (bv_unsigned (e_sp E)) ->
   rw_cells bsegs (e_m0 E) (e_THIS E) (parser_cells E nsi nxt bufo leno) ->

@@ -1,6 +1,6 @@
 (* segconf's calloc (musl mallocng, plain 0x16904, 312 bytes) at the concrete instance src0_msyms / MRx, for every
-   m * n <= CALLOC_BIG_CAP: calloc_realizes_big_cf, the cut-free twin (CallocBigC.v). Adapted from libreac/fuzz_decode's CallocCert_cf.v at
-   25e3d17bdb50 (relocated by alreloc a5c53bb2bed4): the cap 4096 is raised (run_entry_big), the clearing for
+   m * n <= CALLOC_BIG_CAP: calloc_realizes_big_cf, the cut-free twin (CallocBigC.v). Adapted from libreac/fuzz_decode's CallocCert_cf.v
+    (relocated by alreloc a5c53bb2bed4): the cap 4096 is raised (run_entry_big), the clearing for
    n >= 4096 runs mal0_clear's page loop (CallocPage.run_clear_big in place of CallocRun.run_clear), the pc is
    CALLOC_PC (this frame's ms_calloc is None). *)
 From Stdlib Require Import ZArith List Lia Bool.

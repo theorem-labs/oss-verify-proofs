@@ -6,7 +6,7 @@
    parse_string by its published text (PRH_FnReader.tparse_string_specX, blob fb7b12dfa169) as a Section hypothesis.
    The stretches 135..141 and 143..151 run on the engine (YC80xf_inv's paj_run_xf_inv / paj_run_to_xf_inv); the call
    of row 142 is VrdArm.vrd_call_Wb_P; the join is VrdArmStr.vrs_join.
-   THE POST-IMPLICATION TEXTS (kit a working branch 3ac20a5c9e30: PRH_FnReader.v blob fb7b12dfa169,
+   THE POST-IMPLICATION TEXTS (kit a working branch: PRH_FnReader.v blob fb7b12dfa169,
    PRH_FnParse.v blob 94232293d483): parse_string takes no entry position, so the arm supplies nothing about the model
    run before the call; it proves the position AFTER the call (vrd_pv_post's transfer and outcome clauses) from
    parse_string's post arms, choosing the run and position itself (VrdArmStr.vrs_rq). parse_string's two live-count
@@ -96,7 +96,7 @@ Hypothesis LAWS : AR_laws_x SEGS B ARx HL.
 Variable d : nat.
 Variable CTX0 : list (list Z).
 Variable CW : list (list Z).
-(* parse_string, the kit's text lib/A/PRH_FnReader.v tparse_string_specX (the kit's cut 7cdbb61b5fa0, blob f1ae32e3b2cd: the
+(* parse_string, the kit's text lib/A/PRH_FnReader.v tparse_string_specX (the kit's cut, blob f1ae32e3b2cd: the
    cursor set CW in place of the run-word list, prh_cw_ok in the slot of the deleted prh_cur_ok, the wild budget
    against CW, the per-event live room, and the post budgeted at wbudget CW 0, fpostWbm) *)
 Hypothesis H_parse_string : tparse_string_specX B ARx SK CTX0 CW.
@@ -145,7 +145,7 @@ assert (HCNT : cnt + 1 < 2 ^ 64 - 1) by slia.
    runs on HPRE alone: in the full context it would split every disjunctive hypothesis *)
 assert (Hra0c : raZ regs0 < alloc_ceiling) by (clear - HPRE; unfold fpre in HPRE; tauto).
 (* the node is not in the granted real-stack window: a conjunct of the dispatch state since
-   a working branch 09ccdd8bda3, so this lane carries no stand-in for it *)
+   a working branch, so this lane carries no stand-in for it *)
 assert (Hnowin : ~ (spZ regs0 <= v /\ v + 56 <= spZ regs0 + e)) by (intros (A1 & A2); slia).
 rewrite Hskip in Harm. destruct Harm as (Harm & Hp'lt & Hnth & Hws & Hb).
 replace (vrd_arm_of 34) with VA_str in Harm by (vm_compute; reflexivity). subst arm.

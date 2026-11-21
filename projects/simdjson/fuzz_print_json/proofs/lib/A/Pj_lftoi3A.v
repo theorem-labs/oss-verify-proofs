@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -564,7 +565,7 @@ Proof using AF RC OSF_loc OSU_imp OSU_ios ROA CTOR SER PUT LOCD IOSD.
                                (Z_to_bv 64 (f + 32)) (Z_to_bv 64 (f + 96)) w3 w4 w5 w6 Fy fc6 my)).
   { intros Σy my ra' w0 w1 w2 b0' b1' b2' b3' b4' b5' b6' b7' z6 z7 w3 w4 w5 w6 Fy bo bb LVy FRSy SPy CRy ARTy MIy STy FOy IMPy IOSy FSy F24y FBy LOCBy PRESy.
     assert (INCLy : forall e, In e L -> In e (rt_live RT Σy)) by (intros e He; rewrite LVy; exact He).
-    assert (SPLOy : rt_sp0 RT Σy - STACK_WIN <= lo) by (rewrite SPy; exact SPLO).
+    assert (SPLOy : rt_sp0 RT Σy - STACK_SPAN <= lo) by (rewrite SPy; exact SPLO).
 
     pose proof (proj1 (proj2 (ROA Σy my ARTy))) as GOT. unfold PJ_GOT_VT_A, PJ_SB_BVT_A, PJ_IOS_BVT_A in GOT.
 

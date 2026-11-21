@@ -5,16 +5,17 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1392 of its 1502 lines of code are new or changed and 901 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R14.v, with its module names changed; 350 of its 474 lines of code are new or changed and 1378 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R14F.v, with its module paths, module names and addresses changed; 20 of its 44 lines of code are new or changed and 450 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R13.v dfbd328b0853 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/R13.v dfbd328b0853 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives R13.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of R13.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
-(* The footprint (_F) twin of R13.v's one run lemma (r13_evt, R13.v:18): 0x81734 `li a1,1` and 0x81738
+(* The footprint (_F) twin of R13.v's one run lemma (r13_evt, R13.v:19): 0x81734 `li a1,1` and 0x81738
    `beq a0,a1,8191c` (a0 = 1, so taken), re-stepped with lib.Lib StepF as an ExecF.evtF under a universally
    quantified footprint RNG, with the same post-state predicate. Neither instruction touches memory (instruction
    fetch is not an access), so the run needs NO rng premise: r13_evt_F's premises are r13_evt's, with RNG first and

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v and ACam.v (a walk segment, the side-stack frame's release): from strtol's return (0x8e534) to number's return, the four paths of number's tests (the word's first byte, the end pointer's byte, the range of the value) and the release of the class-0 frame. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberB.v, with its module paths and module names changed; 753 of its 818 lines of code are new or changed and 366 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3...): the second half
    of refuse's image-B prefix walk, from RB_TEXT (0x894e4, snprintf's return) through the vsnprintf call, checks 4
    and 5 and the n_refusals store, to the release (0x89544), where RB_REL_stmt takes over. A sub-lane of
@@ -11,7 +12,7 @@
    proves no function (kind: segment lemma of refuse's image-B walk): `rbp_txt : RBP_TXT_stmt ...`, the statement
    of lib/B/Prog/refuse_Pk.v, which a sub-lane takes as a hypothesis. ADAPTED from plugin-hostd/fuzz_command
    lib/B/Prog/check_reply_s4.v (a printf wrapper call and the FP state after it), numberB.v / numberR.v (token runs,
-   the cut to the release) at origin/ossv/recipes 501c0d516c69, and from this lane base's lib/B/Prog/refuse_H.v head
+   the cut to the release), and from this lane base's lib/B/Prog/refuse_H.v head
    (the image-B refuse walk lane: the region and keep tactics), re-derived on image B's code (refuse.fuzz_segconf.asan-ubsan.s
    lines 125-149).
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO run state). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -622,6 +623,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     destruct (Hown q Hq w Hw0) as [Hv Hm]. split; [rewrite HH; exact Hv|]. intros Hout.
     apply Hm. apply (proj2 (rgs_ent_outside E (s_rgs S) (s_rgs P) σ _ Hrge)). exact Hout.
   - exact (blob_ok_agree n0 E E' M model model _ Hwf0 Ha eq_refl Hblob).
+  - vdso_keep_tac.
 Qed.
 
 (* [comment removed for export] *)
@@ -679,6 +681,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     destruct (Hown q Hq w Hw0) as [Hv Hm]. split; [rewrite HH; exact Hv|]. intros Hout.
     apply Hm. exact (proj2 (outside_agree (s_next S) E E' (s_rgs S) _ Hbw Ha) Hout).
   - exact (blob_ok_agree (s_next S) E E' M model model _ Hwf Ha eq_refl Hblob).
+  - vdso_keep_tac.
 Qed.
 
 (* [comment removed for export] *)

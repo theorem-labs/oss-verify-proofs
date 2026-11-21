@@ -13,7 +13,7 @@
    AR_laws_ok (a live block starts at 4096 or above, and the live blocks are pairwise disjoint and of positive
    request size, so a list of live blocks carries no repeat and splits at a live block in one way only);
    lib/Reusable/YI04.v inFP_app. Templated, cited and not imported: zzwv_split_uniq follows FSW_pj_write.v
-   pjw_f_split_uniq (a working branch b6c5b22a453 :1534-1546), and zzwv_put1_inv0's grow arm the
+   pjw_f_split_uniq (a working branch :1534-1546), and zzwv_put1_inv0's grow arm the
    same file's pjw_m_newcap_pos (:721-727), for which WriterRet.newcap_pos is the imported donor.
 
    Where a statement differs from the form first asked for, it is because that form is false or because it
@@ -57,9 +57,9 @@
    So: no donor found in the refs of (1) and (2) above; nothing is claimed for (3).
    (4) the 10 names added for the realloc-shape bswap and the cap-aware count (zzwv_in_ins, zzwv_split_uniq,
        zzwv_ab_mid_dup, zzwv_ab_split_uniq, zzwv_inv0, zzwv_put1_inv0, zzwv_putN_inv0, wv_wevk_split,
-       wv_wevk_mono, wv_wevk_nonneg), 2026-10-29 05:23Z: `git grep -n -w -F -e <each name>` over
-       origin/ossv/recipes e5e7eba2cc0, origin/release/pau-projects-recipes b6a0088adcb and
-       a working branch 946ad86dc9f, pathspec '*.v', output to a file: git grep rc=1 (its own exit
+       wv_wevk_mono, wv_wevk_nonneg), 2026-10-29 05:23Z: `git grep -n -w -F -e <each name>` over,
+        and
+       a working branch, pathspec '*.v', output to a file: git grep rc=1 (its own exit
        code), 0 bytes. A first run of the same names with -E and no pathspec was stopped by its 600 s timeout
        and gave no result. So: no donor for these names in those three refs. *)
 
@@ -125,8 +125,8 @@ Proof.
 Qed.
 
 (* an element whose image overlaps itself sits at one place only in a list whose images are pairwise R-related
-   (template, cited and not imported: FSW_pj_write.v pjw_f_split_uniq, a working branch
-   b6c5b22a453 :1534-1546, there for heads; here through a map, for live blocks) *)
+   (template, cited and not imported: FSW_pj_write.v pjw_f_split_uniq, a working branch:
+   1534-1546, there for heads; here through a map, for live blocks) *)
 Lemma zzwv_split_uniq : forall {X Y : Type} (f : X -> Y) (R : Y -> Y -> Prop) (x : X) (l1 l2 l3 l4 : list X),
   pairwise R (map f (l1 ++ x :: l2)) -> ~ R (f x) (f x) -> l1 ++ x :: l2 = l3 ++ x :: l4 -> l1 = l3 /\ l2 = l4.
 Proof.

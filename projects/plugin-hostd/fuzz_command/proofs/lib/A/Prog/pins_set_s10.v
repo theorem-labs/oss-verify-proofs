@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the close of pins_set's recorded call and its tail jump into answer_code,
-   after proofs/cgif/cgif_file_fuzzer/lib/A/ACh*.v at c8557374ad2e (the last segments of the
+   after proofs/cgif/cgif_file_fuzzer/lib/A/ACh*.v (the last segments of the
    cgif_close walk: the call closed into the model, and the tail call composed with the call rule) over
    fuzz_command's recorder. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* `ps_close`: after the fourth argument is stored, the slot holds the whole call (fn = 20, nargs = 4, the four
    copies), so the recorder's representation is the one of `rec_record R 20 A`.

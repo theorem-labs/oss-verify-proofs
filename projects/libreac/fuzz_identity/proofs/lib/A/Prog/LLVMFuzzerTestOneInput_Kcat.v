@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-366, for
    libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_H.v, with its module names and addresses changed; 1329 of its 1464 lines of code are new or changed and 1008 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The catalogue tail of segment K of LLVMFuzzerTestOneInput's ASan walk (fuzz_identity.asan
    0x81fa0 .. 0x82090, listing offsets 0x1894 .. 0x1984): k_cat_tail_stmt of
    lib/A/Prog/LLVMFuzzerTestOneInput_Kcut.v, from k_mid to inv_K_end.
@@ -135,7 +136,7 @@ Variable KS : asink_syms_T.
 Variable asink_none : list Segment -> asink_syms_T -> (word -> option byte) -> Model -> Prop.
 Variable ameta_inv : list Segment -> asink_syms_T -> alayout -> (word -> option byte) -> Z -> Prop.
 Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
-(* the registered globals of the contract (LLVMFuzzerTestOneInput.v:203) *)
+(* the registered globals of the contract (LLVMFuzzerTestOneInput.v:204) *)
 Variable G : list (Z * Z).
 #[local] Notation EPRE g := (e_pre B MT XM_LIB RLO RHI RA_LLVMF A_EMPTY LLVMF_STK EV_LIB LIVE_LIB
   asink_syms_T KS asink_none ameta_inv arodata_okS g).
@@ -156,7 +157,7 @@ Hypothesis HIMG : forall (W : world SEGS) mem,
 Hypothesis HCAT : tcat_spec B (BASE + AF_reac_box_catalogue) pa_relro_lo pa_relro_hi.
 Hypothesis HCATD : treac_box_catalogue_defect_spec B G.
 Hypothesis ASTRCMP : AStrcmpDef.astrcmp_realizes SEGS B (SIGMA IS___interceptor_trampoline_strcmp).
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
   ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
   m_fds md' = m_fds md /\ m_fs md' = m_fs md.

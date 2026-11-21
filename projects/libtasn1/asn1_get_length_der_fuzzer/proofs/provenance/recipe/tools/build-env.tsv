@@ -1,0 +1,30 @@
+# the environment build.sh passes the container body (docker run -e)
+# flavour	SFX	QSFX	OUTDIR
+flavour	plain	-repro	-repro-quiet	build/riscv64
+flavour	asan	-repro-asan	-repro-quiet-asan	build/riscv64
+flavour	ubsan	-repro-ubsan	-repro-quiet-ubsan	build/riscv64
+flavour	asanubsan	-repro-asanubsan	-repro-quiet-asanubsan	build/riscv64
+# name	value as build.sh writes it (a shell expression of its own variables)	value in a harness build of {target} in {flavour}: {depends} is the pin's DEPENDS, {SFX} {QSFX} {OUTDIR} are the flavour's row above, {image} the toolchain image; - means the variable is passed only when it is set, and a harness build leaves it unset
+env	OFT_RELEASE	1	1
+env	OFT_RUST_RUNTIME		-
+env	T	$t	{target}
+env	DEPS	$deps	{depends}
+env	FLAV	$flav	{flavour}
+env	OFT_CC_PREFIX	$cc_prefix	
+env	CCACHE_DIR	/work/build/.ccache	/work/build/.ccache
+env	CCACHE_COMPILERCHECK	string:$tag	string:{image}
+env	CCACHE_MAXSIZE	${OFT_CCACHE_MAXSIZE:-40G}	40G
+env	OFT_SEAL_GETENV	${OFT_SEAL_GETENV:-1}	1
+env	OFT_MAKE_JOBS	${OFT_MAKE_JOBS:-}	
+env	OFT_MESON_PREFER_STATIC	${OFT_MESON_PREFER_STATIC:-}	
+env	OFT_BLIND_SKIP	${OFT_BLIND_SKIP:-}	
+env	OFT_SILENT_CONTROL_BUILD	${OFT_SILENT_CONTROL_BUILD:-0}	0
+env	OFT_STRIP		-
+env	SOURCE_DATE_EPOCH	$OFT_SOURCE_DATE_EPOCH	1756684800
+env	SFX	$sfx	{SFX}
+env	QSFX	$qsfx	{QSFX}
+env	OUTDIR	$outdir	{OUTDIR}
+env	NAME	$name	{target}
+env	SRCREL	$srcrel	ext/{target}/src
+env	OBJREL	$objrel	build/obj/{flavour}
+env	LIBREL	$librel	build/lib/{flavour}

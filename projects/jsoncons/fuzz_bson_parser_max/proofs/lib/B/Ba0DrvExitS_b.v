@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed exit_preS, exit_run_2S, exit_run_3S and 1 more. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -110,7 +111,7 @@ Section Exit.
     let MV := mrestrict (ahid A model) M in
     dinvA LB LK cr A M model
     /\ usp - 4096 <= S /\ S <= usp /\ S mod 16 = 0
-    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS MV a n)
+    /\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS MV a n)
     /\ L5Defs.L5.img_clear MV 65536 1282048
     /\ exitS tid MV.
 
@@ -250,6 +251,7 @@ Proof.
   - exact MInv1.
   - apply Lz1.
   - rewrite (sbm_fds' _ _ Same1). exact Fd1.
+  - rewrite (sbm_rdrA _ _ Same1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Dinv).
   - unfold wv_regs. repeat split; assumption.
   - rewrite View1. unfold wv_iov.
     pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (StackW (S - 136) 32 ltac:(lia) ltac:(lia))) as IovW.
@@ -407,6 +409,7 @@ Proof.
   - exact MInv1.
   - apply Lz1.
   - rewrite (sbm_fds' _ _ Same1). exact Fd1.
+  - rewrite (sbm_rdrA _ _ Same1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Dinv).
   - unfold wv_regs. repeat split; assumption.
   - rewrite View1. unfold wv_iov.
     pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (StackW (S - 136) 32 ltac:(lia) ltac:(lia))) as IovW.
@@ -564,6 +567,7 @@ Proof.
   - exact MInv1.
   - apply Lz1.
   - rewrite (sbm_fds' _ _ Same1). exact Fd1.
+  - rewrite (sbm_rdrA _ _ Same1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Dinv).
   - unfold wv_regs. repeat split; assumption.
   - rewrite View1. unfold wv_iov.
     pose proof (L5Defs.L5.writable_grows ASEGS MV M1' (S - 136) 32 Grow1 (StackW (S - 136) 32 ltac:(lia) ltac:(lia))) as IovW.

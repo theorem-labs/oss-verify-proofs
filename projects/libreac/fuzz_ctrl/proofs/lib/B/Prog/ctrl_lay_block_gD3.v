@@ -40,13 +40,13 @@ Import ListNotations.
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* The run's own writes after the class-1 request (Section CUTS's fine list LWF, ctrl_lay_block_cutsF.v:450), with
+(* The run's own writes after the class-1 request (Section CUTS's fine list LWF, ctrl_lay_block_cutsF.v:451), with
    S the entry sp and frb the class-1 frame: the window, the output block, the frame and its 16 shadow bytes. *)
 Definition lay_LWF (S p frb : Z) : list lib.Lib.Frame.ivl :=
   [(S - ctrl_lay_block_c.CTRL_LAY_BLOCK_K, S); (p + 18, p + 50); (frb, frb + 128);
    (B.AsanRT.shadow_addr frb, B.AsanRT.shadow_addr frb + 16)].
 
-(* Section CUTS's memory-free hypotheses (ctrl_lay_block_cutsF.v:84-113 and :129-130, the same text with S := bv_unsigned sp,
+(* Section CUTS's memory-free hypotheses (ctrl_lay_block_cutsF.v:85-114 and :130-131, the same text with S := bv_unsigned sp,
    K := CTRL_LAY_BLOCK_K), and the memory-free parts of MDP / GP / AG.  FPT / FPG / FPM depend on the layout only. *)
 Definition lay_pure (sp : word) (p f md g FS : Z) (fr tb mb nb gb : list byte) : Prop :=
   let S := bv_unsigned sp in
@@ -138,7 +138,7 @@ End D3.
 
 (* Every Section CUTS hypothesis the R2 / R3 cut lemmas take (ly_post_sm1_side, ly_kb_c, ly_dispatch_c, ly_pre_box,
    ly_box_k, ly_epi_c, ly_epi_side_pre; measured by their closed binders), in the Section's order and with its text
-   (ctrl_lay_block_cutsF.v:84-179; S := bv_unsigned sp, K := CTRL_LAY_BLOCK_K).  Not taken by any of them: TM's
+   (ctrl_lay_block_cutsF.v:85-180; S := bv_unsigned sp, K := CTRL_LAY_BLOCK_K).  Not taken by any of them: TM's
    siblings AJ5 AJ6 ATM's none, Rrt Rtp88 Rtp8 Rtls RFS0 Rmdl Rnm RJ5 RJ6.  lay_ctx_names destructs it into
    hypotheses with the Section's names, so ctrl_lay_block_cutsF's closed lemmas instantiate by name. *)
 Definition lay_ctx (sp tp : word) (m : word -> option byte) (p f md g FS : Z) (fr ob tb mb nb gb : list byte)

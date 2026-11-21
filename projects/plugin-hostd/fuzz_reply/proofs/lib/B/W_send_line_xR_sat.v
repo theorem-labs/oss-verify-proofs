@@ -4,7 +4,7 @@
    (fuzz_reply.asan-ubsan), in the form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and
    lib/A/AC8b.v (a loop over concrete cut states).  Proves no function (kind: segment lemma of send_line's image-B walk:
    W_send_line_cx.v sl_copy_stmt, the copy half J -> L or X; reuse search in W_send_line_cx.v's header,
-   `R24BSendLine: CONFIRM`).  STRUCTURE ported from image A's closed sl_copy (a working branch a78a220dc8e
+   `R24BSendLine: CONFIRM`).  STRUCTURE ported from image A's closed sl_copy (a working branch
    lib/A/W_send_line_datab.v: the seat at the join, the memcpy call, aout_at_copy, the exit); no theorem crosses images.
    From the join A_sl_join = 0x82a08 (W_send_line_cx.v SLM) to the loop head or the epilogue:
      0x82a08 ld a0,24(sp)      the spilled auipc value of g_out (A_HI 25)
@@ -31,6 +31,7 @@
    the ARx-generic room-form twin of W_send_line_datab.v: sl_copy_x over ARx (a Theorem Labs lane; the B twin of its
    lib/A/W_send_line_datab_x.v) *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_send_line_datab_x.v; 27 of its 92 lines of code are new or changed and 970 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Satisfiability at the real image B of the R contract texts (W_send_line_xR.v), at R := wle' SEGS RZ_cf: each
    lemma derives the R form from the existing strict walk, under that walk's own Section hypotheses. The import block
    is the walk file's (W_send_line_x.v), so each hypothesis reads as there. *)

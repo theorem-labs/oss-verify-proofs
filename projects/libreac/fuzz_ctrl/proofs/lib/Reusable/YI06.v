@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YI06.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed journal_exec). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -177,7 +178,7 @@ change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia. exact HWa. }
 split.
 { destruct HH as (HM & HW' & HB). split; [|split; assumption].
 destruct (mr_model B MR LAWS _ _ _ _ HM) as (Hh & Hl & Hmat).
-eapply (mr_frame B MR LAWS); [exact HM | | | | reflexivity | exact Hh | exact Hl | exact Hmat].
+eapply (mr_frame B MR LAWS); [exact HM | reflexivity | | | | reflexivity | exact Hh | exact Hl | exact Hmat].
 - intros a Ho. apply mbyte_eq_of. pose proof (mr_owned_low B MR LAWS _ _ _ _ a HM Ho).
 apply Heqw; [lia|]. intros HWa. exact (proj2 (HWlow a HWa) Ho).
 - intros a Ho Hp. eapply present_grows; eauto.

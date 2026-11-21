@@ -6,14 +6,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 554 of its 593 lines of code are new or changed and 357 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F7.v; 14 of its 49 lines of code are new or changed and 558 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F7F.v, with its module names and addresses changed; 6 of its 35 lines of code are new or changed and 20 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17; measured against this image only;
-   source runs: lib/B/Prog/Seg/F8.v f8_evt (:301) at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/F8.v f8_evt (:301) at a working branch
      (blob b165baee6c1e379a3efa10590bb71761c711c93f);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    split: f8_evt calls reac_ctrl_kind_name at 0x8217c (parent 23:50Z: split at EVERY call, never state a callee
      contract locally).  f8_pre_F re-runs F8.v lines 324-327 (0x82174 -> the callee entry 0x83d98, ra = 0x82180);
      the callee's return pc 0x82180 IS the run's exit cut (Inv_B82180_at), so the post stretch is empty and no

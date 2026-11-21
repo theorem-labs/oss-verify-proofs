@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 971 of its 1034 lines of code are new or changed and 451 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan
    d663f82d7f488d30, unstripped twin c90d4fa54d43160b), FREE-PIECES-102 Part 7a row T7 = CRT-B-CEXIT: THE TWO FREES
    of the segment C (+0x6f8) ..
@@ -37,15 +38,15 @@
    the run position by t7f_hull0 at the run's length bound HOS4 (Section g). The stretch statements are T7_bd's, at
    SRr'; t7_stretch_FF / t7_stretch_PF take HOS4 after FFREE / PJFREE.
 
-   INPUTS OF RECORD (the row's base was the T7 row's head merged with commit cbe6d10993c2, an ancestor of this tree):
+   INPUTS OF RECORD (the row's base was the T7 row's head merged with, an ancestor of this tree):
    this tree's crt_at_C_B with back's AND copy's free-order conjuncts and Crt102Glue.v's crt_pos with its strtod tie
    and consumer window;
    lib/B/Prog/Crt102KitB.v (cb4_ff, cb4_sp, cb4_ro_img, cb4_fregs_trans, cb4_live_call); PRH_PjOrder.v (pj_fdR_foR,
    pj_foR_frame, pj_foR_fdR); lib/B/Prog/Crt102B_T7_kit.v
-   (cb7k_call, cb7k_ret); the contract texts at the kit tip 3ac20a5c9e30: PRH_FnAlloc.v tfuzz_free_specX, PRH_FnPj.v
+   (cb7k_call, cb7k_ret); the contract texts at the kit tip: PRH_FnAlloc.v tfuzz_free_specX, PRH_FnPj.v
    dc0d0aa79c0f tpj_free_specX (prh_head_wide by CfParamsPreset.preset_head_wide; this tree's PRH_FnPj.v is a later
    blob), PRH_Base.v (prh_run_at_app_iff, prh_cons_from_app_iff, prh_univ_closure_site); row T8's lib/A/Prog/Crt102TailB.v
-   at commit 247f3d4e8cf7 (:109-129; this tree's copy is a later rewrite without ct_ccnt24) for the ccnt24 lemma (copied, with its credit), the
+   (:109-129; this tree's copy is a later rewrite without ct_ccnt24) for the ccnt24 lemma (copied, with its credit), the
    footprint / ledger bookkeeping pattern and ct_bregs_pres.
 
    NUMERALS. LENGTH: 512 / 504 / 64 (the class-3 frame, its flag word, its shadow bytes), 56 (struct pj), 16
@@ -176,8 +177,8 @@ Qed.
 End tr.
 
 (* the ccnt24 entry premise of the two frees, from the room position (row T8's ct_hruns_big / ct_ccnt24,
-   ref/Crt102TailB.v :109-129, commit 247f3d4e8cf7; copied, with its credit to
-   lib/AU/PresetCfnB.v:456-484) *)
+   ref/Crt102TailB.v :109-129; copied, with its credit to
+   lib/AU/PresetCfnB.v:457-485) *)
 Lemma t7f_hruns_big : forall sm x os, PresetReqAt.MAXB < Z.of_nat (length x) -> PresetRun.hruns sm x os = [].
 Proof.
 intros sm x os Hx. induction os as [|[[o1 o2] o0] os IH]; [reflexivity|].
@@ -341,7 +342,7 @@ Hypothesis FFREE : forall fxk : YK11.FPState,
   @PRH_FnAlloc.tfuzz_free_specX fxk rc CfParams_preset prh_img_B RL B_prog_listing PA B ARx SK.   (* contract text *)
 Hypothesis PJFREE : forall fxk : YK11.FPState,
   @PRH_FnPj.tpj_free_specX fxk rc ci CfParams_preset prh_img_B RL B_prog_listing PA B ARx SK CTX0 DOC_D.
-    (* contract text, PRH_FnPj.v (kit tip f97c8b2f046b) *)
+    (* contract text, PRH_FnPj.v (kit tip) *)
 (* THE LENGTH BOUND of the run (route (i), agreed with the Crt102HullPos row): check_round_trip's own
    text premise (PRH_FnCheck.v:2363), which the tops pass; each free's hull budget comes from it (t7f_hull0) *)
 Hypothesis HOS4 : (length rp_os <= 4)%nat.
@@ -722,7 +723,7 @@ Qed.
 
 (* ======================================================================================================== *)
 (* FF (+0x7f8): `ld a0, 0(s1)` (saved), `jal fuzz_free` (+0x7fc = CRT_FF2_CALL_B), return at PF (+0x800). back's
-   free-order tie, crt_at_C_B's own conjunct (Crt102Glue.v at 7281359fe8bc), is carried across fuzz_free by
+   free-order tie, crt_at_C_B's own conjunct (Crt102Glue.v), is carried across fuzz_free by
    PRH_PjOrder.pj_foR_frame with the footprint facts that carry back's tree. *)
 Lemma t7_stretch_FF : AT_PF -> AT_FF.
 Proof.

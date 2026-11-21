@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: auxv_at admits key 33, AT_SYSINFO_EHDR, which the auxv now carries). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -2487,7 +2488,7 @@ Definition libc_auxv_cell : Z := 0x39320.
 
 Definition auxv_at (m : word -> option byte) (aw : Z) (keys : list Z) : Prop :=
 bytes_at segs m libc_auxv_cell (le8 (Z_to_bv 64 aw)) /\ aw mod 8 = 0 /\
-Forall (fun k => 0 < k < 2^64 /\ k <> 33) keys /\
+Forall (fun k => 0 < k < 2^64) keys /\
 (forall i k, nth_error keys i = Some k -> bytes_at segs m (aw + 16 * Z.of_nat i) (le8 (Z_to_bv 64 k))) /\
 bytes_at segs m (aw + 16 * Z.of_nat (length keys)) (le8 (Z_to_bv 64 0)).
 

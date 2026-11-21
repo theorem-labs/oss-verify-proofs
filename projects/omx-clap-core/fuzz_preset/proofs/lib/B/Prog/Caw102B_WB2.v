@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Disp_word.v, with its module paths and module names changed; 116 of its 154 lines of code are new or changed and 465 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Caw102A_Kit.v, with its module names changed; 989 of its 1073 lines of code are new or changed and 70 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102): segment WB2 of the walk of check_as_written (Caw102B.v), from cut_ev (B' 0x81fc4,
    the scratch non-NULL) through the ex_value call to cut_ws (0x82000, ex_value returned 0) or, on its refusal, through
    the scratch's free to cut_oA (0x8201c). Lane CawB102 (segment lane CawB102WB2); re-walk lane CawA102R for B'
@@ -40,7 +41,7 @@
    file (wb2_scr_not_hp, wb2_rod, wb2_src_rd, wb2_apart_x, wb2_tree, wb2_ledger_free, wb2_free_trace, caw_WB2) is the
    base's projections caw_pre_* now; caw_WB2 poses them in the order and under the names of its former pattern. The
    premise caw_cnt C stays (the top gives it by Caw102B.caw_pre_cnt, by conversion; the named argument CAW_CNT is gone).
-   (3) THE OUTCOME (:879-888, caw_dead) is carried by cut_end only; WB2 builds cut_ws, which now ends with the free's hull budget (Caw102B.v:435), and cut_oAR, cut_oA's R form (:437-442).
+   (3) THE OUTCOME (:879-888, caw_dead) is carried by cut_end only; WB2 builds cut_ws, which now ends with the free's hull budget (Caw102B.v:436), and cut_oAR, cut_oA's R form (:437-442).
    STATEMENT CHANGES (part 3c, the free under the re-hide): caw_WB2 states the continuations' R forms at wle'
    (caw_K_wsR / caw_K_oAR in, caw_K_evR out), the re-hide's world relation past the free; every other lemma of this
    file keeps its statement and name.
@@ -318,7 +319,7 @@ Proof. intros c l. induction l as [|[c0 p0] l IH]; cbn [count_cid length]; [lia|
 (* the live class-24 count past a step that adds the blocks l to a state's (the scratch's malloc, caw_scr): ccnt24
    counts the requests ablocks lists (YGcfRoomLive.v, YG0d.ablocks), so it grows by at most
    length l; from caw_cnt C (the text's room counts at the entry state, Caw102B.caw_pre_cnt) it bounds RL_free_step's
-   count (the A' twin: Caw102A_WA2.v f4334a4d9ca1, wa2_ccnt24_app) *)
+   count (the A' twin: Caw102A_WA2.v, wa2_ccnt24_app) *)
 Lemma wb2_filter_app_len : forall (f : Z -> bool) (l1 : list Z) (l2 : list (Z * Z)),
   Z.of_nat (length (List.filter f (l1 ++ map snd l2))) <= Z.of_nat (length (List.filter f l1)) + Z.of_nat (length l2).
 Proof.

@@ -367,13 +367,13 @@ Qed.
 Lemma pi_auxv_join : forall B sec lo1 lo2 mem, auxv_pre B sec lo1 mem -> auxv_pre B sec lo2 mem ->
   auxv_pre B sec (Z.max lo1 lo2) mem.
 Proof.
-  intros B sec lo1 lo2 mem (av & ar & A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10)
-    (av' & ar' & B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 & B9 & B10).
+  intros B sec lo1 lo2 mem (rs & av & ar & A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10)
+    (rs' & av' & ar' & B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 & B9 & B10). pose proof (auxv_types_len_ge rs). pose proof (auxv_types_len_ge rs'). unfold AUXV_RAND_K in *.
   assert (Ea : av = av') by (apply (pi_word_uniq (ms_segs B) mem (ms_libc B + 8)); [exact A1 | exact B1 | lia | lia]).
   subst av'.
-  assert (Er : ar = ar') by (apply (pi_word_uniq (ms_segs B) mem (av + 16 * 8 + 8)); [exact A3 | exact B3 | lia | lia]).
+  assert (Er : ar = ar') by (apply (pi_word_uniq (ms_segs B) mem (av + 16 * Z.of_nat 24 + 8)); [exact A3 | exact B3 | lia | lia]).
   subst ar'.
-  exists av, ar. repeat (split; [assumption|]). lia.
+  exists rs, av, ar. try unfold AUXV_RAND_K. repeat (split; [assumption|]). lia.
 Qed.
 
 Section PI.

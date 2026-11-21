@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_oomowned.v (commit 4d286b2e618d, file sha256 1e47ce18f6fb) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_oomowned.v (file sha256 1e47ce18f6fb) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-oomowned-B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the symbol table of reply's image B, fuzz_reply.asan-ubsan,
    pin 10ffb5f9202a).
 
    oom_owned_img : oom_areas_t, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:291-296 (Definition) / :300
-   (Hypothesis) @ 692f71ce28c.  The layer states oom_areas_t over its Section's Variable B, under the hypothesis
-   TS : im_syms B (YGcfInstMiss.v:240 @ 692f71ce28c).  Reply does not carry YGcfInstMiss.v, so the Lemma states the body
+   (Hypothesis).  The layer states oom_areas_t over its Section's Variable B, under the hypothesis
+   TS : im_syms B (YGcfInstMiss.v:241).  Reply does not carry YGcfInstMiss.v, so the Lemma states the body
    of oom_areas_t VERBATIM at a B with image B's symbol facts (im_syms of AImg_cgif, B/AGif2cgif.v:24, which is
    YF0m.TfibSyms).
    At image B (B/YF0m.v:16-19) the OOM byte is TFIB_OOM = 0x12d960: above the instance object [0xa8098, 0xa8ec8) and the
@@ -30,7 +31,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import ImgB
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import AGif2cgif.
 Open Scope Z_scope.
 
-(* oom_owned_img at image B: the body of oom_areas_t (YGcfInstMiss.v:292-296 @ 692f71ce28c), verbatim. *)
+(* oom_owned_img at image B: the body of oom_areas_t (YGcfInstMiss.v:293-297), verbatim. *)
 Lemma oom_owned_img_B : forall B, @im_syms AImg_cgif B ->
   ~ (as_inst B <= as_oom_byte B < as_inst B + 3632) /\
   ~ (as_depot B <= as_oom_byte B < as_depot B + (4 * 2 ^ 20 + 32)) /\

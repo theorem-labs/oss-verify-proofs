@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d7f488d30, twin c90d4fa54d43160b), lane
    PutStringB (h-rw-pre-7): the SATISFIABILITY WITNESS of the snprintf-instance premise text this lane wrote,
    PutStringB_E.ps_snp_inst, at the instance of record (PA := PI_prog_B, B := YD2l.TfibB, ARx := ARcfx = ARcf /\
    xs_placed_cf, ci := CfImgB.CfImg_B, cp := CfParamsPreset.CfParams_preset), AT THE VALUES THE ROW'S OWNER FIXES for
-   image B' (h-mani-a8's lib/AU/CfApiPresetB.v:99-105 / CfSnprintfPresetB.v:29-36 / CfImgB.v:60-68 at
-   origin/cold/h-mani-a8-alloc102 c0f0b489957b, read by the review SnpInstReview, 2026-10-29 22:2xZ):
+   image B' (h-mani-a8's lib/AU/CfApiPresetB.v:100-106 / CfSnprintfPresetB.v:29-36 / CfImgB.v:60-68,
+   read by the review SnpInstReview, 2026-10-29 22:2xZ):
    - the format band lo = cf_img_lo = the instance's pa_lo, hi = cf_got_stack_chk_guard = the stack guard's GOT cell
      (YE22.A_GOT_CANARY, B''s generated name);
    - the canary chain gc = that GOT cell, gv = cf_stack_chk_guard = the guard object (YE22.V_GOT_CANARY);

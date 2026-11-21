@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v, with its module paths, module names and addresses changed; 43 of its 95 lines of code are new or changed and 30 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state's ASan side TFIB_T (COMP-A's lib/A/FSTfib.v:19-26) from the relocated runtime core of
    cgif_file_fuzzer, in the form of cgif_file_fuzzer's A/AD2o.v (TFIB_T_of_partsXF).  The program part is a
    library invariant LI (a Section variable) and three Section hypotheses: LIBX_ALL, the ASan contract of fs's
@@ -12,7 +13,7 @@
    (A/FSPstat.v FS_PSTAT_FP) are kept; LI0, LI 0 holds when those bytes are the image's (A/AD1w.v
    lib_inv_stable, lib_inv_init).  Every other part (allocator, intrinsics, read checks,
    printf/fprintf/fwrite/exit sites of the driver, start-up) is a proved lemma of the relocated core.
-   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMTfibParts.v (a working branch aeb12aaa12b),
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMTfibParts.v (a working branch),
    with fs's module paths, fs's RLO / RHI, fs's shape and fs's conclusion.
    FSTFIB_T below is COMP-A's TFIB_T (a working branch lib/A/FSTfib.v:19-26) restated, because
    lib/A/FSTfib.v is not on this branch: A/AB1h.v's TSEGS and TPH are Asan.M.loaded_segments and
@@ -72,6 +73,7 @@ Definition FSTFIB_T : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes TSEGS
 (init_config TSEGS Asan.M.init_pc TPH sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS := ag_shape checksum_shape) inp).
@@ -111,26 +113,28 @@ Let EXS : exit_site_tfa B est xst := tfib_exit_site B HB LAWS.
 Lemma fs_srealizesX_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS := ag_shape checksum_shape) inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (@tfib_srealizesX rc (ag_shape checksum_shape) B HB AMALLOC AFREE AICPY ARDCHK ameter_triv XL0 XL0 0x9f190 0xa03e8 MT_FREE RO_IN
   LI LIBX LIK LI0 xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS
-  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem fs_srealizesX_top : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS := ag_shape checksum_shape) inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
-exact (@fs_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+exact (@fs_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 Theorem TFIB_T_of_lib : FSTFIB_T.
-Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp. exact (fs_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp). Qed.
+Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau. exact (fs_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau). Qed.
 End b.

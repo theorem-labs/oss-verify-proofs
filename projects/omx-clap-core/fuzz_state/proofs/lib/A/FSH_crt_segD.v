@@ -4,7 +4,7 @@
    pj_get_str at 0x82264 (0x82268) to the final `ret` at 0x824b4, with the class-3 fake frame live (own = [(3, pos)])
    until the epilogue's flag store releases it.
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, build A), PORTED from
-   a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/ - the bespoke ASan proof of THIS
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/ - the bespoke ASan proof of THIS
    function on the same fs.asan bytes (Qed, closure 334 files, 0 Admitted / Axiom / Parameter): stage cuts St20..St25
    (stdefs.v :521 .. :618), step proofs sd20.v .. sd25.v, and sdglue.v's crt_keep_blk :612 / crt_spared_blk :659 for the
    frees; restated to the S0 forms (its a_call_pre / a_call_post statement is not importable). Checker a Theorem Labs lane:
@@ -266,9 +266,9 @@ Qed.
    aset_shadow_realizesU with the presence clause that FSupoisonU's aintrin_realizesU also states (FSupoisonU.v:263):
    `forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a`. The clause cannot be derived from the aview clause,
    because `aview` reads image bytes through the image and YCbq.apresent_transfer (YCbq.v:693) therefore needs
-   `~ in_img a`. S0 states the clause (SetShadowDefU.v:48, S0 5dbb8ce6286 "set_shadow contracts keep presence"), so
+   `~ in_img a`. S0 states the clause (SetShadowDefU.v:49, S0 "set_shadow contracts keep presence"), so
    crt_set_shadow_fixed below is S0's contract less one conjunct (the callee's stack window is present after the call,
-   SetShadowDefU.v:47). FSH_crt_setsh.v's crt_setsh_of_rt derives SETSH from S0's contract (FSH_crt_chain.v passes
+   SetShadowDefU.v:48). FSH_crt_setsh.v's crt_setsh_of_rt derives SETSH from S0's contract (FSH_crt_chain.v passes
    RT_SETSH) by dropping that conjunct. ---- *)
 Definition crt_set_shadow_fixed (pc v : Z) : Prop :=
   forall ly S U W regs mem md cid pos q n,

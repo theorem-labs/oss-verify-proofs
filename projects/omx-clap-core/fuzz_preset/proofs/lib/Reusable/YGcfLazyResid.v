@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfLazyResid.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfLazyResid.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfLazyResid.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfLazyResid.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the lazy-residue argument at cgif's types, ported from the fuzz_manifest kit
-   (omx-clap-core/fuzz_manifest lib/A/LazyResid.v, LazyResidPf.v, LazyResidPf2.v, LazyEvictPf.v on
-   commit 7bb12afd3646; owner a Theorem Labs lane, a Theorem Labs lane 05:00Z / 05:09Z).
+   (omx-clap-core/fuzz_manifest lib/A/LazyResid.v, LazyResidPf.v, LazyResidPf2.v, LazyEvictPf.v;
+   owner a Theorem Labs lane, a Theorem Labs lane 05:00Z / 05:09Z).
    The world keeps every dead secondary's shadow hull in w_A, so MInv's mat <= A_bytes (w_A W) grows by a hull
    per recycle. The materialized pages are bounded here instead by a CANONICAL set read from the allocator state:
    the base (the at-main allowance A0, the whole primary reservation, the pointer-array reservation and every

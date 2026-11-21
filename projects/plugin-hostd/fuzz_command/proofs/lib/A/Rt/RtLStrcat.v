@@ -4,7 +4,7 @@
      A/Bz/A/I_tramp.v:33 tramp_strcat;
    - the interceptor body: A/Bz/A/I_strcatw.v:527 iscat_spec (depth 4432, :530), under its two Section hypotheses:
      rip_stmt = A/Bz/A/R_isPoisoned.v:296 rip_proof, and strcat_stmt = A/Bz/A/I_strcatww.v:56 sc_walk, which takes
-     rip_stmt, strlen_stmt (A/Prog/wrap_kit_sl.v:21 sl_proof) and strcpy_stmt (A/Prog/strcpy_wrap_sc.v:20 sc_proof);
+     rip_stmt, strlen_stmt (A/Prog/wrap_kit_sl.v:22 sl_proof) and strcpy_stmt (A/Prog/strcpy_wrap_sc.v:20 sc_proof);
    - the glue: RtBzAdapt.v (our premises -> the walk's), RtBzClean.v (the walk run on the cleaned store, read at the
      call site), RtBzAdaptP.v art_post_clean (the walk's end state -> our art_post with the write set E).
    The walk WRITES [d + |dstr|, d + |dstr| + |str| + 1); the unwritten prefix [d, d + |dstr|) of the answer comes from

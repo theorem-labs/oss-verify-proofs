@@ -3,7 +3,7 @@
    0x32a78, i.e. cfg_at 0x98f3c with ra = 0x32a7c).  It establishes ReallocG's [rmemcpy_pre] (dst = q under ly2,
    src = p under ly, len = min (req_size n_old) n, the old header's UsedSize) and [K2_fs].
 
-   The B twin of lib/A/FSRealloc_S2a.v (a working branch 98113525978), which is the TEMPLATE: fs's
+   The B twin of lib/A/FSRealloc_S2a.v (a working branch), which is the TEMPLATE: fs's
    A and B Reallocate bodies are byte-identical modulo pc-relative fields (measured: B = A + 0x70 word for word over
    this window except 0x32a48, the GOT load's lo12), so the same script over B's instance (lib/B/FSRealloc_inst.v,
    K1_fs / K2_fs with A's conjunct lists), B's image modules (lib/B/YB1v YB1w YF0m YF0x YE2y for A's AB1v AB1w
@@ -117,8 +117,8 @@ apply (YF0x.val_mem_ext (mrestrict H m) (mrestrict H' m') a w v); [|exact HV].
 intros k Hk. apply mbyte_eq_of_aview. apply HE. lia.
 Qed.
 
-(* lib/B/YFex.v:19 / YFfl.v:20 pairwise_nth, inlined as the A template inlines AFex.v:18 / AFfl.v:19: lib/A/AFex.v
-   does not compile at A's tree (batch_geom, AFex.v:244), and this file stays off the YFex chain the same way. *)
+(* lib/B/YFex.v:20 / YFfl.v:21 pairwise_nth, inlined as the A template inlines AFex.v:19 / AFfl.v:20: lib/A/AFex.v
+   does not compile at A's tree (batch_geom, AFex.v:245), and this file stays off the YFex chain the same way. *)
 Lemma pairwise_nth_loc {X} (R : X -> X -> Prop) : forall (l : list X) i j x y,
   pairwise R l -> nth_error l i = Some x -> nth_error l j = Some y -> (i < j)%nat -> R x y.
 Proof.

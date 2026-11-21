@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the StackImage section is restated over the launch's entry image with a SPAN hypothesis, its pieces read the auxiliary vector as auxv_bytes and the AT_RANDOM bytes below the strings, stack_argv_string_slack's alignment premise moves from sp to ed_top, and envp_addr and auxv_addr count argv and envp by length; and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -152,143 +153,256 @@ End Glue.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section StackImage.
-  Variables (segs : list Segment) (ph : PhdrInfo) (sp : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).   (* [comment removed for export] *)
+  (* PORTED to 75d69e00.  The entry-image tuple is [InitMem]'s [Section Layout]
+     tuple -- (inp, mb, ph, entry, sp, rnd) -- and argv, envp, the exec file
+     name, the credentials and CONFIG_RSEQ are read off [inp].  The old seven
+     variables (ph sp argv envp uid hw rnd) named a [StackLayout.build_stack_bytes]
+     that no longer exists (StackLayout.v:483 at 75d69e00 takes twelve
+     arguments), and the old auxv notation named an [InitMem] constant that
+     exists at no sha: the vector is [auxv_bytes], it is 27 pairs (29 under
+     CONFIG_RSEQ, StackLayout.v:276), and its byte length is [auxv_size rseq],
+     carried symbolically.  [kb_rseq] is never pinned. *)
+  Variables (segs : list Segment) (inp : ProcInput) (mb : word)
+            (ph : PhdrInfo) (entry : word) (sp : word) (rnd : EntryDraw).
   Notation usp := (bv_unsigned sp).
-  Notation argc := (InitMem.argc argv).
-  Notation envc := (InitMem.envc envp).
-  Notation argv_ptrs := (InitMem.argv_ptrs sp argv envp).
-  Notation envp_ptrs := (InitMem.envp_ptrs sp argv envp).
-  Notation str_base := (InitMem.str_base sp argv envp).
-  Notation env_base := (InitMem.env_base sp argv envp).
-  Notation rnd_addr := (InitMem.rnd_addr sp argv envp).
-  Notation auxv_words := (InitMem.auxv_words ph sp argv envp uid hw).
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation execfn := (in_execfn inp).
+  Notation top := (ed_top rnd).
+  Notation rseq := (kb_rseq (in_kernel inp)).
+  Notation la := (launch_auxv inp sp mb).
+  Notation argc := (InitMem.argc inp).
+  Notation envc := (InitMem.envc inp).
+  Notation struct_size := (InitMem.struct_size inp).
+  Notation str_len := (InitMem.str_len inp).
+  Notation pad_nat := (InitMem.pad_nat inp sp rnd).
+  Notation pad_len := (InitMem.pad_len inp sp rnd).
+  Notation rnd_addr := (InitMem.rnd_addr inp sp).
+  Notation str_base := (InitMem.str_base inp sp rnd).
+  Notation env_base := (InitMem.env_base inp sp rnd).
+  Notation argv_ptrs := (InitMem.argv_ptrs inp sp rnd).
+  Notation envp_ptrs := (InitMem.envp_ptrs inp sp rnd).
+  Notation eimg := (entry_stack_image inp mb ph entry sp rnd).
+  Notation auxv :=
+    (auxv_bytes la ph entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+       (Z_to_bv 64 rnd_addr) (at_execfn_ptr top execfn)).
+
+  (* The block runs from [sp] to [ed_top]; this is [Run.valid_launch_sp]'s
+     content (Run.v:3656, with [launch_sp_hi] = [align_down16 (top - 8 - L) - C]
+     at Run.v:3641) and the reason [block_pad_len]'s [Z.to_nat] clamp never
+     bites.  It is the same premise [InitMem.Section Layout] carries at
+     InitMem.v:465. *)
+  Hypothesis SPAN : (usp + struct_size + str_len + 8 <= bv_unsigned top)%Z.
 
   Variable m : word -> option byte.
-  Hypothesis B : bytes_at segs m usp (build_stack_bytes ph sp argv envp uid hw rnd).
+  Hypothesis B : bytes_at segs m usp eimg.
 
-  #[using="B"] Lemma stack_pieces :
+  (* The generic-memory twin of [InitMem.init_pieces] (InitMem.v:591): the same
+     seven pieces, in the same order, over any [m] carrying the image rather
+     than over [wrap_mem]. *)
+  #[using="segs inp mb ph entry sp rnd SPAN m B"]
+  Lemma stack_pieces :
     bytes_at segs m usp (le8 (Z_to_bv 64 argc)) /\
     bytes_at segs m (usp + 8) (u64s (argv_ptrs ++ [Z_to_bv 64 0])) /\
     bytes_at segs m (usp + 8 * (argc + 2)) (u64s (envp_ptrs ++ [Z_to_bv 64 0])) /\
-    bytes_at segs m (usp + 8 * (argc + envc + 3)) (u64s auxv_words) /\
+    bytes_at segs m (usp + 8 * (argc + envc + 3)) auxv /\
+    bytes_at segs m rnd_addr (at_random_bytes (ed_random rnd)) /\
     bytes_at segs m str_base (flatten_strings argv) /\
-    bytes_at segs m env_base (flatten_strings envp) /\
-    bytes_at segs m rnd_addr (at_random_bytes (ed_random rnd)).
+    bytes_at segs m env_base (flatten_strings envp).
   Proof.
-    pose proof B as B0'. rewrite build_stack_bytes_eq in B0'.
-    unfold raw_bytes in B0'. cbn [u64s app] in B0'.
-    rewrite u64s_app in B0'. cbn [u64s app] in B0'. rewrite u64s_app in B0'. cbn [u64s app] in B0'.
-    repeat rewrite <- app_assoc in B0'. cbn [app] in B0'.
-    pose proof (raw_len_nonneg ph sp argv envp uid hw rnd) as RN.
-    pose proof (flatten_strings_length argv) as L1. pose proof (flatten_strings_length envp) as L2.
-    rename B0' into BB.
+    pose proof B as BB.
+    rewrite (InitMem.build_stack_bytes_eq inp mb ph entry sp rnd SPAN) in BB.
+    unfold InitMem.head_bytes, InitMem.tail_bytes in BB.
+    repeat rewrite <- app_assoc in BB.
+    pose proof (InitMem.raw_len_nonneg inp sp rnd) as RN.
+    pose proof (InitMem.struct_size_parts inp) as SP.
+    pose proof (flatten_strings_length argv) as L1.
+    pose proof (flatten_strings_length envp) as L2.
     apply bytes_at_app in BB. destruct BB as [B0 BB]. rewrite length_le8 in BB.
-    apply bytes_at_app in BB. destruct BB as [B1 BB]. rewrite u64s_length in BB. unfold InitMem.argv_ptrs in BB. rewrite map_length, str_ptrs_length in BB.
+    apply bytes_at_app in BB. destruct BB as [B1 BB].
+      rewrite u64s_length in BB. unfold InitMem.argv_ptrs at 1 in BB.
+      rewrite map_length, str_ptrs_length in BB.
     apply bytes_at_app in BB. destruct BB as [B2 BB]. rewrite length_le8 in BB.
-    apply bytes_at_app in BB. destruct BB as [B3 BB]. rewrite u64s_length in BB. unfold InitMem.envp_ptrs in BB. rewrite map_length, str_ptrs_length in BB.
+    apply bytes_at_app in BB. destruct BB as [B3 BB].
+      rewrite u64s_length in BB. unfold InitMem.envp_ptrs at 1 in BB.
+      rewrite map_length, str_ptrs_length in BB.
     apply bytes_at_app in BB. destruct BB as [B4 BB]. rewrite length_le8 in BB.
-    apply bytes_at_app in BB. destruct BB as [B5 BB]. rewrite u64s_length in BB. change (length auxv_words) with 20%nat in BB.
-    apply bytes_at_app in BB. destruct BB as [B6 BB].
+    apply bytes_at_app in BB. destruct BB as [B5 BB].
+      rewrite length_auxv_bytes, (InitMem.lay_rseq inp mb) in BB.
+    apply bytes_at_app in BB. destruct BB as [B6 BB]. rewrite repeat_length in BB.
     apply bytes_at_app in BB. destruct BB as [B7 BB].
+      rewrite length_at_random_bytes in BB.
     apply bytes_at_app in BB. destruct BB as [B8 BB]. rewrite repeat_length in BB.
+    apply bytes_at_app in BB. destruct BB as [B9 BB]. rewrite L1 in BB.
+    apply bytes_at_app in BB. destruct BB as [B10 BB].
     repeat match goal with |- _ /\ _ => split end.
     - exact B0.
-    - rewrite u64s_app. cbn [u64s]. rewrite app_nil_r. apply (proj2 (bytes_at_app segs m _ _ _)). split; [exact B1|].
-      rewrite u64s_length. unfold InitMem.argv_ptrs at 1. rewrite map_length, str_ptrs_length.
-      replace (usp + 8 + Z.of_nat (8 * length argv))%Z with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv))%Z by lia. exact B2.
-    - rewrite u64s_app. cbn [u64s]. rewrite app_nil_r. apply (proj2 (bytes_at_app segs m _ _ _)). split.
-      + replace (usp + 8 * (argc + 2))%Z with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8)%Z by (unfold InitMem.argc; lia). exact B3.
-      + rewrite u64s_length. unfold InitMem.envp_ptrs at 1. rewrite map_length, str_ptrs_length.
+    - rewrite u64s_app. cbn [u64s]. rewrite app_nil_r.
+      apply (proj2 (bytes_at_app segs m _ _ _)). split; [exact B1|].
+      rewrite u64s_length. unfold InitMem.argv_ptrs at 1.
+      rewrite map_length, str_ptrs_length.
+      replace (usp + 8 + Z.of_nat (8 * length argv))%Z
+        with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv))%Z by lia. exact B2.
+    - rewrite u64s_app. cbn [u64s]. rewrite app_nil_r.
+      apply (proj2 (bytes_at_app segs m _ _ _)). split.
+      + replace (usp + 8 * (argc + 2))%Z
+          with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8)%Z
+          by (unfold InitMem.argc; lia). exact B3.
+      + rewrite u64s_length. unfold InitMem.envp_ptrs at 1.
+        rewrite map_length, str_ptrs_length.
         replace (usp + 8 * (argc + 2) + Z.of_nat (8 * length envp))%Z
-          with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp))%Z by (unfold InitMem.argc; lia). exact B4.
+          with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8
+                + Z.of_nat (8 * length envp))%Z by (unfold InitMem.argc; lia).
+        exact B4.
     - replace (usp + 8 * (argc + envc + 3))%Z
-        with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8)%Z by (unfold InitMem.argc, InitMem.envc; lia). exact B5.
-    - replace str_base with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8 + Z.of_nat (8 * 20))%Z
-        by (unfold InitMem.str_base, struct_size, InitMem.argc, InitMem.envc; lia). exact B6.
-    - replace env_base with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8 + Z.of_nat (8 * 20) + Z.of_nat (length (flatten_strings argv)))%Z
-        by (unfold InitMem.env_base, InitMem.str_base, struct_size, InitMem.argc, InitMem.envc; lia). exact B7.
-    - replace rnd_addr with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8 + Z.of_nat (8 * 20)
-                             + Z.of_nat (length (flatten_strings argv)) + Z.of_nat (length (flatten_strings envp)) + Z.of_nat (Z.to_nat (pad_len argv envp)))%Z
-        by (unfold InitMem.rnd_addr, raw_len, struct_size, InitMem.argc, InitMem.envc; lia). exact BB.
+        with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8
+              + Z.of_nat (8 * length envp) + Z.of_nat 8)%Z
+        by (unfold InitMem.argc, InitMem.envc; lia).
+      exact B5.
+    - replace rnd_addr
+        with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8
+              + Z.of_nat (8 * length envp) + Z.of_nat 8
+              + Z.of_nat (auxv_size rseq) + Z.of_nat (InitMem.gap_len inp))%Z
+        by (unfold InitMem.rnd_addr, block_items in *; lia).
+      exact B7.
+    - replace str_base
+        with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8
+              + Z.of_nat (8 * length envp) + Z.of_nat 8
+              + Z.of_nat (auxv_size rseq) + Z.of_nat (InitMem.gap_len inp) + 16
+              + Z.of_nat pad_nat)%Z
+        by (unfold InitMem.str_base, InitMem.pad_len, block_items in *; lia).
+      exact B9.
+    - replace env_base
+        with (usp + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8
+              + Z.of_nat (8 * length envp) + Z.of_nat 8
+              + Z.of_nat (auxv_size rseq) + Z.of_nat (InitMem.gap_len inp) + 16
+              + Z.of_nat pad_nat + total_arg_bytes argv)%Z
+        by (unfold InitMem.env_base, InitMem.str_base, InitMem.pad_len,
+                   block_items in *; lia).
+      exact B10.
   Qed.
 
-  (* [comment removed for export] *)
-  #[using="ph uid hw rnd B"] Lemma stack_argv_string : forall i s, nth_error argv i = Some s ->
+  (* The generic-memory twin of [InitMem.init_argv_string] (InitMem.v:674). *)
+  #[using="segs inp mb ph entry sp rnd SPAN m B"]
+  Lemma stack_argv_string : forall i s, nth_error argv i = Some s ->
     exists p, nth_error argv_ptrs i = Some (Z_to_bv 64 p) /\ (str_base <= p)%Z /\
       (p + Z.of_nat (length s) + 1 <= env_base)%Z /\ bytes_at segs m p (s ++ [Z_to_bv 8 0]).
   Proof.
     intros i s Hn. destruct (str_ptrs_nth argv str_base i s Hn) as (off & Hp & Ho & Ht & Hf).
-    exists (str_base + off)%Z. split. { unfold InitMem.argv_ptrs. rewrite nth_error_map, Hp. reflexivity. }
+    exists (str_base + off)%Z.
+    split. { unfold InitMem.argv_ptrs. rewrite nth_error_map, Hp. reflexivity. }
     split; [lia|]. split. { unfold InitMem.env_base. lia. }
-    destruct stack_pieces as (_ & _ & _ & _ & B6 & _).
-    pose proof (flatten_strings_length argv).
-    pose proof (bytes_at_slice segs ph sp argv envp uid hw rnd m str_base (flatten_strings argv) (Z.to_nat off) (length s + 1) B6 ltac:(lia)) as B'.
-    rewrite Hf in B'. replace (str_base + Z.of_nat (Z.to_nat off))%Z with (str_base + off)%Z in B' by lia. exact B'.
+    destruct stack_pieces as (_ & _ & _ & _ & _ & BS & _).
+    pose proof (flatten_strings_length argv) as L1.
+    (* the slice of [flatten_strings argv] at [off]; [InitMem.bytes_at_slice]
+       would do this, but it is inlined so that nothing here rests on a
+       discharged-arity guess. *)
+    rewrite <- (firstn_skipn (Z.to_nat off) (flatten_strings argv)) in BS.
+    apply bytes_at_app in BS. destruct BS as [_ BS].
+    rewrite firstn_length in BS.
+    replace (Nat.min (Z.to_nat off) (length (flatten_strings argv)))
+      with (Z.to_nat off) in BS by lia.
+    rewrite <- (firstn_skipn (length s + 1) (skipn (Z.to_nat off) (flatten_strings argv))) in BS.
+    apply bytes_at_app in BS. destruct BS as [BS _].
+    rewrite Hf in BS.
+    replace (str_base + Z.of_nat (Z.to_nat off))%Z with (str_base + off)%Z in BS by lia.
+    exact BS.
   Qed.
 
-  (* [comment removed for export] *)
-  #[using="B"] Lemma stack_argv_string_slack : (usp mod 8 = 0)%Z -> forall i s, nth_error argv i = Some s ->
+  (* argv[i]'s string together with every byte above it, up to the top of the
+     image.  The alignment premise is on [ed_top] rather than on [sp]: at
+     75d69e00 the image ends AT [ed_top] (SPAN makes [block_pad_len] exact), so
+     the end of the image is [ed_top] and [sp]'s own alignment says nothing
+     about it.  [Run.valid_stack_top_va] (Run.v:3610) gives
+     [bv_unsigned top mod page_size = 0], which is strictly stronger. *)
+  #[using="segs inp mb ph entry sp rnd SPAN m B"]
+  Lemma stack_argv_string_slack : (bv_unsigned top mod 8 = 0)%Z ->
+    forall i s, nth_error argv i = Some s ->
     exists p slack, nth_error argv_ptrs i = Some (Z_to_bv 64 p) /\ (str_base <= p)%Z /\
-      (p + Z.of_nat (length s) + 1 <= env_base)%Z /\ bytes_at segs m p (s ++ Z_to_bv 8 0 :: slack) /\
+      (p + Z.of_nat (length s) + 1 <= env_base)%Z /\
+      bytes_at segs m p (s ++ Z_to_bv 8 0 :: slack) /\
       ((- (p + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack))%Z /\
       (p + Z.of_nat (length s) + 1 + Z.of_nat (length slack)
-       = usp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rnd)))%Z.
+       = usp + Z.of_nat (length eimg))%Z.
   Proof.
     intros AL i s Hn. destruct (str_ptrs_nth argv str_base i s Hn) as (off & Hp & Ho & Ht & Hf).
-    pose proof (flatten_strings_length argv) as L1. pose proof (flatten_strings_length envp) as L2.
-    pose proof (raw_len_nonneg ph sp argv envp uid hw rnd) as RN.
-    pose proof (build_stack_bytes_length ph sp argv envp uid hw rnd) as BL.
-    pose proof (raw_bytes_length ph sp argv envp uid hw) as RL.
-    set (W := build_stack_bytes ph sp argv envp uid hw rnd) in *.
-    unfold InitMem.raw_len in BL, RL.
-    set (k := (Z.to_nat (InitMem.struct_size argv envp) + Z.to_nat off)%nat).
-    assert (Ek : (Z.of_nat k = InitMem.struct_size argv envp + off)%Z) by (subst k; lia). clearbody k.
-    assert (EW : W = raw_bytes ph sp argv envp uid hw ++ repeat (Z_to_bv 8 0) (Z.to_nat (InitMem.pad_len argv envp)) ++ at_random_bytes (ed_random rnd))
-      by (subst W; apply build_stack_bytes_eq).
-    (* [comment removed for export] *)
-    set (hdr := u64s (Z_to_bv 64 argc :: argv_ptrs ++ [Z_to_bv 64 0] ++ envp_ptrs ++ [Z_to_bv 64 0] ++ auxv_words)).
-    assert (PRE : Z.of_nat (length hdr) = InitMem.struct_size argv envp).
-    { subst hdr. rewrite u64s_length. cbn [length]. repeat rewrite length_app. cbn [length]. repeat rewrite length_app. cbn [length].
-      unfold InitMem.argv_ptrs, InitMem.envp_ptrs. rewrite !length_map, !str_ptrs_length.
-      change (length auxv_words) with 20%nat. unfold InitMem.struct_size, InitMem.argc, InitMem.envc. lia. }
-    change (raw_bytes ph sp argv envp uid hw) with (hdr ++ flatten_strings argv ++ flatten_strings envp) in EW.
+    pose proof (flatten_strings_length argv) as L1.
+    pose proof (flatten_strings_length envp) as L2.
+    pose proof (total_arg_bytes_nonneg envp) as TN.
+    pose proof (InitMem.raw_len_nonneg inp sp rnd) as RN.
+    pose proof (InitMem.length_head_bytes inp mb ph entry sp rnd) as LH.
+    pose proof (InitMem.build_stack_bytes_length inp mb ph entry sp rnd) as BL.
+    set (W := entry_stack_image inp mb ph entry sp rnd) in *.
+    set (pre := InitMem.head_bytes inp mb ph entry sp rnd
+                ++ at_random_bytes (ed_random rnd)
+                ++ repeat (Z_to_bv 8 0) pad_nat).
+    assert (EW : W = pre ++ flatten_strings argv
+                     ++ (flatten_strings envp ++ execfn ++ [Z_to_bv 8 0]
+                         ++ repeat (Z_to_bv 8 0) 8)).
+    { subst W. subst pre.
+      rewrite (InitMem.build_stack_bytes_eq inp mb ph entry sp rnd SPAN).
+      unfold InitMem.tail_bytes. rewrite <- !app_assoc. reflexivity. }
+    assert (LP : Z.of_nat (length pre) = (struct_size + pad_len)%Z).
+    { subst pre. rewrite !app_length, length_at_random_bytes, repeat_length.
+      unfold InitMem.pad_len. lia. }
+    set (k := (length pre + Z.to_nat off)%nat).
+    assert (Ek : Z.of_nat k = (struct_size + pad_len + off)%Z) by (subst k; lia).
+    assert (Hkp : (length pre <= k)%nat) by (subst k; lia).
+    assert (Hkd : (k - length pre)%nat = Z.to_nat off) by (subst k; lia).
     assert (SK : firstn (length s + 1) (skipn k W) = s ++ [Z_to_bv 8 0]).
-    { rewrite EW. rewrite <- !app_assoc.
-      rewrite skipn_app. rewrite skipn_all2 by lia. cbn [app].
-      replace (k - length hdr)%nat with (Z.to_nat off) by lia.
-      rewrite skipn_app. rewrite firstn_app. rewrite Hf.
-      replace (length s + 1 - length (skipn (Z.to_nat off) (flatten_strings argv)))%nat with 0%nat by (rewrite length_skipn; lia).
+    { rewrite EW. rewrite skipn_app. rewrite skipn_all2 by exact Hkp. cbn [app].
+      rewrite Hkd. rewrite skipn_app. rewrite firstn_app. rewrite Hf.
+      replace (length s + 1 - length (skipn (Z.to_nat off) (flatten_strings argv)))%nat
+        with 0%nat by (rewrite length_skipn; lia).
       cbn [firstn]. apply app_nil_r. }
     exists (str_base + off)%Z, (skipn (length s + 1) (skipn k W)).
     split. { unfold InitMem.argv_ptrs. rewrite nth_error_map, Hp. reflexivity. }
     split; [lia|]. split. { unfold InitMem.env_base. lia. }
-    assert (LK : (k + (length s + 1) <= length W)%nat) by lia.
+    assert (LK : (k + (length s + 1) <= length W)%nat).
+    { unfold InitMem.str_len, launch_string_bytes in BL. lia. }
     assert (BW : bytes_at segs m (usp + Z.of_nat k) (skipn k W)).
-    { pose proof B as BB. rewrite <- (firstn_skipn k W) in BB. apply bytes_at_app in BB. destruct BB as [_ BB].
-      rewrite firstn_length in BB. replace (Nat.min k (length W)) with k in BB by lia. exact BB. }
+    { pose proof B as BB. rewrite <- (firstn_skipn k W) in BB.
+      apply bytes_at_app in BB. destruct BB as [_ BB].
+      rewrite firstn_length in BB.
+      replace (Nat.min k (length W)) with k in BB by lia. exact BB. }
     split.
-    { replace (str_base + off)%Z with (usp + Z.of_nat k)%Z by (unfold InitMem.str_base; lia).
-      replace (s ++ Z_to_bv 8 0 :: skipn (length s + 1) (skipn k W)) with (skipn k W); [exact BW|].
-      rewrite <- (firstn_skipn (length s + 1) (skipn k W)) at 1. rewrite SK. rewrite <- app_assoc. reflexivity. }
+    { replace (str_base + off)%Z with (usp + Z.of_nat k)%Z
+        by (unfold InitMem.str_base; lia).
+      replace (s ++ Z_to_bv 8 0 :: skipn (length s + 1) (skipn k W))
+        with (skipn k W); [exact BW|].
+      rewrite <- (firstn_skipn (length s + 1) (skipn k W)) at 1. rewrite SK.
+      rewrite <- app_assoc. reflexivity. }
     rewrite !length_skipn.
-    assert (E : (str_base + off + Z.of_nat (length s) + 1 + Z.of_nat (length W - k - (length s + 1)) = usp + Z.of_nat (length W))%Z).
+    assert (E : (str_base + off + Z.of_nat (length s) + 1
+                 + Z.of_nat (length W - k - (length s + 1))
+                 = usp + Z.of_nat (length W))%Z).
     { unfold InitMem.str_base. lia. }
     split; [|exact E].
-    (* [comment removed for export] *)
+    (* SPAN makes [block_pad_len]'s clamp exact, so the image ends at [ed_top]. *)
+    assert (SPANEQ : (usp + struct_size + pad_len + str_len + 8 = bv_unsigned top)%Z).
+    { unfold InitMem.pad_len in *. unfold InitMem.pad_nat in *.
+      unfold block_pad_len in *. unfold InitMem.struct_size in *.
+      unfold InitMem.str_len in *. lia. }
     assert (A8 : ((usp + Z.of_nat (length W)) mod 8 = 0)%Z).
-    { rewrite BL. unfold InitMem.pad_len, InitMem.raw_len. Z.div_mod_to_equations. lia. }
+    { rewrite BL.
+      replace (usp + (struct_size + pad_len + str_len + 8))%Z
+        with (bv_unsigned top) by lia.
+      exact AL. }
     Z.div_mod_to_equations. lia.
   Qed.
 
-  (* [comment removed for export] *)
-  #[using="ph uid hw rnd B"] Lemma stack_argv_ptr_read : forall i p,
+  (* argv[i]'s pointer slot, read as an eight-byte load. *)
+  #[using="segs inp mb ph entry sp rnd SPAN m B"]
+  Lemma stack_argv_ptr_read : forall i p,
     nth_error argv_ptrs i = Some p ->
     ov_read_bytes segs m (wa (usp + 8 + 8 * Z.of_nat i)) 8 = Some (le8 p).
   Proof.
     intros i p Hn. destruct stack_pieces as (_ & B1 & _).
-    pose proof (argv_ptrs_length sp argv envp) as L.
-    assert (Hi : (i < length argv_ptrs)%nat). { apply (proj1 (nth_error_Some _ _)). rewrite Hn. discriminate. }
-    assert (Hn' : nth_error (argv_ptrs ++ [Z_to_bv 64 0]) i = Some p). { rewrite nth_error_app1; [exact Hn| exact Hi]. }
+    pose proof (InitMem.argv_ptrs_length inp sp rnd) as L.
+    assert (Hi : (i < length argv_ptrs)%nat).
+    { apply (proj1 (nth_error_Some _ _)). rewrite Hn. discriminate. }
+    assert (Hn' : nth_error (argv_ptrs ++ [Z_to_bv 64 0]) i = Some p).
+    { rewrite nth_error_app1; [exact Hn| exact Hi]. }
     destruct (u64s_split _ _ _ Hn') as (pre & post & E & Hlen & Eu & Hlu).
     replace (8 * Z.of_nat i)%Z with (Z.of_nat (8 * i))%Z by lia.
     rewrite (bytes_at_ov_read segs m (usp + 8) (u64s (argv_ptrs ++ [Z_to_bv 64 0])) (8 * i) 8 B1).
@@ -490,9 +604,18 @@ Section WithCeil.
 Context {CEILV : CEIL}.
 Section Addrs.
   Variables (sp0 : word) (argv envp : list (list byte)).
-  (* [comment removed for export] *)
-  Definition envp_addr : Z := (bv_unsigned sp0 + 8 * (argc argv + 2))%Z.
-  Definition auxv_addr : Z := (bv_unsigned sp0 + 8 * (argc argv + envc envp + 3))%Z.
+  (* The discharged [InitMem.argc]/[InitMem.envc] now take a [ProcInput]
+     (InitMem.v:386-387, over [Section Layout]'s [Variable inp]), not a string
+     list, so the old [argc argv] here was ill-typed after the revision.  The
+     ADDRESSES are unchanged -- argc, the argv pointers and their NULL, the
+     envp pointers and their NULL sit below the vector exactly as before
+     (StackLayout.v:385 [block_items] @ 75d69e00) -- so the arity is kept at
+     three and only the spelling of the two counts changes.  This is
+     [InitMem.argc inp + InitMem.envc inp] unfolded, so it still agrees with
+     [CallKit.stack_pieces]' fourth address [usp + 8 * (argc + envc + 3)]. *)
+  Definition envp_addr : Z := (bv_unsigned sp0 + 8 * (Z.of_nat (length argv) + 2))%Z.
+  Definition auxv_addr : Z :=
+    (bv_unsigned sp0 + 8 * (Z.of_nat (length argv) + Z.of_nat (length envp) + 3))%Z.
 End Addrs.
 
 (* [comment removed for export] *)

@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE2q.v, with its module paths changed, names TfibSyms -> BoxregSyms and its addresses moved to libreac/fuzz_boxreg's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/AE2q.v, with its module paths changed; 96 of its 126 lines of code are new or changed and 130 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A (fuzz_state.asan): the __asan_memcpy walk under the ARU invariant (lib/A/FSupoison.v), any U
    (POISON-U lane; the statement is lib/A/FSupoisonU.v aintrin_realizesU OCpy at A's PC_memcpy 0x51d20): the walk's
    REGION CONDITION as one named lemma, plus the transfers the walk needs between the two readings of memory.
    Port-from: lib/A/FSupoisonIntrinR.v (image A, the memcpy interceptor walk), restated with AE6k.MC_SCR; text
    unchanged otherwise. The image-free helpers are restated here, not imported from FSupoisonIntrinR, so that this
-   file and lib/B/FSupoisonAsanR.v (a working branch 269685bdc74) are one text modulo image modules.
+   file and lib/B/FSupoisonAsanR.v (a working branch) are one text modulo image modules.
 
    The walk is S0's lib/A/AE6k.v + AE6l .. AE6s + AE2q.v (U = [] form: AE2q.v:143 asan_memcpy_realizes), ported over
    FSupoison.ecall_preU in lib/A/FSupoisonAsanC.v. The machine runs on mem, where U's shadow bytes read 0xf7; the AR

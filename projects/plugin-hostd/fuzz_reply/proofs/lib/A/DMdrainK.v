@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainK.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 b10e949093fc) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainK.v (Quarantine::Drain walk set; file sha256 b10e949093fc) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the cell bridge from the quarantine's cells as DMiface.qview states
-   them (cgif's cell vocabulary: YG0n.batch_cells / qc_cells over the view, DMiface.v:81 qv_cells) to the linked
+   them (cgif's cell vocabulary: YG0n.batch_cells / qc_cells over the view, DMiface.v:82 qv_cells) to the linked
    list form the MergeBatches slice and the dequeue loop read (DMwalkIF.lcn / bcell, with the slot word of an item
    [k] taken as the address of its chunk header).  So the drain's composition can hand MergeBatches its mb_cells
    and the dequeue loop its dq_CLK / dq_CEX from qview, without the allocator relation.

@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the initial reserved ledger now ends with the launch's vDSO/vvar pair; KL_mo_other and PHEAP_mo_other written out in plain text with a new premise that the kernel build is kept; U_HI written out in plain text; the init proof closes the new reservation and apartness goals; rauxv_ok_intro restated over the launch's auxv vector, read back as one block, with u64s_flat_map_le8; PHEAP_frame destructures rauxv_ok's new witnesses). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require StackLayout.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import Tac Image ZBridge SysStep ITree Nodes Decode Arr AEvt HeapIface.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U Require Import UImg U_layout.
@@ -169,7 +171,7 @@ Definition data_iv_ok (iv : Z * Z) : Prop := ltac2:(CDefT.buildp (gd_tbl_P_heap 
 Proof.
   intros HP MU WM FW. pose proof (PHEAP_blocks _ _ _ _ HP) as [BR _]. ddestruct HP as (ELB & RH & OW & AUX & [errv ERR] & MRP).
   set (hRP := HRP (h_rc h)) in *.
-  dpose AUX as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & AB & _).
+  dpose AUX as (av & la & ph & ent & uid & gid & hw & xfn & rnd & _ & _ & _ & AB & _).
   assert (CASES : forall lo hi, In (lo, hi) W -> (ACEIL <= lo /\ hi <= h_top h) \/ data_iv_ok (lo, hi) \/ (exists A n, In (A, n) LB /\ block_range PL A n /\ A <= lo /\ hi <= A + n)).
   { intros lo hi Hin. pose proof (proj1 (Forall_forall _ _) FW _ Hin) as [C|[C|([A n] & Hb & C1 & C2)]]; [left; exact C| right; left; exact C| right; right].
     dexists A, n. split; [exact Hb|]. split; [exact (proj1 (Forall_forall _ _) BR _ Hb)| cbn in C1, C2; lia]. }
@@ -513,7 +515,8 @@ Record U_heap_init_hyps (rc : rconsts) (m : mem) (mo : Model) (top : Z) : Prop :
   phi_lazy : m_vm_lazy mo = [];
   phi_halt : m_halted mo = None;
   phi_maps : vm_maps (m_vmmaps mo) = [];
-  phi_resv : vm_reserved (m_vmmaps mo) = segments_reserved usegs;
+  (* at 08b1429 the ledger ends with the launch's vDSO/vvar pair ([State.init_reserved]) *)
+  phi_resv : vm_reserved (m_vmmaps mo) = segments_reserved usegs ++ vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo));
   phi_brk : vm_brk (m_vmmaps mo) = vm_start_brk (m_vmmaps mo);
   phi_valid : valid_brk usegs (vm_start_brk (m_vmmaps mo));
   (* [comment removed for export] *)
@@ -579,14 +582,15 @@ Proof.
     + split; [intros e []| apply pwdisj_nil].
     + (* [comment removed for export] *) cbn [ld_ceil led_init]. unfold alloc_top. rewrite ISP. change stack_max_size with 8388608. apply run_ceil_eq. exact VSP.
     + (* [comment removed for export] *) cbn [ld_ceil led_init]. exact CO.
-    + cbn [ld_resv led_init]. rewrite reservedZ_ref. vm_compute. reflexivity.
-    + intros e Hin. pose proof (reserved_top_ge _ _ Hin). lia.
     + cbn [ld_ceil led_init]. unfold PGSZ, page_size, brk_aslr_max in *. lia.
     + intros b l [].
     + intros b l k [].
     + apply List.NoDup_nil.
     + intros b l H. discriminate.
     + cbn [ld_brk led_init ld_brkreg]. split; [reflexivity| reflexivity].
+    + (* at 75d69e00 [f_equal] already closes the reserved-list equation *)
+      unfold kresv. rewrite RESV, map_app. cbn [ld_resv led_init]. f_equal; try (symmetry; rewrite reservedZ_ref; vm_compute; reflexivity).
+    + unfold kapart. rewrite MAPS. intros e r [].
 Qed.
 
 
@@ -620,41 +624,66 @@ Proof.
     + apply IH; [| lia| cbn [length] in Hl; lia]. intros i w Hi. replace (a + 8 + 8 * Z.of_nat i) with (a + 8 * Z.of_nat (S i)) by lia. apply RD. exact Hi.
 Qed.
 
-#[using="Type"] Lemma rauxv_ok_intro (rc : rconsts) : ltac2:(CDefT.buildp (gd_tbl_P_heap ()) "Pm,P,(1:.&40.)(37.(1:.&8.))Ptop,$26.Pav,$26.Prnd,$26.Px3,$26.Px4,$26.Px5,$26.Phw,$26.Px6,$26.Px11,$26.Px12,$26.Px23,$26.P,(8.(37.(9.(1:.&8.)))(7:.$3:.R<.(23.&40.+7=358.)#8.)(55.(9.(1:.&8.))(80.#8.(23.&40.R:.))))P,Pi,$7>.Pv,$26.P,(8.(37.$26.)(7?.$26.(1>.$26.+3.(1>.$26.R;.(1>.$26.+4.(1>.$26.R:.(1>.$26.+5.(1>.$26.R9.(1>.$26.+10.(1>.$26.R8.(1>.$26.+6.(1>.$26.R7.(1>.$26.+;.(1>.$26.R6.(1>.$26.+<.(1>.$26.R5.(1>.$26.+17.(1>.$26.R4.(1>.$26.+19.(1>.$26.R<.(1>.$26.=(1>.$26.=(21.$26.)))))))))))))))))))))R2.)(55.$26.R1.))(8.(37.(9.(1:.&8.)))(7:.$3:.R10.(23.&40.(32.R>.(72.+8.(7<.R3.))))#8.)(55.(9.(1:.&8.))(80.#8.(23.&40.R2.))))P,(8.(37.(9.(1:.&8.)))(7:.$3:.R>.(23.&40.(32.R;.+8.))#8.)(55.(9.(1:.&8.))(80.#8.(23.&40.(1.O1.)))))P,(24.(2>.(2?.Vsp0,))R>.)P,(24.R?.R>.)P,(24.(32.R?.+:0.)(34.+2.+40.))P,(24.R11.(32.R?.+8.))P,(24.(32.R10.+10.)(34.+2.+40.))P,(7.(24.=R10.)(33.R10.(34.+2.+40.)))P,(7.(24.=R10.)(33.R10.(34.+2.+40.)))P,(7.(24.=R10.)(33.R10.(34.+2.+40.)))P,(7.(24.=R10.)(33.R10.(34.+2.+40.)))P,(7.(24.=R10.)(33.R10.(34.+2.+40.)))P,(7.(24.=R10.)(33.R10.(34.+2.+40.)))P,(7.(24.=R10.)(33.R10.(34.+2.+40.)))P,(7.(24.=R10.)(33.R10.(34.+2.+40.)))P,(24.=R19.)(17.(10.O1.)R1=.R1<.)")
-(* [comment removed for export] *).
+(* the launch's auxv words as u64 bytes: [StackLayout.build_auxv]'s [word_le8] and [Arr.u64s]'s [le8] agree *)
+#[using="Type"] Lemma u64s_flat_map_le8 : forall l : list word, u64s l = flat_map word_le8 l.
 Proof.
-  intros until x23. intros RC RV RZ T0 T1 T2 T3 T4 R3 R4 R5 Rhw R6 R11 R12 R23 Rr. set (hRP := HRP rc) in *.
+  induction l as [|w l IH]; [reflexivity|]. cbn [u64s flat_map]. rewrite IH.
+  rewrite (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.n_to_le_8_spec w). reflexivity.
+Qed.
+
+(* LPS 727298f3: the auxv cell names the launch's own vector ([HP_RMallocTree.rauxv_list]); the facts
+   are read back through the launch memory, none is recorded *)
+#[using="Type"] Lemma rauxv_ok_intro (rc : rconsts) :
+  forall (m : word -> option byte) (top av rnd : Z) (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (ent uid gid hw xfn : word),
+    rdn usegs m (Z_to_bv 64 512856) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 av)) ->
+    rdn usegs m (Z_to_bv 64 av) (length (flat_map word_le8 (rauxv_list la ph ent uid gid hw (Z_to_bv 64 rnd) xfn)))
+      = Some (flat_map word_le8 (rauxv_list la ph ent uid gid hw (Z_to_bv 64 rnd) xfn)) ->
+    rdn usegs m (Z_to_bv 64 (rnd + 8)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (rc_secret rc))) ->
+    ACEIL <= top -> top <= av -> av + 464 <= 2 ^ 64 -> top <= rnd + 8 -> rnd + 16 <= 2 ^ 64 -> 0 <= rnd < 2 ^ 64 ->
+    @rauxv_ok (HRP rc) m top.
+Proof.
+  intros m top av rnd la ph ent uid gid hw xfn RC RV RZ T0 T1 T2 T3 T4 Rr. set (hRP := HRP rc) in *.
   pose proof T0 as T0N. pose proof (run_ceil_lo sp0) as RCL. change ACEIL with (run_ceil sp0) in T0N.
-  dexists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd.
+  rewrite <- u64s_flat_map_le8 in RV.
+  pose proof (length_rauxv_list_le la ph ent uid gid hw (wz rnd) xfn) as LL.
+  dexists av, la, ph, ent, uid, gid, hw, xfn, rnd.
   split. { (* [comment removed for export] *) split.
     - split; [cbn; split; exact I|]. cbn [cells_bytes cbytes]. rewrite app_nil_r. unfold RAUXV_CELL, wz. apply bytes_at_of_rdn_h; [rewrite length_le8; exact RC| lia| rewrite length_le8; lia].
     - cbn [cells_size csize Nat.add]. unfold RAUXV_CELL. split; [lia|]. split; [lia|]. intros i Hi. unfold wview.
       destruct (m (wa (512856 + i))); [discriminate|].
       assert (E : exists k, (k < 8)%nat /\ i = Z.of_nat k) by (exists (Z.to_nat i); lia). ddestruct E as (k & Hk & ->).
       do 8 (destruct k as [|k]; [vm_compute; discriminate|]). lia. }
-  split. { unfold rauxv_list. apply (auxv_bytes_of_rdn m _ av RV); [lia| cbn [length]; lia]. }
+  split. { apply bytes_at_of_rdn_h; [exact RV| lia| rewrite u64s_length; lia]. }
   split. { unfold wz. apply bytes_at_of_rdn_h; rewrite ?length_le8; [exact RZ| lia| lia]. }
   change (@rceil hRP) with (run_ceil sp0). lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma KL_mo_other L0 pbrk mo mo' : ltac2:(CDefT.buildp (gd_tbl_P_heap ()) "P,(8.$83.(84.O1.)(84.O2.))P,(8.(37.(1:.&40.))(85.O1.)(85.O2.))P,(8.(9.(2=.(1:.&40.)(1:.&40.)))(86.O1.)(86.O2.))P,(87.O4.O3.O2.)(87.O4.O3.O1.)")
-(* [comment removed for export] *).
+(* 75d69e00: [KL]'s [kl_resv] reads [m_kernel] (the vDSO pair), so the frame move
+   also keeps the kernel build; stated plainly (was serialised) *)
+#[using="Type"] Lemma KL_mo_other L0 pbrk mo mo' :
+  m_vmmaps mo' = m_vmmaps mo -> m_halted mo' = m_halted mo -> m_vm_lazy mo' = m_vm_lazy mo ->
+  m_kernel mo' = m_kernel mo ->
+  KL L0 pbrk mo -> KL L0 pbrk mo'.
 Proof.
-  intros E1 E2 E3 K. destruct K as [K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13].
-  constructor; unfold minv in *; rewrite ?E1, ?E2, ?E3; assumption.
+  intros E1 E2 E3 E4 K. destruct K as [K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13].
+  constructor; unfold minv, kresv, kapart in *; rewrite ?E1, ?E2, ?E3, ?E4; assumption.
 Qed.
 
-#[using="Type"] Lemma PHEAP_mo_other h LB m mo mo' : ltac2:(CDefT.buildp (gd_tbl_P_heap ()) "P,(8.$83.(84.O1.)(84.O2.))P,(8.(37.(1:.&40.))(85.O1.)(85.O2.))P,(8.(9.(2=.(1:.&40.)(1:.&40.)))(86.O1.)(86.O2.))P,(29.O5.O4.O3.O2.)(29.O5.O4.O3.O1.)")
-(* [comment removed for export] *).
+#[using="Type"] Lemma PHEAP_mo_other h LB m mo mo' :
+  m_vmmaps mo' = m_vmmaps mo -> m_halted mo' = m_halted mo -> m_vm_lazy mo' = m_vm_lazy mo ->
+  m_kernel mo' = m_kernel mo ->
+  PHEAP h LB m mo -> PHEAP h LB m mo'.
 Proof.
-  (intros E1 E2 E3 dd_H; ddestruct dd_H as (ELB & RH & [(L0 & CR & K & INCL) [ND _]] & REST)).
+  (intros E1 E2 E3 E4 dd_H; ddestruct dd_H as (ELB & RH & [(L0 & CR & K & INCL) [ND _]] & REST)).
   split; [exact ELB|]. split; [exact RH|]. split; [| exact REST].
   split; [| split; [exact ND| exact Logic.I]]. exists L0. split; [exact CR|]. split; [eapply KL_mo_other; eassumption| exact INCL].
 Qed.
 
 (* [comment removed for export] *)
-Definition U_HI : heap_iface usegs PL := ltac2:(CDefT.buildp (gd_tbl_P_heap ()) "(88.$3:.(2?.Vsp0,)$5;.$29.$18.$89.$8:.$8;.Lh,$5;.LLB,(9.$:.)Lm,P,(1:.&40.)(37.(1:.&8.))Lmo,$3;.Lmo',$3;.LHH,(29.R5.R4.R3.R2.)LE1,(8.$83.(84.R2.)(84.R3.))LE2,(8.(9.(2=.(1:.&40.)(1:.&40.)))(86.R3.)(86.R4.))LE3,(8.(37.(1:.&40.))(85.R4.)(85.R5.))(8<.R9.R8.R7.R6.R5.R3.R1.R2.R4.)$8=.$8>.$8?.$90.)")
-(* [comment removed for export] *).
+Definition U_HI : heap_iface usegs PL :=
+  HI usegs (U_layout sp0) hst PHEAP h_top PHEAP_mok PHEAP_blocks PHEAP_heap_frame
+    (fun h LB m mo mo' HH E1 E2 E3 E4 => PHEAP_mo_other h LB m mo mo' E1 E3 E2 E4 HH)
+    PHEAP_malloc PHEAP_calloc PHEAP_free PHEAP_free_null.
 
 End PHeap.

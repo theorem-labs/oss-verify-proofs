@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap's in-place room test mremap_inplace_room_b, and the Linux placement through relim). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -57,14 +58,15 @@ Lemma mr_fresh_core_relim : forall L m nz old dst new_n,
   fresh_core (relim L m) nz old dst new_n = fresh_core m nz old dst new_n.
 Proof. reflexivity. Qed.
 
-Definition inplace_core (m : Model) (old new_n : word) (new_nZ : Z) : bool :=
-  let h := m_vmmaps m in
-  (bv_unsigned old + new_nZ <=? alloc_top h) && region_free (vm_reserved h ++ map_remove (vm_maps h) old) old new_n.
+(* At the revision the in-place room test cuts the old range out of the
+   maps ([Mremap.mremap_inplace_room_b]: [maps_subtract], was [map_remove]);
+   it reads no limit, so [relim] leaves it alone. *)
 Lemma mr_inplace_eq : forall m old old_n new_n oz nz,
-  mremap_inplace_grow_b m old old_n new_n oz nz = inplace_core m old new_n nz && mremap_final_budget_b m old old_n old new_n.
+  mremap_inplace_grow_b m old old_n new_n oz nz
+  = mremap_inplace_room_b m old old_n new_n oz nz && mremap_final_budget_b m old old_n old new_n.
 Proof. reflexivity. Qed.
-Lemma mr_inplace_core_relim : forall L m old new_n nz,
-  inplace_core (relim L m) old new_n nz = inplace_core m old new_n nz.
+Lemma mr_inplace_core_relim : forall L m old old_n new_n oz nz,
+  mremap_inplace_room_b (relim L m) old old_n new_n oz nz = mremap_inplace_room_b m old old_n new_n oz nz.
 Proof. reflexivity. Qed.
 
 Lemma cro_relim : forall L eff r m evs,
@@ -74,6 +76,10 @@ Proof.
   destruct ws, zs, us, cs, ci; try reflexivity. destruct (bv_eqb ret r); reflexivity.
 Qed.
 
+Lemma lpi_lim_eq_set : forall L h thp hint n a,
+  Checks.Placement.linux_place_is (setlim L h) thp hint n a
+  = Checks.Placement.linux_place_is h thp hint n a.
+Proof. reflexivity. Qed.
 Lemma arm_mremap_relim_fit : forall L i eff m, vm_limit (m_vmmaps m) <= L ->
   mremap_budget_refused_b (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) m = false ->
   vm_fit (m_vmmaps m) ->
@@ -89,6 +95,8 @@ Proof.
   destruct (negb (Z.eqb (bv_unsigned fl) MREMAP_MAYMOVE)); [reflexivity|].
   destruct (negb (Z.eqb (bv_unsigned old mod page_size) 0)); [intros; apply cro_relim|].
   destruct (page_align_is0_b ns) eqn:Ens; [intros; apply cro_relim|].
+  (* at the revision a grow past TASK_SIZE answers -EINVAL first *)
+  destruct (TASK_SIZE <? nZ)%Z; [intros; apply cro_relim|].
   destruct (page_align_is0_b os); [reflexivity|].
   destruct (negb (mremap_source_b (m_vmmaps m) old on oZ && mremap_backing_uniform_b m old on)); [reflexivity|].
   destruct (oZ =? nZ) eqn:Eeq; [intros; apply cro_relim|].
@@ -110,15 +118,30 @@ Proof.
     + cbn [andb]; match goal with |- (if ?b then _ else _) = _ => destruct b; [rewrite mr_next_relim; reflexivity | reflexivity] end.
     + apply Z.ltb_ge in Esh.
       rewrite (proj2 (Z.leb_gt nZ oZ) ltac:(lia)) in HB.
-      apply negb_false_iff, andb_true_iff in HB as [Hfi _].
-      rewrite !mr_inplace_eq, mr_inplace_core_relim, mr_final_relim, Hfi.
+      (* at the revision the mark reads the in-place gate only when there
+         is room ([Mremap.mremap_budget_refused_b]) *)
+      rewrite !mr_inplace_eq, mr_inplace_core_relim.
+      destruct (mremap_inplace_room_b m old on nn oZ nZ) eqn:Eroom; [|reflexivity].
+      try rewrite Eroom in HB. apply negb_false_iff in HB. rename HB into Hfi.
+      rewrite mr_final_relim, Hfi.
       rewrite mr_final_eq in Hfi. apply Z.leb_le in Hfi.
       rewrite (proj2 (Z.leb_le (vm_backing_used (mremap_model_next m old on old nn)) L) ltac:(lia)).
-      destruct (inplace_core m old nn nZ && true); [|reflexivity].
       cbn [andb]; match goal with |- (if ?b then _ else _) = _ => destruct b; [rewrite mr_next_relim; reflexivity | reflexivity] end.
   - destruct (oZ <? nZ) eqn:Eg; [|reflexivity]. apply Z.ltb_lt in Eg.
     rewrite (proj2 (Z.leb_gt nZ oZ) ltac:(lia)) in HB.
-    apply negb_false_iff, andb_true_iff in HB as [_ Hmv]. unfold mremap_move_budget_b in Hmv. apply Z.leb_le in Hmv.
+    (* at the revision a move happens only without room, at the address
+       [linux_place] gives; both read no limit *)
+    rewrite mr_inplace_core_relim.
+    destruct (mremap_inplace_room_b m old on nn oZ nZ) eqn:Eroom; [reflexivity|].
+    try rewrite Eroom in HB. apply negb_false_iff in HB. rename HB into Hmv.
+    unfold mremap_move_budget_b in Hmv. apply Z.leb_le in Hmv.
+    cbn [negb andb].
+    change (m_vmmaps (relim L m)) with (setlim L (m_vmmaps m)).
+    rewrite ?(lpi_lim_eq_set L (m_vmmaps m)).
+    change (m_kernel (relim L m)) with (m_kernel m).
+    match goal with |- context [Checks.Placement.linux_place_is (m_vmmaps m) ?t ?h nZ r] =>
+      destruct (Checks.Placement.linux_place_is (m_vmmaps m) t h nZ r); [|reflexivity] end.
+    cbn [andb].
     rewrite !mr_fresh_eq, mr_fresh_core_relim, mr_final_relim, mr_final_eq.
     destruct (fresh_core m nZ old r nn) eqn:Ecore; [|reflexivity].
     unfold fresh_core in Ecore. cbv zeta in Ecore.
@@ -132,8 +155,9 @@ Proof.
       - rewrite Hnn. apply pru_mod.
       - rewrite Hnn. unfold page_size in HnZp. lia.
       - rewrite Hnn. lia.
-      - intros a sz Hin. exact (Hfit a sz (map_remove_In _ _ _ Hin)).
-      - apply (region_free_sub (vm_maps (m_vmmaps m))); [exact (rf_app_r _ _ _ _ Hfree) | apply map_remove_In]. }
+      - (* at the revision the move cuts the old range ([maps_subtract]) *)
+        exact (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mremap.maps_subtract_fits _ _ _ Hfit).
+      - exact (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mremap.region_free_subtract_fits _ _ _ _ _ Hfit (rf_app_r _ _ _ _ Hfree)). }
     rewrite (proj2 (Z.leb_le (vm_backing_used (mremap_model_next m old on r nn)) L) ltac:(lia)),
       (proj2 (Z.leb_le (vm_backing_used (mremap_model_next m old on r nn)) (vm_limit (m_vmmaps m))) ltac:(lia)).
     cbn [andb]; match goal with |- (if ?b then _ else _) = _ => destruct b; [rewrite mr_next_relim; reflexivity | reflexivity] end.

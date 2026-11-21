@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ASan strnlen word reads are bounded by the string area's END alignment, [Regen.STR_END], which the launch gives, where they read its start's and the length's). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -28,6 +29,7 @@ Unset Lia Cache.
 
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Bridge Require Import Actr.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import W64Proofs ValProofs MemProofs.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Regen StrEnd.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Br Require Import CtrFX.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Br Require HeapCtr HeapCtrB.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Bridge Require CallA GlueA CtrPre.
@@ -67,7 +69,7 @@ Lemma astrnlen_apply_shape : forall st sts, astrnlen_apply st = Some sts ->
     /\ known_leu (s_facts st) (rg_hi rs) (VL m) = true
     /\ known_leu (s_facts st) (VP CtrA.STRS_ID wzero) (VP ks wzero) = true
     /\ known_leu (s_facts st) (sv_alu ALU_ADD (VP ks wzero) (rg_hi rs)) (sv_alu ALU_ADD (VP CtrA.STRS_ID wzero) (CtrA.SZ 15%uint63)) = true
-    /\ aligned (s_facts st) (VP CtrA.STRS_ID wzero) 3%uint63 = true
+    /\ has_fact Regen.Regen.STR_END (s_facts st) = true
     /\ sts = [strnlen_post st1 r j (rg_hi rs) m].
 Proof.
   intros st sts H. unfold astrnlen_apply in H.
@@ -108,8 +110,7 @@ Variable PB : (int -> list byte) -> Prop.
 Hypothesis PB_str : forall b, PB b -> forall j js, legal_str j js ->
   exists s : list byte, b j = s ++ [Z_to_bv 8 0] /\ Forall (fun x : byte => bv_unsigned x <> 0) s
     /\ b js = Z_to_le_bytes 8 (Z.of_nat (length s) + 1) /\ Z.of_nat (length s) <= 131071.
-Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63))
-                                        /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 Variable NMAXt : nat.
 Notation twfS := (twfA node nstepA nexitA (nsafeA NMAXt) fstepS NMAXt).
 Hypothesis ACCT_rng : forall aw L RNG st LBa mo, ACCT aw L RNG st LBa mo -> rng RNG (ATOP + 4096) (2^47 - (ATOP + 4096)).
@@ -126,7 +127,7 @@ Lemma slack_bytes : forall E st ms mo ks rs r12 (sstr : list byte),
   rg_cells r12 = IMap.Leaf -> rg_bg r12 = BGBlob CtrA.STRS_ID 0%uint63 -> rg_hi r12 = CtrA.SZ 15%uint63 -> rg_lo r12 = 0%uint63 ->
   known_leu (s_facts st) (VP CtrA.STRS_ID wzero) (VP ks wzero) = true ->
   known_leu (s_facts st) (sv_alu ALU_ADD (VP ks wzero) (rg_hi rs)) (sv_alu ALU_ADD (VP CtrA.STRS_ID wzero) (CtrA.SZ 15%uint63)) = true ->
-  aligned (s_facts st) (VP CtrA.STRS_ID wzero) 3%uint63 = true ->
+  has_fact Regen.Regen.STR_END (s_facts st) = true ->
   let A := bv_unsigned (ev E ks) in let NS := Z.of_nat (length sstr) + 1 in
   hiZ E rs = NS -> A + NS < 2 ^ 64 ->
   ALib.Mem.bytes_at asegs (ms_mem ms) A (sstr ++ [Z_to_bv 8 0]) ->
@@ -148,12 +149,12 @@ Proof.
   apply (HeapCtr.known_leu_sound E _ _ _ Hfs) in CONT. rewrite !ValP.den_sv_alu in CONT. cbn [alu64 alu] in CONT.
   rewrite !bv_add_unsigned, !HeapCtr.den_VPz in CONT. fold A Bs S12 in CONT.
   change (bv_unsigned (den E (rg_hi rs))) with (hiZ E rs) in CONT. rewrite HIZ in CONT.
-  pose proof (ValP.aligned_sound E _ Hfs _ _ AL ltac:(change (to_Z 3%uint63) with 3; lia)) as AL8.
-  rewrite HeapCtr.den_VPz in AL8. change (2 ^ to_Z 3%uint63) with 8 in AL8. fold Bs in AL8.
-  destruct (PB12 E HPB) as [ES12 M8]. fold S12 in ES12.
+  (* the string area ends 8-aligned (its start need not be) *)
+  pose proof (StrEnd.StrEnd.str_end_aligned E (s_facts st) Hfs AL) as SE.
+  pose proof (PB12 E HPB) as ES12. fold S12 in ES12.
   assert (CONT' : A + NS <= Bs + S12).
   { rewrite !bv_wrap_small in CONT by (unfold bv_modulus; change (2 ^ Z.of_N 64) with (2 ^ 64); unfold NS in *; lia). exact CONT. }
-  assert (M8' : (Bs + S12) mod 8 = 0) by (rewrite ES12, Z.add_mod, AL8, M8 by lia; reflexivity).
+  assert (M8' : (Bs + S12) mod 8 = 0) by (apply SE; change (Bs + S12 <= 2 ^ 64); lia).
   set (pad := (- (A + NS)) mod 8).
   pose proof (pad_room (A + NS) (Bs + S12) CONT' M8') as PADR. fold pad in PADR.
   pose proof (Z.mod_pos_bound (- (A + NS)) 8 ltac:(lia)) as PB8. fold pad in PB8.
@@ -356,7 +357,7 @@ Lemma astrnlen_apply_shape : forall st sts, astrnlen_apply st = Some sts ->
     /\ known_leu (s_facts st) (rg_hi rs) (VL m) = true
     /\ known_leu (s_facts st) (VP CtrA.STRS_ID wzero) (VP ks wzero) = true
     /\ known_leu (s_facts st) (sv_alu ALU_ADD (VP ks wzero) (rg_hi rs)) (sv_alu ALU_ADD (VP CtrA.STRS_ID wzero) (CtrA.SZ 15%uint63)) = true
-    /\ aligned (s_facts st) (VP CtrA.STRS_ID wzero) 3%uint63 = true
+    /\ has_fact Regen.Regen.STR_END (s_facts st) = true
     /\ sts = [strnlen_post st1 r j (rg_hi rs) m].
 Proof.
   intros st sts H. unfold astrnlen_apply in H.
@@ -397,8 +398,7 @@ Variable PB : (int -> list byte) -> Prop.
 Hypothesis PB_str : forall b, PB b -> forall j js, legal_str j js ->
   exists s : list byte, b j = s ++ [Z_to_bv 8 0] /\ Forall (fun x : byte => bv_unsigned x <> 0) s
     /\ b js = Z_to_le_bytes 8 (Z.of_nat (length s) + 1) /\ Z.of_nat (length s) <= 131071.
-Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63))
-                                        /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Hypothesis PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 Variable NMAXt : nat.
 Notation twfS := (twfA node nstepA nexitA (nsafeA NMAXt) fstepS NMAXt).
 Hypothesis ACCT_rng : forall aw L RNG st LBa mo, ACCT aw L RNG st LBa mo -> rng RNG (ATOP + 4096) (2^47 - (ATOP + 4096)).
@@ -415,7 +415,7 @@ Lemma slack_bytes : forall E st ms mo ks rs r12 (sstr : list byte),
   rg_cells r12 = IMap.Leaf -> rg_bg r12 = BGBlob CtrA.STRS_ID 0%uint63 -> rg_hi r12 = CtrA.SZ 15%uint63 -> rg_lo r12 = 0%uint63 ->
   known_leu (s_facts st) (VP CtrA.STRS_ID wzero) (VP ks wzero) = true ->
   known_leu (s_facts st) (sv_alu ALU_ADD (VP ks wzero) (rg_hi rs)) (sv_alu ALU_ADD (VP CtrA.STRS_ID wzero) (CtrA.SZ 15%uint63)) = true ->
-  aligned (s_facts st) (VP CtrA.STRS_ID wzero) 3%uint63 = true ->
+  has_fact Regen.Regen.STR_END (s_facts st) = true ->
   let A := bv_unsigned (ev E ks) in let NS := Z.of_nat (length sstr) + 1 in
   hiZ E rs = NS -> A + NS < 2 ^ 64 ->
   ALib.Mem.bytes_at bsegs (ms_mem ms) A (sstr ++ [Z_to_bv 8 0]) ->
@@ -437,12 +437,12 @@ Proof.
   apply (HeapCtr.TwinB.known_leu_sound E _ _ _ Hfs) in CONT. rewrite !ValP.den_sv_alu in CONT. cbn [alu64 alu] in CONT.
   rewrite !bv_add_unsigned, !HeapCtr.TwinB.den_VPz in CONT. fold A Bs S12 in CONT.
   change (bv_unsigned (den E (rg_hi rs))) with (hiZ E rs) in CONT. rewrite HIZ in CONT.
-  pose proof (ValP.aligned_sound E _ Hfs _ _ AL ltac:(change (to_Z 3%uint63) with 3; lia)) as AL8.
-  rewrite HeapCtr.TwinB.den_VPz in AL8. change (2 ^ to_Z 3%uint63) with 8 in AL8. fold Bs in AL8.
-  destruct (PB12 E HPB) as [ES12 M8]. fold S12 in ES12.
+  (* the string area ends 8-aligned (its start need not be) *)
+  pose proof (StrEnd.StrEnd.str_end_aligned E (s_facts st) Hfs AL) as SE.
+  pose proof (PB12 E HPB) as ES12. fold S12 in ES12.
   assert (CONT' : A + NS <= Bs + S12).
   { rewrite !bv_wrap_small in CONT by (unfold bv_modulus; change (2 ^ Z.of_N 64) with (2 ^ 64); unfold NS in *; lia). exact CONT. }
-  assert (M8' : (Bs + S12) mod 8 = 0) by (rewrite ES12, Z.add_mod, AL8, M8 by lia; reflexivity).
+  assert (M8' : (Bs + S12) mod 8 = 0) by (apply SE; change (Bs + S12 <= 2 ^ 64); lia).
   set (pad := (- (A + NS)) mod 8).
   pose proof (pad_room (A + NS) (Bs + S12) CONT' M8') as PADR. fold pad in PADR.
   pose proof (Z.mod_pos_bound (- (A + NS)) 8 ltac:(lia)) as PB8. fold pad in PB8.

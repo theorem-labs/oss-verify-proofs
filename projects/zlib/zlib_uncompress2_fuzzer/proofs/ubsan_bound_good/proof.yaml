@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: zlib/zlib_uncompress2_fuzzer/ubsan_bound_good
+bound: '0'
+fingerprint: a2bafb6efa1fd35f3baba03d5dcb7a57cfa81451590dd3d5c06736fd37a7df62

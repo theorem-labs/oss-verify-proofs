@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main's context over the process input and the mmap base; the stack floor is 6144512 bytes below sp). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -59,12 +60,12 @@ Proof. intros A B a f s Q ms H. unfold implM, mbind, mret in *. cbn. exact H. Qe
 
 Section B.
 Context {RCEIL : RunCeiling}.
-Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+Variables (sp0 mbase : word) (rnd : EntryDraw) (inp : ProcInput) (arg0 arg1 : list byte) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
 Hypothesis VSP : valid_sp sp0.
-Hypothesis HCEIL : alloc_ceiling = LO sp0.
-Hypothesis VARGV : valid_argv argv.
-Hypothesis VENVP : valid_envp envp.
-Hypothesis EARGV : argv = [arg0; arg1].
+Hypothesis HCEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
+Hypothesis VARGV : valid_argv (in_argv inp).
+Hypothesis VENVP : valid_envp (in_envp inp).
+Hypothesis EARGV : in_argv inp = [arg0; arg1].
 Hypothesis HT : 0 < TID < 4194304.
 Hypothesis RHF : rheap_frame_stmt.
 Hypothesis MALLOC : rmalloc_stmt.
@@ -79,10 +80,11 @@ Hypothesis TOW : towrite_stmt.
 Notation usp0 := (bv_unsigned sp0).
 Notation gpv := (Z_to_bv 64 0x10800).
 Notation tpv := (Z_to_bv 64 RATP).
-Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+Notation argv := (in_argv inp).
+Notation IMGB := (entry_stack_image inp mbase rph (Z_to_bv 64 (Z.of_N Ubsan.M.init_pc)) sp0 rnd).
 Notation LO' := (LO sp0).
-Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
-Notation FRAME' mm := (exists pad, MFRAME sp0 argv mm pad S7 S6 S5 S4).
+Notation BASE' := (BASE sp0 mbase rnd inp TID).
+Notation FRAME' mm := (exists pad, MFRAME sp0 inp mm pad S7 S6 S5 S4).
 Ltac hyps := first [exact VSP | exact HCEIL | exact VARGV | exact VENVP | exact EARGV | exact HT | exact RHF | exact MALLOC | exact FREE | exact FKP | exact FPR | exact FWX | exact SWF | exact FWR | exact TOW].
 
 Notation GST pc x1 t0 t1 t2 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
@@ -163,7 +165,7 @@ Proof. intros. reflexivity. Qed.
 
 #[using="VSP HCEIL HT RHF FPR FWX SWF"] Lemma fprintf_exit : forall (d : diag_msg) {R} (K : M PState R) (Q : R -> PState -> machine_state -> Prop) (s : PState) (LB : list block)
 x1 t0 t1 t2 x9 (a1v a2v : word) x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 (F : bvmap 5 word) (fc : bv 32) (mm : mem),
-diag_args d mm a1v a2v (usp0 - 8388608) (usp0 - 128) ->
+diag_args d mm a1v a2v (usp0 - 6144512) (usp0 - 128) ->
 BASE' mm -> RHEAP s LB mm -> ps_so s = stdout_init -> frm0 fc ->
 (forall ms', rat_exit 2 s ms' -> implM rsegs K s Q ms') ->
 implM rsegs (s_diag d ;;; K) s Q
@@ -175,7 +177,7 @@ pose proof BA as sfP_; first [ sf_destruct 7%nat sfP_ as ST MI RS AUX IMG SE SOF
 unfold implM. iprefix. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s Q msx) end.
 eapply implM_bind.
-{ eapply (FPR d) with (lo := usp0 - 8388608) (canary := run_canary);
+{ eapply (FPR d) with (lo := usp0 - 6144512) (canary := run_canary);
 [exact FWX| exact SWF| apply stderr_wfile0_wfile; exact SE| reflexivity| rewrite unsigned_lit by lia; replace (usp0 + -128) with (usp0 - 128) by lia; exact DA
 | rewrite unsigned_lit by lia; exact ST
 | rewrite unsigned_lit by lia; unfold FPRINTF_DEPTH; lia| unfold GLOBALS_TOP; lia| rewrite unsigned_lit by lia; lia
@@ -185,12 +187,12 @@ first [ sf_destruct 28%nat PO as u0 u1 u2 b0 b1 b2 b3 b4 b5 b6 b7 u3 u4 u5 u6 Ft
 ua. rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
 replace (ret_pc (Z_to_bv 64 0x1beec)) with (Z_to_bv 64 0x1beec) by (symmetry; rpc).
 pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG.
-assert (OUT2 : forall a, (0x10000 <= a < 0x6e000 /\ ~ (0x3d110 <= a < 0x3d110 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x3d110, 0x3d110 + 232)] a0) a).
+assert (OUT2 : forall a, (0x10000 <= a < 0x6e000 /\ ~ (0x3d110 <= a < 0x3d110 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -128); (0x3d110, 0x3d110 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
 eapply implM_evt; [| intros ms'' H; apply HK; exact H].
 zstep.
 eapply (exit2_tail sp0 TID VSP HCEIL HT s LB).
-- unfold LO. replace (usp0 - 8388608) with (usp0 + -8388608) in ST2 by lia. first [exact ST2 | replace (usp0 + -8388608) with (usp0 - 8388608) in ST2 by lia; exact ST2].
+- unfold LO. replace (usp0 - 6144512) with (usp0 + -6144512) in ST2 by lia. first [exact ST2 | replace (usp0 + -6144512) with (usp0 - 6144512) in ST2 by lia; exact ST2].
 - eapply (RSTAT_agree TID _ _ _ AG); [intros a Ha; apply OUT2; unfold rstat_addr in Ha; lia| exact RS].
 - eapply RHF; [exact HP| exact MUc| exact WMc|].
 constructor; [left; cbn [fst snd]; unfold alloc_ceiling in *; lia|]. constructor; [| constructor].
@@ -214,7 +216,7 @@ unfold implM. iprefix. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s Q msx) end.
 cbn [s_diag]. change (concat pieces_oom) with s_oom.
 eapply implM_bind.
-{ eapply (FWR) with (lo := usp0 - 8388608) (canary := run_canary) (s := s_oom);
+{ eapply (FWR) with (lo := usp0 - 6144512) (canary := run_canary) (s := s_oom);
 [exact TOW| exact SE| rewrite unsigned_lit by (unfold S_OOM; lia); apply rodata_bytes; [exact MI| apply s_oom_ro| unfold S_OOM; lia| unfold S_OOM, s_oom, zlength; cbn; lia]
 | apply str_range || (unfold s_oom; apply Forall_app; split; [apply str_range| constructor; [lia| constructor]])
 | unfold s_oom, zlength; cbn; lia| reflexivity| reflexivity| reflexivity
@@ -228,11 +230,11 @@ first [ sf_destruct 24%nat PO as u0 u1 u2 b0 b1 b2 b3 b4 b5 b6 b7 u3 u4 u5 u6 m2
 ua. rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
 replace (ret_pc (Z_to_bv 64 0x1bf10)) with (Z_to_bv 64 0x1bf10) by (symmetry; rpc).
 pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG.
-assert (OUT2 : forall a, (0x10000 <= a < 0x6e000 /\ ~ (0x3d110 <= a < 0x3d110 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x3d110, 0x3d110 + 232)] a0) a).
+assert (OUT2 : forall a, (0x10000 <= a < 0x6e000 /\ ~ (0x3d110 <= a < 0x3d110 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -128); (0x3d110, 0x3d110 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
 eapply implM_evt; [| intros ms'' H; apply HK; exact H].
 eapply (exit2_tail sp0 TID VSP HCEIL HT s LB).
-- unfold LO. replace (usp0 - 8388608) with (usp0 + -8388608) in ST2 by lia. first [exact ST2 | replace (usp0 + -8388608) with (usp0 - 8388608) in ST2 by lia; exact ST2].
+- unfold LO. replace (usp0 - 6144512) with (usp0 + -6144512) in ST2 by lia. first [exact ST2 | replace (usp0 + -6144512) with (usp0 - 6144512) in ST2 by lia; exact ST2].
 - eapply (RSTAT_agree TID _ _ _ AG); [intros a Ha; apply OUT2; unfold rstat_addr in Ha; lia| exact RS].
 - eapply RHF; [exact HP| exact MUc| exact WMc|].
 constructor; [left; cbn [fst snd]; unfold alloc_ceiling in *; lia|]. constructor; [| constructor].

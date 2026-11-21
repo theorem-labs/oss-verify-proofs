@@ -1,17 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded 35 encoded lemma statements into plain Rocq and dropped the TCodec name table; spin_img_to_spin now quantifies over appended segments and a with_vdso model, spin_segs gets seg_kind, and spin_exec_input is factored out; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/DivergeSim.v, 121 lines within its lines 11-682. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import PropExec.
+From LinuxProcessSemantics.LinuxProcessSem Require Import Vdso.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__DivergeSim () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.MemImageType."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.StackLayout."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.DecodeC."; "LinuxProcessSemantics.Riscv.Instr."; "LinuxProcessSemantics.Riscv.Prelude."; "LinuxProcessSemantics.Riscv.Sem."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.DivergeSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.DivergeSim.SelfJumpImage."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.DivergeSim.WithFP1.WithSegs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "Stdlib.Lists.List."; "stdpp.bitvector.definitions."], [["1None"; "1Some"; "1app"; "1bool"; "1false"; "1list"; "1nat"; "1nil"; "1option"; "1pair"; "1prod"; "1true"; "2and"; "2eq"; "2ex"; "2iff"]; ["2not"; "2or"; "3Z"; "4Segment"; "4mkPhdrInfo"; "5MachineOk"; "5access_report"; "5fetch_word"; "5is_ecall"; "5machine_result"; "5machine_state"; "5memory_access"; "5mkAccessReport"; "5ms_pc"; "5ms_svc_pending"; "5step"]; ["5step_accesses"; "6SError"; "6SNext"; "6all_traces_error"; "6cfg_model"; "6cfg_ms"; "6config"; "6init_machine_state"; "6is_prefix"; "6mi_account_step"; "6mkCfg"; "6obs_trace"; "6reaches_error"; "6reaches_unmodeled"; "6segments_reserved"; "6sstep"]; ["6star"; "6step_to"; "7EntryDraw"; "8Model"; "8ProcInput"; "8event"; "8in_argv"; "8in_envp"; "8in_hwcap"; "8in_uid"; "8init_model"; "8m_halted"; "8m_vm_lazy"; "8materialize_model_accesses"; "9decode_any"; ":Jal"]; [":instr"; ";bvmap"; "<is_x0"; "0P"; ">spin_segs"; "?is_self_jump"; "?silent_loop"; "?spin_c"; "?spinning"; "?to_spin"; "=to_spin"; "@mkst"; "@v_addi"; "AIn"; "0T"; "0a"]; ["0brk0"; "0c"; "0c'"; "0c0"; "0c2"; "0cs"; "0evs"; "0evs_g"; "0fuel"; "0fx"; "0imm"; "0inp"; "0lim"; "0m"; "0mbase"; "0mem"]; ["0model"; "0model'"; "0ms"; "0ms'"; "0pc"; "0rd"; "0regs"; "0rnd"; "0rom"; "0segs"; "0sp"; "Bbv"; "Bbv_signed"; "0sz"; "0to"; "0tr"]; ["0tr2"; "0w"]]).
 Local Ltac div_vm_refl :=
 lazymatch goal with
 | |- ?G => apply (@bool_decide_eq_true_1 G _); vm_cast_no_check (@eq_refl bool true)
@@ -24,7 +24,8 @@ Proof. destruct tr; [reflexivity | contradiction]. Qed.
 Lemma is_prefix_app_mono {A} : forall (e a b : list A),
 is_prefix a b -> is_prefix (e ++ a) (e ++ b).
 Proof. induction e; cbn; auto. Qed.
-Lemma materialize_model_accesses_nil : ltac2:(TCodec.tc2 tcn__DivergeSim "C'QC'='8%113&QMr1(7':'S;yR0%211'6%5221%711%:291(1%12@;%@3>31pULB1").
+Lemma materialize_model_accesses_nil : forall m,
+materialize_model_accesses m [] = Some m.
 Proof.
 intros [fd [maps lazy materialized] io fs proc lim].
 unfold materialize_model_accesses; cbn.
@@ -42,24 +43,35 @@ Proof.
 intros segs ms model ms' ranges Hstep.
 unfold mi_account_step. rewrite Hstep. reflexivity.
 Qed.
-Lemma mi_account_step_no_access : ltac2:(TCodec.tc2 tcn__DivergeSim "Q7'5'C%211'J'QC'='I'F%115%311&Q0r4r3%3221(E(Lr1(7&K%211%53A41%72=1%A3=91':%12ED%C11&Q9r5%231A@(9r2%24LK1C%B281%L3851p0<1pV8Q01pV2Q01pV6Q21pVDQ41").
+Lemma mi_account_step_no_access : forall segs ms model ms',
+RiscvSemantics.step_accesses segs ms = MachineOk (@mkAccessReport machine_state ms' []) ->
+mi_account_step segs ms model = MachineOk (ms', model).
 Proof.
 intros segs ms model ms' Hstep.
 rewrite (mi_account_step_of_accesses segs ms model ms' [] Hstep).
 rewrite materialize_model_accesses_nil. reflexivity.
 Qed.
-Lemma mi_account_step_halted : ltac2:(TCodec.tc2 tcn__DivergeSim "Q5'5'C%211'J'QC'='I':%1254%311&Q9r5r4r3%43321(E(9r2r1%34@?21%52<1%@3<71'8'S;yR0%211%411&QK%11;%21A%I3421p0:1pV4L1pV8N1pV2N1pV6Q01pVDQ21").
+Lemma mi_account_step_halted : forall segs ms model ms' model',
+mi_account_step segs ms model = MachineOk (ms', model') ->
+m_halted model' = m_halted model.
 Proof.
 intros segs ms model ms' model' Hacc.
 destruct (mi_account_step_model_frame segs ms model ms' model' Hacc)
 as (_ & _ & _ & _ & _ & Hproc & _).
 unfold m_halted. rewrite Hproc. reflexivity.
 Qed.
-Lemma v_addi_0 : ltac2:(TCodec.tc2 tcn__DivergeSim ":'S;yR0%211'=&R<r1z%3221%53613pU071").
+Lemma v_addi_0 : forall a : word, v_addi a 0 = a.
 Proof.
 intro a. unfold v_addi. rewrite Z.add_0_r. apply Z_to_bv_bv_unsigned.
 Qed.
-Lemma self_jump_step_accesses : ltac2:(TCodec.tc2 tcn__DivergeSim "RG'5'C%211'J'S;yQ0%211y5%411yE%611'B'='8yR0%;11%311&Nr5%211(0%116%:3631%:1A&Gr7&Mr6%211%5241(1%12I=%D3931'3&H%118(4%I3421':'R0%221M%L11&QN%11B(9(QO%12CLr4%449Q521%C291%Q63971&R2%11K(;%Q:3E21&S<%12Q?Oz%Q>3Q?21'I'F%11QJ%311&Q0r<r;%3221(E(L(7&K%211%43R571%62<1%QN3<81p0A1p0F1p0K1p0Q91p0Q?1p0QJ1pVLR61pUFR81pV<R;1pW4R>1pV6RB1pVDRD1").
+Lemma self_jump_step_accesses : forall segs ms w (rd : reg) (imm : bv 21) sz,
+ms_svc_pending ms = None ->
+fetch_word segs (ms_pc ms) = Some w ->
+is_ecall w = false ->
+decode_any w = Some (Jal rd imm, sz) ->
+is_x0 rd = true ->
+bv_signed imm = 0%Z ->
+RiscvSemantics.step_accesses segs ms = MachineOk (@mkAccessReport machine_state ms []).
 Proof.
 intros segs ms w rd imm sz Hsvc Hfetch Hecall Hdecode Hx0 Himm.
 unfold RiscvSemantics.step_accesses.
@@ -75,12 +87,26 @@ rewrite Hx0. cbv beta iota.
 rewrite b_addsext, Himm, v_addi_0.
 destruct ms; cbn in Hsvc; subst; reflexivity.
 Qed.
-Lemma self_jump_account_fix : ltac2:(TCodec.tc2 tcn__DivergeSim "RF'5'C%211'J'QC'S;yQ0%211y5%411yE%611'B'='8yR0%;11%311&Nr6%211(0%116%:3631%:1A&Gr8&Mr7%211%5241(1r5%22J1%E3:41'3&H%11B(4%J3421':'R0%221N%M11&QN%11A(9(QO%12M@r4%449Q621%D291%Q73971&R2%11J(;%Q;3E21&S<%12Q@Nz%Q?3Q@21'I%F2QKQJ%211&Q9r=r<r;%43321(E%H4R3R243%2291%QK3941p0=1p0B1p0G1p0Q51p0Q;1p0QG1pVLR31pUFR51pV<R81pW4R;1pV2R?1pV6RA1pVDRC1").
+Lemma self_jump_account_fix : forall segs ms model w (rd : reg) (imm : bv 21) sz,
+ms_svc_pending ms = None ->
+fetch_word segs (ms_pc ms) = Some w ->
+is_ecall w = false ->
+decode_any w = Some (Jal rd imm, sz) ->
+is_x0 rd = true ->
+bv_signed imm = 0%Z ->
+mi_account_step segs ms model = MachineOk (ms, model).
 Proof.
 intros. eapply mi_account_step_no_access.
 eapply self_jump_step_accesses; eassumption.
 Qed.
-Lemma step_j_self : ltac2:(TCodec.tc2 tcn__DivergeSim "RH'5'C%211&R1y5'S;yR0%211%5241'8y8%611%311p061yQ0%:11%;1<yE%=11'B'=%<16&Gr9r7%3221(1r4%22=1%93841'3&Hr5%211(4%?3521':'R0%221C%N11&QNr6%211(9(QO%12=Br3%44:L21%F2:1%M3:71&R2%11:(;%Q13G21&S<%12Q6>z%Q53Q621'I'J%211&Or>&R;vRIr=r<r;r:%6554321%9281(E%12=3%QE3=31p0A1p0F1p0K1p0Q:1p0QA1pVLQL1pUFQN1pV<R11pW4R31pVBR61pV0R71pV:R>1pV>R>1pVDRE1").
+Lemma step_j_self : forall segs regs pc mem rom w (rd : reg) (imm : bv 21) sz,
+fetch_word segs pc = Some w ->
+is_ecall w = false ->
+decode_any w = Some (Jal rd imm, sz) ->
+is_x0 rd = true ->
+bv_signed imm = 0%Z ->
+RiscvSemantics.step segs (mkst regs pc mem rom) =
+MachineOk (mkst regs pc mem rom).
 Proof.
 intros segs regs pc mem rom w rd imm sz Hf He Hd Hx0 Hi.
 unfold RiscvSemantics.step.
@@ -97,9 +123,18 @@ ms_svc_pending (cfg_ms c) = None /\
 exists ms' model',
 mi_account_step segs (cfg_ms c) (cfg_model c) = MachineOk (ms', model') /\
 P (mkCfg ms' model').
-Lemma silent_loop_cycle : ltac2:(TCodec.tc2 tcn__DivergeSim "R0'5'Q6%211&R=r1r2%33521'<'='8'S;yR0%211%411&QK&Q4%11;%311(0%117%<3731&N&Q5%11B%311%A3<16'>'J'QC'I':%1243%311&Q9vS9r4%>11%F12%53421(E(9%14>=Q4Q5%32;1%Q33;51(Q:%12Q8Q9r5%Q<3Q>21%Q9251qV4E1%H2F1qV8H1%J2I1%Q>2L1%Q?2Q21p0QA1pU4QG1&R6r3%QH3QJQG1qU4QK1%411p061pU<QM1").
+Lemma silent_loop_cycle : forall (cs : list config),
+(forall c, In c cs ->
+m_halted (cfg_model c) = None /\
+ms_svc_pending (cfg_ms c) = None /\
+exists ms' model',
+mi_account_step segs (cfg_ms c) (cfg_model c) = MachineOk (ms', model') /\
+In (mkCfg ms' model') cs) ->
+silent_loop (fun c => In c cs).
 Proof. intros cs H c. exact (H c). Qed.
-Lemma silent_loop_sstep : ltac2:(TCodec.tc2 tcn__DivergeSim "Q7'Q6!p021'5'QE%211'QA&R6r4%211r5%113'Q?vS9r3%342571'<'=(7%11?%33?:1'>(Q2r1%211%83C?1r8%114%<231qU6M1%92N1%?2;1p0A1p0F1p0I1pVNM1pU>O1pU4Q51pT8Q41").
+Lemma silent_loop_sstep : forall P c evs to,
+silent_loop P -> P c -> sstep segs c evs to ->
+evs = [] /\ exists c', to = SNext c' /\ P c'.
 Proof.
 intros P c evs to Hloop HP Hstep.
 destruct (Hloop c HP) as (Hh & Hsvc & ms' & model' & Hacc & HP').
@@ -112,13 +147,17 @@ rewrite H in H'; injection H'; intros; subst; clear H
 end.
 eauto 7.
 Qed.
-Lemma star_case : ltac2:(TCodec.tc2 tcn__DivergeSim "Q<'Q6'5'QE%211'Q@vS9r3r2r1%544321'A'<'=(7%11<%33<91r4%53A:1%7231'>'Q?r7(Q2%11@%44C3B1r5%F4ECB1r6&2%13KGE%B3K31%D251%E281qW2N1%?2O1qU:Q31%A2Q41qU>Q21%C2Q31%M2E1p0O1pU6Q91pW0Q71pU4Q;1").
+Lemma star_case : forall c tr c', star segs c tr c' ->
+(tr = [] /\ c' = c) \/
+exists evs c2 tr2,
+sstep segs c evs (SNext c2) /\ star segs c2 tr2 c' /\ tr = evs ++ tr2.
 Proof.
 intros c tr c' H;
 destruct H as [c | c1 evs c2 tr2 c3 Hstep Htail];
 [left; auto | right; exists evs, c2, tr2; auto].
 Qed.
-Lemma silent_loop_star : ltac2:(TCodec.tc2 tcn__DivergeSim "Q0'Q6!p021&R6r1%211'5'QE%211'Q@vS9r3r2%443219r6r4%211'<'=(7%11=%33=61r7%11<%7231p091p0=1pU6K1pW0D1pU4M1p0I1pT8M1").
+Lemma silent_loop_star : forall P, silent_loop P ->
+forall c tr c', star segs c tr c' -> P c -> tr = [] /\ P c'.
 Proof.
 intros P Hloop c tr c' Hstar.
 induction Hstar as [c | c evs c2 tr c3 Hstep Hstar IH]; intros HP.
@@ -128,12 +167,14 @@ as (-> & c2' & Heq & HP2).
 injection Heq as <-.
 destruct (IH HP2) as (-> & HP3). auto.
 Qed.
-Lemma silent_loop_star_nil : ltac2:(TCodec.tc2 tcn__DivergeSim "J'Q6!p021'5'QE%211&R6r4%211r5%113'Q@vS9r3%342571'=(7%11=%33=91p051p0:1p0=1pU6F1pW0B1pU4H1pT8G1").
+Lemma silent_loop_star_nil : forall P c tr c',
+silent_loop P -> P c -> star segs c tr c' -> tr = [].
 Proof.
 intros P c tr c' Hloop HP Hstar.
 exact (proj1 (silent_loop_star P Hloop c tr c' Hstar HP)).
 Qed.
-Lemma silent_loop_no_error : ltac2:(TCodec.tc2 tcn__DivergeSim "A'Q6!p021&R6r2%211r3%113&@&Q<vS9%2215%411p061p091pU4?1pT8>1").
+Lemma silent_loop_no_error : forall P c,
+silent_loop P -> P c -> ~ reaches_error segs c.
 Proof.
 intros P c Hloop HP (tr & c2 & evs & Hstar & Herr).
 destruct (silent_loop_star P Hloop c tr c2 Hstar HP) as (_ & HP2).
@@ -141,12 +182,14 @@ destruct (silent_loop_sstep P c2 evs _ Hloop HP2 Herr)
 as (_ & c' & Heq & _).
 discriminate Heq.
 Qed.
-Lemma silent_loop_no_unmodeled : ltac2:(TCodec.tc2 tcn__DivergeSim "A'Q6!p021&R6r2%211r3%113&@&Q=vS9%2215%411p061p091pU4?1pT8>1").
+Lemma silent_loop_no_unmodeled : forall P c,
+silent_loop P -> P c -> ~ reaches_unmodeled segs c.
 Proof.
 intros P c Hloop HP.
 exact (no_error_no_unmodeled segs c (silent_loop_no_error P c Hloop HP)).
 Qed.
-Lemma silent_loop_obs_iff : ltac2:(TCodec.tc2 tcn__DivergeSim "K'Q6!p021&R6r2%211r3%113'5'QE%211&?&Q;vS9r4r1%43321'=(7%11:%33:51%:251pW0<1p0@1p0C1pU4I1pT8H1").
+Lemma silent_loop_obs_iff : forall P c,
+silent_loop P -> P c -> forall tr, obs_trace segs c tr <-> tr = [].
 Proof.
 intros P c Hloop HP tr. split.
 - intros (tr' & c2 & Hstar & Hpre).
@@ -154,7 +197,8 @@ rewrite (silent_loop_star_nil P c tr' c2 Hloop HP Hstar) in Hpre.
 exact (is_prefix_nil_inv tr Hpre).
 - intros ->. apply obs_trace_nil.
 Qed.
-Lemma silent_loop_not_all_errors : ltac2:(TCodec.tc2 tcn__DivergeSim "A'Q6!p021&R6r2%211r3%113&@'Q3vS9%2215%411p061p091pU4?1pT8>1").
+Lemma silent_loop_not_all_errors : forall P c,
+silent_loop P -> P c -> ~ all_traces_error segs c.
 Proof.
 intros P c Hloop HP Hall. revert HP.
 induction Hall as [c Hprog Hnext IH]; intros HP.
@@ -173,39 +217,62 @@ ms_svc_pending ms = None ->
 mi_account_step segs ms model = MachineOk (ms', model') ->
 to_spin ms' model' ->
 to_spin ms model.
-Lemma ts_spin_no_access : ltac2:(TCodec.tc2 tcn__DivergeSim "Q5'J'QC'='8'S;yR0%211%411&Nr2%211(0%116%;3631'I'F%11@%311&Q0vS9r3%3221(E(L(7&K%211%43K71%62<1%K3<81'R9r4%221<p041p0E1pV2Q21pV6Q41").
+Lemma ts_spin_no_access : forall ms model,
+ms_svc_pending ms = None ->
+RiscvSemantics.step_accesses segs ms = MachineOk (@mkAccessReport machine_state ms []) ->
+to_spin ms model.
 Proof.
 intros ms model Hsvc Hstep.
 apply ts_spin; [exact Hsvc | exact (mi_account_step_no_access segs ms model ms Hstep)].
 Qed.
-Lemma ts_step_no_access : ltac2:(TCodec.tc2 tcn__DivergeSim "Q:'J'QC'='8'S;yR0%211%411&Nr3%211(0%116%;3631'I'F%11@%311&Q0vS9r4%3221(E(Lr2(7&K%211%53L41%72=1%L3=91'R9%12G<r6r5%4221p041p071p0I1pV8Q71pV2Q71pV6Q91").
+Lemma ts_step_no_access : forall ms model ms',
+ms_svc_pending ms = None ->
+RiscvSemantics.step_accesses segs ms = MachineOk (@mkAccessReport machine_state ms' []) ->
+to_spin ms' model ->
+to_spin ms model.
 Proof.
 intros ms model ms' Hsvc Hstep Hspin.
 exact (ts_step ms model ms' model Hsvc
 (mi_account_step_no_access segs ms model ms' Hstep) Hspin).
 Qed.
-Lemma ts_spin_no_lazy : ltac2:(TCodec.tc2 tcn__DivergeSim "Q8'J'QC'='8'S;yR0%211%411&Nr2%211(0%116%;3631'5':%12::%311&QL%11:(7%115%D3531'I%11H&OvS9r4%3221(E%12N3%M3731'R9r5%2217p041p0>1p0H1pV2Q51pV6Q71").
+Lemma ts_spin_no_lazy : forall ms model,
+ms_svc_pending ms = None ->
+m_vm_lazy model = [] ->
+RiscvSemantics.step segs ms = MachineOk ms ->
+to_spin ms model.
 Proof.
 intros ms model Hsvc Hlazy Hstep.
 apply ts_spin; [exact Hsvc|].
 rewrite (mi_account_step_no_lazy segs ms model Hlazy).
 rewrite Hstep. reflexivity.
 Qed.
-Lemma ts_step_no_lazy : ltac2:(TCodec.tc2 tcn__DivergeSim "Q='J'QC'='8'S;yR0%211%411&Nr3%211(0%116%;3631'5':%12::%311&QL%11:(7%115%D3531'I%11H&OvS9r5%3221(E%12NE%M3731'R9r4%2217r7r6%5221p041p081p0B1p0L1pV8Q:1pV2Q:1pV6Q<1").
+Lemma ts_step_no_lazy : forall ms model ms',
+ms_svc_pending ms = None ->
+m_vm_lazy model = [] ->
+RiscvSemantics.step segs ms = MachineOk ms' ->
+to_spin ms' model ->
+to_spin ms model.
 Proof.
 intros ms model ms' Hsvc Hlazy Hstep Hspin.
 apply (ts_step ms model ms' model); [exact Hsvc| |exact Hspin].
 rewrite (mi_account_step_no_lazy segs ms model Hlazy).
 rewrite Hstep. reflexivity.
 Qed.
-Lemma ts_spin_of_step_j : ltac2:(TCodec.tc2 tcn__DivergeSim "R:'J'QC'S;yQ0%211y5%411yE%611'B'='8yR0%;11%311&Nr6%211(0%116%:3631%:1A&GvS9&Mr7%211%5241(1r5%22J1%E3:41'3&H%11B(4%J3421':'R0%221N%M11&QN%11A(9(QO%12M@r4%449Q621%D291%Q73971&R2%11J(;%Q;3E21&S<%12Q@Nz%Q?3Q@21'R9r<r;%3221p051p0:1p0?1p0M1p0Q31p0Q?1pVLQK1pUFQM1pV<R01pW4R31pV2R71pV6R91").
+Lemma ts_spin_of_step_j : forall ms model w (rd : reg) (imm : bv 21) sz,
+ms_svc_pending ms = None ->
+fetch_word segs (ms_pc ms) = Some w ->
+is_ecall w = false ->
+decode_any w = Some (Jal rd imm, sz) ->
+is_x0 rd = true ->
+bv_signed imm = 0%Z ->
+to_spin ms model.
 Proof.
 intros. eapply ts_spin_no_access; [assumption|].
 eapply self_jump_step_accesses; eassumption.
 Qed.
 Definition spinning (c : config) : Prop :=
 to_spin (cfg_ms c) (cfg_model c) /\ m_halted (cfg_model c) = None.
-Lemma spinning_silent_loop : ltac2:(TCodec.tc2 tcn__DivergeSim "3&R6&R8%211").
+Lemma spinning_silent_loop : silent_loop spinning.
 Proof.
 intros [ms model] [Hspin Hh]; cbn in Hspin, Hh; cbn.
 revert Hh.
@@ -219,25 +286,33 @@ exists ms', model'. split; [exact Hacc|].
 split; cbn; [exact Hspin'|].
 rewrite (mi_account_step_halted segs ms model ms' model' Hacc). exact Hh.
 Qed.
-Theorem spin_star_nil : ltac2:(TCodec.tc2 tcn__DivergeSim "Q6'J'QC'5'QE%211'Q6'R9r4r3%3221'='8'S;yR0%211%411&QK%11:(0%115%:3531'Q@vS9(Q:r6r5%3221%6451DC(7%11J%D3J51p041p0<1p0H1pU6M1pW0O1pV2Q31pV6Q51").
+Theorem spin_star_nil : forall ms model tr c',
+to_spin ms model -> m_halted model = None ->
+star segs (mkCfg ms model) tr c' -> tr = [].
 Proof.
 intros ms model tr c' Hspin Hh Hstar.
 exact (silent_loop_star_nil spinning (mkCfg ms model) tr c'
 spinning_silent_loop (conj Hspin Hh) Hstar).
 Qed.
-Theorem spin_obs_iff : ltac2:(TCodec.tc2 tcn__DivergeSim "Q5'J'QC'R9r2r1%3221'='8'S;yR0%211%411&QK%11:(0%115%:3531'5'QE%211&?&Q;vS9(Q:r5r4%3221%6351G(7%11;%H3;J1%;241pW0=1p0A1p0M1pV2Q21pV6Q41").
+Theorem spin_obs_iff : forall ms model,
+to_spin ms model -> m_halted model = None ->
+forall tr, obs_trace segs (mkCfg ms model) tr <-> tr = [].
 Proof.
 intros ms model Hspin Hh.
 exact (silent_loop_obs_iff spinning (mkCfg ms model)
 spinning_silent_loop (conj Hspin Hh)).
 Qed.
-Theorem spin_no_error_run : ltac2:(TCodec.tc2 tcn__DivergeSim "N'J'QC'R9r2r1%3221'='8'S;yR0%211%411&QK%11:(0%115%:3531&@&Q<vS9(Q:r4r3%3221%6251%811p0:1p0F1pV2K1pV6M1").
+Theorem spin_no_error_run : forall ms model,
+to_spin ms model -> m_halted model = None ->
+~ reaches_error segs (mkCfg ms model).
 Proof.
 intros ms model Hspin Hh.
 exact (silent_loop_no_error spinning (mkCfg ms model)
 spinning_silent_loop (conj Hspin Hh)).
 Qed.
-Theorem spin_no_sstep_error : ltac2:(TCodec.tc2 tcn__DivergeSim "Q3'J'QC'R9r2r1%3221'='8'S;yR0%211%411&QK%11:(0%115%:3531'5'QE%211&@'Q?vS9(Q:r5r4%3221(Q1%7462H1%911pU>;1p0?1p0K1pV2Q01pV6Q21").
+Theorem spin_no_sstep_error : forall ms model,
+to_spin ms model -> m_halted model = None ->
+forall evs, ~ sstep segs (mkCfg ms model) evs SError.
 Proof.
 intros ms model Hspin Hh evs Herr.
 destruct (silent_loop_sstep spinning (mkCfg ms model) evs SError
@@ -245,21 +320,30 @@ spinning_silent_loop (conj Hspin Hh) Herr)
 as (_ & c' & Heq & _).
 discriminate Heq.
 Qed.
-Theorem spin_no_unmodeled : ltac2:(TCodec.tc2 tcn__DivergeSim "N'J'QC'R9r2r1%3221'='8'S;yR0%211%411&QK%11:(0%115%:3531&@&Q=vS9(Q:r4r3%3221%6251%811p0:1p0F1pV2K1pV6M1").
+Theorem spin_no_unmodeled : forall ms model,
+to_spin ms model -> m_halted model = None ->
+~ reaches_unmodeled segs (mkCfg ms model).
 Proof.
 intros ms model Hspin Hh.
 exact (silent_loop_no_unmodeled spinning (mkCfg ms model)
 spinning_silent_loop (conj Hspin Hh)).
 Qed.
-Theorem spin_not_all_errors : ltac2:(TCodec.tc2 tcn__DivergeSim "N'J'QC'R9r2r1%3221'='8'S;yR0%211%411&QK%11:(0%115%:3531&@'Q3vS9(Q:r4r3%3221%6251%811p0:1p0F1pV2K1pV6M1").
+Theorem spin_not_all_errors : forall ms model,
+to_spin ms model -> m_halted model = None ->
+~ all_traces_error segs (mkCfg ms model).
 Proof.
 intros ms model Hspin Hh.
 exact (silent_loop_not_all_errors spinning (mkCfg ms model)
 spinning_silent_loop (conj Hspin Hh)).
 Qed.
-Lemma obs_trace_of_star : ltac2:(TCodec.tc2 tcn__DivergeSim "E'Q6'5'QE%211'Q@vS9r4r3r2%544321&Q8%13935&Q;r6%23917p041p071pW0>1pU4B1pU>@1pU8D1").
+Lemma obs_trace_of_star : forall c0 evs c tr,
+star segs c0 evs c -> is_prefix tr evs -> obs_trace segs c0 tr.
 Proof. intros c0 evs c tr Hstar Hpre. exists evs, c. auto. Qed.
-Theorem spin_reach_obs : ltac2:(TCodec.tc2 tcn__DivergeSim "QF'Q6'5'QE%211'J'QC'Q@vS9r4r3(Q:r2r1%3221%847651'R9%1275'='8'S;yR0%211%411&QK%11?(0%115%:3531'<&Q8r7%23MC1&Q;r9%23K1Gp041pW0Q11r6%L281%Q14Q01LK&2%13Q78Q0%I3Q719p041pU6Q<1pW0Q:1%B2:1p0D1p0Q01p0Q31pV2Q=1pV6Q?1pT8QA1pU8QE1").
+Theorem spin_reach_obs : forall c0 P ms model,
+star segs c0 P (mkCfg ms model) ->
+to_spin ms model -> m_halted model = None ->
+(forall tr, is_prefix tr P -> obs_trace segs c0 tr) /\
+(forall tr c', star segs (mkCfg ms model) tr c' -> P ++ tr = P).
 Proof.
 intros c0 P ms model Hstar Hspin Hh. split.
 - intros tr Hpre. exact (obs_trace_of_star c0 P _ tr Hstar Hpre).
@@ -281,7 +365,8 @@ end
 | None => false
 end
 end.
-Lemma is_self_jump_to_spin : ltac2:(TCodec.tc2 tcn__DivergeSim "?'J'QC'='3&R5r2%211(;%63521'R9r3%2216p041pV2<1pV6>1").
+Lemma is_self_jump_to_spin : forall ms model,
+is_self_jump ms = true -> to_spin ms model.
 Proof.
 intros ms model H. unfold is_self_jump in H.
 destruct (ms_svc_pending ms) eqn:Hsvc; [discriminate|].
@@ -308,7 +393,8 @@ match mi_account_step segs ms model with
 end
 end
 end.
-Lemma spin_c_to_spin : ltac2:(TCodec.tc2 tcn__DivergeSim "B'6'J'QC'='3&R7r3r2r1%43321(;%83721'R9%1276p031pV2=1pV6?1pUBA1").
+Lemma spin_c_to_spin : forall fuel ms model,
+spin_c fuel ms model = true -> to_spin ms model.
 Proof.
 induction fuel as [|fuel IH]; intros ms model H; cbn in H;
 [discriminate|].
@@ -342,7 +428,8 @@ Hypothesis Hg_obs : forall tr, obs_trace segs c_g tr <-> is_prefix tr T.
 Hypothesis Hg_noerr : ~ reaches_error segs c_g.
 Hypothesis Hloop : silent_loop segs P.
 Hypothesis HP_r : P c_r.
-Theorem spin_branch_toy_obs_iff : ltac2:(TCodec.tc2 tcn__DivergeSim "A'5'QE%211&?&Q;vS9vRCr1%43321&Q8&2vRGvR>%33<21%53=71%<271pW0>1").
+Theorem spin_branch_toy_obs_iff : forall tr,
+obs_trace segs c0 tr <-> is_prefix tr (evs_g ++ T).
 Proof.
 intro tr. split.
 - intros (tr' & cend & Hstar & Hpre).
@@ -369,7 +456,7 @@ exists (evs_g ++ tr''), cend. split.
 + eapply is_prefix_trans; [exact Hpre|].
 apply is_prefix_app_mono. exact HpreT.
 Qed.
-Theorem spin_branch_toy_no_error : ltac2:(TCodec.tc2 tcn__DivergeSim "6&@&Q<vS9vRC%3221%511").
+Theorem spin_branch_toy_no_error : ~ reaches_error segs c0.
 Proof.
 intros (tr & cerr & evs & Hstar & Herr).
 destruct (star_case segs c0 tr cerr Hstar)
@@ -388,7 +475,8 @@ Definition spin_seg : Segment := {|
 seg_base := 0x10000;
 seg_size := 4;
 seg_perms := "r-x"%string;
-seg_bytes := ["6f000000"%pstring]
+seg_bytes := ["6f000000"%pstring];
+seg_kind  := SegLoader
 |}.
 Definition spin_segs : list Segment := [spin_seg].
 Definition spin_img : Image :=
@@ -396,9 +484,14 @@ mkImage spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6).
 Example j_dot_decodes :
 decode_any (Z_to_bv 32 0x6f) = Some (Jal 0 (Z_to_bv 21 0), 4%Z).
 Proof. div_vm_refl. Qed.
-Lemma spin_img_to_spin : ltac2:(TCodec.tc2 tcn__DivergeSim "Q9'S;yR0%211'QB'B'QD'R:&R4&Q7yRPP0(DyRPR0yQHy6%43321r6r3&QFr1%211&QG%113&QI%115&QH%117%B9CA<;:7531&QJ&Q>%11Fr5r4r2%66432B1?%L3K81pUHN1pUJQ01pV@Q21pUNQ41pU2Q51pVFQ61").
+Lemma spin_img_to_spin : forall vt sp brk0 mbase (rnd : EntryDraw) lim inp,
+to_spin (spin_segs ++ vt)
+(init_machine_state (spin_segs ++ vt) 0x10000 (mkPhdrInfo 0x10040 56 6)
+sp mbase rnd inp)
+(with_vdso (vdso_run_init (ed_vdso rnd))
+(init_model (segments_reserved (spin_segs ++ vt)) brk0 mbase sp lim inp)).
 Proof.
-intros sp brk0 mbase rnd lim inp.
+intros vt sp brk0 mbase rnd lim inp.
 eapply ts_spin_of_step_j with (w := Z_to_bv 32 0x6f).
 - reflexivity.
 - div_vm_refl.
@@ -434,14 +527,17 @@ apply spin_not_all_errors.
 - apply spin_img_to_spin.
 - reflexivity.
 Qed.
+Definition spin_exec_input : ProcInput :=
+mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
+net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48.
 Example spin_img_to_spin_by_execution :
 to_spin spin_segs
 (init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6)
-(Z_to_bv 64 65536) (mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0))
-[[]] [] (Z_to_bv 64 1000) hwcap_rv64gc)
+(Z_to_bv 64 65536) (Z_to_bv 64 0x7fff7f800000)
+(mkDraw (Z_to_bv 128 0) (Z_to_bv 64 69632) vdso_keeps_all)
+spin_exec_input)
 (init_model (segments_reserved spin_segs) (Z_to_bv 64 1048576)
 (Z_to_bv 64 0x7fff7f800000) (Z_to_bv 64 65536) 0x40000000%Z
-(mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
-net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48)).
+spin_exec_input).
 Proof. prove_to_spin 1%nat. Qed.
 End SelfJumpImage.

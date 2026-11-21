@@ -4,13 +4,14 @@
    a Theorem Labs lane's audit row PS-10 (premise-check-libreac-fuzz_decode.md) and the proof-by-computation form of
    lib/A/AD2l.v GrantB_syms and lib/A/ACej.v memZL_In: five facts about decode A's start-up record GrantB
    (lib/A/AD2l.v:16), each proved by vm_compute at the record. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* DecodeACrtFacts: the instance facts that lib/A/DecodeClose.v takes as the hypotheses HB_CRT_CELLS,
    HB_RO_RD_UNOWNED, HB_CRT_UCTX, HB_CRT_UFIX and HB_LLVMF_UTRACES, stated at decode A's record:
    - B := GrantB (lib/A/AD2l.v:16): as_const := Tfib_const, as_owned_static := Tfib_owned_static and
-     as_zero_shadow := Tfib_zero_shadow (lib/A/AF0m.v), as_universe := Tfib_universe (lib/A/ACej.v:103),
+     as_zero_shadow := Tfib_zero_shadow (lib/A/AF0m.v), as_universe := Tfib_universe (lib/A/ACej.v:104),
      as_code := Tfib_code (lib/A/AF0l.v:10, pc_malloc_ra0 0x52204, pc_free_ra0 0x520a4);
    - RA_LLVMF := 0x7ff60, the return address of target_run's `jal LLVMFuzzerTestOneInput` (0x7ff5c), the value of
-     lib/A/ACfn.v:25 RA_LLVMF (lib/A/ACej.v:68-73 shows the listing line).
+     lib/A/ACfn.v:25 RA_LLVMF (lib/A/ACej.v:69-74 shows the listing line).
    Each Lemma has the form of its hypothesis at B := GrantB and RA_LLVMF := 0x7ff60. *)
 From Stdlib Require Import ZArith Arith List Bool Lia.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YG00 YG01 YG0f YG0n.

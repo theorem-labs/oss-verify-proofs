@@ -9,6 +9,7 @@
    lr.w/sc.w on the lock word A+4 (16) store 0; with waiters 0 no futex wake is made; a0 = 0; the frame is
    restored and the function returns.  Every branch on the path is decided from the literals of the pre. *)
 (* Modified by Theorem Labs, 2026-10-29: from lib/A/RT_pthread_mutex_unlock.v, as the module RT_pthread_mutex_unlock_x: cut to the proof of rt_pthread_mutex_unlock (the helper lemmas are used by Import) and restated over a generic allocator invariant ARx under lib/Rt/RTx.v's rt_laws (rt_pthread_mutex_unlock_x); the corollaries rt_pthread_mutex_unlock_of_x (rt_pthread_mutex_unlock's statement, unchanged) and rt_pthread_mutex_unlock_cf added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/RT_pthread_mutex_unlock.v's runtime contract rt_pthread_mutex_unlock
    restated over a generic allocator invariant ARx (ghost head set Hp threaded) under the five-law record rt_laws of
    lib/Rt/RTx.v (a Theorem Labs lane's, the one record for both images: rtl_frame, rtl_stack, rtl_const, rtl_layout,
@@ -16,7 +17,7 @@
    W_sites_x.v's aunlock_realizes_x; the proof of rt_pthread_mutex_unlock_x is RT_pthread_mutex_unlock.v's with AR ->
    ARx (am_layout of proj1 HAR -> rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR
    lemmas -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
+   Measured (lines at a working branch): the original reads AR through
    al_frame (:187), al_stack (:192) and the ARm field am_layout (:123), the layout law here; a Theorem Labs lane's three-law
    note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not count the ARm fields, hence the record's rtl_layout and rtl_const_cells.
    At the end: rt_pthread_mutex_unlock_cf, the twin at ARx := ARcf with the laws from AR_laws_cf (RTx.rt_laws_cf).

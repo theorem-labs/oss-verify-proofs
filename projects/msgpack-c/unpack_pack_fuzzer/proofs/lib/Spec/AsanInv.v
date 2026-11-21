@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-ledger bound admits the launch's vDSO/vvar pair above KHIGH; munmap's model is mmap_fixed_destroyed_next, which cuts both lists with maps_subtract, and maps_subtract_as_remove brings an exact unmap back to map_remove). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs.
@@ -181,7 +182,9 @@ Qed.
 Definition AMI (RESV : list (Z * Z)) (ATOP : Z) (ch : list (Z * Z)) (st : astate) (mo : Model) : Prop :=
   m_vm_materialized mo = []
   /\ vm_limit (m_vmmaps mo) = LIMIT
-  /\ Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (vm_reserved (m_vmmaps mo))
+  (* LPS 727298f3: the reserved ledger ends with the launch's vdso/vvar pair, which sits below the mmap base,
+     above [KHIGH]; every other reservation (the image's) ends at or below [RES_HI] *)
+  /\ Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI \/ KHIGH <= bv_unsigned (fst e)) (vm_reserved (m_vmmaps mo))
   /\ zlen (vm_reserved (m_vmmaps mo)) <= LEN0 /\ live_bytes (vm_reserved (m_vmmaps mo)) <= RTOT0
   /\ Forall (entry_ok ATOP) (vm_maps (m_vmmaps mo))
   /\ (ivs_wf (vm_noaccess (m_vmmaps mo)) /\ noacc_sep (vm_noaccess (m_vmmaps mo)))
@@ -203,11 +206,9 @@ Definition fixed_model (mo : Model) (flags addr nZ : Z) : Model :=
      (with_vmmaps (mmap_fixed_rw_next (m_vmmaps mo) (Z_to_bv 64 addr) (Z_to_bv 64 nZ)) mo).
 
 Definition munmap_model (mo : Model) (addr nZ : Z) : Model :=
+  (* LPS 08b1429: the unmap rebuilds both lists with [maps_subtract] ([Mmap.mmap_fixed_destroyed_next]). *)
   with_mmap_destroyed (Z_to_bv 64 addr) (Z_to_bv 64 nZ)
-     (mkVmMapsFull (vm_reserved (m_vmmaps mo)) (map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr))
-        (maps_subtract (vm_noaccess (m_vmmaps mo)) addr (addr + nZ))
-        (vm_start_brk (m_vmmaps mo)) (vm_brk (m_vmmaps mo)) (vm_limit (m_vmmaps mo))
-        (vm_mmap_base (m_vmmaps mo)) (vm_init_sp (m_vmmaps mo))) mo.
+     (mmap_fixed_destroyed_next (m_vmmaps mo) (Z_to_bv 64 addr) (Z_to_bv 64 nZ)) mo.
 
 Definition CHX (pc : list achunk) (pb : list abatch) (st : astate) : list (Z * Z) := CH pc pb st ++ emb_ent st.
 
@@ -582,6 +583,59 @@ Proof.
   apply (Forall_incl _ _ _ (incl_filter f l)) || (rewrite Forall_forall in *; intros q Hq; apply Hf; apply (incl_filter f l); exact Hq).
 Qed.
 
+(* LPS 08b1429: munmap rebuilds [vm_maps] with [maps_subtract]; over a separated ledger whose
+   only entry at [b] is exactly [(b, s)], that is the old [map_remove]. *)
+(* The size bound is STRICT.  [iv_subtract] (75d69e00 State.v:6419-6426) reads the
+   entry's size back as [bv_unsigned sz], and here [sz] is [Z_to_bv 64 s]; the
+   right-remnant test is [b + s <? b + bv_unsigned (Z_to_bv 64 s)].  Only
+   [unsigned_lit] (lib/ALib/MState.v:102) collapses that, and it wants
+   [0 <= s < 2^64], which [b + s <= 2^64] does not give when [b] is 0 — the
+   [rewrite !unsigned_lit by lia] below then stops after the [b] instance and
+   leaves the test stuck, which is exactly the reported failure of [exact IH'].
+   The non-strict form was also FALSE: at [b = 0], [s = 2^64], [went (b, s)] is
+   [(0, 0)], every hypothesis holds for [l = [(a, sz)]] with [a <> 0], and the
+   left side is [[]] while [map_remove] keeps the entry.  All three callers
+   (this file:645, lib/AsanW/ATsafeAlloc.v:207 and :1094) already discharge the
+   strict form: the two in [ATsafeAlloc] have [MOK_munmap]'s own [a + n < 2^64]
+   hypothesis, and [AMI_munmap] has [mb + ms <= ATOP <= ATOP_MAX]. *)
+Lemma maps_subtract_as_remove : forall l (b s : Z),
+  0 <= b -> 0 < s -> b + s < 2^64 ->
+  (forall e, In e l -> 0 < bv_unsigned (snd e)) ->
+  (forall e, In e l -> fst e = Z_to_bv 64 b -> e = went (b, s)) ->
+  (forall e, In e l -> fst e <> Z_to_bv 64 b -> wsep (went (b, s)) e) ->
+  maps_subtract l b (b + s) = map_remove l (Z_to_bv 64 b).
+Proof.
+  induction l as [|[a sz] l IH]; intros b s Hb Hs Hbs Hpos Heq Hsep; [reflexivity|].
+  cbn [maps_subtract]. unfold map_remove. cbn [List.filter fst]. fold (map_remove l (Z_to_bv 64 b)).
+  assert (IH' : maps_subtract l b (b + s) = map_remove l (Z_to_bv 64 b)).
+  { apply IH; auto; intros e He; [apply Hpos | apply Heq | apply Hsep]; right; exact He. }
+  pose proof (Hpos (a, sz) (or_introl eq_refl)) as Psz. cbn [fst snd] in Psz.
+  pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 sz) as Rs.
+  unfold bv_modulus in Ra, Rs. cbn in Ra, Rs.
+  destruct (bv_eqb a (Z_to_bv 64 b)) eqn:E.
+  - apply bv_eqb_eq in E. subst a.
+    pose proof (Heq _ (or_introl eq_refl) eq_refl) as He. unfold went in He. cbn [fst snd] in He.
+    injection He as Hsz. subst sz. cbn [negb].
+    unfold iv_subtract. cbv zeta. rewrite !unsigned_lit by lia.
+    replace (b <? b)%Z with false by (symmetry; apply Z.ltb_ge; lia).
+    replace (b + s <? b + s)%Z with false by (symmetry; apply Z.ltb_ge; lia).
+    cbn [app]. exact IH'.
+  - cbn [negb]. assert (Hne : a <> Z_to_bv 64 b) by (intros ->; unfold bv_eqb in E; rewrite Z.eqb_refl in E; discriminate).
+    pose proof (Hsep (a, sz) (or_introl eq_refl) Hne) as Hw. unfold wsep, went in Hw. cbn [fst snd] in Hw.
+    rewrite !unsigned_lit in Hw by lia.
+    unfold iv_subtract. cbv zeta. rewrite IH'.
+    destruct Hw as [Hw|Hw].
+    + replace (bv_unsigned a <? b)%Z with false by (symmetry; apply Z.ltb_ge; lia).
+      replace (b + s <? bv_unsigned a + bv_unsigned sz)%Z with true by (symmetry; apply Z.ltb_lt; lia).
+      cbn [app]. f_equal. f_equal.
+      * rewrite Z.max_l by lia. apply Z_to_bv_bv_unsigned.
+      * rewrite Z.max_l by lia. replace (bv_unsigned a + bv_unsigned sz - bv_unsigned a) with (bv_unsigned sz) by lia.
+        apply Z_to_bv_bv_unsigned.
+    + replace (bv_unsigned a <? b)%Z with true by (symmetry; apply Z.ltb_lt; lia).
+      replace (b + s <? bv_unsigned a + bv_unsigned sz)%Z with false by (symmetry; apply Z.ltb_ge; lia).
+      cbn [app]. f_equal. f_equal. rewrite Z.min_l by lia. apply Z_to_bv_bv_unsigned.
+Qed.
+
 Lemma AMI_munmap : forall ch1 ch2 st st' mo mb ms,
   AMI' (ch1 ++ (mb, ms) :: ch2) st mo -> 0 < mb -> 0 < ms -> mb + ms <= ATOP ->
   a_space_beg st' = a_space_beg st -> a_ptr_array st' = a_ptr_array st -> commit_bytes st <= commit_bytes st' ->
@@ -601,7 +655,18 @@ Proof.
     assert (HF : Forall (fun e : word * word => 0 < bv_unsigned (snd e)) (vm_maps (m_vmmaps mo))).
     { eapply Forall_impl; [|exact M6]. intros e (He & _). exact He. }
     pose proof (Permutation_Forall HP2 HF) as HF2. apply Forall_cons_iff in HF2 as [_ HF2]. exact HF2. }
-  unfold munmap_model, with_mmap_destroyed. rewrite !unsigned_lit by lia.
+  assert (HMS : maps_subtract (vm_maps (m_vmmaps mo)) mb (mb + ms) = map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 mb)).
+  { assert (HF : forall e, In e (vm_maps (m_vmmaps mo)) -> 0 < bv_unsigned (snd e)).
+    { intros e He. pose proof (proj1 (Forall_forall _ _) M6 e He) as (E1 & _). exact E1. }
+    apply maps_subtract_as_remove; [lia | lia | lia | exact HF | |].
+    - intros e He Hb. apply (Permutation_in _ HP2) in He. destruct He as [He|He]; [exact (eq_sym He)|].
+      exfalso. pose proof (proj1 (Forall_forall _ _) Hfar e He) as Hw.
+      pose proof (HF e (Permutation_in _ (Permutation_sym HP2) (or_intror He))) as He1.
+      unfold wsep, went in Hw. cbn [fst snd] in Hw. rewrite Hb, !unsigned_lit in Hw by lia. lia.
+    - intros e He Hb. apply (Permutation_in _ HP2) in He. destruct He as [He|He]; [subst e; exfalso; apply Hb; reflexivity|].
+      exact (proj1 (Forall_forall _ _) Hfar e He). }
+  unfold munmap_model, with_mmap_destroyed, mmap_fixed_destroyed_next. rewrite !unsigned_lit by lia.
+  rewrite HMS.
   unfold AMI. model_proj. cbn [vm_reserved vm_maps vm_noaccess vm_limit vm_start_brk vm_brk vm_mmap_base vm_init_sp alloc_top].
   rewrite M1. cbn [List.filter].
   repeat match goal with |- _ /\ _ => split end; try assumption.

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_soundA gains nsA_rob, RomBase.sys_rob at every node, which node_srealizes passes to srz_node; csteps_srealizes discharges it by sys_rob_instr; requires RomBase). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import PropExec MState Mem Exec Cfg ITree.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import AcctCore ExecF.
-From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require ShapeAlg SpinAlg.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require ShapeAlg SpinAlg RomBase.
 Import ListNotations.
 Import Exc.
 Open Scope bv_scope.
@@ -95,7 +96,12 @@ m_halted mo' = Some code /\
 exists mo_', sstep_cfg segs ACFG (mkCfg ms mo_) [ExitEv code (m_fs mo')] (SNext (mkCfg ms mo_')) /\ m_halted mo_' = Some code;
 nsA_progress : forall n RNG A ms mo mo_, at_node n RNG ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
 footprint_ok (m_vm_lazy mo) A RNG -> mrel A mo mo_ -> ainv (m_vm_lazy mo) A NMAX mo_ ->
-(exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo')
+      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo');
+  (* LPS 727298f3: the node's system call reads no byte a larger read-only backing adds
+     ([RomBase.sys_rob]), so the walk lifts to the run's segments ([RomStable.srun_init]) *)
+  nsA_rob : forall n RNG A ms mo mo_,
+      at_node n RNG ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
+      mrel A mo mo_ -> RomBase.sys_rob segs (mkCfg ms mo_)
 }.
 Fixpoint implF {R} (RNG : footprint) (t : itree node R)
 (Q : R -> footprint -> machine_state -> Prop) (ms : machine_state) : Prop :=
@@ -201,7 +207,8 @@ intros ms mo ms' mo' T CS.
 remember (ms, mo) as c eqn:Ec. remember (ms', mo') as c' eqn:Ec'.
 revert ms mo ms' mo' Ec Ec'. induction CS as [c|c c1 c2 ST CS IH]; intros ms mo ms' mo' -> E2 Hs.
 - inversion E2; subst. exact Hs.
-- destruct c1 as [ms1 mo1]. eapply SpinAlg.srz_silent1; [apply cstep_node_ok; exact ST|].
+  - destruct c1 as [ms1 mo1]. eapply SpinAlg.srz_silent1;
+      [apply cstep_node_ok; exact ST | apply RomBase.sys_rob_instr; exact (proj1 (proj2 ST)) |].
 eapply IH; eauto.
 Qed.
 Section NodeCase.
@@ -319,11 +326,11 @@ destruct (nsA_progress NS n RNG A ms1 mo mo1_ Hat Hh Hinv NSF FOK MR INV1) as [(
 - destruct (nsA_sound NS n RNG A ms1 mo mo1_ rsp mo' evs Hat Hh Hinv NSF FOK MR INV1 Hst) as (_ & _ & mo_' & Hss & _).
 eapply SpinAlg.srz_conseq; [| apply node_shape_eq].
 apply (SpinAlg.srz_node segs c1 succ s_evs s_nx s_T (exist _ (mkCfg (nret ms1 rsp) mo_', evs) Hss)
-succ_node_ok succ_srealizes).
+               succ_node_ok (nsA_rob NS n RNG A ms1 mo mo1_ Hat Hh Hinv NSF MR) succ_srealizes).
 - destruct (nsA_exit NS n RNG A ms1 mo mo1_ code mo' Hat Hh Hinv NSF MR Hex) as (_ & mo_' & Hss & _).
 eapply SpinAlg.srz_conseq; [| apply node_shape_eq].
 apply (SpinAlg.srz_node segs c1 succ s_evs s_nx s_T (exist _ (mkCfg ms1 mo_', [ExitEv code (m_fs mo')]) Hss)
-succ_node_ok succ_srealizes).
+               succ_node_ok (nsA_rob NS n RNG A ms1 mo mo1_ Hat Hh Hinv NSF MR) succ_srealizes).
 Qed.
 End NodeCase.
 #[using="Type"] Theorem implF_srealizes : node_soundA -> forall {R} (t : itree node R) RNG A Q ms mo mo_,

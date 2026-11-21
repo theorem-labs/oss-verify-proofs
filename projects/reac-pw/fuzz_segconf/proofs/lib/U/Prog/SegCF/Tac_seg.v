@@ -1,5 +1,5 @@
 (* Cut-free (agreement) copy of lib/U/Prog/Seg/Tac_seg.v over U/Prog/SlotInvCF.v (SR := SRcf), as reac-pw/fuzz_pin's
-   U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v (commit a2a7540da98): the same text with
+   U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v: the same text with
    SlotInvCF imported after SlotFR / SlotInv, Seg -> SegCF for the slot's tactic files, frame_facts_ubsan ->
    SlotInvCF.frame_facts_cf and the allocator contracts in their cut-free forms (frame_allocator_cf,
    malloc_contract_cfg, free_contract_cf, calloc_contract_cfg).
@@ -11,7 +11,7 @@
      block list, the cut predicate Pre) at an FP state with frm = 0 (the cut's: CUTST carries it) the run on the
      normalized memory reaches pc' at some FP state with frm = 0,
      writes only seg_W g Wb, keeps writability, keeps sp, gp, tp, and every state related to its end state satisfies
-     Pst (libreac/fuzz_ctrl's sl_seg_fp premise, origin/ossv/recipes 25e3d17bdb50 Prog/Seg/Tac_slot.v, with the
+     Pst (libreac/fuzz_ctrl's sl_seg_fp premise, Prog/Seg/Tac_slot.v, with the
      written blocks and longl in the write set);
    - b1_seg_hb: such a run closes the cut at pc' with the same hb (FR across it by Tac_b1.b1_fr_hb), so H(cut at pc')
      gives H of the start state. This is reac-pw/fuzz_role's Tac_slot.sl_seg_fp with b1_fr_hb in place of sl_fr_run;

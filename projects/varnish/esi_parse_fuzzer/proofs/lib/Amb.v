@@ -1,4 +1,5 @@
 (* This file states or restates instruction words of the task's compiled program (third-party object code: the upstream library at its pinned commit, the C library, the sanitizer runtime and the task authors' wrapper) for use in the proofs - see NOTICE. No Anthropic licence header is applied to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ambient record gains the kernel build, the exec file name, the channel reader and the SIGPIPE settings; mkModelC, mkProcInputC and amb_of fill the new model and input fields, the model with the launch's vDSO run, and the Vdso import is added). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
@@ -1999,6 +2000,8 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
 (* [comment removed for export] *)
+From LinuxProcessSemantics.LinuxProcessSem Require Import Vdso.
+
 Class Amb : Type := mkAmb {
   a_uid : word;
   a_gid : word;
@@ -2008,7 +2011,13 @@ Class Amb : Type := mkAmb {
   a_sigmask : word;
   a_hwcap : word;
   a_va : VaSize;   (* [comment removed for export] *)
-  a_urandom : InputStream   (* [comment removed for export] *)
+  a_urandom : InputStream;   (* [comment removed for export] *)
+  (* 08b1429: the kernel build, AT_EXECFN and the channel/SIGPIPE state come from the input too *)
+  a_kernel : KernelBuild;
+  a_execfn : list byte;
+  a_reader : bool;
+  a_sigdfl : bool;
+  a_sigterm : bool
 }.
 
 (* [comment removed for export] *)
@@ -2019,10 +2028,11 @@ Definition amb_creds {AMB : Amb} : Creds :=
 Definition mkModelC {AMB : Amb} (fds : list (word * FdEntry)) (vm : VmMaps)
     (stdin : InputStream) (fs : Fs.Fs) (halted : option word)
     (tid : option word) (rlim : option (list byte)) : Model :=
-  mkModelOf (mkFdState fds []) (mkVmState vm [] [])
+  mkModelOf (mkFdState fds []) (mkVmState vm [] [] a_kernel (vdso_run_init vdso_draw_keep))
             (mkIoState stdin a_urandom a_net (Z_to_bv 64 0)) (mkFsState fs)
             (mkProcState halted tid amb_creds false a_sigmask
-                         false None false false false false [])
+                         false None false false false false [] false a_reader
+                         (sigpipe_action_at_exec a_sigdfl) a_sigterm)
             (mkLimState rlim a_nofile)
             (mkTimeState (Z_to_bv 64 0)).
 
@@ -2030,12 +2040,14 @@ Definition mkModelC {AMB : Amb} (fds : list (word * FdEntry)) (vm : VmMaps)
 Definition mkProcInputC {AMB : Amb} (argv envp : list (list byte)) (fs : Fs.Fs)
     (stdin : InputStream) : ProcInput :=
   mkProcInput_full argv envp fs stdin a_uid a_gid a_groups a_net a_nofile a_sigmask a_hwcap false a_va
-                   a_urandom [].
+                   a_urandom [] a_kernel a_execfn a_reader a_sigdfl a_sigterm.
 
 (* [comment removed for export] *)
 Definition amb_of (inp : ProcInput) : Amb :=
   mkAmb (in_uid inp) (in_gid inp) (in_groups inp) (in_net inp)
-        (in_nofile inp) (in_sigmask inp) (in_hwcap inp) (in_va_size inp) (in_urandom inp).
+        (in_nofile inp) (in_sigmask inp) (in_hwcap inp) (in_va_size inp) (in_urandom inp)
+        (in_kernel inp) (in_execfn inp) (in_channel_reader inp) (in_sigpipe_default inp)
+        (in_sigpipe_terminal inp).
 
 (* [comment removed for export] *)
 Lemma init_model_C_of : forall reserved brk0 mbase sp lim inp,
@@ -2043,14 +2055,14 @@ Lemma init_model_C_of : forall reserved brk0 mbase sp lim inp,
   init_model reserved brk0 mbase sp lim
     (@mkProcInputC (amb_of inp) (in_argv inp) (in_envp inp) (in_fs inp) (in_stdin inp))
   = init_model reserved brk0 mbase sp lim inp.
-Proof. intros r b mb sp lim [av ev fs si u g gs n nf sm hw ab va ur tm] H. cbn in H. subst ab. reflexivity. Qed.
+Proof. intros r b mb sp lim [av ev fs si u g gs n nf sm hw ab va ur tm kb ex cr sd st] H. cbn in H. subst ab. reflexivity. Qed.
 
 Lemma init_config_C_of : forall segs pc ph sp brk mbase rdraw lim inp,
   in_abort_terminal inp = false ->
   init_config segs pc ph sp brk mbase rdraw lim
     (@mkProcInputC (amb_of inp) (in_argv inp) (in_envp inp) (in_fs inp) (in_stdin inp))
   = init_config segs pc ph sp brk mbase rdraw lim inp.
-Proof. intros segs pc ph sp brk mbase rdraw lim [av ev fs si u g gs n nf sm hw ab va ur tm] H. cbn in H. subst ab. reflexivity. Qed.
+Proof. intros segs pc ph sp brk mbase rdraw lim [av ev fs si u g gs n nf sm hw ab va ur tm kb ex cr sd st] H. cbn in H. subst ab. reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

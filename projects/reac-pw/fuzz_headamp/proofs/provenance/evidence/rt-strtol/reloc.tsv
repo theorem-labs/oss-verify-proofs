@@ -1,4 +1,4 @@
-# alreloc a5c53bb2bed4 (sha256 a5c53bb2bed4ad039a600ecda538d6d0a1a01ccf4d62f8da9a09031a277fa17b): plugin-hostd/fuzz_command lib/A at 2d2ff01bb6f (fuzz_command.asan, pin c0661b96b5bd, symbols 68db792d5fa7) -> reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pin f3e0669d2819, symbols b5f352154c54)
+# alreloc a5c53bb2bed4 (sha256 a5c53bb2bed4ad039a600ecda538d6d0a1a01ccf4d62f8da9a09031a277fa17b): plugin-hostd/fuzz_command lib/A (fuzz_command.asan, pin c0661b96b5bd, symbols 68db792d5fa7) -> reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pin f3e0669d2819, symbols b5f352154c54)
 # one row per numeral the tool reported; final = the value in the written file; check: .got cells against this image's own .got entry, class-5 constants byte-identical
 file:line	donor	alreloc	final	rule	donor image	unit image	check	decision
 A/Bz/A/I_consts.v:17	0x5a1ac	0x54888	0x54888	FUNC entry	__asan_region_is_poisoned	__asan_region_is_poisoned		alreloc

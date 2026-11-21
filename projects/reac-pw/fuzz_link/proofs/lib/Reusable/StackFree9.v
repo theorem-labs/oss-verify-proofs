@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the release walk of __asan_stack_free_8, ported from
-   proofs/cgif/cgif_rgb_fuzzer/lib/YF3h.v:113 tfx_stack_free_7 (instances YF9b.v:35 / YF9w.v:35) at c8557374ad2e, over
+   proofs/cgif/cgif_rgb_fuzzer/lib/YF3h.v:113 tfx_stack_free_7 (instances YF9b.v:35 / YF9w.v:35), over
    the shared lib/Reusable kernel and the contract lib/Reusable/StackFreeDef.v (astack_free_realizes, a Theorem Labs lane).
 
    This file is IMAGE-FREE: every address, the code table and the two symbolic run results are Section variables, so
@@ -19,6 +19,7 @@
    cell (shadow offset, kHighMemEnd, kMidMemBeg / kMidMemEnd, the can-poison byte, REAL(memset)) are read only inside
    the two summarised callees - free_8's own 20 words read no cell - so this file takes no cell hypothesis and no
    symbol-record hypothesis. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Class 9: the image-free walk of frame_release_9 (side stack for frames, class 9), `astack_free_9_at`, the class-8
    walk above with the class constants changed. frame_release_9's 20 words differ from frame_release_8's only at +0x18
    (`lui a0, 8`: the flag pointer is the frame's last word, frame + 0x8000 - 8) and in its two pc-relative words

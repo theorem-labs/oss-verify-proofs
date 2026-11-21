@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMainL.v at ad0e022f7af7 for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMainL.v for reac-pw/fuzz_rate
    image A: role's two middle contracts and pieces become rate's three (lib/A/RtPgCSpec.v rate_build_contract,
    rate_check_contract, rate_csv_contract over lib/A/RtPgSeg.v's pieces); the build's latch has a third entry (from the
    Int-7 piece), the checks' tail becomes the asked[] set-up, the decide loop (closed by its two turns) and its tail,

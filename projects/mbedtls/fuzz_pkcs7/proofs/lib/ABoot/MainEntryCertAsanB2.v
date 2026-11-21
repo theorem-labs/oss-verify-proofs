@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one certificate per value of the run's CONFIG_RSEQ flag, of the renumbered plan me_B2_planR, from and against hand-off states computed from the run, and me_B2_cert at the flag's boolean). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan AsanCertDefs PlanCut StartupHSAsan MainEntryPlanAsan MainEntryHSAsan MainEntryHScutAsan MainEntryPiecesAsan.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan AsanCertDefs PlanCut MainEntryPiecesAsan StartupRegenAsan MainEntryRegenAsan.
 Import ListNotations. Import AX2. Import APC. Import AP.
 Open Scope Z_scope.
 From Ltac2 Require Import Ltac2 Constr Std Control.
@@ -16,5 +17,12 @@ Ltac2 cert_refl (rhs : constr) :=
 
 Definition me_B2_shape : shape := SHole 1021.
 
-Lemma me_B2_cert : s2_check NX1 IT1 me_B2_tab HS_s2c_1020 me_B2_plan = COk me_B2_shape.
+(* LPS 727298f3: [rz] is [s2_check]'s second argument (AsanCertDefs.v); one lemma per value, from
+   and against the states MainEntryRegenAsan.v computes from the run at that value (round C2 of
+   this port's probe record read this shape at both values). *)
+Lemma me_B2_cert0 : s2_check NX1 0 IT1 (me_B2_tab 0) (HSm_1020 0) me_B2_planR = COk me_B2_shape.
 Proof. cert_refl constr:(COk me_B2_shape). Qed.
+Lemma me_B2_cert1 : s2_check NX1 1 IT1 (me_B2_tab 1) (HSm_1020 1) me_B2_planR = COk me_B2_shape.
+Proof. cert_refl constr:(COk me_B2_shape). Qed.
+Lemma me_B2_cert (b : bool) : s2_check NX1 (rseq_z b) IT1 (me_B2_tab (rseq_z b)) (HSm_1020 (rseq_z b)) me_B2_planR = COk me_B2_shape.
+Proof. ltac1:(destruct b; [exact me_B2_cert1 | exact me_B2_cert0]). Qed.

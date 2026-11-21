@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of GI_init and QI_init, and the run's initial model with the vDSO draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -230,16 +231,20 @@ Theorem progG_noerr_gen : forall segs rstage pc ph lim en inp,
   image_low segs -> KLIM + SMALLREQ <= lim ->
   valid_entry (mkImage segs pc ph) en inp -> valid_input_either inp ->
   bv_unsigned (en_sp en) - stack_max_size = alloc_ceiling ->
-  tsafe nstep node_noerr (progG segs rstage (in_argv inp))
-        (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
+  (* LPS 727298f3: over the run's initial model [mo0], which carries the launch's vDSO draw *)
+  tsafe nstep node_noerr (progG segs rstage (in_argv inp)) (mo0 segs lim en inp).
 Proof.
   intros segs rstage pc ph lim [sp brk0 mbase] inp Hsegs Hlim Hve Hvi Htop.
+  pose proof Hvi as Hvi0.
+  assert (Hrdr : in_channel_reader inp = true)
+    by (red in Hvi0; repeat match goal with H : _ /\ _ |- _ => destruct H end; assumption).
   destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _ & _ & Hrel & _).
-  unfold progG. cbn [en_brk en_mmap_base en_sp] in *.
+  unfold progG, mo0. cbn [en_brk en_mmap_base en_sp] in *.
   apply (mspecL_program_noerr LBUDGET (QI [] P) (prog_withG rstage (argv_Z (in_argv inp))) (fun _ _ _ => False)).
   - apply prog_withG_L; [apply argv_Z_short| apply argv_Z_paths]; exact Hargv.
   - unfold reservedZ. unfold valid_brk in Hbrk. cbn [img_segments] in Hbrk.
-    apply QI_init; [exact Hbrk| exact (proj1 Hsegs)| exact (image_low_ceil segs Hsegs)| exact Htop| exact HP0| exact PHI_le| exact (proj2 Hsegs)| exact Hlim| exact Hrel].
+    apply QI_with_vdso.
+    apply QI_init; [exact Hbrk| exact (proj1 Hsegs)| exact (image_low_ceil segs Hsegs)| exact Htop| exact HP0| exact PHI_le| exact (proj2 Hsegs)| exact Hlim| exact Hrel| exact Hrdr].
   - intros [].
 Qed.
 
@@ -404,14 +409,19 @@ Theorem progG_model_ok : forall segs rstage pc ph lim en inp,
 Proof.
   intros segs rstage pc ph lim en inp Hlow Hlim Hve Hvi Htop.
   pose proof (progG_noerr_gen segs rstage pc ph lim en inp Hlow Hlim Hve Hvi Htop) as Hnoerr.
+  pose proof Hvi as Hvi0.
+  assert (Hrdr : in_channel_reader inp = true)
+    by (red in Hvi0; repeat match goal with H : _ /\ _ |- _ => destruct H end; assumption).
   destruct en as [sp brk0 mbase]. destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _ & _ & Hrel & _).
   unfold progG, mo0 in *. cbn [en_brk en_mmap_base en_sp] in *.
   apply (mspecN_program (OQP []) (prog_withG rstage (argv_Z (in_argv inp)))).
   - apply prog_withG_N; [apply argv_Z_short| apply argv_Z_paths]; exact Hargv.
   - unfold reservedZ. cbn [img_segments] in Hbrk. split.
-    + apply (GI_init segs); [exact Hbrk| exact (proj1 Hlow)| exact (image_low_ceil segs Hlow)| exact Htop| exact Hrel].
+    + apply GI_with_vdso.
+      apply (GI_init segs); [exact Hbrk| exact (proj1 Hlow)| exact (image_low_ceil segs Hlow)| exact Htop| exact Hrel| exact Hrdr].
     + unfold valid_brk in Hbrk.
-      apply QI_init; [exact Hbrk| exact (proj1 Hlow)| exact (image_low_ceil segs Hlow)| exact Htop| exact HP0| exact PHI_le| exact (proj2 Hlow)| exact Hlim| exact Hrel].
+      apply QI_with_vdso.
+      apply QI_init; [exact Hbrk| exact (proj1 Hlow)| exact (image_low_ceil segs Hlow)| exact Htop| exact HP0| exact PHI_le| exact (proj2 Hlow)| exact Hlim| exact Hrel| exact Hrdr].
   - exact Hnoerr.
 Qed.
 

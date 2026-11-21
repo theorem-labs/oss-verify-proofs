@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (etriple_mmap_rw_sym_anyA takes a NULL hint, from which the decline test place_declined_b is computed, and passes the grant's new placement fact and the nonzero length to mmap_rw_not_refusable_place; room_place written as plain text with the gap's floor in its conclusion, which not_refusable_of_place needs; the law_res hypothesis and lemma state the reserved ledger as the image's entries followed by the vDSO/vvar pair, written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -728,10 +729,14 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Section MANY.
 Variable segs : list Segment.
-Theorem etriple_mmap_rw_sym_anyA : ltac2:(tb__ "0|10|
-S40S40S3eQ40M0A1M1S40F_;S19SbS1fG1A1S6S3bS41Vsegs;S8S18R5A1A1R8A3S0S28S58A1S7fVsegs;S11S18R6A1A1A2S27S58S59A2A3S0S6ScS18R7A1Z11A2SaZdeA1A3S0S6ScS18R8A1ZbA2R5A3S0S21S17S8S18R9A1A1R6A2S25A3S0S3bS3dG0SeR9R7A2A2R6A3S0S3bS4fR7Z1000A2Z0M2A3S1S4bG2R8A2S4bR8S50Z2Z3eA2A2A2S1fS53A1M3S3aS51S72Vsegs;RfReR10S24G3S6cR3S6dR2R1A2A4A5R14R10RfR4R2A4S1S0S21S8eS39R4U2A2S39R4U3M4A2M5S39R4U5A2A3S25A3S1S0S21S8fG5A1S29A3S1S4eS91R3R10A2ReA2S1R14R11R10R5R3A4G1S6fS39R5U0A2S39R5G4A2R4S39R5U1M6A2R1A5S1S7S7bS7R1S10S18R15A1A1A3S13S12R15R2A2S24S3bS3bS3dG0R4A2M7S4cG7R12A2A4A2F_;Fo;S1G1S1S4dS3dG0R3A2M8S3dG0R1A2M9A2S4bG9S4cG8R11A2A2A2S0S21S14Vsegs;R2A2S29A3F_;Fx;S1S23S6S6A2MaS3bS7bGaR2S1aR16A1A3S1S4dS3dG0SeR16S2aS6S6R3A3A2A2MbR2A2S4bR2S4cGbS3dG0SeR16S2bS6S6R3A3A2A2A2A2A2S4S1S4dS3dG0R6A2McS3dG0S1eS3dG0SeR17S1bR18A1A2A2R3A2A2MdA2S4bGdS4cGcR14A2A2A2A1F_;F_;Fy;Fr;R15R2S45R13S8S18R14A1A1R2A3R12R7S54S70S52R5A1S39R6G6A2R2A3R5A2A5A2A2A2F_;Fa;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S42Vsegs;S3fVsegs;R11ReRdRcA5S43S5S3fVsegs;R11S73RfSaS3dG0S56S55A1A2A1A2ReRdR1A6S3G1G1S3fVsegs;R11R1A1S1cR10S46S18R10A1MeSdS8GeA1MfA1S26S7S10GeA1S22S7S95GfRdA2S20S7A1A3A3S8dGfA1A4A2S45RfGfR1A3ReR2A6La;A2A2Lw;A3F_;F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Felen;Ftp;Frho;FA;FJo;FJf;FJ;").
+(* LPS 727298f3: a premise [reg_sv (ax_S A) 10 = SLit 0] (the hint a0 is NULL) is inserted right
+   after the [reg_sv (ax_S A) 17 = SLit 222] premise, and nothing else changed (decoded with this
+   file's [tbs__] table, the premise added, re-encoded).  The proof computes the decline test
+   [place_declined_b ... = false] of the [wstep_mmap_*A] / [mmap_only_okA] lemmas from it. *)
+Theorem etriple_mmap_rw_sym_anyA : ltac2:(tb__ "0|0|
+S40S40S3eQ40A1S40F_;S19SbS1fS3eQ40A1A1S6S3bS41Vsegs;S8S18R5A1A1R8A3S0S28S58A1S7fVsegs;S11S18R6A1A1A2S27S58S59A2A3S0S6ScS18R7A1Z11A2SaZdeA1A3S0S6ScS18R8A1ZaA2SaZ0A1A3S0S6ScS18R9A1ZbA2R6A3S0S21S17S8S18RaA1A1R7A2S25A3S0S3bS3dQ40SeRaR8A2A2R7A3S0S3bS4fR8Z1000A2Z0A3S1S4bZ0R9A2S4bR9S50Z2Z3eA2A2A2S1fS53A1S3aS51S72Vsegs;R10RfR11S24S1fS53A1S6cR3S6dR2R1A2A4A5R15R11R10R4R2A4S1S0S21S8eS39R4U2A2S39R4U3A2S39R4U5A2A3S25A3S1S0S21S8fS39R4U3A2A1S29A3S1S4eS91R3R11A2RfA2S1R15R12R11R5R3A4S3eQ40A1S6fS39R5U0A2S39R5U3A2R4S39R5U1A2R1A5S1S7S7bS7R1S10S18R16A1A1A3S13S12R16R2A2S24S3bS3bS3dQ40R4A2S4cS3dQ40R4A2R13A2A4A2F_;Fo;S1S3eQ40A1S1S4dS3dQ40R3A2S3dQ40R1A2A2S4bS3dQ40R1A2S4cS3dQ40R3A2R12A2A2A2S0S21S14Vsegs;R2A2S29A3F_;Fx;S1S23S6S6A2S3bS7bS23S6S6A2R2S1aR17A1A3S1S4dS3dQ40SeR17S2aS6S6R3A3A2A2R2A2S4bR2S4cS3dQ40SeR17S2aS6S6R3A3A2A2S3dQ40SeR17S2bS6S6R3A3A2A2A2A2A2S4S1S4dS3dQ40R6A2S3dQ40S1eS3dQ40SeR18S1bR19A1A2A2R3A2A2A2S4bS3dQ40S1eS3dQ40SeR18S1bR19A1A2A2R3A2A2S4cS3dQ40R6A2R15A2A2A2A1F_;F_;Fy;Fr;R16R2S45R14S8S18R15A1A1R2A3R13R7S54S70S52R5A1S39R6U1A2R2A3R5A2A5A2A2A2F_;Fa;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S42Vsegs;S3fVsegs;R12RfReRdA5S43S5S3fVsegs;R12S73R10SaS3dQ40S56S55A1A2A1A2RfReR1A6S3S3eQ40A1S3eQ40A1S3fVsegs;R12R1A1S1cR11S46S18R11A1SdS8S18R11A1A1A1S26S7S10S18R11A1A1S22S7S95S8S18R11A1A1ReA2S20S7A1A3A3S8dS8S18R11A1A1A1A4A2S45R10S8S18R11A1A1R1A3RfR2A6La;A2A2Lw;A3F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Felen;Ftp;Frho;FA;FJo;FJf;FJ;").
 Proof.
-  intros J Jf Jo A rho tp elen nlit Hst Hi H17 H11 Hbel Helen Hmod Hn HJ.
+  intros J Jf Jo A rho tp elen nlit Hst Hi H17 H10 H11 Hbel Helen Hmod Hn HJ.
   apply etriple_ecall_detA; [exact Hst | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pendingA_pending segs _ _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -739,12 +744,16 @@ Proof.
   destruct (mmap_len_sym segs rho tp A tr ms md elen nlit Hsp H11 Helen Hmod Hn) as [Hlen HnZ].
   destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & Hroom & HJf & HOK).
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
-  destruct (mmap_grant_refusable (ms_gpr ms 3) md (mmap_nZ (ms_gpr ms 1))) eqn:Hrf.
-  - eexists. split; [exact (wstep_mmap_intro_failA segs ms md _ Hh H222 Hlen Hmodb tr Hp Hrf)|].
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false).
+  { destruct (pending_argsA segs rho tp A tr ms md Hsp) as (G0 & _). rewrite G0, H10.
+    exact (place_declined_b_null _ _ _). }
+  destruct (mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) md (mmap_nZ (ms_gpr ms 1))) eqn:Hrf.
+  - eexists. split; [exact (wstep_mmap_intro_failA segs ms md _ Hh H222 Hlen Hmodb Hdecl tr Hp Hrf)|].
     left. split; [|exact HJf]. eapply smatchA_after_ret_lit; [exact Hsp | exact Hh | apply vm_same_refl].
-  - destruct (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hrf) as [a Hpl].
+  - destruct (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hlen Hrf) as (a & Hpl & Hlp).
     change (mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a) in Hpl.
-    eexists. split; [exact (wstep_mmap_intro_okA segs ms md _ Hh H222 Hlen Hmodb tr a Hp Hpl)|].
+    eexists. split; [exact (wstep_mmap_intro_okA segs ms md _ Hh H222 Hlen Hmodb Hdecl tr a Hp Hpl Hlp)|].
     right. exists a. destruct (HOK a Hpl) as (Hdisj & Hnro & Hxs & HJo). split.
     + eapply smatchA_after_mmap_obj_sym; eauto.
     + cbn [w_tr w_cfg fst snd cfg_model]. unfold mmap_rw_model. rewrite (with_mmap_backing_plain _ _ _ _ Hnr). exact HJo.
@@ -767,8 +776,10 @@ S3bS6aVCST;R1A2S6aS97R2A2S2F_;F_;Fa;").
 Let AInv : AA -> valuation -> list word -> Model -> Prop := AInvA segs.
 Let J (W : list ulink) (st : ustop) (A : AA) (Kc : KcA) : jpredA := ltac2:(tb__ "0|0|
 S64VAInv;VW;Vst;VA;VKc;SdPcA1A6").
-Hypothesis law_res : ltac2:(tb__ "0|1|
-S7aSbS1fS3eQ40A1M0A1S51VAInv;R4R3R2R1A4S0S1fS23G0G0A2A1S57S52R2A1A1S6eS69A1A3F_;Fmd;Ftp;Frho;FA;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis law_res : forall A rho tp md, AInv A rho tp md ->
+  exists V, vm_reserved (m_vmmaps md) = segments_reserved OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.InvLaws.segsA ++ V
+            /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V.
 Hypothesis Wa : ltac2:(tb__ "0|0|
 S0S21SfS31VW;Vst;Vtmax;A3A1S25A3").
 Hypothesis Da : ltac2:(tb__ "0|6|
@@ -861,7 +872,7 @@ Proof.
   assert (HEV : bv_unsigned (eval rhoX (SVar V_MS)) = secmapsize nv).
   { cbn [eval]. unfold V_MS. rewrite E142. apply u64_lit. clear -BMS Hnv. lia. }
   apply (etriple_mmap_rw_sym_anyA segs (JG W st A Kc rho) (JG W st A Kc rho) Jo (CS1 W st tmax) rhoX tp (SVar V_MS) (secmapsize nv)
-           HST' IC1 R17 R11 HB11 HEV (proj2 BMS) ltac:(clear -BMS Hnv; lia)).
+           HST' IC1 R17 R10 R11 HB11 HEV (proj2 BMS) ltac:(clear -BMS Hnv; lia)).
   intros tr ms md Hsp HJG.
   destruct (pending_argsA segs rhoX tp (CS1 W st tmax) tr ms md Hsp) as (Q0 & Q1 & Q2 & Q3 & Q4 & Q5).
   rewrite R10 in Q0. rewrite R11 in Q1. rewrite R12 in Q2. rewrite R13 in Q3. rewrite R14 in Q4. rewrite R15 in Q5. cbn [eval] in Q0, Q1, Q2, Q3, Q4, Q5.
@@ -1872,12 +1883,21 @@ Let AInv : AA -> valuation -> list word -> Model -> Prop := AInvA segs.
 Let J (W : list ulink) (st : ustop) (A : AA) (Kc : KcA) : jpredA := ltac2:(tb__ "0|0|
 S48VAInv;VW;Vst;VA;VKc;SaPcA1A6").
 
-Lemma law_res : ltac2:(tb__ "0|1|
-S53S8S1fS57Q40A1M0A1S4cVAInv;R4R3R2R1A4S0S1fS21G0G0A2A1S50S4dR2A1A1S5eS4bA1A3F_;Fmd;Ftp;Frho;FA;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]).
+   Statement written as plain text. *)
+Lemma law_res : forall A rho tp md, AInv A rho tp md ->
+  exists V, vm_reserved (m_vmmaps md) = segments_reserved OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.InvLaws.segsA ++ V
+            /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V.
 Proof. intros A rho tp md (_ & _ & _ & _ & HM & _). destruct HM as (_ & _ & _ & _ & _ & _ & _ & HL). exact (proj1 HL). Qed.
 
-Lemma room_place : ltac2:(tb__ "0|4|
-S53S8S1fS57Q40M0A1M1A1S4cG1S34VAInv;R6R5R4R3A4S2dS56R7A1S2fZ2M2Z24A2A2S2dS2cS55R8A1S54R8A1A2Z800A2S1S30Z0M3R4A2S2dR4S2cS2fG2Z1aA2Z3006A2A2A2S0S34S33R5Z1000A2G3A3S0S25S7fR7A1S29A3S32S80R9RaA2R7A2S2G1G1S5aS59G0G3A2RaRbS59G0R9A2R1A5La;A2F_;F_;F_;F_;F_;F_;F_;FnZ;Fflags;Fmd;Ftp;Frho;FA;").
+(* LPS 727298f3: written out as plain text (decoded from this file's [tbs__] table) with one
+   conjunct added to the conclusion, the gap's floor [GAPF <= bv_unsigned a] ([place_of_room_lo]),
+   which MallocA/MmapSymG.v's [not_refusable_of_place] needs for Linux's bottom-up window. *)
+Lemma room_place : forall (A : AA) (rho : valuation) (tp : list word) (md : Model) (flags : word) (nZ : Z),
+  AInv A rho tp md -> aa_V A <= 2 ^ 36 -> aa_Km A + aa_Kf A <= 2048 ->
+  0 < nZ <= 2 ^ 26 + 12294 -> nZ mod 4096 = 0 ->
+  mmap_noreserve_b flags = false -> headroom md tp >= nZ ->
+  exists a : word, mmap_place_ok (Z_to_bv 64 0) flags md (Z_to_bv 64 nZ) a /\ GAPF <= bv_unsigned a.
 Proof.
   intros A rho tp md flags nZ HA HV HK HnZ Hal Hnr Hroom.
   pose proof (AInvA_depot A rho tp md HA) as [DM _].
@@ -1895,10 +1915,10 @@ Proof.
   destruct (count_of_gap_ok A (m_vmmaps md) L4 HB1 HB2) as [CN CS].
   pose proof (hwN_nonneg (ledger (m_vmmaps md))) as N0'. pose proof (hwS_nonneg (ledger (m_vmmaps md))) as S0'.
   assert (HnZ64 : 0 <= nZ < 2 ^ 64) by lia.
-  destruct (place_of_room md nZ ltac:(lia) Hal) as [a Ha].
+  destruct (place_of_room_lo md nZ ltac:(lia) Hal) as [a [Ha Hlo]].
   - rewrite V7. pose proof (geom_top _ HG) as TG. pose proof (topG_range (aa_geom A)). rewrite GAPC_eq. unfold alloc_ceiling_lo. lia.
   - exact (room_gap_closes _ _ (aa_V A) nZ N0' S0' ltac:(lia) HnZ CN CS).
-  - exists a. destruct Ha as (P1 & P2 & P3 & P4). unfold mmap_place_ok. repeat (split; [assumption|]).
+  - exists a. split; [|exact Hlo]. destruct Ha as (P1 & P2 & P3 & P4). unfold mmap_place_ok. repeat (split; [assumption|]).
     unfold mmap_noreserve_backed_ok. rewrite Hnr. rewrite (mmap_nZ_lit nZ HnZ64 Hal).
     apply Z.leb_le. unfold headroom, paid in Hroom. pose proof (Zle_0_nat (length (unpaid md tp))). unfold page_size in *. lia.
 Qed.
@@ -1965,7 +1985,7 @@ Proof.
   assert (HEV : bv_unsigned (eval rhoX (SVar V_MS)) = secmapsize nv).
   { cbn [eval]. unfold V_MS. rewrite E142. apply u64_lit. clear -BMS Hnv. lia. }
   apply (triple1_mmap_rw_symA_granted segs ok (JG W st A Kc rho) Jo (CS1 W st tmax) rhoX tp (SVar V_MS) (secmapsize nv)
-           Hokf Hokp HST' IC1 R17 R11 HB11 HEV (proj2 BMS) ltac:(clear -BMS Hnv; lia)).
+           Hokf Hokp HST' IC1 R17 R10 R11 HB11 HEV (proj2 BMS) ltac:(clear -BMS Hnv; lia)).
   intros tr ms md Hsp HJG.
   destruct (pending_argsA segs rhoX tp (CS1 W st tmax) tr ms md Hsp) as (Q0 & Q1 & Q2 & Q3 & Q4 & Q5).
   rewrite R10 in Q0. rewrite R11 in Q1. rewrite R12 in Q2. rewrite R13 in Q3. rewrite R14 in Q4. rewrite R15 in Q5. cbn [eval] in Q0, Q1, Q2, Q3, Q4, Q5.
@@ -1989,9 +2009,12 @@ Proof.
   split.
   { destruct HROOM as (RV & RN & RK). fold nv in RN.
     destruct (room_place A rhoX tp md (ms_gpr ms 3) (secmapsize nv) HA RV RK ltac:(clear -BMS Hnv RN; lia) (proj2 BMS)
-                ltac:(rewrite Q3; reflexivity) HEADROOM) as [a0 Ha0].
+                ltac:(rewrite Q3; reflexivity) HEADROOM) as (a0 & Ha0 & Hlo0).
     assert (E1 : ms_gpr ms 1 = Z_to_bv 64 (secmapsize nv)) by (rewrite Q1; unfold V_MS; exact E142).
-    rewrite E1. exact (not_refusable_of_place (Z_to_bv 64 0) (ms_gpr ms 3) md (Z_to_bv 64 (secmapsize nv)) a0 Ha0). }
+    rewrite E1, Q0. exact (not_refusable_of_place (Z_to_bv 64 0) (ms_gpr ms 3) md (Z_to_bv 64 (secmapsize nv)) a0
+                         ltac:(rewrite u64_lit by (clear -BMS Hnv; lia); clear -BMS Hnv; lia)
+                         ltac:(unfold GAPF in Hlo0; unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base; lia)
+                         Ha0). }
   intros a Hpl.
   pose proof (mmap_len_sym segs rhoX tp (CS1 W st tmax) tr ms md (SVar V_MS) (secmapsize nv) Hsp R11 ltac:(cbn [eval]; unfold V_MS; rewrite E142; apply u64_lit; lia) (proj2 BMS) ltac:(lia)) as [_ HnZ].
   pose proof (law_res _ _ _ _ HA) as Hres.
@@ -2171,7 +2194,7 @@ Proof.
   assert (HEV : bv_unsigned (eval rhoX (SVar V_MS)) = secmapsize nv).
   { cbn [eval]. unfold V_MS. rewrite E142. apply u64_lit. clear -BMS Hnv. lia. }
   apply (etriple_mmap_rw_symA_granted segs (JG W st A Kc rho) Jo (CS1 W st tmax) rhoX tp (SVar V_MS) (secmapsize nv)
-           HST' IC1 R17 R11 HB11 HEV (proj2 BMS) ltac:(clear -BMS Hnv; lia)).
+           HST' IC1 R17 R10 R11 HB11 HEV (proj2 BMS) ltac:(clear -BMS Hnv; lia)).
   intros tr ms md Hsp HJG.
   destruct (pending_argsA segs rhoX tp (CS1 W st tmax) tr ms md Hsp) as (Q0 & Q1 & Q2 & Q3 & Q4 & Q5).
   rewrite R10 in Q0. rewrite R11 in Q1. rewrite R12 in Q2. rewrite R13 in Q3. rewrite R14 in Q4. rewrite R15 in Q5. cbn [eval] in Q0, Q1, Q2, Q3, Q4, Q5.
@@ -2195,9 +2218,12 @@ Proof.
   split.
   { destruct HROOM as (RV & RN & RK). fold nv in RN.
     destruct (room_place A rhoX tp md (ms_gpr ms 3) (secmapsize nv) HA RV RK ltac:(clear -BMS Hnv RN; lia) (proj2 BMS)
-                ltac:(rewrite Q3; reflexivity) HEADROOM) as [a0 Ha0].
+                ltac:(rewrite Q3; reflexivity) HEADROOM) as (a0 & Ha0 & Hlo0).
     assert (E1 : ms_gpr ms 1 = Z_to_bv 64 (secmapsize nv)) by (rewrite Q1; unfold V_MS; exact E142).
-    rewrite E1. exact (not_refusable_of_place (Z_to_bv 64 0) (ms_gpr ms 3) md (Z_to_bv 64 (secmapsize nv)) a0 Ha0). }
+    rewrite E1, Q0. exact (not_refusable_of_place (Z_to_bv 64 0) (ms_gpr ms 3) md (Z_to_bv 64 (secmapsize nv)) a0
+                         ltac:(rewrite u64_lit by (clear -BMS Hnv; lia); clear -BMS Hnv; lia)
+                         ltac:(unfold GAPF in Hlo0; unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base; lia)
+                         Ha0). }
   intros a Hpl.
   pose proof (mmap_len_sym segs rhoX tp (CS1 W st tmax) tr ms md (SVar V_MS) (secmapsize nv) Hsp R11 ltac:(cbn [eval]; unfold V_MS; rewrite E142; apply u64_lit; lia) (proj2 BMS) ltac:(lia)) as [_ HnZ].
   pose proof (law_res _ _ _ _ HA) as Hres.

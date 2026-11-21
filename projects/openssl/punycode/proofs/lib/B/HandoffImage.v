@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (hs_stk_ok and hi_stk cover the stack from sp0 - 6144513, the part the start state writes, instead of sp0 - 8388608; hi_usp's headroom is measured from sp0 - STACK_WOK). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -79,7 +80,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_WIN + 0x100000 <= sp0 - USP_OFF
+Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_WOK + 0x100000 <= sp0 - USP_OFF
                /\ sp0 - USP_OFF <= sp0 /\ 0x7fff80000000 <= sp0.
 Proof.
   destruct hi_sp0 as [Hsp [Hlo Hhi]]. unfold sp_window_lo, sp_window_hi in *.
@@ -88,7 +89,8 @@ Proof.
   destruct (ealign_sound SEGS E _ (kn ch) e_sp0 HK) as [EA ED].
   assert (D4 : (2 ^ 4 | 2 ^ ealign (kn ch) e_sp0)) by (exists (2 ^ (ealign (kn ch) e_sp0 - 4)); rewrite <- Z.pow_add_r by lia; f_equal; lia).
   destruct (Z.divide_trans _ _ _ D4 ED) as [q Hq]. fold (uE E e_sp0) in Hq. rewrite <- Hsp in Hq.
-  unfold USP_OFF, STACK_WIN. change (2 ^ 4) with 16 in Hq.
+  assert (WOKV : STACK_WOK = 6144513) by reflexivity.
+  unfold USP_OFF. change (2 ^ 4) with 16 in Hq.
   split; [rewrite Hq; replace (q * 16 - 48) with ((q - 3) * 16) by lia; apply Z.mod_mul; lia|]. lia.
 Qed.
 
@@ -243,7 +245,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-8388608) (- USP_OFF) (S (length (kn ch))).
+Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-6144513) (- USP_OFF) (S (length (kn ch))).
 
 Lemma rdn1_mrd : forall segs m a b, L_rdn segs m a 1 = Some [b] -> mrd segs m a = Some b.
 Proof.
@@ -285,7 +287,7 @@ Proof.
   change (Z.of_nat 0) with 0 in W. rewrite Z.add_0_r in W. exact W.
 Qed.
 
-Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - 8388608) (sp0 - USP_OFF).
+Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - 6144513) (sp0 - USP_OFF).
 Proof.
   intros H. destruct (APS.co_isp _ _ _ _ _ _ _ _ _ _ _ _ HC) as [I1 I2]. destruct HISP as [Hlo Hhi]. rewrite <- I1 in Hlo, Hhi.
   assert (Hsp : sp0 = APS.uE E e_sp0) by (change e_sp0 with e_spw; rewrite I1, I2; reflexivity).

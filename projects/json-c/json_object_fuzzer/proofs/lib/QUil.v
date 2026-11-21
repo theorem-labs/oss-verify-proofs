@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: at_main_stmt quantifies its fields, apc and mbase, with QpvH.launch_ok in place of entry_stack_fits and SINV0 / argH0 over them; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -43,27 +44,27 @@ Import QDw3(aentry, mkAE) QNwL(rlay, mkRL, ghost, tag_at).
 
 Definition pg (E : env) (v : nat) : Z := 4096 * bv_unsigned (ev E v).
 
-Definition X_main (E : env) : rlay := mkRL (pg E 237) (pg E 238) (pg E 478) (pg E 479) (pg E 330).
+Definition X_main (E : env) : rlay := mkRL (pg E 241) (pg E 242) (pg E 484) (pg E 485) (pg E 336).
 
 Definition st_main (E : env) : Z := 32768 * bv_unsigned (ev E 0) + 4096 * bv_unsigned (ev E 10).
 
 Definition LA_main (w : bool) (E : env) : Q6sh.ALay := QVyC.LA_J (SB E) (PRES E) (PARR E) (objs_of w E) (atopE E).
 
-Definition RE_main (sp : word) (w : bool) (E : env) : aentry := mkAE (bv_unsigned sp) (st_main E) (pg E 406) (LA_main w E).
+Definition RE_main (sp : word) (w : bool) (E : env) : aentry := mkAE (bv_unsigned sp) (st_main E) (pg E 412) (LA_main w E).
 
 Definition G_main : ghost := fun _ => [].
 Lemma G_main_tag : forall c i, tag_at G_main c i = None.
 Proof. intros c i. unfold tag_at, G_main. destruct (i <? 0); [reflexivity|]. destruct (Z.to_nat i); reflexivity. Qed.
 
-Definition guard_main (E : env) : word := ev E 45.
+Definition guard_main (E : env) : word := ev E 49.
 
 Definition band_main (E : env) (RANGE : 0x7fff7f800000 <= atopE E <= 0x7fffff800000) : Band := mkBand (atopE E) RANGE (guard_main E).
 
 Definition at_main_stmt (P : forall {BAND : Band}, word -> bool -> env -> (word -> option byte) -> Prop) : Prop :=
-forall (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (fs : Fs.Fs) (uid hw : word)
+forall (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (fs : Fs.Fs) (uid hw : word) (apc : N) (mbase : word) (ifs : Fs.Fs) (stdin : InputStream) (gid : word) (groups : list word) (net : NetQueue) (nofile sigmask : word) (abort_terminal : bool) (urnd : InputStream) (tmp : Fs.Fs) (kb : KernelBuild) (execfn : list byte) (rdr sgd sgt : bool)
 (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model),
-valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+valid_sp sp -> valid_argv argv -> valid_envp envp -> QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) ->
 forall (w : bool) (ch : acs), HSCLASS_S w ch ->
-cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo ->
+cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo ->
 forall BAND : Band, band_lo = atopE E -> band_guard = guard_main E ->
 @P BAND sp w E (view (LV_J E) mo FULL).

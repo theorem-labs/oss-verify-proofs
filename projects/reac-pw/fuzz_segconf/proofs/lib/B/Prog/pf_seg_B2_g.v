@@ -25,9 +25,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 413 of its 483 lines of code are new or changed and 4983 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a2.v, with its module names changed; 165 of its 260 lines of code are new or changed and 388 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a10b_j.v, with its module paths and module names changed; 302 of its 359 lines of code are new or changed and 203 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B2 of reac_segconf_parse_file's
    walk (lib/B/Prog/pf_seg_B2.v), its geometry and the cut's objects carried across the segment. The B2 segment lane of
-   the image-B G3 walk owner, 2026-10-30. ADAPTED from commit c181e576cd21 lib/A/Prog/pf_a2_g.v (image A):
+   the image-B G3 walk owner, 2026-10-30. ADAPTED from lib/A/Prog/pf_a2_g.v (image A):
    names pa2_ -> pb2_, image B's numbers (the real frame 0x160 = 352: s1 = (sp0 - 0x160) & -32, 0x87e38 / 0x87e78;
    STK_reac_segconf_parse_file = 12832, SegInstB STK_values), image B's write set (below), c's slot 0xc8 kept.
    pb2_geo: the numbers at FTAKEN (afn_pre's astk_ok for sp0, the realigned s1, the class-5 frame F of the journal,

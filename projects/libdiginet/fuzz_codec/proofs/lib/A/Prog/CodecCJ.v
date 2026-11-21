@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/Prog/IdentCJ.v
-   (origin/ossv/recipes 4b6f0df50aa7) for libdiginet/fuzz_codec's ASan builds: the listing layer (PAImg) is
+   for libdiginet/fuzz_codec's ASan builds: the listing layer (PAImg) is
    dropped, so the segment list is a Section variable and the lemmas that used the listing's `pa_segs_low`
    take it as the hypothesis `segs_low`; every definition and every proof is otherwise the donor's text. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* A callee whose writes may land in a frame of its caller (or of its caller's caller) states its contract in
    the caller-journal form: the premise is the caller's journal, the right to write each byte is the caller's
    premise (twr_ok), and the post extends the same journal and says what the call kept (tcj_kept).

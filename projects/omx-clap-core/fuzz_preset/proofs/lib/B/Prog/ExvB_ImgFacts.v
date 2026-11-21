@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (#102 pin d663f82d7f48, asan-ubsan; unstripped twin c90d4fa54d43),
    ex_value walk: the DISCHARGE of EXV_HYP's (ExvB_Stmt.v) closed image-fact fields and instance fields at the
    instance of record. Proves nothing about the program (no function walked).
@@ -14,23 +15,23 @@
    checked against its table by computation.
    Dischargers cited (all on this branch):
    - eh_tp: strtod_row_sat.strtod_sat_tp_B (B/Prog/strtod_row_sat.v:28);
-   - eh_errno_B: YF0m.ts_errno of YD2l.TfibB_syms (Reusable/YD2l.v:71);
+   - eh_errno_B: YF0m.ts_errno of YD2l.TfibB_syms (Reusable/YD2l.v:72);
    - eh_errno_own: strtod_row_sat.strtod_sat_owned_B (B/Prog/strtod_row_sat.v:40);
-   - eh_got_const: the GOT-guard cell of Tfib_const_abs (Reusable/YF0m.v:202);
+   - eh_got_const: the GOT-guard cell of Tfib_const_abs (Reusable/YF0m.v:203);
    - eh_errno / eh_palib / eh_head / eh_laws: PALibB.exvi_eh_* (B/PALibB.v, blob 5baa19c890f7), cited, not restated;
   - eh_blk32: ablock_n_lt_max_cf (Reusable/YGcfBlockRange.v), with cf_malloc_max < 2 ^ 32 at CfParams_preset closed by vm_compute (no typed value);
    - eh_blk_amem8: block_amem_range8_cf (Reusable/YGcfBlockRange.v), through ablocks = map (sptr_addr ..) blocks;
-   - eh_fpos / eh_frames_cid: frame_facts_cf (Reusable/YG0scf.v:299), conjuncts 2 / 1, on ARcf's ARmcf;
+   - eh_fpos / eh_frames_cid: frame_facts_cf (Reusable/YG0scf.v:300), conjuncts 2 / 1, on ARcf's ARmcf;
    - eh_frame_hull: ARx_frame_hull_vis_cf_ok (Reusable/YGcfFsVis.v) restricted by shadow_hull_vis_sub_cf
      (Reusable/YGcfHeadSh.v);
    - eh_stk_hull: alx_zshadow of eh_laws on the head range of zero_shadow_ranges (the real stack), and layout_ok's
      lo_top (both stack bounds page-aligned, Reusable/YG0f.v);
-   - eh_litsh: alx_const_cells (Tfib_const_shadow's cells 0..11, Reusable/YF0m.v:1076-1087) and alx_zshadow (the first
-     range of Tfib_zero_shadow, (IMG_LO_B, 0x20f60 - IMG_LO_B), Reusable/YF0m.v:1784) of eh_laws;
+   - eh_litsh: alx_const_cells (Tfib_const_shadow's cells 0..11, Reusable/YF0m.v:1077-1088) and alx_zshadow (the first
+     range of Tfib_zero_shadow, (IMG_LO_B, 0x20f60 - IMG_LO_B), Reusable/YF0m.v:1785) of eh_laws;
    - eh_ownlow: ARx_owned_low_law_cf_x (Reusable/YGcallcf.v) of AR_laws_ok_cf;
    - eh_smx / eh_sfx: stack_malloc_x_any / stack_free_x_any (Reusable/YGcallScf.v, at any relation);
    - eh_asfx: astack_free_law_ok_cf (Reusable/YG0tcf.v; its statement astack_free_law_cf is the field at ARcf);
-   - eh_fflx: put together from AR_flag_law_ok_cf (YG0scf.v:477), AR_client_img_law_ok_cf (YG0scf.v:552, flag arm),
+   - eh_fflx: put together from AR_flag_law_ok_cf (YG0scf.v:478), AR_client_img_law_ok_cf (YG0scf.v:553, flag arm),
      lo_img (fst (ly_img ly) = kImgLo) and amc_static_img (YG0ncf.v:108) on Tfib_zero_shadow's last range
      (0x5dde20, IMG_TOP_B - 0x5dde20), which puts B''s image top IMG_TOP_B inside ly_img; the field's zone2 is then
      reached from the B' bound by exvi_zone2_B (see the note there);
@@ -38,13 +39,13 @@
    NOT here (callee texts, not image facts): eh_string, eh_ws, eh_strcmp, eh_strlen, eh_bcmp, eh_memcpy, eh_sm1.
    Numerals (each re-read from the B' tables of this tree):
    0x7fffc1ec-0x7fffc1f7 (ADDRESS: the shadow cells of the three word literals, Tfib_const_shadow indices 0-11,
-   YF0m.v:1076-1087, values 5 f9 f9 f9 6 f9 f9 f9 5 f9 f9 f9); 0x7fffc1e8-0x7fffc1eb (ADDRESS: the hull granule below,
+   YF0m.v:1077-1088, values 5 f9 f9 f9 6 f9 f9 f9 5 f9 f9 f9); 0x7fffc1e8-0x7fffc1eb (ADDRESS: the hull granule below,
    cells 0x21e8-0x21eb of Tfib_zero_shadow's first range, whose shadow starts at 0x7fffa000 = shadow_of_addr IMG_LO_B;
    0x21ec = that range's cell count); 0x41ec / 0x41f0 / 0x41f4 (ADDRESS / 8: the literals' granules); 0x7fffc1f0 /
-   0x7fffc1f8 (ADDRESS: hull bounds); 0x20f60 (ADDRESS: end of Tfib_zero_shadow's first range, YF0m.v:1784);
-   169 (index of the GOT-guard cell z8 (ANum 0xa34d8) 0x5fe770 in Tfib_const_abs, YF0m.v:202);
-   17 and 0x5dde20 (index and start of Tfib_zero_shadow's last range, YF0m.v:1784); 0x10f60 / 0x10f80 / 0x10fa0
-   (exvd_lit's offsets, ExvB_Stmt.v:327-329); 5 / 6 / 0xf9 (VALUE: the literal shadow bytes above); 4 (LENGTH: the
+   0x7fffc1f8 (ADDRESS: hull bounds); 0x20f60 (ADDRESS: end of Tfib_zero_shadow's first range, YF0m.v:1785);
+   169 (index of the GOT-guard cell z8 (ANum 0xa34d8) 0x5fe770 in Tfib_const_abs, YF0m.v:203);
+   17 and 0x5dde20 (index and start of Tfib_zero_shadow's last range, YF0m.v:1785); 0x10f60 / 0x10f80 / 0x10fa0
+   (exvd_lit's offsets, ExvB_Stmt.v:328-330); 5 / 6 / 0xf9 (VALUE: the literal shadow bytes above); 4 (LENGTH: the
    zero-shadow cells under the first hull); 8, 512, 4096 (LENGTH: granule, shadow bytes of a page, page);
   (cf_malloc_max is not typed here: its bound below 2 ^ 32 is vm_computed from CfParams_preset). The uar cell, the GOT / shadow-cell objects and
    B_prog_val (A_OBJ 2) carry no typed numeral here: they are vm_computed from YD2l.v / PAImg_prog.v. *)

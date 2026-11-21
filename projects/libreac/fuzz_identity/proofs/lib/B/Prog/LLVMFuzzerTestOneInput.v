@@ -6,6 +6,7 @@
    BASE + AF_LLVMFuzzerTestOneInput of identb_listing), the library shape and every constant of the unit's
    relocated core are parameters of the Section, and the measured needs of this build's entry (events, live
    bytes, stack) are stated beside it. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* LLVMFuzzerTestOneInput (fuzz_identity.asan-ubsan 0x80774 = BASE + AF_LLVMFuzzerTestOneInput, 0x208c bytes, 2083
    slots): the ASan+UBSan-build contract of the harness entry, and the Section the walk is proved in. No walk here.
 
@@ -205,7 +206,7 @@ Hypothesis G_OUT : In (VAL (A_OBJ 11), 6) G.
 Hypothesis G_REAC : In (VAL (A_OBJ 8), 5) G.
 
 (* Meter room for the run's allocator events: each is a malloc of at most 256 bytes or a free, and the walk
-   counts EV_LLVMF of them (A LLVMFuzzerTestOneInput.v:180-184: the room must be left event by event, so a
+   counts EV_LLVMF of them (A LLVMFuzzerTestOneInput.v:181-185: the room must be left event by event, so a
    boundary carries mo_ok MT S2 ((EV_LLVMF - k) * MEV) with MEV = mo_malloc MT 256 + mo_free MT). *)
 Hypothesis HXM : forall n, EV_LLVMF * (mo_malloc MT 256 + mo_free MT) <= XM_LIB n.
 Hypothesis HXN : forall n, EV_LLVMF * (mo_malloc MT 256 + mo_free MT) <= XN_LIB n.
@@ -254,7 +255,7 @@ map (fun o => [BASE + o; RA_LLVMF]) BUF_OF_RAS ++ map (fun o => [BASE + o]) BUF_
    - the display literals " (", " in / ", " out)" (objects 9, 10, 11) (0x81ec8, 0x81f68, 0x8200c);
    - switch.table.reac_box_family_stem (object 18): reac_box_family_stem's premises (its table in a usable
      range, reac_box_family_stem.v:100) and three non-null entries (0x81a34 aborts on a null stem);
-   - reac_box_name's image premise (reac_box_name.v:117 rbn_img);
+   - reac_box_name's image premise (reac_box_name.v:118 rbn_img);
    - BOX_CATALOGUE (object 28): 8-aligned (the UBSan alignment check at 0x822b4) and each row's fields as
      reac_box_catalogue_defect.v:137-144 asks them for e = the row (the call at 0x822a8). *)
 Definition HW_ROWS : list Z :=
@@ -312,19 +313,19 @@ Hypothesis ABCMP : abcmp_realizes SEGS B (SIGMA IB___interceptor_trampoline_bcmp
 Hypothesis AMEMCHR : amemchr_realizes SEGS B (SIGMA IB___interceptor_trampoline_memchr).
 Hypothesis ASTRLEN : astrlen_realizes SEGS B (SIGMA IB___interceptor_trampoline_strlen).
 Hypothesis ASTRCMP : astrcmp_realizes SEGS B (SIGMA IB___interceptor_trampoline_strcmp).
-(* The shadow-fill entry the frame release calls (0x823e8; lib/B/Rt/SetShadowDef.v:21). *)
+(* The shadow-fill entry the frame release calls (0x823e8; lib/B/Rt/SetShadowDef.v:22). *)
 Hypothesis ASSF5 : aset_shadow_realizes SEGS B (SIGMA IB___asan_set_shadow_f5) 0xf5.
 
 (* The two lemmas of identity's relocated lib/A/ACfh.v the walk uses, with cgif's statements. *)
-(* cgif ACfh.v:29-31 *)
+(* cgif ACfh.v:30-32 *)
 Hypothesis AJ_FP_NIL : forall STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 ajournal SEGS B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k.
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 m_fds md' = m_fds md /\ m_fs md' = m_fs md.
-(* cgif ACfh.v:47-49: a run that keeps the allocator's invariant realizes the trace set it ends in. *)
+(* cgif ACfh.v:48-50: a run that keeps the allocator's invariant realizes the trace set it ends in. *)
 Hypothesis SRZ_ENTER : forall (W : world SEGS) (c : config) (T : TSet),
 AI SEGS (w_H W) (w_A W) (cfg_model c) ->
 SRr SEGS W c (fun W' c' => AI SEGS (w_H W') (w_A W') (cfg_model c') -> srealizes SEGS c' T) ->

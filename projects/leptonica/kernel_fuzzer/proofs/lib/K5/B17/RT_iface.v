@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader in PMfd and fdfs_only; the stack-top bounds of rng_class and fprintf_stderr_icontract under the new stack layout; STACK_SPAN, the guaranteed stack span, beside STACK_WIN). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -29,6 +30,13 @@ Definition SEGTOP_A : Z := 0x62a000.
 (* [comment removed for export] *)
 Definition USTACK_TOP : Z := 0x800000000000.
 Definition STACK_WIN : Z := 0x800000.
+(* LPS 727298f3: STACK_WIN has two roles.  (a) the allocator ceiling, [l_ACEIL = l_sp0 - STACK_WIN]
+   = [alloc_top = usp - stack_max_size]: still 8 MiB, unchanged.  (b) the stack span the start state
+   GUARANTEES writable below sp: the start state claims only [StoreOk.stack_window_depth] = 6144513
+   bytes ([AsanPlanCore.init_kn_with]'s [KWr (SA e_sp0 (-6144513)) ...]), so the 8 MiB span is false
+   for some launches.  STACK_SPAN is role (b): 0x5D0000 = 6094848 <= 6144513.  A literal notation,
+   so arithmetic sees the number without an unfold (as bzip2/bzip2_compress_target's K/A/RT_iface.v). *)
+Notation STACK_SPAN := 0x5D0000%Z (only parsing).
 (* [comment removed for export] *)
 Definition RT_STACK : Z := 0x10000.
 (* [comment removed for export] *)
@@ -137,7 +145,8 @@ Record rt_sig : Type := mkRTS {
 
 (* [comment removed for export] *)
 Definition fdfs_only (PMc : Model -> Prop) : Prop :=
-  forall mo mo', m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> PMc mo -> PMc mo'.
+  forall mo mo', m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> m_channel_reader mo' = m_channel_reader mo ->
+    PMc mo -> PMc mo'.
 
 (* [comment removed for export] *)
 Definition frmW (Pm : machine_state -> Prop) : machine_state -> Prop := fun ms => Pm ms /\ FP.frm0 (ms_fcsr ms).
@@ -187,7 +196,7 @@ Definition rt_pres_ex (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (
 Definition rng_class (RT : rt_sig) (Σ : rts RT) (s n : Z) : Prop :=
   (exists p k, In (p, k) (rt_live RT Σ) /\ p <= s /\ s + n <= p + k)
   \/ (exists f k, In (f, k) (rt_frames RT Σ) /\ f <= s /\ s + n <= f + fs_size k - 8)
-  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 16)
+  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 9)
   \/ (0x10000 <= s /\ s + n <= SEGTOP_A).
 
 (* [comment removed for export] *)
@@ -572,10 +581,13 @@ End Contracts.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition PMfd (F0 : list (word * FdEntry)) (fs0 : Fs) : Model -> Prop := fun mo => m_fds mo = F0 /\ m_fs mo = fs0.
+(* LPS 08b1429: the channel reader travels with the fd frame. [Run.valid_input] pins it true at
+   launch and no step writes it; a nonempty writev needs it ([writev_spec]'s SIGPIPE arm). *)
+Definition PMfd (F0 : list (word * FdEntry)) (fs0 : Fs) : Model -> Prop :=
+  fun mo => m_fds mo = F0 /\ m_fs mo = fs0 /\ m_channel_reader mo = true.
 
 Lemma PMfd_fdfs_only : forall F0 fs0, fdfs_only (PMfd F0 fs0).
-Proof. intros F0 fs0 mo mo' E1 E2 [H1 H2]. split; congruence. Qed.
+Proof. intros F0 fs0 mo mo' E1 E2 E3 (H1 & H2 & H3). split; [congruence|]. split; congruence. Qed.
 
 (* [comment removed for export] *)
 Definition rt_pres_fp (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (W : list (Z * Z)) (m m' : mem) : Prop :=
@@ -680,7 +692,7 @@ Definition fprintf_stderr_icontract : Prop :=
        /\ bv_unsigned sp <= a
        /\ exists slack, bytes_at asegs m (a + Z.of_nat (length s) + 1) slack
             /\ (- (a + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16) ->
+            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8) ->
   fd_lookup F0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
   ERR_rep m -> io_ssp m ->
   ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo ->

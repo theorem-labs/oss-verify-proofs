@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main's frame over the process input; the stack floor [LO] is 6144512 bytes below sp, the heap ceiling stays 8 MiB below it). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -25,17 +26,18 @@ Ltac rpc := apply ret_pc_even; [lia| reflexivity].
 
 Section CTX.
 Context {RCEIL : RunCeiling}.
-Variables (sp0 : word) (argv envp : list (list byte)) (TID : Z).
+Variables (sp0 : word) (inp : ProcInput) (TID : Z).
 Notation usp0 := (bv_unsigned sp0).
 Notation gpv := (Z_to_bv 64 0x10800).
 Notation tpv := (Z_to_bv 64 RATP).
 
-Definition LO : Z := usp0 - 8388608.
+(* LPS 727298f3: the zero window below sp reaches at least 6144512 bytes down ([X0pw.launch_window_lo]) *)
+Definition LO : Z := usp0 - 6144512.
 
 Definition MFRAME (mm : mem) (pad : list byte) (s7v s6v s5v s4v : word) : Prop :=
 rw_cells rsegs mm (usp0 + -128)
-[CB 8 pad; C8 s7v; C8 s6v; C8 s5v; C8 s4v; C8 (Z_to_bv 64 (envp_addr sp0 argv)); C8 (Z_to_bv 64 0x1bc88);
-C8 (Z_to_bv 64 (argc argv)); C8 (Z_to_bv 64 (usp0 + 8)); C8 (Z_to_bv 64 0x310d0)].
+[CB 8 pad; C8 s7v; C8 s6v; C8 s5v; C8 s4v; C8 (Z_to_bv 64 (envp_addr sp0 inp)); C8 (Z_to_bv 64 0x1bc88);
+C8 (Z_to_bv 64 (argc inp)); C8 (Z_to_bv 64 (usp0 + 8)); C8 (Z_to_bv 64 0x310d0)].
 
 Definition RSTAT (k : bool) (mm : mem) : Prop :=
 rw_cells rsegs mm 0x4d388 [C8 (Z_to_bv 64 0x4d388); C8 (Z_to_bv 64 0x4d388); C8 (Z_to_bv 64 0x4d388); C8 (Z_to_bv 64 0); C4 (Z_to_bv 64 TID)]
@@ -210,15 +212,15 @@ Qed.
 
 Section EXITS.
 Context {RCEIL : RunCeiling}.
-Variables (sp0 : word) (argv envp : list (list byte)) (TID : Z).
+Variables (sp0 : word) (inp : ProcInput) (TID : Z).
 Notation usp0 := (bv_unsigned sp0).
 Notation gpv := (Z_to_bv 64 0x10800).
 Notation tpv := (Z_to_bv 64 RATP).
 Hypothesis VSP : valid_sp sp0.
-Hypothesis HCEIL : alloc_ceiling = LO sp0.
+Hypothesis HCEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
 Hypothesis HT : 0 < TID < 4194304.
 
-#[using="VSP HCEIL"] Lemma sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0 /\ alloc_ceiling <= LO sp0 /\ LO sp0 + 8388608 = usp0 /\ 0x6e000 <= LO sp0.
+#[using="VSP HCEIL"] Lemma sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0 /\ alloc_ceiling <= LO sp0 /\ LO sp0 + 6144512 = usp0 /\ 0x6e000 <= LO sp0.
 Proof. destruct VSP as (A & B & C). rewrite HCEIL. unfold LO, sp_window_lo, sp_window_hi, stack_max_size in *. repeat split; lia. Qed.
 
 #[using="HT"] Lemma rat_exit_intro : forall (code : Z) (s : PState) (LB : list block) (SP : Z) (ra t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -241,7 +243,7 @@ Qed.
 
 #[using="VSP HCEIL HT"] Lemma main_return : forall (code : Z) (s : PState) (LB : list block) (x1 t0 t1 t2 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
 (pad : list byte) (s7v s6v s5v s4v : word) (F : bvmap 5 word) (fc : bv 32) (m : mem) (k : bool),
-MFRAME sp0 argv m pad s7v s6v s5v s4v ->
+MFRAME sp0 inp m pad s7v s6v s5v s4v ->
 stk rsegs m (LO sp0) (usp0 + -128) ->
 RSTAT TID k m -> RHEAP s LB m -> stdout_file m (ps_so s) -> stderr_file m -> mem_inv rsegs m ->
 evt rsegs (rat_exit code s)

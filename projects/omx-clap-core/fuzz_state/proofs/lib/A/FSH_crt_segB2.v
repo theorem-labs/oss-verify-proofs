@@ -4,28 +4,29 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0j.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names and addresses changed; 1881 of its 1980 lines of code are new or changed and 485 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81a9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan (image
    tfibsegs, the pinned fuzz_state.asan sha256 64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0): the ASan
    walk of FSH_Fn_crt.v check_round_trip_spec, lane B2 = segments 14-19, from the return of the second pj_object at
    0x82128 (0x8212c, crt_INV_8212c, lane B1's boundary) to the return of the third pj_set at 0x821a8 (0x821ac,
    FSH_crt_base.crt_INV_821ac), with the class-3 fake frame live (own = [(3, pos)]).
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd4.v .. check_round_trip_sd9.v (the steps
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd4.v .. check_round_trip_sd9.v (the steps
    st4 .. st9 over the stage cuts St4 .. St9 of check_round_trip_stdefs.v :315-373) and check_round_trip_sdglue.v
    crt_cr_call :798 (the carried invariant across a callee)). The function-level line, with the full reuse search
    (index v5 built 2026-10-29T01:50:18Z; Require closure of the hit 334 files, 0 Admitted / Axiom / Parameter) and the
    checker verdict CONFIRM (a Theorem Labs lane, role check, 2026-10-29 04:3xZ), is lines 6-21 of the lane head
    (internal path).
-   What is ported and how: d25a984c903's st4 .. st9 each run one callee (pj_string / pj_set through its a_call
+   What is ported and how: a commit's st4 .. st9 each run one callee (pj_string / pj_set through its a_call
    contract), the store-free stretch after it (check_round_trip_runs.v crt_set1 ..), and re-establish the carried
    invariant CR through crt_cr_call. Their a_call_pre / a_call_post statement is not importable, so the same steps are
    restated on the S0 forms: the callee's fpreU at the call site with crt's frame record pushed on the chain (the role
    of crt_cr_call's `pre ACRT_K ...` and window premises), the stack room, the argument registers read
    off the engine's call-site state, the FP relation of the after-call (FSW_K3.fsw_fp_sub) and the frame's flag word
    outside the callee's footprint (FSH_crt_base.crt_after_call's premises), and pj_set's `rd_sum Dold0 <= live` from
-   the exact live equation (a Theorem Labs lane's restated pj_set_spec, a working branch 29d0157ef3d,
+   the exact live equation (a Theorem Labs lane's restated pj_set_spec, a working branch,
    FSH_Fn_reader.v:532). The three FP-cover obligations crt_pjset_fp_ok_150 / _17c / _1a8 are taken by path from
-   a working branch ba97feda29a lib/A/FSH_crt_segB.v:65-119 (with the frame offsets they name).
+   a working branch lib/A/FSH_crt_segB.v:65-119 (with the frame offsets they name).
 
    The six segments (MEASURED, capstone 5.0.7 over the pinned fs.asan):
      14  0x8212c..0x82138  pj_string (v = s6 = F + 0xe0, "org.openmixer.preset/2" 0x20ea0)   no branch (pj_object
@@ -65,7 +66,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 (* ================= the FP-cover obligations of the three pj_set sites, BY PATH from a working branch
-   ba97feda29a lib/A/FSH_crt_segB.v:65-119 (text unchanged) ================= *)
+   lib/A/FSH_crt_segB.v:65-119 (text unchanged) ================= *)
 (* ================= the class-3 frame's objects (offsets from F, MEASURED 0x81f80-0x81fa0) ================= *)
 Definition crtB_DOC : Z := 0x20.
 Definition crtB_STATE : Z := 0x80.
@@ -334,7 +335,7 @@ Qed.
 End r.
 
 (* ================= the lane's inner boundaries 0x8213c / 0x82154 / 0x82168 / 0x82180 / 0x82194 =================
-   One parametric invariant, the ASan twin of d25a984c903's crt_obj_stage (check_round_trip_stdefs.v St4 .. St9 :315-373:
+   One parametric invariant, the ASan twin of's crt_obj_stage (check_round_trip_stdefs.v St4 .. St9 :315-373:
    the document and state trees, v's node, the holdings, the counters), in the forms of FSH_crt_base.crt_INV_821ac.
    The document's and the state's blocks are carried BY SIZE (`Permutation (map snd D) sizes`): pj_set's post has no
    pj_hdr, and the header a later pj_set needs (its cap, hence the grow arm) is read back off pj_node's kids block
@@ -422,7 +423,7 @@ Definition crtB2_INV_821ac : crt_inv :=
     [56 * 8; 8 * 8; 9; 7] VZero K_821ac CNT_821ac LIVE_821ac.
 End inv.
 
-(* ================= what a pj_* call of the lane keeps (the role of d25a984c903's sdglue.v crt_keep_blk :612,
+(* ================= what a pj_* call of the lane keeps (the role of's sdglue.v crt_keep_blk :612,
    crt_spared_blk :659 and crt_cr_call :798 across one callee) =================
    Every footprint of the lane is FR ++ ablocks_fp Dh ++ FS_PSTAT_FP: FR inside crt's class-3 frame (the objects the
    callee writes), Dh live heap blocks (pj_set's old kids / keys), and fs's statics. A byte of another live heap block,

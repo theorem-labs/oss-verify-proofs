@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, one proof step more gives the write node's channel-reader fact (co_rdr). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -271,7 +272,7 @@ Proof.
     apply ref_exit1_Z. exists sp, (Z_to_bv 64 tp), (bv_unsigned (edenot E tide)), (edenot E w2), (edenot E r2).
     split; [exact EC|]. split; [exact (co_halt _ _ _ _ _ HC)|]. split; [exact (co_lazy _ _ _ _ _ HC)|].
     right. exists wb, wp, (edenot E bufp), (edenot E bufsz), (edenot E rp), (edenot E canv).
-    split; [| apply fd_lookup_std1; exact (co_fds _ _ _ _ _ HC)].
+    split; [| split; [apply fd_lookup_std1; exact (co_fds _ _ _ _ _ HC) | exact (SPSA.co_rdr RSEGS _ _ _ _ _ HC)]].
     constructor.
     + exact Rlock.
     + exact Rwp.

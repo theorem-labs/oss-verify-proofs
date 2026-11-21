@@ -3,7 +3,7 @@
 fuzz_uci's ported memchr walk files lib/{A,B}/Rt/{Memchr,MemchrChk}.v `Local`, so no file that imports them inherits
 the redefinition (the form of core-B/reusable-local.py for YA09 / YA0e).
 
-Why: the walk is ported from fuzz_boxreg's released lib/{A,B}/Rt/Memchr.v and MemchrChk.v (recipes 88154566652a),
+Why: the walk is ported from fuzz_boxreg's released lib/{A,B}/Rt/Memchr.v and MemchrChk.v (recipes),
 where the redefinition is global; global_settings v10 (439f8e3bd463) reports each as ESCAPES TACTIC (4 in these four
 files). A `Local` tactic redefinition still holds for the rest of its own file, so the file's own proofs see the same
 tactic; only importers stop inheriting it, and the build of both images is the check that none relied on it.

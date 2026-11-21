@@ -27,9 +27,10 @@
    - Unchanged: Alloc's 77 words (both pins: 0x6ea18-0x6eb4c byte-identical), so the code addresses (A_ALLOC1 0x6ea1c,
      the jal Create 0x6f400 at 0x6eb28, A_RESUME 0x6eb2c, the entry word 0xff010113), Create's 45 words; the image end
      YImgTop.IMG_TOP = 0x5f3000 and the writable window's low end 0x96000 (YB1h.v:87-88 tfib_rw_window); MNR_STK 104.
-   lib/B/YF0m.v (WireSyms, TFIB_STORE) is on this base, generated for this image; the donor (projects/libreac/fuzz_knock/proofs/lib/AU/YD3b.v:30-31 at 41e80c0a1bbb) built its copy from a working branch
+   lib/B/YF0m.v (WireSyms, TFIB_STORE) is on this base, generated for this image; the donor (projects/libreac/fuzz_knock/proofs/lib/AU/YD3b.v:30-31) built its copy from a working branch
    (a build-only input). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3b.v at 88154566652a (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build and its proofs' unfolds of YImgTop.IMG_TOP (in 9 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3b.v (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build and its proofs' unfolds of YImgTop.IMG_TOP (in 9 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -65,7 +66,7 @@ Local Open Scope Z_scope.
 Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 Section kd.
-(* The layout step, as S3 states it (YD3c.v:98-102, amendment 8): the first Put's growth is the placeholder relation
+(* The layout step, as S3 states it (YD3c.v:99-103, amendment 8): the first Put's growth is the placeholder relation
    layout_grow_kd, swapped by name when the owner fixes the signature. Satisfiable: fun _ _ => True. *)
 Variable layout_grow_kd : alayout -> alayout -> Prop.
 
@@ -144,7 +145,7 @@ Definition alloc_post (W : world tfibsegs) (ly : alayout) (S : astate) (regs : b
    Wf (as_universe B) S, In tr (as_universe B) and F <= 32 + depot_frames S, with cnt = length tr + 1;
    0 <= ly_SB ly < 2^64 is 0 while the store block is unmapped
    (a Theorem Labs lane's encoding) and, once mapped, knock-branch lo_app gives in_app (ly_SB ly) kStoreBlockSize, so
-   4096 <= ly_SB ly < ASAN_CEIL; the first-use premises Create shares are cited in AD3c.v's header (S3, e0c0148e076);
+   4096 <= ly_SB ly < ASAN_CEIL; the first-use premises Create shares are cited in AD3c.v's header (S3);
    ly_stk_hi ly <= kHighMemEnd, which amendment 8 adds to Create's pre, was already a premise here. *)
 Definition tfib_alloc_spec : Prop :=
   forall (W : world tfibsegs) (ly : alayout) (S : astate) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
@@ -175,7 +176,7 @@ End g.
 
 (* ===================== The proof of tfib_alloc_ok =====================
    The walk framework of YFem (the mapped-case depot proof this branch joins): the symbolic runner over the fetch table
-   tfibtbl_rtB (YB1q.v:19, which covers Store + Alloc 0x6e8f4 for 150 insns and Create 0x6f400), seeds built with
+   tfibtbl_rtB (YB1q.v:20, which covers Store + Alloc 0x6e8f4 for 150 insns and Create 0x6f400), seeds built with
    entry_st_ok_full, register pins between runs, and SRr_ret_at at the return. The statement above is closed before
    these imports, so they cannot change how its names resolve; the theorem is restated over the same Section
    variables and hypotheses in the same order (its closed type is unchanged). *)

@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCfn.v for libreac/fuzz_decode's ASan+UBSan build (statements only): A_LLVMF at fuzz_decode's listing, RA_LLVMF / A_EMPTY and the core names not yet on the unit as Section Variables, the float-state return of lib/YL0g.v, the runtime cells as constant cells of the asyms record, the read-only image view in the pre, and the walk's statement over its callee contracts; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_cg: the slot contract of fuzz_decode.asan-ubsan's LLVMFuzzerTestOneInput (decodeb_text
    of lib/B/Prog/DecodeBAddr.v, AF_LLVMFuzzerTestOneInput = 0 of lib/B/Prog/DecodeBList.v), as STATEMENTS only (no proof).
-   It is cgif_file_fuzzer's tfib_lib_contract_x (origin/ossv/recipes c8557374ad2e,
+   It is cgif_file_fuzzer's tfib_lib_contract_x (theorem-labs/oss-verify-proofs@6b32741d849a,
    proofs/cgif/cgif_file_fuzzer/lib/YCfn.v:31-69, the ASan+UBSan image's copy of
    lib/A/ACfn.v:33-71) instantiated at fuzz_decode's names, with two changes:
    - check_round_trip, which this function calls, writes float registers (its own float code and its callee
@@ -81,7 +82,7 @@ Lemma dec_asan_cells_file :
 Proof. repeat split; vm_compute; reflexivity. Qed.
 
 (* The sink names (asink_syms, tfib_K, asink_none, ameta_inv, asink_img_laws) are a Theorem Labs lane's sink form,
-   a working branch 4d244de18f0 (in pg-core c8e8b0fa5ec): its astdio_env (lib/Reusable/YE00.v:103) asks no string
+   a working branch (in pg-core): its astdio_env (lib/Reusable/YE00.v:103) asks no string
    bytes, which are only in asink_strs (:108, for the file-output arm). cgif's own lib/YE00.v:100-106 astdio_env asks the
    sink's path, mode, "rwa" and trailer strings, which neither fuzz_decode image holds (a Theorem Labs lane, 2026-10-28 23:46Z), so
    cgif's asink_none in this pre would leave it unsatisfiable. *)
@@ -192,7 +193,7 @@ Local Abbreviation rd W mem := (mrestrict (w_H W) mem).
 (* The frame-pointer chain at this function's calls. It sets s0 to its entry sp at +0x3c (`addi s0, sp, 224`) and
    keeps it until the epilogue; the frame record below s0 holds RA_LLVMF and the caller's s0, whose chain is empty by
    the entry premise (afn_pre ... [] in dec_lib_pre_x). So the chain's return addresses are [RA_LLVMF], or [] when s0
-   lies within 16 bytes of ly_top (YCbq.v:218 achain, YG0d.v:218 chain_pre): cgif's pattern in lib/YCej.v, the copy of lib/A/ACej.v:26-46
+   lies within 16 bytes of ly_top (YCbq.v:218 achain, YG0d.v:218 chain_pre): cgif's pattern in lib/YCej.v, the copy of lib/A/ACej.v:27-47
    (CTX_read_frameconfig, TRACES_LLVMFuzzerTestOneInput). The contexts of the two check_round_trip calls are therefore
    their return address followed by one of these (cgif lib/YCej.v CTX_* lists, which YCfj.v uses). *)
 Definition CTX_check_round_trip : list (list Z) := flat_map (fun r => [[r]; [r; RA_LLVMF]]) DEC_LLVMF_RA_CRT.
@@ -239,7 +240,7 @@ Definition dec_llvmf_holds_stmt : Prop :=
      ameta_inv segs tfib_K ly (rd W0 mem0) M -> ameta_inv segs tfib_K ly' (rd W' mem') M) ->
   ro_below_ofl segs RLO RHI ->
   (* class 0 (a0 = 64 at +0x6c, the call at +0x70): the cgif-AR walk of record, a Theorem Labs lane's
-     lib/A/Rt/StackMalloc0.v:513 stack_malloc0_contract (a working branch 5251b347350), relocated to fuzz_decode
+     lib/A/Rt/StackMalloc0.v:514 stack_malloc0_contract (a working branch), relocated to fuzz_decode
      with the core (image B's copy). *)
   (forall fx : YK11.FPState, @astack_malloc_realizes fx rc segs B 0) ->
   (forall fx : YK11.FPState, @aintrin_realizes fx rc segs B OSet (decodeb_sigma DB___asan_memset)) ->

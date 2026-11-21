@@ -1,6 +1,6 @@
 (* crtB_bridge: the image-B half of the step that carries a footprint run of lib/Lib/ExecF.v into cgif's SRr walk,
    for the cgif-form walk of check_round_trip (lib/B/Prog/check_round_trip_cg.v).  Twin of lib/A/Prog/crtA_bridge.v
-   (a working branch ae1529ccb00).
+   (a working branch).
 
    The image-neutral half (the transport of a run along ms_eqv, and the shape lemma for an arbitrary ROM) is
    lib/Lib/CrtBridge.v.  What is left here is image B's instance: decode's run state for image B is `ms_of_regs` of

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rz_silent1_unit_cfg takes the configuration's sys_rob robustness and rz_sys_lazy_cfg supplies it by sys_rob_instr). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -14,6 +15,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common Require Import PropExec CatExec CatSim SeqExec ExitSim.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common Require Import ShapeAlg ShapeAlgCfg.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.XQ Require Import DivergeSim AgentLib AgentNodes Nodes.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common.Cfg Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Instance cfglift_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
@@ -53,8 +55,9 @@ Qed.
 
 Lemma rz_silent1_unit_cfg : forall c c' T,
   node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  sys_rob segs c ->
   realizes_cfg cfg segs c' T -> realizes_cfg cfg segs c T.
-Proof. intros c c' T Hn Hc. eapply rz_silent1_cfg; [apply node_ok_unit_silent_cfg; exact Hn | exact Hc]. Qed.
+Proof. intros c c' T Hn Hrob Hc. eapply rz_silent1_cfg; [apply node_ok_unit_silent_cfg; exact Hn | exact Hrob | exact Hc]. Qed.
 
 (* [comment removed for export] *)
 Lemma stepacc_ecall_epend' : forall regs pc mem rom w,
@@ -97,7 +100,7 @@ Lemma rz_sys_lazy_cfg : forall regs pc mem rom model w T,
   realizes_cfg cfg segs (mkCfg (mkst regs pc mem rom) model) T.
 Proof.
   intros regs pc mem rom model w T Hh HF HE Hc.
-  eapply rz_silent1_unit_cfg; [| exact Hc].
+  eapply rz_silent1_unit_cfg; [| apply sys_rob_instr; reflexivity | exact Hc].
   exact (node_instr_noacc' (mkst regs pc mem rom) model _ Hh eq_refl (stepacc_ecall_epend' regs pc mem rom w HF HE)).
 Qed.
 

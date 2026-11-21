@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcReads.v (commit 5ad50e61fc6a, file sha256 78734be5a5a4) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (head H4 of the interface DMwalkIF.v at dc3949af11c): the READ FIELDS of
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcReads.v (file sha256 78734be5a5a4) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (head H4 of the interface DMwalkIF.v): the READ FIELDS of
    __asan::QuarantineCallback::Recycle (0x34810) over the opaque cut relation [ARXr] and recycle invariant [DRq].
    rule 24: no function proved here (kind: field statements; head H4's walk is DMrcPrim.v / DMrcSec.v).
 
@@ -94,7 +95,7 @@ cd_model RMAXD (AFf3.X1 X k) (prim_class off) off /\
 (forall a, YFeuC.puser ly X a -> ~ (ck_base B ly k <= a < ck_base B ly k + ck_extent k) -> ~ AFf3.D B ly k (spZ regs) a).
 
 (* The record of the slice's reads (primary half; the secondary half is DMrcSec.rc_sec_reads). *)
-(* CacheDealloc's free-array GROWTH room at the cut (DMwalkIFA.cd_pre_cx's last conjunct, WalkB1 ffbbfde0c14): on the
+(* CacheDealloc's free-array GROWTH room at the cut (DMwalkIFA.cd_pre_cx's last conjunct, WalkB1): on the
    growth arm (its branch test as the guard) the model's budget has room for the free array's map.  A READ of the cut
    state; the cf layer gives it from its room (room_wA_parts_cf / room_rec_cf). *)
 Definition rc_prim_room_t : Prop :=

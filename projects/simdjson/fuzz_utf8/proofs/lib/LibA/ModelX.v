@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: added m_kernel_MX. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -42,6 +43,7 @@ Lemma m_fds_MX : forall m mat, m_fds (MX m mat) = m_fds m. Proof. reflexivity. Q
 Lemma m_fs_MX : forall m mat, m_fs (MX m mat) = m_fs m. Proof. reflexivity. Qed.
 Lemma m_tid_MX : forall m mat, m_tid (MX m mat) = m_tid m. Proof. reflexivity. Qed.
 Lemma m_halted_MX : forall m mat, m_halted (MX m mat) = m_halted m. Proof. reflexivity. Qed.
+Lemma m_kernel_MX : forall m mat, m_kernel (MX m mat) = m_kernel m. Proof. reflexivity. Qed.
 Lemma m_stdin_MX : forall m mat, m_stdin (MX m mat) = m_stdin m. Proof. reflexivity. Qed.
 Lemma nonlazy_bytes_MX : forall m mat, nonlazy_bytes (MX m mat) = nonlazy_bytes m. Proof. reflexivity. Qed.
 Lemma strip_MX : forall m mat, strip (MX m mat) = strip m. Proof. reflexivity. Qed.

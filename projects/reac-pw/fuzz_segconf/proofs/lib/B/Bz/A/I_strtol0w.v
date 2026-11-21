@@ -5,11 +5,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Bz/A/I_strcpyw.v, with its addresses and numbers changed; 300 of its 376 lines of code are new or changed and 371 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Bz/A/I_atoiw.v, with its module paths, addresses and numbers changed; 45 of its 128 lines of code are new or changed and 293 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Bz/A/I_strtol0w.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The strtol interceptor of reac-pw/fuzz_segconf's ASan+UBSan image B called with endptr = NULL: strtol(x, NULL, 10),
    from the trampoline 0x43b44 through the wrapper 0x4b6b8 (196 B), musl's strtol 0x9a9e8 through REAL(strtol)
    (the slot 0xa5080) with the wrapper's own stack slot as its end pointer, and StrtolFixAndCheck 0x554a4 with
    a2 = 0 (I_strtolfix0.v sfix0_spec), to the return.
-   Port of pupnp/FuzzHttp lib/A0/ICP/I_strtol.v:172 strtol0_i_spec (origin/ossv/recipes 501c0d516c69), the same
+   Port of pupnp/FuzzHttp lib/A0/ICP/I_strtol.v:172 strtol0_i_spec (theorem-labs/oss-verify-proofs@6b32741d849a), the same
    path at a1 = 0, onto the Bz kit's form of the live-endptr walk, I_strtolw.v istrtol_spec: the same premises
    without the end-pointer cell, and the same answer (the value [fv str] in a0 and the errno word [fr str ev], from
    strtol_body_stmt, which pupnp's post leaves existential) without the end-pointer write. *)

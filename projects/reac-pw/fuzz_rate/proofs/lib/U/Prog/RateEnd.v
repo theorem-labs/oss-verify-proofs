@@ -1,7 +1,7 @@
 (* ubsan_halts of reac-pw/fuzz_rate from the UBSan frame and the slot of LLVMFuzzerTestOneInput: reac-pw/fuzz_role's
    U/Prog/RoleEnd.v (the plain lib/Prog/RoleEnd.v in reac-pw/fuzz_pin's
-   U/Prog/PinEnd.v form: libreac/fuzz_ctrl's released U/Prog/Seg/Segs.v + SlotLink.v, origin/ossv/recipes
-   25e3d17bdb50) on rate's UBSan build's files, for its five segments.
+   U/Prog/PinEnd.v form: libreac/fuzz_ctrl's released U/Prog/Seg/Segs.v + SlotLink.v)
+   on rate's UBSan build's files, for its five segments.
    - The segment lemmas, each as its segment file states it once its Section closes (Section hypotheses:
      U/FrameAPI.frame_facts_ubsan, then the one contract the segment takes): seg_E01_stmt (U/Prog/Seg/E01.v: the
      prologue, the header reads and malloc(pp)), seg_M01_stmt (U/Prog/Seg/M01.v: rate_build_contract and

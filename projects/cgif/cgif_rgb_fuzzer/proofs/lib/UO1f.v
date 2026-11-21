@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ledger_new_map proves the ledger's new lg_mres and lg_vin fields for the new map). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -167,6 +168,8 @@ split; [exact Hceil|]. intros x Hx Himg. exact (FI x Himg Hx).
 pose proof (vm_backing_used_le_maps (mmap_model a (Z_to_bv 64 n) md) ltac:(rewrite mmap_model_lazy; exact ML) MM) as VB.
 rewrite VM in VB. cbn [State.live_bytes] in VB. rewrite NU in VB. pose proof (lx_lb _ _ _ LX). lia.
 +   exact (lg_ceil _ _ _ _ LG).
++   intros e He. destruct He as [<-|He]; [exact (lgr_app_l _ _ _ _ RF) | exact (lg_mres _ _ _ _ LG e He)].
++   exact (lg_vin _ _ _ _ LG).
 - split; rewrite ?VM.
 + intros k rg x Hk Hl Hx. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
 * rewrite (Lset_lt L A _ k H) in Hx. destruct (lx_cov _ _ _ LX k rg x Hk Hl Hx) as (e & He & Hex). exists e. split; [right; exact He | exact Hex].

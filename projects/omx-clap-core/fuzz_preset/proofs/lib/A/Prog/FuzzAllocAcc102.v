@@ -1,6 +1,6 @@
 (* fuzz_preset image A' (asan, #102 pin 1be0f53d96cb): the walks of alloc.c's flag accessors fuzz_alloc_ran_out
-   (:154-157) and fuzz_alloc_ran_out_reset (:159-162) against the texts at the kit of record
-   decff67d721f, lib/A/PRH_FnAlloc.v (blob 83fe93bc86e2): tfuzz_alloc_ran_out_specX (:127) and
+   (:154-157) and fuzz_alloc_ran_out_reset (:159-162) against the texts at the kit of record,
+   lib/A/PRH_FnAlloc.v (blob 83fe93bc86e2): tfuzz_alloc_ran_out_specX (:127) and
    tfuzz_alloc_ran_out_reset_specX (:138), at the AL rows' instance (cp := CfParams_preset) (PI := prh_img_A)
    (RL := prh_room_live_a8) (L := A_prog_listing) (PA := PI_prog_A) B ARcfx SK. Every conclusion is SRr (YA0n.v).
    This file also holds the IMAGE-PARAMETRIC part of all seven accessor walks (sections 1-3: the byte runs as machine
@@ -14,8 +14,8 @@
    reader loads a static, the writer stores into a static, which is PST (PRH_Base.v prh_pst); neither makes an
    instrumented access or a call. g_ran_out is ONE byte (pi_gz_ran_out = 1, the asan_globals width): the reader's
    lbu zero-extends it, and the ledger's `ran = 0 \/ ran = 1` (prh_glob) keeps the value below 256.
-   Donors (copied and adapted, not Required): h-w6rep-2's #102 relocation origin/cold/h-w6rep-2-p102-allocsurf
-   8a019eaaef99, lib/A/Prog/PwAllocSurf.v 428e59506566 (sections 1-3 and the A' run tactics, prefix pas_ renamed
+   Donors (copied and adapted, not Required): h-w6rep-2's #102 relocation,
+   lib/A/Prog/PwAllocSurf.v 428e59506566 (sections 1-3 and the A' run tactics, prefix pas_ renamed
    acc_), and
    its old-pin walks lib/A/Prog/PwRanOut.v 77105584e9ac / PwRanOutReset.v 5ff92c55a30c (the lbu read, zext8_small,
    the sb's chunk), with PwBase.v's cell regions (pw_rcell / pw_wcell and their region_ok lemmas) made generic in
@@ -767,7 +767,7 @@ apply HQ.
 Qed.
 End A.
 
-(* ---- the two TEXTS (a Theorem Labs lane, lib/A/PRH_FnAlloc.v:127, :138 at decff67d721f) at image A' (#102), at the AL rows' instance:
+(* ---- the two TEXTS (a Theorem Labs lane, lib/A/PRH_FnAlloc.v:127, :138) at image A' (#102), at the AL rows' instance:
    PA := PI_prog_A, PI := prh_img_A, preset's CfParams, the room-live instance of a Theorem Labs lane, and the allocator relation
    ARcfx (ARcf with the error-buffer extents placed). Each is its core (section 3) with the byte run of section 4. ---- *)
 Section T. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg}.

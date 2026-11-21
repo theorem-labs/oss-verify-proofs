@@ -10,15 +10,16 @@
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 532 of its 679 lines of code are new or changed and 1344 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_segments_s1.v, with its module paths and module names changed; 388 of its 515 lines of code are new or changed and 552 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the kit of segment A8a of reac_segconf_parse_file's walk
    (lib/A/Prog/pf_pieces.v S_A8a: SEG 0x887a4 -> NEW 0x8890c / FOUND 0x88964 / CLR 0x880fc, 49 instructions, the
    inlined seg_get search of reac_segconf.c:103-118). Segment A8a's proof, by the G3 walk owner, 2026-10-30.
    This file holds what the walk (lib/A/Prog/pf_a8a.v) reads off the cut predicates, with no instruction walked:
    1. the spine: r_find_go one entry at a time and seg_get's bound branch (the plain lane's pure lemmas
-      p4_find_step / p4_find_end / p4_get_full / p4_rconf_ovf of the plain-build walk owner's lib/Prog/pfB_p4_spine.v
-      at 16c6d72c0344, copied: that file is not in this tree), c->seg[i].name read through sa_rconf (the
+      p4_find_step / p4_find_end / p4_get_full / p4_rconf_ovf of the plain-build walk owner's lib/Prog/pfB_p4_spine.v,
+      copied: that file is not in this tree), c->seg[i].name read through sa_rconf (the
       lemmas cs_bytes_app / cs_bytes_sub / cs_cstr / cs_rname / cs_le4_byte of the listing layer's owner's
-      lib/A/Prog/check_segments_s1.v at commit 1119b387b532, copied);
+      lib/A/Prog/check_segments_s1.v, copied);
    2. a8c, the facts every point of A8a has (INV_SEG's, less the registers the segment overwrites), and
       a8c_keep: they stay true when the memory changes only below the realigned sp (a callee's scratch window) or
       in the slot s1 + 0xb0 (the store at 0x887ac), and the registers they name are kept. Every object a8c names

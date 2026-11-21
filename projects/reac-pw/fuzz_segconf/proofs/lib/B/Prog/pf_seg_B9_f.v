@@ -3,7 +3,7 @@
    lemmas over SegModel's lists and over a reader.
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk: helper facts of segment B9, image B).
    A B9 sub-lane of the image-B G3 walk owner, 2026-10-30.
-   ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_a9_f.v (commit e326ef3cdba9, an
+   ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_a9_f.v (an
    image-A segment lane): the same lemmas with the same proofs, a9_ renamed b9_; the module paths moved to image B (lib.B.Prog
    pf_pieces / SegPgBase / SegABase, lib.B.Rt RtSeg, the B kit copies YA0n YG0f YG0n YG0d YCbq of
    the B-kit name map). Every definition these lemmas read (pf_shb, PF_SC_LINE,

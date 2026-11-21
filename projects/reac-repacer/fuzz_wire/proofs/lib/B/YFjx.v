@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFjx.v (that path at 25e3d17bdb50; donor image sha256 1c29845fe605), with its module paths changed, names TfibSyms -> GrantSyms and its addresses moved to libreac/fuzz_grant's ASan+UBSan build. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YFjx.v at 4f87de75d67 (donor image sha256 fde52226dc48), with its module paths changed, names GrantSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build; the hypothesis Hmap_apart, with the NB / SB extents as KnBlockExt.nb_ext / sb_ext, the variable DPOST, over the layout, world and model after the Put, and the Proof using / clear - lines of PAIRS_ok, FACTS_ok and SEED_ok, taken from proofs/libreac/fuzz_knock/lib/AU/YFjx.v at 88154566652a; Zify's Euclidean-division option is set locally. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFjx.v (that path; donor image sha256 1c29845fe605), with its module paths changed, names TfibSyms -> GrantSyms and its addresses moved to libreac/fuzz_grant's ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YFjx.v (donor image sha256 fde52226dc48), with its module paths changed, names GrantSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build; the hypothesis Hmap_apart, with the NB / SB extents as KnBlockExt.nb_ext / sb_ext, the variable DPOST, over the layout, world and model after the Put, and the Proof using / clear - lines of PAIRS_ok, FACTS_ok and SEED_ok, taken from proofs/libreac/fuzz_knock/lib/AU/YFjx.v; Zify's Euclidean-division option is set locally. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

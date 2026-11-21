@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v for libreac/fuzz_boxreg's program walk (as fuzz_identity's lib/A/Prog/IdentPaLib.v, ea5560a967b, carries it): module paths changed; the names are bsym's (the wrappers' free and malloc entries are BS___interceptor_trampoline_free and BS___interceptor_trampoline_malloc); the shadow GOT slot is object 1 (0x98eb8) and the shadow cell object 12 (0xa0f78) of BoxAddr.v; blk_off_imgP states fuzz_boxreg.asan's image range as Reusable/YImgTop.v's [IMG_LO, IMG_TOP) in place of cgif's off_img. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v for libreac/fuzz_boxreg's program walk (as fuzz_identity's lib/A/Prog/IdentPaLib.v, carries it): module paths changed; the names are bsym's (the wrappers' free and malloc entries are BS___interceptor_trampoline_free and BS___interceptor_trampoline_malloc); the shadow GOT slot is object 1 (0x98eb8) and the shadow cell object 12 (0xa0f78) of BoxAddr.v; blk_off_imgP states fuzz_boxreg.asan's image range as Reusable/YImgTop.v's [IMG_LO, IMG_TOP) in place of cgif's off_img. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxPaLib.v, with its module paths and module names changed; 370 of its 404 lines of code are new or changed and 459 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 asan image, pinned 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): the walk
    of check_reject_clean (merged fuzz_preset.c:538-555, signature unchanged) against the tcheck_reject_clean_specX
-   (lib/A/PRH_FnCheck.v:537, blob 9ecd8eb167c6 = the kit of record f97c8b2f046b's; the text block is byte-identical
-   to decff67d721f's PRH_FnCheck.v:479, blob 4cb899514e6c, which this walk was first proved against at 6ed04b809892).
+   (lib/A/PRH_FnCheck.v:537, blob 9ecd8eb167c6 = the kit of record; the text block is byte-identical
+   to's PRH_FnCheck.v:479, blob 4cb899514e6c, which this walk was first proved against).
    rule 24: proves function check_reject_clean (ported: h-hpreset-7's Wcheck_reject_clean.v,
-   origin/cold/h-hpreset-7-walk-s9-got-rob 9a0674f0b5f2, old pin 0x82060; no #102 copy exists).
+    old pin 0x82060; no #102 copy exists).
    The #102 body (A' 0x82110 = Crc102Syms.A102_check_reject_clean, 20 instructions, frame 16; listing
    h-hreply-s5-rf's check_reject_clean.fuzz_preset.asan102.s) is the donor's
    instruction for instruction, moved by +0xb0; only the pc-relative fields differ. Its arms; every abort arm is the
@@ -23,7 +24,7 @@
    the bytes' order, so each abort arm is refuted and the walk returns with nothing changed but its frame.
    WHAT THE #102 KIT CHANGED against the donor's text, and how the walk meets it:
    - fpre has a fourth conjunct, raZ regs < YM05.alloc_ceiling: read at entry, and given to fuzz_alloc_live from the
-     jal's own return site (Crc102Syms.RA102_check_reject_clean_1); and (kit f97c8b2f046b, FRM0-ENTRY) a fifth,
+     jal's own return site (Crc102Syms.RA102_check_reject_clean_1); and (kit, FRM0-ENTRY) a fifth,
      frm_zero of the entry float state: the walk runs no float instruction, so fuzz_alloc_live is entered at the
      caller's own float state and gets the caller's conjunct unchanged;
    - the post is fpostm (PRH_Base.v fQmn): the memory stays normal. The runs carry it by YGcallMxmn.v's

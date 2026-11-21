@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AE3a.v, with its module paths, module names, addresses and numbers changed; 271 of its 499 lines of code are new or changed and 825 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfSnN3a.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfSnN3a.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* musl memchr (fuzz_manifest.asan 0x92790 = tfib_A_musl_memchr), the NOT-FOUND walk: memchr(p, 0, n) where none
    of the n bytes at p is 0 returns NULL, and every byte it reads lies in [p, p+n).  The fetch/decode lemmas,
    the step tactics, C1, haszero_ref, rd_C1 and rd_HIGHS are those of A/YE3a.v (found case, tfib_memchr). *)

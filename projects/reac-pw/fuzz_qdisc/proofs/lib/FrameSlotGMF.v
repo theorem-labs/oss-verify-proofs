@@ -18,16 +18,35 @@ Variable API : AllocAPI B.
 Context {SH : sink_head} {SK : sink_syms}.
 Hypothesis TBL : forall L A mem md, aa_MR API L A mem md -> forall a, static_owned B a -> 0 <= a < 2 ^ 64 ->
   Mem.ro_addr (ms_segs B) (Z_to_bv 64 a) = true -> mbyte (ms_segs B) mem a = seg_rom (ms_segs B) (Z_to_bv 64 a).
+(* 727298f3: FrameSlotG's two bridge lemmas are stated at AcfgMode (its Section's [API]); the
+   same statements and proofs over this Section's mode-carrying record. *)
+Lemma lib_post_x_G_of_g_m : forall G stk L A regs mem md p n b l L' A' regs' mem' md',
+  lib_post_g B API G stk L A regs mem md p n b l L' A' regs' mem' md' ->
+  lib_post_x_G B API G [] stk L A regs mem md p n b l L' A' regs' mem' md'.
+Proof using.
+  intros G stk L A regs mem md p n b l L' A' regs' mem' md'
+    (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & _ & H11 & H12 & H13 & H14 & H15 & H16 & _ & H17 & H18).
+  exact (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 (conj H6 (conj H7 (conj H8 (conj H9 (conj H10
+    (conj H11 (conj H12 (conj H13 (conj H14 (conj H15 (conj H16 (conj H17 H18))))))))))))))))).
+Qed.
+Lemma ro_agree_of_pre_x_m : forall stk empty L A regs mem md ra p n pl b,
+  lib_pre_x B API stk empty L A regs mem md ra p n pl b -> ro_agree (ms_segs B) mem.
+Proof using TBL.
+  intros stk empty L A regs mem md ra p n pl b [Hpre _].
+  unfold lib_pre in Hpre. pose proof Hpre as [HMR _].
+  apply (ro_agree_of_rodata_ok B mem); [| exact (TBL L A mem md HMR)].
+  repeat match type of Hpre with _ /\ ?R => destruct Hpre as [_ Hpre] end. exact Hpre.
+Qed.
 Lemma lib_contract_x_G_of_gm : forall G R GI j pc ra empty stk,
   @lib_contract_gm AM fx rc LS B API SH SK G R GI j pc ra empty stk ->
   @lib_contract_x_G fx rc LS AM B API SH SK G R GI (fun _ => []) j pc ra empty stk.
 Proof using TBL.
   intros G R GI j pc ra empty stk H L A regs mem md p n pl b K Hpre HGI HR Hfrm HK.
-  apply (H L A regs mem md p n pl b K Hpre HGI HR (ro_agree_of_pre_x B API TBL stk empty L A regs mem md ra p n pl b Hpre)
+  apply (H L A regs mem md p n pl b K Hpre HGI HR (ro_agree_of_pre_x_m stk empty L A regs mem md ra p n pl b Hpre)
     (lib_pre_x_sp B API stk empty L A regs mem md ra p n pl b Hpre) Hfrm).
   intros l c' (fx' & L' & A' & regs' & mem' & md' & Hc & Hf & Hp & HGI').
   apply HK. exists fx', L', A', regs', mem', md'. split; [exact Hc|]. split; [exact Hf|].
-  split; [exact (lib_post_x_G_of_g B API G stk L A regs mem md p n b l L' A' regs' mem' md' Hp) | exact HGI'].
+  split; [exact (lib_post_x_G_of_g_m G stk L A regs mem md p n b l L' A' regs' mem' md' Hp) | exact HGI'].
 Qed.
 End BridgeM.
 Theorem plain_halts_mf_of_frame_slot : forall (G : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop),
@@ -35,7 +54,7 @@ Theorem plain_halts_mf_of_frame_slot : forall (G : list (Z * Z)) (GI : nat -> (w
   G_local_c src0_msyms G GI ->
   (forall mem, G_img_c src0_msyms G mem -> GI 0%nat mem) ->
   (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-     @lib_contract_gm MayFail fx rc checksum_shape src0_msyms (@zlib_API rc) src0_sink_head src0_sink
+     @lib_contract_gm MayFail fx rc checksum_shape src0_msyms (@zlib_API_mf rc) src0_sink_head src0_sink
        G frame_RELRO GI j ENTRY RA_LIB EMPTY SLOT_STACK) ->
   halts_may_fail Exits.any Images.plain.
 Proof.
@@ -45,9 +64,10 @@ Proof.
   - exact frame_RELRO_src0.
   - exact GIL.
   - exact GI0.
-  - intros rc. exists (@zlib_API rc). split; [apply zlib_allocator_extra|].
+  - (* 08b1429: the may-fail walks run over the record at MayFail (ZAllocatorMF.zlib_API_mf). *)
+    intros rc. exists (@zlib_API_mf rc). split; [apply zlib_allocator_extra_mf|].
     split; [exact (zlib_mf_allocator_holds rc)|].
     intros fx j Hj.
-    exact (lib_contract_x_G_of_gm (AM:=MayFail) src0_msyms (@zlib_API rc) (zlib_tables rc)
+    exact (lib_contract_x_G_of_gm (AM:=MayFail) src0_msyms (@zlib_API_mf rc) (src0_tables_m (AM:=MayFail) rc)
       G frame_RELRO GI j _ _ _ _ (H rc fx j Hj)).
 Qed.

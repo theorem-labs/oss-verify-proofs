@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
@@ -202,17 +203,23 @@ assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; li
 rewrite E1, E2, E3. reflexivity.
 Qed.
 Lemma brk_grants_grow : forall req r old,
-req <> Z_to_bv 64 0 ->
-(0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-brk_grants req r old = [(old, r - old)].
+  req <> Z_to_bv 64 0 ->
+  (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
 Proof.
-intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
-assert (E1 : w_is0 req = false)
-by (unfold w_is0; apply bv_eqb_neq; exact Hreq).
-assert (E2 : (0 <? bv_unsigned old)%Z = true) by (apply Z.ltb_lt; lia).
-assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; lia).
-rewrite E1, E2, E3. reflexivity.
+  intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
+  assert (E1 : w_is0 req = false)
+    by (unfold w_is0; apply bv_eqb_neq; exact Hreq).
+  assert (E2 : (0 <? bv_unsigned old)%Z = true) by (apply Z.ltb_lt; lia).
+  assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; lia).
+  rewrite E1, E2, E3. reflexivity.
 Qed.
+
+Lemma brk_grants_is_brk_zeros : forall req r old,
+  brk_grants req r old = brk_zeros req r old.
+Proof. reflexivity. Qed.
 Lemma brk_zeros_query : forall r old, brk_zeros (Z_to_bv 64 0) r old = [].
 Proof.
 intros r old. unfold brk_zeros, brk_is_grow, w_is0.
@@ -307,20 +314,21 @@ rewrite Z_to_bv_bv_unsigned. reflexivity.
 Qed.
 
 Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
-: Prop :=
-r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
-(t = Z_to_bv 64 0 \/
-(((if (page_round_up_Z (bv_unsigned r)
-<? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
-then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
-<=? top)%Z
-&& region_free reserved
-(Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
-(Z_to_bv 64 (page_round_up_Z
-(bv_unsigned r + bv_unsigned t)
-+ page_size - page_round_up_Z (bv_unsigned r)))
-else true)
-&& (bv_unsigned t <=? lim)%Z)%bool = true)).
+    : Prop :=
+  r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
+  (t = Z_to_bv 64 0 \/
+   (((if (page_round_up_Z (bv_unsigned r)
+          <? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
+      then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+            <=? top)%Z
+           && region_free reserved
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
+                (Z_to_bv 64 (page_round_up_Z
+                               (bv_unsigned r + bv_unsigned t)
+                              + page_size - page_round_up_Z (bv_unsigned r)))
+      else true)
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
 (bufs : list (list byte))
 (r : word) : (list (list byte) * word) -> Prop :=

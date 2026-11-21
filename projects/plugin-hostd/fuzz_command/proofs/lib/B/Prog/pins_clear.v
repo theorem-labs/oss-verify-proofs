@@ -5,9 +5,9 @@
    fuzz_command.asan-ubsan, entry BASE + AF_pins_clear = 0x8cbe8), proving a Theorem Labs lane's tpins_clear_spec
    (lib/B/Prog/pins_clear_c.v) over the callees' statements record_c, arg_s_c, mix_call_c and answer_code_c. The
    tail jump into answer_code (pcb_tail) and the join of the two arms (pcb_finish) are the A walk's pcl_tail and
-   pcj_finish (lib/A/Prog/pins_clear_s4.v on a working branch 3cc8391594b), re-derived for B, where record()
+   pcj_finish (lib/A/Prog/pins_clear_s4.v on a working branch), re-derived for B, where record()
    and arg_s() are functions with their own statements instead of inlined code. The runs and calls follow the B
-   walk of socket_send (lib/B/Prog/socket_send.v on a working branch a470f91dbfb).
+   walk of socket_send (lib/B/Prog/socket_send.v on a working branch).
 
    The walk (B code: lib/B/Prog/pins_clear_aux.v's header):
    - entry: the 32-byte frame; the environment's atoms 32, 33, 34 are g_rec.refuse and g_rec.code as unsigned
@@ -23,10 +23,11 @@
    only conditional branch, 0x8cc1c, is the refusal test): there is no report or trap edge to refute here.
 
    Section hypotheses beyond the statement's (TRECORD, TARG_S, TMIX_CALL, TANSWER_CODE, VOBJS), with the names a Theorem Labs lane
-   gives them (statements from a Theorem Labs lane 713692f1e0c): HB (a Theorem Labs lane's allocator record), MTL (the meter's laws),
+   gives them (statements from a Theorem Labs lane): HB (a Theorem Labs lane's allocator record), MTL (the meter's laws),
    cmd_sig_prog_PB (the call targets, CmdObj.v), cmd_img_facts_tfib (the pinned image facts, CmdRecImg.v) and PRW
    (CmdRecCells.v's premise, the core's prog_rw). The record facts the walk uses (cmd_prog_img, cmd_ro_prog_apart,
    ROB, RELRO_IMG, cmd_ro_ok_of_aro, cmd_heap_tail_vis, PROG_WRITABLE) are a Theorem Labs lane's lemmas over them, by exact. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -190,7 +191,7 @@ Variable B : asyms.
 Variable MT : ameter_ops.
 #[local] Notation RLO := CMD_RLO.
 #[local] Notation RHI := CMD_RHI.
-(* the statement's hypotheses (lib/B/Prog/pins_clear_c.v:76-80, a Theorem Labs lane 713692f1e0c) *)
+(* the statement's hypotheses (lib/B/Prog/pins_clear_c.v:76-80, a Theorem Labs lane) *)
 Hypothesis TRECORD : forall fx0 : YK11.FPState, @trecord_spec fx0 rc SK PI B MT.
 Hypothesis TARG_S : forall fx0 : YK11.FPState, @targ_s_spec fx0 rc SK PI B MT.
 Hypothesis TMIX_CALL : forall fx0 : YK11.FPState, @tmix_call_spec fx0 rc SK PI B MT.
@@ -208,7 +209,7 @@ Hypothesis cmd_img_facts_tfib : forall B0, CmdBSyms B0 -> @CmdRecBase.cmd_img_fa
 Hypothesis PRW : prog_rw SEGS B.
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.
 Let IMG : @CmdRecBase.cmd_img_facts SK SEGS B := cmd_img_facts_tfib B HB.
-(* a Theorem Labs lane's record facts over any image (lib/B/Prog/CmdRec{Rest,Ro,Img,Cells}.v, a Theorem Labs lane 713692f1e0c), by exact *)
+(* a Theorem Labs lane's record facts over any image (lib/B/Prog/CmdRec{Rest,Ro,Img,Cells}.v, a Theorem Labs lane), by exact *)
 Let cmd_prog_img : forall a, Exists (in_zr a) TFIB_PROG_STATIC -> in_img SEGS a :=
   CmdRecRest.cmd_prog_img SEGS B LAWS HB IMG.
 Let cmd_ro_prog_apart : forall a, in_roP SEGS RLO RHI a -> in_img SEGS a /\ ~ Exists (in_zr a) TFIB_PROG_STATIC :=

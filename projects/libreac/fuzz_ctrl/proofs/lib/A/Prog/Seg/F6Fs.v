@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1665 of its 1776 lines of code are new or changed and 900 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F5.v, with its module paths, module names and addresses changed; 169 of its 248 lines of code are new or changed and 1697 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0 (the image of Seg/F6F.v's header:
    pinned (internal path), sha256
-   aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d). FACTS ed6b6b7b0ab, PAU pau-libreac-v190.
-   Source: Seg/F6.v 5a9c598d249e (the blob this tree had at release c5e779efe8c) (F6.f6_ebc_evt, F6.v:1418, proof :1449-1507); a Theorem Labs lane's footprint twin of the
-   same run: Seg/F6F.v (an earlier version, blob 61c2fb6fc482, not in this delivery) (f6_ebc_evt_F, on a working branch e1ece7d93f27 and on the
-   glue base a working branch eb89fed7fac). Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c),
-   lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2.
+   aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d). FACTS, PAU pau-libreac-v190.
+   Source: Seg/F6.v 5a9c598d249e (the blob this tree had at release) (F6.f6_ebc_evt, F6.v:1418, proof :1449-1507); a Theorem Labs lane's footprint twin of the
+   same run: Seg/F6F.v (an earlier version, blob 61c2fb6fc482, not in this delivery) (f6_ebc_evt_F, on a working branch and on the
+   glue base a working branch). Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release),
+   lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2.
    rule 24: no function proved (a re-cut of an already-proved v1.9 run; input to the ported walk only).
 
    ---- SPLIT STRETCHES for F6.f6_ebc_evt (a Theorem Labs lane ruling 00:45Z; shape fixed by a Theorem Labs lane 00:48Z and by

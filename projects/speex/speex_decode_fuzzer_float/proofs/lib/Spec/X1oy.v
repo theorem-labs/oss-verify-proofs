@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (QI_fds carries the kernel build across the step, which the invariant's new vDSO/vvar facts read). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -85,8 +86,9 @@ Lemma QI_fds X P s mo mo' : QI X P s mo -> m_vm mo' = m_vm mo -> minv mo' -> m_h
 Proof.
 intros [(st & L & BL & LS & E & INV & SI & HAQ & HK & HL & HP) HB] Hvm0 Hmi Hh. split; [| exact HB].
 assert (Hvm : m_vmmaps mo' = m_vmmaps mo) by (unfold m_vmmaps; rewrite Hvm0; reflexivity).
+assert (Hk : m_kernel mo' = m_kernel mo) by (unfold m_kernel; rewrite Hvm0; reflexivity).
 exists st, L, BL, LS. repeat (split; [assumption|]). split; [| split; [| exact HP]].
-- destruct HK; constructor; try (rewrite Hvm); auto.
+- destruct HK; constructor; try (rewrite Hvm); try (rewrite Hk); auto.
 - unfold LI, LIb, PGE, SBK, nomat in *. rewrite Hvm. unfold m_vm_materialized. rewrite Hvm0. exact HL.
 Qed.
 

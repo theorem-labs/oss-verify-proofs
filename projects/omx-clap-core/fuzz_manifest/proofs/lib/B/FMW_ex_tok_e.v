@@ -6,12 +6,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_strkit.v, with its module paths and module names changed; 240 of its 267 lines of code are new or changed and 303 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head.v; 259 of its 305 lines of code are new or changed and 221 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_e.v, with its module paths, module names and numbers changed; 82 of its 309 lines of code are new or changed and 78 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4 IMAGE B: tk_seg_E (lib/B/FMW_ex_tok_base.v): expected's ex_token right boundary test (fuzz_manifest.c:109-111)
    at TK_E 0x81834 .. 0x818ac of B's expected (listing lines 368-398): a0 = F+0x10 = ll + 1 + nl and the UBSan guard
    0x81838 `bltu s10, a0` (B5 table #46: ~text - j < ll + nl + 1 -> trap 0x8194c); a0 = F+0 + s8 = text + j + nl + 1 + ll,
    the ASan check of its shadow byte, a0 = F+8 + s8 (the same address), lb a0, 0(a0), then eight class branches:
    c >= 128, '\\', '%', ':', '-', '_', a digit, a letter go to TK_N 0x817a4 (no token at j); else 0x81904 a0 = s7 = 1
-   and EX_R 0x81908 (token true: expected answers 1). Twin of image A's lib/A/FMW_ex_tok_e.v (06d82004dc3).
+   and EX_R 0x81908 (token true: expected answers 1). Twin of image A's lib/A/FMW_ex_tok_e.v.
    The run writes nothing. Its symbolic state keeps every register as its own atom (sr_atoms) except s9 = extra atom
    32 (the shadow base); the byte = extra atom 33, its address = extra atom 34 (a 1-byte region based there), the
    frame chunks F+0 and F+8 hold extra atom 35 = text + 1 + nl + ll, and the alias atom 35 + s8 = atom 34 makes both

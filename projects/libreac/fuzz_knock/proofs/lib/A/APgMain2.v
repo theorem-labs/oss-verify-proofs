@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan harness walk (LLVMFuzzerTestOneInput 0x7eed0 in
    fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118): segment S2 PARSED, from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACfe.v (the journal-threaded callee call, lines 159-330) and A/ACf0.v (the
-   addressable range of a frame object from its zero shadow bytes, lines 56-78) at c8557374ad2e, with their module paths
+   addressable range of a frame object from its zero shadow bytes, lines 56-78), with their module paths
    changed and the names of a Theorem Labs lane's framework (a working branch). The S2 -> S7 boundary ss_X / INV_X is
    a Theorem Labs lane's lib/A/APgMain7.v (a working branch); the S2 -> S3 boundary ss_L / INV_L and the loop
    rt_L are a Theorem Labs lane's lib/A/APgLoop0.v / APgMainL.v (a working branch).
    rule 24: no function proved (a port of the released cgif_file_fuzzer harness walk structure). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* SEGMENT S2 PARSED, pc 0x7f088-0x7f108 (33 insns), ending at ss_L (0x7f10c) or ss_X (0x7f274)
    (internal path row S2). The code (capstone 5.0.7 over the

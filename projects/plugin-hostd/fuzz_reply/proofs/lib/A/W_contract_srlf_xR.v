@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_contract_x.v; 195 of its 388 lines of code are new or changed and 1819 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Contract texts of lib/A/W_contract_x.v at a world relation R, for list_free (lf_post_x :321, lf_spec_x :334,
    lf_spec_g_x :474), source_reset (sr_post_x :388, sr_spec_x :399, sr_spec_g_x :476), relay_add (ra_post_x :831,
    ra_spec_x :850, ra_spec_g_x :881) and check_shape_done (aleaf_post_x :106, csd_spec_x :128).  A beside-file of
@@ -71,7 +72,7 @@ Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
 Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable G : list (Z * Z).
-(* W_contract_x.v:321 lf_post_x at R *)
+(* W_contract_x.v:322 lf_post_x at R *)
 Definition lf_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (LA : Z) (l : hlist) (lines : bool) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' kk,
@@ -84,7 +85,7 @@ apres_kept B W mem W' mem' /\
 (forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
 frames S' = frames S /\
 mo_le MT S S' (lf_cost MT l) /\ rp_RM RP S' kr.
-(* W_contract_x.v:334 lf_spec_x at R *)
+(* W_contract_x.v:335 lf_spec_x at R *)
 Definition lf_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch LA (l : hlist) (lines : bool),
 afn_pre_x SEGS B ARx LF_STK ly S Hp W regs mem md ch ->
@@ -98,7 +99,7 @@ forall kr : nat,
 rp_RM RP S (Z.to_nat (lf_cost MT_rk l) + kr) ->
 cnt_ok_pk RP lf_pk (ablocks B ly S) ->
 SRrG SEGS R W (cfg_at SEGS pc regs mem md) (lf_post_xR regs ly S Hp W mem md LA l lines kr).
-(* W_contract_x.v:388 sr_post_x at R *)
+(* W_contract_x.v:389 sr_post_x at R *)
 Definition sr_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (HA : Z) (o : option hsrc) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' kk,
@@ -111,7 +112,7 @@ apres_kept B W mem W' mem' /\
 (forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
 frames S' = frames S /\
 mo_le MT S S' (sr_cost MT o) /\ rp_RM RP S' kr.
-(* W_contract_x.v:399 sr_spec_x at R *)
+(* W_contract_x.v:400 sr_spec_x at R *)
 Definition sr_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch HA (o : option hsrc),
 afn_pre_x SEGS B ARx SR_STK ly S Hp W regs mem md ch ->
@@ -141,9 +142,9 @@ Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
 Variable MT : ameter_ops.
 Variable RP : roomp.
-(* W_contract_x.v:474 lf_spec_g_x at R *)
+(* W_contract_x.v:475 lf_spec_g_x at R *)
 Definition lf_spec_g_xR (pc : Z) : Prop := forall G, gx_prog_x B ARx G -> lf_spec_xR B PST ARx R MT RP G pc.
-(* W_contract_x.v:476 sr_spec_g_x at R *)
+(* W_contract_x.v:477 sr_spec_g_x at R *)
 Definition sr_spec_g_xR (pc : Z) : Prop := forall G, gx_prog_x B ARx G -> sr_spec_xR B PST ARx R MT RP G pc.
 End w2gR.
 
@@ -250,7 +251,7 @@ Variable RP : roomp.
 Variable G : list (Z * Z).
 Variable RG : rep_globals.
 Variable CTX : list (list Z).
-(* W_contract_x.v:831 ra_post_x at R *)
+(* W_contract_x.v:832 ra_post_x at R *)
 Definition ra_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (fd T : Z) (es : list rentry) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' k,
@@ -266,7 +267,7 @@ alock_at RG W' mem' false /\
    ((T = 0 /\ Permutation (ablocks B ly' S') ((T', ATABLE) :: ablocks B ly S)) \/
     (T <> 0 /\ T' = T /\ ablocks B ly' S' = ablocks B ly S)))) /\
 (forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)).
-(* W_contract_x.v:850 ra_spec_x at R *)
+(* W_contract_x.v:851 ra_spec_x at R *)
 Definition ra_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch fd T es,
 afn_pre_x SEGS B ARx RA_STK ly S Hp W regs mem md ch -> spZ regs mod 32 = 0 ->
@@ -302,7 +303,7 @@ Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable RG : rep_globals.
 Variable CTX : list (list Z).
-(* W_contract_x.v:881 ra_spec_g_x at R *)
+(* W_contract_x.v:882 ra_spec_g_x at R *)
 Definition ra_spec_g_xR (pc : Z) : Prop :=
 forall G, gx_ok SEGS B G -> gx_rt B G -> ra_spec_xR B PST ARx R MT RP G RG CTX pc.
 End w5gR.
@@ -383,7 +384,7 @@ Variable R : world SEGS -> world SEGS -> Prop.
 Hypothesis R_refl : forall W, R W W.
 Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
-(* W_contract_x.v:106 aleaf_post_x at R *)
+(* W_contract_x.v:107 aleaf_post_x at R *)
 Definition aleaf_post_xR (STK : Z) (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS)
 (mem : word -> option byte) (md : Model) (Pa0 : word -> Prop) : world SEGS -> config -> Prop :=
 fun W' c' => exists regs' mem' md',
@@ -392,7 +393,7 @@ ajournal_xR SEGS B PST ARx R STK (spZ regs) [] ly S Hp W mem md [] ly S Hp W' me
 aregs_preserved regs regs' /\ Pa0 (getr regs' 10) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
 (forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)).
-(* W_contract_x.v:128 csd_spec_x at R *)
+(* W_contract_x.v:129 csd_spec_x at R *)
 Definition csd_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch n,
 afn_pre_x SEGS B ARx CSD_STK ly S Hp W regs mem md ch ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 269 of its 319 lines of code are new or changed and 464 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102 pins, asan-ubsan d663f82d): segment H3_B of the walk of check_reject_clean_starved
    (row CRB-H3, a Theorem Labs lane's subagent CrsX3H3). Closing lemma crs_seg_H3_B : the B' kit's crs_from_H3_B (B' +1052 =
    0x824fc .. +1072 = 0x82510 = X3_B), from fuzz_alloc_count's and fuzz_pick's texts at prh_img_B (HT_fuzz_alloc_count,
@@ -14,16 +15,16 @@
    count's ledger (x3_st), the reader's home moved by kpb_home_move, its shadow by kpb_home_sh (the home is below
    alloc_ceiling: h3_home_ceil).
    DONOR (rule 24, reuse): lane CrsX3H3's own A' file lib/A/Prog/CrsSeg_H3.v blob b0a8064c165c
-   (a working branch 0a0dced97c5): the count call, the home / shadow transport and h3_home_ceil, at the kit's
+   (a working branch): the count call, the home / shadow transport and h3_home_ceil, at the kit's
    _B names; every B' number recomputed on the B' listing / PAImg (STK_fuzz_pick = 16, x3_stk / h3_stk).
    rule 24: proves function check_reject_clean_starved on image B' (reuse search: `proof-index check_reject_clean_starved 0x82160`, the internal file
    index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved).
-   INPUTS: pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   INPUTS: pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml);
    listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702; image record
-   lib/B/PRH_ImgB.v (prh_img_B); the kit texts of record walkkit-next f97c8b2f046b by path (PRH_FnAlloc.v
-   tfuzz_alloc_count_specX, PRH_FnCheck.v tfuzz_pick_specX); kit lib/B/Prog/CrsKitBp.v at a working branch
-   fb124cd27931. Numerals: offsets +1052 .. +1072 (LENGTH: 4 * slot). No ADDRESS. *)
+   lib/B/PRH_ImgB.v (prh_img_B); the kit texts of record walkkit-next by path (PRH_FnAlloc.v
+   tfuzz_alloc_count_specX, PRH_FnCheck.v tfuzz_pick_specX); kit lib/B/Prog/CrsKitBp.v at a working branch.
+   Numerals: offsets +1052 .. +1072 (LENGTH: 4 * slot). No ADDRESS. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

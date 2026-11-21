@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 2093 of its 2111 lines of code are new or changed and 230 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x83e04, 2692 bytes) of fuzz_ctrl's ASan+UBSan build (image B, libreac v1.9.0): ctrl's PROVED
    footprint run lib/B/Prog/reac_ctrl_parseF.v (reac_ctrl_parse_x_F_holds), cut at its one allocator event, the
    class-1 request __asan_stack_malloc_1 (jal 0x83e74), and RE-BASED at the memory after that call, for the cgif-form
@@ -13,7 +14,7 @@
        hypotheses this stretch reads only (the window and the four runtime cells `entry` destructs; no side-stack
        premise FP0).
    (b) Section SetupFB: 0x83e78 (the return of the call) to the ret 0x84314, at the memory m after the call, with the
-       frame described in the cgif API's stack-malloc form (what astack_malloc_realizes gives, cgif c8557374ad2e
+       frame described in the cgif API's stack-malloc form (what astack_malloc_realizes gives, cgif
        lib/YG0d.v:284-298, plus the AR laws): Fr = frame_addr lyc 1 pos and FL = flag_addr lyc 1 pos (the glue
        instantiates them), no FS / fs_frame / flag-at-entry / runtime write set.  End condition Qb at the return.
        The instruction-level scripts are COPIED VERBATIM from reac_ctrl_parseF.v (fwords, the check tactics, b_done ..
@@ -215,7 +216,7 @@ Section SetupFB.
   Hypothesis HCF255 : bytes_at rsegs m (CF + 255) [Z_to_bv 8 1].
 
   (* ---- The frame of the class-1 request, in the cgif API's stack-malloc form: each hypothesis is the lib/Lib
-     image, at the memory m after the call, of one clause of astack_malloc_realizes' post (cgif c8557374ad2e
+     image, at the memory m after the call, of one clause of astack_malloc_realizes' post (cgif
      lib/YG0d.v:284-298) or of the AR law that clause's frame (1, pos) :: frames S satisfies.  The glue takes
      Fr := frame_addr lyc 1 pos (the post's a0, YG0d.v:293) and FL := flag_addr lyc 1 pos.
        FkAl, FkApp   AR_frames_law (YG0d.v:447-455): frame_addr mod 32 = 0, in_app over fs_frame_bytes 1 = 128.
@@ -230,7 +231,7 @@ Section SetupFB.
                      alloc_ceiling, runtime-owned (so apart from the caller's f and o).
      The side stack is a runtime-owned extent, which the call's keep (YG0d.v:297) does not carry: so these facts
      are taken AT m from the named world statements of ProgWorld (a working branch
-     c03ce1627b6 lib/A/ProgWorld.v; B twin lib/B/ProgWorld.v): FkAl FkApp FkSt Fk120 FkImg (ASAN_GT <= fr) from
+     lib/A/ProgWorld.v; B twin lib/B/ProgWorld.v): FkAl FkApp FkSt Fk120 FkImg (ASAN_GT <= fr) from
      ctl_fs_of_astack_stmt 1, with Fr = fs_frame FS 1 pos = frame_addr lyc 1 pos and FL = fs_flag FS 1 pos =
      flag_addr lyc 1 pos by ctl_fs_geom; FlSt (inside stk FS (FS + FS_SIZE)) from ctl_fs_of_AR_stmt; FkLo FkHi FkF FkO
      FlApp FlHi FlImg FlF FlO from the AR laws named above.  Never carried from the entry memory.  No other
@@ -2281,7 +2282,7 @@ Section SetupFB.
       first [eassumption | exact (conj MU (conj WM (conj RM (conj MI (conj ST SV))))) | exact (ADf0 Hge) | exact Hvr | exact Hvb].
   Qed.
 
-  (* NEW (the side arm of reac_ctrl_parseF.v's entry, :1568-1573 on 6939dc6611d, then fwords / L_body_k / L_epi):
+  (* NEW (the side arm of reac_ctrl_parseF.v's entry, :1568-1573, then fwords / L_body_k / L_epi):
      0x83e78 .. 0x84314 from the return of the class-1 request: a0 = Fr (the cgif rule's frame_addr lyc 1 pos),
      sp = s1 = A, s0 = S, s4 / s5 / s6 = o / f / n, s9 = the shadow offset, s11 the caller's; every other register
      anything (aregs_preserved of the rule keeps s2, s3, s7, s8, s10, which the run does not read before it writes
@@ -2342,8 +2343,8 @@ Proof. intros H m0 m1 m2 m3 W1 W2 W3 x Hx Hv. apply W3. apply W2; [exact Hx|]. a
    the in-stretch callees' _F contracts, which are used UNCHANGED; MemNormF.evtF_normalize_ro moves the run to m, and
    the post comes back across ms_rel (MemNorm.v:47-50) as Qbr: Qb with ro_agree in place of mem_inv, over the real
    memory.  One normalize at the stretch base; the shape is that of F13F (
-   lib/A/Prog/Seg/F13F.v (at head lib/A/Prog/Seg/F13F.v:241-332; from a working branch 5dbd293c250), f13_evt_ro_F).  The transports are the one home's, lib/B/MemNormF.v and
-   lib/B/MemNormTr.v (a working branch 52a6c9e6ecb, merged), stk_normalize_below_img and
+   lib/A/Prog/Seg/F13F.v (at head lib/A/Prog/Seg/F13F.v:242-333; from a working branch), f13_evt_ro_F).  The transports are the one home's, lib/B/MemNormF.v and
+   lib/B/MemNormTr.v (a working branch, merged), stk_normalize_below_img and
    addressable_of_rel included. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require Import MemNorm MemNormF MemNormTr.
 (* route (C): lib.B.ShadowRwOnT.shadow_rw_on_normalize (the shadow_rw_on twin of lib.B.MemNormTr.shadow_rw_normalize)
@@ -2404,7 +2405,7 @@ Section RoFB.
   Hypothesis HCF255 : bytes_at rsegs m (CF + 255) [Z_to_bv 8 1].
 
   (* ---- The frame of the class-1 request, in the cgif API's stack-malloc form: each hypothesis is the lib/Lib
-     image, at the memory m after the call, of one clause of astack_malloc_realizes' post (cgif c8557374ad2e
+     image, at the memory m after the call, of one clause of astack_malloc_realizes' post (cgif
      lib/YG0d.v:284-298) or of the AR law that clause's frame (1, pos) :: frames S satisfies.  The glue takes
      Fr := frame_addr lyc 1 pos (the post's a0, YG0d.v:293) and FL := flag_addr lyc 1 pos.
        FkAl, FkApp   AR_frames_law (YG0d.v:447-455): frame_addr mod 32 = 0, in_app over fs_frame_bytes 1 = 128.
@@ -2419,7 +2420,7 @@ Section RoFB.
                      alloc_ceiling, runtime-owned (so apart from the caller's f and o).
      The side stack is a runtime-owned extent, which the call's keep (YG0d.v:297) does not carry: so these facts
      are taken AT m from the named world statements of ProgWorld (a working branch
-     c03ce1627b6 lib/A/ProgWorld.v; B twin lib/B/ProgWorld.v): FkAl FkApp FkSt Fk120 FkImg (ASAN_GT <= fr) from
+     lib/A/ProgWorld.v; B twin lib/B/ProgWorld.v): FkAl FkApp FkSt Fk120 FkImg (ASAN_GT <= fr) from
      ctl_fs_of_astack_stmt 1, with Fr = fs_frame FS 1 pos = frame_addr lyc 1 pos and FL = fs_flag FS 1 pos =
      flag_addr lyc 1 pos by ctl_fs_geom; FlSt (inside stk FS (FS + FS_SIZE)) from ctl_fs_of_AR_stmt; FkLo FkHi FkF FkO
      FlApp FlHi FlImg FlF FlO from the AR laws named above.  Never carried from the entry memory.  No other

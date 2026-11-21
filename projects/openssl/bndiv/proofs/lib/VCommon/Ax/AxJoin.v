@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (kind_eqb also compares the CONFIG_RSEQ flag that the KEntry kind now carries; placeholder comments removed). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -14,10 +14,6 @@ Import ListNotations.
 
 Local Open Scope Z_scope.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Fixpoint xbs_eqb (l1 l2 : list xb) : bool :=
   match l1, l2 with
@@ -54,7 +50,7 @@ Definition kind_eqb (k1 k2 : rkind) : bool :=
   match k1, k2 with
   | KZero, KZero | KShadow, KShadow | KUnk, KUnk => true
   | KImg w1 i1, KImg w2 i2 => Bool.eqb w1 w2 &&& Nat.eqb i1 i2
-  | KEntry p1, KEntry p2 => (ph_addr p1 =? ph_addr p2)%N &&& (ph_ent p1 =? ph_ent p2)%N &&& (ph_num p1 =? ph_num p2)%N
+  | KEntry r1 p1, KEntry r2 p2 => Bool.eqb r1 r2 &&& (ph_addr p1 =? ph_addr p2)%N &&& (ph_ent p1 =? ph_ent p2)%N &&& (ph_num p1 =? ph_num p2)%N
   | _, _ => false
   end.
 
@@ -68,10 +64,6 @@ Definition rsv_join (a b : rsv) : rsv :=
   | RSome x, RSome y => if xv_eqb x y then a else RUnk
   | _, _ => RUnk
   end.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition vjoin (sa sb : store) (a b : xv) : xv :=
   if xv_eqb a b then a else
@@ -92,7 +84,6 @@ Definition cjoin (c d : cell) : cell :=
   CB [bjoin1 (cbyte c 0) (cbyte d 0); bjoin1 (cbyte c 1) (cbyte d 1); bjoin1 (cbyte c 2) (cbyte d 2); bjoin1 (cbyte c 3) (cbyte d 3);
       bjoin1 (cbyte c 4) (cbyte d 4); bjoin1 (cbyte c 5) (cbyte d 5); bjoin1 (cbyte c 6) (cbyte d 6); bjoin1 (cbyte c 7) (cbyte d 7)].
 
-(* [comment removed for export] *)
 Fixpoint rjoin (d : nat) (sa sb : store) (ta tb : itrie xv) : itrie xv :=
   match d with
   | O => match ta, tb with
@@ -111,7 +102,6 @@ Fixpoint rjoin (d : nat) (sa sb : store) (ta tb : itrie xv) : itrie xv :=
 Section WithSegs.
 Variable segs : list Segment.
 
-(* [comment removed for export] *)
 Fixpoint tjoin (kd : rkind) (d : nat) (ta tb : itrie cell) (acc w : int) : itrie cell :=
   match d with
   | O => match ta, tb with
@@ -127,7 +117,6 @@ Fixpoint tjoin (kd : rkind) (d : nat) (ta tb : itrie cell) (acc w : int) : itrie
             end
   end.
 
-(* [comment removed for export] *)
 Fixpoint tjoin2 (kd : rkind) (d : nat) (ta tb : itrie cell) (acc w : int) : bool * itrie cell :=
   match d with
   | O => match ta, tb with
@@ -188,11 +177,6 @@ Fixpoint mjoin (A B : list region) : option (list region) :=
 
 End WithSegs.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Fixpoint boxjoin (ta tb : itrie (Z * Z)) : itrie (Z * Z) :=
   match ta, tb with
   | ILeaf (l1, h1), ILeaf (l2, h2) => ILeaf (Z.min l1 l2, Z.max h1 h2)
@@ -202,7 +186,6 @@ Fixpoint boxjoin (ta tb : itrie (Z * Z)) : itrie (Z * Z) :=
 
 Definition lin_eqb' (f g : lin) : bool := (fst f =? fst g) &&& teqb (snd f) (snd g).
 
-(* [comment removed for export] *)
 Fixpoint ffind (f : lin) (l : list fact) : option fact :=
   match l with
   | [] => None
@@ -212,8 +195,6 @@ Fixpoint ffind (f : lin) (l : list fact) : option fact :=
 Definition hole_eqb (a b : fact) : bool :=
   fc_hole b &&& (fc_lo a =? fc_lo b) &&& (fc_hi a =? fc_hi b) &&& lin_eqb' (fc_f a) (fc_f b).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition hole_implied (sb : store) (fc : fact) : bool :=
   match lrange sb (fc_f fc) with
   | Some (lo, hi) => (hi <=? fc_lo fc) ||| (fc_hi fc <=? lo)
@@ -236,7 +217,6 @@ Fixpoint fjoin (sb : store) (l : list fact) : list fact :=
   | fc :: r => match fjoin1 sb fc with Some f => f :: fjoin sb r | None => fjoin sb r end
   end.
 
-(* [comment removed for export] *)
 Definition hole_cands : list int := map of_Z [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13; 14; 15].
 
 Definition hjoin1 (sa sb : store) (x : int) : list fact :=
@@ -249,14 +229,12 @@ Definition hjoin1 (sa sb : store) (x : int) : list fact :=
 
 Definition hjoin (sa sb : store) : list fact := flat_map (hjoin1 sa sb) hole_cands.
 
-(* [comment removed for export] *)
 Fixpoint hback (sa : store) (l : list fact) : list fact :=
   match l with
   | [] => []
   | fc :: r => if fc_hole fc &&& negb (lexists (hole_eqb fc) (st_facts sa)) &&& hole_implied sa fc then fc :: hback sa r else hback sa r
   end.
 
-(* [comment removed for export] *)
 Definition fact_eqb (a b : fact) : bool :=
   Bool.eqb (fc_hole a) (fc_hole b) &&& (fc_lo a =? fc_lo b) &&& (fc_hi a =? fc_hi b) &&& lin_eqb' (fc_f a) (fc_f b).
 
@@ -278,10 +256,6 @@ Definition fjoin_fast (sa sb : store) : list fact :=
 
 Definition sjoin (sa sb : store) : store :=
   ST (boxjoin (st_box sa) (st_box sb)) (hjoin sa sb ++ fjoin_fast sa sb).
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition set_next (am : amodel) (nx : int) : amodel :=
   AM (am_maps am) (am_brk0 am) (am_brk am) (am_tid am) (am_shadow am) nx (am_atop am) (am_out am) (am_exp am) (am_fd am).
@@ -316,7 +290,6 @@ Definition afd_eqb (f g : afd) : bool :=
 Definition opt_xv_eqb (a b : option xv) : bool :=
   match a, b with Some x, Some y => xv_eqb x y | None, None => true | _, _ => false end.
 
-(* [comment removed for export] *)
 Definition model_eqb (a b : amodel) : bool :=
   Bool.eqb (am_shadow a) (am_shadow b) &&& opt_xv_eqb (am_tid a) (am_tid b) &&& lin_eqb (am_brk a) (am_brk b)
   &&& lin_eqb (am_brk0 a) (am_brk0 b) &&& lin_eqb (am_atop a) (am_atop b) &&& afd_eqb (am_fd a) (am_fd b)
@@ -324,10 +297,6 @@ Definition model_eqb (a b : amodel) : bool :=
   &&& list_eqb aent_eqb (am_maps a) (am_maps b).
 
 Definition max_next (a b : int) : int := if (a <? b)%uint63 then b else a.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition ajoin_state (A B : astate amodel) (mem : list region) : astate amodel :=
   AS (a_pc A) (rjoin 5 (a_facts A) (a_facts B) (a_regs A) (a_regs B)) (rsv_join (a_resv A) (a_resv B)) mem
@@ -342,6 +311,5 @@ Definition ajoin (segs : list Segment) (A B : astate amodel) : option (astate am
     end
   else None.
 
-(* [comment removed for export] *)
 Definition ajoin_nm (A B : astate amodel) : option (astate amodel) :=
   if w_eqb (a_pc A) (a_pc B) then Some (ajoin_state A B (a_mem A)) else None.

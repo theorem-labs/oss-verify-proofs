@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* musl's vsnprintf in the plain and ubsan images, as a relocatable program tree (InstFmtP.v and InstFmtU.v check the
    tree at the symbol of each image).
-   Port of projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/A10/F_vsnprintf.v (sha256 439229f024d5
-   at 1aeda8ab8602).  That walk runs the same 51 instructions: the donor binary's function, decoded by the decoder that
+   Port of projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/A10/F_vsnprintf.v (sha256 439229f024d5).
+   That walk runs the same 51 instructions: the donor binary's function, decoded by the decoder that
    wrote vsnprintf_prog below, gives this tree with only its five outside addresses (got_ssp, memset, sn_write, vfprintf,
    __stack_chk_fail) changed.  What changes in the port: memset is called directly here (memset_callZ, from
    memset_contract) instead of through the sanitizer's interceptor; vfprintf is called under vfprintf_snf_stmt, which

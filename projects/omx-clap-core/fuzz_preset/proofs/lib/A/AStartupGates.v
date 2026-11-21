@@ -10,6 +10,7 @@
    malloc_context_size (common_flags + 36 = 0x13ca0c, 4 bytes) = 30 at main; the state holds it as the high half of
    the 8-byte cell at common_flags + 32 (0x13ca08), whose value 0x1e00010000 has 30 in its bytes 4..7 (and 1 at byte 2,
    fast_unwind_on_malloc). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Generator: tools/startup/gen_gates.py sha256 4ede9a3948ae2c8b668812e2014eea087f1a54fffe59edf92a30961a6fb922d1; twin sha256 bff8519bbe3ea0e4d8edf35fa48015b5846960886633a77a5e9f86cb565bd590; pin sha256 1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44; template sha256 02a9d18b9a28328cc32e6835581cb262a28a73c83e07f71d9d13c889c48719ed; A/AF0m.v blob 97f423adf6ebdee1e409e001a5e3cb7acc241b0a; A/AB01.v blob d18d06d86ad4f8c265d5659d2c10228cdcb642aa; A/AImgCells.v blob b5ce63262b021e413490a266a2d787ea30ed0bba. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -72,7 +73,7 @@ Definition CELL_RTO : acell := z8 (ANum A_INST_28) RTO_VAL.
 (* release_to_os_interval_ms < 0 at main: its s32 has the sign bit set. This makes the refill guard at PopulateFreeArray +
    0x260 (0x37a10, `bltz a1` with a1 = lw 0x28(a0), the primary allocator's own field) take the never-release arm,
    so the non-negative arm's MonotonicNanoTime call (0x37a1c) and with it clock_gettime are dead. cgif's value is
-   the same, -1 (its YF0m.v:120, guard at 0x3679c). *)
+   the same, -1 (its YF0m.v:121, guard at 0x3679c). *)
 Lemma release_to_os_interval_negative : 2 ^ 31 <= RTO_VAL mod 2 ^ 32.
 Proof. unfold RTO_VAL. vm_compute. intro H. discriminate H. Qed.
 Section gates. Context {fx : YK11.FPState}.

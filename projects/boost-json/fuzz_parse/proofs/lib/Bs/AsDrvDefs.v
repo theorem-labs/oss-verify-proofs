@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -204,6 +205,25 @@ Section TargetRun.
     atq_fd2   : fd_lookup (m_fds mo') (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) }.
 
   (* [comment removed for export] *)
-  Definition as_target_run_stmt : ltac2:(zQ "00P") := ltac2:(zQ "h91!jc!m4!ip6!h8!ipc!hof!k3!jue!kib!km2!kp1!kt5!kte!lhe!lma!o6!ln6!ls8!lt3!ltd!lu6!lue!lv9!mg1!mk2&>0@1$1@1$0#k0@1$5@1$1@1$0#8>2sp@1$1@1$0#k0>1A$6>3cap$6>4data@1$3@1$1@1$0#8>1p$h4>1s@1$c?1H>2LB@1$3$h3>3msF$7>2mo$9>4regs@2$a@1$0#5@1$1@1$0#k0>3mem~0>1K$h6>0@b$h2^c^b^a^9^8^7^6^5^4^3^2>0@1^2@1$4$h0>0>3fx'$h5>5regs'@2$a@1$0#5@1$1@1$0#k0>4mem'~0>4msF'$7>3mo'$9>2s'@1$c?1H>0@h0$h1^6^h4^h3^h2^h1^h0^f^e^c^b^a^5^4^3^2^1@4$e$b$d@2$8^4^3^a@4$e$b$d@2$8^8^7@2$h7@2$h8+1@3$2@1$1@1$0#8@2$f@1$0#8+j0@3$2@1$1@1$0#8@2$f@1$0#8+a@1$4@1$1@1$0#8^4").
+  (* LPS 75d69e00, the launch's channel reader.  Written out as explicit text (rule 11g)
+     from its own [Print] (probe As/PrbStmt.v, a farm round), plus one
+     premise: [m_channel_reader mo = true], after [ATRpre].  It cannot be a field of
+     [ATRpre] -- [as_target_run_ok]'s 49 KB KReplay decomposes [PRE] positionally and
+     records each field's type, so a new field gives "Anomaly decompose_lambda_n_decls"
+     (a farm round) and a widened one an Illegal application
+     (a farm round).  As a premise here it is discharged at the only
+     caller, As/AsMainTop, from [AMpre] and ultimately from the published [valid_input]
+     premise through [Run.valid_input_channel_reader] (75d69e00 Run.v:4951). *)
+  Definition as_target_run_stmt : Prop :=
+    forall (sp : word) (A cap : Z) (data : list byte) (p : bptr) (s : as_St H) (LB : list block)
+           (msF : machine_state) (mo : Model) (regs : bvmap 5 word) (mem : word -> option byte) (K : TSet),
+      ATRpre sp A cap data p s LB msF mo regs mem ->
+      m_channel_reader mo = true ->
+      K [] ->
+      (forall (fx' : FPState) (regs' : bvmap 5 word) (mem' : word -> option byte)
+              (msF' : machine_state) (mo' : Model) (s' : as_St H),
+         ATRpost fx' sp A cap data p s LB mo regs mem regs' mem' msF' mo' s' ->
+         realizes asegs (mkCfg msF' mo') K) ->
+      realizes asegs (mkCfg msF mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
 End TargetRun.
 (* [comment removed for export] *)

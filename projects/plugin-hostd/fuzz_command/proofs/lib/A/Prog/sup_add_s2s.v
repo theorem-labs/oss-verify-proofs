@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the second segment of check_reply's walk (fuzz_command.asan, 0x86d78), from the
    memchr call 0x86ef8 to the return of sup_reply_code 0x86f18, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's call steps: cl_callS, the state
-   after the return) at c8557374ad2e.
+   after the return).
 
    The pieces: 0x86ef8 jal memchr (the reply holds no NUL, so the wrapper returns 0: the not-found contract
    through PaArt.v's aj_art_at); 0x86efc bnez a0 (not taken); 0x86f00 mv a0,s3; 0x86f04 jal check_reply_answer
@@ -15,6 +15,7 @@
    is a program static), and the walk is seeded again with check_reply_sd.v's cr_seed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s2.v, with its module paths and module names changed; 923 of its 964 lines of code are new or changed and 544 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_add_s5.v, with its module paths and module names changed; 409 of its 482 lines of code are new or changed and 891 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_add's walk on the ASan build of plugin-hostd/fuzz_command, stage M0S: the spill arm of record()
    (0x89ee8 .. 0x89f48): rec_calls_free(&record.spill, 1), then c->fn := 0 and c->nargs := 0 on c = &record.spill. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.

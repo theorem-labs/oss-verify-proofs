@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: fit_arith's bound gains the room the reserved vDSO pair takes, 20 * 4096 + 2 * (page_size + nZ), which gap_available now asks for. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -32,7 +33,7 @@ Fixpoint small_reqs {R} (RQ : Z) (t : Malloc.M R) {struct t} : Prop :=
 
 (* [comment removed for export] *)
 #[using="Type"] Lemma fit_arith : forall nZ B, 0 < nZ <= RMAX -> 0 <= B <= BLIVE ->
-  nZ + B + (B / page_size) * (page_size + nZ) <= band_ceiling - bottomup_floor.     (* [comment removed for export] *)
+  nZ + B + (B / page_size) * (page_size + nZ) + (20 * 4096 + 2 * (page_size + nZ)) <= band_ceiling - bottomup_floor.     (* [comment removed for export] *)
 Proof.
   intros nZ B HnZ HB. rewrite band_width. rewrite page_size_eq.
   assert (HQ : B / 4096 <= 2^18). { unfold BLIVE in HB. apply Z.div_le_upper_bound; lia. }

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the symbolic runs of __asan_poison_memory_region (p, 16) and
    __asan_unpoison_memory_region (p, 16) of omx-clap-core/fuzz_preset's ASan image A' (the #102 pin: stripped
    fuzz_preset.asan sha256 1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin
@@ -7,8 +8,8 @@
    user-poisoning flag byte and the verbosity word), the two shadow-address computations, the shadow bytes at both
    ends of the head, musl memset on the two shadow bytes of the head, and the end-granule test.
    RE-PIN of lib/A/CfPoisonRun.v (the old pin A, d83eb25d / twin f0d2e8d4), which is itself the relocation of
-   proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonR.v (origin/cold/port-fm-bcmp 9261fc100fcf). The bodies are the
-   same code: the shared tools repository 153d7bc1ad5 tools/bytecmp/8ed351b56fbe on the donor fuzz_manifest.asan vs A' gives
+   proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonR.v. The bodies are the
+   same code: the shared tools repository tools/bytecmp/8ed351b56fbe on the donor fuzz_manifest.asan vs A' gives
    poison EQUAL-mod-pcrel 17 pcrel / 0 real, unpoison 18 / 0, musl memset EQUAL (identical words); the 80 auipc / lo12
    pairs cross no j / jr / ret / branch and no register re-write, and no S-type store differs
    (the internal file RESULT-20261029.txt, the internal file DEFECT-CASES-20261029.txt). The twin's code and data
@@ -28,7 +29,7 @@
                            already in A/AE2y.v icpt_rodata (0xa3e88 + 8), and MemToShadow (0x54e1c, 79 words; the
                            `jal -0x194` at PO_ENTRY + 0x58) and the shadow-layout cells (flags' GOT slot 0xa2008, the
                            shadow offset 0xaaeb8, kHighMemEnd / kMidMem* 0xabba0..) are already in A/AE34.v
-                           icpt_ranges / A/AE2y.v icpt_rodata (h-rw-pre-4's A -> A' relocation, 4cd3428e06a).
+                           icpt_ranges / A/AE2y.v icpt_rodata (h-rw-pre-4's A -> A' relocation).
    P_LDA / P_LDB / P_RET and U_LDA / U_LDB / U_RET are PO_ENTRY / UP_ENTRY plus the donor's offsets
    (0x60, 0x78, 0x120 and 0x60, 0x74, 0xc4), which the vm_compute'd runs below check.
    No proof text is taken from any image: this file only runs the engine. *)

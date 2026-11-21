@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise, the vDSO): changed bn_mmap_none, bn_mmap_rw, bn_mmap_rw_nbr and 3 more; added bn_mmap_rw_over; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/CJ/Bridge/BrNodes.v, 15 lines within its lines 96-237. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -109,40 +110,39 @@ Proof.
   { unfold mmap_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
     repeat split; try reflexivity. apply lit_ne0. lia. }
   assert (H0 : ms_gpr ms 0 = Z_to_bv 64 0) by (rewrite gpr_areg0; exact H10).
-  eapply (srz_mmap segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs Halloc).
+  (* 727298f3: the node pins a0 = 0, so the hint decline cannot fire ([MmapSim.place_declined_b_null]). *)
+  eapply (srz_mmap segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs
+            ltac:(rewrite H0; apply place_declined_b_null) Halloc).
   - intros a Ha. rewrite Hpr. rewrite H0, Hu1 in Ha. apply HB. exact Ha.
   - rewrite H0, Hu1. exact Hex.
 Qed.
 
-(* [comment removed for export] *)
 Lemma bn_mmap_rw_nbr : forall ms model (len : Z) K,
   m_halted model = None -> m_vm_lazy model = [] ->
   cj_at_node segs (NMmap 0 len 3 34) ms -> 0 < len < 2 ^ 64 ->
   let n := page_round_up_Z len in
   (exists a, grant_ok_na (Z_to_bv 64 0) model a n = true) ->
   (nbr_limit <= vm_limit (m_vmmaps model) -> vm_backing_used model + n <= vm_limit (m_vmmaps model)) ->
-  K [] ->                                                             (* [comment removed for export] *)
   (forall a, grant_ok_na (Z_to_bv 64 0) model a n = true ->
-     vm_backing_used model + n <= vm_limit (m_vmmaps model) ->       (* [comment removed for export] *)
      srealizes segs scfg (mkCfg (nret ms (mkEffectU a [] [(a, Z_to_bv 64 n)] [] [] []))
                                (mmap_model a (Z_to_bv 64 n) model)) K) ->
   srealizes segs scfg (mkCfg ms model) K.
 Proof.
-  intros ms model len K Hh Hlazy (Hsvc & H10 & H11 & H12 & H13 & H14 & H15) Hlen n Hex Hacc HK0 HB.
+  intros ms model len K Hh Hlazy (Hsvc & H10 & H11 & H12 & H13 & H14 & H15) Hlen n Hex Hacc HB.
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite gpr_areg1, H11; apply u64_lit; lia).
   assert (Hpr : page_round_up (ms_gpr ms 1) = Z_to_bv 64 n) by (unfold page_round_up; rewrite Hu1; reflexivity).
   assert (Hargs : mmap_args_ok ms).
   { unfold mmap_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
     repeat split; try reflexivity. apply lit_ne0. lia. }
   assert (H0 : ms_gpr ms 0 = Z_to_bv 64 0) by (rewrite gpr_areg0; exact H10).
-  eapply (srz_mmap_nbr segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs Halloc).
+  (* 727298f3: the node pins a0 = 0, so the hint decline cannot fire ([MmapSim.place_declined_b_null]). *)
+  eapply (srz_mmap_nbr segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs
+            ltac:(rewrite H0; apply place_declined_b_null) Halloc).
   - rewrite Hu1. exact Hacc.
-  - exact HK0.
-  - intros a Ha Hfit. rewrite Hpr. rewrite H0, Hu1 in Ha. rewrite Hu1 in Hfit. apply HB; [exact Ha| exact Hfit].
+  - intros a Ha. rewrite Hpr. rewrite H0, Hu1 in Ha. apply HB. exact Ha.
   - rewrite H0, Hu1. exact Hex.
 Qed.
 
-(* [comment removed for export] *)
 Lemma bn_mmap_rw_huge : forall ms model (len : Z) K,
   m_halted model = None ->
   cj_at_node segs (NMmap 0 len 3 34) ms -> 0 < len < 2 ^ 64 ->
@@ -158,6 +158,24 @@ Proof.
   { unfold mmap_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
     repeat split; try reflexivity. apply lit_ne0. lia. }
   apply (srz_mmap_refused_huge segs scfg ms model (Z_to_bv 64 222) K Hh Hsvc u222 Hargs); [rewrite Hu1; exact Hbig | exact Hsmall | exact HK0].
+Qed.
+
+(* LPS 727298f3: an mmap that does not fit the backing still unspent, under [nbr_limit] (refused by
+   the budget; [bn_mmap_rw_nbr] no longer hands the fit to its continuation) *)
+Lemma bn_mmap_rw_over : forall ms model (len : Z) K,
+  m_halted model = None ->
+  cj_at_node segs (NMmap 0 len 3 34) ms -> 0 < len < 2 ^ 64 ->
+  vm_limit (m_vmmaps model) < vm_backing_used model + page_round_up_Z len ->
+  vm_limit (m_vmmaps model) < nbr_limit ->
+  K [] ->
+  srealizes segs scfg (mkCfg ms model) K.
+Proof.
+  intros ms model len K Hh (Hsvc & H10 & H11 & H12 & H13 & H14 & H15) Hlen Hbig Hsmall HK0.
+  assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite gpr_areg1, H11; apply u64_lit; lia).
+  assert (Hargs : mmap_args_ok ms).
+  { unfold mmap_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
+    repeat split; try reflexivity. apply lit_ne0. lia. }
+  apply (srz_mmap_refused_over segs scfg ms model (Z_to_bv 64 222) K Hh Hsvc u222 Hargs); [rewrite Hu1; exact Hbig | exact Hsmall | exact HK0].
 Qed.
 
 (* [comment removed for export] *)
@@ -180,13 +198,11 @@ Proof.
   { unfold mmap_noaccess_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
     repeat split; try reflexivity. apply lit_ne0. lia. }
   assert (H0 : ms_gpr ms 0 = Z_to_bv 64 0) by (rewrite gpr_areg0; exact H10).
-  apply (srz_mmap_noaccess_at segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs Halloc);
+  (* 727298f3: the node pins a0 = 0, so the hint decline cannot fire ([MmapSim.place_declined_b_null]). *)
+  apply (srz_mmap_noaccess_at segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs
+           ltac:(rewrite H0; apply place_declined_b_null) Halloc);
     rewrite H0, Hu1; [exact Hex | exact HB].
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma bn_mmap_fixed : forall ms model (addr len : Z) K,
   m_halted model = None -> m_vm_lazy model = [] ->
@@ -221,6 +237,8 @@ Lemma bn_mprotect : forall ms model (addr len : Z) K,
   addr mod page_size = 0 -> 0 < len -> 0 <= addr ->
   addr + page_round_up_Z len < two_pow_64 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* LPS 08b1429: the range is apart from the vdso/vvar pair. *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_maps (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   mprotect_budget_ok model (Z_to_bv 64 addr) n = true ->
@@ -228,20 +246,20 @@ Lemma bn_mprotect : forall ms model (addr len : Z) K,
                             (mprotect_model (Z_to_bv 64 addr) n model)) K ->
   srealizes segs scfg (mkCfg ms model) K.
 Proof.
-  intros ms model addr len K Hh Hlazy (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hna Hma Hbud HB.
+  intros ms model addr len K Hh Hlazy (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hvd Hna Hma Hbud HB.
   pose proof (page_round_up_Z_bounds len ltac:(lia)) as Hpr.
   assert (Haddr : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64_lit; unfold two_pow_64 in Hnw; lia).
   apply (srz_mprotect_at segs scfg ms model (Z_to_bv 64 226) (Z_to_bv 64 addr) len K Hh Hlazy Hsvc u226 Halloc);
     rewrite ?gpr_areg0, ?gpr_areg1, ?gpr_areg2, ?Haddr; first [exact H10 | exact H11 | exact H12 | exact HB | assumption | lia].
 Qed.
 
-(* [comment removed for export] *)
 Lemma bn_mprotect_nbr : forall ms model (addr len : Z) K,
   m_halted model = None -> m_vm_lazy model = [] ->
   cj_at_node segs (NMprotect addr len 3) ms ->
   addr mod page_size = 0 -> 0 < len -> 0 <= addr ->
   addr + page_round_up_Z len < two_pow_64 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_maps (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   (nbr_limit <= vm_limit (m_vmmaps model) -> mprotect_budget_ok model (Z_to_bv 64 addr) n = true) ->
@@ -249,16 +267,12 @@ Lemma bn_mprotect_nbr : forall ms model (addr len : Z) K,
                             (mprotect_model (Z_to_bv 64 addr) n model)) K ->
   srealizes segs scfg (mkCfg ms model) K.
 Proof.
-  intros ms model addr len K Hh Hlazy (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hna Hma Hbud HB.
+  intros ms model addr len K Hh Hlazy (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hvd Hna Hma Hbud HB.
   pose proof (page_round_up_Z_bounds len ltac:(lia)) as Hpr.
   assert (Haddr : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64_lit; unfold two_pow_64 in Hnw; lia).
   apply (srz_mprotect_at_nbr segs scfg ms model (Z_to_bv 64 226) (Z_to_bv 64 addr) len K Hh Hlazy Hsvc u226 Halloc);
     rewrite ?gpr_areg0, ?gpr_areg1, ?gpr_areg2, ?Haddr; first [exact H10 | exact H11 | exact H12 | exact HB | assumption | lia].
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma bn_munmap : forall ms model (a len : Z) K,
   m_halted model = None -> m_vm_lazy model = [] ->
@@ -280,7 +294,7 @@ Proof.
   assert (Hargs : munmap_args_ok ms model).
   { unfold munmap_args_ok. rewrite H0, Hu1, Hprr, Haddr. repeat split; try assumption.
     intro Hz. apply (f_equal bv_unsigned) in Hz. rewrite Hu1 in Hz. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hz. lia. }
-  eapply (SpinAlg.srz_munmap segs scfg ms model (Z_to_bv 64 215) K Hh Hlazy Hsvc u215 Hargs).
+  eapply (SpinAlg.srz_munmap segs scfg ms model (Z_to_bv 64 215) K Hh Hlazy Hsvc u215 Hargs Halloc).
   unfold munmap_eff. rewrite H0, Hprr. exact Hc.
 Qed.
 

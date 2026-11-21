@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_end.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; module path and the sink words of fuzz_egress's UBSan image (lf_sink_env: [0x4e140, 0x4e580)).
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_end.v;
+   module path and the sink words of fuzz_egress's UBSan image (lf_sink_env: [0x4e140, 0x4e580)).
    fuzz_egress links no calloc, so llvm_contract hands the link no calloc pc. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

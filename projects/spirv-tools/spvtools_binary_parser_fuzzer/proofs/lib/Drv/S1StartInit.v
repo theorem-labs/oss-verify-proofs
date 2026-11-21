@@ -1,13 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base; the revised stack window; recorded proofs re-encoded or written as text where the change reaches them). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer.images Require Import Plain.
-From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import ArgvEnv RefLayout SymExec3 SymExec3Sound SymRun3.
+(* #38 rule 12i: StoreOk added for [stack_window_depth] / [stack_window_depth_val],
+   the symbolic stack-window bound kn8's KWr row now carries. *)
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import ArgvEnv RefLayout SymExec3 SymExec3Sound SymRun3 StoreOk.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Cls Require Import ClsTac.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Drv Require Import SymExecA SymExecASound Overlay S1BootDefs S1Boot S1StartInit_defs S1StartInit_eqs.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require KReplay.
@@ -294,26 +297,29 @@ Proof.
   apply (C 0x121000%Z wseg_121000); lia.
 Qed.
 
+(* 08b1429: the section runs over the launch's whole input, the mmap base and the entry
+   point, which the stack image ([PropExec.wrap_mem]) and the boot image ([S1Boot.J8],
+   [D8]) now read; argv/envp are the input's. *)
 Section P7.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
   Variable sp0 : word.
   Variable rdraw : EntryDraw.
   Variable Jb : word -> option byte.
-  Variables av envv : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation envv := (in_envp inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av envv uid hw rdraw)) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rdraw)) (only parsing).
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_S1StartInit ()) ["P7"] "h01ah14__x1h21Hh32H1h42H2h52_Hh67__arithh74__ffh86__sat3h98__varmaph:5__with;4cstrh<1vp;1p;2p;3p;4p;7p;8g00:8j15Tg004@j14Tg005Jj19Tg005hj1ZTg00=Wj1>Tg01__j2<Tg006nj1;Tg00<[j20Tg00O^R0j23Tg01`?j1DTg01a;j37Tg007Nj2YTg00oPj3VTg01IUj1UTg01a\j1RTg0084j36Tg01b`j2QTg01cTj2OTg00<6j1NTg008Nj2LTg01ckj2KTg01d\j2JTg00=7j1ITg00>7j2FTg00>Uj1GTg00?3j1HTg00@Aj2ETg00?^j2?Tg00@dj4:Tg00AOj1CTg017nj7MTg00BUj2BTg00C7j2PTg00CQj2ATg00D=j3STg00D\j4TTg004ej1@Tg00FXj7XTg00G_j8WTf0R1#4#4p=1%@1#@p=2f1R2g00KCR3g00KbR4P4g00LBR5P1g00LbFXp=8f3P3P4P4P5f2R6P2P1GWp==p,3Hvag00MaR7#5R8%47#1R9#9R:#ZR;#>R<p,2avR='<R>#;R?'0R@%49R9#1RA#1#1RB#5RC,0?RD'3RE%D=%4B#1#1#1#1#1#5'01<;1#;%27#2#2#2#2#2#2#2#5'0X0<=7<=g00NFRB,Y:=V;1#UX0<=7<=g01e<R;g00R3R:%R1g00ggRF36g01el,Q1=6:F'3X0;1O<=37'3'3'3R='3P0PEP=PEP1P0P@PDPE\=P1%N>10B?%9Ap,3sp0'LRA%59R9'K10BA10B91JA9,0B[[g00I@R9g00P9RA#I%>A1F92%G9%H9RAP91E97R7g00PeR>1?9CC:,8AR0%C4R<PAP91?98P>P7C:,8AR7P<PAP3P4P4P5P7P0FMC=C=1BA5P1P6g00RSRA,P:1A16=6:AdAS9B2CTb7b9b:W1101C10821086106C'3[[^19P1P?f4f5O3b6b8b;X5=X4DX3@P2P1O2n2001000010121000000X2EP2P1O2n2001000000121000000b<o"). Qed.
+  Proof. destruct Hva as [H _]. exact H. Qed.
 
-  Lemma D8_none : forall tid i, cells_miss D8_cells i = true -> D8 sp0 av envv hw tid rdraw (Z_to_bv 64 i) = None.
+  Lemma D8_none : forall tid i, cells_miss D8_cells i = true -> D8 inp sp0 tid rdraw (Z_to_bv 64 i) = None.
 Proof.
   intros tid i Hb. pose proof (u64_range tid) as Ht. pose proof len_av as Hlen.
   unfold cells_miss, D8_cells in Hb. cbn [forallb fst snd] in Hb.
@@ -328,18 +334,19 @@ Qed.
   Definition E8 (regs : bvmap 5 word) : env :=
     Env (fun n => match n with
                   | 0%N => sp0
-                  | 1%N => argc_w av
-                  | 2%N => envp_w sp0 av
+                  | 1%N => argc_w inp
+                  | 2%N => envp_w inp sp0
                   | 40%N => canary rdraw
                   | _ => getr regs (Z_to_bv 5 (Z.of_N n - 3))
                   end) (fun _ => []).
 
   Lemma alu_sp : forall regs k, edenot (E8 regs) (EAlu ALU_ADD (EVar 0) (ELit k)) = Z_to_bv 64 (bv_unsigned sp0 + k).
-Proof.
-ltac2:(KReplay.run1 (kr_t_S1StartInit ()) ["P7"] "h01zh12b1h22b2h31nh41Hh51bh61kh74regsp;1p;2p;3p;6g004@j19Tg004ej1MTg005Jj1<Tg005hj17Tg00S3j2LTg028Mj1ITg029Dj2DTg007Nj28Tg02:8j2@Tg008Nj20Tg00;2j22Tg0084j35Tg0098j3KTg02:kj24Tg00:8j1>Tg00ifj2HTg01d\j23Tg00C7j2ETg02;Qj3CTg02<8j1:Tg02=3j2;Tg02=bj3BTg02>Jj2ATg00\aj6=Tg02??j1FTg00S_j1GTg02@7j3?Tg00^Aj2JTg00I@R0f1R1f0R235p=1P0f4R3f3R4f2R5P1P2E=p=6g00Ma#9R6#M#<%96#9#9#9#9R7#<R8#7R9'LP9%I1R:g02@oR;'DR<1882R='@R>p,3sp0,08R?/21R@,88RA9592X59g00O@RB%72RC%71RDg00O^%75?51210451041'1RE[10511052'1%74?551[RF%73?545\EAK512P2n2001000000120000000W2W1W3PF^2D^1C^3BP2P81881,08RB,2?RC,88RDPA148C12?5RF,88,08RE,12X001481R412?2R3,48/1EX00148@RE1485,2?,48/12X0012?4RG%>6%>7'HR7'3148FR6,12X001317RH1337/16X0013@7R61357,2?/37/12X00P613F7,12X001E0612?H/37AC1?7D6PE%:@D6P4%:1D6148G%:GD6108A1;8@D6PB1;81D6108D1;8CD6O4b41883R3959>eg02AMR>?B<=1A<=E=%F;%G25?>,J:=593eX60W7o"). Qed.
+  Proof.
+    intros regs k. cbn [edenot]. rewrite alu_add. unfold v_add. change (ev (E8 regs) 0) with sp0.
+    apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Zplus_mod_idemp_r. reflexivity.
+  Qed.
   Lemma spx_val : forall regs k, edenot (E8 regs) (spx k) = Z_to_bv 64 (bv_unsigned sp0 + k).
-Proof.
-ltac2:(KReplay.run1 (kr_t_S1StartInit ()) ["P7"] "h01kh14regsp;1p;2g004@j10Tg004ej15Tg005Jj11Tg005hj12Tg00S3j24Tg02B9j23Tg00Ma#0R0#5#1%00#0#0#0#0#1#2'4g00I@f1f0'3W0W1o"). Qed.
+  Proof. intros regs k. unfold spx. apply alu_sp. Qed.
 
   Theorem start_init_run : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
     wfJ sp0 Jb ->
@@ -365,22 +372,22 @@ ltac2:(KReplay.run1 (kr_t_S1StartInit ()) ["P7"] "h01kh14regsp;1p;2g004@j10Tg004
         getr regs' 3 = Z_to_bv 64 0x10800 ->
         getr regs' 4 = Z_to_bv 64 0x1006b8 ->
         getr regs' 8 = Z_to_bv 64 (bv_unsigned sp0 + 8) ->
-        getr regs' 9 = argc_w av ->
-        getr regs' 10 = argc_w av ->
+        getr regs' 9 = argc_w inp ->
+        getr regs' 10 = argc_w inp ->
         getr regs' 11 = Z_to_bv 64 (bv_unsigned sp0 + 8) ->
         getr regs' 12 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)) ->
         getr regs' 18 = Z_to_bv 64 0x655e8 ->
         getr regs' 19 = Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)) ->
         (forall r : reg, In r [20; 21; 22; 23; 24; 25; 26; 27]%list -> getr regs' r = Z_to_bv 64 0) ->
-        G (mkst regs' (0x655e8 : word) (CM J' (apply_runs init_runs (D8 sp0 av envv hw tid rdraw))) rom)) ->
-    G (mkst regs (0x930bc : word) (CM (J8 sp0 av envv uid hw Jb s1v) (D8 sp0 av envv hw tid rdraw)) rom).
+        G (mkst regs' (0x655e8 : word) (CM J' (apply_runs init_runs (D8 inp sp0 tid rdraw))) rom)) ->
+    G (mkst regs (0x930bc : word) (CM (J8 inp mbase entry sp0 rdraw Jb s1v) (D8 inp sp0 tid rdraw)) rom).
 Proof.
 Ltac kimg := split; [lia|]; split; [lia|]; intros i Hi;
                 rewrite cmem_at_data by region_side;
                 apply D8_none; eapply (range_miss_pt D8_cells); [ | exact Hi]; vm_compute; reflexivity.
   intros G HG regs rom s1v tid HJ H1 H2 H3 H4 H8 H9 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
   pose proof len_av as Hlen. pose proof (u64_range tid) as Htid.
-  assert (HJ8 : wfJ sp0 (J8 sp0 av envv uid hw Jb s1v)) by (unfold J8, J_aux, J_lsm; repeat apply wfJ_wbytes; exact HJ).
+  assert (HJ8 : wfJ sp0 (J8 inp mbase entry sp0 rdraw Jb s1v)) by (unfold J8, J_aux, J_lsm; repeat apply wfJ_wbytes; exact HJ).
   assert (HR : regs_ok (E8 regs) sr8 regs).
   { apply regs_ok_by_index. intros i Hi.
     destruct i as [|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|i]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]; [ .. | lia];
@@ -388,18 +395,23 @@ Ltac kimg := split; [lia|]; split; [lia|]; intros i Hi;
       first [ reflexivity
             | match goal with H : getr regs ?r = _ |- getr regs ?r = _ =>
                 rewrite H; cbn [edenot ev E8]; first [ reflexivity | f_equal; lia | unfold envp_w; reflexivity ] end ]. }
-  assert (HK : know_ok SEGS (E8 regs) (CM (J8 sp0 av envv uid hw Jb s1v) (D8 sp0 av envv hw tid rdraw)) kn8).
+  assert (HK : know_ok SEGS (E8 regs) (CM (J8 inp mbase entry sp0 rdraw Jb s1v) (D8 inp sp0 tid rdraw)) kn8).
   { unfold kn8, know_ok. repeat apply Forall_cons; try apply Forall_nil.
     - cbn [kentry_ok edenot ev E8]. lia.
     - cbn [kentry_ok edenot ev E8]. split; [lia | exact Hal].
     - cbn [kentry_ok]. unfold flat, estart, elenZ. cbn [a_base a_off edenot ev E8].
-      rewrite (u_small 8388608) by lia. split; [lia|]. intros d m Hd Hm.
+      (* #38 rule 12i: kn8's window row is now [stack_window_depth], so [u_small]
+         must be instantiated at that symbol rather than at 8388608, which no
+         longer occurs.  The row stays symbolic; only this proof sees the number.
+         An earlier farm round named this line exactly. *)
+      rewrite (u_small stack_window_depth) by (rewrite stack_window_depth_val; lia).
+      rewrite stack_window_depth_val. split; [lia|]. intros d m Hd Hm.
       apply store_ok_cmem_win; [exact HJ8 | region_side | region_side].
     - eapply (kword_intro SEGS (E8 regs) _ (EVar 0) sp0 (-56) 8 _ (Z_to_bv 64 0xcfaa0)); [reflexivity | reflexivity | lia | lia | lia | lia |].
       rewrite rdn_cmem_win by region_side. unfold J8. rd_hit8.
     - eapply (kword_intro SEGS (E8 regs) _ (EVar 0) sp0 (-64) 8 _ (Z_to_bv 64 (bv_unsigned sp0 + 8))); [reflexivity | apply spx_val | lia | lia | lia | lia |].
       rewrite rdn_cmem_win by region_side. unfold J8. rd_hit8.
-    - eapply (kword_intro SEGS (E8 regs) _ (EVar 0) sp0 (-72) 8 _ (argc_w av)); [reflexivity | reflexivity | lia | lia | lia | lia |].
+    - eapply (kword_intro SEGS (E8 regs) _ (EVar 0) sp0 (-72) 8 _ (argc_w inp)); [reflexivity | reflexivity | lia | lia | lia | lia |].
       rewrite rdn_cmem_win by region_side. unfold J8. rd_hit8.
     - cbn [kentry_ok]. unfold flat, estart, elenZ. cbn [a_base a_off edenot].
       rewrite (u_small 0) by lia. rewrite (u_small 0x34000) by lia. split; [lia|]. intros d m Hd Hm.
@@ -426,15 +438,15 @@ Ltac kimg := split; [lia|]; split; [lia|]; intros i Hi;
       rewrite (u_small 0) by lia. rewrite Z.add_0_l. rewrite rdn_cmem_data by region_side. unfold D8. peel. apply rd_guard. }
   destruct init_run_shape as (Hsh & Hpc & Hsr & Hlog).
   destruct (runA_sound SEGS 20000 [MAIN] (SCR [] [] []) CXX_INIT sr8 kn8 41 (fst (fst init_run)) init_scs (snd init_run)
-              (E8 regs) (CM (J8 sp0 av envv uid hw Jb s1v) (D8 sp0 av envv hw tid rdraw)) rom regs)
+              (E8 regs) (CM (J8 inp mbase entry sp0 rdraw Jb s1v) (D8 inp sp0 tid rdraw)) rom regs)
     as (R & HR' & _ & Hms).
   { rewrite init_run_eq. exact Hsh. }
   { exact HR. }
   { exact HK. }
   { rewrite init_scs_nil. constructor. }
   rewrite Hpc, Hlog in Hms. rewrite Hsr in HR'.
-  destruct (split_sound sp0 (wrap_mem RPH sp0 av envv uid hw rdraw) (E8 regs) 0 SLO SHI DLIM) with
-      (log := init_log) (J := J8 sp0 av envv uid hw Jb s1v) (D := D8 sp0 av envv hw tid rdraw) as (J' & HJ' & Hm).
+  destruct (split_sound sp0 (wrap_mem inp mbase RPH entry sp0 rdraw) (E8 regs) 0 SLO SHI DLIM) with
+      (log := init_log) (J := J8 inp mbase entry sp0 rdraw Jb s1v) (D := D8 inp sp0 tid rdraw) as (J' & HJ' & Hm).
   { cbn [ev E8]. unfold win_lo, SLO. rewrite stack_max_size_val. lia. }
   { cbn [ev E8]. unfold SHI. lia. }
   { unfold DLIM, win_lo. rewrite stack_max_size_val. lia. }

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_string_seg_ent.v, with its module names changed; 1582 of its 1646 lines of code are new or changed and 650 lines of the source are left out. *)
-(* STATE ON THE STEP-2 DRAFT TIP (7ed43ad5685e; the R contract of Rtt102Cut.v at wave 0 448ecd157e57): the stretch
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* STATE ON THE STEP-2 DRAFT TIP (the R contract of Rtt102Cut.v at wave 0): the stretch
    concludes YA0nH.SRr' SEGS RZ_cf (the re-hiding move) and its journals re_J / re_AJ are at RZW := YA0nH.wle' SEGS
    RZ_cf (CrtFit's WLE contract). The walk runs the engine's R forms: the entry journal YCbqG.ajournal_x_initR at the
    reflexive wle', the runners YC1fPx.paj_run_x_invR / paj_run_to_x_invR, frame_alloc_1 through
@@ -10,10 +11,10 @@
    YSRrG.SRr'_bind. Every fact read after pj_write comes from the journals' aview clauses (the ajxR_ projections), never
    from the world conjunct. pj_write's new entry premise `(length rp_os <= 4)%nat` is rtt_pre's 29th conjunct. No
    Section hypothesis changed. *)
-(* STATE ON THE BATCH KIT'S CUT (the batch kit walk lane, shared layer 80a1d52c32c7: the cut 7cdbb61b5fa0 merged at
-   c46ea8f2977, Rtt102Cut.v / Rtt102FR1Kit.v re-fitted): the stretch is `rtt_seg_e_A : RTT_SEG_E`, UNCONDITIONAL. The
+(* STATE ON THE BATCH KIT'S CUT (the batch kit walk lane, shared layer: the cut merged,
+   Rtt102Cut.v / Rtt102FR1Kit.v re-fitted): the stretch is `rtt_seg_e_A : RTT_SEG_E`, UNCONDITIONAL. The
    one withheld fact of the pre-cut file, K0-REFUTE-PJW (premise re_K0_REFUTE_PJW of rtt_seg_e_A_of_refute, which was
-   DeadK1's tpj_write_specX text verbatim, the DeadK1 head c753d960f56, PRH_FnWriter.v blob 0bd195c1199a),
+   DeadK1's tpj_write_specX text verbatim, the DeadK1 head, PRH_FnWriter.v blob 0bd195c1199a),
    RETIRES: the cut's lib/A/PRH_FnWriter.v (blob d89d3c67b78c) carries that text as its own tpj_write_specX, taken here
    as the callee-text Section hypothesis TPJW (owned by the kit, at every float state, as every callee text of the walk).
    THE COMPARISON, re_K0_REFUTE_PJW against the cut's tpj_write_specX at n := DOC_D, conjunct by conjunct (a token
@@ -66,12 +67,12 @@
            tpj_write_specX at n := DOC_D (Section hypothesis TPJW); its post's K0-DEAD-PJWRITE conjunct refutes the
            failed arm (re_refute_pj_write_failed), so only the granted outcome reaches RT_PJW.
    NO WITHHELD FACT: K0-REFUTE-PJW is the cut's own tpj_write_specX (see the comparison above). G4 is gone (g_most
-   and g_own_ran_out ride in prh_ledger since base f9eda666dd9).
-   TEMPLATES (read, followed, numerals never copied): the S10 walk at 37251f6b9a5 lib/A/Prog/
+   and g_own_ran_out ride in prh_ledger since base).
+   TEMPLATES (read, followed, numerals never copied): the S10 walk lib/A/Prog/
    S10TxString.v (ts_A :2087, ts_at_B :1950) and S10TxStrGlue.v (ts_A1_entry / ts_A2_entry / ts_A3_entry,
    ts_side_run / ts_side_move) for the prologue, the flag, the frame call and the side facts - round_trip_text's
    prologue and GOT pair are the same instruction sequence as tx_string's, in the same registers;
-   the H2H5 walk head 1934271f1f40 lib/A/Prog/H5RttS1.v (rt1_putN_failed .. rt1_wfail, image-free,
+   the H2H5 walk head lib/A/Prog/H5RttS1.v (rt1_putN_failed .. rt1_wfail, image-free,
    Qed on the old pins) for the writer's pure model, and H5RttE1.v for this function's own prologue shape.
    NUMERALS. LENGTH: 5 / 8 / 13 / 16 / 32 / 64 / 128 / 160 (register and word widths, the saved-register count,
    `addi sp,sp,-0xa0`, `andi sp,sp,-0x20`, the fake frame of class 1), 2 ^ 62 / 2 ^ 64 (counter widths),
@@ -115,7 +116,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import PRH_Reader.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_FnWriter.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_FnTx PRH_FnPj.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import PRH_FnCheck.
-(* The kit's supply file, PIN-FREE on base f9eda666dd9 (blob d6e52752685a): it turns pj_write's post position into the
+(* The kit's supply file, PIN-FREE on base (blob d6e52752685a): it turns pj_write's post position into the
    model's w_evs (PRH_Supply.prhWriter_pjw_evs_granted / prhWriter_pjw_evs_w_evs), which RT_K_W counts. Cited,
    never re-proved *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_Supply.
@@ -129,7 +130,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* ======================================================================================================== *)
-(* ---- THE WRITER'S PURE MODEL (image-free; H5RttS1.v rt1_* at 1934271f1f40, Qed there, rebuilt here under
+(* ---- THE WRITER'S PURE MODEL (image-free; H5RttS1.v rt1_*, Qed there, rebuilt here under
    this lane's names because that file is an old-pin file and is not required) ---- *)
 Lemma re_nth_hd : forall (l : list bool), nth 0 l true = hd true l.
 Proof. intros [|x l]; reflexivity. Qed.
@@ -337,7 +338,7 @@ Lemma re_wcalls_of : forall (t : PjTree.jv) (p : bool),
   = PjWriteHyp.wcalls t p.
 Proof. intros t p. unfold PjWriteHyp.wcalls, WriterApp.w0. cbn [WriterApp.w_text WriterApp.w_cap length]. reflexivity. Qed.
 
-(* THE WRITER'S FINAL CAPACITY IN MODEL TERMS (base d026aa245c5's `capw = last (PresetReqAt.wcaps t p) 0`): the
+(* THE WRITER'S FINAL CAPACITY IN MODEL TERMS (base's `capw = last (PresetReqAt.wcaps t p) 0`): the
    capacity a run of grows reaches is the last capacity it asked for, or the start capacity when it asked none.
    Derived here from WriterSpec's two parallel fixpoints, so the cut's new conjunct needs no kit text. *)
 Lemma re_last_nonempty : forall (L : list Z) x d1 d2, last (x :: L) d1 = last (x :: L) d2.
@@ -614,7 +615,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
    CfParams_preset): palib_laws_A (PALibA.v) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 (* the unit's image binding of B: PALib's fields (owned by the kit / the core's PALib), as S10TxString.v:166 takes it.
-   AT THE A' BINDER: PAL := palib_A (the PALib prover's PALibA 88c72c8175cf, int102 83ac1a932a8d: every PALib field by
+   AT THE A' BINDER: PAL := palib_A (the PALib prover's PALibA 88c72c8175cf, int102: every PALib field by
    vm_compute on AF0l dfca6bb1a8d7, pins102 rc=0).
    This stretch stays generic in B (WalkRtt102's ruling): PALibA.v's palib_A is on the batch kit's cut, and its discharge is
    the binder's, not this file's. *)
@@ -660,8 +661,8 @@ Variable CTX0 : list (list Z).
 
 (* ---- THE CALLEE TEXT: the kit's pj_write text at nesting DOC_D (PRH_FnWriter.v tpj_write_specX at the batch kit's cut, blob
    d89d3c67b78c; owned by the kit), at every float state, as every callee text of the walk is taken (Rtt102CKA.v TSAME /
-   TPJF, Rtt102CmpA.v TFF). It is the text the pre-cut file took as its explicit premise re_K0_REFUTE_PJW (DeadK1
-   c753d960f56, blob 0bd195c1199a), keyed: rp_sm and its equation and DW gone (the comparison is in the file
+   TPJF, Rtt102CmpA.v TFF). It is the text the pre-cut file took as its explicit premise re_K0_REFUTE_PJW (DeadK1,
+   blob 0bd195c1199a), keyed: rp_sm and its equation and DW gone (the comparison is in the file
    header). Its post's K0-DEAD-PJWRITE conjunct `prh_granted ok cnt fail (prhWriter_k ..)` refutes the failed arm
    (q = 0) at the call through the writer-model step re_refute_pj_write_failed below (DeadK1's
    PRH_Refute.prh_refute_pj_write_failed, blob 90e5bae6f73e, rebuilt here); its new entry premise
@@ -817,7 +818,7 @@ Qed.
 (* ======================================================================================================== *)
 (* ---- THE CUT'S CARRIED STATE, re-spelled here with THE SAME BODIES as Rtt102Cut.v's rtt_fx / rtt_saved /
    rtt_frame / rtt_J / rtt_wild / rtt_cregs / rtt_room / rtt_pos / rtt_carry / rtt_led / rtt_wout / rtt_copy_kept /
-   rtt_at_pjw at 80a1d52c32c7 (that file is NOT edited; these are copies, so each is convertible with the cut's and
+   rtt_at_pjw (that file is NOT edited; these are copies, so each is convertible with the cut's and
    `exact` bridges the two in one step). They are re-spelled because this file's lemmas must mention them in their
    statements. re_AJ alone is NOT a copy: it is this stretch's own journal (below). ---- *)
 #[local] Notation RIN := (@rtt_in rc A_prog_listing PA).
@@ -861,7 +862,7 @@ Definition re_cregs (D : RIN) (ly : alayout) (regs : bvmap 5 word) (pos : Z) : P
   getr regs 25 = w64 (shadow_addr F) /\ getr regs 26 = w64 F /\
   getr regs 3 = w64 (as_gp B) /\ getr regs 4 = w64 (as_tp B).
 
-(* the re-stated cut (base 4d768df1473): the room is room_live_cf ONLY, and the model-run POSITION is exact
+(* the re-stated cut: the room is room_live_cf ONLY, and the model-run POSITION is exact
    and carried separately, on the granted path only *)
 Definition re_room (D : RIN) (S : astate) : Prop := room_live_cf S.
 Definition re_pos (D : RIN) (S : astate) (k : nat) : Prop :=
@@ -884,7 +885,7 @@ Definition re_copy_kept (D : RIN) (W : world SEGS) (mem : word -> option byte) :
   ri_copy D <> 0 -> forall a, ri_copy D <= a < ri_copy D + 56 ->
     aview SEGS (w_H W) mem a = aview SEGS (w_H (ri_W D)) (ri_mem D) a.
 
-(* cut 6e2b5d75a77: the refusal arm is GONE from the cut - the writer outcome is the granted one only *)
+(* cut: the refusal arm is GONE from the cut - the writer outcome is the granted one only *)
 Definition re_wout (D : RIN) (q : Z) (Lamw : list (Z * Z)) (cntw ranw : Z) (wab : list (Z * Z)) : Prop :=
   let t := ri_t D in let p := ri_p D in
   q <> 0 /\ cntw = ri_cnt D + PjWriteHyp.wcalls t p /\ ranw = ri_ran D /\
@@ -894,7 +895,7 @@ Definition re_wout (D : RIN) (q : Z) (Lamw : list (Z * Z)) (cntw ranw : Z) (wab 
     Z.of_nat (length (ri_tb D)) < capw /\ capw + cf_head <= PRH_FnWriter.LIVE_pj_write t p /\
     capw = last (PresetReqAt.wcaps t p) 0.
 
-(* base f9eda666dd9 (the ledger-field sweep): g_most and g_own_ran_out are LEDGER FIELDS, so the ledger at a cut
+(* base (the ledger-field sweep): g_most and g_own_ran_out are LEDGER FIELDS, so the ledger at a cut
    names the entry's most and the cut's own *)
 Definition re_led (D : RIN) (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS)
   (mem : word -> option byte) (Lamc : list (Z * Z)) (peakc cntc ranc ownc : Z) : Prop :=
@@ -931,7 +932,7 @@ Qed.
    at the same lyc / Hpc). So only S (once, to set_fs with one more frame) and mem move, and re_side needs
    neither a layout nor a world nor a head-set argument. ---- *)
 Definition re_side (D : RIN) (S : astate) (mem : word -> option byte) : Prop :=
-  (* g_most and g_own_ran_out are LEDGER FIELDS on base f9eda666dd9: the entry's most and own = 0 ride inside *)
+  (* g_most and g_own_ran_out are LEDGER FIELDS on base: the entry's most and own = 0 ride inside *)
   prh_ledger B (ri_ly D) S (ri_Hp D) (ri_W D) mem (ri_Lam D) (ri_peak D) (ri_cnt D) SIZE_MAXZ (ri_ran D)
     (ri_most D) 0 /\
   arodata_okP SEGS RLO RHI B (aview SEGS (w_H (ri_W D)) mem) /\
@@ -1573,7 +1574,7 @@ Qed.
 
 (* THE REFUTATION'S WRITER-MODEL STEP: a run of puts whose k calls are all granted (prh_granted) and below the pick
    (cnt + k <= fail) ends unfailed. The first disjunct of the kit's PRH_Refute.prh_refute_pj_write_failed (on the batch kit
-   cut; the DeadK1 head c753d960f56, blob 90e5bae6f73e), proved here from re_w0_fail: requiring
+   cut; the DeadK1 head, blob 90e5bae6f73e), proved here from re_w0_fail: requiring
    PRH_Refute.v would add PresetCfnA and the room-count files to this stretch's closure for a four-line case. *)
 Lemma re_refute_pj_write_failed : forall ok cnt fail P,
   0 <= cnt -> fail < 2 ^ 64 ->

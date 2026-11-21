@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start state per CONFIG_RSEQ, taken at the launch's flag; the stack-pointer and head facts from the new entry-stack layout's numbers and the launch conjunct; the argument layout from those numbers and the exec file name's address, launch variable 13; the launch's mmap base in the initial valuation's invariant; the launch model's channel reader from the valid input, LPS 08b1429; the reserved ledger is the image's entries then the vDSO/vvar pair, the pair's facts and the ledger's apartness proved from the launch's stack pointer and mmap base, M1_fields written as plain text; the random bytes' 16-byte alignment proved from the head's size and passed to the start-up, which segment 7's CONFIG_RSEQ join reads, written as plain text; the launch's head equation, hgap_of_Jinit, proved from Jinit and the launch's numbers and passed the same way; the pair's top as the launch writes it at LPS c0dd863a, equal to vdso_top by the model's page_round_down_Z_min_r). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "and"; "eq"; "ex"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.ImageFacts"; "segsA"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "lt"; "modulo"; "pow"; "divide"; "@Corelib.Init.Datatypes"; "list"; "nil"; "prod"; "None"; "Some"; "option"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "valuation"; "rw"; "agree_below"; "@Corelib.Numbers.BinNums"; "Z"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "event"; "Model"; "m_fds"; "m_fs"; "m_stdin"; "FdEntry"; "InputStream"; "m_halted"; "m_tid"; "m_vm_lazy"; "m_vm_materialized"; "m_vmmaps"; "sp_window_hi"; "sp_window_lo"; "vm_backing_used"; "vm_brk"; "vm_init_sp"; "vm_limit"; "vm_maps"; "vm_noaccess"; "vm_reserved"; "vm_start_brk"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Init"; "pcA"; "phA"; "S0_A"; "c0A"; "imgA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.InitState"; "Jinit"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Start0"; "K0"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartLib"; "K_nil"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartMain.Main"; "M1"; "QMain"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SP"; "ok_frame"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SoundA"; "jpredA"; "ok_frameA"; "@LinuxProcessSemantics.LinuxProcessSem.Fs"; "Fs"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "cfg_model"; "mkEntry"; "segments_reserved"; "@LinuxProcessSemantics.LinuxProcessSem.Sys.Kernel.Fork"; "PID_MAX_ENVELOPE"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.StartArgF"; "arg_layout"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartMain"; "B0"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartTop"; "PostMain"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "etriple"; "triple"; "world"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "ok_pframe"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SysCallA"; "ok_pframeA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.InitLayout"; "valid_entry48"].
@@ -47,14 +48,77 @@ Hypothesis Hent : ltac2:(tb__ "0|0|
 S47S30S3cVsp;Vbrk;Vmb;Vdraw;A4Vinp;A3").
 Hypothesis Hinp : valid_input_either inp.
 Hypothesis Hlim : 2 ^ 25 <= lim.
+(* LPS 727298f3: the start-up chain's states are made per CONFIG_RSEQ (StartStates.v, Init.v's
+   [S0_A]); this run's value is the launch's kernel build's. *)
+Let rq : bool := kb_rseq (in_kernel inp).
 Variable rhoI : valuation.
 Hypothesis HJ : ltac2:(tb__ "0|0|
-S31S3S2cS2dVsp;Vdraw;Vinp;VrhoI;A7").
+S31S3S2cS2dVsp;Vmb;Vdraw;Vinp;VrhoI;A8").
 
 Let m0 : Model := ltac2:(tb__ "0|0|
 S3bS2fVsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;A6A1").
 
 Definition M1 (tid : word) : Model := with_tid tid m0.
+(* LPS 08b1429: [init_model] copies [in_channel_reader]; [valid_input_either]'s thirteenth conjunct pins it. *)
+Lemma M1_rdr : forall tid, m_channel_reader (M1 tid) = true.
+Proof using Hinp. intros tid. destruct Hinp as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & H & _). exact H. Qed.
+(* LPS 727298f3: the launch reserves the vDSO/vvar pair (State.v [vm_reserved_init_model]); no setter
+   on the way to [M1] writes the kernel build or the reserved ledger (as P/Drv_spine.v's [vdso_ok_md0]). *)
+Lemma vdso_M1 : forall tid e, In e (vdso_reserved (m_kernel (M1 tid)) (vdso_top (m_vmmaps (M1 tid)))) -> In e (vm_reserved (m_vmmaps (M1 tid))).
+Proof using .
+  intros tid e He. unfold M1, m0, c0A, init_config, with_tid in *. cbn [cfg_model] in *.
+  autorewrite with model in *.
+  try rewrite vm_reserved_init_model.
+  autorewrite with model in *.
+  (* LPS c0dd863a: the launch writes the pair's top as [page_round_down_Z (Z.min mb (sp - stack_max_size))];
+     [vdso_top] rounds [sp - stack_max_size] first (State.v [page_round_down_Z_min_r]: the same value). *)
+  apply in_or_app. right. rewrite <- page_round_down_Z_min_r. exact He.
+Qed.
+
+(* LPS 727298f3: the launch's reserved ledger is the image's entries then the vDSO/vvar pair ending at
+   [vdso_top] (State.v [vm_reserved_init_model]); no setter on the way to [M1] writes it. *)
+Lemma resv_M1 : forall tid, vm_reserved (m_vmmaps (M1 tid)) = segments_reserved segsA ++ vdso_reserved (m_kernel (M1 tid)) (vdso_top (m_vmmaps (M1 tid))).
+Proof using .
+  intros tid. unfold M1, m0, c0A, init_config. cbn [cfg_model].
+  rewrite ?m_vmmaps_with_tid, ?m_kernel_with_tid, ?m_vmmaps_with_vdso, ?m_kernel_with_vdso, ?m_kernel_init_model.
+  exact (vm_reserved_init_model _ _ _ _ _ _).
+Qed.
+
+(* LPS 727298f3: the pair's facts (Fw/SysSpec.v [vdso_pair_ok_of]) from the launch's mmap base and stack
+   pointer: [M1]'s are [mb] and [sp], and [Hent] gives [valid_mmap_base mb] and [valid_sp sp]. *)
+Lemma pair_ok_M1 : forall tid, vdso_pair_ok (vdso_reserved (m_kernel (M1 tid)) (vdso_top (m_vmmaps (M1 tid)))).
+Proof using Hent.
+  intros tid. destruct Hent as (Hsp & _ & Hmb & _ & _).
+  assert (HMB : vm_mmap_base (m_vmmaps (M1 tid)) = mb).
+  { unfold M1, m0, c0A, init_config. cbn [cfg_model]. rewrite ?m_vmmaps_with_tid, ?m_vmmaps_with_vdso. reflexivity. }
+  assert (HSP : vm_init_sp (m_vmmaps (M1 tid)) = sp).
+  { unfold M1, m0, c0A, init_config. cbn [cfg_model]. rewrite ?m_vmmaps_with_tid, ?m_vmmaps_with_vdso. reflexivity. }
+  apply vdso_pair_ok_of.
+  - rewrite HMB. destruct Hmb as (H1 & H2 & _). split; assumption.
+  - rewrite HSP. destruct Hsp as (H1 & _). exact H1.
+Qed.
+
+(* The pair ends at or below the mmap base, a word. *)
+Lemma vdso_top_lt : forall h : VmMaps, vdso_top h < two_pow_64.
+Proof using .
+  intros h. pose proof (bv_unsigned_in_range _ (vm_mmap_base h)) as Rm. change (bv_modulus 64) with (2 ^ 64) in Rm.
+  assert (Hvt : vdso_top h = page_round_down_Z (Z.min (bv_unsigned (vm_mmap_base h)) (page_round_down_Z (bv_unsigned (vm_init_sp h) - stack_max_size)))) by reflexivity.
+  assert (PR : forall z, page_round_down_Z z <= z).
+  { intros z. unfold page_round_down_Z, page_size. pose proof (Z.mod_pos_bound z 4096 ltac:(lia)). pose proof (Z.div_mod z 4096 ltac:(lia)). lia. }
+  rewrite Hvt. pose proof (PR (Z.min (bv_unsigned (vm_mmap_base h)) (page_round_down_Z (bv_unsigned (vm_init_sp h) - stack_max_size)))) as P1.
+  pose proof (Z.le_min_l (bv_unsigned (vm_mmap_base h)) (page_round_down_Z (bv_unsigned (vm_init_sp h) - stack_max_size))) as P2.
+  unfold two_pow_64. lia.
+Qed.
+
+(* LPS 727298f3: the launch's reserved ledger is apart within itself, the pair's two entries included
+   (Start8M.v [resv_apart_of], [vdso_reserved_apart]); StartTop's [Hrap]. *)
+Lemma resv_apart_M1 : forall tid, ranges_apart (vm_reserved (m_vmmaps (M1 tid))).
+Proof using Hent.
+  intros tid. apply (resv_apart_of (m_vmmaps (M1 tid)) (vdso_reserved (m_kernel (M1 tid)) (vdso_top (m_vmmaps (M1 tid))))).
+  - exact (resv_M1 tid).
+  - exact (pair_ok_M1 tid).
+  - apply vdso_reserved_apart. exact (vdso_top_lt (m_vmmaps (M1 tid))).
+Qed.
 
 Variable ok : assn.
 Hypothesis OKF : ltac2:(tb__ "0|0|
@@ -69,9 +133,20 @@ S38S10SaS15Q40A1A1SaS16A1M0S17R5R4R3R2R1A4S1G0R3SbS16A1A3F_;Fmd;Ftr;Ftp;Frho;S46
 Lemma K0_nil : K_nil (K0 m0). Proof. intros tr md [H _]; exact H. Qed.
 Lemma K1_nil : K_nil (K1 m0). Proof. intros tr md [H _]; exact H. Qed.
 
-Lemma M1_fields : ltac2:(tb__ "0|7|
-S15Q40A1M0S0S1SfG0A1M1S1dS34R1A1M2A1SdG0A1A3S0S1SaScG0G0A2M3A1M4S1fG2A1SbG3A1M5A3S0S1SaG0A1S20G2A1SbG0A1A3S0S1G4S2aS21G2A1M6A1S3dS3A1A3S0S1G4S28G6A1G5A3S0S1G4S29G6A1G5A3S0S1S13S27G6A1Vlim;A3S0S1G0S2bG6A1Vbrk;A3S0S1G0S25G6A1Vbrk;A3S0S1G0S26G6A1Vsp;A3S0S1S13S24G2A1Z0A3S0S1G1S1eG2A1SeG0R1A2A3S0S1SaScG0S1bA2A1S18G2A1S18Vm0;A1A3S0S1S3aS19G2A1S19Vm0;A1A3S1S1cS1aG2A1S1aVm0;A1A3A2A2A2A2A2A2A2A2A2A2A2A2A2A2Ftid;").
-Proof. clear. intros tid. unfold M1, m0, c0A, init_config, init_model, with_tid. cbn -[segments_reserved]. repeat split; reflexivity. Qed.
+(* LPS 727298f3: the reserved ledger's conjunct is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]), proved from the launch ([resv_M1], [pair_ok_M1]).  Statement written as plain text. *)
+Lemma M1_fields : forall tid : word,
+  m_halted (M1 tid) = None /\ m_vm_lazy (M1 tid) = [] /\ m_vm_materialized (M1 tid) = [] /\
+  (exists V, vm_reserved (m_vmmaps (M1 tid)) = segments_reserved segsA ++ V /\ vdso_pair_ok V) /\
+  vm_maps (m_vmmaps (M1 tid)) = [] /\ vm_noaccess (m_vmmaps (M1 tid)) = [] /\ vm_limit (m_vmmaps (M1 tid)) = lim /\
+  vm_start_brk (m_vmmaps (M1 tid)) = brk /\ vm_brk (m_vmmaps (M1 tid)) = brk /\ vm_init_sp (m_vmmaps (M1 tid)) = sp /\
+  vm_backing_used (M1 tid) = 0 /\ m_tid (M1 tid) = Some tid /\
+  m_fds (M1 tid) = m_fds m0 /\ m_fs (M1 tid) = m_fs m0 /\ m_stdin (M1 tid) = m_stdin m0.
+Proof using Hent.
+  intros tid. pose proof (resv_M1 tid) as EV. pose proof (pair_ok_M1 tid) as HV.
+  split; [|split; [|split; [|split; [exists (vdso_reserved (m_kernel (M1 tid)) (vdso_top (m_vmmaps (M1 tid)))); split; assumption|]]]].
+  all: unfold M1, m0, c0A, init_config, init_model, with_tid; cbn -[segments_reserved]; repeat split; reflexivity.
+Qed.
 
 Lemma brk_facts : ltac2:(tb__ "0|1|
 S0S0S4Z643000S14Q40Vbrk;A2M0A2S4G0Z80643000A2A2S9Z1000G0A2A2").
@@ -82,57 +157,112 @@ Qed.
 Lemma sp_facts : ltac2:(tb__ "0|1|
 S0S0S4S23S14Q40Vsp;A2M0A2S4G0S22A2A2S0S0S4Z7fff80000000G0A2S4G0S8Z2Z2fA2A2A2S1S13S7G0Z10A2Z0A3A2A2").
 Proof.
-  clear - Hent Hinp. destruct Hent as (Hsp & _ & _ & Hfit). pose proof (nums sp inp Hsp Hinp) as N. cbv zeta in N. destruct N as (Nsp & N16 & _).
-  pose proof (LEN_fit sp inp Hinp Hfit) as LF. rewrite sp_hi_val in LF. pose proof (Zle_0_nat (img_len (in_argv inp) (in_envp inp))).
+  clear - Hent Hinp. destruct Hent as (Hsp & _ & _ & _ & Hlau).
+  pose proof (nums pcA phA sp brk mb draw inp Hsp Hinp Hlau) as N. cbv zeta in N. destruct N as (Nsp & N16 & _).
   pose proof Hsp as (S1 & S2 & S3). repeat split; try assumption; lia.
 Qed.
 
-Lemma layout_facts : ltac2:(tb__ "0|4|
-S10S31S3S2cS2dVsp;Vdraw;Vinp;R1A7S14Q40M0S11R2P1A2A2S13S14G0S11R3P6A2A2S13S0S0S4Z7fff80000000R2A2S4R2S8Z2Z2fA2M1A2A2S0S1S13S7R2Z10M2A2Z0A3S0S4S5R2Z50A2R1A2S0S4S5R1G2A2M3G1A2S0S4G3S5R2Z2228cfA2A2S0S4R2S14G0S11R4P4A2A2A2S0S4R2R1A2S1S13R2S14G0Vsp;A2A3A2A2A2A2A2A2A2Tr6;Tx;F_;Frho;").
+Lemma layout_facts : ltac2:(tb__ "0|0|
+S10S31S3S2cS2dVsp;Vmb;Vdraw;Vinp;R1A8S14Q40S11R2P1A2A2S13S14Q40S11R3P6A2A2S13S0S0S4Z7fff80000000R2A2S4R2S8Z2Z2fA2A2A2S0S1S13S7R2Z10A2Z0A3S0S4S5R2Z50A2R1A2S0S4S5R1Z10A2S8Z2Z2fA2A2S0S4S5R1Z10A2S5R2Z2228cfA2A2S0S4R2S14Q40S11R4P4A2A2A2S0S4R2R1A2S1S13R2S14Q40Vsp;A2A3A2A2A2A2A2A2A2Tr6;Tx;F_;Frho;").
 Proof.
-  clear - Hent Hinp. intros rho HJr. destruct Hent as (Hsp & _ & _ & Hfit).
-  pose proof (nums sp inp Hsp Hinp) as N. cbv zeta in N.
+  (* LPS 727298f3: the head is [RND + 16] bytes (InitState's [nums]), the strings above it. *)
+  clear - Hent Hinp. intros rho HJr. destruct Hent as (Hsp & _ & _ & _ & Hlau).
+  pose proof (nums pcA phA sp brk mb draw inp Hsp Hinp Hlau) as N. cbv zeta in N.
   destruct N as (Nsp & N16 & Nargc & Nenvc & Nstr & _ & _ & Nrnd & Npad & Ntab1 & Ntab2 & Nlen & _ & _).
-  pose proof (LEN_fit sp inp Hinp Hfit) as LF. rewrite sp_hi_val in LF.
-  rewrite (ji_sp _ _ _ _ _ _ _ HJr), (ji_rand _ _ _ _ _ _ _ HJr), (ji_argv0 _ _ _ _ _ _ _ HJr). cbv zeta.
-  pose proof (total_arg_bytes_nonneg (in_argv inp)). pose proof (total_arg_bytes_nonneg (in_envp inp)).
-  pose proof (Zle_0_nat (tab (in_argv inp))). pose proof (Zle_0_nat (tab (in_envp inp))). pose proof (Zle_0_nat (pad_len (in_argv inp) (in_envp inp))).
+  pose proof (LEN_fit pcA phA sp brk mb draw inp Hlau) as LF. cbv zeta in LF. rewrite sp_hi_val in LF.
+  pose proof (auxv_size_le (kb_rseq (in_kernel inp))). pose proof (auxv_size_ge (kb_rseq (in_kernel inp))).
+  pose proof (Nat.mod_upper_bound (block_items (in_argv inp) (in_envp inp)) 2 ltac:(lia)).
+  rewrite (ji_sp _ _ _ _ _ _ _ _ HJr), (ji_rand _ _ _ _ _ _ _ _ HJr), (ji_argv0 _ _ _ _ _ _ _ _ HJr). cbv zeta.
+  pose proof (Zle_0_nat (pad_len inp sp draw)). pose proof (Zle_0_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
   rewrite !Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
   rewrite !(Z.mod_small (bv_unsigned sp + _) (2 ^ 64)) by lia.
   repeat split; lia.
 Qed.
 
 Lemma arg_layout_of_Jinit : ltac2:(tb__ "0|0|
-S10S31S3S2cS2dVsp;Vdraw;Vinp;R1A7S3fR2A1F_;Frho;").
+S10S31S3S2cS2dVsp;Vmb;Vdraw;Vinp;R1A8S3fR2A1F_;Frho;").
 Proof.
-  clear - Hent Hinp. intros rho HJr. destruct Hent as (Hsp & _ & _ & Hfit).
-  pose proof (nums sp inp Hsp Hinp) as N. cbv zeta in N.
-  destruct N as (Nsp & N16 & Nargc & Nenvc & Nstr & _ & Nlen0 & Nrnd & Npad & Ntab1 & Ntab2 & Nlen & _ & _).
-  pose proof (LEN_fit sp inp Hinp Hfit) as LF. rewrite sp_hi_val in LF.
+  (* LPS 727298f3: the new argument layout from the launch's numbers (InitState's [nums]) and the
+     exec file name's address (InitState's [execfn_nums], Jinit's [ji_execfn]). *)
+  clear - Hent Hinp. intros rho HJr. destruct Hent as (Hsp & _ & _ & _ & Hlau).
+  pose proof (nums pcA phA sp brk mb draw inp Hsp Hinp Hlau) as N. cbv zeta in N.
+  destruct N as (Nsp & N16 & Nargc & Nenvc & Nstr & Nlen0t & Nlen0 & Nrnd & Npad & Ntab1 & Ntab2 & Nlen & _ & _).
+  pose proof (execfn_nums pcA phA sp brk mb draw inp Hsp Hinp Hlau) as (EX & EXb). cbv zeta in EX, EXb.
+  pose proof (LEN_fit pcA phA sp brk mb draw inp Hlau) as LF. cbv zeta in LF. rewrite sp_hi_val in LF.
+  pose proof (auxv_size_ge (kb_rseq (in_kernel inp))).
   unfold arg_layout.
-  rewrite (ji_sp _ _ _ _ _ _ _ HJr), (ji_argc _ _ _ _ _ _ _ HJr), (ji_envc _ _ _ _ _ _ _ HJr), (ji_argv0 _ _ _ _ _ _ _ HJr), (ji_len0 _ _ _ _ _ _ _ HJr).
-  pose proof (Zle_0_nat (tab (in_argv inp))). pose proof (Zle_0_nat (tab (in_envp inp))). pose proof (Zle_0_nat (pad_len (in_argv inp) (in_envp inp))).
+  rewrite (ji_sp _ _ _ _ _ _ _ _ HJr), (ji_argc _ _ _ _ _ _ _ _ HJr), (ji_envc _ _ _ _ _ _ _ _ HJr), (ji_argv0 _ _ _ _ _ _ _ _ HJr), (ji_len0 _ _ _ _ _ _ _ _ HJr),
+          (ji_rand _ _ _ _ _ _ _ _ HJr), (ji_execfn _ _ _ _ _ _ _ _ HJr), EX.
+  pose proof (Zle_0_nat (pad_len inp sp draw)). pose proof (Zle_0_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  pose proof (Zle_0_nat (tab (in_argv inp))). pose proof (Zle_0_nat (tab (in_envp inp))).
   rewrite !Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
   rewrite !Z.mod_small by lia. repeat split; lia.
 Qed.
 
+(* LPS 727298f3: the random bytes (launch variable 6) are 16-byte aligned: they lie [rand_off] bytes
+   above [sp] (Jinit's [ji_rand]), the head below them, [8 * items + auxv_size + 8 * (items mod 2)]
+   bytes (Lib/InitLayout.v [rand_off], StackLayout.v [block_head_size]), fills whole 16-byte units
+   ([auxv_size] is 16 * (29 or 27)), and [sp] is 16-aligned (InitState's [nums]).  Segment 7's join
+   of its two CONFIG_RSEQ exits reads it (B/StartRegen3.v [K18_join]).  Written as plain text. *)
+Lemma rand16_of_Jinit : forall rho : valuation,
+  Jinit segsA pcA phA sp mb draw inp rho -> bv_unsigned (rw rho 6%positive) mod 16 = 0.
+Proof.
+  clear - Hent Hinp. intros rho HJr. destruct Hent as (Hsp & _ & _ & _ & Hlau).
+  pose proof (nums pcA phA sp brk mb draw inp Hsp Hinp Hlau) as N. cbv zeta in N.
+  destruct N as (Nsp & N16 & Nargc & Nenvc & Nstr & _ & _ & Nrnd & Npad & Ntab1 & Ntab2 & Nlen & _ & _).
+  pose proof (auxv_size_le (kb_rseq (in_kernel inp))). pose proof (auxv_size_ge (kb_rseq (in_kernel inp))).
+  pose proof (Nat.mod_upper_bound (block_items (in_argv inp) (in_envp inp)) 2 ltac:(lia)).
+  assert (R16 : Z.of_nat (rand_off inp) mod 16 = 0).
+  { pose proof (Nat.div_mod (block_items (in_argv inp) (in_envp inp)) 2 ltac:(lia)) as ND.
+    unfold rand_off, block_head_size, auxv_size, auxv_count. cbv zeta.
+    destruct (kb_rseq (in_kernel inp)).
+    - change (16 * 29)%nat with 464%nat. rewrite !Nat2Z.inj_sub by lia.
+      rewrite !Nat2Z.inj_add, !Nat2Z.inj_mul. lia.
+    - change (16 * 27)%nat with 432%nat. rewrite !Nat2Z.inj_sub by lia.
+      rewrite !Nat2Z.inj_add, !Nat2Z.inj_mul. lia. }
+  rewrite (ji_rand _ _ _ _ _ _ _ _ HJr). rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
+  rewrite (Z.mod_small (bv_unsigned sp + _) (2 ^ 64)) by lia.
+  rewrite Z.add_mod by lia. rewrite N16, R16. reflexivity.
+Qed.
+
+(* LPS 727298f3: the launch's head equation (B/n1.v StartALibS [ARG_HGAP]) at this run's CONFIG_RSEQ: the
+   random bytes lie [rand_off] bytes above [sp] (Jinit's [ji_rand]), and [rand_off] is argc's, argv's and
+   envp's words with their NULLs, the auxv and the parity gap (Lib/InitState.v [nums]; StackLayout.v
+   [block_items] counts argc + envc + 3 words).  Segment 7's join reads it (B/StartRegen3.v [K18_join]). *)
+Lemma hgap_of_Jinit : forall rho : valuation,
+  Jinit segsA pcA phA sp mb draw inp rho ->
+  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n1.StartALibS.ARG_HGAP (kb_rseq (in_kernel inp)) rho.
+Proof.
+  clear - Hent Hinp. intros rho HJr. destruct Hent as (Hsp & _ & _ & _ & Hlau).
+  pose proof (nums pcA phA sp brk mb draw inp Hsp Hinp Hlau) as N. cbv zeta in N.
+  destruct N as (Nsp & N16 & Nargc & Nenvc & Nstr & _ & _ & Nrnd & Npad & Ntab1 & Ntab2 & Nlen & _ & _).
+  pose proof (auxv_size_le (kb_rseq (in_kernel inp))). pose proof (auxv_size_ge (kb_rseq (in_kernel inp))).
+  unfold block_items in Nrnd. rewrite Nat2Z.inj_mod, !Nat2Z.inj_add in Nrnd.
+  change (Z.of_nat 3) with 3 in Nrnd. change (Z.of_nat 2) with 2 in Nrnd.
+  unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n1.StartALibS.ARG_HGAP, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n1.StartALibS.ARG_GAP.
+  rewrite (ji_sp _ _ _ _ _ _ _ _ HJr), (ji_argc _ _ _ _ _ _ _ _ HJr), (ji_envc _ _ _ _ _ _ _ _ HJr), (ji_rand _ _ _ _ _ _ _ _ HJr).
+  rewrite !Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
+  rewrite !(Z.mod_small _ (2 ^ 64)) by lia.
+  lia.
+Qed.
+
 Lemma Jinit_agree : ltac2:(tb__ "0|0|
-S10S10S31S3S2cS2dVsp;Vdraw;Vinp;R2A7S12P14R3R2A3S31S3S2cS2dVsp;Vdraw;Vinp;R3A7F_;F_;Frho';Frho;").
+S10S10S31S3S2cS2dVsp;Vmb;Vdraw;Vinp;R2A8S12P14R3R2A3S31S3S2cS2dVsp;Vmb;Vdraw;Vinp;R3A8F_;F_;Frho';Frho;").
 Proof.
   clear. intros rho rho' HJr (Hw & Hl & Hm). destruct HJr; constructor; try (rewrite <- Hw by (cbv; reflexivity); assumption); try (rewrite <- Hl; assumption).
   intros a. rewrite <- Hm. auto.
 Qed.
 
-Definition QMain : assn := ltac2:(tb__ "0|3|
-S44S2S15Q40M0A1M1G1S2S10S10S0S0S6Z0S14G0R2A2M2A2S6G2S3eA2A2S0S31S3S2cS2dVsp;Vdraw;Vinp;R1A7S41S34R2A1S40R1R3A4A2A2Lrho;A2Ltid;A2Lw;").
+Definition QMain : assn := ltac2:(tb__ "0|0|
+S44S2S15Q40A1S15Q40A1S2S10S10S0S0S6Z0S14Q40R2A2A2S6S14Q40R2A2S3eA2A2S0S31S3S2cS2dVsp;Vmb;Vdraw;Vinp;R1A8S41S34R2A1S40R1R3A4A2A2Lrho;A2Ltid;A2Lw;").
 
 Theorem start_main_A : ltac2:(tb__ "0|0|
-S43S3Vok;S36S3S32Vm0;A1S2eVrhoI;A4S35A4").
+S43S3Vok;S36S3S32Vm0;A1S2eVrq;A1VrhoI;A4S35A4").
 Proof.
 
   eapply triple_seq; [exact (start0_sum_A sp brk mb draw lim inp Hent Hinp rhoI HJ ok (OKF _ K0_nil) (OKP _ K0_nil) (OKF _ K1_nil))|].
   apply triple_ex; intros L. apply triple_ex; intros rho1. apply triple_pure; intros [<-|[]]. apply triple_pure; intros Hag1. cbn [lf_state].
-  eapply triple_conseq with (P := fun w => exists tid, 0 < bv_unsigned tid < PID_MAX_ENVELOPE /\ SP segsA (Kx (M1 tid)) S_ctor rho1 w); [| intros w Hw; exact Hw |].
+  eapply triple_conseq with (P := fun w => exists tid, 0 < bv_unsigned tid < PID_MAX_ENVELOPE /\ SP segsA (Kx (M1 tid)) (S_ctor rq) rho1 w); [| intros w Hw; exact Hw |].
   { intros w [Hsm [Htr (tid & Htid & Hmd)]]. exists tid. split; [exact Htid|]. split; [exact Hsm|]. split; [exact Htr | exact Hmd]. }
   apply triple_ex; intros tid. apply triple_pure; intros Htid.
   pose proof (Jinit_agree rhoI rho1 HJ Hag1) as HJ1.
@@ -141,8 +271,8 @@ Proof.
   pose proof (layout_facts rho1 HJ1) as LF. cbv zeta in LF. destruct LF as (X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8).
   assert (Htop : init_sp_ok (m_vmmaps (M1 tid))) by (unfold init_sp_ok; rewrite Fisp; exact Hwin).
   eapply triple_conseq; [intros w Hw; exact Hw | |].
-  2:{ apply (startA_main (M1 tid) B0 Fh Flz Fmt Fres Fmaps Fna ltac:(rewrite Fused; unfold B0; lia) ltac:(rewrite Flim; unfold B0; lia) Htop
-               ltac:(rewrite Fsb, Fbrk; reflexivity) ltac:(rewrite Fbrk; exact Hbrk) ltac:(rewrite Fbrk; exact Hbal) ok (OKF _ (Kx_nil _)) OKFA OKPA rho1).
+  2:{ apply (startA_main (M1 tid) B0 rq Fh Flz Fmt Fres Fmaps Fna ltac:(rewrite Fused; unfold B0; lia) ltac:(rewrite Flim; unfold B0; lia) Htop (M1_rdr tid)
+               ltac:(rewrite Fsb, Fbrk; reflexivity) ltac:(rewrite Fbrk; exact Hbrk) ltac:(rewrite Fbrk; exact Hbal) (vdso_M1 tid) (resv_apart_M1 tid) ok (OKF _ (Kx_nil _)) OKFA OKPA rho1).
       - rewrite Fisp. exact X8.
       - exact X6.
       - exact X7.
@@ -151,16 +281,18 @@ Proof.
       - exact X3.
       - exact X4.
       - exact X5.
-      - exact (arg_layout_of_Jinit rho1 HJ1). }
+      - exact (arg_layout_of_Jinit rho1 HJ1).
+      - exact (rand16_of_Jinit rho1 HJ1).
+      - exact (hgap_of_Jinit rho1 HJ1). }
   intros w Hw. exists tid, rho1. split; [exact Htid|]. split; [exact HJ1 | exact Hw].
 Qed.
 
 Theorem start_main_ex_A : ltac2:(tb__ "0|0|
-S42S3S36S3S32Vm0;A1S2eVrhoI;A4S35A3").
+S42S3S36S3S32Vm0;A1S2eVrq;A1VrhoI;A4S35A3").
 Proof.
   eapply etriple_seq; [exact (start0_sum_ex_A sp brk mb draw lim inp Hent Hinp rhoI HJ)|].
   apply etriple_ex; intros L. apply etriple_ex; intros rho1. apply etriple_pure; intros [<-|[]]. apply etriple_pure; intros Hag1. cbn [lf_state].
-  eapply etriple_conseq with (P := fun w => exists tid, 0 < bv_unsigned tid < PID_MAX_ENVELOPE /\ SP segsA (Kx (M1 tid)) S_ctor rho1 w); [| intros w Hw; exact Hw |].
+  eapply etriple_conseq with (P := fun w => exists tid, 0 < bv_unsigned tid < PID_MAX_ENVELOPE /\ SP segsA (Kx (M1 tid)) (S_ctor rq) rho1 w); [| intros w Hw; exact Hw |].
   { intros w [Hsm [Htr (tid & Htid & Hmd)]]. exists tid. split; [exact Htid|]. split; [exact Hsm|]. split; [exact Htr | exact Hmd]. }
   apply etriple_ex; intros tid. apply etriple_pure; intros Htid.
   pose proof (Jinit_agree rhoI rho1 HJ Hag1) as HJ1.
@@ -169,8 +301,8 @@ Proof.
   pose proof (layout_facts rho1 HJ1) as LF. cbv zeta in LF. destruct LF as (X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8).
   assert (Htop : init_sp_ok (m_vmmaps (M1 tid))) by (unfold init_sp_ok; rewrite Fisp; exact Hwin).
   eapply etriple_conseq; [intros w Hw; exact Hw | |].
-  2:{ apply (startA_main_ex (M1 tid) B0 Flz Fmt Fres Fmaps Fna ltac:(rewrite Fused; unfold B0; lia) ltac:(rewrite Flim; unfold B0; lia) Htop
-               ltac:(rewrite Fsb, Fbrk; reflexivity) ltac:(rewrite Fbrk; exact Hbrk) ltac:(rewrite Fbrk; exact Hbal) ok OKFA OKPA rho1).
+  2:{ apply (startA_main_ex (M1 tid) B0 rq Flz Fmt Fres Fmaps Fna ltac:(rewrite Fused; unfold B0; lia) ltac:(rewrite Flim; unfold B0; lia) Htop (M1_rdr tid)
+               ltac:(rewrite Fsb, Fbrk; reflexivity) ltac:(rewrite Fbrk; exact Hbrk) ltac:(rewrite Fbrk; exact Hbal) (vdso_M1 tid) (resv_apart_M1 tid) ok OKFA OKPA rho1).
       - rewrite Fisp. exact X8.
       - exact X6.
       - exact X7.
@@ -179,7 +311,9 @@ Proof.
       - exact X3.
       - exact X4.
       - exact X5.
-      - exact (arg_layout_of_Jinit rho1 HJ1). }
+      - exact (arg_layout_of_Jinit rho1 HJ1).
+      - exact (rand16_of_Jinit rho1 HJ1).
+      - exact (hgap_of_Jinit rho1 HJ1). }
   intros w Hw. exists tid, rho1. split; [exact Htid|]. split; [exact HJ1 | exact Hw].
 Qed.
 

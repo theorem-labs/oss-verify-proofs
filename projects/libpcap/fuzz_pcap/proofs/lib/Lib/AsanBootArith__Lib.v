@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the deep-stack zero entry KZDEEP and kz_deep1 use the launch's 6144512-byte stack window, offset -6144512 and length 6136320 (were -8388608 and 8380416). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -309,11 +310,12 @@ Import ListNotations.
 Import AX2. Import AX2S.
 Open Scope Z_scope.
 
-Definition KZDEEP : kentry := KZero (SA (EVar 0) (- 0x800000)) (ELit 8380416).
+(* the deep stack below sp - 8192 is zero: the launch's window is [sp - 6144512, sp) at LPS 727298f3 *)
+Definition KZDEEP : kentry := KZero (SA (EVar 0) (- 6144512)) (ELit 6136320).
 
 Definition kz_deep1 (k : kentry) : kentry :=
   match k with
-  | KZero (SA (EVar 0%nat) o) (ELit n) => if (o =? - 0x800000) && (8380416 <=? n) && (n <? 2 ^ 64) then KZDEEP else k
+  | KZero (SA (EVar 0%nat) o) (ELit n) => if (o =? - 6144512) && (6136320 <=? n) && (n <? 2 ^ 64) then KZDEEP else k
   | _ => k
   end.
 Definition kz_deep (kn : list kentry) : list kentry := List.map kz_deep1 kn.
@@ -323,7 +325,7 @@ Proof.
   intros segs E M k HK. destruct k as [| a n | | | | | | | |]; try exact HK.
   destruct a as [b o]. destruct b as [|i| | | | | |]; try exact HK. destruct i as [|i]; [|exact HK].
   destruct n as [z| | | | | | |]; try exact HK. cbn [kz_deep1].
-  destruct ((o =? - 0x800000) && (8380416 <=? z) && (z <? 2 ^ 64)) eqn:C; [|exact HK].
+  destruct ((o =? - 6144512) && (6136320 <=? z) && (z <? 2 ^ 64)) eqn:C; [|exact HK].
   apply andb_prop in C as [C C3]. apply andb_prop in C as [C1 C2].
   apply Z.eqb_eq in C1. apply Z.leb_le in C2. apply Z.ltb_lt in C3. subst o.
   unfold KZDEEP. cbn [kentry_ok] in *. destruct HK as [HF HZ]. unfold flat, elenZ, estart in *. cbn [a_base a_off edenot] in *.

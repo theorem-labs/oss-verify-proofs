@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset (both images; plain-free and image-free): THE LIVE-SET COUNTS at a position of the run,
    moved here VERBATIM from the #102 interface lib/A/PresetCfnA.v / lib/AU/PresetCfnB.v (section 3b) by the interface
    owner's decision (19:0xZ): citing them from the interface pulled the PLAIN image into image-A' / B' closures
@@ -142,8 +143,8 @@ refine (peak_of_room_pos (PresetRoom.in_cls YG00.kBatchClass) PresetLiveBounds.L
 - intros Hx p. exact (PresetLiveSec.live_c24 sm x os p Hx).
 Qed.
 
-(* THE ALL-GRANTED READING'S PEAK AT CALL_TAIL'S POSITION (the batch kit's lib/A/PRH_FnCheck.v tcheck_reject_clean_starved_specX,
-   c43483a61171 :1121-1124, consumers a Theorem Labs lane's crcs and LLVMFuzzerTestOneInput's lanes L4 / L5c): that text takes
+(* THE ALL-GRANTED READING'S PEAK AT CALL_TAIL'S POSITION (the batch kit's lib/A/PRH_FnCheck.v tcheck_reject_clean_starved_specX,:
+   1121-1124, consumers a Theorem Labs lane's crcs and LLVMFuzzerTestOneInput's lanes L4 / L5c): that text takes
    the two pkR bounds over parse_evs .. tb [] (the ALL-GRANTED reading), but its run holds only the STARVED reading,
    so peak_sec_of_room_pos does not apply. At LLVMFuzzerTestOneInput's two calls of check_reject_clean_starved the
    model's live set is known: the earlier calls and check_no_overread's piece leave nothing (PresetRun.call_ok,
@@ -153,7 +154,7 @@ Qed.
    <= A for every grant list: PresetLiveSec.w_reads; the tree's count <= A: PresetRun.cnt_pacc), A = 3,072
    secondaries / 47,664 class-24 requests, below LSEC + DRV = 9,524 / L24 + DRV = 146,222.
    THE PREMISES, each one a fact LLVMFuzzerTestOneInput's walk holds at the call (lib/A/Ent102CutsA.v /
-   Ent102PosA.v at a working branch b2d92e71d7be), after `destruct trp as [[o1 o2] o0]`:
+   Ent102PosA.v at a working branch), after `destruct trp as [[o1 o2] o0]`:
    - the split `call_evs sm x o1 o2 o0 = C ++ call_rest sm x`: Ent102PosA.ec_call_evs_ranout_false E trp with
      C := ec_cno_evs E trp (from the cut's ec_ranout E trp = false and e_n E <= EC_NMAX = 0x300000 = MAXB with
      ec_pre's e_n E = Z.of_nat (length (e_pl E)));

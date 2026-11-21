@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2f.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (17 numerals; per-numeral report). *)
-(* Modified by Theorem Labs, 2026-10: the region counts are the generated IMG_REGIONS' (B/YD2j.v, 57 regions): firstn 57, skipn 60 = 3 + 57, length 63 (cgif: 33, 36, 39), as lib/A/AD2f.v (RelocA e278a2c6482). *)
-(* Modified by Theorem Labs, 2026-10: A_EMPTY_tfa is fuzz_reply.asan-ubsan's oft_aligned_copy.empty 0x5d8ca0 (symtab of fuzz_reply.debug, 32 bytes; = A_INITFLAG target_run.initialized 0x5d8c90 + 0x10 as in the donor and in lib/A/AD2f.v 0x5d8710 / 0x5d8720); the relocation had kept cgif's 0x5d88e0, which in this image lies inside read_stage. IMG_L / IMG_LC have 59 regions and IMG_B differs from IMG_REGIONS at indices 31 (R_A5a_1, 0x5d8c90) and 52 (R_A7b) (cgif 35; 24, 28), the same order as lib/A/AD2f.v (RelocA e278a2c6482). *)
+(* Modified by Theorem Labs, 2026-10: the region counts are the generated IMG_REGIONS' (B/YD2j.v, 57 regions): firstn 57, skipn 60 = 3 + 57, length 63 (cgif: 33, 36, 39), as lib/A/AD2f.v (RelocA). *)
+(* Modified by Theorem Labs, 2026-10: A_EMPTY_tfa is fuzz_reply.asan-ubsan's oft_aligned_copy.empty 0x5d8ca0 (symtab of fuzz_reply.debug, 32 bytes; = A_INITFLAG target_run.initialized 0x5d8c90 + 0x10 as in the donor and in lib/A/AD2f.v 0x5d8710 / 0x5d8720); the relocation had kept cgif's 0x5d88e0, which in this image lies inside read_stage. IMG_L / IMG_LC have 59 regions and IMG_B differs from IMG_REGIONS at indices 31 (R_A5a_1, 0x5d8c90) and 52 (R_A7b) (cgif 35; 24, 28), the same order as lib/A/AD2f.v (RelocA). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

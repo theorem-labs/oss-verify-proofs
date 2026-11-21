@@ -17,13 +17,14 @@
      LAWS / HG / RINV / LS / the contract parameters - _cut's Section w, verbatim;
      TL, TLF, ML, SMP, FFL - the allocator instance (W_kit.v, W_frame.v); GWL, ERRL - _cut's shared laws;
      ASM1 : astack_malloc_pres at class 1 (W_frame.v; RelocA's AF0s.v stack_malloc1_contract proves it);
-     W2_op_add : oa_spec_g at op_add's entry, the text of a working branch 81d480c10a4 lib/A/W_op_add.v, which
+     W2_op_add : oa_spec_g at op_add's entry, the text of a working branch lib/A/W_op_add.v, which
        pb_op_add_g proves;
-     HEV, HZS, HG_obj, ROM_PIN, SHV_oa - instance facts, in the text of a working branch 825c723c13f
+     HEV, HZS, HG_obj, ROM_PIN, SHV_oa - instance facts, in the text of a working branch
        lib/A/W_LLVMFuzzerTestOneInput_addI.v's zz_HEV, zz_HZS, zz_HGOBJ, zz_ROMPIN and zz_GSHV (G_oa is its ad_G,
        4 * ASRC = 384); HROM_G - _G.v's c_rom_apart at G_fr_c;
      HFP_pro - the entry's relay table and output buffer are live blocks apart from the input and inside fr_FP;
      LS_pro_oa, LS_pro, RI_pro - the allocator-room / model obligations at op_add's call and at the first head. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -91,7 +92,7 @@ Variable LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
 
 (* ------------------------------------------------------------------ op_add, as a Section hypothesis *)
-(* op_add's contract, the text of a working branch 81d480c10a4 lib/A/W_op_add.v (oa_spec and oa_post, with
+(* op_add's contract, the text of a working branch lib/A/W_op_add.v (oa_spec and oa_post, with
    oa_post's last conjunct: errno's view is kept) at PI := PB_fr, and its G-generic form oa_spec_g over
    W_contract.v gx_prog.  W2's pb_op_add_g concludes exactly `oa_spec_g B MT (BASE + AF_fr_op_add)`; the stub is a
    copy until this file takes W_op_add.v. *)
@@ -170,30 +171,30 @@ Hypothesis FFL : frame_flag_lawP segs B.
 (* _cut's two shared facts (W_LLVMFuzzerTestOneInput_cut.v glob_wr_law / errno_law), verbatim *)
 Hypothesis GWL : glob_wr_law G_fr.
 Hypothesis ERRL : errno_law B.
-(* discharged by zz_ERRL B TS, a working branch 825c723c13f
+(* discharged by zz_ERRL B TS, a working branch
    lib/A/W_LLVMFuzzerTestOneInput_addI.v:242 *)
 (* ---- instance facts, in _top.v's text (HEV, HZS: AF0m's ts_errno / ts_zsh, measured in _G.v's header) ---- *)
 Hypothesis HEV : as_errno B = TFIB_ERRNO_A.
-(* discharged by zz_HEV B TS, a working branch 825c723c13f lib/A/W_LLVMFuzzerTestOneInput_addI.v:51 *)
+(* discharged by zz_HEV B TS, a working branch lib/A/W_LLVMFuzzerTestOneInput_addI.v:51 *)
 Hypothesis HZS : azs B (rg_s fr_RG) (4 * ASRC).
-(* discharged by zz_HZS B TS, a working branch 825c723c13f lib/A/W_LLVMFuzzerTestOneInput_addI.v:55 *)
+(* discharged by zz_HZS B TS, a working branch lib/A/W_LLVMFuzzerTestOneInput_addI.v:55 *)
 (* ---- G_fr: it holds the program's 20 objects (_G.v obj_c proves it of G_fr_c), and no read-only byte (_G.v
    c_rom_apart) ---- *)
 Hypothesis HG_obj : forall a, inG G_fr_obj a -> inG G_fr a.
-(* discharged at G_fr := G_fr_c B by zz_HGOBJ B, a working branch 825c723c13f
+(* discharged at G_fr := G_fr_c B by zz_HGOBJ B, a working branch
    lib/A/W_LLVMFuzzerTestOneInput_addI.v:64 *)
 Hypothesis HROM_G : forall a, in_rom segs a -> ~ inG G_fr a.
-(* ---- the instance obligation of W_journal.v's rom_out (a working branch 45a3cc9bdd0): an owned read-only byte
+(* ---- the instance obligation of W_journal.v's rom_out (a working branch): an owned read-only byte
    is one of AR's pinned const cells (AF0m pins all 408) ---- *)
 Hypothesis ROM_PIN : forall a, in_rom segs a -> Exists (in_zr a) (as_owned_static B) -> rom_pinned segs B a.
-(* discharged by zz_ROMPIN B TS, a working branch 825c723c13f
+(* discharged by zz_ROMPIN B TS, a working branch
    lib/A/W_LLVMFuzzerTestOneInput_addI.v:131 *)
-(* ---- op_add's own G (W_op_add.v:165-168, FREE-W8.md (sha256 b75e6b922a31; internal record)), and the one conjunct of gx_prog at it that is not a fact of the
+(* ---- op_add's own G (W_op_add.v:166-169, FREE-W8.md (sha256 b75e6b922a31; internal record)), and the one conjunct of gx_prog at it that is not a fact of the
    image: the shadow of its globals is readable in every allocator state ---- *)
 Definition G_oa : list (Z * Z) := [(rg_s fr_globals, 384); (A_NFD, 4)] ++ RA_G fr_globals.
 Hypothesis SHV_oa : forall ly S (W : world segs) mem md a n, AR segs B ly S W mem md -> 0 < n ->
   (forall x, a <= x < a + n -> inG G_oa x) -> shadow_hull_vis (aview segs (w_H W) mem) a n.
-(* discharged by zz_GSHV B TS, a working branch 825c723c13f
+(* discharged by zz_GSHV B TS, a working branch
    lib/A/W_LLVMFuzzerTestOneInput_addI.v:187,
    stated at ARM_add's ad_G = [(rg_s fr_globals, 4 * ASRC); (A_NFD, 4)] ++ RA_G fr_globals, which is G_oa
    (4 * ASRC = 384; the two are convertible) *)
@@ -225,8 +226,8 @@ Hypothesis RI_pro : forall cx q T' pj c O cap out,
   (exists c0 mx0, aout_at B fr_RG (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) c0 O mx0 (Z.of_nat (length O)) cap out) ->
   ct_cl c = 3 -> ct_br c = 0 -> ct_dd c = 0 -> ct_ei c = 0 ->
   RINV cx 0 (pro_m q T' pj c O cap out).
-(* LS_pro at the PROPOSED text (a Theorem Labs lane 20:4xZ; W8Add's fr_LS_pro, a working branch f57b3e2d0ca
-   lib/A/ReplyLS.v:571): the blocks after op_add are given with the entry's split at its table T0 (HFP_pro's first
+(* LS_pro at the PROPOSED text (a Theorem Labs lane 20:4xZ; W8Add's fr_LS_pro, a working branch
+   lib/A/ReplyLS.v:572): the blocks after op_add are given with the entry's split at its table T0 (HFP_pro's first
    conjunct) and relay_add's two cases (T0 = 0: a new table T'; T0 <> 0: T' = T0), so LS's own rest can be built.
    The published premise (a bare disjunction of the two Permutations) gives no such split. *)
 Hypothesis LS_pro : forall cx q T' pj c O cap out (S2 : astate) pos ly S,
@@ -765,7 +766,7 @@ Ltac pro_rgn HS i HR :=
 (* the registers the loop's set-up keeps *)
 Definition pro_kept : list (bv 5) := [2; 3; 4; 8; 9; 21; 22; 24; 26]%bv.
 (* a symbolic value read as a number, and the shadow address of a + c in the shadow matcher's form (W2's oa_sv_lit /
-   oa_sh_den, W_op_add.v:693-707, which this file does not Require) *)
+   oa_sh_den, W_op_add.v:694-708, which this file does not Require) *)
 Lemma pro_sv_lit : forall E e v, U E e = zcanon v -> sv_denot E e = Z_to_bv 64 v.
 Proof. intros E e v H. apply bv_eq. unfold U in H. rewrite H, Z_to_bv_unsigned. apply zcanon_wrap. Qed.
 Lemma pro_sh_den : forall E (bx g : nat) sb a c,
@@ -1135,7 +1136,7 @@ Proof.
   intros a Ha HO. pose proof (rng_all_in (fun x => negb (inGb G_oa x)) G_pst a ltac:(vm_compute; reflexivity) Ha) as H.
   cbv beta in H. apply negb_true_iff in H. apply inGb_false in H. exact (H HO).
 Qed.
-(* what a callee taken at its own G keeps (W2's oa_call_keep / _blk / _hi, W_op_add.v:245-293), and the caller's
+(* what a callee taken at its own G keeps (W2's oa_call_keep / _blk / _hi, W_op_add.v:246-294), and the caller's
    fake frames (the journal's frame clause) *)
 Lemma pro_call_img : forall G' STK sp0 FP ly0 S0 (W0 : world segs) m0 md0 ly1 S1 (W1 : world segs) m1 md1 k,
   ajournal_gx segs B G' 0 [] STK sp0 FP ly0 S0 W0 m0 md0 [] ly1 S1 W1 m1 md1 k -> ~ YI16.sink_open_fp FP ->

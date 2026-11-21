@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* fuzz_state image B, realloc segment S1 (a Theorem Labs lane, 2026-10-29): the entry step's model frame for the REALLOC prefix.
-   The B twin of lib/A/FSRealloc_S1_f.v (a working branch ce07ca45bca), which is A/AFf0.v (the free(NULL)
+   The B twin of lib/A/FSRealloc_S1_f.v (a working branch), which is A/AFf0.v (the free(NULL)
    prefix's frame) with the delta that turns cgif_rgb's YF0u into its realloc twin YF69 (released): the thread object
    part DT of the changed set also covers T + t_stats .. T + t_unwinding, because Reallocate bumps the thread stats words
    T + 2856 / T + 2864 (B: 0x329d0-0x329e4 `ld a1, 0x38(a0); ld a2, 0x40(a0); ...; sd a1, 0x38(a0); sd a2, 0x40(a0)`
@@ -11,9 +11,10 @@
    it).  The depot-id bound proof is A's (depot_inv_cap over this branch's Reusable invariant), not B/YFf0.v's. *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFf0.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 (5e580eb5ab5) bounds a class region's mapped user part by kFreeArrayOffset (YG0s cfacts, YG07 prim_chunk_off), not 2 ^ 31; batch_geom and ext_zone state kFreeArrayOffset, and the proofs unfold it where lia needs its value. *)
+(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 bounds a class region's mapped user part by kFreeArrayOffset (YG0s cfacts, YG07 prim_chunk_off), not 2 ^ 31; batch_geom and ext_zone state kFreeArrayOffset, and the proofs unfold it where lia needs its value. *)
 (* Modified by Theorem Labs, 2026-10: the depot id bound is 20481 from depot_inv_cap (the depot need not lie inside the universe). *)
-(* Modified by Theorem Labs, 2026-10-29: the image-B twin of lib/A/FSRealloc_S1_f.v (a working branch ce07ca45bca): image B's modules (lib/B/Yxxx for lib/A/Axxx) and fuzz_state.asan-ubsan's addresses (a Theorem Labs lane's realloc-thin/fs-addr-map.tsv, capstone-checked). *)
+(* Modified by Theorem Labs, 2026-10-29: the image-B twin of lib/A/FSRealloc_S1_f.v (a working branch): image B's modules (lib/B/Yxxx for lib/A/Axxx) and fuzz_state.asan-ubsan's addresses (a Theorem Labs lane's realloc-thin/fs-addr-map.tsv, capstone-checked). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

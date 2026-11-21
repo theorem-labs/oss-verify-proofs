@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: ajournal_closed_fs is cgif_file_fuzzer's lib/A/ACfh.v ajournal_closed_io (origin/ossv/recipes c8557374ad2e), module paths changed; the rest is new kit for libreac/fuzz_pcap's program walks, over cgif's journal (lib/Reusable/YCbq.v) and the rule lifts of lib/A/Prog/YC85.v, with no image constant: a call whose own journal has a sink-closed footprint leaves the descriptors and the file system exactly as it found them, so a walk whose cumulative journal carries the sink token (fuzz_pcap's entry, PcapEntryDefs.pe_from) keeps m_fds / m_fs exact across the harness's own allocator and intrinsic calls. *)
+(* Modified by Theorem Labs, 2026-10: ajournal_closed_fs is cgif_file_fuzzer's lib/A/ACfh.v ajournal_closed_io (theorem-labs/oss-verify-proofs@6b32741d849a), module paths changed; the rest is new kit for libreac/fuzz_pcap's program walks, over cgif's journal (lib/Reusable/YCbq.v) and the rule lifts of lib/A/Prog/YC85.v, with no image constant: a call whose own journal has a sink-closed footprint leaves the descriptors and the file system exactly as it found them, so a walk whose cumulative journal carries the sink token (fuzz_pcap's entry, PcapEntryDefs.pe_from) keeps m_fds / m_fs exact across the harness's own allocator and intrinsic calls. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* What already existed, and is used here unchanged:
    - YCbq.ajournal_sub_init: a fresh journal at the current state, with any footprint FP1;
    - YC85.ajournal_sub_tok (cgif YC85.v): composition of the cumulative journal with a callee's journal whose footprint

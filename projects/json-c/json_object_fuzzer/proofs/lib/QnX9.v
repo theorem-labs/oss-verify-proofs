@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: crls_B_stmt takes it after alloc_ceiling <= lo; the stack_malloc_full call of its proof discharges it). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -299,7 +300,7 @@ rw_cells asegs m P [C8 (Z_to_bv 64 ptr); C8 (Z_to_bv 64 rem)] -> unpoisoned aseg
 (S + 24 <= P \/ P + 16 <= S) ->
 
 bytes_at asegs m ptr data -> Z.of_nat (length data) = rem -> 0 < ptr -> (rem = 0 \/ exists ab nb, In (ab, nb) LB /\ ab <= ptr /\ ptr + rem <= ab + nb) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - CRLS_STK_B -> bv_unsigned sp mod 32 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - CRLS_STK_B -> bv_unsigned sp mod 32 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 ptr + rem <= lo -> (rem = 0 \/ S + 24 <= ptr \/ ptr + rem <= S) -> (rem = 0 \/ P + 16 <= ptr \/ ptr + rem <= P) ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 (forall ms' m' md' (A' : ASA A4L HIx) (n k : Z) (str rest : list byte)
@@ -327,7 +328,7 @@ replace c with false; [cbv iota | symmetry; repeat match goal with H : _ \/ _ |-
 
 Lemma crls_B : crls_B_stmt 0x92528.
 Proof.
-unfold crls_B_stmt. intros until data. intros A0 A1 A2 Hmax HP FRN OBJ UNS SAL SLOC FDP UNP PAL PLOC SPD SRC LEN PTR0 INB ST LO LOS SPA SHT DLO SDS PDS TP RA K.
+unfold crls_B_stmt. intros until data. intros A0 A1 A2 Hmax HP FRN OBJ UNS SAL SLOC FDP UNP PAL PLOC SPD SRC LEN PTR0 INB ST LO HBT LOS SPA SHT DLO SDS PDS TP RA K.
 subst a0 a1 a2 tp. unfold CRLS_STK_B in LOS.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -358,6 +359,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.

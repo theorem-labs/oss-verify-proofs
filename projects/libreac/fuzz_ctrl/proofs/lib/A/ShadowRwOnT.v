@@ -6,8 +6,8 @@
    Each twin is the original's proof with the region guard P carried through (the originals argue per address):
      shadow_rw_on_kept       <- A.AsanRTFacts.shadow_rw_kept      (AsanRTFacts.v:54; meta_kept + wmono)
      shadow_rw_on_rel        <- the stage-local forward shadow_rw_rel (Seg/A1.v:325, F18.v:232, P7.v:136, ...; mem_rel)
-     shadow_rw_on_normalize  <- A.MemNormTr.shadow_rw_normalize   (MemNormTr.v:113; ro_agree)
-     shadow_rw_on_of_rel     <- A.MemNormTr.shadow_rw_of_rel      (MemNormTr.v:214; mem_rel, backward)
+     shadow_rw_on_normalize  <- A.MemNormTr.shadow_rw_normalize   (MemNormTr.v:114; ro_agree)
+     shadow_rw_on_of_rel     <- A.MemNormTr.shadow_rw_of_rel      (MemNormTr.v:215; mem_rel, backward)
      shadow_rw_on_mem_mono   <- A.Prog.MemMono.shadow_rw_mono     (MemMono.v:49; wmono + rd_mono)
    fl_shadow_rw_on (<- RcAsanFPLib.fl_shadow_rw) moved to lib/A/ShadowRwOnK.v (12:1xZ; light closure). *)
 From Stdlib Require Import ZArith Lia.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main environment takes the run and its execfn string). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -38,7 +39,7 @@ Hypothesis AX : AllocExtra ubs2_msyms (aa_MR API).
 Hypothesis LIB : lib_contract_all ubs2_msyms API LIBPC RA_LIB EMPTY LIB_STACK_RGB.
 Hypothesis FRM : frm_zero fp_csr.
 Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp [a0; path] (in_envp inp) (in_execfn inp) tid rnd) G.
 Lemma run_from_Q : forall cap0 L' A' b0 E ms md (K : dleaf * astate -> TSet),
 user_blocks A' = [(b0, cap0)] -> 65536 <= cap0 <= 67108864 ->
 WF A' -> bounded A' -> st_init_done A' = true ->

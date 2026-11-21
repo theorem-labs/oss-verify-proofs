@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/Reusable/YFet.v, with its module paths changed; 656 of its 901 lines of code are new or changed and 487 lines of the source are left out. *)
 (* The drain walk of free (lib/A/AFet.v tfib_drain_ok, over AFer.v, AFev.v, AFey.v and the walk specs AFgg-AFh8) for any U: tfib_drain_okU. The runs (AFgg.segDE / AFgh.segDN, AFh0.segL, AFh8.segX) go on the real memory with real records; the facts, FIN_a and DRPRE are the donor's at unpoison U mem. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFdn.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: A_Drain, PC_RC_DR_RA, PC_RC_LOOP. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFdn.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: A_Drain, PC_RC_DR_RA, PC_RC_LOOP. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

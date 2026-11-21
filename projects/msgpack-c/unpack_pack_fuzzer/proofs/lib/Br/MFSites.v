@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: room_grant takes the grant's page-aligned length (grant_len_aligned). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -91,7 +92,7 @@ Proof.
 
   set (nZ := page_round_up_Z len).
   assert (HnZ : len <= nZ <= 2 ^ 27) by (unfold nZ, page_round_up_Z, page_size; lia).
-  destruct (room_grant mo j nZ Hroom Hj Hmo (kl_ceil _ _ _ HK) ltac:(lia)) as [a Hg].
+  destruct (room_grant mo j nZ Hroom Hj Hmo (kl_ceil _ _ _ HK) ltac:(lia) (grant_len_aligned len)) as [a Hg].
   destruct (ev_mmap_grant_path len PROT_RW s mo a ltac:(lia) ltac:(lia) (or_introl eq_refl) Hmo (kl_ceil _ _ _ HK) Hg) as (mo' & Hev & Hmo' & Hva & _ & _ & _).
 
   assert (Hok : answer_ok L e (bv_unsigned a) = true).
@@ -338,7 +339,7 @@ Proof.
 
   set (nZ := page_round_up_Z len).
   assert (HnZ : len <= nZ <= 2 ^ 27) by (unfold nZ, page_round_up_Z, page_size; lia).
-  destruct (room_grant mo j nZ Hroom Hj Hmo (kl_ceil _ _ _ HK) ltac:(lia)) as [a Hg].
+  destruct (room_grant mo j nZ Hroom Hj Hmo (kl_ceil _ _ _ HK) ltac:(lia) (grant_len_aligned len)) as [a Hg].
   destruct (ev_mmap_grant_path len PROT_RW s mo a ltac:(lia) ltac:(lia) (or_introl eq_refl) Hmo (kl_ceil _ _ _ HK) Hg) as (mo' & Hev & Hmo' & Hva & _ & _ & _).
 
   assert (Hok : answer_ok L e (bv_unsigned a) = true).

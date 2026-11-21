@@ -5,6 +5,7 @@
    e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f): cut C2 0x82d94 .. cut C3 0x82e50.
    rule 24: no function is proved here; this file proves the walk SEGMENT statement seg_S2_stmt
    (lib/AU/P_LLVMFuzzerTestOneInput_seg.v) under the callee contracts named at its Section hypotheses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   The block, in this build's own registers (the asan twin keeps body in a7 / [s1+0x58] and step in [s1+0x50]):
      0x82d94-0x82dc8  blk's unpoison (shadow cells 0x12-0x16 of F's shadow), s2 = (n' <> 8904), s5 = body,
@@ -192,7 +193,7 @@ Qed.
 (* blk after the refusing call: the 34 bytes the memset 0x82dcc wrote, as literal chunks of a read-only region *)
 Definition s2u_blk_chunks : list YP09.chunk := map (fun i => YP09.mkChunk (Z.of_nat i) (CVal 1 (SLit 165))) (seq 0 34).
 (* the caller chain at a call of the walk, from the saved ra and s0 of `sc_saves`: a Theorem Labs lane's s5_chain
-   (at 61818d377d8, lib/A/P_LLVMFuzzerTestOneInput_S5_kit.v; cgif A/ACf5.v:172-186
+   (at lib/A/P_LLVMFuzzerTestOneInput_S5_kit.v; cgif A/ACf5.v:172-186
    rt_chain), image-free, under this lane's name *)
 Lemma s2u_chain : forall ly (rd rd' : reader) (regs : bvmap 5 word) sp',
 achain ly rd (spZ regs) (s0Z regs) [] -> ly_top ly <= 2 ^ 64 ->
@@ -212,7 +213,7 @@ Qed.
 
 Section h.
 Variable B : asyms.
-(* A Theorem Labs lane (the walk's own Context RO, lib/AU/P_LLVMFuzzerTestOneInput.v:189): the read-only window is below the
+(* A Theorem Labs lane (the walk's own Context RO, lib/AU/P_LLVMFuzzerTestOneInput.v:190): the read-only window is below the
    sink's overflow head; with arodata_okS of the entry it keeps the image bytes at every later state. *)
 Context (RO : ro_below_ofl (SK := SK) SEGS pa_relro_lo pa_relro_hi).
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.

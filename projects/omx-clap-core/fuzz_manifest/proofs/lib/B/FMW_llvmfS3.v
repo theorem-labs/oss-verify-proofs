@@ -1,10 +1,10 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS3.v at a working branch 88b6191927b (8e6beab0664,
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS3.v at a working branch (
    lf_seg3 Qed), RE-WALKED on B's instructions (B 0x80a6c..0x80ac0; A 0x809e0..0x80a24). Registers as on A. Every image
    numeral is taken from B's listing (fuzz_manifest.objdump.txt / nm.txt of the asan-ubsan pin): malloc 0x52e1c (A 0x52dbc),
    __asan_memcpy 0x51ac8 (FMW_llvmf0.v FM_asan_memcpy), return addresses 0x80a7c / 0x80a98, the slow path of the shadow check
    0x80bbc..0x80bc4. B differs from A by two UBSan pointer-overflow guards, each branching to 0x80ba0 (L+0x224, `unimp`,
    the UBSan trap); each is proved NOT taken where the walk meets it (FM-B-TRAPS.md rows 66-67; lib/B/FMTrapB.v at
-   a working branch c89f3cdf72d):
+   a working branch):
      0x80a9c bltu a0, s0 after 0x80a98 `not a0, s1` (u + un wraps): class K2, fmt_not_ltu_not, refuted in lf3_join by
        u + un + 1 <= alloc_ceiling (u's block, al_blocks);
      0x80abc beq a0, a1 after 0x80ab4 `li a1, -1` (u + un = 2^64 - 1): class K1 (U x <> U k), decided NOT taken by the
@@ -48,7 +48,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* ---- from lib/A/FMW_crtB.v (a working branch 88b6191927b), image-free, restated Local ---- *)
+(* ---- from lib/A/FMW_crtB.v (a working branch), image-free, restated Local ---- *)
 Section h. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 (* a register the run left as a computed value v, U E v = z *)
 Local Lemma crt_reg_U : forall H E ss ms (r : bv 5) v z,

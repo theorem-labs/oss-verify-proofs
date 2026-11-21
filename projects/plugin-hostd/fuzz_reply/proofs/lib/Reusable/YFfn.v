@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFfn.v, with its module paths changed; wrefund passes the world field w_H8 through (its hidden set is the old one). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's munmap (errno arm, cut, allocation mark); the hint-dependent mmap refusal; the node obligation sys_rob and the new system calls); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,6 +13,8 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
 YK16 YK0n YK11 YK0h YK0i YK14 YK1c YK0v YK02 YK0p YK15 YK18 YK0y YK1b YK00 YK01 YK13 YP0n YK04 YK05 YA0i YA0n YA05 YA09 YK0g YA08 YG0b.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0f YG0n YG0j.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import RomBase.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -46,21 +49,47 @@ assert (Hargs : munmap_args_ok ms md).
 { unfold munmap_args_ok. rewrite H0, Hu1, Hpr. repeat split; try assumption.
 intros Hz. apply (f_equal bv_unsigned) in Hz. rewrite Hu1 in Hz. change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hz. lia. }
 pose proof (fun eff => eq_trans (munmap_check segs ms (getr regs 17) md eff Hno) (munmap_check_modeled ms md eff Hargs)) as Hchk. rewrite H0, Hpr in Hchk.
+(* 727298f3: [munmap_spec] gained an errno refusal arm ([munmap_errnos := [ENOMEM]]), so
+   [munmap_check_modeled] tests [errno_ret_in munmap_errnos r] first.  The node still has one
+   child: 215 is in [alloc_mark_sysnos], so under ACFG the refusal is spurious and filtered,
+   which [node_chk_cfg_noacc] expresses.  From cgif/cgif_file_fuzzer's YFfn.v. *)
+assert (Hsp215 : bv_unsigned (in_sysno (sys_input segs ms (getr regs 17))) = 215%Z)
+  by (rewrite in_sysno_sys_input; exact Hno).
+assert (Hokc : check_syscall (sys_input segs ms (getr regs 17))
+                 (mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] []) md
+               = CheckOk (munmap_model a n md) []).
+{ rewrite Hchk. replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by reflexivity.
+cbv beta iota. unfold w_is0. rewrite bv_eqb_refl.
+rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity. }
+assert (Hkeep : refusal_b (sys_input segs ms (getr regs 17)) md
+                  (eff_ret (mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] [])) = false)
+  by (rewrite (refusal_b_215 _ md _ Hsp215); reflexivity).
 rewrite <- UF.
-apply (node_det_noacc segs ms md (getr regs 17) (mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] []) (munmap_model a n md) []);
-[exact Hh | reflexivity | | | rewrite munmap_model_halted; exact Hh | reflexivity].
-- intros eff m' evs. split.
-+ intros Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
-destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
-destruct (w_is0 r) eqn:E0; [|discriminate].
+apply (node_chk_cfg_noacc segs ms md (getr regs 17) unit tt
+(fun _ => mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] [])
+(fun _ => munmap_model a n md) (fun _ => []) Hh eq_refl).
+- intros _. exact Hokc.
+- intros _. rewrite munmap_model_halted. exact Hh.
+- intros _. reflexivity.
+- intros [r ws zs us cs ci] m' evs Hck. rewrite Hchk in Hck.
+destruct ws; [|discriminate]. destruct zs; [|discriminate].
+destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
+destruct (errno_ret_in munmap_errnos r) eqn:Er.
++ destruct us; [|discriminate]. injection Hck as <- <-. right. split; [|exact Hh].
+destruct (proj1 (errno_ret_in_true _ _) Er) as (e & He & ->).
+apply (refusal_spurious_of_grant ACFG _ md _ (mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] [])
+(munmap_model a n md) []).
+* exact (acfg_family_off_215 _ Hsp215).
+* cbn [eff_ret]. rewrite (refusal_b_215 _ md _ Hsp215). apply ret_in_errnos_errno. exact He.
+* apply check_syscall_ok_iff. exact Hokc.
+* exact Hkeep.
++ destruct (w_is0 r) eqn:E0; [|discriminate].
 destruct (listNN_eqb us [(a, n)]) eqn:Hl; [|discriminate].
 apply listNN_eqb_eq in Hl. subst us. cbn [andb] in Hck. injection Hck as <- <-.
-unfold w_is0 in E0. apply bv_eqb_eq in E0. subst r. repeat split; reflexivity.
-+ intros (-> & -> & ->). rewrite Hchk. unfold w_is0. rewrite bv_eqb_refl.
-rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
-- intros eff Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
-destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
-destruct (w_is0 r && listNN_eqb us _)%bool; discriminate.
+unfold w_is0 in E0. apply bv_eqb_eq in E0. subst r.
+left. exists tt. repeat split; reflexivity.
+- intros _ Hsp. destruct Hsp as [_ [Hr _]]. rewrite Hkeep in Hr. discriminate.
+- exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_215)).
 Qed.
 Lemma same_io_munmap : forall a n md, same_io md (munmap_model a n md).
 Proof. intros a n md. unfold munmap_model, with_mmap_destroyed, vm_forget_range. eapply same_io_trans; [apply same_io_with_vmmaps | apply same_io_with_vm_backing]. Qed.

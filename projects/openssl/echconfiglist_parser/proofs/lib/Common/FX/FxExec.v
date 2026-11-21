@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fx_step's failing sc probes the store permission with a load and a store back of the same bytes, as the model does). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -514,7 +515,20 @@ Definition fx_step (s : fstate) : fres :=
             | Some M' => let s' := rset s rd (FV 0 w_zero) npc in FNext (FS npc (f_regs s') M' None)
             | None => FStuck 13
             end
-        | Some false => let s' := rset s rd (FV 0 w_one) npc in FNext (FS npc (f_regs s') M None)
+        | Some false =>
+            (* A FAILING sc passes the store permission check too: the model
+               ([Riscv.Sem], Sc arm) reads the bytes at [a] and stores the same
+               bytes back, so it faults on a range the process may not write and
+               reports the access.  Mirror it here, so the step is defined
+               exactly where the model's is. *)
+            match fm_load_abs M a (awidth_sz wd) true with
+            | Some old =>
+                match fm_store_abs M a (awidth_sz wd) old with
+                | Some M' => let s' := rset s rd (FV 0 w_one) npc in FNext (FS npc (f_regs s') M' None)
+                | None => FStuck 13
+                end
+            | None => FStuck 13
+            end
         | None => FStuck 13
         end
     | FAmo op wd rd rs1 rs2 =>

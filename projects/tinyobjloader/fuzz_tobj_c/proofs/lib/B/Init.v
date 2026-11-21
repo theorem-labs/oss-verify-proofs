@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start state per CONFIG_RSEQ; the launch conjunct in place of the entry-stack fit; the launch's mmap base in the initial valuation and its invariant). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool PArith.
@@ -29,7 +30,8 @@ Definition imgA : Image := mkImage segsA pcA phA.
 Definition dataA_lo : Z := 0xe1000.
 Definition dataA_hi : Z := 0x643000.
 
-Definition S0_A : sstate := S0 (Z.of_N pcA) phA dataA_lo dataA_hi.
+(* LPS 727298f3: the start state depends on the run's CONFIG_RSEQ (the auxv's length). *)
+Definition S0_A (rs : bool) : sstate := S0 (Z.of_N pcA) phA dataA_lo dataA_hi rs.
 
 (* [comment removed for export] *)
 Definition c0A (sp brk mb : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput) : config :=
@@ -46,15 +48,16 @@ Proof. reflexivity. Qed.
 
 Theorem init_smatch_A : forall sp brk mb draw lim inp,
   valid_entry48 imgA (mkEntry sp brk mb draw) inp -> valid_input_either inp ->
-  exists rho, smatch segsA rho S0_A (w0 (c0A sp brk mb draw lim inp)) /\ Jinit segsA pcA phA sp draw inp rho.
+  exists rho, smatch segsA rho (S0_A (kb_rseq (in_kernel inp))) (w0 (c0A sp brk mb draw lim inp))
+    /\ Jinit segsA pcA phA sp mb draw inp rho.
 Proof.
-  intros sp brk mb draw lim inp [Hsp [_ [_ Hfit]]] Hinp.
-  exists (rho0 segsA pcA phA sp draw inp). split.
+  intros sp brk mb draw lim inp (Hsp & _ & _ & _ & Hlau) Hinp.
+  exists (rho0 segsA pcA phA sp mb draw inp). split.
   - apply (init_smatch0 segsA pcA phA dataA_lo dataA_hi dataA_ok').
     + unfold dataA_hi. lia.
     + rewrite segs_topA. lia.
     + exact Hsp.
     + exact Hinp.
-    + exact Hfit.
+    + exact Hlau.
   - apply Jinit_rho0.
 Qed.

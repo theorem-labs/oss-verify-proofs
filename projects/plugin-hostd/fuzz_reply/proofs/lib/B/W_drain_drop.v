@@ -23,9 +23,10 @@
    returning to 0x85bec) at G1 = [(HA + 16, 16)] (not at G_DR: gx_rt excludes errno's bytes), lifted into drain's
    journal by lib/B/W_drain_feed.v df_gx_call (ajournal_gx_G_mono).
    The memory and model bookkeeping is lib/B/W_drain_dropk.v (dd_arm_close, dd_DJ).
-   STRUCTURE PORTED FROM a working branch 1c09e330abe lib/B/Prog/drain_p_read_drop_free.v (the
+   STRUCTURE PORTED FROM a working branch lib/B/Prog/drain_p_read_drop_free.v (the
    drop arm and its list_drop call), drain_p_read_tail_drop.v and drain_p_read_tail_keep.v (the two tails); nothing
    is copied, the vocabulary (SRr over AR, journal ajournal_gx, symbolic seats) is this framework's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -420,7 +421,7 @@ Let LDG : forall G, gx_ok SEGS B G -> gx_rt B G -> rom_out SEGS B G -> ldrop_spe
   pb_list_drop_ro_c B MT LAWS TL CTX_F AFREE HCTX_ld AMEMMOVE.
 
 (* ------------------------------------------------------------------ the list_drop call at 0x83914 *)
-(* a list's blocks are live blocks (lib/B/W_drain_dnrk.v:558 dnk_alist_blks_in, at this section's B) *)
+(* a list's blocks are live blocks (lib/B/W_drain_dnrk.v:559 dnk_alist_blks_in, at this section's B) *)
 Lemma ddw_alist_blks_in : forall ly S (W : world SEGS) m LA l lines,
 alist_at B ly S W m LA l lines -> forall b, In b (alist_blks l) -> In b (ablocks B ly S).
 Proof.
@@ -661,7 +662,7 @@ apply (HK W2 ly2 S2 (k1 + kk) regs2 mem2 md2).
 - exact HMLE.
 Qed.
 
-(* the meter over a trace's parts (W_drain_feed.v:2010-2033, here at this section's MT) *)
+(* the meter over a trace's parts (W_drain_feed.v:2011-2034, here at this section's MT) *)
 Lemma ddw_tr_cost_app : forall (t1 t2 : dtrace), tr_cost MT (t1 ++ t2) = tr_cost MT t1 + tr_cost MT t2.
 Proof.
 intros t1 t2. unfold tr_cost. induction t1 as [|ev t1 IH]; [cbn [app fold_right]; lia|].

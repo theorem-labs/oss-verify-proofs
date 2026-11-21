@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main_entry is a record over the run's input). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -20,14 +21,16 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Section AtMain.
   Context {AMB : Amb}.
+  (* At 727298f3 [main_entry] is a record over the run's input ([UbStartup.v:64]). *)
+  Variable inp : ProcInput.
+  Variables (mbase entry : word).
   Variable sp0 : word.
-  Variables av ev : list (list byte).
   Variable rnd : EntryDraw.
   Variable tid : word.
   Variable regs : bvmap 5 word.
   Variable mem : word -> option byte.
   Hypothesis Hvsp : valid_sp sp0.
-  Hypothesis ME : main_entry sp0 av ev rnd tid regs mem.
+  Hypothesis ME : main_entry inp mbase entry sp0 rnd tid regs mem.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -35,7 +38,7 @@ Section AtMain.
   Lemma cells_ok_main_entry : cells_ok mem diag_cells.
   Proof.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    pose proof (main_entry_rdn_image sp0 av ev rnd tid Hlo regs mem ME RSEGS) as HI.
+    pose proof (main_entry_rdn_image _ _ _ _ Hlo _ _ _ _ ME RSEGS) as HI.
     unfold diag_cells, cells_ok.
     repeat (apply Forall_cons); [ .. | apply Forall_nil ]; unfold cell_ok;
       rewrite HI by (vm_compute; reflexivity); vm_refl_bv.
@@ -44,7 +47,7 @@ Section AtMain.
   Lemma pf1_cells_main_entry : cells_ok mem pf1_cells.
   Proof.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    pose proof (main_entry_rdn_image sp0 av ev rnd tid Hlo regs mem ME RSEGS) as HI.
+    pose proof (main_entry_rdn_image _ _ _ _ Hlo _ _ _ _ ME RSEGS) as HI.
     unfold pf1_cells, cells_ok.
     repeat (apply Forall_cons); [ .. | apply Forall_nil ]; unfold cell_ok;
       rewrite HI by (vm_compute; reflexivity); vm_refl_bv.
@@ -56,7 +59,7 @@ Section AtMain.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     split.
     - unfold CANARY. rewrite Z_to_bv_bv_unsigned, <- (canary_bytes_w rnd).
-      exact (main_entry_guard sp0 av ev rnd tid Hlo regs mem ME RSEGS).
+      exact (main_entry_guard _ _ _ _ Hlo _ _ _ _ ME RSEGS).
     - apply u64_range.
   Qed.
 
@@ -64,7 +67,7 @@ Section AtMain.
   Lemma main_entry_none_below : forall i, (0 <= i < 0x3234d0)%Z -> mem (Z_to_bv 64 i) = None.
   Proof.
     intros i Hi. pose proof SPlo as Hlo. pose proof (u64_range tid).
-    rewrite (main_entry_mem_data sp0 av ev rnd tid regs mem ME) by (rewrite stack_max_size_val, u_small by lia; lia).
+    rewrite (main_entry_mem_data _ _ _ _ _ _ _ _ ME) by (rewrite stack_max_size_val, u_small by lia; lia).
     unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc.
     repeat (rewrite wbytes_outside by
       (rewrite ?length_N_to_le_bytes; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; rewrite !u_small by lia; lia)).
@@ -92,7 +95,7 @@ Section AtMain.
            | H : true = true |- _ => clear H
            end.
     rewrite E in *. clear E.
-    rewrite (main_entry_mem_data sp0 av ev rnd tid regs mem ME) by (rewrite stack_max_size_val, u_small by lia; lia).
+    rewrite (main_entry_mem_data _ _ _ _ _ _ _ _ ME) by (rewrite stack_max_size_val, u_small by lia; lia).
     unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc.
     repeat (rewrite wbytes_outside by
       (rewrite ?length_N_to_le_bytes; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; rewrite !u_small by lia;
@@ -106,6 +109,6 @@ End AtMain.
 (* [comment removed for export] *)
 Ltac none_by_range Hvsp ME H :=
   lazymatch type of H with (?lo <= _ < ?hi)%Z =>
-    apply (main_entry_none_range _ _ _ _ _ _ _ Hvsp ME lo hi); [vm_compute; reflexivity | exact H] end.
+    apply (main_entry_none_range _ _ _ _ _ _ _ _ Hvsp ME lo hi); [vm_compute; reflexivity | exact H] end.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (surj_pair_let)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -37,7 +38,6 @@ Definition enf_leaf (o : mem) (st1 : mstate) (g b : aptr) (idx n : Z) (st' : mst
     /\ off = fold_off (enf_off0 o st1 b (get_stride (get_meta_rec st1 g)) idx) ((get_stride (get_meta_rec st1 g) - 4 - n) / 16).
 
 Lemma surj_pair_let {A B C'} (e : A * B) (f : A -> B -> C') : (let '(x, y) := e in f x y) = f (fst e) (snd e).
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_malloc_enf ()) ["CANSEC1"] "p'0h01Ah11Bh22C'h31ei001eh41fh51ai011ah61bi021bi031pi041xi051yp;2p;3p;4p200R0g0000R1p4p710p8p201R2P1p4p7210p8g000MR3j25TP1j31Tg000mj30Tg001Jj32Tg001dj44Tg002Dj23Tp202R1f2R4f1R5'5R6f3R7P7\7[R8P3f4R9P7P3f5R3P9P9f0R:P7P5P:O2n2001100000120104105P5A139:A039:O2527P5f6R3P9f8R;f7R<P;P<P5P:C4R=31A0;<=O2,33X63W5P5P:O2n2001103000120101102X48X36X21X12X00P9P7P4P5P:O5W4W3W2X12X00o"). Qed.
+Proof. destruct e; reflexivity. Qed.
 
 End CANSEC1.

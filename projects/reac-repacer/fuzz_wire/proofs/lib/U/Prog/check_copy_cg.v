@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: the cut-free (SRcf) walk of check_copy on the UBSan image, 0x13550, against
    lib/U/Prog/check_copy_ccf.v: check_copy_holds_cf, as libreac/fuzz_decode's released lib/U/Prog/check_round_trip_cg.v
-   (25e3d17bdb5) is to its check_round_trip.v. Section CC is lib/U/Prog/check_copy.v's with SR replaced by SRcf
+   is to its check_round_trip.v. Section CC is lib/U/Prog/check_copy.v's with SR replaced by SRcf
    (SRcf_bind / SRcf_ret, cc_glue_cg.v's ccg_runA_cf / ccg_runN_cf), malloc at the agree room (malloc_contract_ag with
    room_ag_gen for the room of fuzz_dup's malloc), free by the kit's free_contract_cf, and the room premise cc_room_cf;
    the instruction segments (cc_segA / cc_front / cc_seg_epi, cc_segs.v) and the frame invariant (cc_mid, cc_glue.v)

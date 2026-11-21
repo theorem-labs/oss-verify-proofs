@@ -10,6 +10,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread.v, with its module paths and module names changed; 1341 of its 1416 lines of code are new or changed and 1088 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread_top.v, with its addresses changed; 716 of its 798 lines of code are new or changed and 1334 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread_segf.v, with its module paths and module names changed; 487 of its 561 lines of code are new or changed and 724 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan: the boundaries that cut the walk of lib/B/FSH_Fn_cno.v
    check_no_overread_spec into the top chain and three span segments, each a Prop proved in its own file (owner of
    this file: a Theorem Labs lane). DEFINITIONS and helper lemmas only.
@@ -35,7 +36,7 @@
    s6 = len (0x81294; len + 17 from 0x813e4), s7 = d (0x812b0; F + 0x40 from 0x81418), s8 = the shadow base
    (0x812ac), s9 = F (0x812c0), s10 = F + 0x20 (0x81414), s11 = F + 0x60 (0x8141c); the decode results land in
    s6 / s8 / s9 (0x81448 / 0x81458 / 0x81468).
-   Template (text only): lib/A/FSW_check_no_overread_inv.v at a working branch cefc3a4505b (cf9cbcc28f7's
+   Template (text only): lib/A/FSW_check_no_overread_inv.v at a working branch (a commit's
    split). Kit lemmas by path (lib/B FSW_K / FSW_rd / FSW_strkit / YCem; lib/A's image-generic FSupoison / FSupoisonU
    / FSH_Gen; Reusable). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

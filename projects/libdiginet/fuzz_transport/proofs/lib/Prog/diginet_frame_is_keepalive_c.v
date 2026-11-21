@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_is_keepalive_c.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images; the caller named is fuzz_frame's (its pcs dropped) *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_is_keepalive_c.v to fuzz_transport's images; the caller named is fuzz_frame's (its pcs dropped) *)
 (* Contract of diginet_frame_is_keepalive in fuzz_transport.plain.
    Source: src/diginet_frame.c:55-58 at 835f336c.
    Address 0x176ec, size 48 bytes.

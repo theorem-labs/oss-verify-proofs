@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adds reads_ch, the read events of a list of blocks on a given channel, with reads_ch_cons, and reads, reads_ch on channel 0). *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
@@ -76,3 +77,17 @@ RiscvSemantics.step segs ms = MachineOk ms' ->
 to_rd a ms' -> to_rd a ms.
 Variable H_LH : forall a ms, LH a ms -> to_rd a ms.
 End Drain.
+
+(* This copy uses reads_ch at :81 and never defines it -- "The reference reads_ch was not
+   found in the current environment". cd320f53 theories/Common/DrainSim.v:93-97 defines it
+   immediately before `reads`, and the sibling zstd/simple_decompress AS/DrainSim.v:51-56
+   carries the same two declarations in the same place. Both carried verbatim. *)
+Definition reads_ch (rch : word) (blocks : list (list byte)) : list event :=
+  flat_map (fun bs => map (ReadEv rch) bs) blocks.
+
+Lemma reads_ch_cons : forall rch bs blocks,
+  reads_ch rch (bs :: blocks) = map (ReadEv rch) bs ++ reads_ch rch blocks.
+Proof. reflexivity. Qed.
+
+Definition reads (blocks : list (list byte)) : list event :=
+  reads_ch (Z_to_bv 64 0) blocks.

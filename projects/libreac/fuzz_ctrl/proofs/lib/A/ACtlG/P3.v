@@ -38,7 +38,7 @@
       ranges from the stored shadow bytes; every kept conjunct by munch transport.
 
    CITED, no Section hypothesis for them:
-   - the run: A.Prog.Seg.P3F.p3_evt_ro_F_on (a Theorem Labs lane, P3F.v (at head lib/A/Prog/Seg/P3F.v:702; written on a working branch 2fbeebc6850)): p3_evt_ro_F with the two callees'
+   - the run: A.Prog.Seg.P3F.p3_evt_ro_F_on (a Theorem Labs lane, P3F.v (at head lib/A/Prog/Seg/P3F.v:703; written on a working branch)): p3_evt_ro_F with the two callees'
      _F_on contracts and `shadow_rw_on (P3.p3_evt_ro_shadow_R id fb) m` in place of `shadow_rw m`.  The
      continuation restates the run's register facts over lib.Reusable.YK11.getr by `change` (same body).
    - the frame bound: A.ProgWorld_Fs.ctl_frame_above_img (A.ProgWorld.ctl_frame_above_img_stmt B, a Theorem Labs lane's

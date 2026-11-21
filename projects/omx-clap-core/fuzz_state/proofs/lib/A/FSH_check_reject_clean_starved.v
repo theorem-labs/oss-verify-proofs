@@ -423,15 +423,15 @@ End H.
 Section W. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
 (* ---- the Section hypotheses (owners in brackets): every callee is its own spec, and the image / runtime facts are
-   named exactly as the kit takes them (FSW_frame.v:49-50, FSW_K fsw_uar_regions_ok, FSH_Base.v FsShadowSyms); RELOC's
+   named exactly as the kit takes them (FSW_frame.v:50-51, FSW_K fsw_uar_regions_ok, FSH_Base.v FsShadowSyms); RELOC's
    TfibLib (lib/A/ACeg.v) is the owner that discharges errno_low, ML and the two cell pairs. No CTX: the spec and the
    decode / encode specs dropped it (owner-approved 05:06Z) ---- *)
 Hypothesis IMG : fs_img_facts tfibsegs B.                     (* [S0] FSH_Gen.v / FSH_Rt.v, the statement's own *)
 Hypothesis HSS : FsShadowSyms B.                              (* [S0 / RELOC] FSH_Base.v: GOT 0x9f6f0, cell 0xa7f38 *)
 Hypothesis HGUAR : as_got_uar B = fs_D_GOT_uar.               (* [RELOC] TfibLib tl_got_uar (GOT 0x9f748) *)
 Hypothesis HUCELL : as_uar_cell B = fs_D_uar_cell.            (* [RELOC] TfibLib tl_uar_cell (0xa7f40) *)
-Hypothesis errno_low : api_env tfibsegs B.                    (* [RELOC] TfibLib tl_env; FSW_frame.v:49 *)
-Hypothesis ML : model_laws (as_universe B).                   (* [RELOC] TfibLib tl_universe; FSW_frame.v:50 *)
+Hypothesis errno_low : api_env tfibsegs B.                    (* [RELOC] TfibLib tl_env; FSW_frame.v:50 *)
+Hypothesis ML : model_laws (as_universe B).                   (* [RELOC] TfibLib tl_universe; FSW_frame.v:51 *)
 (* [RUNTIME / S0] lib/A/FSH_Rt.v: FsRt's fr_stack_malloc_0 by its field type, the only FsRt field the walk uses *)
 Hypothesis RTsm0 :
   pc_stack_malloc (as_code B) 0 = PC_stack_malloc_0 /\ FSupoisonU.astack_malloc_realizesU tfibsegs B 0.
@@ -440,7 +440,7 @@ Hypothesis FAIL : fuzz_alloc_fail_spec tfibsegs B.            (* [ALLOC] lib/A/F
 Hypothesis CRC : check_reject_clean_spec tfibsegs B.          (* [CHECKS] lib/A/FSH_Fn_checks.v *)
 Hypothesis DEC : decode_spec_ff B tfibsegs.                   (* [WRITER] lib/A/FSH_Fn_writer.v *)
 Hypothesis ENC : encode_spec B tfibsegs.                      (* [WRITER] lib/A/FSH_Fn_writer.v *)
-(* fuzz/alloc.c's statics are not errno (IMG's footprint conjunct, FSH_Gen.v:563-564 at S0 6a47ac2993a) *)
+(* fuzz/alloc.c's statics are not errno (IMG's footprint conjunct, FSH_Gen.v:563-564 at S0) *)
 Lemma HPST_ERRNO : forall a, inFP FS_PSTAT_FP a -> ~ (as_errno B <= a < as_errno B + 4).
 Proof. intros a Ha. exact (proj2 (proj1 IMG a Ha)). Qed.
 (* the engine's laws, proved for fs (not assumed) *)

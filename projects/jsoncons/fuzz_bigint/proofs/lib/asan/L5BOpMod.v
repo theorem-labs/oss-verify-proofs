@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv's distance of 16 bytes above the stack comes from the premises alone, in place of auxv_above_friend. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -930,8 +931,8 @@ Proof.
       intros a Ha Hs. apply AGC. exact Ha. right; right; right; right; left. exact Hs. }
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
     assert (FRB : E + 16 + 16 <= L5USA.xs_av st /\ L5USA.xs_av st + 160 <= 2 ^ 47).
-    { destruct XSP as ((_ & _ & _ & _ & (_ & _ & _ & _ & _ & AV8 & _ & AVHI & AUXV & _)) & AVLO). split. 2: exact AVHI.
-      apply (L5BUF.auxv_above_friend M (E + 16) _ _ _ _ CS8 AUXV AV8). clear - A32. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). Lia.lia. clear - AVLO SHI; lia. }
+    { destruct XSP as ((_ & _ & _ & _ & (_ & _ & _ & _ & _ & _ & _ & AVHI & _ & _)) & AVLO). split. 2: exact AVHI.
+      clear - AVLO SHI; lia. }
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
     assert (FRK : forall a, E + 16 <= a < E + 16 + 16 -> Mt (Z_to_bv 64 a) = M (Z_to_bv 64 a)).
     { intros a Ha. apply AGC. clear - Ha ER; lia. right; left. split. clear - Ha SLO FRB; lia. unfold SCRo. clear - Ha; lia. }

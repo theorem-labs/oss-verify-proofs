@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjy.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build; Htr is areq_ok S (KDepot tr), the depot walk's trace-length premise; the depot id bound comes from depot_ids_bound on wf_depot (depot_inv); the case split over Tfib_zero_shadow no longer assumes the donor's five ranges (as in omx-clap-core/fuzz_manifest's copy, a Theorem Labs lane 2c257ca7d7a). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjy.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build; Htr is areq_ok S (KDepot tr), the depot walk's trace-length premise; the depot id bound comes from depot_ids_bound on wf_depot (depot_inv); the case split over Tfib_zero_shadow no longer assumes the donor's five ranges (as in omx-clap-core/fuzz_manifest's copy, a Theorem Labs lane). *)
 (* Modified by Theorem Labs, 2026-10: copied from this harness's lib/A/AFjy.v (the twin of cgif_file_fuzzer's lib/YFjy.v), with its module paths changed (lib/A to lib/B, image Asan to AsanUbsan) and its addresses moved to plugin-hostd/fuzz_command's ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

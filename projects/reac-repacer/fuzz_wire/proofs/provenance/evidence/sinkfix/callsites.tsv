@@ -1,5 +1,5 @@
-# by-use call-site list for the sk_file := None restatement (commit 21a12f93ff3); word grep over every .v file of lib/
-# excluded (the restatement itself): lib/{,U/}Reusable/{YI14,YI5c,YL03,YI5cSat}.v; YI5cSat.v (both copies) was deleted later, by 05336ebfc612 (RECORD.md item 7)
+# by-use call-site list for the sk_file := None restatement; word grep over every .v file of lib/
+# excluded (the restatement itself): lib/{,U/}Reusable/{YI14,YI5c,YL03,YI5cSat}.v; YI5cSat.v (both copies) was deleted later, (RECORD.md item 7)
 # counts: sink-file-use 0 uses in 0 files; sink-syms-use 111 uses in 61 files; src0-sink-use 29 uses in 23 files; env-addr-reader 8 uses in 2 files; env-of-st-ok 264 uses in 60 files; env-check 132 uses in 60 files
 kind	file	lines
 sink-file-use	(none)	

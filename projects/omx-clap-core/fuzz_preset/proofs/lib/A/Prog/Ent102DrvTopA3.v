@@ -1,33 +1,34 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102DrvTopA3.v, with its module paths and module names changed; 405 of its 495 lines of code are new or changed and 40 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102 pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4): THE THIRD
    COMPOSED TOP of the A' driver. The second composed top Ent102DrvTopA2.TFIB_T_closed_A_walked2
    (lib/A/Prog/Ent102DrvTopA2.v) with its Section hypotheses DISCHARGED BY CITATION of theorems already proved on
-   the kit's cut 7cdbb61b5fa0, on the named branch of a file taken by path, or in the int102 base this line merges
-   (a working branch 26d8d53a1503) - nothing re-proved - and its two
+   the kit's cut, on the named branch of a file taken by path, or in the int102 base this line merges
+   (a working branch) - nothing re-proved - and its two
    Section variables instantiated, all in ONE composition, TFIB_T_room_all_A_walked3 (section 2): the driver's room
    form with walked2's citations and walked's values, from which walked3 and the halts top both follow:
      H_txt_check_no_overread_A        a Theorem Labs lane's Cno102A_TopA.check_no_overread_holds_A_inst (lib/A/Prog/Cno102A_TopA.v;
-                                      lib/A/Prog/Cno102A_*.v taken BY PATH from a working branch
-                                      d4661e0cd87a, Cno102A_TopA.v, Cno102A_ImgA.v and SameAp_inst.v from its fast-forward
-                                      d9b656d95780, where every callee text is at the walk's own CTX0 and HSAME is
+                                      lib/A/Prog/Cno102A_*.v taken BY PATH from a working branch,
+                                      Cno102A_TopA.v, Cno102A_ImgA.v and SameAp_inst.v from its fast-forward,
+                                      where every callee text is at the walk's own CTX0 and HSAME is
                                       a Theorem Labs lane's premise-free fit of the A' same walk
                                       SameAp_inst.same_holds_Ap_HSAME_fit_s (its strcmp and bcmp rows discharged in that
-                                      file; SameAp_*.v taken BY PATH from a working branch
-                                      2df643bd333c) at CTX0 := iface_ctx0: HPN walked2's parse_noting walk at
+                                      file; SameAp_*.v taken BY PATH from a working branch)
+                                      at CTX0 := iface_ctx0: HPN walked2's parse_noting walk at
                                       drv3_pj_parse_A below, HPJFREE drv3_pj_free_A below, HRO the driver's ran_out citation,
                                       AMALLOC / AFREE the shared rows;
      H_txt_check_as_written_A         a Theorem Labs lane's Caw102A_Top.caw_A_top (lib/A/Prog/Caw102A_Top.v:156; Caw102A_Base.v,
                                       Caw102A_Top.v, Caw102A_WA0..6.v taken BY PATH from
-                                      a working branch d089ac67e34b) at PA := PI_prog_A,
+                                      a working branch) at PA := PI_prog_A,
                                       B := TfibB, CTX0 := iface_ctx0; CWI Caw102A_Img.caw_img_A (lib/A/Prog/Caw102A_Img.v:81),
                                       PAL PALibA.palib_A, AFREE the shared drv3_afree_A, HRANOUT the driver's
                                       ran_out citation; AMALLOC and HEXV below;
      H_txt_check_reject_clean_starved_A
-                                      a Theorem Labs lane's CrsTopAp.crs_holds_Ap (lib/A/Prog/CrsTopAp.v:499; its files taken BY PATH
-                                      from a working branch d664902eef28) at CTX0 := iface_ctx0: check_reject_clean
+                                      a Theorem Labs lane's CrsTopAp.crs_holds_Ap (lib/A/Prog/CrsTopAp.v:500; its files taken BY PATH
+                                      from a working branch) at CTX0 := iface_ctx0: check_reject_clean
                                       and fuzz_alloc_live by walked2's citations, ran_out by the driver's, fuzz_alloc_count
                                       / fail by
                                       PwAllocSurf.fuzz_alloc_count_holds / fuzz_alloc_fail_holds (lib/A/Prog/PwAllocSurf.v:808,
@@ -36,30 +37,30 @@
                                       drv3_asmr1_A below (FCm01xm.stack_malloc1_contract_xm kept by xs_placed_cf, as
                                       lib/AU/FCxmCfxB.v:69 does at B'), pj_write drv3_pj_write_A, fuzz_free
                                       drv3_fuzz_free_A and fuzz_free_null drv3_fuzz_free_null_A below;
-     H_txt_pj_free_A                  a Theorem Labs lane's S6PjFreeTop.pj_free_holds (lib/A/Prog/S6PjFreeTop.v:161; S6PjFree*.v
-                                      taken BY PATH from a working branch 0bda57e5972c) at
+     H_txt_pj_free_A                  a Theorem Labs lane's S6PjFreeTop.pj_free_holds (lib/A/Prog/S6PjFreeTop.v:162; S6PjFree*.v
+                                      taken BY PATH from a working branch) at
                                       ARx := iface_ARx: LAWS YGcallcf.AR_laws_x_xs, TL PALibA.palib_A, VISF drv3_pjf_visf_A
                                       below (YGcfFsVis.ARx_frame_hull_vis_cf_ok through the first conjunct), the image
                                       facts S6ImgWit.s6w_* (lib/A/Prog/S6ImgWit.v), AIM S6ImgWit.s6w_aim; FREE
                                       drv3_fuzz_free_A below;
-     H_txt_pj_parse_A                 PjParseA_top.pj_parse_holds_A (lib/A/Prog/PjParseA_top.v:133; lib/A/Prog/PjParseA_*.v
+     H_txt_pj_parse_A                 PjParseA_top.pj_parse_holds_A (lib/A/Prog/PjParseA_top.v:134; lib/A/Prog/PjParseA_*.v
                                       at the version whose AF is the keep row
                                       YGcfMallocComposeKeep.afree_realizes_cf_rh_keep) at CTX0 := iface_ctx0, every CW:
                                       AF the shared drv3_afree_A;
                                       AU drv3_aunpoison_A and TPV drv3_parse_value_A below;
      XM_LIB, XN_LIB                   := fun _ => 0: they occur neither in TFIB_T_closed_A nor in any remaining hypothesis.
    drv3_pj_write_A (crs_holds_Ap's HT_pj_write) is a Theorem Labs lane's PRW_pj_write.pjw_holds_lc (lib/A/Prog/PRW_pj_write.v:2537;
-   PRW_pj_write.v, PRW_S7bWit.v, PRW_S7bLitWit.v and their closure taken BY PATH from a working branch
-   f75b9f6e6fa6) at ARx := iface_ARx, CTX0 := iface_ctx0, n := DOC_D: LAWS YGcallcf.AR_laws_x_xs, segs_low the class
+   PRW_pj_write.v, PRW_S7bWit.v, PRW_S7bLitWit.v and their closure taken BY PATH from a working branch)
+   at ARx := iface_ARx, CTX0 := iface_ctx0, n := DOC_D: LAWS YGcallcf.AR_laws_x_xs, segs_low the class
    field pa_segs_low, the image facts PRW_S7bWit.s7bw_* and PRW_S7bLitWit.s7bl_pjw_hlit, AMS S6ImgWit.s6w_aim, S9_CF by
    projection, HFREE drv3_fuzz_free_A; its argument pjw_ARGCNT (the class-24 bound at its fuzz_free call,
-   from a model-run position) by a Theorem Labs lane's PresetRoomCounts.counts_of_room_pos_rl (lib/Spec/PresetRoomCounts.v:60);
+   from a model-run position) by a Theorem Labs lane's PresetRoomCounts.counts_of_room_pos_rl (lib/Spec/PresetRoomCounts.v:61);
    HWV drv3_write_value_A and HPUT drv3_put_A below.
-   drv3_put_A is a Theorem Labs lane's S7a_put.put_holds (lib/A/Prog/S7a_put.v:3060; S7a_put.v, S7a_put_wit.v taken BY PATH from
-   a working branch 51391f2ec30d), drv3_indent_A its S7a_indent.indent_holds (S7a_indent.v,
-   S7a_indent_wit.v taken BY PATH from a working branch a8d2be84a39d), drv3_put_string_A its
+   drv3_put_A is a Theorem Labs lane's S7a_put.put_holds (lib/A/Prog/S7a_put.v:3061; S7a_put.v, S7a_put_wit.v taken BY PATH from
+   a working branch), drv3_indent_A its S7a_indent.indent_holds (S7a_indent.v,
+   S7a_indent_wit.v taken BY PATH from a working branch), drv3_put_string_A its
    PRW_put_string.put_string_holds and drv3_write_value_A its PRW_write_value.write_value_holds (PRW_put_string*.v taken
-   BY PATH from a working branch f75b9f6e6fa6), each at ARx := iface_ARx, CTX0 := iface_ctx0, every
+   BY PATH from a working branch), each at ARx := iface_ARx, CTX0 := iface_ctx0, every
    image fact by a citation of an existing witness file (S7a_put_wit, S7a_indent_wit, PRW_S7bWit, PRW_S7bLitWit), the
    frame laws by YGcallcf / YGcallScf, the rows memcpy (Cno102A_TopA.cn_memcpy_A_inst), strlen (drv3_strlen_A), class-0
    frame (drv3_asmr0_A); write_value's jump-table fact HJT by drv3_wv_hjt_A below (one closed boolean per table word, the
@@ -69,21 +70,21 @@
    PALibA.palib_A, pal_pst_ok FuzzAllocAccInst102.acc_pal_pst_ok_A), its rows AFREE the shared drv3_afree_A and
    AUNPOISON drv3_aunpoison_A below.
    THE UNPOISON / POISON ROWS drv3_aunpoison_A / drv3_apoison_A are a Theorem Labs lane's CfPoison102.preset_aunpoison_cf102 /
-   preset_apoison_cf102 (lib/A/CfPoison102.v, int102's POISONSWAP blob 361400873424 = a working branch
-   415c6c3e2969, which cites a Theorem Labs lane's lemma CfApiPreset.poison_next_vis_cf INSIDE the file and has NO
+   preset_apoison_cf102 (lib/A/CfPoison102.v, int102's POISONSWAP blob 361400873424 = a working branch,
+   which cites a Theorem Labs lane's lemma CfApiPreset.poison_next_vis_cf INSIDE the file and has NO
    poison_next_vis_cf Section hypothesis), at the ARcf laws YG0lawscf.AR_laws_ok_cf and AD2l.TfibB_syms (two args, no
    stand-in). int102 carries poisonswap and its VrdTop (below) cites it, so both images cite the rows one way.
    drv3_fuzz_realloc_A (S7a_put.put_holds' HREAL) is a Theorem Labs lane's FuzzReallocAp.fuzz_realloc_holds_Ap
-   (lib/A/Prog/FuzzReallocAp.v:2322, taken BY PATH from a working branch 9d68c8d85aa0) at
+   (lib/A/Prog/FuzzReallocAp.v:2323, taken BY PATH from a working branch) at
    B := TfibB, ARcfx = iface_ARx: PAL PALibA.palib_A; its static set PST := FuzzReallocAp.ra_cells with PST_cells
    FuzzReallocAp.ra_cell_in and PST_ok / PST_errno / MOST_ok / OWN_ok / PST_sub / PST_own_out / PST_most_out by
-   computation at TfibB (drv3_ra_* below, the route of a Theorem Labs lane's AllocTopsA102.v at_*, a working branch
-   d6bfa1b28502, a file not on this line); FMALLOC drv3_fuzz_malloc_A below; AUNPOISON / APOISON drv3_aunpoison_A /
+   computation at TfibB (drv3_ra_* below, the route of a Theorem Labs lane's AllocTopsA102.v at_*, a working branch,
+   a file not on this line); FMALLOC drv3_fuzz_malloc_A below; AUNPOISON / APOISON drv3_aunpoison_A /
    drv3_apoison_A; CF_unpoison / CF_poison by computation; the RELRO image rows by lib/A/CfAroPresetA.v
    (relro_seg_preset_A, errno_relro_preset_A, relro_top_preset_A, ro_reads_nw_preset_A, the range equation by
    computation) and PST_aro by drv3_ra_pst_aro below; AREAL_cf drv3_arealloc_A below (the keep _k form).
    drv3_fuzz_malloc_A is a Theorem Labs lane's FuzzMalloc.fuzz_malloc_holds (lib/A/Prog/FuzzMalloc.v, taken BY PATH from
-   a working branch 2ba86cb8bc30, the kit's batch text with the outcome conjunct): PAL PALibA.palib_A,
+   a working branch, the kit's batch text with the outcome conjunct): PAL PALibA.palib_A,
    pal_pst_ok FuzzAllocAccInst102.acc_pal_pst_ok_A, AMALLOC the shared drv3_amalloc_A, APOISON drv3_apoison_A.
    drv3_parse_value_A (pj_parse_holds_A's TPV) is VrdTop.vrd_parse_value_holds (lib/A/VrdTop.v:1356) at
    CTX0 := iface_ctx0, depth 0: its Section top names the three allocator rows in their keep forms, so AREAL_cf is the
@@ -91,9 +92,9 @@
    own citation of FuzzReallocAp). VrdTop.v and its closure (lib/A/Vrd*.v, the callee walks lib/A/Prog/S4_Ps*.v,
    PwGrow*.v, ExUtf8W*.v, hex4_x.v, hex4_mn.v) are cited at that version, the one whose Section top takes the keep rows.
    drv3_snprintf_A (put_string_holds' SNP) is a Theorem Labs lane's PSnpRowA.snprintf_row_A_inst (lib/A/Prog/PSnpRowA.v,
-   taken BY PATH from a working branch b83b4e86aa29), stated at this premise's instance.
+   taken BY PATH from a working branch), stated at this premise's instance.
    drv3_aread_check_A (walked2's H_aread_check_stmt_cf_A) is a Theorem Labs lane's AD2mcfh.tfib_ARDCHK at TfibB (its TfibSyms by
-   AD2l.TfibB_syms; the cfh set taken BY PATH from a working branch eb2778ca6e2f).
+   AD2l.TfibB_syms; the cfh set taken BY PATH from a working branch).
    THE SECTION HYPOTHESES OF THIS TOP: none. caw_A_top's HEXV is drv3_ex_value_A, S8aTopClosed.ex_value_A_inst_drv
    (cited, no premise). walked2's check_round_trip text is drv3_check_round_trip_A,
    Crt102TopInstA.crt102_top_TfibA_inst, with its tx_value premise ATxValueInst.tx_value_A_inst (both cited).
@@ -227,7 +228,7 @@ exact (YGcallMxmn.astack_malloc_realizes_xm_conj (fx := fx) AB1v.tfibsegs TA (YG
 Qed.
 
 (* the image's shadow bytes are mapped (S7a_put's and PRW_put_string's HIMGSH) at iface_ARx: a Theorem Labs lane's
-   AImgShadowVisCf.tfib_img_shadow_vis_cf (lib/A/AImgShadowVisCf.v:32) through the first conjunct, at CfImg_A's bounds
+   AImgShadowVisCf.tfib_img_shadow_vis_cf (lib/A/AImgShadowVisCf.v:33) through the first conjunct, at CfImg_A's bounds
    (YImgTop's IMG_LO / IMG_TOP by conversion), as Cno102A_TopA.v cn_imgsh_A does at ARcf *)
 Lemma drv3_imgsh_A : forall rc : YM05.RunCeil,
   PRW_HShadow.ARx_img_shadow_vis (@YC4aP.pa_segs rc Listing_prog.A_prog_listing (PAr rc)) (ARi rc).
@@ -237,7 +238,7 @@ exact (AImgShadowVisCf.tfib_img_shadow_vis_cf (cp := CP) _ TA AD2l.TfibB_syms ly
 Qed.
 
 (* the __wrap_strlen row (write_value_holds' STRLEN, PRW_put_string's ASTRLEN): a Theorem Labs lane's
-   PSstrRo.ps_strlen_xrom_xs_A (lib/A/PSstrRo.v:77) at CfImg_A's strlen pc, the listing's by computation on the closed
+   PSstrRo.ps_strlen_xrom_xs_A (lib/A/PSstrRo.v:78) at CfImg_A's strlen pc, the listing's by computation on the closed
    terms *)
 Lemma drv3_strlen_A : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   YGcallMxmn.astrlen_realizes_xrom (fx := fx) (@YC4aP.pa_segs rc Listing_prog.A_prog_listing (PAr rc)) TA (ARi rc)
@@ -413,7 +414,7 @@ Lemma drv3_snprintf_A : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
 Proof. intros rc fx. exact (PSnpRowA.snprintf_row_A_inst rc fx). Qed.
 
 (* THE READ INTERCEPTOR'S CHECK (walked2's H_aread_check_stmt_cf_A): a Theorem Labs lane's AD2mcfh.tfib_ARDCHK
-   (lib/A/AD2mcfh.v, the cfh set taken BY PATH from a working branch eb2778ca6e2f) at TfibB, its one
+   (lib/A/AD2mcfh.v, the cfh set taken BY PATH from a working branch) at TfibB, its one
    Section hypothesis TfibSyms by AD2l.TfibB_syms; its aread_check_stmt is PresetD1preA.aread_check_stmt_cf by
    conversion, at fx := YK11.fx0, cp := CfParams_preset *)
 Lemma drv3_aread_check_A : forall rc : YM05.RunCeil,
@@ -513,8 +514,8 @@ all: first
 Qed.
 
 (* pjw_holds_lc's HPUT, indent_holds' HPUT, put_string_holds' PUT and write_value_holds' PUT: a Theorem Labs lane's
-   S7a_put.put_holds (lib/A/Prog/S7a_put.v:3060; S7a_put.v, S7a_put_wit.v taken BY PATH from
-   a working branch 51391f2ec30d) at ARx := iface_ARx, CTX0 := iface_ctx0: LAWS YGcallcf.AR_laws_x_xs,
+   S7a_put.put_holds (lib/A/Prog/S7a_put.v:3061; S7a_put.v, S7a_put_wit.v taken BY PATH from
+   a working branch) at ARx := iface_ARx, CTX0 := iface_ctx0: LAWS YGcallcf.AR_laws_x_xs,
    TL PALibA.palib_A, the image facts S7a_put_wit.s7p_*, AMC Cno102A_TopA.cn_memcpy_A_inst (PRowCpy's A' row),
    HIMGSH drv3_imgsh_A, HFRSH drv3_pjf_visf_A; HREAL drv3_fuzz_realloc_A *)
 Lemma drv3_put_A : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
@@ -533,8 +534,8 @@ all: first
   | exact S7a_put_wit.s7p_pab_A | exact (conj (Z.le_refl _) (Z.le_refl _)) ].
 Qed.
 
-(* write_value_holds' INDENT: a Theorem Labs lane's S7a_indent.indent_holds (lib/A/Prog/S7a_indent.v:2100; S7a_indent.v,
-   S7a_indent_wit.v taken BY PATH from a working branch a8d2be84a39d), its HPUT drv3_put_A, the
+(* write_value_holds' INDENT: a Theorem Labs lane's S7a_indent.indent_holds (lib/A/Prog/S7a_indent.v:2101; S7a_indent.v,
+   S7a_indent_wit.v taken BY PATH from a working branch), its HPUT drv3_put_A, the
    image facts S7a_indent_wit.s7w_ent_A / s7w_hlit_A / s7w_pstro_A *)
 Lemma drv3_indent_A : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   PRH_FnWriter.tindent_specX (fx := fx) (rc := rc) (cp := CP) (PI := PIc) (PA := PAr rc) TA (ARi rc) SKc C0.
@@ -547,8 +548,8 @@ exact (S7a_indent.indent_holds (fx := fx) (rc := rc) (ci := CfImgA.CfImg_A) (cp 
   (S7a_indent_wit.s7w_hlit_A (ARi rc) _ LAWSx) S7a_indent_wit.s7w_pstro_A).
 Qed.
 
-(* write_value_holds' PUTSTR: a Theorem Labs lane's PRW_put_string.put_string_holds (lib/A/Prog/PRW_put_string.v:130;
-   PRW_put_string.v, _a.v, _l.v, _t.v taken BY PATH from a working branch f75b9f6e6fa6, the rest of
+(* write_value_holds' PUTSTR: a Theorem Labs lane's PRW_put_string.put_string_holds (lib/A/Prog/PRW_put_string.v:131;
+   PRW_put_string.v, _a.v, _l.v, _t.v taken BY PATH from a working branch, the rest of
    its closure already on this line from there) at ARx := iface_ARx, CTX0 := iface_ctx0: the image facts
    PRW_S7bWit.s7bw_* / PRW_S7bLitWit.s7bl_ps_hlit*, errno_low PALibA.palib_errno_A, the frame laws OWNLOW / SMX / ASFX /
    FFLX / SFX by YGcallcf / YGcallScf at iface_ARx (as lib/B/Prog/PutStringB_Wit.v cites them at B'), ASO
@@ -581,7 +582,7 @@ all: first
 Qed.
 
 (* pjw_holds_lc's HWV: a Theorem Labs lane's PRW_write_value.write_value_holds (lib/A/Prog/PRW_write_value.v:7468, on this line
-   from a working branch f75b9f6e6fa6) at ARx := iface_ARx, CTX0 := iface_ctx0, every depth: the
+   from a working branch) at ARx := iface_ARx, CTX0 := iface_ctx0, every depth: the
    image facts PRW_S7bWit.s7bw_wv_ent / s7bw_wv_obj / s7bw_pstro_A, PRW_S7bLitWit.s7bl_wv_hlit, HJT drv3_wv_hjt_A, HW
    S7a_put_wit.s7p_head_wide, PUT drv3_put_A, PUTSTR drv3_put_string_A, INDENT drv3_indent_A, STRLEN drv3_strlen_A *)
 Lemma drv3_write_value_A : forall (rc : YM05.RunCeil) (fx : YK11.FPState) (n : nat),
@@ -717,8 +718,8 @@ Qed.
    premise is not used *)
 Theorem TFIB_T_closed_A_walked3 : PresetD2pA.TFIB_T_closed_A.
 Proof.
-intros sp brk mbase rnd inp en_p Hsp Hbrk Hmb Hfit Hinp _.
-exact (TFIB_T_room_all_A_walked3 sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp (fun _ _ _ _ _ => I)).
+intros sp brk mbase rnd inp en_p Hsp Hbrk Hmb Hfit Hinp Hlau _.
+exact (TFIB_T_room_all_A_walked3 sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau (fun _ _ _ _ _ => I)).
 Qed.
 
 (* inside the Section: the remaining hypotheses by name, and the allowed axioms *)

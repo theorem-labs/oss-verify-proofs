@@ -7,7 +7,8 @@
    realizes conjunct is the proved allocator top: FSupoisonAllocM.tfib_amalloc_realizesU and
    FSupoisonAllocF.afree_realizes_allU.  This file proves no function of its own.  No Axiom, no Admitted.
    rule 24: no function proved. *)
-(* Modified by Theorem Labs, 2026-10: new file; image-B twin of lib/A/FSxM.v (3b004ef7787), FsRt-field forms of image B's malloc / free tops. *)
+(* Modified by Theorem Labs, 2026-10: new file; image-B twin of lib/A/FSxM.v, FsRt-field forms of image B's malloc / free tops. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

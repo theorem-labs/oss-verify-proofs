@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the exit simulation covers the three vDSO steps of sstep. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -200,24 +201,36 @@ Lemma sstep_instr_inv : forall ms model ms' evs st,
 Proof.
   intros ms model ms' evs st Hlazy Hsvc Hstep Hss.
   inversion Hss; subst.
-  - (* [comment removed for export] *)
+  - (* sstep_instr *)
     match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
       rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
       rewrite Hstep in H; inversion H; subst end.
     split; reflexivity.
-  - (* [comment removed for export] *)
+  - (* sstep_instr_fault *)
     match goal with H : mi_account_step segs ms model = MachineFault |- _ =>
       rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
       rewrite Hstep in H; discriminate end.
-  - (* [comment removed for export] *)
+  - (* sstep_instr_unmodeled *)
     match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
       rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
       rewrite Hstep in H; discriminate end.
-  - (* [comment removed for export] *) congruence.
-  - (* [comment removed for export] *) congruence.
-  - (* [comment removed for export] *) congruence.
-  - (* [comment removed for export] *) congruence.
-  - (* [comment removed for export] *) congruence.
+  - (* sstep_vdso_call: its first premise is the same [MachineUnmodeled] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_materialization_fault *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_unmodeled *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_syscall *) congruence.
+  - (* sstep_syscall_materialization_fault *) congruence.
+  - (* sstep_exit *) congruence.
+  - (* sstep_killed *) congruence.
+  - (* sstep_syscall_unmodeled *) congruence.
 Qed.
 
 (* [comment removed for export] *)

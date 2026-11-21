@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 403 of its 523 lines of code are new or changed and 1138 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the initial model and its reservations). *)
 (* The comments in this file are libreac/fuzz_boxreg's lib/A/FMbz_clean.v, through reac-pw/fuzz_pin's lib/A/Rt/FMbz_clean.v, unchanged apart from names and this unit's image and values. A lib/A/Bz body walk run on the CLEANED store, carried back to the real one.
-   Every Bz walk takes `Mem.mem_inv asegs m` (A/Bz/Lib/Mem.v:96-102): the store holds no byte at a read-only image
+   Every Bz walk takes `Mem.mem_inv asegs m` (A/Bz/Lib/Mem.v:97-103): the store holds no byte at a read-only image
    address and none at or above 2^47.  AR does not say that of the real store (it reads memory only through `aview`).
    So the walk is run on `clean m`, the store with every entry at such an address dropped (`clean = mrestrict Dc`),
    where mem_inv holds by construction (mem_inv_clean), and its run is carried back:
@@ -144,7 +145,7 @@ Proof.
   induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
     intros m c mr' rs HR Hi; cbn [interp_eff_accesses] in Hi |- *; try discriminate.
   - injection Hi as <- <- <-. exists m. split; [reflexivity|]. split; [reflexivity|]. intros; reflexivity.
-  - destruct (ov_read_bytes segs (mrestrict D m) a (width_bytes n)) as [bs|] eqn:Hrd; [|discriminate].
+  - destruct (ov_read_bytes segs (mrestrict D m) a (width_bytes n)) as [bs|] eqn:Hrd; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     rewrite (ov_read_bytes_clean _ m a bs HR Hrd).
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict D m))
       as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
@@ -233,7 +234,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_clean ms w msr' rs' HR Hs). }
   exfalso. unfold fetch_failure in Hs.
-  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
                | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
@@ -505,7 +506,7 @@ Proof.
     rewrite (errno_not_ro a He) in Ha. discriminate.
 Qed.
 
-(* and so does the donor's whole rom_view (YG0d.v:382) *)
+(* and so does the donor's whole rom_view (YG0d.v:383) *)
 Lemma rom_eq_of_rom_view : forall (W : world tfibsegs) mem, rom_view tfibsegs W mem -> rom_eq (mrestrict (w_H W) mem).
 Proof. intros W mem HR a Ha. apply mrd_of_view. apply HR. exact (FMbz_str.ro_addr_in_rom a Ha). Qed.
 

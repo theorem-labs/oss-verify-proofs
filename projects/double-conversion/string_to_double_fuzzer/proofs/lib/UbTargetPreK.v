@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ranges may hold up to two more entries; the mapping count and live bytes grow with each read buffer). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -48,7 +49,7 @@ Record target_pre_k (k sp0 B area brkv mas tid sec : Z) (content : list byte)
 
 (* [comment removed for export] *)
 Record target_vm_k (k sp0 B area : Z) (VM : VmMaps) : Prop := TARGET_VM_K {   (* [comment removed for export] *)
-  tvk_res   : vm_reserved VM = segments_reserved RSEGS;
+  tvk_res   : exists VX, vm_reserved VM = segments_reserved RSEGS ++ VX /\ (length VX <= 2)%nat /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) VX;
   tvk_isp   : vm_init_sp VM = Z_to_bv 64 sp0;                                  (* [comment removed for export] *)
   tvk_top   : Forall (fun p => bv_unsigned (fst p) + bv_unsigned (snd p) <= sp0 - 8388608) (vm_maps VM);
                                                                                (* [comment removed for export] *)
@@ -56,11 +57,11 @@ Record target_vm_k (k sp0 B area : Z) (VM : VmMaps) : Prop := TARGET_VM_K {   (*
   tvk_has   : In (Z_to_bv 64 B, Z_to_bv 64 (nbk k)) (vm_maps VM);
   tvk_area  : exists lo sz, In (lo, sz) (vm_maps VM)
                 /\ bv_unsigned lo <= area /\ area + 4096 <= bv_unsigned lo + bv_unsigned sz;
-  tvk_len   : (length (vm_maps VM) <= 9)%nat;
+  tvk_len   : Z.of_nat (length (vm_maps VM)) <= 9 + k;      (* one more retained read buffer per growth step *)
   tvk_small : Forall (fun p => 0 < bv_unsigned (snd p) <= 2 ^ 30
                                /\ bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64) (vm_maps VM);
   tvk_seps  : seps (vm_maps VM);
-  tvk_live  : live_bytes (vm_maps VM) <= nbk k + 2 ^ 20
+  tvk_live  : live_bytes (vm_maps VM) <= 3 * nbk k + 2 ^ 20
 }.
 
 (* [comment removed for export] *)

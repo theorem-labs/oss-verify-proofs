@@ -6,8 +6,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_strkit.v, with its module paths and module names changed; 240 of its 267 lines of code are new or changed and 303 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head.v; 334 of its 382 lines of code are new or changed and 219 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_decl_p.v, with its module paths, module names, addresses and numbers changed; 102 of its 305 lines of code are new or changed and 179 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExDecl, IMAGE B: ex_seg_P's first piece, from EX_P (0x814cc, fuzz_manifest.c:142-147) on fm.asan-ubsan.
-   B twin of lib/A/FMW_ex_decl_p.v (06d82004dc3); B's code (fm_b_expected_iface.out lines 162-172, 224-227):
+   B twin of lib/A/FMW_ex_decl_p.v; B's code (fm_b_expected_iface.out lines 162-172, 224-227):
    0x814cc s4 = s5 + a0 = text + i + a1 = text + p0, the instrumented load of text[p0], 0x814e8 `bgeu c - 9, s3 (= 5)`
    and 0x815c4 `beq c, s11 (= ' ')` decide ManifestModel.is_space. Not a space: 0x815c8 j EX_NEXT 0x81694 with s7 = i
    (ManifestModel.decl = DNone, dm_decl_sp; dseg_N). A space: 0x814ec..0x814fc (a0 = text + p0, a2 = a0 + 1,

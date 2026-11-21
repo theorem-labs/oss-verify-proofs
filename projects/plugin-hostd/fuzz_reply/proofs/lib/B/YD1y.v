@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1y.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (25 numerals; per-numeral report). *)
-(* Modified by Theorem Labs, 2026-10: DRV_IVS is the relocated hull (0xa24f8, 0xa28a0), (0xa2f88, 0xa2fd0), (0x5d8c90, 0x5d9998), (0x5f9a40, 0x5f9c60) minus the ASan redzones of fuzz_reply's program globals, which the generated Tfib_owned_static (B/YF0m.v) owns; cgif's program globals had no redzone inside the hull. As lib/A/AD1y.v (RelocA e5cf89b8f08); B's pieces are A's shifted by 0x580. *)
+(* Modified by Theorem Labs, 2026-10: DRV_IVS is the relocated hull (0xa24f8, 0xa28a0), (0xa2f88, 0xa2fd0), (0x5d8c90, 0x5d9998), (0x5f9a40, 0x5f9c60) minus the ASan redzones of fuzz_reply's program globals, which the generated Tfib_owned_static (B/YF0m.v) owns; cgif's program globals had no redzone inside the hull. As lib/A/AD1y.v (RelocA); B's pieces are A's shifted by 0x580. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

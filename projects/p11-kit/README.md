@@ -32,7 +32,7 @@ By hand: download `p11-kit-bin.tar.zst` from release [v2026.10.0](https://github
 
 ## How these binaries were built
 - Library: [p11-glue/p11-kit](https://github.com/p11-glue/p11-kit) at `120050e353e8f43d7c40bbcc047f667f903f4de5` (0.26.5), built with autotools:
-  - 2 patches, whose text is not in this release yet (it ships in the source bundle)
+  - 2 patches, whose text is not in this repository: it is in `recipe.tar.zst` in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src), under `patches/`, in the order `patches/series.tsv` gives
 - Harnesses: the harness files are modified in `conf_fuzzer` (see each harness page)
 - Everywhere: static riscv64 compiled for RV64G, musl, clang 20.1.8 with `-Os -g`, and a small driver that reads the input file ([docs/running.md](../../docs/running.md)). The sanitizer flags and options are in [docs/building.md](../../docs/building.md). Each harness page lists what else its builds change, and which of its checks were confirmed in the binaries.
 - Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. A binary whose SHA-256 differs after a rebuild with it is a bug: please open an issue.

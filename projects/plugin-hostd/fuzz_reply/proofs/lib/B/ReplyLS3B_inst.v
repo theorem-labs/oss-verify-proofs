@@ -1,43 +1,44 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30 (h-decbox-a1-a2, port-reply row G-BLS3-port): image B's ONE LS instance for the
-   B cf top's LS rows, the B twin of image A's lib/A/ReplyLSI.v :1-240 (origin/cold/h-hreply-s5-r1d-reply-b1c
-   1318828167d3, blob 38aab0d51ccf), its header part only (port-reply 06:42Z: this file carries LSI and the four TX texts;
+   B cf top's LS rows, the B twin of image A's lib/A/ReplyLSI.v :1-240 (
+   blob 38aab0d51ccf), its header part only (port-reply 06:42Z: this file carries LSI and the four TX texts;
    the per-row plugs are the G-BLS lanes'):
      LSI B OM fr_CAP := fr_LS3cp B CALL_ROOM_B /\ fr_OUT OM /\ fr_ENT B /\ fr_CAP   (port-reply 06:43Z)
    with ReplyB3LS3p.fr_LS3cp, ReplyLSBo.fr_OUT (s5-r1d's B fr_OUT; no second copy), ReplyB3LS3e.fr_ENT, and fr_CAP a
    Section slot (A's ReplyLScap.v has no B twin yet; B's room round adds it).
-   - TX_LS_drain_step_t: A's text (ReplyLSI.v:126-157, the tied form of A's ReplyLS3cTopxPost.v plus `0 <= t < OPS_MAX`,
+   - TX_LS_drain_step_t: A's text (ReplyLSI.v:127-158, the tied form of A's ReplyLS3cTopxPost.v plus `0 <= t < OPS_MAX`,
      last), at B's drain names (W_LLVMFuzzerTestOneInput_drain_defs, W_contract) and ReplyB3LS3Arms's dr3_* / ls3_*;
-   - TX_LS_rm_step_t: the B top's LS_rm_step text (ReplyBTop.v:133 at h-hreply-k3 a6411d87d214) plus `0 <= t < OPS_MAX`,
-     last, as A's ReplyLSI.v:159-181 adds it; MT generic (the top instantiates ameter_triv); the remove arm's names
+   - TX_LS_rm_step_t: the B top's LS_rm_step text (ReplyBTop.v:133 at h-hreply-k3) plus `0 <= t < OPS_MAX`,
+     last, as A's ReplyLSI.v:160-182 adds it; MT generic (the top instantiates ameter_triv); the remove arm's names
      W_LLVMFuzzerTestOneInput_remove.rm_* as the B top states them (A's tx_rm_*_cost copies are not needed at B);
    - TX_LS_rf_room: ReplyLSBoRf.lx_rf_room_p (s5-r1d's B copy of A's ReplyLS3oRf text) plus `0 <= t <= OPS_MAX`;
    - TX_LS_exit_end_e: the B top's LS_exit_end text (ReplyBTop.v:90) with A's ReplyLS3e.v LS_exit_end3e's four added
      premises, last (relay_finish's final capacity, the loop's t bound, fr_hblks at the return, NoDup); B's conclusion
      keeps its NP conjunct (A dropped NP; B's top states it);
-   - lsi_lines_run_cap_ge / lsi_drain_run_ocap_ge / lsi_drain_fin_ocap: A's ReplyLSI.v:80-112, word for word (B's
+   - lsi_lines_run_cap_ge / lsi_drain_run_ocap_ge / lsi_drain_fin_ocap: A's ReplyLSI.v:81-113, word for word (B's
      ReplyLSBTrPeak.tp_send_line).
    proves no function (kind: invariant lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyLS3B_inst.v, with its module paths changed; 19 of its 191 lines of code are new or changed and 21 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, a Theorem Labs lane row G-BLS3-port): image B's ONE LS instance for the
-   B cf top's LS rows, the B twin of image A's lib/A/ReplyLSI.v :1-240 (a working branch
-   1318828167d3, sha256 39227fa5fa20; internal record), its header part only (per the ruling: this file carries LSI and the four TX texts;
+   B cf top's LS rows, the B twin of image A's lib/A/ReplyLSI.v :1-240 (a working branch,
+   sha256 39227fa5fa20; internal record), its header part only (per the ruling: this file carries LSI and the four TX texts;
    the per-row plugs are the G-BLS lanes'):
      LSI B OM fr_CAP := fr_LS3cp B CALL_ROOM_B /\ fr_OUT OM /\ fr_ENT B /\ fr_CAP   (a Theorem Labs lane 06:43Z)
    with ReplyB3LS3p.fr_LS3cp, ReplyLSBo.fr_OUT (s5-r1d's B fr_OUT; no second copy), ReplyB3LS3e.fr_ENT, and fr_CAP a
    Section slot (A's ReplyLScap.v has no B twin yet; B's room round adds it).
-   - TX_LS_drain_step_t: A's text (ReplyLSI.v:126-157, the tied form of A's ReplyLS3cTopxPost.v plus `0 <= t < OPS_MAX`,
+   - TX_LS_drain_step_t: A's text (ReplyLSI.v:127-158, the tied form of A's ReplyLS3cTopxPost.v plus `0 <= t < OPS_MAX`,
      last), at B's drain names (W_LLVMFuzzerTestOneInput_drain_defs, W_contract) and ReplyB3LS3Arms's dr3_* / ls3_*;
-   - TX_LS_rm_step_t: the B top's LS_rm_step text (ReplyBTop.v:133 at a Theorem Labs lane a6411d87d214) plus `0 <= t < OPS_MAX`,
-     last, as A's ReplyLSI.v:159-181 adds it; MT generic (the top instantiates ameter_triv); the remove arm's names
+   - TX_LS_rm_step_t: the B top's LS_rm_step text (ReplyBTop.v:133 at a Theorem Labs lane) plus `0 <= t < OPS_MAX`,
+     last, as A's ReplyLSI.v:160-182 adds it; MT generic (the top instantiates ameter_triv); the remove arm's names
      W_LLVMFuzzerTestOneInput_remove.rm_* as the B top states them (A's tx_rm_*_cost copies are not needed at B);
    - TX_LS_rf_room: ReplyLSBoRf.lx_rf_room_p (s5-r1d's B copy of A's ReplyLS3oRf text) plus `0 <= t <= OPS_MAX`;
-   - TX_LS_exit_end_e: A's adopted text word for word (ReplyLSI.v:191-221: the top's LS_exit_end with NP DROPPED, A's
-     8187c47f9bc, plus ReplyLS3e.v LS_exit_end3e's four added premises, last), at B's names (a Theorem Labs lane 07:06Z);
-   - lsi_lines_run_cap_ge / lsi_drain_run_ocap_ge / lsi_drain_fin_ocap: A's ReplyLSI.v:80-112, word for word (B's
+   - TX_LS_exit_end_e: A's adopted text word for word (ReplyLSI.v:192-222: the top's LS_exit_end with NP DROPPED, A's,
+     plus ReplyLS3e.v LS_exit_end3e's four added premises, last), at B's names (a Theorem Labs lane 07:06Z);
+   - lsi_lines_run_cap_ge / lsi_drain_run_ocap_ge / lsi_drain_fin_ocap: A's ReplyLSI.v:81-113, word for word (B's
      ReplyLSBTrPeak.tp_send_line).
-   - LSI and lsi_parts (A's ReplyLSI.v:225-231 and :358-366): the instance and its projections to fr_LS3cp,
+   - LSI and lsi_parts (A's ReplyLSI.v:226-232 and :359-367): the instance and its projections to fr_LS3cp,
      fr_LS3c, fr_LS3 (at YCfn_cf.CALL_ROOM_B), fr_OUT, fr_ENT and the fr_CAP slot. A's lsi_txp is not ported: its
      target txp_LSx lives in A's ReplyLS3cTopxPost.v, whose B twin is a Theorem Labs lane's; the plug files state it there.
    proves no function (kind: invariant lemma). *)
@@ -98,7 +99,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 (* ================================================================== g_capout never falls below 0 over a drain *)
-(* A's ReplyLSI.v:78-112: ds_ocap changes only through lines_run's send_line calls (Prog/drain_b_c.v), and send_line
+(* A's ReplyLSI.v:79-113: ds_ocap changes only through lines_run's send_line calls (Prog/drain_b_c.v), and send_line
    never lowers a capacity that is >= 0 (ReplyLSBTrPeak.tp_send_line) *)
 Lemma lsi_lines_run_cap_ge : forall ls live mx no cap H ka j o ha ks, 0 <= cap ->
   cap <= fst (fst (snd (fst (drain_b_c.lines_run live mx no cap H ka ls j o ha ks)))).
@@ -140,7 +141,7 @@ Variable MT : ameter_ops.
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
 
-(* A's ReplyLSI.v:126-157 (top_x's LS_drain_step at A's ReplyLS3cTopxPost.v TX text, plus `0 <= t < OPS_MAX` last) *)
+(* A's ReplyLSI.v:127-158 (top_x's LS_drain_step at A's ReplyLS3cTopxPost.v TX text, plus `0 <= t < OPS_MAX` last) *)
 Definition TX_LS_drain_step_t : Prop :=
   forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
     si h j h'' e' c' O' cap' out' (E H : hlist) (ly1 : alayout) (h1 : hsrc) (E' H' : hlist),
@@ -168,7 +169,7 @@ Definition TX_LS_drain_step_t : Prop :=
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (dr_step m (dr_k' cx m) si h'' j e' c' O' cap' out') ly' S'.
 
-(* the B top's LS_rm_step (ReplyBTop.v:133), plus `0 <= t < OPS_MAX` last (A's ReplyLSI.v:159-181) *)
+(* the B top's LS_rm_step (ReplyBTop.v:133), plus `0 <= t < OPS_MAX` last (A's ReplyLSI.v:160-182) *)
 Definition TX_LS_rm_step_t : Prop :=
   forall cx t m ly0 S0 (ly : alayout) (S : astate)
     si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc ev5,
@@ -196,14 +197,14 @@ Definition TX_LS_rm_step_t : Prop :=
     (W_LLVMFuzzerTestOneInput_remove.rm_cev c2 ev5) O2 cap2 out2) ly S.
 
 (* the B top's LS_rf_room (ReplyBTop.v:87) in the peak form of s5-r1d's ReplyLSBoRf.v lx_rf_room_p (A's ReplyLS3oRf.v
-   text), plus `0 <= t <= OPS_MAX` last (A's ReplyLSI.v:183-189) *)
+   text), plus `0 <= t <= OPS_MAX` last (A's ReplyLSI.v:184-190) *)
 Definition TX_LS_rf_room : Prop :=
   forall cx t m ly S,
   LSx cx t m ly S -> 0 <= t <= OPS_MAX ->
   ReplyLSBoRf.lx_rf_room_p fr_MMAX (blocks_bytes S) (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m).
 End tx.
 
-(* the cut's own Local Notation (lib/B/W_LLVMFuzzerTestOneInput_cut.v:161), which does not leave its file *)
+(* the cut's own Local Notation (lib/B/W_LLVMFuzzerTestOneInput_cut.v:162), which does not leave its file *)
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
 Section txe.
@@ -219,7 +220,7 @@ Variable fr_FP : bvmap 5 word -> alayout -> astate -> world segs -> (word -> opt
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable ARX : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Variable G : list (Z * Z).
-(* A's ReplyLSI.v:191-221 word for word: the top's LS_exit_end with NP dropped (A 8187c47f9bc) and ReplyLS3e.v
+(* A's ReplyLSI.v:192-222 word for word: the top's LS_exit_end with NP dropped (A) and ReplyLS3e.v
    LS_exit_end3e's four added premises, last, in its order *)
 Definition TX_LS_exit_end_e : Prop :=
   forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem' md' fpos k' C cap out,
@@ -239,7 +240,7 @@ Definition TX_LS_exit_end_e : Prop :=
 End txe.
 
 (* ================================================================== the instance *)
-(* A's ReplyLSI.v:225-231: LSI := fr_LS3cp B /\ fr_OUT OM /\ fr_ENT B /\ fr_CAP (a Theorem Labs lane 06:43Z: B's twin, with
+(* A's ReplyLSI.v:226-232: LSI := fr_LS3cp B /\ fr_OUT OM /\ fr_ENT B /\ fr_CAP (a Theorem Labs lane 06:43Z: B's twin, with
    fr_LS3cp at YCfn_cf.CALL_ROOM_B like ReplyLSB.fr_LS at the B top) *)
 Section inst.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -248,7 +249,7 @@ Definition LSI (B : asyms) (OM : Z) (fr_CAP : lfcx -> Z -> lmod -> alayout -> as
   ReplyB3LS3p.fr_LS3cp B YCfn_cf.CALL_ROOM_B cx t m ly S /\ ReplyLSBo.fr_OUT OM cx t m ly S /\ ReplyB3LS3e.fr_ENT B cx m ly S /\
   fr_CAP cx t m ly S.
 
-(* A's ReplyLSI.v:358-366: the parts of LSI the plugs read *)
+(* A's ReplyLSI.v:359-367: the parts of LSI the plugs read *)
 Lemma lsi_parts : forall B OM fr_CAP cx t m ly S, LSI B OM fr_CAP cx t m ly S ->
   ReplyB3LS3p.fr_LS3cp B YCfn_cf.CALL_ROOM_B cx t m ly S /\ ReplyB3LS3c.fr_LS3c B YCfn_cf.CALL_ROOM_B cx t m ly S /\
   ReplyB3LS3.fr_LS3 B YCfn_cf.CALL_ROOM_B cx t m ly S /\ ReplyLSBo.fr_OUT OM cx t m ly S /\

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillLoc.v (commit 30a1993588f, c5 + memnorm; file sha256 d444e2c90fc1) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/MnRefillLoc.v at commit 789778cb16f, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillLoc.v (c5 + memnorm; file sha256 d444e2c90fc1) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/MnRefillLoc.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (a Theorem Labs lane, hand H1 of task MEMNORM; lead a Theorem Labs lane, integrator ReallocPrimary).
    rule 24: no function proved (kind: run invariant twin - the refill callee's leaf with the memnorm keep, and the
    its composition).
 
-   - [refill_leafR_em]: CLrefill0.refill_leafR (CLrefill0.v:26-33) plus `MemnormT.memnorm_keep tfibsegs mem mem'` inside
+   - [refill_leafR_em]: CLrefill0.refill_leafR (CLrefill0.v:27-34) plus `MemnormT.memnorm_keep tfibsegs mem mem'` inside
      the same existential as the raw frame; [refill_leafR_em_R] drops the keep; [tfib_refill_specR_em] is
      CLrefill0.tfib_refill_specR over it (the Enqueue miss arm's premise shape, CLenqcgif.v:213).
    Keeps compose by a Theorem Labs lane's MemnormLoc.memnorm_keep_trans.

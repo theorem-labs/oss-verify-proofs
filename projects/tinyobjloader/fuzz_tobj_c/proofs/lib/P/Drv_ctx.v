@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch model's channel-reader flag, which a nonempty writev needs, in the driver context). *)
 
 
 From Stdlib Require Import ZArith List Lia.
@@ -28,6 +29,8 @@ Record Fctx := mkFctx {
   f_md0 : Model;
   f_fds0 : m_fds f_md0 = std_fds;
   f_fs0 : m_fs f_md0 = in_fs f_inp;
+  (* LPS 08b1429: the launch model's channel reader (a nonempty writev needs it). *)
+  f_rdr0 : m_channel_reader f_md0 = true;
   f_ok : world -> Prop;
   f_okK : forall K, K_tcons (Spec f_inp) K -> ok_frame segs f_ok K;
   f_okP : forall K, K_tcons (Spec f_inp) K -> ok_pframe segs f_ok K;

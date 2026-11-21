@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised write arms). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -13,6 +14,19 @@ Set Default Proof Mode "Classic".
 
 Section Arms.
 Variable L0 L : Z.
+
+(* The revision's write arms pass a state update as an option of a
+   continuation wrapper ([ReadWrite.write_file_tail]'s [fault] and
+   [place]).  Destructing that option leaves an opaque function, so
+   unfold its producer first and let [sim] walk the concrete body. *)
+Ltac sim_hook ::=
+  lazymatch goal with
+  | |- DIR _ _ _ _ _ (match ?e with Some _ => _ | None => _ end) _ =>
+      lazymatch type of e with
+      | option (Sys SyscallEffect -> Sys SyscallEffect) =>
+          unfold_head e; lazy beta iota zeta
+      end
+  end.
 
 Lemma sim_arm_17 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => getcwd_spec (in_arg i 1) i) (fun i => getcwd_spec (in_arg i 1) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => getcwd_spec (in_arg i 1)) (fun i => getcwd_spec (in_arg i 1))). sim_arm m HM. Qed.

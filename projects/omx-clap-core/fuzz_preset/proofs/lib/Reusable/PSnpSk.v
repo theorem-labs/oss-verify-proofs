@@ -2,9 +2,9 @@
    window is [lo, hi), the premise bundles of the vsnprintf entries (sn_pre) and of the vfprintf entries (vf_pre) with
    their posts, the contracts from the bundles, and the bundles at a memory a walk changed only inside its window and
    at the destination's first byte, at a smaller window, and as printf_common's premises. New file. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's restatement for fuzz_preset (route (a), c-omx-hpreset 10:51Z) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSk.v at origin/cold/port-fm-rtprintf-param 7e395de08f5, image-free: over Section variables segs, B and the engine's generic ARx (Reusable/YCbqG.v) with the ghost head list Hp passed through unchanged, instead of tfibsegs and Poison's ARU over U (FMupoison.v is not ported). The laws are the two AR_laws_x fields used (alx_frame for ARU_frame, alx_stack for ARU_stack), each a Section hypothesis under its field's name, plus stk_bounds_x (for stk_kHighMemBeg over ARU_ARm), a Section hypothesis of exactly the statement of c-omx-alloc's engine lemma YCbqG.stk_bounds_x (7792959a2abb YCbqG.v:308, derived there from AR_laws_x field 18 alx_layout_ok under the whole record): preset's instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`, fm's fixed-U adapter passes stk_kHighMemBeg; field 18 itself and stk_aligned_x are not taken, as no proof here uses them (parent c-libc-stdio, 11:4xZ). ecall_preU -> ecall_pre_x (a flat conjunction: the sn_pre_intro / vf_pre_intro / *_contract* destructures lose their U conjuncts), Gt's g_ecall_preU / writable_xfer -> PSnpGt.v's g_ecall_pre_x / writable_xfer, FMupoison.aview_mod / AF0x.aview_same / AE2y.apresent_mod / AF0x.apresent_same -> YGcfHp.aview_mod_hp / aview_at_hp and the two image-free helpers apresent_mod_x / apresent_same_x below. st_ok_fx and kcall_fx (over tfibsegs and FMsnprintfK) moved to lib/A/PSnpK.v. va_slots_below_47(_nil) moved here from FMsnprintfSx.v. Hypothesis names Hp -> Hpr (Hp is the ghost list). No image numeral. *)
-(* Modified by Theorem Labs, 2026-10: port-fm 00daeaf3796's destination slack (origin/cold/port-fm-rtprintf-param, the
-   final text 3e35620c52e), FMsnprintfSk.v's part: sn_walkA / sn_contractA / sn_applyA carry 'amem_range d
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's restatement for fuzz_preset (route (a), c-omx-hpreset 10:51Z) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSk.v, image-free: over Section variables segs, B and the engine's generic ARx (Reusable/YCbqG.v) with the ghost head list Hp passed through unchanged, instead of tfibsegs and Poison's ARU over U (FMupoison.v is not ported). The laws are the two AR_laws_x fields used (alx_frame for ARU_frame, alx_stack for ARU_stack), each a Section hypothesis under its field's name, plus stk_bounds_x (for stk_kHighMemBeg over ARU_ARm), a Section hypothesis of exactly the statement of c-omx-alloc's engine lemma YCbqG.stk_bounds_x (YCbqG.v:309, derived there from AR_laws_x field 18 alx_layout_ok under the whole record): preset's instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`, fm's fixed-U adapter passes stk_kHighMemBeg; field 18 itself and stk_aligned_x are not taken, as no proof here uses them (parent c-libc-stdio, 11:4xZ). ecall_preU -> ecall_pre_x (a flat conjunction: the sn_pre_intro / vf_pre_intro / *_contract* destructures lose their U conjuncts), Gt's g_ecall_preU / writable_xfer -> PSnpGt.v's g_ecall_pre_x / writable_xfer, FMupoison.aview_mod / AF0x.aview_same / AE2y.apresent_mod / AF0x.apresent_same -> YGcfHp.aview_mod_hp / aview_at_hp and the two image-free helpers apresent_mod_x / apresent_same_x below. st_ok_fx and kcall_fx (over tfibsegs and FMsnprintfK) moved to lib/A/PSnpK.v. va_slots_below_47(_nil) moved here from FMsnprintfSx.v. Hypothesis names Hp -> Hpr (Hp is the ghost list). No image numeral. *)
+(* Modified by Theorem Labs, 2026-10: port-fm's destination slack (origin/cold/port-fm-rtprintf-param, the
+   final text), FMsnprintfSk.v's part: sn_walkA / sn_contractA / sn_applyA carry 'amem_range d
    (sn_len (n - 1) T + 8)' and vf_walkX / vf_contractX / vf_applyX 'amem_range s0 (sn_len n0 T + 8)' (one premise
    after the 2^47 slot bound, threaded as Hd8); amem8_of_stack (FMsnprintfSx.v) is here beside va_slots_below_47,
    with stk_bounds_x for stk_kHighMemBeg. Each '+ 8' is an address-range fact (amem_range), not a presence form. *)
@@ -32,7 +32,7 @@ Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(tr
 Import ListNotations.
 Open Scope Z_scope.
 
-(* ---- presence at an address mod 2^64, and kept by a memory equal at it (image-free; cf. YGcfHp.v:278-290) ---- *)
+(* ---- presence at an address mod 2^64, and kept by a memory equal at it (image-free; cf. YGcfHp.v:279-291) ---- *)
 Lemma apresent_mod_x : forall (Hd : word -> bool) (m : word -> option byte) a, apresent Hd m a = apresent Hd m (a mod 2 ^ 64).
 Proof.
 intros Hd m a. assert (E : Z_to_bv 64 a = Z_to_bv 64 (a mod 2 ^ 64)).
@@ -84,8 +84,8 @@ Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte
 (* the laws of AR_laws_x (YCbqG.v) this file uses, each under its field's name *)
 Hypothesis alx_frame : ARx_frame_law segs B ARx.
 Hypothesis alx_stack : ARx_stack_law segs B ARx.
-(* the stack bounds: exactly the statement of c-omx-alloc's engine lemma YCbqG.stk_bounds_x (7792959a2abb
-   YCbqG.v:308, from AR_laws_x field 18 alx_layout_ok), never proved here: preset's instance passes
+(* the stack bounds: exactly the statement of c-omx-alloc's engine lemma YCbqG.stk_bounds_x (
+   YCbqG.v:309, from AR_laws_x field 18 alx_layout_ok), never proved here: preset's instance passes
    `YCbqG.stk_bounds_x segs B ARx LAWS`, fm's adapter stk_kHighMemBeg. Field 18 and stk_aligned_x are not taken:
    no proof in this file uses them. *)
 Hypothesis stk_bounds_x : forall ly S Hp W mem md,

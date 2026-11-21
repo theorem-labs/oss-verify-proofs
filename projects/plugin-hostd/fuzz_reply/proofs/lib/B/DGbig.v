@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGbig.v (commit 8b4ae5e9984e, the Deallocate big arm, closed at cgif; file sha256 c21a1a7787df) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 13 image addresses moved by code-verified function pairs (7 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 8 pcs named in comments; 6 hand maps (resolve-all.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); 2 model labels (YG00 mcheck / spin tags) kept; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: then from plugin-hostd/fuzz_reply lib/A (commit 29bcc0b4b8f) to image B (fuzz_reply.asan-ubsan, pin 10ffb5f9202a, unstripped twin 3389287e1d61) by alreloc 56664a20986eb62e, same unit A -> B. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGbig.v (the Deallocate big arm, closed at cgif; file sha256 c21a1a7787df) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 13 image addresses moved by code-verified function pairs (7 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 8 pcs named in comments; 6 hand maps (resolve-all.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); 2 model labels (YG00 mcheck / spin tags) kept; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: then from plugin-hostd/fuzz_reply lib/A to image B (fuzz_reply.asan-ubsan, pin 10ffb5f9202a, unstripped twin 3389287e1d61) by alreloc 56664a20986eb62e, same unit A -> B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, DeallocNmaxA): the BIG-BLOCK arm of the frame-generic Deallocate walk, over the
    interface DGbigIF.DIfaceBig: a block above the quarantine's max_size (kQuarantineMax < req_size n).
 
@@ -318,7 +319,7 @@ Variable dpost : Z -> alayout -> astate -> world tfibsegs -> list Z -> Z -> (wor
 Variable dbody : astate -> M unit.
 Variable DRq : astate -> list chunk -> list Z -> Prop.
 Hypothesis IFB : DIfaceBig B U ft ARX ARXr AOX rpre lpost fpre dpost dbody DRq.
-(* The image facts the copied errno scripts read (DGg2.v:602-605). *)
+(* The image facts the copied errno scripts read (DGg2.v:603-606). *)
 Hypothesis EAimg : ErrnoApart.errno_in_img.
 Hypothesis EAz3 : ErrnoApart.errno_apart_zone3_d.
 Hypothesis EAdz : ErrnoApart.errno_apart_dzone_d.

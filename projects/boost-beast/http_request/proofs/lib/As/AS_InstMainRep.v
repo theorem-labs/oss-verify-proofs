@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -12,7 +13,7 @@ From OSSVerify.Proofs.boost_beast.http_request.lib.Lib Require Import Mem Cells 
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Import HeapCeil AsanAllocModel.
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require Import ASegs AsShadow AsConst AsIface AllocWf AllocRep AS_InstWF AS_InstMainDefs.
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Import
-  PropExec AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsImages AsPlanImages AsStartupHSF
+  PropExec AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsanInitL AsImages AsPlanImages AsStartupHSF
   AsMainState AsMainFacts AsMainLazy AsMainCells AsMainIface AsMainIfaceAlloc.
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require Import AsMainSyms.
 Import ListNotations. Import AX2. Import AP. Import APS.
@@ -29,8 +30,8 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).

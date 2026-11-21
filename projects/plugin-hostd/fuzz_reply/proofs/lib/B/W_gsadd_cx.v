@@ -32,6 +32,7 @@
    - the model: the line is a BEGIN whose key is not held; GARfut owes strndup's RMalloc (|x| + 1) and then the
      rest tl2, and carries the two signs 0 <= tr_cost tl2 and 0 <= tr_alloc tl2 that split the budget at the
      strndup call (the first half has them from tr_sizes_ok of the whole owed trace). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -205,7 +206,7 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file (image B's DR_x slice D, 2026-10-30; the B twin of lib/A/W_gsaddb_cx.v's Section cx
-   at a working branch 50623273289): GARB, GAR and gs_addb_stmt over lib/B/W_drain_cx_x.v's Section variables
+   at a working branch): GARB, GAR and gs_addb_stmt over lib/B/W_drain_cx_x.v's Section variables
    (B PST ARx MT RP MMAX RG), the entry's ghost list Hp and budget kr after cx, the cut's own ghost list Hp1 after S1.
    GARB_x / GAR_x are GARB / GAR above (image B's registers and scratch slots) with W_drain_cx_x.v's LCORE_x; GARfut
    (what the walk still owes: strndup's request, then the lines and rounds after this one) and A_dr_addb are AR-free

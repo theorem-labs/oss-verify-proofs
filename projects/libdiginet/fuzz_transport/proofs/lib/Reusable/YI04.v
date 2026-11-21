@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YI04.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YI04.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YI04.v for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar load branch and the YK0n, YI16 and seg_kind repairs; the vDSO-call arm, linux_place_is, StreamSim and fetch_failure); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -31,7 +32,7 @@ Proof.
 induction t as [c0| | | | | |n a k IH|n a v k IH]; intros m c1 m' H; cbn [interp_eff0] in H;
 try discriminate.
 - injection H as <- <-. apply mem_grows_refl.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate]. eapply IH. exact H.
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate]. eapply IH. exact H.
 - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
 eapply mem_grows_trans; [apply write_to_mem_grows|]. eapply IH. exact H.
 Qed.
@@ -48,7 +49,7 @@ Qed.
 Lemma fetch_failure_not_ok : forall m a st', fetch_failure segs m a = MachineOk st' -> False.
 Proof.
 intros m a st' H. unfold fetch_failure in H.
-destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
+try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
 Qed.
 Lemma step_mem_grows : forall st st',
 RiscvSemantics.step segs st = MachineOk st' -> mem_grows (ms_mem st) (ms_mem st').

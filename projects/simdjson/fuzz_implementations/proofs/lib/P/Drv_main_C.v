@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack image is pimg, and the stack region's lower bound is 4 MiB below the entry sp instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -129,7 +130,7 @@ Section C.
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid run_hw run_draw).
+  Notation IMGB := (pimg sp0 argv envp uid).
   Notation RDONE' := (RDONE sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
 
   Notation GST pc x1 t0 t1 t2 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
@@ -217,7 +218,7 @@ Definition RQEXIT (code : Z) (s : PState) : machine_state -> Prop := at_exit_imp
     unfold implM. iprefix. zstep. apply evt_done.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM psegs tm s RQEXIT0 msx) end.
     eapply implM_bind.
-    { eapply (FWR) with (lo := usp0 - 8388608) (canary := rr_guard) (s := msg);
+    { eapply (FWR) with (lo := usp0 - 4194304) (canary := rr_guard) (s := msg);
         [exact SE| rewrite unsigned_lit by lia; change (map _ msg) with (to_bytes msg); apply rodata_bytes; [exact MI| exact RO| lia| lia]
         | exact RNG | rewrite ML; lia| rewrite ML; reflexivity| reflexivity| reflexivity
         | rewrite unsigned_lit by lia; exact ST
@@ -229,7 +230,7 @@ Definition RQEXIT (code : Z) (s : PState) : machine_state -> Prop := at_exit_imp
     destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m1 & -> & MUc & WMc & MI1 & ST1 & SEW & SSP1 & ->).
     rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST1 by lia.
     replace (ret_pc (Z_to_bv 64 0x3e8f4)) with (Z_to_bv 64 0x3e8f4) by (symmetry; rpc).
-    assert (WOKW : Forall (WOKE sp0) [(usp0 - 8388608, usp0 + -128); (RSTDERR, RSTDERR + 232)]).
+    assert (WOKW : Forall (WOKE sp0) [(usp0 - 4194304, usp0 + -128); (RSTDERR, RSTDERR + 232)]).
     { unfold WOKE, WOK, LO. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia| constructor]. }
     assert (BA1 : BASE' m1) by (eapply (BASE_munch sp0 argv envp uid TID VSP CEIL); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI1| unfold LO; exact ST1]).
     assert (P1 : RHEAP s [(bufp, A, cap)] m1).
@@ -246,7 +247,7 @@ Definition RQEXIT (code : Z) (s : PState) : machine_state -> Prop := at_exit_imp
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM psegs tm s RQEXIT0 msx) end.
     eapply implM_bind.
     { unfold rfree_stmt in FREE.
-      eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
+      eapply FREE with (lo := usp0 - 4194304) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
         rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia; unfold RMallocRep.RATP; cbn [Z.add];
         first [ exact P1 | left; reflexivity | exact AUX | exact ST | exact MI | exact ERR1 | unfold RFREE_STACK; lia | lia ]. }
     cbv beta. intros [] s2 ms2 PO.

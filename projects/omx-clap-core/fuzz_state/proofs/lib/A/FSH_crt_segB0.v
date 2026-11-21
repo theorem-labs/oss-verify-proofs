@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v, with its module names changed; 1342 of its 1569 lines of code are new or changed and 2529 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81a9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan (image
    tfibsegs, the pinned fuzz_state.asan sha256 64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0): the ASan
    walk of FSH_Fn_crt.v check_round_trip_spec, SEGMENTS 10-11 (lane B1's first half, a Theorem Labs lane): from the A -> B boundary
    crt_INV_82068 (the return of the second strcmp, 0x82068) across the second preset_base64_decode (call 0x82074, return
    0x82078) and the bcmp thunk (call 0x82098) to the bcmp-return boundary, where a Theorem Labs lane's segment 12 starts; the
    class-3 fake frame is live throughout (own = [(3, pos)]).
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from d25a984c903
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St3 :260 / St4 :315 and check_round_trip_sd3.v
    crt_cmp_seg :239 (the decode call, its length check, the bcmp and the empty-body arm), with check_round_trip_calls.v
    CR :142 and check_round_trip_sdglue.v crt_keep_blk :612 for the facts carried across the two calls)
@@ -17,13 +18,13 @@
    check, 2026-10-29 04:3xZ; the hit's Require closure is 334 files with 0 Admitted / Axiom / Parameter). The donor's
    a_call_pre / a_call_post statement is not importable on S0, so only the structure is taken from it (which call at
    which pc, which guard each callee post decides); the statement forms are S0's (crt_from / crt_INV_*, FSH_crt_base.v).
-   The proof shape is lane D1's twin of this stretch (a working branch 82a1d1bf3a6, lib/A/FSH_crt_segD1*.v:
+   The proof shape is lane D1's twin of this stretch (a working branch, lib/A/FSH_crt_segD1*.v:
    the second decode 0x82270 / bcmp 0x82294 of segments 30-31 run the same instructions): its helper lemmas are copied
    below with the prefix crtD1 -> crtB0 and the length cell F + 0x1a0 -> F + 0x1c0, and a Theorem Labs lane's boundary re-entry
-   (a working branch fa8f03b5240 lib/A/FSH_crt_segA23.v:130-379, a23 -> crtB0) for the empty-body exit.
-   The exit invariants are a Theorem Labs lane's (lib/A/FSH_crt_segB.v at a working branch 75bc3ae2df5, Section inv12,
-   taken by path); the entry invariant is the base's (lib/A/FSH_crt_base.v v28, a working branch
-   19c84cdc567, whose crt_INV_82068 carries the length cell's shadow fact decode_ff asks).
+   (a working branch lib/A/FSH_crt_segA23.v:131-380, a23 -> crtB0) for the empty-body exit.
+   The exit invariants are a Theorem Labs lane's (lib/A/FSH_crt_segB.v at a working branch, Section inv12,
+   taken by path); the entry invariant is the base's (lib/A/FSH_crt_base.v v28, a working branch,
+   whose crt_INV_82068 carries the length cell's shadow fact decode_ff asks).
 
    The two calls and the guards (MEASURED, capstone 5.0.7 over the pinned fs.asan):
      10  0x82068 `bnez a0`  -> 0x824b8 (__asan_handle_no_return, abort): a0 = strcmp's 0, crt_INV_82068
@@ -273,7 +274,7 @@ Lemma crtB0_sc11z_shape :
 Proof. repeat split; vm_compute; reflexivity. Qed.
 
 (* ================= the walk's helpers, from lane D1 (FSH_crt_segD1_keep.v / _bd.v / _bcmp.v / _s31.v /
-   FSH_crt_segD1.v at a working branch 82a1d1bf3a6) and a Theorem Labs lane (FSH_crt_segA23.v reseat / reenter),
+   FSH_crt_segD1.v at a working branch) and a Theorem Labs lane (FSH_crt_segA23.v reseat / reenter),
    renamed ================= *)
 Section h. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable SK : YI16.sink_head.

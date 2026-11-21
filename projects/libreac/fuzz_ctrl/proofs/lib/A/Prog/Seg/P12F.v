@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 3124 of its 3235 lines of code are new or changed and 900 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F4.v, with its addresses changed; 1141 of its 1278 lines of code are new or changed and 3098 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P12.v, with its module paths and module names changed; 147 of its 286 lines of code are new or changed and 1139 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/P12.v blob 52985bf47a6f at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/P12.v blob 52985bf47a6f.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives P12.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type
    is the type of P12.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 (* The footprint twins of Seg/P12.v p12_evt_a (0x81c84-0x81ce0: the two instrumented checks of the "?" string and
@@ -48,7 +49,7 @@ Module LE := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Exec.
 (* The core copy an _F statement names (a Theorem Labs lane 08:56Z rule): LMS (lib.Lib's MState). *)
 Module LMS := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.MState.
 
-(* P12.v:771 p12_addv, copied here: it is declared inside P12.v's Section S, so it does not reach this file. *)
+(* P12.v:772 p12_addv, copied here: it is declared inside P12.v's Section S, so it does not reach this file. *)
 Ltac p12F_addv :=
   first [ reflexivity
         | (rewrite LMS.lit_add_lit; reflexivity)

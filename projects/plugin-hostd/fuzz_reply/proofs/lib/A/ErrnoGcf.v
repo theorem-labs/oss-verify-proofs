@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset (a Theorem Labs lane): the AllocG / DeallocG-dependent part of cgif's ErrnoG.v
-   (proofs/cgif/cgif_file_fuzzer/lib/ErrnoG.v at 271c6736b71, the same bytes (sha256 a021f133aa77; internal record) as a Theorem Labs lane's ErrnoG.v at
-   ad994c27165 and at the memnorm head 29b7505aa27), taken by path: ErrnoG.v:58-229, its Section a, one block under the
+   (proofs/cgif/cgif_file_fuzzer/lib/ErrnoG.v, the same bytes (sha256 a021f133aa77; internal record) as a Theorem Labs lane's ErrnoG.v
+    and at the memnorm head), taken by path: ErrnoG.v:59-230, its Section a, one block under the
    copy line below, byte for byte (no module prefix occurs in it):
    - errno_kept and errno_kept_v (the raw and the view form);
    - Allocate: alloc_leaf_e, aalloc_prim_realizes_e, aalloc_realizes_e and their bridges (alloc_leaf_e_alloc_leaf,
@@ -12,12 +13,12 @@
    - Deallocate: the view forms dealloc_leaf_e / adealloc_realizes_e and the raw forms dealloc_leaf_raw_e /
      adealloc_realizes_raw_e, with their bridges (dealloc_leaf_e_dealloc_leaf, adealloc_realizes_e_adealloc_realizes,
      dealloc_leaf_raw_e_raw, adealloc_realizes_raw_e_raw).
-   The view forms (ErrnoG.v:67-68, 162-180, 202-215) were added on 2026-10-29 for MemnormT.v (by path from
-   29b7505aa27), whose dealloc_leaf_em / adealloc_realizes_em / dealloc_leaf_em_e name ErrnoG.errno_kept_v and
+   The view forms (ErrnoG.v:68-69, 162-180, 202-215) were added on 2026-10-29 for MemnormT.v (by path),
+   whose dealloc_leaf_em / adealloc_realizes_em / dealloc_leaf_em_e name ErrnoG.errno_kept_v and
    ErrnoG.dealloc_leaf_e; every definition of the earlier blocks is unchanged.  Not copied: the cgif-interface part
-   (DIfaceE / DIfaceRE / AIfaceE / AIfaceME and their add-ons, ErrnoG.v:231-539).
-   This unit's AllocG.v / DeallocG.v are cgif's (478a815d97c) by path; their text equals cgif's at 271c6736b71 and at
-   29b7505aa27 (blobs 8afdeb6e04ae / 198a1bf89da2) except the module prefix and the copy line, so the copied text takes
+   (DIfaceE / DIfaceRE / AIfaceE / AIfaceME and their add-ons, ErrnoG.v:232-540).
+   This unit's AllocG.v / DeallocG.v are cgif's by path; their text equals cgif's and
+    (blobs 8afdeb6e04ae / 198a1bf89da2) except the module prefix and the copy line, so the copied text takes
    AllocG's / DeallocG's arguments unchanged.  The Require lines are this unit's (AllocG's, plus AllocG DeallocG).
    No function is proved here (rule 24). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -35,7 +36,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/ErrnoG.v at 271c6736b71, lines 58-229, module prefix only *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/ErrnoG.v, lines 58-229, module prefix only *)
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* errno's 4 bytes (at [as_errno B], the address ascratch excludes) are the same in [mem'] as in [mem]: on the raw

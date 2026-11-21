@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -609,6 +610,39 @@ Definition pri_sep_t (fs : list fact) (gs : list (lin * lin * gkind)) (res : lis
 (* [comment removed for export] *)
 Definition sep_cache (fs : list fact) (gs : list (lin * lin * gkind)) (res : list (word * word)) (jP jT : nat) (sp : lin) (a : ast) (rgs : list region) : list (lin * lin) :=
   List.map (fun R => (rg_base R, rg_size R)) (List.filter (pri_sep_ff fs gs res jP jT sp a) rgs).
+
+(* LPS 727298f3: the launch ledger is the segments' reservations, then the vDSO pair's
+   ([FxChDen.dn_res]).  [pri_sep_ff] reads the ledger only through [sep_res_b], so a check that
+   passes over the segments' part passes over the whole ledger. *)
+Lemma pri_sep_ff_app : forall fs gs res x jP jT sp a R,
+  pri_sep_ff fs gs res jP jT sp a R = true -> pri_sep_ff fs gs (res ++ x) jP jT sp a R = true.
+Proof.
+  intros fs gs res x jP jT sp a R. unfold pri_sep_ff.
+  destruct (is_const (rg_base R)), (is_const (rg_size R)); cbv beta iota; try (intro H; exact H).
+  match goal with |- (if ?c then _ else _) = true -> _ => destruct c end; [|intro H; exact H].
+  destruct (sep_res_b res R) eqn:E.
+  - rewrite (FxChSep.sep_res_b_app _ _ _ E). intros _; reflexivity.
+  - destruct (sep_res_b (res ++ x) R); intro H; [reflexivity | exact H].
+Qed.
+Lemma pri_sep_c_app : forall fs gs res x jP jT sp a R,
+  pri_sep_c fs gs res jP jT sp a R = true -> pri_sep_c fs gs (res ++ x) jP jT sp a R = true.
+Proof.
+  intros fs gs res x jP jT sp a R. unfold pri_sep_c.
+  destruct (sep_cached a R); [intros _; reflexivity | cbv beta iota; apply pri_sep_ff_app].
+Qed.
+Lemma pri_sep_t_app : forall fs gs res x jP jT sp a R,
+  pri_sep_t fs gs res jP jT sp a R = true -> pri_sep_t fs gs (res ++ x) jP jT sp a R = true.
+Proof.
+  intros fs gs res x jP jT sp a R. unfold pri_sep_t.
+  destruct (sep_cached a R); [intros _; reflexivity|].
+  destruct (existsb_l (live_in_l fs a R) CLS); cbv beta iota; [intro H; exact H | apply pri_sep_ff_app].
+Qed.
+Lemma pri_sep_f_app : forall fs gs res x jP jT sp a R,
+  pri_sep_f fs gs res jP jT sp a R = true -> pri_sep_f fs gs (res ++ x) jP jT sp a R = true.
+Proof.
+  intros fs gs res x jP jT sp a R H. rewrite <- pri_sep_ff_eq in H. rewrite <- pri_sep_ff_eq.
+  exact (pri_sep_ff_app _ _ _ _ _ _ _ _ _ H).
+Qed.
 (* [comment removed for export] *)
 End AcPriSep.
 

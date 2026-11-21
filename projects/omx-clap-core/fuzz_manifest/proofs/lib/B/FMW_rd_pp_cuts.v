@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pp_cuts.v (a working branch e2e59892bef),
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pp_cuts.v (a working branch),
    re-walked for B's code (B-readings.lst 0x82060 .. 0x821c0): A's segment structure, B's registers, loop layout and
    UBSan guards. *)
 (* lv2_locate_manifest_readings on fm.asan-ubsan, segment PP (rd_seg_P of lib/B/FMW_rd_cuts.v): the shared base of the

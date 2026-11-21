@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of the header leaf and the read entry, carried to the stderr leaves). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From stdpp Require gmap.
@@ -172,6 +173,7 @@ K [] ->
 DF usp0 pp tid path m -> HEAPc B A [(buf, cap)] m md -> (exists errv, rw_cells rsegs m RERRNO [C4 errv]) ->
 gp = Z_to_bv 64 0x10800 -> tp = Z_to_bv 64 0x77c00 ->
 fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+m_channel_reader md = true ->
 (forall (m' : mem) (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) (F' : bvmap 5 word) (fc' : bv 32),
 DFX usp0 pp tid path m' -> HEAPc B A [(buf, cap)] m' md ->
 (exists errv, rw_cells rsegs m' RERRNO [C4 errv]) ->
@@ -191,7 +193,7 @@ Hypothesis HLEAF : hdr_leaf_stmt.
 #[using="FD2 TRUN HLEAF"] Theorem hdr_ok : hdr_stmt usp0 tid ppw path data fs fds0.
 Proof.
 unfold hdr_stmt. intros until fc. intros HI Hgp Htp FRM. subst gp tp.
-destruct HI as [D HP DSH SH Hcap Hlen (junk & BLK) (errv & ERR) Hfds Hfs HBUD].
+destruct HI as [D HP DSH SH Hcap Hlen (junk & BLK) (errv & ERR) Hfds Hfs HBUD Hrdr].
 pose proof (f_sp _ _ _ _ _ D) as SPB. pose proof (f_ceil _ _ _ _ _ D) as CEIL.
 pose proof (heapc_model_ok B _ _ _ _ HP) as MOK. pose proof (heapc_mem_inv B _ _ _ _ HP) as MI.
 pose proof (heapc_blk B _ _ _ _ buf cap HP ltac:(left; reflexivity)) as (_ & _ & Bpos & Bhi & _ & Bimg).
@@ -205,7 +207,7 @@ if_truex. apply evt_RZ_done.
 unfold t_body. replace (MAX_INPUT <=? Z.of_nat (length data)) with false by (symmetry; apply Z.leb_gt; unfold MAX_INPUT; lia).
 replace (length data <? 6)%nat with true by (symmetry; apply Nat.ltb_lt; lia).
 rewrite t_die_unfold.
-eapply (HLEAF 0x20d3c msg_short); [left; split; reflexivity| apply t_emit_has_nil| exact D| exact HP| exists errv; exact ERR| reflexivity| reflexivity| exact (CFDS_2 _ FD2 _ Hfds)|].
+eapply (HLEAF 0x20d3c msg_short); [left; split; reflexivity| apply t_emit_has_nil| exact D| exact HP| exists errv; exact ERR| reflexivity| reflexivity| exact (CFDS_2 _ FD2 _ Hfds)| exact Hrdr|].
 intros m' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' D' HP' ERR' OUTN ERRC.
 eapply rz_conseq; [| apply t_emit_W_nil; apply t_emit_has_nil].
 apply (tail_ok usp0 tid ppw path fs 2 buf cap [] m' md A []); [| reflexivity].
@@ -236,7 +238,7 @@ destruct (Nat.lt_ge_cases (length data) (6 + Z.to_nat cl)) as [OVR|FIT].
 if_truex. apply evt_RZ_done.
 replace (length data <? 6 + Z.to_nat cl)%nat with true by (symmetry; apply Nat.ltb_lt; lia).
 rewrite t_die_unfold.
-eapply (HLEAF 0x20d58 msg_overrun); [right; split; reflexivity| apply t_emit_has_nil| exact D| exact HP| exists errv; exact ERR| reflexivity| reflexivity| exact (CFDS_2 _ FD2 _ Hfds)|].
+eapply (HLEAF 0x20d58 msg_overrun); [right; split; reflexivity| apply t_emit_has_nil| exact D| exact HP| exists errv; exact ERR| reflexivity| reflexivity| exact (CFDS_2 _ FD2 _ Hfds)| exact Hrdr|].
 intros m' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' D' HP' ERR' OUTN ERRC.
 eapply rz_conseq; [| apply t_emit_W_nil; apply t_emit_has_nil].
 apply (tail_ok usp0 tid ppw path fs 2 buf cap [] m' md A []); [| reflexivity].
@@ -268,7 +270,7 @@ rewrite (zero_lines_split (calls_of data)) by exact CALLS1. apply t_emit_W_app.
 - destruct (length data - 6 - Z.to_nat (cfglen_of data))%nat eqn:EQ; [lia|].
 rewrite (zero_lines_split (calls_of data)) by exact CALLS1. apply t_emit_W_app. }
 eapply (TRUN buf cap m md A Tok Tfail); [| lia| reflexivity| reflexivity| exact FRM| subst Tok; apply t_emit_has_nil| |].
-{ constructor; [exact D| exact HP| exact DSH| exact SH| exact Hcap| exact Hlen| exists junk; exact BLK| exists errv; exact ERR| exact Hfds| exact Hfs| exact HBUD]. }
+{ constructor; [exact D| exact HP| exact DSH| exact SH| exact Hcap| exact Hlen| exists junk; exact BLK| exists errv; exact ERR| exact Hfds| exact Hfs| exact HBUD| exact Hrdr]. }
 *
 intros m' md' A' LK F' fc' gp' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' RP.
 destruct RP as [D' HP' ERR' Hfs' OUT' ERR2'].
@@ -387,11 +389,11 @@ Section AmbE.
 Context {AMB : Amb}.
 
 #[using="Type"] Lemma DF_munch_e : forall usp0 pp tid path m m' W,
-DF usp0 pp tid path m -> munch W m m' -> wmono rsegs m m' -> stk rsegs m' (usp0 - 8388608) (usp0 - 128) ->
+DF usp0 pp tid path m -> munch W m m' -> wmono rsegs m m' -> stk rsegs m' (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) ->
 Forall (fun iv => snd iv <= usp0 - 128 /\ (snd iv <= 0x10000 \/ 0x99000 <= fst iv \/ (RERRNO <= fst iv /\ snd iv <= RERRNO + 4)) /\ fst iv <= snd iv) W ->
 DF usp0 pp tid path m'.
 Proof.
-intros usp0 pp tid path m m' W D MU WM ST' FW. destruct D as [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL].
+intros usp0 pp tid path m m' W D MU WM ST' FW. pose proof QRjH.Mq3.stack_window_depth_val as SWD. destruct D as [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL].
 assert (OUT : forall x, (usp0 - 128 <= x \/ (0x10000 <= x < 0x99000 /\ ~ (RERRNO <= x < RERRNO + 4))) -> outside W x).
 { intros x Hx. unfold RERRNO, RATP in *. clear -FW Hx. induction W as [|[lo hi] W IH]; [exact I|]. apply Forall_cons_iff in FW as [[F1 [F2 F3]] FW]. cbn [fst snd] in *.
 split; [lia| apply IH; exact FW]. }
@@ -401,8 +403,8 @@ assert (EQ : forall x, (usp0 - 128 <= x \/ (0x10000 <= x < 0x99000 /\ ~ (RERRNO 
 destruct PTH as (P1 & P2 & P3). destruct TID as [T1 T2].
 constructor.
 - exact SPB.
-- destruct (stk_split rsegs m (usp0 - 8388608) (usp0 - 128) usp0 STK ltac:(lia)) as [_ S2].
-apply (stk_merge rsegs m' (usp0 - 8388608) (usp0 - 128) usp0 ST'); [| lia].
+- destruct (stk_split rsegs m (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) usp0 STK ltac:(lia)) as [_ S2].
+apply (stk_merge rsegs m' (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) usp0 ST'); [| lia].
 eapply stk_transport; [exact S2| exact MU| exact WM|]. intros x Hx. left. apply OUT. lia.
 - destruct FRM as [[WF BA] WR]. split; [split; [exact WF|]|].
 + eapply bytes_at_agree; [exact BA|]. intros x Hx. apply EQ; [left; lia|]. rewrite cells_bytes_length in Hx by exact WF. cbn in Hx. lia.
@@ -430,14 +432,14 @@ Hypothesis DOT : path = QBxa.Mq5.dot_path.
 Hypothesis LOOM : leaf_oom_stmt usp0 pp tid path.
 Hypothesis LERR : leaf_readerr_stmt usp0 pp tid path.
 Notation B := usp0.
-Notation LO := (usp0 - 8388608).
+Notation LO := (usp0 - QRjH.Mq3.stack_window_depth).
 Notation SP := (usp0 - 128).
 
 #[using="FD2 DOT LOOM LERR"] Theorem read_entry_dir :
 read_entry_stmt usp0 tid ppw path (fd_insert fds0 (Z_to_bv 64 3) FdDir) fs (t_opened_dir path fs).
 Proof.
 unfold read_entry_stmt, t_opened_dir.
-intros F fc t0 t1 t2 s1 a1 a2 a3 a4 a5 a6 a7 s3 t3 t4 t5 t6 m md DE HP HBUD Hfds Hfs FRM.
+intros F fc t0 t1 t2 s1 a1 a2 a3 a4 a5 a6 a7 s3 t3 t4 t5 t6 m md DE HP HBUD Hfds Hfs Hrdr FRM. pose proof QRjH.Mq3.stack_window_depth_val as SWD.
 pose proof (DF_of_entry _ _ _ _ _ DE) as D. destruct DE as [SPB STK FRMc ERRC _ _ _ _ _ _ MI _ _ _ _ _ PTH _ _ CEIL].
 eapply (heapc_malloc_first B rmalloc_spec
 (Z_to_bv 64 0x20bd8) (Z_to_bv 64 SP) (Z_to_bv 64 0x10800) (Z_to_bv 64 0x77c00)
@@ -462,7 +464,7 @@ open_ret RS. pose proof (heapc_model_ok B _ _ _ _ HP') as MOK'. rewrite unsigned
 assert (D' : DF B pp tid path m') by (eapply (DF_alloc B pp tid path m m' LB0 SP LO D PRES (heapc_mem_inv B _ _ _ _ HP') ST' eq_refl ltac:(lia))).
 reenter MOK'. step. if_truex. apply evt_RZ_done.
 rewrite <- Hfs, <- (vm_only_fs md md' VM).
-eapply LOOM; [exact D'| exact HP'| reflexivity| reflexivity| | right; reflexivity].
+eapply LOOM; [exact D'| exact HP'| reflexivity| reflexivity| | rewrite (vm_only_rdr md md' VM); exact Hrdr| right; reflexivity].
 rewrite (vm_only_fds md md' VM), Hfds. rewrite Qn1e.fd_lookup_insert_neq by exact neq23. exact FD2.
 -
 intros ms' m' md' A' r errv' RS VM ST' (LB0 & PLB & PRES) ERR' Hr (junk & BLK) RNG HP' SH' DSH' BUD'.
@@ -493,7 +495,7 @@ repeat split; intros [X1 X2]; apply NCW.
 reenter MOKx. step. if_truex. apply evt_RZ_done.
 rewrite <- Hfs, <- (vm_only_fs md md' VM).
 rewrite <- (Z_to_bv_bv_unsigned ppw).
-eapply LERR; [exact D2| exact HP2| exact DOT| reflexivity| reflexivity|].
+eapply LERR; [exact D2| exact HP2| exact DOT| reflexivity| reflexivity| | rewrite (vm_only_rdr md md' VM); exact Hrdr].
 rewrite (vm_only_fds md md' VM), Hfds. rewrite Qn1e.fd_lookup_insert_neq by exact neq23. exact FD2.
 Qed.
 End ReadDir.

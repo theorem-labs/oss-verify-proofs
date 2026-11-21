@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMove.v at commit c395a1e0dfa, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMove.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the move proofs follow mremap's source cut (maps_subtract, region_free_maps_subtract), its TASK_SIZE gate and its in-place grow when there is room (mremap_inplace_room_b), with a comment of this file's own on each, the source's comment on the grow branch of mremap_at_down is left out, and the cited source commit is named by its public id. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -28,13 +29,29 @@ Proof.
   apply IH. intros b' s' Hin. apply H. right. exact Hin.
 Qed.
 
+(* LPS 08b1429: a range free of every mapping is free of the mremap source cut, whose pieces lie
+   inside those mappings ([maps_subtract_In], [iv_subtract_within]). *)
+Lemma region_free_maps_subtract : forall (l : list (word * word)) (lo hi : Z) (a n : word),
+  (forall (b s : word), In (b, s) l -> (bv_unsigned b + bv_unsigned s <= two_pow_64)%Z) ->
+  region_free l a n = true -> region_free (maps_subtract l lo hi) a n = true.
+Proof.
+  intros l lo hi a n Hfit Hf. apply State.region_free_intro. intros b s Hin.
+  destruct (maps_subtract_In l lo hi b s Hin) as (b0 & s0 & Hin0 & Hiv).
+  destruct (iv_subtract_within b0 s0 lo hi b s (Hfit b0 s0 Hin0) Hiv) as [W1 W2].
+  pose proof (State.region_free_In l a n b0 s0 Hf Hin0) as H0.
+  unfold iv_overlap in *. apply andb_false_iff in H0. apply andb_false_iff.
+  destruct H0 as [H0|H0]; apply Z.ltb_ge in H0; [left | right]; apply Z.ltb_ge; lia.
+Qed.
+
 Theorem move_charge_le : forall m old old_n dst new_n,
   vm_fit (m_vmmaps m) ->
   (bv_unsigned dst mod page_size = 0)%Z ->
   (bv_unsigned new_n mod page_size = 0)%Z ->
   (0 < bv_unsigned new_n)%Z ->
   (bv_unsigned dst + bv_unsigned new_n < two_pow_64)%Z ->
-  region_free (map_remove (vm_maps (m_vmmaps m)) old) dst new_n = true ->
+  (* LPS 08b1429: [mremap_maps_next] cuts the source RANGE ([maps_subtract]) where it used
+     [map_remove] on the base address, so the free-destination premise reads the same list. *)
+  region_free (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) dst new_n = true ->
   (vm_backing_used (mremap_model_next m old old_n dst new_n) <= mremap_move_charge m old old_n new_n)%Z.
 Proof.
   intros m old old_n dst new_n Hfit Halign Hnalign Hpos Hend Hmaps.
@@ -50,13 +67,16 @@ Proof.
   unfold vm_backed_maps. cbn [vm_maps vm_noaccess vm_limit].
   set (KL := maps_subtract (m_vm_lazy m) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
   set (KP := List.filter (page_outside_range (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) (m_vm_materialized m)) in *.
-  set (R0 := map_remove (vm_maps (m_vmmaps m)) old) in *.
+  set (R0 := maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) in *.
   set (NA := vm_noaccess (m_vmmaps m)) in *.
   set (dlo := bv_unsigned dst) in *. set (dhi := (dlo + bv_unsigned new_n)%Z) in *.
   pose proof (mremap_word_range dst) as Hdr. fold dlo in Hdr.
   (* [comment removed for export] *)
   assert (HfitR : forall (a sz : word), In (a, sz) R0 -> (bv_unsigned a + bv_unsigned sz <= two_pow_64)%Z).
-  { intros a sz Hin. apply Hfit. unfold R0, map_remove in Hin. apply List.filter_In in Hin as [Hin _]. exact Hin. }
+  { intros a sz Hin. unfold R0 in Hin.
+    destruct (maps_subtract_In (vm_maps (m_vmmaps m)) _ _ a sz Hin) as (a0 & sz0 & Hin0 & Hiv).
+    pose proof (Hfit a0 sz0 Hin0) as Hf0.
+    destruct (iv_subtract_within a0 sz0 _ _ a sz Hf0 Hiv). lia. }
   (* [comment removed for export] *)
   assert (HX : forall (b s : word), In (b, s) (maps_subtract_all R0 NA) ->
             (bv_unsigned b + bv_unsigned s <= two_pow_64
@@ -122,6 +142,8 @@ Proof.
   destruct (negb (bv_unsigned flags =? MREMAP_MAYMOVE)%Z); [intros _; at_auto|].
   destruct (negb (bv_unsigned old mod page_size =? 0)%Z); [intros _; at_auto|].
   destruct (page_align_is0_b new_size) eqn:Hnew; [intros _; at_auto|].
+  (* LPS 08b1429's gate: a page-aligned new length over TASK_SIZE is EINVAL. *)
+  destruct (TASK_SIZE <? new_nZ)%Z; [intros _; at_auto|].
   destruct (page_align_is0_b old_size) eqn:Hold; [intros _; at_auto|].
   intros R2. apply at_get_model. cbv beta zeta.
   change (mremap_source_b (m_vmmaps (setL L m)) old old_n old_nZ) with (mremap_source_b (m_vmmaps m) old old_n old_nZ).
@@ -135,38 +157,45 @@ Proof.
   destruct (new_nZ <? old_nZ)%Z eqn:Elt.
   - (* [comment removed for export] *)
     apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto].
-  - (* [comment removed for export] *)
+  -
     apply Z.ltb_ge in Elt. apply Z.eqb_neq in Eeq.
     assert (Hle : (new_nZ <=? old_nZ)%Z = false) by (apply Z.leb_gt; lia).
-    rewrite Hle in R2. apply negb_false_iff in R2. apply andb_true_iff in R2 as [Rf Rm].
+    rewrite Hle in R2.
     pose proof (page_align_is0_b_false_word new_size Hnew) as Hnw. fold new_nZ in Hnw. fold new_n in Hnw.
     pose proof (page_round_up_Z_mod (bv_unsigned new_size)) as Hnmod. fold new_nZ in Hnmod.
     pose proof (page_round_up_Z_nonneg (bv_unsigned old_size) (proj1 (mremap_word_range old_size))) as Honn. fold old_nZ in Honn.
     pose proof (alloc_top_lt (m_vmmaps m)) as Htop.
-    unfold mremap_move_budget_b in Rm. apply Z.leb_le in Rm.
-    change (mremap_move_charge (setL L m) old old_n new_n) with (mremap_move_charge m old old_n new_n) in Rm.
-    change (vm_limit (m_vmmaps (setL L m))) with L in Rm.
-    rewrite mremap_final_budget_b_setL in Rf.
-    assert (Rfm : mremap_final_budget_b m old old_n old new_n = true).
-    { unfold mremap_final_budget_b, vm_backing_within_limit. apply Z.leb_le. apply Z.leb_le in Rf.
-      change (vm_limit (m_vmmaps (mremap_model_next m old old_n old new_n))) with (mlim m). lia. }
-    assert (MOVE : lim_at L i m
-              (dst <- choose (fun dst => mremap_fresh_b m old_nZ new_nZ old old_n dst new_n = true) ;;
-               modify (fun _ => mremap_model_next m old old_n dst new_n) ;;
-               pure (mremap_move_effect old old_n dst old_nZ new_nZ))
-              (dst <- choose (fun dst => mremap_fresh_b (setL L m) old_nZ new_nZ old old_n dst new_n = true) ;;
-               modify (fun _ => mremap_model_next (setL L m) old old_n dst new_n) ;;
-               pure (mremap_move_effect old old_n dst old_nZ new_nZ))).
-    { apply at_bind.
-      - apply at_choose. intros dst Hd. unfold mremap_fresh_b in *. cbv zeta in *.
-        apply andb_true_iff in Hd as [Hd _]. apply andb_true_iff. split; [exact Hd|].
+    (* LPS 08b1429: the grow path is the in-place one when there is room, the move otherwise;
+       [setL] changes only [vm_limit], which the room test does not read. *)
+    assert (IR : mremap_inplace_room_b (setL L m) old old_n new_n old_nZ new_nZ
+                 = mremap_inplace_room_b m old old_n new_n old_nZ new_nZ).
+    { unfold mremap_inplace_room_b. cbv zeta.
+      change (m_vmmaps (setL L m)) with (setvl L (m_vmmaps m)).
+      change (alloc_top (setvl L (m_vmmaps m))) with (alloc_top (m_vmmaps m)).
+      change (vm_reserved (setvl L (m_vmmaps m))) with (vm_reserved (m_vmmaps m)).
+      change (vm_maps (setvl L (m_vmmaps m))) with (vm_maps (m_vmmaps m)).
+      reflexivity. }
+    rewrite IR in R2. rewrite IR. revert R2.
+    destruct (mremap_inplace_room_b m old old_n new_n old_nZ new_nZ) eqn:Eroom; intros R2.
+    +
+      apply negb_false_iff in R2.
+      apply at_bind.
+      * apply at_choose. intros [] _. exact R2.
+      * intros [] m1 ev Hc. apply choose_inv in Hc as (_ & -> & ->).
+        apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto].
+    +
+      apply negb_false_iff in R2.
+      unfold mremap_move_budget_b in R2. apply Z.leb_le in R2.
+      change (mremap_move_charge (setL L m) old old_n new_n) with (mremap_move_charge m old old_n new_n) in R2.
+      change (vm_limit (m_vmmaps (setL L m))) with L in R2.
+      apply at_bind.
+      * apply at_choose. intros dst Hd. unfold mremap_dst_ok in *. destruct Hd as [Hp Hf].
+        split; [exact Hp|]. unfold mremap_fresh_b in *. cbv zeta in *.
+        apply andb_true_iff in Hf as [Hf _]. apply andb_true_iff. split; [exact Hf|].
         rewrite mremap_final_budget_b_setL. apply Z.leb_le.
-        apply andb_true_iff in Hd as [Hd Hrf]. apply andb_true_iff in Hd as [Hd Htp].
-        apply andb_true_iff in Hd as [Hd _]. apply andb_true_iff in Hd as [_ Hal].
+        apply andb_true_iff in Hf as [Hf Hrf]. apply andb_true_iff in Hf as [Hf Htp].
+        apply andb_true_iff in Hf as [Hf _]. apply andb_true_iff in Hf as [_ Hal].
         apply Z.eqb_eq in Hal. apply Z.leb_le in Htp.
-        change (m_vmmaps (setL L m)) with (setvl L (m_vmmaps m)) in Hrf, Htp.
-        change (alloc_top (setvl L (m_vmmaps m))) with (alloc_top (m_vmmaps m)) in Htp.
-        cbn [setvl vm_reserved vm_maps] in Hrf.
         pose proof (mremap_word_range dst) as Hdr.
         assert (Hc : (vm_backing_used (mremap_model_next m old old_n dst new_n) <= mremap_move_charge m old old_n new_n)%Z).
         { apply move_charge_le.
@@ -175,20 +204,8 @@ Proof.
           - rewrite Hnw. exact Hnmod.
           - rewrite Hnw. lia.
           - rewrite Hnw. lia.
-          - apply region_free_map_remove. exact (region_free_app_r _ _ _ _ Hrf). }
+          - apply region_free_maps_subtract; [exact Hfit | exact (region_free_app_r _ _ _ _ Hrf)]. }
         lia.
-      - intros dst m1 ev Hc. apply choose_inv in Hc as (_ & -> & ->).
-        apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto]. }
-    assert (IG : mremap_inplace_grow_b (setL L m) old old_n new_n old_nZ new_nZ = mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ).
-    { unfold mremap_inplace_grow_b. cbv zeta.
-      change (m_vmmaps (setL L m)) with (setvl L (m_vmmaps m)).
-      change (alloc_top (setvl L (m_vmmaps m))) with (alloc_top (m_vmmaps m)).
-      change (vm_reserved (setvl L (m_vmmaps m))) with (vm_reserved (m_vmmaps m)).
-      change (vm_maps (setvl L (m_vmmaps m))) with (vm_maps (m_vmmaps m)).
-      rewrite Rfm. rewrite mremap_final_budget_b_setL. rewrite Rf. reflexivity. }
-    rewrite IG.
-    destruct (mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ).
-    + apply at_alt; [| exact MOVE].
-      apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto].
-    + exact MOVE.
+      * intros dst m1 ev Hc. apply choose_inv in Hc as (_ & -> & ->).
+        apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto].
 Qed.

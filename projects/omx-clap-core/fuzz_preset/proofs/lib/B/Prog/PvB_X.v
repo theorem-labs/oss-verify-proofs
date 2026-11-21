@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1213 of its 1267 lines of code are new or changed and 724 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/BTxString.v, with its module paths and module names changed; 485 of its 540 lines of code are new or changed and 1212 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset image B (asan-ubsan), parse_value 0x8637c (a Theorem Labs walk): segment X, the EXIT, B 0x8664c .. 0x866ec,
    over the ONE image-B program listing (lib/B/Listing_prog.v) with the PA-listing engine on YCbqG's
    ajournal_x. The segment's cuts are PvB_Defs.v's: from pv_at_exit (the result code in s5, the fake
@@ -160,7 +161,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 (* the kit rule: YCbqG's 16-field record at the harness head length, as the instance AR_laws_x_xs gives it (the
    sibling segments PvB_D / PvB_D_Lit state it the same way) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* YGcallSx.v:280-292, the three ARx-form hypotheses of aj_flag_store_xR, verbatim (ASFX = YG0dcf astack_free_law_cf,
+(* YGcallSx.v:281-293, the three ARx-form hypotheses of aj_flag_store_xR, verbatim (ASFX = YG0dcf astack_free_law_cf,
    FFLX = the two conjuncts of cgif's frame_flag_lawP the rule reads, SFX = YG05cf stack_free_ok_cf) *)
 Hypothesis ASFX : forall ly S Hp W mem md mem' md' cid pos,
   ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
@@ -182,7 +183,7 @@ Hypothesis FLAGP : forall ly S Hp (W : world SEGS) mem md cid pos,
   apresent (w_H W) mem (flag_addr ly cid pos) /\ aowned B ly S (flag_addr ly cid pos) /\
   in_app (flag_addr ly cid pos) 1 /\ flag_addr ly cid pos < YM05.alloc_ceiling.
 (* MARKED image fact, discharged at PI_prog_B: alloc.c's five statics are image bytes the program owns
-   (YC80x.v:53's PST_ok, the listing engine's own hypothesis for a program-written static) *)
+   (YC80x.v:54's PST_ok, the listing engine's own hypothesis for a program-written static) *)
 Hypothesis PSTOK : forall a, Exists (in_zr a) PSTX ->
   in_img SEGS a /\ ~ Exists (in_zr a) (as_owned_static B).
 (* MARKED instance fact, discharged at lib/A/CfParamsPreset.v (cf_head = 16, preset source/alloc.c:31): a harness

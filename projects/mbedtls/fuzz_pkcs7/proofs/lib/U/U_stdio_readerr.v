@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new section hypothesis Hrdr, the channel reader that writev reads, added to the proof-using lists of re_tail, ref_read_error and ref_read_error_dot and passed on to re_segF; know_okRE reads the stack window at sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -38,13 +39,15 @@ Section ReadErr.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev reads the channel reader (recipes/channel-reader-premise.md) *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
   Let SPal : (bv_unsigned sp0 mod 16 = 0)%Z := proj2 (proj2 Hvsp).
 
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2"] Theorem re_tail : ltac2:(CDefT.buildp (gd_tbl_P_stdio_readerr ()) "Ppath,(0.(1.&8.))Ppp,(1.&40.)Pt8,(0.(1.&8.))Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.(5.(1.&8.)(6.&8.=)R6.))P,(7.(8.(9.(1.&8.)R7.))+3<.)P,(:.$;.(9.(1.&40.)R5.)#27.)P,(:.(1.&40.)(<.R6.#0.)Vsp0,)P,(:.(1.&40.)(<.R7.#2.)R9.)P,(7.(=.&40.Vsp0,)(=.&40.R:.))P,(7.(>.(>.(=.&40.R;.)(8.(9.(1.&8.)R<.)))+8.)(>.(=.&40.Vsp0,)+400000.))P,(?.(10.VBL,R:.)$11.R9.)P,(12.$13.(10.VBL,R;.)R9.$14.)P,(:.(3.(0.(1.&8.)))(15.$13.R:.R>.(16.(9.(1.&8.)R?.)#1.))(17.(0.(1.&8.))(18.(1.&8.)R?.(19.(1.&8.)(6.&8.=)(1:.(1.&8.))))))P,(:.(3.(0.(1.&8.)))(15.$13.R;.(6.&40.(>.(=.&40.R?.)(8.(9.(1.&8.)R10.))))#8.)(17.(0.(1.&8.))R>.))(1;.$13.(1<.(1=.$1>.R=.(6.&40.+1=478.)R<.(1?.$13.))Vmodel,)(20.(21.R11.)(22.Vmodel,)))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr"] Theorem re_tail : ltac2:(CDefT.buildp (gd_tbl_P_stdio_readerr ()) "Ppath,(0.(1.&8.))Ppp,(1.&40.)Pt8,(0.(1.&8.))Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.(5.(1.&8.)(6.&8.=)R6.))P,(7.(8.(9.(1.&8.)R7.))+3<.)P,(:.$;.(9.(1.&40.)R5.)#27.)P,(:.(1.&40.)(<.R6.#0.)Vsp0,)P,(:.(1.&40.)(<.R7.#2.)R9.)P,(7.(=.&40.Vsp0,)(=.&40.R:.))P,(7.(>.(>.(=.&40.R;.)(8.(9.(1.&8.)R<.)))+8.)(>.(=.&40.Vsp0,)+400000.))P,(?.(10.VBL,R:.)$11.R9.)P,(12.$13.(10.VBL,R;.)R9.$14.)P,(:.(3.(0.(1.&8.)))(15.$13.R:.R>.(16.(9.(1.&8.)R?.)#1.))(17.(0.(1.&8.))(18.(1.&8.)R?.(19.(1.&8.)(6.&8.=)(1:.(1.&8.))))))P,(:.(3.(0.(1.&8.)))(15.$13.R;.(6.&40.(>.(=.&40.R?.)(8.(9.(1.&8.)R10.))))#8.)(17.(0.(1.&8.))R>.))(1;.$13.(1<.(1=.$1>.R=.(6.&40.+1=478.)R<.(1?.$13.))Vmodel,)(20.(21.R11.)(22.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     intros path pp t8 vals R M Hnonul HPl HL P0 P2 Hpp1 Hpp2 HR HK Hstr Ht8.
@@ -52,7 +55,7 @@ Section ReadErr.
     eapply (re_segBC sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
-    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -137,7 +140,7 @@ Section ReadErr.
     - change (edenot E (EVar 0)) with sp0. lia.
     - (* [comment removed for export] *) split; [apply flat_intro; cbn; lia|].
       intros d m Hd Hm. unfold estart. cbn [a_base a_off]. change (edenot E (EVar 0)) with sp0.
-      replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia.
+      replace (bv_unsigned sp0 + -6144512 + d)%Z with (bv_unsigned sp0 - 6144512 + d)%Z by lia.
       apply Mstack; lia.
     - change (edenot E (EVar 2)) with pp. lia.
     - (* [comment removed for export] *) split; [apply flat_intro; cbn [edenot a_base a_off]; rewrite ?(u_small 0) by lia; lia|].
@@ -158,7 +161,7 @@ Section ReadErr.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="BL Hvsp Hh Hlazy Hfd2 SPlo SPhi SPal tid canw Rsp Rgp Rtp Rs2 Mstack Mimg Mgot Mcomp Mtid Htid Mlock Mcanary Mneedlocks Mstdin Mofl Hpp1 E"] Theorem ref_read_error : ltac2:(CDefT.buildp (gd_tbl_P_stdio_readerr ()) "Ppath,(0.(1.&8.))Pt8,(0.(1.&8.))P,(4.(5.(1.&8.)(6.&8.=)R2.))P,(7.(8.(9.(1.&8.)R3.))+3<.)P,(7.(>.(>.(=.&40.Vpp,)(8.(9.(1.&8.)R4.)))+8.)(>.(=.&40.Vsp0,)+400000.))P,(:.(3.(0.(1.&8.)))(15.$13.VM,Vpp,(16.(9.(1.&8.)R5.)#1.))(17.(0.(1.&8.))(18.(1.&8.)R5.(19.(1.&8.)(6.&8.=)(1:.(1.&8.))))))P,(:.(3.(0.(1.&8.)))(15.$13.VM,(6.&40.(>.(=.&40.Vpp,)(8.(9.(1.&8.)R6.))))#8.)(17.(0.(1.&8.))R5.))(1;.$13.(1<.(1=.$1>.VR,(6.&40.+1=478.)VM,(1?.$13.))Vmodel,)(20.(21.R7.)(22.Vmodel,)))")
+  #[using="BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi SPal tid canw Rsp Rgp Rtp Rs2 Mstack Mimg Mgot Mcomp Mtid Htid Mlock Mcanary Mneedlocks Mstdin Mofl Hpp1 E"] Theorem ref_read_error : ltac2:(CDefT.buildp (gd_tbl_P_stdio_readerr ()) "Ppath,(0.(1.&8.))Pt8,(0.(1.&8.))P,(4.(5.(1.&8.)(6.&8.=)R2.))P,(7.(8.(9.(1.&8.)R3.))+3<.)P,(7.(>.(>.(=.&40.Vpp,)(8.(9.(1.&8.)R4.)))+8.)(>.(=.&40.Vsp0,)+400000.))P,(:.(3.(0.(1.&8.)))(15.$13.VM,Vpp,(16.(9.(1.&8.)R5.)#1.))(17.(0.(1.&8.))(18.(1.&8.)R5.(19.(1.&8.)(6.&8.=)(1:.(1.&8.))))))P,(:.(3.(0.(1.&8.)))(15.$13.VM,(6.&40.(>.(=.&40.Vpp,)(8.(9.(1.&8.)R6.))))#8.)(17.(0.(1.&8.))R5.))(1;.$13.(1<.(1=.$1>.VR,(6.&40.+1=478.)VM,(1?.$13.))Vmodel,)(20.(21.R7.)(22.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     intros path t8 Hnonul HPl Hpp2 Hstr Ht8.
@@ -170,7 +173,7 @@ Section ReadErr.
     - apply know_okRE. lia.
   Qed.
 
-  #[using="BL Hvsp Hh Hlazy Hfd2 SPlo SPhi SPal tid canw Rsp Rgp Rtp Rs2 Mstack Mimg Mgot Mcomp Mtid Htid Mlock Mcanary Mneedlocks Mstdin Mofl Hpp1 E"] Corollary ref_read_error_dot : ltac2:(CDefT.buildp (gd_tbl_P_stdio_readerr ()) "Pt8,(0.(1.&8.))P,(7.(>.(=.&40.Vpp,)+9.)(>.(=.&40.Vsp0,)+400000.))P,(:.(3.(0.(1.&8.)))(15.$13.VM,Vpp,#2.)(17.(0.(1.&8.))(19.(1.&8.)(6.&8.+2>.)(19.(1.&8.)(6.&8.=)(1:.(1.&8.))))))P,(:.(3.(0.(1.&8.)))(15.$13.VM,(6.&40.(>.(=.&40.Vpp,)+1.))#8.)(17.(0.(1.&8.))R3.))(1;.$13.(1<.(1=.$1>.VR,(6.&40.+1=478.)VM,(1?.$13.))Vmodel,)(20.(21.$23.)(22.Vmodel,)))")
+  #[using="BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi SPal tid canw Rsp Rgp Rtp Rs2 Mstack Mimg Mgot Mcomp Mtid Htid Mlock Mcanary Mneedlocks Mstdin Mofl Hpp1 E"] Corollary ref_read_error_dot : ltac2:(CDefT.buildp (gd_tbl_P_stdio_readerr ()) "Pt8,(0.(1.&8.))P,(7.(>.(=.&40.Vpp,)+9.)(>.(=.&40.Vsp0,)+400000.))P,(:.(3.(0.(1.&8.)))(15.$13.VM,Vpp,#2.)(17.(0.(1.&8.))(19.(1.&8.)(6.&8.+2>.)(19.(1.&8.)(6.&8.=)(1:.(1.&8.))))))P,(:.(3.(0.(1.&8.)))(15.$13.VM,(6.&40.(>.(=.&40.Vpp,)+1.))#8.)(17.(0.(1.&8.))R3.))(1;.$13.(1<.(1=.$1>.VR,(6.&40.+1=478.)VM,(1?.$13.))Vmodel,)(20.(21.$23.)(22.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     intros t8 Hpp2 Hstr Ht8.

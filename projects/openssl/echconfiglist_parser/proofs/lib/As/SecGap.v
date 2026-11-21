@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the gap is stated in the window from task_unmapped_base to alloc_top, where Linux's placement has an answer). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -215,13 +216,17 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+(* 727298f3: the gap is stated in Linux's bottom-up window [task_unmapped_base,
+   alloc_top), the band [Placement.linux_place_exists] needs for the placement rule
+   to have an answer. *)
 Corollary gap_witness_fit_top : forall (h : VmMaps) (B n : Z),
-  0 < n -> 0 < B -> B mod 4096 = 0 -> alloc_top h < 2^64 ->
+  0 < n -> task_unmapped_base <= B -> B mod 4096 = 0 -> alloc_top h < 2^64 ->
   B + cost n B (vm_reserved h ++ vm_maps h) + n <= alloc_top h ->
-  exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + n <= alloc_top h
+  exists g : word, bv_unsigned g mod page_size = 0 /\ task_unmapped_base <= bv_unsigned g /\ bv_unsigned g + n <= alloc_top h
                    /\ region_free (vm_reserved h ++ vm_maps h) g (Z_to_bv 64 n) = true.
 Proof.
   intros h B n Hn HB HBal HT BND.
-  destruct (gap_witness_fit h B (alloc_top h) n Hn HB HBal HT BND) as (g & G1 & G2 & G3 & G4 & G5).
-  exists g. repeat split; assumption.
+  assert (HB0 : 0 < B) by (unfold task_unmapped_base in HB; lia).
+  destruct (gap_witness_fit h B (alloc_top h) n Hn HB0 HBal HT BND) as (g & G1 & G2 & G3 & G4 & G5).
+  exists g. split; [exact G1|]. split; [lia|]. split; [exact G4 | exact G5].
 Qed.

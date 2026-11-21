@@ -20,9 +20,10 @@
 
     WHAT THE HARNESS CHECKS.  Mat_Open on the input (as a temp file),
     Mat_GetDir, then Mat_VarRead and Mat_VarFree for every name; nothing is
-    checked.  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    checked.  The harness makes no check of its own beyond not crashing.  Its
+    halts statements say only that the code it calls never crashes, hangs or
+    trips a sanitizer.  Its agreement statements say only that the code never
+    crashes or trips a sanitizer, and allow a run that never ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

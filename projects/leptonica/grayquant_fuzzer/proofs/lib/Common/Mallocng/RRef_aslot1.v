@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO; the THP flag of the mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -81,7 +82,7 @@ Context {fx : FPState} {RL : Reloc} {RC : RelocCode RL} {RS : RelocSites RL}.
 
 Lemma as_tail_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (s7 pm sc m p cnt aidx c1 : word)
     (K : word -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 23 = s7 -> getr R 21 = pm -> getr R 8 = sc -> getr R 9 = m -> getr R 10 = p ->
   getr R 25 = cnt -> getr R 12 = aidx -> getr R 11 = c1 ->
   tsafe (MallocTree.mbind (as_tail s7 pm sc m p cnt aidx c1) K s) P ->
@@ -95,7 +96,7 @@ Lemma as_tail_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (s
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_SLOT 0x708) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (as_tail s7 pm sc m p cnt aidx c1) K s) L).
 Proof.
-  intros md R mm rom s0 s s7 pm sc m p cnt aidx c1 K P L Hp Hag HI H23 H21 H8 H9 H10 H25 H12 H11 HS HK.
+  intros md R mm rom s0 s s7 pm sc m p cnt aidx c1 K P L Hp Hag HI Hthp0 Hvdo0 H23 H21 H8 H9 H10 H25 H12 H11 HS HK.
   pose proof I as HW. pose proof I as Hret. note_win HI. sys_hyps.
   unfold as_tail in HS |- *. munf. mnorm HS.
   as_run Hp HS Hag HI HW HK Hret K (fun _ : word => (pc+ PC_ALLOC_SLOT 0x860)).
@@ -131,7 +132,7 @@ Definition as_fail_stmt (ENTRY : word) : Prop :=
 Ltac as_fail_tac :=
   intros B md R mm rom s0 s sp DD m K P L Hp Hag HI H2 H9 H22 Hlo Hhi HDD Hstk HS HK;
   pose proof I as Hret; note_win HI; sys_hyps;
-  pose proof HI as HI0; destruct HI0 as (_ & _ & _ & Hlo0 & _ & Hhi64 & _);
+  pose proof HI as HI0; destruct HI0 as (_ & _ & _ & _ & Hlo0 & _ & Hhi64 & _);
   pose proof (mwin_init s0 mm sp DD Hstk) as HW;
   unfold as_fail, m_free_meta_ag in HS |- *; munf; mnorm HS;
   as_run Hp HS Hag HI HW HK Hret K (fun _ : word => (pc+ PC_ALLOC_SLOT 0x860)).
@@ -151,7 +152,7 @@ Definition as_actg_xr (x : option (word * word)) (R' : bvmap 5 word) : Prop :=
 
 Lemma as_actg_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (m3 : word)
     (K : option (word * word) -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 10 = m3 -> getr R 22 = A_LOCK ->
   tsafe (MallocTree.mbind (as_actg m3) K s) P ->
   (forall x s' mm' R',
@@ -164,7 +165,7 @@ Lemma as_actg_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (m
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_SLOT 0x128) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (as_actg m3) K s) L).
 Proof.
-  intros md R mm rom s0 s m3 K P L Hp Hag HI H10 H22 HS HK.
+  intros md R mm rom s0 s m3 K P L Hp Hag HI Hthp0 Hvdo0 H10 H22 HS HK.
   pose proof I as HW. pose proof I as Hret. note_win HI. sys_hyps.
   unfold as_actg, as_actg_xr in HS |- *. munf. mnorm HS.
   as_run Hp HS Hag HI HW HK Hret K (fun _ : option (word * word) => (pc+ PC_ALLOC_SLOT 0x1a0)).

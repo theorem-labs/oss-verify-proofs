@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the channel-reader premise of writev; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0OpenFail_tail.v, 14 lines within its lines 38-630. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -23,26 +24,35 @@ Import SX2. Import SX2S.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
+(* [comment removed for export] *)
 Tactic Notation "run_blk" constr(scr) constr(NX) := run_block_gen FUEL STOPS scr NX false.
 Tactic Notation "run_blk_keep" constr(scr) constr(NX) := run_block_gen FUEL STOPS scr NX true.
 Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 Variable scfg : SpuriousCfg.
 
+
 Section Tail.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable sp0 : word.
-  Variable BL : list (list byte).
+  Variable BL : list (list byte).          (* [comment removed for export] *)
   Variable model : Model.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev_spec reads [m_channel_reader] (recipes/channel-reader-premise.md) *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
 
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
   Lemma of_segI : forall vals R M,
     length vals = 263%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV vals) srI0 R -> know_ok RSEGS (ENV vals) M knI0 ->
@@ -52,7 +62,7 @@ Section Tail.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     run_blk scr0 263%nat.
-
+    (* [comment removed for export] *)
     apply (srz_conseq RSEGS scfg _ (t_emit (W 1 []) (t_exit (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) (m_fs model)))).
     2:{ cbn [W map].
         replace (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) with (exit_code 2) by (apply bv_eq; reflexivity).
@@ -98,6 +108,11 @@ Section Tail.
       exists (Z_to_bv 64 0), (Z_to_bv 64 0). repeat split; krd_solve HK.
   Qed.
 
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
   Definition PRE17 : list byte := s2b "cli: cannot open "%string.
 
   Lemma PRE17_words :
@@ -117,9 +132,9 @@ Section Tail.
   Proof.
     intros path P vals R M HP HPr HL P0 P113 HR HK SBp SBn.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-
+    (* [comment removed for export] *)
     run_blk_keep scr0 231%nat.
-
+    (* [comment removed for export] *)
     assert (WOK : win_ok (ENV vals) 0 BUF_LO BUF_HI IHI).
     { unfold win_ok, BUF_LO, BUF_HI, IHI. cbn [ev ENV]. rewrite P0. lia. }
     assert (SBp' : rdn RSEGS M0 (Z_to_bv 64 (bv_unsigned sp0 - 543)) (length path) = Some path).
@@ -130,8 +145,8 @@ Section Tail.
     { rewrite EQM, (rdn_mem_denot_out RSEGS (ENV vals) M _ 0 BUF_LO BUF_HI IHI);
         [exact SBn | vm_compute; reflexivity | exact WOK | cbn [ev ENV]; rewrite P0; unfold BUF_LO; rewrite u_small by lia; lia
         | cbn [ev ENV]; rewrite P0; unfold BUF_HI; rewrite u_small by lia; cbn; lia]. }
-    clear EQM SBp SBn. rename M0 into M'.
-
+    clear EQM SBp SBn. rename M0 into M'. 
+    (* [comment removed for export] *)
     krdv HK 0%nat (-560)%Z 8%nat Hw0. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
     krdv HK 0%nat (-552)%Z 8%nat Hw1. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
     krdv HK 0%nat (-544)%Z 1%nat Hw2. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
@@ -151,7 +166,7 @@ Section Tail.
       + replace (bv_unsigned sp0 + -560 + Z.of_nat 17)%Z with (bv_unsigned sp0 - 543)%Z by lia. exact SBp'.
       + replace (bv_unsigned sp0 + -560 + Z.of_nat 17 + Z.of_nat (length path))%Z
           with (bv_unsigned sp0 - 543 + P)%Z by lia. exact SBn'. }
-
+    (* [comment removed for export] *)
     assert (LEN : length (msg_cannot_open path) = (17 + (length path + 1))%nat)
       by (unfold msg_cannot_open; rewrite !length_app; reflexivity).
     replace (W 2 (msg_cannot_open path)) with (map (WriteEv (Z_to_bv 64 2)) (msg_cannot_open path ++ []))
@@ -159,10 +174,10 @@ Section Tail.
     pose proof itinerary_le62 as (_ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srH knH Rc Mc model scOF (msg_cannot_open path) []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srH knH) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n srH knH) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scOF]; rewrite ?LEN end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.  (* [comment removed for export] *)
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
     - cbn [edenot length]. reflexivity.
     - cbn [length Z.of_nat]. lia.
@@ -176,13 +191,17 @@ Section Tail.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
-    -
+    - (* [comment removed for export] *)
       clear HR HK. intros R2 M2 HR HK.
       eapply (of_segI (vals ++ junk_vals R2));
         [ rewrite length_app, junk_vals_length, HL; reflexivity
         | rewrite vals_ev_app_l by (rewrite HL; lia); exact P0
         | exact HR | exact HK ].
   Qed.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
 
   Lemma nl_img : rdn RSEGS (fun _ => None) (Z_to_bv 64 0x12b82) 1 = Some [Z_to_bv 8 10].
   Proof. vm_compute. reflexivity. Qed.
@@ -197,9 +216,9 @@ Section Tail.
   Proof.
     intros path P vals R M HP HPr HL P0 P113 HR HK SBp.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-
+    (* [comment removed for export] *)
     run_blk_keep scrG 199%nat.
-    {
+    { (* [comment removed for export] *)
       unfold sc_denot. cbn [branch_taken]. ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113).
       replace (-1 * P + 63)%Z with (63 - P)%Z by lia.
       rewrite ltu_ZZ by lia. cbn [negb]. rewrite (proj2 (Z.ltb_ge _ _)) by lia. reflexivity. }
@@ -210,7 +229,7 @@ Section Tail.
         [exact SBp | vm_compute; reflexivity | exact WOK | cbn [ev ENV]; rewrite P0; unfold BUF_LO; rewrite u_small by lia; lia
         | cbn [ev ENV]; rewrite P0; unfold BUF_HI; rewrite u_small by lia; lia]. }
     clear EQM SBp. rename M0 into M'.
-
+    (* [comment removed for export] *)
     set (dst := Z_to_bv 64 (bv_unsigned sp0 - 543 + P)).
     assert (Hsrc : rdn RSEGS M' (Z_to_bv 64 0x12b82) 1 = Some [Z_to_bv 8 10]).
     { rewrite (kimg_rdn RSEGS (ENV vals) _ knG ltac:(let i := kidx knG (is_kimg_cov 0x12b82 1) in exact i)
@@ -237,12 +256,12 @@ Section Tail.
     replace (Z_to_bv 64 705676) with (0xac48c : word) by (apply bv_eq; reflexivity).
     eapply srz_msteps; [exact Hh | exact Hlazy | exact Hms |]. clear Hms.
     replace (0xa17d8 : word) with (Z_to_bv 64 0xa17d8) by (apply bv_eq; reflexivity).
-
+    (* [comment removed for export] *)
     lazymatch type of HR with regs_ok ?E ?sr ?Rc =>
       pose proof (regs_after_keeps vals (blobs_ev BL) sr Rc R2 callee_kept
                     ltac:(rewrite HL; vm_compute; reflexivity) HR Hkeep callee_kept_no0) as HR2 end.
     rewrite HL in HR2. clear HR Hkeep. rename HR2 into HR.
-
+    (* [comment removed for export] *)
     pose proof (know_cut_sound RSEGS (ENV vals) M' (wbytes M' dst [Z_to_bv 8 10]) 0 (-543) BUF_HI IHI knG
                   ltac:(unfold win_ok, BUF_HI, IHI; cbn [ev ENV]; rewrite P0; lia)
                   ltac:(apply (wbytes_agree_out M' dst [Z_to_bv 8 10] (ENV vals) 0 (-543) BUF_HI);
@@ -258,13 +277,18 @@ Section Tail.
     clearbody vals1.
     change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV vals1) in HR, HK.
     eapply (of_segH path P vals1); try eassumption.
-    -
+    - (* [comment removed for export] *)
       rewrite rdn_wbytes_out; [exact SBp' | | |]; cbn [length]; subst dst; rewrite ?u_small by lia; lia.
-    -
+    - (* [comment removed for export] *)
       subst dst. pose proof (rdn_wbytes_hit RSEGS [Z_to_bv 8 10] M' (Z_to_bv 64 (bv_unsigned sp0 - 543 + P))) as Hn.
       cbn [length] in Hn. apply Hn. rewrite u_small by lia. lia.
   Qed.
 
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
   Definition atG0 (path : list byte) (P : Z) (T : TSet) : Prop :=
     forall vals R M,
       length vals = 199%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 113 = Z_to_bv 64 P ->
@@ -272,6 +296,7 @@ Section Tail.
       rdn RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 543)) (length path) = Some path ->
       srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa17d8) M (seg_rom RSEGS)) model) T.
 
+  (* [comment removed for export] *)
   Lemma of_segF_gen : forall (path : list byte) (pp : word) (P : Z) (T : TSet) vals R M,
     Z.of_nat (length path) = P -> (0 <= P <= 63)%Z ->
     length vals = 167%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp -> vals_ev vals 113 = Z_to_bv 64 P ->
@@ -286,12 +311,12 @@ Section Tail.
     assert (Psmall : (bv_unsigned (edenot (ENV vals) PX) < 2 ^ 31)%Z).
     { cbn [edenot ev ENV PX]. rewrite P113, u_small by lia. lia. }
     unfold PX in Psmall.
-
+    (* [comment removed for export] *)
     run_blk_keep scrF 167%nat.
-    {
+    { (* [comment removed for export] *)
       unfold sc_denot. cbn [branch_taken]. ed_lin ltac:(cbn [ev ENV]; rewrite ?P113).
       rewrite ltu_ZZ by lia. cbn [negb]. rewrite (proj2 (Z.ltb_ge _ _)) by lia. reflexivity. }
-    {
+    { (* [comment removed for export] *)
       unfold sc_denot. cbn [branch_taken].
       rewrite (edenot_exts4 _ _ Psmall), !(edenot_addw0_r _ _) by (rewrite ?edenot_addw0_r by exact Psmall; exact Psmall).
       unfold bv_lts. rewrite Z.ltb_irrefl. reflexivity. }
@@ -302,7 +327,7 @@ Section Tail.
         [exact Hstr | vm_compute; reflexivity | exact WOKS | cbn [ev ENV]; rewrite P0; lia
         | cbn [ev ENV]; rewrite P0; lia]. }
     clear EQM Hstr. rename M0 into M'.
-
+    (* [comment removed for export] *)
     set (dst := Z_to_bv 64 (bv_unsigned sp0 - 543)).
     assert (Hsrc : rdn RSEGS M' pp (length path) = Some path).
     { rewrite <- (firstn_app_l _ path [Z_to_bv 8 0]) at 2 || idtac.
@@ -331,12 +356,12 @@ Section Tail.
     replace (Z_to_bv 64 705676) with (0xac48c : word) by (apply bv_eq; reflexivity).
     eapply srz_msteps; [exact Hh | exact Hlazy | exact Hms |]. clear Hms.
     replace (0xa17d8 : word) with (Z_to_bv 64 0xa17d8) by (apply bv_eq; reflexivity).
-
+    (* [comment removed for export] *)
     lazymatch type of HR with regs_ok ?E ?sr ?Rc =>
       pose proof (regs_after_keeps vals (blobs_ev BL) sr Rc R2 callee_kept
                     ltac:(rewrite HL; vm_compute; reflexivity) HR Hkeep callee_kept_no0) as HR2 end.
     rewrite HL in HR2. clear HR Hkeep. rename HR2 into HR.
-
+    (* [comment removed for export] *)
     pose proof (know_cut_sound RSEGS (ENV vals) M' (wbytes M' dst path) 0 (-543) BUF_HI IHI knF
                   ltac:(unfold win_ok, BUF_HI, IHI; cbn [ev ENV]; rewrite P0; lia)
                   ltac:(apply (wbytes_agree_out M' dst path (ENV vals) 0 (-543) BUF_HI);
@@ -352,7 +377,7 @@ Section Tail.
     clearbody vals1.
     change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV vals1) in HR, HK.
     eapply (HG0 vals1); try eassumption.
-
+    (* [comment removed for export] *)
     subst dst. rewrite <- HP at 1 || idtac.
     pose proof (rdn_wbytes_hit RSEGS path M' (Z_to_bv 64 (bv_unsigned sp0 - 543))) as Hc.
     apply Hc. rewrite u_small by lia. lia.
@@ -372,12 +397,20 @@ Section Tail.
     intros vals' R' M' HL' Q0 Q113 HR' HK' SB. eapply (of_segG path P vals'); eassumption.
   Qed.
 
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+
   Definition atF0 (path : list byte) (pp : word) (P : Z) (T : TSet) : Prop :=
     forall vals R M,
       length vals = 167%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp -> vals_ev vals 113 = Z_to_bv 64 P ->
       regs_ok (ENV vals) srF0 R -> know_ok RSEGS (ENV vals) M knE ->
       rdn RSEGS M pp (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
       srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa17d8) M (seg_rom RSEGS)) model) T.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
 
   Lemma of_segDE : forall (path : list byte) (pp : word) (P : Z) (T : TSet) (t8 : list byte) vals R M,
     Z.of_nat (length path) = P -> (0 <= P <= 131071)%Z -> ~ In (Z_to_bv 8 0) path ->
@@ -393,7 +426,7 @@ Section Tail.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (u64_range pp) as Hppr.
     assert (WOKS : win_ok (ENV vals) 0 0 4194304 IHI).
     { unfold win_ok, IHI. cbn [ev ENV]. rewrite P0. lia. }
-
+    (* [comment removed for export] *)
     run_blk_keep scr0 103%nat.
     assert (Hstr' : rdn RSEGS M0 pp (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
     { rewrite EQM, (rdn_mem_denot_out RSEGS (ENV vals) M _ 0 0 4194304 IHI);
@@ -403,7 +436,7 @@ Section Tail.
         [exact Ht8 | vm_compute; reflexivity | exact WOKS | cbn [ev ENV]; rewrite P0, u_small by lia; lia
         | cbn [ev ENV]; rewrite P0, u_small by lia; lia]. }
     clear EQM Hstr Ht8. rename M0 into M'.
-
+    (* [comment removed for export] *)
     set (spS := Z_to_bv 64 (bv_unsigned sp0 - 1120)).
     assert (Hbuf : rdn RSEGS M' pp (length (path ++ t8)) = Some (path ++ t8)).
     { rewrite length_app. rewrite (word_Z pp). apply rdn_app_Z; [ | | lia | lia].
@@ -459,12 +492,12 @@ Section Tail.
     replace (Z_to_bv 64 708480) with (0xacf80 : word) by (apply bv_eq; reflexivity).
     eapply srz_msteps; [exact Hh | exact Hlazy | exact Hms |]. clear Hms.
     replace (0xa2348 : word) with (Z_to_bv 64 0xa2348) by (apply bv_eq; reflexivity).
-
+    (* [comment removed for export] *)
     lazymatch type of HR with regs_ok ?E ?sr ?Rc =>
       pose proof (regs_after_keeps vals (blobs_ev BL) sr Rc R2 callee_saved
                     ltac:(rewrite HL; vm_compute; reflexivity) HR Hkeep callee_saved_no0) as HR2 end.
     rewrite HL in HR2. clear HR Hkeep. rename HR2 into HR.
-
+    (* [comment removed for export] *)
     destruct Hfr as [Hagree Hgrow].
     pose proof (know_cut_sound RSEGS (ENV vals) M' M2 0 (-1152) (-1120) IHI knD
                   ltac:(unfold win_ok, IHI; cbn [ev ENV]; rewrite P0; lia)
@@ -488,19 +521,19 @@ Section Tail.
     { unfold knE0. apply know_ok_cons; [|exact HK3].
       apply krange_intro. cbn [edenot ev ENV PX]. rewrite Q113, u_small by lia. lia. }
     clear HK3.
-
+    (* [comment removed for export] *)
     assert (Hstr2 : rdn RSEGS M2 pp (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
     { rewrite (frame_mod_rdn RSEGS M' M2 _ _ pp (conj Hagree Hgrow)); [exact Hstr' | | lia].
       intros i Hi. cbn [outside]. split; [|exact I]. unfold in_rng. subst spS. unorm. lia. }
     clear Hstr' Ht8' Hbuf Hz MC Hstk Hagree Hgrow HresP.
     assert (Psmall : (bv_unsigned (edenot (ENV vals1) (EVar 113)) < 2 ^ 31)%Z).
     { cbn [edenot ev ENV]. rewrite Q113, u_small by lia. lia. }
-
+    (* [comment removed for export] *)
     run_blk_keep scrE 135%nat.
-    {
+    { (* [comment removed for export] *)
       unfold sc_denot. cbn [branch_taken]. rewrite (edenot_addw0_r _ _ Psmall).
       unfold bv_lts. rewrite Z.ltb_irrefl. reflexivity. }
-    {
+    { (* [comment removed for export] *)
       unfold sc_denot. exists [Z_to_bv 8 0]. split.
       - unfold adenot, v_addi. cbn [a_base a_off]. rewrite Z.add_0_r, Z_to_bv_bv_unsigned.
         ed_lin ltac:(cbn [ev ENV]; rewrite ?Q2, ?Q113). rewrite <- HP.
@@ -513,7 +546,7 @@ Section Tail.
         [exact Hstr2 | vm_compute; reflexivity | unfold win_ok, IHI; cbn [ev ENV]; rewrite Q0; lia
         | cbn [ev ENV]; rewrite Q0; lia | cbn [ev ENV]; rewrite Q0; lia]. }
     clear EQM Hstr2. rename M0 into M3.
-
+    (* [comment removed for export] *)
     set (dst := Z_to_bv 64 (bv_unsigned sp0 - 543)).
     assert (MC : mcH M3 dst (Z_to_bv 64 0x104cb) 0 []).
     { constructor; subst dst; rewrite ?u_small by lia; cbn [length]; try lia; reflexivity. }
@@ -547,12 +580,17 @@ Section Tail.
     eapply (HF0 vals2); eassumption.
   Qed.
 
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+
   Lemma pre17_img : rdn RSEGS (fun _ => None) (Z_to_bv 64 0x12b6f) 17 = Some PRE17.
   Proof. vm_compute. reflexivity. Qed.
 
   Lemma PRE17_len : length PRE17 = 17%nat.
   Proof. reflexivity. Qed.
 
+  (* [comment removed for export] *)
   Lemma memcpy1_denot : forall vals M, vals_ev vals 0 = sp0 ->
     mem_denot (ENV vals) M logM1 = wbytes M (Z_to_bv 64 (bv_unsigned sp0 - 560)) PRE17.
   Proof.
@@ -584,9 +622,9 @@ Section Tail.
       - apply krange_intro. cbn [edenot ev ENV]. rewrite P2. lia.
       - apply krange_intro. cbn [edenot ev ENV]. lia. }
     clear HK0. change (sr_upd srA (ridx 10) (EVar 38)) with srB0 in HR.
-
+    (* [comment removed for export] *)
     run_blk_keep scrB 39%nat.
-    {
+    { (* [comment removed for export] *)
       unfold sc_denot. cbn [branch_taken]. rewrite edenot_addw0_errno by (cbn [edenot ev ENV]; lia).
       cbn [edenot ev ENV]. unfold bv_ltu. rewrite (u_small 18446744073709547521) by lia.
       apply (proj2 (Z.ltb_ge _ _)). lia. }
@@ -598,7 +636,7 @@ Section Tail.
         [exact Ht8 | vm_compute; reflexivity | exact WOKS | cbn [ev ENV]; rewrite P0, u_small by lia; lia
         | cbn [ev ENV]; rewrite P0, u_small by lia; lia]. }
     clear EQM Hstr Ht8. rename M0 into M'.
-
+    (* [comment removed for export] *)
     set (dst := Z_to_bv 64 (bv_unsigned sp0 - 560)).
     assert (Hsrc : rdn RSEGS M' (Z_to_bv 64 0x12b6f) 17 = Some PRE17).
     { rewrite (kimg_rdn RSEGS (ENV vals) _ knB ltac:(let i := kidx knB (is_kimg_cov 0x12b6f 17) in exact i)
@@ -629,7 +667,7 @@ Section Tail.
       pose proof (regs_after_keeps vals (blobs_ev BL) sr Rc R2 callee_kept
                     ltac:(rewrite HL; vm_compute; reflexivity) HR Hkeep callee_kept_no0) as HR2 end.
     rewrite HL in HR2. clear HR Hkeep. rename HR2 into HR.
-
+    (* [comment removed for export] *)
     assert (HK2 : know_ok RSEGS (ENV vals) (wbytes M' dst PRE17) knC0).
     { subst dst. rewrite <- (memcpy1_denot vals M' P0).
       eapply (carry_after RSEGS (ENV vals) M' logM1 knB [] knC0 [] []);
@@ -651,7 +689,7 @@ Section Tail.
     assert (Q2 : vals_ev vals1 2 = pp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
     clearbody vals1.
     change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV vals1) in HR, HK.
-
+    (* [comment removed for export] *)
     assert (Hstr2 : rdn RSEGS (wbytes M' dst PRE17) pp (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
     { rewrite rdn_wbytes_out; [exact Hstr' | | |]; subst dst; rewrite ?PRE17_len; unorm; lia. }
     assert (Ht82 : rdn RSEGS (wbytes M' dst PRE17) (Z_to_bv 64 (bv_unsigned pp + P)) 8 = Some t8).
@@ -660,7 +698,7 @@ Section Tail.
     set (M1 := wbytes M' dst PRE17) in *. clearbody M1. clear M' dst.
     assert (WOKS1 : win_ok (ENV vals1) 0 0 4194304 IHI).
     { unfold win_ok, IHI. cbn [ev ENV]. rewrite Q0. lia. }
-
+    (* [comment removed for export] *)
     run_blk_keep scr0 71%nat.
     assert (Hstr3 : rdn RSEGS M0 pp (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
     { rewrite EQM, (rdn_mem_denot_out RSEGS (ENV vals1) M1 _ 0 0 4194304 IHI);
@@ -670,7 +708,7 @@ Section Tail.
         [exact Ht82 | vm_compute; reflexivity | exact WOKS1 | cbn [ev ENV]; rewrite Q0, u_small by lia; lia
         | cbn [ev ENV]; rewrite Q0, u_small by lia; lia]. }
     clear EQM Hstr2 Ht82. rename M0 into M3.
-
+    (* [comment removed for export] *)
     set (dst := Z_to_bv 64 (bv_unsigned sp0 - 543)).
     assert (MC : mcH M3 dst (Z_to_bv 64 0x12b80) 0 []).
     { constructor; subst dst; rewrite ?u_small by lia; cbn [length]; try lia; reflexivity. }

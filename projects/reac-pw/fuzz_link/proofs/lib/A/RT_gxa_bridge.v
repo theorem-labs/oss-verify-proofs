@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths and module names changed; 123 of its 193 lines of code are new or changed and 89 lines of the source are left out. *)
-(* Copied from a working branch 86b50358d34 proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls.v (ms_cj_bz, mkR_cj_bz, seg_rom_cj_bz, bz_cj_evt, mem_inv_cj_bz, mem_inv_bz_cj, chk_ok_of_pf_rng and their helpers) and A/FRbz_str.v (Z_to_le_bytes_roundtrip, word_of_mem, ro_C8_of_vis); changed: module path fuzz_reply -> fuzz_disco, instance RT_IImgA.A_img -> RecAsanA.N_img_asan, FBS. prefix dropped, comments dropped. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from a working branch proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls.v (ms_cj_bz, mkR_cj_bz, seg_rom_cj_bz, bz_cj_evt, mem_inv_cj_bz, mem_inv_bz_cj, chk_ok_of_pf_rng and their helpers) and A/FRbz_str.v (Z_to_le_bytes_roundtrip, word_of_mem, ro_C8_of_vis); changed: module path fuzz_reply -> fuzz_disco, instance RT_IImgA.A_img -> RecAsanA.N_img_asan, FBS. prefix dropped, comments dropped. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

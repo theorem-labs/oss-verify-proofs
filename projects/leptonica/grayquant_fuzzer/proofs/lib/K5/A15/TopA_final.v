@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segments (RomBase.sys_rob)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.leptonica.grayquant_fuzzer.images Require Asan.
@@ -9,7 +10,8 @@ From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.A15 Require Import Image
   Gq_iface Gq_gaps Gq_gaps_proof Gq_top.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-Theorem s3s_closed : S3s_stmt Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
+Theorem s3s_closed : topA_runseg_lift -> S3s_stmt Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
 Proof.
-  exact (s3s_of_conetop (fun RC GP => gq_fuzz_top RTA RC GP rta_gq_gaps)).
+  intros RUNSEG.
+  exact (s3s_of_conetop RUNSEG (fun RC GP => gq_fuzz_top RTA RC GP rta_gq_gaps)).
 Qed.

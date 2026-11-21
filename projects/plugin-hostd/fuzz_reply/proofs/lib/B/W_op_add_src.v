@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the source that fuzz_reply's op_add opens (fuzz_reply.c:573-594), as the
    ASan representation lib/B/W_rep.v asrc_at states it (image B, fuzz_reply.asan-ubsan); a pure-memory lemma the
-   walk of lib/B/W_op_add.v uses.  Image-independent: lib/A/W_op_add_src.v (a working branch e412cf890aa) over
+   walk of lib/B/W_op_add.v uses.  Image-independent: lib/A/W_op_add_src.v (a working branch) over
    the B kit. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* After op_add's stores, the slot g_s[i] at HA holds the descriptor fd, open = 1, the pointer q of the
    6000-byte partial buffer, and zero everywhere else (source_reset's memset).  Then asrc_at holds of the
    source HS fd 1 0 0 empty_list 0 q pj 0 0 [] empty_list empty_list, where pj is whatever q's block holds:
@@ -12,7 +13,7 @@
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane's route (b), step 3): proved once over the generic allocator relation ARx
    (oa_new_src_at_x, from AR_laws_x's block law alx_blocks); oa_new_src_at (statement unchanged) is its corollary at
    ARx := ARi0 (cgif's AR with the head set empty), with the laws at ARi0 (LX0) in place of AR_laws.  Image A's
-   conversion (lib/A/W_op_add_src.v, a working branch 6cad466fd5b) carried onto image B's file. *)
+   conversion (lib/A/W_op_add_src.v, a working branch) carried onto image B's file. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

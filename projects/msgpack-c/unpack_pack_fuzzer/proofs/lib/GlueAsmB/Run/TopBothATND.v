@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section hypotheses entry_launch_ok_va Sv48 and valid_launch in place of entry_stack_fits, which rz_absent_asan_top, rz_toolong_asan_top, rz_dir_asan_top and rz_usage_asan_top pass to the Run theorems; rz_dir_asan_top takes the contract table of the directory family's certificates for the start state with CONFIG_RSEQ too). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -25,6 +26,10 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.BothU Require UnivBo
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2A Require T_Both2A.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2T Require T_Both2T.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.BothNU Require T_BothNU.
+(* The CONFIG_RSEQ copies first: their short names are shadowed by the in-place ones below, and are used only
+   through the full-path aliases after the imports. *)
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2DR Require T_Both2D.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR Require Both2D_1.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2D Require T_Both2D.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueAsmB.Run Require RunBothATND.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.Run Require Both2A_1 Both2T_1 BothNU_1 Both2D_1.
@@ -40,6 +45,8 @@ Module ME := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS.MainEntryBoth.
 Module R2 := RootBoth2.RootBoth2.
 Module RN := RootBothN.RootBothN.
 Module OUR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common.ShapeAlg.
+Module TDR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2DR.T_Both2D.
+Module H1DR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Both2D_1.
 
 Section TopBothATND.
 Context {rc : runConstT}.
@@ -66,8 +73,9 @@ Variables (en : ExecEntry) (inp : ProcInput).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hsp : valid_sp (en_sp en).
-Hypothesis Hfit : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
+Hypothesis Hlau : entry_launch_ok_va Sv48 en inp.
 Hypothesis Hhw : valid_hwcap (in_hwcap inp).
+Hypothesis Hvl : valid_launch inp.
 Let p1 := AsanDrun.TwinB.p1 inp.
 Let RAx : drun := AsanDrun.TwinB.RA AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivBoth.UNIV AI_frame_top Cw ACCT_fds AsanImgx.TwinB.IMGX_A_rs3 inp (en_sp en) (en_draw en) Hva.
 
@@ -88,7 +96,7 @@ Theorem rz_absent_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta :
 Proof.
   intros ms mo L RNG sta Hargc2 Hshort Hcase cA (HM & USP & AH & AC & HU & LZ & APR).
   exact (RunBothATND.rz_absent_asan AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivBoth.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.TwinB.IMGX_A_rs3 AsanImgx.TwinB.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.TwinB.IMGX_A_apart2 rc)
+           AsanImgx.TwinB.IMGX_A_rs3 AsanImgx.TwinB.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.TwinB.IMGX_A_apart2 rc)
            Hargc2 Hshort Hcase (Both2A_1.Hyps RAx cA)).
 Qed.
 
@@ -99,19 +107,19 @@ Theorem rz_toolong_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta 
 Proof.
   intros ms mo L RNG sta Hargc2 Hlong cT (HM & USP & AH & AC & HU & LZ & APR).
   exact (RunBothATND.rz_toolong_asan AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivBoth.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.TwinB.IMGX_A_rs3 AsanImgx.TwinB.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.TwinB.IMGX_A_apart2 rc)
+           AsanImgx.TwinB.IMGX_A_rs3 AsanImgx.TwinB.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.TwinB.IMGX_A_apart2 rc)
            Hargc2 Hlong (Both2T_1.Hyps RAx cT)).
 Qed.
 
 Theorem rz_dir_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta : astate),
   length (in_argv inp) = 2%nat -> path_is_dirref p1 = true ->
-  ctab_ok bsegs RAx T_Both2D.CONTRACTS ->
+  ctab_ok bsegs RAx T_Both2D.CONTRACTS -> ctab_ok bsegs RAx TDR.CONTRACTS ->
   H0_at ms mo L RNG sta R2.PRIV -> OUR.realizes bsegs (mkCfg ms mo) (K inp).
 Proof.
-  intros ms mo L RNG sta Hargc2 Hdir cD (HM & USP & AH & AC & HU & LZ & APR).
+  intros ms mo L RNG sta Hargc2 Hdir cD cDR (HM & USP & AH & AC & HU & LZ & APR).
   exact (RunBothATND.rz_dir_asan AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivBoth.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.TwinB.IMGX_A_rs3 AsanImgx.TwinB.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.TwinB.IMGX_A_apart2 rc)
-           Hargc2 Hdir (Both2D_1.Hyps RAx cD Hdir)).
+           AsanImgx.TwinB.IMGX_A_rs3 AsanImgx.TwinB.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.TwinB.IMGX_A_apart2 rc)
+           Hargc2 Hdir (Both2D_1.Hyps RAx cD Hdir) (H1DR.Hyps RAx cDR Hdir)).
 Qed.
 
 Theorem rz_usage_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta : astate),
@@ -121,7 +129,7 @@ Theorem rz_usage_asan_top : forall ms mo (L : alayout) (RNG : footprint) (sta : 
 Proof.
   intros ms mo L RNG sta HargcN cN (HM & USP & AH & AC & HU & LZ & APR).
   exact (RunBothATND.rz_usage_asan AsanImgx.TwinB.IMGX_A AsanImgx.TwinB.IMGX_A_ok ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UnivBoth.UNIV AI_frame_top Cw ACCT_fds
-           AsanImgx.TwinB.IMGX_A_rs3 AsanImgx.TwinB.IMGX_A_stksh en inp Hva Hve Hsp Hfit Hhw ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.TwinB.IMGX_A_apartN rc)
+           AsanImgx.TwinB.IMGX_A_rs3 AsanImgx.TwinB.IMGX_A_stksh en inp Hva Hve Hsp Hlau Hhw Hvl ms mo L RNG sta HM USP AH AC HU LZ APR (CW0 (ms_mem ms)) (@AsanApart.TwinB.IMGX_A_apartN rc)
            HargcN (BothNU_1.Hyps RAx cN)).
 Qed.
 End TopBothATND.

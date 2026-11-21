@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Prog/sup_worker_list.v, with its module paths, addresses and numbers changed; 779 of its 856 lines of code are new or changed and 471 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/rec_clear.v, with its module paths, addresses and numbers changed; 1564 of its 1647 lines of code are new or changed and 773 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Prog/rec_calls_copy.v, with its module paths, addresses and numbers changed; 921 of its 1112 lines of code are new or changed and 1456 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed auxv_keep). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes ZBridge.
@@ -533,8 +534,8 @@ Lemma auxv_keep : forall sec lo m m',
   (forall x, ms_libc B + 8 <= x < ms_libc B + 16 -> mbyte (ms_segs B) m' x = mbyte (ms_segs B) m x) ->
   auxv_pre B sec lo m -> auxv_pre B sec lo m'.
 Proof.
-  intros sec lo m m' Hhi Hlibc (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-  exists av, ar. repeat split; try assumption.
+  intros sec lo m m' Hhi Hlibc (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+  exists rs, av, ar. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *. repeat split; try assumption.
   - intros k Hk. rewrite Hlibc by lia. apply H1. exact Hk.
   - intros k Hk j Hj. rewrite Hhi by lia. apply H2; assumption.
   - intros k Hk. rewrite Hhi by lia. apply H3. exact Hk.

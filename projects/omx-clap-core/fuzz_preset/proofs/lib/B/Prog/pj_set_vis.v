@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: what a PROGRAM CALL keeps of pj_set's image-B walk state (fuzz_preset asan-ubsan,
    B 0x86e8c; the cuts of lib/B/Prog/pj_set_defs.v): the bytes, the placement and the SHADOW facts of the structs
    and the key the kit's text names, from a callee's journal (YCbqG.v ajournal_xR at any world relation R, own = []: the
@@ -14,7 +15,7 @@
      1. a harness block of the ledger: alx_hshadow (YCbqG.v ARx_hshadow_law at cf_head);
      2. a live allocator block that is no harness block: alx_shadow (YCbqG.v ARx_shadow_law), whose premise - no
         hidden head inside the block - FOLLOWS from the ledger (Hp is exactly the harness bases) and the blocks'
-        separation (pjs_no_head_in, transcribed from pj_parse_seg_c1.v@175b3601c4e pjp_no_head_in): no Section
+        separation (pjs_no_head_in, transcribed from pj_parse_seg_c1.v pjp_no_head_in): no Section
         premise is needed for it;
      3. a fake frame: the frame clause keeps its shadow bytes, pjs_g_vis' frame hull gives the hull;
      4. the caller's window: alx_zshadow_byte gives each byte's shadow; the HULL of such a struct reads shadow bytes
@@ -23,7 +24,7 @@
         hull; no later step reads it.
    - The key (cstr_ok + kept_at): the bytes by the block / image clause, the shadow by kept_at's three cases
      (alx_hshadow; pjs_g_vis' zero-shadow conjunct; the const cells alx_const_cells and pjs_g_vis' image shadow map),
-     as pj_parse_seg_c1.v@175b3601c4e pjp_text_kept.
+     as pj_parse_seg_c1.v pjp_text_kept.
    - pjs_aj_widen: a callee journal at its own window (STK, sp) is one at the caller's widened window (STK + e,
      sp + e), with the bytes of [sp, sp + e) outside FP kept - so an apost_base_x callee (pj_get, fuzz_strdup) called
      by YCbqGcallW.v aj_call_xW at e1 = 0 (fpostW_x_of_apost) meets pj_set_defs.v pjs_frame_kept_stmt.
@@ -67,7 +68,7 @@ Local Open Scope Z_scope.
 #[local] Notation RLO := (@pa_relro_lo _ B_prog_listing PA).
 #[local] Notation RHI := (@pa_relro_hi _ B_prog_listing PA).
 
-(* ---- arithmetic (pj_parse_seg_c1.v@175b3601c4e, transcribed) ---- *)
+(* ---- arithmetic (pj_parse_seg_c1.v, transcribed) ---- *)
 (* pjp_req :80 *)
 Lemma pjs_req : forall n, 0 <= n -> n <= req_size n /\ 1 <= req_size n /\ (0 < n -> req_size n = n).
 Proof. intros n Hn. unfold req_size. destruct (Z.eqb_spec n 0); lia. Qed.
@@ -180,7 +181,7 @@ split.
 - intros a Ha _. apply F1; lia.
 Qed.
 
-(* ---- the ledger's harness bases (pj_parse_seg_c1.v@175b3601c4e, transcribed) ---- *)
+(* ---- the ledger's harness bases (pj_parse_seg_c1.v, transcribed) ---- *)
 (* pjp_hp_block :296 *)
 Lemma pjs_hp_block : forall ly S Hp W mem Lam peak cnt fail ran most own h,
   prh_ledger (PA := PA) B ly S Hp W mem Lam peak cnt fail ran most own -> In h Hp ->

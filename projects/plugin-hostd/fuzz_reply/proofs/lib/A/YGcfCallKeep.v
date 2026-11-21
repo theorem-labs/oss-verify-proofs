@@ -1,4 +1,4 @@
-(* CARRIED from commit cf036de67ecc74aaaec7382281ce053532205122,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfCallKeep.v, sha256 6adebc212ec96af0441fe5b8c3d96732518ab60314c6afa9b509b00434307919 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -122,7 +122,7 @@ apply (arodata_keep_cf segs B ly S Hp W mem md ly' (snd r) Hp W' mem' md'
 Qed.
 
 (* 4. realloc of a live block, primed (YG0dcfR.realloc_leaf_cf_rh). The old block is a block of the call state
-   (arealloc_realizes_cf_rh's premise, YG0dcfR.v:106); BLK names the new one. The post's ghost set is
+   (arealloc_realizes_cf_rh's premise, YG0dcfR.v:107); BLK names the new one. The post's ghost set is
    realloc_hp_cf's. *)
 Lemma realloc_leaf_keep_cf_rh : forall ly S Hp W regs mem md p n_old n r W' c',
   ARcf segs B ly S Hp W mem md -> relro_seg_t segs -> errno_relro_t B ->

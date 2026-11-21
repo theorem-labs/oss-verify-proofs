@@ -1,9 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the run's entry stack; named per-field kernel facts in place of a whole-kernel hypothesis). *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
-(* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Bool List.
 From Stdlib Require Import Uint63.
@@ -20,17 +19,13 @@ Local Open Scope Z_scope.
 Local Notation CFG := (mkSpuriousCfg false true true true true true).
 Local Notation LIM := target_alloc_limit.
 
-(* [comment removed for export] *)
 Definition MAIN_PC : Z := 0x1eebcc.
 
 Definition HFS : list (Z * list hint) := (MAIN_PC, [HStop]) :: HF0.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-Notation bdb_cert fin :=
-  (start_cert BDB_SEGS BDB_PC BDB_PH target_alloc_limit (asum_ck bdb_tabs BDB_SEGS target_alloc_limit) fin (mk_htable HFS) FUEL_F) (only parsing).
+Notation bdb_cert r fin :=
+  (start_cert r BDB_SEGS BDB_PC BDB_PH target_alloc_limit (asum_ck bdb_tabs BDB_SEGS target_alloc_limit) fin (mk_htable HFS) FUEL_F) (only parsing).
 
-(* [comment removed for export] *)
 Definition fin_main0 (B : AST) : bool := w_eqb (a_pc B) (wofZ MAIN_PC) && is_nilb (am_out (a_model B)).
 
 Lemma fin_main0_out (B : AST) : fin_main0 B = true -> am_out (a_model B) = [].
@@ -40,24 +35,28 @@ Section Startup.
 Variable POST : list (list byte) -> Fs.Fs -> config -> Prop.
 Variable fin : AST -> bool.
 Hypothesis Hfin_out : forall B, fin B = true -> am_out (a_model B) = [].
-(* [comment removed for export] *)
 Hypothesis Hbridge : forall (fs0 : Fs.Fs) (B : AST), fin B = true ->
   forall ρ c, R BDB_SEGS amodel (MR BDB_SEGS fs0 ρ) LIM ρ B c ->
   forall T : TSet, (forall c', POST (dec_argvB ρ) fs0 c' -> realizes_cfg BDB_SEGS CFG c' T) -> realizes_cfg BDB_SEGS CFG c T.
-Hypothesis Hcert : bdb_cert fin = true.
+(** one certificate per auxv layout; rseq is free *)
+Hypothesis Hcert : bdb_cert true fin = true.
+Hypothesis Hcert_norseq : bdb_cert false fin = true.
 
 Theorem bdb_startup : forall (TT : list (list byte) -> TSet) (en : ExecEntry) (inp : ProcInput),
-  valid_input inp ->
+  valid_input inp -> launch_cache_words (in_kernel inp) = launch_cache_words default_kernel ->
+  min_sigframe_size (in_kernel inp) (in_hwcap inp) = min_sigframe_size default_kernel (in_hwcap inp) ->
   valid_entry (mkImage BDB_SEGS BDB_PC BDB_PH) en inp ->
   (forall argv c, valid_argv argv -> POST argv (in_fs inp) c -> realizes_cfg BDB_SEGS CFG c (TT argv)) ->
   realizes_cfg BDB_SEGS CFG
     (init_config BDB_SEGS BDB_PC BDB_PH (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) LIM inp)
     (TT (in_argv inp)).
 Proof.
-  pose proof (asum_ck_ok bdb_tabs BDB_SEGS BDB_PC CFG LIM bdb_img_ok bdb_tabs_ok bdb_cks_ok) as Hsum.
+  pose proof (asum_ck_ok bdb_tabs BDB_SEGS BDB_PC CFG LIM bdb_img_ok bdb_tabs_ok bdb_cks_ok bdb_segs_nk) as Hsum.
   assert (Hcfg2 : sc_alloc CFG = false) by reflexivity.
-  exact (startup_sound BDB_SEGS BDB_PC BDB_PH CFG Hcfg2 LIM bdb_img_ok (asum_ck bdb_tabs BDB_SEGS LIM) Hsum
-           POST fin Hfin_out Hbridge (mk_htable HFS) FUEL_F Hcert).
+  (* bdb_segs_nk twice: asum_ck_ok takes it as its FOURTH premise, after cks_ok, and
+     Section Start discharges it immediately after Himg (AxStart.v:88-91). *)
+  exact (startup_sound BDB_SEGS BDB_PC BDB_PH CFG Hcfg2 LIM bdb_img_ok bdb_segs_nk (asum_ck bdb_tabs BDB_SEGS LIM) Hsum
+           POST fin Hfin_out Hbridge (mk_htable HFS) FUEL_F Hcert Hcert_norseq).
 Qed.
 
 End Startup.

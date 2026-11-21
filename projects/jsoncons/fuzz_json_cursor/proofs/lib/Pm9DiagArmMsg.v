@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the zero-filled stack window): proof steps and comments changed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -312,7 +313,8 @@ Section Arm.
     assert (CANc : rdn ASEGS MV (Z_to_bv 64 7019984) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))).
     { rewrite Z_to_bv_bv_unsigned, <- P3. exact (kword_lit sp0 _ MV _ 7019984 8%nat (EVar 3) HK ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(cbn; lia)). }
     pose proof (kimg_clear _ MV _ 1412392 1412632 HK ltac:(vm_compute; reflexivity)) as SEIMG.
-    assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    (* WINDOW, old beside new (both WIN asserts): was [usp - 8388608 <= a]; DRV_ZWIN (stk_wr). *)
+    assert (WIN : forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
       by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV _ a n HK HW P0 Ha Hn d k Hd Hk)).
     unfold t_die.
     apply (@fwrite1_run fxq scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hdgm M0 [(A1, CAP)] LK0 crC A M model R S (bv_unsigned can) msg_short KX DI
@@ -454,7 +456,7 @@ Section Arm.
     assert (CANc : rdn ASEGS MV (Z_to_bv 64 7019984) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))).
     { rewrite Z_to_bv_bv_unsigned, <- P3. exact (kword_lit sp0 _ MV _ 7019984 8%nat (EVar 3) HK ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(cbn; lia)). }
     pose proof (kimg_clear _ MV _ 1412392 1412632 HK ltac:(vm_compute; reflexivity)) as SEIMG.
-    assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    assert (WIN : forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
       by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV _ a n HK HW P0 Ha Hn d k Hd Hk)).
     unfold t_die.
     apply (@fwrite2_run fxq scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hdgm M0 [(A1, CAP)] LK0 crC A M model R S (bv_unsigned can) msg_overrun KX DI

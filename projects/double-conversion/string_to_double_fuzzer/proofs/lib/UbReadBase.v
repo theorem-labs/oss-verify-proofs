@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack window is the 6144513 bytes below sp0; the reserved ranges may hold up to two more entries). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -96,8 +97,10 @@ Qed.
 
 (* [comment removed for export] *)
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+  (* twin of RefReadBase.v:99-108: the recorded KWr is 6144513 long, so the window is
+     [sp0-6144513, sp0); the released 8388608 length was left behind by the port. *)
+  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 6144513)%Z ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144513 + d)) m = true.
 
 (* [comment removed for export] *)
 Definition group_writable (M : word -> option byte) (gm : word) : Prop :=
@@ -205,7 +208,7 @@ Definition model_post (VM : VmMaps) (stdin0 : AmbIn) (fs0 : Fs) (tid : word) : M
 
 (* [comment removed for export] *)
 Definition vm_pre (VM : VmMaps) (sp0 mb gm : word) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+  (exists VX, vm_reserved VM = segments_reserved RSEGS ++ VX /\ (length VX <= 2)%nat /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) VX)
   /\ vm_init_sp VM = sp0                       (* [comment removed for export] *)
   /\ vm_limit VM = target_alloc_limit
   /\ map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true
@@ -273,10 +276,10 @@ Definition sr_RE : list expr :=
 (* [comment removed for export] *)
 Definition kn_RE_base : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;
    KAlign (EVar 3) 4096; KRange (EVar 3) 0xe6000 0x7fffff7ef000;   (* [comment removed for export] *)
    KWr (SA (EVar 3) 0) 69632;
-   KDisj (SA (EVar 0) (-8388608)) 8388608 (SA (EVar 3) 0) 69632;
+   KDisj (SA (EVar 0) (-6144513)) 6144513 (SA (EVar 3) 0) 69632;
    KRange (EVar 1) 0x7fff80000000 0x800000400000].
 Definition kn_RE (Llo Lhi : Z) : list kentry := kn_RE_base ++ [KRange (EVar 4) Llo Lhi].
 
@@ -351,7 +354,7 @@ Section EntrySym.
     - split; [lia | exact (proj2 Hsp)].
     - lia.
     - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 0) with sp0.
-      replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia. apply Hst; lia.
+      replace (bv_unsigned sp0 + -6144513 + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia. apply Hst; lia.
     - split; [lia | exact (proj2 (proj2 Hgm))].
     - lia.
     - split; [lia|]. intros d m Hd Hm. unfold adenot, v_addi. cbn [a_base a_off edenot]. change (ev E 3) with gm.

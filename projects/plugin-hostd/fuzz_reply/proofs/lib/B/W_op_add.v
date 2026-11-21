@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's op_add,
    a NEW walk over lib/B/W_listing.v (VERDICT.md (sha256 810ca1df9ca9; internal record): UBSan is trap mode in this pin, so no B body is its A
-   body up to relocation), after lib/A/W_op_add.v (a working branch e412cf890aa), in the form of the cgif walks of
+   body up to relocation), after lib/A/W_op_add.v (a working branch), in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and lib/A/ACbk.v (entry and return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* op_add () at 0x85194 (image B; 0x84f10 in A; fuzz_reply.c:573-594).  It scans g_s[0..3] for the first source whose
    open flag is 0; if there is none it returns with nothing changed.  Otherwise, for that slot i it calls source_reset
    (the slot is already closed, so the callee's o is None), bumps the global g_nfd, stores the new descriptor
@@ -20,7 +21,7 @@
    (a3 = n0 + 1, a0 = n0 + 100) and each blt is a same-atom compare against a1 = n0.
    Image B's call graph moves the deepest callee: source_reset (32 + list_free's 48 + list_drop's 64 + ASTACK; B calls
    list_drop where A inlines it) is deeper than relay_add (64 + wake's 64 + ASTACK), so OA_STK is OA_FRAME + SR_STK
-   here (A: OA_FRAME + RA_STK); kit a working branch f5d62e978e3.
+   here (A: OA_FRAME + RA_STK); kit a working branch.
    Plain contract: lib/Prog/op_add_c.v:33-97, without the plain side's runtime-resource terms
    (rt_ok / roomF / runF), which the ASan side states as the allocator's live-state meter MT.
    Section hypotheses: the two internal calls (SR = source_reset, the kit's sr_spec_g with image B's alignment premise
@@ -32,7 +33,7 @@
    lib/B/W_journal_x.v: pb_op_add_x : oa_spec_x, where oa_post_x / oa_spec_x are this file's contract with the ghost
    head set Hp after S (Hp' after S').  pb_op_add (statement unchanged) and pb_op_add_g are corollaries at
    ARx := ARi0 (cgif's AR with Hp = []), PST := [].  The conversion is image A's (lib/A/W_op_add.v, a working branch
-   e684c643cf1 -> 16113e32f61) carried onto image B's walk.  Each allocator site is its caller-context rule at ONE
+   ->) carried onto image B's walk.  Each allocator site is its caller-context rule at ONE
    closed trace fact, one table per allocator entry: op_add hands malloc the empty chain, so malloc's trace is
    [op_add + 0xd4] (HCTX_oa_malloc, table CTX_M); relay_add's realloc has the one-entry trace [relay_add + 144]
    (HCTXRA, table CTX_R). *)
@@ -126,7 +127,7 @@ Variable B : asyms.
 Variable MT : ameter_ops.
 Variable G : list (Z * Z).
 
-(* The two internal calls are the kit's own contracts (lib/B/W_contract.v of a working branch 67c07b3d6e6):
+(* The two internal calls are the kit's own contracts (lib/B/W_contract.v of a working branch):
    relay_add's ra_spec_g at RG = fr_globals, whose post now carries `apres_kept B W mem W' mem'` (lib/A's op_add
    carried that conjunct in a local oa_ra_spec until W5's post had it), and source_reset's sr_spec_g, whose premise
    `HA mod 8 = 0` is image B's UBSan alignment trap on the argument (0x85aa0-0x85aa4 `andi 7; bnez -> unimp`;

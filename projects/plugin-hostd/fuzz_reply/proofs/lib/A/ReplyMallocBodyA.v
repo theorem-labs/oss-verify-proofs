@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the trace premise in the P'' form, `admits (as_universe B) tr S` (YG01.v), replacing the In-form. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: batch_room_cf added to rpreD_free_cf and to its realloc old-block free twin (YGcfReallocCompose.v RDF2); nmax_cf_ok's comment updated (c5's walk covers n < SEC_NMAX since 84ee52cd012). *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
-(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v applied by 3-way (base commit 5034424e29db, theirs e8a7dd66acf2; preset-side hunks kept), module paths changed. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: batch_room_cf added to rpreD_free_cf and to its realloc old-block free twin (YGcfReallocCompose.v RDF2); nmax_cf_ok's comment updated (c5's walk covers n < SEC_NMAX). *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/YGcfMallocCompose.v applied by 3-way (base, theirs; preset-side hunks kept), module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfMallocCompose.v, with its module paths and module names changed; 103 of its 151 lines of code are new or changed and 342 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane WalkB2; integrator ReallocPrimary).
    rule 24: no function proved here (a restatement: the walk of ___interceptor_malloc's body is the relocated
    lib/A/WrapMallocABodyM1.v (call field) and lib/A/WrapMallocABodyRet.v (return field), composed as
-   omx-clap-core/fuzz_preset's lib/A/WrapMallocABodyTop.v (commit 9e87119fcf60, sha256 10c632c6a817; internal record) composes them).
+   omx-clap-core/fuzz_preset's lib/A/WrapMallocABodyTop.v (sha256 10c632c6a817; internal record) composes them).
    The malloc interceptor BODY contract at plugin-hostd/fuzz_reply image A (asan), at the call-site relation of every
    reply instance, YGcfInstBase.ARXq_cf B (fun i => i = as_inst B), in place of preset's ARXh_A (ARXs_cf's body,
-   WrapMallocADefs.v:36-39): aalloc_realizes_cf_em names its ARX in both its pre and its post, so Allocate's
+   WrapMallocADefs.v:37-40): aalloc_realizes_cf_em names its ARX in both its pre and its post, so Allocate's
    contract at ARXq_cf does not convert to one at ARXh_A. The free wrapper's precedent is lib/A/WrapFreeARXq.v.
    - amalloc_body_L_cf: WrapMallocABodyDefs.amalloc_body_realizes_L (A1's local copy of the layer text) IS the layer's
      amalloc_body_realizes_cf (Reusable/YG0dcf.v): the same conjuncts in the same order, and equal window constants

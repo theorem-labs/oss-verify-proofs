@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its addresses and numbers changed; 647 of its 671 lines of code are new or changed and 535 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* lib/A/ACtlG/F1.v -- GLUE for stage seg_F1 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:740).  A Theorem Labs lane; route (C) L3 switch by a Theorem Labs lane;
    single writer.  rule 24: no function proved.
@@ -224,7 +225,7 @@ Lemma f1g_ro_segs :
 Proof. vm_compute. reflexivity. Qed.
 
 (* The read-only span of the image lies below the sink's overflow head, the instance APostBase's
-   arodata_ok_journalP takes (its Class ro_below_ofl, APostBase.v:28-29), at the empty [rlo, rhi). *)
+   arodata_ok_journalP takes (its Class ro_below_ofl, APostBase.v:29-30), at the empty [rlo, rhi). *)
 Lemma f1g_ro_below : @RAPB.ro_below_ofl segs 0 0 A.AE2k.tfib_sink_head.
 Proof.
   intros a [(s & Hs & Hw & Hr) | Hg]; [| lia].

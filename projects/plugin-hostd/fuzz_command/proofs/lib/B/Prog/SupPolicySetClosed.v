@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for sup_policy_set's
    ASan+UBSan walk (lib/B/Prog/sup_policy_set.v, tsup_policy_set_holds): the per-binary hypotheses it names are
    discharged at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink
-   head YE2k.tfib_sink_head), as A/Prog/SupRemoveAllRefitClosed.v (a working branch e84227c9553) does for A:
+   head YE2k.tfib_sink_head), as A/Prog/SupRemoveAllRefitClosed.v (a working branch) does for A:
    cmd_img_facts_tfib by CmdRecImg.cmd_img_facts_tfib, cmd_sig_prog_PB by CmdRecRest.cmd_sig_prog_PB and the
    statement's VOBJS by CmdRecRest.cmd_val_objs_PB. The walk takes LAWS from the core's AR_laws_ok itself and needs
    neither TL (cmd_palib) nor PRW. What remains is the callees' contracts at every FP state, HB and MTL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

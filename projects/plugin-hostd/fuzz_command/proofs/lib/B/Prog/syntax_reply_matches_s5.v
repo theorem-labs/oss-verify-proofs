@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the walk through a
-   runtime entry, cmp_tail) at c8557374ad2e, with the runtime step aj_art_at of lib/A/Prog/PaArt.v: the walk of
+   runtime entry, cmp_tail), with the runtime step aj_art_at of lib/A/Prog/PaArt.v: the walk of
    syntax_reply_matches on fuzz_command.asan, the strcspn wrapper's call (CALL1, 0x88694) that measures the next word
    of the reply, and its result (RET1, 0x886a0). *)
-(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s5.v (a working branch
-   db7d4effe38) for fuzz_command.asan-ubsan: CALL1 0x889c8 (the set kept in s11), RET1 0x889d4 (the empty-item test
+(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s5.v (a working branch)
+   for fuzz_command.asan-ubsan: CALL1 0x889c8 (the set kept in s11), RET1 0x889d4 (the empty-item test
    on s3, then a0 = 0 and a1 = ~s3 for L3's UBSan check), the set .str.5 at 0x21160, the stack-protector cells
    0xa6bf8 / 0x604158. *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 713692f1e0c (statement pass 4b): ABCMP and ASTRCSPN hold at
+(* Modified by Theorem Labs, 2026-10: onto a working branch (statement pass 4b): ABCMP and ASTRCSPN hold at
    every FP state, as the statement has them; the strcspn call takes ASTRCSPN at fx. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

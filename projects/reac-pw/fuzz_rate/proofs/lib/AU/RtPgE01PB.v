@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01P.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01P.v for image B
    (fuzz_rate.asan-ubsan): image B's code 0x807e0 .. 0x809bc and its pcs; the class-4 frame (1024 bytes, 128 shadow
    bytes, the flag pointer word at F + 0x3f8); the real frame's cell R + 0x190; F in s9 (x25), the shadow address in
    s3 (x19), the shadow offset in s4 (x20, the alias fact's register), the size test in a3; the 88 shadow stores and

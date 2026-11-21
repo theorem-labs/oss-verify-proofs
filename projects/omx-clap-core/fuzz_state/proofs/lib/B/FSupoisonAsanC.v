@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from cgif_file_fuzzer lib/A/AE2q.v with AE6k.v (mc_tail, section l), AE6l.v-AE6s.v and AE3c.v (section f) for libreac/fuzz_disco's __asan_memcpy called with the source equal to the destination: x = d in place of the disjointness premise, the branch at 0x520e0 taken past the overlap check, the musl memcpy source read through the bytes it has already written (src_read, rdn_bytes1); module paths; addresses. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Rt/AcpySame.v, with its module paths, module names and numbers changed; 760 of its 5870 lines of code are new or changed and 1151 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B (fuzz_state.asan-ubsan): __asan_memcpy (B 0x51d90, lib/B/FSH_Base.v PC_memcpy; YB1w
    tfib_A___asan_memcpy) under ARU (lib/A/FSupoison.v), for ANY set U of user-poisoned ranges (POISON-U lane; the
    statement is lib/A/FSupoisonU.v aintrin_realizesU OCpy, the FsRt field fr_memcpy of lib/B/FSH_Rt.v:118).
    Rule 24: no U form of this function existed; this is the U lift of S0's own image-B AR walk (U = [] form
    lib/B/YE2q.v:141 asan_memcpy_realizes), by the method of the image-A interceptor ports (lib/A/FSupoisonIntrinC.v,
-   a working branch cd7610bc4ed).
+   a working branch).
 
    Port-from, text unchanged except where U is threaded:
      lib/B/YE6k.v:838-1034  mc_tail            -> mc_tailU   (the one step that consumes AR: al_frame / al_stack)

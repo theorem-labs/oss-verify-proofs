@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0g.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed in_globals_nil, LIB_STACK_RGB, lib_contract_all). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YM05.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable.R Require Import Cfg.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Definition in_ro_img (B : malloc_syms) (a : Z) : Prop :=
 (exists s, In s (ms_segs B) /\ seg_writable s = false /\
@@ -23,6 +25,8 @@ Definition in_globals (G : list (Z * Z)) (a : Z) : Prop := exists lo len, In (lo
 Lemma in_globals_nil : forall a, ~ in_globals [] a.
 Proof. intros a (lo & len & [] & _). Qed.
 Section c.
+(* The allocation mode: these facts hold for the ledger of either mode. *)
+Context {AM : AllocMode}.
 Variable B : malloc_syms.
 Variable API : AllocAPI B.
 Let segs := ms_segs B.
@@ -69,5 +73,6 @@ End c.
 Definition LIB_STACK : Z := 65536.
 Definition LIB_STACK_RGB : Z := 61440.
 End b.
-Definition lib_contract_all {rc : YM05.RunCeil} (B : malloc_syms) (API : AllocAPI B) (pc ra empty stk : Z) : Prop :=
-forall fx : FPState, @lib_contract fx rc B API pc ra empty stk.
+(* At the allocation mode of [API], as [lib_contract] (Section c) is. *)
+Definition lib_contract_all {rc : YM05.RunCeil} {AM : AllocMode} (B : malloc_syms) (API : AllocAPI B) (pc ra empty stk : Z) : Prop :=
+forall fx : FPState, @lib_contract fx rc AM B API pc ra empty stk.

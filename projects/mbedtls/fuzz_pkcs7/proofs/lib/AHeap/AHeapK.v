@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the proof of hk_vmonly_i carries the heap invariant HKv's new last conjunct, the heap mark, across a VM-only model change). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -159,9 +160,9 @@ Section K.
 (* [comment removed for export] *).
   Proof.
     intros [h HOK] mo mo' [[K VR] GX] E1 E2 E3 E4. unfold HK_i in *. cbn [hh] in *. split; [| exact GX]. split; [| exact VR].
-    ddestruct K as (Hh & ND & GD & LZ & LIM & EB & BUD & WF & TB & CE & RS & RC & VW & AT).
+    ddestruct K as (Hh & ND & GD & LZ & LIM & EB & BUD & WF & TB & CE & RS & RC & VW & AT & MK).
     unfold HKv. unfold eager_bytes, model_ivs_wf in *. rewrite E1, E2, E3, E4.
-    repeat (split; [assumption|]). exact AT.
+    repeat (split; [assumption|]). exact MK.
   Qed.
 End K.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -115,6 +116,8 @@ split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact
 - rewrite LBy. exact (lg_sizes _ _ _ _ G).
 - rewrite LBy. exact (lg_backing _ _ _ _ G).
 -   exact (lg_ceil _ _ _ _ G).
+-   exact (lg_mres _ _ _ _ G).
+-   exact (lg_vin _ _ _ _ G).
 Qed.
 Lemma layout_ok_same' L A1 A2 : layout_ok L A1 -> st_regions A2 = st_regions A1 -> footprint A2 = footprint A1 -> layout_ok L A2.
 Proof.

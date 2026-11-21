@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair: the image table's room for the extra reserved intervals, n_resx and p_resx). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -158,4 +159,5 @@ constructor.
 - rewrite asan_res_sizes. reflexivity.
 - cbn [rw_lo rw_len AJO6]. split; [lia|]. intros m x Hx. apply asan_rw_window. lia.
 - exact asan_shadow_ok.
+- cbn [n_resx p_resx AJO6]. split; lia.
 Qed.

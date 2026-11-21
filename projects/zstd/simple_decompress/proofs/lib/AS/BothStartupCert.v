@@ -1,27 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the certificate is proved at each CONFIG_RSEQ value, for the plan renumbered by the probe-read map (segB's AT_RANDOM split chain rebuilt from probe-read values), against the hand-off states, counters and shape computed in the build). *)
+(* The Both build's start-up certificate for plan A at AsanInit.LIMIT, per CONFIG_RSEQ value and joined;
+   its plan, start state, hand-off table and shape are computed in StartupRegenBoth.v (LPS 727298f3).
+   Written by gen_startup_regen.py. *)
 From Stdlib Require Import ZArith List Bool Lia.
-From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound BothPlanImages AsanInit AsanNodesWJoin BothStartup StartupPlanBoth StartupHSBoth.
-(* [comment removed for export] *)
-Unset Lia Cache.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan BothPlanImages
+  AsanInit AsanNodesWJoin BothCertDefs StartupRegenBoth.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
-
-Definition BFUEL : nat := 400000.
-Definition KC0 : nat := 0.
-Definition FUEL : nat := 3000.
-(* [comment removed for export] *)
-Definition IT0 : itab := mk_itab_ranges BSEGS startup_plan_both_ranges_0.
-Lemma IT0_ok : itab_sound BSEGS IT0.
-Proof. apply APS.mk_itab_ranges_sound. Qed.
-Definition startup_shape : shape := SHole 10.
-From Ltac2 Require Import Ltac2 Constr Std Control.
-Ltac2 vm_cert_refl (rhs : constr) :=
-  let g := Control.goal () in
-  let r := constr:(@eq_refl cres $rhs) in
-  Std.exact_no_check (Constr.Unsafe.make (Constr.Unsafe.Cast r Constr.Cast.vm g)).
-Lemma startup_cert :
-  check BSEGS IT0 BOTH NX0 AsanInit.LIMIT (XNS BSEGS BOTH NX0 AsanInit.LIMIT) XE0 XB0 HS_bothA KC0 BFUEL FUEL None both_init startup_plan_both = COk startup_shape.
-Proof. Time (vm_cert_refl constr:(COk startup_shape)). Time Qed.
+From Ltac2 Require Import Ltac2.
+Lemma startup_cert_0 :
+check BSEGS IT0 BOTH NX0 AsanInit.LIMIT 0 (XNS BSEGS BOTH NX0 AsanInit.LIMIT) XEr XBr (hsA 0) KC0 BFUEL FUEL None (both_init 0) (planA 0) = COk (shapeA 0).
+Proof. Time (vm_cert_refl constr:(COk (shapeA 0))). Time Qed.
+Lemma startup_cert_1 :
+check BSEGS IT0 BOTH NX0 AsanInit.LIMIT 1 (XNS BSEGS BOTH NX0 AsanInit.LIMIT) XEr XBr (hsA 1) KC0 BFUEL FUEL None (both_init 1) (planA 1) = COk (shapeA 1).
+Proof. Time (vm_cert_refl constr:(COk (shapeA 1))). Time Qed.
+Lemma startup_cert : forall r, 0 <= r <= 1 ->
+check BSEGS IT0 BOTH NX0 AsanInit.LIMIT r (XNS BSEGS BOTH NX0 AsanInit.LIMIT) XEr XBr (hsA r) KC0 BFUEL FUEL None (both_init r) (planA r) = COk (shapeA r).
+Proof. ltac1:(intros r Hr; assert (r = 0 \/ r = 1) as [-> | ->] by lia; [exact startup_cert_0 | exact startup_cert_1]). Qed.

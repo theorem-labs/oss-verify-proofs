@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-constapart-B (its IMG_QAPART half) of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the symbol table of reply's image B, fuzz_reply.asan-ubsan,
    pin 10ffb5f9202a).
 
-   IMG_QAPART, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:65-68 @ 8b12df2b772 (four clauses), with qhdr_inst
-   (YGcfInstDrainX.v:62-63 @ 8b12df2b772) unfolded:
+   IMG_QAPART, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:65-68 (four clauses), with qhdr_inst
+   (YGcfInstDrainX.v:62-63) unfolded:
    qhdr_inst B a := (as_inst B + o_quar + 152 <= a < as_inst B + o_quar + 156) \/
                     (as_inst B + o_quar + 160 <= a < as_inst B + o_quar + 192).
    The layer states IMG_QAPART over the image class (Context {IM : AImg}).  Reply does not carry YGcfInstDrainX.v, so the
-   Lemma states IMG_QAPART's body, qhdr_inst unfolded, at reply's instance IM := AImg_reply (B/AGif2reply.v:24,
+   Lemma states IMG_QAPART's body, qhdr_inst unfolded, at reply's instance IM := AImg_reply (B/AGif2reply.v:25,
    im_syms := YF0m.TfibSyms).  (The error buffer object's apartness is the separate row ERRB_QAPART,
    B/ReplyImg_errbqapart.v.)
-   At image B (B/YF0m.v:16-19) the header words are [0xa3348, 0xa334c) and [0xa3350, 0xa3370): below the internal
-   allocator (0xa7840), the flag (0x1360c8), the store (0x178508) and the depot (0x188518).  cgif's discharge: YFey.v:579
+   At image B (B/YF0m.v:17-20) the header words are [0xa3348, 0xa334c) and [0xa3350, 0xa3370): below the internal
+   allocator (0xa7840), the flag (0x1360c8), the store (0x178508) and the depot (0x188518).  cgif's discharge: YFey.v:580
    / :585 / :638 by its numerals. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -31,7 +32,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import ImgBas
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import AGif2reply.
 Open Scope Z_scope.
 
-(* IMG_QAPART at image B: YGcfInstDrainX.v:65-68 @ 8b12df2b772, qhdr_inst unfolded, at IM := AImg_reply. *)
+(* IMG_QAPART at image B: YGcfInstDrainX.v:65-68, qhdr_inst unfolded, at IM := AImg_reply. *)
 Lemma IMG_QAPART_B : forall B, @im_syms AImg_reply B -> forall a,
   ((as_inst B + o_quar + 152 <= a < as_inst B + o_quar + 156) \/ (as_inst B + o_quar + 160 <= a < as_inst B + o_quar + 192)) ->
   ~ (as_depot B <= a < as_depot B + 4 * 2 ^ 20 + 32) /\ ~ (as_store B <= a < as_store B + 32) /\

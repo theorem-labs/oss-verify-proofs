@@ -115,19 +115,21 @@ End WithSegs.
 Lemma no_error_modeled_scfg :
   forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
          (lim : Z) (inp : ProcInput),
-  ~ reaches_error_cfg segs ACFG (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  ~ reaches_error_cfg (run_segments segs inp sp mb) ACFG
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   Equivalence.modeled (run_scfg ACFG (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros * Hne Hu.
   apply Hne.
-  exact (reaches_unmodeled_cfg_reaches_error_cfg segs ACFG
-           (init_config segs pc ph sp brk0 mb rnd lim inp) Hu).
+  exact (reaches_unmodeled_cfg_reaches_error_cfg (run_segments segs inp sp mb) ACFG
+           (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) Hu).
 Qed.
 
 Lemma no_error_error_free_scfg :
   forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
          (lim : Z) (inp : ProcInput),
-  ~ reaches_error_cfg segs ACFG (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  ~ reaches_error_cfg (run_segments segs inp sp mb) ACFG
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   Equivalence.error_free (run_scfg ACFG (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros * Hne.

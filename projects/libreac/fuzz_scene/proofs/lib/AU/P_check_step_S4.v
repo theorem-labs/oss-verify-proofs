@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and addresses changed; 145 of its 210 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/A/P_check_step_S0.v, with its module paths changed; 146 of its 197 lines of code are new or changed and 159 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment S4 of the asan-ubsan walk of check_step in fuzz_scene.asan-ubsan (sha256
    e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f): 0x836d4 .. 0x83860 (ret). The re-poison run
    (0x836d4-0x83704), the frame magic (0x83710), `beqz s2` 0x83714 decided from the fake frame (s2 = F >= 4096), the
    32 x 0xf5 inline release (0x83718-0x83798) and the flag clear `ld a0,0xf8(s2); sb zero,0(a0)` (0x8379c-0x837a0)
-   through aj_flag_store_pi (AU/Prog/SceneFrame.v:465), giving own = [] and stack_free_state 2 fpos; the jump over the
+   through aj_flag_store_pi (AU/Prog/SceneFrame.v:466), giving own = [] and stack_free_state 2 fpos; the jump over the
    dead real-frame unpoison (0x837a4 -> 0x83824), the epilogue loads from the 13 saved slots (0x83828-0x83858) and the
    `ret` (0x83860) to the entry ra (paj_ret_at); the post is apost_base with ablocks unchanged. No UBSan guard lies in
    this range (the 12 guards of check_step are in S1-S3, TWINMAP.md 4.1). Donor: cgif exitN (A/ACk2.v:319-344).
-   Ported from the asan twin's proof (a Theorem Labs lane, lib/A/P_check_step_S4.v at 5b591418ee6d, the same text) with the
+   Ported from the asan twin's proof (a Theorem Labs lane, lib/A/P_check_step_S4.v, the same text) with the
    asan-ubsan kit (lib.AU.Prog; YCbq from lib.AU, gate 6o) and the asan-ubsan cut pc AF_check_step + 0x440; the code
    of this segment is the asan one's instruction for instruction (TWINMAP.md 2: release and epilogue identical).
    The symbolic state at 0x836d4 (pc offset AF_check_step + 0x440): atoms 0..31 are the cut's registers, atoms 32..44

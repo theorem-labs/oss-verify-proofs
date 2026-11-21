@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the progress proof adds the vDSO-call step, realizes_must_exit follows the new rob premise, and lane_halts runs over run_segments). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -76,6 +77,9 @@ Proof.
   inversion H; subst.
   - (* [comment removed for export] *)
     eexists _, _. eapply sstep_cfg_instr; eassumption.
+  - (* the revision's vDSO call: [sstep_cfg_vdso_call] has no filter premise,
+       so the same step exists under every configuration *)
+    eexists _, _. eapply sstep_cfg_vdso_call; eassumption.
   - (* [comment removed for export] *)
     match goal with
     | [ Hspec : syscall_spec (sys_input segs ?ms ?x8) ?model (Ok ?eff ?model' ?evs) |- _ ] =>
@@ -110,7 +114,7 @@ Theorem realizes_must_exit : forall c T,
   must_exit_in_at_cfg cfg segs S c.
 Proof.
   intros c T H S cfg Hle.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros HS HK Hnone.
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros HS HK Hnone.
   - destruct Hnode as [Hcomp Hsound].
     assert (Hnoerr : forall e, ~ sstep_cfg segs kit_cfg c e SError).
     { intros e He. destruct (Hsound e SError He) as (i & _ & Hst). discriminate Hst. }
@@ -153,12 +157,16 @@ End HaltsKit.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* At the revision the run's segment list is [run_segments segs inp sp mb]
+   (the binary's segments plus the vDSO/vvar pair), as in
+   [MustExit.must_exit_in_scfg]. *)
 Definition lane_halts (cfg : SpuriousCfg) (segs : list Segment) (pc : N) (ph : PhdrInfo)
     (lim : Z) (S : list word) : Prop :=
   forall en inp,
     valid_entry (mkImage segs pc ph) en inp -> valid_input inp ->
-    must_exit_in_at_cfg cfg segs S
-      (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp).
+    must_exit_in_at_cfg cfg (run_segments segs inp (en_sp en) (en_mmap_base en)) S
+      (init_config (run_segments segs inp (en_sp en) (en_mmap_base en)) pc ph
+         (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp).
 
 Lemma halts_allowed_of_lane : forall cfg segs pc ph lim S,
   lane_halts cfg segs pc ph lim S ->

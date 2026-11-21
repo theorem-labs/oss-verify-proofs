@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: segment C1 of pj_parse's image-B walk (fuzz_preset asan-ubsan, B 0x862ec; the cuts of
    lib/B/Prog/pj_parse_defs.v): from the cut pjp_C1 at +0x4c (`jal parse_value`) through parse_value's STATED text
    (pjp_texts' first conjunct: lib/A/PRH_FnParse.v tparse_value_specX 0, at the float state fx and the call context
@@ -10,7 +11,7 @@
    for pj_parse's frame, parse_value's post for the outcome, the callee's journal and rd_blocks_move for out's place
    and the text's bytes, and the allocator laws (AR_laws_x at hl := cf_head) with pjp_g_vis for the shadow facts no
    journal clause keeps.
-   parse_value's text is the kit f97c8b2f046b's tparse_value_specX (PRH_FnParse.v 105eb463e190) in the form ruled at
+   parse_value's text is the kit's tparse_value_specX (PRH_FnParse.v 105eb463e190) in the form ruled at
    19:08Z (pj_parse_defs.v tparse_value_specX_len0: rd_pre's text-node apartness under 0 < len), in the
    POST-IMPLICATION form: no position and no run premise at entry; its two room counts at the call come from the
    text's two room-count premises (pj_parse_counts.v pjc_pkR_gtrace: parse_value's all-granted events are the first part of

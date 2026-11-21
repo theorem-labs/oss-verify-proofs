@@ -1,4 +1,4 @@
-(* Ported from: a working branch 52efd1c871f7 proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonS.v:1-46
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonS.v:1-46
    (a Theorem Labs lane, design/POISON.md section 7). Changed: module prefix fuzz_manifest -> fuzz_state, FMupoison -> FSupoison
    (lib/A/FSupoison.v, a Theorem Labs lane's ARU relocated), and the comment's file names and entry addresses (fs.asan's
    __asan_poison_memory_region / __asan_unpoison_memory_region, FSH_Base.PC_poison / PC_unpoison), and `getr` written
@@ -10,7 +10,7 @@
    spelling of YG0d.aintrin_realizes (lib/Reusable/YG0d.v:335) and A/FSupoisonU.aintrin_realizesU. Why: the donor's
    clauses give presence only on the stack window, and the aview equality outside the frame and the two shadow bytes
    does not give presence back (aview falls back to seg_rom where mem a = None), so the walk kit's fsw_intrin_atU
-   (a working branch 259ea2daea9, through ajournal_after_write) could not consume them. Every other clause is
+   (a working branch, through ajournal_after_write) could not consume them. Every other clause is
    the donor's text. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

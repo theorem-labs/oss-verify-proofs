@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: asegs_loader states that every segment of this image is one of the binary's load segments, the premise of AS/SegLift's lift to the run's segments, and AS/SegLift is required here. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -8,6 +9,11 @@ From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Lib Require Import PropExec MState Mem Image.
 From OSSVerify.simdjson.fuzz_utf8.images Require Export Asan.
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import RunDraw.
+(* [asegs_loader] below is the [seg_kernel_map] witness that [AS/SegLift.srealizes_run_segments]
+   takes as its [NL] premise.  Required here so the lift is reached by a proof rather than
+   only named in a comment: [SegLift] depends on [TopLevel] and [AS.ShapeAlg/DivergeSim/SpinAlg],
+   none of which reach back to this file, so the edge adds no cycle. *)
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.AS Require Import SegLift.
 (* [comment removed for export] *)
 Ltac zify_pre_extra ::= atop_facts.   (* [comment removed for export] *)
 Import ListNotations.
@@ -16,6 +22,12 @@ Open Scope Z_scope.
 Definition asegs : list Segment := Asan.M.loaded_segments.
 Definition a_init_pc : N := Asan.M.init_pc.
 Definition a_phdrs : PhdrInfo := Asan.M.phdrs.
+
+(* Every segment of this SNAPSHOT is a LOAD segment of the binary: the kernel's own mappings
+   -- [seg_kind] [SegVdsoText] and [SegVdsoVvar] -- are added by [Run.run_segments] and never
+   by [elf-snapshot].  [AS/SegLift.srealizes_run_segments] asks for exactly this. *)
+Lemma asegs_loader : Forall (fun s => seg_kernel_map s = false) asegs.
+Proof. unfold asegs. repeat constructor. Qed.
 
 (* [comment removed for export] *)
 Definition a_ro_lo   : Z := 0x10000.   Definition a_ro_hi   : Z := 0x59000.

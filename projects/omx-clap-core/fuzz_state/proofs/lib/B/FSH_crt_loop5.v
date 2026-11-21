@@ -6,13 +6,13 @@
    the TOKEN engine (FSW_K fsw_aj_run_to_tokU over Reusable/YCbn.v): a `lb` of a shadow byte becomes a token atom and the
    following `bnez` is resolved by the engine's slow-block pattern, so the PARTIAL-GRANULE slow paths 0x8203c .. 0x82088
    are taken by the engine itself and the __asan_report_* arms are never reached.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 5e9786b4b6c)
-   Port source: a working branch 5e9786b4b6c proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_loop5.v (4597 lines,
-   crt5_seg5), itself PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_loop5.v (4597 lines,
+   crt5_seg5), itself PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/
    check_round_trip_loops.v (et_pre :349, crt_expected_text :1008, et_iter / et_loop); the function's rule-24 line, with
    the full reuse search and the checker's CONFIRM (a Theorem Labs lane, 04:3xZ), is lines 6-21 of the lane head
    (internal path). Same Definition / Lemma names and statement shapes as the A
-   file, over image B (S0 a9edd281227's lib/B kit, the B interface lib/B/FSH_crt_base.v v33 / FSH_crt_site.v); every pc,
+   file, over image B (S0's lib/B kit, the B interface lib/B/FSH_crt_base.v v33 / FSH_crt_site.v); every pc,
    register and atom RE-MEASURED on B and mapped from A by instruction meaning (crt.A2B.tsv). The pure arithmetic is
    REUSED by Require from lib/Prog/check_round_trip_loops.v, as on A. A new file: no licence lines.
 
@@ -26,7 +26,7 @@
                                                              after A's `addi a0, t4, 4` 0x81f54)
      crt5_seg5                                               crt_ss_ret 0x81f58 crt_cs1e -> crt_ss_ret 0x820a4 crt_cs1e
                                                              (exit), crt_ss_ret 0x81d0c crt_cs1e -> crt_ss_ret 0x81e18
-                                                             crt_cs1L (entry; lib/B/FSH_crt_base.v:153-166)
+                                                             crt_cs1L (entry; lib/B/FSH_crt_base.v:154-167)
 
    What differs from A, carried into the proofs:
    - the walk's atoms are A's + 1 (B's crt_E pins 32 .. 50, atom 50 = En; A: 32 .. 49), and atom 82 holds a4 = ~bd, the

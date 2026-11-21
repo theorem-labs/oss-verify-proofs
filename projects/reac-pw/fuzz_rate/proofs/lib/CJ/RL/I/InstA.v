@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/InstP.v at da0a37fe570; the instances are taken at the symbol map of the ASan image A (IImgA). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/InstA.v at b2957340e99a; the module paths name reac-pw/fuzz_rate instead of reac-pw/fuzz_role, and the instances are taken at reac-pw/fuzz_rate's image-A symbol map (IImgA). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/InstP.v; the instances are taken at the symbol map of the ASan image A (IImgA). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/CJ/RL/I/InstA.v; the module paths name reac-pw/fuzz_rate instead of reac-pw/fuzz_role, and the instances are taken at reac-pw/fuzz_rate's image-A symbol map (IImgA). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.Reloc Require Import RStep.

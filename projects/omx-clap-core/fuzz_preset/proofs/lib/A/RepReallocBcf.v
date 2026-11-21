@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocBcf.v (commit 3cae605a900a, blob b4f8ae8fe1bf) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 15 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocBcf.v (blob b4f8ae8fe1bf) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 15 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -90,16 +91,18 @@ Proof. intros m m' x E Hw. unfold writable_at, wview in *. rewrite E. exact Hw. 
 
 Definition msame (m m' : Model) : Prop :=
 m_fd m = m_fd m' /\ m_vmmaps m = m_vmmaps m' /\ m_vm_lazy m = m_vm_lazy m' /\ m_io m = m_io m' /\
-m_fsys m = m_fsys m' /\ m_proc m = m_proc m' /\ m_lim m = m_lim m' /\ m_time m = m_time m'.
+m_fsys m = m_fsys m' /\ m_proc m = m_proc m' /\ m_lim m = m_lim m' /\ m_time m = m_time m'
+(* 727298f3: the vm record also holds the launch's kernel build and the vDSO run state *)
+/\ m_kernel m = m_kernel m' /\ m_vdso m = m_vdso m'.
 Lemma msame_refl : forall m, msame m m.
 Proof. intros m. repeat split; reflexivity. Qed.
 Lemma msame_wvb_l : forall m m' X, msame m m' -> msame (with_vm_backing (m_vm_lazy m) X m) m'.
-Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' X H. exact H. Qed.
+Proof. intros [fd [maps lazy mat kern vd] io fs proc lim tm] m' X H. exact H. Qed.
 Lemma wvb_msame : forall m m' X, msame m m' -> with_vm_backing (m_vm_lazy m) X m = with_vm_backing (m_vm_lazy m') X m'.
 Proof.
-intros [fd [maps lazy mat] io fs proc lim tm] [fd' [maps' lazy' mat'] io' fs' proc' lim' tm'] X
-  (E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8).
-unfold m_vmmaps, m_vm_lazy in E2, E3. cbn in *. subst. reflexivity.
+intros [fd [maps lazy mat kern vd] io fs proc lim tm] [fd' [maps' lazy' mat' kern' vd'] io' fs' proc' lim' tm'] X
+  (E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8 & E9 & E10).
+unfold m_vmmaps, m_vm_lazy, m_kernel, m_vdso in E2, E3, E9, E10. cbn in *. subst. reflexivity.
 Qed.
 Lemma sio_msame : forall m m', msame m m' -> YG0d.same_io m' m.
 Proof. intros m m' (E1 & _ & _ & E4 & E5 & E6 & _). unfold YG0d.same_io. repeat split; assumption. Qed.

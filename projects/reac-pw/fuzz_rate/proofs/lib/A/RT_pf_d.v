@@ -1,7 +1,7 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_d.v (cold/port-fm-rtprintf-param 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_d.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_pf_d.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_d.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_d.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_pf_d.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* R-1 row R-d (port-fm's R1-FREE-PIECES.md): the conversion %d (Pd) in ASan printf_common's scan, as W0-pcom's per-piece
-   pcom arm (RT_pf_sh.v pcom_pcx_arm, origin/cold/h-grant-a2-r1-W0-pcom 6c733891261). The consumers take it as
+   pcom arm (RT_pf_sh.v pcom_pcx_arm). The consumers take it as
    `forall p, PK p -> pcom_pcx_arm p`: RT_pf_sh.v pcx_K / pcomx_K, RT_pf_shU.v pcom_shzK, FMsnprintfFmI.v fm_snprintf_gxaP.
    %d is printf_common's grammar step pcx_dir (100 :: rest) = Some (false, PP_none, PK_int, rest) (I_pcxgram.v): no flag,
    width, precision or length modifier, an int conversion, so the walk consumes one argument word, pa_of (AInt v) = PA_i v,
@@ -9,9 +9,9 @@
    The seam arms of Pd are port-fm's lib/A/FMpfArmPdSeam.v (seam_text_arm_pd / seam_pargs_arm_pd / seam_bytes_arm_pd,
    with the seam-side control seam_pd_control); the printf_common-side control is lib/A/FMpfArmPdCtl.v.
    New file; nothing else is edited. *)
-(* Modified by Theorem Labs, 2026-10: the proof is RT_pf_sh.v pcom_pcx_arm_ps (6c733891261 :141-147) with the step at
-   %d in place of %s, the %d step as in origin/cold/c-libc-stdio-presetsnp-pcom a28a0fadbcc3
-   proofs/omx-clap-core/fuzz_preset/lib/A/PSnpPcGram.v (its %c case) and origin/cold/h-disco-3-cand3 21bcb7200f7
+(* Modified by Theorem Labs, 2026-10: the proof is RT_pf_sh.v pcom_pcx_arm_ps (141-147) with the step at
+   %d in place of %s, the %d step as in
+   proofs/omx-clap-core/fuzz_preset/lib/A/PSnpPcGram.v (its %c case) and
    proofs/libreac/fuzz_disco/lib/A/Prog/pf_bridge.v pcx_cargs_ok (its Pd case). *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.

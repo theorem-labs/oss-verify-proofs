@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the destruct of aok's unmap arm skips its two new ledger facts (seps and entry_ok), which the munmap arm's maps_subtract rebuild needs. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs.
@@ -193,7 +194,9 @@ Proof.
            ++ exact Hk.
            ++ exact HKC.
     + (* [comment removed for export] *)
-      destruct Hok as (Hlen & Ha & Haal & Hce & Hmh & Hsh). cbn [aev_node] in En. injection En as <- <-.
+      (* 08b1429: [aok]'s unmap arm gained the two ledger facts the kept
+         [munmap] arm's [maps_subtract] rebuild needs; nothing here reads them. *)
+      destruct Hok as (Hlen & Ha & Haal & Hce & Hmh & _ & _ & Hsh). cbn [aev_node] in En. injection En as <- <-.
       cbn [evq] in HE.
       rewrite aembed_vis. cbn [aev_tree]. apply twfX_event.
       * eapply (ATsafeAlloc.KI_acct_ok NMAX Abase NLK HLIM); [exact HK| subst NMAXZ; lia].

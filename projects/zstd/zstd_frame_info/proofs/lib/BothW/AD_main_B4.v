@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TASK_SIZE bound on paths: amain_read_all shows the argv[1] path ends below 2^47 for open, and rewrites TASK_SIZE to its value in its range goals). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
@@ -137,6 +138,9 @@ destruct (RG1 ltac:(lia)) as [RGa1 RRa1].
     pose proof VARGV as (_ & _ & _ & NONUL & NOSL). pose proof (proj1 (Forall_forall _ _) NONUL _ (nth_In (n:=1%nat) argv [] ltac:(lia))) as A1NN. cbv beta in A1NN.
     assert (A1NOSL : path_has_slash (nth 1 argv []) = false).
     { destruct argv as [|a0' [|a1' l']]; cbn in ARGC2; try lia. cbn [tl] in NOSL. inversion NOSL as [|? ? [X _]]. exact X. }
+    (* LPS 727298f3: open's node reads the path below TASK_SIZE; the string ends below 2^47 *)
+    assert (TS1 : P1 + Z.of_nat (length (nth 1 argv [])) < 2^47).
+    { unfold zlength in F2, F8. rewrite ?length_map in F2. lia. }
     assert (STR1' : bytes_at bsegs mm P1 (nth 1 argv [] ++ [Z_to_bv 8 0])).
     { pose proof BY1 as X. unfold zb in X. change (fun z : Z => Z_to_bv 8 z) with (Z_to_bv 8) in X.
       rewrite (zbytes_map_unsigned' (nth 1 argv [])) in X || idtac.
@@ -152,7 +156,7 @@ destruct (RG1 ltac:(lia)) as [RGa1 RRa1].
       eapply (open_spec RNG) with (lo := LO) (errv := errv) (canary := canary);
         rewrite ?(unsigned_lit (usp + -128)) by lia; rewrite ?(unsigned_lit P1) by lia; rewrite ?errno_addr_ATP; unfold ATP; rewrite ?unsigned_lit by lia;
         first [ exact ST | exact STR1' | exact ERR | exact GSSP | exact GU | exact MI | reflexivity | exact A1NN | exact A1NOSL | exact RGimg | idtac ].
-      all: unfold got_ssp, ssp_guard, zlength in *; rewrite ?length_map in RGa1;
+      all: unfold got_ssp, ssp_guard, zlength in *; rewrite ?length_map in RGa1; rewrite ?TASK_SIZE_val;
            first [ lia | eapply rng_sub'; [exact RGstk| lia] | eapply rng_sub'; [exact RGimg| lia] | eapply rng_sub'; [exact RGa1| lia] ]. }
     cbv beta. intros r s' RNG' ms' [-> [-> PO]].
     destruct PO as (u0 & u1 & u2 & b1' & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m1 & -> & MUc & WMc & MI1 & ST1 & ERR1 & _ & _ & _ & FDR).

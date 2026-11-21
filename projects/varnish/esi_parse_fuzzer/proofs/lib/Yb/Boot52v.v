@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the ASan start-up bridge takes the input's kernel build, exec file name and SIGPIPE disposition and the launch's mmap-base and launch facts, its start-up invariant takes the new AsanInit arguments, and its three start-up certificates, their hand-off tables, plans and segment start states and its main-entry holes are the ones computed at the run's CONFIG_RSEQ flag ([AsanRegen], [AsanRegen2]) in the place of the recorded hand-off states. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -16,14 +17,14 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AxSyioe.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanz3l AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm AsanInit Asanjze Starob1 Star2r0 Asann0a.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm AsanInit Asanjze Asann0a.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanlzb.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanlzb.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asang3k.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Staruoz Asang3k.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asang3k.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asan5d5.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asan5d5 Asano8r Asanc90.
-Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.AxSyetn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanjze OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starob1 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Star2r0 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asann0a OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb.Asankdu OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asang3k.Startjo OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Staruoz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asang3k OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asan5d5.Starnkk OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asan5d5 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asano8r OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanc90.   (* [comment removed for export] *)
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asan5d5 AsanRegen AsanRegen2.
+Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.AxSyetn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanjze OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asann0a OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb.Asankdu OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asang3k.Startjo OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asang3k OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asan5d5.Starnkk OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asan5d5 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanRegen OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanRegen2.   (* [comment removed for export] *)
 From OSSVerify.varnish.esi_parse_fuzzer.images Require Import Asan.
 Import ListNotations.
 Import AX2. Import AX2S. Import APC. Import AP. Import APS.
@@ -105,12 +106,22 @@ Section MainA.
   Variable groups : list word.
   Variable net : NetQueue.
   Variable urandom : InputStream.   (* [comment removed for export] *)
+  (* LPS 727298f3: [AsanInit.inp]'s three new fields *)
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sigdfl : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
   Hypothesis Hhw : valid_hwcap hw.
+  (* LPS 727298f3: valid_entry's mmap-base and launch conjuncts and valid_input's
+     [valid_launch] *)
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hlaunch : valid_launch (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+                      (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl).
   Variable MAIN : A.TSet.
   Hypothesis MAIN_nil : MAIN [].
 
@@ -118,25 +129,32 @@ Section MainA.
     Hypothesis Hbrk : valid_brk ASEGS brk0.
     Context {BL : AsanInit.BootLim}.   (* [comment removed for export] *)
     (* [comment removed for export] *)
-    Hypothesis CERT0 : check ASEGS IT0 ASAN NX0 (@AsanInit.blim BL) (XNa2 NX0) XE0 XB0 HS_asan KC0 BFUEL FUEL None asan_init startup_plan = COk startup_shape.
-    Hypothesis CERT2 : check ASEGS IT2 ASAN NX2 (@AsanInit.blim BL) (XNa2 NX2) XE0 XB0 HS_asan2 KC2 BFUEL2 FUEL2 None HS_asan_0 startup_plan2 = COk startup_shape2.
-    Hypothesis CERT2B : check ASEGS IT2 ASAN NX2 (@AsanInit.blim BL) (XNa2 NX2) XE0 XB0 HS_asan2b KC2 BFUEL2 FUEL2 None HS_asan_1 startup_plan2b = COk startup_shape2.
+    (* the run's CONFIG_RSEQ flag as the plan's 0 or 1 *)
+    #[local] Notation RZ := (rseq_z (kb_rseq kb)).
+    (* LPS 727298f3: the three start-up certificates at the run's flag, over the hand-off
+       tables, plans and segment start states [AsanRegen]/[AsanRegen2] compute from the run
+       ([AsanRegen.startup_cert], [AsanRegen2.startup_cert2]/[startup_cert2b]). *)
+    Hypothesis CERT0 : check ASEGS IT0 ASAN NX0 (@AsanInit.blim BL) RZ (XNa2 NX0) XE0 XB0 (HS_asan_r RZ) KC0 BFUEL FUEL None (asan_init RZ) (startup_plan_r RZ) = COk startup_shape.
+    Hypothesis CERT2 : check ASEGS IT2 ASAN NX2 (@AsanInit.blim BL) RZ (XNa2 NX2) XE0 XB0 (HS_asan2_r RZ) KC2 BFUEL2 FUEL2 None (HS_asan_0r RZ) (startup_plan2_r RZ) = COk startup_shape2.
+    Hypothesis CERT2B : check ASEGS IT2 ASAN NX2 (@AsanInit.blim BL) RZ (XNa2 NX2) XE0 XB0 (HS_asan2b_r RZ) KC2 BFUEL2 FUEL2 None (HS_asan_1r RZ) (startup_plan2b_r RZ) = COk startup_shape2.
     #[local] Notation HOLE HS :=
       (forall E R FULL model,
-          cs_ok ASEGS ASAN (@AsanInit.blim BL) (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw) fs E HS R FULL model ->
+          cs_ok ASEGS ASAN (@AsanInit.blim BL) (SINV0 ASAN APH sp rdraw brk0 mbase argv envp uid gid hw kb execfn)
+                (argH0 sp rdraw argv envp kb execfn) fs E HS R FULL model ->
           A.srealizes ASEGS (cfg_of ASEGS R MAIN_PC FULL model) MAIN).
-    Hypothesis MAIN1_sound : HOLE HS_asan2_1.
-    Hypothesis MAIN2_sound : HOLE HS_asan2_2.
-    Hypothesis MAIN3_sound : HOLE HS_asan2b_1.
-    Hypothesis MAIN4_sound : HOLE HS_asan2b_2.
+    Hypothesis MAIN1_sound : HOLE (HS_asan2_1r RZ).
+    Hypothesis MAIN2_sound : HOLE (HS_asan2_2r RZ).
+    Hypothesis MAIN3_sound : HOLE (HS_asan2b_1r RZ).
+    Hypothesis MAIN4_sound : HOLE (HS_asan2b_2r RZ).
 
     Theorem asan_startup_main_A : forall apc : N, Z.of_N apc = a_entry ASAN ->
       A.srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw (@AsanInit.blim BL)
-                                     (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom))
+                                     (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl))
                   MAIN.
     Proof.
       intros apc Hapc. apply srealizes_B2A.
-      apply (asan_startup_main sp rdraw brk0 mbase argv envp fs stdin uid gid nofile sigmask hw groups net urandom Hsp Hbrk Hva Hve Hfit Huid Hhw CERT0 CERT2 CERT2B MAIN MAIN_nil);
+      apply (asan_startup_main sp rdraw brk0 mbase argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl
+               Hsp Hbrk Hva Hve Hfit Huid Hhw Hmb Hlaunch Hlau CERT0 CERT2 CERT2B MAIN MAIN_nil);
         [ .. | exact Hapc]; intros E R FULL model HC; apply srealizes_A2B.
       - exact (MAIN1_sound E R FULL model HC).
       - exact (MAIN2_sound E R FULL model HC).
@@ -147,7 +165,7 @@ Section MainA.
     (* [comment removed for export] *)
     Corollary asan_startup_main_A_entry :
       A.srealizes ASEGS (init_config ASEGS Asan.M.init_pc APH sp brk0 mbase rdraw (@AsanInit.blim BL)
-                                     (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom))
+                                     (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl))
                   MAIN.
     Proof. exact (asan_startup_main_A _ (asan_entry_pc)). Qed.
   End Asan.

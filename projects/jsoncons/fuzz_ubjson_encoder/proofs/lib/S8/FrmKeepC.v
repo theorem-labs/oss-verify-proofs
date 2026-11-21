@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vDSO; the model's fetch-failure and unmodeled answers. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -128,7 +129,7 @@ Lemma interp_fz segs : forall e m rep, eff_fz e -> interp_eff_accesses segs e m 
 Proof.
   induction e as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m rep FZ H; cbn [interp_eff_accesses] in H; try discriminate.
   - injection H as <-. exact FZ.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r| | ] eqn:E; try discriminate.
     injection H as <-. cbn [access_value fst]. exact (IH _ m r (FZ _) E).
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -248,7 +249,8 @@ Proof.
     destruct (fetch_tail segs (ms_pc s)) as [w|] eqn:F2.
     + destruct (decode_exec_accesses segs s w) as [r| | ] eqn:E; try discriminate. cbn [drop_access_report] in H. injection H as <-.
       exact (decode_exec_fz segs s w r FZ (fetch_safe _ _ (or_intror F2)) E).
-    + exfalso. unfold fetch_failure in H. destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+    + exfalso. unfold fetch_failure in H.
+  repeat match type of H with context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 Theorem msteps_fz : forall s s', msteps segs s s' -> frm_zero (ms_fcsr s) -> frm_zero (ms_fcsr s').

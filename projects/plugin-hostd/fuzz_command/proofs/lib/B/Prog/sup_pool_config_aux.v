@@ -9,6 +9,7 @@
    block bookkeeping of the post. Re-walked from lib/A/Prog/sup_pool_config_d.v (the verb lemmas),
    sup_pool_config_s2.v (spc_model) and sup_pool_config_s3.v (spc_final_blocks, here over an owned-block list given
    by membership, since B's callees return their lists in their own order). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -315,7 +316,7 @@ Qed.
 
 (* ---------- the record's shadow checks (lib/B/Prog/CmdChk.v) as AR facts: the B twins of lib/A/Prog/CmdRecBase.v's
    crf_zallf_ok, crf_cell_byte_ok, crf_cells_byte_ok, crf_zsh_hit_ok, cmd_byte_ok, cmd_addressable_chk and
-   cmd_hull_vis_chk (a working branch 996e65731ba, lines 36-83 and 412-438), which a Theorem Labs lane does not state ---------- *)
+   cmd_hull_vis_chk (a working branch, lines 36-83 and 412-438), which a Theorem Labs lane does not state ---------- *)
 Lemma spcb_zallf_ok : forall f k lo, crf_zallf f lo k = true -> forall x, lo <= x < lo + Z.of_nat k -> f x = true.
 Proof.
 intros f k. induction k as [|k IH]; intros lo H x Hx; [lia|].
@@ -445,7 +446,7 @@ End lit.
 
 
 (* ---------- the recorder's representation along a walk: sup_reset's B walk helpers (a working branch
-   c79a9f2daf7 lib/B/Prog/sup_reset.v:62-280, srb_ renamed spr_; spr_answer_slot generalised to any recorded call
+   lib/B/Prog/sup_reset.v:63-281, srb_ renamed spr_; spr_answer_slot generalised to any recorded call
    (fn, A)), the same CmdRep forms ---------- *)
 
 Lemma spr_aval_keep : forall rd rd' a n v, aval_mem rd a n v ->

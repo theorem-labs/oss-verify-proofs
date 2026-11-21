@@ -8,7 +8,8 @@
    printf_common contract (apcommon_realizesU), musl vfprintf by a kcall of avfp_realizes; the vprintf entry part
    (tfib_vprintf_icpt_A) is not used; stated as FMsnprintfGI's avfpi_realizes over FMsnprintfI's snk_frame. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvfi.v, with its module paths and module names changed; 297 of its 390 lines of code are new or changed and 314 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvfi.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfSvfi.table); YImgTop zify_pre_hook added after the last Require. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvfi.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfSvfi.table); YImgTop zify_pre_hook added after the last Require. *)
 (* fm's __interceptor_vfprintf (fm.asan 0x46a7c, frame 0x30, entered from musl vsnprintf through __wrap_vfprintf)
    over the GXA-route form sh_avfprintf_icpt_realizesUx (FMsnprintfSx.v), generic in the format family and in the
    stack windows: TryAsanInitFromRtl and the common_flags ()->check_printf test run through, printf_common (ctx,

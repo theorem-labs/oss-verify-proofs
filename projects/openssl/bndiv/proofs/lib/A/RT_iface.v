@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fdfs_only and PMfd carry the channel reader m_channel_reader; the stack bounds in rng_class and fprintf_stderr_icontract move from USTACK_TOP - 16 to USTACK_TOP - 9 and USTACK_TOP - 8; adds STACK_WOK, the 6144000 bytes of zero-mapped stack below sp0 that the launch guarantees, and win_le_wok). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,6 +27,16 @@ Definition SEGTOP_A : Z := 0xbca000.
 (* [comment removed for export] *)
 Definition USTACK_TOP : Z := 0x800000000000.
 Definition STACK_WIN : Z := 0x800000.
+(* The floor of the stack that the main-level contexts (D_defs.START, MAINCTX and the D_*
+   contexts built from them) hold, counted down from sp0.  [STACK_WIN] stays the 8 MiB that
+   [State.alloc_top] keeps between sp0 and the heap ceiling [l_ACEIL].  At LPS 727298f3 the
+   launch zero-maps the stack only from [Run.stack_window_lo], which
+   [StoreOk.stack_window_lo_valid] puts at or below sp0 - 6144513 for every admissible launch,
+   and the symbolic entry state holds exactly [AxEntry.stk_zero] = 6144000 bytes (1500 pages)
+   of it below sp0 ([AxEntry.stk_region], VCommon/Ax/AxEntry.v).  STACK_WOK is that size. *)
+Definition STACK_WOK : Z := 6144000.
+Lemma win_le_wok : forall z : Z, z - STACK_WIN <= z - STACK_WOK.
+Proof. intro z. unfold STACK_WIN, STACK_WOK. lia. Qed.
 (* [comment removed for export] *)
 Definition RT_STACK : Z := 0x10000.
 (* [comment removed for export] *)
@@ -85,7 +96,8 @@ Record rt_sig : Type := mkRTS {
 
 (* [comment removed for export] *)
 Definition fdfs_only (PMc : Model -> Prop) : Prop :=
-  forall mo mo', m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> PMc mo -> PMc mo'.
+  forall mo mo', m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> m_channel_reader mo' = m_channel_reader mo ->
+    PMc mo -> PMc mo'.
 
 (* [comment removed for export] *)
 Definition ASTA (RT : rt_sig) (Σ : rts RT) (PMc : Model -> Prop) (Pm : machine_state -> Prop) : config -> Prop :=
@@ -127,7 +139,7 @@ Definition rt_pres_ex (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (
 Definition rng_class (RT : rt_sig) (Σ : rts RT) (s n : Z) : Prop :=
   (exists p k, In (p, k) (rt_live RT Σ) /\ p <= s /\ s + n <= p + k)
   \/ (exists f k, In (f, k) (rt_frames RT Σ) /\ f <= s /\ s + n <= f + fs_size k - 8)
-  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 16)
+  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 9)
   \/ (0x10000 <= s /\ s + n <= SEGTOP_A).
 
 (* [comment removed for export] *)
@@ -579,10 +591,13 @@ End Contracts.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition PMfd (F0 : list (word * FdEntry)) (fs0 : Fs) : Model -> Prop := fun mo => m_fds mo = F0 /\ m_fs mo = fs0.
+(* LPS 08b1429: the channel reader travels with the fd frame. [Run.valid_input] pins it true at
+   launch and no step writes it; a nonempty writev needs it ([writev_spec]'s SIGPIPE arm). *)
+Definition PMfd (F0 : list (word * FdEntry)) (fs0 : Fs) : Model -> Prop :=
+  fun mo => m_fds mo = F0 /\ m_fs mo = fs0 /\ m_channel_reader mo = true.
 
 Lemma PMfd_fdfs_only : forall F0 fs0, fdfs_only (PMfd F0 fs0).
-Proof. intros F0 fs0 mo mo' E1 E2 [H1 H2]. split; congruence. Qed.
+Proof. intros F0 fs0 mo mo' E1 E2 E3 (H1 & H2 & H3). split; [congruence|]. split; congruence. Qed.
 
 (* [comment removed for export] *)
 Definition rt_pres_fp (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (W : list (Z * Z)) (m m' : mem) : Prop :=
@@ -689,7 +704,7 @@ Definition fprintf_stderr_icontract : Prop :=
        /\ bv_unsigned sp <= a
        /\ exists slack, bytes_at asegs m (a + Z.of_nat (length s) + 1) slack
             /\ (- (a + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16) ->
+            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8) ->
   fd_lookup F0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
   ERR_rep m -> io_ssp m ->
   ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo ->

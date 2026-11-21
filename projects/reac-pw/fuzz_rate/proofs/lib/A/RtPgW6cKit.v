@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6cKit.v at 4c23b042570d for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6cKit.v for reac-pw/fuzz_rate's
    image A: module paths changed; role's RPgSeg / RPgMem vocabulary (e_R, e_F, e_pp, e_src, e_left, rl_inw, rm_) becomes
    rate's (q_R, q_F, q_pp, q_src, q_left, rt_inw, rtm_); the segment pre is rate's rt_seg_pre, which does not carry the
    frame's prologue shadow, so rs_wr_shadow and rs_in_now take it as a premise (rs_start_M01 gives it); the image's

@@ -8,7 +8,7 @@ gates/decval-B.py) with only the inputs changed for image A; the decision tree p
   target image  fuzz_wire.asan  (sha256 2f8f8697cd4f; symbols from the unstripped twin d2f662a22962, bytes from the
                 stripped image of record)
   donor image   fuzz_pcap.asan  (sha256 b7a91d9b1fb0; symbols from the unstripped twin 36da3052c383)
-  donor text    fuzz_pcap's released lib/A/Rt/Memmove*.v (recipes 5098883da0b) with its module paths renamed
+  donor text    fuzz_pcap's released lib/A/Rt/Memmove*.v (recipes) with its module paths renamed
                 (run-gates.sh's DON tree: --don <dir>/A/Rt/<name>.v)
   relocated     the five files, read from --lib <dir>/A/Rt/<name>.v (the committed files, or a planted copy)
   environment   WIRE_BIN (fuzz_wire.asan and .unstripped), PCAP_PIN / PCAP_TWIN (fuzz_pcap.asan pin / twin);

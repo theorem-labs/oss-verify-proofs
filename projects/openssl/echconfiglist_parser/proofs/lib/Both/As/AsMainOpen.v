@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new fourth conjunct of path_at_lazy, the path ending below TASK_SIZE, is proved; the open walks aseg_A, aseg_C, aseg_F and aseg_U run over the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing, under the run's driver-law record). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -18,6 +19,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Amb
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem MState Exec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsCXXHeap AsDriverLaws AsStack0 RefExitBase AsDrvRun
   AsPrintfFirst AsDrvMem AsDrvDefs AsTRSegs AsMainWalk_defs AsMainSegs AsMainPre ECH_Iface.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail.
 Import ListNotations.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -78,10 +80,14 @@ Qed.
 
 Section AOpen.
   Context {HCEIL : HeapCeil}.
+  (* main's open phase lies on its path to the target call, which calls time() and so reads and
+     enters the vDSO: its walks are over the run's segment list asegs ++ rt_tail *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Variable L : alib.
   Hypothesis HH : asan_rt_hyps H.
-  Hypothesis DL : asan_driver_laws H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
   Variables (sp0 : word) (argv : list (list byte)) (s0 : as_St H) (msF0 : machine_state) (mo0 : Model)
             (regs0 : bvmap 5 word) (mem0 : word -> option byte) (B tid can : Z).
   Hypothesis Hva : valid_argv argv.
@@ -156,13 +162,13 @@ Section AOpen.
          as_VIS H s0 msF = mkst R (Z_to_bv 64 0x56aabc) M rom -> as_AKREL H s0 (mkCfg msF mo) -> same_but_materialized mo0 mo ->
          regs_ok E0 srA R -> know_ok RSEGS E0 M knA ->
          frame_mod mem0 M regA_w -> amframe sp0 M ->
-         realizes asegs (mkCfg msF mo) T) ->
-      realizes asegs (mkCfg msF0 mo0) T.
+         arz (mkCfg msF mo) T) ->
+      arz (mkCfg msF0 mo0) T.
     Proof.
       intros T HA. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
       pose proof amain_regs_ok as HR. pose proof amain_know_ok as HK.
       pose proof (am_vis _ _ _ _ _ _ _ _ _ _ _ _ PRE) as HV. pose proof (am_krel _ _ _ _ _ _ _ _ _ _ _ _ PRE) as HAK.
-      eapply (drv_run_lf H DL s0 FUELM STOPSAM scrA 0x1eed1c%Z sr_amain kn_amain 40%nat (fst (fst rA)) (snd (fst rA)) (snd rA)
+      eapply (drv_run_lf_rt H DLR s0 FUELM STOPSAM scrA 0x1eed1c%Z sr_amain kn_amain 40%nat (fst (fst rA)) (snd (fst rA)) (snd rA)
                 (fst (fst caA)) (snd (fst caA)) (snd caA) E0 mem0 regs0 msF0 mo0);
         [ vm_cast_no_check (@eq_refl _ rA) | vm_cast_no_check (@eq_refl _ caA) | exact HR | exact HK
         | rewrite (proj2 rA_facts); apply Forall_nil | scs_nil | exact HV | exact HAK | ].
@@ -217,8 +223,10 @@ Section AOpen.
       intros M R FM HR Hlen. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
       destruct Hpp as [_ (S1a & S1b & S1c & S1d & S1e)].
       destruct (aopenat_regs R HR) as (_ & _ & H11 & _).
-      split; [exact Hlen|]. split; [exact S1c|]. rewrite H11.
-      rewrite <- S1d. apply rdn_agree. intros j Hj. apply (above_A M FM). unorm. lia.
+      (* [path_at_lazy]'s fourth conjunct: the path ends below TASK_SIZE, by [astr_at]'s bound *)
+      split; [exact Hlen|]. split; [exact S1c|]. rewrite H11. split.
+      - rewrite <- S1d. apply rdn_agree. intros j Hj. apply (above_A M FM). unorm. lia.
+      - unfold TASK_SIZE. unorm. lia.
     Qed.
 
     (* [comment removed for export] *)
@@ -230,13 +238,13 @@ Section AOpen.
           getr R' 1 = Z_to_bv 64 0x1eed74 -> getr R' 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) ->
           getr R' 4 = Z_to_bv 64 0xbe1c90 -> getr R' 8 = Z_to_bv 64 2 -> getr R' 10 = Z_to_bv 64 0x10000 ->
           getr R' 18 = Z_to_bv 64 pp -> getr R' 20 = Z_to_bv 64 3 -> getr R' 21 = Z_to_bv 64 0x10000 ->
-          realizes asegs (mkCfg msF' mo') T) ->
-      realizes asegs (mkCfg msF mo) T.
+          arz (mkCfg msF' mo') T) ->
+      arz (mkCfg msF mo) T.
     Proof.
       intros R M msF mo T HV HAK HR HK HC. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
       pose proof (regs_set_a0 E0 srA R (Z_to_bv 64 3) (ELit 3) HR eq_refl) as HR3.
       change (sr_upd srA (ridx 10) (ELit 3)) with srC0 in HR3.
-      eapply (drv_run_lf H DL s0 FUELM STOPSAM noscr 0x56aac0%Z srC0 knA 40%nat (fst (fst rC)) (snd (fst rC)) (snd rC)
+      eapply (drv_run_lf_rt H DLR s0 FUELM STOPSAM noscr 0x56aac0%Z srC0 knA 40%nat (fst (fst rC)) (snd (fst rC)) (snd rC)
                 (fst (fst (carryM rC knA))) (snd (fst (carryM rC knA))) (snd (carryM rC knA)) E0 M _ msF mo);
         [ vm_cast_no_check (@eq_refl _ rC) | vm_cast_no_check (@eq_refl _ (carryM rC knA)) | exact HR3 | exact HK
         | rewrite (proj1 (proj2 rC_facts)); apply Forall_nil | scs_nil | exact HV | exact HAK | ].
@@ -262,8 +270,8 @@ Section AOpen.
           getr R' 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr R' 4 = Z_to_bv 64 0xbe1c90 -> getr R' 8 = Z_to_bv 64 2 ->
           getr R' 18 = Z_to_bv 64 pp ->
           frame_mod M M' aregF_w ->
-          realizes asegs (mkCfg msF' mo') T) ->
-      realizes asegs (mkCfg msF mo) T.
+          arz (mkCfg msF' mo') T) ->
+      arz (mkCfg msF mo) T.
     Proof.
       intros e R M msF mo T HV HAK He HSC HR HK HC. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
       (* [comment removed for export] *)
@@ -282,7 +290,7 @@ Section AOpen.
       assert (HK2 : know_ok RSEGS (AENV vals1) M knF0).
       { unfold knF0. apply Forall_cons; [| exact HK1]. apply krange_intro. cbn [edenot ev AENV]. rewrite Q40.
         pose proof (MainOpen.errno_ret_range e He). pose proof (u64_range (errno_ret e)). lia. }
-      eapply (drv_run_lf H DL s0 FUELM STOPSAM scrF 0x56aac0%Z srF0 knF0 41%nat (fst (fst rF)) (snd (fst rF)) (snd rF)
+      eapply (drv_run_lf_rt H DLR s0 FUELM STOPSAM scrF 0x56aac0%Z srF0 knF0 41%nat (fst (fst rF)) (snd (fst rF)) (snd rF)
                 (fst (fst caF)) (snd (fst caF)) (snd caF) (AENV vals1) M _ msF mo);
         [ vm_cast_no_check (@eq_refl _ rF) | vm_cast_no_check (@eq_refl _ caF) | exact HR2 | exact HK2
         | | rewrite (proj2 (proj2 rF_facts)); apply Forall_nil | exact HV | exact HAK | ].
@@ -347,8 +355,8 @@ Section AOpen.
          getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr R 4 = Z_to_bv 64 0xbe1c90 -> getr R 8 = Z_to_bv 64 2 ->
          getr R 10 = Z_to_bv 64 (Z.of_nat (length argv)) -> getr R 11 = Z_to_bv 64 (bv_unsigned sp0 + 8) ->
          frame_mod mem0 M regU_w -> amframe sp0 M ->
-         realizes asegs (mkCfg msF mo) T) ->
-      realizes asegs (mkCfg msF0 mo0) T.
+         arz (mkCfg msF mo) T) ->
+      arz (mkCfg msF0 mo0) T.
     Proof.
       intros T HU. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
       assert (Hlen : (1 <= length argv <= 1024)%nat) by (destruct Hva as [[H1 H2] _]; lia).
@@ -356,7 +364,7 @@ Section AOpen.
       pose proof (am_vis _ _ _ _ _ _ _ _ _ _ _ _ PRE) as HV. pose proof (am_krel _ _ _ _ _ _ _ _ _ _ _ _ PRE) as HAK.
       pose proof (am_a0 _ _ _ _ _ _ _ _ _ _ _ _ PRE) as R10.
       assert (Hac : ev EU 16 = getr regs0 10) by (subst EU; apply (a_ev_junk sp0 0 0 tid can regs0 10); lia).
-      eapply (drv_run_lf H DL s0 FUELM STOPSAM scrU 0x1eed1c%Z sr_amainN kn_amainU 40%nat (fst (fst rU)) (snd (fst rU)) (snd rU)
+      eapply (drv_run_lf_rt H DLR s0 FUELM STOPSAM scrU 0x1eed1c%Z sr_amainN kn_amainU 40%nat (fst (fst rU)) (snd (fst rU)) (snd rU)
                 (fst (fst caU)) (snd (fst caU)) (snd caU) EU mem0 regs0 msF0 mo0);
         [ vm_cast_no_check (@eq_refl _ rU) | vm_cast_no_check (@eq_refl _ caU) | exact HR | exact HK
         | | rewrite (proj2 (proj2 rU_facts)); apply Forall_nil | exact HV | exact HAK | ].

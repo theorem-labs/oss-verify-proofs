@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the tables of stack_malloc_4 at 0x3d2a0 of libreac/fuzz_identity: class-4 frame constants (1024 frames of 1024 bytes, hints at +32, flags at +0x8800, frames at +0x409000), addresses; module names. *)
-(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a Theorem Labs lane a1ee3c81405) to libreac/fuzz_identity: hex addresses for fuzz_identity.asan, record name TfibSyms (original; identity runs the release with no --rename, a Theorem Labs lane, 10-29), code table StackMallocTbl. *)
+(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a Theorem Labs lane) to libreac/fuzz_identity: hex addresses for fuzz_identity.asan, record name TfibSyms (original; identity runs the release with no --rename, a Theorem Labs lane, 10-29), code table StackMallocTbl. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

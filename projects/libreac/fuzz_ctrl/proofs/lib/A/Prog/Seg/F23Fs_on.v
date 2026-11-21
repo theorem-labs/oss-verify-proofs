@@ -5,7 +5,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 1068 of its 1186 lines of code are new or changed and 1084 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F23.v; 113 of its 263 lines of code are new or changed and 1036 lines of the source are left out. *)
-(* lib/A/Prog/Seg/F23Fs_on.v -- route (C) twin of lib/A/Prog/Seg/F23Fs.v's f23_evt_Fs (Seg/F23Fs.v:71-299), for the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* lib/A/Prog/Seg/F23Fs_on.v -- route (C) twin of lib/A/Prog/Seg/F23Fs.v's f23_evt_Fs (Seg/F23Fs.v:72-300), for the
    glue stage F23 of a Theorem Labs lane (owner a Theorem Labs lane). ADDITIVE: Seg/F23Fs.v (and Seg/F23.v, Seg/F23F.v) are Required and
    unchanged in this delivery apart from comment text; since this twin was written, F23Fs.v names MState by its full path and F23F.v gained its own f23_evt_F_on; this file adds one Definition and one Lemma. Proves no function (kind: segment run).
    rule 24: no function proved.
@@ -20,19 +21,19 @@
    Every other binder, premise (the rng / sh_word_rng footprint premises included) and post conjunct is
    f23_evt_Fs's, in its order.
 
-   THE REGION R = f23_evt_Fs_shadow_R fr Sf (the text of a Theorem Labs lane's F23.f23_evt_shadow_R (from a working branch f556cbc34ed),
+   THE REGION R = f23_evt_Fs_shadow_R fr Sf (the text of a Theorem Labs lane's F23.f23_evt_shadow_R (from a working branch),
    Seg/F23.v (a version not in this delivery), with PORTSC qualified as F23Fs.v names it, F23.PORTSC). Its disjuncts are the uses of the shadow
    premise HSW in f23_evt_Fs's proof (lines of Seg/F23Fs.v):
      - Sf + 16 <= a < Sf + 18: the two shadow stores 0x825a4 sb zero,16(s3) and 0x825ac sb a0,17(s3) need the bytes
-       writable: HS16, F23Fs.v:133 `proj1 (HSW _ HSH16)`, and HS17, F23Fs.v:142 `proj1 (HSW _ HSH17)`;
+       writable: HS16, F23Fs.v:134 `proj1 (HSW _ HSH16)`, and HS17, F23Fs.v:143 `proj1 (HSW _ HSH17)`;
      - asan_memcpy_shadow_R at the call's arguments a0 = fr + 128, a1 = F23.PORTSC, a2 = 12: the copy's own shadow
-       premise, F23Fs.v:238 `F23.f23_shadow_rw_rel m2 _ REL2 SW2`, with SW2 from HSW across the two stores
-       (F23Fs.v:174-176, F23.f23_shadow_rw_write).
-   The remaining use, F23Fs.v:285 `F23.f23_shadow_rw_rel_back m3 m3n R8 SW3` for the post's shadow_rw m', becomes the
+       premise, F23Fs.v:239 `F23.f23_shadow_rw_rel m2 _ REL2 SW2`, with SW2 from HSW across the two stores
+       (F23Fs.v:175-177, F23.f23_shadow_rw_write).
+   The remaining use, F23Fs.v:286 `F23.f23_shadow_rw_rel_back m3 m3n R8 SW3` for the post's shadow_rw m', becomes the
    forall-P post and reads no byte of the premise. The copy's own stack shadow is not in asan_memcpy_contract_F_on's
    shadow premise (only in its sh_word_rng footprint premise, kept), so it is not in R.
 
-   PROOF. f23_evt_Fs's script, with a Theorem Labs lane's narrowing steps from the plain twin F23.f23_evt_on (from a working branch f556cbc34ed,
+   PROOF. f23_evt_Fs's script, with a Theorem Labs lane's narrowing steps from the plain twin F23.f23_evt_on (from a working branch,
    Seg/F23.v (a version not in this delivery)): HS16 / HS17 from `proj1 (HSW _ HR16 HSH16)` / `proj1 (HSW _ HR17 HSH17)`; SW2 for every
    region across the two stores by A.ShadowRwOnT.shadow_rw_on_mem_mono + A.Prog.MemMono.rd_mono_write; the copy's
    shadow premise by A.ShadowRwOnT.shadow_rw_on_rel + A.ShadowRwOn.shadow_rw_on_mono from R's second disjunct; the
@@ -71,7 +72,7 @@ Module MNF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.MemNormF.
    so ctrlgate's DUP check (lib/Lib/MState.v and lib/A/Bz/Lib/MState.v are also in the closure) sees one copy. *)
 Module ULMS := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Tk.UL.MState.
 
-(* F23Fs.v's footprint hint for `step` (Seg/F23Fs.v:58-68), cited: F23Fs.v sets the hint Local. *)
+(* F23Fs.v's footprint hint for `step` (Seg/F23Fs.v:59-69), cited: F23Fs.v sets the hint Local. *)
 Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.acc_hint ::=
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.Seg.F23Fs.f23s_accF.
 

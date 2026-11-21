@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: obj_loop and arr_loop take it after alloc_ceiling <= lo; the visit sections take it as HBTlo and pass it to desc_allA, vis_tail and the loop's induction; the MAPP, OBL_STRDUP_NF, IH and vis_pro calls discharge it; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -243,7 +244,7 @@ rw_cells asegs mc (pa_F pa) ffc' -> rw_cells asegs mc (shA (pa_F pa)) shc' ->
 pe_frameAX mc pf pa nb pj sv ffc' shc'.
 Proof.
 intros pf pa q LB0 LM FRS B ts A m mc md lo nb pj sv ffc shc ffc' shc' STC HP (SLOTS & GAP & SAVED & _ & _) MU WM FFc FSHc.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof alloc_ceiling_range as ACR.
 assert (INtk : In (pf_tk pf, 72) (pe_blocksA pf q LB0 ts ++ LM)) by (apply in_or_app; left; unfold pe_blocksA; apply in_or_app; right; left; reflexivity).
 pose proof (heapA_blk A4L HIx _ _ _ _ _ _ _ _ _ HP INtk) as (_ & _ & Htlo & Hthi & _).
@@ -327,7 +328,7 @@ AJ5 A4L HIx A T md
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x9a0ac) fc None m (seg_rom asegs)).
 Proof.
 intros until fc. intros STC BSL INV SZF SZS PBK Hbn Hn kB BK RA SRC SRCL Hb0 SLOC UNP K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST1].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK1 & FR1).
 destruct PBK as (buf & bpos & cap & pre & post & Epbs & Lpre & CORE1 & Hbp).
@@ -341,7 +342,7 @@ destruct SPF1 as (SPF1 & SPF2 & SPF3 & SPF4).
 set (LBc := (t_objbs ts ++ concat (map lvl_blocks (t_levels ts))) ++ (pf_tk pf, 72) :: (q, 32 * pf_mxd pf) :: LB0) in *.
 eapply MAPP with (lo := lo) (b := xb) (src := src) (n := xn) (pb := t_pb ts) (buf := buf) (bpos := bpos) (cap := cap);
 [ exact HP1 | exact CORE1 | exact Hn | exact SRC | exact SRCL | exact Hb0 | exact SLOC | exact UNP
-| rewrite unsigned_lit by lia; exact ST1 | exact LO | rewrite unsigned_lit by lia; exact SPF1
+| rewrite unsigned_lit by lia; exact ST1 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; exact SPF1
 | rewrite unsigned_lit by lia; exact SPF2
 | rewrite unsigned_lit by lia; exact SPF3
 | exact ERR1 | reflexivity | exact RA | reflexivity | reflexivity | reflexivity
@@ -413,7 +414,7 @@ Hypothesis DEL : lh_delete_tail_A_stmt HIx.
 
 Theorem json_object_put_A_cps : put_stmt_A HIx.
 Proof.
-unfold put_stmt_A, put_stmtA. intros until rc. intros HP PRE A0 ST LO LOS SPA HT ERR TP RA BB K.
+unfold put_stmt_A, put_stmtA. intros until rc. intros HP PRE A0 ST LO HBT LOS SPA HT ERR TP RA BB K.
 unfold put_stk_A in LOS. unfold put_entry_A.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPW.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -476,7 +477,7 @@ left. split; [right; reflexivity | exact HP2].
 +
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP2) as MI.
 pose proof (wmono_refl asegs m2) as WM. pose proof (munch_refl [] m2) as MU.
-destruct (zomb_zhead HIx sp gp lo errv LM FRS c m2 p BS ZM (desc_allA HIx sp gp lo errv LM FRS LO ltac:(lia) SPA HT DEL c)) as (isobj & ck & ZH & HS).
+destruct (zomb_zhead HIx sp gp lo errv LM FRS c m2 p BS ZM (desc_allA HIx sp gp lo errv LM FRS LO HBT ltac:(lia) SPA HT DEL c)) as (isobj & ck & ZH & HS).
 reenterA asegs A4L HIx asegs_wx HP2. step. step. if_false.
 step. step. step. step.
 replace (Z_to_bv 64 (-1)) with (Z_to_bv 64 18446744073709551615) by (apply bv_eq; vm_compute; reflexivity).
@@ -554,6 +555,7 @@ Hypothesis PUT : put_stmt_A HIx.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D w : Z) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - dc_stkA (rdepth r).
 Hypothesis SPA : bv_unsigned sp mod 32 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -670,7 +672,7 @@ eapply OBL_STRDUP_NF with (u := UWpaid) (src := ud) (ab := ud) (nb := udn) (str 
 all: rewrite ?unsigned_lit by lia.
 1: exact INu2. 1: lia. 1: lia. 1: exact USTR. 1: exact NNu. 1: lia.
 1: exact STi.
-1: exact LO. 1: cbn [hl_stack_A A4L]; lia. 1: clear - SPA; Z.div_mod_to_equations; lia. 1: lia.
+1: exact LO. 1: first [assumption | lia]. 1: cbn [hl_stack_A A4L]; lia. 1: clear - SPA; Z.div_mod_to_equations; lia. 1: lia.
 1: exact ERRs. 1: reflexivity. 1: reflexivity. 1: exact I. 1: exact I. 1: exact BBs. 1: cbn [uw_cost]; lia.
 intros ms2 m2 md2 A2 rd e2 RS2 VM2 ST2 HPR2 ERR2 Hrd SDUP HP2. open_ret RS2.
 rewrite ?(unsigned_lit (bv_unsigned sp + -192)) in ST2 by lia. rewrite ?(unsigned_lit (bv_unsigned sp + -192)) in HPR2 by lia.
@@ -952,7 +954,7 @@ Lemma arr_loop : forall (fuel : nat) (kids : list (option jshape)),
 (forall k, In k kids -> VISx k) ->
 forall (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (LBa BS LM : list blk) (FRS : list frame) (B : bud) (lo p pb a : Z) (AL : list blk) (ps : list Z) (KBS : list (list blk)),
-alloc_ceiling <= lo -> lo <= bv_unsigned sp - (VIS_STK0 + VIS_STK1 * odepth (Some (Sarr kids))) -> bv_unsigned sp <= hiA_top A4L HIx ->
+alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - (VIS_STK0 + VIS_STK1 * odepth (Some (Sarr kids))) -> bv_unsigned sp <= hiA_top A4L HIx ->
 0 <= bv_unsigned sp < 2^64 -> bv_unsigned sp mod 16 = 0 ->
 Z.of_nat (length FRS) + (1 + odepth (Some (Sarr kids))) < 4096 ->
 (forall ms' md' m' (A' : ASA A4L HIx),
@@ -984,7 +986,7 @@ AJ5 A4L HIx AX T mdX
 (wz Fr) (wz EMIT_A) uaw (wz p) (wz 2147450880) keyw parw (wz (Fr + 32)) (wz (Fr / 8 + 2147450880)) (wz Fr) xt3 xt4 xt5 xt6)
 F (wz 0xa42e4) fc None mX (seg_rom asegs)).
 Proof.
-induction fuel as [|fuel IHf]; intros kids IH; intros until KBS; intros LO LOS HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44;
+induction fuel as [|fuel IHf]; intros kids IH; intros until KBS; intros LO HBT LOS HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44;
 intros until xt6; intros Hfuel Hii Hd0 HASP HPX VMX HPRX STX SAVE SCR GAP FFX FSHX.
 { exfalso. lia. }
 unfold VIS_STK0, VIS_STK1 in LOS.
@@ -1051,7 +1053,7 @@ pose proof (jopt_now _ _ _ _ _ _ _ _ HPR0c BSI JO) as JOc.
 evt_done5.
 eapply (IH k KIN) with (LBa := LBa) (BS := bs) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (lo := lo) (p := al_nth ps ii);
 [ exact HPc | exact BSI | rewrite unsigned_lit by lia; exact STg | exact LO
-| rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
+| exact HBT | rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
 | rewrite unsigned_lit by lia; clear - SPA HASP Hd0; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | reflexivity | rewrite unsigned_lit by lia; reflexivity
@@ -1090,7 +1092,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (IHf kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb a AL ps KBS LO ltac:(unfold VIS_STK0, VIS_STK1; lia) HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44
+eapply (IHf kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb a AL ps KBS LO HBT ltac:(unfold VIS_STK0, VIS_STK1; lia) HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44
 ASP d Fr _ mdr Ar _ _ jG _ _ _ _ _ _ (ii + 1));
 [ lia | lia | exact Hd0 | exact HASP | exact HPc | exact VM0r
 | eapply heap_pres_trans; [exact HPR0r | eapply heap_pres_weaken; [exact HPRc | lia | intros b Hb; exact Hb]]
@@ -1104,7 +1106,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ mdr Ar);
+eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO HBT ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ mdr Ar);
 [ exact Hd0 | exact HASP | exact HPc | exact VM0r
 | eapply heap_pres_trans; [exact HPR0r | eapply heap_pres_weaken; [exact HPRc | lia | intros b Hb; exact Hb]]
 | eassumption | exact SAVE | eassumption | reflexivity | exact GAP | eassumption | eassumption ].
@@ -1112,7 +1114,7 @@ Qed.
 
 Lemma vis_arr : forall kids, (forall k, In k kids -> VISx k) -> VISx (Some (Sarr kids)).
 Proof.
-intros kids IH. unfold VIS. intros until p. intros HP INC ST LO LOS SPA HT TP RA JO FRN A0 A4 K.
+intros kids IH. unfold VIS. intros until p. intros HP INC ST LO HBT LOS SPA HT TP RA JO FRN A0 A4 K.
 destruct JO as [Hp J]. subst a0 a4 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 assert (DN : 0 <= odepth (Some (Sarr kids))) by (cbn [odepth]; apply sdepth_nonneg).
@@ -1121,7 +1123,7 @@ assert (INp : In (p, 48) BS) by (rewrite EBS; apply in_or_app; left; left; refle
 assert (INAL : incl AL BS) by (intros b Hb; rewrite EBS; apply in_or_app; left; right; apply in_or_app; left; exact Hb).
 assert (INK : forall bs, In bs KBS -> incl bs BS).
 { intros bs Hbs b Hb. rewrite EBS. apply in_or_app; left; right. apply in_or_app; right. apply in_concat. exists bs. split; assumption. }
-eapply vis_pro; [exact HP | exact ST | exact LO | unfold VIS_STK0, VIS_STK1 in *; lia | exact SPA | exact HT | reflexivity | lia |].
+eapply vis_pro; [exact HP | exact ST | exact LO | first [assumption | lia] | unfold VIS_STK0, VIS_STK1 in *; lia | exact SPA | exact HT | reflexivity | lia |].
 intros ASP d Fr m1 md1 A1 jA jG jf xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xt3 xt4 xt5 xt6 Hd0 HASP HP1 VM1 HPR1 ST1 SAVE SCRA GAP FF FSH.
 pose proof LOS as LOS'. unfold VIS_STK0, VIS_STK1 in LOS.
 pose proof alloc_ceiling_range as ACR.
@@ -1207,7 +1209,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ md1 A1);
+eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO HBT ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ md1 A1);
 [ exact Hd0 | exact HASP | exact HPc | exact VM1
 | eapply heap_pres_trans; [exact HPR1 | eapply heap_pres_weaken; [exact HPRc | lia | intros b Hb; exact Hb]]
 | eassumption | exact SAVE | eassumption | reflexivity | exact GAP | eassumption | eassumption ].
@@ -1220,7 +1222,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (arr_loop (S (length ps)) kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb a AL ps KBS LO LOS' HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44
+eapply (arr_loop (S (length ps)) kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb a AL ps KBS LO HBT LOS' HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44
 ASP d Fr _ md1 A1 _ _ jG _ _ _ _ _ _ 0);
 [ lia | lia | exact Hd0 | exact HASP | exact HPc | exact VM1
 | eapply heap_pres_trans; [exact HPR1 | eapply heap_pres_weaken; [exact HPRc | lia | intros b Hb; exact Hb]]
@@ -1301,7 +1303,7 @@ Lemma obj_loop : forall (fuel : nat) (kids : list (option jshape)),
 (forall k, In k kids -> VISx k) ->
 forall (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (LBa BS LM : list blk) (FRS : list frame) (B : bud) (lo p pb0 t : Z) (PBS TBS : list blk) (es : list oent) (KBS : list (list blk)),
-alloc_ceiling <= lo -> lo <= bv_unsigned sp - (VIS_STK0 + VIS_STK1 * odepth (Some (Sobj kids))) -> bv_unsigned sp <= hiA_top A4L HIx ->
+alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - (VIS_STK0 + VIS_STK1 * odepth (Some (Sobj kids))) -> bv_unsigned sp <= hiA_top A4L HIx ->
 0 <= bv_unsigned sp < 2^64 -> bv_unsigned sp mod 16 = 0 ->
 Z.of_nat (length FRS) + (1 + odepth (Some (Sobj kids))) < 4096 ->
 (forall ms' md' m' (A' : ASA A4L HIx),
@@ -1330,7 +1332,7 @@ AJ5 A4L HIx AX T mdX
 (wz Fr) (wz EMIT_A) uaw (wz p) (wz 2147450880) keyw parw (wz (oe_a e)) (wz (Fr / 8 + 2147450880)) (wz Fr) xt3 xt4 xt5 xt6)
 F (wz 0xa4214) fc None mX (seg_rom asegs)).
 Proof.
-induction fuel as [|fuel IHf]; intros kids IH; intros until KBS; intros LO LOS HT SPR SPA FRN K INC OV;
+induction fuel as [|fuel IHf]; intros kids IH; intros until KBS; intros LO HBT LOS HT SPR SPA FRN K INC OV;
 intros until xt6; intros Hfuel He Hd0 HASP HPX VMX HPRX STX SAVE SCR GAP FFX FSHX.
 { exfalso. assert (L : (j < length es)%nat) by (apply nth_error_Some; congruence). lia. }
 unfold VIS_STK0, VIS_STK1 in LOS.
@@ -1365,7 +1367,7 @@ unstash SAVE. unstash GAP.
 evt_done5.
 eapply (IH k KIN) with (LBa := LBa) (BS := bs) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (lo := lo) (p := oe_v e);
 [ exact HPX | exact BSI | rewrite unsigned_lit by lia; exact STX | exact LO
-| rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
+| exact HBT | rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
 | rewrite unsigned_lit by lia; clear - SPA HASP Hd0; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | reflexivity | rewrite unsigned_lit by lia; reflexivity
@@ -1396,7 +1398,7 @@ clear OVr.
 reenterA asegs A4L HIx asegs_wx HPr.
 step. step. step. if_lit. step. if_lit. step. if_falsex.
 evt_done5.
-eapply (IHf kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb0 t PBS TBS es KBS LO ltac:(unfold VIS_STK0, VIS_STK1; lia) HT SPR SPA FRN K INC OV
+eapply (IHf kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb0 t PBS TBS es KBS LO HBT ltac:(unfold VIS_STK0, VIS_STK1; lia) HT SPR SPA FRN K INC OV
 ASP d Fr _ mdr Ar _ _ _ jG _ _ _ _ _ _ _ _ _ _ _ _ _ _ (S j) e');
 [ lia | exact He' | exact Hd0 | exact HASP | exact HPr | exact VM0r | exact HPR0r
 | eassumption | exact SAVE | eassumption | exact GAP | eassumption | eassumption ].
@@ -1404,21 +1406,21 @@ ASP d Fr _ mdr Ar _ _ _ jG _ _ _ _ _ _ _ _ _ _ _ _ _ _ (S j) e');
 reenterA asegs A4L HIx asegs_wx HPr.
 step. step. step. if_lit. step. if_lit. step. if_lit.
 evt_done5.
-eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ mdr Ar);
+eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO HBT ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ mdr Ar);
 [ exact Hd0 | exact HASP | exact HPr | exact VM0r | exact HPR0r
 | eassumption | exact SAVE | eassumption | reflexivity | exact GAP | eassumption | eassumption ].
 Qed.
 
 Lemma vis_obj : forall kids, (forall k, In k kids -> VISx k) -> VISx (Some (Sobj kids)).
 Proof.
-intros kids IH. unfold VIS. intros until p. intros HP INC ST LO LOS SPA HT TP RA JO FRN A0 A4 K.
+intros kids IH. unfold VIS. intros until p. intros HP INC ST LO HBT LOS SPA HT TP RA JO FRN A0 A4 K.
 destruct JO as [Hp J]. subst a0 a4 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 assert (DN : 0 <= odepth (Some (Sobj kids))) by (cbn [odepth]; apply sdepth_nonneg).
 assert (POS : forall a n, In (a, n) BS -> 0 < a /\ a mod 16 = 0).
 { intros b n Hb. pose proof (heapA_blk A4L HIx _ _ _ _ _ _ _ b n HP ltac:(apply in_or_app; left; apply INC; exact Hb)) as (_ & Hal & Hlo & _). split; assumption. }
 destruct (jval_obj_view asegs A4F kids m BS p 1 J POS) as (pb0 & PBS & t & TBS & es & KBS & OV).
-eapply vis_pro; [exact HP | exact ST | exact LO | unfold VIS_STK0, VIS_STK1 in *; lia | exact SPA | exact HT | reflexivity | lia |].
+eapply vis_pro; [exact HP | exact ST | exact LO | first [assumption | lia] | unfold VIS_STK0, VIS_STK1 in *; lia | exact SPA | exact HT | reflexivity | lia |].
 intros ASP d Fr m1 md1 A1 jA jG jf xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xt3 xt4 xt5 xt6 Hd0 HASP HP1 VM1 HPR1 ST1 SAVE SCRA GAP FF FSH.
 pose proof LOS as LOS'. unfold VIS_STK0, VIS_STK1 in LOS.
 pose proof alloc_ceiling_range as ACR.
@@ -1515,7 +1517,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (obj_loop (S (length es)) kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb0 t PBS TBS es KBS LO LOS' HT SPR SPA FRN K INC OV
+eapply (obj_loop (S (length es)) kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb0 t PBS TBS es KBS LO HBT LOS' HT SPR SPA FRN K INC OV
 ASP d Fr _ md1 A1 _ _ _ jG _ _ _ _ _ _ _ _ _ _ _ _ _ _ 0%nat e0);
 [ lia | exact He0 | exact Hd0 | exact HASP | exact HPd | exact VM1
 | eapply heap_pres_trans; [exact HPR1 | eapply heap_pres_weaken; [exact HPRd | lia | intros b Hb; exact Hb]]
@@ -1530,7 +1532,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ md1 A1);
+eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO HBT ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ md1 A1);
 [ exact Hd0 | exact HASP | exact HPd | exact VM1
 | eapply heap_pres_trans; [exact HPR1 | eapply heap_pres_weaken; [exact HPRd | lia | intros b Hb; exact Hb]]
 | eassumption | exact SAVE | eassumption | reflexivity | exact GAP | eassumption | eassumption ].
@@ -1550,7 +1552,7 @@ Qed.
 
 Theorem json_c_visit_A : jo_visit_A_stmt HIx JCVISIT_A EMIT_A (16 + 176 + 4096) 176.
 Proof.
-unfold jo_visit_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) JO FRN A0 A1 A2 A3 K.
+unfold jo_visit_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) JO FRN A0 A1 A2 A3 K.
 subst a0 a1 a2 a3 tp. word_range sp SPR. unfold JCVISIT_A, A_TP in *.
 pose proof (Qdgq_c1.odepth_nonneg s) as DN.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
@@ -1568,7 +1570,7 @@ assert (JO1 : joptA s m1 BS p) by (eapply (jopt_now _ _ _ _ _ _ _ _ HPR1); [appl
 evt_done5.
 eapply (vis_all s) with (LBa := BS ++ LB) (BS := BS) (LM := LM) (FRS := FRS) (B := B) (lo := lo) (p := p);
 [ exact HP1 | apply incl_appl, incl_refl | rewrite unsigned_lit by lia; eassumption | exact LO
-| rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
+| first [assumption | lia] | rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | reflexivity | rewrite unsigned_lit by lia; reflexivity
@@ -1832,7 +1834,7 @@ rw_cells asegs mc (pa_F pa) ffc' -> rw_cells asegs mc (shA (pa_F pa)) shc' ->
 pe_frameAX mc pf pa nb pj sv ffc' shc'.
 Proof.
 intros pf pa q LB0 LM FRS B ts A m mc md lo nb pj sv ffc shc ffc' shc' STC HP (SLOTS & GAP & SAVED & _ & _) MU WM FFc FSHc.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof alloc_ceiling_range as ACR.
 assert (INtk : In (pf_tk pf, 72) (pe_blocksA pf q LB0 ts ++ LM)) by (apply in_or_app; left; unfold pe_blocksA; apply in_or_app; right; left; reflexivity).
 pose proof (heapA_blk A4L HIx _ _ _ _ _ _ _ _ _ HP INtk) as (_ & _ & Htlo & Hthi & _).
@@ -1916,7 +1918,7 @@ AJ5 A4L HIx A T md
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x9b4fc) fc None m (seg_rom asegs)).
 Proof.
 intros until fc. intros STC BSL INV SZF SZS PBK Hbn Hn kB BK RA SRC SRCL Hb0 SLOC UNP K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST1].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK1 & FR1).
 destruct PBK as (buf & bpos & cap & pre & post & Epbs & Lpre & CORE1 & Hbp).
@@ -1930,7 +1932,7 @@ destruct SPF1 as (SPF1 & SPF2 & SPF3 & SPF4).
 set (LBc := (t_objbs ts ++ concat (map lvl_blocks (t_levels ts))) ++ (pf_tk pf, 72) :: (q, 32 * pf_mxd pf) :: LB0) in *.
 eapply MAPP with (lo := lo) (b := xb) (src := src) (n := xn) (pb := t_pb ts) (buf := buf) (bpos := bpos) (cap := cap);
 [ exact HP1 | exact CORE1 | exact Hn | exact SRC | exact SRCL | exact Hb0 | exact SLOC | exact UNP
-| rewrite unsigned_lit by lia; exact ST1 | exact LO | rewrite unsigned_lit by lia; exact SPF1
+| rewrite unsigned_lit by lia; exact ST1 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; exact SPF1
 | rewrite unsigned_lit by lia; exact SPF2
 | rewrite unsigned_lit by lia; exact SPF3
 | exact ERR1 | reflexivity | exact RA | reflexivity | reflexivity | reflexivity
@@ -2020,7 +2022,7 @@ Hypothesis DEL : lh_delete_tail_A_stmt HIx.
 
 Theorem json_object_put_A_cps : put_stmt_A HIx.
 Proof.
-unfold put_stmt_A, put_stmtA. intros until rc. intros HP PRE A0 ST LO LOS SPA HT ERR TP RA BB K.
+unfold put_stmt_A, put_stmtA. intros until rc. intros HP PRE A0 ST LO HBT LOS SPA HT ERR TP RA BB K.
 unfold put_stk_A in LOS. unfold put_entry_A.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPW.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -2084,7 +2086,7 @@ left. split; [right; reflexivity | exact HP2].
 +
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP2) as MI.
 pose proof (wmono_refl asegs m2) as WM. pose proof (munch_refl [] m2) as MU.
-destruct (zomb_zhead HIx sp gp lo errv LM FRS c m2 p BS ZM (desc_allA HIx sp gp lo errv LM FRS LO ltac:(lia) SPA HT DEL c)) as (isobj & ck & ZH & HS).
+destruct (zomb_zhead HIx sp gp lo errv LM FRS c m2 p BS ZM (desc_allA HIx sp gp lo errv LM FRS LO HBT ltac:(lia) SPA HT DEL c)) as (isobj & ck & ZH & HS).
 reenterA asegs A4L HIx asegs_wx HP2. bstep. bstep. if_false.
 bstep. bstep. bstep. bstep.
 replace (Z_to_bv 64 (-1)) with (Z_to_bv 64 18446744073709551615) by (apply bv_eq; vm_compute; reflexivity).
@@ -2159,6 +2161,7 @@ Hypothesis PUT : put_stmt_A HIx.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D w : Z) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - dc_stkA (rdepth r).
 Hypothesis SPA : bv_unsigned sp mod 32 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -2278,7 +2281,7 @@ eapply OBL_STRDUP_NF with (u := UWpaid) (src := ud) (ab := ud) (nb := udn) (str 
 all: rewrite ?unsigned_lit by lia.
 1: exact INu2. 1: lia. 1: lia. 1: exact USTR. 1: exact NNu. 1: lia.
 1: exact STi.
-1: exact LO. 1: cbn [hl_stack_A A4L]; lia. 1: clear - SPA; Z.div_mod_to_equations; lia. 1: lia.
+1: exact LO. 1: first [assumption | lia]. 1: cbn [hl_stack_A A4L]; lia. 1: clear - SPA; Z.div_mod_to_equations; lia. 1: lia.
 1: exact ERRs. 1: reflexivity. 1: reflexivity. 1: exact I. 1: exact I. 1: exact BBs. 1: cbn [uw_cost]; lia.
 intros ms2 m2 md2 A2 rd e2 RS2 VM2 ST2 HPR2 ERR2 Hrd SDUP HP2. open_ret RS2.
 rewrite ?(unsigned_lit (bv_unsigned sp + -192)) in ST2 by lia. rewrite ?(unsigned_lit (bv_unsigned sp + -192)) in HPR2 by lia.
@@ -2545,7 +2548,7 @@ Lemma arr_loop : forall (fuel : nat) (kids : list (option jshape)),
 (forall k, In k kids -> VISx k) ->
 forall (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (LBa BS LM : list blk) (FRS : list frame) (B : bud) (lo p pb a : Z) (AL : list blk) (ps : list Z) (KBS : list (list blk)),
-alloc_ceiling <= lo -> lo <= bv_unsigned sp - (VIS_STK0 + VIS_STK1 * odepth (Some (Sarr kids))) -> bv_unsigned sp <= hiA_top A4L HIx ->
+alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - (VIS_STK0 + VIS_STK1 * odepth (Some (Sarr kids))) -> bv_unsigned sp <= hiA_top A4L HIx ->
 0 <= bv_unsigned sp < 2^64 -> bv_unsigned sp mod 16 = 0 ->
 Z.of_nat (length FRS) + (1 + odepth (Some (Sarr kids))) < 4096 ->
 (forall ms' md' m' (A' : ASA A4L HIx),
@@ -2577,7 +2580,7 @@ AJ5 A4L HIx AX T mdX
 (wz Fr) (wz EMIT_A) uaw (wz p) (wz 2147450880) keyw parw (wz (Fr + 32)) (wz (Fr / 8 + 2147450880)) (wz Fr) xt3 xt4 xt5 xt6)
 F (wz 0xa69a0) fc None mX (seg_rom asegs)).
 Proof.
-induction fuel as [|fuel IHf]; intros kids IH; intros until KBS; intros LO LOS HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44;
+induction fuel as [|fuel IHf]; intros kids IH; intros until KBS; intros LO HBT LOS HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44;
 intros until xt6; intros Hfuel Hii Hd0 HASP HPX VMX HPRX STX SAVE SCR GAP FFX FSHX.
 { exfalso. lia. }
 unfold VIS_STK0, VIS_STK1 in LOS.
@@ -2644,7 +2647,7 @@ pose proof (jopt_now _ _ _ _ _ _ _ _ HPR0c BSI JO) as JOc.
 evt_done5.
 eapply (IH k KIN) with (LBa := LBa) (BS := bs) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (lo := lo) (p := al_nth ps ii);
 [ exact HPc | exact BSI | rewrite unsigned_lit by lia; exact STg | exact LO
-| rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
+| exact HBT | rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
 | rewrite unsigned_lit by lia; clear - SPA HASP Hd0; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | reflexivity | rewrite unsigned_lit by lia; reflexivity
@@ -2683,7 +2686,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (IHf kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb a AL ps KBS LO ltac:(unfold VIS_STK0, VIS_STK1; lia) HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44
+eapply (IHf kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb a AL ps KBS LO HBT ltac:(unfold VIS_STK0, VIS_STK1; lia) HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44
 ASP d Fr _ mdr Ar _ _ jG _ _ _ _ _ _ (ii + 1));
 [ lia | lia | exact Hd0 | exact HASP | exact HPc | exact VM0r
 | eapply heap_pres_trans; [exact HPR0r | eapply heap_pres_weaken; [exact HPRc | lia | intros b Hb; exact Hb]]
@@ -2697,7 +2700,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ mdr Ar);
+eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO HBT ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ mdr Ar);
 [ exact Hd0 | exact HASP | exact HPc | exact VM0r
 | eapply heap_pres_trans; [exact HPR0r | eapply heap_pres_weaken; [exact HPRc | lia | intros b Hb; exact Hb]]
 | eassumption | exact SAVE | eassumption | reflexivity | exact GAP | eassumption | eassumption ].
@@ -2705,7 +2708,7 @@ Qed.
 
 Lemma vis_arr : forall kids, (forall k, In k kids -> VISx k) -> VISx (Some (Sarr kids)).
 Proof.
-intros kids IH. unfold VIS. intros until p. intros HP INC ST LO LOS SPA HT TP RA JO FRN A0 A4 K.
+intros kids IH. unfold VIS. intros until p. intros HP INC ST LO HBT LOS SPA HT TP RA JO FRN A0 A4 K.
 destruct JO as [Hp J]. subst a0 a4 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 assert (DN : 0 <= odepth (Some (Sarr kids))) by (cbn [odepth]; apply sdepth_nonneg).
@@ -2714,7 +2717,7 @@ assert (INp : In (p, 48) BS) by (rewrite EBS; apply in_or_app; left; left; refle
 assert (INAL : incl AL BS) by (intros b Hb; rewrite EBS; apply in_or_app; left; right; apply in_or_app; left; exact Hb).
 assert (INK : forall bs, In bs KBS -> incl bs BS).
 { intros bs Hbs b Hb. rewrite EBS. apply in_or_app; left; right. apply in_or_app; right. apply in_concat. exists bs. split; assumption. }
-eapply vis_pro; [exact HP | exact ST | exact LO | unfold VIS_STK0, VIS_STK1 in *; lia | exact SPA | exact HT | reflexivity | lia |].
+eapply vis_pro; [exact HP | exact ST | exact LO | first [assumption | lia] | unfold VIS_STK0, VIS_STK1 in *; lia | exact SPA | exact HT | reflexivity | lia |].
 intros ASP d Fr m1 md1 A1 jA jG jf xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xt3 xt4 xt5 xt6 Hd0 HASP HP1 VM1 HPR1 ST1 SAVE SCRA GAP FF FSH.
 pose proof LOS as LOS'. unfold VIS_STK0, VIS_STK1 in LOS.
 pose proof alloc_ceiling_range as ACR.
@@ -2800,7 +2803,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ md1 A1);
+eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO HBT ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ md1 A1);
 [ exact Hd0 | exact HASP | exact HPc | exact VM1
 | eapply heap_pres_trans; [exact HPR1 | eapply heap_pres_weaken; [exact HPRc | lia | intros b Hb; exact Hb]]
 | eassumption | exact SAVE | eassumption | reflexivity | exact GAP | eassumption | eassumption ].
@@ -2813,7 +2816,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (arr_loop (S (length ps)) kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb a AL ps KBS LO LOS' HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44
+eapply (arr_loop (S (length ps)) kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb a AL ps KBS LO HBT LOS' HT SPR SPA FRN K INC INp INAL INK HDR HAL L1 L2 KIDS LEN44
 ASP d Fr _ md1 A1 _ _ jG _ _ _ _ _ _ 0);
 [ lia | lia | exact Hd0 | exact HASP | exact HPc | exact VM1
 | eapply heap_pres_trans; [exact HPR1 | eapply heap_pres_weaken; [exact HPRc | lia | intros b Hb; exact Hb]]
@@ -2894,7 +2897,7 @@ Lemma obj_loop : forall (fuel : nat) (kids : list (option jshape)),
 (forall k, In k kids -> VISx k) ->
 forall (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (LBa BS LM : list blk) (FRS : list frame) (B : bud) (lo p pb0 t : Z) (PBS TBS : list blk) (es : list oent) (KBS : list (list blk)),
-alloc_ceiling <= lo -> lo <= bv_unsigned sp - (VIS_STK0 + VIS_STK1 * odepth (Some (Sobj kids))) -> bv_unsigned sp <= hiA_top A4L HIx ->
+alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - (VIS_STK0 + VIS_STK1 * odepth (Some (Sobj kids))) -> bv_unsigned sp <= hiA_top A4L HIx ->
 0 <= bv_unsigned sp < 2^64 -> bv_unsigned sp mod 16 = 0 ->
 Z.of_nat (length FRS) + (1 + odepth (Some (Sobj kids))) < 4096 ->
 (forall ms' md' m' (A' : ASA A4L HIx),
@@ -2923,7 +2926,7 @@ AJ5 A4L HIx AX T mdX
 (wz Fr) (wz EMIT_A) uaw (wz p) (wz 2147450880) keyw parw (wz (oe_a e)) (wz (Fr / 8 + 2147450880)) (wz Fr) xt3 xt4 xt5 xt6)
 F (wz 0xa68cc) fc None mX (seg_rom asegs)).
 Proof.
-induction fuel as [|fuel IHf]; intros kids IH; intros until KBS; intros LO LOS HT SPR SPA FRN K INC OV;
+induction fuel as [|fuel IHf]; intros kids IH; intros until KBS; intros LO HBT LOS HT SPR SPA FRN K INC OV;
 intros until xt6; intros Hfuel He Hd0 HASP HPX VMX HPRX STX SAVE SCR GAP FFX FSHX.
 { exfalso. assert (L : (j < length es)%nat) by (apply nth_error_Some; congruence). lia. }
 unfold VIS_STK0, VIS_STK1 in LOS.
@@ -2958,7 +2961,7 @@ unstash SAVE. unstash GAP.
 evt_done5.
 eapply (IH k KIN) with (LBa := LBa) (BS := bs) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (lo := lo) (p := oe_v e);
 [ exact HPX | exact BSI | rewrite unsigned_lit by lia; exact STX | exact LO
-| rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
+| exact HBT | rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
 | rewrite unsigned_lit by lia; clear - SPA HASP Hd0; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | reflexivity | rewrite unsigned_lit by lia; reflexivity
@@ -2989,7 +2992,7 @@ clear OVr.
 reenterA asegs A4L HIx asegs_wx HPr.
 bstep. bstep. bstep. if_lit. bstep. if_lit. bstep. if_falsex.
 evt_done5.
-eapply (IHf kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb0 t PBS TBS es KBS LO ltac:(unfold VIS_STK0, VIS_STK1; lia) HT SPR SPA FRN K INC OV
+eapply (IHf kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb0 t PBS TBS es KBS LO HBT ltac:(unfold VIS_STK0, VIS_STK1; lia) HT SPR SPA FRN K INC OV
 ASP d Fr _ mdr Ar _ _ _ jG _ _ _ _ _ _ _ _ _ _ _ _ _ _ (S j) e');
 [ lia | exact He' | exact Hd0 | exact HASP | exact HPr | exact VM0r | exact HPR0r
 | eassumption | exact SAVE | eassumption | exact GAP | eassumption | eassumption ].
@@ -2997,21 +3000,21 @@ ASP d Fr _ mdr Ar _ _ _ jG _ _ _ _ _ _ _ _ _ _ _ _ _ _ (S j) e');
 reenterA asegs A4L HIx asegs_wx HPr.
 bstep. bstep. bstep. if_lit. bstep. if_lit. bstep. if_lit.
 evt_done5.
-eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ mdr Ar);
+eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO HBT ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ mdr Ar);
 [ exact Hd0 | exact HASP | exact HPr | exact VM0r | exact HPR0r
 | eassumption | exact SAVE | eassumption | reflexivity | exact GAP | eassumption | eassumption ].
 Qed.
 
 Lemma vis_obj : forall kids, (forall k, In k kids -> VISx k) -> VISx (Some (Sobj kids)).
 Proof.
-intros kids IH. unfold VIS. intros until p. intros HP INC ST LO LOS SPA HT TP RA JO FRN A0 A4 K.
+intros kids IH. unfold VIS. intros until p. intros HP INC ST LO HBT LOS SPA HT TP RA JO FRN A0 A4 K.
 destruct JO as [Hp J]. subst a0 a4 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 assert (DN : 0 <= odepth (Some (Sobj kids))) by (cbn [odepth]; apply sdepth_nonneg).
 assert (POS : forall a n, In (a, n) BS -> 0 < a /\ a mod 16 = 0).
 { intros b n Hb. pose proof (heapA_blk A4L HIx _ _ _ _ _ _ _ b n HP ltac:(apply in_or_app; left; apply INC; exact Hb)) as (_ & Hal & Hlo & _). split; assumption. }
 destruct (jval_obj_view asegs A4F kids m BS p 1 J POS) as (pb0 & PBS & t & TBS & es & KBS & OV).
-eapply vis_pro; [exact HP | exact ST | exact LO | unfold VIS_STK0, VIS_STK1 in *; lia | exact SPA | exact HT | reflexivity | lia |].
+eapply vis_pro; [exact HP | exact ST | exact LO | first [assumption | lia] | unfold VIS_STK0, VIS_STK1 in *; lia | exact SPA | exact HT | reflexivity | lia |].
 intros ASP d Fr m1 md1 A1 jA jG jf xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xt3 xt4 xt5 xt6 Hd0 HASP HP1 VM1 HPR1 ST1 SAVE SCRA GAP FF FSH.
 pose proof LOS as LOS'. unfold VIS_STK0, VIS_STK1 in LOS.
 pose proof alloc_ceiling_range as ACR.
@@ -3108,7 +3111,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (obj_loop (S (length es)) kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb0 t PBS TBS es KBS LO LOS' HT SPR SPA FRN K INC OV
+eapply (obj_loop (S (length es)) kids IH ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa BS LM FRS B lo p pb0 t PBS TBS es KBS LO HBT LOS' HT SPR SPA FRN K INC OV
 ASP d Fr _ md1 A1 _ _ _ jG _ _ _ _ _ _ _ _ _ _ _ _ _ _ 0%nat e0);
 [ lia | exact He0 | exact Hd0 | exact HASP | exact HPd | exact VM1
 | eapply heap_pres_trans; [exact HPR1 | eapply heap_pres_weaken; [exact HPRd | lia | intros b Hb; exact Hb]]
@@ -3123,7 +3126,7 @@ apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ 
 apply (rw_cells_transport asegs [(lo, ASP + 56); (Fr, Fr + 56); (sh, sh + 8)] _ mc) in GAP; [| exact MUc | exact WMc | cbn [disjoint_from cells_size csize Nat.add]; lia]
 end end.
 evt_done5.
-eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ md1 A1);
+eapply (vis_tail HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md T LBa LM FRS B lo LO HBT ltac:(unfold VIS_STK0; lia) HT SPR K ASP d Fr _ md1 A1);
 [ exact Hd0 | exact HASP | exact HPd | exact VM1
 | eapply heap_pres_trans; [exact HPR1 | eapply heap_pres_weaken; [exact HPRd | lia | intros b Hb; exact Hb]]
 | eassumption | exact SAVE | eassumption | reflexivity | exact GAP | eassumption | eassumption ].
@@ -3143,7 +3146,7 @@ Qed.
 
 Theorem json_c_visit_A : jo_visit_A_stmt HIx JCVISIT_A EMIT_A (16 + 176 + 4096) 176.
 Proof.
-unfold jo_visit_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) JO FRN A0 A1 A2 A3 K.
+unfold jo_visit_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) JO FRN A0 A1 A2 A3 K.
 subst a0 a1 a2 a3 tp. word_range sp SPR. unfold JCVISIT_A, A_TP in *.
 pose proof (Qdgq_c1.odepth_nonneg s) as DN.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
@@ -3161,7 +3164,7 @@ assert (JO1 : joptA s m1 BS p) by (eapply (jopt_now _ _ _ _ _ _ _ _ HPR1); [appl
 evt_done5.
 eapply (vis_all s) with (LBa := BS ++ LB) (BS := BS) (LM := LM) (FRS := FRS) (B := B) (lo := lo) (p := p);
 [ exact HP1 | apply incl_appl, incl_refl | rewrite unsigned_lit by lia; eassumption | exact LO
-| rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
+| first [assumption | lia] | rewrite unsigned_lit by lia; unfold VIS_STK0, VIS_STK1; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | reflexivity | rewrite unsigned_lit by lia; reflexivity

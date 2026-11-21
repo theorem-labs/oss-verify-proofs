@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the run's CONFIG_RSEQ flag; AT_EXECFN; the vDSO's mappings and steps; the channel-reader flag that fdchan asks for; the launch's channel-reader and SIGPIPE fields): changed MD0, MD_file, MD_dir, MD0_fds, MD0_fs, split_win, drv_lay, drv_state and 3 more; added reader_of_inp, MD0_rx_ok, MD0_vdso_incl, trim416, canon_mem, canon_state, ss_canon_t, ss_canon_f and 3 more. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -9,7 +10,7 @@ From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YK11 YK0h YK0i YK
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP0f YP04 YN3v.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YO0i YO0f YO0x YO0d YO05.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import UH00 UH01 UH03 UH02 UN3e.
-From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YN03 YL07 YL01 YL08 YL0d.
+From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YN03 YL07 YL01 YL08 YL0d YN2j.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YM05.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -162,19 +163,74 @@ unfold mbyte in Hmb.
 rewrite (seg_rom_above ubs0segs 0x61000 _ ubs0_segs_top) in Hmb by (rewrite Z_to_bv_unsigned; unfold bv_wrap; change (bv_modulus 64) with (2^64); rewrite Z.mod_small by lia; lia).
 rewrite H3 in Hmb. destruct (m' (Z_to_bv 64 (a + Z.of_nat j))); destruct (nth_error bs j); cbn in Hmb; congruence.
 Qed.
-Definition MD0 (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) : Model :=
-with_tid tid (init_model (segments_reserved ubs0segs) brk mbase sp lim inp).
-Definition MD_file (path : list byte) (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) : Model :=
-with_fds (fd_insert (m_fds (MD0 tid brk mbase sp lim inp)) (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0)))
-(MD0 tid brk mbase sp lim inp).
-Definition MD_dir (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) : Model :=
-with_fds (fd_insert (m_fds (MD0 tid brk mbase sp lim inp)) (Z_to_bv 64 3) FdDir) (MD0 tid brk mbase sp lim inp).
-Lemma MD0_fds : forall tid brk mbase sp lim inp,
-m_fds (MD0 tid brk mbase sp lim inp) =
+(* [Run.init_config] wraps the launch model in [with_vdso (vdso_run_init (ed_vdso draw))]
+   (UN3e.ubs0_start), so the model the driver chain starts from carries the entry draw. *)
+Definition MD0 (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) (rnd : EntryDraw) : Model :=
+with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved ubs0segs) brk mbase sp lim inp)).
+Definition MD_file (path : list byte) (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) (rnd : EntryDraw) : Model :=
+with_fds (fd_insert (m_fds (MD0 tid brk mbase sp lim inp rnd)) (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0)))
+(MD0 tid brk mbase sp lim inp rnd).
+Definition MD_dir (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) (rnd : EntryDraw) : Model :=
+with_fds (fd_insert (m_fds (MD0 tid brk mbase sp lim inp rnd)) (Z_to_bv 64 3) FdDir) (MD0 tid brk mbase sp lim inp rnd).
+Lemma MD0_fds : forall tid brk mbase sp lim inp rnd,
+m_fds (MD0 tid brk mbase sp lim inp rnd) =
 [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1)); (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))].
-Proof using. intros. unfold MD0, init_model. autorewrite with model. reflexivity. Qed.
-Lemma MD0_fs : forall tid brk mbase sp lim inp, m_fs (MD0 tid brk mbase sp lim inp) = in_fs inp.
-Proof using. intros. unfold MD0, init_model. autorewrite with model. reflexivity. Qed.
+Proof using. intros. reflexivity. Qed.
+Lemma MD0_fs : forall tid brk mbase sp lim inp rnd, m_fs (MD0 tid brk mbase sp lim inp rnd) = in_fs inp.
+Proof using. intros. reflexivity. Qed.
+(* [fdchan] reads [m_channel_reader] at 727298f3, and [Run.valid_input] pins the launch's
+   [in_channel_reader] to [true] (Run.v:4606); every model here carries it from [init_model]. *)
+Lemma reader_of_inp : forall inp, valid_input inp -> in_channel_reader inp = true.
+Proof using. intros inp H. unfold valid_input in H. tauto. Qed.
+(* The launch's reserved ledger is the image's reservations followed by the vDSO pair
+   ([State.init_reserved]), the pair just below [min mbase (sp - stack_max_size)]
+   ([State.vdso_top_init_model]).  [valid_input] fixes the vDSO size (the recorded kernel's,
+   [Run.valid_input_recorded_kernel]), so the pair is 16 KiB of vvar and 8 KiB of text,
+   far above any break the image allows: [YO0d.rx_ok]. *)
+Lemma MD0_rx_ok : forall sp brk mbase rnd inp,
+valid_sp sp -> valid_brk ubs0segs brk -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
+rx_ok (bv_unsigned brk)
+(vdso_reserved (in_kernel inp) (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)))).
+Proof using.
+intros sp brk mbase rnd inp Hsp Hbrk Hlau Hvi.
+pose proof (entry_launch_ok_va_base Sv48 _ inp Hlau) as Hmb. cbn [en_mmap_base] in Hmb.
+destruct Hmb as (M1 & M2 & _). destruct Hsp as (S1 & S2 & _). destruct Hbrk as (B1 & B2 & _).
+assert (C : (reserved_top (segments_reserved ubs0segs) + brk_aslr_max + 2 ^ 20 + 24576 + 4096
+<=? Z.min (va_mmap_base_min Sv48) (sp_window_lo - stack_max_size)) = true) by (vm_compute; reflexivity).
+apply Z.leb_le in C.
+assert (C2 : (va_mmap_base_max Sv48 <? 2 ^ 63) = true) by (vm_compute; reflexivity).
+apply Z.ltb_lt in C2.
+set (VT := page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))).
+assert (HT : Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size) - 4096 < VT
+<= Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)).
+{ unfold VT, page_round_down_Z, page_size. lia. }
+assert (HK : vdso_reserved (in_kernel inp) VT = vdso_reserved default_kernel VT)
+by exact (f_equal (fun k => vdso_reserved k VT) (valid_input_recorded_kernel inp Hvi)).
+rewrite HK. unfold vdso_reserved. cbv zeta.
+replace (vdso_len default_kernel) with 24576 by (vm_compute; reflexivity).
+replace (vdso_vvar_pages * page_size)%Z with 16384 by (vm_compute; reflexivity).
+replace (vdso_text_pages default_kernel * page_size)%Z with 8192 by (vm_compute; reflexivity).
+assert (C3 : (0 <=? reserved_top (segments_reserved ubs0segs)) = true /\ (0 <=? brk_aslr_max) = true)
+by (split; vm_compute; reflexivity).
+destruct C3 as [C3 C4]. apply Z.leb_le in C3, C4.
+replace (VT - 24576 <? page_size) with false by (symmetry; apply Z.ltb_ge; unfold page_size; lia).
+unfold rx_ok. cbn [length YM01.ivs_bytes fst snd]. rewrite !Z_to_bv_unsigned. unfold bv_wrap.
+change (bv_modulus 64) with (2 ^ 64). rewrite !Z.mod_small by lia.
+split; [lia|]. split; [lia|].
+apply Forall_forall. intros iv Hin. cbn [In] in Hin.
+repeat destruct Hin as [Hin|Hin]; try contradiction; subst iv; cbn [fst];
+rewrite Z_to_bv_unsigned; unfold bv_wrap; change (bv_modulus 64) with (2 ^ 64); rewrite Z.mod_small by lia; lia.
+Qed.
+Lemma MD0_vdso_incl : forall brk mbase sp lim inp md,
+m_kernel md = in_kernel inp ->
+m_vmmaps md = m_vmmaps (init_model (segments_reserved ubs0segs) brk mbase sp lim inp) ->
+incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)).
+Proof using.
+intros brk mbase sp lim inp md Hk Hv. rewrite Hk, Hv, vdso_top_init_model.
+change (vm_reserved (m_vmmaps (init_model (segments_reserved ubs0segs) brk mbase sp lim inp)))
+with (init_reserved (segments_reserved ubs0segs) mbase sp (in_kernel inp)).
+unfold init_reserved. apply incl_appr, incl_refl.
+Qed.
 Definition ubs0_keep : ivl := Eval vm_compute in (drv_keep ubs0_msyms).
 Lemma ubs0_keep_check : keep_check ubs0_msyms ubs0_keep = true.
 Proof using. vm_compute. reflexivity. Qed.
@@ -200,18 +256,81 @@ then [ (fst x, carve r (r_lo r) lo (Z.max (r_wlo r) (r_lo r)) (Z.min (r_whi r) l
 else [x]
 | Some _ => [x]
 end.
+(* [UN3e.ss_main] is indexed by the run's own rseq flag as well as by [two] (UN3e.v:96-98):
+   the flag makes the entry stack's auxv block one pair longer.  The comment this replaces
+   GUESSED that the four states collapse pairwise, and said -- correctly -- that the guess
+   was NOT CHECKED BY A BUILD.  It is checked now and the guess was WRONG:
+   a build of the old proof fails at its line 213 with
+   "Unable to unify ss_main true true with ss_main false true".
+
+   WHAT ACTUALLY DIFFERS, measured field by field by a probe (never merged), on
+   the plain tree whose states this twin mirrors: [ss_pc] is 76080 in all four states,
+   [ss_resv] is None in all four, [ss_fregs] is empty, and [ss_regs] and [ss_facts] are
+   BYTE-IDENTICAL between the rseq-on and rseq-off states.  EXACTLY ONE REGION DIFFERS, the
+   auxv block on atom 5: rseq-on (Some 5, 0..464, 50 chunks) against rseq-off
+   (Some 5, 0..432, 46 chunks), the gap being four 8-byte chunks at offsets 432, 440, 448
+   and 456.  464 = 29*16 and 432 = 27*16 -- the two extra auxv pairs CONFIG_RSEQ adds.
+
+   THE PARAGRAPH THAT STOOD HERE SAID THE rseq-OFF STATE IS A [subregion] OF THE rseq-ON
+   ONE AND THE IMPLICATION RUNS ONE WAY.  THAT WAS INFERRED FROM A SUMMARY AND IT IS
+   REFUTED.  The summary printed region extents and chunk OFFSETS; [submemb] also
+   compares chunk VALUES.  A probe that decomposed [YN2j.mergeb]
+   found exactly ONE false conjunct, [submemb], FALSE IN BOTH DIRECTIONS, at region
+   index 4 of 12.  A second probe then decomposed [subregionb] there and
+   printed the values: the states DISAGREE IN VALUE at offsets 416 and 424 -- rseq-off
+   has [SLit 0; SLit 0], the AT_NULL terminator, where rseq-on has [SLit 27; SLit 28],
+   the AT_RSEQ_* tag/value pair -- and rseq-on carries four further words at 432..456.
+   EVERY CHUNK BELOW 416 AGREES.  So neither state weakens to the other.
+
+   The common weakening is region 4 TRUNCATED AT 416, keeping only the chunks both
+   agree on.  [rs] stays universally quantified; nothing is pinned.  [kb_rseq] is FREE
+   under [Run.valid_input] (75d69e00:theories/LinuxProcessSem/Run.v:4596 fixes only the
+   nine fields [recorded_kernel] copies) and [UN3e.ubs0_start] case-splits all four
+   (rs, two) bullets at UN3e.v:613-620, so a chain needing those words would be false
+   for every rseq-off kernel.  [YN2j.mergeb]/[st_ok_merge] remain the instrument. *)
+(* r2: `The term "r_base r" has type "option nat" while it is
+expected to have type "rkind"`. A NAME SHADOW, not a record-arity change: this file imports
+YP09 (whose `Record region := mkRegion` leads with `r_base : option nat`) and then YO0i
+(whose own `Record region := mkRegion` leads with its `Inductive rkind`), so later-import-wins
+resolved the BARE `mkRegion` to YO0i's while every accessor here is YP09-qualified.
+QUALIFIED rather than reordered: a qualified name cannot be shadowed, and reordering the
+Require line would change what every other name in this file resolves to. *)
+Definition trim416 (r : YP09.region) : YP09.region :=
+YP09.mkRegion (YP09.r_base r) (YP09.r_lo r) 416 (YP09.r_wlo r) (YP09.r_whi r)
+(filter (fun c => Z.ltb (YP09.c_off c) 416) (YP09.r_chunks r)).
+Definition canon_mem (m : YP09.smem) : YP09.smem :=
+firstn 4 m ++ (match nth_error m 4 with Some r => [trim416 r] | None => [] end) ++ skipn 5 m.
+Definition canon_state (two : bool) : sstate :=
+mkSS (ss_pc (ss_main true two)) (ss_regs (ss_main true two)) (canon_mem (ss_mem (ss_main true two)))
+(ss_resv (ss_main true two)) (ss_facts (ss_main true two)).
+Definition ss_canon_t : sstate := Eval vm_compute in (canon_state true).
+Definition ss_canon_f : sstate := Eval vm_compute in (canon_state false).
+Definition ss_canon (two : bool) : sstate := if two then ss_canon_t else ss_canon_f.
+Lemma st_ok_main_rs : forall rs two E ms,
+st_ok ubs0segs E (ss_main rs two) ms -> st_ok ubs0segs E (ss_canon two) ms.
+Proof using.
+intros [|] [|] E ms HS.
+- exact (st_ok_merge ubs0segs E (ss_canon true) (ss_main true true) ms HS ltac:(vm_compute; reflexivity)).
+- exact (st_ok_merge ubs0segs E (ss_canon false) (ss_main true false) ms HS ltac:(vm_compute; reflexivity)).
+- exact (st_ok_merge ubs0segs E (ss_canon true) (ss_main false true) ms HS ltac:(vm_compute; reflexivity)).
+- exact (st_ok_merge ubs0segs E (ss_canon false) (ss_main false false) ms HS ltac:(vm_compute; reflexivity)).
+Qed.
 Definition drv_lay (two : bool) : list (nat * YP09.region) :=
-map (cut_win TDCAN_LO TDCAN_HI) (flat_map (split_win RS_LO RS_HI) (drv_relayout ubs0_msyms (ss_mem (ss_main two)))).
+map (cut_win TDCAN_LO TDCAN_HI) (flat_map (split_win RS_LO RS_HI) (drv_relayout ubs0_msyms (ss_mem (ss_canon two)))).
 Definition drv_state (two : bool) : sstate :=
-mkSS (ss_pc (ss_main two)) (ss_regs (ss_main two)) (map snd (drv_lay two)) (ss_resv (ss_main two)) (ss_facts (ss_main two)).
+mkSS (ss_pc (ss_canon two)) (ss_regs (ss_canon two)) (map snd (drv_lay two)) (ss_resv (ss_canon two)) (ss_facts (ss_canon two)).
 Definition ss_drv_t : sstate := Eval vm_compute in (drv_state true).
 Definition ss_drv_f : sstate := Eval vm_compute in (drv_state false).
 Definition ss_drv (two : bool) : sstate := if two then ss_drv_t else ss_drv_f.
-Lemma st_ok_drv : forall two E ms, st_ok ubs0segs E (ss_main two) ms -> st_ok ubs0segs E (ss_drv two) ms.
+Lemma st_ok_drv_canon : forall two E ms, st_ok ubs0segs E (ss_canon two) ms -> st_ok ubs0segs E (ss_drv two) ms.
 Proof using.
-intros [|] E ms HS.
-- exact (st_ok_relayout ubs0segs E ss_main_t ms (drv_lay true) HS ltac:(vm_compute; reflexivity)).
-- exact (st_ok_relayout ubs0segs E ss_main_f ms (drv_lay false) HS ltac:(vm_compute; reflexivity)).
+intros two E ms HS. destruct two.
+- exact (st_ok_relayout ubs0segs E (ss_canon true) ms (drv_lay true) HS ltac:(vm_compute; reflexivity)).
+- exact (st_ok_relayout ubs0segs E (ss_canon false) ms (drv_lay false) HS ltac:(vm_compute; reflexivity)).
+Qed.
+Lemma st_ok_drv : forall rs two E ms, st_ok ubs0segs E (ss_main rs two) ms -> st_ok ubs0segs E (ss_drv two) ms.
+Proof using.
+intros rs two E ms HS. apply (st_ok_main_rs rs two) in HS. exact (st_ok_drv_canon two E ms HS).
 Qed.
 Definition run_ (ss : sstate) : sstate := fst (sym_runN ubs0segs ubs0tbl FUEL ss).
 Definition runto_ (pc : Z) (ss : sstate) : sstate := fst (sym_run_toN ubs0segs ubs0tbl FUEL pc ss).
@@ -232,13 +351,17 @@ Lemma statics_m1 : drv_add_statics ubs0_msyms (map snd L_m1) (K_M1 + 16) = Some 
 Proof using. vm_compute. reflexivity. Qed.
 Lemma pristine_m1 : pristine_check ubs0_msyms (ss_mem ss_m1) = true.
 Proof using. vm_compute. reflexivity. Qed.
-Lemma auxv_m1 : auxv_check ubs0_msyms (ss_mem ss_m1) (ss_facts ss_m1) 5 6 = true.
+(* [ss_m1] holds for both CONFIG_RSEQ flags (the auxv block is cut at 416, [trim416]), so it
+   checks the 26 shared pairs; the flag's keys from pair 26 on come from [UN3e.runs_main]. *)
+Lemma auxv_m1 : auxv_check_head ubs0_msyms (ss_mem ss_m1) (ss_facts ss_m1) 5 6 = true.
 Proof using. vm_compute. reflexivity. Qed.
 Definition ss_m1_post : sstate := Eval vm_compute in (post_state ss_m1 RA_m1 K_M1 RS_m1).
 Definition ss_m1_null : sstate := Eval vm_compute in
 (mkSS (ss_pc ss_m1_post) (sr_set (ss_regs ss_m1_post) 10%bv (SLit 0)) (ss_mem ss_m1_post) (ss_resv ss_m1_post) (ss_facts ss_m1_post)).
-Definition E_m1 (sp tid : word) (argv envp : list (list byte)) (rnd : EntryDraw) (regs' : bvmap 5 word) (g : Z) : env :=
-post_env (E_main sp argv envp tid rnd) K_M1 regs' g.
+(* [E_main] gained [inp] and [efn] (UN3e.v:69-71); [efn] is [in_execfn inp] at every call
+   site in this tree, so it is read off [inp] here rather than passed. *)
+Definition E_m1 (sp tid : word) (inp : ProcInput) (argv envp : list (list byte)) (rnd : EntryDraw) (regs' : bvmap 5 word) (g : Z) : env :=
+post_env (E_main sp inp argv envp (in_execfn inp) tid rnd) K_M1 regs' g.
 Definition blk_fact : afact := mkAF 4096 CEIL_MAX 4.
 Definition ss_m1_ok : sstate := Eval vm_compute in (add_atom ss_m1_post A_BUF blk_fact).
 Definition ss_rd1 : sstate := Eval vm_compute in (run_ ss_m1_ok).

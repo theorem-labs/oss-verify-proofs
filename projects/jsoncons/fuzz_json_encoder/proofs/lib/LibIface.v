@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed lib_init_facts; removed auxv_words; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/LibIface.v, 32 lines within its lines 12-146. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec StoreOk ShapeAlg SpinAlg HeapIface.
@@ -10,21 +10,21 @@ Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Record lib_layout : Type := LL {
-  ll_heap   : heap_layout;      (* [comment removed for export] *)
-  ll_entry  : Z;                (* [comment removed for export] *)
-  ll_gp     : Z;                (* [comment removed for export] *)
-  ll_empty  : Z;                (* [comment removed for export] *)
-  ll_initc  : list (Z * Z);     (* [comment removed for export] *)
-  ll_init_img : list (Z * Z);   (* [comment removed for export] *)
+  ll_heap   : heap_layout;
+  ll_entry  : Z;
+  ll_gp     : Z;
+  ll_empty  : Z;
+  ll_initc  : list (Z * Z);
+  ll_init_img : list (Z * Z);
   ll_td_self : Z; ll_td_tid : Z; ll_td_locale : Z; ll_locale : Z; ll_td_canary : Z; ll_guard : Z; ll_auxvp : Z;
-                                (* [comment removed for export] *)
-  ll_phdr : Z; ll_phent : Z; ll_phnum : Z;   (* [comment removed for export] *)
-  ll_rw_lo  : Z;                (* [comment removed for export] *)
-  ll_stack  : Z;                (* [comment removed for export] *)
-  ll_credit : Z -> credit;      (* [comment removed for export] *)
-  ll_foot   : list (Z * Z);     (* [comment removed for export] *)
+
+  ll_phdr : Z; ll_phent : Z; ll_phnum : Z;
+  ll_rw_lo  : Z;
+  ll_stack  : Z;
+  ll_credit : Z -> credit;
+  ll_foot   : list (Z * Z);
   ll_init_cells : list (Z * nat * Z)
-                                (* [comment removed for export] *)
+
 }.
 
 Definition in_foot (Lay : lib_layout) (a : Z) : Prop :=
@@ -33,43 +33,47 @@ Definition in_foot (Lay : lib_layout) (a : Z) : Prop :=
 Definition in_initc (Lay : lib_layout) (a : Z) : Prop :=
   (exists iv, In iv (ll_initc Lay) /\ fst iv <= a < snd iv) \/ (hl_sptop (ll_heap Lay) <= a < 2 ^ 64).
 
-(* [comment removed for export] *)
 Definition cellz (segs : list Segment) (M : word -> option byte) (a : Z) (n : nat) (v : Z) : Prop :=
   rdn segs M (Z_to_bv 64 a) n = Some (word_to_le_bytes n (Z_to_bv 64 v)).
 
-(* [comment removed for export] *)
-Definition auxv_words (Lay : lib_layout) (uid rnd hw : Z) : list Z :=
-  [3; ll_phdr Lay; 4; ll_phent Lay; 5; ll_phnum Lay; 16; hw; 6; 4096; 11; uid; 12; uid; 23; 0; 25; rnd; 0; 0].
-
-(* [comment removed for export] *)
+(* STATEMENT CHANGED, old beside new (Main's ruling, option D):
+     OLD  /\ cellz segs M (ll_auxvp Lay) 8 av /\ sptop <= av /\ av + 160 <= 2 ^ 47 /\ av mod 8 = 0
+          /\ (forall j, (j < 20)%nat -> cellz segs M (av + 8 * Z.of_nat j) 8 (nth j (auxv_words Lay uid rnd hw) 0))
+          with  auxv_words Lay uid rnd hw := [3; ll_phdr; 4; ll_phent; 5; ll_phnum; 16; hw; 6; 4096;
+                                              11; uid; 12; uid; 23; 0; 25; rnd; 0; 0]
+     NEW  both conjuncts DROPPED, and [auxv_words] with them.
+   They are FALSE at LPS 75d69e00: the vector is 27 pairs, or 29 under CONFIG_RSEQ
+   ([StackLayout.auxv_count]), in [StackLayout.auxv_entries]' order, with
+   AT_SYSINFO_EHDR and the cache words first, so the 20 words at __auxv are not this
+   ten-pair list.  And NO CONSUMER READS THEM: [lib_init_facts] is consumed only by
+   [lib_statics_init], and its two provers read only the first conjunct
+   (PmLibStaticsA.lib_init_okA:141, [destruct F as (IMG & _)]) and the first and last
+   (PmTop/TopGlueC.pm_statics_init:167-171).  [av] is kept as a parameter so no
+   quantifier over [lib_init_facts] changes shape. *)
 Definition lib_init_facts (Lay : lib_layout) (av uid rnd tid canary hw : Z) (M : word -> option byte) : Prop :=
   let segs := hl_segs (ll_heap Lay) in let sptop := hl_sptop (ll_heap Lay) in
      (forall iv a, In iv (ll_init_img Lay) -> fst iv <= a < snd iv -> M (Z_to_bv 64 a) = None)
   /\ cellz segs M (ll_td_self Lay) 8 (ll_td_self Lay)
   /\ cellz segs M (ll_td_tid Lay) 4 tid /\ 1 <= tid < 2 ^ 22
   /\ cellz segs M (ll_td_locale Lay) 8 (ll_locale Lay)
-  /\ (forall k, (k < 6)%nat -> cellz segs M (ll_locale Lay + 8 * Z.of_nat k) 8 0)   (* [comment removed for export] *)
+  /\ (forall k, (k < 6)%nat -> cellz segs M (ll_locale Lay + 8 * Z.of_nat k) 8 0)
   /\ cellz segs M (ll_td_canary Lay) 8 canary
   /\ cellz segs M (ll_guard Lay) 8 canary /\ 0 <= canary < 2 ^ 64
-  /\ cellz segs M (ll_auxvp Lay) 8 av /\ sptop <= av /\ av + 160 <= 2 ^ 47 /\ av mod 8 = 0
-  /\ (forall j, (j < 20)%nat -> cellz segs M (av + 8 * Z.of_nat j) 8 (nth j (auxv_words Lay uid rnd hw) 0))
   /\ 0 <= uid < 2 ^ 32 /\ 0 <= hw < 2 ^ 64
   /\ sptop <= rnd /\ rnd + 16 <= 2 ^ 64
-  /\ (forall c, In c (ll_init_cells Lay) -> cellz segs M (fst (fst c)) (snd (fst c)) (snd c)).   (* [comment removed for export] *)
-  (* [comment removed for export] *)
+  /\ (forall c, In c (ll_init_cells Lay) -> cellz segs M (fst (fst c)) (snd (fst c)) (snd c)).
 
 Section LibIface.
 Variable Lay : lib_layout.
 Let L := ll_heap Lay.
-Variable scfg : SpuriousCfg.     (* [comment removed for export] *)
+Variable scfg : SpuriousCfg.
 Variable HI : heap_iface.
 
-(* [comment removed for export] *)
 Record lib_statics : Type := LS {
   ls_state : Type;
   ls_ok    : ls_state -> (word -> option byte) -> Prop;
-  (* [comment removed for export] *)
-  ls_g0    : ls_state                           (* [comment removed for export] *)
+
+  ls_g0    : ls_state
 }.
 Variable LSt : lib_statics.
 
@@ -79,7 +83,7 @@ Definition credit_sub (c d : credit) : credit := (fst c - fst d, snd c - snd d).
 Record lib_pre (g : ls_state LSt) (LB : list (Z * Z)) (cr : credit) (sp ptr ra : Z) (payload : list byte)
        (R : bvmap 5 word) (M : word -> option byte) : Prop := LIB_PRE {
   lp_ra : getr R 1%bv = Z_to_bv 64 ra;
-  lp_ra_ok : 0 <= ra < 2 ^ 47 /\ ra mod 2 = 0;                    (* [comment removed for export] *)
+  lp_ra_ok : 0 <= ra < 2 ^ 47 /\ ra mod 2 = 0;
   lp_sp : getr R 2%bv = Z_to_bv 64 sp;
   lp_gp : getr R 3%bv = Z_to_bv 64 (ll_gp Lay);
   lp_tp : getr R 4%bv = Z_to_bv 64 (hl_tp L);
@@ -89,16 +93,15 @@ Record lib_pre (g : ls_state LSt) (LB : list (Z * Z)) (cr : credit) (sp ptr ra :
   lp_ptr : (length payload = 0%nat /\ ptr = ll_empty Lay)
            \/ (0 < Z.of_nat (length payload) /\ In (ptr, Z.of_nat (length payload)) LB);
   lp_payload : rdn (hl_segs L) M (Z_to_bv 64 ptr) (length payload) = Some payload;
-  (* [comment removed for export] *)
+
   lp_stack : sp mod 16 = 0 /\ hl_ceil L + ll_stack Lay <= sp /\ sp <= hl_sptop L /\ 0x7fff80000000 <= hl_sptop L <= 2 ^ 47 /\
              (forall d (m : nat), 0 <= d -> d + Z.of_nat m <= ll_stack Lay ->
                  store_ok (hl_segs L) M (Z_to_bv 64 (sp - ll_stack Lay + d)) m = true)
-             /\ (forall a, sp - ll_stack Lay <= a < sp -> M (Z_to_bv 64 a) <> None);   (* [comment removed for export] *)
+             /\ (forall a, sp - ll_stack Lay <= a < sp -> M (Z_to_bv 64 a) <> None);
   lp_credit : credit_le (ll_credit Lay (Z.of_nat (length payload))) cr;
   lp_statics : ls_ok LSt g M
 }.
 
-(* [comment removed for export] *)
 Lemma lib_pre_floor : forall g LB cr sp ptr ra payload R M,
   lib_pre g LB cr sp ptr ra payload R M -> 0x7fff7f800000 + ll_stack Lay <= sp.
 Proof. intros * P. pose proof (lp_stack _ _ _ _ _ _ _ _ _ P) as (_ & H & _ & (Hlo & _) & _). revert H Hlo. unfold L. intros. lia. Qed.
@@ -109,18 +112,17 @@ Record lib_post (g' : ls_state LSt) (LB : list (Z * Z)) (cr : credit) (sp : Z) (
   lq_a0 : getr R 10%bv = Z_to_bv 64 0;
   lq_regs : regs_preserved R0 R;
   lq_credit : credit_le (credit_sub cr (ll_credit Lay (Z.of_nat (length payload)))) cr';
-  (* [comment removed for export] *)
+
   lq_frame : forall a, 0 <= a < 2 ^ 64 -> client_addr L LB sp (ll_stack Lay) a -> ~ in_foot Lay a -> ~ in_errno L a ->
              M (Z_to_bv 64 a) = M0 (Z_to_bv 64 a);
   lq_scratch : forall a, sp - ll_stack Lay <= a < sp -> M (Z_to_bv 64 a) <> None;
-  (* [comment removed for export] *)
+
   lq_statics : ls_ok LSt g' M
 }.
 
 Definition lib_cfg {fx : FPState} (R : bvmap 5 word) (pc : word) (M : word -> option byte) (model : Model) : config :=
   mkCfg (@mkst fx R pc M (seg_rom (hl_segs L))) model.
 
-(* [comment removed for export] *)
 Definition lib_call_ok : Prop :=
   forall (fx : FPState) (g : ls_state LSt) (LB : list (Z * Z)) (cr : credit) (sp ptr ra : Z) (payload : list byte)
          (R : bvmap 5 word) (M : word -> option byte) (model : Model) (K : ShapeAlg.TSet),
@@ -135,17 +137,15 @@ Definition lib_call_ok : Prop :=
         srealizes (hl_segs L) scfg (@lib_cfg fx' R' (Z_to_bv 64 ra) M' model') K) ->
     srealizes (hl_segs L) scfg (@lib_cfg fx R (Z_to_bv 64 (ll_entry Lay)) M model) K.
 
-(* [comment removed for export] *)
 Definition lib_statics_init : Prop :=
   forall av uid rnd tid canary hw M, lib_init_facts Lay av uid rnd tid canary hw M -> ls_ok LSt (ls_g0 LSt) M.
-(* [comment removed for export] *)
+
 Definition lib_statics_frame : Prop :=
   forall g M M', ls_ok LSt g M ->
     (forall a, 0 <= a < 2 ^ 64 -> in_foot Lay a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
-    (forall a : word, bv_unsigned a < ll_rw_lo Lay -> M a = None -> M' a = None) ->   (* [comment removed for export] *)
-    (forall a, 0 <= a < 2 ^ 64 -> in_initc Lay a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->   (* [comment removed for export] *)
+    (forall a : word, bv_unsigned a < ll_rw_lo Lay -> M a = None -> M' a = None) ->
+    (forall a, 0 <= a < 2 ^ 64 -> in_initc Lay a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
   ls_ok LSt g M'.
-(* [comment removed for export] *)
 
 Record lib_iface_ok : Prop := LIOK {
   lio_call : lib_call_ok;

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YZ03.v and lib/Halts_tfib.v (through a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/AsanTop.v, a working branch 0bed23e5b69, and its fuzz_ctrl image-A twin lib/A/AsanTop.v) for fuzz_ctrl's ASan+UBSan image: the plain side is fuzz_ctrl's proved realization (A/CtrlPlainRz.v, at ag_shape checksum_shape), the halting corollary takes srealizes, module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YZ03.v and lib/Halts_tfib.v (through a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/AsanTop.v, a working branch, and its fuzz_ctrl image-A twin lib/A/AsanTop.v) for fuzz_ctrl's ASan+UBSan image: the plain side is fuzz_ctrl's proved realization (A/CtrlPlainRz.v, at ag_shape checksum_shape), the halting corollary takes srealizes, module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ctrl_asan_ubsan_agrees_of_tfib, ctrl_asan_ubsan_halts_of_tfib). *)
 (* fuzz_ctrl's two ASan+UBSan statements from the ASan+UBSan side TFIB_T_B (CtrlTFIB_B.v), in the form of
    projects/cgif/cgif_file_fuzzer/proofs/lib/YZ03.v (agreement) and lib/Halts_tfib.v (halting):
    - asan_ubsan_agrees: shape_strong_equiv_efs_relim (Reusable/YM09.v) over the plain build's proved realization of SPECX
@@ -77,7 +78,7 @@ Require Import
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.SlotAgree.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import CtrlPlainRz HaltsSpecC.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require Import CtrlTFIB_B.
-(* Modified by Theorem Labs, 2026-10: the plain build's sink instances (Reusable/YI5b.v, YI5c.v, Required above for the plain side) and their ubsan copies (U/Reusable/YI5b.v, YI5c.v, loaded here through AgreeShape) are removed from instance search (#[global]: also for every file that loads this one), so a sink instance left implicit in an ASan composition here cannot be found; full paths, because both copies are loaded here (a Theorem Labs lane step 3; fuzz_boxreg's form, a working branch 12834cac4ca lib/A/Prog/BoxPa.v:21). *)
+(* Modified by Theorem Labs, 2026-10: the plain build's sink instances (Reusable/YI5b.v, YI5c.v, Required above for the plain side) and their ubsan copies (U/Reusable/YI5b.v, YI5c.v, loaded here through AgreeShape) are removed from instance search (#[global]: also for every file that loads this one), so a sink instance left implicit in an ASan composition here cannot be found; full paths, because both copies are loaded here (a Theorem Labs lane step 3; fuzz_boxreg's form, a working branch lib/A/Prog/BoxPa.v:21). *)
 Require OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YI5b OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YI5c OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.YI5b OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.YI5c.
 #[global] Remove Hints OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YI5b.src0_sink_head OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YI5c.src0_sink OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YI5c.src0_sink_laws OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.YI5b.src0_sink_head OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.YI5c.src0_sink OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.YI5c.src0_sink_laws : typeclass_instances.
 Import ListNotations.
@@ -101,12 +102,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     ctrlsegs0_b AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=ag_shape checksum_shape) inp) (SPECX (LS:=ag_shape checksum_shape) inp) inp
-    asan_lim_source_le_b SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le_b SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem ctrl_asan_ubsan_halts_of_tfib : Statements.asan_ubsan_halts.
@@ -118,8 +119,8 @@ Proof.
     AsanUbsan.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target_b (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=ag_shape checksum_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End b.

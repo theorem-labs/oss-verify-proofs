@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YB1l.v (origin/ossv/recipes c8557374ad2e) for libreac/fuzz_knock: module paths changed; it holds no image value of its own (the image facts it composes are this library's lib/AU YB1h / YB1k / YB12 / YB1p). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YB1l.v (theorem-labs/oss-verify-proofs@6b32741d849a) for libreac/fuzz_knock: module paths changed; it holds no image value of its own (the image facts it composes are this library's lib/AU YB1h / YB1k / YB12 / YB1p). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed tfibstartup_fx, FSQ, SINV, argH, E0a, TOP and 2 more; added INP, RZ, AH, AA, SF, SA). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -33,17 +34,29 @@ Variable groups : list word.
 Variable net : NetQueue.
 Variables nofile sigmask : word.
 Variable urnd : InputStream. Variable tmp : Fs.Fs.
+(* The launch's kernel record, exec file name and SIGPIPE disposition, as in [YA02]'s
+   Section: free, so the CONFIG_RSEQ flag [RZ] is the run's own. *)
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variable sdef : bool.
+Let INP : ProcInput := YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef.
+Let RZ : Z := rseq_z (kb_rseq (in_kernel INP)).
 #[local] Notation FSQ := (fs_seed_tmp fs tmp).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk TSEGS brk0.
+Hypothesis Hmb : valid_mmap_base mbase.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
 Hypothesis Huid : valid_id uid.
 Hypothesis Hhw : valid_hwcap hw.
-#[local] Notation SINV := (SINV0 TPH sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 TPH sp rdraw argv envp uid hw).
-#[local] Notation E0a := (E0 TPH sp rdraw brk0 argv envp uid hw).
+Hypothesis Hnof : valid_nofile nofile.
+Hypothesis Hsig : valid_sigmask INP.
+Hypothesis Hvl : valid_launch INP.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+#[local] Notation SINV := (SINV0 TPH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef AsanUbsan.M.init_pc).
+#[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
+#[local] Notation E0a := (E0 sp rdraw brk0 argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
 #[local] Notation LIM := YA02.LIMIT.
 #[local] Notation TOP := (YA02.TOP sp).
 Variable IT0 : itab.
@@ -54,13 +67,23 @@ Variable startup_plan : plan.
 Variable startup_shape : shape.
 Variables KC0 BFUEL FUEL : nat.
 Hypothesis startup_cert :
-check TSEGS IT0 TFIB NX0G LIM (XNG TSEGS tfib_XN1) XE0 XB0 HS hole_le KC0 BFUEL FUEL None (init_acs_of_g TFIB) startup_plan
+check TSEGS IT0 TFIB NX0G LIM RZ (XNG TSEGS tfib_XN1) XE0 XB0 HS hole_le KC0 BFUEL FUEL None (init_acs_of_g RZ TFIB) startup_plan
 = COk startup_shape.
 Variable HOLES : nat -> env -> Fs.Fs -> TSet.
 Hypothesis HOLES_agree : forall h E E' fs', env_agree NX0G E E' -> HOLES h E fs' = HOLES h E' fs'.
 Hypothesis HOLES_nil : forall h E fs', HOLES h E fs' [].
 Hypothesis HOLES_le : forall h' h E fs' tr, hole_le h' h = true -> HOLES h' E fs' tr -> HOLES h E fs' tr.
 Hypothesis HOLES_sound : holes_stmt TSEGS TFIB LIM TOP HS SINV argH HOLES FSQ.
+(* [YA02]'s lemmas applied by unification on their conclusions, as A/YB1l.v. *)
+Lemma AH : forall E (a : word), argH E a = true -> TOP <= bv_unsigned a.
+(* [argH0_high] also abstracts the entry pc [apc], which its statement does not read. *)
+Proof. intros E a H. eapply argH0_high; try eassumption. Unshelve. all: first [assumption | exact AsanUbsan.M.init_pc]. Qed.
+Lemma AA : forall E E' (a : word), env_agree NX0G E E' -> argH E a = argH E' a.
+Proof. reflexivity. Qed.
+Lemma SF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Proof. intros E M M' Hf HSv. eapply SINV0_frame; try eassumption. Unshelve. all: assumption. Qed.
+Lemma SA : forall E E' M, env_agree NX0G E E' -> SINV E M -> SINV E' M.
+Proof. intros E E' M Hag HSv. eapply SINV0_agree; try eassumption. Unshelve. all: assumption. Qed.
 Lemma tfib_XN1_sound : forall i args, node1_stmt TSEGS TFIB NX0G LIM TOP SINV argH FSQ always (tfib_XN1 i args).
 Proof.
 intros [|i] args.
@@ -68,26 +91,31 @@ intros [|i] args.
 exact (xn_sealedtop_sound TFIB NX0G LIM TOP
 (eq_rect _ (fun s => YK04.wx_segs_nowrap s) tfib_wx _ tsegs_tfasegs)
 (eq_rect _ (fun s => forall a : word, in_hull TFIB (bv_unsigned a) = false -> find_segment s (bv_unsigned a) 1 = None) tfib_in_hull _ tsegs_tfasegs)
-tfib_hull_okP (top_ok0 sp Hsp) SINV argH
-(argH0_high TPH sp rdraw argv envp uid hw Hsp Hva) (argH0_agree TPH sp rdraw argv envp uid hw)
-(SINV0_frame TPH sp rdraw brk0 argv envp uid hw) (SINV0_agree TPH sp rdraw brk0 argv envp uid hw) FSQ args).
+tfib_hull_okP (top_ok0 sp Hsp) SINV argH AH AA SF SA FSQ args).
 - destruct i as [|i].
 + cbn [tfib_XN1]. apply xn_range_align_sound.
 + intros cs cs' E R FULL model T _ _ H _. cbn [tfib_XN1] in H. discriminate H.
 Qed.
 Theorem tfib_startup :
-srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk0 mbase rdraw YA02.LIMIT
-(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp))
+srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk0 mbase rdraw YA02.LIMIT INP)
 (sd HOLES t_nil E0a FSQ startup_shape).
 Proof.
-exact (asan_startup_init TSEGS TFIB TPH tfib_img_facts tfib_wx tfib_in_hull tfib_res_len tfib_hull_ok tfib_shadow_ok
-tfib_res_cover tfib_segs_wr
-_ _ _ _ _ _ _ _ tfib_Xenv tfib_Fe1 tfib_Fe2 tfib_Fe3 tfib_Ee tfib_De1 tfib_De2 tfib_De3
-tfib_Xpn tfib_Fp0 tfib_Fp1 tfib_Fp2 tfib_Fp3 tfib_Fp4 tfib_Ep tfib_Dp0 tfib_Dp1 tfib_Dp2 tfib_Dp3 tfib_Dp4
-sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hbrk Hva Hve Hfit Huid Hhw
-tfib_SUM_imemset tfib_SUM_memset tfib_SUM_imemcpy tfib_SUM_memcpy tfib_SUM_miz tfib_SUM_istrncpy tfib_SUM_popfree
-tfib_XN1 tfib_XN1_sound IT0 IT0_ok HS hole_le startup_plan startup_shape KC0 BFUEL FUEL startup_cert
-HOLES HOLES_agree HOLES_nil HOLES_le HOLES_sound
-AsanUbsan.M.init_pc eq_refl).
+(* [asan_startup_init] is applied by unification: its Section grew ([kb], [execfn], [apc]
+   and the launch premises), and the entry pc [apc] is fixed by the goal. *)
+eapply asan_startup_init;
+try solve [ assumption | reflexivity
+| exact tfib_img_facts | exact tfib_wx | exact tfib_in_hull | exact tfib_res_len
+| exact tfib_hull_ok | exact tfib_shadow_ok | exact tfib_res_cover | exact tfib_segs_wr
+| exact tfib_Xenv | exact tfib_Fe1 | exact tfib_Fe2 | exact tfib_Fe3 | exact tfib_Ee
+| exact tfib_De1 | exact tfib_De2 | exact tfib_De3
+| exact tfib_Xpn | exact tfib_Fp0 | exact tfib_Fp1 | exact tfib_Fp2 | exact tfib_Fp3
+| exact tfib_Fp4 | exact tfib_Ep | exact tfib_Dp0 | exact tfib_Dp1 | exact tfib_Dp2
+| exact tfib_Dp3 | exact tfib_Dp4
+| exact tfib_SUM_imemset | exact tfib_SUM_memset | exact tfib_SUM_imemcpy
+| exact tfib_SUM_memcpy | exact tfib_SUM_miz | exact tfib_SUM_istrncpy | exact tfib_SUM_popfree
+| exact tfib_XN1_sound | exact startup_cert ].
+(* [itab_sound TSEGS ?IT0] comes before the goal that fixes [?IT0]; it is closed once
+   [startup_cert] has fixed it. *)
+all: exact IT0_ok.
 Qed.
 End b.

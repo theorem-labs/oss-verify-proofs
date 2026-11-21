@@ -1,5 +1,5 @@
 (* Theorem Labs, 2026-10: THE BATCH KIT'S LEDGER MOVE across a prefix and a call (lane PItemsB, owner; a Theorem Labs lane's order, item 4).
-   The batch kit (a working branch 8ba304fe2f93, lib/A/PRH_FnParse.v 4fe5b038ae41:173-182) prices a
+   The batch kit (a working branch, lib/A/PRH_FnParse.v 4fe5b038ae41:173-182) prices a
    refusal: rd_ledger_move takes g_most and the call's ALL-GRANTED trace gt, keys g_ran_out on each call's request
    against g_most (PRH_Base.prh_oks, :841-845) and adds prh_refused_peak over prh_ev_helds gt (:854-873).
    parse_items' walk reaches every block of its loop only while every allocation so far was GRANTED, so its prefix
@@ -163,7 +163,7 @@ unfold prh_refused in Hr. destruct (nth i ok true) eqn:Eb; [discriminate|].
 rewrite (proj2 (Z.eqb_eq _ _) (G i Hi Eb)) in Hr. discriminate.
 Qed.
 
-(* ---- THE LIVE BYTES PER EVENT at a state (the batch kit's tip 03fcabb582d0: rd_room's live conjunct, tgrow_specX's and
+(* ---- THE LIVE BYTES PER EVENT at a state (the batch kit's tip: rd_room's live conjunct, tgrow_specX's and
    tparse_string_specX's live premises are PRH_Base.prh_live_evs S E): the prefix and after-prefix forms of
    PItems_posb.pi_evs_ok at the live list of a state. A call at the block state Sc, whose live list is the entry's
    moved by the prefix's events E1 (pi_live), gets its own events' bound E2 from the entry's over E1 ++ E2 ++ E3 ---- *)

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpChkY.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build
    (image A) by an address map recorded by the porting lane; module paths, GrantSyms ->
    TfibSyms. The proof script is a Theorem Labs lane's, unchanged. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_identity/proofs/lib/A/Rt/StrcmpChkY.v (donor image sha256 c954b804786c), with its module paths changed and its addresses moved to libdiginet/fuzz_codec's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Rt/StrcmpChkY.v, with its module paths, addresses and numbers changed; 7 of its 2425 lines of code are new or changed and 7 lines of the source are left out. *)
-(* Relocated from libreac/fuzz_identity's released proofs/lib/A/Rt/StrcmpChkY.v (c3777b3715d0) to libdiginet/fuzz_transport's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from libreac/fuzz_identity's released proofs/lib/A/Rt/StrcmpChkY.v to libdiginet/fuzz_transport's
    image A, fuzz_transport.asan e89be137db17 (unstripped twin 86efc3a80314).
    The walked functions (the trampoline, ___interceptor_strcmp, __sanitizer_weak_hook_strcmp,
    __asan_region_is_poisoned, __asan::TryAsanInitFromRtl) have the donor's sizes and the donor's words up to

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -202,7 +203,7 @@ Proof using AF DOCD DELD AFV.
     assert (INA1 : In (ia, nia) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [apply live_remove_keep; [exact INA| exact (not_eq_sym M1)]| exact (not_eq_sym M5)]).
     assert (INO1 : In (oc, noc) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [apply live_remove_keep; [exact INO| exact (not_eq_sym M2)]| exact (not_eq_sym M6)]).
     assert (INX1 : In (idx, nidx) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [apply live_remove_keep; [exact INX| exact (not_eq_sym M3)]| exact (not_eq_sym M7)]).
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (INF1 : In (f, k) (rt_frames RT Σ1)) by (rewrite FRS1; exact INF).
     assert (CLP : forall x, P <= x < P + 80 -> aclient (rt_live RT Σ1) (rt_frames RT Σ) (usp + -32) x).
     { intros x Hx. right; right; right; left. exists f, k. split; [exact INF| lia]. }

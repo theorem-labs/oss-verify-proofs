@@ -3,19 +3,20 @@
 (* Modified by Theorem Labs, 2026-10: made from lib/Reusable/YCbq.v:1551-1633 aj_malloc_at04 (copied from
    proofs/cgif/cgif_file_fuzzer/lib/YCbq.v) and lib/Reusable/YCbp.v:28-35 amalloc04_rule_triv (copied from
    proofs/cgif/cgif_file_fuzzer/lib/YCbp.v), at the calloc contract of lib/Reusable/YGCalloc.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The calloc call rule at the trivial meter, the calloc twin of YCbp.v amalloc04_rule_triv (rule 24: no function
    proved; this file is kit-level link lemmas).
 
    [aj_calloc_at04] is YCbq.v:1551-1633 aj_malloc_at04, line for line, with three changes:
-   - it consumes the calloc contract YGCalloc.v:335-337 acalloc_realizes_cgif (the realizes form :213-222
+   - it consumes the calloc contract YGCalloc.v:336-338 acalloc_realizes_cgif (the realizes form :213-222
      acalloc_realizesP at this unit's malloc tree, call precondition, amreal and malloc_leaf) in place of
      YG0d.v:254 amalloc_realizes, so the request is n = nm * sz with nm in a0 and sz in a1, and the call-depth
      premise [ly_bot lyc + cdepth < spZ regsT] and the size bound [nm * sz <= cmax] are passed on to it;
-   - the post adds the zero conjunct of YGCalloc.v:205-208 calloc_leaf_with (:198-201 calloc_zeroed), read at the
+   - the post adds the zero conjunct of YGCalloc.v:206-209 calloc_leaf_with (:198-201 calloc_zeroed), read at the
      returned block (its a0 is the block address, below 2 ^ 64 by the AR block law);
-   - the trace premise is YGCalloc.v:241-242 ctrace0 (the text of YCbq.v:317 call_trace0), and the one-element
+   - the trace premise is YGCalloc.v:242-243 ctrace0 (the text of YCbq.v:317 call_trace0), and the one-element
      trace [pc0] is a premise ([UNIVC]): YCbq.v:808-811 api_env carries it for malloc's and free's pc0 only.
-   [acalloc04_rule_triv] is YCbp.v:28-35 amalloc04_rule_triv at YGCalloc.v:255-276 acalloc04_rule. *)
+   [acalloc04_rule_triv] is YCbp.v:28-35 amalloc04_rule_triv at YGCalloc.v:256-277 acalloc04_rule. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

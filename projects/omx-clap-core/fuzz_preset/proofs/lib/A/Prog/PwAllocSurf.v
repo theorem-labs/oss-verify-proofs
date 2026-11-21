@@ -1,9 +1,9 @@
 (* fuzz_preset image A' (asan, #102 pin 1be0f53d96cb, unstripped twin bff8519bbe3e): the walks of alloc.c's five
    accessors of the test harness's allocator statics (alloc.c :129-152) against the texts (lib/A/PRH_FnAlloc.v:70-124,
-   blob 83fe93bc86e2, kit of record walkkit-next decff67d721f):
+   blob 83fe93bc86e2, kit of record walkkit-next):
    fuzz_alloc_live_holds, fuzz_alloc_peak_holds, fuzz_alloc_peak_reset_holds, fuzz_alloc_count_holds and
    fuzz_alloc_fail_holds. Every conclusion is SRr (srealizes, YA0n.v).
-   RELOCATED 2026-10-29 from the old-pin walks (origin/cold/h-w6rep-2-allocsurf c47ea1638ed6, this file blob
+   RELOCATED 2026-10-29 from the old-pin walks (this file blob
    3e57698d78f7, image d83eb25d / twin f0d2e8d4). The five bodies are instruction-equal mod pc-relative fields on the two
    asan pins (the old d83eb25d, twin f0d2e8d4, and #102's 1be0f53d96cb, twin bff8519bbe3e: 0 real differences;
    every pc-relative target is the same symbol + offset on both pins); this file names no address, so only the
@@ -22,7 +22,7 @@
                             or a0,a1,a0 ; auipc a1 ; sd a0 -> g_fail_at ; ret                           (9 words)
    The walks read these words from the image (build_table over the segments), so a different body fails them. None
    makes an instrumented access: the readers load a static, the writers store into a static, which is PST.
-   Shape (h-hpreset-7's split; origin/cold/h-hpreset-7-walk-S8b b8cc8ce5f57 ExUtf8.v / ExUtf8W.v / lib/B ExUtf8B.v):
+   Shape (h-hpreset-7's split; ExUtf8.v / ExUtf8W.v / lib/B ExUtf8B.v):
    1. pas_rd_run / pas_wr_run state a byte run as machine behaviour over ANY segments (no journal, no ledger);
    2. the cores pas_<fn>_core, parametric in the image ({PI : PrhImg} {PA : PAImg L}) and in the allocator relation
       ARx, build fpost (YCbqG's apost_base_x at PST := prh_pst) from the byte run: a reader by ajournal_x_init and
@@ -37,7 +37,7 @@
       not Required);
    4. the five texts at PA := PI_prog_A, PI := prh_img_A, cp := CfParams_preset, ARx := FuzzStrdup.v's ARcf /\
       xs_placed_cf. LAWS is the allocator laws' lift (h-mani-a8's AR_laws_ok_cf -> YGcallcf.v's AR_laws_x_xs, as
-      FuzzStrdup.v:234-235 cites it). Opened hypothesis: PST_unowned (PST_ok's B half).
+      FuzzStrdup.v:235-236 cites it). Opened hypothesis: PST_unowned (PST_ok's B half).
    fuzz_alloc_fail's saturating sum is pas_sat: s = (c + k) mod 2 ^ 64, and s | -(s <u c) is the text's
    `if k <? SIZE_MAXZ - c then c + k else SIZE_MAXZ` in all three cases (no wrap; c + k = SIZE_MAX, no wrap; wrap).
    Mechanics from lib/A/Prog/PwLive.v (the reader, old vocabulary), PwRanOutReset.v (a one-static writer) and PwBase.v
@@ -761,7 +761,7 @@ Context {SK : YI16.sink_head}.
 Variable B : asyms.
 #[local] Abbreviation ARc := (fun ly S Hp W mem md => ARcf (cp := CP) SEGS B ly S Hp W mem md /\ xs_placed_cf ly S).
 (* the allocator's laws at ARcf: h-mani-a8's AR_laws_ok_cf (YG0lawscf.v), and AR_laws_x from them (YGcallcf.v),
-   exactly as FuzzStrdup.v:234-235 *)
+   exactly as FuzzStrdup.v:235-236 *)
 Let LAWS_cf : AR_laws_cf (cp := CP) SEGS B := AR_laws_ok_cf (cp := CP) SEGS B.
 Let LAWS : AR_laws_x SEGS B ARc (@cf_head CP) := AR_laws_x_xs (cp := CP) SEGS B LAWS_cf.
 (* PST_ok's B half: the seven statics are not runtime-owned statics of B (its image half is pas_pst_img_A). Its
@@ -793,7 +793,7 @@ exact (pas_fail_core B ARc SK _ LAWS PST_OK pas_pst_sep_A pas_pst_al_A pas_pst_r
 Qed.
 
 (* THE FIVE TOPS, at the kit's room-live instance h-mani-a8's prh_room_live_a8 (PRH_Base.v:218, from YGcfRoomLive's
-   proved laws), as S1's FuzzStrdup.v:532 / FuzzFree.v:896 state theirs; the owner's form for the signature *)
+   proved laws), as S1's FuzzStrdup.v:533 / FuzzFree.v:896 state theirs; the owner's form for the signature *)
 Theorem fuzz_alloc_live_holds :
   tfuzz_alloc_live_specX (cp := CP) (PI := PIA) (RL := prh_room_live_a8 (cp := CP)) (PA := PA) B ARc SK.
 Proof. exact (fuzz_alloc_live_holds_rl (RL := prh_room_live_a8 (cp := CP))). Qed.

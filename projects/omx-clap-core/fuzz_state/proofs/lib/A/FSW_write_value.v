@@ -3,19 +3,20 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 1536 of its 1692 lines of code are new or changed and 1217 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* write_value (fs.asan 0x83d84, preset_file.c:525-575): the ASan walk of fs's recursive value writer, image A, against
-   lib/A/FSH_Fn_writer.v's write_value_spec_at (statement head a working branch efbff066c09, S0 aaf2c4ec41f's kit).
+   lib/A/FSH_Fn_writer.v's write_value_spec_at (statement head a working branch, S0's kit).
    MEASURED with the engine on the original fs.asan (a build machine, sha256 64b53ff8...): the prologue (frame 176, FRAME_write_value),
    the inline ASan check of v->type (shadow of the root node, atom 11), the type check `bltu 6, ty`, the jump table at
    .rodata 0x21000 (seven 4-byte offsets), and the arms: null / false / true load their literal and TAIL-jump to put
    (0x8418c) with the entry ra; number branches on str at 0x83f44 and calls strlen; string branches on str at 0x83e94 and
    TAIL-jumps to put_string (0x85ad8); array / object call put (0x8418c) at 0x83e38, returning to 0x83e3c.
    Callees are Section hypotheses (put_spec, put_string_spec, indent_spec, astrlen_realizesU; no CTX list since the
-   statement head a working branch dda8331bd25, which also fixes put_string's visited-frame clause); the
+   statement head a working branch, which also fixes put_string's visited-frame clause); the
    TAIL step (wvc_tail_otJ) and the raised-top after-call step (wvc_after_call_ot) are PROVED here from FSW_K3 /
    FSW_rres (by a part of a Theorem Labs lane). The container arms wv_arr / wv_obj are Section hypotheses, proved by the Theorem Labs lane
    (lib/A/ZZwv_cont.v); write_value_holds is the closing theorem over all seven arms and every level.
-   Port-from: the generation-N image-A proof (211ff3e9df0 lib/A/Prog/write_value_blocks.v, write_value.v: stage cuts and
+   Port-from: the generation-N image-A proof (lib/A/Prog/write_value_blocks.v, write_value.v: stage cuts and
    case split), a Theorem Labs lane's lib/A/FMW_check_reject_clean.v (run / call shape), the checks lane's FSW_caw_tail.v (token runs).
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0): write_value has RELEASED proofs for fs's PLAIN and
    UBSAN builds only (lib/Prog, lib/U/Prog), none for ASan; they are templates, not drop-ins. *)
@@ -317,7 +318,7 @@ refine (conj _ (conj _ (conj _ (conj _ (conj _ (conj _ (conj _ _))))))).
   + eapply Forall_impl; [|exact HF]. intros c Hc. cbv beta in Hc |- *. lia.
 - (* 4096 <= p *)
   lia.
-- (* below the allocation ceiling (cstr_ok asks p + n + 1 since 2d9cdf6a160; the chunk gives p + n + 8) *)
+- (* below the allocation ceiling (cstr_ok asks p + n + 1; the chunk gives p + n + 8) *)
   pose proof (proj2 CH) as CH2. lia.
 - (* len < 2 ^ 32: a block is below MALLOC_MAX = 2 ^ 28 *)
   unfold MALLOC_MAX in AMAX. lia.
@@ -379,7 +380,7 @@ Qed.
 End cs.
 
 (* ---- the frame chain an allocator call reads at s0 = o: FSH_Fn_writer.v's ONE-NODE clause, word for word (statement
-   head a working branch a369fd60e33), named once here ---- *)
+   head a working branch), named once here ---- *)
 Definition wv_chain_o {fx : YK11.FPState} {rc : YM05.RunCeil} (U : list (Z * Z)) (W : world tfibsegs)
     (mem : word -> option byte) (regs : bvmap 5 word) (o : Z) : Prop :=
   o = spZ regs + 8 /\ raZ regs < alloc_ceiling \/
@@ -452,7 +453,7 @@ split.
 Qed.
 
 (* ================= the spec's post, and the spec restricted to a class of trees ================= *)
-(* write_value_spec_at's conclusion (FSH_Fn_writer.v, statement head a working branch efbff066c09), m = 2 - k *)
+(* write_value_spec_at's conclusion (FSH_Fn_writer.v, statement head a working branch), m = 2 - k *)
 Definition wv_post (m : nat) (ot o v pretty d : Z) (t : PjTree.jv) (D UL : list (Z * Z)) (buf cap failed : Z)
     (text : list Z) (live peak cnt fail : Z) (regs : bvmap 5 word) (ly : alayout) (S : astate) (U : list (Z * Z))
     (W : world tfibsegs) (mem : word -> option byte) (md : Model) : world tfibsegs -> config -> Prop :=
@@ -668,9 +669,9 @@ Hypothesis wv_arr : forall k, ((k < 2)%nat -> write_value_spec_at B tfibsegs (S 
 Hypothesis wv_obj : forall k, ((k < 2)%nat -> write_value_spec_at B tfibsegs (S k)) ->
   wv_spec_on (fun t => exists members, t = PjTree.JObj members) k.
 (* the callee-footprint relation of the FP-keyed ajournal_sub is FSW_K3.fsw_fp_sub (S0's kit) *)
-(* the TAIL step and the raised-top after-call step: proved by a part of a Theorem Labs lane (a working branch
-   72cacaf9a57, ZZwv_defs.v), folded here; they compose through FSW_K3.fsw_ajournal_sub5, whose premise is S0's
-   five-arm fsw_fp_sub (kit b04db294041) word for word *)
+(* the TAIL step and the raised-top after-call step: proved by a part of a Theorem Labs lane (a working branch,
+   ZZwv_defs.v), folded here; they compose through FSW_K3.fsw_ajournal_sub5, whose premise is S0's
+   five-arm fsw_fp_sub (kit) word for word *)
 (* KIT ITEM (the arms' TAIL step, proved here from fsw_ajournal_sub5): the caller's journal from entry to the
    jump may already hold the calls the container arm made (k > 0, the state and the buffer moved); the callee,
    entered at the jump with the caller's ra and callee-saved registers, returns to the caller's caller. *)
@@ -819,7 +820,7 @@ repeat match goal with |- _ /\ _ => split end; try assumption; lazymatch goal wi
   | Htl : forall a, _ -> aview _ _ m a <> None |- forall a, _ -> aview _ _ m' a <> None =>
       (* the word holding the NUL ends at or below alloc_ceiling: p + |l| + 1 <= alloc_ceiling and alloc_ceiling is
          4096-aligned (YM05.alloc_ceiling_value), so (p + |l|) / 8 * 8 + 8 <= alloc_ceiling (FSW_K.cstr_ok_below's
-         step, 60d0985773d) *)
+         step) *)
       intros a Ha; rewrite AV; [exact (Htl a Ha)|];
       pose proof (Z.mod_pos_bound (p + Z.of_nat (length l)) 8 ltac:(lia));
       pose proof (Z.div_mod (p + Z.of_nat (length l)) 8 ltac:(lia));
@@ -1564,7 +1565,7 @@ Qed.
 
 (* the frame slots the prologue wrote, as the epilogue reloads them after a call: 64 the shadow base, 72 .. 168 the
    thirteen saved entry registers (s11 .. s2, s1, s0, ra), each an extra atom xatom (5 + k) of the resumed env
-   (the layout of wvc_cs0 / wvc_xs of a part of a Theorem Labs lane, ZZwv_defs.v 72cacaf9a57) *)
+   (the layout of wvc_cs0 / wvc_xs of a part of a Theorem Labs lane, ZZwv_defs.v) *)
 Definition wv_saved : list (bv 5) := [27; 26; 25; 24; 23; 22; 21; 20; 19; 18; 9; 8; 1]%bv.
 Definition wv_xsR (regs : bvmap 5 word) (str kids keys n d : Z) : list word :=
   wv_xs str kids keys n ++ [Z_to_bv 64 d] ++ map (fun r => YK11.getr regs r) wv_saved.

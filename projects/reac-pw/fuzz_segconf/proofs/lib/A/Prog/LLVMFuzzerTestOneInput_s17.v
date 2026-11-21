@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,6 +37,7 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 837 of its 889 lines of code are new or changed and 401 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): file group _s17, the segments S07 and
    S08 of the test harness's entry function LLVMFuzzerTestOneInput (0x84d34), cuts K853bc -> K85414 -> K85024 (f + 1)
    or K854a0:
@@ -49,8 +50,8 @@
    Each lemma proves its statement lt_seg_S<k>_stmt of LLVMFuzzerTestOneInput_defs.v exactly; the callee contract
    and the free wrapper's rule are Section hypotheses at every FP state, as fuzz_command's walk files take them.
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; output pasted verbatim in
    the walk's shared brief; checker (fresh, read-only): CONFIRM; none: written new) *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
@@ -111,7 +112,7 @@ Proof. intros i Hi Hn. do 36 (destruct i as [|i]; [first [reflexivity | lia] |])
 Lemma s17_fsh_f8 : forall i, (12 <= i < 17)%nat -> nth i (lt_fsh LFO0) 0 = 248.
 Proof. intros i Hi. do 17 (destruct i as [|i]; [first [reflexivity | lia] |]). lia. Qed.
 
-(* ---- the model of the file loop's latch: the plain / UBSan owner's plain lib/Prog/Seg/L03.v:57-97 (commit 440d61eaa8c8, its lemmas l03_after_next, l03_skipn_nth, l03_run_skip, l03_after_last), copied with seg_spec's
+(* ---- the model of the file loop's latch: the plain / UBSan owner's plain lib/Prog/Seg/L03.v:58-98 (its lemmas l03_after_next, l03_skipn_nth, l03_run_skip, l03_after_last), copied with seg_spec's
    names qualified ---- *)
 (* a turn that is not the last is the drop-in step of seg_run *)
 Lemma s17_after_next : forall inp f, Z.of_nat (S f) <> seg_spec.seg_nfiles inp ->

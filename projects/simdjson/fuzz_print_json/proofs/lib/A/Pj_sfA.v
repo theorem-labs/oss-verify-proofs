@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -24,7 +25,7 @@ Definition sf_specA (RT : rt_sig) : Prop :=
   forall (Σ : rts RT) (ra gp tp t0 t1 t2 s0 s1 a0 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
          (F : bvmap 5 word) (fc : bv 32) (m : mem) (EX q lo : Z),
   ART RT Σ m -> mem_inv asegs m -> (0 <= EX <= 2047)%Z ->
-  stk asegs m lo q -> (lo + 16 <= q)%Z -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z -> (q + 16 <= USTACK_TOP)%Z ->
+  stk asegs m lo q -> (lo + 16 <= q)%Z -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z -> (q + 16 <= USTACK_TOP)%Z ->
   evt asegs (fun ms' => exists m', sf_postA1 ra q gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m' ms'
                         /\ munch [(q - 16, q)]%Z m m' /\ wmono asegs m m' /\ mem_inv asegs m' /\ stk asegs m' lo q /\ ART RT Σ m')
       (MS (mkR ra (Z_to_bv 64 q) gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 EX) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)

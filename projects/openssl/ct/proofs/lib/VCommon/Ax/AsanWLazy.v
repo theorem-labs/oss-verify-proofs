@@ -1,13 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VCommon proof library over the revised model); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon Require Import CatSim ShapeAlg ShapeAlgCfg.
+From OSSVerify.Proofs.openssl.ct.lib.VCommon.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+(* elem_of_list_filter / elem_of_list_In for no_lazy_in_reserved below.  The farm's own
+   error printed both constants side by side -- `In sg (List.filter …)` against
+   `In sg (filter …)` -- so segments_reserved's filter is STDPP's here too, exactly as
+   the UNCLOSED-GOAL probe showed in AxGrant.v.  Placed before `Import ListNotations`
+   so Stdlib's list notations still win, and above `Local Open Scope Z_scope`. *)
+From stdpp Require Import list.
 Import ListNotations.
 
 Local Open Scope Z_scope.
@@ -85,13 +93,40 @@ Lemma no_lazy_in_reserved : forall model (segs : list Segment) (sg : Segment) lo
   (forall p q, In p (m_vm_lazy model) -> In q (segments_reserved segs) ->
      bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned (fst q)
      \/ bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned (fst p)) ->
+  (* NEW PREMISE, and the non-cascading shape.  segments_reserved gained
+     `filter (fun s => negb (seg_kernel_map s))` (LPS@75d69e00 Run.v:253-254), so
+     `apply in_map; exact Hin` at :95 now wants `In sg (filter … segs)` and `In sg segs`
+     no longer suffices.  The alternative -- moving the premise to the filtered list,
+     as in_segs_reserved does -- would CASCADE here: no_lazy_in_segment below passes
+     Hin straight through, and ITS callers are no_lazy_img and no_lazy_imgn in AxSum,
+     whose membership comes from `in_seg segs a = true` via existsb_exists.  Threading
+     a closed Boolean instead leaves every caller's `In sg segs` untouched and costs
+     one hypothesis discharged by vm_compute at the top, where segs is the unit's own
+     ELF image.  The image is never kernel-mapped: run_segments is a literal append
+     (Run.v:328-330), so the vDSO tail is the only place such a segment enters. *)
+  forallb (fun s => negb (seg_kernel_map s)) segs = true ->
   In sg segs ->
   bv_unsigned (fst (segment_reservation sg)) <= lo ->
   hi <= bv_unsigned (fst (segment_reservation sg)) + bv_unsigned (snd (segment_reservation sg)) ->
   no_lazy model lo hi.
 Proof.
-  intros model segs sg lo hi H Hin Hlo Hhi. apply no_lazy_of_disj. intros p Hp.
-  assert (Hq : In (segment_reservation sg) (segments_reserved segs)) by (apply in_map; exact Hin).
+  intros model segs sg lo hi H Hfk Hin Hlo Hhi. apply no_lazy_of_disj. intros p Hp.
+  (* WAS, and the farm measured it false at AsanWLazy.v:109:
+       assert (Hnk : In sg (List.filter (fun s => negb (seg_kernel_map s)) segs))
+         by (apply List.filter_In; split; [exact Hin | …]).
+       assert (Hq : …) by (apply in_map; exact Hnk).
+     `The term "Hnk" has type "In sg (List.filter …)" while it is expected to have type
+     "In sg (filter …)"` -- the two constants printed side by side, which is the whole
+     cause-6 diagnosis in one line.  This is AxGrant.v's cure, already VOK OK there and
+     now built as a .vo on the farm: key to stdpp's own lemma, and pair the names
+     because this pin renames them. *)
+  assert (Hq : In (segment_reservation sg) (segments_reserved segs)).
+  { unfold segments_reserved. apply in_map.
+    first [apply elem_of_list_In | apply list_elem_of_In].
+    first [apply elem_of_list_filter | apply list_elem_of_filter
+          | apply elem_of_filter | apply filter_elem_of]. split.
+    - apply Is_true_eq_left. exact (proj1 (forallb_forall _ segs) Hfk sg Hin).
+    - first [apply elem_of_list_In | apply list_elem_of_In]. exact Hin. }
   destruct (H p _ Hp Hq) as [E|E]; [left|right]; lia.
 Qed.
 
@@ -100,14 +135,16 @@ Lemma no_lazy_in_segment : forall model (segs : list Segment) (sg : Segment) lo 
   (forall p q, In p (m_vm_lazy model) -> In q (segments_reserved segs) ->
      bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned (fst q)
      \/ bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned (fst p)) ->
+  (* Same premise, threaded to no_lazy_in_reserved below; callers keep `In sg segs`. *)
+  forallb (fun s => negb (seg_kernel_map s)) segs = true ->
   In sg segs ->
   Z.of_N (seg_base sg) + Z.of_N (seg_size sg) < 2 ^ 64 - 4096 ->
   Z.of_N (seg_base sg) <= lo -> hi <= Z.of_N (seg_base sg) + Z.of_N (seg_size sg) ->
   lo < hi ->
   no_lazy model lo hi.
 Proof.
-  intros model segs sg lo hi H Hin Hsz Hlo Hhi Hlh.
-  apply (no_lazy_in_reserved model segs sg lo hi H Hin).
+  intros model segs sg lo hi H Hfk Hin Hsz Hlo Hhi Hlh.
+  apply (no_lazy_in_reserved model segs sg lo hi H Hfk Hin).
   - unfold segment_reservation, page_round_down_Z, page_size. cbn [fst].
     pose proof (N2Z.is_nonneg (seg_base sg)) as Hb.
     rewrite Z_to_bv_unsigned, bv_wrap_small; [|change (bv_modulus 64) with (2 ^ 64)].
@@ -196,7 +233,14 @@ Proof.
     assert (Hall : forall p, In p (accesses_pages acc []) ->
               page_in_ranges p (m_vm_lazy model) = false).
     { intros p Hp. destruct (in_accesses_pages acc [] p Hp) as [[]|(a & n & i & Hin & Hi & ->)].
-      unfold acc_ok in Hok. rewrite Forall_forall in Hok. destruct (Hok _ Hin) as [Hnw Hnl]. cbn [fst snd] in Hnw, Hnl.
+      (* `List.Forall_forall` is QUALIFIED: the `From stdpp Require Import list` this
+         file now carries shadows the bare name, and stdpp's is stated with `x ∈ l`
+         where Stdlib's uses `In x l`.  The farm measured it -- `Hok : forall x, x ∈
+         acc -> …` against `Hin : In (a, n) acc`, 126 lines below the edit that caused
+         it, in a proof I never touched.  EXACTLY the same shadowing as AxGrant.v:235,
+         and I wrote that this file had no Forall_forall "checked by
+         grep" -- that grep was wrong and the compiler was not. *)
+      unfold acc_ok in Hok. rewrite List.Forall_forall in Hok. destruct (Hok _ Hin) as [Hnw Hnl]. cbn [fst snd] in Hnw, Hnl.
       exact (page_not_lazy model a n i Hnw Hnl Hi). }
     revert Hall. generalize (accesses_pages acc []) as L. intros L Hall.
     induction L as [|p ps IH]; [reflexivity|].
@@ -251,7 +295,7 @@ Lemma rzc_acc : forall ms model ms' acc T,
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
   intros ms model ms' acc T Hh Hsvc Hs Hok Hc.
-  eapply rzc_silent1; [eapply node_instr_acc; eassumption | exact Hc].
+  eapply rzc_silent1; [eapply node_instr_acc; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 End Nodes.

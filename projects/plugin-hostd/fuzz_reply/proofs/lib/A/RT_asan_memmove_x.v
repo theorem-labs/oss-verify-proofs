@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: fuzz_reply.asan's __asan_memmove (0x52e04), its site contract
    W_sites.v amemmove_realizes, as an instance of the Bz walk Bz/A/I_amemmovew.v amemmove_spec.
    The pieces composed:
-   - the walk: lib/A/Bz/A/I_amemmovew.v (pcap's walk, a working branch eabce720039, relocated to
+   - the walk: lib/A/Bz/A/I_amemmovew.v (pcap's walk, a working branch, relocated to
      fuzz_reply.asan: the 220 words differ only in auipc/ld/jal) with its section hypothesis RIP =
      Bz/A/R_isPoisoned.v rip_proof, and the internal memmove lib/A/Bz/A/I_imemmove.v it calls;
    - the transport and the post: lib/A/RT_post.v (aentry_post_of_walk, bz_transport, chk_norm, stk_norm_high,
@@ -14,14 +14,15 @@
    No refusal exit: the walk proves both range checks pass (the quick check, or __asan_region_is_poisoned returning
    0), so it never reaches an error branch, the fatal stack trace or libunwind. *)
 (* Modified by Theorem Labs, 2026-10-29: from lib/A/RT_asan_memmove.v, as the module RT_asan_memmove_x: cut to the proof of rt_amemmove and its cell lemmas (the other helper lemmas are used by Import) and restated over a generic allocator invariant ARx under lib/Rt/RTx.v's rt_laws (tfib_const_lookup_x, cell_val_x, ro8_x and walk_cells_memmove_x read the cells through the const-cells law; rt_amemmove_x); the corollaries rt_amemmove_of_x (rt_amemmove's statement, unchanged) and rt_amemmove_cf added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/RT_asan_memmove.v's runtime contract rt_amemmove restated over a generic
    allocator invariant ARx (ghost head set Hp threaded) under the five-law record rt_laws of lib/Rt/RTx.v
    (a Theorem Labs lane's, the one record for both images: rtl_frame, rtl_stack, rtl_const, rtl_layout, rtl_const_cells).
    RT_asan_memmove.v is not edited; its helper lemmas are used by Import. The statement is W_sites_x.v's
    amemmove_realizes_x; the proof of rt_amemmove_x is RT_asan_memmove.v's with AR -> ARx (am_layout of proj1 HAR ->
    rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
-   al_frame / al_stack (through RT_post.aentry_post_of_walk, :379), the ARm field am_layout (:278 and RT_post.v:249),
+   Measured (lines at a working branch): the original reads AR through
+   al_frame / al_stack (through RT_post.aentry_post_of_walk, :379), the ARm field am_layout (:278 and RT_post.v:250),
    the layout law here, and the ARm field am_const (:128 in walk_cells_memmove, through AF0x.tfib_const_lookup), the
    const-cells law here (walk_cells_memmove_x below); the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not count
    the ARm fields, hence the record's rtl_layout and rtl_const_cells.
@@ -91,7 +92,7 @@ Module WSX := OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.W_sites_x.
 Section core. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* ---- the runtime cells the walk reads, from TfibSyms' constant table, over the const-cells law ----
-   AF0x.v:207-216 tfib_const_lookup and RT_asan_memmove.v:111-121 cell_val / ro8 read the cells from AR's ARm part
+   AF0x.v:207-216 tfib_const_lookup and RT_asan_memmove.v:112-122 cell_val / ro8 read the cells from AR's ARm part
    (am_const); these copies read them from the list `Forall (cell_holds B ly ..) (as_const B ly)` itself, which is
    the conclusion of RTx.v's rtl_const_cells (YCbqG.v:153 ARx_const_cells_law's text).  The proofs are the originals' with `am_const B ly S _ M` -> M. *)
 Lemma tfib_const_lookup_x : forall B, TfibSyms B -> forall ly H mem a (w : nat) v,

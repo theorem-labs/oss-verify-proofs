@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed Hp, Zify, str_atA; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DiagArmOpen.v, lines 121, 260-264, 295. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -122,7 +123,7 @@ Section Arm.
     Hypothesis HW : L5Defs.L5.writable ASEGS MV (S - 5440) 5440.
     Hypothesis HD : L5Defs.L5.defined MV (S - 5440) 5440.
     Hypothesis HIMG : L5Defs.L5.img_clear MV 65536 1269760.
-    Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+    Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
     Hypothesis HSTR : Ba0DiagStrnlen.DSN.cstr MV p bs t8.
     Hypothesis HSH : forall x : word, Ba0RegionPoisoned.SB + p / 8 - 7 <= bv_unsigned x < Z.min (Ba0RegionPoisoned.SB + (p + n) / 8 + 8) (Ba0RegionPoisoned.SB + 2 ^ 44) -> MV x = Some (Z_to_bv 8 0).
     Hypothesis HSTK : L5KnA.L5KA.zeros_at MV (Ba0RegionPoisoned.SB + S / 8 - 680) 688.
@@ -261,11 +262,11 @@ Section Arm.
 
   (* [comment removed for export] *)
   Record str_atA (A : list (Z * Z)) (p1 : word) (path : list byte) : Prop := STR_ATA {
-    sa_lo : usp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47;
+    sa_lo : usp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47;
     sa_str : rdn ASEGS M0 p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]);
     sa_nonul : ~ In (Z_to_bv 8 0) path;
     sa_len : Z.of_nat (length path) <= 131071;
-    sa_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16);
+    sa_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8);
     sa_sah : shadow_allowed A (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar)
   }.
 
@@ -296,7 +297,7 @@ Section Arm.
     assert (G10 : getr R 10%bv = Z_to_bv 64 1284064) by (regv HR (10%bv : reg); reflexivity).
     assert (G11 : getr R 11%bv = Z_to_bv 64 127259) by (regv HR (11%bv : reg); reflexivity).
     assert (G12 : getr R 12%bv = Z_to_bv 64 (bv_unsigned p1)) by (regv HR (12%bv : reg); cbn [edenot ev ENVA]; rewrite P2; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47) by (unfold S; lia).
+    assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47) by (unfold S; lia).
     destruct (Z_le_gt_dec (Z.of_nat (length path)) 62) as [HnA|HnA'].
     - apply (die_of_chain [Ba0DiagOpenA.DOA.PRE17 ++ path ++ Ba0DiagOpenA.DOA.SUF1] _ vals knOEA LB LK cr A M model fxq R fs S HK OKb P0 D EFS FD2
                ltac:(unfold S; lia) ltac:(unfold S; lia) HS16).

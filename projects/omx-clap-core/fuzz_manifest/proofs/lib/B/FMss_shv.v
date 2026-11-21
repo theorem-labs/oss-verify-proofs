@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_shv.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_shv.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* The local shadow premise of the strstr lane's P-model walks.  The copied wrapper statements
    (lib/A/Prog/*_wrap_c.v) ask for `shadow_rw m` (AsanRT.v:29): every byte of the whole low and
    high shadow readable.  At a donor call site the memory is `mrestrict (w_H W) mem` and the

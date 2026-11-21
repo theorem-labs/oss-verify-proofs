@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: fully qualified module paths. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -224,7 +225,7 @@ Context {fx : FPState}. Context {bmK : BMode}.
 
 End WithFP10.
 Ltac chain_mst :=
-  first [ eapply CatSim.msteps_to_wexit
+  first [ eapply S9.CatSim.msteps_to_wexit
         | eapply MmapSim.msteps_twm
         | eapply MmapSim.msteps_twm_tail
         | eapply MmapSim.msteps_tmw

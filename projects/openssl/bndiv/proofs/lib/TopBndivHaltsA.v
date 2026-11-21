@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (realizes_asan also takes the start certificate without CONFIG_RSEQ (BdAStartCertNoRseq) and the valid_input_cache_words and valid_input_min_sigframe_size facts; must_exit_asan_big uses vdso_image = None). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -12,7 +13,7 @@ From OSSVerify.Proofs.openssl.bndiv.lib.AS Require ShapeHalts.
 From OSSVerify.Proofs.openssl.bndiv.lib Require TopHalts TopBndivAsan.
 From OSSVerify.Proofs.openssl.bndiv.lib.A Require Import RT_iface RT_rep D_defs D_libiface I_iodefs X_xdefs.
 From OSSVerify.Proofs.openssl.bndiv.lib.AxA Require ArtA.
-From OSSVerify.Proofs.openssl.bndiv.lib.AxBdA Require BdAStartCert.
+From OSSVerify.Proofs.openssl.bndiv.lib.AxBdA Require BdAStartCert BdAStartCertNoRseq.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon Require ShapeAlgCfg.
 From OSSVerify.Proofs.openssl.bndiv.lib.AxA Require RzBridge StartA.
 Require OSSVerify.openssl.bndiv.images.Asan.
@@ -30,6 +31,12 @@ Proof.
   - intros tr0 code fs' E. exact (TopHalts.canonT_exits02 argv fs tr Htr tr0 code fs' E).
 Qed.
 
+Section KernelFacts.
+  (* The two kernel fields the ASan start-up witness reads (the auxv's cache words and
+     AT_MINSIGSTKSZ) come from the model's own per-field accessors, Run.valid_input_cache_words
+     and Run.valid_input_min_sigframe_size.  rseq, aslr, guard, rnd_bits and thp are NOT read
+     as fixed values. *)
+
 (* [comment removed for export] *)
 Lemma realizes_asan : forall en inp, valid_entry imgA en inp -> valid_input inp ->
   VCommon.ShapeAlgCfg.realizes_cfg Asan.M.loaded_segments ncfg
@@ -39,7 +46,9 @@ Lemma realizes_asan : forall en inp, valid_entry imgA en inp -> valid_input inp 
 Proof.
   intros en inp He Hi.
   exact (AxA.StartA.startA_realizes RTA OUT_repA ERR_repA XENVA lib_startA ArtA.fin_mainA ArtA.fin_mainA_out ArtA.bridgeA_final
-           AxBdA.BdAStartCert.bda_cert_main TopBndivAsan.main_asan en inp He Hi).
+           AxBdA.BdAStartCert.bda_cert_main AxBdA.BdAStartCertNoRseq.bda_cert_main_norseq
+           TopBndivAsan.main_asan en inp He Hi
+           (valid_input_cache_words inp Hi) (valid_input_min_sigframe_size inp (in_hwcap inp) Hi)).
 Qed.
 
 (* [comment removed for export] *)
@@ -48,7 +57,9 @@ Theorem must_exit_asan_big : forall en inp, valid_entry imgA en inp -> valid_inp
 Proof.
   intros en inp He Hi. pose proof (realizes_asan en inp He Hi) as Hr.
   destruct en as [sp brk mb rnd]. cbn [must_exit_in_scfg en_sp en_brk en_mmap_base en_draw] in *.
-  apply (AxA.RzBridge.realizes_cfg_must_exit_forced_only _ TopHalts.codes02 _ _ Hr).
+  (* LPS 08b1429: the binary carries no vDSO segment of its own *)
+  assert (Hvi : vdso_image Asan.M.loaded_segments = None) by reflexivity.
+  apply (AxA.RzBridge.realizes_cfg_must_exit_forced_only_init _ TopHalts.codes02 _ _ _ _ _ _ _ inp _ Hvi Hr).
   - apply canonT_exits_in.
   - reflexivity.
 Qed.
@@ -73,4 +84,5 @@ Check (halts_bndiv_asan :
     LinuxProcessSemantics.EquivalenceDefinition.Equivalence.ShippedBudgets.lim_source
     [stdpp.bitvector.definitions.Z_to_bv 64 0; stdpp.bitvector.definitions.Z_to_bv 64 2]
     (LinuxProcessSemantics.LinuxProcessSem.MemImageType.mkImage OSSVerify.openssl.bndiv.images.Asan.M.loaded_segments OSSVerify.openssl.bndiv.images.Asan.M.init_pc OSSVerify.openssl.bndiv.images.Asan.M.phdrs)).
+End KernelFacts.
 (* [comment removed for export] *)

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the PURE (machine-free) model layer of segment VALUE of parse_items' image-B walk (lane
    PItemsB.PItemsValue of a Theorem Labs lane's image-B walk list). Rule 24: no function is proved here; these are grammar and
    ledger lemmas over PjGrammar (lib/Spec) at the strtod model PRH_Reader.prh_jr_strtod.
@@ -24,7 +25,7 @@
       (pvm_cont_frame_core; pi_cont_frame over the whole footprint, every call; pi_cont_frame_slot /
       pi_cont_frame_slot_gen over the footprint minus a write [lo, hi) past the members' slots), through
       PItems_shape.v's pis_open / pis_exit_open / pis_fd_hdr0 and PRH_Reader.v's frame lemmas.
-   6. THE BATCH KIT TOOLS (240b06ed4fd4): pvm_some_granted (a run that returned had every outcome granted),
+   6. THE BATCH KIT TOOLS: pvm_some_granted (a run that returned had every outcome granted),
       pvm_calls_le_granted, pvm_gt_grant (under pi_grant the whole call's all-granted run is the prefix then the block's
       continuation at ok = []), pvm_jf_det / pvm_jfv_det (PresetReqAt.jfv / jfl depend only on the outcomes of the calls
       the run makes), pvm_kids_snoc / pvm_ncaps_snoc, pvm_foR_perm, and the FRAME lemmas of the batch kit's invariants over
@@ -558,7 +559,7 @@ Context {cp : CfParams} {RL : PrhRoomLive}.
 Lemma pvm_prh_held_app : forall t1 t2, prh_held (t1 ++ t2) = prh_held t1 + prh_held t2.
 Proof. intros t1 t2. unfold prh_held. rewrite held_app, calls_app, Nat2Z.inj_add. ring. Qed.
 
-(* the room of a trace split (the batch kit's tip 03fcabb582d0: rd_room's third conjunct is prh_live_evs, the live bytes along
+(* the room of a trace split (the batch kit's tip: rd_room's third conjunct is prh_live_evs, the live bytes along
    the trace's events from the state's live requests): the prefix's room at the same state, and the rest's room at a
    state whose live requests are the first one's moved by the prefix's events (PItems_ledk1.pik1_live_evs_pre /
    pik1_live_evs_after) *)
@@ -1075,7 +1076,7 @@ Qed.
 
 End cont.
 
-(* ================= 6. The batch kit's invariants (the batch kit 240b06ed4fd4) ================= *)
+(* ================= 6. The batch kit's invariants (the batch kit) ================= *)
 
 (* ---- the outcome list of a run that RETURNED: every allocation it made was granted (an ok list that refuses a call
    stops the run there with None, PjGrammar.agrees' second clause) ---- *)

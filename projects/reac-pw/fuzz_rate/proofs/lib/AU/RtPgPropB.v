@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgProp.v at 533bf30ff015 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgProp.v for image B
    (fuzz_rate.asan-ubsan): image B's pieces, pcs and files; the latch has two entries; the shape-7 piece also takes
    pod_write_ent's contract, and pab_piece_int7_B discharges it by pod_write_ent's own walk (lib/AU/PweRun.v). *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256

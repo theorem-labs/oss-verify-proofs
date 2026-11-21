@@ -1,0 +1,61 @@
+# The size of each workflow file, in a workflow of its own.  GitHub starts no run of a workflow file over 500 KB
+# (docs.github.com/en/actions/reference/limits): it shows one failed run with no job, so a guard inside that file
+# never runs.  pr.yml was 473,303 bytes on main on 2026-11-20, and #2907, after it merged main, held a pr.yml of 515,273
+# bytes and got no pr.yml run (Dispatch issue OSSV-841).  This file is small, so it starts whatever pr.yml's size, and
+# its job fails a pull request or a merge queue group in which any workflow file is over 490,000 bytes.  pr.yml's plan
+# job runs the same step (tools/oft/tests/test_workflow_size.py holds the two texts equal); this job is the one that
+# still runs once pr.yml is past the limit, so main's required checks name it as well as main-gate.  It checks out
+# only the .github/workflows/ of the commit GitHub checks out for the event (a pull request's merge commit, a merge
+# queue group's own commit), measures every .yml and .yaml file there, whatever the case of its suffix and dotfiles
+# too, and runs no tool of the base or of the change; a checkout with no pr.yml fails it rather than passing with
+# nothing measured.  The limit drops to 450,000 bytes once OSSV-841 moves the long run scripts out of pr.yml.
+name: workflow-size
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group:
+
+permissions:
+  contents: read
+
+# as pr.yml's: `bash --noprofile --norc -eo pipefail`, so the step runs as its twin there does
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  workflow-size:
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          path: head
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/workflows/
+      - name: no workflow file is over 490,000 bytes, so GitHub still starts its runs
+        run: |
+          set -euo pipefail
+          limit=490000
+          [ -f head/.github/workflows/pr.yml ] || {
+            echo "::error::head/.github/workflows/pr.yml is not there: the checkout holds no workflow to measure"; exit 1; }
+          over=0 n=0
+          while IFS= read -r -d '' f; do
+            n=$((n + 1))
+            if [ -L "$f" ]; then
+              echo "::error file=${f#head/}::${f#head/} is a symbolic link, which this step does not measure: commit the workflow as a file"
+              over=1
+              continue
+            fi
+            size=$(wc -c < "$f")
+            if [ "$size" -gt "$limit" ]; then
+              echo "::error file=${f#head/}::${f#head/} is $size bytes, over $limit: GitHub starts no run of a workflow file over 500 KB, so move text out of it"
+              over=1
+            fi
+          done < <(find head/.github/workflows -maxdepth 1 \( -type f -o -type l \) \( -iname '*.yml' -o -iname '*.yaml' \) -print0 | sort -z)
+          [ "$over" = 0 ] || exit 1
+          echo "each of the $n workflow files is $limit bytes or less"

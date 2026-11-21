@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed lib_site; added vmc_refl; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/U/Pm10DrvLibL_u.v, lines 14-16, 23, 226-232. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -13,7 +14,12 @@ From OSSVerify.jsoncons.fuzz_json_encoder.images Require Import Ubsan.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import RunEnv
   PropExec CatExec CatSim SeqExec StoreOk ShapeAlg ShapeLaws SpinAlg SpinAlgX
   SymExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX RefMemcpyLib Hoare AsanAcct
-  HeapIface LibIface LibIfaceFp DrvKit. From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require Import Pm6Drv_defs_u5 Pm6DrvLib_u5 Pm6DrvD_defs_u5 Pm6ExitAx_u5.
+  (* Pm6MainEntry_u5 for the [DRV_ZWIN] notation: Require is transitive for LOADING but Import
+     is NOT for VISIBILITY, so reaching Pm6MainEntry_u5 through Pm6DrvLib_u5 is not enough
+     ("The variable DRV_ZWIN was not found in the current environment", :222).  It goes
+     BEFORE the Pm6Drv*_u modules, not after, so that every spelling those export keeps
+     resolving exactly as it did: the later import wins. *)
+  HeapIface LibIface LibIfaceFp DrvKit. From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require Import Pm6MainEntry_u5 Pm6Drv_defs_u5 Pm6DrvLib_u5 Pm6DrvD_defs_u5 Pm6ExitAx_u5.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5.Lib Require Import LibContractU.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5.Drv Require Import LibStaticsU.
 Import ListNotations.
@@ -21,6 +27,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
 
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
@@ -224,33 +231,35 @@ Section DrvLibLayout.
     unfold lib_cfg in MS. rewrite (dll_heap Lay L DLL), (dl_segs L sp0 DL), (dll_entry Lay L DLL) in MS.
     pose proof (dl_stack L sp0 DL) as ST.
     apply MS; clear MS; try assumption.
-    - (* [comment removed for export] *)
+    -
       constructor; rewrite ?(dll_heap Lay L DLL), ?(dl_segs L sp0 DL), ?(dl_tp L sp0 DL), ?(dll_empty Lay L DLL), ?(dll_stack Lay L DLL),
                            ?(dll_gp Lay L DLL), ?(dl_sptop L sp0 DL); try assumption.
       + lia.
-      + (* [comment removed for export] *)
+      +
         destruct (has_window_nth kn Hiw) as [i Hn].
         split; [rewrite Z.add_mod, Hal, Hsoal by lia; reflexivity|]. split; [lia|]. split; [lia|]. split; [lia|]. split.
         * intros d m Hd Hm.
-          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (so - 65536 + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
+          (* old: [... (EVar 0) (-8388608) 8388608 ...]; [so - 65536 + d >= - 2 ^ 22 - 65536 = -4259840 >= - DRV_ZWIN] *)
+          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (so - 65536 + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
           unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
           replace (bv_unsigned sp0 + so - 65536 + d) with (bv_unsigned sp0 + (so - 65536 + d)) by lia. exact W.
         * intros a Ha.
-          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (a - bv_unsigned sp0) 1%nat HK Hn ltac:(lia) ltac:(cbn; lia)) as W.
+          (* old: [... (EVar 0) (-8388608) 8388608 ...]; [a >= bv_unsigned sp0 + so - 65536 >= bv_unsigned sp0 - DRV_ZWIN] *)
+          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (a - bv_unsigned sp0) 1%nat HK Hn ltac:(lia) ltac:(cbn; lia)) as W.
           unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
           replace (bv_unsigned sp0 + (a - bv_unsigned sp0)) with a in W by lia.
           apply (window_defined M a); [lia | lia | exact W].
-    - (* [comment removed for export] *)
+    -
       intros fx' g' R' M' model' cr' HFP' HPOST HH' HBUT.
       destruct HPOST as [Qa0 Qregs Qcr Qframe Qscr Qls].
       rewrite (dll_stack Lay L DLL) in Qframe, Qscr. rewrite (dll_heap Lay L DLL) in Qframe.
       assert (HL' : length (vals ++ junk_vals R') = (length vals + 32)%nat) by (rewrite length_app, junk_vals_length; reflexivity).
       assert (P0' : vals_ev (vals ++ junk_vals R') 0 = sp0) by (rewrite vals_ev_app_l by lia; exact P0).
       apply (CONT fx' R' M' model' g' cr' HL').
-      + (* [comment removed for export] *)
+      +
         apply regs_ok_upd_same; [| discriminate | cbn [edenot]; symmetry; exact Qa0].
         apply (regs_after_keeps vals ebs sr R R' c_kept Hsv HR (regs_preserved_kept sp0 Hsp R R' Qregs) c_kept_no0).
-      + (* [comment removed for export] *)
+      +
         unfold keep_lib.
         pose proof (env_app_know RSEGS vals (junk_vals R') ebs M kn Hkv HK) as HK1.
         eapply (know_keep_sound RSEGS 0 so 65536 bls vbnd [3%nat; 4%nat] IMG_LIB IMG_RW

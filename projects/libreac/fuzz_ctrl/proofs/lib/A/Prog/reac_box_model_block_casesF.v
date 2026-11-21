@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 617 of its 632 lines of code are new or changed and 233 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_cases.v at a working branch d69f7c708f6 (proved v1.9
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_cases.v at a working branch (proved v1.9
    run of record) over lib/Lib/StepF: upd0_F, rom_at_F and join_app_F by the same script, addr_keep_app_F, four_bytes_F and shadow4_addr_F with `hide_sec.` only, cs_join_F, cs1_F, cs2_F and cs3_F with `hide_sec.` and footprint steps, and the new lemmas sh1_F, fk_sh4_F and fk_shadow4_sub.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes:
      JOIN_0013 = 0x21a20, 32 bytes (RcSynth.J13), file offset 0x11a20 (LOAD va 0x10000 off 0):
        04 03 00 13 00 02 00 fe 0e f0 41 0a 00 00 12 12 03 02 00 01 00 7a f7 00 00 00 00 00 00 00 00 02 - matches;
@@ -18,7 +19,7 @@
       no new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes (above).
    4. Every _F carries provenance in its header and goes to the auditor a Theorem Labs lane, who signs it against its
       proved run before it counts.
@@ -102,7 +103,7 @@ Ltac2 Notation "inst_exact" c(constr) := let r := inst c in exact $r.
 
 Set Default Proof Mode "Classic".
 
-(* The store hook of the evtF walk of this function (reac_box_model_blockF.v of 3c9fcc93205): it also transports
+(* The store hook of the evtF walk of this function (reac_box_model_blockF.v): it also transports
    rd_mono. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
@@ -229,7 +230,7 @@ Section MainF.
   Hypothesis NDJ : p <> 0 -> (b = 5 \/ b = 6) -> has row <> 0 -> rname row <> 0 ->
     fp_dj [(rname row, rname row + Z.of_nat (length nb))] (fp_w [0%nat] FS).
 
-  (* The footprint and the nine regions of the run (reac_box_model_blockF.v of 3c9fcc93205, Section MainF). *)
+  (* The footprint and the nine regions of the run (reac_box_model_blockF.v, Section MainF). *)
   Variable RNG : footprint.
   Hypothesis Rimg : rng RNG 0x10000 0x5ee000.
   Hypothesis Rwin : rng RNG (bv_unsigned sp - REAC_BOX_MODEL_BLOCK_K) REAC_BOX_MODEL_BLOCK_K.

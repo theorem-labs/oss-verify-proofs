@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (interp_pos re-proved for the vvar range check on loads (range_meets_vvar)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -58,7 +59,8 @@ Lemma interp_pos : forall t m report, eff_pos t -> interp_eff_accesses segs t m 
 Proof.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m report HP H; cbn in H; try discriminate.
   - injection H as <-. constructor.
-  - destruct HP as [Pn Pk]. destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct HP as [Pn Pk]. destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r| |] eqn:Hr; try discriminate.
     injection H as <-. cbn. constructor; [exact Pn| exact (IH _ m r (Pk _) Hr)].
   - destruct HP as [Pn Pk]. destruct (store_ok segs m a (width_bytes n)); [|discriminate].

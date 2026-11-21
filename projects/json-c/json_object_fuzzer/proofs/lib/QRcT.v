@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the tokparse proof names jo_preA's conjunct and keeps it in the clear before json_tokener_free_A_cps; the deep-copy sections take it as HBTlo; the calls of json_tokener_parse_ex_A_cps, json_tokener_free_A_cps, PUT, array_list_add_A_cps and IH discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -98,7 +99,7 @@ AJ5 A4L HIx A T md
 F (Z_to_bv 64 0x93040) fc None m (seg_rom asegs)).
 Proof.
 intros until u. intros PRE SP32 LMN CSTR LEN LOC LCK G UTF UW UWK FRN BB BD FRM A0 K. subst a0.
-destruct PRE as (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA).
+destruct PRE as (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA).
 destruct CSTR as (STR & NONUL & PAD & ALOC & UNP). destruct ALOC as (Fr & kf & INF & HF1 & HF2).
 pose proof (heapA_frame A4L HIx _ _ _ _ _ _ _ _ _ HP INF) as (Hkf & HFal & HF0 & HFc & _).
 pose proof alloc_ceiling_range as ACR. pose proof (hiA_top_le A4L HIx) as HT47.
@@ -228,6 +229,7 @@ right. exists Fr, kf. split; [exact INF|]. split; [exact HF1 | unfold len; lia].
 1: reflexivity.
 1: eassumption.
 1: exact LO.
+1: first [assumption | lia].
 1: (unfold PE_STK_A; lia).
 1: (replace (bv_unsigned sp + -32) with (bv_unsigned sp + (-1) * 32) by lia; rewrite Z.mod_add by lia; exact SP32).
 1: lia.
@@ -291,7 +293,7 @@ AJ5 A4L HIx A4 T md4
 (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -32)) gpx (Z_to_bv 64 6434400) y0 y1 y2 (Z_to_bv 64 r) (Z_to_bv 64 r4) b0 b1 b2 b3 b4 b5 b6 b7
 (Z_to_bv 64 2147450880) s3 s4 s5 s6 s7 s8 s9 s10 s11 y3 y4 y5 y6)
 F4 (Z_to_bv 64 0x930b0) fc4 None m4 (seg_rom asegs))).
-{ clear - K HD_le PUT ACR HT47 SPR LO LOS SPA HT RA Htlo Hthi Hr BB BD.
+{ clear - K HD_le PUT ACR HT47 SPR LO HBT LOS SPA HT RA Htlo Hthi Hr BB BD.
 intros m4 md4 A4 B4 F4 fc4 RBS4 r4 errv4 x1 gpx y0 y1 y2 b0 b1 b2 b3 b4 b5 b6 b7 y3 y4 y5 y6 HP4 RES4 TOKR4 PX4 VM4 FS4 FRM4 LOC4 LCK4 G4 UTF4 ST4 FR4 ERR4 BB4 BD4.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP4) as MI4.
 pose proof (munch_refl [(bv_unsigned sp - 32, bv_unsigned sp)] m4) as MU4. pose proof (wmono_refl asegs m4) as WM4.
@@ -541,6 +543,7 @@ Qed.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D w : Z) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - dc_stkA (rdepth r).
 Hypothesis SPA : bv_unsigned sp mod 32 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -699,7 +702,7 @@ assert (PC : put_costA so 1 VBS <= bB Bc).
 { unfold put_costA. destruct so; [change (1 =? 1) with true; cbv iota|]; unfold DC_KB in *; lia. }
 evt_done5.
 eapply PUT with (LB := BS ++ CBS ++ REM ++ LB) (LM := LM) (FRS := (Fr, 1) :: FRS) (B := Bc) (lo := lo) (errv := errs) (s := so) (BS := VBS) (p := v2) (rc := 1);
-[ exact HPp | exact PP | reflexivity | rewrite unsigned_lit by lia; exact STi | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; lia
+[ exact HPp | exact PP | reflexivity | rewrite unsigned_lit by lia; exact STi | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERRs | reflexivity | reflexivity | exact PC | ].
 intros ms2 md2 A2 (m2 & rr & B2 & RS2 & VM2 & ST2 & HPR2 & ERR2 & BB2 & BD2 & OUT2).
 destruct RS2 as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -840,7 +843,7 @@ evt_done5.
 eapply (array_list_add_A_cps HIx (wz 654232) (wz (bv_unsigned sp + -192)) gp sp (wz (bv_unsigned sp + -192)) (wz sh) x19 (wz 2147450880) x21 x22 x23 x24 (wz (Fr + 64)) x26 (wz (D / 8 + 2147450880))
 F1 fc1 mc mdc LBR LM ((Fr, 1) :: FRS) Bc lo qa qarr cap v psq T);
 [ exact HPa | exact HALq | rewrite Lq1; lia | lia
-| rewrite unsigned_lit by lia; exact STi | exact LO | rewrite unsigned_lit by lia; lia
+| rewrite unsigned_lit by lia; exact STi | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | exact ERRs | reflexivity | reflexivity | reflexivity | exact BBadd | exact (proj2 (heapA_budget A4L HIx _ _ _ _ _ _ _ HP)) | ].
 intros ms' md' A' (m' & rr & errv' & arr' & size' & B' & RS & VM' & ST' & HPR' & ERR' & BD' & HP' & OUT).
@@ -1151,7 +1154,7 @@ eapply (IH sk KIN) with (A := A) (LB := LBk) (BS := bs) (LM := LM) (FRS := (Fr, 
 | exists Fr, 1; split; [left; reflexivity | rewrite fr_size_1; lia]
 | exact UNP | clear - D6; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; exact STg | exact LO
-| rewrite unsigned_lit by lia; unfold dc_stkA, DC_F, DC_C; cbn [rdepth]; lia
+| first [assumption | lia] | rewrite unsigned_lit by lia; unfold dc_stkA, DC_F, DC_C; cbn [rdepth]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | exact ERRs | reflexivity | rewrite unsigned_lit by lia; reflexivity | exact FRM1
@@ -1589,6 +1592,7 @@ Qed.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D w : Z) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - dc_stkA (rdepth r).
 Hypothesis SPA : bv_unsigned sp mod 32 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -1750,7 +1754,7 @@ assert (PC : put_costA so 1 VBS <= bB Bc).
 { unfold put_costA. destruct so; [change (1 =? 1) with true; cbv iota|]; unfold DC_KB in *; lia. }
 evt_done5.
 eapply PUT with (LB := BS ++ CBS ++ REM ++ LB) (LM := LM) (FRS := (Fr, 1) :: FRS) (B := Bc) (lo := lo) (errv := errs) (s := so) (BS := VBS) (p := v2) (rc := 1);
-[ exact HPp | exact PP | reflexivity | rewrite unsigned_lit by lia; exact STi | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; lia
+[ exact HPp | exact PP | reflexivity | rewrite unsigned_lit by lia; exact STi | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERRs | reflexivity | reflexivity | exact PC | ].
 intros ms2 md2 A2 (m2 & rr & B2 & RS2 & VM2 & ST2 & HPR2 & ERR2 & BB2 & BD2 & OUT2).
 destruct RS2 as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -1894,7 +1898,7 @@ evt_done5.
 eapply (array_list_add_A_cps HIx (wz 661872) (wz (bv_unsigned sp + -192)) gp sp (wz (bv_unsigned sp + -192)) (wz Fr) (wz (D / 8 + 2147450880)) (wz D) x21 (wz 2147450880) x23 x24 (wz (Fr + 64)) x26 (wz sh)
 F1 fc1 mc mdc LBR LM ((Fr, 1) :: FRS) Bc lo qa qarr cap v psq T);
 [ exact HPa | exact HALq | rewrite Lq1; lia | lia
-| rewrite unsigned_lit by lia; exact STi | exact LO | rewrite unsigned_lit by lia; lia
+| rewrite unsigned_lit by lia; exact STi | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | exact ERRs | reflexivity | reflexivity | reflexivity | exact BBadd | exact (proj2 (heapA_budget A4L HIx _ _ _ _ _ _ _ HP)) | ].
 intros ms' md' A' (m' & rr & errv' & arr' & size' & B' & RS & VM' & ST' & HPR' & ERR' & BD' & HP' & OUT).
@@ -2206,7 +2210,7 @@ eapply (IH sk KIN) with (A := A) (LB := LBk) (BS := bs) (LM := LM) (FRS := (Fr, 
 | exists Fr, 1; split; [left; reflexivity | rewrite fr_size_1; lia]
 | exact UNP | clear - D6; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; exact STg | exact LO
-| rewrite unsigned_lit by lia; unfold dc_stkA, DC_F, DC_C; cbn [rdepth]; lia
+| first [assumption | lia] | rewrite unsigned_lit by lia; unfold dc_stkA, DC_F, DC_C; cbn [rdepth]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | exact ERRs | reflexivity | rewrite unsigned_lit by lia; reflexivity | exact FRM1

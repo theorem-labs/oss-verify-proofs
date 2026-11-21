@@ -6,7 +6,7 @@
    shadow_rw_on P m is A.AsanRT.shadow_rw's body (AsanRT.v:28-29) under the guard P, guard FIRST.  Narrowing a premise
    `shadow_rw m` to `shadow_rw_on R m` weakens it, so every existing caller still closes it with one
    shadow_rw_on_of_shadow_rw. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.AsanRT A.Img0.

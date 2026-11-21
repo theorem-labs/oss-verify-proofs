@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfRoomPre.v, sha256 fcc5b2a4a4acdec4d1cf96fa601d062759275b61e4cd97d5b92fbb02e14b3bd6 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,9 +6,10 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: acall_pre_cf_intro's stack-bottom premise is A7d's `ly_bot ly + ACALL_PREFIX < spZ regs` (a3e599d9f79e Reusable/YGcfRoomPre.v:38), following acall_pre_cf (YG0dcf.v). *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: acall_pre_cf_intro's stack-bottom premise is A7d's `ly_bot ly + ACALL_PREFIX < spZ regs` (Reusable/YGcfRoomPre.v:39), following acall_pre_cf (YG0dcf.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the INPUT-DRIVEN ROOM.
    acall_pre_cf (YG0dcf.v) carries five conjuncts beyond cgif's call form. Two are free: qmeter_cf follows
    from qtight and Wf_cf (mroom_cf_of_live, YG08cf.v), and the free path's FA_GROW headroom from

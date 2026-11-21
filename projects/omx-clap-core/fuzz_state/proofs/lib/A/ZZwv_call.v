@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 1536 of its 1692 lines of code are new or changed and 1217 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_write_value.v, with its numbers changed; 154 of its 207 lines of code are new or changed and 1639 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* write_value's CONTAINER arms (fs.asan image A, write_value 0x83d84): the CALL-SITE machinery shared by every call
    the arms make (put of '[' / '{' / ',' / the separator, indent, put_string of a key, write_value of an item), over
    the loop invariant of lib/A/ZZwv_inv.v:
@@ -13,7 +14,7 @@
    Template (segmentation of the arm into call sites; not a copied proof): the bespoke ASan proof
    a working branch lib/A/Prog/write_value_cont.v (wvc_fi_munch 480-492, wvc_fi_same 494-505,
    wvc_callpre 564-578); the port-line call composition pjw_put_call (lib/A/FSW_pj_write.v,
-   a working branch b6c5b22a453, 1925-2258).
+   a working branch, 1925-2258).
    Rule 24: no function proved here (write_value's lookup: lane record (internal path), CHECKER CONFIRM
    a Theorem Labs lane). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

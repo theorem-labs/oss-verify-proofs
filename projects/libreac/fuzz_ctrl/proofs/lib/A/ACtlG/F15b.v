@@ -28,7 +28,7 @@
        ProgBridge.RNG_W (w_H W3) with fp_avoids_RNG_W (34 arm, a read-only run).
    G5  the exit cut at the run's end map R (registers named by the run's post); journal: ajournal_exec with the
        empty write set (no byte written, the model materialized); frames / frame law / k unchanged, and the cut's
-       ctl_rt_C B ly3 S3 mem3 (route (C), a working branch shell 1899bed1aee) carried whole by
+       ctl_rt_C B ly3 S3 mem3 (route (C), a working branch shell) carried whole by
        `exact Hrt` (same ly3 S3 mem3 at both exits; the stage reads no shadow byte).
        Body: FRAC through Kit.kit_frac_move; the predicates that read registers move through the v1.9 source's own
        register lemmas (Seg/F13 fsj_regs / ifs2_regs, Seg/F15 lk_regs / flv_regs / f16carry_regs / spill_regs /
@@ -46,7 +46,7 @@
    ctrl's lib/A/Reusable/<X> (YI04 YI16 YK11 YK1b YM05 YO09) are written with their full path
    OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.<X> and loaded by an absolute Require.
 
-   BUILD STATE: TYPE-CHECK on a working branch shell 1899bed1aee (cb build, BASE row 23b918fe0c2e, a build machine,
+   BUILD STATE: TYPE-CHECK on a working branch shell (cb build, BASE row, a build machine,
    workspace (internal path)); the build of record is cbrec.sh's, named in the lane's
    report. *)
 

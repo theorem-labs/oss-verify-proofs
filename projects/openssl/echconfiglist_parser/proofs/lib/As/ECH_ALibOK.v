@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ECHL takes the heap-ceiling record, so K_libx0, TRLEN, DOK, LT and LCOST are stated for every HeapCeil HC over @ECHL HC). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -19,10 +20,10 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Lemma K_libx0 : forall iv, In iv (al_LIBX0 ECHL) -> img_check (fst iv) (snd iv) = true.
+Lemma K_libx0 : forall (HC : HeapCeil) iv, In iv (al_LIBX0 (@ECHL HC)) -> img_check (fst iv) (snd iv) = true.
 Proof.
   assert (E : forallb (fun iv : Z * Z => img_check (fst iv) (snd iv)) LIBX0 = true) by (vm_compute; reflexivity).
-  intros iv Hin. cbn [al_LIBX0 ECHL] in Hin. rewrite forallb_forall in E. exact (E iv Hin).
+  intros HC iv Hin. cbn [al_LIBX0 ECHL] in Hin. rewrite forallb_forall in E. exact (E iv Hin).
 Qed.
 
 (* [comment removed for export] *)
@@ -38,10 +39,10 @@ Lemma in_win4_all : forallb in_win4_b LIBXT = true.
 Proof. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
-Lemma TRLEN : (length (trlist_of (all_demands ECHL LIB_TRACES)) <= TRCAP)%nat.
-Proof. vm_compute. lia. Qed.
-Lemma DOK : demands_okb (all_demands ECHL LIB_TRACES) = true.
-Proof. vm_compute. reflexivity. Qed.
+Lemma TRLEN : forall (HC : HeapCeil), (length (trlist_of (all_demands (@ECHL HC) LIB_TRACES)) <= TRCAP)%nat.
+Proof. intros HC. unfold all_demands. change (al_PF (@ECHL HC)) with (@nil (Z * list Z)). vm_compute. lia. Qed.
+Lemma DOK : forall (HC : HeapCeil), demands_okb (all_demands (@ECHL HC) LIB_TRACES) = true.
+Proof. intros HC. unfold all_demands. change (al_PF (@ECHL HC)) with (@nil (Z * list Z)). vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -93,11 +94,11 @@ End OK.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Lemma LT : forall (HC : HeapCeil) (H : asr), (forall pc0 t, In (pc0, t) LIB_TRACES -> trace_ok (as_TR H) pc0 t) -> al_tr_ok ECHL H.
+Lemma LT : forall (HC : HeapCeil) (H : asr), (forall pc0 t, In (pc0, t) LIB_TRACES -> trace_ok (as_TR H) pc0 t) -> al_tr_ok (@ECHL HC) H.
 Proof.
   intros HC H D. cbn [al_tr_ok ECHL]. unfold atr_ok. apply Forall_forall. intros [pc0 t] Hin. cbn [fst snd]. exact (D pc0 t Hin).
 Qed.
-Lemma LCOST : forall (HC : HeapCeil) (H : asr), as_Cm H = ICm -> as_Cf H = ICf -> al_cost ECHL H (2 ^ 26) <= ALIB_COST_MAX.
+Lemma LCOST : forall (HC : HeapCeil) (H : asr), as_Cm H = ICm -> as_Cf H = ICf -> al_cost (@ECHL HC) H (2 ^ 26) <= ALIB_COST_MAX.
 Proof.
   intros HC H E1 E2. cbn [al_cost ECHL]. unfold acost. rewrite E1, E2. unfold ICm, ICf, ACOST_BYTES, ALIB_COST_MAX.
   cbn [Z.leb]. vm_compute. discriminate.

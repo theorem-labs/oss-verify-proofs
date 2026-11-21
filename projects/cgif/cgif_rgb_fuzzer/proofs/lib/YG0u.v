@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (img_covered_b skips kernel-map segments, the ALedger reserved ledger is the image's reservations followed by the vDSO pair above the high shadow, and the new al_zres keeps the primary reserve and the pointer array off that ledger). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -251,7 +252,7 @@ match l with
 | e :: t => Z.eqb (fst e) lo && Z.leb 0 (snd e) && Z.ltb (lo + snd e) (2 ^ 64) && tiles_b t (lo + snd e) hi
 end.
 Definition img_covered_b (segs : list Segment) (img : Z * Z) : bool :=
-Z.leb 0 (fst img) && tiles_b (map seg_resv_z segs) (fst img) (fst img + snd img).
+Z.leb 0 (fst img) && tiles_b (map seg_resv_z (filter (fun s => negb (seg_kernel_map s)) segs)) (fst img) (fst img + snd img).
 Lemma tiles_b_cover : forall l lo hi a, 0 <= lo -> tiles_b l lo hi = true -> lo <= a < hi ->
 exists e, In e l /\ fst e <= a < fst e + snd e /\ 0 <= fst e /\ fst e + snd e < 2 ^ 64.
 Proof.
@@ -307,7 +308,11 @@ YK0h.sum_count (fun x => negb (YK0h.covered (na ++ lz) x)) (map wiv E).
 Record ALedger (S : astate) (md : Model) : Prop := {
 al_img : forall sg, In sg segs -> fst (ly_img ly) <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly) + snd (ly_img ly);
 al_limit : vm_limit (m_vmmaps md) = ASAN_VM_LIMIT;
-al_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+(* 08b1429: the ledger is the image's reservations followed by the vDSO pair (State.init_reserved), which sits
+   above the high shadow ([resx_entry_ok]: KHI + 4096 <= base) and spans at most 20 pages. *)
+al_reserved : exists rx : list (word * word), vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx
+/\ Forall (fun e => kHighMemBeg + 4096 <= bv_unsigned (fst e) /\ 0 < bv_unsigned (snd e) <= 0x14000) rx
+/\ (length rx <= 2)%nat;
 al_prim : exists pieces, prim_pieces_ok S pieces /\
 (forall p, In p pieces <-> (In (wiv p) (vm_maps (m_vmmaps md)) /\ 0 < snd p /\ ly_prim ly <= fst p /\ fst p + snd p <= ly_prim ly + kPrimResvSize));
 al_Q : In (wiv (ly_Q ly, kPtrArrayResv)) (vm_maps (m_vmmaps md));
@@ -325,7 +330,11 @@ al_top : YN05.ceil_of_top (alloc_top (m_vmmaps md));
 al_imgcov : forall a, in_zr a (ly_img ly) ->
 exists e, In e (segments_reserved segs) /\ bv_unsigned (fst e) <= a < bv_unsigned (fst e) + bv_unsigned (snd e);
 al_shna : region_free (vm_noaccess (m_vmmaps md)) (w64 kLowShadowBeg) (w64 (kLowShadowEnd - kLowShadowBeg)) = true /\
-region_free (vm_noaccess (m_vmmaps md)) (w64 kHighShadowBeg) (w64 (kHighShadowEnd - kHighShadowBeg)) = true
+region_free (vm_noaccess (m_vmmaps md)) (w64 kHighShadowBeg) (w64 (kHighShadowEnd - kHighShadowBeg)) = true;
+(* 08b1429: the primary reserve and the pointer array avoid the reserved ledger (image + vDSO pair): both were
+   mapped at start-up, and the start-up maps avoid it (cs_ok co_mres); the reserved ledger never changes. *)
+al_zres : region_free (vm_reserved (m_vmmaps md)) (w64 (ly_prim ly)) (w64 kPrimResvSize) = true /\
+region_free (vm_reserved (m_vmmaps md)) (w64 (ly_Q ly)) (w64 kPtrArrayResv) = true
 }.
 Lemma ceil_top_init_sp_ok : forall md, YN05.ceil_of_top (alloc_top (m_vmmaps md)) -> YK07.init_sp_ok (m_vmmaps md).
 Proof.

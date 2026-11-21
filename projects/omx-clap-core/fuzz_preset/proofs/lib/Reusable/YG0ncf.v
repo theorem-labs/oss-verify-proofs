@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the `Ltac ... ::=` overrides made #[local], the DELTA of commit 432757103df6 (a Theorem Labs lane's fix) applied 3-way; no other text of that commit taken. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG0ncf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG0ncf.v at commit 5034424e29db (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t + pf_cells_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the `Ltac ... ::=` overrides made #[local], the DELTA (a Theorem Labs lane's fix) applied 3-way; no other text of that commit taken. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG0ncf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG0ncf.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t + pf_cells_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the RELATIONAL LAYER.
    ARmcf / ARcf are FRESH records, never a wrapper around cgif's ARm / AR: a wrapper would inherit am_wf : Wf,
    which is false for both units (preset's class 17 maps 3,584 MiB against cgif's 2 GiB bound).
@@ -93,7 +94,7 @@ Proof. intros S x Hx. exact Hx. Qed.
    own ly_sec slot (the last entry tagged ERRB_CAP_TAG, matching errb_e in YG00cf.v), with
    length errb_cap_cf S. 0 or 1 entries. It is the one mapped extent the ledger covers
    besides lazy_zones and sec_extents (the errbuf map, errb_map_cf, is a KMmapSec with no
-   chunk), i.e. c-asan's placement xs (SecGrantP.v:114 at 820536849e5). Its length is
+   chunk), i.e. c-asan's placement xs (SecGrantP.v:114). Its length is
    at most cf_nob by Wf_cf's wsc_lens, since it is an st_secs entry's sm_len. *)
 Fixpoint last_cap_idx (l : list secmap) (i : nat) (acc : option nat) : option nat :=
 match l with
@@ -368,7 +369,7 @@ Variable ly : alayout.
 
 (* The A side of the budget. A_BASE_CF absorbs cgif's whole event credit (YGcfNames.v);
    prim_committed, 8 * st_sec_reserved and sec_live_bytes are cgif's own live quantities
-   (YG01.v:216-220); prim_committed / 8 is the primary's SHADOW (each grant, kUserMapSize or
+   (YG01.v:217-221); prim_committed / 8 is the primary's SHADOW (each grant, kUserMapSize or
    kFreeArrayMapSize = 262144, exposes its map and 262144 / 8 bytes of shadow at wallow, so a
    primary grant raises the budget by exactly what it adds to w_A; abudget_grant_fa_cf /
    abudget_grant_user_cf, YGcfAbudget.v); errb_cap_cf is our error-message buffer (YG00cf.v).
@@ -391,7 +392,7 @@ A_BASE_CF + prim_committed S + prim_committed S / 8 + 8 * st_sec_reserved S + se
    sm_size tags do not enter it. A REQUESTED-byte T would be unsound against 8192 * N (sm_len <= n + 12294; a Theorem Labs lane).
    nsec_cf and sec_T_cf are YGcfNames.v's (moved there for CfParams's hull laws, unchanged). *)
 
-(* Preset's hull term: cgif's sec_hulls (YG01.v:287) restricted to the user entries. *)
+(* Preset's hull term: cgif's sec_hulls (YG01.v:288) restricted to the user entries. *)
 Definition sec_hulls_cf (S : astate) : Z :=
 fold_right (fun sm acc => (if sec_user_cf sm then sm_len sm / 8 + 8192 else 0) + acc) 0 (st_secs S).
 
@@ -472,7 +473,7 @@ Qed.
 
 
 (* ---- The free path's free-array growth is FUNDED. ----
-   prim_committed (YG01.v:327-328) sums rg_mapped_fa, so every free-array map the free
+   prim_committed (YG01.v:328-329) sums rg_mapped_fa, so every free-array map the free
    path makes (return_to_allocator, YG00.v:462-467) RAISES abudget_cf, by the map and its
    shadow (prim_committed / 8): what the map needs is mroom_cf AFTER it. Each class's free
    array is capped at kFreeArrayMax, so over the at most 32 regions the growth adds at most
@@ -548,7 +549,10 @@ Record ALedger_cf (S : astate) (md : Model) : Prop := {
 alc_img : forall sg, In sg segs -> fst (ly_img ly) <= Z.of_N (seg_base sg) /\
 Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly) + snd (ly_img ly);
 alc_limit : ASAN_VM_LMIN <= vm_limit (m_vmmaps md);
-alc_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+(* 727298f3: the reservations are the image's followed by the tail [YG0n.res_tail_ok] bounds (the vDSO/vvar pair),
+   as cgif's al_reserved states them, so ALedger_cf_of_ALedger copies the field. *)
+alc_reserved : exists rx : list (word * word),
+vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx /\ res_tail_ok ly rx;
 alc_prim : exists pieces, prim_pieces_ok ly S pieces /\
 (forall p, In p pieces <-> (In (wiv p) (vm_maps (m_vmmaps md)) /\ 0 < snd p /\ ly_prim ly <= fst p /\
 fst p + snd p <= ly_prim ly + kPrimResvSize));

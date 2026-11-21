@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1682 of its 1758 lines of code are new or changed and 438 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): every journal of this kit is the
    engine's R form at R := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf (ajournal_xwR / ajournal_xR, the notations AJW / AJ)
    and every step statement is YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf (the glue's crt_live_journal and QF are there).
@@ -9,7 +10,7 @@
    at R under YSRrG.SRr'_bind / SRr'_mono and take the callee's text at R (apost_base_xFR / apost_base_xbFR at wle',
    i.e. PRH_Base's fpostF / fpostFb); crt102rw_lift_xF / crt102rw_lift_x lift a plain (wle) callee text to that form.
    Names and binder lists unchanged. Contract note: the internal file WLE-CONTRACT.md. *)
-(* base: commit 2fdcfd7be069 (post-landing line). kb round (brief
+(* base: (post-landing line). kb round (brief
    the internal file wild-budget-kb-reshape.md): crt_live carries its budget kb and its journal
    at a budget WS with wbudget [] kb WS; the kit's live-state lemmas take and give that journal (the caller's at any
    WS, the callee's at its own WS1), its call rules run over YCbqGwild.aj_call_xbF (crt102rw_call / _call_ch at the
@@ -21,7 +22,7 @@
    this file proves no function (kind: segment lemma support).
    INPUTS OF RECORD: the lane's glue lib/A/Prog/Crt102Glue.v (crt_live, crt_side, crt_saved, crt_frame, crt_spill,
    crt_bregs, crt_cfg, crt_at_J, crt_at_X), Crt102Img.v (the cut offsets), Crt102Model.v; the contract texts at the
-   kit tip caa965672d21 by path on base 33ff96ae153c; engine 67637094dec6; listing d42e123915ae; build route
+   kit tip by path on base; engine; listing; build route
    pins102.
    CONTENTS. Part 1 (image-free, Section over segs): pj_fdR facts - crt102rw_nodeR_fdR (a represented tree is freeable
    at its depth), crt102rw_fdR_mono, crt102rw_fdR_frame (a freeable tree whose footprint keeps its bytes),
@@ -79,7 +80,7 @@ Open Scope Z_scope.
 (* ======================================================================================================== *)
 (* PART 1, image-free: the freeable-tree facts the join needs (pj_free (&copy) at STK_pj_free DOC_D).
    crt102rw_nodeR_fdR: a represented tree is freeable at its depth (transcribed from an earlier walk's H5CrtS7.v
-   cx_nodeR_fd at commit 1934271f1f40, :264 (that file is not in this tree), itself plain PjStruct.v pj_node_fd over PRH_Reader's predicates);
+   cx_nodeR_fd, :264 (that file is not in this tree), itself plain PjStruct.v pj_node_fd over PRH_Reader's predicates);
    crt102rw_fdR_mono: freeable at d is freeable at every d' >= d; crt102rw_fdR_frame: a freeable tree whose footprint
    keeps its bytes (and writability) is the same freeable tree. *)
 Section rd.
@@ -578,7 +579,7 @@ Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 (* ---- AN IMAGE STRING HANDED TO A CALLEE AS A C STRING (pj_string's STAMP at +0x24c, pj_set's MOD_AT at +0x278, and
    the loop slice's strcmp literals): the state-free kept_img (PRH_Base.v, kept_at's third case) and the image's own
    bytes give cstr_ok at ANY ARx state with the read-only view. The derivation is S10TxState.v's s10_src_img
-   (commit 88b4aea723f, lib/A/Prog/S10TxState.v:562-594), extended by the NUL, the 8-byte slack
+   (lib/A/Prog/S10TxState.v:562-594), extended by the NUL, the 8-byte slack
    and the tail granule cstr_ok asks; it takes S10's two stand-ins byte for byte (the statement over this file's
    SEGS), so there is one derivation and one place both appear. ---- *)
 (* MARKED STAND-IN (the unit's image binding of B; owner: the contract texts; ARcf gives it by amc_syms / aso_zshadow,

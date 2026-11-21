@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor STKLO is sp - 6144512, the window the revision's launch maps below sp, and STKHI is the draw's page top; entry_regs is restated in plain text over the launch input main_entry_A names; the bridge destructures the new main_entry_A (one launch input and mmap base, the launch premises, the new stack cells) and passes them to the entry lemmas; the main-entry records take the channel reader, me_model's last conjunct, which the revision's writev reads). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -67,7 +68,8 @@ Section Pack.
   (* [comment removed for export] *)
   Let hAR : arun := arun_of sp Hsp.
   #[local] Existing Instance hAR.
-  Let STKLO : Z := bv_unsigned sp - 2 ^ 23.
+  (* LPS 727298f3: the stack floor is sp - 6144512, the bottom of the window the launch maps below sp *)
+  Let STKLO : Z := bv_unsigned sp - 6144512.
   Let R : art_layout := R0 STKLO.
   (* [comment removed for export] *)
   Let B12 : b12_T := AW_B12WalkP.b12_walk.      (* [comment removed for export] *)
@@ -98,7 +100,8 @@ Section Pack.
   (* [comment removed for export] *)
 
   Let sp0 : Z := bv_unsigned sp.
-  Let STKHI : Z := ESTKHI sp rdraw argv envp uid hw.
+  (* LPS 727298f3: the stack VMA's end is the draw's page top ([A_entry_mem.ESTKHI]) *)
+  Let STKHI : Z := ESTKHI rdraw.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -125,17 +128,25 @@ Section Pack.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "0050?L1412672389.70 L15524745311.70L16088256383.67L50735752720.71L7081782237.70 00000b01X02G03:03jS2sp5rdraw4argv4envp3uid2hw5STKLO3sp05STKHI2LO3HIwS2sp5rdraw4argv4envp3uid2hw5STKLO3sp05STKHI3AVL3SPR2HkS2sp5rdraw4argv4envp3uid2hw5STKLO3sp05STKHI3AVLS2sp5rdraw4argv4envp3uid2hw5STKLO3sp05STKHI2Rg1k2HkS2sp5rdraw4argv4envp3uid2hw5STKLO3sp05STKHI1p2Hk". (* [comment removed for export] *)
-  #[using="Hsp Hva Hve Hfit STKLO sp0 STKHI"] Lemma entry_regs : ltac2:(CDefT.buildp (gd_tbl_A_entry_pack ()) "Pp,$;.PRg,(<.&5.(0.&40.))P,(=.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vuid,Vhw,R2.)P,(>.$?.$10.(11.R3.))P,(12.R4.R3.)Pr,(0.&5.)(5.(0.&40.)(6.R5.R1.)(6.(13.Vsp,(6.R5.(3.&5.+5.))(6.R5.(3.&5.+6.))(6.R5.(3.&5.+7.))(6.R5.(3.&5.+=.))(6.R5.(3.&5.+>.))(6.R5.(3.&5.+?.))(6.R5.(3.&5.+10.))(6.R5.(3.&5.+11.))(6.R5.(3.&5.+1<.))(6.R5.(3.&5.+1=.))(6.R5.(3.&5.+1>.))(6.R5.(3.&5.+1?.))(4.(14.(15.(0.&8.))Vargv,)))R1.))")
-(* [comment removed for export] *).
+  (* LPS 727298f3: restated in plain text from its encoding: [me_init] is over the launch input
+     [main_entry_A] names, so the lemma takes that input and its argv tie. *)
+  #[using="uid hw Hsp Hva Hve Hfit STKLO sp0 STKHI"] Lemma entry_regs : forall (inp : ProcInput) (p : me_params) (Rg : bvmap 5 word),
+    in_argv inp = argv ->
+    me_init sp brk0 rdraw inp p -> Forall cnst_ok (me_cnsts p) -> me_regs p Rg ->
+    forall r : bv 5,
+      getr Rg r = getr (MREGS sp (getr Rg (Z_to_bv 5 5)) (getr Rg (Z_to_bv 5 6)) (getr Rg (Z_to_bv 5 7))
+                         (getr Rg (Z_to_bv 5 13)) (getr Rg (Z_to_bv 5 14)) (getr Rg (Z_to_bv 5 15)) (getr Rg (Z_to_bv 5 16))
+                         (getr Rg (Z_to_bv 5 17)) (getr Rg (Z_to_bv 5 28)) (getr Rg (Z_to_bv 5 29)) (getr Rg (Z_to_bv 5 30))
+                         (getr Rg (Z_to_bv 5 31)) (Z.of_nat (length argv))) r.
   Proof.
-    intros p Rg HI HCN HR.
-    dpose (me_regs_sp sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit p Rg HI HR) as (H1 & H2 & H3 & H4 & H10 & H11 & H8 & H9 & H18 & H20 & H21 & H22 & H23 & H24 & H25 & H26 & H27).
+    intros inp p Rg Eav HI HCN HR.
+    dpose (me_regs_sp sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit inp p Rg HI HR) as (H1 & H2 & H3 & H4 & H10 & H11 & H8 & H9 & H18 & H20 & H21 & H22 & H23 & H24 & H25 & H26 & H27).
     pose proof HR as X. unfold me_regs in X. ddestruct X as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & H12 & _ & _ & _ & _ & _ & _ & H19 & _).
     zreg H1. zreg H2. zreg H3. zreg H4. zreg H8. zreg H9. zreg H10. zreg H11. zreg H12. zreg H18. zreg H19.
     zreg H20. zreg H21. zreg H22. zreg H23. zreg H24. zreg H25. zreg H26. zreg H27.
-    pose proof (r_s1 p HCN) as R1. pose proof (r_s2 p HCN) as R2. pose proof (HSP sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit p HI HCN) as E.
+    pose proof (r_s1 p HCN) as R1. pose proof (r_s2 p HCN) as R2. pose proof (HSP sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit inp p HI HCN) as E.
     pose proof (valid_argv_len argv Hva) as AVL.
-    assert (ARGC : argc p = Z_to_bv 64 (Z.of_nat (length argv))) by (ddestruct HI as (_ & X & _); exact X).
+    assert (ARGC : argc p = Z_to_bv 64 (Z.of_nat (length argv))) by (ddestruct HI as (_ & X & _); rewrite <- Eav; exact X).
     assert (Hargc : uv p v_argc = Z.of_nat (length argv)). { unfold uv. cbn [pget]. rewrite ARGC. apply u_lit64. lia. }
     assert (SPR : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (dpose Hsp as (LO & HIw & _); unfold sp_window_lo in LO; unfold sp_window_hi in HIw; lia).
     unfold MREGS. cbv zeta. apply reg_cases. intros k Hk. rewrite getr_mkR by exact Hk.
@@ -161,8 +172,11 @@ Section Pack.
     intros Rg mem md ME Hfs.
     ddestruct (@main_entry_h0X hAR sp brk0 rdraw argv envp fs uid hw Hsp Hva Hve Hfit (HACsp_of sp Hsp) Rg mem md ME)
       as (bp & Hbsp & Hbhi & PIN & HOK & HMi & HKi & VOL & FR & FRESH & TOPe & SHIe).
-    ddestruct ME as (p & HI & HCN & HREG & HMOD & HMEM). ddestruct HMEM as (HCOM & HRC & Hzero & Hargs & Hwin & [HNN HDEF]).  (* [comment removed for export] *)
-    dpose (stkhi_facts sp rdraw argv envp uid hw Hfit) as (T1 & T2 & T3 & T4). fold STKHI in T1, T2, T3, T4.
+    (* LPS 727298f3: one launch input and mmap base, with their ties, the launch premises and the new stack cells *)
+    ddestruct ME as (inp & mb & p & Eav & Eev & Euid & Ehw & Hvl & Hlau & HI & HCN & HREG & HMOD & HMEM).
+    ddestruct HMEM as (HCOM & HRC & HSTK & Hzero & Hargs & Hwin & HNN & HDEF).  (* [comment removed for export] *)
+    dpose (stkhi_facts sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF) as (T1 & T2 & T3 & T4).
+    fold STKHI in T1, T2, T3, T4.
     pose proof (valid_argv_len argv Hva) as AVL. pose proof (valid_argv_nonempty argv Hva) as AVN.
     assert (SPR : 0x7fff80000000 <= sp0 <= 2 ^ 47) by (dpose Hsp as (LO & HIw & _); unfold sp_window_lo in LO; unfold sp_window_hi in HIw; unfold sp0; lia).
     set (h := HS STKLO (h0_of bp) HOK : hst STKLO).
@@ -189,19 +203,22 @@ Section Pack.
              (getr Rg (Z_to_bv 5 14)), (getr Rg (Z_to_bv 5 15)), (getr Rg (Z_to_bv 5 16)), (getr Rg (Z_to_bv 5 17)),
              (getr Rg (Z_to_bv 5 28)), (getr Rg (Z_to_bv 5 29)), (getr Rg (Z_to_bv 5 30)), (getr Rg (Z_to_bv 5 31)), mem, md, h.
       split; [reflexivity|].
-      split; [exact (entry_regs p Rg HI HCN HREG)|].
+      split; [exact (entry_regs inp p Rg Eav HI HCN HREG)|].
       cbn [dp_R dp_HIA dp_HID dp_SI dp_can dp_tid dp_wp0 dp_rp0 dp_wp1 dp_rp1 dp_TOP dp_STKHI dp_V0 dp_FR0].
       (* [comment removed for export] *)
-      pose proof (entry_tailA sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit mem p HI HCN HCOM HDEF) as TAIL.
-      pose proof (entry_sshad sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit mem p HI HCN HCOM) as SSH. fold STKHI in SSH.
-      pose proof (entry_stk sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit mem p HI HCN HCOM) as STK.
-      assert (STKe : stk asegs mem (sp0 - 2 ^ 23) (sp0 - 48)) by exact (proj1 (stk_split asegs mem (sp0 - 2 ^ 23) (sp0 - 48) sp0 STK ltac:(unfold sp0 in *; lia))).
+      pose proof (entry_tailA sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF) as TAIL.
+      pose proof (entry_sshad sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF) as SSH. fold STKHI in SSH.
+      pose proof (entry_stk sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF) as STK.
+      assert (STKe : stk asegs mem (sp0 - 6144512) (sp0 - 48)) by exact (proj1 (stk_split asegs mem (sp0 - 6144512) (sp0 - 48) sp0 STK ltac:(unfold sp0 in *; lia))).
       assert (FDS : m_fds md = FDS2) by (ddestruct HMOD as (_ & X & _); exact X).
+      (* the revision's writev reads the channel reader: [me_model]'s last conjunct *)
+      assert (RDR : m_channel_reader md = true).
+      { clear - HMOD. unfold me_model in HMOD. repeat match type of HMOD with _ /\ _ => apply proj2 in HMOD end. exact HMOD. }
       assert (Henvc : 0 <= Z.of_nat (length envp) <= 256) by (destruct Hve as (LE & _); lia).
       destruct argv as [|a0s [|path rest]]; [cbn in AVN; lia | | destruct rest as [|x l]].
       + (* [comment removed for export] *)
-        exists (APTR sp [a0s] envp 0).
-        ddestruct (entry_argv_str sp brk0 rdraw [a0s] envp uid hw Hsp Hfit mem Hargs 0%nat ltac:(cbn; lia)) as (BA & LOp & HIp).
+        exists (APTR rdraw [a0s] envp inp 0).
+        ddestruct (entry_argv_str sp brk0 rdraw [a0s] envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF 0%nat ltac:(cbn; lia)) as (BA & LOp & HIp).
         fold STKHI in HIp. cbn [nth length Z.of_nat] in BA, LOp, HIp.
         constructor.
         * exact HMi.
@@ -211,7 +228,7 @@ Section Pack.
         * exact TAIL.
         * exact SSH.
         * exact STKe.
-        * exact (entry_argv_ptr0 sp brk0 rdraw [a0s] envp uid hw Hsp Hva Hve Hfit mem p HI HCN HCOM Hwin).
+        * exact (entry_argv_ptr0 sp brk0 rdraw [a0s] envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF).
         * exact BA.
         * exact (valid_argv_str_nz [a0s] 0%nat Hva ltac:(cbn; lia)).
         * cbn [length Z.of_nat Pos.of_succ_nat] in LOp |- *. lia.
@@ -219,10 +236,11 @@ Section Pack.
         * cbn [length Z.of_nat Pos.of_succ_nat]. lia.
         * exact FDS.
         * exact Hfs.
+        * exact RDR.
         * exact (valid_argv_str_len [a0s] 0%nat Hva ltac:(cbn; lia)).
       + (* [comment removed for export] *)
-        exists (APTR sp [a0s; path] envp 1).
-        ddestruct (entry_argv_str sp brk0 rdraw [a0s; path] envp uid hw Hsp Hfit mem Hargs 1%nat ltac:(cbn; lia)) as (BA & LOp & HIp).
+        exists (APTR rdraw [a0s; path] envp inp 1).
+        ddestruct (entry_argv_str sp brk0 rdraw [a0s; path] envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF 1%nat ltac:(cbn; lia)) as (BA & LOp & HIp).
         fold STKHI in HIp. cbn [nth length Z.of_nat Pos.of_succ_nat Pos.succ] in BA, LOp, HIp.
         constructor.
         * exact HMi.
@@ -237,7 +255,7 @@ Section Pack.
         * exact SSH.
         * (* [comment removed for export] *) apply (si_init SI). intros a Ha Hfp. apply (entry_sifp sp mem p HCOM). apply SIFP. exact Hfp.
         * exact STKe.
-        * exact (entry_argv_ptr1 sp brk0 rdraw [a0s; path] envp uid hw Hsp Hva Hve Hfit mem p HI HCN HCOM Hwin ltac:(cbn; lia)).
+        * exact (entry_argv_ptr1 sp brk0 rdraw [a0s; path] envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF ltac:(cbn; lia)).
         * exact BA.
         * exact (valid_argv_str_nz [a0s; path] 1%nat Hva ltac:(cbn; lia)).
         * (* [comment removed for export] *) dpose Hva as (_ & _ & _ & _ & PL). cbn [tl] in PL. exact (Forall_inv PL).
@@ -245,10 +263,11 @@ Section Pack.
         * lia.
         * exact FDS.
         * exact Hfs.
+        * exact RDR.
         * exact (valid_argv_str_len [a0s; path] 1%nat Hva ltac:(cbn; lia)).
       + (* [comment removed for export] *)
-        exists (APTR sp (a0s :: path :: x :: l) envp 0).
-        ddestruct (entry_argv_str sp brk0 rdraw (a0s :: path :: x :: l) envp uid hw Hsp Hfit mem Hargs 0%nat ltac:(cbn; lia)) as (BA & LOp & HIp).
+        exists (APTR rdraw (a0s :: path :: x :: l) envp inp 0).
+        ddestruct (entry_argv_str sp brk0 rdraw (a0s :: path :: x :: l) envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF 0%nat ltac:(cbn; lia)) as (BA & LOp & HIp).
         fold STKHI in HIp. cbn [nth] in BA, LOp, HIp.
         constructor.
         * exact HMi.
@@ -258,7 +277,7 @@ Section Pack.
         * exact TAIL.
         * exact SSH.
         * exact STKe.
-        * exact (entry_argv_ptr0 sp brk0 rdraw (a0s :: path :: x :: l) envp uid hw Hsp Hva Hve Hfit mem p HI HCN HCOM Hwin).
+        * exact (entry_argv_ptr0 sp brk0 rdraw (a0s :: path :: x :: l) envp uid hw Hsp Hva Hve Hfit inp mb Eav Eev Hvl Hlau mem p HI HCN HCOM HSTK Hargs Hwin HDEF).
         * exact BA.
         * exact (valid_argv_str_nz (a0s :: path :: x :: l) 0%nat Hva ltac:(cbn; lia)).
         * cbn [length] in LOp, AVL |- *. lia.
@@ -266,6 +285,7 @@ Section Pack.
         * cbn [length] in AVL |- *. lia.
         * exact FDS.
         * exact Hfs.
+        * exact RDR.
         * exact (valid_argv_str_len (a0s :: path :: x :: l) 0%nat Hva ltac:(cbn; lia)).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)

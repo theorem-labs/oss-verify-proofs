@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap invariant's stack presence stated from hceil + 2244096 = sp0 - 6144512, the floor of the stack the launch maps, to a_top; the wild-free walk's presence from the caller's stack floor). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,6 +27,18 @@ Record iparams : Type := IP {
 (* [comment removed for export] *)
 Record ist {HCEIL : HeapCeil} : Type := IST { i_s : ast ; i_d : depot }.
 Arguments IST {HCEIL} _ _.
+
+(* LPS 727298f3: [ISPRES] below gives stack presence from [hceil + 2244096], the floor of the window
+   the launch maps; the recorded proofs that consume it were recorded against the wider [hceil, a_top),
+   so they take their bound through this weakening. *)
+Lemma spres_relax : forall lo a hi : Z, lo + 2244096 <= a < hi -> lo <= a < hi.
+Proof. intros lo a hi [H1 H2]. split; lia. Qed.
+
+(* The wild free's frame walk reads from [sp - 16] up: inside [ISPRES] when the caller's stack floor
+   [lo] is at or above [hceil + 2244096] (the premise free_wild_stmt_at takes last). *)
+Lemma spres_of_floor : forall h lo sp a top : Z,
+  h + 2244096 <= lo -> lo <= sp - AFREE_STACK -> sp - 16 <= a < top -> h + 2244096 <= a < top.
+Proof. intros h lo sp a top F L [A1 A2]. unfold AFREE_STACK in L. split; lia. Qed.
 
 Section Defs.
   Context {HCEIL : HeapCeil}.
@@ -68,8 +81,13 @@ Section Defs.
   Definition IAL (x : ist) : Z := Z.min (a_AL (i_s x)) (ACWILD * (AWMAX - nwild (i_d x))).
 
   (* [comment removed for export] *)
+  (* LPS 727298f3: the launch maps only [stack_window_lo, sp0) below sp0 (Run.stack_window_lo, at most
+     sp0 - 6144513), so the stack is present from hceil + 2244096 = sp0 - 6144512 up, not from the heap
+     ceiling hceil = sp0 - 8388608, which is unchanged.  Above sp0 up to a_top (the launch's block:
+     argc .. the auxv, its alignment gap, AT_RANDOM, the pad, the strings) the start-up invariant's
+     presence field carries the launch image to main (AsanPlanSound.co_pres). *)
   Definition ISPRES (s : ast) (m : mem) : Prop :=
-    forall a, hceil <= a < a_top s -> wview asegs m (wa a) <> None.
+    forall a, hceil + 2244096 <= a < a_top s -> wview asegs m (wa a) <> None.
 
   (* [comment removed for export] *)
   Definition ATHR (m : mem) : Prop :=

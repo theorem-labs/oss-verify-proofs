@@ -1,6 +1,6 @@
 # G7: the address checker of record 3d2eee813cce over the image B files (gate record)
 
-Proves no function (kind: measurement). Re-run 2026-10-30 on the series base b1afc3e80791 (`run.sh g7`). The
+Proves no function (kind: measurement). Re-run 2026-10-30 on the series base (`run.sh g7`). The
 port_addr_check of record is now 3d2eee813cce; the G1 record (efa19b81e92b) stands beside this one, unchanged.
 
 ## Tool
@@ -12,8 +12,8 @@ run). Images keyed by build letter A / B / P / U. `--fail-on-flags`: exit 4 when
 ## Command
 G1's command with the tool replaced, every other argument the same:
 ```
-python3 "$PAC3" --git "$GIT" --donors-from "$DONORS" --summary --fail-on-flags \
-  --src c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib --dst b1afc3e80791:proofs/libreac/fuzz_disco/lib \
+python3 "$PAC3" --git "$GIT" --donors-from "$DONORS" --summary --fail-on-flags \:
+  proofs/cgif/cgif_file_fuzzer/lib:proofs/libreac/fuzz_disco/lib \
   --paired-only --map A/=A/ --map =Reusable/ \
   --src-image A="$CGIF_BIN/cgif_file_fuzzer.asan" --src-image B="$CGIF_BIN/cgif_file_fuzzer.asan-ubsan" \
   --src-image P="$CGIF_BIN/cgif_file_fuzzer.plain" --src-image U="$CGIF_BIN/cgif_file_fuzzer.ubsan" \

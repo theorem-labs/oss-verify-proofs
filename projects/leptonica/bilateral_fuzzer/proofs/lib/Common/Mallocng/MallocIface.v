@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the kernel's transparent-huge-page setting). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -218,20 +219,22 @@ Proof.
 Qed.
 
 Lemma VMok_A0 : forall h,
-  vm_maps h = [] -> vm_noaccess h = [] -> vm_reserved h = segments_reserved ml_segs ->
+  vm_maps h = [] -> vm_noaccess h = [] -> vm_reserved h = segments_reserved ml_segs ++ heap_resx ->
+  (length heap_resx <= 2)%nat -> live_bytes heap_resx <= 0x14000 ->
   vm_start_brk h = vm_brk h -> valid_brk ml_segs (vm_brk h) -> alloc_top h = alloc_ceiling ->
   VMok A0 h.
 Proof. exact VMok_init. Qed.
 
 (* [comment removed for export] *)
 Lemma minv_init : forall m h,
-  vm_maps h = [] -> vm_noaccess h = [] -> vm_reserved h = segments_reserved ml_segs ->
+  vm_maps h = [] -> vm_noaccess h = [] -> vm_reserved h = segments_reserved ml_segs ++ heap_resx ->
+  (length heap_resx <= 2)%nat -> live_bytes heap_resx <= 0x14000 ->
   vm_start_brk h = vm_brk h -> valid_brk ml_segs (vm_brk h) -> alloc_top h = alloc_ceiling ->
   (forall a, LOCKA <= bv_unsigned a < CTX_END -> m a = None) ->
   (forall a, grantable a -> m a = None) ->
   minv A0 m h.
 Proof.
-  intros m h Hm Hn Hr Hsb Hbrk Htop Hctx Hheap. constructor.
+  intros m h Hm Hn Hr Hrl Hrb Hsb Hbrk Htop Hctx Hheap. constructor.
   - apply WF_A0.
   - apply Rep_A0. exact Hctx.
   - apply VMok_A0; assumption.
@@ -271,9 +274,9 @@ Fixpoint treach {T : Type} (t : itree T) (Q : T -> mstate -> Prop) : Prop :=
   | TCrash => False
   | TBrk req vm kf ko =>
       (brk_grow_ok_vm vm req req = false /\ treach kf Q) \/ (brk_grow_ok_vm vm req req = true /\ treach ko Q)
-  | TMmap k len vm kf ko =>
-      (mmap_refusable_k k vm (page_round_up_Z (bv_unsigned len)) = true /\ treach kf Q)
-      \/ exists a, mmap_grant_ok k vm a (page_round_up_Z (bv_unsigned len)) = true /\ treach (ko a) Q
+  | TMmap k thp len vm kf ko =>
+      (mmap_refusable_k k thp vm (page_round_up_Z (bv_unsigned len)) = true /\ treach kf Q)
+      \/ exists a, mmap_grant_ok k thp vm a (page_round_up_Z (bv_unsigned len)) = true /\ treach (ko a) Q
   | TMmapFixed addr len k1 k2 k3 => treach k2 Q
   | TMprot addr len vm kf ko =>
       (mprot_ok_vm vm addr (page_round_up len) = false /\ treach kf Q)
@@ -410,7 +413,7 @@ Qed.
 
 (* [comment removed for export] *)
 Definition call_state (mm : word -> option byte) (md : Model) (sp : word) : mstate :=
-  MS mm (m_vmmaps md) (bv_unsigned sp - ALLOC_STACK) (bv_unsigned sp).
+  MS mm (m_vmmaps md) (bv_unsigned sp - ALLOC_STACK) (bv_unsigned sp) (kb_thp (m_kernel md)).
 
 (* [comment removed for export] *)
 Definition zslot (mt : meta_rec) : Prop := 48 <= mt_sc mt \/ mt_stride mt < 16 * size_class (mt_sc mt).

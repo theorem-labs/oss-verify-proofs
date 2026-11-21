@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YQ04.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed MV_OK_wf). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -132,84 +133,97 @@ Lemma filter_length_le {A} : forall (f : A -> bool) l, (length (List.filter f l)
 Proof. intros f l. induction l as [|y l IH]; cbn; [lia|]. destruct (f y); cbn; lia. Qed.
 Theorem MV_OK_wf : MV_OK m.
 Proof.
-unfold MV_OK. intros old old_size new_size dst. cbv zeta. intros SU LT NEQ ALD POS TOP FREE.
-set (h := m_vmmaps m) in *.
-set (onz := page_round_up_Z (bv_unsigned old_size)) in *. set (nnz := page_round_up_Z (bv_unsigned new_size)) in *.
-set (old_n := Z_to_bv 64 onz) in *. set (new_n := Z_to_bv 64 nnz) in *.
-pose proof (alloc_top_lt h) as ATOP. unfold two_pow_64 in ATOP. pose proof (word_range dst) as Rd.
-assert (Honz : 0 <= onz) by (subst onz; unfold page_round_up_Z, page_size; pose proof (word_range old_size); apply Z.mul_nonneg_nonneg; [apply Z.div_pos; lia|lia]).
-assert (Rn : bv_unsigned new_n = nnz) by (subst new_n; apply u64; lia).
-unfold vm_backing_used, mremap_move_charge, mremap_model_next, vm_resize_backing, mremap_maps_next, vm_backed_maps.
-cbv zeta. fold h.
-change (m_vmmaps (with_vm_backing ?lz ?mt ?mm)) with (m_vmmaps mm).
-change (m_vm_lazy (with_vm_backing ?lz ?mt ?mm)) with lz.
-change (m_vm_materialized (with_vm_backing ?lz ?mt ?mm)) with mt.
-change (m_vmmaps (with_vmmaps ?hh m)) with hh. cbn [vm_maps vm_noaccess].
-change (m_vm_lazy (with_vmmaps ?hh m)) with (m_vm_lazy m). change (m_vm_materialized (with_vmmaps ?hh m)) with (m_vm_materialized m).
-set (M := map_remove (vm_maps h) old). set (NA := vm_noaccess h). set (LZ := m_vm_lazy m). set (MT := m_vm_materialized m).
-set (sl := mremap_source_lazy_b m old old_n).
-set (olo := bv_unsigned old). set (dlo := bv_unsigned dst).
-set (KL := maps_subtract LZ olo (olo + bv_unsigned old_n)).
-set (KL' := maps_subtract KL dlo (dlo + bv_unsigned new_n)).
-rewrite length_app.
-match goal with |- context [List.map (move_page_base old dst) ?l] => set (FL := l) in * end.
-pose proof (filter_length_le (page_outside_range dlo (dlo + bv_unsigned new_n)) (List.filter (page_outside_range olo (olo + bv_unsigned old_n)) MT)) as LEN1.
-assert (LEN2 : length (if sl then List.map (move_page_base old dst) FL else []) = length (if sl then FL else [])) by (destruct sl; [apply length_map | reflexivity]).
-rewrite LEN2.
-assert (NWM : nwr M) by (subst M; unfold map_remove; apply nwr_filter; exact HWF).
-assert (NWD : nwr ((dst, new_n) :: M)) by (constructor; [unfold phi, plo, psz; cbn [fst snd]; fold dlo; rewrite Rn; lia | exact NWM]).
-rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all ((dst, new_n) :: M) NA) _)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWD).
-rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all M NA) KL)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWM).
-assert (IND : zsum (fun x => if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0) 0 N64 = nnz) by (rewrite zsum_indicator; rewrite ?N64_Z; lia).
-assert (FREE_M : forall x, dlo <= x < dlo + nnz -> owners M x = 0%nat).
-{ intros x Hx. pose proof (owners_filter_le (fun p => negb (bv_eqb (fst p) old)) (vm_maps h) x) as LE.
-change (List.filter (fun p => negb (bv_eqb (fst p) old)) (vm_maps h)) with M in LE.
-rewrite (region_free_no_owner (vm_maps h) dst new_n x (region_free_app_r _ _ _ _ FREE)) in LE; [lia|].
-apply owns_intro; fold dlo; [lia | rewrite Rn; lia]. }
-enough (PW : forall x,
-Z.of_nat (owners (maps_subtract_all (maps_subtract_all ((dst, new_n) :: M) NA) (if sl then lazy_interior dst new_n ++ KL' else KL')) x)
-<= (if sl then 0 else if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0) + Z.of_nat (owners (maps_subtract_all (maps_subtract_all M NA) KL) x)).
-{ pose proof (zsum_le_all _ _ 0 N64 PW) as ZL. rewrite zsum_add in ZL.
-clearbody sl. destruct sl.
-- rewrite (zsum_zero (fun x => if true then 0 else if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0)) in ZL; [|intros; reflexivity].
-unfold page_size. lia.
-- rewrite IND in ZL. unfold page_size. lia. }
-intros x. clear IND LEN1 LEN2 FL.
-rewrite !owners_maps_subtract_all; try (exact NWD || exact NWM || (apply nwr_maps_subtract_all; (exact NWD || exact NWM))).
-rewrite owners_cons, owns_b_spec. cbn [fst snd]. fold dlo. rewrite Rn.
-assert (CE : forall C, cov C x = negb (Nat.eqb (owners C x) 0)).
-{ intros C; induction C as [|c C IH]; [reflexivity|]. rewrite cov_cons, owners_cons, IH. destruct (owns_b c x), (owners C x); reflexivity. }
-assert (CKL' : cov KL' x = (negb ((dlo <=? x) && (x <? dlo + nnz)) && cov KL x)%bool).
-{ rewrite !CE. subst KL'. rewrite owners_maps_subtract; [| lia | rewrite Rn; lia | left; rewrite Rn; lia]. rewrite Rn.
-destruct ((dlo <=? x) && (x <? dlo + nnz))%bool, (owners KL x); reflexivity. }
-clearbody sl. destruct sl.
--
-unfold cov. rewrite existsb_app. fold (cov KL' x) (cov KL x) (cov NA x). rewrite CKL'.
-assert (CI : existsb (fun c => owns_b c x) (lazy_interior dst new_n) = ((dlo <=? x) && (x <? dlo + nnz))%bool).
-{ unfold lazy_interior. cbv zeta. fold dlo. rewrite Rn.
-set (kd := dlo / page_size). set (kn := (bv_unsigned new_size + page_size - 1) / page_size).
-assert (E1 : dlo = kd * page_size) by (pose proof (Z.div_mod dlo page_size ltac:(unfold page_size; lia)); unfold page_size in *; lia).
-assert (E2 : nnz = kn * page_size) by reflexivity.
-assert (E3 : (dlo + page_size - 1) / page_size = kd).
-{ rewrite E1. replace (kd * page_size + page_size - 1) with (kd * page_size + (page_size - 1)) by lia.
-rewrite Z.div_add_l by (unfold page_size; lia). rewrite Z.div_small by (unfold page_size; lia). lia. }
-assert (E4 : (dlo + nnz) / page_size = kd + kn).
-{ rewrite E1, E2. replace (kd * page_size + kn * page_size) with ((kd + kn) * page_size) by lia. apply Z.div_mul. unfold page_size; lia. }
-rewrite E3, E4.
-assert (TST : (kd + kn) * page_size = dlo + nnz) by (clear - E1 E2; lia).
-rewrite TST. clear TST. rewrite <- E1.
-destruct (Z.ltb_spec dlo (dlo + nnz)) as [LTk|LTk]; [|exfalso; clear - LT Honz LTk; lia].
-cbn [existsb orb]. rewrite owns_b_spec. cbn [fst snd].
-replace (dlo + nnz - dlo) with nnz by (clear; lia).
-rewrite (u64 dlo) by (clear - Rd; lia). rewrite (u64 nnz) by (clear - TOP ATOP Rd LT Honz; lia).
-destruct ((dlo <=? x) && (x <? dlo + nnz))%bool; reflexivity. }
-rewrite CI. destruct (Z.leb_spec dlo x); destruct (Z.ltb_spec x (dlo + nnz)); cbn [negb andb orb];
-destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
--
-rewrite CKL'. destruct (Z.leb_spec dlo x); destruct (Z.ltb_spec x (dlo + nnz)); cbn [negb andb orb].
-+ rewrite (FREE_M x) by lia. destruct (cov NA x); cbn; lia.
-+ destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
-+ destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
-+ destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
+  unfold MV_OK. intros old old_size new_size dst. cbv zeta. intros SU LT NEQ ALD POS TOP FREE.
+  set (h := m_vmmaps m) in *.
+  set (onz := page_round_up_Z (bv_unsigned old_size)) in *. set (nnz := page_round_up_Z (bv_unsigned new_size)) in *.
+  set (old_n := Z_to_bv 64 onz) in *. set (new_n := Z_to_bv 64 nnz) in *.
+  pose proof (alloc_top_lt h) as ATOP. unfold two_pow_64 in ATOP. pose proof (word_range dst) as Rd.
+  assert (Honz : 0 <= onz) by (subst onz; unfold page_round_up_Z, page_size; pose proof (word_range old_size); apply Z.mul_nonneg_nonneg; [apply Z.div_pos; lia|lia]).
+  assert (Rn : bv_unsigned new_n = nnz) by (subst new_n; apply u64; lia).
+  (* [comment removed for export] *)
+  unfold vm_backing_used, mremap_move_charge, mremap_model_next, vm_resize_backing, mremap_maps_next, vm_backed_maps.
+  cbv zeta. fold h.
+  change (m_vmmaps (with_vm_backing ?lz ?mt ?mm)) with (m_vmmaps mm).
+  change (m_vm_lazy (with_vm_backing ?lz ?mt ?mm)) with lz.
+  change (m_vm_materialized (with_vm_backing ?lz ?mt ?mm)) with mt.
+  change (m_vmmaps (with_vmmaps ?hh m)) with hh. cbn [vm_maps vm_noaccess].
+  change (m_vm_lazy (with_vmmaps ?hh m)) with (m_vm_lazy m). change (m_vm_materialized (with_vmmaps ?hh m)) with (m_vm_materialized m).
+  set (M := maps_subtract (vm_maps h) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)). set (NA := vm_noaccess h). set (LZ := m_vm_lazy m). set (MT := m_vm_materialized m).
+  set (sl := mremap_source_lazy_b m old old_n).
+  set (olo := bv_unsigned old). set (dlo := bv_unsigned dst).
+  set (KL := maps_subtract LZ olo (olo + bv_unsigned old_n)).
+  set (KL' := maps_subtract KL dlo (dlo + bv_unsigned new_n)).
+  (* [comment removed for export] *)
+  rewrite length_app.
+  match goal with |- context [List.map (move_page_base old dst) ?l] => set (FL := l) in * end.
+  pose proof (filter_length_le (page_outside_range dlo (dlo + bv_unsigned new_n)) (List.filter (page_outside_range olo (olo + bv_unsigned old_n)) MT)) as LEN1.
+  assert (LEN2 : length (if sl then List.map (move_page_base old dst) FL else []) = length (if sl then FL else [])) by (destruct sl; [apply length_map | reflexivity]).
+  rewrite LEN2.
+  (* [comment removed for export] *)
+  assert (NWM : nwr M) by (subst M; apply nwr_maps_subtract; [pose proof (word_range old); lia | pose proof (word_range old_n); lia | exact HWF]).
+  assert (NWD : nwr ((dst, new_n) :: M)) by (constructor; [unfold phi, plo, psz; cbn [fst snd]; fold dlo; rewrite Rn; lia | exact NWM]).
+  rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all ((dst, new_n) :: M) NA) _)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWD).
+  rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all M NA) KL)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWM).
+  (* [comment removed for export] *)
+  assert (IND : zsum (fun x => if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0) 0 N64 = nnz) by (rewrite zsum_indicator; rewrite ?N64_Z; lia).
+  (* [comment removed for export] *)
+  assert (FREE_M : forall x, dlo <= x < dlo + nnz -> owners M x = 0%nat).
+  { intros x Hx.
+    assert (LE : (owners M x <= owners (vm_maps h) x)%nat).
+    { subst M. rewrite owners_maps_subtract;
+        [| pose proof (word_range old); lia
+         | pose proof (word_range old_n); pose proof (word_range old); lia
+         | right; exact HWF ].
+      destruct ((bv_unsigned old <=? x) && (x <? bv_unsigned old + bv_unsigned old_n))%bool; lia. }
+    rewrite (region_free_no_owner (vm_maps h) dst new_n x (region_free_app_r _ _ _ _ FREE)) in LE; [lia|].
+    apply owns_intro; fold dlo; [lia | rewrite Rn; lia]. }
+  (* [comment removed for export] *)
+  enough (PW : forall x,
+    Z.of_nat (owners (maps_subtract_all (maps_subtract_all ((dst, new_n) :: M) NA) (if sl then lazy_interior dst new_n ++ KL' else KL')) x)
+    <= (if sl then 0 else if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0) + Z.of_nat (owners (maps_subtract_all (maps_subtract_all M NA) KL) x)).
+  { pose proof (zsum_le_all _ _ 0 N64 PW) as ZL. rewrite zsum_add in ZL.
+    clearbody sl. destruct sl.
+    - rewrite (zsum_zero (fun x => if true then 0 else if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0)) in ZL; [|intros; reflexivity].
+      unfold page_size. lia.
+    - rewrite IND in ZL. unfold page_size. lia. }
+  intros x. clear IND LEN1 LEN2 FL.
+  rewrite !owners_maps_subtract_all; try (exact NWD || exact NWM || (apply nwr_maps_subtract_all; (exact NWD || exact NWM))).
+  rewrite owners_cons, owns_b_spec. cbn [fst snd]. fold dlo. rewrite Rn.
+  (* [comment removed for export] *)
+  assert (CE : forall C, cov C x = negb (Nat.eqb (owners C x) 0)).
+  { intros C; induction C as [|c C IH]; [reflexivity|]. rewrite cov_cons, owners_cons, IH. destruct (owns_b c x), (owners C x); reflexivity. }
+  assert (CKL' : cov KL' x = (negb ((dlo <=? x) && (x <? dlo + nnz)) && cov KL x)%bool).
+  { rewrite !CE. subst KL'. rewrite owners_maps_subtract; [| lia | rewrite Rn; lia | left; rewrite Rn; lia]. rewrite Rn.
+    destruct ((dlo <=? x) && (x <? dlo + nnz))%bool, (owners KL x); reflexivity. }
+  clearbody sl. destruct sl.
+  - (* [comment removed for export] *)
+    unfold cov. rewrite existsb_app. fold (cov KL' x) (cov KL x) (cov NA x). rewrite CKL'.
+    assert (CI : existsb (fun c => owns_b c x) (lazy_interior dst new_n) = ((dlo <=? x) && (x <? dlo + nnz))%bool).
+    { unfold lazy_interior. cbv zeta. fold dlo. rewrite Rn.
+      set (kd := dlo / page_size). set (kn := (bv_unsigned new_size + page_size - 1) / page_size).
+      assert (E1 : dlo = kd * page_size) by (pose proof (Z.div_mod dlo page_size ltac:(unfold page_size; lia)); unfold page_size in *; lia).
+      assert (E2 : nnz = kn * page_size) by reflexivity.
+      assert (E3 : (dlo + page_size - 1) / page_size = kd).
+      { rewrite E1. replace (kd * page_size + page_size - 1) with (kd * page_size + (page_size - 1)) by lia.
+        rewrite Z.div_add_l by (unfold page_size; lia). rewrite Z.div_small by (unfold page_size; lia). lia. }
+      assert (E4 : (dlo + nnz) / page_size = kd + kn).
+      { rewrite E1, E2. replace (kd * page_size + kn * page_size) with ((kd + kn) * page_size) by lia. apply Z.div_mul. unfold page_size; lia. }
+      rewrite E3, E4.
+      assert (TST : (kd + kn) * page_size = dlo + nnz) by (clear - E1 E2; lia).
+      rewrite TST. clear TST. rewrite <- E1.
+      destruct (Z.ltb_spec dlo (dlo + nnz)) as [LTk|LTk]; [|exfalso; clear - LT Honz LTk; lia].
+      cbn [existsb orb]. rewrite owns_b_spec. cbn [fst snd].
+      replace (dlo + nnz - dlo) with nnz by (clear; lia).
+      rewrite (u64 dlo) by (clear - Rd; lia). rewrite (u64 nnz) by (clear - TOP ATOP Rd LT Honz; lia).
+      destruct ((dlo <=? x) && (x <? dlo + nnz))%bool; reflexivity. }
+   
+    rewrite CI. destruct (Z.leb_spec dlo x); destruct (Z.ltb_spec x (dlo + nnz)); cbn [negb andb orb];
+      destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
+  - (* [comment removed for export] *)
+    rewrite CKL'. destruct (Z.leb_spec dlo x); destruct (Z.ltb_spec x (dlo + nnz)); cbn [negb andb orb].
+    + rewrite (FREE_M x) by lia. destruct (cov NA x); cbn; lia.
+    + destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
+    + destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
+    + destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
 Qed.
 End MV.

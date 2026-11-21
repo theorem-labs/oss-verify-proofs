@@ -4,7 +4,7 @@
    lemmas (taken by path on the glue base) and a Theorem Labs lane's ProgBridge / MemNormTr; the memory a stretch runs on is
    MemNorm.normalize of a world memory.  Written by a Theorem Labs lane (glue lane).  rule 24: proof-index
    reac_ctrl_parse (2026-10-28 21:05Z, exit 0): 12 named files, plain / ubsan builds of other units;
-   checker a Theorem Labs lane: CONFIRM. At ossv/recipes c5e779efe8c (2026-10-31), released ASan walks of reac_ctrl_parse exist in fuzz_grant, fuzz_disco and fuzz_scene.
+   checker a Theorem Labs lane: CONFIRM. At (2026-10-31), released ASan walks of reac_ctrl_parse exist in fuzz_grant, fuzz_disco and fuzz_scene.
    Twin families: every name of a doubled family is reached through a full-path Module alias below (lib.Reusable, lib.Lib,
    lib.A.MemNorm and friends), never bare. *)
 From Stdlib Require Import ZArith List Lia Bool.

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFhncf.v (commit f01d79f3fb5, cf refill round 3; file sha256 0932f15b904b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 15 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); 7 hand maps (resolve-run-f01d79f3fb5.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2, base a working branch d50ec3c8a93a): the cf
-   twin of YFhn.v (c5 8d6c9f45705b, blob of this tree): the cache-init step of the refill keeps the cf relation,
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFhncf.v (cf refill round 3; file sha256 0932f15b904b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 15 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); 7 hand maps (resolve-run.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2, base a working branch): the cf
+   twin of YFhn.v (c5, blob of this tree): the cache-init step of the refill keeps the cf relation,
    ARcf at S -> ARcf at S1 = set_cache_inited true (set_cache (init_caches ..) S), and the leaf transport across it.
-   Substitutions only (YG0qcf.v:3-14's naming contract): AR -> ARcf with the ghost set HpG after S, ARm -> ARmcf,
+   Substitutions only (YG0qcf.v:3-15's naming contract): AR -> ARcf with the ghost set HpG after S, ARm -> ARmcf,
    am_X -> amc_X, Wf -> Wf_cf (WfP_init_caches -> WfP_cf_init_caches), wf_X / wr_X -> wfc_X / wrc_X, acells ->
    acells_cf (region_cells -> region_cells_cf), ajunk -> ajunk_cf, shadow_ok -> shadow_ok_cf, the YG0q / YG0s helpers
    -> their _cf forms; cgif's mapped_user_bound (kUserMapSize * EV_MAX) -> wrc_mapped_bound (kFreeArrayOffset).  The

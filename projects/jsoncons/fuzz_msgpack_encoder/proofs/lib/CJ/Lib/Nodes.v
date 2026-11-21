@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed read_cstr_aux_bytes_in, read_cstr_aux_toolong_bytes_in. *)
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 
@@ -115,35 +116,80 @@ Proof.
   intros. apply readable_bytes_full, read_bytes_map_bytes_in; assumption.
 Qed.
 
-(* [comment removed for export] *)
+(* #38 made State.read_cstr_aux test State.access_okb a 1 at EVERY byte it steps, so the
+   unguarded walk these two lemmas described no longer exists, and they are false exactly
+   where a name's bytes sit at or above TASK_SIZE -- a range strncpy_from_user refuses
+   (lib/strncpy_from_user.c, max_addr = TASK_SIZE_MAX).  The model repaired its OWN copies
+   rather than weakening them and says so at 75d69e00 Common/FileSim.v:389-399: "each
+   premise is the weakest that makes its lemma true".  The premises below are its premises
+   (:401-405 and :449-451) restated for this file's `a : Z` dialect, and they differ from
+   each other deliberately: the CstrOk one bounds the last byte the walk steps (the NUL),
+   while the TooLong one bounds the last of `fuel` non-NUL bytes and is GUARDED at fuel = 0,
+   where the walk steps no byte and the lemma holds wherever a is.
+   There is no proof-only route, checked rather than assumed: bytes_in bounds its range by
+   2^64 (:49-51) while access_okb's bound is TASK_SIZE = 0x800000000000 (model State.v:1377,
+   access_okb base len = (len <=? TASK_SIZE) && (bv_unsigned base <=? TASK_SIZE - len)), far
+   below it, so no amount of readability supplies access_okb (wa a) 1 = true.
+   The non-wrap step is remade here at wa (a + 1) through wa_unsigned, rather than taken from
+   State.bv_unsigned_succ_below_task_size, which is stated on a word.
+   NOTE ON CONDITION (b): these two lemmas have ZERO callers in this unit (measured over the
+   whole of proofs/lib), so the premise is discharged by nobody and can reach nothing.  They
+   are repaired only because the file still has to compile.  Ported hunk-for-hunk from the
+   json-c/json_object_fuzzer unit's port (its QJFf.v:870), which carries the same
+   two lemmas in the same `mp (wa a)` dialect. *)
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (a + Z.of_nat (length str) < TASK_SIZE)%Z ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
-  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [read_cstr_aux]. rewrite Hb. reflexivity.
-  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [read_cstr_aux]. rewrite Hb.
+  induction str as [|b str IH]; intros fuel mp a Hf Hnz Hlo H.
+  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [length] in Hlo. cbn [app] in H.
+    assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+    assert (Hr : (0 <= a < 2 ^ 64)%Z)
+      by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+    assert (Hok : access_okb (wa a) 1 = true)
+      by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+    apply bytes_in_cons in H as [Hb _].
+    rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb. reflexivity.
+  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [length] in Hf, Hlo. cbn [app] in H.
+    assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+    assert (Hr : (0 <= a < 2 ^ 64)%Z)
+      by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+    assert (Hok : access_okb (wa a) 1 = true)
+      by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+    apply bytes_in_cons in H as [Hb H].
+    rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-    intro Hin. apply Hnz. right. exact Hin.
+    rewrite Hne, wa_succ.
+    rewrite (IH fuel mp (a + 1) ltac:(lia)
+               ltac:(intro Hin; apply Hnz; right; exact Hin) ltac:(lia) H).
+    reflexivity.
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
   (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (fuel <> 0%nat -> (a + Z.of_nat fuel <= TASK_SIZE)%Z) ->
   bytes_in mp a str ->
   read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
-  destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-  cbn [read_cstr_aux]. rewrite Hb.
+  induction fuel as [|fuel IH]; intros str mp a Hf Hnz Hlo H; [reflexivity|].
+  specialize (Hlo ltac:(discriminate)).
+  destruct str as [|b str]; [cbn in Hf; lia|].
+  assert (Ha0 : (0 <= a)%Z) by (destruct H as (HH & _ & _); exact HH).
+  assert (Hr : (0 <= a < 2 ^ 64)%Z)
+    by (unfold TASK_SIZE in Hlo; change (2 ^ 64)%Z with 18446744073709551616%Z; lia).
+  assert (Hok : access_okb (wa a) 1 = true)
+    by (rewrite access_okb_one, (wa_unsigned a Hr); apply Z.ltb_lt; lia).
+  apply bytes_in_cons in H as [Hb H].
+  rewrite (read_cstr_aux_accepted mp (wa a) fuel Hok), Hb.
   assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
-  intro Hin. apply Hnz. right. exact Hin.
+  rewrite Hne, wa_succ.
+  rewrite (IH str mp (a + 1) ltac:(cbn in Hf; lia)
+             ltac:(intro Hin; apply Hnz; right; exact Hin) ltac:(intros _; lia) H).
+  reflexivity.
 Qed.
 
 (* [comment removed for export] *)

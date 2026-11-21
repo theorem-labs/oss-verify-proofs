@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the rauxv_ok destruct patterns follow its any-layout auxv form, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Tgt/RMallocKit_A.v, line 105. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -86,8 +87,8 @@ Variable m' : ltac:(sec_ty2 constr:(SEC_T_rauxv_ok_pres) 2%nat 0%nat).
 Variable B : ltac:(sec_ty2 constr:(SEC_T_rauxv_ok_pres) 3%nat 0%nat).
 Lemma rauxv_ok_pres : ltac:(sec_stmt2 constr:(SEC_T_rauxv_ok_pres) 4%nat 0%nat).
 Proof.
-intros (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & C1 & A1 & A2 & H) HP HB HC.
-exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+intros (av & vs & rnd & C1 & A1 & A2 & H & HL) HP HB HC.
+exists av, vs, rnd. split; [|split; [|split; [|exact (conj H HL)]]].
 - eapply rpres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HC. lia.
 - eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
 - eapply rpres_except_bytes_at; [exact HP| exact A2|]. intros a Ha. apply HB. lia.

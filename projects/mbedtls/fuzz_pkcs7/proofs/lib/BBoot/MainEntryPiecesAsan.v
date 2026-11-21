@@ -1,15 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (NX1 and every recorded main-entry plan renumbered by the start-up's renumbering vsh_su, as me_R0_planR to me_B5_planR; the recorded hand-off tables me_R0_tab to me_B4_tab removed, MainEntryRegenAsan.v computes them from the run). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BBoot Require Import AsanCertDefs. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import PlanCut. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BBoot Require Import StartupHSAsan MainEntryPlanAsan MainEntryHSAsan MainEntryHScutAsan.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BBoot Require Import AsanCertDefs. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import PlanCut PlanRegen. From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BBoot Require Import StartupPiecesAsan MainEntryPlanAsan.
 Import ListNotations. Import AX2. Import APC. Import AP.
 Open Scope Z_scope.
 
 
 (* [comment removed for export] *)
-Definition NX1 : nat := 467.
+(* LPS 727298f3: the main entry's first fresh variable is the start-up's counter at hand-off 0, which
+   the run now numbers by the start-up's renumbering [vsh_su] (StartupPiecesAsan.v): 467 + 6 = 473,
+   the counter of the hand-off state at 0 computed from the run (round C2 of this port's probe record). *)
+Definition NX1 : nat := vsh_su 467.
 (* [comment removed for export] *)
 Definition IT1_ranges : list (Z * nat) :=
   [(288920, 9%nat); (288964, 7%nat); (289020, 4%nat); (348740, 39%nat); (348944, 13%nat); (349012, 40%nat); (349296, 49%nat); (349636, 34%nat);
@@ -51,42 +55,50 @@ Definition me_qB5 : plan := subL 62 me_qB4.
 
 (* [comment removed for export] *)
 Definition me_R0_plan : plan := fst (pcut 2 mainentry_plan 0).
-Definition me_R0_tab : nat -> option acs := hs_tab [(1000%nat, HS_s2c_1000); (1001%nat, HS_s2c_1001)].
 
 (* [comment removed for export] *)
 Definition me_A1_plan : plan := PFact me_KD (fst (pcut 592 me_qA 10)).   (* [comment removed for export] *)
-Definition me_A1_tab : nat -> option acs := hs_tab [(1010%nat, HS_s2c_1010)].
 
 (* [comment removed for export] *)
 Definition me_A2_plan : plan := PFact me_KD (fst (pcut 480 me_qA2 11)).   (* [comment removed for export] *)
-Definition me_A2_tab : nat -> option acs := hs_tab [(1011%nat, HS_s2c_1011)].
 
 (* [comment removed for export] *)
 Definition me_A3_plan : plan := PFact me_KD (fst (pcut 340 me_qA3 12)).   (* [comment removed for export] *)
-Definition me_A3_tab : nat -> option acs := hs_tab [(1012%nat, HS_s2c_1012)].
 
 (* [comment removed for export] *)
 Definition me_A4_plan : plan := PFact me_KD (me_cmp me_M4 (fst (pcut 62 me_qA4 13))).   (* [comment removed for export] *)
-Definition me_A4_tab : nat -> option acs := hs_tab [(1013%nat, HS_s2c_1013)].
 
 (* [comment removed for export] *)
 Definition me_A5_plan : plan := PFact me_KD (me_cmp me_M5 (me_qA5)).   (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 Definition me_B1_plan : plan := PFact me_KD (fst (pcut 592 me_qB 20)).   (* [comment removed for export] *)
-Definition me_B1_tab : nat -> option acs := hs_tab [(1020%nat, HS_s2c_1020)].
 
 (* [comment removed for export] *)
 Definition me_B2_plan : plan := PFact me_KD (fst (pcut 480 me_qB2 21)).   (* [comment removed for export] *)
-Definition me_B2_tab : nat -> option acs := hs_tab [(1021%nat, HS_s2c_1021)].
 
 (* [comment removed for export] *)
 Definition me_B3_plan : plan := PFact me_KD (fst (pcut 340 me_qB3 22)).   (* [comment removed for export] *)
-Definition me_B3_tab : nat -> option acs := hs_tab [(1022%nat, HS_s2c_1022)].
 
 (* [comment removed for export] *)
 Definition me_B4_plan : plan := PFact me_KD (me_cmp me_M4 (fst (pcut 62 me_qB4 23))).   (* [comment removed for export] *)
-Definition me_B4_tab : nat -> option acs := hs_tab [(1023%nat, HS_s2c_1023)].
 
 (* [comment removed for export] *)
 Definition me_B5_plan : plan := PFact me_KD (me_cmp me_M5 (me_qB5)).   (* [comment removed for export] *)
+
+(* LPS 727298f3: each recorded main-entry plan renumbered where it is checked, by the start-up's map
+   [vsh_su] (PlanRegen.psh), as in image A's ABoot/MainEntryPiecesAsan.v: from the hand-off state at
+   0 computed from the run, every one of these plans runs to its recorded hand-offs at both rz values
+   with the recorded shapes except R0's, whose EVar 359 reads EVar 365 (round C2).  Their hand-off
+   states are computed from the run in MainEntryRegenAsan.v, so no recorded hand-off state is used. *)
+Definition me_R0_planR : plan := psh vsh_su me_R0_plan.
+Definition me_A1_planR : plan := psh vsh_su me_A1_plan.
+Definition me_A2_planR : plan := psh vsh_su me_A2_plan.
+Definition me_A3_planR : plan := psh vsh_su me_A3_plan.
+Definition me_A4_planR : plan := psh vsh_su me_A4_plan.
+Definition me_A5_planR : plan := psh vsh_su me_A5_plan.
+Definition me_B1_planR : plan := psh vsh_su me_B1_plan.
+Definition me_B2_planR : plan := psh vsh_su me_B2_plan.
+Definition me_B3_planR : plan := psh vsh_su me_B3_plan.
+Definition me_B4_planR : plan := psh vsh_su me_B4_plan.
+Definition me_B5_planR : plan := psh vsh_su me_B5_plan.

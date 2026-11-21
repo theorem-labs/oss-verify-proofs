@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YJ00.v, with its module paths changed; realizes_must_exit_at and realizes_exit_verdict removed, because fuzz_disco's realizes (YK15.v) has a cut at a budget refusal and nothing here uses them. *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_scene/lib/Reusable/YJ00.v (a working branch e624b1e2c9a), with its module paths changed (fuzz_scene -> fuzz_disco). *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_scene/lib/Reusable/YJ00.v (a working branch), with its module paths changed (fuzz_scene -> fuzz_disco). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool Classical.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs Monad State Specs Run.

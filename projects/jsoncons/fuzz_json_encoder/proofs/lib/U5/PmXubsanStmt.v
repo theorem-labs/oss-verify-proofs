@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed pm_xubsan_tgt_stmt. *)
 (* The ubsan target half of ubsan_agrees, stated on its own: the ubsan image realizes the plain spec at
    target_alloc_limit for every input whose payload satisfies PHI. Shape of PmXasanFinalW.pm_xasan_tgt_stmtW with the
    ubsan image; the payload premise phi_okU is phrased with SpecG.hdr_okD, the form the source half produces
@@ -36,12 +37,20 @@ Abbreviation IMG_xubsan :=
 Section FPX_1.
 #[local] Existing Instance PropExec.fx0.
 
+(* STATEMENT CHANGED, old beside new (tree-local; no Statements.v closure names it):
+     OLD  .. valid_hwcap (in_hwcap inp) -> in_va_size inp = Sv48 -> (forall a0s path, .. -> phi_okU ..) -> ..
+     NEW  the same, plus [valid_launch inp], [entry_launch_ok_va Sv48 ..] and
+          [in_channel_reader inp = true] after [in_va_size inp = Sv48]: the facts
+          [Run.valid_input_abort] and [Run.valid_entry] give at LPS 727298f3 and the ubsan driver
+          ([Pm6DrvMainW_u5.src_realizes_stmtG_lim]) reads.  The conclusion is unchanged. *)
 Definition pm_xubsan_tgt_stmt (scfg : SpuriousCfg) (PHI : list byte -> Prop) : Prop :=
   forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk Ubsan.M.loaded_segments brk -> valid_mmap_base mbase ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp -> valid_hwcap (in_hwcap inp) ->
     in_va_size inp = Sv48 ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
+    in_channel_reader inp = true ->
     (forall a0s path, in_argv inp = [a0s; path] -> phi_okU PHI path (in_fs inp)) ->
     srealizes Ubsan.M.loaded_segments scfg
       (init_config Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rdraw target_alloc_limit inp)

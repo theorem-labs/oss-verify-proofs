@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs: emitted for reac-pw/fuzz_role image A by atable.py 6a35bb77e745 from fuzz_role.asan and its unstripped twin, from proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v at c8557374ad2e: TFIB_TEXT_N over this image's own .text, img_lo / img_hi cited from lib/Reusable/YImgTop.v *)
+(* Modified by Theorem Labs: emitted for reac-pw/fuzz_role image A by atable.py 6a35bb77e745 from fuzz_role.asan and its unstripped twin, from proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v at theorem-labs/oss-verify-proofs@6b32741d849a: TFIB_TEXT_N over this image's own .text, img_lo / img_hi cited from lib/Reusable/YImgTop.v *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_role.asan (reac-pw/fuzz_role asan) sha256 614cffc0864cc31d9d1ced61322c4efd567b64bc89fe09a227a05b5126e0debb; unstripped twin sha256 6da77bafc5c050954dd89149e1e55a24064c2211e3cbd351822d1c0a20900ad6 *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

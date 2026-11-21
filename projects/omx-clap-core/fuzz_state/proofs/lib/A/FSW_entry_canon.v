@@ -4,9 +4,9 @@
    it after a runtime call, after a program call, or at a branch join, from the journal's and AR's facts alone.
    rule 24: no function proved (fs's harness entry). The proof is entry_st_ok_full (Reusable/YI04.v) with the three
    regions' facts.
-   Ported from: a Theorem Labs lane's crcs_resume_sm (a working branch c4bfd3bc057,
-   lib/A/FSH_check_reject_clean_starved.v) and FSW_frame.v fsw_readd_frame_regions (a working branch
-   2dde269425f): the same region facts (AR_frames_law, YCbq.frames_bounds), here for the entry's three regions. *)
+   Ported from: a Theorem Labs lane's crcs_resume_sm (a working branch,
+   lib/A/FSH_check_reject_clean_starved.v) and FSW_frame.v fsw_readd_frame_regions (a working branch):
+   the same region facts (AR_frames_law, YCbq.frames_bounds), here for the entry's three regions. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

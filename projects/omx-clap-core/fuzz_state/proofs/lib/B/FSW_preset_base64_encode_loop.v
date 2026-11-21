@@ -24,17 +24,17 @@
    - encR_loop: from the head of round r with the first r output quads written, all the rounds, by induction on a
      bound of len - 3r. Its one hypothesis RS is the round step (A's encR_round_step statement at B's head 0x84788 and
      exit 0x849b8), proved by the round-step lane.
-   Boundaries and registers: the encB map (a working branch 187167cc7a6 encB-map.md, tables 2a-2c),
+   Boundaries and registers: the encB map (a working branch encB-map.md, tables 2a-2c),
    rulings of a Theorem Labs lane 09:44Z (head 0x84788, encR_kept without 19 / 20, exit 0x849b8 with x14).
 
    rule 24: proves no function (kind: segment lemma of preset_base64_encode's walk - image-B loop-register layer + loop
    induction; the function's reuse search and CONFIRM: (internal path),
    a Theorem Labs lane 04:05:58Z)
-   Ported from: lib/A/FSW_preset_base64_encode.v at a working branch 402eb5565fc lines 61-78 (enc_rin, enc_rout,
+   Ported from: lib/A/FSW_preset_base64_encode.v at a working branch lines 61-78 (enc_rin, enc_rout,
    enc_gf, enc_round_ss, enc_SH .. enc_SH4), 356-443 (enc_round_state), 462-494 (enc_sh_ok, enc_sh_seat), 1237 / 1241-1246
    (encR_extra3, encR_loop_regs), 1299-1366 (encR_round_state, encR_seat_dj), 1378-1437 (encR_wr_bound, encR_seat_ok,
    encR_round_env), 1463-1475 / 1491-1500 (encR_sh0, enc_shbase), 1510-1513 (encR_exit_regs); a working branch
-   e1f485ea4e1 lines 2176-2228 (EncLoop: RS, encR_loop). Old-B donor a working branch b96980d72d1
+   lines 2176-2228 (EncLoop: RS, encR_loop). Old-B donor a working branch
    lib/B/Prog/preset_base64_encode_blocks.v:374-379 (BL: B's loop register file), :761-784 (enc_loop: the induction on
    len - 3k). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

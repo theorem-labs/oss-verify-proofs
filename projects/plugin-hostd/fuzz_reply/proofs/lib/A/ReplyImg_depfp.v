@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: row img-depfp-A of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record) (CF-UNIT-HYPS.md:41 sha256 77b3f94c95d2; internal record): the cf layer's image
-   premise dep_fp_img B DZ (YGcfInstDepot.v:165-167, "what StackDepotPut may write lies in the zone DZ the caller frames
+   premise dep_fp_img B DZ (YGcfInstDepot.v:166-168, "what StackDepotPut may write lies in the zone DZ the caller frames
    out") at plugin-hostd/fuzz_reply's image A (asan, pin 42c58610e125), for both zones the layer uses:
    DZ := ag_dzone (AGImg_reply's, = AGis.DZONE) and DZ := dg_dzone (DImg_reply's, = DGgi.DZONE).
    The reply tree does not carry YGcfInstDepot.v, so each theorem states dep_fp_img's text UNFOLDED:
      dep_fp_img B DZ := forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B ->
                         CLdepot.depot_footprint B ly a -> DZ ly a.
    Ported (form and script, no numeral) from preset's A/YGcfInstF1WA.v dep_fp_a_A / dep_fp_d_A
-   (a working branch 7700305f42c4) and cgif's YGcfInstF1Wcgif.v:82 / :89 dep_fp_a_cgif / dep_fp_d_cgif
-   (a working branch 511c76f79c41), which both apply AGix.footprint_DZONE (cgif AGix.v:162-166); reply A has
+   (a working branch) and cgif's YGcfInstF1Wcgif.v:82 / :89 dep_fp_a_cgif / dep_fp_d_cgif
+   (a working branch), which both apply AGix.footprint_DZONE (cgif AGix.v:162-166); reply A has
    no AGix, so the script is inlined: the footprint's two table ranges are reply A's own TfibSyms values
-   (AF0m.v:18 TFIB_DEPOT / TFIB_STORE through ts_depot / ts_store), the nodes and store blocks are DZONE's own arms.
+   (AF0m.v:19 TFIB_DEPOT / TFIB_STORE through ts_depot / ts_store), the nodes and store blocks are DZONE's own arms.
    rule 24: no function proved (kind: image premise over the unit's tables). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -39,7 +40,7 @@ Variable B : asyms.
 Hypothesis TS : TfibSyms B.
 
 (* StackDepotPut's footprint at reply A lies in the depot zone [TFIB_STORE, TFIB_DEPOT + d_map1 + 8 * 32768) plus the
-   nodes and store blocks (AGis.v:230-231 = DGgi.v:514-515). *)
+   nodes and store blocks (AGis.v:231-232 = DGgi.v:515-516). *)
 Lemma footprint_DZONE_reply : forall ly a, CLdepot.depot_footprint B ly a ->
   (TFIB_STORE <= a < TFIB_DEPOT + d_map1 + 8 * 32768) \/ (ly_NB ly <= a < ly_NB ly + kNodesBlockSize) \/
   (ly_SB ly <= a < ly_SB ly + kStoreBlockSize).
@@ -48,7 +49,7 @@ intros ly a FP. unfold CLdepot.depot_footprint in FP. rewrite (ts_depot B TS), (
 unfold TFIB_DEPOT, TFIB_STORE, d_map1 in *. lia.
 Qed.
 
-(* dep_fp_img B ag_dzone, unfolded (YGcfInstDepot.v:166-167). *)
+(* dep_fp_img B ag_dzone, unfolded (YGcfInstDepot.v:167-168). *)
 Theorem dep_fp_a_A : forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B ->
   CLdepot.depot_footprint B ly a -> ag_dzone ly a.
 Proof.
@@ -58,7 +59,7 @@ intros ly a _ _ _ FP. destruct (footprint_DZONE_reply ly a FP) as [X|[X|X]]; [le
 - exact X.
 Qed.
 
-(* dep_fp_img B dg_dzone, unfolded (YGcfInstDepot.v:166-167). *)
+(* dep_fp_img B dg_dzone, unfolded (YGcfInstDepot.v:167-168). *)
 Theorem dep_fp_d_A : forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B ->
   CLdepot.depot_footprint B ly a -> dg_dzone ly a.
 Proof.

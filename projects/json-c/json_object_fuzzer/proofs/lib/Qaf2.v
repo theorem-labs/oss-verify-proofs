@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the PUT, PUTX and DEEP calls discharge it (jo_preA's conjunct)). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -207,7 +208,7 @@ AJ5 A4L HIx A T md (sstateBc (Fr + 256) (Fr + 192) (Z_to_bv 64 ret) gp t0 t1 t2 
 { intros s PRE CLE CD0. pose proof (ca_PUT _ _ _ _ _ _ _ CA) as PU. unfold put_stmt_A, put_stmtA in PU. unfold sstateB.
 eapply PU with (A := A) (BS := DBS) (LB := LBx) (FRS := [(Fr, 3)]) (B := B) (s := s) (lo := lo) (rc := 1) (errv := errv);
 [ exact HP | exact PRE | reflexivity | rewrite unsigned_lit by lia; exact ST | exact LO
-| rewrite unsigned_lit by lia; unfold put_stk_A; lia | rewrite unsigned_lit by lia; exact SP16
+| first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; lia | rewrite unsigned_lit by lia; exact SP16
 | rewrite unsigned_lit by lia; lia | exact ERR | reflexivity | rewrite unsigned_lit by lia; exact Hret2 | lia |].
 intros ms' md' A' (m' & r' & B' & RS & VM' & ST' & HPR' & ERR' & CHB & CHD & OUT).
 destruct RS as (xt0 & xt1 & xt2 & xa1 & xa2 & xa3 & xa4 & xa5 & xa6 & xa7 & xt3 & xt4 & xt5 & xt6 & F' & fc' & -> & FS' & FRM').
@@ -221,7 +222,7 @@ destruct d as [|s|tojs|].
 - pose proof (ca_PUTX _ _ _ _ _ _ _ CA) as PX. unfold jo_put_xleaf_A_stmt in PX. cbn [put_any_costB put_any_costD] in CBp, CDp, KQ. unfold sstateB.
 eapply PX with (A := A) (BS := DBS) (LB := LBx) (FRS := [(Fr, 3)]) (B := B) (r := JRdblx tojs) (lo := lo) (errv := errv);
 [ split; [exact HP|]; rewrite unsigned_lit by lia;
-split; [exact ST|]; split; [exact LO|]; split; [unfold put_stk_A; lia|]; split; [exact SP16|]; split; [lia|];
+split; [exact ST|]; split; [exact LO|]; split; [first [assumption | lia]|]; split; [unfold put_stk_A; lia|]; split; [exact SP16|]; split; [lia|];
 split; [exact ERR|]; split; [reflexivity | rewrite unsigned_lit by lia; exact Hret2]
 | exact RR | exact I | exact CBp | exact CDp | reflexivity |].
 intros ms' md' m' rv A' B' (RS & VM' & ST' & HPR' & [errv' ERR']) [CHB CHD] _ ERRx HP'.
@@ -232,7 +233,7 @@ unfold sstateB in KQ. eapply KQ; [exact VM' | exact FS' | exact FRM' | exact ST'
 - pose proof (ca_PUTX _ _ _ _ _ _ _ CA) as PX. unfold jo_put_xleaf_A_stmt in PX. cbn [put_any_costB put_any_costD] in CBp, CDp, KQ. unfold sstateB.
 eapply PX with (A := A) (BS := DBS) (LB := LBx) (FRS := [(Fr, 3)]) (B := B) (r := JRstrx) (lo := lo) (errv := errv);
 [ split; [exact HP|]; rewrite unsigned_lit by lia;
-split; [exact ST|]; split; [exact LO|]; split; [unfold put_stk_A; lia|]; split; [exact SP16|]; split; [lia|];
+split; [exact ST|]; split; [exact LO|]; split; [first [assumption | lia]|]; split; [unfold put_stk_A; lia|]; split; [exact SP16|]; split; [lia|];
 split; [exact ERR|]; split; [reflexivity | rewrite unsigned_lit by lia; exact Hret2]
 | exact RR | exact I | exact CBp | exact CDp | reflexivity |].
 intros ms' md' m' rv A' B' (RS & VM' & ST' & HPR' & [errv' ERR']) [CHB CHD] _ ERRx HP'.
@@ -332,7 +333,7 @@ evt_done5.
 pose proof (ca_DEEP _ _ _ _ _ _ _ CA) as DC. unfold jo_deep_copy_A_stmt, JO_DEEP_COPY_A, JO_SHALLOW_COPY_A, JO_DEEP_STK0_A, JO_DEEP_STK1_A in DC.
 eapply DC with (A := A) (BS := BS) (LB := LK ++ LB0) (FRS := [(Fr, 3)]) (B := B) (lo := lo) (p := p) (D := Fr + 256) (r := r) (errv := errv2) (w := wdc).
 - split; [exact HP2|]. rewrite unsigned_lit by lia.
-split; [exact ST2|]. split; [exact LO|]. split; [lia|]. split; [exact sp1_16t|]. split; [lia|].
+split; [exact ST2|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [lia|]. split; [exact sp1_16t|]. split; [lia|].
 split; [exact ERR2|]. split; [reflexivity | vm_compute; reflexivity].
 - rewrite unsigned_lit by lia. exact SPA1.
 - exact (proj1 GA2).

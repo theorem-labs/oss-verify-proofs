@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry segment of sup_chain's image-B walk (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, a Theorem Labs lane's lib/B/Prog/sup_chain_c.v `tsup_chain_spec`, statement f490061c104): from the entry
+   fuzz_command.asan-ubsan, a Theorem Labs lane's lib/B/Prog/sup_chain_c.v `tsup_chain_spec`, statement): from the entry
    0x8c1c4 (BASE + AF_sup_chain) to the first arrival at the loop head 0x8c3d0 (BASE + SCB_LOOP), against the
    interface lib/B/Prog/sup_chain_d.v (scb_lctx, scb_inv 0). B code (capstone over the pin's .symtab, listing
    CmdList.v:6004+):
@@ -20,6 +20,7 @@
                                 fresh block), list[0] := 0, n >= 1, the loop's registers, " %d" to s1 + 40
    The two snprintf calls return at an FP state the walk continues at (fx1, then fx2): the symbolic state is moved
    to it (PaFx.st_ok_pi_restrict_xfx) and the run lemmas are taken there. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -48,7 +49,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---------- Ltacs (B answer_code's preg / norm_ssp / nwin_tac, a working branch db9a922ed3f) ---------- *)
+(* ---------- Ltacs (B answer_code's preg / norm_ssp / nwin_tac, a working branch) ---------- *)
 Ltac preg HS r Hr :=
 lazymatch type of HS with
 | st_ok_pi ?segs ?val ?E ?ss (restrict ?H ?ms) =>
@@ -125,7 +126,7 @@ let ss2 := eval vm_compute in (ss_after_call ss rs k retk) in
 change (ss_after_call ss rs k retk) with ss2 in HS2
 end.
 
-(* ---------- the representation's readers (B sup_reset's srb_*, a working branch c79a9f2daf7) ---------- *)
+(* ---------- the representation's readers (B sup_reset's srb_*, a working branch) ---------- *)
 Lemma scs_aval_keep : forall rd rd' a n v, aval_mem rd a n v ->
   (forall x, a <= x < a + Z.of_nat n -> rd' x = rd x) -> aval_mem rd' a n v.
 Proof. intros rd rd' a n v H K k Hk. rewrite K by lia. exact (H k Hk). Qed.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMissW.v (a working branch 3cae605a900a, file sha256 2484a3723413) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 18 image addresses moved by code-verified function pairs (18 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 08394634e479) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve none (alreloc flagged no numeral of these files) (0 lines name this file); 18 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMissW.v (a working branch, file sha256 2484a3723413) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 18 image addresses moved by code-verified function pairs (18 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve none (alreloc flagged no numeral of these files) (0 lines name this file); 18 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    The 18 arm tops of the 12 miss walk files over the refill window (a Theorem Labs lane, a working branch: AGimW AGimEW
    AGim0W AGim0EW MemnormMissGW MemnormMissG0W AGinW AGin0W MemnormMissKW MemnormMissK0W; AGk1W / AGk1EW are their inner
@@ -126,7 +127,7 @@ Local Ltac walk_args Hp :=
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The g-path (49 <= n <= 64512) miss arms.                                                                         *)
 
-(* AGimWB.alloc_missg (AGimWB.v:779): can_fill = 1, alloc_leaf *)
+(* AGimWB.alloc_missg (AGimWB.v:780): can_fill = 1, alloc_leaf *)
 Theorem cfi_alloc_missg : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 1 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -135,7 +136,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (alloc_leaf tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGimWB.alloc_missg; walk_args Hp. Qed.
 
-(* AGimEWB.alloc_missg_e (AGimEWB.v:360): can_fill = 1, alloc_leaf_e *)
+(* AGimEWB.alloc_missg_e (AGimEWB.v:361): can_fill = 1, alloc_leaf_e *)
 Theorem cfi_alloc_missg_e : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 1 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -144,7 +145,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (ErrnoG.alloc_leaf_e tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGimEWB.alloc_missg_e; walk_args Hp. Qed.
 
-(* AGim0WB.alloc_missg0 (AGim0WB.v:457): can_fill = 0, alloc_leaf *)
+(* AGim0WB.alloc_missg0 (AGim0WB.v:458): can_fill = 0, alloc_leaf *)
 Theorem cfi_alloc_missg0 : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 0 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -153,7 +154,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (alloc_leaf tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGim0WB.alloc_missg0; walk_args Hp. Qed.
 
-(* AGim0WB.alloc_missg_cf (AGim0WB.v:510): can_fill cf in {0, 1}, alloc_leaf *)
+(* AGim0WB.alloc_missg_cf (AGim0WB.v:511): can_fill cf in {0, 1}, alloc_leaf *)
 Theorem cfi_alloc_missg_cf : forall Hp cf inst so bp ly S W regs mem md n tr, cf = 0 \/ cf = 1 ->
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 cf inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -162,7 +163,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (alloc_leaf tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGim0WB.alloc_missg_cf; walk_args Hp. Qed.
 
-(* AGim0EWB.alloc_missg0_e (AGim0EWB.v:260): can_fill = 0, alloc_leaf_e *)
+(* AGim0EWB.alloc_missg0_e (AGim0EWB.v:261): can_fill = 0, alloc_leaf_e *)
 Theorem cfi_alloc_missg0_e : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 0 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -171,7 +172,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (ErrnoG.alloc_leaf_e tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGim0EWB.alloc_missg0_e; walk_args Hp. Qed.
 
-(* AGim0EWB.alloc_missg_cf_e (AGim0EWB.v:314): can_fill cf in {0, 1}, alloc_leaf_e *)
+(* AGim0EWB.alloc_missg_cf_e (AGim0EWB.v:315): can_fill cf in {0, 1}, alloc_leaf_e *)
 Theorem cfi_alloc_missg_cf_e : forall Hp cf inst so bp ly S W regs mem md n tr, cf = 0 \/ cf = 1 ->
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 cf inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -180,7 +181,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (ErrnoG.alloc_leaf_e tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGim0EWB.alloc_missg_cf_e; walk_args Hp. Qed.
 
-(* MemnormMissGWB.alloc_missg_em (MemnormMissGWB.v:560): can_fill = 1, alloc_leaf_em *)
+(* MemnormMissGWB.alloc_missg_em (MemnormMissGWB.v:561): can_fill = 1, alloc_leaf_em *)
 Theorem cfi_alloc_missg_em : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 1 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -189,7 +190,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply MemnormMissGWB.alloc_missg_em; walk_args Hp. Qed.
 
-(* MemnormMissG0WB.alloc_missg0_em (MemnormMissG0WB.v:257): can_fill = 0, alloc_leaf_em *)
+(* MemnormMissG0WB.alloc_missg0_em (MemnormMissG0WB.v:258): can_fill = 0, alloc_leaf_em *)
 Theorem cfi_alloc_missg0_em : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 0 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -198,7 +199,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply MemnormMissG0WB.alloc_missg0_em; walk_args Hp. Qed.
 
-(* MemnormMissG0WB.alloc_missg_cf_em (MemnormMissG0WB.v:311): can_fill cf in {0, 1}, alloc_leaf_em (WalkSigA's wsa_missg) *)
+(* MemnormMissG0WB.alloc_missg_cf_em (MemnormMissG0WB.v:312): can_fill cf in {0, 1}, alloc_leaf_em (WalkSigA's wsa_missg) *)
 Theorem cfi_alloc_missg_cf_em : forall Hp cf inst so bp ly S W regs mem md n tr, cf = 0 \/ cf = 1 ->
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 cf inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -210,7 +211,7 @@ Proof. intros Hp. eapply MemnormMissG0WB.alloc_missg_cf_em; walk_args Hp. Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The k-path (0 <= n <= 48) miss arms.                                                                             *)
 
-(* AGinWB.alloc_missk (AGinWB.v:980): can_fill = 1, alloc_leaf *)
+(* AGinWB.alloc_missk (AGinWB.v:981): can_fill = 1, alloc_leaf *)
 Theorem cfi_alloc_missk : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 1 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -219,7 +220,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (alloc_leaf tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGinWB.alloc_missk; walk_args Hp. Qed.
 
-(* AGinWB.alloc_missk_e (AGinWB.v:1033): can_fill = 1, alloc_leaf_e *)
+(* AGinWB.alloc_missk_e (AGinWB.v:1034): can_fill = 1, alloc_leaf_e *)
 Theorem cfi_alloc_missk_e : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 1 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -228,7 +229,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (ErrnoG.alloc_leaf_e tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGinWB.alloc_missk_e; walk_args Hp. Qed.
 
-(* AGin0WB.alloc_missk0 (AGin0WB.v:438): can_fill = 0, alloc_leaf *)
+(* AGin0WB.alloc_missk0 (AGin0WB.v:439): can_fill = 0, alloc_leaf *)
 Theorem cfi_alloc_missk0 : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 0 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -237,7 +238,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (alloc_leaf tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGin0WB.alloc_missk0; walk_args Hp. Qed.
 
-(* AGin0WB.alloc_missk_cf (AGin0WB.v:491): can_fill cf in {0, 1}, alloc_leaf *)
+(* AGin0WB.alloc_missk_cf (AGin0WB.v:492): can_fill cf in {0, 1}, alloc_leaf *)
 Theorem cfi_alloc_missk_cf : forall Hp cf inst so bp ly S W regs mem md n tr, cf = 0 \/ cf = 1 ->
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 cf inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -246,7 +247,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (alloc_leaf tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGin0WB.alloc_missk_cf; walk_args Hp. Qed.
 
-(* AGin0WB.alloc_missk0_e (AGin0WB.v:502): can_fill = 0, alloc_leaf_e *)
+(* AGin0WB.alloc_missk0_e (AGin0WB.v:503): can_fill = 0, alloc_leaf_e *)
 Theorem cfi_alloc_missk0_e : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 0 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -255,7 +256,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (ErrnoG.alloc_leaf_e tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGin0WB.alloc_missk0_e; walk_args Hp. Qed.
 
-(* AGin0WB.alloc_missk_cf_e (AGin0WB.v:554): can_fill cf in {0, 1}, alloc_leaf_e *)
+(* AGin0WB.alloc_missk_cf_e (AGin0WB.v:555): can_fill cf in {0, 1}, alloc_leaf_e *)
 Theorem cfi_alloc_missk_cf_e : forall Hp cf inst so bp ly S W regs mem md n tr, cf = 0 \/ cf = 1 ->
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 cf inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -264,7 +265,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (ErrnoG.alloc_leaf_e tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply AGin0WB.alloc_missk_cf_e; walk_args Hp. Qed.
 
-(* MemnormMissKWB.alloc_missk_em (MemnormMissKWB.v:366): can_fill = 1, alloc_leaf_em *)
+(* MemnormMissKWB.alloc_missk_em (MemnormMissKWB.v:367): can_fill = 1, alloc_leaf_em *)
 Theorem cfi_alloc_missk_em : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 1 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -273,7 +274,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply MemnormMissKWB.alloc_missk_em; walk_args Hp. Qed.
 
-(* MemnormMissK0WB.alloc_missk0_em (MemnormMissK0WB.v:255): can_fill = 0, alloc_leaf_em *)
+(* MemnormMissK0WB.alloc_missk0_em (MemnormMissK0WB.v:256): can_fill = 0, alloc_leaf_em *)
 Theorem cfi_alloc_missk0_em : forall Hp inst so bp ly S W regs mem md n tr,
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 0 inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->
@@ -282,7 +283,7 @@ amreal tfibsegs (malloc_cf n tr S) W (cfg_at tfibsegs 0x326a4 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) qtight TFIB_OOM inst ly S W regs mem md n tr).
 Proof. intros Hp. eapply MemnormMissK0WB.alloc_missk0_em; walk_args Hp. Qed.
 
-(* MemnormMissK0WB.alloc_missk_cf_em (MemnormMissK0WB.v:309): can_fill cf in {0, 1}, alloc_leaf_em (WalkSigA's wsa_missk) *)
+(* MemnormMissK0WB.alloc_missk_cf_em (MemnormMissK0WB.v:310): can_fill cf in {0, 1}, alloc_leaf_em (WalkSigA's wsa_missk) *)
 Theorem cfi_alloc_missk_cf_em : forall Hp cf inst so bp ly S W regs mem md n tr, cf = 0 \/ cf = 1 ->
 alloc_pre tfibsegs B (U_cf B) (ARXq_cf B IOK Hp) (rpre_cf B) cf_malloc_max LIVE_MAX 8 1 cf inst so bp ly S W regs mem md n tr ->
 YG0dcf.arodata_ok_cf tfibsegs B mem ->

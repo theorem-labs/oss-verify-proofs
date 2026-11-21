@@ -1,7 +1,7 @@
 (* G4.ExEntry, IMAGE B: EX_S 0x81334 (fuzz_manifest.c:118): strchr (r + 1 = s4, '<') at 0x8133c, s3 = the answer; a '<'
    at j2 loops back through the UBSan guard 0x812f4 (K1: beq s3, s1 with s1 = -1, the trap arm needs text + j2 = 2^64 - 1,
    impossible for a byte of text) to EX_WL 0x812f8; no '<' jumps (0x81348) to the scan's setup EX_MS 0x81358. B twin of
-   lib/A/FMW_ex_entry_s.v (06d82004dc3). ex_S_seg (FMW_ex_entry_kit.v). *)
+   lib/A/FMW_ex_entry_s.v. ex_S_seg (FMW_ex_entry_kit.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

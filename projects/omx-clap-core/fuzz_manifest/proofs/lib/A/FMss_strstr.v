@@ -1,4 +1,4 @@
-(* lib/A/Prog/strstr.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8), re-run over the
+(* lib/A/Prog/strstr.v (a Theorem Labs lane's port, unchanged from a working branch), re-run over the
    local-shadow statements (FMss_TwAsan.v, FMss_twoway_strstr_c.v, FMss_strstr_c.v, FMss_strchr_wrap_c.v).  Changed
    lines: the imports; the twoway call's shadow premise (shvis_sub of the haystack's, as the addressable line of the
    same call does); tw_tail's post, whose shadow fact now comes from TA kept over the call's munch (the twoway post

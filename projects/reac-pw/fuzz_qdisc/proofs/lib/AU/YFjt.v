@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjt.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AFjt.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_qdisc's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AFjt.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_qdisc's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AFjt.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the reserved ledger). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -707,7 +708,13 @@ idx = res ->
 at_N Wy md1 WIN (PSR Wy SH2 R) S_V Wy c1 -> AI tfibsegs (w_H Wy) (w_A Wy) (cfg_model c1) ->
 (forall m m' : word -> option byte, (forall x : word, ~ QR (bv_unsigned x) -> m' x = m x) -> R m -> R m') ->
 amwf (cfg_model c1) ->
-vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ->
+(* 727298f3: the ledger's packed [al_reserved] field (YG0n): the equation and the facts the
+   vvar/vDSO pair carries; the pointer-array window one places this node's map
+   (libdiginet/fuzz_codec's AFjt). *)
+(vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ++ vdso_reserved (m_kernel (cfg_model c1)) (vdso_top (m_vmmaps (cfg_model c1)))
+ /\ region_free (vdso_reserved (m_kernel (cfg_model c1)) (vdso_top (m_vmmaps (cfg_model c1)))) (w64 (ly_prim ly)) (w64 kPrimResvSize) = true
+ /\ region_free (vdso_reserved (m_kernel (cfg_model c1)) (vdso_top (m_vmmaps (cfg_model c1)))) (w64 (ly_Q ly)) (w64 kPtrArrayResv) = true
+ /\ Forall (fun iv => 0x10007fff8000 <= bv_unsigned (fst iv)) (vdso_reserved (m_kernel (cfg_model c1)) (vdso_top (m_vmmaps (cfg_model c1))))) ->
 (forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 In (wiv (Qb, kPtrArrayResv)) (vm_maps (m_vmmaps (cfg_model c1))) ->
 eager_used (cfg_model c1) + A_bytes (w_A Wy) + 2 ^ 19 <= vm_limit (m_vmmaps (cfg_model c1)) ->
@@ -732,7 +739,8 @@ node_ok tfibsegs c1 I (fun _ => []) nx /\
 (forall i, sp i = true -> AI tfibsegs (w_H Wy) (w_A Wy) (cfg_model (nx i)) -> srealizes tfibsegs (nx i) t_nil) /\
 (forall i, sp i = false -> amreal tfibsegs (K (bit i)) Wy (nx i) Q).
 Proof.
-intros RT sN K Q R c1 Heq HN HAI RQ MW RSV IMGS INQ SL0 HTOP Haok GRANT IO0.
+intros RT sN K Q R c1 Heq HN HAI RQ MW RSV0 IMGS INQ SL0 HTOP Haok GRANT IO0.
+destruct RSV0 as [RSV [_ [QW _]]].
 pose proof (QR_facts Heq) as (E1 & _ & QA & F9 & Q5 & F10 & EQR).
 destruct HN as (_ & ms & mat & E' & Ec & HE & HS & Hrv & MEQ & PRS & HPm).
 set (mdN := with_vm_backing (m_vm_lazy md1) mat md1) in *.
@@ -759,9 +767,15 @@ assert (CEILT : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_top (m_v
 assert (PLACE : region_free (vm_reserved (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true /\
 map_contains (vm_maps (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true).
 { rewrite pru17. split.
-- rewrite RSV. pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
+- (* 727298f3: the ledger is the image's reservations and the vvar/vDSO pair; the pair misses
+     the pointer-array window ([QW]), and QSv's range lies inside that window (libdiginet/fuzz_codec's AFjt). *)
+rewrite RSV, YK13.region_free_app. apply andb_true_intro. split.
++ pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
 apply (tfib_region_free_reserved QSv 131072); [clear; zlia | clear - F9 F10 Q5 E1; ceil; unfold ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia |].
 clear - F9z F9 Q5 E1. unfold zone3, zone3cases, TFIB_IMG_LO, TFIB_IMG_END, kLowShadowBeg, kHighMemBeg, kPtrArrayResv in *. try unfold Qb in *. zlia.
++ apply (YA06.region_free_sub _ (w64 Qb) (w64 kPtrArrayResv) _ _ QW);
+unfold w64; rewrite !unsigned_lit_small by (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia);
+clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia.
 - apply (YA09.map_contains_intro _ (w64 QSv) (w64 131072) (w64 Qb) (w64 kPtrArrayResv) INQ);
 unfold w64; rewrite !unsigned_lit_small by (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia);
 clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia. }

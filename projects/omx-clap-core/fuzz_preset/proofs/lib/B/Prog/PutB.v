@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43), THE
    THEOREM of the walk of put (lane PutB, a Theorem Labs lane), against the kit's text tput_specX of the batch kit's cut
    (lib/A/PRH_FnWriter.v (sha256 bc9a9128f55a; internal record) :410-499), at the B' instance
    (the internal file bprime-pivot.md item 6): PA := PI_prog_B, B := YD2l.TfibB, ARx := ARcfx (ARcf /\ xs_placed_cf =
    YGcallcf.ARxs), cp := CfParams_preset, ci := CfImg_B, RL := prh_room_live_a8.
-   rule 24: no function proved (the batch kit's rebind of put B'): the walk is int102's (e3d81b897ee, from a Theorem Labs lane bp-put
-   0ea1325e9b81), rebound to the batch kit's texts.
+   rule 24: no function proved (the batch kit's rebind of put B'): the walk is int102's (from a Theorem Labs lane bp-put),
+   rebound to the batch kit's texts.
    WHAT IS PROVED: THE TEXT ITSELF. The earlier walk proved a _FIX twin that added a refusal premise
    (REFUSED-RET) and weakened the grow-NULL conjunct to `exists hist'` (NULL-HIST). The kit's text resolves both:
    it takes the consumer window prh_cons_from and states the refusal arm DEAD (`exists ok, prhWriter_ret_ok .. /\

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/MemnormDmid.v (commit 3cae605a900a, file sha256 cf594a16c154) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 3 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/MemnormDmid.v (file sha256 cf594a16c154) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 3 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM): the two Deallocate arms that call QuarantineCache::Enqueue (the mid arm,
    DGg2, and the drain arm, DGfz), with errno and memnorm kept on the raw memory.
    rule 24: no function proved (kind: arm twins, frame corollaries over the callees' memnorm-kept contracts).
@@ -112,8 +113,8 @@ Qed.
 Lemma xr_raw_em : forall B AOX, DGfz.xr_raw B AOX true (MnEnq.acall_raw_em_x B AOX).
 Proof. intros B AOX inst stk ly S W regs mem md E ly' S' W' regs' mem' md' H _. exact (proj1 H). Qed.
 
-(* copy of DGfz.v:88-103 / DGg2.v:149-163 (the section header), plus the callees' memnorm-kept contracts and the
-   ErrnoApart image facts the copied errno scripts read (DGfz.v:113-116) *)
+(* copy of DGfz.v:89-104 / DGg2.v:150-164 (the section header), plus the callees' memnorm-kept contracts and the
+   ErrnoApart image facts the copied errno scripts read (DGfz.v:114-117) *)
 Section e.
 Variable B : asyms.
 Hypothesis TS : TfibSyms B.
@@ -163,7 +164,7 @@ pose proof (di_view B U ft ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq M
 pose proof (di_inst B U ft ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq MP IF inst ly S W mem md HARX) as HIO.
 destruct (DGg1.FH_m B TS U ARX rpre fpre inst so bp ly S W regs mem md p n tr PRE0 HBLK HIO DV)
   as (hb1 & j1 & j2 & j3 & Hhb1 & Hhdr & FH).
-(* copy of DGg2.v:619-624 *)
+(* copy of DGg2.v:620-625 *)
 destruct DV as [[LY IMG _ _ _ _ _] _ _ _ _ _ _ (HZp & _ & _ & HNN) _ _].
 assert (Hpa : 0 <= sptr_addr B ly p) by (destruct HZp as [Z0 _]; lia).
 assert (HSP : ly_stk_lo ly + DGbaseC.DFSTACK <= bv_unsigned (getr regs 2))
@@ -175,7 +176,7 @@ eapply amreal_mono; [| exact (amreal_apath_gflag tfibsegs _ _ _ _ MAIN)].
 intros r Wo co [(regsR & memR & mdR & -> & HPOST & HLP & X & regsC & memC & mdC & regsE & memE & mdE & HX & RAWC & DMC & FRT)
   HPATH].
 destruct HX as (HXr & HXe & HXm).
-(* copy of DGg2.v:630-639: errno from Deallocate's entry to Enqueue's call, and from Enqueue's return to Put's ret *)
+(* copy of DGg2.v:631-640: errno from Deallocate's entry to Enqueue's call, and from Enqueue's return to Put's ret *)
 assert (ERRC : ErrnoG.errno_kept B mem memC).
 { intros i Hi. apply DMC; rewrite (EB i Hi); intros Hw.
   - apply (ErrnoApart.errno_apart_dwin_m EAimg EAz3 B ly _ _ _ _ TS LY IMG HSP HZp (proj1 HNN) Hw). lia.
@@ -213,13 +214,13 @@ intros inst so bp ly S W regs mem md p n tr PRE HMP HBLK DRAIN.
 pose proof PRE as PRE0.
 destruct PRE0 as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
 Hso1 & Hso2 & Hso3 & Hbp1 & Hbp2 & Hbp3 & Htrlen & PSO & PLEN & PBUF & Htr & Hp0 & HFP).
-(* copy of DGfz.v:724-728 *)
+(* copy of DGfz.v:725-729 *)
 pose proof (di_view _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ IF inst ly S W mem md p n HARX HRP HFP HBLK) as DV.
 destruct (dv_chunk _ _ _ _ _ _ _ _ DV) as (k & HK & HKS & _ & HKR).
 pose proof (dv_nonnull _ _ _ _ _ _ _ _ DV) as PNN.
 pose proof (di_inst _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ IF inst ly S W mem md HARX) as HIO.
 destruct (DGg1.FH_m B TS U ARX rpre fpre inst so bp ly S W regs mem md p n tr PRE HBLK HIO DV) as (hb1 & j1 & j2 & j3 & Hhb1 & Hhdr & FH).
-(* copy of DGfz.v:730-746 (errno's bytes apart from Put's frame and dmem_m's windows), with sp0 / pa / nn unfolded *)
+(* copy of DGfz.v:731-747 (errno's bytes apart from Put's frame and dmem_m's windows), with sp0 / pa / nn unfolded *)
 pose proof (dv_n _ _ _ _ _ _ _ _ DV) as DN.
 pose proof (dn_ly _ _ _ _ _ DN) as LY. pose proof (dn_img _ _ _ _ _ DN) as IMG.
 destruct (dv_zone _ _ _ _ _ _ _ _ DV) as (Z3 & _ & _ & NN).

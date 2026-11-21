@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the run reads the binary's segments with the vDSO appended (lifted by SRomStable.srun_init), the heap starts from the launch's reserved ledger (init_reserved), and the main entry takes the launch input with its launch facts (valid_launch, entry_launch_ok_va) and the channel reader. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import RunEnv
   Ub0Usage Ub0OpenFail_defs Ub0OpenFail
   HeapIface LibIface DrvKit Ub0Drv_defs Ub0DrvLib Ub0DrvA Ub0DrvC_defs Ub0DrvC Ub0DrvD_defs Ub0DrvLibL Ub0DrvD
   Ub0DrvE Ub0DrvF Ub0DrvG_defs Ub0DrvG Ub0DrvH.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.Common.Cfg Require SRomStable.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
@@ -103,12 +105,12 @@ Section Main.
   Hypothesis DLF : forall sp, valid_sp sp -> drv_layout (LF sp) sp.
   Hypothesis DLLF : forall sp, valid_sp sp -> drv_lib_layout (LayF sp) (LF sp).
   Hypothesis LIokF : forall sp, valid_sp sp -> lib_iface_ok (LayF sp) scfg (HIF sp) (LStF sp).
-  (* [comment removed for export] *)
-  Hypothesis HINIT : forall sp a0s path envp uid hw rdraw tid regs mem brk mbase,
+
+  Hypothesis HINIT : forall sp a0s path envp uid hw rdraw tid regs mem brk mbase (inp : ProcInput),
     valid_sp sp -> valid_brk RSEGS brk -> valid_mmap_base mbase -> valid_argv [a0s; path] -> valid_envp envp ->
-    (0 < bv_unsigned tid < 2 ^ 22)%Z -> main_entry sp [a0s; path] envp uid hw rdraw tid regs mem ->
-    hi_heap (HIF sp) [] cr0 mem (mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk target_alloc_limit mbase sp).
-  (* [comment removed for export] *)
+    (0 < bv_unsigned tid < 2 ^ 22)%Z -> main_entry inp mbase (0x201fc : word) sp [a0s; path] envp uid hw rdraw tid regs mem ->
+    hi_heap (HIF sp) [] cr0 mem (mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp (in_kernel inp)) [] [] brk brk target_alloc_limit mbase sp).
+
   Hypothesis Hfs : sc_fs scfg = true.
   (* [comment removed for export] *)
   Hypothesis Hbudget : forall sp n, valid_sp sp -> 0 <= n < 67108864 ->
@@ -119,10 +121,12 @@ Section Main.
   Definition tgt_realizes_stmt2 : Prop :=
     forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
       valid_sp sp -> valid_brk RSEGS brk -> valid_mmap_base mbase ->
-      entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+      valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp ->
-      srealizes RSEGS scfg
-        (init_config RSEGS Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rdraw target_alloc_limit inp)
+      in_channel_reader inp = true ->
+      (* LPS 08b1429: over the run's segment list, lifted by [SRomStable.srun_init]. *)
+      srealizes (run_segments RSEGS inp sp mbase) scfg
+        (init_config (run_segments RSEGS inp sp mbase) Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rdraw target_alloc_limit inp)
         (spec (in_argv inp) (in_fs inp)).
 
   Lemma cred_credit_ok : forall L Kc Bc, 0 <= Kc -> 0 <= Bc -> 0 <= hl_k_per_malloc L -> 0 <= hl_b_overhead L ->
@@ -133,14 +137,17 @@ Section Main.
 
   Theorem ub0_realizes_spec : tgt_realizes_stmt2.
   Proof.
-    unfold tgt_realizes_stmt2. intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfits Hva Hve Hvfs Hcreds.
+    unfold tgt_realizes_stmt2. intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hvl Hlau Hva Hve Hvfs Hcreds Hrd.
+    apply (SRomStable.srun_init scfg RSEGS inp sp mbase _ _ _ _ _ _ eq_refl).
     apply ref_startup; try assumption.
     intros tid regs mem Htid ME.
-    rewrite with_tid_init_model_E.
-    set (RE := run_env_of inp).
-    set (fs0 := in_fs inp) in *. clearbody fs0.
-    destruct inp as [argv envp ifs0 stdin0 uid gid groups net nofile sigmask hw abt va urnd0 tmp0].
-    cbn [in_argv in_envp in_stdin in_uid in_hwcap] in *.
+    rewrite with_tid_with_vdso_init_model_E.
+    set (RE := run_env_at inp (Vdso.vdso_run_init (ed_vdso rdraw))).
+    assert (RO : @ReaderOn RE) by exact Hrd.
+    destruct inp as [argv envp ifs0 stdin0 uid gid groups net nofile sigmask hw abt va urnd tmp0 kern execfn chr spd spt].
+    unfold in_fs in *. cbn [in_argv in_envp in_image_fs in_tmp in_stdin in_uid in_hwcap in_kernel in_execfn] in *.
+
+    set (fs0 := fs_seed_tmp ifs0 tmp0) in *. clearbody fs0.
     assert (Huid : bv_unsigned uid < 2 ^ 32) by (destruct Hcreds as [Hu _]; unfold valid_id in Hu; cbn [in_uid] in Hu; lia).
     clearbody RE. clear Hcreds.
     pose proof (HIokF sp Hsp) as HIok. pose proof (DLF sp Hsp) as DL. pose proof (DLLF sp Hsp) as DLL. pose proof (LIokF sp Hsp) as LIok.
@@ -150,27 +157,28 @@ Section Main.
     { destruct (dll_credit_pos Lay L DLL 0 ltac:(lia)) as [P1 P2]. pose proof (Hbudget sp 0 Hsp ltac:(lia)) as HB0.
       fold L Lay in HB0. refine (cred_credit_ok L _ _ _ _ Hkpm Hovh HB0); lia. }
     destruct argv as [|a0s [|path [|x l]]].
-    - apply (ref_usage_w scfg sp [] envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid ME Hfits). cbn; lia.
-    - apply (ref_usage_w scfg sp [a0s] envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid ME Hfits). cbn; lia.
+    - apply (ref_usage_w scfg sp [] envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid _ _ ME). cbn; lia.
+    - apply (ref_usage_w scfg sp [a0s] envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid _ _ ME). cbn; lia.
     - cbn [spec].
-      pose proof (HINIT sp a0s path envp uid hw rdraw tid regs mem brk mbase Hsp Hbrk Hmb Hva Hve Htid ME) as HH0. fold HI in HH0.
+      pose proof (HINIT sp a0s path envp uid hw rdraw tid regs mem brk mbase _ Hsp Hbrk Hmb Hva Hve Htid ME) as HH0. fold HI in HH0.
       destruct (Nat.leb_spec0 4096 (length path)) as [Hlong|Hshort].
-      + apply (ref_open_fail_toolong_w scfg sp a0s path envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid ME Hfits Hlong).
+      + apply (ref_open_fail_toolong_w scfg sp a0s path envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid _ _ ME Hlong).
       + destruct (list_byte_eqb path []) eqn:Hemp.
         * apply list_byte_eqb_iff in Hemp.
-          apply (ref_open_fail_empty_w scfg sp a0s path envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid ME Hfits Hemp).
+          apply (ref_open_fail_empty_w scfg sp a0s path envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid _ _ ME Hemp).
         * assert (Hne : path <> []) by (intros E; apply list_byte_eqb_iff in E; rewrite E in Hemp; discriminate).
-          (* [comment removed for export] *)
-          assert (HKA : open_err_k scfg sp a0s path envp hw rdraw tid mem (mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk target_alloc_limit mbase sp)
-                          fs0 stdin0 (t_die (msg_cannot_open path) fs0)).
+
+          lazymatch type of ME with main_entry ?inp0 _ _ _ _ _ _ _ _ _ _ _ =>
+          assert (HKA : open_err_k scfg sp a0s path envp hw rdraw tid mem (mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp kern) [] [] brk brk target_alloc_limit mbase sp)
+                          fs0 stdin0 inp0 (t_die (msg_cannot_open path) fs0)) end.
           { unfold open_err_k. intros e vals R M He HL P0 P38 P2 HR HK HA.
-            exact (ref_open_fail_errno scfg sp a0s path envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 target_alloc_limit Hva Hve Hsp ME Hfits
+            exact (ref_open_fail_errno scfg sp a0s path envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 target_alloc_limit Hva Hve Hsp Htid _ _ ME
                      e vals R M He HL P0 P38 P2 HR HK HA). }
           replace (0x20348%bv : word) with (Z_to_bv 64 0x20348) by (apply bv_eq; reflexivity).
           destruct (list_byte_eqb path dot_path) eqn:Hdot.
           -- (* [comment removed for export] *)
              apply list_byte_eqb_iff in Hdot.
-             pose proof (drv_dir scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem _ fs0 stdin0 cr0 Hva Hve Hsp Htid ME Hfits Hfs Hdot DL HH0 Hcr65536
+             pose proof (drv_dir scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem _ fs0 stdin0 cr0 Hva Hve Hsp Htid _ _ _ ME Hfs Hdot DL HH0 Hcr65536
                            _ HKA) as HD.
              rewrite Hdot in HD |- *. exact HD.
           -- assert (Hnd : path <> dot_path) by (intros E; apply list_byte_eqb_iff in E; rewrite E in Hdot; discriminate).
@@ -181,44 +189,44 @@ Section Main.
                lazymatch goal with |- context [path_eqb path ?d] => destruct (path_eqb path d) eqn:E; [|reflexivity] end.
                exfalso. apply Hnd. apply path_eqb_eq in E. rewrite E. reflexivity. }
              destruct (fs_lookup fs0 path) as [fdata|] eqn:Hlk.
-             ++ (* [comment removed for export] *)
-                apply (drv_open scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem _ fs0 stdin0 fdata cr0 Hva Hve Hsp Htid ME Hlk Hne Hppl Hfs
+             ++
+                apply (drv_open scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem _ fs0 stdin0 fdata cr0 Hva Hve Hsp Htid _ _ _ ME Hlk Hne Hppl Hfs
                          ltac:(lia) DL HH0 Hcr65536 _ _ HKA); [| apply t_body_nil].
-                (* [comment removed for export] *)
+
                 set (PLv := Z.max 0 (Z.min (PL fdata) 67108863)).
                 assert (HPLv : 0 <= PLv < 67108864) by lia.
                 destruct (dll_credit_pos Lay L DLL PLv ltac:(lia)) as [CP1 CP2].
-                apply (drv_file scfg L HI HIok sp a0s path envp uid hw rdraw tid mem
-                         fs0 stdin0 fdata cr0 Hva Hve Hsp Htid Hlk ltac:(lia) DL
+                apply (drv_file scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem
+                         fs0 stdin0 fdata cr0 Hva Hve Hsp Htid _ _ _ ME Hlk ltac:(lia) DL
                          (hl_k_per_malloc L + 4 * fst (ll_credit Lay PLv)) (PLv + hl_b_overhead L + 4 * snd (ll_credit Lay PLv))
                          ltac:(lia) ltac:(lia) (t_body fdata fs0) (t_body_nil fdata fs0)).
                 ** (* [comment removed for export] *)
                    intros Hlt CAP crC HCAP HltC HK1 HB1.
                    destruct (Nat.lt_ge_cases (length fdata) 6) as [Hs|Hge6].
                    { rewrite (t_body_short fdata fs0) by (unfold MAX_INPUT; lia).
-                     exact (hdr_short scfg L HI HIok sp a0s path envp uid hw rdraw tid mem fs0 stdin0 fdata Hva Hve Hsp Htid ltac:(lia) DL CAP crC Hs). }
+                     exact (hdr_short scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem fs0 stdin0 fdata Hva Hve Hsp Htid _ _ _ ME ltac:(lia) DL CAP crC Hs). }
                    destruct (Z.lt_ge_cases (Z.of_nat (length fdata)) (6 + CFG fdata)) as [Hov|Hok].
                    { rewrite (t_body_overrun fdata fs0) by (unfold MAX_INPUT; lia).
-                     exact (hdr_overrun scfg L HI HIok sp a0s path envp uid hw rdraw tid mem fs0 stdin0 fdata Hva Hve Hsp Htid ltac:(lia) DL CAP HCAP crC HltC Hge6 Hov). }
+                     exact (hdr_overrun scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem fs0 stdin0 fdata Hva Hve Hsp Htid _ _ _ ME ltac:(lia) DL CAP HCAP crC HltC Hge6 Hov). }
                    rewrite (t_body_ok fdata fs0) by (unfold MAX_INPUT; lia).
-                   apply (hdr_ok scfg L HI sp a0s path envp uid hw rdraw tid mem fs0 stdin0 fdata Hva Hve Hsp ltac:(lia) DL CAP HCAP crC HltC Hok);
+                   apply (hdr_ok scfg L HI sp a0s path envp uid hw rdraw tid regs mem fs0 stdin0 fdata Hva Hve Hsp Htid _ _ _ ME ltac:(lia) DL CAP HCAP crC HltC Hok);
                      [| apply t_emit_has_nil].
                    assert (HPLeq : PL fdata = PLv) by (unfold PLv; rewrite !PL_eq; pose proof (CFG_range fdata); lia).
-                   apply (drv_target scfg L HI HIok sp a0s path envp uid hw rdraw tid mem (mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk target_alloc_limit mbase sp) fs0 stdin0 fdata Hva Hve Hsp Htid ltac:(lia) DL CAP HCAP crC HltC Hok);
+                   apply (drv_target scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem (mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp kern) [] [] brk brk target_alloc_limit mbase sp) fs0 stdin0 fdata Hva Hve Hsp Htid _ _ _ ME ltac:(lia) DL CAP HCAP crC HltC Hok);
                      [ intros HPLp; unfold credit_ok; rewrite HPLeq; lia | | apply t_emit_has_nil].
-                   apply (drv_loop scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem (mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk target_alloc_limit mbase sp) fs0 stdin0 fdata Hva Hve Hsp Htid ME ltac:(lia) DL CAP HCAP crC HltC
-                            Lay LSt DLL LIok Huid Hfits Hok).
-                   (* [comment removed for export] *)
+                   apply (drv_loop scfg L HI HIok sp a0s path envp uid hw rdraw tid regs mem (mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp kern) [] [] brk brk target_alloc_limit mbase sp) fs0 stdin0 fdata Hva Hve Hsp Htid _ _ _ ME ltac:(lia) DL CAP HCAP crC HltC
+                            Lay LSt DLL LIok Huid Hok).
+
                    pose proof (CALLS_range fdata) as HCL.
                    unfold credit_le, credit_scale, cr1. rewrite HPLeq. cbn [fst snd].
                    destruct (PLv =? 0)%Z eqn:EP; unfold debit; cbn [fst snd]; split; nia.
                 ** (* [comment removed for export] *)
                    intros Hge. unfold refuse_at. rewrite (t_body_refused fdata fs0) by (unfold MAX_INPUT; lia).
-                   exact (drv_refuse scfg HI sp a0s path envp hw rdraw tid mem fs0 stdin0 fdata Hsp Htid ltac:(lia)).
+                   exact (drv_refuse scfg HI sp a0s path envp hw rdraw tid mem fs0 stdin0 fdata Hsp Htid _ ltac:(lia)).
                 ** pose proof (Hbudget sp PLv Hsp HPLv) as HB. fold L Lay in HB. exact HB.
              ++ replace (Z_to_bv 64 0x20348) with (0x20348%bv : word) by (apply bv_eq; reflexivity).
-                apply (ref_open_fail_absent_w scfg sp a0s path envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid ME Hfits ltac:(lia) Hne Hppl Hlk).
-    - apply (ref_usage_w scfg sp (a0s :: path :: x :: l) envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid ME Hfits). cbn; lia.
+                apply (ref_open_fail_absent_w scfg sp a0s path envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid _ _ ME ltac:(lia) Hne Hppl Hlk).
+    - apply (ref_usage_w scfg sp (a0s :: path :: x :: l) envp uid hw rdraw tid regs mem brk mbase fs0 stdin0 _ Hva Hve Hsp Htid _ _ ME). cbn; lia.
   Qed.
 End Main.
 End FPX_1.

@@ -1,7 +1,7 @@
-# v10 global_settings 439f8e3bd463 on lib/ of a8fc5eedae69: every row in a file this core adds
+# v10 global_settings 439f8e3bd463 on lib/: every row in a file this core adds
 # (lib/A/*, the A-only kernel files, Reusable/YImgTop.v), with the identical line in its released donor file.
-# Rows in the plain side's files (5e64a89b4393) are that lane's record. Whole lib: SUMMARY 1606 files; ESCAPES 832; PLAIN 3015; UNMEASURED 2; KERNEL 0.
-file	line	class	level	donor_released_file@25e3d17bdb50	donor_line	setting
+# Rows in the plain side's files are that lane's record. Whole lib: SUMMARY 1606 files; ESCAPES 832; PLAIN 3015; UNMEASURED 2; KERNEL 0.
+file	line	class	level	donor_released_file	donor_line	setting
 A/AB01.v	16	PLAIN	TACTIC	proofs/cgif/cgif_file_fuzzer/lib/A/AB01.v	9	Unset Lia Cache.
 A/AB01.v	16	PLAIN	TACTIC	proofs/cgif/cgif_file_fuzzer/lib/A/AB01.v	9	Unset Nia Cache.
 A/AB03.v	9	PLAIN	TACTIC	proofs/cgif/cgif_file_fuzzer/lib/A/AB03.v	9	Unset Lia Cache.

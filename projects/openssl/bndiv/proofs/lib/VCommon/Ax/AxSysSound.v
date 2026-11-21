@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adv_effect, R_sys_post and R_reg_sys state the syscall post-state's cleared reservation, None and RNone; set_tid_address's new sys_rob premise via rob_sys_96). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -24,9 +25,27 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Definition eff_mem (m : word -> option byte) (eff : SyscallEffect) : word -> option byte :=
   apply_writes (apply_copies m (apply_zeros (apply_unmaps m (eff_unmaps eff)) (eff_zeros eff)) (eff_copies eff)) (eff_writes eff).
 
+(* WAS, and the farm measured it false at AxSysSound.v:30:
+     Lemma adv_effect (ms : machine_state) (eff : SyscallEffect) :
+       advance_past_svc (apply_effect (latch ms) eff)
+       = setx ms (Z_to_bv 5 10) (eff_ret eff) (ms_pc_val ms + Z_to_bv 64 4)%bv
+             (ms_resv ms) (eff_mem (ms_mem ms) eff).
+     Proof. reflexivity. Qed.
+   THE ONE FIELD THAT MOVED, read from the three definitions rather than inferred from
+   the unification message:
+     LPS@75d69e00 Run.v:221-227  advance_past_svc sets `ms_resv := None`.
+     VCommon/BootWitness/BootStep.v:28-29  setx ms rd v pc' RESV mem -- the fifth
+       argument is the reservation, so `(ms_resv ms)` is what the old statement claimed.
+     VCommon/Ax/AsanWAcc.v:37-40  latch keeps ms_pc_val and ms_resv untouched and only
+       sets ms_svc_pending, so it contributes nothing to this difference.
+   advance_past_svc also writes `ms_pc_val := ms_pc ms + 4` where the statement says
+   `ms_pc_val ms + 4`; latch and apply_effect both carry ms_pc_val through unchanged and
+   the old proof closed by reflexivity on that field, so the accessors agree here and
+   only the reservation changed.  ONE character of substance: (ms_resv ms) -> None. *)
 Lemma adv_effect (ms : machine_state) (eff : SyscallEffect) :
   advance_past_svc (apply_effect (latch ms) eff)
-  = setx ms (Z_to_bv 5 10) (eff_ret eff) (ms_pc_val ms + Z_to_bv 64 4)%bv (ms_resv ms) (eff_mem (ms_mem ms) eff).
+  = setx ms (Z_to_bv 5 10) (eff_ret eff) (ms_pc_val ms + Z_to_bv 64 4)%bv
+        None (eff_mem (ms_mem ms) eff).
 Proof. reflexivity. Qed.
 
 Lemma eff_mem_ret (m : word -> option byte) (r : word) : eff_mem m (mkEffect r [] []) = m.
@@ -47,13 +66,24 @@ Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
 
 (* [comment removed for export] *)
+(* WAS, and the farm measured the consumer side false at AxSysSound.v:97:
+     Lemma R_sys_post ... -> a_resv B = a_resv A -> ...
+       RR ρ B (mkCfg (setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4)%bv
+                           (ms_resv ms) mem') m').
+   adv_effect above now produces `None` in that fifth (reservation) argument, because
+   advance_past_svc clears the reservation (LPS@75d69e00 Run.v:221-227).  So the
+   abstract post-state has to record the clearing too: the premise becomes
+   `a_resv B = RNone` -- which is exactly what AxSys.v's with_model now builds, so
+   every call site still discharges it by reflexivity -- and r_resv is then
+   RResv ρ RNone None, i.e. None = None (AxState.v:343-348).  Two characters of
+   substance: (ms_resv ms) -> None on the right, a_resv A -> RNone in the premise. *)
 Lemma R_sys_post (ρ : valuation) (A B : AST) (ms : machine_state) (model m' : Model) (ret : word) (rv : xv) (mem' : word -> option byte) :
   RR ρ A (mkCfg ms model) ->
-  a_pc B = npc A -> pc_ok (npc A) = true -> a_regs B = aset (a_regs A) reg_a0 rv -> a_resv B = a_resv A ->
+  a_pc B = npc A -> pc_ok (npc A) = true -> a_regs B = aset (a_regs A) reg_a0 rv -> a_resv B = RNone ->
   xv_val ρ rv ret -> sat ρ (a_facts B) -> MRm ρ (a_model B) m' -> m_halted m' = None ->
   vm_backing_used m' <= a_budget B -> vm_limit (m_vmmaps m') = LIM ->
   RMem segs ρ (a_mem B) mem' -> hs_ok ρ (a_mem B) mem' -> mem_cov segs m' mem' -> comp_inv segs ρ (a_mem B) m' -> na_ok segs ρ (a_mem B) m' mem' ->
-  RR ρ B (mkCfg (setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4)%bv (ms_resv ms) mem') m').
+  RR ρ B (mkCfg (setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4)%bv None mem') m').
 Proof.
   intros HR Epc Hok Eregs Eresv Hv Hsat HM Hh Hb Hl HRM Hhs Hcov Hcomp Hna.
   destruct HR as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15]. cbn [cfg_ms cfg_model] in *.
@@ -62,14 +92,16 @@ Proof.
   - rewrite Epc. exact (pc_ok_spec _ Hok).
   - reflexivity.
   - rewrite Eregs. change reg_a0 with (ri (Z_to_bv 5 10)). apply RRegs_set; assumption.
-  - rewrite Eresv. exact H5.
+  - rewrite Eresv. reflexivity.
   - split; assumption.
 Qed.
 
 (* [comment removed for export] *)
+(* `a_resv B = a_resv A` WAS the fifth premise; it is now `a_resv B = RNone`, for the
+   reason recorded at R_sys_post above.  Its call sites all pass a with_model state. *)
 Lemma R_reg_sys (ρ : valuation) (A B : AST) (ms : machine_state) (model m' : Model) (ret : word) (rv : xv) :
   RR ρ A (mkCfg ms model) ->
-  a_pc B = npc A -> pc_ok (npc A) = true -> a_regs B = aset (a_regs A) reg_a0 rv -> a_resv B = a_resv A -> a_mem B = a_mem A ->
+  a_pc B = npc A -> pc_ok (npc A) = true -> a_regs B = aset (a_regs A) reg_a0 rv -> a_resv B = RNone -> a_mem B = a_mem A ->
   xv_val ρ rv ret -> sat ρ (a_facts B) -> MRm ρ (a_model B) m' -> m_halted m' = None ->
   vm_backing_used m' <= a_budget B -> vm_limit (m_vmmaps m') = LIM -> m_vmmaps m' = m_vmmaps model ->
   RR ρ B (mkCfg (advance_past_svc (apply_effect (latch ms) (mkEffect ret nil nil))) m').
@@ -120,7 +152,8 @@ Proof.
   assert (H17 : bv_unsigned (rg ms (Z_to_bv 5 17)) = 96) by exact (reg_lit ρ _ ms (Z_to_bv 5 17) 17%uint63 96 Hregs eq_refl H17x).
   assert (Hmt : m_tid model = None) by (pose proof (mr_tid segs fs0 ρ _ _ HM) as X; rewrite Etid in X; exact X).
   apply (rzc_latch segs cfg ms model w _ Hh Hsvc Hf He).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) Hh eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) Hh eq_refl
+           (rob_sys_96 segs (latch ms) model (rg ms (Z_to_bv 5 17)) eq_refl H17)).
   - rewrite (check_syscall_96 segs _ _ _ _ H17). unfold check_set_tid_address. rewrite Hmt. cbn. discriminate.
   - intros eff m' evs Hc. rewrite (check_syscall_96 segs _ _ _ _ H17) in Hc. unfold check_set_tid_address in Hc. rewrite Hmt in Hc.
     destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate Hc]. destruct zs; [|discriminate Hc]. destruct us; [|discriminate Hc].

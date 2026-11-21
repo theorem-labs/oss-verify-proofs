@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: bit-level and arithmetic facts that musl fread's walk (libreac/fuzz_pcap,
    ASan build, fread 0x8ee5c) needs about the RISC-V value functions, and the facts about
-   rread_k / rmread_fill (lib/A/Stdio/PFreadM.v:275-277).
+   rread_k / rmread_fill (lib/A/Stdio/PFreadM.v:276-278).
 
    rule 24: no function proved. These are auxiliary lemmas, not a function walk.
 
@@ -108,7 +109,7 @@ Lemma fa_D_8ef60 : decode_any (0x02955533 : bv 32) = Some (Mul M_DIVU 10 10 9, 4
 Proof. fa_vm_refl. Qed.
 End fa_dec.
 
-(* 4-8. rread_k (PFreadM.v:275) and rmread_fill (PFreadM.v:277). *)
+(* 4-8. rread_k (PFreadM.v:276) and rmread_fill (PFreadM.v:278). *)
 Lemma rread_k_bounds : forall l n p, 0 <= l -> 0 <= p <= n ->
   0 <= rread_k l n p <= l /\ rread_k l n p <= n - p.
 Proof. intros l n p Hl Hp. unfold rread_k. lia. Qed.

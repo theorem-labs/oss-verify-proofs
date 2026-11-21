@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the section takes the launch's fields (QpvH.inp argv envp ifs stdin uid gid hw groups ... kb execfn ...), apc and mbase, with QpvH.launch_ok in place of entry_stack_fits, for SINV0, argH0 and E0; the entry stack layout: the auxv address by QpvH.u_e_auxv and the stack bounds from the length of entry_stack_image; the stack facts up to 24 + AUXSZ 1, below the image's end at its page-aligned top). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -44,24 +45,43 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
+Let Hfes := proj1 Hfit.
+Let Hkernel := proj1 (proj2 Hfit).
+Let Hlaunch := proj1 (proj2 (proj2 Hfit)).
+Let Hlau := proj2 (proj2 (proj2 Hfit)).
+#[local] Ltac qpv X := first [ solve [eapply (X JO6PH apc); eassumption] | solve [eapply (X JO6PH); eassumption] | solve [eapply X; eassumption] ].
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation h := (m_vmmaps mo).
 #[local] Notation LV := (LV_J E).
-#[local] Notation argH := (argH0 JO6PH sp rdraw argv envp uid hw).
+#[local] Notation argH := (argH0 sp rdraw argv envp kb execfn).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation argc := (Z.of_nat (length argv)).
 #[local] Notation envc := (Z.of_nat (length envp)).
 #[local] Notation HID := (hid AJO6 usp argH E ch mo).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
 
 Definition GLO : Z := 0x7fff8000 + (TOPP usp - 8388608) / 8.
 Definition GHI : Z := 0x7fff8000 + atopE E / 8.
@@ -200,7 +220,10 @@ Qed.
 Definition H1g (a : word) : bool := (HID a || gapb a)%bool.
 
 Lemma HID_off : H_off_segments JO6SEGS HID.
-Proof. exact (H_off_segments_cs JO6SEGS AJO6 usp asan_in_hull asan_hull_ok argH (argH0_high JO6PH sp rdraw argv envp uid hw Hsp Hva) E ch mo). Qed.
+Proof.
+assert (AH : forall E a, argH0 sp rdraw argv envp kb execfn E a = true -> CEIL <= bv_unsigned a) by qpv QpvH.argH0_high.
+exact (H_off_segments_cs JO6SEGS AJO6 usp asan_in_hull asan_hull_ok argH AH E ch mo).
+Qed.
 
 Lemma H1g_off : H_off_segments JO6SEGS H1g.
 Proof.
@@ -214,7 +237,8 @@ Proof.
 intros a Ha. unfold hid, vis, in_hull. cbn [img_lo img_hi AJO6].
 replace (argH E a) with false.
 2:{ symmetry. destruct (argH E a) eqn:Hg; [|reflexivity]. exfalso.
-pose proof (argH0_high JO6PH sp rdraw argv envp uid hw Hsp Hva E a Hg). unfold CEIL in *. lia. }
+assert (AH : forall E a, argH0 sp rdraw argv envp kb execfn E a = true -> CEIL <= bv_unsigned a) by qpv QpvH.argH0_high.
+pose proof (AH E a Hg). unfold CEIL in *. lia. }
 cbn [orb negb]. replace ((65536 <=? bv_unsigned a) && (bv_unsigned a <? 6574080))%bool with true; [reflexivity|].
 symmetry. apply andb_true_intro; split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
 Qed.
@@ -269,11 +293,11 @@ Qed.
 Lemma u_auxv : bv_unsigned (edenot E E_AUXV) = usp + 8 * argc + 8 * envc.
 Proof.
 pose proof (proj1 (P co_sinv)) as Senv.
-rewrite (edenot_ev_agree NX0 E (E0 JO6PH sp rdraw brk0 argv envp uid hw) E_AUXV Senv eq_refl eq_refl).
-pose proof (QpvH.u_e_auxv JO6PH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U.
-pose proof (split_lit_denot (E0 JO6PH sp rdraw brk0 argv envp uid hw) e_auxv E_AUXV 24 split_auxv) as S.
+rewrite (edenot_ev_agree NX0 E (E0 sp rdraw brk0 argv envp uid gid hw kb execfn) E_AUXV Senv eq_refl eq_refl).
+assert (U : uE (E0 sp rdraw brk0 argv envp uid gid hw kb execfn) e_auxv = usp + 8 * argc + 8 * envc + 24) by qpv QpvH.u_e_auxv.
+pose proof (split_lit_denot (E0 sp rdraw brk0 argv envp uid gid hw kb execfn) e_auxv E_AUXV 24 split_auxv) as S.
 unfold uE in U. rewrite S, u_lit64a in U.
-pose proof (u64_range (edenot (E0 JO6PH sp rdraw brk0 argv envp uid hw) E_AUXV)). pose proof (u64_range sp).
+pose proof (u64_range (edenot (E0 sp rdraw brk0 argv envp uid gid hw kb execfn) E_AUXV)). pose proof (u64_range sp).
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
@@ -281,12 +305,29 @@ Qed.
 Lemma stack_fact_avoids : forall K, stack_fact K = true -> fact_avoids (hidden LV mo) E K.
 Proof.
 intros K Hs.
-pose proof (QpvH.usp_fit JO6PH sp rdraw argv envp uid hw Hfit) as Ufit.
-pose proof (QpvH.bsb_ge JO6PH sp rdraw argv envp uid hw) as [G _].
+assert (Ufit : usp + Z.of_nat (length (entry_stack_image (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) mbase JO6PH (Z_to_bv 64 (Z.of_N apc)) sp rdraw)) <= 2 ^ 47) by qpv QpvH.usp_fit.
+assert (G : 8 * argc + 8 * envc + 482 <= Z.of_nat (length (entry_stack_image (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) mbase JO6PH (Z_to_bv 64 (Z.of_N apc)) sp rdraw))) by qpv QpvH.bsb_ge.
+(* LPS 727298f3: the image runs from sp to the stack VMA's page-aligned top (stack_image_size), so its length
+   is a multiple of 8 and the 29-pair auxv, up to 24 + AUXSZ 1 above E_AUXV, ends below the image's end *)
+assert (LB : Z.of_nat (length (entry_stack_image (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) mbase JO6PH (Z_to_bv 64 (Z.of_N apc)) sp rdraw)) = bv_unsigned (ed_top rdraw) - usp) by qpv QpvH.length_bsb_eq.
+assert (TA : bv_unsigned (ed_top rdraw) mod 4096 = 0) by (pose proof Hlau as ((TA0 & _ & _) & _ & _); exact TA0).
+assert (GA : 8 * argc + 8 * envc + 24 + AUXSZ 1 <= Z.of_nat (length (entry_stack_image (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) mbase JO6PH (Z_to_bv 64 (Z.of_N apc)) sp rdraw))).
+{ destruct Hsp as (_ & _ & HSA). unfold AUXSZ.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
+lia.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+}
+unfold AUXSZ in GA.
 pose proof (MA main_atop_bounds) as AB. rewrite atop_val in AB.
-destruct K; cbn [stack_fact] in Hs; try discriminate Hs. destruct a as [b off]. cbn [fact_avoids].
-apply andb_prop in Hs as [Hs H3]. apply andb_prop in Hs as [H1 H2]. apply expr_eqb_eq in H1. subst b.
-apply Z.leb_le in H2. apply Z.leb_le in H3. intros i Hi. unfold estart. cbn [a_base a_off]. rewrite u_auxv.
+destruct K; cbn [stack_fact] in Hs; try discriminate Hs; destruct a as [b off]; cbn [fact_avoids].
+- apply andb_prop in Hs as [Hs H3]. apply andb_prop in Hs as [H1 H2]. apply expr_eqb_eq in H1. subst b.
+apply Z.leb_le in H2. apply Z.leb_le in H3. unfold AUXSZ in H3. intros i Hi. unfold estart. cbn [a_base a_off]. rewrite u_auxv.
+unfold hidden. apply negb_false_iff. rewrite u64_lit by lia. apply allowed_base. right. rewrite atop_val. lia.
+- destruct n as [nn| | | | | | |]; try discriminate Hs.
+apply andb_prop in Hs as [Hs H4]. apply andb_prop in Hs as [Hs H3]. apply andb_prop in Hs as [H1 H2]. apply expr_eqb_eq in H1. subst b.
+apply Z.leb_le in H2. apply Z.leb_le in H3. apply Z.leb_le in H4. unfold AUXSZ in H4.
+intros i Hi. unfold elenZ in Hi. cbn [edenot] in Hi. rewrite u64_lit in Hi by lia.
+unfold estart. cbn [a_base a_off]. rewrite u_auxv.
 unfold hidden. apply negb_false_iff. rewrite u64_lit by lia. apply allowed_base. right. rewrite atop_val. lia.
 Qed.
 

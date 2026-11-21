@@ -5,9 +5,9 @@
    fuzz_command.asan-ubsan; the walk is lib/B/Prog/pins_clear.v): the listing of the function, the entry state and
    g_rec's region, the model's two arms, the refusal word's sign extension and the test, the recorder's
    representation after the store of g_rec.state, the call targets, and the footprint and journal facts. Copied in
-   part from the ASan walk (lib/A/Prog/pins_clear_s4.v on a working branch 3cc8391594b) and from the B helper
-   files of descriptors_add (a working branch 92b1730d737) and lv2_refusals_forget
-   (a working branch 6a72ccf993e), re-derived on pins_clear's B code.
+   part from the ASan walk (lib/A/Prog/pins_clear_s4.v on a working branch) and from the B helper
+   files of descriptors_add (a working branch) and lv2_refusals_forget
+   (a working branch), re-derived on pins_clear's B code.
 
    B's code (fuzz_command.asan-ubsan sha256 658cefbe806b535ba1fbe5a37c8efe02099fc39c326f300e9b1c969d479df401,
    .symtab pins_clear = 0x8cbe8, size 108 = 27 instructions, all 4 bytes; listing lib/B/Prog/CmdList.v:6653-6679;
@@ -27,6 +27,7 @@
    No `jal __asan_report_*` and no unimp / ebreak in [0x8cbe8, 0x8cc54): 0 report edges and 0 UBSan trap edges. Every
    g_rec access goes through s1 = the object atom A_OBJ 44 (cmd_val_objs), never through an auipc (A_HI) base, so
    the walk needs no `cmd_val_his`. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

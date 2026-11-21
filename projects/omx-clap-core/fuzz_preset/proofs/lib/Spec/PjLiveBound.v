@@ -1,7 +1,7 @@
 (* omx-clap-core/fuzz_preset: the per-call LIVE byte bounds of the #102 check texts. Nothing here is a function's
    proof (rule 24); kind: statement text.
 
-   WHAT IS BOUNDED. The kit's check texts (walkkit-next 99f596897b85: lib/A/PRH_FnCheck.v:212-220 and :382-403,
+   WHAT IS BOUNDED. The kit's check texts (walkkit-next: lib/A/PRH_FnCheck.v:212-220 and :382-403,
    PRH_FnPj.v:184-214, PRH_FnWriter.v:179-180, PRH_FnTx.v:146, PRH_FnReader.v:357, PRH_Reader.v:53-57 and :189) take
    `blocks_bytes S + LIVE_<fn> .. <= LIVE_MAX` as a premise. The walk of LLVMFuzzerTestOneInput discharges it from
    `blocks_bytes S + LIVE_LIB <= LIVE_MAX`, LIVE_LIB = 3 * 2 ^ 32 (live_lib), so each LIVE_<fn> of the input x, or of

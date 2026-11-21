@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the harness blocks of Section BlocksT walk the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing, through drv_run_lf_rt under the run's driver laws asan_driver_laws_run, since the target calls time(), which reads the vDSO). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Amb
   MainDefs MainArith MainWalk_defs MainSegs.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import MState Exec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsShadow AsConst AsIface AsCXXHeap AsDriverLaws RefExitBase AsDrvRun AsPrintfFirst AsTRWalk_defs.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail.
 Import ListNotations.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -69,19 +71,26 @@ Lemma covT7b : log_covered regT (s_log (fst (fst rT7b))) = true. Proof. vm_compu
 Lemma covT8 : log_covered regT (s_log (fst (fst rT8))) = true. Proof. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
+(* The harness's walk calls the target, so it is over the run's segment list from the
+   configuration with that list's read-only backing ([arz]; [drv_run_lf_rt], As/AsDrvRun.v); the
+   symbolic run, the knowledge and the memory facts stay the binary's. *)
 Ltac run_segT stops scr pc sr kn nx r c E M R :=
   lazymatch goal with
-  | HVx : AsIface.as_VIS ?Hh ?sx ?msFx = _, DLx : asan_driver_laws ?Hh |- @realizes _ _ (mkCfg ?msFx ?mox) _ =>
-    eapply (drv_run_lf Hh DLx sx FUELM stops scr pc sr kn nx (fst (fst r)) (snd (fst r)) (snd r)
+  | HVx : AsIface.as_VIS ?Hh ?sx ?msFx = _, DLx : asan_driver_laws_run _ _ _ _ ?Hh |- @realizes _ _ (RomBase.cwrom (mkCfg ?msFx ?mox) _) _ =>
+    eapply (drv_run_lf_rt Hh DLx sx FUELM stops scr pc sr kn nx (fst (fst r)) (snd (fst r)) (snd r)
               (fst (fst c)) (snd (fst c)) (snd c) E M R msFx mox);
     [ vm_cast_no_check (@eq_refl _ r) | vm_cast_no_check (@eq_refl _ c) | | | | scs_nil | | | ]
   end.
 
 Section BlocksT.
   Context {HCEIL : HeapCeil}.
+  (* the harness's blocks run on the way to and from the target, which calls time() and so reads
+     and enters the vDSO: their walks are over the run's segment list, under the run's driver laws *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Hypothesis HH : asan_rt_hyps H.
-  Hypothesis DL : asan_driver_laws H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
   Variable sp : word.          (* [comment removed for export] *)
   Hypothesis Hsp16 : (bv_unsigned sp mod 16 = 0)%Z.
   Hypothesis HspLo : (0x7fff7f811000 <= bv_unsigned sp)%Z.
@@ -249,9 +258,9 @@ Section BlocksT.
         keep6 regs regs' -> frame_mod mem mem' (regTb_w sp) -> stk_ok RSEGS mem' sp 128 ->
         tframe mem' (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19) (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 23) ->
         (bv_unsigned ib = 0%Z -> cells_ok mem' atexit_done_cells) ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f40d0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem CP cfg PL N ib K R1 R2 R4 R10 R11 R12 R13 Hib HAP Hstk Hro Hrel Hlatch HK HV HA.
     set (v := TV (Z_to_bv 64 0) cfg N (Z_to_bv 64 0) (Z_to_bv 64 (bv_unsigned ib)) (Z_to_bv 64 0) (Z_to_bv 64 0) PL CP (Z_to_bv 64 0) (Z_to_bv 64 0)).
@@ -348,9 +357,9 @@ Section BlocksT.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f412c) mem rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         regs138 regs' (Z_to_bv 64 Nz) PL (Z_to_bv 64 cfgz) CP -> getr regs' 21 = Z_to_bv 64 (calls_of cfgz c) ->
         keep6 regs regs' ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f4118) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem Nz cfgz PL CP c K (R2 & R4 & R8 & R9 & R18 & R19 & R20) HN Hcfg Hc HCP Hstk Hro Hrel Hlatch HK HV HA.
     pose proof (bv_unsigned_in_range 8 c) as Hc8. cbn in Hc8. pose proof (u64_range CP) as HCPr.
@@ -390,9 +399,9 @@ Section BlocksT.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f418c) mem rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         loop_base regs' (Z_to_bv 64 0) (Z_to_bv 64 0xba9920) (Z_to_bv 64 0) -> getr regs' 21 = Z_to_bv 64 (calls_of cfgz c) ->
         keep4 regs regs' ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f4118) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem cfgz PL CP c K (R2 & R4 & R8 & R9 & R18 & R19 & R20) Hcfg Hc HCP Hstk Hro Hrel Hlatch HK HV HA.
     pose proof (bv_unsigned_in_range 8 c) as Hc8. cbn in Hc8. pose proof (u64_range CP) as HCPr.
@@ -431,9 +440,9 @@ Section BlocksT.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1c424c) mem rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         regs138 regs' N PL cfg CP -> getr regs' 21 = r -> getr regs' 1 = Z_to_bv 64 0x1f4134 -> getr regs' 10 = N ->
         keep6 regs regs' ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f412c) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem N PL cfg CP r K (R2 & R4 & R8 & R9 & R18 & R19 & R20) R21 Hstk Hro Hrel Hlatch HK HV HA.
     set (v := TV (Z_to_bv 64 0) cfg N (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) r PL CP (Z_to_bv 64 0) (Z_to_bv 64 0)).
@@ -457,9 +466,9 @@ Section BlocksT.
         regs138 regs' N PL D CP -> getr regs' 21 = r -> getr regs' 1 = Z_to_bv 64 0x1f4148 ->
         getr regs' 10 = D -> getr regs' 11 = PL -> getr regs' 12 = N ->
         keep6 regs regs' ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f4134) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem N PL cfg CP r D K (R2 & R4 & R8 & R9 & R18 & R19 & R20) R21 R10 HD Hstk Hro Hrel Hlatch HK HV HA.
     set (v := TV (Z_to_bv 64 0) cfg N D (Z_to_bv 64 0) (Z_to_bv 64 0) r PL CP (Z_to_bv 64 0) (Z_to_bv 64 0)).
@@ -483,9 +492,9 @@ Section BlocksT.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f418c) mem rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         loop_base regs' N D D -> getr regs' 21 = r ->
         keep4 regs regs' ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f4148) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem N PL cfg CP r D K (R2 & R4 & R8 & R9 & R18 & R19 & R20) R21 Hstk Hro Hrel Hlatch HK HV HA.
     set (v := TV (Z_to_bv 64 0) cfg N D (Z_to_bv 64 0) (Z_to_bv 64 0) r PL CP (Z_to_bv 64 0) (Z_to_bv 64 0)).
@@ -510,9 +519,9 @@ Section BlocksT.
         getr regs' 10 = D -> getr regs' 11 = N ->
         keep4 regs regs' -> frame_mod mem mem' (regTc_w sp) -> stk_ok RSEGS mem' sp 128 ->
         rdn RSEGS mem' (Z_to_bv 64 0xba9914) 1 = Some (word_to_le_bytes 1 (Z_to_bv 64 1)) ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f418c) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem N D OW S3 r K (R2 & R4 & R8 & R9 & R18 & R20 & R22 & R23) R19 R21 Hstk Hro Hrel Hlatch HK HV HA.
     set (v := TV (Z_to_bv 64 0) (Z_to_bv 64 0) N D (Z_to_bv 64 0) (Z_to_bv 64 0) r (Z_to_bv 64 0) (Z_to_bv 64 0) OW S3).
@@ -539,9 +548,9 @@ Section BlocksT.
         getr regs' 11 = Z_to_bv 64 0 ->
         keep4 regs regs' -> frame_mod mem mem' (regTc_w sp) -> stk_ok RSEGS mem' sp 128 ->
         rdn RSEGS mem' (Z_to_bv 64 0xba9914) 1 = Some (word_to_le_bytes 1 (Z_to_bv 64 0)) ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f41a0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem N D OW r K (R2 & R4 & R8 & R9 & R18 & R20 & R22 & R23) R21 R10 Hstk Hro Hrel Hlatch HK HV HA.
     set (v := TV (Z_to_bv 64 0) (Z_to_bv 64 0) N D (Z_to_bv 64 0) (Z_to_bv 64 0) r (Z_to_bv 64 0) (Z_to_bv 64 0) OW (Z_to_bv 64 0)).
@@ -575,9 +584,9 @@ Section BlocksT.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f418c) mem rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         loop_base regs' N D OW -> getr regs' 19 = Z_to_bv 64 18446744073709551615 ->   (* [comment removed for export] *) getr regs' 21 = Z_to_bv 64 (rz - 1) ->
         keep4 regs regs' ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f41b0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem N D OW rz K (R2 & R4 & R8 & R9 & R18 & R20 & R22 & R23) R19 R21 Hr Hstk Hro Hrel Hlatch HK HV HA.
     set (v := TV (Z_to_bv 64 0) (Z_to_bv 64 0) N D (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 rz) (Z_to_bv 64 0) (Z_to_bv 64 0) OW (Z_to_bv 64 0)).
@@ -601,9 +610,9 @@ Section BlocksT.
         as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1c4248) mem rom -> as_AKREL H s (mkCfg msF' mo') -> same_but_materialized mo mo' ->
         loop_base regs' N D OW -> getr regs' 19 = Z_to_bv 64 18446744073709551615 ->   (* [comment removed for export] *) getr regs' 1 = Z_to_bv 64 0x1f41cc -> getr regs' 10 = OW ->
         keep4 regs regs' ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f41b0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem N D OW K (R2 & R4 & R8 & R9 & R18 & R20 & R22 & R23) R19 R21 Hstk Hro Hrel Hlatch HK HV HA.
     set (v := TV (Z_to_bv 64 0) (Z_to_bv 64 0) N D (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 1) (Z_to_bv 64 0) (Z_to_bv 64 0) OW (Z_to_bv 64 0)).
@@ -648,9 +657,9 @@ Section BlocksT.
         getr regs' 22 = s6 -> getr regs' 23 = s7 ->
         (forall r : reg, In r [3; 24; 25; 26; 27]%list -> getr regs' r = getr regs r) ->
         keep4 regs regs' ->
-        realizes asegs (mkCfg msF' mo') K) ->
+        arz (mkCfg msF' mo') K) ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f41cc) mem rom -> as_AKREL H s (mkCfg msF mo) ->
-    realizes asegs (mkCfg msF mo) K.
+    arz (mkCfg msF mo) K.
   Proof.
     intros s msF mo regs mem N D OW s0 s1 s2 s3 s4 s5 s6 s7 K (R2 & R4 & R8 & R9 & R18 & R20 & R22 & R23) Hstk Hro Hrel Hlatch TF HK HV HA.
     set (v := MV sp s0 s1 N D s2 s3 (Z_to_bv 64 0) s4 s5 OW (Z_to_bv 64 0) s6 s7).

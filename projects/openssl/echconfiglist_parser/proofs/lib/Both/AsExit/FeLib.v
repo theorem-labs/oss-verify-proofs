@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failed load is split on range_meets_vvar and the instruction fetch on vdso_text_at, the model's vvar and vDSO-text cases). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import bitvector.
@@ -32,7 +33,7 @@ Proof.
   induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH]; intros m c m1 rs H; cbn [interp_eff_accesses] in H;
     try discriminate.
   - injection H as <- <- <-. apply mem_grows_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [[[c' m'] rs']| |] eqn:Ek;
       [|discriminate|discriminate].
     cbn in H. injection H as <- <- <-. exact (IH _ _ _ _ _ Ek).
@@ -64,6 +65,7 @@ Proof.
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (decode_exec_accesses_grows _ _ _ E)|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (decode_exec_accesses_grows _ _ _ E)|].
   unfold fetch_failure in E.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) `mod` 2 =? 0)%Z); [discriminate|].
   match type of E with (match (if ?c then _ else _) with _ => _ end = _) => destruct c; discriminate end.
 Qed.

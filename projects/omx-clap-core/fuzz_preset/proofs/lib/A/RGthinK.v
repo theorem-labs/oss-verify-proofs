@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinK.v (hub 66a127cb11e, blob b4a97a8df297) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), module paths and every image numeral moved by symbol + offset; record, the internal file A5.md. *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinK.v (blob b4a97a8df297) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), module paths and every image numeral moved by symbol + offset; record, the internal file A5.md. *)
 (* fuzz_preset.asan image A (pinned sha256 d83eb25dbf0df6d5...): the addresses of the realloc chain that the thin realloc
    segments run through, and the decode table of that code.
 

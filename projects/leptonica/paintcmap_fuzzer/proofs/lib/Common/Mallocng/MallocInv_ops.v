@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag ms_thp that mmap_grant_ok reads in ts_sys_mmap; ts_sys_mprotect_none's premise that the range is free of the reservations). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -200,7 +201,7 @@ Section SysSteps.
   Lemma ts_sys_mmap : forall mk (len : word) s (K : word -> M R) P,
     WIN s -> 0 < bv_unsigned len < 2^62 ->
     tsafe (K MAP_FAILED (upd s (errno_mem (ms_mem s) ENOMEM) (ms_vm s))) P ->
-    (forall a : word, mmap_grant_ok mk (ms_vm s) a (page_round_up_Z (bv_unsigned len)) = true ->
+    (forall a : word, mmap_grant_ok mk (ms_thp s) (ms_vm s) a (page_round_up_Z (bv_unsigned len)) = true ->
        tsafe (K a (match mk with
                    | MMrw => upd s (zfill a (page_round_up len) (ms_mem s)) (vm_mmap a (page_round_up len) (ms_vm s))
                    | MMnone => upd s (unfill a (page_round_up len) (ms_mem s)) (vm_noacc a (page_round_up len) (ms_vm s))
@@ -270,15 +271,16 @@ Section SysSteps.
     WIN s -> 0 < bv_unsigned len -> bv_unsigned addr mod 4096 = 0 ->
     bv_unsigned addr + page_round_up_Z (bv_unsigned len) <= alloc_top (ms_vm s) ->
     map_contains (vm_maps (ms_vm s)) addr (page_round_up len) = true ->
+    region_free (vm_reserved (ms_vm s)) addr (page_round_up len) = true ->
     map_contains (vm_noaccess (ms_vm s)) addr (page_round_up len) = true ->
     tsafe (K MAP_FAILED (upd s (errno_mem (ms_mem s) ENOMEM) (ms_vm s))) P ->
     (mprot_ok_vm (ms_vm s) addr (page_round_up len) = true ->
      tsafe (K (Z_to_bv 64 0) (upd s (zfill addr (page_round_up len) (ms_mem s)) (vm_unprotect addr (page_round_up len) (ms_vm s)))) P) ->
     tsafe ((x <- sys_mprotect_rw addr len ;; K x) s) P.
   Proof.
-    intros addr len s K P HWn Hlen Hal Hce Hmc Hna Hf Hok. unfold mbind, sys_mprotect_rw. unfold page_size.
+    intros addr len s K P HWn Hlen Hal Hce Hmc Hrs Hna Hf Hok. unfold mbind, sys_mprotect_rw. unfold page_size.
     rewrite (proj2 (Z.ltb_lt 0 (bv_unsigned len))) by llia. rewrite Hal. rewrite (proj2 (Z.leb_le _ _)) by exact Hce.
-    rewrite Hmc, Hna. cbn [andb Z.eqb tbind tsafe]. split; [| exact Hok].
+    rewrite Hmc, Hrs, Hna. cbn [andb Z.eqb tbind tsafe]. split; [| exact Hok].
     intros _ (* [comment removed for export] *).
     apply (proj1 (tsafe_tbind_assoc _ _ _ _)). cbn [tbind].
     pose proof (ts_set_errno ENOMEM s (fun _ s' => K MAP_FAILED s') P HWn) as X. unfold mbind in X. apply X. exact Hf.

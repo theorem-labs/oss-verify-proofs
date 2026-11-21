@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Bs0Gc.
@@ -265,9 +266,10 @@ Section Exit.
     as_Cf H cap <= as_AL H s ->
     xstat mem -> ostate pending mem ->
     fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+    m_channel_reader mo = true ->
     realizes asegs (mkCfg msF mo) (t_emit (W 1 pending) (t_exit (bv_and status (Z_to_bv 64 255)) (m_fs mo))).
   Proof.
-    intros s msF mo regs mem p A cap status pending junk HV HA R2 R4 R8 R9 Hst RH HCB AD HCF XS OS Hfd1. pose proof (u64_range status) as HstR.
+    intros s msF mo regs mem p A cap status pending junk HV HA R2 R4 R8 R9 Hst RH HCB AD HCF XS OS Hfd1 Hrd1. pose proof (u64_range status) as HstR.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo. pose proof aceil_loX as HCL. acb.
     pose proof (ah_blocks H HH _ _ _ (p, A, cap) RH ltac:(left; reflexivity)) as BR. pose proof BR as (B1 & B2 & B3 & B4 & B5 & B6 & B7). cbn [blk_addr blk_size fst snd] in *.
 
@@ -329,7 +331,9 @@ Section Exit.
         apply (as_exit_T (Z.of_nat (S k')) regs3 mem2 msF3 mo3 Lz Sz Zr (Z_to_bv 64 (bv_unsigned sp0 - 48)) status t c TB (zero_lines (S k')));
           [ lia | exact XA | exact CT | rewrite zero_lines_length; lia
           | rewrite zero_lines_length; exact (so_bytes _ _ STA)
-          | rewrite EFDS; exact Hfd1 | exact T2 | exact T4 | exact T10 | exact OK | exact RS ].
+          | rewrite EFDS; exact Hfd1
+          | rewrite (same_but_materialized_reader _ _ SB3), (adl_rdr H DL _ _ MP2), (same_but_materialized_reader _ _ SB1); exact Hrd1
+          | exact T2 | exact T4 | exact T10 | exact OK | exact RS ].
   Qed.
 
   End FX.
@@ -339,7 +343,7 @@ Section Exit.
     ARfInv H sp0 pp tid can fs0 mem0 A s p regs mem mo ->
     realizes asegs (mkCfg msF mo) (t_die msg_refused fs0).
   Proof.
-    intros mem0 pp fs0 s msF mo regs mem p A HV HA [(R2 & R4 & R8 & R18 & R20) R9 [cap RH] ST EFS Hfd1 Hfd2]. rewrite <- EFS.
+    intros mem0 pp fs0 s msF mo regs mem p A HV HA [(R2 & R4 & R8 & R18 & R20) R9 [cap RH] ST EFS Hfd1 Hfd2 Hrd]. rewrite <- EFS.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof SP16. pose proof Elo. pose proof aceil_loX as HCL. acb.
     pose proof (xstat_of_mstatics _ _ ST) as XS.
     destruct (ahm_of _ _ _ RH) as [TB AH].
@@ -347,7 +351,7 @@ Section Exit.
     destruct ST as [INV STK AC RELRO [G1 G2] CELLS OUT [TID Ht] [CAN Hc] RFS LATCH [shi [SH0 Hshi]] ABOVE FR AUX].
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros Lz Sz Zr OK RS _.
     apply (as_refused Lz Sz Zr regs mem msF mo (Z_to_bv 64 (bv_unsigned sp0 - 128)) can tid TB);
-      [| | exact R4 | exact OK | exact RS | exact Hfd2].
+      [| | exact R4 | exact OK | exact RS | exact Hfd2 | exact Hrd].
     -   split.
       + exact R2.
       + rewrite u_small by lia. rewrite <- Zminus_mod_idemp_l, SP16. reflexivity.

@@ -2,7 +2,7 @@
    lib/A/DecodeClose.v, the facts about the ASan runtime around calloc.  Each lemma below has the type of the
    DecodeClose.v hypothesis it names, at the composition's free symbol record B; a row that reads the image's
    start-up cells takes [GrantSyms B] (lib/A/AF0m.v) as the one named premise HA_TFIBSYMS.  The image-B twin is
-   lib/B/DecodeBRows.v (dec_b_*, a working branch 0c5218b14d0).
+   lib/B/DecodeBRows.v (dec_b_*, a working branch).
 
      dec_a_rt_unw    : H_CALLOC_RT_UNW    bridge from lib/A/AFl4.v tfib_unwind_ok
      dec_a_img_cover : H_CALLOC_IMG_COVER acall_pre -> AR -> ALedger -> lib/A/AF0x.v img_cover_of_ledger

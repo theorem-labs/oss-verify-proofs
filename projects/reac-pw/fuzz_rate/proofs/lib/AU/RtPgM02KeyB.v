@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v at 48d3cf0d8e40 (its closing
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v (its closing
    theorem rt_m02_key_A and m2k_near) for image B (fuzz_rate.asan-ubsan): the four pieces are image B's files
    lib/AU/RtPgM02KeyCB.v, RtPgM02KeyVB.v, RtPgM02KeyFB.v chained by lib/AU/RtPgM02KitB.v m2kb_chain, and pod_nearest's
    contract comes from lib/AU/RtPgNearB.v rt_pod_nearest_B (its Section hypotheses are this file's). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate, image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1). Proves no function (kind: segment lemma):

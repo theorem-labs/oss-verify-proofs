@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with the mprotect step's vDSO-pair premise read off the kernel ledger link at the granted mapping. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -330,7 +331,7 @@ Lemma ev_mmap_none_grant_path : forall len s mo (a : word),
                                    (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
 Proof.
   intros len s mo a h nZ n Hlen HnZ Hmo Hck Hg.
-  pose proof Hg as (G1 & G2 & G3 & G4 & G5). fold h in G3, G4, G5 |- *.
+  pose proof Hg as (G1 & G2 & G3 & G4 & G5 & G6). fold h in G3, G4, G5, G6 |- *.
   assert (Hnr : mmap_noreserve_b (Z_to_bv 64 (Malloc.MAP_PRIVATE + MAP_ANON)) = false) by reflexivity.
   assert (Hge : len <= nZ) by (unfold nZ, page_round_up_Z, page_size; lia).
   assert (HlenU : bv_unsigned (Z_to_bv 64 len) = len).
@@ -343,8 +344,8 @@ Proof.
                                (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo)).
   set (eff := mkEffectU a [] [] [(a, n)] [] []).
   assert (Hst : nstep (NMmap 0 len Malloc.PROT_NONE (Malloc.MAP_PRIVATE + MAP_ANON)) mo eff mo' []).
-  { apply (proj2 (nstep_mmap_none_inv 0 len mo eff mo' [] Hw)). split; [reflexivity|]. right.
-    exists a. rewrite HlenU. fold h nZ n. split; [| split; reflexivity]. repeat split; assumption. }
+  { apply (proj2 (nstep_mmap_none_inv 0 len mo eff mo' [] Hw ltac:(apply place_declined_b_null; vm_compute; reflexivity))). split; [reflexivity|]. right.
+    exists a. rewrite HlenU. fold h nZ n. split; [| split; reflexivity]. exact G6. }
   destruct (nstep_dec_mmap_none len [] mo eff mo' [] Hlen ltac:(unfold mmap_len; exact HnZ) Hck ltac:(constructor) Hst)
     as (_ & VA & x & Hdec & Hx).
   assert (Hx' : x = MmOk (bv_unsigned a)).
@@ -359,11 +360,12 @@ Qed.
 Lemma ev_mprotect_grant_path : forall (a : Z) s mo,
   let h := m_vmmaps mo in let aw := Z_to_bv 64 a in let nw := Z_to_bv 64 PGSZ in
   0 < a -> a mod 4096 = 0 -> a + PGSZ <= alloc_ceiling -> mo_ok mo ->
+  region_free (vdso_reserved (m_kernel mo) (vdso_top h)) aw nw = true ->
   map_contains (vm_noaccess h) aw nw = true -> map_contains (vm_maps h) aw nw = true ->
   vm_live_bytes h <= vm_limit h ->
   tpath nstep (ev_step (EMprotect a PGSZ PROT_RW) s) mo [] (Ok (0, s)) (mprotect_model_next mo aw nw).
 Proof.
-  intros a s mo h aw nw Ha Hal Hce Hmo Hcn Hcm Hlive. pose proof alloc_ceiling_lt as CL.
+  intros a s mo h aw nw Ha Hal Hce Hmo Hvd Hcn Hcm Hlive. pose proof alloc_ceiling_lt as CL.
   assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; unfold PGSZ in *; lia).
   assert (Un : bv_unsigned nw = PGSZ) by (subst nw; apply unsigned_lit; unfold PGSZ; lia).
   set (eff := mkEffect (Z_to_bv 64 0) [] [(aw, nw)]).
@@ -374,6 +376,7 @@ Proof.
               ltac:(reflexivity) ltac:(fold aw; rewrite Ua, page_size_eq; exact Hal) ltac:(reflexivity)
               ltac:(fold aw; rewrite Ua; change (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ))) with PGSZ; unfold two_pow_64, PGSZ in *; lia)
               ltac:(reflexivity)
+              ltac:(fold aw; change (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ)))) with nw; exact Hvd)
               ltac:(fold aw; change (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ)))) with nw; exact Hcn)
               ltac:(fold aw; change (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ)))) with nw; exact Hcm))).
     split; [reflexivity|]. right. fold aw. change (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ)))) with nw.
@@ -483,7 +486,7 @@ Proof.
   destruct PH2 as (Ecur & _ & _ & _ & _ & (e0 & He0 & He0l & He0h) & _ & _).
   assert (Ua : bv_unsigned (Z_to_bv 64 (round_up_pg b0)) = b0) by (rewrite Ea; apply unsigned_lit; unfold PGSZ in *; lia).
   assert (Hrf : region_free (vm_reserved (m_vmmaps mo2g)) (Z_to_bv 64 (round_up_pg b0)) (Z_to_bv 64 PGSZ) = true).
-  { apply region_free_above. intros e He. rewrite Ua, Ecur. apply (kl_resv_top _ _ _ HK2). exact He. }
+  { apply kl_rf_split. intros e He. rewrite Ua, (unsigned_lit PGSZ) by (unfold PGSZ; lia). rewrite Ecur. destruct (kl_resv_top _ _ _ HK2 e He) as [D|D]; [left; exact D| right; unfold PGSZ in *; lia]. }
   assert (Hmc : map_contains (vm_maps (m_vmmaps mo2g)) (Z_to_bv 64 (round_up_pg b0)) (Z_to_bv 64 PGSZ) = true).
   { unfold map_contains. apply existsb_exists. exists e0. split; [exact He0|].
     rewrite Ua, (unsigned_lit PGSZ) by (unfold PGSZ; lia). unfold elo, ehi in *.
@@ -502,7 +505,7 @@ Proof.
     eapply msteps_snoc; [eapply msteps_snoc; [eapply msteps_snoc; [apply msteps_refl | lia | exact M1] | rewrite EV4; lia | exact M2]
                         | rewrite !EV4; lia | exact M3]. }
   pose proof (room_step mo mo3 0 3 _ Hroom ltac:(lia) MS3 ltac:(lia) ltac:(lia)) as R3.
-  destruct (room_grant mo3 (0 + 1) 69632 R3 ltac:(lia) Hmo3 (kl_ceil _ _ _ HK3) ltac:(lia)) as [a' Hga'].
+  destruct (room_grant mo3 (0 + 1) 69632 R3 ltac:(lia) Hmo3 (kl_ceil _ _ _ HK3) ltac:(lia) eq_refl) as [a' Hga'].
   destruct (ev_mmap_grant_path 69632 PROT_RW s2 mo3 a' ltac:(lia) ltac:(change (page_round_up_Z 69632) with 69632; lia) (or_introl eq_refl)
               Hmo3 (kl_ceil _ _ _ HK3) Hga') as (mo4 & E4 & Hmo4 & _ & _ & _ & _).
   set (a2 := bv_unsigned a') in *.
@@ -619,7 +622,7 @@ Proof.
   pose proof (room_step mo mo2 0 2 (2 * 12288) Hroom ltac:(lia) MS2 ltac:(lia) ltac:(lia)) as R2.
 
   unfold K3T in CT2. rewrite sbind_vis in CT2. apply ctree_ok_vis in CT2 as [Hpre3 CT3].
-  destruct (room_grant mo2 (0 + 1) 8192 R2 ltac:(lia) Hmo2 (kl_ceil _ _ _ HK2) ltac:(lia)) as [a Hga].
+  destruct (room_grant mo2 (0 + 1) 8192 R2 ltac:(lia) Hmo2 (kl_ceil _ _ _ HK2) ltac:(lia) eq_refl) as [a Hga].
   destruct (ev_mmap_none_grant_path 8192 s1 mo2 a ltac:(lia) ltac:(change (page_round_up_Z 8192) with 8192; lia) Hmo2 (kl_ceil _ _ _ HK2) Hga) as (mo3 & E3 & Hmo3 & Hva3 & Hvm3).
   change (page_round_up_Z 8192) with 8192 in Hvm3.
   set (a1 := bv_unsigned a) in *.
@@ -646,9 +649,15 @@ Proof.
     apply andb_true_iff. split; apply Z.leb_le; lia. }
   assert (Hlive : vm_live_bytes (m_vmmaps mo3) <= vm_limit (m_vmmaps mo3)).
   { destruct R3 as [_ _ RL RM]. lia. }
+  (* the page lies in the mapping just granted, which is free of the kernel's ledger and so of the vDSO pair *)
+  assert (Hvd : region_free (vdso_reserved (m_kernel mo3) (vdso_top (m_vmmaps mo3))) (Z_to_bv 64 (a1 + PGSZ)) (Z_to_bv 64 PGSZ) = true).
+  { apply (kl_vdso_free _ _ _ _ _ HK3). apply (kl_in_map_free _ _ _ (a, Z_to_bv 64 8192) _ _ HK3).
+    - rewrite Hvm3. cbn [vm_maps]. left. reflexivity.
+    - unfold elo. cbn [fst]. fold a1. unfold PGSZ. rewrite unsigned_lit by (pose_ceil; lia). lia.
+    - unfold ehi. cbn [fst snd]. fold a1. unfold PGSZ. rewrite !unsigned_lit by (pose_ceil; lia). lia. }
   pose proof (ev_mprotect_grant_path (a1 + PGSZ) s1 mo3 ltac:(unfold PGSZ; lia)
                 ltac:(unfold PGSZ; rewrite Z.add_mod, G1 by lia; reflexivity)
-                ltac:(unfold PGSZ in *; lia) Hmo3 Hcn Hcm Hlive) as E4.
+                ltac:(unfold PGSZ in *; lia) Hmo3 Hvd Hcn Hcm Hlive) as E4.
   cbv zeta in E4. set (mo4 := mprotect_model_next mo3 (Z_to_bv 64 (a1 + PGSZ)) (Z_to_bv 64 PGSZ)) in *.
   destruct (kev_measure L3 (EMprotect (a1 + PGSZ) PGSZ PROT_RW) s1 mo3 0 s1 mo4 Hpre4 HK3 Hmo3 E4) as (Hok4 & HK4 & _ & _ & _ & Hmo4 & _ & M4).
   specialize (CT4 0 Hok4). set (L4 := event_post L3 (EMprotect (a1 + PGSZ) PGSZ PROT_RW) 0) in *.
@@ -658,7 +667,7 @@ Proof.
   change (esize (EMprotect (a1 + PGSZ) PGSZ PROT_RW)) with 0 in MS4.
   pose proof (room_step mo mo4 0 4 _ Hroom ltac:(lia) MS4 ltac:(lia) ltac:(lia)) as R4.
 
-  destruct (room_grant mo4 (0 + 1) 69632 R4 ltac:(lia) Hmo4 (kl_ceil _ _ _ HK4) ltac:(lia)) as [a' Hga'].
+  destruct (room_grant mo4 (0 + 1) 69632 R4 ltac:(lia) Hmo4 (kl_ceil _ _ _ HK4) ltac:(lia) eq_refl) as [a' Hga'].
   destruct (ev_mmap_grant_path 69632 PROT_RW s1 mo4 a' ltac:(lia) ltac:(change (page_round_up_Z 69632) with 69632; lia) (or_introl eq_refl) Hmo4 (kl_ceil _ _ _ HK4) Hga') as (mo5 & E5 & Hmo5 & _ & _ & _ & _).
   set (a2 := bv_unsigned a') in *.
   pose proof (is_err_grant mo4 a' 69632 ltac:(lia) (kl_ceil _ _ _ HK4) Hga') as Herr2. fold a2 in Herr2.
@@ -1091,7 +1100,7 @@ Lemma ev_mmap_none_grant_path : forall len s mo (a : word),
                                    (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
 Proof.
   intros len s mo a h nZ n Hlen HnZ Hmo Hck Hg.
-  pose proof Hg as (G1 & G2 & G3 & G4 & G5). fold h in G3, G4, G5 |- *.
+  pose proof Hg as (G1 & G2 & G3 & G4 & G5 & G6). fold h in G3, G4, G5, G6 |- *.
   assert (Hnr : mmap_noreserve_b (Z_to_bv 64 (Malloc.MAP_PRIVATE + MAP_ANON)) = false) by reflexivity.
   assert (Hge : len <= nZ) by (unfold nZ, page_round_up_Z, page_size; lia).
   assert (HlenU : bv_unsigned (Z_to_bv 64 len) = len).
@@ -1104,8 +1113,8 @@ Proof.
                                (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo)).
   set (eff := mkEffectU a [] [] [(a, n)] [] []).
   assert (Hst : nstep (NMmap 0 len Malloc.PROT_NONE (Malloc.MAP_PRIVATE + MAP_ANON)) mo eff mo' []).
-  { apply (proj2 (nstep_mmap_none_inv 0 len mo eff mo' [] Hw)). split; [reflexivity|]. right.
-    exists a. rewrite HlenU. fold h nZ n. split; [| split; reflexivity]. repeat split; assumption. }
+  { apply (proj2 (nstep_mmap_none_inv 0 len mo eff mo' [] Hw ltac:(apply place_declined_b_null; vm_compute; reflexivity))). split; [reflexivity|]. right.
+    exists a. rewrite HlenU. fold h nZ n. split; [| split; reflexivity]. exact G6. }
   destruct (nstep_dec_mmap_none len [] mo eff mo' [] Hlen ltac:(unfold mmap_len; exact HnZ) Hck ltac:(constructor) Hst)
     as (_ & VA & x & Hdec & Hx).
   assert (Hx' : x = MmOk (bv_unsigned a)).
@@ -1120,11 +1129,12 @@ Qed.
 Lemma ev_mprotect_grant_path : forall (a : Z) s mo,
   let h := m_vmmaps mo in let aw := Z_to_bv 64 a in let nw := Z_to_bv 64 PGSZ in
   0 < a -> a mod 4096 = 0 -> a + PGSZ <= alloc_ceiling -> mo_ok mo ->
+  region_free (vdso_reserved (m_kernel mo) (vdso_top h)) aw nw = true ->
   map_contains (vm_noaccess h) aw nw = true -> map_contains (vm_maps h) aw nw = true ->
   vm_live_bytes h <= vm_limit h ->
   tpath nstep (ev_step (EMprotect a PGSZ PROT_RW) s) mo [] (Ok (0, s)) (mprotect_model_next mo aw nw).
 Proof.
-  intros a s mo h aw nw Ha Hal Hce Hmo Hcn Hcm Hlive. pose proof alloc_ceiling_lt as CL.
+  intros a s mo h aw nw Ha Hal Hce Hmo Hvd Hcn Hcm Hlive. pose proof alloc_ceiling_lt as CL.
   assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; unfold PGSZ in *; lia).
   assert (Un : bv_unsigned nw = PGSZ) by (subst nw; apply unsigned_lit; unfold PGSZ; lia).
   set (eff := mkEffect (Z_to_bv 64 0) [] [(aw, nw)]).
@@ -1135,6 +1145,7 @@ Proof.
               ltac:(reflexivity) ltac:(fold aw; rewrite Ua, page_size_eq; exact Hal) ltac:(reflexivity)
               ltac:(fold aw; rewrite Ua; change (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ))) with PGSZ; unfold two_pow_64, PGSZ in *; lia)
               ltac:(reflexivity)
+              ltac:(fold aw; change (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ)))) with nw; exact Hvd)
               ltac:(fold aw; change (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ)))) with nw; exact Hcn)
               ltac:(fold aw; change (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ)))) with nw; exact Hcm))).
     split; [reflexivity|]. right. fold aw. change (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 PGSZ)))) with nw.
@@ -1244,7 +1255,7 @@ Proof.
   destruct PH2 as (Ecur & _ & _ & _ & _ & (e0 & He0 & He0l & He0h) & _ & _).
   assert (Ua : bv_unsigned (Z_to_bv 64 (round_up_pg b0)) = b0) by (rewrite Ea; apply unsigned_lit; unfold PGSZ in *; lia).
   assert (Hrf : region_free (vm_reserved (m_vmmaps mo2g)) (Z_to_bv 64 (round_up_pg b0)) (Z_to_bv 64 PGSZ) = true).
-  { apply region_free_above. intros e He. rewrite Ua, Ecur. apply (kl_resv_top _ _ _ HK2). exact He. }
+  { apply kl_rf_split. intros e He. rewrite Ua, (unsigned_lit PGSZ) by (unfold PGSZ; lia). rewrite Ecur. destruct (kl_resv_top _ _ _ HK2 e He) as [D|D]; [left; exact D| right; unfold PGSZ in *; lia]. }
   assert (Hmc : map_contains (vm_maps (m_vmmaps mo2g)) (Z_to_bv 64 (round_up_pg b0)) (Z_to_bv 64 PGSZ) = true).
   { unfold map_contains. apply existsb_exists. exists e0. split; [exact He0|].
     rewrite Ua, (unsigned_lit PGSZ) by (unfold PGSZ; lia). unfold elo, ehi in *.
@@ -1263,7 +1274,7 @@ Proof.
     eapply msteps_snoc; [eapply msteps_snoc; [eapply msteps_snoc; [apply msteps_refl | lia | exact M1] | rewrite EV4; lia | exact M2]
                         | rewrite !EV4; lia | exact M3]. }
   pose proof (room_step mo mo3 0 3 _ Hroom ltac:(lia) MS3 ltac:(lia) ltac:(lia)) as R3.
-  destruct (room_grant mo3 (0 + 1) 69632 R3 ltac:(lia) Hmo3 (kl_ceil _ _ _ HK3) ltac:(lia)) as [a' Hga'].
+  destruct (room_grant mo3 (0 + 1) 69632 R3 ltac:(lia) Hmo3 (kl_ceil _ _ _ HK3) ltac:(lia) eq_refl) as [a' Hga'].
   destruct (ev_mmap_grant_path 69632 PROT_RW s2 mo3 a' ltac:(lia) ltac:(change (page_round_up_Z 69632) with 69632; lia) (or_introl eq_refl)
               Hmo3 (kl_ceil _ _ _ HK3) Hga') as (mo4 & E4 & Hmo4 & _ & _ & _ & _).
   set (a2 := bv_unsigned a') in *.
@@ -1380,7 +1391,7 @@ Proof.
   pose proof (room_step mo mo2 0 2 (2 * 12288) Hroom ltac:(lia) MS2 ltac:(lia) ltac:(lia)) as R2.
 
   unfold K3T in CT2. rewrite sbind_vis in CT2. apply ctree_ok_vis in CT2 as [Hpre3 CT3].
-  destruct (room_grant mo2 (0 + 1) 8192 R2 ltac:(lia) Hmo2 (kl_ceil _ _ _ HK2) ltac:(lia)) as [a Hga].
+  destruct (room_grant mo2 (0 + 1) 8192 R2 ltac:(lia) Hmo2 (kl_ceil _ _ _ HK2) ltac:(lia) eq_refl) as [a Hga].
   destruct (ev_mmap_none_grant_path 8192 s1 mo2 a ltac:(lia) ltac:(change (page_round_up_Z 8192) with 8192; lia) Hmo2 (kl_ceil _ _ _ HK2) Hga) as (mo3 & E3 & Hmo3 & Hva3 & Hvm3).
   change (page_round_up_Z 8192) with 8192 in Hvm3.
   set (a1 := bv_unsigned a) in *.
@@ -1407,9 +1418,15 @@ Proof.
     apply andb_true_iff. split; apply Z.leb_le; lia. }
   assert (Hlive : vm_live_bytes (m_vmmaps mo3) <= vm_limit (m_vmmaps mo3)).
   { destruct R3 as [_ _ RL RM]. lia. }
+  (* the page lies in the mapping just granted, which is free of the kernel's ledger and so of the vDSO pair *)
+  assert (Hvd : region_free (vdso_reserved (m_kernel mo3) (vdso_top (m_vmmaps mo3))) (Z_to_bv 64 (a1 + PGSZ)) (Z_to_bv 64 PGSZ) = true).
+  { apply (kl_vdso_free _ _ _ _ _ HK3). apply (kl_in_map_free _ _ _ (a, Z_to_bv 64 8192) _ _ HK3).
+    - rewrite Hvm3. cbn [vm_maps]. left. reflexivity.
+    - unfold elo. cbn [fst]. fold a1. unfold PGSZ. rewrite unsigned_lit by (pose_ceil; lia). lia.
+    - unfold ehi. cbn [fst snd]. fold a1. unfold PGSZ. rewrite !unsigned_lit by (pose_ceil; lia). lia. }
   pose proof (ev_mprotect_grant_path (a1 + PGSZ) s1 mo3 ltac:(unfold PGSZ; lia)
                 ltac:(unfold PGSZ; rewrite Z.add_mod, G1 by lia; reflexivity)
-                ltac:(unfold PGSZ in *; lia) Hmo3 Hcn Hcm Hlive) as E4.
+                ltac:(unfold PGSZ in *; lia) Hmo3 Hvd Hcn Hcm Hlive) as E4.
   cbv zeta in E4. set (mo4 := mprotect_model_next mo3 (Z_to_bv 64 (a1 + PGSZ)) (Z_to_bv 64 PGSZ)) in *.
   destruct (kev_measure L3 (EMprotect (a1 + PGSZ) PGSZ PROT_RW) s1 mo3 0 s1 mo4 Hpre4 HK3 Hmo3 E4) as (Hok4 & HK4 & _ & _ & _ & Hmo4 & _ & M4).
   specialize (CT4 0 Hok4). set (L4 := event_post L3 (EMprotect (a1 + PGSZ) PGSZ PROT_RW) 0) in *.
@@ -1419,7 +1436,7 @@ Proof.
   change (esize (EMprotect (a1 + PGSZ) PGSZ PROT_RW)) with 0 in MS4.
   pose proof (room_step mo mo4 0 4 _ Hroom ltac:(lia) MS4 ltac:(lia) ltac:(lia)) as R4.
 
-  destruct (room_grant mo4 (0 + 1) 69632 R4 ltac:(lia) Hmo4 (kl_ceil _ _ _ HK4) ltac:(lia)) as [a' Hga'].
+  destruct (room_grant mo4 (0 + 1) 69632 R4 ltac:(lia) Hmo4 (kl_ceil _ _ _ HK4) ltac:(lia) eq_refl) as [a' Hga'].
   destruct (ev_mmap_grant_path 69632 PROT_RW s1 mo4 a' ltac:(lia) ltac:(change (page_round_up_Z 69632) with 69632; lia) (or_introl eq_refl) Hmo4 (kl_ceil _ _ _ HK4) Hga') as (mo5 & E5 & Hmo5 & _ & _ & _ & _).
   set (a2 := bv_unsigned a') in *.
   pose proof (is_err_grant mo4 a' 69632 ltac:(lia) (kl_ceil _ _ _ HK4) Hga') as Herr2. fold a2 in Herr2.

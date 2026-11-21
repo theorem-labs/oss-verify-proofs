@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up is over the run's whole ProcInput with the mmap base, the image entry and the launch's premises; img_facts gains if_resx; the Section variables AsanInit's lemmas close over and never read are supplied from this image; the chain starts from init_acs_of at the run's CONFIG_RSEQ flag). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -28,6 +29,8 @@ Proof.
   - exact B_t_if_sizes.
   - exact B_t_if_rw.
   - exact B_t_shadow_ok.
+  - (* [if_resx]: the table states [n_resx := 2; p_resx := 20] (Start/B_Atable.v) *)
+    split; apply Nat.leb_le; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -36,27 +39,35 @@ Qed.
 Section B_Check.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variable brk0 : word.
-  Variables argv envp : list (list byte).
-  Variables uid hw : word.
+  Variables brk0 mbase : word.
+  Variable inp : ProcInput.
   Variable fs : Fs.Fs.
+  Hypothesis IMG : img_facts B_SEGS B_T B_PH.
+  Hypothesis Hapc : Z.of_N BPC0 = a_entry B_T.
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hbrk : valid_brk B_SEGS brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 
-  #[local] Notation argH := (argH0 B_PH sp rdraw argv envp uid hw).
+  #[local] Notation argH := (argH0 sp rdraw inp).
   #[local] Notation ISP := (bv_unsigned sp).
-  Let AH := argH0_high B_PH sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree B_PH sp rdraw argv envp uid hw.
+  Let AH : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ ISP <= bv_unsigned a.
+  (* as A_Top.v: the Section variables [argH0_high]'s statement never reads *)
+  Proof. intros E a H. eapply argH0_high; try eassumption. all: first [exact B_SEGS | exact B_T | exact B_PH | exact BPC0 | exact LIM]. Qed.
+  Let AA := argH0_agree sp rdraw inp.
 
   (* [comment removed for export] *)
   Variable SINV : env -> (word -> option byte) -> Prop.
-  Hypothesis S0 : forall E M, SINV E M -> SINV0 B_PH sp rdraw brk0 argv envp uid hw E M.
+  Hypothesis S0 : forall E M, SINV E M -> SINV0 B_PH BPC0 sp rdraw brk0 mbase inp E M.
   Hypothesis SF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
   Hypothesis SA : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
-  Let SP : forall E M, SINV E M -> uE E e_pgsp = pgdown ISP :=
-    fun E M H => SINV0_pgsp B_PH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E M (S0 E M H).
+  Let SP : forall E M, SINV E M -> uE E e_pgsp = pgdown ISP.
+  Proof. intros E M H. pose proof (S0 E M H) as H0. eapply SINV0_pgsp; eassumption. Qed.
 
   (* [comment removed for export] *)
   Variable XN : nat -> list expr -> acs -> option acs.
@@ -75,7 +86,8 @@ Section B_Check.
   Hypothesis HOLES_sound : holes_stmt B_SEGS B_T LIM HS SINV argH ISP HOLES fs.
   Variable KC : nat.
 
-  Let X_sound := B_x_all_sinv sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SINV S0 SF SA.
+  Let X_sound : forall x, x_stmt B_SEGS B_T NX0 AsanInit.LIMIT SINV argH ISP fs x.
+  Proof. intros x. eapply B_x_all_sinv; eassumption. Qed.
 
   (* [comment removed for export] *)
   Lemma B_ob_sys : forall y, sys_stmt B_SEGS B_T NX0 LIM SINV argH ISP fs y.
@@ -130,35 +142,39 @@ End B_Check.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section B_Top.
-  (* [comment removed for export] *)
+  (* LPS 08b1429: the run's whole [ProcInput]; the hypotheses are [Run.valid_entry]'s and
+     [Run.valid_input]'s, as AsanInit's Section states them. *)
   Variable sp : word.
   Variable rdraw : EntryDraw.
   Variables brk0 mbase : word.
-  Variables argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
-  Variable urnd : InputStream.      (* [comment removed for export] *)
+  Variable inp : ProcInput.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk B_SEGS brk0.
   Hypothesis Hmb : valid_mmap_base mbase.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 
-  #[local] Notation SINV := (SINV0 B_PH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 B_PH sp rdraw argv envp uid hw).
-  #[local] Notation E0B := (E0 B_PH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 B_PH BPC0 sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
+  (* as A/HandoffArgv.v:89: E0 takes sp, rdraw, brk0, inp - not mbase. *)
+  #[local] Notation E0B := (E0 sp rdraw brk0 inp).
   #[local] Notation ISP := (bv_unsigned sp).
-  #[local] Notation inpB := (AsanInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd).
-  Let SF := SINV0_frame B_PH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree B_PH sp rdraw brk0 argv envp uid hw.
-  Let AH := argH0_high B_PH sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree B_PH sp rdraw argv envp uid hw.
+  #[local] Notation fs := (in_fs inp).
+  Let SF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+  Proof. intros E M M' Hf HS. eapply SINV0_frame; eassumption. Qed.
+  Let SA : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
+  (* as A_Top.v: [SINV0_agree] closes over AsanInit Section variables its statement never reads *)
+  Proof.
+    intros E E' M Hag HS. eapply SINV0_agree; try eassumption;
+      try exact B_SEGS; try exact B_T; try exact B_PH; try exact BPC0; try exact LIM.
+  Qed.
+  Let AH : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ ISP <= bv_unsigned a.
+  Proof. intros E a H. eapply argH0_high; try eassumption. all: first [exact B_SEGS | exact B_T | exact B_PH | exact BPC0 | exact LIM]. Qed.
+  Let AA := argH0_agree sp rdraw inp.
 
   (* [comment removed for export] *)
   Variable csm : acs.
@@ -167,25 +183,32 @@ Section B_Top.
   Hypothesis HOLES_nil : forall h E fs', HOLES h E fs' [].
   Hypothesis MAIN : holes_stmt B_SEGS B_T LIM (HS_one csm) SINV argH ISP HOLES fs.
 
-  (* [comment removed for export] *)
-  Hypothesis CHAIN : chain B_SEGS B_T LIM B_XN0 B_XE0 B_XB0 (init_acs_of B_T) csm.
+  (* [init_acs_of] takes the run's CONFIG_RSEQ flag, read off the input here, never chosen *)
+  Hypothesis CHAIN : chain B_SEGS B_T LIM B_XN0 B_XE0 B_XB0 (init_acs_of (rseq_z (kb_rseq (in_kernel inp))) B_T) csm.
 
   Theorem B_chain_startup :
-    srealizes B_SEGS (init_config B_SEGS BPC0 B_PH sp brk0 mbase rdraw LIM inpB) (HOLES 0%nat E0B fs).
+    srealizes B_SEGS (init_config B_SEGS BPC0 B_PH sp brk0 mbase rdraw LIM inp) (HOLES 0%nat E0B fs).
   Proof.
-    rewrite (init_cfg_eq B_SEGS B_T B_PH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd LIM BPC0 eq_refl).
-    pose proof (init_cs_ok B_SEGS B_T B_PH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd LIM LIMIT_ok
-                  B_img_facts Hsp Hbrk Hva Hve Hfit Huid) as HC.
+    (* positional: AsanInit's Section order, segs A ph apc sp rdraw brk0 mbase inp LIM *)
+    epose proof (init_cfg_eq B_SEGS B_T B_PH BPC0 sp rdraw brk0 mbase inp LIM) as EQ.
+    repeat match type of EQ with ?P -> _ => specialize (EQ ltac:(first [exact eq_refl | exact B_img_facts | exact LIMIT_ok | eassumption])) end.
+    rewrite EQ. clear EQ.
+    epose proof (init_cs_ok B_SEGS B_T B_PH BPC0 sp rdraw brk0 mbase inp LIM) as HC.
+    repeat match type of HC with ?P -> _ => specialize (HC ltac:(first [exact eq_refl | exact B_img_facts | exact LIMIT_ok | eassumption])) end.
     pose proof (chain_realizes B_SEGS B_T LIM SINV argH ISP fs B_XN0 B_XE0 B_XB0 HOLES) as CR.
     match type of HC with cs_ok _ _ _ _ _ _ _ ?E ?cs ?R ?FULL ?model =>
-      specialize (fun CS => CR CS (init_acs_of B_T) csm CHAIN MAIN E R FULL model HC) end.
+      specialize (fun CS => CR CS (init_acs_of (rseq_z (kb_rseq (in_kernel inp))) B_T) csm CHAIN MAIN E R FULL model HC) end.
     match type of HC with cs_ok _ _ _ _ _ _ _ _ _ _ _ ?model =>
-      replace fs with (m_fs model) at 2 by (exact (co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC)) end.
+      match goal with |- srealizes _ ?c (HOLES 0%nat ?e _) =>
+        enough (Hg : srealizes B_SEGS c (HOLES 0%nat e (m_fs model)))
+          by (rewrite (co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC) in Hg; exact Hg) end end.
     apply CR. clear CR.
     intros IT HIT HS HSs KC FUEL BFUEL p cs s Hchk E R FULL model HC'.
-    exact (B_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SINV (fun E M H => H) SF SA
-              B_XN0 B_XE0 B_XB0
-              (B_XN0_sound LIM SINV argH ISP fs AH AA SF SA) (B_XE0_sound LIM SINV argH ISP fs) (B_XB0_sound LIM SINV argH ISP fs)
-              IT HIT HS HOLES HOLES_agree HOLES_nil HSs KC FUEL BFUEL p cs s Hchk E R FULL model HC').
+    pose proof (B_XN0_sound LIM SINV argH ISP fs AH AA SF SA) as XNs.
+    pose proof (B_XE0_sound LIM SINV argH ISP fs) as XEs. pose proof (B_XB0_sound LIM SINV argH ISP fs) as XBs.
+    pose proof B_img_facts as IMG0.
+    assert (Hapc0 : Z.of_N BPC0 = a_entry B_T) by reflexivity.
+    assert (S00 : forall E M, SINV E M -> SINV E M) by (intros ? ? H; exact H).
+    eapply B_check_sound; eassumption.
   Qed.
 End B_Top.

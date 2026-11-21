@@ -1,13 +1,27 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: main-phase entry facts computed at LPS 727298f3 from the four main-entry states of the start-up chain, under a variable map read from probe runs. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
-From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import AxSymExec3 AsanPlan MainExport StartupHS2Both.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import AxSymExec3 AsanPlanCore AsanPlan MainExport MainRename StartupHS2Both.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require PlanRegen.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
 
-Definition both_mem_facts : list mfact := [
+(* The main phase's entry facts of the ASan+UBSan image: the same construction as
+   [MainFactsAsan].  The [*_rec] lists are the facts exported from the recorded main-phase
+   hand-off states (before LPS 727298f3), in that run's numbering; the lists below are computed
+   from them and the four states the start-up chain hands the main phase ([StartupHS2Both]): a
+   recorded fact stays when every state that list is read at justifies its renumbered copy, and
+   is replaced in place by the filler [MainRename.mfill] / [pfill] otherwise. *)
+
+(* the run's state map, old numbering -> the LPS 727298f3 run's, read from the probe runs of this
+   image (notes/probe-pupnp__FuzzHttp.md) *)
+Definition VTBL_B : list (nat * nat) := [(11, 2); (44, 4); (78, 4); (310, 6)]%nat.
+Definition vgB : nat -> nat := PlanRegen.tshift VTBL_B.
+
+Definition both_mem_facts_rec : list mfact := [
 
   MCell (ZLit 724608) 8 (ZLit 1)
   ; MCell (ZLit 724616) 1 (ZLit 1)
@@ -1171,7 +1185,7 @@ Definition both_mem_facts : list mfact := [
   ; MWr (ZAdd (ZMul (ZLit 512) (ZV 471)) (ZLit 2147450880)) 512
 ].
 
-Definition both_pure_facts : list pfact := [
+Definition both_pure_facts_rec : list pfact := [
 
   PVar 0 4294901760 4294967295
   ; PVar 1 1 1024
@@ -1396,7 +1410,7 @@ Definition both_pure_facts : list pfact := [
   ; PDisjS (ZAdd (ZMul (ZLit 512) (ZV 78)) (ZLit 2147450880)) (ZLit 8192) (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))
 ].
 
-Definition both_mem_facts_w1 : list mfact := [
+Definition both_mem_facts_w1_rec : list mfact := [
   MCell (ZLit 1598472) 8 (ZLit 3)
   ; MCell (ZLit 1598496) 4 (ZLit 3)
   ; MCell (ZLit 5230696) 4 (ZLit 1)
@@ -1408,7 +1422,7 @@ Definition both_mem_facts_w1 : list mfact := [
   ; MZero (ZAdd (ZMul (ZLit 4096) (ZV 454)) (ZLit 24)) 8388584
 ].
 
-Definition both_mem_facts_w2 : list mfact := [
+Definition both_mem_facts_w2_rec : list mfact := [
   MCell (ZLit 1598472) 8 (ZLit 2)
   ; MCell (ZLit 1598496) 4 (ZLit 2)
   ; MCell (ZLit 3188872) 4 (ZLit 1)
@@ -1419,11 +1433,11 @@ Definition both_mem_facts_w2 : list mfact := [
   ; MZero (ZAdd (ZMul (ZLit 4096) (ZV 454)) (ZLit 16)) 8388592
 ].
 
-Definition both_pure_facts_w1 : list pfact := [
+Definition both_pure_facts_w1_rec : list pfact := [
   PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 0 4030
 ].
 
-Definition both_pure_facts_w2 : list pfact := [
+Definition both_pure_facts_w2_rec : list pfact := [
   PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 4031 4095
 ].
 
@@ -1477,36 +1491,22 @@ Definition both_ledger : list lentry := [
   ; LMap (ZLit 2147446784) 268435456 KRWLAZY
 ].
 
-Definition both_totsz : Z := 17729664626688.
-Definition both_ylo : Z := 23387528589312.
-Definition both_eager : Z := 16519168.
-Definition both_abytes : Z := 2460832256.
+(* the knowledge of the states each list is read at *)
+Definition BKN : list (list kentry) := [kn bS21_0; kn bS22_0; kn bS21_1; kn bS22_1].
+Definition BKN1 : list (list kentry) := [kn bS21_0; kn bS21_1].
+Definition BKN2 : list (list kentry) := [kn bS22_0; kn bS22_1].
 
-Lemma both_mem_facts_justified_w1 :
-  forallb (mjustify (s_know (a_ss HS_both2_1)) (var_ranges (s_know (a_ss HS_both2_1))) 65536 6328320) (both_mem_facts ++ both_mem_facts_w1) = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma both_pure_facts_justified_w1 :
-  forallb (pjustify (s_know (a_ss HS_both2_1)) (var_ranges (s_know (a_ss HS_both2_1)))) (both_pure_facts ++ both_pure_facts_w1) = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma both_vis_justified_w1 :
-  vis_match (var_ranges (s_know (a_ss HS_both2_1))) (a_vis HS_both2_1) both_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_both2_1))) (a_ghost HS_both2_1) both_ghost = true.
-Proof. split; vm_compute; reflexivity. Qed.
-Lemma both_ledger_justified_w1 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_both2_1))) (a_maps HS_both2_1) both_ledger = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma both_consts_w1 : a_totsz HS_both2_1 = both_totsz /\ a_ylo HS_both2_1 = both_ylo /\ a_eager HS_both2_1 = both_eager /\ a_abytes HS_both2_1 = both_abytes.
-Proof. repeat split; reflexivity. Qed.
-Lemma both_mem_facts_justified_w2 :
-  forallb (mjustify (s_know (a_ss HS_both2_2)) (var_ranges (s_know (a_ss HS_both2_2))) 65536 6328320) (both_mem_facts ++ both_mem_facts_w2) = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma both_pure_facts_justified_w2 :
-  forallb (pjustify (s_know (a_ss HS_both2_2)) (var_ranges (s_know (a_ss HS_both2_2)))) (both_pure_facts ++ both_pure_facts_w2) = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma both_vis_justified_w2 :
-  vis_match (var_ranges (s_know (a_ss HS_both2_2))) (a_vis HS_both2_2) both_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_both2_2))) (a_ghost HS_both2_2) both_ghost = true.
-Proof. split; vm_compute; reflexivity. Qed.
-Lemma both_ledger_justified_w2 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_both2_2))) (a_maps HS_both2_2) both_ledger = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma both_consts_w2 : a_totsz HS_both2_2 = both_totsz /\ a_ylo HS_both2_2 = both_ylo /\ a_eager HS_both2_2 = both_eager /\ a_abytes HS_both2_2 = both_abytes.
-Proof. repeat split; reflexivity. Qed.
+Definition both_mem_facts : list mfact := Eval vm_compute in mkeep vgB BKN 65536 6328320 both_mem_facts_rec.
+Definition both_pure_facts : list pfact := Eval vm_compute in pkeep vgB BKN both_pure_facts_rec.
+Definition both_mem_facts_w1 : list mfact := Eval vm_compute in mkeep vgB BKN1 65536 6328320 both_mem_facts_w1_rec.
+Definition both_mem_facts_w2 : list mfact := Eval vm_compute in mkeep vgB BKN2 65536 6328320 both_mem_facts_w2_rec.
+Definition both_pure_facts_w1 : list pfact := Eval vm_compute in pkeep vgB BKN1 both_pure_facts_w1_rec.
+Definition both_pure_facts_w2 : list pfact := Eval vm_compute in pkeep vgB BKN2 both_pure_facts_w2_rec.
+
+(* the four sizes the main phase's model bounds: the largest of the four states' *)
+Definition both_totsz : Z := Eval vm_compute in
+  Z.max (Z.max (a_totsz bS21_0) (a_totsz bS22_0)) (Z.max (a_totsz bS21_1) (a_totsz bS22_1)).
+Definition both_eager : Z := Eval vm_compute in
+  Z.max (Z.max (a_eager bS21_0) (a_eager bS22_0)) (Z.max (a_eager bS21_1) (a_eager bS22_1)).
+Definition both_abytes : Z := Eval vm_compute in
+  Z.max (Z.max (a_abytes bS21_0) (a_abytes bS22_0)) (Z.max (a_abytes bS21_1) (a_abytes bS22_1)).

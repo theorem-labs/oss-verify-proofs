@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -143,7 +144,7 @@ Lemma ifw_finish : forall sp0 (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s
   rw_cells bsegs m1 (usp + -2128) [CB 2072 junk] -> rw_cells bsegs m1 (usp + -56) [C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] ->
   mem_inv bsegs m2 ->
   rw_cells bsegs m2 Fp (file_cells flags (bufp + bufsize) WP bufp wfn bufp bufsize fd mode' lbf tail) ->
-  (Fp = RSTDOUT \/ Fp = RSTDERR) -> sp0 - STACK_WIN <= lo -> ixit2 sp0 m ->
+  (Fp = RSTDOUT \/ Fp = RSTDERR) -> sp0 - STACK_SPAN <= lo -> ixit2 sp0 m ->
   evt bsegs (ifwrite0_post (ixit2 sp0) ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc Fp flags WP wfn bufp bufsize fd lbf tail lo m)
     (MS (mkR (Z_to_bv 64 0x722cc) (Z_to_bv 64 (usp + -2128)) gp tp t0 t1 t2 (Z_to_bv 64 usp) (Z_to_bv 64 1)
              (Z_to_bv 64 0) a1 a2 a3 a4 a5 a6 a7
@@ -168,7 +169,7 @@ Proof.
   intros x Hx. unfold XWI, XTPLOC in Hx. cbn [outside] in Hx |- *. destruct FPC as [-> | ->]; lia.
 Qed.
 
-Theorem ifwrite0_ok : forall sp0, ifwrite0_stmt (ixit2 sp0) (sp0 - STACK_WIN).
+Theorem ifwrite0_ok : forall sp0, ifwrite0_stmt (ixit2 sp0) (sp0 - STACK_SPAN).
 Proof.
   intros sp0 ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m Fp S flags mode wend wpos wbase wfn bufp bufsize fd lbf tail lo
          FC WCASE LBF -> -> -> -> FPC B0 BS0 BSP BLO Fp0 FPB SR ST LOD GLO XL SPH [IXm XCm] MI.

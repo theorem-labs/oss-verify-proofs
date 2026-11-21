@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-depkeep-B of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for the cf layer at
-   plugin-hostd/fuzz_reply). The B twin of a Theorem Labs lane's lib/A/ReplyImg_depkeep.v (a working branch
-   7c7e587ea49), mirrored line for line: same helper names, same Section c form, same premises.
+   plugin-hostd/fuzz_reply). The B twin of a Theorem Labs lane's lib/A/ReplyImg_depkeep.v (a working branch),
+   mirrored line for line: same helper names, same Section c form, same premises.
    rule 24: no function proved (kind: image row; the constant cells and the depot's cells against the kept zones, at
    reply's image B, fuzz_reply.asan-ubsan).
 
-   The row is the cf layer's image premise dep_keep_img B KEEP (lane F1, YGcfInstDepot.v:154 at a working branch
-   a8ad57cefdc; the table text is CF-UNIT-HYPS-F1.md (sha256 d0647c7f8142; internal record) row 7), at its two zone pairs:
+   The row is the cf layer's image premise dep_keep_img B KEEP (lane F1, YGcfInstDepot.v:155 at a working branch;
+   the table text is CF-UNIT-HYPS-F1.md (sha256 d0647c7f8142; internal record) row 7), at its two zone pairs:
    - Allocate:   KEEP := fun ly a => ag_dzone ly a \/ ag_czone ly a                    ([dep_keep_a_B]);
    - Deallocate: KEEP := fun ly a => dg_dzone ly a \/ (dg_czone ly a /\ ~ dg_izone a)   ([dep_keep_d_B]).
    cgif's discharge is YGcfInstF1Wcgif.v:96 dep_keep_a_cgif / :109 dep_keep_d_cgif.  Reply does not carry the layer's
    YGcfInstDepot.v yet, so each theorem states dep_keep_img's body, KEEP applied, at reply B's instances (ImgBase.AImg at
-   AImg_reply, B/AGif2reply.v:24; ImgBaseAG.AGImg at AGImg_reply, B/AGif0reply.v:117; ImgBaseDG.DImg at DImg_reply,
+   AImg_reply, B/AGif2reply.v:25; ImgBaseAG.AGImg at AGImg_reply, B/AGif0reply.v:118; ImgBaseDG.DImg at DImg_reply,
    B/DGif0reply.v:31), and a consumer closes the layer's row by `exact` once the layer is on reply.
    ONE PREMISE DIFFERS from the layer head: dep_keep_img's depot premise is `depot_fits (as_universe B) (st_depot S)`
    (YG01.v:260, the P'' depot model).  Reply's model has no depot_fits, so the premise here is the row-7 text,
@@ -20,14 +21,14 @@
    reads.  When reply takes P'', the only line that changes is the depot_ids bound ([depot_ids_bound] below).
 
    The proofs are cgif's AGix Section c (const_cells_zone, CZONE_range, DZONE_range, cell_holds_agree, aview_agree,
-   depot_ids_bound, depot_mem_ok_agree; cgif lib/AGix.v:53-141 at a8ad57cefdc; const_kept's loop is inline in the two
-   theorems, as in dep_keep_d_cgif) and CLdepotcgif.const_noizone with its helpers (cgif lib/CLdepotcgif.v:43-112 at
-   a8ad57cefdc), re-run at reply's image B: reply has no AGix.v and no CLdepotcgif.v.  Each table check is
+   depot_ids_bound, depot_mem_ok_agree; cgif lib/AGix.v:53-141; const_kept's loop is inline in the two
+   theorems, as in dep_keep_d_cgif) and CLdepotcgif.const_noizone with its helpers (cgif lib/CLdepotcgif.v:43-112),
+   re-run at reply's image B: reply has no AGix.v and no CLdepotcgif.v.  Each table check is
    a vm_compute on reply B's own constant tables (Tfib_const_abs / Tfib_const_shadow / Tfib_const, B/YF0m.v); reply B's
-   constant-cell zone CZONE is AGif0reply.CZONE (B/AGif0reply.v:64, image to 0x5fc000 and high shadow cells up to
-   0x800b7800); the depot zone is AGis.DZONE (B/AGis.v:231) = DGgi.DZONE (B/DGgi.v:515); the internal allocator's zone
-   is DGgi.IZONE (B/DGgi.v:517), at TFIB_IAL_LO / TFIB_IAL_HI / TFIB_IAL_FLAG = 0xa7840 / 0x128870 / 0x1360c8
-   (B/YF0m.v:18-19). *)
+   constant-cell zone CZONE is AGif0reply.CZONE (B/AGif0reply.v:65, image to 0x5fc000 and high shadow cells up to
+   0x800b7800); the depot zone is AGis.DZONE (B/AGis.v:232) = DGgi.DZONE (B/DGgi.v:516); the internal allocator's zone
+   is DGgi.IZONE (B/DGgi.v:518), at TFIB_IAL_LO / TFIB_IAL_HI / TFIB_IAL_FLAG = 0xa7840 / 0x128870 / 0x1360c8
+   (B/YF0m.v:19-20). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -62,7 +63,7 @@ Ltac zlia := first [ lia | ceil; unfold zone3, zone3cases, in_app, app_addr, in_
 (* The table checks (by vm_compute on reply's tables).                                                              *)
 
 (* AGix.abs_cell_ok at reply B's CZONE bounds: an image-absolute cell lies in [0x10000, 0x5fc000) or in the high
-   shadow window [0x7fff8000, 0x800b7800) (B/AGif0reply.v:64; the same bounds as B/YFix.v's abs_cell_ok). *)
+   shadow window [0x7fff8000, 0x800b7800) (B/AGif0reply.v:65; the same bounds as B/YFix.v's abs_cell_ok). *)
 Definition abs_cell_ok (c : acell) : bool :=
 match c_at c with
 | ANum a => (0x10000 <=? a) && ((a + Z.max 1 (Z.of_nat (c_w c)) <=? 0x5fc000) ||
@@ -233,7 +234,7 @@ Qed.
 End c.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The row: dep_keep_img B KEEP (YGcfInstDepot.v:154), its body at reply's instances, at the two zone pairs.       *)
+(* The row: dep_keep_img B KEEP (YGcfInstDepot.v:155), its body at reply's instances, at the two zone pairs.       *)
 
 (* Allocate (YGcfInstF1Wcgif.v:96 dep_keep_a_cgif's twin): KEEP := ag_dzone \/ ag_czone, i.e. AGis.DZONE \/
    AGif0reply.CZONE at AGImg_reply. *)

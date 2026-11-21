@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE2k.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the image-B (asan-ubsan) twin of A/AE2k.v in the shared sink form (a Theorem Labs lane 4d244de18f0):
+(* Modified by Theorem Labs, 2026-10: the image-B (asan-ubsan) twin of A/AE2k.v in the shared sink form (a Theorem Labs lane):
    the sink's path, mode, "rwa" and trailer strings (A_PATH, A_WB, A_RWA, A_TRAILER) and the fopen and fclose cells are
    removed, as fuzz_ctrl.asan-ubsan holds none of them (0 hits for the strings in every PT_LOAD), so tfib_K's four string
    fields are 0 and tfib_owned is the sink's own static cells. Every value is re-measured in fuzz_ctrl.asan-ubsan (nm and
@@ -10,6 +10,7 @@
    (.threaded +1, .need_locks +3; was 0x5fcb61 / 0x5fcb63), ofl_lock 0x5fcd40 / ofl_head 0x5fcd48, metadata_mem 0xa8f08
    (was 0xa9188), __stack_chk_guard 0x5fc690 (was 0x5fc910) behind the GOT word 0xa1578, __stdio_read / write / seek /
    close 0x94608 / 0x94728 / 0x94720 / 0x945dc. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YI16 YE00.

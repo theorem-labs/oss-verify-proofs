@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMmemchr.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMmemchr.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's runtime contract for memchr (p, 0, n) in the donor's form: amemchr_realizes (lib/A/FMH_Rt.v:143) at
    PC_memchr = 0x4134c, the four-byte jump to the interceptor at 0x43bd8 (REAL = musl memchr 0x92790), in both
    cases: a zero byte found (result p + its index) and none (result 0).

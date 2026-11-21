@@ -5,8 +5,9 @@
    fuzz_command.asan-ubsan), its middle: the segment from the return of record (0x8bdcc) through the call of arg_s
    (0x8bdd4), and the segment from the return of arg_s (0x8bdd8) through the call of rec_shape_of (0x8bde4), each
    ending in the next segment (sup_quarantine_clear_t.v's sqcb_S3). In the form of lib/A/Prog/sup_quarantine_clear_s3.v
-   (the A walk, a working branch f2402580166: sqc_SX's call of xstrdup and of rec_shape_of), re-derived
+   (the A walk, a working branch: sqc_SX's call of xstrdup and of rec_shape_of), re-derived
    on B's code: B calls arg_s where A stored the slot's fields itself and called xstrdup. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* 0x8bdcc .. 0x8bdd4: mv s1,a0; mv a1,s0; jal arg_s.
    0x8bdd8 .. 0x8bde4: auipc a0,0xfff96; addi a0,a0,0x68 (the verb literal 0x21e40, listing object 70); li a1,16;

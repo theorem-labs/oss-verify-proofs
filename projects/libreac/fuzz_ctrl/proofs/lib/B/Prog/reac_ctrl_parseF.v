@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3501 of its 3539 lines of code are new or changed and 210 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The footprint twin of reac_ctrl_parse_x_holds (reac_ctrl_parse.v, not in this delivery; RECIPE.md step 1 (a working note, not in this delivery)): the same run as
    an ExecF.evtF under a footprint RNG (reac_ctrl_parse_contract_x_F of reac_ctrl_parse_c.v), by the script of
    lib/B/Prog/reac_ctrl_parse.v (not in this delivery) over StepF's step.  Every data access closes from one rng premise of that statement:
@@ -37,8 +38,8 @@ Open Scope Z_scope.
 (* wrapper's bcmp_wrap_contract_F comes from bcmp_wrap_c.v.  __asan_stack_malloc_1's footprint form follows.           *)
 
 (* __asan_stack_malloc_c in footprint form: the NARROW text, asan_stack_malloc_contract_F_narrow at lines 694-721 of
-     git show 062bf770c5b:proofs/libreac/fuzz_knock/lib/A/Prog/asan_stack_malloc_F.v
-   (the canonical wide text of 31a0b55aa13 fuzz_scene asan_stack_malloc_cF.v with its one side-stack premise
+     git show:proofs/libreac/fuzz_knock/lib/A/Prog/asan_stack_malloc_F.v
+   (the canonical wide text fuzz_scene asan_stack_malloc_cF.v with its one side-stack premise
    rng RNG FS FS_SIZE replaced by two pieces), in a Theorem Labs lane's premise order, with fuzz_knock's names replaced by fuzz_ctrl
    image B's: the module paths, IMG_LO (reac_ctrl_parse_c.v) and IMG_HI (below) for asan_stack_malloc_cF's, and image
    B's ASAN_STACK_MALLOC_1 and ASAN_STACK_MALLOC_K (asan_stack_malloc_c.v).  The premises of

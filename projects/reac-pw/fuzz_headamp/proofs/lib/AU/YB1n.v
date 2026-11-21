@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB1n.v (donor image sha256 7093581aab04), with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AB1n.v (donor image sha256 43654a025fd0), with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/AB1n.v at 9f8c843f0e03 (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_headamp/lib/A/AB1n.v at b0cad0df5623 (image sha256 f3e0669d2819), with its module names changed (A.Axyz -> AU.Yxyz) and its addresses moved to reac-pw/fuzz_headamp's ASan+UBSan build (image sha256 53edda9bdeeb) by derive_y.py b7b132fb12a7; the Modified-by lines above describe how lib/A/AB1n.v was made and quote its ASan-build values. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/AB1n.v (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_headamp/lib/A/AB1n.v (image sha256 f3e0669d2819), with its module names changed (A.Axyz -> AU.Yxyz) and its addresses moved to reac-pw/fuzz_headamp's ASan+UBSan build (image sha256 53edda9bdeeb) by derive_y.py b7b132fb12a7; the Modified-by lines above describe how lib/A/AB1n.v was made and quote its ASan-build values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ-sized auxiliary vector; the launch's ProcInput, mmap base and entry draw; the start-up hand-off states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -18,7 +19,7 @@ From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import YA01 YA0c
 
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.AU Require Import YB12 YB1h YB1k.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import YB1j.
-From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.AU Require Import YB1p YB1l YB05 YB01 YB1m.
+From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.AU Require Import YB1p YB1l YB05 YB01r YB1m.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
 Import AX2. Import AX2S. Import APG. Import APSG. Import APSXG.
@@ -46,46 +47,66 @@ Lemma tfib_all_holes : all_holes startup_shape = true.
 Proof. vm_compute. reflexivity. Qed.
 Section f.
 #[local] Existing Instance YK11.fx0.
-Definition HS_ok (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs)
-(c : config) : Prop :=
+(* As A/AB1n.v: the launch input is YA02's, with [kb], the exec file name and [sdef] free. *)
+Definition HS_ok (h : nat) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word)
+(argv envp : list (list byte)) (fs0 : Fs.Fs) (stdin : InputStream) (uid gid hw : word)
+(groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs)
+(kb : KernelBuild) (execfn : list byte) (sdef : bool) (fsq : Fs.Fs) (c : config) : Prop :=
 exists ch E R FULL model,
-HS_tfib h = Some ch
+HS_tfib_r (rseq_z (kb_rseq kb)) h = Some ch
 /\ c = cfg_of TSEGS R (pc ch) FULL model
 /\ cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-(SINV0 TPH sp rdraw brk0 argv envp uid hw) (argH0 TPH sp rdraw argv envp uid hw) fs E ch R FULL model.
+(SINV0 TPH sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef AsanUbsan.M.init_pc)
+(argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) fsq E ch R FULL model.
 Theorem tfib_startup_T1 :
 forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream)
-(uid gid hw : word) (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs),
-valid_sp sp -> valid_brk TSEGS brk0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-valid_id uid -> valid_hwcap hw ->
+(uid gid hw : word) (groups : list word) (net : NetQueue) (nofile sigmask : word) (urnd : InputStream) (tmp : Fs.Fs)
+(kb : KernelBuild) (execfn : list byte) (sdef : bool),
+valid_sp sp -> valid_brk TSEGS brk0 -> valid_mmap_base mbase -> valid_argv argv -> valid_envp envp ->
+entry_stack_fits sp argv envp -> valid_id uid -> valid_hwcap hw -> valid_nofile nofile ->
+valid_sigmask (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
+valid_launch (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) ->
 forall T : TSet, T [] ->
-(forall h c, HS_ok h sp rdraw brk0 argv envp uid hw (fs_seed_tmp fs tmp) c -> srealizes TSEGS c T) ->
+(forall h c, HS_ok h sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef
+(fs_seed_tmp fs tmp) c -> srealizes TSEGS c T) ->
 srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk0 mbase rdraw YA02.LIMIT
-(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)) T.
+(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef)) T.
 Proof.
-intros sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hbrk Hva Hve Hfit Huid Hhw T HT HH.
+intros sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef
+Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hnof Hsig Hvl Hlau T HT HH.
 set (HOLES := fun (_ : nat) (_ : env) (_ : Fs.Fs) => T).
-eapply srz_conseq.
-- apply (tfib_startup_closed sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hbrk Hva Hve Hfit Huid Hhw HOLES).
-+ intros h E E' fs0 _; reflexivity.
-+ intros h E fs0; exact HT.
-+ intros h' h E fs0 tr _ X; exact X.
-+ intros h ch Hh E R FULL model HC. cbn [HOLES].
-replace (m_fs model) with (fs_seed_tmp fs tmp) by (symmetry; exact (co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC)).
-apply (HH h). exists ch, E, R, FULL, model. split; [exact Hh|]. split; [reflexivity|]. exact HC.
-- apply sd_all_holes; [exact tfib_all_holes | intros; reflexivity].
+assert (ST : srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk0 mbase rdraw YA02.LIMIT
+(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef))
+(sd HOLES t_nil (E0 sp rdraw brk0 argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef)
+(fs_seed_tmp fs tmp) startup_shape)).
+{ eapply tfib_startup_closed;
+solve [ assumption
+| intros h E E' fs0 _; reflexivity
+| intros h E fs0; exact HT
+| intros h' h E fs0 tr _ X; exact X
+| intros h ch Hh E R FULL model HC; cbn [HOLES];
+replace (m_fs model) with (fs_seed_tmp fs tmp) by (symmetry; exact (co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC));
+apply (HH h); exists ch, E, R, FULL, model;
+split; [exact Hh|]; split; [reflexivity|]; exact HC ]. }
+eapply srz_conseq; [ exact ST | apply sd_all_holes; [exact tfib_all_holes | intros; reflexivity] ].
 Qed.
-Lemma HS_ok_open : forall h sp rdraw brk0 argv envp uid hw fs c,
-HS_ok h sp rdraw brk0 argv envp uid hw fs c ->
+Lemma HS_ok_open : forall h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c,
+HS_ok h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c ->
 exists ch E R FULL model,
-HS_tfib h = Some ch /\ c = cfg_of TSEGS R (pc ch) FULL model
+HS_tfib_r (rseq_z (kb_rseq kb)) h = Some ch /\ c = cfg_of TSEGS R (pc ch) FULL model
 /\ cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-(SINV0 TPH sp rdraw brk0 argv envp uid hw) (argH0 TPH sp rdraw argv envp uid hw) fs E ch R FULL model
-/\ (forall n, (n < NX0G)%nat -> ev E n = ev (E0 TPH sp rdraw brk0 argv envp uid hw) n)
-/\ (forall a, argH0 TPH sp rdraw argv envp uid hw E a = true -> FULL a = wrap_mem TPH sp argv envp uid hw rdraw a)
-/\ eb E = eb (E0 TPH sp rdraw brk0 argv envp uid hw).
+(SINV0 TPH sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef AsanUbsan.M.init_pc)
+(argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) fsq E ch R FULL model
+/\ (forall n, (n < NX0G)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) n)
+/\ (forall a, argH0 sp rdraw argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef E a = true ->
+FULL a = wrap_mem (YA02.inp argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef) mbase TPH
+(Z_to_bv 64 (Z.of_N AsanUbsan.M.init_pc)) sp rdraw a)
+/\ eb E = eb (E0 sp rdraw brk0 argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
 Proof.
-intros h sp rdraw brk0 argv envp uid hw fs c (ch & E & R & FULL & model & Hh & Hc & HC).
+intros h sp rdraw brk0 mbase argv envp fs0 stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef fsq c
+(ch & E & R & FULL & model & Hh & Hc & HC).
 exists ch, E, R, FULL, model. split; [exact Hh|]. split; [exact Hc|]. split; [exact HC|].
 exact (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC).
 Qed.

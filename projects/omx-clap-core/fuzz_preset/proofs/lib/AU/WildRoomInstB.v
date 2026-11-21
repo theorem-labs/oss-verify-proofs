@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset B' (fuzz_preset.asan-ubsan, ELF sha256 c90d4fa54d43160b), THE SATISFIABILITY
    WITNESSES of the room conjunct of the trace carrier P'' at image B's universe lib/Reusable/YCej.v (the trace-carrier
-   form, dd7d1838e568, as at a working branch 460396d4bd13) (a Theorem Labs lane's VERIFY rule 1, ruled
+   form, dd7d1838e568, as at a working branch) (a Theorem Labs lane's VERIFY rule 1, ruled
    22:54Z). rule 24: no function proved. rule 24: proves no function (kind: instance facts).
    ONE IMAGE: this file Requires image B's universe and driver traces only (YCej, YF0m); image A's are
    lib/A/WildRoomInstA.v. The image-free parts (K_LLVMF, init_depot_nil, wild_room_init_K, wild_room_run_fits, cw_of,
    wild_room_cw_fix / _init / _stored) are lib/Reusable/YCbqGwild.v's.
-   The start state is YG00.v init_state (lib/AU/PresetD1preB.v:260 at a working branch d60353b01f6f),
+   The start state is YG00.v init_state (lib/AU/PresetD1preB.v:260 at a working branch),
    whose depot is [] (YCbqGwild.init_depot_nil). Before the first entry call the driver stores only DRV_TRACES
    (lib/Reusable/YF0m.v), all fixed in YCej's universe (drv_fixed_B; lib/Reusable/YD2l.v's TfibB_syms does the same
    computation against the list form). CW_B w1 w2 is the cursor set: parse_items' and parse_string's frees

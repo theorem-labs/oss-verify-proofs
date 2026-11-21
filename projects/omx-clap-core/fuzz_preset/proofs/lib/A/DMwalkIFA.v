@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMwalkIF.v (commit 5ad50e61fc6a, file sha256 dcd705c22ea1) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 7 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 3 code pcs the tool read as sizes, by the internal file funcpair.py), and 42 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMwalkIF.v (file sha256 dcd705c22ea1) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 7 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 3 code pcs the tool read as sizes, by the internal file funcpair.py), and 42 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1 of ReallocPrimary's Theorem Labs walk lanes, brief, the internal file B-WALK-LANES.md of the lane's
    frame directory, section 'Lane B1'): the INTERFACE of the real-merge drain walk at
    omx-clap-core/fuzz_preset's asan image A' (the donor's is at cgif_file_fuzzer's asan-ubsan image) - the statement head of every slice, so the slices can be written in
@@ -11,7 +12,7 @@
 
    The four slices and their heads:
    - H1 [mb_ok_t], [mb_model_facts]: QuarantineCache::MergeBatches (0x34554 .. the return to 0x34418) against the
-     shared model's merge_batches_cf (YG00cf.v:283-297), over the cell vocabulary of section 1 below.
+     shared model's merge_batches_cf (YG00cf.v:284-298), over the cell vocabulary of section 1 below.
    - H2 [dorecycle_spec_r]: Quarantine::DoRecycle (0x346d8) over the OPAQUE cut relation [ARXr] and recycle
      invariant [DRq], with the COUNT-0 batch arm (0x3477c / 0x34780) and fuel [length P].
    - H3 [cdealloc_m_t_cgif]: SizeClassAllocator64LocalCache::Deallocate (0x34c14) over [ARXr] / [DRq], in
@@ -27,7 +28,7 @@
    Section Variable with its premise where a slice needs one.
 
    Facts a slice may cite (file:line), beside the Stdlib and the LPS semantics:
-   - the model: YG00.v (batch, b_bytes :149, sum_bytes YG01.v:209, all_batches YG01.v:153, pop_batches :518,
+   - the model: YG00.v (batch, b_bytes :149, sum_bytes YG01.v:210, all_batches YG01.v:154, pop_batches :518,
      do_recycle :510, recycle_chunk :495, cache_dealloc), YG00cf.v (merge_batches_cf :283-297, maybe_drain_cf),
      DMspec.v (merge_split_cf :50, recycle_body_cf :56, drain_body_cf :61, acall_post_x :102);
    - the cells: YG0n.v (batch_cells :77, qc_cells :89, quar_cells :95), YG0f.v (cell_holds :262);
@@ -110,13 +111,13 @@ Variable mat0 : list word.
 Variable iw : chunk -> Z.
 Variable L0 : list batch.
 (* Recycle's sp: the temp (to-deallocate) list's header is at [spr .. spr + 32); MergeBatches' own frame is
-   [spr - 16, spr) (DMseg_mbe.v:51 R_STK, DMseg_mbt.v:93-96 R_STK at the tail's sp = spr - 16). *)
+   [spr - 16, spr) (DMseg_mbe.v:52 R_STK, DMseg_mbt.v:94-97 R_STK at the tail's sp = spr - 16). *)
 Let spr : Z := bv_unsigned (getr regs0 2).
 Let m0 : word -> option byte := mrestrict (w_H W) mem0.
 Let cfgMB : config :=
 mkCfg (mkst regs0 (w64 0x34554) mem0 (seg_rom tfibsegs)) (with_vm_backing (m_vm_lazy md0) mat0 md0).
 
-(* The call's registers are DMsegDA.at_MB's (DMsegDA.v:49-69) with Drain's a3 and T + t_cache kept in s3 / s4;
+(* The call's registers are DMsegDA.at_MB's (DMsegDA.v:50-70) with Drain's a3 and T + t_cache kept in s3 / s4;
    the walk reads s0 / s1 / s2 only to return them (DMseg_mbh.SREGSX). *)
 Record mb_pre : Prop := MbPre {
 mb_LY : layout_ok ly;
@@ -128,7 +129,7 @@ mb_a1 : getr regs0 11 = w64 spr;
 mb_s0 : getr regs0 8 = w64 (A_QUAR + 160);
 mb_s1 : getr regs0 9 = w64 kQuarantineMin;
 mb_s2 : getr regs0 18 = w64 A_QUAR;
-(* MergeBatches is entered only on the merge arm.  merge_test alone (DMsegDA.v:71, the machine's 0x343e0 / 0x343f4)
+(* MergeBatches is entered only on the merge arm.  merge_test alone (DMsegDA.v:72, the machine's 0x343e0 / 0x343f4)
    does NOT give this: with |L0| = 1 any 8192 < bytes < 16384 passes it, and the walk would leave through
    0x34568 -> 0x34688, which no shell covers.  DMsegDA.postDm (:73-74) reaches at_MB only when
    kQuarantineMax < bytes, and kQuarantineMax = 2 ^ 28 (YG00.v:27) with bytes < 2 * kBatchBytes * |L0| forces
@@ -140,22 +141,22 @@ mb_bfacts : forall b, In b L0 ->
   kHighMemBeg <= addrb ly b /\ addrb ly b + kBatchBytes <= ASAN_CEIL /\ addrb ly b mod 8192 = 0 /\
   (1 <= length (b_items b) <= Z.to_nat kBatchSlots)%nat /\
   (addrb ly b + kBatchBytes <= spr - 16 \/ spr + 32 <= addrb ly b);
-(* List.NoDup, the Stdlib one: DMdeq.dq_ND (DMdeq.v:679), the consumer, is List.NoDup, while the ambient NoDup
-   is stdpp's (DMiface.qview's qv_nodup, DMiface.v:95, is stdpp's; DMdrainQ.nodup_of_stdpp bridges the two) *)
+(* List.NoDup, the Stdlib one: DMdeq.dq_ND (DMdeq.v:680), the consumer, is List.NoDup, while the ambient NoDup
+   is stdpp's (DMiface.qview's qv_nodup, DMiface.v:96, is stdpp's; DMdrainQ.nodup_of_stdpp bridges the two) *)
 mb_nodup : List.NoDup (map b_self L0);
 mb_nn : forall k, In k (flat_map b_items L0) -> 0 <= ck_n k;
 mb_iw : forall k, In k (flat_map b_items L0) -> 0 <= iw k < 2 ^ 64;
-(* the byte bound the walk's arithmetic uses: DMiface.qview's qv_bytes (DMiface.v:104), not a size literal *)
+(* the byte bound the walk's arithmetic uses: DMiface.qview's qv_bytes (DMiface.v:105), not a size literal *)
 mb_bytes : sum_bytes L0 <= 2 ^ 31;
 (* the global list's header (count, first, last, bytes) at inst + o_quar + 160 .. 192 *)
 mb_hdr : val_mem tfibsegs m0 (A_QUAR + 160) 8 (zl L0) /\ val_mem tfibsegs m0 (A_QUAR + 168) 8 (fa ly L0 0) /\
   val_mem tfibsegs m0 (A_QUAR + 176) 8 (la ly L0) /\ val_mem tfibsegs m0 (A_QUAR + 184) 8 (sum_bytes L0);
-(* the temp list's header, zeroed by Recycle's prologue (DMsegDA.at_MB, DMsegDA.v:66) *)
+(* the temp list's header, zeroed by Recycle's prologue (DMsegDA.at_MB, DMsegDA.v:67) *)
 mb_tmp : val_mem tfibsegs m0 spr 8 0 /\ val_mem tfibsegs m0 (spr + 8) 8 0 /\
   val_mem tfibsegs m0 (spr + 16) 8 0 /\ val_mem tfibsegs m0 (spr + 24) 8 0;
-(* the two lock bytes Recycle holds and the two bytes after them (DMsegDA.at_MB, DMsegDA.v:61: the word at
+(* the two lock bytes Recycle holds and the two bytes after them (DMsegDA.at_MB, DMsegDA.v:62: the word at
    inst + o_quar + 152 is 257).  MergeBatches never writes them - they are outside mbwin - and the segment at
-   0x34418 seeds from them (DMseg_rj.SS0's R_QW, DMseg_rj.v:58-60), so the post carries the value. *)
+   0x34418 seeds from them (DMseg_rj.SS0's R_QW, DMseg_rj.v:59-61), so the post carries the value. *)
 mb_mutex : val_mem tfibsegs m0 (A_QUAR + 152) 4 257;
 (* the list's cells, linked, last next word 0 *)
 mb_cells : lcn ly iw m0 L0 0;
@@ -163,7 +164,7 @@ mb_cells : lcn ly iw m0 L0 0;
 mb_pres : forall a, spr - 16 <= a < spr + 32 -> apresent (w_H W) mem0 a;
 mb_bpres : forall b a, In b L0 -> bobj_of ly b a -> apresent (w_H W) mem0 a
 }.
-(* H1 builds DMseg_mbe.SS0's seed (st_ok at 0x34554) from these facts, as DMdeq.SEED1_ok (DMdeq.v:373) builds
+(* H1 builds DMseg_mbe.SS0's seed (st_ok at 0x34554) from these facts, as DMdeq.SEED1_ok (DMdeq.v:374) builds
    YFgl's from its cells; no seed is assumed here. *)
 
 (* The callee-saved registers and gp / tp MergeBatches returns unchanged (DMseg_mbh.SREGSX, DMseg_mbt.SREGSX). *)
@@ -171,7 +172,7 @@ Definition SREGSX : list (bv 5) := [3; 4; 8; 9; 18; 19; 20; 21; 22; 23; 24; 25; 
 
 (* What MergeBatches may have written: Recycle's frame window (its own frame and the temp list's header), the
    global list's header, and the CELL words (not the whole objects) of the entry list, of the kept list and of the
-   extracted list.  This is DMiface.dwin_q's shape (DMiface.v:113-114), so the drain's cut memory relation
+   extracted list.  This is DMiface.dwin_q's shape (DMiface.v:114-115), so the drain's cut memory relation
    [dmem_q] follows from it. *)
 Definition mbwin (Lk ex : list batch) (a : Z) : Prop :=
 (spr - 16 <= a < spr + 32) \/ (A_QUAR + 160 <= a < A_QUAR + 192) \/
@@ -179,7 +180,7 @@ Definition mbwin (Lk ex : list batch) (a : Z) : Prop :=
 
 (* The return at 0x34418: the kept list [Lk] is the global list, the extracted (emptied) batches [ex] are the temp
    list at Recycle's sp, and the global byte word has lost kBatchBytes per extracted batch - merge_split_cf's
-   (gm, ex) exactly (DMspec.v:50-55). *)
+   (gm, ex) exactly (DMspec.v:51-56). *)
 Definition mb_post (W' : world tfibsegs) (c' : config) : Prop :=
 let Lk := fst (MB L0) in let ex := snd (MB L0) in
 W' = W /\ exists regs' mem' mat,
@@ -228,7 +229,7 @@ sum_bytes (done ++ cur :: nx :: t) + kBatchBytes * zl ex = sum_bytes L0 /\
  getr regs' 10 = w64 (A_QUAR + 160) /\ getr regs' 11 = w64 spr /\
  getr regs' 12 = w64 (kBatchBytes * zl ex) /\ getr regs' 14 = w64 (addrb ly cur) /\
  getr regs' 5 = w64 (addrb ly nx) /\ getr regs' 15 = w64 kBatchSlots /\
- (* a6 = -8192, which the tail adds into size (cur) at 0x345e4 and DMseg_mbt's seed pins (DMseg_mbt.v:128) *)
+ (* a6 = -8192, which the tail adds into size (cur) at 0x345e4 and DMseg_mbt's seed pins (DMseg_mbt.v:129) *)
  getr regs' 16 = w64 18446744073709543424 /\ getr regs' 17 = w64 kBatchBytes /\
  (forall x : word, ~ mbwin (done ++ cur :: nx :: t) ex (bv_unsigned x) -> mem' x = mem0 x) /\
  (forall a, mbwin (done ++ cur :: nx :: t) ex a -> kHighMemBeg <= a -> apresent (w_H W) mem' a) /\
@@ -282,16 +283,16 @@ End mb.
    DGif1dI / DGif1dr for the cgif instance).  They are stated here, not in DMiface.v / DGif0.v, which are
    a Theorem Labs lane's files.
    - [di_rview_x_t]: DMiface.di_rview_t plus the class-24 region's allocated bound.  DoRecycle's segments need it
-     at every cut (YFhc.fh_Hb YFhc.v:93, DMrec.RZ.fh_Hb DMrec.v:93, the s7 bound DGif1db.v:197, region_in_prim);
+     at every cut (YFhc.fh_Hb YFhc.v:93, DMrec.RZ.fh_Hb DMrec.v:94, the s7 bound DGif1db.v:198, region_in_prim);
      the released walk takes it from Wf inside YFhf.slot_carved (YFhf.v:70-79), and DMiface.qview's qv_geom
-     (DMiface.v:91-94) holds only at Drain's entry and bounds by kFreeArrayOffset, which is larger.  The bound is
+     (DMiface.v:92-95) holds only at Drain's entry and bounds by kFreeArrayOffset, which is larger.  The bound is
      NOT the literal 2 ^ 31: that is cgif's event-derived wr_mapped_bound (YG06.v:132, YFgq.v:133), while the cf
-     class bound is wrc_mapped_bound = kFreeArrayOffset = 0xE0000000 (YG01cf.v:44-45; preset's class 17 maps
+     class bound is wrc_mapped_bound = kFreeArrayOffset = 0xE0000000 (YG01cf.v:45-46; preset's class 17 maps
       3,584 MiB), so it is the Section Variable [RMAXD] with [rmaxd_ok] (2 ^ 31 <= RMAXD <= kFreeArrayOffset), the name
      and premise lane B2 uses in EnqGbase (ReallocPrimary 00:0xZ): 2 ^ 31 at cgif, kFreeArrayOffset at cf.
      CfF2b proves the kFreeArrayOffset form at every cut (YGcfInstDrainQ.slot_carved_cf).
    The free-array room is NOT a field: CfF2b measured (00:0xZ) that YG03cf.RIx_cf / WfR_cf carry none and that
-   the property is FALSE on reachable cf states - a Theorem Labs lane dropped cgif's wf_fa_room (YG01cf.v:51-63) because
+   the property is FALSE on reachable cf states - a Theorem Labs lane dropped cgif's wf_fa_room (YG01cf.v:52-64) because
    cgif's room came from an event term (the remaining event budget), which the EVENT-TERM GATE forbids, and the free
    path really does grow the free array.  So H3 WALKS EnsureFreeArraySpace (FGt.tfib_efa_spec, FGt.v:85-88); its
    first deliverable is the list of fields the 13 premises of FGt.efa_pre (FGt.v:56-79) need at a CacheDealloc
@@ -321,7 +322,7 @@ End rd.
    COUNT-0 batch arm (its RIx demands 1 <= count).  H2 restates it over [ARXr] and [DRq], with fuel [length P]
    and that arm (0x3477c ld s6 = count, 0x34780 beqz -> 0x347a8; the shell is DMrec.v's module RZ).
    H2 also writes the twins of the three places that fix the class-24 region bound at the LITERAL 2 ^ 31 -
-   DMrec.RZ.fh_Hb (DMrec.v:93), YFhc.fh_Hb (YFhc.v:93) and the s7 step they carry (DGif1db.v:197) - restated as
+   DMrec.RZ.fh_Hb (DMrec.v:94), YFhc.fh_Hb (YFhc.v:93) and the s7 step they carry (DGif1db.v:198) - restated as
    b + kBatchBytes <= ly_space ly + region_off kBatchClass + RMAXD (reviewer RevIF2, finding 3; the class
    computation at 0x347bc-0x347c4, bits 32..36 of b - base, stays 24 for every RMAXD <= 2 ^ 32). *)
 Section dr.
@@ -331,23 +332,23 @@ Variable AOX : alayout -> astate -> Z -> Prop.
 Variable DRq : astate -> list chunk -> list Z -> Prop.
 Variable RMAXD : Z.
 
-(* DoRecycle's own frame (112) plus the recycle callees' window KSTACK_CF = 2048 (DMiface.v:132), rounded up to
-   16: DGif1da.DRSTACK_X (DGif1da.v:30), kept here so H2 and DMdrain read one number. *)
+(* DoRecycle's own frame (112) plus the recycle callees' window KSTACK_CF = 2048 (DMiface.v:133), rounded up to
+   16: DGif1da.DRSTACK_X (DGif1da.v:31), kept here so H2 and DMdrain read one number. *)
 Definition DRSTACK_X : Z := 2176.
 
 (* Recycle calls DoRecycle with a0 = inst + o_quar, a1 = Recycle's sp (the temp list), a2 = T + t_cache
-   (DMseg_rj.at_RJX, DMseg_rj.v:138-144; DMdeq.ATDR, DMdeq.v:193-207).  The model premises are the instance's:
+   (DMseg_rj.at_RJX, DMseg_rj.v:139-145; DMdeq.ATDR, DMdeq.v:194-208).  The model premises are the instance's:
    [ARXr] at the cut, [DRq] with every chunk and every batch object of [P] still to recycle.
    [inst = as_inst B] is NOT redundant: DoRecycle overwrites a0 at 0x34708 and builds the allocator address as a
    CONSTANT with auipc at 0x3471c / 0x34724 (the space-base load at 0x347a8 reads A_ALLOCATOR + 32; DMrec.RZ's
-   fh_regs DMrec.v:91 and at_CD0 DMrec.v:174 are over A_ALLOCATOR), so the walk needs the instance to BE the
+   fh_regs DMrec.v:92 and at_CD0 DMrec.v:175 are over A_ALLOCATOR), so the walk needs the instance to BE the
    image's allocator; with TfibSyms B that is as_inst B = TFIB_INST = A_ALLOCATOR.  The released DGif1da fixes
-   TFIB_INST outright (DGif1da.v:47-50). *)
+   TFIB_INST outright (DGif1da.v:48-51). *)
 Definition dr_pre_r (inst : Z) (ly : alayout) (X : astate) (P : list batch) (W : world tfibsegs)
 (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) : Prop :=
 ARXr inst ly X W mem md /\ inst = as_inst B /\ DRq X (flat_map b_items P) (map b_self P) /\
 (* The two facts DoRecycle's segment seeds read from the relation at cgif (DMrec.RZ.free_hyps' fh_LY / fh_IMG,
-   DMrec.v:85-86, through YFhl.entry_facts; YFha / YFhc the same), as CONJUNCTS of the call's premise and NOT as
+   DMrec.v:86-87, through YFhl.entry_facts; YFha / YFhc the same), as CONJUNCTS of the call's premise and NOT as
    instance fields: the drain discharges both at the call site - the layout from DMiface.qview's qv_ly / qv_img
    at Drain's entry, since ly does not change inside the drain, and the stack clause from drain_reads'
    di_stack_t ARX AOX at the pre-transfer state with di_requar_r_t's owned shrink - and inside DoRecycle both
@@ -434,7 +435,7 @@ forall S its zs k, DRq S its zs -> In k its -> 0 <= ck_n k < NMAXD /\ ck_extent 
    The free-array growth arm (ReturnToAllocator 0x3514c -> EnsureFreeArraySpace 0x35474) IS reached at cf and
    must be walked, through the released allocator-relation-free callee FGt.tfib_efa_spec (FGt.v:85-88): cgif
    refutes it from the invariant's free-array room (DGif1dr.v:26-30, YFfi.v:462, YG0l.return_room), but that room
-   is event-derived (the remaining event budget) and a Theorem Labs lane dropped it at cf (YG01cf.v:51-63; CfF2b 00:0xZ), so it
+   is event-derived (the remaining event budget) and a Theorem Labs lane dropped it at cf (YG01cf.v:52-64; CfF2b 00:0xZ), so it
    is neither a premise here nor a field.  The stack then reaches 1264 bytes (frames 48 + 64 + 128 and FGt's
    RSTACK 1024), inside KSTACK_CF = 2048.  H3's FIRST deliverable is the list of fields FGt.efa_pre's 13
    premises (FGt.v:56-79: the vm reservation, the map, the budget, the shadow presence, mf's alignment and
@@ -459,7 +460,7 @@ getr regs 13 = w64 (ly_space ly + off) /\
    the cf instance's class well-formedness is YG01cf.wf_class_cf, so only the consequences the walk reads are
    listed, with the class bound at [RMAXD].  The five conjuncts the first draft lacked are the ones the released
    seed takes from wf_class and the growth arm needs: the cache's limit word (YFfi's reg_facts through wr_cache,
-   YG01.v:271 - the model branches on pc_max, YG00.v:463, so without the equation the model and the machine can
+   YG01.v:272 - the model branches on pc_max, YG00.v:463, so without the equation the model and the machine can
    take different arms), the allocated part's alignment (wr_alloc_al, YFfi.v:85, which with the RMAXD bound
    gives fh_Hoff's RELv + class_size <= kFreeArrayOffset), the mapped free array's bound and its alignment
    (wr_fa_bound, YFfi.v:86; seed atoms YFgk.v:121 and FGt.efa_pre's FGt.v:61), the count bound FGt.efa_pre asks
@@ -536,7 +537,7 @@ Variable DRq : astate -> list chunk -> list Z -> Prop.
 Variable RMAXD : Z.
 
 (* What the drain reads of the machine through the opaque relations: DGif0.DIface's drain-side field types
-   (DGif0.v:339-347, :368-369), which CfF2a and CfF2b discharge at the cf instance. *)
+   (DGif0.v:340-348, :369-370), which CfF2a and CfF2b discharge at the cf instance. *)
 Definition drain_reads : Prop :=
 di_qview_t B ARX L24 QB /\ di_qowned_t ARX AOX L24 QB /\ di_stack_t ARX AOX /\
 di_frame_t ARX AOX /\ di_frame_t ARXr AOX /\

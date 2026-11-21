@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/rp_uci_int_cg.v (commit ba35beec1417; itself the realizes form of proofs/libreac/fuzz_boxreg/lib/A/Rt/MemchrDef.v amemchr_realizes at recipes commit 88154566652a) for reac-repacer/fuzz_uci's rp_uci_int in image B: the B core's tfibsegs (lib/B/YB1v.v), lib/B/Rt/{ConstsViewDef,MemchrDef}.v, the listing modules lib/B/Prog's; every address in the comments measured on fuzz_uci.asan-ubsan. *)
+(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/rp_uci_int_cg.v (itself the realizes form of proofs/libreac/fuzz_boxreg/lib/A/Rt/MemchrDef.v amemchr_realizes at recipes) for reac-repacer/fuzz_uci's rp_uci_int in image B: the B core's tfibsegs (lib/B/YB1v.v), lib/B/Rt/{ConstsViewDef,MemchrDef}.v, the listing modules lib/B/Prog's; every address in the comments measured on fuzz_uci.asan-ubsan. *)
 (* rp_uci_int_cg: the ASan contract of rp_uci_int (fuzz_uci.asan-ubsan 0x7ffd4, listing name US_rp_uci_int,
    AF_rp_uci_int = 0xcec of lib/B/Prog/UciPList.v), as a STATEMENT only (no proof).
 

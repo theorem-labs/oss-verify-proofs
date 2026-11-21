@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: made for reac-repacer/fuzz_uci's ASan image from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/A/DecodeClose.v (the closing form: one named Section hypothesis per open part, the parts proved elsewhere applied as Lemmas of the hypotheses' names and statements, the program contract LIB_CONTRACT from the entry walk and its callees, the two statements from AsanTop; its About / Print Assumptions commands are left out, because on this image's core those commands for the three tops take about 13 minutes per build) and libreac/fuzz_grant proofs/libreac/fuzz_grant/lib/A/AGrantT.v (the driver step: the core arguments of tfib_srealizesX, the run ceiling and TFIB_T), with the sink guard of fuzz_grant's lib/A/GrantTop.v; names GrantB -> UciB, the library shape fuzz_uci's checksum_shape, fuzz_uci's own program statements and rows; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput, mmap base and entry draw). *)
 (* WireCloseParts: every part of the composition of fuzz_wire's two ASan statements that is not a program walk, each a
-   Lemma of the relocated core, the relocated runtime contracts or the kit, at B := WireB (lib/A/AD2l.v:16) and
+   Lemma of the relocated core, the relocated runtime contracts or the kit, at B := WireB (lib/A/AD2l.v:17) and
    segs := wiresegs0 (lib/A/WireTFIB.v): the runtime contracts the program calls, the facts about B and the meter the
    walks take, the leaf-kit facts, and the driver step (wire_TFIB_T_of_lib): the core's lib/A/AD1q.v:172
    tfib_srealizesX over the program contract of the entry function, which lib/A/WireClose.v gives from the walks.
@@ -75,12 +76,12 @@ Local Abbreviation KS := AE2k.tfib_K.
 (* ===================================================================================================== *)
 (* The runtime contracts the program calls                                                               *)
 (* ===================================================================================================== *)
-(* malloc / free: lib/A/AF0w.v:46 tfib_amalloc_realizes, lib/A/AF0q.v:14 afree_realizes_closed. *)
+(* malloc / free: lib/A/AF0w.v:47 tfib_amalloc_realizes, lib/A/AF0q.v:14 afree_realizes_closed. *)
 Lemma H_RT_MALLOC : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @amalloc_realizes fx rc segs B.
 Proof. intros rc fx. exact (@AF0w.tfib_amalloc_realizes fx rc B WireB_syms (fun t => eq_refl)). Qed.
 Lemma H_RT_FREE : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @afree_realizes fx rc segs B.
 Proof. intros rc fx. exact (@AF0q.afree_realizes_closed fx rc B WireB_syms (fun t => eq_refl)). Qed.
-(* The memcpy interceptor the driver calls, lib/A/AD2m.v:18 tfib_AICPY. *)
+(* The memcpy interceptor the driver calls, lib/A/AD2m.v:19 tfib_AICPY. *)
 Lemma H_RT_MEMCPY_WRAP : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @aintrin_realizes fx rc segs B OCpy (pc_wrap_memcpy (as_code B)).
 Proof. intros rc fx. exact (AD2m.tfib_AICPY B WireB_syms). Qed.
@@ -102,7 +103,7 @@ Proof.
   exact (AE2r.asan_memset_realizes B (AR_laws_ok tfibsegs B) WireB_syms
     ly S W regs mem md d x n HPRE G10 G11 G12 Hn Hd Hdn Hdst Hra Hhull Ham).
 Qed.
-(* __asan_memmove (0x51310), lib/A/Rt/Memmove.v:148 asan_memmove_contract; rp_copy_untag calls it. *)
+(* __asan_memmove (0x51310), lib/A/Rt/Memmove.v:149 asan_memmove_contract; rp_copy_untag calls it. *)
 Lemma H_RT_ASAN_MEMMOVE : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @MD.amemmove_realizes fx rc segs B (wire_sigma WS___asan_memmove).
 Proof. intros rc fx. exact (@Memmove.asan_memmove_contract fx rc B (AR_laws_ok tfibsegs B) WireB_syms). Qed.
@@ -161,7 +162,7 @@ Proof.
   - split; [|exact Himg]. unfold app_addr, in_app, ASAN_CEIL in *. lia.
   - split; [exact H4096|]. split; [|exact Hceil]. unfold zone2, off_img, kLowShadowBeg, kHighMemBeg in *. lia.
 Qed.
-(* The core's sink record laws, lib/A/AD1u.v:44 tfib_AIL, and Reusable/YE01.v asink_none_kept / ameta_inv_kept
+(* The core's sink record laws, lib/A/AD1u.v:45 tfib_AIL, and Reusable/YE01.v asink_none_kept / ameta_inv_kept
    specialised to one journal step. *)
 Lemma HB_SINK_IMG_LAWS : @asink_img_laws SK segs B KS.
 Proof. apply AD1u.tfib_AIL; first [exact WireB_syms | apply AR_laws_ok]. Qed.
@@ -250,14 +251,15 @@ Lemma wire_srealizesX_rc : @tfib_lib_contract_x_all rc checksum_shape B MT XL XL
   forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk segs brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes segs (init_config segs WAs.M.init_pc WAs.M.phdrs sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS:=checksum_shape) inp).
 Proof.
-  intros LIBX sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+  intros LIBX sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
   change target_alloc_limit with YA02.LIMIT.
   exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK MT XL XL RLO RHI MT_FREE RO_IN LIBX xst XFR PF1 PFN est ESTI
-    ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+    ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 
@@ -265,8 +267,8 @@ End RC.
 Theorem wire_TFIB_T_of_lib :
   (forall rc : YM05.RunCeil, @tfib_lib_contract_x_all rc checksum_shape B MT XL XL RLO RHI) -> TFIB_T.
 Proof.
-  intros LIB sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+  intros LIB sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   exact (@wire_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowW sp Hsp))
     (LIB (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowW sp Hsp))) sp rnd brk mbase inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.

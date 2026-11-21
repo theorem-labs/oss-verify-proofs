@@ -26,8 +26,8 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import
 YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05 YE01 APostBase.
-(* image B's core twin (a Theorem Labs lane's B run ec8ce4c2cc5): the segments.  YE2k (the sink head) is NOT required: at
-   9afb8c9070a it does not compile (YE2k.v:12 holds an unrelocated, refused value for address 0x41980), so SK stays a
+(* image B's core twin (a Theorem Labs lane's B run): the segments.  YE2k (the sink head) is NOT required:
+    it does not compile (YE2k.v:12 holds an unrelocated, refused value for address 0x41980), so SK stays a
    Section variable. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YB1v.
 (* the result value: the shared model of the function (lib/Prog, not a frame-route file) *)

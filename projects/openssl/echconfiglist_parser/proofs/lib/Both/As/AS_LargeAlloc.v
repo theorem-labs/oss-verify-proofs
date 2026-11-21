@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the GAP hypothesis places the gap at or above task_unmapped_base instead of above 0, and one more side goal is closed). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -194,7 +195,7 @@ Section LargeAlloc.
   Hypothesis BUD : eager_used mo + pages_total S * page_size + msz + (msz / 32768 + 2) * page_size + 0x20000 <= vm_limit (m_vmmaps mo).
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  Hypothesis GAP : exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + msz <= alloc_top (m_vmmaps mo)
+  Hypothesis GAP : exists g : word, bv_unsigned g mod page_size = 0 /\ task_unmapped_base <= bv_unsigned g /\ bv_unsigned g + msz <= alloc_top (m_vmmaps mo)
                                     /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) g (wz msz) = true.
   (* [comment removed for export] *)
   Hypothesis IMGR : forall x : word, AIMG_LO <= bv_unsigned x < AIMG_TOP -> in_rangesb x (vm_reserved (m_vmmaps mo)) = true.
@@ -243,6 +244,7 @@ Section LargeAlloc.
       rewrite ?NZ, ?(same_but_materialized_vmmaps _ _ SBM1), ?(same_but_materialized_eager _ _ SBM1).
     { apply wz_ne0. lia. }
     { reflexivity. } { reflexivity. } { reflexivity. } { reflexivity. }
+    { first [reflexivity | apply bv_eq; reflexivity]. }
     { exact NW. }
     { intros _ _. pose proof (pages_total_nonneg S). unfold page_size in *. lia. }
     { exact GAP. }

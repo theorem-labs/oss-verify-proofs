@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: both sections are restated over the launch's entry image (inp, mb, ph, entry, sp0, rnd) with a new IMGTOP hypothesis that it ends at the 8-aligned ed_top, from which span_of_top derives the stack-image lemmas' SPAN premise; the argv strings' slack runs to 8 bytes below the image end (was 16), argc is length argv, main_usage and main_usage__body take envp, hw and uid, which the image's argv and environment lemmas now read, grow_spec, read_step, body_spec, loop_spec and tail_spec take IMGTOP, read_step, body_spec, loop_spec, read_all_spec and main_spec declare argv, envp, uid and hw, which the lemmas they call read, and the lemmas whose lia steps see the image's length (want_spec, cap_shift_zero, blk_facts, blk_tclr, RS_chunk, atp_unsigned, geu_cond_true, geu_cond_false) take mb, ph and entry. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
@@ -192,6 +193,31 @@ Qed.
 Local Lemma RS_ok_pre : rw_bytes_b asegs 0x5d0c50 (repeat (Z_to_bv 8 0) (Z.to_nat 65536)) = true.
 Proof. apply rw_bytes_b_zero_w. intros i Hi. rewrite Z2Nat.id in Hi by lia. apply asegs_zero_rs. lia. Qed.
 
+(* PORTED to 75d69e00.  The [SPAN] premise that the ported
+   E2/Musl/Printf_kit__Musl.v [Section StackImage] carries
+   (Printf_kit__Musl.v:194, donor E2/Musl/InitMem.v:465), derived from the one
+   fact this file is given about the top of the image.  [Run.entry_stack_image_top]
+   is DELETED at 75d69e00 (0 rows; control [entry_page_top] 11, Run.v:1341), so
+   where the image ends is a launch fact rather than a computation; the sections
+   below take it as [IMGTOP] and MainEntryA__A3D discharges it from
+   [Run.valid_entry_va]'s fifth conjunct.  [kb_rseq] is not pinned anywhere
+   here: [block_head_size] carries the flag symbolically. *)
+#[using="Type"] Lemma span_of_top :
+  forall inp0 (mb0 : word) ph0 (entry0 sp1 : word) rnd0,
+  (bv_unsigned sp1
+   + Z.of_nat (length (entry_stack_image inp0 mb0 ph0 entry0 sp1 rnd0))
+   = bv_unsigned (ed_top rnd0))%Z ->
+  (bv_unsigned sp1
+   + Z.of_nat (block_head_size (kb_rseq (in_kernel inp0)) (in_argv inp0) (in_envp inp0))
+   + Z.of_nat (launch_string_bytes (in_argv inp0) (in_envp inp0) (in_execfn inp0))
+   + 8 <= bv_unsigned (ed_top rnd0))%Z.
+Proof.
+  intros inp0 mb0 ph0 entry0 sp1 rnd0 HT.
+  pose proof (build_stack_bytes_length inp0 mb0 ph0 entry0 sp1 rnd0) as BL.
+  unfold InitMem.struct_size, InitMem.str_len, InitMem.pad_len, InitMem.pad_nat in *.
+  lia.
+Qed.
+
 Section CANSEC1. Context {rc : runConstT} {tlsI : ABase.atlsT}.
 Section Main.
   Context {H hptr : Type} (HO : HeapOps H hptr) (FO : @FrameOps H hptr) (sites : stack_site -> Z).
@@ -201,9 +227,23 @@ Section Main.
   #[local] Abbreviation cblk := (@cblock hptr).
   #[local] Abbreviation PS := (PState H hptr).
   (* [comment removed for export] *)
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  (* PORTED to 75d69e00: the entry-image tuple is E2/Musl/InitMem.v's
+     [Section Layout] tuple (inp, mb, ph, entry, sp, rnd).  [argv], [envp],
+     [uid] and [hw] stay as section LETs over [inp] so that the 28 [#[using=]]
+     lists below -- and the argument lists of everything they name -- do not
+     move; a [Let] is bridged to its own body by delta/zeta, so [apply],
+     [exact] and [pose proof] see through it (rule 11c-GAP-KIND).  The old
+     seven-argument [build_stack_bytes a_phdrs sp0 argv envp uid hw rnd] is
+     gone: [StackLayout.build_stack_bytes] takes twelve (StackLayout.v:483) and
+     [Run.entry_stack_image] six (Run.v:1344). *)
+  Variables (inp : ProcInput) (mb : word) (ph : PhdrInfo) (entry : word)
+            (sp0 : word) (rnd : EntryDraw).
+  Let argv := in_argv inp.
+  Let envp := in_envp inp.
+  Let uid := in_uid inp.
+  Let hw := in_hwcap inp.
   Notation USP := (bv_unsigned sp0).
-  Notation SBK := (build_stack_bytes a_phdrs sp0 argv envp uid hw rnd).
+  Notation SBK := (entry_stack_image inp mb ph entry sp0 rnd).
   Variables (L : alayout) (LO : Z).
   (* [comment removed for export] *)
   Variable AT_EXIT : Z -> PS -> footprint -> machine_state -> Prop.
@@ -225,6 +265,14 @@ Section Main.
   Hypothesis TOP_lo : (USP - 160 <= al_top L)%Z.
   Hypothesis TOP47 : (al_top L <= 2^47)%Z.
   Hypothesis USP47 : (USP + Z.of_nat (length SBK) <= 2^47)%Z.
+  (* The image ENDS at [ed_top], and [ed_top] is page-aligned
+     ([Run.valid_stack_top_va], Run.v:3611).  Both halves come from
+     [Run.entry_launch_ok_va] (Run.v:3723) and are discharged by
+     MainEntryA__A3D / ImplA; this section has no entry record.  The second
+     half replaces the old [usp mod 8 = 0] alignment argument: at 75d69e00 the
+     image ends AT [ed_top], so [sp]'s alignment says nothing about its end. *)
+  Hypothesis IMGTOP : (USP + Z.of_nat (length SBK) = bv_unsigned (ed_top rnd)
+                       /\ bv_unsigned (ed_top rnd) mod 8 = 0)%Z.
   Hypothesis TRD : traces_drv L.
   Hypothesis TRF : traces_fuzz_one TP L RA_FUZZ [].
 
@@ -253,7 +301,7 @@ Section Main.
   Let block_mobjA := block_mobjA FO GIOA fflagA GL.
 
   (* [comment removed for export] *)
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma slack_trunc : forall (m : mem) (P : Z) (str slackF : list byte) (B : Z),
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma slack_trunc : forall (m : mem) (P : Z) (str slackF : list byte) (B : Z),
     bytes_at asegs m P (str ++ Z_to_bv 8 0 :: slackF) -> ((- (P + Z.of_nat (length str) + 1)) mod 8 <= Z.of_nat (length slackF))%Z ->
     (P + Z.of_nat (length str) + 1 <= B)%Z -> (B mod 8 = 0)%Z ->
     exists slack, bytes_at asegs m P (str ++ Z_to_bv 8 0 :: slack) /\ ((- (P + Z.of_nat (length str) + 1)) mod 8 <= Z.of_nat (length slack))%Z
@@ -276,7 +324,7 @@ Section Main.
   Proof. pose proof (Nat2Z.is_nonneg (length SBK)) as N0. pose proof LO_lo as A. pose proof LO_hi as B. pose proof USP47 as C. unfold MAIN_STACK, TARGET_RUN_STACK, FUZZ_STACK, PCAP_L4_STACK, STDIO_STACK in B. atop_facts. lia. Qed.
 
   (* [comment removed for export] *)
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma unw_main : forall RNG (m : mem) PC (sp s0 ra : word) X,
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma unw_main : forall RNG (m : mem) PC (sp s0 ra : word) X,
     (bv_unsigned s0 <= bv_unsigned sp)%Z -> ra = Z_to_bv 64 X -> (ACLIENT_LO <= X < ACLIENT_HI)%Z -> ~ (ACLIENT_LO <= PC < ACLIENT_HI)%Z ->
     In [PC; X] (al_U L) -> In [PC] (al_U L) -> rng RNG LO (al_top L - LO) -> (bv_unsigned sp < 2^47)%Z ->
     unw_okA L RNG m LO PC sp s0 ra.
@@ -309,7 +357,7 @@ Section Main.
   Definition main_entry (s : PS) (RNG : footprint) (ms : machine_state) : Prop :=
     exists (gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem) (FB : list cblk),
       ms = MS (mkR (Z_to_bv 64 RA_MAIN) (Z_to_bv 64 (USP + -48)) gp (Z_to_bv 64 ATP) t0 t1 t2 s0 s1
-                   (Z_to_bv 64 (argc argv)) (Z_to_bv 64 (USP + 8)) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                   (Z_to_bv 64 (Z.of_nat (length argv))) (Z_to_bv 64 (USP + 8)) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
               F (Z_to_bv 64 MAIN_ENTRY) fc None m (seg_rom asegs)
       /\ GIOA L RNG s [] FB [] m /\ mem_inv asegs m /\ stk asegs m LO (USP + -48) /\ valid_argv argv /\ rngs RNG
       /\ bytes_at asegs m USP SBK.      (* [comment removed for export] *)
@@ -344,7 +392,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'main_usage__stmt 0).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'main_usage__stmt 1).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'main_usage__stmt 2).
-  #[using="fflagA GL GD EPR_USAGE LO_lo LO_hi USP16 TOP_lo TOP47 USP47 AT_EXIT_I drv_lit_mobjA drv_stack_writes"] Lemma main_usage__body : ltac:(let T := type of (fun (h : main_usage__stmt) => h s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="fflagA GL GD EPR_USAGE LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP AT_EXIT_I drv_lit_mobjA drv_stack_writes envp hw uid"] Lemma main_usage__body : ltac:(let T := type of (fun (h : main_usage__stmt) => h s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (s, (RNG, ms))) as _.
     intros (gp & t0 & t1 & t2 & s0 & s1 & a2 & a3 & a4 & a5 & a6 & a7 & s2 & s3 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m & FB & -> & G & MI & ST & VA & RS & CS) HC.
@@ -355,8 +403,8 @@ Section Main.
     assert (EA : exists argv0 argvr, argv = argv0 :: argvr) by (destruct argv as [|x y]; [cbn in VA1; lia| eauto]).
     (nd_pre EA 3%nat; intros argv0 argvr EARGV; nd_post).
     assert (HA0 : nth_error argv 0 = Some argv0) by (rewrite EARGV; reflexivity).
-    pose proof (raw_len_nonneg a_phdrs sp0 argv envp uid hw rnd) as RN.
-    pose proof (build_stack_bytes_length a_phdrs sp0 argv envp uid hw rnd) as BL.
+    pose proof (raw_len_nonneg inp sp0 rnd) as RN.
+    pose proof (build_stack_bytes_length inp mb ph entry sp0 rnd) as BL.
     pose proof (bytes_at_bound _ _ _ _ CS) as CSB.
     unfold main_prog, main_model. unfold argv_Z at 1. rewrite length_map.
     replace (Z.of_nat (length argv) =? 2)%Z with false by (symmetry; apply Z.eqb_neq; exact HC). cbn [negb].
@@ -365,20 +413,21 @@ Section Main.
     ienterG.
     carve_frame 80%nat ST.
     do 11 zstep.
-    zstep. if_true_by (neq_cond (argc argv) 2 ltac:(unfold argc; lia) ltac:(lia) ltac:(unfold argc; exact HC)).
+    zstep. if_true_by (neq_cond (Z.of_nat (length argv)) 2 ltac:(lia) ltac:(lia) ltac:(exact HC)).
     (* [comment removed for export] *)
     lazymatch goal with |- evtF _ _ _ (MS _ _ _ _ _ ?m1 _) =>
-      (nd_pre (stack_argv_string_slack asegs a_phdrs sp0 argv envp uid hw rnd m1 CS
-                  ltac:(generalize USP16; clear; intros; Z.div_mod_to_equations; lia) 0 argv0 HA0) 8%nat; intros P0 slackF HP0 P0lo P0hi STRF SLKF ENDF; nd_post);
-      pose proof (stack_argv_ptr_read asegs a_phdrs sp0 argv envp uid hw rnd m1 CS 0 _ HP0) as RD0
+      (nd_pre (stack_argv_string_slack asegs inp mb ph entry sp0 rnd (span_of_top inp mb ph entry sp0 rnd (proj1 IMGTOP)) m1 CS
+                  (proj2 IMGTOP) 0 argv0 HA0) 8%nat; intros P0 slackF HP0 P0lo P0hi STRF SLKF ENDF; nd_post);
+      pose proof (stack_argv_ptr_read asegs inp mb ph entry sp0 rnd (span_of_top inp mb ph entry sp0 rnd (proj1 IMGTOP)) m1 CS 0 _ HP0) as RD0
     end.
     replace (USP + 8 + 8 * Z.of_nat 0)%Z with (USP + 8)%Z in RD0 by lia.
     unfold InitMem.str_base, InitMem.env_base, InitMem.str_base in P0lo, P0hi.
-    (nd_pre (slack_trunc _ P0 argv0 slackF (USP + Z.of_nat (length SBK) - 16) STRF SLKF
-                ltac:(rewrite BL; unfold raw_len, pad_len in *; clear - P0hi RN; lia)
-                ltac:(rewrite BL; generalize USP16; unfold pad_len; clear; intros; Z.div_mod_to_equations; lia)) 4%nat; intros slack0 STR0 SLK0 END0; nd_post).
+    (nd_pre (slack_trunc _ P0 argv0 slackF (USP + Z.of_nat (length SBK) - 8) STRF SLKF
+                ltac:(rewrite BL; pose proof (InitMem.flatten_strings_length (in_argv inp)) as FL1; pose proof (InitMem.flatten_strings_length (in_envp inp)) as FL2;
+                      unfold InitMem.str_len, launch_string_bytes, raw_len, pad_len in *; clear - P0hi RN FL1 FL2; lia)
+                ltac:(pose proof IMGTOP as [IT IT8]; rewrite IT; clear - IT8; Z.div_mod_to_equations; lia)) 4%nat; intros slack0 STR0 SLK0 END0; nd_post).
     assert (RA0 : rng RNG (USP + 8) 8).
-    { eapply rng_sub'; [exact CSR|]. rewrite BL. unfold raw_len, struct_size, InitMem.argc, InitMem.envc. clear - RN. lia. }
+    { eapply rng_sub'; [exact CSR|]. rewrite BL. clear - RN. lia. }
     do 7 zstep.
     (* [comment removed for export] *)
     lazymatch type of MU with munch _ _ ?mb =>
@@ -412,7 +461,7 @@ Section Main.
                       | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; aln16 | exact RS'].
   Qed.
   End Zd1.
-  #[using="fflagA GL GD EPR_USAGE LO_lo LO_hi USP16 TOP_lo TOP47 USP47 AT_EXIT_I drv_lit_mobjA drv_stack_writes"] Lemma main_usage : ltac:(let t := eval cbv delta [main_usage__stmt] in main_usage__stmt in exact t).
+  #[using="fflagA GL GD EPR_USAGE LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP AT_EXIT_I drv_lit_mobjA drv_stack_writes envp hw uid"] Lemma main_usage : ltac:(let t := eval cbv delta [main_usage__stmt] in main_usage__stmt in exact t).
   Proof. exact main_usage__body. Qed.
 
   (* [comment removed for export] *)
@@ -455,7 +504,7 @@ Section Main.
     end.
 
   (* [comment removed for export] *)
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma want_spec : forall RNG (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma want_spec : forall RNG (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
       (F : bvmap 5 word) (fc : bv 32) (m : mem) (cap len : Z),
     s5 = Z_to_bv 64 cap -> s3 = Z_to_bv 64 len -> (0 <= len < cap)%Z -> (cap <= 67108864)%Z -> rng_aimg RNG ->
     evtF asegs RNG (fun ms' => exists a0', ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0' a1 (Z_to_bv 64 (Z.min (cap - len) 65536)) a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
@@ -472,7 +521,7 @@ Section Main.
       rewrite Z.min_r by lia. apply evtF_done. eexists. reflexivity.
   Qed.
 
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma cap_shift_zero : forall cap j, (cap = 65536 * 2 ^ j)%Z -> (0 <= j)%Z -> (cap < 67108864)%Z -> Z.shiftr cap 26 = 0%Z.
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma cap_shift_zero : forall cap j, (cap = 65536 * 2 ^ j)%Z -> (0 <= j)%Z -> (cap < 67108864)%Z -> Z.shiftr cap 26 = 0%Z.
   Proof. intros cap j -> Hj Hc. rewrite Z.shiftr_div_pow2 by lia. apply Z.div_small. lia. Qed.
 
   (* [comment removed for export] *)
@@ -491,14 +540,14 @@ Section Main.
       end.
 
   (* [comment removed for export] *)
-  #[using="tlsI FO fflagA sp0 argv envp uid hw rnd GL block_mobjA"] Lemma blk_facts : forall RNG s CL FB m b, GIOA L RNG s CL FB [] m -> In b CL -> (0 <= cb_size b)%Z ->
+  #[using="tlsI FO fflagA sp0 argv envp uid hw rnd mb ph entry GL block_mobjA"] Lemma blk_facts : forall RNG s CL FB m b, GIOA L RNG s CL FB [] m -> In b CL -> (0 <= cb_size b)%Z ->
     mobjA RNG m (cb_addr b) (cb_size b) /\ (cb_addr b + cb_size b <= ATOP)%Z /\ (0x603000 <= cb_addr b)%Z.
   Proof.
     intros RNG s CL FB m b G Hb Hn. (nd_pre (block_mobjA L RNG s CL FB m (cb_addr b) (cb_size b) G ltac:(exists b; split; [exact Hb| lia]) Hn) 3%nat; intros A1 A2 A3; nd_post).
     unfold AIMG_HI in A3. auto.
   Qed.
   (* [comment removed for export] *)
-  #[using="FO fflagA sp0 argv envp uid hw rnd GL"] Lemma blk_tclr : forall RNG s CL FB m b, GIOA L RNG s CL FB [] m -> In b CL -> (0 < cb_size b)%Z ->
+  #[using="FO fflagA sp0 argv envp uid hw rnd mb ph entry GL"] Lemma blk_tclr : forall RNG s CL FB m b, GIOA L RNG s CL FB [] m -> In b CL -> (0 < cb_size b)%Z ->
     (cb_addr b + cb_size b <= ATPv + -200 \/ ATPv + 304 <= cb_addr b)%Z.
   Proof.
     intros RNG s CL FB m b G Hb Hn.
@@ -529,7 +578,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'grow_spec__stmt 5).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'grow_spec__stmt 6).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'grow_spec__stmt 7).
-  #[using="FO fflagA argv envp uid hw rnd GL GD MALLOC FREE EPR_BIG LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma grow_spec__body : ltac:(let T := type of (fun (h : grow_spec__stmt) => h fd P1 path slack st s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="FO fflagA argv envp uid hw rnd GL GD MALLOC FREE EPR_BIG LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma grow_spec__body : ltac:(let T := type of (fun (h : grow_spec__stmt) => h fd P1 path slack st s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (fd, (P1, (path, (slack, (st, (s, (RNG, ms)))))))) as _.
     intros LHH Hfull.
@@ -659,7 +708,7 @@ Section Main.
       split; [exact HC|]. split; [symmetry; exact Hfull|]. split; [lia| exact PATH].
   Qed.
   End Zd2.
-  #[using="FO fflagA argv envp uid hw rnd GL GD MALLOC FREE EPR_BIG LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma grow_spec : ltac:(let t := eval cbv delta [grow_spec__stmt] in grow_spec__stmt in exact t).
+  #[using="FO fflagA argv envp uid hw rnd GL GD MALLOC FREE EPR_BIG LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma grow_spec : ltac:(let t := eval cbv delta [grow_spec__stmt] in grow_spec__stmt in exact t).
   Proof. exact grow_spec__body. Qed.
 
   Definition body_post (fd P1 : Z) (path slack : list byte) : (rd_st (ptr:=hptr) + rd_result (ptr:=hptr)) -> PS -> footprint -> machine_state -> Prop :=
@@ -668,7 +717,7 @@ Section Main.
   (* [comment removed for export] *)
   #[using="Type"] Lemma RS_ok : rw_bytes_b asegs 0x5d0c50 (repeat (Z_to_bv 8 0) (Z.to_nat 65536)) = true.
   Proof. exact RS_ok_pre. Qed.   (* [comment removed for export] *)
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma RS_chunk : forall m : mem, exists rsj, rw_cells asegs m 0x5d0c50 [CB (Z.to_nat 65536) rsj].
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma RS_chunk : forall m : mem, exists rsj, rw_cells asegs m 0x5d0c50 [CB (Z.to_nat 65536) rsj].
   Proof.
     intros m. (nd_pre (rw_cells_any asegs m 0x5d0c50%Z (repeat (Z_to_bv 8 0) (Z.to_nat 65536)) RS_ok ltac:(lia) ltac:(rewrite repeat_length; lia)) 3%nat; intros rsj RSL RSC; nd_post).
     rewrite repeat_length in RSC. exists rsj. exact RSC.
@@ -681,14 +730,14 @@ Section Main.
     unfold READ_STAGE in U. apply static_mobjA; [lia | lia | lia | eapply unpoisoned_sub; [exact U| lia| lia] | exact W | exact RI | exact RSH].
   Qed.
 
-  #[using="sp0 argv envp uid hw rnd"] Lemma atp_unsigned : bv_unsigned (Z_to_bv 64 ATP) = ATP.
+  #[using="sp0 argv envp uid hw rnd mb ph entry"] Lemma atp_unsigned : bv_unsigned (Z_to_bv 64 ATP) = ATP.
   Proof. pose proof atp_lin as ((TL & _) & _). atop_facts. unfold ATP. apply unsigned_lit. lia. Qed.
 
   (* [comment removed for export] *)
   Definition read_step__stmt : Prop := forall fd P1 path slack (len0 : Z) (st1 : rd_st (ptr:=hptr)) s RNG ms,
     grow_post fd P1 path slack len0 (Some st1) s RNG ms ->
     ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) < 2^24 /\ (- (P1 + Z.of_nat (length path) + 1)) mod 8 <= Z.of_nat (length slack))%Z -> (3 <= fd <= 4096)%Z -> (USP <= P1)%Z ->
-    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 16)%Z ->
+    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 8)%Z ->
     implMG RNG
       (s0 <- mget ;;
        (let buf := sites SiteReadStage in
@@ -710,7 +759,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'read_step__stmt 6).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'read_step__stmt 7).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'read_step__stmt 8).
-  #[using="FO fflagA GL GD EPR_READ SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 drv_lit_mobjA block_mobjA"] Lemma read_step__body : ltac:(let T := type of (fun (h : read_step__stmt) => h fd P1 path slack len0 st1 s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="FO fflagA argv envp uid hw GL GD EPR_READ SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP drv_lit_mobjA block_mobjA"] Lemma read_step__body : ltac:(let T := type of (fun (h : read_step__stmt) => h fd P1 path slack len0 st1 s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (fd, (P1, (path, (slack, (len0, (st1, (s, (RNG, ms))))))))) as _.
     intros GP HNUL HPL HFD HP1 HPEND.
@@ -865,13 +914,13 @@ Section Main.
         split; [exact PATH|]. split; [exact HP1| exact HFD].
   Qed.
   End Zd3.
-  #[using="FO fflagA GL GD EPR_READ SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 drv_lit_mobjA block_mobjA"] Lemma read_step : ltac:(let t := eval cbv delta [read_step__stmt] in read_step__stmt in exact t).
+  #[using="FO fflagA argv envp uid hw GL GD EPR_READ SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP drv_lit_mobjA block_mobjA"] Lemma read_step : ltac:(let t := eval cbv delta [read_step__stmt] in read_step__stmt in exact t).
   Proof. exact read_step__body. Qed.
 
   (* [comment removed for export] *)
   Definition body_spec__stmt : Prop := forall fd P1 path slack (st : rd_st (ptr:=hptr)) s RNG ms,
     LH fd P1 path slack st s RNG ms -> ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) < 2^24 /\ (- (P1 + Z.of_nat (length path) + 1)) mod 8 <= Z.of_nat (length slack))%Z ->
-    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 16)%Z ->
+    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 8)%Z ->
     implMG RNG (read_loop_body diag (pmalloc HO) (pfree HO) (sites SiteReadStage) fd (map bv_unsigned path) st) s (body_post fd P1 path slack) ms.
   Section Zd4.   (* [comment removed for export] *)
   Variable fd : ltac2:(SecDietF.SzSecF.ty 'body_spec__stmt 0).
@@ -882,7 +931,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'body_spec__stmt 5).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'body_spec__stmt 6).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'body_spec__stmt 7).
-  #[using="FO fflagA GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma body_spec__body : ltac:(let T := type of (fun (h : body_spec__stmt) => h fd P1 path slack st s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma body_spec__body : ltac:(let T := type of (fun (h : body_spec__stmt) => h fd P1 path slack st s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (fd, (P1, (path, (slack, (st, (s, (RNG, ms)))))))) as _.
     intros LHH HNUL HPL HPEND.
@@ -911,13 +960,13 @@ Section Main.
       + cbv beta iota. apply implMG_ret. apply evtF_done. exact GP.
   Qed.
   End Zd4.
-  #[using="FO fflagA GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma body_spec : ltac:(let t := eval cbv delta [body_spec__stmt] in body_spec__stmt in exact t).
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma body_spec : ltac:(let t := eval cbv delta [body_spec__stmt] in body_spec__stmt in exact t).
   Proof. exact body_spec__body. Qed.
 
   (* [comment removed for export] *)
-  #[using="FO fflagA GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma loop_spec : forall fuel fd P1 path slack (st : rd_st (ptr:=hptr)) s RNG ms,
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma loop_spec : forall fuel fd P1 path slack (st : rd_st (ptr:=hptr)) s RNG ms,
     LH fd P1 path slack st s RNG ms -> ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) < 2^24 /\ (- (P1 + Z.of_nat (length path) + 1)) mod 8 <= Z.of_nat (length slack))%Z ->
-    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 16)%Z ->
+    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 8)%Z ->
     implMG RNG (mloop fuel (read_loop_body diag (pmalloc HO) (pfree HO) (sites SiteReadStage) fd (map bv_unsigned path)) st) s
       (LX fd P1 path slack) ms.
   Proof.
@@ -975,7 +1024,7 @@ Section Main.
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'read_all_spec__stmt 1).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'read_all_spec__stmt 2).
   Variable argv1 : ltac2:(SecDietF.SzSecF.ty 'read_all_spec__stmt 3).
-  #[using="FO fflagA GL GD MALLOC FREE EPR_OPEN EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma read_all_spec__body : ltac:(let T := type of (fun (h : read_all_spec__stmt) => h s RNG ms argv1) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_OPEN EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma read_all_spec__body : ltac:(let T := type of (fun (h : read_all_spec__stmt) => h s RNG ms argv1) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (s, (RNG, (ms, argv1)))) as _.
     intros (ra & gp & t0 & t1 & t2 & s1 & a0 & a2 & a3 & a4 & a5 & a6 & a7 & s2 & s3 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m & FB & -> & G & MI & ST & (j0 & f1 & f2 & f3 & f4 & f5 & f6 & f7 & f8 & FR) & RS & CS) HA1 VA.
@@ -985,17 +1034,18 @@ Section Main.
     destruct (gd_errno _ _ _ GD _ _ _ _ _ _ _ G) as (e & T2). destruct (gd_canary _ _ _ GD _ _ _ _ _ _ _ G) as (L2 & (can & L3)).
     pose proof (gd_args _ _ _ GD _ _ _ _ _ _ _ G) as CSO. (pose proof CSO as ndP__; nd_pre ndP__ 5%nat; intros _ _ _ CSR _; nd_post).
     pose proof atp_unsigned as ETP. pose proof atp_lin as ((TL & _) & _). pose proof atp_below_atop as TBA. pose proof ATPv_img as TIMG. unfold ATP in *.
-    pose proof (raw_len_nonneg a_phdrs sp0 argv envp uid hw rnd) as RN.
-    pose proof (build_stack_bytes_length a_phdrs sp0 argv envp uid hw rnd) as BL.
+    pose proof (raw_len_nonneg inp sp0 rnd) as RN.
+    pose proof (build_stack_bytes_length inp mb ph entry sp0 rnd) as BL.
     pose proof (bytes_at_bound _ _ _ _ CS) as CSB.
-    (nd_pre (stack_argv_string_slack asegs a_phdrs sp0 argv envp uid hw rnd m CS
-                ltac:(generalize USP16; clear; intros; Z.div_mod_to_equations; lia) 1 argv1 HA1) 8%nat; intros P1 slackF HP1 P1lo P1hi STRF SLKF ENDF; nd_post).
-    assert (P1hi' : (P1 + Z.of_nat (length argv1) + 1 <= USP + Z.of_nat (length SBK) - 16)%Z)
-      by (rewrite BL; unfold InitMem.str_base, InitMem.env_base, InitMem.str_base, raw_len, pad_len in *; clear - P1hi RN; lia).
-    (nd_pre (slack_trunc _ P1 argv1 slackF (USP + Z.of_nat (length SBK) - 16) STRF SLKF P1hi'
-                ltac:(rewrite BL; generalize USP16; unfold pad_len; clear; intros; Z.div_mod_to_equations; lia)) 4%nat; intros slack1 STRS SLK1 END1; nd_post).
+    (nd_pre (stack_argv_string_slack asegs inp mb ph entry sp0 rnd (span_of_top inp mb ph entry sp0 rnd (proj1 IMGTOP)) m CS
+                (proj2 IMGTOP) 1 argv1 HA1) 8%nat; intros P1 slackF HP1 P1lo P1hi STRF SLKF ENDF; nd_post).
+    assert (P1hi' : (P1 + Z.of_nat (length argv1) + 1 <= USP + Z.of_nat (length SBK) - 8)%Z)
+      by (rewrite BL; pose proof (InitMem.flatten_strings_length (in_argv inp)) as FL1; pose proof (InitMem.flatten_strings_length (in_envp inp)) as FL2;
+          unfold InitMem.str_base, InitMem.env_base, InitMem.str_base, InitMem.str_len, launch_string_bytes, raw_len, pad_len in *; clear - P1hi RN FL1 FL2; lia).
+    (nd_pre (slack_trunc _ P1 argv1 slackF (USP + Z.of_nat (length SBK) - 8) STRF SLKF P1hi'
+                ltac:(pose proof IMGTOP as [IT IT8]; rewrite IT; clear - IT8; Z.div_mod_to_equations; lia)) 4%nat; intros slack1 STRS SLK1 END1; nd_post).
     destruct (proj1 (bytes_at_app asegs m P1 (argv1 ++ [Z_to_bv 8 0]) slack1) ltac:(rewrite <- app_assoc; exact STRS)) as [STR1 _].
-    pose proof (stack_argv_ptr_read asegs a_phdrs sp0 argv envp uid hw rnd m CS 1 _ HP1) as RD1.
+    pose proof (stack_argv_ptr_read asegs inp mb ph entry sp0 rnd (span_of_top inp mb ph entry sp0 rnd (proj1 IMGTOP)) m CS 1 _ HP1) as RD1.
     replace (USP + 8 + 8 * Z.of_nat 1)%Z with (USP + 16)%Z in RD1 by lia.
     unfold InitMem.str_base, InitMem.env_base, InitMem.str_base in P1lo, P1hi.
     assert (P1lo' : (USP <= P1)%Z) by (unfold struct_size, InitMem.argc, InitMem.envc in P1lo; lia).
@@ -1006,11 +1056,11 @@ Section Main.
       exact (proj1 (Forall_forall _ _) VA5 _ (nth_error_In _ _ HA1)). }
     assert (HPL : (Z.of_nat (length argv1) < 2^24 /\ (- (P1 + Z.of_nat (length argv1) + 1)) mod 8 <= Z.of_nat (length slack1))%Z).
     { split; [|exact SLK1]. pose proof (proj1 (Forall_forall _ _) VA3 _ (nth_error_In _ _ HA1)). cbn beta in *. lia. }
-    assert (HPEND : (P1 + Z.of_nat (length argv1) + 1 + Z.of_nat (length slack1) <= USP + Z.of_nat (length SBK) - 16)%Z) by lia.
+    assert (HPEND : (P1 + Z.of_nat (length argv1) + 1 + Z.of_nat (length slack1) <= USP + Z.of_nat (length SBK) - 8)%Z) by lia.
     pose proof (bytes_at_bound _ _ _ _ STRS) as PBS. rewrite length_app in PBS; cbn [length] in PBS.
     pose proof (bytes_at_bound _ _ _ _ STR1) as PB. rewrite length_app in PB; cbn [length] in PB.
     assert (RA1 : rng RNG (USP + 16) 8).
-    { eapply rng_sub'; [exact CSR|]. rewrite BL. unfold raw_len, struct_size, InitMem.argc, InitMem.envc. clear - RN. lia. }
+    { eapply rng_sub'; [exact CSR|]. rewrite BL. clear - RN. lia. }
     unfold read_all. rewrite to_bytes_of_bytes.
     ienterG. zstep. zstep. zstep. zstep.
     name_spm.
@@ -1021,6 +1071,7 @@ Section Main.
         | rewrite Hspm; lia | rewrite Hspm, ETP; lia | rewrite Hspm, unsigned_lit by lia; lia
         | rewrite ETP, unsigned_lit by lia; lia | rewrite Hspm; unfold ssp_guard; lia
         | rewrite ETP; unfold ssp_guard; lia | rewrite ETP; unfold got_ssp; lia | rewrite ETP; lia
+        | rewrite unsigned_lit by lia; clear - P1hi' USP47; lia
         | rewrite Hspm; eapply rng_sub'; [exact R2| lia] | rewrite ETP; eapply rng_sub'; [exact R5| lia]
         | rewrite unsigned_lit by lia; eapply rng_sub'; [exact CSR| lia] | exact R3 ]. }
     intros r RNG' ms' PO. unfold open_post in PO. destruct PO as (-> & PO). destruct_exs PO. (destruct PO as (-> & ndR1__); nd_pre ndR1__ 9%nat; intros MU WM MI' ST' ERR STR GOT GUARD Hr; nd_post).
@@ -1124,7 +1175,7 @@ Section Main.
         split; [exists junk2; exact BUF2|]. split; [exact HLC2|]. split; [exact HCAP2|]. split; [exact HJ2| exact RS2].
   Qed.
   End Zd5.
-  #[using="FO fflagA GL GD MALLOC FREE EPR_OPEN EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma read_all_spec : ltac:(let t := eval cbv delta [read_all_spec__stmt] in read_all_spec__stmt in exact t).
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_OPEN EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma read_all_spec : ltac:(let t := eval cbv delta [read_all_spec__stmt] in read_all_spec__stmt in exact t).
   Proof. exact read_all_spec__body. Qed.
 
   (* [comment removed for export] *)
@@ -1211,9 +1262,9 @@ Section Main.
   #[using="argv envp uid hw rnd FREE LO_lo LO_hi USP16 TOP47 USP47 TRD AT_EXIT_I"] Lemma free_ret_spec : ltac:(let t := eval cbv delta [free_ret_spec__stmt] in free_ret_spec__stmt in exact t).
   Proof. exact free_ret_spec__body. Qed.
 
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma geu_cond_true : forall x y, (0 <= y <= x)%Z -> (x < 2^64)%Z -> negb (bv_ltu (Z_to_bv 64 x) (Z_to_bv 64 y)) = true.
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma geu_cond_true : forall x y, (0 <= y <= x)%Z -> (x < 2^64)%Z -> negb (bv_ltu (Z_to_bv 64 x) (Z_to_bv 64 y)) = true.
   Proof. intros. rewrite ltu_cond_false by lia. reflexivity. Qed.
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma geu_cond_false : forall x y, (0 <= x < y)%Z -> (y < 2^64)%Z -> negb (bv_ltu (Z_to_bv 64 x) (Z_to_bv 64 y)) = false.
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma geu_cond_false : forall x y, (0 <= x < y)%Z -> (y < 2^64)%Z -> negb (bv_ltu (Z_to_bv 64 x) (Z_to_bv 64 y)) = false.
   Proof. intros. rewrite ltu_cond_true by lia. reflexivity. Qed.
 
   (* [comment removed for export] *)
@@ -1236,7 +1287,7 @@ Section Main.
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'tail_spec__stmt 2).
   Variable q : ltac2:(SecDietF.SzSecF.ty 'tail_spec__stmt 3).
   Variable content : ltac2:(SecDietF.SzSecF.ty 'tail_spec__stmt 4).
-  #[using="TP fflagA argv envp uid hw rnd GL GD FREE EFW TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF AT_EXIT_I drv_lit_mobjA block_mobjA"] Lemma tail_spec__body : ltac:(let T := type of (fun (h : tail_spec__stmt) => h s RNG ms q content) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="TP fflagA argv envp uid hw rnd GL GD FREE EFW TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF AT_EXIT_I drv_lit_mobjA block_mobjA"] Lemma tail_spec__body : ltac:(let T := type of (fun (h : tail_spec__stmt) => h s RNG ms q content) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (s, (RNG, (ms, (q, content))))) as _.
     intros RX.
@@ -1355,7 +1406,7 @@ Section Main.
           apply evtF_done. eapply free_ret_spec; [exact G2 | exact MI2 | exact ST2 | exists j0, f1, f2, f3, f4, f5, f6, f7, f8; exact FR | exact RS' | lia].
   Qed.
   End Zd7.
-  #[using="TP fflagA argv envp uid hw rnd GL GD FREE EFW TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF AT_EXIT_I drv_lit_mobjA block_mobjA"] Lemma tail_spec : ltac:(let t := eval cbv delta [tail_spec__stmt] in tail_spec__stmt in exact t).
+  #[using="TP fflagA argv envp uid hw rnd GL GD FREE EFW TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF AT_EXIT_I drv_lit_mobjA block_mobjA"] Lemma tail_spec : ltac:(let t := eval cbv delta [tail_spec__stmt] in tail_spec__stmt in exact t).
   Proof. exact tail_spec__body. Qed.
 
   (* [comment removed for export] *)
@@ -1368,7 +1419,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'main_spec__stmt 0).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'main_spec__stmt 1).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'main_spec__stmt 2).
-  #[using="TP fflagA GL GD MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF AT_EXIT_I drv_lit_mobjA drv_stack_writes block_mobjA"] Lemma main_spec__body : ltac:(let T := type of (fun (h : main_spec__stmt) => h s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="TP fflagA argv envp uid hw GL GD MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF AT_EXIT_I drv_lit_mobjA drv_stack_writes block_mobjA"] Lemma main_spec__body : ltac:(let T := type of (fun (h : main_spec__stmt) => h s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (s, (RNG, ms))) as _.
     intros ME.
@@ -1386,7 +1437,7 @@ Section Main.
     ienterG.
     carve_frame 80%nat ST.
     do 11 zstep.
-    replace (argc argv) with 2%Z by (unfold argc; lia).
+    replace (Z.of_nat (length argv)) with 2%Z by lia.
     zstep. if_false_by (eq_cond 2).
     lazymatch type of MU with munch _ _ ?mb =>
       destruct (drv_stack_writes L RNG s [] FB m mb _ (USP - 48)%Z G MU WM) as [G1 AG0]; [constructor; [cbn [fst snd]; lia| constructor] | lia |] end.
@@ -1403,7 +1454,7 @@ Section Main.
       + cbv beta iota. apply tail_spec. exact RX.
   Qed.
   End Zd8.
-  #[using="TP fflagA GL GD MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF AT_EXIT_I drv_lit_mobjA drv_stack_writes block_mobjA"] Theorem main_spec : ltac:(let t := eval cbv delta [main_spec__stmt] in main_spec__stmt in exact t).
+  #[using="TP fflagA argv envp uid hw GL GD MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF AT_EXIT_I drv_lit_mobjA drv_stack_writes block_mobjA"] Theorem main_spec : ltac:(let t := eval cbv delta [main_spec__stmt] in main_spec__stmt in exact t).
   Proof. exact main_spec__body. Qed.
 End Main.
 End CANSEC1.
@@ -1608,9 +1659,15 @@ Section Main.
   #[local] Abbreviation cblk := (@cblock hptr).
   #[local] Abbreviation PS := (PState H hptr).
   (* [comment removed for export] *)
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  (* PORTED to 75d69e00; see the twin at :204. *)
+  Variables (inp : ProcInput) (mb : word) (ph : PhdrInfo) (entry : word)
+            (sp0 : word) (rnd : EntryDraw).
+  Let argv := in_argv inp.
+  Let envp := in_envp inp.
+  Let uid := in_uid inp.
+  Let hw := in_hwcap inp.
   Notation USP := (bv_unsigned sp0).
-  Notation SBK := (build_stack_bytes a_phdrs sp0 argv envp uid hw rnd).
+  Notation SBK := (entry_stack_image inp mb ph entry sp0 rnd).
   Variables (L : alayout) (LO : Z).
   (* [comment removed for export] *)
   Variable AT_EXIT : Z -> PS -> footprint -> machine_state -> Prop.
@@ -1632,6 +1689,9 @@ Section Main.
   Hypothesis TOP_lo : (USP - 160 <= al_top L)%Z.
   Hypothesis TOP47 : (al_top L <= 2^47)%Z.
   Hypothesis USP47 : (USP + Z.of_nat (length SBK) <= 2^47)%Z.
+  (* see the twin at :228 *)
+  Hypothesis IMGTOP : (USP + Z.of_nat (length SBK) = bv_unsigned (ed_top rnd)
+                       /\ bv_unsigned (ed_top rnd) mod 8 = 0)%Z.
   Hypothesis TRD : traces_drv L.
   Hypothesis TRF : traces_fuzz_one TP L RA_FUZZ [].
 
@@ -1660,7 +1720,7 @@ Section Main.
   Let block_mobjA := block_mobjA FO GIOA fflagA GL.
 
   (* [comment removed for export] *)
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma slack_trunc : forall (m : mem) (P : Z) (str slackF : list byte) (B : Z),
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma slack_trunc : forall (m : mem) (P : Z) (str slackF : list byte) (B : Z),
     bytes_at asegs m P (str ++ Z_to_bv 8 0 :: slackF) -> ((- (P + Z.of_nat (length str) + 1)) mod 8 <= Z.of_nat (length slackF))%Z ->
     (P + Z.of_nat (length str) + 1 <= B)%Z -> (B mod 8 = 0)%Z ->
     exists slack, bytes_at asegs m P (str ++ Z_to_bv 8 0 :: slack) /\ ((- (P + Z.of_nat (length str) + 1)) mod 8 <= Z.of_nat (length slack))%Z
@@ -1683,7 +1743,7 @@ Section Main.
   Proof. pose proof (Nat2Z.is_nonneg (length SBK)) as N0. pose proof LO_lo as A. pose proof LO_hi as B. pose proof USP47 as C. unfold MAIN_STACK, TARGET_RUN_STACK, FUZZ_STACK, PCAP_L4_STACK, STDIO_STACK in B. atop_facts. lia. Qed.
 
   (* [comment removed for export] *)
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma unw_main : forall RNG (m : mem) PC (sp s0 ra : word) X,
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma unw_main : forall RNG (m : mem) PC (sp s0 ra : word) X,
     (bv_unsigned s0 <= bv_unsigned sp)%Z -> ra = Z_to_bv 64 X -> (ACLIENT_LO <= X < ACLIENT_HI)%Z -> ~ (ACLIENT_LO <= PC < ACLIENT_HI)%Z ->
     In [PC; X] (al_U L) -> In [PC] (al_U L) -> rng RNG LO (al_top L - LO) -> (bv_unsigned sp < 2^47)%Z ->
     unw_okA L RNG m LO PC sp s0 ra.
@@ -1716,7 +1776,7 @@ Section Main.
   Definition main_entry (s : PS) (RNG : footprint) (ms : machine_state) : Prop :=
     exists (gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem) (FB : list cblk),
       ms = MS (mkR (Z_to_bv 64 RA_MAIN) (Z_to_bv 64 (USP + -48)) gp (Z_to_bv 64 ATP) t0 t1 t2 s0 s1
-                   (Z_to_bv 64 (argc argv)) (Z_to_bv 64 (USP + 8)) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                   (Z_to_bv 64 (Z.of_nat (length argv))) (Z_to_bv 64 (USP + 8)) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
               F (Z_to_bv 64 MAIN_ENTRY) fc None m (seg_rom asegs)
       /\ GIOA L RNG s [] FB [] m /\ mem_inv asegs m /\ stk asegs m LO (USP + -48) /\ valid_argv argv /\ rngs RNG
       /\ bytes_at asegs m USP SBK.      (* [comment removed for export] *)
@@ -1751,7 +1811,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'main_usage__stmt 0).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'main_usage__stmt 1).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'main_usage__stmt 2).
-  #[using="fflagA GL GD EPR_USAGE LO_lo LO_hi USP16 TOP_lo TOP47 USP47 AT_EXIT_I drv_lit_mobjA drv_stack_writes"] Lemma main_usage__body : ltac:(let T := type of (fun (h : main_usage__stmt) => h s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="fflagA GL GD EPR_USAGE LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP AT_EXIT_I drv_lit_mobjA drv_stack_writes envp hw uid"] Lemma main_usage__body : ltac:(let T := type of (fun (h : main_usage__stmt) => h s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (s, (RNG, ms))) as _.
     intros (gp & t0 & t1 & t2 & s0 & s1 & a2 & a3 & a4 & a5 & a6 & a7 & s2 & s3 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m & FB & -> & G & MI & ST & VA & RS & CS) HC.
@@ -1762,8 +1822,8 @@ Section Main.
     assert (EA : exists argv0 argvr, argv = argv0 :: argvr) by (destruct argv as [|x y]; [cbn in VA1; lia| eauto]).
     (nd_pre EA 3%nat; intros argv0 argvr EARGV; nd_post).
     assert (HA0 : nth_error argv 0 = Some argv0) by (rewrite EARGV; reflexivity).
-    pose proof (raw_len_nonneg a_phdrs sp0 argv envp uid hw rnd) as RN.
-    pose proof (build_stack_bytes_length a_phdrs sp0 argv envp uid hw rnd) as BL.
+    pose proof (raw_len_nonneg inp sp0 rnd) as RN.
+    pose proof (build_stack_bytes_length inp mb ph entry sp0 rnd) as BL.
     pose proof (bytes_at_bound _ _ _ _ CS) as CSB.
     unfold main_prog, main_model. unfold argv_Z at 1. rewrite length_map.
     replace (Z.of_nat (length argv) =? 2)%Z with false by (symmetry; apply Z.eqb_neq; exact HC). cbn [negb].
@@ -1772,20 +1832,21 @@ Section Main.
     ienterG.
     carve_frame 80%nat ST.
     do 11 zstep.
-    zstep. if_true_by (neq_cond (argc argv) 2 ltac:(unfold argc; lia) ltac:(lia) ltac:(unfold argc; exact HC)).
+    zstep. if_true_by (neq_cond (Z.of_nat (length argv)) 2 ltac:(lia) ltac:(lia) ltac:(exact HC)).
     (* [comment removed for export] *)
     lazymatch goal with |- evtF _ _ _ (MS _ _ _ _ _ ?m1 _) =>
-      (nd_pre (stack_argv_string_slack asegs a_phdrs sp0 argv envp uid hw rnd m1 CS
-                  ltac:(generalize USP16; clear; intros; Z.div_mod_to_equations; lia) 0 argv0 HA0) 8%nat; intros P0 slackF HP0 P0lo P0hi STRF SLKF ENDF; nd_post);
-      pose proof (stack_argv_ptr_read asegs a_phdrs sp0 argv envp uid hw rnd m1 CS 0 _ HP0) as RD0
+      (nd_pre (stack_argv_string_slack asegs inp mb ph entry sp0 rnd (span_of_top inp mb ph entry sp0 rnd (proj1 IMGTOP)) m1 CS
+                  (proj2 IMGTOP) 0 argv0 HA0) 8%nat; intros P0 slackF HP0 P0lo P0hi STRF SLKF ENDF; nd_post);
+      pose proof (stack_argv_ptr_read asegs inp mb ph entry sp0 rnd (span_of_top inp mb ph entry sp0 rnd (proj1 IMGTOP)) m1 CS 0 _ HP0) as RD0
     end.
     replace (USP + 8 + 8 * Z.of_nat 0)%Z with (USP + 8)%Z in RD0 by lia.
     unfold InitMem.str_base, InitMem.env_base, InitMem.str_base in P0lo, P0hi.
-    (nd_pre (slack_trunc _ P0 argv0 slackF (USP + Z.of_nat (length SBK) - 16) STRF SLKF
-                ltac:(rewrite BL; unfold raw_len, pad_len in *; clear - P0hi RN; lia)
-                ltac:(rewrite BL; generalize USP16; unfold pad_len; clear; intros; Z.div_mod_to_equations; lia)) 4%nat; intros slack0 STR0 SLK0 END0; nd_post).
+    (nd_pre (slack_trunc _ P0 argv0 slackF (USP + Z.of_nat (length SBK) - 8) STRF SLKF
+                ltac:(rewrite BL; pose proof (InitMem.flatten_strings_length (in_argv inp)) as FL1; pose proof (InitMem.flatten_strings_length (in_envp inp)) as FL2;
+                      unfold InitMem.str_len, launch_string_bytes, raw_len, pad_len in *; clear - P0hi RN FL1 FL2; lia)
+                ltac:(pose proof IMGTOP as [IT IT8]; rewrite IT; clear - IT8; Z.div_mod_to_equations; lia)) 4%nat; intros slack0 STR0 SLK0 END0; nd_post).
     assert (RA0 : rng RNG (USP + 8) 8).
-    { eapply rng_sub'; [exact CSR|]. rewrite BL. unfold raw_len, struct_size, InitMem.argc, InitMem.envc. clear - RN. lia. }
+    { eapply rng_sub'; [exact CSR|]. rewrite BL. clear - RN. lia. }
     do 7 zstep.
     (* [comment removed for export] *)
     lazymatch type of MU with munch _ _ ?mb =>
@@ -1819,7 +1880,7 @@ Section Main.
                       | rewrite unsigned_lit by lia; lia | rewrite unsigned_lit by lia; aln16 | exact RS'].
   Qed.
   End Zd1.
-  #[using="fflagA GL GD EPR_USAGE LO_lo LO_hi USP16 TOP_lo TOP47 USP47 AT_EXIT_I drv_lit_mobjA drv_stack_writes"] Lemma main_usage : ltac:(let t := eval cbv delta [main_usage__stmt] in main_usage__stmt in exact t).
+  #[using="fflagA GL GD EPR_USAGE LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP AT_EXIT_I drv_lit_mobjA drv_stack_writes envp hw uid"] Lemma main_usage : ltac:(let t := eval cbv delta [main_usage__stmt] in main_usage__stmt in exact t).
   Proof. exact main_usage__body. Qed.
 
   (* [comment removed for export] *)
@@ -1862,7 +1923,7 @@ Section Main.
     end.
 
   (* [comment removed for export] *)
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma want_spec : forall RNG (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma want_spec : forall RNG (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
       (F : bvmap 5 word) (fc : bv 32) (m : mem) (cap len : Z),
     s5 = Z_to_bv 64 cap -> s3 = Z_to_bv 64 len -> (0 <= len < cap)%Z -> (cap <= 67108864)%Z -> rng_aimg RNG ->
     evtF asegs RNG (fun ms' => exists a0', ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0' a1 (Z_to_bv 64 (Z.min (cap - len) 65536)) a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
@@ -1879,7 +1940,7 @@ Section Main.
       rewrite Z.min_r by lia. apply evtF_done. eexists. reflexivity.
   Qed.
 
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma cap_shift_zero : forall cap j, (cap = 65536 * 2 ^ j)%Z -> (0 <= j)%Z -> (cap < 67108864)%Z -> Z.shiftr cap 26 = 0%Z.
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma cap_shift_zero : forall cap j, (cap = 65536 * 2 ^ j)%Z -> (0 <= j)%Z -> (cap < 67108864)%Z -> Z.shiftr cap 26 = 0%Z.
   Proof. intros cap j -> Hj Hc. rewrite Z.shiftr_div_pow2 by lia. apply Z.div_small. lia. Qed.
 
   (* [comment removed for export] *)
@@ -1898,14 +1959,14 @@ Section Main.
       end.
 
   (* [comment removed for export] *)
-  #[using="tlsI FO fflagA sp0 argv envp uid hw rnd GL block_mobjA"] Lemma blk_facts : forall RNG s CL FB m b, GIOA L RNG s CL FB [] m -> In b CL -> (0 <= cb_size b)%Z ->
+  #[using="tlsI FO fflagA sp0 argv envp uid hw rnd mb ph entry GL block_mobjA"] Lemma blk_facts : forall RNG s CL FB m b, GIOA L RNG s CL FB [] m -> In b CL -> (0 <= cb_size b)%Z ->
     mobjA RNG m (cb_addr b) (cb_size b) /\ (cb_addr b + cb_size b <= ATOP)%Z /\ (0x604000 <= cb_addr b)%Z.
   Proof.
     intros RNG s CL FB m b G Hb Hn. (nd_pre (block_mobjA L RNG s CL FB m (cb_addr b) (cb_size b) G ltac:(exists b; split; [exact Hb| lia]) Hn) 3%nat; intros A1 A2 A3; nd_post).
     unfold AIMG_HI in A3. auto.
   Qed.
   (* [comment removed for export] *)
-  #[using="FO fflagA sp0 argv envp uid hw rnd GL"] Lemma blk_tclr : forall RNG s CL FB m b, GIOA L RNG s CL FB [] m -> In b CL -> (0 < cb_size b)%Z ->
+  #[using="FO fflagA sp0 argv envp uid hw rnd mb ph entry GL"] Lemma blk_tclr : forall RNG s CL FB m b, GIOA L RNG s CL FB [] m -> In b CL -> (0 < cb_size b)%Z ->
     (cb_addr b + cb_size b <= ATPv + -200 \/ ATPv + 304 <= cb_addr b)%Z.
   Proof.
     intros RNG s CL FB m b G Hb Hn.
@@ -1936,7 +1997,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'grow_spec__stmt 5).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'grow_spec__stmt 6).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'grow_spec__stmt 7).
-  #[using="FO fflagA argv envp uid hw rnd GL GD MALLOC FREE EPR_BIG LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma grow_spec__body : ltac:(let T := type of (fun (h : grow_spec__stmt) => h fd P1 path slack st s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="FO fflagA argv envp uid hw rnd GL GD MALLOC FREE EPR_BIG LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma grow_spec__body : ltac:(let T := type of (fun (h : grow_spec__stmt) => h fd P1 path slack st s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (fd, (P1, (path, (slack, (st, (s, (RNG, ms)))))))) as _.
     intros LHH Hfull.
@@ -2066,7 +2127,7 @@ Section Main.
       split; [exact HC|]. split; [symmetry; exact Hfull|]. split; [lia| exact PATH].
   Qed.
   End Zd2.
-  #[using="FO fflagA argv envp uid hw rnd GL GD MALLOC FREE EPR_BIG LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma grow_spec : ltac:(let t := eval cbv delta [grow_spec__stmt] in grow_spec__stmt in exact t).
+  #[using="FO fflagA argv envp uid hw rnd GL GD MALLOC FREE EPR_BIG LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma grow_spec : ltac:(let t := eval cbv delta [grow_spec__stmt] in grow_spec__stmt in exact t).
   Proof. exact grow_spec__body. Qed.
 
   Definition body_post (fd P1 : Z) (path slack : list byte) : (rd_st (ptr:=hptr) + rd_result (ptr:=hptr)) -> PS -> footprint -> machine_state -> Prop :=
@@ -2075,7 +2136,7 @@ Section Main.
   (* [comment removed for export] *)
   #[using="Type"] Lemma RS_ok : rw_bytes_b asegs 0x5d1050 (repeat (Z_to_bv 8 0) (Z.to_nat 65536)) = true.
   Proof. exact RS_ok_pre. Qed.   (* [comment removed for export] *)
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma RS_chunk : forall m : mem, exists rsj, rw_cells asegs m 0x5d1050 [CB (Z.to_nat 65536) rsj].
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma RS_chunk : forall m : mem, exists rsj, rw_cells asegs m 0x5d1050 [CB (Z.to_nat 65536) rsj].
   Proof.
     intros m. (nd_pre (rw_cells_any asegs m 0x5d1050%Z (repeat (Z_to_bv 8 0) (Z.to_nat 65536)) RS_ok ltac:(lia) ltac:(rewrite repeat_length; lia)) 3%nat; intros rsj RSL RSC; nd_post).
     rewrite repeat_length in RSC. exists rsj. exact RSC.
@@ -2088,14 +2149,14 @@ Section Main.
     unfold READ_STAGE in U. apply static_mobjA; [lia | lia | lia | eapply unpoisoned_sub; [exact U| lia| lia] | exact W | exact RI | exact RSH].
   Qed.
 
-  #[using="sp0 argv envp uid hw rnd"] Lemma atp_unsigned : bv_unsigned (Z_to_bv 64 ATP) = ATP.
+  #[using="sp0 argv envp uid hw rnd mb ph entry"] Lemma atp_unsigned : bv_unsigned (Z_to_bv 64 ATP) = ATP.
   Proof. pose proof atp_lin as ((TL & _) & _). atop_facts. unfold ATP. apply unsigned_lit. lia. Qed.
 
   (* [comment removed for export] *)
   Definition read_step__stmt : Prop := forall fd P1 path slack (len0 : Z) (st1 : rd_st (ptr:=hptr)) s RNG ms,
     grow_post fd P1 path slack len0 (Some st1) s RNG ms ->
     ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) < 2^24 /\ (- (P1 + Z.of_nat (length path) + 1)) mod 8 <= Z.of_nat (length slack))%Z -> (3 <= fd <= 4096)%Z -> (USP <= P1)%Z ->
-    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 16)%Z ->
+    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 8)%Z ->
     implMG RNG
       (s0 <- mget ;;
        (let buf := sites SiteReadStage in
@@ -2117,7 +2178,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'read_step__stmt 6).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'read_step__stmt 7).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'read_step__stmt 8).
-  #[using="FO fflagA GL GD EPR_READ SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 drv_lit_mobjA block_mobjA"] Lemma read_step__body : ltac:(let T := type of (fun (h : read_step__stmt) => h fd P1 path slack len0 st1 s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="FO fflagA argv envp uid hw GL GD EPR_READ SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP drv_lit_mobjA block_mobjA"] Lemma read_step__body : ltac:(let T := type of (fun (h : read_step__stmt) => h fd P1 path slack len0 st1 s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (fd, (P1, (path, (slack, (len0, (st1, (s, (RNG, ms))))))))) as _.
     intros GP HNUL HPL HFD HP1 HPEND.
@@ -2272,13 +2333,13 @@ Section Main.
         split; [exact PATH|]. split; [exact HP1| exact HFD].
   Qed.
   End Zd3.
-  #[using="FO fflagA GL GD EPR_READ SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 drv_lit_mobjA block_mobjA"] Lemma read_step : ltac:(let t := eval cbv delta [read_step__stmt] in read_step__stmt in exact t).
+  #[using="FO fflagA argv envp uid hw GL GD EPR_READ SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP drv_lit_mobjA block_mobjA"] Lemma read_step : ltac:(let t := eval cbv delta [read_step__stmt] in read_step__stmt in exact t).
   Proof. exact read_step__body. Qed.
 
   (* [comment removed for export] *)
   Definition body_spec__stmt : Prop := forall fd P1 path slack (st : rd_st (ptr:=hptr)) s RNG ms,
     LH fd P1 path slack st s RNG ms -> ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) < 2^24 /\ (- (P1 + Z.of_nat (length path) + 1)) mod 8 <= Z.of_nat (length slack))%Z ->
-    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 16)%Z ->
+    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 8)%Z ->
     implMG RNG (read_loop_body diag (pmalloc HO) (pfree HO) (sites SiteReadStage) fd (map bv_unsigned path) st) s (body_post fd P1 path slack) ms.
   Section Zd4.   (* [comment removed for export] *)
   Variable fd : ltac2:(SecDietF.SzSecF.ty 'body_spec__stmt 0).
@@ -2289,7 +2350,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'body_spec__stmt 5).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'body_spec__stmt 6).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'body_spec__stmt 7).
-  #[using="FO fflagA GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma body_spec__body : ltac:(let T := type of (fun (h : body_spec__stmt) => h fd P1 path slack st s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma body_spec__body : ltac:(let T := type of (fun (h : body_spec__stmt) => h fd P1 path slack st s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (fd, (P1, (path, (slack, (st, (s, (RNG, ms)))))))) as _.
     intros LHH HNUL HPL HPEND.
@@ -2318,13 +2379,13 @@ Section Main.
       + cbv beta iota. apply implMG_ret. apply evtF_done. exact GP.
   Qed.
   End Zd4.
-  #[using="FO fflagA GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma body_spec : ltac:(let t := eval cbv delta [body_spec__stmt] in body_spec__stmt in exact t).
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma body_spec : ltac:(let t := eval cbv delta [body_spec__stmt] in body_spec__stmt in exact t).
   Proof. exact body_spec__body. Qed.
 
   (* [comment removed for export] *)
-  #[using="FO fflagA GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma loop_spec : forall fuel fd P1 path slack (st : rd_st (ptr:=hptr)) s RNG ms,
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma loop_spec : forall fuel fd P1 path slack (st : rd_st (ptr:=hptr)) s RNG ms,
     LH fd P1 path slack st s RNG ms -> ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) < 2^24 /\ (- (P1 + Z.of_nat (length path) + 1)) mod 8 <= Z.of_nat (length slack))%Z ->
-    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 16)%Z ->
+    (P1 + Z.of_nat (length path) + 1 + Z.of_nat (length slack) <= USP + Z.of_nat (length SBK) - 8)%Z ->
     implMG RNG (mloop fuel (read_loop_body diag (pmalloc HO) (pfree HO) (sites SiteReadStage) fd (map bv_unsigned path)) st) s
       (LX fd P1 path slack) ms.
   Proof.
@@ -2382,7 +2443,7 @@ Section Main.
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'read_all_spec__stmt 1).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'read_all_spec__stmt 2).
   Variable argv1 : ltac2:(SecDietF.SzSecF.ty 'read_all_spec__stmt 3).
-  #[using="FO fflagA GL GD MALLOC FREE EPR_OPEN EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma read_all_spec__body : ltac:(let T := type of (fun (h : read_all_spec__stmt) => h s RNG ms argv1) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_OPEN EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma read_all_spec__body : ltac:(let T := type of (fun (h : read_all_spec__stmt) => h s RNG ms argv1) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (s, (RNG, (ms, argv1)))) as _.
     intros (ra & gp & t0 & t1 & t2 & s1 & a0 & a2 & a3 & a4 & a5 & a6 & a7 & s2 & s3 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m & FB & -> & G & MI & ST & (j0 & f1 & f2 & f3 & f4 & f5 & f6 & f7 & f8 & FR) & RS & CS) HA1 VA.
@@ -2392,17 +2453,18 @@ Section Main.
     destruct (gd_errno _ _ _ GD _ _ _ _ _ _ _ G) as (e & T2). destruct (gd_canary _ _ _ GD _ _ _ _ _ _ _ G) as (L2 & (can & L3)).
     pose proof (gd_args _ _ _ GD _ _ _ _ _ _ _ G) as CSO. (pose proof CSO as ndP__; nd_pre ndP__ 5%nat; intros _ _ _ CSR _; nd_post).
     pose proof atp_unsigned as ETP. pose proof atp_lin as ((TL & _) & _). pose proof atp_below_atop as TBA. pose proof ATPv_img as TIMG. unfold ATP in *.
-    pose proof (raw_len_nonneg a_phdrs sp0 argv envp uid hw rnd) as RN.
-    pose proof (build_stack_bytes_length a_phdrs sp0 argv envp uid hw rnd) as BL.
+    pose proof (raw_len_nonneg inp sp0 rnd) as RN.
+    pose proof (build_stack_bytes_length inp mb ph entry sp0 rnd) as BL.
     pose proof (bytes_at_bound _ _ _ _ CS) as CSB.
-    (nd_pre (stack_argv_string_slack asegs a_phdrs sp0 argv envp uid hw rnd m CS
-                ltac:(generalize USP16; clear; intros; Z.div_mod_to_equations; lia) 1 argv1 HA1) 8%nat; intros P1 slackF HP1 P1lo P1hi STRF SLKF ENDF; nd_post).
-    assert (P1hi' : (P1 + Z.of_nat (length argv1) + 1 <= USP + Z.of_nat (length SBK) - 16)%Z)
-      by (rewrite BL; unfold InitMem.str_base, InitMem.env_base, InitMem.str_base, raw_len, pad_len in *; clear - P1hi RN; lia).
-    (nd_pre (slack_trunc _ P1 argv1 slackF (USP + Z.of_nat (length SBK) - 16) STRF SLKF P1hi'
-                ltac:(rewrite BL; generalize USP16; unfold pad_len; clear; intros; Z.div_mod_to_equations; lia)) 4%nat; intros slack1 STRS SLK1 END1; nd_post).
+    (nd_pre (stack_argv_string_slack asegs inp mb ph entry sp0 rnd (span_of_top inp mb ph entry sp0 rnd (proj1 IMGTOP)) m CS
+                (proj2 IMGTOP) 1 argv1 HA1) 8%nat; intros P1 slackF HP1 P1lo P1hi STRF SLKF ENDF; nd_post).
+    assert (P1hi' : (P1 + Z.of_nat (length argv1) + 1 <= USP + Z.of_nat (length SBK) - 8)%Z)
+      by (rewrite BL; pose proof (InitMem.flatten_strings_length (in_argv inp)) as FL1; pose proof (InitMem.flatten_strings_length (in_envp inp)) as FL2;
+          unfold InitMem.str_base, InitMem.env_base, InitMem.str_base, InitMem.str_len, launch_string_bytes, raw_len, pad_len in *; clear - P1hi RN FL1 FL2; lia).
+    (nd_pre (slack_trunc _ P1 argv1 slackF (USP + Z.of_nat (length SBK) - 8) STRF SLKF P1hi'
+                ltac:(pose proof IMGTOP as [IT IT8]; rewrite IT; clear - IT8; Z.div_mod_to_equations; lia)) 4%nat; intros slack1 STRS SLK1 END1; nd_post).
     destruct (proj1 (bytes_at_app asegs m P1 (argv1 ++ [Z_to_bv 8 0]) slack1) ltac:(rewrite <- app_assoc; exact STRS)) as [STR1 _].
-    pose proof (stack_argv_ptr_read asegs a_phdrs sp0 argv envp uid hw rnd m CS 1 _ HP1) as RD1.
+    pose proof (stack_argv_ptr_read asegs inp mb ph entry sp0 rnd (span_of_top inp mb ph entry sp0 rnd (proj1 IMGTOP)) m CS 1 _ HP1) as RD1.
     replace (USP + 8 + 8 * Z.of_nat 1)%Z with (USP + 16)%Z in RD1 by lia.
     unfold InitMem.str_base, InitMem.env_base, InitMem.str_base in P1lo, P1hi.
     assert (P1lo' : (USP <= P1)%Z) by (unfold struct_size, InitMem.argc, InitMem.envc in P1lo; lia).
@@ -2413,11 +2475,11 @@ Section Main.
       exact (proj1 (Forall_forall _ _) VA5 _ (nth_error_In _ _ HA1)). }
     assert (HPL : (Z.of_nat (length argv1) < 2^24 /\ (- (P1 + Z.of_nat (length argv1) + 1)) mod 8 <= Z.of_nat (length slack1))%Z).
     { split; [|exact SLK1]. pose proof (proj1 (Forall_forall _ _) VA3 _ (nth_error_In _ _ HA1)). cbn beta in *. lia. }
-    assert (HPEND : (P1 + Z.of_nat (length argv1) + 1 + Z.of_nat (length slack1) <= USP + Z.of_nat (length SBK) - 16)%Z) by lia.
+    assert (HPEND : (P1 + Z.of_nat (length argv1) + 1 + Z.of_nat (length slack1) <= USP + Z.of_nat (length SBK) - 8)%Z) by lia.
     pose proof (bytes_at_bound _ _ _ _ STRS) as PBS. rewrite length_app in PBS; cbn [length] in PBS.
     pose proof (bytes_at_bound _ _ _ _ STR1) as PB. rewrite length_app in PB; cbn [length] in PB.
     assert (RA1 : rng RNG (USP + 16) 8).
-    { eapply rng_sub'; [exact CSR|]. rewrite BL. unfold raw_len, struct_size, InitMem.argc, InitMem.envc. clear - RN. lia. }
+    { eapply rng_sub'; [exact CSR|]. rewrite BL. clear - RN. lia. }
     unfold read_all. rewrite to_bytes_of_bytes.
     ienterG. zstep. zstep. zstep. zstep.
     name_spm.
@@ -2428,6 +2490,7 @@ Section Main.
         | rewrite Hspm; lia | rewrite Hspm, ETP; lia | rewrite Hspm, unsigned_lit by lia; lia
         | rewrite ETP, unsigned_lit by lia; lia | rewrite Hspm; unfold ssp_guard; lia
         | rewrite ETP; unfold ssp_guard; lia | rewrite ETP; unfold got_ssp; lia | rewrite ETP; lia
+        | rewrite unsigned_lit by lia; clear - P1hi' USP47; lia
         | rewrite Hspm; eapply rng_sub'; [exact R2| lia] | rewrite ETP; eapply rng_sub'; [exact R5| lia]
         | rewrite unsigned_lit by lia; eapply rng_sub'; [exact CSR| lia] | exact R3 ]. }
     intros r RNG' ms' PO. unfold open_post in PO. destruct PO as (-> & PO). destruct_exs PO. (destruct PO as (-> & ndR1__); nd_pre ndR1__ 9%nat; intros MU WM MI' ST' ERR STR GOT GUARD Hr; nd_post).
@@ -2531,7 +2594,7 @@ Section Main.
         split; [exists junk2; exact BUF2|]. split; [exact HLC2|]. split; [exact HCAP2|]. split; [exact HJ2| exact RS2].
   Qed.
   End Zd5.
-  #[using="FO fflagA GL GD MALLOC FREE EPR_OPEN EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD drv_lit_mobjA block_mobjA"] Lemma read_all_spec : ltac:(let t := eval cbv delta [read_all_spec__stmt] in read_all_spec__stmt in exact t).
+  #[using="FO fflagA argv envp uid hw GL GD MALLOC FREE EPR_OPEN EPR_READ EPR_BIG SITE_RS LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD drv_lit_mobjA block_mobjA"] Lemma read_all_spec : ltac:(let t := eval cbv delta [read_all_spec__stmt] in read_all_spec__stmt in exact t).
   Proof. exact read_all_spec__body. Qed.
 
   (* [comment removed for export] *)
@@ -2618,9 +2681,9 @@ Section Main.
   #[using="argv envp uid hw rnd FREE LO_lo LO_hi USP16 TOP47 USP47 TRD AT_EXIT_I"] Lemma free_ret_spec : ltac:(let t := eval cbv delta [free_ret_spec__stmt] in free_ret_spec__stmt in exact t).
   Proof. exact free_ret_spec__body. Qed.
 
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma geu_cond_true : forall x y, (0 <= y <= x)%Z -> (x < 2^64)%Z -> negb (bv_ltu (Z_to_bv 64 x) (Z_to_bv 64 y)) = true.
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma geu_cond_true : forall x y, (0 <= y <= x)%Z -> (x < 2^64)%Z -> negb (bv_ltu (Z_to_bv 64 x) (Z_to_bv 64 y)) = true.
   Proof. intros. rewrite ltu_cond_false by lia. reflexivity. Qed.
-  #[using="rc sp0 argv envp uid hw rnd"] Lemma geu_cond_false : forall x y, (0 <= x < y)%Z -> (y < 2^64)%Z -> negb (bv_ltu (Z_to_bv 64 x) (Z_to_bv 64 y)) = false.
+  #[using="rc sp0 argv envp uid hw rnd mb ph entry"] Lemma geu_cond_false : forall x y, (0 <= x < y)%Z -> (y < 2^64)%Z -> negb (bv_ltu (Z_to_bv 64 x) (Z_to_bv 64 y)) = false.
   Proof. intros. rewrite ltu_cond_true by lia. reflexivity. Qed.
 
   (* [comment removed for export] *)
@@ -2643,7 +2706,7 @@ Section Main.
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'tail_spec__stmt 2).
   Variable q : ltac2:(SecDietF.SzSecF.ty 'tail_spec__stmt 3).
   Variable content : ltac2:(SecDietF.SzSecF.ty 'tail_spec__stmt 4).
-  #[using="TP fflagA argv envp uid hw rnd GL GD FREE EFW TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF AT_EXIT_I drv_lit_mobjA block_mobjA"] Lemma tail_spec__body : ltac:(let T := type of (fun (h : tail_spec__stmt) => h s RNG ms q content) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="TP fflagA argv envp uid hw rnd GL GD FREE EFW TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF AT_EXIT_I drv_lit_mobjA block_mobjA"] Lemma tail_spec__body : ltac:(let T := type of (fun (h : tail_spec__stmt) => h s RNG ms q content) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (s, (RNG, (ms, (q, content))))) as _.
     intros RX.
@@ -2762,7 +2825,7 @@ Section Main.
           apply evtF_done. eapply free_ret_spec; [exact G2 | exact MI2 | exact ST2 | exists j0, f1, f2, f3, f4, f5, f6, f7, f8; exact FR | exact RS' | lia].
   Qed.
   End Zd7.
-  #[using="TP fflagA argv envp uid hw rnd GL GD FREE EFW TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF AT_EXIT_I drv_lit_mobjA block_mobjA"] Lemma tail_spec : ltac:(let t := eval cbv delta [tail_spec__stmt] in tail_spec__stmt in exact t).
+  #[using="TP fflagA argv envp uid hw rnd GL GD FREE EFW TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF AT_EXIT_I drv_lit_mobjA block_mobjA"] Lemma tail_spec : ltac:(let t := eval cbv delta [tail_spec__stmt] in tail_spec__stmt in exact t).
   Proof. exact tail_spec__body. Qed.
 
   (* [comment removed for export] *)
@@ -2775,7 +2838,7 @@ Section Main.
   Variable s : ltac2:(SecDietF.SzSecF.ty 'main_spec__stmt 0).
   Variable RNG : ltac2:(SecDietF.SzSecF.ty 'main_spec__stmt 1).
   Variable ms : ltac2:(SecDietF.SzSecF.ty 'main_spec__stmt 2).
-  #[using="TP fflagA GL GD MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF AT_EXIT_I drv_lit_mobjA drv_stack_writes block_mobjA"] Lemma main_spec__body : ltac:(let T := type of (fun (h : main_spec__stmt) => h s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
+  #[using="TP fflagA argv envp uid hw GL GD MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF AT_EXIT_I drv_lit_mobjA drv_stack_writes block_mobjA"] Lemma main_spec__body : ltac:(let T := type of (fun (h : main_spec__stmt) => h s RNG ms) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
   Proof.
     pose proof (fun (_ : True) => (s, (RNG, ms))) as _.
     intros ME.
@@ -2793,7 +2856,7 @@ Section Main.
     ienterG.
     carve_frame 80%nat ST.
     do 11 zstep.
-    replace (argc argv) with 2%Z by (unfold argc; lia).
+    replace (Z.of_nat (length argv)) with 2%Z by lia.
     zstep. if_false_by (eq_cond 2).
     lazymatch type of MU with munch _ _ ?mb =>
       destruct (drv_stack_writes L RNG s [] FB m mb _ (USP - 48)%Z G MU WM) as [G1 AG0]; [constructor; [cbn [fst snd]; lia| constructor] | lia |] end.
@@ -2810,7 +2873,7 @@ Section Main.
       + cbv beta iota. apply tail_spec. exact RX.
   Qed.
   End Zd8.
-  #[using="TP fflagA GL GD MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF AT_EXIT_I drv_lit_mobjA drv_stack_writes block_mobjA"] Theorem main_spec : ltac:(let t := eval cbv delta [main_spec__stmt] in main_spec__stmt in exact t).
+  #[using="TP fflagA argv envp uid hw GL GD MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF AT_EXIT_I drv_lit_mobjA drv_stack_writes block_mobjA"] Theorem main_spec : ltac:(let t := eval cbv delta [main_spec__stmt] in main_spec__stmt in exact t).
   Proof. exact main_spec__body. Qed.
 End Main.
 End CANSEC1.

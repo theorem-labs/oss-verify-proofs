@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (exit_pre_pending written out in plain text instead of its encoded CDefT form, with a new channel-reader premise after the fd one; exit_mem's stack window moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,7 +26,7 @@ Ltac2 gd_tbl_P_exitkit () : Init.string Init.list := ["stdpp.bitvector.definitio
 
 (* [comment removed for export] *)
 Record exit_mem (sp0 : word) (tid : Z) (M : word -> option byte) : Prop := EXIT_MEM {
-  xm_win : forall a : word, (bv_unsigned sp0 - 8388608 <= bv_unsigned a < bv_unsigned sp0)%Z -> wview RSEGS M a <> None;
+  xm_win : forall a : word, (bv_unsigned sp0 - 6144512 <= bv_unsigned a < bv_unsigned sp0)%Z -> wview RSEGS M a <> None;
   xm_ro  : forall a : Z, (0x10000 <= a < 0x485e0)%Z -> M (Z_to_bv 64 a) = None;
   xm_got : rdn RSEGS M (Z_to_bv 64 0x485e0) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x79c30));
   xm_rest : forall a : Z, (0x485e8 <= a < 0x49638)%Z -> M (Z_to_bv 64 a) = None;
@@ -152,15 +153,17 @@ Section XK.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="sp0 tid Hvsp Hh Hlazy SPlo SPhi G2 G4 G10 XM"] Theorem exit_pre_pending : ltac2:(CDefT.buildp (gd_tbl_P_exitkit ()) "Pwp,$2.Ppending,(=.(0.&8.))P,(16.VM,R2.)P,(4.(6.+7:098.R3.)(5.R3.+7:498.))P,(9.$2.(12.R4.+7:098.)(8.(17.(0.&8.)R3.)))P,(9.(1.(=.(0.&8.)))(>.$?.VM,(:.&40.+7:098.)(17.(0.&8.)R4.))(18.(=.(0.&8.))R4.))P,(9.(1.$19.)(1:.(1;.Vmodel,)(:.&40.+1.))(18.$19.(1<.(:.&40.+1.))))(14.VR,VM,Vmodel,Vcode,R6.)")
+  #[using="sp0 tid Hvsp Hh Hlazy SPlo SPhi G2 G4 G10 XM"] Theorem exit_pre_pending :
+  (* plain text: new premise [Hrdr] after the fd one, the channel reader the revision's writev reads (recipes/channel-reader-premise.md) *)
+  (forall wp : (@Corelib.Numbers.BinNums.Z), (forall pending : (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)), (forall x_ : (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.P.P_printf1.stdout_buffered M wp), (forall x_1 : (@Corelib.Init.Logic.and (@Stdlib.ZArith.BinInt.Z.lt 499864%Z wp) (@Stdlib.ZArith.BinInt.Z.le wp 500888%Z)), (forall x_2 : (@Corelib.Init.Logic.eq (@Corelib.Numbers.BinNums.Z) (@Stdlib.ZArith.BinInt.Z.sub wp 499864%Z) (@Stdlib.ZArith.BinInt.Z.of_nat (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) pending))), (forall x_3 : (@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N))) (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.rdn (@OSSVerify.mbedtls.fuzz_pkcs7.images.Plain.M.loaded_segments) M (@stdpp.bitvector.definitions.Z_to_bv 64%N 499864%Z) (@Corelib.Init.Datatypes.length (@stdpp.bitvector.definitions.bv 8%N) pending)) (@Corelib.Init.Datatypes.Some (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) pending)), (forall x_4 : (@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry)) (@LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup (@LinuxProcessSemantics.LinuxProcessSem.State.m_fds model) (@stdpp.bitvector.definitions.Z_to_bv 64%N 1%Z)) (@Corelib.Init.Datatypes.Some (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry) (@LinuxProcessSemantics.LinuxProcessSem.State.FdChannel (@stdpp.bitvector.definitions.Z_to_bv 64%N 1%Z)))), (forall Hrdr : (@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.bool) (@LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader model) (@Corelib.Init.Datatypes.true)), (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.P.P_stdio_defs.exit_pre R M model code pending)))))))))
 (* [comment removed for export] *).
   Proof.
-    intros wp pending SB Hwp Hlen Hrd Hfd1. destruct (xm_err _ _ _ XM) as (wp2 & rp2 & FC).
+    intros wp pending SB Hwp Hlen Hrd Hfd1 Hrdr. destruct (xm_err _ _ _ XM) as (wp2 & rp2 & FC).
     pose proof XM as [Wn RO GOT RE U2 U1 CO TI TR LO [canw CA] NL SI OF _ _]. destruct SB.
     dexists (Z_to_bv 64 (bv_unsigned sp0 - 48)), (Z_to_bv 64 0x599c8), tid, wp2, rp2.
     split; [apply exit_common_of; exact FC|]. split; [exact Hh|]. split; [exact Hlazy|].
     right. dexists 0x7a098%Z, wp, (Z_to_bv 64 0x7a098), (Z_to_bv 64 1024), (Z_to_bv 64 0), canw.
-    split; [|exact Hfd1].
+    split; [|split; [exact Hfd1 | exact Hrdr]].
     split.
     - exact sob_lock.
     - exact sob_wpos.

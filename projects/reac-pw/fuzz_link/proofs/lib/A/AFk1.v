@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFk1.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nodeK no longer takes the premise that the reserved list is the image's segments alone (false at this revision; its proof never read it)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -1087,7 +1088,6 @@ Proof. try unfold pcap_img_end in *. try unfold IMG_TOP in *. clearP. vm_compute
 Lemma nodeK : forall {RT : Type} (sN : astate) (K : Z -> itree astate RT) (Q : RT -> world tfibsegs -> config -> Prop) (base : sptr) (len8 : Z) (c1 : config),
 at_N Wy md1 X (PSR Wy SH4 (PDX Wy RX z)) S_K Wy c1 -> AI tfibsegs (w_H Wy) (w_A Wy) (cfg_model c1) ->
 amwf (cfg_model c1) ->
-vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ->
 (forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 (forall z, In z band_maps -> In (wiv z) (vm_maps (m_vmmaps (cfg_model c1)))) ->
 YM05.ceil_of_top (alloc_top (m_vmmaps (cfg_model c1))) ->

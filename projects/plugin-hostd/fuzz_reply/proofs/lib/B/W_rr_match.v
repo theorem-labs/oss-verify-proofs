@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the MATCH segment of the IMAGE-B walk of fuzz_reply's relay_remove
-   (lib/B/W_relay_remove_cx.v:438 rr_match_stmt: RRM i 0x842d8 -> RRU (Some i) 0x843c0, fuzz_reply.asan-ubsan).
+   (lib/B/W_relay_remove_cx.v:439 rr_match_stmt: RRM i 0x842d8 -> RRU (Some i) 0x843c0, fuzz_reply.asan-ubsan).
    Proves no function (kind: segment lemma of the image-B walk).  The segment is W_rr_match_cx.v's four hops
    composed by rr_match_of_hops: W_rr_m_drain.v (eof shadow check, drain when open), W_rr_m_ge.v (g_src reloaded and
    checked, gestures_end), W_rr_m_free.v (g_src reloaded and checked, the buf shadow check, free (s->buf)),
    W_rr_m_cpy.v (g_src reloaded and checked, g_nsrc -= 1 with its int32 trap, the memcpy's index traps,
    __asan_memcpy).  The Section block is W_relay_remove_cx.v's, verbatim. *)
-(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane f4cd818e98d
+(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane
    lib/A/W_rr_match.v): MATCH over ARx in room form, in place, from the four hops over the generic Section
    (rr_match_stmt B PST ARx MT RP MMAX RG CTX_AFREE); the Section block is W_relay_remove_cx.v's generic one, the
    hops are cited by name (W_rr_m_drain.rr_m_drain, W_rr_m_ge.rr_m_ge, W_rr_m_free.rr_m_free, W_rr_m_cpy.rr_m_cpy). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

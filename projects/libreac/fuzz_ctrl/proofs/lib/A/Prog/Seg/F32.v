@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its numbers changed; 2046 of its 2082 lines of code are new or changed and 360 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F32 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): 0x827d8-0x82858 with the side blocks
    0x82a20-0x82a28 and 0x82a74-0x82a7c (plan-asan section 2 row F32, call CAT@0x82858).
    rule 24: no function proved.
    v1.9 STATUS (2026-10-28): UNVERIFIED.  No build without probes has checked this file on v1.9.0.  It closed only
-   in an ITERATION-ONLY build on the v1.9 bytes (FACTS 0bfe9aa0d452) with probes in Seg/Tac_slot.v and
+   in an ITERATION-ONLY build on the v1.9 bytes (FACTS) with probes in Seg/Tac_slot.v and
    Seg/Tac_fsfree.v.  It waits for Seg/Tac_slot.v / Tac_fsfree.v re-fit to the regenerated Contract.v and FrameAPI.v.
 
    Cuts: the official SlotInv.v bodies (a working branch, push 11B and later).  Two entries (F31 reaches
@@ -2189,7 +2190,7 @@ Proof.
 Qed.
 
 (* Route (C): f32_evt_m's run under the catalogue's narrowed contract CATc.reac_box_catalogue_contract_on
-   (reac_box_catalogue_c.v, a working branch d68c95046c8), whose shadow_rw premise is dropped.  f32_evt_m used
+   (reac_box_catalogue_c.v, a working branch), whose shadow_rw premise is dropped.  f32_evt_m used
    its premise `shadow_rw m` only to give the callee `shadow_rw` on the post-store memory (its catalogue bullet);
    the run itself reads its two shadow bytes (phi + 16, phi + 17) through the ov_read_bytes premises, stores S(fr) + 4
    through rw_cells (Sfr fr + 4), and the callee's asan_cells through asan_cells_kept.  Under the narrowed contract

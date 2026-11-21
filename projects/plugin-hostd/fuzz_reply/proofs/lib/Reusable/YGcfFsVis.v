@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfFsVis.v, sha256 aa94e0c45459db59feb867caa7c769a6abbcae690f9a88763ea29c9f22eb57e3.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), FAKE-STACK SHADOW VISIBILITY.
    ARmcf's amc_areas (cgif's am_areas, verbatim) keeps, in every state, the shadow of the fake stack's FRAMES part
    visible: aareas (YG0n.v:133-139) lists (ASh (AF kFakeFramesOff), (kFakeStackSize - kFakeFramesOff) / 8).

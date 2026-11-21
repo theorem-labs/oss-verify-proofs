@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed wv_after, wv_loop, wv_loop_stmt; added sbm_rdr; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagLoopK.v, 13 lines within its lines 36-423. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -29,6 +30,12 @@ Lemma wv_keep_of : forall Lr R R', keeps_but Lr R R' -> incl Lr [1; 18; 19; 20; 
 Proof. intros Lr R R' KB Hi r Hr. apply KB; [exact (wv_keep_cs r Hr)|]. intros X. exact (wv_keep_not r Hr (Hi r X)). Qed.
 
 Lemma sbm_fds' : forall m m', same_but_materialized m m' -> m_fds m' = m_fds m.
+Proof. intros m m' ->. destruct m as [fd [maps lazy mat] io fsy pr lim tm]. reflexivity. Qed.
+
+(* LPS 727298f3: a write to a channel succeeds only while its reader is there
+   ([ReadWrite.write_spec]'s channel arm reads [State.m_channel_reader]); the flag is
+   untouched by materialisation *)
+Lemma sbm_rdr : forall m m', same_but_materialized m m' -> m_channel_reader m' = m_channel_reader m.
 Proof. intros m m' ->. destruct m as [fd [maps lazy mat] io fsy pr lim tm]. reflexivity. Qed.
 
 Lemma rdn_skipn_Z : forall (M : word -> option byte) a n bs k,
@@ -186,6 +193,7 @@ Section Loop.
       (length (bs1 ++ bs2) <= n)%nat ->
       m_vm_lazy model = lazy -> MInv A model -> m_halted model = None ->
       fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+      m_channel_reader model = true ->
       wv_regs s R q c (l1 + l2) ->
       wv_iov (mrestrict H M) q c b1 l1 b2 l2 bs1 bs2 ->
       l1 + l2 <= 2 ^ 30 ->
@@ -201,6 +209,7 @@ Section Loop.
       (length (bs1 ++ bs2) <= n)%nat -> (k <= length (bs1 ++ bs2))%nat -> (1 <= k)%nat \/ l1 + l2 = 0 ->
       m_vm_lazy model = lazy -> MInv A model -> m_halted model = None ->
       fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+      m_channel_reader model = true ->
       wv_regs s R q c (l1 + l2) ->
       wv_iov (mrestrict H M) q c b1 l1 b2 l2 bs1 bs2 ->
       l1 + l2 <= 2 ^ 30 ->
@@ -209,7 +218,7 @@ Section Loop.
       srealizes ASEGS scfg (mkCfg (mkst (regupd R 10%bv (Z_to_bv 64 (Z.of_nat k))) (v_addi (wv_pc s) 4) M rom) model)
                 (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k (bs1 ++ bs2))) K).
   Proof.
-    intros n IH s R M model q c b1 l1 b2 l2 bs1 bs2 k Hn Hk Hk1 HL HI Hh FD RG IOV H30 HFD DONE.
+    intros n IH s R M model q c b1 l1 b2 l2 bs1 bs2 k Hn Hk Hk1 HL HI Hh FD RDR RG IOV H30 HFD DONE.
     destruct RG as (G17 & G10 & G11 & G12 & G9 & G18 & G22 & Gq).
     destruct IOV as (Q1 & Q2 & Hc & C0 & C8 & SOK & BUF1 & HC1 & HC2).
     pose proof (wv_buf_len _ _ _ _ BUF1) as LEN1.
@@ -251,6 +260,7 @@ Section Loop.
     assert (HL2 : m_vm_lazy model2 = lazy) by (rewrite (sbm_lazy_eq _ _ SBM2); exact HL).
     assert (Hh2 : m_halted model2 = None) by (rewrite (sbm_halted_eq _ _ SBM2); exact Hh).
     assert (FD2 : fd_lookup (m_fds model2) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd))) by (rewrite (sbm_fds' _ _ SBM2); exact FD).
+    assert (RDR2 : m_channel_reader model2 = true) by (rewrite (sbm_rdr _ _ SBM2); exact RDR).
     destruct (Z.eqb_spec (Z.of_nat k) (l1 + l2)) as [E|NE].
     -
       rewrite skipn_all2 by lia. cbn [map].
@@ -292,6 +302,7 @@ Section Loop.
         * exact HI3.
         * rewrite (sbm_halted_eq _ _ SBM3); exact Hh2.
         * rewrite (sbm_fds' _ _ SBM3); exact FD2.
+        * rewrite (sbm_rdr _ _ SBM3); exact RDR2.
         * unfold wv_regs. replace (l1 - Z.of_nat k + l2) with (l1 + l2 - Z.of_nat k) by ring. repeat split; try assumption.
           rewrite (KB3 9%bv ltac:(cs_in) ltac:(cs_out)). exact V9.
         * rewrite VIS3. unfold wv_iov. split; [exact Q1|]. split; [exact Q2|]. split; [exact Hc|].
@@ -341,6 +352,7 @@ Section Loop.
         * exact HI3.
         * rewrite (sbm_halted_eq _ _ SBM3); exact Hh2.
         * rewrite (sbm_fds' _ _ SBM3); exact FD2.
+        * rewrite (sbm_rdr _ _ SBM3); exact RDR2.
         * unfold wv_regs. replace (l2 - d + 0) with (l1 + l2 - Z.of_nat k) by (unfold d; ring). repeat split; try assumption.
           rewrite (KB3 9%bv ltac:(cs_in) ltac:(cs_out)). exact V9.
         * rewrite VIS3. unfold wv_iov. split; [lia|]. split; [lia|]. split; [left; reflexivity|].
@@ -365,7 +377,7 @@ Section Loop.
   Theorem wv_loop : forall n, wv_loop_stmt n.
   Proof.
     intros n. induction n as [n IH] using lt_wf_ind.
-    intros s R M model q c b1 l1 b2 l2 bs1 bs2 Hn HL HI Hh FD RG IOV H30 HFD DONE.
+    intros s R M model q c b1 l1 b2 l2 bs1 bs2 Hn HL HI Hh FD RDR RG IOV H30 HFD DONE.
     pose proof RG as (G17 & G10 & G11 & G12 & G9 & G18 & G22 & Gq).
     pose proof IOV as (Q1 & Q2 & Hc & C0 & C8 & SOK & BUF1 & HC1 & HC2).
     pose proof BUF1 as (Hb1 & Hl1 & Hb1l & _ & RD1 & NL1).
@@ -387,7 +399,7 @@ Section Loop.
         pose proof (wv_after n IH s R M model q 1 b1 0 b2 0 [] [] 0%nat) as X. cbn [app skipn Z.of_nat] in X. rewrite Z.add_0_r in X.
         apply X; try assumption; try lia.
       + eapply (rz_writev1_wall_lz ASEGS scfg R (wv_pc s) M model ECALLW fd (Z_to_bv 64 q) (Z_to_bv 64 b1) (Z_to_bv 64 l1) bs1 K);
-          [apply fetch_wv_pc | apply is_ecall_ECALLW | exact Hh | exact FD | exact Hfd | exact G17 | exact G10 | exact G11 | exact G12
+          [apply fetch_wv_pc | apply is_ecall_ECALLW | exact Hh | exact FD | exact RDR | exact Hfd | exact G17 | exact G10 | exact G11 | exact G12
           | exact C0f | rewrite UQ; exact C8f | unfold word_to_nat; rewrite u64_lit by lia; exact RD1f
           | rewrite UQ; unfold TASK_SIZE; lia | rewrite !u64_lit by lia; unfold TASK_SIZE; lia | apply NLI; lia
           | intros j Hj; rewrite HL; rewrite !u64_lit in * by lia; apply NL1; lia | rewrite u64_lit by lia; lia | rewrite u64_lit by lia; lia | exact HK0 |].
@@ -400,7 +412,7 @@ Section Loop.
       assert (C16f := rdn_of_mrestrict ASEGS H M HH _ _ _ C16). assert (C24f := rdn_of_mrestrict ASEGS H M HH _ _ _ C24).
       assert (RD2f := rdn_of_mrestrict ASEGS H M HH _ _ _ RD2).
       eapply (rz_writev2_wall_lz ASEGS scfg R (wv_pc s) M model ECALLW fd (Z_to_bv 64 q) (Z_to_bv 64 b1) (Z_to_bv 64 l1) (Z_to_bv 64 b2) (Z_to_bv 64 l2) bs1 bs2 K);
-        [apply fetch_wv_pc | apply is_ecall_ECALLW | exact Hh | exact FD | exact Hfd | exact G17 | exact G10 | exact G11 | exact G12
+        [apply fetch_wv_pc | apply is_ecall_ECALLW | exact Hh | exact FD | exact RDR | exact Hfd | exact G17 | exact G10 | exact G11 | exact G12
         | exact C0f | rewrite UQ; exact C8f | rewrite UQ; exact C16f | rewrite UQ; exact C24f
         | unfold word_to_nat; rewrite u64_lit by lia; exact RD1f | unfold word_to_nat; rewrite u64_lit by lia; exact RD2f
         | rewrite UQ; unfold TASK_SIZE; lia | rewrite !u64_lit by lia; unfold TASK_SIZE; lia | rewrite !u64_lit by lia; unfold TASK_SIZE; lia

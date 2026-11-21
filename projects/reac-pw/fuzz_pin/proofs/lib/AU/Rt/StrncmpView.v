@@ -1,10 +1,10 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/StrncmpView.v at origin/ossv/recipes f26f9fbd8777; module paths changed; arodata_okP is taken from pin's lib/A/PPgBase.v (the same text as boxreg's lib/A/Prog/BoxBase.v), not from BoxBase; no numeral; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/StrncmpView.v; module paths changed; arodata_okP is taken from pin's lib/A/PPgBase.v (the same text as boxreg's lib/A/Prog/BoxBase.v), not from BoxBase; no numeral; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
 (* libreac/fuzz_boxreg, build asan: the two read-only premises of lib/A/Rt/StrncmpDef.v `astrncmp_realizes`
    (fm_rom_viewN, fm_rom_viewO; StrncmpDef.v:68-76) from facts a caller has at its call. Rule 24: no function is
    proved here; image-generic (segs, B are parameters).
    - fm_rom_viewN_of_arodata: from arodata_okP segs rlo rhi B (aview segs (w_H W) mem) (lib/A/Prog/BoxBase.v:20),
      which every caller spec carries (ReacBoxregDeclare.v:127, Check.v:122) and every ajournal keeps
-     (arodata_ok_journalP). in_roP segs rlo rhi a is in_rom segs a (YG0d.v:380, the bytes of every segment without
+     (arodata_ok_journalP). in_roP segs rlo rhi a is in_rom segs a (YG0d.v:381, the bytes of every segment without
      write permission: text, .rodata, .eh_frame, .eh_frame_hdr) OR rlo <= a < rhi (RELRO); the left disjunct is in_rom
      word for word,
      so arodata_okP covers every byte fm_rom_viewN asks for and no extra premise is needed (RELRO bytes are covered as
@@ -15,7 +15,7 @@
      (ro_img_word, the same recursion as lib/A/AF0mCheck.v img_word over segs). It is the shape of AF0mCheck.v's
      box_ro_gate (ro_pinned_chk / box_ro_pinned over Tfib_const_abs, the 26 read-only pins af0m.py appends), with
      in_rom in place of box_ro_ranges and as_const B ly in place of Tfib_const_abs, so the asyms instance proves it from
-     box_ro_gate, as_const = Tfib_const (A/AD2l.v:52; Tfib_const_abs is a part of it) and in_rom box_segs a ->
+     box_ro_gate, as_const = Tfib_const (A/AD2l.v:53; Tfib_const_abs is a part of it) and in_rom box_segs a ->
      Exists .. box_ro_ranges. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/StrncmpView.v of this library, for reac-pw/fuzz_pin's asan-ubsan image (fuzz_pin.asan-ubsan d6f83d301522) instead of its asan image (fuzz_pin.asan 3e4859aed23f): module paths lib.A -> lib.AU (the core files A<xyz> -> Y<xyz>); lib.A.PPgBase, image-independent, kept; no numeral changed (every address numeral checked on the asan-ubsan image). The comment lines above describe how lib/A/Rt/StrncmpView.v was made and quote the asan image's values; the code and comments below carry the asan-ubsan values. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.

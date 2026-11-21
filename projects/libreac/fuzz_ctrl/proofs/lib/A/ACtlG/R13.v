@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its module names, addresses and numbers changed; 146 of its 169 lines of code are new or changed and 536 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R13.v -- GLUE for stage seg_R13 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:690).
    Written by a Theorem Labs lane's glue lane (piece W2a: R6 R7 R8 R9 R13); single writer.  The pattern is
    glue-pattern.md (a working note, not in this delivery) (worked example lib/A/ACtlG/A5.v).
@@ -43,7 +44,7 @@
        unchanged.
 
    SECTION HYPOTHESES (exact text below).  All are ACtl.v's own, for those A.ACtlG.Free81920's (
-   Free81920.v (at head lib/A/ACtlG/Free81920.v:175-199; from a working branch a8f81298e30)) glue_free_81920 takes (MT_FREE for its MOK_FREE), copied verbatim and passed to glue_free_81920; this stage adds none of its own.
+   Free81920.v (at head lib/A/ACtlG/Free81920.v:176-200; from a working branch)) glue_free_81920 takes (MT_FREE for its MOK_FREE), copied verbatim and passed to glue_free_81920; this stage adds none of its own.
    - LAWS: the core's AR law record (YCbq.v:207), as A5.v and ACtl.v:183 take it.
    - TFIB_SYMS: the core's symbol record for B (ACtl.v:191).
    - AFREE4: the core's free rule afree04_rule (YC5d.v:76), sink head explicit (the donor walk's Section hypothesis,
@@ -55,10 +56,10 @@
    ProgWorldCtlRtC.ctl_rt_C_of_AR); BLKSH is gone too (Free81920 cites the PROVED
    A.ProgWorldShadow.ctl_block_shadow_of_AR, a Theorem Labs lane 13:12Z); glue_free_81920 takes none of the three.
    The KitMem.v helpers the free step uses (kitmem_bytes_at_mrd / kitmem_addressable_mrd / kitmem_rw_cells_mrd) are
-   cited by name inside Free81920.v (a Theorem Labs lane's KitMem.v, a working branch 4a56e997c0f).
+   cited by name inside Free81920.v (a Theorem Labs lane's KitMem.v, a working branch).
 
    CLOSURE: every Require is qualified; the six modules that exist twice (YI04 YI16 YK11 YK1b YM05 YO09) are named
-   fully qualified (a Theorem Labs lane 03:5xZ).  Requires the _F files R13F.v / R15F.v of record (glue base 46eb24cd4b3) and
+   fully qualified (a Theorem Labs lane 03:5xZ).  Requires the _F files R13F.v / R15F.v of record (glue base) and
    so their closure; the frame-route blob list is in the commit message.
 
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at only as Y11.* (the core's lib/Reusable/YK11) / Reusable.YG0d.*.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap's error answer: rr_answer_cases admits EINVAL, 22, beside ENOMEM, 12). *)
 
 
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib Require CodeAt StepGen GwInst GwEq GwApply GwApply2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6nq.
@@ -242,7 +243,7 @@ Proof. first [GwApply2.gw_by_name2 GwI.segs (@QQRC.Mqb.ranges_free_except_In) | 
 let zz := match x with MrErr e => neg_errno e | MrInPlace => B | MrMoved a => a end in
 mremap_answer_ok live B ol nd zz = true ->
 match x with
-| MrErr e => e = 12
+| MrErr e => e = 12 \/ e = 22
 | MrInPlace => True
 | MrMoved a => (a mod 4096 = 0 /\ 0 < a /\ a + nd <= alloc_ceiling) /\ avoids a nd [] = true /\ a <> B mod 2^64
 end ->

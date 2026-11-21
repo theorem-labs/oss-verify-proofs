@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0x.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proof steps adapted to the changed model definitions and lemma arguments). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,6 +29,8 @@ Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+(* [YN06.src0_free_realizes] carries [@amf AM = false] (see YN06); only [src0_free_realizes_closed] below uses it. *)
+Hypothesis AMF : @amf AM = false.
 Definition ofMq (q : apathM) : apath :=
 match q with MQ1 => Q1 | MQ2 => Q2 | MQ3 => Q3 | MQ4V1 => Q4V1 | MQ4V2 => Q4V2 | MQ5V1 => Q5V1 | MQ5V2 => Q5V2
 | MQ6V1 => Q6V1 | MQ6V2 => Q6V2 | MQ7V1 => Q7V1 | MQ7V2 => Q7V2 end.
@@ -349,6 +352,6 @@ Proof. apply src0_ntA_of_nested. apply src0_nested. Qed.
 Theorem src0_ntfree : ntfree_hyp B1.
 Proof. apply src0_ntfree_of_A. apply src0_ntA. Qed.
 Theorem src0_free_realizes_closed : free_realizes B1 (MRx B1).
-Proof. exact (src0_free_realizes src0_ntfree). Qed.
+Proof. exact (src0_free_realizes AMF src0_ntfree). Qed.
 End b.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

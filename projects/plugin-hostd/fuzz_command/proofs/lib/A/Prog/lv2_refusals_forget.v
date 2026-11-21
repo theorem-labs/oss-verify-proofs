@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of lv2_refusals_forget (plugin-hostd/fuzz_command, 0x8d278, 91
-   instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v .. ACh8.v (cgif_close's segment walk) at
-   c8557374ad2e: the symbolic executor over the position-abstract listing between the calls, the callees' contracts
+   instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v .. ACh8.v (cgif_close's segment walk):
+   the symbolic executor over the position-abstract listing between the calls, the callees' contracts
    through cl_callS, and the return through paj_ret_at. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

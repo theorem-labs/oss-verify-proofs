@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTopI.v at ad0e022f7af for image B, in the
-   form of proofs/reac-pw/fuzz_rate/lib/AU/RtPgTopIB.v at 2e01bfcb541: image B's segments (lib/AU/Img0.v), its
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTopI.v for image B, in the
+   form of proofs/reac-pw/fuzz_rate/lib/AU/RtPgTopIB.v: image B's segments (lib/AU/Img0.v), its
    read-only range (.data.rel.ro start 0x9a3c0 .. .got end 0x9b7c8), the segment statements of lib/AU/RPgHarn.v, the
    pieces of lib/AU/RPgSeg.v, the chaining of lib/AU/RPgTop.v and the two middle contracts closed by
    lib/AU/RPgMainL.v. *)

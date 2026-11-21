@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO/vvar pair in the reserved ledger passed to the mprotect node, Hvdr; the reserved ledger stated as the image's entries followed by the vDSO/vvar pair, vdso_pair_ok, written as plain text; the page-aligned break passed to mg_vmmaps, whose brk grow records a page range, LPS b07fadb; segment 4's fail path, Start4Fail, runs on the states A/StartRegenS2.v computes per CONFIG_RSEQ, s8_fail_safe for each value of the flag, its statement written as plain text; musl malloc(40)'s proof per CONFIG_RSEQ, from the per-flag interface state to the per-flag posts, its statements written as plain text; OKP_triv takes the syscall frame's sys_rob premise). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -33,33 +34,30 @@ Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ImageFacts OSSVerify.Pro
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require e4.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require e5.
 Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e4.Start4FailStates OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e5.Start4FailCut.
+(* LPS 727298f3: the fail path's states are those A/StartRegenS2.v computes per CONFIG_RSEQ (Start4R:
+   [F0 r], [C2 r], [E_spin r], from [E_k8x r]); its run and CFG check ([spin_ok r], [check_s8f r])
+   are A/StartRegen2.v's, for both values. *)
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require StartRegenS2 StartRegen2.
+Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartRegenS2.Start4R OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.StartRegen2.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.
 Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
 
-Lemma spin_ok : ltac2:(tb__ "0|1|
-SdS6S2SaA1M0A1ScS8U2S0S7S12S1S7A1A3SeS3A5S4G0S0SaSbSeS1dA2S1SaA1A3A2A3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-
-Lemma check_s8f : ltac2:(tb__ "0|1|
-SdS5S1eS8S14S0S7S15S0S7S12S1S7A1A3A3P1fS0S9S13S0S9SfS1S9A1M0A3A3S0S9SeG0A3A6S3A3").
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-
 Section S8F.
 Variable ok : assn.
 Hypothesis OKF : ltac2:(tb__ "0|1|
 S20S16S2S17Q40A1A1S2S11A1M0S10R5R4R3R2R1A4SdG0R3S1S11A1A3F_;Fmd;Ftr;Ftp;Frho;S21S8Vok;R2A3F_;FJ;").
 
-Theorem s8_fail_safe : ltac2:(tb__ "0|0|
-S10S7S16S2S17Q40A1A1S1bS1cS8Vok;S1fS8S18R5R4A2S1aS19A1R3R2A5R1A4FQ;Ftp;Frho;FB;Fm;").
+Theorem s8_fail_safe : forall (r : bool) (m : Model) (B : Z) (rho : valuation) (tp : list (bv 64)) (Q : assn),
+  triple segsA ok (SPA segsA (KxA m B) (fail_state (E_k8x r)) rho tp) Q.
 Proof.
-  intros m B rho tp Q.
+  intros r m B rho tp Q.
   assert (OKJ : ok_frameA segsA ok (KxA m B)) by (apply OKF; intros; eapply KxA_nil; eassumption).
-  change (fail_state E_k8x) with F0.
-  apply (cfg_soundA segsA FUEL1 [PC_OUT; PC_SPIN] 31 [F0; C2] [E_spin] (KxA m B) ok Q tp OKJ (stableA_KxA segsA 31 m B) check_s8f).
-  - intros E rho' [<-|[]]. apply (triple_spinA ok (KxA m B) E_spin rho' tp); [exact OKJ | apply stableA_KxA | reflexivity | exact spin_ok].
+  change (fail_state (E_k8x r)) with (F0 r).
+  apply (cfg_soundA segsA FUEL1 [PC_OUT; PC_SPIN] 31 [F0 r; C2 r] [E_spin r] (KxA m B) ok Q tp OKJ (stableA_KxA segsA 31 m B) (check_s8f r)).
+  - intros E rho' [<-|[]]. apply (triple_spinA ok (KxA m B) (E_spin r) rho' tp); [exact OKJ | apply stableA_KxA | destruct r; reflexivity | destruct r; exact (spin_ok _)].
   - left. reflexivity.
 Qed.
 End S8F.
@@ -845,7 +843,7 @@ S2cS5S14S21Q40A1A1S14S39A1M0S3bR5R4R3R2R1A4S0G0R3S19S39A1A3F_;Fmd;Ftr;Ftp;Frho;S
 Proof. intros J _ rho tp tr ms md msv' _ _ _ _ _. exact I. Qed.
 Lemma OKP_triv : ltac2:(tb__ "0|1|
 S2cS5S14S21Q40A1A1S14S39A1M0S3bR5R4R3R2R1A4S0G0R3S19S39A1A3F_;Fmd;Ftr;Ftp;Frho;Sa1S4S36R2A3F_;FJ;").
-Proof. intros J _ rho tp tr ms md x8 _ _ _. exact I. Qed.
+Proof. intros J _ rho tp tr ms md x8 _ _ _ _. exact I. Qed.
 
 Section Assembly.
 Variable ok : assn.
@@ -854,11 +852,13 @@ S2cS5S14S21Q40A1A1S14S39A1M0S3bR5R4R3R2R1A4S0G0R3S19S39A1A3F_;Fmd;Ftr;Ftp;Frho;S
 Hypothesis OKP : ltac2:(tb__ "0|1|
 S2cS5S14S21Q40A1A1S14S39A1M0S3bR5R4R3R2R1A4S0G0R3S19S39A1A3F_;Fmd;Ftr;Ftp;Frho;Sa1S4Vok;R2A3F_;FJ;").
 Variables (m : Model) (B : Z).
+(* LPS 727298f3: the CONFIG_RSEQ flag; malloc(40)'s states (A/e3.v) and posts (A/e9.v) are per flag. *)
+Variable rq : bool.
 Hypothesis HM : m40_hyps m B.
 
-Let Hres : ltac2:(tb__ "0|1|
-S0S14S17S21Q40A1M0G0A2A1S3aS37Vm;A1A1Sa4S4A1A3") := ltac2:(tb__ "0|0|
-S87Vm;VB;VHM;A3"). Let Hsb : ltac2:(tb__ "0|1|
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Let Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V := m40_res m B HM.
+Let Hsb : ltac2:(tb__ "0|1|
 S0S21Q40A1S42S37Vm;A1M0A1S41G0A1A3") := ltac2:(tb__ "0|0|
 S88Vm;VB;VHM;A3"). Let Hal : ltac2:(tb__ "0|0|
 S0S13S32S22Q40S6eVm;A1A2Z1000A2Z0A3") := ltac2:(tb__ "0|0|
@@ -879,6 +879,8 @@ S17S21Q40M0A1M1G1A2M2S8fG2R1S40Vm;A1A3S31Z0S22G0S20G1G1R2A3A2A2F_;Fr;") := ltac2
 S86Vm;VB;VHM;A3"). Let Hlim : ltac2:(tb__ "0|0|
 Sa3Vm;A1") := ltac2:(tb__ "0|0|
 S84Vm;VB;VHM;A3").
+(* LPS 727298f3: the vDSO/vvar pair is in the reserved ledger (e9's [m40_vdso]). *)
+Let Hvdr := m40_vdso m B HM.
 
 Definition SP0 (rho0 : valuation) : Prop := ltac2:(tb__ "0|0|
 S30S2fS74Vm;A1S95A2S22Q40S9Vrho0;PaA2A2A2").
@@ -903,36 +905,37 @@ Proof.
   rewrite mf_res_vmmaps. unfold mmap_none_vm. cbn. repeat split; reflexivity.
 Qed.
 
-Lemma facts_M_in_E22f : ltac2:(tb__ "0|0|
-SaS8fSaR1S94A3S8fSaR2S11S25S44A1A1A3F_;Ff;").
-Proof. intros f Hf. vm_compute in Hf. vm_compute. tauto. Qed.
-Lemma objs_clear_E22f : ltac2:(tb__ "0|2|
-S0S15S73S1aS17S7S13A2M0S1bS7S13SeS98S4aScZ1000M1A1A3G1A4S19G0A1A3S25S44A1A2S16A3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma S22f_eq : ltac2:(tb__ "0|1|
-S0S26S4eS51S44SfS6S25S44A1A1M0A1S1aSbS9eG0Z1000A2S19SbA1A3S71G0A1S65G0A1A5A3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma wid_RET0f : ltac2:(tb__ "0|1|
-S0S15S68S78S59S1aS17S12S7A2M0S1bS12S7S79S4aA4S19G0A1A3A2S24A2S16A3"). Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma wid_RETPf : ltac2:(tb__ "0|1|
-S0S15S68S78S5bS1aS17S12S7A2M0S1bS12S7S79S4aA4S1aG0S1bS12S7S7dS63A4S19G0A1A3A3A2S24A2S16A3"). Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma nexts_f : ltac2:(tb__ "0|2|
-S1S0S12S6S25S44A1A1S47A3S1S66S24S43A2S1S67S43S47A2S1S0S12S6S25S4eA1M0A1S65S47A1A3S1S0S12S6S25S48S44A1A1M1A1S47A3S1S0S15S8G1A1S18A3S0S15S8G0A1S18A3A2A2A2A2A2A2").
+Lemma facts_M_in_E22f : forall f : sprop, In f facts_M -> In f (ss_facts (ax_S (E22f rq))).
+Proof. intros f Hf. vm_compute in Hf. destruct rq; vm_compute; tauto. Qed.
+Lemma objs_clear_E22f : objs_clear_M [(SAlu ALU_ADD vRES (SLit 4096), 4096)] (ax_S (E22f rq)) = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma S22f_eq : S22f rq = cont (E22f rq) (SVar (ss_next (ax_S (E22f rq)))) [mmap_obj (ss_next (ax_S (E22f rq))) 4096]
+                          (Fgrant (ss_next (ax_S (E22f rq)))) (Pos.succ (ss_next (ax_S (E22f rq)))).
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma wid_RET0f : wsub_id_below (post_sub (RET0f rq) [(NA, vRES)]) NF = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma wid_RETPf : wsub_id_below (post_sub (RETPf rq) [(NA, vRES); (NG, vGRPf)]) NF = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma nexts_f : ss_next (ax_S (E22f rq)) = N22f /\ Pos.le NF N18 /\ Pos.lt N18 N22f /\
+  ss_next (ax_S (S22f rq)) = Pos.succ N22f /\ ss_next (ax_S (refuse (E22f rq))) = N22f /\
+  ss_lenient (ax_S (refuse (E22f rq))) = false /\ ss_lenient (ax_S (S22f rq)) = false.
 Proof.
-  split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [unfold NF, N18; lia|]. split; [unfold N18, N22f; lia|].
-  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2.
+  split; [exact (N22f_eq rq)|]. split; [unfold NF, N18; lia|]. split; [unfold N18, N22f; lia|].
+  destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2.
 Qed.
 
-Lemma tail_fail : ltac2:(tb__ "0|3|
-S5S14S21Q40M0A1M1A1G1S5S90R4A1S9cS23G0Z0A2Vm;S6fR3A4S0G1S9R3S65S43A1A2R4A3S35R7S22G0R5A2M2S2fG2Z2000A2R4A4S8bS4Vok;S2bS4S6bS70Vm;R6A2S2fVB;Z1000A2A2S44R5R7A5S6cS4S24R8R7S77Vm;VB;A2A5A4F_;F_;F_;F_;Frho;Fa;Ftp;Frho0;").
+Lemma tail_fail : forall (rho0 : valuation) (tp : list word) (a : word) (rho : valuation),
+  SP0 rho0 -> mmap_place_ok_none (Z_to_bv 64 0) m n8w a -> rw rho (Pos.succ N18) = a ->
+  VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) rho ->
+  triple segsA ok (SPA segsA (KxA (mf_exp m a) (B + 4096)) (E22f rq) rho tp) (LQPA segsA NF rho0 tp (Posts_M m B rq)).
 Proof.
   intros rho0 tp a rho HSP0 Hpl Ha HVK. pose proof nexts_f as (Xn & Xf & Xlt & Xs & Xr & Xlr & Xls).
-  pose proof E22f_at as (Hpc & Hecall & R17 & R10 & R11 & R12 & R13 & R14 & R15).
+  pose proof (E22f_at rq) as (Hpc & Hecall & R17 & R10 & R11 & R12 & R13 & R14 & R15).
   pose proof (mf_exp_facts a) as (Fres & Flim & Fmaps & Finit).
   eapply triple_seq.
   { apply triple1_triple.
-    apply (node_rw ok OKF OKP E22f (mf_exp m a) (B + 4096) [(SAlu ALU_ADD vRES (SLit 4096), 4096)]
-             eq_refl eq_refl facts_M_in_E22f Hecall R17 R10 R11 R12 R13 R14 R15 objs_clear_E22f).
+    apply (node_rw ok OKF OKP (E22f rq) (mf_exp m a) (B + 4096) [(SAlu ALU_ADD vRES (SLit 4096), 4096)]
+             ltac:(destruct rq; reflexivity) ltac:(destruct rq; reflexivity) facts_M_in_E22f Hecall R17 R10 R11 R12 R13 R14 R15 objs_clear_E22f).
     - rewrite Fres. exact Hres.
     - rewrite Flim. pose proof HB. lia.
     - unfold init_sp_ok. rewrite Finit. exact Htop.
@@ -945,46 +948,48 @@ Proof.
     - unfold alloc_top. rewrite Finit. exact (VK_sp _ _ _ _ _ HVK HSP0). }
   apply triple_disj.
   -
-    apply (run1 ok (KxA (mf_exp m a) (B + 4096)) FUEL_M CUTS_M (refuse E22f) RET0f RsSymJump rho tp);
-      [exact run_22f_fail | apply OKFx' | apply STx | exact Xlr |].
+    apply (run1 ok (KxA (mf_exp m a) (B + 4096)) FUEL_M CUTS_M (refuse (E22f rq)) (RET0f rq) RsSymJump rho tp);
+      [exact (run_22f_fail rq) | apply OKFx' | apply STx | exact Xlr |].
     intros rho1 Hag1. rewrite Xr in Hag1.
-    eapply triple_entailsA; [exact ent_RET0f | exact wid_RET0f | apply STx |].
-    assert (HVK1 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho1 (post_sub RET0f [(NA, vRES)]))).
+    eapply triple_entailsA; [exact (ent_RET0f rq) | exact wid_RET0f | apply STx |].
+    assert (HVK1 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho1 (post_sub (RET0f rq) [(NA, vRES)]))).
     { apply (VK_sub _ _ _ _ _ wid_RET0f). eapply VK_agree; [| exact HVK | exact Hag1]. plia. }
-    apply (post_fin ok (KxA (mf_exp m a) (B + 4096)) P_null1 (JL_null1 m B)); [right; left; reflexivity | | exact (proj1 HVK1)].
+    apply (post_fin ok (KxA (mf_exp m a) (B + 4096)) (P_null1 rq) (JL_null1 m B)); [right; left; reflexivity | | exact (proj1 HVK1)].
     intros tr md (Htr & Hem & Hpaid). split; [exact (proj1 HVK1)|].
     exists (O1_fail a). split; [exact Hpl|]. split; [reflexivity|]. split; [|split; [exact (proj2 HVK1)|]].
-    + cbn [out1_base]. unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RET0f [(NA, vRES)]) NA) with vRES by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + cbn [out1_base]. unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RET0f rq) [(NA, vRES)]) NA) with vRES by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vRES. cbn [eval]. rewrite <- Ha. symmetry. apply (proj1 Hag1). plia.
     + cbn [out1_model]. split; [exact Htr|]. split; [exact Hem|]. lia.
   -
     apply triple_ex. intros g. apply triple_pure. intros Hplg.
     rewrite <- S22f_eq.
-    apply (run1 ok (KxA (mgrant (mf_exp m a) g) (B + 4096 + 4096)) FUEL_M CUTS_M S22f RETPf RsSymJump _ tp);
-      [exact run_22f | apply OKFx' | apply STx | exact Xls |].
+    apply (run1 ok (KxA (mgrant (mf_exp m a) g) (B + 4096 + 4096)) FUEL_M CUTS_M (S22f rq) (RETPf rq) RsSymJump _ tp);
+      [exact (run_22f rq) | apply OKFx' | apply STx | exact Xls |].
     intros rho1 Hag1. rewrite Xs in Hag1.
-    eapply triple_entailsA; [exact ent_RETPf | exact wid_RETPf | apply STx |].
-    assert (HVK1 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho1 (post_sub RETPf [(NA, vRES); (NG, vGRPf)]))).
+    eapply triple_entailsA; [exact (ent_RETPf rq) | exact wid_RETPf | apply STx |].
+    assert (HVK1 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho1 (post_sub (RETPf rq) [(NA, vRES); (NG, vGRPf)]))).
     { apply (VK_sub _ _ _ _ _ wid_RETPf). eapply VK_agree; [| | exact Hag1]; [plia|]. apply VK_set_rw; [plia|]. exact HVK. }
-    apply (post_fin ok _ P_ok (JL_ok m B)); [right; right; left; reflexivity | | exact (proj1 HVK1)].
+    apply (post_fin ok _ (P_ok rq) (JL_ok m B)); [right; right; left; reflexivity | | exact (proj1 HVK1)].
     intros tr md (Htr & Hem & Hpaid). split; [exact (proj1 HVK1)|].
     exists (O1_fail a), g. split; [exact Hpl|]. split; [exact Hplg|]. split; [reflexivity|]. split; [|split; [|split; [exact (proj2 HVK1)|]]].
-    + cbn [out1_base]. unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RETPf [(NA, vRES); (NG, vGRPf)]) NA) with vRES by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + cbn [out1_base]. unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RETPf rq) [(NA, vRES); (NG, vGRPf)]) NA) with vRES by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vRES. cbn [eval]. rewrite <- Ha. rewrite <- (proj1 Hag1 (Pos.succ N18)) by (rewrite ?Xn; plia). rewrite rho_set_rw_other by (rewrite ?Xn; plia). reflexivity.
-    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RETPf [(NA, vRES); (NG, vGRPf)]) NG) with vGRPf by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RETPf rq) [(NA, vRES); (NG, vGRPf)]) NG) with vGRPf by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vGRPf. cbn [eval]. rewrite <- (proj1 Hag1 N22f) by (rewrite ?Xn; plia). rewrite Xn. apply rho_set_rw_at.
     + cbn [out1_model]. split; [exact Htr|]. split; [exact Hem|]. lia.
 Qed.
 
-Lemma etail_fail : ltac2:(tb__ "0|3|
-S5S14S21Q40M0A1M1A1G1S5S90R4A1S9cS23G0Z0A2Vm;S6fR3A4S0G1S9R3S65S43A1A2R4A3S35R7S22G0R5A2M2S2fG2Z2000A2R4A4S8cS4S2bS4S6bS70Vm;R6A2S2fVB;Z1000A2A2S44R5R7A5S6cS4S24R8R7S77Vm;VB;A2A5A3F_;F_;F_;F_;Frho;Fa;Ftp;Frho0;").
+Lemma etail_fail : forall (rho0 : valuation) (tp : list word) (a : word) (rho : valuation),
+  SP0 rho0 -> mmap_place_ok_none (Z_to_bv 64 0) m n8w a -> rw rho (Pos.succ N18) = a ->
+  VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) rho ->
+  etriple segsA (SPA segsA (KxA (mf_exp m a) (B + 4096)) (E22f rq) rho tp) (LQPA segsA NF rho0 tp (Posts_M m B rq)).
 Proof.
   intros rho0 tp a rho HSP0 Hpl Ha HVK. pose proof nexts_f as (Xn & Xf & Xlt & Xs & Xr & Xlr & Xls).
-  pose proof E22f_at as (Hpc & Hecall & R17 & R10 & R11 & R12 & R13 & R14 & R15).
+  pose proof (E22f_at rq) as (Hpc & Hecall & R17 & R10 & R11 & R12 & R13 & R14 & R15).
   pose proof (mf_exp_facts a) as (Fres & Flim & Fmaps & Finit).
   eapply etriple_seq.
-  { apply (enode_rw_any E22f (mf_exp m a) (B + 4096) [(SAlu ALU_ADD vRES (SLit 4096), 4096)]
-             eq_refl eq_refl facts_M_in_E22f Hecall R17 R10 R11 R12 R13 R14 R15 objs_clear_E22f).
+  { apply (enode_rw_any (E22f rq) (mf_exp m a) (B + 4096) [(SAlu ALU_ADD vRES (SLit 4096), 4096)]
+             ltac:(destruct rq; reflexivity) ltac:(destruct rq; reflexivity) facts_M_in_E22f Hecall R17 R10 R11 R12 R13 R14 R15 objs_clear_E22f).
     - rewrite Fres. exact Hres.
     - rewrite Flim. pose proof HB. lia.
     - unfold init_sp_ok. rewrite Finit. exact Htop.
@@ -997,33 +1002,33 @@ Proof.
     - unfold alloc_top. rewrite Finit. exact (VK_sp _ _ _ _ _ HVK HSP0). }
   apply etriple_disj.
   -
-    apply (erun1 (KxA (mf_exp m a) (B + 4096)) FUEL_M CUTS_M (refuse E22f) RET0f RsSymJump rho tp);
-      [exact run_22f_fail | apply STx | exact Xlr |].
+    apply (erun1 (KxA (mf_exp m a) (B + 4096)) FUEL_M CUTS_M (refuse (E22f rq)) (RET0f rq) RsSymJump rho tp);
+      [exact (run_22f_fail rq) | apply STx | exact Xlr |].
     intros rho1 Hag1. rewrite Xr in Hag1.
-    eapply etriple_entailsA; [exact ent_RET0f | exact wid_RET0f | apply STx |].
-    assert (HVK1 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho1 (post_sub RET0f [(NA, vRES)]))).
+    eapply etriple_entailsA; [exact (ent_RET0f rq) | exact wid_RET0f | apply STx |].
+    assert (HVK1 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho1 (post_sub (RET0f rq) [(NA, vRES)]))).
     { apply (VK_sub _ _ _ _ _ wid_RET0f). eapply VK_agree; [| exact HVK | exact Hag1]. plia. }
-    apply (epost_fin (KxA (mf_exp m a) (B + 4096)) P_null1 (JL_null1 m B)); [right; left; reflexivity | | exact (proj1 HVK1)].
+    apply (epost_fin (KxA (mf_exp m a) (B + 4096)) (P_null1 rq) (JL_null1 m B)); [right; left; reflexivity | | exact (proj1 HVK1)].
     intros tr md (Htr & Hem & Hpaid). split; [exact (proj1 HVK1)|].
     exists (O1_fail a). split; [exact Hpl|]. split; [reflexivity|]. split; [|split; [exact (proj2 HVK1)|]].
-    + cbn [out1_base]. unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RET0f [(NA, vRES)]) NA) with vRES by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + cbn [out1_base]. unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RET0f rq) [(NA, vRES)]) NA) with vRES by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vRES. cbn [eval]. rewrite <- Ha. symmetry. apply (proj1 Hag1). plia.
     + cbn [out1_model]. split; [exact Htr|]. split; [exact Hem|]. lia.
   -
     apply etriple_ex. intros g. apply etriple_pure. intros Hplg.
     rewrite <- S22f_eq.
-    apply (erun1 (KxA (mgrant (mf_exp m a) g) (B + 4096 + 4096)) FUEL_M CUTS_M S22f RETPf RsSymJump _ tp);
-      [exact run_22f | apply STx | exact Xls |].
+    apply (erun1 (KxA (mgrant (mf_exp m a) g) (B + 4096 + 4096)) FUEL_M CUTS_M (S22f rq) (RETPf rq) RsSymJump _ tp);
+      [exact (run_22f rq) | apply STx | exact Xls |].
     intros rho1 Hag1. rewrite Xs in Hag1.
-    eapply etriple_entailsA; [exact ent_RETPf | exact wid_RETPf | apply STx |].
-    assert (HVK1 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho1 (post_sub RETPf [(NA, vRES); (NG, vGRPf)]))).
+    eapply etriple_entailsA; [exact (ent_RETPf rq) | exact wid_RETPf | apply STx |].
+    assert (HVK1 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho1 (post_sub (RETPf rq) [(NA, vRES); (NG, vGRPf)]))).
     { apply (VK_sub _ _ _ _ _ wid_RETPf). eapply VK_agree; [| | exact Hag1]; [plia|]. apply VK_set_rw; [plia|]. exact HVK. }
-    apply (epost_fin _ P_ok (JL_ok m B)); [right; right; left; reflexivity | | exact (proj1 HVK1)].
+    apply (epost_fin _ (P_ok rq) (JL_ok m B)); [right; right; left; reflexivity | | exact (proj1 HVK1)].
     intros tr md (Htr & Hem & Hpaid). split; [exact (proj1 HVK1)|].
     exists (O1_fail a), g. split; [exact Hpl|]. split; [exact Hplg|]. split; [reflexivity|]. split; [|split; [|split; [exact (proj2 HVK1)|]]].
-    + cbn [out1_base]. unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RETPf [(NA, vRES); (NG, vGRPf)]) NA) with vRES by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + cbn [out1_base]. unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RETPf rq) [(NA, vRES); (NG, vGRPf)]) NA) with vRES by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vRES. cbn [eval]. rewrite <- Ha. rewrite <- (proj1 Hag1 (Pos.succ N18)) by (rewrite ?Xn; plia). rewrite rho_set_rw_other by (rewrite ?Xn; plia). reflexivity.
-    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RETPf [(NA, vRES); (NG, vGRPf)]) NG) with vGRPf by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RETPf rq) [(NA, vRES); (NG, vGRPf)]) NG) with vGRPf by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vGRPf. cbn [eval]. rewrite <- (proj1 Hag1 N22f) by (rewrite ?Xn; plia). rewrite Xn. apply rho_set_rw_at.
     + cbn [out1_model]. split; [exact Htr|]. split; [exact Hem|]. lia.
 Qed.
@@ -1033,7 +1038,7 @@ Definition grow_out (o : out1) : Prop := match o with O1_fail _ => False | _ => 
 Lemma grow_facts : ltac2:(tb__ "0|9|
 S7bS91R1A1S96S38S37Vm;A1M0A1M1A1S0S15S3eS1dS17S21Q40M2A1M3G3A2M4S3aG0A1M5G1A3S6eVm;A1S72A3S16A3S1S0S14G4A1S3aS37S7aVm;R4A2A1M6A1M7G5A3S1S0S13S3cG6A1S3cG0A1A3S1S0G3S3dG6A1S3dG0A1A3S1S2G3G3S2G3G3S1S8fG4S1bG3G3R2R1A4S38S37S7aVm;R6A2A1A1A3S1S30S22G2R2A2M8S2fVbrk0;Z1000A2A2S30S2fVbrk0;Z2000A2S2fG8S22G2R1A2A2A2A2A2Ls;A2Lb;A2S9bS1dG4G7S38G6A1A3S9aS99A3A2A2A2A2F_;F_;F_;Fo;").
 Proof.
-  intros o Ho Hwf Hfree3. pose proof (mg_vmmaps m Hlo Hhi) as MG. pose proof (n2w_val) as NV. pose proof n3w_val as NV3.
+  intros o Ho Hwf Hfree3. pose proof (mg_vmmaps m Hal Hlo Hhi) as MG. pose proof (n2w_val) as NV. pose proof n3w_val as NV3.
   assert (Upg : bv_unsigned pgw = 4096) by reflexivity.
   pose proof (band_clear_of_free _ (brk0w m) n3w Hband Hfree3 ltac:(rewrite NV3; lia)) as HBD. rewrite NV3 in HBD.
   assert (BG : band_covered (vm_reserved (m_vmmaps m) ++ (brk0w m, n2w) :: vm_maps (m_vmmaps m)) SHADOW_BAND_LO SHADOW_BAND_HI)
@@ -1061,44 +1066,48 @@ Proof.
       * apply (HBD 0x7fff7000); lia.
 Qed.
 
-Lemma facts_M_in_E22g : ltac2:(tb__ "0|0|
-SaS8fSaR1S94A3S8fSaR2S11S25S45A1A1A3F_;Ff;").
-Proof. intros f Hf. vm_compute in Hf. vm_compute. tauto. Qed.
-Lemma objs_clear_E22g : ltac2:(tb__ "0|2|
-S0S15S73S1aS17S7S13A2M0S1bS7S13SeS98S49ScZ1000M1A1A3G1A4S19G0A1A3S25S45A1A2S16A3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma S22g_eq : ltac2:(tb__ "0|1|
-S0S26S4fS51S45SfS6S25S45A1A1M0A1S1aSbS9eG0Z1000A2S19SbA1A3S71G0A1S65G0A1A5A3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma wid_RET0g : ltac2:(tb__ "0|1|
-S0S15S68S78S5aS1aS17S12S7A2M0S1bS12S7S79S49A4S19G0A1A3A2S24A2S16A3"). Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma wid_RETPg : ltac2:(tb__ "0|1|
-S0S15S68S78S5cS1aS17S12S7A2M0S1bS12S7S79S49A4S1aG0S1bS12S7S7dS64A4S19G0A1A3A3A2S24A2S16A3"). Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma nexts_g : ltac2:(tb__ "0|4|
-S1S0S12S6S25S45A1A1S46A3S1S66S24S43A2S1S67S43S46A2S1S0S12S6S25S4fA1M0A1S65S46A1A3S1S0S12S6S25S48S45A1A1M1A1S46A3S1S0S15S8G1A1S18A3S1S0S15S8G0A1S18A3S1S0S12S6S25S50A1M2A1S65S65S43A1A1M3A3S1S0S15S8G2A1S18A3S66G3S46A2A2A2A2A2A2A2A2A2A2").
+Lemma facts_M_in_E22g : forall f : sprop, In f facts_M -> In f (ss_facts (ax_S (E22g rq))).
+Proof. intros f Hf. vm_compute in Hf. destruct rq; vm_compute; tauto. Qed.
+Lemma objs_clear_E22g : objs_clear_M [(SAlu ALU_ADD vBRK (SLit 4096), 4096)] (ax_S (E22g rq)) = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma S22g_eq : S22g rq = cont (E22g rq) (SVar (ss_next (ax_S (E22g rq)))) [mmap_obj (ss_next (ax_S (E22g rq))) 4096]
+                          (Fgrant (ss_next (ax_S (E22g rq)))) (Pos.succ (ss_next (ax_S (E22g rq)))).
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma wid_RET0g : wsub_id_below (post_sub (RET0g rq) [(NA, vBRK)]) NF = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma wid_RETPg : wsub_id_below (post_sub (RETPg rq) [(NA, vBRK); (NG, vGRPg)]) NF = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma nexts_g : ss_next (ax_S (E22g rq)) = N22g /\ Pos.le NF N18 /\ Pos.lt N18 N22g /\
+  ss_next (ax_S (S22g rq)) = Pos.succ N22g /\ ss_next (ax_S (refuse (E22g rq))) = N22g /\
+  ss_lenient (ax_S (refuse (E22g rq))) = false /\ ss_lenient (ax_S (S22g rq)) = false /\
+  ss_next (ax_S (U24c rq)) = Pos.succ (Pos.succ N18) /\ ss_lenient (ax_S (U24c rq)) = false /\
+  Pos.le (Pos.succ (Pos.succ N18)) N22g.
 Proof.
-  split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [unfold NF, N18; lia|]. split; [unfold N18, N22g; lia|].
-  split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|].
-  split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. unfold N18, N22g; lia.
+  split; [exact (N22g_eq rq)|]. split; [unfold NF, N18; lia|]. split; [unfold N18, N22g; lia|].
+  split; [destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|].
+  split; [destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. split; [destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc|]. unfold N18, N22g; lia.
 Qed.
 
-Lemma tail_grow : ltac2:(tb__ "0|2|
-S7bS5S14S21Q40A1M0A1S5S90R3A1S91R5A1S7eVm;R6A2S96S38S37Vm;A1A1A1S0G0S9R5S43A2S6eVm;A1A3S35R8Vbrk0;S2fVbrk0;Z2000M1A2R6A4S8bS4Vok;S2bS4S6bS7aVm;RaA2S2fVB;G1A2A2S50R7S7fVm;RaR8A3A5S6cS4S24R9R8S77Vm;VB;A2A5A4F_;F_;F_;F_;F_;F_;Frho;Ftp0;Frho0;Fo;").
+Lemma tail_grow : forall (o : out1) (rho0 : valuation) (tp0 : list word) (rho : valuation),
+  SP0 rho0 -> grow_out o -> out1_ok m o -> ivs_wf (vm_maps (m_vmmaps m)) ->
+  rw rho N18 = brk0w m -> VK rho0 brk0 (brk0 + 8192) rho ->
+  triple segsA ok (SPA segsA (KxA (out1_model m o) (B + 8192)) (U24c rq) rho (out1_tp m o tp0))
+    (LQPA segsA NF rho0 tp0 (Posts_M m B rq)).
 Proof.
   intros o rho0 tp0 rho HSP0 Ho Hok Hwf HN18 HVK. pose proof nexts_g as (Xn & Xf & Xlt & Xs & Xr & Xlr & Xls & Xu & Xlu & Xun).
-  pose proof E22g_at as (Hpc & Hecall & R17 & R10 & R11 & R12 & R13 & R14 & R15).
+  pose proof (E22g_at rq) as (Hpc & Hecall & R17 & R10 & R11 & R12 & R13 & R14 & R15).
   assert (Hfree3 : region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) (brk0w m) n3w = true)
     by (destruct o; cbn [out1_ok] in Hok; [| | |destruct Ho]; exact (proj2 Hok)).
   destruct (grow_facts o Ho Hwf Hfree3) as (Fres & Flim & Finit & (b1 & s1 & Hb1 & Hb1l & Hb1h) & Fband).
   set (mx := out1_model m o) in *. set (tpx := out1_tp m o tp0) in *.
-  apply (run1 ok (KxA mx (B + 8192)) FUEL_M CUTS_M U24c E22g RsCut rho tpx); [exact run_24 | apply OKFx' | apply STx | exact Xlu |].
+  apply (run1 ok (KxA mx (B + 8192)) FUEL_M CUTS_M (U24c rq) (E22g rq) RsCut rho tpx); [exact (run_24 rq) | apply OKFx' | apply STx | exact Xlu |].
   intros rho1 Hag1. rewrite Xu in Hag1.
   assert (HN18' : rw rho1 N18 = brk0w m) by (rewrite <- (proj1 Hag1 N18) by plia; exact HN18).
   assert (HVK1 : VK rho0 brk0 (brk0 + 8192) rho1) by (eapply VK_agree; [| exact HVK | exact Hag1]; plia).
   eapply triple_seq.
   { apply triple1_triple.
-    apply (node_rw ok OKF OKP E22g mx (B + 8192) [(SAlu ALU_ADD vBRK (SLit 4096), 4096)]
-             eq_refl eq_refl facts_M_in_E22g Hecall R17 R10 R11 R12 R13 R14 R15 objs_clear_E22g).
+    apply (node_rw ok OKF OKP (E22g rq) mx (B + 8192) [(SAlu ALU_ADD vBRK (SLit 4096), 4096)]
+             ltac:(destruct rq; reflexivity) ltac:(destruct rq; reflexivity) facts_M_in_E22g Hecall R17 R10 R11 R12 R13 R14 R15 objs_clear_E22g).
     - rewrite Fres. exact Hres.
     - rewrite Flim. pose proof HB. lia.
     - unfold init_sp_ok. rewrite Finit. exact Htop.
@@ -1110,35 +1119,35 @@ Proof.
     - unfold alloc_top. rewrite Finit. exact (VK_sp _ _ _ _ _ HVK1 HSP0). }
   apply triple_disj.
   -
-    apply (run1 ok (KxA mx (B + 8192)) FUEL_M CUTS_M (refuse E22g) RET0g RsSymJump rho1 tpx);
-      [exact run_22g_fail | apply OKFx' | apply STx | exact Xlr |].
+    apply (run1 ok (KxA mx (B + 8192)) FUEL_M CUTS_M (refuse (E22g rq)) (RET0g rq) RsSymJump rho1 tpx);
+      [exact (run_22g_fail rq) | apply OKFx' | apply STx | exact Xlr |].
     intros rho2 Hag2. rewrite Xr in Hag2.
-    eapply triple_entailsA; [exact ent_RET0g | exact wid_RET0g | apply STx |].
-    assert (HVK2 : VK rho0 brk0 (brk0 + 8192) (rho_sub rho2 (post_sub RET0g [(NA, vBRK)]))).
+    eapply triple_entailsA; [exact (ent_RET0g rq) | exact wid_RET0g | apply STx |].
+    assert (HVK2 : VK rho0 brk0 (brk0 + 8192) (rho_sub rho2 (post_sub (RET0g rq) [(NA, vBRK)]))).
     { apply (VK_sub _ _ _ _ _ wid_RET0g). eapply VK_agree; [| exact HVK1 | exact Hag2]. plia. }
-    apply (post_fin ok (KxA mx (B + 8192)) P_null1 (JL_null1 m B)); [right; left; reflexivity | | exact (proj1 HVK2)].
+    apply (post_fin ok (KxA mx (B + 8192)) (P_null1 rq) (JL_null1 m B)); [right; left; reflexivity | | exact (proj1 HVK2)].
     intros tr md (Htr & Hem & Hpaid). split; [exact (proj1 HVK2)|].
     exists o. split; [exact Hok|]. split; [reflexivity|]. split; [|split].
-    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RET0g [(NA, vBRK)]) NA) with vBRK by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RET0g rq) [(NA, vBRK)]) NA) with vBRK by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vBRK. cbn [eval]. rewrite <- (proj1 Hag2 N18) by plia. rewrite HN18'. destruct o; [reflexivity|reflexivity|reflexivity|destruct Ho].
     + replace (out1_W m o) with (brk0, brk0 + 8192) by (destruct o; [reflexivity|reflexivity|reflexivity|destruct Ho]). exact (proj2 HVK2).
     + split; [exact Htr|]. split; [exact Hem|]. lia.
   -
     apply triple_ex. intros g. apply triple_pure. intros Hplg.
     rewrite <- S22g_eq.
-    apply (run1 ok (KxA (mgrant mx g) (B + 8192 + 4096)) FUEL_M CUTS_M S22g RETPg RsSymJump _ tpx);
-      [exact run_22g | apply OKFx' | apply STx | exact Xls |].
+    apply (run1 ok (KxA (mgrant mx g) (B + 8192 + 4096)) FUEL_M CUTS_M (S22g rq) (RETPg rq) RsSymJump _ tpx);
+      [exact (run_22g rq) | apply OKFx' | apply STx | exact Xls |].
     intros rho2 Hag2. rewrite Xs in Hag2.
-    eapply triple_entailsA; [exact ent_RETPg | exact wid_RETPg | apply STx |].
-    assert (HVK2 : VK rho0 brk0 (brk0 + 8192) (rho_sub rho2 (post_sub RETPg [(NA, vBRK); (NG, vGRPg)]))).
+    eapply triple_entailsA; [exact (ent_RETPg rq) | exact wid_RETPg | apply STx |].
+    assert (HVK2 : VK rho0 brk0 (brk0 + 8192) (rho_sub rho2 (post_sub (RETPg rq) [(NA, vBRK); (NG, vGRPg)]))).
     { apply (VK_sub _ _ _ _ _ wid_RETPg). eapply VK_agree; [| | exact Hag2]; [plia|]. apply VK_set_rw; [plia|]. exact HVK1. }
-    apply (post_fin ok _ P_ok (JL_ok m B)); [right; right; left; reflexivity | | exact (proj1 HVK2)].
+    apply (post_fin ok _ (P_ok rq) (JL_ok m B)); [right; right; left; reflexivity | | exact (proj1 HVK2)].
     intros tr md (Htr & Hem & Hpaid). split; [exact (proj1 HVK2)|].
     exists o, g. split; [exact Hok|]. split; [exact Hplg|]. split; [reflexivity|]. split; [|split; [|split]].
-    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RETPg [(NA, vBRK); (NG, vGRPg)]) NA) with vBRK by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RETPg rq) [(NA, vBRK); (NG, vGRPg)]) NA) with vBRK by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vBRK. cbn [eval]. rewrite <- (proj1 Hag2 N18) by (rewrite ?Xn; plia). rewrite rho_set_rw_other by (rewrite ?Xn; plia). rewrite HN18'.
       destruct o; [reflexivity|reflexivity|reflexivity|destruct Ho].
-    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RETPg [(NA, vBRK); (NG, vGRPg)]) NG) with vGRPg by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RETPg rq) [(NA, vBRK); (NG, vGRPg)]) NG) with vGRPg by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vGRPg. cbn [eval]. rewrite <- (proj1 Hag2 N22g) by (rewrite ?Xn; plia). rewrite Xn. apply rho_set_rw_at.
     + replace (out1_W m o) with (brk0, brk0 + 8192) by (destruct o; [reflexivity|reflexivity|reflexivity|destruct Ho]). exact (proj2 HVK2).
     + split; [exact Htr|]. split; [exact Hem|]. lia.
@@ -1147,22 +1156,22 @@ Qed.
 Lemma etail_grow : forall (o : out1) (rho0 : valuation) (tp0 : list word) (rho : valuation),
   SP0 rho0 -> grow_out o -> out1_ok m o -> ivs_wf (vm_maps (m_vmmaps m)) ->
   rw rho N18 = brk0w m -> VK rho0 brk0 (brk0 + 8192) rho ->
-  etriple segsA (SPA segsA (KxA (out1_model m o) (B + 8192)) U24c rho (out1_tp m o tp0))
-    (LQPA segsA NF rho0 tp0 (Posts_M m B)).
+  etriple segsA (SPA segsA (KxA (out1_model m o) (B + 8192)) (U24c rq) rho (out1_tp m o tp0))
+    (LQPA segsA NF rho0 tp0 (Posts_M m B rq)).
 Proof.
   intros o rho0 tp0 rho HSP0 Ho Hok Hwf HN18 HVK. pose proof nexts_g as (Xn & Xf & Xlt & Xs & Xr & Xlr & Xls & Xu & Xlu & Xun).
-  pose proof E22g_at as (Hpc & Hecall & R17 & R10 & R11 & R12 & R13 & R14 & R15).
+  pose proof (E22g_at rq) as (Hpc & Hecall & R17 & R10 & R11 & R12 & R13 & R14 & R15).
   assert (Hfree3 : region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) (brk0w m) n3w = true)
     by (destruct o; cbn [out1_ok] in Hok; [| | |destruct Ho]; exact (proj2 Hok)).
   destruct (grow_facts o Ho Hwf Hfree3) as (Fres & Flim & Finit & (b1 & s1 & Hb1 & Hb1l & Hb1h) & Fband).
   set (mx := out1_model m o) in *. set (tpx := out1_tp m o tp0) in *.
-  apply (erun1 (KxA mx (B + 8192)) FUEL_M CUTS_M U24c E22g RsCut rho tpx); [exact run_24 | apply STx | exact Xlu |].
+  apply (erun1 (KxA mx (B + 8192)) FUEL_M CUTS_M (U24c rq) (E22g rq) RsCut rho tpx); [exact (run_24 rq) | apply STx | exact Xlu |].
   intros rho1 Hag1. rewrite Xu in Hag1.
   assert (HN18' : rw rho1 N18 = brk0w m) by (rewrite <- (proj1 Hag1 N18) by plia; exact HN18).
   assert (HVK1 : VK rho0 brk0 (brk0 + 8192) rho1) by (eapply VK_agree; [| exact HVK | exact Hag1]; plia).
   eapply etriple_seq.
-  { apply (enode_rw_any E22g mx (B + 8192) [(SAlu ALU_ADD vBRK (SLit 4096), 4096)]
-             eq_refl eq_refl facts_M_in_E22g Hecall R17 R10 R11 R12 R13 R14 R15 objs_clear_E22g).
+  { apply (enode_rw_any (E22g rq) mx (B + 8192) [(SAlu ALU_ADD vBRK (SLit 4096), 4096)]
+             ltac:(destruct rq; reflexivity) ltac:(destruct rq; reflexivity) facts_M_in_E22g Hecall R17 R10 R11 R12 R13 R14 R15 objs_clear_E22g).
     - rewrite Fres. exact Hres.
     - rewrite Flim. pose proof HB. lia.
     - unfold init_sp_ok. rewrite Finit. exact Htop.
@@ -1174,35 +1183,35 @@ Proof.
     - unfold alloc_top. rewrite Finit. exact (VK_sp _ _ _ _ _ HVK1 HSP0). }
   apply etriple_disj.
   -
-    apply (erun1 (KxA mx (B + 8192)) FUEL_M CUTS_M (refuse E22g) RET0g RsSymJump rho1 tpx);
-      [exact run_22g_fail | apply STx | exact Xlr |].
+    apply (erun1 (KxA mx (B + 8192)) FUEL_M CUTS_M (refuse (E22g rq)) (RET0g rq) RsSymJump rho1 tpx);
+      [exact (run_22g_fail rq) | apply STx | exact Xlr |].
     intros rho2 Hag2. rewrite Xr in Hag2.
-    eapply etriple_entailsA; [exact ent_RET0g | exact wid_RET0g | apply STx |].
-    assert (HVK2 : VK rho0 brk0 (brk0 + 8192) (rho_sub rho2 (post_sub RET0g [(NA, vBRK)]))).
+    eapply etriple_entailsA; [exact (ent_RET0g rq) | exact wid_RET0g | apply STx |].
+    assert (HVK2 : VK rho0 brk0 (brk0 + 8192) (rho_sub rho2 (post_sub (RET0g rq) [(NA, vBRK)]))).
     { apply (VK_sub _ _ _ _ _ wid_RET0g). eapply VK_agree; [| exact HVK1 | exact Hag2]. plia. }
-    apply (epost_fin (KxA mx (B + 8192)) P_null1 (JL_null1 m B)); [right; left; reflexivity | | exact (proj1 HVK2)].
+    apply (epost_fin (KxA mx (B + 8192)) (P_null1 rq) (JL_null1 m B)); [right; left; reflexivity | | exact (proj1 HVK2)].
     intros tr md (Htr & Hem & Hpaid). split; [exact (proj1 HVK2)|].
     exists o. split; [exact Hok|]. split; [reflexivity|]. split; [|split].
-    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RET0g [(NA, vBRK)]) NA) with vBRK by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RET0g rq) [(NA, vBRK)]) NA) with vBRK by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vBRK. cbn [eval]. rewrite <- (proj1 Hag2 N18) by plia. rewrite HN18'. destruct o; [reflexivity|reflexivity|reflexivity|destruct Ho].
     + replace (out1_W m o) with (brk0, brk0 + 8192) by (destruct o; [reflexivity|reflexivity|reflexivity|destruct Ho]). exact (proj2 HVK2).
     + split; [exact Htr|]. split; [exact Hem|]. lia.
   -
     apply etriple_ex. intros g. apply etriple_pure. intros Hplg.
     rewrite <- S22g_eq.
-    apply (erun1 (KxA (mgrant mx g) (B + 8192 + 4096)) FUEL_M CUTS_M S22g RETPg RsSymJump _ tpx);
-      [exact run_22g | apply STx | exact Xls |].
+    apply (erun1 (KxA (mgrant mx g) (B + 8192 + 4096)) FUEL_M CUTS_M (S22g rq) (RETPg rq) RsSymJump _ tpx);
+      [exact (run_22g rq) | apply STx | exact Xls |].
     intros rho2 Hag2. rewrite Xs in Hag2.
-    eapply etriple_entailsA; [exact ent_RETPg | exact wid_RETPg | apply STx |].
-    assert (HVK2 : VK rho0 brk0 (brk0 + 8192) (rho_sub rho2 (post_sub RETPg [(NA, vBRK); (NG, vGRPg)]))).
+    eapply etriple_entailsA; [exact (ent_RETPg rq) | exact wid_RETPg | apply STx |].
+    assert (HVK2 : VK rho0 brk0 (brk0 + 8192) (rho_sub rho2 (post_sub (RETPg rq) [(NA, vBRK); (NG, vGRPg)]))).
     { apply (VK_sub _ _ _ _ _ wid_RETPg). eapply VK_agree; [| | exact Hag2]; [plia|]. apply VK_set_rw; [plia|]. exact HVK1. }
-    apply (epost_fin _ P_ok (JL_ok m B)); [right; right; left; reflexivity | | exact (proj1 HVK2)].
+    apply (epost_fin _ (P_ok rq) (JL_ok m B)); [right; right; left; reflexivity | | exact (proj1 HVK2)].
     intros tr md (Htr & Hem & Hpaid). split; [exact (proj1 HVK2)|].
     exists o, g. split; [exact Hok|]. split; [exact Hplg|]. split; [reflexivity|]. split; [|split; [|split]].
-    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RETPg [(NA, vBRK); (NG, vGRPg)]) NA) with vBRK by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RETPg rq) [(NA, vBRK); (NG, vGRPg)]) NA) with vBRK by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vBRK. cbn [eval]. rewrite <- (proj1 Hag2 N18) by (rewrite ?Xn; plia). rewrite rho_set_rw_other by (rewrite ?Xn; plia). rewrite HN18'.
       destruct o; [reflexivity|reflexivity|reflexivity|destruct Ho].
-    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub RETPg [(NA, vBRK); (NG, vGRPg)]) NG) with vGRPg by (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
+    + unfold rho_sub. cbn [rw]. replace (wsub_get (post_sub (RETPg rq) [(NA, vBRK); (NG, vGRPg)]) NG) with vGRPg by (destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc).
       unfold vGRPg. cbn [eval]. rewrite <- (proj1 Hag2 N22g) by (rewrite ?Xn; plia). rewrite Xn. apply rho_set_rw_at.
     + replace (out1_W m o) with (brk0, brk0 + 8192) by (destruct o; [reflexivity|reflexivity|reflexivity|destruct Ho]). exact (proj2 HVK2).
     + split; [exact Htr|]. split; [exact Hem|]. lia.
@@ -1211,19 +1220,24 @@ Qed.
 Definition Z8 (rho : valuation) : Prop := ltac2:(tb__ "0|4|
 S21Q40M0A1S1S30S2fVbrk0;Z1000A2S22G0R1A2M1A2S31G1S2fVbrk0;Z2000A2A2A2S0S1cS21Q8M2A1M3A1S10Vrho;R2A2S1eG3S23G2Z0A2A2A3F_;Fa;").
 
-Lemma nexts_20 : ltac2:(tb__ "0|5|
-S1S0S12S6S25S60A1M0A1S65S43A1M1A3S1S0S12S6S25S5fA1M2A1G1A3S1S0S15S8G0A1S18A3S1S0S15S8G2A1S18A3S1S0S15S68S1aS17S12S7A2M3S1bS12S7G1S49A4S19G3A1M4A3S24A2S16A3S0S15S68S1aG3S1bS12S7G1ScS34S33Z2Z40A2Z1A2A1A4G4A3S24A2S16A3A2A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma nexts_20 : ss_next (ax_S (S20g_ok rq)) = Pos.succ N18 /\ ss_next (ax_S (S20g_ko rq)) = Pos.succ N18 /\
+  ss_lenient (ax_S (S20g_ok rq)) = false /\ ss_lenient (ax_S (S20g_ko rq)) = false /\
+  wsub_id_below [(Pos.succ N18, vBRK)] NF = true /\ wsub_id_below [(Pos.succ N18, SLit (2 ^ 64 - 1))] NF = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 
-Lemma from_L24 : ltac2:(tb__ "0|2|
-S7bS5S14S21Q40A1M0A1S26S69S5S90R5A1S91R7A1S7eVm;R8A2S96S38S37Vm;A1A1A1S0S15S2aR7S62R6A3S16A3S0S15S68R7S24A2S16A3S0S15S68R8S65S43A1A2S16A3S0G0S9R8S43A2S6eVm;A1A3S35RdVbrk0;S2fVbrk0;Z2000M1A2R9A4S92RaA1S8bS4Vok;S2bS4S6bS7aVm;R10A2S2fVB;G1A2A2RdRbS7fVm;R10ReA3A5S6cS4S24RfReS77Vm;VB;A2A5A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Frho;Fs;FL;Ftp0;Frho0;Fo;").
+Lemma from_L24 : forall (o : out1) (rho0 : valuation) (tp0 : list word) (L : axst) (s : wsub) (rho : valuation),
+  SP0 rho0 -> grow_out o -> out1_ok m o -> ivs_wf (vm_maps (m_vmmaps m)) ->
+  entailsA L (U24 rq) s = true -> wsub_id_below s NF = true -> wsub_id_below s (Pos.succ N18) = true ->
+  rw rho N18 = brk0w m -> VK rho0 brk0 (brk0 + 8192) rho -> Z8 rho ->
+  triple segsA ok (SPA segsA (KxA (out1_model m o) (B + 8192)) L rho (out1_tp m o tp0))
+    (LQPA segsA NF rho0 tp0 (Posts_M m B rq)).
 Proof.
   intros o rho0 tp0 L s rho HSP0 Ho Hok Hwf He Hs Hs' HN18 HVK HZ8.
   eapply triple_entailsA; [exact He | exact Hs | apply STx |].
   assert (HN18' : rw (rho_sub rho s) N18 = brk0w m) by (rewrite (rw_sub_other rho s N18 Hs'); exact HN18).
   assert (HVK' : VK rho0 brk0 (brk0 + 8192) (rho_sub rho s)) by (apply (VK_sub _ _ _ _ _ Hs); exact HVK).
   eapply triple_conseq; [| intros w Hw; exact Hw | apply (tail_grow o rho0 tp0 (rho_sub rho s) HSP0 Ho Hok Hwf HN18' HVK')].
-  intros w Hw. apply (carve24 m Hlo Hhi Htop Hband _ (rho_sub rho s)); [exact HN18' | | exact (VK_sp _ _ _ _ _ HVK' HSP0) | | | exact Hw].
+  intros w Hw. apply (carve24 m rq Hlo Hhi Htop Hband _ (rho_sub rho s)); [exact HN18' | | exact (VK_sp _ _ _ _ _ HVK' HSP0) | | | exact Hw].
   + destruct o; cbn [out1_ok] in Hok; [| | |destruct Ho]; exact (proj1 Hok).
   + destruct o; cbn [out1_ok] in Hok; [| | |destruct Ho]; exact (proj2 Hok).
   + intros a Ha. cbn. apply HZ8. exact Ha.
@@ -1231,24 +1245,28 @@ Qed.
 
 Lemma efrom_L24 : forall (o : out1) (rho0 : valuation) (tp0 : list word) (L : axst) (s : wsub) (rho : valuation),
   SP0 rho0 -> grow_out o -> out1_ok m o -> ivs_wf (vm_maps (m_vmmaps m)) ->
-  entailsA L U24 s = true -> wsub_id_below s NF = true -> wsub_id_below s (Pos.succ N18) = true ->
+  entailsA L (U24 rq) s = true -> wsub_id_below s NF = true -> wsub_id_below s (Pos.succ N18) = true ->
   rw rho N18 = brk0w m -> VK rho0 brk0 (brk0 + 8192) rho -> Z8 rho ->
   etriple segsA (SPA segsA (KxA (out1_model m o) (B + 8192)) L rho (out1_tp m o tp0))
-    (LQPA segsA NF rho0 tp0 (Posts_M m B)).
+    (LQPA segsA NF rho0 tp0 (Posts_M m B rq)).
 Proof.
   intros o rho0 tp0 L s rho HSP0 Ho Hok Hwf He Hs Hs' HN18 HVK HZ8.
   eapply etriple_entailsA; [exact He | exact Hs | apply STx |].
   assert (HN18' : rw (rho_sub rho s) N18 = brk0w m) by (rewrite (rw_sub_other rho s N18 Hs'); exact HN18).
   assert (HVK' : VK rho0 brk0 (brk0 + 8192) (rho_sub rho s)) by (apply (VK_sub _ _ _ _ _ Hs); exact HVK).
   eapply etriple_conseq; [| intros w Hw; exact Hw | apply (etail_grow o rho0 tp0 (rho_sub rho s) HSP0 Ho Hok Hwf HN18' HVK')].
-  intros w Hw. apply (carve24 m Hlo Hhi Htop Hband _ (rho_sub rho s)); [exact HN18' | | exact (VK_sp _ _ _ _ _ HVK' HSP0) | | | exact Hw].
+  intros w Hw. apply (carve24 m rq Hlo Hhi Htop Hband _ (rho_sub rho s)); [exact HN18' | | exact (VK_sp _ _ _ _ _ HVK' HSP0) | | | exact Hw].
   + destruct o; cbn [out1_ok] in Hok; [| | |destruct Ho]; exact (proj1 Hok).
   + destruct o; cbn [out1_ok] in Hok; [| | |destruct Ho]; exact (proj2 Hok).
   + intros a Ha. cbn. apply HZ8. exact Ha.
 Qed.
 
-Lemma seg_grow : ltac2:(tb__ "0|6|
-S5S14S21Q40A1M0A1S5S90R3A1S0G0S9R2S43A2S6eVm;A1M1A3S1S30S2fVbrk0;Z2000M2A2M3S3fS37Vm;A1M4A1A2S0S15S3eS1dS17G0G0A2S3aG4A1S38G4A1M5A3G1S72A3S16A3A2S96G5A1S35R7Vbrk0;G3R5A4S92R6A1S8bS4Vok;S2bS4S6bS76Vm;A1S2fVB;G2A2A2S55R7R8A5S6cS4S24R9R8S77Vm;VB;A2A5A4F_;F_;F_;F_;F_;F_;Frho;Ftp;Frho0;").
+Lemma seg_grow : forall (rho0 : valuation) (tp : list word) (rho : valuation),
+  SP0 rho0 -> rw rho N18 = brk0w m ->
+  brk0 + 8192 <= alloc_top (m_vmmaps m) /\
+  region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) (brk0w m) n3w = true ->
+  ivs_wf (vm_maps (m_vmmaps m)) -> VK rho0 brk0 (brk0 + 8192) rho -> Z8 rho ->
+  triple segsA ok (SPA segsA (KxA (mg m) (B + 8192)) (E20g rq) rho tp) (LQPA segsA NF rho0 tp (Posts_M m B rq)).
 Proof.
   intros rho0 tp rho HSP0 HN18 Hok Hwf HVK HZ8. pose proof nexts_20 as (Xok & Xko & Lok & Lko & Wok & Wko).
   assert (Upg : bv_unsigned pgw = 4096) by reflexivity.
@@ -1256,26 +1274,26 @@ Proof.
   { unfold rho20. apply VK_set_rm; [exact HVK|]. intros x Hx. apply unmap_range_outside. rewrite Upg. unfold brk0 in Hx. lia. }
   assert (HZ20 : Z8 (rho20 m rho)).
   { unfold rho20, Z8. intros a Ha. unfold set_rm. cbn [rm]. rewrite unmap_range_outside by (rewrite Upg; unfold brk0 in Ha; lia). apply HZ8. exact Ha. }
-  eapply triple_seq; [apply triple1_triple; apply (node20g ok OKF OKP m B Hres Hsb Hal Hlo Hhi HB Htop Hband rho tp (B + 8192) HN18 (VK_sp _ _ _ _ _ HVK HSP0) (proj2 Hok))|].
+  eapply triple_seq; [apply triple1_triple; apply (node20g ok OKF OKP m B rq Hres Hsb Hal Hlo Hhi HB Htop Hband rho tp (B + 8192) HN18 (VK_sp _ _ _ _ _ HVK HSP0) (proj2 Hok))|].
   apply triple_disj; [|apply triple_disj; [|apply triple_pure; intros _]].
   -
-    apply (run1 ok (KxA (mg m) (B + 8192)) FUEL_M (0xd59b4 :: CUTS_M) S20g_ko L24ko RsCut rho tp); [exact run_20g_ko | apply OKFx' | apply STx | exact Lko |].
+    apply (run1 ok (KxA (mg m) (B + 8192)) FUEL_M (0xd59b4 :: CUTS_M) (S20g_ko rq) (L24ko rq) RsCut rho tp); [exact (run_20g_ko rq) | apply OKFx' | apply STx | exact Lko |].
     intros rho1 Hag1. rewrite Xko in Hag1.
-    apply (from_L24 O1_kept rho0 tp L24ko _ rho1 HSP0 I Hok Hwf ent_24ko Wko Wko).
+    apply (from_L24 O1_kept rho0 tp (L24ko rq) _ rho1 HSP0 I Hok Hwf (ent_24ko rq) Wko Wko).
     + rewrite <- (proj1 Hag1 N18) by plia. exact HN18.
     + eapply VK_agree; [| exact HVK | exact Hag1]. plia.
     + intros a Ha. rewrite <- (proj2 (proj2 Hag1)). apply HZ8. exact Ha.
   -
-    apply (run1 ok (KxA (mg_ok m) (B + 8192)) FUEL_M (0xd59b4 :: CUTS_M) S20g_ok L24ok RsCut (rho20 m rho) tp); [exact run_20g_ok | apply OKFx' | apply STx | exact Lok |].
+    apply (run1 ok (KxA (mg_ok m) (B + 8192)) FUEL_M (0xd59b4 :: CUTS_M) (S20g_ok rq) (L24ok rq) RsCut (rho20 m rho) tp); [exact (run_20g_ok rq) | apply OKFx' | apply STx | exact Lok |].
     intros rho1 Hag1. rewrite Xok in Hag1.
-    apply (from_L24 O1_ok rho0 tp L24ok _ rho1 HSP0 I Hok Hwf ent_24ok Wok Wok).
+    apply (from_L24 O1_ok rho0 tp (L24ok rq) _ rho1 HSP0 I Hok Hwf (ent_24ok rq) Wok Wok).
     + rewrite <- (proj1 Hag1 N18) by plia. unfold rho20, set_rm. cbn [rw]. exact HN18.
     + eapply VK_agree; [| exact HVK20 | exact Hag1]. plia.
     + intros a Ha. rewrite <- (proj2 (proj2 Hag1)). apply HZ20. exact Ha.
   -
-    apply (run1 ok (KxA (mg_dead m) (B + 8192)) FUEL_M (0xd59b4 :: CUTS_M) S20g_ko L24ko RsCut (rho20 m rho) (tp20 m tp)); [exact run_20g_ko | apply OKFx' | apply STx | exact Lko |].
+    apply (run1 ok (KxA (mg_dead m) (B + 8192)) FUEL_M (0xd59b4 :: CUTS_M) (S20g_ko rq) (L24ko rq) RsCut (rho20 m rho) (tp20 m tp)); [exact (run_20g_ko rq) | apply OKFx' | apply STx | exact Lko |].
     intros rho1 Hag1. rewrite Xko in Hag1.
-    apply (from_L24 O1_dead rho0 tp L24ko _ rho1 HSP0 I Hok Hwf ent_24ko Wko Wko).
+    apply (from_L24 O1_dead rho0 tp (L24ko rq) _ rho1 HSP0 I Hok Hwf (ent_24ko rq) Wko Wko).
     + rewrite <- (proj1 Hag1 N18) by plia. unfold rho20, set_rm. cbn [rw]. exact HN18.
     + eapply VK_agree; [| exact HVK20 | exact Hag1]. plia.
     + intros a Ha. rewrite <- (proj2 (proj2 Hag1)). apply HZ20. exact Ha.
@@ -1286,7 +1304,7 @@ Lemma eseg_grow : forall (rho0 : valuation) (tp : list word) (rho : valuation),
   brk0 + 8192 <= alloc_top (m_vmmaps m) /\
   region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) (brk0w m) n3w = true ->
   ivs_wf (vm_maps (m_vmmaps m)) -> VK rho0 brk0 (brk0 + 8192) rho -> Z8 rho ->
-  etriple segsA (SPA segsA (KxA (mg m) (B + 8192)) E20g rho tp) (LQPA segsA NF rho0 tp (Posts_M m B)).
+  etriple segsA (SPA segsA (KxA (mg m) (B + 8192)) (E20g rq) rho tp) (LQPA segsA NF rho0 tp (Posts_M m B rq)).
 Proof.
   intros rho0 tp rho HSP0 HN18 Hok Hwf HVK HZ8. pose proof nexts_20 as (Xok & Xko & Lok & Lko & Wok & Wko).
   assert (Upg : bv_unsigned pgw = 4096) by reflexivity.
@@ -1294,48 +1312,55 @@ Proof.
   { unfold rho20. apply VK_set_rm; [exact HVK|]. intros x Hx. apply unmap_range_outside. rewrite Upg. unfold brk0 in Hx. lia. }
   assert (HZ20 : Z8 (rho20 m rho)).
   { unfold rho20, Z8. intros a Ha. unfold set_rm. cbn [rm]. rewrite unmap_range_outside by (rewrite Upg; unfold brk0 in Ha; lia). apply HZ8. exact Ha. }
-  eapply etriple_seq; [apply (enode20g_ok m B Hres Hsb Hal Hlo Hhi HB Htop Hband rho tp (B + 8192) HN18 (VK_sp _ _ _ _ _ HVK HSP0) (proj2 Hok))|].
-  apply (erun1 (KxA (mg_ok m) (B + 8192)) FUEL_M (0xd59b4 :: CUTS_M) S20g_ok L24ok RsCut (rho20 m rho) tp); [exact run_20g_ok | apply STx | exact Lok |].
+  eapply etriple_seq; [apply (enode20g_ok m B rq Hres Hsb Hal Hlo Hhi HB Htop Hband rho tp (B + 8192) HN18 (VK_sp _ _ _ _ _ HVK HSP0) (proj2 Hok))|].
+  apply (erun1 (KxA (mg_ok m) (B + 8192)) FUEL_M (0xd59b4 :: CUTS_M) (S20g_ok rq) (L24ok rq) RsCut (rho20 m rho) tp); [exact (run_20g_ok rq) | apply STx | exact Lok |].
   intros rho1 Hag1. rewrite Xok in Hag1.
-  apply (efrom_L24 O1_ok rho0 tp L24ok _ rho1 HSP0 I Hok Hwf ent_24ok Wok Wok).
+  apply (efrom_L24 O1_ok rho0 tp (L24ok rq) _ rho1 HSP0 I Hok Hwf (ent_24ok rq) Wok Wok).
   + rewrite <- (proj1 Hag1 N18) by plia. unfold rho20, set_rm. cbn [rw]. exact HN18.
   + eapply VK_agree; [| exact HVK20 | exact Hag1]. plia.
   + intros a Ha. rewrite <- (proj2 (proj2 Hag1)). apply HZ20. exact Ha.
 Qed.
 
-Lemma nexts_main : ltac2:(tb__ "0|b|
-S1S0S12S6S25S93A1M0A1S24A3S1S0S15S8G0A1S18A3S1S0S12S6S25S4bA1A1M1G1A3S1S0S12S6S25S4cA1M2A1S65S43A1M3A3S1S0S15S8G2A1S18A3S1S0S12S6S25S5dA1M4A1G3A3S1S0S15S8G4A1S18A3S1S0S12S6S25S4dA1M5A1G3A3S1S0S15S8G5A1S18A3S1S0S12S6S25S48S54A1A1M6A1G3A3S1S0S15S8G6A1S18A3S1S0S12S6S25S5eA1M7A1S65G3A1M8A3S1S0S15S8G7A1S18A3S1S0S12S6S25S48S56A1A1M9A1G8A3S1S0S15S8G9A1S18A3S1S0S12S6S25S61A1MaA1G8A3S0S15S8GaA1S18A3A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
-Lemma wid_RET0a : ltac2:(tb__ "0|0|
-S0S15S68S78S57S19S17S12S7A2A1A2S24A2S16A3"). Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma wid_RET0b : ltac2:(tb__ "0|0|
-S0S15S68S78S58S19S17S12S7A2A1A2S24A2S16A3"). Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma next_E18_ge : ltac2:(tb__ "0|0|
-S1S66S24S6S25S4bA1A1A2S66S24S43A2A2").
-Proof. split; [vm_compute; discriminate | unfold NF, N18; lia]. Qed.
+Lemma nexts_main : ss_next (ax_S (Pre_M rq)) = NF /\ ss_lenient (ax_S (Pre_M rq)) = false /\
+  ss_next (ax_S (E18 rq)) = ss_next (ax_S (E18 rq)) /\
+  ss_next (ax_S (S18 rq)) = Pos.succ N18 /\ ss_lenient (ax_S (S18 rq)) = false /\
+  ss_next (ax_S (S19g rq)) = Pos.succ N18 /\ ss_lenient (ax_S (S19g rq)) = false /\
+  ss_next (ax_S (S19f rq)) = Pos.succ N18 /\ ss_lenient (ax_S (S19f rq)) = false /\
+  ss_next (ax_S (refuse (E20f rq))) = Pos.succ N18 /\ ss_lenient (ax_S (refuse (E20f rq))) = false /\
+  ss_next (ax_S (S20f rq)) = Pos.succ (Pos.succ N18) /\ ss_lenient (ax_S (S20f rq)) = false /\
+  ss_next (ax_S (refuse (E21f rq))) = Pos.succ (Pos.succ N18) /\ ss_lenient (ax_S (refuse (E21f rq))) = false /\
+  ss_next (ax_S (S21f rq)) = Pos.succ (Pos.succ N18) /\ ss_lenient (ax_S (S21f rq)) = false.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
+Lemma wid_RET0a : wsub_id_below (post_sub (RET0a rq) []) NF = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma wid_RET0b : wsub_id_below (post_sub (RET0b rq) []) NF = true.
+Proof. destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma next_E18_ge : Pos.le NF (ss_next (ax_S (E18 rq))) /\ Pos.le NF N18.
+Proof. split; [destruct rq; vm_compute; discriminate | unfold NF, N18; lia]. Qed.
 
-Theorem musl_malloc40_main : ltac2:(tb__ "0|0|
-S5S14S21Q40A1A1Sa2Vm;R1A2S96S38S37Vm;A1A1A1S90R4A1S8bS4Vok;S2bS4S6bVm;VB;A2S93R5R4A5S6cS4S24R5R4S77Vm;VB;A2A5A4F_;F_;F_;Ftp;Frho;").
+Theorem musl_malloc40_main : forall (rho : valuation) (tp : list word),
+  tp_in_maps m tp -> ivs_wf (vm_maps (m_vmmaps m)) -> SP0 rho ->
+  triple segsA ok (SPA segsA (KxA m B) (Pre_M rq) rho tp) (LQPA segsA NF rho tp (Posts_M m B rq)).
 Proof.
   intros rho0 tp Htp Hwf HSP0.
   pose proof nexts_main as (XnP & XlP & _ & Xn18 & Xl18 & Xn19g & Xl19g & Xn19f & Xl19f & Xn20r & Xl20r & Xn20 & Xl20 & Xn21r & Xl21r & Xn21 & Xl21).
   pose proof next_E18_ge as [XE18 XN18].
 
-  apply (run1 ok (KxA m B) FUEL_M CUTS_M Pre_M E18 RsCut rho0 tp); [exact run_I | apply OKFx' | apply STx | exact XlP |].
+  apply (run1 ok (KxA m B) FUEL_M CUTS_M (Pre_M rq) (E18 rq) RsCut rho0 tp); [exact (run_I rq) | apply OKFx' | apply STx | exact XlP |].
   intros rho1 Hag1. rewrite XnP in Hag1.
   assert (HVK1 : VK rho0 0 0 rho1) by (eapply VK_agree; [apply Pos.le_refl | apply VK_refl | exact Hag1]).
-  eapply (triple_entailsA segsA ok (KxA m B) NF E18 E18t []); [exact ent_18 | reflexivity | apply STx |].
+  eapply (triple_entailsA segsA ok (KxA m B) NF (E18 rq) (E18t rq) []); [exact (ent_18 rq) | reflexivity | apply STx |].
   assert (HVK1' : VK rho0 0 0 (rho_sub rho1 [])) by (apply (VK_sub _ _ _ _ [] eq_refl); exact HVK1).
   set (rho1' := rho_sub rho1 []) in *.
 
-  eapply triple_seq; [apply triple1_triple; apply (node18 ok OKF OKP m B Hal Hlo Hhi rho1' tp)|].
+  eapply triple_seq; [apply triple1_triple; apply (node18 ok OKF OKP m B rq Hal Hlo Hhi rho1' tp)|].
   assert (HVK2 : VK rho0 0 0 (rho_set_rw rho1' N18 (brk0w m))) by (apply VK_set_rw; [exact XN18 | exact HVK1']).
-  apply (run1 ok (KxA m B) FUEL_M CUTS_M S18 E19 RsCut _ tp); [exact run_18 | apply OKFx' | apply STx | exact Xl18 |].
+  apply (run1 ok (KxA m B) FUEL_M CUTS_M (S18 rq) (E19 rq) RsCut _ tp); [exact (run_18 rq) | apply OKFx' | apply STx | exact Xl18 |].
   intros rho2 Hag2. rewrite Xn18 in Hag2.
   assert (HN18 : rw rho2 N18 = brk0w m) by (rewrite <- (proj1 Hag2 N18) by plia; apply rho_set_rw_at).
   assert (HVK3 : VK rho0 0 0 rho2) by (eapply VK_agree; [| exact HVK2 | exact Hag2]; plia).
 
-  eapply triple_seq; [apply triple1_triple; apply (node19 ok OKF OKP m B Hres Hsb Hal Hlo Hhi HB Htop Hband rho2 tp HN18 (VK_sp _ _ _ _ _ HVK3 HSP0))|].
+  eapply triple_seq; [apply triple1_triple; apply (node19 ok OKF OKP m B rq Hres Hsb Hal Hlo Hhi HB Htop Hband rho2 tp HN18 (VK_sp _ _ _ _ _ HVK3 HSP0))|].
   apply triple_disj.
   -
     apply triple_ex. intros rho3. apply triple_pure. intros Hceil. apply triple_pure. intros Hfree. apply triple_pure. intros (R1 & R2 & R3 & R4).
@@ -1344,7 +1369,7 @@ Proof.
     { destruct HVK3 as [Hav Hrm]. split.
       - eapply agree_vals_trans; [exact Hav|]. split; [intros i Hi; symmetry; apply R1 | intros l; symmetry; apply R2].
       - intros x Hx. rewrite (R3 x) by (unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fh.MuslMalloc40Nodes.brk0; unfold brk0 in Hx; exact Hx). apply Hrm. lia. }
-    apply (run1 ok (KxA (mg m) (B + 8192)) FUEL_M CUTS_M S19g E20g RsCut rho3 tp); [exact run_19g | apply OKFx' | apply STx | exact Xl19g |].
+    apply (run1 ok (KxA (mg m) (B + 8192)) FUEL_M CUTS_M (S19g rq) (E20g rq) RsCut rho3 tp); [exact (run_19g rq) | apply OKFx' | apply STx | exact Xl19g |].
     intros rho4 Hag4. rewrite Xn19g in Hag4.
     apply (seg_grow rho0 tp rho4 HSP0).
     + rewrite <- (proj1 Hag4 N18) by plia. exact HN18'.
@@ -1353,18 +1378,18 @@ Proof.
     + eapply VK_agree; [| exact HVK4 | exact Hag4]. plia.
     + intros a Ha. rewrite <- (proj2 (proj2 Hag4)). apply R4. unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fh.MuslMalloc40Nodes.brk0. unfold brk0 in Ha. lia.
   -
-    apply (run1 ok (KxA m B) FUEL_M CUTS_M S19f E20f RsCut rho2 tp); [exact run_19f | apply OKFx' | apply STx | exact Xl19f |].
+    apply (run1 ok (KxA m B) FUEL_M CUTS_M (S19f rq) (E20f rq) RsCut rho2 tp); [exact (run_19f rq) | apply OKFx' | apply STx | exact Xl19f |].
     intros rho3 Hag3. rewrite Xn19f in Hag3.
     assert (HVK4 : VK rho0 0 0 rho3) by (eapply VK_agree; [| exact HVK3 | exact Hag3]; plia).
-    eapply triple_seq; [apply triple1_triple; apply (node20f ok OKF OKP m B Hres HB Htop Hband rho3 tp (VK_sp _ _ _ _ _ HVK4 HSP0))|].
+    eapply triple_seq; [apply triple1_triple; apply (node20f ok OKF OKP m B rq Hres HB Htop Hband rho3 tp (VK_sp _ _ _ _ _ HVK4 HSP0))|].
     apply triple_disj.
     +
-      apply (run1 ok (KxA m B) FUEL_M CUTS_M (refuse E20f) RET0a RsSymJump rho3 tp); [exact run_20f_fail | apply OKFx' | apply STx | exact Xl20r |].
+      apply (run1 ok (KxA m B) FUEL_M CUTS_M (refuse (E20f rq)) (RET0a rq) RsSymJump rho3 tp); [exact (run_20f_fail rq) | apply OKFx' | apply STx | exact Xl20r |].
       intros rho4 Hag4. rewrite Xn20r in Hag4.
-      eapply triple_entailsA; [exact ent_RET0a | exact wid_RET0a | apply STx |].
-      assert (HVK5 : VK rho0 0 0 (rho_sub rho4 (post_sub RET0a []))).
+      eapply triple_entailsA; [exact (ent_RET0a rq) | exact wid_RET0a | apply STx |].
+      assert (HVK5 : VK rho0 0 0 (rho_sub rho4 (post_sub (RET0a rq) []))).
       { apply (VK_sub _ _ _ _ _ wid_RET0a). eapply VK_agree; [| exact HVK4 | exact Hag4]. plia. }
-      apply (post_fin ok (KxA m B) P_null0 (JL_null0 m B)); [left; reflexivity | | exact (proj1 HVK5)].
+      apply (post_fin ok (KxA m B) (P_null0 rq) (JL_null0 m B)); [left; reflexivity | | exact (proj1 HVK5)].
       intros tr md (Htr & Hem & Hpaid). split; [reflexivity|]. split; [exact (proj1 HVK5)|].
       exists O0_refused. split; [exact I|]. split; [exact (proj2 HVK5)|]. split; [exact Htr|]. split; [exact Hem|]. lia.
     +
@@ -1372,31 +1397,31 @@ Proof.
       assert (HVK5 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho20f rho3 a)).
       { unfold rho20f. apply VK_set_rw; [plia|]. apply VK_set_rm; [eapply VK_widen; [| exact HVK4]; intros z Hz; lia|].
         intros x Hx. apply unmap_range_outside. change (bv_unsigned n8w) with 8192. exact Hx. }
-      apply (run1 ok (KxA (mf_res m a) B) FUEL_M CUTS_M S20f E21f RsCut (rho20f rho3 a) tp); [exact run_20f | apply OKFx' | apply STx | exact Xl20 |].
+      apply (run1 ok (KxA (mf_res m a) B) FUEL_M CUTS_M (S20f rq) (E21f rq) RsCut (rho20f rho3 a) tp); [exact (run_20f rq) | apply OKFx' | apply STx | exact Xl20 |].
       intros rho4 Hag4. rewrite Xn20 in Hag4.
       assert (Ha : rw rho4 (Pos.succ N18) = a) by (rewrite <- (proj1 Hag4 (Pos.succ N18)) by plia; unfold rho20f; apply rho_set_rw_at).
       assert (HVK6 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) rho4) by (eapply VK_agree; [| exact HVK5 | exact Hag4]; plia).
-      eapply triple_seq; [apply triple1_triple; apply (node21f ok OKF OKP m B Hres HB Htop Hband Hlz Hlim rho4 tp a Ha (VK_sp _ _ _ _ _ HVK6 HSP0) Hpl Htp)|].
+      eapply triple_seq; [apply triple1_triple; apply (node21f ok OKF OKP m B rq Hres HB Htop Hband Hlz Hlim Hvdr rho4 tp a Ha (VK_sp _ _ _ _ _ HVK6 HSP0) Hpl Htp)|].
       apply triple_disj.
       *
-        apply (run1 ok (KxA (mf_res m a) B) FUEL_M CUTS_M (refuse E21f) RET0b RsSymJump rho4 tp); [exact run_21f_fail | apply OKFx' | apply STx | exact Xl21r |].
+        apply (run1 ok (KxA (mf_res m a) B) FUEL_M CUTS_M (refuse (E21f rq)) (RET0b rq) RsSymJump rho4 tp); [exact (run_21f_fail rq) | apply OKFx' | apply STx | exact Xl21r |].
         intros rho5 Hag5. rewrite Xn21r in Hag5.
-        eapply triple_entailsA; [exact ent_RET0b | exact wid_RET0b | apply STx |].
-        assert (HVK7 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho5 (post_sub RET0b []))).
+        eapply triple_entailsA; [exact (ent_RET0b rq) | exact wid_RET0b | apply STx |].
+        assert (HVK7 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho5 (post_sub (RET0b rq) []))).
         { apply (VK_sub _ _ _ _ _ wid_RET0b). eapply VK_agree; [| exact HVK6 | exact Hag5]. plia. }
-        apply (post_fin ok (KxA (mf_res m a) B) P_null0 (JL_null0 m B)); [left; reflexivity | | exact (proj1 HVK7)].
+        apply (post_fin ok (KxA (mf_res m a) B) (P_null0 rq) (JL_null0 m B)); [left; reflexivity | | exact (proj1 HVK7)].
         intros tr md (Htr & Hem & Hpaid). split; [reflexivity|]. split; [exact (proj1 HVK7)|].
         exists (O0_reserved a). split; [exact Hpl|]. split; [exact (proj2 HVK7)|]. split; [exact Htr|]. split; [exact Hem|]. lia.
       *
-        apply (run1 ok (KxA (mf_exp m a) (B + 4096)) FUEL_M CUTS_M S21f E22f RsCut rho4 tp); [exact run_21f | apply OKFx' | apply STx | exact Xl21 |].
+        apply (run1 ok (KxA (mf_exp m a) (B + 4096)) FUEL_M CUTS_M (S21f rq) (E22f rq) RsCut rho4 tp); [exact (run_21f rq) | apply OKFx' | apply STx | exact Xl21 |].
         intros rho5 Hag5. rewrite Xn21 in Hag5.
         apply (tail_fail rho0 tp a rho5 HSP0 Hpl).
         -- rewrite <- (proj1 Hag5 (Pos.succ N18)) by plia. exact Ha.
         -- eapply VK_agree; [| exact HVK6 | exact Hag5]. plia.
 Qed.
 
-Theorem musl_malloc40_sum : ltac2:(tb__ "0|0|
-S5S14S21Q40A1A1S8bS4Vok;S2bS4S7cVm;VB;A2S93R2R1A5S6cS4S24R2R1S77Vm;VB;A2A5A4Ftp;Frho;").
+Theorem musl_malloc40_sum : forall (rho : valuation) (tp : list word),
+  triple segsA ok (SPA segsA (KxM m B) (Pre_M rq) rho tp) (LQPA segsA NF rho tp (Posts_M m B rq)).
 Proof.
   intros rho tp n Hg w HP. destruct w as [tr [ms md]].
   pose proof HP as [(Hsm & HMI & _) ((Htr & Hem & Hpaid) & HSP0)].
@@ -1407,23 +1432,23 @@ Proof.
   - cbn [cfg_model snd] in HMI. rewrite <- Evm. exact (proj1 (MI_ivs_wf segsA _ _ HMI)).
 Qed.
 
-Lemma enode18 : ltac2:(tb__ "0|1|
-S5S14S21Q40A1A1S8cS4S2bS4S6bVm;VB;A2M0S52R2R1A5S2bS4G0S4cS9fR2S43S6eVm;A1A3R1A5A3Ftp;Frho;").
+Lemma enode18 : forall (rho : valuation) (tp : list word),
+  etriple segsA (SPA segsA (KxA m B) (E18t rq) rho tp) (SPA segsA (KxA m B) (S18 rq) (rho_set_rw rho N18 (brk0w m)) tp).
 Proof.
-  intros rho tp. pose proof E18_at as (Hpc & Hecall & R17 & R10).
+  intros rho tp. pose proof (E18_at rq) as (Hpc & Hecall & R17 & R10).
   apply etriple_ecall_detA; [apply STx | exact Hecall |].
   intros tr ms md Hsp HK. pose proof HK as (Htr & Hem & Hpaid). subst tr.
   pose proof (erase_mat_eq_fields md m Hem) as (Evm & _ & _ & _).
   pose proof (smatch_pendingA_halted segsA _ _ _ _ _ _ Hsp) as Hh.
-  destruct (regs_of_pending rho tp E18t [] ms md Hsp) as (G0 & _ & _ & _ & _ & _ & Hp).
+  destruct (regs_of_pending rho tp (E18t rq) [] ms md Hsp) as (G0 & _ & _ & _ & _ & _ & Hp).
   rewrite R17 in Hp. rewrite R10 in G0. cbn [eval] in Hp, G0.
   assert (H214 : bv_unsigned (Z_to_bv 64 214) = 214%Z) by reflexivity.
   exists ([], mkCfg (after_sys ms (vm_brk (m_vmmaps md))) md). split.
   - apply (wstep_brk_query_introA segsA ms md _ Hh H214 [] Hp G0).
   - split; [| cbn [w_tr w_cfg fst snd cfg_model]; exact HK].
-    unfold S18, cont. rewrite Evm. change (vm_brk (m_vmmaps m)) with (brk0w m).
-    assert (HN : ss_next (ax_S E18t) = N18) by reflexivity. rewrite <- HN.
-    eapply smatchA_after_ret_fresh; [exact Hsp | exact Hh | apply vm_same_refl | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
+    unfold S18, cont. rewrite Evm. change (vm_brk (m_vmmaps m)) with (brk0w m). rewrite app_nil_r. unfold vBRK.
+    assert (HN : ss_next (ax_S (E18t rq)) = N18) by exact (N18_eq rq). rewrite <- HN.
+    eapply smatchA_after_ret_fresh; [exact Hsp | exact Hh | apply vm_same_refl | rewrite HN; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc |].
     rewrite HN. unfold F18, vBRK. pose proof Hal as Hal'. pose proof Hlo as Hlo'. pose proof Hhi as Hhi'. unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fh.MuslMalloc40Nodes.brk0 in Hal', Hlo', Hhi'.
     constructor; [|constructor; [|constructor; [|constructor]]]; cbn [holds eval]; rewrite rho_set_rw_at.
     + split; [lia|]. change (2 ^ 12) with 4096. exact Hal'.
@@ -1433,25 +1458,25 @@ Qed.
 
 Theorem musl_malloc40_main_ex : forall (rho : valuation) (tp : list word),
   tp_in_maps m tp -> ivs_wf (vm_maps (m_vmmaps m)) -> SP0 rho ->
-  etriple segsA (SPA segsA (KxA m B) Pre_M rho tp) (LQPA segsA NF rho tp (Posts_M m B)).
+  etriple segsA (SPA segsA (KxA m B) (Pre_M rq) rho tp) (LQPA segsA NF rho tp (Posts_M m B rq)).
 Proof.
   intros rho0 tp Htp Hwf HSP0.
   pose proof nexts_main as (XnP & XlP & _ & Xn18 & Xl18 & Xn19g & Xl19g & Xn19f & Xl19f & Xn20r & Xl20r & Xn20 & Xl20 & Xn21r & Xl21r & Xn21 & Xl21).
   pose proof next_E18_ge as [XE18 XN18].
-  apply (erun1 (KxA m B) FUEL_M CUTS_M Pre_M E18 RsCut rho0 tp); [exact run_I | apply STx | exact XlP |].
+  apply (erun1 (KxA m B) FUEL_M CUTS_M (Pre_M rq) (E18 rq) RsCut rho0 tp); [exact (run_I rq) | apply STx | exact XlP |].
   intros rho1 Hag1. rewrite XnP in Hag1.
   assert (HVK1 : VK rho0 0 0 rho1) by (eapply VK_agree; [apply Pos.le_refl | apply VK_refl | exact Hag1]).
-  eapply (etriple_entailsA segsA (KxA m B) NF E18 E18t []); [exact ent_18 | reflexivity | apply STx |].
+  eapply (etriple_entailsA segsA (KxA m B) NF (E18 rq) (E18t rq) []); [exact (ent_18 rq) | reflexivity | apply STx |].
   assert (HVK1' : VK rho0 0 0 (rho_sub rho1 [])) by (apply (VK_sub _ _ _ _ [] eq_refl); exact HVK1).
   set (rho1' := rho_sub rho1 []) in *.
   eapply etriple_seq; [apply (enode18 rho1' tp)|].
   assert (HVK2 : VK rho0 0 0 (rho_set_rw rho1' N18 (brk0w m))) by (apply VK_set_rw; [exact XN18 | exact HVK1']).
-  apply (erun1 (KxA m B) FUEL_M CUTS_M S18 E19 RsCut _ tp); [exact run_18 | apply STx | exact Xl18 |].
+  apply (erun1 (KxA m B) FUEL_M CUTS_M (S18 rq) (E19 rq) RsCut _ tp); [exact (run_18 rq) | apply STx | exact Xl18 |].
   intros rho2 Hag2. rewrite Xn18 in Hag2.
   assert (HN18 : rw rho2 N18 = brk0w m) by (rewrite <- (proj1 Hag2 N18) by plia; apply rho_set_rw_at).
   assert (HVK3 : VK rho0 0 0 rho2) by (eapply VK_agree; [| exact HVK2 | exact Hag2]; plia).
 
-  eapply etriple_seq; [apply (enode19_any m B Hres Hsb Hal Hlo Hhi HB Htop Hband rho2 tp HN18 (VK_sp _ _ _ _ _ HVK3 HSP0))|].
+  eapply etriple_seq; [apply (enode19_any m B rq Hres Hsb Hal Hlo Hhi HB Htop Hband rho2 tp HN18 (VK_sp _ _ _ _ _ HVK3 HSP0))|].
   apply etriple_disj.
   1:{
     apply etriple_ex. intros rho3. apply etriple_pure. intros Hceil. apply etriple_pure. intros Hfree. apply etriple_pure. intros (R1 & R2 & R3 & R4).
@@ -1460,7 +1485,7 @@ Proof.
     { destruct HVK3 as [Hav Hrm]. split.
       - eapply agree_vals_trans; [exact Hav|]. split; [intros i Hi; symmetry; apply R1 | intros l; symmetry; apply R2].
       - intros x Hx. rewrite (R3 x) by (unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fh.MuslMalloc40Nodes.brk0; unfold brk0 in Hx; exact Hx). apply Hrm. lia. }
-    apply (erun1 (KxA (mg m) (B + 8192)) FUEL_M CUTS_M S19g E20g RsCut rho3 tp); [exact run_19g | apply STx | exact Xl19g |].
+    apply (erun1 (KxA (mg m) (B + 8192)) FUEL_M CUTS_M (S19g rq) (E20g rq) RsCut rho3 tp); [exact (run_19g rq) | apply STx | exact Xl19g |].
     intros rho4 Hag4. rewrite Xn19g in Hag4.
     apply (eseg_grow rho0 tp rho4 HSP0).
     + rewrite <- (proj1 Hag4 N18) by plia. exact HN18'.
@@ -1468,19 +1493,19 @@ Proof.
     + exact Hwf.
     + eapply VK_agree; [| exact HVK4 | exact Hag4]. plia.
     + intros a Ha. rewrite <- (proj2 (proj2 Hag4)). apply R4. unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fh.MuslMalloc40Nodes.brk0. unfold brk0 in Ha. lia. }
-  apply (erun1 (KxA m B) FUEL_M CUTS_M S19f E20f RsCut rho2 tp); [exact run_19f | apply STx | exact Xl19f |].
+  apply (erun1 (KxA m B) FUEL_M CUTS_M (S19f rq) (E20f rq) RsCut rho2 tp); [exact (run_19f rq) | apply STx | exact Xl19f |].
   intros rho3 Hag3. rewrite Xn19f in Hag3.
   assert (HVK4 : VK rho0 0 0 rho3) by (eapply VK_agree; [| exact HVK3 | exact Hag3]; plia).
 
-  eapply etriple_seq; [apply (enode20f_any okT OKF_triv OKP_triv m B Hres HB Htop Hband rho3 tp (VK_sp _ _ _ _ _ HVK4 HSP0))|].
+  eapply etriple_seq; [apply (enode20f_any okT OKF_triv OKP_triv m B rq Hres HB Htop Hband rho3 tp (VK_sp _ _ _ _ _ HVK4 HSP0))|].
   apply etriple_disj.
   -
-    apply (erun1 (KxA m B) FUEL_M CUTS_M (refuse E20f) RET0a RsSymJump rho3 tp); [exact run_20f_fail | apply STx | exact Xl20r |].
+    apply (erun1 (KxA m B) FUEL_M CUTS_M (refuse (E20f rq)) (RET0a rq) RsSymJump rho3 tp); [exact (run_20f_fail rq) | apply STx | exact Xl20r |].
     intros rho4 Hag4. rewrite Xn20r in Hag4.
-    eapply etriple_entailsA; [exact ent_RET0a | exact wid_RET0a | apply STx |].
-    assert (HVK5 : VK rho0 0 0 (rho_sub rho4 (post_sub RET0a []))).
+    eapply etriple_entailsA; [exact (ent_RET0a rq) | exact wid_RET0a | apply STx |].
+    assert (HVK5 : VK rho0 0 0 (rho_sub rho4 (post_sub (RET0a rq) []))).
     { apply (VK_sub _ _ _ _ _ wid_RET0a). eapply VK_agree; [| exact HVK4 | exact Hag4]. plia. }
-    apply (epost_fin (KxA m B) P_null0 (JL_null0 m B)); [left; reflexivity | | exact (proj1 HVK5)].
+    apply (epost_fin (KxA m B) (P_null0 rq) (JL_null0 m B)); [left; reflexivity | | exact (proj1 HVK5)].
     intros tr md (Htr & Hem & Hpaid). split; [reflexivity|]. split; [exact (proj1 HVK5)|].
     exists O0_refused. split; [exact I|]. split; [exact (proj2 HVK5)|]. split; [exact Htr|]. split; [exact Hem|]. lia.
   -
@@ -1488,32 +1513,32 @@ Proof.
     assert (HVK5 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho20f rho3 a)).
     { unfold rho20f. apply VK_set_rw; [plia|]. apply VK_set_rm; [eapply VK_widen; [| exact HVK4]; intros z Hz; lia|].
       intros x Hx. apply unmap_range_outside. change (bv_unsigned n8w) with 8192. exact Hx. }
-    apply (erun1 (KxA (mf_res m a) B) FUEL_M CUTS_M S20f E21f RsCut (rho20f rho3 a) tp); [exact run_20f | apply STx | exact Xl20 |].
+    apply (erun1 (KxA (mf_res m a) B) FUEL_M CUTS_M (S20f rq) (E21f rq) RsCut (rho20f rho3 a) tp); [exact (run_20f rq) | apply STx | exact Xl20 |].
     intros rho4 Hag4. rewrite Xn20 in Hag4.
     assert (Ha : rw rho4 (Pos.succ N18) = a) by (rewrite <- (proj1 Hag4 (Pos.succ N18)) by plia; unfold rho20f; apply rho_set_rw_at).
     assert (HVK6 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) rho4) by (eapply VK_agree; [| exact HVK5 | exact Hag4]; plia).
 
-    eapply etriple_seq; [apply (enode21f_any okT OKF_triv OKP_triv m B Hres HB Htop Hband Hlz Hlim rho4 tp a Ha (VK_sp _ _ _ _ _ HVK6 HSP0) Hpl Htp)|].
+    eapply etriple_seq; [apply (enode21f_any okT OKF_triv OKP_triv m B rq Hres HB Htop Hband Hlz Hlim Hvdr rho4 tp a Ha (VK_sp _ _ _ _ _ HVK6 HSP0) Hpl Htp)|].
     apply etriple_disj.
     +
-      apply (erun1 (KxA (mf_res m a) B) FUEL_M CUTS_M (refuse E21f) RET0b RsSymJump rho4 tp); [exact run_21f_fail | apply STx | exact Xl21r |].
+      apply (erun1 (KxA (mf_res m a) B) FUEL_M CUTS_M (refuse (E21f rq)) (RET0b rq) RsSymJump rho4 tp); [exact (run_21f_fail rq) | apply STx | exact Xl21r |].
       intros rho5 Hag5. rewrite Xn21r in Hag5.
-      eapply etriple_entailsA; [exact ent_RET0b | exact wid_RET0b | apply STx |].
-      assert (HVK7 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho5 (post_sub RET0b []))).
+      eapply etriple_entailsA; [exact (ent_RET0b rq) | exact wid_RET0b | apply STx |].
+      assert (HVK7 : VK rho0 (bv_unsigned a) (bv_unsigned a + 8192) (rho_sub rho5 (post_sub (RET0b rq) []))).
       { apply (VK_sub _ _ _ _ _ wid_RET0b). eapply VK_agree; [| exact HVK6 | exact Hag5]. plia. }
-      apply (epost_fin (KxA (mf_res m a) B) P_null0 (JL_null0 m B)); [left; reflexivity | | exact (proj1 HVK7)].
+      apply (epost_fin (KxA (mf_res m a) B) (P_null0 rq) (JL_null0 m B)); [left; reflexivity | | exact (proj1 HVK7)].
       intros tr md (Htr & Hem & Hpaid). split; [reflexivity|]. split; [exact (proj1 HVK7)|].
       exists (O0_reserved a). split; [exact Hpl|]. split; [exact (proj2 HVK7)|]. split; [exact Htr|]. split; [exact Hem|]. lia.
     +
-      apply (erun1 (KxA (mf_exp m a) (B + 4096)) FUEL_M CUTS_M S21f E22f RsCut rho4 tp); [exact run_21f | apply STx | exact Xl21 |].
+      apply (erun1 (KxA (mf_exp m a) (B + 4096)) FUEL_M CUTS_M (S21f rq) (E22f rq) RsCut rho4 tp); [exact (run_21f rq) | apply STx | exact Xl21 |].
       intros rho5 Hag5. rewrite Xn21 in Hag5.
       apply (etail_fail rho0 tp a rho5 HSP0 Hpl).
       * rewrite <- (proj1 Hag5 (Pos.succ N18)) by plia. exact Ha.
       * eapply VK_agree; [| exact HVK6 | exact Hag5]. plia.
 Qed.
 
-Theorem musl_malloc40_sum_ex : ltac2:(tb__ "0|0|
-S5S14S21Q40A1A1S8cS4S2bS4S7cVm;VB;A2S93R2R1A5S6cS4S24R2R1S77Vm;VB;A2A5A3Ftp;Frho;").
+Theorem musl_malloc40_sum_ex : forall (rho : valuation) (tp : list word),
+  etriple segsA (SPA segsA (KxM m B) (Pre_M rq) rho tp) (LQPA segsA NF rho tp (Posts_M m B rq)).
 Proof.
   intros rho tp w HP. destruct w as [tr [ms md]].
   pose proof HP as [(Hsm & HMI & _) ((Htr & Hem & Hpaid) & HSP0)].
@@ -1526,9 +1551,9 @@ Qed.
 End Assembly.
 
 Theorem musl_malloc40_sum_A : musl_malloc40_sum_stmt.
-Proof. intros ok m B OKF OKP HM rho tp. exact (musl_malloc40_sum ok OKF OKP m B HM rho tp). Qed.
+Proof. intros ok m B OKF OKP HM r rho tp. exact (musl_malloc40_sum ok OKF OKP m B r HM rho tp). Qed.
 
 Theorem musl_malloc40_sum_ex_A : musl_malloc40_sum_ex_stmt.
-Proof. intros m B HM rho tp. exact (musl_malloc40_sum_ex m B HM rho tp). Qed.
+Proof. intros m B HM r rho tp. exact (musl_malloc40_sum_ex m B r HM rho tp). Qed.
 End MuslMalloc40.
 

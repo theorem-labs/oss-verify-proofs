@@ -1,4 +1,4 @@
-file	line (at 78d6988b23aa)	role	text
+file	line	role	text
 AFj1.v	364	Hypothesis FZD	Hypothesis FZD : forall a, FZ a -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd).
 AFj1.v	1304	discharge proved	assert (FZDp : forall a, FZ' a -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd)).
 AFj1.v	1395	instantiation	{ eapply ABD_old with (zn := nb) (ln := kNodesBlockSize) (zs := sb) (ls := kStoreBlockSize) (memD := memD) (odd := odd);

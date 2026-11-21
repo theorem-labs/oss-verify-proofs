@@ -34,18 +34,18 @@
    |---|---|---|---|---|
    | BufferedStackTrace::UnwindImpl (336 bytes, 84 insns)  | 0x59e44   | 0x59e90   | sym       | 0x5a384 (AFl0.v:19 A_UnwindImpl) |
    | __asan::TryAsanInitFromRtl (160 bytes, 40 insns)      | 0x590ac   | 0x590f8   | sym       | 0x595ec   |
-   | __asan::GetMallocContextSize (16 bytes, 4 insns)      | 0x59e34   | 0x59e80   | sym       | 0x5a374 (AB1w.v:221) |
-   | StackTrace::GetCurrentPc (8 bytes, 2 insns)           | 0x72a08   | 0x72a54   | sym       | 0x72e34 (AB1w.v:411) |
+   | __asan::GetMallocContextSize (16 bytes, 4 insns)      | 0x59e34   | 0x59e80   | sym       | 0x5a374 (AB1w.v:222) |
+   | StackTrace::GetCurrentPc (8 bytes, 2 insns)           | 0x72a08   | 0x72a54   | sym       | 0x72e34 (AB1w.v:412) |
    | musl memset (248 bytes, 62 insns)                     | 0x92474   | 0x92a1c   | sym, image (the slot's content) | 0x97698 |
    | __asan::asan_inited (1 byte, .bss)                    | 0xa1a98   | 0xa2018   | sym; code AsanInited+0x0/+0x4, TryAsanInitFromRtl+0xc/+0x10 | 0xa6cd8 |
    | __asan::tsd_key_inited (1 byte, .bss)                 | 0xa0620   | 0xa0ba0   | sym; code AsanTSDGet+0x0/+0x4 | 0xa5860 |
    | __asan::tsd_key (4 bytes, .bss)                       | 0xa0624   | 0xa0ba4   | sym; code AsanTSDGet+0x10 `lw a0, 4(a0)` | 0xa5864 |
    | GOT slot holding &PageSizeCached (.got)               | 0x98d20   | 0x992c8   | code UnwindFast+0x38/+0x3c; image | 0x9df78 |
    | __sanitizer::PageSizeCached (8 bytes, .bss)           | 0x130860  | 0x130de0  | sym; image (the GOT slot's content) | 0x135aa0 |
-   | __asan::malloc_context_size (4 bytes, .bss)           | 0xa1abc   | 0xa203c   | sym; code GetMallocContextSize+0x0/+0x4 | 0xa6cfc (AB1w.v:587) |
-   | GOT slot holding &real_memset (.got)                  | 0x98d60   | 0x99308   | code asan_calloc+0x6c/+0x70; image | 0x9dfb8 (AE37.v:30-31) |
-   | __interception::real_memset (8 bytes, .data)          | 0x9abc0   | 0x9b168   | sym; image (the GOT slot's content) | 0x9fe28 (AE37.v:33) |
-   | GOT slot holding &common_flags_dont_use (.got)        | 0x98d30   | 0x992d8   | code ___interceptor_calloc+0xd4/+0xd8; image | 0x9df88 (AB1w.v:568) |
+   | __asan::malloc_context_size (4 bytes, .bss)           | 0xa1abc   | 0xa203c   | sym; code GetMallocContextSize+0x0/+0x4 | 0xa6cfc (AB1w.v:588) |
+   | GOT slot holding &real_memset (.got)                  | 0x98d60   | 0x99308   | code asan_calloc+0x6c/+0x70; image | 0x9dfb8 (AE37.v:31-32) |
+   | __interception::real_memset (8 bytes, .data)          | 0x9abc0   | 0x9b168   | sym; image (the GOT slot's content) | 0x9fe28 (AE37.v:34) |
+   | GOT slot holding &common_flags_dont_use (.got)        | 0x98d30   | 0x992d8   | code ___interceptor_calloc+0xd4/+0xd8; image | 0x9df88 (AB1w.v:569) |
    | __sanitizer::common_flags_dont_use (288 bytes, .bss)  | 0x1328e8  | 0x132e68  | sym; image (the GOT slot's content) | 0x137b28 |
    | builtin_tls (musl, 131280 bytes, .bss)                | 0x5d3c90  | 0x5d4210  | sym; code static_init_tls+0x1a0/+0x1b4 | 0x5d8ec8 |
    | thread pointer tp of the main thread                  | 0x5d3d58  | 0x5d42d8  | builtin_tls + 200, below | 0x5d8f90 (AF0m.v:12 TFIB_TP) |

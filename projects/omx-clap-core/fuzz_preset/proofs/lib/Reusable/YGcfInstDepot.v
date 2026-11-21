@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDepot.v (a working branch 9910d964c1cb, file sha256 0050aecb0ef0), lane F1 of the cf instance layer on layer 987b886cbb10; module paths changed only: 54 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDepot.v (a working branch, file sha256 0050aecb0ef0), lane F1 of the cf instance layer on layer; module paths changed only: 54 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
    The cf twin of cgif/cgif_file_fuzzer lib/CLdepotcgif.v (file sha256 12a504bff9a6; donor not released) (and of CLdepotcgifE.v's
    de_depot_cgif): StackDepotPut's contract at the walks' call sites, at the cf relation, from the unit's released
@@ -9,7 +10,7 @@
 
    CLdepotcgif.v proves CLdepot.DepotSub at ARX_cgif and gets the depot fields from CLdepot.depot_field_ok.  Two
    things differ at the cf relation:
-   1. The released contract (CLdepot.depot_spec_x, CLdepot.v:94-113; cgif YFl0.tfib_depot_spec, preset A/AFl0.v:68)
+   1. The released contract (CLdepot.depot_spec_x, CLdepot.v:95-114; cgif YFl0.tfib_depot_spec, preset A/AFl0.v:68)
       takes cgif's `Wf (as_universe B) S`, but ARcf carries Wf_cf.  The contract reads the model only through its
       depot, so [depot_spec_d_of_x] closes the gap with no new premise: it runs the contract at the state
       [dswap_cf S] (S's depot on cgif's initial state, Wf by YG01.wf_init and Wf_cf's wfc_depot), whose answer
@@ -76,7 +77,7 @@ Variable IMGC : alayout -> Prop.
 Variable B : asyms.
 (* CLdepot.depot_spec_x (cgif/cgif_file_fuzzer lib/CLdepot.v (file sha256 672fb059f653; donor not released) :94-113, at the admission premise YG01.admits) with its
    state premise `Wf (as_universe B) S` replaced by the depot part of it, which Wf_cf carries (wfc_depot:
-   depot_fits, YG01.v:153). *)
+   depot_fits, YG01.v:154). *)
 Definition depot_spec_d : Prop :=
 forall (W : world segs) (ly : alayout) (S : astate) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) (buf : Z) (tr : list Z),
@@ -142,7 +143,7 @@ Variable Hp : list Z.
 Variable ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop.
 Hypothesis HAR : forall inst ly S W mem md, ARX inst ly S W mem md -> ARcf im_segs B ly S Hp W mem md.
 
-(* The depot post (CLdepot.v:88-91) at the unit's segments. *)
+(* The depot post (CLdepot.v:89-92) at the unit's segments. *)
 Definition dpost_cf : Z -> alayout -> astate -> world im_segs -> list Z -> Z -> (word -> option byte) -> Prop :=
 CLdepot.dpost_x im_segs B.
 
@@ -170,7 +171,7 @@ Section z.
 Variable A_DEP : Z.
 Variables (DZ KEEP : alayout -> Z -> Prop).
 
-(* CLdepot.depot_field (CLdepot.v:116-135) at the cf relation (CLdepot.depot_field_ok's script over the swap). *)
+(* CLdepot.depot_field (CLdepot.v:117-136) at the cf relation (CLdepot.depot_field_ok's script over the swap). *)
 Theorem depot_field_cf : YGcfDIface.IMG_COVER -> dep_keep_img KEEP -> dep_fp_img DZ ->
 CLdepot.depot_spec_x im_segs A_DEP im_tp im_img_cover B ->
 CLdepot.depot_field im_segs A_DEP im_tp B ARX (YGcfInstBase.cf_tr_ok B) DZ KEEP.

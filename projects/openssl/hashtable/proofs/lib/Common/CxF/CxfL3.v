@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up plan values of the launch: gid, CONFIG_RSEQ area, the reserved pair and the string block). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,6 +34,10 @@ Proof. unfold KHI. reflexivity. Qed.
 Definition FLOOR : Z := 0x2aaaaaaab000.
 Lemma L_APCL_FLOOR : @FLOOR = @APC.FLOOR.
 Proof. unfold FLOOR. reflexivity. Qed.
+
+Definition GAP_CEIL : Z := 0x7fff7f800000.
+Lemma L_APCL_GAP_CEIL : @GAP_CEIL = @APC.GAP_CEIL.
+Proof. unfold GAP_CEIL. reflexivity. Qed.
 
 Definition MBASE_MIN : Z := 0x154555557000.
 Lemma L_APCL_MBASE_MIN : @MBASE_MIN = @APC.MBASE_MIN.
@@ -1286,8 +1291,8 @@ Definition grant_keep_bBF (bc : bctx) (ms : list amap) (K : kentry) : bool :=
 Definition kn_grant_filterF (k : list kentry) (ms : list amap) : list kentry :=
   let bc := mkbc k in kimg_clip (List.filter (grant_keep_bBF bc ms) k).
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-  let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
-  Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
+  let cnt := Z.of_nat (n_res A + n_resx A + length (a_maps cs))%nat in
+  Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) GAP_CEIL.
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
   Z.leb (a_eager cs + a_abytes cs + extra) LIMIT.
 Definition kdisj_maps (ms : list amap) (nb : expr) (ne : expr) : list kentry :=
@@ -1371,18 +1376,21 @@ Definition mmap_fixed_grant (cs : acs) (ms0 : list amap) (b : expr) (off : Z) (n
   let k' := ksh ++ kn_grant_filter k ms0 in
   let cs1 := add_entry (with_maps0 cs ms0) (s_regs (a_ss cs)) k' (nxt cs) m nhi eager (a_ylo cs) in
   if visible then vis_add cs1 a ne (kmem ++ kn cs1) else Some cs1.
+Definition resx_clear (cs : acs) : Z := Z.min KHI (a_ylo cs).
 Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
   let k := kn cs in
   let a := reg cs 10 in
   
   match fixed_args cs CEIL with
   | Some (b, off, ne, nlo, nhi) =>
-      if (no_fog (a_maps cs)
-          && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
-          && (negb eager || budget_ok cs nhi)
-          && expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) a)%bool
-      then mmap_fixed_grant cs (a_maps cs) b off ne nhi kind eager visible
-      else
+      match fixed_args cs (resx_clear cs) with
+      | Some (b2, off2, ne2, nlo2, nhi2) =>
+          if (no_fog (a_maps cs)
+          && forallb (fun m => ranges_apart_x k b2 off2 ne2 (am_base m) 0 (am_len m)) (a_maps cs)
+          && (negb eager || budget_ok cs nhi2)
+          && expr_vars_lt (nxt cs) ne2 && expr_vars_lt (nxt cs) a)%bool
+          then mmap_fixed_grant cs (a_maps cs) b2 off2 ne2 nhi2 kind eager visible
+          else
       
           match find_hole k (a_maps cs) a ne with
           | Some h =>
@@ -1394,6 +1402,19 @@ Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : op
               else None
           | None => None
           end
+      | None =>
+      
+          match find_hole k (a_maps cs) a ne with
+          | Some h =>
+              let ms0 := unhole (a_maps cs) h in
+              if (forallb (fun m => negb (is_hole m) || ranges_apart_x k b off ne (am_base m) 0 (am_len m)) ms0
+                  && (negb eager || budget_ok cs nhi)
+                  && expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) a)%bool
+              then mmap_fixed_grant cs ms0 b off ne nhi kind eager visible
+              else None
+          | None => None
+          end
+      end
   | None => None
   end.
 Definition kn_rezero (k : list kentry) (ub : expr) (uk : Z) (un : expr) : list kentry :=
@@ -1586,12 +1607,14 @@ Definition mmap_fixed_freeF (cs : acs) (kind : mkind) (eager visible : bool) : o
   
   match fixed_args cs CEIL with
   | Some (b, off, ne, nlo, nhi) =>
-      if (no_fog (a_maps cs)
-          && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
-          && (negb eager || budget_ok cs nhi)
-          && expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) a)%bool
-      then mmap_fixed_grantF cs (a_maps cs) b off ne nhi kind eager visible
-      else
+      match fixed_args cs (resx_clear cs) with
+      | Some (b2, off2, ne2, nlo2, nhi2) =>
+          if (no_fog (a_maps cs)
+          && forallb (fun m => ranges_apart_x k b2 off2 ne2 (am_base m) 0 (am_len m)) (a_maps cs)
+          && (negb eager || budget_ok cs nhi2)
+          && expr_vars_lt (nxt cs) ne2 && expr_vars_lt (nxt cs) a)%bool
+          then mmap_fixed_grantF cs (a_maps cs) b2 off2 ne2 nhi2 kind eager visible
+          else
       
           match find_hole k (a_maps cs) a ne with
           | Some h =>
@@ -1603,6 +1626,19 @@ Definition mmap_fixed_freeF (cs : acs) (kind : mkind) (eager visible : bool) : o
               else None
           | None => None
           end
+      | None =>
+      
+          match find_hole k (a_maps cs) a ne with
+          | Some h =>
+              let ms0 := unhole (a_maps cs) h in
+              if (forallb (fun m => negb (is_hole m) || ranges_apart_x k b off ne (am_base m) 0 (am_len m)) ms0
+                  && (negb eager || budget_ok cs nhi)
+                  && expr_vars_lt (nxt cs) ne && expr_vars_lt (nxt cs) a)%bool
+              then mmap_fixed_grantF cs ms0 b off ne nhi kind eager visible
+              else None
+          | None => None
+          end
+      end
   | None => None
   end.
 Definition node_mmap2F (cs : acs) : option (acs * acs) :=
@@ -2444,32 +2480,37 @@ Definition V_Q : nat := 11.
 Definition V_HW : nat := 9.
 Definition V_L1 : nat := 7.
 Definition V_UID : nat := 8.
+Definition V_G : nat := 12.
+Definition V_R : nat := 13.
+Definition V_GID : nat := 14.
 Definition e_sp0 : expr := eadd (eadd (escale 32768 (EVar V_S1)) (escale 4096 (EVar V_P))) (escale 16 (EVar V_S2)).
 Definition e_sp8 : expr := eadd (eadd (escale 4096 (EVar V_S1)) (escale 512 (EVar V_P))) (escale 2 (EVar V_S2)).
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition e_str0 : expr := eaddz e_auxv 160.
+Definition e_atrandom : expr := eadd (eadd (eaddz e_auxv 432) (escale 32 (EVar V_R))) (escale 8 (EVar V_G)).
+Definition e_str0 : expr := eadd (eaddz e_atrandom 16) (EVar V_W).
 Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
 Definition e_atr8 : expr :=
-  eadd e_sp8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
-Definition e_Xsh : expr := eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (EVar V_W) (escale 2 (EVar V_S2)))).
+  eadd e_sp8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (escale 4 (EVar V_R)) (EVar V_G)))).
+Definition e_Xsh : expr := eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (escale 4 (EVar V_R)) (eadd (EVar V_G) (escale 2 (EVar V_S2))))).
 Definition e_Xm : expr := mkAlu ALU_AND e_Xsh (ELit (-8)).
 Definition e_atr8m : expr := eadd (eadd (escale 4096 (EVar V_S1)) (escale 512 (EVar V_P))) e_Xm.
+Definition e_Xm2 : expr := mkAlu ALU_AND (eaddz e_Xsh 2) (ELit (-8)).
+Definition e_atr8m2 : expr := eadd (eadd (escale 4096 (EVar V_S1)) (escale 512 (EVar V_P))) e_Xm2.
 Definition e_vis3b : expr := escale 32768 (EVar V_S1).
 Definition e_vis3n : expr := eadd (escale 4096 (EVar V_P)) (escale 4096 (EVar V_Q)).
 Definition e_pgslack : expr := esub (esub (escale 4096 (EVar V_Q)) (escale 16 (EVar V_S2)))
-                                    (escale 8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W)))).
+                                    (eaddz (escale 8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (escale 4 (EVar V_R)) (EVar V_G))))) 472).
 Definition e_pgslack8 : expr := esub (esub (escale 512 (EVar V_Q)) (escale 2 (EVar V_S2)))
-                                     (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
+                                     (eaddz (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (escale 4 (EVar V_R)) (EVar V_G)))) 59).
 Definition e_top8 : expr := eadd (escale 4096 (EVar V_S1)) (eadd (escale 512 (EVar V_P)) (escale 512 (EVar V_Q))).
 Definition e_top : expr := eadd (escale 32768 (EVar V_S1)) (eadd (escale 4096 (EVar V_P)) (escale 4096 (EVar V_Q))).
 Definition e_blk0 : expr := esub (esub (escale 4096 (EVar V_Q)) (escale 16 (EVar V_S2))) (escale 8 (eadd (EVar V_ARGC) (EVar V_ENVC))).
 Definition e_blk08 : expr := esub (esub (escale 512 (EVar V_Q)) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (EVar V_ENVC)).
 Definition e_blkL0 : expr := esub e_blk0 (EVar V_L0).
 Definition e_blkL01 : expr := esub (esub e_blk0 (EVar V_L0)) (EVar V_L1).
-Definition e_strW0 : expr := esub (escale 8 (EVar V_W)) (EVar V_L0).
-Definition e_strW01 : expr := esub (esub (escale 8 (EVar V_W)) (EVar V_L0)) (EVar V_L1).
+Definition e_strW0 : expr := esub (esub e_pgslack (EVar V_W)) (eaddz (EVar V_L0) 8).
+Definition e_strW01 : expr := esub e_strW0 (EVar V_L1).
 Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
 Definition node_envscan (cs : acs) : option acs :=
   let k := kn cs in
@@ -3729,7 +3770,9 @@ Lemma L_APCL_kn_grant_filterF : @kn_grant_filterF = @APC.kn_grant_filterF.
 Proof. unfold kn_grant_filterF. rewrite ?L_APCL_kimg_clip, ?L_APCL_grant_keep_bBF, ?AX2BL.L_AX2BL_mkbc. reflexivity. Qed.
 
 Lemma L_APCL_gap_ok : @gap_ok = @APC.gap_ok.
-Proof. unfold gap_ok. rewrite ?L_APCL_CEIL, ?L_APCL_FLOOR. reflexivity. Qed.
+Proof. unfold gap_ok. rewrite ?L_APCL_GAP_CEIL, ?L_APCL_FLOOR. reflexivity. Qed.
+Lemma L_APCL_resx_clear : @resx_clear = @APC.resx_clear.
+Proof. unfold resx_clear. rewrite ?L_APCL_KHI. reflexivity. Qed.
 
 Lemma L_APCL_budget_ok : @budget_ok = @APC.budget_ok.
 Proof. unfold budget_ok. reflexivity. Qed.
@@ -3774,7 +3817,7 @@ Lemma L_APCL_mmap_fixed_grant : @mmap_fixed_grant = @APC.mmap_fixed_grant.
 Proof. unfold mmap_fixed_grant. rewrite ?L_APCL_mkind_eqb, ?L_APCL_reg, ?L_APCL_kn, ?L_APCL_nxt, ?L_APCL_shadow_facts, ?L_APCL_vis_add, ?L_APCL_kn_grant_filter, ?L_APCL_with_maps0, ?L_APCL_add_entry. reflexivity. Qed.
 
 Lemma L_APCL_mmap_fixed_free : @mmap_fixed_free = @APC.mmap_fixed_free.
-Proof. unfold mmap_fixed_free. rewrite ?L_APCL_CEIL, ?L_APCL_is_hole, ?L_APCL_no_fog, ?L_APCL_reg, ?L_APCL_kn, ?L_APCL_nxt, ?L_APCL_expr_vars_lt, ?L_APCL_budget_ok, ?L_APCL_fixed_args, ?L_APCL_find_hole, ?L_APCL_unhole, ?L_APCL_mmap_fixed_grant, ?AX2L.L_AX2L_ranges_apart_x. reflexivity. Qed.
+Proof. unfold mmap_fixed_free. rewrite ?L_APCL_resx_clear, ?L_APCL_CEIL, ?L_APCL_is_hole, ?L_APCL_no_fog, ?L_APCL_reg, ?L_APCL_kn, ?L_APCL_nxt, ?L_APCL_expr_vars_lt, ?L_APCL_budget_ok, ?L_APCL_fixed_args, ?L_APCL_find_hole, ?L_APCL_unhole, ?L_APCL_mmap_fixed_grant, ?AX2L.L_AX2L_ranges_apart_x. reflexivity. Qed.
 
 Lemma L_APCL_kn_rezero : @kn_rezero = @APC.kn_rezero.
 Proof. unfold kn_rezero. rewrite ?L_APCL_kentry_apart_bp, ?AX2L.L_AX2L_mk_sprep. reflexivity. Qed.
@@ -3840,7 +3883,7 @@ Lemma L_APCL_mmap_fixed_grantF : @mmap_fixed_grantF = @APC.mmap_fixed_grantF.
 Proof. unfold mmap_fixed_grantF. rewrite ?L_APCL_mkind_eqb, ?L_APCL_reg, ?L_APCL_kn, ?L_APCL_nxt, ?L_APCL_shadow_facts, ?L_APCL_vis_add, ?L_APCL_kn_grant_filterF, ?L_APCL_with_maps0, ?L_APCL_add_entry. reflexivity. Qed.
 
 Lemma L_APCL_mmap_fixed_freeF : @mmap_fixed_freeF = @APC.mmap_fixed_freeF.
-Proof. unfold mmap_fixed_freeF. rewrite ?L_APCL_CEIL, ?L_APCL_is_hole, ?L_APCL_no_fog, ?L_APCL_reg, ?L_APCL_kn, ?L_APCL_nxt, ?L_APCL_expr_vars_lt, ?L_APCL_budget_ok, ?L_APCL_fixed_args, ?L_APCL_find_hole, ?L_APCL_unhole, ?L_APCL_mmap_fixed_grantF, ?AX2L.L_AX2L_ranges_apart_x. reflexivity. Qed.
+Proof. unfold mmap_fixed_freeF. rewrite ?L_APCL_resx_clear, ?L_APCL_CEIL, ?L_APCL_is_hole, ?L_APCL_no_fog, ?L_APCL_reg, ?L_APCL_kn, ?L_APCL_nxt, ?L_APCL_expr_vars_lt, ?L_APCL_budget_ok, ?L_APCL_fixed_args, ?L_APCL_find_hole, ?L_APCL_unhole, ?L_APCL_mmap_fixed_grantF, ?AX2L.L_AX2L_ranges_apart_x. reflexivity. Qed.
 
 Lemma L_APCL_node_mmap2F : @node_mmap2F = @APC.node_mmap2F.
 Proof. unfold node_mmap2F. rewrite ?L_APCL_refuse, ?L_APCL_mmap_gate, ?L_APCL_mmap_nullF, ?L_APCL_mmap_fixed_freeF. reflexivity. Qed.
@@ -4030,6 +4073,12 @@ Proof. unfold V_L1. reflexivity. Qed.
 
 Lemma L_APCL_V_UID : @V_UID = @APC.V_UID.
 Proof. unfold V_UID. reflexivity. Qed.
+Lemma L_APCL_V_G : @V_G = @APC.V_G.
+Proof. unfold V_G. reflexivity. Qed.
+Lemma L_APCL_V_R : @V_R = @APC.V_R.
+Proof. unfold V_R. reflexivity. Qed.
+Lemma L_APCL_V_GID : @V_GID = @APC.V_GID.
+Proof. unfold V_GID. reflexivity. Qed.
 
 Lemma L_APCL_e_sp0 : @e_sp0 = @APC.e_sp0.
 Proof. unfold e_sp0. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_S1, ?L_APCL_V_S2, ?L_APCL_V_P. reflexivity. Qed.
@@ -4044,25 +4093,31 @@ Lemma L_APCL_e_auxv : @e_auxv = @APC.e_auxv.
 Proof. unfold e_auxv. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_ENVC, ?L_APCL_e_envp. reflexivity. Qed.
 
 Lemma L_APCL_e_str0 : @e_str0 = @APC.e_str0.
-Proof. unfold e_str0. rewrite ?L_APCL_eaddz, ?L_APCL_e_auxv. reflexivity. Qed.
+Proof. unfold e_str0. rewrite ?L_APCL_eadd, ?L_APCL_eaddz, ?L_APCL_V_W, ?L_APCL_e_atrandom. reflexivity. Qed.
 
 Lemma L_APCL_e_str1 : @e_str1 = @APC.e_str1.
 Proof. unfold e_str1. rewrite ?L_APCL_eadd, ?L_APCL_eaddz, ?L_APCL_V_L0, ?L_APCL_e_str0. reflexivity. Qed.
 
 Lemma L_APCL_e_atrandom : @e_atrandom = @APC.e_atrandom.
-Proof. unfold e_atrandom. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_W, ?L_APCL_e_str0. reflexivity. Qed.
+Proof. unfold e_atrandom. rewrite ?L_APCL_eadd, ?L_APCL_eaddz, ?L_APCL_escale, ?L_APCL_V_G, ?L_APCL_V_R, ?L_APCL_e_auxv. reflexivity. Qed.
 
 Lemma L_APCL_e_atr8 : @e_atr8 = @APC.e_atr8.
-Proof. unfold e_atr8. rewrite ?L_APCL_eadd, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_W, ?L_APCL_e_sp8. reflexivity. Qed.
+Proof. unfold e_atr8. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_R, ?L_APCL_V_G, ?L_APCL_e_sp8. reflexivity. Qed.
 
 Lemma L_APCL_e_Xsh : @e_Xsh = @APC.e_Xsh.
-Proof. unfold e_Xsh. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_W, ?L_APCL_V_S2. reflexivity. Qed.
+Proof. unfold e_Xsh. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_R, ?L_APCL_V_G, ?L_APCL_V_S2. reflexivity. Qed.
 
 Lemma L_APCL_e_Xm : @e_Xm = @APC.e_Xm.
 Proof. unfold e_Xm. rewrite ?L_APCL_e_Xsh, ?AX2L.L_AX2L_mkAlu. reflexivity. Qed.
 
 Lemma L_APCL_e_atr8m : @e_atr8m = @APC.e_atr8m.
 Proof. unfold e_atr8m. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_S1, ?L_APCL_V_P, ?L_APCL_e_Xm. reflexivity. Qed.
+
+Lemma L_APCL_e_Xm2 : @e_Xm2 = @APC.e_Xm2.
+Proof. unfold e_Xm2. rewrite ?L_APCL_eaddz, ?L_APCL_e_Xsh, ?AX2L.L_AX2L_mkAlu. reflexivity. Qed.
+
+Lemma L_APCL_e_atr8m2 : @e_atr8m2 = @APC.e_atr8m2.
+Proof. unfold e_atr8m2. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_S1, ?L_APCL_V_P, ?L_APCL_e_Xm2. reflexivity. Qed.
 
 Lemma L_APCL_e_vis3b : @e_vis3b = @APC.e_vis3b.
 Proof. unfold e_vis3b. rewrite ?L_APCL_escale, ?L_APCL_V_S1. reflexivity. Qed.
@@ -4071,10 +4126,10 @@ Lemma L_APCL_e_vis3n : @e_vis3n = @APC.e_vis3n.
 Proof. unfold e_vis3n. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_P, ?L_APCL_V_Q. reflexivity. Qed.
 
 Lemma L_APCL_e_pgslack : @e_pgslack = @APC.e_pgslack.
-Proof. unfold e_pgslack. rewrite ?L_APCL_eadd, ?L_APCL_esub, ?L_APCL_escale, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_W, ?L_APCL_V_S2, ?L_APCL_V_Q. reflexivity. Qed.
+Proof. unfold e_pgslack. rewrite ?L_APCL_eadd, ?L_APCL_esub, ?L_APCL_eaddz, ?L_APCL_escale, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_R, ?L_APCL_V_G, ?L_APCL_V_S2, ?L_APCL_V_Q. reflexivity. Qed.
 
 Lemma L_APCL_e_pgslack8 : @e_pgslack8 = @APC.e_pgslack8.
-Proof. unfold e_pgslack8. rewrite ?L_APCL_eadd, ?L_APCL_esub, ?L_APCL_escale, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_W, ?L_APCL_V_S2, ?L_APCL_V_Q. reflexivity. Qed.
+Proof. unfold e_pgslack8. rewrite ?L_APCL_eadd, ?L_APCL_esub, ?L_APCL_eaddz, ?L_APCL_escale, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_R, ?L_APCL_V_G, ?L_APCL_V_S2, ?L_APCL_V_Q. reflexivity. Qed.
 
 Lemma L_APCL_e_top8 : @e_top8 = @APC.e_top8.
 Proof. unfold e_top8. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_S1, ?L_APCL_V_P, ?L_APCL_V_Q. reflexivity. Qed.
@@ -4095,10 +4150,10 @@ Lemma L_APCL_e_blkL01 : @e_blkL01 = @APC.e_blkL01.
 Proof. unfold e_blkL01. rewrite ?L_APCL_esub, ?L_APCL_V_L0, ?L_APCL_V_L1, ?L_APCL_e_blk0. reflexivity. Qed.
 
 Lemma L_APCL_e_strW0 : @e_strW0 = @APC.e_strW0.
-Proof. unfold e_strW0. rewrite ?L_APCL_esub, ?L_APCL_escale, ?L_APCL_V_L0, ?L_APCL_V_W. reflexivity. Qed.
+Proof. unfold e_strW0. rewrite ?L_APCL_esub, ?L_APCL_eaddz, ?L_APCL_V_L0, ?L_APCL_V_W, ?L_APCL_e_pgslack. reflexivity. Qed.
 
 Lemma L_APCL_e_strW01 : @e_strW01 = @APC.e_strW01.
-Proof. unfold e_strW01. rewrite ?L_APCL_esub, ?L_APCL_escale, ?L_APCL_V_L0, ?L_APCL_V_W, ?L_APCL_V_L1. reflexivity. Qed.
+Proof. unfold e_strW01. rewrite ?L_APCL_esub, ?L_APCL_V_L1, ?L_APCL_e_strW0. reflexivity. Qed.
 
 Lemma L_APCL_e_argv1w : @e_argv1w = @APC.e_argv1w.
 Proof. unfold e_argv1w. rewrite ?L_APCL_V_ARGC, ?L_APCL_e_str1. reflexivity. Qed.
@@ -4386,7 +4441,7 @@ Definition BRK_ASLR : Z := 0x80000000.
 Lemma L_APCL_BRK_ASLR : @BRK_ASLR = @APC.BRK_ASLR.
 Proof. unfold BRK_ASLR. reflexivity. Qed.
 
-Definition NX0 : nat := 12.
+Definition NX0 : nat := 15.
 Lemma L_APCL_NX0 : @NX0 = @APC.NX0.
 Proof. unfold NX0. reflexivity. Qed.
 
@@ -4409,27 +4464,25 @@ Proof. unfold auxw. rewrite ?L_APCL_e_auxb. reflexivity. Qed.
 
 Definition init_kn_with (atr : kentry) (A : atable) : list kentry :=
   [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 255; KRange (EVar V_P) 0 7; KRange (EVar V_Q) 1 600;
-   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7;
-   KRange e_atr8m 0xFFFF0000000 0xFFFFFFFFFE0;   
-   KRange e_pgslack 200 4295; KRange e_pgslack8 25 536; KRange e_top8 0xFFFF0000000 0x100000000000;   
+   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFC5;
+   KRange e_atr8m 0xFFFF0000000 0xFFFFFFFFFC0; KRange e_atr8m2 0xFFFF0000000 0xFFFFFFFFFC0;
+   KRange e_pgslack 10 2101262; KRange e_pgslack8 1 262657; KRange e_top8 0xFFFF0000000 0x100000000000;
    KRange e_top 0x7FFF80000000 0x800000000000;
-   
    KRange e_blkL01 201 2457600; KRange e_blkL0 201 2457600; KRange e_blk0 200 2457600; KRange e_blk08 25 307200;
    KRange e_strW01 1 2240000; KRange e_strW0 1 2240000;
    KRange e_sp0 0x7fff80000000 0x7fffffffff40;
    KRange e_sp8 0xFFFF0000000 0xFFFFFFFFFE8;
    KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
-   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0 0xFFFFFFFFFFFFFFFF;
-   KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
-   KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
+   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0 0xFFFFFFFFFFFFFFFF; KRange (EVar V_G) 0 1; KRange (EVar V_R) 0 1;
+   KRange (EVar V_W) 0 4110; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+   KWr (SA e_sp0 (-6144000)) (ELit 6144000); KZero (SA e_sp0 (-6144000)) (ELit 6144000);   (* LPS c0dd863a: AsanInit.stack_window_ok *)
    KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
-  
-  ++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 3 16 (EVar V_HW) ++ auxw 4 6 (ELit 4096)
-  ++ auxw 5 11 (EVar V_UID) ++ auxw 6 12 (EVar V_UID) ++ auxw 7 23 (ELit 0) ++ auxw 8 25 e_atrandom ++ auxw 9 0 (ELit 0)
+  ++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 10 16 (EVar V_HW) ++ auxw 11 6 (ELit 4096)
+  ++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 e_atrandom
   ++ [atr;
       KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
 Lemma L_APCL_init_kn_with : @init_kn_with = @APC.init_kn_with.
-Proof. unfold init_kn_with. rewrite ?L_APCL_eaddz, ?L_APCL_V_S1, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_L0, ?L_APCL_V_W, ?L_APCL_V_BRK, ?L_APCL_V_S2, ?L_APCL_V_P, ?L_APCL_V_Q, ?L_APCL_V_HW, ?L_APCL_V_L1, ?L_APCL_V_UID, ?L_APCL_e_sp0, ?L_APCL_e_sp8, ?L_APCL_e_str0, ?L_APCL_e_atrandom, ?L_APCL_e_atr8, ?L_APCL_e_atr8m, ?L_APCL_e_pgslack, ?L_APCL_e_pgslack8, ?L_APCL_e_top8, ?L_APCL_e_top, ?L_APCL_e_blk0, ?L_APCL_e_blk08, ?L_APCL_e_blkL0, ?L_APCL_e_blkL01, ?L_APCL_e_strW0, ?L_APCL_e_strW01, ?L_APCL_e_argv1w, ?L_APCL_kw_argv1, ?L_APCL_BRK_ASLR, ?L_APCL_auxw. reflexivity. Qed.
+Proof. unfold init_kn_with. rewrite ?L_APCL_eaddz, ?L_APCL_V_S1, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_L0, ?L_APCL_V_W, ?L_APCL_V_BRK, ?L_APCL_V_S2, ?L_APCL_V_P, ?L_APCL_V_Q, ?L_APCL_V_HW, ?L_APCL_V_L1, ?L_APCL_V_UID, ?L_APCL_e_sp0, ?L_APCL_e_sp8, ?L_APCL_e_str0, ?L_APCL_e_atrandom, ?L_APCL_e_atr8, ?L_APCL_e_atr8m, ?L_APCL_e_atr8m2, ?L_APCL_e_pgslack, ?L_APCL_e_pgslack8, ?L_APCL_e_blk0, ?L_APCL_e_blk08, ?L_APCL_e_blkL0, ?L_APCL_e_blkL01, ?L_APCL_e_strW0, ?L_APCL_e_strW01, ?L_APCL_V_G, ?L_APCL_V_R, ?L_APCL_e_top8, ?L_APCL_e_top, ?L_APCL_e_argv1w, ?L_APCL_kw_argv1, ?L_APCL_BRK_ASLR, ?L_APCL_auxw. reflexivity. Qed.
 
 Definition atr_entry : kentry := KBlob (SA (fst e_atrb) (snd e_atrb)) (ELit 16) K_RND.
 Lemma L_APCL_atr_entry : @atr_entry = @APC.atr_entry.
@@ -4451,17 +4504,15 @@ Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
 Lemma L_APCL_init_regs : @init_regs = @APC.init_regs.
 Proof. unfold init_regs. rewrite ?L_APCL_e_sp0, ?AX2L.L_AX2L_sr_upd. reflexivity. Qed.
 
-Definition en_blk : expr := eadd (escale 8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W)))) (ELit 200).
-Lemma L_APCL_en_blk : @en_blk = @APC.en_blk.
-Proof. unfold en_blk. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_V_ARGC, ?L_APCL_V_ENVC, ?L_APCL_V_W. reflexivity. Qed.
-
 Definition init_vis (A : atable) : list (expr * expr) :=
   [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (eaddz e_pgsp (-8388608), eadd (ELit 8388608) (escale 16 (EVar V_S2))); (e_vis3b, e_vis3n)].
 Lemma L_APCL_init_vis : @init_vis = @APC.init_vis.
 Proof. unfold init_vis. rewrite ?L_APCL_eadd, ?L_APCL_escale, ?L_APCL_eaddz, ?L_APCL_e_pgsp, ?L_APCL_V_S2, ?L_APCL_e_vis3b, ?L_APCL_e_vis3n. reflexivity. Qed.
 
 Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
-  ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis A) []
+  ACS (mk_ss (a_entry A) init_regs kn0 NX0) []
+      (img_hi A - img_lo A + resx_bytes A) (MBASE_MIN - resx_bytes A) 0
+      (init_vis A) []
       (vis_cost (img_hi A - img_lo A) + vis_cost 8392704 + vis_cost 4194304) (escale 4096 (EVar V_BRK)) FdStd false.
 Lemma L_APCL_init_acs_of_with : @init_acs_of_with = @APC.init_acs_of_with.
 Proof. unfold init_acs_of_with. rewrite ?L_APCL_MBASE_MIN, ?L_APCL_mk_ss, ?L_APCL_escale, ?L_APCL_vis_cost, ?L_APCL_V_BRK, ?L_APCL_NX0, ?L_APCL_init_regs, ?L_APCL_init_vis. reflexivity. Qed.
@@ -4475,7 +4526,7 @@ Lemma L_APCL_init_acs_of_zero : @init_acs_of_zero = @APC.init_acs_of_zero.
 Proof. unfold init_acs_of_zero. rewrite ?L_APCL_init_kn_zero, ?L_APCL_init_acs_of_with. reflexivity. Qed.
 
 Definition ASAN : atable :=
-  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ba64; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xe1ea4; x_imemcpy := 0xe1e28; x_memset := 0x116934; x_memcpy := 0x116530; x_memiszero := 0xe2508;
      x_istrncpy := 0xe23b8; x_sealed := 0x1205f; x_popfree := 0x52a70;
@@ -4499,7 +4550,7 @@ Lemma L_APCL_asan_init : @asan_init = @APC.asan_init.
 Proof. unfold asan_init. rewrite ?L_APCL_init_acs_of, ?L_APCL_ASAN. reflexivity. Qed.
 
 Definition BOTH : atable :=
-  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ba54; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xe1e94; x_imemcpy := 0xe1e18; x_memset := 0x116924; x_memcpy := 0x116520; x_memiszero := 0xe24f8;
      x_istrncpy := 0xe23a8; x_sealed := 0x1205f; x_popfree := 0x52a60;

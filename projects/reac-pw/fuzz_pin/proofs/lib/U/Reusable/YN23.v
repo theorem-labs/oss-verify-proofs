@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN23.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation-mode premise (amf AM = false) that munmap's node asks for); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -21,6 +22,10 @@ Open Scope Z_scope.
 Abbreviation B := src0_msyms.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+(* 08b1429: [YN0e.src0_malloc_realizes] now carries `@amf AM = false ->`, because
+   [YN02.knode_munmap] does (215 joined [alloc_mark_sysnos]).  Only
+   [src0_malloc_realizes_of_hyps] below uses it; [src0_malloc_small] does not. *)
+Hypothesis AMF : @amf AM = false.
 Theorem src0_malloc_small : alloc_slot_hyp B -> malloc_small_hyp B.
 Proof.
 intros ASH L A regs mem md n PRE R10 Hn.
@@ -44,5 +49,5 @@ unfold gmask. rewrite Hhd. reflexivity.
 Qed.
 Corollary src0_malloc_realizes_of_hyps :
 alloc_meta_hyp B -> alloc_slot_hyp B -> malloc_realizes B (MRx B).
-Proof. intros AMH ASH. apply (src0_malloc_realizes AMH). apply src0_malloc_small. exact ASH. Qed.
+Proof. intros AMH ASH. apply (src0_malloc_realizes AMF AMH). apply src0_malloc_small. exact ASH. Qed.
 End a.

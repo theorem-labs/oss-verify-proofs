@@ -1,8 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed nret_MSsvc. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
@@ -12,10 +11,6 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CJ.Lib Require Export Decod
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma evt_ecall : forall segs (Q : machine_state -> Prop) R F pc fc rv m ro w,
   fetch_word segs (Z_to_bv 64 pc) = Some w -> is_ecall w = true ->
@@ -27,7 +22,6 @@ Proof.
   split; [reflexivity|]. rewrite (step_ecall_gen segs R F (Z_to_bv 64 pc) fc rv m ro w Hf He). reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Ltac step_ecall :=
   lazymatch goal with
   | |- evt ?segs ?Q (MS ?R ?F (Z_to_bv 64 ?pc) ?fc ?rv ?m ?ro) =>
@@ -40,13 +34,9 @@ Ltac step_ecall :=
       end
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Lemma nret_MSsvc : forall R F pc x8 fc rv m ro r ws zs us ci,
   nret (MSsvc R F pc x8 fc rv m ro) (mkEffectU r ws zs us [] ci)
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
 Proof. reflexivity. Qed.
 
 Lemma mkR_set_a0 : forall x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 v,
@@ -54,7 +44,6 @@ Lemma mkR_set_a0 : forall x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16
   = mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 v x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
 Lemma apply_mem_none : forall m, apply_writes (apply_zeros (apply_unmaps m []) []) [] = m.
 Proof. reflexivity. Qed.
 
@@ -65,7 +54,6 @@ Lemma apply_mem_delivered : forall m a bs,
   apply_writes (apply_zeros (apply_unmaps m []) []) (delivered_writes a bs) = write_to_mem m a bs.
 Proof. intros m a [|b bs]; reflexivity. Qed.
 
-(* [comment removed for export] *)
 Definition in_range (a n : Z) (x : word) : bool :=
   (a <=? bv_unsigned x)%Z && (bv_unsigned x <? a + n)%Z.
 
@@ -85,8 +73,6 @@ Qed.
 
 Section MemEffects.
 Variable segs : list Segment.
-
-(* [comment removed for export] *)
 
 Lemma rw_cells_CB_prefix_write : forall m A n junk bs,
   rw_cells segs m A [CB n junk] -> (length bs <= n)%nat ->
@@ -116,8 +102,6 @@ Lemma mem_inv_syswrite : forall m A n junk bs,
 Proof.
   intros. apply mem_inv_store; [assumption|]. eapply rw_cells_CB_store_ok; eauto.
 Qed.
-
-(* [comment removed for export] *)
 
 Section Zeros.
 Variables (m : word -> option byte) (a n : Z).
@@ -189,7 +173,6 @@ Qed.
 Lemma wmono_zeros : forall m0, wmono segs m0 m -> wmono segs m0 m'.
 Proof. intros m0 H x Hx. apply wview_zeros_mono, H, Hx. Qed.
 
-(* [comment removed for export] *)
 Lemma mem_inv_zeros : mem_inv segs m -> (forall x : word, (a <= bv_unsigned x < a + n)%Z -> ro_addr segs x = false) -> mem_inv segs m'.
 Proof.
   intros Hinv Hro x b Hx. unfold m' in Hx. rewrite apply_zeros_spec in Hx by assumption.
@@ -199,7 +182,6 @@ Proof.
   apply Hro. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma bytes_at_zeros_new : bytes_at segs m' a (repeat (Z_to_bv 8 0) (Z.to_nat n)).
 Proof.
   split; [lia|]. rewrite repeat_length. split; [lia|]. intros i Hi.
@@ -222,8 +204,6 @@ Proof.
 Qed.
 
 End Zeros.
-
-(* [comment removed for export] *)
 
 Section Unmaps.
 Variables (m : word -> option byte) (a n : Z).
@@ -290,14 +270,9 @@ Proof.
   destruct (in_range a n x); [discriminate|]. exact (Hinv _ _ Hx).
 Qed.
 
-(* [comment removed for export] *)
 End Unmaps.
 
 End MemEffects.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma rw_cells_wr_at : forall segs m A cs n,
   rw_cells segs m A cs -> (n <= Z.of_nat (cells_size cs))%Z -> wr_at segs m A n.
@@ -309,7 +284,6 @@ Proof. intros segs m A cs [[_ H] _]. exact H. Qed.
 Lemma ro_cells_bytes_at : forall segs m A cs, ro_cells segs m A cs -> bytes_at segs m A (cells_bytes cs).
 Proof. intros segs m A cs [_ H]. exact H. Qed.
 
-(* [comment removed for export] *)
 Ltac at_node_solve :=
   at_node_red; split_spine;
   first [ reflexivity | lia | assumption
@@ -330,7 +304,6 @@ Ltac at_node_solve :=
           end
         | idtac ].
 
-(* [comment removed for export] *)
 Ltac sys_mem_write :=
   lazymatch goal with
   | |- evt ?segs ?Q (MS ?R ?F ?pc ?fc ?rv (write_to_mem ?m (Z_to_bv 64 ?B) ?bs) ?ro) =>
@@ -356,7 +329,6 @@ Ltac sys_mem_write :=
     end
   end.
 
-(* [comment removed for export] *)
 Lemma apply_mem_zeros : forall m z, apply_writes (apply_zeros (apply_unmaps m []) [z]) [] = apply_zeros m [z].
 Proof. reflexivity. Qed.
 Lemma apply_mem_unmaps : forall m u, apply_writes (apply_zeros (apply_unmaps m [u]) []) [] = apply_unmaps m [u].
@@ -442,7 +414,6 @@ Ltac sys_mem_unmaps :=
     clear Heqm Ha Hn Han; try clear m
   end.
 
-(* [comment removed for export] *)
 Ltac sys_nret :=
   rewrite nret_MSsvc; rewrite ?mkR_set_a0; simp_regs;
   (lazymatch goal with
@@ -458,14 +429,8 @@ Ltac sys_nret :=
         | rewrite apply_mem_unmaps; sys_mem_unmaps
         | idtac ].
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Notation errno_addr tp := (bv_unsigned tp + (-164))%Z (only parsing).
 
-(* [comment removed for export] *)
 Definition sysret_val (r : word) : word :=
   match errno_of r with Some _ => Z_to_bv 64 (-1) | None => r end.
 Definition sysret_errno (r errv : word) : word :=
@@ -474,7 +439,6 @@ Definition sysret_errno (r errv : word) : word :=
 Lemma errno_of_big : forall r, (2^64 - 4096 < bv_unsigned r)%Z -> errno_of r = Some (2^64 - bv_unsigned r)%Z.
 Proof. intros r H. unfold errno_of. destruct (Z.leb_spec0 (2^64 - 4095) (bv_unsigned r)); [reflexivity|lia]. Qed.
 
-(* [comment removed for export] *)
 Lemma negw_errno : forall u, (2^64 - 4096 < u < 2^64)%Z -> bv_swrap 32 (0 - u) = (2^64 - u)%Z.
 Proof.
   intros u Hu. unfold bv_swrap, bv_wrap, bv_half_modulus, bv_modulus.
@@ -483,7 +447,6 @@ Proof.
   rewrite Z.mod_add by lia. rewrite Z.mod_small by lia. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma swrap32_small : forall z, (-2^31 <= z < 2^31)%Z -> bv_swrap 32 z = z.
 Proof.
   intros z Hz. unfold bv_swrap, bv_wrap, bv_half_modulus, bv_modulus.
@@ -524,12 +487,6 @@ Lemma sextw_small : forall z, (0 <= z < 2^31)%Z ->
   Z_to_bv 64 (bv_swrap 32 (bv_unsigned (Z_to_bv 64 z) + 0)) = Z_to_bv 64 z.
 Proof. intros z Hz. rewrite unsigned_lit by lia. rewrite Z.add_0_r, swrap32_small by lia. reflexivity. Qed.
 
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma stk_lo_nonneg : forall segs m lo hi, stk segs m lo hi -> (0 <= lo)%Z.
 Proof. intros segs m lo hi (H & _). exact H. Qed.
 
@@ -556,7 +513,6 @@ Tactic Notation "call_sp" uconstr(SPEC) :=
   | _ => call SPEC
   end.
 
-(* [comment removed for export] *)
 Ltac sys_finish :=
   (lazymatch goal with |- evt _ _ _ => apply evt_done | _ => idtac end);
   lazymatch goal with |- ?P ?ms => try unfold P | _ => idtac end;
@@ -568,11 +524,6 @@ Ltac sys_finish :=
   end;
   repeat match goal with |- _ /\ _ => split end; try assumption.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma impl_from_evt : forall {node : Type} segs (atn : node -> machine_state -> Prop) {R} (t : itree node R) Q ms,
   evt segs (fun ms' => impl segs atn t Q ms') ms -> impl segs atn t Q ms.
 Proof. intros node segs atn R t Q ms H. eapply impl_evt; [exact H|]. intros ms' H'; exact H'. Qed.
@@ -580,13 +531,11 @@ Proof. intros node segs atn R t Q ms H. eapply impl_evt; [exact H|]. intros ms' 
 Ltac iprefix := apply impl_from_evt.
 Ltac ihere := apply evt_done.
 
-(* [comment removed for export] *)
 Tactic Notation "icall" uconstr(SPEC) :=
   (lazymatch goal with |- evt _ _ _ => apply evt_done | _ => idtac end);
   first [ eapply SPEC
         | eapply impl_epost_mono; [ eapply SPEC | ] ].
 
-(* [comment removed for export] *)
 Ltac ipost segs :=
   let a := fresh "ans" in let ms' := fresh "ms'" in let PO := fresh "POST" in
   intros a ms' PO;
@@ -605,7 +554,7 @@ Ltac ipost segs :=
   try destruct_ands PO;
   try (let MIname := fresh "MI" in
        lazymatch goal with H : mem_inv segs _ |- _ => rename H into MIname; try rename MIname into MI end);
-  (* [comment removed for export] *)
+
   repeat match goal with
   | |- context [ret_pc (Z_to_bv 64 ?n)] => is_Zlit n;
       replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n) by (symmetry; apply ret_pc_even; [ lia | reflexivity ])

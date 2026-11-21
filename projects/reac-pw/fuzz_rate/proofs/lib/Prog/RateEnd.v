@@ -1,6 +1,6 @@
 (* plain_halts of reac-pw/fuzz_rate from the frame and the slot of LLVMFuzzerTestOneInput: reac-pw/fuzz_role's
    Prog/RoleEnd.v (itself reac-pw/fuzz_pin's Prog/PinEnd.v,
-   libreac/fuzz_ctrl's released Prog/Seg/Segs.v + Prog/Seg/SlotLink.v, origin/ossv/recipes 25e3d17bdb50) for rate's
+   libreac/fuzz_ctrl's released Prog/Seg/Segs.v + Prog/Seg/SlotLink.v) for rate's
    five segments.
    - The segment lemmas, each as its segment file states it once its Section closes (Section hypotheses:
      FrameAPI.frame_facts_plain, then the one contract the segment takes): seg_E01_stmt (Seg/E01.v: the prologue,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the start-up section takes kb, execfn, rdr, sgd and sgt, with QpvH.launch_ok, the channel reader rdr = true, and SINV0 / argH0 over them; the CONFIG_RSEQ flag of the start-up layer: the stage-1 hand-off states, the stage-2 starts and the recorded certificates at the run's value RZK). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -86,7 +87,7 @@ intros HOLES T D E fs s. induction s; cbn [all_holes sd]; intros Hs HH HT; try d
 - rewrite HH. intros tr. tauto.
 Qed.
 
-Definition HS2s (h : nat) : option acs := match HS2sA h with Some c => Some c | None => HS2sB h end.
+Definition HS2s (r : Z) (h : nat) : option acs := match HS2sA r h with Some c => Some c | None => HS2sB r h end.
 
 Section Startup.
 
@@ -103,42 +104,59 @@ Variables nofile sigmask : word.
 Variable abort_terminal : bool.
 Variable urnd : InputStream.
 Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 #[local] Notation fs := (fs_seed_tmp ifs tmp).
+#[local] Notation INP := (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk JOB6SEGS brk0.
 Hypothesis Hmb : valid_mmap_base mbase.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw INP.
 Hypothesis Huid : valid_id uid.
+(* LPS 08b1429: the standard channels have a reader (Run.valid_input), which seeds cs_ok's co_rdr *)
+Hypothesis Hrdr : rdr = true.
 
-#[local] Notation SINV := (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 JOB6PH sp rdraw argv envp uid hw).
-#[local] Notation E0a := (E0 JOB6PH sp rdraw brk0 argv envp uid hw).
+#[local] Notation SINV := (SINV0 JOB6PH AsanUbsan.M.init_pc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
+#[local] Notation argH := (argH0 sp rdraw argv envp kb execfn).
+#[local] Notation E0a := (E0 sp rdraw brk0 argv envp uid gid hw kb execfn).
 #[local] Notation LIM := QVWI.Mq0.LIMIT.
+(* the run's CONFIG_RSEQ value, 0 or 1: the start-up certificates are taken at it *)
+#[local] Notation RZK := (rseq_z (kb_rseq kb)).
 
 #[local] Notation USP := (bv_unsigned sp).
 #[local] Notation CSOK := (cs_ok JOB6SEGS BJO6 LIM USP SINV argH fs).
 
-Lemma xsniff_disabled : forall nx0, x_stmt JOB6SEGS BJO6 nx0 LIM USP SINV argH fs XSniff.
+Lemma xsniff_disabled : forall nx0, x_stmt JOB6SEGS BJO6 nx0 LIM RZK USP SINV argH fs XSniff.
 Proof. intros nx0 args cs cs' E R FULL model T HC _ Hn Hk. discriminate Hn. Qed.
 
 Lemma AH : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a.
-Proof. exact (argH0_high JOB6PH sp rdraw argv envp uid hw Hsp Hva). Qed.
+Proof.
+intros E a H. unfold argH0 in H. cbv beta zeta in H. destruct Hsp as [Hlo _]. unfold sp_window_lo in Hlo. unfold CEIL.
+pose proof (rseq_z_range (kb_rseq kb)).
+apply orb_prop in H as [H|H]; [apply orb_prop in H as [H|H]; [apply orb_prop in H as [H|H]|]|];
+apply andb_prop in H as [H _]; apply Z.leb_le in H; lia.
+Qed.
 Lemma ASP : forall E (a : word), argH E a = true -> USP <= bv_unsigned a.
-Proof. exact (argH0_sp JOB6PH sp rdraw argv envp uid hw Hva). Qed.
+Proof.
+intros E a H. unfold argH0 in H. cbv beta zeta in H. pose proof (rseq_z_range (kb_rseq kb)).
+apply orb_prop in H as [H|H]; [apply orb_prop in H as [H|H]; [apply orb_prop in H as [H|H]|]|];
+apply andb_prop in H as [H _]; apply Z.leb_le in H; lia.
+Qed.
 Lemma USPOK : usp_ok USP.
 Proof. exact (usp_ok0 sp Hsp). Qed.
 Lemma NXGE : forall nx0, (NX0 <= nx0)%nat -> nx0_ge nx0.
 Proof. intros nx0 Hn. unfold nx0_ge. unfold NX0 in Hn. lia. Qed.
 Lemma AA : forall nx0, (NX0 <= nx0)%nat -> forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a.
-Proof. intros nx0 Hn E E' a Hag. apply argH0_agree. eapply env_agree_le; [exact Hag | exact Hn]. Qed.
+Proof. intros nx0 Hn E E' a Hag. reflexivity. Qed.
 Lemma SF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
-Proof. exact (SINV0_frame JOB6PH sp rdraw brk0 argv envp uid hw). Qed.
+Proof. intros E M M' Hf [H1 H2]. split; [exact H1|]. intros a Ha. rewrite (Hf a Ha). apply H2. exact Ha. Qed.
 Lemma SA : forall nx0, (NX0 <= nx0)%nat -> forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Proof. intros nx0 Hn E E' M Hag. apply SINV0_agree. eapply env_agree_le; [exact Hag | exact Hn]. Qed.
 
-Lemma node_x_sound_all : forall nx0, (NX0 <= nx0)%nat -> forall x, x_stmt JOB6SEGS BJO6 nx0 LIM USP SINV argH fs x.
+Lemma node_x_sound_all : forall nx0, (NX0 <= nx0)%nat -> forall x, x_stmt JOB6SEGS BJO6 nx0 LIM RZK USP SINV argH fs x.
 Proof.
 intros nx0 Hn. pose proof AH as AH'. pose proof (AA nx0 Hn) as AA'. pose proof SF as SF'. pose proof (SA nx0 Hn) as SA'.
 pose proof (NXGE nx0 Hn) as NXGE'.
@@ -160,7 +178,7 @@ Variable TM : Fs.Fs -> TSet.
 Hypothesis TM_nil : forall fs', TM fs' [].
 Definition HOLEST (h : nat) (E : env) (fs' : Fs.Fs) : TSet := TM fs'.
 
-Hypothesis HMAIN : forall h ch, HS2s h = Some ch ->
+Hypothesis HMAIN : forall h ch, HS2s RZK h = Some ch ->
 forall E R FULL model, CSOK E ch R FULL model -> srealizes JOB6SEGS (cfg_of JOB6SEGS R (pc ch) FULL model) (TM (m_fs model)).
 
 #[local] Ltac img_side :=
@@ -171,14 +189,14 @@ Lemma check_sound_job6 : forall nx0, (NX0 <= nx0)%nat ->
 forall IT, itab_sound JOB6SEGS IT ->
 forall HS, holes_stmt JOB6SEGS BJO6 LIM USP HS SINV argH HOLEST fs ->
 forall fuel bfuel p cs s,
-check JOB6SEGS IT BJO6 nx0 LIM (XNjob6 JOB6SEGS nx0) XE0 XB0 HS KC0 bfuel fuel None cs p = COk s ->
+check JOB6SEGS IT BJO6 nx0 LIM RZK (XNjob6 JOB6SEGS nx0) XE0 XB0 HS KC0 bfuel fuel None cs p = COk s ->
 forall E R FULL model, CSOK E cs R FULL model ->
 srealizes JOB6SEGS (cfg_of JOB6SEGS R (pc cs) FULL model) (sd HOLEST t_nil E (m_fs model) s).
 Proof.
 intros nx0 Hn IT IT_ok HS HSs fuel bfuel p cs s Hc E R FULL model HC.
 pose proof AH as AH'. pose proof (AA nx0 Hn) as AA'. pose proof SF as SF'. pose proof (SA nx0 Hn) as SA'.
 pose proof (NXGE nx0 Hn) as NXGE'. pose proof ASP as ASP'. pose proof USPOK as USPOK'.
-refine (check_sound JOB6SEGS IT IT_ok BJO6 nx0 LIM USP HS (XNjob6 JOB6SEGS nx0) XE0 XB0
+refine (check_sound JOB6SEGS IT IT_ok BJO6 nx0 LIM RZK USP HS (XNjob6 JOB6SEGS nx0) XE0 XB0
 asan_wx asan_in_hull asan_hull_ok asan_shadow_ok NXGE' SINV argH AH' AA' SF' SA'
 HOLEST _ _ _ fs KC0
 _ _ _ _ _ _ _ (node_x_sound_all nx0 Hn) _ _ _ _ HSs
@@ -199,33 +217,38 @@ fuel bfuel None p cs s Hc E R FULL model t_nil HC I eq_refl).
 - apply XB0_sound.
 Qed.
 
-Lemma NX1A_ge : (NX0 <= QINi.NX1)%nat.
-Proof. apply Nat.leb_le. vm_compute. reflexivity. Qed.
-Lemma NX1B_ge : (NX0 <= QptC.NX1)%nat.
-Proof. apply Nat.leb_le. vm_compute. reflexivity. Qed.
+Lemma NX1A_ge : (NX0 <= QINi.NX1 RZK)%nat.
+Proof. apply Nat.leb_le. destruct (kb_rseq kb); vm_compute; reflexivity. Qed.
+Lemma NX1B_ge : (NX0 <= QptC.NX1 RZK)%nat.
+Proof. apply Nat.leb_le. destruct (kb_rseq kb); vm_compute; reflexivity. Qed.
 
-Lemma stage2sA_holes_sound : holes_stmt JOB6SEGS BJO6 LIM USP HS2sA SINV argH HOLEST fs.
+Lemma stage2sA_holes_sound : holes_stmt JOB6SEGS BJO6 LIM USP (HS2sA RZK) SINV argH HOLEST fs.
 Proof.
 intros h ch Hh E R FULL model HC. unfold HOLEST. refine (HMAIN h ch _ E R FULL model HC).
 unfold HS2s. rewrite Hh. reflexivity.
 Qed.
-Lemma stage2sB_holes_sound : holes_stmt JOB6SEGS BJO6 LIM USP HS2sB SINV argH HOLEST fs.
+Lemma stage2sB_holes_sound : holes_stmt JOB6SEGS BJO6 LIM USP (HS2sB RZK) SINV argH HOLEST fs.
 Proof.
 intros h ch Hh E R FULL model HC. unfold HOLEST. refine (HMAIN h ch _ E R FULL model HC).
-unfold HS2s. rewrite Hh. destruct (HS2sA h) eqn:Ha; [|reflexivity].
-exfalso. revert Hh Ha. unfold HS2sA, HS2sB. destruct h as [|[|[|[|[|h]]]]]; cbn; intros; congruence.
+unfold HS2s. rewrite (HS2s_disj RZK h ch Hh), Hh. reflexivity.
 Qed.
 
-Lemma stage1_holes_sound : holes_stmt JOB6SEGS BJO6 LIM USP HS1s SINV argH HOLEST fs.
+(* LPS 727298f3: the stage-1 hand-off states, the stage-2 starts and the certificates are the
+recorded ones at the run's CONFIG_RSEQ value (RZK); HS1s_dom names the two hand-off indices. *)
+Lemma stage1_holes_sound : holes_stmt JOB6SEGS BJO6 LIM USP (HS1s RZK) SINV argH HOLEST fs.
 Proof.
 intros h ch Hh E R FULL model HC.
-destruct h as [|[|[|[|[|[|[|h]]]]]]]; try discriminate Hh; cbn [HS1s] in Hh; injection Hh as <-.
-- pose proof (check_sound_job6 QINi.NX1 NX1A_ge QINi.IT2 (asan_IT_ranges_ok job6_stage2_ranges) HS2sA stage2sA_holes_sound
-FUEL BFUEL job6_stage2 QINi.CS1 job6_stage2sA_shape job6_stage2sA_cert E R FULL model HC) as R2.
+destruct (HS1s_dom RZK h ch Hh) as [-> | ->].
+- assert (Hcs : QINi.CS1 RZK = ch) by (unfold QINi.CS1; rewrite Hh; reflexivity).
+rewrite <- Hcs in HC |- *.
+pose proof (check_sound_job6 (QINi.NX1 RZK) NX1A_ge QINi.IT2 (asan_IT_ranges_ok job6_stage2_ranges) (HS2sA RZK) stage2sA_holes_sound
+FUEL BFUEL job6_stage2 (QINi.CS1 RZK) job6_stage2sA_shape (job6_stage2sA_cert (kb_rseq kb)) E R FULL model HC) as R2.
 eapply srz_conseq; [exact R2|].
 unfold HOLEST. cbn [sd job6_stage2sA_shape]. destruct (_ <=? _)%Z; intros tr; tauto.
-- pose proof (check_sound_job6 QptC.NX1 NX1B_ge QptC.IT2 (asan_IT_ranges_ok job6_stage2b_ranges) HS2sB stage2sB_holes_sound
-FUEL BFUEL job6_stage2b QptC.CS1 job6_stage2sB_shape job6_stage2sB_cert E R FULL model HC) as R2.
+- assert (Hcs : QptC.CS1 RZK = ch) by (unfold QptC.CS1; rewrite Hh; reflexivity).
+rewrite <- Hcs in HC |- *.
+pose proof (check_sound_job6 (QptC.NX1 RZK) NX1B_ge QptC.IT2 (asan_IT_ranges_ok job6_stage2b_ranges) (HS2sB RZK) stage2sB_holes_sound
+FUEL BFUEL job6_stage2b (QptC.CS1 RZK) job6_stage2sB_shape (job6_stage2sB_cert (kb_rseq kb)) E R FULL model HC) as R2.
 eapply srz_conseq; [exact R2|].
 unfold HOLEST. cbn [sd job6_stage2sB_shape]. destruct (_ <=? _)%Z; intros tr; tauto.
 Qed.
@@ -234,15 +257,17 @@ Lemma job6_startup1s_all_holes : all_holes job6_startup1s_shape = true.
 Proof. reflexivity. Qed.
 
 Theorem asan_startup_job6S :
-srealizes JOB6SEGS (init_config JOB6SEGS AsanUbsan.M.init_pc JOB6PH sp brk0 mbase rdraw QpvH.LIMIT
-(QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp))
+srealizes JOB6SEGS (init_config JOB6SEGS AsanUbsan.M.init_pc JOB6PH sp brk0 mbase rdraw QpvH.LIMIT INP)
 (TM fs).
-Proof.
+Proof using Hsp Hbrk Hmb Hva Hve Hfit Huid Hrdr TM_nil HMAIN.
 pose proof asan_img_facts as IMG.
-rewrite (init_cfg_eq JOB6SEGS BJO6 JOB6PH sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp AsanUbsan.M.init_pc eq_refl).
-pose proof (init_cs_ok JOB6SEGS BJO6 JOB6PH sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net IMG Hsp Hbrk Hva Hve Hfit Huid nofile sigmask abort_terminal urnd tmp) as HC0.
-pose proof (check_sound_job6 NX0 (le_n NX0) Q9O7.IT1 (asan_IT_ranges_ok job6_startup1s_ranges) HS1s stage1_holes_sound
-FUEL BFUEL job6_startup1s bjo_init job6_startup1s_shape job6_startup1s_cert E0a _ _ _ HC0) as R1.
+assert (Hapc : Z.of_N AsanUbsan.M.init_pc = a_entry BJO6) by reflexivity.
+pose proof Hfit as (Hfes & Hkernel & Hlaunch & Hlau).
+erewrite init_cfg_eq by eassumption.
+match goal with |- srealizes _ (cfg_of _ ?R0 _ ?F0 ?m0) _ =>
+assert (HC0 : CSOK E0a (bjo_init RZK) R0 F0 m0) by (eapply init_cs_ok; eassumption) end.
+pose proof (check_sound_job6 NX0 (le_n NX0) Q9O7.IT1 (asan_IT_ranges_ok job6_startup1s_ranges) (HS1s RZK) stage1_holes_sound
+FUEL BFUEL (job6_startup1s RZK) (bjo_init RZK) job6_startup1s_shape (job6_startup1s_cert (kb_rseq kb)) E0a _ _ _ HC0) as R1.
 eapply srz_conseq; [exact R1|].
 apply sd_all_holes; [exact job6_startup1s_all_holes | intros; reflexivity | apply TM_nil].
 Qed.

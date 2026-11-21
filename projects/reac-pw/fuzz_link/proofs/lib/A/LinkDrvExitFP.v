@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE23.v, with its module paths changed, names TfibSyms -> BoxregSyms and its addresses moved to libreac/fuzz_boxreg's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/AE23.v, with its module paths changed; 372 of its 416 lines of code are new or changed and 1631 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/A/LinkExitFile.v, with its module paths and module names changed; 217 of its 261 lines of code are new or changed and 372 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's channel-reader flag kept in exf_mid over the flush (LinkDrvExitF.v's sbm_rdr)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -107,7 +108,7 @@ Theorem exf_loop_pend_ok : exf_loop_pend_tfa PcapB xst.
 Proof.
 intros W regs mem md usp code f k fs tid cval sew wpos0 wbase0 MID G8 _ _ _.
 pose proof MID as (Msp & M16 & Musp & Mgp & Mtp & Mtpx & Mpres & Mcode & Mc02 & Mra & Mra2 &
-  Mcells & Mtid & Mtidr & Mgot & Mcan & Mcanr & Msew1 & Msew2 & Msewr & Mso & Mfds & Mfs & Mgi & Mf4 & Mf16 & Mfh &
+  Mcells & Mtid & Mtidr & Mgot & Mcan & Mcanr & Msew1 & Msew2 & Msewr & Mso & Mfds & Mcr & Mfs & Mgi & Mf4 & Mf16 & Mfh &
   Mnoar).
 pose proof Mnoar as (Nicpt & Nsra & Nshull & Nby & Nrange & Nbelow & Nfra & Nfhull).
 pose proof Musp as [Ulo Uhi]. unfold sp_window_lo, sp_window_hi in Ulo, Uhi.
@@ -250,6 +251,7 @@ split.
   - right. split; [exact Hk1|]. apply (XFR k (w_H W) (w_H W) mem mem2 HX). intros a Ha. apply IMGK;
     unfold STDOUT_MUT, STDOUT_LO, STDOUT_HI, SOBUF_LO, SOBUF_HI in Ha; lia. }
 split; [intros fd; rewrite (proj1 (sbm_fds_fs md md3 SB)); exact (Mfds fd)|].
+split; [rewrite (sbm_rdr md md3 SB); exact Mcr|].
 split; [rewrite (proj2 (sbm_fds_fs md md3 SB)); exact Mfs|].
 split.
 { right. exists f. split; [|split; [reflexivity | exact (proj1 Hk2)]].

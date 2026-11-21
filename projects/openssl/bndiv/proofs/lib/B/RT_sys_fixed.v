@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the two fixed-mmap proofs get the reserved-range clause from artm_res_free_in_maps, since the reserved ledger is no longer a bare equality now that the vDSO tail is appended, and pass mdl_fixed_reader for the channel-reader premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -183,13 +184,21 @@ Proof.
       unfold B, S in Hov. cbn [fst snd] in Hov. rewrite E7a, E7n in Hov. specialize (Hov ltac:(lia) ltac:(lia) ltac:(lia)). lia. }
     split; [exact Hwf|].
     split; [unfold alloc_top, stack_max_size; rewrite Hisp; lia|].
-    split; [rewrite Eres; apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia|].
+    (* [Eres] is no longer a bare equality and cannot be rewritten with.  What
+       separates this range from the launch's vDSO tail is that it lies inside the
+       mapping [Hin7] the runtime already tracks, and ARTM_A's reserved clause puts
+       every tracked mapping apart from the tail.  Hunk from bignum
+       BgB/RT_sys_fixed.v:178-181; the hypothesis names are the same in this file. *)
+    split; [apply (artm_res_free_in_maps mo _ _ _ Eres Hin7);
+              [ cbn [fst snd]; rewrite ?Eua, ?Eul, ?E7a, ?E7n; lia
+              | cbn [fst snd]; rewrite ?Eua, ?Eul, ?E7a, ?E7n; lia
+              | apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia ]|].
     split; [apply (map_contains_intro _ _ _ _ Hin7); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E7a, ?E7n; lia|].
     split; [rewrite Elim; unfold E0_MAX, VMLIMIT in *; lia|].
     split.
     + (* [comment removed for export] *)
       split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_maps]; rewrite EM; exact Hperm|].
-      split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; exact Eres|].
+      split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved vm_maps]; exact Eres|].
       split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_limit]; exact Elim|].
       split.
       { pose proof (eager_used_fixed50_le mo (Z_to_bv 64 addr) (Z_to_bv 64 len) Hwf) as Hle. rewrite Eua, Eul in Hle. lia. }
@@ -212,7 +221,7 @@ Proof.
       (* [comment removed for export] *)
       split; [unfold maps_zbound; rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_maps]; exact Hzb|].
       apply NodesA_madv.noaccess_pos_fixed; [exact Hwf| exact Hnp].
-    + apply (HPMc mo); [apply mdl_fixed_fds| apply mdl_fixed_fs| exact HPc].
+    + apply (HPMc mo); [apply mdl_fixed_fds| apply mdl_fixed_fs| apply mdl_fixed_reader| exact HPc].
   - intros mo (HA & _). pose proof HA as (_ & _ & _ & _ & (_ & _ & _ & Hisp & _)). unfold alloc_top, stack_max_size. rewrite Hisp. lia.
 Qed.
 
@@ -260,12 +269,17 @@ Proof.
       unfold B, S in Hov. cbn [fst snd] in Hov. rewrite E9a, E9n in Hov. specialize (Hov ltac:(lia) ltac:(lia) ltac:(lia)). lia. }
     split; [exact Hwf|].
     split; [unfold alloc_top, stack_max_size; rewrite Hisp; lia|].
-    split; [rewrite Eres; apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia|].
+    (* same cause as the first block, with [Hin9]/[E9a]/[E9n] in place of
+       [Hin7]/[E7a]/[E7n]; hunk from bignum BgB/RT_sys_fixed.v:261 *)
+    split; [apply (artm_res_free_in_maps mo _ _ _ Eres Hin9);
+              [ cbn [fst snd]; rewrite ?Eua, ?Eul, ?E9a, ?E9n; lia
+              | cbn [fst snd]; rewrite ?Eua, ?Eul, ?E9a, ?E9n; lia
+              | apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia ]|].
     split; [apply (map_contains_intro _ _ _ _ Hin9); cbn [fst snd]; rewrite ?Eua, ?Eul, ?E9a, ?E9n; lia|].
     split; [rewrite Elim; unfold E0_MAX, VMLIMIT in *; lia|].
     split.
     + split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_maps]; rewrite EM; exact Hperm|].
-      split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved]; exact Eres|].
+      split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_reserved vm_maps]; exact Eres|].
       split; [rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_limit]; exact Elim|].
       split.
       { pose proof (eager_used_fixed50_le mo (Z_to_bv 64 addr) (Z_to_bv 64 len) Hwf) as Hle. rewrite Eua, Eul in Hle. lia. }
@@ -287,6 +301,6 @@ Proof.
       (* [comment removed for export] *)
       split; [unfold maps_zbound; rewrite mdl_fixed_vmmaps; unfold mmap_fixed_rw_next; cbn [vm_maps]; exact Hzb|].
       apply NodesA_madv.noaccess_pos_fixed; [exact Hwf| exact Hnp].
-    + apply (HPMc mo); [apply mdl_fixed_fds| apply mdl_fixed_fs| exact HPc].
+    + apply (HPMc mo); [apply mdl_fixed_fds| apply mdl_fixed_fs| apply mdl_fixed_reader| exact HPc].
   - intros mo (HA & _). pose proof HA as (_ & _ & _ & _ & (_ & _ & _ & Hisp & _)). unfold alloc_top, stack_max_size. rewrite Hisp. lia.
 Qed.

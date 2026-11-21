@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,7 +27,7 @@ Section Laws.
   (* [comment removed for export] *)
   Lemma akernel_vm_ext : forall (s : ast) mo mo',
     m_vmmaps mo' = m_vmmaps mo -> akernel s mo -> akernel s mo'.
-  Proof. intros s mo mo' E K. unfold akernel in *. rewrite E. exact K. Qed.
+  Proof. intros s mo mo' E K. unfold akernel, akernel_resx in *. rewrite E. exact K. Qed.
 
   Lemma AMODEL_vm_ext : forall (s : ast) mo mo',
     m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> AMODEL s mo -> AMODEL s mo'.
@@ -171,6 +172,9 @@ Scheme kc__2 := Elimination for Corelib.Init.Logic.and Sort Prop.
       + intros ms mo ms' mo' [_ K] LZ E1 E2. split; [exact LZ|]. cbn [cfg_model] in *. exact (IK_vm_ext s mo mo' E1 E2 K).
     - (* [comment removed for export] *) intros mo mo' (Efd & _ & Efs & Epr & _). unfold m_fs, m_fds, m_halted. rewrite Efd, Efs, Epr. repeat split; reflexivity.
     - (* [comment removed for export] *) intros mo mo' SB. exact (nonvm_same_mat mo mo' SB).
+    - (* [adl_rdr]: [nonvm_same]'s fourth conjunct is the [m_proc] equation the [adl_mpres]
+         bullet above rewrites with; [m_channel_reader] is a projection of [m_proc]. *)
+      intros mo mo' (_ & _ & _ & Epr & _). unfold m_channel_reader. rewrite Epr. reflexivity.
     - (* [comment removed for export] *) exact inst_live.
   Qed.
 End Laws.

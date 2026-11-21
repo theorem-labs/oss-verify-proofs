@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YN03.v, with its module paths and numbers changed; 1 of its 535 lines of code are new or changed and 2 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ledger_ok). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -93,7 +94,8 @@ st_tables : forall a, table_addr a -> mbyte segs mem a = seg_rom segs (w64 a);
 st_vmlock : forall i, 0 <= i < vml_len B -> mbyte segs mem (vml_lo B + i) = Some (Z_to_bv 8 0)
 }.
 Record ledger_ok (L : layout) (A : astate) (md : Model) : Prop := {
-lg_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+lg_reserved : exists rx, vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx
+/\ rx_ok (ly_brk0 L) rx;
 lg_limit : SRC_LIM_MIN <= vm_limit (m_vmmaps md);
 lg_maps : forall r rg, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg <> RkBrk ->
 In (w64 (ly_reg L r), w64 (rg_len rg)) (vm_maps (m_vmmaps md));

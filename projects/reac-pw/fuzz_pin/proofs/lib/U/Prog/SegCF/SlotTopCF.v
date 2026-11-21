@@ -1,8 +1,8 @@
 (* The cut-free (agreement) slot of reac-pw/fuzz_pin's UBSan build: lib_contract_cg for every j < 4, from the
    cut-free copy of the slot proof (U/Prog/SlotInvCF.v, SegCF/*.v) under the agreement frame's facts
    (SlotInvCF.frame_facts_cf: U/FrameAPI.frame_facts_ubsan with the cut-free allocator and the agreement room
-   128 <= sb_cap <= CAP_AG). libreac/fuzz_ctrl's released U/Prog/SegCF/SlotTopCF.v with its SegCF/Segs.v
-   (origin/ossv/recipes 25e3d17bdb50), for pin's three segments:
+   128 <= sb_cap <= CAP_AG). libreac/fuzz_ctrl's released U/Prog/SegCF/SlotTopCF.v with its SegCF/Segs.v,
+   for pin's three segments:
    - segs_cf: the cut-free segment lemmas (StmtsCF.seg_lemmas) for every instance with frame_facts_cf, from
      SegCF/E01.v (memchr: the released leaf U/Prog/memchr.v), SegCF/M01.v (pin_mid_contract, proved by
      U/Prog/pin_mid.v from memcpy and strlen (released leaves) and the _holds theorems of pin's own callees in this

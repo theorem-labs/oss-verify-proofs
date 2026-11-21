@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of the sup_broadcast walk on the ASan+UBSan build of plugin-hostd/fuzz_command
-   (fuzz_command.asan-ubsan, 0x8b4f0, 19 instructions), made from a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s1.v at
-   a5a5ff08765, a working branch): the return points of the two calls, the walk's footprint and
+   (fuzz_command.asan-ubsan, 0x8b4f0, 19 instructions), made from a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s1.v,
+   a working branch): the return points of the two calls, the walk's footprint and
    post-condition, and two facts the A kit carried under local names: HPROG (every byte of g_rec, record.spill and
    g_quitting is one of the record's program statics, over B's ts_prog, lib/B/YF0m.v:4874, :4899) and
    sb_blocks_nodup (the live blocks start at distinct addresses, from AR's al_sep). B keeps record() as a function
    (lib/B/Prog/record_c.v), so the A kit's shadow facts for the inline store checks are record's and stay out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

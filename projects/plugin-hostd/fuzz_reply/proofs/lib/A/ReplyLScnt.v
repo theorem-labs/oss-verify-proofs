@@ -1,30 +1,31 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_gone_base_x.v, with its module paths and module names changed; 432 of its 501 lines of code are new or changed and 589 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The count rows LS_cnt of LS v3, one per arm (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), the ROOM round), at the instance
    LSx := fr_LS3cp B (ReplyLS3p.v) and RINV := fr_RINV, for a Theorem Labs lane's FREE-PIECES row B1c.
-   proves no function (kind: invariant lemma).  Arm files and line numbers: a working branch at 4e0e1968abd;
-   the callees' count premises: the ROOM round audit cb71685bcb2, lib/A/W_contract_x.v and lib/A/W_op_add.v.
+   proves no function (kind: invariant lemma).  Arm files and line numbers: a working branch;
+   the callees' count premises: the ROOM round audit, lib/A/W_contract_x.v and lib/A/W_op_add.v.
 
    WHAT A ROW SAYS.  At the arm's cut point (ly, S), for the arm's peak PK : (Z -> bool) -> nat,
      acnt Psec (ablocks B ly S) + PK Psec <= Lsec /\ acnt P24 (ablocks B ly S) + PK P24 <= L24 /\
      (forall c, 1 <= c <= 30 -> acnt (Pcls c) (ablocks B ly S) + PK (Pcls c) <= LPRIM c)
    in ReplyCnt.v's names (Lsec = 1,024, L24 = 2^15, LPRIM c = RL_PRIM c = 2^31 / class_size c).  PK P is at least,
    at every allocating callee call of the arm, the net count the earlier callees added plus that callee's OWN premise
-   peak (the audit's rule, W_contract_x.v:274-284: a callee's premise is fixed text, so the arm pays the callee's
+   peak (the audit's rule, W_contract_x.v:275-285: a callee's premise is fixed text, so the arm pays the callee's
    stated constant, not its smaller actual peak).  A net growth is at most a peak, so a sum of the earlier callees'
    trace peaks plus the largest premise constant is enough.  The arm's walk gets each inner call's count premise from
    the row and the block relation it threads (ROOM-TEXTS (b), "Inner-call derivation"; cnt_ok_pk_mono, audit
-   W_journal_x.v:1402).
+   W_journal_x.v:1403).
 
    THE PEAKS (the forms W8Entry-2 matches), with the callees' premise peaks at the audit:
-   - SEG_PRO, ARM_add: op_add, oa_peak (W_op_add.v:348, :430).  pk_oa P = [P ATABLE] + [P APARTIAL], oa_peak's text.
-   - ARM_write: list_push, lp_peak (W_contract_x.v:260, :377).  pk_lp = lp_peak word for word.
+   - SEG_PRO, ARM_add: op_add, oa_peak (W_op_add.v:349, :431).  pk_oa P = [P ATABLE] + [P APARTIAL], oa_peak's text.
+   - ARM_write: list_push, lp_peak (W_contract_x.v:261, :378).  pk_lp = lp_peak word for word.
    - ARM_drain: drain, dr_pk = own trace peak + 2 (:303-304, :764); check_no_loss_read (no request); check_no_loss,
      cnl_pk E H = tr_peakP (cnl_tr E H) + 2 (:296-302, :1341); check_shape_done (no request).
      pk_drain m h j P = tr_peakP P (dr_tr ..) + (cnl_pk (hs_held h) (map (map (Z_to_bv 8)) (dr_lines h)) P + 2).
      The second summand is the audit's cnl_pk at the call: the drain appended its reference lines to the empty
-     expected list and kept the held list (dr_rel W_contract.v:1262, :1264; LS_cnl_pre's premises); lsc_cnl_call
+     expected list and kept the held list (dr_rel W_contract.v:1263, :1265; LS_cnl_pre's premises); lsc_cnl_call
      equates the call's own check_no_loss trace, under any naming (the audit's cnl_tr names every block
      RelayRunF.adr0), with this file's cnl_pk (ReplyTrPeakCnl.v; NOT the audit's W_contract_x.cnl_pk, which takes
      (E H) and adds the 2).
@@ -36,14 +37,14 @@
      check_no_loss (cnl_pk + 2), check_shape_ends (0); check_shape_done.
      pk_gone cx m hs P = tr_peakP P (rig_tr ..) + (the sum over the table of gn_cnl P, each open entry's cnl_pk of its
      drained texts) + 3.
-   - ARM_event: malloc (cnt_ok, peak 0, audit W_journal_x.v:1504), relay_event at S ++ [(q, re_len e)] with re_pk = 2
-     (W_contract_x.v:286, :816), free (cnt_ok; relay_event's own trace peak <= 2, W_tr_cnt.v tc_re :204).
+   - ARM_event: malloc (cnt_ok, peak 0, audit W_journal_x.v:1505), relay_event at S ++ [(q, re_len e)] with re_pk = 2
+     (W_contract_x.v:287, :817), free (cnt_ok; relay_event's own trace peak <= 2, W_tr_cnt.v tc_re :204).
      pk_event e P = [P (re_len e)] + 2.
    - SEG_EXIT: relay_finish rf_pk = 5 (:289, :1165), then check_shape_ends and source_reset (0); check_shape_done.
      pk_exit P = 5 (relay_finish's own trace peak <= 5, W_tr_cnt.v tc_rf :309, covers the later frees' premises).
    ROOM-TEXTS (c)'s table gives ARM_remove "rr's peak" and ARM_gone "rig's peak": both arms also call check_no_loss
    after a drain (_remove_x.v CNL :193; _gone_x.v's cnl_spec_x), whose premise peak depends on the drained lines
-   (the audit's cnl_pk, W_contract_x.v:302), so the rows here carry it.
+   (the audit's cnl_pk, W_contract_x.v:303), so the rows here carry it.
 
    THE GUARDS.  Each row takes the arm's own premises of its LS rules (ad_at_op; wr_pick and 0 < wr_n; dr_at_op,
    dr_pick, j, the fd and re_eof = 0; rm_at; gn_pairs; ev_evt), then facts the arm has at its cut point and LS / RINV
@@ -128,16 +129,16 @@ Open Scope Z_scope.
 
 (* ================================================================== the arms' peaks (Z -> bool) -> nat *)
 Definition zn (b : bool) : nat := if b then 1%nat else 0%nat.
-(* op_add: its premise peak oa_peak, word for word (audit cb71685bcb2 W_op_add.v:190): the partial buffer APARTIAL,
+(* op_add: its premise peak oa_peak, word for word (audit W_op_add.v:191): the partial buffer APARTIAL,
    then relay_add's new table ATABLE *)
 Definition pk_oa (P : Z -> bool) : nat := (zn (P ATABLE) + zn (P APARTIAL))%nat.
-(* list_push: its premise peak lp_peak, word for word (audit W_contract_x.v:260-261) *)
+(* list_push: its premise peak lp_peak, word for word (audit W_contract_x.v:261-262) *)
 Definition pk_lp (l : hlist) (n : Z) : (Z -> bool) -> nat :=
   fun P => ((if P (lp_vbytes l) && lp_grow l then 1 else 0) + (if P (n + 1)%Z then 1 else 0))%nat.
 (* the event: malloc (re_len e), then relay_event at the state with that block, its premise peak re_pk = 2 (audit
-   W_contract_x.v:286), then free *)
+   W_contract_x.v:287), then free *)
 Definition pk_event (e : list byte) (P : Z -> bool) : nat := (zn (P (re_len e)) + 2)%nat.
-(* the exit: relay_finish, its premise peak rf_pk = 5 (audit W_contract_x.v:289), then check_shape_ends and
+(* the exit: relay_finish, its premise peak rf_pk = 5 (audit W_contract_x.v:290), then check_shape_ends and
    source_reset (premise peak 0, frees) *)
 Definition pk_exit (P : Z -> bool) : nat := 5%nat.
 
@@ -147,7 +148,7 @@ Definition lsc_pq (p : rentry * (hsrc * nat)) : Prop :=
     (re_skip (fst p) = 0 \/ re_skip (fst p) = 1) /\ re_skip (fst p) = hs_overlong (fst (snd p)) /\
     (re_skip (fst p) = 0 -> bzs (re_U (fst p)) = bzs (hs_W (fst (snd p)))) /\
     Z.of_nat (length (re_U (fst p))) <= APARTIAL /\ 0 <= hs_off (fst (snd p)).
-(* the drain arm: drain (premise dr_pk = its trace peak + 2, audit W_contract_x.v:303), then check_no_loss (premise
+(* the drain arm: drain (premise dr_pk = its trace peak + 2, audit W_contract_x.v:304), then check_no_loss (premise
    cnl_pk E H = its trace peak + 2, :302) over the expected texts the drain appended (dr_rel / LS_cnl_pre:
    map snd (hl_recs (hs_expected h'')) = [] ++ map (map (Z_to_bv 8)) (dr_lines h)) and the held list it keeps
    (hs_held h'' = hs_held h) *)
@@ -325,8 +326,8 @@ Qed.
 
 (* ################################################################## the data-dependent arms *)
 (* ---- check_no_loss after a drain: the call's own trace (any naming nm of its blocks) has the rows' cnl_pk, from
-   the expected list the drain appended to (empty at the operation's start, fr_pair_ok ReplyRINV.v:165; dr_rel
-   W_contract.v:1262) and the held list it kept (dr_rel :1229) ---- *)
+   the expected list the drain appended to (empty at the operation's start, fr_pair_ok ReplyRINV.v:166; dr_rel
+   W_contract.v:1263) and the held list it kept (dr_rel :1229) ---- *)
 Lemma lsc_cnl_call : forall (j : nat) (nm : Z -> RelayRunT.addr YO0i.sptr) (h h'' : hsrc) (P : Z -> bool),
   hl_recs (hs_expected h) = [] ->
   map snd (hl_recs (hs_expected h'')) = map snd (hl_recs (hs_expected h)) ++ map (map (Z_to_bv 8)) (dr_lines h) ->

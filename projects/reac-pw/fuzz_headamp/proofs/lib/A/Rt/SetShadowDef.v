@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only the contract of the shadow-fill entries (__asan_set_shadow_XX), restated over the asan-state definitions of the cgif_file_fuzzer proof as libreac/fuzz_boxreg holds them; module names. *)
-(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a Theorem Labs lane a1ee3c81405) to libreac/fuzz_boxreg: module names only (this file states no image address). *)
-(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_identity (a working branch acd10c1e450) to libreac/fuzz_boxreg: module names only (this file states no image address). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/SetShadowDef.v at origin/ossv/recipes 09c6822d886 for reac-pw/fuzz_headamp: module paths only (this file states no image address); a Print Assumptions line added. *)
+(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a Theorem Labs lane) to libreac/fuzz_boxreg: module names only (this file states no image address). *)
+(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_identity (a working branch) to libreac/fuzz_boxreg: module names only (this file states no image address). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/SetShadowDef.v for reac-pw/fuzz_headamp: module paths only (this file states no image address); a Print Assumptions line added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

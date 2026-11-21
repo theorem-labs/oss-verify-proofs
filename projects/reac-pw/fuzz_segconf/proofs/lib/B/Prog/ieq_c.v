@@ -42,11 +42,12 @@
    IMAGE-INDEPENDENT: no image module is Required; A_ieq, STK_ieq, RLO and RHI are parameters, and the
    shadow-base cells are fields of B.
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); row 16 is in the accepted v1,
-   5e0b8a44fdc; at e45889d6935a strlen is that file's DECISION 2, option (b)):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; row 16 is in the accepted v1,;
+    strlen is that file's DECISION 2, option (b)):
      RtString.astrlen_realizes (row 16), at the strlen trampoline (image A 0x43a0c, interceptor 0x43abc).
    They are NOT premises of this contract: the statement does not mention them. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/ieq_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

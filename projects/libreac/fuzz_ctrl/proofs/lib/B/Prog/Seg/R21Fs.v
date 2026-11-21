@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1421 of its 1489 lines of code are new or changed and 943 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R21.v, with its addresses changed; 121 of its 199 lines of code are new or changed and 1411 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/Seg/R21Fs.v -- the NARROWED pre stretch of R21's tail (r21_tail_evt, Seg/R21.v:330), fuzz_ctrl image B
    (libreac v1.9.0).  The image-B twin of lib/A/Prog/Seg/R21Fs.v (image A, a Theorem Labs lane); single writer.
    rule 24: no function proved (a segment stretch).
@@ -11,13 +12,13 @@
    Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
      image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
        sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-     source run: lib/B/Prog/Seg/R21.v r21_tail_evt (:330-471), blob 54812916d1e4a55c3dac312e07f10606976d0d30 (the blob this tree had at release c5e779efe8c);
-     source stretch: lib/B/Prog/Seg/R21F.v c094b33a83e8cc77f6c945e4486d692eedccb020 (the blob this tree had at release c5e779efe8c), r21_tail_pre_F (:357-459)
+     source run: lib/B/Prog/Seg/R21.v r21_tail_evt (:330-471), blob 54812916d1e4a55c3dac312e07f10606976d0d30 (the blob this tree had at release);
+     source stretch: lib/B/Prog/Seg/R21F.v c094b33a83e8cc77f6c945e4486d692eedccb020 (the blob this tree had at release), r21_tail_pre_F (:357-459)
        (the h <> 0 guard on the rng premises of S5 + 20, the name pointer and its shadow byte, and the rows narrowed to
        the bytes both arms read: auditor a Theorem Labs lane, 2026-10-29 09:00Z, and a Theorem Labs lane's S5 items; the h <> 0 guard
        on the value premise of that shadow byte, K280: auditor a Theorem Labs lane, 2026-10-29 10:38Z);
-     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
      compare: r21_tail_pre_F_of_Fs re-derives R21F.r21_tail_pre_F, pinned term for term by
        r21_tail_pre_F_of_Fs_verbatim (constr_eq against the type of R21F.r21_tail_pre_F).
 
@@ -26,7 +27,7 @@
    25 conjuncts, but the stretch's own script (R21F.v, proof of r21_tail_pre_F) destructs HN and reads only three of
    them: the byte at S5 + 20 (R20), the name pointer at mr + 280 (R280) and 0 < nm < 2 ^ 64 (Hnm).  The other 22
    conjuncts (the two strings' bytes and addressability, end_in_app / app_mem, stk lo spv and its bounds, the two
-   window separations, asan_cells / shadow_rw / ro_agree, GOT_CF / CF + 250 / CF + 245 -- R21F.v:377-389) and the
+   window separations, asan_cells / shadow_rw / ro_agree, GOT_CF / CF + 250 / CF + 245 -- R21F.v:378-390) and the
    binders spv / lo / sx with `sp = Z_to_bv 64 spv` and `0 <= spv < 2 ^ 64` are premises of the plain
    strcmp_wrap_contract, which the stretch never applies: it stops AT the wrapper trampoline entry
    STRCMP_WRAP = 0x42aa0 (call pc 0x81c54, return pc 0x81c58), and astrcmp_realizes has no cell premise.

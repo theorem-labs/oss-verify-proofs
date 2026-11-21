@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 479 of its 533 lines of code are new or changed and 284 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the cut statements
    of the walk of the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0, 1,248 instructions), and the
    statement of every segment lemma between them. Statement text only: no function of the binary is proved here.
 
-   THE FORM: the image-B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v (image A's cut-statement commit
-   6888a1bad128), with the same definition and lemma names, so that an image-A segment proof becomes an image-B
+   THE FORM: the image-B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v (image A's cut-statement),
+   with the same definition and lemma names, so that an image-A segment proof becomes an image-B
    one by renaming registers, slots and pcs; only the cut names carry image B's pcs. Image A's form is
    plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_defs.v; its image-B twin there
-   (lib/B/Prog/LLVMFuzzerTestOneInput_defs.v at origin/ossv/recipes 3abc3740de97) differs from its A file only in
+   (lib/B/Prog/LLVMFuzzerTestOneInput_defs.v) differs from its A file only in
    the registers, the frame slots and the LO_* offsets, as this file differs from image A's. The context record
    lcx, lt_base (the contract's premises word for word, so lt_adapter is exact), lt_post / lt_Q (its post word
    for word), and one LT_<cut>_stmt per cut: "from this point of the function to its return, under the entry's

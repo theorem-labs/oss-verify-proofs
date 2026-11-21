@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_sum16_w_c.v at bb3053036017d1d92db6eca9e973ce610be16c08 to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_sum16_w_c.v to fuzz_transport's images *)
 (* Wide contract of diginet_sum16 in fuzz_transport.ubsan (0x17f60), for a caller that gives p = 0
    with no bytes. diginet_frame_build calls diginet_sum16 (body, body_len) in the mode
    DIGINET_SUM_BODY (0x183b8), and a caller of diginet_frame_build can give body = NULL and

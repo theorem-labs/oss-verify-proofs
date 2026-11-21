@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_malloc.v (a working branch 7a6aa01e779), relocated by
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_malloc.v (a working branch), relocated by
    b_reloc.py (mal; revcheck report (internal path)), the call boundary moved by
    hand. B splits A's fuzz_malloc 0x8193c in two: fuzz_malloc 0x81b88 (frame 16: failing(), the size check, malloc (n + 16)
    at 0x81bcc, NULL -> 0) restores its frame and TAIL-CALLS the outlined own 0x81bfc (`j` at 0x81be4; own's frame is its

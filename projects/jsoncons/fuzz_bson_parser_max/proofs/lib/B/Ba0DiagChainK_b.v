@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed dg_chain_run; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagChainK.v, lines 118, 175, 195-196. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -116,7 +117,7 @@ Section Chain.
     dinvA LB LK cr A M model -> m_fs model = fs ->
     agree0 MVi (mrestrict (ahid A model) M) S -> mem_grows MVi (mrestrict (ahid A model) M) ->
     usp - 4096 <= S <= usp -> S <= Sf <= usp -> Sf mod 16 = 0 ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVi (Z_to_bv 64 (a + d)) k = true) ->
+    (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVi (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 1282048 -> MVi (Z_to_bv 64 i) = None) ->
     exitE tid MVi -> stdoutPA MVi ->
     fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
@@ -173,6 +174,7 @@ Section Chain.
       + exact HM1.
       + exact Hh1.
       + exact FD1.
+      + exact (di_rdr _ _ _ _ _ _ _ _ _ _ D1).
       + unfold wv_regs. repeat split; assumption.
       + rewrite VIS1. unfold wv_iov. split; [exact W3|]. split; [exact W4|]. split; [exact Wc|]. split; [exact I0|]. split; [exact I1|].
         split. { replace (Z_to_bv 64 q) with (Z_to_bv 64 (q + 0)) by (f_equal; lia). apply (store_ok_mono ASEGS _ MVi ME _ MGiE). apply (WINi q (16 * c)); lia. }
@@ -192,7 +194,8 @@ Section Chain.
           - exact GRM3.
           - exact (sbm_vml _ _ SBM3).
           - exact MI3.
-          - rewrite (sbm_halted_eq _ _ SBM3). exact Hh1. }
+          - rewrite (sbm_halted_eq _ _ SBM3). exact Hh1.
+          - exact (sbm_rdrA _ _ SBM3). }
         pose proof (ahid_sbm A model1 model3 SBM3) as AH3. rewrite VIS1 in FRV3, GRV3. rewrite <- AH3 in FRV3, GRV3.
         set (MV3 := mrestrict (ahid A model3) M3) in *.
         apply (IH LB LK cr A MVi S Sf tid fs fxE R3 0x120264 M3 model3 D3).

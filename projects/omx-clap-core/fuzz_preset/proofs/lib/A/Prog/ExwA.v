@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: ex_word (fuzz_preset.c :322-332) of fuzz_preset's asan image A' (the #102 pin 1be0f53d,
    unstripped twin bff8519b), A_prog_sigma AS_ex_word = 0x8452c, 87 slots of A_prog_listing (slot 3027 of
    PAImg_prog's A_entry_ex_word; read for the instruction stream only).
-   PORTED from a Theorem Labs lane's walk of image B' (lib/B/Prog/ExwB.v, a working branch 66eac2b9522a, B' ex_word
+   PORTED from a Theorem Labs lane's walk of image B' (lib/B/Prog/ExwB.v, a working branch, B' ex_word
    0x848d4): the same plan (ONE walk ex_word_walk over a memory invariant P, the two runtime calls through the rule
    shapes ew_strlen_rule / ew_bcmp_rule), RE-WALKED at A'. A' has no UBSan instrumentation, so B''s `unimp` edges
    (`bnez q & 7`, `bnez v & 7`, `bltu p + len < p`, the xor test) and their refutations are gone; the shadow base is s7
@@ -1369,7 +1370,7 @@ Qed.
 End w.
 End e.
 
-(* ---- the every-fx form S8aWord.v:268 / S8aStr.v:1253's WORDX takes: the two call texts depend on the float state,
+(* ---- the every-fx form S8aWord.v:269 / S8aStr.v:1254's WORDX takes: the two call texts depend on the float state,
    so they are taken at every fx; the allocator laws and the image binding do not mention it ---- *)
 Section a. Context {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {RL : PrhRoomLive}.
 Variable B : asyms.

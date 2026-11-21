@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: four blank lines removed; nothing else changed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,7 +26,6 @@ Proof. intros a k Ha. unfold btgt. apply v_addi_lit. exact Ha. Qed.
 Lemma c_eq_lit : forall a b, 0 <= a < 2 ^ 64 -> 0 <= b < 2 ^ 64 ->
 c_eq (Z_to_bv 64 a) (Z_to_bv 64 b) = Z.eqb a b.
 Proof. intros a b Ha Hb. unfold c_eq, bv_eqb. rewrite !u_lit by lia. reflexivity. Qed.
-
 Ltac rif :=
 repeat match goal with
 | |- context [if bv_eqb ?a ?b then ?u else ?v] =>
@@ -210,14 +210,12 @@ Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a =
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Definition Hv (E : env) (cs : acs) (model : Model) : word -> bool := fun a => negb (vis A TOP E cs model a).
-
 Lemma Hv_high : forall E cs model (a : word), TOP <= bv_unsigned a -> Hv E cs model a = false.
 Proof.
 intros E cs model a Ha. unfold Hv, vis. apply negb_false_iff.
 replace (TOP <=? bv_unsigned a) with true by (symmetry; apply Z.leb_le; exact Ha).
 rewrite orb_true_r. reflexivity.
 Qed.
-
 Lemma lazy_cover_vis : forall E cs R FULL model,
 cs_ok SEGS A LIMIT TOP SINV argH FS0 E cs R FULL model -> lazy_cover (Hv E cs model) (m_vm_lazy model) (allowA A E cs).
 Proof.
@@ -250,7 +248,6 @@ exists (pagedown (sh_lo A E p), pageup (sh_hi A E p)). split.
 * cbn [fst snd]. apply andb_true_intro. split; apply Z.leb_le; unfold pagedown, pageup; lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-
 Lemma H_off_segments_vis : forall E cs model, H_off_segments SEGS (Hv E cs model).
 Proof.
 intros E cs model a Hh. unfold Hv in Hh. apply negb_true_iff in Hh. unfold vis in Hh.

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: W_shadow_pin.v's ashp for the program's literals at the pinned placement PB_fr
    (W_img.v), for every B with the start-up instance's TfibSyms B (lib/A/AF0m.v, sha256 3845e3de2622; internal record, carried by path
-   as in a working branch 56c6b16d1c8).  Each lemma is shp_ashp over Tfib_const_shadow and
+   as in a working branch).  Each lemma is shp_ashp over Tfib_const_shadow and
    Tfib_zero_shadow, decided by vm_compute.  The literals and the shadow bytes their last granule rests on (a
    partial granule, so no zero-shadow range holds the literal and `azs` is false there):
      .str.2   ""             0x20ee0, 1 byte    granule 0x20ee0 shadow 0x7fffc1dc = 1
@@ -13,6 +13,7 @@
      .str.7   "end\0"        0x20f60, 4 bytes   granule 0x20f60 shadow 0x7fffc1ec = 4
    Every other byte of each 8-aligned shadow hull is a 0xf9 redzone cell of Tfib_const_shadow or the zero shadow
    byte 0x7fffc1e4.  The names carry the byte count: ashp_<literal>_<n>_fr. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType.

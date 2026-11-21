@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap_maps_next takes the old length and removes the old mapping by maps_subtract; ledger_ok's vDSO fields, with the new map missing the reserved list (RFREE), a new premise of realloc_ok_leaf). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -366,11 +367,13 @@ Hypothesis RETce : RET + NEEDED <= alloc_ceiling.
 Hypothesis DISJ : forall e, In e (vm_maps (m_vmmaps md)) -> e <> (w64 MEM, w64 OLDLEN) ->
 ranges_disjoint (RET, NEEDED) (iv_lo e, iv_len e).
 Hypothesis NIMG : forall x, RET <= x < RET + NEEDED -> ~ in_img B x.
+(* 727298f3: the new map misses the model's reservations (the vvar/vDSO pair among them), for ledger_ok's lg_rfree. *)
+Hypothesis RFREE : region_free (vm_reserved (m_vmmaps md)) (w64 RET) (w64 NEEDED) = true.
 Definition r' : nat := length (st_regions A).
 Definition L' : layout := Layout (ly_ctx L) (fun k => if Nat.eqb k r' then RET else ly_reg L k) (ly_brk0 L) (ly_sec L).
 Definition A' : astate := A_ok A g am fr n.
 Definition am' : ameta := newam am fr n r' (NEEDED / 4096).
-Definition vm' : VmMaps := mremap_maps_next (m_vmmaps md) (w64 MEM) (w64 RET) (w64 NEEDED).
+Definition vm' : VmMaps := mremap_maps_next (m_vmmaps md) (w64 MEM) (w64 OLDLEN) (w64 RET) (w64 NEEDED).
 Definition md' : Model := with_vmmaps vm' md.
 Definition rgn : YO0i.region := mkRegion RkMap NEEDED [] true.
 Lemma r_lt : (r < r')%nat.
@@ -556,6 +559,8 @@ Lemma ERET : bv_unsigned (w64 RET) = RET.
 Proof. pose proof needed_facts' as (_ & _ & N3 & _). pose proof alloc_ceiling_lt. unfold w64. rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia. Qed.
 Lemma ENEED : bv_unsigned (w64 NEEDED) = NEEDED.
 Proof. pose proof needed_facts' as (_ & _ & N3 & _). pose proof alloc_ceiling_lt. unfold w64. rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia. Qed.
+Lemma old_entry_in : In (w64 MEM, w64 OLDLEN) (vm_maps (m_vmmaps md)).
+Proof. destruct reg as (rg & Hr & Hk & Hl & Hlen). unfold MEM. rewrite <- Hlen. apply (lg_maps _ _ _ _ LG r rg Hr Hl). rewrite Hk. discriminate. Qed.
 Lemma vm'_facts :
 vm_maps (m_vmmaps md') = (w64 RET, w64 NEEDED) :: map_remove (vm_maps (m_vmmaps md)) (w64 MEM) /\
 vm_noaccess (m_vmmaps md') = vm_noaccess (m_vmmaps md) /\
@@ -565,10 +570,23 @@ vm_start_brk (m_vmmaps md') = vm_start_brk (m_vmmaps md) /\
 vm_brk (m_vmmaps md') = vm_brk (m_vmmaps md) /\
 m_halted md' = m_halted md /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = [].
 Proof.
-destruct Hmd as (H1 & H2 & H3). unfold md', vm', mremap_maps_next, with_vmmaps. cbn. rewrite H2, H3. repeat split; reflexivity.
+assert (SUB : maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (w64 MEM))
+  (bv_unsigned (w64 MEM) + bv_unsigned (w64 OLDLEN)) = map_remove (vm_maps (m_vmmaps md)) (w64 MEM)).
+{ apply maps_subtract_exact.
+  - exact (proj1 (lx_maps _ _ _ LX _ old_entry_in)).
+  - intros b s Hin0. exact (proj1 (lx_maps _ _ _ LX _ Hin0)).
+  - intros b s Hin0 Hb. subst b.
+    destruct (lx_disj _ _ _ LX _ _ Hin0 old_entry_in) as [E|D].
+    + exact (f_equal snd E).
+    + pose proof (proj1 (lx_maps _ _ _ LX _ Hin0)).
+      pose proof (proj1 (lx_maps _ _ _ LX _ old_entry_in)).
+      unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in *. exfalso; lia.
+  - intros b s Hin0 Hne0.
+    destruct (lx_disj _ _ _ LX _ _ Hin0 old_entry_in) as [E|D].
+    + exfalso. apply Hne0. exact (f_equal fst E).
+    + exact D. }
+destruct Hmd as (H1 & H2 & H3). unfold md', vm', mremap_maps_next, with_vmmaps. cbn. rewrite SUB, H2, H3. repeat split; reflexivity.
 Qed.
-Lemma old_entry_in : In (w64 MEM, w64 OLDLEN) (vm_maps (m_vmmaps md)).
-Proof. destruct reg as (rg & Hr & Hk & Hl & Hlen). unfold MEM. rewrite <- Hlen. apply (lg_maps _ _ _ _ LG r rg Hr Hl). rewrite Hk. discriminate. Qed.
 Lemma len_nonneg k rg : region_of A k = Some rg -> 0 <= rg_len rg.
 Proof. exact (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (inv_areas HW)))))))) k rg). Qed.
 Lemma other_region k rg : k <> r -> region_of A k = Some rg -> rg_live rg = true -> reg_lo rg < rg_len rg ->
@@ -714,6 +732,12 @@ cbn [State.live_bytes] in X1. rewrite ENEED in X1.
 pose proof (live_bytes_map_remove _ _ _ EIN) as LR. rewrite EOLD in LR.
 pose proof (lx_lb _ _ _ LX). rewrite live_bytes_A'. lia.
 -   exact (lg_ceil _ _ _ _ LG).
+- exact (lg_vdso _ _ _ _ LG).
+- intros k rg Hk Hl Hkind. rewrite VR. destruct (Nat.eq_dec k r') as [->|Hk'].
++ rewrite region_of_A', Nat.eqb_refl in Hk. replace (Nat.eqb r' r) with false in Hk by (symmetry; apply Nat.eqb_neq; lia).
+injection Hk as <-. cbn [rg_len rgn]. rewrite L'_new. exact RFREE.
++ destruct (OTHER k rg Hk Hl Hk') as (Hkr & HkA & Hlt & ->). exact (lg_rfree _ _ _ _ LG k rg HkA Hl Hkind).
+- exact (lg_brk_vdso _ _ _ _ LG).
 Qed.
 Lemma ledger_x_A' : ledger_x L' A' md'.
 Proof.
@@ -1534,6 +1558,7 @@ realloc_gctx B L A mem md g am fr n ->
 OLDLEN am <> NEEDED fr n -> RET mod PGSZ = 0 -> 0 < RET -> RET + NEEDED fr n <= alloc_ceiling ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> e <> (w64 (MEM L am), w64 (OLDLEN am)) -> ranges_disjoint (RET, NEEDED fr n) (iv_lo e, iv_len e)) ->
 (forall x, RET <= x < RET + NEEDED fr n -> ~ in_img B x) ->
+region_free (vm_reserved (m_vmmaps md)) (w64 RET) (w64 (NEEDED fr n)) = true ->
 ok_memspec B L A mem g am fr n RET mem' SCR ->
 MRx B (L' L A RET) (A' A g am fr n) mem' (md' L md am fr n RET) /\
 WF (A' A g am fr n) /\ bounded (A' A g am fr n) /\ layout_le A L (L' L A RET) /\
@@ -1547,9 +1572,9 @@ mbyte (ms_segs B) mem' (ptr_addr L q + i) = mbyte (ms_segs B) mem (ptr_addr L q 
 (exists l1 l2 m1 m2, user_blocks A = l1 ++ (frame_ptr am 0 fr, NOLD fr) :: l2 /\ m1 ++ m2 = l1 ++ l2 /\
 user_blocks (A' A g am fr n) = m1 ++ (p_ok A am fr n, n) :: m2) /\
 (m_vm_lazy md = [] /\ m_vm_materialized md = [] /\ m_halted md = None /\
-md' L md am fr n RET = with_vmmaps (mremap_maps_next (m_vmmaps md) (w64 (MEM L am)) (w64 RET) (w64 (NEEDED fr n))) md).
+md' L md am fr n RET = with_vmmaps (mremap_maps_next (m_vmmaps md) (w64 (MEM L am)) (w64 (OLDLEN am)) (w64 RET) (w64 (NEEDED fr n))) md).
 Proof using.
-intros [MX Hu Hfr H63 Hn Hin] Hne RETal RETpos RETce DISJ NIMG [SCRhi COPY Wp3 Wg16 Wg24 Wg28 Wg32 Wend Wpn We45 PRES FRAME PRESG].
+intros [MX Hu Hfr H63 Hn Hin] Hne RETal RETpos RETce DISJ NIMG RFREE [SCRhi COPY Wp3 Wg16 Wg24 Wg28 Wg32 Wend Wpn We45 PRES FRAME PRESG].
 split; [eapply MRx_A'; eassumption|].
 split; [eapply WF_A'; eassumption|].
 split; [eapply bounded_A'; eassumption|].

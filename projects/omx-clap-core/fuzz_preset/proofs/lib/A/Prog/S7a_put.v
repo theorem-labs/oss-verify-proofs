@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A' (the #102 asan pin 1be0f53d), slice S7a: the program walk of put (A' 0x87094, 129 instructions)
    over the ONE image-A program listing (lib/A/Listing_prog.v, the A' listing v3), generic in the image facts (Context
    PAImg) and in the allocator relation ARx (LAWS : AR_laws_x), concluding the kit's text tput_specX (put_holds). THIS
-   VERSION is on the kit's CUT 7cdbb61b5fa0 (merged forward into the batch prep on the batch kit's tip e45217a4c7ba, whose texts it was
+   VERSION is on the kit's CUT (merged forward into the batch prep on the batch kit's tip, whose texts it was
    re-fitted to; the cut's PRH_FnWriter / PRH_FnAlloc are the batch kit's bytes): every file but the lane's is the cut's
    (CfParamsPreset b60d0f63c926). The texts it meets: PRH_FnWriter's tput_specX (the run event as an entry premise,
    the consumer window prh_cons_from, the live room per event prh_live_evs, the per-arm position post with f' = 1's
    history existential, the post prhWriter_ret_ok under prh_granted: DEAD-PUT); PRH_FnAlloc's tfuzz_realloc_specX
    (the position as a post-implication of the call's own events, THE OUTCOME at a consumer allocation: res <> 0, the
    live premise guarded by cnt <> fail); PRH_Base's ledger with the #102 cells most / own. Relocated from the old-pin
-   donor c2f1ac7094cb by alreloc c4338d099cfb8025 (re-run byte-identical on
+   donor by alreloc c4338d099cfb8025 (re-run byte-identical on
    0474699fc83547e0).
    rule 24: proves function put. No kit/ARx proof of put exists (WalkS7a's reuse search, the internal file r24v2-REPORT.md, checker
    WalkS7a.S7aR24Check2 CONFIRM); the structure is walk-S10's S10TxPut.v (tx_put), a Theorem Labs lane's put.v a reading
@@ -1975,7 +1976,7 @@ cbn [List.filter List.fold_right]. destruct (is_alloc k); cbn [List.map List.fol
 Qed.
 
 Section rp.
-(* the position interface the text carries (the batch kit's e45217a4c7ba, PRH_FnWriter.v tput_specX; the leaf
+(* the position interface the text carries (the batch kit, PRH_FnWriter.v tput_specX; the leaf
    lib/Spec/PresetRoomPos.v): fixed through put's walk, only the index and the history advance *)
 Variable rp_sm : list Z -> Z * Z.
 Variable rp_x : list Z.
@@ -2162,7 +2163,7 @@ injection Hv as <-.
 lia.
 Qed.
 (* a word's eight bytes give the word (YCem.v rdword_of_val_mem's proof, for this file: YCem's Require closure, YCeh.v,
-   does not build on the engine s1b 459129c18903, YCeh.v:63) *)
+   does not build on the engine s1b, YCeh.v:64) *)
 Lemma put_rdword_of_val_mem : forall (H : word -> bool) mem a v,
   val_mem SEGS (mrestrict H mem) a 8 v -> 0 <= v < 2 ^ 64 -> rdword (aview SEGS H mem) a = Some v.
 Proof.
@@ -3027,7 +3028,7 @@ split.
 { intros Hg f' Hf'. split.
   - intros _. apply HPS. pose proof (HEV Hg Hcf) as HE. unfold prhWriter_ev in HE. rewrite Enc in HE. exact HE.
   - (* f' = 1 against the stored failed = 0 (V24'): one byte decides (the #102 text keys this arm on f' = 1, the fix of
-       the f' <> 0 defect a Theorem Labs lane found on kit-oldpin b501d43ce5af) *)
+       the f' <> 0 defect a Theorem Labs lane found on kit-oldpin) *)
     intros Ef'. subst f'. exfalso. exact (put_val_mem_1 _ _ _ V24' Hf' eq_refl). }
 (* no refusal: the one call granted (DEAD-PUT's prh_granted) *)
 assert (G1 : prh_granted [true] (WriterApp.w_cnt st) (WriterApp.w_fail st) (prhWriter_k [true] st [bs])).

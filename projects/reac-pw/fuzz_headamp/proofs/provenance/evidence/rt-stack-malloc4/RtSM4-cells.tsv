@@ -1,5 +1,5 @@
 # Per-cell decisions: plugin-hostd/fuzz_command lib/A/Rt/RtSM4.v + RtSM4T.v (+ the code-table block of RtSM1T.v) at
-# origin/ossv/recipes 2d2ff01bb6f -> reac-pw/fuzz_headamp lib/A/Rt/RtSM4.v + RtSM4T.v (image A).
+# -> reac-pw/fuzz_headamp lib/A/Rt/RtSM4.v + RtSM4T.v (image A).
 # Donor image: fuzz_command.asan pinned c0661b96b5bd (symbols: its unstripped twin 68db792d5fa7). Unit image:
 # fuzz_headamp.asan pinned f3e0669d2819 (symbols: unstripped twin b5f352154c54).
 # Relocation tool: alreloc a5c53bb2bed4 (sha256 a5c53bb2bed4ad039a600ecda538d6d0a1a01ccf4d62f8da9a09031a277fa17b), dry run,

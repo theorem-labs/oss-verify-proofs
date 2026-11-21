@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies, EB takes mbase, and L15's ledger grant and the environment length move from 27 to 43. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -24,7 +25,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Definition L15 : ledger := lgrant L13 27 0x38e000.
+Definition L15 : ledger := lgrant L13 43 0x38e000.
 Lemma DS_E7_eq : DS_std L13 = DS_E7. Proof. reflexivity. Qed.
 Lemma L15_incl : incl (l_maps L_E6) (l_maps L15). Proof. unfold L15, lgrant. cbn [l_maps]. apply incl_tl, L13_incl. Qed.
 
@@ -40,7 +41,7 @@ Section Theorems.
   Let usp := bv_unsigned sp.
 
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation at_E7' := (at_E7 sp brk mbase draw lim inp).
 
   (* [comment removed for export] *)
@@ -53,7 +54,7 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_internal_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js R M mdl K Hlim Hjs HB HK. unfold at_E7 in HB.
-    assert (LEN : length (VB sp draw inp a tid c pl js) = 27%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB sp mbase draw inp a tid c pl js) = 43%nat) by (rewrite length_VB, Hjs; reflexivity).
     rewrite fetch_internal_mmap_ret_prev in HK.
     eapply (bs_mmap_rw_spin sp brk mbase draw lim inp VI VE H2 A2 a tid c pl js SR_E7 KN_E7 L13 HC5 LZ5 0x38e000 A_internal_mmap_ecall ECALLW
               R M mdl K HB fetch_internal_mmap_ecall is_ecall_ECALLW);
@@ -205,7 +206,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Definition L15 : ledger := lgrant L13 27 0x38e000.
+Definition L15 : ledger := lgrant L13 43 0x38e000.
 Lemma DS_E7_eq : DS_std L13 = DS_E7. Proof. reflexivity. Qed.
 Lemma L15_incl : incl (l_maps L_E6) (l_maps L15). Proof. unfold L15, lgrant. cbn [l_maps]. apply incl_tl, L13_incl. Qed.
 
@@ -221,7 +222,7 @@ Section Theorems.
   Let usp := bv_unsigned sp.
 
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation at_E7' := (at_E7 sp brk mbase draw lim inp).
 
   (* [comment removed for export] *)
@@ -234,7 +235,7 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_internal_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js R M mdl K Hlim Hjs HB HK. unfold at_E7 in HB.
-    assert (LEN : length (VB sp draw inp a tid c pl js) = 27%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB sp mbase draw inp a tid c pl js) = 43%nat) by (rewrite length_VB, Hjs; reflexivity).
     rewrite fetch_internal_mmap_ret_prev in HK.
     eapply (bs_mmap_rw_spin sp brk mbase draw lim inp VI VE H2 A2 a tid c pl js SR_E7 KN_E7 L13 HC5 LZ5 0x38e000 A_internal_mmap_ecall ECALLW
               R M mdl K HB fetch_internal_mmap_ecall is_ecall_ECALLW);

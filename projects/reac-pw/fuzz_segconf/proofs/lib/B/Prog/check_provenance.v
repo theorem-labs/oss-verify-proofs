@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of check_reply_answer (plugin-hostd/fuzz_command, 0x88450, 75 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close, a caller with calls). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_answer.v, with its module paths and module names changed; 961 of its 1069 lines of code are new or changed and 505 lines of the source are left out. *)
-(* the image-B port of lib/A/Prog/check_provenance.v (commit 9e9d574ba383): the walk of
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* the image-B port of lib/A/Prog/check_provenance.v: the walk of
    check_provenance on fuzz_segconf image B (asan-ubsan, BASE + AF_check_provenance = 0x87278, 61 instructions)
-   against check_provenance_contract (lib/B/Prog/check_provenance_c.v, image B's copy of the FINAL contract 6f783602b5e3),
-   in the form of plugin-hostd/fuzz_command's lib/A/Prog/check_reply_answer.v at origin/ossv/recipes 501c0d516c69:
+   against check_provenance_contract (lib/B/Prog/check_provenance_c.v, image B's copy of the FINAL contract),
+   in the form of plugin-hostd/fuzz_command's lib/A/Prog/check_reply_answer.v:
    one symbolic run per straight piece over the position-abstract listing (lib/B/Prog/SegList.v), the two
    instrumented checks removed by tok_load with the contract's sa_addr on want's mseg entry, the strcmp wrapper
    through its lib/B/Rt contract (a Section hypothesis), every branch to the no-return hook and abort refuted from
    the contract's two same_text conjuncts. The kit (call rule, entry state, byte bridges, image B's numbers) is
-   check_provenance_lem.v. Control flow: the plain walk lib/Prog/check_provenance.v at commit
-   440d61eaa8c8; the UBSan trap as lib/U/Prog/check_provenance.v at commit b544ddc5a62a refutes it.
+   check_provenance_lem.v. Control flow: the plain walk lib/Prog/check_provenance.v;
+   the UBSan trap as lib/U/Prog/check_provenance.v refutes it.
 
    Image B's code is image A's with other addresses and UBSan's alignment test of want after the saves:
    0x8728c mv s0,a1; 0x87290 andi a1,a2,3; 0x87294 bnez a1 -> 0x87344 unimp; 0x87298 mv s1,a2 (image A: mv s1,a2;

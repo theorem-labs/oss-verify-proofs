@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv mallocng's secret scan reads is the launch's, 27 or 29 pairs by CONFIG_RSEQ). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -34,10 +35,10 @@ Lemma rauxv_ok_pres_B : forall C m m' B,
   rauxv_ok m' B.
 Proof.
   intros C m m' B [HC H] HP HB HCC. split; [exact HC|]. intros AV.
-  destruct (H AV) as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C1 & A1 & A2 & HH).
+  destruct (H AV) as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C1 & (rs & g & A1) & A2 & HH).
   exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact HH]]].
   - eapply rpres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HCC. lia.
-  - eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
+  - exists rs, g. eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
   - eapply rpres_except_bytes_at; [exact HP| exact A2|]. intros a Ha. apply HB. lia.
 Qed.
 

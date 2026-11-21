@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded encoded statements of regions_callA, window_store_ok, dinv_frame, dinv_block and others into plain lemmas, shrank the stack window to 6144513, and added the di_rdr channel-reader invariant with sbm_rdrA, model_rt_rdr and with_fds_rdr; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DrvLib.v, 151 lines within its lines 21-852. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -18,7 +19,7 @@ Import SX2. Import SX2S.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
 Ltac2 tcn__Ja0DrvLib () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Decimal."; "Corelib.Init.Logic."; "Corelib.Init.Nat."; "Corelib.Init.Number."; "Corelib.Init.Peano."; "Corelib.Lists.ListDef."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Fs."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.As0DrvKitA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.DrvKitA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.DrvNodesLazyK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIface."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIfaceA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ja0DrvLib.FPX_1.DrvLayoutA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ja0Drv_defs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StreamSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymDrive."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2.SX2."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2Sound.SX2S."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymRun."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Asan.M."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "0A'"; "0Ad"; "0As"; "1None"; "1O"; "1Some"; "1app"; "1bool"; "1cons"; "1false"; "1length"; "1list"; "1nat"; "1nil"; "1option"]; ["1pair"; "1prod"; "1true"; "2D3"; "2D5"; "2D6"; "2Nil"; "3I"; "3True"; "3and"; "3eq"; "3ex"; "3not"; "3or"; "4add"; "4of_num_uint"]; ["5UIntDecimal"; "6le"; "6lt"; "7map"; "7nth"; "8Z"; "0E"; "0E'"; "0FF"; "0FF'"; "0H"; "0HI"; "0K"; "0L"; "0LB"; "0LB'"]; ["0LBc"; "0LK"; "0LK'"; "9Fs"; ":store_ok"; ";mkCfg"; "<FdEntry"; "<Model"; "<VmState"; "<event"; "<m_fds"; "<m_fs"; "<m_halted"; "<m_vm"; "<m_vm_lazy"; "<with_fds"]; ["=bvmap"; "0M"; "0M'"; "0MV"; "0Mx"; "0P"; "0R"; "0R'"; ">lzinv"; "?MInv"; "?mrestrict"; "?same_but_materialized"; "?segs_below_b"; "@find_nz"; "@log_in_b"; "@regions_ok"]; ["Anolazy_rng"; "Bblocks_apart"; "Bcredit"; "Bdefined"; "Bin_block"; "Blb_remove"; "Bregs_preserved"; "CS"; "Caacc"; "Cablock_range"; "Caclient"; "Cacredit_ok"; "Cadebit"; "Cahid"; "Capp_rng"; "Car_sptop"]; ["Car_stack_top"; "Cart_private"; "Castack_ok"; "Cblock_shadow"; "Cfframe"; "Cin_shadow_of"; "Cmodel_rt"; "Cri_inv"; "Cshadow_blk"; "Cvml"; "Cvml_of"; "DCPa"; "DCWA"; "DSCa"; "DSTKTOP"; "Ddinv"]; ["Dhas_window"; "DhzA"; "Dsub_blockA"; "EIMG_CLIENT_A"; "EIMG_RW_A"; "EIMG_W_A"; "Ec_kept"; "Ekeep_allocA"; "Ekn_blkA"; "Fgetr"; "Fmkst"; "Frdn"; "Fseg_rom"; "Gsrealizes"; "Hwseg_ok"; "Ijunk_vals"]; ["Isr_after_call_j"; "JEVar"; "JEnv"; "JKWr"; "JSA"; "Jenv"; "Jexpr"; "Jkentry"; "Jridx"; "Jsentry"; "Kknow_ok"; "Kmem_denot"; "Kregs_ok"; "Lkn_vars_lt"; "Lsr_vars_lt"; "Lvals_ev"]; ["Mloaded_segments"; "NIn"; "Nincl"; "Nnth_error"; "Oadd"; "Ole"; "Olt"; "Omodulo"; "Oof_nat"; "Oopp"; "Opow"; "Osub"; "Oto_nat"; "0V"; "0a"; "0ar"]; ["0b"; "0bls"; "0bs"; "0cap"; "0capd"; "0caps"; "0cr"; "0cr'"; "0dst"; "0ebs"; "0f"; "0fx"; "0hi"; "0hi'"; "0i"; "0j"]; ["0k"; "0kn"; "0lo"; "0lo'"; "0log"; "0m"; "0m'"; "0model"; "0model'"; "0n"; "0nb"; "0p"; "0r"; "0ra"; "0scfg"; "0scr"]; ["0scr'"; "0so"; "0sp"; "0sp0"; "0sr"; "0src"; "PBV"; "PZ_to_bv"; "Pbv"; "Pbv_unsigned"; "0u"; "0v"; "0vals"; "0vals'"; "0vbnd"; "0x"]; ["0z"]]).
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Lemma no_bls : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "J'='Q5!p021p041'J'?%116&R=r2(>'A%12<;%311%6251(6r1%22@1%=3;41r4r3%221<p041p[FF1pZNH1pT<E1").
+Lemma no_bls : forall (P : nat -> Z -> Prop) i nb, DrvKitA.find_nz i [] = Some nb -> P i nb.
 Proof. intros P i nb H. discriminate H. Qed.
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
@@ -71,14 +72,23 @@ Definition SCa (sp scr : Z) (a : Z) : Prop := sp - scr <= a < sp.
 Definition sub_blockA (LB : list (Z * Z)) (A nb : Z) : Prop :=
 exists cap, 0 < nb <= cap /\ In (A, cap) LB /\ ablock_range L ar A cap.
 Definition hzA (A n : Z) : Prop := 4096 <= A /\ (A + n <= 0x10000 \/ 0x691000 <= A) /\ A + n <= bv_unsigned sp0 - 8388608.
-Lemma hzA_of_block_range : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "='Q5&RIvQ=vTOr2r1%544321&SAr3%2215p041p[D;1p2<1").
+Lemma hzA_of_block_range : forall A n, ablock_range L ar A n -> hzA A n.
 Proof.
 clear Hsp Hal. intros A n (B1 & B2 & B3 & B4 & B5 & B6). rewrite (dla_img_lo DL), (dla_img_hi DL) in B2. rewrite (dla_sptop DL) in B5.
 unfold hzA. repeat split; lia.
 Qed.
-Lemma sub_blockA_hz : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "@'<'A'Q5%2211%411&SBr3r2r1%43321&SA%1254p031p[F;1p2<1pRN;1").
+Lemma sub_blockA_hz : forall LB A nb, sub_blockA LB A nb -> hzA A nb.
 Proof. clear Hsp Hal. intros LB A nb (cap & Hnb & _ & HB). apply hzA_of_block_range in HB. unfold hzA in *. lia. Qed.
-Lemma regions_callA : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "TI'<'V8yR0%211%411'=y8%611%811p041'Q5'A%1272%=11%3244%?11&S4%A11&RB'?%11=p0B1'QG'T5(T2&T?rE%211rD%5221'JrF(5%8221vV3%53Q021'I&TE&TI&TJ+2+F%3221%511%721Bz%92D1%;231%;23F+TP0%=2H1%?231&S7vQ;rBr@r>r<r:r8&S:r6%211%;8:9876541&RDr1%22Q31r2%42Q51p031pYNQL1rG%8217p015pYNR01%QH1R1&R=rK%22;1(6%12R6?%QC3631&SBrJ&V9rQ0r3%QN221%42RF1%7361Fp091p[FRA1pZNRG1rQ1%R5218%;2RM1%QK21Mp0@1pZ2RH1p\HRN1'R?&T@rMrL(>%11S4&SC&SD&S;rI&TD%K2S=R=%221:&RM%12QKQIr?r;%4221%:69RG6?41&S=%128A%E<DRICBQ<Q6@?>QO31p0G1p0O1p0QB1p0QG1p0QO1p0R01p0R=1p0RB1p0RO1tR>S<S61p[BS>1p[@S?1pT6SA1pT4SB1p4SI1p2SJ1pZ@SH1pZ>SI1pS6SK1pS4SL1pRDSM1pRBSN1pS0T11pRNT21pS2T31p\NT61pZ4T71p\0T;1p\4T<1pZDT>1p\JTD1").
+Lemma regions_callA : forall vals ebs so scr bls vbnd LBc LB LB' FF FF' LK LK' cr cr' A A' M M' model model',
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+- 2 ^ 22 <= so <= 0 -> 0 <= scr <= 4096 ->
+ri_inv HI LB FF LK cr A M (vml_of model) -> ri_inv HI LB' FF' LK' cr' A' M' (vml_of model') ->
+(forall a, in_block LBc a -> in_block LB a) -> (forall a, in_block LBc a -> in_block LB' a) ->
+(forall i nb, find_nz i bls = Some nb -> sub_blockA LBc (bv_unsigned (vals_ev vals i)) nb) ->
+(forall v b, find_nz v vbnd = Some b -> bv_unsigned (vals_ev vals v) <= b) ->
+regions_ok ASEGS 0 so scr bls vbnd [] IMG_CLIENT_A IMG_RW_A E
+(CPa LBc FF (bv_unsigned sp0 + so) scr (ahid A model) (ahid A' model')) (SCa (bv_unsigned sp0 + so) scr).
 Proof.
 intros vals ebs so scr bls vbnd LBc LB LB' FF FF' LK LK' cr cr' A A' M M' model model' E P0 Hso Hscr HH HH' Hsub Hsub' Hbl Hvb.
 pose proof Hsp as Hsp'.
@@ -109,32 +119,37 @@ intros Mx d m Hd Hm.
 apply (store_ok_window ASEGS Mx (Z_to_bv 64 0x65d350) (Z_to_bv 64 d) 65536%nat m 0x65d350 0x66d350);
 first [exact wseg_stage | reflexivity | lia | (rewrite u_small by lia; lia)].
 Qed.
-Lemma regs_preserved_keptA : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "J&R0y5'V8yR0%211%5241&RFr2r1%3221%819&TA&SF%23351'J&SIr4%221:r5%421<%63@31p081p[J<1p0>1pT@C1pT>D1").
+Lemma regs_preserved_keptA : forall R R', regs_preserved R R' -> forall r : reg, In r c_kept -> getr R' r = getr R r.
 Proof.
 intros R R' HP r Hr. apply HP. unfold c_kept in Hr. unfold callee_saved_idx.
 repeat (destruct Hr as [<-|Hr]; [cbn; tauto|]). destruct Hr.
 Qed.
-Lemma c_kept_no0A : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "=&L&TA'V8y5%211(V6z(G%33521/015&SF%:3721%<11").
+Lemma c_kept_no0A : ~ In (0%bv : reg) c_kept.
 Proof. unfold c_kept. intros H. repeat (destruct H as [H|H]; [discriminate|]). exact H. Qed.
-Lemma vals_ev_junkA : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "Q6'<'V8yR0%211%411&R0y5%2214'=&Q2r1uQ0%3221'J&T?&7r4&SOr3%211%53A41&N&;%12D7r2%4221%<261&SI&V7&TH%116%32I1%52>1%D3N71p0F1pZNK1pT@M1p\JQ11").
+Lemma vals_ev_junkA : forall vals R' i, (i < 32)%nat ->
+vals_ev (vals ++ junk_vals R') (length vals + i) = getr R' (Z_to_bv 5 (Z.of_nat i)).
 Proof.
 intros vals R' i Hi. rewrite vals_ev_app_r. unfold vals_ev, junk_vals. rewrite nth_map_seq by exact Hi. reflexivity.
 Qed.
-Lemma aclient_scr_mono : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "Q1'<'A'Q5%2211%411&S4%611'I&TEzr2%3221r3%5231%7231&RJvQ=vTOr7r6r5r4%77654321<r8%97871653<p031p0<1pYNI1p\2J1p\0K1p\6L1pRBI1pRNL1").
+Lemma aclient_scr_mono : forall LB FF sp scr scr' a, 0 <= scr' <= scr -> aclient L ar LB FF sp scr a -> aclient L ar LB FF sp scr' a.
 Proof.
 intros LB FF sp scr scr' a Hs Hc. unfold aclient, aclient_g in *.
 destruct Hc as [Hc|[Hc|Hc]]; [left; exact Hc | right; left; split; [tauto | lia] | right; right; exact Hc].
 Qed.
-Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (-8388608)) 8388608)) kn.
-Lemma has_window_nth : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "Q1'<'T7%211'J'8&S@r1%211(B%63521'K'='?%11<&TCr3%23?1:(6(T3(T4(T1(5%211-XPPP0%5221+XPPP0%8221%:2J1%I3?<1qZNB1%D2C1p0F1p[4N1").
+Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (-6144513)) (6144513))) kn.
+Lemma has_window_nth : forall kn, has_window kn = true -> exists i, nth_error kn i = Some (KWr (SA (EVar 0) (-6144513)) (6144513)).
 Proof.
 intros kn H. unfold has_window in H. apply existsb_exists in H as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
 apply In_nth_error in Hin. exact Hin.
 Qed.
-Lemma window_store_ok : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "R7'<'V8yR0%211%411'=y8%611%811p041'?%114p091'T7%>11'Q5'T5(T2&T?r6%211r5%5221&T:&T@r1r4%443261'J'8&S@%11:(B%53421r9(5%B221vV3%:3Q321&TE-XPPP0%221F&TDr7&TH%11J%4231z%9221&QDr:&V7&V9%12QC@r8%=221%52QF1%84Q171>%N3M1Jp0;1p0C1p0G1p0M1p0Q41tR>Q@Q:1p[<QL1p]2QC1p[4QE1pT8QH1pZDQL1p\JR21").
+Lemma window_store_ok : forall vals ebs MV kn (z : Z) (m : nat),
+let E := Env (vals_ev vals) ebs in
+know_ok ASEGS E MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
+- 6144513 <= z -> z + Z.of_nat m <= 0 ->
+store_ok ASEGS MV (Z_to_bv 64 (bv_unsigned sp0 + z)) m = true.
 Proof.
 intros vals ebs MV kn z m E HK Hw P0 Hz Hm. destruct (has_window_nth kn Hw) as [i Hn].
-pose proof (kwr_store_ok ASEGS E MV kn i (EVar 0) (-8388608) 8388608 z m HK Hn ltac:(lia) ltac:(lia)) as W.
+pose proof (kwr_store_ok ASEGS E MV kn i (EVar 0) (-6144513) 6144513 z m HK Hn ltac:(lia) ltac:(lia)) as W.
 unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W. exact W.
 Qed.
 Lemma segs_belowA : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "8'J'8&R<&T@+VbTP0%3221(B%73621").
@@ -145,14 +160,23 @@ intros Mx a Ha Hs. cbn [store_ok] in Hs. unfold wview in Hs.
 destruct (Mx (Z_to_bv 64 a)) as [b|]; [discriminate|]. exfalso.
 rewrite (find_segment1_none_above ASEGS 0x691000 (bv_unsigned (Z_to_bv 64 a)) segs_belowA) in Hs by (rewrite u_small by lia; lia). discriminate.
 Qed.
-Lemma window_defined : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "R9'<'V8yR0%211%411'=y8%611%811p041'8p081'?%116p0;1'T7%@11'T5(T2&T?r5%211r4%5221&T:&T@r1&R:r3%2271r2%746521'J&S@%116(B%43J21r8(5%D221vV3%93Q621'Q5'I&TE&TK&V9%12Q=7+XPPP0%4221%621H&TF%12J5%:231&L&V7%12QFJ%D11(4%11QD%L3Q?31%711p091pYNE1p0G1p0M1p0Q31tR>QBQ<1p[4QD1pT4QG1pRFQK1pZDQN1p\JR41").
+Lemma window_defined : forall vals ebs (H : word -> bool) M kn,
+let E := Env (vals_ev vals) ebs in
+know_ok ASEGS E (mrestrict H M) kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
+forall a, bv_unsigned sp0 - 6144513 <= a < bv_unsigned sp0 -> M (Z_to_bv 64 a) <> None.
 Proof.
 intros vals ebs H M kn E HK Hw P0 a Ha. pose proof Hsp as Hsp'.
 pose proof (window_store_ok vals ebs _ kn (a - bv_unsigned sp0) 1 HK Hw P0 ltac:(lia) ltac:(lia)) as W.
 replace (bv_unsigned sp0 + (a - bv_unsigned sp0)) with a in W by ring.
 apply (store_ok_of_mrestrict ASEGS) in W. apply store_ok_defined; [lia | exact W].
 Qed.
-Lemma astack_ok_of_window : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "SB'<'V8yR0%211%411'=y8%611%811p041'8p081'?%116p0;1'T7%@11'Q5'A%1222%D11&S4%F11&RB&S9'T5(T2&T?r=%211r<%5221&T:&T@r1&R:r;%2271r:%746521'J&S@%116(B%43Q221r@(5%D221vV3%93Q>21'I&TE&TI&TJ+2+F%3221%511%721Lz%92N1%;231&TG+@%22Q41%I3Q@16%?27Q6+TP0%A2Q81%C231&S7vQ;r9rAr8%584Q?Q=Q7Q5321&RCrB&V9%12R=O&TK&S0vTO%211%4215%93861&S2vQ=rC&TD%12;A%55493Q>1p071p0B1p0I1p0N1p0Q31p0Q@1p0QF1p0QL1tR>R;R51pYLR=1p2RB1pZ>R@1pS4RB1pRBRC1pRNRF1p\0RJ1p\4RK1p[4RM1pT4S01pRFS41pZDS71p\JS=1").
+Lemma astack_ok_of_window : forall vals ebs (H : word -> bool) M kn so scr LB FF LK cr A V,
+let E := Env (vals_ev vals) ebs in
+know_ok ASEGS E (mrestrict H M) kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
+- 2 ^ 22 <= so <= 0 -> so mod 16 = 0 -> 0 <= scr <= 4096 ->
+ri_inv HI LB FF LK cr A M V ->
+defined M (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0) ->
+astack_ok L ar M scr (bv_unsigned sp0 + so).
 Proof.
 intros vals ebs H M kn so scr LB FF LK cr A V E HK Hw P0 Hso Hsoal Hscr HH Hdef. pose proof Hsp as Hsp'. pose proof Hal as Hal'.
 unfold astack_ok. rewrite (dla_sptop DL), (dla_segs DL).
@@ -164,7 +188,11 @@ apply (window_store_ok vals ebs _ kn _ m HK Hw P0); lia.
 + apply (window_defined vals ebs H M kn HK Hw P0). lia.
 + replace (bv_unsigned sp0 + so + i) with (bv_unsigned sp0 + (so + i)) by ring. apply Hdef. lia.
 Qed.
-Lemma kn_blkA_ok : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "QI'<'V8yR0%211%411'=y8%611%811p041'?%114p091'Q5'T5(T2&T?r6%211r5%5221'Jr7r4%8221&V7r2%22I1%73I41r8(5%?221vV3%<3N21&RIvQ=vTO%3421>B&RC%13:DF&T:&T@r9&SH%12?F%544J31p071p0:1p0?1p0E1tR>Q4N1p\FQ61p[DQ71p\HQ@1pT:Q:1pZDQ>1p\JQD1").
+Lemma kn_blkA_ok : forall vals ebs Mx v n u,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals v = Z_to_bv 64 u -> vals_ev vals 0 = sp0 ->
+ablock_range L ar u n -> defined Mx u n ->
+know_ok ASEGS E Mx (kn_blkA v n).
 Proof.
 intros vals ebs Mx v n u E Pv P0 HBR Hdef. pose proof HBR as (_ & _ & B2 & B3 & _).
 pose proof (hzA_of_block_range _ _ HBR) as (Z1 & Z2 & Z3). pose proof Hsp as Hsp'.
@@ -186,7 +214,9 @@ apply Forall_cons. { cbn [kentry_ok]. unfold estart. cbn [a_base a_off edenot ev
 change (ev E v) with (vals_ev vals v). rewrite Pv, !u_small by lia. lia. }
 apply Forall_nil.
 Qed.
-Lemma lzinv_of_inv : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "QE'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051'QG&S7vQ;r7r6r5r4r3r2&S:r1%211%;8:9876541'R9%1286'J%E1F&QL%11;(4%11J%63531&R8&T@&RM%12EC%4431FDp061p0>1p0A1p[@N1pT4Q01p2Q<1pZ>Q:1pS4Q<1pRBQ=1pRNQ@1").
+Lemma lzinv_of_inv : forall LB FF LK cr A M model,
+ri_inv HI LB FF LK cr A M (vml_of model) -> MInv A model -> m_halted model = None ->
+lzinv ASEGS (ahid A model) A model.
 Proof.
 intros LB FF LK cr A M model HH HM Hh.
 destruct (aio_lazy _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (AWF & LZ).
@@ -197,7 +227,7 @@ pose proof (LZ a Hl) as (Z1 & _). cbv zeta in Z1. rewrite (dla_img_hi DL) in Z1.
 split; [unfold ahid; apply lazy_cover_mkH; intros r Hr; exact Hr|].
 split; [exact AWF|]. split; [exact HM | exact Hh].
 Qed.
-Lemma model_rt_halted : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "C'QG&S6r2r1%3221'J'?'V8yR0%211%411&QL%11:r3%311%:3531p0<1p[>A1p[<B1").
+Lemma model_rt_halted : forall m m', model_rt m m' -> m_halted m' = m_halted m.
 Proof. intros m m' ->. destruct m; reflexivity. Qed.
 Definition CWA (LB : list (Z * Z)) (a : Z) : Prop :=
 in_block LB a \/ bv_unsigned sp0 - 8388608 <= a < bv_unsigned sp0 \/ (exists lo hi, In (lo, hi) IMG_W_A /\ lo <= a < hi).
@@ -207,18 +237,9 @@ intros lo hi Hin. destruct (img_w_sub lo hi Hin) as (lo' & hi' & Hin' & H1 & H2)
 exists lo', hi'. split; [exact Hin'|]. split; [exact H1|]. split; [exact H2|].
 unfold IMG_W_A in Hin. cbn [In] in Hin. repeat (destruct Hin as [Hin|Hin]; [injection Hin as <- <-; lia|]). destruct Hin.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_cwa_not_bshadow := (ltac2:(TCodec.tc2 tcn__Ja0DrvLib "Q='<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051&S9&S7vQ;r8r7r6r5r4r3r2%9887654321&S<r9%2214&L&S3r:%2219%411p061p0:1pYNQ31pYLF1pT4H1p2Q41pZ>Q21pS4Q41pRBQ51pRNQ81")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_cwa_not_bshadow) 0%nat 0%nat).
-Variable FF : ltac:(sec_ty2 constr:(SEC_T_cwa_not_bshadow) 1%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_cwa_not_bshadow) 2%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_cwa_not_bshadow) 3%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_cwa_not_bshadow) 4%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_cwa_not_bshadow) 5%nat 0%nat).
-Variable V : ltac:(sec_ty2 constr:(SEC_T_cwa_not_bshadow) 6%nat 0%nat).
-Variable a : ltac:(sec_ty2 constr:(SEC_T_cwa_not_bshadow) 7%nat 0%nat).
-Lemma cwa_not_bshadow : ltac:(sec_stmt2 constr:(SEC_T_cwa_not_bshadow) 8%nat 0%nat).
+Lemma cwa_not_bshadow : forall LB FF LK cr A M V a, ri_inv HI LB FF LK cr A M V -> CWA LB a -> ~ block_shadow LB a.
 Proof.
+intros LB FF LK cr A M V a.
 intros HH HC (b' & Hb' & X').
 pose proof (aio_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (WB & _).
 destruct (WB b' Hb') as ((Q0 & _ & Q16 & Q3 & Q4 & Q5) & _). unfold app_mem, BIGSHADOW_LO, BIGSHADOW_HI in Q5.
@@ -230,8 +251,7 @@ destruct HC as [HB|[HS|(lo & hi & Hin & Hr)]].
 - destruct (img_w_client lo hi Hin) as (lo' & hi' & Hin' & H1 & H2 & H3 & H4). lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-End SE.
-Lemma cwa_not_private : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "QK'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051&S9&S7vQ;r8r7r6r5r4r3r2%9887654321'I&TEz%2215&TF&TJ+2+R0%3221%52;1%:271&S<r:%221@&L&S1vQ=vTOr;%453217G%611p081p0<1p0H1pYNQA1pYLQ41pT4Q61p2QB1pZ>Q@1pS4QB1pRBQC1pRNQF1").
+Lemma cwa_not_private : forall LB FF LK cr A M V a, ri_inv HI LB FF LK cr A M V -> 0 <= a < 2 ^ 64 -> CWA LB a -> ~ art_private L ar LB FF a.
 Proof.
 intros LB FF LK cr A M V a HH Ha HC [NC|[RO|BS]]; [| |exact (cwa_not_bshadow _ _ _ _ _ _ _ a HH HC BS)].
 - apply NC. unfold aclient. destruct HC as [HB|[HS|(lo & hi & Hin & Hr)]].
@@ -245,19 +265,33 @@ destruct (WF b Hb) as (HBR & _). apply hzA_of_block_range in HBR. unfold hzA in 
 + pose proof Hsp. lia.
 + exact (dla_ro DL lo hi a Hin Hr RO).
 Qed.
-Lemma ainv_frame : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "RH'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051p]062'QG&S7vQ;r9r8r7r6r5r4&S:r2%211%;8:9876541'I&TEzr1%3221&TF&TJ+2+R0%3221%5271%;271&L&S<r<%221B%411'J&V7r3%22Q91%M11%O12%63Q721p081p0>1pYNQF1%Q31H(4%11Q>%=3Q>31%C11%Q81Q3%@3QA14%F11p041pYNQH1&S9%Q:1Q;%Q;1Q=%G3321r=r;r:%QH8QG3N21QFQD5p051p0:1p0E1p0QA1p[BQN1p[@QO1pT6R11pT4R31p2R?1pZ>R=1pS4R?1pRBR@1pRNRC1").
+Lemma ainv_frame : forall LB FF LK cr A M M' (model model' : Model),
+ri_inv HI LB FF LK cr A M (vml_of model) ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ CWA LB a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
+(forall a : word, M a <> None -> M' a <> None) ->
+vml_of model' = vml_of model ->
+ri_inv HI LB FF LK cr A M' (vml_of model').
 Proof.
 intros LB FF LK cr A M M' model model' HH FR GR EV. rewrite EV.
 apply (aio_frame _ _ _ _ _ HIok LB FF LK cr A M M' _ HH); [|exact GR].
 intros a Ha HP. apply FR; [exact Ha|]. intros HC. exact (cwa_not_private _ _ _ _ _ _ _ a HH Ha HC HP).
 Qed.
-Lemma sbm_vml : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "?'QG&R;r2r1%3221'J&S9&S:%116r3%311%63531p081p[>=1p[<>1").
+Lemma sbm_vml : forall m m', same_but_materialized m m' -> vml_of m' = vml_of m.
 Proof. intros m m' ->. destruct m as [fd [maps lazy mat] io fsy pr lim tm]. reflexivity. Qed.
-Lemma sbm_fds : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "M'QG&R;r2r1%3221'I'J'<'A'V8yR0%211'QF%5221%711&QJ%11>r3%311%=3531&QC&QK%11D%216%B3421%D261p0F1p[>K1p[<L1").
+Lemma sbm_fds : forall m m', same_but_materialized m m' -> m_fds m' = m_fds m /\ m_fs m' = m_fs m.
 Proof. intros m m' ->. destruct m as [fd [maps lazy mat] io fsy pr lim tm]. split; reflexivity. Qed.
-Lemma model_rt_fds : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "M'QG&S6r2r1%3221'I'J'<'A'V8yR0%211'QF%5221%711&QJ%11>r3%311%=3531&QC&QK%11D%216%B3421%D261p0F1p[>K1p[<L1").
+Lemma model_rt_fds : forall m m', model_rt m m' -> m_fds m' = m_fds m /\ m_fs m' = m_fs m.
 Proof. intros m m' ->. destruct m; split; reflexivity. Qed.
-Lemma regions_writeA : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "RN'<'V8yR0%211%411'=y8%611%811p041'A'Q5%2271%=11%4233%?11&S4%A11&RB'?%11=p0B1&S9'T5(T2&T?r:%211r9%5221'Jr;(5%8221vV3%53Q021&S7vQ;r8r7r6r5r4r3%887@654321%J1Q2&R=r2r=%3221(6r1%22Q91%G3841&SB&V9r@%Q021>%32QH1%53;1<p071p[FQB1pZNQI1'R?&T@&TJ+2+Q8%3221r<(>%11QK%21R3&SE%41QL&S<%11Q='Hq0R31%@<?Q?;;:8765Q531p0B1p0Q51p0Q?1tR>QLQF1pYLQN1pT4R01p2R71pZ>R51pS4R71pRBR81pRNR;1pZ4R>1pZDRC1p\JRI1").
+Lemma sbm_rdrA : forall m m', same_but_materialized m m' -> m_channel_reader m' = m_channel_reader m.
+Proof. intros m m' ->. destruct m as [fd [maps lazy mat] io fsy pr lim tm]. reflexivity. Qed.
+Lemma model_rt_rdr : forall m m', model_rt m m' -> m_channel_reader m' = m_channel_reader m.
+Proof. intros m m' ->. destruct m; reflexivity. Qed.
+Lemma regions_writeA : forall vals ebs bls LB FF LK cr A M V,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+ri_inv HI LB FF LK cr A M V ->
+(forall i nb, find_nz i bls = Some nb -> sub_blockA LB (bv_unsigned (vals_ev vals i)) nb) ->
+regions_ok ASEGS 0 (2 ^ 40) (2 ^ 40) bls [] [] IMG_W_A [] E (CWA LB) (fun _ => True).
 Proof.
 intros vals ebs bls LB FF LK cr A M V E P0 HH Hbl. pose proof Hsp as Hsp'.
 constructor; cbn [ev E]; rewrite ?P0.
@@ -274,7 +308,16 @@ exists (bv_unsigned (vals_ev vals i), cap). split; [exact Hin|]. cbn [fst snd]. 
 split; [lia|]. split; [lia|]. intros a Ha. unfold CWA. right. right. exists lo, hi. auto.
 - intros lo hi [].
 Qed.
-Lemma block_frame : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "TC'<'V8yR0%211%411'=y8%611%811p041'A'Q5%2271%=11%4233%?11&S4%A11&RB'?%11=p0B1'QG'T9%H11'T5(T2&T?r<%211r;%5221'Jr=(5%8221vV3%53Q221&S7vQ;r:r9r8r7r6&S:r4%211%:89B876541%N1Q6&R=r2r?%3221(6r1%22Q=1%I3841&SB&V9rBr3%Q3221%42QM1%63<1=p081p[FQG1pZNQN1'8&R>&TJ+2+Q8%3221r>(>%11R7&SEr5%:7Q=665321(B%QA3=21&R:&RM%12Q<Q9%321Q;&T;%523Q>%23:1Q<%QI3R441%73QNQAQ3%QK3G1;%QN1Q9%R11Q:%QN3R:21p041pYNRM1'I&TEz%221Q=&TF+R0%Q12Q01%32QA1%8251&L&S<%12Q@QI%311&V7%12S=QB%R?11%Q712%RB3RN21p061p0;1pYNS:1%RJ1QO(4%11SA%RI3S531%@11%RK3S7N3%B11p031pYNSK1%N2:1p0Q01p0Q81p0QA1p0R01p0RD1p0S01tR>S=S71p[:S?1p[@SB1pT6SD1pT4SE1p2SL1pZ>SJ1pS4SL1pRBSM1pRNT01pZ4T31pZDT81p\JT>1").
+Lemma block_frame : forall vals ebs bls LB FF LK cr A M M' (model : Model) log,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+ri_inv HI LB FF LK cr A M (vml_of model) ->
+(forall i nb, find_nz i bls = Some nb -> sub_blockA LB (bv_unsigned (vals_ev vals i)) nb) ->
+log_in_b 0 (2 ^ 40) (2 ^ 40) bls [] IMG_W_A log = true ->
+mrestrict (ahid A model) M' = mem_denot E (mrestrict (ahid A model) M) log ->
+(forall a, ahid A model a = true -> M' a = M a) ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ CWA LB a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a))
+/\ (forall a : word, M a <> None -> M' a <> None).
 Proof.
 intros vals ebs bls LB FF LK cr A M M' model log E P0 HH Hbl Hlog EQM EQH.
 pose proof (regions_writeA vals ebs bls LB FF LK cr A M _ P0 HH Hbl) as RG.
@@ -290,7 +333,8 @@ rewrite E1, EQM. apply (mem_denot_grows E (mrestrict (ahid A model) M) log a). u
 Qed.
 Variable M0 : word -> option byte.
 Definition STKTOP : Z := Z.max (ar_sptop ar) (ar_stack_top ar).
-Lemma stksh_rng : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "R1'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051&S9&S7vQ;r8r7r6r5r4r3r2%9887654321&S5&TK&ROvTO%211+XPPP0%5221&S>%7212%9331;'I&TE&TD+QoooPP0+_oogoPPP0%3221%521C+_oooooooO%6251%82F1%:241&TJ+2+Q?%3221%H21C%J3D1M%A271p0C1p0N1p]0QG1pYLQ:1pT4Q<1p2QH1pZ>QF1pS4QH1pRBQI1pRNQL1").
+Lemma stksh_rng : forall LB FF LK cr A M V x, ri_inv HI LB FF LK cr A M V -> in_shadow_of (ahl_ceil ar) (STKTOP - ahl_ceil ar) x ->
+0x7fff8000 + 0xfffeff00000 <= x <= 0x7fff8000 + 0xfffffffffff /\ in_shadow_of (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) x.
 Proof.
 intros LB FF LK cr A M V x HH HS. pose proof Hsp as Hsp'.
 destruct (aio_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (_ & _ & _ & _ & _ & _ & _ & _ & _ & TOP & _).
@@ -309,11 +353,13 @@ di_minv : MInv A model;
 di_halt : m_halted model = None;
 di_above : forall a, bv_unsigned sp0 <= a < 2 ^ 47 -> M (Z_to_bv 64 a) = M0 (Z_to_bv 64 a);
 di_stksh : forall x, in_shadow_of (ahl_ceil ar) (STKTOP - ahl_ceil ar) x -> byte_at M x 0;
-di_hish : forall x, in_shadow_of (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) x -> byte_at M x 0
+di_hish : forall x, in_shadow_of (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) x -> byte_at M x 0;
+di_rdr : m_channel_reader model = true
 }.
-Lemma dinv_lzinv : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "Q5'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051'QG'S?r6r5r4r3r2r1%76654321&R8&T@&RM%1286%443197p061p[@?1pT4A1p2M1pZ>K1pS4M1pRNQ01").
+Lemma dinv_lzinv : forall LB LK cr A M model, dinv LB LK cr A M model -> lzinv ASEGS (ahid A model) A model.
 Proof. intros LB LK cr A M model D. exact (lzinv_of_inv _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ D) (di_minv _ _ _ _ _ _ D) (di_halt _ _ _ _ _ _ D)). Qed.
-Lemma stksh_not_cwa : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "QD'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051&S9&S7vQ;r8r7r6r5r4r3r2%9887654321&S5&TK&ROvTO%211+XPPP0%5221&S>%7212%9331;&L&S<r:%221@%411p061p0A1p]0Q:1pYLM1pT4O1p2Q;1pZ>Q91pS4Q;1pRBQ<1pRNQ?1").
+Lemma stksh_not_cwa : forall LB FF LK cr A M V x, ri_inv HI LB FF LK cr A M V ->
+in_shadow_of (ahl_ceil ar) (STKTOP - ahl_ceil ar) x -> ~ CWA LB x.
 Proof.
 intros LB FF LK cr A M V x HH HS HC. pose proof Hsp as Hsp'. destruct (stksh_rng _ _ _ _ _ _ _ x HH HS) as ((X1 & X2) & _).
 destruct HC as [HB|[HSt|(lo & hi & Hin & Hr)]].
@@ -322,14 +368,15 @@ destruct (WF b Hb) as (HBR & _). destruct HBR as (_ & _ & _ & _ & _ & (_ & AM & 
 - lia.
 - destruct (img_w_client lo hi Hin) as (_ & _ & _ & _ & _ & H3 & H4). lia.
 Qed.
-Lemma hish_rng : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "M'Q5&S5&TK&ROvTO%211+XPPP0%5221&TJ+2+Q?%3221%:215r1%=3721'I&TE&TD+QoooPP0+_oogoPPP0%3221r2%6221+_oooooooO%7261%9241%;241p0=1p]0L1").
+Lemma hish_rng : forall x, in_shadow_of (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) x -> 0x7fff8000 + 0xfffeff00000 <= x <= 0x7fff8000 + 0xfffffffffff.
 Proof.
 intros x HS. pose proof Hsp as Hsp'. unfold in_shadow_of, S, SB, ahl_ceil in *. rewrite (dla_sptop DL) in *.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 clear - HS Hsp'. lia.
 Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Lemma hish_not_cwa : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "QG'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051&S9&S7vQ;r8r7r6r5r4r3r2%9887654321&S5&TK&ROvTO%211+XPPP0%5221&TJ+2+Q?%3221%:215%<361>&L&S<r:%221C%411p061p0D1p]0Q=1pYLQ01pT4Q21p2Q>1pZ>Q<1pS4Q>1pRBQ?1pRNQB1").
+Lemma hish_not_cwa : forall LB FF LK cr A M V x, ri_inv HI LB FF LK cr A M V ->
+in_shadow_of (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) x -> ~ CWA LB x.
 Proof.
 intros LB FF LK cr A M V x HH HS HC. pose proof Hsp as Hsp'. destruct (hish_rng x HS) as (X1 & X2).
 destruct HC as [HB|[HSt|(lo & hi & Hin & Hr)]].
@@ -338,9 +385,15 @@ destruct (WF b Hb) as (HBR & _). destruct HBR as (_ & _ & _ & _ & _ & (_ & AM & 
 - lia.
 - destruct (img_w_client lo hi Hin) as (_ & _ & _ & _ & _ & H3 & H4). lia.
 Qed.
-Lemma dinv_frame : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "RN'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051p]062'QG'S?r8r7r6r5r4r2%76654321'I&TEzr1%3221&TF&TJ+2+R0%3221%5271%;271&L&S<r;%221A%411'J&V7r3%22Q51%K11%M12%63Q321p081p0>1pYNQB1%Q11H(4%11Q:%=3Q:31%C11%Q61Q2%@3Q=14%F11p041pYNQD1&S9&S:%11Q:%21Q<%H3421'R9r9%221Q@%QL1QM&QL%11QD%D1R0%Q03421r>r=r<%QM6321Q7:QKp051p0;1p0?1p0E1p0Q01p0QL1p[BR51p[@R61pT6R81pT4R:1p2RF1pZ>RD1pS4RF1pRNRI1").
+Lemma dinv_frame : forall LB LK cr A M M' (model model' : Model),
+dinv LB LK cr A M model ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ CWA LB a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
+(forall a : word, M a <> None -> M' a <> None) ->
+vml_of model' = vml_of model -> MInv A model' -> m_halted model' = None ->
+m_channel_reader model' = m_channel_reader model ->
+dinv LB LK cr A M' model'.
 Proof.
-intros LB LK cr A M M' model model' D FR GR EV MI HL. pose proof Hsp as Hsp'. constructor.
+intros LB LK cr A M M' model model' D FR GR EV MI HL RD. pose proof Hsp as Hsp'. constructor.
 - exact (ainv_frame _ _ _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ D) FR GR EV).
 - exact MI.
 - exact HL.
@@ -354,44 +407,63 @@ destruct (WF b Hb) as (HBR & _). apply hzA_of_block_range in HBR. unfold hzA in 
 destruct (stksh_rng _ _ _ _ _ _ _ x (di_inv _ _ _ _ _ _ D) Hx) as (X & _). lia.
 - intros x Hx. unfold byte_at. rewrite FR; [exact (di_hish _ _ _ _ _ _ D x Hx) | | exact (hish_not_cwa _ _ _ _ _ _ _ x (di_inv _ _ _ _ _ _ D) Hx)].
 pose proof (hish_rng x Hx). lia.
+- rewrite RD. exact (di_rdr _ _ _ _ _ _ D).
 Qed.
-Lemma dinv_block : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "SK'<'V8yR0%211%411'=y8%611%811p041'A'Q5%2271%=11%4233%?11&S4%A11&RB'?%11=p0B1'QG'T9%H11'T5(T2&T?r<%211r;%5221'Jr=(5%8221vV3%53Q221'S?r:r9r8r7r5%66>54321%J1Q2&R=r2r?%3221(6r1%22Q91%E3841&SB&V9rBr3%O221%42QI1%63<1=p081p[FQC1pZNQJ1'8&R>&TJ+2+Q8%3221r>(>%11R3&SE%97Q855421O(B%Q<3<21&R:&RM%12QAQ6%321Q8&T;%523Q;r6%33Q921%QE3R051%83QEQ?Q3%QG3G1<%QL1Q9%QH1Q:%QJ3R621p041pYNRI1&R8&T@%A2QNQH%3421QOQH&R;%12R4QKrAr@%QO6Q=21QER4R7p041p071p0<1p0D1p0N1p0Q<1p0R01p0R81tR>RER?1p[:RG1p[BRJ1p[@RK1pT6RM1pT4RN1p2S51pZ>S31pS4S51pRNS81pZ4S;1pZDS@1p\JSF1").
+Lemma dinv_block : forall vals ebs bls LB LK cr A M M' (model model' : Model) log,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+dinv LB LK cr A M model ->
+(forall i nb, find_nz i bls = Some nb -> sub_blockA LB (bv_unsigned (vals_ev vals i)) nb) ->
+log_in_b 0 (2 ^ 40) (2 ^ 40) bls [] IMG_W_A log = true ->
+mrestrict (ahid A model) M' = mem_denot E (mrestrict (ahid A model) M) log ->
+(forall a, ahid A model a = true -> M' a = M a) ->
+lzinv ASEGS (ahid A model) A model' -> same_but_materialized model model' ->
+dinv LB LK cr A M' model'.
 Proof.
 intros vals ebs bls LB LK cr A M M' model model' log E P0 D Hbl Hlog EQM EQH HZ SBM.
 destruct (block_frame vals ebs bls LB [] LK cr A M M' model log P0 (di_inv _ _ _ _ _ _ D) Hbl Hlog EQM EQH) as (FR & GR).
 destruct HZ as (_ & _ & _ & MI & HL).
-exact (dinv_frame _ _ _ _ _ _ _ _ D FR GR (sbm_vml _ _ SBM) MI HL).
+exact (dinv_frame _ _ _ _ _ _ _ _ D FR GR (sbm_vml _ _ SBM) MI HL (sbm_rdrA _ _ SBM)).
 Qed.
-Lemma minv_same_vm : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "I'<'A'Q5%2211%411'QG'J'QH&QMr1%211r2%411%73631'R9r4r3%3221r5%5213p031p081p[>A1p[<B1p2D1").
+Lemma minv_same_vm : forall A (m m' : Model), m_vm m' = m_vm m -> MInv A m -> MInv A m'.
 Proof.
 intros A m m' EV [I1 I2 I3 I4 I5].
 constructor; unfold m_vm_materialized, m_vm_lazy, m_vmmaps, eager_used, m_vmmaps, m_vm_lazy in *; rewrite EV; assumption.
 Qed.
-Lemma vml_same_vm : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "B'QG'J'QH&QMr1%211r2%411%73631&S9&S:%115r3%311%=3531p071p[>@1p[<A1").
+Lemma vml_same_vm : forall (m m' : Model), m_vm m' = m_vm m -> vml_of m' = vml_of m.
 Proof. intros m m' EV. unfold vml_of, m_vmmaps, m_vm_lazy. rewrite EV. reflexivity. Qed.
-Lemma with_fds_vm : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "E'<'A'V8yR0%211'QF%5221%711'QG'J'QH&QM&QOr2r1%3221%511%613%93821p[<;1pZF=1").
+Lemma with_fds_vm : forall f (m : Model), m_vm (with_fds f m) = m_vm m.
 Proof. intros f m. destruct m. reflexivity. Qed.
-Lemma with_fds_fs : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "E'<'A'V8yR0%211'QF%5221%711'QG'J&QC&QK&QOr2r1%3221%511%613%93821p[<;1pZF=1").
+Lemma with_fds_fs : forall f (m : Model), m_fs (with_fds f m) = m_fs m.
 Proof. intros f m. destruct m. reflexivity. Qed.
-Lemma with_fds_fds : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "C'<'A'V8yR0%211'QF%5221%711'QG'J&QJ&QOr2r1%3221%511%73914p[<91pZF;1").
+Lemma with_fds_fds : forall f (m : Model), m_fds (with_fds f m) = f.
 Proof. intros f m. destruct m as [[t p] v i fsy pr l tm]. reflexivity. Qed.
-Lemma ahid_same_lazy : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "N'<'A'Q5%2211%411'QG'J'V8yR0%211%9211%;11&QNr1%211r2%411%;3631'8p0:1&RMr4%2217r3%4231%C3631p091p[>F1p[<G1p2I1").
+Lemma with_fds_rdr : forall f (m : Model), m_channel_reader (with_fds f m) = m_channel_reader m.
+Proof. intros f m. destruct m. reflexivity. Qed.
+Lemma ahid_same_lazy : forall A (m m' : Model), m_vm_lazy m' = m_vm_lazy m -> ahid A m' = ahid A m.
 Proof. intros A m m' EL. unfold ahid. rewrite EL. reflexivity. Qed.
-Lemma ahid_sbm : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "J'<'A'Q5%2211%411'QG&R;r2r1%3221'J'V8yR0%211'8p021&RMr4%221;r3%4231%;3631p0=1p[>B1p[<C1p2E1").
+Lemma ahid_sbm : forall A (m m' : Model), same_but_materialized m m' -> ahid A m' = ahid A m.
 Proof. intros A m m' SB. apply ahid_same_lazy. exact (sbm_lazy_eq _ _ SB). Qed.
-Lemma dinv_model : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "QC'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051'QG'S?r7r6r5r4r3r2%76654321'J'QH&QM%115%217%53421%D1E&QL%11;(4%11I%;3531r:r9r8%G6321FECp051p0<1p0C1p[BL1p[@M1pT4O1p2Q;1pZ>Q91pS4Q;1pRNQ>1").
+Lemma dinv_model : forall LB LK cr A M (model model' : Model),
+dinv LB LK cr A M model -> m_vm model' = m_vm model -> m_halted model' = None ->
+m_channel_reader model' = m_channel_reader model -> dinv LB LK cr A M model'.
 Proof.
-intros LB LK cr A M model model' D EV HL.
-apply (dinv_frame LB LK cr A M M model model' D); [reflexivity | auto | exact (vml_same_vm _ _ EV) | exact (minv_same_vm _ _ _ EV (di_minv _ _ _ _ _ _ D)) | exact HL].
+intros LB LK cr A M model model' D EV HL RD.
+apply (dinv_frame LB LK cr A M M model model' D); [reflexivity | auto | exact (vml_same_vm _ _ EV) | exact (minv_same_vm _ _ _ EV (di_minv _ _ _ _ _ _ D)) | exact HL | exact RD].
 Qed.
 Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
-Lemma dinv_stack_defined : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "Q:'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051'QG'S?r6r5r4r3r2r1%76654321&RC&V9vV3%22C1&TK&S0vTO%211%4215%93=61p0;1p[@D1pT4F1p2Q21pZ>Q01pS4Q21pRNQ51").
+Lemma dinv_stack_defined : forall LB LK cr A M model, dinv LB LK cr A M model ->
+defined M (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
 Proof.
 intros LB LK cr A M model D i Hi.
 destruct (aio_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ D)) as (_ & _ & _ & _ & _ & _ & _ & _ & _ & TOP & _).
 rewrite (di_above _ _ _ _ _ _ D) by lia. apply M0_def. exact Hi.
 Qed.
-Lemma dinv_call : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "S4'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051p]062'QG'S?r?r<r:r8r6r4%76654321&TEr3&V9vV3%22E1%5241'Izr1%9221&TF&TJ+2+R0%3221%5271%:271&RJvQ=vTOrB(>%11Q;r5r2%877653L21'J&V7%12Q=K%Q211r;%113%63Q<31p081p0B1pYNQK1&S7vQ;r@r>&S:%11Q<%6854D3Q@Q?Q>1'R9r7%22?1&S6r9%221QDrCrAr=%QL632QK1F5p051p091p0=1p0E1p0QD1p0QK1p\0RC1p\6RD1p[BR61p[@R71pT6R91pT4R;1p4RG1p2RH1pZ@RF1pZ>RG1pS6RI1pS4RJ1pS0RM1pS2RN1pRNRO1").
+Lemma dinv_call : forall LB LBc LB' LK LK' cr cr' A A' M M' (model model' : Model) sp scr,
+dinv LB LK cr A M model -> sp <= bv_unsigned sp0 ->
+(forall a, 0 <= a < 2 ^ 64 -> aclient L ar LBc [] sp scr a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
+ri_inv HI LB' [] LK' cr' A' M' (vml_of model') -> MInv A' model' -> model_rt model model' ->
+dinv LB' LK' cr' A' M' model'.
 Proof.
 intros LB LBc LB' LK LK' cr cr' A A' M M' model model' sp scr D Hsp1 PR HH' MI RT. pose proof Hsp as Hsp'. constructor.
 - exact HH'.
@@ -402,6 +474,7 @@ intros LB LBc LB' LK LK' cr cr' A A' M M' model model' sp scr D Hsp1 PR HH' MI R
 unfold byte_at. rewrite PR; [exact (di_stksh _ _ _ _ _ _ D x Hx) | lia | unfold aclient; right; right; right; right; left; exact XC].
 - intros x Hx. pose proof (hish_rng x Hx) as X.
 unfold byte_at. rewrite PR; [exact (di_hish _ _ _ _ _ _ D x Hx) | lia | unfold aclient; right; right; right; right; left; exact Hx].
+- rewrite (model_rt_rdr _ _ RT). exact (di_rdr _ _ _ _ _ _ D).
 Qed.
 Lemma amalloc_site : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "[M'<'V8yR0%211%411'=y8%611%811p041'T6%;11'T7%=11&R0y5%221='?%11;p0@1'QG'A'Q5%2211%H11&S4%J11&RB%72G6%M11'QI%O11!p]021'T5(T2&T?rA%211r@%5221&T<r1r>%33251&T:&T@r2&R:&RMr9r=%3221%521:%94871?'J'8&T>&;rD%22QI1rB%5221(B%93821&T=rE%92R01%3217%>3=16'Q1u1rF%?2R61%4231rG(5%Q9221vV3%H3R<21&S@%11?%K3J1C&SI(V6+2(G%33R821%52F1&V7&TD&V9%12RJ>%321Q:%52RL1%Q83RL71'I&TE&TI&TJ+F%22@1%411%621QLz%82QN1%:231&TGr?+@%3221%QH3RI17rH+:%N3S31L%Q0231%K2SBR?%QN3SB21&TF%12?QJ+K%F2Q41%I2QM1%K241&RKvQ=rC%332QM1rK+4%Q>3SC1Q<%Q@231+V]k\0%Q<2T31%R?3T331rL+1%QE3SJ1QC%QG231%RD3T81G%Q;2Q4R?+R0%Q;2QI1%I2RB1%Q@241%Q62CQL%RK3SL1Q:'S?rJrIrNrM%56AH4321%T81T3&R=%12S<6(6%12T7SC%S73531&Q2r3rQ7%S82TO1%4231&SBrQ0%T2256%R<2U51%4331SI%R9261p0<1p[FTE1pZNU71rQ8%SD2U;1%@2?1%T<23@%RF2U?1%RA21T3%RC241p0F1pZ2TO1p\HUA1(>%11TJ%SA11&7rQ<&SOr5%211%53UL41%TL1TF%TN216%T82UOTC&NrQ>%T;2V21uQ0%4221%TA3V361rQ?%T@2V71u:%9221%U92Q=1r4%SF2V=1%TI3V=31&T0&Q3%VB1V4&T8&SF%443VA21rQ@%TN2VE1%83E31%UA3QJ1U8r7r8%U<221%U>21U<&SHrQA%U72VN1%O21GrQ6%5221&SGrQ5+TP0rQ4rQ3%554321Q6%QA3VO71%UO4UNN>1(9(@%14VIVIDR>rQ;%43VJ21rQ:&RLrQ9%23SH1RDr:%S46652K1V5&S6rQ=%2214&TB%13W5:6&RIvTO%24T219=&RAr;%231BQI&S8r<%23TI1R:%U52U:VL+Q?%U52UC1%TC2VO1%U:241%UB2X9VL%V?11rQE%113%VH3WM31p061pYNWK1%UA2U:W8%TM2W9T5%UD221&RDrQD%221W8%UO2XFSH%VN11rQG%113%W53X:31p061p0:1pYNX91&TA%QC4X;X;T1WB&SC%33X<21%V32RFWE%U?2WFT5%V6221%VL1?rQJ%11A%WC3XH31p051p091pYNXG1pZJXH1p[6XI1'SMvUN(QE&SJvU;%VL2YCSJ&SL%11X9%554WM3UJ1%721WL%:4X<91R:p0<1p0M1p0Q<1p0QI1p0QM1p0R11p0R51p0R81p0R<1p0RH1p0S;1p0SF1p0SO1tR@Y6T71t\LZ5T:1p\FYD1p4YC1p[BYH1pT6YJ1pT@YN1+_Sf0%WG2Z>1%N5MS91S8JrQ2%Q1221%Q44Y6Q31W4p071p0TM1p0U11p0U<1p0V11p0V81p0V;1p0VA1p0VG1p0VO1p0W41p0W;1p0WB1p0WH1p0X41p0XB1p0XF1p0XL1p0Y21p0Y81p0YC1p0YN1tR>Z9Z31pRJZ;1p[LZG1p\NZA1pZ4ZB1p\4ZJ1p[DZK1p2ZJ1pZ>ZH1pS4ZJ1pRNZM1p[@[21pT4[41pT>[81p[4[<1p\:[?1pZD[B1p\J[H1").
 Proof.
@@ -460,12 +533,12 @@ apply (dinv_call LB LB ((u, n) :: LB) LK LK cr (adebit L cr n) A A' M M' model m
 apply PR1; [assumption|]. unfold aclient. right. right. left. rewrite (dla_img_lo DL), (dla_img_hi DL).
 split; [destruct (img_client_rng lo hi Hin) as (I1 & I2 & I3); lia | exact (dla_client DL lo hi a Hin Ha)].
 Qed.
-Lemma in_lb_remove_in : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "A'Q5'<'A%1233%311&TAr1&REr3r2%3221%63851%73934p021pZ2;1pRN;1p\F@1").
+Lemma in_lb_remove_in : forall u (LB : list (Z * Z)) b, In b (lb_remove u LB) -> In b LB.
 Proof.
 intros u LB b. induction LB as [|c LB' IH]; [intros []|]. cbn [lb_remove].
 destruct (Z.eqb (fst c) u); [intros H; right; exact H|]. intros [<-|H]; [left; reflexivity | right; apply IH; exact H].
 Qed.
-Lemma in_block_remove : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "A'Q5'<'A%1233%311&RD&REr3r2%3221r1%6221%7254p021pYN>1pRN;1p\F@1").
+Lemma in_block_remove : forall u LB a, in_block (lb_remove u LB) a -> in_block LB a.
 Proof. intros u LB a (b & Hb & Hr). exists b. split; [exact (in_lb_remove_in u LB b Hb) | exact Hr]. Qed.
 Lemma afree_site : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "ZJ'<'V8yR0%211%411'=y8%611%811p041'T6%;11'T7%=11&R0y5%221='?%11;p0@1'QG'A'Q5%2211%H11&S4%J11&RB%72G6%M11'QI%O11!p]021'T5(T2&T?rB%211rA%5221&T<r1r?%33251&T:&T@r2&R:&RMr:r>%3221%521:%94871?'J'8&T>&;rE%22QI1rC%5221(B%93821&T=rF%92R01%3217%>3=16'Q1u1rG%?2R61%4231rH(5%Q9221vV3%H3R<21&S@%11?%K3J1C&SI(V6+2(G%33R821%52F1&V7&TD&V9%12RJ>r=%4221%62RM1%Q93RM81'I&TE&TI&TJ+F%22A1%411%621QEz%82QG1%:231&TG+@%22R31%QH3RI16&TA(@%14RLRLR=R;%33RL1QArJ+:%Q23S71Q0%Q4231%O2SFQK%R23SF21rK+4%Q83S=1Q6%Q:231+V]k\0%Q62SM1%R93SM31rL+1%Q?3SD1Q=%QA231r@%Q=2T41%R@3T431%Q62OS1&TF+R0%Q72QF1%32S51%Q<251%Q22S9QI%RH3SI1Q6'S?rIrNrM%46CJQ0321%T41SO&R=%12S8R<(6%12T3S?%S33531&Q2r3rQ7%S42TK1%4231&SB&RErQ0%22Q21%T0278%R:2U31%6331SG%R6281p0>1p[FTC1pZNU51rQ8%SB2U91%B2A1%T:23B%RD2U=1%R>21T1%R@241p0H1pZ2TM1p\HU?1(>%11TH%SL11&7rQ;&SOr4%211%53UJ41%TJ1TD%TL216%T62UMTA&NrQ=%T92V01uQ0%4221%T?3V161&T0rQ<&Q3%V91UK&T8&SF%443V821rQ>%TE2V<1%93831r7%U93U321r5r6%U4221%U6215&SGrQ2+TP0rQ1%45321QIC%U?4U>R061rQ5rQ9%QN221r8%RA62QFR4=1@&S6%12Q:3&TB%13V>QJ5%T42T:UL+Q?%T42TC1%S02UO1%T9241%TB2W9UL%T?11rQ@%113%UH3VM31p061pYNVK1%T@2T9V8%S:2V9S8%TC221&RDrQ?%RF2QN1%321V9%U02WGRM%V?11rQB%113%V63W;31p061p0;1pYNW:1%T@4W;W;S5VB&SC%TC3W<21%U22R9VE%SL2VFS9%U5221%W21>rQE%11@%VC3WH31p051p091pYNWG1pZJWH1p[6WI1'SMvUN(QE&SJvU;rQ6%UM2XD1&SL%11W:%655W>3W61%821UM%;4W=:1QNp0=1p0M1p0Q=1p0QJ1p0QM1p0R01p0R61p0RA1p0RN1tR@X3S61t\LY2S91p4X?1p[BXD1pT6XF1pT@XJ1rQ4+_SeL%VD2Y;1rQ3%L5K421G%N21RH%Q14X3Q01W9p081p0SL1p0T01p0T;1p0U21p0U81p0U;1p0UB1p0UJ1p0V21p0V91p0V>1p0VC1p0VO1p0W>1p0WB1p0WH1p0WN1p0X41p0X?1p0XJ1tR>Y5XO1pRJY71p[LYC1p\NY=1pZ4Y>1p\4YF1p[DYG1p\FYH1p2YG1pZ>YE1pS4YG1pRNYJ1p[@YO1pT4Z11pT>Z51p[4Z91p\:Z<1pZDZ?1p\JZE1").
 Proof.
@@ -541,15 +614,9 @@ exact (Hpt (Datatypes.S j) ltac:(lia)).
 Qed.
 End SE.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
-Section SE.
-Local Abbreviation SEC_T_aacc_of_blkA := (ltac2:(TCodec.tc2 tcn__Ja0DrvLib "Q;'V8yR0%211'?y8%511%311p051'Q5&S8r5r4r3%43321'J&TG+8%2271z%53;21&TEr6%2241r7%421>&TD%125@r8%3215%9231&RHr:%2319;p041p0:1p0=1p0A1p0H1p[<N1p[HO1p[DQ01p\FQ11pT4Q31")) (only parsing).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_aacc_of_blkA) 0%nat 0%nat).
-Variable u : ltac:(sec_ty2 constr:(SEC_T_aacc_of_blkA) 1%nat 0%nat).
-Variable n : ltac:(sec_ty2 constr:(SEC_T_aacc_of_blkA) 2%nat 0%nat).
-Variable p : ltac:(sec_ty2 constr:(SEC_T_aacc_of_blkA) 3%nat 0%nat).
-Variable m : ltac:(sec_ty2 constr:(SEC_T_aacc_of_blkA) 4%nat 0%nat).
-Lemma aacc_of_blkA : ltac:(sec_stmt2 constr:(SEC_T_aacc_of_blkA) 5%nat 0%nat).
+Lemma aacc_of_blkA : forall M u n p m, shadow_blk M u n -> u mod 8 = 0 -> 0 <= u -> u <= p -> p + m <= u + n -> aacc M p m.
 Proof.
+intros M u n p m.
 intros [SZ SP] U8 U0 H1 H2 a Ha.
 unfold shadow_zero, byte_at in SZ, SP |- *.
 assert (E : S a = S u + (a / 8 - u / 8)) by (unfold S; lia).
@@ -558,20 +625,21 @@ destruct (Z_lt_le_dec (a / 8 - u / 8) (n / 8)) as [LT|GE].
 - right. exists (n mod 8). assert (NZ : n mod 8 <> 0) by lia. assert (G : a / 8 - u / 8 = n / 8) by lia.
 split; [rewrite E, G; apply SP; exact NZ | lia].
 Qed.
-End SE.
-Lemma u16_u8 : ltac2:(TCodec.tc2 tcn__Ja0DrvLib ">'Q5'J&TGr1+@%3221z%63721r2+8%8221%:3;15p051p\F=1").
+Lemma u16_u8 : forall u, u mod 16 = 0 -> u mod 8 = 0.
 Proof. intros u H. lia. Qed.
-Lemma S_mono : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "='Q5&TEr2r1%3221&RGr3%211%316%8221p061pZ2;1pYN<1").
+Lemma S_mono : forall a b, a <= b -> S a <= S b.
 Proof. intros a b H. unfold S. lia. Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Lemma src_blk_aacc : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "QH'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051&S9&S7vQ;r;r:r9r8r7r6r5%9887654321&TA(@r4%24LL51r<%53M21&TE%12:5&TD%12;7%22>=%5221&RH%13D@?p031p081p0;1p0B1p[DQ;1p\<Q<1pZ<Q=1p8Q>1pYLQ11pT4Q31p2Q?1pZ>Q=1pS4Q?1pRBQ@1pRNQC1").
+Lemma src_blk_aacc : forall LB FF LK cr A M V (As caps src n : Z),
+ri_inv HI LB FF LK cr A M V -> In (As, caps) LB -> As <= src -> src + n <= As + caps -> aacc M src n.
 Proof.
 intros LB FF LK cr A M V As caps src n HH Hin H1 H2.
 destruct (aio_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (WF & _).
 destruct (WF (As, caps) Hin) as (HBR & _ & HSB & _). cbn [fst snd] in HBR, HSB. destruct HBR as (B1 & _ & B3 & _).
 apply (aacc_of_blkA M As caps src n HSB (u16_u8 _ B3)); lia.
 Qed.
-Lemma src_blk_app_rng : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "QI'<'A'Q5%2211%411&S4%611&RB'V8yR0%211'?y8%511%311p051&S9&S7vQ;r;r:r9r8r7r6r5%9887654321&TA(@r4%24LL51r<%53M21&TE%12:5&TD%12;7%22>=%5221&RNvTO%231A@p041p091p0<1p0C1p[DQ<1p\<Q=1pZ<Q>1p8Q?1pYLQ21pT4Q41p2Q@1pZ>Q>1pS4Q@1pRBQA1pRNQD1").
+Lemma src_blk_app_rng : forall LB FF LK cr A M V (As caps src n : Z),
+ri_inv HI LB FF LK cr A M V -> In (As, caps) LB -> As <= src -> src + n <= As + caps -> app_rng ar src n.
 Proof.
 intros LB FF LK cr A M V As caps src n HH Hin H1 H2.
 destruct (aio_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (WF & _).
@@ -590,15 +658,19 @@ destruct (aic_img_shadow _ _ _ _ _ ICok _ _ _ _ _ _ _ HH src n) as (Z0 & _).
 - rewrite (aicl_poison IL ILY). repeat (apply Forall_cons; [cbn [fst snd]; lia|]). apply Forall_nil.
 - apply Z0. unfold in_shadow_of. split; apply S_mono; lia.
 Qed.
-Lemma aclient_remove : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "K'Q5'<'A%1233%311&S4%511&RJvQ=vTO&REr6r5%3221r4r3r2r1%;7:954321%<7;:87543p021pYNE1p\0F1p\6G1pRBB1pRNE1p\FJ1").
+Lemma aclient_remove : forall u LB FF sp scr a, aclient L ar (lb_remove u LB) FF sp scr a -> aclient L ar LB FF sp scr a.
 Proof.
 intros u LB FF sp scr a Hc. unfold aclient, aclient_g in *.
 destruct Hc as [Hc|[Hc|[Hc|[Hc|[Hc|[Hc|Hc]]]]]]; [left; exact (in_block_remove u LB a Hc) | tauto | tauto | tauto | tauto | tauto |].
 right. right. right. right. right. right. destruct Hc as (b & Hb & Hr). exists b. split; [exact (in_lb_remove_in u LB b Hb) | exact Hr].
 Qed.
-Lemma ablock_range_prefix : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "E'Q5&RIvQ=vTOr3r2%544321'I&TFz%2215&TE%1278%6231r5%>4=<1;p031p0;1p[FB1p[DC1p\FD1").
+Lemma ablock_range_prefix : forall u n nb, ablock_range L ar u n -> 0 < nb <= n -> ablock_range L ar u nb.
 Proof. intros u n nb (B1 & B2 & B3 & B4 & B5 & (B6 & B7 & B8)) Hnb. unfold ablock_range, app_mem. repeat split; lia. Qed.
-Lemma kn_blkA_of_inv : ltac2:(TCodec.tc2 tcn__Ja0DrvLib "RG'<'V8yR0%211%411'=y8%611%811p041'A'Q5%2211%=11&S4%?11&RB'?%11;p0@1'QG'T5(T2&T?r<%211r;%5221'S?r:r9r8r7r6%66854321&TA(@r5r4%34LL21%53L1@'I&TFz%2216&TE%1289%6231'Jr@%K21C&V7%12QBD%53QB31rA(5%Q1221vV3%:3QG21&T:&T@&R:&RMr=%221Q6%421Q9&SH%12Q6Q3%948Q331p0;1p0A1p0H1p0Q01p0Q71tR>QEQ?1p[FR01pZ8R11p\FR21p\HR91p[@QK1pT4QM1p2R41pZ>R21pS4R41pRNR71pZDR<1p\JRB1").
+Lemma kn_blkA_of_inv : forall vals ebs LB LK cr A M (model : Model) v (u cap nb : Z),
+let E := Env (vals_ev vals) ebs in
+dinv LB LK cr A M model -> In (u, cap) LB -> 0 < nb <= cap ->
+vals_ev vals v = Z_to_bv 64 u -> vals_ev vals 0 = sp0 ->
+know_ok ASEGS E (mrestrict (ahid A model) M) (kn_blkA v nb).
 Proof.
 intros vals ebs LB LK cr A M model v u cap nb E D Hin Hnb Pv P0.
 pose proof (di_inv _ _ _ _ _ _ D) as HH.

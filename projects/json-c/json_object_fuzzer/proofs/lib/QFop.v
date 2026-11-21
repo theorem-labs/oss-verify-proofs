@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer: four main-entry states in HSCLASS_S; the launch's ProcInput: section Cinv's SINV0 and argH0 over the launch's fields with apc, mbase, kb and execfn; the channel-reader fact co_rdr in fdinv_main; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run; APS.A_wf_allowA taken in either argument form). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -110,15 +111,15 @@ Definition kn_mem (K : kentry) (k : list kentry) : bool := existsb (kentry_eqb K
 Lemma kn_mem_In : forall K k, kn_mem K k = true -> In K k.
 Proof. intros K k H. unfold kn_mem in H. apply existsb_exists in H as (K' & Hin & Heq). apply kentry_eqb_eq in Heq. subst K'. exact Hin. Qed.
 
-Definition F208 : kentry := KRange (EVar 208) 4295491576 34326181871.
-Definition F209 : kentry := KRange (EVar 209) 0 15.
+Definition F208 : kentry := KRange (EVar 212) 4295491576 34326181871.
+Definition F209 : kentry := KRange (EVar 213) 0 15.
 Definition F0 : kentry := KRange (EVar 0) 4294901760 4294967295.
 Definition F10 : kentry := KRange (EVar 10) 0 8.
 Definition KZ_BAND : kentry :=
 KZero {| a_base := EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 0)) (EMd M_MUL (ELit 512) (EVar 10)); a_off := 2146402304 |}
 (EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 0)) (EMd M_MUL (ELit (-512)) (EVar 10))) (ELit 0x100000100000)).
 Lemma HS2_facts : forall w ch, HSCLASS_S w ch -> In F208 (kn ch) /\ In F209 (kn ch) /\ In F0 (kn ch) /\ In F10 (kn ch) /\ In KZ_BAND (kn ch).
-Proof. intros w ch HCL. repeat split; apply kn_mem_In; destruct w; destruct HCL as [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros w ch HCL. repeat split; apply kn_mem_In; destruct w; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Lemma e_top_eq : e_top = EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 4096) (EVar 10)).
 Proof. reflexivity. Qed.
@@ -133,7 +134,7 @@ rewrite Z.mod_add by lia. apply Z.mod_small. lia.
 Qed.
 
 Lemma HS2_fd : forall w ch, HSCLASS_S w ch -> a_fd ch = FdStd.
-Proof. intros [|] ch [-> | ->]; reflexivity. Qed.
+Proof. intros [|] ch [-> | [-> | [-> | ->]]]; reflexivity. Qed.
 
 Section Cinv.
 Variable sp : word.
@@ -142,15 +143,29 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation h := (m_vmmaps mo).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation LV := (LV_J E).
 
 Lemma fdinv_main : fdinv mo.
@@ -171,6 +186,7 @@ destruct (bv_eqb (Z_to_bv 64 0) k); [discriminate|]. destruct (bv_eqb (Z_to_bv 6
 - intros k e Hk. rewrite LK in Hk.
 destruct (bv_eqb (Z_to_bv 64 0) k); [injection Hk as <-; exact I|]. destruct (bv_eqb (Z_to_bv 64 1) k); [injection Hk as <-; exact I|].
 destruct (bv_eqb (Z_to_bv 64 2) k); [injection Hk as <-; exact I| discriminate].
+- exact (P co_rdr).
 Qed.
 
 Lemma maps_below_top_main : maps_below_top h.
@@ -283,17 +299,17 @@ unfold wiv2z, obj_e, uE in *. cbn [fst snd] in *. lia.
 Qed.
 
 Definition PRES_PAGE_J : expr * expr :=
-(EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 208)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 209))) (ELit 137439019008), ELit 4096).
+(EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 212)) (EMd Instr.M_MUL (ELit (-4096)) (EVar 213))) (ELit 137439019008), ELit 4096).
 Lemma pres_page_inside : inside_appvis PRES_PAGE_J.
 Proof.
-assert (Ho : In (208%nat, 137439023104) (OBJS_W w)) by (destruct w; cbn; tauto).
-exists (wiv2z (obj_e E (208%nat, 137439023104))). split; [exact (obj_appvis _ Ho)|].
+assert (Ho : In (212%nat, 137439023104) (OBJS_W w)) by (destruct w; cbn; tauto).
+exists (wiv2z (obj_e E (212%nat, 137439023104))). split; [exact (obj_appvis _ Ho)|].
 pose proof (P co_know) as K. unfold know_ok in K. rewrite Forall_forall in K.
 destruct (HS2_facts w ch HCL) as (I1 & I2 & _).
 pose proof (K _ I1) as K1. pose proof (K _ I2) as K2. unfold F208, F209 in K1, K2. cbn [kentry_ok edenot] in K1, K2.
 unfold wiv2z, obj_e, PRES_PAGE_J, uE. cbn [fst snd edenot].
 rewrite !u_add64, !u_mul64, !u64_lit by lia. rewrite !u_lit64a.
-set (x208 := bv_unsigned (ev E 208)) in *. set (x209 := bv_unsigned (ev E 209)) in *.
+set (x208 := bv_unsigned (ev E 212)) in *. set (x209 := bv_unsigned (ev E 213)) in *.
 clearbody x208 x209. clear - K1 K2.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 lia.
@@ -308,27 +324,27 @@ Qed.
 
 Definition ov (o : nat * Z) : expr * expr := (EMd Instr.M_MUL (ELit 4096) (EVar (fst o)), ELit (snd o)).
 
-Definition PAGE2_B : expr * expr := (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 423)) (ELit 4096), ELit 4096).
+Definition PAGE2_B : expr * expr := (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 429)) (ELit 4096), ELit 4096).
 Definition HULL_J : expr * expr := (ELit 65536, ELit 6508544).
 Definition VIS_W (w' : bool) : list (expr * expr) :=
-[ov (2129%nat, 4096); ov (496%nat, 4096); ov (479%nat, 8388608); ov (478%nat, 1048576)]
-++ (if w' then [ov (423%nat, 4096); ov (5%nat, 8192)] else [ov (424%nat, 4096); PAGE2_B])
-++ [ov (406%nat, 11571200); ov (330%nat, 4096); ov (265%nat, 4096); ov (238%nat, 65536); ov (237%nat, 4096); PRES_PAGE_J; ov (207%nat, 3727360);
-ov (78%nat, 65536); HULL_J; (e_stacklo, e_stacklen)].
+[ov (2135%nat, 4096); ov (502%nat, 4096); ov (485%nat, 8388608); ov (484%nat, 1048576)]
+++ (if w' then [ov (429%nat, 4096); ov (5%nat, 8192)] else [ov (430%nat, 4096); PAGE2_B])
+++ [ov (412%nat, 11571200); ov (336%nat, 4096); ov (269%nat, 4096); ov (242%nat, 65536); ov (241%nat, 4096); PRES_PAGE_J; ov (211%nat, 3727360);
+ov (82%nat, 65536); HULL_J; (e_stacklo, e_stacklen)].
 Lemma VIS_eq : a_vis ch = VIS_W w.
-Proof. destruct w; destruct HCL as [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. destruct w; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
-Definition F423 : kentry := KRange (EVar 423) 1 34359736319.
+Definition F423 : kentry := KRange (EVar 429) 1 34359736319.
 Lemma page2_inside : w = false -> inside_appvis PAGE2_B.
 Proof.
-intros Hw. assert (Ho : In (423%nat, 8192) (OBJS_W w)) by (rewrite Hw; cbn; tauto).
-exists (wiv2z (obj_e E (423%nat, 8192))). split; [exact (obj_appvis _ Ho)|].
+intros Hw. assert (Ho : In (429%nat, 8192) (OBJS_W w)) by (rewrite Hw; cbn; tauto).
+exists (wiv2z (obj_e E (429%nat, 8192))). split; [exact (obj_appvis _ Ho)|].
 pose proof (P co_know) as K. unfold know_ok in K. rewrite Forall_forall in K.
-assert (I1 : In F423 (kn ch)) by (apply kn_mem_In; rewrite Hw in HCL; destruct HCL as [-> | ->]; vm_compute; reflexivity).
+assert (I1 : In F423 (kn ch)) by (apply kn_mem_In; rewrite Hw in HCL; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity).
 pose proof (K _ I1) as K1. unfold F423 in K1. cbn [kentry_ok edenot] in K1.
 unfold wiv2z, obj_e, PAGE2_B, uE. cbn [fst snd edenot].
 rewrite !u_add64, !u_mul64, !u64_lit by lia.
-set (x423 := bv_unsigned (ev E 423)) in *. clearbody x423. clear - K1.
+set (x423 := bv_unsigned (ev E 429)) in *. clearbody x423. clear - K1.
 rewrite (Z.mod_small (4096 * x423)) by lia. rewrite Z.mod_small by lia. lia.
 Qed.
 
@@ -434,7 +450,7 @@ destruct Hp as (p & Hp & Hz). destruct (vis_cases p Hp) as [Hin | ->].
 * exfalso. cbn [fst snd] in Z1. rewrite (proj1 u_stack) in Z1.
 pose proof (TOPP_facts _ (usp_ok0 sp Hsp)) as (_ & _ & _ & T4). unfold STACK_MAX, CEIL in T4. lia.
 * rewrite (stack_shadow_zero x (conj Z1 Z2)). discriminate.
-- assert (Hh : hid AJO6 (bv_unsigned sp) (argH0 JO6PH sp rdraw argv envp uid hw) E ch mo x = true).
+- assert (Hh : hid AJO6 (bv_unsigned sp) (argH0 sp rdraw argv envp kb execfn) E ch mo x = true).
 { unfold hid. apply orb_true_iff. right. apply negb_true_iff. unfold vis. rewrite Hm, Hna, Hlz, Hal. cbn [negb andb orb].
 unfold in_hull. cbn [img_lo img_hi AJO6].
 replace ((65536 <=? bv_unsigned x) && (bv_unsigned x <? 6574080))%bool with false by (symmetry; apply andb_false_iff; right; apply Z.ltb_ge; lia).
@@ -495,15 +511,17 @@ Lemma main_backing_bound : vm_backing_used mo <= a_eager ch + a_abytes ch.
 Proof.
 rewrite vm_backing_used_split.
 pose proof (P co_minv) as MI. pose proof (P co_eager) as HE. pose proof (P co_abytes) as HA.
-pose proof (allowed_pages_bound (allowA AJO6 E ch) (m_vm_materialized mo) (A_wf_allowA AJO6 (fun _ => None) (fun _ _ _ => None) XE0 XB0 0%nat E ch)
-(minv_nodup _ _ MI) (minv_aligned _ _ MI) (minv_allowed _ _ MI)) as HP.
+first [pose proof (allowed_pages_bound (allowA AJO6 E ch) (m_vm_materialized mo) (A_wf_allowA AJO6 (fun _ => None) (fun _ _ _ => None) XE0 XB0 0%nat E ch)
+(minv_nodup _ _ MI) (minv_aligned _ _ MI) (minv_allowed _ _ MI)) as HP
+| pose proof (allowed_pages_bound (allowA AJO6 E ch) (m_vm_materialized mo) (A_wf_allowA AJO6 E ch)
+(minv_nodup _ _ MI) (minv_aligned _ _ MI) (minv_allowed _ _ MI)) as HP].
 unfold page_size in *. lia.
 Qed.
 
 Lemma main_backing : vm_backing_used mo <= 2480000000.
 Proof.
 pose proof main_backing_bound as B.
-assert (HAE : a_eager ch + a_abytes ch <= 2480000000) by (apply Z.leb_le; destruct w; destruct HCL as [-> | ->]; vm_compute; reflexivity). lia.
+assert (HAE : a_eager ch + a_abytes ch <= 2480000000) by (apply Z.leb_le; destruct w; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity). lia.
 Qed.
 
 Lemma main_Phi_bound : Phi LV mo <= 0x2800000000.

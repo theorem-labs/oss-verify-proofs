@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Pod/RoleImgA.v at 7d5486c1b1d; fuzz_rate's image A: its addresses, the key of both strcmp calls, the % 24 multiplier, closed_list and ordered; the record check is Pod/RateImg.v's. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/Pod/RateImgA.v at 178e33ba81ec; the same facts for image B (fuzz_rate.asan-ubsan): its three .data.rel.ro table addresses, its jump-table targets, its % 33 constant cell, its pcs, its read-only range, the image module AsanUbsan, and a control against the plain and the UBSan image. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Pod/RoleImgA.v; fuzz_rate's image A: its addresses, the key of both strcmp calls, the % 24 multiplier, closed_list and ordered; the record check is Pod/RateImg.v's. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/Pod/RateImgA.v; the same facts for image B (fuzz_rate.asan-ubsan): its three .data.rel.ro table addresses, its jump-table targets, its % 33 constant cell, its pcs, its read-only range, the image module AsanUbsan, and a control against the plain and the UBSan image. *)
 (** fuzz_rate's image B (fuzz_rate.asan-ubsan, pinned sha256
     c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14)
     holds pod.h's tables where [rate_asanubsan_addrs] says (the record type is Pod/Tables.v's pod_addrs and the check

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, target_vm_k's ledger is the launch's (ResLaunch.res_launch: the image's entries and the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -13,6 +14,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From OSSVerify.skcms.iccprofile_info.images Require Import Plain.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Fs.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require ResLaunch.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require Import
   PropExec CatExec StoreOk Frame MallocDefs RefEnframeBase RefWorld ShapeAlg Spec RefTargetPre RefWorldK.
 From Stdlib Require Import Zify.
@@ -58,7 +60,7 @@ Record target_pre_k (k sp0 B area brkv mas tid sec cnr : Z) (content : list byte
 
 (* [comment removed for export] *)
 Record target_vm_k (k sp0 B area : Z) (VM : VmMaps) : Prop := TARGET_VM_K {
-  tvk_res   : vm_reserved VM = segments_reserved RSEGS;
+  tvk_res   : ResLaunch.res_launch (segments_reserved RSEGS) VM;   (* LPS 727298f3: image entries ++ vdso/vvar pair *)
   tvk_sp    : vm_init_sp VM = Z_to_bv 64 sp0;                               (* [comment removed for export] *)
   tvk_limit : 2 ^ 31 <= vm_limit VM;
   tvk_has   : In (Z_to_bv 64 B, Z_to_bv 64 (nbk k)) (vm_maps VM);

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module names changed; 389 of its 426 lines of code are new or changed and 741 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): STRETCH F of
    round_trip_text's walk (lane RttFR1 of WalkRtt102, the text owner), RTT_SEG_F of Rtt102Cut.v at the batch kit's cut (the cut
-   7cdbb61b5fa0 merged into the lane, c46ea8f2977; the shared layer re-fitted at 80a1d52c32c7):
+   merged into the lane; the shared layer re-fitted):
    rtt_seg RT_CMP rtt_at_cmp -> rtt_seg RT_TXE rtt_at_txe.
    rule 24: proves no function (kind: segment lemma); the function-level lookup is the brief's
    (proof-index round_trip_text EXIT=0, no released ASan proof).
@@ -106,7 +107,7 @@ Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 (* (a) PRH_Base.v:202 prh_head_wide (`8 <= cf_head`; ONE spelling a walk takes; the preset instance has cf_head = 16):
    the ledger's head word (8 bytes below each harness pointer) lies inside its block, so the seven stores keep it *)
 Hypothesis HW : prh_head_wide.
-(* (b) the callee's kit text, fuzz_alloc_ran_out (PRH_FnAlloc.v at walkkit-next de5e947c224b), at any float state:
+(* (b) the callee's kit text, fuzz_alloc_ran_out (PRH_FnAlloc.v at walkkit-next), at any float state:
    the call happens at the cut's fxc *)
 Hypothesis TFR : forall fx' : YK11.FPState,
   @tfuzz_alloc_ran_out_specX fx' rc cp prh_img_A RL A_prog_listing PA B ARx SK.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Import Scfg SimInv ExitSim CatSim ShapeAlg.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Common.Cfg Require Import RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
@@ -26,6 +28,7 @@ Let sstepc := sstep_cfg segs the_scfg.
 Inductive sreach (Q : config -> Prop) : config -> Prop :=
 | sr_done : forall c, Q c -> sreach Q c
 | sr_step : forall c,
+    sys_rob segs c ->
     (exists c', sstepc c [] (SNext c')) ->
     (forall evs X, sstepc c evs X -> evs = [] /\ exists c', X = SNext c') ->
     (forall evs c', sstepc c evs (SNext c') -> sreach Q c') ->
@@ -33,12 +36,13 @@ Inductive sreach (Q : config -> Prop) : config -> Prop :=
 
 (* [comment removed for export] *)
 Lemma sr_step' : forall (Q : config -> Prop) c,
+  sys_rob segs c ->
   (exists c', sstepc c [] (SNext c')) ->
   (forall evs X, sstepc c evs X ->
      evs = [] /\ exists c', X = SNext c' /\ sreach Q c') ->
   sreach Q c.
 Proof.
-  intros Q c Hp Ha. apply sr_step; [exact Hp| |].
+  intros Q c Hrob Hp Ha. apply sr_step; [exact Hrob | exact Hp| |].
   - intros evs X Hss. destruct (Ha evs X Hss) as [-> (c' & -> & _)]. split; [reflexivity | exists c'; reflexivity].
   - intros evs c' Hss. destruct (Ha evs (SNext c') Hss) as [_ (c'' & E & H)]. injection E as <-. exact H.
 Qed.
@@ -53,9 +57,9 @@ Proof. intros Q c H. apply sr_done. exact H. Qed.
 Lemma sreach_mono : forall (Q Q' : config -> Prop) c,
   sreach Q c -> (forall c', Q c' -> Q' c') -> sreach Q' c.
 Proof.
-  intros Q Q' c H HQ. induction H as [c Hc | c Hprog Hall Hk IH].
+  intros Q Q' c H HQ. induction H as [c Hc | c Hrob Hprog Hall Hk IH].
   - apply sr_done. apply HQ. exact Hc.
-  - apply sr_step; [exact Hprog | exact Hall |].
+  - apply sr_step; [exact Hrob | exact Hprog | exact Hall |].
     intros evs c' Hss. exact (IH evs c' Hss).
 Qed.
 
@@ -63,9 +67,9 @@ Qed.
 Lemma sreach_seq : forall (Q1 Q2 : config -> Prop) c,
   sreach Q1 c -> (forall c', Q1 c' -> sreach Q2 c') -> sreach Q2 c.
 Proof.
-  intros Q1 Q2 c H K. induction H as [c Hc | c Hprog Hall Hk IH].
+  intros Q1 Q2 c H K. induction H as [c Hc | c Hrob Hprog Hall Hk IH].
   - apply K. exact Hc.
-  - apply sr_step; [exact Hprog | exact Hall |].
+  - apply sr_step; [exact Hrob | exact Hprog | exact Hall |].
     intros evs c' Hss. exact (IH evs c' Hss).
 Qed.
 
@@ -80,7 +84,7 @@ Lemma sreach_inv : forall (Q : config -> Prop) c,
           /\ forall evs X, sstepc c evs X ->
                evs = [] /\ exists c', X = SNext c' /\ sreach Q c').
 Proof.
-  intros Q c H. destruct H as [c Hc | c Hp Ha Hk]; [left; exact Hc | right; split; [exact Hp|]].
+  intros Q c H. destruct H as [c Hc | c Hrob Hp Ha Hk]; [left; exact Hc | right; split; [exact Hp|]].
   intros evs X Hss. destruct (Ha evs X Hss) as [-> (c' & ->)].
   split; [reflexivity|]. exists c'. split; [reflexivity | exact (Hk [] c' Hss)].
 Qed.
@@ -110,14 +114,14 @@ Proof. intros Q1 Q2 c H. eapply sreach_mono; [exact H|]. intros; right; assumpti
 Lemma sreach_no_error_now : forall (Q : config -> Prop) c evs,
   sreach Q c -> ~ Q c -> ~ sstepc c evs SError.
 Proof.
-  intros Q c evs H HnQ Hss. destruct H as [c Hc | c Hp Ha Hk]; [exact (HnQ Hc)|].
+  intros Q c evs H HnQ Hss. destruct H as [c Hc | c Hrob Hp Ha Hk]; [exact (HnQ Hc)|].
   destruct (Ha evs SError Hss) as [_ (c' & Hc')]. discriminate Hc'.
 Qed.
 
 Lemma sreach_silent_now : forall (Q : config -> Prop) c evs X,
   sreach Q c -> ~ Q c -> sstepc c evs X -> evs = [].
 Proof.
-  intros Q c evs X H HnQ Hss. destruct H as [c Hc | c Hp Ha Hk]; [exact (False_ind _ (HnQ Hc))|].
+  intros Q c evs X H HnQ Hss. destruct H as [c Hc | c Hrob Hp Ha Hk]; [exact (False_ind _ (HnQ Hc))|].
   exact (proj1 (Ha evs X Hss)).
 Qed.
 
@@ -128,11 +132,12 @@ Qed.
 (* [comment removed for export] *)
 Lemma sreach_node : forall c (I : Type) (nx : I -> config) (i0 : I) (Q : config -> Prop),
   node_ok segs c I (fun _ => []) nx ->
+  sys_rob segs c ->
   (forall i, sreach Q (nx i)) ->
   sreach Q c.
 Proof.
-  intros c I nx i0 Q [Hcomp Hsound] Hk.
-  apply sr_step.
+  intros c I nx i0 Q [Hcomp Hsound] Hrob Hk.
+  apply sr_step; [exact Hrob | | |].
   - exists (nx i0). apply (Hcomp i0).
   - intros evs X Hss. destruct (Hsound evs X Hss) as (i & -> & ->).
     split; [reflexivity|]. exists (nx i). reflexivity.
@@ -143,17 +148,19 @@ Qed.
 (* [comment removed for export] *)
 Lemma sreach_node_post : forall c (I : Type) (nx : I -> config) (i0 : I),
   node_ok segs c I (fun _ => []) nx ->
+  sys_rob segs c ->
   sreach (fun c' => exists i, c' = nx i) c.
 Proof.
-  intros c I nx i0 Hn. apply (sreach_node c I nx i0); [exact Hn|].
+  intros c I nx i0 Hn Hrob. apply (sreach_node c I nx i0); [exact Hn | exact Hrob |].
   intros i. apply sr_done. exists i. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 Lemma sreach_silent1 : forall c c' (Q : config -> Prop),
   node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  sys_rob segs c ->
   sreach Q c' -> sreach Q c.
-Proof. intros c c' Q Hn Hc. apply (sreach_node c unit (fun _ => c') tt Q Hn). intros []; exact Hc. Qed.
+Proof. intros c c' Q Hn Hrob Hc. apply (sreach_node c unit (fun _ => c') tt Q Hn Hrob). intros []; exact Hc. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -169,7 +176,7 @@ Lemma sreach_step1 : forall ms model ms' (Q : config -> Prop),
   sreach Q (mkCfg ms model).
 Proof.
   intros ms model ms' Q Hh Hlazy Hsvc Hstep Hc.
-  eapply sreach_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply sreach_silent1; [apply node_instr; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
@@ -220,7 +227,7 @@ Theorem sreach_realizes : forall (Q : config -> Prop) c T,
   (forall c', Q c' -> realizes segs c' T) ->
   realizes segs c T.
 Proof.
-  intros Q c T H K. induction H as [c Hc | c Hprog Hall Hk IH].
+  intros Q c T H K. induction H as [c Hc | c Hrob Hprog Hall Hk IH].
   - apply K. exact Hc.
   - destruct Hprog as [c1 Hc1].
     pose (I := {c' : config | sstepc c [] (SNext c')}).
@@ -233,7 +240,7 @@ Proof.
     { intros [c' Hc']. cbn. apply (IH [] c' Hc'). }
     assert (HT0 : T []) by (eapply realizes_nonempty; apply (HT (exist _ c1 Hc1))).
     apply (rz_conseq segs c (t_alt (fun _ : I => t_emit [] T))).
-    + apply (rz_node segs c I (fun _ => []) (fun i => proj1_sig i) (fun _ => T) (exist _ c1 Hc1) Hnode HT).
+    + apply (rz_node segs c I (fun _ => []) (fun i => proj1_sig i) (fun _ => T) (exist _ c1 Hc1) Hnode Hrob HT).
     + intros tr. split.
       * intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
       * intros Htr. exists (exist _ c1 Hc1). exact (proj2 (t_emit_nil_eq T HT0 tr) Htr).

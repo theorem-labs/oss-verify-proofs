@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): SEGMENT L7 of the walk of
    LLVMFuzzerTestOneInput (B' 0x816cc), THE COMPOSITION. Proves entry_B_of_segs_stmt of the B' cut file
@@ -11,8 +12,8 @@
      by instantiation of its implicit arguments.
    - The kit TEXTS (reached only through the cut file's statements; no text is opened here): PRH_Base.v 016934fdc1af,
      PRH_FnCheck.v 1b4213c5f76f, PRH_FnAlloc.v 006c7e1ef8e6, PRH_FnPj.v 50f4781cadb9.
-   - Template: lib/B/EntryCutsB.v entry_B_of_segs (a working branch fbe3888c3879), its eb_bind; this
-     cut graph has no loop, so SRr_bind (YA0n.v:41) and the case split of the branching posts are all it uses.
+   - Template: lib/B/EntryCutsB.v entry_B_of_segs (a working branch), its eb_bind; this
+     cut graph has no loop, so SRr_bind (YA0n.v:42) and the case split of the branching posts are all it uses.
    THE GRAPH: start -> frame (L0a, exists fk) -> s1 | exit (L0b) -> cno (L1) -> pno | exit (L2) -> caw | free (L3)
    -> free | crs0 | acc (L4, exists t D); crs0 -> exit (L4j); acc -> rm (L5a) -> crt (L5b) -> free | crs1 (L5c);
    crs1 -> free (L5d); free -> exit (L6f); exit -> ret (L6x). Every cut after L0a is at the same fk.
@@ -53,7 +54,7 @@ Variable ec_lcut : ecx -> nat -> Z.
 (* the lanes from L1 on are at wle' over the fixed zone (Ent102CutsB.v ec_laneR WLE') *)
 Local Notation WLE' := (wle' segs (@YGcfRehidePost.RZ_cf rc)).
 
-(* two lanes in a row are one lane (YA0nH.SRrG_bind at the transitive wle', YA0nH.v:155) *)
+(* two lanes in a row are one lane (YA0nH.SRrG_bind at the transitive wle', YA0nH.v:156) *)
 Lemma ec_bind {P Q R : world segs -> config -> Prop} :
   ec_laneR WLE' P Q -> ec_laneR WLE' Q R -> ec_laneR WLE' P R.
 Proof.

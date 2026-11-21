@@ -3,8 +3,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFex.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow is a Theorem Labs lane's arity-free form (2c257ca7d7a); fuzz_pcap's Tfib_zero_shadow has six rows, the donor's five. *)
+(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow is a Theorem Labs lane's arity-free form; fuzz_pcap's Tfib_zero_shadow has six rows, the donor's five. *)
 (* Modified by Theorem Labs, 2026-10: batch_geom bounds rg_mapped_user, and ext_zone the chunk extent, by kFreeArrayOffset (strictly) instead of 2 ^ 31, through YG06Free.mapped_user_le_free_array and cfacts; no restated proof unfolds EV_MAX, and the proofs that read the bounds unfold kFreeArrayOffset. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

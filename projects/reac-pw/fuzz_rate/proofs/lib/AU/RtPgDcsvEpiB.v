@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88; its helpers rx_reg_atom,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgX01.v; its helpers rx_reg_atom,
    rx_reg_ext, rx_reg_lit, rx_st_region, rx_chunk_zero, rx_flag0_of, the tactics z5 / z5g / rx_mach / rx_atom / rx_ext /
    rx_lit / rx_run_flag (the flag-store run with aj_flag_store's full argument count) and the shape of its release run
    (the flag pointer word, the flag byte and the 13 save slots as one symbolic state, then SRr_ret_at) are kept with the
    prefix ep_, on reac-pw/fuzz_rate's image A and lib/A/RtPgDcsvDefs.v's code table dc_tbl; the tail walk of
    reac_rate_drivable_csv below is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgDcsvEpi.v at 693242f63d54 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgDcsvEpi.v for image B
    (fuzz_rate.asan-ubsan): the walk is image B's tail, on lib/AU/RtPgDcsvDefsB.v and lib/AU/RtPgStepsB.v; its pcs,
    cells and registers are image B's (buflen R+24, buf R+32, tmp R+48, F R+8 / R+16, the frame's shadow address in
    s2, copy in s3, buf in s4); F is an env atom of run C read from the cell R+8 (image B keeps it in no register);
    run B reads the cell R+32 and carries the range facts 0 < buf and 0 < buf + copy and the cond fact
    buf <= buf + copy, so the engine steps over the three B-only trap branches 0x845ac / 0x845c0 / 0x845c8. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): PART 3 of the walk of

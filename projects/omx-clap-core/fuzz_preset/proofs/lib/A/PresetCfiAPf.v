@@ -23,6 +23,7 @@
    Not restated: link_AMEMSET / link_AMEMCPY (the AsanAPI_cf fields aa_asan_memset_cf / aa_asan_memcpy_cf, whose
    consumer was cgif's harness walk; preset's entry function calls neither). Dropped: link_ASM2 (cgif's class 2;
    preset's classes are cf_fs_classes = [0; 1; 3], taken through the stack-malloc premise of tfib_lib_x_all_A). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -45,7 +46,7 @@ Local Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------- *)
 (* 1. The closure.                                                         *)
-(* #102 (no-DW interface, PresetCfnA.v, first at commit 8259b94c42ee): the harness walk takes the callee record at
+(* #102 (no-DW interface, PresetCfnA.v, first): the harness walk takes the callee record at
    every float state fx0 (each callee runs at the FP state its caller hands it); the closure applies it to the record.
    The record itself (the kit's sixteen texts, the frame-area allocation and its release) is assembled by the composition
    (lib/A/PresetD2pAPf.v), by field name. *)

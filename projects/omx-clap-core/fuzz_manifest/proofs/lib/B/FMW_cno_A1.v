@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_A1.v at a working branch 31d1eb57a40.
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_A1.v at a working branch.
    check_no_overread 0x80bd4, entry segment: the prologue (frame 112, ra s0..s11 saved; s1 := tn, s2 := tp, s4 := un,
    s6 := up, s8 := the shadow base, s5 := un + 18 + (un + 18 == 0) = un + 18), malloc (un + 18) at 0x80c38, back at
    0x80c3c (cno_P1). No overflow check lies in this range (B 0x80bd4 .. 0x80c38). *)
@@ -28,8 +28,8 @@ Open Scope Z_scope.
 
 Section S. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-Hypothesis FB : FmB B.                                   (* lib/B/FMW_seg.v:37: code addresses, GOT/cell values, statics not owned *)
-Hypothesis HB : TfibSyms B.                              (* ReusableB/YF0m.v:658 *)
+Hypothesis FB : FmB B.                                   (* lib/B/FMW_seg.v:38: code addresses, GOT/cell values, statics not owned *)
+Hypothesis HB : TfibSyms B.                              (* ReusableB/YF0m.v:659 *)
 Hypothesis IMG : fm_img_facts tfibsegs B.                (* lib/B/FMH_Fn.v:61 *)
 Hypothesis UNIV : fm_univ B.                             (* lib/B/FMH_Fn.v:71: incl Tfib_universe (as_universe B) *)
 Hypothesis AMALLOC4 : amalloc04_rule tfibsegs B ameter_triv.   (* YC5d.v:57; ameter_triv YCbp.v:17, mo_ok = True *)

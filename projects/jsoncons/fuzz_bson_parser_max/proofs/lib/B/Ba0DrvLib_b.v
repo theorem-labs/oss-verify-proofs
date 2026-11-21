@@ -1,5 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed dinv, dinv_block, dinv_call and 6 more; added model_rt_rdr, sbm_rdrA, with_fds_rdr; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvLib.v, 25 lines within its lines 170-566. *)
+(* LPS 727298f3: a recorded stack window was measured UP from sp at the released model (f1006fe8 Run.v init_machine_state) and is measured DOWN from the stack VMA end at LPS 727298f3 (Run.v stack_window_lo), so a window of 8388608 bytes below sp claims up to 2101782 bytes the model answers None for. Shortened by gen_kwin_plain.py to stack_max_size - max (TOP - SP) = 6144513, keeping the window's TOP unchanged; every number read out of the model, see the tool's four control legs. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -166,8 +168,8 @@ Section DrvLayoutA.
   Qed.
 
   (* [comment removed for export] *)
-  Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (-8388608)) 8388608)) kn.
-  Lemma has_window_nth : forall kn, has_window kn = true -> exists i, nth_error kn i = Some (KWr (SA (EVar 0) (-8388608)) 8388608).
+  Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (-6144513)) (6144513))) kn.
+  Lemma has_window_nth : forall kn, has_window kn = true -> exists i, nth_error kn i = Some (KWr (SA (EVar 0) (-6144513)) (6144513)).
   Proof.
     intros kn H. unfold has_window in H. apply existsb_exists in H as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
     apply In_nth_error in Hin. exact Hin.
@@ -176,11 +178,12 @@ Section DrvLayoutA.
   Lemma window_store_ok : forall vals ebs MV kn (z : Z) (m : nat),
     let E := Env (vals_ev vals) ebs in
     know_ok ASEGS E MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
-    - 8388608 <= z -> z + Z.of_nat m <= 0 ->
+    (* the window [has_window] finds is [StoreOk.stack_window_depth] = 6144513 deep *)
+    - 6144513 <= z -> z + Z.of_nat m <= 0 ->
     store_ok ASEGS MV (Z_to_bv 64 (bv_unsigned sp0 + z)) m = true.
   Proof.
     intros vals ebs MV kn z m E HK Hw P0 Hz Hm. destruct (has_window_nth kn Hw) as [i Hn].
-    pose proof (kwr_store_ok ASEGS E MV kn i (EVar 0) (-8388608) 8388608 z m HK Hn ltac:(lia) ltac:(lia)) as W.
+    pose proof (kwr_store_ok ASEGS E MV kn i (EVar 0) (-6144513) 6144513 z m HK Hn ltac:(lia) ltac:(lia)) as W.
     unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W. exact W.
   Qed.
 
@@ -199,7 +202,7 @@ Section DrvLayoutA.
   Lemma window_defined : forall vals ebs (H : word -> bool) M kn,
     let E := Env (vals_ev vals) ebs in
     know_ok ASEGS E (mrestrict H M) kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
-    forall a, bv_unsigned sp0 - 8388608 <= a < bv_unsigned sp0 -> M (Z_to_bv 64 a) <> None.
+    forall a, bv_unsigned sp0 - 6144513 <= a < bv_unsigned sp0 -> M (Z_to_bv 64 a) <> None.
   Proof.
     intros vals ebs H M kn E HK Hw P0 a Ha. pose proof Hsp as Hsp'.
     pose proof (window_store_ok vals ebs _ kn (a - bv_unsigned sp0) 1 HK Hw P0 ltac:(lia) ltac:(lia)) as W.
@@ -278,6 +281,8 @@ Section DrvLayoutA.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition CWA (LB : list (Z * Z)) (a : Z) : Prop :=
+    (* [8388608] here is the [ahl_ceil] / [stack_max_size] homonym (the client region a write may touch,
+       [DrvKitA.regions_ok.rg_stack]'s [- 2 ^ 23]), not the zero-filled window of [has_window] *)
     in_block LB a \/ bv_unsigned sp0 - 8388608 <= a < bv_unsigned sp0 \/ (exists lo hi, In (lo, hi) IMG_W_A /\ lo <= a < hi).
 
   Lemma img_w_client : forall lo hi, In (lo, hi) IMG_W_A -> exists lo' hi', In (lo', hi') IMG_CLIENT_A /\ lo' <= lo /\ hi <= hi' /\ 0x10000 <= lo /\ hi <= 0x696000.
@@ -335,6 +340,13 @@ Section DrvLayoutA.
   Proof. intros m m' ->. destruct m as [fd [maps lazy mat] io fsy pr lim tm]. split; reflexivity. Qed.
   Lemma model_rt_fds : forall m m', model_rt m m' -> m_fds m' = m_fds m /\ m_fs m' = m_fs m.
   Proof. intros m m' ->. destruct m; split; reflexivity. Qed.
+  (* the channel-reader flag ([State.m_channel_reader], which [ReadWrite.write_spec]'s
+     channel arm reads at 727298f3) is untouched by materialisation and by a library
+     call's round trip *)
+  Lemma sbm_rdrA : forall m m', same_but_materialized m m' -> m_channel_reader m' = m_channel_reader m.
+  Proof. intros m m' ->. destruct m as [fd [maps lazy mat] io fsy pr lim tm]. reflexivity. Qed.
+  Lemma model_rt_rdr : forall m m', model_rt m m' -> m_channel_reader m' = m_channel_reader m.
+  Proof. intros m m' ->. destruct m; reflexivity. Qed.
 
   (* [comment removed for export] *)
   Lemma regions_writeA : forall vals ebs bls LB FF LK cr A M V,
@@ -411,7 +423,10 @@ Section DrvLayoutA.
     di_above : forall a, bv_unsigned sp0 <= a < 2 ^ 47 -> M (Z_to_bv 64 a) = M0 (Z_to_bv 64 a);
     di_stksh : forall x, in_shadow_of (ahl_ceil ar) (STKTOP - ahl_ceil ar) x -> byte_at M x 0;
     (* [comment removed for export] *)
-    di_hish : forall x, in_shadow_of (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) x -> byte_at M x 0
+    di_hish : forall x, in_shadow_of (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) x -> byte_at M x 0;
+    (* the channel has a reader: the launch sets it ([Ba0DrvEntryK_b.ent_rdr]) and nothing
+       the driver does clears it; the writes to fd 2 need it ([Ba0DiagLoopK_b.wv_loop]) *)
+    di_rdr : m_channel_reader model = true
   }.
 
   Lemma dinv_lzinv : forall LB LK cr A M model, dinv LB LK cr A M model -> lzinv ASEGS (ahid A model) A model.
@@ -453,9 +468,10 @@ Section DrvLayoutA.
     (forall a, 0 <= a < 2 ^ 64 -> ~ CWA LB a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
     (forall a : word, M a <> None -> M' a <> None) ->
     vml_of model' = vml_of model -> MInv A model' -> m_halted model' = None ->
+    m_channel_reader model' = m_channel_reader model ->
     dinv LB LK cr A M' model'.
   Proof.
-    intros LB LK cr A M M' model model' D FR GR EV MI HL. pose proof Hsp as Hsp'. constructor.
+    intros LB LK cr A M M' model model' D FR GR EV MI HL RD. pose proof Hsp as Hsp'. constructor.
     - exact (ainv_frame _ _ _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ D) FR GR EV).
     - exact MI.
     - exact HL.
@@ -469,6 +485,7 @@ Section DrvLayoutA.
       destruct (stksh_rng _ _ _ _ _ _ _ x (di_inv _ _ _ _ _ _ D) Hx) as (X & _). lia.
     - intros x Hx. unfold byte_at. rewrite FR; [exact (di_hish _ _ _ _ _ _ D x Hx) | | exact (hish_not_cwa _ _ _ _ _ _ _ x (di_inv _ _ _ _ _ _ D) Hx)].
       pose proof (hish_rng x Hx). lia.
+    - rewrite RD. exact (di_rdr _ _ _ _ _ _ D).
   Qed.
 
   (* [comment removed for export] *)
@@ -486,7 +503,7 @@ Section DrvLayoutA.
     intros vals ebs bls LB LK cr A M M' model model' log E P0 D Hbl Hlog EQM EQH HZ SBM.
     destruct (block_frame vals ebs bls LB [] LK cr A M M' model log P0 (di_inv _ _ _ _ _ _ D) Hbl Hlog EQM EQH) as (FR & GR).
     destruct HZ as (_ & _ & _ & MI & HL).
-    exact (dinv_frame _ _ _ _ _ _ _ _ D FR GR (sbm_vml _ _ SBM) MI HL).
+    exact (dinv_frame _ _ _ _ _ _ _ _ D FR GR (sbm_vml _ _ SBM) MI HL (sbm_rdrA _ _ SBM)).
   Qed.
 
   (* [comment removed for export] *)
@@ -503,6 +520,8 @@ Section DrvLayoutA.
   Proof. intros f m. destruct m. reflexivity. Qed.
   Lemma with_fds_fds : forall f (m : Model), m_fds (with_fds f m) = f.
   Proof. intros f m. destruct m as [[t p] v i fsy pr l tm]. reflexivity. Qed.
+  Lemma with_fds_rdr : forall f (m : Model), m_channel_reader (with_fds f m) = m_channel_reader m.
+  Proof. intros f m. destruct m. reflexivity. Qed.
 
   Lemma ahid_same_lazy : forall A (m m' : Model), m_vm_lazy m' = m_vm_lazy m -> ahid A m' = ahid A m.
   Proof. intros A m m' EL. unfold ahid. rewrite EL. reflexivity. Qed.
@@ -510,10 +529,11 @@ Section DrvLayoutA.
   Proof. intros A m m' SB. apply ahid_same_lazy. exact (sbm_lazy_eq _ _ SB). Qed.
 
   Lemma dinv_model : forall LB LK cr A M (model model' : Model),
-    dinv LB LK cr A M model -> m_vm model' = m_vm model -> m_halted model' = None -> dinv LB LK cr A M model'.
+    dinv LB LK cr A M model -> m_vm model' = m_vm model -> m_halted model' = None ->
+    m_channel_reader model' = m_channel_reader model -> dinv LB LK cr A M model'.
   Proof.
-    intros LB LK cr A M model model' D EV HL.
-    apply (dinv_frame LB LK cr A M M model model' D); [reflexivity | auto | exact (vml_same_vm _ _ EV) | exact (minv_same_vm _ _ _ EV (di_minv _ _ _ _ _ _ D)) | exact HL].
+    intros LB LK cr A M model model' D EV HL RD.
+    apply (dinv_frame LB LK cr A M M model model' D); [reflexivity | auto | exact (vml_same_vm _ _ EV) | exact (minv_same_vm _ _ _ EV (di_minv _ _ _ _ _ _ D)) | exact HL | exact RD].
   Qed.
 
   (* [comment removed for export] *)
@@ -544,6 +564,7 @@ Section DrvLayoutA.
       unfold byte_at. rewrite PR; [exact (di_stksh _ _ _ _ _ _ D x Hx) | lia | unfold aclient; right; right; right; right; left; exact XC].
     - intros x Hx. pose proof (hish_rng x Hx) as X.
       unfold byte_at. rewrite PR; [exact (di_hish _ _ _ _ _ _ D x Hx) | lia | unfold aclient; right; right; right; right; left; exact Hx].
+    - rewrite (model_rt_rdr _ _ RT). exact (di_rdr _ _ _ _ _ _ D).
   Qed.
 
   (* [comment removed for export] *)

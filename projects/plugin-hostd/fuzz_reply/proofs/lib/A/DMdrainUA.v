@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainUA.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail and top; file sha256 d418e2eb1b5d) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainUA.v (drain recycle tail and top; file sha256 d418e2eb1b5d) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the drain's SHARED RECYCLE TAIL.  From DMdrainU9.recyc_cut_in -
    what either recycle arm hands over at Recycle's call of DoRecycle (0x33afc) - to the drain's leaf
    DIfaceR.drain_leaf_g with MnEnq.acall_raw_em_x, over the model's drain tree: the model's cut is
@@ -12,7 +13,7 @@
    (DMdrainV1.merge_to_call).  At cgif's OWN instance no merge-arm state exists (DGif1dq.merge_vacuous); the
    merge arm is live at the shared instance (preset / reply), which is what this generic statement serves.
    The cut's memory relation needs no header premise: DMiface.dmem_q's presence clause is stated for
-   0 <= a < 2 ^ 64 (the dmiface-wrap narrowing, merged at ff33a28eb30).
+   0 <= a < 2 ^ 64 (the dmiface-wrap narrowing, merged).
    rule 24: proves function __sanitizer::Quarantine::Drain (recycle arms, from DoRecycle's call to the return),
    with __sanitizer::QuarantineCache::DoRecycle by H2's walk; frame-generic over ARX / ARXr.  The lane's reuse
    search is LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record), `proof-index MergeBatches Recycle QuarantineCallback_Recycle

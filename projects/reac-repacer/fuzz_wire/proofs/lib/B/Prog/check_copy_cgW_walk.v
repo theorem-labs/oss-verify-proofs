@@ -12,11 +12,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/A/Prog/check_width_cgW.v, with its module paths, module names and numbers changed; 1585 of its 1769 lines of code are new or changed and 537 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the walk of reac-repacer/fuzz_uci's check_value in image A, proving the frozen statement
    lib/A/Prog/check_value_cg.v uci_check_value_cg_holds_stmt, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/
-   crtA_walk.v, crtA_w_head.v, crtA_w_tail.v, crtA_encw.v, crtA_w_mid.v and crtA_close.v (commit
-   88154566652a): footprint runs carried into SRr, an inner journal over the call's stack window, each call cut by its
+   crtA_walk.v, crtA_w_head.v, crtA_w_tail.v, crtA_encw.v, crtA_w_mid.v and crtA_close.v:
+   footprint runs carried into SRr, an inner journal over the call's stack window, each call cut by its
    callee contract, and the helpers of those files (crtA_run, crtA_ms_shape, crtA_ms_reg, crtT_regs_of, crtA_trace0,
    crtT_chain_nil, crtA_byte_eq, crtT_rw_cells_ext, crtA_rng_vis, crtT_aj_md, crtT_not_old, crtT_perm_rm,
    crtA_addressable, crtA_rng_hull, crtA_vis_hull) restated at this unit's image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_copy_cgW_walk: the walk of check_copy (fuzz_wire.asan-ubsan 0x80abc = wire_sigma WS_check_copy) from the
    callee contracts its statement names, i.e. lib/B/Prog/check_copy_cg.v wire_check_copy_cg; the image-B twin of
    lib/A/Prog/check_copy_cgW_walk.v (the same lemmas and steps at image B's names and offsets), in the form of

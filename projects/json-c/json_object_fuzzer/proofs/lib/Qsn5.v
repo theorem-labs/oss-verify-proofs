@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the nodes: silent_closed is stated at an instruction step, ms_svc_pending ms = None, where a node has RomBase.sys_rob_instr). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -587,8 +588,11 @@ exists ms', mo'. split; [exact Hacc|]. split; [|split; [|split; [|split; [exact 
 - intros a Ha. unfold ms'. cbn [ms_mem unrestrict]. unfold munrestrict. rewrite Ha. reflexivity.
 Qed.
 
+(* LPS 727298f3: the silent step is an instruction step ([ms_svc_pending ms = None]), so a closure that
+   builds a node there has [RomBase.sys_rob_instr] for it *)
 Definition silent_closed (P : config -> Prop) : Prop :=
 forall ms mo ms' mo', node_ok segs (mkCfg ms mo) unit (fun _ => []) (fun _ => mkCfg ms' mo') ->
+ms_svc_pending ms = None ->
 drift mo mo' -> lv_inv mo -> m_halted mo = None ->
 (forall a, hidden mo a = true -> ms_mem ms' a = ms_mem ms a) ->
 P (mkCfg ms' mo') -> P (mkCfg ms mo).
@@ -605,7 +609,7 @@ Proof.
 intros P HP msr0 msr' Hms. induction Hms as [msr | msr msr1 msr2 H1 H2 IH]; intros mo ms -> HI Hh Hk.
 - apply (Hk ms mo eq_refl (drift_refl mo) HI Hh). intros; reflexivity.
 - destruct (mstep_view mo ms msr1 HI Hh H1) as (ms1 & mo1 & Hacc & Hss & Hdet & Hv1 & Hd1 & Hhid1 & Hsvc).
-apply (HP ms mo ms1 mo1); [| exact Hd1 | exact HI | exact Hh | exact Hhid1 |].
+apply (HP ms mo ms1 mo1); [| exact Hsvc | exact Hd1 | exact HI | exact Hh | exact Hhid1 |].
 + split; [intros []; exact Hss|]. intros e st Hst. exists tt. exact (Hdet e st Hst).
 + pose proof (drift_frame _ _ Hd1) as (_ & _ & Hh1 & _ & _ & _ & _ & _ & Hhid & _).
 apply (IH mo1 ms1 (eq_sym Hv1) (lv_inv_drift _ _ HI Hd1) ltac:(rewrite Hh1; exact Hh)).

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the file section takes the output channel's reader ([ia_channel_reader])). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import ModelAmb.
@@ -115,6 +116,7 @@ Section FilePhase.
   Hypothesis W : world0 (bv_unsigned sp0) area (bv_unsigned gm) brkv mas (bv_unsigned tid) (bv_unsigned can) (bv_unsigned sec) M.
   Hypothesis MF : main_frame (bv_unsigned sp0) M.
   Hypothesis VP : vm_pre VM sp0 mb bw gm.
+  Hypothesis Hrdr : ia_channel_reader stdin0 = true.   (* LPS 08b1429: SIGPIPE otherwise *)
 
   Let L : Z := Z.of_nat (length content).
 
@@ -148,6 +150,7 @@ Section FilePhase.
       + exact Hcanr.
       + exact Hsecr.
       + apply HUReadG0.map_has_In. exact Vhas.
+      + exact Hrdr.
       + intros Hm. specialize (HLT Hm). lia.
       + intros R'' TE. apply (HTGT 0%Z (bv_unsigned gm + 32)%Z VM R'' M').
         constructor.

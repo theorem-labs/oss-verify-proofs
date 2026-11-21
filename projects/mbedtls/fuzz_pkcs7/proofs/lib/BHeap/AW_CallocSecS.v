@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hypotheses T_large, T_node and T_store take the placement premise placed_at, last, as the lemmas that discharge them and the lemmas they are passed to now do; their encoded statements kept verbatim, with lemmas proving them equal to the written-out statements without that premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -119,8 +120,30 @@ Section CallocSec.
   Let U (r : Z) := PA + 0x20000 * r.
   Hypothesis K_apart_l : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pmo,$1<.Pa,(=.&40.)Pw,(=.&40.)P,A5.VK,R5.R4.Vnb0,Vbl0,R3.P,(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R4.))(23.(22.R4.)))R3.R2.)$24.)P,(12.+10000.(25.&40.R3.))P,(12.(13.(25.&40.R5.)(25.&40.R4.))(26.VhAR,))Py,$11.P,(14.A5.VCSf,R:.R9.Vnb0,Vbl0,R1.(14.(0.(12.(27.VAL,)R1.)(28.R1.(29.VAL,)))(14.(0.(12.+7???7000.R1.)(28.R1.+10007???8000.))(0.(12.VPA,R1.)(28.R1.(13.VPA,+800000.))))))(2:.(0.(12.(25.&40.R8.)R2.)(28.R2.(13.(25.&40.R8.)(25.&40.R7.)))))")
 (* [comment removed for export] *).
-  Hypothesis T_large : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pmsz,$11.Pmo,$1<.Pa,(=.&40.)P,A3.VGl,R5.R4.R3.P,A5.VK,R6.R5.Vnb0,Vbl0,R3.P,(1=.$11.(2;.(25.&40.R3.)+1000.)=)P,(28.=(25.&40.R4.))P,(12.(13.(25.&40.R5.)R7.)(26.VhAR,))P,(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R7.))(23.(22.R7.)))R6.(7.&40.R8.))$24.)(0.A5.VK,(20.(1;.$11.$11.)R;.(4.(1;.$11.$11.)(2<.$11.$11.(25.&40.R7.)R9.)(8.(1;.$11.$11.))))R:.Vnb0,Vbl0,(2=.+22.R7.R9.R8.)(2>.A4.VCSf,(20.(1;.$11.$11.)R;.(4.(1;.$11.$11.)(2<.$11.$11.(25.&40.R7.)R9.)(8.(1;.$11.$11.))))R:.Vnb0,Vbl0,(25.&40.R7.)R9.))")
-(* [comment removed for export] *).
+  Definition ZZ_T_large_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pmsz,$11.Pmo,$1<.Pa,(=.&40.)P,A3.VGl,R5.R4.R3.P,A5.VK,R6.R5.Vnb0,Vbl0,R3.P,(1=.$11.(2;.(25.&40.R3.)+1000.)=)P,(28.=(25.&40.R4.))P,(12.(13.(25.&40.R5.)R7.)(26.VhAR,))P,(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R7.))(23.(22.R7.)))R6.(7.&40.R8.))$24.)(0.A5.VK,(20.(1;.$11.$11.)R;.(4.(1;.$11.$11.)(2<.$11.$11.(25.&40.R7.)R9.)(8.(1;.$11.$11.))))R:.Vnb0,Vbl0,(2=.+22.R7.R9.R8.)(2>.A4.VCSf,(20.(1;.$11.$11.)R;.(4.(1;.$11.$11.)(2<.$11.$11.(25.&40.R7.)R9.)(8.(1;.$11.$11.))))R:.Vnb0,Vbl0,(25.&40.R7.)R9.))").
+  Lemma ZZ_T_large_faithful : ZZ_T_large_old =
+    (forall (sc : list (Z * Z)) (r msz : Z) (mo : Model) (a : word),
+       Gl sc r msz ->
+       K sc r nb0 bl0 mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + msz <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 msz) = true ->
+       K (sc ++ [(bv_unsigned a, msz)]) r nb0 bl0 (anon_grant 0x22 a msz mo)
+       /\ crange (CSf (sc ++ [(bv_unsigned a, msz)]) r nb0 bl0) (bv_unsigned a) msz).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_large :
+    forall (sc : list (Z * Z)) (r msz : Z) (mo : Model) (a : word),
+      Gl sc r msz ->
+      K sc r nb0 bl0 mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + msz <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 msz) = true ->
+      ASys.placed_at msz mo a ->
+      K (sc ++ [(bv_unsigned a, msz)]) r nb0 bl0 (anon_grant 0x22 a msz mo)
+      /\ crange (CSf (sc ++ [(bv_unsigned a, msz)]) r nb0 bl0) (bv_unsigned a) msz.
   Hypothesis LEDGER_P : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pmo,$1<.P,A2.VGp,R3.R2.P,A5.VK,R4.R3.Vnb0,Vbl0,R2.(0.(1=.$1>.(1?.(21.(22.R3.))(7.&40.A1.VU,R4.)(7.&40.+20000.))$24.)(14.(1=.$1>.(2?.(23.(22.R3.))(7.&40.A1.VU,R4.)(7.&40.+20000.))$24.)(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R3.))(23.(22.R3.)))(7.&40.A1.VU,R4.)(7.&40.+20000.))$24.)))")
 (* [comment removed for export] *).
   Hypothesis TP_commit : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pmo,$1<.P,A2.VGp,R3.R2.P,A5.VK,R4.R3.Vnb0,Vbl0,R2.P,(1=.$1>.(2?.(23.(22.R3.))(7.&40.A1.VU,R4.)(7.&40.+20000.))$24.)(0.A5.VK,R6.(13.R5.+1.)Vnb0,Vbl0,(30.+32.A1.VU,R5.+20000.R4.)(2>.A4.VCSf,R6.(13.R5.+1.)Vnb0,Vbl0,A1.VU,R5.+20000.))")
@@ -136,10 +159,54 @@ Section CallocSec.
   Hypothesis K_apart : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pnb,(;.$11.)Pbl,(;.$11.)Pmo,$1<.Pa,(=.&40.)Pw,(=.&40.)P,A5.VK,R7.R6.R5.R4.R3.P,(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R4.))(23.(22.R4.)))R3.R2.)$24.)P,(12.+10000.(25.&40.R3.))P,(12.(13.(25.&40.R5.)(25.&40.R4.))(26.VhAR,))Px,$11.P,(14.A5.VCSf,R<.R;.R:.R9.R1.(0.(12.(27.VAL,)R1.)(28.R1.(29.VAL,))))(2:.(0.(12.(25.&40.R8.)R2.)(28.R2.(13.(25.&40.R8.)(25.&40.R7.)))))")
 (* [comment removed for export] *).
   Variables (Gn Gs : list (Z * Z) -> Z -> list Z -> list Z -> Prop).
-  Hypothesis T_node : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pnb,(;.$11.)Pbl,(;.$11.)Pmo,$1<.Pa,(=.&40.)P,A4.VGn,R6.R5.R4.R3.P,A5.VK,R7.R6.R5.R4.R3.P,(1=.$11.(2;.(25.&40.R3.)+1000.)=)P,(28.=(25.&40.R4.))P,(12.(13.(25.&40.R5.)(1:.+2.+14.))(26.VhAR,))P,(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R7.))(23.(22.R7.)))R6.(7.&40.(1:.+2.+14.)))$24.)(0.A5.VK,R<.R;.(20.$11.R:.(4.$11.(25.&40.R7.)(8.$11.)))R9.(2=.+22.R7.(1:.+2.+14.)R8.)(2>.A4.VCSf,R<.R;.(20.$11.R:.(4.$11.(25.&40.R7.)(8.$11.)))R9.(25.&40.R7.)(1:.+2.+14.)))")
-(* [comment removed for export] *).
-  Hypothesis T_store : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pnb,(;.$11.)Pbl,(;.$11.)Pmo,$1<.Pa,(=.&40.)P,A4.VGs,R6.R5.R4.R3.P,A5.VK,R7.R6.R5.R4.R3.P,(1=.$11.(2;.(25.&40.R3.)+1000.)=)P,(28.=(25.&40.R4.))P,(12.(13.(25.&40.R5.)(1:.+2.+17.))(26.VhAR,))P,(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R7.))(23.(22.R7.)))R6.(7.&40.(1:.+2.+17.)))$24.)(0.A5.VK,R<.R;.R:.(20.$11.R9.(4.$11.(25.&40.R7.)(8.$11.)))(2=.+4022.R7.(1:.+2.+17.)R8.)(2>.A4.VCSf,R<.R;.R:.(20.$11.R9.(4.$11.(25.&40.R7.)(8.$11.)))(25.&40.R7.)(1:.+2.+17.)))")
-(* [comment removed for export] *).
+  Definition ZZ_T_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pnb,(;.$11.)Pbl,(;.$11.)Pmo,$1<.Pa,(=.&40.)P,A4.VGn,R6.R5.R4.R3.P,A5.VK,R7.R6.R5.R4.R3.P,(1=.$11.(2;.(25.&40.R3.)+1000.)=)P,(28.=(25.&40.R4.))P,(12.(13.(25.&40.R5.)(1:.+2.+14.))(26.VhAR,))P,(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R7.))(23.(22.R7.)))R6.(7.&40.(1:.+2.+14.)))$24.)(0.A5.VK,R<.R;.(20.$11.R:.(4.$11.(25.&40.R7.)(8.$11.)))R9.(2=.+22.R7.(1:.+2.+14.)R8.)(2>.A4.VCSf,R<.R;.(20.$11.R:.(4.$11.(25.&40.R7.)(8.$11.)))R9.(25.&40.R7.)(1:.+2.+14.)))").
+  Lemma ZZ_T_node_faithful : ZZ_T_node_old =
+    (forall (sc : list (Z * Z)) (r : Z) (nb bl : list Z) (mo : Model) (a : word),
+       Gn sc r nb bl ->
+       K sc r nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 20 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+       K sc r (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+       /\ crange (CSf sc r (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_node :
+    forall (sc : list (Z * Z)) (r : Z) (nb bl : list Z) (mo : Model) (a : word),
+      Gn sc r nb bl ->
+      K sc r nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      K sc r (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (CSf sc r (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20).
+  Definition ZZ_T_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pnb,(;.$11.)Pbl,(;.$11.)Pmo,$1<.Pa,(=.&40.)P,A4.VGs,R6.R5.R4.R3.P,A5.VK,R7.R6.R5.R4.R3.P,(1=.$11.(2;.(25.&40.R3.)+1000.)=)P,(28.=(25.&40.R4.))P,(12.(13.(25.&40.R5.)(1:.+2.+17.))(26.VhAR,))P,(1=.$1>.(1?.(20.(1;.(=.&40.)(=.&40.))(21.(22.R7.))(23.(22.R7.)))R6.(7.&40.(1:.+2.+17.)))$24.)(0.A5.VK,R<.R;.R:.(20.$11.R9.(4.$11.(25.&40.R7.)(8.$11.)))(2=.+4022.R7.(1:.+2.+17.)R8.)(2>.A4.VCSf,R<.R;.R:.(20.$11.R9.(4.$11.(25.&40.R7.)(8.$11.)))(25.&40.R7.)(1:.+2.+17.)))").
+  Lemma ZZ_T_store_faithful : ZZ_T_store_old =
+    (forall (sc : list (Z * Z)) (r : Z) (nb bl : list Z) (mo : Model) (a : word),
+       Gs sc r nb bl ->
+       K sc r nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 23 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+       K sc r nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+       /\ crange (CSf sc r nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_store :
+    forall (sc : list (Z * Z)) (r : Z) (nb bl : list Z) (mo : Model) (a : word),
+      Gs sc r nb bl ->
+      K sc r nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      K sc r nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (CSf sc r nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23).
   Hypothesis ROOM_n : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pnb,(;.$11.)Pbl,(;.$11.)Pmo,$1<.P,A4.VGn,R5.R4.R3.R2.P,A5.VK,R6.R5.R4.R3.R2.(35.(=.&40.)La,(=.&40.)(36.VhAR,+22.(1:.+2.+14.)R4.R1.))")
 (* [comment removed for export] *).
   Hypothesis ROOM_s : ltac2:(CDefT.buildp (gd_tbl_AW_CallocSecS ()) "Psc,(;.(1;.$11.$11.))Pr,$11.Pnb,(;.$11.)Pbl,(;.$11.)Pmo,$1<.P,A4.VGs,R5.R4.R3.R2.P,A5.VK,R6.R5.R4.R3.R2.(35.(=.&40.)La,(=.&40.)(36.VhAR,+4022.(1:.+2.+17.)R4.R1.))")

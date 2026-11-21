@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a sim_hook that unfolds the write arms' optional continuation wrappers, ReadWrite.write_file_tail's fault and place; simulation arms for set_robust_list (99), clock_getres (114) and pwritev2 (287), new in the system call table). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -13,6 +14,19 @@ Set Default Proof Mode "Classic".
 
 Section Arms.
 Variable L0 L : Z.
+
+(* The revision's write arms pass a state update as an option of a
+   continuation wrapper ([ReadWrite.write_file_tail]'s [fault] and
+   [place]).  Destructing that option leaves an opaque function, so
+   unfold its producer first and let [sim] walk the concrete body. *)
+Ltac sim_hook ::=
+  lazymatch goal with
+  | |- DIR _ _ _ _ _ (match ?e with Some _ => _ | None => _ end) _ =>
+      lazymatch type of e with
+      | option (Sys SyscallEffect -> Sys SyscallEffect) =>
+          unfold_head e; lazy beta iota zeta
+      end
+  end.
 
 Lemma sim_arm_17 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => getcwd_spec (in_arg i 1) i) (fun i => getcwd_spec (in_arg i 1) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => getcwd_spec (in_arg i 1)) (fun i => getcwd_spec (in_arg i 1))). sim_arm m HM. Qed.
@@ -122,11 +136,17 @@ Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => set_tid_addre
 Lemma sim_arm_98 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => futex_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) i) (fun i => futex_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => futex_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3)) (fun i => futex_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3))). sim_arm m HM. Qed.
 
+Lemma sim_arm_99 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => set_robust_list_spec (in_arg i 1) i) (fun i => set_robust_list_spec (in_arg i 1) i).
+Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => set_robust_list_spec (in_arg i 1)) (fun i => set_robust_list_spec (in_arg i 1))). sim_arm m HM. Qed.
+
 Lemma sim_arm_101 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => nanosleep_spec (in_arg i 0) (in_arg i 1) i) (fun i => nanosleep_spec (in_arg i 0) (in_arg i 1) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => nanosleep_spec (in_arg i 0) (in_arg i 1)) (fun i => nanosleep_spec (in_arg i 0) (in_arg i 1))). sim_arm m HM. Qed.
 
 Lemma sim_arm_113 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1) i) (fun i => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1)) (fun i => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1))). sim_arm m HM. Qed.
+
+Lemma sim_arm_114 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1) i) (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1) i).
+Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1)) (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1))). sim_arm m HM. Qed.
 
 Lemma sim_arm_119 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => sched_setscheduler_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) i) (fun i => sched_setscheduler_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => sched_setscheduler_spec (in_arg i 0) (in_arg i 1) (in_arg i 2)) (fun i => sched_setscheduler_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))). sim_arm m HM. Qed.
@@ -265,6 +285,9 @@ Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => prlimit64_spe
 
 Lemma sim_arm_278 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) i) (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2)) (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))). sim_arm m HM. Qed.
+
+Lemma sim_arm_287 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i) (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i).
+Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5))) (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)))). sim_arm m HM. Qed.
 
 Lemma sim_arm_435 : forall (d : bool) i m, MOK L0 m -> DIR L0 L d i m (fun i => clone3_spec (in_arg i 0) (in_arg i 1) i) (fun i => clone3_spec (in_arg i 0) (in_arg i 1) i).
 Proof. intros d i m HM. apply (dir_table_form L0 L d i m (fun i => clone3_spec (in_arg i 0) (in_arg i 1)) (fun i => clone3_spec (in_arg i 0) (in_arg i 1))). sim_arm m HM. Qed.

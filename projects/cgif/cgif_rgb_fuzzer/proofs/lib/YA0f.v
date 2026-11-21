@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's CONFIG_RSEQ flag rz is threaded through the seven summary nodes' x_stmt, never pinned). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -569,6 +570,11 @@ Hypothesis SINV_s1 : forall E M, SINV E M ->
 uE E e_sp0 = TOP + 8388608 /\ uE E (EVar V_S1) = (TOP + 8388608) / 32768 /\ (TOP + 8388608) mod 16 = 0.
 Hypothesis SHADOW_ok : shadow_ok A.
 Variable FS0 : Fs.Fs.
+(* #38: the run's CONFIG_RSEQ flag.  [x_stmt] gained it after [TOP] because
+   [node_x] reaches [e_str0]/[e_argv1w], which the revision made r-dependent.
+   The seven summary nodes below never inspect it - they are memset/memcpy/
+   strncpy/popfree summaries - so it is threaded and never pinned. *)
+Variable rz : Z.
 Definition segs_wr_ok : Prop := forall seg, In seg SEGS -> seg_writable seg = true -> seg_readable seg = true.
 Hypothesis SEGS_wr : segs_wr_ok.
 #[local] Notation cfg := (cfg_of SEGS) (only parsing).
@@ -2091,7 +2097,7 @@ unfold M, Mr, mrestrict in Zi. rewrite Hhx in Zi. exact Zi.
 split; [eapply w_env_agree_le; [exact Hag | exact Fle] | exact Hag].
 Qed.
 Theorem node_x_sound_XIMemset :
-fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIMemset.
+fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT TOP rz SINV argH FS0 XIMemset.
 Proof.
 intros SUM args bm cs cs' E R FULL model T HC Hal Hn Hk. cbn [node_x] in Hn.
 destruct (spad_fillz A nx0 cs (x_imemset A) 256) as [cs0|] eqn:Hsz.
@@ -2101,7 +2107,7 @@ destruct (spad_fill0 A nx0 cs (x_imemset A) 256) as [cs1|] eqn:Hsp.
 - exact (summary_fill_sound _ _ SUM bm cs cs' E R FULL model T HC Hal Hn Hk).
 Qed.
 Theorem node_x_sound_XMemset :
-fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemset.
+fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT TOP rz SINV argH FS0 XMemset.
 Proof.
 intros SUM args bm cs cs' E R FULL model T HC Hal Hn Hk. cbn [node_x] in Hn.
 destruct (spad_fillz A nx0 cs (x_memset A) two64) as [cs0|] eqn:Hsz.
@@ -2111,19 +2117,19 @@ destruct (spad_fill0 A nx0 cs (x_memset A) two64) as [cs1|] eqn:Hsp.
 - exact (summary_fill_sound _ _ SUM bm cs cs' E R FULL model T HC Hal Hn Hk).
 Qed.
 Theorem node_x_sound_XIMemcpy :
-copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIMemcpy.
+copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT TOP rz SINV argH FS0 XIMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 Theorem node_x_sound_XMemcpy :
-copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemcpy.
+copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT TOP rz SINV argH FS0 XMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 Theorem node_x_sound_XMemIsZero :
-miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemIsZero.
+miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT TOP rz SINV argH FS0 XMemIsZero.
 Proof. intros SUM args. exact (summary_miz_sound SUM). Qed.
 Theorem node_x_sound_XIStrncpy :
-istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIStrncpy.
+istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT TOP rz SINV argH FS0 XIStrncpy.
 Proof. intros SUM args. exact (summary_istrncpy_sound SUM). Qed.
 Theorem node_x_sound_XPopFree :
-popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XPopFree.
+popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT TOP rz SINV argH FS0 XPopFree.
 Proof. intros SUM args. exact (summary_popfree_sound SUM args). Qed.
 Lemma w_cover_x_rd1 : forall fuel E M k b i stop,
 know_ok SEGS E M k -> cover_x fuel k b i stop = true ->

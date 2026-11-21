@@ -15,7 +15,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.ubsan (sha256
-   27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts 8f3e7e1a07f1):
+   27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts):
      check_no_overread FUNC LOCAL 0x13868 size 464: addi sp, sp, -0xf0; s0..s7 and ra saved at sp + 0xa8 .. sp + 0xe8;
      three calls of the out-of-line padded (0x1448c; padded_c) with fill 0x31, 0x32, 0; the three trees at sp + 0x70,
      sp + 0x38, sp zeroed by memset; three parse_noting calls (0x13928, 0x13954, 0x13980), each behind out_of_memory() =

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyWalkSigDrh.v (commit 4d286b2e618d, file sha256 0fdae9655fab) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 1 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyWalkSigDrh.v (file sha256 0fdae9655fab) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 1 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Reply's Deallocate walk under the re-hide at image B, at the cf layer's round 3 part 3: an instance of CfF2a's record
    YGcfInstFreeSig.WalkSigDrh (lib/B) at the free top's instance, in the form image B's primed top
-   YGcfInstFreeTopRh.adealloc_realizes_raw_cf_em_m_rh_cf takes it (lib/B/YGcfInstFreeTopRh.v:251-256, B row (c)
-   02b40b5bc30b): the lib/B mirror of lib/A/ReplyWalkSigDrh.v (AFREE_CF premise #12), with image B's module names.
+   YGcfInstFreeTopRh.adealloc_realizes_raw_cf_em_m_rh_cf takes it (lib/B/YGcfInstFreeTopRh.v:251-256, B row (c)):
+   the lib/B mirror of lib/A/ReplyWalkSigDrh.v (AFREE_CF premise #12), with image B's module names.
    rule 24: no function proved (kind: instance of a record of walk tops from the unit's arm theorems).
 
    The instance: B := TfibB, U := U_cf TfibB, ft := free_cf, ARX := ARX_cf TfibB IOK Hp, AOX := aowned TfibB,

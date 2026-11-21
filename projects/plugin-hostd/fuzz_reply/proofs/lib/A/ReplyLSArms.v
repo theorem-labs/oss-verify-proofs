@@ -1,7 +1,7 @@
 (* WIP (a Theorem Labs lane's FREE-PIECES row B1c, a Theorem Labs lane, claimed 2026-10-29T20:07:33Z): the LS rules of the drain /
    remove / gone / event arms of fuzz_reply's entry walk, proved from fr_LS (lib/A/ReplyLS.v, v2 text: a Theorem Labs lane's B1a
    keeps it, with `kk` moved into Section ls).  The arms' texts are those of a working branch
-   11dbbff1cc0 (drain / remove / gone are the same blobs on this base 87ac96a746d; event's LS rules are in integ's
+   (drain / remove / gone are the same blobs on this base; event's LS rules are in integ's
    event.v (sha256 8897210ba524; internal record) only).
 
    CLASSIFICATION at the instance MT := ameter_triv (Reusable/YCbp.v:17: mo_ok := fun _ _ => True,
@@ -64,7 +64,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 (* The instance the arms are used at (ReplyATop.v:93 MT := ameter_triv; the request bound of the write arm,
-   W_LLVMFuzzerTestOneInput_write.v:132 WR_MMAX, which ATop equates with fr_MMAX).  Each rule below is the arm's
+   W_LLVMFuzzerTestOneInput_write.v:133 WR_MMAX, which ATop equates with fr_MMAX).  Each rule below is the arm's
    hypothesis with LS := fr_LS B, RINV := fr_RINV, MT := ameter_triv, MMAX := WR_MMAX. *)
 Local Notation MT := ameter_triv.
 Local Notation MMAX := WR_MMAX.
@@ -77,7 +77,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 
 (* ================================================================== drain *)
-(* a working branch 129f255c729 _drain.v:760 LS_drain_skip (integ 6fb612fb746 :692 has four more
+(* a working branch _drain.v:760 LS_drain_skip (integ :692 has four more
    premises; this text implies it) *)
 Lemma fr_LS_drain_skip : forall cx t m ly S,
   fr_LS B cx t m ly S -> fr_LS B cx (t + 1) (dr_skip m (dr_k' cx m)) ly S.
@@ -88,7 +88,7 @@ Proof.
 Qed.
 
 (* ================================================================== remove *)
-(* 30d91cacb63 _remove.v:3801 LS_rm_cshe_pre (= integ :3767) *)
+(* _remove.v:3801 LS_rm_cshe_pre (= integ :3767) *)
 Lemma fr_LS_rm_cshe_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev LB c2 O2 cap2 E' H',
   fr_LS B cx t m ly0 S0 -> fr_RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
   rm_cnl_ok h1 E' H' ->
@@ -97,7 +97,7 @@ Lemma fr_LS_rm_cshe_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev LB 
   mo_ok MT S (W_LLVMFuzzerTestOneInput_remove.rm_cshe_cost MT H').
 Proof. intros. apply mo_ok_triv. Qed.
 
-(* 30d91cacb63 _remove.v:5232 LS_rm_sr_pre (= integ :5186) *)
+(* _remove.v:5232 LS_rm_sr_pre (= integ :5186) *)
 Lemma fr_LS_rm_sr_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev LB c2 O2 cap2 E' H' H'' ds cc,
   fr_LS B cx t m ly0 S0 -> fr_RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
   rm_cnl_ok h1 E' H' -> rm_cshe_ok m (set_exp_held h1 E' H') O2 (rm_A1 m h1) H'' ds cc ->
@@ -114,7 +114,7 @@ Proof.
   intros cx m Hk Hn. unfold ev_len. destruct (Z.leb_spec 2 (c_n cx - lm_k m - 1)); lia.
 Qed.
 
-(* a working branch 1172d6d9065 _event.v:1031 LS_event_malloc (= integ :1032) *)
+(* a working branch _event.v:1031 LS_event_malloc (= integ :1032) *)
 Lemma fr_LS_event_malloc : forall cx t m ly S e,
   fr_LS B cx t m ly S -> fr_RINV cx t m -> ev_evt cx m e ->
   re_len e < MMAX /\ blocks_bytes S + re_len e <= LIVE_MAX /\ mo_ok MT S (mo_malloc MT (re_len e)).
@@ -128,7 +128,7 @@ Proof.
   unfold re_len, ROOM_SPARE in *. refine (conj _ (conj _ (mo_ok_triv _ _))); lia.
 Qed.
 
-(* 1172d6d9065 _event.v:1040 LS_event_free (= integ :1041) *)
+(* _event.v:1040 LS_event_free (= integ :1041) *)
 Lemma fr_LS_event_free : forall cx t m ly S (S1 S2 : astate) e,
   fr_LS B cx t m ly S -> fr_RINV cx t m -> ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->

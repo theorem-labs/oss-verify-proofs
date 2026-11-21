@@ -1,4 +1,4 @@
-(* CARRIED from commit 886368392e934bec75bf4485ad77505063da7c16,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRealloc.v, sha256 6de2709b644711ddea8b3ffc8c6f03561ac1f3ae42ca70011f2c994077dd391a (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -7,9 +7,9 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken back by path from commit 2d97a7029501,
+(* Modified by Theorem Labs, 2026-10-30: taken back by path from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstRealloc.v (the P'' text), with this unit's module prefixes and
-   no other change.  The preset text itself was taken from this layer's commit bbe791f0bb0 with THREE changes:
+   no other change.  The preset text itself was taken from this layer's with THREE changes:
    - room_br and the realloc(p, n) end rule arealloc_realizes_cf_inst that used it are DROPPED: room_br
      (YGcfReallocCompose.ARX_br at ARXq_cf) is not satisfiable as a closed statement (the source's own header). The
      realloc(p, n) end rule is YGcfInstReallocK.arealloc_realizes_cf_k_inst, with the caller's room at the entry.
@@ -36,6 +36,7 @@
    realloc interceptor; it decodes the unit's bytes, so it is a premise of the theorem. Allocate's call-site argument
    can_fill (acf) is a Section variable: each unit's walk passes its own.
    No image constant; no function is proved here (rule 24). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

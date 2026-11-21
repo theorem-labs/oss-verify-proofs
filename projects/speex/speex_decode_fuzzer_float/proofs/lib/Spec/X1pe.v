@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap room predicate nroom reads Linux's placement answer, vm_place_available at the NULL hint, in place of a free gap above 0). *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Lib Require Import X1bs X1c2 X1bn.
@@ -17,7 +18,8 @@ Definition LBUDGET : Z := 2147483648.
 Definition nroom (B : Z) (n : node) (mo : Model) : Prop :=
 match n with
 | NMmap addr len prot flags => addr = 0 -> flags = MAP_PRIVATE + MAP_ANONYMOUS ->
-live_bytes (vm_maps (m_vmmaps mo)) + mmap_len len <= B /\ vm_gap_available (m_vmmaps mo) (mmap_len len) = true
+live_bytes (vm_maps (m_vmmaps mo)) + mmap_len len <= B
+/\ vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (mmap_len len) = true
 | _ => True
 end.
 

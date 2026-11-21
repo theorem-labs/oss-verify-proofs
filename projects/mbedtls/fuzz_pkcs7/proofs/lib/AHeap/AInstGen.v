@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (G_T_node and G_T_store restated in plain text with the new ASys.placed_at premise, each old encoded statement kept as a definition with a lemma that it equals the plain statement without that premise; G_ROOM_e added, the room lemma at the emb size). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -238,22 +239,73 @@ Section InstGen.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="ASB IML IMH GOT64 GSB64 H VR0 VWF0 HH H68 HU HF SLACK"] Theorem G_T_node : ltac2:(CDefT.buildp (gd_tbl_AInstGen ()) "Pu,(7.$8.)Pf,(7.$8.)Pnb,(1?.$1.)Pbl,(1?.$1.)Pmo,$2.Pa,(24.&40.)P,(37.R6.R5.R4.R3.)P,(25.R7.R6.R5.R4.R3.)P,(6.$1.(38.(2<.&40.R3.)+1000.)=)P,(16.=(2<.&40.R4.))P,(15.(17.(2<.&40.R5.)(14.+2.+14.))(2=.VhAR,))P,(6.$8.(26.(27.(28.(24.&40.)(24.&40.))(29.(2:.R7.))(2;.(2:.R7.)))R6.(31.&40.(14.+2.+14.)))$;.)(4.(25.R<.R;.(27.$1.R:.(39.$1.(2<.&40.R7.)(3:.$1.)))R9.(3;.+22.R7.(14.+2.+14.)R8.))(3<.(20.R<.R;.(27.$1.R:.(39.$1.(2<.&40.R7.)(3:.$1.)))R9.)(2<.&40.R7.)(14.+2.+14.)))")
-(* [comment removed for export] *).
+  (* LPS #38: preserve the encoded statement and certify its explicit restatement. *)
+  Definition ZZ_G_T_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstGen ()) "Pu,(7.$8.)Pf,(7.$8.)Pnb,(1?.$1.)Pbl,(1?.$1.)Pmo,$2.Pa,(24.&40.)P,(37.R6.R5.R4.R3.)P,(25.R7.R6.R5.R4.R3.)P,(6.$1.(38.(2<.&40.R3.)+1000.)=)P,(16.=(2<.&40.R4.))P,(15.(17.(2<.&40.R5.)(14.+2.+14.))(2=.VhAR,))P,(6.$8.(26.(27.(28.(24.&40.)(24.&40.))(29.(2:.R7.))(2;.(2:.R7.)))R6.(31.&40.(14.+2.+14.)))$;.)(4.(25.R<.R;.(27.$1.R:.(39.$1.(2<.&40.R7.)(3:.$1.)))R9.(3;.+22.R7.(14.+2.+14.)R8.))(3<.(20.R<.R;.(27.$1.R:.(39.$1.(2<.&40.R7.)(3:.$1.)))R9.)(2<.&40.R7.)(14.+2.+14.)))").
+
+  Lemma ZZ_G_T_node_faithful : ZZ_G_T_node_old =
+    (forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+       Gn u f nb bl ->
+       Kg u f nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 20 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+       Kg u f (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+       /\ crange (CSg u f (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+
+  #[using="ASB IML IMH GOT64 GSB64 H VR0 VWF0 HH H68 HU HF SLACK"] Theorem G_T_node :
+    forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+      Gn u f nb bl ->
+      Kg u f nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      Kg u f (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (CSg u f (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20).
   Proof.
-    (intros u f nb bl mo a G dd_H; ddestruct dd_H as (NU & NF & UK & K); intros AAL A0 ACE RF).
-    destruct (D_T_node AL ASB IML IMH (vp u f) nb0 bl0 (vp_SLACK u f) nb bl mo a G K AAL A0 ACE RF) as [K' C'].
+    (intros u f nb bl mo a G dd_H; ddestruct dd_H as (NU & NF & UK & K); intros AAL A0 ACE RF FL).
+    destruct (D_T_node AL ASB IML IMH (vp u f) nb0 bl0 (vp_SLACK u f) nb bl mo a G K AAL A0 ACE RF FL) as [K' C'].
     split; [exact (conj NU (conj NF (conj UK K')))|]. intros x Hx. apply CSg_CSd. apply C'. exact Hx.
   Qed.
-  #[using="ASB IML IMH GOT64 GSB64 H VR0 VWF0 HH H68 HU HF SLACK"] Theorem G_T_store : ltac2:(CDefT.buildp (gd_tbl_AInstGen ()) "Pu,(7.$8.)Pf,(7.$8.)Pnb,(1?.$1.)Pbl,(1?.$1.)Pmo,$2.Pa,(24.&40.)P,(3=.R6.R5.R4.R3.)P,(25.R7.R6.R5.R4.R3.)P,(6.$1.(38.(2<.&40.R3.)+1000.)=)P,(16.=(2<.&40.R4.))P,(15.(17.(2<.&40.R5.)(14.+2.+17.))(2=.VhAR,))P,(6.$8.(26.(27.(28.(24.&40.)(24.&40.))(29.(2:.R7.))(2;.(2:.R7.)))R6.(31.&40.(14.+2.+17.)))$;.)(4.(25.R<.R;.R:.(27.$1.R9.(39.$1.(2<.&40.R7.)(3:.$1.)))(3;.+4022.R7.(14.+2.+17.)R8.))(3<.(20.R<.R;.R:.(27.$1.R9.(39.$1.(2<.&40.R7.)(3:.$1.))))(2<.&40.R7.)(14.+2.+17.)))")
-(* [comment removed for export] *).
+  (* LPS #38: preserve the encoded statement and certify its explicit restatement. *)
+  Definition ZZ_G_T_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstGen ()) "Pu,(7.$8.)Pf,(7.$8.)Pnb,(1?.$1.)Pbl,(1?.$1.)Pmo,$2.Pa,(24.&40.)P,(3=.R6.R5.R4.R3.)P,(25.R7.R6.R5.R4.R3.)P,(6.$1.(38.(2<.&40.R3.)+1000.)=)P,(16.=(2<.&40.R4.))P,(15.(17.(2<.&40.R5.)(14.+2.+17.))(2=.VhAR,))P,(6.$8.(26.(27.(28.(24.&40.)(24.&40.))(29.(2:.R7.))(2;.(2:.R7.)))R6.(31.&40.(14.+2.+17.)))$;.)(4.(25.R<.R;.R:.(27.$1.R9.(39.$1.(2<.&40.R7.)(3:.$1.)))(3;.+4022.R7.(14.+2.+17.)R8.))(3<.(20.R<.R;.R:.(27.$1.R9.(39.$1.(2<.&40.R7.)(3:.$1.))))(2<.&40.R7.)(14.+2.+17.)))").
+
+  Lemma ZZ_G_T_store_faithful : ZZ_G_T_store_old =
+    (forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+       Gs u f nb bl ->
+       Kg u f nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 23 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+       Kg u f nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+       /\ crange (CSg u f nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+
+  #[using="ASB IML IMH GOT64 GSB64 H VR0 VWF0 HH H68 HU HF SLACK"] Theorem G_T_store :
+    forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+      Gs u f nb bl ->
+      Kg u f nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      Kg u f nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (CSg u f nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23).
   Proof.
-    (intros u f nb bl mo a G dd_H; ddestruct dd_H as (NU & NF & UK & K); intros AAL A0 ACE RF).
-    destruct (D_T_store AL ASB IML IMH (vp u f) nb0 bl0 (vp_SLACK u f) nb bl mo a G K AAL A0 ACE RF) as [K' C'].
+    (intros u f nb bl mo a G dd_H; ddestruct dd_H as (NU & NF & UK & K); intros AAL A0 ACE RF FL).
+    destruct (D_T_store AL ASB IML IMH (vp u f) nb0 bl0 (vp_SLACK u f) nb bl mo a G K AAL A0 ACE RF FL) as [K' C'].
     split; [exact (conj NU (conj NF (conj UK K')))|]. intros x Hx. apply CSg_CSd. apply C'. exact Hx.
   Qed.
   #[using="H VR0 VWF0 HH H68 HU HF SLACK CB20"] Theorem G_ROOM_n : forall u f nb bl mo, Gn u f nb bl -> Kg u f nb bl mo -> exists a, anon_grantable 0x22 (2^20) mo a.
   Proof. (intros u f nb bl mo G dd_H; ddestruct dd_H as (_ & _ & _ & K)). exact (D_ROOM_n AL (vp u f) nb0 bl0 (vp_VR u f) (vp_SLACK u f) (vp_CB20 u f) nb bl mo G K). Qed.
+  (* LPS #38: the emb-sized sibling of [G_ROOM_n]; see [AInstDepot.D_ROOM_e]. *)
+  #[using="H VR0 VWF0 HH H68 HU HF SLACK CB20"] Theorem G_ROOM_e : forall u f nb bl mo, Gn u f nb bl -> Kg u f nb bl mo -> exists a, anon_grantable 0x22 0x10000 mo a.
+  Proof. (intros u f nb bl mo G dd_H; ddestruct dd_H as (_ & _ & _ & K)). exact (D_ROOM_e AL (vp u f) nb0 bl0 (vp_VR u f) (vp_SLACK u f) (vp_CB20 u f) nb bl mo G K). Qed.
   #[using="H VR0 VWF0 HH H68 HU HF CB23"] Theorem G_ROOM_s : ltac2:(CDefT.buildp (gd_tbl_AInstGen ()) "Pu,(7.$8.)Pf,(7.$8.)Pnb,(1?.$1.)Pbl,(1?.$1.)Pmo,$2.P,(3=.R5.R4.R3.R2.)P,(25.R6.R5.R4.R3.R2.)(?.(24.&40.)La,(24.&40.)(3>.VhAR,+4022.(14.+2.+17.)R4.R1.))")
 (* [comment removed for export] *).
   Proof. (intros u f nb bl mo G dd_H; ddestruct dd_H as (_ & _ & _ & K)). exact (D_ROOM_s AL (vp u f) nb0 bl0 (vp_VR u f) (vp_CB23 u f) nb bl mo G K). Qed.

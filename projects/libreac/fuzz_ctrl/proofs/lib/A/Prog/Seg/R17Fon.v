@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1392 of its 1502 lines of code are new or changed and 901 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R14.v, with its module paths, module names, addresses and numbers changed; 629 of its 730 lines of code are new or changed and 1401 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R17.v; 39 of its 110 lines of code are new or changed and 659 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/R17Fon.v -- route (C) twin of a Theorem Labs lane's footprint run A.Prog.Seg.R17F.r17_evt_F (source not in this delivery), for fuzz_ctrl
    image A's walk stage seg_R17 (glue lib/A/ACtlG/R17.v).  Written by a Theorem Labs lane;
    single writer.  rule 24: no function proved (stage glue of a walk; kind: segment lemma).  ADDITIVE beside-file:
    a Theorem Labs lane's lib/A/Prog/Seg/R17F.v (not in this delivery) is not edited.
 
-   PROVENANCE.  Base text: a Theorem Labs lane's fold a working branch 4bae33fdf54, lib/A/Prog/Seg/R17F.v (not in this delivery) blob
+   PROVENANCE.  Base text: a Theorem Labs lane's fold a working branch, lib/A/Prog/Seg/R17F.v (not in this delivery) blob
    bbdfb80ade0 (lemma r17_evt_F).  That blob differs from a working branch's R17F.v (an earlier version, blob e5d2fd55e19, not in this delivery) (
-   a working branch 1899bed1aee) only by qualification: it names lib/Lib's Frame through a Module alias
+   a working branch) only by qualification: it names lib/Lib's Frame through a Module alias
    LFr and writes the full path of MState.unsigned_lit.  Here lib/Lib's Frame is written by its full path
    (OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Frame), with no Module alias.  The image, the run
    [0x8183c, 0x81858) and its regions are R17F.v's (its header: image A = fuzz_ctrl.asan, libreac v1.9.0, sha256
@@ -25,7 +26,7 @@
 
    WHAT CHANGED against r17_evt_F (binders, premise order and post otherwise identical):
    - the first premise is the callee's region-form footprint contract
-     A.Prog.reac_ports_parse_c.reac_ports_parse_contract_F_on (reac_ports_parse_c.v 3cb58b9552c (the blob this tree had at release c5e779efe8c), :141) in place
+     A.Prog.reac_ports_parse_c.reac_ports_parse_contract_F_on (reac_ports_parse_c.v 3cb58b9552c (the blob this tree had at release), :141) in place
      of reac_ports_parse_contract_F: the same contract with `shadow_rw m` dropped from its asan premise
      (`asan_cells m /\ addressable m p 20 /\ addressable m q 12`), same post reac_ports_parse_post;
    - the premise `shadow_rw m` (R17F.v bbdfb80ade0:59, between `asan_cells m` and `addressable m (phi + 18) 20`) is

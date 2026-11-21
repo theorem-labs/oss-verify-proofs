@@ -7,7 +7,7 @@ value is a cgif image quantity whose fuzz_command counterpart differs (or, for t
 fuzz_command quantity). The positions were chosen from find_plants.py's list (controls/plant_candidates.*.txt).
 The plants are textual: no Coq build.
 
-usage: mkplants_rc2.py UNIT_LIB OUTDIR      (UNIT_LIB holds A/ and B/ of tree a3c671fb9bb; writes OUTDIR/base-A/A,
+usage: mkplants_rc2.py UNIT_LIB OUTDIR      (UNIT_LIB holds A/ and B/ of tree; writes OUTDIR/base-A/A,
        OUTDIR/base-B/B, OUTDIR/<plant>/<side> and OUTDIR/plants.tsv)"""
 import os, shutil, sys
 

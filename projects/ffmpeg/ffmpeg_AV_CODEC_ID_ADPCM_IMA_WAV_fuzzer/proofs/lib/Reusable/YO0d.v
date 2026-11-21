@@ -3,11 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0d.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YO0d.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed, and its addresses and numbers named by Reusable/YAddr.v, which holds this fuzz target's plain binary's values; musl's vmlock, which this binary's __vm_wait reads and zlib's binary does not link, added to the static memory the proofs track, and the proofs extended to it; the fuzz target's own globals that its harness writes or reads (ms_hw, ms_hr) added. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (auxv_types, auxv_pre and auxv_words_at per CONFIG_RSEQ: the 26 common pairs, the rseq pairs and AT_NULL; the initial ledger with the vvar/vDSO pair, hp_vdso; hp_brk_vdso, the brk/vDSO gap derived at the launch; sys_rob at each node (RomBase), for the lift to the run's segment list). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YK11 YK0s YK0i YK15 YM06 YM02 YP09.
+From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YO0i YO0f YO0x.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Export YM0b.
@@ -70,19 +72,33 @@ Definition word_mem (segs : list Segment) (mem : word -> option byte) (a v : Z) 
 forall k, (k < 8)%nat -> mbyte segs mem (a + Z.of_nat k) = Some (Z_to_bv 8 (le_byte v 8 k)).
 Definition in_img (B : malloc_syms) (a : Z) : Prop := ms_segs B <> [] /\ exists s, In s (segments_reserved (ms_segs B)) /\
 bv_unsigned (fst s) <= a < bv_unsigned (fst s) + bv_unsigned (snd s).
-Definition AUXV_TYPES : list Z := [3; 4; 5; 16; 6; 11; 12; 23; 25; 0].
+(** The launch carries 26 common pairs, optional rseq pairs, and AT_NULL. *)
+Definition auxv_types (rs : bool) : list Z :=
+[33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]
+++ (if rs then [27; 28] else []) ++ [0].
+Definition AUXV_RAND_K : nat := 24.
+Lemma auxv_types_rand : forall rs, nth AUXV_RAND_K (auxv_types rs) 0 = 25.
+Proof. intros [|]; reflexivity. Qed.
+Lemma length_auxv_types : forall rs, Z.of_nat (length (auxv_types rs)) = 27 + 2 * (if rs then 1 else 0).
+Proof. intros [|]; reflexivity. Qed.
+Lemma auxv_types_len_ge : forall rs, 27 <= Z.of_nat (length (auxv_types rs)).
+Proof. intros [|]; cbn; lia. Qed.
+Definition auxv_words_at (segs : list Segment) (m : word -> option byte) (av ar : Z) : Prop :=
+exists rs : bool,
+(forall k, (k < length (auxv_types rs))%nat -> word_mem segs m (av + 16 * Z.of_nat k) (nth k (auxv_types rs) 0)) /\
+word_mem segs m (av + 16 * Z.of_nat AUXV_RAND_K + 8) ar.
 Definition auxv_pre (B : malloc_syms) (sec : Z) (lo : Z) (mem : word -> option byte) : Prop :=
-exists av ar,
+exists (rs : bool) av ar,
 word_mem (ms_segs B) mem (ms_libc B + 8) av /\
-(forall k, (k < 10)%nat -> word_mem (ms_segs B) mem (av + 16 * Z.of_nat k) (nth k AUXV_TYPES 0)) /\
-word_mem (ms_segs B) mem (av + 16 * 8 + 8) ar /\
+(forall k, (k < length (auxv_types rs))%nat -> word_mem (ms_segs B) mem (av + 16 * Z.of_nat k) (nth k (auxv_types rs) 0)) /\
+word_mem (ms_segs B) mem (av + 16 * Z.of_nat AUXV_RAND_K + 8) ar /\
 word_mem (ms_segs B) mem (ar + 8) sec /\
-4096 <= av /\ av + 160 <= 2 ^ 63 /\ 4096 <= ar /\ ar + 16 <= 2 ^ 63 /\
+4096 <= av /\ av + 16 * Z.of_nat (length (auxv_types rs)) <= 2 ^ 63 /\ 4096 <= ar /\ ar + 16 <= 2 ^ 63 /\
 lo <= av /\ lo <= ar.
 Lemma auxv_pre_mono : forall B sec lo lo' mem, lo' <= lo -> auxv_pre B sec lo mem -> auxv_pre B sec lo' mem.
 Proof.
-intros B sec lo lo' mem Hle (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat (split; [assumption|]). split; lia.
+intros B sec lo lo' mem Hle (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+exists rs, av, ar. repeat (split; [assumption|]). split; lia.
 Qed.
 Definition static_owned (B : malloc_syms) (a : Z) : Prop :=
 (ms_lock B <= a < ms_lock B + 4) \/
@@ -238,11 +254,11 @@ node_ok segs c I (fun _ => []) nx ->
 (forall i, bit i = 1 -> realizes segs (nx i) TB) ->
 realizes segs c (t_alt2 TA TB).
 Proof.
-intros c I nx bit TA TB [Hsnd Hcmp] Hbits [ia Hia] [ib Hib] HA HB.
+intros c I nx bit TA TB [Hsnd [Hcmp Hrob]] Hbits [ia Hia] [ib Hib] HA HB.
 set (IA := {i : I | bit i = 0}). set (IB := {i : I | bit i = 1}).
 set (nx' := fun j : IA + IB => match j with inl (exist _ i _) => nx i | inr (exist _ i _) => nx i end).
 apply (rz_alt2 segs c IA IB nx' TA TB (exist _ ia Hia) (exist _ ib Hib)).
-- split.
+- split; [| split; [| exact Hrob]].
 + intros [[i Hi]|[i Hi]]; cbn; apply Hsnd.
 + intros e st Hst. destruct (Hcmp e st Hst) as (i & -> & ->).
 destruct (Hbits i) as [Hi|Hi].
@@ -523,11 +539,28 @@ hp_vm    : vm_maps (m_vmmaps md) = [] /\ vm_noaccess (m_vmmaps md) = [] /\
 vm_brk (m_vmmaps md) = vm_start_brk (m_vmmaps md) /\
 valid_brk segs (vm_brk (m_vmmaps md)) /\
 bv_unsigned (vm_brk (m_vmmaps md)) + 2 * 4096 <= alloc_ceiling /\
-vm_reserved (m_vmmaps md) = segments_reserved segs /\
+(* 08b1429: [init_model] installs the vvar/vDSO pair above the image
+   ([State.v:7716-7721 init_reserved], seeded at [:7786]), so the initial ledger is
+   [init_reserved], not [segments_reserved] alone.  Written with the pair spelled out
+   rather than as [init_reserved] so that this record names no launch argument
+   ([mbase], [sp]) it does not otherwise mention; [State.vm_reserved_init_model] is the
+   model's own proof that the two forms agree. *)
+vm_reserved (m_vmmaps md)
+  = segments_reserved segs ++ vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)) /\
 SRC_LIM_MIN <= vm_limit (m_vmmaps md) /\
 vm_backing_used md <= 0;
 hp_model : m_halted md = None /\ m_vm_lazy md = [] /\ m_vm_materialized md = [];
-hp_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md))
+hp_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md));
+(* The vDSO entries are among the reservations.  LAST in the record, so every existing
+   construction keeps its bullet order and gains one at the end.  It is a CONSEQUENCE of
+   the equation in [hp_vm] above ([incl_appr ... (incl_refl _)]) and not an extra
+   assumption; it is a field because [YN03.ledger_ok]'s [lg_vdso] consumes it by name. *)
+hp_vdso : incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md));
+(* The brk start lies at least 23 pages below the vDSO pair, so the first brk grow misses it
+   ([YN03.ledger_ok]'s [lg_brk_vdso]).  DERIVED at the launch ([YL0n]), never assumed:
+   [Run.valid_brk] puts the brk within [brk_aslr_max] of the image's reservations, and the
+   launch puts [vdso_top] above [mmap_base_min], far above that. *)
+hp_brk_vdso : (bv_unsigned (vm_brk (m_vmmaps md)) + 23 * 4096 <= vdso_top (m_vmmaps md))%Z
 }.
 End y.
 End d.

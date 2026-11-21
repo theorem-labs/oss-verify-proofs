@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB, and the allocator-ceiling premise of the client-write lemma is derived from the floor by lia. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
@@ -81,7 +82,7 @@ Definition np_b_cpsA : Prop :=
   rw_cells asegs m (OS + 128) [C8 (Z_to_bv 64 0x15c5d0)] -> rw_cells asegs m (OS + 136) (ios_cellsX OS 0x15c5f8 0x1002 0 fill j148 j284) ->
   bytes_at asegs m (shad OS) (repeat z8 36) -> (0 <= fill < 256)%Z -> (v = 0 \/ v = 1)%Z ->
   el_tploc m -> io_ssp m -> frm0 fc -> LOCBA m ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z -> (lo + EL_NP_STACK_A <= q)%Z ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z -> (lo + EL_NP_STACK_A <= q)%Z ->
   (q + 16 <= USTACK_TOP)%Z -> (q mod 16 = 0)%Z ->
   (Z.of_nat (length (rt_frames RT Σ)) + 1 <= FRAMES_TOT)%Z -> (1 <= rt_credit RT Σ)%Z ->
   (forall (Σ' : rts RT) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' (F' : bvmap 5 word) (fc' : bv 32) m' (pb' : word) (pp' ep' : Z) (dum' : list byte),
@@ -129,7 +130,7 @@ Proof using AF FDO MST DCC.
   assert (AG1 : forall P : Z -> Prop, (forall x, P x -> ~ (q - 96 <= x < q)) -> agree_on P m m1).
   { intros P HP a Ha. apply MU1. cbn [outside]. split; [exact (HP _ Ha)| exact I]. }
   assert (ART1 : ART RT Σ m1).
-  { apply (art_client_write RT AF Σ m m1 lo ART0 LOW); [| exact WM1]. intros a Ha. apply MU1. cbn [outside]. split; [| exact I]. intros Hr. apply Ha. left. clear - Hr LOR SPT; ul. }
+  { apply (art_client_write RT AF Σ m m1 lo ART0 ltac:(lia)); [| exact WM1]. intros a Ha. apply MU1. cbn [outside]. split; [| exact I]. intros Hr. apply Ha. left. clear - Hr LOR SPT; ul. }
   assert (SB1 : rw_cells asegs m1 OS (sb_cellsX pb (Z_to_bv 64 pp) (Z_to_bv 64 ep) dum))
     by (eapply rw_cells_agree_nw; [exact SB|]; apply AG1; intros x Hx; cbn [sb_cellsX cells_size csize Nat.add] in Hx; lia).
   assert (V1 : rw_cells asegs m1 (OS + 128) [C8 (Z_to_bv 64 0x15c5d0)])

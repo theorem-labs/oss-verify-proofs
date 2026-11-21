@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap decline premise place_declined_b; Linux's mmap placement; the vDSO's mappings and steps): changed map_grant_exists, grant_facts, step_MM. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -207,20 +208,47 @@ unfold req_len in Hpos, Hlive, Hreq. unfold MG_LIVE, MG_SLOTS, MG_REQ in *.
 pose proof (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (inv_areas I3))))))))) as NN. cbv beta in NN.
 pose proof (live_bytes_nonneg' s3 NN) as Hlb.
 destruct ubs0_reserved_small as [RS RL]. pose proof ubs0_reserved_bytes as RB.
-destruct (region_free_exists28_std (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1)) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
-- pose proof (page_round_ge len). pose proof (page_round_lt len). lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with ubs0segs. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G). change (ms_segs B) with ubs0segs.
-rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md1))). pose proof (lx_lb _ _ _ LX). lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
+(* r2: `Unable to unify "true" with "linux_place_is ... && true
+   && true && true && true && true"`. grant_ok's FIRST conjunct is now Placement.linux_place_is,
+   so a merely free slot is no longer a witness -- region_free_exists28_std gives the five
+   TRAILING atoms and no placement. This is this unit's own donor-written route, copied from
+   UN0c.v:292-327 (and its YN0c.v twin), which repaired the identical shape: run
+   region_free_exists28 over the reserved and mapped entries PLUS a dummy [0, task_unmapped_base)
+   entry, so the slot is forced into Linux's second window, then linux_place_exists gives Linux's
+   own address and grant_ok_intro assembles the six conjuncts from it. *)
+set (T := 183251939328).
+assert (HT : LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base = T) by reflexivity.
+assert (HnPR : 0 < page_round len) by lia.
+assert (HnalPR : page_round len mod page_size = 0) by (unfold page_round, PGSZ, page_size; apply Z_mod_mult).
+assert (UT : bv_unsigned (Z_to_bv 64 T) = T) by (apply Z_to_bv64_small; unfold T; lia).
+destruct (region_free_exists28 ((Z_to_bv 64 0, Z_to_bv 64 T) :: (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1))) (page_round len))
+as (a & Ha1 & Ha2 & Ha3 & Ha4).
+- unfold slot28. lia.
+- cbn [length ivs_bytes snd]. rewrite Nat2Z.inj_succ, UT.
+assert (Hcnt : Z.of_nat (length (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1))) <= 2 ^ 16).
+{ rewrite length_app. destruct (lg_reserved _ _ _ _ G) as (rx & Erx & Lrx & _ & _). rewrite Erx, length_app. pose proof (lg_count _ _ _ _ G). change (ms_segs B) with ubs0segs. lia. }
+assert (Hbytes : ivs_bytes (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1)) <= 2 ^ 36).
+{ destruct (lg_reserved _ _ _ _ G) as (rx & Erx & _ & Brx & _). rewrite ivs_bytes_app, Erx, ivs_bytes_app. change (ms_segs B) with ubs0segs.
+rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md1))). pose proof (lx_lb _ _ _ LX). lia. }
+assert (Hd : (T + ivs_bytes (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1))) / slot28 <= 2 ^ 12).
+{ apply Z.div_le_upper_bound; [unfold slot28; lia|]. unfold slot28, T. lia. }
+unfold JMAX. lia.
+- cbn [region_free] in Ha4. apply andb_prop in Ha4 as [Hov Ha4]. apply negb_true_iff in Hov.
+unfold iv_overlap in Hov. rewrite UT in Hov. change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hov.
+pose proof (u64_range (Z_to_bv 64 (page_round len))) as Un.
+assert (HaT : T <= bv_unsigned a) by (apply andb_false_iff in Hov as [Hov|Hov]; apply Z.ltb_ge in Hov; lia).
 pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
-assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md1)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *.
-pose proof (page_round_ge len). pose proof (page_round_lt len). change (2 ^ 32) with 4294967296 in Hlive. lia. }
-reflexivity.
+destruct (Checks.Placement.linux_place_exists (m_vmmaps md1) (kb_thp (m_kernel md1)) (Z_to_bv 64 0) (page_round len) HnPR HnalPR
+ltac:(exists (bv_unsigned a); right; split; [exact Ha1|]; split; [rewrite HT; lia|];
+split; [lia|]; rewrite Z_to_bv_bv_unsigned; exact Ha4)) as [gPR HgPR].
+destruct (Checks.Placement.linux_place_admissible _ _ _ _ _ HnPR HnalPR HgPR) as (_ & Hg0 & Hgt & _).
+assert (Hg64 : gPR < 2 ^ 64).
+{ pose proof (u64_range (vm_init_sp (m_vmmaps md1))) as R. unfold alloc_top, stack_max_size in Hgt. lia. }
+exists (Z_to_bv 64 gPR). apply (grant_ok_intro _ _ _ _ HnPR HnalPR).
++ apply (proj2 (Checks.Placement.linux_place_is_iff _ _ _ _ _ HnPR HnalPR)).
+rewrite Z_to_bv64_small by lia. exact HgPR.
++ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *.
+pose proof (page_round_ge len). pose proof (page_round_lt len). change (2 ^ 32) with 4294967296 in Hlive. lia.
 Qed.
 Lemma to_Kf : forall regs3 mem3 RET, regs_ok E6 (ss_regs ss_MK) regs3 -> mem_ok ubs0segs E6 mem3 (ss_mem ss_MK) -> facts_ok E6 (ss_facts ss_MK) ->
 RET = Z_to_bv 64 (2 ^ 64 - 12) -> midrep B L1 s3 mem3 md1 -> FRcB mem3 ->
@@ -276,9 +304,8 @@ region_free (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1)) a (Z_to_bv 64
 Proof using K nu sp.
 intros mm a len HM Hlen Hmod GR. pose proof (proj1 alloc_ceiling_val) as AC. pose proof (u64_range a) as Ua.
 assert (PR : page_round len = len) by (apply page_round_fixed; unfold PGSZ; exact Hmod). rewrite PR in GR.
-unfold grant_ok in GR. apply andb_prop in GR as [GR _]. apply andb_prop in GR as [GR RF].
-apply andb_prop in GR as [GR Htop]. apply andb_prop in GR as [Hal Ha0].
-apply Z.eqb_eq in Hal. apply Z.ltb_lt in Ha0. apply Z.leb_le in Htop. unfold page_size in Hal.
+(* grant_ok leads with linux_place_is at the revision; unpacked as YN2c.v's grant_facts does. *)
+destruct (grant_ok_unpack _ _ _ _ GR) as (Hal & Ha0 & Htop & RF & _). unfold page_size in Hal.
 assert (Hceil : bv_unsigned a + len <= alloc_ceiling).
 { apply (YM05.grant_below_ceil _ _ (lg_ceil _ _ _ _ (mid_ledger _ _ _ _ _ HM))); [| exact Htop].
 rewrite Z.add_mod, Hal, Hmod by lia. reflexivity. }
@@ -373,6 +400,11 @@ apply (knode_mmap_rw ubs0segs regs3 (Z_to_bv 64 (ubs0_A_mmap + 0xc4)) mem3 (seg_
 - rewrite (Hregs 13%bv), G13. reflexivity.
 - rewrite (Hregs 14%bv), G14. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs 15%bv), G15. reflexivity.
+- (* 727298f3 (#146): the knode now carries the place_declined_b premise. The hint
+     register is pinned by this walk; a NULL hint is never declined. *)
+  apply YK0v.place_declined_b_of_zero.
+  rewrite (Hregs 10%bv). vm_compute. reflexivity.
+
 -
 intros e He. apply LF.
 assert (Ee : errno_ret e = Z_to_bv 64 (2 ^ 64 - 12)) by (destruct He as [<-|[]]; unfold errno_ret; apply bv_eq; reflexivity). rewrite Ee.

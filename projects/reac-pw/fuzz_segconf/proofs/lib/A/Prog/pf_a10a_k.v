@@ -5,9 +5,10 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 550 of its 584 lines of code are new or changed and 220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_parse_file (image A, 0x87a78), segment A10a (ROLE 0x881d4 -> INTENT 0x88450, 57 instructions,
    checks 16, 17, 25, no call; lib/A/Prog/pf_pieces.v S_A10a): the kit of the segment's walk. Segment A10a's proof,
-   by the G3 walk owner, written new in the form of fuzz_command's lib/A/Prog walks at origin/ossv/recipes 501c0d516c69
+   by the G3 walk owner, written new in the form of fuzz_command's lib/A/Prog walks
    (answer_l.v: a loop with inline checks and own-frame stores, re-seeded at each iteration) and of this unit's
    lib/A/Prog/trim_t.v / trim_tr.v.
    Here: the pure facts of the role fold (R:234-238: r_low as a map, the role step of r_key), the bytes the

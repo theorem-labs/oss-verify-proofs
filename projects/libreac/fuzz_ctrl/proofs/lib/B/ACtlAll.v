@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v; 727 of its 778 lines of code are new or changed and 508 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlAll.v -- the TOP of fuzz_ctrl image B's (asan-ubsan) cgif-form walk of LLVMFuzzerTestOneInput in ROUTE (C)
    (the cut carries B.ACtlRtC.ctl_rt_C; no AR_states_vis0_shadow / AR_states_owned_ro anywhere), closed as far as the
    route-C stage lemmas reach.  proves no function (kind: merge; rule 24: a composition of proved stage lemmas, no
@@ -26,7 +27,7 @@
      proved here by computation;
    - provenance of the frame-allocator contracts (a Theorem Labs lane's condition): stack_malloc6_contract / stack_free6_contract are
      a Theorem Labs lane's B.Rt.StackMalloc6.disco_stack_malloc6 / B.Rt.StackFree6S.disco_stack_free6_shared, files of record at
-     a working branch 055c2ebca7f, cbrec v9 VERDICT ok
+     a working branch, cbrec v9 VERDICT ok
      its build record (a build record, not in this delivery);
    - LS stays a Context parameter, so ACtl.v's LS_LEAF stays a named premise: it is discharged where the top is
      applied, by a Theorem Labs lane's closing lemma B.CtrlClose_B.ctrl_LS_LEAF (reflexivity at fuzz_ctrl's shape);
@@ -329,7 +330,7 @@ Let AMALLOC : Reusable.YG0d.amalloc_realizes segs CtrlB :=
 Let AMALLOC4 :=
     @Reusable.YCbp.amalloc04_rule_triv fx rc Reusable.YE2k.tfib_sink_head segs CtrlB segs_low errno_low LAWS ML
     AMALLOC.
-(* a Theorem Labs lane's lib/B/Rt/Memchr.v (by path, 80272cf7f78) *)
+(* a Theorem Labs lane's lib/B/Rt/Memchr.v (by path) *)
 Let AMEMCHR : Reusable.MemchrDef.amemchr_realizes segs CtrlB 0x42ab0 :=
     B.Rt.Memchr.memchr_icpt_realizes CtrlB LAWS TFIB_SYMS.
 (* a Theorem Labs lane's lib/B/Rt/IntrinCpySet.v asan_memcpy_aintrin (a working branch, v9 VERDICT ok) *)
@@ -366,9 +367,9 @@ Let PC1 : Reusable.YG0f.pc_stack_malloc (Reusable.YG0f.as_code CtrlB) 1 = B.Prog
 (* the core: Reusable.YG05.stack_malloc_progress (ACtlW0.v's form) *)
 Let SMP : Reusable.YCbq.stack_malloc_progressP CtrlB :=
     fun s cid => Reusable.YG05.stack_malloc_progress (Reusable.YG0f.as_universe CtrlB) s cid.
-(* a Theorem Labs lane's lib/B/BFrameFlagLaw.v frame_flag_law_ok (dddf4fa8e61, v11 VERDICT ok) *)
+(* a Theorem Labs lane's lib/B/BFrameFlagLaw.v frame_flag_law_ok (v11 VERDICT ok) *)
 Let FFL : Reusable.YCbq.frame_flag_lawP segs CtrlB := B.BFrameFlagLaw.frame_flag_law_ok CtrlB.
-(* a Theorem Labs lane's lib/B/Prog/build_dt1_single_F_closed.v (at head lib/B/Prog/build_dt1_single_F_closed.v:27; from a working branch 467b2c94dcc) build_dt1_single_F_holds_on_closed *)
+(* a Theorem Labs lane's lib/B/Prog/build_dt1_single_F_closed.v (at head lib/B/Prog/build_dt1_single_F_closed.v:27; from a working branch) build_dt1_single_F_holds_on_closed *)
 Let HBD : B.Prog.build_dt1_single_c.build_dt1_single_contract_F_on :=
     B.Prog.build_dt1_single_F_closed.build_dt1_single_F_holds_on_closed.
 (* a Theorem Labs lane's lib/B/Prog/dt1_head_F.v:117 dt1_head_F_holds_on *)
@@ -380,9 +381,9 @@ Let HMC : B.Prog.asan_memcpy_cF_on.asan_memcpy_contract_F_on := B.Prog.asan_memc
 (* lib/B/Prog/asan_memsetF_on.v at memset_holds *)
 Let HMS : B.Prog.asan_memset_cF_on.asan_memset_contract_F_on :=
     B.Prog.asan_memsetF_on.asan_memset_holds_F_on B.Prog.memset.memset_holds.
-(* a Theorem Labs lane's lib/B/Prog/name_fieldF_on.v name_field_holds_F_on at the memset _on run (fc9d52761d0) *)
+(* a Theorem Labs lane's lib/B/Prog/name_fieldF_on.v name_field_holds_F_on at the memset _on run *)
 Let HNF : B.Prog.name_field_c_on.name_field_contract_F_on := B.Prog.name_fieldF_on.name_field_holds_F_on HMS.
-(* a Theorem Labs lane's lib/B/Prog/asan_stack_malloc_0F.v asan_stack_malloc_0_holds_F_on (a working branch 4fcf3722ed4, v12 ok) *)
+(* a Theorem Labs lane's lib/B/Prog/asan_stack_malloc_0F.v asan_stack_malloc_0_holds_F_on (a working branch, v12 ok) *)
 Let HSM : B.Prog.asan_stack_malloc_cF_on.asan_stack_malloc_0_contract_F_on :=
     B.Prog.asan_stack_malloc_0F.asan_stack_malloc_0_holds_F_on.
 (* model_block's JOIN_0013 table lies in a zero-shadow range of CtrlB (computation over as_zero_shadow): ctlall_HZS_J13 above *)
@@ -400,7 +401,7 @@ Let TMB :=
 Let TLAY :=
     @B.Prog.C_ctrl_lay_blockPb.pb_ctrl_lay_block fx rc Reusable.YE2k.tfib_sink_head 0x9f1a0 0xa15e8 RELRO_IMG
     CtrlB B.ProgBridgeData.ctrl_ro_globs LAWS errno_low ML SMP ASM1 ASF PC1 TFIB_SYMS GM TMB.
-(* a Theorem Labs lane's lib/B/Prog/C_ctrl_emit_as.v pb_ctrl_emit_as (4b7386f8736, re-pointed to the record core; a working branch 8249a22a3e4) *)
+(* a Theorem Labs lane's lib/B/Prog/C_ctrl_emit_as.v pb_ctrl_emit_as (re-pointed to the record core; a working branch) *)
 Let EMIT :=
     @B.Prog.C_ctrl_emit_as.pb_ctrl_emit_as fx rc Reusable.YE2k.tfib_sink_head 0x9f1a0 0xa15e8 CtrlB RELRO_IMG
     TFIB_SYMS LAWS B.ProgBridgeData.ctrl_ro_globs GM TLAY.
@@ -408,7 +409,7 @@ Let EMIT :=
 Let FR_RELRO : 0x9f1a0 <= 0xa0600 /\ 0xa0708 <= 0xa15e8 := ctlall_FR_RELRO.
 (* the build_as frame table is a registered global (computation): ctlall_GLOBS_FR above *)
 Let GLOBS_FR : In (0xa0600, 264) B.ProgBridgeData.ctrl_ro_globs := ctlall_GLOBS_FR.
-(* a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_build_as.v pb_reac_ctrl_build_as (by path, d10821c397d; VIS0-free) *)
+(* a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_build_as.v pb_reac_ctrl_build_as (by path; VIS0-free) *)
 Let BUILD_AS : B.Prog.C_reac_ctrl_build_as.treac_ctrl_build_as_spec (SK := Reusable.YE2k.tfib_sink_head) 0x9f1a0 0xa15e8 CtrlB B.ProgBridgeData.ctrl_ro_globs :=
     @B.Prog.C_reac_ctrl_build_as.pb_reac_ctrl_build_as fx rc Reusable.YE2k.tfib_sink_head 0x9f1a0 0xa15e8
     RELRO_IMG CtrlB B.ProgBridgeData.ctrl_ro_globs LAWS TFIB_SYMS EMIT GM GLOBS_FR FR_RELRO.
@@ -439,22 +440,22 @@ Let H_bcmp : Reusable.YG0d.abcmp_realizes segs CtrlB B.Prog.bcmp_wrap_c.BCMP_WRA
     Reusable.YE2s.bcmp_icpt_contract CtrlB LAWS TFIB_SYMS.
 (* a Theorem Labs lane's trampoline constant is 0x42aa0, by reflexivity *)
 Let STRCMP_AT : B.Rt.Strcmp.STRCMP_TRAMP = 0x42aa0 := eq_refl.
-(* a Theorem Labs lane's lib/B/Rt/Strcmp.v:468 ctrl_strcmp_tramp at B_strcmp_tramp_entry := 0x42aa0, moved along STRCMP_AT (B_strcmp_tramp_at : 0x42aa0 = STRCMP_WRAP is eq_refl too) *)
+(* a Theorem Labs lane's lib/B/Rt/Strcmp.v:469 ctrl_strcmp_tramp at B_strcmp_tramp_entry := 0x42aa0, moved along STRCMP_AT (B_strcmp_tramp_at : 0x42aa0 = STRCMP_WRAP is eq_refl too) *)
 Let H_strcmp : Reusable.AStrcmpDef.astrcmp_realizes segs CtrlB 0x42aa0 :=
     eq_rect B.Rt.Strcmp.STRCMP_TRAMP (fun e => Reusable.AStrcmpDef.astrcmp_realizes segs CtrlB e)
     (B.Rt.Strcmp.ctrl_strcmp_tramp CtrlB LAWS TFIB_SYMS) 0x42aa0 STRCMP_AT.
 (* the core: Reusable/YCeg.v:64 Hwx_tfa (Qed :65), stated over tfibsegs, the same term as segs *)
 Let Hwx : Reusable.YK04.wx_segs_nowrap segs := Reusable.YCeg.Hwx_tfa.
-(* a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v pb_reac_ctrl_parse (3e03efa9e16; premises errno_low ML SMP ASM1 PC1 ASF TS, no VIS0) *)
+(* a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v pb_reac_ctrl_parse (premises errno_low ML SMP ASM1 PC1 ASF TS, no VIS0) *)
 Let PARSE : B.Prog.C_reac_ctrl_parse.treac_ctrl_parse_spec (SK := Reusable.YE2k.tfib_sink_head) segs CtrlB 0x9f1a0 0xa15e8 :=
     @B.Prog.C_reac_ctrl_parsePf.pb_reac_ctrl_parse fx rc Reusable.YE2k.tfib_sink_head CtrlB 0x9f1a0 0xa15e8
     errno_low ML SMP ASM1 PC1 ASF TFIB_SYMS.
 (* the catalogue and the build_as row table lie in the relro span (computation; ACtlW1.v): ctlall_RELRO_CAT above *)
 Let RELRO_CAT : 0x9f1a0 <= B.ACtlCutP.SM.CAT /\ B.ACtlCutP.BAC.BA_FR + 72 + Z.of_nat (length B.ACtlCutP.BAP.ba_tbl) <= 0xa15e8 := ctlall_RELRO_CAT.
-(* a Theorem Labs lane's lib/Reusable/CtrlTopLink.v ctrlb_RO (a working branch 204fa48d73b, v11 VERDICT ok) *)
+(* a Theorem Labs lane's lib/Reusable/CtrlTopLink.v ctrlb_RO (a working branch, v11 VERDICT ok) *)
 Let RO_OFL : @Reusable.APostBase.ro_below_ofl segs 0x9f1a0 0xa15e8 Reusable.YE2k.tfib_sink_head :=
     Reusable.CtrlTopLink.ctrlb_RO.
-(* a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_classify_box_frame.v pb_reac_ctrl_classify_box_frame, the VIS0-free form (0371159a0f7: RELRO_IMG, LAWS, TPARSE, CtrlTSyms) *)
+(* a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_classify_box_frame.v pb_reac_ctrl_classify_box_frame, the VIS0-free form (RELRO_IMG, LAWS, TPARSE, CtrlTSyms) *)
 Let TCLS : B.Prog.C_reac_ctrl_classify_box_frame.treac_ctrl_classify_box_frame_spec CtrlB 0x9f1a0 0xa15e8 :=
     B.Prog.C_reac_ctrl_classify_box_frame.pb_reac_ctrl_classify_box_frame CtrlB 0x9f1a0 0xa15e8 RELRO_IMG LAWS
     PARSE TFIB_SYMS.
@@ -473,7 +474,7 @@ Let TREPLY : B.Prog.C_reac_ctrl_identity_reply.treac_ctrl_identity_reply_spec (S
 Let aview_vis_mrd := B.ProgWorld.aview_vis_mrd.
 (* lib/B/ProgBridgeData.v *)
 Let ctl_bcmp_cells_of_AR := @B.ProgBridgeData.ctl_bcmp_cells_of_AR rc CtrlB TFIB_SYMS.
-(* lib/B/ProgBridgeData.v (74a700f78a6) *)
+(* lib/B/ProgBridgeData.v *)
 Let ctl_box_view := B.ProgBridgeData.ctl_box_view CtrlB TFIB_SYMS.
 (* lib/B/ProgBridgeData.v *)
 Let ctl_cat_addressable := @B.ProgBridgeData.ctl_cat_addressable rc CtrlB TFIB_SYMS.
@@ -529,9 +530,9 @@ Let declaration_of_F_holds_on : B.Prog.declaration_of_c.declaration_of_contract_
 Let img_vis_W := B.ProgBridge.img_vis_W.
 (* the KIND_NAME table lies in [0x9f1a0, 0xa15e8) (computation; ACtlW3b.v: owner the top): ctlall_kn_relro above *)
 Let kn_relro : 0x9f1a0 <= KNC.KIND_NAME /\ KNC.KIND_NAME + 112 <= 0xa15e8 := ctlall_kn_relro.
-(* a Theorem Labs lane's lib/B/ProgBridgeData.v (3d6fd9e4988) *)
+(* a Theorem Labs lane's lib/B/ProgBridgeData.v *)
 Let mem_grows_fsteps := B.ProgBridgeData.mem_grows_fsteps.
-(* a Theorem Labs lane's lib/B/ACtlOwn6.v own6_frame_proved (by path, 92b69bb98ec; cbrec v6 record) *)
+(* a Theorem Labs lane's lib/B/ACtlOwn6.v own6_frame_proved (by path; cbrec v6 record) *)
 Let own6_frame : forall (cx : B.ACtlCut.ctlcx) ly3 S3 (W3 : Reusable.YA0n.world segs) mem3 md3 k fr,
   Reusable.YCbq.ajournal (SK := Reusable.YE2k.tfib_sink_head) segs CtrlB Reusable.YCfn.LLVMF_STK (B.ACtlCut.c_sp cx) []
     (B.ACtlCut.c_ly cx) (B.ACtlCut.c_S cx) (B.ACtlCut.c_W cx) (B.ACtlCut.c_mem cx) (B.ACtlCut.c_md cx)
@@ -557,10 +558,10 @@ Let reac_identity_init_holds_F_on := reac_identity_init_F_holds_on.
 (* a Theorem Labs lane's lib/B/Rt/SetShadow.v *)
 Let set_shadow_f8 : Reusable.YG0d.AR_laws segs CtrlB -> Reusable.YF0m.CtrlTSyms CtrlB -> Reusable.SetShadowDef.aset_shadow_realizes segs CtrlB 0x55144 0xf8 :=
     B.Rt.SetShadow.ctrl_set_shadow_f8 CtrlB.
-(* a Theorem Labs lane's lib/B/Rt/StackFree6S.v disco_stack_free6_shared (055c2ebca7f; SF6_ENTRY = 0x3dd30) *)
+(* a Theorem Labs lane's lib/B/Rt/StackFree6S.v disco_stack_free6_shared (SF6_ENTRY = 0x3dd30) *)
 Let stack_free6_contract : Reusable.StackFreeDef.astack_free_realizes segs CtrlB 0x3dd30 6 :=
     B.Rt.StackFree6S.disco_stack_free6_shared fx CtrlB LAWS TFIB_SYMS.
-(* a Theorem Labs lane's lib/B/Rt/StackMalloc6.v disco_stack_malloc6 (a working branch 055c2ebca7f, record above) *)
+(* a Theorem Labs lane's lib/B/Rt/StackMalloc6.v disco_stack_malloc6 (a working branch, record above) *)
 Let stack_malloc6_contract : Reusable.YG0d.AR_laws segs CtrlB -> Reusable.YF0m.CtrlTSyms CtrlB -> Reusable.YG0d.astack_malloc_realizes segs CtrlB 6 :=
     fun L T => B.Rt.StackMalloc6.disco_stack_malloc6 fx CtrlB L T.
 (* lib/B/ProgBridge.v *)

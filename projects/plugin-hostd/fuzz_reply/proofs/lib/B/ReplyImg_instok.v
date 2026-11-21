@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-instok-B of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: measurement; image rows, closed computations at reply's image B,
@@ -7,25 +8,25 @@
 
    The cf layer states this row as a Hypothesis (Hit, Sec) and a Definition (F2a) over its own Section context; reply
    has not taken those layer files yet.  So each Lemma below states the layer text VERBATIM at reply's instances (the
-   image class ImgBase.AImg at image B's AImg_reply, B/AGif2reply.v:24; ImgBaseAG.AGImg at AGImg_reply,
-   B/AGif0reply.v:117; ImgBaseDG.DImg at DImg_reply, B/DGif0reply.v:31), and a consumer closes the layer's row with
+   image class ImgBase.AImg at image B's AImg_reply, B/AGif2reply.v:25; ImgBaseAG.AGImg at AGImg_reply,
+   B/AGif0reply.v:118; ImgBaseDG.DImg at DImg_reply, B/DGif0reply.v:31), and a consumer closes the layer's row with
    `exact` once the layer is on reply.  No Definition of the layer is copied here.  The class fields ag_inst_ok and
-   dg_inst_ok are on reply (B/ImgBaseAG.v:41, B/ImgBaseDG.v:35); at image B both are AGif0reply.inst_ok
-   (B/AGif0reply.v:59: 0x9fdf8 <= inst /\ inst + 0xe60 <= 0xa3e60 /\ inst mod 8 = 0).
-   - INST_AG, the Hit layer's YGcfInstHit.v:170 (commit ee95275bccbf; :161 at cc4fb1f2a13 / d2e17f315ba), in Section b
-     (Variable B : asyms, :141; Hypothesis TS : im_syms B, :187), and the Sec layer's YGcfInstSec.v:1346 (commit
-     8aea1d52068b; Section b, Variable B :353, Hypothesis TS :755), the same text in both:
+   dg_inst_ok are on reply (B/ImgBaseAG.v:42, B/ImgBaseDG.v:36); at image B both are AGif0reply.inst_ok
+   (B/AGif0reply.v:60: 0x9fdf8 <= inst /\ inst + 0xe60 <= 0xa3e60 /\ inst mod 8 = 0).
+   - INST_AG, the Hit layer's YGcfInstHit.v:171 (161), in Section b
+     (Variable B : asyms, :141; Hypothesis TS : im_syms B, :187), and the Sec layer's YGcfInstSec.v:1346 (
+     Section b, Variable B :353, Hypothesis TS :755), the same text in both:
        Hypothesis INST_AG : ag_inst_ok (as_inst B).
-     (It replaced Sec's IOK_AG, YGcfInstSec.v:1281 at commit 4c2fd365d8e, the line CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row 49 cites:
+     (It replaced Sec's IOK_AG, YGcfInstSec.v:1280, the line CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row 49 cites:
        Hypothesis IOK_AG : forall inst, IOK inst -> ag_inst_ok inst.
      and the unit's IOK_ok, IOK i -> i = as_inst B, gives that form from INST_AG.)
-     cgif's discharge: YGcfInstHitcgif.v:115-119 INST_AG_cgif (commit cc4fb1f2a13).
-   - FM_INST_OK, the F2a layer's YGcfInstFreeModel.v:44 (commit 89caf2ed6834; Section a, Variable B : asyms, :39):
+     cgif's discharge: YGcfInstHitcgif.v:115-119 INST_AG_cgif.
+   - FM_INST_OK, the F2a layer's YGcfInstFreeModel.v:45 (Section a, Variable B : asyms, :39):
        Definition FM_INST_OK : Prop := dg_inst_ok (as_inst B).
-     (:43 at commit 587da63d252, the line CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row 49 cites, was the IOK form
+     (:43, the line CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row 49 cites, was the IOK form
        Definition FM_INST_OK (IOK : Z -> Prop) : Prop := forall i, IOK i -> dg_inst_ok i.)
-     cgif's discharge: DGif1.v:2159-2160 inst_cgif (commit ee95275bccbf), `unfold inst_ok, TFIB_INST; lia`.
-   At image B the instance object is TFIB_INST = 0xa2fd8 (B/YF0m.v:16; ts_inst, B/YF0m.v:869): 0x9fdf8 <= 0xa2fd8,
+     cgif's discharge: DGif1.v:2159-2160 inst_cgif, `unfold inst_ok, TFIB_INST; lia`.
+   At image B the instance object is TFIB_INST = 0xa2fd8 (B/YF0m.v:17; ts_inst, B/YF0m.v:870): 0x9fdf8 <= 0xa2fd8,
    0xa2fd8 + 0xe60 = 0xa3e38 <= 0xa3e60, and 0xa2fd8 = 8 * 0x145fb. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -46,8 +47,8 @@ Open Scope Z_scope.
 
 Section rows. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* INST_AG at image B (YGcfInstHit.v:170, YGcfInstSec.v:1346): AGImg_reply's instance window holds the symbol table's
-   instance object TFIB_INST = 0xa2fd8 (B/YF0m.v:16). *)
+(* INST_AG at image B (YGcfInstHit.v:171, YGcfInstSec.v:1346): AGImg_reply's instance window holds the symbol table's
+   instance object TFIB_INST = 0xa2fd8 (B/YF0m.v:17). *)
 Lemma inst_ag_B : forall B, @im_syms AImg_reply B -> @ag_inst_ok AImg_reply AGImg_reply (as_inst B).
 Proof.
 intros B TS. change (TfibSyms B) in TS. change (AGif0reply.inst_ok (as_inst B)).
@@ -55,8 +56,8 @@ rewrite (ts_inst B TS). unfold AGif0reply.inst_ok, TFIB_INST.
 split; [lia | split; [lia | reflexivity]].
 Qed.
 
-(* FM_INST_OK at image B (YGcfInstFreeModel.v:44): DImg_reply accepts the symbol table's instance object
-   TFIB_INST = 0xa2fd8 (B/YF0m.v:16).  dg_inst_ok's instance is DImg_reply (the one DImg instance in scope); the first
+(* FM_INST_OK at image B (YGcfInstFreeModel.v:45): DImg_reply accepts the symbol table's instance object
+   TFIB_INST = 0xa2fd8 (B/YF0m.v:17).  dg_inst_ok's instance is DImg_reply (the one DImg instance in scope); the first
    `change` checks that it is AGif0reply.inst_ok, DImg_reply's field (B/DGif0reply.v:32). *)
 Lemma fm_inst_ok_B : forall B, @im_syms AImg_reply B -> dg_inst_ok (as_inst B).
 Proof.

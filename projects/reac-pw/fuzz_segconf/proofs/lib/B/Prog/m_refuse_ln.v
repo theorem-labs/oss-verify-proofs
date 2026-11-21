@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,14 +37,15 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module names changed; 564 of its 639 lines of code are new or changed and 378 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The "%s:%d: " arm of the walk of m_refuse on fuzz_segconf.asan-ubsan (image B, pin sha256 c3796c0b38f3...,
    entry 0x8782c): n_kept < 8 and line > 0, the snprintf call at 0x878d0 and the tail to the ret at 0x87974.
    mr_arm_keptL : MR_KEPTL_stmt B, the statement of lib/B/Prog/m_refuse_k.v (which carries the walk's kit: the
    entry state mr_entry, the block facts mr_blk, the branch lemmas mr_blez / mr_ub_wrap, the post mr_Q and the
    three arm statements). The sibling arm (line = 0, the call at 0x8791c) is lib/B/Prog/m_refuse_l0.v.
 
-   ADAPTATION of the image-A m_file-family lane's image-A walk of the same function (lib/A/Prog/m_refuseA.v at
-   commit 0e3b3a97f9af: the entry seed, the token runs, mr_snp's snprintf step and the
+   ADAPTATION of the image-A m_file-family lane's image-A walk of the same function (lib/A/Prog/m_refuseA.v:
+   the entry seed, the token runs, mr_snp's snprintf step and the
    tail), at image B's numbers and with image B's UBSan trap branches.
 
    The code this arm walks (the neutral listing of m_refuse in image B):

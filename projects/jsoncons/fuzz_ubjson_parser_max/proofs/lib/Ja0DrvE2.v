@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: renames section variable p0 to auxvp, unfolds Section SE wrappers of ls_ok_frameW, lib_then_pfA, iter2A and iter1A into plain lemmas with #[using] attributes, and lowers the writable stack bound to usp - 6144513; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DrvE2.v, lines 37, 60-63, 292, 434, 573-575, 618. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -35,7 +36,7 @@ Hypothesis Hal : bv_unsigned sp0 mod 16 = 0.
 Hypothesis DL : drv_layoutA L ar IL sp0.
 Variable fs0 : Fs.Fs.
 Variable fdata : list byte.
-Variables p0 p1 can : word.
+Variables auxvp p1 can : word.
 Variable M0 : word -> option byte.
 Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
 Variable A0 : list (Z * Z).
@@ -57,10 +58,10 @@ Let CFG : Z := CFGA fdata.
 Let PL : Z := PLA fdata.
 #[local] Notation payloadA := (Ja0DrvD.payloadA fdata).
 #[local] Notation blk_factsA := (Ja0DrvD.blk_factsA L ar fdata CAP).
-#[local] Notation SSPA := (Ja0DrvE.SSPA scfg L ar HI sp0 fs0 fdata p0 p1 can M0 A0 CAP Lay LSt).
-#[local] Notation LH2PA := (Ja0DrvE.LH2PA scfg L ar HI sp0 fs0 fdata p0 p1 can M0 A0 CAP Lay LSt).
+#[local] Notation SSPA := (Ja0DrvE.SSPA scfg L ar HI sp0 fs0 fdata auxvp p1 can M0 A0 CAP Lay LSt).
+#[local] Notation LH2PA := (Ja0DrvE.LH2PA scfg L ar HI sp0 fs0 fdata auxvp p1 can M0 A0 CAP Lay LSt).
 #[local] Notation e_factsA := (Ja0DrvE.e_factsA L ar HI sp0 fs0 fdata M0 A0 CAP Lay LSt).
-#[local] Notation e_valsA := (Ja0DrvE.e_valsA sp0 fdata p0 p1 can).
+#[local] Notation e_valsA := (Ja0DrvE.e_valsA sp0 fdata auxvp p1 can).
 #[local] Notation lib_roomA := (Ja0DrvE.lib_roomA fdata Lay).
 #[local] Notation EA := (Ja0DrvE.EA fs0).
 #[local] Notation LV := (lib_view Lay ar).
@@ -100,13 +101,9 @@ rewrite (mem_denot_frame_Z ASEGS 0 (2 ^ 40) (2 ^ 40) [] [] [] IMG_CB _ CWS (fun 
 unfold mrestrict. rewrite Hh. reflexivity.
 Qed.
 Definition DW (a : Z) : Prop := usp - 8388608 <= a < usp \/ 1273648 <= a < 1273648 + 232 \/ SOBUF <= a < SOBUF + 1024 \/ 0x66d354 <= a < 0x66d355.
-Section SE.
-Local Abbreviation SEC_T_ls_ok_frameW := (forall g (M M' : word -> option byte), ls_ok LSt g M -> (forall a, 0 <= a < 2 ^ 64 -> ~ DW a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) -> ls_ok LSt g M') (only parsing).
-Variable g : ltac:(sec_ty2 constr:(SEC_T_ls_ok_frameW) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_ls_ok_frameW) 1%nat 0%nat).
-Variable M' : ltac:(sec_ty2 constr:(SEC_T_ls_ok_frameW) 2%nat 0%nat).
-Lemma ls_ok_frameW : ltac:(sec_stmt2 constr:(SEC_T_ls_ok_frameW) 3%nat 0%nat).
-Proof using scfg L ar IL HI Hsp DL fdata Lay DLL DLC LIOK LEN CFG PL g M M'.
+#[using="scfg L ar IL HI Hsp DL fdata Lay DLL DLC LIOK LEN CFG PL"] Lemma ls_ok_frameW : forall g (M M' : word -> option byte), ls_ok LSt g M -> (forall a, 0 <= a < 2 ^ 64 -> ~ DW a -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) -> ls_ok LSt g M'.
+Proof.
+intros g M M'.
 intros HLS FR.
 pose proof Hsp as Hsp'.
 apply (lioa_frame _ _ _ _ _ LIOK g M M' HLS).
@@ -126,7 +123,6 @@ apply FR; [exact Ha|]. unfold DW, SOBUF. lia.
 + cbn [lib_view ll_heap heap_view hl_sptop] in Hab. rewrite (dla_sptop L ar IL sp0 DL) in Hab.
 apply FR; [exact Ha|]. unfold DW, SOBUF. lia.
 Qed.
-End SE.
 #[using="sp0 Hsp fdata LEN CFG PL"] Lemma Wpf_in_Wpf1 : forall S j a, 0 <= j <= 510 -> Wpf S j a -> Wpf1 S a.
 Proof. intros S j a Hj. unfold Wpf, Wpf1, SOBUF. lia. Qed.
 #[using="Hsp fdata LEN CFG PL"] Lemma Wpf1_in_DW : forall S a, usp - 4096 <= S <= usp -> Wpf1 S a -> DW a.
@@ -232,7 +228,7 @@ regs_ok (ENVG vals) srPA R -> know_ok ASEGS (ENVG vals) MV knX ->
 let S := usp + PSO in
 (usp - 4096 <= S /\ S + 32 <= usp /\ S mod 16 = 0 /\ 0 <= bv_unsigned can < 2 ^ 64)
 /\ (getr R 1%bv = Z_to_bv 64 685632 /\ getr R 2%bv = Z_to_bv 64 S /\ getr R 10%bv = Z_to_bv 64 85708 /\ getr R 11%bv = Z_to_bv 64 (S + 24))
-/\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+/\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
 /\ (forall i, 65536 <= i < 1261568 -> MV (Z_to_bv 64 i) = None)
 /\ rdn ASEGS MV (Z_to_bv 64 6876608) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))
 /\ rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)).
@@ -344,8 +340,7 @@ split. { split; [replace ((kc - 1) * fst (lla_credit Lay PL)) with (kc * fst (ll
 intros c Hc. specialize (FR c Hc). specialize (HLEAK c Hc).
 replace ((kc - 1) * lla_leak Lay c) with (kc * lla_leak Lay c - lla_leak Lay c) by ring. lia.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_lib_then_pfA := (forall (fx' : PropExec.FPState) knL vals R M (model : Model) A (A1 PTR OWN k : Z) LB LK cr g (KP : TSet), kn_vars_lt 102 knL = true -> has_window knL = true ->
+#[using="C IL HIok Hsp Hal DL M0_def HCAP HLEN DLL LIOK LEN CFG PL"] Lemma lib_then_pfA : forall (fx' : PropExec.FPState) knL vals R M (model : Model) A (A1 PTR OWN k : Z) LB LK cr g (KP : TSet), kn_vars_lt 102 knL = true -> has_window knL = true ->
 e_valsA 102 vals A1 PTR OWN k -> 1 <= k <= 4 ->
 regs_ok (ENVG vals) srLBA R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knL ->
 blk_factsA A1 PTR OWN LB ->
@@ -361,20 +356,9 @@ rdn ASEGS M' (Z_to_bv 64 PTR) (length payloadA) = Some payloadA ->
 dinvA LB LK' cr' A' M' model' -> incl A0 A' -> m_fds model' = fds0 -> m_fs model' = fs0 -> ls_ok LSt g' M' -> lib_roomA (k - 1) LK' cr' ->
 (forall lo hi a, In (lo, hi) IMG_LIB_A -> lo <= a < hi -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
 srealizes ASEGS scfg (mkCfg (@mkst fx2 R' (Z_to_bv 64 0xa7548) M' (seg_rom ASEGS)) model') KP) ->
-srealizes ASEGS scfg (mkCfg (@mkst fx' R (Z_to_bv 64 0xa764c) M (seg_rom ASEGS)) model) KP) (only parsing).
-Variable fx' : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 0%nat 0%nat).
-Variable knL : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 1%nat 0%nat).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 2%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 5%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 6%nat 0%nat).
-Variable A1 : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 7%nat 0%nat).
-Variable PTR : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 8%nat 0%nat).
-Variable OWN : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 9%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_lib_then_pfA) 10%nat 0%nat).
-Lemma lib_then_pfA : ltac:(sec_stmt2 constr:(SEC_T_lib_then_pfA) 11%nat 0%nat).
-Proof using C IL HIok Hsp Hal DL M0_def HCAP HLEN DLL LIOK LEN CFG PL fx' knL vals R M model A A1 PTR OWN k.
+srealizes ASEGS scfg (mkCfg (@mkst fx' R (Z_to_bv 64 0xa764c) M (seg_rom ASEGS)) model) KP.
+Proof.
+intros fx' knL vals R M model A A1 PTR OWN k.
 intros LB LK cr g KP KV HW EV Hk HR HK HBLK HC HPAY DI HINC F1 F2 HLS HROOM HKP0 CONT.
 pose proof Hsp as Hsp'. pose proof EV as (HL & HV & P48 & P70 & P73 & P79 & P81 & P82 & P83). pose proof HV as (P0 & _).
 pose proof HBLK as (HBR & REST). pose proof (hzA_of_block_range L ar IL sp0 DL _ _ HBR) as (Y1 & Y2 & Y3).
@@ -436,7 +420,6 @@ exists (OWN, PL). subst LB PTR. split; [left; reflexivity|]. cbn [fst snd]. lia.
 + rewrite PLN in HCR'. replace (Z.of_nat (Z.to_nat PL)) with PL in HCR' by lia. exact (room_step k LK LK' cr cr' ltac:(lia) HPL HROOM HCR' HLEAK).
 + exact HIMG'.
 Qed.
-End SE.
 #[using="scfg IL HI Hsp DL can HCAP HLEN Lay DLL DLC LIOK LEN CFG PL"] Lemma facts_offstkA : forall (M M2 : word -> option byte) (H2 : word -> bool) (A1 PTR OWN : Z) LB g,
 (forall a, 0 <= a < 2 ^ 64 -> ~ CWS a -> M2 (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
 blk_factsA A1 PTR OWN LB ->
@@ -458,13 +441,9 @@ split. { apply (ls_ok_frameW g M M2 HLS). intros a Ha Hn. apply FRS; [exact Ha|]
 intros j Hj SO SOX. apply (stdout_agree sp0 Hsp fdata j _ _ SO SOX Hj). intros a Ha. unfold mrestrict.
 destruct (H2 (Z_to_bv 64 a)); [reflexivity|]. apply FRS; [unfold SOBUF in Ha; lia | unfold CWS, SOBUF in *; lia].
 Qed.
-Section SE.
-Local Abbreviation SEC_T_iter2A := (forall k (j : nat) K, K [] -> SSPA k (Z.of_nat j + 1) K -> LH2PA k (Z.of_nat j) K) (only parsing).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_iter2A) 0%nat 0%nat).
-Variable j : ltac:(sec_ty2 constr:(SEC_T_iter2A) 1%nat 0%nat).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_iter2A) 2%nat 0%nat).
-Lemma iter2A : ltac:(sec_stmt2 constr:(SEC_T_iter2A) 3%nat 0%nat).
-Proof using C IL HIok ICok Hsp Hal DL M0_def HCAP HLEN ILY Hpr DLL DLC LIOK LEN CFG PL k j K.
+#[using="C IL HIok ICok Hsp Hal DL M0_def HCAP HLEN ILY Hpr DLL DLC LIOK LEN CFG PL"] Lemma iter2A : forall k (j : nat) K, K [] -> SSPA k (Z.of_nat j + 1) K -> LH2PA k (Z.of_nat j) K.
+Proof.
+intros k j K.
 intros HKnil HSS.
 unfold Ja0DrvE.LH2PA.
 intros fx' vals R M model A A1 PTR OWN LB LK cr g EV Hk Hj Hjk HR HK (HBLK & HC & HPAY & DI & HINC & F1 & F2 & SO & SOX & HLS & HROOM).
@@ -492,20 +471,17 @@ apply (pf_siteKA fx2 knP2A vals' R0 M1 model0 A' A1 PTR OWN k j LB LK' cr' g' K 
 - exact (conj HBLK (conj HC2 (conj HPAY2 (conj DI (conj HINC' (conj G1 (conj G2 (conj SO2 (conj SOX2 (conj HLS2 HROOM')))))))))).
 - exact HSS.
 Qed.
-End SE.
 Variable LK0 : list fframe.
 Variable crC : credit.
 #[local] Notation CALLS := (Ja0DrvD.CALLSA fdata).
 #[local] Notation cr1 := (Ja0DrvD.cr1A L fdata crC).
-#[local] Notation lh1_kA := (Ja0DrvD.lh1_kA scfg L ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC).
-Hypothesis AUXV : auxv_atA sp0 p0 M0.
+#[local] Notation lh1_kA := (Ja0DrvD.lh1_kA scfg L ar HI sp0 fs0 fdata auxvp p1 can M0 LK0 A0 CAP crC).
+Hypothesis AUXV : auxv_atA sp0 auxvp M0.
 Hypothesis HROOM1 : lib_roomA CALLS LK0 cr1.
 Hypothesis TAILX : forall j : nat, SSPA 1 (Z.of_nat j) (EA j).
-Section SE.
-Local Abbreviation SEC_T_iter1A := (forall K, K [] -> SSPA CALLS 0 K -> lh1_kA (t_emit (W 1 (zero_lines 1)) K)) (only parsing).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_iter1A) 0%nat 0%nat).
-Lemma iter1A : ltac:(sec_stmt2 constr:(SEC_T_iter1A) 1%nat 0%nat).
-Proof using C IL HIok ICok Hsp Hal DL M0_def HCAP HLEN ILY Hpr DLL DLC LIOK LEN CFG PL AUXV HROOM1 K.
+#[using="C IL HIok ICok Hsp Hal DL M0_def HCAP HLEN ILY Hpr DLL DLC LIOK LEN CFG PL AUXV HROOM1"] Lemma iter1A : forall K, K [] -> SSPA CALLS 0 K -> lh1_kA (t_emit (W 1 (zero_lines 1)) K).
+Proof.
+intros K.
 intros HKnil HSS.
 unfold Ja0DrvD.lh1_kA.
 intros fx' vals R M model A A1 PTR OWN LB EV HR HK HBLK HC HPAY DI HINC F1 F2.
@@ -525,7 +501,7 @@ rewrite <- HPAY. apply rdn_agree. intros q Hq. rewrite PLN in Hq. rewrite u_smal
 destruct (sbm_fds _ _ SBM) as (G1 & G2). rewrite F1 in G1. rewrite F2 in G2.
 clear HR HK DI EQM EQH SBM F1 F2 HC HPAY FRS. rename R0 into Rb, HR0 into HRb, HK0 into HKb, DI0 into DIb, model0 into modelb.
 rename HC1 into HC, HPAY1 into HPAY. clear M. rename M1 into M.
-destruct (lib_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) DLC vals _ knLB1A LB LK0 cr1 A M modelb p0 HKb ltac:(vm_compute; reflexivity) P1 DIb AUXV)
+destruct (lib_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) DLC vals _ knLB1A LB LK0 cr1 A M modelb auxvp HKb ltac:(vm_compute; reflexivity) P1 DIb AUXV)
 as (av & uid & rnd & tid & cny & hw & LIF).
 pose proof (lioa_init _ _ _ _ _ LIOK av uid rnd tid cny hw M LIF) as HLS.
 apply (lib_then_pfA fx' knLB1A vals Rb M modelb A A1 PTR OWN CALLS LB LK0 cr1 (ls_g0 LSt) (t_emit (W 1 (zero_lines 1)) K) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
@@ -540,13 +516,12 @@ destruct (sbm_fds _ _ SBM) as (G1 & G2). rewrite Q1 in G1. rewrite Q2 in G2.
 exact (pf_site1A fx2 knPA vals' R0 M1 model0 A' A1 PTR OWN CALLS LB LK' cr' g' K ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) EV' HKr HR HK HBLK HC2 HPAY2 DI HINC' G1 G2 HLS2 HROOM'
 HKnil HSS).
 Qed.
-End SE.
 #[using="C IL HIok ICok Hsp Hal DL M0_def HCAP HLEN ILY Hpr DLL DLC LIOK LEN CFG PL TAILX"] Lemma SS_realA : forall (n j : nat), (1 <= n)%nat -> Z.of_nat j + Z.of_nat n <= 4 -> SSPA (Z.of_nat n) (Z.of_nat j) (EA (j + n - 1)%nat).
 Proof.
 induction n as [|n IH]; intros j Hn Hjn; [lia|].
 destruct n as [|n'].
 - replace (j + 1 - 1)%nat with j by lia. change (Z.of_nat 1) with 1. apply TAILX.
-- apply (step_SA scfg L ar C IL HI HIok sp0 Hsp DL fs0 fdata p0 p1 can M0 A0 CAP HCAP Lay LSt); [lia|].
+- apply (step_SA scfg L ar C IL HI HIok sp0 Hsp DL fs0 fdata auxvp p1 can M0 A0 CAP HCAP Lay LSt); [lia|].
 replace (Z.of_nat (Datatypes.S (Datatypes.S n')) - 1) with (Z.of_nat (Datatypes.S n')) by lia.
 apply iter2A; [unfold Ja0DrvE.EA; apply t_emit_has_nil|].
 replace (j + Datatypes.S (Datatypes.S n') - 1)%nat with (Datatypes.S j + Datatypes.S n' - 1)%nat by lia.

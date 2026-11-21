@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the cut lemma pb_bs_cell of reac_grant_build_sweep's cell loop, adapting the call-and-reseat walk pattern of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v and lib/A/AChf.v and the caller-journal call block of lib/YC20.v; module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantBuildSweepCell.v, with its module paths and module names changed; 905 of its 931 lines of code are new or changed and 336 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the walk of the
    test harness's entry function LLVMFuzzerTestOneInput (0x84dc0): segment S07 (0x854d4 .. 0x8552c: reac_segconf_parse
    (c, text) at 0x854dc, check 17 at 0x854e0 (the shadow byte of m + 0x2000, never poisoned), returned := returned &
@@ -13,7 +14,7 @@
    proves function LLVMFuzzerTestOneInput (reuse search, rule 24: released units, the earlier proof delivery and working
    heads; the result is recorded with the commissioning brief; none: written new)
 
-   S08 follows image A's twin (image A's S07 / S08 commit 6b130104f652, LLVMFuzzerTestOneInput_s17.v lt_seg_S08), with
+   S08 follows image A's twin (image A's S07 / S08, LLVMFuzzerTestOneInput_s17.v lt_seg_S08), with
    image B's registers and slots (PLAN-asanubsan-main section 11: the shadow base SH(FR) is loaded from 184(s1) into a0,
    the byte -8 is `li a1,-8`, the latch compares s9 with s2). S07 is written new (the twin had no S07 yet): the run to
    the parse's jal, the parse by cl_callSF and its contract (its FP state fx1 by srr_after_callF), then s7_tail at fx1:

@@ -1,9 +1,9 @@
 # v10 global_settings 439f8e3bd463 on the files this core adds (the 492 files of the run's stage-out
 # A/ and Reusable/, and Reusable/YImgTop.v taken by path), each row with the identical setting of its
-# released donor file (fuzz_grant at 25e3d17bdb50).
+# released donor file (fuzz_grant).
 # target: SUMMARY: 493 files read of 493 given; ESCAPES 234; PLAIN 1240; UNMEASURED 1; KERNEL 0; levels TACTIC 1166, OPTION 309; HINTS 102 (report only, tactic-level) (rc 0)
 # donor:  SUMMARY: 493 files read of 493 given; ESCAPES 359; PLAIN 1240; UNMEASURED 1; KERNEL 0; levels TACTIC 1291, OPTION 309; HINTS 102 (report only, tactic-level) (rc 0)
-file	line	class	level	donor_released_file@25e3d17bdb50	donor_line	setting
+file	line	class	level	donor_released_file	donor_line	setting
 A/AB14.v	13	PLAIN	TACTIC	proofs/libreac/fuzz_grant/lib/A/AB14.v	12	Unset Lia Cache.
 A/AB14.v	13	PLAIN	TACTIC	proofs/libreac/fuzz_grant/lib/A/AB14.v	12	Unset Nia Cache.
 A/AB14.v	15	ESCAPES	TACTIC	proofs/libreac/fuzz_grant/lib/A/AB14.v	14	Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=

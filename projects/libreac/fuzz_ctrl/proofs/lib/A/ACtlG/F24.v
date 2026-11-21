@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2748 of its 2845 lines of code are new or changed and 931 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e2.v, with its module paths and module names changed; 4090 of its 4391 lines of code are new or changed and 2544 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4c.v, with its module names and addresses changed; 411 of its 441 lines of code are new or changed and 4361 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F24.v -- GLUE for stage seg_F24 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:820).  Written by a Theorem Labs lane; single writer of this file.
    rule 24: no function proved (stage glue of a walk).
@@ -23,7 +24,7 @@
    (A/Prog/reac_ports_parseF.v reac_ports_parse_F_holds_on) and lifts the WHOLE run once with
    Reusable.YA0nR.SRr_fevt_hid at RNG := A.ProgBridge.RNG_W (w_H W3).  It cites NO <f>_SRr_at.
 
-   ROUTE (C) (a Theorem Labs lane 1502cba0417 / 1899bed1aee): the cut carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3.  The
+   ROUTE (C) (a Theorem Labs lane): the cut carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3.  The
    run needs no shadow byte from it (the callee's _on contract dropped its shadow premise).  The exit cut has the
    same state (ly3, S3), so the entry's two regions (cut_shadow B ly3 S3, img_shadow) are carried to it, each by
    A.ShadowRwOnT.shadow_rw_on_kept: the write set (the callee's stack window and the frame's ports words) is app
@@ -53,10 +54,10 @@
 
    SECTION HYPOTHESES (exact text in the file; why)
    - LAWS : Reusable.YG0d.AR_laws segs B -- the core's AR law record (YCbq.v:207), as ACtl.v:183 has it.
-   No other Section hypothesis.  The kit's image facts are CITED from lib/A/ACtlG/Kit.v (glue base
-   46eb24cd4b3, Kit.v blob 7e164a09a73, which builds): A.ACtlG.Kit.kit_wx (SRr_fevt_hid's wx_segs_nowrap) and
-   A.ACtlG.Kit.kit_segs_low (ajournal_exec's image placement).  On the first base (eb89fed7fac, commit
-   fe89f3b2df5) they were named Section hypotheses with the kit's exact text, because Kit.v did not compile
+   No other Section hypothesis.  The kit's image facts are CITED from lib/A/ACtlG/Kit.v (glue base,
+   Kit.v blob 7e164a09a73, which builds): A.ACtlG.Kit.kit_wx (SRr_fevt_hid's wx_segs_nowrap) and
+   A.ACtlG.Kit.kit_segs_low (ajournal_exec's image placement).  On the first base ()
+   they were named Section hypotheses with the kit's exact text, because Kit.v did not compile
    there.  kit_frac_move is NOT used: this stage rebuilds FRAC from its own destructuring (the run keeps
    2 3 4 8 9 19 26).  kit_RNG0 is NOT used: the run reads and writes memory, so the footprint is RNG_W.
 
@@ -73,7 +74,7 @@
    SHADOWED NAMES: getr / mkst / seg_rom are lib.Reusable.YK11-qualified and cfg_at Reusable.YG0d-qualified
    (through the local Reusable alias block) everywhere.
 
-   BUILD STATE: type-checks on a working branch 1899bed1aee (a working branch); its build of
+   BUILD STATE: type-checks on a working branch (a working branch); its build of
    record (cbrec) is reported by the lane, not here.  No Axiom, no Parameter, no unproved step. *)
 
 From Coq Require Import ZArith List Lia Permutation.

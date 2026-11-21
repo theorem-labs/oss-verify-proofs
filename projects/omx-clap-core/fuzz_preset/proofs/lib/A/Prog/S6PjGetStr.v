@@ -1,27 +1,28 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 509 of its 547 lines of code are new or changed and 740 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S6: a Theorem Labs lane's program walk of pj_get_str (32 instructions) over the ONE image-A program
    listing (lib/A/Listing_prog.v, a Theorem Labs lane), generic in the image facts (Context PAImg A_prog_listing) and in the
    allocator relation ARx (LAWS : AR_laws_x .. cf_head), concluding the text tpj_get_str_specX from the text
    tpj_get_specX of its one callee pj_get, in srealizes / SRr form.
    THE MEMORY INVARIANT (a Theorem Labs lane's generic-P form): the walk is pj_get_str_holds_P, for every P with
    srr_inv_laws SEGS P, from tpj_get_specXP P to tpj_get_str_specXP P (a Theorem Labs lane's generalisations of the m-form texts,
-   lib/A/Prog/S6PjStrcmp.v section (4), commit b45105596b2 blob c6208f606c8e; the call composes
+   lib/A/Prog/S6PjStrcmp.v section (4), blob c6208f606c8e; the call composes
    with the callee's text in that form, so no srr_inv_call). Its runs carry m |-> (P mem -> P m) (YSRrMemnorm.v
-   paj_run_x_inv, laws srr_inv_laws_imp; 5ffa8525936b on the kit's cut 7cdbb61b5fa0). The kit's m-form text
+   paj_run_x_inv, laws srr_inv_laws_imp; 5ffa8525936b on the kit's cut). The kit's m-form text
    (on the cut PRH_FnPj.v 5aca5cbe2cfb) is the instance pj_get_str_holds at P := YAkMemnorm.memnorm SEGS (conversion
-   tpj_get_str_specX_of_P). The old statement (the 3f0953cd536 text) has no corollary: The TEXT changed (fpostm, fpre's raZ
-   bound, which the call of pj_get discharges from its return slot by PRW_StepKit.v pa_slot_lt_ceil_b, 0df3991c13f4, commit c50d0958c0b).
-   Texts: the kit's cut 7cdbb61b5fa0 (lib/A/PRH_FnPj.v 5aca5cbe2cfb, PRH_Reader.v 4266e709561a, PRH_Base.v ef7c8ca98529).
+   tpj_get_str_specX_of_P). The old statement (the text) has no corollary: The TEXT changed (fpostm, fpre's raZ
+   bound, which the call of pj_get discharges from its return slot by PRW_StepKit.v pa_slot_lt_ceil_b, 0df3991c13f4).
+   Texts: the kit's cut (lib/A/PRH_FnPj.v 5aca5cbe2cfb, PRH_Reader.v 4266e709561a, PRH_Base.v ef7c8ca98529).
    Engine on the cut: YC80x.v 14f84f225e8f / YC1fPx.v 7814b594066f (paj_run_x, paj_run_tok_x), YCbqG.v 219748197d6b
    (ajournal_x), YCbqGcall.v c1fcd07d2537 (aj_call_x_sp, the call of pj_get); lib/A/Prog/S1Ledger.v 8cf15eeb6311
    (prh_ledger_kept_aview); listing Listing_prog.v 7ed1529926bd / PAImg_prog.v 505a51ff7d08. History: first proved on
-   the kit's preview walkkit-next 3f0953cd536 over listing v4 (a working branch 7c8ffeba5035). The code after the call runs from a FRESH seat (pa_entry_st_ok_full) of the state the call returns,
+   the kit's preview walkkit-next over listing v4 (a working branch). The code after the call runs from a FRESH seat (pa_entry_st_ok_full) of the state the call returns,
    whose node region names the member's type and str words.
    Rule 24: no donor (proof-index pj_get_str 2026-10-29: released hits are the plain / UBSan images' pj_get_str
    only; grep of the cold/h-hpreset-7-* and cold/h-rw-pre-* lane heads by name and A / B entry address).
-   RE-FIT 2026-10-29 onto the #102 kit walkkit-next f97c8b2f046b (PRH_FnPj.v 908f34f0beaa, PRH_Base.v fdb45545469b,
+   RE-FIT 2026-10-29 onto the #102 kit walkkit-next (PRH_FnPj.v 908f34f0beaa, PRH_Base.v fdb45545469b,
    S1Ledger.v 8cf15eeb6311, S6PjStrcmp.v 08bc26a7e4e3): the ledger prh_ledger .. ran most own is threaded through
    gs_lam_low and the call of pj_get; fpre's last conjunct frm_zero (FRM0-ENTRY) passes from the entry's fpre to
    pj_get's (same float state fx).

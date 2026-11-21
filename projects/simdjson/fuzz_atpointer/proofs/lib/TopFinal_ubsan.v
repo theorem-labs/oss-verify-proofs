@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image's segment list passed to the sanitizer family lemmas). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -15,6 +16,8 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Definition client_U_stmt : Prop :=
   forall (CE : Ceiling) (RN : OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.P.Rnd.RunRnd), @OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.U.Zq5.rfuzz_one_stmt CE RN.
 
+(* The [kernel_pinned ->] premises are gone (superseded 2026-11-06, see
+   TopLevel.v); nothing below takes a kernel premise. *)
 Lemma HU : client_U_stmt -> impl_U_stmt.
 Proof. intros CU. exact (OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.U.Zco.impl_U_closed CU). Qed.
 

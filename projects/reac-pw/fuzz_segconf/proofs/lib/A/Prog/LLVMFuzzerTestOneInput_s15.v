@@ -23,6 +23,7 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 4505 of its 4800 lines of code are new or changed and 4758 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the walk of segment S05 of
    the test harness's entry function LLVMFuzzerTestOneInput (image A entry 0x84d34), the code at
    0x850f8 .. 0x85204 and 0x85404 .. 0x85410: the NULL test of the text block (refuted), checked_memcpy of the
@@ -50,7 +51,7 @@
 
    THE SECTION HYPOTHESES (the header of each piece; order fixed):
    - B, MT; snp_lo, snp_hi, snp_cr: the image range and read-only ranges of interceptor row 4 (snprintf,
-     RtPFSeg.seg_asnprintf_realizes, FINAL at commit 755e9278f8ff, RtPFSeg.v sha256
+     RtPFSeg.seg_asnprintf_realizes, FINAL at RtPFSeg.v sha256
      5fcabfce1726), with the five HSNP_ facts image A's close computes (_s20 takes the same names);
    - MTL, MTFL (the meter's laws), TL, TLF (the listing's GOT / cell facts), IMGS (_s10's s10_img bundle,
      LLVMFuzzerTestOneInput_s10k.v), BSYM (AF0m.SegBSyms B: AR's stack-protector cells, s10_lt_img_kept's other
@@ -59,7 +60,7 @@
      literals the image's words point at (fuzz_command takes these from its B record; segconf's record
      modules SegRecBase / SegRecImg do not build yet: they Require the listing's stage-2 AF0m / AB1v);
    - AMEMCPY, AMEMSET (aintrin_realizes OCpy / OSet), AFREE4 (afree04_rule), ASNPRINTF, HM_FILE, HPARSE_FILE
-     (the two callees' FINAL contracts at commit 6f783602b5e3), each at every
+     (the two callees' FINAL contracts), each at every
      FP state: aintrin_realizes and afree04_rule are indexed by it.
    AR_laws is the kit's theorem YG0q.AR_laws_ok, not a hypothesis. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
@@ -1175,7 +1176,7 @@ apply firstn_all2. lia.
 Qed.
 
 (* ============================== the snprintf step through the walk's journal ==============================
-   plugin-hostd/fuzz_command's lib/A/Prog/PaRt.v:271-424 cwc_aj_snprintf_atSF (origin/ossv/recipes 501c0d516c69),
+   plugin-hostd/fuzz_command's lib/A/Prog/PaRt.v:271-424 cwc_aj_snprintf_atSF,
    ported to segconf's row 4 RtPFSeg.seg_asnprintf_realizes (lib/A/Rt/RtPFSeg.v): the window is
    RtPFSeg.SEG_SNP_K = 2 * ESTACK in place of the donor's 3 * ESTACK, and the format family is
    RtPFSeg.FR_seg lo gotw, taken as a premise in place of the donor's RtPFCmd.FR_cmd built from fr_lit_ok. The

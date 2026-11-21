@@ -5,15 +5,15 @@
    (a Theorem Labs lane 2026-10-29T04:09Z, proof-index v5 built 04:08:23Z, a Theorem Labs lane's idx-B-parse_string.txt; by address B
    0x85534, no trampoline; named cold branches and all 10067 cold refs, a Theorem Labs lane reuse-parse_string.md:13-33;
    CONFIRM 2026-10-29T04:34Z, a Theorem Labs lane: the search holds): the only lib/B proof of parse_string
-   is the bespoke line a working branch 955803f9b2e lib/B/Prog/parse_string*.v, stated over another
+   is the bespoke line a working branch lib/B/Prog/parse_string*.v, stated over another
    engine, so it is a template here, not a port source.
 
    TEMPLATES.
-   - the image-A walk, PROVED: a working branch 9f3343583b7 lib/A/FSW_parse_string.v, Section W2
+   - the image-A walk, PROVED: a working branch lib/A/FSW_parse_string.v, Section W2
      (:1049-1997: ps2_* helpers, the copy loop's states, ps2_step / ps2_post / ps2_exit / ps2_loop / ps2_r0,
      ps2_blocks, pstr_stage2). Its structure, definitions and lemma names are ported; the addresses, the register
      allocation and the block layout are B's.
-   - the bespoke image-B proof (cut points and registers only, not imported): a working branch 955803f9b2e
+   - the bespoke image-B proof (cut points and registers only, not imported): a working branch
      lib/B/Prog/parse_string_segs.v:211-229 (aps_alloc_setup: the registers at 0x85618 and the loop head 0x85678),
      lib/B/Prog/parse_string.v:1180 (aps_some, the Some-Q path), parse_string_segs.v:55-61 (aps_ck_out, the exit at
      0x85a60).
@@ -37,7 +37,7 @@
 
    The shared definitions (RA_PSTR_MALLOC, FRAME_PSTR, pstr_saved, pstr_frame_at, pstr_ret_facts, the range_addressable
    readers pstr_RA_stk_mem / pstr_RA_blk_mem, pstr_val_mem_eq_at, ps2_req, ps2_img_hi) are
-   lib/B/FSW_parse_string_defs.v (675315ade48). No Admitted, no Axiom, no Parameter, no admit, no timeout. *)
+   lib/B/FSW_parse_string_defs.v. No Admitted, no Axiom, no Parameter, no admit, no timeout. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

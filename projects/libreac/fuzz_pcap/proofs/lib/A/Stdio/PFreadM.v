@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the contracts of musl's fread and of the two read-path helpers it calls,
    __toread and the fmemopen cookie read mread, inside libreac/fuzz_pcap (libreac v1.9.0, ASan
    build), stated in cgif_file_fuzzer's vocabulary.
@@ -14,7 +15,7 @@
    The entry addresses are parameters of the contracts (pc), so the asan-ubsan copy is the same
    statement at its own addresses.
 
-   At ossv/recipes 25e3d17bdb50 (2026-10-29), NO DONOR existed for these functions (rule 24: a Theorem Labs lane's runtime-donors.md (sha256 77e6fad19fb7; internal record) rows 3-4 and section
+   At (2026-10-29), NO DONOR existed for these functions (rule 24: a Theorem Labs lane's runtime-donors.md (sha256 77e6fad19fb7; internal record) rows 3-4 and section
    6). The step content comes from this worker's own plain proofs lib/Prog/fread_c.v,
    lib/Prog/__toread_c.v, lib/Prog/mread_c.v and the layout model lib/Prog/StdioModel.v; the names
    come from the cgif donor listed at the end.
@@ -48,7 +49,7 @@
    to its argument a1, which is fread's destination, and adds j to c->pos (0x8eab0) BEFORE it fills
    the window (0x8eac4-0x8eaf0). Those j bytes are delivered to the caller, so the caller position
    moves from p to p + j; only the r window bytes are read ahead (cpos' - (p + j) = r). This
-   composes with a Theorem Labs lane's amseek_rewind_spec (PFmopsM.v at 10eaf4540eb) at its p := p + j: the
+   composes with a Theorem Labs lane's amseek_rewind_spec (PFmopsM.v) at its p := p + j: the
    rewind by rend - rpos = r returns the cookie to p + j.
 
    fread WITH nm = 0 (reachable: pcap_source_next 0x81bd4, nm = incl_len, a Theorem Labs lane). fread does
@@ -65,7 +66,7 @@
    0x81ae4, 0x81bc8): nm = 24 at 0x815f8, 16 at 0x819b8, s11 with 0 < s11 < incl_len at 0x81af0,
    incl_len (possibly 0) at 0x81bd4. With size 1 fread returns the byte count (0x8ef5c-0x8ef60
    divides by 1); a general size would need the item-granular result (len - l) / size and its
-   remainder bytes, so the statement fixes size = 1, as cgif's afwrite_spec does (YE01.v:176).
+   remainder bytes, so the statement fixes size = 1, as cgif's afwrite_spec does (YE01.v:177).
 
    NO ALLOCATOR CALL IS REACHABLE, so these contracts carry no room premise, no meter and no frame
    chain, and record no event. Every call instruction in the three bodies:
@@ -100,8 +101,8 @@
        (YC20.v:358-359; awr_byte YCbq.v:457-461);
      - the post extends the SAME journal (tlzw_post YC20.v:334) and says, against the state at the
        call, what the call kept (tlzw_kept YC20.v:311-323).
-   pcap's own pcap_source_next statement already has this form (a working branch
-   3e755b00849, lib/A/Prog/PcapSourceNextDefs.v: nx_wr_ok :324-328, nx_kept :333-350, nx_wrset
+   pcap's own pcap_source_next statement already has this form (a working branch,
+   lib/A/Prog/PcapSourceNextDefs.v: nx_wr_ok :324-328, nx_kept :333-350, nx_wrset
    :353, tnext_post :361, tnext_specX :388). rread_wr_ok and rread_kept below are nx_wr_ok and
    nx_kept with the callee's window as a parameter, and rread_call is tnext_specX's call-state
    premises, so pcap has one destination form and not two. afn_pre is not needed: the caller's
@@ -139,8 +140,8 @@
    THE DATA BUFFER b. A post that keeps garr8 b C (inside asource_at) needs b off the callee's
    stack window (a Theorem Labs lane's R1, sent by a Theorem Labs lane: with b = sp0 - 48 mseek's store at
    0x8ec2c writes ra into C). All three pres carry the live-block premise In (b, |C|) (ablocks ...)
-   and the explicit disjunct (b + |C| <= sp - STK \/ sp <= b), in the form of PFmopsM.v:133
-   (a working branch ece7690b19e). rtoread_pre LACKED the live-block premise
+   and the explicit disjunct (b + |C| <= sp - STK \/ sp <= b), in the form of PFmopsM.v:134
+   (a working branch). rtoread_pre LACKED the live-block premise
    (a Theorem Labs lane, 22:42Z: with b = sp - 16 __toread's saves at 0x8e63c / 0x8e640 overwrite C and the
    post's asource_unbuffered is false); it has it now. The disjunct also follows from the live
    block: AR_blocks_law (YG0d.v:423-426) puts every block below alloc_ceiling, and astk_ok
@@ -162,7 +163,7 @@
      - m_fds and m_fs unchanged. The post's journal is the caller's journal. Its aos_step
        (YCbq.v:34-39) over the caller's footprint PERMITS fds_rel / fs_rel changes when that
        footprint holds the sink token. musl fread, __toread and mread reach no ecall.
-       rfmemopen_post states the same clause (PFmemopenM.v:227-233).
+       rfmemopen_post states the same clause (PFmemopenM.v:228-234).
      - the shadow band [kLowMemEnd, kHighShadowEnd) (YG0f.v:18, :24) unchanged. The interceptor's
        check after REAL fread (0x43568-0x435bc; region_is_poisoned at 0x436a8) reads the shadow of
        (d, j) on the memory at REAL's return. The band lies below alloc_ceiling (YK06.v:14), and
@@ -220,7 +221,7 @@
    constants of cgif's model, named through the core. The statements do not use the image end,
    the shadow of the image, or the fake-stack floor.
 
-   DONOR VOCABULARY (origin/ossv/recipes c8557374ad2e, proofs/cgif/cgif_file_fuzzer/lib/):
+   DONOR VOCABULARY (proofs/cgif/cgif_file_fuzzer/lib/):
      afn_pre YCbq.v:334-341, ajournal YCbq.v:348-370; apost_base YC20.v:90-96;
      SRr YA0n.v:34-37, world / w_H YA0n.v:17-22;
      cfg_at YG0d.v:212-213, w64 YG0d.v:27, spZ YG0d.v:23, ESTACK YG0d.v:18,
@@ -228,7 +229,7 @@
      aintrin_realizes YG0d.v:317-335; range_addressable YG0v.v:32-33; SHADOW_OFF YG0f.v:11;
      asyms YG0f.v:154; aview YG0n.v:17; sink_head YI16.v:10; garr8 YI00.v:14-15;
      val_mem YI04.v:140; mrestrict YK04.v:16; getr YK11.v:22;
-     the shape of rfread (size-1 argument, disjointness, amem_range, shadow premises) YE01.v:172-187
+     the shape of rfread (size-1 argument, disjointness, amem_range, shadow premises) YE01.v:173-188
      afwrite_spec;
      the pre / post split as named Definitions A/ACfn.v:33-59.
    CALLER-JOURNAL VOCABULARY (lib/Reusable at this commit): ajournal YCbq.v:347-369, awr_byte
@@ -236,7 +237,7 @@
      YCbq.v:34-39; tlzw_kept / tlzw_pR_ok / tlzw_post / tlzw_spec YC20.v:311-365; in_img
      YG0d.v:471, AR_blocks_law YG0d.v:423-426; kLowMemEnd YG0f.v:18, kHighShadowEnd YG0f.v:24;
      alloc_ceiling YK06.v:14; the caller-journal post's register and config shape YC20.v:332-335.
-   PREDICATE (a working branch 58a865eec30, lib/A/Stdio/PSource.v):
+   PREDICATE (a working branch, lib/A/Stdio/PSource.v):
      SRC_FILE_BLOCK :49, SRC_BUF_OFF :50, SRC_BUFSIZ :51, SRC_COOKIE_OFF :52, U32M1 :57,
      source_mode :162-163, source_flags :212-213, asource_at :215-231,
      asource_unbuffered :261-262. *)
@@ -408,7 +409,7 @@ Definition rfread_post (d nm f b p : Z) (C : list Z) (lyc : alayout) (Sc : astat
   (* musl fread, __toread and mread make no fd and no fs call. The journal below is the caller's,
      and its aos_step (YCbq.v:34-39) only gives fds_rel / fs_rel, which PERMIT a change of the sink
      fd and path when the caller's footprint holds the sink token, so the equality has to be
-     stated here or no caller can have it (as rfmemopen_post, PFmemopenM.v:227-233). *)
+     stated here or no caller can have it (as rfmemopen_post, PFmemopenM.v:228-234). *)
   m_fds md' = m_fds mdc /\ m_fs md' = m_fs mdc /\
   (* the shadow band is as it was: the interceptor reads the shadow of (d, j) after REAL fread
      returns (0x43568-0x435bc, 0x436a8), and below alloc_ceiling the kept clauses pin only frame

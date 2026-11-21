@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: reworked the entry-state proof to destructure the new launch-record component and extract valid_launch and in_channel_reader premises from Hvalid, passing them to the SRC and TGT specializations; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/BigintFinalA.v, lines 45-55. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -31,10 +32,15 @@ drv_lib_layout_top1 LIB1 (fun sp _ => PMUXC.top_lsx) budget1) as TGT.
 intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid _.
 pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & Hcreds & _).
-specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
-specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds).
+destruct Hens as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [_ Halau]]]].
+assert (Hvl : valid_launch inp) by (red in Hvalid; tauto).
+assert (Hrd : in_channel_reader inp = true) by (red in Hvalid; tauto).
+assert (Hargv : valid_argv (in_argv inp)) by (red in Hvalid; tauto).
+assert (Henvp : valid_envp (in_envp inp)) by (red in Hvalid; tauto).
+assert (Hfs : valid_fs (in_fs inp)) by (red in Hvalid; tauto).
+assert (Hcreds : valid_creds inp) by (red in Hvalid; tauto).
+specialize (SRC rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hrd).
+specialize (TGT asp abrk amb arnd inp Hasp Habrk Hamb Hvl Halau Hargv Henvp Hfs Hcreds Hrd).
 unfold ShippedBudgets.lim_source, ShippedBudgets.lim_target.
 split; [| split].
 - eapply srealizes_error_free_unkilled; [exact SRC | apply kill_free_spec].

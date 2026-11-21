@@ -1,5 +1,5 @@
 (* The frame invariant of fuzz_lock.ubsan's LLVMFuzzerTestOneInput (0x12bbc) and the machinery its walk runs on:
-   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_fr.v (25e3d17bdb50) at fuzz_lock's UBSan
+   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_fr.v at fuzz_lock's UBSan
    addresses, with lib_post replaced by lib_post_r (the return register holds r, 0 or -1: see U/Prog/FrameRet.v).
    The guard's GOT slot is 0x1caf8 (U/FrameAPI.v frame_ubsan). Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB03.v (origin/ossv/recipes c8557374ad2e) for fuzz_ctrl's asan-ubsan image (sha256 12136677c5cf...), with its module paths changed: JS_tfib_band is the join state collected at the plan's PVia node by a Theorem Labs lane's collector (tools/startup ColA.v, pass 1: the donor checker APG.check's node set run on this image, plan lib/Reusable/YB05.v and table lib/Reusable/YB12.v), printed by hsform.py js *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB03.v (theorem-labs/oss-verify-proofs@6b32741d849a) for fuzz_ctrl's asan-ubsan image (sha256 12136677c5cf...), with its module paths changed: JS_tfib_band is the join state collected at the plan's PVia node by a Theorem Labs lane's collector (tools/startup ColA.v, pass 1: the donor checker APG.check's node set run on this image, plan lib/Reusable/YB05.v and table lib/Reusable/YB12.v), printed by hsform.py js *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.

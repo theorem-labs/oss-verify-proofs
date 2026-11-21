@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: the start-up facts of libreac/fuzz_identity's ASan build (image A) that
    lib/A/Prog/IdentEntryLink.v (Section L) takes as the Hypotheses GM (:250), IV (:251), ZS_STEM (:340), ZS_NAME (:341),
    HUMM (:680) and HUMF (:683), each proved here with that Hypothesis's text as its conclusion. The checks and their
-   lemmas are ported from fuzz_grant's closer (a working branch d110b9a519a, proofs/libreac/fuzz_grant/lib/A/Prog/
-   GrantCloseChk.v:38-145 and GrantClose.v:200-287); the universe check is cgif's ACee.v:80 pattern (c8557374ad2e) in
+   lemmas are ported from fuzz_grant's closer (a working branch, proofs/libreac/fuzz_grant/lib/A/Prog/
+   GrantCloseChk.v:38-145 and GrantClose.v:200-287); the universe check is cgif's ACee.v:80 pattern in
    the start-up AD2l.v's In_of_existsb form. One change in substance: the glob check is RELAXED (see glob_chk_relaxed). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The record: premises, not the core. The core's record (IdentB, TfibB before the rename) is lib/A/AD2l.v:15, and
-   lib/A/IdentTop.v:152-157 discharges the premises below from it; the start-up file lib/A/AF0m.v of a working branch 1ddc6a57e5d does not build on that branch
+   lib/A/IdentTop.v:152-157 discharges the premises below from it; the start-up file lib/A/AF0m.v of a working branch does not build on that branch
    (AF0m.v requires AF0l.v, which that branch does not carry). That branch's lib/A/ACej.v needs only Stdlib and lib/Reusable/YG00.v, YG01.v and YG0a.v, all on that branch; whether it builds was not measured. So, as lib/A/IdentHimgOwned.v does, the facts are stated
    in a Section over `Variable IdentB : asyms` with one premise per record field the proofs read, against verbatim
    copies of the start-up tables below:
@@ -26,7 +27,7 @@
      HZS, HUNIV, HRA0M, HRA0F by eq_refl;
      HCONST by fun ly => ex_intro _ (Tfib_const_sym ++ Tfib_const_abs) (app_assoc Tfib_const_sym Tfib_const_abs Tfib_const_shadow).
    Sources of the copies (each body below is the source's text, line for line):
-     TFIB_ZERO_SHADOW_A  = Tfib_zero_shadow,  lib/A/AF0m.v:1547-1548 @ a working branch 1ddc6a57e5d
+     TFIB_ZERO_SHADOW_A  = Tfib_zero_shadow,  lib/A/AF0m.v:1547-1548 @ a working branch
      TFIB_CONST_SHADOW_A = Tfib_const_shadow, lib/A/AF0m.v:831-1545  @ the same commit (714 one-byte cells)
        (AF0m.v sha256 894ced30947c45acc73a7d40a6084da4e413f8a618308d38a44f3769b9a37840)
      TFIB_UNIVERSE_A     = Tfib_universe,     lib/A/ACej.v:170-206   @ the same commit (36 traces)

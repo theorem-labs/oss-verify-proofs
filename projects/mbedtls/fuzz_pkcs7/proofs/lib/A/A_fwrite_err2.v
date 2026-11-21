@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new section premise Hrdr, the channel reader the revision's writev reads, carried to the model after the block and passed to stdio_call_sound_frA). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -178,6 +179,8 @@ Section FW.
   Hypothesis Hlen : length msg = Z.to_nat MLEN.
   Hypothesis Hmsg : rdn RSEGS M (Z_to_bv 64 MA) (Z.to_nat MLEN) = Some msg.
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* the revision's writev reads the channel reader *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   (* [comment removed for export] *)
   Let D : word -> bool := Dimg [(bv_unsigned sp0 - 4096, bv_unsigned sp0)%Z; (SW1, SW1 + 8)%Z; (SW2, SW2 + 8)%Z].
@@ -366,6 +369,8 @@ Section FW.
     change (map (WriteEv (Z_to_bv 64 2)) msg) with (map (WriteEv (Z_to_bv 64 (sc_fd resB))) ([] ++ msg)).
     assert (FdA : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))).
     { unfold m_fds in *. destruct MMA as (E1 & _). rewrite E1. exact Hfd2. }
+    assert (RdA : m_channel_reader mo = true).
+    { pose proof MMA as X. destruct X as (_ & _ & _ & _ & _ & E6 & _). unfold m_channel_reader in *. rewrite E6. exact Hrdr. }
     eapply (stdio_call_sound_frA AL CS KI IMG K_halted K_mat K_vmonly valsP1 (blobs_ev []) srA knA RA MA0 mo resB [] msg KK HR HK);
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn resB edenot].
     + vm_compute. reflexivity.
@@ -387,6 +392,7 @@ Section FW.
       rewrite u_small by lia. cbn [log_out]. unfold adenot, v_addi. cbn [a_base a_off edenot]. evs.
       rewrite !(u_small 0) by lia. repeat split; rewrite ?u_small by lia; lia.
     + exact FdA.
+    + exact RdA.
     + exact HKA.
     + intros z Hz. revert Hz. evs. rewrite alu_add_zlit by lia. rewrite !u_small by lia. intros Hz. apply WCS. lia.
     + intros z Hz. rewrite !u_small in Hz by lia. lia.

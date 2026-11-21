@@ -1,6 +1,6 @@
 # G4: ifchk, YF0m's cells at the 50 image B hand-off states (gate record)
 
-Proves no function (kind: measurement). Re-run 2026-10-30 on the series base b1afc3e80791 (`run.sh g4`).
+Proves no function (kind: measurement). Re-run 2026-10-30 on the series base (`run.sh g4`).
 
 ## Tool
 - ifchk.py sha256 `f5cde600cc1886bb65200495a69e1eb3afb936ea5512edb8c581edc0299847fb`, through the start-up set of record

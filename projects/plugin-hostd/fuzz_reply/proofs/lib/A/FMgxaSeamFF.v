@@ -1,9 +1,9 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFF.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables/reply-A/FMgxaSeamFF.table). *)
-(* What the format-generic chain asks of the seam's families: pf_family (FMsnprintfShared.v:95) and pf_family_ro
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFF.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables/reply-A/FMgxaSeamFF.table). *)
+(* What the format-generic chain asks of the seam's families: pf_family (FMsnprintfShared.v:96) and pf_family_ro
    (FMgxaSeamDef.v:62) keep under a memory change inside the regions rs outside the shadow, asked at 64-bit addresses
-   only, and they keep when the regions shrink (ff_mono, FMsnprintfShared.v:110).
-   The stable64 statements are the body of RtPrintf.Param's ff_stable64 (FMsnprintfSx.v:21,
-   cold/port-fm-rtprintf-param 1ad8495e209) with FF substituted; this branch does not carry that file, and a consumer
+   only, and they keep when the regions shrink (ff_mono, FMsnprintfShared.v:111).
+   The stable64 statements are the body of RtPrintf.Param's ff_stable64 (FMsnprintfSx.v:22)
+   with FF substituted; this branch does not carry that file, and a consumer
    closes `ff_stable64 (pf_family PK)` with `exact`.
    Every read the family makes through rd is
    - a format byte or its NUL, in [f, f + |fmt| + 1), which fmt_at keeps disjoint from rs;

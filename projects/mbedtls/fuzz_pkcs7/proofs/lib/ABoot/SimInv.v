@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the encoded statements of no_error_run_corun and no_error_run_modeled are written out in plain text over the run's segment list, run_segments of the segments, input, stack pointer and mmap base; the proof of no_error_run_modeled unfolds image_run_segments). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -71,8 +72,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma no_error_run_corun : ltac2:(CDefT.buildp (gd_tbl_SimInv ()) "Psegs,(0.$1.)Ppc,$2.Pph,$3.Psp,(4.&40.)Pbrk0,(4.&40.)Pmb,(4.&40.)Prnd,$5.Plim,$6.Pinp,$7.P,(8.(9.R9.(:.R9.R8.R7.R6.R5.R4.R3.R2.R1.)))(;.(<.R:.R9.R8.)R3.(=.R7.R6.R5.R4.)R2.$>.)")
-(* [comment removed for export] *).
+Lemma no_error_run_corun :
+  forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
+         (lim : Z) (inp : ProcInput),
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
+  omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp H. cbn [omni_corun].
   apply no_error_coexec, H.
@@ -81,10 +86,15 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Lemma no_error_run_modeled : ltac2:(CDefT.buildp (gd_tbl_SimInv ()) "Psegs,(0.$1.)Ppc,$2.Pph,$3.Psp,(4.&40.)Pbrk0,(4.&40.)Pmb,(4.&40.)Prnd,$5.Plim,$6.Pinp,$7.P,(8.(9.R9.(:.R9.R8.R7.R6.R5.R4.R3.R2.R1.)))(?.(10.(<.R:.R9.R8.)R3.(=.R7.R6.R5.R4.)R2.))")
-(* [comment removed for export] *).
+Lemma no_error_run_modeled :
+  forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
+         (lim : Z) (inp : ProcInput),
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
+  Equivalence.modeled (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp H.
-  apply modeled_iff. cbn [img_segments].
+  apply modeled_iff.
+  cbn [image_run_segments img_segments en_sp en_mmap_base].
   eapply coexec_conseq; [apply no_error_run_corun, H | apply never_errors_covered].
 Qed.

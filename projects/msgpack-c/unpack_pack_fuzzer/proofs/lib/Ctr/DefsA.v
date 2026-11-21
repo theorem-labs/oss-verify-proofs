@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv check reads the LPS 727298f3 vector; strnlen's check reads the string area's end alignment, [Regen.STR_END], where it read [FAlign 12 3], false at this revision). *)
 From Stdlib Require Import ZArith Bool List.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import W64 Val IMap Mem Instr State Step Plan.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Regen.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Ctr Require Import Lib.
 Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -65,7 +67,25 @@ Definition stack_ok (st : sstate) (need : int) : option (int * int) :=
 
 Definition rload (st : sstate) (k : int) (off : int) (w : int) : option sv :=
   match do_load segs st (VP k (wlit off)) w false with inl (Some v) => Some v | _ => None end.
-Definition AUXV_KEYS : list int := [3; 4; 5; 16; 6; 11; 12; 23; 25; 0]%uint63.
+(** The auxv's AT_ TYPE constants in the order [StackLayout.auxv_entries]
+    lists them at LPS 75d69e00 (75d69e00:theories/LinuxProcessSem/
+    StackLayout.v:229-263): the ten launch pairs, AT_HWCAP, AT_PAGESZ,
+    AT_CLKTCK, the three PhdrInfo pairs, AT_BASE, AT_FLAGS, AT_ENTRY, the
+    four credential pairs, AT_SECURE, AT_RANDOM, AT_EXECFN.  Twenty-six
+    pairs, UNCONDITIONAL; the CONFIG_RSEQ pairs and AT_NULL are in
+    [auxv_null_ok] below, because where they sit depends on the kernel
+    build.
+
+    Every type constant is the one it always was.  What moved is the SLOT:
+    AT_PHDR keeps type 3 and now sits at slot 13, AT_HWCAP keeps type 16 at
+    slot 10, AT_PAGESZ keeps type 6 at slot 11, AT_UID keeps type 11 at slot
+    19, AT_EUID keeps type 12 at slot 20, AT_RANDOM keeps type 25 at slot
+    24, AT_SECURE keeps type 23 and stays at slot 23.  This list WAS the ten
+    types [3;4;5;16;6;11;12;23;25;0] at the old slots, which no state
+    produced by a 75d69e00 launch satisfies -- and being a [list int] of
+    uint63 keys rather than an auxv vector, no auxv-keyed census saw it. *)
+Definition AUXV_KEYS : list int := [33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]%uint63.
+Definition AUXV_RSEQ_KEYS : list int := [27; 28]%uint63.
 Fixpoint auxv_keys_ok (st : sstate) (ks : list int) (off : int) : bool :=
   match ks with
   | [] => true
@@ -83,10 +103,26 @@ Definition rnd_region_ok (st : sstate) : bool :=
               end
   | None => false
   end.
+(** The terminator, decided from the STATE rather than from a flag.  AT_NULL
+    closes the vector at pair [26 + 2*r], so it is at byte 416 without
+    CONFIG_RSEQ and at byte 448 with it, the two AT_RSEQ_* pairs filling
+    416 and 432.  Keying this off the state is what keeps [auxv_ok]'s arity:
+    a boolean parameter would reach [alloc_call] and through it the twelve
+    [vm_compute; reflexivity] certificates in [Br/HeapCtrB.v], which must
+    stay closed terms.  The disjunct that fires is also exactly the witness
+    [HeapCtr.auxv_sound] needs for [rauxv_ok]'s [exists (r : bool)]. *)
+Definition auxv_null_ok (st : sstate) : bool :=
+  (auxv_keys_ok st [0]%uint63 416%uint63
+   && is_litv (rload st AUXV_ID 424%uint63 8%uint63) 0%uint63)
+  || (auxv_keys_ok st (AUXV_RSEQ_KEYS ++ [0]%uint63) 416%uint63
+      && is_litv (rload st AUXV_ID 456%uint63 8%uint63) 0%uint63).
+
+(** AT_RANDOM is slot 24, so its VALUE slot is byte 16*24+8 = 392; it was
+    136 when AT_RANDOM was slot 8. *)
 Definition auxv_ok (st : sstate) : bool :=
   auxv_keys_ok st AUXV_KEYS 0%uint63
-  && is_sv (rload st AUXV_ID 136%uint63 8%uint63) (VP RND_ID wzero)
-  && is_litv (rload st AUXV_ID 152%uint63 8%uint63) 0%uint63
+  && is_sv (rload st AUXV_ID 392%uint63 8%uint63) (VP RND_ID wzero)
+  && auxv_null_ok st
   && rnd_region_ok st.
 
 Definition sp_below_anchor (fs : list fact) (sp : sv) : bool := known_leu fs sp (VP STACK_ID wzero).
@@ -534,7 +570,7 @@ Definition strnlen_apply (st : sstate) : option (list sstate) :=
                  && known_ltu fs (VL wzero) (VP ks wzero)
                  && known_leu fs (VP STRS_ID wzero) (VP ks wzero)
                  && known_leu fs (sv_alu ALU_ADD (VP ks wzero) H) (sv_alu ALU_ADD (VP STRS_ID wzero) (SZ 15%uint63))
-                 && aligned fs (VP STRS_ID wzero) 3%uint63
+                 && has_fact Regen.Regen.STR_END fs
               then
                 let L := sv_alu ALU_SUB H (VL wone) in
                 let st1 := setregs st (IMap.add STACK_ID (forget_r1 r1 ksp) (s_regs st)) in

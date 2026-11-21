@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/PixChk.v; 76 of its 102 lines of code are new or changed and 45 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRecStep.v at commit 33db28e0c9a (the core dead_shadow_new change 269a783f7a5..33db28e0c9a, reviewed), module paths changed. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRecStep.v (the core dead_shadow_new change.., reviewed), module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* One recycle step in the model keeps every dead real slot dead with the same length, and revives no slot: every
    entry live after the step is the same entry before it. recycle_chunk only removes the chunk and, for a secondary,
    marks the SAME st_secs entry dead with the same length and size (sec_dealloc); cache_dealloc touches neither

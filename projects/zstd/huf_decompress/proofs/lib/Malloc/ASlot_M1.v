@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (rec_st', errno_lit)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -43,8 +44,7 @@ Hypothesis K0 : 0 <= k < 32.
 Hypothesis LBK : lowbit msk = 2 ^ k.
 
 Lemma rec_st' : get_meta_rec st' g = m_set_avail (msk - 2 ^ k) mr.
-Proof.
-ltac2:(KReplay.run1 (kr_t_ASlot_M1 ()) ["CANSEC1"; "TASLOT"] "h01mh11zp;1p;2p;3p;6p10000p4p70g000eR0p4p710p8g001Cj1<Tg002:j23Tg002Wj21Tg003Tj22j15Tg004Pj1;Tg0055j1:Tg005Sj27Tg0060j30Tg006Jj26TP0j64Tg006dj38Tg007]j39Tg008oR0p,3mskR1%<1R2'3R3p,3stXR4p,1gR5'1R6'2f0R7g009f#;#:p,1k'7R8,31p,2mr'2R9500X00g00:KR:P81317/26=009X1:1609P2p,3LBKE4%53R3=854/15A9453E4p,3st'/15=009eo"). Qed.
+Proof. unfold st'. rewrite get_meta_rec_upd_same. rewrite LBK. reflexivity. Qed.
 End TASLOT.
 
 (* [comment removed for export] *)
@@ -73,8 +73,7 @@ Hypothesis A1 : a1 = Z_to_bv 64 req.
 Let F0 : ISTF st LB := MallocFacts_inv4.ist_facts_proof st0 LB st AR IS.
 
 Lemma errno_lit : errno_addr tp = 107900.
-Proof.
-ltac2:(KReplay.run1 (kr_t_ASlot_M1 ()) ["CANSEC1"; "LEVEL"] "h02Hah17__sat13h27__sat15h31ah41Hh52H0h62H1h72H2h82H3h97__arithh:4__ffh;7__sat12h<7__sat14h=8__varmaph>5__with?2tph@1zp;1p;2p;3p;4p;7p;6g004Pj10Tg00:ij1STg00;Gj1JTg00;jj11Tg0055j14Tg00<Oj2RTg00=5j2BTg00=_j1ITg00>=j2@Tg0060j3>Tg006Jj2=Tg00>Zj1XTg00?Xj1VTg00@Nj2<Tg00@jR0j29Tg00AEj2ETg00Amj26Tg005Sj2DTg00BIj3CTg00Bmj2QTg00CNj1OTg00Cnj1NTg00DNj1MTg00Dlj1LTg00EJj1KTg00F5j2;Tg00FXj4?Tg00GCj3HTg00Gfj7PTg00HJj2GTg00Hlj2TTg00IXj3UTg00J7j4[Tg00Jij2ZTg000ej6FTg00Kej7YTf0R1#0#0#0#0p=8%01#0p=2%11#0p=7%11#1#1#1p=5%11#1p=W%01#0#0#0#0#0#0#0p=:g00LIR2/<1p=3f1R3g00LgR4g00MFR5P5g00MfR6P1g00NFFYp=Ag009fR7#0R8#8R9#0R:#SR;#JR<%17R7#0R=#1#2#1R>#7#2#7#8#4R?,R;R@g00:KRA1B;1%18#2#1#2#IRB'@%0>#7#1#5#2#4R>3>X?<PAP?1@1B=>A>X@A1=A>1B;@p,2rcR@#X%17#5#5#5R7#0#1#W#5#7#2#8#:#:#4%V@R@'<%57#5#7#2#8#:#:#4,<@'9%48R8%49R9'E1628R@%391D89R7,62[R>[%38RBg00NfR<AC893UW0%37\<^0B%4:R:,E8%3:1D8:R9,62[RC\@AC8:3V<X0B%39\<^0Bp,2SCp,2scRB#3R<%0=#2#4,6BRB'9P0P<PB%3?16?9'9R9P1p,2RQp,3reqR=#3R:16=7R='9P0P:P=P9P1f;g00OB1Q28'=P@eR@O1PCf>P@O1P>g00OhR>#O%N>%MA%LA%KAR>P4P5P5P6PA1;A2g00PT1;A?R5C?,A>PAP5g00Q;1;A8=HA;C?,A>FP1G>6P1f2R>g00QbR6g00RBR;'=1T1>=>6;dAUA23C[b:b=b>P9P1b9b2b1X8=X7:P3P1O2n2001000000121000000b3X6BX5<P3P1O2n2001000000121000000b3b;b1b<b2b4,Z?EFp,2tpp,2TPEFo"). Qed.
+Proof. subst tp. rewrite unsigned_lit by lia. reflexivity. Qed.
 End LEVEL.
 
 

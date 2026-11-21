@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fr_RINV, a concrete definition of the loop's relational invariant RINV of the
-   entry walk of fuzz_reply's LLVMFuzzerTestOneInput (lib/A/W_LLVMFuzzerTestOneInput_cut.v:534, the Section variable
+   entry walk of fuzz_reply's LLVMFuzzerTestOneInput (lib/A/W_LLVMFuzzerTestOneInput_cut.v:535, the Section variable
    `RINV : lfcx -> Z -> lmod -> Prop` that lcut carries at every cut point), and, below it, each model rule over RINV
    that a W8 segment takes as a Section hypothesis, restated with RINV := fr_RINV (the `_obl` definitions).  The last
    section proves the obligations that read fr_RINV alone or step only the cursor and the flags; the rest are open.
@@ -25,7 +25,7 @@
      A-proof keeps in LS (LS_write_room, LS_drain_pre); they are not here.
    - The cost counts the relay's unfinished line by its bytes, `length (re_U e)`, where SlotInv.v:56 counts
      `re_used e`: the two are equal under aentry_ok (W_rep.v:125), but the arms' rules see only the model, and W7's
-     drain fixes re_U, not re_used (dr_step_ok, W_LLVMFuzzerTestOneInput_drain.v:559).
+     drain fixes re_U, not re_used (dr_step_ok, W_LLVMFuzzerTestOneInput_drain.v:560).
    - The entries' model facts that aentry_ok (W_rep.v:120-135) states in memory and that RINV-only rules read
      (RI_pads, RI_pair, RI_rm_cnlr_eof, the exit's end matching) are fr_entry_ok.
    The `_obl` definitions are grouped by segment file, each with the rule's file:line.  Rules on atop's head (head,
@@ -36,9 +36,10 @@
    proves every rule of W_LLVMFuzzerTestOneInput_top.v (SEG_HEAD's, ARM_add's, the small arms') in the form that
    holds. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV.v, with its module names changed; 353 of its 443 lines of code are new or changed and 1101 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* a Theorem Labs lane's FREE-PIECES row B1c (a Theorem Labs lane): the drain arm's LS_drain_pre at the instance LS := fr_LS B,
-   RINV := fr_RINV, MT := ameter_triv, MMAX := WR_MMAX.  The text is a working branch 129f255c729
-   lib/A/W_LLVMFuzzerTestOneInput_drain.v:730-742 (the same in integ 6fb612fb746 :658); every definition it names
+   RINV := fr_RINV, MT := ameter_triv, MMAX := WR_MMAX.  The text is a working branch
+   lib/A/W_LLVMFuzzerTestOneInput_drain.v:731-743 (the same in integ :658); every definition it names
    (dr_at_op, dr_pick, dr_e0 in that file; dr_tr, dr_cost, tr_max, tr_alloc in W_contract.v; drain_b_c.v,
    send_line_b_c.v, ListTr.v, RelayModel.v, RelayKeys.v, RelayRep.v, HarnessRep.v, YG01.v) has the same text in this
    tree.  Its six conjuncts, by status:
@@ -57,7 +58,7 @@
        (ListTr.list_push_tra).  Nor the second: fr_RINV says nothing of re_U when re_skip = 1 (fr_cost counts it
        only at re_skip = 0) and fr_LS bounds re_cap only through PHI (about 2^33), so drain's first growth
        (drain_b_c.grow_tr, `cap - used < 4096`) may ask 2 re_cap >= 2^30, e.g. for re_cap = 2^29 and a longer re_U.
-   (5) blocks_bytes S + tr_alloc (dr_tr ..) <= LIVE_MAX: NOT PROVABLE.  tr_alloc (W_contract.v:951-957) sums the size
+   (5) blocks_bytes S + tr_alloc (dr_tr ..) <= LIVE_MAX: NOT PROVABLE.  tr_alloc (W_contract.v:952-958) sums the size
        of every request, and gesture_seen regrows the relay's held array by one slot per new begin
        (drain_b_c.seen_tr: RRealloc ka ((|H| + 1) * 8), relay.c:106), so a drain of N new begin keys has
        tr_alloc >= 4 N (N + 1), above LIVE_MAX = 2^34 for N >= 65,536 - about 1.7 MB of input in some 26 operations
@@ -111,7 +112,7 @@ Import ListNotations.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:132 WR_MMAX) *)
+(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:133 WR_MMAX) *)
 Local Notation MT := ameter_triv.
 Local Notation MMAX := WR_MMAX.
 

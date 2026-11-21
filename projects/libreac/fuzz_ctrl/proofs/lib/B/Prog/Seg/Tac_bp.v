@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 685 of its 794 lines of code are new or changed and 902 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Shared helpers for a Theorem Labs lane's image-B segments P1-P6 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B):
    rule 24: no function proved (slot segments).  The byte / shadow / stack helpers and the normalized-memory run
-   lemma are Seg/R3.v's (a working branch eb5573148b), renamed; bp_fra is R3's r3_fra.  bp_post is
+   lemma are Seg/R3.v's (a working branch), renamed; bp_fra is R3's r3_fra.  bp_post is
    R3's continuation made generic: FRA and ENT move across a run whose write set W lies in the frame's 392 shadow
    bytes, the frame body [fr + 24, fr + 3136) and a callee's own stack window [sp - K, sp) (K <= FN_STACK), when
    every written byte is readable afterwards and the FRA registers are kept.  libreac v1.9.0: the frame is
@@ -424,7 +425,7 @@ Proof.
 Qed.
 
 (* The thread cells and the side-stack package across a byte-wise agreeing memory (the MemNorm normalization;
-   lib/B/Prog/Seg/R9.v r9_atls_tr / r9_fp_tr of prover a Theorem Labs lane, a working branch 1659ee9abe8). *)
+   lib/B/Prog/Seg/R9.v r9_atls_tr / r9_fp_tr of prover a Theorem Labs lane, a working branch). *)
 Lemma bp_atls_tr : forall m m0 TP DT TS C T DB k,
   (forall a bs, bytes_at rsegs m a bs -> bytes_at rsegs m0 a bs) ->
   ASM.asan_tls_cells m TP DT TS C T DB k -> ASM.asan_tls_cells m0 TP DT TS C T DB k.

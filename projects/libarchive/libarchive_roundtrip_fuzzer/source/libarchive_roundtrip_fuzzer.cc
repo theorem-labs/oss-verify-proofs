@@ -1,7 +1,9 @@
+// Modified by Theorem Labs, 2026-11-14: catch std::bad_alloc from this harness's own allocations, free what it opened and return 0. Ignore SIGPIPE, as libarchive's own bsdtar and bsdcpio do.
 /*
  * Archive roundtrip fuzzer for libarchive
  * Writes an archive then reads it back - tests write/read consistency
  */
+#include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -16,13 +18,22 @@ static constexpr size_t kMaxInputSize = 64 * 1024;
 
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+  struct sigaction sa;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = SIG_IGN;
+  sigaction(SIGPIPE, &sa, NULL);
   if (len < 10 || len > kMaxInputSize) {
     return 0;
   }
 
   DataConsumer consumer(buf, len);
   std::vector<uint8_t> archive_data;
-  archive_data.reserve(len * 2);
+  try {
+    archive_data.reserve(len * 2);
+  } catch (const std::bad_alloc &) {
+    return 0;
+  }
 
   // Phase 1: Write an archive
   struct archive *writer = archive_write_new();
@@ -44,7 +55,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
 
   // Open to memory
   size_t used = 0;
-  archive_data.resize(len * 4);
+  try {
+    archive_data.resize(len * 4);
+  } catch (const std::bad_alloc &) {
+    archive_write_free(writer);
+    return 0;
+  }
   if (archive_write_open_memory(writer, archive_data.data(), archive_data.size(), &used) != ARCHIVE_OK) {
     archive_write_free(writer);
     return 0;
@@ -94,15 +110,20 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
     return 0;
   }
 
-  std::vector<uint8_t> read_buffer(4096, 0);
-  struct archive_entry *entry;
-  while (archive_read_next_header(reader, &entry) == ARCHIVE_OK) {
-    archive_entry_pathname(entry);
-    archive_entry_size(entry);
+  try {
+    std::vector<uint8_t> read_buffer(4096, 0);
+    struct archive_entry *entry;
+    while (archive_read_next_header(reader, &entry) == ARCHIVE_OK) {
+      archive_entry_pathname(entry);
+      archive_entry_size(entry);
 
-    ssize_t r;
-    while ((r = archive_read_data(reader, read_buffer.data(), read_buffer.size())) > 0)
-      ;
+      ssize_t r;
+      while ((r = archive_read_data(reader, read_buffer.data(), read_buffer.size())) > 0)
+        ;
+    }
+  } catch (const std::bad_alloc &) {
+    archive_read_free(reader);
+    return 0;
   }
 
   archive_read_free(reader);

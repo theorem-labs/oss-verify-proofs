@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the entry-state shape of proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at 5afd8b87436 (its regions, atom facts, assumed branch conditions and alias fact) for reac-pw/fuzz_rate's image B: the four states are pod_write_ent's own, measured on its code. *)
+(* Modified by Theorem Labs, 2026-10: the entry-state shape of proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (its regions, atom facts, assumed branch conditions and alias fact) for reac-pw/fuzz_rate's image B: the four states are pod_write_ent's own, measured on its code. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The four engine states of pod_write_ent's walk on image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14). Proves no function (kind: statement text):
    this file only names the states; lib/AU/PweWalk.v proves the function against them.

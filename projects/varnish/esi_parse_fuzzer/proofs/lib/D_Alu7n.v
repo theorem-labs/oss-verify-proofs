@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (callH's stack-window row and its spk bound restated over the 6144512 bytes below sp0 that main_entry's window certifies), as bzip2/bzip2_compress_target's main phase was. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -297,9 +298,10 @@ Section Wrapped.
     ch_spk16 : (spk mod 16 = 0)%Z;
     ch_splo : (alloc_ceiling + 8388608 <= bv_unsigned (vals_ev vals 0))%Z;   (* [comment removed for export] *)
     ch_sphi : (bv_unsigned (vals_ev vals 0) <= 2 ^ 47)%Z;
-    ch_spk  : (-8388608 + 8192 + 64 <= spk <= 0)%Z;
+    (* LPS 727298f3: the frame lies inside main_entry's window row (6144512 bytes below sp0) *)
+    ch_spk  : (-6144512 + 8192 + 64 <= spk <= 0)%Z;
     (* [comment removed for export] *)
-    ch_win  : exists iw, nth_error kn iw = Some (KWr (SA (EVar 0) (-8388608)) 8388608)
+    ch_win  : exists iw, nth_error kn iw = Some (KWr (SA (EVar 0) (-6144512)) 6144512)
   }.
 
   (* [comment removed for export] *)
@@ -337,7 +339,7 @@ Section Wrapped.
     - rewrite H1. cbn [edenot]. rewrite u_small by lia. exact Hra4.
     - rewrite SPV. unfold MALLOC_STACK. lia.
     - rewrite SPV. unfold MALLOC_STACK.
-      apply (win_mapped vals ebs M kn iw (-8388608) 8388608 spk 8192 HK Hiw); unfold HEAP_HI; lia.
+      apply (win_mapped vals ebs M kn iw (-6144512) 6144512 spk 8192 HK Hiw); unfold HEAP_HI; lia.
     - intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' r A' m' md' AI' MI' MF (Hr & NEW & LIVE & OTHER & LB' & NL') FR.
       rewrite H1. cbn [edenot].
       lazymatch goal with |- realizes _ (mkCfg (mkst ?RR _ _ _) _) _ =>
@@ -400,7 +402,7 @@ Section Wrapped.
     - rewrite H1. cbn [edenot]. rewrite u_small by lia. exact Hra4.
     - rewrite SPV. unfold MALLOC_STACK. lia.
     - rewrite SPV. unfold MALLOC_STACK.
-      apply (win_mapped vals ebs M kn iw (-8388608) 8388608 spk 8192 HK Hiw); unfold HEAP_HI; lia.
+      apply (win_mapped vals ebs M kn iw (-6144512) 6144512 spk 8192 HK Hiw); unfold HEAP_HI; lia.
     - intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' r A' m' md' Hr AI' MI' MF LIVE OTHER LB' NL' FR.
       rewrite H1. cbn [edenot]. post_regs vals ebs sr R Hsv HR H1.
       lazymatch goal with |- realizes _ (mkCfg (mkst ?RR _ _ _) _) _ =>
@@ -449,7 +451,7 @@ Section Wrapped.
     - rewrite H1. cbn [edenot]. rewrite u_small by lia. exact Hra4.
     - rewrite SPV. unfold FREE_STACK. lia.
     - rewrite SPV. unfold FREE_STACK.
-      apply (win_mapped vals ebs M kn iw (-8388608) 8388608 spk 8192 HK Hiw); unfold HEAP_HI; lia.
+      apply (win_mapped vals ebs M kn iw (-6144512) 6144512 spk 8192 HK Hiw); unfold HEAP_HI; lia.
     - intros t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' A' m' md' AI' MI' MF GONE OTHER LB' NL' ERRNO FR.
       rewrite H1. cbn [edenot]. post_regs vals ebs sr R Hsv HR H1.
       eapply (K _ m' md' A' HR'); try eassumption.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: rauxv_ok's new witnesses (the keyed auxv values, AT_EXECFN, the CONFIG_RSEQ entries) where its preservation across an allocation takes it apart). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -2660,7 +2661,7 @@ alloc_ceiling <= lo -> sp <= B -> rauxv_ok m' B.
 Proof. clear - RIMG_HI RDATA_LO gw_RTEXT_LO gw_RDATA2_LO RNG_RATP LAY_lo_RATP LAY_hi_RATP LAY_win_0 LAY_win_1 LAY_win_2 LAY_win_3 LAY_win_4 LAY_ref_reserved st m MR ER stE mE lo sp m1 m' B RATP st0. gw_expose_fam RATP. first [clear st0 | gw_hide st0 | idtac].
 intros MRE AUX PE CLO SB. eapply rauxv_ok_pres; [gw_exact AUX| gw_exact PE| |].
 - intros a Ha Hfp. destruct (rmalloc_fp_cases_ER stE mE lo sp a MRE Hfp); [lia|].
-destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). unfold alloc_ceiling in *. lia.
+destruct AUX as (av & vs & rnd & ex & rs & _ & _ & _ & HH). unfold alloc_ceiling in *. lia.
 - intros a Ha Hfp. gw_expose_fam RATP.
 destruct (rmalloc_fp_image_ER stE mE lo sp a MRE Hfp CLO ltac:(lia)) as [X|X]; gw_expose_fam RATP; lia.
 Qed.

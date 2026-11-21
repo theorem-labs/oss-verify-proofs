@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the zero-filled stack window): proof steps and comments changed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -325,7 +326,7 @@ Section DrvE.
     assert (XR : exitR (bv_unsigned (vals_ev vals 4)) MV) by exact (EXITR vals [] LK cr A M model0 HK0 DI0).
     assert (XT : cells_at MV (ATX ls2)) by exact (atx_vis scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ ls2 DI0 HATX).
     assert (XPC : dinvA [] LK cr A M model0 /\ bv_unsigned sp0 - 4096 <= S /\ S <= bv_unsigned sp0 /\ S mod 16 = 0
-                  /\ (forall a n, bv_unsigned sp0 - 8388608 <= a -> a + n <= bv_unsigned sp0 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+                  /\ (forall a n, bv_unsigned sp0 - DRV_ZWIN <= a -> a + n <= bv_unsigned sp0 -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
                   /\ (forall i, 65536 <= i < 1392640 -> MV (Z_to_bv 64 i) = None)).
     { split; [exact DI0|]. split; [unfold S; lia|]. split; [unfold S; lia|].
       split; [exact HS16|].

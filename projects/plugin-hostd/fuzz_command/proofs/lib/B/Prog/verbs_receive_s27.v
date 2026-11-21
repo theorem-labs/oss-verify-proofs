@@ -25,6 +25,7 @@
    branches; leg C, on an instance verb with an argument, the reloads, the check, the atoi and sup_call calls and the
    jump to JB. sup_call is printf-reaching (apost_baseF): it returns at some FP state fx' with fxrel fx fx', and the
    jump to JB runs at fx' (q_jmp is FP-generic), so the segment is stated with vr_segF. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -137,7 +138,7 @@ Let ART := aj_art_at SEGS B LAWS pa_segs_low (pal_env B TL).
 (* ---------------------------------------------------------------------------------------------------------------
    Across the atoi call: memory that agrees below the allocation ceiling and from the realigned stack pointer up,
    except at the errno cell (aj_art_at's frame for aatoi_realizes, whose window is below vr_s1); the S12 lane's
-   vr_kx (a working branch 1413152415c, verbs_receive_s12.v), on the fixed interface *)
+   vr_kx (a working branch, verbs_receive_s12.v), on the fixed interface *)
 Definition s27_kx (e : vrE) (W : world SEGS) (m m' : word -> option byte) : Prop :=
 forall a, 0 <= a < 2 ^ 64 -> (a < alloc_ceiling \/ vr_s1 e <= a) -> ~ aerrno_cell B a -> rdW W m' a = rdW W m a.
 

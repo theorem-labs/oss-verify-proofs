@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpTbl.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build (image A)
    by an address map recorded by the porting lane; module paths, GrantSyms ->
    TfibSyms, and scmp_ranges now states the trampoline word itself (see below). The proofs are a Theorem Labs lane's,
    unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Rt/StrcmpTbl.v, with its module paths and module names changed; 155 of its 251 lines of code are new or changed and 29 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/FMsl0.v and lib/A/FMstrlen_chk1.v (sl_ld8) at 6ebe35ba632; the table holds the strcspn wrapper body, musl __strchrnul and musl strcspn of reac-pw/fuzz_pin.asan, the load lemmas read one byte as well as eight, and the interfaces of the pieces of the strcspn walk are stated here. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/FMsl0.v and lib/A/FMstrlen_chk1.v (sl_ld8); the table holds the strcspn wrapper body, musl __strchrnul and musl strcspn of reac-pw/fuzz_pin.asan, the load lemmas read one byte as well as eight, and the interfaces of the pieces of the strcspn walk are stated here. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/FMcs0.v of this library, for reac-pw/fuzz_pin's asan-ubsan image (fuzz_pin.asan-ubsan d6f83d301522) instead of its asan image (fuzz_pin.asan 3e4859aed23f): module paths lib.A -> lib.AU (the core files A<xyz> -> Y<xyz>); lib.A.PPgWrap, image-independent, kept; 27 address numerals moved to the same symbol + offset of the asan-ubsan image (each checked on that image); by hand, comments only: the address list names fuzz_pin.asan-ubsan (sha256 d6f83d301522, unstripped twin 635d02c7e8fa), the core files YE34 / YE2y / lib/AU/YF0m.v, and the pieces' files under lib/AU. The comment lines above describe how lib/A/FMcs0.v was made and quote the asan image's values; the code and comments below carry the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

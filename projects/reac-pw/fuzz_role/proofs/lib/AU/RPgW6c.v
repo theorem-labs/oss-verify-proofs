@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6cB.v at 05426fac6916 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6cB.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): its closing theorem only (the bridges are lib/AU/RPgW6cGlue.v,
    the helpers lib/AU/RPgW6cKit.v); the statement is lib/AU/RPgSeg.v's rs_piece_W6c_stmt; the intrinsics are
    __asan_memcpy 0x5116c and __asan_memset 0x51608; the allocator meter's laws are a premise, as ebb_J_of asks. *)

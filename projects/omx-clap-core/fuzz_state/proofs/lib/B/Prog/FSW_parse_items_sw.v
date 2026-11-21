@@ -2,17 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) skip_ws call steps of the parse_items walk.
    pic_call_sw is the B-local port, to parse_items' window and chain, of the B parse_value walk's pv_wscall
-   (a working branch a40df3dd279 proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value_holds.v,
+   (a working branch proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value_holds.v,
    a Theorem Labs lane): the callee's fpreU from the caller's journal (FSW_ret.fsw_fpreU_atFP), skip_ws_spec, and its post handed
    on with the callee journal at the caller's raised window (STK_skip_ws + (ot - spZ regsC), ot), which is the form
    FSW_parse_items_calls.pic_after_callT resumes from. Changed from pv_wscall: the chain fpreU reads is built here
    (FSW_parse_items_mem.pim_chain_q16: s0 = q + 16 at every parse_items call), rd_win is built from the journal, and the
    two journals are handed on uncomposed. pis_mrd_grows is a B-local copy of the A walk's pid_mrd_grows
-   (a working branch 493982bffc9 proofs/omx-clap-core/fuzz_state/lib/A/FSW_pitems_dev.v), verbatim.
+   (a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSW_pitems_dev.v), verbatim.
    pi_sw1 is the first call, 0x84f58 -> 0x84f5c (pf.c:217, the white space after `{`): stage A
    (FSW_parse_items.pi_stageA), the call, and the resume at 0x84f5c in FSW_parse_items.pi_ssB0 (the state stage B's two
    arms take), with the data both arms and the post read.
    rule 24: proves no function (kind: call-step lemmas). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

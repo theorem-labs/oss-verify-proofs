@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/AFiacf.v (commit eb934de95d13, blob a79c9523ca91) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 6 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/AFiacf.v (blob a79c9523ca91) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 6 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -54,14 +55,14 @@ cbn [snd] in *. pose proof (YG08.sec_map_size_bound (ck_req k) ltac:(lia)) as SB
 pose proof (cf_sizes_ok (ck_req k) Hn) as CS. lia.
 Qed.
 Lemma sec_grant_exists_AR : forall B ly S rd md nZ,
-ARmcf B ly S Hp rd -> ALedger_cf tfibsegs ly S md -> amwf md -> 0 < nZ <= YGcfNames.cf_nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+ARmcf B ly S Hp rd -> ALedger_cf tfibsegs ly S md -> amwf md -> 0 < nZ <= YGcfNames.cf_nob -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Proof.
-intros B ly S rd md nZ M L [_ NZ] HnZ.
+intros B ly S rd md nZ M L [_ NZ] HnZ HnZal.
 pose proof (wfc_secondary _ _ _ _ _ (amc_wf _ _ _ _ _ M)) as WS. pose proof (xs_cf_length ly S) as XL.
 pose proof (sec_extents_count B ly S rd M) as SC. pose proof cf_nob_ok as NO.
 apply (SecGrantP.sec_grant_exists_cover_P cf_nob (YF06.SEC_LIVE_N + 1) tfibsegs ly md (sec_extents ly S ++ xs_cf ly S) nZ
-cf_nob_lo cf_nob_al); [| exact (amc_layout _ _ _ _ _ M) | exact (ledger_cover_of_ALedger_cf tfibsegs ly S md L) | exact NZ | | | exact HnZ].
+cf_nob_lo cf_nob_al); [| exact (amc_layout _ _ _ _ _ M) | exact (ledger_cover_of_ALedger_cf tfibsegs ly S md L) | exact NZ | | | exact HnZ | exact HnZal].
 - unfold YF06.SEC_LIVE_N. lia.
 - rewrite length_app. lia.
 - apply Forall_app. split; [exact (sec_extents_sizes B ly S rd M) | exact (xs_cf_ok ly S WS)].
@@ -82,7 +83,7 @@ Hypothesis M : ARmcf B ly S Hp rd.
 Hypothesis L : ALedger_cf tfibsegs ly S md.
 Hypothesis HnZ : 0 < nZ <= cf_malloc_max + 4 * 4096.
 Hypothesis HnZal : nZ mod 4096 = 0.
-Hypothesis HG : grant_ok_na_pin md a nZ = true.
+Hypothesis HG : grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Let A : Z := bv_unsigned a.
 Let LY : layout_ok ly := amc_layout _ _ _ Hp _ M.
 Lemma nZ_word : bv_unsigned (Z_to_bv 64 nZ) = nZ.
@@ -100,7 +101,8 @@ A mod 4096 = 0 /\ 0 < A /\ A + nZ <= alloc_top (m_vmmaps md) /\
 region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (Z_to_bv 64 nZ) = true /\
 A + nZ <= alloc_top (m_vmmaps md).
 Proof.
-clear LY. pose proof HG as Hg. unfold grant_ok_na_pin in Hg.
+clear LY. pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ (proj1 HnZ) ltac:(unfold page_size; exact HnZal) HG) as Hg.
+unfold YK13.grant_ok_na_pin_b in Hg.
 apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
 unfold page_size in Hal. unfold A. repeat split; assumption.

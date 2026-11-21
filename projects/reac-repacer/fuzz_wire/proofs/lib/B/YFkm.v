@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFkm.v (that path at 25e3d17bdb50; donor image sha256 1c29845fe605), with its module paths changed, names TfibSyms -> GrantSyms and its addresses moved to libreac/fuzz_grant's ASan+UBSan build. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YFkm.v at 4f87de75d67 (donor image sha256 fde52226dc48), with its module paths changed, names GrantSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build; the proof steps of fuzz_knock's depot model (st_depot S <> [] premises and case splits on st_depot, the layout lemma layout_gle_refl, depot_ok_pre / depot_ok_post / depot_ok_mapped and the depot_same step of lib/Reusable/YG0n.v), taken from proofs/libreac/fuzz_knock/lib/AU/YFkm.v at 88154566652a; Zify's Euclidean-division option is set locally. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFkm.v (that path; donor image sha256 1c29845fe605), with its module paths changed, names TfibSyms -> GrantSyms and its addresses moved to libreac/fuzz_grant's ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YFkm.v (donor image sha256 fde52226dc48), with its module paths changed, names GrantSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build; the proof steps of fuzz_knock's depot model (st_depot S <> [] premises and case splits on st_depot, the layout lemma layout_gle_refl, depot_ok_pre / depot_ok_post / depot_ok_mapped and the depot_same step of lib/Reusable/YG0n.v), taken from proofs/libreac/fuzz_knock/lib/AU/YFkm.v; Zify's Euclidean-division option is set locally. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

@@ -1,8 +1,8 @@
-(* CARRIED from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/ReallocP.v, sha256 12eea4d6ef85c3aef89d99bd596f2c04035007c3fe95618486d95c73305014d5.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v at 82e315ce20c (cold/c-asan-realloc-primary; no cgif_file_fuzzer copy there; the C5 trace premise), with its module paths changed by its own module map (YN05 -> YM05, YG0h -> YG0f, YA0l -> YA0n). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v (cold/c-asan-realloc-primary; no cgif_file_fuzzer copy there; the C5 trace premise), with its module paths changed by its own module map (YN05 -> YM05, YG0h -> YG0f, YA0l -> YA0n). *)
 (* The realloc statements over section variables, for any harness whose model is the YG00 form.
 
    [arealloc_realizes_allP] is the realloc contract for 1 <= n < nmax and a live old block;

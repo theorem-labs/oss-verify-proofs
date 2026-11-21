@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Pj_pdtor2A.v, lines 30, 93, 239. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -26,7 +27,7 @@ Lemma pdtor_tail : forall (Σ : rts RT) PMc (ra sp gp t0 t1 t2 s0 s1 a1' a2 a3 a
   fdfs_only PMc -> mat_stable PMc ->
   pdone RT Σ m1 P L0 -> ART RT Σ m1 -> mem_inv asegs m1 ->
   stk asegs m1 lo (bv_unsigned sp + -32) -> rw_cells asegs m1 (bv_unsigned sp + -32) [CB 8 j; C8 s1; C8 s0; C8 ra] ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PID_STACK <= bv_unsigned sp ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PID_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> unwind_ok ra s0 sp -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st (Z_to_bv 64 0xb6b0c) (Z_to_bv 64 (bv_unsigned sp + -32)) gp (Z_to_bv 64 0x6b0128) t0 t1 t2 (Z_to_bv 64 P) (Z_to_bv 64 2147450880)
                                        (Z_to_bv 64 (P + 24)) a1' a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_docdtor m1)))
@@ -89,7 +90,7 @@ Proof using AF DOCD DELD AFV.
     assert (INA1 : In (ia, nia) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [apply live_remove_keep; [exact INA| exact (not_eq_sym M1)]| exact (not_eq_sym M5)]).
     assert (INO1 : In (oc, noc) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [apply live_remove_keep; [exact INO| exact (not_eq_sym M2)]| exact (not_eq_sym M6)]).
     assert (INX1 : In (idx, nidx) (rt_live RT Σ1)) by (rewrite LV1; apply live_remove_keep; [apply live_remove_keep; [exact INX| exact (not_eq_sym M3)]| exact (not_eq_sym M7)]).
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (INF1 : In (f, k) (rt_frames RT Σ1)) by (rewrite FRS1; exact INF).
     assert (CLP : forall x, P <= x < P + 80 -> aclient (rt_live RT Σ1) (rt_frames RT Σ) (usp + -32) x).
     { intros x Hx. right; right; right; left. exists f, k. split; [exact INF| lia]. }
@@ -235,7 +236,7 @@ Proof using AF DELA DOCD DELD AFV.
     cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2.
     rewrite (ret_pc_even 0xb6b04) in Hc2' by lia.
     assert (KEEP : forall e, In e (rt_live RT Σ) -> fst e <> copy -> In e (rt_live RT Σ1)) by (intros e He Hn; rewrite LV1; apply live_remove_keep; assumption).
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (FR2 : rw_cells asegs m2 (usp + -32) [CB 8 j; C8 s1; C8 s0; C8 ra]).
     { apply (rw_cells_agree_nw asegs m1 m2 _ _ FR1). apply (agree_of_pres _ _ _ _ _ _ PRES2).
       intros x Hx. cbn [cells_size csize Nat.add] in Hx. left; ul. }

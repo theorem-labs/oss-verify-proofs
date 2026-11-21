@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's maps_subtract cut; the THP flag of the mmap placement; the reserved ledger). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -60,13 +61,15 @@ Proof.
 Qed.
 
 Lemma VMall_brk_grow : forall A h (req : word),
-  VMall A h -> u (vm_start_brk h) <= u (vm_brk h) -> u (vm_brk h) <= u req ->
+  VMall A h -> u (vm_start_brk h) <= u (vm_brk h) -> u (vm_brk h) < u req ->
+  page_aligned (u (vm_brk h)) -> page_aligned (u req) ->
   VMall A (vm_brk_grow req h).
 Proof.
-  intros A h req HV Hsb Hle. unfold vm_brk_grow.
+  intros A h req HV Hsb Hle Hab Har. rewrite vm_brk_grow_aligned by (unfold page_aligned, page_size in *; first [assumption | lia]).
   pose proof (u64_range req). pose proof (u64_range (vm_brk h)).
   apply (VMall_cons A A h); auto.
-  left. cbn [fst snd]. rewrite u_sub_small by llia. llia.
+  - llia.
+  - left. cbn [fst snd]. rewrite u_sub_small by llia. llia.
 Qed.
 
 (* [comment removed for export] *)
@@ -107,6 +110,11 @@ Proof.
     split; [| apply maps_subtract_free; [exact NW | exact H2]].
     pose proof (NWM _ _ H1) as NW1. rewrite !uZ in NW1 by llia.
     apply (maps_subtract_in_intro _ lo hi _ _ _ H1). rewrite (iv_subtract_apart _ _ lo hi); rewrite ?uZ by llia; try llia. left; reflexivity.
+  - (* res: every piece lies inside an entry already apart from the reserved ledger *)
+    apply (res_ok_mono h); [reflexivity | exact Vres |]. intros b' sz' Hin. cbn [vm_maps] in Hin.
+    destruct (in_maps_subtract _ lo hi b' sz' Hin) as (b & sz & H0 & H1).
+    destruct (iv_subtract_in b sz lo hi b' sz' (NWM b sz H0) H1) as (A1 & A2 & A3 & A4).
+    apply (region_free_sub _ b sz); [exact (res_ok_in h b sz Vres H0) | llia | llia].
   - apply maps_subtract_pw; [exact NWM | llia | exact Vpw].
   - intros b' sz' Hin. destruct (in_maps_subtract _ lo hi b' sz' Hin) as (b & sz & H0 & H1).
     destruct (iv_subtract_in b sz lo hi b' sz' (NWM b sz H0) H1) as (A1 & A2 & A3 & A4).
@@ -129,7 +137,7 @@ Qed.
 
 Lemma mmap_none_facts : forall sp0 argv envp cb A s (a len : word),
   IS sp0 argv envp cb A s -> VMcore A (ms_vm s) -> 0 < u len -> u len < 2^62 ->
-  grant_ok_na_vm (ms_vm s) a (page_round_up_Z (u len)) = true ->
+  grant_ok_na_vm (ms_thp s) (Z_to_bv 64 0) (ms_vm s) a (page_round_up_Z (u len)) = true ->
   u (page_round_up len) = page_round_up_Z (u len) /\
   u len <= page_round_up_Z (u len) /\
   u a mod 4096 = 0 /\ 0x1000 <= u a /\ u a + page_round_up_Z (u len) <= alloc_ceiling /\
@@ -147,7 +155,7 @@ Proof.
   assert (EnZ : u (page_round_up len) = page_round_up_Z (u len)) by (unfold page_round_up; apply uZ; llia).
   assert (En : Z_to_bv 64 (page_round_up_Z (u len)) = page_round_up len) by reflexivity.
   rewrite En in G4. rewrite region_free_app in G4. apply andb_true_iff in G4. destruct G4 as [Gr Gm].
-  pose proof (region_free_image a (page_round_up len) ltac:(rewrite <- (vc_res A _ HV); exact Gr) ltac:(rewrite EnZ; llia)) as Himg.
+  pose proof (region_free_image a (page_round_up len) ltac:(exact (res_ok_seg _ _ _ (vc_res A _ HV) Gr)) ltac:(rewrite EnZ; llia)) as Himg.
   rewrite EnZ in Himg.
   pose proof (proj1 (region_free_spec _ _ _) Gm) as FREE. rewrite EnZ in FREE.
   pose proof (aligned_ge_page (u a) G1 G2) as Hlo.
@@ -168,7 +176,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma mmap_none_state : forall sp0 argv envp cb A s (a len : word),
   IS sp0 argv envp cb A s -> VMcore A (ms_vm s) -> 0 < u len -> u len < 2^62 ->
-  grant_ok_na_vm (ms_vm s) a (page_round_up_Z (u len)) = true ->
+  grant_ok_na_vm (ms_thp s) (Z_to_bv 64 0) (ms_vm s) a (page_round_up_Z (u len)) = true ->
   let n := page_round_up len in
   IS sp0 argv envp cb A (upd s (unfill a n (ms_mem s)) (vm_noacc a n (ms_vm s))) /\
   VMcore A (vm_noacc a n (ms_vm s)) /\
@@ -193,7 +201,9 @@ Proof.
     + intros x Hd Hx. exact (proj1 (Gdom x Hx) Hd).
     + intros x _ _ Hc. cbn [vm_maps vm_noacc]. apply mcov_cons. exact Hc.
     + intros x Hx Hm. exfalso. apply Hm. apply unfill_in. rewrite EnZ. exact Hx.
-  - unfold vm_noacc. apply (VMcore_add_noacc A (ms_vm s) a n HV); rewrite ?EnZ; try assumption; llia.
+  - unfold vm_noacc.
+    assert (Gres : region_free (vm_reserved (ms_vm s)) a n = true) by exact (grant_ok_na_vm_res _ _ _ _ _ Hg).
+    apply (VMcore_add_noacc A (ms_vm s) a n HV); rewrite ?EnZ; try assumption; llia.
 Qed.
 
 (* [comment removed for export] *)

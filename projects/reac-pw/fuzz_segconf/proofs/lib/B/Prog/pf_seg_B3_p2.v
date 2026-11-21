@@ -24,9 +24,10 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 414 of its 496 lines of code are new or changed and 4971 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B2.v, with its module names and addresses changed; 438 of its 521 lines of code are new or changed and 413 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B3 of reac_segconf_parse_file's
    walk, its second piece: MID1 (0x880d0) -> the memset at 0x88130 -> MID2 (0x88134). The B3 segment lane of the image-B G3 walk owner,
-   2026-10-30. ADAPTED from the image-A G3 walk owner's image-A segment walk lib/A/Prog/pf_a2.v (commit 3f59c8d75ed4:
+   2026-10-30. ADAPTED from the image-A G3 walk owner's image-A segment walk lib/A/Prog/pf_a2.v (
    seed, run, region read-back, call step), re-derived on image B's code:
      0x880d0 srli a0,s6,3; add a3,a0,s4; lb a0,0(a3); 0x880dc beqz a0 -> 0x880e4   inline check B#1 (load4 of c->gen;
              slow path 0x891cc .. 0x891e0 not reached: the granule of c + 0x40e0 is addressable, reader_pre's

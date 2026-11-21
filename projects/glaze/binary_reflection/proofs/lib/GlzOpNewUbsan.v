@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HMDL and pre_facts carry the channel reader and the vDSO reservation inclusion through operator new). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -281,7 +282,9 @@ Definition HMEM (M : word -> option byte) : Prop :=
   (forall a : word, M a <> M0 a -> mh_changed (MSTK_M + 16) Lc sp0 a) /\
   (forall a : word, sp0 - (MSTK_M + 16) <= bv_unsigned a < sp0 -> store_ok RSEGS M a 1%nat = true).
 Definition HMDL (mdl : Model) : Prop :=
-  m_halted mdl = None /\ m_vm_lazy mdl = [] /\ m_vm_materialized mdl = [] /\ m_fs mdl = m_fs mdl0 /\ m_fds mdl = m_fds mdl0.
+  m_halted mdl = None /\ m_vm_lazy mdl = [] /\ m_vm_materialized mdl = [] /\ m_fs mdl = m_fs mdl0 /\ m_fds mdl = m_fds mdl0
+  /\ m_channel_reader mdl = m_channel_reader mdl0
+  /\ incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
 Definition CSV : list Z := [3; 9; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27]%Z.
 Definition QQ : config -> Prop := malloc_ok AINV (MSTK_M + 16) R0 M0 mdl0 Lc B C ret n sp0.
 
@@ -293,7 +296,8 @@ Lemma pre_facts :
   bv_unsigned spw = sp0 /\ sp0 mod 16 = 0 /\ CEIL + (MSTK_M + 16) <= sp0 /\
   getr R0 4 = Z_to_bv 64 TPV /\
   (forall a : word, sp0 - (MSTK_M + 16) <= bv_unsigned a < sp0 -> store_ok RSEGS M0 a 1%nat = true) /\
-  B + (n + MBLK) <= MH_GBUDGET /\ C + 1 <= LMAX.
+  B + (n + MBLK) <= MH_GBUDGET /\ C + 1 <= LMAX /\
+  incl (vdso_reserved (m_kernel mdl0) (vdso_top (m_vmmaps mdl0))) (vm_reserved (m_vmmaps mdl0)).
 Proof using HPRE. exact HPRE. Qed.
 
 Lemma sp0_rng : CEIL0 <= CEIL /\ CEIL + 1296 <= sp0 /\ sp0 < 2 ^ 64.
@@ -369,8 +373,8 @@ Lemma mpre_of : forall rx Mx mdlx retk,
   getr rx 10 = nw -> getr rx 2 = sp1w -> getr rx 4 = Z_to_bv 64 0x8ab90 ->
   malloc_pre MSTK_M rx Mx mdlx B C retk n (sp0 - 16).
 Proof using HPRE.
-  intros rx Mx mdlx retk (_ & _ & _ & ST) (Hh & Hl & Hm & _ & _) H1 Hrk Hev H10 H2 H4.
-  destruct pre_facts as (_ & _ & _ & _ & _ & _ & Hn & Hnr & Hsp & Hal & Hc & _ & _ & Hb & Hcn). pose proof sp0_rng as SR.
+  intros rx Mx mdlx retk (_ & _ & _ & ST) (Hh & Hl & Hm & _ & _ & _ & HVDSO) H1 Hrk Hev H10 H2 H4.
+  destruct pre_facts as (_ & _ & _ & _ & _ & _ & Hn & Hnr & Hsp & Hal & Hc & _ & _ & Hb & Hcn & _). pose proof sp0_rng as SR.
   unfold malloc_pre. rewrite H10, H2, sp1w_u.
   repeat match goal with |- _ /\ _ => split end; try assumption; try (unfold MSTK_M in *; lia).
   - rewrite <- Zminus_mod_idemp_l, Hal. reflexivity.
@@ -392,8 +396,8 @@ Lemma exit_K : forall (K : config -> Prop) rx Mx mdlx c3,
   HMEM Mx -> HMDL mdlx -> CSR rx -> getr rx 2 = sp1w -> getr rx 4 = Z_to_bv 64 0x8ab90 ->
   malloc_ok AINV MSTK_M rx Mx mdlx Lc B C 0x749c0 n (sp0 - 16) c3 -> K c3.
 Proof using HPRE.
-  intros K rx Mx mdlx c3 HK HQK HMx (Hhx & Hlx & Hmx & Hfsx & Hfdx) CSx R2 R4
-         (R' & M' & mdl' & p & -> & RK & H10 & Hal & Hblk & Hdisj & Hdef & CH' & ST' & HA' & Hh' & Hl' & Hm' & Hfs' & Hfd').
+  intros K rx Mx mdlx c3 HK HQK HMx (Hhx & Hlx & Hmx & Hfsx & Hfdx & Hrdrx & _) CSx R2 R4
+         (R' & M' & mdl' & p & -> & RK & H10 & Hal & Hblk & Hdisj & Hdef & CH' & ST' & HA' & Hh' & Hl' & Hm' & Hfs' & Hfd' & Hrdr' & Hvdso').
   destruct pre_facts as (_ & _ & _ & _ & Hrr & Hre & _ & _ & Hsp & _ & _ & HT4 & _). pose proof sp0_rng as SR.
   pose proof (hmem_after_malloc Mx M' HMx CH' ST') as HM'. destruct HM' as (M8 & M16 & MCH & MST).
   assert (R'2 : getr R' 2 = Z_to_bv 64 (bv_unsigned spw - 16)) by (rewrite Hsp; csrw RK 2; exact R2).
@@ -414,6 +418,7 @@ Proof using HPRE.
             first [ apply CSx; cbv; lit_in | rewrite (zreg 4 I), R4, HT4; reflexivity ] ].
   - rewrite Hfs'. exact Hfsx.
   - rewrite Hfd'. exact Hfdx.
+  - rewrite Hrdr'. exact Hrdrx.
 Qed.
 
 (* [comment removed for export] *)
@@ -423,7 +428,7 @@ Theorem opnew_retry : forall T,
   realizes RSEGS (mkCfg (mkst R0 (Z_to_bv 64 0x749a4) M0 rom) mdl0) T.
 Proof using HPRE HA0 AINV_stack HMW.
   intros T HT HQ.
-  destruct pre_facts as (Hh & Hl & Hm & Hra & Hrr & Hre & Hn & Hnr & Hsp & Hal & Hc & HT4 & Hstk & _). pose proof sp0_rng as SR.
+  destruct pre_facts as (Hh & Hl & Hm & Hra & Hrr & Hre & Hn & Hnr & Hsp & Hal & Hc & HT4 & Hstk & _ & _ & HVDSO). pose proof sp0_rng as SR.
   pose proof (u64_range spw) as Hspr.
   assert (ST16 : store_ok USEGS M0 (Z_to_bv 64 (bv_unsigned spw - 16)) 16 = true).
   { apply store_ok_of_all; [u_norm; lia|]. intros x Hx. revert Hx; u_norm; intros Hx.
@@ -432,7 +437,7 @@ Proof using HPRE HA0 AINV_stack HMW.
     as (r1 & S1 & H11 & H12 & H110 & H18 & CS1).
   rewrite (zbv_lit 0x749a4 (0x749a4%bv : word) eq_refl).
   apply (rz_msteps RSEGS _ _ mdl0 T Hh Hl S1).
-  assert (HD0 : HMDL mdl0) by (split; [exact Hh | split; [exact Hl | split; [exact Hm | split; reflexivity]]]).
+  assert (HD0 : HMDL mdl0) by (repeat split; try assumption; reflexivity).
   assert (R12 : getr r1 2 = sp1w) by (rewrite H12, Hsp; reflexivity).
   assert (R14 : getr r1 4 = Z_to_bv 64 0x8ab90) by (csrw CS1 4; exact HT4).
   assert (CSR1 : CSR r1) by (intros x Hx; apply CS1; revert Hx; cbv; tauto).

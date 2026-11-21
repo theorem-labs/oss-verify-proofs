@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the CUTS of pj_parse's image-B' walk (fuzz_preset asan-ubsan, pin d663f82d7f488d30; B'
-   0x862ec, 36 instructions; preset_file.c :296-309), on the kit's cwpj-fix f29626eb1667 (the batch kit's CUT 7cdbb61b5fa0 plus
+   0x862ec, 36 instructions; preset_file.c :296-309), on the kit's cwpj-fix (the batch kit's CUT plus
    (the kit cut preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record) plus the prh_cw_pj repair). STATEMENTS ONLY
    (and pjp_invR's two one-line lemmas): the entry record, the walk's final post (the kit's tpj_parse_specX post, by its kit name), the cut states,
    the segment statements (each proved by its own file) and the keep statements the segments share. lib/B/Prog/pj_parse_top.v composes them.
@@ -17,7 +18,7 @@
      +0x54..+0x64  a0 := sp + 8, skip_ws, reload p / end, beq       taken -> +0x84 (a0 := 0, j +0x74)
      +0x68..+0x70  a0 := s0, pj_free, a0 := -1                     CUT pjp_C2ref at +0x68
      +0x74..+0x80  ld ra, ld s0, sp += 48, ret                      CUT pjp_C3 at +0x74
-   TEXTS: the kit's cwpj-fix f29626eb1667 (lib/A/PRH_FnPj.v blob 38a83863585f, PRH_FnParse.v, PRH_FnReader.v, PRH_Base.v
+   TEXTS: the kit's cwpj-fix (lib/A/PRH_FnPj.v blob 38a83863585f, PRH_FnParse.v, PRH_FnReader.v, PRH_Base.v
    (lib/A/PRH_FnPj.v (sha256 35457d119ddb; internal record), PRH_FnParse.v, PRH_FnReader.v, PRH_Base.v (sha256 ada75e4a39ad; internal record)):
    no run-word list DW (prh_univ_closure B CTX0; the cursor set CW and its room YCbqGwild.wild_room ..  CW 0), the
    budgeted posts (fpostWFbm at YCbqGwild.wbudget CW 0), the re-keyed prh_oks and the refusal peak, the outcome

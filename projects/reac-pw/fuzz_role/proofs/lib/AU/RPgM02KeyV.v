@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyV.v at 887bee7c56d (the value tail:
-   the role's range test, check_role and the jump to T) and proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02KeyVB.v at
-   f07713e8e823 (its join m2kv_jn_walk / m2kb_join: the entry state over the frame cell, the call through the seam of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyV.v (the value tail:
+   the role's range test, check_role and the jump to T) and proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02KeyVB.v
+    (its join m2kv_jn_walk / m2kb_join: the entry state over the frame cell, the call through the seam of
    lib/AU/RtPgM02BaseB.v and the second run after the return) for reac-pw/fuzz_role image B (fuzz_role.asan-ubsan):
    image B's pcs (JN 0x824dc, check_role 0x82aac called from 0x824f0 with ra 0x824f4, MAL 0x824f8, T 0x82504); the
    role cell is at F+0x2a0 held in s4 (atom 20; image A: F+0x180 in s6); the code is s9 (image A: s8); the registers
    the join keeps are sp, rs_L_chk's six (m2k_L6) and s6, s8, s9, s10 (m2kv_L; image A: ch_L and s9, s11); the cut
    after the join is rebuilt by lib/AU/RPgM02KeyBase.v's m2k_cut_T (image A: lib/A/RPgM02Tail.v's ch_cut_T), and the
    run after the return enters a state with no region in place of image A's tl_enter. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role, image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, the same loaded bytes). Proves no function

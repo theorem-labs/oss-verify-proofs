@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v; 139 of its 244 lines of code are new or changed and 1604 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Lib-level pieces of image-B segment F17b of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, libreac v1.9.0;
    lib/B/Prog/Seg/F17b.v): the call `jal __asan_memcpy` at 0x82630, which copies the first fragment's body
    gg[27 .. 27 + gg[26]) (src = [A+312] + 9 = Phi + 27) into the body of the frame object `first`
@@ -12,7 +13,7 @@
    (lib/B/Prog/asan_memcpy_c.v) asks for it: f17_mc runs the contract on MemNorm.normalize m (mem_inv_normalize)
    and carries the run back to m by MemNorm.evt_normalize. The lemmas below move the contract's premises to the
    normalized memory and its post back; every address they speak of is at or above GT, where no segment lies.
-   They are the memcpy machinery of a working branch 09d6f8f33fa lib/B/Prog/Seg/F12.v (f12_evt and the f12_
+   They are the memcpy machinery of a working branch lib/B/Prog/Seg/F12.v (f12_evt and the f12_
    normalization lemmas), here in the Lib engine of the contract; Seg/F17b.v steps in the UL engine and hands
    the call to f17_mc. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

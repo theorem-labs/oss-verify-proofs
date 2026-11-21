@@ -17,12 +17,12 @@ Lemma rz_lb_srz : (forall c T, QRjH.realizes segs c T -> Q1lV.srealizes segs c T
 /\ (forall V T c, QRjH.lbody segs V T c -> Q1lV.slbody segs V T c).
 Proof.
 apply QRjH.realizes_lbody_mutind.
-- intros c I evs nx T i0 Hn _ IH. exact (Q1lV.srz_node segs c I evs nx T i0 Hn IH).
+- intros c I evs nx T i0 Hn Hrob _ IH. exact (Q1lV.srz_node segs c I evs nx T i0 Hn Hrob IH).
 - intros c Hh. exact (Q1lV.srz_halt segs c Hh).
 - intros c T T' _ IH Heq. exact (Q1lV.srz_conseq segs c T T' IH Heq).
 - intros V T c c_e HV _ IHb Hw _ IHe. exact (Q1lV.srz_loop segs V T c c_e HV IHb Hw IHe).
 - intros V T c _ IH. exact (Q1lV.slb_exit segs V T c IH).
-- intros V T c I nx k Hn _ IHk HV. exact (Q1lV.slb_node segs V T c I nx k Hn IHk HV).
+- intros V T c I nx k Hn Hrob _ IHk HV. exact (Q1lV.slb_node segs V T c I nx k Hn Hrob IHk HV).
 Qed.
 
 Lemma realizes_srealizes : forall c T, QRjH.realizes segs c T -> Q1lV.srealizes segs c T.
@@ -33,6 +33,7 @@ Definition TGT_UBSAN_REALIZES : Prop :=
 forall (sp brk mbase : word) (rnd : EntryDraw) (inp : ProcInput),
 valid_sp sp -> valid_brk Ubsan.M.loaded_segments brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 valid_input_either inp ->
 QRjH.realizes Ubsan.M.loaded_segments
 (init_config Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
@@ -52,10 +53,10 @@ Proof.
 exact (QJur_c1.strong_universal_error_free_budgets_abort_of_mixed_at
 Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs
 Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs
-(fun inp => spec (in_argv inp) (in_fs inp)) QSpR.spec_kill_free_inp
+(fun inp => spec (in_argv inp) (in_fs inp)) QSpR.spec_kill_free_inp eq_refl eq_refl
 source_alloc_limit target_alloc_limit
 (QHdY.drv_realizes_P OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Jo3.TargetJoP.target_P2_proof)
-(fun sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hei =>
-realizes_srealizes _ _ _ (TGT sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hei))).
+(fun sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hlau Hei =>
+realizes_srealizes _ _ _ (TGT sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hlau Hei))).
 Qed.
 End Top.

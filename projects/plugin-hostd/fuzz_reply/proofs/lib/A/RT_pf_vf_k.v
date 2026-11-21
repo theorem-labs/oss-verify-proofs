@@ -1,6 +1,6 @@
 (* KEEP-FX copy of RT_pf_vf.v: ___interceptor_vfprintf as musl vsnprintf's `vfprintf`, from the keep-FP twin's guarded
    musl vfprintf body (lib/CJ/RL/GXAK, provenance/keepfx/README.md).
-   Copy of lib/A/RT_pf_vf.v:33-83 and :128-362 at d49bd1db505 (sha256 0022c9da30b0; internal record), retargeted to GXAK; the helper
+   Copy of lib/A/RT_pf_vf.v:33-83 and :128-362 (sha256 0022c9da30b0; internal record), retargeted to GXAK; the helper
    lemmas at RT_pf_vf.v:84-126 are not copied but used in place, qualified by the alias PF.
 
    vf_icpt_ok_k: the twin's guarded vfprintf body at A_img (GXAK/G_vfprintf_snf_closed.v

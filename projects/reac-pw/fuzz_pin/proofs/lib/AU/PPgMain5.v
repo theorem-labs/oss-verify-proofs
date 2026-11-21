@@ -9,7 +9,7 @@
    0x80974-0x8097c, `beqz s2,0x809d4` 0x80980 not taken, the 16 stores of 0xf5 0x80984-0x809c4, the flag byte
    `ld a0,120(s2)` / `sb zero,0(a0)` 0x809c8-0x809cc, `j 0x80a04`, a0 := 0, the 13 restores and `ret` 0x80a44).
    The proof text names no address, so it is the A file's. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgMain7.v at 6ebe35ba632; made the exit segment
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgMain7.v; made the exit segment
    S5 of reac-pw/fuzz_pin's ASan harness walk (LLVMFuzzerTestOneInput 0x806b4, fuzz_pin.asan sha256
    3e4859aed23f78a6eb028120d664abda29bcb8a3bfdea5d6ee5b32b646de9d16): the exit state is lib/A/PPgMainSt.v's ss_X with
    INV_X, the lemma is pm_S5 (rt_post's PX is True, so the PX step and the general rt_XP form are dropped), the module
@@ -39,6 +39,7 @@
    - Two more shadow stores at the start (s7 + 4, s7 + 8 := 0xf8); fs_rwF makes the 16 shadow bytes writable first.
    - INV_X is k <= RT_EV /\ acc <= c_T cx /\ Permutation ..., with RT_EV = 2 (one malloc, one free).
    - rt_post's PX is True: its conjunct is closed by I. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

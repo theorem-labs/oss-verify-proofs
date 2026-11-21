@@ -1,16 +1,39 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one code range added and two widened in IT0_ranges, for ASan's refused-munmap path and the block before the msbmask ecall; the recorded hand-off tables su_P1_tab and su_P2_tab and their imports removed; the plan-variable renumbering vsh_su, read from probe runs, and the renumbered plans su_P1_planR, su_P2_planR, su_P3A_planR, su_P3B_planR and su_P3C_planR added; the plan rewrite mfix added, and su_P2_plan now turns each munmap node into the two-branch PMunmap2 with a spinning refused branch). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan AsanCertDefs PlanCut StartupPlanAsan StartupHSAsan StartupHScutAsan.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan AsanCertDefs PlanCut PlanRegen StartupPlanAsan.
 Import ListNotations. Import AX2. Import APC. Import AP.
 Open Scope Z_scope.
 
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* #38 REFUSED-MUNMAP PATH.  Two ranges are added below and nothing else in this file moves for them.
+   [sym_execTX_go] (AxSymExec3.v:2990) halts wherever [itab_lookup] answers [None], so the refused
+   child stopped at the first address past [(509236, 26)] and [PSpin], which only tests the pc it is
+   handed, answered CErr 2 in four builds of this port; re-measured here in a later
+   build.
+     509236 = ASan's UnmapOrDie.  The refused munmap returns through internal_iserror (502980) with
+     a0 = 1 and errno 12 in *(sp+0xc); the [bnez a0] at 509304 goes to 509340, one past the old end
+     509336.  509340..509356 is the error tail, so (509236, 26) becomes (509236, 31).
+     Its call lands on ReportMunmapFailureAndDie at 484872: ten instructions ending in [bnez a0]
+     at 484908, then [j .] at 484912.  The range STOPS AT 484912 and does not contain it, exactly as
+     the mmap twin's (484644, 15) stops at 484704 - a spin is read from [segs] by [node_spin], never
+     from the table, so the run halts on the spin's address and [PSpin] succeeds there.
+   The donor is in this file already: ReportMmapFailureAndDie (484656) tests the SAME TWO GLOBALS as
+   484872 and fifteen [PMmap (PRun [] PSpin) _] nodes discharge it today.
+   Soundness is unconditional: [mk_itab_ranges_sound] (AsanPlanSound.v:691) holds for an ARBITRARY
+   range list and every entry is DECODED from ASEGS, so a range can only let the executor see more of
+   the image it is already proved against.  It is not a premise, a statement or an axiom, and it
+   cannot change a run that already succeeded, because such a run never consulted a missing entry.
+   Image B's copy of all four addresses is this one plus 1396 (BBoot/StartupPiecesAsan.v).
+   (506848, 4) is widened to (506848, 28), the block from node_msbmask's exit at 506848 up to the
+   ecall at 506960 (B: 508244 and 508356); the probe runs that read the renumbering below were made
+   with this table. *)
 Definition IT0_ranges : list (Z * nat) :=
   [(287452, 18%nat); (287784, 15%nat); (288212, 24%nat); (288316, 18%nat); (288396, 27%nat); (288508, 7%nat); (296640, 9%nat); (296724, 4%nat);
    (296932, 6%nat); (297200, 7%nat); (297264, 3%nat); (297292, 15%nat); (297364, 6%nat); (297560, 22%nat); (297656, 21%nat); (297884, 8%nat);
@@ -66,12 +89,12 @@ Definition IT0_ranges : list (Z * nat) :=
    (470148, 9%nat); (470264, 12%nat); (470356, 15%nat); (470468, 23%nat); (470564, 7%nat); (470780, 10%nat); (470824, 7%nat); (471040, 29%nat);
    (471276, 33%nat); (471452, 15%nat); (471596, 18%nat); (471676, 18%nat); (471752, 8%nat); (471868, 24%nat); (476208, 1%nat); (476220, 39%nat);
    (476488, 32%nat); (476620, 5%nat); (476672, 8%nat); (476716, 1%nat); (476740, 14%nat); (478504, 29%nat); (478632, 38%nat); (478848, 9%nat);
-   (478924, 3%nat); (478984, 3%nat); (484644, 15%nat); (486344, 4%nat); (486384, 1%nat); (486412, 4%nat); (486444, 1%nat); (487044, 8%nat);
+   (478924, 3%nat); (478984, 3%nat); (484644, 15%nat); (484872, 10%nat); (486344, 4%nat); (486384, 1%nat); (486412, 4%nat); (486444, 1%nat); (487044, 8%nat);
    (487100, 22%nat); (488152, 1%nat); (488224, 1%nat); (488936, 9%nat); (488992, 28%nat); (489420, 10%nat); (491044, 89%nat); (492240, 1202%nat);
    (498252, 25%nat); (498404, 22%nat); (498648, 41%nat); (498856, 16%nat); (499036, 17%nat); (499268, 9%nat); (499360, 26%nat); (499484, 12%nat);
    (499536, 4%nat); (499560, 11%nat); (500008, 15%nat); (500104, 16%nat); (501144, 3%nat); (501160, 1%nat); (501188, 2%nat); (501304, 24%nat);
-   (501916, 10%nat); (502980, 9%nat); (503020, 2%nat); (503032, 1%nat); (503724, 21%nat); (506616, 11%nat); (506848, 4%nat); (506896, 2%nat);
-   (507692, 15%nat); (507780, 1%nat); (508240, 2%nat); (508836, 1%nat); (508852, 13%nat); (508916, 40%nat); (509092, 7%nat); (509236, 26%nat);
+   (501916, 10%nat); (502980, 9%nat); (503020, 2%nat); (503032, 1%nat); (503724, 21%nat); (506616, 11%nat); (506848, 28%nat); (506896, 2%nat);
+   (507692, 15%nat); (507780, 1%nat); (508240, 2%nat); (508836, 1%nat); (508852, 13%nat); (508916, 40%nat); (509092, 7%nat); (509236, 31%nat);
    (510448, 18%nat); (510532, 8%nat); (510576, 35%nat); (510732, 1%nat); (510756, 20%nat); (512144, 17%nat); (512480, 10%nat); (512668, 33%nat);
    (512804, 13%nat); (512864, 8%nat); (512936, 2%nat); (512968, 6%nat); (513060, 19%nat); (513516, 26%nat); (513756, 21%nat); (514132, 3%nat);
    (514392, 14%nat); (514980, 25%nat); (515084, 8%nat); (515148, 23%nat); (515264, 6%nat); (515324, 4%nat); (515368, 4%nat); (515428, 5%nat);
@@ -107,11 +130,88 @@ Definition su_KD : kentry := KDisj (SA su_SB (-8388608)) (ELit 16777216) (SA (EM
 
 (* [comment removed for export] *)
 Definition su_P1_plan : plan := ins_main 37 (PFact su_KD) (fst (pcutS 200 70 startup_plan 0)).   (* [comment removed for export] *)
-Definition su_P1_tab : nat -> option acs := hs_tab [(1000%nat, HS_s1c_1000)].
+(* LPS 727298f3: the launch has two more plan variables (V_G, V_GID: NX0 10 -> 12) and more of the
+   auxv to read, so the run numbers its fresh variables differently from the run the plans were
+   recorded against.  [vsh_su] renumbers each recorded start-up plan where it is checked
+   (PlanRegen.psh), and it is read from probe runs, not chosen (the probe record of this port):
+   - old v >= 10 moves by 4: at main's PFact su_KD (old EVar 93) the run's only 65536-byte mapping is
+     based at 4096 * EVar 97 (probe 2); with that map P1 runs whole to hand-off 1000 at both rz values
+     in both images, its counter (248) and every mapping base the recorded one + 4 (probe 3, round C1);
+   - old v >= 325 moves by 6: renumbered by + 4, P2's PBump 359 refuses at counter 365 at both rz
+     values in both images (round C1), so the variables the run adds from that bump on are numbered
+     from 365; and the start-up's hand-off state at 0 computed from the run has mappings based at
+     EVar 331 and EVar 398 where the recorded one has EVar 325 and EVar 392 (round C2).  325 is the
+     lowest old variable the runs show at + 6, and the renumbering is increasing, so every old
+     variable from 325 to 359 moves by 6; no plan and no recorded state names an old variable in
+     261..324, where the step from + 4 to + 6 lies.  No start-up plan names a variable in 325..358,
+     so every start-up plan checked is the same under this map as under the + 6 from 359 that
+     rounds C1 and C2 ran. *)
+Definition vsh_su : nat -> nat := tshift [(10%nat, 4%nat); (325%nat, 6%nat)].
+Definition su_P1_planR : plan := psh vsh_su su_P1_plan.
 
-(* [comment removed for export] *)
-Definition su_P2_plan : plan := fst (pcutS 100 25 su_t70 1).
-Definition su_P2_tab : nat -> option acs := hs_tab [(1001%nat, HS_s1c_1001); (1002%nat, HS_s1c_1002); (1003%nat, HS_s1c_1003)].
+(* #38 (75d69e00 Sys/Mm/Mmap.v): [node_sys YMunmap] is [None] at this revision - munmap's exact-unmap
+   arm answers -ENOMEM under an [alt] beside the success, so the single-outcome system-call node no
+   longer covers it and the plan must branch.  [mfix] is the identity on every plan constructor except
+   [PSys YMunmap k], which becomes [PMunmap2 kr k]: the refused child [kr] and the cut child [k].  It
+   is a total rewriting of the COLLECTED plan, not a re-encoding of it, so the plan's text is still the
+   collector's.  [kr] is [PRun [] PSpin], the shape every other refusal child in [startup_plan] already
+   has: with IT0's refused-munmap ranges above, the refused arm runs ASan's UnmapOrDie error tail into
+   ReportMunmapFailureAndDie's spin and [PSpin] succeeds there.
+   Measured in a build of this port: COk at rz = 0 AND rz = 1, and the shape is EXACTLY the
+   [su_P2_shape] this piece already certified, so no certificate shape moves.  Must-fire control in the
+   same run: with the old IT0 the same plan answers CErr 2 at pc 509340. *)
+Fixpoint mfix (kr : plan) (p : plan) : plan :=
+  match p with
+  | PRun s k => PRun s (mfix kr k)
+  | PSplit e m a b => PSplit e m (mfix kr a) (mfix kr b)
+  | PCase2 e m a b => PCase2 e m (mfix kr a) (mfix kr b)
+  | PCaseDisj b1 b2 a b => PCaseDisj b1 b2 (mfix kr a) (mfix kr b)
+  | PShDisj b1 n1 b2 n2 k => PShDisj b1 n1 b2 n2 (mfix kr k)
+  | PContra => PContra
+  | PFact K k => PFact K (mfix kr k)
+  | PJoin b o n k => PJoin b o n (mfix kr k)
+  | PForget i k => PForget i (mfix kr k)
+  | PDropRange b n k => PDropRange b n (mfix kr k)
+  | PGcKeep w k => PGcKeep w (mfix kr k)
+  | PBump m k => PBump m (mfix kr k)
+  | PHavoc r k => PHavoc r (mfix kr k)
+  | PHavocBig K k => PHavocBig K (mfix kr k)
+  | PFresh r l b k => PFresh r l b (mfix kr k)
+  | PSys YMunmap k => PMunmap2 kr (mfix kr k)
+  | PSys y k => PSys y (mfix kr k)
+  | PMmap a b => PMmap (mfix kr a) (mfix kr b)
+  | PMmapIn a b c => PMmapIn (mfix kr a) (mfix kr b) (mfix kr c)
+  | PMprotect a b => PMprotect (mfix kr a) (mfix kr b)
+  | PBrk2 a b => PBrk2 (mfix kr a) (mfix kr b)
+  | PX x a k => PX x a (mfix kr k)
+  | PExt i a k => PExt i a (mfix kr k)
+  | PEmit i a k => PEmit i a (mfix kr k)
+  | PExt2 i a k1 k2 => PExt2 i a (mfix kr k1) (mfix kr k2)
+  | PLoop j n inv b k => PLoop j n inv (mfix kr b) (mfix kr k)
+  | PNext => PNext
+  | PHandoff h => PHandoff h
+  | PExit => PExit
+  | PSpin => PSpin
+  | PFog i s k => PFog i s (mfix kr k)
+  | PFogNew i s k => PFogNew i s (mfix kr k)
+  | PGhost b n k => PGhost b n (mfix kr k)
+  | PUnvis b n k => PUnvis b n (mfix kr k)
+  | PHavocBrk l h k => PHavocBrk l h (mfix kr k)
+  | PIntro l h k => PIntro l h (mfix kr k)
+  | PDiamond j r k => PDiamond j r (mfix kr k)
+  | PRename m k => PRename m (mfix kr k)
+  | PCompact k => PCompact (mfix kr k)
+  | PVia j js lo ka k => PVia j js lo (mfix kr ka) (mfix kr k)
+  | PMerge j => PMerge j
+  | PAbstractCell b n k => PAbstractCell b n (mfix kr k)
+  | PHavocWords bs k => PHavocWords bs (mfix kr k)
+  | PRespell r e k => PRespell r e (mfix kr k)
+  | PMmapInH a b c => PMmapInH (mfix kr a) (mfix kr b) (mfix kr c)
+  | PMunmap2 a b => PMunmap2 (mfix kr a) (mfix kr b)
+  end.
+Definition su_P2_kr : plan := PRun [] PSpin.
+Definition su_P2_plan : plan := mfix su_P2_kr (fst (pcutS 100 25 su_t70 1)).
+Definition su_P2_planR : plan := psh vsh_su su_P2_plan.
 
 (* [comment removed for export] *)
 Definition su_P3A_plan : plan := su_K 0.   (* [comment removed for export] *)
@@ -121,3 +221,10 @@ Definition su_P3B_plan : plan := su_K 1.   (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 Definition su_P3C_plan : plan := su_K 2.   (* [comment removed for export] *)
+
+(* P3's plans renumbered where they are checked.  They have no munmap node, so the munmap rewrite
+   [mfix] applied to P2 leaves them unchanged (round C2: [mfix su_P2_kr] keeps each plan's size,
+   360, 361 and 361) and is not applied. *)
+Definition su_P3A_planR : plan := psh vsh_su su_P3A_plan.
+Definition su_P3B_planR : plan := psh vsh_su su_P3B_plan.
+Definition su_P3C_planR : plan := psh vsh_su su_P3C_plan.

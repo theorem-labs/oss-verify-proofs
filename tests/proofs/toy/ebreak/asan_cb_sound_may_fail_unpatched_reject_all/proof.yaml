@@ -1,0 +1,3 @@
+refutes: toy/ebreak/asan_cb_sound_may_fail_unpatched_reject_all
+approach: the classifier, lps's exit1 image, answers no on lps's finite-input witness, on which each build agrees with its original, the same image
+uses: [lps-checks]

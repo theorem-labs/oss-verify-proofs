@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call node: slbwP_nclosedT takes the node's robust-call check from nsA_rob). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Specs Run.
@@ -76,7 +77,8 @@ assert (Hnode : node_ok segs c1 Ix (fun _ => []) (fun i => snd (proj1_sig i))).
 - intros e st Hst. destruct (Hexpl e st Hst) as (rsp & ms' & mo' & -> & -> & _).
 exists (exist _ ([], mkCfg ms' mo') Hst). split; reflexivity. }
 apply (slbwP_nclosedT segs V T P c1 Ix (fun i => snd (proj1_sig i))
-(fun i => Qs (msview L (cfg_model (snd (proj1_sig i))) (cfg_ms (snd (proj1_sig i))))) Hnode).
+(fun i => Qs (msview L (cfg_model (snd (proj1_sig i))) (cfg_ms (snd (proj1_sig i))))) Hnode
+(nsA_rob _ _ _ _ _ _ _ _ _ _ _ NS n ms mo Hsp Hat1 Hh HC1 Hns1)).
 - intros [[e c'] Hst]. cbn [fst snd proj1_sig].
 destruct (Hexpl e _ Hst) as (rsp & ms' & mo' & E & -> & Hv' & Hr & HC' & Hh'). injection E as ->. cbn [cfg_model cfg_ms].
 assert (HstA : nstA n mo0 rsp mo' []) by (exists mo; split; assumption).

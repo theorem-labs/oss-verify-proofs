@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, PIN sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b):
    SEGMENT L6x of LLVMFuzzerTestOneInput (B' entry 0x816cc), the EXIT LANE: listing slots 113 .. 177 (+0x1c4 = cut_exit
@@ -9,13 +10,13 @@
    real-stack arm (`beqz s2` not taken: fk <> 0, the engine's range fact on fk), poisons all 16 shadow bytes with 0xf5,
    releases the fake frame INLINE (`ld a0,0x78(s2); sb zero,0(a0)`: the flag byte at flag_addr := 0), sets a0 = 0,
    restores sp = s0 - 0x80, reloads ra and s0 .. s11 from the saved block, pops the frame and returns to the entry ra.
-   PORTED from lib/A/Prog/Ent102L6A.v (seg_L6x_A, blob 6c75598064ef, a working branch a2d6bb26a279,
+   PORTED from lib/A/Prog/Ent102L6A.v (seg_L6x_A, blob 6c75598064ef, a working branch,
    merged here) by port/a2b.py (sha256 f5113cbc90e503da, no --map; a2b leaves no literal untranslated here). Hand
    fixes: the Require routing (lib.B Listing_prog Ent102PLB, lib.AU Ent102CutsB, lib.AU.Prog Ent102L6BDefs /
    Ent102L6BEnt) and A_prog_listing -> B_prog_listing. The flag-store rule lib/A/Prog/Ent102L6AFlag.v (blob
    0b5bed13b141) and lib/A/Prog/S1Ledger.v are image-free (no listing, no image module) and are Required as they
    stand, as the other B' rows Require S1Ledger.
-   STATEMENT (read at commit b1ed4e6c944d): lib/AU/Ent102CutsB.v
+   STATEMENT (read): lib/AU/Ent102CutsB.v
    (blob a74a7497b9d0): seg_L6x_stmt over `forall E fk, ec_hyps -> ..` (no DW), cut_exit (its index pair
    os_c = e_os E ++ [trp], i_c = e_i0 E + |ec_call_evs E trp|, and its spent wild budget ec_wk_exit), cut_ret (its
    journal at the same budget ec_wk_exit; the exact position at cut_exit's pair, the same trp as witness: the lane
@@ -24,7 +25,7 @@
    witnesses are cut_exit's, kept: the lane touches neither cell, so Ent102CallB.ec_ledger_cells is not needed),
    the RECORD ec_hyps read by name - ech_frame_area's astack_free_law_cf and ech_img's ei_pst / ei_sio /
    ei_sio_frame. ec_inv and ec_pre are read BY NAME, never by a positional destruct: lib/AU/Prog/Ent102CallB.v's
-   projections (blob 1c7a402519bc, = the CallA / CallB re-fit 3ea93d01b97c's; ec_inv_ledger /
+   projections (blob 1c7a402519bc, = the CallA / CallB re-fit; ec_inv_ledger /
    ec_inv_pre / ec_inv_pay / ec_inv_perm, ec_pre_payload) and, for the parts it does not project, this file's
    l6_inv_* / l6_pre_* (section 1), proved by its type-directed ec_conj_pick. The journal's own parts are YCbqG's
    ajx_* projections. No callee is called, so no callee room (ec_room_at), no grant form and no

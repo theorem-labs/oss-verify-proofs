@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6144513-byte zero-filled stack window): changed alib_sitew. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -66,7 +67,7 @@ Section LibSiteW.
     PHI payload ->                                (* [comment removed for export] *)
     K [] ->
     (forall (fx' : PropExec.FPState) R' M' (model' : Model) g' cr' LK' A',
-       fp_ok fx' ->                               (* [comment removed for export] *)
+       fp_ok fx' ->
        let vals' := vals ++ junk_vals R' in
        let E' := Env (vals_ev vals') ebs in
        length vals' = (length vals + 32)%nat ->
@@ -88,19 +89,21 @@ Section LibSiteW.
     pose proof (dinv_stack_defined scfg L ar C HI HIok sp0 Hsp M0 M0_def _ _ _ _ _ _ DI) as Hdef.
     pose proof Hsp as Hsp'. pose proof Hal as Hal'. destruct (dlla_stack Lay L DLL) as ((ST1 & ST2) & ST3).
     set (sp := bv_unsigned sp0 + so) in *.
-    assert (WDEF : forall a, bv_unsigned sp0 - 8388608 <= a < bv_unsigned sp0 -> M (Z_to_bv 64 a) <> None)
+    (* WINDOW, old beside new: was [sp0 - 8388608 <= a]; DRV_ZWIN (Pm5DrvLib.window_defined).
+       VIS above and the [mx] ceiling arithmetic below keep 8388608 (stack_max_size). *)
+    assert (WDEF : forall a, bv_unsigned sp0 - DRV_ZWIN <= a < bv_unsigned sp0 -> M (Z_to_bv 64 a) <> None)
       by (exact (window_defined sp0 Hsp vals ebs (ahid A model) M kn HK Hiw P0)).
     destruct (aio_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (_ & _ & _ & _ & _ & _ & _ & _ & (B4096 & TOPEQ & _ & _) & TOP47 & _).
     pose proof (LIokW fx g LB [] LK cr A sp ptr ra payload R M model K) as MS.
     unfold lib_cfgA in MS. rewrite (dlla_L Lay L DLL), (dla_segs L ar IL sp0 DL), (dlla_entry Lay L DLL) in MS.
     apply MS; clear MS; try assumption.
-    - (* [comment removed for export] *)
+    -
       constructor; rewrite ?(dlla_L Lay L DLL), ?(dla_segs L ar IL sp0 DL), ?(dla_tp L ar IL sp0 DL), ?(dlla_gp Lay L DLL); try assumption.
       + split; [exact Hra | exact Hra2].
-      + (* [comment removed for export] *)
+      +
         intros Hpos. destruct Hptr as [(H0 & _)|(_ & Hin)]; [rewrite H0 in Hpos; cbn in Hpos; lia|].
         exact (di_blksh _ _ _ _ _ _ _ _ _ _ DI (ptr, Z.of_nat (length payload)) Hin).
-      + (* [comment removed for export] *)
+      +
         rewrite (dla_sptop L ar IL sp0 DL). unfold sp.
         split; [rewrite Z.add_mod, Hal', Hsoal by lia; reflexivity|]. split; [lia|]. split; [lia|]. split; [lia|]. split.
         * intros i Hi. apply WDEF. lia.
@@ -108,14 +111,14 @@ Section LibSiteW.
           -- apply WDEF. lia.
           -- replace (bv_unsigned sp0 + so + i) with (bv_unsigned sp0 + (so + i)) by ring. apply Hdef. lia.
       + intros f [].
-      + (* [comment removed for export] *)
+      +
         intros j Hj. apply (di_stksh _ _ _ _ _ _ _ _ _ _ DI). unfold STKTOP, in_shadow_of, S, SB. rewrite (dla_sptop L ar IL sp0 DL) in *.
         set (mx := Z.max (bv_unsigned sp0) (ar_stack_top ar)) in *.
         replace (bv_unsigned sp0 - 8388608 + (mx - (bv_unsigned sp0 - 8388608)) - 1) with (mx - 1) by ring.
         Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
         unfold sp in *. lia.
         Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-    - (* [comment removed for export] *)
+    -
       intros fx' g' R' M' model' cr' LK' A' HFP' POST HRT HINC Hh' HMI' HLEAK HH'.
       destruct POST as [Qa0 Qregs Qcr Qframe Qscr Qgrows Qstk Qls].
       rewrite ?(dlla_L Lay L DLL) in *.
@@ -126,10 +129,10 @@ Section LibSiteW.
       assert (ABOVE : forall a, bv_unsigned sp0 <= a < 2 ^ 47 -> M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)).
       { intros a Ha. apply FR; [lia | | split; [apply (not_foot_off_image L ar sp0 Hsp Lay DLL) | apply (not_junk_off_image L sp0 Hsp Lay DLL)]; lia]. unfold aclient. right. left. rewrite (dla_sptop L ar IL sp0 DL). unfold sp. lia. }
       apply (CONT fx' R' M' model' g' cr' LK' A' HFP' HL'); try assumption.
-      + (* [comment removed for export] *)
+      +
         apply regs_ok_upd_sameA; [| discriminate | cbn [edenot]; symmetry; exact Qa0].
         apply (regs_after_keeps vals ebs sr R R' c_kept Hsv HR (regs_preserved_keptA sp0 Hsp R R' Qregs) c_kept_no0A).
-      + (* [comment removed for export] *)
+      +
         unfold keep_libA.
         pose proof (env_app_know ASEGS vals (junk_vals R') ebs _ kn Hkv HK) as HK1.
         refine (know_keep_sound ASEGS 0 so stk bls vbnd [] IMG_LIB_A IMG_RW_A
@@ -147,8 +150,8 @@ Section LibSiteW.
           -- rewrite Qframe; [apply WDEF; unfold sp in *; lia | unfold sp in *; lia | | apply (not_foot_off_image L ar sp0 Hsp Lay DLL); unfold sp in *; lia | apply (not_junk_off_image L sp0 Hsp Lay DLL); unfold sp in *; lia].
              unfold aclient. right. left. rewrite (dla_sptop L ar IL sp0 DL). unfold sp in *. lia.
           -- replace a with (sp - lla_stack Lay + (a - (sp - lla_stack Lay))) by ring. apply Qscr. lia.
-      + (* [comment removed for export] *)
-        apply DINV; [exact HH' | exact HMI' | exact Hh' | | | |].
+      +
+        apply DINV; [exact HH' | exact HMI' | exact Hh' | | | | | rewrite (model_rt_rdr _ _ HRT); exact (di_rdr _ _ _ _ _ _ _ _ _ _ DI)].
         * intros a Ha. rewrite (ABOVE a Ha). exact (di_above _ _ _ _ _ _ _ _ _ _ DI a Ha).
         * intros x Hx. destruct (stksh_rng scfg L ar C IL HI HIok sp0 Hsp DL _ _ _ _ _ _ _ x HH Hx) as (XR & XC).
           unfold STKTOP, in_shadow_of, S, SB in Hx. rewrite (dla_sptop L ar IL sp0 DL) in Hx.

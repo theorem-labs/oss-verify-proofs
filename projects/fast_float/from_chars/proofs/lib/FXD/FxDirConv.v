@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -108,6 +109,7 @@ Proof. LiaFast.lf_pins (fun (Hfs : LiaFast.U) => LiaFast.u0).
     + intros []. apply lazy_cover_mkH_app; intros x Hx'; exact Hx'.
     + intros []. exact Hminv.
     + intros []. unfold ret_ci, syscall_effect_accesses; cbn [eff_copyins eff_writes write_accesses]; rewrite app_nil_r; exact Hav.
+    + exact (RomWrite.openat_rob segs ms1 model x8 (svc_set_pending ms) Hno ltac:(rewrite Hg1; intros Hf; destruct Hnf as [(_ & p0 & Hc0 & _)|[(Hc0 & _)|(Hc0 & _)]]; discriminate (eq_trans (eq_sym Hc0) Hf))).
     + intros [] m'' Hinv'' Hsb''. exact (HcA m'' Hinv'' Hsb'').
   - apply (t_alt_const_nil unit tt A).
     exact (realizes_cfg_nonempty segs cfg _ _ (HcA model Hminv (same_but_materialized_refl _))).

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMcdR.v (commit ce1a656b52b7, file sha256 3692d62389a4) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 3 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMcdR.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, CacheDealloc walk (H3 DMcd* + FG*N, a prior worker DMcdGWb / DMcdGW); file sha256 0e41a3a4f172) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 3 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMcdR.v at commit 9ee489aa7d7, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMcdR.v (file sha256 3692d62389a4) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 3 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMcdR.v (CacheDealloc walk (H3 DMcd* + FG*N, a prior worker DMcdGWb / DMcdGW); file sha256 0e41a3a4f172) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 3 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMcdR.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1 slice H3 of ReallocPrimary's Theorem Labs walk lanes; brief
-   a Theorem Labs lane's internal file B-WALK-LANES.md, interface DMwalkIF.v at 3e29c198d40, frozen): the READ FIELDS of
+   a Theorem Labs lane's internal file B-WALK-LANES.md, interface DMwalkIF.v, frozen): the READ FIELDS of
    the CacheDealloc walk (SizeClassAllocator64LocalCache::Deallocate, 0x34d00) over an OPAQUE cut relation [ARXr].
    rule 24: no function proved here (kind: field statements; the lane's reuse search is the internal file LOOKUP-B1-drain.txt,
    `proof-index MergeBatches Recycle QuarantineCallback_Recycle Drain` 2026-10-29T23:07:48Z exit 0, B1LookupCheck
@@ -26,7 +27,7 @@
                    byte budget for the grant, the new map's shadow present                                      [F7-F10]
    - rd_growT      ARXr re-established after the grant (world / vm / eager_used change), with its frame        [F11]
    - rd_step       ARXr re-established after the no-growth step, from the walk's own frame + written values     [F12]
-   [F3] / [F4] are cd_model's conjuncts (DMwalkIF.v:448-459). *)
+   [F3] / [F4] are cd_model's conjuncts (DMwalkIF.v:449-460). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -102,21 +103,21 @@ val_mem tfibsegs (m_of W mem) (RG + 56) 8 0.
 
 (* [F2] the image's constant cells at every cut, as the AM relation's am_const (YF0x.v:163).  The no-growth walk's
    six constant words (space base, region-info base, the mask, ...; YFfi.const_vals) are cells of this list
-   (DMcdF.const_vals), and EnsureFreeArraySpace's seed reads about 25 of them (FGkN.v:203-253) through
+   (DMcdF.const_vals), and EnsureFreeArraySpace's seed reads about 25 of them (FGkN.v:204-254) through
    FGtN.efa_pre_lk.  Stated for the head's symbol record B (cd_pre_cx's), so [cd_reads] takes B; at cf it is the
-   projection amr_const of ARmcfR (YGcfInstDrainR.v:61; a Theorem Labs lane 04:21Z). *)
+   projection amr_const of ARmcfR (YGcfInstDrainR.v:62; a Theorem Labs lane 04:21Z). *)
 Definition rd_img : Prop :=
 forall inst ly X W mem md, ARXr inst ly X W mem md ->
 Forall (cell_holds B ly (aview tfibsegs (w_H W) mem)) (as_const B ly).
 
 (* the walk's allocator object is the symbols' (cd_pre_cx states it; MnRecycle.cd_pre_x, cdealloc_m_t's premise, does
-   not, a Theorem Labs lane 06:32Z): at cf ARXr_cf's first conjunct IOK inst (YGcfInstDrainR.v:280-281) with IOK_ok
-   (YGcfInstBase.v:173). *)
+   not, a Theorem Labs lane 06:32Z): at cf ARXr_cf's first conjunct IOK inst (YGcfInstDrainR.v:281-282) with IOK_ok
+   (YGcfInstBase.v:174). *)
 Definition rd_inst : Prop :=
 forall inst ly X W mem md, ARXr inst ly X W mem md -> inst = as_inst B.
 
 (* the growth arm's byte budget at the BATCH class's call (cdealloc_m_t's premise DMiface.cd_pre_x does not state
-   it; cd_pre_cx does, DMwalkIF.v:451-452): a Theorem Labs lane 07:33Z, a field; at cf from room_rec_cf via room_wA_parts_cf. *)
+   it; cd_pre_cx does, DMwalkIF.v:452-453): a Theorem Labs lane 07:33Z, a field; at cf from room_rec_cf via room_wA_parts_cf. *)
 Definition rd_budget_x : Prop :=
 forall inst ly X z W regs mem md, cd_pre_x B ARXr inst ly X z W regs mem md ->
 (* the pending items' byte bound is only in DRq_cf at cf (CfF2bRChunk, a Theorem Labs lane 08:29Z) *)
@@ -153,7 +154,7 @@ forall inst ly X W mem md c, ARXr inst ly X W mem md -> 1 <= c <= 30 ->
 let mf := rg_mapped_fa (reg X c) in
 let fadr := YFk5.FAv ly c + mf in
 mf + kFreeArrayMapSize <= kFreeArrayMax ->
-(* the grant's byte budget is the CALL's fact (cd_pre_cx's last conjunct, DMwalkIF.v:451-452; at cf fm port's
+(* the grant's byte budget is the CALL's fact (cd_pre_cx's last conjunct, DMwalkIF.v:452-453; at cf fm port's
    room_rec_cf), not derivable from ARXr alone (CfF2b, a Theorem Labs lane 07:22Z): a premise here *)
 eager_used md + A_bytes (w_A W) + 2 * kUserMapSize + 32768 <= vm_limit (m_vmmaps md) ->
 region_free (vm_reserved (m_vmmaps md)) (w64 fadr) (w64 kUserMapSize) = true /\

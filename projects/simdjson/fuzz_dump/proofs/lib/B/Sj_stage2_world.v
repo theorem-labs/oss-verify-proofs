@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -36,7 +37,7 @@ Section World.
     nw_art    : ART RT (snd w) (wm w);
     nw_frames : (length (rt_frames RT (snd w)) + NUMA_FRAMES <= FRAMES_MAX)%nat;
     nw_credit : NUMA_CREDIT <= rt_credit RT (snd w);
-    nw_win    : rt_sp0 RT (snd w) - STACK_WIN <= e_lo E0;
+    nw_win    : rt_sp0 RT (snd w) - STACK_SPAN <= e_lo E0;
     nw_room   : e_lo E0 + NUMA_STACK <= e_spa E0;
     nw_top    : bv_unsigned (e_sp E0) + 16 <= USTACK_TOP;
     nw_tp     : e_tp E0 = Z_to_bv 64 0x6ab368;

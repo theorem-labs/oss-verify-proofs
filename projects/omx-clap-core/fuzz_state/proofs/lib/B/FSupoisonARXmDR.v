@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dr.v (a working branch 84ee52cd012, file sha256 b93fc55c9771) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dr.v (a working branch, file sha256 b93fc55c9771) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file's instance of DGif0.DIface's di_rchunk and di_cdealloc (DMiface.v types),
    restated from the released QuarantineCallback::Recycle and LocalCache::Deallocate walks (YFfs, YFg7, YFg8, YFg9, YFg0)
    at DMspec.acall_post_x's raw frame clause and the stack window DMiface.KSTACK_CF. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/DGif1dr.v, with its module paths and module names changed; 431 of its 512 lines of code are new or changed and 338 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B: DIfaceR (lib/Reusable/DIfaceR.v) at the any-user-poison instance ARX_ARU, the premise H_difR_U
    of lib/B/FSReallocAG.v (a Theorem Labs lane, 2026-10-29).
 
@@ -18,19 +19,19 @@
    DGgi / DGif1 / DGif1dr / CLenqcgif / CLenqcgifRaw / FSupoisonAllocFK become lib/B's YB1v / YF0m / YFeu / YFew / ...)
    and the file:line citations of the comments.  No numeral of either image is named in this file.
 
-   WHAT THIS FILE IS.  [fs_difR_U] is DIfaceR at the parameters lib/B/DIfaceRcgif.v:42-46 (diface_r_cgif) uses, except
+   WHAT THIS FILE IS.  [fs_difR_U] is DIfaceR at the parameters lib/B/DIfaceRcgif.v:43-47 (diface_r_cgif) uses, except
    ARX := ARXr := ARX_ARU tfibsegs B TFIB_INST Up and fpre := fpreU tfibsegs B Up, for every Up:
      U := tr_admit (as_universe B), rpre := rpre_dealloc_cgif, lpost := qtight, dpost := CLenqcgifRaw.dpost_enq_cgif B,
      dbody := drain_body, QB := qloose, DRq := DGif1dr.DRq_cgif B, 16385 <= L24.
    It is built with Build_DIfaceR from four field lemmas, each the ARU twin of its AR source:
-     dr_enqueue  [dr_enqueue_U]  twin of CLenqcgifRaw.dr_enqueue_cgif (CLenqcgifRaw.v:54) over CLenqcgif.di_enqueue_cgif
-                                 (CLenqcgif.v:475) and DGif1.enq_bridge_cgif (DGif1.v:1884);
-     dr_drain    [dr_drain_U]    twin of DGif1d.dr_drain_cgif (DGif1d.v:56) = DGif1df.tfib_drain_ok_cf (DGif1df.v:360);
-     dr_rchunk   [dr_rchunk_U]   twin of DGif1dr.dgif1_rchunk_cgif / dgif1_rchunk_walk (DGif1dr.v:421 / :371);
-     dr_cdealloc [dr_cdealloc_U] twin of DGif1dr.dgif1_cdealloc_cgif / dgif1_cdealloc_walk (DGif1dr.v:487 / :432).
+     dr_enqueue  [dr_enqueue_U]  twin of CLenqcgifRaw.dr_enqueue_cgif (CLenqcgifRaw.v:55) over CLenqcgif.di_enqueue_cgif
+                                 (CLenqcgif.v:476) and DGif1.enq_bridge_cgif (DGif1.v:1885);
+     dr_drain    [dr_drain_U]    twin of DGif1d.dr_drain_cgif (DGif1d.v:57) = DGif1df.tfib_drain_ok_cf (DGif1df.v:361);
+     dr_rchunk   [dr_rchunk_U]   twin of DGif1dr.dgif1_rchunk_cgif / dgif1_rchunk_walk (DGif1dr.v:422 / :372);
+     dr_cdealloc [dr_cdealloc_U] twin of DGif1dr.dgif1_cdealloc_cgif / dgif1_cdealloc_walk (DGif1dr.v:488 / :433).
 
    THE GAP: FOUR U-RAW CALLEE SPECS (premises of fs_difR_U).  Every DIfaceR field carries the raw frame acall_raw_x
-   (DIfaceR.v:51-56: mem' x = mem x on the RAW memory).  a Theorem Labs lane's U twins (lib/B/FSupoisonAllocFK.v:42-122) end in
+   (DIfaceR.v:52-57: mem' x = mem x on the RAW memory).  a Theorem Labs lane's U twins (lib/B/FSupoisonAllocFK.v:42-122) end in
    FSupoisonU.acall_postU (FSupoisonU.v:171-176), YG0d's acall_post at FSupoison.unpoison U mem: a frame on the view
    only.  The AR sources do not bridge from the released (view-only) specs either: they re-run each walk with the
    segments' raw MEQ kept.  So each U leaf below is the FK leaf with ONE more conjunct, the last one inside its
@@ -38,22 +39,22 @@
    of a Theorem Labs lane's RAW-TEXT record (a Theorem Labs lane 19:11Z, items 1, 3, 4, 5; `~ False ->` kept
    per its 19:14Z decision).  Each spec has the shape of its FK spec, so once a Theorem Labs lane adds the conjunct to the FK
    leaf, the FK spec is this spec by conversion.
-     [drain_leafRU]   FK.drain_leafU (FK.v:45-49) + raw at DSTACK.   AR source: DIfaceR.drain_leaf_raw_cf (DIfaceR.v:85,
-                      over :73-79), proved by DGif1df.drain_arm_x (DGif1df.v:353); the walk's MEQs: YFgj.at_RETD (FIN_x,
-                      DGif1df.v:109), YFer.ATDR + DoRecycle's raw (EPI_x, DGif1df.v:262); U: FSupoisonAllocFdn.v:329
+     [drain_leafRU]   FK.drain_leafU (FK.v:45-49) + raw at DSTACK.   AR source: DIfaceR.drain_leaf_raw_cf (DIfaceR.v:86,
+                      over :73-79), proved by DGif1df.drain_arm_x (DGif1df.v:354); the walk's MEQs: YFgj.at_RETD (FIN_x,
+                      DGif1df.v:110), YFer.ATDR + DoRecycle's raw (EPI_x, DGif1df.v:263); U: FSupoisonAllocFdn.v:330
                       (tfib_drain_okU, :916).
-     [cd_leafRU]      FK.cd_leafU (FK.v:72-79) + raw at KSTACK.      AR source: DGif1dr.cd_leafR (DGif1dr.v:118-123),
-                      proved by cdealloc_okR (:133), from YFgk.MEQ (:147); U: FSupoisonAllocFcd.v:186-194 (cd_post_mu).
-     [rcc_leafRU]     FK.rcc_leafU (FK.v:88-95) + raw at KSTACK.     AR source: DGif1dr.rcc_leafR (DGif1dr.v:124-129),
+     [cd_leafRU]      FK.cd_leafU (FK.v:72-79) + raw at KSTACK.      AR source: DGif1dr.cd_leafR (DGif1dr.v:119-124),
+                      proved by cdealloc_okR (:133), from YFgk.MEQ (:147); U: FSupoisonAllocFcd.v:187-195 (cd_post_mu).
+     [rcc_leafRU]     FK.rcc_leafU (FK.v:88-95) + raw at KSTACK.     AR source: DGif1dr.rcc_leafR (DGif1dr.v:125-130),
                       proved by rchunkR (:323) over rchunk_primR (:162, YFgs.MEQ :177) and rchunk_secR (:301, YFg8.LINKD /
-                      YFgv.MEQP); U: FSupoisonAllocFcd.v:355-363 (rc_post_mu), FSupoisonAllocFrs.v.
+                      YFgv.MEQP); U: FSupoisonAllocFcd.v:356-364 (rc_post_mu), FSupoisonAllocFrs.v.
      [enq_leafRU]     FK.enq_leafU (FK.v:109-117) + raw at QSTACK.   AR source: CLenq.enq_leaf_x's raw clause
-                      (CLenq.v:61-62), proved per arm by CLenqcgif.enq_room_xs / enq_hit_xs / enq_miss_xs (CLenqcgif.v:81,
+                      (CLenq.v:62-63), proved per arm by CLenqcgif.enq_room_xs / enq_hit_xs / enq_miss_xs (CLenqcgif.v:82,
                       :144, :218) from YFgp / YFgq / YFgr MEQ; U: FSupoisonAllocFeqR.v (the three arms' post transfers).
    (FK.dr_leafU's raw text, RAW-TEXT.md item 2, is what a Theorem Labs lane needs to prove [tfib_drain_specRU]; no DIfaceR field
    reads DoRecycle directly, so it is not a premise here.)
 
-   ONE DIFFERENCE FROM THE AR SOURCES.  AR's cd / rcc raw frame (DGif1dr.v:122-123, :128-129) excludes the stack window
+   ONE DIFFERENCE FROM THE AR SOURCES.  AR's cd / rcc raw frame (DGif1dr.v:123-124, :129-130) excludes the stack window
    only; the U texts exclude ascratch (the window and the errno cells).  DIfaceR's dr_rchunk / dr_cdealloc exclude
    ascratch KSTACK_CF, so the fields still follow; DGif1dr.pres_lift reads the stack-only form, so [pres_lift_s] re-proves
    it for the ascratch form (the errno cells lie in the image, below the stack).
@@ -116,7 +117,7 @@ Local Open Scope am_scope.
 Section spec.
 Variable B : asyms.
 
-(* Drain: FK.drain_leafU (FSupoisonAllocFK.v:45-49) + raw at DSTACK (DIfaceR.drain_leaf_raw_cf, DIfaceR.v:85). *)
+(* Drain: FK.drain_leafU (FSupoisonAllocFK.v:45-49) + raw at DSTACK (DIfaceR.drain_leaf_raw_cf, DIfaceR.v:86). *)
 Definition drain_leafRU (ly : alayout) (X : astate) (U : list (Z * Z)) (W : world tfibsegs) (regs : bvmap 5 word)
     (mem : word -> option byte) (md : Model) (r : unit * astate) (W' : world tfibsegs) (c' : config) : Prop :=
   exists regs' mem' md',
@@ -129,7 +130,7 @@ Definition tfib_drain_specRU : Prop :=
     FK.drain_preU B ly X U W regs mem md ->
     amreal tfibsegs (drain_body X X) W (cfg_at tfibsegs A_Drain regs mem md) (drain_leafRU ly X U W regs mem md).
 
-(* CacheDealloc: FK.cd_leafU (FSupoisonAllocFK.v:72-79) + raw at KSTACK (DGif1dr.cd_leafR, DGif1dr.v:118-123). *)
+(* CacheDealloc: FK.cd_leafU (FSupoisonAllocFK.v:72-79) + raw at KSTACK (DGif1dr.cd_leafR, DGif1dr.v:119-124). *)
 Definition cd_leafRU (ly : alayout) (X : astate) (U : list (Z * Z)) (W : world tfibsegs) (regs : bvmap 5 word)
     (mem : word -> option byte) (md : Model) (r : unit * astate) (W' : world tfibsegs) (c' : config) : Prop :=
   exists regs' mem' md',
@@ -145,7 +146,7 @@ Definition tfib_cdealloc_specRU : Prop :=
     FK.cd_preU B ly X c off U W regs mem md ->
     amreal tfibsegs (cache_dealloc c off X) W (cfg_at tfibsegs A_CDealloc regs mem md) (cd_leafRU ly X U W regs mem md).
 
-(* Recycle: FK.rcc_leafU (FSupoisonAllocFK.v:88-95) + raw at KSTACK (DGif1dr.rcc_leafR, DGif1dr.v:124-129). *)
+(* Recycle: FK.rcc_leafU (FSupoisonAllocFK.v:88-95) + raw at KSTACK (DGif1dr.rcc_leafR, DGif1dr.v:125-130). *)
 Definition rcc_leafRU (ly : alayout) (X : astate) (k : chunk) (U : list (Z * Z)) (W : world tfibsegs) (regs : bvmap 5 word)
     (mem : word -> option byte) (md : Model) (r : unit * astate) (W' : world tfibsegs) (c' : config) : Prop :=
   exists regs' mem' md',
@@ -161,7 +162,7 @@ Definition tfib_rchunk_specRU : Prop :=
     FK.rcc_preU B ly X k cbp U W regs mem md ->
     amreal tfibsegs (recycle_chunk k X) W (cfg_at tfibsegs A_RChunk regs mem md) (rcc_leafRU ly X k U W regs mem md).
 
-(* Enqueue: FK.enq_leafU (FSupoisonAllocFK.v:109-117) + raw at QSTACK (CLenq.enq_leaf_x's raw clause, CLenq.v:61-62). *)
+(* Enqueue: FK.enq_leafU (FSupoisonAllocFK.v:109-117) + raw at QSTACK (CLenq.enq_leaf_x's raw clause, CLenq.v:62-63). *)
 Definition enq_leafRU (ly : alayout) (X : astate) (U : list (Z * Z)) (W : world tfibsegs) (regs : bvmap 5 word)
     (mem : word -> option byte) (md : Model) (k : chunk) (r : unit * astate) (W' : world tfibsegs) (c' : config) : Prop :=
   exists regs' mem' md' nb,
@@ -322,7 +323,7 @@ split.
   apply (stack_off_ush tfibsegs B ly S Up W mem md a HARU). lia.
 Qed.
 
-(* DGif1dr.pres_lift (DGif1dr.v:345) with the raw frame in the U texts' form: ascratch excluded, so the errno cells
+(* DGif1dr.pres_lift (DGif1dr.v:346) with the raw frame in the U texts' form: ascratch excluded, so the errno cells
    too; they lie in the image (ts_errno), below the stack (FSupoison.stk_kHighMemBeg). *)
 Lemma pres_lift_s : forall ly S S' (W W' : world tfibsegs) mem mem' md md' (regs : bvmap 5 word),
   AR tfibsegs B ly S W mem md -> AR tfibsegs B ly S' W' mem' md' -> wle W W' ->
@@ -348,7 +349,7 @@ split; [|exists b; rewrite E; exact Hb].
 destruct (w_H W' (Z_to_bv 64 a)) eqn:E'; [|reflexivity]. rewrite (WLE _ E') in Hn. discriminate.
 Qed.
 
-(* ---- dr_cdealloc: the twin of DGif1dr.dgif1_cdealloc_walk (DGif1dr.v:432-486) ---- *)
+(* ---- dr_cdealloc: the twin of DGif1dr.dgif1_cdealloc_walk (DGif1dr.v:433-487) ---- *)
 Lemma dr_cdealloc_U : tfib_cdealloc_specRU B -> dr_cdealloc_t B ARXU (aowned B) (DGif1dr.DRq_cgif B).
 Proof.
 intros CDR inst ly X its z zs W regs mem md PREX RX.
@@ -401,7 +402,7 @@ split; [exact (DGif1dr.RIx_cd_step_its _ _ _ _ _ _ _ _ _ _ _ RX CP)|]. split; [e
 intros a O. exact (proj1 (aowned_cd_same B ly _ _ _ _ X kBatchClass _ ns S' CP a) O).
 Qed.
 
-(* ---- dr_rchunk: the twin of DGif1dr.dgif1_rchunk_walk (DGif1dr.v:371-420) ---- *)
+(* ---- dr_rchunk: the twin of DGif1dr.dgif1_rchunk_walk (DGif1dr.v:372-421) ---- *)
 Lemma dr_rchunk_U : tfib_rchunk_specRU B -> dr_rchunk_t B ARXU (aowned B) (DGif1dr.DRq_cgif B).
 Proof.
 intros RCR inst ly X k ks zs cbp W regs mem md PREX RX.
@@ -454,7 +455,7 @@ split; [exact RX'|]. split; [exact CI|].
 intros a O. exact (aowned_rc_back B ly _ _ _ _ X k ns S' Hst RPX a O).
 Qed.
 
-(* ---- dr_drain: the twin of DGif1d.dr_drain_cgif / DGif1df.tfib_drain_ok_cf (DGif1df.v:360-368) ---- *)
+(* ---- dr_drain: the twin of DGif1d.dr_drain_cgif / DGif1df.tfib_drain_ok_cf (DGif1df.v:361-369) ---- *)
 Lemma dr_drain_U : tfib_drain_specRU B -> forall L24, drain_spec_raw_cf B ARXU (aowned B) drain_body L24 qloose.
 Proof.
 intros DRR L24 inst ly X W regs mem md PREcf.
@@ -473,10 +474,10 @@ split; [exact (post_x_U inst DSTACK ly X W regs mem md _ _ W' regs' mem' md' (co
 exact RAW.
 Qed.
 
-(* ---- dr_enqueue: the twin of CLenqcgifRaw.dr_enqueue_cgif (CLenqcgifRaw.v:54-70) ---- *)
+(* ---- dr_enqueue: the twin of CLenqcgifRaw.dr_enqueue_cgif (CLenqcgifRaw.v:55-71) ---- *)
 
-(* The pre at the quarantined state: DGif1.enq_bridge_cgif (DGif1.v:1884) at the unpoisoned memories, then ARU
-   rebuilt there (FSupoisonARXmD's di_post_c argument, FSupoisonARXmD.v:764-802, for qx in place of qfin_c). *)
+(* The pre at the quarantined state: DGif1.enq_bridge_cgif (DGif1.v:1885) at the unpoisoned memories, then ARU
+   rebuilt there (FSupoisonARXmD's di_post_c argument, FSupoisonARXmD.v:765-803, for qx in place of qfin_c). *)
 Lemma enq_bridge_U : forall L24, 16385 <= L24 ->
   forall inst ly S W mem0 md0 p n tr k z hb1 sp0 (regs : bvmap 5 word) (mem : word -> option byte) mat,
   ARXU inst ly S W mem0 md0 -> rpre_dealloc_cgif S n -> fpreU tfibsegs B Up ly S W mem0 p n -> In (p, n) (blocks S) ->
@@ -555,7 +556,7 @@ intros a Ha. apply (apresent_unpoison_bwd (w_H W) Up mem a); [|exact (HPRES a Ha
 apply (stack_off_ush tfibsegs B ly S Up W mem0 md0 a HARU). unfold CLenq.QSTACK_G in *. lia.
 Qed.
 
-(* CLenq's enqueue pre at ARX_ARU gives FK's U pre (CLenqcgif.enq_pre_of_x, CLenqcgif.v:59, across the unpoisoning). *)
+(* CLenq's enqueue pre at ARX_ARU gives FK's U pre (CLenqcgif.enq_pre_of_x, CLenqcgif.v:60, across the unpoisoning). *)
 Lemma enq_preU_of_x : forall inst ly X W regs mem md k,
   CLenq.enq_pre_x tfibsegs B ARXU inst ly X W regs mem md k -> FK.enq_preU B ly X Up W regs mem md k.
 Proof.
@@ -582,7 +583,7 @@ destruct (post_x_U inst QSTACK ly X W regs mem md _ _ W' regs' mem' md' (conj Hi
 exact (conj P1 (conj P2 (conj P3 (conj P4 (conj P5 (conj P6 (conj RAW P7))))))).
 Qed.
 
-(* CLenq's sub-interface at ARX_ARU (CLenqcgif.EnqSub_cgif, CLenqcgif.v:442, across the unpoisoning). *)
+(* CLenq's sub-interface at ARX_ARU (CLenqcgif.EnqSub_cgif, CLenqcgif.v:443, across the unpoisoning). *)
 Lemma EnqSub_U : forall L24, CLenq.EnqSub tfibsegs ARXU (aowned B) qtight qloose L24 (CLenqcgif.EPc L24).
 Proof.
 intros L24. constructor.

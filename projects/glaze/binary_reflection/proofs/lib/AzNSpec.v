@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nmodel gains the channel-reader conjunct; malloc_nspec and h_malloc_at take the channel-reader premise). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -88,7 +89,15 @@ Definition ncall_pre (R : bvmap 5 word) (M : word -> option byte) (ret sp stk : 
 
 (* [comment removed for export] *)
 Definition nmodel (mdl mdl' : Model) : Prop :=
-  m_halted mdl' = None /\ m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl.
+  m_halted mdl' = None /\ m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl
+  (* [m_channel_reader] rides with the group above; appended LAST, so every positional
+     consumer keeps the names it already binds and only gains one.  Same shape and same
+     spelling as the plain lane's GlzSpecsStr.v:354-356, consumed at GlzCall.v:298, and as
+     the Mh lane's MhASlotK.v:540.  It is here rather than as a free-standing hypothesis
+     because [nmodel] is the fact every producer on this path already builds, and because
+     GPS.cs_ok's co_rdr (AzGPS.v:244) is stated at the POST model: a construction over
+     [mdl'] cannot reach the caller's reader without a model-move fact. *)
+  /\ m_channel_reader mdl' = m_channel_reader mdl.
 
 #[local] Notation cfg := (fun fx R p M mdl => mkCfg (mkstF fx R (Z_to_bv 64 p) M (seg_rom SEGS)) mdl).
 
@@ -155,6 +164,9 @@ Definition malloc_nspec (stk entry : Z) : Prop :=
 Definition alloc1_nspec (XTRA : (word -> option byte) -> Prop) (stk entry : Z) : Prop :=
   forall fx R M mdl Lc Lf B C K (ret n sp : Z) T,
     nmalloc_pre false fx R M mdl Lc Lf B C K ret n sp stk -> XTRA M -> m_fds mdl = APS.fds_std -> Z.of_nat (length Lf) + 1 <= FTOPc -> T [] ->
+    (* [co_rdr] (AzGPS.v:244): the entry [cs_ok] the callee builds carries the channel
+       reader, and only the caller -- which holds a [cs_ok] already -- can supply it. *)
+    m_channel_reader mdl = true ->
     (forall fx' R' M' mdl' (p : word), nmalloc_post_ok R M mdl Lc Lf B C K n sp stk fx' R' M' mdl' p -> RZ (cfg fx' R' ret M' mdl') T) ->
     RZ (cfg fx R entry M mdl) T.
 (* [comment removed for export] *)
@@ -408,6 +420,8 @@ Definition h_malloc_at (stk entry : Z) : Prop :=
 Definition h_alloc1_at (XTRA : (word -> option byte) -> Prop) (stk entry : Z) : Prop :=
   forall fx R M mdl L LF B C K (ret n sp : Z) T,
     hmalloc_pre false fx R M mdl L LF B C K ret n sp stk -> XTRA M -> m_fds mdl = APS.fds_std -> Z.of_nat (length LF) + 1 <= FMIN -> T [] ->
+    (* [co_rdr] (AzGPS.v:244): as for [alloc1_nspec] at :157. *)
+    m_channel_reader mdl = true ->
     (forall fx' R' M' mdl' (p : word), hmalloc_post_ok R M mdl L LF B C K n sp stk fx' R' M' mdl' p -> RZ (cfg fx' R' ret M' mdl') T) ->
     RZ (cfg fx R entry M mdl) T.
 (* [comment removed for export] *)

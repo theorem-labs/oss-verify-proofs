@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane missw): AGim0EW, the AIfaceMw variant of AGim0E.v (c5
-   8d6c9f45705b): the refill's stack window is the Section variable RW (0 <= RW, 176 + RW <= AFSTACK: hypothesis
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane missw): AGim0EW, the AIfaceMw variant of AGim0E.v (c5):
+   the refill's stack window is the Section variable RW (0 <= RW, 176 + RW <= AFSTACK: hypothesis
    RWB) of MnRefillW.v, not RSTACK = 1024.  Same proof script; the changes are AIfaceM -> AIfaceMw (fields if_ ->
    ifw_), the refill leaves -> their _w forms at RW, RSTACK -> RW, the refill-window steps through
    MnRefillW.win_af_w and the other frame lia steps under RWB, RW (and RWB) in the explicit arguments of the W
    twins' lemmas, and the imports of the W twins.  AGim0E.v is unchanged.  rule 24: no function proved (kind:
    re-statement of a proved miss walk over a wider refill window). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGim0EW.v (commit 3295f3a9fd5, CfInstMiss lane M field round 3 (cf-miss 3295f3a9fd5); file sha256 dacb7272119f) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 6 image addresses moved by function pairs the comparison kit cmpkit 4bbd3a74be89 calls the same code except at the by-hand acceptances named below (strictcmp2 16982e3ef42b, by funcpair_reply 053b61532a33 on the cgif twin ce511d541cda; 6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance of the kit's known false-difference class (accept.tsv, re-measured each run: the bytes the code reads equal and read-only on both images): _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb+0xdc); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AGim0EW.v at commit f7d0d764e77, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (6 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGim0EW.v (CfInstMiss lane M field round 3 (cf-miss); file sha256 dacb7272119f) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 6 image addresses moved by function pairs the comparison kit cmpkit 4bbd3a74be89 calls the same code except at the by-hand acceptances named below (strictcmp2 16982e3ef42b, by funcpair_reply 053b61532a33 on the cgif twin ce511d541cda; 6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance of the kit's known false-difference class (accept.tsv, re-measured each run: the bytes the code reads equal and read-only on both images): _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb+0xdc); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AGim0EW.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (6 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The errno-kept twins of AGim0's g-path MISS arms: [alloc_missg0_e] (can_fill = 0) and [alloc_missg_cf_e]
    (can_fill cf in {0, 1}) conclude ErrnoG.alloc_leaf_e (AllocG.alloc_leaf plus errno's 4 bytes unchanged on the grant
    branch) in place of alloc_leaf.
@@ -51,7 +52,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import ErrnoG.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ErrnoApart AGimW AGim0W AGimEW.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
-(* copy of AGim0.v:44 *)
+(* copy of AGim0.v:45 *)
 Local Ltac bvne := first [cbn; lia | vm_compute; congruence | intros X; vm_compute in X; discriminate X].
 Local Set Warnings "-abstract-large-number".
 Local Set Warnings "-notation-for-abbreviation".
@@ -207,7 +208,7 @@ Local Abbreviation LEAFJ_e := (AGimEW.LEAFJ_e B U mt ARX AOX rpre nmax lmax lpos
   S' ly' W' memR mdR HARXp CIp HBBp Hly HWLE HSIO HFRA HFRR HPRR HERR l off Hcache').
 Lemma JOIN0_e : amreal tfibsegs (malloc_join_t stag n tr cl S') W' (cfg_at tfibsegs 0x36580 regsR memR mdR) PL_e.
 Proof.
-(* copy of AGim0.v:391-394, + errno *)
+(* copy of AGim0.v:392-395, + errno *)
 destruct (@AGiz.vw_junk_values _ _ B W' ly' inst memR n cl cnt' v' kz TS HV' Hkz1 Nrange Hcl_class)
   as (j0 & j1 & j2 & j3 & j4 & jb & Hj0 & Hj1 & Hj2 & Hj3 & Hj4 & Hjb & Hjb_def).
 eapply amreal_mono; [| eapply TAILJ0; eassumption].
@@ -223,7 +224,7 @@ End f.
 Lemma missg_core0_e : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0)
 (alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regsU mem0 md0 n tr).
 Proof.
-(* copy of AGim0.v:405-440, + errno *)
+(* copy of AGim0.v:406-441, + errno *)
 assert (CORE : amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs A_Allocate regsU mem0 md0) PL_e).
 {
 rewrite (Fshape_miss n tr S Hn0 FP Hmiss). fold cl.
@@ -272,7 +273,7 @@ YG0dcf.arodata_ok_cf tfibsegs B mem ->
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x31c30 regs mem md)
 (alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGim0.v:453-497, + errno *)
+(* copy of AGim0.v:454-498, + errno *)
 intros inst so bp ly S W regs mem md n tr PRE HRO Nrange0 Hmiss.
 destruct PRE as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres0 & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
 Hso1 & Hso2 & Hso3 & Hbp1 & Hbp2 & Hbp3 & Htrlen & PSO & PLEN & PBUF & Htr & Hn0 & Hlive).
@@ -327,7 +328,7 @@ YG0dcf.arodata_ok_cf tfibsegs B mem ->
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x31c30 regs mem md)
 (alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGim0.v:506-508, + errno *)
+(* copy of AGim0.v:507-509, + errno *)
 intros cf inst so bp ly S W regs mem md n tr [-> | ->].
 - exact (alloc_missg0_e inst so bp ly S W regs mem md n tr).
 - exact (AGimEW.alloc_missg_e B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag IF TS rtree RW RWB IFM IFME EII ESH EDZ inst so bp ly S W regs mem md n tr).

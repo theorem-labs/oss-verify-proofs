@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* The harness-body walk of LLVMFuzzerTestOneInput, fuzz_wire.c:253-282 (projects/reac-repacer/fuzz_wire/source), on
    the UBSan image fuzz_wire ubsan 6e91fe0b5555: entry 0x12dc0, frame 0x40 bytes (ra, s0..s6 only), 95 instructions
@@ -25,9 +26,9 @@
      lf_fr_call_x / g_above_x carry the frame across it.
    - free (0x12ef8, 0x12f00): c and f are blocks of the state, outside the entry blocks; the budget returns to b
      (sb_free_malloc).
-   The SR level is libreac/fuzz_decode's released fd_glue.v / fd_seghelp.v / fd_exit.v glue (recipes 25e3d17bdb5)
+   The SR level is libreac/fuzz_decode's released fd_glue.v / fd_seghelp.v / fd_exit.v glue (recipes)
    over this unit's lf_fr (lib/U/Prog/LLVMFuzzerTestOneInput_fr.v), in the shape of reac-repacer/fuzz_uci's
-   lib/U/Prog/LLVMFuzzerTestOneInput.v (6874bc78b1f).
+   lib/U/Prog/LLVMFuzzerTestOneInput.v.
    rule 24: proves function LLVMFuzzerTestOneInput (reuse search: the released recipes and candidates, the lemma
    index, the live heads): the released LLVMFuzzerTestOneInput proofs are other programs' entries; written new on
    these templates. *)

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the walk of musl's fread inside libreac/fuzz_pcap (libreac v1.9.0,
    memory-checking build). frd_walk proves lib/A/Stdio/PFreadM.v's rfread_contract (the
-   caller-journal form of a working branch 9b4de8c19fc) from its three callees, taken
+   caller-journal form of a working branch) from its three callees, taken
    as Section hypotheses: the memory-copy trampoline's aintrin_realizes OCpy (cgif YG0d.v:317-335),
    rtoread_contract and rmread_contract (PFreadM.v; their proofs are the sibling lanes'). The
    instances are in their own files: rfread_contract_asan in lib/A/Stdio/PFreadMWA.v and

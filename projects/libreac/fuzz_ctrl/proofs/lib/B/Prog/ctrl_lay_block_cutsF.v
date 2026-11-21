@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1636 of its 1651 lines of code are new or changed and 233 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint-form CUT lemmas of the ctrl_lay_block run (libreac fuzz_ctrl, image B = asan-ubsan, entry 0x86104), for
    the cgif-form glue lib/B/Prog/C_ctrl_lay_block.v (a Theorem Labs lane).  rule 24: no function proved here.
 
@@ -21,7 +22,7 @@
    each definition is an abbreviation of its closed form.
 
    Today's form (not re-based): the premises at each cut are the facts the run's proof carries there. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -31,16 +32,16 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require Import RcModel RcLib Rc
   RcSynthLib RcLay RcLayLib RcAsan RcAsanLib.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import RcAsanRT RcAsanFP RcAsanFPLib
   asan_stack_malloc_c asan_memset_c asan_memcpy_c reac_box_model_block_c ctrl_lay_block_c.
-(* a Theorem Labs lane's OWN footprint contracts of the two runtime helpers (a working branch 9869f1d1f86,
+(* a Theorem Labs lane's OWN footprint contracts of the two runtime helpers (a working branch,
    merged into this branch): asan_memset_contract_F, asan_memcpy_contract_F, sh_word_rng, IMG_LO, IMG_HI.
    This file states no copy of them (image-B owner, 23:15Z). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import asan_memset_cF asan_memcpy_cF.
 (* route (C): the region vocabulary and the callees' footprint _on contracts: the stack-malloc leaves of record
-   (a working branch 6a82e56a6ee: asan_stack_malloc_cF.v, asan_stack_malloc_cF_on.v; this copy
-   states no local malloc contract), a Theorem Labs lane's memset / memcpy _on (a working branch
-   13875397c54), reac_box_model_block's (lib/B/Prog/reac_box_model_block_cF_on.v, a Theorem Labs lane 0f83c3ed3e5). *)
+   (a working branch: asan_stack_malloc_cF.v, asan_stack_malloc_cF_on.v; this copy
+   states no local malloc contract), a Theorem Labs lane's memset / memcpy _on (a working branch),
+   reac_box_model_block's (lib/B/Prog/reac_box_model_block_cF_on.v, a Theorem Labs lane). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require Import ShadowRwOn.
-(* fl_shadow_rw_on: a Theorem Labs lane's (lib/B/ShadowRwOnK.v, a working branch 2bfdc5c22cd8), cited qualified. *)
+(* fl_shadow_rw_on: a Theorem Labs lane's (lib/B/ShadowRwOnK.v, a working branch), cited qualified. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require ShadowRwOnK.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import sh_word_on asan_stack_malloc_cF
   asan_stack_malloc_cF_on asan_memset_cF_on asan_memcpy_cF_on reac_box_model_block_c_on reac_box_model_block_cF_on.

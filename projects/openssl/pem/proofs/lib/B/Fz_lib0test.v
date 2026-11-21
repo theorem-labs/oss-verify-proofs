@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack-depot count's variable in the computed main hand-off). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -165,7 +166,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma test_A_2 : TEST_A (inst B_HSm 45%nat (ELit 2)) = true.
+Lemma test_A_2 : TEST_A (inst B_HSm 48%nat (ELit 2)) = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma test_A_3 : TEST_A (inst B_HSm 45%nat (ELit 3)) = true.
+Lemma test_A_3 : TEST_A (inst B_HSm 48%nat (ELit 3)) = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.

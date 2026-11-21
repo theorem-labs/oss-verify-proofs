@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1417 of its 1432 lines of code are new or changed and 233 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_cases2.v at a working branch d69f7c708f6 (proved v1.9
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_cases2.v at a working branch (proved v1.9
    run of record) over lib/Lib/StepF: cs4_F, cs5_F and a4_cl_mc_loc_F follow their scripts, with four new helper lemmas, two OfF bounds, three corollaries of the runs and five Lets; the script edits include `hide_sec.` and footprint steps, and a4_cl_mc_loc_F also takes RSr, RSsh and SSsh.  Image: fuzz_ctrl.asan (libreac v1.9.0), ELF
-   sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd.  FACTS ed6b6b7b0ab.  Const cells
+   sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd.  FACTS.  Const cells
    checked against the v1.9.0 image bytes: none read (these three runs read only the row at p, the box at o, the
    name at rname row and the function's own window; every other value they use is an instruction immediate).
 
@@ -18,7 +19,7 @@
       no new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header (image root, ELF sha256, tool version, which compare) and goes to
       the auditor a Theorem Labs lane, who signs it against its proved run before it counts.
@@ -27,14 +28,14 @@
    The three statements are _cases2.v's with `evt rsegs Q0` replaced by `evtF rsegs RNG Q` (the fixed ret-post Q0
    is generalized to the section variable Q, so the S2 stretch can stop at the flag release at 0x864f4; where the
    original applies `epi` the re-run applies HKR), and with the data regions carried by Section MainF's footprint
-   hypotheses (the nine of 3c9fcc93205 reac_box_model_blockF.v:147-159 plus the ten of the lead's decision
+   hypotheses (the nine of reac_box_model_blockF.v:148-160 plus the ten of the lead's decision
    (B) of 2026-10-28 23:0xZ).  a4_cl_mc_loc_F alone adds three lemma-level premises: its source [SS, SS + nn) is an
    arbitrary address no section hypothesis covers.
 
    __asan_memcpy is applied in its shared footprint form (asan_memcpy_cF.v, a Theorem Labs lane), with named arguments.
    No lemma here takes the stack-malloc contract: the jal at 0x85bb8 is the glue's allocator event, outside this
    stretch.  `Import YK11` of the Seg-file form is not used: this unit is the lib.Lib engine, as
-   3c9fcc93205 reac_box_model_blockF.v is. *)
+   reac_box_model_blockF.v is. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -104,7 +105,7 @@ Ltac2 Notation "inst_exact" c(constr) := let r := inst c in exact $r.
 Set Default Proof Mode "Classic".
 
 (* The store hook of reac_box_model_block.v, re-issued for the evtF walk: it also transports rd_mono
-   (3c9fcc93205 reac_box_model_blockF.v:46-56). *)
+   (reac_box_model_blockF.v:47-57). *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -119,7 +120,7 @@ Local Ltac footprint_after_store segs m a bs ::=
 
 (* An address the walk builds from a register holds [bv_unsigned (Z_to_bv 64 e)], which StepF's syntactic
    matching does not relate to the [rng] premise of its region.  Normalize the wrap, then close the bounds
-   from an rng hypothesis by lia alone.  Text of reac_box_model_block_cases0aF.v:120-132 (a Theorem Labs lane's S1
+   from an rng hypothesis by lia alone.  Text of reac_box_model_block_cases0aF.v:121-133 (a Theorem Labs lane's S1
    measurement, 18:24Z: a hook that does division reasoning costs 78-417 s per chk_core, this one 1.8-4.8 s).
    Two things keep it cheap: it fires only on the wrapped shape, and it does no division reasoning -- the
    division argument of a shadow byte is made ONCE per lemma by sh1_F below. *)
@@ -140,7 +141,7 @@ Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.acc_hint ::= mb_accF
 
 (* The shadow-check tactics of reac_box_model_block_base.v:313-354 over evtF (an Ltac body binds the tactics in
    scope where it is written, so the evt forms of the proved file cannot serve here).  Text of
-   reac_box_model_block_casesF.v:128-169. *)
+   reac_box_model_block_casesF.v:129-170. *)
 Ltac steps_until_if :=
   lazymatch goal with
   | |- evtF _ _ _ (MS _ _ (Z_to_bv 64 _) _ _ _ _) => step; steps_until_if
@@ -233,8 +234,8 @@ Section MainF.
   Hypothesis NDJ : p <> 0 -> (b = 5 \/ b = 6) -> has row <> 0 -> rname row <> 0 ->
     fp_dj [(rname row, rname row + Z.of_nat (length nb))] (fp_w [0%nat] FS).
 
-  (* The footprint and the regions these runs read or write.  The nine of 3c9fcc93205
-     reac_box_model_blockF.v:147-159 (the side stack in two pieces: the header [FS, fs_frame FS 0 0) and the
+  (* The footprint and the regions these runs read or write.  The nine of
+     reac_box_model_blockF.v:148-160 (the side stack in two pieces: the header [FS, fs_frame FS 0 0) and the
      class-0 area fp_w [0%nat] FS), then the ten data-region facts of the lead's decision (B). *)
   Variable RNG : footprint.
   Hypothesis Rimg : rng RNG 0x10000 0x5ee000.
@@ -266,7 +267,7 @@ Section MainF.
 
   (* The definitions of reac_box_model_block_base.v and reac_box_model_block_binv.v at this section's variables
      (decision (A): the originals' pure Definitions are reused, never redefined; same text as
-     reac_box_model_block_binvF.v:155-163). *)
+     reac_box_model_block_binvF.v:156-164). *)
   Notation FK := (B.FK FS A).
   (* route (C): BV over the NARROWED shadow premise (a Theorem Labs lane's BV_F = BINV.BV with JX's `shadow_rw mc`
      replaced by `shadow_rw_on (reac_box_model_block_shadow_R ...) mc`); same binders. *)
@@ -1517,7 +1518,7 @@ End MainF.
    premises, nothing weaker.  The callee contracts stay in their _F form (a run that calls __asan_memcpy,
    __asan_memset or build_dt1_single cannot be re-played without the callee's footprint contract), and so does
    a4_cl_mc_loc's own continuation premise, for the same reason.  Text of the section and of all_rng:
-   reac_box_model_block_binv2F.v:739-816 (itself reac_box_model_block_epiF.v:879-950). *)
+   reac_box_model_block_binv2F.v:740-817 (itself reac_box_model_block_epiF.v:880-951). *)
 Section OfF.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (m : word -> option byte) (p b o FS off A : Z) (row nb ob : list byte).

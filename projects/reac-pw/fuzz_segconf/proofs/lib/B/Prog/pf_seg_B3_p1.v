@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B3 of reac_segconf_parse_file's
    walk, its first piece: FRAME (0x88074) -> the snprintf at 0x880cc -> MID1 (0x880d0). The B3 segment lane of
-   the image-B G3 walk owner, 2026-10-30. ADAPTED from the image-A G3 walk owner's image-A segment walk lib/A/Prog/pf_a2.v (commit
-   3f59c8d75ed4: the seed from a cut, the run, the call step, the next state) and its snprintf step pf_a8b_t.v
+   the image-B G3 walk owner, 2026-10-30. ADAPTED from the image-A G3 walk owner's image-A segment walk lib/A/Prog/pf_a2.v (
+   the seed from a cut, the run, the call step, the next state) and its snprintf step pf_a8b_t.v
    (here pf_seg_B3_t.v), re-derived on image B's code (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s):
      0x88074 ld a0,200(s1); 0x88078 bnez a0 -> 0x88080, else 0x8807c j unimp 0x891c8        UBSan trap T01 (c NULL)
      0x88080 ld a0,200(s1); andi a0,a0,7; 0x88088 beqz a0 -> 0x88090, else 0x8808c j unimp  UBSan trap T02 (c misaligned)

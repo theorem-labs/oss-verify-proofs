@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdChk.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; cmd_ -> seg_. *)
-(* Modified by Theorem Labs, 2026-10: the image-B twin of lib/A/Prog/SegChk.v (commit 4f361f065164): module paths and image B's values. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdChk.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; cmd_ -> seg_. *)
+(* Modified by Theorem Labs, 2026-10: the image-B twin of lib/A/Prog/SegChk.v: module paths and image B's values. *)
 (* The two boolean checkers over the allocator record's lists (lib/A/AF0m.v) that a contract may state about an
    image range: `cmd_addr_b a n` (every byte of [a, a + n) has a shadow byte that the record pins and that admits
    the byte) and `cmd_hull_b a n` (every byte of the 8-byte shadow words that the checks of [a, a + n) read is

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of the NR part (sections 1-3) of lib/A/HaltsClosedA.v
-   (a Theorem Labs lane, a working branch defcedd3ace4, blob 7704185517; itself made from lib/A/PresetD1qA.v:68-143
+   (a Theorem Labs lane, a working branch, blob 7704185517; itself made from lib/A/PresetD1qA.v:68-143
    and cgif_file_fuzzer lib/A/AD1q.v:39-100), for fuzz_preset's asan-ubsan image. Lane CwD2 (a Theorem Labs lane), for the B room
    form TFIB_T_room_B (lib/AU/PresetD2oB.v) and a Theorem Labs lane's HaltsClosedB.v.
    Made by port/a2b.py (sha256 5b422ca8702e6a4ff6132a82e3aeda2473f0324f421be16d0832b0d807e1adc2; re-run with sha256
@@ -13,9 +13,10 @@
    place of the plain no-refusal premise). NR_agrees_B gives back PresetD1qB.v's texts by conversion
    (drv_mainX_stmt_NR_agrees_B, tfib_srealizesX_B_of_NR).
    Pending relocB: PresetD1qB.v's imports are on a Theorem Labs lane's relocation.
-   Its A twin is now lib/A/PresetD1qNRA.v (sections 1-3 of HaltsClosedA.v moved there word for word, a working branch
-   d767d529aa0), which is what lib/A/PresetD2oAPf.v imports.
+   Its A twin is now lib/A/PresetD1qNRA.v (sections 1-3 of HaltsClosedA.v moved there word for word, a working branch),
+   which is what lib/A/PresetD2oAPf.v imports.
    proves no function (kind: composition). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -45,66 +46,72 @@ Definition NR_agrees_B : ExecEntry -> ProcInput -> Prop := fun en_p inp =>
 Definition NR_halts_B : ExecEntry -> ProcInput -> Prop := fun _ _ => True.
 
 (* ---------------------------------------------------------------------- *)
-(* 2. The driver's conclusion over NR: PresetD1qB.v:70-87 with `NR en_p inp` in place of :75-77. *)
-Definition drv_mainX_stmt_NR_B (NR : ExecEntry -> ProcInput -> Prop) (rc : YM05.RunCeil) (HS : nat -> option acs)
+(* 2. The driver's conclusion over NR: PresetD1qB.v's drv_mainX_stmt_B with `NR en_p inp` in place of its no-refusal
+      premise. *)
+Definition drv_mainX_stmt_NR_B (NR : ExecEntry -> ProcInput -> Prop) (rc : YM05.RunCeil) (HS : Z -> nat -> option acs)
   : Prop :=
-forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (en_p : ExecEntry)
+forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (en_p : ExecEntry)
 (h : nat) (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-valid_sp sp -> valid_brk AsanUbsan.M.loaded_segments brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+valid_sp sp -> valid_brk AsanUbsan.M.loaded_segments brk -> valid_mmap_base mbase ->
+entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
 NR en_p inp ->
 @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
-HS h = Some ch ->
-cs_ok AsanUbsan.M.loaded_segments TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 AsanUbsan.M.loaded_segments AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem AsanUbsan.M.phdrs sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+HS (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+cs_ok AsanUbsan.M.loaded_segments TFIB YA02.LIMIT (YA02.TOP sp) (SINV_B sp rdraw brk mbase inp) (argH_B sp rdraw inp)
+(in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (E0_B sp rdraw brk inp) n) ->
+(forall a, argH_B sp rdraw inp E a = true -> FULL a = FULL0_B sp rdraw mbase inp a) ->
 srealizes AsanUbsan.M.loaded_segments (cfg_of AsanUbsan.M.loaded_segments R (pc ch) FULL model)
 (CLOSEDX (LS := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.ZTraceSpec.checksum_shape) inp).
 
 (* the agrees instance is today's text *)
-Lemma drv_mainX_stmt_NR_agrees_B : forall rc HS, drv_mainX_stmt_B rc HS <-> drv_mainX_stmt_NR_B NR_agrees_B rc HS.
+Lemma drv_mainX_stmt_NR_agrees : forall rc HS, drv_mainX_stmt_B rc HS <-> drv_mainX_stmt_NR_B NR_agrees_B rc HS.
 Proof. intros rc HS. split; intros H; exact H. Qed.
 
 (* ---------------------------------------------------------------------- *)
-(* 3. Start-up + driver over NR: PresetD1qB.v:91-102 with `NR en_p inp` in place of :97-99. *)
+(* 3. Start-up + driver over NR: PresetD1qB.v's tfib_srealizesX_B with `NR en_p inp` in place of its no-refusal
+      premise. *)
 Definition tfib_srealizesX_NR_B (NR : ExecEntry -> ProcInput -> Prop) : Prop :=
-forall (rc : YM05.RunCeil) (HS : nat -> option acs),
+forall (rc : YM05.RunCeil) (HS : Z -> nat -> option acs),
 tfib_startup_T1_B HS -> drv_mainX_stmt_NR_B NR rc HS ->
 forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput) (en_p : ExecEntry),
 valid_sp sp -> valid_brk AsanUbsan.M.loaded_segments brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 NR en_p inp ->
 @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
 srealizes AsanUbsan.M.loaded_segments (init_config AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw YA02.LIMIT inp)
 (SPECX (LS := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.ZTraceSpec.checksum_shape) inp).
 
-(* PresetD1qB.v:122-143 (tfib_srealizesX_B_holds), word for word, with NR for the plain premise *)
+(* PresetD1qB.v's tfib_srealizesX_B_holds, word for word, with NR for the plain premise *)
 Theorem tfib_srealizesX_NR_B_holds : forall NR, tfib_srealizesX_NR_B NR.
 Proof.
-intros NR rc HS HST DRV sp rdraw brk mb inp en_p Hsp Hbrk Hmb Hfit Hinp HNR Hceil.
-pose proof Hinp as (Hva & Hve & Hvfs & _ & [Huid Hgid] & Hnof & Hsig & Hhw & Hab & Hmmu & _).
-destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp].
-cbn in Hab, Hmmu. subst ab mmu.
-change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp)
-with (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) in *.
+intros NR rc HS HST DRV sp rdraw brk mb inp en_p Hsp Hbrk Hmb Hfit Hinp Hlau HNR Hceil.
+pose proof Hinp as (Hva & Hve & _ & _ & _ & [Huid _] & Hnof & Hsig & Hhw & Hab & Hmmu & _ & Hvl & Hcr & Hspt & Hkern).
+destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp kern execfn cr spd spt].
+cbn [in_argv in_envp in_uid in_hwcap in_nofile in_abort_terminal in_va_size in_channel_reader in_sigpipe_terminal in_kernel]
+in Hva, Hve, Hfit, Huid, Hhw, Hnof, Hab, Hmmu, Hcr, Hspt, Hkern.
+subst ab mmu cr spt.
+rewrite Hkern in Hinp, Hsig, Hvl, Hlau, HNR |- *.
+change (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp (recorded_kernel kern) execfn true spd false)
+with (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd) in *.
 apply (srz_conseq AsanUbsan.M.loaded_segments _
 (CLOSEDX (LS := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.ZTraceSpec.checksum_shape)
-(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp)));
+(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd)));
 [| apply t_eq_sym; apply (specx_closedx_eq (LS := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.ZTraceSpec.checksum_shape))].
-apply (HST sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp Hsp Hbrk Hva Hve Hfit Huid Hhw
+apply (HST sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hnof Hsig Hvl Hlau
 (CLOSEDX (LS := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.ZTraceSpec.checksum_shape)
-(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp))
+(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd))
 (CLOSEDX_has_nil (LS := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.ZTraceSpec.checksum_shape) _)).
 intros h c Hok.
-destruct (HS_ok_open_B HS h sp rdraw brk argv envp uid hw (fs_seed_tmp fs tmp) c Hok)
-as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
-exact (DRV sp rdraw brk (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) en_p h ch E R FULL model
-Hsp Hbrk Hfit Hinp HNR Hceil Hch HC HE HM).
+destruct (HS_ok_open_B HS h sp rdraw brk mb argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd
+(fs_seed_tmp fs tmp) c Hok) as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
+exact (DRV sp rdraw brk mb (YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kern execfn spd) en_p
+h ch E R FULL model Hsp Hbrk Hmb Hfit Hinp Hlau HNR Hceil Hch HC HE HM).
 Qed.
 
 (* the agrees instance is today's tfib_srealizesX_B *)
 Lemma tfib_srealizesX_B_of_NR : tfib_srealizesX_B.
 Proof. exact (tfib_srealizesX_NR_B_holds NR_agrees_B). Qed.
-

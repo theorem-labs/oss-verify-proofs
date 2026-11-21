@@ -7,7 +7,7 @@ path, machine name or date is written: an image is named by its file name and sh
 
 Inputs, all from the environment:
   UCI_A, UCI_B, UCI_PIN_A, UCI_PIN_B, BOX_A, BOX_B, BOX_PIN_A, BOX_PIN_B   as for mk_evidence_memchr.py (scripts/env.example.sh)
-  KIT      a directory holding the kit's SHA256SUMS and the seven files it names (commit 3c3e62ee278,
+  KIT      a directory holding the kit's SHA256SUMS and the seven files it names (
            tools/cmpkit/4bbd3a74be89/). sha256(SHA256SUMS) must start with 4bbd3a74be89 and each file must match its line,
            else the run stops. The seven files are copied into one temporary directory that holds only them, and run there.
   PYTHONPATH   a pyelftools install

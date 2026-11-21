@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the serializer sections take it as HBTlo and pass it to ser_litA and ser_childA; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -71,7 +72,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa (pe_jtA ST_string_escape) (t_co ts) gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s5 s10 (Z_to_bv 64 (pa_F pa + 64)) F fc m).
 Proof.
 intros until fc. intros STC INV K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR). pose proof REST as (HP & _).
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
 destruct pa as [sp0 Ff oldloc newloc bsl dsl]; cbn [pa_sp0 pa_F pa_oldloc pa_newloc pa_bslack pa_dslack] in *.
@@ -196,6 +197,7 @@ Hypothesis FL : aflags_ok fl.
 Hypothesis Hlv : 0 <= lv.
 Hypothesis Hlvd : lv + sdepth (Sarr kids) <= 1000.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - ser_budgetA (Sarr kids).
 Hypothesis SPA : usp mod 16 = 0.
 Hypothesis HT : usp <= hiA_top A4L HIx.
@@ -391,7 +393,7 @@ F' (Z_to_bv 64 0x9a0ac) fc' None m (seg_rom asegs))).
 { intros lit k bs t0_ t1_ t2_ a3_ a4_ a5_ a6_ a7_ t3_ t4_ t5_ t6_ RB BL CHK Hk Hl Hlk.
 evt_done5.
 rewrite <- (Z_to_bv_bv_unsigned ra) at 1. rewrite <- (Z_to_bv_bv_unsigned sp) at 1.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF lit k bs RB BL CHK ltac:(lia) Hl Hlk) with (F := F) (e := e);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF lit k bs RB BL CHK ltac:(lia) Hl Hlk) with (F := F) (e := e);
 [ exact INVU | exact He | lia | lia | exact SPA | lia | lia | reflexivity | word_range ra RAR; lia | exact RA | exact FS' | exact FR' | ].
 intros A2 m2 md2 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F2 fc2 INV2 FS2 FR2.
 pose proof INV2 as (buf2 & cap2 & bpos2 & content2 & errv2 & B2 & HP2 & PB2 & _ & _ & _ & ERR2 & ST2 & HPR2 & VM2 & Hb2 & Hc2 & HB2 & HD2).
@@ -631,7 +633,7 @@ unfold_consts.
 step. if_falsex. fold_mkR.
 evt_done5.
 eapply (kid_callA 0x9b8b8 0x9b8e0 s' v pbk RESTk); [right; split; reflexivity | exact INV2 | exact JN | exact INCLk |].
-eapply (ser_childA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED JHEX0 (afn_of s') s' (KIDS s' INk)) with (F := F) (e := acc);
+eapply (ser_childA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED JHEX0 (afn_of s') s' (KIDS s' INk)) with (F := F) (e := acc);
 [ exact INV2 | exact JN | exact INCLk | exact JTXk | lia | lia | exact FL | lia | rewrite sdepth_arr in Hlvd; lia | exact FRSN
 | unfold ser_budgetA, ASER_LEVEL, ASER_LEAF; lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -643,7 +645,7 @@ destruct (jtxk_arr_step_none asegs A4F _ _ _ _ _ _ _ _ _ _ KOK2 NTHk HP0 JT) as 
 rewrite NTHp in Hv0. injection Hv0 as Hv0. rewrite Hv0.
 step. if_lit. step. step. step. if_lit. step. step. step. fold_mkR.
 evt_done5.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x23360 4 LIT_NULL) with (F := F) (e := acc);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x23360 4 LIT_NULL) with (F := F) (e := acc);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV2 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -672,7 +674,7 @@ stash INV.
 a4l. reenterA asegs A4L HIx asegs_wx HP.
 step. step. step. step. fold_mkR.
 evt_done5. unstash INV.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x23440 1 LIT_COMMA) with (F := F) (e := acc - 2);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x23440 1 LIT_COMMA) with (F := F) (e := acc - 2);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -694,7 +696,7 @@ eapply ser_memA_weaken_e; [| exact INV3]. lia.
 -
 if_rw E1 false. step. step. step. step. fold_mkR.
 evt_done5. unstash INV3.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x23480 1 LIT_SPACE) with (F := F) (e := acc - 2 + 1);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x23480 1 LIT_SPACE) with (F := F) (e := acc - 2 + 1);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV3 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS3 | exact FR3 | ].
 intros A4 m4 md4 t0'' t1'' t2'' a0'' a1'' a2'' a3'' a4'' a5'' a6'' a7'' t3'' t4'' t5'' t6'' F4 fc4 INV4 FS4 FR4.
@@ -833,7 +835,7 @@ unfold_consts.
 step. if_falsex. fold_mkR.
 evt_done5.
 eapply (kid_callA 0x9b724 0x9b74c s' v pbk RESTk); [left; split; reflexivity | exact INV2 | exact JN | exact INCLk |].
-eapply (ser_childA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED JHEX0 (afn_of s') s' (KIDS s' INk)) with (F := F) (e := 2);
+eapply (ser_childA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED JHEX0 (afn_of s') s' (KIDS s' INk)) with (F := F) (e := 2);
 [ exact INV2 | exact JN | exact INCLk | exact JTXk | lia | lia | exact FL | lia | rewrite sdepth_arr in Hlvd; lia | exact FRSN
 | unfold ser_budgetA, ASER_LEVEL, ASER_LEAF; lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -857,7 +859,7 @@ destruct (jtxk_arr_step_none asegs A4F _ _ _ _ _ _ _ _ _ _ KOK2 NTHk pbtail_nil 
 rewrite NTHp in Hv0. injection Hv0 as Hv0. rewrite Hv0.
 step. if_lit. step. if_lit. step. step. step. step. step. step. fold_mkR.
 evt_done5.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x23360 4 LIT_NULL) with (F := F) (e := 2);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x23360 4 LIT_NULL) with (F := F) (e := 2);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV2 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -937,7 +939,7 @@ eapply ser_memA_weaken_e; [| exact INV3]. lia.
 +
 if_rw E1 false. step. step. step. step. step. fold_mkR.
 evt_done5.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x23480 1 LIT_SPACE) with (F := F) (e := 1);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x23480 1 LIT_SPACE) with (F := F) (e := 1);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV3 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A4 m4 md4 t0'' t1'' t2'' a0'' a1'' a2'' a3'' a4'' a5'' a6'' a7'' t3'' t4'' t5'' t6'' F4 fc4 INV4 FS4 FR4.
@@ -961,7 +963,7 @@ Hypothesis OBL_REALLOC_NF : realloc_nf_stmt HIx.
 
 Theorem ser_arrA : forall kids, (forall s', In (Some s') kids -> ser_specA HIx (afn_of s') s') -> ser_specA HIx ASER_ARR (Sarr kids).
 Proof.
-intros kids KIDS. unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+intros kids KIDS. unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (a & ABS & ps & KBS & EREST & NODE & AL & L1 & L2 & KOK).
 pose proof AL as (arr & size & junk & EABS & _). subst ABS.
 subst a0 a1 a2 a3 tp REST.
@@ -999,14 +1001,14 @@ split; [apply model_vm_only_refl|].
 split; [lia|]. split; [unfold ser_capb; lia|]. split; lia. }
 assert (Hw3 : 24 <= w) by (eapply (jtxk_arr_acc (fun _ => True)); [intros s0' _ bs0 w0 r0 H0; exact (jtx_nonneg _ _ _ _ H0) | exact JTX]).
 evt_done5.
-eapply (ser_litA HIx sp gp m md LB LM FRS B pb lo bpos cap w LO HT CAP TXT NEED OBL_REALLOC_NF 0x23800 1 LIT_LBRACK) with (F := F) (e := 0);
+eapply (ser_litA HIx sp gp m md LB LM FRS B pb lo bpos cap w LO HBT HT CAP TXT NEED OBL_REALLOC_NF 0x23800 1 LIT_LBRACK) with (F := F) (e := 0);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV1 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | apply fsaved_refl | exact FRM | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
 unstash NODE0. unstash JHX0. unstash AL. unstash KOK. unstash LOS.
 lazymatch type of INV3 with context [[(_, [CB 56 ?jj; _; _; _; _; _; _; _; _; _; _; _; _; _])]] =>
 eapply (arr_startA HIx OBL_REALLOC_NF ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B pb lo p rc pb0 lv fl a arr size bpos cap w
-ps KBS kids T Y R KIDS FL Hlv Hlvd LO LOS SPA HT RA CAP TXT NEED JHX0 FRSN INCL NODE0 AL KOK JTX K
+ps KBS kids T Y R KIDS FL Hlv Hlvd LO HBT LOS SPA HT RA CAP TXT NEED JHX0 FRSN INCL NODE0 AL KOK JTX K
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ jj); [exact INV3 | exact FS3 | exact FR3] end.
 Qed.
 End Top.
@@ -1047,6 +1049,7 @@ Hypothesis Hd : d = 0 \/ d = 16.
 Hypothesis Hq : q = usp - 128 - d.
 Hypothesis Hq32 : q mod 32 = 0.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - ADBL_STACK.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis K : forall ms' md' A', ser_postA HIx ra sp gp (wz A_TP) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB LM FRS B0 pb cap0 bpos0 9 lo ms' md' A' ->
@@ -1202,6 +1205,7 @@ Let usp := bv_unsigned sp.
 Hypothesis Hd : d = 0 \/ d = 16.
 Hypothesis Hq : q = usp - 128 - d.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - ADBL_STACK.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 
@@ -1405,6 +1409,7 @@ Hypothesis FL : aflags_ok fl.
 Hypothesis Hlv : 0 <= lv.
 Hypothesis Hlvd : lv + sdepth (Sarr kids) <= 1000.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - ser_budgetA (Sarr kids).
 Hypothesis SPA : usp mod 16 = 0.
 Hypothesis HT : usp <= hiA_top A4L HIx.
@@ -1600,7 +1605,7 @@ F' (Z_to_bv 64 0x9b4fc) fc' None m (seg_rom asegs))).
 { intros lit k bs t0_ t1_ t2_ a3_ a4_ a5_ a6_ a7_ t3_ t4_ t5_ t6_ RB BL CHK Hk Hl Hlk.
 evt_done5.
 rewrite <- (Z_to_bv_bv_unsigned ra) at 1. rewrite <- (Z_to_bv_bv_unsigned sp) at 1.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF lit k bs RB BL CHK ltac:(lia) Hl Hlk) with (F := F) (e := e);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF lit k bs RB BL CHK ltac:(lia) Hl Hlk) with (F := F) (e := e);
 [ exact INVU | exact He | lia | lia | exact SPA | lia | lia | reflexivity | word_range ra RAR; lia | exact RA | exact FS' | exact FR' | ].
 intros A2 m2 md2 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F2 fc2 INV2 FS2 FR2.
 pose proof INV2 as (buf2 & cap2 & bpos2 & content2 & errv2 & B2 & HP2 & PB2 & _ & _ & _ & ERR2 & ST2 & HPR2 & VM2 & Hb2 & Hc2 & HB2 & HD2).
@@ -1841,7 +1846,7 @@ step. if_falsex.
 step. step. ubsan_align Hval. fold_mkR.
 evt_done5.
 eapply (kid_callA 0x9d070 0x9d098 s' v pbk RESTk); [right; split; reflexivity | exact INV2 | exact JN | exact INCLk |].
-eapply (ser_childA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED JHEX0 (afn_of s') s' (KIDS s' INk)) with (F := F) (e := acc);
+eapply (ser_childA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED JHEX0 (afn_of s') s' (KIDS s' INk)) with (F := F) (e := acc);
 [ exact INV2 | exact JN | exact INCLk | exact JTXk | lia | lia | exact FL | lia | rewrite sdepth_arr in Hlvd; lia | exact FRSN
 | unfold ser_budgetA, ASER_LEVEL, ASER_LEAF; lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -1853,7 +1858,7 @@ destruct (jtxk_arr_step_none asegs A4F _ _ _ _ _ _ _ _ _ _ KOK2 NTHk HP0 JT) as 
 rewrite NTHp in Hv0. injection Hv0 as Hv0. rewrite Hv0.
 step. if_lit. step. step. step. if_lit. step. step. step. fold_mkR.
 evt_done5.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x233c0 4 LIT_NULL) with (F := F) (e := acc);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x233c0 4 LIT_NULL) with (F := F) (e := acc);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV2 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -1882,7 +1887,7 @@ stash INV.
 a4l. reenterA asegs A4L HIx asegs_wx HP.
 step. step. step. step. fold_mkR.
 evt_done5. unstash INV.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x234a0 1 LIT_COMMA) with (F := F) (e := acc - 2);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x234a0 1 LIT_COMMA) with (F := F) (e := acc - 2);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -1904,7 +1909,7 @@ eapply ser_memA_weaken_e; [| exact INV3]. lia.
 -
 if_rw E1 false. step. step. step. step. fold_mkR.
 evt_done5. unstash INV3.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x234e0 1 LIT_SPACE) with (F := F) (e := acc - 2 + 1);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x234e0 1 LIT_SPACE) with (F := F) (e := acc - 2 + 1);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV3 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS3 | exact FR3 | ].
 intros A4 m4 md4 t0'' t1'' t2'' a0'' a1'' a2'' a3'' a4'' a5'' a6'' a7'' t3'' t4'' t5'' t6'' F4 fc4 INV4 FS4 FR4.
@@ -2046,7 +2051,7 @@ step. if_falsex.
 step. step. ubsan_align Hval. fold_mkR.
 evt_done5.
 eapply (kid_callA 0x9cec0 0x9cee8 s' v pbk RESTk); [left; split; reflexivity | exact INV2 | exact JN | exact INCLk |].
-eapply (ser_childA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED JHEX0 (afn_of s') s' (KIDS s' INk)) with (F := F) (e := 2);
+eapply (ser_childA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED JHEX0 (afn_of s') s' (KIDS s' INk)) with (F := F) (e := 2);
 [ exact INV2 | exact JN | exact INCLk | exact JTXk | lia | lia | exact FL | lia | rewrite sdepth_arr in Hlvd; lia | exact FRSN
 | unfold ser_budgetA, ASER_LEVEL, ASER_LEAF; lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -2070,7 +2075,7 @@ destruct (jtxk_arr_step_none asegs A4F _ _ _ _ _ _ _ _ _ _ KOK2 NTHk pbtail_nil 
 rewrite NTHp in Hv0. injection Hv0 as Hv0. rewrite Hv0.
 step. if_lit. step. if_lit. step. step. step. step. step. step. fold_mkR.
 evt_done5.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x233c0 4 LIT_NULL) with (F := F) (e := 2);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x233c0 4 LIT_NULL) with (F := F) (e := 2);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV2 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
@@ -2179,7 +2184,7 @@ eapply ser_memA_weaken_e; [| exact INV3]. lia.
 +
 if_rw E1 false. step. step. step. step. step. fold_mkR.
 evt_done5.
-eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HT CAP0 TXT NEED OBL_REALLOC_NF 0x234e0 1 LIT_SPACE) with (F := F) (e := 1);
+eapply (ser_litA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 w LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF 0x234e0 1 LIT_SPACE) with (F := F) (e := 1);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV3 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | exact FS' | exact FR' | ].
 intros A4 m4 md4 t0'' t1'' t2'' a0'' a1'' a2'' a3'' a4'' a5'' a6'' a7'' t3'' t4'' t5'' t6'' F4 fc4 INV4 FS4 FR4.
@@ -2203,7 +2208,7 @@ Hypothesis OBL_REALLOC_NF : realloc_nf_stmt HIx.
 
 Theorem ser_arrA : forall kids, (forall s', In (Some s') kids -> ser_specA HIx (afn_of s') s') -> ser_specA HIx ASER_ARR (Sarr kids).
 Proof.
-intros kids KIDS. unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+intros kids KIDS. unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 destruct JN as (a & ABS & ps & KBS & EREST & NODE & AL & L1 & L2 & KOK).
 pose proof AL as (arr & size & junk & EABS & _). subst ABS.
 subst a0 a1 a2 a3 tp REST.
@@ -2241,14 +2246,14 @@ split; [apply model_vm_only_refl|].
 split; [lia|]. split; [unfold ser_capb; lia|]. split; lia. }
 assert (Hw3 : 24 <= w) by (eapply (jtxk_arr_acc (fun _ => True)); [intros s0' _ bs0 w0 r0 H0; exact (jtx_nonneg _ _ _ _ H0) | exact JTX]).
 evt_done5.
-eapply (ser_litA HIx sp gp m md LB LM FRS B pb lo bpos cap w LO HT CAP TXT NEED OBL_REALLOC_NF 0x23860 1 LIT_LBRACK) with (F := F) (e := 0);
+eapply (ser_litA HIx sp gp m md LB LM FRS B pb lo bpos cap w LO HBT HT CAP TXT NEED OBL_REALLOC_NF 0x23860 1 LIT_LBRACK) with (F := F) (e := 0);
 [ vm_compute; reflexivity | reflexivity | vm_compute; reflexivity | lia | lia | lia
 | exact INV1 | lia | lia | lia | clear - SPA; Z.div_mod_to_equations; lia | lia | lia | reflexivity | lia | reflexivity | apply fsaved_refl | exact FRM | ].
 intros A3 m3 md3 t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F3 fc3 INV3 FS3 FR3.
 unstash NODE0. unstash JHX0. unstash AL. unstash KOK. unstash LOS.
 lazymatch type of INV3 with context [[(_, [CB 88 ?jj; _; _; _; _; _; _; _; _; _; _; _; _; _])]] =>
 eapply (arr_startA HIx OBL_REALLOC_NF ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B pb lo p rc pb0 lv fl a arr size bpos cap w
-ps KBS kids T Y R KIDS FL Hlv Hlvd LO LOS SPA HT RA CAP TXT NEED JHX0 FRSN INCL NODE0 AL KOK JTX K
+ps KBS kids T Y R KIDS FL Hlv Hlvd LO HBT LOS SPA HT RA CAP TXT NEED JHX0 FRSN INCL NODE0 AL KOK JTX K
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ jj); [exact INV3 | exact FS3 | exact FR3] end.
 Qed.
 End Top.
@@ -2289,6 +2294,7 @@ Hypothesis Hd : d = 0 \/ d = 16.
 Hypothesis Hq : q = usp - 128 - d.
 Hypothesis Hq32 : q mod 32 = 0.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - ADBL_STACK.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis K : forall ms' md' A', ser_postA HIx ra sp gp (wz A_TP) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB LM FRS B0 pb cap0 bpos0 9 lo ms' md' A' ->
@@ -2446,6 +2452,7 @@ Let usp := bv_unsigned sp.
 Hypothesis Hd : d = 0 \/ d = 16.
 Hypothesis Hq : q = usp - 128 - d.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - ADBL_STACK.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 
@@ -2667,7 +2674,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa (pe_jtA ST_string_escape) (t_co ts) gp t0 a0 a1 a2 a3 a4 a5 a6 a7 s3 s5 s6 s7 s8 s9 s11 t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC INV K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR). pose proof REST as (HP & _).
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
 destruct pa as [sp0 Ff oldloc newloc bsl dsl]; cbn [pa_sp0 pa_F pa_oldloc pa_newloc pa_bslack pa_dslack] in *.

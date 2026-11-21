@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB1v.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, tfibguard_start and tfibmusl_text_start moved to oft_exit_guard and sysconf of fuzz_ctrl's asan image (sha256 aac16e1fe728...), and tfibmusl_text_count recomputed by the released rule (.text end + 12 - tfibmusl_text_start) / 4 for that image. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB1v.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, tfibguard_start and tfibmusl_text_start moved to oft_exit_guard and sysconf of fuzz_ctrl's asan image (sha256 aac16e1fe728...), and tfibmusl_text_count recomputed by the released rule (.text end + 12 - tfibmusl_text_start) / 4 for that image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

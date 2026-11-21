@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the leaf's ledger counts the launch's vDSO/vvar pair with the image's reservations). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -181,13 +182,15 @@ Hypothesis Hrho : forall t, to_Z t < to_Z n -> rho' t = rho t.
 Hypothesis Hmaps' : vm_maps V' = map (den rho') ALL'.
 Hypothesis Hna' : vm_noaccess V' = na_apply rho' ops (vm_noaccess V).
 Hypothesis Hlz' : m_vm_lazy m' = lz_apply rho' ops (m_vm_lazy m).
+(* LPS 727298f3: the reserved ledger is the root's whole [vm_reserved] (the image's
+   reservations [R0] plus the launch's vDSO/vvar pair); the drive never changes it. *)
 Hypothesis Hfacts' :
-  vm_reserved V' = R0
+  vm_reserved V' = vm_reserved V
   /\ sp_window_lo <= bv_unsigned (vm_init_sp V') <= sp_window_hi
   /\ Forall (fun p => 0 < e_sz p) (vm_maps V')
   /\ Forall (fun p => e_lo p mod page_size = 0 /\ e_sz p mod page_size = 0) (vm_maps V')
   /\ Forall (fun p => 0 < e_lo p /\ e_hi p <= alloc_top V') (vm_maps V')
-  /\ Forall (fun p => Forall (e_disj p) R0) (vm_maps V')
+  /\ Forall (fun p => Forall (e_disj p) (vm_reserved V)) (vm_maps V')
   /\ pw_disj (vm_maps V') /\ Z.of_nat (length (vm_maps V')) <= c' /\ live_bytes (vm_maps V') <= S'.
 Hypothesis Hwfna' : Forall (fun q => e_hi q <= 2 ^ 64) (vm_noaccess V').
 Hypothesis Hwflz' : Forall (fun q => e_hi q <= 2 ^ 64) (m_vm_lazy m').
@@ -257,7 +260,7 @@ Proof.
   unfold e_hi, e_lo, e_sz, page_size in *.
   split; [exact H1|]. split; [exact H2|]. split; [exact H3|]. split; [|exact H5].
   apply off_hull; [lia|]. intros x r Hr Hx Hxr.
-  pose proof (proj1 (Forall_forall _ _) H6 r Hr) as Hd. unfold e_disj, e_hi, e_lo, e_sz in *. lia.
+  pose proof (proj1 (Forall_forall _ _) H6 r (CXS.co_res_in _ _ _ _ _ _ _ _ _ _ _ _ HCS r Hr)) as Hd. unfold e_disj, e_hi, e_lo, e_sz in *. lia.
 Qed.
 
 Lemma leaf_wf : model_ivs_wf m'.
@@ -596,11 +599,13 @@ Qed.
 Definition same3_chk : bool :=
   AX2.expr_eqb (CAP.a_brk END) (CAP.a_brk CS) && afd_eqb (CAP.a_fd END) (CAP.a_fd CS)
   && Bool.eqb (CAP.a_tidset END) (CAP.a_tidset CS)
-  && (live_bytes R0 + S' <=? CAP.a_totsz END) && (fE' <=? CAP.a_eager END).
+  (* LPS 727298f3: the ledger also holds at most [resx_bytes A] bytes of the launch's
+     extra reserved intervals (the vDSO/vvar pair, [CXS.co_resx]). *)
+  && (live_bytes R0 + CAP.resx_bytes A + S' <=? CAP.a_totsz END) && (fE' <=? CAP.a_eager END).
 Hypothesis Hsame3 : same3_chk = true.
 
 Lemma same3_parts : CAP.a_brk END = CAP.a_brk CS /\ CAP.a_fd END = CAP.a_fd CS /\ CAP.a_tidset END = CAP.a_tidset CS
-  /\ live_bytes R0 + S' <= CAP.a_totsz END /\ fE' <= CAP.a_eager END.
+  /\ live_bytes R0 + CAP.resx_bytes A + S' <= CAP.a_totsz END /\ fE' <= CAP.a_eager END.
 Proof.
   unfold same3_chk in Hsame3. apply andb_prop in Hsame3 as [H H5]. apply andb_prop in H as [H H4].
   apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
@@ -610,7 +615,9 @@ Qed.
 Lemma leaf_totsz : CXS.sum_sizes (vm_reserved V' ++ vm_maps V') <= CAP.a_totsz END.
 Proof.
   destruct same3_parts as (_ & _ & _ & H4 & _). destruct Hfacts' as (Hr & _ & _ & _ & _ & _ & _ & _ & HS).
-  rewrite sum_sizes_live, live_bytes_app, Hr. lia.
+  destruct (CXS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ HCS) as (rx & Erx & _ & _ & Hsum).
+  rewrite sum_sizes_live in Hsum.
+  rewrite sum_sizes_live, live_bytes_app, Hr, Erx, live_bytes_app. lia.
 Qed.
 
 Lemma leaf_eager : AsanAcct.eager_used m' <= CAP.a_eager END.
@@ -1168,7 +1175,7 @@ Hypothesis HShZ' : forall x : word, in_shadow (bv_unsigned x) -> no_region rho' 
                      ~ exempted rho' EX' (bv_unsigned x) ->
                      rview segs FULL' x = Some (Z_to_bv 8 0) /\ wview segs FULL' x <> None.
 Hypothesis HM1 : forall t rg, iget t M1 = Some rg -> region_ok rho' t rg.
-Hypothesis Hspok' : forall t rg, iget t M1 = Some rg -> span_ok R0 rho' M1 t rg.
+Hypothesis Hspok' : forall t rg, iget t M1 = Some rg -> span_ok segs (vm_reserved V) rho' M1 t rg.
 Hypothesis Hexcov' : lazy_cov ALL' EX'.
 
 Definition exb (z : Z) : bool :=
@@ -1257,7 +1264,7 @@ Proof.
   rewrite forallb_forall in Hall. pose proof (Hall (t, rg) (proj2 (ielements_spec M1 t rg) Hg)) as Hck. cbn [snd] in Hck.
   destruct (rg_kind rg) as [|p] eqn:Ek.
   - destruct Hso as [[Hm|Hm] | (_ & _ & Hpre)]; [lia | lia |].
-    destruct (Hpre z Hin) as (r & Hr & R1 & R2).
+    destruct (Hpre z Hin) as (r & _ & Hr & R1 & R2).
     pose proof (proj1 (Forall_forall _ _) (res_in_hull segs A Hres) r Hr) as [Rh1 Rh2].
     apply existsb_exists in Hhq as (q & Hq & Hqc). apply andb_prop in Hqc as [Hqc _]. unfold hullq in Hqc.
     destruct (fst q) as [b| | | | | | |] eqn:Eb; try discriminate. destruct (snd q) as [l| | | | | | |] eqn:El; try discriminate.
@@ -1767,7 +1774,15 @@ Proof.
   - exact leaf_fds.
   - exact leaf_fs.
   - exact leaf_tid.
-  - exact (proj1 Hfacts').
+  - (* LPS 727298f3: the root's ledger, unchanged by the drive, with the launch's vDSO/vvar pair *)
+    destruct Hfacts' as (Hr & _ & _ & _ & _ & HdR & _). rewrite Hr. split; [|split; [|split]].
+    + exact (CXS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ HCS).
+    + eapply Forall_impl; [|exact HdR]. intros p Hp. eapply Forall_impl; [|exact Hp].
+      intros q Hq. unfold CXS.iv_disjoint. unfold e_disj, e_hi, e_lo, e_sz in Hq. lia.
+    + destruct Hsame as (_ & _ & _ & _ & _ & _ & Hk & Hvt). rewrite Hk, Hvt.
+      exact (CXS.co_vdso _ _ _ _ _ _ _ _ _ _ _ _ HCS).
+    + destruct Hsame as (_ & _ & _ & Hp & _). unfold m_channel_reader. rewrite Hp.
+      exact (CXS.co_rdr _ _ _ _ _ _ _ _ _ _ _ _ HCS).
   - exact Hlim'.
   - exact leaf_maps.
   - apply leaf_holes.

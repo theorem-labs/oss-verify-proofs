@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (fs.asan-ubsan, UBSan trap mode) walk of parse_value against
-   lib/B/FSH_Fn_reader.v parse_value_spec (CTX-free; the text of a working branch 035561e0fd4 = a working branch
-   311139dc663: skip_ws_spec's post keeps [sp, ot) but [q, q + 8), parse_value_spec's k = 0 arm
+   lib/B/FSH_Fn_reader.v parse_value_spec (CTX-free; the text of a working branch = a working branch:
+   skip_ws_spec's post keeps [sp, ot) but [q, q + 8), parse_value_spec's k = 0 arm
    `q = spZ regs + 8 /\ raZ regs <= q`; both rulings a Theorem Labs lane and after the k = 0 gap report): the
    COMPOSITION, parse_value_holds : parse_value_spec tfibsegs B k (stages: FSW_parse_value.v; decode table:
    FSW_parse_value_tbl.v).
@@ -16,14 +16,15 @@
        working heads
      proof-index: 0x82fcc: 0 named, 0 by address, 0 related, 0 released lemma(s), 0 by file name, an earlier delivery 0 named and
        0 name(s) holding it, 0 UNRELEASED working-branch file(s) in the lemma index, 105 UNRELEASED hit(s) on live working heads
-   Port source (Lookup result): ported from a working branch 75e39a1f41d:proofs/omx-clap-core/fuzz_state/lib/
+   Port source (Lookup result): ported from a working branch:proofs/omx-clap-core/fuzz_state/lib/
    B/Prog/{parse_value_disp,PvStr,PvItems,PvJoin,PvStep,PvHolds,ParseUnit}.v (COMPLETE old-form image-B walk of
    parse_value: entry/fake frame/skip_ws call pv_pro + pv_disp, parse_string arm pv_str_ok, parse_items arm pv_items_ok,
    epilogue pv_join + pvs_none, composition parse_value_step / parse_value_holds_b; all Qed, no admit), restated against
    parse_value_spec's frame lemma by lemma, NOT Required, NOT bridged; new-frame shape from image A's walk
-   a working branch (ebb53c68f7d .. 00c6d1886e6: lib/A/FSH_parse_value.v pv_grant / pv_resume_sm /
+   a working branch (..: lib/A/FSH_parse_value.v pv_grant / pv_resume_sm /
    pv_seg0 / pv_sm / pv_epi / pv_strcall, lib/A/FSW_parse_value_calls.v pvc_objcall), copied and re-measured for B. *)
-(* the IMAGE B (fs.asan-ubsan, UBSan trap mode) walk of parse_value against lib/B/FSH_Fn_reader.v parse_value_spec (CTX-free; the text of a working branch 035561e0fd4 = a working branch 311139dc663: skip_ws_spec's post keeps [sp, ot) but [q, q + 8), parse_value_spec's k = 0 arm `q = spZ regs + 8 /\ raZ regs <= q`; both rulings a Theorem Labs lane, 09:09Z and after the k = 0 gap report): the COMPOSITION, parse_value_holds : parse_value_spec tfibsegs B k (stages: FSW_parse_value.v; decode table: FSW_parse_value_tbl.v).   What is ported from the old B walk is its CONTENT on B's code: pv_pro's prologue / class-0 grant / frame setup
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* the IMAGE B (fs.asan-ubsan, UBSan trap mode) walk of parse_value against lib/B/FSH_Fn_reader.v parse_value_spec (CTX-free; the text of a working branch = a working branch: skip_ws_spec's post keeps [sp, ot) but [q, q + 8), parse_value_spec's k = 0 arm `q = spZ regs + 8 /\ raZ regs <= q`; both rulings a Theorem Labs lane, 09:09Z and after the k = 0 gap report): the COMPOSITION, parse_value_holds : parse_value_spec tfibsegs B k (stages: FSW_parse_value.v; decode table: FSW_parse_value_tbl.v).   What is ported from the old B walk is its CONTENT on B's code: pv_pro's prologue / class-0 grant / frame setup
    (here pv_seg0, pv_sm, pv_seg1), the skip_ws call (pv_wscall), pv_disp's dispatch (q's alignment and shadow checks,
    in->p < in->end, in->p <> 0, the byte's shadow check, the byte tests; here FSW_parse_value.pv_disp), pv_str_ok (v's
    UBSan checks, v->type := 4, parse_string, v->str; here pv_disp + pv_strcall + pv_str1), pv_items_ok (a2 := 1,
@@ -390,7 +391,7 @@ Ltac pv_wr0_tac :=
   exfalso; exact (pv_wrange_nil _ _ Ha).
 
 (* ================= the three program calls through their callee hypotheses =================
-   Ported from image A's walk (a working branch c778809c93e: lib/A/FSH_parse_value.v pv_strcall,
+   Ported from image A's walk (a working branch: lib/A/FSH_parse_value.v pv_strcall,
    lib/A/FSW_parse_value_calls.v pvc_objcall), with any journal start (W0 mem0 md0) and B's return addresses; skip_ws is
    B's own call (A inlines the loop). The callee's fpreU at its entry is FSW_ret.fsw_fpreU_atFP from the caller's
    journal; the callee's window [sp1 - STK_callee, ot) lies inside the caller's [ot - STK, ot), so the journals
@@ -795,7 +796,7 @@ destruct (G 7 ltac:(lia)) as (z7 & E7 & P7). rewrite E7.
 eexists. split; [reflexivity | lia].
 Qed.
 (* the live blocks' request sum (blocks_bytes) is rd_sum of ablocks (copied from the accepted B grow walk,
-   a working branch 8c301ffdfdb lib/B/Prog/FSW_grow_holds.v grow_bb) *)
+   a working branch lib/B/Prog/FSW_grow_holds.v grow_bb) *)
 Lemma pv_bb : forall B ly S, blocks_bytes S = rd_sum (ablocks B ly S).
 Proof.
 intros B ly S. unfold blocks_bytes, rd_sum, ablocks, blocks.
@@ -893,7 +894,7 @@ split.
     * exact (achain_ly_top ly lyc rdc sq q chq' Etop (achain_lower ly rdc sp sq q chq' Hc' Hsq2)).
     * rewrite Etop. exact (pv_forall_bad_x (ly_top ly) q chq chq' (pv_achain_fps ly rd0 sp q chq Hchq Hsp) Hfa HF).
 Qed.
-(* one byte read off a memory as a val_mem of width 1 (image A's walk, a working branch 00c6d1886e6
+(* one byte read off a memory as a val_mem of width 1 (image A's walk, a working branch
    lib/A/FSH_parse_value.v pv_val1) *)
 Lemma pv_val1 : forall (m : word -> option byte) a (b : byte), mbyte tfibsegs m a = Some b ->
   val_mem tfibsegs m a 1 (bv_unsigned b).

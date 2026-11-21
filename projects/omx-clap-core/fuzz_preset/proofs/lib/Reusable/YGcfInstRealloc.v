@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRealloc.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken back by path from commit 2d97a7029501,
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRealloc.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken back by path from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstRealloc.v (the P'' text), with this unit's module prefixes and
-   no other change.  The preset text itself was taken from this layer's commit bbe791f0bb0 with THREE changes:
+   no other change.  The preset text itself was taken from this layer's with THREE changes:
    - room_br and the realloc(p, n) end rule arealloc_realizes_cf_inst that used it are DROPPED: room_br
      (YGcfReallocCompose.ARX_br at ARXq_cf) is not satisfiable as a closed statement (the source's own header). The
      realloc(p, n) end rule is YGcfInstReallocK.arealloc_realizes_cf_k_inst, with the caller's room at the entry.
@@ -30,6 +30,7 @@
    realloc interceptor; it decodes the unit's bytes, so it is a premise of the theorem. Allocate's call-site argument
    can_fill (acf) is a Section variable: each unit's walk passes its own.
    No image constant; no function is proved here (rule 24). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

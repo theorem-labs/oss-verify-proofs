@@ -1,5 +1,5 @@
 (* fuzz_preset, slice S5b, lane A2Loop (a Theorem Labs lane, 2026-10-30): the ASSEMBLY of parse_items (image A, the ASan build;
-   entry VrdIPro.PI_ENTRY) against the RECORD text lib/A/PRH_FnParse.v (the kit's cut 7cdbb61b5fa0, blob f0d92dcec7e9):
+   entry VrdIPro.PI_ENTRY) against the RECORD text lib/A/PRH_FnParse.v (the kit's cut, blob f0d92dcec7e9):
    parse_items' text at
    nesting d from parse_value's text at d + 1, and the depth boundary.
    rule 24: proves no function (kind: segment lemma). The function's segments are other lanes' lemmas; this file

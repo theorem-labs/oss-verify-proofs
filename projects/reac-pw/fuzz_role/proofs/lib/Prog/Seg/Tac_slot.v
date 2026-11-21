@@ -4,7 +4,7 @@
    fflags), FR from scratch (sl_fr_of), FR across a Kind A run (sl_fr_run, sl_mid, sl_mid_fp), and FR's window and
    bounds.
    Taken from reac-pw/fuzz_pin's Prog/Seg/Tac_slot.v, itself libreac/fuzz_ctrl's released Prog/Seg/Tac_slot.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted, same lemma names, with role's numbers: the frame is 496 bytes, so the
+   adapted, same lemma names, with role's numbers: the frame is 496 bytes, so the
    saved registers at S - 104 are fsp g + 392 (sl_fp); the sink and errno numerals (sl_sink, sl_errno_val) are
    frame_facts_plain's (ofl_head 0x4f9f0, ofl_lock 0x4f9e8, __libc 0x4f5c0, builtin_tls 0x2f330); the last PT_LOAD
    ends at 0x4fe08, under SL_TOP. Every use of frame_facts_plain goes through the named accessors (the ff_ lemmas

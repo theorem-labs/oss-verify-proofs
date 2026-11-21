@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 277 of its 298 lines of code are new or changed and 497 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3; 0x86140), the segment S_MF_HDRB (HFIND 0x865c0 ->
    TAIL 0x86820): the PREMISES OF ITS CALLEES, from the walk's mid-segment invariant. A walk lane of
    the image-B m_file-family owner's G2B. Statement and proof are about the reader `aview SEGS (w_H Wc) memc` and the journal only: no
    instruction is executed here, no symbolic state.
-   ADAPTED from image A's lib/A/Prog/m_file_s_hdrb_3.v (commit d8beabc2758c): the same lemmas;
+   ADAPTED from image A's lib/A/Prog/m_file_s_hdrb_3.v: the same lemmas;
    image B's numbers where image A's file had its own: the frame 320 (image A 288) and SegInstB.STK_m_file = 8,592
    (hb3_below_win), SegInstB's gotwA / guardA / seg_litA_fz (hb3_refuse_pre), image B's call pcs in the comments.
    The call sites it serves (the neutral listing of m_file in image B):

@@ -3,10 +3,10 @@
    realloc thin segment S2a (lib/B/FSRealloc_inst.v FS_seg_mid_a: Allocate's return 0x32a04 -> `jalr a3` 0x32a78 ->
    musl memcpy 0x98f3c).  FSRealloc_S2a.v consumes these lemmas; the machine walk is FSRealloc_S2a_walk.v.
 
-   The B twin of lib/A/FSRealloc_S2a_ar.v (a working branch 98113525978), which is the template: the
+   The B twin of lib/A/FSRealloc_S2a_ar.v (a working branch), which is the template: the
    same statements and scripts over image B's modules (lib/B/YB1v, YF0m, YF0x for A's AB1v, AF0m, AF0x) and B's two
    REAL(memcpy) cells.  A's file restates in-tree lemmas of lib/A/AFg1.v / AFfu.v / AFf0.v; their B twins are
-   lib/B/YFg1.v:61-65 (kk, kk_facts), :86-87 (cell_lit), :114-115 (hdr_In) and lib/B/YFfu.v:111-115, :142-143,
+   lib/B/YFg1.v:61-65 (kk, kk_facts), :86-87 (cell_lit), :114-115 (hdr_In) and lib/B/YFfu.v:112-116, :143-144,
    :170-171, which Require lib/B/YFex.v; the restatement keeps this file off that chain, as A's keeps off AFex.v.
    The released donor of this step is cgif_rgb_fuzzer's lib/YF78.v:220-249 (`hdr_facts`, over YF1w's hw_val /
    hb1_facts / p_zone / cell_lit).
@@ -65,7 +65,7 @@ Local Open Scope Z_scope.
 Fail Definition probe_SK : OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable.YI16.sink_head := _.
 Fail Definition probe_SH : OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable.YI14.sink_syms := _.
 (* A range none of whose points lies in [e] is disjoint from [e] (lib/B/YFf0.v's zdisjoint_of_pointwise, restated
-   here because YFf0.v Requires lib/B/YFex.v; A's template restates AFf0.v:92-96 for the same reason). *)
+   here because YFf0.v Requires lib/B/YFex.v; A's template restates AFf0.v:93-97 for the same reason). *)
 Lemma s2a_zdisjoint_of_pointwise : forall a s (e : Z * Z), 0 < s -> 0 < snd e -> (forall x, a <= x < a + s -> ~ in_zr x e) ->
   zdisjoint (a, s) e.
 Proof.

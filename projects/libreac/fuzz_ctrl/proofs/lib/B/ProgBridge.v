@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgBridge.v (a working branch 411ba2461e4 .. 4034df3a2b8): lib.A Img0 -> lib.B Img0; comments name image B; B's own segment spans and RT range; tfibsegs_rsegs over the core twin Reusable/YB1v. *)
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgBridge.v (a working branch ..): lib.A Img0 -> lib.B Img0; comments name image B; B's own segment spans and RT range; tfibsegs_rsegs over the core twin Reusable/YB1v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_ctrl image B (asan-ubsan): glue from ctrl's footprint runs (Lib/ExecF.v mstepsF / evtF over B/Img0 rsegs) to the kit's
    fsteps (Reusable/YK04R.v), and the footprint a call site chooses: RNG_W H, every range of visible bytes.
    With it, a callee contract `<f>_contract_F` (forall RNG, ExecF.rng RNG lo len premises -> evtF rsegs RNG P ms)
@@ -69,7 +70,7 @@ Qed.
 
 (* The core's configuration at a pc (YG0d.cfg_at: YK11.mkst, the FP registers and fcsr from fx, no pending service
    call, no reservation, the segments' rom) is the footprint contracts' start state written with lib/Lib's MS.
-   Image-independent: the same statement and proof as image A's (lib/A/ProgBridge.v, 94d4995b31f). *)
+   Image-independent: the same statement and proof as image A's (lib/A/ProgBridge.v). *)
 Lemma cfg_at_MS : forall {fx : YK11.FPState} segs pc regs mem md,
   YG0d.cfg_at segs pc regs mem md =
   mkCfg (MState.MS regs fp_regs (Z_to_bv 64 pc) fp_csr None mem (seg_rom segs)) md.
@@ -83,7 +84,7 @@ Lemma rsegs_spans : map (fun s => (Z.of_N (seg_base s), Z.of_N (seg_size s))) rs
 Proof. vm_compute. reflexivity. Qed.
 
 (* A byte inside a segment of segs is visible in every hidden set H that hides no segment byte. Image-independent:
-   the same statement and proof as image A's (lib/A/ProgBridge.v, a Theorem Labs lane 7b850582d6a). *)
+   the same statement and proof as image A's (lib/A/ProgBridge.v, a Theorem Labs lane). *)
 Lemma vis_of_seg_span : forall segs H, H_off_segments segs H ->
   forall b sz a, In (b, sz) (map (fun s => (Z.of_N (seg_base s), Z.of_N (seg_size s))) segs) ->
   0 <= a < 2 ^ 64 -> b <= a < b + sz -> H (Z_to_bv 64 a) = false.
@@ -122,7 +123,7 @@ Lemma img_vis_W : forall W : YA0n.world rsegs,
   range_visible (YA0n.w_H W) ImgBounds.IMG_LO (ImgBounds.IMG_HI - ImgBounds.IMG_LO).
 Proof. intros W. exact (img_vis_of_Hoff (YA0n.w_H W) (YA0n.w_Hoff W)). Qed.
 
-(* A sub-range of a visible range is visible. Image-independent: the same as image A's (a Theorem Labs lane 4034df3a2b8). *)
+(* A sub-range of a visible range is visible. Image-independent: the same as image A's (a Theorem Labs lane). *)
 Lemma range_visible_sub : forall H lo len lo' len',
   range_visible H lo len -> lo <= lo' -> 0 <= len' -> lo' + len' <= lo + len ->
   range_visible H lo' len'.
@@ -141,7 +142,7 @@ Proof.
     [exact (img_vis_W W) | | | ]; unfold AsanRT.RT_LO, AsanRT.RT_HI, ImgBounds.IMG_LO, ImgBounds.IMG_HI; lia.
 Qed.
 
-(* The core's segments (Reusable/YB1v.v, image B's core twin, a Theorem Labs lane ec8ce4c2cc5 in core 9afb8c9070a) are ctrl's
+(* The core's segments (Reusable/YB1v.v, image B's core twin, a Theorem Labs lane in core) are ctrl's
    footprint runs' segments (B/Img0.v): both are AsanUbsan.M.loaded_segments. Twin of image A's tfibsegs_rsegs. *)
 Lemma tfibsegs_rsegs : YB1v.tfibsegs = rsegs.
 Proof. reflexivity. Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRh.v (commit c5011e28c6b5, file sha256 9c8e6156f0a5) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRh.v (file sha256 9c8e6156f0a5) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (F1 priming row R3, lane B1, slice H4; integrator a Theorem Labs lane): new file. rule 24: no function
    proved here (kind: F1 priming of an already proved walk, the secondary arm of __asan::QuarantineCallback::Recycle
    (0x34810): lift to YA0nH.SRr' / YG0dH.amreal' and apply the core's re-hide step at the return).
@@ -371,7 +372,7 @@ assert (HS : forall a : word, YGcfRehidePost.rh_lo MAP <= bv_unsigned a < YGcfRe
 assert (SEC2 : nth_error (st_secs X2v) r = Some (mkSec (sm_len sm) (sm_size sm) false)).
 { unfold AFg8.X2v, AFg8.X2, AFg8.X1, AFf3.X1. cbn [st_secs set_sec_arr set_secs set_chunks].
   apply nth_error_lupd_same. exact (nth_error_lt _ _ _ Hsm). }
-(* the set at the core's index key (e987a9cee4c): slot r held the live entry sm at the entry state X (Hsm, LIVE from
+(* the set at the core's index key: slot r held the live entry sm at the entry state X (Hsm, LIVE from
    the cut's sc_ELEN) and holds the dead entry of the same length at X2v (SEC2) *)
 assert (DS : forall a, YGcfRehidePost.rh_lo MAP <= a < YGcfRehidePost.rh_hi MAP LEN -> YGcfRehidePost.dead_shadow_new ly X X2v a).
 { intros a Ha. exists r, (mkSec (sm_len sm) (sm_size sm) false), sm.
@@ -394,7 +395,7 @@ destruct RM as (regs' & mem' & md' & Ec & POST & RAW & ERR & MN & AV & PU & CI &
 rewrite Ec in Ec1. unfold cfg_at in Ec1. injection Ec1 as E1 E2 E3. subst regs1 mem1 md1. subst c'.
 pose (HO := YA0nR.Hoff_rehide tfibsegs (w_H W2) (YGcfRehidePost.rh_lo MAP) (YGcfRehidePost.rh_hi MAP LEN) (w_Hoff W2) HS).
 pose (HA := YA0nR.Awf_rehide (w_A W2) (shull (MAP, LEN)) (YGcfRehidePost.rh_lo MAP) (YGcfRehidePost.rh_hi MAP LEN) (w_Awf W2) SH).
-(* preset's world carries w_H8 (YA0n.v:25): the re-hidden world's proof of it, from w_H8 W2 and the 8-aligned (page
+(* preset's world carries w_H8 (YA0n.v:26): the re-hidden world's proof of it, from w_H8 W2 and the 8-aligned (page
    rounded) rh_lo / rh_hi, by YA0nR.H_rehide_H8 *)
 assert (M8 : forall x, (x / 4096 * 4096) mod 8 = 0)
   by (intro x; replace (x / 4096 * 4096) with ((x / 4096 * 512) * 8) by ring; apply Z.mod_mul; lia).

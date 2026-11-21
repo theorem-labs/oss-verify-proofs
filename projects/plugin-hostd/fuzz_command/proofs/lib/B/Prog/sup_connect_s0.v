@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the interface of sup_connect's walk on fuzz_command.asan-ubsan (image B,
    0x8b45c = BASE + AF_sup_connect, 37 instructions), the B twin of lib/A/Prog/sup_connect_s0.v
-   (a working branch 8d55d5a2288), re-derived on B's code. B's sup_connect has no inline ASan
+   (a working branch), re-derived on B's code. B's sup_connect has no inline ASan
    check, no side-stack frame and no UBSan trap site: it saves ra, s0..s4 in a 48-byte frame, moves its four
    arguments to s3 (verb), s2 (line), s1 (port_a), s0 (port_b), calls record(4) (0x8b48c), keeps the slot in s4,
    calls arg_s(c, verb) (0x8b498), arg_line(c, line) (0x8b4a4), arg_s(c, port_a) (0x8b4b0), arg_s(c, port_b)
@@ -23,6 +23,7 @@
    writable. At a return point: atoms 0..31 the registers there (sp = the entry's sp - 48), atoms 32..37 the entry
    values of ra, s0, s1, s2, s3, s4 that the frame holds; the one region is that frame, read-only. No shadow entry:
    the walk reads no shadow byte. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

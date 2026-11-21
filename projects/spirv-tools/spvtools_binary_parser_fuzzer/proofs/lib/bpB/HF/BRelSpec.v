@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap decline premise place_declined_b). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -313,24 +314,27 @@ Lemma munmap_exact_outcome : forall addr len i m o,
   let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
   map_has (vm_maps (m_vmmaps m)) addr n = true ->
   munmap_spec addr len i m o <->
-  o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
+  (* at the revision munmap is an injected allocation arm ([Run.injected_table]
+     215, [munmap_errnos]) and the exact arm rebuilds the ledgers through
+     [Mmap.mmap_fixed_destroyed_next] ([Mmap.munmap_spec]) *)
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+  \/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
          (with_mmap_destroyed addr n
-            (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m)) (vm_mmap_base (m_vmmaps m))
-               (vm_init_sp (m_vmmaps m))) m) [].
+            (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) [].
 Proof.
   intros addr len i m o Hal Hlen Hnw. cbv zeta. intros Hhas. unfold munmap_spec.
   rewrite (proj2 (Z.eqb_eq _ _) Hal), Hlen. cbn [negb orb].
   rewrite (proj2 (Z.ltb_ge _ _) Hnw). sys_unfold.
   split.
-  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys. reflexivity.
-  - intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
-    split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|].
-    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys;
+      solve [ left; eexists; split; [eassumption|reflexivity] | right; reflexivity ].
+  - intros [(e & He & ->) | ->].
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. left. eexists _, _, _, _.
+      split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. right. eexists _, _, _, _. split; [reflexivity|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 Definition mmap_err_out (m : Model) (o : outcome SyscallEffect) : Prop :=
@@ -344,20 +348,37 @@ Proof.
   - intros ->. exists ENOMEM. split; [left; reflexivity | reflexivity].
 Qed.
 
+(* A NULL hint is never declined: [place_declined_b]'s FIRST conjunct is
+   [negb (hint_address hint =? 0)].  [hint_address] is
+   [page_round_down_Z (bv_unsigned hint)] and neither step reduces on its
+   own, so the [vm_compute] is doing real work. *)
+Lemma place_declined_b_null : forall kb h nZ,
+  place_declined_b kb h (Z_to_bv 64 0) nZ = false.
+Proof.
+  intros kb h nZ. unfold place_declined_b.
+  assert (Hz : hint_address (Z_to_bv 64 0) = 0%Z) by (vm_compute; reflexivity).
+  rewrite Hz. reflexivity.
+Qed.
+
 Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
   mmap_off_aligned_b off = true ->
   mmap_anon_b flags = true ->
   w_is0 len = false ->
   mmap_modeled_b prot flags off = true ->
+  (* At 727298f3 (#144, #146) the spec reads the model BEFORE the [alt] and
+     answers [unmodeled] where [Mmap.place_declined_b] fires, so a declined
+     call has no [Ok] outcome and this equivalence is false without the
+     premise.  A premise and not a conjunct, so every caller says which
+     calls it is about; a NULL hint discharges it by computation. *)
+  place_declined_b (m_kernel m) (m_vmmaps m) addr
+    (page_round_up_Z (bv_unsigned len)) = false ->
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
   mmap_spec addr len prot flags fd off i m o <->
   mmap_err_out m o
-  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-                /\ (0 < bv_unsigned a)%Z
-                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                /\ region_free (vm_reserved h ++ vm_maps h) a n = true
+  (* at the revision the address is the one [Mmap.linux_place] gives *)
+  \/ exists a, (linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
                 /\ mmap_noreserve_backed_ok flags m nZ = true)
                /\ o = Ok (mkEffect a [] [(a, n)])
                         (with_mmap_backing flags a n
@@ -366,17 +387,18 @@ Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
                                (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h)
                                (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod. cbv zeta. unfold mmap_spec.
-  rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb]. unfold mmap_err_out. sys_unfold.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hdecl. cbv zeta. unfold mmap_spec.
+  rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb].
+  rewrite bind_get_model. cbv beta zeta. rewrite Hdecl.
+  unfold mmap_err_out. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
-    + right. eexists; split; [|reflexivity]. repeat split; assumption.
+    + right. eexists; split; [|reflexivity]. split; assumption.
   - intros [(e & He & ->) | (a & Ha & ->)].
     + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. eexists _, _, _, _; (split; [reflexivity|]); (split; [|reflexivity]).
-      eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
+    + right. eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
       split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
@@ -386,15 +408,14 @@ Lemma mmap_noaccess_outcome : forall addr len prot flags fd off i m o,
   w_is0 len = false ->
   mmap_modeled_b prot flags off = false ->
   mmap_noaccess_b prot flags off = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr
+    (page_round_up_Z (bv_unsigned len)) = false ->
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
   mmap_spec addr len prot flags fd off i m o <->
   mmap_err_out m o
-  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-                /\ (0 < bv_unsigned a)%Z
-                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                /\ region_free (vm_reserved h ++ vm_maps h) a n = true)
+  \/ exists a, linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
                /\ o = Ok (mkEffectU a [] [] [(a, n)] [] [])
                         (with_mmap_backing flags a n
                           (with_vmmaps
@@ -402,17 +423,18 @@ Lemma mmap_noaccess_outcome : forall addr len prot flags fd off i m o,
                                ((a, n) :: vm_noaccess h) (vm_start_brk h) (vm_brk h)
                                (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hna. cbv zeta. unfold mmap_spec.
-  rewrite Hoff, Hanon, Hlen, Hmod, Hna. cbn [negb]. unfold mmap_err_out. sys_unfold.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hna Hdecl. cbv zeta. unfold mmap_spec.
+  rewrite Hoff, Hanon, Hlen, Hmod, Hna. cbn [negb].
+  rewrite bind_get_model. cbv beta zeta. rewrite Hdecl.
+  unfold mmap_err_out. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
-    + right. eexists; split; [|reflexivity]. repeat split; assumption.
+    + right. eexists; split; [|reflexivity]. assumption.
   - intros [(e & He & ->) | (a & Ha & ->)].
     + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. eexists _, _, _, _; (split; [reflexivity|]); (split; [|reflexivity]).
-      eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
+    + right. eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
       split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
@@ -485,6 +507,10 @@ Lemma mprotect_expose_outcome : forall addr len prot i m o,
   mprotect_modeled_b prot = true ->
   let h := m_vmmaps m in
   let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
+  (* the revision's vDSO/vvar gate ([Mprotect.mprotect_spec]): a range that
+     meets the pair is [unmodeled]; the model's [Common/RefNodes.mprotect_check]
+     takes the same premise *)
+  region_free (vdso_reserved (m_kernel m) (vdso_top h)) addr n = true ->
   map_contains (vm_noaccess h) addr n = true ->
   map_contains (vm_maps h) addr n = true ->
   mprotect_spec addr len prot i m o <->
@@ -492,16 +518,16 @@ Lemma mprotect_expose_outcome : forall addr len prot i m o,
   \/ (mprotect_budget_ok m addr n = true
       /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model_next m addr n) []).
 Proof.
-  intros addr len prot i m o Hgc Hal Hlen Hnw Hmod. cbv zeta. intros Hna Hma.
+  intros addr len prot i m o Hgc Hal Hlen Hnw Hmod. cbv zeta. intros Hvd Hna Hma.
   unfold mprotect_spec.
   rewrite Hgc, (proj2 (Z.eqb_eq _ _) Hal), Hlen, (proj2 (Z.leb_gt _ _) Hnw), Hmod. cbn [negb].
   unfold mprotect_err_out. sys_unfold.
   split.
-  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hna, Hma in *; cbn [andb] in *; inv_sys.
+  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hvd, Hna, Hma in *; cbn [negb andb] in *; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
     + right. split; [assumption|reflexivity].
   - intros [(e & He & ->) | (Hb & ->)]; eexists _, _, _, _; (split; [reflexivity|]);
-      rewrite Hna, Hma; cbn [andb]; (split; [|reflexivity]).
+      rewrite Hvd; cbn [negb]; rewrite Hna, Hma; cbn [andb]; (split; [|reflexivity]).
     + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
     + right. eexists _, _, _, _. split; [exists tt; split; [exact Hb|reflexivity]|].
       split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.

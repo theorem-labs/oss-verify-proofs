@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's has_prefix, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and lib/A/ACbk.v (entry and return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* has_prefix(s, n, p) at 0x86020 measures the NUL-terminated string at p with the strlen interceptor
    and, when its length fits in n, compares the two with the bcmp interceptor.
    THE GENERIC WALK (route (b), step 3; CONVERSION.md (sha256 1015972e02a9; internal record), on the check_bounded template
-   a working branch 663b15a129c, lib/A/W_check_bounded.v): pb_has_prefix_x proves W_contract_x.hp_spec_x over
+   a working branch, lib/A/W_check_bounded.v): pb_has_prefix_x proves W_contract_x.hp_spec_x over
    any allocator relation ARx with its laws.  Both calls are Section hypotheses in their generic site-contract form:
    ASTRLEN (W_contract_x.v astrlen_realizes_x) and ABCMP (W_sites_x.v abcmp_realizes_x), entered through
    W_sites_x.v's aj_strlen_gx_at_x / aj_bcmp_gx_at_x over the journal W_journal_x.ajournal_gx_x [] 0 [].

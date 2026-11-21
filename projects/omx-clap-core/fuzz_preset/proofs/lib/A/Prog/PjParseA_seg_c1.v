@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_parse_seg_c1.v, with its module paths and module names changed; 174 of its 787 lines of code are new or changed and 158 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: segment C1 of pj_parse's image-A' walk (fuzz_preset asan, #102 pin 1be0f53d96cb, unstripped
-   twin bff8519bbe3e; A' 0x85e20; lane PjASegC1 of PjParseA, a Theorem Labs lane) on the batch kit's cut 7cdbb61b5fa0: from the cut
+   twin bff8519bbe3e; A' 0x85e20; lane PjASegC1 of PjParseA, a Theorem Labs lane) on the batch kit's cut: from the cut
    pjp_C1 at +0x48 (`jal parse_value`, q = a0 = sp1, ra = the return site +0x4c) through parse_value's STATED text
    (pjp_texts' first conjunct: lib/A/PRH_FnParse.v tparse_value_specX 0, at the float state fx and the call context
    [[return site]]) and the `bnez a0` at +0x4c, to the cuts pjp_C2ok (+0x50, a0 = 0) and pjp_C2ref (+0xc8, a0 = -1),

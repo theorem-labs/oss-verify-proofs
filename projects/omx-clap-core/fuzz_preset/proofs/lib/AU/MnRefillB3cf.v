@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillB3cf.v (commit 3cae605a900a, file sha256 e0051c1df0a6) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 8 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillB3cf.v (file sha256 e0051c1df0a6) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 8 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
 (* Theorem Labs, 2026-10-30 (ReallocPrimary.CfW, lane W, cf refill re-base, B3 half; base on the
-   cf layer): MnRefillB3cf, the B3 top of the cf refill, the cf twin of MnRefillB3.v (this tree's copy, = c5 8d6c9f45705b).
-   A hand port of MnRefillB3.v at commit 8d6c9f45705b (its mechanical part scripted outside the tree): imports the B3 cf
+   cf layer): MnRefillB3cf, the B3 top of the cf refill, the cf twin of MnRefillB3.v (this tree's copy, = c5).
+   A hand port of MnRefillB3.v (its mechanical part scripted outside the tree): imports the B3 cf
    twins YFk5cf..YFkmcf; RI+68 is the junk atom rJEX = 55 of YFkpcf with value jex, so the B3 atoms are 56..69.
    The walk (the machine side) is c5's.  The model side is re-based onto the cf model:
    - Section g: cgif's refill_reg / EV_A slack / qloosem are dropped; the case premises of
@@ -24,12 +24,13 @@
   MnRefillSeamcf.refill_B3_classfull_cf (the class-full arm, another hand's) -> MnRefillSeamcf.refill_B3_inner_cf.
    EVENT-FREE: no st_nev, EV_A, EV_MAX, EV_BIG, mtr_ok, aregime, refill_reg, qloosem or non-cf abudget.
    rule 24: no function proved (kind: re-base of the proved refill walk onto the cf instance). *)
-(* Theorem Labs, 2026-10-29 (a prior worker, hand H1 of task MEMNORM): copy of CLrefillB3.v:1-2056 at fd6ec37fd04 (c5
-   ad994c27165), plus the memnorm keep.  Changed, and nothing else: this comment, the MnRefillLoc / MnRefillLoccgif /
+(* Theorem Labs, 2026-10-29 (a prior worker, hand H1 of task MEMNORM): copy of CLrefillB3.v:1-2056 (c5),
+   plus the memnorm keep.  Changed, and nothing else: this comment, the MnRefillLoc / MnRefillLoccgif /
    MemnormT / MemnormLoc imports, [LEAFQ] (MnRefillLoc.refill_leafR_em in place of refill_leafR), and the end of
    [LEAF_std], which also proves the keep from the same machine frame MEQ and YFkm.XC_where's location of XC.
    rule 24: no function proved (kind: run invariant twin of SizeClassAllocator64LocalCache::Refill's B3 branch). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* CLrefillB3: the released YFkn.v (the refill's B3 branch, inited or not: the class has fewer than max_cached / 2
    free entries, so the refill maps user memory and/or a free-array page) re-run with the stronger leaf
    CLrefill0.refill_leafR.  The file is YFkn.v verbatim except: this comment, the CLrefill0 import, [LEAFQ]
@@ -782,7 +783,7 @@ vm_limit (m_vmmaps (grant_md true FL50 a n md)) = vm_limit (m_vmmaps md) /\
 vm_mmap_base (m_vmmaps (grant_md true FL50 a n md)) = vm_mmap_base (m_vmmaps md) /\
 vm_init_sp (m_vmmaps (grant_md true FL50 a n md)) = vm_init_sp (m_vmmaps md).
 Proof. clear. intros a n md. unfold grant_md, with_mmap_backing, mmap_model. rewrite nores50. destruct md as [fd [maps lazy mat] io fs pr lim tm]. cbn. destruct maps; cbn. repeat split; reflexivity. Qed.
-(* ---- the cf model of the refill tree (refill_tree_cf, YGcfInstRefill.v:62) ---- *)
+(* ---- the cf model of the refill tree (refill_tree_cf, YGcfInstRefill.v:63) ---- *)
 Lemma WF0S : WfP_cf (as_universe B) 0 0 0 S.
 Proof. eapply WfP_cf_weaken; [exact HWT | clear; zlia | clear; zlia | clear; zlia]. Qed.
 (* populate_cf's success tail: cgif's `ret true` at kBatchClass, `clear_exh_cf c ;; ret true` at every other class *)
@@ -1108,7 +1109,7 @@ destruct (mem (Z_to_bv 64 a)) as [b|] eqn:Eb; [exists b; reflexivity | exfalso; 
 Qed.
 Definition FLR : word := Z_to_bv 64 0x104022.
 Lemma noresR : mmap_noreserve_b FLR = true. Proof. clear. reflexivity. Qed.
-(* the layer's machine leaf (YGcfInstRefill.v:378), at the call state S *)
+(* the layer's machine leaf (YGcfInstRefill.v:379), at the call state S *)
 Definition LEAFQ : unit * astate -> world tfibsegs -> config -> Prop := refill_leaf_core_cf B Hph ly S c W regs0 mem0 md0.
 Lemma VIS64 : forall r i, In r (ajunk B ly S ++ aareas S ++ aclient S) -> 0 <= i < snd r -> 0 <= aeval B ly (fst r) + i < 2 ^ 64.
 Proof.

@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for descriptors_add's
    ASan+UBSan walk (lib/B/Prog/descriptors_add.v, tdescriptors_add_holds), after
-   a working branch f349bdaedba lib/A/Prog/RecBClosed.v:163-191 and a working branch e84227c9553
+   a working branch lib/A/Prog/RecBClosed.v:163-191 and a working branch
    lib/A/Prog/SupRemoveAllRefitClosed.v:50-60. At the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose
    segments are tfibsegs, and the sink head YE2k.tfib_sink_head) the walk's record hypotheses are discharged by
-   a Theorem Labs lane's B CmdRecFacts by exact (a working branch 707acd856cb): CmdRecImg.cmd_img_facts_tfib and
+   a Theorem Labs lane's B CmdRecFacts by exact (a working branch): CmdRecImg.cmd_img_facts_tfib and
    CmdRecRest.cmd_val_objs_PB, cmd_val_his_PB, cmd_sig_prog_PB and cmd_prw_tfib. What remains is the callees'
    contracts at every FP state, HB and MTL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the twenty-word auxv is replaced by the launch's 29-pair auxv with the CONFIG_RSEQ pair and its 27-pair twin without it, with a lemma that splits on the flag. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -134,14 +135,90 @@ Proof.
   unfold init_ssp_post, rtd_cells. sfinish.
 Qed.
 
-Definition auxv20 (rnd uid hw : word) : list word :=
-  [Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
-   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; z64;
-   Z_to_bv 64 25; rnd; z64; z64].
+(* The auxv the default kernel lays ([Run.launch_auxv] with [kb_rseq] true):
+   ARCH_DLINFO's ten entries, [create_elf_tables]' sixteen, the CONFIG_RSEQ
+   pair and AT_NULL.  Keys and the image's own PhdrInfo are literal; the rest
+   are the launch's values. *)
+Definition auxv29 (la : LaunchAuxv) (hw ent uid gid rnd efn : word) : list word :=
+  [Z_to_bv 64 33; la_sysinfo_ehdr la;
+   Z_to_bv 64 40; cw_l1i_size (la_cache la); Z_to_bv 64 41; cw_l1i_geom (la_cache la);
+   Z_to_bv 64 42; cw_l1d_size (la_cache la); Z_to_bv 64 43; cw_l1d_geom (la_cache la);
+   Z_to_bv 64 44; cw_l2_size (la_cache la); Z_to_bv 64 45; cw_l2_geom (la_cache la);
+   Z_to_bv 64 46; cw_l3_size (la_cache la); Z_to_bv 64 47; cw_l3_geom (la_cache la);
+   Z_to_bv 64 51; la_minsigstksz la;
+   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 17; Z_to_bv 64 100;
+   Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
+   Z_to_bv 64 7; z64; Z_to_bv 64 8; z64; Z_to_bv 64 9; ent;
+   Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 13; gid; Z_to_bv 64 14; gid;
+   Z_to_bv 64 23; z64; Z_to_bv 64 25; rnd; Z_to_bv 64 31; efn;
+   Z_to_bv 64 27; Z_to_bv 64 28; Z_to_bv 64 28; Z_to_bv 64 32; z64; z64].
 
-Lemma auxv20_auxv_words : forall sp argv envp uid hw,
-  auxv_words Plain.M.phdrs sp argv envp uid hw = auxv20 (Z_to_bv 64 (rnd_addr sp argv envp)) uid hw.
+Lemma auxv29_length : forall la hw ent uid gid rnd efn, length (auxv29 la hw ent uid gid rnd efn) = 58%nat.
 Proof. reflexivity. Qed.
+
+Lemma auxv29_auxv_words : forall la entry sp top argv envp execfn uid gid hw,
+  la_rseq la = true ->
+  auxv_words la Plain.M.phdrs entry sp top argv envp execfn uid gid hw
+  = auxv29 la hw entry uid gid (Z_to_bv 64 (rnd_addr true sp argv envp)) (Z_to_bv 64 (xfn_base top argv envp execfn)).
+Proof. intros la entry sp top argv envp execfn uid gid hw Hr. unfold auxv_words, auxv_entries. rewrite Hr. reflexivity. Qed.
+
+(* The auxv the SAME kernel lays when [kb_rseq] is false: [auxv29] without the
+   CONFIG_RSEQ pair, i.e. without AT_RSEQ_FEATURE_SIZE (27) = 28 and
+   AT_RSEQ_ALIGN (28) = 32.  Twenty-seven pairs, fifty-four words -- four fewer
+   than [auxv29], which is the 32 bytes [AUXSZ r = 432 + 32*r] accounts for and
+   the reason [rnd_addr] takes the flag.
+
+   A TWIN rather than one [auxv] parametric in [la_rseq la], deliberately: the
+   list is 54-58 closed terms and both [_length] lemmas below are [reflexivity].
+   Under a binder for the flag neither reduces, exactly as a single r-parametric
+   startup certificate would put [vm_compute] under a binder.  Two closed
+   definitions keep both sides computable and the consumers case-split on
+   [kb_rseq] instead -- the same shape the start-up certificate uses.
+
+   Not a kernel pin: [recorded_kernel] leaves [kb_rseq] free
+   (75d69e00 Run.v:4575-4577), so BOTH arms must exist for a caller to have one
+   whichever way the flag falls.  Before this, only the true arm did, which is
+   what [Startup.v]'s [Hypothesis Hkernel] was covering for. *)
+Definition auxv27 (la : LaunchAuxv) (hw ent uid gid rnd efn : word) : list word :=
+  [Z_to_bv 64 33; la_sysinfo_ehdr la;
+   Z_to_bv 64 40; cw_l1i_size (la_cache la); Z_to_bv 64 41; cw_l1i_geom (la_cache la);
+   Z_to_bv 64 42; cw_l1d_size (la_cache la); Z_to_bv 64 43; cw_l1d_geom (la_cache la);
+   Z_to_bv 64 44; cw_l2_size (la_cache la); Z_to_bv 64 45; cw_l2_geom (la_cache la);
+   Z_to_bv 64 46; cw_l3_size (la_cache la); Z_to_bv 64 47; cw_l3_geom (la_cache la);
+   Z_to_bv 64 51; la_minsigstksz la;
+   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 17; Z_to_bv 64 100;
+   Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
+   Z_to_bv 64 7; z64; Z_to_bv 64 8; z64; Z_to_bv 64 9; ent;
+   Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 13; gid; Z_to_bv 64 14; gid;
+   Z_to_bv 64 23; z64; Z_to_bv 64 25; rnd; Z_to_bv 64 31; efn;
+   z64; z64].
+
+Lemma auxv27_length : forall la hw ent uid gid rnd efn, length (auxv27 la hw ent uid gid rnd efn) = 54%nat.
+Proof. reflexivity. Qed.
+
+Lemma auxv27_auxv_words : forall la entry sp top argv envp execfn uid gid hw,
+  la_rseq la = false ->
+  auxv_words la Plain.M.phdrs entry sp top argv envp execfn uid gid hw
+  = auxv27 la hw entry uid gid (Z_to_bv 64 (rnd_addr false sp argv envp)) (Z_to_bv 64 (xfn_base top argv envp execfn)).
+Proof. intros la entry sp top argv envp execfn uid gid hw Hr. unfold auxv_words, auxv_entries. rewrite Hr. reflexivity. Qed.
+
+(* The PREMISE-FREE form, and the only one a consumer that has not pinned the
+   kernel can use: the two twins above each need their arm's flag as a
+   hypothesis, so a caller holding neither had nothing.  [auxv_words] already
+   takes the flag through [rnd_addr (la_rseq la)], so both sides of the [if]
+   carry the matching [rnd_addr] literal and no caller has to supply one.
+   [auxv29_auxv_words] and [auxv27_auxv_words] are the arms of this equation;
+   consumers that still hold [la_rseq la = true] from [launch_ok] keep using
+   them unchanged. *)
+Lemma auxv_words_split : forall la entry sp top argv envp execfn uid gid hw,
+  auxv_words la Plain.M.phdrs entry sp top argv envp execfn uid gid hw
+  = if la_rseq la
+    then auxv29 la hw entry uid gid (Z_to_bv 64 (rnd_addr true sp argv envp)) (Z_to_bv 64 (xfn_base top argv envp execfn))
+    else auxv27 la hw entry uid gid (Z_to_bv 64 (rnd_addr false sp argv envp)) (Z_to_bv 64 (xfn_base top argv envp execfn)).
+Proof.
+  intros la entry sp top argv envp execfn uid gid hw.
+  unfold auxv_words, auxv_entries. destruct (la_rseq la); reflexivity.
+Qed.
 
 Lemma envp_count_loop : forall (ws : list word) (Q : machine_state -> Prop)
     ra sp gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6

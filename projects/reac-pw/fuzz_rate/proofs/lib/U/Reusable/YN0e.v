@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0e.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the model's mmap decline). *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,6 +29,10 @@ Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section f. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+(* 08b1429: [YN0c.none_tail] carries `@amf AM = false ->` because [YN02.knode_munmap] does (215 joined
+   [alloc_mark_sysnos]); assumed here, discharged where AM is pinned (YN33, [Cfg.AcfgMode]), as
+   reac-pw/fuzz_pin's YN0e. *)
+Hypothesis AMF : @amf AM = false.
 Section h.
 Hypothesis AMH : alloc_meta_hyp B.
 Ltac bvlit := split; apply Z.leb_le; vm_compute; reflexivity.
@@ -539,7 +544,7 @@ fold sp; try assumption.
 -
 destruct AMP as [HI3 EU3].
 rewrite (dm_k_none n A A3). rewrite K1.
-apply (none_tail L A regs mem md n a L3 A3 regs6 mem6 md3 PRE Hn Hrange GR MID3 LE3 FR3 UB3 HI3 EU3 BND3 AMA3 VM3);
+apply (none_tail AMF L A regs mem md n a L3 A3 regs6 mem6 md3 PRE Hn Hrange GR MID3 LE3 FR3 UB3 HI3 EU3 BND3 AMA3 VM3);
 fold sp; try assumption.
 + rewrite (PR 2%bv ltac:(creg)). exact K2.
 + rewrite (PR 3%bv ltac:(creg)). exact K3.
@@ -555,7 +560,7 @@ Theorem malloc_direct_mreal : forall L A regs mem md n,
 call_pre B (MRx B) L A regs mem md -> getr regs 10 = Z_to_bv 64 n -> MMAP_THRESHOLD <= n < 2 ^ 62 ->
 mreal src0segs (mkCfg (mkst regs (Z_to_bv 64 src0_A_malloc) mem (seg_rom src0segs)) md) (malloc n A)
 (malloc_leaf B (MRx B) L A regs mem md n).
-Proof using AMH.
+Proof using AMF AMH.
 intros L A regs mem md n PRE Hn Hrange.
 pose proof PRE as (MX & HW & HB & Hret & Hal & Hceil & Hsp63 & Hstk & Htp & Herr & Hauxv).
 pose proof (MRx_MRc _ _ _ _ _ MX) as M. destruct (mc_md _ _ _ _ _ M) as (Hh & Hlz & Hmat).
@@ -592,6 +597,13 @@ eapply (knode_mmap_rw src0segs regs2 _ mem2 (seg_rom src0segs) md A (n + IB + UN
 - rewrite (Hregs2 13%bv). vm_compute. reflexivity.
 - rewrite (Hregs2 14%bv). eval_sr_get. cbn [sv_denot]. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs2 15%bv). vm_compute. reflexivity.
+(* 727298f3 (#146): NULL hint, so the decline is false through the first
+   conjunct [negb (hint_address hint =? 0)]; never through [alloc_top]. *)
+- assert (H10 : getr regs2 10 = Z_to_bv 64 0)
+by (rewrite (Hregs2 10%bv); vm_compute; reflexivity).
+rewrite H10. unfold place_declined_b, hint_address.
+change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
+change (page_round_down_Z 0) with 0%Z. reflexivity.
 -
 intros e He. destruct He as [<- | []].
 match goal with |- mreal _ _ ?t _ => change t with (@IRet astate (option sptr * astate) (None, A)) end.

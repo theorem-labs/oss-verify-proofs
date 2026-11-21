@@ -8,19 +8,20 @@
    (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACai.v:156-159. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v, with its module paths and module names changed; 1279 of its 1357 lines of code are new or changed and 927 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch
-   60d0985773d, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_K.v; 388 of its 479 lines of code are new or changed and 1266 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K3.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K3.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
-(* fs walk kit, the FP-keyed core's static arm (RELOC's YCbq, a working branch 4aa3d96b823 on, whose
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* fs walk kit, the FP-keyed core's static arm (RELOC's YCbq, a working branch on, whose
    ajournal_sub admits a third callee-footprint case `inFP FP a /\ in_img segs a`: a callee writing an image
    static that is also in the caller's FP, e.g. fuzz_alloc_live / fuzz_alloc_fail at FS_PSTAT_FP inside a
-   FS_PSTAT_FP caller). S0 carries that core since a working branch 400b2a240b3; the walk lanes import this
+   FS_PSTAT_FP caller). S0 carries that core since a working branch; the walk lanes import this
    file by name, so its lemmas stay here.
    fsw_ajournal_sub3: ajournal_sub at tfibsegs with the laws discharged, for any after-call lemma (FSW_frame.v's
    own-carrying after-call too). fsw_rt_atU3: fsw_rt_atU with the three-arm premise. fsw_ajournal_sub5: the composition
@@ -456,8 +457,8 @@ End e3.
    [sp0 - STK, sp0) (indent's frame [sp - 32, sp) ends at sp < ot; pj_write's pj_out, pj_parse's struct pj_in,
    parse_string's hex4 slot sit above the caller's frame). The chunks cs are read on a memory memk of world Wk whose
    frame bytes equal the memory's after the call (Hkeep, mbyte of the raw memory): the call's (W, memC) with Hkeep from
-   the callee's keep clause (FSH_Gen.wkeep), as FSW_indent's ind_after_callU (a working branch
-   fcc7188ba36) reads put's; or the return's (W', mem') with Hkeep by reflexivity. The chunks lie in [0, f) by
+   the callee's keep clause (FSH_Gen.wkeep), as FSW_indent's ind_after_callU (a working branch)
+   reads put's; or the return's (W', mem') with Hkeep by reflexivity. The chunks lie in [0, f) by
    regions_wf (fstk_ret's chunk_inside).
    fsw_after_callFPU_ot: the frame ends at the window top (spZ regsC = sp0 - f), the chunks read on the memory AFTER
    the call (the caller's saved s1 at sp - 24 is INSIDE the callee's window); fsw_after_callFPU_win at

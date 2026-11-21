@@ -2,7 +2,7 @@
    segment S_MF_KIGNP (KIGN 0x86968 -> KKNOCK 0x86a7c or KDONE 0x86c1c; the image-B m_file segment table section 9,
    the image-B m_file cut map section 4 S_MF_KIGNP), in the form of lib/B/Prog/m_file_m.v's cut statements. Statement text
    and logic only (no instruction is executed here). A walk lane of the image-B m_file-family owner's G2B. ADAPTED from the image-A m_file-family lane's
-   image-A lib/A/Prog/m_file_s_kign_m.v (commit a11e040adbd4) at image B's pcs, registers and
+   image-A lib/A/Prog/m_file_s_kign_m.v at image B's pcs, registers and
    frame cells.
    proves no function (kind: segment lemma of m_file's walk: the inner statements of S_MF_KIGNP).
 

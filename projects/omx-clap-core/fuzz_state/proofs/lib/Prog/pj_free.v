@@ -1125,8 +1125,8 @@ Lemma n_auxv_agree : forall sec lo m m', auxv_pre B sec lo m ->
   (forall x, (ms_libc B + 8 <= x < ms_libc B + 16) \/ (lo <= x < 2 ^ 63) -> mbyte segs m' x = mbyte segs m x) ->
   auxv_pre B sec lo m'.
 Proof.
-  intros sec lo m m' (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) HA.
-  exists av, ar.
+  intros sec lo m m' (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) HA. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
+  exists rs, av, ar. try unfold AUXV_RAND_K.
   split; [apply (n_word_agree m); [exact H1 | intros k Hk; apply HA; lia]|].
   split; [intros k Hk; apply (n_word_agree m); [exact (H2 k Hk) | intros j Hj; apply HA; lia]|].
   split; [apply (n_word_agree m); [exact H3 | intros j Hj; apply HA; lia]|].

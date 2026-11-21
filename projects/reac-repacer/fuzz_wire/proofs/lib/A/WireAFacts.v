@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: made for reac-repacer/fuzz_uci's ASan image from four files of libreac/fuzz_decode's lib/A: the boolean membership helpers and the cell / trace / read-only proofs of DecodeACrtFacts.v, the proof of DecodeClose.v's HB_API_ENV, the vm_compute checks of DecodeASinkRo.v (dec_A_ro_segs_chk, dec_A_rom_errno_chk, dec_HB_RO_BELOW_OFL, dec_HB_ROM_NO_ERRNO) and DecodeALaws.v's dec_XL0 / HB_COST, each at fuzz_uci's record UciB (lib/A/AD2l.v), segments ucisegs0 (lib/A/UciTFIB.v), sink head (lib/A/AE2k.v) and program statements (lib/A/Prog); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WireAFacts: the facts about image A's record that lib/A/WireClose.v takes and that no program statement shapes,
-   each proved by computation at B := WireB (lib/A/AD2l.v:16) and segs := wiresegs0 (lib/A/WireTFIB.v, the same
-   segments as lib/A/AB1v.v:13 tfibsegs), in the form of fuzz_uci's lib/A/UciAFacts.v:
+   each proved by computation at B := WireB (lib/A/AD2l.v:17) and segs := wiresegs0 (lib/A/WireTFIB.v, the same
+   segments as lib/A/AB1v.v:14 tfibsegs), in the form of fuzz_uci's lib/A/UciAFacts.v:
    - wire_api_env_WireB : api_env segs B (Reusable/YCbq.v api_env): errno (as_errno WireB = lib/A/AF0m.v TFIB_ERRNO)
      lies in low memory and inside one loaded segment, and the traces [pc_malloc_ra0] / [pc_free_ra0]
      (lib/A/AF0l.v) are in Tfib_universe (lib/A/ACej.v);

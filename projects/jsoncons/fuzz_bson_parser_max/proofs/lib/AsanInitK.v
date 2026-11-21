@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free, the reserved-interval ledger, the vDSO, the rseq-dependent auxv, the 6 MiB zero-filled stack window, the launch input's kernel build; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)): changed FULL0, FULL0_below, FULL0_low and 38 more; added AUXW, CHEAD, G and 55 more; removed W_range; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanInitK.v, 857 lines within its lines 37-1653. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -35,15 +36,55 @@ Record img_facts (segs : list Segment) (A : atable) (ph : PhdrInfo) : Prop := IM
   if_sizes : sum_sizes (segments_reserved segs) = img_hi A - img_lo A;
   if_rw    : (0 <= rw_lo A /\ 0 <= rw_len A /\ rw_lo A + rw_len A < 2 ^ 64)
              /\ forall m (x : word), rw_lo A <= bv_unsigned x < rw_lo A + rw_len A -> wview segs m x <> None;
-  if_shadow : 0 <= shadow_off A <= 2 ^ 47
+  if_shadow : 0 <= shadow_off A <= 2 ^ 47;
+  (* NEW FIELD: the table's bounds on the launch's extra reserved intervals are
+     honest for the pair Linux installs -- two intervals of at most twenty pages
+     ([State.vdso_len_bounds] gives 5..20 pages, and a sixteen-page vDSO text
+     reaches the top of that).  Appended, so every positional projection of
+     [img_facts] keeps its meaning.
+     Model donor [75d69e00:theories/Common/AsanInit.v:63];
+     donor shape openssl/pem Common/AsanInit.v:46. *)
+  if_resx  : (2 <= n_resx A)%nat /\ (20 <= p_resx A)%nat
 }.
 
 (* [comment removed for export] *)
-Definition stack_image_size (argv envp : list (list byte)) : Z :=
-  let struct_size := (8 + (Z.of_nat (length argv) + 1) * 8
-                      + (Z.of_nat (length envp) + 1) * 8 + 160)%Z in
-  let len := (struct_size + total_arg_bytes argv + total_arg_bytes envp)%Z in
-  (len + ((8 - len mod 8) mod 8) + 16)%Z.
+(* STATEMENT CHANGED, old beside new.  The image is no longer computed from
+   (argv, envp) at all: at 75d69e00 it is Linux's whole block from sp to the
+   stack VMA's end, so its size is a function of (sp, top).
+     OLD  stack_image_size (argv envp : list (list byte)) : Z :=
+            let struct_size := 8 + (|argv|+1)*8 + (|envp|+1)*8 + 160 in
+            let len := struct_size + total_arg_bytes argv + total_arg_bytes envp in
+            len + ((8 - len mod 8) mod 8) + 16
+     NEW  stack_image_size (sp top : word) : Z := bv_unsigned top - bv_unsigned sp
+   The old one is FALSE, not stale: it has the old 160-byte auxv, puts the
+   strings inside the struct, and knows nothing of the exec file name or the
+   arch_align_stack pad.  Consumer re-checked: AsanNodesStartXInitK.v:146,
+   which unfolded it -- that unfolding goes with it.  Model donor :356. *)
+Definition stack_image_size (sp top : word) : Z :=
+  (bv_unsigned top - bv_unsigned sp)%Z.
+
+(* AT_NULL closes the vector: pair 28 with CONFIG_RSEQ, pair 26 without
+   ([StackLayout.auxv_entries]), so its two words are [2 * (26 + 2 * r)] and
+   one more, at the flag's [r = rseq_z (la_rseq la)].  Model donor
+   [75d69e00:theories/Common/AsanInit.v:77]; the K cone has no copy of it, so
+   it is stated here rather than in [AsanPlanCoreK.v], where [e_auxv]'s
+   Section would have to be reopened. *)
+Lemma auxv_words_null : forall la ph entry uid gid hw ar ae,
+  nth (Z.to_nat (2 * (26 + 2 * rseq_z (la_rseq la))))
+      (auxv_words la ph entry uid gid hw ar ae) (Z_to_bv 64 0) = Z_to_bv 64 0
+  /\ nth (Z.to_nat (2 * (26 + 2 * rseq_z (la_rseq la)) + 1))
+         (auxv_words la ph entry uid gid hw ar ae) (Z_to_bv 64 0) = Z_to_bv 64 0.
+Proof. intros [ehdr c msz [|]] ph entry uid gid hw ar ae; split; reflexivity. Qed.
+
+(* The AT_RANDOM block's literal offset off [e_auxb]'s base: the pointer
+   vector's NULLs and argc (24) plus the auxv itself, under BOTH layouts.  It
+   is NOT a single literal any more -- 456 at [rseq = false], 488 at
+   [rseq = true] -- which is what made [atrandom_ok]'s old [ak = 184] false.
+   Model donor [75d69e00:theories/Common/AsanPlanCore.v:3874]; the tie to the
+   model's own auxv size is [AsanPlanCoreK.AUXSZ_of], which is
+   hypothesis-free. *)
+Lemma e_atrb_off : forall b, snd (e_atrb (rseq_z b)) = 24 + AUXSZ (rseq_z b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
 Section Init.
   Variable segs : list Segment.
@@ -65,7 +106,33 @@ Section Init.
   Variable nofile : word.
   Variable sigmask : word.
   Variable abrt : bool.
-  Variable ur : InputStream.   (* [comment removed for export] *)
+  Variable ur : InputStream.
+  (* The revision widened [State.mkProcInput_full] from fifteen places to
+     twenty.  [kb] stays a Variable so every free field of the build is free:
+     a run under [Run.valid_input] satisfies
+     [in_kernel inp = recorded_kernel (in_kernel inp)]
+     ([Run.valid_input_recorded_kernel]), so it instantiates [kb] with its own
+     build.  Shape and argument order follow the model's own fixture at
+     [theories/Common/AsanInit.v:137-141]. *)
+  Variable kb : KernelBuild.
+  (* The exec file name is free for the same reason, and NOT
+     [State.default_execfn] as the model's fixture has it: that section builds
+     its own input, whereas this one must accept the input the published
+     statement quantifies over, and [Run.valid_input] constrains the name only
+     through [valid_launch] -- it never pins it.  A pin here would be a premise
+     no caller could discharge. *)
+  Variable execfn : list byte.
+  (* The SIGPIPE disposition at exec ([State.in_sigpipe_default]) is free in
+     [Run.valid_input], [Run.valid_input_abort] and [Run.valid_input_either] at LPS
+     727298f3 ("THE DISPOSITION IS NOT PINNED"), so the launch input takes it as a
+     Variable, as the abort declaration [abrt]. *)
+  Variable sdf : bool.
+  (* The image's ELF entry: [Run.init_config]'s pc, and the auxv's AT_ENTRY.
+     It is a Section Variable because the auxv -- hence the stack image --
+     reads it; it WAS only [init_cfg_eq]'s local quantifier, at the end of this
+     Section.  Shape and reason follow the model's own fixture at
+     [theories/Common/AsanInit.v:91] and [:161]. *)
+  Variable apc : N.
 
   Hypothesis IMG : img_facts segs A ph.
   Hypothesis Hsp : valid_sp sp.
@@ -79,23 +146,90 @@ Section Init.
   Hypothesis Huid : valid_id uid.
   (* [comment removed for export] *)
   Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Hapc : Z.of_N apc = a_entry A.
+  Definition inp : ProcInput :=
+    mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw
+      abrt Sv48 ur [] (recorded_kernel kb) execfn true sdf false.  (* [comment removed for export] *)
+  (* [Run.valid_input]'s last conjunct: the exec file name is a name [execve]
+     admits and the launch fits under E2BIG.  Model donor [:146]. *)
+  Hypothesis Hlaunch : valid_launch inp.
+  (* [Run.valid_entry]'s FIFTH conjunct: the start state is exactly a Linux
+     launch.  It pins the stack VMA's end, the entry stack pointer inside the
+     [arch_align_stack] window, and the mmap base -- so it is what bounds the
+     pad [V_W] and the image's length.  Model donor [:151]. *)
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
   (* [comment removed for export] *)
 
-  Definition inp : ProcInput := mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw abrt Sv48 ur [].   (* [comment removed for export] *)  (* [comment removed for export] *)
-  Let bsb := build_stack_bytes ph sp argv envp uid hw rdraw.
-  Let SIMG := entry_stack_image ph sp argv envp uid hw rdraw.   (* [comment removed for export] *)
+  Let entryw : word := Z_to_bv 64 (Z.of_N apc).
+  (* the auxv the launch builds; [Run.launch_auxv] copies CONFIG_RSEQ straight
+     off the kernel build, so [la_rseq la] IS this Section's [rseq]
+     ([RefLayout.lay_rseq]).  Model donor [:162]. *)
+  Let la : LaunchAuxv := launch_auxv inp sp mbase.
+  (* The mapped image IS Linux's block, sp .. [ed_top].  In the OLD revision
+     [entry_stack_image] was [build_stack_bytes ++ entry_slack sp bytes
+     (ed_slack draw)], strictly longer than the block; at 75d69e00 it is
+     [build_stack_bytes ...] exactly ([Run.v]), the slack having become
+     [ed_top].  So [bsb] and [SIMG] are now the SAME list; the disjunct of
+     [argH0] that used to name the difference is gone with it. *)
+  Let bsb := entry_stack_image inp mbase ph entryw sp rdraw.
+  Let SIMG := entry_stack_image inp mbase ph entryw sp rdraw.
   Let usp := bv_unsigned sp.
   Let argc := Z.of_nat (length argv).
   Let envc := Z.of_nat (length envp).
   Let L0 := Z.of_nat (length (nth 0 argv [])).
   Let L1 := Z.of_nat (length (nth 1 argv [])).
-  (* [comment removed for export] *)
-  Let W := (Z.of_nat (length bsb) - 16 - (8 * argc + 8 * envc + 184)) / 8.
+  (* The run's CONFIG_RSEQ flag, kept SYMBOLIC: it is the one field of
+     [Run.launch_auxv] that [Run.valid_input] leaves free (the other three --
+     [vdso_text_base], [launch_cache_words], [min_sigframe_size] -- are pinned
+     and come free from [Run.valid_input_recorded_kernel]), and it is the one
+     that reaches [cat_string_off].  Never pinned to [default_kernel]. *)
+  Let rseq := kb_rseq (in_kernel inp).
+  Let top := ed_top rdraw.
+  Let utop := bv_unsigned top.
+  (* [StackLayout.block_items mod 2]: STACK_ROUND's 8-byte gap, in words.  This
+     is the plan's NEW variable [V_G], appended at index 11 with [NX0] moving
+     11 -> 12; no existing index shifts.  Value confirmed against the model
+     ([theories/Common/AsanInit.v:212]) and, independently, against
+     leptonica/pix1's already-ported plan. *)
+  Let G := Z.of_nat (block_items argv envp mod 2).
+  (* V_W CHANGED MEANING, not merely value.
+       OLD  W := (Z.of_nat (length bsb) - 16 - (8*argc + 8*envc + 184)) / 8
+            -- a COUNT of string words, the strings sitting just above the auxv.
+       NEW  W := Z.of_nat (block_pad_len rseq sp top argv envp execfn)
+            -- the [arch_align_stack] pad, in BYTES.
+     Forced by the plan's new [e_str0 r := eadd (eaddz (e_atrandom r) 16)
+     (EVar V_W)]: V_W is now the distance from the top of the AT_RANDOM bytes
+     up to argv[0], because the strings moved ABOVE the random bytes.  The old
+     formula is not stale, it is FALSE.  [execfn] is this Section's free
+     Variable, NOT [State.default_execfn]: the published statement hands the
+     section an arbitrary exec name and [Run.valid_input] constrains it only
+     through [valid_launch]. *)
+  Let W := Z.of_nat (block_pad_len rseq sp top argv envp execfn).
+  (* argv[0]'s first byte.  [CatExec.v:352] has [cat_string_off = block_head_size
+     + block_pad_len], so this IS the model's [usp + CHEAD + W], and the same
+     quantity [AsanNodesStartXK.v]'s STR0 names. *)
+  Let STR0 := usp + Z.of_nat (cat_string_off rseq sp top argv envp execfn).
+  (* the plan's CONFIG_RSEQ flag as 0 or 1: the lead's settled interface, [r : Z]
+     instantiated with [rseq_z (kb_rseq (in_kernel inp))] *)
+  Let RZ := rseq_z rseq.
+  (* C, sp to the top of the AT_RANDOM bytes *)
+  Let CHEAD := Z.of_nat (block_head_size rseq argv envp).
+  (* L, the string bytes with their NULs, the exec file name included *)
+  Let LSTR := Z.of_nat (launch_string_bytes argv envp execfn).
+
+  (* the input's fields, by conversion, so the arithmetic below stays a
+     function of (sp, rdraw, argv, envp, execfn, kb) and not of the whole input *)
+  Lemma inp_argv : in_argv inp = argv.        Proof. reflexivity. Qed.
+  Lemma inp_envp : in_envp inp = envp.        Proof. reflexivity. Qed.
+  Lemma inp_execfn : in_execfn inp = execfn.  Proof. reflexivity. Qed.
+  Lemma inp_rseq : kb_rseq (in_kernel inp) = rseq. Proof. reflexivity. Qed.
 
   Definition vals0 : list word :=
     [Z_to_bv 64 (usp / 32768); Z_to_bv 64 argc; Z_to_bv 64 envc; Z_to_bv 64 L0; Z_to_bv 64 W;
      Z_to_bv 64 (bv_unsigned brk0 / 4096); Z_to_bv 64 ((usp mod 4096) / 16); Z_to_bv 64 L1; uid; hw;
-     Z_to_bv 64 ((usp mod 32768) / 4096)].   (* [comment removed for export] *)
+     Z_to_bv 64 ((usp mod 32768) / 4096); Z_to_bv 64 G;
+     (* [V_GID] (index 12): AT_GID and AT_EGID, both [gid] ([AsanPlanCoreK.V_GID]) *)
+     gid].   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition E0 : env := Env (fun n => nth n vals0 (Z_to_bv 64 0))
                              (fun k => if Nat.eqb k K_RND then at_random_bytes (ed_random rdraw) else []).
@@ -106,20 +240,36 @@ Section Init.
     let z := bv_unsigned a in
     ((uE E e_sp0 <=? z) &&
      (((usp + 24 <=? z) && (z <? usp + 8 * argc + 8 * envc + 24))
-      || ((usp + 8 * argc + 8 * envc + 184 <=? z) && (z <? usp + 8 * argc + 8 * envc + 184 + 8 * W))
-      || ((usp + Z.of_nat (length bsb) <=? z) && (z <? usp + Z.of_nat (length SIMG)))))%bool.   (* [comment removed for export] *)
+      (* The string area, in its new place.  This ONE disjunct replaces two:
+         the old [usp + 8*argc + 8*envc + 184 .. + 8*W] (the strings just above
+         the auxv, now FALSE -- they are at the TOP of the stack VMA) and the
+         dead [usp + |bsb| .. usp + |SIMG|] (empty, since those are the same
+         list at this revision; it used to be the page tail [entry_slack]).
+         Shape from the model, [theories/Common/AsanInit.v:237]. *)
+      || ((STR0 <=? z) && (z <? utop))))%bool.
 
   Definition SINV0 (E : env) (M : word -> option byte) : Prop :=
     (forall n, (n < NX0)%nat -> ev E n = ev E0 n)
-    /\ (forall a, argH0 E a = true -> M a = wrap_mem ph sp argv envp uid hw rdraw a).
+    /\ (forall a, argH0 E a = true -> M a = wrap_mem inp mbase ph entryw sp rdraw a).
 
   (* [comment removed for export] *)
   Lemma argH0_high : forall E a, argH0 E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a.
   Proof.
+    (* [argH0] went from three disjuncts to two when the string range collapsed
+       into [STR0 <= z < utop], so the inner [orb_prop] this proof used had
+       nothing left to split.  The [Nat2Z.is_nonneg] is load-bearing: the
+       second disjunct gives [STR0 <= bv_unsigned a], and unfolding [STR0]
+       exposes [bv_unsigned sp + Z.of_nat (cat_string_off ...)], whose
+       [Z.of_nat] [lia] will not find a lower bound for on its own.  The
+       conclusion's second conjunct comes from [HS], the leading
+       [uE E e_sp0 <=? z] guard this file keeps and the model's own [argH0]
+       does not have. *)
     intros E a H. unfold argH0 in H. destruct Hsp as [Hlo _]. unfold sp_window_lo in Hlo. unfold CEIL.
     pose proof (valid_argv_len argv Hva).
+    pose proof (Nat2Z.is_nonneg (cat_string_off rseq sp top argv envp execfn)).
     apply andb_prop in H as [HS H]. apply Z.leb_le in HS.
-    apply orb_prop in H as [H|H]; [apply orb_prop in H as [H|H]|]; apply andb_prop in H as [H _]; apply Z.leb_le in H; unfold usp, argc, envc in H; lia.
+    apply orb_prop in H as [H|H]; apply andb_prop in H as [H _]; apply Z.leb_le in H;
+      unfold usp, argc, envc, STR0 in H; lia.
   Qed.
 
   Lemma e_sp0_init : expr_vars_lt NX0 e_sp0 = true.
@@ -158,51 +308,136 @@ Section Init.
   Lemma usp_al : usp mod 16 = 0.
   Proof. unfold usp. destruct Hsp as (_ & _ & H). exact H. Qed.
 
-  (* [comment removed for export] *)
-  Lemma length_bsb_eq : Z.of_nat (length bsb) = stack_image_size argv envp.
+  Lemma RZ_range : 0 <= RZ <= 1.
+  Proof. exact (rseq_z_range rseq). Qed.
+
+  (* the vector's length, the ONE case split on the flag the arithmetic needs *)
+  Lemma auxv_count_RZ : Z.of_nat (auxv_count rseq) = 27 + 2 * RZ.
+  Proof. unfold RZ, rseq_z, auxv_count. destruct (kb_rseq (in_kernel inp)); reflexivity. Qed.
+
+  Lemma gap_range : 0 <= G <= 1.
+  Proof. unfold G. pose proof (Nat.mod_upper_bound (block_items argv envp) 2 ltac:(lia)). lia. Qed.
+
+  (* C = 8*items + AUXSZ RZ + 8*g + 16, with items = argc + envc + 3 and the
+     auxv AUXSZ RZ = 432 + 32*RZ bytes: 29 entries with CONFIG_RSEQ, 27 without *)
+  Lemma chead_eq : CHEAD = 8 * argc + 8 * envc + 472 + 32 * RZ + 8 * G.
   Proof.
-    unfold bsb, build_stack_bytes, stack_image_size. cbv zeta.
-    rewrite (string_addrs_pair argv). cbv beta iota.
-    rewrite (string_addrs_pair envp). cbv beta iota.
-    rewrite !length_app, length_at_random_bytes, repeat_length, !length_flat_map_le8,
-      !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-      !length_flatten_strings.
-    rewrite !total_arg_bytes_Z. unfold auxv_size.
-    rewrite !Nat2Z.inj_add, !Nat2Z.inj_mul.
-    match goal with
-    | |- context [Z.to_nat ?pd] =>
-        assert (Hpd : (0 <= pd < 8)%Z) by (apply Z.mod_pos_bound; lia); rewrite (Z2Nat.id pd) by lia
-    end.
+    pose proof (AUXSZ_of rseq) as HA. unfold AUXSZ in HA. change (rseq_z rseq) with RZ in HA.
+    unfold CHEAD, G, argc, envc, block_head_size, block_items.
     lia.
   Qed.
+
+  Lemma chead_range : 480 <= CHEAD <= 10752.
+  Proof.
+    pose proof chead_eq. pose proof len_av. pose proof len_ev. pose proof gap_range. pose proof RZ_range. lia.
+  Qed.
+
+  (* L >= 2: argv[0]'s NUL and the exec file name's NUL are both in the string
+     area ([copy_strings] / [copy_string_kernel], fs/exec.c, Linux v6.18.46,
+     commit 1f99e9ab748f).  The model's proof unfolds [default_execfn] here;
+     ours CANNOT -- [execfn] is a free Variable -- so this goes through [Hav0]
+     (argv is non-empty) instead, which holds for every exec name. *)
+  Lemma lstr_lo : 2 <= LSTR.
+  Proof.
+    unfold LSTR, launch_string_bytes.
+    pose proof (Nat2Z.is_nonneg (length (flatten_strings envp))).
+    pose proof (Nat2Z.is_nonneg (length execfn)).
+    pose proof Hav0 as Hnz.
+    destruct argv as [|a t] eqn:Ea; [cbn in Hnz; lia|].
+    cbn [flatten_strings flat_map]. rewrite !length_app. cbn [length]. lia.
+  Qed.
+
+  Lemma s0_in_strings : L0 + 1 <= LSTR.
+  Proof.
+    unfold LSTR, launch_string_bytes, L0.
+    pose proof (Nat2Z.is_nonneg (length (flatten_strings envp))).
+    pose proof (Nat2Z.is_nonneg (length execfn)).
+    pose proof Hav0 as Hnz.
+    destruct argv as [|a t] eqn:Ea; [cbn in Hnz; lia|].
+    cbn [flatten_strings flat_map nth]. rewrite !length_app. cbn [length]. lia.
+  Qed.
+
+  (* [Run.valid_launch]'s E2BIG half, in this file's names *)
+  Lemma lstr_hi : LSTR + 8 * argc + 8 * envc <= 2097152.
+  Proof.
+    destruct Hlaunch as [_ Hb]. unfold launch_bytes, e2big_limit in Hb.
+    rewrite inp_argv, inp_envp, inp_execfn in Hb. unfold LSTR, argc, envc. lia.
+  Qed.
+
+  (* The pad [arch_align_stack] left.  [launch_sp_hi] is
+     [align_down16(top - 8 - L) - C] and [launch_sp_lo] the same with
+     [top - 8 - L - 4095], so the pad is r (0..4095) plus the remainder the
+     low-four-bit mask leaves -- at most 4110, NOT 4095. *)
+  Lemma pad_bounds_Z : 0 <= utop - 8 - LSTR - usp - CHEAD <= 4110.
+  Proof.
+    destruct Hlau as (_ & Hsw & _). destruct Hsw as (_ & Hslo & Hshi).
+    unfold launch_sp_lo, launch_sp_hi, align_down16 in Hslo, Hshi.
+    rewrite inp_argv, inp_envp, inp_execfn, inp_rseq in Hslo, Hshi.
+    change (ed_top rdraw) with top in Hslo, Hshi.
+    fold LSTR in Hslo, Hshi. fold CHEAD in Hslo, Hshi. fold utop usp in Hslo, Hshi.
+    pose proof (Z.mod_pos_bound (utop - 8 - LSTR) 16 ltac:(lia)).
+    pose proof (Z.mod_pos_bound (utop - 8 - LSTR - 4095) 16 ltac:(lia)).
+    lia.
+  Qed.
+
+  Lemma pad_eq : W = utop - 8 - LSTR - usp - CHEAD.
+  Proof.
+    pose proof pad_bounds_Z.
+    unfold W, block_pad_len, LSTR, CHEAD, utop, usp in *.
+    rewrite Z2Nat.id by lia. reflexivity.
+  Qed.
+
+  (* REPLACES W_range's [W <= 280000], which was the old word-count bound. *)
+  Lemma pad_range : 0 <= W <= 4110.
+  Proof. pose proof pad_bounds_Z. pose proof pad_eq. lia. Qed.
+
+  Lemma length_bsb_eq : Z.of_nat (length bsb) = stack_image_size sp top.
+  Proof.
+    unfold bsb, stack_image_size.
+    exact (length_entry_stack_image_launch Sv48 inp mbase ph entryw sp brk0 rdraw Hlau).
+  Qed.
+
+  Lemma length_bsb_sum : Z.of_nat (length bsb) = CHEAD + W + LSTR + 8.
+  Proof.
+    pose proof pad_eq. rewrite length_bsb_eq. unfold stack_image_size. fold utop usp. lia.
+  Qed.
+
+  Lemma bsb_nw : usp + Z.of_nat (length bsb) < 2 ^ 64.
+  Proof.
+    unfold usp, bsb.
+    exact (entry_stack_image_no_wrap Sv48 inp mbase ph entryw sp brk0 rdraw Hlau).
+  Qed.
+
+  Lemma bsb_len_hi : Z.of_nat (length bsb) <= 2101782.
+  Proof. unfold bsb. exact (bsb_bound Sv48 inp mbase ph entryw sp brk0 rdraw Hlaunch Hlau). Qed.
 
   Lemma usp_fit : usp + Z.of_nat (length bsb) <= 2 ^ 47.
   Proof.
-    pose proof (build_stack_bytes_within_span ph sp argv envp uid hw rdraw) as B. fold bsb in B.
-    unfold entry_stack_fits, sp_window_hi in Hfit. unfold usp. lia.
+    rewrite length_bsb_eq. unfold stack_image_size. fold utop usp.
+    pose proof (entry_page_top_within_window Sv48 inp mbase sp brk0 rdraw Hlau) as H.
+    unfold entry_page_top, va_stack_top, sp_window_hi in H. fold top utop in H. lia.
   Qed.
 
-  Lemma bsb_ge : 8 * argc + 8 * envc + 200 <= Z.of_nat (length bsb) /\ (Z.of_nat (length bsb) - 16 - (8 * argc + 8 * envc + 184)) mod 8 = 0.
+  (* STATEMENT CHANGED, old beside new:
+       OLD  8*argc + 8*envc + 200 <= |bsb|
+            /\ (|bsb| - 16 - (8*argc + 8*envc + 184)) mod 8 = 0
+       NEW  8*argc + 8*envc + 482 <= |bsb|
+     The mod-8 conjunct existed ONLY to justify the old W's division by 8, and
+     W is no longer a quotient, so it has no consumer left.  The bound rises
+     200 -> 482 because the auxv grew: 432 bytes at 27 pairs, and the block now
+     also carries STACK_ROUND's gap, the sixteen random bytes, the pad, the
+     strings and the eight-byte slot.  Stated at the SMALLER layout (RZ = 0,
+     G = 0, L = 2) so it holds for every value of the free field kb_rseq. *)
+  Lemma bsb_ge : 8 * argc + 8 * envc + 482 <= Z.of_nat (length bsb).
   Proof.
-    rewrite length_bsb_eq. unfold stack_image_size, argc, envc. cbv zeta.
-    pose proof (total_arg_bytes_Z argv). pose proof (total_arg_bytes_Z envp).
-    match goal with |- context [((8 - ?l mod 8) mod 8)%Z] => set (len := l) end.
-    assert (0 <= Z.of_nat (total_arg_bytes_nat argv)) by lia.
-    split; [lia|].
-    assert (Hpd : 0 <= (8 - len mod 8) mod 8 < 8) by (apply Z.mod_pos_bound; lia).
-    assert (Hm : (len + (8 - len mod 8) mod 8) mod 8 = 0).
-    { rewrite <- Zplus_mod_idemp_l. rewrite Zplus_mod_idemp_r.
-      replace (len mod 8 + (8 - len mod 8)) with 8 by lia. reflexivity. }
-    replace (len + (8 - len mod 8) mod 8 + 16 - 16 - (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184))
-      with (len + (8 - len mod 8) mod 8 - 8 * (Z.of_nat (length argv) + Z.of_nat (length envp) + 23)) by (unfold len; lia).
-    rewrite Zminus_mod, Hm, Z.mul_comm, Z_mod_mult. reflexivity.
+    pose proof length_bsb_sum. pose proof chead_eq. pose proof lstr_lo. pose proof pad_range.
+    pose proof gap_range. pose proof RZ_range. lia.
   Qed.
 
-  Lemma W_range : 0 <= W /\ 8 * W = Z.of_nat (length bsb) - 16 - (8 * argc + 8 * envc + 184) /\ W <= 280000.
+  Lemma str0_hi : STR0 + LSTR + 8 = utop.
   Proof.
-    pose proof bsb_ge as [G M]. pose proof (bsb_bound ph sp argv envp uid hw rdraw Hva Hve) as B. fold bsb in B.
-    unfold W. pose proof len_av. pose proof len_ev.
-    lia.
+    unfold STR0, cat_string_off. pose proof pad_eq.
+    fold CHEAD. fold W. lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -216,7 +451,7 @@ Section Init.
   Qed.
 
   Lemma usp_hi : usp + 192 <= 2 ^ 47.
-  Proof. pose proof usp_fit. pose proof bsb_ge as [G _]. pose proof len_av. pose proof len_ev. lia. Qed.
+  Proof. pose proof usp_fit. pose proof bsb_ge as Gb. pose proof len_av. pose proof len_ev. lia. Qed.
 
   (* [comment removed for export] *)
   Lemma uE0 :
@@ -224,7 +459,7 @@ Section Init.
     /\ uE E0 (EVar V_ARGC) = argc /\ uE E0 (EVar V_ENVC) = envc /\ uE E0 (EVar V_L0) = L0
     /\ uE E0 (EVar V_W) = W /\ uE E0 (EVar V_BRK) = bv_unsigned brk0 / 4096.
   Proof.
-    pose proof usp_lo. pose proof usp_hi. pose proof len_av. pose proof len_ev. pose proof W_range as (W1 & W2 & W3).
+    pose proof usp_lo. pose proof usp_hi. pose proof len_av. pose proof len_ev. pose proof pad_range. pose proof gap_range.
     pose proof (u64_range brk0) as [B1 B2].
     assert (HL0 : 0 <= L0 <= 131071).
     { unfold L0. pose proof (valid_argv_str_len argv 0 Hva ltac:(destruct Hva as [Hl _]; lia)). lia. }
@@ -328,37 +563,91 @@ Section Init.
     rewrite !Z.mod_small by lia. lia.
   Qed.
 
-  Lemma u_e_str0 : uE E0 e_str0 = usp + 8 * argc + 8 * envc + 184.
+  (* The valuation of the new plan variable [V_G], the twelfth slot.  Stated
+     beside [uE0_s2a] and [uE0_L1] because [uE0] covers only the seven the
+     pre-revision plan had. *)
+  Lemma uE0_G : uE E0 (EVar V_G) = G.
   Proof.
-    pose proof usp_lo. pose proof usp_hi. pose proof len_av. pose proof len_ev.
-    pose proof u_e_auxv as UA. unfold e_str0, eaddz, uE in *. rewrite mkAlu_denot, edenot_lit.
-    rewrite u_add64, u64_lit by lia. rewrite UA. rewrite Z.mod_small by lia. lia.
+    pose proof gap_range. unfold uE. cbn [edenot E0 ev nth vals0 V_G].
+    rewrite u64_lit by lia. reflexivity.
   Qed.
 
-  Lemma u_e_str1 : uE E0 e_str1 = usp + 8 * argc + 8 * envc + 184 + L0 + 1.
+  (* STATEMENT CHANGED, old beside new:
+       OLD  uE E0 e_atrandom = usp + Z.of_nat (length bsb) - 16
+       NEW  uE E0 (e_atrandom RZ) = usp + CHEAD - 16
+     The sixteen AT_RANDOM bytes sit at the top of the HEAD, not at the top of
+     the IMAGE: [create_elf_tables] lays the vector down from them and
+     [copy_strings] has already put the strings above them (fs/exec.c,
+     fs/binfmt_elf.c, Linux v6.18.46, commit 1f99e9ab748f).  The old
+     right-hand side is FALSE, not stale -- it names a place that is now
+     inside the string area.  Model's own form:
+     [75d69e00:theories/Common/AsanInit.v:482]. *)
+  Lemma u_e_atrandom : uE E0 (e_atrandom RZ) = usp + CHEAD - 16.
   Proof.
-    pose proof usp_lo. pose proof usp_hi. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as [G _].
+    pose proof usp_lo. pose proof usp_hi. pose proof usp_fit. pose proof len_av. pose proof len_ev.
+    pose proof chead_eq. pose proof chead_range. pose proof gap_range. pose proof RZ_range.
+    pose proof u_e_auxv as UA. pose proof uE0_G as UG.
+    unfold e_atrandom, eadd, eaddz, escale, uE, AUXSZ in *.
+    rewrite !mkAlu_denot, !mkMd_denot, !edenot_lit.
+    rewrite !u_add64, !u_mul64, !u64_lit by lia. rewrite UA, UG.
+    rewrite !Z.mod_small by lia. lia.
+  Qed.
+
+  (* STATEMENT CHANGED, old beside new:
+       OLD  uE E0 e_str0 = usp + 8 * argc + 8 * envc + 184
+       NEW  uE E0 (e_str0 RZ) = STR0
+     [184] was the struct plus the OLD 160-byte auxv, with the strings just
+     above it.  They are now at the top of the stack VMA, so the old
+     right-hand side is FALSE, not stale.  [STR0] is
+     [usp + cat_string_off rseq sp top argv envp execfn], which
+     [CatExec.v:430] defines as [block_head_size + block_pad_len] -- the
+     model's [usp + CHEAD + W] ([AsanInit.v:220], [:492]) -- so it is a
+     function of the FREE [kb_rseq] through [RZ] and of the
+     [arch_align_stack] pad, never a constant. *)
+  Lemma u_e_str0 : uE E0 (e_str0 RZ) = STR0.
+  Proof.
+    pose proof usp_lo. pose proof usp_hi. pose proof usp_fit. pose proof len_av. pose proof len_ev.
+    pose proof chead_eq. pose proof chead_range. pose proof gap_range. pose proof RZ_range.
+    pose proof pad_range. pose proof pad_eq. pose proof lstr_lo.
+    destruct uE0 as (_ & _ & _ & _ & _ & U6 & _).
+    pose proof u_e_atrandom as UA.
+    unfold e_str0, eadd, eaddz, uE in *. rewrite !mkAlu_denot, !edenot_lit.
+    rewrite !u_add64, !u64_lit by lia. rewrite UA, U6.
+    rewrite !Z.mod_small by lia.
+    unfold STR0, cat_string_off. fold CHEAD. fold W. lia.
+  Qed.
+
+  (* Same move, one string along: argv[1] is argv[0] + L0 + 1. *)
+  Lemma u_e_str1 : uE E0 (e_str1 RZ) = STR0 + L0 + 1.
+  Proof.
+    pose proof usp_lo. pose proof usp_hi. pose proof usp_fit. pose proof len_av. pose proof len_ev.
+    pose proof chead_eq. pose proof chead_range. pose proof gap_range. pose proof RZ_range.
+    pose proof pad_range. pose proof pad_eq. pose proof str0_hi. pose proof s0_in_strings.
     destruct uE0 as (_ & _ & _ & _ & U5 & _).
     assert (HL0 : 0 <= L0 <= 131071).
     { unfold L0. pose proof (valid_argv_str_len argv 0 Hva Hav0). lia. }
-    pose proof u_e_str0 as US. unfold e_str1, eadd, eaddz, uE in *. rewrite !mkAlu_denot, !edenot_lit.
-    rewrite !u_add64, !u64_lit by lia. rewrite US, U5. rewrite !Z.mod_small by lia. lia.
+    pose proof u_e_str0 as US. unfold e_str1, eadd, eaddz, uE in *.
+    rewrite !mkAlu_denot, !edenot_lit.
+    rewrite !u_add64, !u64_lit by lia. rewrite US, U5.
+    rewrite !Z.mod_small by lia. lia.
   Qed.
 
-  Lemma u_e_atrandom : uE E0 e_atrandom = usp + Z.of_nat (length bsb) - 16.
+  (* STATEMENT CHANGED, old beside new:
+       OLD  uE E0 e_atr8 = usp / 8 + argc + envc + W
+       NEW  uE E0 e_atr8 = usp / 8 + argc + envc + G
+     The plan's [e_atr8] now reads [EVar V_G] where it read [EVar V_W]
+     ([AsanPlanCoreK.v:3201]), because the quantity it bounds is the shadow of
+     the argument block below the random bytes -- the auxv size cancels out of
+     it, which is why it is the one expression of this family that takes no
+     [rz] ([AsanInit.v:3279] states the same independence).  [W] and [G] are
+     no longer related: [W] is the pad in BYTES and is not a quotient, so
+     [W_range]'s second conjunct has no replacement. *)
+  Lemma u_e_atr8 : uE E0 e_atr8 = usp / 8 + argc + envc + G.
   Proof.
-    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof W_range as (W1 & W2 & W3).
-    destruct uE0 as (_ & _ & _ & _ & _ & U6 & _).
-    pose proof u_e_str0 as US. unfold e_atrandom, eadd, escale, uE in *. rewrite mkAlu_denot, mkMd_denot, edenot_lit.
-    rewrite u_add64, u_mul64, u64_lit by lia. rewrite US, U6. rewrite !Z.mod_small by lia. lia.
-  Qed.
-
-  Lemma u_e_atr8 : uE E0 e_atr8 = usp / 8 + argc + envc + W.
-  Proof.
-    pose proof usp_lo. pose proof usp_hi. pose proof len_av. pose proof len_ev. pose proof W_range as (W1 & W2 & W3).
-    destruct uE0 as (U1 & U2 & U3 & U4 & U5 & U6 & U7). pose proof u_sp8 as U8.
+    pose proof usp_lo. pose proof usp_hi. pose proof len_av. pose proof len_ev. pose proof gap_range.
+    destruct uE0 as (U1 & U2 & U3 & U4 & U5 & U6 & U7). pose proof u_sp8 as U8. pose proof uE0_G as UG.
     unfold e_atr8, eadd, escale, uE in *. rewrite !mkAlu_denot.
-    rewrite !u_add64 by lia. rewrite U8, U3, U4, U6. rewrite !Z.mod_small by lia. lia.
+    rewrite !u_add64 by lia. rewrite U8, U3, U4, UG. rewrite !Z.mod_small by lia. lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -366,16 +655,133 @@ Section Init.
   (* [comment removed for export] *)
 
   Definition R0 : bvmap 5 word := regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp.
-  Definition FULL0 : word -> option byte := wrap_mem ph sp argv envp uid hw rdraw.
-  Definition model0 : Model := init_model (segments_reserved segs) brk0 mbase sp LIMIT inp.  (* [comment removed for export] *)
+  Definition FULL0 : word -> option byte := wrap_mem inp mbase ph entryw sp rdraw.
+  (* STATEMENT CHANGED, old beside new:
+       OLD  model0 := init_model (segments_reserved segs) brk0 mbase sp LIMIT inp
+       NEW  model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rdraw))
+                        (init_model (segments_reserved segs) brk0 mbase sp LIMIT inp)
+     The old term is no longer [Run.init_config]'s model: the revision copies the
+     launch's vDSO draw into the start state, and the error this produced names
+     exactly that wrapper ([init_cfg_eq]'s [reflexivity]).  Nothing else in this
+     file moves, because [with_vdso] rebuilds only the VM subsystem's vDSO
+     field: [m_vmmaps], [m_kernel], [m_vm_lazy], [m_vm_materialized] and
+     [m_proc] are each preserved BY [reflexivity]
+     ([75d69e00:theories/LinuxProcessSem/State.v:5046-5062]), so [model0_facts]
+     still closes by [repeat split; reflexivity] and every [cs_ok] projection
+     over [model0] keeps its value.
+     Model donor [75d69e00:theories/LinuxProcessSem/State.v:5031-5034] for the
+     setter and Vdso.v:254 for [vdso_run_init]; donor shape openssl/pem
+     Common/AsanInit.v:651-653 (`with_vdso (vdso_run_init (ed_vdso rdraw))`). *)
+  Definition model0 : Model :=
+    with_vdso (Vdso.vdso_run_init (ed_vdso rdraw))
+      (init_model (segments_reserved segs) brk0 mbase sp LIMIT inp).
 
-  Let cs0 := init_acs_of A.
+  Let cs0 := init_acs_of RZ A.
   Let hid0 := hid A argH0 E0 cs0 model0.
   Let Mr0 := Mr A argH0 E0 cs0 model0 FULL0.
 
+  (** THE LAUNCH'S RESERVED LEDGER is the image's reservations AND the vDSO pair
+      ([State.init_reserved]), placed at [State.vdso_top] of the initial ledger,
+      which for [mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp] is
+      [page_round_down_Z (Z.min mbase (sp - stack_max_size))].
+      Model donor [75d69e00:theories/LinuxProcessSem/State.v:7716-7721, 7836-7838];
+      donor shape openssl/pem Common/AsanInit.v:664-666. *)
+  Let VTOP : Z :=
+    page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)).
+  Let RESX : list (word * word) := vdso_reserved (in_kernel inp) VTOP.
+
+  Lemma sum_sizes_app : forall l1 l2, APSK.sum_sizes (l1 ++ l2) = APSK.sum_sizes l1 + APSK.sum_sizes l2.
+  Proof.
+    induction l1 as [|iv l1 IH]; intro l2; cbn [app APSK.sum_sizes]; [lia|]. rewrite IH. lia.
+  Qed.
+
+  Lemma mb_range : mmap_base_min <= bv_unsigned mbase <= mmap_base_max
+                   /\ bv_unsigned mbase mod page_size = 0.
+  Proof. destruct Hmb as (Y1 & Y2 & Y3). repeat split; assumption. Qed.
+
+  Lemma vtop_range : mmap_base_min - 4095 <= VTOP <= bv_unsigned mbase
+                     /\ VTOP mod 4096 = 0.
+  Proof.
+    pose proof mb_range as ((Y1 & Y2) & Y3). pose proof usp_lo.
+    unfold VTOP, page_round_down_Z, page_size, stack_max_size,
+           mmap_base_min, mmap_base_max, sp_window_hi, usp in *.
+    split; [split|]; lia.
+  Qed.
+
+  (** the pair, for ANY kernel build: four vvar pages, then one to sixteen text
+      pages.  Stated through [vdso_len] / [vdso_text_pages] rather than computed
+      at one build, so it holds for every value of the free kernel fields.
+      Donor shape openssl/pem Common/AsanInit.v:699-709; the model's own
+      [75d69e00:theories/Common/AsanInit.v:593-604] pins [vdso_len] to 24576 by
+      [vm_compute], which this cone must NOT do -- its kernel is free. *)
+  Lemma resx_shape :
+    RESX = [(Z_to_bv 64 (VTOP - vdso_len (in_kernel inp)), Z_to_bv 64 (vdso_vvar_pages * page_size));
+            (Z_to_bv 64 (VTOP - vdso_len (in_kernel inp) + vdso_vvar_pages * page_size),
+             Z_to_bv 64 (vdso_text_pages (in_kernel inp) * page_size))].
+  Proof.
+    pose proof vtop_range as [[T1 T2] T3]. pose proof (vdso_len_bounds (in_kernel inp)).
+    unfold RESX, vdso_reserved. cbv zeta.
+    replace (VTOP - vdso_len (in_kernel inp) <? page_size) with false
+      by (symmetry; apply Z.ltb_ge; unfold page_size, mmap_base_min in *; lia).
+    reflexivity.
+  Qed.
+
+  Lemma resx_len : (length RESX <= 2)%nat.
+  Proof. rewrite resx_shape. cbn [length]. lia. Qed.
+
+  Lemma resx_sum : APSK.sum_sizes RESX = vdso_len (in_kernel inp).
+  Proof.
+    pose proof vtop_range as [[T1 T2] T3]. pose proof mb_range as ((Y1 & Y2) & Y3).
+    pose proof (vdso_text_pages_pos (in_kernel inp)). pose proof (vdso_text_pages_le (in_kernel inp)).
+    rewrite resx_shape. cbn [APSK.sum_sizes fst snd].
+    unfold vdso_len, vdso_vvar_pages, page_size in *.
+    rewrite !u64_lit by lia. lia.
+  Qed.
+
+  Lemma resx_bytes_lo : 81920 <= resx_bytes A.
+  Proof.
+    pose proof (if_resx _ _ _ IMG) as [RX1 RX2]. unfold resx_bytes. lia.
+  Qed.
+
+  Lemma resx_ok : Forall (APSK.resx_entry_ok A) RESX.
+  Proof.
+    pose proof vtop_range as [[T1 T2] T3]. pose proof mb_range as ((Y1 & Y2) & Y3).
+    pose proof (if_hull _ _ _ IMG) as (G1 & G2 & G3 & G4).
+    pose proof (vdso_text_pages_pos (in_kernel inp)). pose proof (vdso_text_pages_le (in_kernel inp)).
+    rewrite resx_shape. unfold APSK.resx_entry_ok, vdso_len, vdso_vvar_pages, page_size in *.
+    repeat constructor; cbn [fst snd];
+      rewrite !u64_lit by (unfold mmap_base_min, mmap_base_max, sp_window_hi in *; lia);
+      unfold KHI, mmap_base_min, mmap_base_max, sp_window_hi in *; lia.
+  Qed.
+
+  (* STATEMENT CHANGED, old beside new:
+       OLD  vm_reserved (m_vmmaps model0) = segments_reserved segs
+       NEW  vm_reserved (m_vmmaps model0) = segments_reserved segs ++ RESX
+            with RESX := vdso_reserved (in_kernel inp) VTOP
+     (an intermediate repair stated the same thing as
+      [init_reserved (segments_reserved segs) mbase sp (in_kernel inp)]; this is
+      that term with [init_reserved] unfolded, which is the shape [co_res]
+      consumes, and is still a [reflexivity])
+     The old conjunct is FALSE under the revision, not stale: [init_model]
+     now seeds the reserved ledger with [init_reserved reserved mbase sp
+     (in_kernel inp)], which appends the vdso/vvar pair [execve] installed
+     above the image ([75d69e00:theories/LinuxProcessSem/State.v:7786], the
+     [mkVmMapsFull (init_reserved reserved mbase sp (in_kernel inp)) ...]
+     field; [init_reserved] itself at :7716-7721).  The new form is the
+     library's own term and closes by [reflexivity] for EVERY value of the
+     free kernel fields -- [kb_rseq] included -- because [vdso_reserved]
+     is applied to [in_kernel inp] rather than computed at one build.
+     Conjunct ORDER is unchanged, so the positional [destruct]s below keep
+     their meaning.  Consumers re-checked: [hid0_eq] (:649, destructs
+     positions 5/6/7 -- [vm_maps], [vm_noaccess], [m_vm_lazy] -- and never
+     reads this conjunct, since [vis] at [AsanPlanSoundK.v:193] reads
+     [vm_maps], [vm_noaccess] and [m_vm_lazy] only) and [init_cs_ok]
+     (:1063, [rewrite ?M4] among all thirteen).  No other file mentions
+     [model0_facts]. *)
   Lemma model0_facts :
     m_halted model0 = None /\ m_fds model0 = fds_std /\ m_tid model0 = None
-    /\ vm_reserved (m_vmmaps model0) = segments_reserved segs /\ vm_maps (m_vmmaps model0) = []
+    /\ vm_reserved (m_vmmaps model0) = segments_reserved segs ++ RESX
+    /\ vm_maps (m_vmmaps model0) = []
     /\ vm_noaccess (m_vmmaps model0) = [] /\ m_vm_lazy model0 = [] /\ m_vm_materialized model0 = []
     /\ vm_limit (m_vmmaps model0) = LIMIT /\ vm_brk (m_vmmaps model0) = brk0 /\ vm_start_brk (m_vmmaps model0) = brk0
     /\ vm_mmap_base (m_vmmaps model0) = mbase /\ eager_used model0 = 0.
@@ -399,23 +805,51 @@ Section Init.
     replace (usp / 4096 * 4096 - 8388608 <=? bv_unsigned a) with true by (symmetry; apply Z.leb_le; lia). rewrite orb_true_r. reflexivity.
   Qed.
 
-  Lemma FULL0_below : forall a : word, usp - 8388608 <= bv_unsigned a < usp -> FULL0 a = Some (Z_to_bv 8 0).
+  (* STATEMENT CHANGED, old beside new:
+       OLD  usp - 8388608 <= bv_unsigned a < usp -> FULL0 a = Some 0
+       NEW  usp - 6144513 <= bv_unsigned a < usp -> FULL0 a = Some 0
+     The old one is FALSE, not stale, at EVERY launch.  [PropExec.wrap_mem]
+     ([PropExec.v:2467-2476]) now zero-fills down to
+     [Run.stack_window_lo (in_kernel inp) mbase rdraw]
+     = [Z.max (ed_top rdraw - stack_max_size) (mbase + stack_guard_gap_bytes kb)]
+     ([75d69e00:theories/LinuxProcessSem/Run.v:1379]), where it used to fill
+     from [sp - stack_max_size].  Since [ed_top rdraw] is strictly ABOVE sp
+     ([pad_eq]: [W = utop - 8 - LSTR - usp - CHEAD >= 0] with [LSTR >= 2]),
+     [stack_window_lo > usp - 8388608] on every run -- no hypothesis recovers
+     the old window.  6144513 is [StoreOk.stack_window_depth]
+     ([StoreOk.v:140-146]: [stack_max_size - stack_window_reach] with
+     [stack_window_reach = 2244095]), which is what
+     [StoreOk.stack_window_lo_valid] bounds [stack_window_lo] by, for every
+     value of the free kernel fields -- [kb_rseq] and [kb_aslr] both, the
+     latter being the one [stack_window_lo_valid] case-splits on internally.
+     Model donor [75d69e00:theories/Common/AsanInit.v:639].
+     Consumers re-checked: [Mr0_below] and [stack_window_ok] below (both
+     restated to 6144513), and [atrandom_ok]/[rdn_Mr0_stack], which only ever
+     apply it at or above sp. *)
+  Lemma FULL0_below : forall a : word, usp - 6144513 <= bv_unsigned a < usp -> FULL0 a = Some (Z_to_bv 8 0).
   Proof.
     intros a Ha. unfold FULL0, wrap_mem.
+    assert (HW : stack_window_lo (in_kernel inp) mbase rdraw
+                 <= bv_unsigned sp + stack_window_reach - stack_max_size)
+      by exact (stack_window_lo_valid inp sp brk0 mbase rdraw Hlaunch Hlau).
     assert (Hs : stack_to_mem sp SIMG a = None).
     { unfold stack_to_mem. replace (Z.leb (bv_unsigned sp) (bv_unsigned a)) with false by (symmetry; apply Z.leb_gt; unfold usp in Ha; lia). reflexivity. }
-    fold SIMG. rewrite Hs. unfold stack_max_size, usp in *.
-    replace (Z.leb (bv_unsigned sp - 8 * 1024 * 1024) (bv_unsigned a)) with true by (symmetry; apply Z.leb_le; lia).
+    fold SIMG. rewrite Hs. unfold stack_window_reach, stack_max_size, usp in *.
+    replace (Z.leb (stack_window_lo (in_kernel inp) mbase rdraw) (bv_unsigned a)) with true by (symmetry; apply Z.leb_le; lia).
     replace (Z.ltb (bv_unsigned a) (bv_unsigned sp)) with true by (symmetry; apply Z.ltb_lt; lia). reflexivity.
   Qed.
 
+  (* STATEMENT UNCHANGED at 8388608: [stack_window_lo_ge_sp] gives
+     [sp - stack_max_size <= stack_window_lo], so nothing BELOW the old window
+     is filled either.  Only the filled side shrank.  Model donor [:653]. *)
   Lemma FULL0_low : forall a : word, bv_unsigned a < usp - 8388608 -> FULL0 a = None.
   Proof.
     intros a Ha. unfold FULL0, wrap_mem.
+    pose proof (stack_window_lo_ge_sp inp sp brk0 mbase rdraw Hlau) as HW.
     assert (Hs : stack_to_mem sp SIMG a = None).
     { unfold stack_to_mem. replace (Z.leb (bv_unsigned sp) (bv_unsigned a)) with false by (symmetry; apply Z.leb_gt; unfold usp in Ha; lia). reflexivity. }
     fold SIMG. rewrite Hs. unfold stack_max_size, usp in *.
-    replace (Z.leb (bv_unsigned sp - 8 * 1024 * 1024) (bv_unsigned a)) with false by (symmetry; apply Z.leb_gt; lia). reflexivity.
+    replace (Z.leb (stack_window_lo (in_kernel inp) mbase rdraw) (bv_unsigned a)) with false by (symmetry; apply Z.leb_gt; lia). reflexivity.
   Qed.
 
   (* [comment removed for export] *)
@@ -425,7 +859,7 @@ Section Init.
     rdn segs Mr0 a n = rdn segs (stack_to_mem sp SIMG) a n.
   Proof.
     intros a n Ha Hn Hvis. pose proof usp_lo. unfold SIMG.
-    rewrite <- (rdn_wrap_stack_above segs ph sp argv envp a n uid hw rdraw) by (unfold usp in *; lia).
+    rewrite <- (rdn_wrap_stack_above segs inp mbase ph entryw sp rdraw a n) by (unfold usp in *; lia).
     apply rdn_ext; [exact Hn|]. intros x Hx. apply Mr0_visible; [unfold usp, CEIL in *; lia | apply Hvis; exact Hx].
   Qed.
 
@@ -451,22 +885,38 @@ Section Init.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
+  (* STATEMENT CHANGED, old beside new, following [argH0]'s own restatement:
+       OLD  three disjuncts, the second [usp + 8*argc + 8*envc + 184 .. + 8*W]
+            and the third [usp + |bsb| .. usp + |SIMG|]
+       NEW  two, the string area being [STR0 .. utop]
+     Model's shape: [75d69e00:theories/Common/AsanInit.v:237]. *)
   Lemma argH0_range : forall a : word, argH0 E0 a = true ->
     usp + 24 <= bv_unsigned a < usp + 8 * argc + 8 * envc + 24
-    \/ usp + 8 * argc + 8 * envc + 184 <= bv_unsigned a < usp + Z.of_nat (length bsb) - 16
-    \/ usp + Z.of_nat (length bsb) <= bv_unsigned a < usp + Z.of_nat (length SIMG).
+    \/ STR0 <= bv_unsigned a < utop.
   Proof.
-    intros a H. unfold argH0 in H. pose proof W_range as (W1 & W2 & W3). apply andb_prop in H as [_ H].
-    apply orb_prop in H as [H|H]; [apply orb_prop in H as [H|H]|]; apply andb_prop in H as [H1 H2]; apply Z.leb_le in H1; apply Z.ltb_lt in H2;
-      [left | right; left | right; right]; lia.
+    intros a H. unfold argH0 in H. apply andb_prop in H as [_ H].
+    apply orb_prop in H as [H|H]; apply andb_prop in H as [H1 H2];
+      apply Z.leb_le in H1; apply Z.ltb_lt in H2; [left | right]; lia.
   Qed.
 
+  (* The complement, in the same two ranges: below the argv pointers, between
+     them and argv[0], and above the stack VMA's end. *)
   Lemma not_argH0 : forall a : word,
-    (bv_unsigned a < usp + 24 \/ (usp + 8 * argc + 8 * envc + 24 <= bv_unsigned a < usp + 8 * argc + 8 * envc + 184)
-     \/ usp + Z.of_nat (length bsb) - 16 <= bv_unsigned a < usp + Z.of_nat (length bsb)) -> argH0 E0 a = false.
+    (bv_unsigned a < usp + 24 \/ (usp + 8 * argc + 8 * envc + 24 <= bv_unsigned a < STR0)
+     \/ utop <= bv_unsigned a) -> argH0 E0 a = false.
   Proof.
     intros a H. destruct (argH0 E0 a) eqn:Ha; [|reflexivity]. apply argH0_range in Ha.
-    pose proof len_av. pose proof len_ev. pose proof bsb_ge as [G _]. lia.
+    (* [STR0], [utop], [CHEAD], [W] and [LSTR] stay ATOMS here: every relation
+       the contradiction needs is among the posed facts ([str0_hi] and [pad_eq]
+       together give [STR0 = usp + CHEAD + W], [chead_eq] with [gap_range] and
+       [RZ_range] give [CHEAD >= 8*argc + 8*envc + 472]).  The OLD
+       [unfold STR0, cat_string_off in *; fold CHEAD in *; fold W in *] cannot
+       work at this revision: [CHEAD] and [W] are now Section [Let]s in the
+       context, so [fold .. in *] folds them inside their own bodies and Rocq
+       refuses with "Cannot create self-referring hypothesis CHEAD". *)
+    pose proof len_av. pose proof len_ev. pose proof chead_eq. pose proof pad_range.
+    pose proof gap_range. pose proof str0_hi. pose proof pad_eq. pose proof lstr_lo.
+    pose proof RZ_range. lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -489,13 +939,42 @@ Section Init.
   Lemma spb_eq : split_lit e_sp0 = (e_sp0, 0).
   Proof. reflexivity. Qed.
 
-  (* [comment removed for export] *)
+  (* the auxv words the launch wrote, named once.  Model donor [:736]. *)
+  Let AUXW := auxv_words la ph entryw uid gid hw
+                (at_random_ptr sp rseq argv envp) (at_execfn_ptr top execfn).
+
+  (* STATEMENT CHANGED, old beside new:
+       OLD  (j < 20)%nat ->
+            nth j (auxv_words ph (at_random_ptr sp rseq argv envp) uid hw)
+                (Z_to_bv 64 0) = edenot E0 v -> ...
+       NEW  (j < 2 * auxv_count rseq)%nat ->
+            nth j AUXW (Z_to_bv 64 0) = edenot E0 v -> ...
+     The old one is FALSE, not stale, twice over: [StackLayout.auxv_words] now
+     takes eight arguments ([la ph entry uid gid hw ar ae]) where it took four,
+     so the old application does not even type; and the vector is 58 words (29
+     pairs) with CONFIG_RSEQ and 54 (27) without, where 20 was the old 160-byte
+     auxv's count.  [auxv_count rseq] is symbolic in the free field [kb_rseq],
+     so the new bound holds at BOTH builds ([auxv_count_RZ] is the only case
+     split).  Model donor [:740]; the read-back is [RefLayout.read_auxv_word],
+     whose own bound is the same [2 * auxv_count (kb_rseq (in_kernel inp))].
+     Consumers re-checked: [auxw_ok] (below, restated with it) and nothing
+     else -- no other file mentions [auxv_word_ok]. *)
   Lemma auxv_word_ok : forall (j : nat) v,
-    (j < 20)%nat ->
-    nth j (auxv_words ph (at_random_ptr sp argv envp) uid hw) (Z_to_bv 64 0) = edenot E0 v ->
+    (j < 2 * auxv_count rseq)%nat ->
+    nth j AUXW (Z_to_bv 64 0) = edenot E0 v ->
     kentry_ok segs E0 Mr0 (KWord (SA (fst e_auxb) (snd e_auxb + 8 * Z.of_nat j)) 8 v).
   Proof.
-    intros j v Hj Hv. pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as [G _].
+    intros j v Hj Hv. pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev.
+    pose proof chead_eq. pose proof chead_range. pose proof pad_range. pose proof gap_range.
+    pose proof length_bsb_sum. pose proof lstr_lo. pose proof bsb_ge as Gb. pose proof RZ_range.
+    pose proof auxv_count_RZ.
+    (* [STR0] is [usp + Z.of_nat (cat_string_off ..)] here, an ATOM, where the
+       model defines it as [usp + CHEAD + W] outright ([:220]).  [str0_hi] with
+       [pad_eq] is the tie -- together they give [STR0 = usp + CHEAD + W] --
+       and the fourth bullet below needs it: an auxv word sits at
+       [usp + 8*argc + 8*envc + 24 + 8*j], which [not_argH0]'s MIDDLE disjunct
+       covers only once [STR0] has a value. *)
+    pose proof str0_hi. pose proof pad_eq.
     assert (Hab : split_lit e_auxv = (fst e_auxb, snd e_auxb)) by (unfold e_auxb; destruct (split_lit e_auxv); reflexivity).
     set (ab := fst e_auxb) in *. set (ak := snd e_auxb) in *.
     pose proof (split_u E0 e_auxv ab ak Hab) as Hs. rewrite u_e_auxv in Hs.
@@ -508,14 +987,19 @@ Section Init.
     - intros x Hx. apply not_argH0. rewrite word_add_nat, u64_lit in Hx; unfold auxv_off, usp in *; [|lia].
       rewrite !Nat2Z.inj_add, !Nat2Z.inj_mul in Hx. cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in Hx. lia.
     - rewrite <- Hv.
-      pose proof (read_auxv_word segs ph sp rdraw argv envp uid hw Hva Hve Hhi' j Hj) as RW.
-      exact RW.
+      exact (read_auxv_word segs Sv48 inp mbase ph entryw sp brk0 rdraw Hlaunch Hlau Hhi' j Hj).
   Qed.
 
+  (* STATEMENT CHANGED, old beside new:
+       OLD  (0 <= i <= 9) -> nth .. (auxv_words ph .. uid hw) .. -> ...
+       NEW  (0 <= i < Z.of_nat (auxv_count rseq)) -> nth .. AUXW .. -> ...
+     Same two reasons as [auxv_word_ok]; the plan claims pair [26 + 2 * RZ]
+     ([AsanPlanCoreK.v:3774]), which 9 excludes at either build.  Consumers
+     re-checked: [auxv_null_ok] and [init_kn_with_ok], both below. *)
   Lemma auxw_ok : forall i ty v,
-    (0 <= i <= 9) ->
-    nth (Z.to_nat (2 * i)) (auxv_words ph (at_random_ptr sp argv envp) uid hw) (Z_to_bv 64 0) = Z_to_bv 64 ty ->
-    nth (Z.to_nat (2 * i + 1)) (auxv_words ph (at_random_ptr sp argv envp) uid hw) (Z_to_bv 64 0) = edenot E0 v ->
+    (0 <= i < Z.of_nat (auxv_count rseq)) ->
+    nth (Z.to_nat (2 * i)) AUXW (Z_to_bv 64 0) = Z_to_bv 64 ty ->
+    nth (Z.to_nat (2 * i + 1)) AUXW (Z_to_bv 64 0) = edenot E0 v ->
     know_ok segs E0 Mr0 (auxw i ty v).
   Proof.
     intros i ty v Hi H1 H2. unfold auxw.
@@ -527,22 +1011,40 @@ Section Init.
   Lemma kr_ok : forall e lo hi, lo <= uE E0 e <= hi -> kentry_ok segs E0 Mr0 (KRange e lo hi).
   Proof. intros e lo hi H. cbn [kentry_ok]. unfold uE in H. exact H. Qed.
 
-  (* [comment removed for export] *)
-  Lemma Mr0_below : forall a : word, usp - 8388608 <= bv_unsigned a < usp -> Mr0 a = Some (Z_to_bv 8 0).
+  (* STATEMENT CHANGED, old beside new, for [FULL0_below]'s reason and stated
+     through [StoreOk.stack_window_depth] rather than its numeral, so a model
+     change to [stack_window_reach] moves this in one place:
+       OLD  usp - 8388608 <= bv_unsigned a < usp -> Mr0 a = Some 0
+       NEW  usp - stack_window_depth <= bv_unsigned a < usp -> Mr0 a = Some 0
+     ([stack_window_depth = 6144513], [StoreOk.v:143-146].)  Model donor
+     [75d69e00:theories/Common/AsanInit.v:779]. *)
+  Lemma Mr0_below : forall a : word, usp - stack_window_depth <= bv_unsigned a < usp -> Mr0 a = Some (Z_to_bv 8 0).
   Proof.
-    intros a Ha. pose proof usp_lo. pose proof len_av.
-    rewrite Mr0_visible; [apply FULL0_below; exact Ha | unfold CEIL; lia | apply not_argH0; lia].
+    intros a Ha. pose proof usp_lo. pose proof len_av. pose proof stack_window_depth_val.
+    rewrite Mr0_visible; [apply FULL0_below; lia | lia | apply not_argH0; lia].
   Qed.
 
+  (* STATEMENT CHANGED, old beside new -- this is the ONE place in the cone
+     where the plan's zero window is proved from the model, and the old width
+     is FALSE at every launch (see [FULL0_below]):
+       OLD  kentry_ok .. (KWr (SA e_sp0 (-8388608)) (ELit 8388608))
+            /\ kentry_ok .. (KZero (SA e_sp0 (-8388608)) (ELit 8388608))
+       NEW  the same two at [-stack_window_depth] / [stack_window_depth]
+     [AsanPlanCoreK.v:3764]'s two entries move with it, matching the model's
+     own plan ([75d69e00:theories/Common/AsanPlanCore.v:3911], which spells the
+     numeral 6144513); so do [has_window] in the four Drv libs and the
+     [usp - 8388608] window facts built on them.  Nothing here reads [kb_rseq],
+     and [stack_window_lo_valid] discharges [kb_aslr] internally, so the new
+     statement holds at every kernel build. *)
   Lemma stack_window_ok :
-    kentry_ok segs E0 Mr0 (KWr (SA e_sp0 (-8388608)) (ELit 8388608))
-    /\ kentry_ok segs E0 Mr0 (KZero (SA e_sp0 (-8388608)) (ELit 8388608)).
+    kentry_ok segs E0 Mr0 (KWr (SA e_sp0 (-stack_window_depth)) (ELit stack_window_depth))
+    /\ kentry_ok segs E0 Mr0 (KZero (SA e_sp0 (-stack_window_depth)) (ELit stack_window_depth)).
   Proof.
-    pose proof usp_lo. pose proof usp_hi.
-    assert (Hst : estart E0 (SA e_sp0 (-8388608)) = usp - 8388608).
+    pose proof usp_lo. pose proof usp_hi. pose proof stack_window_depth_val as HD.
+    assert (Hst : estart E0 (SA e_sp0 (-stack_window_depth)) = usp - stack_window_depth).
     { unfold estart. cbn [a_base a_off]. pose proof u_e_sp0 as U. unfold uE in U. rewrite U. lia. }
-    assert (Hl : elenZ E0 (ELit 8388608) = 8388608) by (apply elenZ_lit; lia).
-    assert (Hfl : flat E0 (SA e_sp0 (-8388608)) (elenZ E0 (ELit 8388608))).
+    assert (Hl : elenZ E0 (ELit stack_window_depth) = stack_window_depth) by (apply elenZ_lit; lia).
+    assert (Hfl : flat E0 (SA e_sp0 (-stack_window_depth)) (elenZ E0 (ELit stack_window_depth))).
     { unfold flat. rewrite Hst, Hl. lia. }
     split; cbn [kentry_ok]; (split; [exact Hfl|]); rewrite Hst, ?Hl.
     - intros d m Hd Hdm. apply store_ok_of_all; rewrite u_small by lia; [lia|].
@@ -552,77 +1054,130 @@ Section Init.
 
   Lemma argc_word_ok : kentry_ok segs E0 Mr0 (KWord (SA e_sp0 0) 8 (EVar V_ARGC)).
   Proof.
-    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as [G _].
+    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as Gb.
     apply (kword_stack e_sp0 0 (EVar V_ARGC) sp).
     - pose proof u_e_sp0 as U. unfold uE in U. rewrite U. unfold usp. lia.
     - unfold usp. lia.
     - unfold usp in *. lia.
     - intros x Hx. apply not_argH0. unfold usp in *. lia.
-    - pose proof (read_argc ph segs sp argv envp uid hw rdraw) as RW.
+    - pose proof (read_argc inp mbase ph entryw segs sp rdraw) as RW.
       assert (Hv : len_word argv = edenot E0 (EVar V_ARGC)).
-      { apply bv_eq. destruct uE0 as (_ & _ & U3 & _). unfold uE in U3. rewrite U3. unfold argc. exact (u_argcN argv Hva). }
-      rewrite <- Hv. apply RW. fold bsb. pose proof usp_fit. unfold usp in *. lia.
+      { apply bv_eq. destruct uE0 as (_ & _ & U3 & _). unfold uE in U3. rewrite U3.
+        pose proof len_av. unfold len_word, argc in *. rewrite u64_lit by lia. reflexivity. }
+      rewrite inp_argv in RW. rewrite <- Hv. apply RW. fold bsb. pose proof bsb_nw. unfold usp in *. lia.
   Qed.
 
-  Lemma argv0_word_ok : kentry_ok segs E0 Mr0 (KWord (SA e_sp0 8) 8 e_str0).
+  (* argv[0] is at the BOTTOM OF THE STRING AREA, [cat_string_off] bytes above
+     sp -- it is no longer [cat_struct_size] bytes above sp, and [STR0] is the
+     name this Section already gives that address.  Spelled with [in_argv inp]
+     and [ed_top rdraw] rather than the Section's abbreviations, because that is
+     the form [CatExec]'s lemmas rewrite to.  Model donor [:820]; the K cone had
+     no copy, because the OLD proof went through [ArgvEnv.u_cat_argv_ptr], whose
+     [cat_argv_ptr sp argv envp k] spelling the revision replaced with
+     [cat_argv_ptr (ed_top rdraw) argv envp execfn k]. *)
+  Lemma cat_argv0_eq :
+    bv_unsigned (cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0) = STR0.
   Proof.
-    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as [G _].
-    apply (kword_stack e_sp0 8 e_str0 (sp + nat_to_word (8 + 8 * 0))%bv).
+    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev.
+    pose proof chead_eq. pose proof pad_range. pose proof gap_range. pose proof length_bsb_sum. pose proof RZ_range.
+    rewrite (cat_argv_ptr_offset (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0 Hav0).
+    change (total_arg_bytes_nat (firstn 0 (in_argv inp))) with 0%nat.
+    rewrite (cat_string_base_offset Sv48 inp mbase sp brk0 rdraw Hlau).
+    change (kb_rseq (in_kernel inp)) with rseq. change (in_execfn inp) with execfn.
+    change (in_argv inp) with argv. change (in_envp inp) with envp.
+    unfold STR0, CHEAD, W, usp, rseq, top, cat_string_off in *.
+    rewrite nat_to_word_add_merge, word_add_nat, u64_lit by lia. lia.
+  Qed.
+
+  Lemma argv0_word_ok : kentry_ok segs E0 Mr0 (KWord (SA e_sp0 8) 8 (e_str0 RZ)).
+  Proof.
+    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as Gb.
+    apply (kword_stack e_sp0 8 (e_str0 RZ) (sp + nat_to_word (8 + 8 * 0))%bv).
     - pose proof u_e_sp0 as U. unfold uE in U. rewrite U. rewrite word_add_nat, u64_lit; unfold usp in *; lia.
     - rewrite word_add_nat, u64_lit; unfold usp in *; lia.
     - rewrite word_add_nat, u64_lit; unfold usp in *; lia.
     - intros x Hx. apply not_argH0. rewrite word_add_nat, u64_lit in Hx; unfold usp in *; lia.
-    - pose proof (read_argv_ptr_k ph segs sp argv envp 0 uid hw rdraw Hav0) as RW.
-      assert (Hv : cat_argv_ptr sp argv envp 0 = edenot E0 e_str0).
-      { apply bv_eq. rewrite (@u_cat_argv_ptr ph sp rdraw argv envp uid hw Hva Hve Hlo' Hhi' 0 Hav0).
-        pose proof u_e_str0 as U. unfold uE in U. rewrite U. unfold cat_struct_size, auxv_size. replace (total_arg_bytes_nat (firstn 0 argv)) with 0%nat by reflexivity.
-        unfold usp, argc, envc. lia. }
-      rewrite <- Hv. apply RW. fold bsb. unfold usp in *. lia.
+    - pose proof (read_argv_ptr_k segs inp mbase ph entryw sp rdraw 0) as RW.
+      assert (Hv : cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0
+                   = edenot E0 (e_str0 RZ)).
+      { apply bv_eq. rewrite cat_argv0_eq. pose proof u_e_str0 as U. unfold uE in U. rewrite U. reflexivity. }
+      rewrite <- Hv. apply RW; [exact Hav0|]. fold bsb. pose proof bsb_nw. unfold usp in *. lia.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma argv1_word_ok : kentry_ok segs E0 Mr0 (kw_argv1 e_argv1w).
+  Lemma argv1_word_ok : kentry_ok segs E0 Mr0 (kw_argv1 (e_argv1w RZ)).
   Proof.
     unfold kw_argv1.
-    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as [G _].
+    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as Gb.
     assert (HL0 : 0 <= L0 <= 131071).
     { unfold L0. pose proof (valid_argv_str_len argv 0 Hva Hav0). lia. }
-    assert (Hw1 : edenot E0 e_argv1w = if (1 <? argc) then edenot E0 e_str1 else Z_to_bv 64 0).
+    assert (Hw1 : edenot E0 (e_argv1w RZ) = if (1 <? argc) then edenot E0 (e_str1 RZ) else Z_to_bv 64 0).
     { unfold e_argv1w. cbn [edenot]. destruct uE0 as (_ & _ & U3 & _). unfold uE in U3. cbn [edenot] in U3.
       apply bv_eq. rewrite u_mul64, u_sltu64, u64_lit, U3 by lia.
-      pose proof (u64_range (edenot E0 e_str1)).
+      pose proof (u64_range (edenot E0 (e_str1 RZ))).
       destruct (1 <? argc); [rewrite Z.mul_1_l, Z.mod_small by lia; reflexivity | rewrite u64_lit by lia; reflexivity]. }
-    apply (kword_stack e_sp0 16 e_argv1w (sp + nat_to_word (8 + 8 * 1))%bv).
+    apply (kword_stack e_sp0 16 (e_argv1w RZ) (sp + nat_to_word (8 + 8 * 1))%bv).
     - pose proof u_e_sp0 as U. unfold uE in U. rewrite U. rewrite word_add_nat, u64_lit; unfold usp in *; lia.
     - rewrite word_add_nat, u64_lit; unfold usp in *; lia.
     - rewrite word_add_nat, u64_lit; unfold usp in *; lia.
     - intros x Hx. apply not_argH0. rewrite word_add_nat, u64_lit in Hx; unfold usp in *; lia.
     - rewrite Hw1. destruct (1 <? argc) eqn:Hc.
       + apply Z.ltb_lt in Hc. assert (Hav1 : (1 < length argv)%nat) by (unfold argc in Hc; lia).
-        pose proof (read_argv_ptr_k ph segs sp argv envp 1 uid hw rdraw Hav1) as RW.
-        assert (Hv : cat_argv_ptr sp argv envp 1 = edenot E0 e_str1).
-        { apply bv_eq. rewrite (@u_cat_argv_ptr ph sp rdraw argv envp uid hw Hva Hve Hlo' Hhi' 1 Hav1).
-          pose proof u_e_str1 as U. unfold uE in U. rewrite U. unfold cat_struct_size, auxv_size.
+        pose proof (read_argv_ptr_k segs inp mbase ph entryw sp rdraw 1) as RW.
+        assert (Hv : cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 1
+                     = edenot E0 (e_str1 RZ)).
+        { apply bv_eq.
+          pose proof chead_eq. pose proof pad_range. pose proof gap_range. pose proof length_bsb_sum. pose proof RZ_range.
           assert (TF : forall l : list (list byte), (0 < length l)%nat ->
                         Z.of_nat (total_arg_bytes_nat (firstn 1 l)) = Z.of_nat (length (nth 0 l [])) + 1)
             by (intros [|x t] Hl; [cbn in Hl; lia|]; change (firstn 1 (x :: t)) with [x]; cbn -[Z.of_nat Z.add]; lia).
-          rewrite Nat2Z.inj_add, (TF argv Hav0). unfold L0, usp, argc, envc. lia. }
-        rewrite <- Hv. apply RW. fold bsb. unfold usp in *. lia.
+          pose proof (TF argv Hav0) as TF0.
+          pose proof u_e_str1 as U. unfold uE in U.
+          rewrite (cat_argv_ptr_offset (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 1 Hav1).
+          rewrite (cat_string_base_offset Sv48 inp mbase sp brk0 rdraw Hlau).
+          change (kb_rseq (in_kernel inp)) with rseq. change (in_execfn inp) with execfn.
+          change (in_argv inp) with argv. change (in_envp inp) with envp.
+          rewrite U. unfold STR0, CHEAD, W, usp, L0, rseq, top, cat_string_off in *.
+          rewrite nat_to_word_add_merge, word_add_nat, u64_lit by lia. lia. }
+        rewrite <- Hv. apply RW; [exact Hav1|]. fold bsb. pose proof bsb_nw. unfold usp in *. lia.
       + apply Z.ltb_ge in Hc. assert (Hav1 : length argv = 1%nat) by (unfold argc in Hc; pose proof Hav0; lia).
-        pose proof (read_argv_null segs ph sp rdraw argv envp uid hw Hva Hve Hhi') as RW. rewrite Hav1 in RW.
+        pose proof (read_argv_null segs Sv48 inp mbase ph entryw sp brk0 rdraw Hlaunch Hlau Hhi') as RW.
+        rewrite inp_argv in RW. rewrite Hav1 in RW.
         exact RW.
   Qed.
 
-  (* [comment removed for export] *)
-  Lemma atrandom_ok : kentry_ok segs E0 Mr0 (KBlob (SA (fst e_atrb) (snd e_atrb)) (ELit 16) K_RND).
+  (* STATEMENT UNCHANGED.  Three steps inside it were FALSE, not stale, and all
+     three are the same move: the AT_RANDOM bytes are no longer at the TOP of
+     the image.
+       OLD  Hak : ak = 184
+       NEW  Hak : ak = 24 + AUXSZ RZ          (456 at rseq = false, 488 at true)
+       OLD  Hst : estart E0 (SA ab ak) = usp + |bsb| - 16
+       NEW  Hst : estart E0 (SA ab ak) = usp + CHEAD - 16
+       OLD  Hu  : bv_unsigned (at_random_ptr ..) = usp + off
+       NEW  Hu  : bv_unsigned (at_random_ptr ..) = usp + CHEAD - 16
+     [snd (e_atrb RZ)] is [24 + AUXSZ RZ] because [e_atrandom] now adds the
+     auxv's own size ([AsanPlanCoreK.v:253]); no literal can be right at both
+     builds, and the tie to the model's [auxv_size] is the hypothesis-free
+     [AsanPlanCoreK.AUXSZ_of].  The position is [CHEAD - 16], the top of the
+     HEAD and not of the image, because the strings and the [arch_align_stack]
+     pad are now above the random bytes ([u_e_atrandom] above, model donor
+     [75d69e00:theories/Common/AsanInit.v:482]).  Model donor for this proof:
+     [:892]. *)
+  Lemma atrandom_ok : kentry_ok segs E0 Mr0 (KBlob (SA (fst (e_atrb RZ)) (snd (e_atrb RZ))) (ELit 16) K_RND).
   Proof.
-    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as [G _].
-    assert (Hab : split_lit e_atrandom = (fst e_atrb, snd e_atrb)) by (unfold e_atrb; destruct (split_lit e_atrandom); reflexivity).
-    set (ab := fst e_atrb) in *. set (ak := snd e_atrb) in *.
-    pose proof (split_u E0 e_atrandom ab ak Hab) as Hs. rewrite u_e_atrandom in Hs.
-    assert (Hak : ak = 184) by (subst ak; vm_compute; reflexivity).
+    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as Gb.
+    pose proof chead_eq. pose proof chead_range. pose proof pad_range. pose proof gap_range.
+    pose proof length_bsb_sum. pose proof lstr_lo. pose proof RZ_range.
+    (* [str0_hi] with [pad_eq] gives [STR0 = usp + CHEAD + W], which the
+       [not_argH0] side condition needs: the random bytes end at [usp + CHEAD],
+       at or below [STR0]. *)
+    pose proof str0_hi. pose proof pad_eq.
+    assert (Hab : split_lit (e_atrandom RZ) = (fst (e_atrb RZ), snd (e_atrb RZ))) by (unfold e_atrb; destruct (split_lit (e_atrandom RZ)); reflexivity).
+    set (ab := fst (e_atrb RZ)) in *. set (ak := snd (e_atrb RZ)) in *.
+    pose proof (split_u E0 (e_atrandom RZ) ab ak Hab) as Hs. rewrite u_e_atrandom in Hs.
+    assert (Hak : ak = 24 + AUXSZ RZ) by exact (e_atrb_off rseq). unfold AUXSZ in Hak.
     specialize (Hs ltac:(lia) ltac:(lia)).
-    assert (Hst : estart E0 (SA ab ak) = usp + Z.of_nat (length bsb) - 16) by (unfold estart; cbn [a_base a_off]; lia).
+    assert (Hst : estart E0 (SA ab ak) = usp + CHEAD - 16) by (unfold estart; cbn [a_base a_off]; lia).
     assert (Hl : elenZ E0 (ELit 16) = 16) by (apply elenZ_lit; lia).
     cbn [kentry_ok]. rewrite Hst, Hl.
     assert (HE : eb E0 K_RND = at_random_bytes (ed_random rdraw)) by (unfold E0; cbn [eb]; rewrite Nat.eqb_refl; reflexivity).
@@ -630,25 +1185,33 @@ Section Init.
     split; [unfold flat; rewrite Hst; unfold usp in *; lia|].
     split; [rewrite length_at_random_bytes; reflexivity|].
     intros i Hi.
-    destruct (at_random_off segs ph sp rdraw argv envp uid hw Hva Hve Hhi') as [off (Hp & Hlen & Hmod & Hrd)].
-    fold bsb in Hlen.
-    assert (Hu : bv_unsigned (at_random_ptr sp argv envp) = usp + Z.of_nat off).
-    { rewrite Hp, word_add_nat. apply u64_lit. unfold usp in *. lia. }
-    specialize (Hrd (Z.to_nat i) 1%nat ltac:(lia)). fold bsb in Hrd. fold SIMG in Hrd.
+    destruct (at_random_off segs Sv48 inp mbase ph entryw sp brk0 rdraw Hlaunch Hlau Hhi') as [off (Hp & Hoff & Hmod & Hrd)].
+    rewrite inp_argv, inp_envp, inp_rseq in Hp, Hoff, Hrd.
+    assert (Hu : bv_unsigned (at_random_ptr sp rseq argv envp) = usp + CHEAD - 16).
+    { rewrite Hp, word_add_nat, u64_lit by (unfold usp in *; lia). unfold CHEAD. lia. }
+    (* ONE name for the image, and it must be the goal's.  [bsb] and [SIMG] are
+       the same list at this revision, so [fold bsb in Hrd] succeeds and then
+       [fold SIMG in Hrd] is a no-op -- leaving [Hrd] on [bsb] while the goal
+       (through [wrap_above_sp] and [fold SIMG] below) is on [SIMG].  The
+       [destruct .. eqn:Hstk] then rewrites only the goal's copy and
+       [injection Hrd] fails with "Nothing to inject". *)
+    specialize (Hrd (Z.to_nat i) 1%nat ltac:(lia)). fold SIMG in Hrd.
     rewrite (AsanCeil.firstn1_skipn_nth _ _ (Z_to_bv 8 0)) in Hrd by (rewrite length_at_random_bytes; lia).
-    assert (Ha : (at_random_ptr sp argv envp + nat_to_word (Z.to_nat i))%bv = Z_to_bv 64 (usp + Z.of_nat (length bsb) - 16 + i)).
+    assert (Ha : (at_random_ptr sp rseq argv envp + nat_to_word (Z.to_nat i))%bv = Z_to_bv 64 (usp + CHEAD - 16 + i)).
     { apply bv_eq. rewrite word_add_nat, Hu, u64_lit, u64_lit; unfold usp in *; lia. }
     rewrite Ha in Hrd.
     rewrite Mr0_visible; [| rewrite u64_lit; unfold usp, CEIL in *; lia | apply not_argH0; rewrite u64_lit; unfold usp in *; lia].
-    unfold FULL0. rewrite (wrap_above_sp ph sp argv envp _ uid hw rdraw) by (rewrite u64_lit; unfold usp in *; lia). fold SIMG.
+    unfold FULL0. rewrite (wrap_above_sp inp mbase ph entryw sp rdraw _) by (rewrite u64_lit; unfold usp in *; lia). fold SIMG.
     cbn [rdn] in Hrd.
-    destruct (stack_to_mem sp SIMG (Z_to_bv 64 (usp + Z.of_nat (length bsb) - 16 + i))) as [b|] eqn:Hstk.
+    destruct (stack_to_mem sp SIMG (Z_to_bv 64 (usp + CHEAD - 16 + i))) as [b|] eqn:Hstk.
     - cbn in Hrd. injection Hrd as ->. reflexivity.
     - exfalso. unfold stack_to_mem in Hstk. fold usp in Hstk. rewrite u64_lit in Hstk by (unfold usp in *; lia).
-      replace (usp <=? usp + Z.of_nat (length bsb) - 16 + i) with true in Hstk by (symmetry; apply Z.leb_le; lia).
+      replace (usp <=? usp + CHEAD - 16 + i) with true in Hstk by (symmetry; apply Z.leb_le; lia).
       cbv zeta in Hstk.
-      assert (HL : (length bsb <= length SIMG)%nat) by (unfold SIMG, entry_stack_image; cbv zeta; rewrite length_app; fold bsb; lia).
-      replace (usp + Z.of_nat (length bsb) - 16 + i - usp <? Z.of_nat (length SIMG)) with true in Hstk by (symmetry; apply Z.ltb_lt; lia).
+      (* [bsb] and [SIMG] are the same list at this revision, so this is
+         [le_n]; it WAS [length_app] on [build_stack_bytes ++ entry_slack]. *)
+      assert (HL : (length bsb <= length SIMG)%nat) by (unfold SIMG, bsb; lia).
+      replace (usp + CHEAD - 16 + i - usp <? Z.of_nat (length SIMG)) with true in Hstk by (symmetry; apply Z.ltb_lt; lia).
       apply nth_error_None in Hstk. lia.
   Qed.
 
@@ -672,33 +1235,222 @@ Section Init.
     intros x Hx. apply R3. lia.
   Qed.
 
-  Lemma atr_ptr_eq : at_random_ptr sp argv envp = edenot E0 e_atrandom.
+  Lemma atr_ptr_eq : at_random_ptr sp rseq argv envp = edenot E0 (e_atrandom RZ).
   Proof.
-    pose proof usp_lo. pose proof usp_fit.
-    destruct (at_random_off segs ph sp rdraw argv envp uid hw Hva Hve Hhi') as [off (Hp & Hlen & Hmod & _)]. fold bsb in Hlen.
-    apply bv_eq. rewrite Hp, word_add_nat, u64_lit by (unfold usp in *; lia).
-    pose proof u_e_atrandom as U. unfold uE in U. rewrite U. unfold usp. lia.
+    pose proof usp_lo. pose proof usp_fit. pose proof chead_eq. pose proof chead_range. pose proof gap_range.
+    pose proof len_av. pose proof len_ev. pose proof bsb_ge as Gb. pose proof RZ_range.
+    destruct (at_random_off segs Sv48 inp mbase ph entryw sp brk0 rdraw Hlaunch Hlau Hhi') as [off (Hp & Hoff & _ & _)].
+    rewrite inp_argv, inp_envp, inp_rseq in Hp, Hoff.
+    apply bv_eq. rewrite Hp, word_add_nat, u64_lit by (unfold CHEAD, usp in *; lia).
+    pose proof u_e_atrandom as U. unfold uE in U. rewrite U. unfold CHEAD, usp. lia.
   Qed.
 
-  Lemma init_kn_with_ok : forall atr, kentry_ok segs E0 Mr0 atr -> know_ok segs E0 Mr0 (init_kn_with atr A).
+  (* AT_NULL, the one claimed pair whose index moves with the flag: pair
+     [26 + 2 * RZ] ([AsanPlanCoreK.v:3774], [auxv_words_null] above).  It WAS
+     closed inside [init_kn_with_ok]'s uniform [cbn; try reflexivity] block,
+     which cannot reduce a symbolic [nth]. *)
+  Lemma auxv_null_ok : know_ok segs E0 Mr0 (auxw (26 + 2 * RZ) 0 (ELit 0)).
+  Proof.
+    pose proof auxv_count_RZ. pose proof RZ_range.
+    destruct (auxv_words_null la ph entryw uid gid hw
+                (at_random_ptr sp rseq argv envp) (at_execfn_ptr top execfn)) as [N1 N2].
+    apply auxw_ok; [lia | exact N1 | rewrite edenot_lit; exact N2].
+  Qed.
+
+  (* The rest of the vector ([AsanPlanCoreK.auxv_rest]), at parity with bzip2's
+     [K/AS/AsanInit.v] [auxt_ok] / [auxv_unk_ok] / [auxv_rseq_ok]
+     and its [init_kn_with_ok]'s pair block
+     (as in jsoncons/fuzz_bigint). *)
+  (* a type word alone (the pairs whose value stays unknown) *)
+  Lemma auxt_ok : forall i ty,
+    (0 <= i < Z.of_nat (auxv_count rseq)) ->
+    nth (Z.to_nat (2 * i)) AUXW (Z_to_bv 64 0) = Z_to_bv 64 ty ->
+    kentry_ok segs E0 Mr0 (KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty)).
+  Proof.
+    intros i ty Hi H1.
+    replace (snd e_auxb + 16 * i) with (snd e_auxb + 8 * Z.of_nat (Z.to_nat (2 * i))) by lia.
+    apply auxv_word_ok; [lia|]. rewrite H1. reflexivity.
+  Qed.
+
+  (* the whole vector is readable ([KUnk]): it is visible block memory below argv[0] *)
+  Lemma auxv_unk_ok : kentry_ok segs E0 Mr0 (KUnk (SA (fst e_auxb) (snd e_auxb)) (ELit (AUXSZ RZ))).
+  Proof.
+    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev.
+    pose proof chead_eq. pose proof chead_range. pose proof pad_range. pose proof gap_range.
+    pose proof length_bsb_sum. pose proof lstr_lo. pose proof bsb_ge as Gb. pose proof RZ_range.
+    (* [STR0] is an atom here; [str0_hi] with [pad_eq] give it a value, as in [auxv_word_ok] *)
+    pose proof str0_hi. pose proof pad_eq.
+    assert (Hab : split_lit e_auxv = (fst e_auxb, snd e_auxb)) by (unfold e_auxb; destruct (split_lit e_auxv); reflexivity).
+    set (ab := fst e_auxb) in *. set (ak := snd e_auxb) in *.
+    pose proof (split_u E0 e_auxv ab ak Hab) as Hs. rewrite u_e_auxv in Hs.
+    assert (Hak : ak = 24) by (subst ak; vm_compute; reflexivity).
+    specialize (Hs ltac:(lia) ltac:(lia)).
+    assert (Hst : estart E0 (SA ab ak) = usp + 8 * argc + 8 * envc + 24) by (unfold estart; cbn [a_base a_off]; lia).
+    assert (Hl : elenZ E0 (ELit (AUXSZ RZ)) = AUXSZ RZ) by (apply elenZ_lit; unfold AUXSZ; lia).
+    cbn [kentry_ok]. rewrite Hst, Hl. unfold AUXSZ in *.
+    split; [unfold flat; rewrite Hst; unfold usp in *; lia|].
+    intros i Hi.
+    rewrite Mr0_visible; [| rewrite u64_lit; unfold usp in *; lia | apply not_argH0; rewrite u64_lit; unfold usp in *; lia].
+    unfold FULL0. rewrite (wrap_above_sp inp mbase ph entryw sp rdraw _) by (rewrite u64_lit; unfold usp in *; lia). fold SIMG.
+    unfold stack_to_mem. fold usp. rewrite u64_lit by (unfold usp in *; lia).
+    replace (usp <=? usp + 8 * argc + 8 * envc + 24 + i) with true by (symmetry; apply Z.leb_le; lia).
+    cbv zeta.
+    assert (HL : (length bsb <= length SIMG)%nat) by (unfold SIMG, bsb; lia).
+    replace (usp + 8 * argc + 8 * envc + 24 + i - usp <? Z.of_nat (length SIMG)) with true by (symmetry; apply Z.ltb_lt; lia).
+    intros Hn. apply nth_error_None in Hn. lia.
+  Qed.
+
+  (* the CONFIG_RSEQ pair (26, 27), claimed only at [RZ = 1], where it is in the vector *)
+  Lemma auxv_rseq_ok :
+    know_ok segs E0 Mr0 (if Z.eqb RZ 1 then auxw 26 27 (ELit 28) ++ auxw 27 28 (ELit 32) else []).
+  Proof.
+    pose proof auxv_count_RZ. pose proof RZ_range.
+    unfold RZ, rseq, rseq_z in *. unfold AUXW, la, launch_auxv in *.
+    (* [kb_rseq (in_kernel inp)] is the body of the Section's [Let rseq]; split on it
+       through [bool_dec] and rewrite in the goal only *)
+    destruct (Bool.bool_dec (kb_rseq (in_kernel inp)) true) as [Hr|Hr]; [| apply Bool.not_true_is_false in Hr];
+      rewrite Hr; cbn [Z.eqb Pos.eqb]; [|constructor].
+    apply Forall_app; split; apply auxw_ok;
+      unfold AUXW, rseq, la, launch_auxv, auxv_words, auxv_entries, auxv_count in *; cbn [la_rseq];
+      rewrite ?Hr;
+      first [ (cbn; lia)
+            | (cbn [flat_map fst snd app nth Z.to_nat Z.mul Pos.to_nat Pos.mul Z.add Pos.add Pos.iter_op Nat.add Nat.mul];
+               first [reflexivity | (rewrite edenot_lit; reflexivity)])
+            | fail 1 "OSSV467-AUXRSEQ:" ].
+  Qed.
+
+  (* STACK_ROUND's gap, [usp + 8*argc + 8*envc + 24 + AUXSZ RZ] for [8*G] bytes,
+     and the arch_align_stack pad, [usp + CHEAD] for [W] bytes: both visible
+     block memory below argv[0] ([STR0 = usp + CHEAD + W]), so readable, as
+     [auxv_unk_ok] is for the vector. *)
+  Lemma gap_unk_ok : kentry_ok segs E0 Mr0 (KUnk (SA (fst e_auxb) (snd e_auxb + AUXSZ RZ)) (escale 8 (EVar V_G))).
+  Proof.
+    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev.
+    pose proof chead_eq. pose proof chead_range. pose proof pad_range. pose proof gap_range.
+    pose proof length_bsb_sum. pose proof lstr_lo. pose proof bsb_ge as Gb. pose proof RZ_range.
+    pose proof str0_hi. pose proof pad_eq.
+    assert (Hab : split_lit e_auxv = (fst e_auxb, snd e_auxb)) by (unfold e_auxb; destruct (split_lit e_auxv); reflexivity).
+    set (ab := fst e_auxb) in *. set (ak := snd e_auxb) in *.
+    pose proof (split_u E0 e_auxv ab ak Hab) as Hs. rewrite u_e_auxv in Hs.
+    assert (Hak : ak = 24) by (subst ak; vm_compute; reflexivity).
+    specialize (Hs ltac:(lia) ltac:(lia)).
+    assert (Hst : estart E0 (SA ab (ak + AUXSZ RZ)) = usp + 8 * argc + 8 * envc + 24 + AUXSZ RZ)
+      by (unfold estart; cbn [a_base a_off]; lia).
+    assert (Hl : elenZ E0 (escale 8 (EVar V_G)) = 8 * G).
+    { pose proof uE0_G as UG. unfold elenZ, escale, uE in *. rewrite mkMd_denot, edenot_lit.
+      rewrite u_mul64, u64_lit, UG by lia. rewrite Z.mod_small by lia. reflexivity. }
+    cbn [kentry_ok]. rewrite Hst, Hl. unfold AUXSZ in *.
+    split; [unfold flat; rewrite Hst; unfold AUXSZ, usp in *; lia|].
+    intros i Hi.
+    rewrite Mr0_visible; [| rewrite u64_lit; unfold usp in *; lia | apply not_argH0; rewrite u64_lit; unfold usp in *; lia].
+    unfold FULL0. rewrite (wrap_above_sp inp mbase ph entryw sp rdraw _) by (rewrite u64_lit; unfold usp in *; lia). fold SIMG.
+    unfold stack_to_mem. fold usp. rewrite u64_lit by (unfold usp in *; lia).
+    replace (usp <=? usp + 8 * argc + 8 * envc + 24 + (432 + 32 * RZ) + i) with true by (symmetry; apply Z.leb_le; lia).
+    cbv zeta.
+    assert (HL : (length bsb <= length SIMG)%nat) by (unfold SIMG, bsb; lia).
+    replace (usp + 8 * argc + 8 * envc + 24 + (432 + 32 * RZ) + i - usp <? Z.of_nat (length SIMG)) with true by (symmetry; apply Z.ltb_lt; lia).
+    intros Hn. apply nth_error_None in Hn. lia.
+  Qed.
+
+  Lemma pad_unk_ok : kentry_ok segs E0 Mr0 (KUnk (SA (fst (e_atrb RZ)) (snd (e_atrb RZ) + 16)) (EVar V_W)).
+  Proof.
+    pose proof usp_lo. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof bsb_ge as Gb.
+    pose proof chead_eq. pose proof chead_range. pose proof pad_range. pose proof gap_range.
+    pose proof length_bsb_sum. pose proof lstr_lo. pose proof RZ_range.
+    pose proof str0_hi. pose proof pad_eq.
+    assert (Hab : split_lit (e_atrandom RZ) = (fst (e_atrb RZ), snd (e_atrb RZ))) by (unfold e_atrb; destruct (split_lit (e_atrandom RZ)); reflexivity).
+    set (ab := fst (e_atrb RZ)) in *. set (ak := snd (e_atrb RZ)) in *.
+    pose proof (split_u E0 (e_atrandom RZ) ab ak Hab) as Hs. rewrite u_e_atrandom in Hs.
+    assert (Hak : ak = 24 + AUXSZ RZ) by exact (e_atrb_off rseq). unfold AUXSZ in Hak.
+    specialize (Hs ltac:(lia) ltac:(lia)).
+    assert (Hst : estart E0 (SA ab (ak + 16)) = usp + CHEAD) by (unfold estart; cbn [a_base a_off]; lia).
+    assert (Hl : elenZ E0 (EVar V_W) = W) by (destruct uE0 as (_ & _ & _ & _ & _ & U6 & _); exact U6).
+    cbn [kentry_ok]. rewrite Hst, Hl.
+    split; [unfold flat; rewrite Hst; unfold usp in *; lia|].
+    intros i Hi.
+    rewrite Mr0_visible; [| rewrite u64_lit; unfold usp in *; lia | apply not_argH0; rewrite u64_lit; unfold usp in *; lia].
+    unfold FULL0. rewrite (wrap_above_sp inp mbase ph entryw sp rdraw _) by (rewrite u64_lit; unfold usp in *; lia). fold SIMG.
+    unfold stack_to_mem. fold usp. rewrite u64_lit by (unfold usp in *; lia).
+    replace (usp <=? usp + CHEAD + i) with true by (symmetry; apply Z.leb_le; lia).
+    cbv zeta.
+    assert (HL : (length bsb <= length SIMG)%nat) by (unfold SIMG, bsb; lia).
+    replace (usp + CHEAD + i - usp <? Z.of_nat (length SIMG)) with true by (symmetry; apply Z.ltb_lt; lia).
+    intros Hn. apply nth_error_None in Hn. lia.
+  Qed.
+
+  Lemma auxv_rest_ok : know_ok segs E0 Mr0 (auxv_rest RZ A).
+  Proof.
+    pose proof RZ_range. pose proof auxv_count_RZ.
+    unfold auxv_rest.
+    (* AT_CLKTCK, AT_BASE, AT_FLAGS, AT_ENTRY, AT_GID, AT_EGID: below the
+       CONFIG_RSEQ pair, so the same words under both layouts; AT_ENTRY from
+       [Hapc]; AT_GID/AT_EGID are [gid], slot [V_GID] of [vals0] *)
+    do 6 (apply Forall_app; split;
+      [ apply auxw_ok;
+        [ lia
+        | unfold AUXW, auxv_words, auxv_entries;
+          cbn [flat_map fst snd app nth Z.to_nat Z.mul Pos.to_nat Pos.mul Z.add Pos.add Pos.iter_op Nat.add Nat.mul];
+          reflexivity
+        | unfold AUXW, auxv_words, auxv_entries;
+          cbn [flat_map fst snd app nth Z.to_nat Z.mul Pos.to_nat Pos.mul Z.add Pos.add Pos.iter_op Nat.add Nat.mul];
+          first [ reflexivity
+                | (rewrite edenot_lit; reflexivity)
+                | (rewrite edenot_lit; unfold entryw; rewrite Hapc; reflexivity)
+                | fail 1 "OSSV467-AUXREST-PAIR:" ] ]
+      | ]).
+    apply Forall_app; split; [exact auxv_rseq_ok|].
+    apply Forall_cons; [exact auxv_unk_ok|].
+    (* the eleven type words, written out so a miss names itself *)
+    do 11 (apply Forall_cons;
+      [ first [ (apply auxt_ok;
+                 [ lia
+                 | unfold AUXW, auxv_words, auxv_entries;
+                   cbn [flat_map fst snd app nth Z.to_nat Z.mul Pos.to_nat Pos.mul Z.add Pos.add Pos.iter_op Nat.add Nat.mul];
+                   reflexivity ])
+              | fail 1 "OSSV467-AUXT:" ] |]).
+    apply Forall_cons; [exact gap_unk_ok|].
+    apply Forall_cons; [exact pad_unk_ok|].
+    apply Forall_nil.
+  Qed.
+
+  Lemma init_kn_with_ok : forall atr, kentry_ok segs E0 Mr0 atr -> know_ok segs E0 Mr0 (init_kn_with RZ atr A).
   Proof.
     intros atr Hatr.
-    pose proof usp_lo. pose proof usp_hi. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof W_range as (W1 & W2 & W3).
-    pose proof brk_range as [B1 B2]. pose proof bsb_ge as [G _]. pose proof (if_hull _ _ _ IMG) as (I1 & I2 & I3 & I4).
+    pose proof usp_lo. pose proof usp_hi. pose proof usp_fit. pose proof len_av. pose proof len_ev. pose proof pad_range. pose proof gap_range. pose proof chead_range.
+    (* [usp_fit] bounds [usp + |bsb|], so every upper bound below that is
+       stated in [CHEAD] -- the AT_RANDOM range's [<= 2^47] first -- needs
+       [length_bsb_sum] to connect the two, and [chead_eq] with [RZ_range] for
+       [CHEAD]'s own shape.  The OLD proof had neither, because the OLD
+       [e_atrandom] sat at the top of the image and read [|bsb|] directly.
+       Model donor [:1013-1015]. *)
+    pose proof chead_eq. pose proof length_bsb_sum. pose proof lstr_lo. pose proof RZ_range. pose proof auxv_count_RZ.
+    pose proof brk_range as [B1 B2]. pose proof bsb_ge as Gb. pose proof (if_hull _ _ _ IMG) as (I1 & I2 & I3 & I4).
     pose proof (if_ph _ _ _ IMG) as (P1 & P2 & P3).
     destruct uE0 as (U1 & U2 & U3 & U4 & U5 & U6 & U7).
     assert (HL0 : 0 <= L0 <= 131071).
     { unfold L0. pose proof (valid_argv_str_len argv 0 Hva Hav0). lia. }
     unfold init_kn_with.
+    (* [auxv_rest] is proved apart ([auxv_rest_ok]); hiding it keeps the
+       [Forall_app] split below from opening it *)
+    remember (auxv_rest RZ A) as REST eqn:EREST.
     destruct stack_window_ok as [SW1 SW2].
     apply Forall_app; split.
     { apply Forall_cons; [apply kr_ok; rewrite U1; lia|].
       apply Forall_cons; [apply kr_ok; rewrite U2; lia|].
       apply Forall_cons; [apply kr_ok; rewrite uE0_s2a; lia|].   (* [comment removed for export] *)
+      (* [KRange (e_str0 RZ) 0x7fff800000c0 0x800000000000], argv[0]'s address:
+         [STR0 + LSTR + 8 = utop] ([str0_hi]) with [utop - usp = |bsb|]
+         ([length_bsb_eq]) and [usp + |bsb| <= 2^47] ([usp_fit]) above, and
+         [STR0 = usp + CHEAD + W] ([length_bsb_sum]) with [usp_lo] below. *)
+      apply Forall_cons; [apply kr_ok; rewrite u_e_str0; pose proof str0_hi as S0;
+                          pose proof length_bsb_eq as LE; unfold stack_image_size in LE; fold utop usp in LE; lia|].
       apply Forall_cons; [apply kr_ok; unfold eaddz, uE; rewrite mkAlu_denot, edenot_lit, u_add64, u64_lit by lia;
                           pose proof u_e_atrandom as U; unfold uE in U; rewrite U; rewrite Z.mod_small by lia; lia|].
       apply Forall_cons; [apply kr_ok; rewrite u_e_atr8; lia|].
-      apply Forall_cons; [apply kr_ok; rewrite u_e_auxv; lia|].   (* [comment removed for export] *)
+      (* [KRange e_auxv (0x7fff80000000 + 24) (2^47 - AUXSZ r - 16)]
+         ([AsanPlanCoreK.v:3751]): the auxv's own size is IN the bound, so
+         [AUXSZ] has to be unfolded before [lia] sees a linear term in [RZ]. *)
+      apply Forall_cons; [apply kr_ok; rewrite u_e_auxv; unfold AUXSZ; lia|].
       apply Forall_cons; [apply kr_ok; rewrite u_e_sp0; lia|].
       apply Forall_cons; [apply kr_ok; rewrite u_sp8; lia|].
       apply Forall_cons; [apply kr_ok; rewrite u_e_sppg; lia|].   (* [comment removed for export] *)
@@ -710,6 +1462,12 @@ Section Init.
       apply Forall_cons; [apply kr_ok; rewrite uE0_uid; unfold valid_id in Huid; pose proof (u64_range uid); lia|].
       apply Forall_cons; [apply kr_ok; rewrite uE0_hw; pose proof hw_range; lia|].
       apply Forall_cons; [apply kr_ok; rewrite U6; lia|].
+      (* [KRange (EVar V_G) 0 1], the plan's NEW variable ([AsanPlanCoreK.v:3762]
+         appends it after [V_W]): [uE0] is a seven-tuple over
+         S1/S2/ARGC/ENVC/L0/W/BRK and does not carry it, so the bullet reads
+         [uE0_G].  Its absence is why [rewrite U7] was landing on the [V_G]
+         entry and reporting "Found no subterm matching uE E0 (EVar V_BRK)". *)
+      apply Forall_cons; [apply kr_ok; rewrite uE0_G; pose proof gap_range; lia|].
       apply Forall_cons; [apply kr_ok; rewrite U7; unfold BRK_ASLR in *; lia|].
       apply Forall_cons; [exact SW1|].
       apply Forall_cons; [exact SW2|].
@@ -718,19 +1476,38 @@ Section Init.
       apply Forall_cons; [exact argv1_word_ok|].
       apply Forall_nil. }
     repeat (apply Forall_app; split).
-    1-10: apply auxw_ok; [lia | rewrite auxv_words_eq; cbn [nth Z.to_nat Z.mul Pos.to_nat Pos.mul Z.add Pos.add Pos.iter_op Nat.add Nat.mul]; try reflexivity ..].
+    (* AT_NULL (pair [26 + 2 * RZ]): its index is symbolic in the free field,
+       so no [cbn] closes it -- [auxv_words_null] is the only case split. *)
+    10: exact auxv_null_ok.
+    (* AT_RANDOM (pair 24): its value is the plan's [e_atrandom RZ]; no
+       [try reflexivity] here, the two sides are only equal by [atr_ptr_eq] *)
+    9: apply auxw_ok;
+         [ lia
+         | unfold AUXW, auxv_words, auxv_entries;
+           cbn [flat_map fst snd app nth Z.to_nat Z.mul Pos.to_nat Pos.mul Z.add Pos.add Pos.iter_op Nat.add Nat.mul];
+           reflexivity
+         | unfold AUXW, auxv_words, auxv_entries;
+           cbn [flat_map fst snd app nth Z.to_nat Z.mul Pos.to_nat Pos.mul Z.add Pos.add Pos.iter_op Nat.add Nat.mul];
+           exact atr_ptr_eq ].
+    (* pairs 13, 14, 15, 11, 10, 19, 20, 23: all below the CONFIG_RSEQ pair, so
+       the same words under both layouts *)
+    1-8: apply auxw_ok;
+         [ lia
+         | unfold AUXW, auxv_words, auxv_entries;
+           cbn [flat_map fst snd app nth Z.to_nat Z.mul Pos.to_nat Pos.mul Z.add Pos.add Pos.iter_op Nat.add Nat.mul];
+           try reflexivity .. ].
     all: try (rewrite edenot_lit; reflexivity).
     1: rewrite edenot_lit, P1; reflexivity.
     1: rewrite edenot_lit, P2; reflexivity.
     1: rewrite edenot_lit, P3; reflexivity.
-    1: exact atr_ptr_eq.
     apply Forall_cons; [exact Hatr|].
     apply Forall_cons; [exact kimg_ok|].
     apply Forall_cons; [exact rw_window_ok|].
     apply Forall_nil.
+    rewrite EREST. exact auxv_rest_ok.
   Qed.
 
-  Lemma init_kn_ok : know_ok segs E0 Mr0 (init_kn A).
+  Lemma init_kn_ok : know_ok segs E0 Mr0 (init_kn RZ A).
   Proof. exact (init_kn_with_ok _ atrandom_ok). Qed.
 
   (* [comment removed for export] *)
@@ -806,7 +1583,19 @@ Section Init.
     - reflexivity.
     - reflexivity.
     - reflexivity.
-    - reflexivity.
+    - (* co_res: the launch reserves the vDSO pair beside the image.  The witness
+         is [RESX] and its four clauses are: the ledger equality by
+         [reflexivity] (that IS [model0_facts]'s conjunct); the geometry by
+         [resx_ok]; [length RESX <= 2 <= n_resx A] by [if_resx]; and
+         [sum_sizes RESX = vdso_len (in_kernel inp) <= 20 pages <= resx_bytes A]
+         by [State.vdso_len_bounds] and [if_resx].  Every step is stated over
+         [in_kernel inp], so it holds at EVERY kernel build.
+         Model donor [75d69e00:theories/Common/AsanInit.v:1228-1238]. *)
+      pose proof (if_resx _ _ _ IMG) as [RX1 RX2]. pose proof resx_bytes_lo.
+      pose proof (vdso_len_bounds (in_kernel inp)).
+      exists RESX. split; [reflexivity|].
+      split; [exact resx_ok|].
+      split; [pose proof resx_len; lia | rewrite resx_sum; unfold page_size in *; lia].
     - reflexivity.
     - reflexivity.
     - constructor.   (* [comment removed for export] *)
@@ -818,8 +1607,12 @@ Section Init.
     - intros z Hz. exact Hz.
     - constructor.
     - constructor.
-    - rewrite app_nil_r, (if_sizes _ _ _ IMG). lia.
-    - (* [comment removed for export] *) rewrite u_e_sp0, u_e_sppg. unfold APSK.pagedown, model0, init_model, usp. cbn -[Z.mul Z.div Z.sub Z.add].
+    - (* co_totsz: the image's reservations and the vDSO pair.
+         Model donor [75d69e00:theories/Common/AsanInit.v:1251-1253]. *)
+      rewrite app_nil_r, sum_sizes_app, (if_sizes _ _ _ IMG), resx_sum.
+      pose proof (vdso_len_bounds (in_kernel inp)). pose proof resx_bytes_lo.
+      unfold page_size in *. lia.
+    - (* [comment removed for export] *) rewrite u_e_sp0, u_e_sppg. unfold APSK.pagedown, model0, with_vdso, init_model, usp. cbn -[Z.mul Z.div Z.sub Z.add].
       destruct Hsp as (S1 & S2 & S3). repeat split; [lia | exact S2].
     - unfold escale. rewrite mkMd_denot. cbn [edenot]. apply bv_eq. rewrite u_mul64, u64_lit by lia.
       destruct uE0 as (_ & _ & _ & _ & _ & _ & U7). unfold uE in U7. cbn [edenot] in U7. rewrite U7.
@@ -833,13 +1626,43 @@ Section Init.
     - (* [comment removed for export] *) reflexivity.
     - (* [comment removed for export] *) reflexivity.
     - (* [comment removed for export] *) intros HH. discriminate HH.
+    - (* co_mres: no tracked mappings at start, so nothing to be apart from *)
+      constructor.
+    - (* co_vdso: the ledger ends with the launch's own pair.
+         Model donor [727298f3:theories/Common/AsanInit.v:1277-1281]. *)
+      replace (m_kernel model0) with (in_kernel inp) by reflexivity.
+      replace (vdso_top (m_vmmaps model0)) with VTOP
+        by (symmetry; exact (vdso_top_init_model (segments_reserved segs) brk0 mbase sp LIMIT inp)).
+      apply incl_appr, incl_refl.
+    - (* co_rdr: [inp] passes [true] for the channel reader *)
+      reflexivity.
   Qed.
 
 
   (* [comment removed for export] *)
-  Theorem init_cfg_eq : forall apc : N, Z.of_N apc = a_entry A ->
+  (* STATEMENT CHANGED, old beside new, because [apc] became this Section's
+     Variable (the auxv, hence the stack image, reads the entry):
+       OLD  forall apc : N, Z.of_N apc = a_entry A ->
+              init_config segs apc ph sp brk0 mbase rdraw LIMIT inp = ...
+       NEW  init_config segs apc ph sp brk0 mbase rdraw LIMIT inp = ...
+     over the Section's [apc] and [Hapc].  I first kept the old statement and
+     tied the quantifier to [apc] by [N2Z.inj], which is provable -- but it
+     makes every consumer pass the SAME entry twice, once to discharge [apc]
+     and [Hapc] and once to the quantifier.  Dropping the quantifier is the
+     model's own form ([theories/Common/AsanInit.v]) and costs consumers one
+     pair of arguments instead of two.  It is not a weakening: the old
+     statement follows from this one for any [apc'] satisfying [Hapc]'s
+     equation, because [Z.of_N] is injective, so no consumer loses strength.
+     Consumers re-checked: As0StartupK.v:218,231 and Bo0StartupK.v:219,232
+     (G1BigintKernelArity's four sites), which now pass [apc] and [Hapc]
+     after [execfn] and drop their trailing entry/[eq_refl] pair. *)
+  Theorem init_cfg_eq :
     init_config segs apc ph sp brk0 mbase rdraw LIMIT inp = cfg_of segs R0 (a_entry A) FULL0 model0.
   Proof.
-    intros apc Hpc. unfold init_config, cfg_of. cbn [in_argv in_envp in_uid in_hwcap inp]. rewrite init_mkst. rewrite Hpc. reflexivity.
+    unfold init_config, cfg_of. cbn [in_argv in_envp in_uid in_hwcap inp].
+    (* [FULL0] hides one occurrence of [entryw = Z_to_bv 64 (Z.of_N apc)], which
+       [rewrite Hapc] cannot see; unfold both so the entry rewrites on BOTH
+       sides and the two [mkst]s become syntactically equal. *)
+    unfold FULL0, entryw. rewrite init_mkst. rewrite Hapc. reflexivity.
   Qed.
 End Init.

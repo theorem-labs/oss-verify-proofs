@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image bounds taken from the unit's own Reusable/YImgTop.v. *)
-(* Modified by Theorem Labs, 2026-10: the empty-depot switch (DepotCfg.depot_has_trace) taken from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v at 88154566652a, hunk by hunk (provenance evidence/depot: depot-classes.tsv, depot_apply.py): hunks 2 3 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49; hunks 1 5 keep this file's text. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YCbq.v at 4f87de75d677 (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: the empty-depot switch (DepotCfg.depot_has_trace) taken from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v, hunk by hunk (provenance evidence/depot: depot-classes.tsv, depot_apply.py): hunks 2 3 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49; hunks 1 5 keep this file's text. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YCbq.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's channel-reader fact for fdchan's third conjunct; fdchan's third conjunct, the channel-reader flag, carried in cs_ok (co_rdr) and threaded to the fd sites); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -35,7 +36,9 @@ Ltac zlia := appn; lia.
 Definition proc_but_pins (md md' : Model) : Prop :=
 m_proc md' = mkProcState (procst_halted (m_proc md)) (procst_tid (m_proc md)) (procst_creds (m_proc md)) (procst_setsid_succeeded (m_proc md))
 (procst_sigmask (m_proc md)) (procst_children (m_proc md)) (procst_utsname (m_proc md)) (procst_sigaltstack_installed (m_proc md))
-(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md').
+(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md')
+(procst_sigpipe_pending (m_proc md)) (procst_channel_reader (m_proc md))
+(procst_sigpipe_action (m_proc md)) (procst_sigpipe_terminal (m_proc md)).
 Definition aos_step (FP : list (Z * Z)) (md md' : Model) : Prop :=
 m_io md' = m_io md /\ m_pipes md' = m_pipes md /\
 YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
@@ -43,11 +46,18 @@ YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
 proc_but_pins md md' /\
 (~ YI16.sink_open_fp FP -> m_fd md' = m_fd md /\ m_fsys md' = m_fsys md /\ m_proc md' = m_proc md).
 Lemma proc_but_pins_refl : forall md, proc_but_pins md md.
-Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 Lemma proc_but_pins_trans : forall m1 m2 m3, proc_but_pins m1 m2 -> proc_but_pins m2 m3 -> proc_but_pins m1 m3.
 Proof.
 intros m1 m2 m3 H12 H23. unfold proc_but_pins, m_statpins in *. rewrite H23. rewrite H12. reflexivity.
 Qed.
+(* LPS 727298f3: [proc_but_pins] rebuilds the process record with the SAME
+   [procst_channel_reader], so the flag [fdchan] asks for travels over a
+   library call as the fd table does. *)
+Lemma proc_but_pins_channel_reader : forall md md', proc_but_pins md md' -> m_channel_reader md' = m_channel_reader md.
+Proof. intros md md' H. unfold m_channel_reader. rewrite H. reflexivity. Qed.
+Lemma aos_step_channel_reader : forall FP md md', aos_step FP md md' -> m_channel_reader md' = m_channel_reader md.
+Proof. intros FP md md' (_ & _ & _ & _ & _ & H & _). exact (proc_but_pins_channel_reader md md' H). Qed.
 Lemma aos_step_refl : forall FP md, aos_step FP md md.
 Proof.
 intros FP md. split; [reflexivity|]. split; [reflexivity|]. split; [apply YI16.fds_rel_refl|]. split; [apply YI16.fs_rel_refl|].

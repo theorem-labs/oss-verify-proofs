@@ -5,7 +5,7 @@
    rule 24: no function proved: LLVMFuzzerTestOneInput is fuzz_state's own harness entry (`proof-index
    LLVMFuzzerTestOneInput` covers other units' harnesses only), written in the donor cgif_file_fuzzer's form.
    The sink's image laws at ACfn's sink head (AIL) come from A/AD1u.v tfib_AIL over the goal's TfibSyms B (AD1u builds
-   on a working branch 65390c475ad, RELOC's working branch e9e78e0ce90).
+   on a working branch, RELOC's working branch).
    Port-from: cgif_file_fuzzer lib/A/ACfj.v:230-257 (tfib_lib_x_body: the segments under srealizes), lib/A/ACfi.v:103-141
    (closed under the callee contracts). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

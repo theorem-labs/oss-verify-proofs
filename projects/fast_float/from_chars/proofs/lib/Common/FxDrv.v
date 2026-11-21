@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar answer of a memory read; the model's fetch_failure cases). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -29,7 +30,7 @@ Variable segs : list Segment.
 Proof. LiaFast.lf_pins LiaFast.u0.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m r H; cbn [interp_eff_accesses] in H; try discriminate.
   - injection H as <-. apply mem_grows_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep| |] eqn:Hk; try discriminate.
     injection H as <-. cbn [access_value]. exact (IH _ m rep Hk).
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -57,7 +58,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct (fetch_word segs (ms_pc st)); [exact (decode_exec_accesses_grows _ _ _ Hs)|].
   destruct (fetch_word_ov segs (ms_mem st) (ms_pc st)); [exact (decode_exec_accesses_grows _ _ _ Hs)|].
   destruct (fetch_tail_any segs (ms_mem st) (ms_pc st)); [exact (decode_exec_accesses_grows _ _ _ Hs)|].
-  unfold fetch_failure in Hs. destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+  unfold fetch_failure in Hs. repeat match type of Hs with context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 #[using="Type"] Theorem isteps_grows : forall ms ms', isteps segs ms ms' -> mem_grows (ms_mem ms) (ms_mem ms').
@@ -100,7 +101,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hd w H)|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hd w H)|].
   unfold fetch_failure in H.
-  destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
+  repeat match type of H with context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 #[using="Type"] Lemma fx_rom : forall ms ms', FxStep.isteps segs ms ms' -> ms_rom ms' = ms_rom ms.

@@ -3,8 +3,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2a.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: image B's twin of lib/A/AD2acf.v (a working branch 46f1762ad5a): A's hand
+(* Modified by Theorem Labs, 2026-10: image B's twin of lib/A/AD2acf.v (a working branch): A's hand
    edits to its generator copy, applied to this generator copy with image B's modules and numerals (row A3). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -58,21 +59,64 @@ Hypothesis HFILE : file_arm_tfa B.
 Hypothesis HDIR : dir_arm_tfa B.
 (* field round 3 (Part A): the image fact behind the RELRO bytes' keep (B/YD1vcf.v relro_ok) *)
 Hypothesis RO : relro_ok.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
-Hypothesis Hargv : in_argv inp = [a0; p].
+Variables (sp brk mbase : word) (inp : ProcInput) (rnd : EntryDraw)
+(xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+(* The entry stack is TOP-anchored at 75d69e00: [YP08.z_strs] counts DOWN from
+   [bv_unsigned (ed_top rnd)], not up from [bv_unsigned sp] (YP08.v:200-203 against
+   YP08.v:494-505, where [zsp] and [ztop] are two different abbreviations and
+   [layout_facts]'s fourth and seventh conjuncts separate them, YP08.v:756-761).  So this
+   section carries the entry draw, and with it the launch premises YP08's own section header
+   now takes (YP08.v:477-493).  Premise order and names copied from the ported donor
+   YL0q Section b / YL0p.v:39-45: [Hsp Hargv Hva Hve Hvl Hlau Hvi], with
+   [entry_stack_fits] DROPPED -- [entry_launch_ok_va] implies it
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722) and nothing here consumed it as a
+   fact ([argv1_task_size] below now derives its bound from [YP08.z_argv_fits] instead). *)
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hargv : in_argv inp = [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-Hypothesis Hfit : entry_stack_fits sp [a0; p] (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 #[local] Notation envp := (in_envp inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation efn := (in_execfn inp).
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+[a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
+#[local] Notation ztop := (bv_unsigned (ed_top rnd)).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
+(* The entry-layout lemmas speak of [in_argv inp]; [Hargv] converts to the two-element
+   spelling. The top bound pins the complete section prefix, including its image fields. *)
+Let Hva2 : valid_argv [a0; p].
+Proof. rewrite <- Hargv. exact Hva. Qed.
 Lemma EL0 : bv_unsigned (ew EL 0) = usp. Proof. reflexivity. Qed.
 Lemma EL3 : ew EL 3 = Z_to_bv 64 2. Proof. reflexivity. Qed.
-Lemma EL2 : bv_unsigned (ew EL 2) = z_argv usp [a0; p] envp 1.
-Proof. unshelve eapply (YP08.ew2' sp [a0; p] envp); try assumption. cbn; lia. Qed.
+Lemma EL2 : bv_unsigned (ew EL 2) = z_argv ztop [a0; p] envp efn 1.
+Proof.
+assert (H2 : bv_unsigned (ew (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp) (in_execfn inp) xw xd) 2)
+= z_argv ztop (in_argv inp) envp efn 1)
+by (exact (YP08.ew2' TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd
+  Hsp Hva Hve Hvl Hlau 1 ltac:(lia) xw xd ltac:(rewrite Hargv; cbn; lia))).
+rewrite Hargv in H2. exact H2.
+Qed.
 Lemma usp_lo : sp_window_lo <= usp. Proof. exact (proj1 Hsp). Qed.
+Lemma ztop_le : ztop <= kHighMemEnd.
+Proof.
+assert (H : ztop <= SP_HI) by exact (YP08.top_le TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau).
+unfold SP_HI, kHighMemEnd in *. lia.
+Qed.
+(* Bound argv[1]'s terminating byte with the run's top-anchored layout. *)
+Lemma argv1_task_size : z_argv ztop [a0; p] envp efn 1 + Z.of_nat (length p) < TASK_SIZE.
+Proof.
+assert (HT : TASK_SIZE = 2 ^ 47) by reflexivity.
+assert (Hal : (2 <= length (in_argv inp))%nat) by (rewrite Hargv; cbn; lia).
+assert (Z1 : z_argv ztop (in_argv inp) envp efn 1
++ Z.of_nat (length (nth 1 (in_argv inp) [])) + 1 <= SP_HI - 9)
+by (exact (YP08.z_argv_fits TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd
+  Hsp Hva Hve Hvl Hlau 1 ltac:(lia))).
+rewrite Hargv in Z1. cbn [nth] in Z1. unfold SP_HI in Z1. lia.
+Qed.
 Definition at_open (W : world tfibsegs) (ms : machine_state) (md : Model) : world tfibsegs -> config -> Prop :=
 fun W' c' => W' = W /\ exists ms' mat,
 c' = mkCfg ms' (with_vm_backing (m_vm_lazy md) mat md)
@@ -112,6 +156,12 @@ Lemma cstr_len_le : forall mp fuel (a : word) n,
 mp (woff a n) = Some (Z_to_bv 8 0) -> (cstr_access_len_aux mp a fuel <= S n)%nat.
 Proof.
 intros mp fuel. induction fuel as [|fuel IH]; intros a n Hn; cbn [cstr_access_len_aux]; [lia|].
+(* [State.cstr_access_len_aux] gained [strncpy_from_user]'s clamp at this revision
+   (75d69e00:theories/LinuxProcessSem/State.v:1493): the fuel-successor case now tests
+   [negb (access_okb a 1)] BEFORE it looks at [mp a], and returns 0 there, so the walk
+   stops without counting.  That arm bounds the count by 0, which is below [S n].  The
+   None arm below returns 1 now rather than 0, and [lia] closes it either way. *)
+destruct (negb (access_okb a 1)); [lia|].
 destruct (mp a) as [b|] eqn:Ha; [|lia].
 destruct (bv_eqb b (Z_to_bv 8 0)) eqn:Hb; [lia|].
 destruct n as [|n].
@@ -147,10 +197,17 @@ Lemma wvb_fs : forall l mat (md : Model), m_fs (with_vm_backing l mat md) = m_fs
 Proof. intros l mat md. destruct md; reflexivity. Qed.
 Lemma wvb_fds : forall l mat (md : Model), m_fds (with_vm_backing l mat md) = m_fds md.
 Proof. intros l mat md. destruct md; reflexivity. Qed.
+(* The channel-reader twins of [wvb_fds] / [sbm_fds]: [fdchan] at LPS 727298f3 asks for the
+   model's channel reader beside the descriptor, and neither a backing ledger nor a
+   materialization touches the process state. *)
+Lemma wvb_rdr : forall l mat (md : Model), m_channel_reader (with_vm_backing l mat md) = m_channel_reader md.
+Proof. intros l mat md. destruct md; reflexivity. Qed.
 Lemma sbm_fs : forall md md', same_but_materialized md md' -> m_fs md' = m_fs md.
 Proof. intros md md' Hs. rewrite Hs. apply wvb_fs. Qed.
 Lemma sbm_fds : forall md md', same_but_materialized md md' -> m_fds md' = m_fds md.
 Proof. intros md md' Hs. rewrite Hs. apply wvb_fds. Qed.
+Lemma sbm_rdr : forall md md', same_but_materialized md md' -> m_channel_reader md' = m_channel_reader md.
+Proof. intros md md' Hs. rewrite Hs. apply wvb_rdr. Qed.
 Definition stk_win (rs : smem) : bool :=
 existsb (fun r => match r_base r with Some 0%nat => (r_wlo r <=? -65536) && (0 <=? r_whi r) | _ => false end)%bool rs.
 Lemma wview_off_hull : forall m a, APC.img_hi TFIB <= a < 2 ^ 64 -> wview TSEGS m (Z_to_bv 64 a) <> None -> m (Z_to_bv 64 a) <> None.
@@ -183,36 +240,37 @@ Lemma wbs_open : wr_below_sp (ss_facts ss_open) (smem_main true) = true. Proof. 
 Lemma wbs_m1 : wr_below_sp (ss_facts ss_m1) (ss_mem ss_open) = true. Proof. vm_compute. reflexivity. Qed.
 Lemma open_prefix : forall (W : world tfibsegs) ms md ly T,
 st_ok tfibsegs EL (ss_main true) (restrict (w_H W) ms) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) -> stk_up usp ly W (ms_mem ms) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) -> stk_up usp ly W (ms_mem ms) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly init_state [] W (ms_mem ms) md -> top_ok usp ly ->
 FINV ly (w_H W) (ms_mem ms) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> arodata_ok_cf tfibsegs B (ms_mem ms) ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true -> arodata_ok_cf tfibsegs B (ms_mem ms) ->
 (forall regs mem md',
 regs_ok EL (ss_regs ss_open) regs ->
 mem_ok tfibsegs EL (mrestrict (w_H W) mem) (ss_mem ss_open) ->
 facts_ok EL (ss_facts ss_open) ->
-runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] envp) -> stk_up usp ly W mem ->
+runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) -> stk_up usp ly W mem ->
 AI tfibsegs (w_H W) (w_A W) md' -> ARcf tfibsegs B ly init_state [] W mem md' -> FINV ly (w_H W) mem ->
-m_fs md' = in_fs inp -> m_fds md' = APSG.fds_std ->
+m_fs md' = in_fs inp -> m_fds md' = APSG.fds_std -> m_channel_reader md' = true ->
 bv_unsigned (getr regs 17%bv) = 56 ->
 getr regs 10%bv = AT_FDCWD ->
 Z.ldiff (bv_unsigned (getr regs 12%bv)) open_ignored_flags = 0 ->
 modeled_open_flags (getr regs 12%bv) = true ->
-getr regs 11%bv = Z_to_bv 64 (z_argv usp [a0; p] envp 1) ->
-rdn tfibsegs mem (Z_to_bv 64 (z_argv usp [a0; p] envp 1)) (length (p ++ [NUL])) = Some (p ++ [NUL]) ->
+getr regs 11%bv = Z_to_bv 64 (z_argv ztop [a0; p] envp efn 1) ->
+bv_unsigned (Z_to_bv 64 (z_argv ztop [a0; p] envp efn 1)) + Z.of_nat (length p) < TASK_SIZE ->
+rdn tfibsegs mem (Z_to_bv 64 (z_argv ztop [a0; p] envp efn 1)) (length (p ++ [NUL])) = Some (p ++ [NUL]) ->
 ranges_avoid (w_H W) (open_copyins (pend_at regs (Z_to_bv 64 (ss_pc ss_open)) mem (seg_rom tfibsegs))) ->
 arodata_ok_cf tfibsegs B mem ->
 srealizes tfibsegs (mkCfg (pend_at regs (Z_to_bv 64 (ss_pc ss_open)) mem (seg_rom tfibsegs)) md') T) ->
 srealizes tfibsegs (mkCfg ms md) T.
 Proof.
-intros W ms md ly T HS0 HR0 HU0 HAI0 HAR0 HTOP HFI0 Hfs Hfds HAD0 K. pose proof (top_ok_ceil _ _ HTOP) as HCT.
+intros W ms md ly T HS0 HR0 HU0 HAI0 HAR0 HTOP HFI0 Hfs Hfds Hcr HAD0 K. pose proof (top_ok_ceil _ _ HTOP) as HCT.
 apply (SRr_srealizes tfibsegs W (mkCfg ms md) (at_open W ms md) T (open_run W ms md HS0) HAI0).
 intros W' c' _ HAI' (-> & ms' & mat & -> & HS' & HF & HFr). cbn [cfg_model] in HAI'.
 destruct (st_ok_ecall_shape_r tfibsegs (w_H W) EL ss_open ms' HS' eq_refl) as (regs & mem & Ems & Hregs & Hmem & HG).
 rewrite Ems in HF, HFr |- *. cbn [ms_mem pend_at] in HF, HFr.
-assert (HR : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] envp)).
+assert (HR : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn)).
 { eapply (runs_at_frame EL (ss_facts ss_open) (smem_main true)); [exact HG | exact wbs_open | exact HFr | rewrite EL0; lia | exact HR0]. }
-assert (H11 : getr regs 11%bv = Z_to_bv 64 (z_argv usp [a0; p] envp 1)).
+assert (H11 : getr regs 11%bv = Z_to_bv 64 (z_argv ztop [a0; p] envp efn 1)).
 { rewrite (Hregs (11%bv:reg)); eval_sr_get; cbn [sv_denot]. rewrite Z.add_0_r, EL2. reflexivity. }
 pose proof (runs_at_nth _ _ _ 2 _ _ HR eq_refl) as HBr. cbn [nth] in HBr.
 pose proof (runs_at_bounds _ _ _ 2 _ _ HR eq_refl) as HBb. cbn [nth fst snd] in HBb. rewrite length_app in HBb. cbn [length] in HBb.
@@ -226,31 +284,39 @@ ltac:(rewrite EL0; lia) (proj1 (proj2 Hsp)) HTOP HU0) | exact HAI' | ..].
 - exact (finv_run B ly init_state _ W (ms_mem ms) md (w_H W) EL (smem_main true) _ _ usp HAR0 HFr (smem_main_win_ok true) EL0 usp_lo (proj1 (proj2 Hsp)) HTOP HFI0).
 - rewrite wvb_fs. exact Hfs.
 - rewrite wvb_fds. exact Hfds.
+- rewrite wvb_rdr. exact Hcr.
 - rewrite (Hregs (17%bv:reg)); eval_sr_get; cbn [sv_denot]. reflexivity.
 - rewrite (Hregs (10%bv:reg)); eval_sr_get; cbn [sv_denot]. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs (12%bv:reg)); eval_sr_get; cbn [sv_denot]. vm_compute. reflexivity.
 - rewrite (Hregs (12%bv:reg)); eval_sr_get; cbn [sv_denot]. vm_compute. reflexivity.
 - exact H11.
+- (* 75d69e00's TASK_SIZE premise, in the [bv_unsigned] form the four call sites need.
+     The lower bound is [HBb]'s, the upper [argv1_task_size]'s. *)
+pose proof argv1_task_size as Hub. pose proof (proj1 HBb) as Hlb.
+pose proof usp_lo as Hul. unfold sp_window_lo in Hul.
+assert (HT : TASK_SIZE = 2 ^ 47) by reflexivity.
+rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus.
+change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia. lia.
 - exact (YP08.bytes_at_rdn tfibsegs mem _ _ (bytes_at_unrestrict _ _ _ _ HBr)).
-- apply (open_copyins_avoid (w_H W) regs _ mem (z_argv usp [a0; p] envp 1) H11); [pose proof usp_lo; unfold sp_window_lo in *; lia | lia | exact HBr].
+- apply (open_copyins_avoid (w_H W) regs _ mem (z_argv ztop [a0; p] envp efn 1) H11); [pose proof usp_lo; pose proof (proj1 HBb); unfold sp_window_lo in *; lia | lia | exact HBr].
 - exact (aro_run B W EL (smem_main true) (ms_mem ms) mem RO HFr (smem_main_win_ok true) ltac:(rewrite EL0; exact usp_lo) HAD0).
 Qed.
 Lemma errno_branch : forall (W : world tfibsegs) regs mem md' md'' ly e,
 regs_ok EL (ss_regs ss_open) regs ->
 mem_ok tfibsegs EL (mrestrict (w_H W) mem) (ss_mem ss_open) ->
 facts_ok EL (ss_facts ss_open) ->
-runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] envp) ->
-ARcf tfibsegs B ly init_state [] W mem md' -> top_ok usp ly -> m_fs md' = in_fs inp -> m_fds md' = APSG.fds_std ->
+runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) ->
+ARcf tfibsegs B ly init_state [] W mem md' -> top_ok usp ly -> m_fs md' = in_fs inp -> m_fds md' = APSG.fds_std -> m_channel_reader md' = true ->
 AI tfibsegs (w_H W) (w_A W) md'' -> same_but_materialized md' md'' ->
 0 < e < 4096 ->
 srealizes tfibsegs
 (mkCfg (mkst (regupd regs 10%bv (errno_ret e)) (v_addi (Z_to_bv 64 (ss_pc ss_open)) 4) mem (seg_rom tfibsegs)) md'')
 (diag (msg_cannot_open p) (in_fs inp)).
 Proof.
-intros W regs mem md' md'' ly e Hregs Hmem HG HR HAR HTOP Hfs Hfds HAI Hs He.
-apply (HCO sp inp xw xd W regs mem md'' ly a0 p e Hargv Hsp Hva Hve Hfit Hregs Hmem HG HR HAI);
+intros W regs mem md' md'' ly e Hregs Hmem HG HR HAR HTOP Hfs Hfds Hcr HAI Hs He.
+apply (HCO sp brk mbase inp xw xd W regs mem md'' ly a0 p rnd e Hsp Hargv Hva Hve Hvl Hlau Hvi Hregs Hmem HG HR HAI);
 [exact (AR_same_but_materialized B ly init_state _ W mem md' md'' HAR Hs) | exact HTOP | rewrite (sbm_fs _ _ Hs); exact Hfs
-| rewrite (sbm_fds _ _ Hs); exact Hfds | exact He].
+| rewrite (sbm_fds _ _ Hs); exact Hfds | rewrite (sbm_rdr _ _ Hs); exact Hcr | exact He].
 Qed.
 Definition ss_open3 : sstate := resume ss_open (SLit 3) (ss_mem ss_open) (ss_facts ss_open).
 Definition at_m1 (W : world tfibsegs) (mem : word -> option byte) (md : Model) : world tfibsegs -> config -> Prop :=
@@ -273,21 +339,21 @@ Lemma success_branch : forall (W : world tfibsegs) regs mem md' md'' ly (e3 : Fd
 regs_ok EL (ss_regs ss_open) regs ->
 mem_ok tfibsegs EL (mrestrict (w_H W) mem) (ss_mem ss_open) ->
 facts_ok EL (ss_facts ss_open) ->
-runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] envp) -> stk_up usp ly W mem ->
-ARcf tfibsegs B ly init_state [] W mem md' -> FINV ly (w_H W) mem -> top_ok usp ly -> m_fs md' = in_fs inp -> m_fds md' = APSG.fds_std ->
+runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) -> stk_up usp ly W mem ->
+ARcf tfibsegs B ly init_state [] W mem md' -> FINV ly (w_H W) mem -> top_ok usp ly -> m_fs md' = in_fs inp -> m_fds md' = APSG.fds_std -> m_channel_reader md' = true ->
 AI tfibsegs (w_H W) (w_A W) md'' -> same_but_materialized (with_fds (APSG.fds3 e3) md') md'' ->
 arodata_ok_cf tfibsegs B mem ->
 (forall ms1 md1,
 st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms1) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms1)) (runs_main_tfa true sp [a0; p] envp) -> stk_up usp ly W (ms_mem ms1) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms1)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) -> stk_up usp ly W (ms_mem ms1) ->
 AI tfibsegs (w_H W) (w_A W) md1 -> ARcf tfibsegs B ly init_state [] W (ms_mem ms1) md1 ->
-top_ok usp ly -> FINV ly (w_H W) (ms_mem ms1) -> m_fs md1 = in_fs inp -> m_fds md1 = APSG.fds3 e3 ->
+top_ok usp ly -> FINV ly (w_H W) (ms_mem ms1) -> m_fs md1 = in_fs inp -> m_fds md1 = APSG.fds3 e3 -> m_channel_reader md1 = true ->
 arodata_ok_cf tfibsegs B (ms_mem ms1) ->
 srealizes tfibsegs (mkCfg ms1 md1) T) ->
 srealizes tfibsegs
 (mkCfg (mkst (regupd regs 10%bv (Z_to_bv 64 3)) (v_addi (Z_to_bv 64 (ss_pc ss_open)) 4) mem (seg_rom tfibsegs)) md'') T.
 Proof.
-intros W regs mem md' md'' ly e3 T Hregs Hmem HG HR HU HAR HFI HTOP Hfs Hfds HAI Hs HAD K. pose proof (top_ok_ceil _ _ HTOP) as HCT.
+intros W regs mem md' md'' ly e3 T Hregs Hmem HG HR HU HAR HFI HTOP Hfs Hfds Hcr HAI Hs HAD K. pose proof (top_ok_ceil _ _ HTOP) as HCT.
 pose proof (st_ok_resume_sv tfibsegs EL ss_open regs (mrestrict (w_H W) mem) (SLit 3) (Z_to_bv 64 3) Hregs Hmem HG eq_refl) as HS.
 rewrite <- restrict_mkst_fx in HS. change (resume _ _ _ _) with ss_open3 in HS.
 apply (SRr_srealizes tfibsegs W _ (at_m1 W mem md'') T (m1_run W _ mem md'' HS) HAI).
@@ -308,12 +374,13 @@ exact (stk_present (w_H W) (ms_mem ms1) (ss_mem ss_m1) X ss_m1_stk).
 - exact (finv_run B ly init_state _ W mem md'' (w_H W) EL (ss_mem ss_open) _ _ usp HAR'' HFr ss_open_win_ok EL0 usp_lo (proj1 (proj2 Hsp)) HTOP HFI).
 - rewrite wvb_fs, (sbm_fs _ _ Hs), with_fds_fs. exact Hfs.
 - rewrite wvb_fds, (sbm_fds _ _ Hs), with_fds_fds. reflexivity.
+- rewrite wvb_rdr, (sbm_rdr _ _ Hs). exact Hcr.
 - exact (aro_run B W EL (ss_mem ss_open) mem (ms_mem ms1) RO HFr ss_open_win_ok ltac:(rewrite EL0; exact usp_lo) HAD).
 Qed.
 Section f.
 Variables (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout).
 Hypothesis HS0 : st_ok tfibsegs EL (ss_main true) (restrict (w_H W) ms).
-Hypothesis HR0 : runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp).
+Hypothesis HR0 : runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn).
 Hypothesis HU0 : stk_up usp ly W (ms_mem ms).
 Hypothesis HAI0 : AI tfibsegs (w_H W) (w_A W) md.
 Hypothesis HAR0 : ARcf tfibsegs B ly init_state [] W (ms_mem ms) md.
@@ -321,11 +388,21 @@ Hypothesis HTOP0 : top_ok usp ly.
 Hypothesis HFI0 : FINV ly (w_H W) (ms_mem ms).
 Hypothesis Hfs0 : m_fs md = in_fs inp.
 Hypothesis Hfds0 : m_fds md = APSG.fds_std.
+(* Beside [Hfds0]: the channel reader [fdchan] asks for at LPS 727298f3, from the hand-off
+   ([cs_ok]'s [co_rdr]); never assumed above a top theorem. *)
+Hypothesis Hcr0 : m_channel_reader md = true.
 Hypothesis HAD0 : arodata_ok_cf tfibsegs B (ms_mem ms).
-Let Hnul1 : ~ In NUL p := argv_no_nul [a0; p] Hva 1 ltac:(cbn; lia).
+(* Convert the local input-list spelling after selecting the complete layout prefix. *)
+Let Hnul1 : ~ In NUL p.
+Proof.
+assert (H : ~ In NUL (nth 1 (in_argv inp) []))
+by (exact (YP08.argv_no_nul TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd
+  Hsp Hva Hve Hvl Hlau 1 ltac:(rewrite Hargv; cbn; lia))).
+rewrite Hargv in H. cbn [nth] in H. exact H.
+Qed.
 Let plain_name_of_argv : p <> dot_path -> openat_plain_name p = true.
 Proof.
-intros Hnd. pose proof Hva as (_ & _ & _ & _ & HF). cbn [tl] in HF. apply Forall_inv in HF. destruct HF as [Hs Hdd].
+intros Hnd. pose proof Hva2 as (_ & _ & _ & _ & HF). cbn [tl] in HF. apply Forall_inv in HF. destruct HF as [Hs Hdd].
 unfold openat_plain_name, path_is_dirref. rewrite Hs, Hdd.
 destruct (path_eqb p dot_path) eqn:E; [apply path_eqb_eq in E; contradiction | reflexivity].
 Qed.
@@ -334,82 +411,87 @@ valid_fs (in_fs inp) -> (length p < 4096)%nat -> p <> [] -> p <> dot_path -> fs_
 srealizes tfibsegs (mkCfg ms md) (t_alt2 (diag (msg_cannot_open p) (in_fs inp)) (CLOSEDX_loaded data (in_fs inp))).
 Proof.
 intros data Hvfs Hlen Hne Hnd Hlk.
-apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 HAD0).
-intros regs mem md' Hregs Hmem HG HR HU HAI HAR HFI Hfs Hfds H17 H10 H12 H12' H11 Hrd Hav HAD.
+apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 Hcr0 HAD0).
+intros regs mem md' Hregs Hmem HG HR HU HAI HAR HFI Hfs Hfds Hcr H17 H10 H12 H12' H11 Hts Hrd Hav HAD.
 eapply (srz_openat_file_lazy tfibsegs (w_H W) (w_A W) regs _ mem (seg_rom tfibsegs) md' p data _ _ HAI H17 H10 H12).
-- rewrite pend_read_byte_mrb, H11. apply (read_cstr_of_rdn tfibsegs mem _ p); [lia | exact Hnul1 |].
+- rewrite pend_read_byte_mrb, H11. apply (read_cstr_of_rdn tfibsegs mem _ p); [lia | exact Hnul1 | exact Hts |].
 replace (length p + 1)%nat with (length (p ++ [NUL])) by (rewrite length_app; cbn; lia). exact Hrd.
 - exact Hne.
 - exact (plain_name_of_argv Hnd).
 - rewrite Hfs. exact Hlk.
 - rewrite Hfds, alloc_fd_fds_std. exact fd_lookup_fds_std3.
 - exact Hav.
-- intros e md'' He HAI'' Hs. exact (errno_branch W regs mem md' md'' ly e Hregs Hmem HG HR HAR HTOP0 Hfs Hfds HAI'' Hs (openat_errnos_small e He)).
+- intros e md'' He HAI'' Hs. exact (errno_branch W regs mem md' md'' ly e Hregs Hmem HG HR HAR HTOP0 Hfs Hfds Hcr HAI'' Hs (openat_errnos_small e He)).
 - intros md'' HAI'' Hs. rewrite Hfds, alloc_fd_fds_std, fd_insert_std3 in Hs. rewrite Hfds, alloc_fd_fds_std.
-apply (success_branch W regs mem md' md'' ly (FdFile p (Z_to_bv 64 0)) _ Hregs Hmem HG HR HU HAR HFI HTOP0 Hfs Hfds HAI'' Hs HAD).
-intros ms1 md1 HS1 HR1 HU1 HAI1 HAR1 HTOP1 HFI1 Hfs1 Hfds1 HAD1.
-exact (HFILE sp inp xw xd W ms1 md1 ly a0 p data Hargv Hsp Hva Hve Hvfs Hlen Hne Hnd Hlk HS1 HR1 HU1 HAI1 HAR1 HTOP1 HFI1 Hfs1 Hfds1 HAD1).
+apply (success_branch W regs mem md' md'' ly (FdFile p (Z_to_bv 64 0)) _ Hregs Hmem HG HR HU HAR HFI HTOP0 Hfs Hfds Hcr HAI'' Hs HAD).
+intros ms1 md1 HS1 HR1 HU1 HAI1 HAR1 HTOP1 HFI1 Hfs1 Hfds1 Hcr1 HAD1.
+(* [eapply] + [eassumption]: [file_arm_tfa] gained the entry draw and the launch premises
+   (YD1v.v:137-152), so no call hard-codes its order (rule 25j). *)
+eapply HFILE; eassumption.
 Qed.
 Theorem tfib_open_dir :
 p = dot_path ->
 srealizes tfibsegs (mkCfg ms md) (t_alt2 (diag (msg_cannot_open p) (in_fs inp)) (CLOSEDX_dir p (in_fs inp))).
 Proof.
 intros Hdot.
-apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 HAD0).
-intros regs mem md' Hregs Hmem HG HR HU HAI HAR HFI Hfs Hfds H17 H10 H12 H12' H11 Hrd Hav HAD.
+apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 Hcr0 HAD0).
+intros regs mem md' Hregs Hmem HG HR HU HAI HAR HFI Hfs Hfds Hcr H17 H10 H12 H12' H11 Hts Hrd Hav HAD.
 eapply (srz_openat_dir_lazy tfibsegs (w_H W) (w_A W) regs _ mem (seg_rom tfibsegs) md' _ _ HAI H17 H10 H12).
-- rewrite pend_read_byte_mrb, H11, <- Hdot. apply (read_cstr_of_rdn tfibsegs mem _ p); [rewrite Hdot; cbn; lia | exact Hnul1 |].
+- rewrite pend_read_byte_mrb, H11, <- Hdot. apply (read_cstr_of_rdn tfibsegs mem _ p); [rewrite Hdot; cbn; lia | exact Hnul1 | exact Hts |].
 replace (length p + 1)%nat with (length (p ++ [NUL])) by (rewrite length_app; cbn; lia). exact Hrd.
 - rewrite Hfds, alloc_fd_fds_std. exact fd_lookup_fds_std3.
 - exact Hav.
-- intros e md'' He HAI'' Hs. exact (errno_branch W regs mem md' md'' ly e Hregs Hmem HG HR HAR HTOP0 Hfs Hfds HAI'' Hs (openat_errnos_small e He)).
+- intros e md'' He HAI'' Hs. exact (errno_branch W regs mem md' md'' ly e Hregs Hmem HG HR HAR HTOP0 Hfs Hfds Hcr HAI'' Hs (openat_errnos_small e He)).
 - intros md'' HAI'' Hs. rewrite Hfds, alloc_fd_fds_std, fd_insert_std3 in Hs. rewrite Hfds, alloc_fd_fds_std.
-apply (success_branch W regs mem md' md'' ly FdDir _ Hregs Hmem HG HR HU HAR HFI HTOP0 Hfs Hfds HAI'' Hs HAD).
-intros ms1 md1 HS1 HR1 _ HAI1 HAR1 HTOP1 HFI1 Hfs1 Hfds1 HAD1.
-exact (HDIR sp inp xw xd W ms1 md1 ly a0 p Hargv Hsp Hva Hve Hfit Hdot HS1 HR1 HAI1 HAR1 HTOP1 HFI1 Hfs1 Hfds1 HAD1).
+apply (success_branch W regs mem md' md'' ly FdDir _ Hregs Hmem HG HR HU HAR HFI HTOP0 Hfs Hfds Hcr HAI'' Hs HAD).
+intros ms1 md1 HS1 HR1 _ HAI1 HAR1 HTOP1 HFI1 Hfs1 Hfds1 Hcr1 HAD1.
+eapply HDIR; eassumption.
 Qed.
 Theorem tfib_open_empty : p = [] -> srealizes tfibsegs (mkCfg ms md) (diag (msg_cannot_open p) (in_fs inp)).
 Proof.
 intros Hnil.
-apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 HAD0).
-intros regs mem md' Hregs Hmem HG HR _ HAI HAR HFI Hfs Hfds H17 H10 H12 H12' H11 Hrd Hav _.
+apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 Hcr0 HAD0).
+intros regs mem md' Hregs Hmem HG HR _ HAI HAR HFI Hfs Hfds Hcr H17 H10 H12 H12' H11 Hts Hrd Hav _.
 eapply (srz_openat_empty_lazy tfibsegs (w_H W) (w_A W) regs _ mem (seg_rom tfibsegs) md' _ HAI H17 H12').
-- rewrite pend_read_byte_mrb, H11. apply (read_cstr_of_rdn tfibsegs mem _ []); [cbn; lia | intros [] |].
-rewrite Hnil in Hrd. cbn [length app Nat.add] in Hrd |- *. exact Hrd.
+- rewrite pend_read_byte_mrb, H11. apply (read_cstr_of_rdn tfibsegs mem _ []); [cbn; lia | intros [] | cbn [length]; lia |].
+rewrite Hnil in Hrd |- *. cbn [length app Nat.add] in Hrd |- *. exact Hrd.
 - exact Hav.
-- intros md'' HAI'' Hs. apply (errno_branch W regs mem md' md'' ly ENOENT Hregs Hmem HG HR HAR HTOP0 Hfs Hfds HAI'' Hs). unfold ENOENT. lia.
+- intros md'' HAI'' Hs. apply (errno_branch W regs mem md' md'' ly ENOENT Hregs Hmem HG HR HAR HTOP0 Hfs Hfds Hcr HAI'' Hs). unfold ENOENT. lia.
 Qed.
 Theorem tfib_open_absent :
 (length p < 4096)%nat -> p <> [] -> p <> dot_path -> fs_lookup (in_fs inp) p = None ->
 srealizes tfibsegs (mkCfg ms md) (diag (msg_cannot_open p) (in_fs inp)).
 Proof.
 intros Hlen Hne Hnd Hlk.
-apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 HAD0).
-intros regs mem md' Hregs Hmem HG HR _ HAI HAR HFI Hfs Hfds H17 H10 H12 H12' H11 Hrd Hav _.
+apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 Hcr0 HAD0).
+intros regs mem md' Hregs Hmem HG HR _ HAI HAR HFI Hfs Hfds Hcr H17 H10 H12 H12' H11 Hts Hrd Hav _.
 eapply (srz_openat_absent_lazy tfibsegs (w_H W) (w_A W) regs _ mem (seg_rom tfibsegs) md' p _ HAI H17 H10 H12).
-- rewrite pend_read_byte_mrb, H11. apply (read_cstr_of_rdn tfibsegs mem _ p); [lia | exact Hnul1 |].
+- rewrite pend_read_byte_mrb, H11. apply (read_cstr_of_rdn tfibsegs mem _ p); [lia | exact Hnul1 | exact Hts |].
 replace (length p + 1)%nat with (length (p ++ [NUL])) by (rewrite length_app; cbn; lia). exact Hrd.
 - exact Hne.
 - exact (plain_name_of_argv Hnd).
 - rewrite Hfs. exact Hlk.
 - exact Hav.
-- intros md'' HAI'' Hs. apply (errno_branch W regs mem md' md'' ly ENOENT Hregs Hmem HG HR HAR HTOP0 Hfs Hfds HAI'' Hs). unfold ENOENT. lia.
+- intros md'' HAI'' Hs. apply (errno_branch W regs mem md' md'' ly ENOENT Hregs Hmem HG HR HAR HTOP0 Hfs Hfds Hcr HAI'' Hs). unfold ENOENT. lia.
 Qed.
 Theorem tfib_open_toolong : (4096 <= length p)%nat -> srealizes tfibsegs (mkCfg ms md) (diag (msg_cannot_open p) (in_fs inp)).
 Proof.
 intros Hlen.
-apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 HAD0).
-intros regs mem md' Hregs Hmem HG HR _ HAI HAR HFI Hfs Hfds H17 H10 H12 H12' H11 Hrd Hav _.
+apply (open_prefix W ms md ly _ HS0 HR0 HU0 HAI0 HAR0 HTOP0 HFI0 Hfs0 Hfds0 Hcr0 HAD0).
+intros regs mem md' Hregs Hmem HG HR _ HAI HAR HFI Hfs Hfds Hcr H17 H10 H12 H12' H11 Hts Hrd Hav _.
 eapply (srz_openat_toolong_lazy tfibsegs (w_H W) (w_A W) regs _ mem (seg_rom tfibsegs) md' _ HAI H17 H12').
 - rewrite pend_read_byte_mrb, H11.
 assert (Hlenf : length (firstn 4096 p) = 4096%nat) by (rewrite length_firstn; lia).
 apply (read_cstr_toolong_of_rdn tfibsegs mem _ (firstn 4096 p) Hlenf).
 + intros Hin. apply Hnul1. rewrite <- (firstn_skipn 4096 p). apply in_app_iff. left. exact Hin.
++ (* 75d69e00's TASK_SIZE premise on [read_cstr_toolong_of_rdn] (YK0p.v:340); this branch
+     has [4096 <= length p], so [Hts] gives it. *)
+lia.
 + pose proof (rdn_firstn tfibsegs mem (length (p ++ [NUL])) _ (p ++ [NUL]) 4096 Hrd ltac:(rewrite length_app; cbn; lia)) as Hf.
 rewrite firstn_app, (proj2 (Nat.sub_0_le _ _)) in Hf by lia. cbn [firstn] in Hf. rewrite app_nil_r in Hf.
 exact Hf.
 - exact Hav.
-- intros md'' HAI'' Hs. apply (errno_branch W regs mem md' md'' ly ENAMETOOLONG Hregs Hmem HG HR HAR HTOP0 Hfs Hfds HAI'' Hs). unfold ENAMETOOLONG. lia.
+- intros md'' HAI'' Hs. apply (errno_branch W regs mem md' md'' ly ENAMETOOLONG Hregs Hmem HG HR HAR HTOP0 Hfs Hfds Hcr HAI'' Hs). unfold ENAMETOOLONG. lia.
 Qed.
 Theorem tfib_open_all : valid_fs (in_fs inp) -> srealizes tfibsegs (mkCfg ms md) (CLOSEDX_args [a0; p] (in_fs inp)).
 Proof.
@@ -430,21 +512,29 @@ End f.
 End d.
 Theorem tfib_arm_argv2 (B : asyms) (HB : TfibSyms B) (ARL : AR_laws_cf tfibsegs B)
 (HCO : cannot_open_tfa B) (HFILE : file_arm_tfa B) (HDIR : dir_arm_tfa B) (RO : relro_ok) :
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+forall (sp brk mbase : word) (inp : ProcInput) (rnd : EntryDraw)
+(xw : nat -> word) (xd : nat -> list byte)
 (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (a0 p : list byte),
-in_argv inp = [a0; p] ->
-valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_fs (in_fs inp) ->
-st_ok tfibsegs (YP08.E0 sp (in_argv inp) (in_envp inp) xw xd) (ss_main true) (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (in_argv inp) (in_envp inp)) ->
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
+valid_fs (in_fs inp) ->
+st_ok tfibsegs (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp) (in_execfn inp) xw xd) (ss_main true) (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms))
+(runs_main_tfa true sp (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp)) ->
 stk_up (bv_unsigned sp) ly W (ms_mem ms) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly init_state [] W (ms_mem ms) md -> top_ok (bv_unsigned sp) ly ->
 FINV ly (w_H W) (ms_mem ms) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true ->
 (* field round 3 (Part A): the hand-off memory's RELRO bytes *)
 arodata_ok_cf tfibsegs B (ms_mem ms) ->
 srealizes tfibsegs (mkCfg ms md) (CLOSEDX_args [a0; p] (in_fs inp)).
 Proof.
-intros sp inp xw xd W ms md ly a0 p Hargv Hsp Hva Hve Hfit Hvfs HS HR HU HAI HAR HTOP HFI Hfs Hfds HAD. rewrite Hargv in Hva, Hfit, HS, HR.
-exact (tfib_open_all B HB ARL HCO HFILE HDIR RO sp inp xw xd a0 p Hargv Hsp Hva Hve Hfit W ms md ly HS HR HU HAI HAR HTOP HFI Hfs Hfds HAD Hvfs).
+intros sp brk mbase inp rnd xw xd W ms md ly a0 p Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HS HR HU HAI HAR HTOP HFI Hfs Hfds Hcr HAD.
+rewrite Hargv in HS, HR.
+(* [eapply] + [eassumption]: [tfib_open_all] is discharged over Section d's variable list,
+   so no call here hard-codes its order (rule 25j). *)
+eapply (tfib_open_all B HB ARL HCO HFILE HDIR RO); eassumption.
 Qed.
 End c.

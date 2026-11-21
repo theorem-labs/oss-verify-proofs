@@ -1,21 +1,22 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane, CloseB round 3): the AFMEMOPEN argument of
    lib/B/Prog/PcapFuzzFopen.v pb_libreac_fuzz_fopenX (its Section hypothesis at :167-168) at the asan-ubsan instance
    of lib/B/PcapCloseB.v. rule 24: no function proved; this file is assembly of proved lemmas.
 
-   The statement is lib/A/Prog/PcapEntryFinal.v:401-403's AFMEMOPEN at this image: SK := asan_ubsan_sink_head,
+   The statement is lib/A/Prog/PcapEntryFinal.v:402-404's AFMEMOPEN at this image: SK := asan_ubsan_sink_head,
    SEGS := pa_segs at PI_pcap, B := PcapB, K := pcap_KS (lib/B/Stdio/PSourceK.v), MT := ameter_triv,
    CTX := CTX_pcap_source_open, pc := pa_sigma PS___interceptor_trampoline_fmemopen (= 0x41614), FM_RA := 0x8e7d8,
    [mc_lo, mc_hi) := [0x10350, 0x10370).
 
    The proof:
-   - lib/B/Stdio/PFmemopenI.v:328 pcap_afmemopen_spec (the fmemopen interceptor at FM_ENTRY = 0x41614), with
+   - lib/B/Stdio/PFmemopenI.v:329 pcap_afmemopen_spec (the fmemopen interceptor at FM_ENTRY = 0x41614), with
      LAWS := YG0q.AR_laws_ok, TB := YD2l.TfibB_syms, ASIL := YD1u.tfib_ASIL (as lib/B/PcapCloseB.v:294-295),
-     AMR := lib/B/PcapBFacts.v:135 PcapB_AMALLOC4, and RFM := below;
-   - RFM: lib/B/Stdio/PFmemopenMW.v:1551 pcapu_rfmemopen_contract (musl fmemopen at 0x8e73c, ra 0x8e7d8), with
-     ASIL, TL := TfibB_syms and its strchr hypothesis SCHR (PFmemopenMW.v:468) := lib/Reusable/YE2j.v:265
+     AMR := lib/B/PcapBFacts.v:136 PcapB_AMALLOC4, and RFM := below;
+   - RFM: lib/B/Stdio/PFmemopenMW.v:1552 pcapu_rfmemopen_contract (musl fmemopen at 0x8e73c, ra 0x8e7d8), with
+     ASIL, TL := TfibB_syms and its strchr hypothesis SCHR (PFmemopenMW.v:468) := lib/Reusable/YE2j.v:266
      tfib_strchr_lit (the asan-ubsan strchr interceptor contract at 0x415b8; SCU_ENTRY / SCU_WIN / INSTU /
      stu_cells / rwau_img / KEPTSU / strchru_post of PFmemopenMW.v are YE2j.v's SC_ENTRY / SC_WIN / INST /
      st_cells / rwa_img / KEPTS / strchr_post by unfolding).
@@ -23,9 +24,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    FM_RA = 0x8e7d8 is the return of musl fmemopen's `jal` to the malloc trampoline at fmemopen+0x98 (0x8e7d4), the
    buf != NULL call. The buf == NULL call (fmemopen+0xa8 = 0x8e7e4, return 0x8e7e8) is not assumed away: it is
    refuted at its branches inside the walk. afmemopen_spec carries In (b, n) (ablocks B ly S)
-   (lib/A/Stdio/PFmemopenISpec.v:92; pb_libreac_fuzz_fopenX supplies it at PcapFuzzFopen.v:477 from its premise
+   (lib/A/Stdio/PFmemopenISpec.v:93; pb_libreac_fuzz_fopenX supplies it at PcapFuzzFopen.v:477 from its premise
    lib/A/Prog/PcapFuzzFopenDefs.v:147), pcap_afmemopen_spec passes it to rfmemopen_pre (PFmemopenI.v:390,
-   lib/A/Stdio/PFmemopenM.v:220), and pcapu_rfmemopen_contract turns it into 4096 <= b (AR's block law, al_blocks,
+   lib/A/Stdio/PFmemopenM.v:221), and pcapu_rfmemopen_contract turns it into 4096 <= b (AR's block law, al_blocks,
    PFmemopenMW.v:1563) and gives s1 = b in [4096, 2^47] to phase C (fm_C, PFmemopenMW.v:890, called at :1610-1612).
    Phase C's symbolic run r_C (PFmemopenMW.v:246-249, its fact on register 9) decides `bnez s1` at 0x8e788 taken and
    `beqz s1` at 0x8e7cc not taken, so the run reaches the malloc trampoline with ra = FM_MALLOC_RA_U = 0x8e7d8
@@ -101,7 +102,7 @@ exact (@BFMI.pcap_afmemopen_spec fx rc RD2l.PcapB LAWS_B RD2l.TfibB_syms RPSH.as
   RCbp.ameter_triv RCej.CTX_pcap_source_open (symaddr (Symbols.AsanUbsan.s_fmemopen + 0x9c)%Z) ASIL_B AMR_B RFM_B).
 Qed.
 
-(* The lemma fits pb_libreac_fuzz_fopenX's AFMEMOPEN slot (the form of lib/A/Prog/PcapEntryFinal.v:640-641) at the
+(* The lemma fits pb_libreac_fuzz_fopenX's AFMEMOPEN slot (the form of lib/A/Prog/PcapEntryFinal.v:641-642) at the
    instance: SK, PI_pcap, PcapB, pcap_KS, FM_RA 0x8e7d8, CTX_pcap_source_open, ameter_triv, ro_img, [0x10350, 0x10370),
    LAWS and MLAWS proved; ROIMG_LOW, MCONSTS, FI and STRCMP are the other lanes' arguments, bound here. *)
 Check (fun (rc : RM05.RunCeil) (fx : RK11.FPState) ROIMG_LOW MCONSTS FI STRCMP =>

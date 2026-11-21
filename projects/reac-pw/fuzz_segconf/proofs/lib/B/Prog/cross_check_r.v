@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 356 of its 380 lines of code are new or changed and 494 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The two refuse call sites of cross_check on IMAGE B (reac-pw/fuzz_segconf, fuzz_segconf.asan-ubsan, pin
    c3796c0b38f3), as closed lemmas: at each site the loop invariant of cross_check_d.v supplies every premise of
    refuse_contract (rule 1j-bis), and the facts of a cut survive the call. ADAPTED from the image-A G3 walk owner's image-A
-   lib/A/Prog/cross_check_r.v (commit 130284ff40f1): the lemmas are the same, the call pcs,
+   lib/A/Prog/cross_check_r.v: the lemmas are the same, the call pcs,
    the argument registers and the order of the two arms are image B's.
 
      refuse_site_ok_89900   jal 0x892f8 at 0x89900, return 0x89904: refuse(c, 0, F_xbox, s->name)

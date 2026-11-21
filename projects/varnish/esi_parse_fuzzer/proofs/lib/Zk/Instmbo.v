@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reservation ledger is the image's reservations followed by the vdso/vvar pair, mremap's TASK_SIZE gate, and mremap's next maps take the source length and cut the source range out of vm_maps (maps_subtract). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Classical_Prop.
@@ -110,7 +111,7 @@ Lemma p0_mremap_pre : forall s LB m md b st off g bm i r ar q res,
   rbf st m (blk_slot b) off (blk_size b) g bm i r ar q res -> m_sizeclass (get_meta_rec st g) = 63 ->
   let B := r_base r in let OLDL := m_maplen (get_meta_rec st g) * 4096 in
   minv md /\ m_halted md = None /\ m_vm_lazy md = [] /\ m_vm_materialized md = []
-  /\ map wwZ (vm_reserved (m_vmmaps md)) = p0_reserved
+  /\ (exists rx, map wwZ (vm_reserved (m_vmmaps md)) = p0_reserved ++ rx /\ resv_x rx)   (* 08b1429: then the vdso pair *)
   /\ In (went B OLDL) (vm_maps (m_vmmaps md))
   /\ ceil_ok md   (* [comment removed for export] *)
   /\ (forall nd, 0 < nd <= alloc_ceiling -> nd mod 4096 = 0 -> nsafe (NMremap B OLDL nd MREMAP_MAYMOVE) md).
@@ -130,7 +131,7 @@ Proof.
   rewrite mmap_len_round_up, <- OT in G4, G5, G6.
   pose proof alloc_ceiling_val as ACV. 
   split; [exact (kl_minv _ _ _ HK)|]. split; [exact Hh|]. split; [exact Hl|]. split; [exact (kl_mat _ _ _ HK)|].
-  split. { rewrite <- (kl_resv _ _ _ HK), RESV. reflexivity. }
+  split. { destruct (kl_resv _ _ _ HK) as (rx & Erx & Xr). exists rx. rewrite Erx, RESV. split; [reflexivity | exact Xr]. }
   split; [exact G5|]. split; [exact (kl_ceil _ _ _ HK)|].
   intros nd Hnd NDA.
   assert (UB : bv_unsigned (KNodes.w (r_base r)) = r_base r) by (unfold KNodes.w; apply unsigned_lit; lia).
@@ -144,6 +145,7 @@ Proof.
     - exfalso. apply Mrems6x.bv_eqb_true_iff in E. apply (f_equal bv_unsigned) in E. rewrite !unsigned_lit in E by lia. lia.
     - apply Z.leb_gt. Z.div_mod_to_equations. lia. }
   split; [apply PA; lia|]. split; [apply PA; [lia| exact OAL]|].
+  split; [rewrite RN; pose proof alloc_ceiling_val; unfold TASK_SIZE; lia|].   (* 08b1429: mremap's TASK_SIZE gate *)
   unfold mremap_src_ok, mremap_source_b, mremap_backing_uniform_b. rewrite RO, Hl, UB. pose proof (kl_ceil _ _ _ HK) as KCL. unfold ceil_ok in KCL. rewrite KCL.   (* [comment removed for export] *) cbn [region_free forallb orb map_contains].
   assert (EW : Z_to_bv 64 (m_maplen (get_meta_rec st g) * 4096) = wz (m_maplen (get_meta_rec st g) * 4096)) by reflexivity.
   rewrite (proj2 (Z.leb_le _ _) G4). cbn [andb].
@@ -229,8 +231,8 @@ Theorem remap_model : forall s LB m md b st off g bm i r ar q res n (dst : word)
   let h := m_vmmaps md in
   ( (ND = OLDL /\ NB = B /\ md' = md)
     \/ (ND <> OLDL /\ 0 < NB /\ NB mod 4096 = 0 /\ NB + ND <= alloc_ceiling
-        /\ m_vmmaps md' = mremap_maps_next h (wz B) dst (wz ND) /\ minv md' /\ m_halted md' = None /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = []
-        /\ ((dst = wz B /\ (ND < OLDL \/ region_free (vm_reserved h ++ map_remove (vm_maps h) (wz B)) (wz B) (wz ND) = true))
+        /\ m_vmmaps md' = mremap_maps_next h (wz B) (wz OLDL) dst (wz ND) /\ minv md' /\ m_halted md' = None /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = []
+        /\ ((dst = wz B /\ (ND < OLDL \/ region_free (vm_reserved h ++ maps_subtract (vm_maps h) B (B + OLDL)) (wz B) (wz ND) = true))
             \/ (dst <> wz B /\ region_free (vm_reserved h ++ vm_maps h) dst (wz ND) = true))) ) ->
   (forall o, 0 <= o < Z.min OLDL ND -> mK (wz (NB + o)) = m (wz (B + o))) ->
   (forall o, 0 <= o < ND -> mK (wz (NB + o)) <> None) ->
@@ -328,7 +330,9 @@ Proof.
             apply (proj1 (list_elem_of_In _ _)). apply elem_of_map_to_list. rewrite lookup_delete_ne by congruence. exact H2. }
           destruct (D2 (r_base r2) (r_len r2) (or_introl IG2)) as [D|D]; rewrite ?mmap_len_round_up in D; lia. }
       split.
-      { pose proof (region_free_ranges_free _ _ _ D4) as RF. rewrite <- (kl_resv _ _ _ HK), RESV in RF. fold NB in RF.
+      { pose proof (region_free_ranges_free _ _ _ D4) as RF. destruct (kl_resv _ _ _ HK) as (rx & Erx & _).
+        rewrite Erx, RESV in RF. unfold ranges_free in RF. rewrite forallb_app in RF. apply andb_prop in RF as [RF _].
+        fold NB in RF.
         unfold KLink.wz in RF. rewrite unsigned_lit in RF by lia. exact RF. }
       split; [exact XM|]. split; [exact XH|]. split; [exact XL|].
       intros NE. apply D5. intros E. apply NE. unfold NB. rewrite E. unfold KLink.wz. apply unsigned_lit. lia. }

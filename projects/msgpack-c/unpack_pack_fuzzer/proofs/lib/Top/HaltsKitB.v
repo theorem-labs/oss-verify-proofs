@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the halting kit's realizes and init_config read the run's segment list, run_segments, the image's segments followed by the vDSO pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Classical_Prop.
@@ -116,7 +117,8 @@ Hypothesis KK_exits : forall inp, valid_input inp -> exits_in S (KK inp).
 Hypothesis HL : Lsmall <= Lbig.
 Hypothesis RZ : forall sp brk0 mb rnd inp,
   valid_input inp -> valid_entry (mkImage segs pc ph) (mkEntry sp brk0 mb rnd) inp ->
-  realizes segs (init_config segs pc ph sp brk0 mb rnd Lbig inp) (KK inp).
+  realizes (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd Lbig inp) (KK inp).
 
 Theorem must_exit_big : forall en inp,
   valid_entry (mkImage segs pc ph) en inp -> valid_input inp ->

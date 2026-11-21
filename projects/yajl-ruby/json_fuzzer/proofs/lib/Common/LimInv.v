@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (linv_vdso: the budget invariant kept by the vDSO bump). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -30,6 +31,9 @@ Proof.
   destruct (materialize_model_accesses_frame m acc m' H) as (_ & E & _).
   split; [exact (fits_vmmaps_eq m m' E HF) | rewrite E; exact HW].
 Qed.
+
+Lemma linv_vdso : forall m, linv m -> linv (with_vdso_bump m).
+Proof. intros m H. exact H. Qed.
 
 Lemma linv_init : forall reserved brk0 mbase sp lim inp,
   linv (init_model reserved brk0 mbase sp lim inp).

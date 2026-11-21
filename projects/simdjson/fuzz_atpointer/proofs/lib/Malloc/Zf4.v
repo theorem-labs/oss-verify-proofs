@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up auxv values as the list the model's launch writes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -80,8 +81,46 @@ Definition ptr_rel (p : optr) (r : option bptr) : Prop :=
   | _, _ => False
   end.
 
-Definition auxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* The default kernel's 29-pair auxv ([StackLayout.auxv_entries] with
+   CONFIG_RSEQ) as mallocng's [__malloc_init] scan sees it: the keys are
+   literal, the values other than AT_RANDOM's are [vs]. *)
+Definition auxv_list (vs : list Z) (rnd : Z) : list word :=
+  map wz [33; nth 0 vs 0; 40; nth 1 vs 0; 41; nth 2 vs 0; 42; nth 3 vs 0; 43; nth 4 vs 0;
+          44; nth 5 vs 0; 45; nth 6 vs 0; 46; nth 7 vs 0; 47; nth 8 vs 0; 51; nth 9 vs 0;
+          16; nth 10 vs 0; 6; nth 11 vs 0; 17; nth 12 vs 0; 3; nth 13 vs 0; 4; nth 14 vs 0;
+          5; nth 15 vs 0; 7; nth 16 vs 0; 8; nth 17 vs 0; 9; nth 18 vs 0; 11; nth 19 vs 0;
+          12; nth 20 vs 0; 13; nth 21 vs 0; 14; nth 22 vs 0; 23; nth 23 vs 0; 25; rnd;
+          31; nth 24 vs 0; 27; 28; 28; 32; 0; 0].
+
+Lemma auxv_list_length : forall vs rnd, length (auxv_list vs rnd) = 58%nat.
+Proof. reflexivity. Qed.
+
+(* The same table for a kernel built WITHOUT CONFIG_RSEQ: twenty-seven pairs,
+   the AT_RSEQ_FEATURE_SIZE / AT_RSEQ_ALIGN pair absent, AT_NULL kept
+   ([StackLayout.auxv_entries] appends the rseq pair conditionally on
+   [la_rseq la]).  Added 2026-11-06 with the kernel de-pin: [Run.valid_input_either]
+   (75d69e00 Run.v:4575-4577) leaves [kb_rseq] free, so the process invariant
+   cannot name one table. *)
+Definition auxv_list27 (vs : list Z) (rnd : Z) : list word :=
+  map wz [33; nth 0 vs 0; 40; nth 1 vs 0; 41; nth 2 vs 0; 42; nth 3 vs 0; 43; nth 4 vs 0;
+          44; nth 5 vs 0; 45; nth 6 vs 0; 46; nth 7 vs 0; 47; nth 8 vs 0; 51; nth 9 vs 0;
+          16; nth 10 vs 0; 6; nth 11 vs 0; 17; nth 12 vs 0; 3; nth 13 vs 0; 4; nth 14 vs 0;
+          5; nth 15 vs 0; 7; nth 16 vs 0; 8; nth 17 vs 0; 9; nth 18 vs 0; 11; nth 19 vs 0;
+          12; nth 20 vs 0; 13; nth 21 vs 0; 14; nth 22 vs 0; 23; nth 23 vs 0; 25; rnd;
+          31; nth 24 vs 0; 0; 0].
+
+Lemma auxv_list27_length : forall vs rnd, length (auxv_list27 vs rnd) = 54%nat.
+Proof. reflexivity. Qed.
+
+(* The table the kernel actually laid, selected by [kb_rseq].  A two-armed
+   [if] rather than one list parametric in the flag, for the reason
+   [P/Z10k.v] gives at [auxv27]: every consumer needs the list reduced to a
+   closed term, and under a binder for the flag neither arm reduces. *)
+Definition auxv_tab (r : bool) (vs : list Z) (rnd : Z) : list word :=
+  if r then auxv_list vs rnd else auxv_list27 vs rnd.
+
+Lemma auxv_tab_length_le : forall r vs rnd, (length (auxv_tab r vs rnd) <= 58)%nat.
+Proof. intros r vs rnd. destruct r; cbn [auxv_tab auxv_list auxv_list27 length map]; lia. Qed.
 
 Lemma Forall_disjoint_from : forall (P : Z * Z -> Prop) W a n,
   Forall P W -> (forall lo hi, P (lo, hi) -> a + n <= lo \/ hi <= a) -> disjoint_from W a n.

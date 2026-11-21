@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb), ex_string's UTF-8 cuts (ExsA_Stmt.v
    CUT_UTF8 / CUT_UTF8R):
      A 0x84228 lw a1,36(sp) (the code point cp); mv a0,s3 (o); jal ex_utf8 (A 0x84230, the callee's run form
      texutf8_runA, ExsA_Callee.v, through the Section hypothesis HUTF8), then CUT_UTF8R at the return A 0x84234:
      add s3,s3,a0 (o + n); li a3,101 / a4,91 / a5,113 / a6,114 (ESK again); j 0x84378 (CUT_CONT, acc ++ PjGrammar.utf8
      cp).
-   PORTED from lib/B/Prog/ExsB_Utf8.v (a Theorem Labs lane's B' walk, on 66eac2b9522a): es_cut_utf8 is the donor's proof (one run
+   PORTED from lib/B/Prog/ExsB_Utf8.v (a Theorem Labs lane's B' walk): es_cut_utf8 is the donor's proof (one run
    to the call, the callee's run form, the return) re-pointed at A'; es_cut_utf8r is the donor's last run alone.
    CHANGED for A': the pcs (UTF8 0x1f4, UTF8R 0x200, CONT 0x344; B' 0x238 / 0x244 / 0x3b8); o / the next p are s3 / s5
    (atoms 19 / 21; B': s2 / s4); the return adds n into s3 (B': o + n into a0) and re-sets a3 .. a6 (B': a4 .. a7, t0

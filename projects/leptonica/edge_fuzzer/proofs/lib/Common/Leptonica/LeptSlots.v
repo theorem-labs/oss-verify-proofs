@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -39,12 +40,12 @@ Proof.
   unfold CALLOC_STACK, ALLOC_STACK in *.
   assert (Hs : 0 <= s < 2 ^ 64) by lia.
   eapply (ai_free fx A m md regs (Z_to_bv 64 0) ret (c_sp0 C) (c_argv C) (c_envp C) S
-            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_env _ _ _ _ HW) H10 (or_introl eq_refl) H1 (pin_ret _ Hret) H4).
+            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_vdso _ _ _ _ HW) (w_env _ _ _ _ HW) H10 (or_introl eq_refl) H1 (pin_ret _ Hret) H4).
   - rewrite H2, u_Z2bv by lia. exact Hs16.
   - rewrite H2, u_Z2bv by lia. rewrite V2. lia.
   - rewrite H2, u_Z2bv by lia. lia.
   - rewrite H2. intros a Ha. rewrite u_Z2bv in Ha by lia. exact (W_call_win C A m md s 1024 CK HW ltac:(lia) Hhi a Ha).
-  - intros A' m' vm' regs' Hinv' Hcs Lp' EQ Hfr Hlive Hdef E1 E2 E3 E4 _.
+  - intros A' m' vm' regs' Hinv' Hcs Lp' EQ Hfr Hlive Hdef E1 E2 E3 E4 E5 _.
     rewrite H2, u_Z2bv in Hfr by lia.
     assert (Hkeep' : forall q k, live (c_A0 C) q = Some k -> live A' q = Some k).
     { intros q k L. destruct (bv_eq_dec _ q (Z_to_bv 64 0)) as [->|NE]; [congruence|].
@@ -53,7 +54,7 @@ Proof.
     { intros a Ha. destruct (Hdef a Ha) as [X|X]; [right; left; exact X | right; right; exact X]. }
     assert (Hlive2 : forall q k i, live (c_A0 C) q = Some k -> 0 <= i < k -> m' (at_ q i) = m (at_ q i)).
     { intros q k i L Hi. exact (Hlive q k i (Hkeep' q k L) Hi). }
-    destruct (W_after_call C A m md A' m' vm' s 1024 CK HW ltac:(lia) ltac:(lia) Hhi Hinv' Hkeep' Hfr Hlive2 Hdef' E1 E2 E3 E4) as [HW' F].
+    destruct (W_after_call C A m md A' m' vm' s 1024 CK HW ltac:(lia) ltac:(lia) Hhi Hinv' Hkeep' Hfr Hlive2 Hdef' E1 E2 E3 E4 E5) as [HW' F].
     apply (HK A' m' vm' regs' HW' Hcs Lp' EQ). split; [exact F|].
     intros q k i L Hi. destruct (bv_eq_dec _ q (Z_to_bv 64 0)) as [->|NE].
     + (* [comment removed for export] *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B (fs.asan-ubsan, POISON-U lane): FSupoisonU.abcmp_realizesU at pc_wrap_bcmp, i.e. the bcmp
    interceptor walk for ANY set U of user-poisoned heads (FSupoison.ARU). Rule 24: not proved from scratch. The donor
    is cgif_file_fuzzer's released lib/A/AE2s.v (bc_icpt_srr / bc_icpt_realizes, over SRr / AR_laws, our kit's
@@ -9,10 +10,10 @@
    own lib/Prog/bcmp.v and lib/U/Prog twins are the PLAIN / UBSAN images' functional proofs, not this image's.
    ARU (any-user-poison) form, published as the shared one; two Theorem Labs lanes hold the U = [] form at their own
    addresses. Its U = [] corollary is tfib_abcmp_realizes (FSupoisonU.abcmp_realizes_of_U), the donor's statement.
-   PORT (image B): text of lib/A/FSupoisonBcmp.v at a working branch cd7610bc4ed (a Theorem Labs lane); imports switched to the lib/B
+   PORT (image B): text of lib/A/FSupoisonBcmp.v at a working branch (a Theorem Labs lane); imports switched to the lib/B
    twins (YB1v YE34 YF0l YF0m YF0x YB1w YE20 YE2y; YE2s YE2z YE3b YE6z YE70 = this branch's relocations of
    lib/A/AE2s / AE2z / AE3b / AE6z / AE70 to fs.asan-ubsan), FSupoisonIntrinR -> lib/B/FSupoisonAsanR (the same region
-   lemmas over image B, McpyB f32c92531db), the image-generic lib/A modules (FSupoison, FSupoisonU) kept.
+   lemmas over image B, McpyB), the image-generic lib/A modules (FSupoison, FSupoisonU) kept.
    The text below is the image-A file's, with its addresses replaced by image B's.
 
    The chain (fs.asan-ubsan's listing, sha256 5ac5ce0954f8...): __wrap_bcmp MC_ENTRY `j 0x43de4`

@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the closing of sup_worker_list's ASan+UBSan walk (lib/B/Prog/sup_worker_list.v,
    tsup_worker_list_holds) at the pinned image, after the pattern of a Theorem Labs lane's PASS4-REFIT.md section F
-   (lib/A/Prog/SupRemoveAllRefitClosed.v on a working branch e84227c9553). *)
+   (lib/A/Prog/SupRemoveAllRefitClosed.v on a working branch). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/SupWorkerListClosed.v, with its module names changed; 13 of its 42 lines of code are new or changed and 10 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for sup_lv2_worker_set's ASan+UBSan walk
    (lib/B/Prog/sup_lv2_worker_set.v, tsup_lv2_worker_set_holds; fuzz_command.asan-ubsan): the per-binary record
    hypotheses the walk names are discharged at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments
-   are tfibsegs, and the sink head YE2k.tfib_sink_head), as A's SupRemoveAllRefitClosed.v (a working branch e84227c9553)
-   and a Theorem Labs lane's RecBClosed.v (a working branch f349bdaedba) do: cmd_img_facts_tfib is a Theorem Labs lane's
+   are tfibsegs, and the sink head YE2k.tfib_sink_head), as A's SupRemoveAllRefitClosed.v (a working branch)
+   and a Theorem Labs lane's RecBClosed.v (a working branch) do: cmd_img_facts_tfib is a Theorem Labs lane's
    CmdRecImg.cmd_img_facts_tfib, cmd_sig_prog_PB is CmdRecRest.cmd_sig_prog_PB and the statement's VOBJS is
    CmdRecRest.cmd_val_objs_PB; the walk uses no PRW, TL or cmd_val_his_PB, and LAWS is the core's AR_laws_ok inside
    the walk. What remains is the callees' contracts at every FP state, HB and MTL. *)

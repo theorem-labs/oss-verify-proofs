@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels; munmap can be refused; the model's error returns). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -149,6 +150,14 @@ Section Header.
   Variables (R0 : bvmap 5 word) (M0 : word -> option byte).
   Hypothesis HP : header_pre sp0 p1 gm tid area can sec content R0 M0.
   Hypothesis Hmap : map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true.
+  (* #38's ref_stdio_write takes a SIGPIPE guard beside its fd_lookup premise
+     (LibStdioCall.v:279), and [modelh] is [mkModelA … stdin0 …], whose
+     m_channel_reader IS [ia_channel_reader stdin0] (ModelAmb.v:53).  Nothing in the unit
+     pinned it, so it travels with stdin0 and is discharged where stdin0 becomes
+     [amb_of inp]: there [ia_channel_reader (amb_of inp)] computes to
+     [in_channel_reader inp], which the published statement already requires
+     (AsanTop.v:73).  Same shape as RefStdioWrite.v:715's Hrdr. *)
+  Hypothesis Hcr : ia_channel_reader stdin0 = true.
 
   Let L : Z := Z.of_nat (length content).
   Definition modelh : Model := model_post VM stdin0 fs0 tid.
@@ -274,6 +283,14 @@ Section Header.
                           | try1 Hgav | try1 Hgfr | try1 HgW | try1 Hsec | try1 Hfmh | try1 Hact | try1 Hus | try1 Hseq
                           | try1 Htc | try1 Herr' | try1 Hgd ]
                 end).
+      (* #38 made [kn_Hstack]'s writable run [KWr (SA (EVar 0) (-6144513)) 6144513]; no branch
+         of the cascade above matches a [kentry_ok] of a KWr, so it was the one goal left open
+         (measured: one ZZDBG print).  [hp_stack] is exactly
+         that window once the [+ -] is normalised. *)
+      all: (split; [lia|];
+            intros d m Hd Hm;
+            replace (bv_unsigned sp0 + -6144513 + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia;
+            apply Hst; lia).
   Qed.
 
   (* [comment removed for export] *)
@@ -369,9 +386,7 @@ Section Header.
     | lia
     | change (page_round_up_Z 69632) with 69632%Z; rewrite task_size_val; lia   (* [comment removed for export] *)
     | change (page_round_up_Z 69632) with 69632%Z; cbv [m_vmmaps modelh model_post mkModelA m_vm vmst_maps]; exact Hmap
-    | ];
-    rewrite v_addi_pc4 by lia; change (0x9a358 + 4)%Z with 0x9a35c%Z;
-    change (page_round_up_Z 69632) with 69632%Z.
+    | | ].
 
   Ltac err_tail_2 HL P0 P3 P4 HR HK :=
     let HK2 := fresh "HK2" in let HR2 := fresh "HR2" in
@@ -391,12 +406,21 @@ Section Header.
     (* [comment removed for export] *)
     run_block scr0 73%nat.
 
-  Ltac err_tail_3 HL P0 P3 P4 HR HK :=
+  (* The refused free (munmap_errnos): a0 = -ENOMEM, [gm] stays mapped and its knowledge is
+     kept; the same exit path runs on (musl's free ignores munmap's result). *)
+  Ltac err_tail_2r HL P0 P3 P4 HR HK :=
+    let HR2 := fresh "HR2" in
+    lazymatch type of HR with regs_ok ?E ?sr ?Rc =>
+      pose proof (regs_set_a0 E sr Rc (errno_ret ENOMEM) (ELit (- 12)) HR eq_refl) as HR2 end;
+    clear HR; rename HR2 into HR;
+    run_block scr0 73%nat.
+
+  Ltac err_tail_3 HL P0 P3 P4 HR HK MDL :=
     let Hst := fresh "Hst" in let Ktid := fresh "Ktid" in
     (* [comment removed for export] *)
     apply (rz_conseq RSEGS _ (t_emit (W 1 []) (t_exit (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255))
-                                                  (m_fs (munmap_model gm (Z_to_bv 64 69632) modelh)))));
-    [ | replace (m_fs (munmap_model gm (Z_to_bv 64 69632) modelh)) with fs0 by reflexivity;
+                                                  (m_fs MDL))));
+    [ | replace (m_fs MDL) with fs0 by reflexivity;
         replace (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) with (exit_code 2) by (apply bv_eq; reflexivity);
         apply t_eq_sym; apply t_emit_nil_exit ];
     apply ref_exit_Z;
@@ -436,8 +460,15 @@ Section Header.
   Ltac err_tail_tac :=
     intros vals R M HL P0 P3 P4 HR HK;
     err_tail_1 HL P0 P3 P4 HR HK;
-    match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_2 HL P0 P3 P4 HR' HK' end;
-    match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_3 HL P0 P3 P4 HR' HK' end.
+    [ intros err Herr; cbn [munmap_errnos In] in Herr; destruct Herr as [<-|[]];
+      rewrite v_addi_pc4 by lia; change (0x9a358 + 4)%Z with 0x9a35c%Z;
+      match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_2r HL P0 P3 P4 HR' HK' end;
+      match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_3 HL P0 P3 P4 HR' HK' constr:(modelh) end
+    | rewrite v_addi_pc4 by lia; change (0x9a358 + 4)%Z with 0x9a35c%Z;
+      change (page_round_up_Z 69632) with 69632%Z;
+      match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_2 HL P0 P3 P4 HR' HK' end;
+      match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ =>
+        err_tail_3 HL P0 P3 P4 HR' HK' constr:(munmap_model gm (Z_to_bv 64 69632) modelh) end ].
 
   #[using="p1 area can sec R0 M0 HP Hmap L"] Lemma err_tail_short : err_tail_stmt srSB0 knSB0.
   Proof. err_tail_tac. Qed.
@@ -474,6 +505,9 @@ Section Header.
                  _ _ msg_addr 31 HK eq_refl) by (cbn; lia);
       apply msg_img
     | apply fds_std_2
+    | exact Hcr          (* #38's SIGPIPE guard: stdio_call_sound takes it straight after
+                            the fd_lookup premise (LibStdioCall.v:277-279), and the cascade
+                            here had no slot for it, so the next `reflexivity` landed on it. *)
     | reflexivity
     | reflexivity
     | apply t_exit_has_nil
@@ -492,7 +526,7 @@ Section Header.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  #[using="sp0 p1 gm area can sec HP Hmap L"] Theorem header_short : (length content < 6)%nat ->
+  #[using="sp0 p1 gm area can sec HP Hcr Hmap L"] Theorem header_short : (length content < 6)%nat ->
     realizes RSEGS (mkCfg (mkst R0 (Z_to_bv 64 0x32670) M0 (seg_rom RSEGS)) modelh) (t_die msg_short fs0).
   Proof.
     intros Hlt. destruct hdr_sym as (e & He & HR & HK0).
@@ -514,7 +548,7 @@ Section Header.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  #[using="sp0 p1 gm area can sec HP Hmap L"] Theorem header_overrun :
+  #[using="sp0 p1 gm area can sec HP Hcr Hmap L"] Theorem header_overrun :
     (6 <= length content)%nat -> (Z.of_nat (length content) < 6 + hdr_cfglen content)%Z ->
     realizes RSEGS (mkCfg (mkst R0 (Z_to_bv 64 0x32670) M0 (seg_rom RSEGS)) modelh) (t_die msg_overrun fs0).
   Proof.
@@ -803,25 +837,28 @@ End Intro.
   main_frame (bv_unsigned sp0) M ->
   (Z.of_nat (length content) < 65536)%Z ->
   In (gm, Z_to_bv 64 69632) (vm_maps VM) ->
+  ia_channel_reader stdin0 = true ->
   (forall R' M', target_pre (bv_unsigned sp0) (bv_unsigned gm) area brkv mas (bv_unsigned tid) sec content R' M' ->
      realizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 0x32844) M' (seg_rom RSEGS)) (model_post VM stdin0 fs0 tid))
                 (t_target content fs0)) ->
   realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x32670) M (seg_rom RSEGS)) (model_post VM stdin0 fs0 tid))
              (t_body content fs0).
 Proof.
-  intros sp0 p1 gm tid area brkv mas sec content VM stdin0 fs0 Rr Mr R M Hvsp RP W0 MF HL Hin HT.
+  intros sp0 p1 gm tid area brkv mas sec content VM stdin0 fs0 Rr Mr R M Hvsp RP W0 MF HL Hin Hcr HT.
   destruct (header_pre_intro sp0 p1 gm tid area brkv mas sec content Rr Mr R M Hvsp RP W0 MF HL) as [can HP].
   pose proof (map_has_In _ _ _ Hin) as Hmap.
   pose proof (Z.mod_pos_bound (hdr_cfg content) 32768 ltac:(lia)) as CR.
   unfold t_body.
   destruct (MAX_INPUT <=? Z.of_nat (length content))%Z eqn:E1; [apply Z.leb_le in E1; unfold MAX_INPUT in E1; lia|].
   destruct (length content <? 6)%nat eqn:E2.
-  - apply Nat.ltb_lt in E2. apply (header_short sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap E2).
+  (* Section hypotheses discharge in DECLARATION order -- Hmap at :151, Hcr at :159 -- not in
+     the order the #[using=…] set happens to list them. *)
+  - apply Nat.ltb_lt in E2. apply (header_short sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap Hcr E2).
   - apply Nat.ltb_ge in E2.
     destruct (length content <? 6 + Z.to_nat ((bv_unsigned (nth 0 content (Z_to_bv 8 0)) +
                256 * bv_unsigned (nth 1 content (Z_to_bv 8 0))) mod 32768))%nat eqn:E3.
     + apply Nat.ltb_lt in E3.
-      apply (header_overrun sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap E2).
+      apply (header_overrun sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap Hcr E2).
       unfold hdr_cfglen, hdr_cfg, hdr_b0, hdr_b1 in *. lia.
     + apply Nat.ltb_ge in E3.
       pose proof (t_body_target content fs0 ltac:(unfold MAX_INPUT; lia) ltac:(unfold hdr_cfg, hdr_b0, hdr_b1; lia)) as TB.
@@ -862,6 +899,7 @@ Section FPW_2. Context {fx : PropExec.FPState}.
   main_frame (bv_unsigned sp0) M ->
   (Z.of_nat (length content) < 65536)%Z ->
   In (gm, Z_to_bv 64 69632) (vm_maps VM) ->
+  ia_channel_reader stdin0 = true ->
   (forall R' M', target_pre (bv_unsigned sp0) (bv_unsigned gm) area brkv mas (bv_unsigned tid) sec content R' M' ->
      realizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 0x32844) M' (seg_rom RSEGS))
                              (model_post VM stdin0 fs0 tid)) (t_target content fs0)) ->

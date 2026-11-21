@@ -1,5 +1,5 @@
 (* ubsan_halts of reac-pw/fuzz_pin from the UBSan frame and the slot of LLVMFuzzerTestOneInput: the plain
-   lib/Prog/PinEnd.v (libreac/fuzz_ctrl's released U/Prog/Seg/Segs.v + SlotLink.v, origin/ossv/recipes 25e3d17bdb50)
+   lib/Prog/PinEnd.v (libreac/fuzz_ctrl's released U/Prog/Seg/Segs.v + SlotLink.v)
    on the UBSan build's files.
    - segs_holds: the segment lemmas (U LLVMFuzzerTestOneInput_c.seg_lemmas) for every instance that satisfies
      U/FrameAPI.frame_facts_ubsan, from U/Prog/Seg/E01.v (memchr: the released leaf U/Prog/memchr.v), U/Prog/Seg/M01.v

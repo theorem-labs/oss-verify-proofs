@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names changed; 1538 of its 1613 lines of code are new or changed and 509 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v, with its module paths changed; 295 of its 370 lines of code are new or changed and 1538 lines of the source are left out. *)
-(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 82a1d1bf3a6 lib/A/FSH_crt_segD1_dec.v)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from c159ab19cb1) - the base
-   v33 delta of a working branch c159ab19cb1 (crtD1d_cnt_le_k over the by-trace K / CNT_82268, new
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD1_dec.v)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - the base
+   v33 delta of a working branch (crtD1d_cnt_le_k over the by-trace K / CNT_82268, new
    crtD1d_wcalls_wev0, HROOM replaced by FSH_crt_room.crt_room_D1_holds, the Local Strategy for the kernel trap).
-   Port source: a working branch 82a1d1bf3a6 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_dec.v (409
-   lines, CTX-free, on S0 6e79fac25a0 + base v27), itself PORTED from a working branch d25a984c903
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_dec.v (409
+   lines, CTX-free, on S0 + base v27), itself PORTED from a working branch
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17 :521 / St18 :535 and
    check_round_trip_sd16.v :541, the bespoke ASan proof of this function on fs.asan. CHECKER VERDICT: CONFIRM
    (a Theorem Labs lane, role check, 2026-10-29 04:3xZ) on (internal path), lines

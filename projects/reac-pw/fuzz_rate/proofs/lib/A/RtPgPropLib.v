@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgProp.v at a529a88a6181 (its lines 1-340 and
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgProp.v (its lines 1-340 and
    674-687: the cut helpers and the tactics of the pieces, not the pieces) for reac-pw/fuzz_rate image A: the rl_
    vocabulary becomes rt_ (rt_at, rt_loc, rt_renv's q_ fields, rt_seg_pre, rt_inw), rm_ becomes rtm_; rate's image
    record (its 0x1e0-byte real frame, its write ranges hi_w1, its 56 frame shadow bytes); pa_E1_R names rate's R range

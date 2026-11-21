@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fd_lookup case splits also name the model's four new descriptor kinds, FdStream, FdEventfd, FdDgram and FdAnon). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -142,7 +143,7 @@ Proof. aceil.
   - exact HK0.
   - (* [comment removed for export] *)
     unfold read_out in RO. cbn [nstep].
-    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| ]|] eqn:E; try discriminate.
+    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| |sid sside sst|ectx|dfam|aid aaf]|] eqn:E; try discriminate.
     + destruct (fs_lookup (m_fs mo) p) as [data|] eqn:FL; [|discriminate].
       eexists _, _, []. split; [reflexivity|]. split; reflexivity.
     + exists (efferr EISDIR), mo, []. auto.
@@ -169,7 +170,7 @@ Proof. aceil.
       constructor. }
     assert (VS : vm_same mo mo1 /\ minvA mo1 /\ m_halted mo1 = None /\ m_fs mo1 = m_fs mo).
     { unfold read_out in RO.
-      destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| ]|] eqn:E; try discriminate.
+      destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| |sid sside sst|ectx|dfam|aid aaf]|] eqn:E; try discriminate.
       - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:FL; [|discriminate]. injection RO as E1 E2. subst.
         split; [apply vm_same_with_fds|]. split; [eapply minvA_update_file; [exact Hminv | exact E]|].
         split; [destruct mo; exact Hh | destruct mo; reflexivity].
@@ -287,7 +288,7 @@ Proof. aceil.
   - exact HK0.
   - (* [comment removed for export] *)
     unfold read_out in RO. cbn [nstep].
-    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| ]|] eqn:E; try discriminate.
+    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| |sid sside sst|ectx|dfam|aid aaf]|] eqn:E; try discriminate.
     + destruct (fs_lookup (m_fs mo) p) as [data|] eqn:FL; [|discriminate].
       eexists _, _, []. split; [reflexivity|]. split; reflexivity.
     + exists (efferr EISDIR), mo, []. auto.
@@ -314,7 +315,7 @@ Proof. aceil.
       constructor. }
     assert (VS : vm_same mo mo1 /\ minvA mo1 /\ m_halted mo1 = None /\ m_fs mo1 = m_fs mo).
     { unfold read_out in RO.
-      destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| ]|] eqn:E; try discriminate.
+      destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| |sid sside sst|ectx|dfam|aid aaf]|] eqn:E; try discriminate.
       - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:FL; [|discriminate]. injection RO as E1 E2. subst.
         split; [apply vm_same_with_fds|]. split; [eapply minvA_update_file; [exact Hminv | exact E]|].
         split; [destruct mo; exact Hh | destruct mo; reflexivity].

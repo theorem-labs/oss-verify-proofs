@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths changed; 166 of its 215 lines of code are new or changed and 3804 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/joined_byte.v; 39 of its 104 lines of code are new or changed and 150 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/joined_byteF_on.v -- route (C): the proofs of the _on forms of image B's joined_byte (entry 0x836ac),
    whose statements are in joined_byte_c_on.v.  joined_byteF.v is FROZEN (a Theorem Labs lane FROZEN-INTERFACES.md:37 (a working note, not in this delivery)), so by
    ASSIGN.md:79 (a working note, not in this delivery) these proofs are in this separate file and joined_byteF.v stays unchanged apart from comment text.  Writer:
    a Theorem Labs lane.  rule 24: no function proved.
 
-   joined_byte_holds_F_on is the script of joined_byte_holds_F (joined_byteF.v:161-243 at 6c3b15fd429) with two
+   joined_byte_holds_F_on is the script of joined_byte_holds_F (joined_byteF.v:161-243) with two
    changes: (1) the shadow_rw premise is not introduced (the old script introduced it as HSW and cleared it unused at
    :181); (2) the tail jb_tail_on is joined_byteF.v's jb_tail plus the post's last conjunct, closed from the munch of
    the frame, wmono and HWs (the frame is apart from the shadow) by jbF_shadow_rw_on_munch.  That lemma is the proof of
@@ -31,7 +32,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import joined_byte_c_
 Import ListNotations.
 Open Scope Z_scope.
 
-(* joined_byteF.v:47's hook (Local there, so set again here): the shadow loads' access goals go through acc_hintF. *)
+(* joined_byteF.v:48's hook (Local there, so set again here): the shadow loads' access goals go through acc_hintF. *)
 Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.acc_hint ::= acc_hintF.
 
 (* shadow_rw_on survives writes apart from the shadow (the proof of B.ShadowRwOnT.fl_shadow_rw_on; see the header). *)

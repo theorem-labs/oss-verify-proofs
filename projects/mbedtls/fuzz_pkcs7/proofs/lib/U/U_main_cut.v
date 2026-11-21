@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the path pointer p1 is measured from the stack VMA's end and the exec file name; U_realizes_spec_c gains the channel-reader, valid_launch and entry_launch_ok_va premises; the stack window of cut_mem (cm_below, cm_win_ok, cm_win) and of file_kont_of_concrete's proof moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608); cut_mem, file_kont_concrete and file_kont_of_concrete's statement take the entry draw rd, and file_kont_stmt_c and dir_kont_stmt_c pass it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -56,7 +57,7 @@ Section Cut.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
 
   (* [comment removed for export] *)
-  Definition pathp : word := p1 sp0 a0s path envv.
+  Definition pathp : word := p1 a0s path envv rd.
 
   (* [comment removed for export] *)
   Definition cut_regs (t1 t2 a12 t3 t4 t5 t6 : word) : bvmap 5 word := ltac2:(CDefT.buildp (gd_tbl_P_main_cut ()) "(0.(1.&40.+1=28<.)(1.&40.(2.(3.&40.Vsp0,)+80.))(1.&40.+10800.)(1.&40.+5=0<8.)$4.O7.O6.(1.&40.+2.)(1.&40.+2.)(1.&40.+3.)O5.O5.(1.&40.+3.)(1.&40.=)(1.&40.=)(1.&40.=)(1.&40.+38.)$4.(1.&40.(5.(3.&40.Vsp0,)+20.))(1.&40.=)(1.&40.=)(1.&40.=)(1.&40.=)(1.&40.=)(1.&40.=)(1.&40.=)(1.&40.=)O4.O3.O2.O1.)")
@@ -69,12 +70,12 @@ Section Cut.
   (* [comment removed for export] *)
   Record cut_mem (M : word -> option byte) : Prop := {
     cm_above : forall a : word, (bv_unsigned sp0 <= bv_unsigned a)%Z -> M a = mem0 a;
-    cm_below : forall a : word, (bv_unsigned a < bv_unsigned sp0 - 8388608)%Z -> M a = mem0 a;
+    cm_below : forall a : word, (bv_unsigned a < bv_unsigned sp0 - 6144512)%Z -> M a = mem0 a;
     (* [comment removed for export] *)
-    cm_win_ok : forall (d : Z) (m : nat), (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-                  store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true;
+    cm_win_ok : forall (d : Z) (m : nat), (0 <= d)%Z -> (d + Z.of_nat m <= 6144512)%Z ->
+                  store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144512 + d)) m = true;
     cm_win : forall a : word,
-               (bv_unsigned sp0 - 8388608 <= bv_unsigned a < bv_unsigned sp0)%Z -> wview RSEGS M a <> None;
+               (bv_unsigned sp0 - 6144512 <= bv_unsigned a < bv_unsigned sp0)%Z -> wview RSEGS M a <> None;
     (* [comment removed for export] *)
     cm_ra : cell8 M (bv_unsigned sp0 - 56) (Z_to_bv 64 0x3f2a8);
     cm_s0 : cell8 M (bv_unsigned sp0 - 64) (Z_to_bv 64 (bv_unsigned sp0 + 8));
@@ -146,7 +147,7 @@ Section Cut.
     end.
   Ltac frame_cell FR k := frame_cell_gen FR k; let W := fresh "W" in intros W; exact W.
 
-  #[using="rd regs0 Hva Hve Hvsp ME SPlo SPhi"] Theorem file_kont_of_concrete : ltac2:(CDefT.buildp (gd_tbl_P_main_cut ()) "Pfd3,$1:.PKB,$1;.P,(1<.R2.R1.)(1=.VAMB,VLM,Vsp0,Va0s,Vpath,Venvv,Vtid,Vmem0,Vbrk,Vmbase,Vfs0,Vstdin0,R3.R2.)")
+  #[using="rd regs0 Hva Hve Hvsp ME SPlo SPhi"] Theorem file_kont_of_concrete : ltac2:(CDefT.buildp (gd_tbl_P_main_cut ()) "Pfd3,$1:.PKB,$1;.P,(1<.R2.R1.)(1=.VAMB,VLM,Vsp0,Va0s,Vpath,Venvv,Vtid,Vrd,Vmem0,Vbrk,Vmbase,Vfs0,Vstdin0,R3.R2.)")
 (* [comment removed for export] *).
   Proof.
     intros fd3 KB HC. unfold file_seg2_kont_g.
@@ -164,14 +165,14 @@ Section Cut.
     change (mkst ?Rx ?pc ?Mx ?rom) with (MS Rx bvmap_empty pc (Z_to_bv 32 0) None Mx rom).
     apply HC.
     (* [comment removed for export] *)
-    assert (WOK : forall (d : Z) (m : nat), (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-                  store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true).
+    assert (WOK : forall (d : Z) (m : nat), (0 <= d)%Z -> (d + Z.of_nat m <= 6144512)%Z ->
+                  store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144512 + d)) m = true).
     { intros d m Hd Hdm.
-      pose proof (kwr_store_ok RSEGS (ENV a0s path vals) _ knA ltac:(let i := kidx knA (is_kwr_cov (EVar 0) (-8388608) 8388608) in exact i)
-                    _ _ _ (-8388608 + d) m HK eq_refl ltac:(lia) ltac:(lia)) as Hst.
+      pose proof (kwr_store_ok RSEGS (ENV a0s path vals) _ knA ltac:(let i := kidx knA (is_kwr_cov (EVar 0) (-6144512) 6144512) in exact i)
+                    _ _ _ (-6144512 + d) m HK eq_refl ltac:(lia) ltac:(lia)) as Hst.
       unfold adenot, v_addi in Hst. cbn [a_base a_off edenot ev ENV] in Hst. rewrite P0 in Hst.
-      replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + (-8388608 + d))%Z by lia. exact Hst. }
-    assert (FR : forall k v, kread RSEGS knA (EVar 0) k 8 = Some v -> (-8388608 <= k)%Z -> (k + 8 <= 0)%Z ->
+      replace (bv_unsigned sp0 - 6144512 + d)%Z with (bv_unsigned sp0 + (-6144512 + d))%Z by lia. exact Hst. }
+    assert (FR : forall k v, kread RSEGS knA (EVar 0) k 8 = Some v -> (-6144512 <= k)%Z -> (k + 8 <= 0)%Z ->
                  cell8 M (bv_unsigned sp0 + k) (edenot (ENV a0s path vals) v)).
     { intros k v Hk H1 H2. unfold cell8.
       pose proof (kread_rdn RSEGS (ENV a0s path vals) M knA (EVar 0) k 8 v HK Hk ltac:(lia) ltac:(lia)
@@ -182,7 +183,7 @@ Section Cut.
     - exact HB.
     - exact WOK.
     - intros a Ha.
-      apply (store_ok_all RSEGS M (Z.to_nat 8388608) (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + 0)));
+      apply (store_ok_all RSEGS M (Z.to_nat 6144512) (Z_to_bv 64 (bv_unsigned sp0 - 6144512 + 0)));
         rewrite ?Z2Nat.id, ?u_small by lia; [lia | apply WOK; rewrite ?Z2Nat.id by lia; lia | lia].
     - frame_cell FR (-56)%Z.
     - frame_cell_gen FR (-64)%Z. intros W.
@@ -198,7 +199,7 @@ Section Cut.
     - frame_cell FR (-112)%Z.
     - frame_cell FR (-120)%Z.
     - rewrite <- Sr. apply rdn_agree. intros j Hj. apply HA. unfold pathp, p1 in *.
-      pose proof (u64_range (cat_argv_ptr sp0 [a0s; path] envv 1)). rewrite u_small by lia. lia.
+      pose proof (u64_range (cat_argv_ptr (ed_top rd) [a0s; path] envv a_execfn 1)). rewrite u_small by lia. lia.
     - unfold pathp, p1. lia.
     - unfold pathp, p1. lia.
   Qed.
@@ -240,7 +241,7 @@ Definition file_kont_stmt_c {LM : Lim} : Prop :=
     valid_argv [a0s; path] -> valid_envp envv -> valid_sp sp0 -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
     main_entry sp0 [a0s; path] envv tid rd regs0 mem0 -> valid_brk Ubsan.M.loaded_segments brk ->
     fs_lookup fs0 path = Some fdata -> path <> [] -> path <> dot_path -> (length path <= 4095)%nat ->
-    file_kont_concrete sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 (FdFile path (Z_to_bv 64 0)) (t_opened fdata fs0).
+    file_kont_concrete sp0 a0s path envv tid rd mem0 brk mbase fs0 stdin0 (FdFile path (Z_to_bv 64 0)) (t_opened fdata fs0).
 
 (* [comment removed for export] *)
 Definition dir_kont_stmt_c {LM : Lim} : Prop :=
@@ -248,7 +249,7 @@ Definition dir_kont_stmt_c {LM : Lim} : Prop :=
          (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream),
     valid_argv [a0s; dot_path] -> valid_envp envv -> valid_sp sp0 -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
     main_entry sp0 [a0s; dot_path] envv tid rd regs0 mem0 -> valid_brk Ubsan.M.loaded_segments brk ->
-    file_kont_concrete sp0 a0s dot_path envv tid mem0 brk mbase fs0 stdin0 FdDir (t_opened_dir dot_path fs0).
+    file_kont_concrete sp0 a0s dot_path envv tid rd mem0 brk mbase fs0 stdin0 FdDir (t_opened_dir dot_path fs0).
 
 Lemma file_kont_stmt_of_c {LM : Lim} : file_kont_stmt_c -> file_kont_stmt.
 Proof.
@@ -272,7 +273,7 @@ Theorem U_realizes_spec_c {LM : Lim} :
   forall sp brk mbase rd (inp : ProcInput),
     valid_sp sp -> valid_brk usegs' brk ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->     (* [comment removed for export] *)
+    entry_stack_fits sp (in_argv inp) (in_envp inp) -> in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->     (* [comment removed for export] *)
     realizes usegs'
       (init_config usegs' upc uph sp brk mbase rd LIM inp)
       (spec (in_argv inp) (in_fs inp)).

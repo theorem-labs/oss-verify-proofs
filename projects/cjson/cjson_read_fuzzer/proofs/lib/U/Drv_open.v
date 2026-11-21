@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: DMOD's destructs name its fourth field, the channel reader; the two dheap_model calls give the new kernel-equality premise (with_fds touches only m_fds); and main_two_proof discharges open_spec's new premise that the path ends below TASK_SIZE; the path's TASK_SIZE bound is read off its bytes in mapped memory (bytes_at_task); dheap0_model after the open is given its kernel-equality premise. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -378,7 +379,7 @@ Section S.
              (t_emit (W 1 (to_bytes (so_buf so))) (t_exit (wz code) fs)).
   Proof.
     intros until ph. intros HL INA DM CODE ER MI ST FR DS SOF SOB SEF.
-    pose proof DM as [MOK' MFDS HFS]. pose proof GT as GT'.
+    pose proof DM as [MOK' MFDS HFS _]. pose proof GT as GT'.
     unfold wz.
     eapply rz_step_evt; [exact MOK'|]. do 2 step. apply evt_done.
     eapply (scps_realizes usegs).
@@ -426,7 +427,7 @@ Section S.
   Proof.
     intros until mo. intros RET ST8 SOB.
     (nelim RET 31%nat; intros t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 F' fc' m' e' LB' -> FRM' MI' ST' ER' HL' INA FR DS SEF SOF DM).
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (bv_unsigned_in_range 8 b1) as R1. change (bv_modulus 8) with 256 in R1.
     unfold wz. eapply rz_step_evt; [exact MOK'|].
     step. if_cases K; zify_cond K.
@@ -452,7 +453,7 @@ Section S.
              (t_die msg fs).
   Proof.
     intros until t6. intros HL INA DM ER MI ST FR DS SOF SEF.
-    pose proof DM as [MOK' MFDS HFS]. destruct (DMOD_chan _ _ _ DM ltac:(left; reflexivity)) as [CH1 CH2].
+    pose proof DM as [MOK' MFDS HFS _]. destruct (DMOD_chan _ _ _ DM ltac:(left; reflexivity)) as [CH1 CH2].
     pose proof (lhd_ssp0 _ _ _ _ HL) as SSP.
     unfold wz. unfold PERRNO in ER.
     apply rz_die. eapply rz_step_evt; [exact MOK'|]. do 2 step. apply evt_done.
@@ -479,7 +480,7 @@ Section S.
              (t_die msg_short fs).
   Proof.
     intros until t6. intros HL INA DM ER MI ST FR DS SOF SEF.
-    pose proof DM as [MOK' _ _]. (nelimp DS 13%nat; intros _ _ _ _ _ _ _ _ _ _ G1 G2 _). unfold wz in G1, G2.
+    pose proof DM as [MOK' _ _ _]. (nelimp DS 13%nat; intros _ _ _ _ _ _ _ _ _ _ G1 G2 _). unfold wz in G1, G2.
     unfold wz. eapply rz_step_evt; [exact MOK'|]. do 7 step. apply evt_done.
     apply (main_fwrite_die A_MSG_short msg_short SO_SHORT F fc m mo LB A cap e); assumption.
   Qed.
@@ -494,7 +495,7 @@ Section S.
              (t_die msg_overrun fs).
   Proof.
     intros until t6. intros HL INA DM ER MI ST FR DS SOF SEF.
-    pose proof DM as [MOK' _ _]. (nelimp DS 13%nat; intros _ _ _ _ _ _ _ _ _ _ G1 G2 _). unfold wz in G1, G2.
+    pose proof DM as [MOK' _ _ _]. (nelimp DS 13%nat; intros _ _ _ _ _ _ _ _ _ _ G1 G2 _). unfold wz in G1, G2.
     unfold wz. eapply rz_step_evt; [exact MOK'|]. do 6 step. apply evt_done.
     apply (main_fwrite_die A_MSG_overrun msg_overrun SO_OVERRUN F fc m mo LB A cap e); assumption.
   Qed.
@@ -504,7 +505,7 @@ Section S.
   Proof.
     intros F fc FRM. unfold post_stmt. intros cap A cs p d junk m mo ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 IV LT.
     (nelim IV 21%nat; intros ST MI FR DS CJ [e ER] IFL SOF SEF BY DH RP PD DM FL BLK [stj RSC] [k CAP] LEN1 LEN2 CAP2).
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (dheap_block_range _ _ _ _ _ (p, A, cap) DH ltac:(left; reflexivity)) as BR. cbn [blk_addr blk_size fst snd] in BR.
     (nelimp BR 5%nat; intros BR1 BR2 BR3 BR4 BR5). unfold alloc_ceiling in BR4.
     set (len := zlength data) in *.
@@ -524,7 +525,8 @@ Section S.
     xport FR MU2 WM2 FR2. xport DS MU2 WM2 DS2. xport CJ MU2 WM2 CJ2. xport IFL MU2 WM2 IFL2. xport SOF MU2 WM2 SOF2. xport SEF MU2 WM2 SEF2.
     xport BLK MU2 WM2 BLK2.
     assert (DH2 : DHEAP cs [(p, A, cap)] SPB m2 (with_fds FDS0 mo)).
-    { apply (dheap_model cs _ SPB m2 mo); [| reflexivity| destruct MOK' as [Hh _]; exact Hh].
+    (* kernel slot, as at P/Drv_hdr.v:528: with_fds touches only m_fds. *)
+    { apply (dheap_model cs _ SPB m2 mo); [| reflexivity| reflexivity| destruct MOK' as [Hh _]; exact Hh].
       eapply dheap_frame_ext; [exact DH| exact MU2| exact WM2| solve_Forall ltac:(drv_write_ok_tac)]. }
     assert (DM2 : DMOD fs FDS0 (with_fds FDS0 mo)) by (eapply DMOD_with_fds; exact DM).
     pose proof (dheap_mok _ _ _ _ _ DH2) as MOK2.
@@ -739,7 +741,7 @@ Section S.
     intros until t6. intros IV IH IHb.
     (nelim IV 21%nat; intros ST MI FR DS CJ [e ER] IFL SOF SEF BY DH RP PD DM FL BLK [stj RSC] [k CAP] LEN1 LEN2 CAP2).
     pose proof RSN_Z as HRSN. pose proof PRS_eq as HPRS.
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (dheap_block_range _ _ _ _ _ (p, A, cap) DH ltac:(left; reflexivity)) as BR. cbn [blk_addr blk_size fst snd] in BR.
     (nelimp BR 5%nat; intros BR1 BR2 BR3 BR4 BR5). unfold alloc_ceiling in BR4.
     pose proof (pow2_ge1 k) as K2.   (* [comment removed for export] *)
@@ -879,7 +881,7 @@ Section S.
     intros until want. intros IV IH LT WANT.
     (nelim IV 21%nat; intros ST MI FR DS CJ [e ER] IFL SOF SEF BY DH RP PD DM FL BLK [stj RSC] [k CAP] LEN1 LEN2 CAP2).
     pose proof RSN_Z as HRSN. pose proof PRS_eq as HPRS.
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (dheap_block_range _ _ _ _ _ (p, A, cap) DH ltac:(left; reflexivity)) as BR. cbn [blk_addr blk_size fst snd] in BR.
     (nelimp BR 5%nat; intros BR1 BR2 BR3 BR4 BR5). unfold alloc_ceiling in BR4.
     pose proof (pow2_ge1 k) as K2.   (* [comment removed for export] *)
@@ -918,7 +920,8 @@ Section S.
     xport FR MU2 WM2 FR2. xport DS MU2 WM2 DS2. xport CJ MU2 WM2 CJ2. xport IFL MU2 WM2 IFL2. xport SOF MU2 WM2 SOF2. xport SEF MU2 WM2 SEF2. xport BY MU2 WM2 BY2.
     xport BLK MU2 WM2 BLK2. xport RSCb MU2 WM2 RSCb2.
     assert (DH2 : DHEAP cs [(p, A, cap)] SPB m2 (with_fds (FDS3 (FdFile path (Z_to_bv 64 (len + n)))) mo)).
-    { apply (dheap_model cs _ SPB m2 mo); [| reflexivity| destruct MOK' as [Hh _]; exact Hh].
+    (* kernel slot, as at P/Drv_hdr.v:528: with_fds touches only m_fds. *)
+    { apply (dheap_model cs _ SPB m2 mo); [| reflexivity| reflexivity| destruct MOK' as [Hh _]; exact Hh].
       eapply dheap_frame_ext; [exact DH| exact MU2| exact WM2|].
       solve_Forall ltac:(first [drv_write_ok_tac| unfold PRS; drv_write_ok_tac]). }
     assert (DM2 : DMOD fs (FDS3 (FdFile path (Z_to_bv 64 (len + n)))) (with_fds (FDS3 (FdFile path (Z_to_bv 64 (len + n)))) mo)).
@@ -1033,7 +1036,7 @@ Section S.
   Proof.
     intros until t6. intros IV IH LT.
     (nelimp IV 21%nat; intros _ _ _ _ _ _ _ _ _ _ DH _ _ DM _ _ _ [k CAP] LEN1 LEN2 CAP2).
-    pose proof DM as [MOK' _ _].
+    pose proof DM as [MOK' _ _ _].
     unfold wz.
     eapply rz_step_evt; [exact MOK'|].
     step. rewrite (unsigned_lit len) by lia. do 2 step. if_cases K; zify_cond K.
@@ -1141,7 +1144,7 @@ Section S.
   Proof using SO_EXIT SO_OOM.   (* [comment removed for export] *)
     intros until KH. intros DM DH TP ST LO GT SPH MI FRM DS TID FR CJ ER IFL SOF SEF [stj RSC] BY NONUL SLK LEN PUS KH0 HK.
     pose proof RSN_Z as HRSN. pose proof PRS_eq as HPRS.
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     unfold wz in *. unfold PERRNO in ER. unfold PINITFLAG in IFL.
     eapply rz_step_evt; [exact MOK'|].
     step. if_cases K; zify_cond K; [exfalso; lia|]. clear K.
@@ -1195,7 +1198,7 @@ Section S.
   Proof.
     intros until ms. intros DM DH TP ST LO GT SPH MI FRM DS TID ER SOF SEF BY NONUL SLK LEN PUS RSC BR (ra & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & s7 & t3 & t4 & t5 & t6 & ->).
     pose proof RSN_Z as HRSN. pose proof PRS_eq as HPRS.
-    pose proof DM as [MOK' MFDS HFS]. pose proof BR as (BR1 & BR2 & BR3 & BR4 & BR5). unfold alloc_ceiling in BR4.
+    pose proof DM as [MOK' MFDS HFS _]. pose proof BR as (BR1 & BR2 & BR3 & BR4 & BR5). unfold alloc_ceiling in BR4.
     unfold wz in *. unfold PERRNO in ER.
     eapply rz_step_evt; [exact MOK'|].
     do 3 step. if_cases K; zify_cond K; [exfalso; rewrite ?unsigned_lit in K by lia; lia|]. clear K.
@@ -1302,8 +1305,11 @@ Section S.
     intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m mo fs lo P1 tid path slack errv.
     intros DM DH RA TP -> -> ST LO CEIL SPH SPAL MI FRM DS TID CJ ER IFL SOF SEF [stj RSC] AV BY NONUL HSL HDD SLK LEN PUS.
     pose proof RSN_Z as HRSN. pose proof PRS_eq as HPRS.   (* [comment removed for export] *)
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (bytes_at_bound _ _ _ _ BY) as BB. rewrite length_app in BB. cbn [length] in BB.
+    (* the path's bytes lie in mapped memory, so they end below TASK_SIZE (open_spec's last premise) *)
+    pose proof (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.Mem.bytes_at_task usegs m _ _ MI usegs_task BY ltac:(destruct path; discriminate)) as TS.
+    rewrite length_app in TS. cbn [length] in TS.
     pose proof CEIL as GT.
     unfold wz, PMAIN in *. unfold PERRNO in ER. unfold PINITFLAG in IFL.
     pose proof (munch_refl [(bv_unsigned sp - 80, bv_unsigned sp)] m) as MU. pose proof (wmono_refl usegs m) as WM.
@@ -1366,7 +1372,7 @@ Section S.
       first [ exact ST | exact MI | exact NONUL | exact SSP1 | exact SSP2
             | lazymatch goal with |- _ = _ => reflexivity end
             | rewrite ?(errno_addr_tp tp TP); rewrite ?TP; unfold PERRNO, PTP, F_syscalls.got_ssp, F_syscalls.ssp_guard;
-              rewrite ?unsigned_lit by lia; first [exact BYP| exact ER| lia] ]. }
+              rewrite ?unsigned_lit by lia; first [exact BYP| exact ER| lia | unfold TASK_SIZE in *; lia] ]. }
     (* [comment removed for export] *)
     unfold spec_path.
     destruct (Nat.leb_spec0 4096 (length path)) as [TL|NTL].
@@ -1401,7 +1407,7 @@ Section S.
       rewrite RA in FR2.
       eapply (after_open_ok SO_EXIT SO_OOM _ sp gp tp _ _ _ s1 _ _ _ _ _ _ _ s3 s4 s5 s6 s7 s8 s9 s10 s11 _ _ _ _ F fc m2 _ fs e3 lo P1 tid path slack _ fj0 s0 s1 s2 s3 s4 s5 s6 s7 _ KH);
         first [ eapply DMOD_with_fds; exact DM
-              | eapply dheap0_model; [eapply dheap0_frame_ext; [exact DH1| exact MU2| exact WM2| solve_Forall ltac:(drv_write_ok_tac)]| reflexivity| destruct MOK' as [Hh _]; exact Hh]
+              | eapply dheap0_model; [eapply dheap0_frame_ext; [exact DH1| exact MU2| exact WM2| solve_Forall ltac:(drv_write_ok_tac)]| reflexivity| reflexivity| destruct MOK' as [Hh _]; exact Hh]
               | exact TP| exact ST2| exact MI2| exact FRM| exact DS2| exact TID| unfold mframe; exact FR2| exact CJ2| exact ER2| exact IFL2| exact SOF2| exact SEF2| exists stj; exact RSC2| exact BY3| exact NONUL| exact SLK| exact LEN| exact KH0| exact HK
               | unfold zlength in *; lia ]. }
     destruct (list_byte_eqb path dot_path) eqn:E1.

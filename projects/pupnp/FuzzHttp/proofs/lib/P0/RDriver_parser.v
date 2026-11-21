@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import base list gmap.
@@ -24,7 +25,7 @@ Section PS.
   Context {HGW : HasGuard} {HCEIL : HasCeiling}.
   Variables (sp0 : word) (argv : list (list byte)) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
   Hypothesis FZ : fuzz_one_stmt AI_P0.
   Notation usp0 := (bv_unsigned sp0).
 
@@ -68,7 +69,7 @@ Section PS.
     destruct INP as (data & IB & ILEN & IOR).
     unfold fuzz_one_stmt in FZ.
     eapply sreach_mono_keep.
-    { eapply (FZ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m s LB (d_AL d) (ap_payload_len ap) (usp0 - 8388608) usp0 errv guard_word data);
+    { eapply (FZ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m s LB (d_AL d) (ap_payload_len ap) (usp0 - 6144512) usp0 errv guard_word data);
         cbn [ai_L AI_P0 P0L al_errno al_tp RENV RHEAP];
         first [ exact IB | exact ILEN | exact IOR | exact HP | exact AUX | exact MI | exact G | exact SS1 | exact SS2 | exact FRM | reflexivity
               | rewrite unsigned_lit by lia; first [exact ST | unfold RERRNO in ERR; exact ERR | unfold PARSER_STACK; lia | lia]
@@ -124,7 +125,7 @@ Section PS.
       destruct OWN as (PL & EOW & BR2). specialize (L2 eq_refl).
       pose proof P0_free_contract as FC. unfold free_contract_at in FC. cbn [ai_L AI_P0 P0L al_free_pc al_errno al_tp al_stack RENV RHEAP] in FC.
       eapply sreach_mono_keep.
-      { eapply (FC _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m s LB p (d_AL d) (ap_payload_len ap) (usp0 - 8388608) usp0 errv);
+      { eapply (FC _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m s LB p (d_AL d) (ap_payload_len ap) (usp0 - 6144512) usp0 errv);
           first [ exact HP | exact L2 | exact AUX | exact MI | exact ERR | rewrite EOW; reflexivity
                 | rewrite unsigned_lit by lia; first [exact ST | lia]
                 | rewrite CEIL; unfold LO; lia | lia ]. }
@@ -172,7 +173,7 @@ Section PS.
     pose proof DBL as [L1 _].
     pose proof P0_free_contract as FC. unfold free_contract_at in FC. cbn [ai_L AI_P0 P0L al_free_pc al_errno al_tp al_stack RENV RHEAP] in FC.
     eapply sreach_mono_keep.
-    { eapply (FC _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m s LB (ap_buf ap) (d_A d) (d_cap d) (usp0 - 8388608) usp0 errv);
+    { eapply (FC _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m s LB (ap_buf ap) (d_A d) (d_cap d) (usp0 - 6144512) usp0 errv);
         first [ exact HP | exact L1 | exact AUX | exact MI | exact ERR | reflexivity
               | rewrite unsigned_lit by lia; first [exact ST | lia]
               | rewrite CEIL; unfold LO; lia | lia ]. }

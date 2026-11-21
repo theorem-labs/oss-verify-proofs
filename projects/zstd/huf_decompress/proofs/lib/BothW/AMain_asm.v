@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (amain_open's pure facts read through keep_facts; ported by content from zstd_frame_info's file of the same role, with this binary's addresses and names; minvA_std_fds's channel-reader premise discharged from amL_reader). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Common Require Import RunDraw.
 (* [comment removed for export] *)
@@ -88,23 +89,25 @@ Proof.
   Qed.
 
   Theorem asan_impl : asan_impl_stmt ASTAGE.
-Proof.
+  Proof.
     unfold asan_impl_stmt. intros en inp w V m ms mo Hv Hi HM.
     set (rc := run_consts_of en (Z_to_bv 64 0) (valid_sp_of_entry en inp Hv Hi)).
     assert (HA : atop_of (en_sp en) = @ATOP rc) by reflexivity.
     exists NMAX, (RNG0 V mo), (A0 V), (epostF TT).
-    pose proof HM as (_ & HV & _ & _ & HP & _ & _ & _ & _ & [HLIM HMOD]).
-    apply Forall_app in HP as [HP _].
+    pose proof HM as (_ & HV & _ & HMF0 & HPF0 & _ & _ & _ & _ & _ & [HLIM HMOD]).   (* [comment removed for export] *)
+    destruct (keep_facts _ _ _ _ _ HMF0 HPF0) as (_ & _ & HP).
     rewrite HA.
     split; [exact (ADRV rc en inp w V m ms mo Hv Hi HM HA)|].
-    split. {
+    split. { (* [comment removed for export] *)
       rewrite <- HA. destruct (equiv_PA_asan_toP_LL (vm_limit (m_vmmaps mo)) HLIM source_alloc_limit ltac:(vm_compute; discriminate)
                                  PREAD_STAGE ASTAGE V (en_sp en) _ _ _ en inp mo Hv Hi HMOD HP) as [_ HL].
       exact HL. }
     split. { rewrite m_halted_MX. exact (amL_halted _ _ _ _ _ HMOD). }
-    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (amL_fds _ _ _ _ _ HMOD) | reflexivity |].
-             rewrite m_vmmaps_MX, (amL_top _ _ _ _ _ HMOD). pose proof (amL_usp _ _ _ _ _ HMOD). unfold sp_window_lo, sp_window_hi. lia. }
+    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (amL_fds _ _ _ _ _ HMOD) | reflexivity | |].
+             - rewrite m_vmmaps_MX, (amL_top _ _ _ _ _ HMOD). pose proof (amL_usp _ _ _ _ _ HMOD). unfold sp_window_lo, sp_window_hi. lia.
+             - rewrite m_channel_reader_MX. exact (amL_reader _ _ _ _ _ HMOD). }
     split. { exact (MODEL_OK rc en inp w V m ms mo Hv Hi HM HA). }
+    (* [comment removed for export] *)
     change (MX mo []) with (canon mo). apply mrel_canon.
     - exact (amL_mat_nodup _ _ _ _ _ HMOD).
     - intros p Hp. destruct (amL_mat _ _ _ _ _ HMOD p Hp) as (Hal & _ & Hallow). apply A0_init; assumption.

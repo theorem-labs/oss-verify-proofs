@@ -1,13 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO pair; the launch's input, mmap base and entry draw; the page-granular brk grant, so PK_brk_grow takes both breaks page-aligned; a NULL-hint mmap is placed by linux_place, so PK_gap proves that placement available). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import PropExec MState ITree Nodes Decode VmGap.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Spec Require Import Prelim Malloc KInv KStep KStepK MBound.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require RelSpec.
 Import ListNotations.
 Local Open Scope Z_scope.
 
@@ -161,7 +164,7 @@ Lemma PK_with_tid zd wb wm wp mo v : PK zd wb wm wp mo -> PK zd wb wm wp (with_t
 Proof. intros P. eapply PK_vm_eq; [exact P| apply m_vmmaps_with_tid| apply m_vm_materialized_with_tid]. Qed.
 
 Lemma PK_init zd r brk mb sp lim inp :
-  (length r <= nres)%nat -> bv_unsigned brk <= SBMAX -> BACKTOP <= lim -> mmap_base_min <= bv_unsigned mb ->
+  (length r + 2 <= nres)%nat -> bv_unsigned brk <= SBMAX -> BACKTOP <= lim -> mmap_base_min <= bv_unsigned mb ->
   PK zd (BB * Z.of_nat KTOP) (BM * Z.of_nat KTOP) (BP * Z.of_nat KTOP) (init_model r brk mb sp lim inp).
 Proof.
   intros Hr Hb Hl Hm. constructor; rewrite ?m_vmmaps_init_model, ?m_vm_materialized_init_model;
@@ -169,6 +172,8 @@ Proof.
   - intros e [].
   - unfold BRKTOP. assert (PGSZ = 4096) by reflexivity. nia.
   - unfold MAPTOP. lia.
+  - unfold init_reserved. rewrite length_app.
+    pose proof (vdso_reserved_length (in_kernel inp) (page_round_down_Z (Z.min (bv_unsigned mb) (bv_unsigned sp - stack_max_size)))). lia.
   - unfold BACKTOP, BB, KTOP. cbn. lia.
   - unfold BB, BM, BP, KTOP. cbn. lia.
 Qed.
@@ -218,11 +223,11 @@ Proof. repeat split; reflexivity. Qed.
 
 Lemma PK_brk_grow zd wb wm wp mo rsp mo' evs req :
   let h := m_vmmaps mo in let b := bv_unsigned (vm_brk h) in
-  0 < b -> bv_unsigned (vm_start_brk h) <= b -> b < req <= b + 2 * PGSZ ->
+  0 < b -> bv_unsigned (vm_start_brk h) <= b -> b < req <= b + 2 * PGSZ -> b mod 4096 = 0 -> req mod 4096 = 0 ->
   2 * PGSZ <= wb -> 1 <= wm -> 2 <= wp ->
   PK zd wb wm wp mo -> nstep (NBrk req) mo rsp mo' evs -> PK zd (wb - 2 * PGSZ) (wm - 1) (wp - 2) mo'.
 Proof.
-  intros h b. subst h b. set (h := m_vmmaps mo). set (b := bv_unsigned (vm_brk h)). intros Hb Hsb Hreq Wb Wm Wp P ST.
+  intros h b. subst h b. set (h := m_vmmaps mo). set (b := bv_unsigned (vm_brk h)). intros Hb Hsb Hreq Hba Hra Wb Wm Wp P ST.
   pose proof (pk_brk _ _ _ _ _ P) as PB. fold h b in PB. pose proof BRKTOP_HIGH as BH. unfold PGSZ, HIGH in *.
   assert (R64 : b < req < 2^64) by lia.
   destruct (nstep_brk_inv _ _ _ _ _ ST) as (r & Hr & Eh & _ & _ & _). fold h in Hr, Eh.
@@ -232,7 +237,7 @@ Proof.
   destruct (brk_r_ok_grow mo req r Hsb R64 Hr) as [->|[-> GO]].
   - pose proof (brk_model_next_same h (Z_to_bv 64 req)) as (Q1 & Q2 & Q3 & Q4 & Q5).
     apply (PK_same zd wb wm wp _ _ _ mo mo' P); rewrite ?Eh; auto; lia.
-  - pose proof (brk_model_next_grown h req Hb R64) as (Q1 & Q2 & Q3 & Q4 & Q5).
+  - pose proof (brk_model_next_grown h req Hb R64 Hba Hra) as (Q1 & Q2 & Q3 & Q4 & Q5).
     destruct P as [Zn Sb Bk Cn Rv Bc Lm Bs Wn]. fold h in Zn, Sb, Bk, Cn, Rv, Bc, Lm, Bs. unfold PGSZ in *.
     constructor; rewrite ?Eh, ?Q1, ?Q2, ?Q4, ?Q5, ?M1, ?M2; rewrite ?unsigned_lit by lia; unfold PGSZ; auto; try lia.
     + intros e [<-|He].
@@ -449,26 +454,74 @@ Proof.
   cbn [vm_maps vm_limit] in *. specialize (R (minv_nolazy _ (kl_minv _ _ _ K)) eq_refl eq_refl eq_refl). lia.
 Qed.
 
-Lemma PK_gap zd wb wm wp mo L pbrk n :
-  KL L pbrk mo -> PK zd wb wm wp mo -> 0 < n <= LMAX -> vm_gap_available (m_vmmaps mo) n = true.
+(* the vDSO pair adds at most two entries of at most twenty pages each to the placement cost *)
+Lemma gap_cost_vdso n c kb top : 0 < n -> top < two_pow_64 ->
+  gap_cost n c (vdso_reserved kb top) <= 2 * (20 * 4096 + n + 4095).
 Proof.
-  intros K P Hn. set (h := m_vmmaps mo).
-  pose proof (kl_resv_top _ _ _ K) as RT. pose proof (kl_start _ _ _ K) as (S1 & S2 & S3 & S4).
+  intros Hn Htop.
+  assert (B : forall e, In e (vdso_reserved kb top) -> vsz e <= 20 * 4096).
+  { intros [a s] He. pose proof (vdso_reserved_above kb top a s Htop He) as [H1 H2].
+    pose proof (vdso_len_bounds kb) as [_ H3]. unfold vsz. cbn [snd]. unfold page_size in H3. lia. }
+  pose proof (vdso_reserved_length kb top) as Len. revert B Len.
+  generalize (vdso_reserved kb top) as l. intros l B Len.
+  destruct l as [|e1 [|e2 [|e3 l]]]; cbn [length] in Len; try lia; cbn [gap_cost].
+  - lia.
+  - pose proof (B e1 (or_introl eq_refl)). destruct (c <? vhi e1); lia.
+  - pose proof (B e1 (or_introl eq_refl)). pose proof (B e2 (or_intror (or_introl eq_refl))).
+    destruct (c <? vhi e1), (c <? vhi e2); lia.
+Qed.
+
+(* LPS 727298f3: a NULL-hint grant is refused only when [linux_place] has no answer.  A free
+   aligned window above [task_unmapped_base] and below [alloc_top] is a fit of Linux's
+   bottom-up search, so the search answers ([Placement.linux_place_exists]); the window comes
+   from the cost bound as in [VmGap.vm_gap_available_of_cost].  The same lemma as the A0
+   tree's ZAA/ALinkVm.v vm_place_available_of_cost, which this library cannot import. *)
+Lemma vm_place_available_of_cost : forall h thp nZ c,
+  0x2aaaaab000 <= c -> c mod 4096 = 0 -> 0 < nZ -> nZ mod page_size = 0 ->
+  c + nZ + gap_cost nZ c (vm_reserved h ++ vm_maps h) <= alloc_top h ->
+  RelSpec.vm_place_available h thp (Z_to_bv 64 0) nZ = true.
+Proof.
+  intros h thp nZ c Hc Hal Hn Hnal Hcost. pose proof (alloc_top_lt h) as TOP. unfold two_pow_64 in TOP.
+  destruct (free_base_exists (vm_reserved h ++ vm_maps h) c (alloc_top h) nZ ltac:(lia) Hal Hn Hcost)
+    as (g & G1 & G2 & G3 & G4).
+  apply (proj2 (RelSpec.vm_place_available_spec h thp (Z_to_bv 64 0) nZ Hn Hnal)).
+  lapply (Placement.linux_place_exists h thp (Z_to_bv 64 0) nZ Hn Hnal).
+  2:{ exists g. right. unfold gap_fits. split; [exact G2|].
+      split; [eapply Z.le_trans; [|exact (Z.le_trans _ _ _ Hc G1)]; apply Z.leb_le; vm_compute; reflexivity|].
+      split; [exact G3|]. apply region_free_of_clear; [lia| lia| lia| exact G4]. }
+  intros (p & Hp).
+  destruct (Placement.linux_place_admissible _ _ _ _ p Hn Hnal Hp) as (_ & Hpos & Htop & _).
+  exists (Z_to_bv 64 p). rewrite Z_to_bv_unsigned, bv_wrap_small; [exact Hp|].
+  unfold bv_modulus. change (2 ^ Z.of_N 64) with (2 ^ 64). lia.
+Qed.
+
+Lemma PK_gap zd wb wm wp mo L pbrk n thp :
+  KL L pbrk mo -> PK zd wb wm wp mo -> 0 < n <= LMAX -> n mod page_size = 0 ->
+  RelSpec.vm_place_available (m_vmmaps mo) thp (Z_to_bv 64 0) n = true.
+Proof.
+  intros K P Hn Hnal. set (h := m_vmmaps mo).
+  pose proof (kl_vdso _ _ _ K) as VD. unfold vdso_in_resv in VD. destruct VD as (RR & ER & RT).
+  pose proof (kl_start _ _ _ K) as (S1 & S2 & S3 & S4).
   pose proof (pk_sb _ _ _ _ _ P) as SB. pose proof (pk_brk _ _ _ _ _ P) as PB.
   pose proof (pk_cnt _ _ _ _ _ P) as CN. pose proof (pk_W _ _ _ _ _ P) as (W1 & W2 & W3). pose proof (pk_back _ _ _ _ _ P) as BK.
-  pose proof (KL_top_bracket _ _ _ K) as TB. pose proof BRKTOP_HIGH as BH. fold h in RT, S1, S2, S3, S4, SB, PB, CN, BK, TB.
+  pose proof (KL_top_bracket _ _ _ K) as TB. pose proof BRKTOP_HIGH as BH. fold h in ER, RT, S1, S2, S3, S4, SB, PB, CN, BK, TB.
   assert (PG : PGSZ = 4096) by reflexivity.
-  apply (vm_gap_available_of_cost h n HIGH); [unfold HIGH; lia| reflexivity| lia|].
-  rewrite gap_cost_app.
-  assert (R0 : gap_cost n HIGH (vm_reserved h) = 0).
-  { rewrite gap_cost_eq, bytes_above_low, nabove_low; [lia| |]; intros e He; specialize (RT e He);
-      change (vhi e) with (ehi e); unfold BRKTOP, SBMAX, HIGH in *; nia. }
-  rewrite R0.
+  apply (vm_place_available_of_cost h thp n 0x2aaaaab000); [lia| reflexivity| lia| exact Hnal|].
+  assert (CB : gap_cost n 0x2aaaaab000 (vm_reserved h ++ vm_maps h)
+               <= gap_cost n HIGH (vm_reserved h) + gap_cost n HIGH (vm_maps h)).
+  { rewrite <- gap_cost_app. apply gap_cost_mono; [lia| unfold HIGH; lia]. }
+  revert CB. generalize (gap_cost n 0x2aaaaab000 (vm_reserved h ++ vm_maps h)) as gc. intros gc CB.
+  assert (R0 : gap_cost n HIGH (vm_reserved h) <= 2 * (20 * 4096 + n + 4095)).
+  { rewrite ER, gap_cost_app.
+    assert (G1 : gap_cost n HIGH RR = 0).
+    { rewrite gap_cost_eq, bytes_above_low, nabove_low; [lia| |]; intros e He; specialize (RT e He);
+        change (vhi e) with (ehi e); unfold BRKTOP, SBMAX, HIGH in *; nia. }
+    rewrite G1. pose proof (gap_cost_vdso n HIGH (m_kernel mo) (vdso_top h) ltac:(lia) (vdso_top_lt h)). lia. }
   assert (CM : gap_cost n HIGH (vm_maps h) <= BACKTOP + MAPTOP * (n + 4095)).
   { apply gap_cost_le; [lia| |].
     - etransitivity; [apply bytes_above_le_live|]. pose proof (live_bytes_nonneg (vm_maps h)). nia.
     - pose proof (nabove_le_length HIGH (vm_maps h)). lia. }
-  unfold HIGH, BACKTOP, MAPTOP, BM, KTOP, LMAX in *. cbn in CM |- *. lia.
+  unfold HIGH, BACKTOP, MAPTOP, BM, KTOP, LMAX in *. cbn in CB, CM, R0 |- *. lia.
 Qed.
 
 Lemma PK_not_forced_mmap zd wb wm wp mo L pbrk len prot :
@@ -482,13 +535,14 @@ Proof.
   assert (NE : page_round_up_Z (bv_unsigned (Z_to_bv 64 len)) = round_up_pg len).
   { rewrite unsigned_lit by (unfold LMAX in Hl; lia). rewrite <- KStep.round_up_pg_eq. reflexivity. }
   pose proof (MBound.round_up_pg_ge len) as RG.
-  pose proof (PK_gap zd wb wm wp mo L pbrk (round_up_pg len) K P ltac:(lia)) as GAP.
+  pose proof (PK_gap zd wb wm wp mo L pbrk (round_up_pg len) (kb_thp (m_kernel mo)) K P ltac:(lia)
+                ltac:(rewrite page_size_val; exact (MBound.round_up_pg_mod len))) as GAP.
   unfold nmmap_refusable. rewrite NE. destruct Hp as [-> | ->].
   - change (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with false.
     change (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with true. cbv iota.
-    unfold mmap_reserve_refusable. rewrite GAP. reflexivity.
+    unfold RelSpec.mmap_place_reserve_refusable. rewrite GAP. reflexivity.
   - change (mmap_modeled_b (Z_to_bv 64 PROT_RW) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with true. cbv iota.
-    unfold mmap_grant_refusable. rewrite GAP.
+    unfold RelSpec.mmap_place_refusable. rewrite GAP.
     unfold mmap_noreserve_backed_ok. change (mmap_noreserve_b (Z_to_bv 64 MAPF)) with false. cbv iota.
     pose proof (vm_backing_used_le mo (minv_nolazy _ (kl_minv _ _ _ K))) as U. rewrite page_size_val in U.
     pose proof (pk_back _ _ _ _ _ P) as BK. pose proof (pk_lim _ _ _ _ _ P) as LM.

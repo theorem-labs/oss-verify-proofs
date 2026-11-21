@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B3 of reac_segconf_parse_file's
    walk, its third piece: MID2 (0x88134) -> DONE (0x89114, the empty text) or HEAD (0x881f8, the first line).
    The B3 segment lane of the image-B G3 walk owner, 2026-10-30. ADAPTED from the image-A G3 walk owner's image-A segment walk lib/A/Prog/pf_a2.v
-   (commit 3f59c8d75ed4: seed, plain runs, region read-back), re-derived on image B's code:
+   (seed, plain runs, region read-back), re-derived on image B's code:
      0x88134 srli a0,s11,3; add a0,a0,s4; lb a0,0(a0); 0x88140 beqz a0 -> 0x88148    inline check B#2 (load1 of *p;
              the shadow byte s of t's granule; s = 0, or s <> 0 and the cold slow path 0x891e4 `andi a1,s11,7;
              bge a1,a0` -> error path 0x891f0 is not taken (t mod 8 < s: reader_pre's sa_addr t (|s| + 1),

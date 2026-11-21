@@ -48,9 +48,9 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.A.Prog Require Import PaRun PaShado
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A.Prog Require Import PaJournal ScenePaLib SceneBase SceneRo SceneFrame.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Prog Require Import SceneBlock.
-(* reac_ctrl_checksum_verify: a Theorem Labs lane's landed contract (at 61afd7acb1d), TCKV_STK = 16. *)
+(* reac_ctrl_checksum_verify: a Theorem Labs lane's landed contract, TCKV_STK = 16. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A.Prog Require Import P_reac_ctrl_checksum_verify.
-(* reac_ctrl_parse: a Theorem Labs lane's statement (at 63ad3e6dcfa), TPARSE_STK = 160 + 2 * ESTACK = 8352. *)
+(* reac_ctrl_parse: a Theorem Labs lane's statement, TPARSE_STK = 160 + 2 * ESTACK = 8352. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A.Prog Require Import P_reac_ctrl_parse.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.

@@ -25,7 +25,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require Import RcModel RcLib Rc
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import RcAsanRT asan_stack_malloc_c RcAsanFP RcAsanFPLib
   asan_memcpy_c asan_memset_c ctrl_lay_block_c reac_braid_encode_ns0_c ctrl_finish_c reac_box_model_block_c
   ctrl_emit_as_c.
-(* E4 of the glue draft: the ONE text of record of the two runtime helpers (a Theorem Labs lane, 9869f1d1f86); this file
+(* E4 of the glue draft: the ONE text of record of the two runtime helpers (a Theorem Labs lane); this file
    used to carry its own copy of each. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import asan_memset_cF asan_memcpy_cF.
 (* Route (C) (a Theorem Labs lane, the _on block at the end of Section Emit): the leaf region predicate (lib/B/ShadowRwOn.v),

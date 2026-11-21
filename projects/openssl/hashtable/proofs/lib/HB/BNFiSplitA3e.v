@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it; the plans are renumbered to the new numbering). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -20,17 +21,18 @@ Section FiSplitA3e.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
-  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw c.
+  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw L c.
 
   (* [comment removed for export] *)
   Hypothesis H_FIa : fx_hole SV argH ISP fs (with_facts c7a3_hs25 [par_even]) fiaenda3e.
@@ -44,7 +46,7 @@ Section FiSplitA3e.
   #[local] Notation SVP := (SVG PHI SV).
   #[local] Notation PIECE := (piece SVP argH ISP fs).
 
-  Let SVP1 : forall E M, SVP E M -> HBArg.SINV1 sp brk0 argv envp rdraw hw uid E M := fun E M H => SV1 E M (proj1 H).
+  Let SVP1 : forall E M, SVP E M -> HBArg.SINV1 (L:=L) sp brk0 argv envp rdraw hw uid E M := fun E M H => SV1 E M (proj1 H).
   Let SVPF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SVP E M -> SVP E M' :=
     fun E M M' Hf H => conj (SVF E M M' Hf (proj1 H)) (proj2 H).
   Let SVPA : forall E E' M, env_agree NX0 E E' -> SVP E M -> SVP E' M := fun E E' M Hag H => conj (SVA E E' M Hag (proj1 H)) (PHI_agree E E' Hag (proj2 H)).
@@ -54,7 +56,7 @@ Section FiSplitA3e.
   Lemma fib_piece : PIECE c7ma3e_hs27 T.
   Proof.
     apply (hole_compose SVP argH ISP fs c7ma3e_hs27 fienda3se7 T); [vm_compute; lia | exact T_agree | | exact Htail].
-    apply (fx_hole_phi sp rdraw argv envp uid hw fs SV NX0 PHI PHI_agree c7ma3e_hs27 fienda3se7); [vm_compute; lia | exact H_FIb].
+    apply (fx_hole_phi sp rdraw argv envp fs SV NX0 PHI PHI_agree c7ma3e_hs27 fienda3se7); [vm_compute; lia | exact H_FIb].
   Qed.
 
   Lemma mini_holes : holes_stmt HASEGS HAT AsanInit.LIMIT C7mA3e_HS SVP argH ISP (fun _ => T) fs.
@@ -67,12 +69,12 @@ Section FiSplitA3e.
     intros E R FULL m HC.
     exact (ha1_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SVP SVP1 SVPF SVPA C7mA3e_HS (fun _ => T)
              (fun _ E1 E2 fs0 Hag => T_agree E1 E2 fs0 Hag) (fun _ => T_nil) (fun _ _ _ => eq_refl) mini_holes c7ma3e_IT c7ma3e_IT_ok
-             0%nat true 3000%nat 400000%nat c7m_plan fiaenda3e c7ma3e_shape c7ma3e_cert E R FULL m HC).
+             0%nat true 3000%nat 400000%nat (HBReg.mplan c7m_plan) fiaenda3e c7ma3e_shape c7ma3e_cert E R FULL m HC).
   Qed.
 
   Theorem fi_split_a3e : PIECE (with_facts c7a3_hs25 [par_even]) T.
   Proof.
     apply (hole_compose SVP argH ISP fs (with_facts c7a3_hs25 [par_even]) fiaenda3e T); [vm_compute; lia | exact T_agree | | exact mini_piece].
-    apply (fx_hole_phi sp rdraw argv envp uid hw fs SV NX0 PHI PHI_agree (with_facts c7a3_hs25 [par_even]) fiaenda3e); [vm_compute; lia | exact H_FIa].
+    apply (fx_hole_phi sp rdraw argv envp fs SV NX0 PHI PHI_agree (with_facts c7a3_hs25 [par_even]) fiaenda3e); [vm_compute; lia | exact H_FIa].
   Qed.
 End FiSplitA3e.

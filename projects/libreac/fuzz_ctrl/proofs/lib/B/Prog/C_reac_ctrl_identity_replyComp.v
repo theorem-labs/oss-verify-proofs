@@ -29,7 +29,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import RcAsanFP C_rea
 (* rrB_SBpost and rrB_inH. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import C_reac_ctrl_identity_replyPf.
 (* rrB_journal_gen (the journal across a lifted stretch) moved out of Pf into the shared GlueLift.v with its
-   name and statement unchanged (a working branch aabcfc3744e, merged here as b9b1631c5b8). *)
+   name and statement unchanged (a working branch, merged here as). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import GlueLift.
 Import ListNotations.
 Open Scope Z_scope.
@@ -120,7 +120,7 @@ Lemma rrB_J_SB :
     (* The frame facts at the base memory mb: the stk, shadow-zero and ASAN_GT conjuncts of
        B.ProgWorldAstack.ctl_fs_of_astack's conclusion at cid 1 (mem' := mb, fr := G, n := fs_B 1 = 128), the same
        conclusion that supplies rrB_SB_lifted's frame premises at mb (G + 120 and the flag byte).  The lead (a Theorem Labs lane)
-       discharges them at the composition: ctl_fs_of_astack is applicable from fd812f73bc3 (rrB_E1 through
+       discharges them at the composition: ctl_fs_of_astack is applicable (rrB_E1 through
        lib.Reusable.YCbqMalloc.aj_stack_malloc_at_fc), with its own premises 0 <= cid <= 6, the [lo, spZ - ESTACK)
        range and presence, 1 <= L <= fs_frame_bytes 1, ctl_fs_geom_stmt and AR_laws taken there.  This lemma takes
        the conclusion conjuncts only, so it needs none of those premises itself. *)
@@ -129,7 +129,7 @@ Lemma rrB_J_SB :
     (H_fr_gt : ASAN_GT <= fs_frame FS 1 jj)
     (* every byte of the frame G and of its 16 shadow bytes is an awr_byte (the in_frames arm, frame (1, jj)) *)
     (* OWNER PENDING: the lead (a Theorem Labs lane) discharges it at the composition; B.ProgWorldAstack.ctl_fs_of_astack is
-       applicable from fd812f73bc3 (rrB_E1 re-proved through lib.Reusable.YCbqMalloc.aj_stack_malloc_at_fc) *)
+       applicable (rrB_E1 re-proved through lib.Reusable.YCbqMalloc.aj_stack_malloc_at_fc) *)
     (HFRAMES_C1 : forall a,
        fs_frame FS 1 jj <= a < fs_frame FS 1 jj + 128 \/
        shadow_addr (fs_frame FS 1 jj) <= a < shadow_addr (fs_frame FS 1 jj) + 16 ->

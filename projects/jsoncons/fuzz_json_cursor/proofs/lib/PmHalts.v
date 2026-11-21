@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed halts_csrc. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import ShapeAlg Dive
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.CJ.Bridge Require PmHeapInst10.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Pm10DrvLibL Pm10HeapBridge PmFinal Pm10NoSpin.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require PropExec.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.Common.Cfg Require SRomStable.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -42,13 +44,23 @@ Section Src.
     intros [sp brk mb rnd] inp Hen Hvalid.
     pose proof (valid_input_va_size _ Hvalid) as Hsv48.
     rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-    destruct Hen as [Hrsp [Hrbrk [Hrmb Hrfit]]].
-    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _).
+    (* valid_entry's 5th conjunct is the launch ([Run.valid_entry_sv48]'s RHS order);
+       valid_input is read through the model's BY-NAME accessors, for Pm10DrvMain's
+       src_realizes_stmt2_lim (.. Hmb Hvl Hlau Hargv Henvp Hfs Hcreds Hcr). *)
+    destruct Hen as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]].
     eapply (srealizes_must_exit_init _ PmFinal.cfg0 CODES).
-    - exact (Pm10HeapBridge.src0_realizes_spec_heap_lim PmFinal.cfg0 eq_refl eq_refl Lay0F LS0F DLL0 LIB0 LX0 BUD0 source_alloc_limit
-               sp brk mb rnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
+    - (* the run reads the binary's segments with the run's vDSO appended
+         ([Run.run_segments]); [SRomStable.srun_init] lifts the walk over the binary's own
+         segments ([vdso_image] of them is [None] by computation) *)
+      apply (SRomStable.srun_init PmFinal.cfg0 Plain.M.loaded_segments inp sp mb _ _ _ _ _ _ eq_refl).
+      exact (Pm10HeapBridge.src0_realizes_spec_heap_lim PmFinal.cfg0 eq_refl eq_refl Lay0F LS0F DLL0 LIB0 LX0 BUD0 source_alloc_limit
+               sp brk mb rnd inp Hrsp Hrbrk Hrmb (valid_input_launch _ Hvalid) Hrlau
+               (valid_input_argv _ Hvalid) (valid_input_envp _ Hvalid) (valid_input_fs _ Hvalid)
+               (valid_input_creds _ Hvalid) (valid_input_channel_reader _ Hvalid)).
     - apply Safe_init_big. exact nbr_limit_source.
-    - exact Pm10NoSpin.src11_no_spin_site.
+    - (* the vDSO pair is not executable, so the run's list has a spin site only where the
+         binary's own segments have one ([SRomStable.spin_site_run_segments]) *)
+      intro Hs. exact (Pm10NoSpin.src11_no_spin_site (SRomStable.spin_site_run_segments _ _ _ _ Hs)).
     - apply HaltsSpec.codes_ok_spec; [exact codes_0 | exact codes_2].
     - apply HaltsSpec.nokill_spec.
   Qed.

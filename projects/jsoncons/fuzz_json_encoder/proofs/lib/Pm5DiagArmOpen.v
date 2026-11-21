@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed Hp, dg_open_site, str_atA; added vmc_refl; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm9DiagArmOpen.v, lines 18, 115-116, 250-256, 286. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -21,6 +22,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 #[local] Notation u64A := (L5Defs.L5.u64_at ASEGS).
@@ -123,7 +125,8 @@ Section Arm.
     Hypothesis HW : L5Defs.L5.writable ASEGS MV (S - 5440) 5440.
     Hypothesis HD : L5Defs.L5.defined MV (S - 5440) 5440.
     Hypothesis HIMG : L5Defs.L5.img_clear MV 65536 1466368.
-    Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+    (* SLACK 16 -> 9, old beside new: was [p + n + 1 + 16 <= 2 ^ 47]; see Pm5DrvEntryK.ent_str_hi.  lia margin UNCHECKED. *)
+    Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
     Hypothesis HSTR : Pm5DiagStrnlen.DSN.cstr MV p bs t8.
     Hypothesis HSH : forall x : word, Pm5RegionPoisoned.SB + p / 8 - 7 <= bv_unsigned x < Z.min (Pm5RegionPoisoned.SB + (p + n) / 8 + 8) (Pm5RegionPoisoned.SB + 2 ^ 44) -> MV x = Some (Z_to_bv 8 0).
     Hypothesis HSTK : L5KnA.L5KA.zeros_at MV (Pm5RegionPoisoned.SB + S / 8 - 680) 688.
@@ -260,17 +263,16 @@ Section Arm.
              (fun x _ _ => eq_refl) (mem_grows_refl _) ltac:(lia) ltac:(lia) HS16 WINi IMGi XAi SOPi FD2 CH).
   Qed.
 
-  (* [comment removed for export] *)
+  (* SLACK 16 -> 9, old beside new: sa_lo/sa_def were [+ 1 + 16]; see Pm5DrvEntryK.ent_str_hi. *)
   Record str_atA (A : list (Z * Z)) (p1 : word) (path : list byte) : Prop := STR_ATA {
-    sa_lo : usp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47;
+    sa_lo : usp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47;
     sa_str : rdn ASEGS M0 p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]);
     sa_nonul : ~ In (Z_to_bv 8 0) path;
     sa_len : Z.of_nat (length path) <= 131071;
-    sa_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16);
+    sa_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8);
     sa_sah : shadow_allowed A (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar)
   }.
 
-  (* [comment removed for export] *)
   Lemma dg_open_site : forall (fxq : PropExec.FPState) vals R M (model : Model) LB LK cr A fs (p1 : word) (path : list byte),
     regs_ok (ENVG vals) srOEA R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knOEA -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 ->
     dinvA LB LK cr A M model -> m_fs model = fs -> fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
@@ -297,7 +299,7 @@ Section Arm.
     assert (G10 : getr R 10%bv = Z_to_bv 64 1477960) by (regv HR (10%bv : reg); reflexivity).
     assert (G11 : getr R 11%bv = Z_to_bv 64 131045) by (regv HR (11%bv : reg); reflexivity).
     assert (G12 : getr R 12%bv = Z_to_bv 64 (bv_unsigned p1)) by (regv HR (12%bv : reg); cbn [edenot ev ENVA]; rewrite P2; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47) by (unfold S; lia).
+    assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47) by (unfold S; lia).
     destruct (Z_le_gt_dec (Z.of_nat (length path)) 62) as [HnA|HnA'].
     - apply (die_of_chain [Pm5DiagOpenA.DOA.PRE17 ++ path ++ Pm5DiagOpenA.DOA.SUF1] _ vals knOEA LB LK cr A M model fxq R fs S HK OKb P0 D EFS FD2
                ltac:(unfold S; lia) ltac:(unfold S; lia) HS16).
@@ -317,7 +319,6 @@ Section Arm.
                    (u64_range can) HC HSN ltac:(lia)).
   Qed.
 
-  (* [comment removed for export] *)
   Theorem open_armA : forall path fs0 p1 LK0 cr0 A0, str_atA A0 p1 path ->
     open_err_kA scfg ar HI sp0 fs0 fdata p1 M0 LK0 cr0 A0 (t_die (msg_cannot_open path) fs0).
   Proof.

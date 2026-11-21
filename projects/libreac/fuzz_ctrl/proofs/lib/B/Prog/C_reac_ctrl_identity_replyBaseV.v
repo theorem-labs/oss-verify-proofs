@@ -20,7 +20,7 @@
      B.ProgWorld_Fs.ctl_fp_of_AR (lib/B/ProgWorld_Fs.v:407)               fp [1%nat] mem2 ..
      B.ProgWorld_Fs.pw_F_above (:267), pw_F_present (:292), pw_view_mrd (:72), pw_u64 (:49)
      B.ProgWorld.as_tp_RT_TP (lib/B/ProgWorld.v:893), as_tsd_TSD (:1206)
-     B.ProgWorldVisWin.win_sh_vis (lib/B/ProgWorldVisWin.v:69)            the window's shadow cover
+     B.ProgWorldVisWin.win_sh_vis (lib/B/ProgWorldVisWin.v:70)            the window's shadow cover
      B.ProgWorldVisHeap.heap_vis (:43), heap_sh_vis (:53)                  the message and its shadow covers
      B.ProgWorldVisFrame.vis_of_aview (lib/B/ProgWorldVisFrame.v:39)       the class-1 frames' shadow (am_areas)
      B.ProgWorldTlsApart.fp_tls_apart, B.ProgWorldBlkApart.ctl_block_apart_fs (the ProgWorld statements
@@ -36,7 +36,7 @@
 
    NAMED Section hypotheses of this file (besides the shared header's): CELLS_NOT_C1 (SPEC GAP; the composition
    gives it from the spec's P11 conjunct cid <> 1) and HRT2 (the cut's ctl_rt_C).  rule 24:
-   lookup-reac_ctrl_identity_reply.txt (a working note, not in this delivery), checker CONFIRM; At ossv/recipes c5e779efe8c (2026-10-31), no released proof outside this unit; written new. *)
+   lookup-reac_ctrl_identity_reply.txt (a working note, not in this delivery), checker CONFIRM; At (2026-10-31), no released proof outside this unit; written new. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Cells Exec Step Frame.
@@ -112,7 +112,7 @@ Proof.
   assert (E : 0x7fffff800000 / 8 = 0xffffff00000) by reflexivity. rewrite E in A1. lia.
 Qed.
 
-(* ctrl's class-1 side-stack numerals (asan_stack_malloc_c.v:26-31; rrF_fs_frame1, reac_ctrl_identity_replyRB.v:179) *)
+(* ctrl's class-1 side-stack numerals (asan_stack_malloc_c.v:26-31; rrF_fs_frame1, reac_ctrl_identity_replyRB.v:180) *)
 Lemma rb_fs1 : forall FS, fs_frame FS 1 0 = FS + 1085440 /\ fs_frame FS 1 (fs_M 1) = FS + 2134016 /\
   fs_hint FS 1 = FS + 8 /\ fs_flag FS 1 0 = FS + 20480 /\ fs_M 1 = 8192 /\ fs_frame FS 0 0 = FS + 36864.
 Proof.
@@ -279,7 +279,7 @@ Local Notation FSc := (lib.Reusable.YG0f.ly_F lyc).
 (* Every lemma below states its Section dependencies with `Proof using rbBase` and starts by clearing the Section
    hypotheses outside rbBase (rb_clr): lia reverts every arithmetic hypothesis of its context into its proof term, so
    otherwise the closed lemmas would also take premises they never need (the numeric premises Rfr .. Rpn, S16, Hg and
-   the interim H_aj_stack_malloc_at_fc, measured by About on fa3e3dde5f7). *)
+   the interim H_aj_stack_malloc_at_fc, measured by About). *)
 Local Ltac rb_clr := clear P4gp Rfr Rlen Rpa Rpp Rpn S16 Hg HJ1 HP H10 HFR HNI HNEV HBB HZ HFL
   H_aj_stack_malloc_at_fc.
 Collection rbBase := LAWS TS P1 P4tp HSlo HShi P10 P11 HR HREL HROS HJ2 HAB HKEPT HRT2 CELLS_NOT_C1.

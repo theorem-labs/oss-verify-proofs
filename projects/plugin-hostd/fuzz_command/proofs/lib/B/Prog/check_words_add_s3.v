@@ -5,9 +5,10 @@
    form of proofs/cgif/cgif_file_fuzzer/lib/A/ACaa.v (a program call through cl_callS, the symbolic state re-seated
    after it) and A/AChc.v (cl_seed: a symbolic state built from the facts of a cut point). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s2.v, with its module paths and module names changed; 348 of its 400 lines of code are new or changed and 591 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_words_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, part 3: the placement-word middle
    0x88f64 .. 0x88fe8 when the placement is word 3. The twin of cwa_mid_dash in lib/B/Prog/check_words_add_s2.v,
-   and the B twin of lib/A/Prog/check_words_add_s3.v (a working branch 1aea12cabb8). When read > 4 the run
+   and the B twin of lib/A/Prog/check_words_add_s3.v (a working branch). When read > 4 the run
    decides word 4's slot's trap sites 0x88fc0 (w + 32 below w), 0x88fc4 (w null), 0x88fc8 (w + 32 null) and
    0x88fd0 ((w + 32) & 7) not taken from the fact on atom 18 (w): at or above 4064 by the slot's block, 8-aligned
    by the statement's `wp mod 8 = 0`. *)

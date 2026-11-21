@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): proof steps and comments changed; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DiagArmRead.v, line 76. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -71,7 +72,7 @@ Section Arm.
     assert (G10 : getr R 10%bv = Z_to_bv 64 1407328) by (regv HR (10%bv : reg); reflexivity).
     assert (G11 : getr R 11%bv = Z_to_bv 64 129610) by (regv HR (11%bv : reg); reflexivity).
     assert (G12 : getr R 12%bv = Z_to_bv 64 (bv_unsigned p1)) by (regv HR (12%bv : reg); cbn [edenot ev ENVA]; rewrite P2; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47) by (unfold S; lia).
+    assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47) by (unfold S; lia).
     assert (HSm : 140735332552704 + 5440 <= S <= 140737488355328) by (unfold S; lia).
     apply (die_of_chain scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL Hex M0 [] [Pm8DiagReadA.DRA.PRE19 ++ path ++ Pm8DiagReadA.DRA.SUF1] _ vals knHE LB LK cr A M model fxq R fs S HK OKb P0 D EFS FD2
              ltac:(unfold S; lia) ltac:(unfold S; lia) HS16).

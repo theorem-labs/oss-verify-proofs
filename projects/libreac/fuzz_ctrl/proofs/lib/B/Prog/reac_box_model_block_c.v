@@ -109,9 +109,9 @@ Definition reac_box_model_block_contract : Prop :=
    fetch is not an access), each under the guard its data premise carries.  The regions come from the steps of the
    run (lib/B/Prog/reac_box_model_block.v, _body.v, _case*.v) and from the footprint forms of the callees
    __asan_stack_malloc_0, __asan_memset, __asan_memcpy, build_dt1_single, dt1_head and name_field.  The side stack
-   and the thread cells take the narrow form of the B reac_ctrl_parse text (a working branch d0b3606c9c9
+   and the thread cells take the narrow form of the B reac_ctrl_parse text (a working branch
    lib/B/Prog/reac_ctrl_parse_c.v) at class 0.  The footprint forms of __asan_memcpy and __asan_memset this proof
-   applies (a working branch 9869f1d1f86) take RngBytes.rng_bytes RNG, so this statement
+   applies (a working branch) take RngBytes.rng_bytes RNG, so this statement
    takes it too.
 
      image (code, jump table, JOIN, GOT, the     [0x10000, 0x5fe000)                 read/write

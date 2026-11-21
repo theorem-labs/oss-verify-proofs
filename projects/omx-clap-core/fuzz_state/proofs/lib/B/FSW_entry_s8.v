@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_cmp_kit.v, with its module paths and module names changed; 829 of its 888 lines of code are new or changed and 291 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, lane ENTRY, IMAGE B (fs.asan-ubsan, pinned 5ac5ce0954f8), segment S8 of the LLVMFuzzerTestOneInput
    walk (0x81170-0x8118c): `ld a2, 0(s4)` (len), check_reject_clean_starved(text, body, len) (0x8117c, ra 0x81180),
    fuzz_free(body) (0x81184, ra 0x81188), free(text) through __wrap_free 0x530e0 (0x8118c, ra 0x81190 = PC_epi); the B
@@ -13,8 +14,8 @@
    specs are lib/B/FSH_Fn_entry.v FsEntryFns' CTX-free en_starved / en_free at the Section's sink head SK (the top file
    passes @... FSH_Base.fsB_sink_head).
    rule 24: proves function LLVMFuzzerTestOneInput (segment S8; reuse search: proof-index LLVMFuzzerTestOneInput,
-   ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_s8.v of a working branch 0d34d65d2b7 (itself from donor cgif_file_fuzzer
+   ported from a working branch).
+   Ported from: lib/A/FSW_entry_s8.v of a working branch (itself from donor cgif_file_fuzzer
    lib/A/ACfd.v:133-171, lib/A/ACfi.v:128, lib/YCf6.v:82-101), addresses rewritten in one pass from the B listing
    (A 0x810f0 / 0x810fc / 0x81100 / 0x81104 / 0x81108 / 0x8110c / 0x81110 / 0x53070 -> B 0x81170 / 0x8117c / 0x81180 /
    0x81184 / 0x81188 / 0x8118c / 0x81190 / 0x530e0); the saved words are read back with YCem.rdword_of_val_mem (B's

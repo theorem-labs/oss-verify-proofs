@@ -1,4 +1,4 @@
-(* The conjuncts of the gone arm's LS_gone_rig at its former sum-form text (W8's GN_LS_rig at 1fcc03569d3; gone_base's
+(* The conjuncts of the gone arm's LS_gone_rig at its former sum-form text (W8's GN_LS_rig; gone_base's
    GN_LS_rig is now the peak text, ReplyLS3Peak.v's former TX_GN_LS_rig, proved there by pk_gone_rig from the pieces
    below) at the instance LS := fr_LS3 B (and fr_LS3c B, by
    its first projection), RINV := fr_RINV, MT := ameter_triv, MMAX := WR_MMAX.  proves no function (kind: invariant
@@ -13,7 +13,7 @@
             re_used e <= APARTIAL`) of every entry: arelay_at's clause W_rep.v:162 `Forall (aentry_ok ..) es`, in
             amodel_at (_cut.v:379), which GRG carries through gst (_gone_base.v:630, :658); gone_p3.v:924 destructs
             it as HREL.
-        fr_LS3 and fr_RINV give none of the three: fr_RINV says nothing of lm_O (ReplyRINV.v:219-226), so the run's
+        fr_LS3 and fr_RINV give none of the three: fr_RINV says nothing of lm_O (ReplyRINV.v:220-227), so the run's
         starting g_nout and every send growth 2 * (g_nout + len) are free; the two drain facts are the reasons
         ReplyLSDrainPre.v's header gives (pending 2^25 + 2 NULs and 32 * 2^25 for t >= 513; re_U unbounded at
         re_skip = 1 and 2 re_cap >= 2^30).  The bound: one induction over the table (grg_run_rq) with the drain
@@ -34,7 +34,7 @@
         drains and four key runs add to the same sum.
    (R3) mo_ok MT S (tr_cost MT tr): vacuous at ameter_triv (mo_ok is True; fr_LS3_gone_rig_c3).
    (R4) lm_cap m < MMAX: PROVED with ONE named hypothesis Hcap : lm_cap m <= 2 ^ 29 (fr_LS3_gone_rig_c4), as
-        ReplyLS3Arms.v fr_LS3_rm_rr_pre_cap :1004: fr_RINV says nothing of lm_cap (ReplyRINV.v:219-226) and fr_LS3
+        ReplyLS3Arms.v fr_LS3_rm_rr_pre_cap :1004: fr_RINV says nothing of lm_cap (ReplyRINV.v:220-227) and fr_LS3
         bounds it only through PHI3 (aout_blks (lm_cap m) (lm_out m) is a model block), about 2^33.  The program keeps
         it [INFERENCE]: g_capout only grows, by send_line to 2 (g_nout + len), and every operation starts at g_nout = 0
         (gn_op, the head's lm_clear_O); for gone this file bounds every send growth (g_capout's new size) by
@@ -97,7 +97,7 @@ Import ListNotations.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:132 WR_MMAX) *)
+(* the instance (ReplyATop.v:93 MT := ameter_triv; W_LLVMFuzzerTestOneInput_write.v:133 WR_MMAX) *)
 Local Notation MT := ameter_triv.
 Local Notation MMAX := WR_MMAX.
 Local Notation zsum l := (fold_right Z.add 0 l).

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed to omx-clap-core fuzz_manifest (copied from cgif_file_fuzzer, no other change). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import bitvector.
@@ -77,13 +78,37 @@ rewrite IH by (intros e He; apply H; right; exact He).
 destruct (H (a, sz) (or_introl eq_refl)) as [D|D]; cbn [fst snd] in D; unfold uw in D; unfold iv_overlap;
 destruct (Z.ltb_spec (bv_unsigned lo) (bv_unsigned a + bv_unsigned sz)); destruct (Z.ltb_spec (bv_unsigned a) (bv_unsigned lo + bv_unsigned n)); cbn; try reflexivity; exfalso; lia.
 Qed.
+(** A range inside a free range is free. *)
+Lemma region_free_within : forall l (lo n lo' n' : word),
+region_free l lo n = true -> uw lo <= uw lo' -> uw lo' + uw n' <= uw lo + uw n ->
+region_free l lo' n' = true.
+Proof.
+induction l as [|[a sz] t IH]; intros lo n lo' n' H H1 H2; cbn [region_free] in *; [reflexivity|].
+apply andb_true_iff in H as [Ha Ht]. rewrite (IH lo n lo' n' Ht H1 H2), andb_true_r.
+unfold iv_overlap in *. unfold uw in *.
+destruct (Z.ltb_spec (bv_unsigned lo) (bv_unsigned a + bv_unsigned sz));
+destruct (Z.ltb_spec (bv_unsigned a) (bv_unsigned lo + bv_unsigned n)); cbn in Ha; try discriminate;
+destruct (Z.ltb_spec (bv_unsigned lo') (bv_unsigned a + bv_unsigned sz));
+destruct (Z.ltb_spec (bv_unsigned a) (bv_unsigned lo' + bv_unsigned n')); cbn; first [reflexivity | exfalso; lia].
+Qed.
 Lemma region_free_reserved : forall (sgs : list Segment) lo len,
 (forall sg, In sg sgs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 kImgEnd + 4096 <= lo -> 0 <= len -> lo + len < 2 ^ 64 ->
 region_free (segments_reserved sgs) (w64 lo) (w64 len) = true.
 Proof.
 intros sgs lo len IMG H1 H2 H3. apply region_free_intro. intros e He. unfold segments_reserved in He. apply in_map_iff in He as (sg & <- & Hsg).
-destruct (IMG sg Hsg) as [G1 G2]. unfold segment_reservation. cbn [fst snd]. left.
+(* 08b1429: segments_reserved maps over `filter (fun s => negb (seg_kernel_map s)) sgs`
+   (Run.v:253-254), so in_map_iff yields membership in the FILTERED list. Filtered
+   membership is strictly stronger, so taking only the In component weakens nothing.
+   `filter_In` cannot engage: this file imports stdpp and Run.v does not, so the goal's
+   `filter` and stdlib's `List.filter` are different constants. Proved by reduction
+   instead, which holds for whichever one the model's definition uses. *)
+assert (HsgU : In sg sgs).
+{ clear - Hsg. induction sgs as [|a l IH]; cbn in Hsg; [contradiction|].
+destruct (negb (seg_kernel_map a)) eqn:E; cbn in Hsg.
+- destruct Hsg as [->|Hsg]; [left; reflexivity | right; exact (IH Hsg)].
+- right; exact (IH Hsg). }
+destruct (IMG sg HsgU) as [G1 G2]. unfold segment_reservation. cbn [fst snd]. left.
 unfold page_round_up_Z, page_round_down_Z, page_size.
 set (b := Z.of_N (seg_base sg)) in *. set (z := Z.of_N (seg_size sg)) in *.
 pose proof (Z.div_mod b 4096 ltac:(lia)). pose proof (Z.mod_pos_bound b 4096 ltac:(lia)).
@@ -423,7 +448,11 @@ assert (R : ly_prim ly <= addrU /\ addrU + n <= ly_prim ly + kPrimResvSize /\ kI
 { clear - B1 B2 B3 B4 B5 C1 C2. unfold addrU, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
 split.
-- rewrite L3. apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia].
+- destruct L3 as (rx & L3 & _ & _ & _ & RP). rewrite L3, region_free_app. apply andb_true_intro. split.
++ apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia].
++ (* the reservation tail misses the primary reservation ([YG0n.res_tail_ok]) *)
+apply (region_free_within rx (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact RP | |]; unfold uw;
+rewrite !w64_unsigned by (unfold kUserMapSize, kPrimResvSize, kHighMemBeg in *; lia); lia.
 - destruct L4 as (pieces & (P1 & P2 & P3) & P4).
 destruct (proj1 (Exists_exists _ _) (proj2 (P3 addrU ltac:(unfold kUserMapSize in *; lia)) (no_hole_in_range Hn addrU ltac:(unfold kUserMapSize; lia)))) as (P0 & HP & Hin).
 pose proof (proj1 (Forall_forall _ _) P1 P0 HP) as (Q0 & _ & QE). pose proof (no_cut_inside _ QE) as NC. unfold in_zr in Hin.
@@ -442,7 +471,11 @@ pose proof prim_bounds as (B1 & B2 & B3 & B4 & B5). pose proof prim_hi as [C1 C2
 assert (R : ly_prim ly <= addrU /\ addrU + n <= ly_prim ly + kPrimResvSize /\ kImgEnd + 4096 <= addrU /\ addrU + n < 2 ^ 63).
 { clear - B1 B2 B3 B4 B5 C1 C2. unfold addrU, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
-rewrite region_free_app. apply andb_true_intro. split; [rewrite L3; apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia]|].
+rewrite region_free_app. apply andb_true_intro. split;
+[destruct L3 as (rx & L3 & _ & _ & _ & RP); rewrite L3, region_free_app; apply andb_true_intro; split;
+ [apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia]
+ |apply (region_free_within rx (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact RP | |]; unfold uw;
+  rewrite !w64_unsigned by (unfold kUserMapSize, kPrimResvSize, kHighMemBeg in *; lia); lia]|].
 apply region_free_intro. intros e He. pose proof (L8 e He) as X. apply Exists_exists in X as (z & Hz & Z1 & Z2).
 pose proof (NZ e He) as Pe. pose proof (uw_range (fst e)) as U1. pose proof (uw_range (snd e)) as U2. unfold uw in *.
 rewrite !w64_unsigned by (clear - R1 R2 R4 B1; unfold kHighMemBeg, kUserMapSize in *; lia).
@@ -650,7 +683,11 @@ assert (R : ly_prim ly <= addrF /\ addrF + n <= ly_prim ly + kPrimResvSize /\ kI
 { clear - B1 B2 B3 B4 B5 C1 C2 M3. unfold addrF, offF, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
 split.
-- rewrite L3. apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia].
+- destruct L3 as (rx & L3 & _ & _ & _ & RP). rewrite L3, region_free_app. apply andb_true_intro. split.
++ apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia].
++ (* the reservation tail misses the primary reservation ([YG0n.res_tail_ok]) *)
+apply (region_free_within rx (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact RP | |]; unfold uw;
+rewrite !w64_unsigned by (unfold kUserMapSize, kPrimResvSize, kHighMemBeg in *; lia); lia.
 - destruct L4 as (pieces & (P1 & P2 & P3) & P4).
 destruct (proj1 (Exists_exists _ _) (proj2 (P3 addrF ltac:(unfold kUserMapSize in *; lia)) (no_hole_in_rangeF Hn addrF ltac:(unfold kUserMapSize; lia)))) as (P0 & HP & Hin).
 pose proof (proj1 (Forall_forall _ _) P1 P0 HP) as (Q0 & _ & QE). pose proof (no_cut_insideF _ QE) as NC. unfold in_zr in Hin.
@@ -669,7 +706,11 @@ pose proof prim_boundsF as (B1 & B2 & B3 & B4 & B5). pose proof prim_hiF as [C1 
 assert (R : ly_prim ly <= addrF /\ addrF + n <= ly_prim ly + kPrimResvSize /\ kImgEnd + 4096 <= addrF /\ addrF + n < 2 ^ 63).
 { clear - B1 B2 B3 B4 B5 C1 C2 M3. unfold addrF, offF, kHighMemBeg, kImgEnd, kFreeArrayOffset, kFreeArrayMax, kUserMapSize in *. lia. }
 destruct R as (R1 & R2 & R3 & R4).
-rewrite region_free_app. apply andb_true_intro. split; [rewrite L3; apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia]|].
+rewrite region_free_app. apply andb_true_intro. split;
+[destruct L3 as (rx & L3 & _ & _ & _ & RP); rewrite L3, region_free_app; apply andb_true_intro; split;
+ [apply (region_free_reserved segs); [exact al_img_env' | exact R3 | unfold kUserMapSize; lia | lia]
+ |apply (region_free_within rx (w64 (ly_prim ly)) (w64 kPrimResvSize)); [exact RP | |]; unfold uw;
+  rewrite !w64_unsigned by (unfold kUserMapSize, kPrimResvSize, kHighMemBeg in *; lia); lia]|].
 apply region_free_intro. intros e He. pose proof (L8 e He) as X. apply Exists_exists in X as (z & Hz & Z1 & Z2).
 pose proof (NZ e He) as Pe. pose proof (uw_range (fst e)) as U1. pose proof (uw_range (snd e)) as U2. unfold uw in *.
 rewrite !w64_unsigned by (clear - R1 R2 R4 B1; unfold kHighMemBeg, kUserMapSize in *; lia).

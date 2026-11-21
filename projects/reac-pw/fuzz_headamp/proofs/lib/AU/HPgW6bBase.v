@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bBase.v and RPgEntBKit.v at f3898085bda
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bBase.v and RPgEntBKit.v
    (the block statements of ent_build's cases 1, 4, 5 and 9 and the engine kit of their walk) for
    reac-pw/fuzz_headamp's image B: image B's pcs, registers (the cursor in s2, what is left in s4 and t1, the
    shadow offset in s11), real-frame cells (R+0x40, R+0xe8, R+0x118, R+0x130, R+0x138, R+0x148 read; R+0x58,

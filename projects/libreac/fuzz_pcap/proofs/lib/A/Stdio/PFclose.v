@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fclose on libreac/fuzz_pcap's fmemopen READ stream, ported from
    cgif_file_fuzzer's write-sink fclose (donor lib/YE01.v:193 afclose_spec, with the walks at
-   lib/A/AE24.v:75 and lib/A/AE28.v:238/:651/:690; donor sha c8557374ad2e).
+   lib/A/AE24.v:75 and lib/A/AE28.v:238/:651/:690; donor sha).
 
    STATEMENT ONLY, as a Theorem Labs lane asked: the definitions compile, there is no lemma yet.
    The proof composes cgif's relocated interceptor and musl fclose walks (the code is masked-equal:
@@ -20,7 +20,7 @@
 
    IMAGE ROOT: the ORIGINAL v1.9.0 set, which is what the statements target --
    the pinned fuzz_pcap images and their unstripped twins,
-   statements ed6b6b7b0ab. NOT the toolchain-N images: a runtime premise
+   statements. NOT the toolchain-N images: a runtime premise
    true on one can be false on the other (another proof's
    malloc_context_size = 1 is exactly such a premise, true on N and false here).
 
@@ -35,6 +35,7 @@
    Call sites (a Theorem Labs lane, same image): pcap_source_open 0x81674 and 0x816b8 (error paths),
    pcap_source_close 0x81ec8. The spec is parametric in the entry pc and the two free return
    addresses, so one definition serves all three. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require Namei.
@@ -108,30 +109,30 @@ Hypothesis ASIL : asource_img_laws SK segs B K.
 
 (* ---------------------------------------------------------------------------------------------- *)
 (* The cgif-core vocabulary this statement is written over: the REAL relocated definitions, with    *)
-(* their homes on a working branch ae00077a82d.                                                      *)
+(* their homes on a working branch.                                                      *)
 (*   afn_pre, ajournal         lib/Reusable/YCbq.v:333, :347. YCbq, NOT YCe5: both define these     *)
 (*                             names, and YCbq is the superset pcap consumes.                        *)
 (*   ablocks, aregs_preserved, spZ, cfg_at                                                           *)
 (*                             lib/Reusable/YG0d.v:421, :22, :24, :213                               *)
-(*   arodata_okS               lib/Reusable/YE01.v:186                                               *)
+(*   arodata_okS               lib/Reusable/YE01.v:187                                               *)
 (*   asrc_meta_inv, asource_img_laws                                                                 *)
 (*                             lib/A/Stdio/PSourceMeta.v: the source analogues of the core's        *)
-(*                             ameta_inv (YE01.v:137) and asink_img_laws (YE01.v:25), over K         *)
+(*                             ameta_inv (YE01.v:138) and asink_img_laws (YE01.v:26), over K         *)
 (*   aview                     lib/Reusable/YG0n.v:18                                                *)
 (*   SRr, world, w_H           lib/Reusable/YA0n.v:35, :18                                           *)
 (*   astate, st_nev, EV_MAX    lib/Reusable/YG00.v:155, :168, :39;  frames  lib/Reusable/YG01.v:214  *)
 (*   alayout, asyms, as_universe, pc_free_ra0   lib/Reusable/YG0f.v                                  *)
-(*   rd W mem                  the donor's own abbreviation for mrestrict (w_H W) mem (YE01.v:47;    *)
+(*   rd W mem                  the donor's own abbreviation for mrestrict (w_H W) mem (YE01.v:48;    *)
 (*                             mrestrict is lib/Reusable/YK04.v:17)                                  *)
 (*                                                                                                   *)
 (* ONE SYMBOL RECORD. K : asource_syms (PSource.v) is this file's READ stream, and every stream fact  *)
 (* -- asource_at, asource_none, the meta invariant, as_close / as_seek -- is stated over it. The core *)
 (* states ameta_inv over cgif's SINK record asink_syms, which would make every caller discharge sink *)
 (* image laws (path, trailer) for a program with no sink; asrc_meta_inv is the same body over K.     *)
-(* ASIL is the donor's AIL (YE01.v:45) for the source record. Like AIL it enters no Definition here  *)
+(* ASIL is the donor's AIL (YE01.v:46) for the source record. Like AIL it enters no Definition here  *)
 (* (Coq drops a section hypothesis that no definition uses): it is there for the proofs stated in   *)
-(* this Section. The donor's lemmas over the meta invariant, ameta_ptr_of_AR (YE01.v:139) and        *)
-(* ameta_inv_kept (YE01.v:151), are ported as asrc_meta_ptr_of_AR / asrc_meta_inv_kept in           *)
+(* this Section. The donor's lemmas over the meta invariant, ameta_ptr_of_AR (YE01.v:140) and        *)
+(* ameta_inv_kept (YE01.v:152), are ported as asrc_meta_ptr_of_AR / asrc_meta_inv_kept in           *)
 (* PSourceMeta.v, under the same ASIL.                                                               *)
 (* ---------------------------------------------------------------------------------------------- *)
 Local Notation rd W mem := (mrestrict (w_H W) mem).
@@ -139,7 +140,7 @@ Local Notation rd W mem := (mrestrict (w_H W) mem).
 (* ---------------------------------------------------------------------------------------------- *)
 (* afclose_source_spec: fclose on the fmemopen read stream.                                          *)
 (*                                                                                                   *)
-(* Premises, in the donor's order (YE01.v:193), with asink_at replaced by asource_at:                 *)
+(* Premises, in the donor's order (YE01.v:194), with asink_at replaced by asource_at:                 *)
 (*   the function precondition; a0 = f; the FILE block is one of the live blocks; the stream is open  *)
 (*   at ANY consumed position p (every call site needs this, including the error paths, where p       *)
 (*   may be 0 or len C); the meta invariant; the rodata window; room for 2 events; and the two free   *)
@@ -196,7 +197,7 @@ Definition afclose_source_spec_stk (STK pc ra1 ra2 rlo rhi : Z) : Prop :=
          asource_none segs K (rd W' mem') /\
          (* the harness's buffer survives the close, bytes and all *)
          garr8 segs (rd W' mem') b C /\
-         (* no descriptor and no file-system change (donor form YE01.v:222; a Theorem Labs lane 22:06Z). A caller
+         (* no descriptor and no file-system change (donor form YE01.v:223; a Theorem Labs lane 22:06Z). A caller
             cannot derive it: asource_fp carries YI16.sink_token, so ajournal's aos_step lets m_fds
             and m_fs change. It is true of the code: fclose's callees (fflush -> mseek, __ofl_lock,
             mclose, __unlist_locked_file, __ofl_unlock, free x2) make no descriptor or file-system

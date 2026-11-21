@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_classify_box_frameLib.v, with its module names and numbers changed; 4975 of its 5172 lines of code are new or changed and 792 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* GENERATED FILE - do not edit.  GLUE/gen_reac_ctrl_identity_replyRB.py from the route-(C) run
    lib/B/Prog/reac_ctrl_identity_replyF_on.v (git blob 967305b245d9f403d5276d6c560cb7a09230829b)
    and GLUE/reac_ctrl_identity_replyRB.ins + GLUE/reac_ctrl_identity_replyRB.SC.ins
@@ -9,7 +10,7 @@
    SW-site edits site (ii) :3012 / site (ii) :3014 applied), then `End Rep.` and `End Callees.`;
    F_on's tail (reac_ctrl_identity_reply_holds_F_on) is not copied.
    GLUE = analyses/libreac/fuzz_ctrl/glue-B/identity_reply. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 (* GENERATED FILE - do not edit.  analyses/libreac/fuzz_ctrl/glue-B/identity_reply/gen_reac_ctrl_identity_replyF_on.py
    from the accepted lib/B/Prog/reac_ctrl_identity_replyF.v (git blob af7c0c619ef83864657423d92e8e0cdcab8d66af).
    Route (C) phase 2: the run with its Section premise `SW : shadow_rw m` narrowed to
@@ -422,10 +423,10 @@ Qed.
 (* ------------------------------------------------------------------------------------------------------------ *)
 (* Route (C): the three callee forms the narrowed run takes, as the hypotheses of ONE Section that holds the rest of the
    file, so reac_ctrl_identity_reply_holds_F_on at its end takes them in this order:
-     asan_stack_malloc_1_contract_F_on            lib/B/Prog/asan_stack_malloc_cF_on.v (a Theorem Labs lane, 6a82e56a6ee);
+     asan_stack_malloc_1_contract_F_on            lib/B/Prog/asan_stack_malloc_cF_on.v (a Theorem Labs lane);
      reac_ctrl_parse_contract_x_F_on              lib/B/Prog/reac_ctrl_parse_c.v (a Theorem Labs lane);
-     reac_ctrl_record_cksum_verify_contract_F_on  lib/B/Prog/reac_ctrl_record_cksum_verify_c.v (a Theorem Labs lane,
-                                                  5c355e74408: the accepted contract without its shadow premise).
+     reac_ctrl_record_cksum_verify_contract_F_on  lib/B/Prog/reac_ctrl_record_cksum_verify_c.v (a Theorem Labs lane,:
+                                                  the accepted contract without its shadow premise).
    The CKV feed was found here: the accepted run passes `SWc : shadow_rw mc` (replyF:4746, from rJB :2375) to RecLoop's
    `SW : shadow_rw mm` (:475), which rloopR gives to reac_ctrl_record_cksum_verify_contract_F at :514 (its premise
    `(1 <= bv_unsigned a1 -> shadow_rw m)`, reac_ctrl_record_cksum_verify_c.v:55); under the narrowed parse post SWc is
@@ -5116,7 +5117,7 @@ Section Rep.
      coarse lists rWB (:1954) / rWP (:1955); both contain all of fp_w [1%nat] FS (the class-1 hint word, every flag
      byte, every frame and its shadow), bytes the allocator owns, which the journal step cannot take.  The run
      writes only rWSC G j.
-     SHAPE (a Theorem Labs lane's cmInvW, lib/B/Prog/C_reac_box_catalogue_matchLibW.v at bf33012d564): each copied invariant
+     SHAPE (a Theorem Labs lane's cmInvW, lib/B/Prog/C_reac_box_catalogue_matchLibW.v): each copied invariant
      is the accepted one AND munch (rWSC G j) m mc.  So every accepted helper is used UNCHANGED on the first
      conjunct (rJB_EI0, rTI_of_EI0, rr_JB_ck, rr_EI0_out, rr_EI0_sh, rr_TI_sh, rr_TI_fr, rr_TI_flag, rr_OUTF_wf,
      rr_win_addr_full, rr_z16, rp_td_pre_F); each copied lemma is the accepted script, and the fine munch goes

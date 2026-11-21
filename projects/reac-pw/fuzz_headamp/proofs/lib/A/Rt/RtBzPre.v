@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzPre.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzPre.v; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
 (* The runtime layer of omx-clap-core/fuzz_manifest, the pre side of the strncmp contract: from the premises of
    lib/A/Rt/RtBzHStr.v astrncmp_realizes (ecall_pre_k, rom_viewN / rom_viewO, cstr_ok, AR) to the premises of a Bz body
    walk (lib/A/Bz: Mem.bytes_at, Frame.stk, I_qck.chk_ok, mem_inv, the runtime's fixed cells), and what a Bz post says

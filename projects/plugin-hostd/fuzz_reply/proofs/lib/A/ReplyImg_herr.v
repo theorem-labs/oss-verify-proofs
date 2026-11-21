@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-herr-A of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for the cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image row; a closed fact of reply's image A, fuzz_reply.asan).
-   HERR is the cf layer's unit premise `Hypothesis HERR : as_errno B = im_errno.` (YGcfInstMiss.v:244 at 692f71ce28c,
-   :242 at 1ad1106e381), in the Section where `TS : im_syms B`.  Reply has not taken the layer files, so the lemma below
-   states that text at reply's image instance (ImgBase.AImg at AImg_reply, A/AGif2reply.v:23, whose im_errno is
-   TFIB_ERRNO 0x5d93cc, A/AF0m.v:22) over the same premise TS; a consumer closes the layer's HERR with `exact`.
-   Discharge pattern: cgif's AGif2cgif.v:26 `im_errno := TFIB_ERRNO` + YF0m.v:297 `ts_errno`; here the TfibSyms field
-   ts_errno (A/AF0m.v:875). *)
+   HERR is the cf layer's unit premise `Hypothesis HERR : as_errno B = im_errno.` (YGcfInstMiss.v:245,
+   :242), in the Section where `TS : im_syms B`.  Reply has not taken the layer files, so the lemma below
+   states that text at reply's image instance (ImgBase.AImg at AImg_reply, A/AGif2reply.v:24, whose im_errno is
+   TFIB_ERRNO 0x5d93cc, A/AF0m.v:23) over the same premise TS; a consumer closes the layer's HERR with `exact`.
+   Discharge pattern: cgif's AGif2cgif.v:26 `im_errno := TFIB_ERRNO` + YF0m.v:298 `ts_errno`; here the TfibSyms field
+   ts_errno (A/AF0m.v:876). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -29,7 +30,7 @@ Open Scope Z_scope.
 Lemma herr_A : forall B, @im_syms AImg_reply B -> as_errno B = @im_errno AImg_reply.
 Proof. intros B TS. change (TfibSyms B) in TS. exact (ts_errno B TS). Qed.
 
-(* The cell's value, for a reader that needs the number: TFIB_ERRNO = 0x5d93cc (A/AF0m.v:22). *)
+(* The cell's value, for a reader that needs the number: TFIB_ERRNO = 0x5d93cc (A/AF0m.v:23). *)
 Lemma herr_A_val : @im_errno AImg_reply = 0x5d93cc.
 Proof. reflexivity. Qed.
 

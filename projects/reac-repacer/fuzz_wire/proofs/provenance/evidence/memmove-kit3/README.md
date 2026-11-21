@@ -22,7 +22,7 @@ the closure, and the rest is settled by named measurements, with 0 REAL:
   0, unmeasured 0, unpaired 0; records/jtcheck-open-*), and the reviewer measured each of their tables. The other 51 are
   settled by the named measurements below. The per-function list is records/closure-settlement-*.txt: KIT-JTCHECK 11
   and MEASURED 51, each MEASURED function with its count per class.
-  The central re-run of the comparison-kit records (commit bdc037d1af2a, its row M2 for this record) counts
+  The central re-run of the comparison-kit records (its row M2 for this record) counts
   736 / 49: its jtcheck also accepts Symbolizer::PlatformInit and LoadedModule::addAddressRange. Both differ from this
   count at one target, the empty string X 0x13e67 / Y 0x13e7d (PlatformInit +0x18c; addAddressRange +0x70, A 0x5f8f4, B
   0x5f694). The reviewer found that jtcheck's acceptance of each is a misreading by its heuristics (AUDIT.md, 'Re-check

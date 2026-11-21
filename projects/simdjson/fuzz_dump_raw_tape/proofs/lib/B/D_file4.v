@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB, and the bound of the stack pointer below the stack top is derived from main's 16-byte alignment; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/D_file4.v, lines 108-118. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -103,10 +104,17 @@ Proof using AF AF_DRV CLS MAL FRE FRN MCP FWR FUZZ VPR EXC OUT_loc ERR_loc XENV_
   pose proof (cap_ok_range cap HCAP) as CAPR.
   assert (INB : In (buf, cap) (rt_live RT Σ)) by (rewrite LV; left; reflexivity).
   pose proof (af_live_range RT AF Σ m buf cap ART0 INB) as (PR1 & PR2 & PR3).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   set (n := Z.of_nat (length data)) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
-  assert (UTOP : usp + 16 <= USTACK_TOP) by lia.
+  (* LPS 727298f3: the strings end eight bytes below the stack VMA's end, which
+     may be USTACK_TOP; the remaining bytes come from main's 16-alignment (B16).
+     Proof from projects/bzip2/bzip2_compress_target/proofs/lib/K/A/D_file4.v. *)
+  assert (UTOP : usp + 16 <= USTACK_TOP).
+  { assert (Hup : usp <= USTACK_TOP - 11) by ul.
+    pose proof (Z_div_mod_eq_full usp 16) as Hq. rewrite B16, Z.add_0_r in Hq.
+    set (q := usp / 16) in Hq. clearbody q.
+    unfold USTACK_TOP in Hup |- *. lia. }
 
   apply (CLS Σ (FD argvb n) fs (Z_to_bv 64 0xae8c8) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2)
            (Z_to_bv 64 buf) (Z_to_bv 64 3) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) (Z_to_bv 64 n) (Z_to_bv 64 3) (Z_to_bv 64 cap)

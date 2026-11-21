@@ -1,9 +1,9 @@
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan, a Theorem Labs lane: the three runtime call steps of the walk between the
    second past_nul return (0x81394) and the lifetime-start stores (0x81414), proved against the call-step interface of
    lib/B/FSW_check_no_overread.v Section I (cno_base / cno_site / cno_ret; statements cno_call_mal_T, cno_call_mcpy_T,
-   cno_call_mset_T of the B INTERFACE commit decf0bae273), exactly as committed there:
+   cno_call_mset_T of the B INTERFACE), exactly as committed there:
    - cno_call_mal   __wrap_malloc (n + 18) at 0x8139c (callee PC_malloc 0x530e4, ra 0x813a0): the B kit's
-     lib/B/FSW_malloc_free.v fsw_aj_malloc04U (ALLOC's kit, ea464b7bd5d; used by path) on the call-relative journal
+     lib/B/FSW_malloc_free.v fsw_aj_malloc04U (ALLOC's kit; used by path) on the call-relative journal
      (YCbq.ajournal_sub_init), composed back into the walk's journal (YCbq.ajournal_sub). The model's malloc answers a
      block at 4096 <= t, so the post carries t <> 0. B-SPECIFIC: the post also carries range_addressable over
      [t, t + n + 18) at the return (B's first inline ASan check, 0x813c8-0x813d4 for the store of t[n] at 0x813dc, comes
@@ -29,8 +29,8 @@
      (cno_call_mal's post, and cno_call_mset's post), and cno_ubsan_t: 4096 <= t, t + n + 18 <= alloc_ceiling < 2 ^ 47
      (the block lies in application memory: YCbq.al_blocks under the post's AR) and n <= PRESET_FILE_MAX_BYTES
      = 3 * 2 ^ 20 (cno_base), so t + n + 17 < 2 ^ 64 - 1 and no UBSan guard traps. No new premise.
-   Template (text only): lib/A/FSW_check_no_overread_mem.v at a working branch 59f0008819f (another working branch at
-   91de3f442c1's text). The walk's own helpers come from lib/B/FSW_check_no_overread.v (core c20439f478a): cno_stk,
+   Template (text only): lib/A/FSW_check_no_overread_mem.v at a working branch (another working branch at
+   a commit's text). The walk's own helpers come from lib/B/FSW_check_no_overread.v (core): cno_stk,
    cno_chain, cno_pstat_img, cno_aview_unp. Kit lemmas are used by path (lib/B FSW_K, FSW_rd, FSW_frame, FSW_strkit,
    FSW_malloc_free; lib/A's image-generic FSupoison, FSupoisonU, FSH_Gen; Reusable); none is copied.
    rule 24: proves no function of its own (kind: call-step lemmas of check_no_overread's walk; the lookup line is the

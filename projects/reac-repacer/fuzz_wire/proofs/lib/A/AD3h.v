@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, written by a Theorem Labs lane (S8) for another Theorem Labs lane's knock StackDepot chain. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement for the NULL hint). *)
 (*
    StackDepot map-on-first-use chain: the contract of __sanitizer::MmapOrDie(unsigned long, char const*, bool)
    (0x65200-0x6530c in fuzz_wire.asan; the donor fuzz_knock.asan's 0x64278-0x64384, 67 insns, unstripped twin sha256 fff563b3...; AB1w.v tfib_A_MmapOrDie) and its proof.
@@ -27,7 +28,7 @@
      0x64338 a0 := x; restore ra/s0/s1/s2/s3; addi sp,sp,48; ret
    Touched stack bytes: [sp - 104, sp) (MmapOrDie's 48: sw 0(sp), sw 4(sp), the five saves; GetNamedMappingFd's 56:
    its seven saves); the rest of GetNamedMappingFd's 272-byte frame is never read or written on this path.
-   ReportMmapFailureAndDie 0x5f37c (the refused arm) spins after main (the self-loop j 0 at 0x5f3ac, in AB12.v:19's stops_more); the premises make every
+   ReportMmapFailureAndDie 0x5f37c (the refused arm) spins after main (the self-loop j 0 at 0x5f3ac, in AB12.v:20's stops_more); the premises make every
    refusal spurious at the ecall (anon_node, YF05.v:151; srz_mmap_rw_ok, YA09.v:726; line 87 below), so the contract has no refused arm. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AD3h.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to reac-repacer/fuzz_wire's ASan build. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
@@ -76,7 +77,7 @@ Definition mod_cells (m : word -> option byte) : Prop :=
    along the instruction steps before the ecall: they only materialize, eager_used_wvb YK04.v:788-790, and W is fixed
    along the walk). The budget pays n twice: the grant of flags 0x22 is charged at the ecall
    (mmap_noreserve_backed_ok, LPS Sys/Mm/Mmap.v:1233-1236; eager_used grows by at most n), and the range is then
-   exposed in the world by allow_expose (YG0b.v:421-427), which adds [x, x + n) to w_A. commit_expose (YG0b.v:91-102)
+   exposed in the world by allow_expose (YG0b.v:422-428), which adds [x, x + n) to w_A. commit_expose (YG0b.v:92-103)
    would not grow w_A, but it needs that no page of [x, x + n) is lazy in the model, which no invariant of the core
    states. *)
 Definition mod_room (W : world tfibsegs) (md : Model) (n : Z) : Prop :=
@@ -109,7 +110,7 @@ Definition mod_contract : Prop :=
                (forall a : word, ~ (x <= bv_unsigned a < x + size) -> w_H W' a = w_H W a) /\
       (* P1 *) getr regs' 10 = Z_to_bv 64 x /\ regs_preserved regs regs' /\
       (* P2 *) YG0f.page_aligned x /\ 0 < x /\
-      (* P3 *) grant_ok_na_pin md (Z_to_bv 64 x) size = true /\
+      (* P3 *) grant_ok_na_pin (Z_to_bv 64 0) md (Z_to_bv 64 x) size = true /\
                Forall (fun q => zdisjoint (x, size) (bv_unsigned (fst q), bv_unsigned (snd q)))
                  (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) /\ x + size <= alloc_top (m_vmmaps md) /\
       (* P4 *) (forall i, 0 <= i < size -> apresent (w_H W') mem' (x + i) /\ aview tfibsegs (w_H W') mem' (x + i) = Some 0) /\
@@ -121,18 +122,18 @@ Definition mod_contract : Prop :=
 End g.
 
 (* THE PROOF. Three pieces, each in the core's SRr form (Reusable/YA0n.v):
-   1. 0x65200 to the ecall 0x63b34: one symbolic run (SRr_run_to_sh_gen, YA0p.v:39) from SSM0, whose atoms are sp,
+   1. 0x65200 to the ecall 0x63b34: one symbolic run (SRr_run_to_sh_gen, YA0p.v:40) from SSM0, whose atoms are sp,
       size (page aligned, 4096 <= size), name (<> 0) and the decorate_proc_maps byte (even); the engine decides every
       branch on the way (GetPageSize skipped, IsPowerOfTwo, name <> 0, the decorate_proc_maps low bit) from those
       facts and the literal cells, and reaches the ecall with a0 = 0, a1 = size, a2 = 3, a3 = 0x22, a4 = -1, a5 = 0.
    2. The ecall: anon_node (YF05.v:151-167) lists only granting children, because md_room gives a grant and the
-      budget gives mmap_noreserve_backed_ok (vm_backing_used_le, YA09.v:90-94); SRr_node (YA0n.v:106) consumes the
-      node; each child's AI is AI_transport (YA0i.v:80) with mod_eager_used_mmap_le. The child's world is then
-      wallow W x (x + size) (allow_expose, YG0b.v:421-427, which the second n of the budget pays), and the walk
+      budget gives mmap_noreserve_backed_ok (vm_backing_used_le, YA09.v:90-94); SRr_node (YA0n.v:107) consumes the
+      node; each child's AI is AI_transport (YA0i.v:81) with mod_eager_used_mmap_le. The child's world is then
+      wallow W x (x + size) (allow_expose, YG0b.v:422-428, which the second n of the budget pays), and the walk
       resumes with a fresh atom for x (st_ok_resume_atom, YP03.v:397); the stack window and the image cells keep
       their values because md_takes puts them apart from the grant (mod_takes_apart).
    3. 0x63b38 to the ret 0x652dc: one symbolic run (internal_iserror twice: x < 2^64 - 4095 from MOD_XF, so no
-      store; IncreaseTotalMmap: mmap_limit_mb = 0, so no amoadd), then SRr_ret_at (YA0o.v:336).
+      store; IncreaseTotalMmap: mmap_limit_mb = 0, so no amoadd), then SRr_ret_at (YA0o.v:337).
    TAKEN FROM: the entry / run / return pattern of the core's tfib_ialloc_ok (A/AFfg.v:33-96); the ecall node and the
    world growth of the core's nodeS (A/AFjs.v:515-642); everything else is new (no donor). *)
 (* ---- The decode table and the symbolic states (closed: every vm_compute below has no Section variable). ---- *)
@@ -249,19 +250,24 @@ rewrite !mod_msa_app, mod_live_bytes_app.
 pose proof (mod_live_msa_le (m_vm_lazy m) (maps_subtract_all [(a, n)] (vm_noaccess (m_vmmaps m)))) as X1.
 pose proof (mod_live_msa_le (vm_noaccess (m_vmmaps m)) [(a, n)]) as X2. cbn [live_bytes] in X2. lia.
 Qed.
-Lemma mod_grant_split : forall md (a : word) n, grant_ok_na_pin md a n = true ->
+Lemma mod_grant_split : forall md (a : word) n, 0 < n -> n mod 4096 = 0 ->
+  grant_ok_na_pin (Z_to_bv 64 0) md a n = true ->
   bv_unsigned a mod 4096 = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps md) /\
   region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (Z_to_bv 64 n) = true.
 Proof.
-intros md a n Hg. unfold grant_ok_na_pin in Hg.
+intros md a n Hn Hnal Hg0.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hnal) Hg0) as Hg.
+unfold YK13.grant_ok_na_pin_b in Hg.
 apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop. unfold page_size in Hal. auto.
 Qed.
 Lemma mod_takes_apart : forall md e (a : word) n y,
-  md_takes md e -> grant_ok_na_pin md a n = true -> 0 <= n < 2 ^ 64 -> n mod 4096 = 0 -> in_zr y e ->
+  md_takes md e -> grant_ok_na_pin (Z_to_bv 64 0) md a n = true -> 0 <= n < 2 ^ 64 -> n mod 4096 = 0 -> in_zr y e ->
   y < bv_unsigned a \/ bv_unsigned a + n <= y.
 Proof.
-intros md e a n y Ht Hg Hn Hnal Hy. destruct (mod_grant_split md a n Hg) as (Hal & _ & Htop & Hrf).
+intros md e a n y Ht Hg Hn Hnal Hy.
+destruct (Z.eq_dec n 0) as [->|Hn0]; [lia|].
+destruct (mod_grant_split md a n ltac:(lia) Hnal Hg) as (Hal & _ & Htop & Hrf).
 destruct Ht as [[Hp HE]|Ht].
 - apply HE in Hy. apply Exists_exists in Hy as ([b s] & Hin & Hb). cbn [fst snd] in Hb.
   pose proof (YK13.region_free_In _ a (Z_to_bv 64 n) b s Hrf Hin) as D. rewrite unsigned_lit_small in D by lia. lia.
@@ -304,7 +310,7 @@ assert (SPH : sp <= 2 ^ 64 - 16).
 { clear - Hsp16 Usp. pose proof (Z.div_mod sp 16 ltac:(lia)) as D. rewrite Hsp16 in D. set (q := sp / 16) in D. clearbody q. lia. }
 assert (SPL : 0x5f5000 + 104 <= sp) by (clear - HspLo; unfold TFIB_IMG_END, MOD_STK in HspLo; lia).
 destruct HC as (C1 & C2 & C3 & (f & C4 & C5) & C6).
-destruct HROOM as ((g & Hg1 & Hg2 & Hg3 & Hg4) & HB).
+destruct HROOM as ((g & Hg1 & Hg2 & Hg3 & Hg4 & Hg5) & HB).
 pose proof (alloc_top_room (m_vmmaps md)) as ATR. unfold two_pow_64, stack_max_size in ATR.
 set (fb := f mod 256).
 assert (Hfb : 0 <= fb <= 254 /\ fb mod 2 = 0).
@@ -372,13 +378,11 @@ assert (R13 : getr regs1 13%bv = Z_to_bv 64 34) by (rewrite Hregs1, R13s; reflex
 assert (R14 : getr regs1 14%bv = Z_to_bv 64 (-1)) by (rewrite Hregs1, R14s; cbn [sv_denot]; apply bv_eq; reflexivity).
 assert (R15 : getr regs1 15%bv = Z_to_bv 64 0) by (rewrite Hregs1, R15s; reflexivity).
 assert (PRU : page_round_up_Z size = size) by (apply YK02.page_round_up_Z_aligned; [lia | unfold page_size; exact (proj2 (proj2 SZ))]).
-assert (GEX : exists a, grant_ok_na_pin md1 a (page_round_up_Z size) = true).
-{ rewrite PRU. exists (Z_to_bv 64 g). unfold grant_ok_na_pin. change (m_vmmaps md1) with (m_vmmaps md).
-  rewrite (unsigned_lit_small g) by lia. unfold page_size. rewrite Hg4.
-  apply andb_true_intro; split; [|reflexivity]. apply andb_true_intro; split; [apply andb_true_intro; split|].
-  - apply Z.eqb_eq. exact Hg1.
-  - apply Z.ltb_lt. exact Hg2.
-  - apply Z.leb_le. exact Hg3. }
+assert (GEX : exists a, grant_ok_na_pin (Z_to_bv 64 0) md1 a (page_round_up_Z size) = true).
+{ rewrite PRU.
+  apply (YK13.grant_ok_na_pin_of_gap (Z_to_bv 64 0) md1 g size ltac:(lia)
+           ltac:(unfold page_size; exact (proj2 (proj2 SZ))) ltac:(unfold page_size; exact Hg1) Hg5);
+  change (m_vmmaps md1) with (m_vmmaps md); assumption. }
 assert (EU1 : eager_used md1 = eager_used md) by apply eager_used_wvb.
 assert (BOK : mmap_noreserve_backed_ok (Z_to_bv 64 34) md1 (page_round_up_Z size) = true).
 { rewrite PRU. unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22. apply Z.leb_le.
@@ -387,7 +391,7 @@ assert (BOK : mmap_noreserve_backed_ok (Z_to_bv 64 34) md1 (page_round_up_Z size
 destruct (anon_node tfibsegs regs1 (Z_to_bv 64 0x63b34) mem1 (seg_rom tfibsegs) md1 (Z_to_bv 64 34) size
   (AI_halted _ _ _ _ HAI1) R17 R10 R11 ltac:(lia) R12 R13 mmap_flags_core_22 R14 R15 GEX BOK)
   as (I & nx & bit & ga & i0 & NODE & _ & OUT).
-assert (AIg : forall a : word, grant_ok_na_pin md1 a size = true ->
+assert (AIg : forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md1 a size = true ->
   AI tfibsegs (w_H W) (w_A W) (mmap_model a (Z_to_bv 64 size) md1) /\
   eager_used (mmap_model a (Z_to_bv 64 size) md1) <= eager_used md + size).
 { intros a Ha. pose proof (mod_eager_used_mmap_le a (Z_to_bv 64 size) md1) as EG. rewrite (unsigned_lit_small size) in EG by lia.
@@ -400,8 +404,9 @@ apply (SRr_node tfibsegs W _ I nx i0 _ NODE).
 intros i. destruct (OUT i) as (md_i & _ & _ & _ & Hg_i & NX_i & MD_i). rewrite NX_i. clear NX_i NODE OUT.
 rewrite PRU in Hg_i, MD_i |- *. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22) in MD_i. subst md_i.
 set (a := ga i) in *. set (A := bv_unsigned a).
-assert (Hg0 : grant_ok_na_pin md a size = true) by exact Hg_i.
-destruct (mod_grant_split md a size Hg0) as (GA1 & GA2 & GA3 & GA4). fold A in GA1, GA2, GA3.
+(* [with_vm_backing] keeps [m_vmmaps] and [m_kernel], all the placement test reads. *)
+assert (Hg0 : grant_ok_na_pin (Z_to_bv 64 0) md a size = true) by exact Hg_i.
+destruct (mod_grant_split md a size ltac:(lia) (proj2 (proj2 SZ)) Hg0) as (GA1 & GA2 & GA3 & GA4). fold A in GA1, GA2, GA3.
 pose proof (u64_range a) as UA. fold A in UA.
 destruct (AIg a Hg_i) as [HAI2 EG2].
 set (md2 := mmap_model a (Z_to_bv 64 size) md1) in *.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the hint justifier mj1 also reads MDefS facts off KUnk entries. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import AxSymExec3 AsanPlan MainExport.
@@ -23,6 +24,7 @@ Definition mj1 (kn : list kentry) (VR : vranges) (HLO HHI : Z) (f : mfact) (K : 
     | MZeroS a n, KZero sa ne => sym_len VR ne n && addr_match VR sa a
     | MWrS a n, KWr sa ne => sym_len VR ne n && addr_match VR sa a
     | MBlobD a n, KBlob sa ne _ => lit_len ne n && addr_match VR sa a
+    | MDefS a n, KUnk sa ne => sym_len VR ne n && addr_match VR sa a
     | _, _ => false
     end.
 

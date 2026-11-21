@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the IO node lemmas discharge the read-only-backing premise (RomBase.sys_rob) for ioctl and openat, and the openat paths end below TASK_SIZE. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import
   ShapeAlg SpinAlg Nodes StoreOk AgentLib AgentNodes RefNodes AsanAcct AsanAcctShape AsanNodesLibE.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import AsanAcctNoLazy.   (* [comment removed for export] *)
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import SpinAlgCfg AsanNodesLibCfg.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import RomBase RomWrite RomWritev.
 Unset Nia Cache.  (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
@@ -88,14 +90,15 @@ Qed.
 Lemma srz_cfg_ret_only_silent_noacc : forall ms model x8 r m' T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = check_ret_only eff r m' []) ->
   m_halted m' = None ->
   srealizes_cfg segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   srealizes_cfg segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hc.
+  intros ms model x8 r m' T Hh Hsvc Hrob Hchk Hh' Hc.
   rewrite <- (apply_effect_no_write ms r) in Hc.
-  eapply (srz_cfg_det_noacc segs ms model x8 (mkEffect r [] []) m' T Hh Hsvc); [| | exact Hh' | reflexivity | exact Hc].
+  eapply (srz_cfg_det_noacc segs ms model x8 (mkEffect r [] []) m' T Hh Hsvc Hrob); [| | exact Hh' | reflexivity | exact Hc].
   - intros eff m'' evs. rewrite Hchk. apply check_ret_only_ok_iff.
   - intros eff. rewrite Hchk. apply check_ret_only_no_unmodeled.
 Qed.
@@ -104,14 +107,15 @@ Qed.
 Lemma srz_cfg_ret_only_copyins_silent_mat : forall ms model x8 reads r m' T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = check_ret_only_copyins reads eff r m' []) ->
   m_halted m' = None ->
   materialize_model_accesses m' reads = Some m' ->
   srealizes_cfg segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   srealizes_cfg segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 reads r m' T Hh Hsvc Hchk Hh' Hmat Hc.
-  eapply srz_cfg_silent1; [|exact Hc].
+  intros ms model x8 reads r m' T Hh Hsvc Hrob Hchk Hh' Hmat Hc.
+  eapply srz_cfg_silent1; [| exact Hrob | exact Hc].
   rewrite <- (apply_effect_copyins_no_write ms r reads).
   apply (node_chk_ev_mat_gen ms model x8 unit (fun _ => with_copyins reads (mkEffect r [] []))
            (fun _ => m') (fun _ => m') (fun _ => []) Hh Hsvc).
@@ -178,6 +182,7 @@ Qed.
 Lemma srz_cfg_open_mat : forall ms model x8 reads (mk : word -> Model) A B,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   alloc_no (bv_unsigned x8) = false ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model
                = check_open_result_copyins reads eff model mk) ->
@@ -191,10 +196,11 @@ Lemma srz_cfg_open_mat : forall ms model x8 reads (mk : word -> Model) A B,
                        (mk (alloc_fd (m_fds model)))) B ->
   srealizes_cfg segs (mkCfg ms model) (t_alt2 A B).
 Proof.
-  intros ms model x8 reads mk A B Hh Hsvc Hna Hchk Hmk Hmat0 Hmat1 Hfree HA HB.
+  intros ms model x8 reads mk A B Hh Hsvc Hrob Hna Hchk Hmk Hmat0 Hmat1 Hfree HA HB.
   apply (srz_cfg_alt2 segs (mkCfg ms model) {e : Z | In e openat_errnos} unit
            (open_nx ms model mk) A B (exist _ ENOMEM ENOMEM_in_openat_errnos) tt).
   - apply node_ok_cfg_of_nonalloc; [exact (nonalloc_no segs ms model x8 Hsvc Hna) | eapply node_open_mat; eassumption].
+  - exact Hrob.
   - intros [e He]. cbn [open_nx]. apply HA. exact He.
   - intros []. cbn [open_nx]. exact HB.
 Qed.
@@ -216,7 +222,7 @@ Lemma srz_cfg_close_lazy : forall regs (pc : word) mem rom model w fd e K,
 Proof.
   intros regs pc mem rom model w fd e K HF HE Hh H17 Hfd Hfd32 Hlk Hc.
   eapply srz_cfg_sys_lazy; [exact Hh | exact HF | exact HE |].
-  eapply srz_cfg_ret_only_silent_noacc; [exact Hh | reflexivity | | | rewrite adv_set_epend; exact Hc].
+  eapply srz_cfg_ret_only_silent_noacc; [exact Hh | reflexivity | rob_auto | | | rewrite adv_set_epend; exact Hc].
   - intros eff. rewrite (check_syscall_57 segs) by (rewrite H17; apply u64_lit; lia).
     unfold check_close. rewrite ms_gpr_epend0, Hfd, (fd32_id fd Hfd32), Hlk. reflexivity.
   - rewrite with_fds_halted. exact Hh.
@@ -224,7 +230,7 @@ Qed.
 
 Lemma check_syscall_29 : forall ms x8 eff m,
   bv_unsigned x8 = 29%Z ->
-  check_syscall (sys_input segs ms x8) eff m = check_ioctl (fd32 (ms_gpr ms 0)) (cmd32 (ms_gpr ms 1)) eff m.
+  check_syscall (sys_input segs ms x8) eff m = check_ioctl (sys_input segs ms x8) (fd32 (ms_gpr ms 0)) (cmd32 (ms_gpr ms 1)) eff m.
 Proof. intros ms x8 eff m Hno. unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -240,7 +246,11 @@ Lemma srz_cfg_ioctl_winsz_lazy : forall regs (pc : word) mem rom model w fd c K,
 Proof.
   intros regs pc mem rom model w fd c K HF HE Hh H17 Hfd Hfd32 Hlk H11 Hc.
   eapply srz_cfg_sys_lazy; [exact Hh | exact HF | exact HE |].
-  eapply srz_cfg_ret_only_silent_noacc; [exact Hh | reflexivity | | exact Hh | rewrite adv_set_epend; exact Hc].
+  eapply srz_cfg_ret_only_silent_noacc;
+    [exact Hh | reflexivity
+    | apply (ioctl_rob_tty segs _ model (getr regs 17));
+        [reflexivity | rewrite H17; apply u64_lit; lia | rewrite ms_gpr_epend1, H11; reflexivity]
+    | | exact Hh | rewrite adv_set_epend; exact Hc].
   intros eff. rewrite check_syscall_29 by (rewrite H17; apply u64_lit; lia).
   unfold check_ioctl. rewrite ms_gpr_epend0, ms_gpr_epend1, Hfd, (fd32_id fd Hfd32), Hlk, H11.
   reflexivity.
@@ -263,7 +273,7 @@ Lemma srz_cfg_read_dir_lazy : forall regs (pc : word) mem rom model w fd K,
 Proof.
   intros regs pc mem rom model w fd K HF HE Hh H17 Hfd Hfd32 Hlk Hdir Hc.
   eapply srz_cfg_sys_lazy; [exact Hh | exact HF | exact HE |].
-  eapply srz_cfg_ret_only_silent_noacc; [exact Hh | reflexivity | | exact Hh | rewrite adv_set_epend; exact Hc].
+  eapply srz_cfg_ret_only_silent_noacc; [exact Hh | reflexivity | rob_auto | | exact Hh | rewrite adv_set_epend; exact Hc].
   intros eff. rewrite (check_syscall_63 segs _ _ eff model) by (rewrite H17; apply u64_lit; lia).
   unfold check_read. rewrite ms_gpr_epend0, ms_gpr_epend1, ms_gpr_epend2, Hfd, (fd32_id fd Hfd32), Hlk.
   rewrite (access_okb_intro _ _ Hdir). reflexivity.
@@ -367,7 +377,7 @@ Proof.
     + exact Hnu.
     + intros []. rewrite with_fds_halted. exact Hh.
     + intros []. unfold syscall_effect_accesses. cbn [eff_copyins eff_writes app]. exact Hmat. }
-  apply (srz_cfg_silent1 segs _ c' _ HN). unfold c'.
+  apply (srz_cfg_silent1 segs _ c' _ HN); [rob_auto |]. unfold c'.
   destruct bs as [|b bsr]; cbn [delivered_writes].
   - unfold ms. rewrite adv_ret_epend. cbn [wbytes] in Hc. exact Hc.
   - unfold ms. rewrite adv_write1_epend. exact Hc.
@@ -514,21 +524,23 @@ Section Openat.
   (* [comment removed for export] *)
   Definition path_at' (p : list byte) : Prop :=
     (length p <= 4095)%nat /\ ~ In (Z_to_bv 8 0) p
+    /\ (bv_unsigned (getr regs 11) + Z.of_nat (length p) < TASK_SIZE)%Z
     /\ rdn segs mem (getr regs 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]).
 
   Lemma path_at_cstr' : forall p, path_at' p -> read_cstr (mrb segs mem) (getr regs 11) = CstrOk p.
-  Proof. intros p (H1 & H2 & H3). apply read_cstr_of_rdn; assumption. Qed.
+  Proof. intros p (H1 & H2 & H3 & H4). apply read_cstr_of_rdn; assumption. Qed.
 
   (* [comment removed for export] *)
   Lemma srz_cfg_openat_toolong_lazy : forall bs K,
+    (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z ->
     rdn segs mem (getr regs 11) 4096 = Some bs -> ~ In (Z_to_bv 8 0) bs ->
     srealizes_cfg segs (mkCfg (post (errno_ret ENAMETOOLONG)) model) K ->
     srealizes_cfg segs (mkCfg (mkst regs pc mem (seg_rom segs)) model) K.
   Proof using HF HE Hh H17 H10 Hfl Hmat0.
-    intros bs K Hrd Hnz Hc. cbv delta [post] in *.
-    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hrd) as Hp.
+    intros bs K Htask Hrd Hnz Hc. cbv delta [post] in *.
+    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Htask Hrd) as Hp.
     eapply srz_cfg_sys_lazy; [exact Hh | exact HF | exact HE |].
-    eapply srz_cfg_ret_only_copyins_silent_mat; [exact Hh | reflexivity | | exact Hh | | rewrite adv_set_epend; exact Hc].
+    eapply srz_cfg_ret_only_copyins_silent_mat; [exact Hh | reflexivity | apply (openat_rob segs ms model (getr regs 17)); [reflexivity | exact Hno56 | rewrite (ms_path _ Hp); discriminate] | | exact Hh | | rewrite adv_set_epend; exact Hc].
     - intros eff. fold ms.
       exact (openat_toolong_check segs ms (getr regs 17) model Hno56
                ltac:(unfold ms; rewrite ms_gpr_epend2; exact (modeled_open_flags_rd _ Hfl)) (ms_path _ Hp) eff).
@@ -543,7 +555,7 @@ Section Openat.
   Proof using HF HE Hh H17 H10 Hfl Hmat0.
     intros K Hp Hc. cbv delta [post] in *.
     eapply srz_cfg_sys_lazy; [exact Hh | exact HF | exact HE |].
-    eapply srz_cfg_ret_only_copyins_silent_mat; [exact Hh | reflexivity | | exact Hh | | rewrite adv_set_epend; exact Hc].
+    eapply srz_cfg_ret_only_copyins_silent_mat; [exact Hh | reflexivity | apply (openat_rob segs ms model (getr regs 17)); [reflexivity | exact Hno56 | rewrite (ms_path _ (path_at_cstr' [] Hp)); discriminate] | | exact Hh | | rewrite adv_set_epend; exact Hc].
     - intros eff. fold ms.
       exact (openat_enoent_check ms (getr regs 17) model [] Hno56 ms_gpr0_fdcwd (ms_path _ (path_at_cstr' [] Hp))
                ms_flags (or_introl eq_refl) eff).
@@ -558,7 +570,7 @@ Section Openat.
   Proof using HF HE Hh H17 H10 Hfl Hmat0.
     intros p K Hp Hpl Hfs Hc. cbv delta [post] in *.
     eapply srz_cfg_sys_lazy; [exact Hh | exact HF | exact HE |].
-    eapply srz_cfg_ret_only_copyins_silent_mat; [exact Hh | reflexivity | | exact Hh | | rewrite adv_set_epend; exact Hc].
+    eapply srz_cfg_ret_only_copyins_silent_mat; [exact Hh | reflexivity | apply (openat_rob segs ms model (getr regs 17)); [reflexivity | exact Hno56 | rewrite (ms_path _ (path_at_cstr' p Hp)); discriminate] | | exact Hh | | rewrite adv_set_epend; exact Hc].
     - intros eff. fold ms.
       exact (openat_enoent_check ms (getr regs 17) model p Hno56 ms_gpr0_fdcwd (ms_path _ (path_at_cstr' p Hp))
                ms_flags (or_intror (conj Hpl Hfs)) eff).
@@ -578,7 +590,7 @@ Section Openat.
   Proof using HF HE Hh H17 H10 Hfl Hmat0 Hfree Hmat1.
     intros KA KB Hp HA HB. cbv delta [post] in *.
     eapply srz_cfg_sys_lazy; [exact Hh | exact HF | exact HE |].
-    eapply srz_cfg_open_mat; [exact Hh | reflexivity | rewrite Hno56; reflexivity | | | | | exact Hfree | |].
+    eapply srz_cfg_open_mat; [exact Hh | reflexivity | apply (openat_rob segs ms model (getr regs 17)); [reflexivity | exact Hno56 | rewrite (ms_path _ (path_at_cstr' _ Hp)); discriminate] | rewrite Hno56; reflexivity | | | | | exact Hfree | |].
     - intros eff. fold ms.
       exact (openat_dot_check ms (getr regs 17) model dot_path Hno56 ms_gpr0_fdcwd (ms_path _ (path_at_cstr' _ Hp))
                eq_refl ms_flags eq_refl eq_refl eff).
@@ -599,7 +611,7 @@ Section Openat.
   Proof using HF HE Hh H17 H10 Hfl Hmat0 Hfree Hmat1.
     intros p d KA KB Hp Hne Hpl Hfs HA HB. cbv delta [post] in *.
     eapply srz_cfg_sys_lazy; [exact Hh | exact HF | exact HE |].
-    eapply srz_cfg_open_mat; [exact Hh | reflexivity | rewrite Hno56; reflexivity | | | | | exact Hfree | |].
+    eapply srz_cfg_open_mat; [exact Hh | reflexivity | apply (openat_rob segs ms model (getr regs 17)); [reflexivity | exact Hno56 | rewrite (ms_path _ (path_at_cstr' p Hp)); discriminate] | rewrite Hno56; reflexivity | | | | | exact Hfree | |].
     - intros eff. fold ms.
       exact (openat_file_check ms (getr regs 17) model p d Hno56 ms_gpr0_fdcwd (ms_path _ (path_at_cstr' p Hp))
                (path_eqb_neq _ _ Hne) ms_flags Hpl Hfs eff).

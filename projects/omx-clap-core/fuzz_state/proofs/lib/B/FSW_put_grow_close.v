@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 1917 of its 1994 lines of code are new or changed and 2709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_put_grow_tail.v, with its module paths, module names and numbers changed; 18 of its 516 lines of code are new or changed and 1496 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): put's GROW arm, the composition of the second half: pgt_run, from the call
    of fuzz_realloc (0x82bc4, ra = 0x84580) to put_spec's post (lib/B/FSW_put.v put_post), over fuzz_realloc_spec's
    three outcomes - refused (cnt = fail; FSW_put_grow_refused.v pgt_refused), granted from a NULL buffer (cap = 0, its
@@ -11,8 +12,8 @@
    the source range after the call (FSW_put_grow_src.v pgt_src_after). The Section is lib/B/FSW_put_grow_tail.v's; the
    pieces' lemmas are re-stated over it (their files close their Sections) and applied as A applies them.
 
-   TAKEN FROM: lib/A/FSW_put_grow_tail.v at a working branch 860b2fb1188 (the same blob is on
-   a working branch f0e2574c33c): pgt_put1 (:1596-1604), pgt_bb (:1826-1835) and pgt_run (:1837-2156),
+   TAKEN FROM: lib/A/FSW_put_grow_tail.v at a working branch (the same blob is on
+   a working branch): pgt_put1 (:1596-1604), pgt_bb (:1826-1835) and pgt_run (:1837-2156),
    unchanged in form (B's resume pc 542080).
 
    RULE-24: proves function put (omx-clap-core/fuzz_state, image B = asan-ubsan, entry 0x8449c; the GROW arm)
@@ -53,7 +54,7 @@ Variable B : asyms.
 Hypothesis HSS : FsShadowSyms B.
 Hypothesis RT_memcpy : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Hypothesis IMG : fs_img_facts tfibsegs B.
-(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path from dda8331bd25:
+(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path:
    CTX-free with its `cnt <> fail ->` room guards), discharged at composition. *)
 Hypothesis HREALLOC : fuzz_realloc_spec tfibsegs B.
 

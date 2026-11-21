@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-interval ledger, the vDSO, the launch input's kernel build): changed HIU_init, ehi_le_reserved_top; added vdso_live_le. *)
 (* The initial ubsan heap: the invariant at the start-up state with the initial credit (K0U, B0U). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -23,13 +24,23 @@ Import ITree.Exc.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-(* Every reserved entry ends at or below the top of the reservations. *)
 Lemma ehi_le_reserved_top : forall (l : list (word * word)) e, In e l -> ehi e <= reserved_top l.
 Proof.
   induction l as [|[a sz] l IH]; intros e He; [destruct He|].
   cbn [reserved_top]. destruct He as [<-|He].
   - unfold ehi. cbn [fst snd]. lia.
   - specialize (IH e He). lia.
+Qed.
+
+(* LPS 727298f3: the vDSO pair [State.init_reserved] appends to the launch ledger spans at most 20 pages
+   ([State.vdso_text_pages_le]). *)
+Lemma vdso_live_le : forall kb top, live_bytes (vdso_reserved kb top) <= 20 * 4096.
+Proof.
+  intros kb top. pose proof (vdso_text_pages_pos kb) as P1. pose proof (vdso_text_pages_le kb) as P2.
+  unfold vdso_reserved. cbv zeta.
+  match goal with |- context [if ?c then _ else _] => destruct c end.
+  - cbn [live_bytes]. lia.
+  - cbn [live_bytes snd]. rewrite !u64_lit; unfold vdso_vvar_pages, page_size; lia.
 Qed.
 
 Section INITU.
@@ -40,67 +51,23 @@ Theorem HIU_init : forall (M : word -> option byte) (lim : Z) (VM : VmMaps),
   hi_heap (HIU sptop) [] (hl_K0 (L0U sptop), hl_B0 (L0U sptop)) M VM.
 Proof.
   intros M lim VM HLIM H HVM.
-  destruct H as (NONE & NL & PS & GOT & (canary & Hcan & GUARD)
-    & (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & secret & AUXC & AVL & RND
-       & Bav & Hav & Brnd & Hrnd & X3 & X4 & X5 & XHW & X6 & X11 & X12 & X23 & Xr & Xs) & MI).
-  destruct HVM as (brk0 & mbase & isp & HVMe & VB & _ & VSP & Hisp). subst VM.
-  change (bv_unsigned isp = sptop) in Hisp.
-  change (valid_brk rsegs brk0) in VB.
-  destruct VB as (VB1 & VB2 & VB3).
-  change (segments_reserved rsegs) with RESV in VB1, VB2.
-  rewrite reserved_top_RESV in VB1, VB2.
-  unfold brk_aslr_max, page_size in *.
-  destruct VSP as (SP1 & SP2 & _). unfold sp_window_lo, sp_window_hi in *.
-  assert (HIMG : 0 < IMG_HI < 2 ^ 32) by (split; apply Z.ltb_lt; vm_compute; reflexivity).
-  assert (Hrange : CEIL_LO <= sptop - 2 ^ 23 <= CEIL_HI) by (unfold CEIL_LO, CEIL_HI; lia).
-  pose (R0 := mkRunP (sptop - 2 ^ 23) Hrange secret Xs canary Hcan).
-  assert (HCEIL : @alloc_ceiling R0 = sptop - 2 ^ 23) by reflexivity.
-  destruct (@RHEAP_init_proof R0 M (Z_to_bv 64 av) NONE NL AUXC PS GOT GUARD MI) as [HR HAUX].
-  pose proof K0_val as HK0. pose proof NSEG_val as HNSEG.
-  assert (HRL : Z.of_nat (length RESV) = 4) by (rewrite RESV_eq; reflexivity).
-  change (hi_heap0 sptop [] (K0U, B0U) M (mkVmMapsFull RESV [] [] brk0 brk0 lim mbase isp)
-          /\ GU (K0U, B0U) (mkVmMapsFull RESV [] [] brk0 brk0 lim mbase isp)).
-  split.
-  2:{ unfold GU. cbn [vm_maps vm_reserved fst snd live_bytes]. rewrite app_nil_r, HRL.
-      unfold B0U, CAPG, K0U. lia. }
-  exists R0, (@ps_init R0 (reservedZ rsegs)), (led_init (reservedZ rsegs)), [], 0.
-  cbn [fst snd vm_reserved vm_maps vm_limit].
-  rewrite app_nil_r.
-  splits.
-  - exact HCEIL.
-  - reflexivity.
-  - exact HR.
-  - unfold ps_init. cbn [ps_m]. apply creach_init.
-  - apply Permutation_refl.
-  - constructor; cbn [vm_maps vm_noaccess vm_reserved vm_start_brk vm_brk vm_init_sp
-                      ld_resv ld_groups ld_metas ld_brkreg ld_brk led_init].
-    + split; [intros e []|constructor].
-    + intros e [].
-    + reflexivity.
-    + reflexivity.
-    + intros e He. pose proof (ehi_le_reserved_top RESV e He) as Hle.
-      rewrite reserved_top_RESV in Hle. lia.
-    + rewrite HCEIL. unfold PGSZ. lia.
-    + intros b l [].
-    + intros b l k [].
-    + constructor.
-    + intros b l Hb. discriminate.
-    + split; reflexivity.
-    + rewrite HCEIL. lia.
-  - exact MI.
-  - exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd.
-    refine (conj HAUX (conj AVL (conj RND _))). rewrite HCEIL. lia.
-  - intros a Ha. apply NONE. unfold RCTX in Ha. lia.
-  - constructor.
-  - lia.
-  - unfold K0U. lia.
-  - unfold K0U. lia.
-  - unfold B0U. lia.
-  - unfold ps_init. cbn [ps_m]. rewrite pot_init. lia.
-  - rewrite HRL. unfold K0U. lia.
-  - rewrite RESV_eq. repeat constructor; cbv beta; apply Z.leb_le; vm_compute; reflexivity.
-  - exact HLIM.
-  - constructor.
+  (* LPS 727298f3: the launch ledger is [State.init_reserved] (the image's reservations and the vDSO
+     pair); [HI0_init] builds the invariant over it at the credit (K0, B0), lowered here to (K0U, B0U) *)
+  assert (HVM0 : init_vm (L0 sptop) lim VM).
+  { destruct HVM as (brk0 & mbase & isp & kb & E & R). exists brk0, mbase, isp, kb. exact (conj E R). }
+  pose proof (HI0_init sptop M lim VM HLIM H HVM0) as H0.
+  change (hi_heap0 sptop [] (K0, B0) M VM) in H0.
+  change (hi_heap0 sptop [] (K0U, B0U) M VM /\ GU (K0U, B0U) VM).
+  pose proof K0_val as HK0.
+  split; [apply (hi_heap0_cr_le sptop [] K0 B0 K0U B0U M VM H0); unfold K0U, B0U; lia|].
+  destruct H0 as (R0 & s & L & LBb & nc & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & LEN & _).
+  destruct HVM as (brk0 & mbase & isp & kb & -> & _).
+  unfold GU. cbn [vm_maps vm_reserved fst snd live_bytes] in LEN |- *. rewrite app_nil_r in LEN |- *.
+  unfold init_reserved in LEN |- *. rewrite live_bytes_app.
+  change (segments_reserved (hl_segs (L0U sptop))) with RESV in LEN |- *.
+  rewrite RESV_live.
+  match goal with |- context [live_bytes (vdso_reserved kb ?t)] => pose proof (vdso_live_le kb t) as HV end.
+  unfold B0U, CAPG, RESVMAX. splits; lia.
 Qed.
 
 End INITU.

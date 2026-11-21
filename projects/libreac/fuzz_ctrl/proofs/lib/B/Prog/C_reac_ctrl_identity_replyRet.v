@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_build_asLib.v, with its module paths and module names changed; 1068 of its 1130 lines of code are new or changed and 635 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/C_reac_ctrl_identity_replyRet.v -- fuzz_ctrl image B (asan-ubsan, libreac v1.9.0): the TAIL of the cgif-form
    glue pb_reac_ctrl_identity_reply (reac_ctrl_identity_reply, 0x848fc), on the plan of record
    analyses/libreac/fuzz_ctrl/glue-B/identity_reply/pb_reac_ctrl_identity_reply.plan.md, section 1, rows S-C and ret.
@@ -9,7 +10,7 @@
    rule 24: no function proved here.  Released-proof lookup of record
    (`proof-index reac_ctrl_identity_reply reac_ctrl_identity_reply_contract_F`,
    lookup-reac_ctrl_identity_reply.txt (a working note, not in this delivery), checker CONFIRM in
-   lookup-check.md (a working note, not in this delivery)): At ossv/recipes c5e779efe8c (2026-10-31), no released proof outside this unit.  Written new.
+   lookup-check.md (a working note, not in this delivery)): At (2026-10-31), no released proof outside this unit.  Written new.
 
    THE TWO ENTRIES OF THE SHARED TAIL.  Both lifts run RB's fine-write-list chain at a stretch BASE memory mb (the chain
    base is normalize mb) and end in the same post rrB_SCpost (RB's rQSC over the normalized run, the real end state, the
@@ -32,8 +33,8 @@
 
    THE WRITE SET of the tail, Wr := ~ outside (rWSC G j) (RB, the fine list): the window [S - 9072, S) (awr_byte's
    window arm), the frame G = frame_addr lyb 1 pos and its 16 shadow bytes (the in_frames arm, (1, pos) owned at the
-   base), the frame's flag byte (rrB_journal_free's flag arm; rQSC's last conjunct gives it 0 at the end, ReplySC
-   dceac150ddc), the three OUT cells under reply_ok (the spec's P11 awr_byte, moved to the base state by rrR_awr_tr).
+   base), the frame's flag byte (rrB_journal_free's flag arm; rQSC's last conjunct gives it 0 at the end, ReplySC),
+   the three OUT cells under reply_ok (the spec's P11 awr_byte, moved to the base state by rrR_awr_tr).
    One rrB_journal_free step: own drops (1, pos), S' = stack_free_state 1 pos Sb.
 
    acall_kept.  The post's acall_kept over [S - 9072, S) is built step by step from the function's entry (lyc, Sc, W,
@@ -42,12 +43,12 @@
    rrB_K_raw (a lifted run, raw bytes kept off its write set) and rrB_K_ev (a call, its own acall_kept over a window
    inside [S - 9072, S)).  The bytes the function itself creates and writes (its frame, that frame's shadow and flag)
    are apart from every class acall_kept keeps (rrR_new_apart, from the AR laws: a Theorem Labs lane's C_reac_ctrl_parseW.v
-   rcpW_apart_* (at head lib/B/Prog/C_reac_ctrl_parseW.v:246, :278, :310; from a working branch 2e352cba74d), copied with the frame-distinctness derived here).
+   rcpW_apart_* (at head lib/B/Prog/C_reac_ctrl_parseW.v:246, :278, :310; from a working branch), copied with the frame-distinctness derived here).
 
    SECTION HYPOTHESES: LAWS (AR_laws; Sections RetW, Steps, Ret), ML (model_laws), ASF (astack_free_law), FFL
    (frame_flag_lawP) (Section Ret), the same names and texts as GlueLift.v's Section JournalFree and the spec's plan
    comment (OWNER PENDING: LAWS / ML core B bundle, the record core's TfibLib; ASF / FFL a Theorem Labs lane's class-1 fake-stack
-   rules, a working branch ff613211c11).  segs_low is PROVED (B.ProgWorld.pws_segs_low); the callee contract
+   rules, a working branch).  segs_low is PROVED (B.ProgWorld.pws_segs_low); the callee contract
    reac_ctrl_record_cksum_verify_contract_F_on (RB's Section Callees, route (C)) is PROVED
    (reac_ctrl_record_cksum_verify_F.reac_ctrl_record_cksum_verify_holds_F_on).  The two lifts take RB's narrowed
    premise shadow_rw_on (reac_ctrl_identity_reply_shadow_R ..) at the real base memory and move it to normalize mb by
@@ -586,7 +587,7 @@ End RetK.
 
 (* ==== 3. The function's own new bytes (its class-1 frame, that frame's shadow and flag) are apart from every class
    acall_kept keeps; the entry's classes lie below the window.  Copied from a Theorem Labs lane's C_reac_ctrl_parseW.v
-   (a working branch 2e352cba74d: rcpW_ceil, rcpW_fgeo, rcpW_apart_block / frame), unchanged but for the
+   (a working branch: rcpW_ceil, rcpW_fgeo, rcpW_apart_block / frame), unchanged but for the
    names and the let-bound Fr / FL written out. ==== *)
 Section RetW.
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil} {SK : lib.Reusable.YI16.sink_head}.
@@ -1038,7 +1039,7 @@ Variable B : lib.Reusable.YG0f.asyms.
    on every B base), as GlueLift.v's Section JournalFree takes them. *)
 Hypothesis LAWS : lib.Reusable.YG0d.AR_laws rsegs B.
 Hypothesis ML : lib.Reusable.YG0d.model_laws (lib.Reusable.YG0f.as_universe B).
-(* OWNER PENDING: a Theorem Labs lane's class-1 fake-stack rules, a working branch ff613211c11 (cgif lib/A/ACed.v:125-133,
+(* OWNER PENDING: a Theorem Labs lane's class-1 fake-stack rules, a working branch (cgif lib/A/ACed.v:125-133,
    tfibX_ASF / tfibX_FFL), the spec's plan comment's ASF / FFL. *)
 Hypothesis ASF : lib.Reusable.YG0d.astack_free_law rsegs B.
 Hypothesis FFL : lib.Reusable.YCbq.frame_flag_lawP rsegs B.

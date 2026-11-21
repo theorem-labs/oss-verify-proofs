@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_grant/proofs/lib/A/Prog/KindOfLink1.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* kind_of_link1 (fuzz_scene.asan-ubsan 0x84aac, 29 instructions): the contract of the ASan+UBSan build's code and its walk.
    The function reads no memory and has no frame: it compares a0 with constants and returns Pau's
    KL1 of it (lib/Prog/RcKind.v:6) in a0.
-   The asan-ubsan twin of lib/A/Prog/P_kind_of_link1.v (at d9e17010c56): the module
+   The asan-ubsan twin of lib/A/Prog/P_kind_of_link1.v: the module
    paths are lib.AU.Prog and every number below is re-measured in this image; the statement text is the asan one.
    The core module YCbq is Required from lib.AU (its asan-ubsan copy: it differs between scene's two images);
    every other core module from lib.Reusable, as in the asan file.
-   The walk is the asan walk of lib/A/Prog/P_kind_of_link1.v (at 61afd7acb1d, itself ported from
-   a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/KindOfLink1.v, at d98082bd58b) with the
-   module paths lib.AU.Prog; RET takes this listing's PL_scene (lib/AU/Prog/ScenePa.v:36). lib/Prog/GrantModel is
+   The walk is the asan walk of lib/A/Prog/P_kind_of_link1.v (itself ported from
+   a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/KindOfLink1.v) with the
+   module paths lib.AU.Prog; RET takes this listing's PL_scene (lib/AU/Prog/ScenePa.v:37). lib/Prog/GrantModel is
    not imported (fuzz_scene has no GrantModel): the walk states GrantModel's signed64_small here, with the same proof.
    The 29 slots at AF_kind_of_link1 hold the same PW words as the asan listing's, so the walk's branches and
    returns are the asan walk's; there is no UBSan trap branch to close.
    Numbers: fuzz_scene.asan-ubsan, sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f
-   (projects/libreac/fuzz_scene/harness.yaml at c8557374ad2e); symbols from the .symtab of
+   (projects/libreac/fuzz_scene/harness.yaml); symbols from the .symtab of
    unstripped/fuzz_scene/fuzz_scene.asan-ubsan, whose bytes at 0x84aac..0x84b20 equal the pinned image's.
    - kind_of_link1 = 0x84aac, st_size 116 = 29 instructions (no compressed instruction).
    - LLVMFuzzerTestOneInput = 0x828a4 = the listing's base (SceneAddr.v:16 scene_text), so

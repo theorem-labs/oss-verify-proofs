@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/diginet_meter_segments_c.v, with its module paths, module names and addresses changed; 9 of its 21 lines of code are new or changed and 8 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_decode.asan-ubsan) text of lib/A/Prog/diginet_meter_segments_F_c.v, in the leaf form of proofs/libreac/fuzz_decode/lib/B/Prog/check_braid_F_c.v at recipes commit 88154566652a, with this image's entry. *)
+(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_decode.asan-ubsan) text of lib/A/Prog/diginet_meter_segments_F_c.v, in the leaf form of proofs/libreac/fuzz_decode/lib/B/Prog/check_braid_F_c.v at recipes, with this image's entry. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint form of the contract of diginet_meter_segments on fuzz_decode.asan-ubsan (image B): entry 0x82dc8,
    56 bytes (14 instructions), no call, no stack frame.
 

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE-FREE part of lib/A/W_journal.v (itself a remapped copy of
-   proofs/plugin-hostd/fuzz_reply/lib/A/W_journal.v, origin/cold/port-reply-w2 6328acea202, blob ecd9547e32f; see
+   proofs/plugin-hostd/fuzz_reply/lib/A/W_journal.v, blob ecd9547e32f; see
    W_journal.v's header for the renames). Split out under h-rw-pca-4's standing statement / walk rule (02:36Z) after
    h-rw-pca-7's measurement (02:33Z, donor controls clean): W_journal.v Requires PcapSyms / PcapPa / PcapPaLib for its
    Section g (paj_run_x / paj_run_to_x at the listing), and PcapPa Requires PcapList, the ASan program listing, so every
@@ -12,6 +12,7 @@
    SRr_run_to_pi_tok_AJX), which takes the symbol type and listing as Variables. Requires only lib/Reusable and the
    image-free kit (PaTable, PaSym, PaRun, PaShadow, PaJournal). lib/B Requires THIS file. W_journal.v keeps Section g
    and Requires Export this file, so lib/A users see no change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -82,7 +83,7 @@ Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Local Notation ajournal := (ajournal segs B).
 
 (* The side condition on G: image bytes outside the allocator's statics.  Such a byte is not aowned
-   (AR_owned_image_law, YG0d.v:474-475), not hidden (H_off_segments), below alloc_ceiling and not in the
+   (AR_owned_image_law, YG0d.v:475-476), not hidden (H_off_segments), below alloc_ceiling and not in the
    shadow (segs_low).  errno is not excluded: a lane whose function stores errno may put errno's 4 bytes
    in its G if it shows them in the image and outside as_owned_static. *)
 Definition gx_ok (G : list (Z * Z)) : Prop :=

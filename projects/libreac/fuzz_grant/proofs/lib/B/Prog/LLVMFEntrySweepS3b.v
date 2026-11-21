@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS3b), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8v.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS3b.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 3, part b, of the sweep phase of fuzz_grant's entry function on IMAGE B:
    0x81684 .. 0x8173c (fuzz_grant.c:328-332) — the second group-A loop and the block that
    sets the group-B loop up. For every channel c = 1 .. a.width - 1 (the head 0x81684,
@@ -23,7 +24,7 @@
    inner one on the parameters left (3 - p). The two calls are LLVMFEntrySweepS3d.v's
    `gsw_want` and `gsw_cga`; the ground is LLVMFEntrySweepS1c.v and LLVMFEntrySweepS3c.v.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS3b.v (a working branch afd75724b5b, blob f467c3a4a, 1307 lines),
+   Adapted from lib/A/Prog/GrantEntrySweepS3b.v (a working branch, blob f467c3a4a, 1307 lines),
    which carries no licence header of its own.
    Image B calls want_of where image A reads was_set and set_to in line and calls reac_headamp_default, indexes the row as 8 + 3c + p from s11 behind three UBSan guards into the trap 0x81f48, keeps c, 3c + 8, 34, 3 and p in s2, s4, s5, s6 and s7, and reloads `a`, the two frame arrays and the table from spill slots 120, 136, 128 and 152. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.

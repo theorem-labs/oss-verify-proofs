@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the load and fetch case splits cover a read that meets the vvar region and the vDSO text check at the pc. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -112,7 +113,7 @@ Lemma interp_eff_accesses_full : forall t, eff_full t -> forall m r,
 Proof.
   intros t H. induction H; intros m r E; cbn [interp_eff_accesses] in E; try discriminate.
   - injection E as <-. exact H.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k _) m) as [r'| |] eqn:E'; try discriminate.
     injection E as <-. cbn [access_value]. exact (H0 _ _ _ E').
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -143,7 +144,8 @@ Proof.
   destruct (fetch_word segs (ms_pc ms)); [exact (D _ E)|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)); [exact (D _ E)|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)); [exact (D _ E)|].
-  unfold fetch_failure in E. destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+  unfold fetch_failure in E. destruct (vdso_text_at _ _); [discriminate|].
+  destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
 Qed.
 
 Lemma msteps_rfull : forall ms ms', msteps segs ms ms' -> rfull (ms_regs ms) -> rfull (ms_regs ms').
@@ -168,7 +170,7 @@ Lemma interp_eff_accesses_wrel : forall t m r,
 Proof.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m r E; cbn [interp_eff_accesses] in E; try discriminate.
   - injection E as <-. apply wrel_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k _) m) as [r'| |] eqn:E'; try discriminate.
     injection E as <-. cbn [access_value]. exact (IH _ _ _ E').
   - destruct (store_ok segs m a (width_bytes n)) eqn:Hok; [|discriminate].
@@ -192,7 +194,8 @@ Proof.
   destruct (fetch_word segs (ms_pc ms)); [exact (D _ E)|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)); [exact (D _ E)|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)); [exact (D _ E)|].
-  unfold fetch_failure in E. destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+  unfold fetch_failure in E. destruct (vdso_text_at _ _); [discriminate|].
+  destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
 Qed.
 
 Lemma msteps_wrel : forall ms ms', msteps segs ms ms' -> wrel (ms_mem ms) (ms_mem ms').

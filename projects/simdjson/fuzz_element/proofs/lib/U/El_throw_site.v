@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: each throw path is checked at both CONFIG_RSEQ values. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -85,7 +86,7 @@ Definition throw_site_stmt (pcs D raval : Z) (XP : mem -> Z -> Prop) (XR : Z -> 
 Section Site.
   Variables (pcs pc0 pc1 D raval : Z) (XP : mem -> Z -> Prop) (XR : Z -> word -> Prop) (xk : list kentry) (IT : itab).
   Hypothesis ITS : itab_sound usegs IT.
-  Hypothesis RUN : forall uw : bool, exit_ok (xautoP IT xs_W xs_RW 0x7c1b8 XS_FUEL XS_KD (xs_ssD D xk pc1 raval uw)) = true.
+  Hypothesis RUN : forall uw b : bool, exit_ok (xautoP IT xs_W xs_RW 0x7c1b8 XS_FUEL XS_KD (xs_ssD D xk pc1 raval uw b)) = true.
   Hypothesis PC0 : pc0 = pcs + 8.
   Hypothesis PCS : 0 <= pcs /\ pcs + 8 < 2^32 /\ (pcs + 8) mod 2 = 0.
   Hypothesis RAV : 0 <= raval < 2^64.

@@ -12,8 +12,8 @@
    [phi+34, phi+34+n0) of the 50-byte record block phi, then the mod-128 test 0x820a4-0x820a8 (not taken).
 
    THE RUN (one, PROVED): lib/A/Prog/Seg/F11F.v f11_fd4_evt_F (:221-263), Required qualified, no Section
-   hypothesis.  F11F.v is a Theorem Labs lane's, taken by path from a working branch bf0fe242de5 (blob
-   2a9b50649ca, branch commit e1170215d9a); the earlier text (commit 5dbd293c250) did not compile here
+   hypothesis.  F11F.v is a Theorem Labs lane's, taken by path from a working branch (blob
+   2a9b50649ca, branch); the earlier text did not compile here
    (F11F.v:419 applied the RNG-first ingest contract with RNG last); f11_fd4_evt_F's statement is the same in
    both.  The run READS the record block [phi, phi+50) and its byte-exact shadow span, and WRITES NO MEMORY (its
    post carries the start memory m).  It has no call, so it is lifted whole (split rule 04:01Z: nothing split).
@@ -62,7 +62,7 @@
 
    NAMES.  Six core modules exist twice (lib/Reusable/<X> and lib/A/Reusable/<X>: YI04 YI16 YK11 YK1b YM05 YO09),
    and F11F's closure loads the lib/A copies and lib/A/Bz/Lib, so the twins are loaded by ABSOLUTE Require lines
-   (as Kit.v (at head lib/A/ACtlG/Kit.v:53-59) / A5.v (at head lib/A/ACtlG/A5.v:93-96); the glue base from a working branch 46eb24cd4b3) and every project name here is written through a
+   (as Kit.v (at head lib/A/ACtlG/Kit.v:53-59) / A5.v (at head lib/A/ACtlG/A5.v:93-96); the glue base from a working branch) and every project name here is written through a
    module alias of its FULL path (Module X := OSSVerify.Proofs.libreac.fuzz_ctrl.lib....), never a partial
    path; Lib.MState.MS likewise (a Theorem Labs lane's measurement).  getr / seg_rom / cfg_at appear only as XK11.* / XG0d.*
    (the check of glue-pattern.md section 2 (a working note, not in this delivery) hits only comments).
@@ -76,11 +76,11 @@
    the front (destruct ends in `& _`) and carried by Kit.kit_frac_move at the SAME memory; no lemma here
    re-establishes FRAC / FRAHC at a new memory.
 
-   ROUTE (C) BUILD STATE: type-check rc=0 on a working branch shell 1899bed1aee (cb build, a build machine, log
+   ROUTE (C) BUILD STATE: type-check rc=0 on a working branch shell (cb build, a build machine, log
    (internal path), build 2026-10-29T13:05:56Z); build of record: a Theorem Labs lane's cbrec record
    over lib/A/ACtlG/L3W4bAudit.v (not in this delivery).  The paragraph below is the pre-route-(C) state.
    BUILD STATE (TYPE-CHECK ONLY on the glue branch's planning core; values do not count): wb4b.sh on VM
-   a build machine at branch head c5d58e80468, rc=0: (internal path)
+   a build machine at branch head, rc=0: (internal path)
    build-20261029T072954Z.log compiled F11F.vo and F11_fd4.vo, build-20261029T073141Z.log the final proof text.
    No AD2l stand-in was needed (the closure does not reach lib/A/AD2l.v).  Print
    Assumptions glue_seg_F11_fd4 (below End): the Rocq primitive-type axioms and functional_extensionality_dep only.

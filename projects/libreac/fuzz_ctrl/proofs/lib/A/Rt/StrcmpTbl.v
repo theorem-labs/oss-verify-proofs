@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpTbl.v (a working branch 97c611eec86) by port_core.py, with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpTbl.v (a working branch) by port_core.py, with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_grant's ASan build: the code table of the strcmp interceptor
    walk (lib/A/Rt/Strcmp.v) and the A/AE2y.v phase lemmas over it (icpt_phase, icpt_phase_to, icpt_ld8 with
    tbl_icpt replaced by tbl_sc; same proofs). The table is A/AE34.v's tbl_icpt plus the 333 four-byte words from

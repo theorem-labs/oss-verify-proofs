@@ -1,6 +1,6 @@
 (* G4.ExHead, IMAGE B: the scan head of expected (EX_L 0x813c0 .. EX_P / EX_NEXT / EX_R, fuzz_manifest.c:134-142) on
    fm.asan-ubsan (pin ca61e5c9eabc0050): the shared definitions of the head walk (symbolic states at its cuts, the
-   shadow-token setup). Shape after image A's lib/A/FMW_ex_head_d.v (06d82004dc3); every pc, register and slot is B's
+   shadow-token setup). Shape after image A's lib/A/FMW_ex_head_d.v; every pc, register and slot is B's
    (internal path).
    B keeps i in s7 (register 23) and text + i in s5 (register 21); the scan's constants are s0 = -1, s3 = 5, s11 = ' '
    (callee-saved) and a6 = text, a7 = 6, t0 = ':', t1 = the NUL/space mask (caller-saved, re-made after strncmp).

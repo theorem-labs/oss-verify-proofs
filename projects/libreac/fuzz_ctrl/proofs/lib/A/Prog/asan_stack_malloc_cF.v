@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 722 of its 760 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_blockF.v, with its module paths and module names changed; 9 of its 45 lines of code are new or changed and 724 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/asan_stack_malloc_cF.v -- image A's FOOTPRINT contract of __asan_stack_malloc_<c>, STATEMENT ONLY
    (route (C) wave, a Theorem Labs lane 11:50Z; writer a Theorem Labs lane). Before this file the only generic text was the local copy
    in lib/A/Prog/reac_ctrl_parseF.v (a version not in this delivery), whose comment says the unit's own is to be published; this is it.
 
    TEXT: fs_shadow_area and asan_stack_malloc_contract_F are the text of record reac_ctrl_parseF.v imports (a Theorem Labs lane's
-   NARROW form, a working branch 062bf770c5b fuzz_knock lib/A/Prog/asan_stack_malloc_F.v:694-721,
+   NARROW form, a working branch fuzz_knock lib/A/Prog/asan_stack_malloc_F.v:694-721,
    with image A's names). reac_ctrl_parseF.v and every other local copy (reac_box_catalogue_matchF.v (not in this delivery),
    ctrl_lay_blockF.v (not in this delivery), reac_box_model_blockF.v (a version not in this delivery)) stay unchanged apart from comment text until the wave-end deletion review.
    Names the text binds: IMG_LO / IMG_HI of lib/A/Prog/ImgBounds.v (the binding parseF.v's text gets through

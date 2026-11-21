@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO's mappings and steps): changed ho_res; added ho_mres. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -144,8 +145,15 @@ Lemma ho_fds_std : a_fd ch = FdStd -> m_fds model = fds_std.
 Proof. intros H. pose proof (co_fds _ _ _ _ _ _ _ _ _ _ _ _ HC) as X. rewrite H in X. exact X. Qed.
 Lemma ho_tid : a_tidset ch = false -> m_tid model = None.
 Proof. exact (co_tid _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
-Lemma ho_res : vm_reserved (m_vmmaps model) = segments_reserved SEGS.
-Proof. exact (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+Lemma ho_res : exists rx : list (word * word),
+vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+/\ Forall (resx_entry_ok A) rx
+/\ (length rx <= n_resx A)%nat
+/\ sum_sizes rx <= resx_bytes A.
+Proof. exact (co_resx _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+Lemma ho_mres : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+(vm_maps (m_vmmaps model)).
+Proof. exact (co_mres _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 Lemma ho_limit : vm_limit (m_vmmaps model) = LIMIT.
 Proof. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 Lemma ho_brk : vm_brk (m_vmmaps model) = edenot E (a_brk ch).

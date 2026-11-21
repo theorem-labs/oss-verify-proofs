@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HC is stated over AsanInitL's SINV0L and argH0 of the run's input; args_block and PMC's pmc_args give the argument bytes at some launch base with launch_base_ok). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
 From OSSVerify.openssl.echconfiglist_parser.images Require Import Asan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
-  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit
+  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanInitL
   AsHSTab AsMainVM AsMainState AsMainFacts AsMainLazyChk AsMainLazy LazyRestrict LazySR.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsCert Require Import AsImages AsPlanImages.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsMainSyms PerfLia.
@@ -180,12 +181,12 @@ Section CELLS.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model FULL).
-  #[local] Notation HID := (hid ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model).
+  #[local] Notation MR := (Mr ASAN_H (argH0 sp0 rdraw inp) E ch model FULL).
+  #[local] Notation HID := (hid ASAN_H (argH0 sp0 rdraw inp) E ch model).
   Let X := Xof g E.
   Let brk0z := bv_unsigned brk0.
   Let sp0z := bv_unsigned sp0.
@@ -214,7 +215,7 @@ Section CELLS.
     pose proof (proj1 (forallb_forall _ _) uw_facts h Hin) as HF. cbn beta in HF. rewrite Hh in HF.
     unfold has_fact, uw_fact in HF. unfold pm_short. fold sp0z in SPM. rewrite <- SPM.
     destruct (hole_short h); [|destruct (h <? 4)%nat];
-      pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ HF) as UR; rewrite uE_var in UR;
+      pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ HF) as UR; rewrite uE_var in UR;
       (destruct (Z.leb_spec 96 (16 * vE E 10)); destruct (Z.leb_spec (16 * vE E 10) 160); cbn [andb]; try reflexivity; exfalso; lia).
   Qed.
   Lemma hole_sel_here : forall w, world_ok w (pm_short sp0z) g -> hole_sel w h = true.
@@ -355,11 +356,20 @@ Section CELLS.
   Qed.
 
   (* [comment removed for export] *)
+  (** #38: [argB0]'s string arm starts at [STR0 = usp + CHEAD + W], and [AsanInit.chead_eq]
+      puts [CHEAD] at [8 argc + 8 envc + 472 + 32 R + 8 G], above the envp arm's floor *)
   Lemma argH0_low : forall z, 0 <= z < sp0z + 8 * Z.of_nat (length (in_argv inp)) + 16 ->
-    argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E (Z_to_bv 64 z) = false.
+    argH0 sp0 rdraw inp E (Z_to_bv 64 z) = false.
   Proof.
     intros z Hz. pose proof Vsp as Vsp'. destruct Vsp' as [Vlo [Vhi _]]. unfold sp_window_lo, sp_window_hi in Vlo, Vhi. unfold sp0z in Hz.
-    pose proof (len_av APH sp0 rdraw _ (in_envp inp) (in_uid inp) (in_hwcap inp) Vav) as LA.
+    (* the three layout facts, stated here: [AsanInit.len_av], [chead_eq] and [R_range] are
+       discharged over [AsanInit]'s Section variables, which this Section does not hold *)
+    assert (LA : 1 <= Z.of_nat (length (in_argv inp)) <= 1024) by (destruct Vav as [LA _]; lia).
+    assert (RR : 0 <= rseq_z (kb_rseq (in_kernel inp)) <= 1) by apply rseq_z_range.
+    assert (CE : Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))
+                 = 8 * Z.of_nat (length (in_argv inp)) + 8 * Z.of_nat (length (in_envp inp)) + 472
+                   + 32 * rseq_z (kb_rseq (in_kernel inp)) + 8 * Z.of_nat (block_items (in_argv inp) (in_envp inp) mod 2))
+      by (pose proof (auxv_size_rseq (kb_rseq (in_kernel inp))) as HA; unfold block_head_size, block_items; lia).
     unfold argH0. apply andb_false_iff. left. unfold argB0. rewrite u_of_Z by lia.
     apply orb_false_iff. split; apply andb_false_iff; left; apply Z.leb_gt; lia.
   Qed.
@@ -377,7 +387,7 @@ Section CELLS.
   Lemma brk_facts : g = true -> 12386304 <= brk0z /\ brk0z + 12288 <= 2147446784 /\ 4096 * vE E 5 = brk0z.
   Proof.
     intros Hg. destruct (lzc_parts h ch Hh) as (_ & _ & _ & G5 & _). specialize (G5 Hg).
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5.
     pose proof (BRKg sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC Hg) as B5. fold brk0z in B5.
     pose proof (pso_brk _ _ _ _ (pm_syms_ok_open sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) Hg) as [PB _].
     unfold ALOWSH_LO in PB. fold brk0z in PB. lia.
@@ -454,7 +464,7 @@ Section CELLS.
   Proof.
     intros z Hz. pose proof Vsp as Vsp'. destruct Vsp' as [Vlo [Vhi _]]. unfold sp_window_lo, sp_window_hi in Vlo, Vhi.
     pose proof (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & TOPm & _). fold sp0z in TOPm.
-    pose proof (len_av APH sp0 rdraw _ (in_envp inp) (in_uid inp) (in_hwcap inp) Vav) as LA. unfold sp0z in Hz, TOPm.
+    assert (LA : 1 <= Z.of_nat (length (in_argv inp)) <= 1024) by (destruct Vav as [LA _]; lia). unfold sp0z in Hz, TOPm.
     unfold hid. apply orb_false_iff. split; [apply argH0_low; unfold sp0z; lia|].
     apply negb_false_iff. unfold vis. rewrite u_of_Z by lia.
     replace (TOP model <=? z) with true by (symmetry; apply Z.leb_le; lia). destruct (in_hull ASAN_H z); reflexivity.
@@ -537,12 +547,18 @@ Section CELLS.
       [apply hid_img; exact Hz | apply hid_vis; assumption | apply hid_stack; exact Hz | eapply hid_sh; eassumption].
   Qed.
 
-  (* [comment removed for export] *)
-  Lemma args_block : forall a, argB0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) a = true ->
-    FULL a = wrap_mem APH sp0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a.
+  (** #38: the memory the invariant pins, at the base it is closed over. The base is
+      existential ([AsanInitL.SINV0L]); a consumer gets SOME launch base with its defining
+      facts, never the run's by name, and the bytes under [argB0] (the envp array and the
+      string area) are the ones it reads *)
+  Lemma args_block : exists mb, launch_base_ok sp0 rdraw brk0 inp mb /\
+    forall a, argB0 sp0 rdraw inp a = true ->
+      FULL a = wrap_mem inp mb APH (Z_to_bv 64 (Z.of_N Asan.M.init_pc)) sp0 rdraw a.
   Proof.
-    intros a Ha. pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as SI. apply (proj2 SI).
-    rewrite (argH0_SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) Vsp Vav Vev Vfit E FULL a SI). exact Ha.
+    pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as SI.
+    destruct (SINV0L_mem _ _ _ _ _ _ _ _ SI) as (mb & Hb & HM). exists mb. split; [exact Hb|].
+    intros a Ha. apply HM.
+    rewrite (argH0_SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp Vsp Vav Vev E FULL a SI). exact Ha.
   Qed.
 End CELLS.
 
@@ -565,8 +581,11 @@ Record PMC (sp0 : word) (rdraw : EntryDraw) (inp : ProcInput) (brk0z : Z) (X : p
                 rdn ASEGS m (Z_to_bv 64 (cx_val (bv_unsigned sp0) brk0z X a)) 8
                 = Some (word_to_le_bytes 8 (Z_to_bv 64 (cx_val (bv_unsigned sp0) brk0z X v)));
   pmc_img   : forall lo hi, img_check lo hi = true -> forall a, lo <= a < hi -> m (Z_to_bv 64 a) = None;
-  pmc_args  : forall a, argB0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) a = true ->
-                m a = wrap_mem APH sp0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a
+  (** #38: at some launch base consistent with the run's stack pointer and draw (the break
+      is not read by [Run.entry_launch_ok_va]) *)
+  pmc_args  : exists brk mb, launch_base_ok sp0 rdraw brk inp mb /\
+                forall a, argB0 sp0 rdraw inp a = true ->
+                  m a = wrap_mem inp mb APH (Z_to_bv 64 (Z.of_N Asan.M.init_pc)) sp0 rdraw a
 }.
 
 (* [comment removed for export] *)
@@ -588,8 +607,8 @@ Lemma PMC_open : forall (sp0 brk0 : word) (rdraw : EntryDraw) (inp : ProcInput) 
     (FULL : word -> option byte) (model : Model),
   valid_sp sp0 -> valid_brk ASEGS brk0 -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
   HSF_asan h = Some ch ->
-  cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
+  cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp)
+        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model ->
   PMC sp0 rdraw inp (bv_unsigned brk0) (Xof (hole_granted h) E) FULL.
 Proof.
   intros sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC. constructor.
@@ -600,7 +619,7 @@ Proof.
   - intros w a v Hc0 Hw H1 H2 Hv. eapply word_sound; try eassumption.
     intros i Hi. eapply visibleZ_hid; try eassumption. apply Hv. exact Hi.
   - intros lo hi Hc0. eapply img_sound; eassumption.
-  - intros a Ha. eapply args_block; eassumption.
+  - destruct (args_block sp0 brk0 rdraw inp ch E R FULL model Vsp Vav Vev HC) as (mb & Hb & HM). exists brk0, mb. split; [exact Hb | exact HM].
 Qed.
 
 Section ALL.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AD1k.v (origin/ossv/recipes c8557374ad2e) for reac-pw/fuzz_link's asan image (sha256 059dae63e07c...) by gen_ad1k.py a93a5ff60645 of the start-up tool set (sha256 c99b47f502d4; internal record): only its image literals regenerated, from the generated lib/A/AD2j.v, lib/A/AF0m.v and the image's asan_globals and stdio FILEs *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AD1k.v (theorem-labs/oss-verify-proofs@6b32741d849a) for reac-pw/fuzz_link's asan image (sha256 059dae63e07c...) by gen_ad1k.py a93a5ff60645 of the start-up tool set (sha256 c99b47f502d4; internal record): only its image literals regenerated, from the generated lib/A/AD2j.v, lib/A/AF0m.v and the image's asan_globals and stdio FILEs *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's channel-reader flag fdchan reads, carried as cs_ok's co_rdr (reac-repacer/fuzz_uci's form)); internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_link.asan (reac-pw/fuzz_link asan) sha256 059dae63e07ca2d80ae9227fa125d40586a02172c96d2b6884f8617ab912061d; unstripped twin sha256 66cd0f159895f119b29a44eb3760cfda78506402a019729057dba69562af9d9f *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -333,7 +334,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -366,7 +367,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

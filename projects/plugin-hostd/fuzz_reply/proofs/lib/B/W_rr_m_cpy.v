@@ -36,7 +36,7 @@
      0x843b4 by trap_ptr_sovf, the compares' values 0 by trap_U_sltu_ge (G0 <= G0 + 56 (N - 1)) and the runner's
      slti = 0; the runner decides 0x84378, 0x84384 and 0x843a0 from the atoms' ranges. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 in the room form (lane Rrm, the image-A twin a Theorem Labs lane
-   f4cd818e98d lib/A/W_rr_m_cpy.v): hop CPY over ANY allocator relation ARx, in place (Section c is
+   lib/A/W_rr_m_cpy.v): hop CPY over ANY allocator relation ARx, in place (Section c is
    W_relay_remove_cx.v's generic block, as in W_rr_m_kit.v): laws al_X -> alx_X (BLKN for a live block's 0 <= n,
    rm_ablocks_nodup over ARx), the journal, frame and block lemmas their _x twins (the heap-block shadow facts under
    HP0), RUN = paj_run_x_x with paj_run_tok_x, the call by aj_gx_entry_at_x with AMEMCPY / AMEMCPYS in their _x forms
@@ -44,6 +44,7 @@
    conjunct at the same state (rmc_post's new premise).  Image B against the A twin: the journal is at RR_STK_x
    (W_contract_x.v: 128 bytes above RR_STK; A: RR_STK), RLIVE owns no frame (own = [], no fpos / F / FL), and the
    trap edges stay psrr_branch_tok over the same RUN (A's hop has none). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1037,7 +1038,7 @@ eapply (SRrG_bind SEGS R R_trans).
       eapply SRr_mono.
       { apply (AMEMCPY ly1 S1 Hp1 W1 (ms_regs ms3) (ms_mem ms3) _ (rmSA cx i) (rxG0 cx + AENT * (rN cx - 1)) AENT HPRE3
           A10 A11 P12); try (unfold rmSA, AENT; lia); [exact DEST | exact Cd1 | | exact Cd2 | exact Cd3 |].
-        (* QMm W1 (B engine 9015b6a6f732): the dest is a slot of the heap block ATABLE, off the image, so no kept byte *)
+        (* QMm W1 (B engine): the dest is a slot of the heap block ATABLE, off the image, so no kept byte *)
         { intros a Ha HK. apply (kept_x_off_img SEGS B a); [|exact HK]. intros Himg.
           refine (blk_img_x SEGS B ARx LAWS ly1 S1 Hp1 W1 (ms_mem ms3) _ (rxG0 cx) ATABLE a HAR3 TIn _ Himg).
           change (req_size ATABLE) with 896. exact (HSLOT a Ha). }

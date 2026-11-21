@@ -28,7 +28,7 @@
 # It is one-shot: the pull request after the approved one empties it again.
 schema: oss-fuzz-theorems/migration-pin/1
 digest: ''
-tree: 'a88b7f4e57006514b9f7d77f788825d180a4cda31ff263e8ff27fc8f4e18898b'
-check: deferred
-check_of_record: 'the CI/CD lane''s check of record of release 2026.11.3, read by the v2026.11.3 release by hand, source 820d4f7db1c0b4fa05bc50eb0c2fcfd66f65aa30'
-pull_request: 'release 2026.11.3, branch release/v2026.11.3-1'
+pull_request: ''
+tree: ''
+check: ''
+check_of_record: ''

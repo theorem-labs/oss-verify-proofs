@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start states of the recorded S6 hand-off states beside the computed ones, the variable map read from probes of the run at 727298f3, and the leaf check's carried-fact test the holes' end states are moved with). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound AsHSTab.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import EAsStartupHSA.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import EAsStartupHSA EAsStartupHSARec.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Br Require Br3Trans BrRa.
 Import ListNotations. Import AX2. Import AP. Import APS.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -18,6 +20,29 @@ Definition s6start2 : acs := set_kn HSA_easan_1 (UW_LONG :: kn HSA_easan_1).
 Definition s6start3 : acs := set_kn HSA_easan_1 (UW_SHORT :: kn HSA_easan_1).
 Definition s6start4 : acs := HSA_easan_2.
 Definition s6start5 : acs := HSA_easan_3.
+
+(** LPS 727298f3: the start states the recorded S6 hand-off states ([EAsStartupHSARec]) gave, made as above; each
+    hole's recorded end state is moved to the new start ([ES6End0] .. [ES6End5]) against these and the computed
+    ones ([s6start0] .. [s6start5], over the S6 states the run computes in the build). *)
+Definition s6start_rec0 : acs := set_kn HSA_easan_rec_0 (UW_LONG :: kn HSA_easan_rec_0).
+Definition s6start_rec1 : acs := set_kn HSA_easan_rec_0 (UW_SHORT :: kn HSA_easan_rec_0).
+Definition s6start_rec2 : acs := set_kn HSA_easan_rec_1 (UW_LONG :: kn HSA_easan_rec_1).
+Definition s6start_rec3 : acs := set_kn HSA_easan_rec_1 (UW_SHORT :: kn HSA_easan_rec_1).
+Definition s6start_rec4 : acs := HSA_easan_rec_2.
+Definition s6start_rec5 : acs := HSA_easan_rec_3.
+
+(** LPS 727298f3: [vsh_hand], the recorded S6 states' variables in the numbering of the run at 727298f3, a total
+    monotone map read from probes of that run: the S6 plans' map [EAsStartupHSA.vsh_s6], whose first step
+    (old 44 is new 50, old 61 is new 67: the thread-id word and the canary words) and second (old 326 is new 334 at LPS c0dd863a)
+    the run itself shows.  The variables a hole creates
+    (at and above the recorded states' counter) move with its last step, as the computed states' counter does. *)
+Definition vsh_hand : nat -> nat := vsh_s6.
+
+(** the facts of a start state [S] that a hole's leaf check takes as carried to its end state: the check's own
+    classification ([Br3Trans.pre_old], as [Br3Trans.rest3x_chk] computes it) at 1 or 2 *)
+Definition carried3 IM A TT classes (S : acs) d bs (cands : list kentry) : list kentry :=
+  map fst (filter (fun p => orb (Z.eqb (snd p) 1) (Z.eqb (snd p) 2))
+                  (combine cands (Br3Trans.pre_old IM A TT classes S d bs (BrRa.ra_fast (kn S)) (set_kn S cands)))).
 
 Definition S6START_table : list (nat * acs) :=
   [(0%nat, s6start0); (1%nat, s6start1); (2%nat, s6start2); (3%nat, s6start3); (4%nat, s6start4); (5%nat, s6start5)].

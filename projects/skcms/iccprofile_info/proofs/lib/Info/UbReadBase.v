@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, stack_writable and the first read region span 6144513 bytes below sp, was 8388608, and vm_pre's ledger is the launch's (ResLaunch.res_launch: the image's entries and the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.skcms.iccprofile_info.images Require Import Ubsan.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require ResLaunch.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require Import Amb
   PropExec CatExec CatSim SeqExec StoreOk ShapeAlg
   SymExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX Frame RefMemcpyLib UbTargetPre UbReadDefs.
@@ -61,8 +63,8 @@ Qed.
 
 (* [comment removed for export] *)
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 6144513)%Z ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144513 + d)) m = true.
 
 (* [comment removed for export] *)
 Definition group_writable (M : word -> option byte) (gm : word) : Prop :=
@@ -158,7 +160,7 @@ Record read_pre (sp0 p1 mb gm sec cnr : word) (R : bvmap 5 word) (M : word -> op
 
 (* [comment removed for export] *)
 Definition vm_pre (VM : VmMaps) (sp0 mb gm : word) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+  ResLaunch.res_launch (segments_reserved RSEGS) VM   (* LPS 727298f3: image entries ++ vdso/vvar pair *)
   /\ vm_limit VM = target_alloc_limit
   /\ vm_init_sp VM = sp0
   /\ map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true
@@ -177,7 +179,7 @@ Definition vm_pre (VM : VmMaps) (sp0 mb gm : word) : Prop :=
 
 (* [comment removed for export] *)
 Definition read_regions0 (sp0 gm : word) (L : Z) : list (word * Z) :=
-  [(Z_to_bv 64 (bv_unsigned sp0 - 8388608), 8388480%Z); (Z_to_bv 64 0x213c9, 65536%Z);
+  [(Z_to_bv 64 (bv_unsigned sp0 - 6144513), 6144385%Z); (Z_to_bv 64 0x213c9, 65536%Z);
    (Z_to_bv 64 (bv_unsigned gm + 32), L)].
 
 Record read_post0 (sp0 p1 gm : word) (content : list byte)

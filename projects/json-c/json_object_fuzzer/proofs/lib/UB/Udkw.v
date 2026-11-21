@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (S4_heap_iface takes the stack top's TASK_SIZE bound, heap_iface's hi_top_task; heap_model_frame's kernel-build premise passed to heapc_model_frame). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From stdpp Require gmap.
@@ -63,6 +64,8 @@ Qed.
 Section Inst.
 Variable B : Z.
 Hypothesis HBlt : alloc_ceiling < B.
+(* LPS 727298f3: heap_iface's [hi_top_task] *)
+Hypothesis HBtask : (B <= TASK_SIZE)%Z.
 Hypothesis HM : rmalloc_impl_stmt.
 Hypothesis HF : rfree_impl_stmt.
 Hypothesis HC0 : rcalloc_stmt.
@@ -217,7 +220,7 @@ Qed.
 
 Definition S4_heap_iface : heap_iface S4L.
 Proof.
-unshelve refine (@HI _ S4L hstate (HEAPc B) B HBlt _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+unshelve refine (@HI _ S4L hstate (HEAPc B) B HBlt HBtask _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 (S4_malloc_at RMALLOC_SYM (rmalloc_stmt_at_sym (rmalloc_stmt_of_impl HM)))
 (S4_free_at RFREE_SYM (rfree_stmt_at_sym (rfree_stmt_of_impl HF)) rfree_null_at_sym)
 (S4_malloc_at rmalloc_entry (rmalloc_stmt_at_impl HM))
@@ -233,7 +236,7 @@ S4_calloc S4_realloc).
 pose proof (heapc_blk B _ _ _ _ _ _ HP HIN) as (_ & _ & _ & _ & _ & IMG). unfold RIMG_LO, RIMG_HI in IMG. lia.
 -  intros A LB LB' m md HP P. exact (heapc_perm B _ _ _ _ _ HP P).
 -  intros A LB m md a n HP HIN. exact (heapc_blk_slack B _ _ _ _ _ _ HP HIN).
--  intros A LB m md md' HP E1 E2 E3 Hh. exact (heapc_model_frame B _ _ _ _ _ HP E1 E2 Hh).
+-  intros A LB m md md' HP E1 E2 E3 Ek Hh. exact (heapc_model_frame B _ _ _ _ _ HP E1 E2 Ek Hh).
 -  intros A LB m m' md HP CH WM MI'. eapply (heapc_frame B _ _ _ _ _ HP); [| exact WM| exact MI'].
 intros a Ha NCW. apply (CH a Ha).
 + intros [C LT]. apply NCW. destruct C as [C|[C|C]]; [rewrite QYTG.Mq0.alloc_ceiling_State in C; right; left; lia| | left; apply in_block_zin; exact C].

@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 134 of its 423 lines of code are new or changed and 107 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/P2.v d7928842d2aa (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/P2.v d7928842d2aa (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: seg_P2_run re-derives the lib.Lib Exec.evt run at ExecF.RNG_all. There is NO seg_P2_run_of_F_verbatim
    pin in this file, because P2.v states NO run lemma: its one run is the `sl_run` argument inside seg_P2
    (P2.v:169, the second bullet of its proof at P2.v:178), so there is no P2.<r> constant to pin against (the same
@@ -55,7 +56,7 @@ Module LFr := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Frame.
 Module P2UE := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Tk.UL.Exec.
 
 (* lib.Lib evt -> UL evt, by induction on the lib.Lib step chain (every lib.Lib step is a UL step).  The same
-   six lines as Seg/F27F.v f27F_ul_of_lib (a working branch 47a3d558cf1c), Seg/F5F.v f5F_ul_of_lib and
+   six lines as Seg/F27F.v f27F_ul_of_lib (a working branch), Seg/F5F.v f5F_ul_of_lib and
    Seg/F10F.v f10F_ul_of_lib.  It lets the tie below keep P2.v's own `apply (sl_run ...)`, which takes the UL
    form, while seg_P2_run gives the lib.Lib one. *)
 Lemma p2F_ul_of_lib : forall Q ms, LE.evt rsegs Q ms -> P2UE.evt rsegs Q ms.

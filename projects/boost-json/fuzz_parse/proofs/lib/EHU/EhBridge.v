@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -253,11 +254,85 @@ Lemma bytes_at_u64s_nth : ltac2:(zQ "h20!hqf!ii8!ho7!kr1!krb!in9!o3!hof!ki5!qs4!
 Proof.
 ltac2:(KReplay.run1z (kr_t_EhBridge ()) [] "##WGp'0h01nh11lh24__x1h31Hh44posth55Hlen0h64Hlu0h77__arithh84__ffh98__varmaph:5__with;4__x2h<4cstrh=5cstr0h>!s-$1h?1xi001xh@3prehA1yhB1EhC2EuhD2HBhE4HlenhF3HluhG2HnhH1MhI1ahJ!si$2hK1ehL1ihM1ohN1whO2wshP1zp&0p;1p;4p;3p;2p;<p;6p;8p;Bp;7g009Kj1RTg00:0j1q!s/$Nj1hTg00;1j1]Tg00Thj1bTg04M=j12Tg01h`k40<Tg01k[k307Tg01abj2=Tg00=;j34j1eTg04N=j4wTg00bcj3KTg02SSj31Tg01idj23Tg01gaj1>Tg00KWj1DTg019aR0j2UTg00Q?k105Tg00M5R1j10Tg04OCR2j2?Tg01TSR3j2!tO$S8j1G!sE$`j2STg01m?j1sTg00]@l<YTg00\@k20B!s0$ck30ATg00S<j4W!s/$cj1M!ug$Hj1pTg00UHj2o!s/$fk10@Tg00VDk10?!s0$oj2nTg00WRj2mTg04P7j3kTg00X5j4`Tg00YDk20!uS$R9j2\!s9$fk20!vG$ZRk30;Tg00[1k40:Tg00dcj4VTg01o_j3ATg020=j36!t+$Zj2QTg03DJk208Tg0023j65Tg04Q1k20!sL$QNj2g!s/$nj1dTg01l9k104Tg00L6R4j2!u=$Q]R5j2NTg00cCk103Tg021=k401Tg04RSk40!w2$S2j2~!s/$Pj2}!sV$aj4|Tg00<Yj1{!sA$lk402Tg04TKj4zTg01n@j28Tg01bDj3a!sA$ij3i!sA$Wj8yTg001Wj6xTg00F:R6j2^Tg01_Vk409Tg0230lBlTg00lQl<vTg00jAj7uTg00kmj8tTg00nTR7f1R8f0R934p=Cf4R:f3R;f2R<?18!s;$91S89947<p=_1^89,^<p=JA4;<8/^9p=I%>8=1<9p=Lg00DQR=P<P8P9H09p=F13<8=479p=O13;<1S89547p=BA1<8991:;p=jg00n6R>?489p=<1\>9p=:P7!s$$>P>P>g04UHP1!s$$2g04Uhf5R2P:P;!t:%MBlp=c!sT'!sM%!sD-<vp=r!sD$9P1P8P<P;P:P2f6R?f7R@f8RAM<Yp=Xg012hRB/N9p=EP8g002QRCg010<RDPDg010\REP9g011<Fup=P1=<8=4;9p=;P7!tA,E5p=H!t@$4P1P5g00o3!ta1Yp=[P>!t2$oUP9C`p=TP;PCPDPDPE!sL%Gtp=f!u~123V!u~&3g0246P!u|3Zg00EUR3#RR1#R#RRC#R!s$$q#hR5%qC#hR4#][%b5RFP=P:P;%2<RGH0<%]5B075;<1=5834!t#&9CwPFP?AK5:991581358RH/C2%b4RI%2?P4%28RJ%>:RK%29RL514D9134JRMg012IRN#D!s$1RO;_23JCIX4F,UFX@F,UFP0PFPFP@AK52!t8%CH?PI%2@P4PJAL42LD9A_MO?!s`0%]IRP&05CRC%02'?,7@#G=FAO1=IK34P9PFf9RKAK5@!s|'API%2KRH!s~&@!s~&A!s~,!tZ%f:R0AK5A9915<AO5<KPI%20P4PG%>ARM=14LD9P4PGPOPKCB!sf&f<RGf;RQ%0K,?C'7#G;FO1=IM54PP9PFPGAK509915:AO5:QPI%2GRMP4%2:R:AL40!s|%:POPQ!s|%P6PFf=R0P5P2AK5Q8D9AO52G!t^$RLP4%22RRAL4QJ!sa$RPOPGCB3Jf@RJf?RS%00!tZ,%>G,=I!t\'SP5!w;$0;!s{$ASPI%2JR0P4%2ARAf>R;=L4:!s~$APOPSCB3JP6AO5KJPIfARK#2R:P4PHP4%>SPRDj!s3$OPJCBCIfDRRfCRG!v+0%>J!tP'fBRJ9O5!u|$RRKP4PMP4%>JPA!sn$M!u@%!uy$IfER6#2RMP4PLAL4GH!tc$LPOPRCBfHRLfGRH%06!t7/R!ua+I%2HP4%2SRS%2Q9L46!se$0POPHCB1SOLR0#0RQ%0LRR,?CRA'<RT1<AAP>P>%e>RUP9X?>RVPU1<89#sXA>X?>PQPAPVPV%09RV#:X?7P0!vH$C%:CRQPLPR%:REcRRErPAPA%:AM<Y134:R:/C0%0:RW/<ARX%e7RYPU%08/<V1C8920B8940AXA7X?7RVP:PW%:W!t,$RM9XP9CWPX135JRXfIRR'C%0XRA%0RR0'<RWPYPUPVPX!tB$PRP0%:0RAM9XP?CWPWfJRW#M%0WR?#E134KRK#M%0K#E1356R6#M%06#Eg013bR6#pRK%b6R61o>8&0@>RX&0?>R:P>1n>CRZ1m>3R35k>R[g014NR\P[C`'P20>:EREP9P<g00m6R]g0155R^'\20=9<=4]^dB0;>B8H0:R^b8b9b:X2>1?C9R]/<]^2>P9fN#0O1b7b>b=b<b5b6CVPTP>1SORRT#0R]fMfLR_/79!xi'R`,=IRa54PXP>PP%2WRb9A4T964O,=IA4P9aXMP!{W%J%>LRc%2;R;514Rd514RePPPI1SOWRf=A49964OPaC;X1IPIAA4TJRg134JRh,QT=A4d514PPPIA64O9!sO&RiPI%p4RjP!t6$G,34Rk,QfA14`SRl5A491!t$1T!tC$Qf9=A4l914j!sC+07P7PN!t0$A49!sB4IPd!sB$14j!ty1PdPi!td%cRi134cRl,QO=64;!u#&P!t|+mPIPc!tO$34`!sK%S914!sF'PO!tk%O9!s?&`!tg3649!s>0IPj!tc&`!sk+IPcPm1=Ic,\PA14cj2084cE5A64N;2064;E51gOO%dOE5Pl&04LRPDHPiP4POPcPO1@9OX071@OO1NCCRiPOPCPQ!s+%E[1ChT%0hRm1?C0Ra'<R`!{q&hPm%:mRnPTPa!sZ&RP0PAEc!{~%8CWR0P`135GRG/CW%0GRR/<?Ro!sg&G!~'$PWP?%:?M9XP@CWR@PofKR?#MRW%0?#ERR134MRM#MRG%0MRM#ERVfF,35RU#MRY%0U#ERUPKP6&03>RpPX1TZZ,P:PEP!{f&PiP9!{S2lPPDHH01!vG$Od!v'&;H00E5A14jd1~4dE5AA4Nd1}4dE51gTT%dTE5PhP8DHPgP4PTPJ1@hT1NmaPhPmP!v&%AE[P0P`P@PoPWPRPGPV!uh$KP6P>1o><P8PpC|RpPXP:P>P3P\1m>1R19k>ZR\C`,P:%{DRD1T3\,P:Cf!uA,X2>X;>1?C8R\,<91?C<,N8[^2>^;>P9fO#0%2L,34#0P2O3!ul1H02!uI$Te!u2%PdCzE5PbP<E517?]#G=F_OP=P_P?PbPTPOPHPIPe18fORf1349'@X1I134dRI,8h1@f9X07134;RH,8l18k9,@fX07PO134SRS,89,8k!s:&T18O!s8$!s5$18TORf18OHRS,8TR?'@17aCR_%0HR=,7CR],7aR2'NPfP_!vw%!zS&ZP?P2!s8&SP]!z;&HP=%:=EZEZ!wF9%Mk%0k#E!wN$!wB$1n>B/T1,P:PDAa>[ZAa>Z19a>['T!w>8%E817\C17C<,7\'N!w>+PMfP#0P8!w8$J!z$0!yD%!z-$PIAi4c;DH134eAi4JdDH!wD%GyE5PaP9Exb3WFWCP8P9O2n20010!s#$12!s/&W3WE!sD@B!sD?X4F!sE71!sE'@!sE>bKWGWDXN5XL7WOXI>WHo"). Qed.
 
-Ltac auxw AW i := eapply (AW i); [cbn; lia | lia | reflexivity | cbn [edenot vX16 vX6 vUID vX12 vX23 vRND lit]; try reflexivity; eassumption].
-(* [comment removed for export] *)
-Lemma auxv_kn_ok : ltac2:(zQ "h30!hqf!ii8!pp1!in9!ki5!oj1!o3!lj9!kp8!kr1!hvc!lp3!qu0!qub!qs4!lk5!qvb!lj2!kq4>1E$a>1M>0@1$1@1$0#k0@1$9@1$1@1$0#8>2av$4>3x16$4>2x6$4>3x11$4>3x12$4>3x23$4>3rnd$4>0@3$3@1$1@1$0#k0@2$5^9N3@1$2^7>0@3$3@1$1@1$0#k0@2$5^aNh8@1$2^7>0@3$3@1$1@1$0#k0@2$5^bNhd@1$2^7>0@3$3@1$1@1$0#k0@2$5^cNh9@1$2^7>0@3$3@1$1@1$0#k0@2$5^dNhe@1$2^7>0@3$3@1$1@1$0#k0@2$5^eNhf@1$2^7>0@3$3@1$1@1$0#k0@2$5^fNha@1$2^7>0@4$7$6^f$h0@1$f@1$2^e>0@4$7$6^h0^f@1$e@6$d^e^d^c^b^a^9>0@2$8Z^h0>0@2$8@2$h1^h1+q0@2$h2+2+k0@4$b$6^h4^h3$c").
+Definition IMG_TOP : Z := 1249280.   (* LPS 727298f3: the end of the binary's loaded segments *)
+(* LPS 727298f3: the auxv block at the revision's layout ([StackLayout.auxv_entries]).  [auxv_kn] claims
+   AT_SYSINFO_EHDR's, AT_GID's, AT_EGID's and AT_EXECFN's value words only as present ([KUnk]); a stack
+   byte above the image is present when [Mem.bytes_at] reads it, because no loaded segment reaches it. *)
+Lemma find_segment_above : forall segs x n, 0 < n ->
+  (forall seg, In seg segs -> Z.of_N (seg_base seg) + Z.of_N (seg_size seg) <= x) ->
+  find_segment segs x n = None.
 Proof.
-ltac2:(KReplay.run1z (kr_t_EhBridge ()) [] "#$HZh07__sat33h17__arithh24__ffh3!sA&2h48__varmaph55__with64__x1h73offh84__x2h91nh:1xh;3Hi0h<1Rh=4cstrh>2Hah?1eh@1ihA1mhB1whC1yhD2AWhE1EhF2EShG1HhH3H24hI3H25hJ3H26hK3H29hL2H3hM3H30hN3H31hO2HChP2HVhQ4Hav0hR4Hav1hS2HehT2HihU2HnhV1MhW2avhX1bhY1lhZ3rndh[3x11h\3x12h]3x16h^3x23h_2x6h`1zp%0p%1p&0p;1p;2p;3p;4p;6p;8p;;p;7p;<p;Bg009Kj18Tg00:0k102!s0$Nj1uTg00;1j1gTg00KWj14Tg03^1j2RTg03IXj1<Tg00=;j3Jk10CTg01gaj1ZTg01h`j4oTg04VKj6^Tg04M=k109Tg00LPj1BTg01TSR0j2ITg00Q?j13!s:$6k20X!s9$]R1j2KTg03baj1LTg01^Hj2YTg01e<j3hTg00THj1w!s|$6R2j2VTg00F:j2cTg00RSk60GTg01U0k20>Tg00^GR3j27!s;$Xk30:Tg01V<k20!u|$R9j2G!t#$hj1mTg00cCk106Tg00Ufk104Tg00VDk103Tg00YDk20\!s0$fk20[Tg00ZRk30ZTg00[1k40YTg00dcj45!sa$oj2kTg00M5R4j16Tg01m?j1~Tg01bDj3W!t_$]k30!s0$n@k20VTg01idj2yTg01l9j1xTg0023j6\!sK$Wk80RTg01S8j1[Tg01o_j3jTg020=j3i!s/$\k10PTg001Wj6vTg021=k40OTg03cfm;0N!u\$Hj2tTg00WRj2sTg00<Yk10MTg04GHk60!wP$Qek20JTg04OCR5j20Tg01jDR6j2`Tg01k[j3rTg01CWj2qTg01fKj4pTg00S<k40!xd$Sck10HTg00`<j2!xd$aNj3eTg00b7j2nTg04Wbk20F!s9$cj3f!wY$ak40=Tg04XNk20;Tg04Y7k30?Tg01`Zk20@!s:$`k70ATg03\am<0BTg00]@l<STg03Lmk205Tg03N@j6;Tg02R?k40QTg00X5j4_Tg00jAj7]Tg00kIk70T!wt$]k40UTg00lQl<zTg0230lBaTg01_Vk40^Tg01abk201!s`$mk80]Tg04P7j3lTg012hR7f0R8'Kp=P%88#3p=N%88#8p=Mg04[9R9f2R:'Yf1R;;h8p==g02U0R<?f;8p=?g00n6R=/G8p=1g00nTR>P=P2P4P1g00o3f5R2f4R?f3R@P:P;P8M<Sp=b1k=8p=9P:g002QRAg010<RBPBg010\RCP=P;g00oUP8C_g011<RDF]p=OP:PAPBPBPCP;P8K0Tp>00P=P=g024YP8H0Up=}P>P=!s$$4P4P2P?P!tK+zp=C!sB&!s$%0P8P;P:P0P@P?P2f6REf7RFf8RGf9S00MBap=|!sQ$1PFP1PE!sw1Sp={P>!s$$=!tV&3V!tF$4P0g0246g012IR0P7!s[+Bap>0Sg00DQS01!s;%H0^p=T201;89J@:p=Q!ua-!v+$16^P8C_P!v#$:P@!sD+!sf$L0]p=U1Y98p>0KAJ=;8p=21q:;=J@8p=@!to$6P4P3g02\lR1!u>4>Al=;8p>0<!v^0!sI%0P7!v^%>0D!v_05!v_&5!v_%PEPFP7PG!u[%E!tu-=P:g014NRH!t6$!u@'d!tg,P1P!vE/<Sp>071`?!s7&C5p=A!v@$,G:p=!tUEGQ!x-&F!sI$!sG%!sE2<Sp=!tt01k=:P!tq1Hg01K]g00EURD#8S02#8RH#8RA#8R5#8R1#8R3$02R4#uR6&02A#uRI#g[%40RJ#4RK#4RL,RG%<ERM5J6Q00%4LS03#4S04#4S05#4S06#4RN#4S07#4S08#4S09#4S0:#4S0;#4S0<#4S0=#4S0>#4S0?#4S0@#4S0A#4RO#4!s$%RP'R=J6Mf:S0B%4PRP#4RQ!sB&R!sB&;S0C/RP!s2$<RP%4R!sA+=S0D%4!s4'>S0E/RQ=J6MQ01Q0Eg04\@RMQ0D#<S0F#ZCoQ01f?S0GQ0EQ0DPPQ0CQ0BQ00PGE^$09CoQ0G#Pf@S0HQ02#BRP#8RQ#8S0I#8RR#8RS#NS0J'IQ02#3RT%33RU+0XRV'KfCRWfBRX%L7RY%BHS0K#8S0L#B!s$$8!s--M!s-$M#NRZ'Y?hN91Y97%BDR[#3R\#LS0M7hNS0N%3AR]%83R3!sZ+M#N#LS0O7=NS0P%35R5%3HRH#LS0Q!s;$R%8[R^#8R_#8R`#3Ra%B[S0S#8S0T#M!t3$b#LS0U!sU$V%31R1%3PRc#LS0W!s;$X%3RRR%3QRQ#LS0Y!s;$Z%8`!sw$d%L5S0[!s;$\g04]VS0]9=bNS0^%3^Re#LS0_9=UNS0`Q0L#MRf#3Rgg04^\S0a!s_$b%3SRS%BPRP#3Rh#LS0c!s?$d%MP#NRig04_aS0e!s;$f%N`R`%3_Rj#LS0g!s;$h%B^S0i!vh$^g04`gS0j!s@$k%N[R[%BP#3S0l#LS0m!s>$nQ0S#BS0o!sZ$Pg04amS0p!sB$q%33R3%B_#3S0r#LS0s!s>$t%BAS0u!sX$Ag04c3S0v!s@$w%NfRf?=NYS0xQ0K#BS0y!sN$_!s;%z%w<S0{'?S0|'?S0}'?S0~'?S10'?S11'?S12'?S13'?S14'?S15'?S16'?S17'?S18'?S19'?S1:'?S1;'?S1<'?S1='?S1>'?S1?'?PWPXPZPNPLfA#<R<1VJNRk1VNNS1@'cS1A%3DRl/K]Rm1K]]S1B'cS1CPkQ1@PmQ1BPJPl%1lS1DPNP]%1]RmEbPNP]Pm!s+%EbS1EJ0GS1F20>TURk177TRn%PU177V[Ro[Rp%PTRqg01\4RrB0:TU;UW>Rs%PV\r^>qRqP;g01\P2087T'GPneO1RnPog013bS1G#wRrQ1G#mRt&06=Ru&04=Rv&03=Rw%9lS1H%9]Rx5OwAOwxxS1I40020\wCRCP8P:g00m6Ryg0155Rz'G20[8:=JyzdB0Z=7;H0YRzb2b4b5Q1CP8b1b0b3b0S1JC5PkPpPsPqPnPoPrPtPuPv1k=7Ry%9ZR{5OwPCP!sd&%PZR|!sf,P|e%6NR|,IZS1K/KVR}1IZ]S1L/KVS1MP8X:=R~1K;8#~XC=X:=S1NQ1KQ1LP~P~P~1I;8#}#1XA=X9=S1LPZPZ%1ZP|P]P~P~%68#1X:>RZ!wV&CS1KM:|PVPV%1VS1OG{!u77AW={x%9TS1P>0W=4S1Q!u?0Q1M!u=,C5P}eP}eQ0BQ01PXPM%Z<R}P0PNP@P>PN20V0NR4/V8X9>1V4N1I7]R{/K]S1MP4P{1G=7S1R!tr%H0S!yS'!ti:yx=Owx!t\<1yI}%x<E\L0R%mIR{#gS1M%60S1S,IM#[=TXNP{AjI0}9iINCQP=1IM7Q1MfDR}%[8;TNP{%<WS1T#ZS1U9jI0S1V9iINR4CQX`=P8PM&0PMEvQ1M%[MRM=TW!s[$XS1W#Z9jI0!t&&{P4Q1MfER4?TMNP{P8CQXY{P8Q1VPIPNQ1VP>PN1V8NX9>Q1@Q1BQ1E!ur7Q1I!ul/B!ul/Q1U,yIQ1T#xE\H0O!th$AT}MNP{Q1VCQP8b<b<b<N;0NP}P9P8PXQ0C!t631t=;PvPw1s=DRDQ0J#95W=Q!xo$S1V&0MBS1TPwAOwyDS1UQ1TQ1UQ1Q9:wD600wCUCU!tt,X6=Q0J,I8/KV%P;S1B%P:17:V'c[[^6=P8fFS1IP2PEO3!uD'J0LX7=&0K8-0J}1IX8'2^7=g01LiS1E%6@,0],2:S1@P=%6?,0]1`2O%g6RBfHS1XfGS1YQ1IP4P}PWE^=r6EP6P@CQfLS1Z/q2S1[=J6?Q01fMQ1ZA=@NECp[[[X7=1`?OS1\PBQ!sk-PX!sm$2P6P:CQS1]P6fKS1^P?P@C@S1_Q1ZQ1^P9%6FR9,0]S1`PNP2fJS1aQ1`'IRMQ1AQ1CQ1F1`FOQ0I#3RI,79S0IPFP9%19POPI%1IR9E>P:H0IS1FQ0I&0HGS1C%6GS1A#PS1bQ1Jb=b;C5PGQ1`O1Q!sN$!t&$!|C0Q1G1X=J1X=0S1`5e=S1JQ1`1X=L5e=g0162S1`'n+0F;frPtP=1t=:P;PuH0=S1cPvPwQ02,s=S029OwyQ1TPw!x^$TQ02-0<x9W=DRD9Owy!xg4X8=!{2$B10]@,I:R:#P!xc$^8=P8Q0D#6S0DfPS1BP?Q0HO4!xo'b=b;1IM|S1U/KVS1d1IM]S1e/KVP~Q1N!tP$e!#5Z$Q1LPMPM%1MP|P]Q!#56'Q1OG{!v7>20;=]1X=K60?=Q1J5e=Q1`'n!v#$Q!ur+%9IRM5:w!up&VQ1TAW=Dx!{x%!uj717;I!{Z$;/KV1I:]/KV!um0Q1BP2Q0G!uf1C5Q1deP6P?Q1M!yc%Q1A,0]'I#[;TNP{20@N8CQXX6!sB$afIQ1X!zb,E^PFP?Q0CP;K0AQ1[P8E\N<0BWSWUWTP@P8E\WGXB6W?X7=X@>Q1EQ1@Q1\Q1]Q1_Q01!tF%A=EN2!{t$[^B6]?^7=^@>P4P}Q0NQ1?P8P0P7Q0M%<\R>Q1S,0]R29J=7R@10]7R?!s2${P=P=&0C=RVP~PV12!#:f+R:P7P7Q1RP2P?!x6%10!#:j-R;P]P]PmQ1S!sE$ZQ1RH0DN90EM<S!#5s6PwPyPxPyCd!wW,P{!#:E/@eP0PO177IR0Q1RPOPIP9H07!su7A:wyM!sp-0!sp,DAADB6>1G6>P6P4Q0MP>C@eO8!v@%PQ1>P8PJP]Q0Og04d9#<R>%6JR0,0]Ry,2]!vE$lR{,2]R?P!v<$P:!ug%PyP{!v/%P!uy&P0Pl!uz%PJPlQ1DECM:FM:E!u|:xPxQ1H!u}0?!u}3JPO17lIR@!sy&!v%%E>!#9l8H=:w!v&/@!v&>O!v&0RQ1=P8PKP5Q0Q%<HR>%6KR@,0]Rl,25RJ10]TR?,25R0!u~+5P5%15R{Pl!y2'!v%+@PT!v%&KPT%1TR@!v'A%95R?PxQ1P!v-00!v-0JePKPO17TIRJPKPTP@!v,AP!v,2J!v,>Q!v,0VQ1<P8PLPaQ0Ug04eK!y1%LRJ,0]R@,2aRT10]\RK,2a!v1-aPa%1aP@PK!v/2JP\!v/&LP\%1\RJ!y4BaPx%9\RaCH!v-<TePLPO17\IRTPLP\PJ!v-?A:wa!v+/T!v+>U!v+0XQ1;P8Q03P1Q0W%<cR>Q03#6RT,0]Ra,21!y6$HR\,21RL!v'+1P1%11Pa!uq&!v',TPH!v'%Q03PH%1HRT!v+B1Px%9HR1!v+0L!y42Q03PO17HIRJ!t#$PT!v-B1!y4KW!v-0ZQ1:P8Q04PRQ0Yg04f\#<R>Q04#6!y7%1,2R!y7$cRH,2R!v2-RPR%1RP1!ux&!y7/c!v2'4Pc%1c!y8DRPx%9cRR!v2>TeQ04PO17cIRT!t#$!y:DR!y:KY!v20\Q19P8Q05PdQ0[%<5R>Q05!y:'R,2d!y:$eRc,2d!v--dPd%1dPR!ut&!y:/e!v-'5Pe%1e!y:DdPx%9eRd!y:B5PO17e!y:$5Pe!y:Dd!y:K[!v-0^Q18P8Q06PbQ0]Q1WQ06#6R>,0]RJ,2bRdQ0S#3!v=%L,2bRc!v2+bPb%1bPJPL!v22>!#6T&Q06!#6U$>!v2BbPx%9TRb!v20c!v20deQ06!#6U%d!t#$P>!v2Bb!v2/d!v2/Q1W9DB6Q0C!v3%]Q1W!v4-`Q17P8PNPUQ0_%<eRe10]|Rd,2URb10]]R>,2URT!v%+UPU%1UPdP>!v%2!#Dq&!ur>UPxPx!uo0T!uo0bePNPO17]IR!#X[&!umAx!um/b!xy3e1G6e!ul%_Pe!uk-bQ16P8Q07PgQ0aP<Q07#6Re,0]Rb,2gRNQ0K!xx'U,2gR|!uu+gPg%1gPbPU!uu2e!xx,7!xx%e!xxBg!xx%g!v/0|!v/0NeQ07!xx&N!t#$Pe!v1Bg!v1/N!v13<Q0B!v0%aP<!v0-dQ15P8Q08PSQ0c%<hR<Q08#6RN,0]Rg,2S!y/$QRT,2S!v,-SPS%1SPg!us&!v,,NPQ!v,'8PQ%1QRN!v,BSPx%9QRS!v,>eeQ08PO17QIR!s1$QPN!v,BS!v,/e!v,41G6<!v-%c!v-0fQ14P8Q09PiQ0eQ0H#<R<Q09!y='S,2iRN10]hRQ,2i!v0-iPi%1iPS!uv&!y7/h!v0'9Ph%1h!y7DiPx%9hRi!y7B9PO17h!y7$9Ph!y7Di!y7C0!v/%e!v/0hQ13P8Q0:P`Q0g%<jR<Q0:!y7'i,2`!y7$jRh,2`!v,-`P`%1`Pi!us&!y7/j!v,':Pj%1j!y7D`Px%9jR`!y7B:PO17j!y7$:Pj!y7D`!y7Kg!v-0kQ12P8Q0;P^Q0jQ0G!y7%;!y7'`,2^RNQ0i#3Rj,0]R|,2^Rh!v6+^P^%1^P`P|!y=4!v6+;!v6%!y=C^!v6%^!v60h!y=4;!v6&N!t#$!y=D^!y=APG!v4%j!v40nQ11P8Q0<P[Q0mQ0l!v4%<#6RG,0]RN,2[R^Q0T#3!vE%j,2[!v4-[P[%1[!y2+!v4,G!#?b+<!#?b$G!v4B[!#?b$[!v4>^eQ0<!#?b%^!t#$PG!v4B[!v4/^!yD>m!v60qQ10P8Q0=PPQ0pQ0E!v6%=#6R^,0]R[,2PRGQ0o!v6'h,2PRj!v6+PPP%1PP[!|T4^!v6,=!v6%^!v6BP!v6%P!v60j!v60GeQ0=!v6&G!t#$P^!v6BP!v6/G!yD5F!v4%p!v40tQ0~P8Q0>P3Q0sQ0r!v4%>#6RF,0]RG,23RP10]5R^,23Re!v-+3P3%13PGP^!v-2FP5!v-'>P5P{!v'B3PxP?!v$0e!v$0PeQ0>PO175IRP!sy&!v$B?!v$/P!y8>s!v&0wQ0}P8Q0?PAQ0vQ0FQ0?#6R<,0]RP,2AR?Q0u#3R{,0]R5,2A!v+-APA%1APP!ur&!v+,<!#X_%ZQ0?P{%1{R<!v/BAPx%9{RA!v2>?eQ0?PO17{IR?!t#$P<!v2BAM!#YH8DAQ0F9DB6PE!v2%vQ0F!v3-xQ0|P8Q0@PfPY%<7R7Q0@#6RE,0]R?,2fRAQ0L#3!vE%{,2f!v4-fPf%1fP?!#[[3EP<!v4'@P<%1<RE!v4BfPx%9<Rf!v4>AeQ0@PO17<IRA!t#$PE!v4Bf!v4/A!y@37RB1G67P6P4PYP7C@eR6!v6'zQ0{P8Q0AP_PYP7Q0A#6R7,0]RY,2_RAQ0y#3Rf,0]RE,2_R<!v3+_P_%1_PYPE!v327Pf!v3'A!vW$RZ!v3B_Px%9fR!#IF0<!v34APO17f!v3$APfPZ!#IHN!v30PBP6O82054}E;!s$IbDbFE;Q01PWPXg04gmH0QeWRWQWPWOWJWNWMWIWKWHWLXZ=X^=X\=X[=X_=X]=XW=WVWEo"). Qed.
+  induction segs as [|s r IH]; intros x n Hn Hall; [reflexivity|].
+  cbn [find_segment].
+  pose proof (Hall s (or_introl eq_refl)) as Hs.
+  assert (Hr : forall seg, In seg r -> Z.of_N (seg_base seg) + Z.of_N (seg_size seg) <= x)
+    by (intros seg Hin; apply Hall; right; exact Hin).
+  destruct (Z.leb (Z.of_N (seg_base s)) x) eqn:E1; cbn [andb]; [|exact (IH x n Hn Hr)].
+  destruct (Z.leb (x + n) (Z.of_N (seg_base s) + Z.of_N (seg_size s))) eqn:E2; [|exact (IH x n Hn Hr)].
+  apply Z.leb_le in E2. lia.
+Qed.
+
+Lemma rsegs_top : forall seg, In seg rsegs -> Z.of_N (seg_base seg) + Z.of_N (seg_size seg) <= IMG_TOP.
+Proof.
+  assert (H : forallb (fun s => Z.leb (Z.of_N (seg_base s) + Z.of_N (seg_size s)) IMG_TOP) rsegs = true)
+    by (vm_compute; reflexivity).
+  intros seg Hin. rewrite forallb_forall in H. apply Z.leb_le. exact (H seg Hin).
+Qed.
+
+Lemma mrd_high : forall (M : bv 64 -> option (bv 8)) (x : Z) (b : bv 8), IMG_TOP <= x < 2^64 ->
+  Mem.mrd rsegs M (Mem.wa x) = Some b -> M (Mem.wa x) = Some b.
+Proof.
+  intros M x b Hx H. unfold Mem.mrd in H. destruct (M (Mem.wa x)) as [b'|]; [exact H|].
+  unfold PropExec.seg_rom, memory_read in H.
+  rewrite (find_segment_above rsegs (bv_unsigned (Mem.wa x)) (Z.of_N 1)) in H; [discriminate|lia|].
+  intros seg Hin. pose proof (rsegs_top seg Hin). unfold Mem.wa. rewrite u64_lit by lia. lia.
+Qed.
+
+Lemma kunk_of_bytes_at : forall (E : env) (M : bv 64 -> option (bv 8)) (b : expr) (off a : Z) (w : bv 64),
+  estart E (SA b off) = a -> IMG_TOP <= a -> a + 8 <= 2^64 ->
+  Mem.bytes_at rsegs M a (Mem.le8 w) -> kentry_ok rsegs E M (KUnk (SA b off) (ELit 8)).
+Proof.
+  intros E M b off a w Ha Hlo Hhi Hb.
+  assert (H0 : 0 <= IMG_TOP) by (unfold IMG_TOP; lia).
+  destruct Hb as (_ & _ & Hb). rewrite Mem.length_le8 in Hb.
+  cbn [kentry_ok]. rewrite elenZ_lit by lia. split.
+  - unfold flat. rewrite Ha. lia.
+  - intros i Hi HN. rewrite Ha in HN.
+    assert (Hi8 : (Z.to_nat i < 8)%nat) by lia.
+    specialize (Hb (Z.to_nat i) Hi8). rewrite Z2Nat.id in Hb by lia.
+    assert (Hs : nth_error (Mem.le8 w) (Z.to_nat i) <> None)
+      by (apply nth_error_Some; rewrite Mem.length_le8; lia).
+    destruct (nth_error (Mem.le8 w) (Z.to_nat i)) as [c|] eqn:Ec; [|congruence].
+    pose proof (mrd_high M (a + i) c ltac:(lia) Hb) as HM. unfold Mem.wa in HM. congruence.
+Qed.
+
+Lemma auxv_kn_ok : forall (E : env) (M : bv 64 -> option (bv 8)) (av x16 x6 x11 x12 x23 rnd : Z),
+  ev E 3 = wz av -> ev E 24 = wz x16 -> ev E 29 = wz x6 -> ev E 25 = wz x11 ->
+  ev E 30 = wz x12 -> ev E 31 = wz x23 -> ev E 26 = wz rnd ->
+  Mem.bytes_at rsegs M RAUXV_CELL (Mem.le8 (wz av)) ->
+  auxv_words_ok M av x16 x6 x11 x12 x23 rnd ->
+  0 <= av -> av + 464 <= 2^64 ->
+  know_ok rsegs E M auxv_kn.
+Proof.
+  intros E M av x16 x6 x11 x12 x23 rnd E3 E24 E29 E25 E30 E31 E26 AC AW H0 H160.
+  destruct AW as (Hlo & Hhi & AW).
+  assert (ES : forall off, estart E (SA vAUXV off) = av + off).
+  { intros off. apply estart_of; [cbn [edenot vAUXV]; rewrite E3; reflexivity | lia]. }
+  assert (IT : IMG_TOP <= 2^32) by (unfold IMG_TOP; lia).
+  unfold auxv_kn. cbv beta iota delta [AUXV_RSEQ] in AW |- *.
+  repeat match goal with H : _ /\ _ |- _ => destruct H end.
+  repeat match goal with H : exists _, _ |- _ => destruct H end.
+  unfold wz, PH_ADDR, PH_ENT, PH_NUM, RAUXV_CELL in *.
+  cbn [app].
+  repeat (first
+    [ apply know_ok_nil
+    | apply know_ok_cons; [ first
+        [ eapply kword8_of_bytes_at;
+            [ first [ apply ES | apply estart_lit ]
+            | cbn [edenot lit vAUXV vX16 vX6 vUID vX12 vX23 vRND];
+              rewrite ?E3, ?E24, ?E29, ?E25, ?E30, ?E31, ?E26; rewrite ?Z.add_0_r; try unfold wz; eassumption ]
+        | eapply kunk_of_bytes_at; [ apply ES | lia | lia | eassumption ] ] | ] ]).
+Qed.
 
 
 (* [comment removed for export] *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap reductions also unfold check_mmap_fixed_overflow, and the null-hint reduction rewrites place_declined_b_null; the null-hint answer is granted only at Linux's own placement, linux_place_is, from which the four placement facts follow; munmap's next state is the model's mmap_fixed_destroyed_next cut, and its reduction carries the ENOMEM answer arm, which chk_munmap_inv rules out by the step's non-refusal). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -107,7 +108,7 @@ Local Ltac reduce_fixed C1 C2 C3 C4 C6 :=
   let HL := fresh in let HA := fresh in
   assert (HL : bv_unsigned (Z_to_bv 64 L) = L) by (apply u64_small; lia);
   assert (HA : bv_unsigned (Z_to_bv 64 A) = A) by (apply u64_small; lia);
-  unfold mmap_CHK, check_mmap; rewrite off0_aligned, C6; cbn [negb]; rewrite (w_is0_false L) by lia; rewrite C1, C2, C3, C4; cbv zeta;
+  unfold mmap_CHK, check_mmap, check_mmap_fixed_overflow; rewrite off0_aligned, C6; cbn [negb]; rewrite (w_is0_false L) by lia; rewrite C1, C2, C3, C4; cbv zeta;
   rewrite HL, HA, (page_round_up_aligned L LA);
   replace (two_pow_64 <=? A + L) with false by (symmetry; apply Z.leb_gt; unfold two_pow_64; lia);
   replace (negb (A + L <=? alloc_top (m_vmmaps mo))) with false by (symmetry; rewrite Bool.negb_false_iff; apply Z.leb_le; lia);
@@ -166,14 +167,15 @@ Definition anon_post (flags : Z) (r : word) : Model :=
                     (vm_noaccess (m_vmmaps mo)) (vm_start_brk (m_vmmaps mo)) (vm_brk (m_vmmaps mo))
                     (vm_limit (m_vmmaps mo)) (vm_mmap_base (m_vmmaps mo)) (vm_init_sp (m_vmmaps mo))) mo).
 
+(* LPS 727298f3: the grant's address is Linux's own placement ([Placement.linux_place_is]), as
+   in [check_mmap]; [anon_match_ok] gives the four facts the old guard tested from it. *)
 Definition anon_match (flags : Z) (eff : resp) : check_result :=
   match eff with
   | mkEffectU r [] zs [] [] [] =>
       if errno_ret_in mmap_errnos r
       then match zs with [] => CheckOk mo [] | _ => CheckReject end
       else
-        if (bv_unsigned r mod page_size =? 0) && (0 <? bv_unsigned r) && (bv_unsigned r + L <=? alloc_top (m_vmmaps mo))
-           && region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) r (Z_to_bv 64 L)
+        if Placement.linux_place_is (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) L r
            && mmap_noreserve_backed_ok (Z_to_bv 64 flags) mo L
            && listNN_eqb zs [(r, Z_to_bv 64 L)]
         then CheckOk (anon_post flags r) []
@@ -184,7 +186,9 @@ Definition anon_match (flags : Z) (eff : resp) : check_result :=
 Local Ltac reduce_anon C1 C3 :=
   let HL := fresh in
   assert (HL : bv_unsigned (Z_to_bv 64 L) = L) by (apply u64_small; lia);
-  unfold mmap_CHK, check_mmap; rewrite off0_aligned, C3; cbn [negb]; rewrite (w_is0_false L) by lia; rewrite C1; cbv zeta;
+  unfold mmap_CHK, check_mmap, check_mmap_fixed_overflow; rewrite off0_aligned, C3; cbn [negb]; rewrite (w_is0_false L) by lia; rewrite C1; cbv zeta;
+  (* LPS 727298f3: NULL hint, never declined ([place_declined_b_null]). *)
+  rewrite place_declined_b_null;
   rewrite HL, (page_round_up_aligned L LA); reflexivity.
 
 Lemma chk_anon_rw_red : forall eff, mmap_CHK 0 L 3 0x22 mo eff = anon_match 0x22 eff.
@@ -209,30 +213,24 @@ Lemma anon_match_ok : forall flags eff mo' evs, anon_match flags eff = CheckOk m
 Proof.
   intros flags [r ws zs us cs ci] mo' evs H NR. unfold anon_match in H. cbn [eff_ret] in NR.
   destruct ws; [|discriminate]. destruct us; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate]. rewrite NR in H.
-  destruct (bv_unsigned r mod page_size =? 0) eqn:E1; [|discriminate].
-  destruct (0 <? bv_unsigned r) eqn:E2; [|discriminate].
-  destruct (bv_unsigned r + L <=? alloc_top (m_vmmaps mo)) eqn:E3; [|discriminate].
-  destruct (region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) r (Z_to_bv 64 L)) eqn:E4; [|discriminate].
+  destruct (Placement.linux_place_is (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) L r) eqn:E0; [|discriminate].
   destruct (mmap_noreserve_backed_ok (Z_to_bv 64 flags) mo L) eqn:E5; [|discriminate].
   destruct (listNN_eqb zs [(r, Z_to_bv 64 L)]) eqn:E7; [|discriminate].
   cbn [andb] in H. injection H as <- <-. apply (proj1 (listNN_eqb_eq _ _)) in E7. subst.
-  apply Z.eqb_eq in E1. apply Z.ltb_lt in E2. apply Z.leb_le in E3. unfold page_size in E1.
+  destruct (Placement.linux_place_is_admissible _ _ _ _ _ L0 ltac:(unfold page_size; exact LA) E0) as (E1 & E2 & E3 & E4).
+  unfold page_size in E1.
   split; [reflexivity|]. exists r. repeat split; assumption.
 Qed.
 
 Lemma anon_match_grant : forall flags (R : Z),
-  R mod 4096 = 0 -> 0 < R -> R + L <= alloc_top (m_vmmaps mo) -> alloc_top (m_vmmaps mo) < 2^63 ->
-  region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) (Z_to_bv 64 R) (Z_to_bv 64 L) = true ->
+  0 < R -> R + L <= alloc_top (m_vmmaps mo) -> alloc_top (m_vmmaps mo) < 2^63 ->
+  Placement.linux_place_is (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) L (Z_to_bv 64 R) = true ->
   mmap_noreserve_backed_ok (Z_to_bv 64 flags) mo L = true ->
   anon_match flags (mkEffectU (Z_to_bv 64 R) [] [(Z_to_bv 64 R, Z_to_bv 64 L)] [] [] []) = CheckOk (anon_post flags (Z_to_bv 64 R)) [].
 Proof.
-  intros flags R RA R0 RL TOP RFR NB. unfold anon_match.
-  assert (HR : bv_unsigned (Z_to_bv 64 R) = R) by (apply u64_small; lia).
-  rewrite (errno_ret_in_lit R) by lia. rewrite HR.
-  replace (R mod page_size =? 0) with true by (symmetry; apply Z.eqb_eq; unfold page_size; exact RA).
-  replace (0 <? R) with true by (symmetry; apply Z.ltb_lt; lia).
-  replace (R + L <=? alloc_top (m_vmmaps mo)) with true by (symmetry; apply Z.leb_le; lia).
-  rewrite RFR, NB, listNN_eqb_refl'. reflexivity.
+  intros flags R R0 RL TOP PL NB. unfold anon_match.
+  rewrite (errno_ret_in_lit R) by lia.
+  rewrite PL, NB, listNN_eqb_refl'. reflexivity.
 Qed.
 End Anon.
 
@@ -252,15 +250,15 @@ Hypothesis MH : map_has (vm_maps (m_vmmaps mo)) (Z_to_bv 64 A) (Z_to_bv 64 L) = 
 
 Definition munmap_post : Model :=
   with_mmap_destroyed (Z_to_bv 64 A) (Z_to_bv 64 L)
-    (mkVmMapsFull (vm_reserved (m_vmmaps mo)) (map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 A))
-       (maps_subtract (vm_noaccess (m_vmmaps mo)) A (A + L))
-       (vm_start_brk (m_vmmaps mo)) (vm_brk (m_vmmaps mo)) (vm_limit (m_vmmaps mo)) (vm_mmap_base (m_vmmaps mo)) (vm_init_sp (m_vmmaps mo))) mo.
+    (mmap_fixed_destroyed_next (m_vmmaps mo) (Z_to_bv 64 A) (Z_to_bv 64 L)) mo.
 
 Lemma chk_munmap_red : forall eff,
   munmap_CHK A L mo eff =
   match eff with
   | mkEffectU r [] [] us [] [] =>
-      if w_is0 r && listNN_eqb us [(Z_to_bv 64 A, Z_to_bv 64 L)] then CheckOk munmap_post [] else CheckReject
+      if errno_ret_in munmap_errnos r
+      then match us with [] => CheckOk mo [] | _ => CheckReject end
+      else if w_is0 r && listNN_eqb us [(Z_to_bv 64 A, Z_to_bv 64 L)] then CheckOk munmap_post [] else CheckReject
   | _ => CheckReject
   end.
 Proof.
@@ -278,20 +276,27 @@ Lemma chk_munmap_nu : forall eff, munmap_CHK A L mo eff <> CheckUnmodeled.
 Proof.
   intros [r ws zs us cs ci]. rewrite chk_munmap_red.
   destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
+  destruct (errno_ret_in munmap_errnos r); [destruct us; discriminate|].
   destruct (_ && _); discriminate.
 Qed.
 
 Lemma chk_munmap_inv : forall eff mo' evs, munmap_CHK A L mo eff = CheckOk mo' evs ->
+  errno_ret_in munmap_errnos (eff_ret eff) = false ->
   evs = [] /\ eff = mkEffectU (Z_to_bv 64 0) [] [] [(Z_to_bv 64 A, Z_to_bv 64 L)] [] [] /\ mo' = munmap_post.
 Proof.
-  intros [r ws zs us cs ci] mo' evs H. rewrite chk_munmap_red in H.
+  intros [r ws zs us cs ci] mo' evs H NE. cbn [eff_ret] in NE. rewrite chk_munmap_red in H.
   destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
+  destruct (errno_ret_in munmap_errnos r); [discriminate NE|].
   destruct (w_is0 r) eqn:E1; [|discriminate]. destruct (listNN_eqb us [(Z_to_bv 64 A, Z_to_bv 64 L)]) eqn:E2; [|discriminate].
   cbn [andb] in H. injection H as <- <-. unfold w_is0 in E1. apply bv_eqb_eq in E1. apply (proj1 (listNN_eqb_eq _ _)) in E2. subst. auto.
 Qed.
 
 Lemma chk_munmap_grant :
   munmap_CHK A L mo (mkEffectU (Z_to_bv 64 0) [] [] [(Z_to_bv 64 A, Z_to_bv 64 L)] [] []) = CheckOk munmap_post [].
-Proof. rewrite chk_munmap_red. rewrite w_is0_zero, listNN_eqb_refl'. reflexivity. Qed.
+Proof.
+  rewrite chk_munmap_red.
+  rewrite <- ret_in_errnos_errno_ret_in. rewrite (ret_in_errnos_lit munmap_errnos 0) by first [reflexivity | lia].
+  rewrite w_is0_zero, listNN_eqb_refl'. reflexivity.
+Qed.
 End Munmap.
 End RC__1.

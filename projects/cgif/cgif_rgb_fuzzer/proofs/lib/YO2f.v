@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap step's map equation goes through maps_subtract_exact from the ledger, as munmap now subtracts the range). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -147,7 +148,17 @@ assert (Hlen : 0 < rg_len rg).
 assert (Ebase : bv_unsigned (Z_to_bv 64 (ly_reg L r)) = ly_reg L r).
 { rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia. }
 assert (VM : vm_maps (m_vmmaps (munmap_model (Z_to_bv 64 (ly_reg L r)) (Z_to_bv 64 (rg_len rg)) md))
-= map_remove (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ly_reg L r))) by reflexivity.
+= map_remove (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ly_reg L r))).
+{ transitivity (maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (Z_to_bv 64 (ly_reg L r)))
+(bv_unsigned (Z_to_bv 64 (ly_reg L r)) + bv_unsigned (Z_to_bv 64 (rg_len rg)))); [reflexivity|].
+apply (maps_subtract_exact (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ly_reg L r)) (Z_to_bv 64 (rg_len rg))).
+- rewrite Elen. destruct (lx_maps _ _ _ X _ Hin) as [P _]. unfold iv_len in P. cbn [snd] in P. rewrite Elen in P. lia.
+- intros b s H. destruct (lx_maps _ _ _ X _ H) as [P _]. exact P.
+- intros b s H ->. destruct (lx_disj _ _ _ X _ _ H Hin) as [E|D]; [injection E as E; exact E|].
+exfalso. destruct (lx_maps _ _ _ X _ H) as [P _]. destruct (lx_maps _ _ _ X _ Hin) as [P2 _].
+unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in *. lia.
+- intros b s H Hne. destruct (lx_disj _ _ _ X _ _ H Hin) as [E|D]; [injection E as E _; congruence|].
+unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in *. lia. }
 split; rewrite ?VM.
 - intros r2 rg2 x Hr2 Hl2 Hx. rewrite HA' in Hr2.
 destruct (Nat.eqb_spec r2 r) as [->|Hne]; [injection Hr2 as <-; discriminate|].

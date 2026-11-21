@@ -1,12 +1,12 @@
 (* fuzz_preset, program part (the kit's ex texts): the ASan contract TEXTS of the harness's expected-text parser and its
-   tree comparison (fuzz_preset.c @8f3e7e1a07 :92-356): same, ex_value (with ex_number and ex_items inlined), ex_string,
+   tree comparison (fuzz_preset.c :92-356): same, ex_value (with ex_number and ex_items inlined), ex_string,
    ex_word, ex_hex4, ex_utf8 and ex_ws (out of line in image B only; image A inlines it), in cgif's per-function form
    (cgif_file lib/YC21.v:33-66; the fm port's FMH_Fn.v:101-180), as lib/A/PRH_FnAlloc.v states it: fpre (YCbqG's afn_pre_x +
    the read-only view), argument registers, the alloc.c ledger (PRH_Base.v prh_ledger, restated with the same values:
    none of these functions reaches the allocator or writes a static, the internal file calls-A.tsv / the internal file calls-B.tsv), and SRr to the return
-   address. Every conclusion is `srealizes` through SRr (lib/Reusable/YA0n.v:38-41).
+   address. Every conclusion is `srealizes` through SRr (lib/Reusable/YA0n.v:39-42).
    IMAGE-PARAMETRIC: segments pa_segs, entries pa_sigma AS_<fn>, frames STK_<fn> (PRH_Base.v; STK_ex_value's per-level
-   frame carries the 16 bytes of its `andi sp, sp, -32` realignment, pi_frame since d1737d5887e). No image constant.
+   frame carries the 16 bytes of its `andi sp, sp, -32` realignment, pi_frame). No image constant.
    ALLOCATOR-PARAMETRIC: ARx is an explicit argument.
    FUNCTIONAL CONTENT: preset's released plain contracts lib/Prog/{ex_value,ex_string,ex_word,ex_hex4,same}_c.v,
    restated (their pure models only: PjGrammar.jr_value / jr_string / scan / skip / hex4 / utf8 with ReaderRes.jr_strtod,
@@ -28,13 +28,13 @@
    WHERE A BYTE LIVES (prhex_inblk, prhex_home): a byte read or written AFTER an intervening program call needs a home
    whose shadow facts survive the call's journal: a live allocator block outside its hidden head (AR_laws_x's
    alx_shadow), a live fake frame (ajournal_x keeps a frame's bytes and their shadow), or the real stack above the
-   entry sp (alx_zshadow, YCbqG ea24ad37a3c: the head of zero_shadow_ranges is [ly_stk_lo, ly_stk_hi), YG0n.v:188-189,
+   entry sp (alx_zshadow, YCbqG: the head of zero_shadow_ranges is [ly_stk_lo, ly_stk_hi), YG0n.v:188-189,
    and astk_ok with fwin puts the caller's cells there). These are laws a walk cites, not premises of these texts.
    Runtime calls (strlen, strcmp, bcmp, __asan_memcpy, strtod) keep every byte off their stack window and written cells
-   (abcmp_realizes YG0d.v:383, aintrin_realizes :347, YStrtodRowX.v:377-379), so no home is asked for those bytes.
+   (abcmp_realizes YG0d.v:383, aintrin_realizes :347, YStrtodRowX.v:378-380), so no home is asked for those bytes.
    NAMED GAPS (runtime shapes these texts' walks need, not stated here):
    - EX-STRTOD-END: ex_value calls musl strtod (scratch, &end) with `end` in its own class-1 fake frame (frame + 32,
-     A 0x83310 frame_alloc_1 (96)). OWNED AND PROVED: lib/Reusable/YStrtodRowX.v @ 5a1376f3c69 (the leaf-lemma author), whose
+     A 0x83310 frame_alloc_1 (96)). OWNED AND PROVED: lib/Reusable/YStrtodRowX.v (the leaf-lemma author), whose
      strtod_site_x (:347) carries the single agreed entry name aj_memnorm (:344) and whose astrtod_realizes_x (:354)
      states this call site: *e = s + c in a live fake frame, fa0 = bits, errno and its window may change, frm_zero,
      fs0-fs11 kept.
@@ -44,7 +44,7 @@
      STANDS: ex_word's first call is strlen (A 0x84578, B 0x84920), whose call rule (YGcallMx aj_strlen_at_x) asks
      first_byte, src_ok, amem_range8, range_addressable and shadow_hull_vis over len + 1 and the tail granule visible
      - cstr_ok's conjuncts (the S8b walk, measured on the rule). The reader `literal` takes cstr_ok for the same reason: it
-     calls strlen, then bcmp (PRH_FnReader.v:320-324; lib/A/Prog/literal_inst.v:18-20). So only the
+     calls strlen, then bcmp (PRH_FnReader.v:320-324; lib/A/Prog/literal_inst.v:19-21). So only the
      literals' SHADOW is the gap, not the whole premise. CLOSED 2026-10-29: a walk discharges ex_word's cstr_ok at a
      literal by PRH_Base.cstr_ok_ro (the S1 owner's YGcallRoStr.ro_cstr_x), its image premise decided by
      YGcallRoStr.ro_str_check / ro_str_check_ok (vm_compute); the literal's shadow is ro_str_img's, no named hypothesis.
@@ -123,7 +123,7 @@ Definition prhex_home (ly : alayout) (S : astate) (Lam : list (Z * Z)) (regs : b
 
 (* a tree at p: the plain representation (lblk = the harness blocks), its root at home, the root's 56 bytes
    addressable, and the root's 56-byte HULL VISIBLE (every shadow byte of the granules [p, p + 56) present in the view;
-   the memnorm-runner author's fact HVHULL, commit da73e1570f87 lib/A/Prog/S8aNumber.v:62-64, which
+   the memnorm-runner author's fact HVHULL, lib/A/Prog/S8aNumber.v:63-65, which
    its ev_number arm needs at ex_value's mid states and which no kit law gives: CONSUMER: the memnorm-runner author). Every home
    supplies it: a Lam block by alx_hshadow (field 14) / AR_shadow_law, a fake frame by alx_frames (its shadow present),
    the real stack by alx_zshadow_byte. *)
@@ -296,14 +296,14 @@ Definition tex_value_specX (n : nat) : Prop :=
   fpre B ARx (STK_ex_value n) ly S Hp W regs mem md ch ->
   (* THE MEMORY IS NORMAL AT ENTRY (the walk controller's measurement, the kit owner's ruling (a)): ex_value reaches musl
      strtod, whose row consumes it, and ev_mid's memnorm conjunct has NO other source - until now only the comment at
-     :38 named it. YAkMemnorm.memnorm segs mem (the engine file YAkMemnorm.v:41, blob 96c72061b4d4 at
-     commit e47394d004f6: the same body as YAjMemnorm.memnorm, `mem_inv /\ task_mem`), over
+     :38 named it. YAkMemnorm.memnorm segs mem (the engine file YAkMemnorm.v:41, blob 96c72061b4d4:
+     the same body as YAjMemnorm.memnorm, `mem_inv /\ task_mem`), over
      the FULL overlay, never the at-main restricted view. SPELLED OVER YAkMemnorm on the CONVERSION argument (the kit owner's
      ruling): the S1 owner's YGcallMxmn rows and engine leaves state over it, so the one conversion
      (YAkMemnormJ.memnorm_kit_j) is at the at-main seed, not at every allocator call. The OVERRIDE argument was measured
      and does NOT apply to the kit: the kit of record's own closure already holds all three lia overrides (LiaTwx2,
      YM03, YM05), with or without either memnorm file. SUPPLIERS, both proved: image A's AjMemnormMainA.v and image B's
-     YjMemnormMainB.tfib_memnorm_at_main_B (the image-B memnorm owner, commit b757f238656), threaded down the
+     YjMemnormMainB.tfib_memnorm_at_main_B (the image-B memnorm owner), threaded down the
      call chain check_as_written <- LLVMFuzzerTestOneInput. THE KEEP ACROSS THIS CALL is this post's m-form: fpostWFm
      adds PRH_Base.fQmn's `memnorm segs mem -> memnorm segs mem'` (PRH_Base.v:1465-1469, :1510-1513); across a RUNNER
      SEGMENT a walk keeps it by YSRrMemnorm.srr_inv_laws_memnorm_k (lib/Reusable/YSRrMemnorm.v:30; lib/A/Prog/S8aWord.v
@@ -360,7 +360,7 @@ Definition tsame_specX (n : nat) : Prop :=
   fpre B ARx (STK_same n) ly S Hp W regs mem md ch ->
   (* THE LIVE REAL STACK ABOVE sp, GUARDED (the kit owner's ruling, 2026-10-29, on the S1 owner's wording): when the root
      pa is at or above sp, the live real stack [sp, ly_top) is present (the S1 owner's engine leaf
-     YGcallStackUp.astack_up_x, lib/Reusable/YGcallStackUp.v 136e8c774182, engine set s1b f027ed1fab66, taken by path;
+     YGcallStackUp.astack_up_x, lib/Reusable/YGcallStackUp.v 136e8c774182, engine set s1b, taken by path;
      the B' walker's F25). This premise is CONVERTIBLE to the conclusion of the engine's YGcallStackUp.astack_up_guard_x
      (`astack_up_x segs ly W (spZ regs) mem -> (spZ regs <= pa -> forall a, spZ regs <= a < ly_top ly ->
      apresent (w_H W) mem a)`) with astack_up_x unfolded - convertible, not syntactically identical - so a caller

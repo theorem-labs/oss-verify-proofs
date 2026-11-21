@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the frame-area interface (FCiface.v) at the second allocator instance, image-free.
    fs_iface_ARcf: ARcf segs B (YG0ncf.v) satisfies fs_iface, given AR_laws_cf segs B (YG0dcf.v). ARcf takes its
    arguments in ARx's order (ly S Hp W mem md after segs B), so ARx := ARcf segs B with no wrapper.
-   Each field is a projection, as in cgif's fs_iface_AR (FCiface.v:173):
+   Each field is a projection, as in cgif's fs_iface_AR (FCiface.v:174):
    - fi_hints, fi_layout, fi_tsd, fi_const, fi_flags: ARmcf's amc_wf (Wf_cf's wfc_fakestack), amc_layout, amc_tsd,
      amc_const, amc_flags (YG0ncf.v:89-116);
    - fi_fs_cells: amc_cells, fs_cells S being the sixth block of acells_cf (YG0ncf.v:50-53);

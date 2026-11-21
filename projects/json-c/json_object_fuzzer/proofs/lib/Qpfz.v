@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the jo_preA proofs for the SHRINK and AADD calls give it; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -53,7 +54,7 @@ AJ5 A4L HIx A T md
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x9ed6c) fc None m (seg_rom asegs)).
 Proof.
 intros until fc. intros STC BSL INV PBK BK Hl Hcs Hop Hnbs RA K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST1].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK1 & FR1).
 pose proof REST1 as (HP1 & LV1 & OBJ1 & ST1 & ERR1 & _).
@@ -74,7 +75,7 @@ assert (SPF1 : lo <= pf_spf pf - (16 + 48 + 4096) /\ pf_spf pf mod 16 = 0 /\ pf_
 destruct SPF1 as (SPF1 & SPF2 & SPF3 & SPF4).
 eapply SHRINK with (LB := RB) (ABS := tl_cbs l) (p := tl_cur l) (kids := kids) (lo := lo) (errv := errv) (FRS := (pa_F pa, 2) :: FRS);
 [ | exact J | reflexivity | reflexivity | exact Hk28 | exact COST | ].
-{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
+{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
 split; [exact ERR1|]. split; [reflexivity | exact RA]. }
 intros ms2 md2 m2 r A2 B2 (RS2 & VM2 & ST2 & HPR2 & (errv2 & ERR2)) HB2 HD2 (cbs2 & J2 & Hlen2 & _ & HP2 & JX2).
 destruct RS2 as (w0 & w1 & w2 & w3 & w4 & w5 & w6 & w7 & w8 & w9 & w10 & w11 & w12 & w13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -149,7 +150,7 @@ s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x9ecf4) fc None m (s
 Proof.
 intros until fc. intros STC BSL INV PBK BK Hl Hst Hcs Hnbs RA K.
 assert (Hop : lvl_closed l = false) by (apply lvl_closed_open_st; rewrite Hst; reflexivity).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST1].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK1 & FR1).
 pose proof REST1 as (HP1 & LV1 & OBJ1 & ST1 & ERR1 & _).
@@ -172,7 +173,7 @@ assert (SPF1 : lo <= pf_spf pf - (16 + 96 + 4096) /\ pf_spf pf mod 16 = 0 /\ pf_
 destruct SPF1 as (SPF1 & SPF2 & SPF3 & SPF4).
 eapply AADD with (LB := RB) (ABS := tl_cbs l) (VBS := t_objbs ts) (p := tl_cur l) (v := t_obj ts) (kids := kids) (vs := t_objs ts) (lo := lo) (errv := errv) (FRS := (pa_F pa, 2) :: FRS);
 [ | exact J | exact JOB | reflexivity | reflexivity | exact Hk28 | exact COST | ].
-{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
+{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
 split; [exact ERR1|]. split; [reflexivity | exact RA]. }
 intros ms2 md2 m2 r A2 B2 (RS2 & VM2 & ST2 & HPR2 & (errv2 & ERR2)) HD2 OUT.
 destruct RS2 as (w0 & w1 & w2 & w3 & w4 & w5 & w6 & w7 & w8 & w9 & w10 & w11 & w12 & w13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -263,7 +264,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis MAPP : memappend_A_stmt2 HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -584,7 +585,7 @@ AJ5 A4L HIx A T md
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0xa0a14) fc None m (seg_rom asegs)).
 Proof.
 intros until fc. intros STC BSL INV PBK BK Hl Hcs Hop Hnbs RA K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST1].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK1 & FR1).
 pose proof REST1 as (HP1 & LV1 & OBJ1 & ST1 & ERR1 & _).
@@ -605,7 +606,7 @@ assert (SPF1 : lo <= pf_spf pf - (16 + 48 + 4096) /\ pf_spf pf mod 16 = 0 /\ pf_
 destruct SPF1 as (SPF1 & SPF2 & SPF3 & SPF4).
 eapply SHRINK with (LB := RB) (ABS := tl_cbs l) (p := tl_cur l) (kids := kids) (lo := lo) (errv := errv) (FRS := (pa_F pa, 2) :: FRS);
 [ | exact J | reflexivity | reflexivity | exact Hk28 | exact COST | ].
-{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
+{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
 split; [exact ERR1|]. split; [reflexivity | exact RA]. }
 intros ms2 md2 m2 r A2 B2 (RS2 & VM2 & ST2 & HPR2 & (errv2 & ERR2)) HB2 HD2 (cbs2 & J2 & Hlen2 & _ & HP2 & JX2).
 destruct RS2 as (w0 & w1 & w2 & w3 & w4 & w5 & w6 & w7 & w8 & w9 & w10 & w11 & w12 & w13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -680,7 +681,7 @@ s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0xa097c) fc None m (s
 Proof.
 intros until fc. intros STC BSL INV PBK BK Hl Hst Hcs Hnbs RA K.
 assert (Hop : lvl_closed l = false) by (apply lvl_closed_open_st; rewrite Hst; reflexivity).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST1].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK1 & FR1).
 pose proof REST1 as (HP1 & LV1 & OBJ1 & ST1 & ERR1 & _).
@@ -703,7 +704,7 @@ assert (SPF1 : lo <= pf_spf pf - (16 + 96 + 4096) /\ pf_spf pf mod 16 = 0 /\ pf_
 destruct SPF1 as (SPF1 & SPF2 & SPF3 & SPF4).
 eapply AADD with (LB := RB) (ABS := tl_cbs l) (VBS := t_objbs ts) (p := tl_cur l) (v := t_obj ts) (kids := kids) (vs := t_objs ts) (lo := lo) (errv := errv) (FRS := (pa_F pa, 2) :: FRS);
 [ | exact J | exact JOB | reflexivity | reflexivity | exact Hk28 | exact COST | ].
-{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
+{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
 split; [exact ERR1|]. split; [reflexivity | exact RA]. }
 intros ms2 md2 m2 r A2 B2 (RS2 & VM2 & ST2 & HPR2 & (errv2 & ERR2)) HD2 OUT.
 destruct RS2 as (w0 & w1 & w2 & w3 & w4 & w5 & w6 & w7 & w8 & w9 & w10 & w11 & w12 & w13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -798,7 +799,7 @@ Hypothesis MAPP : memappend_A_stmt2 HIx.
 Let PRW := PE_REST_A_private_write HIx GA GA_outside.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -987,7 +988,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis MAPP : memappend_A_stmt2 HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1314,7 +1315,7 @@ Hypothesis MAPP : memappend_A_stmt2 HIx.
 Let PRW := PE_REST_A_private_write HIx GA GA_outside.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).

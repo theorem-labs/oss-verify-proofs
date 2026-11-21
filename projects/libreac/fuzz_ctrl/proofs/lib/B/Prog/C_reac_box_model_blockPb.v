@@ -16,7 +16,7 @@
    the run's universal shadow premise is shadow_rw_on R over its own region R, reac_box_model_block_shadow_R), and
    the glue supplies R at mem2 from ctl_rt_C_of_AR's cut_shadow / img_shadow (C_reac_box_model_blockMid.v by
    C_reac_box_model_blockCover.mbB_R_on).  Every ProgWorld statement the glue uses is PROVED on image B and cited
-   by name inside Ent and Mid (a Theorem Labs lane's db8a86df2da); none is a premise here.
+   by name inside Ent and Mid (a Theorem Labs lane); none is a premise here.
 
    rule 24: no function proved (glue of the proved run reac_box_model_block_holds_F; lookup of record
    lookup-reac_box_model_block.txt (a working note, not in this delivery), CONFIRM in lookup-check.md (a working note, not in this delivery)). *)

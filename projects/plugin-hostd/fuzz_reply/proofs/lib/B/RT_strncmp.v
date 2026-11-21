@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract astrncmp_realizes (lib/A/W_sites.v) proved for
    fuzz_reply.asan-ubsan's strncmp interceptor, entered at the trampoline __interceptor_trampoline_strncmp 0x421f4. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strncmp.v at commit debcdf3fa6a, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (20 numerals; per-numeral report). *)
-(* Route (R2Cmp, a Theorem Labs lane, 2026-10-29): the body walk is a Theorem Labs lane's (commit f8664b31b9c
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strncmp.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (20 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Route (R2Cmp, a Theorem Labs lane, 2026-10-29): the body walk is a Theorem Labs lane's (
    lib/A/Bz/A/I_strncmp.v istrncmp_spec), relocated onto fuzz_reply.asan in lib/A/Bz/A/I_strncmp*.v (the interceptor is
    the same 374 instructions modulo relocation, checked word by word); its range check's Section hypothesis is met by
    R_isPoisoned.rip_proof.  The bridge is R1's RT_kit / RT_post (the walk runs on the normalized memory, read back on

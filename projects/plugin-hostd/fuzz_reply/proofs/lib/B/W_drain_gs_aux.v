@@ -7,10 +7,10 @@
    allocator site, the meters over an append, a kept footprint below alloc_ceiling, an allocator rule's mo_ok
    from dbud, and the signs of the requests the cut predicates still owe.
 
-   PORTED from image A on a working branch 0c06ccc287f, every lemma name kept:
-     lib/A/W_drain_gs.v:668-791 (last changed in 1ef2c00b5d5): gs_aentry_okx_kept, gs_gx_open, gs_gx_close,
+   PORTED from image A on a working branch, every lemma name kept:
+     lib/A/W_drain_gs.v:669-792 (last changed): gs_aentry_okx_kept, gs_gx_open, gs_gx_close,
        gs_tr_cost_app, gs_tr_alloc_app, gs_tr_max_nonneg, gs_tr_max_app, gs_kept_lo, gs_akept_of, gs_mo_ok_of;
-     lib/A/W_drain_tr.v:113-547 (last changed in 333e49d6f5f): tr_sizes_ok, gs_tr_cost_nonneg,
+     lib/A/W_drain_tr.v:113-547 (last changed): tr_sizes_ok, gs_tr_cost_nonneg,
        gs_tr_alloc_nonneg, gs_dlfut_sizes, gs_dsfut_sizes, gs_dnext_signs_at, gs_cut_facts, gs_cut_dnext_signs,
        gs_dgs_dnext_signs, and what they need (sz_*, dr_run_sizes, gs_dlater_sizes, tr_drl_split).
    No lemma names an image address or an image-A number.  Each is stated over image B's own interface:
@@ -32,6 +32,7 @@
    nothing else: gs_aentry_okx_kept / gs_gx_open / gs_gx_close to B; gs_tr_cost_app to MT; gs_mo_ok_of to
    MT MMAX MTL; gs_tr_cost_nonneg to MT MTL; gs_cut_facts / gs_cut_dnext_signs / gs_dgs_dnext_signs to
    B MT MMAX RG; the others to no section variable. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -142,11 +143,11 @@ Hypothesis HCTX_sd : In [BASE + AF_fr_drain + 0x994] CTX_S.
 Hypothesis HCTX_ld : In [BASE + AF_fr_list_drop + 0x9c] CTX_F.
 
 (* =========================================================================================================
-   (1) The machine-state helpers (lib/A/W_drain_gs.v:668-791).
+   (1) The machine-state helpers (lib/A/W_drain_gs.v:669-792).
    ========================================================================================================= *)
 
 (* ---- The relay entry in the line loop's form across a step that keeps its footprint. ----
-   W_rep.v aentry_ok_kept, for W_drain_cx.v:385 aentry_okx (the two differ only in the conjuncts about
+   W_rep.v aentry_ok_kept, for W_drain_cx.v:386 aentry_okx (the two differ only in the conjuncts about
    s->buf's contents, which carry no memory). *)
 Lemma gs_aentry_okx_kept : forall ly S W mem ly' S' W' mem' e,
 aentry_okx B ly S W mem e ->
@@ -622,7 +623,7 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file's cut facts (image B's DR_x slice D, 2026-10-30; the B twin of the shared
-   helpers of lib/A/W_gsadd_scratch.v's Section cx at a working branch 50623273289): over
+   helpers of lib/A/W_gsadd_scratch.v's Section cx at a working branch): over
    lib/B/W_drain_cx_x.v's Section variables (B PST ARx MT RP MMAX RG), with the entry's ghost list Hp and budget kr
    after cx and the cut's own ghost list Hp1 after S1.  Everything above this line is unchanged, so every AR
    statement of this file keeps its text and its Section list; the twin only adds names (the AR name with _x).

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1165 of its 1242 lines of code are new or changed and 437 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b): SEGMENT CB2
    (Copies) of the re-walk of check_no_overread (cno, entry B' 0x819f0 = slot 201), row R7-4 (a Theorem Labs lane's
    CB2, brief, the internal file brief-r74.md; plan, the internal file PLAN-cno-caw-102.md 5.2 row "CB2 Copies |
    0x81b80 -> 0x81bbc").
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   INPUTS (by path, ON THE KIT'S CUT a working branch 7cdbb61b5fa0, at the worktree's base
-   0e85941c7687; every path but this file is that head's blob):
+   INPUTS (by path, ON THE KIT'S CUT a working branch, at the worktree's base;
+   every path but this file is that head's blob):
      SHARED CONTRACT lib/B/Prog/Cno102B_Base.v 06098b64f859 (cnb_pre CTX0 D, no DW, with the entry room wild_room and
      its two position-free pkR counts; cnb_base .. k wk over the budgeted journal cnb_J D wk, wk = 0 at both cuts here;
      cnb_at_copy with cnb_prog D [], cnb_ex_init with cnb_prog D (cnb_cevs ..) and `own0 <> 0 -> cnb_cdead D`; the
@@ -321,7 +322,7 @@ Context {PA : PAImg B_prog_listing}.
 #[local] Notation BASE := (@pa_val _ B_prog_listing PA A_TEXT).
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 Variable B : asyms.
-(* the walk's allocator relation, the cf instance (S1KitAlloc's ARxs, YGcallcf.v; Cno102B_F.v:181) *)
+(* the walk's allocator relation, the cf instance (S1KitAlloc's ARxs, YGcallcf.v; Cno102B_F.v:182) *)
 #[local] Abbreviation ARcfx := (fun ly S Hp W mem md => ARcf SEGS B ly S Hp W mem md /\ xs_placed_cf ly S).
 #[local] Notation AJ := (ajournal_x (SK := SK) SEGS B prh_pst ARcfx).
 #[local] Notation STK := STK_check_no_overread.

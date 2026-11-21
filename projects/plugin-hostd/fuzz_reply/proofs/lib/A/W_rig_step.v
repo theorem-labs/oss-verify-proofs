@@ -10,12 +10,13 @@
          bytes of the fake frame F, apart from the image, the heap blocks and the stack.
    OUTER the outer loop by induction on |es| - i (lib/A/W_drain_outer.v's form, cgif lib/A/ACfj.v:157-163).
    ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the RIG_x round): converted IN PLACE to the
-   generic Section of the segment interface (commit 863f3bb0f69, lib/A/W_relay_instance_gone_cx.v): any allocator
+   generic Section of the segment interface (lib/A/W_relay_instance_gone_cx.v): any allocator
    relation ARx with its laws, the program statics PST and the room record RP; Section c below is the cx's list.  STEP
    runs over the generic journal (W_frame_x.v's paj_run_sh_x / paj_run_to_sh_x / psrr_branch_pi_x on YCbqG.v's
    ajournal_x, packed again by W_journal_x.v ajournal_gx_pack_x); the cut's head set Hp1 is kept (no call), and gbud,
    room and counts included, is carried unchanged: the step keeps the layout, the allocator state and the trace
    still owed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -74,8 +75,8 @@ Variable RG : rep_globals.
 (* the free interceptor's caller-context table (K0_SITES' CTX_AFREE) *)
 Variable CTX_AFREE : list (list Z).
 Context {hl : Z}.
-(* ---- The Section hypotheses every segment file copies: lib/A/W_relay_instance_gone_cx.v Section c's list (commit
-   863f3bb0f69), names, order and texts; the cx's comments say what each one is. ---- *)
+(* ---- The Section hypotheses every segment file copies: lib/A/W_relay_instance_gone_cx.v Section c's list,
+   names, order and texts; the cx's comments say what each one is. ---- *)
 (* the instance's laws, over ARx *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* no hidden head in any ARx state (a Theorem Labs lane's HP0 ruling; W_journal_x.v range_addressable_of_block_hp0_x) *)
@@ -154,7 +155,7 @@ Hypothesis HLIT21 : glit_at_x ARx 21 (RelayModel.K_GESTURE ++ [0]).
 (* the two literals lie in .rodata below the GOT word FR_GOT_GUARD = 0x9e658, |"%s %d "| + 1 = 7 and
    |"param_gesture"| + 1 + 8 = 22 bytes: the location premises M1 / M3 of the narrowed asnprintf_realizes_x
    (W_sites_x.v), which this abstract placement does not fix.  PB_fr decides it by vm_compute: SnpNarrowSites.v
-   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (commit 2f48fc47493's hypothesis, carried here). *)
+   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (a commit's hypothesis, carried here). *)
 Hypothesis HLITGOT : VAL (A_OBJ 20) + 7 <= FR_GOT_GUARD /\ VAL (A_OBJ 21) + 22 <= FR_GOT_GUARD.
 Hypothesis HLIT31 : glit_at_x ARx 31 ([32; 101; 110; 100] ++ [0]).
 (* the program statics PST hold no byte this walk carries through a journal's image clause *)
@@ -691,7 +692,7 @@ Let RUNPR := SRrG_run_pi_AJ_xG (PL := PL_fr) B PST ARx LAWS (R := R).
 Let RUNTOPR := SRrG_run_to_pi_AJ_xG (PL := PL_fr) B PST ARx LAWS (R := R).
 Let BRR := paj_branch_xR (PI := PI) (R := R).
 
-(* W_rig_step.v:484 rig_step_proof at R *)
+(* W_rig_step.v:485 rig_step_proof at R *)
 Theorem rig_step_proof_xR : rig_step_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 intros cx i W1 c1 HB HE KO KU.
@@ -860,7 +861,7 @@ psrr_branch_pi_x RUNPR BRR HS.
   rewrite <- Hend. exact K6.
 Qed.
 
-(* W_rig_step.v:655 stp_rgo_lt at R *)
+(* W_rig_step.v:656 stp_rgo_lt at R *)
 Lemma stp_rgo_lt_xR : forall cx i W1 c1, RGO_xR B PST ARx MT RP MMAX RG R cx i W1 c1 -> (i < length (gxes cx))%nat.
 Proof.
 intros cx i W1 c1 HO.
@@ -869,7 +870,7 @@ destruct HO as (regs1 & ly1 & S1 & m1 & md1 & k1 & F & FL & qd & c2 & O2 & cap2 
 exact Hi.
 Qed.
 
-(* W_rig_step.v:663 rig_outer_proof at R *)
+(* W_rig_step.v:664 rig_outer_proof at R *)
 Theorem rig_outer_proof_xR : rig_outer_stmt_xR B PST ARx MT RP MMAX RG CTX_AFREE R.
 Proof.
 intros TOP KEY KEYS STEP.

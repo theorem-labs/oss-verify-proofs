@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lemmas of send_message's own walk on plugin-hostd/fuzz_command's ASan image,
-   ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v and A/ACk5.v at c8557374ad2e (cgif_close's frame-chain
+   ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v and A/ACk5.v (cgif_close's frame-chain
    step and ng_chain): verbs_receive's allocator-event count is a count, the frame chain at the realigned stack
    pointer, and the stack bytes kept across the walk. The call rule for a callee that writes a program static and the
    transport lemmas its callers need (cl_callS_pg, ajournal_fp_widen, rec_repA_kept, aval_mem_kept_r ...) are the
    kit's, lib/A/Prog/PaCallPg.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/send_message_l.v, with its module paths and module names changed; 69 of its 96 lines of code are new or changed and 85 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command: the lemmas every call stage uses.
 
    The frame chain of s0 at a program call. sup_add keeps its own frame pointer in s0 (0x8a43c `addi s0,sp,128`, the

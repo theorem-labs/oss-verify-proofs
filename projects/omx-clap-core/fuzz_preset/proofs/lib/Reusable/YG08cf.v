@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG08cf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG08cf.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG08cf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG08cf.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the VM BUDGET on live state.
    cgif's YG08.v bounds the budget through the event counter, and both branches are false here:
    - vm_budget_slack (YG08.v:151-164), small branch: `st_nev s <= EV_MAX`, with prim_committed_bound
      (:46, `prim_user_mapped <= kUserMapSize * EV_MAX`) and sec_hulls <= HULL_MAX * EV_MAX (:157);
-   - its big branch: `st_nev s <= EV_BIG = 2 ^ 17` (YG01.v:199, :203-204).
+   - its big branch: `st_nev s <= EV_BIG = 2 ^ 17` (YG01.v:200, :204-205).
    Preset makes about 3.0e7 allocator events per harness call and fuzz_reply 6.7e7.
    This file bounds the budget on LIVE state only. The ceiling is CF_MAX (YGcfNames.v:109). The credit is what
    abudget_cf counts: A_BASE_CF + prim_committed + 8 * st_sec_reserved + sec_live_bytes + the hulls of the
@@ -182,7 +183,7 @@ destruct (ck_beg k); cbv beta iota; lia.
 Qed.
 
 (* The hulls of the LIVE secondaries, the fold of YGcfNames.v's sec_live_hulls over any chunk list: unlike
-   cgif's sec_hulls (YG01.v:179), which sums over st_secs and so over every secondary ever mapped, it counts
+   cgif's sec_hulls (YG01.v:180), which sums over st_secs and so over every secondary ever mapped, it counts
    only the chunks that still hold a secondary. *)
 Lemma live_hulls_le : forall l, Forall (fun k => 0 <= ck_req k) l ->
 0 <= fold_right (fun k acc => match ck_beg k with
@@ -215,7 +216,7 @@ change (sec_bytes (st_chunks s)) with (sec_live_bytes s) in B1, B0. change (reqb
 change (quar_nl (st_chunks s)) with (quar_n s) in B1. lia.
 Qed.
 
-(* The quarantine's chunks, from qloose (YG01.v:232-233) and the batch byte counts. *)
+(* The quarantine's chunks, from qloose (YG01.v:233-234) and the batch byte counts. *)
 Lemma quar_n_loose_cf : forall U pp cc bb s, WfP_cf U pp cc bb s -> qloose s -> quar_n s <= 2 ^ 29 + 2 ^ 31.
 Proof.
 intros U pp cc bb s W (T1 & T2 & T3). pose proof (wfc_quarantine _ _ _ _ _ W) as Q.

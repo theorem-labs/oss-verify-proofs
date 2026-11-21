@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new lemma KM_reader; KM_vm also requires m_kernel unchanged; impl_sreach_post takes the node post-state argument). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -100,10 +101,16 @@ Definition KM (s : PState) (mo : Model) : Prop :=
 Lemma KM_halted_lazy : forall s mo, KM s mo -> m_halted mo = None /\ m_vm_lazy mo = [].
 Proof. try hcb. try hsb. intros s mo (L & _ & K & _). split; [exact (kb_halt _ _ _ K)| exact (proj1 (kb_minv _ _ _ K))]. Qed.
 
+(* the reader-present launch, carried by [mminv] through every mm node *)
+Lemma KM_reader : forall s mo, KM s mo -> m_channel_reader mo = true.
+Proof. try hcb. try hsb. intros s mo (L & _ & K & _). exact (mminv_reader _ (kb_minv _ _ _ K)). Qed.
+
 (* [comment removed for export] *)
-Lemma KM_vm : forall s mo mo', KM s mo -> mminv mo' -> m_halted mo' = None -> m_vmmaps mo' = m_vmmaps mo -> KM s mo'.
+(* the kernel relation's vDSO fields read [m_kernel], which [m_vmmaps] equality does not fix *)
+Lemma KM_vm : forall s mo mo', KM s mo -> mminv mo' -> m_halted mo' = None ->
+  m_kernel mo' = m_kernel mo -> m_vmmaps mo' = m_vmmaps mo -> KM s mo'.
 Proof. try hcb. try hsb.
-  intros s mo mo' (L & CR & K & B) MI HH E. exists L. split; [exact CR|]. split; [eapply KLB_vm_eq; eauto|].
+  intros s mo mo' (L & CR & K & B) MI HH EK E. exists L. split; [exact CR|]. split; [eapply KLB_vm_eq; eauto|].
   unfold BUD in *. rewrite E. exact B.
 Qed.
 
@@ -205,7 +212,7 @@ Proof. try hcb. try hsb.
   intros A c s Qm P Qk ms mo IM MS HP HH MI TF.
   pose proof (MS s mo HP) as TW. unfold etwf in TW.
   eapply sreach_mono.
-  { eapply (impl_sreach_post usegs (at_node usegs) Nodes.nstep Nodes.nexit mminv mmsafe (mm_node_sound usegs) mminv_lazy
+  { eapply (impl_sreach_post usegs (at_node usegs) Nodes.nstep Nodes.nexit mminv mmsafe (fun _ => nret) (mm_node_sound usegs) mminv_lazy
               (c s) _ ms mo (fun r mo' => match r with Unr => False | Ok p => Qk (fst p) (snd p) mo' end)).
     - exact IM.
     - exact HH.

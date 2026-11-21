@@ -1,15 +1,15 @@
 (* check_no_overread B 0x8124c (fs.c, fs.asan-ubsan), the TAIL CALL STEPS: two of the call-step statements of
-   lib/B/FSW_check_no_overread.v's Section I (the CTX-free B interface, a working branch decf0bae273):
+   lib/B/FSW_check_no_overread.v's Section I (the CTX-free B interface, a working branch):
      cno_call_bcmp  : cno_call_bcmp_T  (bcmp 0x814a4 / 0x814c0, ra 0x814a8 / 0x814c4)
      cno_call_afree : cno_call_afree_T (__wrap_free 0x814e4 / 0x814ec / 0x814f4, ra 0x814e8 / 0x814f0 / 0x814f8)
    This file proves PART of check_no_overread (rule 24: two of its tail call steps). It states no contract of its own:
    every statement is the interface's Prop, taken by name. The segments that chain the steps are the walk's (_top.v);
    the epilogue and the `ret` are _ret.v's; fuzz_free's step is _ffree.v's. The callees stay Section hypotheses in
    CTX-free form (no call-trace row, no CTX); the allocator's C5 disjunct is closed inside the B kit's free call step
-   lib/B/FSW_malloc_free.v fsw_aj_freeU (ALLOC's kit, ea464b7bd5d; used by path) from the event budget
+   lib/B/FSW_malloc_free.v fsw_aj_freeU (ALLOC's kit; used by path) from the event budget
    st_nev S < EV_MAX (`right` of afree_realizesU's last premise).
    TEMPLATE (text only; no byte offset is copied, B's bytes differ): lib/A/FSW_check_no_overread_tail.v at
-   a working branch 59f0008819f.
+   a working branch.
    MEASURED (neutral_dis listing (internal path) on
    the pinned fs.asan-ubsan), the five sites this file walks:
      0x814a4  jal 0x426d8 = PC_bcmp   ra 0x814a8   (0x814a8  bnez a0, 0x815f4)

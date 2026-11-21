@@ -3,11 +3,12 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths changed; 150 of its 167 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/Prog/FrameRet.v, with its module paths, module names and addresses changed; 328 of its 365 lines of code are new or changed and 130 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (agreement) copy of the slot frame and cut invariants of reac-pw/fuzz_rate LLVMFuzzerTestOneInput
    (UBSan, [0x12fe0, 0x146c0)): lib/U/Prog/SlotFR.v and lib/U/Prog/SlotInv.v with SR := SRcf, in one file.
    Model: reac-pw/fuzz_role's U/Prog/SlotInvCF.v, itself
-   reac-pw/fuzz_pin's U/Prog/SlotInvCF.v in the form of libreac/fuzz_ctrl's released U/Prog/SlotInvCF.v
-   (origin/ossv/recipes 25e3d17bdb50). The U segment files of the slot (U/Prog/Seg/*.v and U/Prog/RateSlot.v) are
+   reac-pw/fuzz_pin's U/Prog/SlotInvCF.v in the form of libreac/fuzz_ctrl's released U/Prog/SlotInvCF.v.
+   The U segment files of the slot (U/Prog/Seg/*.v and U/Prog/RateSlot.v) are
    copied to U/Prog/SegCF/*.v over this file. Changes from U/Prog/SlotFR.v and U/Prog/SlotInv.v:
    - SR, its lemmas, evt_SR(_canon) and kb_run are redefined under the same names (ctrl's block, verbatim), so the
      copied segment proofs prove the cut-free run (crealizes: realizes, cut_free and uniform, U/SlotAgree.v);

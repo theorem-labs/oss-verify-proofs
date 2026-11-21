@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the open-failure tails' fd-2 writes take the channel-reader premise m_channel_reader), as bzip2/bzip2_compress_target's message tails were. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -325,6 +326,7 @@ Section Tail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr2 : m_channel_reader model = true.   (* LPS 727298f3: the fd-2 write needs a reading far end *)
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
@@ -403,7 +405,7 @@ Section Tail.
     ++ word_to_le_bytes 1 (Z_to_bv 64 32) = PRE17.
   Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
 
-  #[using="SPhi SPlo Hfd2 Hlazy Hh Hvsp"] Lemma of_segH : forall (path : list byte) (P : Z) vals R M,
+  #[using="SPhi SPlo Hfd2 Hrdr2 Hlazy Hh Hvsp"] Lemma of_segH : forall (path : list byte) (P : Z) vals R M,
     Z.of_nat (length path) = P -> (0 <= P <= 62)%Z ->
     length vals = 231%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 113 = Z_to_bv 64 P ->
     regs_ok (ENV vals) srH0 R -> know_ok RSEGS (ENV vals) M knH0 ->
@@ -469,6 +471,7 @@ Section Tail.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z in MSG by lia. exact MSG.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr2.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -487,7 +490,7 @@ Section Tail.
   Lemma nl_img : rdn RSEGS (fun _ => None) (Z_to_bv 64 0x11ff1) 1 = Some [Z_to_bv 8 10].
   Proof. vm_compute. reflexivity. Qed.
 
-  #[using="SPhi SPlo Hfd2 Hlazy Hh Hvsp"] Lemma of_segG : forall (path : list byte) (P : Z) vals R M,
+  #[using="SPhi SPlo Hfd2 Hrdr2 Hlazy Hh Hvsp"] Lemma of_segG : forall (path : list byte) (P : Z) vals R M,
     Z.of_nat (length path) = P -> (0 <= P <= 62)%Z ->
     length vals = 199%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 113 = Z_to_bv 64 P ->
     regs_ok (ENV vals) srG0 R -> know_ok RSEGS (ENV vals) M knG0 ->
@@ -664,7 +667,7 @@ Section Tail.
     apply Hc. rewrite u_small by lia. lia.
   Qed.
 
-  #[using="SPhi SPlo Hfd2 Hlazy Hh Hvsp"] Lemma of_segF : forall (path : list byte) (pp : word) (P : Z) vals R M,
+  #[using="SPhi SPlo Hfd2 Hrdr2 Hlazy Hh Hvsp"] Lemma of_segF : forall (path : list byte) (pp : word) (P : Z) vals R M,
     Z.of_nat (length path) = P -> (0 <= P <= 62)%Z ->
     length vals = 167%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp -> vals_ev vals 113 = Z_to_bv 64 P ->
     (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + P + 8 <= bv_unsigned sp0 + 4194304)%Z ->
@@ -1090,6 +1093,7 @@ Section Tail2.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr2 : m_channel_reader model = true.   (* LPS 727298f3: the fd-2 write needs a reading far end *)
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -1137,6 +1141,7 @@ Section Tail2.
     - reflexivity.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr2.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -1202,6 +1207,7 @@ Section Tail2.
       replace (17 + length path)%nat with (17 + length path)%nat by lia. exact B80.
     - cbn [edenot]. exact Hnl.
     - exact Hfd2.
+    - exact Hrdr2.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -1263,6 +1269,7 @@ Section Tail2.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hb.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr2.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -1341,6 +1348,7 @@ Section Tail2.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact H17.
     - cbn [edenot ev ENV PX]. rewrite P2. exact Hsrc.
     - exact Hfd2.
+    - exact Hrdr2.
     - exact Hh.
     - exact Hlazy.
     - apply t_emit_has_nil.
@@ -1432,7 +1440,7 @@ Section Tail2.
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
     destruct (Z.le_gt_cases (Z.of_nat (length path)) 62) as [Hle | Hgt].
-    - eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    - eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr2 path pp _ vals'); try eassumption; lia.
     - destruct (Z.le_gt_cases (Z.of_nat (length path)) 63) as [Hle2 | Hgt2].
       + assert (E63 : Z.of_nat (length path) = 63%Z) by lia. rewrite E63 in Q113.
         eapply (of_segF_gen sp0 BL model Hvsp Hh Hlazy path pp 63 _ vals'); try eassumption; try lia.

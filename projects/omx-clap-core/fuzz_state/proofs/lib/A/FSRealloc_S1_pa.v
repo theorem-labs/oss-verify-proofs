@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* fuzz_state image A, realloc segment S1 (a Theorem Labs lane, 2026-10-29).
    The register / frame checks at Allocate's entry (PAREGS, PAFRAMES, PAST_top, pachk_ok) and the prefix leaf pa_leaf.
-   Port of cgif_rgb_fuzzer lib/YF6q.v + YF6v.v (released donor of the realloc prefix; ovpi checkout 102d6008296,
+   Port of cgif_rgb_fuzzer lib/YF6q.v + YF6v.v (released donor of the realloc prefix; ovpi checkout,
    byte-equal to (internal path)), translated by a Theorem Labs lane's translate_rgb_to_fs.py:
    module names mapped to fs's (the map checked on cgif_rgb YF2w / YF2i / YF1y against fs's A/AFh1 / AFgn / AFg3),
    img_* tactics to plain ones, (addr + D_xxx) to fs.asan addresses (realloc-thin/fs-addr-map.tsv; 0x534b8 = return pc
@@ -12,6 +12,7 @@
    of 0x32960; pa_leaf states fs's allocator relation FSupoison.ARU (the any-user-poison form, FSRealloc_inst.FS_ARX)
    instead of AR *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -165,7 +166,7 @@ c' = cfg_at tfibsegs 0x31ef4 regs' mem' md' /\
 (FSupoison.ARU tfibsegs B ly (snd r) Up W' mem' md' /\ wle W W' /\ same_io md md' /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ aowned B ly S a -> ~ aowned B ly (snd r) a -> ~ ascratch B ASTACK regs a ->
 aview tfibsegs (w_H W') mem' a = aview tfibsegs (w_H W) mem a) /\
-(* the same frame on the raw memory (c5's seg_pre post, RGtop.v:255) *)
+(* the same frame on the raw memory (c5's seg_pre post, RGtop.v:256) *)
 (forall x : word, ~ aowned B ly S (bv_unsigned x) -> ~ ascratch B ASTACK regs (bv_unsigned x) -> mem' x = mem x) /\
 (forall a, spZ regs - ASTACK <= a < spZ regs -> apresent (w_H W') mem' a)) /\
 PAST_top regs (Z.of_nat (length tr)) (w_H W') regs' mem' /\

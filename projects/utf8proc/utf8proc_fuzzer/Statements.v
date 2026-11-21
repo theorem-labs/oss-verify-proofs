@@ -18,12 +18,20 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  Iterates codepoints of the NUL-terminated input
-    calling case/category/width/grapheme-break queries, then
-    NFD/NFC/NFKD/NFKC/NFKC_Casefold and five utf8proc_map option sets; every
-    return value is ignored.  The harness makes no check of its own beyond not
-    crashing, so a statement about it says only that the code it calls never
-    crashes, hangs or trips a sanitizer.
+    WHAT THE HARNESS CHECKS.  Takes only an input of 1 byte to 64 KiB ending in
+    NUL and iterates its codepoints up to the first NUL with utf8proc_iterate,
+    stopping at a result <= 0 and otherwise advancing by it, calling
+    case/category/width/validity/grapheme-break queries on each; then, for an
+    input under 4 bytes when malloc succeeds, six utf8proc_normalize_utf32 calls
+    on 0 codepoints; then NFD/NFC/NFKD/NFKC/NFKC_Casefold and five utf8proc_map
+    option sets. It drops the queries', normalize_utf32's and utf8proc_map's
+    results, and only frees the NFD-to-Casefold results and the map outputs.
+    The harness makes no check of its own beyond not crashing.  Its halts
+    statements say only that the code it calls never crashes, hangs or trips a
+    sanitizer.  Its agreement statements say only that the code never crashes or
+    trips a sanitizer, and allow a run that never ends.  Its bound statements
+    say only how often its builds may disagree.  Its decidability statements say
+    only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

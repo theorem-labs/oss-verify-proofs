@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module names changed; 135 of its 173 lines of code are new or changed and 740 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Rtt102FStoresA.v; 22 of its 174 lines of code are new or changed and 21 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* B' TWIN (asan-ubsan d663f82d7f488d30, unstripped twin c90d4fa54d43160b) of lib/A/Prog/Rtt102FStoresA.v, by a name map:
    round_trip_text's body on image B is image A's instruction sequence with only pc-relative immediates changed
    (capstone over both twins' symtab bodies; every call site at the same offset), so the twin is the A' file with
@@ -12,8 +13,8 @@
    closed image check is re-run at B' by the build. The comments below are the A' file's: their addresses and slot
    numbers are image A's. *)
 (* fuzz_preset, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): THE SEVEN SHADOW STORES of STRETCH F of
-   round_trip_text's walk (lane RttFR1 of WalkRtt102, the text owner), RTT_SEG_F of Rtt102Cut.v at the batch kit's cut (shared layer
-   80a1d52c32c7): rtt_seg RT_CMP rtt_at_cmp -> rtt_seg RT_TXE rtt_at_txe; Rtt102FB.v proves it, this file is its store
+   round_trip_text's walk (lane RttFR1 of WalkRtt102, the text owner), RTT_SEG_F of Rtt102Cut.v at the batch kit's cut (shared layer):
+   rtt_seg RT_CMP rtt_at_cmp -> rtt_seg RT_TXE rtt_at_txe; Rtt102FB.v proves it, this file is its store
    segment.
    rule 24: proves no function (kind: segment lemma); the function-level lookup is the brief's.
    THE CODE (A' +0x184 .. +0x1c8, A' capstone listing :99-116):

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_classify_box_frameLib.v, with its module paths and module names changed; 805 of its 936 lines of code are new or changed and 858 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB.v is the re-based copy of lib/B/Prog/reac_box_model_block.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB.v is the re-based copy of lib/B/Prog/reac_box_model_block.v
    (source sha256 13776076e131201f48cef61f548252511d37e8ca260bde60ad0ff58253bfdc20) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: fwords, entry, td_tail, epi0. *)
 From Stdlib Require Import ZArith List Lia Bool.

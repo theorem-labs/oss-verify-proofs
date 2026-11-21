@@ -1,6 +1,7 @@
-(* CARRIED BY PATH from commit d61fa45ba152, proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfBlockRange.v, sha256 8d33c626f42f. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfBlockRange.v, sha256 8d33c626f42f. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: a live block's user range, terminator included, satisfies YGcfStr.amem_range8, the
    strengthened range premise of astrcmp_realizes_cf / astrlen_realizes_cf. AR_blocks_law_cf (YG0dcf.v) gives the
    user range's in_app and 16-alignment only; amem_range8's high arm also needs the START at least

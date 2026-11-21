@@ -1,4 +1,4 @@
-(* CARRIED from fuzz_preset cf67bba98b9 proofs/omx-clap-core/fuzz_preset/lib/Reusable/YAkMemnormJ.v, sha256 82f88552384a37dd9d2a3e2122aa53045bdc4621ef34b4290b8e5cb36db027c4.
+(* CARRIED from fuzz_preset proofs/omx-clap-core/fuzz_preset/lib/Reusable/YAkMemnormJ.v, sha256 82f88552384a37dd9d2a3e2122aa53045bdc4621ef34b4290b8e5cb36db027c4.
    Changes: the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib ->
    OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib (2 occurrences), and the two licence lines removed.
    The body is otherwise unchanged. *)

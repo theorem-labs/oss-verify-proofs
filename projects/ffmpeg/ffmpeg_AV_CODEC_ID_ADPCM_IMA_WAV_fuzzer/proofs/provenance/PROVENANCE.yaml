@@ -1,0 +1,205 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: ffmpeg
+  harness: ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/ffmpeg/project.yaml
+  - projects/ffmpeg/ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/harness.yaml
+release:
+  repository: https://github.com/theorem-labs/oss-verify-proofs
+  binaries_release: v2026.10.0
+  sources_release: v2026.10.0-src
+upstream:
+  name: FFmpeg
+  repository: https://github.com/FFmpeg/FFmpeg
+  commit: bbd37149e4b1bd9730a70f06b72d1c1f9b95bc0f
+  licence: GPL-2.0-or-later
+  licence_evidence: LICENSE.md of FFmpeg/FFmpeg at bbd37149 states that FFmpeg is under the LGPL version
+    2.1 or later, and that the GPL version 2 or later applies to all of FFmpeg once a GPL part is used;
+    the recipe that built these binaries configures the build with --enable-gpl (recipe/targets/ffmpeg-ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/pin,
+    the FF_CONFIG=main branch), so the binaries are under the GPL version 2 or later. The same line also
+    passes --enable-nonfree, and enables no non-free external library. Of the four texts the source archive
+    carries, the two that apply without --enable-version3, COPYING.GPLv2 and COPYING.LGPLv2.1, are kept
+    here.
+oss_fuzz:
+  repository: https://github.com/google/oss-fuzz
+  commit: bd2ce21991a94a362b92fb1bf25f86d5a1a60842
+  path: projects/ffmpeg
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/target_enc_fuzzer.c
+    from:
+      repository: https://github.com/FFmpeg/FFmpeg
+      commit: bbd37149e4b1bd9730a70f06b72d1c1f9b95bc0f
+      path: tools/target_enc_fuzzer.c
+    modified: false
+    licence: LGPL-2.1-or-later
+  modifications:
+  - Linked against FFmpeg at commit bbd37149.
+  - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the
+    program depends only on its input.
+  - A small driver reads the input file, calls the harness one to four times and prints each return value.
+recipe:
+  asset:
+    release: v2026.10.0-src
+    file: recipe.tar.zst
+    bytes: 938459
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5
+  target: ffmpeg-ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer
+  overlay: null
+  files: 'recipe/ (recipe/MANIFEST.tsv: every file with its sha256 in recipe.tar.zst; rows of kind upstream
+    are laid down from the -src asset; recipe/UPSTREAM-CARRIED.tsv gives the origin and licence of upstream
+    text in files of kind ours+upstream)'
+  patches: []
+  build_system: custom
+  how_to_rebuild: 'as docs/reproducing.md: with recipe/ as /work, unpack the project''s -src asset where
+    its MANIFEST says, apply recipe/series.tsv in order, and run recipe/tools/build-body.sh in the builder
+    image, with the environment of recipe/tools/build-env.tsv and the network off'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: 'the published source of the compiler image''s static AddressSanitizer: its toolchain/ and patches/
+      are those the image was built from, with comments and patch descriptions edited for publication
+      (toolchain-src.tar.zst holds this commit). Building it gives the image''s libclang_rt.builtins.a
+      and musl libc.a byte for byte; its libclang_rt.asan.a and asan_cxx.a differ from the image''s only
+      in DWARF line tables, which --strip-all removes from the binaries'
+    image_runtime_md5:
+      libclang_rt.asan.a: 91ba024da5ddacd96dc1c7588e5763b3
+      libclang_rt.asan_cxx.a: 2c6e776abd494934481b3f47ff030052
+      libclang_rt.builtins.a: 1f3d379aa7d4de2dcf11254b8f493a29
+      libc.a: 485eb64c0b7397bfea554a9cdf8e352c
+binaries:
+- build: plain
+  file: ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.plain
+  bytes: 1290424
+  sha256: 2b4230471bfe6da200a04b9887a2d0113b7a4cc2c37081e325aeaada1236badb
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+- build: asan
+  file: ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.asan
+  bytes: 4012856
+  sha256: a730dbd7b5f4e495305fc149d8d8cba34bdaa991f01e0a029f3aa59eb6b7a8a9
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libunwind.a
+- build: ubsan
+  file: ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.ubsan
+  bytes: 1453464
+  sha256: e735c6bdcb1353d2c9c96de0b18b0c9c09dbf42ce120e7b75c8c47e5280315cd
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+- build: asan-ubsan
+  file: ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.asan-ubsan
+  bytes: 4161272
+  sha256: 05007ac2f8a34aae20b8c62b9caab15e122d8cf875fa2d82fdf6c085536ea7bc
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libunwind.a
+binary_asset:
+  release: v2026.10.0
+  file: ffmpeg-bin.tar.zst
+  bytes: 1889250088
+  sha256: ccd82d97018e0e2c526daed1e2551380ec638fb1730b2af56cb13077a662ea9c
+source_asset:
+  src:
+    release: v2026.10.0-src
+    file: ffmpeg-src.tar.zst
+    bytes: 12710160
+    sha256: 0dcfedf83c80005e026035efcbd071ad47a049f3d7fba989abcda7c26c87cc2e
+  src_manifest:
+    release: v2026.10.0-src
+    file: ffmpeg-src.MANIFEST.tsv
+    bytes: 79557
+    sha256: 6745c9527aa3568806ea1f3435677f15f01f94c2b083e82ec97df6bc3b71e751
+rebuild:
+- the four binaries are the ones release v2026.10.0 published, as projects/ffmpeg/ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/harness.yaml
+  pins them by sha256 and bytes, and this record's binaries block repeats those pins; this record was
+  written without a rebuild of them
+proofs:
+  origin: contributed in https://github.com/theorem-labs/oss-verify-proofs/pull/24 (head 5092ffbe06f135c79d97c06dc521468cd492f691).
+    Of its 277 Rocq files, 270 carry Anthropic's copyright line and the tag Apache-2.0 OR MIT, 6 are tagged
+    MIT and 1 carries no licence lines. 264 of the 270 say in a line under their licence header that they
+    were copied from projects/zlib/checksum_fuzzer/proofs/lib with their module paths changed, and 262
+    of those also name proofs/cgif/cgif_file_fuzzer/lib and 2 proofs/cgif/cgif_rgb_fuzzer/lib as where
+    the zlib files themselves came from; the zlib record names final-anthropic-opensource-formal-verification-proofs-package-2026-10-21
+    (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a) as the package those cgif
+    files came from
+  licence: Apache-2.0 OR MIT for the 270 files that carry Anthropic's copyright line and that tag; MIT,
+    this repository's licence (LICENSE), for the other 7, which the contributor wrote
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  modified: each changed file carries one line under its licence header saying so
+licence:
+  components:
+  - component: FFmpeg (libavcodec, libavutil, libswresample, and the harness tools/target_enc_fuzzer.c)
+    files: the FFmpeg code linked into the four binaries
+    licence: GPL-2.0-or-later
+    evidence: LICENSE.md of FFmpeg/FFmpeg at bbd37149 (LGPL version 2.1 or later, and the GPL version
+      2 or later for all of FFmpeg once a GPL part is used) with the recipe's --enable-gpl; tools/target_enc_fuzzer.c:1-21,
+      the harness, names the LGPL version 2.1 or later for itself. Of the four texts the source archive
+      carries, the two that apply without --enable-version3, COPYING.GPLv2 and COPYING.LGPLv2.1, are kept
+      here.
+    texts:
+    - LICENSES/ffmpeg-COPYING.GPLv2
+    - LICENSES/ffmpeg-COPYING.LGPLv2.1
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt and libunwind at llvmorg-20.1.8 (87f0227c); the four builds'
+      uninstrumented lists in harness.yaml name clang_rt.crtbegin.o and libclang_rt.builtins.a in every
+      build, and libclang_rt.asan.a and libunwind.a in the two ASan builds, and no libc++
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and
+      musl code it patches keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: Theorem Labs file-input driver and build recipe (recipe/src/, recipe/targets/*/plugin.c)
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of this repository (MIT, Theorem Labs, PBC)
+    texts:
+    - LICENSES/oss-fuzz-theorems-LICENSE
+  source_bundle:
+  - file: ffmpeg-src.tar.zst
+    sha256: 0dcfedf83c80005e026035efcbd071ad47a049f3d7fba989abcda7c26c87cc2e
+  - file: ffmpeg-src.MANIFEST.tsv
+    sha256: 6745c9527aa3568806ea1f3435677f15f01f94c2b083e82ec97df6bc3b71e751
+  - file: recipe.tar.zst
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5

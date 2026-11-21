@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, DeallocNmaxA): the interface of Allocator::Deallocate's BIG-BLOCK arm, an additive
    companion of DGif0.DIface (DGif0.v is not edited).
 
    Quarantine::Put enqueues a chunk only when its user size is at most the quarantine's max_size (the cell
    inst + 0x318 = kQuarantineMax; compiler-rt llvmorg-20.1.8 sanitizer_quarantine.h:96-108; cgif 0x35690
    `bgeu max_size, size`). Above it, RecyclePassThrough (asan_allocator.cpp:255-263) frees the chunk at once:
-   FromPrimary's test on the space base (the instance's primary.space cell, an image constant cell: cgif YF0m.v:26
+   FromPrimary's test on the space base (the instance's primary.space cell, an image constant cell: cgif YF0m.v:27
    `c8 (AInst o_space) (ASp 0)`), FillChunk (vacuous: flags()->max_free_fill_size = 0), then
    QuarantineCallback::Recycle (cgif 0x3570c -> 0x3359c), then Put's cache-size test, which finds the thread cache
    as it was (no drain), and the returns of Put and Deallocate. The model is YG00cf.free_cf's recycle side:

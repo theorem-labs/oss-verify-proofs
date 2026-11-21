@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpTbl.v, with its module paths changed, the modules Strcmp* renamed RtStrcmp*, and its addresses and its trampoline word moved to plugin-hostd/fuzz_command's ASan build, whose ___interceptor_strcmp (0x45a24) is fuzz_grant's (0x426ec) word for word modulo pc-relative fields. *)
 (* Modified by Theorem Labs, 2026-10: moved from this harness's lib/A/Rt/RtStrcmpTbl.v to plugin-hostd/fuzz_command's ASan+UBSan image (fuzz_command.asan-ubsan), whose ___interceptor_strcmp (0x45a70) is the ASan image's (0x45a24) word for word modulo pc-relative fields: module paths lib/A to lib/B, and the addresses by the name-keyed A-to-B address map (the table range 0x45a6c, the trampoline 0x45188, the common_flags .got word 0xa5f40 and cells 0x142768 / 0x142858, as lib/B/YF0m.v holds them); the comments re-read from that image; the proof text is unchanged. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/B/Rt/RtStrcmpTbl.v (donor image sha256 bbe55d24d096), with its module paths changed and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_grant's ASan build, here at fuzz_command.asan-ubsan's addresses: the code table of the strcmp interceptor
    walk (lib/B/Rt/RtStrcmp.v) and the B/YE2y.v phase lemmas over it (icpt_phase, icpt_phase_to, icpt_ld8 with
    tbl_icpt replaced by tbl_sc; same proofs). The table is B/YE34.v's tbl_icpt plus the 333 four-byte words from
@@ -53,11 +54,11 @@ Proof. vm_compute. repeat split; reflexivity. Qed.
    __asan_region_is_poisoned's bounds), all MEASURED on fuzz_command.asan-ubsan and taken from YF0m's Tfib_const
    (the AR const law) by YE2y.rodata_ok:
    - 0xa5f40 (.got) = 0x142768 __sanitizer::common_flags_dont_use, read by `auipc a0,0x60; ld s8,1108(a0)` at
-     0x45aec / 0x45af0 (YF0m row `z8 (ANum 0xa5f40) 0x142768`, YF0m.v:180);
+     0x45aec / 0x45af0 (YF0m row `z8 (ANum 0xa5f40) 0x142768`, YF0m.v:181);
    - common_flags + 0xfa = 0x142862 intercept_strcmp, read by `lbu a0,0xfa(s8)` at 0x45af4: byte 2 of YF0m's row
-     `z8 (ANum 0x142860) 0x101010101010101` (YF0m.v:69) = 1, so `beqz a0` at 0x45af8 does not skip the checks;
+     `z8 (ANum 0x142860) 0x101010101010101` (YF0m.v:70) = 1, so `beqz a0` at 0x45af8 does not skip the checks;
    - common_flags + 0xf5 = 0x14285d strict_string_checks, read by `lbu a1,0xf5(s8)` at 0x45afc and `lbu a0,0xf5(s8)`
-     at 0x45b58: byte 5 of YF0m's row `z8 (ANum 0x142858) 0x101000100000000` (YF0m.v:68) = 0, so internal_strlen is
+     at 0x45b58: byte 5 of YF0m's row `z8 (ANum 0x142858) 0x101000100000000` (YF0m.v:69) = 0, so internal_strlen is
      not called (`bnez a1` 0x45b0c, `bnez a0` 0x45b5c not taken).
    The two flag cells are declared as the 8-byte words YF0m holds. *)
 Definition sc_rodata : list (Z * Z * list (Z * N * Z)) :=

@@ -20,7 +20,11 @@ Proof using.
   intros ms model ms' Hh Hl Hsvc Hstep Hc tr c' Hstar.
   inversion Hstar as [c0 | c1 evs c2 tr' c3 Hs Hst]; subst.
   - exact (budget_refused_at_no_lazy_instr segs ms model Hl Hsvc).
-  - destruct (node_instr segs ms model ms' Hh Hl Hsvc Hstep) as [_ Hall].
+  (* 08b1429: Reusable/YK15.v's [node_ok] is now a THREE-way conjunction -- the exactness
+     half is followed by [sys_rob segs c] (YK15.v:190-196; it was two conjuncts,
+     YK15.v:189-192). [_ Hall] therefore bound the pair, and applying it to
+     [evs] was the reported "Illegal application (Non-functional construction)". *)
+  - destruct (node_instr segs ms model ms' Hh Hl Hsvc Hstep) as [_ [Hall _]].
     destruct (Hall evs (SNext c2) Hs) as [[] [_ Heq]].
     injection Heq as ->. exact (Hc tr' c' Hst).
 Qed.
@@ -41,7 +45,7 @@ Proof using.
   intros ms model ms' Hh Hl Hsvc Hstep Hu.
   apply (uniform_nonplacement segs _ (fun x8 len => instr_not_placement segs ms model x8 len Hsvc)).
   intros evs c2 Hs.
-  destruct (node_instr segs ms model ms' Hh Hl Hsvc Hstep) as [_ Hall].
+  destruct (node_instr segs ms model ms' Hh Hl Hsvc Hstep) as [_ [Hall _]].
   destruct (Hall evs (SNext c2) Hs) as [[] [_ Heq]].
   injection Heq as ->. exact Hu.
 Qed.

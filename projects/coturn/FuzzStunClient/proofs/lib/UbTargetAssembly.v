@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section takes the launch's kernel build (Amb) and passes the entry lemmas the channel-reader fact. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -21,6 +22,7 @@ From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import WalkFast.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import WalkFastK.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import WalkFastM.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import SumWalkFast.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Amb.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Ltac OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common.WalkTac.gres ::= gres_fast.
 #[local] Ltac OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common.WalkTac.vnorm ::= vnorm_fast.
@@ -76,6 +78,7 @@ Proof. unfold nx0_okP, NX0k. lia. Qed.
 
 Section WithHyps.
 Hypothesis RH : ub_tphase_hyps.
+Context {AMB : Amb.Amb}.   (* LPS 08b1429: target_vm(_k) read the launch's kernel build (init_reserved) *)
 
 Lemma check_sound_all : forall nx0 fuel bfuel p cs s, nx0_okP nx0 ->
   check RSEGS ITAB UB_ATB nx0 bfuel fuel cs p = COk s ->
@@ -101,8 +104,8 @@ Theorem target_class_sound : forall (bfuel fuel : nat) (nlo nhi : Z) (p : plan) 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13d90) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros bfuel fuel nlo nhi p s HC HS H0 Hz sp0 gm area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_ok sp0 gm area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & c & sv & He & CS).
+  intros bfuel fuel nlo nhi p s HC HS H0 Hz sp0 gm area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_ok sp0 gm area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & c & sv & He & CS).
   eapply rz_conseq.
   - exact (check_sound_all NX0 fuel bfuel p (cs_T nlo nhi) s NX0_ok HC _ R M _ CS).
   - rewrite (npos_class nlo nhi content H0 Hz Hn) in HS.
@@ -122,8 +125,8 @@ Theorem target_class_sound_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : Z) (
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13d90) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS H0 Hz sp0 B area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & c & sv & He & CS).
+  intros k bfuel fuel nlo nhi p s HC HS H0 Hz sp0 B area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & c & sv & He & CS).
   eapply rz_conseq.
   - exact (check_sound_all NX0k fuel bfuel p (cs_Tk k nlo nhi) s NX0k_ok HC _ R M _ CS).
   - rewrite (npos_class nlo nhi content H0 Hz Hn) in HS.
@@ -143,8 +146,8 @@ Theorem target_class_sound_top : forall (bfuel fuel : nat) (nlo nhi : Z) (p : pl
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13d90) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros bfuel fuel nlo nhi p s HC HS Htop sp0 gm area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_ok sp0 gm area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & c & sv & He & CS).
+  intros bfuel fuel nlo nhi p s HC HS Htop sp0 gm area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_ok sp0 gm area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & c & sv & He & CS).
   pose proof (tp_len _ _ _ _ _ _ _ _ _ TP) as HL.
   assert (CR : 0 <= hdr_cfglen content < 32768) by (unfold hdr_cfglen; apply Z.mod_pos_bound; lia).
   assert (C0 : hdr_cfglen content = 0) by (unfold hdr_paylen in Hn; lia).
@@ -167,8 +170,8 @@ Theorem target_class_sound_top_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13d90) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS Htop sp0 B area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & c & sv & He & CS).
+  intros k bfuel fuel nlo nhi p s HC HS Htop sp0 B area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & c & sv & He & CS).
   pose proof (tk_len _ _ _ _ _ _ _ _ _ _ TP) as HL. pose proof (tk_L _ _ _ _ _ _ _ _ _ _ TP) as HK.
   pose proof (capk_pos (k - 1) ltac:(pose proof (wk_k _ _ _ _ _ _ _ (tk_world _ _ _ _ _ _ _ _ _ _ TP)); lia)) as Hc.
   assert (CR : 0 <= hdr_cfglen content < 32768) by (unfold hdr_cfglen; apply Z.mod_pos_bound; lia).
@@ -193,8 +196,8 @@ Theorem target_class_sound_low_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13d90) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS Hlow H0 Hz sp0 B area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & c & sv & He & CS).
+  intros k bfuel fuel nlo nhi p s HC HS Hlow H0 Hz sp0 B area brkv mas tid content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & c & sv & He & CS).
   pose proof (tk_len _ _ _ _ _ _ _ _ _ _ TP) as HL. pose proof (tk_L _ _ _ _ _ _ _ _ _ _ TP) as HK.
   assert (C1 : 1 <= hdr_cfglen content) by (unfold hdr_paylen in Hn; lia).
   eapply rz_conseq.

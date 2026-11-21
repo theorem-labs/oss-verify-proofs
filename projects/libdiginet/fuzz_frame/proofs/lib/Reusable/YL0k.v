@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0k.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YL0k.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; 3 image values moved to fuzz_frame's binaries by symbol and offset (provenance/evidence/k2/k2-values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YL0k.v for libdiginet/fuzz_frame; 3 image values moved to fuzz_frame's binaries by symbol and offset (provenance/evidence/k2/k2-values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv memory facts (26 common pairs, the rseq pairs, AT_NULL) derived from the entry runs before the start-up cut; MD0 over the entry draw's vDSO run state (Run.init_config's with_vdso)); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -164,19 +165,25 @@ unfold mbyte in Hmb.
 rewrite (seg_rom_above src0segs 0x60000 _ src0_segs_top) in Hmb by (rewrite Z_to_bv_unsigned; unfold bv_wrap; change (bv_modulus 64) with (2^64); rewrite Z.mod_small by lia; lia).
 rewrite H3 in Hmb. destruct (m' (Z_to_bv 64 (a + Z.of_nat j))); destruct (nth_error bs j); cbn in Hmb; congruence.
 Qed.
-Definition MD0 (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) : Model :=
-with_tid tid (init_model (segments_reserved src0segs) brk mbase sp lim inp).
-Definition MD_file (path : list byte) (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) : Model :=
-with_fds (fd_insert (m_fds (MD0 tid brk mbase sp lim inp)) (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0)))
-(MD0 tid brk mbase sp lim inp).
-Definition MD_dir (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) : Model :=
-with_fds (fd_insert (m_fds (MD0 tid brk mbase sp lim inp)) (Z_to_bv 64 3) FdDir) (MD0 tid brk mbase sp lim inp).
-Lemma MD0_fds : forall tid brk mbase sp lim inp,
-m_fds (MD0 tid brk mbase sp lim inp) =
+(* 727298f3: [Run.init_config] wraps the start model in [with_vdso (vdso_run_init (ed_vdso
+   draw))], so the start model takes the entry draw [rnd] as well. *)
+Definition MD0 (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) (rnd : EntryDraw) : Model :=
+with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved src0segs) brk mbase sp lim inp)).
+Definition MD_file (path : list byte) (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) (rnd : EntryDraw) : Model :=
+with_fds (fd_insert (m_fds (MD0 tid brk mbase sp lim inp rnd)) (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0)))
+(MD0 tid brk mbase sp lim inp rnd).
+Definition MD_dir (tid brk mbase sp : word) (lim : Z) (inp : ProcInput) (rnd : EntryDraw) : Model :=
+with_fds (fd_insert (m_fds (MD0 tid brk mbase sp lim inp rnd)) (Z_to_bv 64 3) FdDir) (MD0 tid brk mbase sp lim inp rnd).
+Lemma MD0_fds : forall tid brk mbase sp lim inp rnd,
+m_fds (MD0 tid brk mbase sp lim inp rnd) =
 [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1)); (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))].
-Proof. intros. unfold MD0, init_model. autorewrite with model. reflexivity. Qed.
-Lemma MD0_fs : forall tid brk mbase sp lim inp, m_fs (MD0 tid brk mbase sp lim inp) = in_fs inp.
-Proof. intros. unfold MD0, init_model. autorewrite with model. reflexivity. Qed.
+Proof. intros. unfold MD0, init_model. autorewrite with model. first [reflexivity | cbn; reflexivity]. Qed.
+Lemma MD0_fs : forall tid brk mbase sp lim inp rnd, m_fs (MD0 tid brk mbase sp lim inp rnd) = in_fs inp.
+Proof. intros. unfold MD0, init_model. autorewrite with model. first [reflexivity | cbn; reflexivity]. Qed.
+(** At 08b1429 [fdchan] also requires [m_channel_reader]; the initial model takes it from the input. *)
+Lemma MD0_channel_reader : forall tid brk mbase sp lim inp rnd,
+m_channel_reader (MD0 tid brk mbase sp lim inp rnd) = in_channel_reader inp.
+Proof. intros. unfold MD0, init_model. autorewrite with model. first [reflexivity | cbn; reflexivity]. Qed.
 Definition src0_keep : ivl := Eval vm_compute in (drv_keep src0_msyms).
 Lemma src0_keep_check : keep_check src0_msyms src0_keep = true.
 Proof. vm_compute. reflexivity. Qed.
@@ -242,8 +249,8 @@ Proof. vm_compute. reflexivity. Qed.
 Definition ss_m1_post : sstate := Eval vm_compute in (post_state ss_m1 RA_m1 K_M1 RS_m1).
 Definition ss_m1_null : sstate := Eval vm_compute in
 (mkSS (ss_pc ss_m1_post) (sr_set (ss_regs ss_m1_post) 10%bv (SLit 0)) (ss_mem ss_m1_post) (ss_resv ss_m1_post) (ss_facts ss_m1_post)).
-Definition E_m1 (sp tid : word) (argv envp : list (list byte)) (rnd : EntryDraw) (regs' : bvmap 5 word) (g : Z) : env :=
-post_env (E_main sp argv envp tid rnd) K_M1 regs' g.
+Definition E_m1 (sp tid : word) (inp : ProcInput) (rnd : EntryDraw) (regs' : bvmap 5 word) (g : Z) : env :=
+post_env (E_main sp inp tid rnd) K_M1 regs' g.
 Definition blk_fact : afact := mkAF 4096 CEIL_MAX 4.
 Definition ss_m1_ok : sstate := Eval vm_compute in (add_atom ss_m1_post A_BUF blk_fact).
 Definition ss_rd1 : sstate := Eval vm_compute in (run_ ss_m1_ok).

@@ -14,3 +14,5 @@ tree's `PROGAT_CODE_` line through the unit's key map to the image, and names th
 Each `.recipe` gives the exact commands, the sha256 of every input (images, unstripped twins, key maps, the decoder)
 and of the output. On each of the four pins, the decoder's output is byte-equal to the committed tree in all four
 files, measured 2026-10-31. A second run gives the same bytes.
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

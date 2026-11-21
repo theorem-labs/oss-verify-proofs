@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the NARROWED snprintf site contract (W_sites.v asnprintf_realizes, W_sites_x.v
    asnprintf_realizes_x: the pieces of reply's one format "%s %d "; M1 the format and M3 the %s string in the image's
    read-only data below the GOT word; M2 the destination above the image) holds at each of its three walked
    applications, every premise from the facts that application holds there.
    - W_LLVMFuzzerTestOneInput_gone_p1.v (AR at PB_fr) and W_LLVMFuzzerTestOneInput_gone_p1_x.v (ARx at PB_fr):
      san_M1, san_M3, san_M2_AR and san_M2_x, SnpAssembly's sanity lemmas TAKEN VERBATIM with the parser lemmas they
-     use (lib/A/RT_pf_snp_srr.v on a working branch 8f558767590, :125-178 and :190-247; snp_text_shape left
+     use (lib/A/RT_pf_snp_srr.v on a working branch, :125-178 and :190-247; snp_text_shape left
      out, no application here uses it).
    - W_rig_top.v snp_call, which is generic over the placement PI and over the allocator relation ARx: san_M1_pi,
      san_M3_pi and san_M2_x_pi state the same facts at any PI (san_M2_AR_pi is the AR walk's form, kept for the B
@@ -46,7 +47,7 @@ Open Scope Z_scope.
 Lemma PF_GLOBALS_TOP_tbl : PF_GLOBALS_TOP = RT_pf_Tbl.PF_GLOBALS_TOP.
 Proof. reflexivity. Qed.
 
-(* ---- the one format: the parser is injective (RT_pf_snp_srr.v 8f558767590 :125-178, verbatim) ---- *)
+(* ---- the one format: the parser is injective (RT_pf_snp_srr.v :125-178, verbatim) ---- *)
 Module PFC := OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog.printf_facts_c.
 
 Definition pf_unparse_piece (p : PFC.pf_piece) : list Z :=
@@ -101,11 +102,11 @@ Definition snp_ps : list PFC.pf_piece := [PFC.Ps; PFC.PLit 32; PFC.Pd; PFC.PLit 
 Lemma snp_fmt_eq : forall fmt, PFC.pf_parse fmt = Some snp_ps -> fmt = snp_fmtb.
 Proof. intros fmt H. exact (pf_parse_unparse (length fmt) fmt snp_ps (le_n _) H). Qed.
 
-(* ---- THE NARROWING IS SATISFIED AT ITS THREE APPLICATIONS (W_rig_top.v:3202, W_LLVMFuzzerTestOneInput_gone_p1.v:648,
-   W_LLVMFuzzerTestOneInput_gone_p1_x.v:478), each premise from the facts the application itself holds there ---- *)
+(* ---- THE NARROWING IS SATISFIED AT ITS THREE APPLICATIONS (W_rig_top.v:3203, W_LLVMFuzzerTestOneInput_gone_p1.v:649,
+   W_LLVMFuzzerTestOneInput_gone_p1_x.v:479), each premise from the facts the application itself holds there ---- *)
 Section San. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* M1: all three pass f = VAL (A_OBJ 20) (lib/A/W_LLVMFuzzerTestOneInput_gone_p1.v:623 V20; gone_p1_x.v:476 and W_rig_top.v:3202 the same object at
+(* M1: all three pass f = VAL (A_OBJ 20) (lib/A/W_LLVMFuzzerTestOneInput_gone_p1.v:624 V20; gone_p1_x.v:476 and W_rig_top.v:3203 the same object at
    PB_fr) and a format that parses to the four pieces (RIG_FMT, p1_fmt), so |fmt| = 6 *)
 Lemma san_M1 : forall fmt, PFC.pf_parse fmt = Some snp_ps ->
   65536 <= @pa_val _ fr_prog_listing PB_fr (A_OBJ 20) /\
@@ -116,8 +117,8 @@ assert (V20 : @pa_val _ fr_prog_listing PB_fr (A_OBJ 20) = 135040) by (vm_comput
 rewrite V20. unfold FR_GOT_GUARD. cbn [length snp_fmtb]. lia.
 Qed.
 
-(* M3: all three pass a3 = VAL (A_OBJ 21) (gone_p1.v:679 U13, W_rig_top.v:3034 R13) with the arguments
-   [APtr K_GESTURE; AInt id] (lib/A/W_LLVMFuzzerTestOneInput_gone_p1.v:649, gone_p1_x.v:477, W_rig_top.v:3204), so |s| = 13 *)
+(* M3: all three pass a3 = VAL (A_OBJ 21) (gone_p1.v:679 U13, W_rig_top.v:3035 R13) with the arguments
+   [APtr K_GESTURE; AInt id] (lib/A/W_LLVMFuzzerTestOneInput_gone_p1.v:650, gone_p1_x.v:477, W_rig_top.v:3205), so |s| = 13 *)
 Lemma san_M3 : forall (r13 : word) (id : Z) s, bv_unsigned r13 = @pa_val _ fr_prog_listing PB_fr (A_OBJ 21) ->
   hd_error [PFC.APtr RelayModel.K_GESTURE; PFC.AInt id] = Some (PFC.APtr s) ->
   65536 <= bv_unsigned r13 /\ bv_unsigned r13 + Z.of_nat (length s) + 1 + 8 <= FR_GOT_GUARD.
@@ -127,7 +128,7 @@ assert (V21 : @pa_val _ fr_prog_listing PB_fr (A_OBJ 21) = 134944) by (vm_comput
 rewrite E, V21. unfold FR_GOT_GUARD, RelayModel.K_GESTURE. cbn [length]. lia.
 Qed.
 
-(* M2 at the two AR applications: the buffer is frame_addr ly 1 fpos + 32 for a live class-1 fake frame (W_rig_top.v:3177
+(* M2 at the two AR applications: the buffer is frame_addr ly 1 fpos + 32 for a live class-1 fake frame (W_rig_top.v:3178
    HAR / Hin / HF from ts_jframe; gone_p1.v:508-509 FF / Hfin with HART).  AR's ledger puts ly_img over every segment
    (W_img.fr_img_cover: its top is at least 0x5fb000), and a fake frame lies above ly_img: the fake stack is disjoint
    from ly_img (YG0s.frame_facts), starts at or above 4096 and is longer than kImgLo (layout_ok's lo_img) - YCbqG.v's

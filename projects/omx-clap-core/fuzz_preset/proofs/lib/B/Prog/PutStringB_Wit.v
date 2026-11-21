@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d7f488d30, twin c90d4fa54d43160b), lane
    PutStringB (h-rw-pre-7): the INSTANCE WITNESSES of the image facts the put_string walk keeps as Section hypotheses
    (lib/B/Prog/PutStringB_Base.v / PutStringB_A.v Section h, PutStringB_T.v Section h and its release lemma's FPRX).
@@ -11,15 +12,15 @@
    AF_put_string / ARx_frame_hull_vis are cited, not restated); psw_fit_base applies six PutStringB_Base.v lemmas to
    them, so those texts are checked against the walk's Section hypotheses by the kernel.
    TEMPLATES (copied, not Required; reuse, not trust):
-   - WT = lib/B/Prog/WriteValueB_Wit.v at origin/cold/h-rw-pre-7-bp-write_value 6639b1e8a3ca (blob 94d028301e5d):
+   - WT = lib/B/Prog/WriteValueB_Wit.v (blob 94d028301e5d):
      the generic checkers and the literal step (psw_zr_b .. psw_lit_rd, psw_lit_b / psw_lit_sound), LAWS, TL, HW,
      Hent, HPSTRO, the zero-shadow alignment, the const-shadow inclusion, the bound checks and the strlen row. The
      literal step is WT's wvw_lit_rd (itself PORTED from h-rw-pre-5's S7a_indent_wit.v s7w_lit_rd), with every lia
      scoped here.
-   - PT = lib/B/Prog/PutB_Wit.v at origin/cold/h-rw-pre-7-bp-put 768d17e2fe20 (blob 29f078c91f7c): HIMGSH
+   - PT = lib/B/Prog/PutB_Wit.v (blob 29f078c91f7c): HIMGSH
      (pe_imgsh: YImgShadowCoverCf.img_shadow_vis_cf_at_of_cover at YF0m.Tfib_zero_shadow / Tfib_const_shadow, the
      cover check at pa_lo / pa_hi), HFHULL (pe_frsh), the Hobj cover check (pe_obj).
-   - ET = lib/B/Prog/ExvB_ImgFacts.v at origin/cold/h-rw-pre-7-bp-ex_value b767dd3b849 (blob 4d34335b252c): the
+   - ET = lib/B/Prog/ExvB_ImgFacts.v (blob 4d34335b252c): the
      disjointness checker (exvi_disj_b), Huar (exvi_eh_got_uar), HUARC's apartness (exvi_eh_uar_cell), PST_ok's
      owned part (exvi_eh_pst_own), OWNLOW (exvi_eh_ownlow, here at ARcfx), SMX / SFX (exvi_eh_smx / exvi_eh_sfx),
      ASFX / FFLX (here YGcallScf.v's ARcfx twins astack_free_x_xs / frame_flag_x_xs), FPRX (exvi_eh_fflx's apresent

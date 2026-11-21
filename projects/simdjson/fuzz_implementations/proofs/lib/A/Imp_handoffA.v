@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the client's hand-off check is evaluated on the hand-off states the start-up certificate computes for each CONFIG_RSEQ value instead of the recorded ones. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import MState Mem Frame Cells Step Arr Exec ImageA RzCPS.
 From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.AS Require Import PropExec ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound
-  StartupHSAsan.
+  AsanStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.A Require Import Layout Shadow RT_iface D_defs D_libiface HandoffKit HandoffImage HandoffCLX RT_state RT_rep Atp_activewA Atp_handoffA
   Pj_defsA Imp_hdefsA Imp_ios_defsA Imp_libifaceA.
 Import ListNotations.
@@ -61,20 +62,8 @@ Proof using SEGS_in_hull HULL_ok argH_high HC.
 Qed.
 End Lib.
 
-Lemma hs_imp_0 : hs_imp_ok HS_asan_0 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_imp_1000 : hs_imp_ok HS_asan_1000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_imp_2000 : hs_imp_ok HS_asan_2000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_imp_3000 : hs_imp_ok HS_asan_3000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-
-Lemma HS_imp_ok : forall h ch, HS_asan h = Some ch -> hs_imp_ok ch = true.
-Proof.
-  intros h ch. unfold HS_asan.
-  apply (hs_if_some_lib (fun c => hs_imp_ok c = true)); [exact hs_imp_3000|].
-  apply (hs_if_some_lib (fun c => hs_imp_ok c = true)); [exact hs_imp_2000|].
-  apply (hs_if_some_lib (fun c => hs_imp_ok c = true)); [exact hs_imp_1000|].
-  apply (hs_if_some_lib (fun c => hs_imp_ok c = true)); [exact hs_imp_0| discriminate].
-Qed.
+(* The hand-off states [AS/AsanStartupCert.v] computes, one table per CONFIG_RSEQ value:
+   [hs_imp_ok] is evaluated on each, per closed flag ([destruct b] leaves each branch
+   closed for [vm_compute]; both branches are discharged). *)
+Lemma HS_imp_ok : forall (b : bool) h ch, HS_asan (rseq_z b) h = Some ch -> hs_imp_ok ch = true.
+Proof. intros b. apply (HS_asan_forall hs_imp_ok b). destruct b; vm_compute; reflexivity. Qed.

@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/send_message.v (the ASan walk,
-   a working branch 4f5a539710b, re-fitted d0af25245f3) to the ASan+UBSan build fuzz_command.asan-ubsan
+   a working branch, re-fitted) to the ASan+UBSan build fuzz_command.asan-ubsan
    (lib/B, entry 0x86bf8): `tsend_message_spec_holds : tsend_message_spec B MT` is the statement of
-   lib/B/Prog/send_message_c.v at a working branch f490061c104 (passes 4, 4b and 5: callees and runtime entries at every FP
+   lib/B/Prog/send_message_c.v at a working branch (passes 4, 4b and 5: callees and runtime entries at every FP
    state, rounding mode 0 in place of astack_pres, the post apost_baseF). The record facts come from a Theorem Labs lane's kit
    (lib/B/Prog/CmdRecBase.v cmd_img_facts and the lemmas of CmdRecImg.v, CmdRecRo.v), the call rules and transport
    lemmas from lib/B/Prog/PaCallPg.v and PaFx.v. *)
 (* Modified by Theorem Labs, 2026-10: send_message's walk on plugin-hostd/fuzz_command's ASan+UBSan image, assembled
    from its five segments (send_message_s1.v .. send_message_s5.v) as cgif's cgif_close is assembled from its segment
-   chain (proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v, ACke.v at c8557374ad2e; the chain
+   chain (proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v, ACke.v; the chain
    ACh1.v:804-805, ACh2.v:1238-1239, the contract ACh5.v:323-341). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

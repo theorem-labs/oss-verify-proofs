@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 359 of its 421 lines of code are new or changed and 716 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): THE TOP of the walk of check_reject_clean_starved against the text
    tcheck_reject_clean_starved_specX. It discharges, at the A' instance, every premise of the segment lemmas that the
    instance decides (one lemma each: the engine's Section hypotheses HX_*, the image facts, the instance facts HI_*,
@@ -11,8 +12,8 @@
    or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan
    Proof.v existed for check_reject_clean_starved). Written new.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
-   - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1 74dcda1eda12);
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
+   - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1);
      entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved).
    - The text tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v:1756-1858
      (no DW, the strtod model keyed, the wild room, the room counts,
@@ -26,7 +27,7 @@
      (lib/A/PRH_Base.v:1779-1785) two wild cursor traces at crcs's arguments, met by CrsSeg_X1.x_cw_pj;
      pj_parse's text is taken at every cursor set (HT_pj_parse), as CrsTopBp.v takes it.
    - THE INSTANCE: B := AD2l.TfibB (lib/A/AD2l.v blob eb321db7a357), PA := PI_prog_A, PI := prh_img_A,
-     cp := CfParamsPreset.CfParams_preset (lib/A/CfParamsPreset.v), ARx := crs_ARx_Ap below = YGcallcf.v:211's ARxs at
+     cp := CfParamsPreset.CfParams_preset (lib/A/CfParamsPreset.v), ARx := crs_ARx_Ap below = YGcallcf.v:212's ARxs at
      TfibB (h-mani-a8's ARcf with the message buffer placed, xs_placed_cf), laws YGcallcf.AR_laws_x_xs of
      YG0lawscf.AR_laws_ok_cf (YGcallcf.v blob 6d2b13c24437). fx, rc, ci, RL, SK stay Section variables (the text
      quantifies over them).
@@ -63,8 +64,8 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Prog Require Ledger.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Prog Require WriterValue PjWriteHyp.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PjTree PjGrammar PresetRoomPos PresetReqAt PresetRun.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PresetLiveBounds.
-(* the live-set counts at a position of the run (h-pre-b1's leaf, lib/Spec/PresetRoomCounts.v blob 8a4dfa84e8be,
-   origin/cold/h-pre-b1-iface-102 94736cca66e0): the two class-24 bounds of W1 and Z *)
+(* the live-set counts at a position of the run (h-pre-b1's leaf, lib/Spec/PresetRoomCounts.v blob 8a4dfa84e8be):
+   the two class-24 bounds of W1 and Z *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PresetRoomCounts.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import Img0 Listing_prog PAImg_prog PRH_Base PRH_Img.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import PRH_Reader PRH_FnCheck.
@@ -127,7 +128,7 @@ Context {SK : YI16.sink_head}.
 (* ======================================================================================================== *)
 (* ---- THE INSTANCE RELATION and its laws ---- *)
 
-(* YGcallcf.v:211 ARxs at TfibB: h-mani-a8's allocator relation ARcf with the error-message buffer placed *)
+(* YGcallcf.v:212 ARxs at TfibB: h-mani-a8's allocator relation ARcf with the error-message buffer placed *)
 Definition crs_ARx_Ap : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop :=
   fun ly S Hp W mem md => YG0ncf.ARcf SEGS TA ly S Hp W mem md /\ YG0ncf.xs_placed_cf ly S.
 #[local] Notation ARA := crs_ARx_Ap.

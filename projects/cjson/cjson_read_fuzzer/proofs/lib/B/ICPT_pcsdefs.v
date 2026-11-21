@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a string argument's end plus 9 (was its end plus 16) is at most 2^47, what the launch's entry block gives for an argv string (the NUL that ends execfn and the 8-byte slot come after it, below ed_top <= 2^47). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -1455,7 +1456,7 @@ Definition pcommon_s_stmt (fa : Z) : Prop :=
     a1 = Z_to_bv 64 fa -> a2 = Z_to_bv 64 VA ->
     rw_cells bsegs m VA [C8 (Z_to_bv 64 S)] -> bv_unsigned sp <= VA -> VA + 8 <= 2^47 ->
     bytes_at bsegs m S (str ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) str ->
-    bv_unsigned sp <= S -> S + Z.of_nat (length str) + 1 + 16 <= 2^47 -> Z.of_nat (length str) <= 2^20 ->
+    bv_unsigned sp <= S -> S + Z.of_nat (length str) + 1 + 9 <= 2^47 -> Z.of_nat (length str) <= 2^20 ->
     evt bsegs (pcommons_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc lo m)
       (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 APRINTF_COMMON) fc None m (seg_rom bsegs)).

@@ -5,17 +5,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its addresses changed; 1324 of its 1487 lines of code are new or changed and 1039 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P3.v; 462 of its 820 lines of code are new or changed and 1129 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/P3.v blob d3039cfecf9b at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/P3.v blob d3039cfecf9b.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives P3.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of P3.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
-(* The footprint twins of Seg/P3.v's two run lemmas (p3_evt :153 (at head lib/A/Prog/Seg/P3.v:166), p3_evt_ro :463 (at head lib/A/Prog/Seg/P3.v:678), the lines of
-   S_P3 (segment-runs-A.tsv (a working note, not in this delivery)); P3.p3_run :346 (at head lib/A/Prog/Seg/P3.v:537) concludes SR, not evt,
+(* The footprint twins of Seg/P3.v's two run lemmas (p3_evt :153 (at head lib/A/Prog/Seg/P3.v:167), p3_evt_ro :463 (at head lib/A/Prog/Seg/P3.v:679), the lines of
+   S_P3 (segment-runs-A.tsv (a working note, not in this delivery)); P3.p3_run :346 (at head lib/A/Prog/Seg/P3.v:538) concludes SR, not evt,
    so it is out of the spec's scope and stays plain).
    The segment (0x81b14 -> 0x81b7c) has two kinds of data access of its own: the 19 one-byte frame-shadow stores
    into [S + 336, S + 365), which the lemma's own 29-cell `rw_cells rsegs m (S + 336) [C1 b0; ...]` premise names,
@@ -26,7 +27,7 @@
    lib/A/Prog/asan_memsetF.v) and reac_identity_init_contract_F (lib/A/Prog/reac_identity_init_c.v:62).  Their own
    footprint premises are passed through unchanged, instantiated at these call sites (fb, 35, spv for the memset;
    id and spv for the init).  rng_bytes RNG is a forall-memory form and is passed through unchanged.
-   P3.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 40 of its code lines changed or removed, 353 added. *)
+   P3.v's code is unchanged since release (comments edited); it differs from the source blob above: 40 of its code lines changed or removed, 353 added. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes.
@@ -48,7 +49,7 @@ Ltac p3F_sb :=
            mem_after_store
        end).
 
-(* ---- p3_evt (P3.v:153) under a footprint RNG. ---- *)
+(* ---- p3_evt (P3.v:154) under a footprint RNG. ---- *)
 Lemma p3_evt_F : asan_memset_contract_F -> reac_identity_init_contract_F ->
   forall (RNG : ExecF.footprint)
          (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -255,8 +256,8 @@ Proof.
 Qed.
 
 (* ---- Route (C) (a Theorem Labs lane's frozen form; p3_evt_F stays as it is): p3_evt_F with the two callees' _F_on contracts,
-   asan_memset_contract_F_on (lib/A/Prog/asan_memset_cF_on.v, a Theorem Labs lane 83ab88c3325) and
-   reac_identity_init_contract_F_on (lib/A/Prog/reac_identity_init_c.v, a Theorem Labs lane 09bc1c86820).  The run reads no
+   asan_memset_contract_F_on (lib/A/Prog/asan_memset_cF_on.v, a Theorem Labs lane) and
+   reac_identity_init_contract_F_on (lib/A/Prog/reac_identity_init_c.v, a Theorem Labs lane).  The run reads no
    shadow byte and stores none through `shadow_rw m`: its 19 frame-shadow stores (0x81b14 .. 0x81b64) go through the
    rw_cells premise of S + 336 .. S + 364.  The shadow it needs present is its two callees': the memset at 0x81b74
    (asan_memset_shadow_R at a0 = fb, a2 = 35) and reac_identity_init at 0x81b7c (reac_identity_init_shadow_R id).  That
@@ -563,7 +564,7 @@ Proof.
   exact I.
 Qed.
 
-(* ---- p3_evt_ro (P3.v:463) under a footprint RNG: p3_evt_F on the normalized memory, moved back by
+(* ---- p3_evt_ro (P3.v:464) under a footprint RNG: p3_evt_F on the normalized memory, moved back by
    MemNormF.evtF_normalize_ro.  The import block below is P3.v's own second block, in its order, so that the
    names of p3_evt_ro_of_F's statement are the names of P3.p3_evt_ro's (`getr` is YK11's from here on). ---- *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Reusable Require Import YK11 YM05 YK0o YK0s YK15 YP09 YO0f YO0d YO09

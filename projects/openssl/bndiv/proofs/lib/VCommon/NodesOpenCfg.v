@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a node's new sys_rob premise for the openat nodes, via RomWrite.openat_rob, and for the read-dir node; the new TASK_SIZE bound on the path buffer, `Hbuf`, for the C-string read lemmas; imports RomBase and RomWrite). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon Require Import
   PropExec SimInv CatSim CatExec SeqExec FileSim ShapeAlg ShapeAlgCfg AgentLib AgentNodes Nodes NodesCfg.
+From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.Cfg Require RomBase RomWrite.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -108,6 +110,7 @@ Lemma rzc_ret_copyins_silent : forall ms model x8 reads r m' T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
   cfg_transparent segs cfg (mkCfg ms model) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model
                = check_ret_only_copyins reads eff r m' []) ->
   m_halted m' = None ->
@@ -115,8 +118,8 @@ Lemma rzc_ret_copyins_silent : forall ms model x8 reads r m' T,
   realizes_cfg segs cfg (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
-  intros ms model x8 reads r m' T Hh Hsvc Ht Hchk Hh' Hlazy Hc.
-  eapply rzc_silent1; [|exact Hc].
+  intros ms model x8 reads r m' T Hh Hsvc Ht Hrob Hchk Hh' Hlazy Hc.
+  eapply rzc_silent1; [| exact Hrob | exact Hc].
   apply node_ok_cfg_of_transparent; [|exact Ht].
   eapply node_ret_only_copyins; eassumption.
 Qed.
@@ -127,6 +130,7 @@ Lemma rzc_open : forall ms model x8 reads (mk : word -> Model) A B,
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
   cfg_transparent segs cfg (mkCfg ms model) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model
                = check_open_result_copyins reads eff model mk) ->
   (forall fd, m_halted (mk fd) = None) ->
@@ -138,10 +142,11 @@ Lemma rzc_open : forall ms model x8 reads (mk : word -> Model) A B,
                        (mk (alloc_fd (m_fds model)))) B ->
   realizes_cfg segs cfg (mkCfg ms model) (t_alt2 A B).
 Proof.
-  intros ms model x8 reads mk A B Hh Hlazy Hsvc Ht Hchk Hmk Hmklazy Hfree HA HB.
+  intros ms model x8 reads mk A B Hh Hlazy Hsvc Ht Hrob Hchk Hmk Hmklazy Hfree HA HB.
   apply (rzc_alt2 segs cfg (mkCfg ms model) {e : Z | In e openat_errnos} unit
            (open_nx ms model mk) A B (exist _ ENOMEM ENOMEM_in_openat_errnos) tt).
   - apply node_ok_cfg_of_transparent; [|exact Ht]. eapply node_open; eassumption.
+  - exact Hrob.
   - intros [e He]. cbn [open_nx]. apply HA. exact He.
   - intros []. cbn [open_nx]. exact HB.
 Qed.
@@ -158,6 +163,19 @@ Section Openat.
   Hypothesis H10 : getr regs 10 = AT_FDCWD.
   (* [comment removed for export] *)
   Hypothesis Hfl : Z.ldiff (bv_unsigned (getr regs 12)) open_ignored_flags = 0%Z.
+  (* NEW at this revision.  LPS@75d69e00 Common/FileSim.v gave read_cstr_of_rdn a THIRD
+     premise `(bv_unsigned a + Z.of_nat (length str) < TASK_SIZE)%Z` (vendored
+     FileSim.v:376) and read_cstr_toolong_of_rdn one of
+     `(bv_unsigned a + 4096 <= TASK_SIZE)%Z` (FileSim.v:414), because
+     State.read_cstr_aux now tests `access_okb a 1` at every byte it steps; the walk is
+     false of a name at or above TASK_SIZE, which strncpy_from_user refuses.  TASK_SIZE
+     is 2 ^ 47, so no existing `<= 2 ^ 64` bound implies it, and the bound is in no
+     hypothesis here -- measured as "No such assumption" at :191 chars 28-38, the
+     `assumption` of `apply read_cstr_of_rdn; assumption`
+     (measured on the farm).  One section hypothesis serves both sites: it is
+     stated at 4096 (path_max) rather than per-path so that the toolong lemma, whose
+     read is exactly 4096 bytes, takes it unchanged. *)
+  Hypothesis Hbuf : (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z.
 
   Let ms := epend regs pc mem (seg_rom segs) (getr regs 17).
   Let post (r : word) := mkst (regupd regs 10 r) (v_addi pc 4) mem (seg_rom segs).
@@ -184,8 +202,18 @@ Section Openat.
   Lemma path_at_cstr : forall p, path_at p -> read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrOk p.
   Proof.
     intros p (H1 & H2 & H3). cbv delta [ms]. rewrite ms_read_byte_epend, ms_gpr_epend1.
-    apply read_cstr_of_rdn; assumption.
+    (* H1 caps the path at 4095, so Hbuf covers the new third premise. *)
+    apply read_cstr_of_rdn; [exact H1 | exact H2 | lia | exact H3].
   Qed.
+
+  (* LPS 08b1429: an openat node whose path read does not fault reads the same over a larger
+     backing ([RomWrite.openat_rob]) *)
+  Lemma ms_rob : read_cstr (ms_read_byte ms) (ms_gpr ms 1) <> CstrFault ->
+    RomBase.sys_rob segs (mkCfg ms model).
+  Proof. exact (RomWrite.openat_rob segs ms model (getr regs 17) eq_refl Hno56). Qed.
+
+  Lemma ms_rob_at : forall p, path_at p -> RomBase.sys_rob segs (mkCfg ms model).
+  Proof. intros p Hp. apply ms_rob. rewrite (path_at_cstr p Hp). discriminate. Qed.
 
   (* [comment removed for export] *)
   Lemma rzc_openat_toolong : forall bs K,
@@ -194,10 +222,12 @@ Section Openat.
     realizes_cfg segs cfg (mkCfg (mkst regs pc mem (seg_rom segs)) model) K.
   Proof.
     intros bs K Hrd Hnz Hc.
-    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hrd) as Hp.
+    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hbuf Hrd) as Hp.
     eapply rzc_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
+    assert (Hrob : RomBase.sys_rob segs (mkCfg ms model)).
+    { apply ms_rob. cbv delta [ms]. rewrite ms_read_byte_epend, ms_gpr_epend1, Hp. discriminate. }
     eapply (rzc_ret_copyins_silent ms model (getr regs 17) (open_copyins ms) (errno_ret ENAMETOOLONG) model K
-              Hh eq_refl ms_t); [ | exact Hh | exact Hlazy | ].
+              Hh eq_refl ms_t Hrob); [ | exact Hh | exact Hlazy | ].
     - apply (openat_toolong_check segs ms (getr regs 17) model Hno56).
       + cbv delta [ms]. rewrite ms_gpr_epend2. exact (modeled_open_flags_rd _ Hfl).
       + cbv delta [ms]. rewrite ms_read_byte_epend, ms_gpr_epend1. exact Hp.
@@ -214,7 +244,7 @@ Section Openat.
     intros p K Hp Hcase Hc.
     eapply rzc_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
     eapply (rzc_ret_copyins_silent ms model (getr regs 17) (open_copyins ms) (errno_ret ENOENT) model K
-              Hh eq_refl ms_t); [ | exact Hh | exact Hlazy | ].
+              Hh eq_refl ms_t (ms_rob_at p Hp)); [ | exact Hh | exact Hlazy | ].
     - apply (openat_enoent_check segs ms (getr regs 17) model p Hno56 ms_a0 (path_at_cstr p Hp) ms_fl).
       destruct Hcase as [-> | Hpl]; [left; reflexivity | right; exact Hpl].
     - cbv delta [ms]. rewrite adv_set_epend. exact Hc.
@@ -232,7 +262,8 @@ Section Openat.
   Proof.
     intros p d KA KB Hp Hpe Hpl Hfs HA HB.
     eapply rzc_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply (rzc_open ms model (getr regs 17) (open_copyins ms)); [exact Hh | exact Hlazy | reflexivity | exact ms_t | | | | exact Hfree | |].
+    eapply (rzc_open ms model (getr regs 17) (open_copyins ms)); [exact Hh | exact Hlazy | reflexivity | exact ms_t
+      | exact (ms_rob_at p Hp) | | | | exact Hfree | |].
     - exact (openat_rd_check segs ms (getr regs 17) model p d Hno56 ms_a0 (path_at_cstr p Hp) Hpe ms_fl Hpl Hfs).
     - intros fd. exact Hh.
     - intros fd. exact Hlazy.
@@ -249,7 +280,8 @@ Section Openat.
   Proof.
     intros KA KB Hp HA HB.
     eapply rzc_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply (rzc_open ms model (getr regs 17) (open_copyins ms)); [exact Hh | exact Hlazy | reflexivity | exact ms_t | | | | exact Hfree | |].
+    eapply (rzc_open ms model (getr regs 17) (open_copyins ms)); [exact Hh | exact Hlazy | reflexivity | exact ms_t
+      | exact (ms_rob_at dot_path Hp) | | | | exact Hfree | |].
     - exact (openat_dot_check segs ms (getr regs 17) model Hno56 ms_a0 (path_at_cstr dot_path Hp) ms_fl).
     - intros fd. exact Hh.
     - intros fd. exact Hlazy.
@@ -275,7 +307,9 @@ Proof.
   assert (H63 : bv_unsigned (getr regs 17) = 63%Z) by (rewrite H17; reflexivity).
   eapply rzc_conseq; [| apply t_emit_nil_eq; eapply realizes_cfg_nonempty; exact Hc].
   eapply (rzc_ret_chk segs cfg (epend regs pc mem (seg_rom segs) (getr regs 17)) model (getr regs 17)
-            (errno_ret EISDIR) model [] K Hh eq_refl).
+            (errno_ret EISDIR) model [] K Hh eq_refl
+            (RomBase.sys_rob_memfree segs (epend regs pc mem (seg_rom segs) (getr regs 17)) model (getr regs 17) eq_refl
+               ltac:(rewrite H63; exact RomBase.memfree_63))).
   - apply (read_dir_check segs _ (getr regs 17) model H63);
       rewrite ?ms_gpr_epend0, ?ms_gpr_epend1, ?ms_gpr_epend2; assumption.
   - destruct Hcfg as (H1 & H2 & H3 & H4 & H5).

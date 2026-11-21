@@ -13,7 +13,7 @@
    Two forms, as the donor's ubsan segments (fuzz_decode U/Prog/fd_segments_c.v and fd_segments_ccf.v):
    receive_contract (SR, for ubsan_halts) and receive_contract_cf (SRcf, U/SlotAgree.v: the run is also cut-free,
    for ubsan_agrees; the allocator's contracts in that form are malloc_contract_cf / free_contract_cf, whose budget
-   is room_cf). The evt contracts of the callees that do not allocate are cut in by evt_SR (U/Contract.v:24) /
+   is room_cf). The evt contracts of the callees that do not allocate are cut in by evt_SR (U/Contract.v:25) /
    evt_SRcf (U/AgreeLift.v:45), after MemNorm.v evt_normalize. The heap frame's address a is chosen by malloc, so the model premise quantifies
    over it (every a a successful malloc can return: 0 < a, a + 65536 <= 2^64) and the post names the a malloc
    returned: the world after is receive_m's at that a (m_rx stores pointers into the frame). *)
@@ -44,7 +44,7 @@ Definition H_GUARD : Z := 0x63690.
 Definition h_world (x : Z) : Prop := W_BASE_UBSAN <= x < W_BASE_UBSAN + W_LEN.
 
 (* The heap-frame addresses the model is asked about: every address a successful malloc returns (fresh_block,
-   U/Contract.v:73, and alloc_ceiling below 2^63 give it). TSim's heap_ok (TSim/LoopOk.v) asks the same of each A k. *)
+   U/Contract.v:74, and alloc_ceiling below 2^63 give it). TSim's heap_ok (TSim/LoopOk.v) asks the same of each A k. *)
 Definition h_addr_ok (a : Z) : Prop := 0 < a /\ a + 65536 <= 2 ^ 64.
 
 Section K.

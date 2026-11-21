@@ -13,8 +13,8 @@
    numbers; image B's are the ones this file states. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_pin's ASan harness walk (LLVMFuzzerTestOneInput 0x806b4,
    fuzz_pin.asan sha256 3e4859aed23f78a6eb028120d664abda29bcb8a3bfdea5d6ee5b32b646de9d16) from
-   proofs/libreac/fuzz_knock/lib/A/APgRt.v at origin/ossv/recipes 6ebe35ba632 (the context record, rt_from, the
-   class-1 tactics) and proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v at c8557374ad2e (the meter need of a harness that
+   proofs/libreac/fuzz_knock/lib/A/APgRt.v (the context record, rt_from, the
+   class-1 tactics) and proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v at theorem-labs/oss-verify-proofs@6b32741d849a (the meter need of a harness that
    calls malloc and free, rt_trace_in), with their module paths changed. rule 24 (reuse): no function is proved
    here; this is the walk's context record and its tactics.
 
@@ -32,6 +32,7 @@
    P5 rt_trace_in names pin's two traced calls: malloc_ra0 0x52df0 with ra 0x80828, free_ra0 0x52c90 with ra 0x80934.
    P6 the GOT / cell literals of rt_entry are pin's: 0x99050 = 626768, 0xa15f8 = 660984, 0x990a8 = 626856,
       0xa1600 = 660992. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -426,7 +427,7 @@ lazymatch type of HS with st_ok _ ?Ev _ _ =>
 lazymatch type of E70 with ew _ 70 = Z_to_bv 64 ?v => assert (B70 : bv_unsigned (ew Ev 70) = v) by (rewrite E70; apply unsigned_lit_small; unfold LLVMF_STK in *; lia) end;
 lazymatch type of RF with ew _ 75 = Z_to_bv 64 ?v => assert (B75 : bv_unsigned (ew Ev 75) = v) by (rewrite RF; apply unsigned_lit_small; lia) end end.
 
-(* ====== the walk tactics of fuzz_knock lib/A/APgMain1.v:66-260 (6ebe35ba632), shared by every segment here ====== *)
+(* ====== the walk tactics of fuzz_knock lib/A/APgMain1.v:66-260, shared by every segment here ====== *)
 (* ============================== Part 1: local copies of donor walk tactics ============================== *)
 (* [A/ACf9.v:246-279, 339-340, 347-348] *)
 Ltac add_atom_win HS n w En :=

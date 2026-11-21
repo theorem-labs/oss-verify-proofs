@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -61,7 +62,60 @@ ltac2:(KReplay.run1 (kr_t_MmapSim ()) ["FPX1"] "h02Hxh11ah21mh31nh41xp;1p;2p;5g0
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition munmap_model : ltac2:(zQ "30!h9!jt2!jc>4addr@1$2@1$0#k0>1n@1$2@1$0#k0>1m$1$1") := ltac2:(zQ "h20!jtb!h9!itb!jc!jt2!ju7!jv5!kg6!kh6!ki0!kie!kja!kk5!kl5!km4!kn3!kr7!jp1\4addr@1$3@1$1#k0\1n@1$3@1$1#k0\1m$4@4$h0^3^2@8$7@1$e@1$0^1@2$5@1$b@1$0^1^3@3$6@1$d@1$0^1@2$2@1$1#k0^3@2$h1@2$2@1$1#k0^3@2$2@1$1#k0^2@1$f@1$0^1@1$8@1$0^1@1$a@1$0^1@1$c@1$0^1@1$9@1$0^1^1").
+(* The post-state of [munmap_spec]'s exact arm at 08b1429: the range cut out of
+   both ledgers ([mmap_fixed_destroyed_next]) and its sparse backing forgotten. *)
+Definition munmap_model (addr n : word) (m : Model) : Model :=
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
+
+Lemma iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z
+      with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a
+      \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+                = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
 
 Definition mmap_model : ltac2:(zQ "30!h9!jt2!jc>1a@1$2@1$0#k0>1n@1$2@1$0#k0>1m$1$1") := ltac2:(zQ "h10!jtb!h9!jc!hm5!ho1!hg3!jt2!kg6!kh6!ki0!kie!kja!kk5!kl5!km4!kn3!ksf\1a@1$2@1$1#k0\1n@1$2@1$1#k0\1m$6@2$h0@8$7@1$e@1$0^1@3$3@2$5@1$2@1$1#k0@1$2@1$1#k0@4$4@1$2@1$1#k0@1$2@1$1#k0^3^2@1$b@1$0^1@1$d@1$0^1@1$f@1$0^1@1$8@1$0^1@1$a@1$0^1@1$c@1$0^1@1$9@1$0^1^1").
 
@@ -74,12 +128,15 @@ Definition place_ok : ltac2:(zQ "50!vc!h9!nb!kv1!jc>1h$3>1a@1$4@1$1#k0>1n$2$0") 
 (* [comment removed for export] *)
 Definition grant_ok : ltac2:(zQ "50!h9!jc!vc!nb!jt2>4hint@1$1@1$0#k0>1m$4>1a@1$1@1$0#k0>1n$3$2") := ltac2:(zQ "h60!h9!kvb!jtb!jc!itb!jp1!lj8!lg2!hg3!nb!jt2!lg8!lh5!li2!ll0!kie!kja!km4!lj1!ljf!lk6!it1\4hint@1$3@1$0#k0\1m$a\1a@1$3@1$0#k0\1n$9@2$1@2$1@2$1@2$1@2$h2@2$h4@2$4@1$0#k0^2$cZ@2$h3Z@2$4@1$0#k0^2@2$6@2$5@2$4@1$0#k0^2^1@1$b@1$2^3@3$d@3$7@2$8@1$3@1$0#k0@1$3@1$0#k0@1$h1@1$2^3@1$h0@1$2^3^2@2$h5@1$0#k0^1@2$6@2$5@1$e^3^1@1$f@1$2^3").
 
-Lemma munmap_model_halted : ltac2:(zQ "70!h9!jc!lm3!n2!l5!jt2!lmf>4addr@1$1@1$0#k0>1n@1$1@1$0#k0>1m$5@3$4@1$3@1$1@1$0#k0@1$2@3$6^3^2^1@1$2^1").
+Lemma munmap_model_halted : forall addr n m, m_halted (munmap_model addr n m) = m_halted m.
+Proof. reflexivity. Qed.
+Lemma munmap_model_no_lazy : forall addr n m,
+  m_vm_lazy m = [] -> m_vm_lazy (munmap_model addr n m) = [].
 Proof.
-ltac2:(KReplay.run1 (kr_t_MmapSim ()) ["FPX1"] "h04addrh11mh21np;1p;2g009ej10Tg00:oj15Tg00;Mj12Tg00<0j11Tg00\Fj14Tg00X1j23Tg00RP#0#0#0#0#0#0#5#2R0g00]=%10f0#4'3W1X20W0o"). Qed.
-Lemma munmap_model_no_lazy : ltac2:(zQ "93!h9!jc!hg3!hn4!hnb!l5!lnf!jt2!lmf&@2$2@1$1@1$0#k0@1$1@1$0#k0&@1$3~0&@1$4~0>4addr@1$1@1$0#k0>1n@1$1@1$0#k0>1m$7>0@3$5~1@1$6^1~2@3$5~1@1$6@3$8^4^3^2~2").
-Proof.
-ltac2:(KReplay.run1z (kr_t_MmapSim ()) ["FPX1"] "##/;h05Hlazyh14addrh21lh31mh41np;1p;2p;3p;8p;7p;6g009ej11Tg00:oj1STg00;Mj1OTg00?Pj2NTg009Ej1RTg00^3j10Tg00O@j1QTg00>6j33!sA$kj15Tg00_^j16Tg00`Uj1ITg00aOj1ETg00bEj2?Tg00c>j1KTg00N0j2>Tg00Ynj2JTg00d8j3:Tg00e4j1H!s/$oj1GTg00fdj1FTg00g[j1DTg00hVj1CTg00iOj8BTg00jFj1<Tg00kFj39Tg00l>j17Tg00m1j14!s/$fj1=Tg00n[j1;Tg00oOj12Tg010Dj78Tg011:j2@Tg012;j3ATg00X1j2MTg006:j6L!sA$Vj3PTg00RP#1!s$-SR0#OR1g00]=1N11R2#RR3f0R4#0%Q2R233P3P2f2R5#5%65R6#I%E6f4R7'?%K61>07R7f3R8,>0R9,J7R:3:%H6%G6%F6%D6%C6GB%<5794%75%45%=5%;5%25F8R6#5%66%06?:7:1@7:%<65A139%76%46%=6%;6%26F8#0=332X231M32f1R6#0R:P4EL%56%66R4#I%E4/?8%K41>05,J9R07:9%H4%G4%F4%D4%C4GB%<679:!t-4R:#5%6:%0:?:901@90%<:!tY&:%4:%=:%;:%2:!tY'eAP856!s2&W0W3X41W1o"). Qed.
+  intros addr n m Hlazy. unfold munmap_model, with_mmap_destroyed,
+    vm_forget_range, with_vm_backing, with_vmmaps.
+  cbn [m_vm_lazy]. rewrite Hlazy. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma place_ok_unpack : ltac2:(zQ "h60!h9!loc!l5!jc!itb!vc!ho8!nb!lg2!hg3!kv1!lg8!lh5!li2!kja!km4!lp2!jp1!jp8!jpe!lk6!it1>1h$a>1a@1$3@1$0#k0>1n$7>0@3$2$5@3$h0^3^2^1$6@2$1@3$2$7@2$h4@2$4@1$0#k0^3$cZ@2$1@2$h3Z@2$4@1$0#k0^3@2$1@2$h2@2$h1@2$4@1$0#k0^3^2@1$b^4@3$2$5@3$d@3$8@2$9@1$3@1$0#k0@1$3@1$0#k0@1$f^4@1$e^4^3@2$h5@1$0#k0^2$6").
@@ -140,21 +197,59 @@ Definition munmap_args_ok : ltac2:(zQ "20!hk1!jt2>2ms$0>5model$1P") := ltac2:(zQ
 Definition munmap_eff : ltac2:(zQ "20!hk1!mic>2ms$0$1") := ltac2:(zQ "e2!h9!jc!hnb!hg3!lr0!hm5!hn4!mjd!ho1!hk1!mk3!mke!mhb!it1&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0\2ms$9@6$b@2$d@1$0#k0Z@1$2@2$3@1$1@1$0#k0@1$6@1$1@1$0#8~1@3$5~0@4$8@1$1@1$0#k0@1$1@1$0#k0@2$4^1N0@1$c@2$4^1N1~1@1$2$a@1$2@2$3@1$1@1$0#k0$7").
 
 (* [comment removed for export] *)
-Lemma munmap_outcome_si : ltac2:(zQ "h60!mic!l5!h9!mo9!lr0!hn4!hnb!mp4!nb!hs4!mpa!hk1!lu6!mse!jt2!mte!mu7!mv9!lmf!mhb!jc!itb>4segs@1$5$9>2ms$b>2x8@1$h4@1$2#k0>5model$e>1o@1$3$0>0@3$1$8@2$h5@1$2#k0^3+t7>0@2$h0^5^3@2$7@3$d@3$c^7^6^5^4^3@3$1@1$3$0^3@4$a$0@1$h1^6@3$h2@2$4^6N0@1$h3@2$4^6N1^4@1$6$f").
+Lemma munmap_outcome_si : forall segs ms x8 model o,
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  syscall_spec (sys_input segs ms x8) model o <->
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
+  \/ o = Ok (munmap_eff ms)
+            (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) [].
 Proof.
-ltac2:(KReplay.run1z (kr_t_MmapSim ()) ["FPX1"] "##3vh01bh13Halh24Hhash34Hlenh43Hnoh53Hnwh65lemmah75modelh82msh95nd_i2h:1oh;4segsh<2x8p;1p;2p;3p;4p;5p;9p;6p;7g009Ej1ZTg009ej12Tg00:oj1MTg00;Mj1ITg01Unj1YTg00N0j23!sJ$Jj14Tg00AMj1LTg00>6j31Tg01Vfj2J!s\$0j20Tg01??j2GTg00E7j1F!sn$Zj2XTg01X0j1E!s/$Ij1DTg00Ynj2CTg00ZKj2BTg00_^j1@Tg00aOj1?Tg01YGj18Tg01ZPj3ATg01[Fj3=Tg01\<j3<Tg01]7j19Tg012Vj3;Tg00O@j1KTg01^=j4:Tg015@R0j25Tg01_5j27!s/$jj56Tg01`jj2HTg01aVl9NTg01bPj1OTg01cGj3PTg006:j6>Tg01dUj4QTg01eaj4RTg01fhj1STg01gbl9TTg01i2j3WTg01jAj3VTg01kNj7UTg00QQ#Zg00Vjg00RPR1#2!s$-MR2#IR3g00]=g01lSR4#YR5g00TaR6f2R7,32%41#2#4!s&$4#4#LR131f4R8/J7f5R9g00UkR:'0R;,32R<g01B;'Gg01C3R=516R>%F:R?,09R@1X2=R=513#E132@#D,C<g01mQR<'Bg00S5RAf3RB#@#?%8@R@7A;g00VJRC31f6RD?=98?<B7P4%99A;;@Bg01nI#KR@C:9157'510D?=13=#Ef7R;/0:,3210;?,32#D'C/B<%@D#?f8R</0:10<?#83A=1ACf:RCf9R8;=<RE?<;D17E:RF17E?RGPEP;PDD6'5p-0RHP0g01o?f;?=C8R0?<<;170:170?RIP0P<P;D6f0RJP4%9C10C:RK10C?#8;;<P!t{%;RLPL1HHLM9NW6!t/%P3P<132J=161X03P9%OEAPC8<E>CQP3108:R:PJP!t2+/5LX03!s@$?R?PKPJ!s@2:P?!t%&BP2P?P=P7CR%S?g00SU51Aef1PJM9T!sO,D6P4%98%8?=;:;!t{&D'5ePGAW!tY$PFAV!s/$O2W2W5W3X1>PJFUW9W4W:W7W<W8W;o"). Qed.
+  intros segs ms x8 model o Hno (Hal & Hlen & Hnw & Hhas).
+  rewrite (syscall_spec_215 _ model o) by (rewrite in_sysno_sys_input; exact Hno).
+  rewrite in_arg0_sys_input, in_arg1_sys_input.
+  unfold munmap_eff, munmap_model, page_round_up.
+  apply munmap_exact_outcome; [exact Hal | unfold w_is0; apply bv_eqb_neq; exact Hlen | exact Hnw |].
+  unfold page_round_up in Hhas. exact Hhas.
+Qed.
 
-Lemma munmap_ok : ltac2:(zQ "h40!h9!lr0!hn4!hnb!l5!nb!hs4!mpa!hk1!lu6!mse!jt2!mic!mte!mu7!mv9!lmf!mhb!jc!itb>4segs@1$2$6>2ms$8>2x8@1$h2@1$0#k0>5model$b>0@3$4$5@2$h3@1$0#k0^2+t7>0@2$e^4^2@3$a@3$9^6^5^4^3@4$7$c@1$f^5@3$h0@2$1^5N0@1$h1@2$1^5N1^3@1$3$d").
+Lemma munmap_ok : forall segs ms x8 model,
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  syscall_spec (sys_input segs ms x8) model
+    (Ok (munmap_eff ms)
+        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
 Proof.
-ltac2:(KReplay.run1 (kr_t_MmapSim ()) ["FPX1"] "h01Hh12Hah23Hnoh35modelh42msh54segsh62x8p;1p;2p;3p;4p;7g009Ej1DTg009ej10Tg00:oj1=Tg00;Mj1;Tg00N0j2CTg00:Jj12Tg00AMj1>Tg00>6j34Tg01Vfj2<Tg01[Fj36Tg01]7j13Tg01U0j21Tg00E7j1:Tg01YGj19Tg012Vj38Tg00O@j1BTg01^=j47Tg01\<j35Tg01Unj1?Tg0200j7@Tg00X1j2ATg00QQ#Dg00Vjg00RPR0#0#0#0#0#0#0#=R1#;g00]=g00Taf1R2,C1%20#0#2#0#2#2#2#>34f3R0/<2g015Yf5R1f4R3;60f2R4g01lSR5%33g00UkR6,13%:6R7,13#9;84g01nI#BR8C7R935%?5R:P5%3111161117#9;80P8C7R;;4;R<[A4:99f6R=?613?50;[R>f7?6=1P5%3=11=611=7#9;83P8C7753\<P1P3P0P4P9P2f0R2F@P2n2001000000120000000P>P21A:;O1b0W1W2W3W6W4W5o"). Qed.
+  intros segs ms x8 model Hno Ha. apply (munmap_outcome_si segs ms x8 model _ Hno Ha).
+  right. reflexivity.
+Qed.
 
-Lemma munmap_ok_inv : ltac2:(zQ "h50!l5!hn4!jt2!mic!mte!loc!h9!lr0!hnb!nb!hs4!mpa!hk1!lu6!mse!mu7!mv9!lmf!mhb!jc!itb>4segs@1$1$a>2ms$c>2x8@1$h3@1$6#k0>5model$2>3eff$3>6model'$2>3evs@1$1$4>0@3$0$9@2$h4@1$6#k0^5+t7>0@2$f^7^5>0@3$e@3$d^9^8^7^6@4$b$3^5^4^3@2$5@3$0$3^6@1$h0^9@2$5@3$0$2^5@3$h1@2$7^9N0@1$h2@2$7^9N1^7@3$0@1$1$4^4@1$8$4").
+Lemma munmap_ok_inv : forall segs ms x8 model eff model' evs,
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) ->
+  evs = [] /\
+  ((exists e, In e munmap_errnos /\
+     eff = mkEffect (errno_ret e) [] [] /\ model' = model)
+   \/ (eff = munmap_eff ms /\
+       model' = munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
 Proof.
-ltac2:(KReplay.run1z (kr_t_MmapSim ()) ["FPX1"] "##40h01Hh15Hspech23effh33evsh46model'h52Hah63Hnoh75!s:$h82msh94segsh:2x8p;1p;2p;3p;7p;8p;4p;6g009Ej1?Tg009ej16Tg00:oj1DTg00;Mj1ATg00N0j2L!sA$Jj18Tg00AMj1ETg00>6j30Tg01Vfj2CTg01[Fj3:Tg01\<j3;Tg01Unj1@Tg01]7j14Tg00E7j1KTg00O@j1JTg0200j7ITg021=j8HTg015YR0j21Tg00X1j2<Tg01>dj4=Tg006:j69Tg01^=j4F!t3$0j2>Tg01YGj1GTg012Vj3BTg01lSR1f2R2f1R3f0R4CFp=7f3R5g00UkR6'>1>23#G;B4p=2A0134p=5g00]=R7?034p=3g00QQ#?g00Vjg00RPR8#6!s$-DR9#Ag01nIR:#?R;g00Taf4R<,L9%88#6#!s&%8#8#E30f6R8/C<f8R9f7R=;:8f5R>A7<523;P0f9R??:9=A7><5R57;8%@1R@A78><R<%4?P?P?%K6R6P=C2%J:R:3730RA[RB%49P9P9P6P8C2;7:90@5f:RC?:?9?;=<R<[A7=8>%4CRDPCPCP6P9C2RE;7:50@\<P?P9P=P8P5P2P3FIP3n20010!s#$12!s-%0PBP4P3O1PAP1P=PDP8PEP>P:P4GH15=D138EA0;>:'1'1P0f;R>#4,59P>P>P6P?C2,3=A0;8:'1f<R8#4,5?P8P8P6PCC2,39A0;=!sd%4f=R=#4,5CP1f>R9#4f?REPEP!uu$,3>RDA0;C:RA'1f@RB#4R2,53PBPB!uS%,38!tZ&R5'1[X21!vA,,3CA0;?:'1P0PDPA1522/15P4fAR5P5P6PE!tz$P7fBR2P2P6PBC2A0;9:fD!t:$A/5ARA!t<&2C2R2,33A0;E!u4$[X47!uA$P;P:1322A0;4:'1,1AX3;fCRA#4R2/52PAPAP6P5C2R5/35R6A0;:!uJ$1<12P6PA1<751<;:C=C=P9P4E9W0!s-+3P4O2!wp0!s/&W0P>!sJCb1b1b0W1W5W6W3X47X21X77W:W8W9o"). Qed.
+  intros segs ms x8 model eff model' evs Hno Ha Hspec.
+  apply (munmap_outcome_si segs ms x8 model _ Hno Ha) in Hspec.
+  destruct Hspec as [(e & HIn & Hs) | Hs]; apply Ok_inj in Hs as (-> & -> & ->).
+  - split; [reflexivity|]. left. exists e. auto.
+  - split; [reflexivity|]. right. auto.
+Qed.
 
-Lemma munmap_no_unmodeled : ltac2:(zQ "f0!h9!hn4!l5!lvd!nb!hs4!ng7!hk1!lu6!mse!jt2!mic!mu7!jc!itb>4segs@1$1$5>2ms$7>2x8@1$d@1$0#k0>5model$a>0@3$2$4@2$e@1$0#k0^2+t7>0@2$c^4^2@1$3@3$9@3$8^6^5^4^3@1$6$b").
+Lemma munmap_no_unmodeled : forall segs ms x8 model,
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  ~ syscall_spec (sys_input segs ms x8) model Unmodeled.
 Proof.
-ltac2:(KReplay.run1 (kr_t_MmapSim ()) ["FPX1"] "h05Hspech11Hh22Hah33Hnoh45modelh52msh64segsh72x8p;1p;2p;3p;4p;7p;5g009Ej1FTg009ej10Tg00:oj1?Tg00;Mj1<Tg00N0j2ETg00:Jj12Tg00AMj1@Tg00>6j33Tg01Vfj2=Tg01[Fj36Tg022?j1;Tg01\<j34Tg01Unj1:Tg01]7j19Tg01U0j21Tg00E7j1DTg01YGj17Tg012Vj38Tg00O@j1CTg01^=j45Tg0200j7ATg0237j5BTg01X0j1>Tg00QQ#Fg00Vjg00RPR0#0#0#0#0#0#0#?R1#<g00]=g00Taf1R2,E1%20#0#2#0#2#2#2#@33f3R0/=2f5R1f4R3;60f2R4g01lSR5#;R634R7g015Yf6R8?613?406%:5R9P5%98g00UkR:,18%D:R;,18#7;83g01nI#CR<C5736R=[R>P5%91111:111;#7;80P<C59396f7R??681?436R@[P5%9?RA11?:11?;#7;81R?P<C59396\@P8P1P3P0P6P4P2FAP2n2001000000120000000P>f0R>P2O1P=P5PAP?P<P>DBb0b1W0%>7eW2W3W4W7W5W6o"). Qed.
+  intros segs ms x8 model Hno Ha Hspec.
+  apply (munmap_outcome_si segs ms x8 model _ Hno Ha) in Hspec.
+  destruct Hspec as [(e & _ & Hs) | Hs]; exact (Unmodeled_Ok _ _ _ Hs).
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -262,9 +357,100 @@ Combined Scheme twm_mutind from twm_min, twm_pend_min, twm_tail_min.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma sstep_munmap_inv : ltac2:(zQ "hd1!h9!jc!l5!hn4!mte!hnb!n2!hg3!lr0!ni5!nie!nh4!v5!loc!nb!hk1!nj9!nkb!nl4!nm9!nn9!jt2!lm3!lnf!nrc!nse!ntc!nuc!itb&@2$7@1$1@1$0#k0@1$1@1$0#k0>2ms$f>5model$h5>2x8@1$1@1$0#k0>3evs@1$3$4>2st$a>0@3$2@1$6@1$1@1$0#k0@1$h6^4@1$b@1$1@1$0#k0>0@3$2@1$3~0@1$h7^5@1$5~0>0@3$2@1$6@1$1@1$0#k0@1$h0^7@2$c@1$1@1$0#k0^5>0@3$2$e@2$hc@1$0#k0^6+t7>0@2$h8^9^8>0@4$h4?4segs@2$9^a^9^7^6@2$d@3$2@1$3$4^8@1$5$4@3$2$a^7@1$h1@2$9@1$h2@2$h3^b@1$h9^b@3$ha@2$8^bN0@1$hb@2$8^bN1^a").
+Lemma sstep_munmap_inv : forall ms model x8 evs st,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  sstep segs (mkCfg ms model) evs st ->
+  evs = [] /\
+  ((exists e, In e munmap_errnos /\
+      st = SNext (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model)) \/
+   st = SNext (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model))).
 Proof.
-ltac2:(KReplay.run1z (kr_t_MmapSim ()) ["WithSegs"] "#$Uvp'0h01Hh12H1h22H3h32H0h42H2h52H4h63Hssh72H5h82H6h92H7h:1mi001mh;2x0h<1li011lh=6model'i02!s0&h>1si031sh?3evsi043evsh@!sE%0hA3ms0hB2sthC3effi053effhD1oi061ohE2HxhF1ehG4evs0hH2HmhI2_HhJ1thK4HeffhL3HeqhM4HevshN7!tI%'i07!s1'hO5HargshP2HhhQ5HlazyhR3HnohS4HsvchT1ci081chU4codei09!s-$hV5!sj$i0:!s/%hW2msi0;2mshX3ms'i0<3ms'hY3sigi0=3sighZ2x8i0>!s+$?9cfg_!sl&@6!s3$sp%0p%1p%2p&0p;1p;2p;3p;4p;6p;7p;8p;9p;:g009ej1ZTg00:ok10mTg00;Mk10cTg009Ek109Tg00<0S00k10FTg01Mek10CTg00?Pk20BTg00^3k10>Tg00O@k10:Tg00>6S01j30Tg00=Tj22Tg00N0k207!t@$Jj1qTg00AMk10gTg01Vfk20fTg027Fj21Tg028;R0j44Tg00E7k10bTg00\Fj1C!sD$oj1GTg00G^k10[Tg02:5j3PTg00Kej2oTg02;1j1B!s/$gj4STg005?j6=Tg004cj66j7Lk80ITg02<Cj2!tN$<bk10eTg015Yj2ATg02=jk10dTg01[Fj3!v$$]7j1!ua$5]j6^Tg012Vj3jTg02?2j1yTg02@8j2xTg02AAk40?Tg02BQk30!tN$_^k10<Tg00`Uk10aTg00aOk10`Tg00bEk20_Tg00c>k10^Tg00Ynk20]Tg00d8k30;Tg00e4k10\!s0$ok10!x>$fdk10YTg00g[k10XTg00hVk10WTg00iOk80VTg02Cbk20U!x1$kk10TTg011:k20!vG$jFk10R!uO$;k30QTg00kFk30!w$$l>k10OTg00m1k10N!s0$fk10MTg00n[k10LTg00oOk10KTg010Dk70JTg00X1j2!xb$>dk40HTg006:j8bl9uk600k70Gm:0lTg02D\l:vTg02Eej6wTg02Fjj1?Tg01\<j3hTg02G]j1}Tg02HTj2WTg02IJk30ETg02JYj2_Tg02KOk20kTg022?k10!wn$LWk70iTg02Mfj2`Tg01U0j2lTg01YGk105Tg02N_j1!wc$Akk40hTg01^=k403!{X$`k30!z`$7Fk30DTf2R1f1R2#Cf0R330p=8%G2=013p=Dg02O\S02?023p=Ig02PQR4!s4%J%:3,`2p=df3R5g00UkR6'l1l12$05;j3p=3%a2/13p=c%B39042p=]A0512/A3p=9g00VjR7g00]=R8P2P3H0hp=p%B2=043p=eQ02P8P5P1P2P3E^p=nA0823p=5Q02P7!s@/rA0723p=>f5R9f4R:#:'`#a1l56!ta,'1#Bp=N1112#B!t2%QA0423,A1p=i1123#Bp=H!uQ%#ap=U!s:%9041,A5p=VP:115!tD$C4p=MP8P:!tU'J00p=\P7!s82[g02QGS03!t?%;P4Q03!sJ,FLp>02!s;%!uF'6p=|g01lSR;!s8%H039h:5p=71283p=<%y2,x1=053p=K1`12#a!w0$Y%y3,x2p>0112839012p=k!sG+#Bp=TA0:51!w'&'Ap=Xf6R<?F9:P!t<,7h5p=R1`23#ap>0A!ti%%B3C4p>0@1l36p={1l23$05p=z%:2,`1!t2'>08!sr-p=tAF:51?h23p=@%}!yu&Og01nIR=1W12<!v:$~B0D=12!uM%mB04=23:0D=1p=E12239051p=s1_12>04=3p>06g00RPR>#Z!s$,$0mS04$0cR?&09=R@&0F?RA&0C?RB78520B??RC$09&0>:&0:C3012?:9DA<S05g00TaQ040079%q>#Z#q!s&$q#q$0g30f8R>f7RC+0fp,4segsRDf9RE/1>S06P<P9C4P0PDf>S07f=R0'1S08,I5f<RF90@51J5FP@Q07&0:=R=fARG/dGPGPG&0b6R6f@RHC3'c,]0C9[[[P3%C1S09=0ABRI%G:S0:!s2$J20B78RK$0[RLAPD9:1p51,oK3011<9RMfHRNfGRO'1RP'IfFRQ90@=1eMQQ06fKRMfJRR'1S0;'IQ02!|~%3P3n0110800012010@10?WFS0<f:S0=/1ES0>fLRS/1MP3Cn15EM!sc&7P3P2!sc9?f;RTQ0='1S0@fMRU/1SP2Cr1>TUfNRV,>FP3fORW,>0fPRXQ07/5XRYA0@=WRZf?R[Q07'1S0A/eWA8AGBfCR\9PD9fBR]/pG,oK50LP@fTR^P=fSR_fWR`P!s$%6fVRaENS0B'JS0CC9]1^3J]0]5]2[X:7150WP3PYfQ!tA%XRb11H[S0D/eXRc%GaS0E=0ABAPD`:1p\]!t=+URdP=fXReP!s$%6P`ENS0F,J^C9]1]3^0I]5]2X:8P3PbP@P=AQGHYRbA8AdBRf%G`Rg!x?$hAPDe`fDRi/p\!t/%RjA0@:=S0GfYRkP!s$%6PeENS0H7id]1]3]0]5X<@!t+$41H]G%CaRb!t|$DAeBAPDkefERl/pi!s{%A0@==RmfZRnP!s$%6PkENS0I7i5!sx%X>4P@P=PD11nkRoP3PaC4Pm11OQRp#Bf[Rq/UqPqPqP6PnC3CV]6X?@PD11keS0JP=PdC4P411QlS0K#BRrPDPqPnP=P3DMPm%BPf\Rs/UsPsPsP6Pq!sk&B4PDPoP=PrC4PAPB%GqS0L12?kRrPAQ0LPBP5CSRo!s3'rP5!sN$CnRtPrPAPtPBP:CS!s0&rP:PAPBQ0LPrPoP^E=!s$'A0ABr!sB%0P?p-0S0MP3g02R=Rrg02RZS0Nn101106000210!s#$XFAS0Og02S6S0P12?nP3E6PrPmfIRo/1NS0Q#Bf]Rt/UtPtPtP6PsC3CV/f3b0bLW6PaP9P3F!s0%<PWFLX7jX4hX1ffRRfP3E6b1X5cPY!s1&2ZP[P3D\b1W3Q07P3D[b3W0P3O1b!s+&W4!#6p$P9P:P5O6W5W2W4W1W3W0X=8XX7X@8XA7P<!sH%!sT%O7A8A3BS0RADA1BS0SAPD51S0T&0eKRZ50L11:511i\'IS0UA0@=]S0V%;]S0W11C</IpS0XQ0<11>CS0YPPP3CnS0Z15COS0[Q0?Q06Q0QP2CrS0\1>EoS0]Q0=/>RS0^P31>TMS0_PS15FSRPA0@=MRp%;MS0`A8A[BRcAPD9GRh=0LZA0@X=S0aPW1U__P_P_P6PfC3CVS0b!~44TMS0cP3PPP!u1$SRj%;SRuADAfBRvAPD_:Rw=0LZP@PYP=1d^^P^P^P6P_!#7%$XC9S0d!}}4jP@P=%;US0eA8AYBRxADA_BRyAPD^_Rz=0LZR{Q0G1dddPdPdP6P^!sx%YS0f'AS0g!}q0Q!so$fBR|%G^S0h!~n$}APDd^R~!to$a!s$&6PdENS0i9im5S0j!}e4adRZP3PfC4Q0B#;,Am!}P+d^S0BP=PYC4PD11`aS0kP=P3C4Q0F!sQ'!}6$ZP=Q03!}7%Pg12?dS0lPAPg!}3%S0m!s3%Q0l!}4%PbQ!sG$b!}2+b!sD%!}3$PgQ0lQ0mPX!}4,Q0l90AB!sq%BQ0OQ!|[$aS0!|^$S0oPrQ0H!te$S0H!|K,fP9P3I02!s1$<PMFLRgX7{X4yX1xPVP3C|b1X5uPU!|L'pP0!|L'PF!|KT!|E%!|A,5Q0RQ0SQ0T&0dKRK50LQ0UQ0VQ0WQ0XQ0ZQ0[Q0\Q0]Q0^P3Q0_PSQ0`A0LhKQ!zc&^0c]5^2p\PX:7Q!zb,LwKQ0d]1^3v^0I^5u^2j!z1-Q0eA0LzKRzQ0g]1^3y^0x!yY-0L~KQ0j]1^3}^0|X>4PgX7z!v:~!v:2%C9S0R=!xG$S12?99DACS0UAFD><S0VPC!sn$1D7Q0S&0F8RpP<PC%<9CKQ0@11fY'IS0WA0@<XQ0==Y0>/eXQ08Q0B'I!#3q$Q0APZ!#3m$^Q07/5dS0cQ0?Q0DQ0k!#3o$D1>H`S0j1>GeS0gP31>]kS0dPn15\nS0`A0@[kS0bAY1\G/ek%CQS0_!u0%]Q0:12?QS0\50AS0[AFD9OS0ZPNPQPlP\D7Q0]201ONS0T=kpQP@f`RZP=f_RufcRxP!s$%6fbRyENS0p'JS0qC9S0r]2]4!~Z&8]7!#4V$]kS0sP3Q0`PqA0@HnRzf^Rg?Yi]/enS0t%GZS0u12?OS0v!tb$wfaR|=FDNS0xP:POPQPiD7%COS0y!u<%z201NoS0{=kpOP@P|P=fdR}P!s$%6PxENS0|,JZC9S0}!te'^0I]8]7X:8Q0bP3PzP@PqAYul\/eqRzA8AuBS0~12?NS109DA|S11AFDyoS12P|PNPOP5D7%CNS13!tW$14201oRS15=kpNS16P@PyP=feRKP!s$%6P}ENS17,J|S18C9!vA/X<@Q0t!tW$4ATZQiA8AZBS1912?o9DAyS1:AFDxRS1;PyPoPNPZD7%CoS1<=0ABPpPRPM%<oCKP@PxP=ffRzP!s$%6PKENS1=,J9S1>!tF/X>4Q0~Q11Q!uK+uD7Q14Q16P4ATKMoR~PD11zKS1?PxP3C4P@P}P=fgRL?YUM%:LS1@PLPLP6PzC3S1A5TLS1BDX!#6d%11K}S1CPyP~C4PAP?Q00P?P?P3P3PV!#?_5JAS1D12?US1E12?}S1FPAQ1E%GzS1GQ!s4%GQ1EP:CSPuE=E^A0?U}P?PKfhR~#GS1H12?3S1I50APDfiRjP2P~PWPVPzFRP@PLP=fjRv?YXV%:vS1JPvPvP6PjC3S1K5TvDX]2]4X;?%GLS1L12?KS1M!su$P~PzPLPVPUPKFR%:jRw90;WS1NPjPjP6P~C3S1O,5VA0@z=RPPPATjWU20AjwQ1OCVQ1NQ1K,5WS1PA0@~=P;flRw#:S1QPDfmRP/1wS1RPvAYP3YH0@fnRc=FDwS1SPPP2P_fkRJD7PpP^P1%<_!xd$PP=fpRh?Y5^%:hS1TPhPhP6foS1UC3S1V5ThDX]9]2]6XC;PDPwPJPjQ1Q=TwXDMAFDPJS1WPw%:PS1XPfPv!t2$_%:cS1Y%<fCKP8Q1UQ1UP6PcC3S1ZAFDhcS1[!s=$TP3PPD7A8A2BS1\PpP1frS1]#:S1^%<a!tv$hP=fsR{%:{S1_+0ARb/H`S1`P{P{P6Q1]C3S1a,1b']C9]9]5]2X=8Q1U=FDPS1bPcQ1U#:S1cQ1ZPwD7Q1V=8ABfqS1d#{S1eQ1d/z6S1f;jhS1gQ1d#:S1h#yS1i'xS1j=kpd!#?1$P{Q1]P3Q1`DMPDftRbQ1]P{%:bS1`%{bS1k1zb6S1l;j{S1mP2!yW$1P=fuS1nQ1n'US1o/1kQ1oQ!s7$P6PbC3S1p'H!y]$!#@#$Q1]Q1dP=!s-$^;TaDM!tL%d!s8$_Q1aP=FRPpQ1mQ1`#yS1`'x%<kS1a90p3XDpP1Q1m#<Rb!sI%Q1kQ1lP{PcH0?40=E6AkpbeQ01PpQ1p#<Rb%<qS1p90p2PmfxS01Q01'UR{/HsP{Q01#{S1`Q01!vL$mfwR{3jS1lCV[P3Q!tF$bfvS1kQ1kP6Q1nC3#<%<nS1n50pPpP8Q00P8!#SV$&0<{Rb$0a&0`bQ1`+0_&0^bQ04!s3$7S1`Q1`!s5$m+07+0]S1m40;&0\b&0Zb&0Yb&0Xb&0WbL0V00U!su$T&0<b&0>b!uh$m40;!s/%+0S&0Rb60Q?40P&0Ob&0Nb&0Mb&0Lb&0KbK0J!#3e/10001XFp!y~'kC3S1k#<Q1pP3E^Q1k/5qQ1l/5sP3fyS1lQ1lP6Q01C3/5tP8fzRbPbP6Q1lC3S01Pmf{S1pQ1p'US1m/H3!uZ$mQ!s:$!xu'mCVX:8P8Q01PDQ1pPbP=!z,$f|!v1%P6Q1p!yG$#<=kp2f}S04Q!s%'P6Q1`EN!s9%5im]9]6XN8PDPbQ1lP=Q01:08bbDM!y3&=0pbP!y6%`Q1p408Rb/Jb1g@=1g4bH0HW9W6PgP2PCP9L0IPgP3E6b7W3P3O1!#AP&W0n2!vU$6!#7>$101Q1n90p3Pm1U{{R{/HqP{Q1kCV[XDpQ1aO1P3Q1n,gpO1b0b9W2W6Q1UP<P9P1GbW9W5W2P^P:P2PTP3M9uW!sJ$PfP1P<P5PCM9uWMWHWKPDPjPL!#7Z&P|PZP3M:vEwW2W4PV!#C/$GbbEW6P|P<PqFL!t,%W4W1Ps!uG$1W8PGP3J00b1W7Pi!#D0'\!#D07!#Cd%PC!#PK&O8W8W7!#D8/G@XN8X=8XC;X;?!#DG%TQ0=PEP>!s`,!sp%O<A8A:BS0bQ05PDPCP9P<!sE%FRQ0bPpP9P<&0C8R{CKQ0>11XW'IS0tA0@=VS16%;VS1N110FS1n11_f'IS1aQ0<Q0811^_!#DL$8150_S1kQ0?Q0AQ0B!#DJ$B1>[dS0A1>HaS1pP31>G`S1`Pe15]eS1mA0@=`S01%;`A8AlBS1l!#D@$lS0450AS1_PDP9PQPOPlPiP\FRS1^Q1lPp!s:${CKP@PgP=1d||P|P|P6PZ!#Oe$tC9S1o!#D26G`S1qP3Q1mPkA0@=eRb%;eS1rQ0\9DAgS1sPDPuPOP:AtQliS1tD@S1uQ0]Q0T=0p{P@PuP=1dyyPyPyP6P|!tB%gS0T!#@k+!#Cg-1!#]%&%;kRbA8AtBS1vQ0v9DAuS1wPDPZPNPuAtOQlS1xD@S1yQ0zQ0{=0p{S0{A0@<=S1zQ0q'A!#C>21rP3PbA8AgBS0qQ0uQ10!v]$0PDP|PoPZAtNOQS0uD@S1{Q14Q15=0p{Q0|9im!#Bn11vQ1wQ!tN'!#RN&}xS14P3PZC4Q17!#P=$15!#RR'xyS1|P=PuC4PDQ1C!#RN%1=!#RN-Q14!#RO%Q15PAP?Q1DQ1E12?xS1D!#BB%KS1=Q!s4%=Q1EP9CSPg!#BB&xP?P}Q1LQ!#B8%P~P2PLAtWVUS1ED@Pr!#Al%Q1GQ1F!sJ%LPKPzAtVUSS1FD@%:~S1}!#Ah$~P~P~P6PLC3S20,5VS21A0@U=PrQ1~Q1O,5WA0@W=P;%:JRbAFDwvS1OPJP3PfPY!#@+$P2!zI$r]9]2XC;AFDJjS22PvPbPYPX!sK$fQ1Q!sL$8%{PS1Q1zP6S23;jwRbQ1SPPQ1YP3P_D7Q!#@E$Q1T!s|+!#?g&WPwQ1XPbPfD7PcPcP6PPC3S1X=8ABPpQ1ZQ1c!{}&=PDQ1dQ1UPhQ1hQ1gP3FRPr]2XG@Q!#Ad&Q1VP=D7PpQ1jA0p3{XDpP2Q1g#<S1jQ1gQ1iQ1eQ1fPhPJ!#=|&Q1j!{n$pQ1]Q1]P6Q1dC3#<Q00P8Q0MP3Q0NPr!#`b6pQ0PP{!#`X$1fr3S0N!#7O$PdP9P1K0G!#7K%_P5!#7K/PfP1P5P>Gb!#7F'!#G,$WPVPUPZPu!#7F2<P9GbbE'fW6PZPC!#Ws&ZP>Pk!#7S/n!#T^$W8Pk!#7]%7P\!#7R']!#7R^!#7O0!#7M:;Q0S!#X&$!#Tf%5D7S0VQ0R12?5S0550AAOA<BQ0WP@PC%?>=~<=PXCmAQ0EXQ0XQ0^Q0cQ0DQ0jQ0gP3Q0dPnQ0`P@PH%?GS0d=~[=PkCmS0jAQ1]kQ0]Q0[Q0ZQ1t7hNQ0_12?iS1t50A%}O!#TT%Q!#SP6Q!#SL'P@PG%?]S0`=~H=PnCmR{AQg\nS0]Q0wQ0xQ1x7h:Q0yQ04!t$$N!#S@%Q!#Rk8jP3P{P@%?\,WG=E]=AQuiqR{!#P6'Q0u7h|S0uQ13Q!#V8$13AOAoBS12Q1zQ18!#5y40]!s}$41HZlQ19Q1:Q!#Q~'OD7Q1<Q0v!w,%RBP@%?MS1<,Wo=ER=S0vP=Q!#Qo:!tV%12P@%?RS19,WN=Eo=S1:PDQ1?P3PyC4P@%?S,WR=EM=R{P=11LSQ1BDXRp!#Hl'CQ1:P|C4P41HzM!sf$PLPzP{P3DMP@%?U,WM=ES=P=11~UQ1}Q205T~!#RG'Q1?Q0vQ1:!#RE4W!#RE712?VR{Q1MPAP{Q1L!s0$Q1LP{P9CSPZ!#6t%VKP?PzQ1I9DAjPDPvP2PjPXPWPV!#3X$]4X;?PAQ1HP?PzCs!#Ar&Q1ED@Q1J90;XR{Q1PA0@V=S1PPrPJPJP6PvC3S1J,5XQ0aP8PbPDPcPP%?3S1E,WY=Ef=1Hc3DMQ1bPcPdP2P_D7PAQ09P?P_CsAOA5B!#5z&]6X=8PDQ1R%?b,WX=EY=11PbH0@Q1SPPP^Q1XPfD7Q1Z12?fRc58AQ1V=OABPAQ1g#C!#d]$3XDAP2%ChS0l!#5U$<0EhE6PAQ0lP?P^CsPAQ1d#CQ0n!sV'3PBPPE6Q0mQ!#e'$Nb0b5b5!#3p%6PfP2P<P5PEP>N:0lWIWHXI{!vo$~!vo'PyP|!#4w-W!#4w+,fpW6PyPC!#o:%yP>!#EL;q!#4w'!#EKfU?!#4z4!#EK=!#4|'Q059OA9Q0tP@P<%?C>069=PVCmAQF>VQ1aQ08Q1kQ0BQ0AQ1pP3Q1`PeQ1mP@P[Q07%?H<06=P`CmRpAQ1G`Q1lQ1_Q1^12?\R{9OAlP@PtP=1dZZPZPZP6Pu!#Bn$sC9!~c+7]5[X:7Q!#D%'P@PHQ0d>06[=PeCmRZAQs]eRlQ1sQ1uQ1t9OAQQ1o!#4P+7]5!#gJ$ZP@Q0`,_H=EG=AQt\kRZ!#Am,_!#5@$RPP@P9P=Q0T!tW/!#y9$ZP41HgiQ0qQ10Q1{Q0y!#4z$P@%?o,_O=EN=S0yP=Q0p,J:!sh,!#C%-P@%?N,_Q=EO=RZPDQ1|P3PuC4P@Q19,_N=Eo=RNP=11}RQ0|DXRh!#3v%!z#$ZPgDMP41Hxo!se%4PN!#_I$Q1<,_o=ER=P=11KMQ17!#3n,|Q0yPZ!#3m4U!#3m:SRZ12?yRNPAPZ%G}R|PNPA!tP$:CSPt!#3p%SyP?PxQ1G!#Cf'LP2PzQ1F!#Ca/=Q1D!sE%zP}PKPUPSPMFRQ1@90;VR}Q1A,5UA0@S=PrQ21Q1PP8Q1KPDPJPvQ1E,_W=EX=1HJ3DMQ1OPJP_P2PYD712?YRY9OA1Pr]8!#3Y'PvPjQ1K#?,_V=EW=Q1K,HvDMQ22PvPfQ1JPXD7PwPwP6PJC312?X5OAPA%}bA0A3c!#3#&A%Cb%CwPBQ1QQ23<0EwP~E=-0kbE6A0ABY!#q]+Pc!#A^$!#3P$8W8W2W6PX!#3L%>M9u!#3I$}!#Fb&PV!v%$uPg!#3I-U!#Qb+,fhW6PuP<!#3I%uPCPeFLX8P!#AA+E6b1X7l!#AB&X5p!#ACC2!~X%!~f'O7!#3F1Y?!#ABN1\12?29DA5PDP:P1P5&0j;R;D@119:Q0K'IA0@=i%;iQ0YQ0Q'IQ0<Q0611Ro!$/Q$>oQ0?Q0>Q0;P2CrQ0=/>M1>TSP31>FUPV150VRVA0@=URS!#xc$HBPAQ0:P?PHCsPDP9PGP]P;D@P@PfP=Q0f!$,>$!#{>-FUP3PVPWQ16Q1NPAQ0hP?PG!sf$dP]P:!sf&_P=Q0i,Jf!$-%4Q16!#P#$WRIA8A_BRG12?]9DAdR]PDPaP\PdP;D@RdQ0GQ0C'A!#zp,Q1NP3PIA8A^BQ0E=0A{PDP`PiPaP;D@Q0F9im!$,B4e`RaP3P^C4Q0H!~o&Q0kP=P_C4PDQ0J!#zN&I!#zN/a!#N}&0H!~Y3O!~Y8Q0\12?`RaPAQ0\%GkRmPaPAPmQ0\P5CSPf!~X&Q`P?PeQ0!#O@+sP2Pq!v^$r]7!~W$12?e9DAnPDPqPkPn!sC$DPsPnPqP^P_P3K0iW7W4POP3P:P5!#Iu'^!#zj+^P<PUFLX7dX4]X1GPX!#It%5PW!{X&2S!$+'$!{Y%0!#wTS!{I'!{>06n104108!vD$3!v?%87110;10:10<1020!s#'5!s=&!s7=<!s_+>1051021071040!s#1;!sL5!sI3!so64109!soF10=!sI/6!sI,!s:+Q02Q1n,I1A0@1T1J1TP@P0P=1dHHPHPHP6P[!#=A$FC9[[[X>4X<@WTQ0!~v$O3P3Q02Q0@'g1g@>1g4CO3b0W6WOWRWSWQWPXB4W?WZXV8XW7o"). Qed.
+  intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss.
+  inversion Hss; subst; try congruence.
+  - (* [comment removed for export] *)
+    match goal with
+    | H2 : ms_svc_pending ms = Some ?x,
+      H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0) |- _ =>
+      assert (Hx : x = x8) by congruence; subst x;
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (Hevs & Hcase);
+      subst evs0
+    end.
+    split; [reflexivity|].
+    destruct Hcase as [(e & HIn & -> & ->) | (-> & ->)].
+    + left. exists e.
+      match goal with
+      | Hmat : materialize_model_accesses model _ = Some _ |- _ =>
+        rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat;
+        inversion Hmat; subst
+      end.
+      split; [assumption |].
+      rewrite apply_effect_no_write. reflexivity.
+    + right.
+      match goal with
+      | Hmat : materialize_model_accesses
+          (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) _ = Some _ |- _ =>
+        rewrite (materialize_model_accesses_no_lazy _ _
+          (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
+        inversion Hmat; subst
+      end.
+      reflexivity.
+  - (* [comment removed for export] *)
+    exfalso.
+    match goal with
+    | H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
+      Hmat : materialize_model_accesses ?model' _ = None |- _ =>
+      assert (Hx : x = x8) by congruence; subst x;
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & -> & ->) | (-> & ->)];
+      [ rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat
+      | rewrite (materialize_model_accesses_no_lazy _ _
+          (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat ];
+      discriminate
+    end.
+  - (* [comment removed for export] *)
+    exfalso.
+    match goal with
+    | H2 : ms_svc_pending ms = Some ?x,
+      H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
+      H6 : m_halted ?model' = Some ?code |- _ =>
+      assert (Hx : x = x8) by congruence; subst x;
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & _ & ->) | (_ & ->)];
+      [ rewrite Hh in H6
+      | rewrite munmap_model_halted, Hh in H6 ];
+      discriminate
+    end.
+  - (* [comment removed for export] *)
+    exfalso.
+    match goal with
+    | H2 : ms_svc_pending ms = Some ?x,
+      H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
+      H6 : m_killed ?model' = Some ?sig |- _ =>
+      assert (Hx : x = x8) by congruence; subst x;
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & _ & ->) | (_ & ->)];
+      [ rewrite (m_killed_of_m_halted_none _ Hh) in H6
+      | rewrite (m_killed_of_m_halted_none _ (eq_trans (munmap_model_halted _ _ _) Hh)) in H6 ];
+      discriminate
+    end.
+  - (* [comment removed for export] *)
+    exfalso.
+    match goal with
+    | H2 : ms_svc_pending ms = Some ?x,
+      H3 : syscall_spec (sys_input segs ms ?x) model Unmodeled |- _ =>
+      assert (Hx : x = x8) by congruence; subst x;
+      exact (munmap_no_unmodeled segs ms x8 model Hno Hargs H3)
+    end.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

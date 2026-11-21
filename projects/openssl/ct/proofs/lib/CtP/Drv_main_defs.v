@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry state over the launch input ProcInput). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCt.
 (* [comment removed for export] *)
@@ -53,17 +54,17 @@ Notation RSTAGE := 0x2dab69%Z (only parsing).
 
 Section WithCeiling1. Context {CE__ : Ceiling} {RN__ : RunRnd} {LM : LibModel} {LSP : LibSpec} {LL : LibLaws}.
 Section CTX.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid : word) (TID : Z).
+  Variables (sp0 : word) (inp : ProcInput) (mbase : word) (TID : Z).
   Notation usp0 := (bv_unsigned sp0).
 
   (* [comment removed for export] *)
-  Definition LO : Z := usp0 - 8388608.
+  Definition LO : Z := usp0 - 6144513.   (* the start-up's frame window, [Startup.STK_DEPTH] *)
 
   (* [comment removed for export] *)
   Definition MFRAME (mm : mem) (pad : list byte) (s7v s6v s5v s4v : word) : Prop :=
     rw_cells ctpsegs mm (usp0 + -128)
-      [CB 8 pad; C8 s7v; C8 s6v; C8 s5v; C8 s4v; C8 (wz (envp_addr sp0 argv)); C8 (wz RMAIN);
-       C8 (wz (argc argv)); C8 (wz (usp0 + 8)); C8 (wz RMAIN_RET)].
+      [CB 8 pad; C8 s7v; C8 s6v; C8 s5v; C8 s4v; C8 (wz (envp_addr inp sp0)); C8 (wz RMAIN);
+       C8 (wz (argc inp)); C8 (wz (usp0 + 8)); C8 (wz RMAIN_RET)].
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -82,14 +83,15 @@ Section CTX.
   Definition BASE (mm : mem) : Prop :=
     stk ctpsegs mm LO (usp0 + -128) /\ mem_inv ctpsegs mm /\ ESTAT mm /\ rauxv_ok mm usp0
     /\ ssp_cells mm rr_guard /\ lx_statics mm
-    /\ bytes_at ctpsegs mm usp0 (build_stack_bytes pph sp0 argv envp uid run_hw run_draw).
+    /\ (bytes_at ctpsegs mm usp0 (entry_stack_image inp mbase pph PENTRY sp0 run_draw)
+        /\ (usp0 + InitMem.head_size inp <= bv_unsigned (ed_top run_draw) - 8 - InitMem.str_len inp)%Z).
 
   (* [comment removed for export] *)
   Definition P1 (ms : machine_state) : Prop :=
     exists (t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (mm : mem) (pad : list byte),
       ms = MS (mkR (wz RMAIN_RET) (wz (usp0 + -128)) (wz 0x10800) (wz RATP) t0 t1 t2
-                   (wz 2) (wz 2) (wz 2) (wz (usp0 + 8)) (wz (envp_addr sp0 argv)) a3 a4 a5 a6 a7
-                   (wz RMAIN) (wz (envp_addr sp0 argv)) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                   (wz 2) (wz 2) (wz 2) (wz (usp0 + 8)) (wz (envp_addr inp sp0)) a3 a4 a5 a6 a7
+                   (wz RMAIN) (wz (envp_addr inp sp0)) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
               bvmap_empty (wz RP1) (Z_to_bv 32 0) None mm (seg_rom ctpsegs)
       /\ MFRAME mm pad s7 s6 s5 s4 /\ BASE mm
       /\ RHEAP (ps_init (reservedZ ctpsegs)) [] mm
@@ -107,18 +109,22 @@ End CTX.
 
 (* [comment removed for export] *)
 Definition main_to_P1_stmt : Prop :=
-  forall (sp0 : word) (argv envp : list (list byte)) (uid : word) (ms : machine_state),
-    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp0 argv envp ->
-    Z.of_nat (length argv) = 2 ->
-    at_main sp0 argv envp uid ms ->
-    exists TID, 0 < TID < 4194304 /\ evt ctpsegs (P1 sp0 argv envp uid TID) ms.
+  forall (sp0 : word) (inp : ProcInput) (mbase : word) (ms : machine_state),
+    valid_sp sp0 -> ceil_ok sp0 -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+    entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+    (bv_unsigned sp0 + InitMem.head_size inp <= bv_unsigned (ed_top run_draw) - 8 - InitMem.str_len inp)%Z ->
+    Z.of_nat (length (in_argv inp)) = 2 ->
+    at_main sp0 inp mbase ms ->
+    exists TID, 0 < TID < 4194304 /\ evt ctpsegs (P1 sp0 inp mbase TID) ms.
 
 (* [comment removed for export] *)
 Definition main_usage_stmt : Prop :=
-  forall (sp0 : word) (argv envp : list (list byte)) (uid : word) (ms : machine_state),
-    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp0 argv envp ->
-    Z.of_nat (length argv) <> 2 ->
-    at_main sp0 argv envp uid ms ->
-    implM ctpsegs (io_diag io (DUsage (nth 0 (argv_Z argv) [])) ;;; mret 2) (ps_init (reservedZ ctpsegs))
+  forall (sp0 : word) (inp : ProcInput) (mbase : word) (ms : machine_state),
+    valid_sp sp0 -> ceil_ok sp0 -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+    entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+    (bv_unsigned sp0 + InitMem.head_size inp <= bv_unsigned (ed_top run_draw) - 8 - InitMem.str_len inp)%Z ->
+    Z.of_nat (length (in_argv inp)) <> 2 ->
+    at_main sp0 inp mbase ms ->
+    implM ctpsegs (io_diag io (DUsage (nth 0 (argv_Z (in_argv inp)) [])) ;;; mret 2) (ps_init (reservedZ ctpsegs))
           (fun code s' ms' => at_exit code s' ms') ms.
 End WithCeiling1.

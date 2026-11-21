@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* RELOCATED B -> B' (h-pre-b3's #102 row, 2026-10-29): the walk of origin/cold/h-pre-b3-exstring-b 5f62ea0b5c45 (OLD
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* RELOCATED B -> B' (h-pre-b3's #102 row, 2026-10-29): the walk (OLD
    pin f8f98a95, unstripped twin 3b5e1a09) moved to the #102 pin B' (asan-ubsan d663f82d7f48, unstripped twin
-   c90d4fa54d43, facts 8f3e7e1a07f1) by alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9), on int102 with the kit
-   decff67d721f. ex_string, ex_hex4 and ex_utf8 have equal instruction words on B and B' up to pc-relative fields,
+   c90d4fa54d43, facts) by alreloc c4338d099cfb8025, on int102 with the kit.
+   ex_string, ex_hex4 and ex_utf8 have equal instruction words on B and B' up to pc-relative fields,
    and every pc-relative target names the same symbol + offset. Every address in this file, in a comment or in a term, is the B' image's; a mention of the record image
    f8f98a95 below names the donor's image. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B (asan-ubsan, record image f8f98a95bc52, OLD pin), ex_hex4
@@ -16,7 +17,7 @@
    INSTRUCTION STREAM: the neutral listing of the record image only (the internal file neutral_dis.py omx-clap-core-preset-ranout/asan-ubsan/
    fuzz_preset ex_hex4, image sha256 f8f98a95bc52..., the internal file ex_hex4.fuzz_preset.asan-ubsan.s);
    the walk runs over the whole-range table B_prog_tbl of listing B_prog_listing / PI_prog_B. pcs are EXH_PC + offset.
-   REUSE: h-verbs-1's hex4_mn.v (origin/cold/h-verbs-1-hex4-mn d83df2ff2fa4, blob a0acac4a3e17) proves hex4, which is
+   REUSE: h-verbs-1's hex4_mn.v (blob a0acac4a3e17) proves hex4, which is
    B_prog_sigma AS_hex4 = B 0x88850, another function (fuzz_preset.c's reader hex4, not ex_string's ex_hex4): its body
    tests the digits with `bgeu c-48,10` / `bgeu c-97,6` / `bltu 5,c-65` and accumulates with `or`, ex_hex4's with
    `bgeu c-58,-10` / `bltu 5,c-97` / `bltu 5,c-65` plus two `bltz`, and `add`. So its run lemmas do not cover ex_hex4;
@@ -106,7 +107,7 @@ mkSS (EXH_PC + 0xb8) exh_fregs [exh_stkL; exh_outR] None
 Definition ss_exh_q : sstate :=
 mkSS (EXH_PC + 0xdc) sr_atoms [exh_stkL] None (mkFacts [(2%nat, EXH_SPF)] [] []).
 
-(* ---- journal-free helpers (h-verbs-1's hex4_x.v / hex4_xs.v, d83df2ff2fa4, renamed exh_) ---- *)
+(* ---- journal-free helpers (h-verbs-1's hex4_x.v / hex4_xs.v, renamed exh_) ---- *)
 Fixpoint exh_hacc (v : Z) (l : list Z) : option Z :=
 match l with
 | [] => Some v
@@ -218,7 +219,7 @@ getr regs 14 = w64 SHADOW_OFF /\ getr regs 15 = w64 (4 - i) /\ getr regs 16 = w6
 
 (* ---- YCbqG's table runners SRr_run_tok_AJx / SRr_run_to_tok_AJx carrying a memory invariant Pinv (YC80x
    srr_inv_laws; the run step is YC80x.SRr_msteps_inv). The shape of h-verbs-1's hex4_mn.v Section tw
-   (d83df2ff2fa4, blob a0acac4a3e17), with its msteps_keeps hypothesis replaced by srr_inv_laws. ---- *)
+   (blob a0acac4a3e17), with its msteps_keeps hypothesis replaced by srr_inv_laws. ---- *)
 Section tw. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable SK : YI16.sink_head.
 Variable segs : list Segment.
@@ -316,7 +317,7 @@ eapply exh_chain; [exact Hms | exact Hlen | destruct r; [exact HS' | destruct Hr
 Qed.
 End tw.
 
-(* ---- the walk (h-verbs-1's hex4 walk, hex4_x.v / hex4_mn.v at d83df2ff2fa4, re-pointed at ex_hex4: its loop head
+(* ---- the walk (h-verbs-1's hex4 walk, hex4_x.v / hex4_mn.v, re-pointed at ex_hex4: its loop head
    is EXH_PC + 0x30, its digit tests are `bgeu c - 58, -10` / `bltu 5, c - 97` / `bltu 5, c - 65` with a `bltz` after
    the two letter subtractions, its accumulator step is `add`, and t1 / a2 carry the cursor) ---- *)
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

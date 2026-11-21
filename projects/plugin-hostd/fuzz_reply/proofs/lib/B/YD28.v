@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD28.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (42 numerals; per-numeral report). *)
-(* Modified by Theorem Labs, 2026-10: counts follow the generated IMG_REGIONS' 57 regions (S_COf 62, tail after 4 + 57 = 61; S_US 60; cgif 38, 37, 36), and the stdio FILEs lie in R_A3_4 (664960, 800) of the cut R_A3 (B/YD2j.v), so imgs_of_R / stderr_of_L read that piece (stderr's IMG_L piece 664960 + 280); as lib/A/AD28.v (RelocA 27a91588cd0). *)
+(* Modified by Theorem Labs, 2026-10: counts follow the generated IMG_REGIONS' 57 regions (S_COf 62, tail after 4 + 57 = 61; S_US 60; cgif 38, 37, 36), and the stdio FILEs lie in R_A3_4 (664960, 800) of the cut R_A3 (B/YD2j.v), so imgs_of_R / stderr_of_L read that piece (stderr's IMG_L piece 664960 + 280); as lib/A/AD28.v (RelocA). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

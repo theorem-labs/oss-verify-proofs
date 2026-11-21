@@ -6,16 +6,16 @@
    proves no function (kind: invariant lemma; the premise bundle of m_file's image-B snprintf call at 0x862a8, for the
    segment S_MF_ENTRY): invariant lemmas over any state whose AR holds; no instruction is executed in this file.
 
-   Adapted from image A's lib/A/Prog/m_file_s_entry_k.v on a working branch at 6019db533ca0 (image A
+   Adapted from image A's lib/A/Prog/m_file_s_entry_k.v on a working branch (image A
    fuzz_segconf.asan, call at 0x86014). Only the Require lines (image B's kit copies lib.B.YA0n / YG0f / YG0n / YG0d /
    YCbq, lib.B.Rt.RtPFPf / RtPFShared, lib.B.Prog.SegPgBase / SegABase) and this comment differ; every name, statement
    and proof is A's. The statements are over a Variable segs, a Variable B and Hypothesis LAWS : AR_laws segs B, so no
    image number appears in them; the image bound kImgEnd they name is image B's (lib/B/YG0f.v:20, 0x602000), and every
    image-bound step takes it from AR (al_img and lo_img of image B's kit), never from image A's 0x601000.
 
-   The callee contract is lib/B/Rt/RtPFSeg.v:234-235 `seg_asnprintf_realizes img_lo img_hi cr pc gotw guard` =
-   RtPFCmd.cmd_asnprintf_realizes (lib/B/Rt/RtPFCmd.v:316) at the family FR_seg (RtPFSeg.v:166-174: fmt_at,
-   pf_args_asan, cmd_args_slack / cmd_args_amem of RtPFCmd.v:81-93), over the vocabulary of lib/B/Rt/RtPFShared.v:47-75.
+   The callee contract is lib/B/Rt/RtPFSeg.v:235-236 `seg_asnprintf_realizes img_lo img_hi cr pc gotw guard` =
+   RtPFCmd.cmd_asnprintf_realizes (lib/B/Rt/RtPFCmd.v:317) at the family FR_seg (RtPFSeg.v:166-174: fmt_at,
+   pf_args_asan, cmd_args_slack / cmd_args_amem of RtPFCmd.v:82-94), over the vocabulary of lib/B/Rt/RtPFShared.v:48-76.
    These lemmas turn the reader-level facts of lib/B/Prog/SegABase.v (sa_str, sa_addr, sa_heap, sa_fframe, sa_img,
    sa_lit, sa_disj) into that contract's premises, so the walk supplies only reader-level facts:
    - mf_str_end_span: RtPFShared.str_end's slack is seg_spec.cstr_span (the read span SegABase keeps apart);
@@ -25,7 +25,7 @@
    - mf_heap_addr: a heap range's shadow facts (sa_addr) at ANY state whose AR holds.
    Image bounds come from AR alone (ALedger.al_img and layout_ok.lo_img: an image byte lies in [0x10000, kImgEnd)).
    mf_dest_heap takes ONE premise beyond the bundle's draft: the image cover of the layout, the type of the
-   listing's PAImg field pa_img_cover (lib/B/Prog/SegPa.v:54). Without it no fact of a generic segs keeps a heap
+   listing's PAImg field pa_img_cover (lib/B/Prog/SegPa.v:55). Without it no fact of a generic segs keeps a heap
    block out of [0x10000 + |ly_img|, kImgEnd); the walk has it for SEGS from its PAImg instance.
    APtr is RtPFPf's constructor (RtPFShared Requires RtPFPf without re-exporting it), so it is written RtPFPf.APtr. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
@@ -190,7 +190,7 @@ split; [exact A2|]. split; [exact A3|]. apply A4. lia.
 Qed.
 
 (* 4: the destination, a range of one live heap block. The first premise is the image cover of the layout, the type
-   of the listing's PAImg field pa_img_cover (SegPa.v:52): with it the block, a client range, misses
+   of the listing's PAImg field pa_img_cover (SegPa.v:53): with it the block, a client range, misses
    [0x10000, kImgEnd) (al_client_img) *)
 Lemma mf_dest_heap : forall ly S (W : world segs) (regs : bvmap 5 word) mem md (d w : Z),
   (forall ly' S' md', ALedger segs ly' S' md' ->

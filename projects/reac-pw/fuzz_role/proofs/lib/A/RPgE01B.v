@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10-29: new file for libreac/fuzz_scene (asan), the start-up certificate of scene's B. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_scene/lib/A/SceneBCert.v at 6ebe35ba632; restated for reac-pw/fuzz_role image A: the four facts of lib/A/RPgE01S.v, its static law and B's four cell addresses and two code entries, every number read from role's lib/A/AF0m.v and lib/A/RPgImgA.v; the read-only bytes the runtime owns and the .data.rel.ro cells added. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_scene/lib/A/SceneBCert.v; restated for reac-pw/fuzz_role image A: the four facts of lib/A/RPgE01S.v, its static law and B's four cell addresses and two code entries, every number read from role's lib/A/AF0m.v and lib/A/RPgImgA.v; the read-only bytes the runtime owns and the .data.rel.ro cells added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image A (fuzz_role.asan, pinned sha256
    614cffc0864cc31d9d1ced61322c4efd567b64bc89fe09a227a05b5126e0debb; every address measured on the unstripped twin
    6da77bafc5c050954dd89149e1e55a24064c2211e3cbd351822d1c0a20900ad6, same loaded bytes): THE START-UP CERTIFICATE

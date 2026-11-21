@@ -5,7 +5,7 @@
      block list, the cut predicate Pre) at an FP state with frm = 0 (the cut's: CUTST carries it) the run on the
      normalized memory reaches pc' at some FP state with frm = 0,
      writes only seg_W g Wb, keeps writability, keeps sp, gp, tp, and every state related to its end state satisfies
-     Pst (libreac/fuzz_ctrl's sl_seg_fp premise, origin/ossv/recipes 25e3d17bdb50 Prog/Seg/Tac_slot.v, with the
+     Pst (libreac/fuzz_ctrl's sl_seg_fp premise, Prog/Seg/Tac_slot.v, with the
      written blocks and longl in the write set);
    - b1_seg_hb: such a run closes the cut at pc' with the same hb (FR across it by Tac_b1.b1_fr_hb), so H(cut at pc')
      gives H of the start state. This is reac-pw/fuzz_role's Tac_slot.sl_seg_fp with b1_fr_hb in place of sl_fr_run;

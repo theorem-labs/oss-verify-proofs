@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the strings may end at TOP + 8, was TOP + 16, their addresses read the table's CONFIG_RSEQ layout, and the write path takes the channel reader (m_channel_reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -88,13 +89,15 @@ Section NodesArg.
   (* [comment removed for export] *)
   #[local] Notation arg_ok := (AsanNodesArgSoundCfg.arg_ok argc).
 
+  (* The same layout contract AsanNodesArgSoundCfg takes: the strings end eight below the stack
+     top, which may be [2 ^ 47]. *)
   Hypothesis Lay : 0x7fff80000000 <= usp /\ usp + 192 <= STR0 /\ STR0 + L0 + 1 <= TOP
                    /\ (2 <= argc -> STR1 + L1 + 1 <= TOP)
-                   /\ TOP mod 8 = 0 /\ TOP + 16 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
+                   /\ TOP mod 8 = 0 /\ TOP + 8 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
   Hypothesis Hnz : forall i j, (j < length (ARG i))%nat -> bv_unsigned (byte_at (ARG i) j) <> 0.
 
   Hypothesis SINV_vals : forall E M, SINV E M ->
-    uE E e_sp0 = usp /\ uE E e_str0 = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
+    uE E e_sp0 = usp /\ uE E (e_str0 A) = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
     /\ edenot E (EVar V_ARGC) = Z_to_bv 64 argc /\ edenot E (EVar V_L1) = Z_to_bv 64 L1
     /\ eb E 1%nat = argv0 /\ eb E 2%nat = argv1.
   (* [comment removed for export] *)
@@ -126,6 +129,7 @@ Section NodesArg.
     rdn SEGS mem (Z_to_bv 64 (g_canary G)) 8 = Some (word_to_le_bytes 8 can) ->
     0 < fd < 2147483648 ->
     fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+    m_channel_reader model = true ->
     m_halted model = None ->
     0 <= wb <= wp -> wp <= 0x800000000000 -> wp - wb = Z.of_nat (length pending) -> bv_unsigned l = Z.of_nat (length extra) ->
     Z.of_nat (length pending) + Z.of_nat (length extra) <= 2 ^ 30 ->
@@ -198,7 +202,7 @@ Section NodesArg.
     set (spm := eaddz (reg cs 2) (-112)) in Hn.
     destruct (split_lit spm) as [qb qk] eqn:Hsq.
     destruct (pieces_walk SEGS PIECES_FUEL (kn cs) WB WP [] []) as [pend|] eqn:Hpend; [|discriminate].
-    destruct (extra_pieces SEGS (kn cs) (reg cs 11) (reg cs 12)) as [extra|] eqn:Hextra; [|discriminate].
+    destruct (extra_pieces SEGS A (kn cs) (reg cs 11) (reg cs 12)) as [extra|] eqn:Hextra; [|discriminate].
     destruct (xlo (kn cs) (reg cs 2)) as [splo|] eqn:Hsplo; [|discriminate].
     destruct (xhi (kn cs) (reg cs 2)) as [sphi|] eqn:Hsphi; [|discriminate].
     destruct (xhi (kn cs) (esub WP WB)) as [nphi|] eqn:Hnphi; [|discriminate].
@@ -364,6 +368,7 @@ Section NodesArg.
     - exact Rcan.
     - apply orb_prop in Hfd12 as [X|X]; apply Z.eqb_eq in X; subst; lia.
     - exact FD.
+    - exact (co_rdr _ _ _ _ _ _ _ _ _ _ _ HC).
     - exact (co_halt _ _ _ _ _ _ _ _ _ _ _ HC).
     - lia.
     - lia.

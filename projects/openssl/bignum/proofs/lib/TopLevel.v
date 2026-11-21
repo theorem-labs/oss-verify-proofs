@@ -1,13 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger, the m_channel_reader premise, the launch input ProcInput, the run's segment list and the vDSO). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.openssl.bignum.lib.Lib Require Import PropExec MState Frame Exec ITree Nodes RegsEquiv FP.
+From OSSVerify.Proofs.openssl.bignum.lib.Common Require Import RsLift.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -16,22 +18,46 @@ Definition prog_tree (R : Type) : Type := ProcInput -> ExecEntry -> itree node R
 
 Definition ms0 (segs : list Segment) (pc : N) (ph : PhdrInfo)
     (en : ExecEntry) (inp : ProcInput) : machine_state :=
-  init_ms segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp).
+  init_ms segs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp.
 
 Lemma ms0_eq : forall segs pc ph en inp,
   ms0 segs pc ph en inp =
   MS (mkR_init (en_sp en)) bvmap_empty (Z_to_bv 64 (Z.of_N pc)) (Z_to_bv 32 0) None
-     (wrap_mem ph (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) (seg_rom segs).
+     (wrap_mem inp (en_mmap_base en) ph (Z_to_bv 64 (Z.of_N pc)) (en_sp en) (en_draw en)) (seg_rom segs).
 Proof. reflexivity. Qed.
 
+(* [comment removed for export] *)
+(* At the revision the run's initial model carries the launch's vDSO draw
+   ([Run.init_config]'s [with_vdso]); the walks run over that model. *)
 Definition mo0 (segs : list Segment) (lim : Z) (en : ExecEntry) (inp : ProcInput) : Model :=
-  init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp.
+  with_vdso (vdso_run_init (ed_vdso (en_draw en)))
+    (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
 
-Lemma init_config_eq : forall segs pc ph lim en inp,
-  init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp
-  = mkCfg (init_machine_state segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (mo0 segs lim en inp).
+Lemma m_fds_mo0 : forall segs lim en inp,
+  m_fds (mo0 segs lim en inp)
+  = m_fds (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
 Proof. reflexivity. Qed.
 
+Lemma m_fs_mo0 : forall segs lim en inp,
+  m_fs (mo0 segs lim en inp)
+  = m_fs (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
+Proof. reflexivity. Qed.
+
+(* The run's initial configuration, over [Run.run_segments]: the machine state
+   reads the run's list, the model's reservations are the binary's
+   ([RsLift.segments_reserved_run_segments]). *)
+Lemma init_config_run : forall segs pc ph lim en inp,
+  init_config (run_segments segs inp (en_sp en) (en_mmap_base en)) pc ph
+    (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp
+  = mkCfg (init_machine_state (run_segments segs inp (en_sp en) (en_mmap_base en)) pc ph
+             (en_sp en) (en_mmap_base en) (en_draw en) inp)
+          (mo0 segs lim en inp).
+Proof.
+  intros segs pc ph lim en inp. unfold init_config, mo0.
+  rewrite segments_reserved_run_segments. reflexivity.
+Qed.
+
+(* [comment removed for export] *)
 Lemma mo0_alloc_top : forall segs lim en inp,
   alloc_top (m_vmmaps (mo0 segs lim en inp)) = (bv_unsigned (en_sp en) - stack_max_size)%Z.
 Proof. reflexivity. Qed.
@@ -48,13 +74,23 @@ Proof.
 Qed.
 
 Lemma vie_va_size : forall inp, valid_input_either inp -> in_va_size inp = Sv48.
-Proof. intros inp (_ & _ & _ & _ & _ & _ & _ & _ & v & _). exact v. Qed.
+Proof. intros inp Hv. red in Hv. repeat match goal with H : _ /\ _ |- _ => destruct H end. assumption. Qed.
+
+(* At the revision [valid_input_either] pins the channel reader and the launch. *)
+Lemma vie_reader : forall inp, valid_input_either inp -> in_channel_reader inp = true.
+Proof. intros inp Hv. red in Hv. repeat match goal with H : _ /\ _ |- _ => destruct H end. assumption. Qed.
+
+Lemma vie_launch : forall inp, valid_input_either inp -> valid_launch inp.
+Proof. intros inp Hv. red in Hv. repeat match goal with H : _ /\ _ |- _ => destruct H end. assumption. Qed.  (* [comment removed for export] *)
 
 Lemma mo0_not_halted : forall segs lim en inp, m_halted (mo0 segs lim en inp) = None.
 Proof. reflexivity. Qed.
 
-Lemma mo0_minv : forall segs lim en inp, minv (mo0 segs lim en inp).
-Proof. intros. apply minv_init. Qed.
+Lemma mo0_minv : forall segs lim en inp, in_channel_reader inp = true -> minv (mo0 segs lim en inp).
+Proof.
+  intros segs lim en inp Hr.
+  exact (minv_init (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp Hr).
+Qed.
 
 Lemma ms0_svc : forall segs pc ph en inp, ms_svc_pending (ms0 segs pc ph en inp) = None.
 Proof. reflexivity. Qed.
@@ -94,46 +130,73 @@ Qed.
 
 Lemma run_eq : forall segs pc ph lim en inp,
   run (mkImage segs pc ph) lim en inp =
-  let c0 := mkCfg (init_machine_state segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (mo0 segs lim en inp) in
-  {| bh_traces := obs_trace segs c0;
-     bh_errors := reaches_error segs c0;
-     bh_all_errors := all_traces_error segs c0;
-     bh_unmodeled := reaches_unmodeled segs c0 |}.
-Proof. intros segs pc ph lim [sp brk mb rnd] inp. reflexivity. Qed.
+  let vsegs := run_segments segs inp (en_sp en) (en_mmap_base en) in
+  let c0 := mkCfg (init_machine_state vsegs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp) (mo0 segs lim en inp) in
+  {| bh_traces := obs_trace vsegs c0;
+     bh_errors := reaches_error vsegs c0;
+     bh_all_errors := all_traces_error vsegs c0;
+     bh_unmodeled := reaches_unmodeled vsegs c0 |}.
+Proof.
+  (* The rewrite must fire BEFORE the entry record is destructed: at the
+     revision [init_config]'s machine state reads [run_segments segs inp
+     (en_sp en) (en_mmap_base en)], and a [cbn] that reduces those
+     projections first leaves no subterm matching [init_config_run]'s
+     right-hand side. *)
+  intros segs pc ph lim en inp. cbv zeta.
+  rewrite <- (init_config_run segs pc ph lim en inp).
+  destruct en as [sp brk mb rnd]. cbn [run en_sp en_brk en_mmap_base en_draw]. reflexivity.
+Qed.
 
 Lemma run_scfg_eq : forall cfg segs pc ph lim en inp,
   run_scfg cfg (mkImage segs pc ph) lim en inp =
-  let c0 := mkCfg (init_machine_state segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (mo0 segs lim en inp) in
-  {| bh_traces := obs_trace_cfg segs cfg c0;
-     bh_errors := reaches_error_cfg segs cfg c0;
-     bh_all_errors := all_traces_error_cfg segs cfg c0;
-     bh_unmodeled := reaches_unmodeled_cfg segs cfg c0 |}.
-Proof. intros cfg segs pc ph lim [sp brk mb rnd] inp. reflexivity. Qed.
+  let vsegs := run_segments segs inp (en_sp en) (en_mmap_base en) in
+  let c0 := mkCfg (init_machine_state vsegs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp) (mo0 segs lim en inp) in
+  {| bh_traces := obs_trace_cfg vsegs cfg c0;
+     bh_errors := reaches_error_cfg vsegs cfg c0;
+     bh_all_errors := all_traces_error_cfg vsegs cfg c0;
+     bh_unmodeled := reaches_unmodeled_cfg vsegs cfg c0 |}.
+Proof.
+  (* Same order as [run_eq]: rewrite under [cbv zeta] with [en] still a variable. *)
+  intros cfg segs pc ph lim en inp. cbv zeta.
+  rewrite <- (init_config_run segs pc ph lim en inp).
+  destruct en as [sp brk mb rnd]. cbn [run_scfg en_sp en_brk en_mmap_base en_draw]. reflexivity.
+Qed.
 
 Lemma run_of_tree : forall {R : Type} segs pc ph lim (t : itree node R) (Q : R -> machine_state -> Prop) en inp,
   impl segs (at_node segs) t Q (ms0 segs pc ph en inp) ->
   leaves_unreachable_m nstep t (mo0 segs lim en inp) ->
   tsafe nstep nsafe t (mo0 segs lim en inp) ->
+  in_channel_reader inp = true ->
   trace_equiv (bh_traces (run_scfg ncfg (mkImage segs pc ph) lim en inp)) (tree_traces t (mo0 segs lim en inp))
   /\ ~ bh_errors (run_scfg ncfg (mkImage segs pc ph) lim en inp)
   /\ ~ bh_unmodeled (run_scfg ncfg (mkImage segs pc ph) lim en inp).
 Proof.
-  intros R segs pc ph lim t Q en inp Himpl Hleaves Hsafe.
-  rewrite run_scfg_eq. cbn [bh_traces bh_errors bh_unmodeled].
-  destruct (init_behaviour_scfg_eqv segs ncfg pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (mo0 segs lim en inp))
+  intros R segs pc ph lim t Q en inp Himpl Hleaves Hsafe Hrd.
+  rewrite run_scfg_eq. cbv zeta. cbn [bh_traces bh_errors bh_unmodeled].
+  (* The run reads [run_segments segs inp sp mbase] = segs ++ tail.  The walk is
+     over segs; [RsLift.impl_rs_nodes] carries it to segs ++ tail at the state
+     with the run's ROM, which is [ms0 (segs ++ tail)]. *)
+  set (tail := vdso_segments (in_kernel inp) (en_sp en) (en_mmap_base en)).
+  pose proof (vdso_segments_inert (in_kernel inp) (en_sp en) (en_mmap_base en)) as Hin. fold tail in Hin.
+  change (run_segments segs inp (en_sp en) (en_mmap_base en)) with (segs ++ tail).
+  destruct (init_behaviour_scfg_eqv (segs ++ tail) ncfg pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp (mo0 segs lim en inp))
     as (Htr & Herr & _ & Hunm).
-  change (init_ms segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) with (ms0 segs pc ph en inp) in Htr, Herr, Hunm.
-  pose proof (nodes_sound segs) as NS.
+  change (init_ms (segs ++ tail) pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp)
+    with (ms0 (segs ++ tail) pc ph en inp) in Htr, Herr, Hunm.
+  pose proof (impl_rs_nodes segs tail Hin _ t Q (ms0 segs pc ph en inp) Himpl) as Himpl'.
+  change (rs_ms segs tail (ms0 segs pc ph en inp)) with (ms0 (segs ++ tail) pc ph en inp) in Himpl'.
+  pose proof (nodes_sound (segs ++ tail)) as NS.
+  pose proof (mo0_minv segs lim en inp Hrd) as Hminv.
   split; [| split].
   - intros tr. rewrite (Htr tr). unfold tree_traces.
-    apply (impl_run_traces2 node segs ncfg (at_node segs) nstep nexit minv nsafe NS t _ _ _
-             Himpl Hleaves (mo0_not_halted _ _ _ _) (mo0_minv _ _ _ _) Hsafe (ms0_svc _ _ _ _ _)).
+    apply (impl_run_traces2 node (segs ++ tail) ncfg (at_node (segs ++ tail)) nstep nexit minv nsafe NS t _ _ _
+             Himpl' Hleaves (mo0_not_halted _ _ _ _) Hminv Hsafe (ms0_svc _ _ _ _ _)).
   - rewrite Herr.
-    apply (impl_run_safe2 node segs ncfg (at_node segs) nstep nexit minv nsafe NS t _ _ _
-             Himpl Hleaves (mo0_not_halted _ _ _ _) (mo0_minv _ _ _ _) Hsafe (ms0_svc _ _ _ _ _)).
+    apply (impl_run_safe2 node (segs ++ tail) ncfg (at_node (segs ++ tail)) nstep nexit minv nsafe NS t _ _ _
+             Himpl' Hleaves (mo0_not_halted _ _ _ _) Hminv Hsafe (ms0_svc _ _ _ _ _)).
   - rewrite Hunm.
-    apply (impl_run_modeled2 node segs ncfg (at_node segs) nstep nexit minv nsafe NS t _ _ _
-             Himpl Hleaves (mo0_not_halted _ _ _ _) (mo0_minv _ _ _ _) Hsafe (ms0_svc _ _ _ _ _)).
+    apply (impl_run_modeled2 node (segs ++ tail) ncfg (at_node (segs ++ tail)) nstep nexit minv nsafe NS t _ _ _
+             Himpl' Hleaves (mo0_not_halted _ _ _ _) Hminv Hsafe (ms0_svc _ _ _ _ _)).
 Qed.
 
 Lemma trace_equiv_sym : forall T1 T2, trace_equiv T1 T2 -> trace_equiv T2 T1.
@@ -156,9 +219,9 @@ Proof.
   intros RS RT segsS pcS phS segsT pcT phT tS tT QS QT HS HT HEQ enS enT inp HvS HvT Hvi. apply valid_input_either_of_valid_input in Hvi.
   destruct (HS enS inp HvS Hvi) as (HimplS & HleavesS & HsafeS).
   destruct (HT enT inp HvT Hvi) as (HimplT & HleavesT & HsafeT).
-  destruct (run_of_tree segsS pcS phS source_alloc_limit (tS inp enS) QS enS inp HimplS HleavesS HsafeS)
+  destruct (run_of_tree segsS pcS phS source_alloc_limit (tS inp enS) QS enS inp HimplS HleavesS HsafeS (vie_reader inp Hvi))
     as (HtrS & _ & HmodS).
-  destruct (run_of_tree segsT pcT phT target_alloc_limit (tT inp enT) QT enT inp HimplT HleavesT HsafeT)
+  destruct (run_of_tree segsT pcT phT target_alloc_limit (tT inp enT) QT enT inp HimplT HleavesT HsafeT (vie_reader inp Hvi))
     as (HtrT & HerrT & _).
   split.
   -   exact HmodS.
@@ -183,9 +246,9 @@ Proof.
   intros RS RT segsS pcS phS segsT pcT phT tS tT QS QT HS HT HEQ enS enT inp HvS HvT Hvi. apply valid_input_either_of_valid_input in Hvi.
   destruct (HS enS inp HvS Hvi) as (HimplS & HleavesS & HsafeS).
   destruct (HT enT inp HvT Hvi) as (HimplT & HleavesT & HsafeT).
-  destruct (run_of_tree segsS pcS phS source_alloc_limit (tS inp enS) QS enS inp HimplS HleavesS HsafeS)
+  destruct (run_of_tree segsS pcS phS source_alloc_limit (tS inp enS) QS enS inp HimplS HleavesS HsafeS (vie_reader inp Hvi))
     as (HtrS & HerrS & _).
-  destruct (run_of_tree segsT pcT phT target_alloc_limit (tT inp enT) QT enT inp HimplT HleavesT HsafeT)
+  destruct (run_of_tree segsT pcT phT target_alloc_limit (tT inp enT) QT enT inp HimplT HleavesT HsafeT (vie_reader inp Hvi))
     as (HtrT & HerrT & _).
   split; [exact HerrS|]. split; [exact HerrT|].
   eapply trace_equiv_trans; [exact HtrS|].

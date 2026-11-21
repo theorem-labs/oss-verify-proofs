@@ -4,6 +4,7 @@
    a Theorem Labs lane approved this statement; amendment 1 brought S3's md_takes (positive size), Create's premises md_takes md (as_store B, 32) and kHighMemBeg <= ly_stk_lo ly (carried in Store's first-use pre) and the Section hypothesis mnr_stk_ge (gone with amendment 8); amendment 2 (S1 only) bounds the slot of a later call (in_app, off the stack, off the store cells); amendment 3 added 0 <= ly_SB ly < 2 ^ 64; amendments 5 and 6 carry S3's ext_but_SB (unmapped-NB filter) and widen Store's first-use frame exclusion to SS + [0, 32) (Create writes mtx_); amendment 7 carries the VM budget premise eager_used md + A_bytes (w_A W) + kStoreBlockSize <= vm_limit (m_vmmaps md); amendment 8 takes S4 by name from a Theorem Labs lane's AD3d (mnr_stk is gone: BIC_STK = 32 + MNR_STK = 136), adds to the first-use pre what S4 asks (ivs_wf, ceil_of_top, mnr_cell_extents taken), replaces w_H W' = w_H W in the first-use post by S4's exposure (X joins w_A, w_H unchanged outside X) and states P6 with S3's placeholder layout_grow_kd ly ly'; amendment 8 note 6 (AD3c.v, carried by AD3b.v) adds S3's exact model after the grant to the first-use post, over Store's entry model; amendment 9 (a Theorem Labs lane, from a Theorem Labs lane's measurement) drops the presence premise for stored_'s 4 bytes, which no caller can supply for an image .bss byte: Store reads and writes stored_ through the reader and the writable segment. The refused arm is excluded by premise (md_room, carried from Create's pre through Alloc's): a real refusal reaches ReportMmapFailureAndDie (0x5e3f4), which ends the run.
    Amendment 11 (a Theorem Labs lane): the first-use arm's last conjunct states X fresh against every map of Store's entry model md (Forall over vm_maps (m_vmmaps md)), from S2's new last conjunct at Alloc's call model md1 = with_vm_backing (m_vm_lazy md) mat md, which keeps m_vmmaps (m_vmmaps_wvb).
    rule 24: proves function StackStore::Store (reuse search: see (internal path)). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -24,7 +25,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
 
-(* knock's Store (A image, sha256 61768cf4739b..., read from the packed base c8557374's Asan_seg_001.hex; the AU twin's
+(* knock's Store (A image, sha256 61768cf4739b..., read from the packed base's Asan_seg_001.hex; the AU twin's
    numbers come from AU's own tables):
      0x6e8f4  frame 64 (ra, s0-s5 saved); s3 := a1 (the StackTrace); s4 := size (lw 8(a1)); s5 := tag (lw 12(a1))
      0x6e924  size | tag = 0 -> return 0

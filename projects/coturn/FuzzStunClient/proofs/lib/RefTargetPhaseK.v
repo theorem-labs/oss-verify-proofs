@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, target_phase_k takes the launch's kernel build (Amb), which target_vm_k reads. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import
   Spec TargetSpec TargetKDefs RefWorld RefTargetPre RefWorldK RefTargetPreK
   SymExec3 SymPlan SymPlanSoundA RefATB RefTargetEntry_defs RefTargetEntryK_defs
   TargetShape TargetShapeTop RefTargetAssembly RefTargetCover.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Amb.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import RefTPB_g01 RefTPB_g02 RefTPB_g03 RefTPB_g04 RefTPB_g05 RefTPB_g06 RefTPB_g07 RefTPB_g08 RefTPB_g09 RefTPB_g10.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
@@ -132,31 +134,32 @@ Proof. vm_compute. reflexivity. Qed.
 Theorem target_phase_k :
   ref_tphase_hyps ->
   forall k : Z, (1 <= k <= 10)%Z ->
+  forall {AMB : Amb.Amb},   (* LPS 08b1429: target_vm_k reads the launch's kernel build *)
   forall (sp0 B area brkv mas tid : Z) (content : list byte)
          (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (model : Model),
     target_pre_k k sp0 B area brkv mas tid content R M -> target_vm_k k sp0 B area VM -> SPSA.std_model VM model ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13cb0) M (seg_rom RSEGS)) model) (t_target content (m_fs model)).
 Proof.
-  intros RH k Hk sp0 B area brkv mas tid content R M VM model TP TV SM.
+  intros RH k Hk AMB sp0 B area brkv mas tid content R M VM model TP TV SM.
   destruct (k_cases k Hk) as [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | ->]]]]]]]]].
-  - exact (tpk_dispatch 1 classes_k1 32763 131065 classes_k1_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 1 classes_k1 32763 131065 classes_k1_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 1 sp0 B area brkv mas tid content R M 65536 131072 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 2 classes_k2 98299 262137 classes_k2_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 2 classes_k2 98299 262137 classes_k2_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 2 sp0 B area brkv mas tid content R M 131072 262144 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 3 classes_k3 229371 524281 classes_k3_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 3 classes_k3 229371 524281 classes_k3_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 3 sp0 B area brkv mas tid content R M 262144 524288 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 4 classes_k4 491515 1048569 classes_k4_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 4 classes_k4 491515 1048569 classes_k4_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 4 sp0 B area brkv mas tid content R M 524288 1048576 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 5 classes_k5 1015803 2097145 classes_k5_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 5 classes_k5 1015803 2097145 classes_k5_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 5 sp0 B area brkv mas tid content R M 1048576 2097152 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 6 classes_k6 2064379 4194297 classes_k6_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 6 classes_k6 2064379 4194297 classes_k6_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 6 sp0 B area brkv mas tid content R M 2097152 4194304 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 7 classes_k7 4161531 8388601 classes_k7_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 7 classes_k7 4161531 8388601 classes_k7_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 7 sp0 B area brkv mas tid content R M 4194304 8388608 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 8 classes_k8 8355835 16777209 classes_k8_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 8 classes_k8 8355835 16777209 classes_k8_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 8 sp0 B area brkv mas tid content R M 8388608 16777216 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 9 classes_k9 16744443 33554425 classes_k9_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 9 classes_k9 16744443 33554425 classes_k9_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 9 sp0 B area brkv mas tid content R M 16777216 33554432 TP eq_refl eq_refl)).
-  - exact (tpk_dispatch 10 classes_k10 33521659 67108857 classes_k10_cover RH sp0 B area brkv mas tid content R M VM model TP TV SM
+  - exact (tpk_dispatch 10 classes_k10 33521659 67108857 classes_k10_cover RH AMB sp0 B area brkv mas tid content R M VM model TP TV SM
            (paylen_rangek 10 sp0 B area brkv mas tid content R M 33554432 67108864 TP eq_refl eq_refl)).
 Qed.

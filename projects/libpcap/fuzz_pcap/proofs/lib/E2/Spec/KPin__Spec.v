@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the Hvm premise's reserved ledger is State.init_reserved (the image segments then the vDSO/vvar pair), and KL_main proves the new kl_vdso_in, kl_vdso and reserved-ledger shape obligations. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -58,7 +59,8 @@ Variables (segs : list Segment) (brk0 mbase sp : word) (lim tb : Z).   (* [comme
 Let resvZ := reservedZ segs ++ [(tb, 4096)].
 (* [comment removed for export] *)
 Variable mo : Model.
-Hypothesis Hvm : m_vmmaps mo = mkVmMapsFull (segments_reserved segs) [] [] brk0 brk0 lim mbase sp.
+(* LPS 727298f3: the initial reserved ledger ends in the vDSO/vvar pair ([State.init_reserved]) *)
+Hypothesis Hvm : m_vmmaps mo = mkVmMapsFull (init_reserved (segments_reserved segs) mbase sp (m_kernel mo)) [] [] brk0 brk0 lim mbase sp.
 (* [comment removed for export] *)
 Hypothesis Hktop : alloc_ceiling = page_round_down_Z (alloc_top (m_vmmaps mo)).
 Hypothesis Hminv : minv mo.
@@ -77,15 +79,33 @@ Hypothesis Htb : 0 < tb /\ exists e, In e (segments_reserved segs)
 #[using="brk0 mbase sp lim Hvm Hktop Hminv Hhalt Hbrk Htop_pos Hceil Hfloor Hlim Htb"] Theorem KL_main : KL (led_init resvZ) 0 mo.
 Proof.
   destruct Hbrk as (Hlo & Hhi & Hal). destruct Htb as (A0 & te & Hte & Tlo & Thi). pose proof alloc_ceiling_lt as Hcl.
-  constructor; try exact Hktop; rewrite ?Hvm, ?Hhalt; cbn -[Z.pow Z.mul Z.add Z_to_bv bv_unsigned].
+  (* [kl_vdso_in]: the pair ends at [vdso_top] of this ledger (the rounding identity of
+     [State.vdso_top_init_model]) *)
+  assert (Hvdi : incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (vm_reserved (m_vmmaps mo))).
+  { rewrite Hvm. unfold vdso_top, mmap_top, alloc_top. cbn [vm_mmap_base vm_init_sp vm_reserved].
+    rewrite page_round_down_Z_min_r. unfold init_reserved. apply incl_appr, incl_refl. }
+  constructor; try exact Hktop; try exact Hvdi; rewrite ?Hvm, ?Hhalt; cbn -[Z.pow Z.mul Z.add Z_to_bv bv_unsigned].
   - exact Hminv.
   - reflexivity.
   - split; [intros e []| apply pwdisj_nil].
   - intros r Hr. subst resvZ. apply in_app_or in Hr as [Hr|[<-|[]]].
     + unfold reservedZ in Hr. apply in_map_iff in Hr as (e & <- & He). exists e.
-      split; [unfold elo; cbn; lia|]. split; [unfold ehi; cbn; lia|]. left. exact He.
-    + exists te. unfold elo, ehi. cbn [fst snd]. split; [lia|]. split; [lia|]. left. exact Hte.
-  - intros e Hin. pose proof (reserved_top_ge' _ _ Hin). unfold ehi. lia.
+      split; [unfold elo; cbn; lia|]. split; [unfold ehi; cbn; lia|]. left. unfold init_reserved. apply in_or_app. left. exact He.
+    + exists te. unfold elo, ehi. cbn [fst snd]. split; [lia|]. split; [lia|]. left. unfold init_reserved. apply in_or_app. left. exact Hte.
+  - (* the ledger is the image segments followed by the pair, at most two entries of at
+       most 20 pages *)
+    exists (segments_reserved segs), (vdso_reserved (m_kernel mo) (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)))).
+    split; [reflexivity|]. split; [|split].
+    + unfold vdso_reserved; cbv zeta; destruct (_ <? _); cbn [length]; lia.
+    + assert (HLB : forall t, live_bytes (vdso_reserved (m_kernel mo) t) <= 20 * 4096).
+      { pose proof (vdso_text_pages_pos (m_kernel mo)) as HPP.
+        pose proof (vdso_text_pages_le (m_kernel mo)) as HL.
+        intros t. unfold vdso_reserved. cbv zeta.
+        destruct (t - vdso_len (m_kernel mo) <? page_size); [cbn; lia|]. cbn [live_bytes].
+        rewrite !bv_unsigned_Z_to_bv_u64 by (unfold vdso_vvar_pages, page_size, two_pow_64; lia).
+        unfold vdso_vvar_pages, page_size. lia. }
+      apply HLB.
+    + intros e Hseg. pose proof (reserved_top_ge' _ _ Hseg). unfold ehi. lia.
   - unfold PGSZ in *. unfold page_size in Hal. lia.
   - intros b l [].
   - intros b l k [].
@@ -98,6 +118,8 @@ Proof.
   - unfold PGSZ in *. lia.
   - intros b l [[]|[k []]].
   - intros e [].
+  (* [kl_vdso]: no tracked mapping yet *)
+  - intros r _ e [].
 Qed.
 
 (* [comment removed for export] *)

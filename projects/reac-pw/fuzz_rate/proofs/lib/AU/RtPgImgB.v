@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/leptonica/bilateral_fuzzer/lib/O2/O2Reloc.v, with its addresses changed; 147 of its 158 lines of code are new or changed and 285 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgImgA.v at 7379c28ff70f; the same record for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgImgA.v; the same record for
    image B (fuzz_rate.asan-ubsan), with every value re-measured on image B's own pinned bytes: the side-stack class,
    the seven cut pcs, the real frame's size, the seven cut lists, the frame's two shadow patterns, the three segments'
    write ranges, the checked real-frame range, the registered globals, the strings, the read-only cells and the four
    tables; check_csv's image-B stack bound is added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; symbols and the frame descriptor from the
    unstripped twin a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded bytes differ only

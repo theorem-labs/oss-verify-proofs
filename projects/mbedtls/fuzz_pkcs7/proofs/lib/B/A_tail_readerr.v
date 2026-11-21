@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-phase stack floor STKLO and the stage floor LOdeep are sp0 - 6144512, the window the revision's launch maps; PL16 is pathp + length + 11 <= STKHI, as the revision's launch places the strings at the stack top; the tail statement's new channel-reader premise, which the revision's writev reads, is passed to readerr_tailA). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -41,7 +42,7 @@ Section Tail.
   Hypothesis SPlo : 0x7fff80000000 <= bv_unsigned sp0.
   Hypothesis SPhi : bv_unsigned sp0 <= 0x800000000000.
   Hypothesis SPal : bv_unsigned sp0 mod 16 = 0.
-  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 8388608.
+  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 6144512.
   Variables (path : list byte) (pathp : word) (fs0 : Fs).
   Variables (can : word) (tid : Z) (wp0 rp0 wp1 rp1 : word).
   Variables (TOP STKHI : Z).
@@ -57,7 +58,7 @@ Section Tail.
   Local Ltac2 Set LiaOrc.tbl := fun () => "00Y0@L10812571693.97 L1123598903.80  L11602724311.94 L11758983131.99 L16352041034.81 L187041400.78   L19122796294.82 L19317149972.108L21538903817.79 L25071619629.107L25325058361.74 L28350069467.87 L32114292796.92 L33600146808.106L3610556270.99  L3788567612.94  L37960836342.86 L38081936810.101L39231319166.99 L39583005574.100L41140478957.96 L42435749866.99 L45786986535.84 L50054634347.60 L51695985839.87 L5178510586.87  L51819007707.94 L52619446531.99 L55686439908.100L56254184707.92 L5738458375.100 L5744940978.95  L57629198784.93 L57702181339.87 L59315053158.98 L61885532617.97 L65459772779.95 L66247761411.99 L67543774492.81 L67752153213.98 L9840393242.91  00001801o02g03O03n04J04`05S05o07907S08208l09]0:C0;C0;k0==0>F0?70?d0@n0AP0Ah0BG0Bf0Cb0DS0E60Eh0Fk0Gn0H`0I?0J30K<0L=0MG0M]0NL0OKS1R3sp04SPlo4path5pathp5STKHI7STKHI643msp3PLO3PHI3spw2lo5SPlo'5extra3LEXS1R3sp04SPlo4SPal4path5pathp5STKHI7STKHI643PLO3PHI2lo1LS1R3sp04SPlo4path5pathp5STKHI3msp3PLO3PHI3spw2lo1L5SPlo'S1R3sp04path5pathp5STKHI3msp3spw2lo1x2HxS3sp04SPlo4path5STKHI3msp3spw1LS1R3sp04SPlo4path5STKHI2lo1LS3sp04path5STKHI3spw1LS1R3sp04path5pathp5STKHI3msp3spw2lo1L5extra3LEX3L62S1R3sp04SPhi4path5STKHI2lo1LS1R3sp04SPlo4path5pathp5STKHI3PLO3ALO3spw1L5SPlo'5extra3LEX4PL161c4BAND2C0S3sp04SPlo4SPhi4path5STKHIS1R3sp04path5STKHI3msp3spw2lo1LS1R3sp04SPlo4path5pathp5STKHI3msp3PLO3PHI3spw1L5SPlo'1x2HxS1R3sp04path5pathp5STKHI3msp3L603spw2lo5extra3LEXS1R3sp04path5STKHI3msp3spw2lo1L1s1g2HgS3sp04SPlo4path5pathp5STKHI3msp3PLO3PHI3spw1L5SPlo'7STKHIhi1x2HxS1R3sp04path5STKHI8STKHImax3msp3spw2lo1LS1R3sp04SPlo5STKLO4path5pathp5STKHI3msp3PLO3PHI3spw2lo1L5SPlo'4LOlo7STKHIhi1s1g2HgS1R3sp04SPlo5STKLO4path5STKHI6HSTKHI3msp3SH83spw2lo1L5SPlo'4LOlo1s3LO82HgS1R3sp04path5pathp5STKHI3msp3PHI3spw2lo5extra3LEXS1R3sp04path5pathp5STKHI3msp3spw2lo5extra3LEXS1R3sp04SPlo5STKLO4path5pathp5STKHI3msp3PLO3PHI3spw2lo1L5SPlo'4LOlo1s1g2HgS1R3sp04path5STKHI6HSTKHI3spw2lo1LS3sp04path5STKHI3msp3L60S1R3sp04path5STKHI3msp3spw2lo1LS1R3sp04path5STKHI3msp3spw2lo1LS1R3sp04SPlo4path5pathp5STKHI3msp3PHI3spw2lo1L5SPlo'7STKHIhiS1R3sp04path5pathp5STKHI3msp3PHI3spw2lo5extra3LEXS1R3sp04path5STKHI3msp3spw2lo1L1s1gS3sp04SPlo4path5pathp5STKHI3PLO3PHI3spw5SPlo'1x2HxS1R3sp04SPlo4path5pathp5STKHI3msp3PLO3PHI3spw2lo5SPlo'7STKHIhi1x2HxS1R3sp04SPlo4path5pathp5STKHI3msp3PLO3PHI3spw2lo5SPlo'7STKHIhi1x2HxS3sp04SPlo4path5pathp5STKHI3PLO3PHI3spw5SPlo'1x2HxS1R3sp04path5STKHI3msp3spw2lo1LS3sp04SPlo4path5pathp5STKHI3PLO3PHI3spw5SPlo'1x2Hx1CS1R3sp04SPlo5STKLO4path5STKHI6HSTKHI3msp3SH83spw2lo1L5SPlo'4LOlo1s2Hs3LO8S1R3sp04SPlo5STKLO4path5STKHI6HSTKHI3msp3SL83SH83spw1L5SPlo'4LOloS1R3sp04SPlo5STKLO4path5pathp5STKHI3msp3PLO3PHI3spw2lo1L5SPlo'4LOlo1s1g2HgS3sp04path5STKHI3spw1LS1R3sp04path5pathp5STKHI3PLO3spw2lo1L5extra3LEXS1R3HIA3sp04SPlo4path5STKHI3msp1h2HS3spw2lo1L5SPlo'7STKHIhi1c1H". (* [comment removed for export] *)
   #[using="AL IMG ASB HIMGCS SPlo SPhi SPal STKLO HSTKHI STKHImax STKHI64 msp L60"] Theorem readerr_tail : readerr_stmtA R HIA sp0 path pathp fs0 can tid wp0 rp0 wp1 rp1 TOP STKHI.
   Proof.
-    unfold readerr_stmtA. intros t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 x7 t3 t4 t5 t6 buf m mo h NHM HKh HT HS MI TM ST SSH BY NZ PLO PHI FD FS.
+    unfold readerr_stmtA. intros t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 x7 t3 t4 t5 t6 buf m mo h NHM HKh HT HS MI TM ST SSH BY NZ PLO PHI FD RDR FS.
     assert (PLEN : Z.of_nat (length path) <= 131071) by lia.
     ddestruct NHM as (m0 & HM0 & MU0 & WM0).
     pose proof (u64_range sp0) as SPR. pose proof (u64_range pathp) as PR.
@@ -74,7 +75,7 @@ Section Tail.
     assert (SPal' : (bv_unsigned spw mod 16 = 0)%Z) by (rewrite Uspw; subst msp; lia).
     assert (LOlo : (0x10007fff7fff < lo)%Z) by (subst lo; rewrite STKLO; lia).
     assert (LOhi : (lo + 16384 <= bv_unsigned spw)%Z) by (subst lo; rewrite Uspw, STKLO; subst msp; lia).
-    assert (LOdeep : (bv_unsigned spw - 8388608 <= lo)%Z) by (subst lo; rewrite Uspw, STKLO; subst msp; lia).
+    assert (LOdeep : (bv_unsigned spw - 6144512 <= lo)%Z) by (subst lo; rewrite Uspw, STKLO; subst msp; lia).
     assert (STKHIlo : (bv_unsigned spw + 128 <= STKHI)%Z) by (rewrite Uspw; subst msp; lia).
     assert (STKHIhi : (STKHI <= 0x800000000000)%Z) by lia.
     assert (SCS : crange CS lo (STKHI - lo)). { subst CS lo. rewrite <- HS. apply (hcs_stack _ _ HIA h). }
@@ -119,7 +120,7 @@ Section Tail.
     assert (Plo' : (bv_unsigned spw + 128 <= bv_unsigned pathp)%Z) by (rewrite Uspw; subst msp; lia).
     assert (Phi' : (bv_unsigned pathp + Z.of_nat (length (path ++ Z_to_bv 8 0 :: extra)) <= STKHI)%Z).
     { rewrite length_app. cbn [length]. rewrite LEX. subst L. lia. }
-    assert (PL16 : (bv_unsigned pathp + L + 16 <= STKHI)%Z) by (subst L; lia).
+    assert (PL16 : (bv_unsigned pathp + L + 11 <= STKHI)%Z) by (subst L; lia).
     (* [comment removed for export] *)
     assert (SHRD : forall c, CS c -> exists b, bytes_at asegs m (shadow_of AL c) [b]).
     { subst CS. intros c Hc. destruct (hm_shadow_rd _ _ HIA h [(buf, 65536)] [] m0 c HM0 Hc) as (b & Bb & _). exists b.
@@ -144,7 +145,7 @@ Section Tail.
       pose proof (stage_B2 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH pathp path extra eq_refl BYbuf NZ WIN8 Plo' Phi' PL16 PLEN SHRD CSTOP N5) as N4.
       pose proof (stage_B1 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD pathp path extra Plo' PL16 N4) as N3.
       pose proof (stage_A2 AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 TMw MAPD ZSH pathp path extra eq_refl BYbuf NZ Plo' PL16 PLEN SHRD CSTOP N3) as N2.
-      exact (readerr_tailA AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' HKh FD lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl TMw MAPD pathp path extra eq_refl Plo' PL16 N2).
+      exact (readerr_tailA AL CS KI IMG ALWF CSOK ASB Kh Km spw mo SPlo' SPhi' SPal' HKh FD RDR lo LOlo LOhi LOdeep STKHI STKHIlo STKHIhi STKHI64 SCS FCS Rg m can tid wp0 rp0 wp1 rp1 eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl eq_refl TMw MAPD pathp path extra eq_refl Plo' PL16 N2).
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 End Tail.

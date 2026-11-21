@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-hdzx-A of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record); merger ReallocPrimary.CfW).
    rule 24: no function proved (kind: image rows; a closed computation at reply's image A, fuzz_reply.asan).
-   Reuse search: the row's cgif discharge, YGcfInstHitcgif.v:78 HDZX_cgif (a working branch cc4fb1f2a13); no HDZX
+   Reuse search: the row's cgif discharge, YGcfInstHitcgif.v:78 HDZX_cgif (a working branch); no HDZX
    discharge at reply.
 
-   HDZX is the cf layer's YGcfInstHit.v:154-155 (a working branch ee95275bccb):
+   HDZX is the cf layer's YGcfInstHit.v:155-156 (a working branch):
      forall ly' a, layout_ok ly' -> im_img_cover ly' -> ag_dzone ly' a ->
        ~ (as_inst B <= a < as_inst B + 3632) /\ ~ (as_ialloc_lo B <= a < as_ialloc_hi B) /\
        ~ (as_ialloc_flag B <= a < as_ialloc_flag B + 2).
@@ -15,7 +16,7 @@
      flag (the highest of the three ends is the flag's, 0x135b48 + 2), plus the depot's nodes and store blocks;
    - [hdzx_A]: with ag_dzone := ReplyImg_hdzo.DZONE_A (cgif's AGis.DZONE at reply A's numbers, image part [TFIB_STORE =
      0x177f88, 0x5c8710)).
-   Reply A's symbols (A/AF0m.v:17-20): TFIB_INST 0xa2a58 (+ 3632 = 0xa3888), TFIB_IAL_LO / HI 0xa72c0 / 0x1282f0,
+   Reply A's symbols (A/AF0m.v:18-21): TFIB_INST 0xa2a58 (+ 3632 = 0xa3888), TFIB_IAL_LO / HI 0xa72c0 / 0x1282f0,
    TFIB_IAL_FLAG 0x135b48. The blocks are apart from the image window by layout_ok's lo_disj (static_extents indices 4
    (NB), 5 (SB), 9 (ly_img), Reusable/YG0f.v:297-302, the same order as cgif's), and the window covers the image
    [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x5fb000) (img_cover, A/AF0x.v:54), which holds the three objects. *)

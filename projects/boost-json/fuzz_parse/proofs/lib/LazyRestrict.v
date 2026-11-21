@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, lemmas added for the revision, the launch's channel reader. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -156,7 +157,39 @@ Lemma interp_eff_accesses_restrict : forall t m c m1 rs,
     /\ (forall x, hid x = true -> m' x = m x)
     /\ ranges_visible hid rs.
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["HidSem"] "#%2Ip'0h02m'h11Hh21xi001xh32H0h42Ekh52H1h61mi011mh71ci021ch81eh92m1h:2rsh;3Hinh<2H2h=2H3h>2c0h?1oi031oh@2ErhA2EshB4HvishC1ai041ahD1ni051nhE2n'hF4HhidhG2HkhH1bi061bhI2c'hJ3m''hK2H4hL2a'hM1li071lhN3HrshO2IHhP2a0hQ<access_valuei08!s60hR?!s5%ed_rangesi09!s93hS1khT2m0hU6resulti0:!s0&hV3rs'hW1thX4HlenhY2HxhZ2bsi0;2bsh[1pi0<1ph\1vi0=6reportp%0p%1p%2p%3p&0p;1p;2p;3p;4p;7p;6p;5p;:p;8p;=g003<j1aTg003aj1~Tg004?j1jTg00jUR0j1rTg00>:k101Tg01VDS00j2zTg00hDS01k10>!s?$dR1k10:!si$bS02j30Tg01WlS03j22Tg01XFj1|Tg00=Zk10?!s9$nj2KTg00YGj1tTg01Z6j2DTg00L^S04j29Tg01[Ej3=Tg00<?j2JTg011mj3bTg00bej3?!s/$Jj4TTg01\Lj4nTg00`:j7\j6LTg00J@k703j6Hm:09j8^m=0;!sS$fk10!tl$]Nk10ATg00l;j2_Tg01^Vj1}Tg01_>k10@Tg01`Fj1{!s/$nj1yTg01aVj1xTg01b>j3w!s/$fj1!vL$Iej4OTg01cij1vTg01dij37Tg01f4j2fTg01g8j2d!uH$Kj2YTg01h?k50!ud$Xgj38Tg00ggj6gTg01iVj4sTg01Oej4PTg01j>k40!sK$5<j2iTg01kPk20!t4$lTj2hTg01R4j2o!s/$Tj3ck40!wc$mQk406Tg01ngk605Tg020;m:04!s0$ej4XTg021Ej4qTf5R2f4R3g021nR4f3R5f2R6f1R7CXf0R83='Kp=3A7567=038p=6g00QER9g00QeS05708p=[A02351D78,96'9p=EA7356=027/98p=RP4P6P7P8CXp=5A=678,K5p=>f6R:A=356,K2;0!sS%MP4P5P6P7CX==38p=W1K67=058p=VP:P2P31K5!su$Egp=UA0478p=`19!tM$p=SA056!sr%<A=567,K390:2!s8$BP6g00KaR;!t^'4!u-&,95p=CP6g022WR<!sE$qp=mf7R=P5P;!ta&8389=:2'Kp=@P6P<P7%v!sO$:1K789056p=l!sy&p=pA0:23!t_''9p>0<A86789=35,K2p=;A85679=23,K:=0=8p=FP6P;P7%1!tn$G!sV+p=u!tW1p=k!w@%9!w@+eA0;78p=Z1i78,h69c3597:2p=N!s8-p=A!s4&p=I!w4%P8H009023p=QAc6789735p=]g0235S06Q0!vW$<#a#a#aR!s-&#~R>#jR?%~<#jS07#rR<[R@g023]RA$01RB1z4@RC$0>RD$0:REp,4segsRFP3p,4rmemRGP5O1S08PDPCP@!t\%E3S09D6PEPF!xc$!sA%3P8P6E3S0:P@P5PGP8O1RHp,3hidRI!s4$J#[RKP6P7O1RLP=P7O1S0;50<[^2?PIP6EES0<ERX0@,2@[]:^9@^74]6S0=WWPEPF%|3Q08Q09D6Q02PE!tJ&2PGP3O1S0>&0?ARAE3RMPDPCA5@23S0?P5C>RN90E7!sY%f9ROf8RP55@PA!sj&=P8P2E3P@P:PHf:RQP7O190<L\K!tl%2EEFM!ti&P8!sZ$!we$DWRR,KDRS90EM!ta+:PGP2O1S0@PADW!t[&35S0AP6C>RMCVPEPBP1PDPBP8Q01PCPBP8P8n101104000120108109S0BPAPA!s@%100031010:0000X8!t?'=PGP:O1S0C!t?$NP8FUA0BA5PEP@!t6$@!t6'!s/$0P4P@P@P7P8n200110<!tB'2103!tU6RNP9P<PJQ07#tPOP8O1n!t]$0002!t[$C?RJPJ!tvAPPGP=O1S0D!v7-:2S0EP3C>S0FP7FUQ0D=0@2PEP4!u1$4!u1'4!u1,4P7P7!u1KJPQPQ!tgAOPGPPO1S0G!tg-=:S0HP2C>S0IP6FU1`O=1`QPP8f;RT/`OP4PQPGf<RUO1=0@QRVA0BAQRW!z$&?RX95@5!y}'f>RYP8PUE3S0JP@f=RZPHfAR[!{s%K!z//UEES0L!z2+[X74PGPT!t6$OP8PVP@PGPZO1S0MA0BATRV!tC&@R\95@X!{B+XP8PZ!{B$6PHfBR]!{B3Z!{B-X?@!t'$BPA!su%A5@\[!sr%A5@\8RVP7C>PGP[O1S0N=0@HS0OfCR^!s}0R_1DI7R`3S!t%'XMBP4PY!|2+8PGP\O1S0P!w8'!tz$YPZE3CV!sM+[P]PAE3Ra!tP&[8PA!uq$]O1RbPHfDRcP7O1Rd!tJ+1DIARe'9C<FB!tJ%]1X>4!sy+YPGPXO1S0Q!tH-YPZ!w_%RCVP@Q0P!s>&\Q0N!tO$f!s7$VPYC>RV50E!v=+]^!w1+]P8PA!w1$GP^O1PHfERg!v60/9eC<!v1$Rh!tg%9@PEPDQ0P95@XRi==C!st%iPZC>C!wP+A5@[b!sE08!sE$!tT'^c!tT+^!tT-cO1RiPHfFRj!tV:!tT%:BA0EffP@PhP]A0EaaA0@bbRhA0<dd!xA%f/9eRk'91JEaPhPk1J@bPfPe1J<dVKX2?1z?;RdA4?78S0S;bAg015]S0TA?I56S0UP8!#3:'0W;XE;XL?PeeCT!s$$nW1PYP5P8F\!s0$3!s0&\P2PTK03PUP8ELbKX=WPT!s1$=W<!s;$Hb<W5P8O1b!s+0W3P8O1W3n2002!~Z%010101A0E8M!vY+P=S0V!v\+:P8P3!v\$2PHPO!|;33!|;/6EPSO1P81JEMO1b3!#:D$:P2Q0:Q!#:k+eW1X:BX9@X74X6@!zJ%F&02!#:n'PE&0ADRMP1PDp-0RAP8Q0TQ0Tg00\bRW!#4k9S0Wg00M9S0XPSP8ELQ0TPEPM!#;`'8P5E3ReA0@3HS0YPP!uE35CCRfC<!tv%/_8b3Rk!tk&!u=J%}!u<0@DRhP1PDP!u9%PWQ0T!u4<ZQ!u/1hPeP!t\2f!t2%!t[K{!t[,!u>$%{!s`Ky!s`,!tB%y!s`Kx!s`3x!s`Fg00L@S0[%j7S0\Q06[%j!#B4$2P3O1!vq,PFP=P:O1!sy3[^:B!#AY$^6@[PEPFAw=:2!s_+FQ0>P=%1PCOQ07$01Rf#rRk1Jk8PFQ0@PP%1OS0]CO=0k8P0PfPFQ0DPQ%1TS0^!s=-EP7!x@$EPT%v8Re9m>ZO1PGPOO1S0_57FPDPC1fC8RSPdP?PZ%1YS0`1dC8RWG@S0aPhPM!xt%0!xt'=0000Ph!s<,21110;00Q0I!#6]$!tJ%FPQPZQ0`CORA!tU&ZAm>XeO1=7FT!{Q$!tE%X%1\S0bP!tA$c!tAO!#>C'8P=E3S0dP@PPPHPU!#=/$e!|@/=EES0!zc+S0g]1]@P7PFQ0GPT%1US0hCO1Yf850kPE!vX'A:>Z7O1Q!vN$Q!v0>DQ0V==C:ClQ0`PQPZP6P7I0=PkPA1Yf6Q0`9?IZS0iC<Q04PFPTPY%1XS0j!tE$550kQ0j9?IY!vb-ZP\%1[S0k!ve-\Am>]!ve%Y!ve-]%1^S0lPWG@!vbSA5@U8PQP@PTPHPX!v\%m!v\/QEE!#='&P81Yf290kAPk1Yf:Q0l9?I]!u'+6!tu&cAm>j!tu%]!tu-jfGRe#1S0n!txTVP@PXPHAp_IYK0!x8&[X?k%1]S0o9?I[S0pP[A:>^=O1Q0Q57FPE1JE8S0q!vn$]A:>cPO1Q0PP8D!ty'FPcA:>jQO1Pb!s=-7!u,-efHRb#1!u&@!#?3&[P\E3S0r!{u%!sr%efIR_=:>Z!v/$g!t$'fJS0s#1S0t94?_S0uPWE;!t/BcP8P]E3S0vP@P^PHPe!#8l2]EES0w!{R,x]1]4P7!#H\$EPFPjA:>bUO1Pi1KD8S0yD6!#<E$1fC7S0zPd%1_S0{94?bS0|1dC7S0}!tN+^!tN%~GF!uV+_fKRi=:>X!uV$e!vX-ifLRV#1S10!v[FjP8PcE3S11P@PgPHP_!uR01DIcS12'9C<S13!uW'!uT$!#K%'EPFQ0sA:>V\O1PGPbO1!t'$7P8C>S14!ua'A=C67R0,fCS15PdfMRA#1S1694?VS171dC0S1!#SJ&bPePjE3S19!uj-AfOS1:=:>^O1R0=7Fi!um'Q1:fPRa#1S1;54?Rl!xEEQ0sP8PbE3S1<P@P_PHPA!xF3bEES1=!um/^RBP8!xA$0PGPiO1!#9t&!x:%RS1>PdPl1dCRS1?!uC&iQ0sP_E3S1@GF!#TA'Q0APdfQS1A9G?aS1BP6E;RR!sZ%fNS1CPAPVE3S1D90E7S1!{C+fSRlfUR0=:>_O1Q1A!#9Q%!{G$VRm#1S1F94?0S1GPWE;S1H!xuBaP8Q1CE3S1IP@Q1:PHPlP7O1S1J!v--Q1CEES1K!v/'[P!wu'V!uZ$E3S1L90ER!uW'?PdQ1AfRS1M5G?S1NP5!sW&APVPiE3S1O!xN$!#U:,BfTRR9G?lS1P=8d2RnPn!#QJ;Q0EQ1M=!sT$Q=8d3Ro5=CQ1D!#U/%oV!#U/-PNP=P=!ss:S1RPDQ0H==Cn!y8&1:Q1CPAE3S1SP7FUQ1C90@:S1T!#Sz-PJPOPO!s|<U!v%%VPd%10S1V94?RS1WP:Du!wC'!t7%E3S1X!#SE$PaS1YQ1A,`OS1ZP8Q1M,`QS1[P4PlA0@TlS1\PdP?fYRJfZRn#1PTDk=0BlS1]!|>+nf\RN=:>aO1RofXRp!y>/]Rq#1S1^94?NS1_!|?EfWRrP8P0E3S1`P@PmPHPn!|@30EES1a!y7+[X74Q1M90@QS1bP8Q1\P@PRf[Rs9G?nS1c=8dU=0BRRt!u,+sQ1A9:>qO1Ru=7FJ!u%+^Rv#1S1d94?qS1e!{A%f!{ABpP8PmE3S1gP@PrPHPs!u&3mEES1h!u&+X?@Q1]P8PtPBAG?sNS1i=8dZ!tn+NQ1M9:>vO1=7Fn!tl+_Rt#1S1j94?vS1k!tl%l!tlBJP8P7E3S1m!ty$HPN!#Q51`C<S1n!tk'!#Us$rPEPFPuPGPJ!#6j%@P8PXPYE3S1o!#4=$A5@7\S1pQ1e=8dXRu5=C!#?a%JpS1qPrC>S1rCV!uM+vf`R`=:>RO1Rw=7FN!uP+aRx#1S1s94?`S1t!yACA5@s8S1u%1`S1v94?tS1w=8d[RyA0@nHS1xPv!u]0S1yPIPyCC!#W/+]4XI4!u^$oPGPp!u^+r!#XH$S1z!#9N'5@pXS1{PdQ1_PY!xe+r!xe%|GF!s5$!sR'n8S1}PdQ1kP\!s9'JRoPpC>S1!#<P$FPwPGPN!tB+sP7P[E3S20!tB$!vM%`fbRw=:>m!xu$vRz!vM+cR{#1S2194?wS22!vMFq8S23%1wS2494?xS25=8d^R|A0@NHS26P`!vM127PIP|!vM-4]1XJ!#Xo$1q==CuQ!xI&FPqA:>tlO1PGPs!uH&oP\C>S28D6PBPy!v8+NsS29PdQ1tP]PDPCQ29P8C>S2:!#<r,xA:>{r!uj$tRo!uj+dRu#1S2;94?{S2<!{c$2=!umBv8S2>Q22=8dc!uc$qHS2?Px!uc2@!uc21X:B!y~'nS2APyC>Ry=0EyPvA:>x0PqPNPsP]P7O6PEP!w`$Q23P^C>S2BQ26Q271DI^S2CEe!s{%Q03P@PEP!uH$Q2>PcC>S2DQ2?Q2@Q12!sN$!u{+wA:>up!u{$`!uy+eS2E#1S2F94?uS2!#<h$2H!uzBt8S2IQ2<=8dgRoA0@vHS2JPw!uz2KPIPo!uz,!#?j%{Q2E=:>JO1Px!zj&`P8PjE3S2LA0@tHS2MP{!#CY2jS2N3SERQ0!|p%uffRo=:>nO1Pw!sn&xP7PeE3S2OD6PG!sh%@`S2PP5P7O1S2QPuP7O150<!s}'eS2R3S!vC+ofhRz=:>N!vF$uRy!vH+iS2S#1S2T94?zS2U!|0F{8S2VPdP?fgR|%1zS2WP_DkR}A0@wHS2XPo!vP2YPIP}!vP0!uO%{P5P_E3S2Z90EyQ0>90@{S2[P:!uN%\P|!uN/Q0s,DIS2]3SQ04Q0@90@uS2^Q0;Pz!uw2iS2_'9!uw'fjS2`flS2a=:>`!u{$!#3&'Q2afmS2b#1S2c54?S2d!u{F|8S2e!u{$kS2fQ2a#1S2gPADkRyA0@oHS2hQ2!#322i!#6Y0P8Q0D90@oS2jP@Q0GPEPFQ2afnRy=:>wO1PGQ2`!#5S&Q2SP8Q1:E3S2kD6!|,%`=5@7S2lPdfoS2m#1S2n94?yS2oPaE;R}=0E}PZ!vo%pPy!vF/S2qQ1A!vr$r!vK-pR}frR~=:>o!vI$!yD,sS2s#1S2t94?~S2!#NpAQ2b=5@8S2v!vG$qS2w%1~S2xPlDkS2y5=CClS2zQ0YP}!to%{!vK-|Q2y7pIS2y3S!#v`&1]4!#hL$FQ2fQ2b=:>x!vD%S!vD'PzQ0G!#CJ$2}!vD'SQ0_55@S0_PdQ2b%1yS2~54?S30Q1:E;S31Q3150EQ0eQ2b!yc2aS31'9Q04Q2qQ2rQ2zQ0M!#m]$MQ!tm,P8Q0mQ2{!s`-RS2{!#HP%2m=5@XS2yP0C>S2z!}S+!#Sq'fvS2qfwS32#1S33!tm$4!zJCQ2w!w'$35fuS36Q2q5G?S37=8drS38Q0OftS39!zG13:PIQ38!zH,X6EP@!#9t'}\S3;Q39Q36#1S3<!tX$==8dmS3>!sJ'8S3?Q3>C>S3@Q0P!v,%PQ2s!t92APIQ3>CCS3>FMX0@PX!u,%yQ2sQ39!t|$B=8d0S3CC>S3DQ3D!wO$QQ0Q50@S3EQ0KP~!zw03FQ3C,DIS3C'9S3G'9Q3D,JEQ3EQ3GQ0Q,J@S0QQ!sN$P7Q0SQ385bdg00mUS38Q34A4?67S3G50dQ3G=bdpS3DQ0UP8Q32fxS3H!ti$IA4?56S3J50dQ02PdQ3HfyS3K!sD$HA4?:2S3L90d7A?I=:[S3MP8Q!s@$35S3N!t-$KfzS3O!sY$KA4?23S3P50dPdP;Q00P?P;P;P8!#zx46105X8dS3QQ3Of{S3R#1S3S!wW$OQ3LP8EgQ3S/Z2PdP?!sq'?P8!#y`4!sq+SQ3Rf|S3T#1S3U!sq$VA4?=:S3WP7EgQ3R=0?=Q3T=0?PP8f}S!s8$OP?PQp+01AS3X#1S3Y/ZQS3ZA?IUTS3[[XH?p+01@S3\#1/ZOP8Q3ZP;p+01BS3Z#1S3]A?IZ8XD;S3^P?PUPFPGf~S3_O1S3`P8p+01CS3a#1S3bCOQ2q,Yf50k!yI$3_PGQ1CO155@S3cPdP?P7p+01DS3d#1S3ePuG@S3fQ3f50Ep+01ES3f#1S3g9?I6p+01FS3h#1S3i94?5A4?\X50dp+01GS3j#1S3k9?I[];]B]1]@XC?PFPGQ3RO1S3lPUQ3]COQ36!td/RPGPA!tc&m!tc$ZQ3bP{G@S3nQ3n50EQ3e9?IYQ3g94?XA4?XY50dP;Q3iQ3k94?[A4?[8!tY&HS3n#1S3o9?I]];XE;Q!t~$\S3pQ3p50dP6W;PXP2P8F\W;WBW1W@Q3XP5Q39P]PyPPN:09!#sx+Q3_!#sy6!#ss1<!#u<$101Q3P90d8A?I:2[X[dQ3NO1S3pP8Q3P,JdO1S3qb3W;P8O1Q3J=bdJP2P3P5P8O!s=&S3r!zA$!s{%2110!s3&W3!#vD$Q3C!#vE'!#5z%3;==CmS3C,fCS3sQ3=Q3C,dCS3C58dQ3@Q!#3K%,2@eP~Q39=:>zO1=7F}PTEHWNWFP7P8O2!tI+1012!tR&W3W1W4P|P8PZPUG^W3!sR@G!sD?X0@!sE+1!sE,!sF%b8W1PJP2P7F\W4!#x]%8P7G^!tO$XP2PUPTG^P0!wg$KW=!#xa%=W<!w{$!#xkRQ1O90E8!#Vo,Q1MA:>Rb!v:$a!#`&+W!#_tE1:!#||$S3>P@Q1CPHQ1M!#TX2AEES3@!#TX+6EQ1LO1P8Q1O,JEO1S3tb!w7$XVBXJ@XI4!vn-10<!vO'2103XQC!sC&!$/1%!sB&8109XUDP8O1P^A:>gOO1Q0N57FS0N=0Eh!u$%P[P\PXE3R>90EhS3uPEPhQ0ZQ0XQ0rP8ELS3vQ0TQ0x/_8S0x!tg%Q!sj$MA0EM>S0NPEPMQ0W!s[-0W!s[%!sU%!#\E&1031110:0101P8P=O2b4bTWBPFPYP[Q0oCOP8EH!yt?bPW1W@XZf!uP$FQ0CPO%1QR>CO%tf50kQ0F!uA$0x!uA/I!td%X!td$g/_8!tg$@!tg%301!#mE$7!te$6O2b@b?!#vc$OP=!#x,AWOWSXC?WDQ0[Q0\Q06Q0=PEPFPPP=P:P2Cs!#wM0PQ0]CPP91J9!#wC%OP>CP=098P9!#w=$TQ0h!s8+!#w8+FPQQ0GPU%1ZR>PZPTFN!#sc>h!$6r,1!#vi,9!sq%PYQ0jCP!t&+U!s9&PXPZFNQ!#vS?!t#2dQ!#u{+Rk]1]A!#uz$CPQQ0^CPRf#[!t6+O!uX'PUPQ!#Z?+P?PUP>!#l\>Q0F50EP>PPPUP7H08!w&$UP>CP#[A?IU>'9!#u{$O!#y;$P#[Q0i!uh+TPXQ0bCPR>!tZ+Z!s;&P\PY!tY0\Q0k!#sqA!uz0!#Cb%Q8PPP@POPHQ2p!~S/P!#ua-%[>P9Q05Q0p!tk&!#sC&XP^%1cS05PcP]DAS0b97F[!tf-c%1gS0iPWG@R>!wgMJQ0L!#3x+H9Q0k9?I\Q0o1i]\RH+07Q07Q0o/hH'oQ0o'ZP@PGPYO1Q0l?I^[RH7c]!tt%A7F[8P!tL<Q0R50EX?@P:PGAcY]HO1R>PHPYP]P;Q0lA?I^8XD;P7Q07/oHP8EHH06EL!#7%&A7F\>!uk-^Q05!#reEZPUPTDWClPGQ0bO1!vY$EQ!#wk&PGP\PcQ0iPgP^DAO1!#wr0PGP]PjQ0nPePg!sE2!#K/'Q0|!#8U>Q!#we0FPePgP_Q0tQ0sPb!yw/Q0s%1i!{TAvQ!#w5+R>!#w43PGPcPbQ0{P_PeDAO1Q!#w8+Q0zPdQ0uQ0}Q!#vp/FP_PePiQ10PVQ0s!ta,Q17!uP@11Q!#v:@PGPbPVQ16PAPi!t]$!#v4+Q15PdQ1C9G?AQ18Q!#ug/iQ1:Q1;PaQ1CDARi97FA!td,B!tdA<Q!#u1:A!#u13Q1>!sx$Q1?Q!#ts4Q1NP6E;RiQ1!x0/lQ1AP0Q1FPmPR!x0/Pm%1r!x/@1IQ!#sm/Q1L90Ei!#s^/QP5Q!#sE5Q1W=8d2RiPi!#s=@P=8d3Re!#s6/eVPEP@Q!#ri+iQ!#rY&TPEP4Q!#r,,Q1GP:DuQ!#qk$Q1YQ!#qa$[P4PlQ1\Q1c=8dT=0BlRi!v5+pPNQ1^PqPsDAS1^97FnQ!#o&<Q1`Q!#p]3!#pV+Q1i!#pN'e!t1+JPqQ1dPvPNDARV97FsQ!#nF<Q1gQ!#oc0P8PePBQ1_!#o[/FPNPnPvQ1jPtPq!{c/w!y}AmQ!#n}8sPGPVO1Q!#no&Q1pQ1k=8dXRV!wZ$!#nZ-NP`Q1sPxPtDARe97Fv!tN+25!#WTC1uQ1t=8d[RHQ1xQ1yPIPH!#n'8nPGQ1^O1Q!#mv+Q!#mq$ePYQ!#mc0Q!#m^$wP\Q!#mO'vPGPeO1Q!#mA/FP`PvPwQ21P{PxFNReQ!#j:@Q23!#j5$^Rp!#h}$PIPp!#l^=V!#l^,PGPsPtQ1vP`PvDAO1Q!#lX%H!u,&29!vU%]Q!#lH/FPxPtP{Q2;PuPwFNRtQ!#i4@Q2>!#i/$cRV!#jG$PIPV!#ko5Q2APHC>RH=0EHPvPqPxQ24PwP`DA!#kp'5PEPeQ2BQ26P<PLP`PuQ2FQ2E;I{ReP7EQ!#ef$!#kz4tQ2DQ2?!s\$xQ2E%1oRt?IouRs!s],!#l12FPwP`PuPeD!$5C,Q2EPt!#;uBQ2IQ2G=8dgRtQ2JQ2KPIPt!#kb4!tZ$PsD]Q2LQ2M!tm${P|Q2W?Izo!uG-NEe!#kP'PwPo%1|P|Q2EDAQ2OD6Q2PP<Q2QPuPzQ2TQ2S;I|Rw!sg-!#k<-FPoPuPzPwD]Rw!uP/SQ2`!$5fDQ2VQ2U=8d_R_Q2XQ2YPIP_!uS/Q2Z90EwQ2[P<Q2\P|Q2fQ2gQ2aQ2`3I!te-!#jQ%2^P<Q0;Pz!sI$cQ2bQ2f3I!u80!#jU,PFQ2`!sS$Pw!wb,Q30!~ED2eQ2d=8dARAQ2hQ2iPIPA!u11!#ih/PGQ2`PyQ2nQ2mQ2b!|:%!#i['l!vV%m%1}PaG@RA=0EAP<Q2pPyP~Q2tQ2sQ2w3IRA!u@+RwQ!#iL-PFP}PyP~PA!u@/B!#i8BvQ2u=8dlRA5=CClRzQ0YQ2|?pIARA!#hf9PG!xQ$bQ2~PyQ2a!uC%!#hZ&!#hQ$oQ1:E;!#v%%<!#hD$Q2wQ2x?I~}!wU,!#hG%PwQ2rQ0M=SzA!{A+<Q0mP}Q39Q3<Q36Q2s!uw0Q2{PEQ!#h76Q3I!x0D35Q34=8drRrQ0OQ3:PIPr!#gW7Q3;Q37=8dmRm!s6%?PmC>RWQ0PQ3APIPmCCRm!#f{13==8d0RSC>Rz=0EzQ3EQ3F1DISRS'9Rw'91J!s<$PwQ0QQ3FPSP<P~Q2qQ33Q32Q36!zw%H00Q2sP6O190<8X?<Pw!sM$P7P;!sQ%=?I8XD;Q2EQ07/owPuEHP8J05Q0KP5!#TT$EHXYKX2?Q0S=bdrQ38Q3IQ!#gD%!#g=&HQ!#g,-KQ!#fh$KQ!#fc%OQ!#fS+3QQ3V!#ew'U!#ew&3SQ3TQ3R5G?Q!#eD&T!#eD$R!#eD$Q3_!#eB&Q3]/ZQRrQ!#e2$Q3Y/ZOP8PrP;Q3bQ!#dp&Q3`P8Q3eCP#[!wF%!#dI%Q3gPuG@Rr=0Er!zZ$3aPGQ3XP6Q3iQ3hQ3dDA!#sd'3\PGQ1:O1Q2EE3D6Q3k9?I5!s_%fQ3aP3Q3oQ3nQ3hDA!s['ZQ1AP|E3D6P<PRP7O1Q3hP=p+01KRr#1Rwp+01IRz7Ir!zY+p+01J!sD$y94?:A4?^]50dA?Icw];]F]G]B]4]1]AXC?PFQ!#eQ$b!uX,!#e>'eP{G@R{=0E{!tw%ZPGQ3\PYQ3g!u+%!uX'Q3cPuC>D6Q3i9?IX!sU%dQ3ZP\Q3kQ3jQ3f!uN,XPaPo!uM%Q1JQ3fP^Q3n9Iy!u<,AG?]zA4?][50dP;PyA4?cwA4?c!#fH&L#19?Ig];XE;A4?^yRy=0dyP3W;P]PP!#f=%FWGWBW4W1WAQ3ZP5Q2qP]P^P}PbPYPPN=0;!#fI-\!#fIQpQ!#f&-!#ekAPS!#ej3sQ37Q3C58dPWPm!#eU+FP~P}Q39PAD]!#eS~!#eS~LbKX=i!#eTc!$=>+FQ1MPaPRQ1VP0PlFNQ!$C7<Q3>Q!#dq5Q!#dgqGP[Pg%1jPjPcDAO197F^R^=0EhQ3uQ3vQ0T1_>8R>!tD%A0E^MQ0NQ0WQ0TP>!#d'?6!#d'$b1bXWBPFPUP\Q0kCP!#d/GAg00f9909fQ0xQ0X!tW$k!#c[$An011060102!t9-AbH!#a+%OPPP=Cs!#c\EW\XC?WDP8N:04WWo"). Qed.
+  induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
+    intros m c m1 rs H; cbn [interp_eff_accesses] in H |- *.
+  - inversion H; subst. exists m. repeat split; auto.
+    intros a' n' Hin. destruct Hin.
+  - discriminate.
+  - discriminate.
+  - discriminate.
+  - discriminate.
+  - discriminate.
+  - destruct (ov_read_bytes segs (rmem m) a (width_bytes n)) as [bs|] eqn:Er; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
+    destruct (ov_read_bytes_restrict _ _ _ _ Er) as [-> Hvis].
+    destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (rmem m))
+      as [[[c' m''] rs']| |] eqn:Ek; [|discriminate|discriminate].
+    cbn in H. inversion H; subst.
+    destruct (IH _ _ _ _ _ Ek) as (m' & Hk & -> & Hhid & Hrs).
+    rewrite Hk. cbn. exists m'. repeat split; auto.
+    intros a' n' [Hin|Hin]; [|exact (Hrs a' n' Hin)].
+    inversion Hin; subst. exact Hvis.
+  - destruct (store_ok segs (rmem m) a (width_bytes n)) eqn:Es; [|discriminate].
+    destruct (store_ok_restrict _ _ _ Es) as [-> Hvis].
+    assert (Hlen : length (Z_to_le_bytes (width_bytes n) (bv_unsigned v)) = width_bytes n)
+      by apply length_Z_to_le_bytes.
+    rewrite (write_to_mem_restrict _ m a) in H by (rewrite Hlen; exact Hvis).
+    destruct (interp_eff_accesses segs k
+                (rmem (write_to_mem m a (Z_to_le_bytes (width_bytes n) (bv_unsigned v)))))
+      as [[[c' m''] rs']| |] eqn:Ek; [|discriminate|discriminate].
+    cbn in H. inversion H; subst.
+    destruct (IH _ _ _ _ Ek) as (m' & Hk & -> & Hhid & Hrs).
+    rewrite Hk. cbn. exists m'. repeat split; auto.
+    + intros x Hx. rewrite (Hhid x Hx). apply write_to_mem_hidden; [rewrite Hlen; exact Hvis | exact Hx].
+    + intros a' n' [Hin|Hin]; [|exact (Hrs a' n' Hin)].
+      inversion Hin; subst. exact Hvis.
+Qed.
 
 (* [comment removed for export] *)
 
@@ -193,8 +226,7 @@ ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["HidSem"] "##23p'0h01oh11ah21mi002h
 
 Lemma fetch_failure_restrict : forall m a,
   fetch_failure segs (rmem m) a = fetch_failure segs m a.
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["HidSem"] "##/fp'0h01ah11mh21oi001bi015trapsi021xp;1p;3p;2p;6g003<j12Tg003aj16Tg004?j14Tg00jUR0j19Tg02Ahj38Tg01Vdj1FTg005<j2>Tg008Tj15Tg00;Bj2<Tg01TEj2;Tg029kj1:Tg01_>j1@Tg02F_j20Tg0092j37Tg007oj33Tg02Ggj21Tg019:j1ETg01]Nj1D!t`$bj3?Tg00<?j2CTg02DAj2BTg00J@j6ATg02HDj3=Tg00K<R1#2R2#2#2R3#2R4#2#2#6R5#4R6%63#4#9[%64#4R4#9R3p,4segsR7f1R8f0R938R:g02IIR;#FR<g00QER=P<1>58%52R2'<g00MUR>';#:R?%@;R@P=P<1078%51g00M9RA575RB9358,07'1RCP0P4P=P9f2RDA752ARE535,07%E1#5=75ARA935D!sU%1g00f9RFn10110200021010000'1P@%D;R;n01!s9%20000n!sD%!s4&P=P<P?P!te$!tG%A87D8P1P!sx6,1CP@P!sv@3?X23!uZ$>59/<2/;>#:P!ul'9A359B!u/$!u\&:A358E,07A358A!s@%!uB:!tGA,C<p,4rmemP8O1R;=8791B89EAA=7;9A=7895?<eX06W1o"). Qed.
+Proof. intros m a. unfold fetch_failure. rewrite fetch_half_any_restrict. reflexivity. Qed.
 
 (* [comment removed for export] *)
 
@@ -207,7 +239,24 @@ ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["HidSem"] "#$=3p'0h01Hh11xi001xh22H
 
 Lemma step_accesses_restrict : ltac2:(zQ "80!ho1!kje!ksd!io6!koa!kkf!ks1!ik6>3msF$0>4rep1@1$1$0>0@3$3@1$5@1$1$0@2$2?4segs@2$7?3hid^2@2$4@1$1$0^1@3$6^3^2@2$2?4segs^3").
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["HidSem"] "##K7p'0h01Hh11oi001oh22H0h31wi011wh41bi021bh51eh61mi031mh73msFh84rep1i046resulti053st'i065trapsi071xp;1p;2p;3p;4p;6g00hDj1WTg01VdR0j1ITg02JPj29Tg02e5j2ETg01Xnj21Tg004bj30Tg02f:j12Tg02g7j2STg003<j1;!s/$aj1?!sS$?j1FTg00jUR1j1KTg02K\j35Tg02Rfj13Tg02<Rj3>Tg02EYj3:Tg02HDj34Tg00=Zj1VTg01[Ej3UTg01_>j1HTg01]Nj1GTg02[Hj36Tg02h9j4CTg02iWj2RTg00`:j6<Tg02jnj2QTg02lFj2PTg005<j2OTg008Tj1@Tg00;Bj2NTg01TEj2MTg029kj1LTg02F_j2=Tg0092j3ATg02Ggj28Tg02Ahj3BTg019:j1JTg00l;j2DTg007oj3TTf3R2f2R3f1R4f0R53T'=p=7g02IIR6%W6R7%I7R8p,4segsR9p,3hidR:/94'E117530%23,S9g00K<R;#;R<#;#;#;R=#;R>#?#FR?#KR@P1P?!s&$8P5f5RA,9:=595RB!s;%p,4rmemRCf4RD#3REO1RF%2DRG5>9RHP!sM&A:9FGPBP0P6P8A49FGg023]#V9U65,17RF%H7RI%G7RJn1011070003101050000!s:,21010100RK!s:5!s851172RL508!u9&4f6RM!u6$N!s8%%3ARO%2ARP5>9RQPN!t~+OPPN!t~+OPPFPIP!tjJ!s8G96AD]0P5117DRN908BPMP4PAP5CCW0X3?P5O1!u+&C%32O1RR%22R25>919:D!u;$D!t|+R2PD!t|+R2!t|a1173508P@PH!xi'19:!vV%!s8'CPOO1RO=:9PPH!vFl=08NX1@P5A>9EGRN1REGE<!tA&NPBPK!sZ8LPQP!zh18RQ!zh'L!u$'f7RK#3RBO1RN%2KRG5:9REPL!u4+NG!u4=RN!vXJMRO!z-/9RP!vV/%3QR2%2QRR5:9RD!vY-2R!vYa96QK!yg&KRH908LPPP4PQ!yg:MO1RS%2MRM5:919:K=595!t[+SM!t[O117A!yF%E!yF-P!sx,PCP2O1=49!uZP=08H!x{%:9BGRH1QB!x{,HPLPN!sZ8OPD!x{2;R@!x{':!t_'f:RD#3ROO1%2DRN549RL!ujRPRH!xX/<RG!uh,%3@%2@RB549!yj>R!x57@!~v,2908:PGP4P@!x51!u;&%3PO1%2P!t4@117Q508%I6RQ!{S'P5!sV==082X6QP5A49ONR21PONE<!s^&2!s^@H%;>#?R>/OB%@<R<'Ng00MU'M#Lg00QERB!#8R&PBPQP5%H6RHPBPQf=R2#2RN,=9P9P>PN%@;g00M9RO5A>RLC7'8P1%?=#FR=PB%32=B9NP9P>f>RP#2RCAA><OR<C7!sf$C%J;#@=A>OR;C7'8g00f9R?!w52200'8R:PH%G6REn011060002!x`$010!s#$!s4$!v|@GR!{d$!uN,4P!uK$1=9C!t\%P!u7&P!u2$P=B!s?%f?RC#2RMP!u,'MP!t|$P!tw8PHP!trZ96P2!yj&@RM908IP8PIP0P7p-0RSP5g015]RKg00\bRT!#6c&3!sk'40000X58RUPOPAP5E<PKA6P2I/D5b2W0!uq,%2GRA!x3'A!um1G=B9A!xL%!ug+N!ugQ!z;@MP:P!yv2!shO!~/$P508f@!#3+'!x;'!skL76C!w/&2!}s$!w/%UPOPP!vU':C!vU'A08J2P8PJP0P7PSP5PKPKPT!wC:!sj1J!sj&!tg$2!tg+4O1b4!s<+!s@%1!s<%A6@DReb0W!#4{%0!w2,!sH%1!sBK1!sB21E939634eW0W8W7o"). Qed.
+  intros msF rep1 H. unfold step_accesses in H |- *.
+  change (ms_pc (restrict_by hid msF)) with (ms_pc msF) in H.
+  change (ms_mem (restrict_by hid msF)) with (rmem (ms_mem msF)) in H.
+  destruct (fetch_word segs (ms_pc msF)) as [w|].
+  { exact (decode_exec_accesses_restrict _ _ _ H). }
+  rewrite fetch_word_ov_restrict in H.
+  destruct (fetch_word_ov segs (ms_mem msF) (ms_pc msF)) as [w|].
+  { exact (decode_exec_accesses_restrict _ _ _ H). }
+  rewrite fetch_tail_any_restrict in H.
+  destruct (fetch_tail_any segs (ms_mem msF) (ms_pc msF)) as [w|].
+  { exact (decode_exec_accesses_restrict _ _ _ H). }
+  rewrite fetch_failure_restrict in H.
+  unfold fetch_failure in H |- *.
+  destruct (vdso_text_at segs (ms_pc msF)); [discriminate|].
+  destruct (negb (bv_unsigned (ms_pc msF) `mod` 2 =? 0)%Z); [discriminate|].
+  match type of H with (match (if ?c then _ else _) with _ => _ end = _) =>
+    destruct c; discriminate end.
+Qed.
 
 (* [comment removed for export] *)
 Theorem step_restrict_by : ltac2:(zQ "h50!ho1!io6!h9!jc!jk3!kje!ig0!l9!hja!jq6!koa!km1!kkf!hk3!ko4!kn1!kte!ksd!kp7!ik6!il4>3msF$0>3ms1$0>0@3$1@1$c$0@2$h0?4segs@2$h3?3hid^2@2$a$0^1@2$e@1$5$0\3rep@1$5$0@2$4@3$1@1$c@1$5$0@2$h1?4segs^4@2$a@1$5$0^1@2$4@3$1$0@2$b$0^1@3$h4?3hid^4^3@2$4@2$h2?3hid@2$f$0^1@2$4>1x@1$3@1$2#k0>0@3$1$7@1?3hid^1$9@3$1@1$8@1$3@1$2#8@2$6^5^2@1$d@1$3@1$2#8>1x@1$3@1$2#k0>0@3$1$7@1?3hid^1$9@3$1@1$8@1$3@1$2#8@2$6@2$b$0^3^2@2$6^6^2").
@@ -357,8 +406,7 @@ ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##B]h01Sh11zh24__p1h34__p2h44__p
 Definition eager_used : ltac2:(zQ "20!m7!mme>1m$1$0") := ltac2:(zQ "60!mme!mn7!mo5!mp2!mpe!mr4\1m$0@1$1@2$4@1$5@1$3^1@1$2^1").
 
 Lemma vm_backing_used_split : ltac2:(zQ "d0!ki5!io6!h9!m7!mme!ms6!lre!mtc!muf!q3!lt1!iq6!jc>1m$4@3$1$3@1$7^1@2$9@1$8^1@2$a@1$b@2$0@1$c@1$2#k0@1$5^1$6").
-Proof.
-ltac2:(KReplay.run1 (kr_t_LazyRestrict ()) [] "h01mp;1p;2g048Lj19Tg003<j10Tg003aj12Tg004?j11Tg049Wj18Tg01R4j27Tg006ij13Tg03`Cj24Tg00;bj25Tg00<?j26Tg04:Wg00J^f0R0#9g00K<#0#0#0#0#0#0#2#1%80'7#3g03j?'4'5'6W0o"). Qed.
+Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Record lazy_inv (L S : list (word * word)) (m : Model) : Prop := {
@@ -372,41 +420,49 @@ Record lazy_inv (L S : list (word * word)) (m : Model) : Prop := {
 Definition same_but_materialized : ltac2:(zQ "10!mme>1m$0>2m'$0P") := ltac2:(zQ "50!mme!io6!mo5!ms6!mvc\1m$0\2m'$0@3$1$0^1@3$4@1$2^2@1$3^1^2").
 
 Lemma same_but_materialized_refl : ltac2:(zQ "20!mme!ngf>1m$0@2$1^1^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##-=p'0h02fdh12fsh22ioh34lazyh43limh51mi001mh66m_fsysi01!s0&h74m_ioi02!s-$h85m_limi03!s/%h96m_proci04!s0&h:6m_timei05!s0&h;4m_vmi06!s-$h<4mapsh=3math>4!s\$?2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;2p;7p;1p;3g04;Mj21Tg04<cj73Tg003<j10!s/$aj14Tg004?j1;Tg01VDj2:Tg00>:j12Tg04=Yj35Tg04>Qj16Tg049Wj17Tg04?Ij38Tg00<?j29Tg04:WR0P0f0R1/11P1g04@Gg04A?R2P2g04B7R!s,$oR3g04CgR4g04DaR5g04EZR6f7R7f5R8f4R9f3R:f2R;f1R<P1F3R=/1=]:]8]9]6]7!t+$FTg00K<#0!s$-4#;R=/:=#2%2=f<f6R==578P9P:P;P!sq%7#6%77;87,90X?6X45X>4X13X22W=W3W<!sP%O3n0110800013010:10910;W;W0P=P!sy-O7!sO$0000170107106102101104103105W5o"). Qed.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma same_but_materialized_trans : ltac2:(zQ "20!mme!ngf>2m1$0>2m2$0>2m3$0>0@2$1^3^2>0@2$1^3^2@2$1^5^3").
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##29p'0h02m2h12m3h21Hh32m1h42fdh52fsh62ioh74lazyh83limh96m_fsysi00!s0&h:4m_ioi01!s-$h;5m_limi02!s/%h<6m_proci03!s0&h=6m_timei04!s0&h>4m_vmi05!s-$h?4mapsh@3mathA4!s\$B2tmi061mi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;7p;2p;3p;6g04>Qj10Tg049Wj14Tg04<cj73Tg003<j12!s/$aj1>Tg004?j1=Tg01VDj2<Tg00>:j18Tg04=Yj35Tg04?Ij36Tg00<?j2;Tg00J@j6:Tg04;Mj29!sn$bj3?Tg04:WR0f3R1f2R2f1R3f0R4363?p=1%02?634p=7P0P3%02%43R5P2C1R6P2f4R7#0%42R8P7C1\6[^10^00P4g04@Gg04A?R9P9g04B7R!s,$oR:g04CgR;g04DaR<g04EZR=P3f9R>f7R?f6R@f5RAP7P1P2F3RB#0P5PBC1P2f;RBP>f8RCP?P@PAP7F3RD#0P8PD!tN-]=];]<]9]:!tX$FTg00K<#2!s$->#=R6/<6#8%86P3f>A5>C!sz&!tF&6!tF$6C1P0f?f:R6?5>!tF+P1F3RD?78DRDP2%04P8P4C1P1fAf<?5B6P>P!sS&F3RE#0RF%41RGPEC1[X0!vk$DP5PD!t,$@A5B6!sW+!uL$?#0RC?6G?RG?78GRGP4PF%44PEC1X10%4G=6C?,;0P2P4E:W2!s-'X10X00XB=X8<XA;X5:X69W@W7W?P2P3P4O3n0110800013110:10910;W>W4!uv,!sO$7!sO$6000171107105101100103102104X301923R31972\3!wF&^30eo"). Qed.
+  unfold same_but_materialized.
+  intros [fd [maps lazy mat] io fs proc lim tm] m2 m3 -> ->. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma same_but_materialized_fields : ltac2:(zQ "h70!io6!jk3!h9!mme!ni8!nj0!nja!nk2!nkb!nl5!mo5!mp2!jc!r5!m0!nlf!nma!nn5!no0!noc!np9!nq6!ngf>1m$3>2m'$3>0@2$h6^2^1@2$1@3$0$f@1$4^2@1$4^3@2$1@3$0$h5@1$b^2@1$b^3@2$1@3$0@1$d@2$e@1$c@1$2#k0@1$c@1$2#k0@1$a^2@1$a^3@2$1@3$0$h1@1$6^2@1$6^3@2$1@3$0$h0@1$5^2@1$5^3@2$1@3$0$h3@1$8^2@1$8^3@2$1@3$0$h2@1$7^2@1$7^3@3$0$h4@1$9^2@1$9^3").
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##61p'0h02m'h11Hh22fdh32fsh42ioh54lazyh63limh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;2p;1p;3p;7p;4p;6g04;Mj2ATg04GKj1;Tg04H>j13Tg003<j1=!s/$aj1HTg004?j1GTg01VDj2FTg00>:j1BTg04>Qj16Tg04I5j17!s/$hj15Tg04J]j18Tg04KRj19Tg04LFj1<!sw$bj30Tg04<cj7>Tg04=Yj3@Tg049Wj1ETg04?Ij3CTg00L^j22Tg00<?j24Tg00bJj4:Tg00J@j6DTf3R0f2R1f1R230f0R3'2p=?f6R4f5R5f4R630A0012/2!sA$1g04:WR7P71A23g04@GR8%;2R9%;1g04FTR:%32R;%31g00K<#=!s$-H#GR</F<#BR=%62R>%61g04B7R?%72R@%7!s5$oRA%52RB%51g04CgRC%82RD%81g04DaRE%92RF%91g04EZRG%<2RH%<130C?F1F1F1[^07P3g04A?RIPIf8RIP4P5P6P0P1P2F>/A3P8P9f9R9f7RJ!sC,F>RK#;P:P;%3KP=P>%6KP?P@%7KPAPB%5KPCPD%8KPEPF%9K%<K90GH!tG/^<G^:E^;C^8A^9?P3%B<f=A@IJ!tQ47f>R<A@9I!tP1H#6RK%E2RF;CHRDP8%;3f?f:?@9IP!sQ+F>RJ#;P:%33%3JP=%63%6JP?%73%7JPA%53%5JPC%83%8JPE%93%9J%<3%<J50G!u%'X07A08<<ACIFH#3%3HRF50:RJA0=IIR9A0?44RBA0A55R@A0C66R>A0E00R;A0G11RL'2RM'2RN'2RO'2RP'2RQ'2148<PJPQ14:FP9PP14=IPBPO14?4P@PN14A5P>PM14C6P;PL14E014G1C:!s$/P8%;D%;HP:%3DPFP=%6DPKP?%7D%7HPA%5D%5HPC%8D%8HPE%9D%9H%<D%<H!u\-eP2P3EDW1X07XAGX6EX@CX3AX4?W?X5=X>:P1P2P3O3n0110800013110:10910;W=X28!yZ/P3O7!sP$0000171107106102101104103105W7o"). Qed.
+  intros [fd [maps lazy mat] io fs proc lim tm] m' ->. cbn. repeat split; reflexivity.
+Qed.
 
 Lemma same_but_materialized_halted : ltac2:(zQ "70!mme!nr0!hja!io6!h9!ngf!jc>1m$0>2m'$0>0@2$5^2^1@3$3@1$2@1$6@1$4#k0@1$1^2@1$1^3").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##02p'0h02m'h11Hh22fdh32fsh42ioh54lazyh63limh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;2p;1p;3p;7p;6g04;Mj25Tg003<j11!s/$aj1;Tg004?j17Tg00jUj1?Tg04M;j10!sA$bj34Tg04<cj72Tg01VDj2:Tg00>:j16Tg04=Yj33Tg04>Qj18Tg049Wj19Tg04?Ij3>Tg00<?j2=Tg00J@j6<Tg04:WR0P0f1R1f0R2'5g00K<#1!s$-;#7R3#?R4%01R5f2R6#034[^00P2g04@Gg04A?R7P7g04B7R!s,$oR8g04CgR9g04DaR:g04EZR;f8R<f6R=f5R>f4R?f3R@P6P1F2/52f9RAf7RBP=P>P?P@P6F2#09445[^00]<]:];]8]9!tF$FT1:33#6%63f=A3<B!s[+!st&P0f>A3A<!su0R3#8%91;>3%02f?f:?3A<P!sI+F2#0544X00%03,=4P1P2E<W1X00XA;X6:X@9X38X47W?W5W>P6P1P2O3n0110800013010:10910;W=W2!tJ,!sO$7!sO$0000170107106102101104103105W7o"). Qed.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
 
 Lemma same_but_materialized_fs : ltac2:(zQ "50!mme!nrc!io6!nuf!ngf>1m$0>2m'$0>0@2$4^2^1@3$2$3@1$1^2@1$1^3").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##0'p'0h02m'h11Hh22fdh32fsh42ioh54lazyh63limh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;2p;1p;3p;7p;6g04;Mj25Tg04N2j10Tg004bj34Tg04<cj72Tg003<j11!s/$aj1<!sJ$?j1;Tg01VDj28Tg00>:j16Tg04=Yj33Tg04>Qj17Tg049Wj19Tg04?Ij3:Tg00<?j2>Tg00J@j6=Tg04:WR0P0f1R1f0R2'5g03Y[R3%01R4f2R5#034[^00P2g04@Gg04A?R6P6g04B7R!s,$oR7g04CgR8g04DaR9g04EZR:f8R;f6R<f5R=f4R>f3R?P5P1F2/52f9R@f7RAP<P=P>P?P5F2#094!t<%]<]:];]8]9!tF$FTg00K<#1!s$-<#;R4/84#6%64f=A3;A!sq+!t2&P0f>A3@;!t30R4#7%91;:4%02f?f:?3@;P!sI+F2#0543X00%04,>3P1P2E=W1X00XA:X69X@8X37X46W?W5W>P5P1P2O3n0110800013010:10910;W=W2!tJ,!sO$7!sO$0000170107106102101104103105W7o"). Qed.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
 
 Lemma same_but_materialized_fds : ltac2:(zQ "90!mme!nv5!r5!m0!io6!h9!nve!ngf!jc>1m$0>2m'$0>0@2$7^2^1@3$4@1$2@2$3@1$8@1$5#k0$6@1$1^2@1$1^3").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##00p'0h02m'h11Hh22fdh32fsh42ioh54lazyh63limh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;2p;1p;3p;7p;6g04;Mj26Tg003<j10!s/$aj1<Tg004?j1;Tg01VDj27Tg00>:j15Tg04Nej11!sJ$bj34Tg04<cj72Tg04=Yj33Tg04>Qj1:Tg049Wj18Tg04?Ij39Tg00<?j2>Tg00J@j6=Tg04:WR0P0f1R1f0R2'6g00K<#0!s$-<#;R3g04OY'7#5R4%11R5f2R6#134[^00P2g04@Gg04A?R7P7g04B7R!s,$oR8g04CgR9g04DaR:g04EZR;f8R<f6R=f5R>f4R?f3R@P6P1F2/62f9RAf7RBP=P>P?P@P6F2#19445[^00]<]:];]8]9!tF$FT1733#5%53f=A3<B!s[+!st&P0f>A3A<!su0R3#:%81;93%12f?f:?3A<P!sI+F2#1544X00%13,>4P1P2E=W1X00XA;X6:X@9X38X47W?W5W>P6P1P2O3n0110800013010:10910;W=W2!tJ,!sO$7!sO$0000170107106102101104103105W7o"). Qed.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
+
+(* LPS 75d69e00: materialization leaves the process state alone, so the launch's
+   channel-reader fact survives it.  Needed because the lazy chain carries the model
+   through [same_but_materialized], so [m_channel_reader mo = true] has to be
+   TRANSPORTED to each step's model rather than assumed of it -- As/ and Bs/
+   AsStdioWrite's [LZ_rdr].  Pure addition, in the shape of
+   [same_but_materialized_fds] directly above.
+   Donor, statement and proof: a donor tree:
+   projects/openssl/echconfiglist_parser/proofs/lib/LazyRestrict.v:868-871. *)
+Lemma same_but_materialized_reader : forall m m',
+  same_but_materialized m m' -> m_channel_reader m' = m_channel_reader m.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
 
 Lemma same_but_materialized_vmmaps : ltac2:(zQ "50!mme!mp2!io6!nq6!ngf>1m$0>2m'$0>0@2$4^2^1@3$2$3@1$1^2@1$1^3").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##0#p'0h02m'h11Hh22fdh32fsh42ioh54lazyh63limh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;2p;1p;3p;7p;6g04;Mj25Tg04H>j10Tg004bj34Tg04<cj72Tg003<j11!s/$aj1<!sJ$?j1;Tg01VDj28Tg00>:j16Tg04=Yj33Tg04>Qj17Tg049Wj19Tg04?Ij3:Tg00<?j2>Tg00J@j6=Tg04:WR0P0f1R1f0R2'5g04FTR3%01R4f2R5#034[^00P2g04@Gg04A?R6P6g04B7R!s,$oR7g04CgR8g04DaR9g04EZR:f8R;f6R<f5R=f4R>f3R?P5P1F2/52f9R@f7RAP<P=P>P?P5F2#094!t<%]<]:];]8]9P2g00K<#1!s$-<#;R4/84#6%64f=A3;A!sl+!t,&P0f>A3@;!t-0R4#7%91;:4%02f?f:?3@;P!sI+F2#0543X00%04,>3P1P2E=W1X00XA:X69X@8X37X46W?W5X>3P5P1P2O3n0110800013010:10910;W=W2!tK,!sO$7!sO$0000170107106102101104103105W7o"). Qed.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
 
 Lemma same_but_materialized_eager : ltac2:(zQ "50!mme!muf!io6!m7!ngf>1m$0>2m'$0>0@2$4^2^1@3$2$3@1$1^2@1$1^3").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##0'p'0h02m'h11Hh22fdh32fsh42ioh54lazyh63limh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;2p;1p;3p;7p;6g04;Mj25Tg048Lj10Tg004bj34Tg04<cj72Tg003<j11!s/$aj1<!sJ$?j1;Tg01VDj28Tg00>:j16Tg04=Yj33Tg04>Qj17Tg049Wj19Tg04?Ij3:Tg00<?j2>Tg00J@j6=Tg04:WR0P0f1R1f0R2'5g00J^R3%01R4f2R5#034[^00P2g04@Gg04A?R6P6g04B7R!s,$oR7g04CgR8g04DaR9g04EZR:f8R;f6R<f5R=f4R>f3R?P5P1F2/52f9R@f7RAP<P=P>P?P5F2#094!t<%]<]:];]8]9!tF$FTg00K<#1!s$-<#;R4/84#6%64f=A3;A!sq+!t2&P0f>A3@;!t30R4#7%91;:4%02f?f:?3@;P!sI+F2#0543X00%04,>3P1P2E=W1X00XA:X69X@8X37X46W?W5W>P5P1P2O3n0110800013010:10910;W=W2!tJ,!sO$7!sO$0000170107106102101104103105W7o"). Qed.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
 
 Lemma same_but_materialized_with_vm_backing : ltac2:(zQ "70!r5!h9!mme!mo5!mvc!ngf!jc>1m$2>5pages@1$0@1$6@1$1#k0@2$5^2@3$4@1$3^2^1^2").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##-cp'0h05pagesh12fdh22fsh32ioh44lazyh53limh61mi001mh76m_fsysi01!s0&h84m_ioi02!s-$h95m_limi03!s/%h:6m_proci04!s0&h;6m_timei05!s0&h<4m_vmi06!s-$h=4mapsh>3math?4!s\$@2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;3p;2p;7g003<j10Tg003aj1;Tg004?j1:Tg00>:j13Tg04>Qj12Tg04?Ij31Tg04;Mj25Tg04<cj74Tg01VDj29Tg04=Yj37Tg049Wj16Tg00<?j28Tg04:WR0P0g00K<#0!s$-;#:R1#3R2f1R3%23f0R4;13'5]0P4g04@Gg04A?R5P5g04B7R!s,$oR6g04CgR7g04DaR8g04EZR9f8R:f6R;f5R<f4R=f3R>f2R?P3F4R@%2@?14@'5^02];]9]:]7]8!t5$FT1911#3f=f7=7:;P<P=P>P!s_%:#2R1A114:#6;1:,80X02X@9X58X?7X26X35X>2W4W=P?P3P4O3n0110800013010:10910;W<W1P!t%-P4O7!sO$0000170107106102101104103105W6o"). Qed.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm] pages. reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -476,11 +532,59 @@ ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##E4p'0h01kh11ni001nh21ah32H0h41
 (* [comment removed for export] *)
 Lemma newly_materialized_pages_visible : ltac2:(zQ "e2!h9!jc!r5!m0!jk3!iua!llc!is2!onc!mm2!ijc!kp7!okc!op9&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1L~1>1S~1>3mat@1$2@1$1@1$0#k0>2rs@1$2$7>0@2$b@2$a^4^3^1=3new@1$2@1$1@1$0#k0@3$8^5^3^2@2$4@2$c@1$1@1$0#k0^1@2$4>1p@1$1@1$0#k0>0@3$5@1$1@1$0#k0^1^2@1$6@3$5@1$1@1$0#k0^2^6@3$d@1$1@1$0#k0^1@1$9^5").
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##M-p'0h01Hh11ph21kh32Hph41nh54Hhidh61ah72ESh84Hacch93Hinh:3HpLh;2_Hh<1bi001bh=1xi011xh>1Ah?2Hmh@2b1hA2b2hB1ehC1fhD1lhE5pageshF3HbrhG2HkhH3HpxhI4HvishJ1LhK1ShL2a0hM3mathN3newhO1ohP2rsp;1p;2p;3p;4p;6p;5p;8g003<j1ETg003aj1tTg004?j1fTg01VDj2YTg00>:j1JTg03LVj2qj3rTg01Z6j2mTg00=Zj1bTg04hJj29Tg04okj3KTg04d5j2OTg011mj31Tg03Jmj1_Tg03oWj1VTg050Fj3UTg00L^R0j22!s:$_j1oTg051;j3nTg052Pj4lTg0531j4eTg00m7j2=!s/$oj2cTg04`ej2>Tg04bDj2?!tN$Qj2aTg029kj1CTg00`:j6LTg00l;j2X!sw$Oj4`Tg00]jj2BTg006ij16Tg01WlR1j2N!t3$UR2j2sTg007Ij2G!s/$oj3HTg054aj2pTg005<j25Tg03``j2T!s/$Cj2P!vt$bj37!vM$>j2QTg00;bj2FTg00UAj2RTg03Ibj2DTg00<?j2kTg0565j5iTg057Nj5jTg00J@j8gTg00bJj4ZTg058bj3[Tg020ej4dTg04S=j1WTf3R3f2R4'>f1R5f0R6'?#C'=p=8g00QER7g00QeR8776p=0A1345/26p=M1?56#Cp=I%V69145p=3P4g00KaR9P5P6Cdp=@1545/F6#Wp=:f6R:f5R;f4R<31A7456,23'2p=;1N96p=41545%66'F#Wp=<!sH'p=^!sm&p=]%W69745p=\g00f9R=9!tg$A1256,24p=S%C6,=5p=hg00K<#E!s$-tR>#fR?/Y?#JR@%J?RAg023]#J1q34/m6P6P;P6P3C8X1?RB%b?RC,95RD5K?RE,O?P6P:P6P<!sG$194C5K?91?6RFA1?5<RG#_RH[^1?RI%V3RJ9U?ERE'2P?PBPD%o?9n5CClPIPEg03C_p4p710RIP7\6RD%J4RBP0AK3469135P<P4P5P3P4O1#0CM[RKP3P5P6P4P5!s9%AK<3591<4RL[P;P3P4P<P3!sB%\L!s6$5P6CeP5n20010!s#$12!s-%0WDX=5WCW>RLPK^DB^=5^CD^>IRIP6P?P6f9RDP6f7RB!uh$P319;CRKP4O5A1?3KRKP3f8RMP3P:C8#0RN'2P019:C91?<P<PDP<PBC8#0g015]ROP619MC91?:PBf<RPPBf:RQC8#0P01=56#0%04RR%05RS'2[RT%06,2S1=45#0RS[%03/2R\S1c56!uJ9XA7X@7RSPT^A7^@7RTP6f>RR,>DRU1IDPRVP5O3%0URU%0VRV'2P0f?RW,>Q#0f=RX,IQ#0POP6fARY,>P#0f@RZ,IX!ts$?56#0A1?45R[[A1?561?45#0[R\1?34#0\[1a56P6!tk8EAX1?P\^EA^1?P6PWfBR\PXO31?W\#0P7fCR[,?Z%C6#0X<7P4P8P6EL%C8R]#0P7P]P7p-0R^P6POg00\bR_n01!t7%!t5$XB7g00M9R`!sa%PO1XO6b0b?b9b0W?W;P5P6O2!tn7b3b0W3!sH81!sH,X9GPHeX3FX1?PLP!yB&PMP6P:!y>%419<CRIP5O5P?P4PIP4PBP4P;C8#0CMP0PKPNA3?<MP619BC91?;P:f;RNP:PD!x}$SPTP61>MXRT1IMNRS!w|%T%0S'2P0PUPVA3?QRP61>NZ#01IPW#0PWPCPXPBC`A1?XC1Y?9RVA@?45RUP\1B65RSP?PZ%66RT9:>4RKF;X29#4X49#4X6?,N?'sP2A1?RCPVPUP[PSP?PYP!sO6A3?W[P6A1?WCPOfER293?YRIP6n!vW'0W0P6O1PVPUfDRL!sr$\!sr7P1P?!t>$2!sJ$[!sJ4!w-$VPUfGRU!sI$2!sI1P1P9PVA@?35fHRKPSP?fFRIA:>3T!sN,fIRG93?2P6!sR$;5fJ!ss$KA:>;!sN'!sq+:4fKR11B64P?PGA:>:!sI%fMRS93?G!sl&M<PS1B6<P?P1A:>MTF;P0A@?D;fNRT51V1B5;P?fLA<>D5C^fQR193?SP6A@?NBfPRS!sK$<MP?fORVA<>P<C^P01B;D%6;9]>X9\?SfU93?1P61BBNfS%6M9]>Z5\?P?A<>YDRDfWR1/9C91?6f[Ra,>5#0A3?4a]:]8X1?fV!sD%DA<>\QfZR\'>#0P1P[PWPBPNP3O5%6N,G>9H>[9ra\#A1pLPg00J^R\%6PRP9:>L,5>Ra1G>P9H!s3%Lg03j?RP'T/PP371QaL1FaP,RL3SP0%6XRX9:>2,5>R01G>X9H!s3%2/TP/PP57\1Q021F0P,R2'2A<>IRf]53?P6%6WRW9:>U,5>1G>W9H!s1$!s_+%6ZRZ9:>K,5>R\1G>Z9H!s3%Z'Q1F\P,RZ'2%6Y!uL%GP?fa,D6P71k76fb,D5=776P7fd,D3=776ffRG,D<RY/h5#AA<>VU=3?G]5]7P5fc,D4RV#0feRU,D3RZ/=]#APUP<A<>TIRIP5P:DiW5W7%AV%C=RV,=Z#AP7PY1=6V#AX<7P6P8PGPIP<PNP;DjEL1=8VRV!sM$VP7P^P6P_PO!#503P`P=!#5'$A<>SKfg53?/X6b0b5W5W7!sV1P6PMO2b7b<b=WFWH!#5+=Lb5W:W8fTP6PTPKGgW0WG!sV=W0W9!sD?X2!sE81!s2$W0X4!sEA6?!sE?P6O1!s@-!tD%!un$bOW;W:!#7c@W3W8!sHA!#8#%EeCZCZA[<45RE,O?A[;3491?6PH[^1?AU?EJ3SePEPA1O?6A1?65A1?5;#_[^1?%V<9U?63SbNeWIWPWMXK@WJo"). Qed.
+  intros L S mat rs Hvis. cbn zeta.
+  unfold newly_materialized_pages. split; [|split].
+  - apply NoDup_filter. apply NoDup_accesses_pages. constructor.
+  - intros p Hp Hin. apply filter_In in Hp. destruct Hp as [_ Hp].
+    apply andb_true_iff in Hp. destruct Hp as [_ Hm].
+    apply page_mem_In in Hin. rewrite Hin in Hm. discriminate.
+  - intros p Hp. apply filter_In in Hp. destruct Hp as [Hacc Hp].
+    apply andb_true_iff in Hp. destruct Hp as [HpL _].
+    destruct (accesses_pages_in rs [] p Hacc) as [[] | (a & n & k & Hin & Hk & ->)].
+    pose proof (Hvis a n Hin k Hk) as Hhid.
+    destruct (page_of_access_byte a k) as [Hpx Hbr].
+    set (x := a + Z_to_bv 64 (Z.of_nat k)) in *.
+    unfold hiddenb in Hhid.
+    destruct (in_rangesb x S) eqn:ES.
+    + exact (window_page_in_all_pages S x _ ES Hpx).
+    + rewrite (page_in_ranges_addr L _ x HpL Hbr) in Hhid. discriminate.
+Qed.
 
 Theorem materialize_restrict : ltac2:(zQ "h12!h9!jc!r5!mme!m0!mo5!mvc!oq1!jof!hja!jk3!io6!ko4!is2!oqc!ijc!kp7&@2$4@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1L~1>1S~1>1m$3>2rs@1$2$d>0@3$7^4^3^2>0@2$h0@2$f^5^4^2@2$c@1$2@1$1@1$0#k0\5pages@1$2@1$1@1$0#k0@2$a@3$b@1$9$3@2$e^5^4@2$8$3@3$6@1$5^5^1^5@3$7^7^6@3$6@1$5^5^1^5").
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) [] "##i:p'0h05pagesi0!s/&h11ph24Hlenh31Hh49Happ_inclh57!s2$ndh66Hfreshh76Hn!sB$84Hnndh94Hbudh:1mi011mh;1nh<3newi023newh=2Enh>5Hgoalh?5H!sc$@5HlazyhA3HndhB2HphC1li031lhD1zhE4__x1hF4__x2hG4__x3hH4__x4hI4__x5hJ4!sh$K4HinvhL4HnewhM4HvishN1LhO1ShP7__arithhQ4__ffhR8__varmaphS5__withT1bi041bhU4cstrhV5cstr0hW2fdhX2fshY2iohZ3limh[6m_fsysi05!s0&h\4m_ioi06!s-$h]5m_limi07!s/%h^6m_proci08!s0&h_6m_timei09!s0&h`4m_vmi0:!s-$ha4mapshb3mathc4new'hd4!sc$e2rshf2tmi0;9li_budgeti0<7li!w|$i0=7li_lazyi0>8li_nodupi0?4m_fdi0@1vi0A9vmst!sL&B!s3%mapsi0CA!s3&terializedi0D1xp&0p;1p;2p;3p;5p;6p;7p;4p;8g003<j1^Tg003ak10GTg004?k104Tg01VDk20QTg00>:R0j1]Tg059iR1j3WTg03LVk20FTg01Z6k20>Tg00jUR2j1nTg05;4j2bTg01Wlj2TTg04>Qj16!t2$bj30Tg049Wj11Tg04d5j23Tg048Lj1RTg03k7j15Tg05<=k50DTg058bj3;Tg011mj3GTg03oWj1QTg050Fj3JTg00L^R3j2aTg05=^k603Tg03@Cj32Tg05><k601Tg01R4j24Tg04YPj2kTg006ij1!u:$=>j2<Tg04^ik20P!s^$Yk50OTg05??k10NTg00`:j6YTg00mUR4j2STg04<cj78Tg04=Yj3:Tg04H>j1jTg05@Pj1zTg05AMj2yTg05BMj1xTg05CFj1iTg04?Ij3?Tg00<?j2!t3$J@j6Uk70JTg05D=k70K!uw$Kj2ITg05EHj1vTg00lZj2MTg00YGj1f!u=$Zj1uTg00o0k30ETg00bJj4tTg01\Lj4sTg00Xgj39Tg00;bj2PTg041kj2rTg047mk30C!s0$Jk20=Tg00nPk20<!tp$Yj1qTg008Tk10;Tg03gFk20:!vi$Jj1oTg00Vij2`!sB$ok30!t7$WRj3m!tI$;k207!yu$Zj2lTg00?8k10!y8$?Vj4_Tg00@4k108!s0$Rk105Tg019:j1pTg00A=j2VTg00BCj3\!s8$`k202Tg03i\j3hTg00D5k20@!s0$Wk20ATg00ECk30B!s0$bk400Tg03`Cj2XTg01Acj4~!vW$Jj3}Tg05FFk10H!s9$dk60ITg03Jmj1|!tJ$fk40LTg00CQk70!wK$[0j8{Tf0R5#^#^p=Zf2R6#6f1R7;?5p=Ff5R8f4R9g04:WR:f3R;'I30AW675'ap=E%Q59J67p=7g03j?R<,X5p=A%j5#ip=B1P67/<5p=CAG675#|p=H1475#>p=L%159267p==%>!sL%DA?6759W9;p=Of6R=P8P9P;P6P7P5F8#1p=@1X5<,P7p=g1I:5p=K%R7/P5p=d%55,<7p>0?g00QER<g00QeR>705p=[g00J^R?P7g00[TP5H0Lp=c!s5$N_R@g00O>RAPAg00O^RBP5g00PeK0Mp=eP;P@PAPAPB!tY%G{p=wg00K<R@#^RC#^RD#Z#ZRE$0G$04RF00QF#]RGg023]#]AW;6720F9;00>7P1!uN%%]FR1%n:RH1b89AF858RIf7RJP=PIEEX01'TP7%6Jf9RI50Gf8RK#1RL,3F%1IRMf:RN57F%RNf;RO#5#A%BN3Cf=RPf<RQ%1ORRPNPKI0DA;PRNP113F5RSAGF57f>RT#1RU9HF7RV[^1F%QPRW9JF5'a'ab<%1Q=;TORX,3FRYf?RZ%1P;;Q9GF5P!sW$AJFXWPH1bPQAFP5PRXPZPTPX!u1$,T1f@RX?;UPRU9GF5%1ZRW9HF7!sa$7FUZfARU?;WTP1PFP5%1XRWP;PJP6J03A2F5W,3FPFP7%1URWfBRV#QR[P6PJJ01A2F7W=JF[P?fCR[#Q,LFA=F;[RW,4FR\/D5XD?g00KaR]P31k75%>6R^%>7R_'<[R`%>5Ra,<_1k67R_[1D;^\_20P75P7n20010!s#$12!s-%0X:]W;P`^:]^;]P5P\fDR\#QR`,4FPFPWP`P6P7I0OO3b3%5[R`&0N[EYA=F6V,4F/D`%1\R`9015A2F9!s/$'SRWP:%65fHR_50G%17!xL$6fIR^!xJ$;fJRb!xJ%;3CfLRc%19;;^P1AGF56RdAHF7L[^1FfNRe#QRf9JF6A2F;L,3FA2F9MfPRM57FA=F8N,4FfQRL#5'DA01PRA2F=R901P'SfTRRfSRg%6QPTPQDO]B]2]4]5]7]6^8Sb<]9]?]A]@fERhg04@Gg04A?RiPig04B7R!s,$oRjg04CgRkg04DaRlg04EZRmPJ!~+26fVRn50GPKP!~G-F@,3FPIPJ!s;,F@fWRo57FPNPK!s?,F8Rp#RfXRq!v=%p3CfZRpPOPI!sM,F@;;oP1PZPPPQPOPNPIPKF@Rr9HF7\d^1Ff\Rs#QRt!vU'r,3FPXPT!sW,F89=F9f^57FPU!{I$!sA&!s?$8,4Ff_Rr#5'DfKRuPVPX!sK,F@Rv5!zm$=v901u'SfbfaRvP[PU!sN,F8Rw#6PcPw!w<>]_]]]^][]\P5g04FTPQA:J=!vs3[50GPPA:KJ!vt4TA:IK!vw0=JFtPZA:NI!vw1t#Rf]!vu%t3CPXA:ON!vt0=;rsP1P\A:ZT!vx;A7F6v!vq+hA:XZ!vt5c57FfFRrA:UX!vy8d!vw$GRvA:VU!vx1d901MA2F=!s/$'SPGfgRdP^A:\5V!v~,F8#jRs#z/y5#x%5d#ARt%is3CfifhRsP7PgPbA:h7[P!s\+F8DO]9XJGP_A:[d!wr0#jRb#z/yd#xffRw!vE$ib3CPsPdfRRb!tO$s!tO05?sRx1NGs%6x=0GseP4A01bVRyA2FKV901bRz13FgP7A01g[R{P1P\PSX01R|PPPRP5EUW3P5O1A2FI[901gR}P1A2FN\R~P|P=!sJ/!#4n,2!s-$!s'$%1xR|,3FeP4PyPzA7FgsP7P1P\fj97F5X01RsPQ!so%X3{P5O1P1P~PsP8!s;'}!t,=A7F|deP5%Rx%Bx7CteK0KW9PVPOPKK0JPdPw!vl$V!{`1X#6PLPXDOeWBW2W4W5W7W6X8Sb<W9W?WAW@XfmXZlXdkXXjXYiXb1XJGWa!{\%O3n0110@01013110B10A10CW`WW!#3_-P5O7!sO$!s$$7110?10:106105108107109!z]+!{Q%!sa%5O;WBX01PvPr%6hRiP7PhDO\W^01PGPr%1hRW=;v\A;5W\501XCGA;r`[,N1%6\RjPQEUA;j`[9019RjePjP1P8PHP2P1PHP0PF%n1RjP7%1v,I1P<Pj%v^1LF;'g%B^'MA=F;^,I1%f1R`n!wB+0000n1011!s1$20020104103AF_5_#K%f:R[!sG%D!wr%!wo%Fv5vRkP^P_Pk!#=C&XC1P8P11N15A01=5P0PFA01K513F7AGF5;%1cRk!#=W,;cA2F9k,3FfMRc#1R_92F8=JFfA=F=e,4FfORf#5'D%1MR^!#;>%K!s/$'SPgPb%6LRlP7PLDO[^01!v//PjPI%1LR0!v-+gRm1LFO'g%Bg'M%1gRS92FO,I1P!v1Ib5b#KP!v-7?l5LRlPgPbPl!v-']>!#7,+]8]=P7%uFRl901J13FlAGF5l%1uRX!v0-luA2FlX!#<f$lk=7FcA2Fl_,4F%5e'D%1fR_!u~&l_!ss$5'SPbPL%6MRcP7PM!v$&1PHA?c^M#KA?c5MRcPbPLPc!tk$P_AFf_fRc#KRk=0HkAWLMc1NHkP5P_A01_!s'$l1N1_40EO2CtCsW>!|i,W8W=A9F75901OA9F67,3FA9F9;Rl9GF5AHF7_!uI'fA9F89=2F_!sK%=8=2F^=7FLA9FJ==2F0!uU$b'DA015SA9FIKRb=2FSR0!uW&nfURJ%6RP7PR!uW&?14FSRL#>#A,dg!xh+<PjA9FONR^,LF#AR_,P7%BJRl'M%1JRf92F^!x`6%6nR^??5n!xO:FJ5JRkPoPn!{W-D?P]14F0%5JR0,<aX;]P714Fb/rLRLB0CFbSEY%5R,DLP?A9FNI,4FRL%1R,4FRR'r#>20?5nXD?P5%>L%>R'PRb20=LREY1<b0P<1LFf#A,dJ/P_/MlRlP>P31M75#[1<67R3[1<751M67#[[R_1M;6#[\320<75P5!#E^8?X;?P_^:?^;?P5%1nR_,4FR3#>RJ#A,dnA9FQORO,LF'gRf%BnRb%q3g00MUR3/<JA9FPQRQ,4FRJ#q%>J,<3g00N3RJ%ZE#Z#Z$0;RE-0:?g00TER0#oRR#o,`?609?1`?R1`?05m?5m?g00]>+07%uJ39%]JP?P?1l?9P6&06?RJC_P7!s8$8P;PJC_C_&08?&05?RJ%p@,V?R01V?CRR5\?%pC,V?RC'c,eJ%fARAPJ1V?@R@202?ERL9h?C5\?1V?DRD!sL$PAAh?RL9\?@Ah?0L5\?/cD,eJCwCw20@JBP5P61N<>20A56#[dB0B?37H00bQbRbSXE?XF?XG?XH?XI?AC6791X8E=C791X;E,P61X9E;C8[[^E?^F?^G?^H?^I?P5%5pfYR?#BA9FZT,LF%1?,LF%R?P9PeO7bPbVbU1<fbeO3b3C~A0<>lP<P>!{Z/P7A9FTP==Fq!{D6AF?5?!{@;q5qR[PpP?P[!{@+T<P1PH%6oR<A=FQo;?o#KA?<5oR<P?PqP<!sQ$A2FO_ROA?^OnR^#KRn=0HnAWqo^1NHnP;POA01O_A01OO1N1O3}!#3S$1MfbP5EYb3b2b2Pm&0HgEU!#3i2Xc1X1FP7P5O2!u0%301020121!#79$P5!#Dc$!#=<&O8b=bCA;iW\!t+%PH1bh\A?i5hRiPvPrPi!uZ'eb>b2b4b5b<!#>l$YP5J0IbL!#>q&!#>3'4n30!|T,4110=10>10<10;WMWKWeX::XOGWNo"). Qed.
+  intros L S m rs Hinv Hvis.
+  destruct Hinv as [Hlazy Hnd Hincl Hbud].
+  pose proof (newly_materialized_pages_visible L S (m_vm_materialized m) rs Hvis) as Hnew.
+  cbn zeta in Hnew. destruct Hnew as (Hnnd & Hfresh & Hnincl).
+  set (new := newly_materialized_pages L (m_vm_materialized m) rs) in *.
+  assert (Happ_nd : List.NoDup (new ++ m_vm_materialized m))
+    by (apply NoDup_app; assumption).
+  assert (Happ_incl : incl (new ++ m_vm_materialized m) (all_pages S))
+    by (apply incl_app; assumption).
+  assert (Hlen : (Z.of_nat (length (new ++ m_vm_materialized m)) <= pages_total S)%Z).
+  { rewrite <- all_pages_length. apply Nat2Z.inj_le. apply NoDup_incl_length; assumption. }
+  assert (Hgoal : forall pages,
+            (pages = m_vm_materialized m \/ pages = new ++ m_vm_materialized m) ->
+            lazy_inv L S (with_vm_backing (m_vm_lazy m) pages m)).
+  { intros pages Hp.
+    destruct m as [fd [maps lazy mat] io fs proc lim tm]. cbn in *. subst lazy.
+    split; cbn.
+    - reflexivity.
+    - destruct Hp as [-> | ->]; assumption.
+    - destruct Hp as [-> | ->]; assumption.
+    - exact Hbud. }
+  unfold materialize_model_accesses, materialize_accesses.
+  replace (newly_materialized_pages (m_vm_lazy m) (m_vm_materialized m) rs) with new
+    by (unfold new; rewrite Hlazy; reflexivity).
+  destruct new as [|p new'] eqn:En.
+  - exists (m_vm_materialized m). split; [reflexivity|]. apply Hgoal. left; reflexivity.
+  - rewrite vm_backing_used_split.
+    rewrite length_app, Nat2Z.inj_add in Hlen.
+    match goal with |- context [if ?c then _ else _] => replace c with true end.
+    + exists ((p :: new') ++ m_vm_materialized m). split; [reflexivity|].
+      apply Hgoal. right; reflexivity.
+    + symmetry. apply Z.leb_le. clear - Hlen Hbud. unfold page_size in *. nia.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -513,7 +617,9 @@ Variable L : ltac2:(zQ "40!h9!jc!r5!m0@1$2@2$3@1$1@1$0#k0@1$1@1$0#k0").
 (* [comment removed for export] *)
 Lemma lazy_inv_windows_mono : ltac2:(zQ "h02!h9!jc!r5!m0!mm2!oq1!mme!mp2!lre!osb!muf!mka!op9!q3!jl6!lt1&@2$3@1$1@1$0#k0@1$1@1$0#k0&@1$2~0>1S~1>2S'~1>1m$6>0@3$5?1L^3^1>0@3$c@1$1@1$0#k0@1$4^4@1$4^3>0@2$e@2$d@1$a^3@2$f@1$b^4$8@1$9@1$7^3@3$5?1L^5^4").
 Proof.
-ltac2:(KReplay.run1 (kr_t_LazyRestrict ()) ["Windows"] "p'0h01Hh12Hbh23Hb'h35Hinclh42Hlh53Hndh64Hsubh71Sh82S'h91mi009li_budgeti017li_incli027li_lazyi038li_nodupp;1p;2p;3p;6p;7g003<j11Tg003aj1DTg004?j1=Tg01VDj2<Tg00>:j1CTg059iR0j3;Tg03oWj10Tg050Fj33Tg048Lj15Tg03k7j16Tg03`Cj22Tg00;bj28Tg04H>j19Tg05CFj1:Tg00=>j24Tg04>Qj1BTg004bj3@Tg049Wj17Tg04d5j2?Tg05Hjj6>Tg05D=j7ATg00K<#1#1#1#1#1#1#D#=R1/<1#CR2g04:Wp,1LR3f2R4f0R53;P0P3f3R0f1R6f4R7#0%00531%50%67g03j?R8'2'8%90#:'4f5R9=;37[[P5%B9=@23f6#7,?1f7#7f9#0531f8R:#5f:R;#6/28'8%9:#:'4f;R:#0%0;531%5;%6:/28'8%9;#:'4P3f<R3P:P9P7P1%7:f=#0%03P0P6E>P5FAW2W6W1W3W5W4P0P4P6P5O4n30001000000140102103101100W0W9X82W7o"). Qed.
+  intros S S' m [Hl Hnd Hincl Hb] Hsub Hb'. split; try assumption.
+  eapply incl_tran; eassumption.
+Qed.
 
 Lemma pages_total_cons : ltac2:(zQ "a1!h9!jc!m0!mka!jsd!r5!io6!m7!lud!q3&@2$2@1$1@1$0#k0@1$1@1$0#k0>1W~0>1S@1$5~0@3$6$7@1$3@3$4~0^2^1@2$9@1$8^2@1$3^1").
 Proof.
@@ -526,7 +632,9 @@ ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["Windows"] "##0ah04__x1h12S1h22S2h3
 (* [comment removed for export] *)
 Lemma lazy_inv_open_window : ltac2:(zQ "f1!h9!jc!m0!jsd!oq1!r5!mme!mp2!lre!osb!muf!mka!q3!jl6!lt1&@2$2@1$1@1$0#k0@1$1@1$0#k0>1W~0>1S@1$5~0>1m$6>0@3$4?1L^2^1>0@2$d@2$c@1$a^2@2$e@1$b@3$3~0^4^3$8@1$9@1$7^2@3$4?1L@3$3~0^5^4^3").
 Proof.
-ltac2:(KReplay.run1 (kr_t_LazyRestrict ()) ["Windows"] "h02Hbh14Hinvh21Sh31Wh41mp;1p;2p;3p;5p;6g003<j10Tg003aj1CTg004?j14Tg01VDj23Tg00>:j1BTg059ij3;Tg048Lj1:Tg00Xgj31Tg03k7j15Tg03`Cj26Tg00;bj27Tg04H>j18Tg05CFj19Tg00=>j2ATg03oWj12Tg040aj1@Tg05IHj2<Tg05Ifj5=Tg050Fj3>Tg05JDj6?Tg00K<#0#0#0#0#0#0#C#4R0/30R1%B1g04:Wp,1Lf1R2f0R33;%:2f3R4f2R5511#5g03j?'6'7%82#9'AP4f4R6=114R1P5P2P0%24R4%@6P41<04D=%219>04eP3E?W0W1W4W2W3o"). Qed.
+  intros W S m Hinv Hb. eapply lazy_inv_windows_mono; [exact Hinv | | exact Hb].
+  cbn [all_pages]. apply incl_appr. apply incl_refl.
+Qed.
 
 (* [comment removed for export] *)
 
@@ -569,7 +677,9 @@ ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["Windows"] "##/Sh01ah11Sh21Wh33msFp
 
 Lemma lazy_inv_vm_frame : ltac2:(zQ "90!h9!mme!ou6!oq1!jc!r5!m0!io6!oue>1S@1$5@2$6@1$4@1$0#k0@1$4@1$0#k0>1m$1>2m'$1>0@3$7$8@1$2^1@1$2^2>0@3$3?1L^4^3@3$3?1L^5^3").
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["Windows"] "##4@p'0h02m'h13vm'h21Eh31Hh42Hbh55Hinclh62Hlh73Hndh81Sh92fdh:3fd'h;2fsh<3fs'h=2ioh>3io'h?3limh@4lim'hA1mi001mhB4prochC5proc'hD2tmhE3tm'hF2vmi019li_budgeti027li_incli037li_lazyi048li_nodupi054m_fdi066m_fsysi074m_ioi085m_limi096m_proci0:6m_timei0;4m_vmp;1p;2p;3p;7p;6g003<j12Tg003aj1FTg004?j1;Tg01VDj26Tg00>:j1ETg05RMj13!sJ$bj34Tg059iR0j31Tg04<cj70Tg04>Qj17Tg049Wj15Tg04d5j28Tg03oWj19Tg050Fj3DTg048Lj1CTg03k7j1BTg03`Cj2=Tg00;bj2>Tg04H>j1?Tg05CFj1<Tg00=>j2@Tg05D=j7ATg00J@j6:Tg00K<#2!s$-F#;R1/61#ER2g04:WR3P3g04A?R4f0R5#3R6f1R7#334p,1LR8f4R9f2R:31f5R;=18:[[^03P5g04@GR<g04B7R=g04BoR>g04CgR?g04DaR@g04EZRAP3f8RBf7RCf6RDP;P9f3REP:F0#39446fBR6f9RFPBPCP!sF$PEF0518fCRB!t@%P5!s?'P:P7P5F0#3fERGfDRHPBP6fARIf@RJf?F0#3544fOfFRKPGP!sE$PIPJ!sx$P4PKfQRLPFP5!t;2X14P0P8fPfGR0P!sa-F0PFP0!sT/918LP5fKRLfJRFfIRIfHR6P!s\$F0#7=428fLR2PLPFPIP!s@$F0#5,81fMRKP!s?-F0#5fV#95D1fNR1P!sC-F0R6#CfW#Bg03j?'='>%?6#<'@P8fXPJP1f>f=f<f;f:F0!v8+AW4W5W7W6!s8'O4n300010!s#$140103104102101PCP7E:W3W2XEAX@@XC?X<>X>=X14X:<!w<1O7n01!sn%17010510;10710610910810:X03WDW?WBW;W=XF4W9!si>1!si8WAW8o"). Qed.
+  intros S [fd vm io fs proc lim tm] [fd' vm' io' fs' proc' lim' tm'] E H.
+  cbn in E. subst vm'. destruct H as [Hl Hnd Hincl Hb]. split; assumption.
+Qed.
 
 (* [comment removed for export] *)
 
@@ -600,40 +710,31 @@ ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##/Vp'0h01bi001bh11L
 (* [comment removed for export] *)
 
 Lemma m_vm_lazy_vm_add_lazy : ltac2:(zQ "a1!h9!jc!m0!mo5!ll6!r5!io6!mme!ov9!pga&@2$2@1$1@1$0#k0@1$1@1$0#k0>1a@1$1@1$0#k0>1n@1$1@1$0#k0>1m$7@3$6@1$5~0@1$3@3$9^3^2^1@3$4~0@2$8^3^2@1$3^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##/%p'0h01ah12fdh22fsh32ioh44lazyh53limh61mi001mh76m_fsysi01!s0&h84m_ioi02!s-$h95m_limi03!s/%h:6m_proci04!s0&h;6m_timei05!s0&h<4m_vmi06!s-$h=4mapsh>3math?1nh@4!s`$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;2p;3p;7g003<j10Tg003aj1<Tg004?j1;Tg01VDj28Tg00>:j17Tg05S@j36Tg04>Qj11Tg05T:j22Tg03@Cj33!se$bj35Tg04<cj74Tg04=Yj39Tg00<?j2:Tg00K<#0!s$-<#;R0g04:WR1P11800R1#7R2f3R3f2R4f0R536#11234%1553135P5g04@Gg04A?R6P6g04B7R!s,$oR7g04CgR8g04DaR9g04EZR:fAR;f@R<f7R=f5R>f4R?P3P4f1R@P5F4RA!t3%;<%1A531552];]9]:]7]8!t>$FT%70fFfE'2f<f6RA=9=>P!sk$P!si$#1531,:2XA:X59X@8X27X36W>X42W=!sL%O3n0110800013010:10910;W<W1PAP!su-O7!sO$0000171107106102101104103105W6X?0W0o"). Qed.
+Proof. intros a n [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma m_vm_materialized_vm_add_lazy : ltac2:(zQ "70!h9!jc!ms6!r5!io6!mme!pga>1a@1$1@1$0#k0>1n@1$1@1$0#k0>1m$5@3$4@1$3@1$1@1$0#k0@1$2@3$6^3^2^1@1$2^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##-Rp'0h01ah12fdh22fsh32ioh44lazyh53limh61mi001mh76m_fsysi01!s0&h84m_ioi02!s-$h95m_limi03!s/%h:6m_proci04!s0&h;6m_timei05!s0&h<4m_vmi06!s-$h=4mapsh>3math?1nh@4!s`$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;3p;7p;2g003<j10Tg003aj1:Tg004?j19Tg00>:j12Tg05S@j35Tg049Wj11!sJ$bj34Tg04<cj73Tg01VDj28Tg04=Yj37Tg00<?j26Tg00K<#0!s$-:#9R0g04:WR1P1%20R1f3R2f2R3f0R435#1%1434P4g04@Gg04A?R5P5g04B7R!s,$oR6g04CgR7g04DaR8g04EZR9fAf@f7R:f5R;f4R<P2P3f1R=P4F3R>!t$%>541];]9]:]7]8!t3$FT1800#2f<f6R>=7:;P!sa$P!s_$#1,61XA9X58X@7X26X35X>1W4W=!sI%O3n0110800013010:10910;W<W1P>P!sr-O7!sO$0000170107106102101104103105W6X?0W0o"). Qed.
+Proof. intros a n [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma m_vmmaps_vm_add_lazy : ltac2:(zQ "70!h9!mp2!jc!io6!mme!nq6!pga>1a@1$2@1$0#k0>1n@1$2@1$0#k0>1m$4@3$3$5@1$1@3$6^3^2^1@1$1^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##-Rp'0h01ah12fdh22fsh32ioh44lazyh53limh61mi001mh76m_fsysi01!s0&h84m_ioi02!s-$h95m_limi03!s/%h:6m_proci04!s0&h;6m_timei05!s0&h<4m_vmi06!s-$h=4mapsh>3math?1nh@4!s`$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;3p;7p;2g003<j10Tg003aj1:Tg004?j19Tg05S@j33Tg04H>j11!sA$bj35Tg04<cj74Tg01VDj28Tg00>:j12Tg04=Yj37Tg00<?j26Tg00K<#0!s$-:#9R0g04:WR1P1g04FTR1f3R2f2R3f0R433#1%1435P4g04@Gg04A?R5P5g04B7R!s,$oR6g04CgR7g04DaR8g04EZR9fAf@f7R:f5R;f4R<P2P3f1R=P4F4R>!t$%>551];]9]:]7]8P41800#2%20f<f6R>=7:;P!s_$P!s]$#1,61XA9X58X@7X26X35W>W4X=1!sI%O3n0110800013010:10910;W<W1P>P!sr-O7!sO$0000170107106102101104103105W6X?0W0o"). Qed.
+Proof. intros a n [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma m_vm_lazy_vm_forget_range : ltac2:(zQ "a0!h9!m7!mo5!jc!r5!m0!io6!mme!ph9!pia>2lo$1>2hi$1>1m$7@3$6@1$4@2$5@1$3@1$0#k0@1$3@1$0#k0@1$2@3$9^3^2^1@3$8@1$2^1^3^2").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##-up'0h02fdh12fsh22hih32ioh44lazyh53limh62loh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;2p;3p;7g003<j10Tg003aj1;Tg004?j1:Tg01VDj27Tg00>:j16Tg05U6j35Tg04>Qj11Tg05V4j32!s\$bj34Tg04<cj73Tg04=Yj38Tg00<?j29Tg00J^R0g04:WR1P1g00K<#0!s$-;#:R1/71#6R2f3R3f2R4f0R535#1%15?23434P5g04@Gg04A?R6P6g04B7R!s,$oR7g04CgR8g04DaR9g04EZR:fAR;f@R<f7R=f5R>f4R?P3P4f1R@P5F3RA!t0%A?2;<542]<]:];]8]9!t;$FT%61f<f6R1=8=>P!sb$P!s`$#1fFfE32,92XA:X59X@8X17X36W?X42W>!sO%O3n0110800013010:10910;W=W0P1P!sx-O7!sO$0000170107106102101104103105W7X20W6o"). Qed.
+Proof. intros lo hi [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma m_vm_materialized_vm_forget_range : ltac2:(zQ "a0!h9!m7!ms6!jc!r5!io6!mme!pjd!pia!pl4>2lo$1>2hi$1>1m$6@3$5@1$4@1$3@1$0#k0@1$2@3$8^3^2^1@3$9@1$3@1$0#k0@2$7^3^2@1$2^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##//p'0h02fdh12fsh22hih32ioh44lazyh53limh62loh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;3p;2p;7g003<j10Tg003aj1<Tg004?j1;Tg00>:j16Tg05U6j37Tg049Wj11Tg05W0j23Tg04okj32!s\$bj35Tg04<cj74Tg01VDj28Tg04=Yj39Tg00<?j2:Tg00J^R0g04:WR1P1g00K<#0!s$-<#;R1#6R2f3R3f2R4f0R537#11334%1552135P5g04@Gg04A?R6P6g04B7R!s,$oR7g04CgR8g04DaR9g04EZR:fAR;f@R<f7R=f5R>f4R?P3P4f1R@P5F4RA!t3%;<%1A521552]<]:];]8]9!t>$FT1811#6fFfE'3f<f6RA=9=>P!sn$P!sl$#1521,:2XA:X59X@8X17X36X?2W4W>!sL%O3n0110800013010:10910;W=W0PAP!su-O7!sO$0000170107106102101104103105W7X20W6o"). Qed.
+Proof. intros lo hi [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma m_vmmaps_vm_forget_range : ltac2:(zQ "60!m7!mp2!io6!mme!nq6!pia>2lo$0>2hi$0>1m$3@3$2$4@1$1@3$5^3^2^1@1$1^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##-Zp'0h02fdh12fsh22hih32ioh44lazyh53limh62loh71mi001mh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@4!s\$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;3p;1p;7p;2g05U6j35Tg04H>j11Tg004bj33Tg04<cj74Tg003<j10!s/$aj1:!sJ$?j19Tg01VDj28Tg00>:j12Tg04=Yj37Tg00<?j26Tg00J^R0g04:WR1P1g04FTR1f3R2f2R3f0R435#1%1433P4g04@Gg04A?R5P5g04B7R!s,$oR6g04CgR7g04DaR8g04EZR9fAf@f7R:f5R;f4R<P2P3f1R=P4F4R>!t$%>531]<]:];]8]9P4g00K<#0!s$-:#9R>/8>#2%2>f<f6R>=7:;P!su$P!ss$#1,61XA9X58X@7X16X35W?W4X>1!sI%O3n0110800013010:10910;W=W0P>P!sr-O7!sO$0000170107106102101104103105W7X20W6o"). Qed.
+Proof. intros lo hi [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma m_vm_lazy_with_vmmaps : ltac2:(zQ "90!h9!mo5!jc!r5!m0!io6!mme!nq6!ple>1h$7>1m$6@3$5@1$3@2$4@1$2@1$0#k0@1$2@1$0#k0@1$1@2$8^2^1@1$1^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##-Ip'0h02fdh12fsh21hh32ioh44lazyh53limh61mi001mh76m_fsysi01!s0&h84m_ioi02!s-$h95m_limi03!s/%h:6m_proci04!s0&h;6m_timei05!s0&h<4m_vmi06!s-$h=4mapsh>3math?4!s\$@2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;2p;3p;7g003<j10Tg003aj1:Tg004?j19Tg01VDj26Tg00>:j15Tg05X1j24Tg04>Qj11!sS$bj33Tg04<cj72Tg04=Yj38Tg00<?j27Tg04FTR0g04:WR1P1g00K<#0!s$-:#9R1/61#5R2f2R3f0R4'4#1%1433P4g04@Gg04A?R5P5g04B7R!s,$oR6g04CgR7g04DaR8g04EZR9f@f7R:f5R;f4R<f3R=P3f1R>P4F2R?!t$%?532];]9]:]7]8P4%51f<f6R1=8:;P<P=P3P!sW$#1,72X@9X58X?7X16X35W>X42X=0!sJ%O3n0110800013010:10910;W<W0P1P!ss-O7!sO$0000170107106102101104103105W6W2o"). Qed.
+Proof. intros h [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma m_vm_materialized_with_vmmaps : ltac2:(zQ "80!ms6!r5!io6!h9!mme!nq6!ple!jc>1h$5>1m$4@3$2@1$1@1$7@1$3#k0@1$0@2$6^2^1@1$0^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##-Ip'0h02fdh12fsh21hh32ioh44lazyh53limh61mi001mh76m_fsysi01!s0&h84m_ioi02!s-$h95m_limi03!s/%h:6m_proci04!s0&h;6m_timei05!s0&h<4m_vmi06!s-$h=4mapsh>3math?4!s\$@2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;2p;3p;7g003<j10Tg003aj1:Tg004?j19Tg00>:j12Tg05X1j25Tg049Wj11!sJ$bj34Tg04<cj73Tg01VDj28Tg04=Yj37Tg00<?j26Tg04FTR0g04:WR1P1g00K<#0!s$-:#9R1#2R2f2R3f0R4'5#1%1434P4g04@Gg04A?R5P5g04B7R!s,$oR6g04CgR7g04DaR8g04EZR9f@f7R:f5R;f4R<f3R=P3f1R>P4F3R?!t$%?542];]9]:]7]8P41811#2f<f6R1=7:;P<P=P3P!sZ$#1,62X@9X58X?7X16X35X>2W4X=0!sJ%O3n0110800013010:10910;W<W0P1P!ss-O7!sO$0000170107106102101104103105W6W2o"). Qed.
+Proof. intros h [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 Lemma m_vmmaps_with_vmmaps : ltac2:(zQ "50!nq6!io6!mme!mp2!ple>1h$0>1m$2@3$1$0@1$3@2$4^2^1^2").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyRestrict ()) ["LazyLedger"] "##,zp'0h02fdh12fsh21hh32ioh44lazyh53limh61mi001mh76m_fsysi01!s0&h84m_ioi02!s-$h95m_limi03!s/%h:6m_proci04!s0&h;6m_timei05!s0&h<4m_vmi06!s-$h=4mapsh>3math?4!s\$@2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;2p;1p;3p;7g05X1j21Tg04H>j14Tg004bj32Tg04<cj75Tg003<j10!s/$aj19!sJ$?j18Tg01VDj26Tg00>:j13Tg00<?j27Tg04FTR0g04:WR1P1f2R1f0R2'1#4=201P2g04@Gg04A?R3P3g04B7R!s,$oR4g04CgR5g04DaR6g04EZR7f@R8f7f5R9f4R:f3R;P1f1R<P2F5!s}&8];]9]:]7]8P2g00K<#0!s$-9#8R8/68#3%38fE,70X@7X56X?5X14X33W>W4X=0P1P<P2O3n0110800013010:10910;W<W0f6P9P:P;!sO&7!sO$0000170107106102101104103105W6W2o"). Qed.
+Proof. intros h [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Lemma lazy_interior_aligned : ltac2:(zQ "e2!h9!jc!m0!io6!ma!m7!lre!lvb!jsd!r5!lje!it3!ov9!jlb&@3$3$5@2$7@2$4@1$0#k0^2$6Z&@2$2@1$1@1$0#k0@1$1@1$0#k0>1a@1$1@1$0#k0>1n@1$1@1$0#k0>0~0>0~0>0@2$dZ@2$4@1$0#k0^3@3$3@1$9~1@2$c^5^4@3$8~1@4$b@1$1@1$0#k0@1$1@1$0#k0^5^4@1$a~1").

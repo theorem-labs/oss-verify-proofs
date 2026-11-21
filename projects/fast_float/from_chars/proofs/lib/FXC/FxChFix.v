@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes; the vDSO run state; the launch's reservations with the vDSO pair; the model's m_kernel field). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
@@ -45,7 +46,7 @@ Local Open Scope Z_scope.
 Definition piece_rgs (pcs : list (lin * lin * Z)) : list region := List.map (fun p => RG (fst (fst p)) (snd (fst p)) RZ TEmpty) pcs.
 Definition piece_allow (pcs : list (lin * lin * Z)) : list (lin * Z) := List.map (fun p => (fst (fst p), snd p)) pcs.
 Definition norep_post (L : sst) (b : Z) (pcs : list (lin * lin * Z)) : sst :=
-  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) (lconst b)) (piece_rgs pcs ++ s_rgs L) (s_facts L) (s_next L) (s_resv L).
+  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) (lconst b)) (piece_rgs pcs ++ s_rgs L) (s_facts L) (s_next L) RNone.
 Definition norep_M (M : smodel) (b k : Z) (kd : gkind) (pcs : list (lin * lin * Z)) (zr : bool) : smodel :=
   SM ((lconst b, lconst k, kd) :: sm_maps M) (piece_allow pcs ++ sm_allow M) (if zr then (b, b + k) :: sm_zr M else sm_zr M)
      (sm_tid M) (sm_brk M) (sm_sbrk M) (sm_sp M) (sm_frz M) [].
@@ -166,7 +167,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
     { intros R HR'. destruct (piece_rgs_In _ _ HR') as (p & Hp & ->). cbn [rg_base]. split; [exact (proj1 (HpE p Hp))|].
       unfold rsz. cbn [rg_size]. exact (proj2 (HpE p Hp)). }
     unfold sden0, norep_post. cbn [s_pc s_regs s_rgs s_facts s_resv mks ms_pc_val ms_svc_pending ms_resv ms_regs ms_mem ms_fcsr].
-    split; [reflexivity|]. split; [reflexivity|]. split; [exact Hrv|].
+    split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [apply regs_ok_upd; [exact HR | rewrite lden_lconst; reflexivity]|].
     split; [|split; [|split; [exact HF | exact Hfrm]]].
     - apply Forall_app. split.
@@ -263,7 +264,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
     + intros p Hp. rewrite Hlz'. change ((a, Z_to_bv 64 k) :: m_vm_lazy model) with ([(a, Z_to_bv 64 k)] ++ m_vm_lazy model).
       rewrite page_in_ranges_app, (N4 p Hp), orb_true_r. reflexivity.
     + rewrite Hvm'. cbn [vm_limit]. rewrite Hlim. exact Hbud'.
-  - unfold H', Hof. apply (hoff_of segs _ _ (vm_maps (m_vmmaps model')) (vm_reserved (m_vmmaps model')) Hsegb);
+  - unfold H', Hof. eapply (hoff_of segs _ _ (vm_maps (m_vmmaps model')) (vm_reserved (m_vmmaps model')) Hsegb);
       [rewrite Hvm'; exact Hres | exact Hlzm' | exact Hmres'].
   - rewrite Hvm'. exact Hres.
   - rewrite Hvm'. exact Hlim.
@@ -342,6 +343,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
   - rom_tac.
   - apply own_nil. reflexivity.
   - rewrite Hblob0. apply blob_ok_nil. exact Hnm'.
+  - vdso_keep_tac; [unfold model'; rewrite fn_vmmaps; reflexivity | exact Htop' | unfold model'; apply fn_kernel].
 Qed.
 End NorepPost.
 
@@ -570,6 +572,39 @@ Proof.
   rewrite !fg64 by (unfold two64 in *; lia). exact Hg.
 Qed.
 
+(* a region inside the shadow misses the vDSO/vvar pair whenever the pair sits above the shadow ([dn_vdso]) *)
+Lemma region_free_vdso : forall kb (top b k : Z), 0 <= b -> 0 <= k -> b + k <= SH_HI -> SH_HI + vdso_len kb <= top -> top < two64 ->
+  region_free (vdso_reserved kb top) (Z_to_bv 64 b) (Z_to_bv 64 k) = true.
+Proof.
+  intros kb top b k Hb Hk Hbk Ht Hw. pose proof (vdso_len_bounds kb) as Hv. unfold vdso_reserved.
+  destruct (top - vdso_len kb <? page_size) eqn:E; [reflexivity|]. apply Z.ltb_ge in E.
+  assert (Htp : 1 <= vdso_text_pages kb) by (unfold vdso_len, vdso_vvar_pages, page_size in *; lia).
+  unfold vdso_len, vdso_vvar_pages, page_size, SH_HI in *. cbn [region_free]. unfold iv_overlap.
+  rewrite !fg64 by (unfold two64 in *; lia).
+  apply andb_true_intro; split; [apply negb_true_iff, andb_false_iff; right; apply Z.ltb_ge; lia|].
+  apply andb_true_intro; split; [apply negb_true_iff, andb_false_iff; right; apply Z.ltb_ge; lia | reflexivity].
+Qed.
+
+Lemma vdso_top_lt : forall h, vdso_top h < two64.
+Proof.
+  intros h. pose proof (alloc_top_room h) as R. unfold two_pow_64, stack_max_size in R.
+  unfold vdso_top, mmap_top, page_round_down_Z, page_size, two64.
+  set (a := alloc_top h) in *. set (m := bv_unsigned (vm_mmap_base h)).
+  pose proof (Z.mul_div_le a 4096 ltac:(lia)).
+  pose proof (Z.mul_div_le (Z.min m (a / 4096 * 4096)) 4096 ltac:(lia)). lia.
+Qed.
+
+(* [norep_free_sound] over the launch ledger: the segments, then the vDSO/vvar pair *)
+Lemma norep_free_sound_vdso : forall E M res kb top b k, Forall (gshape_ok E) (sm_maps M) -> 0 <= b -> 0 <= k -> b + k <= SH_HI ->
+  SH_HI + vdso_len kb <= top -> top < two64 -> norep_free res M b k = true ->
+  region_free ((res ++ vdso_reserved kb top) ++ List.map (gden E) (sm_maps M)) (Z_to_bv 64 b) (Z_to_bv 64 k) = true.
+Proof.
+  intros E M res kb top b k Hsh Hb Hk Hbk Ht Hw Hf.
+  pose proof (norep_free_sound E M res b k Hsh ltac:(unfold SH_HI, two64 in *; lia) ltac:(unfold SH_HI, two64 in *; lia) Hf) as Hn.
+  rewrite region_free_app in Hn. apply andb_prop in Hn as [Hn1 Hn2].
+  rewrite !region_free_app, Hn1, Hn2, (region_free_vdso kb top b k Hb Hk Hbk Ht Hw). reflexivity.
+Qed.
+
 Definition norep_ok (res : list (word * word)) (LIMIT : Z) (L : sst) (M : smodel) (b k : Z) (kd : gkind) (na : bool)
     (idxs : list (nat * Z)) (zr : bool) (wlo whi : Z) : bool :=
   match a7c L, arg L 0, arg L 1, arg L 2, arg L 3, arg L 5, pieces_of (s_facts L) (s_rgs L) idxs with
@@ -647,7 +682,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff : LiaFast.U) => LiaFast.u0).
   assert (HTOP : b + k <= alloc_top (m_vmmaps model)).
   { destruct Hspok as [Hsp1 _]. unfold init_sp_ok, sp_window_lo in Hsp1. unfold alloc_top, stack_max_size. lia. }
   assert (Hrf : region_free (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) (Z_to_bv 64 b) (Z_to_bv 64 k) = true).
-  { rewrite Hres, Hmaps. apply norep_free_sound; [exact Hgsh | lia | unfold SH_HI, two64 in *; lia | exact Hfree]. }
+  { rewrite Hres, Hmaps. apply norep_free_sound_vdso; [exact Hgsh | lia | lia | lia | exact (den_vdso_of _ _ _ _ _ _ _ _ _ Hd) | apply vdso_top_lt | exact Hfree]. }
   assert (Hplace : place_ok model k (Z_to_bv 64 b)).
   { unfold place_ok, page_size. rewrite Hub. repeat split; try lia. exact Hrf. }
   assert (Hgate : fixed_gate model (Z_to_bv 64 b) (Z_to_bv 64 len)).
@@ -672,7 +707,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff : LiaFast.U) => LiaFast.u0).
     assert (Hbr := branch_noreplace_na_free segs ms1 (ms_reg ms 17) model Hno).
     rewrite ?Hg0, ?Hg1, ?Hg2, ?Hg3, ?Hg5 in Hbr. rewrite HnZ in Hbr.
     specialize (Hbr Hoffa Hanon Hnz0 Hmod Hnac Hfna Hfrw Hsel Hgate Hrf).
-    eapply rzc_silent1; [|exact (Hk _ _ HD')].
+    eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD')].
     apply (node_mmap_alt_choose_at segs cfg Hoff ms1 model (ms_reg ms 17) (Z_to_bv 64 b) (fun a => a = Z_to_bv 64 b)
              (fun a => fresh_na_next (Z_to_bv 64 flags) a (Z_to_bv 64 k) model)
              (fun a => mkEffectU a [] [] [(a, Z_to_bv 64 k)] [] []) Hh Hsvc Hno Hbr).
@@ -686,7 +721,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff : LiaFast.U) => LiaFast.u0).
     rewrite ?Hg0, ?Hg1, ?Hg2, ?Hg3, ?Hg5 in Hbr. rewrite HnZ in Hbr.
     apply andb_prop in Hsel as [Hsel1 Hsel2]. apply negb_true_iff in Hsel1.
     specialize (Hbr Hoffa Hanon Hnz0 Hmod Hnac Hfna Hfrw Hsel1 Hsel2 Hgate Hrf).
-    eapply rzc_silent1; [|exact (Hk _ _ HD')].
+    eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD')].
     apply (node_mmap_alt_choose_at segs cfg Hoff ms1 model (ms_reg ms 17) (Z_to_bv 64 b)
              (fun a => a = Z_to_bv 64 b /\ mmap_noreserve_backed_ok (Z_to_bv 64 flags) model k = true)
              (fun a => fresh_rw_next (Z_to_bv 64 flags) a (Z_to_bv 64 k) model)
@@ -738,6 +773,12 @@ Proof.
   intros na flags a n m. unfold fixed_next, fixed_na_next, fixed_rw_next, mmap_fixed_rw_next, with_mmap_replacement, with_mmap_backing,
     vm_add_lazy, vm_forget_range.
   destruct na, (mmap_noreserve_b flags); destruct m; cbn; repeat split; reflexivity.
+Qed.
+Lemma fx_kernel : forall na flags a n m, m_kernel (fixed_next na flags a n m) = m_kernel m.
+Proof.
+  intros na flags a n m. unfold fixed_next, fixed_na_next, fixed_rw_next, mmap_fixed_rw_next, with_mmap_replacement, with_mmap_backing,
+    vm_add_lazy, vm_forget_range.
+  destruct na, (mmap_noreserve_b flags); destruct m; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -867,7 +908,7 @@ Proof.
 Qed.
 
 Definition fix_post (L : sst) (a : lin) : sst :=
-  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) a) (s_rgs L) (s_facts L) (s_next L) (s_resv L).
+  SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) a) (s_rgs L) (s_facts L) (s_next L) RNone.
 Definition fix_M (M : smodel) (j : nat) (k : gkind) : smodel :=
   SM (set_kind j k (sm_maps M)) (sm_allow M) (sm_zr M) (sm_tid M) (sm_brk M) (sm_sbrk M) (sm_sp M) (sm_frz M) (sm_own M).
 
@@ -979,7 +1020,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
           destruct (Hcont _ _ Hc) as [_ Hrd]. rewrite okey_pos in Hrd by lia. unfold w. exact Hrd. }
         unfold rd1 in Hrd. destruct (mrestrict H (ms_mem ms) (Z_to_bv 64 w)) as [b0|] eqn:Hm; [exact Hrd|].
         exfalso. assert (Hcm : covered (vm_maps (m_vmmaps model)) w = true) by (apply Hrg; lia).
-        pose proof (Hmres w Hcm) as Hnr. rewrite Hres in Hnr.
+        pose proof (Hmres w Hcm) as Hnr. rewrite Hres, covered_app in Hnr. apply orb_false_iff in Hnr as [Hnr _].
         assert (Hfs : find_segment segs (bv_unsigned (Z_to_bv 64 w)) 1 = None).
         { destruct (find_segment segs (bv_unsigned (Z_to_bv 64 w)) 1) eqn:Hf; [|reflexivity]. exfalso.
           rewrite Hw64 in Hf. pose proof (seg_covered segs w Hsegb ltac:(unfold uE in *; lia) ltac:(rewrite Hf; discriminate)) as Hc'.
@@ -999,7 +1040,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
     { intros R HR'. unfold uE, rsz. unfold bases_wf in Hbw. rewrite forallb_forall in Hbw. destruct (andb_prop _ _ (Hbw R HR')) as [Hb1 Hb2].
       rewrite (lden_agree_wf _ E E'' _ Hb1 Ha''), (lden_agree_wf _ E E'' _ Hb2 Ha''). split; reflexivity. }
     unfold sden0, fix_post. cbn [s_pc s_regs s_rgs s_facts s_resv mks ms_pc_val ms_svc_pending ms_resv ms_regs ms_mem ms_fcsr].
-    split; [reflexivity|]. split; [reflexivity|]. split; [exact Hrv|].
+    split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [apply regs_ok_upd; [exact HR | exact (lden_agree_wf _ E E'' a Hwa Ha'')]|].
     split; [|split; [exact HD | split; [exact HF | exact Hfrm]]].
     apply Forall_forall. intros R HR'. rewrite Forall_forall in HG. apply (rg_ok_mem_eq segs E'' (ms_mem (restrict H ms))); [exact (HG R HR')|].
@@ -1086,7 +1127,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
       rewrite (page_in_ms_keep _ u (u + n) p Hwlz ltac:(lia) Hal ltac:(rewrite Z.add_mod, Hal, Hnal by lia; reflexivity) (N2 p Hp) Hout (N4 p Hp)).
       rewrite orb_true_r. reflexivity.
     + rewrite Hvm'. cbn [vm_limit]. rewrite Hlim. exact Hbud'.
-  - unfold H', Hof. apply (hoff_of segs _ _ (vm_maps (m_vmmaps model')) (vm_reserved (m_vmmaps model')) Hsegb);
+  - unfold H', Hof. eapply (hoff_of segs _ _ (vm_maps (m_vmmaps model')) (vm_reserved (m_vmmaps model')) Hsegb);
       [rewrite Hvm'; exact Hres | exact Hlzm' | exact Hmres'].
   - rewrite Hvm'. exact Hres.
   - rewrite Hvm'. exact Hlim.
@@ -1148,6 +1189,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
       * symmetry. exact (Hm0i w Hop ltac:(lia)).
       * rewrite fresh_mem_out by (rewrite Hua, HnZw; lia). rewrite (Hm Ho). symmetry. apply Hm0o. lia.
   - exact Hblob'.
+  - vdso_keep_tac; [unfold model'; rewrite fx_vmmaps; reflexivity | unfold alloc_top, model'; rewrite fx_vmmaps; reflexivity | unfold model'; apply fx_kernel].
 Qed.
 End FixKeep.
 
@@ -1327,6 +1369,32 @@ Proof.
   unfold iv_disj, B, S, gden in Hdj. cbn [fst snd] in Hdj. rewrite Hbv in Hdj.
   unfold uE in S4. rewrite Hbv in S4. rewrite (fg64' b Hbr) in Hdj, S4.
   specialize (Hin w Hw). unfold gsz, uE in Hin, Gb, Hdj. lia.
+Qed.
+
+(* the launch ledger's vDSO/vvar pair is well formed and non-empty, so a segments-only fact about the
+   reserved list extends to [segments ++ vdso_reserved] *)
+Lemma ivs_wf_app : forall l1 l2, ivs_wf l1 -> ivs_wf l2 -> ivs_wf (l1 ++ l2).
+Proof. intros l1 l2 H1 H2 q Hq. apply in_app_or in Hq as [Hq|Hq]; [exact (H1 q Hq) | exact (H2 q Hq)]. Qed.
+Lemma vdso_ivs_ok : forall kb top, 0 <= top < two64 ->
+  ivs_wf (vdso_reserved kb top) /\ Forall (fun p => 0 < bv_unsigned (snd p)) (vdso_reserved kb top).
+Proof.
+  intros kb top Ht. pose proof (vdso_len_bounds kb) as Hv. pose proof (vdso_text_pages_pos kb) as Hp.
+  unfold vdso_reserved. cbv zeta.
+  destruct (top - vdso_len kb <? page_size) eqn:E; [split; [apply ivs_wf_nil | constructor]|]. apply Z.ltb_ge in E.
+  unfold vdso_len, vdso_vvar_pages, page_size, two64 in *.
+  split.
+  - apply ivs_wf_cons; [|apply ivs_wf_cons; [|apply ivs_wf_nil]]; unfold iv_wf, B, S; cbn [fst snd];
+      rewrite !fg64 by (unfold two64; lia); change (2 ^ 64) with 18446744073709551616; lia.
+  - constructor; [|constructor; [|constructor]]; cbn [snd]; rewrite fg64 by (unfold two64; lia); lia.
+Qed.
+(* the launch ledger [res ++ vdso pair] is well formed and positive when [res] is and the pair sits above the shadow *)
+Lemma ivs_ledger_ok : forall res kb top, ivs_wf res -> Forall (fun p => 0 < bv_unsigned (snd p)) res ->
+  SH_HI + vdso_len kb <= top -> top < two64 ->
+  ivs_wf (res ++ vdso_reserved kb top) /\ Forall (fun p => 0 < bv_unsigned (snd p)) (res ++ vdso_reserved kb top).
+Proof.
+  intros res kb top Hw Hp Hh Ht. pose proof (vdso_len_bounds kb) as Hv.
+  destruct (vdso_ivs_ok kb top ltac:(unfold SH_HI in *; lia)) as [Hw' Hp'].
+  split; [exact (ivs_wf_app _ _ Hw Hw') | exact (proj2 (Forall_app _ _ _) (conj Hp Hp'))].
 Qed.
 
 Lemma region_free_of_pts : forall l (lo n : word), ivs_wf l -> Forall (fun p => 0 < bv_unsigned (snd p)) l ->
@@ -1517,7 +1585,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff Hrespos Hreswf : LiaFast.U) => LiaFast.u
       + exfalso. destruct (HG0 R HR) as (HRs & _ & _).
         exact (sep_app2_sound E (s_facts L) (sm_maps M) model (sm_sp M) _ HF0 Hmaps Hpd Hgsh Hgtop Hsp (proj2 Hspok)
                  j g a n R Hj Hgm Hlo Hhi ltac:(unfold two64; lia) HRs HRw Hc w Hw Hin).
-      + exfalso. rewrite <- Hres in Hc.
+      + exfalso. apply (sep_res_b_app _ (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))) in Hc. rewrite <- Hres in Hc.
         exact (sep_res_sound E (sm_maps M) model _ Hmaps Hgsh Hmres j g a n R Hj Hgm Hlo Hhi Hc w Hw Hin).
       + exfalso. destruct (HG0 R HR) as (HRs & _ & _).
         exact (sep_rb_sound E (s_facts L) (sm_maps M) model (sm_sp M) HF0 Hgsh Hgtop Hsp (proj2 Hspok) j a n R HRs HRw Hc w Hw Hin).
@@ -1559,7 +1627,11 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff Hrespos Hreswf : LiaFast.U) => LiaFast.u
   assert (Hctn : (region_free (vm_reserved (m_vmmaps model)) (lden E a) (Z_to_bv 64 n0)
                   && map_contains (vm_maps (m_vmmaps model)) (lden E a) (Z_to_bv 64 n0))%bool = true).
   { apply andb_true_intro. split.
-    - rewrite Hres. apply region_free_of_pts; [exact Hreswf | exact Hrespos | | rewrite HnZw; exact HnZpos].
+    - assert (Hvt : 0 <= vdso_top (m_vmmaps model) < two64).
+      { pose proof (den_vdso_of _ _ _ _ _ _ _ _ _ Hd). pose proof (vdso_len_bounds (m_kernel model)). pose proof (vdso_top_lt (m_vmmaps model)).
+        unfold SH_HI, page_size in *. lia. }
+      destruct (vdso_ivs_ok (m_kernel model) _ Hvt) as [Hvw Hvp].
+      rewrite Hres. apply region_free_of_pts; [exact (ivs_wf_app _ _ Hreswf Hvw) | exact (proj2 (Forall_app _ _ _) (conj Hrespos Hvp)) | | rewrite HnZw; exact HnZpos].
       intros x Hx. rewrite HnZw, HuA in Hx. rewrite <- Hres. exact (Hmres x (Hcm x Hx)).
     - rewrite Hmaps. apply (map_contains_intro _ _ _ (fst (gden E g)) (snd (gden E g))); [rewrite <- surjective_pairing; exact (lden_maps_in E _ _ g Hgj Hgm) | |].
       + unfold gden. cbn [fst]. unfold uE in *. lia.
@@ -1569,14 +1641,14 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff Hrespos Hreswf : LiaFast.U) => LiaFast.u
   - assert (Hbr := branch_fixed_na_contained segs ms1 (ms_reg ms 17) model Hno).
     rewrite ?Hg0, ?Hg1, ?Hg2, ?Hg3, ?Hg5 in Hbr. rewrite HnZ in Hbr, Hctn.
     specialize (Hbr Hoffa Hanon Hnz0 Hmod Hnac Hsel Hgate Hctn).
-    eapply rzc_silent1; [|exact (Hk _ _ HD')].
+    eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD')].
     exact (node_mmap_fixed_na_contained segs cfg Hoff ms1 model (ms_reg ms 17) (lden E a) (Z_to_bv 64 n0) (Z_to_bv 64 flags) Hh Hsvc Hno
              ltac:(rewrite HuA; lia) Hbr).
   - apply andb_prop in Hsel as [Hsel1 Hsel2]. apply negb_true_iff in Hsel1.
     assert (Hbr := branch_fixed_rw_contained segs ms1 (ms_reg ms 17) model Hno).
     rewrite ?Hg0, ?Hg1, ?Hg2, ?Hg3, ?Hg5 in Hbr. rewrite HnZ in Hbr, Hctn.
     specialize (Hbr Hoffa Hanon Hnz0 Hmod Hnac Hsel1 Hsel2 Hgate Hctn).
-    eapply rzc_silent1; [|exact (Hk _ _ HD')].
+    eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD')].
     apply (node_mmap_fixed_rw_contained segs cfg Hoff ms1 model (ms_reg ms 17) (lden E a) (Z_to_bv 64 n0) (Z_to_bv 64 flags) Hh Hsvc Hno
              ltac:(rewrite HuA; lia) Hbr).
     (* [comment removed for export] *)

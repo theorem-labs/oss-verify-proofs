@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (commit f38a2a07767, B2 FINAL (im_rmax comment, d236f37c0d0); file sha256 fd42537792fa) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (B2 FINAL (im_rmax comment); file sha256 fd42537792fa) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B2; integrator ReallocPrimary).
    rule 24: proves function __sanitizer::QuarantineCache<__asan::QuarantineCallback>::Enqueue (the MISS arm: a new
    batch is needed and the class-24 cache is EMPTY, so Enqueue calls the internal allocator's Refill in the middle
@@ -18,7 +19,7 @@
    WHY THE REFILL IS TWO FIELDS (the scout's fact table, agent ReallocPrimary.WalkB2.FactMiss).  cgif's miss arm
    reads four things out of its own [enq_pre] that the shared cf premise does NOT carry: the budget conjunct
    (YFg6.v:356), all of [refill_reg X kBatchClass] (YFg6.v:356, :862, :876), the [rroom] half of [qloosem]
-   (YFg6.v:356), and [wf_fa_room], which the cf Wf drops (YFg6.v:862, YFf2.v:142-150).  NONE of them may be a
+   (YFg6.v:356), and [wf_fa_room], which the cf Wf drops (YFg6.v:862, YFf2.v:143-151).  NONE of them may be a
    premise of this arm.  They are spent INSIDE two fields that an instance fills from its own refill contract and
    its own refill-tree apost:
    - [im_refill]: the callee's contract AT THE CALL CONFIGURATION the first segment reached, premised on that
@@ -118,17 +119,17 @@ Record EnqIfaceMiss : Prop := {
      chunk_ok_cf, through the Wf_cf conjunct of enq_pre_cf), as for ir_nmax / ih_nmax (fresh reviewer, 01:1xZ). *)
   im_nmax : forall inst ly X W regs mem md k, EPRE inst ly X W regs mem md k -> 1 <= ck_n k < NMAXD;
 
-  (* RMAXD's window, in B1's form (DMwalkIF.v:307 rmaxd_ok at 3e29c198d40), as EnqGbase.v:201 [ih_rmaxd_ok]: a
+  (* RMAXD's window, in B1's form (DMwalkIF.v:308 rmaxd_ok), as EnqGbase.v:202 [ih_rmaxd_ok]: a
      field, not a Section hypothesis, so that it is a compiled lemma at each instance. *)
   im_rmaxd_ok : 2 ^ 31 <= RMAXD <= kFreeArrayOffset;
 
   (* the class-24 region's mapped-user bound of this instance, AT THE REFILLED STATE X1: that is where the tail walk
      reads it.  cgif_file: YFf2.nb_geom's fifth conjunct at X1.  At cf, batch_room_cf ALONE does not give it:
-     batch_room_cf (YG00cf.v:363-364, `rg_mapped_user + kUserMapSize <= kFreeArrayOffset`) holds at the PRE-state X
+     batch_room_cf (YG00cf.v:364-365, `rg_mapped_user + kUserMapSize <= kFreeArrayOffset`) holds at the PRE-state X
      (an enq_pre_cf conjunct), and regs_only X X1 (im_apostg) says nothing about [reg X1].  The cf instance closes it
-     at X1 itself: the refill leaf's relation gives Wf_cf at X1 (amc_wf), and YG01cf.mapped_bound_cf (YG01cf.v:251)
-     bounds every class's mapped-user bytes by kFreeArrayOffset (CfF1's YGcfInstEnqMisscgif.v:134-138 at
-     5a0eabced8d1). *)
+     at X1 itself: the refill leaf's relation gives Wf_cf at X1 (amc_wf), and YG01cf.mapped_bound_cf (YG01cf.v:252)
+     bounds every class's mapped-user bytes by kFreeArrayOffset (CfF1's YGcfInstEnqMisscgif.v:134-138).
+     *)
   im_rmax : forall inst ly X W regs mem md k c1 X1 W5 c5 l,
     EPRE inst ly X W regs mem md k ->
     RLEAF ly X W regs mem md k c1 (tt, X1) W5 c5 ->

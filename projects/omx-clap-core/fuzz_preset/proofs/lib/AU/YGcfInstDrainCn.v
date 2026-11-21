@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstDrainCn.v (commit ce1a656b52b7, file sha256 219dc0e75c1e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstDrainCn.v (file sha256 219dc0e75c1e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b: the GRANT step of F11 — the drain's cut relation
    across EnsureFreeArraySpace's KMapFreeArray grant, at the intermediate memory the walk exposes at that call's
    return.  rule 24: no function proved (kind: relation-level facts about the walk's own frame).
@@ -68,7 +69,7 @@ Hypothesis Hc : 1 <= c <= 30.
 Hypothesis Hgrow : mf + kFreeArrayMapSize <= kFreeArrayMax.
 Hypothesis Hsp : ly_stk_lo ly + 320 <= sp0 <= ly_stk_hi ly.
 
-(* EnsureFreeArraySpace's frame at its return: H3's WING1 (DMcdR.v:137-191 @ ea2f3f773b0) — its stack scratch, the
+(* EnsureFreeArraySpace's frame at its return: H3's WING1 (DMcdR.v:138-192) — its stack scratch, the
    region's mapped-free-array word, the record's NON-cell junk bytes, the two thread-stats windows, the new map and
    its shadow.  Every other region cell is the entry's, by the frame. *)
 Variable stklo : Z.
@@ -116,7 +117,7 @@ destruct DEC as [Hw|Hw].
 Qed.
 
 
-(* The walk's written values at EnsureFreeArraySpace's return (DMcdR.v:137-191): the region's mapped-free-array word
+(* The walk's written values at EnsureFreeArraySpace's return (DMcdR.v:138-192): the region's mapped-free-array word
    takes the grown size, the new map is zeroed and its shadow is the free-array poison. *)
 Hypothesis V_RG24 : forall k, (k < 8)%nat -> rd1 (RG + 24 + Z.of_nat k) = Some (le_byte (mf + kFreeArrayMapSize) 8 k).
 Hypothesis V_MAP : forall a, fadr <= a < fadr + kUserMapSize -> rd1 a = Some (le_byte 0 1 0).
@@ -845,7 +846,7 @@ Hypothesis HCOV : forall x, ~ (fadr <= x < fadr + kUserMapSize) ->
 Hypothesis HEAG : eager_used md2 <= eager_used md + kUserMapSize.
 Hypothesis HAMWF : amwf md2.
 (* The free side's ledger at the grant's post, DERIVED (it was a named premise until the layer's abudget_cf carried
-   prim_committed / 8, ae2fa80b0325): the grant adds the map and its shadow to the world, 8 * 32768 + 32768 bytes
+   prim_committed / 8): the grant adds the map and its shadow to the world, 8 * 32768 + 32768 bytes
    (HWA), and raises the committed primary by the map (cg_prim_committed), so YGcfAbudget.ledger_grant_prim_cf at
    q = 32768 carries the pre-state's ledger over. *)
 Lemma cn_free_ledger : A_bytes (w_A W3) <= abudget_cf (cgX X c).

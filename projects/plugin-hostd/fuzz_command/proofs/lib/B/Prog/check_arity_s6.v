@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the fifth segment of check_reply's walk (fuzz_command.asan, 0x86d78), the
    strcmp call of the refusal path (0x86fb8) and the branch into the epilogue, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (the step through a call and back) and A/ACh5.v (a segment that ends
-   in another segment's statement), at c8557374ad2e.
+   in another segment's statement).
 
    The code of the segment is
      0x86fb8  jal  wrapper_strcmp       a0 = g_rec.reply, a1 = s3 = F + 32, which holds "resp <code>"
@@ -17,7 +17,8 @@
    memory, so the engine's frame is empty and every byte the walk reads is the byte of the state the segment was
    entered in. The interceptor's own writes are the ones its contract allows, inside its scratch window below sp. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s5.v, with its module paths and module names changed; 254 of its 304 lines of code are new or changed and 362 lines of the source are left out. *)
-(* B twin of lib/A/Prog/check_arity_s6.v (a working branch 9c6410fb32e) on image B
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin of lib/A/Prog/check_arity_s6.v (a working branch) on image B
    (fuzz_command.asan-ubsan). Relocation plus B's frame: "..." 0x21880 -> 0x218c0 (RO_lit_218c0), the frame region
    112 -> 144 bytes with its write window [0, 8) -> [0, 40) (ca_shape, ca_kept, ca_awr_sh, ca_regs_back_g); B stores
    to 0(sp) .. 0x20(sp) (0x87824 .. 0x87870) and reads them back after each bcmp call (0x878b0 .. 0x878cc), so

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO reservation in the reserved ledger: three-arm bounds in the slot and boot facts; grant_exists over Linux placement, linux_place, in the task_unmapped_base window with a positive size). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -32,7 +33,17 @@ Section N6.
   Definition shpage_boot (pb n : Z) : Prop :=
     (exists b m : word, In (b, m) (bt_maps0 bt) /\ u b <= pb /\ pb + n <= u b + u m)
     /\ (forall a, pb <= a < pb + n -> pg_in_ivz (bt_lazy0 bt) a /\ ~ in_ivz (bt_noacc0 bt) a)
-    /\ (forall iv, In iv (bt_reserved bt) -> u (fst iv) + u (snd iv) <= AS_LO).
+    (* LPS 08b1429: the launch's vDSO pair is appended to [vm_reserved]
+       ([State.init_reserved]; AsSInit.v:754-781) and is NOT below [AS_LO], so
+       the old one-sided bound is FALSE over it.  Unlike [res_low] and
+       [res_in_hull], THIS one IS carried by a constant: [shadow_boot] (:137)
+       confines [[pb, pb+n)] to the two shadow bands, both at or below
+       [AS_HEAPLO = 0x10007fff8000] (AsVocab.v:1621), and the donor's
+       [resx_entry_ok] clause [KHI + 4096 <= fst iv] gives exactly that, since
+       [KHI = 0x10007fff8000] (AzPlanCore.v:102) is the SAME literal.  This is
+       the site the donor's [KHI] clause was written for. *)
+    /\ (forall iv, In iv (bt_reserved bt) ->
+          u (fst iv) + u (snd iv) <= AS_LO \/ AS_HEAPLO <= u (fst iv)).
 
   Section Range.
     Variables (st : ast) (Lc FF : list (Z * Z)) (M : mem) (mdl mdlm : Model) (pb n : Z).
@@ -79,11 +90,20 @@ Section N6.
     Proof using SB0 HI LO POS SBM R mdl M FF Lc st bt RUN.
       pose proof band_lits as (_ & _ & _ & P0 & P1 & Upb & Un).
       destruct ledger_m as (_ & _ & _ & _ & ER & _). rewrite ER. destruct SB0 as (_ & _ & RS).
-      assert (G : forall l, (forall iv, In iv l -> u (fst iv) + u (snd iv) <= AS_LO) -> region_free l wpb wn = true).
+      assert (G : forall l, (forall iv, In iv l -> u (fst iv) + u (snd iv) <= AS_LO
+                                                   \/ AS_HEAPLO <= u (fst iv)) ->
+                            region_free l wpb wn = true).
       { intros l. induction l as [|[a sz] t IH]; intros Hl; [reflexivity|]. (lazymatch goal with |- ?G => let G' := eval cbn [region_free] in G in change_no_check G' end).
         apply andb_true_intro. split.
-        - (lazymatch goal with |- ?G => let G' := eval unfold iv_overlap in G in change_no_check G' end). rewrite Upb. pose proof (Hl (a, sz) (or_introl eq_refl)) as X. cbn [fst snd] in X.
-          apply Bool.negb_true_iff. apply Bool.andb_false_iff. left. apply Z.ltb_ge. lia.
+        - (lazymatch goal with |- ?G => let G' := eval unfold iv_overlap in G in change_no_check G' end). rewrite Upb, Un.
+          pose proof (Hl (a, sz) (or_introl eq_refl)) as X. cbn [fst snd] in X.
+          apply Bool.negb_true_iff. apply Bool.andb_false_iff.
+          (* LPS 08b1429: arm 1 is the image segments, below [AS_LO] and so below
+             [pb] ([LO]); arm 2 is the vDSO pair, at or above [AS_HEAPLO] and so
+             at or above [pb + n] ([HI]).  Opposite sides, opposite disjuncts. *)
+          destruct X as [X|X];
+            [left; apply Z.ltb_ge; unfold AS_LO, AS_GAPLO, AS_GAPHI, AS_HEAPLO in *; lia
+            |right; apply Z.ltb_ge; unfold AS_LO, AS_GAPLO, AS_GAPHI, AS_HEAPLO in *; lia].
         - apply IH. intros iv Hiv. apply Hl. right. exact Hiv. }
       exact (G _ RS).
     Qed.
@@ -198,8 +218,21 @@ Section BootFacts.
   Definition ptr8_sep : Prop :=
     forall l1 l2 y, bt_maps0 bt = l1 ++ (Z_to_bv 64 (bt_ptrarr bt), Z_to_bv 64 (2 ^ 23)) :: l2 -> In y (l1 ++ l2) ->
       bv_unsigned (fst y) + bv_unsigned (snd y) <= bt_ptrarr bt \/ bt_ptrarr bt + 2 ^ 23 <= bv_unsigned (fst y).
+  (* LPS 08b1429: the launch's vDSO pair is appended to [vm_reserved]
+     ([State.init_reserved]; AsSInit.v:754-781) and is NOT inside the image
+     hull, so the old two-sided bound is FALSE over it.  Arms 2 and 3 say such
+     an interval misses the ptr8 array [[bt_ptrarr, bt_ptrarr + 2^23)], which is
+     what [s8_region_free] needs: [s8_lits] puts the s8 region inside that array
+     ([P8 <= lo], [lo + K <= P8 + 2^23]).  Stated in [bt] so this file needs no
+     geometry constant; discharged in [AsAinvMainA] from [APS.co_mres] plus
+     [ptr8_entry] -- the array is a [vm_maps] member -- and never from a
+     literal, since no constant separates the vDSO pair from the array. *)
   Definition res_in_hull : Prop :=
-    forall iv, In iv (bt_reserved bt) -> ia_img_lo (bt_ia bt) <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= ia_img_hi (bt_ia bt).
+    forall iv, In iv (bt_reserved bt) ->
+      (ia_img_lo (bt_ia bt) <= bv_unsigned (fst iv)
+       /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= ia_img_hi (bt_ia bt))
+      \/ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bt_ptrarr bt
+      \/ bt_ptrarr bt + 2 ^ 23 <= bv_unsigned (fst iv).
 
   (* [comment removed for export] *)
   Definition stack_geom : Prop :=
@@ -1252,7 +1285,13 @@ Definition BOOTCNT : Z := 32.
 Definition BOOTSZ : Z := 17730000000000.
 Definition CNTMAX : Z := XCNT + BOOTCNT + 1 + LMAX + QSECCNT + NODEMAX + STOREMAX.
 Definition SZMAX : Z := XSZ + BOOTSZ + (GBUDGET + 2 ^ 29) + 2 ^ 20 * NODEMAX + 2 ^ 23 * STOREMAX.
-Lemma room_num : 4096 + NZEX + SZMAX + CNTMAX * (NZEX + 4095) <= alloc_ceiling.
+(* 75d69e00: the gap walk must land in one of Linux's two placement windows, and
+   the bottom-up one starts at [Mmap.task_unmapped_base] (0x2aaaaab000), so the
+   scan floor moves there from 4096.  The slack is unaffected -- the floor is
+   1.8e11 against a 1.4e14 ceiling. *)
+Lemma room_num :
+  LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base
+  + NZEX + SZMAX + CNTMAX * (NZEX + 4095) <= alloc_ceiling.
 Proof. vm_compute. intros H. discriminate H. Qed.
 
 (* [comment removed for export] *)
@@ -1502,12 +1541,17 @@ Section Exists.
   Theorem grant_window : forall extra hm nZ,
     vm_reserved hm = vm_reserved (m_vmmaps mdl) -> incl (vm_maps hm) (extra ++ vm_maps (m_vmmaps mdl)) ->
     Z.of_nat (length extra) <= XCNT -> gw_sizes extra <= XSZ -> 0 <= nZ <= NZEX ->
-    exists g, g mod page_size = 0 /\ 4096 <= g /\ g + nZ <= alloc_ceiling
+    exists g, g mod page_size = 0
+              /\ LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g
+              /\ g + nZ <= alloc_ceiling
               /\ region_free (vm_reserved hm ++ vm_maps hm) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true.
   Proof using BT BOK KC R QR HQ W M qg qt FF Lc st bt RUN.
     intros extra hm nZ ER INC XL XS HN.
     destruct (coarse_totals extra XL XS) as (CL & CS). pose proof room_num as RN.
-    destruct (free_gap_from 4096 eq_refl ltac:(lia) (coarse extra) nZ ltac:(lia)) as (g & G1 & G2 & G3 & G4).
+    destruct (free_gap_from
+                LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base
+                ltac:(reflexivity) ltac:(unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base; lia)
+                (coarse extra) nZ ltac:(lia)) as (g & G1 & G2 & G3 & G4).
     { assert (P : Z.of_nat (length (coarse extra)) * (nZ + 4095) <= CNTMAX * (NZEX + 4095)) by (apply Z.mul_le_mono_nonneg; lia).
       clear - P CS RN HN. lia. }
     exists g. repeat (split; [assumption|]).
@@ -1521,38 +1565,83 @@ Section Exists.
     pose proof (page_floor_le (alloc_top (m_vmmaps mdl))). pose proof ceil_rng. rewrite fg_alloc_ceiling_val. lia.
   Qed.
 
+  (* 75d69e00 Checks/Placement.v:1012-1017: [grant_ok_nr] and [MmapSim.grant_ok]
+     both gained [linux_place_is] as their first conjunct, so a witness is no
+     longer any free address but the one Linux's rule returns.  The gap walk now
+     discharges [Placement.linux_place_exists]'s premise in the BOTTOM-UP window
+     [[task_unmapped_base, alloc_top)] -- which is why [grant_window]'s floor
+     moved -- and the address comes back from [linux_place_b].  Both forms need
+     a POSITIVE PAGE-ALIGNED length, which is where the two new premises come
+     from; both call sites already hold them. *)
+  Lemma place_exists_x : forall extra hint mdlm nZ,
+    vm_reserved (m_vmmaps mdlm) = vm_reserved (m_vmmaps mdl) -> incl (vm_maps (m_vmmaps mdlm)) (extra ++ vm_maps (m_vmmaps mdl)) ->
+    alloc_top (m_vmmaps mdlm) = alloc_top (m_vmmaps mdl) ->
+    Z.of_nat (length extra) <= XCNT -> gw_sizes extra <= XSZ -> 0 < nZ <= NZEX ->
+    nZ mod page_size = 0 ->
+    exists a : word,
+      LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is
+        (m_vmmaps mdlm) (kb_thp (m_kernel mdlm)) hint nZ a = true.
+  Proof using BT BOK KC R QR HQ W M qg qt FF Lc st bt RUN.
+    intros extra hint mdlm nZ ER INC ET XL XS HN HNal.
+    destruct (grant_window extra (m_vmmaps mdlm) nZ ER INC XL XS ltac:(lia)) as (g & G1 & G2 & G3 & G4).
+    pose proof ceiling_top as CT. pose proof fg_alloc_ceiling_val as CV.
+    assert (HP : exists p,
+              LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.linux_place
+                (m_vmmaps mdlm) (kb_thp (m_kernel mdlm)) hint nZ p).
+    { apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_exists
+               (m_vmmaps mdlm) (kb_thp (m_kernel mdlm)) hint nZ ltac:(lia) HNal).
+      exists g. right.
+      split; [exact G1|]. split; [exact G2|]. split; [rewrite ET; lia | exact G4]. }
+    destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b
+                (m_vmmaps mdlm) (kb_thp (m_kernel mdlm)) hint nZ) as [p|] eqn:Hb.
+    - pose proof (proj1 (proj1 (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b_spec
+                                  (m_vmmaps mdlm) (kb_thp (m_kernel mdlm)) hint nZ ltac:(lia) HNal) p) Hb) as Hpl.
+      destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_admissible
+                  (m_vmmaps mdlm) (kb_thp (m_kernel mdlm)) hint nZ p ltac:(lia) HNal Hpl)
+        as (_ & Hpos & Hhi & _).
+      pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.alloc_top_lt_two_pow_64
+                    (m_vmmaps mdlm)) as Hat.
+      unfold two_pow_64 in Hat.
+      exists (Z_to_bv 64 p).
+      unfold LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is.
+      rewrite Hb. apply Z.eqb_eq. rewrite u64_lit by lia. reflexivity.
+    - exfalso. destruct HP as (p & Hp).
+      exact (proj1 (proj2 (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b_spec
+                             (m_vmmaps mdlm) (kb_thp (m_kernel mdlm)) hint nZ ltac:(lia) HNal)) Hb p Hp).
+  Qed.
+
   Theorem grant_nr_exists_x : forall extra hint mdlm nZ,
     vm_reserved (m_vmmaps mdlm) = vm_reserved (m_vmmaps mdl) -> incl (vm_maps (m_vmmaps mdlm)) (extra ++ vm_maps (m_vmmaps mdl)) ->
     alloc_top (m_vmmaps mdlm) = alloc_top (m_vmmaps mdl) ->
-    Z.of_nat (length extra) <= XCNT -> gw_sizes extra <= XSZ -> 0 <= nZ <= NZEX ->
+    Z.of_nat (length extra) <= XCNT -> gw_sizes extra <= XSZ -> 0 < nZ <= NZEX ->
+    nZ mod page_size = 0 ->
     exists a, AsanAcctShape.NoReserve.grant_ok_nr hint mdlm a nZ = true.
   Proof using BT BOK KC R QR HQ W M qg qt FF Lc st bt RUN.
-    intros extra hint mdlm nZ ER INC ET XL XS HN.
-    destruct (grant_window extra (m_vmmaps mdlm) nZ ER INC XL XS HN) as (g & G1 & G2 & G3 & G4).
-    pose proof ceiling_top as CT. pose proof fg_alloc_ceiling_val as CV.
-    exists (Z_to_bv 64 g). (lazymatch goal with |- ?G => let G' := eval unfold AsanAcctShape.NoReserve.grant_ok_nr in G in change_no_check G' end). rewrite u64_lit by lia. rewrite G4, ET.
-    rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt 0 g)) by lia. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
+    intros extra hint mdlm nZ ER INC ET XL XS HN HNal.
+    destruct (place_exists_x extra hint mdlm nZ ER INC ET XL XS HN HNal) as (a & Hpl).
+    exists a.
+    exact (AsanAcctShape.NoReserve.grant_ok_nr_intro hint mdlm a nZ ltac:(lia) HNal Hpl).
   Qed.
   Theorem grant_exists_x : forall extra hint mdlm nZ,
     vm_reserved (m_vmmaps mdlm) = vm_reserved (m_vmmaps mdl) -> incl (vm_maps (m_vmmaps mdlm)) (extra ++ vm_maps (m_vmmaps mdl)) ->
     alloc_top (m_vmmaps mdlm) = alloc_top (m_vmmaps mdl) ->
-    Z.of_nat (length extra) <= XCNT -> gw_sizes extra <= XSZ -> 0 <= nZ <= NZEX ->
+    Z.of_nat (length extra) <= XCNT -> gw_sizes extra <= XSZ -> 0 < nZ <= NZEX ->
+    nZ mod page_size = 0 ->
     vm_backing_used mdlm + nZ <= vm_limit (m_vmmaps mdlm) ->
     exists a, MmapSim.grant_ok hint mdlm a nZ = true.
   Proof using BT BOK KC R QR HQ W M qg qt FF Lc st bt RUN.
-    intros extra hint mdlm nZ ER INC ET XL XS HN BUD.
-    destruct (grant_window extra (m_vmmaps mdlm) nZ ER INC XL XS HN) as (g & G1 & G2 & G3 & G4).
-    pose proof ceiling_top as CT. pose proof fg_alloc_ceiling_val as CV.
-    exists (Z_to_bv 64 g). (lazymatch goal with |- ?G => let G' := eval unfold MmapSim.grant_ok in G in change_no_check G' end). rewrite u64_lit by lia. rewrite G4, ET.
-    rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt 0 g)) by lia. rewrite (proj2 (Z.leb_le _ _)) by lia.
-    rewrite (proj2 (Z.leb_le _ _) BUD). reflexivity.
+    intros extra hint mdlm nZ ER INC ET XL XS HN HNal BUD.
+    destruct (place_exists_x extra hint mdlm nZ ER INC ET XL XS HN HNal) as (a & Hpl).
+    exists a.
+    exact (MmapSim.grant_ok_intro hint mdlm a nZ ltac:(lia) HNal Hpl BUD).
   Qed.
 
-  Theorem grant_exists : forall hint mdlm nZ, m_vmmaps mdlm = m_vmmaps mdl -> 0 <= nZ <= NZEX ->
+  Theorem grant_exists : forall hint mdlm nZ, m_vmmaps mdlm = m_vmmaps mdl -> 0 < nZ <= NZEX ->
+    nZ mod page_size = 0 ->
     vm_backing_used mdlm + nZ <= vm_limit (m_vmmaps mdlm) ->
     exists a, MmapSim.grant_ok hint mdlm a nZ = true.
   Proof using BT BOK KC R QR HQ W M qg qt FF Lc st bt RUN.
-    intros hint mdlm nZ E HN BUD. apply (grant_exists_x [] hint mdlm nZ); try (rewrite E; reflexivity); try exact HN; try exact BUD.
+    intros hint mdlm nZ E HN HNal BUD. apply (grant_exists_x [] hint mdlm nZ); try (rewrite E; reflexivity); try exact HN; try exact HNal; try exact BUD.
     - rewrite E. intros x Hx. exact Hx.
     - (lazymatch goal with |- ?G => let G' := eval unfold XCNT in G in change_no_check G' end). (lazymatch goal with |- ?G => let G' := eval cbn in G in change_no_check G' end). lia.
     - (lazymatch goal with |- ?G => let G' := eval unfold XSZ in G in change_no_check G' end). (lazymatch goal with |- ?G => let G' := eval cbn [gw_sizes] in G in change_no_check G' end). lia.
@@ -1705,7 +1794,11 @@ Section Slot8.
     Proof using SBM HH1 MW1 ER1 GROW RH R W qg qt mdl1 mdl M0 FF Lc RUN.
       destruct s8_lits as (L0 & L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9 & L10). destruct s8_mat_eqs as (E1 & _). rewrite E1, ER1.
       destruct ledger_R8 as (_ & _ & _ & _ & RES & _). rewrite RES.
-      apply RefNodes.region_free_intro. intros b s Hbs. pose proof (RH (b, s) Hbs) as H. cbn [fst snd] in H. rewrite L9, L10. lia.
+      (* LPS 08b1429: arm 1 is the image segments (inside the hull, which the s8
+         region misses by [L3]); arms 2 and 3 are the launch's vDSO pair, which
+         [res_in_hull] now places on one side or the other of the ptr8 array,
+         and [L6]/[L7] put the s8 region inside that array. *)
+      apply RefNodes.region_free_intro. intros b s Hbs. destruct (RH (b, s) Hbs) as [H|[H|H]]; cbn [fst snd] in H; rewrite L9, L10; lia.
     Qed.
 
     Lemma s8_map_contains : map_contains (vm_maps (m_vmmaps mdlm)) addr size = true.

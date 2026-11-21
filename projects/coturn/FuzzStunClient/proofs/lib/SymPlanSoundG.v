@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, one proof step more gives the write node's channel-reader fact (co_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -151,6 +152,7 @@ Proof.
     eapply (SPS.vm_ok_ext RSEGS); [exact Hag | | exact Hmv | exact HV].
     apply N.leb_le in Hnx. pose proof nx0_pos as Hnp. unfold nx0_okP in Hnp. lia.
   - eapply slots_ok_ext; [exact Hag | exact Hslv | exact HSL].
+  - match goal with H : m_channel_reader _ = true |- _ => exact H end.   (* LPS 08b1429: [co_rdr] *)
 Qed.
 
 Lemma expr_vars_lt_mono : forall b b' e, (b <= b')%N -> SP.expr_vars_lt b e = true -> SP.expr_vars_lt b' e = true.

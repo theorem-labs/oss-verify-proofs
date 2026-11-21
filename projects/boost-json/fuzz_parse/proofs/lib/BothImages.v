@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -15,7 +16,10 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Definition BOTH_H : ltac2:(zQ "10!je$0") := ltac2:(zQ "40!lf!nb!o2!o8@hb$3+hggg0+nhjgg0N4+nvvvogg0+mnttc+hqqgg0+lmpgg0+hggk0+j8+b+qiih8+qihpc+hqinq0+hqijpc+qinm4+qimk4+hhtoe+mukp8+qjoncZZZ+hpgnr8+hpgns4+hpgonc+hpgoo8@3$1$0+mshgc@3$1$0+mtnj0@3$1$0+piis0@3$1$0+pootc@3$1$0+poov0@3$1$0+popg4@3$1$0+puip4@3$1$0+pujm4@3$1$0+qroqc@3$1$0+qsnr8@3$1$0+qspk8@3$1$0+qsqr8@3$1$0+rmmq0@1$2$0").
 Notation ASAN_H := BOTH_H.   (* [comment removed for export] *)
 
-Definition hinit : ltac2:(zQ "10!oc$0") := ltac2:(zQ "20!p1!tb@1$0$1").
+(* Twin of AsImages.v's [hinit]; see the note there.  [init_acs_of] takes the run's
+   CONFIG_RSEQ as [r] since the revision, and [hinit] passes the launch's value through
+   instead of fixing one kernel build. *)
+Definition hinit (r : Z) : acs := init_acs_of r BOTH_H.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

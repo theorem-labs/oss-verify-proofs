@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_egress: the harness-body walk of LLVMFuzzerTestOneInput on the UBSan image
    (fuzz_egress.ubsan: entry 0x12c6c, frame 0xa0, memset 0x1b4b4, memcpy 0x1b0b0, malloc 0x14240,
@@ -166,7 +167,7 @@ Definition qret (F : bvmap 5 word) (fc : bv 32) (ra gp tp s0 s1 s2 s3 s4 s5 s6 s
     reg_get R 19 = s3 /\ reg_get R 20 = s4 /\ reg_get R 21 = s5 /\ reg_get R 22 = s6 /\ reg_get R 23 = s7 /\
     reg_get R 24 = s8 /\ reg_get R 25 = s9 /\ reg_get R 26 = s10 /\ reg_get R 27 = s11.
 
-(* fuzz_uci's lib/U/Prog/LLVMFuzzerTestOneInput.v at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1 *)
+(* fuzz_uci's lib/U/Prog/LLVMFuzzerTestOneInput.v *)
 Lemma lf_rw_cells_frame : forall m m' A cs,
   rw_cells rsegs m A cs ->
   (forall a, A <= a < A + Z.of_nat (cells_size cs) ->
@@ -242,7 +243,7 @@ Hypothesis CI : forall fx' : YK11.FPState, @check_inject_contract fx' rc B API.
 Hypothesis SEGS : ms_segs B = rsegs.
 Hypothesis AX : AllocExtra B (aa_MR API).
 
-(* libreac/fuzz_decode's lib/U/Prog/fd_seghelp.v at 25e3d17bdb5059606131377a3722d585415ab5d6 *)
+(* libreac/fuzz_decode's lib/U/Prog/fd_seghelp.v *)
 Lemma blk_keep : forall stk Sw L A mem md LX AXX memX mdX x bs,
   lf_fr B API stk Sw L A mem md LX AXX memX mdX -> In (x, Z.of_nat (length bs)) (blocks L A) ->
   blk_data B mem x bs -> blk_data B memX x bs.

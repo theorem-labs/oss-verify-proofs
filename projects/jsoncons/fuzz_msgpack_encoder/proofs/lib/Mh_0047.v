@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed interp_fk, step_fk. *)
 (* [comment removed for export] *)
 Set Warnings "-require-in-module".
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel. From Stdlib Require ZArith NArith List Lia Bool. From stdpp.bitvector Require definitions. From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run. From LinuxProcessSemantics.Riscv Require Prelude Instr Decode DecodeC Sem. From OSSVerify.jsoncons.fuzz_msgpack_encoder.images Require Plain. From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require PropExec. Require OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0038. Require OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0030. Require OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0041.
@@ -161,7 +162,7 @@ Lemma interp_fk segs : forall e m rep, eff_fk e -> interp_eff_accesses segs e m 
 Proof.
   induction e as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m rep FZ H; cbn [interp_eff_accesses] in H; try discriminate.
   - injection H as <-. exact FZ.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|lazymatch type of H with context [if ?b then _ else _] => destruct b end; discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r| | ] eqn:E; try discriminate.
     injection H as <-. cbn [access_value fst]. exact (IH _ m r (FZ _) E).
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -195,7 +196,13 @@ Proof.
     destruct (fetch_tail segs (ms_pc s)) as [w|] eqn:F2.
     + destruct (decode_exec_accesses segs s w) as [r| | ] eqn:E; try discriminate. cbn [drop_access_report] in H. injection H as <-.
       exact (decode_exec_fk segs s w r FZ (fetch_safe _ _ (or_intror F2)) E).
-    + exfalso. unfold fetch_failure in H. destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+    + exfalso. unfold fetch_failure in H.
+      (* #38 gave fetch_failure a LEADING vdso_text_at arm.  The two destructs below cannot
+         absorb it: neither [negb _] nor [_ || _] unifies with [vdso_text_at _ _], so the first
+         [discriminate] would meet a goal that is still an if-match.  Donor, THIS TREE, same
+         class, already repaired: Mh_0036.v:3905-3910. *)
+      destruct (vdso_text_at segs (ms_pc s)); [discriminate|].
+      destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
 Qed.
 
 Theorem msteps_fk : forall s s', msteps segs s s' -> frm_of (ms_fcsr s) = c0 -> frm_of (ms_fcsr s') = c0.

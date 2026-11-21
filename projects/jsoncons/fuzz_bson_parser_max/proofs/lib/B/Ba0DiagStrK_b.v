@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed str_cstr; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagStrK.v, lines 54-56. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -52,9 +53,9 @@ Section StrK.
   (* [comment removed for export] *)
   #[using="scfg L C IL HIok Hsp DL"] Lemma str_cstr : forall LB LK cr A M (model : Model) (p : word) (path : list byte),
     dinvA LB LK cr A M model ->
-    usp <= bv_unsigned p -> bv_unsigned p + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47 ->
+    usp <= bv_unsigned p -> bv_unsigned p + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47 ->
     rdn ASEGS M0 p (length path + 1) = Some (path ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) path ->
-    defined M0 (bv_unsigned p) (Z.of_nat (length path) + 1 + 16) ->
+    defined M0 (bv_unsigned p) (Z.of_nat (length path) + 1 + 8) ->
     exists t8, Ba0DiagStrnlen_b.DSN.cstr (mrestrict (ahid A model) M) (bv_unsigned p) path t8.
   Proof.
     intros LB LK cr A M model p path D Hlo Hhi STR NONUL PDEF. pose proof Hsp as Hsp'.

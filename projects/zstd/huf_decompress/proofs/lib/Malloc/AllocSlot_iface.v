@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (AS_STACK_S, AS_STACK_ge)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,10 +25,8 @@ Section CANSEC1. Context {rc : runConstT}.
 Definition AS_STACK (fuel : nat) : Z := 128 + 96 * Z.of_nat fuel.
 
 Lemma AS_STACK_S f : AS_STACK (S f) = AS_STACK f + 96.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AllocSlot_iface ()) ["CANSEC1"] "h04__x1h11fh27__arithh34__ffh48__varmaph55__with64cstrh71zp;1p;2p;3p;4p;7p;6g0000j15Tg000Pj1NTg000nj14Tg001Sj18Tg0021j1FTg002Vj26Tg0033j20Tg003Pj32Tg003jj1>Tg004Oj2=Tg004kj1<Tg005Kj1;Tg005kj2MTg006Ij1LTg006gj1KTg007Rj27Tg0085j2ETg008Xj33Tg009;j39Tg009^j4CTg00:Ij7BTg00:mj2ATg00;Oj2@Tg00;ij2DTg00<Uj3?Tg00=4j4GTg00=fj1HTg00>Ej1ITg00>ij6JTg00?Gj1:Tf0R0#4#4p=1g00@KR1g00@jR2%50R3#Ng00AHR4#4#1#1#1#8R5%F4#4#1#1#8R6/60'0R7f1R8#5,66,05/06522X72%>0g00AmR9/=3g00BKR3#<%;31M28%L2%K2R3g00C7g00CVR:P:g00D6R:P21725R;1726R<1E24R=%84R4,72532592532g00DVA92<=932;=32<CCg00E=FB1A3:P0f2R:g00E]R3g00F=R<'@1D0:=23<dA?298CGb3b4b5X021004,66,051076522^02P0%5:O1b2b6%H0R:#5%I0EJ%::%:0/06522eX11P0O1W1o"). Qed.
+Proof. unfold AS_STACK. rewrite Nat2Z.inj_succ. lia. Qed.
 Lemma AS_STACK_ge f : 128 <= AS_STACK f.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AllocSlot_iface ()) ["CANSEC1"] "h04__x1h11fh27__arithh34__ffh48__varmaph55__with64cstrp;1p;2p;3p;4p;8p;7g003jj1STg0000j15Tg004Oj22Tg00F]j28Tg00=fj19Tg00GFj3LTg00Goj2BTg00H[j2ATg004kj1?Tg00IGj3>Tg005Kj1=Tg005kj2;Tg006Ij1:Tg006gj1RTg007Rj23Tg0085j2QTg009^j47Tg00Igj1KTg000nj11Tg001Sj16Tg0021j1@Tg009;j3CTg008Xj3DTg00JIj8ETg00:mj2FTg00;Oj2GTg00;ij2HTg003Pj3ITg00<Uj3JTg00=4j4<Tg002Vj2MTg0033j2NTg00?Gj1OTg00:Ij7PTf1R0g00C7R1g00CVR2P2g00D6R3f0R4g00E=FPp=4%14#1p=0g00@KR5%S4g00AmR6%54'2g00@jR7g00BKR8g00JmR9,87R:%99#9,879L7:g00KL'B'A%?83>%=81;70%:7%R7R8P1P2P2P3P71376g00L8R1g00AHR:,Q7R9C7,48%K2P7%1:#0#0#0#6R2,37R;P1%@:#1#0#0#6R:,37=C799D7;C7,48GE1F83P4f2R8g00E]R3g00F=R;'G1H48=I3;dAJ760C<b3b4b5W012641M:0,N2,22[^07P4%58P0O2b2b6%O4,22eX15P4O1W1o"). Qed.
+Proof. unfold AS_STACK. lia. Qed.
 
 End CANSEC1.

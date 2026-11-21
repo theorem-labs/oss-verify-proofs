@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRcSec.v (commit f02099425ace, round-3 cf layer, field round 3 (d0377850faa + 91bb9319bae); reply-rccf; file sha256 b249de0dd331) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstRcSec.v at commit 2c35faeeaec, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRcSec.v (round-3 cf layer, field round 3; reply-rccf; file sha256 b249de0dd331) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstRcSec.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's munmap (errno arm, cut, allocation mark)). *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (second hand of the lane): the SECONDARY arm of
    __asan::QuarantineCallback::Recycle's read fields over the drain's cut relation, the cf twin of
-   YFf4.rs_fin_ARm (YFf4.v:1079).
+   YFf4.rs_fin_ARm (YFf4.v:1080).
    rule 24: no function proved (kind: relational transport of the RChunk post to the cf cut relation ARcfR).
 
-   Lane B1's slice H4 states the secondary fields (commit a7bbacac3615, proofs/cgif/cgif_file_fuzzer/lib/
+   Lane B1's slice H4 states the secondary fields (proofs/cgif/cgif_file_fuzzer/lib/
    DMrcSecReads.v: rc_sec_cut_t, rc_sec_mapr_t, rc_sec_step_t) over `world tfibsegs` and over its own machine
    predicates (DMrcSecGv.at_RET / WIN3, DMrcSecMun.LINKD / WPRE, DMrcSecFc.sec_cut, the literal TFIB_TSD), so that
    text cannot be stated at the cf instance, which is generic in ImgBase.AImg.  CfF2b (2026-10-30 02:4xZ) approved
    the F12 shape instead, which is what this file proves: the window and the memory premise are stated HERE, in the
    image-free form, and H4 writes the one bridge from at_RET / LINKD to these premises, as F12's walk does for
    CacheDealloc.
-   The window is YFf4's (YFf4.v:77-86) with as_inst B for cgif's A_ALLOCATOR: the stack window below the entry sp
+   The window is YFf4's (YFf4.v:78-87) with as_inst B for cgif's A_ALLOCATOR: the stack window below the entry sp
    [rsDS], four allocator word ranges [rsDI] (the mutex and the count carry written values), the two thread-stats
    pairs [rsDJ], the pointer-array slot
    of the dead entry [rsDQ], the last entry's index word [rsDL], the unmapped map's shadow [rsDH] and the unmapped
@@ -82,12 +83,12 @@ Qed.
 Lemma Forall_flat_map_in : forall {A C} (Q : C -> Prop) (f : A -> list C) l x, Forall Q (flat_map f l) -> In x l -> Forall Q (f x).
 Proof. intros A C Q f l x H Hx. apply Forall_forall. intros y Hy. apply (proj1 (Forall_forall _ _) H). apply in_flat_map. exists x. auto. Qed.
 
-(* copy of YFex.v:70 *)
+(* copy of YFex.v:71 *)
 Lemma find_chunk_at_app_cf : forall B ly l1 l2 g,
 find_chunk_at B ly (l1 ++ l2) g = match find_chunk_at B ly l1 g with Some x => Some x | None => find_chunk_at B ly l2 g end.
 Proof. intros B ly l1 l2 g. induction l1 as [|x t IH]; cbn; [reflexivity|]. destruct (_ && _); [reflexivity | exact IH]. Qed.
 
-(* copy of YFf4.v:825 *)
+(* copy of YFf4.v:826 *)
 Lemma in_rangesb_remove : forall g A Bq lo len, ~ (lo <= g < lo + len) -> in_rangesb g (A ++ (lo, len) :: Bq) = in_rangesb g (A ++ Bq).
 Proof.
 intros g A Bq lo len Hn. induction A as [|[lo' len'] A IH]; cbn [app in_rangesb].
@@ -96,7 +97,7 @@ intros g A Bq lo len Hn. induction A as [|[lo' len'] A IH]; cbn [app in_rangesb]
 - rewrite IH. reflexivity.
 Qed.
 
-(* copies of YFf4.v:19-47 (that file is not required here: it fixes the zify euclidean-division flag globally) *)
+(* copies of YFf4.v:20-48 (that file is not required here: it fixes the zify euclidean-division flag globally) *)
 Lemma nth_error_removelast_lt : forall {A} (l : list A) j, (S j < length l)%nat ->
 nth_error (YG00.removelast l) j = nth_error l j.
 Proof.
@@ -132,7 +133,7 @@ Qed.
 
 (* The image premise (named, over ImgBase.AImg's im_syms and the symbol table only; the pattern of
    YGcfInstDrainX.IMG_QAPART): the allocator words the secondary arm writes are apart from the depot, store and
-   internal-allocator areas of the symbol table.  cgif: by its numerals (YFf4.v:726 / :735 / :773). *)
+   internal-allocator areas of the symbol table.  cgif: by its numerals (YFf4.v:727 / :736 / :774). *)
 Definition sdeal_inst (B : asyms) (a : Z) : Prop :=
 (as_inst B + 680 <= a < as_inst B + 684) \/ (as_inst B + 120 <= a < as_inst B + 129) \/
 (as_inst B + 144 <= a < as_inst B + 160) \/ (as_inst B + 704 <= a < as_inst B + 720).
@@ -338,7 +339,7 @@ Local Notation X1 := (YFf3.X1 X k).
 Definition arr : list nat := st_sec_arr X.
 Definition lastr : nat := last arr r.
 Definition arr' : list nat := YG00.removelast (lupd arr i lastr).
-(* YFf4.X2 (YFf4.v:65), verbatim. *)
+(* YFf4.X2 (YFf4.v:66), verbatim. *)
 Definition rsX2 : astate := set_sec_arr arr' (set_secs (lupd (st_secs X) r (mkSec (sm_len sm) (sm_size sm) false)) X1).
 Definition MAP : Z := ly_sec ly r.
 Definition LEN : Z := sec_map_size (ck_req k).
@@ -348,7 +349,7 @@ Definition qi : Z := ly_Q ly + 8 * idx.
 Definition lst : Z := ly_sec ly lastr.
 Definition own : bool := idx =? nA - 1.
 
-(* The window: YFf4.v:77-86, with as_inst B for cgif's A_ALLOCATOR. *)
+(* The window: YFf4.v:78-87, with as_inst B for cgif's A_ALLOCATOR. *)
 Definition rsDS (a : Z) : Prop := sp - YFeu.KSTACK <= a < sp.
 Definition rsDI (a : Z) : Prop :=
 (as_inst B + 680 <= a < as_inst B + 684) \/ (as_inst B + 120 <= a < as_inst B + 129) \/
@@ -1020,7 +1021,7 @@ Qed.
 Definition cell_in (lo len : Z) (ce : acell) : Prop :=
 lo <= aeval B ly (c_at ce) /\ aeval B ly (c_at ce) + Z.max 1 (Z.of_nat (c_w ce)) <= lo + len.
 
-(* copy of YFf3.v:422 *)
+(* copy of YFf3.v:423 *)
 Lemma batch_cells_within : forall l ce, In ce (batch_cells l) ->
 exists b2, In b2 l /\ cell_in (ly_space ly + b_self b2) (24 + 8 * Z.of_nat (length (b_items b2))) ce.
 Proof.
@@ -1241,7 +1242,7 @@ destruct (find_chunk_at B ly l1 g) as [y|] eqn:F1.
       destruct fa_poison' as (FP1 & FP2 & EF & EF2). rewrite EF. rewrite EF2 in R'. rewrite in_rangesb_remove by lia. rewrite R'. exact HS'.
 Qed.
 
-(* The weak shadow (CfF2b 68f3ef3b4ba): a pending chunk other than the dead one is still pending at rsX2; the dead
+(* The weak shadow (CfF2b): a pending chunk other than the dead one is still pending at rsX2; the dead
    chunk's user granules lie in its map, which ashadow_X2 excludes. *)
 Lemma shadow' : shadow_ok_weak_cf B ly Hp rd' rsX2.
 Proof.
@@ -1878,7 +1879,8 @@ Lemma xs_keep : forall md', amwf md -> xs_mapped_cf ly X md ->
 m_vmmaps md' = m_vmmaps (YK0v.munmap_model (w64 MAP) (w64 LEN) md) -> xs_mapped_cf ly rsX2 md'.
 Proof.
 intros md' MW Hm Ev. apply (YGcfXsMapped.xs_mapped_cf_frame ly X md ly rsX2 md' [(MAP, LEN)] Hm xs_cf_X2).
-- intros q Hq HD. rewrite Ev. exact (YGcfXsMapped.mkeep_munmap MAP LEN (w64 LEN) md q Hq HD).
+- intros q Hq HD. rewrite Ev. pose proof MR as (_ & LED & _). pose proof KFACTS as (_ & _ & _ & _ & GI & _).
+  exact (YGcfXsMapped.mkeep_munmap MAP LEN (w64 LEN) md MW (alc_sec _ _ _ _ LED _ GI) q Hq HD).
 - apply Forall_forall. intros e He. constructor; [|constructor]. cbn [fst].
   pose proof (proj1 (Forall_forall _ _) (amr_xs_placed _ _ _ _ _ rM) e He) as (P1 & P2 & P3 & P4).
   pose proof KFACTS as (_ & _ & _ & _ & GI & _).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list run_segments). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List.
@@ -15,7 +16,7 @@ Definition image_realizes_cfg_e (cfg : SpuriousCfg) (segs : list Segment) (pc : 
   forall sp brk0 mb rnd inp,
     valid_entry (mkImage segs pc ph) (mkEntry sp brk0 mb rnd) inp ->
     valid_input_either inp ->
-    realizes_cfg segs cfg (init_config segs pc ph sp brk0 mb rnd lim inp) (Spec inp).
+    realizes_cfg (run_segments segs inp sp mb) cfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) (Spec inp).
 
 (* [comment removed for export] *)
 Lemma image_realizes_cfg_of_e : forall cfg segs pc ph lim Spec,
@@ -31,7 +32,7 @@ Lemma image_realizes_cfg_abort_of_e : forall cfg segs pc ph lim Spec sp brk0 mb 
   image_realizes_cfg_e cfg segs pc ph lim Spec ->
   valid_entry (mkImage segs pc ph) (mkEntry sp brk0 mb rnd) inp ->
   valid_input_abort inp ->
-  realizes_cfg segs cfg (init_config segs pc ph sp brk0 mb rnd lim inp) (Spec inp).
+  realizes_cfg (run_segments segs inp sp mb) cfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) (Spec inp).
 Proof.
   intros cfg segs pc ph lim Spec sp brk0 mb rnd inp H Hv Hinp.
   apply H; [exact Hv | exact (valid_input_either_of_valid_input_abort _ Hinp)].
@@ -43,7 +44,7 @@ Definition no_kill (Spec : ProcInput -> TSet) : Prop :=
 
 (* [comment removed for export] *)
 Lemma realizes_cfg_error_free_unkilled : forall cfg segs pc ph sp brk0 mb rnd lim inp T,
-  realizes_cfg segs cfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  realizes_cfg (run_segments segs inp sp mb) cfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   (forall tr sig fs, T tr -> ~ List.In (KillEv sig fs) tr) ->
   error_free_unkilled (run_scfg cfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
@@ -60,10 +61,10 @@ Theorem shape_strong_equiv_ef_scfg_abort :
          source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T : TSet) (inp : ProcInput),
-  realizes_cfg source_segs cfg
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  realizes_cfg target_segs cfg
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  realizes_cfg (run_segments source_segs inp rsp rmb) cfg
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  realizes_cfg (run_segments target_segs inp asp amb) cfg
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   (forall tr sig fs, T tr -> ~ List.In (KillEv sig fs) tr) ->
   error_free_unkilled (run_scfg cfg (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ error_free_unkilled (run_scfg cfg (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_gfr.v at bc49657c087a; module path, the name egress_slot_g_frame, LLVM_K from check_inject. *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_gfr.v; module path, the name egress_slot_g_frame, LLVM_K from check_inject. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The plain image's slot contract for any lib_shape whose continuation, room and delta are kept_shape's, as
    libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_gfr.v (decode_slot_g_frame), over this unit's
    llvm_contract (LLVMFuzzerTestOneInput_end.v). fuzz_egress links no calloc and its deepest callee stack is

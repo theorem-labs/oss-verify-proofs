@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainE.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 1e5e2845a724) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainE.v (Quarantine::Drain walk set; file sha256 1e5e2845a724) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the SEED of Quarantine::Drain's entry shell (YFgj.v, the walk at
    0x337ec), i.e. YFgj.free_hyps (YFgj.v:105-120) in full, from the facts DMiface.qview gives at Drain's entry
-   (DMiface.v:75-107: the mutex bytes, both caches' headers, the batch cells, the two Quarantine constants, the
+   (DMiface.v:76-108: the mutex bytes, both caches' headers, the batch cells, the two Quarantine constants, the
    thread header's presence) together with DMspec.drain_pre_cf's register and stack clauses and the two cache
    byte bounds of QB (CfF2b's QB_cf).  With it DMseg_dme.segDEm / DMseg_dmn.segDNm apply at the shared instance.
    rule 24: no function proved (kind: the seed of segments already walked, DMseg_dme.segDEm / DMseg_dmn.segDNm;
@@ -67,7 +68,7 @@ Hypothesis Hstklo : kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd.
    derives it from layout_ok and img_cover by YF0x.zone3_intro) *)
 Hypothesis HTz : zone3 T kThreadObjSize.
 Hypothesis HSB : kHighMemBeg <= SB /\ SB + kSpaceSize <= ASAN_CEIL /\ SB mod 65536 = 0.
-(* drain_pre_cf's registers and stack (DMspec.v:95-99) *)
+(* drain_pre_cf's registers and stack (DMspec.v:96-100) *)
 Hypothesis Htp : getr regs0 4 = w64 TFIB_TP.
 Hypothesis Hra : YK0s.ret_ok (getr regs0 1).
 Hypothesis Hra4096 : 4096 <= bv_unsigned (getr regs0 1).

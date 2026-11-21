@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BPKN, imported from MainEntryBoth). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,7 +11,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr InitMem.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.LibA Require Import ExecF Shadow.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Spec Require Import STree AsanCtrl AsanEmbed AsanHandoffBoth.
-From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import MainExport MainFactsBoth.
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import MainExport MainFactsBoth MainEntryBoth.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.BothW Require Import BImg ABase ABytes ALayout ARep AHeapP ARepInit_kit ARepInit_A.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Common Require Import RunDraw.
 Import ListNotations.
@@ -24,7 +25,7 @@ Section CANSEC1. Context {rc : runConstT}.
 Section E.
   Variables (lz : list (word * word)) (AL : word -> Prop) (V : nat -> Z) (w : bool) (U : list (list Z)).
   Hypothesis A0I : forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V both_vis) p -> AL p.
-  Hypothesis HP : Forall (pfact_ok V) both_pure_facts.
+  Hypothesis HP : Forall (pfact_ok V) BPKN.
   Hypothesis HU : (length U <= Z.to_nat AUMAX)%nat.
   Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.   (* [comment removed for export] *)
   Let L := mkALayout (LV V) w U.

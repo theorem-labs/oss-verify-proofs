@@ -23,7 +23,8 @@
    The pure model lemmas dm_* below are this file's own copies. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_drop.v, with its module names changed; 93 of its 140 lines of code are new or changed and 4468 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_ref.v, with its module paths changed; 3 of its 141 lines of code are new or changed and 2 lines of the source are left out. *)
-(* Image-B (fuzz_reply.asan-ubsan) copy of lib/A/W_drain_ref.v (a working branch e6b5f95b285), over lib/B's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image-B (fuzz_reply.asan-ubsan) copy of lib/A/W_drain_ref.v (a working branch), over lib/B's
    interface; only the imports and the Section header (lib/B/W_drain_lineb.v's) changed. *)
 (* The relay / reference agreement at a line of fuzz_reply's drain (image A's original: ASan walk, fuzz_reply.asan 0x830dc ..
    0x83de4; image B's: fuzz_reply.asan-ubsan 0x83278 .. 0x841fc): when the relay's buffer dW s1 holds a line [p, q) that the relay sends (s->skip clear at p and the

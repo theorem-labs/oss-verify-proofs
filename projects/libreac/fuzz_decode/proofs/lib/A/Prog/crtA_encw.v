@@ -25,7 +25,7 @@
    ajournal_after_write; the frame the prologue wrote and the read-only view (crtA_rom_on) are carried to the
    bcmp cut.
 
-   Old-form record of the same step: a working branch dc455613c81 lib/A/Prog/check_round_trip_F.v
+   Old-form record of the same step: a working branch lib/A/Prog/check_round_trip_F.v
    crt_mid_F (segments 6-7 around the encode / bcmp calls, with crt_glue.v and crt_enc.v); this file ports its
    structure into cgif's backward-chain form (cgif_file_fuzzer ACey.v:270-330 / ACet.v:36-43). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.

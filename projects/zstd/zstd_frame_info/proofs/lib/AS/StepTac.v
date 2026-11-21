@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (bsb_bound restated: the launch values' entry stack image is at most 2,101,782 bytes (was build_stack_bytes, 2,240,000) under valid_launch and entry_launch_ok_va; block_head_size_le, launch_sp_le_top and launch_top_minus_sp added; #[using] attributes dropped from 26 lemmas). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -428,7 +429,7 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_Z2bv : forall z, (0 <= z)%Z -> (z < 2^64)%Z ->
+Lemma u_Z2bv : forall z, (0 <= z)%Z -> (z < 2^64)%Z ->
   bv_unsigned (Z_to_bv 64 z) = z.
 Proof.
   intros z Hlo Hhi. rewrite Z_to_bv_unsigned.
@@ -437,32 +438,32 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addi_m1 : forall x, (1 <= bv_unsigned x)%Z ->
+Lemma v_addi_m1 : forall x, (1 <= bv_unsigned x)%Z ->
   v_addi x (-1) = Z_to_bv 64 (bv_unsigned x - 1).
 Proof. intros x H1. apply (v_addi_m x 1); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m16 : forall x, (16 <= bv_unsigned x)%Z ->
+Lemma v_addi_m16 : forall x, (16 <= bv_unsigned x)%Z ->
   v_addi x (-16) = Z_to_bv 64 (bv_unsigned x - 16).
 Proof. intros x H16. apply (v_addi_m x 16); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m32 : forall x, (32 <= bv_unsigned x)%Z ->
+Lemma v_addi_m32 : forall x, (32 <= bv_unsigned x)%Z ->
   v_addi x (-32) = Z_to_bv 64 (bv_unsigned x - 32).
 Proof. intros x H32. apply (v_addi_m x 32); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m48 : forall x, (48 <= bv_unsigned x)%Z ->
+Lemma v_addi_m48 : forall x, (48 <= bv_unsigned x)%Z ->
   v_addi x (-48) = Z_to_bv 64 (bv_unsigned x - 48).
 Proof. intros x H48. apply (v_addi_m x 48); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m64 : forall x, (64 <= bv_unsigned x)%Z ->
+Lemma v_addi_m64 : forall x, (64 <= bv_unsigned x)%Z ->
   v_addi x (-64) = Z_to_bv 64 (bv_unsigned x - 64).
 Proof. intros x H64. apply (v_addi_m x 64); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m80 : forall x, (80 <= bv_unsigned x)%Z ->
+Lemma v_addi_m80 : forall x, (80 <= bv_unsigned x)%Z ->
   v_addi x (-80) = Z_to_bv 64 (bv_unsigned x - 80).
 Proof. intros x H80. apply (v_addi_m x 80); lia. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addi_nneg_t : forall x imm, (0 <= imm)%Z ->
+Lemma v_addi_nneg_t : forall x imm, (0 <= imm)%Z ->
   (bv_unsigned x + imm < 2^64)%Z ->
   v_addi x imm = Z_to_bv 64 (bv_unsigned x + imm).
 Proof. intros x imm _ _. reflexivity. Qed.
@@ -717,20 +718,20 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma byte_nz_u : forall b : byte, b <> Z_to_bv 8 0 -> (bv_unsigned b <> 0)%Z.
+Lemma byte_nz_u : forall b : byte, b <> Z_to_bv 8 0 -> (bv_unsigned b <> 0)%Z.
 Proof.
   intros b Hb Hc. apply Hb. apply bv_eq. rewrite Hc. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_zext8 : forall b : byte,
+Lemma u_zext8 : forall b : byte,
   bv_unsigned (Z_to_bv 64 (bv_unsigned b)) = bv_unsigned b.
 Proof.
   intro b. apply u_Z2bv; pose proof (u8_range b); lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma zext8_byte : forall b : byte,
+Lemma zext8_byte : forall b : byte,
   Z_to_bv 8 (bv_unsigned (Z_to_bv 64 (bv_unsigned b))) = b.
 Proof.
   intro b. apply bv_eq.
@@ -740,7 +741,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma byte_neq_lit_u : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
+Lemma byte_neq_lit_u : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
   b <> Z_to_bv 8 z -> (bv_unsigned b <> z)%Z.
 Proof.
   intros b z Hz Hb Hc. apply Hb. apply bv_eq.
@@ -750,7 +751,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma c_eq_zext_lit_false : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
+Lemma c_eq_zext_lit_false : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
   b <> Z_to_bv 8 z ->
   c_eq (Z_to_bv 64 (bv_unsigned b)) (Z_to_bv 64 z) = false.
 Proof.
@@ -760,12 +761,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_ntw : forall n : nat, (Z.of_nat n < 2^64)%Z ->
+Lemma u_ntw : forall n : nat, (Z.of_nat n < 2^64)%Z ->
   bv_unsigned (nat_to_word n) = Z.of_nat n.
 Proof. intros n Hn. unfold nat_to_word. apply u_Z2bv; lia. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat : forall (a : word) (n : nat),
+Lemma word_add_nat : forall (a : word) (n : nat),
   a + nat_to_word n = Z_to_bv 64 (bv_unsigned a + Z.of_nat n).
 Proof.
   intros a n. apply bv_eq. unfold nat_to_word.
@@ -774,14 +775,14 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat_0 : forall x : word, x + nat_to_word 0 = x.
+Lemma word_add_nat_0 : forall x : word, x + nat_to_word 0 = x.
 Proof.
   intro x. apply bv_eq. rewrite word_add_nat.
   rewrite u_Z2bv by (pose proof (u64_range x); lia). lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat_1 : forall (a : word) (m : nat),
+Lemma word_add_nat_1 : forall (a : word) (m : nat),
   v_addi (a + nat_to_word m) 1 = a + nat_to_word (S m).
 Proof.
   intros a m. rewrite !word_add_nat. unfold v_addi. apply bv_eq.
@@ -789,7 +790,7 @@ Proof.
   rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
 
-#[using="Type"] Lemma word_add_nat_m1 : forall (a : word) (m : nat),
+Lemma word_add_nat_m1 : forall (a : word) (m : nat),
   v_addi (a + nat_to_word (S m)) (-1) = a + nat_to_word m.
 Proof.
   intros a m. rewrite !word_add_nat. unfold v_addi. apply bv_eq.
@@ -798,7 +799,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_add_comm : forall x y : word, v_add x y = y + x.
+Lemma v_add_comm : forall x y : word, v_add x y = y + x.
 Proof.
   intros x y. apply bv_eq.
   change (v_add x y) with (x + y).
@@ -806,7 +807,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_add_wrap : forall x y : word,
+Lemma v_add_wrap : forall x y : word,
   (2^64 <= bv_unsigned x + bv_unsigned y)%Z ->
   v_add x y = Z_to_bv 64 (bv_unsigned x + bv_unsigned y - 2^64).
 Proof.
@@ -817,7 +818,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_sub_0_neg : forall y : word,
+Lemma v_sub_0_neg : forall y : word,
   v_sub (Z_to_bv 64 0) y = Z_to_bv 64 (- bv_unsigned y).
 Proof.
   intro y. unfold v_sub.
@@ -826,7 +827,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_neg_small : forall z : Z, (0 < z)%Z -> (z <= 2^64)%Z ->
+Lemma u_neg_small : forall z : Z, (0 < z)%Z -> (z <= 2^64)%Z ->
   bv_unsigned (Z_to_bv 64 (- z)) = (2^64 - z)%Z.
 Proof.
   intros z Hz0 Hz. rewrite Z_to_bv_unsigned, bv_wrap64_mod.
@@ -836,7 +837,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addi_neg_S : forall d : nat,
+Lemma v_addi_neg_S : forall d : nat,
   v_addi (Z_to_bv 64 (- Z.of_nat (S d))) 1 = Z_to_bv 64 (- Z.of_nat d).
 Proof.
   intro d. unfold v_addi. apply bv_eq.
@@ -845,18 +846,70 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma bsb_bound : forall ph (sp : word) (a e : list (list byte)) uid hw rnd,
-  valid_argv a -> valid_envp e ->
-  (Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd)) <= 2240000)%Z.
+Lemma block_head_size_le : forall rseq argv envp,
+  (Z.of_nat (block_head_size rseq argv envp)
+   <= 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 512)%Z.
 Proof.
-  intros ph sp a e uid hw rnd Hva Hve.
-  pose proof (build_stack_bytes_within_span ph sp a e uid hw rnd).
-  pose proof (entry_stack_span_bound a e Hva Hve).
-  unfold entry_stack_span_max in *. lia.
+  intros rseq argv envp.
+  unfold block_head_size, block_items, auxv_size, auxv_count.
+  pose proof (Nat.mod_upper_bound
+                (length argv + length envp + 3) 2 ltac:(lia)).
+  destruct rseq; lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma range_avoids_two : forall (s0 s1 : Segment) (a n : Z),
+Lemma launch_sp_le_top : forall inp (top sp : word),
+  valid_launch_sp top inp sp ->
+  (bv_unsigned sp <= bv_unsigned top)%Z.
+Proof.
+  intros inp top sp [_ [_ Hhi]].
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Nat2Z.is_nonneg
+    (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))) 16 ltac:(lia)).
+  lia.
+Qed.
+
+(* [comment removed for export] *)
+Lemma launch_top_minus_sp : forall inp (top sp : word),
+  valid_launch inp ->
+  valid_launch_sp top inp sp ->
+  (bv_unsigned top - bv_unsigned sp <= 2101782)%Z.
+Proof.
+  intros inp top sp [_ Hb] [_ [Hlo _]].
+  unfold launch_bytes, e2big_limit in Hb.
+  unfold launch_sp_lo, align_down16 in Hlo.
+  pose proof (block_head_size_le (kb_rseq (in_kernel inp))
+                (in_argv inp) (in_envp inp)).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))
+     - 4095) 16 ltac:(lia)).
+  lia.
+Qed.
+
+(* [comment removed for export] *)
+Lemma bsb_bound : forall v inp mbase ph entry (sp brk : word) draw,
+  valid_launch inp ->
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+   <= 2101782)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hvl Hlau.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw
+             Hlau).
+  destruct Hlau as (_ & Hsp & _).
+  exact (launch_top_minus_sp inp (ed_top draw) sp Hvl Hsp).
+Qed.
+
+(* [comment removed for export] *)
+Lemma range_avoids_two : forall (s0 s1 : Segment) (a n : Z),
   Z.ltb a (Z.of_N (seg_base s0) + Z.of_N (seg_size s0)) = false ->
   Z.ltb a (Z.of_N (seg_base s1) + Z.of_N (seg_size s1)) = false ->
   range_avoids_ro_segs [s0; s1] a n = true.
@@ -873,7 +926,7 @@ Definition ro_segs_below (segs : list Segment) (data_base : Z) : bool :=
              || Z.leb (Z.of_N (seg_base seg) + Z.of_N (seg_size seg)) data_base)
           segs.
 
-#[using="Type"] Lemma range_avoids_ro_above : forall (segs : list Segment) (data_base addr n : Z),
+Lemma range_avoids_ro_above : forall (segs : list Segment) (data_base addr n : Z),
   ro_segs_below segs data_base = true ->
   (data_base <= addr)%Z ->
   range_avoids_ro_segs segs addr n = true.

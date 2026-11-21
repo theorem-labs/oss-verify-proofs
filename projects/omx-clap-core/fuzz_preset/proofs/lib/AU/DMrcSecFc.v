@@ -1,6 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecFc.v (a working branch 5ad50e61fc6a, file sha256 fc38cbf5add2) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 26 image addresses moved by code-verified function pairs (28 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecFc.v (a working branch, file sha256 fc38cbf5add2) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 26 image addresses moved by code-verified function pairs (28 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (interface cgif/cgif_file_fuzzer lib/DMwalkIF.v (file sha256 e132437205e6; donor not released)): the CUT-READ record of the
    SECONDARY arm of __asan::QuarantineCallback::Recycle (0x348fc), i.e. LargeMmapAllocator::Deallocate's walk.
    rule 24: no function proved here (kind: field statements; the walk is DMrcSec.v).

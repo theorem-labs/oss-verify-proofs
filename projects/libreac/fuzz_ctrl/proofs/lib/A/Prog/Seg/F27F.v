@@ -5,17 +5,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 186 of its 223 lines of code are new or changed and 359 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F27.v, with its module paths and module names changed; 583 of its 701 lines of code are new or changed and 105 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F27.v c521acaf7acb (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F27.v c521acaf7acb (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F_bounded re-derives the extracted run at ExecF.RNG_all, and each <r>_of_F_bounded_shape
    proves that the bounded corollary is the extracted statement plus address-bound premises and nothing else.
    There is NO <r>_of_F_verbatim pin in this file, because F27.v states NO run lemma: its two runs are the
    `Tac_slot.sl_run` argument inside the one Hat proof seg_F27 (F27.v:139, the two arms at :165 and :229), so there
-   is no F27.<r> constant to pin against. This is the case Seg/F5F.v (a Theorem Labs lane, 96b9daa01771) reports the same way;
+   is no F27.<r> constant to pin against. This is the case Seg/F5F.v (a Theorem Labs lane) reports the same way;
    reported here to the lead and to the auditor a Theorem Labs lane.
    Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 

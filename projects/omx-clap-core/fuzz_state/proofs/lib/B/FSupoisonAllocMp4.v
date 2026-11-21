@@ -5,7 +5,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/AFet.v, with its module paths and module names changed; 84 of its 110 lines of code are new or changed and 704 lines of the source are left out. *)
 (* Malloc PRIMARY miss-g walk under ARU, any UP: threads lib/A/AFim.v (malloc_missg) over AFiw.v / AFi4.v (the miss seed MS0, MREG0), AFiu.v / AFit.v / AFiv.v (the miss runs), AFl1.v (the refill contract, here in its any-UP form FSupoisonAllocR.tfib_refill_specU), AFj2.v's tail (here FSupoisonAllocMp2.tail_innerU), AFi5.v (AR_oom), with lib/A/FSupoison.v, FSupoisonU.v, FSupoisonAllocR.v, FSupoisonAllocMp1.v and FSupoisonAllocMp2.v. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* Modified by Theorem Labs, 2026-10: image-B port (fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d) of lib/A/FSupoisonAllocMp4.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), the kit is lib/B/FSupoisonAllocR / Rf / Rt, every statement is over B's tfibsegs (lib/B/YB1v.v); no address of either image is named here. *)
+(* Modified by Theorem Labs, 2026-10: image-B port (fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d) of lib/A/FSupoisonAllocMp4.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), the kit is lib/B/FSupoisonAllocR / Rf / Rt, every statement is over B's tfibsegs (lib/B/YB1v.v); no address of either image is named here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

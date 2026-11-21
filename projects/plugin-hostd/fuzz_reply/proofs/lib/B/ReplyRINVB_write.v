@@ -2,8 +2,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) twin of the two write rows of
-   lib/A/ReplyRINV_a3.v at 5467eb8cd0d (a working branch), relocated onto lib/B/ReplyRINVB.v's fr_RINV
-   and lib/B/W_LLVMFuzzerTestOneInput_write.v's records at the B top e43cf0c7bef (a working branch).
+   lib/A/ReplyRINV_a3.v (a working branch), relocated onto lib/B/ReplyRINVB.v's fr_RINV
+   and lib/B/W_LLVMFuzzerTestOneInput_write.v's records at the B top (a working branch).
    RI_write_skip_b and RI_write_push_b are the Section hypotheses RI_write_skip (_write.v :256) and RI_write_push
    (_write.v :262) with RINV := ReplyRINVB.fr_RINV, in the text of the Section hypotheses of the same names in
    lib/B/ReplyBTop.v (a working branch).
@@ -11,7 +11,7 @@
      bw_in_byte_range, bw_wr_k, bw_wr_x_len         A twin a3_in_byte_range :83, a3_wr_k :92, a3_wr_x_len :110
      bw_pending_push, bw_nopen_wset                 A twin a3_pending_push :173, a3_nopen_wset :182
      bw_wpair, bw_cost_wpair                        A twin a3_wpair :192, a3_cost_wpair :195
-     bw_Forall2_r, bw_Forall2_map                   lib/A/ReplyRINV.v at f57b3e2d0ca fr_Forall2_r :590, fr_Forall2_map :777
+     bw_Forall2_r, bw_Forall2_map                   lib/A/ReplyRINV.v fr_Forall2_r :590, fr_Forall2_map :777
                                                     (ReplyRINVB.v has neither)
      RI_write_skip_b, RI_write_push_b               A twin RI_write_skip_holds :114, RI_write_push_holds :219
    A -> B swaps: the imports are lib/B/ReplyRINVB.v's (its header lists them against lib/A/ReplyRINV.v), then lib/B's
@@ -20,6 +20,7 @@
    same text as lib/A's); the Section has ReplyRINVB.v's Context and Variables (the twin's LS is not one of them, and no
    lemma here names it).  The constants the proofs read are the byte bound 256, fuzz_u16's bound 65535 and
    SlotInv.WRITE_MAX = 65535 (lib/Prog/SlotInv.v :25, one file for both images). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

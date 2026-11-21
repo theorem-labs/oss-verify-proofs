@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormHitK.v (a working branch 30a1993588f, c5 + memnorm; file sha256 27e8828a0fd7) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 3 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormHitK.v (a working branch, c5 + memnorm; file sha256 27e8828a0fd7) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 3 image addresses moved by code-verified function pairs (4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM): the hit-k arm of AGil.v with memnorm kept.  [ARM_HITK_em] is
    AGil.ARM_HITK_e with MemnormT.alloc_leaf_em (ErrnoG.alloc_leaf_e plus `memnorm mem -> memnorm mem'`) in place of
    ErrnoG.alloc_leaf_e.  rule 24: no function proved (kind: arm twin, frame corollary).
 
-   As in the g pilot (MemnormHitG.v): the keep comes from the arm's own raw frame, at_RETkw's MEQF (AGif0n.v:113-115),
+   As in the g pilot (MemnormHitG.v): the keep comes from the arm's own raw frame, at_RETkw's MEQF (AGif0n.v:114-116),
    which keeps every byte outside ImgBaseAG.K6.WIN, ag_dzone, the new block [K6.Kv + 16, + K6.NPv n) and its shadow;
    none of those zones holds a read-only byte or reaches TASK_SIZE ([memnorm_at_RETkw]):
    - the stack window, the class span (Kv / Uv), the block, PBW and the shadow lie at or above kImgEnd, where tfibsegs
@@ -14,7 +15,7 @@
    - the thread object's cells (K6.WINT) and the depot's node and store blocks are owned extents
      (MemnormHitG.mn_safe_owned); the depot zone's static part [0x178148, 0x5c88d0) lies in tfibsegs' read-write
      segments (MemnormSafecgif.mn_safe_rw).
-   The proof of ARM_HITK_em is AGil.v:307-494 (blocks marked as copies; the section header is AGil.v:45-60, :89-90,
+   The proof of ARM_HITK_em is AGil.v:308-495 (blocks marked as copies; the section header is AGil.v:46-61, :90-91,
    :282-284, and EA_K is AGil.EA_K at this section's B TS EAI EAS EAD) plus the memnorm conjunct from the same MEQF;
    no runner is swapped and no walk is touched.  AGil.v is unchanged. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -49,7 +50,7 @@ Local Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Open Scope am_scope.
 
-(* memnorm is kept by a memory that equals [mem] outside at_RETkw's raw frame zones (AGif0n.v:113-115, the clause in
+(* memnorm is kept by a memory that equals [mem] outside at_RETkw's raw frame zones (AGif0n.v:114-116, the clause in
    the form at_RETkw states it). *)
 Lemma memnorm_at_RETkw : forall ly (regs0 : bvmap 5 word) n cl v odd (mem mem' : word -> option byte),
 layout_ok ly -> img_cover ly ->
@@ -103,7 +104,7 @@ apply (MemnormT.memnorm_frame4 tfibsegs (ImgBaseAG.K6.WIN ly regs0 n cl v odd) (
 - exact MEQ.
 Qed.
 
-(* copy of AGil.v:45-60 (the section header), unchanged *)
+(* copy of AGil.v:46-61 (the section header), unchanged *)
 Section b.
 Variable B : asyms.
 (* The trace premise (C5): a predicate on the trace and the state (cgif: In tr (as_universe B)). *)
@@ -120,18 +121,18 @@ Hypothesis IF : AIface B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis IFK : AIfaceK B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis TS : TfibSyms B.
 Local Ltac bvne := first [cbn; lia | vm_compute; congruence | intros X; vm_compute in X; discriminate X].
-(* copy of AGil.v:88-90, unchanged *)
+(* copy of AGil.v:89-91, unchanged *)
 (* can_fill of the caller's call site: 1 (malloc, realloc) or 0 (calloc). *)
 Variable cf : Z.
 Hypothesis Hcf01 : cf = 0 \/ cf = 1.
-(* copy of AGil.v:279-284, unchanged *)
+(* copy of AGil.v:280-285, unchanged *)
 (* ERRNO-KEPT: errno's 4 bytes lie outside at_RETkw's raw frame (the WIN windows, the depot zone, the new block and
    its shadow) at any layout and stack pointer in that layout's stack.  From h-decbox-a9's ErrnoApart
    image Props (discharged once per image in ErrnoApartcgif). *)
 Hypothesis EAI : ErrnoApart.errno_in_img.
 Hypothesis EAS : ErrnoApart.errno_apart_shadow_ag.
 Hypothesis EAD : ErrnoApart.errno_apart_dzone_ag.
-(* AGil.EA_K (AGil.v:285) at this section's variables *)
+(* AGil.EA_K (AGil.v:286) at this section's variables *)
 Let EA_K := AGil.EA_K B TS EAI EAS EAD.
 (* MEMNORM-KEPT twin of AGil.ARM_HITK_e (MemnormT.alloc_leaf_em). *)
 Theorem ARM_HITK_em : forall inst so bp ly S W regs mem md n tr l off,
@@ -140,7 +141,7 @@ alloc_pre tfibsegs B U ARX rpre nmax lmax 8 1 cf inst so bp ly S W regs mem md n
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x31bd8 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGil.v:307-490, unchanged *)
+(* copy of AGil.v:308-491, unchanged *)
 intros inst so bp ly S W regs mem md n tr l off PRE Nrange Hinited Hcache.
 destruct IF as [Finst Fview Fshape Fdepot Fdaok Fpost Fowned Funinit].
 destruct IFK as [Fpostk Fownedk].
@@ -330,7 +331,7 @@ assert (MNK : MemnormT.memnorm_keep tfibsegs mem mem').
 { pose proof Hsp as (Lo0 & _ & Hi0 & _).
   exact (memnorm_at_RETkw ly regs0 n cl v odd mem mem' HLY HIMG Lo0 Hi0 Hcl (proj1 Hv) (proj2 Hv) Nrange MEQF). }
 split; [exact MNK|].
-(* copy of AGil.v:491-497, unchanged *)
+(* copy of AGil.v:492-498, unchanged *)
 split. { cbn [fst]. rewrite R10, KU. reflexivity. }
 split; [exact HLP|].
 split; [exact HPATH|].

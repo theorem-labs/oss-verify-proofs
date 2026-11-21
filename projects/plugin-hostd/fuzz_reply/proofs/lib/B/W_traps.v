@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/W_traps.v: the image-B trap-refutation kit of fuzz_reply.asan-ubsan.  Proves no function (kind: segment
    lemma): every lemma here is bit-vector arithmetic over the symbolic engine's values; no image, no address.
 
@@ -17,17 +18,17 @@
    (int32 shapes: for a sign-extended int32 operand).
 
    Two layers, one kit: the code from the first Require through trap_dbl_guard is a Theorem Labs lane's kit
-   (a working branch 73bb5b07501 / c7bdec020ef, byte for byte, 32 lemmas; its 50 sites in
+   (a working branch, byte for byte, 32 lemmas; its 50 sites in
    TRAPS-CENSUS.md (sha256 b33c2b52103e; internal record));
    the section after it is BTrapKit's (the WRAP family, trap_seat, the seat values).  Where a cut keeps a computed
    check result in an atom, or the engine folded part of a check with the state's facts, the trap_U_* / trap_S_*
    value lemmas give that result's value, and trap_nonnull (beqz) / trap_bnez_zero (bnez) close the branch on it.
 
-   MEASURED (a Theorem Labs lane W4, a working branch 9f0cd2ef50e): gestures_end has 10 trap edges and gesture_model
+   MEASURED (a Theorem Labs lane W4, a working branch): gestures_end has 10 trap edges and gesture_model
    6; in EACH function the runner decided every trap edge but ONE, from the seat's atom facts, and the one left was a
    pointer-overflow WRAP (gestures_end 0x826a4 `bltu held+8i, held`, lib/B/W_gse_loop.v gsl_wrap; gesture_model
-   0x8612c `bltu ~LINE, js+1`, lib/B/W_gm_found.v).  W8Add's check_bounded (a working branch
-   7e062bb9b9c): the same, once the one-time flags sat in the loop-head facts.  So: seat the facts below, and cite the
+   0x8612c `bltu ~LINE, js+1`, lib/B/W_gm_found.v).  W8Add's check_bounded (a working branch):
+   the same, once the one-time flags sat in the loop-head facts.  So: seat the facts below, and cite the
    WRAP family for what is left.
 
    THE SEAT RECIPE (YP0m.facts: f_atoms / f_conds / f_alias of the cut's sstate):

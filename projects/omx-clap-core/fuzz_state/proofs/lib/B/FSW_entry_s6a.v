@@ -13,9 +13,9 @@
    has A's name, argument order and statement at B's numerals (B's fuzz/alloc.c statics 0xa41c0 / 0x5daac0 / 0x5daae0 /
    0x5dab00, relro FS_RLO 0x9f6b0 .. FS_RHI 0xa0908, YCfn.LIVE_LIB, YCem.rdword_of_val_mem).
    rule 24: proves function LLVMFuzzerTestOneInput (segment S6, part A; reuse search: proof-index
-   LLVMFuzzerTestOneInput, ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_s6a.v of a working branch 0d34d65d2b7 (itself a working branch
-   08ad70da3bf; donor cgif_file_fuzzer lib/A/ACfj.v + ACfi.v, image-B form lib/YCfj.v + lib/YCfi.v on origin/ossv/recipes).
+   LLVMFuzzerTestOneInput, ported from a working branch).
+   Ported from: lib/A/FSW_entry_s6a.v of a working branch (itself a working branch;
+   donor cgif_file_fuzzer lib/A/ACfj.v + ACfi.v, image-B form lib/YCfj.v + lib/YCfi.v on origin/ossv/recipes).
    RELOC-B hypotheses (owner RELOC-B): none; this file takes no Section hypothesis. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

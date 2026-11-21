@@ -3,36 +3,37 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: THE PLUG of the ASan walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput.
    rule 24: no function proved (kind: merge).  This file proves no segment and no callee: it applies the top
-   composition `llvmf_compose` (lib/A/P_LLVMFuzzerTestOneInput_Top.v:94) at scene's own instance and discharges six
+   composition `llvmf_compose` (lib/A/P_LLVMFuzzerTestOneInput_Top.v:95) at scene's own instance and discharges six
    of its seven segment premises with the proved segment theorems, each at the statement's Section h. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*     scene_llvmf_plug : scene_llvmf_stmt B A_LLVMF RA_LLVMF EV_LIB LIVE_LIB LLVMF_STK A_EMPTY
 
    under the hypotheses of lib/A/P_LLVMFuzzerTestOneInput.v's Section h (copied below in its text; a hypothesis the
    proof does not use drops out when the section closes) and ONE more: HS0, the composition's S0 premise, in the
-   form lib/A/P_LLVMFuzzerTestOneInput_Top.v:167 states it.
+   form lib/A/P_LLVMFuzzerTestOneInput_Top.v:168 states it.
 
    INSTANCE.  segs := scene_segs (= PI_scene's pa_segs), meter := scene_mt (= ameter_triv), walk := scene_walk_asan
    (Top.v:161, i.e. scene_walk (Top.v:82-87) at SCENE_SINK_OWNED and the six entry constants, sw_xm = sw_xn = 0,
    sw_rlo / sw_rhi = PI_scene's pa_relro_lo / pa_relro_hi), geometry := scene_geom_asan, shape :=
-   SceneAsanBase.scene_shape (the statement's, P_LLVMFuzzerTestOneInput.v:152, :307).  The sink head is the
+   SceneAsanBase.scene_shape (the statement's, P_LLVMFuzzerTestOneInput.v:153, :308).  The sink head is the
    statement's own constant P_LLVMFuzzerTestOneInput.scene_sink_head (:150-151, type written fully qualified there),
    passed BY NAME to every lemma that takes one (gate 6h); its local instance below only mirrors the statement's
    own `#[local] Instance` (:150), so that the copied hypotheses elaborate as they do there.
 
    THE SEGMENT THEOREMS (each Qed; Print Assumptions = kernel primitives + functional_extensionality_dep):
-     S1  P_LLVMFuzzerTestOneInput_S1.scene_seg_S1  :1032  a working branch 7b2b57c5429
-     S2  P_LLVMFuzzerTestOneInput_S2.seg_S2        :225   a working branch 6e3cac2c3e1 (+ S2AluLemmas.v, a28950bc27b)
-     S3  P_LLVMFuzzerTestOneInput_S3.scene_seg_S3  :1921  a working branch 4cf034be9d6
-     S4  P_LLVMFuzzerTestOneInput_S4.scene_S4      :1936  a working branch 2172fd006fc
-     S5  P_LLVMFuzzerTestOneInput_S5.scene_seg_S5  :135   a working branch 3a1b22cbd21 (+ _S5_kit.v, J_StackSzPf.v)
-     S6  P_LLVMFuzzerTestOneInput_S6.llvmf_S6      :134   a working branch 28719c5598c
+     S1  P_LLVMFuzzerTestOneInput_S1.scene_seg_S1  :1032  a working branch
+     S2  P_LLVMFuzzerTestOneInput_S2.seg_S2        :225   a working branch (+ S2AluLemmas.v)
+     S3  P_LLVMFuzzerTestOneInput_S3.scene_seg_S3  :1921  a working branch
+     S4  P_LLVMFuzzerTestOneInput_S4.scene_S4      :1936  a working branch
+     S5  P_LLVMFuzzerTestOneInput_S5.scene_seg_S5  :135   a working branch (+ _S5_kit.v, J_StackSzPf.v)
+     S6  P_LLVMFuzzerTestOneInput_S6.llvmf_S6      :134   a working branch
    S3 is ONE whole_transfer turn, `seg_S3_turn_stmt`, which is exactly the composition's HS3 (Top.v:173,
    seg.v:592-595); the 343-turn induction is inside S4 (`s4_loop`), whose statement takes the turn as its second
    premise (seg.v:601-603), and llvmf_compose feeds HS3 there (Top.v:125).  No bridge lemma is needed.
 
-   HOW EACH SEGMENT PREMISE IS DISCHARGED (statement = lib/A/P_LLVMFuzzerTestOneInput.v at 0b6bed94801, whose Section
-   h c0ad992d3c8 changes only by writing (SK := scene_sink_head) in BSS / SSB / SSM, as this file already does, at
+   HOW EACH SEGMENT PREMISE IS DISCHARGED (statement = lib/A/P_LLVMFuzzerTestOneInput.v, whose Section
+   h changes only by writing (SK := scene_sink_head) in BSS / SSB / SSM, as this file already does, at
    the same lines; segment lines are the segment file's).  Only the premises a segment theorem keeps after its
    section closes are listed (its `About`); every one is the statement's hypothesis itself, accepted up to
    conversion, except HWKev (derived by lia) and HWRLO / HWRHI (eq_refl).
@@ -76,9 +77,9 @@
    statement's own constant, by its full name, and the shape's leaf equation is closed by reflexivity without
    being written.
 
-   BUILD RECIPE (scene's base does not build standalone): clone at the statement of record f6ab6e97937;
-   `git checkout 7687b78416d3 -- proofs/libreac/fuzz_scene && git checkout f6ab6e97937 -- proofs/libreac/fuzz_scene`;
-   then by path the segment files above and lib/A/P_LLVMFuzzerTestOneInput_Top.v (a working branch f4279258d43). *)
+   BUILD RECIPE (scene's base does not build standalone): clone at the statement of record;
+   `git checkout -- proofs/libreac/fuzz_scene && git checkout -- proofs/libreac/fuzz_scene`;
+   then by path the segment files above and lib/A/P_LLVMFuzzerTestOneInput_Top.v (a working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -114,7 +115,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* the statement's own sink head (P_LLVMFuzzerTestOneInput.v:150-151), by its full name *)
+(* the statement's own sink head (P_LLVMFuzzerTestOneInput.v:151-152), by its full name *)
 #[local] Notation SKS := OSSVerify.Proofs.libreac.fuzz_scene.lib.A.P_LLVMFuzzerTestOneInput.scene_sink_head.
 
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -127,7 +128,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation RHI := (@pa_relro_hi _ scene_listing PI_scene).
 
 (* ---- lib/A/P_LLVMFuzzerTestOneInput.v's Section h (:166-301), in its own text and order; BSS, SSB and SSM take
-   the sink head by name, as c0ad992d3c8 writes them. ---- *)
+   the sink head by name, as writes them. ---- *)
 Section h.
 Variable B : asyms.
 Variables A_LLVMF RA_LLVMF EV_LIB LIVE_LIB LLVMF_STK A_EMPTY : Z.
@@ -171,7 +172,7 @@ Hypothesis TCHECKX : tcheck_step_specX SKS B.
 Hypothesis HTRACE : rt_trace_in_stmt SEGS RA_LLVMF (pc_malloc_ra0 (as_code B)) (pc_free_ra0 (as_code B))
 RT_malloc1_ra RT_malloc2_ra RT_malloc3_ra RT_free1_ra RT_free2_ra RT_free3_ra (as_universe B).
 
-(* ---- the composition's instance (P_LLVMFuzzerTestOneInput_Top.v:79-87, :161-162) ---- *)
+(* ---- the composition's instance (P_LLVMFuzzerTestOneInput_Top.v:80-88, :162-163) ---- *)
 #[local] Notation WKA := (P_LLVMFuzzerTestOneInput_Top.scene_walk_asan A_LLVMF RA_LLVMF EV_LIB LIVE_LIB LLVMF_STK A_EMPTY).
 #[local] Notation SSEGS := P_LLVMFuzzerTestOneInput_Top.scene_segs.
 #[local] Notation SMT := P_LLVMFuzzerTestOneInput_Top.scene_mt.

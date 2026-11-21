@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormDnull.v (commit 30a1993588f, c5 + memnorm; file sha256 8b04fdf51697) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from lib/A/MemnormDnull.v (commit d2dafa219c1, file sha256 20a0c7138418) onto plugin-hostd/fuzz_reply's asan-ubsan image (unstripped fuzz_reply.asan-ubsan, sha256 3389287e1d61; pin 10ffb5f9202a) by alreloc ced0368250cb6538 (A -> B, direct map 541d2a13b9d2): 2 numerals moved; module paths lib.A -> lib.B and the image twins A<r> -> Y<r>. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormDnull.v (c5 + memnorm; file sha256 8b04fdf51697) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from lib/A/MemnormDnull.v (file sha256 20a0c7138418) onto plugin-hostd/fuzz_reply's asan-ubsan image (unstripped fuzz_reply.asan-ubsan, sha256 3389287e1d61; pin 10ffb5f9202a) by alreloc ced0368250cb6538 (A -> B, direct map 541d2a13b9d2): 2 numerals moved; module paths lib.A -> lib.B and the image twins A<r> -> Y<r>. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM): the NULL arm of DGg3.v with memnorm kept.  [null_arm_c_em] /
    [dealloc_null_arm_em] are DGg3.null_arm_c_e / dealloc_null_arm_e with MemnormDleaf.dealloc_leaf_raw_eem
    (DGleafE.dealloc_leaf_raw_ee plus `memnorm mem -> memnorm mem'`) in place of DGleafE.dealloc_leaf_raw_ee.
@@ -13,7 +14,7 @@
    stack (above kImgEnd, below kHighMemEnd = TASK_SIZE: lo_top, YG0f.v:324-326), the unwinding byte in the thread
    object, an owned extent (MemnormHitG.mn_safe_owned), and IZONE in tfibsegs' read-write segments
    (MemnormSafecgif.mn_safe_rw).
-   The proof of null_arm_c_em is DGg3.v:428-495 (blocks marked as copies; the section headers are DGg3.v:57-86), plus
+   The proof of null_arm_c_em is DGg3.v:429-496 (blocks marked as copies; the section headers are DGg3.v:58-87), plus
    the memnorm conjunct from the same MEQR.  DGg3's section-local lemmas PREd, LOv, HIGH, STK64, R1, R2 and null_main
    are taken by `Let` at this file's identical section variables.  No runner is swapped and no walk is touched.
    DGg3.v is unchanged. *)
@@ -66,7 +67,7 @@ apply (MemnormT.memnorm_frame tfibsegs (fun a => DGgn.WIN ly regs0 a \/ DGgn.IZO
 - intros x NZ. apply MEQ; intros X; apply NZ; [left | right]; exact X.
 Qed.
 
-(* copy of DGg3.v:57-86 (the section headers), unchanged *)
+(* copy of DGg3.v:58-87 (the section headers), unchanged *)
 Section b.
 Variable B : asyms.
 Hypothesis TS : TfibSyms B.
@@ -97,7 +98,7 @@ Local Notation SB := (ly_space ly).
 Local Notation m0 := (mrestrict (w_H W) mem).
 Local Notation E0 := (DGgn.E0 ly regs0 tr).
 Local Notation LENv := (DGgn.LENv tr).
-(* DGg3's section-local lemmas (DGg3.v:88, :103, :109, :154, :156, :157, :406) at this section's variables *)
+(* DGg3's section-local lemmas (DGg3.v:89, :104, :110, :155, :157, :158, :407) at this section's variables *)
 Let PREd := DGg3.PREd B TS U ARX rpre fpre inst so bp ly S W regs mem md n tr PRE.
 Let LOv := DGg3.LOv B TS U ft ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq MP IF inst so bp ly S W regs mem md n tr PRE.
 Let HIGH := DGg3.HIGH B TS U ft ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq MP IF inst so bp ly S W regs mem md n tr PRE.
@@ -110,7 +111,7 @@ Let null_main := DGg3.null_main B TS U ft ARX ARXr AOX rpre lpost fpre dpost dbo
 Theorem null_arm_c_em : amreal tfibsegs (ft PNull tr S) W (cfg_at tfibsegs 0x3191c regs mem md)
 (MemnormDleaf.dealloc_leaf_raw_eem B ft ARX AOX lpost inst ly S W regs mem md PNull n tr).
 Proof.
-(* copy of DGg3.v:428-489, unchanged *)
+(* copy of DGg3.v:429-490, unchanged *)
 pose proof PREd as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & _).
 pose proof PRE as PRE'. unfold DeallocG.dealloc_pre in PRE'.
 do 27 (destruct PRE' as [_ PRE']). destruct PRE' as (HTU & _ & HFP).
@@ -178,18 +179,18 @@ assert (MNK : MemnormT.memnorm_keep tfibsegs mem mem').
 { refine (memnorm_MEQN ly (dregs regs 0 inst bp so) mem mem' (dn_ly _ _ _ _ _ LOv) (dn_img _ _ _ _ _ LOv) _ _ (proj1 MEQR)).
   - rewrite R2. exact Hlo.
   - rewrite R2. exact Hhi. }
-(* copy of DGg3.v:490-493, unchanged *)
+(* copy of DGg3.v:491-494, unchanged *)
 split; [exact ERR|].
 split.
 { intros a Ha. apply aview_same. pose proof (ERR (a - as_errno B) ltac:(lia)) as E.
   replace (as_errno B + (a - as_errno B)) with a in E by lia. unfold w64 in E. exact E. }
 split; [exact MNK|].
-(* copy of DGg3.v:494-495, unchanged *)
+(* copy of DGg3.v:495-496, unchanged *)
 split; [exact HLP | exact HPATH].
 Qed.
 End c.
 
-(* DGg3.dealloc_null_arm_e (DGg3.v:514) with memnorm kept. *)
+(* DGg3.dealloc_null_arm_e (DGg3.v:515) with memnorm kept. *)
 Theorem dealloc_null_arm_em : forall inst so bp ly S W regs mem md p n tr,
 DeallocG.dealloc_pre tfibsegs B U ARX rpre fpre 1 inst so bp ly S W regs mem md p n tr -> p = PNull ->
 amreal tfibsegs (ft p tr S) W (cfg_at tfibsegs 0x3191c regs mem md)

@@ -1,8 +1,9 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRhOk.v (a working branch 5ad50e61fc6a, file sha256 d1a63d27efc0) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRhOk.v (a working branch, file sha256 d1a63d27efc0) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the three target statements de_rchunk_m_rh_t / rchunk_m_rh_t / rchunk_ok_rh_t are Required from the light files DIfaceRh.v / DMwalkIFRh.v (the cgif texts of reply's) and their inline Definitions here are dropped, as in reply's DMrcRhOk.v; no proof changes. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's delta to proofs/cgif/cgif_file_fuzzer/lib/DMrcRhOk.v (5ad50e61fc6a -> a working branch 9f12c64c854, file sha256 19c15b91256c) applied at B' by a 3-way merge (base and theirs the two cgif texts, ours this file): the statement moved to DIfaceRh / DMwalkIFRh, which this file now Requires (DIfaceRh from lib.Reusable, DMwalkIFRh from lib.AU). 1 conflict, the Require block, resolved to this file's lines plus those two; no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's delta to proofs/cgif/cgif_file_fuzzer/lib/DMrcRhOk.v (-> a working branch, file sha256 19c15b91256c) applied at B' by a 3-way merge (base and theirs the two cgif texts, ours this file): the statement moved to DIfaceRh / DMwalkIFRh, which this file now Requires (DIfaceRh from lib.Reusable, DMwalkIFRh from lib.AU). 1 conflict, the Require block, resolved to this file's lines plus those two; no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (F1 priming row R3, lane B1, slice H4; integrator a Theorem Labs lane): new file. rule 24: no function
    proved here (kind: F1 priming of already proved walks: the head of __asan::QuarantineCallback::Recycle (0x348fc) at
    the re-hide twin, from the secondary arm under the re-hide (DMrcRh.rchunk_sec_rh) and the primary arm, which
@@ -17,7 +18,7 @@
    - [rc_sec_pre_rh_t]: the read field of the re-hide's pre-state premises, DMrcRh's HULL / SREAL / M1 / M2 at the
      call, quantified like DMrcSecReads' fields.
    - [rc_sec_rehide_all_t]: DMrcRh.rc_sec_rehide_t at every call.
-   - [rc_prim_mach_rh_t]: DMrcPrim.rchunk_prim_m's statement (DMrcPrim.v:236, its Section hypotheses TfibSyms B,
+   - [rc_prim_mach_rh_t]: DMrcPrim.rchunk_prim_m's statement (DMrcPrim.v:237, its Section hypotheses TfibSyms B,
      rc_prim_reads and H3's cdealloc_g_t included) in its primed form: amreal' at YGcfRehidePost.RZ_cf, the call post
      YGcfRehidePost.acall_post_x_rh.  This file does not Require DMrcPrim or DMrc.
    - [rc_reads_rh]: DMrc.rc_reads with DMrcSecReads.rc_sec_step_g over the loosened post relation ARXsl (indexed by

@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 403 of its 523 lines of code are new or changed and 1138 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/FMbz_clean.v, with its module paths and module names changed; 344 of its 386 lines of code are new or changed and 481 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/A/HPgWrapNcmp.v's hd_strncmp_core (itself reac-pw/fuzz_pin's
-   lib/A/PPgWrapNcmp.v pin_strncmp_core at 90722657971) re-run with the caller's frame hole of lib/A/HPgHole.v
+   lib/A/PPgWrapNcmp.v pin_strncmp_core) re-run with the caller's frame hole of lib/A/HPgHole.v
    (ecall_preH in, the hole post out), as lib/A/Rt/FMrt_lift.v rt_post_roU_win re-runs rt_post_ro_win with
    lib/A/Rt/FMupoison.v ARU_frame: hd_rt_post_roH_win is rt_post_roU_win with HPgHole.ARH_frame in place of
    ARU_frame; the walk's premises that AR gives (the stack window, the runtime cells, the read-only views) are read
    off AR of the unpoisoned memory and carried to the memory itself, which agrees with it off the hole; the rest
    is pin's proof. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgWrapNcmpH.v, with its module paths and module names changed; 146 of its 195 lines of code are new or changed and 337 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fm's runtime contracts in the donor's form, the generic half.
    - A walk proved over the machine state alone (lib/Lib `evt`, its registers written `mkR ...`) is
      read at a donor call site (`SRr` from `cfg_at`, YG0d.v:213): the register map is moved with
@@ -66,7 +67,7 @@ Qed.
 Open Scope Z_scope.
 
 (* the image's W^X fact: the same one-line computation as A/AF0x.v Hwx_tfa, which does not build on
-   this base (A/AF0m.v:340 syntax error, fixed on Reloc's branch); switch to AF0x.Hwx_tfa once it does *)
+   this base (A/AF0m.v:341 syntax error, fixed on Reloc's branch); switch to AF0x.Hwx_tfa once it does *)
 Lemma fm_wx : wx_segs_nowrap tfibsegs.
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.
 

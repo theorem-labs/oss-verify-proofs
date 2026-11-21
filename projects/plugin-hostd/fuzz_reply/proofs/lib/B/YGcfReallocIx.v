@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/PixChk.v, with its module paths and module names changed; 568 of its 593 lines of code are new or changed and 46 lines of the source are left out. *)
-(* CARRIED from commit c0a9e267fe7c72927fb7af31896a8a6bbcb58b93,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfReallocIx.v, sha256 fa2923801fc30c4b27d511a6f97fb75734615755d5bb2e5f960ce8fd98f2db63 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -16,14 +17,14 @@
    - realloc_dead_ix_compose: that inclusion, from rec_live_lt (the backward liveness below an index L) across the inner
      malloc and the keep of every st_secs entry at an index >= L across the inner free.
    - malloc_cf_secs_keep: malloc_cf only appends to st_secs and, below the entry length, rewrites only errbuf control
-     entries, into not-live ones (sec_alloc YG00.v:347-363; errb_set_size, errb_retire, errb_map_cf YG00cf.v:93-129).
+     entries, into not-live ones (sec_alloc YG00.v:347-363; errb_set_size, errb_retire, errb_map_cf YG00cf.v:94-130).
      So the backward liveness holds below the entry length. Without the index guard it fails at the live secondary that
      sec_alloc appends (YG00.v:356), which is why rec_live_lt is the step relation here.
    - free_cf_fresh_keep: free_cf leaves every st_secs entry at an index >= L as it is.
    - realloc_dead_ix_of_paths: the chain along the realloc tree (ReallocP.v:28-35: free_cf PNull, malloc_cf n, free_cf p)
      from Wf_cf at the realloc's entry and q <> p.
    THE QUARANTINE-DRAIN RISK (measured first). free_cf may recycle chunks: the freed chunk itself when it is above the
-   quarantine's max_size (YG00cf.v:353), and the quarantine's items when it drains (maybe_drain_cf YG00cf.v:305-321,
+   quarantine's max_size (YG00cf.v:354), and the quarantine's items when it drains (maybe_drain_cf YG00cf.v:306-322,
    do_recycle YG00.v:514-521). A recycled secondary marks its own st_secs entry dead IN PLACE (sec_dealloc, YG00.v:489):
    no path of free_cf reorders, removes or appends an st_secs entry (free_cf_secs_mark). But the recycled index is the
    recycled chunk's own, and the model checks that chunk only by mem_chunk (YG00.v:501), so the model alone does not keep
@@ -31,12 +32,12 @@
    (P1) every item of q_items S (YG01.v:300) that is a secondary PSec r _ has r < L;
    (P2) so has the freed chunk, find_user (st_chunks S) p.
    realloc_dead_ix_of_paths discharges both from Wf_cf at the realloc's entry: wq_items (YG01.v:387) puts every item in
-   st_chunks, chunk_ok_cf (YG01cf.v:110-119) gives every secondary chunk an st_secs entry, the entry step free_cf PNull and
+   st_chunks, chunk_ok_cf (YG01cf.v:111-120) gives every secondary chunk an st_secs entry, the entry step free_cf PNull and
    malloc_cf leave both queues alone (rx_null_free, malloc_cf_frame_ix), and malloc_cf adds only the chunk of the block q
    it returns, so the freed chunk is an entry chunk when q <> p.
    THE KEY. The per-call dead set is the core's YGcfRehidePost.dead_shadow_new (:62-64), keyed by slot index: the slots
-   live at the call's entry S and dead at its exit. Its body is the core's from 269a783f7a5, which is the draft text
-   (proofs/omx-clap-core/fuzz_preset/lib/A/Draft/F6DeadShadowNull.v:247-249 at 34350d9f4846) verbatim under the name
+   live at the call's entry S and dead at its exit. Its body is the core, which is the draft text
+   (proofs/omx-clap-core/fuzz_preset/lib/A/Draft/F6DeadShadowNull.v:247-249) verbatim under the name
    dead_shadow_new. dead_sec, rh_lo and rh_hi are YGcfRehidePost.v's too (:34-36, :29-30).
    rec_live_lt is backward liveness (a slot live at the step's exit was live at its entry, with the same length) with
    an index guard.
@@ -444,7 +445,7 @@ Qed.
 
 Definition rx_fstep (A : nat -> Prop) (s0 s : astate) : Prop := rx_mark A (st_secs s0) (st_secs s).
 
-(* The items of the two queues of s, in maybe_drain_cf's order (YG00cf.v:309), all at indices in A. *)
+(* The items of the two queues of s, in maybe_drain_cf's order (YG00cf.v:310), all at indices in A. *)
 Definition rx_qi (A : nat -> Prop) (s : astate) : Prop :=
   forall c r o, In c (flat_map b_items (qc_list (st_qglobal s) ++ qc_list (st_qthread s))) -> ck_beg c = PSec r o -> A r.
 
@@ -509,7 +510,7 @@ induction fuel as [|f IH]; intros bs s0 s HI H; destruct bs as [|b t]; cbn [do_r
     * intros u2 s2 H2. apply IH; [intros b' k r o Hb' Hk Hbg; exact (HI b' k r o (or_intror Hb') Hk Hbg) | exact H2].
 Qed.
 
-(* MergeBatches (YG00cf.v:285-299) only moves items, and the batches it extracts are empty. *)
+(* MergeBatches (YG00cf.v:286-300) only moves items, and the batches it extracts are empty. *)
 Lemma rx_merge_spec : forall fuel l, let '(rest, ex) := merge_batches_cf fuel l in
   (forall b, In b ex -> b_items b = []) /\ (forall k, In k (flat_map b_items rest) -> In k (flat_map b_items l)).
 Proof.
@@ -545,7 +546,7 @@ induction fuel as [|f IH]; intros q acc; cbn [pop_batches].
   + right. exact H1.
 Qed.
 
-(* maybe_drain_cf (YG00cf.v:305-321): every chunk it recycles is an item of the two queues at its start. *)
+(* maybe_drain_cf (YG00cf.v:306-322): every chunk it recycles is an item of the two queues at its start. *)
 Lemma rxf_maybe_drain : forall A s0 s, rx_qi A s -> rx_fstep A s0 s ->
   apost (maybe_drain_cf s) (fun x => rx_fstep A s0 (snd x)).
 Proof.
@@ -609,7 +610,7 @@ split; [exact E1|]. split; [exact E4|].
 intros c Hc. destruct (rx_qc_push_items (st_qthread s1) k nb c Hc) as [X|X]; [left; rewrite <- E3; exact X | right; exact X].
 Qed.
 
-(* free_cf after its depot put (YG00cf.v:351-354): the freed chunk's state change, its enqueue or its immediate
+(* free_cf after its depot put (YG00cf.v:352-355): the freed chunk's state change, its enqueue or its immediate
    recycle, and the drain. *)
 Lemma rxf_free_tail : forall A S S3 k',
   (forall c r o, In c (q_items S) -> ck_beg c = PSec r o -> A r) ->

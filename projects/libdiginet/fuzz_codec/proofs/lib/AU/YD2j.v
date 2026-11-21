@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_codec image B by gen_ad2.py (frozen 8a509576b937, start-up tool set of commit 4453a719871) from fuzz_codec.asan-ubsan, its atable (lib/AU/YB12.v), its TSEGS window (lib/AU/YB1h.v), its owned statics (lib/AU/YF0m.v) and the 50 hand-off states of lib/AU/YB01.v; the donor lib/YD2i.v and lib/YD2j.v at commit 25e3d17bdb50 give the text only *)
+(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_codec image B by gen_ad2.py (frozen 8a509576b937, start-up tool set) from fuzz_codec.asan-ubsan, its atable (lib/AU/YB12.v), its TSEGS window (lib/AU/YB1h.v), its owned statics (lib/AU/YF0m.v) and the 50 hand-off states of lib/AU/YB01.v; the donor lib/YD2i.v and lib/YD2j.v give the text only *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_codec.asan-ubsan (libdiginet/fuzz_codec asan-ubsan) sha256 73109e32e77beff294d41ae6f16d607479ad1884485781b322645e6f8afa99c3; unstripped twin sha256 43feeaa314a42fe569b4443c710a74561e9077e617f7412cc54fbf4a6557b266 *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

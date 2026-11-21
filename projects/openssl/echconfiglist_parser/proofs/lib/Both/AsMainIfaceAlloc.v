@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up invariant is SINV0L over the run's input, the args block no longer takes the stack-fit premise, and the canary word's variable is AsMainFacts.K_CAN, renumbered with the end states; ak_reserved states the reserved ledger as the image's reservations followed by the launch's vDSO/vvar pair, with ak_mres, ak_vdso, ak_rx and ak_res_apart for the pair's bounds and its distance from the tracked mappings, and ak1, ak1_lo and ak9 are proved over the whole ledger). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -9,7 +10,7 @@ From OSSVerify.openssl.echconfiglist_parser.images Require Import AsanUbsan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame Arr CellsX TacX.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import HeapCeil.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsStack0.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanHexScan AsHSTab AsMainVM. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazyChk AsMainLazy AsMainCells AsMainIface AsMainIfacePre. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import LazyRestrict LazySR.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanInitL AsanHexScan AsHSTab AsMainVM. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazyChk AsMainLazy AsMainCells AsMainIface AsMainIfacePre. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import LazyRestrict LazySR.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import AsPlanImagesHex AsPlanImagesHexZ.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import AsMainSyms.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import AsImages AsPlanImages.
@@ -27,8 +28,8 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH AsanUbsan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -178,7 +179,7 @@ Section AT_MAIN.
   #[local] Notation hid_sh := (AsMainCells.hid_sh sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation hid_stack := (AsMainCells.hid_stack sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation visibleZ_hid := (AsMainCells.visibleZ_hid sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
-  #[local] Notation args_block := (AsMainCells.args_block sp0 brk0 rdraw inp ch E R FULL model Vsp Vav Vev Vfit HC) (only parsing).
+  #[local] Notation args_block := (AsMainCells.args_block sp0 brk0 rdraw inp ch E R FULL model Vsp Vav Vev HC) (only parsing).
   #[local] Notation Mr_some := (AsMainCells.Mr_some sp0 rdraw inp ch E FULL model) (only parsing).
   #[local] Notation Mr_vis_none := (AsMainCells.Mr_vis_none sp0 rdraw inp ch E FULL model) (only parsing).
   #[local] Notation rdn_Mr_full := (AsMainCells.rdn_Mr_full sp0 brk0 rdraw inp ch E FULL model) (only parsing).
@@ -421,11 +422,11 @@ Section AT_MAIN.
   (* [comment removed for export] *)
   Lemma fx_canary : exists gd : word, rw_cells asegs VM 0xc01cd0 [C8 gd].
   Proof.
-    exists (edenot E (EVar 61)).
-    pose proof (kword_main w_all (CAbs, 0xc01cd0) 8 (EVar 61) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
+    exists (edenot E (EVar K_CAN)).
+    pose proof (kword_main w_all (CAbs, 0xc01cd0) 8 (EVar K_CAN) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
     revert W. pmc_simpl. rewrite Z.add_0_l. intros W.
     apply rw_cells_img; [cbn; tauto | lia | csz; lia |]. apply bytes_at_of_nth; [lia | csz; lia |]. intros i Hi.
-    apply (rdn_mrd ASEGS (cells_bytes [C8 (edenot E (EVar 61))]) VM 0xc01cd0); [| lia | csz; lia | exact Hi].
+    apply (rdn_mrd ASEGS (cells_bytes [C8 (edenot E (EVar K_CAN))]) VM 0xc01cd0); [| lia | csz; lia | exact Hi].
     cbn [cells_bytes cbytes app]. rewrite app_nil_r. exact (W ltac:(lia) ltac:(lia) ltac:(apply vr_img; lia)).
   Qed.
   (* [comment removed for export] *)
@@ -594,8 +595,29 @@ Section AT_MAIN.
   Proof. pose proof (pm_topz _ _ _ _ _ PMo) as T0. cbn [cfg_model cfg_of] in T0. unfold TOP, pm_top in T0. exact T0. Qed.
   Lemma ak_eager : eager_used model <= 16838656.
   Proof. exact (pm_eager _ _ _ _ _ PMo). Qed.
-  Lemma ak_reserved : vm_reserved VMM = segments_reserved ASEGS.
-  Proof. exact (pm_reserved _ _ _ _ _ PMo). Qed.
+  (* LPS 727298f3: the reserved ledger is the image's reservations followed by the launch's extra
+     entries (the vDSO/vvar pair); every tracked mapping lies apart from it; the pair is inside it
+     ([AsMainFacts.pm_reserved], from [cs_ok]'s [co_res]) *)
+  Lemma ak_reserved : exists rx : list (word * word),
+      vm_reserved VMM = segments_reserved ASEGS ++ rx
+      /\ Forall (APS.resx_entry_ok ASAN_H) rx /\ (length rx <= APC.n_resx ASAN_H)%nat /\ APS.sum_sizes rx <= APC.resx_bytes ASAN_H.
+  Proof. exact (proj1 (pm_reserved _ _ _ _ _ PMo)). Qed.
+  Lemma ak_mres : Forall (fun iv => Forall (APS.iv_disjoint iv) (vm_reserved VMM)) (vm_maps VMM).
+  Proof. exact (proj1 (proj2 (pm_reserved _ _ _ _ _ PMo))). Qed.
+  Lemma ak_vdso : incl (vdso_reserved (m_kernel model) (vdso_top VMM)) (vm_reserved VMM).
+  Proof. exact (proj2 (proj2 (pm_reserved _ _ _ _ _ PMo))). Qed.
+  (* the pair's entries start a page above [AHI_LO] ([APS.resx_entry_ok]); [ASAN_H] bounds them
+     to two entries of 81920 bytes in all *)
+  Lemma ak_rx : exists rx : list (word * word),
+      vm_reserved VMM = segments_reserved ASEGS ++ rx
+      /\ Forall (fun e => 0x10007fff9000 <= bv_unsigned (fst e)) rx /\ (length rx <= 2)%nat /\ APS.sum_sizes rx <= 81920.
+  Proof.
+    destruct ak_reserved as (rx & Erx & RX & RN & RS). exists rx. split; [exact Erx|]. split.
+    - eapply Forall_impl; [| exact RX]. intros e Re. unfold APS.resx_entry_ok in Re.
+      destruct Re as (_ & _ & _ & _ & R5 & _). unfold APC.KHI in R5. lia.
+    - assert (EN : APC.n_resx ASAN_H = 2%nat) by reflexivity. assert (EB : APC.resx_bytes ASAN_H = 81920) by reflexivity.
+      rewrite EN in RN. rewrite EB in RS. split; [exact RN | exact RS].
+  Qed.
   Lemma ak_res_list : segments_reserved ASEGS =
     [(Z_to_bv 64 0x10000, Z_to_bv 64 0x185000); (Z_to_bv 64 0x195000, Z_to_bv 64 0x3dc000); (Z_to_bv 64 0x571000, Z_to_bv 64 0x79000); (Z_to_bv 64 0x5ea000, Z_to_bv 64 0x61a000)].
   Proof. vm_compute. reflexivity. Qed.
@@ -603,14 +625,26 @@ Section AT_MAIN.
   Lemma ak_noacc : vm_noaccess VMM = zz2ww (PM_NOACC brk0z X).  Proof. exact PM_noacc_eq. Qed.
   Lemma ak_lazy : m_vm_lazy model = zz2ww (PM_LAZY sp0z X).       Proof. exact PM_lazy_eq. Qed.
   (* [comment removed for export] *)
-  Lemma ak1 : forall e, In e (vm_reserved VMM) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= 0xc04000.
-  Proof. intros e He. rewrite ak_reserved in He. pose proof (proj1 (Forall_forall _ _) asan_res_hull e He) as [_ H2]. cbn [img_hi ASAN_H] in H2. exact H2. Qed.
+  (* LPS 727298f3: a reserved entry is the image's (it ends at or below the image top) or the
+     launch's pair (it starts a page above [AHI_LO]) *)
+  Lemma ak1 : forall e, In e (vm_reserved VMM) ->
+    bv_unsigned (fst e) + bv_unsigned (snd e) <= 0xc04000 \/ 0x10007fff9000 <= bv_unsigned (fst e).
+  Proof.
+    intros e He. destruct ak_rx as (rx & Erx & RX & _). rewrite Erx in He. apply in_app_iff in He. destruct He as [He|He].
+    - left. pose proof (proj1 (Forall_forall _ _) asan_res_hull e He) as [_ H2]. cbn [img_hi ASAN_H] in H2. exact H2.
+    - right. exact (proj1 (Forall_forall _ _) RX e He).
+  Qed.
   Lemma ak1_lo : forall e, In e (vm_reserved VMM) -> 0x10000 <= bv_unsigned (fst e).
-  Proof. intros e He. rewrite ak_reserved in He. pose proof (proj1 (Forall_forall _ _) asan_res_hull e He) as [H1 _]. cbn [img_lo ASAN_H] in H1. exact H1. Qed.
+  Proof.
+    intros e He. destruct ak_rx as (rx & Erx & RX & _). rewrite Erx in He. apply in_app_iff in He. destruct He as [He|He].
+    - pose proof (proj1 (Forall_forall _ _) asan_res_hull e He) as [H1 _]. cbn [img_lo ASAN_H] in H1. exact H1.
+    - pose proof (proj1 (Forall_forall _ _) RX e He) as H1. cbv beta in H1. lia.
+  Qed.
   Lemma ak9 : forall x : word, 0x10000 <= bv_unsigned x < 0xc04000 -> in_rangesb x (vm_reserved VMM) = true.
   Proof.
-    intros x Hx. rewrite ak_reserved. destruct (proj2 asan_res_cover (bv_unsigned x) ltac:(cbn [img_lo img_hi ASAN_H]; lia)) as [iv [Hin Hr]].
-    unfold in_rangesb. apply existsb_exists. exists iv. split; [exact Hin|]. unfold zin_rangeb. apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
+    intros x Hx. destruct ak_rx as (rx & Erx & _). rewrite Erx.
+    destruct (proj2 asan_res_cover (bv_unsigned x) ltac:(cbn [img_lo img_hi ASAN_H]; lia)) as [iv [Hin Hr]].
+    unfold in_rangesb. apply existsb_exists. exists iv. split; [apply in_or_app; left; exact Hin|]. unfold zin_rangeb. apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
   Qed.
   (* [comment removed for export] *)
   Lemma zz_in : forall l x b k, zz_ok l -> In (b, k) l -> b <= bv_unsigned x < b + k -> in_rangesb x (zz2ww l) = true.
@@ -638,6 +672,17 @@ Section AT_MAIN.
   Proof. intros b k a n Hin H0 H1. rewrite ak_maps. exact (zz_contains _ _ _ _ _ zz_ok_maps Hin H0 H1). Qed.
   Lemma ak_maps_exact : forall b k, In (b, k) (PM_MAPS brk0z X) -> In (Z_to_bv 64 b, Z_to_bv 64 k) (vm_maps VMM).
   Proof. intros b k Hin. rewrite ak_maps. unfold zz2ww. apply (in_map (fun p : Z * Z => (Z_to_bv 64 (fst p), Z_to_bv 64 (snd p))) _ (b, k)). exact Hin. Qed.
+  (* LPS 727298f3: a reserved entry lies apart from every entry of the main-entry map list
+     ([cs_ok]'s [co_mres]) *)
+  Lemma ak_res_apart : forall b k e, In (b, k) (PM_MAPS brk0z X) -> In e (vm_reserved VMM) ->
+    bv_unsigned (fst e) + bv_unsigned (snd e) <= b \/ b + k <= bv_unsigned (fst e).
+  Proof.
+    intros b k e Hin He.
+    pose proof (proj1 (Forall_forall _ _) zz_ok_maps (b, k) Hin) as [Hb Hk]. cbn [fst snd] in Hb, Hk.
+    pose proof (proj1 (Forall_forall _ _) ak_mres _ (ak_maps_exact b k Hin)) as D.
+    pose proof (proj1 (Forall_forall _ _) D e He) as D'. unfold APS.iv_disjoint in D'. cbn [fst snd] in D'.
+    rewrite !u_of_Z in D' by lia. lia.
+  Qed.
   Lemma ak_zr_in : forall b k x, In (b, k) (PM_ZR sp0z X) -> b <= bv_unsigned x < b + k -> in_rangesb x (zz2ww (PM_ZR sp0z X)) = true.
   Proof. intros b k x Hin Hx. exact (zz_in _ _ _ _ zz_ok_zr Hin Hx). Qed.
   Lemma ak_lazy_in : forall b k x, In (b, k) (PM_LAZY sp0z X) -> b <= bv_unsigned x < b + k -> in_rangesb x (zz2ww (PM_LAZY sp0z X)) = true.

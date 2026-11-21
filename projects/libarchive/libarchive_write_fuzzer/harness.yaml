@@ -5,8 +5,10 @@ rocq: OSSVerify.libarchive.libarchive_write_fuzzer
 origin: upstream
 summary: Writes up to 10 fuzz entries (file/dir/symlink, ids, mtime, <= 1 KiB data) in one of 8 formats
   (pax_restricted, gnutar, ustar, cpio newc, zip, 7zip, xar, pax) through one of gzip/bzip2/xz/zstd/none
-  into an in-memory vector. The produced archive is never read back or inspected; header/data return codes
-  ignored.
+  into a vector it never reads. It returns early if archive_write_new returns NULL or archive_write_open
+  does not return ARCHIVE_OK, stops adding entries if archive_entry_new returns NULL, writes a file's data
+  only when archive_write_header returns ARCHIVE_OK and the data is non-empty, and drops every other
+  libarchive result. write_callback returns -1 if appending to the vector throws std::bad_alloc.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -15,7 +17,7 @@ source:
     repository: https://github.com/libarchive/libarchive
     commit: 3670ecf7c59a6b12fe93e6255bbe4a1f3420edf8
     path: contrib/oss-fuzz/libarchive_write_fuzzer.cc
-  modified: false
+  modified: true
   licence: BSD-2-Clause
 library:
   repository: https://github.com/libarchive/libarchive
@@ -26,11 +28,15 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/libarchive_write_fuzzer.cc is libarchive 3670ecf7''s contrib/oss-fuzz/libarchive_write_fuzzer.cc
+  with one Theorem Labs change. It catches std::bad_alloc from the harness''s own allocation inside write_callback,
+  which then returns -1, so libarchive''s write fails and no exception passes through libarchive''s C
+  code.'
 builds:
   plain:
     file: libarchive_write_fuzzer.plain
-    bytes: 4286312
-    sha256: 18c9872482a964405aa327c9cab9cb21f3a8f5f15e22d381adc74b566495636b
+    bytes: 4286408
+    sha256: 99958236e01e4c012a6ec8d0b27dfd759a4008c082e555d575c342ca05f720e9
     segments:
     - 1
     - 1
@@ -75,8 +81,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   ubsan:
     file: libarchive_write_fuzzer.ubsan
-    bytes: 4312152
-    sha256: cfdfa6bb3f70315a71a3bd99057c26410e429de771f770a2d462417d0eacabfb
+    bytes: 4312256
+    sha256: 6603a86b3843ade9147fcc024fae78ecd6103d44b7e635d02054a56fd6933cf5
     segments:
     - 1
     - 1
@@ -121,8 +127,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan:
     file: libarchive_write_fuzzer.asan
-    bytes: 5149512
-    sha256: b98a2ba2cc7fb60b41c6833d90f3ba5c47b633f15f64dedea2acee81bd98af72
+    bytes: 5149576
+    sha256: 9f663d1538a68b76fd4d50c46d9a5638b0b5e63521ad5995dbc97032d4b2034d
     segments:
     - 1
     - 1
@@ -170,8 +176,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan-ubsan:
     file: libarchive_write_fuzzer.asan-ubsan
-    bytes: 5161576
-    sha256: 6d47ee5286f935682ed24e4a78dc57db2bad0cc4f65b899f92e589dc87563b40
+    bytes: 5161672
+    sha256: d4cf5f05bb89a819b409909de0948f17c30396659aefc8c1e23a250c9c1faad6
     segments:
     - 1
     - 1
@@ -219,6 +225,9 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
 licence: NOASSERTION
 checks: []
+model_gap:
+- open-flags
+- other-files
 statements:
   asan_agrees:
     kind: agreement
@@ -228,7 +237,8 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -237,7 +247,8 @@ statements:
     reading: may-fail
     budgets: standard
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -246,7 +257,8 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -256,7 +268,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts_may_fail:
     kind: halts
     builds:
@@ -264,7 +277,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -274,7 +288,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -284,7 +299,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts_may_fail:
     kind: halts
     builds:
@@ -292,7 +308,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -302,4 +319,5 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2

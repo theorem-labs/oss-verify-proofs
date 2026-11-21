@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43):
    pj_get and pj_get_str at the unit's image instance (PjGetB.v pj_get_holds_B_top / pj_get_str_holds_B_top, the kit's
-   texts tpj_get_specX / tpj_get_str_specX at the cut 7cdbb61b5fa0) with the strcmp row CITED, so no premise is left
+   texts tpj_get_specX / tpj_get_str_specX at the cut) with the strcmp row CITED, so no premise is left
    (owner order 14:33Z; row of a Theorem Labs lane).
    rule 24: no function proved. rule 24: proves no function (kind: instance corollary citing a proved row).
    Instance (the tops'): B := YD2l.TfibB, PA := PI_prog_B (L := B_prog_listing), PI := prh_img_B,

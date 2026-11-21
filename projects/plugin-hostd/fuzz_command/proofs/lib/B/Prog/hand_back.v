@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of hand_back (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, entry BASE + AF_hand_back = 0x8a978, 38 instructions, 152 bytes): it proves a Theorem Labs lane's
-   `thand_back_spec` (lib/B/Prog/hand_back_c.v, a working branch f490061c104) in the form of cgif_file_fuzzer's
+   `thand_back_spec` (lib/B/Prog/hand_back_c.v, a working branch) in the form of cgif_file_fuzzer's
    per-function walks: afn_pre at the entry, the symbolic executor over the position-abstract listing between the
    calls, the free through the 04 allocator rules, the strlen wrapper through PaArt's aj_art_at, xmalloc through
    PaCall's cl_callS, __asan_memcpy through PaCall's aj_intrin_atS, the return through paj_ret_at, and apost_base at
@@ -11,11 +11,11 @@
    of a side-stack frame below alloc_ceiling (class D), so xmalloc's achain is achain_low and the free wrapper's
    chain_pre is achain_chain_pre of it; no presence of the stack up to ly_top is used.
 
-   It is the B re-walk of the A walk lib/A/Prog/hand_back.v (a working branch 9d24669319c), which calls
+   It is the B re-walk of the A walk lib/A/Prog/hand_back.v (a working branch), which calls
    xstrdup twice (the second a tail call); B inlines both xstrdup calls (strlen, xmalloc, __asan_memcpy each), so the
-   two copies are walked here as the A side's xstrdup walk walks its one copy (a working branch
-   4fcb3ab49d9, xstrdup.v.green). The B code template was also read from the Generation-N walk
-   lib/B/Prog/hand_back.v (template only, not ported: a working branch 543f2c3645b).
+   two copies are walked here as the A side's xstrdup walk walks its one copy (a working branch,
+   xstrdup.v.green). The B code template was also read from the Generation-N walk
+   lib/B/Prog/hand_back.v (template only, not ported: a working branch).
 
    B's code (capstone on fuzz_command.asan-ubsan, symbol hand_back, LOCAL FUNC 0x8a978, 152 bytes):
      0x8a978 addi sp,sp,-48; sd ra,40(sp); sd s0,32(sp); sd s1,24(sp); sd s2,16(sp); sd s3,8(sp)
@@ -43,7 +43,8 @@
    other per-binary fact is a Theorem Labs lane's lemma over them, by exact: CmdRecRo.v RELRO_IMG, ROB; CmdRecRest.v
    cmd_ro_prog_apart, cmd_prog_img; CmdRecImg.v cmd_prog_unowned, cmd_rom_view_on; CmdRecCells.v cmd_cf_env,
    PROG_WRITABLE. The reader and list lemmas shared with the other recorder walks are the kit's (lib/B/Prog/RecBLemmas.v,
-   a working branch 707acd856cb): aval_mem_view, val_mem_view, lay_blocks_in, recb_pair_dec, recb_run_keeps_m. *)
+   a working branch): aval_mem_view, val_mem_view, lay_blocks_in, recb_pair_dec, recb_run_keeps_m. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

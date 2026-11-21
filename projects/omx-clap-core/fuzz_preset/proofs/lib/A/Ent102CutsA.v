@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Ent102CutsA.v, with its module paths and module names changed; 541 of its 801 lines of code are new or changed and 79 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102 pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4): THE CUT FILE of
    the harness entry LLVMFuzzerTestOneInput (A' 0x815e0, 804 bytes, 201 instructions, one `ret` at +0x2c4, no jalr).
@@ -11,7 +12,7 @@
    - Program text: src-102/new/fuzz_preset.c (the #102 harness source) (sha256 c7b4007bba7bab3e,
      836 lines; `sha256sum -c SHA256SUMS` OK), LLVMFuzzerTestOneInput at :800-836.
    - LISTING: a Theorem Labs lane's whole-program listing of A' (lib/A/Listing_prog.v 1ab147923c5d, symbol-pinned A_OBJ,
-     a working branch d42e123915ae; on this branch by path). The offsets below were measured on
+     a working branch; on this branch by path). The offsets below were measured on
      the capstone listing of the twin (the lane's note, the internal file llvm-plan.md appendix A) and CHECKED on
      the generated listing: every one of the 19 call sites is a `PCall AS_<callee>` slot at the offset of section 1,
      slot 73 (+0x124) is the `PHi` of g_own_ran_out's base, slots 19 / 20 / 21 / 22 / 28 / 48 / 49 are the GOT loads,
@@ -19,11 +20,11 @@
      and reads no slot, no A_OBJ index and no generated table; the segment proofs instantiate L := A_prog_listing
      with the PAListing of lib/A/Ent102PLA.v (blob cited in each of them).
    - THE KIT'S TEXTS: a working branch by path: lib/A/PRH_FnCheck.v 37d8e4d0072e and PRH_Base.v
-     016934fdc1af (3438f3406f33: the flags-clear / g_most / request-bound premises and the r <-> flags return
-     condition on the check_* texts; prh_ledger's named projections), on the kit BATCH 1 (1bba49fd7ac5: int-return check_no_overread / check_as_written / check_round_trip,
+     016934fdc1af (the flags-clear / g_most / request-bound premises and the r <-> flags return
+     condition on the check_* texts; prh_ledger's named projections), on the kit BATCH 1 (int-return check_no_overread / check_as_written / check_round_trip,
      3-argument parse_noting, prh_pst with the two #102 statics pi_g_most / pi_g_own_ran_out, prh_fn with
      F_read_members / F_fuzz_alloc_most, STK_LLVMFuzzerTestOneInput on the #102 callee list), PRH_FnAlloc.v
-     025bb30f5117 and PRH_FnPj.v 43642538e741 (b076aa8be5e1).
+     025bb30f5117 and PRH_FnPj.v 43642538e741.
    - B' (asan-ubsan pin d663f82d7f488d30, entry 0x816cc) has the same mnemonic and register sequence (elfdis --diff:
      identical except pc-relative fields), so every LENGTH below is B''s too; port/a2b.py makes lib/AU's twin.
 
@@ -36,7 +37,7 @@
    Program constants (LLVMF_STK, LLVMF_FS_CLASS, LCNT, SIZE_MAX, LIVE_LIB) carry the interface's values (section 0).
 
    GAPS this statement carries (each is a named premise or a pending field, never a guessed text):
-   - Every callee has its kit text in ec_texts (the kit 99f596897b85: PRH_FnCheck.v 1b4213c5f76f with
+   - Every callee has its kit text in ec_texts (the kit: PRH_FnCheck.v 1b4213c5f76f with
      tfuzz_alloc_most_specX and tread_members_specX; PRH_FnAlloc.v 006c7e1ef8e6). The nine accessor / check /
      parse_noting posts KEEP prh_own / prh_most (both PST cells, which the journal's image clause exempts).
      Still to come from the kit (the ledger-field half of the E sweep: most / own in prh_glob, PEAK' / RAN'); a segment that
@@ -45,7 +46,7 @@
      segments that cross parse_noting (L2) wait for it. The kit's next texts add the g_own_ran_out = 0 / ran = 0 /
      request <= g_most premises to the check_* texts; the cuts from L1 on then carry the two cells' values
      (pi_g_own_ran_out, pi_g_most, by name).
-   - The kit's 3438f3406f33 check_* texts take g_own_ran_out = 0 (prh_own), ran = 0, g_most (prh_most) and a request
+   - The kit's check_* texts take g_own_ran_out = 0 (prh_own), ran = 0, g_most (prh_most) and a request
      bound; the cuts from cut_cno on carry ec_most / ec_own_is (by name); the request bound ec_req_bound is PROVED
      (lib/A/Ent102ReqA.v, from a Theorem Labs lane's lib/Spec/PjReqBoundW.v), not a premise. Accessor texts and parse_noting do
      not yet keep g_most / g_own_ran_out in their posts (both cells are PST, which the journal's image clause exempts):
@@ -93,7 +94,7 @@ Local Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------- *)
 (* 0. Program constants (LENGTHs, the same in both images), with the VALUES of the interface's section 2
-      (lib/A/PresetCfnA.v, the #102 interface, iface-102 4672b2ce764d: LLVMF_STK 32768,
+      (lib/A/PresetCfnA.v, the #102 interface, iface-102: LLVMF_STK 32768,
       LLVMF_FS_CLASS 1, SIZE_MAX 2^64 - 1, LCNT 2^32, LIVE_LIB 3 * 2^32; the owner raised the last two at 15:3xZ so
       that the whole call's counts and live bytes fit). They are written here, not imported: the interface's closure reaches
       lib/ZTraceSpec.v -> lib/ZImage.v, which is red on the #102 facts (ZImage.v:38, the old plain image's entry pc;
@@ -144,7 +145,7 @@ Context {L : ptable asym} {PA : @PAImg rc L}.
 Local Notation segs := (@pa_segs rc L PA).
 (* THE WORLD RELATION AFTER A FREE (the re-hiding move): check_no_overread, the first
    callee that frees a live block, re-hides shadow, so from cut_cno on the journal's world conjunct and every lane's
-   continuation are at wle' over the fixed zone RZ_cf (YA0nH.v:147, YGcfRehidePost.v:151), not at wle. *)
+   continuation are at wle' over the fixed zone RZ_cf (YA0nH.v:148, YGcfRehidePost.v:152), not at wle. *)
 Local Notation WLE' := (wle' segs (@YGcfRehidePost.RZ_cf rc)).
 Variable B : asyms.
 Variable SK : YI16.sink_head.
@@ -302,12 +303,12 @@ Definition ec_pre (E : ecx) : Prop :=
      a run position). Read BY TYPE; inserted after every conjunct a walk file names by position, and not last *)
   (length (e_os E) <= 3)%nat /\
   YAkMemnorm.memnorm segs (e_mem E) /\
-  (* THE LIVE REAL STACK at the entry (the slot pre's last conjunct, PresetCfnA.v header item (13); the kit 4b8f95c0455c),
+  (* THE LIVE REAL STACK at the entry (the slot pre's last conjunct, PresetCfnA.v header item (13); the kit),
      at e_sp0 E: segment L5b carries it by the journal to check_round_trip's call (tcheck_round_trip_specX's last
      premise). Read BY TYPE (ec_conj_pick); not the last conjunct, so ec_room_at's projection of the wild room stays *)
   YGcallStackUp.astack_up_x segs (e_ly E) (e_W E) (e_sp0 E) (e_mem E) /\
   (* the payload plus 8 bytes is below the allocator ceiling. SINCE THE KIT'S + 8 RELAXATION (the batch kit's freeze,
-     2026-10-29; the batch kit's correction of the B' twin's comment, e935f720dae, carried here so a2b keeps it) src_rd asks ONLY
+     2026-10-29; the batch kit's correction of the B' twin's comment, carried here so a2b keeps it) src_rd asks ONLY
      `p + len <= YM05.alloc_ceiling`, which this conjunct implies, so the + 8 here is stronger than any kit text needs
      (droppable at a later rebind). The block law gives `p + req_size n <= YM05.alloc_ceiling` (the old file's G19 /
      EntS3B's es3_pay8). The instantiation proves it by the interface's preset_lib_pre_pay8. Needed by L1
@@ -367,7 +368,7 @@ Record ec_img : Prop := MkEcImg {
      (data, 0) UNCONDITIONALLY - a payload-free call reaches them (ck_read [] = None). Nothing else in this file or
      in PresetCfnA's pre says anything about EC_EMPTY. EntryCutsB's open item ei_empty (EntryCutsB.v:90-91);
      L4Lane's finding, 14:5xZ. *)
-  (* stated over the INSTANCE's image bounds since the kit decff67d721f: kept_at / kept_img (PRH_Base.v:1020-1047) bound an
+  (* stated over the INSTANCE's image bounds since the kit: kept_at / kept_img (PRH_Base.v:1020-1047) bound an
      image string by pa_lo + 64 <= p /\ p + n + 64 <= pa_hi, and with PA generic nothing relates pa_lo / pa_hi to
      YImgTop's IMG_LO / IMG_TOP (L4Lane, 18:2xZ). At A' PAImg_prog sets them to IMG_LO / IMG_TOP; B' has its own. *)
   (* BOTH bounds: the YImgTop half for src_rd's own facts (4096 <= EC_EMPTY, EC_EMPTY + 8 <= YM05.alloc_ceiling,
@@ -993,7 +994,7 @@ Definition ec_lane (P Q : world segs -> config -> Prop) : Prop := forall W c, P 
 (* ec_lane OVER A WORLD RELATION R (YA0nH.SRrG): used on BOTH sides of a free (L0a / L0b before check_no_overread,
    every later lane across or after it), so ec_lane keeps its name and body as the instance at wle (YA0n.SRr IS SRrG at
    wle: ec_lane_R_wle, by reflexivity) and every lane from L1 on is ec_laneR at wle' (WLE'), i.e. SRr' segs RZ_cf
-   (YA0nH.v:163). ec_lane_wle' lifts a plain lane into it (YA0nH.SRr_SRr'). *)
+   (YA0nH.v:164). ec_lane_wle' lifts a plain lane into it (YA0nH.SRr_SRr'). *)
 Definition ec_laneR (R : world segs -> world segs -> Prop) (P Q : world segs -> config -> Prop) : Prop :=
   forall W c, P W c -> SRrG segs R W c Q.
 Lemma ec_lane_R_wle : forall P Q, ec_lane P Q = ec_laneR (@wle segs) P Q.
@@ -1036,11 +1037,11 @@ Record ec_univ : Prop := MkEcUniv {
    cut_cno the walk keeps only the no-refusal arms, and the kit's refusal arms (check_as_written r = 1 with own = 1,
    check_round_trip r = 1, check_reject_clean_starved ran' = 1, parse_noting ran <> 0) are closed by this ONE shared
    fact in the ALLOCATOR-CONTRACT form - never a state invariant (which ec_inv's satisfiable states would refute).
-   It IS the interface's preset_no_refusal (lib/A/PresetCfnA.v:666-680, a proved lemma: P8's no_null_preset over
+   It IS the interface's preset_no_refusal (lib/A/PresetCfnA.v:667-681, a proved lemma: P8's no_null_preset over
    YGcfRoom.malloc_cf_null_full), word for word, at this call's model (e_sm E) (e_x E) (e_H0 E): a primary malloc_cf
    made at a consumer allocation of the run returns NULL only on an environment refusal (grant flag false). On a
    realized path every kernel ask is granted (amalloc_realizes_cf, YG0dcf.v:132-133), so together: no NULL at a
-   consumer allocation. ec_allocs_follow is the interface's run_allocs_follow (PresetCfnA.v:536-538) verbatim (this
+   consumer allocation. ec_allocs_follow is the interface's run_allocs_follow (PresetCfnA.v:537-539) verbatim (this
    file cannot Require the interface). Satisfiable: the seam discharges ec_noref by preset_no_refusal itself. It
    reaches a callee's refusal arm through that callee's kit text, which must take it (or the kit's prh_granted on its
    oracle, discharged from it) and give ran' = ran / r = 0. *)
@@ -1254,7 +1255,7 @@ Qed.
 
 (* ONE HOME for the no-call step every segment repeats (parent 02:4xZ, after a Theorem Labs lane wrote it twice): the cut's
    budgeted journal across a stretch with NO call - materialize the model, keep the budget, and grow the spent budget to
-   the next cut's (the engine's rebase / materialize / unbase0, YCbqG.v:850 and YCbqGwild.v:387 / :440). *)
+   the next cut's (the engine's rebase / materialize / unbase0, YCbqG.v:851 and YCbqGwild.v:387 / :440). *)
 Lemma ec_inv_wk_growR : forall (R : world segs -> world segs -> Prop) {hl : Z} (LAWS : AR_laws_x segs B ARx hl)
   (E : ecx) own ly S Hp W mem md k WS (wk wk' : nat) X,
   ajournal_xwR (SK := SK) segs B PST ARx R LLVMF_STK (e_sp0 E) [] (e_ly E) (e_S E) [] (e_W E) (e_mem E) (e_md E) own

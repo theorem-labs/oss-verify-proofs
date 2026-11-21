@@ -2,8 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of answer (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan,
-   entry 0x8aa10, 209 instructions, 836 bytes): tanswer_spec of a Theorem Labs lane's lib/B/Prog/answer_c.v (a working branch
-   f490061c104), assembled from four segments as the A walk lib/A/Prog/answer.v (a working branch d28426fbb96)
+   entry 0x8aa10, 209 instructions, 836 bytes): tanswer_spec of a Theorem Labs lane's lib/B/Prog/answer_c.v (a working branch),
+   assembled from four segments as the A walk lib/A/Prog/answer.v (a working branch)
    does: the entry to BODY (answer_e.v), BODY to JOIN and HEAD (answer_br.v, with the snprintf step of answer_snp.v),
    syntax_instantiate's loop from HEAD to JOIN (answer_l.v), and JOIN to the return (answer_t.v); the cut statements
    are answer_s1.v's. B's code differs from A's in the loop (B's registers and its five UBSan trap sites) and in the
@@ -18,8 +18,9 @@
    side-stack entries' record TLF (PaLibF), and, in the form a Theorem Labs lane states them only at the pinned image (PI := PB_cmd,
    tfibsegs), cmd_palib, cmd_sig_prog_PB, cmd_img_facts_tfib and cmd_frame_flag_law; PRW for the store into
    g_rec.state. AnswerClosed.v discharges all of them but HB, MTL and MTFL at the pinned image. Base: a Theorem Labs lane
-   fc8bcbd8b42 (the snprintf contract's band premise `+ 8`, discharged in answer_snp.v). *)
+   (the snprintf contract's band premise `+ 8`, discharged in answer_snp.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/answer.v, with its module paths and module names changed; 110 of its 136 lines of code are new or changed and 56 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_words' ASan walk: the assembly of the segments. The two loops (calls c < ncalls <= 16, items a < nargs <= 6)
    are closed by induction on the remaining trip count, from the segment statements of check_words_d.v; the
    theorem tcheck_words_spec then follows from the entry statement. The segment lemmas themselves are proved in

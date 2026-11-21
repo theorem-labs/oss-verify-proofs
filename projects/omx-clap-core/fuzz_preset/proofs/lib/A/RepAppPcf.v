@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/RepAppPcf.v (commit eb934de95d13, blob c6159289c746) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 31 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/RepAppPcf.v (blob c6159289c746) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 31 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String Ascii.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -413,7 +414,7 @@ Lemma post_remap : forall lk Hp ly S S1 W regs mem md (s : list Z) (a : Z) (mat 
   st_secs S1 = map cfx_retire (st_secs S) ++ [mkSec ncap ERRB_CAP_TAG false] ->
   wle W W' -> w_A W' = w_A W ->
   (forall x : word, ~ (a <= bv_unsigned x < a + ncap) -> w_H W' x = w_H W x) ->
-  YK13.grant_ok_na_pin md (w64 a) ncap = true -> 0 < a -> a + ncap < 2 ^ 64 ->
+  YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) ncap = true -> 0 < a -> a + ncap < 2 ^ 64 ->
   regs_preserved regs regs' ->
   (forall x : word, ~ (spZ regs - APP_STK <= bv_unsigned x < spZ regs) ->
      ~ (C_ERRBUF <= bv_unsigned x < C_ERRBUF + 56) -> ~ (a <= bv_unsigned x < a + ncap) ->
@@ -452,7 +453,7 @@ assert (GR1 : secs_errb_grow (st_secs S) (st_secs S1))
 assert (GR2 : secs_errb_grow (st_secs S1) (st_secs (st_setsize (errb_size_cf S + Z.of_nat (length s)) S1))).
 { apply (YGcfSecsStep.secs_errb_set_grow_ret _ S1 _ (st_setsize_eq _ S1)); [rewrite (RepRelcf.rr_size_map S S1 _ ES1)|]; lia. }
 assert (Ha64 : 0 <= a < 2 ^ 64) by lia.
-assert (G' : YK13.grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) (w64 a)
+assert (G' : YK13.grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) (w64 a)
                (page_round_up_Z (errb_size_cf S + Z.of_nat (length s))) = true) by exact GRANT.
 destruct (RepRelcf.errb_grant_facts B Hp ly S W (held_mem lk mem) md mat a
             (page_round_up_Z (errb_size_cf S + Z.of_nat (length s))) AR XM G' Ha64 ltac:(lia) ltac:(lia))
@@ -666,7 +667,7 @@ Lemma post_first : forall lk Hp ly S S1 W regs mem md (s : list Z) (a : Z) (mat 
   st_secs S1 = map cfx_retire (st_secs S) ++ [mkSec ncap ERRB_CAP_TAG false] ->
   wle W W' -> w_A W' = w_A W ->
   (forall x : word, ~ (a <= bv_unsigned x < a + ncap) -> w_H W' x = w_H W x) ->
-  YK13.grant_ok_na_pin md (w64 a) ncap = true -> 0 < a -> a + ncap < 2 ^ 64 ->
+  YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) ncap = true -> 0 < a -> a + ncap < 2 ^ 64 ->
   regs_preserved regs regs' ->
   (forall x : word, ~ (spZ regs - APP_STK <= bv_unsigned x < spZ regs) ->
      ~ (C_ERRBUF <= bv_unsigned x < C_ERRBUF + 56) -> ~ (a <= bv_unsigned x < a + ncap) ->
@@ -706,7 +707,7 @@ assert (GR1 : secs_errb_grow (st_secs S) (st_secs S1)) by exact (RepRelcf.rr_sec
 assert (GR2 : secs_errb_grow (st_secs S1) (st_secs (st_setsize (Z.of_nat (length s)) S1))).
 { apply (YGcfSecsStep.secs_errb_set_grow_ret _ S1 _ (st_setsize_eq _ S1)); [rewrite (RepRelcf.rr_size_map S S1 _ ES1)|]; lia. }
 assert (Ha64 : 0 <= a < 2 ^ 64) by lia.
-assert (G' : YK13.grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) (w64 a)
+assert (G' : YK13.grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) (w64 a)
                (page_round_up_Z 65536) = true) by exact GRANT.
 destruct (RepRelcf.errb_grant_facts B Hp ly S W (held_mem lk mem) md mat a (page_round_up_Z 65536)
             AR XM G' Ha64 ltac:(lia) ltac:(lia)) as (GA & GAPP & GCE & GFA).

@@ -8,15 +8,16 @@
    (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACai.v:156-159. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v, with its module paths and module names changed; 1279 of its 1357 lines of code are new or changed and 927 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch
-   60d0985773d, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_K.v; 280 of its 368 lines of code are new or changed and 1269 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_pj.v from a working branch
-   60d0985773d (= a Theorem Labs lane fa3ab36b74a), same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+   (= a Theorem Labs lane fa3ab36b74a), same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The struct pj kit for fs's ASan walks: the reader specs' Lib form of a struct pj field (lib/Prog/PjStruct.v pj_u64 /
    pj_u32 / pj_hdr, over Lib/Mem.v bytes_at) carried to YI04's val_mem form, and from a spec's pj_hdr to the object
    region a walk puts in FSW_K.v fsw_entryT_argsX's rs, with the atom facts for its gf. ONE copy for pj_set, grow,
@@ -40,8 +41,8 @@
    atom, extent and chunk list inside [v, v + 56); chunks from YI04 chunk_ok_val (val_mem) or fsw_pj_chunk8 /
    fsw_pj_chunk4 (pj_u64 / pj_u32); fsw_pj_parts_disjX for rs.
    PORTED, the donor bodies copied rather than imported, so that no plain-image module (Contract, Img0) enters this ASan
-   file. Donors (object ids identical on ossv/recipes 566eb6ffa5d, release/pau-projects-recipes b6a0088adcb, S0
-   71efad42f00 and kit 259ea2daea9): lib/KindBGlue.v 6cb1bd7d29, lib/Prog/pj_write.v 3ad1a23c18, lib/Prog/put_kb.v
+   file. Donors (object ids identical, S0
+   and kit): lib/KindBGlue.v 6cb1bd7d29, lib/Prog/pj_write.v 3ad1a23c18, lib/Prog/put_kb.v
    24a463fa6a. Each ported lemma names its donor line below.
    NEW TEXT: the val_mem forms of pj_u64 / pj_u32 (the measured route), the chunk / part / region / atom-fact /
    disjointness lemmas, pj_obj_region(W / R)(X), pj_in_obj, pj_fields, pj_obj_facts(X).

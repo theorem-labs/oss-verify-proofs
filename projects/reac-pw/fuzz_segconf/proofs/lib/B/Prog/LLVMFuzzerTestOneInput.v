@@ -24,15 +24,16 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 4505 of its 4800 lines of code are new or changed and 4758 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s15.v, with its module paths and module names changed; 177 of its 228 lines of code are new or changed and 4749 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the walk of the test
    harness's entry function LLVMFuzzerTestOneInput (0x84dc0, 4,992 bytes, 1,248 instructions) composed from its segment
    lemmas into LLVMFuzzerTestOneInput_contract at image B's instance (the entry BASE + AF_LLVMFuzzerTestOneInput, the
    window STK_LLVMFuzzerTestOneInput and SegInstB's pure parameters, exactly as lt_adapter in
    LLVMFuzzerTestOneInput_s02.v states it). This is the theorem the image-B owner's close consumes.
 
-   THE FORM: the image-B twin of the image-A G1 walk owner's lib/A/Prog/LLVMFuzzerTestOneInput.v (image A's composition commit
-   d7cd63ea3138), with the same theorem name and the same hypothesis names wherever image B has the same hypothesis;
-   its form is plugin-hostd/fuzz_command's lib/B/Prog/LLVMFuzzerTestOneInput.v (origin/ossv/recipes 3abc3740de97):
+   THE FORM: the image-B twin of the image-A G1 walk owner's lib/A/Prog/LLVMFuzzerTestOneInput.v (image A's composition),
+   with the same theorem name and the same hypothesis names wherever image B has the same hypothesis;
+   its form is plugin-hostd/fuzz_command's lib/B/Prog/LLVMFuzzerTestOneInput.v:
    each segment lemma at every FP state (lt_close closes each of its premises from this Section), the chain by
    LLVMFuzzerTestOneInput_s02.v's lt_assemble (the two loops by downward induction inside it), and the entry
    statement adapted to the contract by lt_adapter.

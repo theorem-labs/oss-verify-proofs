@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: PE_STATIC_A's new second conjunct, skipped where the depth and length bounds are taken from STC). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -55,8 +56,8 @@ destruct KALL as (IHL & IHR & IHB & IHA). unfold KLOOP_S in IHL. unfold KREDO_S 
 pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewrite EPBS in PBK.
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess.
 assert (RK : rank (tl_st l) (tl_ss l) = 7%nat) by (rewrite Hst; reflexivity).
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
-assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & X & _); exact X).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & _ & X & _); exact X).
 assert (CO0 : 0 <= t_co ts) by (pose proof INV as [(_ & _ & X & _) _]; lia).
 assert (SPB : SPV (t_x ts) <= t_co ts) by (unfold SPOK in SP; specialize (SP ltac:(rewrite Est, Hst; reflexivity)); lia).
 assert (SP0' : 0 <= SPV (t_x ts)) by (unfold SPV; apply Z.mod_pos_bound; lia).
@@ -130,8 +131,8 @@ destruct KALL as (IHL & IHR & IHB & IHA). unfold KLOOP_S in IHL. unfold KREDO_S 
 pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewrite EPBS in PBK.
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess.
 assert (RK : rank (tl_st l) (tl_ss l) = 7%nat) by (rewrite Hst; reflexivity).
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
-assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & X & _); exact X).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & _ & X & _); exact X).
 assert (CO0 : 0 <= t_co ts) by (pose proof INV as [(_ & _ & X & _) _]; lia).
 assert (SPB : SPV (t_x ts) <= t_co ts) by (unfold SPOK in SP; specialize (SP ltac:(rewrite Est, Hst; reflexivity)); lia).
 assert (SP0' : 0 <= SPV (t_x ts)) by (unfold SPV; apply Z.mod_pos_bound; lia).
@@ -206,8 +207,8 @@ destruct KALL as (IHL & IHR & IHB & IHA). unfold KLOOP_S in IHL. unfold KREDO_S 
 pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewrite EPBS in PBK.
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess.
 assert (RK : rank (tl_st l) (tl_ss l) = 7%nat) by (rewrite Hst; reflexivity).
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
-assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & X & _); exact X).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & _ & X & _); exact X).
 assert (CO0 : 0 <= t_co ts) by (pose proof INV as [(_ & _ & X & _) _]; lia).
 assert (SPB : SPV (t_x ts) <= t_co ts) by (unfold SPOK in SP; specialize (SP ltac:(rewrite Est, Hst; reflexivity)); lia).
 assert (EM : mredo pf ts = S (mredo pf ts - 1)) by (unfold mredo; rewrite Est, Ess, RK; lia). assert (EB : bredo pf ts = S (Z.to_nat 2816 + (mredo pf ts - 1 + (bx pf ts - Z.to_nat 2816)))).
@@ -253,7 +254,7 @@ pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewr
 destruct (PBJ_open _ _ _ _ PBK) as (g & G0 & PBg & Hg & JLg).
 assert (PBKg : PBOK m ts (g - t_co ts)) by (unfold PBOK; replace (t_co ts + (g - t_co ts)) with g by lia; exact PBg).
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess. pose proof (rank_ge1S (tl_st l) (tl_ss l)) as RG1.
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
 assert (EM : mredo pf ts = S (mredo pf ts - 1)) by (unfold mredo; rewrite Est, Ess; lia). assert (EB : bredo pf ts = S (Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192) + (mredo pf ts - 1 + (bx pf ts - Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192))))).
 { pose proof (bx_ge pf ts ltac:(lia)) as GE9. rewrite Est, Ess, ?Hst in GE9. bres_norm_in GE9. pose proof (BTOK_ge pf). unfold BTOK in *. unfold bredo. rewrite EM at 1. lia. }
 rewrite EB in BK.
@@ -316,7 +317,7 @@ pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewr
 destruct (PBJ_open _ _ _ _ PBK) as (g & G0 & PBg & Hg & JLg).
 assert (PBKg : PBOK m ts (g - t_co ts)) by (unfold PBOK; replace (t_co ts + (g - t_co ts)) with g by lia; exact PBg).
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess. pose proof (rank_ge1S (tl_st l) (tl_ss l)) as RG1.
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
 assert (EM : mredo pf ts = S (mredo pf ts - 1)) by (unfold mredo; rewrite Est, Ess; lia). assert (EB : bredo pf ts = S (Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192) + (mredo pf ts - 1 + (bx pf ts - Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192))))).
 { pose proof (bx_ge pf ts ltac:(lia)) as GE9. rewrite Est, Ess, ?Hst in GE9. bres_norm_in GE9. pose proof (BTOK_ge pf). unfold BTOK in *. unfold bredo. rewrite EM at 1. lia. }
 rewrite EB in BK.
@@ -388,7 +389,7 @@ destruct (PBJ_open _ _ _ _ PBK) as (g & G0 & PBg & Hg & JLg).
 assert (PBKg : PBOK m ts (g - t_co ts)) by (unfold PBOK; replace (t_co ts + (g - t_co ts)) with g by lia; exact PBg).
 assert (JSS : jpi0 (tl_ss l) <= 30) by (apply (esc_ss_pi ST_escape_unicode (tl_ss l) c0 hn0); [reflexivity | exact SS26 | exact Hmode]).
 destruct (proj2 OW ltac:(rewrite Est, Hst; reflexivity)) as [SP0 UC0]. unfold UCSV in UC0.
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
 eapply (seg_euni_A HIx GA GA_outside GA_pres MAPP pf pa q LBc LM FRS payload me lo m md A B ts l cb nb pj sv errv T (g - t_co ts) (bredo pf ts));
 [exact STC | exact BSL | exact FL0 | exact INV | exact PBKg | lia | exact BK | exact CSTR | exact Hl | exact Hst | exact Hco | exact Hcb | exact SP0 | exact UC0 | exact SSA | rewrite <- UTFR; exact UTF | | | |].
 -
@@ -451,7 +452,7 @@ clear UWK_dbl UWK_str UWK_dup.
 destruct KALL as (IHL & IHR & IHB & IHA). unfold KLOOP_S in IHL. unfold KREDO_S in IHR. unfold KBRK_S in IHB. unfold KADV_S in IHA.
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess.
 assert (RK : rank (tl_st l) (tl_ss l) = 8%nat) by (rewrite Hst; reflexivity).
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
 assert (CO0 : 0 <= t_co ts) by (pose proof INV as [(_ & _ & X & _) _]; lia).
 assert (EM : mredo pf ts = S (mredo pf ts - 1)) by (unfold mredo; rewrite Est, Ess, RK; lia). assert (EB : bredo pf ts = S (Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192) + (mredo pf ts - 1 + (bx pf ts - Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192))))).
 { pose proof (bx_ge pf ts ltac:(lia)) as GE9. rewrite Est, Ess, ?Hst in GE9. bres_norm_in GE9. pose proof (BTOK_ge pf). unfold BTOK in *. unfold bredo. rewrite EM at 1. lia. }
@@ -632,8 +633,8 @@ destruct KALL as (IHL & IHR & IHB & IHA). unfold KLOOP_S in IHL. unfold KREDO_S 
 pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewrite EPBS in PBK.
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess.
 assert (RK : rank (tl_st l) (tl_ss l) = 7%nat) by (rewrite Hst; reflexivity).
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
-assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & X & _); exact X).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & _ & X & _); exact X).
 assert (CO0 : 0 <= t_co ts) by (pose proof INV as [(_ & _ & X & _) _]; lia).
 assert (SPB : SPV (t_x ts) <= t_co ts) by (unfold SPOK in SP; specialize (SP ltac:(rewrite Est, Hst; reflexivity)); lia).
 assert (SP0' : 0 <= SPV (t_x ts)) by (unfold SPV; apply Z.mod_pos_bound; lia).
@@ -707,8 +708,8 @@ destruct KALL as (IHL & IHR & IHB & IHA). unfold KLOOP_S in IHL. unfold KREDO_S 
 pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewrite EPBS in PBK.
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess.
 assert (RK : rank (tl_st l) (tl_ss l) = 7%nat) by (rewrite Hst; reflexivity).
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
-assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & X & _); exact X).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & _ & X & _); exact X).
 assert (CO0 : 0 <= t_co ts) by (pose proof INV as [(_ & _ & X & _) _]; lia).
 assert (SPB : SPV (t_x ts) <= t_co ts) by (unfold SPOK in SP; specialize (SP ltac:(rewrite Est, Hst; reflexivity)); lia).
 assert (SP0' : 0 <= SPV (t_x ts)) by (unfold SPV; apply Z.mod_pos_bound; lia).
@@ -785,7 +786,7 @@ pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewr
 destruct (PBJ_open _ _ _ _ PBK) as (g & G0 & PBg & Hg & JLg).
 assert (PBKg : PBOK m ts (g - t_co ts)) by (unfold PBOK; replace (t_co ts + (g - t_co ts)) with g by lia; exact PBg).
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess. pose proof (rank_ge1S (tl_st l) (tl_ss l)) as RG1.
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
 assert (EM : mredo pf ts = S (mredo pf ts - 1)) by (unfold mredo; rewrite Est, Ess; lia). assert (EB : bredo pf ts = S (Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192) + (mredo pf ts - 1 + (bx pf ts - Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192))))).
 { pose proof (bx_ge pf ts ltac:(lia)) as GE9. rewrite Est, Ess, ?Hst in GE9. bres_norm_in GE9. pose proof (BTOK_ge pf). unfold BTOK in *. unfold bredo. rewrite EM at 1. lia. }
 rewrite EB in BK.
@@ -849,7 +850,7 @@ pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewr
 destruct (PBJ_open _ _ _ _ PBK) as (g & G0 & PBg & Hg & JLg).
 assert (PBKg : PBOK m ts (g - t_co ts)) by (unfold PBOK; replace (t_co ts + (g - t_co ts)) with g by lia; exact PBg).
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess. pose proof (rank_ge1S (tl_st l) (tl_ss l)) as RG1.
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
 assert (EM : mredo pf ts = S (mredo pf ts - 1)) by (unfold mredo; rewrite Est, Ess; lia). assert (EB : bredo pf ts = S (Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192) + (mredo pf ts - 1 + (bx pf ts - Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192))))).
 { pose proof (bx_ge pf ts ltac:(lia)) as GE9. rewrite Est, Ess, ?Hst in GE9. bres_norm_in GE9. pose proof (BTOK_ge pf). unfold BTOK in *. unfold bredo. rewrite EM at 1. lia. }
 rewrite EB in BK.
@@ -907,8 +908,8 @@ destruct KALL as (IHL & IHR & IHB & IHA). unfold KLOOP_S in IHL. unfold KREDO_S 
 pose proof (PBS_of ts l Hl) as EPBS. rewrite Hst in EPBS. pbs_norm_in EPBS. rewrite EPBS in PBK.
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess.
 assert (RK : rank (tl_st l) (tl_ss l) = 7%nat) by (rewrite Hst; reflexivity).
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
-assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & X & _); exact X).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (LENR : 0 <= pf_len pf < 2^26) by (pose proof STC as (_ & _ & _ & _ & _ & _ & X & _); exact X).
 assert (CO0 : 0 <= t_co ts) by (pose proof INV as [(_ & _ & X & _) _]; lia).
 assert (SPB : SPV (t_x ts) <= t_co ts) by (unfold SPOK in SP; specialize (SP ltac:(rewrite Est, Hst; reflexivity)); lia).
 assert (EM : mredo pf ts = S (mredo pf ts - 1)) by (unfold mredo; rewrite Est, Ess, RK; lia). assert (EB : bredo pf ts = S (Z.to_nat 2816 + (mredo pf ts - 1 + (bx pf ts - Z.to_nat 2816)))).
@@ -966,7 +967,7 @@ destruct (PBJ_open _ _ _ _ PBK) as (g & G0 & PBg & Hg & JLg).
 assert (PBKg : PBOK m ts (g - t_co ts)) by (unfold PBOK; replace (t_co ts + (g - t_co ts)) with g by lia; exact PBg).
 assert (JSS : jpi0 (tl_ss l) <= 30) by (apply (esc_ss_pi ST_escape_unicode (tl_ss l) c0 hn0); [reflexivity | exact SS26 | exact Hmode]).
 destruct (proj2 OW ltac:(rewrite Est, Hst; reflexivity)) as [SP0 UC0]. unfold UCSV in UC0.
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
 eapply (seg_euni_B HIx GA GA_outside GA_pres MAPP pf pa q LBc LM FRS payload me lo m md A B ts l cb nb pj sv errv T (g - t_co ts) (bredo pf ts));
 [exact STC | exact BSL | exact FL0 | exact INV | exact PBKg | lia | exact BK | exact CSTR | exact Hl | exact Hst | exact Hco | exact Hcb | exact SP0 | exact UC0 | exact SSA | rewrite <- UTFR; exact UTF | | | | |].
 -
@@ -1033,7 +1034,7 @@ clear UWK_dbl UWK_str UWK_dup.
 destruct KALL as (IHL & IHR & IHB & IHA). unfold KLOOP_S in IHL. unfold KREDO_S in IHR. unfold KBRK_S in IHB. unfold KADV_S in IHA.
 pose proof (cur_st_ofS ts l Hl) as Est. pose proof (cur_ss_ofS ts l Hl) as Ess.
 assert (RK : rank (tl_st l) (tl_ss l) = 8%nat) by (rewrite Hst; reflexivity).
-assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
+assert (Hd31 : (t_depth ts <= 31)%nat) by (pose proof INV as [(LEN32 & D32 & _) _]; pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _); lia).
 assert (CO0 : 0 <= t_co ts) by (pose proof INV as [(_ & _ & X & _) _]; lia).
 assert (EM : mredo pf ts = S (mredo pf ts - 1)) by (unfold mredo; rewrite Est, Ess, RK; lia). assert (EB : bredo pf ts = S (Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192) + (mredo pf ts - 1 + (bx pf ts - Z.to_nat (16 * Z.max 0 (pf_len pf) + 8192))))).
 { pose proof (bx_ge pf ts ltac:(lia)) as GE9. rewrite Est, Ess, ?Hst in GE9. bres_norm_in GE9. pose proof (BTOK_ge pf). unfold BTOK in *. unfold bredo. rewrite EM at 1. lia. }

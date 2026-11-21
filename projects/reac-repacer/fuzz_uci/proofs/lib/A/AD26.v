@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD26.v, with its module paths changed, names TfibSyms -> UciSyms and its addresses moved to libreac/fuzz_grant's ASan build. *)
 (* Modified by Theorem Labs: copied from proofs/libreac/fuzz_grant/lib/A/AD26.v (donor image sha256 c2c7559b29bd), with its module paths changed, names GrantSyms -> UciSyms and its addresses moved to reac-repacer/fuzz_uci's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's own kernel record and CONFIG_RSEQ flag; the exec file name; the launch premises valid_launch and entry_launch_ok_va; as libreac/fuzz_decode's port; the launch's channel-reader flag, which fdchan asks for at the revision, carried over the malloc site's same_io step into the read arms). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -56,21 +57,42 @@ Hypothesis ML : model_laws (as_universe B).
 Hypothesis MSITE : malloc_site_tfa B.
 Hypothesis RDF : rd0_file_tfa B.
 Hypothesis RDD : rd0_dir_tfa B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
 Hypothesis Hargv : in_argv inp = [a0; p].
+(* Shape copied from the in-tree ported donor AD1v.v:121-127 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is DROPPED rather than kept: [entry_launch_ok_va] implies it
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722).  MEASURED for this file: the old
+   [Hfit] was consumed at exactly one site, the [rd0_dir_tfa] call in [tfib_dir_arm_at],
+   and only to feed that Prop's old [entry_stack_fits] premise, which AD1v.v drops.
+   Firing control for that zero: the same query fires twice in AD2i.v (:264, :754), genuine
+   direct consumptions, in a section that is not this one.
+   [Hva] is now [valid_argv (in_argv inp)] rather than [valid_argv [a0; p]], matching both
+   YP08's own section hypothesis (YP08.v:486) and AD1v's Props, so [eassumption] discharges
+   the YP08 section lemmas below; [Hargv] converts whenever the [[a0; p]] spelling is wanted. *)
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-Hypothesis Hfit : entry_stack_fits sp [a0; p] (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 #[local] Notation envp := (in_envp inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation efn := (in_execfn inp).
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210): entry-draw top,
+   the run's own [kb_rseq] flag, and the execfn. *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
 Lemma EL0 : bv_unsigned (ew EL 0) = usp. Proof. reflexivity. Qed.
+(* Pin the whole entry-layout section, including the image fields absent from the bound. *)
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YP08.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) envp + 16 < 2 ^ 63)
+by exact (YP08.z_rand_end TSEGS TPH inp mbase Asan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau).
+rewrite Hargv in Hz. pose proof (u64_range sp).
 unfold z_rand in *. rewrite u64_lit by lia. lia.
 Qed.
 Lemma usp_facts : sp_window_lo <= usp <= sp_window_hi /\ usp mod 16 = 0.
@@ -141,7 +163,7 @@ Qed.
 Section d.
 Variables (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (e : FdEntry).
 Hypothesis HS1 : st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms).
-Hypothesis HR1 : runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp).
+Hypothesis HR1 : runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn).
 Hypothesis HAI1 : AI tfibsegs (w_H W) (w_A W) md.
 Hypothesis HAR1 : AR tfibsegs B ly init_state W (ms_mem ms) md.
 Hypothesis HTOP1 : top_ok usp ly.
@@ -150,23 +172,27 @@ Hypothesis Hfs1 : m_fs md = in_fs inp.
 Hypothesis Hfds1 : m_fds md = APSG.fds3 e.
 Lemma same_io_fs_fds : forall m m', same_io m m' -> m_fs m' = m_fs m /\ m_fds m' = m_fds m.
 Proof. intros m m' (H1 & _ & H3 & _). unfold m_fs, m_fds. rewrite H1, H3. split; reflexivity. Qed.
+(* LPS 727298f3: [same_io] keeps the process record (YG0d.v:36-37), and
+   [m_channel_reader] is one of its fields, so it travels with the rest. *)
+Lemma same_io_channel_reader : forall m m', same_io m m' -> m_channel_reader m' = m_channel_reader m.
+Proof. intros m m' (_ & _ & _ & H4). unfold m_channel_reader. rewrite H4. reflexivity. Qed.
 Lemma wvb_fs' : forall l mat (m : Model), m_fs (with_vm_backing l mat m) = m_fs m.
 Proof. intros l mat m. destruct m; reflexivity. Qed.
 Lemma wvb_fds' : forall l mat (m : Model), m_fds (with_vm_backing l mat m) = m_fds m.
 Proof. intros l mat m. destruct m; reflexivity. Qed.
-Theorem m1_common : forall KB : TSet,
+Theorem m1_common : m_channel_reader md = true -> forall KB : TSet,
 (forall ws (W' : world tfibsegs) ms1 md1 ly' S' (pb : sptr),
 st_ok tfibsegs (havoc EL K_M1 ws) ss_rd0 (restrict (w_H W') ms1) ->
-runs_at usp (mrestrict (w_H W') (ms_mem ms1)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W') (ms_mem ms1)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) ->
 AI tfibsegs (w_H W') (w_A W') md1 -> AR tfibsegs B ly' S' W' (ms_mem ms1) md1 -> top_ok usp ly' ->
 blocks S' = [(pb, 65536)] -> pb <> PNull -> sptr_addr B ly' pb = bv_unsigned (ew (havoc EL K_M1 ws) A_BUF) -> st_nev S' <= 1 ->
 prim_pristine_except S' [] -> quar_bytes S' = 0 -> frames S' = [] -> qtight S' ->
 FINV ly' (w_H W') (ms_mem ms1) ->
-m_fs md1 = in_fs inp -> m_fds md1 = APSG.fds3 e ->
+m_fs md1 = in_fs inp -> m_fds md1 = APSG.fds3 e -> m_channel_reader md1 = true ->
 srealizes tfibsegs (mkCfg ms1 md1) KB) ->
 srealizes tfibsegs (mkCfg ms md) KB.
 Proof.
-intros KB CONT.
+intros Hcr0 KB CONT.
 pose proof usp_facts as [[Ulo Uhi] U16]. pose proof (u64_range sp) as Usp. pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
 pose proof m1_checks as (CK1 & CK2 & CK3 & CK4 & CK5). pose proof (top_ok_ceil _ _ HTOP1) as HCT.
 apply (SRr_srealizes tfibsegs W (mkCfg ms md) (at_m1c W ms md) _ (m1c_run W ms md HS1) HAI1).
@@ -186,7 +212,7 @@ assert (Hra : raZ regs = 0x7ee9c) by (unfold raZ; rewrite R1; apply u64_lit; lia
 pose proof (st_ok_mem_ok tfibsegs EL ss_m1c _ HS) as HM. cbn [restrict ms_mem] in HM. fold mem in HM.
 assert (Hwin : forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a).
 { intros a Ha. eapply (win_present EL (w_H W) mem (ss_mem ss_m1c)); [exact HM | left; reflexivity | exact EL0 | lia | lia | cbn; lia]. }
-assert (HR : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] envp)).
+assert (HR : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn)).
 { eapply (runs_at_frame EL (ss_facts ss_m1c) (ss_mem ss_m1)); [exact (st_ok_facts_ok tfibsegs EL ss_m1c _ HS) | exact wbs_m1c | exact HFr | rewrite EL0; lia | exact HR1]. }
 assert (HAR : AR tfibsegs B ly init_state W mem md').
 { apply (AR_after_run B HB ARL ly init_state W EL (ss_mem ss_m1) (ms_mem ms) mem md mat HAR1 ss_m1_win_ok); [rewrite EL0; exact Ulo | rewrite EL0; exact HCT | exact HF |].
@@ -289,45 +315,46 @@ intros a Ha. right. exists (sptr_addr B ly' pb), 65536. exact (conj Hin Ha). }
 exact (finv_run B ly' S' W' mem' md2 (w_H W') _ (ss_mem ss_m1r) _ _ usp HAR' HFr3 ss_m1r_win_ok E2_0 Ulo Uhi (top_ok_le _ _ _ _ Hlyle HTOP1) HFIp).
 + rewrite wvb_fs', Efs. subst md'. rewrite wvb_fs', Hfs1. reflexivity.
 + rewrite wvb_fds', Efds. subst md'. rewrite wvb_fds', Hfds1. reflexivity.
++ rewrite YK04.wvb_channel_reader, (same_io_channel_reader _ _ Hio). subst md'. rewrite YK04.wvb_channel_reader. exact Hcr0.
 Qed.
 End d.
 Theorem tfib_file_arm_at : forall (W : world tfibsegs) ms md ly data,
 valid_fs (in_fs inp) -> (length p < 4096)%nat -> p <> [] -> p <> dot_path -> fs_lookup (in_fs inp) p = Some data ->
 st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) ->
 AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly init_state W (ms_mem ms) md -> top_ok usp ly -> FINV ly (w_H W) (ms_mem ms) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds3 (FdFile p (Z_to_bv 64 0)) ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds3 (FdFile p (Z_to_bv 64 0)) -> m_channel_reader md = true ->
 srealizes tfibsegs (mkCfg ms md) (CLOSEDX_loaded data (in_fs inp)).
 Proof.
-intros W ms md ly data Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI Hfs Hfds.
-unfold CLOSEDX_loaded. apply (m1_common W ms md ly _ HS HR HAI HAR HTOP HFI Hfs Hfds).
-intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev HP1 HQ1 HF1 HT1 HFI1 Hfs1 Hfds1.
-exact (RDF sp inp xw xd ws W' ms1 md1 ly' S' a0 p data pb Hargv Hsp Hva Hve Hvfs Hlen Hne Hnd Hlk HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev HP1 HQ1 HF1 HT1 HFI1 Hfs1 Hfds1).
+intros W ms md ly data Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI Hfs Hfds Hcr.
+unfold CLOSEDX_loaded. apply (m1_common W ms md ly _ HS HR HAI HAR HTOP HFI Hfs Hfds Hcr).
+intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev HP1 HQ1 HF1 HT1 HFI1 Hfs1 Hfds1 Hcr1.
+exact (RDF sp brk mbase inp xw xd ws W' ms1 md1 ly' S' a0 p data pb rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlen Hne Hnd Hlk HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev HP1 HQ1 HF1 HT1 HFI1 Hfs1 Hfds1 Hcr1).
 Qed.
 Theorem tfib_dir_arm_at : forall (W : world tfibsegs) ms md ly,
 p = dot_path ->
 st_ok tfibsegs EL ss_m1 (restrict (w_H W) ms) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp efn) ->
 AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly init_state W (ms_mem ms) md -> top_ok usp ly -> FINV ly (w_H W) (ms_mem ms) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds3 FdDir ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds3 FdDir -> m_channel_reader md = true ->
 srealizes tfibsegs (mkCfg ms md) (CLOSEDX_dir p (in_fs inp)).
 Proof.
-intros W ms md ly Hdot HS HR HAI HAR HTOP HFI Hfs Hfds. unfold CLOSEDX_dir.
-apply (m1_common W ms md ly _ HS HR HAI HAR HTOP HFI Hfs Hfds).
-intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev _ _ _ _ _ Hfs1 Hfds1.
-exact (RDD sp inp xw xd ws W' ms1 md1 ly' S' a0 p pb Hargv Hsp Hva Hve Hfit Hdot HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hpb Hnev Hfs1 Hfds1).
+intros W ms md ly Hdot HS HR HAI HAR HTOP HFI Hfs Hfds Hcr. unfold CLOSEDX_dir.
+apply (m1_common W ms md ly _ HS HR HAI HAR HTOP HFI Hfs Hfds Hcr).
+intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev _ _ _ _ _ Hfs1 Hfds1 Hcr1.
+exact (RDD sp brk mbase inp xw xd ws W' ms1 md1 ly' S' a0 p pb rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hdot HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hpb Hnev Hfs1 Hfds1 Hcr1).
 Qed.
 End M1.
 Theorem tfib_file_arm (B : asyms) (HB : UciSyms B) (ARL : AR_laws tfibsegs B) (ML : model_laws (as_universe B))
 (MSITE : malloc_site_tfa B) (RDF : rd0_file_tfa B) : file_arm_tfa B.
 Proof.
-intros sp inp xw xd W ms md ly a0 p data Hargv Hsp Hva Hve Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI Hfs Hfds.
-exact (tfib_file_arm_at B HB ARL ML MSITE RDF sp inp xw xd a0 p Hargv Hsp Hva Hve W ms md ly data Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI Hfs Hfds).
+intros sp brk mbase inp xw xd W ms md ly a0 p data rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI Hfs Hfds Hcr.
+exact (tfib_file_arm_at B HB ARL ML MSITE RDF sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau Hvi W ms md ly data Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP HFI Hfs Hfds Hcr).
 Qed.
 Theorem tfib_dir_arm (B : asyms) (HB : UciSyms B) (ARL : AR_laws tfibsegs B) (ML : model_laws (as_universe B))
 (MSITE : malloc_site_tfa B) (RDD : rd0_dir_tfa B) : dir_arm_tfa B.
 Proof.
-intros sp inp xw xd W ms md ly a0 p Hargv Hsp Hva Hve Hfit Hdot HS HR HAI HAR HTOP HFI Hfs Hfds.
-exact (tfib_dir_arm_at B HB ARL ML MSITE RDD sp inp xw xd a0 p Hargv Hsp Hva Hve Hfit W ms md ly Hdot HS HR HAI HAR HTOP HFI Hfs Hfds).
+intros sp brk mbase inp xw xd W ms md ly a0 p rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hdot HS HR HAI HAR HTOP HFI Hfs Hfds Hcr.
+exact (tfib_dir_arm_at B HB ARL ML MSITE RDD sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau Hvi W ms md ly Hdot HS HR HAI HAR HTOP HFI Hfs Hfds Hcr).
 Qed.
 End c.

@@ -5,16 +5,17 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 615 of its 727 lines of code are new or changed and 899 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F35.v, with its module names changed; 625 of its 686 lines of code are new or changed and 666 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F28.v; 174 of its 338 lines of code are new or changed and 522 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F28.v f28_loop (:560), f28_tail (:686) at a working branch
-     3803efccea0 (blob f6be1c0fd181fbbf51f210c9487fea5a1f277ca7);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
-   compare: split stretches, both calls-free.  f28_loop_F re-runs F28.v:584-679 (the 12-turn port-slot loop
-     0x8292c -> 0x829cc) and f28_tail_F re-runs F28.v:713-759 (the tail 0x829cc -> 0x82aa4) on the lib.Lib
+     (blob f6be1c0fd181fbbf51f210c9487fea5a1f277ca7);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
+   compare: split stretches, both calls-free.  f28_loop_F re-runs F28.v:585-680 (the 12-turn port-slot loop
+     0x8292c -> 0x829cc) and f28_tail_F re-runs F28.v:714-760 (the tail 0x829cc -> 0x82aa4) on the lib.Lib
      engine with StepF in place of the UL engine's Step (the two step relations have the same body, as
      F22.f22_lu_msteps shows).  Neither run calls anything, so neither is split further. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

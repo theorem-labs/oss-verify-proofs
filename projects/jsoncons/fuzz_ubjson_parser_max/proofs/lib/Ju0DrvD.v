@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded the encoded statements (CALLS_range, relay lemmas, know_Tc, pl0_to_lh, drv_target) into plain lemmas, added ProcInput, mbase and entry to main_entry, and passed inp to p0, p1, rnd and target_k, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0DrvD.v, 44 lines within its lines 38-399. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -20,7 +21,6 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.L5FastTauto.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import SecKit. From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__Ju0DrvD () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Peano."; "Corelib.Lists.ListDef."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIface."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ju0DrvC_defs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ju0DrvD.FPX_1.DrvD."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ju0DrvD_defs."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ju0MainEntry."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymDrive."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2.SX2."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2Sound.SX2S."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymRun."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Ubsan.M."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A1"; "0CAP"; "0CFG"; "1O"; "1Some"; "1app"; "1bool"; "1cons"; "1length"; "1list"; "1nat"; "1nil"; "1option"; "1pair"; "1prod"; "1true"]; ["2I"; "2and"; "2eq"; "3le"; "3lt"; "4nth"; "5Z"; "0ENVb"; "0HI"; "0K"; "0L"; "0LEN"; "6mkCfg"; "7Model"; "7VmMaps"; "7event"]; ["7m_vmmaps"; "8bvmap"; "0M"; "0M'"; "0PL"; "0R"; "0R'"; "9block_range"; "9hi_heap"; "9model_but_vm"; ":knT0"; ":zseq"; ";CALLS"; ";callsF"; ";lh1_k"; ";payload"]; [";relay"; "<calls_x"; "<knTc"; "<knTe"; "<relay_ok_b"; "<srLH"; "=auxvp"; "=blobs0"; "=p0"; "=p1"; "=rnd"; ">FPState"; ">mkst"; ">rdn"; ">seg_rom"; "?TSet"]; ["@srealizes"; "Ablobs_ev"; "BELit"; "BEVar"; "BEnv"; "Bedenot"; "Bexpr"; "Bridx"; "Bsr_upd"; "Cknow_ok"; "Cregs_ok"; "Denv_agree"; "Dvals_ev"; "Eloaded_segments"; "FIn"; "Fforallb"]; ["Gadd"; "Geqb"; "Gle"; "Glt"; "Gmodulo"; "Gpow"; "Gto_nat"; "0VM"; "0W"; "0a0s"; "0above"; "0b"; "0bl"; "0chi"; "0clo"; "0crC"]; ["0envv"; "0fdata"; "0fx'"; "0hw"; "0i"; "0j"; "0m'"; "0model2"; "0path"; "0phi"; "0plo"; "0rdraw"; "0scfg"; "0sp0"; "0sr"; "0srX"]; ["HBV"; "HZ_to_bv"; "Hbv"; "Hbv_unsigned"; "0target_k"; "0tid"; "0vals"; "0vals1"]]).
 Local Ltac tauto := L5FastTauto.ptauto0.
 Open Scope bv_scope.
 Import SX2. Import SX2S.
@@ -31,7 +31,7 @@ Tactic Notation "run_blockT_keep" constr(scr) constr(NX) := run_block_gen FUEL S
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
 Section DrvD.
-Context {RE : RunEnv}.
+Context {RE : RunEnv}. Context {RO : ReaderOn}.
 Variable L : heap_layout.
 Variable HI : heap_iface.
 Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -53,7 +53,9 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+Variable inp : ProcInput.
+Variable mbase entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
 Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
 Hypothesis Hplen : (length path <= 4095)%nat.
 Hypothesis DL : drv_layout L sp0.
@@ -74,22 +76,22 @@ Let model2 (VM : VmMaps) : Model := model2 tid fs0 stdin0 VM.
 Let CFG : Z := CFG fdata.
 Let PL : Z := PL fdata.
 Let B2 : Z := B2 fdata.
-Let target_k := target_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata CAP crC.
+Let target_k := target_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata inp CAP crC.
 Hypothesis Hok : (6 + CFG <= LEN)%Z.
 Hypothesis Hcr1 : (0 < PL)%Z -> credit_ok L crC PL.
 Definition CALLS : Z := if (CFG =? 0)%Z then 1 else (B2 mod 4 + 1)%Z.
 Definition payload : list byte := skipn (Z.to_nat (6 + CFG)) fdata.
 Definition cr1 : credit := if (PL =? 0)%Z then crC else debit L crC PL.
-#[using="LEN PL"] Lemma CALLS_range : ltac2:(TCodec.tc2 tcn__Ju0DrvD "8'A&RB+1&Q<%3221+4%5231%7231").
+#[using="LEN PL"] Lemma CALLS_range : (1 <= CALLS <= 4)%Z.
 Proof. clear Htid Hplen HLEN Hsp Hal Hok Hcr1. unfold CALLS. destruct (CFG =? 0)%Z; [lia|]. pose proof (Z.mod_pos_bound B2 4 ltac:(lia)). lia. Qed.
-#[using="CAP HCAP HLEN LEN CFG B2 Hok"] Lemma PL_range : ltac2:(TCodec.tc2 tcn__Ju0DrvD "8'A&RBzvQ4%3221+QooooI%5231%7231").
+#[using="CAP HCAP HLEN LEN CFG B2 Hok"] Lemma PL_range : (0 <= PL <= 67108857)%Z.
 Proof. clear Htid Hplen Hsp Hal Hcr1. subst PL CFG LEN. unfold Ju0DrvC.PL. pose proof (CFG_range fdata). lia. Qed.
-#[using="B2"] Lemma payload_len : ltac2:(TCodec.tc2 tcn__Ju0DrvD "<'B':&8'SBy8%211&Q?%5221&RFvQ4%211%;3:41").
+#[using="B2"] Lemma payload_len : length payload = Z.to_nat PL.
 Proof. clear Htid Hplen Hsp Hal Hcr1. unfold payload. rewrite length_skipn. subst PL LEN CFG. unfold Ju0DrvC.PL. pose proof (CFG_range fdata). lia. Qed.
 Definition lh_vals (vals : list word) (A1 PTR OWN k : Z) : Prop :=
 length vals = 102%nat /\ vals_ev vals 0 = sp0
-/\ vals_ev vals 1 = p0 sp0 a0s path envv /\ vals_ev vals 2 = p1 sp0 a0s path envv
-/\ vals_ev vals 3 = auxvp sp0 a0s path envv /\ vals_ev vals 4 = rnd sp0 a0s path envv /\ vals_ev vals 5 = tid
+/\ vals_ev vals 1 = p0 a0s path envv rdraw inp /\ vals_ev vals 2 = p1 a0s path envv rdraw inp
+/\ vals_ev vals 3 = auxvp sp0 a0s path envv /\ vals_ev vals 4 = rnd sp0 a0s path envv inp /\ vals_ev vals 5 = tid
 /\ vals_ev vals 48 = Z_to_bv 64 A1 /\ vals_ev vals 70 = Z_to_bv 64 LEN
 /\ vals_ev vals 73 = Z_to_bv 64 CFG /\ vals_ev vals 79 = Z_to_bv 64 PL
 /\ vals_ev vals 81 = Z_to_bv 64 k /\ vals_ev vals 82 = Z_to_bv 64 PTR /\ vals_ev vals 83 = Z_to_bv 64 OWN.
@@ -106,19 +108,21 @@ rdn RSEGS M (Z_to_bv 64 A1) (length fdata) = Some fdata ->
 rdn RSEGS M (Z_to_bv 64 PTR) (length payload) = Some payload ->
 hi_heap HI LB cr1 M VM ->
 srealizes RSEGS scfg (mkCfg (@mkst fx' R (Z_to_bv 64 0x341a4) M (seg_rom RSEGS)) (model2 VM)) K.
-#[using="uid hw rdraw Hva Hve Hvsp Hplen"] Lemma hiv_facts' : ltac2:(TCodec.tc2 tcn__Ju0DrvD "QF'9'SByR0%211%411'B&R<r1u3%3221&QFvS=vRIvS8vS0%544321%;3=71r2u4%=221&QJ%14:987%A3C31':&R>(7(;%114%335:1%436E1%637G1'A&RB&SC%12Q0Gr5%N21C%42Q31%6241&R@&RE+2+D%3221%5271+R0%6251%?231%A2:1p0C1pV:K1p0M1p0Q41pW>QA1").
-Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen vals P3 P4 i Hi). Qed.
-#[using="Type"] Lemma m2_but : ltac2:(TCodec.tc2 tcn__Ju0DrvD "@'N'M&Q9vS7r2%211r1%5221'B&Q0%116%811%43;81p061pV>=1pU@?1").
+Lemma hiv_facts' : forall vals,
+vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp ->
+forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
+Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen vals P3 P4 i Hi). Qed.
+#[using="Type"] Lemma m2_but : forall VM m', model_but_vm (model2 VM) m' -> m' = model2 (m_vmmaps m').
 Proof. intros VM m' H. exact H. Qed.
-#[using="Type"] Lemma m2_vm : ltac2:(TCodec.tc2 tcn__Ju0DrvD "9'N'B&Q0vS7r1%211%411%63713pU@81").
+#[using="Type"] Lemma m2_vm : forall VM, m_vmmaps (model2 VM) = VM.
 Proof. intros. reflexivity. Qed.
 Definition callsF (v80 : word) : word :=
 edenot (Env (fun n => match n with 80%nat => v80 | _ => Z_to_bv 64 0 end) (blobs_ev [])) calls_x.
-#[using="Type"] Lemma calls_x_callsF : ltac2:(TCodec.tc2 tcn__Ju0DrvD "L'9'SByR0%211%411y8%511%711%811'B&R5(R4&R<r2%211&R1r1%211%7241&QA%:221&Q=uR@%;2:1%311%@3F51pUJB1pW>G1").
+#[using="Type"] Lemma calls_x_callsF : forall vals bl, edenot (Env (vals_ev vals) (blobs_ev bl)) calls_x = callsF (vals_ev vals 80).
 Proof. intros. reflexivity. Qed.
-#[using="Type"] Lemma callsF_tab : ltac2:(TCodec.tc2 tcn__Ju0DrvD "K'B'6&R?'F&RA&SCyR0&Q=&SAr1%2241%411%7261&R@&RD+4%2271+1%5221%?271qUHA1&Q;uX0%211%F3E41(?%J3I21").
+#[using="Type"] Lemma callsF_tab : forallb (fun b => Z.eqb (bv_unsigned (callsF (Z_to_bv 64 b))) (b mod 4 + 1)) (zseq 256) = true.
 Proof. vm_compute. reflexivity. Qed.
-#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma callsF_val : ltac2:(TCodec.tc2 tcn__Ju0DrvD "M'F'A&RBzr1%3221&RC+X0%2241%8241'B'SByR0%211&Q=&SAr2%2251%411&R@&RD+4%2261+1%5221%:2=1%@3=81p0B1pUHL1").
+#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma callsF_val : forall b, (0 <= b < 256)%Z -> callsF (Z_to_bv 64 b) = Z_to_bv 64 (b mod 4 + 1).
 Proof.
 intros b Hb. pose proof callsF_tab as T. rewrite forallb_forall in T.
 specialize (T b (proj2 (in_zseq 256 b) ltac:(cbn; lia))). apply Z.eqb_eq in T.
@@ -129,23 +133,24 @@ Definition lay_ext (vals : list word) (R : bvmap 5 word) (W : word) : list word 
 getr R 10; getr R 11; getr R 12; getr R 13; getr R 14; getr R 15; getr R 16; getr R 17;
 getr R 28; getr R 29; getr R 30; getr R 31; W].
 Definition relay (vals : list word) (R : bvmap 5 word) (W : word) : list word := firstn 81 vals ++ lay_ext vals R W.
-#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma relay_len : ltac2:(TCodec.tc2 tcn__Ju0DrvD "K'9'SByR0%211%411&Q1y5%2214'CuRA&8r3%2291%5241'B':&Q@r4r2%33281%:2A1uS6%83721p0:1pUBE1pR<B1pW>F1").
+#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma relay_len : forall vals R W, (81 <= length vals)%nat -> length (relay vals R W) = 102%nat.
 Proof. intros. unfold relay. rewrite len_lay by lia. reflexivity. Qed.
-#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma relay_lo : ltac2:(TCodec.tc2 tcn__Ju0DrvD "Q2'9'SByR0%211%411&Q1y5%2214':'CuRA&8r4%22:1%5241&Dr2%2217'B&R<&Q@r6r5%3321;r3%6221%7252%93H21p0;1p0?1pV<F1pUBL1pR<I1pW>M1").
+#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma relay_lo : forall vals R W j, (81 <= length vals)%nat -> (j < 81)%nat -> vals_ev (relay vals R W) j = vals_ev vals j.
 Proof. intros. unfold relay. apply vals_lo; lia. Qed.
-#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma relay_81 : ltac2:(TCodec.tc2 tcn__Ju0DrvD "K'9'SByR0%211%411&Q1y5%2214'CuRA&8r3%2291%5241'B&R<&Q@r4r2%33281%521;%624<%83C21p0:1pUBE1pR<B1pW>F1").
+#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma relay_81 : forall vals R W, (81 <= length vals)%nat -> vals_ev (relay vals R W) 81 = vals_ev vals 81.
 Proof.
 intros vals R W H. unfold relay.
 change (vals_ev (firstn 81 vals ++ lay_ext vals R W) 81) with (vals_ev (firstn 81 vals ++ lay_ext vals R W) (81 + 0)).
 rewrite vals_hi by lia. reflexivity.
 Qed.
-#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma relay_101 : ltac2:(TCodec.tc2 tcn__Ju0DrvD "K'9'SByR0%211%411&Q1y5%2214'CuRA&8r3%2291%5241'B&R<&Q@r4r2%33281uS5%6221%83C14p0:1pUBE1pR<B1pW>F1").
+#[using="sp0 path fdata Hplen LEN CFG PL B2"] Lemma relay_101 : forall vals R W, (81 <= length vals)%nat -> vals_ev (relay vals R W) 101 = W.
 Proof.
 intros vals R W H. unfold relay.
 change (vals_ev (firstn 81 vals ++ lay_ext vals R W) 101) with (vals_ev (firstn 81 vals ++ lay_ext vals R W) (81 + 20)).
 rewrite vals_hi by lia. reflexivity.
 Qed.
-#[using="sp0 Hplen LEN CFG PL B2"] Lemma relay_agree : ltac2:(TCodec.tc2 tcn__Ju0DrvD "Q@'9'SByR0%211%411&Q1y5%2214'CuRB&8r3%2291%5241&R;(R4&R<r4%211&R1&5y8%E11%G11&QGvRIvS8vS3vS;%544321(7vS1(;%11:%43;31%?3<61%A11%F2C1vG&Q@r2%23HN1%411%M3Q261p0O1pUBQ:1pR<Q71pW>Q;1").
+#[using="sp0 Hplen LEN CFG PL B2"] Lemma relay_agree : forall vals R W, (82 <= length vals)%nat ->
+env_agree 82 (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw ++ [fdata]))) (ENVb (relay vals R W)).
 Proof.
 intros vals R W HL. split; [|reflexivity]. intros n Hn. cbn [ev ENVb ENV].
 destruct (Nat.eq_dec n 81) as [->|Hne]; [symmetry; apply relay_81; lia | symmetry; apply relay_lo; lia].
@@ -153,7 +158,10 @@ Qed.
 Definition junk_pos : list (nat * nat) :=
 [(1,4); (5,5); (6,6); (7,7); (9,1); (10,8); (11,9); (12,10); (13,11); (14,12); (15,13); (16,14); (17,15);
 (18,2); (19,3); (28,16); (29,17); (30,18); (31,19)]%nat.
-#[using="RE sp0 tid mem0 VM0 fs0 stdin0 Hvsp Htid Hplen CAP HCAP Hsp LEN above model2 CFG PL B2"] Lemma relay_regs : ltac2:(TCodec.tc2 tcn__Ju0DrvD "QN'9'SByR0%211%411'R6%611&Q1y5%2216'CuRB&8r4%22;1%5241'B'6&QD%116(?%53421&R:(R4&R<r6%211&R1&5y8%M11%O11&QGvRIvS8vS3vS;%544321(7vS1(;%11:%43;31%?3<61%A11%F2C1r5%I321Q2vG&Q@r7%2315Q6%411&QE%Q03218p081p0Q31p0Q:1pUBQG1pR<QB1pVNQF1pW>QI1").
+#[using="RE sp0 tid mem0 VM0 fs0 stdin0 Hvsp Htid Hplen CAP HCAP Hsp LEN above model2 CFG PL B2"] Lemma relay_regs : forall vals sr R W,
+(82 <= length vals)%nat -> relay_ok_b sr = true ->
+regs_ok (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw ++ [fdata]))) sr R ->
+regs_ok (ENVb (relay vals R W)) srLH R.
 Proof.
 intros vals sr R W HL Hokb HR.
 unfold relay_ok_b in Hokb. rewrite forallb_forall in Hokb.
@@ -168,14 +176,30 @@ getr R (Z_to_bv 5 (Z.of_nat r)) = edenot (ENVb (relay vals R W)) (nth r srLH (EL
 { intros r k Hr Hk. rewrite Hr. cbn [edenot ev ENVb ENV]. unfold relay. rewrite vals_hi by lia. symmetry. exact Hk. }
 do 32 (destruct i as [|i]; [first [lia | apply SH; cbn; tauto | eapply JK; reflexivity] |]). lia.
 Qed.
-#[using="sp0 Hplen CAP HCAP HLEN LEN B2 Hok"] Lemma know_Tc : ltac2:(TCodec.tc2 tcn__Ju0DrvD "QM'9'SByR0%211%411'<y8%611%311p061'F'B&R<r6uR9%3221&SAv2%22@1%83@41r7uR?%:221vQ4%82F1%>3F31'A&RB%12?;r5%32=1%5231%5239r4%72;1%9231&R9&R=vGr:%211r9&Q:%746321r;%711&QBr8%2471LQ3%=4<4:1p071p0@1p0E1p0L1p0Q31pVDQ=1pVFQ>1pULQ?1pUNQ@1pR6QB1pW>QH1").
+#[using="sp0 Hplen CAP HCAP HLEN LEN B2 Hok"] Lemma know_Tc : forall vals M clo chi plo phi,
+vals_ev vals 73 = Z_to_bv 64 CFG -> vals_ev vals 79 = Z_to_bv 64 PL ->
+(clo <= CFG <= chi)%Z -> (plo <= PL <= phi)%Z ->
+know_ok RSEGS (ENVb vals) M knT0 -> know_ok RSEGS (ENVb vals) M (knTc clo chi plo phi).
 Proof.
 intros vals M clo chi plo phi P73 P79 HC HP HK. pose proof (CFG_range fdata) as RC. pose proof PL_range as RP.
 unfold knTc. constructor; [|constructor; [|exact HK]]; cbn [kentry_ok edenot ev ENVb ENV].
 - rewrite P73, u_small by (subst CFG; lia). lia.
 - rewrite P79, u_small by lia. lia.
 Qed.
-#[using="VM0 Hvsp Htid Hplen HCAP Hsp"] Lemma pl0_to_lh : ltac2:(TCodec.tc2 tcn__Ju0DrvD "W0&QO'QK'9'SByR0%211%411'R6%611&Q1y5%2216'<y8%;11%311p0;1'N'F&Q>r8%211'B':&8r7%22E1uRB%63521&R<(3%22;1vS=%;3L21r9u1%7221&QHvRIvS8vS0%449321%D3Q561r:u2%@221&QI%14?987%J3Q;31r;u3%F221&QF%14E?>=%Q03QA31r<u4%L221&QJ%14KEDC%Q63QG31r=u5%Q2221vSE%Q;3QL21r>uQ@%Q7221&SA%12R2Q4%QA3R231r?uR6%Q=221vK%72R81%QG3R831r@uR9%QC221v2%=2R>1%QM3R>31rAuR?%QI221vQ4%C2RD1%R33RD31rBuRA%QO221&Q<%I2RJ1%R93RJ31&R:vGrC%211%431:@'6&QD&R8&R7(S@+E(@%33S221%511(R3%11D%93>31%;11(?%RM3>21&Eu9rD(R2z%211%64SC541+hld@%511%S73SF31uBrE%<4SI217%S;3SJ18&R5rG%Q311uErF%C4T021>%6241%SC3T41Q;&R9&R=rH%Q<11&QC%5442@1vRJ%11;&Q7vJv1%332F1%TD1T8%T;11&QM%RD2TECvS1%T32T=1%44A@31(4%1284%T93831%T:3T>R9Q8&Q8vH(7'>%12TCTC(=%14TETEKC(;%114%73531vROrJrI%=5<4321'R0vS<(L&QLrOrL+V`]4%SA2UB1rK&QN%11Q>%8576431vS7%11@%<231rQ0%@4QD?21p0B1p0Q11p0Q31p0Q>1p0QC1p0QF1p0QM1p0R61p0R;1p0RF1p0S61p0S<1p0SC1p0SJ1p0T11p0T81p0T?1p0TE1p0TL1p0U31p0U:1p0UD1p0UJ1p0V21p2V61pU@V81pR8V:1pR>V@1pW0VD1pW@VG1pV6VM1pQDVO1").
+#[using="VM0 Hvsp Htid Hplen HCAP Hsp"] Lemma pl0_to_lh : forall K (fx' : PropExec.FPState) vals1 srX R' M' VM (A1 : Z),
+lh1_k K ->
+length vals1 = 82%nat -> vals_ev vals1 0 = sp0 ->
+vals_ev vals1 1 = p0 a0s path envv rdraw inp -> vals_ev vals1 2 = p1 a0s path envv rdraw inp ->
+vals_ev vals1 3 = auxvp sp0 a0s path envv -> vals_ev vals1 4 = rnd sp0 a0s path envv inp -> vals_ev vals1 5 = tid ->
+vals_ev vals1 48 = Z_to_bv 64 A1 -> vals_ev vals1 70 = Z_to_bv 64 LEN -> vals_ev vals1 73 = Z_to_bv 64 CFG ->
+vals_ev vals1 79 = Z_to_bv 64 PL -> vals_ev vals1 81 = Z_to_bv 64 CALLS ->
+regs_ok (ENVb vals1) srX R' -> relay_ok_b (sr_upd srX (ridx 21) (EVar 81)) = true ->
+nth 9 srX (ELit 0) = ELit 815760 -> nth 18 srX (ELit 0) = ELit 0 ->
+edenot (ENVb vals1) (nth 21 srX (ELit 0)) = Z_to_bv 64 CALLS ->
+know_ok RSEGS (ENVb vals1) M' knTe ->
+above M' -> block_range L A1 CAP -> rdn RSEGS M' (Z_to_bv 64 A1) (length fdata) = Some fdata ->
+PL = 0%Z -> hi_heap HI [(A1, CAP)] (crC) M' VM ->
+srealizes RSEGS scfg (mkCfg (@mkst fx' R' (Z_to_bv 64 0x341a4) M' (seg_rom RSEGS)) (model2 VM)) K.
 Proof.
 intros K fx' vals1 srX R' M' VM A1 HLH HL1 W0 W1 W2 W3 W4 W5 W48 W70 W73 W79 V81 HR' Hrel H9 H18 H20 HK' HA1 HBR HC1 HPL0 HH1.
 pose proof Hsp as Hsp'.
@@ -206,11 +230,9 @@ eapply ksubl_sound; [exact HK' | vm_compute; reflexivity].
 - rewrite Hpay. reflexivity.
 - unfold cr1. fold PL. rewrite (proj2 (Z.eqb_eq PL 0) HPL0). exact HH1.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_drv_target := (ltac2:(TCodec.tc2 tcn__Ju0DrvD "?&QO&Q>r1%211r2(;'O%211%411vSDr3%211p041p0:1pQD>1")) (only parsing).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_drv_target) 0%nat 0%nat).
-Theorem drv_target : ltac:(sec_stmt2 constr:(SEC_T_drv_target) 1%nat 0%nat).
-Proof using HIok uid VM0 Hva Hve Hvsp Htid Hplen DL HCAP HLEN Hsp Hal Hok Hcr1 K.
+#[using="HIok uid VM0 Hva Hve Hvsp Htid regs0 mbase entry ME Hplen DL HCAP HLEN Hsp Hal Hok Hcr1"] Theorem drv_target : forall K, lh1_k K -> K [] -> target_k K.
+Proof.
+intros K.
 intros HLH HK0.
 unfold target_k, Ju0DrvC.target_k.
 intros vals R M VM A1 HL P0 P48 P70 P1 P2 P3 P4 P5 P71 P72 P73 P79 P80 HR HK HA HBR HC HH.
@@ -330,7 +352,7 @@ rewrite HL1 in HL', HA2, HR', HK'. change (82 + 10)%nat with 92%nat in HA2.
 pose proof (hz_of_block_range L sp0 DL _ _ HBR2) as HZ2. pose proof HZ2 as (U1 & U2 & U4). pose proof HBR2 as (_ & _ & U3 & _ & _).
 assert (X0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W0).
 assert (X3 : vals_ev vals2 3 = auxvp sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W3).
-assert (X4 : vals_ev vals2 4 = rnd sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W4).
+assert (X4 : vals_ev vals2 4 = rnd sp0 a0s path envv inp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W4).
 assert (X48 : vals_ev vals2 48 = Z_to_bv 64 A1) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W48).
 assert (X73 : vals_ev vals2 73 = Z_to_bv 64 CFG) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W73).
 assert (X79 : vals_ev vals2 79 = Z_to_bv 64 PL) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact W79).
@@ -417,6 +439,5 @@ eapply ksubl_sound; [exact HK | vm_compute; reflexivity].
 + exact HPAY3.
 + unfold cr1. fold PL. replace (PL =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia). exact HH3.
 Qed.
-End SE.
 End DrvD.
 End FPX_1.

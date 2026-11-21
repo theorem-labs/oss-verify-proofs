@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (fuzz_reply.asan-ubsan) walk of fuzz_reply's send_line, closed, in
    the form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v (segments joined at cut points).
-   Structure ported from image A's lib/A/W_send_line.v (a working branch a78a220dc8e: pb_send_line_g /
+   Structure ported from image A's lib/A/W_send_line.v (a working branch: pb_send_line_g /
    pb_send_line); no theorem crosses images.
    send_line (fuzz_reply.asan-ubsan 0x82854, 168 instructions): the entry segment (W_send_line_entry.v sl_entry)
    closed with the loop segment (W_send_line_loop.v pb_sl_loop_cut: the EINTR, dead and data rounds), whose data round
@@ -17,10 +17,10 @@
    send_line*.v (another image) and does not cover lib/B; git grep over origin/cold/* finds two donors and no lib/B
    W_send_line* or pb_send_line (checker line `R24BSendLine: CONFIRM`).  Ported here, STRUCTURE only (no theorem
    crosses either framework):
-   - image A, new framework: a working branch 9367674296a lib/A/W_send_line_cx.v / _entry.v / _loop.v /
+   - image A, new framework: a working branch lib/A/W_send_line_cx.v / _entry.v / _loop.v /
      _datab_cx.v / _grow_cx.v / W_send_line.v (pb_send_line_g, sl_grow_stmt its one premise) and the copy half
-     a working branch 99ad96efcc6 lib/A/W_send_line_datab.v (sl_copy);
-   - image B, old framework: a working branch 37280b674f71 lib/B/Prog/send_line_*.v (send_line_b.v:2283
+     a working branch lib/A/W_send_line_datab.v (sl_copy);
+   - image B, old framework: a working branch lib/B/Prog/send_line_*.v (send_line_b.v:2283
      send_line_holds; its cuts, its trap handling and its data arm send_line_seg.v asl_grow_call / asl_copy_call).
    send_line (line, len) at 0x82854 (relay.c:66-86, fuzz_send inlined from fuzz_reply.c:278-313), 168 instructions,
    frame 144 (13 saved registers at 40(sp) .. 136(sp); the auipc values of g_client_broken, g_send_max, g_capout,
@@ -47,15 +47,16 @@
    made from W_send_line.v and W_send_line_cx.v's Section header: pb_send_line_x, the walk closed over ARx in room form
    (sl_spec_x at A_send_lineP) from sl_entry_x, pb_sl_loop_cut_x, sl_copy_x and sl_grow_x (the B twin of a Theorem Labs lane's
    lib/A/W_send_line_x.v) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, a Theorem Labs lane row G-BSL-b): the IMAGE B (fuzz_reply.asan-ubsan) walk of
    fuzz_reply's send_line (0x82854) over ANY allocator relation ARx with its laws and HP0 and any room record RP, the
-   B twin of lib/A/W_send_line_x.v (09658767db0f, sha256 bc4a66f45e10; internal record): the entry
+   B twin of lib/A/W_send_line_x.v (sha256 bc4a66f45e10; internal record): the entry
    (W_send_line_entry_x.v sl_entry_x), the loop (W_send_line_loop_x.v pb_sl_loop_cut_x over the data round's two
    halves), the copy half (W_send_line_datab_x.v sl_copy_x, a Theorem Labs lane) and the growth half (W_send_line_grow_x.v
    sl_grow_x), each taken by `eapply <theorem>; eassumption` over this Section's hypotheses, lib/B/W_send_line_cx_x.v's
    header word for word (B's numerals: HCTX_slr at + 0x1a0 = 0x829f4, HERRAL, HV9..HV12, HH18, HH20..HH25, A_OBJ 30).
    The conclusion is W_contract_x.v's sl_spec_x at A_send_lineP (= BASE + AF_fr_send_line), the form of the B
-   consumers' SL_x (lib/B/W_relay_event_x_top.v:60 at a Theorem Labs lane's 0b2924645e1; k3's ReplyBTop.v Context).
+   consumers' SL_x (lib/B/W_relay_event_x_top.v:60 at a Theorem Labs lane; k3's ReplyBTop.v Context).
    proves no function (kind: segment lemma of send_line's walk: the assembly of its segments). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Setoid.
@@ -111,26 +112,26 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* a live block's request is below 2 ^ 30 (image A's BLKM text, W_LLVMFuzzerTestOneInput_exit_x.v:269; the top states it
+(* a live block's request is below 2 ^ 30 (image A's BLKM text, W_LLVMFuzzerTestOneInput_exit_x.v:270; the top states it
    at ARX from the cf instance's AR_blocks_law_cf): the copy half's memcpy at 0x82a34 needs n < 2 ^ 32 *)
 Hypothesis BLKM : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 30.
-(* W_send_line_cx.v:98-106, AR-free *)
+(* W_send_line_cx.v:99-107, AR-free *)
 Hypothesis HG : gx_ok SEGS B (G_SL B RG).
 Hypothesis HGR : forall a, inG (G_SL B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_SL B RG).
 Hypothesis HGO : gx_ok SEGS B [(rg_client RG, 4); (rg_send_dead RG, 1); (rg_send_max RG, 8)].
 Hypothesis MTL : ameter_laws MT.
 Hypothesis TL : PALib B.
-(* W_send_line_cx.v:108-110, the runtime and allocator sites over ARx (the allocator's at RP) *)
+(* W_send_line_cx.v:109-111, the runtime and allocator sites over ARx (the allocator's at RP) *)
 Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, YCk0.v:34, holds [0x829f4]; YCk0.v:175 is send_line's edge to it); send_line hands the rule a cut
-   chain (ch = []), so the trace is the return address alone (image A's a0c781b35e6..0828d5d79f5 form). *)
+   chain (ch = []), so the trace is the return address alone (image A.. form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x1a0] CTX_R.   (* realloc returns to 0x829f4 *)
-(* W_send_line_cx.v:113-140, AR-free *)
+(* W_send_line_cx.v:114-141, AR-free *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
@@ -169,7 +170,7 @@ Variable HA : alayout -> astate -> bvmap 5 word -> list (Z * Z * Z) -> Z -> Z ->
 Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md -> RO mem.
 Hypothesis HA_call : forall lyc Sc regsT ch p n, mo_ok MT Sc (mo_malloc MT n + mo_free MT) -> HA lyc Sc regsT ch p n.
 Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CTX_R R (SIGMA WS_realloc).
-(* W_send_line_x.v:154 pb_send_line_x at R *)
+(* W_send_line_x.v:155 pb_send_line_x at R *)
 Theorem pb_send_line_xR : sl_spec_xR B PST ARx R MT RP MMAX RG A_send_lineP.
 Proof.
 assert (GROW : sl_grow_stmt_xR B PST ARx MT RP MMAX RG R)

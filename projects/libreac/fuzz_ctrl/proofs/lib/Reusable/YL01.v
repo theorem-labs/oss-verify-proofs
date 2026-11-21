@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL01.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed MR_after_frame, MR_with_fds). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -566,7 +567,7 @@ assert (UN : forall a, ~ in_wrange E rs a -> 0 <= a < 2 ^ 64 -> m' (Z_to_bv 64 a
 { intros a Hn Ha. apply (HF (Z_to_bv 64 a)). rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
 rewrite Z.mod_small by lia. exact Hn. }
 assert (Hac : alloc_ceiling < 2 ^ 64) by (pose proof YM05.alloc_ceiling_val; lia).
-eapply (mr_frame B MR LAWS L A m m' md md HMR).
+eapply (mr_frame B MR LAWS L A m m' md md HMR eq_refl).
 - intros a Ho. pose proof (mr_owned_low B MR LAWS _ _ _ _ a HMR Ho) as Hlow.
 destruct (in_wrange_dec E rs a) as [Hw|Hn]; [exfalso; exact (NOW a Hw Ho)|].
 unfold mbyte. rewrite (UN a Hn) by lia. reflexivity.
@@ -584,7 +585,7 @@ Qed.
 Lemma MR_with_fds : forall L A m md f, MR L A m md -> MR L A m (with_fds f md).
 Proof.
 intros L A m md f HMR. destruct (mr_model B MR LAWS _ _ _ _ HMR) as (Hh & Hlz & Hmat).
-eapply (mr_frame B MR LAWS L A m m md (with_fds f md) HMR).
+eapply (mr_frame B MR LAWS L A m m md (with_fds f md) HMR eq_refl).
 - intros; reflexivity.
 - intros a _ H; exact H.
 - intros p n i Hp Hi. exact (proj1 (mr_blocks B MR LAWS L A m md p n i HMR Hp Hi)).

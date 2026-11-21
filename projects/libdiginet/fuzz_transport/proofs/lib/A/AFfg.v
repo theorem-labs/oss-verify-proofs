@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFfg.v, with its module paths changed and its addresses moved to libreac/fuzz_grant's ASan build; the addresses inside internal_alloc_placeholder that the move left at cgif_file_fuzzer.asan's values (0xe7208, 0xe7240, 0xe7fc0, 0xe7fd0, 0x128208, 0x128230) re-derived from fuzz_grant.asan's placeholder at 0xa5d40 as 0xe5d48, 0xe5d80, 0xe6b00, 0xe6b10, 0x126d48, 0x126d70. *)
-(* Relocated from proofs/libreac/fuzz_grant/lib/A/AFfg.v at 25e3d17bdb50 by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_grant/lib/A/AFfg.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/R_strchr.v, with its module paths and module names changed; 22 of its 39 lines of code are new or changed and 418 lines of the source are left out. *)
-(* lib/A/Prog/strchr_wrap_c.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8) with the one change
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* lib/A/Prog/strchr_wrap_c.v (RtStr's port, unchanged) with the one change
    of the local-shadow variant (FMss_shv.v): `shadow_rw m` becomes `shvis m S N` for the checked range, and the post's
    `shadow_rw m'` becomes `shvis m' S N`.  The constants, strchr_val and strchr_n stay in the original module. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

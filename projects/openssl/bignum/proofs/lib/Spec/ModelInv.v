@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (GI_init takes the channel-reader premise in_channel_reader, which prog_model_ok supplies; the initial reserved list is the image segments followed by the vDSO pair, so kl_resv, kl_resv_top and the new kl_vdso are reproved; GI_with_vdso carries GI to the run's initial model with the vDSO draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -539,16 +540,48 @@ Lemma GI_init : forall segs brk0 mbase sp lim inp,
   valid_brk segs brk0 -> 0 < reserved_top (segments_reserved segs) ->
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling ->
   bv_unsigned sp - stack_max_size = alloc_ceiling ->
+  (* [minv] gained the channel-reader conjunct at #38 (Lib/Nodes.v), so [minv_init]
+     now takes [in_channel_reader inp = true] and [apply minv_init] leaves it open.
+     The bndiv twin measured that at Spec/ModelInv.v:585,
+     "[Focus] Wrong bullet -: Current bullet - is not finished" -- an unfinished goal
+     in the PREVIOUS bullet, not a bullet-count change.  Taken as a PREMISE, as
+     openssl/ct did for its own new [minv_init] premise.  Both callers already hold
+     [valid_input_either inp], which contains this conjunct, so it is discharged by
+     callers all the way up and nothing surfaces in a published file. *)
+  in_channel_reader inp = true ->
   GI [] (ps_init (reservedZ segs)) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-  intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop. unfold GI, OWN. split; [|split; [apply List.NoDup_nil| unfold Gso, so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia]].
+  intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop Hrdr. unfold GI, OWN. split; [|split; [apply List.NoDup_nil| unfold Gso, so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia]].
   exists (led_init (reservedZ segs)). split; [apply creach_init|]. split; [|intros c []].
   constructor; rewrite ?m_vmmaps_init_model; cbn -[Z.pow Z.mul Z.add init_model].
-  - apply minv_init.
+  - apply minv_init. exact Hrdr.
   - reflexivity.
   - split; [intros e []| apply pwdisj_nil].
-  - reflexivity.
-  - intros e Hin. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia.
+  (* LPS 75d69e00: [kl_resv] was an EQUALITY before the revision; now
+     [init_model]'s reserved list is the image's segments FOLLOWED BY the
+     vDSO/vvar pair ([State.init_reserved]), so the claim is the INCLUSION
+     of the segment prefix. *)
+  - unfold init_reserved; rewrite map_app; apply incl_appl, incl_refl.
+  (* [kl_resv_top] gained the [exists V]: the pair's suffix is at most two
+     entries of at most 20 pages, and every reserved entry is either below
+     the break (the segments) or one of those two.  The witness is
+     [State.vdso_reserved] at the ledger's [vdso_top]. *)
+  - exists (vdso_reserved (in_kernel inp)
+              (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)))).
+    split; [|split].
+    + unfold vdso_reserved; cbv zeta; destruct (_ <? _); cbn [length]; lia.
+    + pose proof (vdso_len_bounds (in_kernel inp)) as HB.
+      pose proof (vdso_text_pages_pos (in_kernel inp)) as HPP.
+      pose proof (vdso_text_pages_le (in_kernel inp)) as HL.
+      unfold vdso_reserved, vdso_len, vdso_vvar_pages, page_size in *; cbv zeta.
+      destruct (_ <? 4096); cbn [live_bytes]; [lia|].
+      rewrite !bv_unsigned_Z_to_bv_u64 by (unfold two_pow_64 in *; lia); lia.
+    + intros e Hin. unfold init_reserved in Hin. apply in_app_or in Hin as [Hseg|Hvd].
+      * left. pose proof (reserved_top_ge _ _ Hseg). unfold ehi. lia.
+      * right. exact Hvd.
+  (* [kl_vdso] is NEW at the revision: [init_model] has no tracked maps, so
+     the mapping side is [In e []]. *)
+  - intros r _ e [].
   - unfold PGSZ in *. unfold page_size in Hal. lia.
   - intros b l [].
   - intros b l k [].
@@ -580,7 +613,17 @@ Lemma image_low_ceil : forall segs, image_low segs ->
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling.
 Proof. intros segs [_ H]. pose proof alloc_ceiling_ge. unfold PGSZ. lia. Qed.
 
-
+(* LPS 727298f3: the walks start from [Run.init_config]'s model, which is [init_model]
+   with the launch's vDSO draw installed ([TopLevel.mo0]).  [with_vdso] rebuilds the VM
+   subsystem with only [m_vdso] changed, and neither [KL] nor [minv] nor [Gso] reads
+   [m_vdso], so each field carries over by conversion. *)
+Lemma GI_with_vdso : forall X s v m, GI X s m -> GI X s (with_vdso v m).
+Proof.
+  intros X s v m [(L & Hc & HK & Hi) [Hnd HG]].
+  split; [|split; [exact Hnd| exact HG]].
+  exists L. split; [exact Hc|]. split; [|exact Hi].
+  destruct HK; constructor; assumption.
+Qed.
 
 Theorem prog_model_ok : forall segs rstage pc ph lim en inp,
   image_low segs ->
@@ -591,12 +634,16 @@ Theorem prog_model_ok : forall segs rstage pc ph lim en inp,
   /\ tsafe nstep nsafe (prog segs rstage (in_argv inp)) (mo0 segs lim en inp).
 Proof.
   intros segs rstage pc ph lim [sp brk0 mbase] inp Hlow Hve Hvi Htop.
+  (* keep a copy before the destruct below consumes it *)
+  pose proof Hvi as Hvi0.
   destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _).
   unfold prog, mo0. cbn [en_brk en_mmap_base en_sp] in *.
   apply (mspec_program (GI []) (prog_with rstage (argv_Z (in_argv inp)))).
   - apply prog_with_GI; [apply argv_Z_short| apply argv_Z_paths]; exact Hargv.
-  - unfold reservedZ. cbn [img_segments] in Hbrk. unfold valid_brk in Hbrk.
-    apply (GI_init segs); [exact Hbrk| exact (proj1 Hlow)| exact (image_low_ceil segs Hlow)| exact Htop].
+  - apply GI_with_vdso.
+    unfold reservedZ. cbn [img_segments] in Hbrk. unfold valid_brk in Hbrk.
+    apply (GI_init segs); [exact Hbrk| exact (proj1 Hlow)| exact (image_low_ceil segs Hlow)| exact Htop
+                          | red in Hvi0; repeat match goal with H : _ /\ _ |- _ => destruct H end; assumption].
 Qed.
 
 

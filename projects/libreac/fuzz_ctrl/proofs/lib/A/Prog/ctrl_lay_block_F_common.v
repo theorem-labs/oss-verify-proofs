@@ -27,7 +27,7 @@
       new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header and goes to the auditor a Theorem Labs lane
       who signs it against its proved run before it counts.
@@ -41,9 +41,9 @@
      target; the stripped asan/fuzz_ctrl of the same tree has the same sha)
    - compare: the objdump listing shipped beside the image,
      fuzz_ctrl.objdump.txt (a working note, not in this delivery), ctrl_lay_block at 0x855f4 .. 0x85988
-   - FACTS of record ed6b6b7b0ab (origin/regen/libreac-v190-on-338), PAU
+   - FACTS of record (origin/regen/libreac-v190-on-338), PAU
      (internal path), built with zfactsbuild.sh
-   - stretches re-run from ctrl_lay_block.v at a working branch d69f7c708f6 (4176 lines; Section L from
+   - stretches re-run from ctrl_lay_block.v at a working branch (4176 lines; Section L from
      :403; Theorem ctrl_lay_block_holds :4169)
 
    NOTE ON THE IMPORT ORDER (for the auditor).  F5F.v's `Import YK11` is deliberately NOT used here.  YK11 is the UL
@@ -63,7 +63,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import RcAsanRT RcAsa
   asan_stack_malloc_c asan_memset_c asan_memcpy_c reac_box_model_block_c ctrl_lay_block_c.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import ctrl_lay_block.
 (* The two shared footprint contracts the stretches apply at the checked fill / copy calls: stated by their owner
-   (a Theorem Labs lane, through a Theorem Labs lane's ctrl bridge e9f2c8f46ec), never restated here.  A stretch file takes
+   (a Theorem Labs lane, through a Theorem Labs lane's ctrl bridge), never restated here.  A stretch file takes
    asan_memset_contract_F / asan_memcpy_contract_F as Section hypotheses of exactly these types.  They bring
    ImgBounds (IMG_LO = 0x10000, IMG_HI = 0x5fe000) and RngBytes.rng_bytes with them. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_cF asan_memcpy_cF.

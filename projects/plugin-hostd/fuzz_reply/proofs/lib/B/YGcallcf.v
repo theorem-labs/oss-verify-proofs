@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* CARRIED from this tree's proofs/plugin-hostd/fuzz_reply/lib/Reusable/YGcallcf.v, sha256 8f47cfc3ee075a764e7d26f11827e5856db5a6fa1b6cb7ce9bd5351f7c74f908
-   (that file is carried from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241, proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallcf.v).
+   (that file is carried from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallcf.v).
    Re-pointed for lib/B (fuzz_reply.asan-ubsan): each Require of a module that lib/B instantiates now names lib/B's
    module (lib/B/YCbqG.v, this carry's own lib/B copy; lib/B/YGcallx.v, this carry's own lib/B copy).
    The exact changes (`lib.` is OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.; each source line is replaced
@@ -9,7 +9,7 @@
    - line 42: `From lib.Reusable Require Import YCbqG YGcallx.` -> `From lib.B Require Import YCbqG YGcallx.`
    Nothing else changes: below this comment the bytes are the source's.
    DO NOT EDIT: change the source file on its branch, carry it again, and re-point it again. *)
-(* CARRIED from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallcf.v, sha256 f26843de34bf8209d3b0733f995d869c8436f477f7f80e8473ab8926ba82e675.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
@@ -19,6 +19,7 @@
    REFLEXIVITY; QM := QM_cf, their STATE part (the new FA_GROW headroom + FA_GROW_MAX / 8, and cf_hull_ok), for the model
    laws; QMQ_cf (QMm_cf S mem -> QM_cf S) is a projection. QM_cf_of_room takes cf_hull_ok, as the layer's
    acall_pre_cf_intro does (abudget_room_cf and mroom_cf_of_live need it); QMm_cf_of_room adds the two memory facts. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the cf BRIDGE. Each call form of the second allocator instance (YG0dcf.v) IS the generic
    form of YGcallx.v at
      ARx  := fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md,
@@ -166,7 +167,7 @@ exact (YGcfHeadSh.ARx_hshadow_law_cf_ok segs B L).
 intros ly S Hp W mem md p n a HAR Hin Ha. exact (YGcfTail.amalloc_tail_vis_end_cf segs B ly S Hp W mem md p n a HAR Hin Ha).
 - (* field 16: the image's const cells, ARmcf's amc_const *)
 intros ly S Hp W mem md (M & _). exact (amc_const _ _ _ _ _ M).
-- (* field 17: ly_img covers every segment (ALedger_cf's alc_img, as FCifaceCf.v:136), and a live fake frame lies
+- (* field 17: ly_img covers every segment (ALedger_cf's alc_img, as FCifaceCf.v:137), and a live fake frame lies
      at or above the image's top: the fake stack is disjoint from ly_img (frame_facts_cf), starts at or above 4096
      and is longer than kImgLo (= fst (ly_img ly), layout_ok's lo_img), so it cannot start below the image's end *)
 intros ly S Hp W mem md HAR. pose proof HAR as (M & LG & _). split.
@@ -179,7 +180,7 @@ exfalso. apply D. exists (Z.max (ly_F ly) (fst (ly_img ly))). unfold in_zr. cbn 
 unfold kImgLo, kFakeStackSize in *. split; [lia | left; lia]. }
 pose proof (Z.mul_nonneg_nonneg cid (2 ^ 20) ltac:(lia) ltac:(lia)) as CN.
 unfold frame_addr, kFakeFramesOff in *. lia.
-- (* field 18: the layout is layout_ok, ARmcf's amc_layout (as FCifaceCf.v:135) *)
+- (* field 18: the layout is layout_ok, ARmcf's amc_layout (as FCifaceCf.v:136) *)
 intros ly S Hp W mem md HAR. exact (amc_layout _ _ _ _ _ (proj1 HAR)).
 Qed.
 

@@ -1,13 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the strcmp contract of record (AStrcmpDef.astrcmp_realizes) lifted to user-poisoned heads,
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/AStrcmpDefU.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
    per a Theorem Labs lane's ruling of 2026-10-29 and the text agreed with libreac/fuzz_state (a Theorem Labs lane,
    (internal path)). Against AStrcmpDef.v's definition there are exactly six token changes:
    the name; the binder U after S; ecall_pre segs B -> ecall_preU and its U; AR segs B -> ARU in the post and its U. Every
    other premise stays over the raw memory, because the interceptor reads the raw shadow and unpoison changes only the
    user-poisoned heads' shadow bytes (UPoison.v). AStrcmpDef.v is unchanged, so its consumers rebuild nothing; at U = [] this
    text is that one (astrcmp_realizes_of_U). The stack window stays the literal 2 * ESTACK of the plain text. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/AStrcmpDefU.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

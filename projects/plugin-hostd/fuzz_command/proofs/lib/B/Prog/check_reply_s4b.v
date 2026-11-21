@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s4b.v (the ASan walk, a working branch, check_reply_s4b.v as a Theorem Labs lane compiled it at 10:10Z on a working branch e84227c9553) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses ("resp %d" at 0x21100). *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s4b.v (the ASan walk, a working branch, check_reply_s4b.v as a Theorem Labs lane compiled it at 10:10Z on a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses ("resp %d" at 0x21100). *)
 (* Modified by Theorem Labs, 2026-10: segment 4b of check_reply's walk (fuzz_command.asan-ubsan, 0x86e64): the refusal
    path from the return of snprintf at 0x870b4 to the strcmp call at 0x870d0 (cr_s4b : CR_STRCMP_stmt ->
    CR_RSNP_stmt, lib/B/Prog/check_reply_m.v), after proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (a call step with
@@ -12,6 +12,7 @@
    (check_reply_sd.v cr_seed) with g_rec's fields as the only region, runs `mv a0,s5` to the call of
    rec_code_declared, takes the code's declared answer 1 (reply_okA), so the abort branch at 0x870bc is not taken,
    and runs over the inline check of g_rec.reply and the loads of the reply and the refusal to 0x870d0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

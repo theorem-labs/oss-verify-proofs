@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Ported to libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AB1p.v at c8557374ad2: module paths renamed; no image literal of its own survives (the donor's one, memcpy 0x97294 in tfib_copy_spec_memcpy, is gone with the glue below). Shape change agreed by two Theorem Labs lanes (2026-10-29): knock has no A/AB1e, AB1g, AB17 (the donor's memset / memcpy function proofs), so the proofs of tfib_fill_spec_memset and tfib_copy_spec_memcpy are derived from knock's existing A/AE3d.tfib_memset (musl memset 0x8fd0c = A/AB12 x_memset) and A/AE3c.tfib_memcpy (musl memcpy 0x8f908 = x_memcpy); their statements are the donor's, unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported to libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AB1p.v at theorem-labs/oss-verify-proofs@6b32741d849a: module paths renamed; no image literal of its own survives (the donor's one, memcpy 0x97294 in tfib_copy_spec_memcpy, is gone with the glue below). Shape change agreed by two Theorem Labs lanes (2026-10-29): knock has no A/AB1e, AB1g, AB17 (the donor's memset / memcpy function proofs), so the proofs of tfib_fill_spec_memset and tfib_copy_spec_memcpy are derived from knock's existing A/AE3d.tfib_memset (musl memset 0x8fd0c = A/AB12 x_memset) and A/AE3c.tfib_memcpy (musl memcpy 0x8f908 = x_memcpy); their statements are the donor's, unchanged. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

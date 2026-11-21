@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (pn_mem's stack window moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -26,7 +27,7 @@ Ltac2 gd_tbl_P_printfN () : Init.string Init.list := ["OSSVerify.KrLib.Lib.Shape
 
 (* [comment removed for export] *)
 Record pn_mem (sp0 : word) (w : Z) (canw : word) (M : word -> option byte) : Prop := PN_MEM {
-  pn_win : forall a : word, (bv_unsigned sp0 - 8388608 <= bv_unsigned a < bv_unsigned sp0)%Z -> wview RSEGS M a <> None;
+  pn_win : forall a : word, (bv_unsigned sp0 - 6144512 <= bv_unsigned a < bv_unsigned sp0)%Z -> wview RSEGS M a <> None;
   pn_ro  : forall a : Z, (0x10000 <= a < 0x4bcd8)%Z -> M (Z_to_bv 64 a) = None;
   pn_got : rdn RSEGS M (Z_to_bv 64 0x4bcd8) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x7d330));
   pn_rest : forall a : Z, (0x4bce0 <= a < 0x4c000)%Z -> M (Z_to_bv 64 a) = None;

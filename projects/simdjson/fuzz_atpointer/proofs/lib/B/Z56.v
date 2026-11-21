@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -32,7 +33,7 @@ Lemma lftoi_ptail : forall (Σ Σ1 Σn : rts RT) PMc (m mx : mem) (usp sp' f A l
   ((exists p n, In (p, n) (rt_live RT Σ) /\ p <= d /\ d + Z.of_nat (length bs) <= p + n) \/ (bs = [] /\ d < SEGTOP_A)) ->
   rt_frames RT Σ = [] ->
   Z.of_nat (length (rt_live RT Σ)) + FUZZ_LIVE <= LIVE_MAX -> FUZZ_COST <= rt_credit RT Σ -> 8 + vcost_pushes (atp_P (chars bs)) 0 0 <= 2^32 ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + FUZZ_STACK <= usp -> usp + 16 <= USTACK_TOP ->
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + FUZZ_STACK <= usp -> usp + 16 <= USTACK_TOP ->
   vliveA (rt_live RT Σ1) A (vcap_iter (atp_P (chars bs)) 0 0) (Z.of_nat (atp_P (chars bs))) (rt_live RT Σ) ->
   rt_credit RT Σ - 2 - vcost_pushes (atp_P (chars bs)) 0 0 <= rt_credit RT Σ1 ->
   Z.of_nat (length (rt_live RT Σ1)) <= 3 + Z.of_nat (length (rt_live RT Σ)) -> lposx (rt_live RT Σ1) ->

@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE7d.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (9 numerals; per-numeral report). *)
-(* Modified by Theorem Labs, 2026-10: from lib/B/YE7d.v of this unit (asan-ubsan), as proofs/libreac/fuzz_disco/lib/Y/Rt/Strnlen.v (a working branch a58fbc98b07) does on disco: the strnlen wrapper over a buffer addressable for all n bytes (lib/Rt/StrnlenDef.v): musl strnlen through lib/B/Rt/StrnlenMusl.v (general memchr wrapper contract, lib/B/Rt/Memchr.v), then the shadow check of min(k + 1, n) bytes by lib/B/YE7e.v (k + 1 < n), lib/B/Rt/StrnlenChk.v (k + 1 >= n >= 1) or its n = 0 walk; the count fact at entry is n < 2^32. *)
+(* Modified by Theorem Labs, 2026-10: from lib/B/YE7d.v of this unit (asan-ubsan), as proofs/libreac/fuzz_disco/lib/Y/Rt/Strnlen.v (a working branch) does on disco: the strnlen wrapper over a buffer addressable for all n bytes (lib/Rt/StrnlenDef.v): musl strnlen through lib/B/Rt/StrnlenMusl.v (general memchr wrapper contract, lib/B/Rt/Memchr.v), then the shadow check of min(k + 1, n) bytes by lib/B/YE7e.v (k + 1 < n), lib/B/Rt/StrnlenChk.v (k + 1 >= n >= 1) or its n = 0 walk; the count fact at entry is n < 2^32. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Made generic in place over YE2y.v's icpt_laws_x (any allocator invariant ARx; ghost head set Hpx threaded
-   unchanged), hunk for hunk as image A's twin lib/A/Rt/Strnlen.v was (commit 6e43e5f7379): each walk lemma is stated
+   unchanged), hunk for hunk as image A's twin lib/A/Rt/Strnlen.v was: each walk lemma is stated
    over ARx (<name>_x, and POSTr_x / POSTC_x for the section posts); every theorem or lemma that took AR_laws keeps its
    statement byte for byte (its post definition too) and is re-proved from its _x at ARx := AR_x B
    (YE2y.icpt_laws_x_AR), in a section named <section>A. Contract texts over ARx: lib/B/IcptRealizesX.v (strnlen) and

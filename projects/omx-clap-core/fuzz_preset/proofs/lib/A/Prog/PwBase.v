@@ -2,7 +2,7 @@
    alloc.c ledger and the symbolic cells that the walks of parse_noting, fuzz_alloc_ran_out and
    fuzz_alloc_ran_out_reset share. Every image number comes from the generated PwSyms.v; the instruction words come
    from the image itself (YP02.build_table over tfibsegs, = Img0.rsegs = the pinned image's loaded segments).
-   Relocated 2026-10-29 from the old-pin file (origin/cold/h-w6rep-2-allocsurf c47ea1638ed6, image d83eb25d): no
+   Relocated 2026-10-29 from the old-pin file (image d83eb25d): no
    statement or proof changed; the numbers changed only in the regenerated PwSyms.v. PR_PST / pr_glob below are this
    file's own five alloc.c cells (the generator's set), NOT the prh_pst, which on #102 also has g_most and
    g_own_ran_out (PRH_Base.v prh_pst); PwAllocSurf.v uses only pw_rcell / pw_wcell and their region_ok lemmas. *)

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writev channel-reader flag). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -152,8 +153,9 @@ Proof using AF AF_ICPT.
              (fun _ => t_emit [] T)
              (entry_st ra (Z_to_bv 64 usp) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 sa) (Z_to_bv 64 len) (Z_to_bv 64 1)
                 (Z_to_bv 64 STDERR_FILE) a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_fwrite m) c
-             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| exact TOK| exact Hc| exact IMPL|].
+             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| | exact TOK| exact Hc| exact IMPL|].
     - intros mo fd (HAR & HF & _) Hin. cbn in Hin. destruct Hin as [<-|[]]. rewrite HF. exact HFD.
+    - intros mo (_ & _ & _ & HRD). exact HRD.
     - intros x ms' c' HQ Hc'.
       assert (R : realizes ctasegs c' T).
       { apply Hk. eapply ASTA_conseq; [exact Hc'|]. intros ms <-.

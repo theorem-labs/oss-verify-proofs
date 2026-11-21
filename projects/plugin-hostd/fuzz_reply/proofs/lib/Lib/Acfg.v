@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair and its reserved region). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -50,8 +51,9 @@ Qed.
 Lemma acfg_family_off_no : forall i n,
   bv_unsigned (in_sysno i) = n -> In n alloc_mark_sysnos -> injected_family_off ACFG i = true.
 Proof.
-  intros i n E Hin. unfold injected_family_off. rewrite E. cbn [alloc_mark_sysnos In] in Hin.
-  destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; reflexivity.
+  intros vi vn k1 k2. unfold injected_family_off. rewrite k1.
+  cbn [alloc_mark_sysnos In] in k2.
+  destruct k2 as [<- | [<- | [<- | [<- | [<- | []]]]]]; reflexivity.
 Qed.
 
 Lemma acfg_nonspurious (i : SyscallInput) (m : Model) (eff : SyscallEffect)
@@ -333,14 +335,52 @@ Proof.
 Qed.
 
 Lemma inv_no_reaches_error_cfg (Inv : config -> Prop)
-    (Hstep : forall (c : config) (evs : list event) (c' : config),
-       Inv c -> sstep_cfg segs ACFG c evs (SNext c') -> Inv c')
-    (Hnoerr : forall (c : config) (evs : list event),
-       Inv c -> not (sstep_cfg segs ACFG c evs SError))
-  : forall c : config, Inv c -> not (reaches_error_cfg segs ACFG c).
+  (Hstep : forall c evs c', Inv c -> sstep_cfg segs ACFG c evs (SNext c') -> Inv c')
+  (Hnoerr : forall c evs, Inv c -> ~ sstep_cfg segs ACFG c evs SError) :
+  forall c, Inv c -> ~ reaches_error_cfg segs ACFG c.
 Proof.
-  intros c Hc [tr [cerr [evs [Hreach Herr]]]].
-  exact (Hnoerr cerr evs (star_cfg_inv Inv Hstep c tr cerr Hc Hreach) Herr).
+  intros vc k1 (vtr & vd & vevs & k2 & k3).
+  exact (Hnoerr vd vevs (star_cfg_inv Inv Hstep vc vtr vd k1 k2) k3).
+Qed.
+
+(* Any unfiltered step is a filtered one once each syscall outcome it may
+   consume is known not to be a spurious refusal. *)
+Lemma cr2_sstep_lift : forall c e st,
+  sstep segs c e st ->
+  (forall x8 eff m' evs,
+     ms_svc_pending (cfg_ms c) = Some x8 ->
+     syscall_spec (sys_input segs (cfg_ms c) x8) (cfg_model c) (Ok eff m' evs) ->
+     m_halted m' = None ->
+     ~ spurious_refusal_cfg ACFG (sys_input segs (cfg_ms c) x8) (cfg_model c) eff) ->
+  sstep_cfg segs ACFG c e st.
+Proof.
+  intros vc ve vst k1.
+  destruct k1 as
+    [ vms vmodel vms' vmodel' k2 k3 k4
+    | vms vmodel k2 k3 k4
+    | vms vmodel k2 k3 k4
+    | vms vmodel vfn vn veff vmodel' vmodel'' vevs k2 k3 k4 kf1 kf2 kf3 kf4 kf5 kf6
+    | vms vmodel vfn vn veff vmodel' vevs k2 k3 k4 kg1 kg2 kg3 kg4 kg5 kg6
+    | vms vmodel vfn k2 k3 k4 kh1 kh2
+    | vms vmodel vx8 veff vmodel' vmodel'' vevs k2 k3 k4 k5 k6
+    | vms vmodel vx8 veff vmodel' vevs k2 k3 k4 k5 k6
+    | vms vmodel vx8 veff vmodel' vevs vcode k2 k3 k4 k5 k6
+    | vms vmodel vx8 veff vmodel' vevs vsig k2 k3 k4 k5
+    | vms vmodel vx8 k2 k3 k4 ];
+    intros k9; cbn [cfg_ms cfg_model] in k9.
+  - exact (sstep_cfg_instr segs ACFG vms vmodel vms' vmodel' k2 k3 k4).
+  - exact (sstep_cfg_instr_fault segs ACFG vms vmodel k2 k3 k4).
+  - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
+  - exact (sstep_cfg_syscall segs ACFG vms vmodel vx8 veff vmodel' vmodel'' vevs
+             k2 k3 k4 (k9 vx8 veff vmodel' vevs k3 k4 k5) k5 k6).
+  - exact (sstep_cfg_syscall_materialization_fault segs ACFG vms vmodel vx8 veff vmodel' vevs
+             k2 k3 k4 (k9 vx8 veff vmodel' vevs k3 k4 k5) k5 k6).
+  - exact (sstep_cfg_exit segs ACFG vms vmodel vx8 veff vmodel' vevs vcode k2 k3 k4 k5 k6).
+  - exact (sstep_cfg_killed segs ACFG vms vmodel vx8 veff vmodel' vevs vsig k2 k3 k4 k5).
+  - exact (sstep_cfg_syscall_unmodeled segs ACFG vms vmodel vx8 k2 k3 k4).
 Qed.
 
 Lemma sstep_cfg_of_instr : forall ms model e st,
@@ -351,6 +391,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
 Qed.
 
 Lemma sstep_cfg_of_nonalloc : forall ms model x8 e st,
@@ -376,94 +419,105 @@ Lemma sstep_cfg_of_acfg : forall ms model x8 e st,
      m_halted m' = None -> syscall_spec_acfg (sys_input segs ms x8) model (Ok eff m' evs)) ->
   sstep_cfg segs ACFG (mkCfg ms model) e st.
 Proof.
-  intros ms model x8 e st Hsvc H Hacfg. inversion H; subst;
-    try (match goal with H1 : ms_svc_pending ms = None |- _ => rewrite Hsvc in H1; discriminate H1 end);
-    match goal with H1 : ms_svc_pending ms = Some ?y |- _ =>
-      rewrite Hsvc in H1; injection H1; intro; subst y end.
-  - eapply sstep_cfg_syscall; try eassumption.
-    match goal with Hs : syscall_spec _ _ (Ok ?eff ?m' ?evs), Hh : m_halted ?m' = None |- _ =>
-      exact (proj2 (Hacfg _ _ _ Hs Hh) Hh) end.
-  - eapply sstep_cfg_syscall_materialization_fault; try eassumption.
-    match goal with Hs : syscall_spec _ _ (Ok ?eff ?m' ?evs), Hh : m_halted ?m' = None |- _ =>
-      exact (proj2 (Hacfg _ _ _ Hs Hh) Hh) end.
-  - eapply sstep_cfg_exit; eassumption.
-  - eapply sstep_cfg_killed; eassumption.
-  - eapply sstep_cfg_syscall_unmodeled; eassumption.
+  intros vms vmodel vx8 ve vst k1 k2 k3. apply (cr2_sstep_lift _ _ _ k2).
+  intros vy veff vm' vevs k4 k5 k6. cbn [cfg_ms cfg_model] in *.
+  rewrite k1 in k4. injection k4 as k7. subst vy.
+  exact (proj2 (k3 veff vm' vevs k5 k6) k6).
 Qed.
 
-Lemma sstep_cfg_syscall_acfg (ms : machine_state) (model : Model) (x8 : word)
-    (eff : SyscallEffect) (model' model'' : Model) (evs : list event)
-  : m_halted model = None
-  -> ms_svc_pending ms = Some x8
-  -> syscall_spec_acfg (sys_input segs ms x8) model (Ok eff model' evs)
-  -> m_halted model' = None
-  -> materialize_model_accesses model' (syscall_effect_accesses eff) = Some model''
-  -> sstep_cfg segs ACFG {| cfg_ms := ms; cfg_model := model |} evs
-       (SNext {| cfg_ms := advance_past_svc (apply_effect ms eff); cfg_model := model'' |}).
+(* An admitted, still-running outcome of the filtered spec is an outcome of
+   the spec that the filter keeps. *)
+Lemma cr2_acfg_running : forall i m eff m' evs,
+  syscall_spec_acfg i m (Ok eff m' evs) -> m_halted m' = None ->
+  syscall_spec i m (Ok eff m' evs) /\ ~ spurious_refusal_cfg ACFG i m eff.
 Proof.
-  intros Hlive Hpend [Hspec Hok] Hlive' Hmat.
-  apply sstep_cfg_syscall with (x8 := x8) (model' := model'); try assumption.
-  exact (Hok Hlive').
+  intros vi vm veff vm' vevs [k1 k2] k3. exact (conj k1 (k2 k3)).
 Qed.
 
-Lemma sstep_cfg_syscall_mf_acfg (ms : machine_state) (model : Model) (x8 : word)
-    (eff : SyscallEffect) (model' : Model) (evs : list event)
-  : m_halted model = None
-  -> ms_svc_pending ms = Some x8
-  -> syscall_spec_acfg (sys_input segs ms x8) model (Ok eff model' evs)
-  -> m_halted model' = None
-  -> materialize_model_accesses model' (syscall_effect_accesses eff) = None
-  -> sstep_cfg segs ACFG {| cfg_ms := ms; cfg_model := model |} nil SError.
+Lemma sstep_cfg_syscall_acfg : forall ms model x8 eff model' model'' evs,
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  syscall_spec_acfg (sys_input segs ms x8) model (Ok eff model' evs) ->
+  m_halted model' = None ->
+  materialize_model_accesses model' (syscall_effect_accesses eff) = Some model'' ->
+  sstep_cfg segs ACFG (mkCfg ms model) evs
+            (SNext (mkCfg (advance_past_svc (apply_effect ms eff)) model'')).
 Proof.
-  intros Hlive Hpend [Hspec Hok] Hlive' Hmat.
-  refine (sstep_cfg_syscall_materialization_fault segs ACFG ms model x8 eff model' evs
-            Hlive Hpend Hspec _ Hlive' Hmat).
-  exact (Hok Hlive').
+  intros vms vmodel vx8 veff vmodel' vmodel'' vevs k1 k2 k3 k4 k5.
+  destruct (cr2_acfg_running _ _ _ _ _ k3 k4) as [k6 k7].
+  exact (sstep_cfg_syscall segs ACFG vms vmodel vx8 veff vmodel' vmodel'' vevs k1 k2 k6 k7 k4 k5).
 Qed.
 
-Lemma sstep_cfg_sys_inv_acfg (ms : machine_state) (model : Model) (x8 : word)
-    (evs : list event) (st : step_to)
-  : ms_svc_pending ms = Some x8
-  -> sstep_cfg segs ACFG {| cfg_ms := ms; cfg_model := model |} evs st
-  -> let i := sys_input segs ms x8 in
-     (exists (eff : SyscallEffect) (model' : Model) (evs0 : list event),
-        syscall_spec_acfg i model (Ok eff model' evs0) /\ m_halted model' = None
-        /\ match materialize_model_accesses model' (syscall_effect_accesses eff) with
-        | Some model'' => evs = evs0 /\
-            st = SNext {| cfg_ms := advance_past_svc (apply_effect ms eff); cfg_model := model'' |}
-        | None => evs = nil /\ st = SError
-        end)
-     \/ (exists (eff : SyscallEffect) (model' : Model) (evs0 : list event) (code' : word),
-           syscall_spec_acfg i model (Ok eff model' evs0) /\ m_halted model' = Some code' /\
-           m_killed model' = None /\ evs = (evs0 ++ ExitEv code' (m_fs model') :: nil)%list /\
-           st = SNext {| cfg_ms := ms; cfg_model := model' |})
-     \/ (exists (eff : SyscallEffect) (model' : Model) (evs0 : list event) (sig : word),
-           syscall_spec_acfg i model (Ok eff model' evs0) /\ m_killed model' = Some sig /\
-           evs = (evs0 ++ KillEv sig (m_fs model') :: nil)%list /\
-           st = SNext {| cfg_ms := ms; cfg_model := model' |})
-     \/ (syscall_spec_acfg i model Unmodeled /\ evs = nil /\ st = SError).
+Lemma sstep_cfg_syscall_mf_acfg : forall ms model x8 eff model' evs,
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  syscall_spec_acfg (sys_input segs ms x8) model (Ok eff model' evs) ->
+  m_halted model' = None ->
+  materialize_model_accesses model' (syscall_effect_accesses eff) = None ->
+  sstep_cfg segs ACFG (mkCfg ms model) [] SError.
 Proof.
-  intros Hpend Hstep; cbv zeta; inversion Hstep; subst;
-    try (match goal with Hnone : ms_svc_pending ms = None |- _ => congruence end);
-    match goal with Hsome : ms_svc_pending ms = Some ?y |- _ =>
-      rewrite Hpend in Hsome; injection Hsome; intro Hy; subst y end.
-  - left; do 3 eexists; split; [split; [eassumption | intro; eassumption] |].
-    split; [eassumption |].
-    match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ =>
-      rewrite Hm; split; reflexivity end.
-  - left; do 3 eexists; split; [split; [eassumption | intro; eassumption] |].
-    split; [eassumption |].
-    match goal with Hm : materialize_model_accesses _ _ = None |- _ =>
-      rewrite Hm; split; reflexivity end.
-  - right; left; do 4 eexists.
-    split; [split; [eassumption | intro Hnone; exfalso; congruence] |].
-    repeat split; try eassumption; reflexivity.
-  - right; right; left; do 4 eexists.
-    split; [split; [eassumption | intro Hnone; exfalso] |].
-    + match goal with Hk : m_killed _ = Some _ |- _ =>
-        rewrite (m_killed_of_m_halted_none _ Hnone) in Hk; discriminate Hk end.
-    + repeat split; try eassumption; reflexivity.
-  - right; right; right; split; [split; [eassumption | exact I] | split; reflexivity].
+  intros vms vmodel vx8 veff vmodel' vevs k1 k2 k3 k4 k5.
+  destruct (cr2_acfg_running _ _ _ _ _ k3 k4) as [k6 k7].
+  exact (sstep_cfg_syscall_materialization_fault segs ACFG vms vmodel vx8 veff vmodel' vevs
+           k1 k2 k6 k7 k4 k5).
+Qed.
+
+Lemma sstep_cfg_sys_inv_acfg : forall ms model x8 evs st,
+  ms_svc_pending ms = Some x8 ->
+  sstep_cfg segs ACFG (mkCfg ms model) evs st ->
+  let i := sys_input segs ms x8 in
+  (exists eff model' evs0,
+      syscall_spec_acfg i model (Ok eff model' evs0)
+      /\ m_halted model' = None
+      /\ match materialize_model_accesses model' (syscall_effect_accesses eff) with
+         | Some model'' => evs = evs0 /\ st = SNext (mkCfg (advance_past_svc (apply_effect ms eff)) model'')
+         | None => evs = [] /\ st = SError
+         end)
+  \/ (exists eff model' evs0 code',
+      syscall_spec_acfg i model (Ok eff model' evs0)
+      /\ m_halted model' = Some code' /\ m_killed model' = None
+      /\ evs = evs0 ++ [ExitEv code' (m_fs model')] /\ st = SNext (mkCfg ms model'))
+  \/ (exists eff model' evs0 sig,
+      syscall_spec_acfg i model (Ok eff model' evs0)
+      /\ m_killed model' = Some sig
+      /\ evs = evs0 ++ [KillEv sig (m_fs model')] /\ st = SNext (mkCfg ms model'))
+  \/ (syscall_spec_acfg i model Unmodeled /\ evs = [] /\ st = SError).
+Proof.
+  intros vms vmodel vx8 vevs vst k1 k2. cbv zeta.
+  remember (mkCfg vms vmodel) as vc eqn:k3. revert k3.
+  destruct k2 as
+    [ vms2 vmodel2 vms' vmodel' k4 k5 k6
+    | vms2 vmodel2 k4 k5 k6
+    | vms2 vmodel2 k4 k5 k6
+    | vms2 vmodel2 vfn2 vn2 veff vmodel' vmodel'' vevs2 k4 k5 k6 kf1 kf2 kf3 kf4 kf5 kf6
+    | vms2 vmodel2 vfn2 vn2 veff vmodel' vevs2 k4 k5 k6 kg1 kg2 kg3 kg4 kg5 kg6
+    | vms2 vmodel2 vfn2 k4 k5 k6 kh1 kh2
+    | vms2 vmodel2 vy veff vmodel' vmodel'' vevs2 k4 k5 k6 k7 k8 k9
+    | vms2 vmodel2 vy veff vmodel' vevs2 k4 k5 k6 k7 k8 k9
+    | vms2 vmodel2 vy veff vmodel' vevs2 vcode k4 k5 k6 k7 k8
+    | vms2 vmodel2 vy veff vmodel' vevs2 vsig k4 k5 k6 k7
+    | vms2 vmodel2 vy k4 k5 k6 ];
+    intros k10; injection k10 as k11 k12; subst vms2 vmodel2;
+    try (rewrite k1 in k5; discriminate k5);
+    rewrite k1 in k5; injection k5 as k13; subst vy.
+  - (* a kept outcome that materializes *)
+    left. exists veff, vmodel', vevs2.
+    split; [exact (conj k6 (fun _ => k7)) |]. split; [exact k8 |].
+    rewrite k9. split; reflexivity.
+  - (* a kept outcome whose materialization faults *)
+    left. exists veff, vmodel', vevs2.
+    split; [exact (conj k6 (fun _ => k7)) |]. split; [exact k8 |].
+    rewrite k9. split; reflexivity.
+  - (* exit: the outcome is halted, so the filter does not apply *)
+    right; left. exists veff, vmodel', vevs2, vcode.
+    split; [split; [exact k6 | intros k14; rewrite k7 in k14; discriminate k14] |].
+    repeat split; assumption.
+  - (* kill: a killed model is halted, so again the filter does not apply *)
+    right; right; left. exists veff, vmodel', vevs2, vsig.
+    split; [split; [exact k6 |] |].
+    + intros k14. rewrite (m_killed_of_m_halted_none vmodel' k14) in k7. discriminate k7.
+    + repeat split; assumption.
+  - right; right; right. split; [exact (conj k6 I) |]. split; reflexivity.
 Qed.
 
 End WithSegs.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: prog_model_ok's initial invariant is GI_init's, with the input's channel-reader fact (valid_input_either_reader), carried onto the initial model holding the entry's vDSO draw (GI_fds, minv_with_vdso). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -29,11 +30,17 @@ Proof.
   intros segs rs pc ph lim en inp Hpos Hceil Hfloor Hresv Hlim Hen Hinp.
   pose proof (never_forced segs rs pc ph lim en inp Hpos Hceil Hfloor Hresv Hlim Hen Hinp) as HNF.
   destruct en as [sp brk0 mbase dr]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hinp) in Hen.
+  pose proof (valid_input_either_reader _ Hinp) as Hrdr.
   destruct Hen as ((HspL & HspH & _) & Hbrk & _ & _). destruct Hinp as (Hargv & _ & _ & _).
   revert HNF. unfold prog, prog_itree, mo0, entry_atop. cbn [en_brk en_mmap_base en_sp]. intros HNF.
   apply (mspecP_program (GIo []) (prog_with rs (argv_Z (in_argv inp)))).
   - apply prog_with_GIP. apply argv_Z_short. exact Hargv.
-  - eapply GIo_init; [exact Hbrk| exact Hpos| split; [exact HspL| exact HspH]| reflexivity| exact Hceil].
+  - (* LPS 727298f3: [mo0] carries the entry's vDSO draw ([with_vdso]); the VM ledger, the kernel
+       state and the halt flag are [init_model]'s *)
+    exists None. cbn [TargetSafe.clb app].
+    eapply GI_fds;
+      [ apply (GI_init segs brk0 mbase sp lim inp _ Hbrk Hpos ltac:(split; [exact HspL| exact HspH]) eq_refl Hceil Hrdr)
+      | reflexivity | reflexivity | apply minv_with_vdso, minv_init; [split; [exact HspL| exact HspH] | exact Hrdr] | reflexivity ].
   - exact HNF.
 Qed.
 

@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 126 of its 152 lines of code are new or changed and 492 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a7_d.v, with its numbers changed; 295 of its 379 lines of code are new or changed and 68 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a11b_x1.v, with its module paths and module names changed; 146 of its 178 lines of code are new or changed and 347 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the REF3 piece
    of segment B6 of reac_segconf_parse_file's walk, b6_ref3_ok : HA_TAIL n -> H_REF3 n at every FP state.
    The B6 segment lane of the image-B G3 walk owner, 2026-10-30. proves no function (kind: segment piece of reac_segconf_parse_file's
@@ -90,7 +91,7 @@ Section d. Context {rc : YM05.RunCeil} {SK : YI16.sink_head} {PI : PAImg seg_lis
 #[local] Notation SIG := (@pa_sigma _ seg_listing PI).
 #[local] Notation rdW W mem := (aview SEGS (w_H W) mem).
 Variable B : asyms.
-(* the callee's contract at image B's entry and window, at every FP state (pf_pieces.v:861) *)
+(* the callee's contract at image B's entry and window, at every FP state (pf_pieces.v:862) *)
 Hypothesis REFUSE : forall fx0 : YK11.FPState,
   @refuse_contract fx0 rc SK SEGS B (BASE + AF_refuse) STK_refuse RLO_A RHI_A seg_litA_rc gotwA guardA.
 (* the listing's facts over the walk's abstract instance *)

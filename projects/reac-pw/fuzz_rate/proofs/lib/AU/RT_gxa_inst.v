@@ -1,10 +1,10 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_gxa_inst.v (cold/port-fm-rtprintf-param 3e35620c52e); changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfA.N_img_asan_vf/N_sym_asan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanA.N_img_asan/N_sym_asan, numerals 0x41308 -> 0x429f8 and 0x8ede0 -> 0x95fac. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_gxa_inst.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_gxa_inst.v; changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfA.N_img_asan_vf/N_sym_asan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanA.N_img_asan/N_sym_asan, numerals 0x41308 -> 0x429f8 and 0x8ede0 -> 0x95fac. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_gxa_inst.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* GXA's two top theorems, instantiated on the pinned fuzz_manifest.asan.
 
    lib/CJ/RL/GXA holds the format-general ASan printf core, proved and Qed over an abstract image
    record: printf_core_a_proof (G_printf_core.v:1028), vfprintf_snf_a_closed and
-   vfprintf_snf_a_guarded_closed (G_vfprintf_snf_closed.v:109, :118) and vsnprintf_x_proof
+   vfprintf_snf_a_guarded_closed (G_vfprintf_snf_closed.v:110, :119) and vsnprintf_x_proof
    (G_vsnprintf.v).  Every image fact they take is discharged for this harness in RT_IImgA_ok.v at
    RT_IImgA.v's instance A_img (and A_img_vsn for musl vsnprintf, whose call to vfprintf lands on
    the link-time wrapper, not on musl vfprintf's body).  This file joins the two: it carries the
@@ -21,7 +21,7 @@
    The image facts are carried by instance resolution, and the call contracts by name.  Do not
    close these with `unshelve eapply ...; all: first [<long exact list>]`: measured on port-reply's
    b4, that backtracks over the guarded theorem's evars and ran 45 minutes without finishing. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RT_gxa_inst.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/RT_gxa_inst.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/RT_gxa_inst.v keeps its donor's comment text) is kept as lib/A/RT_gxa_inst.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RT_gxa_inst.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/RT_gxa_inst.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/RT_gxa_inst.v keeps its donor's comment text) is kept as lib/A/RT_gxa_inst.v writes it. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

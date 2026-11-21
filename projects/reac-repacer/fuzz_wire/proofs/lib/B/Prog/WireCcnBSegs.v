@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Spec/StrFun.v; 203 of its 237 lines of code are new or changed and 430 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WireCcnBSegs: the footprint (ExecF.evtF) runs of the straight-line segments of reac-repacer/fuzz_wire's
    check_counter in image B (fuzz_wire.asan-ubsan 0x804c0 = wire_sigma WS_check_counter; objdump of record sha256
-   440b9550f4f5), stepped by lib/Lib/StepF.v, in the form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v (recipes
-   commit 0295462466b2; its frame-word helpers copied), the shadow checks stepped as in this unit's
+   440b9550f4f5), stepped by lib/Lib/StepF.v, in the form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v (recipes;
+   its frame-word helpers copied), the shadow checks stepped as in this unit's
    lib/B/Prog/rp_counter_FW.v:
      ccn_short_F  entry, n < 18 -> the return: the 0x20-byte frame (ra, s0, s1 at 24(sp), 16(sp), 8(sp)) written and
                   read back, `bltu a1, a2` (a2 = 18) taken to +0x78;

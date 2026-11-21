@@ -34,7 +34,7 @@
      astack_free_law, frame_flag_lawP, one <x>_realizes per interceptor) are the WALK's Section hypotheses: the
      contract's body does not mention them, so they do not reach its statement. Each contract file names, in its
      head comment, the entries its walk must take, with the row of the interceptor lane's interface
-     (provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626)) that gives each text.
+     (provenance/evidence/interceptors/INTERFACE-A-interceptors.md) that gives each text.
 
    THE ASAN FACTS a contract adds over the plain one, in this file's names:
    - [sa_addr rd q n]: [q, q + n) is addressable and its shadow bytes are mapped. Stated for every object F loads
@@ -268,8 +268,8 @@ Definition sa_room (S : astate) : Prop := Z.of_nat (length (frames S)) <= 8.
 Definition sa_room_n (n : Z) (S : astate) : Prop := Z.of_nat (length (frames S)) + n <= 9.
 
 (* ============================ band room past a string, from where it lies ============================ *)
-(* The printf rows' family ends with cmd_args_amem (fuzz_command lib/A/Rt/RtPFCmd.v:82-87, taken by the interceptor lane's
-   FR_seg, RtPFSeg.v:160-168): each %s / %.24s argument w of a string s needs amem_range w (|s| + 8), the
+(* The printf rows' family ends with cmd_args_amem (fuzz_command lib/A/Rt/RtPFCmd.v:83-88, taken by the interceptor lane's
+   FR_seg, RtPFSeg.v:161-169): each %s / %.24s argument w of a string s needs amem_range w (|s| + 8), the
    arithmetic application-range predicate (lib/Reusable/YG0d.v:325), which sa_addr gives only over |s| + 1. It
    needs no premise: it follows from where every contract already places the string (a G3 walk lane
    raised it as STOP #5 and withdrew it after checking image A; image B's G3 walk lane found the same). A live
@@ -302,7 +302,7 @@ Proof. intros p k H1 H2. unfold amem_range, kImgEnd, kLowMemEnd in *. left. lia.
    side-stack frame could carry one across the call. The allocator record pins such shadow at every AR state
    (its zero-shadow ranges and its constant cells), and the stack_malloc post and the journal both give AR at
    the new state, so a walk re-derives the shadow wherever it needs it. This is fuzz_command's own route, its
-   lib/A/Prog/CmdRecBase.v cmd_addressable_chk / cmd_hull_vis_chk / cmd_aread_ok_chk at 501c0d516c69, which
+   lib/A/Prog/CmdRecBase.v cmd_addressable_chk / cmd_hull_vis_chk / cmd_aread_ok_chk, which
    each image discharges by a boolean check over its record. Found by a contracts check, 2026-10-30; accepted by
    the image-A owner. The per-image obligation (each literal and the table sa_pinned, from segconf's generated record)
    belongs to the listing's stage 2 (SegRecBase, the CmdRecBase analogue). *)
@@ -312,7 +312,7 @@ forall ly S (W : world segs) mem md, AR segs B ly S W mem md -> sa_addr (aview s
    (image A: .str at 0x21340 has size 3 and a 29-byte redzone, provenance/evidence/image-tables/asan_globals.asan.tsv line 27), a
    redzone's shadow is not zero, so the record can pin it only as a constant cell, and am_const_owned
    (lib/Reusable/YG0n.v:212, :201-202) then makes the redzone an owned static, which the journal's image clause
-   (YCbq.v:479-480) does not keep. fuzz_command's record shows the same (its lib/A/AF0m.v:5208 lists the redzone
+   (YCbq.v:479-480) does not keep. fuzz_command's record shows the same (its lib/A/AF0m.v:5209 lists the redzone
    after its 3-byte global). But an image byte is mapped at EVERY reader, with no AR at all: aview is mbyte over
    mrestrict, and mbyte falls back to the segment's byte (fuzz_command's CmdRecBase.v:367 crf_rom_view_some, used
    for literal tails in its CmdRecRo.v:95 cmd_tail_vis_at). So a literal's tail is stated as a pure image fact,

@@ -3,7 +3,7 @@
    The counts themselves (Psec, cnt_sec, cnt_cls, cnt24) have ONE definition, in ReplyCnt.v; this file proves the
    lemmas LS uses over them, and the event weights w_sec / w_cls with the cnt_after lemmas (the counts of a block
    list move by the weight of each allocator event exactly).
-   A Theorem Labs lane's counts (cfdriver Reusable/YGcfRoomLive.v at 46f1762ad5a / a working branch 8071b92028b):
+   A Theorem Labs lane's counts (cfdriver Reusable/YGcfRoomLive.v / a working branch):
      sec_cnt S := length (filter rl_sec_req (map snd (blocks S))), rl_sec_req n := negb (PresetRoom.is_primary n)
        (:1172-1173), which is ReplyCnt.Psec;
      ccnt24 S := PresetRoom.ccnt kBatchClass (map snd (blocks S)) (:1145);

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap uses the kernel's placement and the declined-placement gate; the ledger counts the launch's vDSO/vvar pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
-From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import RomBase ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.FX Require Import
   W64 ITrie FxSpec FxInstr FxState FxMem FxExec FxRel FxMemSound FxValSound FxStepSound FxStepMain FxRun FxRn FxSys.
 Import ListNotations.
@@ -65,6 +66,12 @@ Definition ptr (v : fval) : option (int * int) :=
 (* [comment removed for export] *)
 Definition pg_up (len : int) : int := ((len + 4095) >> 12) << 12.
 
+(* LPS 727298f3 (#144/#146): a NULL hint is never declined, by computation through
+   [place_declined_b]'s first conjunct. *)
+Lemma place_declined_b_hint0 : forall kb h (hint : word) (nZ : Z),
+  bv_unsigned hint = 0%Z -> place_declined_b kb h hint nZ = false.
+Proof. intros kb h hint nZ H. unfold place_declined_b, hint_address. rewrite H. reflexivity. Qed.
+
 Definition fent_eqb (e1 e2 : fent) : bool :=
   match e1, e2 with
   | (t1, o1, l1), (t2, o2, l2) => (t1 =? t2) && (o1 =? o2) && (l1 =? l2)
@@ -94,7 +101,7 @@ Variable xsys : fstate -> fledger -> int -> option dres.
 Variable xask : fstate -> option (int * int).
 
 Definition grant_fits (L : fledger) (nZ : Z) : bool :=
-  (4096 + (Rb + fl_S L) + (Rc + fl_c L) * (nZ + 4096) + nZ <=? 140735332483072)%Z
+  (183251939328 + (Rb + fl_S L) + (Rc + fl_c L) * (nZ + 4096) + nZ <=? 140735332483072)%Z
   && match rl with RSrc => true | RTgt => (fl_S L + nZ <=? Lim)%Z end.
 
 Definition tag_ok (F : fstate) (n : int) : bool :=
@@ -136,7 +143,7 @@ Definition sys_brk_query (F : fstate) (L : fledger) (n : int) : option dres :=
   end.
 
 Definition na_fits (L : fledger) (nZ : Z) : bool :=
-  (4096 + (Rb + fl_S L) + (Rc + fl_c L) * (nZ + 4096) + nZ <=? 140735332483072)%Z.
+  (183251939328 + (Rb + fl_S L) + (Rc + fl_c L) * (nZ + 4096) + nZ <=? 140735332483072)%Z.
 
 (* [comment removed for export] *)
 Definition sys_grant_na (F : fstate) (L : fledger) (n : int) (len : int) : option dres :=
@@ -222,6 +229,11 @@ Definition sys_brk_grow (F : fstate) (L : fledger) (n : int) (t off : int) : opt
   | None => None
   end.
 
+(* LPS 727298f3: the two freely placed mmap arms are driven only for a NULL hint, the
+   case [place_declined_b] never declines; any other hint is refused here. *)
+Definition hint_null (F : fstate) : bool :=
+  match conc (rget F 10) with Some h => h =? 0 | None => false end.
+
 Definition drive_sys_own (F : fstate) (L : fledger) (n : int) : option dres :=
   if negb (ecall_here F) then None else
   match conc (rget F 17) with
@@ -231,8 +243,8 @@ Definition drive_sys_own (F : fstate) (L : fledger) (n : int) : option dres :=
       match conc (rget F 11), conc (rget F 12), conc (rget F 13), conc (rget F 15) with
       | Some len, Some prot, Some flags, Some o =>
           if negb (o =? 0) then None
-          else if (prot =? 3) && (flags =? 34) then sys_grant F L n len
-          else if (prot =? 0) && (flags =? 34) then sys_grant_na F L n len
+          else if (prot =? 3) && (flags =? 34) then (if hint_null F then sys_grant F L n len else None)
+          else if (prot =? 0) && (flags =? 34) then (if hint_null F then sys_grant_na F L n len else None)
           else if (prot =? 0) && (flags =? 50) then
             match ptr (rget F 10) with
             | Some (t, off) => sys_guard F L n t off len
@@ -361,14 +373,18 @@ End DriveDefs.
 (* [comment removed for export] *)
 Definition same_but_vm (m m' : Model) : Prop :=
   m_fd m' = m_fd m /\ m_io m' = m_io m /\ m_fsys m' = m_fsys m /\ m_proc m' = m_proc m
-  /\ m_lim m' = m_lim m /\ m_time m' = m_time m.
+  /\ m_lim m' = m_lim m /\ m_time m' = m_time m
+  (* LPS 08b1429: the launch's kernel build and the vDSO/vvar pair's top
+     ([State.vdso_top], read off [vm_mmap_base] and [vm_init_sp]) place the
+     pair ([State.vdso_reserved]); no step of the drive changes either. *)
+  /\ m_kernel m' = m_kernel m /\ vdso_top (m_vmmaps m') = vdso_top (m_vmmaps m).
 
 Lemma same_but_vm_refl m : same_but_vm m m.
 Proof. repeat split; reflexivity. Qed.
 
 Lemma same_but_vm_trans m1 m2 m3 : same_but_vm m1 m2 -> same_but_vm m2 m3 -> same_but_vm m1 m3.
 Proof.
-  intros (A1 & A2 & A3 & A4 & A5 & A6) (B1 & B2 & B3 & B4 & B5 & B6).
+  intros (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8) (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8).
   repeat split; congruence.
 Qed.
 
@@ -399,6 +415,11 @@ Lemma XI_frame_rho m0 (xtags : list int) : forall rho rho' m,
 Proof. intros rho rho' m _ H. exact H. Qed.
 Lemma XI_frame_vm m0 : forall rho m m', same_but_vm m m' -> XI_frame m0 rho m -> XI_frame m0 rho m'.
 Proof. intros rho m m' H1 H2. exact (same_but_vm_trans _ _ _ H2 H1). Qed.
+(* LPS 08b1429: [XI_frame m0] meets [XI_vdso] once [m0]'s vDSO/vvar pair lies in [R]. *)
+Lemma XI_frame_vdso m0 (R : list (word * word)) :
+  incl (vdso_reserved (m_kernel m0) (vdso_top (m_vmmaps m0))) R ->
+  forall rho m, XI_frame m0 rho m -> incl (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) R.
+Proof. intros H rho m (_ & _ & _ & _ & _ & _ & Ek & Et). rewrite Ek, Et. exact H. Qed.
 
 Definition XI_and (X1 X2 : (int -> word) -> Model -> Prop) : (int -> word) -> Model -> Prop :=
   fun rho m => X1 rho m /\ X2 rho m.
@@ -430,8 +451,10 @@ Hypothesis Halloc : sc_alloc cfg = false.
 (* [comment removed for export] *)
 Variable R0 : list (word * word).
 Variable Rb Rc Lim : Z.
-Hypothesis HRb : live_bytes R0 <= Rb.
-Hypothesis HRc : Z.of_nat (length R0) <= Rc.
+(* LPS 08b1429: [R0] is the whole reserved ledger, vDSO/vvar pair included; the
+   pigeonhole charges only its entries above [task_unmapped_base] ([res_hi]). *)
+Hypothesis HRb : res_cost R0 <= Rb.
+Hypothesis HRc : Z.of_nat (res_count R0) <= Rc.
 Variable rl : role.
 (* [comment removed for export] *)
 Variable keep : list int.
@@ -441,6 +464,10 @@ Variable XI : (int -> word) -> Model -> Prop.
 Variable xtags : list int.
 Hypothesis XI_rho : forall rho rho' m, (forall t, In t xtags -> rho' t = rho t) -> XI rho m -> XI rho' m.
 Hypothesis XI_vm : forall rho m m', same_but_vm m m' -> XI rho m -> XI rho m'.
+(* LPS 08b1429: the caller's invariant puts the launch's vDSO/vvar pair inside the
+   reserved ledger; mprotect's vDSO gate ([Mprotect.mprotect_spec]) reads it. *)
+Hypothesis XI_vdso : forall rho m, XI rho m ->
+  incl (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) R0.
 
 Local Abbreviation Rn := (FxRn.Rn segs IM).
 
@@ -933,14 +960,17 @@ Definition dres_in (x : fstate * fledger * int) (res : dres) : Prop :=
   end.
 
 (* [comment removed for export] *)
+(* LPS 08b1429: with the system call's number reading no memory ([RomBase.memfree]), so that
+   the node is robust to the run's larger read-only backing ([ShapeCfg.rzc_node]) *)
 Definition sys_ok (res : dres) (ms : machine_state) (m : Model) : Prop :=
-  exists (I : Type) (i0 : I) (nx : I -> config),
+  (exists (I : Type) (i0 : I) (nx : I -> config),
     (forall e st, sstep_cfg segs cfg (mkCfg (ms_pend ms) m) e st <->
                   exists i, e = [] /\ st = SNext (nx i))
     /\ forall i, exists F' L' n' rho' ms' m' k,
          dres_in (F', L', n') res
          /\ rsteps segs k (cfg_ms (nx i)) = MachineOk ms' /\ cfg_model (nx i) = m'
-         /\ DInv n' rho' F' L' ms' m'.
+         /\ DInv n' rho' F' L' ms' m')
+  /\ memfree (bv_unsigned (ms_reg ms 17)).
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -968,7 +998,7 @@ Record node_ext (n : int) (rho : int -> word) (F : fstate) (L : fledger) (ms : m
 }.
 
 (* [comment removed for export] *)
-Definition sys_okX (n : int) (rho : int -> word) (F : fstate) (L : fledger)
+Definition sys_okX0 (n : int) (rho : int -> word) (F : fstate) (L : fledger)
                    (res : dres) (ms : machine_state) (m : Model) : Prop :=
   exists (I : Type) (i0 : I) (nx : I -> config),
     (forall e st, sstep_cfg segs cfg (mkCfg (ms_pend ms) m) e st <->
@@ -979,12 +1009,20 @@ Definition sys_okX (n : int) (rho : int -> word) (F : fstate) (L : fledger)
          /\ DInv n' rho' F' L' ms' m'
          /\ node_ext n rho F L ms m n' rho' F' L' ms' m'.
 
+Definition sys_okX (n : int) (rho : int -> word) (F : fstate) (L : fledger)
+                   (res : dres) (ms : machine_state) (m : Model) : Prop :=
+  sys_okX0 n rho F L res ms m /\ memfree (bv_unsigned (ms_reg ms 17)).
+
 Lemma sys_okX_ok n rho F L res ms m : sys_okX n rho F L res ms m -> sys_ok res ms m.
 Proof.
-  intros (I & i0 & nx & Hiff & Hsucc). exists I, i0, nx. split; [exact Hiff|].
+  intros [(I & i0 & nx & Hiff & Hsucc) Hmf]. split; [|exact Hmf]. exists I, i0, nx. split; [exact Hiff|].
   intros i. destruct (Hsucc i) as (F' & L' & n' & rho' & ms' & m' & k & H1 & H2 & H3 & H4 & _).
   exists F', L', n', rho', ms', m', k. split; [exact H1|]. split; [exact H2|]. split; [exact H3 | exact H4].
 Qed.
+
+(** The node at an FX system call is robust to a larger backing. *)
+Lemma sys_rob_pend : forall ms m, memfree (bv_unsigned (ms_reg ms 17)) -> sys_rob segs (mkCfg (ms_pend ms) m).
+Proof. intros ms m H. exact (sys_rob_memfree segs (ms_pend ms) m (ms_reg ms 17) eq_refl H). Qed.
 
 (* [comment removed for export] *)
 Lemma node_ext_same n rho F L ms m n' rho' F' ms' :
@@ -1111,7 +1149,8 @@ Lemma sys_grant_succ n rho F L ms m len res a :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = 34 ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
-  mmap_grant_b m a (page_round_up_Z (to_Z len)) = true ->
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
+  mmap_place_b (ms_gpr (ms_pend ms) 0) m a (page_round_up_Z (to_Z len)) = true ->
   exists L',
     res = DOne (fx_grant F n (pg_up len)) L' (n + 1)%uint63
     /\ sstep_cfg segs cfg (mkCfg (ms_pend ms) m) []
@@ -1125,7 +1164,7 @@ Lemma sys_grant_succ n rho F L ms m len res a :
          (sysret (ms_pend ms) a (apply_zeros (ms_mem (ms_pend ms)) [(a, Z_to_bv 64 (page_round_up_Z (to_Z len)))]))
          (mmap_grant_model a (page_round_up_Z (to_Z len)) m).
 Proof.
-  intros Hsys (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr) Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Ha.
+  intros Hsys (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr) Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull Ha.
   unfold sys_grant in Hsys. cbv zeta in Hsys.
   destruct ((0 <? len)%uint63 && (len <=? 4611686018427387904)%uint63
             && (pg_up len <=? 4611686018427387904)%uint63 && tag_ok F n
@@ -1150,10 +1189,10 @@ Proof.
   destruct (ledger_inv_params_nonneg _ _ _ _ _ Hli) as [Hc0 HS0].
   unfold grant_fits in Hfit. apply andb_true_iff in Hfit as [Hpig Hacct].
   apply Z.leb_le in Hpig. rewrite HnZ in Hpig.
-  assert (Hpig' : page_size + (live_bytes R0 + fl_S L) + (Z.of_nat (length R0) + fl_c L) * (nZ + page_size) + nZ
+  assert (Hpig' : page_size + (res_cost R0 + fl_S L) + (Z.of_nat (res_count R0) + fl_c L) * (nZ + page_size) + nZ
                   <= alloc_lo_bound).
   { rewrite alloc_lo_bound_val. unfold page_size.
-    assert ((Z.of_nat (length R0) + fl_c L) * (nZ + 4096) <= (Rc + fl_c L) * (nZ + 4096))
+    assert ((Z.of_nat (res_count R0) + fl_c L) * (nZ + 4096) <= (Rc + fl_c L) * (nZ + 4096))
       by (apply Z.mul_le_mono_nonneg_r; lia).
     lia. }
   fold nZ in Ha. eexists. split; [reflexivity|]. fold nZi nZ.
@@ -1161,9 +1200,9 @@ Proof.
             (SNext (mkCfg (sysret (ms_pend ms) a (apply_zeros (ms_mem (ms_pend ms)) [(a, Z_to_bv 64 nZ)]))
                           (mmap_grant_model a nZ m)))).
   { apply (mmap_anon_step_iff cfg segs (ms_pend ms) _ m (to_Z len) Halloc Hh (proj1 Hnl)
-             (ms_pend_svc ms) Hx8 Hargs (ex_intro _ a Ha)).
+             (ms_pend_svc ms) Hx8 Hargs (place_declined_b_hint0 _ _ _ _ Hnull) (ex_intro _ a Ha)).
     exists a. repeat split. exact Ha. }
-  pose proof Ha as Hg. apply mmap_grant_b_iff in Hg as (Hal & Hapos & Hatop & Hfree & _).
+  pose proof (mmap_place_b_grant _ _ _ _ Ha) as Hg. apply mmap_grant_b_iff in Hg as (Hal & Hapos & Hatop & Hfree & _).
   destruct (ledger_inv_alloc_top _ _ _ _ _ Hli) as [_ Htop].
   unfold page_size in Hal. unfold TASK_SIZE in Htop.
   assert (Hsep : sep_from rho (f_mem F) (bv_unsigned a) (bv_unsigned a + to_Z nZi)).
@@ -1211,7 +1250,7 @@ Proof.
   split; [exact HRn'|].
   split. { unfold rho'. rewrite rho_upd_other; [exact H0|]. intros E. rewrite <- E, to_Z_0 in Hn0. lia. }
   split; [exact Hh|]. split; [apply model_nolazy_with_vmmaps; exact Hnl|].
-  split; [cbn [fl_c fl_S]; rewrite HnZ; exact (mmap_anon_inv R0 Lim (fl_c L) (fl_S L) m a (to_Z len) Hli Hpos Ha)|].
+  split; [cbn [fl_c fl_S]; rewrite HnZ; exact (mmap_anon_inv R0 Lim (fl_c L) (fl_S L) m a (to_Z len) Hli Hpos (mmap_place_b_grant _ _ _ _ Ha))|].
   split.
   { (* [comment removed for export] *)
     rewrite HM'. intros t rg Hgt. unfold M' in Hgt. rewrite iget_iset in Hgt.
@@ -1267,7 +1306,7 @@ Proof.
     exact (Hmem rgt x Hgt Hx).
 Qed.
 
-Lemma sys_grant_soundX n rho F L ms m len res :
+Lemma sys_grant_soundX0 n rho F L ms m len res :
   sys_grant Rb Rc Lim rl F L n len = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
   RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
@@ -1276,9 +1315,10 @@ Lemma sys_grant_soundX n rho F L ms m len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = 34 ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
-  sys_okX n rho F L res ms m.
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
+  sys_okX0 n rho F L res ms m.
 Proof.
-  intros Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5. pose proof Hsys as Hsys0.
+  intros Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull. pose proof Hsys as Hsys0.
   pose proof HD as (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr).
   unfold sys_grant in Hsys. cbv zeta in Hsys.
   destruct ((0 <? len)%uint63 && (len <=? 4611686018427387904)%uint63
@@ -1304,23 +1344,24 @@ Proof.
   destruct (ledger_inv_params_nonneg _ _ _ _ _ Hli) as [Hc0 HS0].
   unfold grant_fits in Hfit. apply andb_true_iff in Hfit as [Hpig Hacct].
   apply Z.leb_le in Hpig. rewrite HnZ in Hpig.
-  assert (Hpig' : page_size + (live_bytes R0 + fl_S L) + (Z.of_nat (length R0) + fl_c L) * (nZ + page_size) + nZ
+  assert (Hpig' : task_unmapped_base + (res_cost R0 + fl_S L) + (Z.of_nat (res_count R0) + fl_c L) * (nZ + page_size) + nZ
                   <= alloc_lo_bound).
-  { rewrite alloc_lo_bound_val. unfold page_size.
-    assert ((Z.of_nat (length R0) + fl_c L) * (nZ + 4096) <= (Rc + fl_c L) * (nZ + 4096))
+  { rewrite alloc_lo_bound_val, task_unmapped_base_val. unfold page_size.
+    assert ((Z.of_nat (res_count R0) + fl_c L) * (nZ + 4096) <= (Rc + fl_c L) * (nZ + 4096))
       by (apply Z.mul_le_mono_nonneg_r; lia).
     lia. }
-  assert (Hex : exists a, mmap_grant_b m a nZ = true).
+  assert (HnZal : nZ mod page_size = 0) by (unfold page_size; exact HnZmod).
+  assert (Hex : exists a, mmap_place_b (ms_gpr (ms_pend ms) 0) m a nZ = true).
   { destruct rl_cases as [Erl|Erl].
     - pose proof Hbud1 as Hb. unfold budget in Hb. rewrite Erl in Hb.
       exact (mmap_anon_grant_exists_src cfg segs R0 Lim (fl_c L) (fl_S L) (ms_pend ms) _ m (to_Z len)
                Hli Hb Hh (ms_pend_svc ms) Hx8 Hargs Hpig').
     - rewrite Erl in Hacct. apply Z.leb_le in Hacct. rewrite HnZ in Hacct.
-      exact (mmap_grant_exists_inv_acct R0 Lim (fl_c L) (fl_S L) m nZ Hli (proj2 Hnl) ltac:(lia) Hpig' Hacct). }
+      exact (mmap_place_exists_inv_acct (ms_gpr (ms_pend ms) 0) R0 Lim (fl_c L) (fl_S L) m nZ Hli (proj2 Hnl) HnZpos HnZal Hpig' Hacct). }
   pose proof (mmap_anon_step_iff cfg segs (ms_pend ms) _ m (to_Z len) Halloc Hh (proj1 Hnl)
-                (ms_pend_svc ms) Hx8 Hargs Hex) as Hiff. cbv zeta in Hiff. fold nZ in Hiff.
+                (ms_pend_svc ms) Hx8 Hargs (place_declined_b_hint0 _ _ _ _ Hnull) Hex) as Hiff. cbv zeta in Hiff. fold nZ in Hiff.
   destruct Hex as [a0 Ha0].
-  exists {a : word | mmap_grant_b m a nZ = true}, (exist _ a0 Ha0),
+  exists {a : word | mmap_place_b (ms_gpr (ms_pend ms) 0) m a nZ = true}, (exist _ a0 Ha0),
     (fun i => mkCfg (sysret (ms_pend ms) (proj1_sig i)
                        (apply_zeros (ms_mem (ms_pend ms)) [(proj1_sig i, Z_to_bv 64 nZ)]))
                     (mmap_grant_model (proj1_sig i) nZ m)).
@@ -1329,11 +1370,27 @@ Proof.
     - intros (a & Ha & -> & ->). exists (exist _ a Ha). split; reflexivity.
     - intros ([a Ha] & -> & ->). exists a. repeat split. exact Ha. }
   intros [a Ha]. cbn [proj1_sig].
-  destruct (sys_grant_succ n rho F L ms m len _ a Hsys0 HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Ha)
+  destruct (sys_grant_succ n rho F L ms m len _ a Hsys0 HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull Ha)
     as (L' & E & _ & HD' & Hne).
   eexists (fx_grant F n (pg_up len)), L', (n + 1)%uint63, (rho_upd rho n a), _, _, 0%nat.
   cbn [cfg_ms cfg_model rsteps]. rewrite E. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
   split; [exact HD' | exact Hne].
+Qed.
+
+Lemma sys_grant_soundX n rho F L ms m len res :
+  sys_grant Rb Rc Lim rl F L n len = Some res ->
+  DInv n rho F L ms m -> at_ecall F ->
+  RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
+  bv_unsigned (ms_reg ms 17) = 222 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 1) = to_Z len ->
+  bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 3) = 34 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
+  sys_okX n rho F L res ms m.
+Proof.
+  intros. split; [eapply sys_grant_soundX0; eassumption |].
+  match goal with H : bv_unsigned (ms_reg ms 17) = _ |- _ => rewrite H end. memfree_lit.
 Qed.
 
 Lemma sys_grant_sound n rho F L ms m len res :
@@ -1345,6 +1402,7 @@ Lemma sys_grant_sound n rho F L ms m len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = 34 ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
   sys_ok res ms m.
 Proof.
   intros. eapply sys_okX_ok. eapply sys_grant_soundX; eassumption.
@@ -1460,14 +1518,14 @@ Proof.
     destruct (Hsep _ _ _ _ Et Hg' Hg) as [Hd|Hd]; lia.
 Qed.
 
-Lemma sys_unmap_soundX n rho F L ms m t off len res :
+Lemma sys_unmap_soundX0 n rho F L ms m t off len res :
   sys_unmap keep F L n t off len = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
   RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
   bv_unsigned (ms_reg ms 17) = 215 ->
   ms_gpr (ms_pend ms) 0 = adr rho t (to_Z off) ->
   bv_unsigned (ms_gpr (ms_pend ms) 1) = to_Z len ->
-  sys_okX n rho F L res ms m.
+  sys_okX0 n rho F L res ms m.
 Proof.
   intros Hsys (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr) Hat Hstep Hx8 Ha0 Ha1.
   unfold sys_unmap in Hsys. destruct (iget t (f_mem F)) as [rg|] eqn:Hg; [|discriminate].
@@ -1503,7 +1561,7 @@ Proof.
   { apply (munmap_entry_args_of_inv R0 Lim (fl_c L) (fl_S L)); try assumption.
     - rewrite Hnw. exact Hup.
     - rewrite Ha0. exact Hin. }
-  pose proof (munmap_entry_step_iff cfg segs (ms_pend ms) _ m (to_Z len) nw Hh Hnl
+  pose proof (munmap_entry_step_iff cfg segs (ms_pend ms) _ m (to_Z len) nw Halloc Hh Hnl
                 (ms_pend_svc ms) Hx8 Hargs) as Hiff.
   rewrite Ha0 in Hiff.
   exists unit, tt, (fun _ => mkCfg (sysret (ms_pend ms) (Z_to_bv 64 0)
@@ -1641,6 +1699,19 @@ Proof.
   exact (ival_disjoint rho (f_mem F) tk t rgk rg _ Hsep Hnek Hgk Hg Hx (proj2 (Hival _) (conj B1 B2))).
 Qed.
 
+Lemma sys_unmap_soundX n rho F L ms m t off len res :
+  sys_unmap keep F L n t off len = Some res ->
+  DInv n rho F L ms m -> at_ecall F ->
+  RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
+  bv_unsigned (ms_reg ms 17) = 215 ->
+  ms_gpr (ms_pend ms) 0 = adr rho t (to_Z off) ->
+  bv_unsigned (ms_gpr (ms_pend ms) 1) = to_Z len ->
+  sys_okX n rho F L res ms m.
+Proof.
+  intros. split; [eapply sys_unmap_soundX0; eassumption |].
+  match goal with H : bv_unsigned (ms_reg ms 17) = _ |- _ => rewrite H end. memfree_lit.
+Qed.
+
 Lemma sys_unmap_sound n rho F L ms m t off len res :
   sys_unmap keep F L n t off len = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
@@ -1656,13 +1727,13 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma sys_brk_query_soundX n rho F L ms m res :
+Lemma sys_brk_query_soundX0 n rho F L ms m res :
   sys_brk_query F L n = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
   RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
   bv_unsigned (ms_reg ms 17) = 214 ->
   bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
-  sys_okX n rho F L res ms m.
+  sys_okX0 n rho F L res ms m.
 Proof.
   intros Hsys (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr) Hat Hstep Hx8 Ha0.
   unfold sys_brk_query in Hsys.
@@ -1702,6 +1773,18 @@ Proof.
   exact Hfr.
 Qed.
 
+Lemma sys_brk_query_soundX n rho F L ms m res :
+  sys_brk_query F L n = Some res ->
+  DInv n rho F L ms m -> at_ecall F ->
+  RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
+  bv_unsigned (ms_reg ms 17) = 214 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
+  sys_okX n rho F L res ms m.
+Proof.
+  intros. split; [eapply sys_brk_query_soundX0; eassumption |].
+  match goal with H : bv_unsigned (ms_reg ms 17) = _ |- _ => rewrite H end. memfree_lit.
+Qed.
+
 Lemma sys_brk_query_sound n rho F L ms m res :
   sys_brk_query F L n = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
@@ -1726,7 +1809,8 @@ Lemma sys_grant_na_succ n rho F L ms m len res a :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 0 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = 34 ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
-  mmap_grant_na_b (m_vmmaps m) a (page_round_up_Z (to_Z len)) = true ->
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
+  mmap_place_na_b (ms_gpr (ms_pend ms) 0) m a (page_round_up_Z (to_Z len)) = true ->
   exists L',
     res = DOne (fx_grant_na F n (pg_up len)) L' (n + 1)%uint63
     /\ sstep_cfg segs cfg (mkCfg (ms_pend ms) m) []
@@ -1740,7 +1824,7 @@ Lemma sys_grant_na_succ n rho F L ms m len res a :
          (sysret (ms_pend ms) a (apply_unmaps (ms_mem (ms_pend ms)) [(a, Z_to_bv 64 (page_round_up_Z (to_Z len)))]))
          (mmap_na_model a (page_round_up_Z (to_Z len)) m).
 Proof.
-  intros Hsys (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr) Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Ha.
+  intros Hsys (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr) Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull Ha.
   unfold sys_grant_na in Hsys. cbv zeta in Hsys.
   destruct ((0 <? len)%uint63 && (len <=? 4611686018427387904)%uint63
             && (pg_up len <=? 4611686018427387904)%uint63 && tag_ok F n
@@ -1765,10 +1849,10 @@ Proof.
   destruct (ledger_inv_params_nonneg _ _ _ _ _ Hli) as [Hc0 HS0].
   unfold na_fits in Hfit. rename Hfit into Hpig.
   apply Z.leb_le in Hpig. rewrite HnZ in Hpig.
-  assert (Hpig' : page_size + (live_bytes R0 + fl_S L) + (Z.of_nat (length R0) + fl_c L) * (nZ + page_size) + nZ
+  assert (Hpig' : page_size + (res_cost R0 + fl_S L) + (Z.of_nat (res_count R0) + fl_c L) * (nZ + page_size) + nZ
                   <= alloc_lo_bound).
   { rewrite alloc_lo_bound_val. unfold page_size.
-    assert ((Z.of_nat (length R0) + fl_c L) * (nZ + 4096) <= (Rc + fl_c L) * (nZ + 4096))
+    assert ((Z.of_nat (res_count R0) + fl_c L) * (nZ + 4096) <= (Rc + fl_c L) * (nZ + 4096))
       by (apply Z.mul_le_mono_nonneg_r; lia).
     lia. }
   fold nZ in Ha. eexists. split; [reflexivity|]. fold nZi nZ.
@@ -1776,9 +1860,9 @@ Proof.
             (SNext (mkCfg (sysret (ms_pend ms) a (apply_unmaps (ms_mem (ms_pend ms)) [(a, Z_to_bv 64 nZ)]))
                           (mmap_na_model a nZ m)))).
   { apply (mmap_na_step_iff cfg segs (ms_pend ms) _ m (to_Z len) Halloc Hh (proj1 Hnl)
-             (ms_pend_svc ms) Hx8 Hargs (ex_intro _ a Ha)).
+             (ms_pend_svc ms) Hx8 Hargs (place_declined_b_hint0 _ _ _ _ Hnull) (ex_intro _ a Ha)).
     exists a. repeat split. exact Ha. }
-  pose proof Ha as Hg. apply mmap_grant_na_b_iff in Hg as (Hal & Hapos & Hatop & Hfree).
+  pose proof (mmap_place_na_b_grant_na _ _ _ _ Ha) as Hg. apply mmap_grant_na_b_iff in Hg as (Hal & Hapos & Hatop & Hfree).
   destruct (ledger_inv_alloc_top _ _ _ _ _ Hli) as [_ Htop].
   unfold page_size in Hal. unfold TASK_SIZE in Htop.
   assert (Hsep : sep_from rho (f_mem F) (bv_unsigned a) (bv_unsigned a + to_Z nZi)).
@@ -1829,7 +1913,7 @@ Proof.
   split; [exact HRn'|].
   split. { unfold rho'. rewrite rho_upd_other; [exact H0|]. intros E. rewrite <- E, to_Z_0 in Hn0. lia. }
   split; [exact Hh|]. split; [apply model_nolazy_with_vmmaps; exact Hnl|].
-  split; [cbn [fl_c fl_S]; rewrite HnZ; exact (mmap_na_inv R0 Lim (fl_c L) (fl_S L) m a (to_Z len) Hli Hpos Ha)|].
+  split; [cbn [fl_c fl_S]; rewrite HnZ; exact (mmap_na_inv R0 Lim (fl_c L) (fl_S L) m a (to_Z len) Hli Hpos (mmap_place_na_b_grant_na _ _ _ _ Ha))|].
   split.
   { (* [comment removed for export] *)
     rewrite HM'. intros t rg Hgt. unfold M' in Hgt. rewrite iget_iset in Hgt.
@@ -1889,7 +1973,7 @@ Proof.
     exact (Hmem rgt x Hgt Hx).
 Qed.
 
-Lemma sys_grant_na_soundX n rho F L ms m len res :
+Lemma sys_grant_na_soundX0 n rho F L ms m len res :
   sys_grant_na Rb Rc F L n len = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
   RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
@@ -1898,9 +1982,10 @@ Lemma sys_grant_na_soundX n rho F L ms m len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 0 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = 34 ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
-  sys_okX n rho F L res ms m.
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
+  sys_okX0 n rho F L res ms m.
 Proof.
-  intros Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5. pose proof Hsys as Hsys0.
+  intros Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull. pose proof Hsys as Hsys0.
   pose proof HD as (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr).
   unfold sys_grant_na in Hsys. cbv zeta in Hsys.
   destruct ((0 <? len)%uint63 && (len <=? 4611686018427387904)%uint63
@@ -1926,18 +2011,19 @@ Proof.
   destruct (ledger_inv_params_nonneg _ _ _ _ _ Hli) as [Hc0 HS0].
   unfold na_fits in Hfit. rename Hfit into Hpig.
   apply Z.leb_le in Hpig. rewrite HnZ in Hpig.
-  assert (Hpig' : page_size + (live_bytes R0 + fl_S L) + (Z.of_nat (length R0) + fl_c L) * (nZ + page_size) + nZ
+  assert (Hpig' : task_unmapped_base + (res_cost R0 + fl_S L) + (Z.of_nat (res_count R0) + fl_c L) * (nZ + page_size) + nZ
                   <= alloc_lo_bound).
-  { rewrite alloc_lo_bound_val. unfold page_size.
-    assert ((Z.of_nat (length R0) + fl_c L) * (nZ + 4096) <= (Rc + fl_c L) * (nZ + 4096))
+  { rewrite alloc_lo_bound_val, task_unmapped_base_val. unfold page_size.
+    assert ((Z.of_nat (res_count R0) + fl_c L) * (nZ + 4096) <= (Rc + fl_c L) * (nZ + 4096))
       by (apply Z.mul_le_mono_nonneg_r; lia).
     lia. }
-  assert (Hex : exists a, mmap_grant_na_b (m_vmmaps m) a nZ = true).
-  { exact (mmap_grant_na_exists_inv R0 Lim (fl_c L) (fl_S L) (m_vmmaps m) nZ Hli ltac:(lia) Hpig'). }
+  assert (HnZal : nZ mod page_size = 0) by (unfold page_size; exact HnZmod).
+  assert (Hex : exists a, mmap_place_na_b (ms_gpr (ms_pend ms) 0) m a nZ = true).
+  { exact (mmap_place_na_exists_inv (ms_gpr (ms_pend ms) 0) R0 Lim (fl_c L) (fl_S L) m nZ Hli HnZpos HnZal Hpig'). }
   pose proof (mmap_na_step_iff cfg segs (ms_pend ms) _ m (to_Z len) Halloc Hh (proj1 Hnl)
-                (ms_pend_svc ms) Hx8 Hargs Hex) as Hiff. cbv zeta in Hiff. fold nZ in Hiff.
+                (ms_pend_svc ms) Hx8 Hargs (place_declined_b_hint0 _ _ _ _ Hnull) Hex) as Hiff. cbv zeta in Hiff. fold nZ in Hiff.
   destruct Hex as [a0 Ha0].
-  exists {a : word | mmap_grant_na_b (m_vmmaps m) a nZ = true}, (exist _ a0 Ha0),
+  exists {a : word | mmap_place_na_b (ms_gpr (ms_pend ms) 0) m a nZ = true}, (exist _ a0 Ha0),
     (fun i => mkCfg (sysret (ms_pend ms) (proj1_sig i)
                        (apply_unmaps (ms_mem (ms_pend ms)) [(proj1_sig i, Z_to_bv 64 nZ)]))
                     (mmap_na_model (proj1_sig i) nZ m)).
@@ -1946,11 +2032,27 @@ Proof.
     - intros (a & Ha & -> & ->). exists (exist _ a Ha). split; reflexivity.
     - intros ([a Ha] & -> & ->). exists a. repeat split. exact Ha. }
   intros [a Ha]. cbn [proj1_sig].
-  destruct (sys_grant_na_succ n rho F L ms m len _ a Hsys0 HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Ha)
+  destruct (sys_grant_na_succ n rho F L ms m len _ a Hsys0 HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull Ha)
     as (L' & E & _ & HD' & Hne).
   eexists (fx_grant_na F n (pg_up len)), L', (n + 1)%uint63, (rho_upd rho n a), _, _, 0%nat.
   cbn [cfg_ms cfg_model rsteps]. rewrite E. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
   split; [exact HD' | exact Hne].
+Qed.
+
+Lemma sys_grant_na_soundX n rho F L ms m len res :
+  sys_grant_na Rb Rc F L n len = Some res ->
+  DInv n rho F L ms m -> at_ecall F ->
+  RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
+  bv_unsigned (ms_reg ms 17) = 222 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 1) = to_Z len ->
+  bv_unsigned (ms_gpr (ms_pend ms) 2) = 0 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 3) = 34 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
+  sys_okX n rho F L res ms m.
+Proof.
+  intros. split; [eapply sys_grant_na_soundX0; eassumption |].
+  match goal with H : bv_unsigned (ms_reg ms 17) = _ |- _ => rewrite H end. memfree_lit.
 Qed.
 
 Lemma sys_grant_na_sound n rho F L ms m len res :
@@ -1962,6 +2064,7 @@ Lemma sys_grant_na_sound n rho F L ms m len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 0 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = 34 ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
   sys_ok res ms m.
 Proof.
   intros. eapply sys_okX_ok. eapply sys_grant_na_soundX; eassumption.
@@ -2303,7 +2406,7 @@ Proof.
   exact Hrange.
 Qed.
 
-Lemma sys_guard_soundX n rho F L ms m t off len res :
+Lemma sys_guard_soundX0 n rho F L ms m t off len res :
   sys_guard keep F L n t off len = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
   RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
@@ -2313,7 +2416,7 @@ Lemma sys_guard_soundX n rho F L ms m t off len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 0 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = 50 ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
-  sys_okX n rho F L res ms m.
+  sys_okX0 n rho F L res ms m.
 Proof.
   intros Hsys HD Hat Hstep Hx8 Ha0 Ha1 Ha2 Ha3 Ha5.
   pose proof HD as (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr).
@@ -2429,6 +2532,22 @@ Proof.
     apply Z.leb_le in B1. apply Z.ltb_lt in B2. apply Hx. unfold in_ival. lia.
 Qed.
 
+Lemma sys_guard_soundX n rho F L ms m t off len res :
+  sys_guard keep F L n t off len = Some res ->
+  DInv n rho F L ms m -> at_ecall F ->
+  RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
+  bv_unsigned (ms_reg ms 17) = 222 ->
+  ms_gpr (ms_pend ms) 0 = adr rho t (to_Z off) ->
+  bv_unsigned (ms_gpr (ms_pend ms) 1) = to_Z len ->
+  bv_unsigned (ms_gpr (ms_pend ms) 2) = 0 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 3) = 50 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  sys_okX n rho F L res ms m.
+Proof.
+  intros. split; [eapply sys_guard_soundX0; eassumption |].
+  match goal with H : bv_unsigned (ms_reg ms 17) = _ |- _ => rewrite H end. memfree_lit.
+Qed.
+
 Lemma sys_guard_sound n rho F L ms m t off len res :
   sys_guard keep F L n t off len = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
@@ -2444,7 +2563,7 @@ Proof.
   intros. eapply sys_okX_ok. eapply sys_guard_soundX; eassumption.
 Qed.
 
-Lemma sys_expose_soundX n rho F L ms m t off len res :
+Lemma sys_expose_soundX0 n rho F L ms m t off len res :
   sys_expose Lim rl keep F L n t off len = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
   RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
@@ -2452,7 +2571,7 @@ Lemma sys_expose_soundX n rho F L ms m t off len res :
   ms_gpr (ms_pend ms) 0 = adr rho t (to_Z off) ->
   bv_unsigned (ms_gpr (ms_pend ms) 1) = to_Z len ->
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
-  sys_okX n rho F L res ms m.
+  sys_okX0 n rho F L res ms m.
 Proof.
   intros Hsys HD Hat Hstep Hx8 Ha0 Ha1 Ha2.
   pose proof HD as (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr).
@@ -2487,7 +2606,8 @@ Proof.
   pose proof (i63_range off) as Hoff0. pose proof (i63_range eo) as Heo0. pose proof (i63_range el) as Hel0.
   assert (HnZw : bv_unsigned (Z_to_bv 64 nZ) = nZ) by (apply u64_lit; lia).
   assert (Hargs : mprotect_rw_args (ms_pend ms) m (to_Z len)).
-  { apply (mprotect_rw_args_of_inv R0 Lim (fl_c L) (fl_S L) (ms_pend ms) m (to_Z len) q); try assumption; try lia.
+  { pose proof (XI_vdso rho m HXI) as Hvd.
+    apply (mprotect_rw_args_of_inv R0 Lim (fl_c L) (fl_S L) (ms_pend ms) m (to_Z len) q); try assumption; try lia.
     - rewrite Ha0. exact Hamod.
     - rewrite Ha0, Eqlo, Hau. lia.
     - rewrite Ha0, Eqhi, Hau. fold nZ. lia. }
@@ -2570,6 +2690,20 @@ Proof.
     apply Z.leb_le in B1. apply Z.ltb_lt in B2. apply Hx. unfold in_ival. lia.
 Qed.
 
+Lemma sys_expose_soundX n rho F L ms m t off len res :
+  sys_expose Lim rl keep F L n t off len = Some res ->
+  DInv n rho F L ms m -> at_ecall F ->
+  RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
+  bv_unsigned (ms_reg ms 17) = 226 ->
+  ms_gpr (ms_pend ms) 0 = adr rho t (to_Z off) ->
+  bv_unsigned (ms_gpr (ms_pend ms) 1) = to_Z len ->
+  bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
+  sys_okX n rho F L res ms m.
+Proof.
+  intros. split; [eapply sys_expose_soundX0; eassumption |].
+  match goal with H : bv_unsigned (ms_reg ms 17) = _ |- _ => rewrite H end. memfree_lit.
+Qed.
+
 Lemma sys_expose_sound n rho F L ms m t off len res :
   sys_expose Lim rl keep F L n t off len = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
@@ -2601,13 +2735,13 @@ Proof.
     apply Hsub. exact H3.
 Qed.
 
-Lemma sys_brk_grow_soundX n rho F L ms m t off res :
+Lemma sys_brk_grow_soundX0 n rho F L ms m t off res :
   sys_brk_grow keep F L n t off = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
   RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
   bv_unsigned (ms_reg ms 17) = 214 ->
   ms_gpr (ms_pend ms) 0 = adr rho t (to_Z off) ->
-  sys_okX n rho F L res ms m.
+  sys_okX0 n rho F L res ms m.
 Proof.
   intros Hsys HD Hat Hstep Hx8 Ha0.
   pose proof HD as (HRn & H0 & Hh & Hnl & Hli & Hcov & Hmir & Hbud & HXI & Hxt & Hfr).
@@ -2816,6 +2950,18 @@ Proof.
     rewrite Hbrku in Hs; unfold in_ival in Hx; lia.
 Qed.
 
+Lemma sys_brk_grow_soundX n rho F L ms m t off res :
+  sys_brk_grow keep F L n t off = Some res ->
+  DInv n rho F L ms m -> at_ecall F ->
+  RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
+  bv_unsigned (ms_reg ms 17) = 214 ->
+  ms_gpr (ms_pend ms) 0 = adr rho t (to_Z off) ->
+  sys_okX n rho F L res ms m.
+Proof.
+  intros. split; [eapply sys_brk_grow_soundX0; eassumption |].
+  match goal with H : bv_unsigned (ms_reg ms 17) = _ |- _ => rewrite H end. memfree_lit.
+Qed.
+
 Lemma sys_brk_grow_sound n rho F L ms m t off res :
   sys_brk_grow keep F L n t off = Some res ->
   DInv n rho F L ms m -> at_ecall F ->
@@ -2867,10 +3013,18 @@ Proof.
     apply eqb_lit in Eo. rewrite Eo, to_Z_0 in Ha5.
     destruct ((prot =? 3)%uint63 && (flags =? 34)%uint63) eqn:Eg.
     { apply andb_true_iff in Eg as [Ep Ef]. apply eqb_lit in Ep, Ef. rewrite Ep in Ha2. rewrite Ef in Ha3.
-      exact (sys_grant_soundX n rho F L ms m len res Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5). }
+      destruct (hint_null F) eqn:Hhn; cbv iota in Hsys; [|discriminate].
+      unfold hint_null in Hhn. destruct (conc (FxState.rget F 10)) as [h0|] eqn:H10; [|discriminate].
+      apply eqb_lit in Hhn. destruct (conc_sound rho _ _ H0 H10) as [_ Hnull].
+      rewrite <- (pend_gpr0 rho F ms HR) in Hnull. rewrite Hhn, to_Z_0 in Hnull.
+      exact (sys_grant_soundX n rho F L ms m len res Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull). }
     destruct ((prot =? 0)%uint63 && (flags =? 34)%uint63) eqn:Ena.
     { apply andb_true_iff in Ena as [Ep Ef]. apply eqb_lit in Ep, Ef. rewrite Ep in Ha2. rewrite Ef in Ha3.
-      exact (sys_grant_na_soundX n rho F L ms m len res Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5). }
+      destruct (hint_null F) eqn:Hhn; cbv iota in Hsys; [|discriminate].
+      unfold hint_null in Hhn. destruct (conc (FxState.rget F 10)) as [h0|] eqn:H10; [|discriminate].
+      apply eqb_lit in Hhn. destruct (conc_sound rho _ _ H0 H10) as [_ Hnull].
+      rewrite <- (pend_gpr0 rho F ms HR) in Hnull. rewrite Hhn, to_Z_0 in Hnull.
+      exact (sys_grant_na_soundX n rho F L ms m len res Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull). }
     destruct ((prot =? 0)%uint63 && (flags =? 50)%uint63) eqn:Egd; [|discriminate].
     apply andb_true_iff in Egd as [Ep Ef]. apply eqb_lit in Ep, Ef. rewrite Ep in Ha2. rewrite Ef in Ha3.
     destruct (ptr (FxState.rget F 10)) as [[t off]|] eqn:H10; [|discriminate].
@@ -3052,12 +3206,13 @@ Proof.
     + (* [comment removed for export] *)
       destruct (drive_sys code Rb Rc Lim rl keep xsys F1 L n) as [res|] eqn:Hsys.
       * destruct (drive_sys_sound n rho F1 L ms1 m res Hsys HD1 (Hec eq_refl))
-          as (I & i0 & nx & Hiff & Hsucc).
+          as [(I & i0 & nx & Hiff & Hsucc) Hmf].
         pose proof HD1 as (HRn1 & H01 & _).
         pose proof (R_svc _ _ _ _ _ (Rn_R _ _ _ _ HRn1 H01)) as Hsvc.
         apply (rzc_rsteps cfg segs 1 ms1 m (ms_pend ms1) T Hh (proj1 Hnl) (rsteps_pend ms1 Hsvc (Hec eq_refl))).
         apply (rzc_cases_same cfg segs _ I nx T i0).
         { apply node_ok_cfg_of_step_iff. exact Hiff. }
+        { exact (sys_rob_pend ms1 m Hmf). }
         intros i. destruct (Hsucc i) as (F' & L' & n' & rho' & ms' & m' & k' & Hin & Hk' & Hm' & HD').
         destruct (nx i) as [msi mi]. cbn [cfg_ms cfg_model] in Hk', Hm'. subst mi.
         pose proof HD' as (_ & _ & Hh' & Hnl' & _).
@@ -3101,7 +3256,7 @@ Proof.
       exact (star_cfg_trans cfg segs _ [] _ [] _ Hstar1 Hst).
     + destruct (drive_sys code Rb Rc Lim rl keep xsys F1 L n) as [res|] eqn:Hsys.
       * destruct (drive_sys_sound n rho F1 L ms1 m res Hsys HD1 (Hec eq_refl))
-          as (I & i0 & nx & Hiff & Hsucc).
+          as [(I & i0 & nx & Hiff & Hsucc) Hmf].
         pose proof HD1 as (HRn1 & H01 & _).
         pose proof (R_svc _ _ _ _ _ (Rn_R _ _ _ _ HRn1 H01)) as Hsvc.
         pose proof (rsteps_star_cfg cfg segs 1 ms1 m (ms_pend ms1) Hh (proj1 Hnl)
@@ -3371,12 +3526,13 @@ Proof.
     + exact (IH n rho F1 L ms1 m HD1 Hext Hleaf).
     + destruct (drive_sys code Rb Rc Lim rl keep xsys F1 L n) as [res|] eqn:Hsys.
       * destruct (drive_sys_soundX n rho F1 L ms1 m res Hsys (DInvX_DInv _ _ _ _ _ _ HD1) (Hec eq_refl))
-          as (I & i0 & nx & Hiff & Hsucc).
+          as [(I & i0 & nx & Hiff & Hsucc) Hmf].
         pose proof (DInvX_DInv _ _ _ _ _ _ HD1) as (HRn1 & H01 & _).
         pose proof (R_svc _ _ _ _ _ (Rn_R _ _ _ _ HRn1 H01)) as Hsvc.
         apply (rzc_rsteps cfg segs 1 ms1 m (ms_pend ms1) T Hh (proj1 Hnl) (rsteps_pend ms1 Hsvc (Hec eq_refl))).
         apply (rzc_cases_same cfg segs _ I nx T i0).
         { apply node_ok_cfg_of_step_iff. exact Hiff. }
+        { exact (sys_rob_pend ms1 m Hmf). }
         intros i. destruct (Hsucc i) as (F' & L' & n' & rho' & ms' & m' & k' & Hin & Hk' & Hm' & HD' & Hne).
         destruct (nx i) as [msi mi]. cbn [cfg_ms cfg_model] in Hk', Hm'. subst mi.
         pose proof HD' as (_ & _ & Hh' & Hnl' & _).
@@ -3421,7 +3577,7 @@ Proof.
       exact (star_cfg_trans cfg segs _ [] _ [] _ Hstar1 Hst).
     + destruct (drive_sys code Rb Rc Lim rl keep xsys F1 L n) as [res|] eqn:Hsys.
       * destruct (drive_sys_soundX n rho F1 L ms1 m res Hsys (DInvX_DInv _ _ _ _ _ _ HD1) (Hec eq_refl))
-          as (I & i0 & nx & Hiff & Hsucc).
+          as [(I & i0 & nx & Hiff & Hsucc) Hmf].
         pose proof (DInvX_DInv _ _ _ _ _ _ HD1) as (HRn1 & H01 & _).
         pose proof (R_svc _ _ _ _ _ (Rn_R _ _ _ _ HRn1 H01)) as Hsvc.
         pose proof (rsteps_star_cfg cfg segs 1 ms1 m (ms_pend ms1) Hh (proj1 Hnl)

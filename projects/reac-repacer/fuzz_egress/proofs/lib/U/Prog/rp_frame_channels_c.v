@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: copied from reac-repacer/fuzz_wire proofs/reac-repacer/fuzz_wire/lib/U/Prog/rp_frame_channels_c.v at 75e059c080d; module path, entry address and the addresses in comments set to fuzz_egress's.
+(* Modified by Theorem Labs: copied from reac-repacer/fuzz_wire proofs/reac-repacer/fuzz_wire/lib/U/Prog/rp_frame_channels_c.v; module path, entry address and the addresses in comments set to fuzz_egress's.
    rp_frame_channels, reac-repacer src/repace_wire.c:74-86 (sha256 cfd1889a071e): fuzz_egress ubsan 44f6a3ebc228 at 0x1337c
    (0x74 bytes). Calls reac_frame_clean_len (contract reac_frame_clean_len_c.v) and reads the 8-byte reciprocal of 36 at
    A_K36 (`ld` at 0x133a0, used by `mulhu` / `srli 5` for the division by 36). Saves ra / s0 in a 16-byte frame.

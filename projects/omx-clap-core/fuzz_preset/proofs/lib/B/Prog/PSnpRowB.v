@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d7f488d30, twin c90d4fa54d43160b), the
    __wrap_snprintf ROW AT PUT_STRING B''s INSTANCE: the engine's text
    YGcallSnp.asnprintf_realizes_xrom at the values PutStringB_SnpWit.put_string_holds_B_owner's snprintf premise
-   names (PutStringB_SnpWit.v:194-197): segs := the instance's segments, B := YD2l.TfibB, ARx := ARcfx = ARcf /\
+   names (PutStringB_SnpWit.v:195-198): segs := the instance's segments, B := YD2l.TfibB, ARx := ARcfx = ARcf /\
    xs_placed_cf (cp := CfParamsPreset.CfParams_preset), the relro range [pa_relro_lo, pa_relro_hi), the format band
    [pa_lo, the stack guard's GOT cell YE22.A_GOT_CANARY), the canary chain YE22.A_GOT_CANARY -> YE22.V_GOT_CANARY, the
    image range [pa_lo, pa_hi), cr := every non-writable segment (snr_cr below: PutStringB_SnpWit.psn_cr's body, :74-75,
@@ -13,13 +14,13 @@
    concrete instance; no new walk).
    The root's Section items, each supplied at the instance (none is left a premise):
    - LAWS := YGcallcf.AR_laws_x_xs of YG0lawscf.AR_laws_ok_cf (YG0lawscf.v:22), at cf_head (the
-     term PutStringB_Wit.psw_laws, PutStringB_Wit.v:313-314, is);
-   - TB := YD2l.TfibB_syms (YD2l.v:71);
+     term PutStringB_Wit.psw_laws, PutStringB_Wit.v:314-315, is);
+   - TB := YD2l.TfibB_syms (YD2l.v:72);
    - alx_band_pres := YCbqG.alx_band_pres (AR_laws_x's field 20, its law ARx_band_pres_law) of LAWS;
-   - W_H8 := the world's field YA0n.w_H8 (YA0n.v:25).
+   - W_H8 := the world's field YA0n.w_H8 (YA0n.v:26).
    The root's five side conditions are closed comparisons of the instance's bounds, decided by vm_compute. Its
    conclusion is the row by conversion only: the segments are YB1v.tfibsegs (PutStringB_SnpWit.psn_segs), FF_preset_x
-   and FF_esc have the same body (PSnpPfFam.v:95-99, YGcallSnpCk.v:112-118), YE2p's canary cells are YE22's (both
+   and FF_esc have the same body (PSnpPfFam.v:95-99, YGcallSnpCk.v:113-119), YE2p's canary cells are YE22's (both
    generated constants), PSnpPcom.PCM_CR is snr_cr's map / filter over the same segments, and PSnpI.PC_snprintf is
    pa_sigma AS___wrap_snprintf (PAImg_prog.v:81).
    Numerals: 8160 (LENGTH: the root's window, PSnpSnpRoot.snprintf_xrom_B's 8160 <= K). No image ADDRESS is typed. *)

@@ -5,13 +5,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Prog/drain_b_seg.v, with its module paths, module names and numbers changed; 578 of its 664 lines of code are new or changed and 1143 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/U/Prog/relay_finish_seg.v, with its module paths and module names changed; 360 of its 432 lines of code are new or changed and 592 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/CF/RecKindB.v, with its module paths and module names changed; 186 of its 219 lines of code are new or changed and 399 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* GXA's interceptor call contract for strnlen (lib/CJ/RL/GXA/StrnlenCall.v:29-41 strnlen_stack_contract),
    discharged at the ASan instance A_img (RT_IImgA.v:96) on the pinned fuzz_reply.asan.
 
    This file proves no new function.  It composes three proofs that are already in the tree:
-   - c-asan-rt's Bz interceptor walk of ___interceptor_strnlen 0x424c4 (lib/A/Bz/A/I_strnlen.v:103 istrnlen_spec,
+   - c-asan-rt's Bz interceptor walk of ___interceptor_strnlen 0x424c4 (lib/A/Bz/A/I_strnlen.v:104 istrnlen_spec,
      relocated by R1Str), which calls REAL(strnlen) = musl strnlen 0x96e48 (I_strnlenw.v:81 musl_strnlen_spec);
-   - its two section hypotheses: rip_stmt (lib/A/Bz/A/R_isPoisoned.v:298 rip_proof) and memchr_stmt
+   - its two section hypotheses: rip_stmt (lib/A/Bz/A/R_isPoisoned.v:299 rip_proof) and memchr_stmt
      (lib/A/FRsl.v:76 mch_proof);
    - GXA's call-contract statement, which it takes as a Context in G_printf_core.v:124-125.
    What it adds is glue only:
@@ -29,7 +30,7 @@
      0x42190  __interceptor_trampoline_strnlen  (fuzz_reply.nm.txt (sha256 fbd46584a9a4; internal record); the A_img row KV 0x21920 0x42190)
      0x424c4  ___interceptor_strnlen            (the target of the j at 0x42190; istrnlen_spec's entry pc)
    The memcpy and memset contracts (CopyCall.v:29, SetCall.v:28) are discharged in RT_gxa_calls_mem.v, over
-   c-asan-rt's interceptor walks relocated from 840c4afa7e2 (lib/A/Bz/A/I_memcpy.v, I_imemset.v). *)
+   c-asan-rt's interceptor walks relocated (lib/A/Bz/A/I_memcpy.v, I_imemset.v). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

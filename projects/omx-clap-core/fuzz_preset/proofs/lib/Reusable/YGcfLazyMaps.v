@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfLazyMaps.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: ALedger_cf's alc_lazy_in_maps (YG0ncf.v), every noaccess or lazy address is mapped:
    its init witness and its keep lemmas over the model steps that touch vm_maps, vm_noaccess or m_vm_lazy
    (mmap_model, noaccess_model, with_mmap_backing, grant_md's two arms, munmap_model). Why (Main 2026-10-30,
    a Theorem Labs lane's RepF4Append 7th finding): nothing else in ARcf relates m_vm_lazy / vm_noaccess to vm_maps, so
    commit_expose's premise (no page of a fresh eager grant in m_vm_lazy) was unprovable at the Realloc walk.
-   Reuse check (rule 24, LazyInMapsReuse): no layer, kit (7bb12afd3646) or LPS lemma states the lazy half; the
+   Reuse check (rule 24, LazyInMapsReuse): no layer, kit or LPS lemma states the lazy half; the
    noaccess half exists only as an assumed cs_ok field (YA0e.v:212 co_nasub). No function is proved here.
    Theorem Labs, 2026-10-30 (a Theorem Labs lane): the definition and its model-level keep lemmas moved to YKlazy.v, which
    Requires only YK* model files so that YA*'s start-up arms can call them; re-exported here. The two grant_md
@@ -38,7 +39,7 @@ Abbreviation lim_mmap_range := YKlazy.lim_mmap_range.
 Abbreviation lazy_in_maps_noreserve_cf := YKlazy.lazy_in_maps_noreserve_cf.
 Abbreviation lazy_in_maps_munmap_cf := YKlazy.lazy_in_maps_munmap_cf.
 
-(* grant_md's hole arm (YG0b.v:27-28): the map, then its backing. *)
+(* grant_md's hole arm (YG0b.v:28-29): the map, then its backing. *)
 Lemma lazy_in_maps_grant_hole_cf : forall flags addr n md, lazy_in_maps_cf md ->
 bv_unsigned addr + bv_unsigned n <= 2 ^ 64 -> lazy_in_maps_cf (YG0b.grant_md true flags addr n md).
 Proof.

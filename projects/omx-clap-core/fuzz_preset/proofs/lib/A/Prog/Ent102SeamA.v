@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102SeamA.v, with its module paths changed; 17 of its 184 lines of code are new or changed and 11 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102 pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4): THE SEAM of the
-   walk of LLVMFuzzerTestOneInput. The interface's slot statement preset_lib_x_stmt (lib/A/PresetCfnA.v:1127), EXACTLY as
+   walk of LLVMFuzzerTestOneInput. The interface's slot statement preset_lib_x_stmt (lib/A/PresetCfnA.v:1128), EXACTLY as
    the driver of record takes it (lib/A/PresetD2pAPf.v:277, H_preset_lib_x_stmt_A), at the walk's fixed values:
-     sm := ReaderRes.jr_strtod (the walk's ec_pre asks e_sm E = jr_strtod, lib/A/Ent102CutsA.v:289),
+     sm := ReaderRes.jr_strtod (the walk's ec_pre asks e_sm E = jr_strtod, lib/A/Ent102CutsA.v:290),
      iface_room_np := YGcfRoomLive.room_live_cf at CfParams_preset (= the driver's np_live_A by conversion),
      A_MOD_AT / A_STAMP := Ent102InstA.ia_mod_at / ia_stamp (the literals ec_img_A fixes),
      MT := ameter_triv (the driver's: its mo_ok / mo_le are True).

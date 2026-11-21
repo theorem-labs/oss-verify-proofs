@@ -1,6 +1,6 @@
 (* fuzz_preset, program walks (slice S7a, a Theorem Labs lane; the ONE copy, imported by S7b's writer walks): the pure
    composition of the writer post along a run of puts, and the room count of such a run. No machine state is stepped
-   here. THIS VERSION is on the kit's cut 7cdbb61b5fa0 (lib/A/PRH_FnWriter.v d89d3c67b78c, PRH_Base.v ef7c8ca98529):
+   here. THIS VERSION is on the kit's cut (lib/A/PRH_FnWriter.v d89d3c67b78c, PRH_Base.v ef7c8ca98529):
    prh_oks reads the run's requests (prhWriter_reqs) and g_most; prhWriter_ret_ok has a refused-grow arm; and every
    writer text's post is prhWriter_ret_ok under outcomes with NO refusal (prh_granted, the DEAD family), named here
    prhWriter_retg.
@@ -730,7 +730,7 @@ Proof.
     assert (Hin : In (fst a) (map fst L)) by (rewrite EL; apply in_map; apply in_elt).
     cbn [map] in Hnd. inversion Hnd; subst.
     match goal with Hn : ~ _ |- _ => apply Hn end.
-    first [ exact Hin | apply list_elem_of_In; exact Hin | apply elem_of_list_In; exact Hin ].
+    first [ exact Hin | apply list_elem_of_In; exact Hin | apply list_elem_of_In; exact Hin ].
 Qed.
 
 
@@ -757,7 +757,7 @@ Definition prhWriter_blk (ly : alayout) (S : astate) (Lam : list (Z * Z)) (peak 
      peak' = Z.max peak (Ledger.lsum (l1 ++ l2) + WriterApp.w_cap st') /\
      Permutation (ablocks B ly' S') ((buf' - cf_head, WriterApp.w_cap st' + cf_head) :: b1 ++ b2)).
 
-(* THE WRITER TEXTS' POST at the batch kit e45217a4c7ba (tput_specX / tindent_specX / tput_string_specX / twrite_value_specX,
+(* THE WRITER TEXTS' POST at the batch kit (tput_specX / tindent_specX / tput_string_specX / twrite_value_specX,
    the DEAD family): prhWriter_ret_ok under outcomes ok with no refusal (prh_granted), named *)
 Definition prhWriter_retg (ly : alayout) (S : astate) (Lam : list (Z * Z)) (peak ran most own o buf : Z)
   (st : WriterApp.wst) (P : list (list Z))
@@ -953,7 +953,7 @@ Proof.
   - unfold prhWriter_blk. left. repeat split; try reflexivity. exact Hperm.
   - intros i Hi; exfalso; lia.
 Qed.
-(* the writer buffer's block bytes (the body PRH_FnWriter.v carried until the batch kit e45217a4c7ba dropped it with the
+(* the writer buffer's block bytes (the body PRH_FnWriter.v carried until the batch kit dropped it with the
    LIVE_<fn> sums; prhWriter_blk_bb states the live-bytes move with it) *)
 Definition prhWriter_buf_bytes (st : WriterApp.wst) : Z :=
   if WriterApp.w_cap st =? 0 then 0 else WriterApp.w_cap st + cf_head.
@@ -1098,7 +1098,7 @@ rewrite prhW_live_sum in H2. fold A in H2. fold st1 in H2.
 lia.
 Qed.
 
-(* ---- THE MODEL-RUN POSITION along a run of puts (the batch kit e45217a4c7ba, PRH_FnWriter.v d89d3c67b78c). prhWriter_put_pos
+(* ---- THE MODEL-RUN POSITION along a run of puts (the batch kit, PRH_FnWriter.v d89d3c67b78c). prhWriter_put_pos
    names tput_specX's per-arm position post, keyed on the failed field at o + 24: f' = 0 advances by one; f' = 1 (the
    chosen failure) keeps the index with SOME history (the kit owner's ruling on a Theorem Labs lane's measurement: fuzz_realloc's NULL
    arm gives `exists hist'`).

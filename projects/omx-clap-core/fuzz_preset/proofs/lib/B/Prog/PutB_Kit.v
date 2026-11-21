@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (asan-ubsan #102 pin d663f82d7f48, twin c90d4fa54d43), the walk of put
    (lane PutB, h-rw-pre-7): the GENERIC step kit the put walk needs, carried in a lane file because the base
-   (origin/cold/h-rw-pre-4-int102 df2b5f442798) has no lib/A/Prog walk kit. Three sources, each named here:
+   has no lib/A/Prog walk kit. Three sources, each named here:
    (1) lines below `From ..` up to `End pc.` and the tactics after it: lib/A/Prog/PRW_StepKit.v VERBATIM, blob
-       0df3991c13f4 (origin/cold/h-hpreset-7-walk-S7B 7819c4b4583 and origin/cold/h-rw-pre-5-walk-s7a-put
-       f9241d720872 carry the same blob; WalkS7b's port of cgif lib/A/AC8j.v). Generic in segs, B, PST, ARx, the
+       0df3991c13f4 (and
+        carry the same blob; WalkS7b's port of cgif lib/A/AC8j.v). Generic in segs, B, PST, ARx, the
        listing class: no image class, no address, no image numeral. pa_slot_lt_ceil / _b is the one discharge of
        fpre's `raZ regs < YM05.alloc_ceiling` at a call (b-writers brief: cite PRW_StepKit.pa_slot_lt_ceil).
    (2) section hs: the two ARx shadow-visibility hypotheses of lib/A/Prog/PRW_HShadow.v (same blob family),
        with ONE change: ARx_img_shadow_vis_r takes the image bounds lo / hi as arguments instead of naming image A's
        IMG_LO / IMG_TOP (YImgTop), so the walk states it at its own instance's pa_lo / pa_hi (PRH_Base's kept_at /
        kept_img are per-instance since the kit owner's 2026-10-29 ruling).
-   (3) section wr: three writer-model lemmas of lib/A/Prog/S7a_WriterRet.v (a working branch 1b148985489 /
-       h-rw-pre-5-walk-s7a-put f9241d720872, blob 29e79f90789a): prhW_putN_failed, prhW_k_nil, prhW_k_failed (same
-       proofs), and the batch kit's (a working branch 7cdbb61b5fa0) two facts the walk reads off put's own
+   (3) section wr: three writer-model lemmas of lib/A/Prog/S7a_WriterRet.v (a working branch /
+       h-rw-pre-5-walk-s7a-put, blob 29e79f90789a): prhW_putN_failed, prhW_k_nil, prhW_k_failed (same
+       proofs), and the batch kit's (a working branch) two facts the walk reads off put's own
        run: prhW_evs_grow (a grow that is not the allocation set to fail makes the one event prhWriter_ev) and
        putb_live_first (PRH_Base.prh_live_evs at its first event is the leaf's per-call live premise, by
        PresetLiveBytes.blocks_bytes_zsum, the one home of that identity).
@@ -330,8 +331,8 @@ eapply (region_kept_stack_ajx _ _ _ _ _);
 Ltac kept_intrin Hfr Hpres2 AG Usp :=
 eapply region_kept_aview; [cbn [ew ewset Nat.eqb]; rewrite ?(AG 2%nat) by lia; exact Usp | intros a Ha; apply Hfr; unfold ESTACK; lia | exact Hpres2].
 
-(* AC8j :249-256 reshok_bx / reshok are NOT ported: their shok_auto lived in Reusable/YC81.v, which the kit removed at
-   2d523216ac5 (the cgif GIF-encoder listing island), and no walk used the port (reshok_sv, removed here). A walk
+(* AC8j :249-256 reshok_bx / reshok are NOT ported: their shok_auto lived in Reusable/YC81.v, which the kit removed
+    (the cgif GIF-encoder listing island), and no walk used the port (reshok_sv, removed here). A walk
    re-seats its shadow tokens with its own sh_ok lemma. *)
 
 (* AC8j :257-273 *)

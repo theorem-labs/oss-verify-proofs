@@ -66,13 +66,13 @@ Proof.
   specialize (H _ Hk). rewrite Z2Nat.id in H by lia.
   replace (lo + (a - lo)) with a in H by lia. apply negb_true_iff. exact H.
 Qed.
-Lemma zlib_tables : forall (rc : RunCeil) L A mem md, aa_MR (@zlib_API rc) L A mem md ->
+(* 08b1429: over the allocator invariant at any allocation mode (the may-fail chain's record is at MayFail). *)
+Lemma src0_tables_m {AM : Cfg.AllocMode} : forall (rc : RunCeil) L A mem md, MRx (AM:=AM) src0_msyms L A mem md ->
   forall a, static_owned src0_msyms a -> 0 <= a < 2 ^ 64 ->
   Mem.ro_addr (ms_segs src0_msyms) (Z_to_bv 64 a) = true ->
   mbyte (ms_segs src0_msyms) mem a = seg_rom (ms_segs src0_msyms) (Z_to_bv 64 a).
 Proof.
   intros rc L A mem md HMR a Hs Ha Hro.
-  change (MRx src0_msyms L A mem md) in HMR.
   pose proof (mc_statics _ _ _ _ _ (proj1 HMR)) as ST.
   unfold static_owned in Hs.
   destruct Hs as [H|[H|[H|[H|[H|[H|Ht]]]]]].
@@ -86,6 +86,13 @@ Proof.
       by (unfold table_addr; tauto).
     destruct Hv as [Hv|Hv]; [apply (st_tables _ _ ST); exact Hv|].
     exfalso. rewrite (ro_false_range (ms_segs src0_msyms) (vml_lo src0_msyms) (vml_len src0_msyms) a ltac:(vm_compute; reflexivity) ltac:(lia)) in Hro. discriminate Hro.
+Qed.
+Lemma zlib_tables : forall (rc : RunCeil) L A mem md, aa_MR (@zlib_API rc) L A mem md ->
+  forall a, static_owned src0_msyms a -> 0 <= a < 2 ^ 64 ->
+  Mem.ro_addr (ms_segs src0_msyms) (Z_to_bv 64 a) = true ->
+  mbyte (ms_segs src0_msyms) mem a = seg_rom (ms_segs src0_msyms) (Z_to_bv 64 a).
+Proof.
+  intros rc L A mem md HMR. exact (src0_tables_m rc L A mem md HMR).
 Qed.
 Theorem plain_halts_of_frame_slot : forall (G : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop),
   (forall a, in_globals G a -> in_globals frame_G a) ->

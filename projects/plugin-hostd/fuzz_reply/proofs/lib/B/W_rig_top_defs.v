@@ -10,11 +10,12 @@
    trace, a prefix of the remaining trace (stmt_top_room); drain's live bytes are bounded in the NET form,
    blocks_bytes S' <= blocks_bytes S + tr_net (dr_tr ..) (stmt_dr_bytes, stmt_top_budget).
    ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is the RIG_x round of
-   lib/A/W_rig_top.v, commit f4cd818e98d): over any allocator relation ARx with its laws and the room record RP, at
+   lib/A/W_rig_top.v): over any allocator relation ARx with its laws and the room record RP, at
    W_relay_instance_gone_cx.v's generic Section c (its list copied verbatim, in every TOP file).  Every journal is
    ajournal_gx_x with its head sets, at the kit's RIG_STK_x / DRAIN_STK_x; the laws are AR_laws_x's; the journal
    helpers copied from W_gesture_end.v are their _x twins.  THE ROOM at the drain call: dr_kr and gtop_bud's layout
    (stmt_top_room / stmt_top_budget); THE COUNTS: stmt_dr_cnt, lib/B/W_rr_m_dcnt.v rmc_dr_cnt's text. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -182,7 +183,7 @@ Hypothesis PSTG : forall a,
 
 (* ---- Walk helpers, copied from lib/B/W_gesture_end.v (W4's, Qed on bint; that file does not build on this branch:
    its W_ge_room.v predates the kit's ge_room); the journal helpers over ajournal_gx_x, as image A's
-   lib/A/W_gestures_end.v gse_callS_x / gse_keep_img_x / gse_keep_high_x / gse_nodup_x (commit f4cd818e98d) state and
+   lib/A/W_gestures_end.v gse_callS_x / gse_keep_img_x / gse_keep_high_x / gse_nodup_x state and
    prove them. ---- *)
 Lemma ge_garr8_aview : forall H mem a l j, garr8 SEGS (mrestrict H mem) a l -> (j < length l)%nat ->
 aview SEGS H mem (a + Z.of_nat j) = Some (nth j l 0).

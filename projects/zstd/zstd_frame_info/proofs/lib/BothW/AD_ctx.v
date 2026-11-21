@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ALO, the program's stack bottom, inside the 6,144,513-byte stack window every launch zero-maps below sp, rounded to sp's 64-byte grid; geo restated to match). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
@@ -39,7 +40,9 @@ Section CTX.
   (* [comment removed for export] *)
   Variables (S0 S1 S2 S3 S4 S5 S6 S7 : word) (J8 : list byte).
 
-  Definition ALO : Z := usp - 8388608 + 4096.
+  (* LPS 727298f3: the stack every launch zero-maps below sp is the model's [stack_window_depth],
+     6144513 bytes (InitMem.im_stack_depth); its bottom rounded up to sp's 64-byte grid is sp - 6144512 *)
+  Definition ALO : Z := usp - 6144512.
 
   Definition AMFRAME (mm : amem) : Prop :=
     rw_cells bsegs mm (usp + -128) [CB 8 J8; C8 S7; C8 S6; C8 S5; C8 S4; C8 S3; C8 S2; C8 S1; C8 S0; C8 (Z_to_bv 64 ASTAGE2_RET)].
@@ -164,7 +167,7 @@ lia.
     /\ (exists errv, rw_cells bsegs mm (errno_addr (Z_to_bv 64 ATP)) [C4 errv])
     /\ stdout_file mm so.
 
-  #[using="USP16 USPLO USPHI"] Lemma geo : ATOP <= ALO /\ ALO + 8388608 - 4096 = usp /\ KHIGH <= ALO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
+  #[using="USP16 USPLO USPHI"] Lemma geo : ATOP <= ALO /\ ALO + 6144512 = usp /\ KHIGH <= ALO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
   Proof. unfold ALO, KHIGH in *. repeat split; lia. Qed.
 
   #[using="Type"] Lemma errno_addr_ATP : errno_addr (Z_to_bv 64 ATP) = 0x5d3f2c.

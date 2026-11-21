@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-errnoseg-B of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: measurement; image rows, closed computations at reply's image B,
@@ -7,15 +8,15 @@
 
    The cf layer states this row as a Definition over its own Section context; reply has not taken that layer file yet.
    So the Lemma below states the layer Definition's body VERBATIM at reply's instance (the image class ImgBase.AImg at
-   image B's AImg_reply, B/AGif2reply.v:24), and a consumer closes the layer's row with `exact` once the layer is on
+   image B's AImg_reply, B/AGif2reply.v:25), and a consumer closes the layer's row with `exact` once the layer is on
    reply.  No Definition of the layer is copied here.
-   - errno_seg_t, the cf layer's YGcfInstErrno.v:83-84 (lane F1, commit cadcb4a0f830; the same text at :86-87 of
-     commit bdbe5c2a7e5, the line CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row 35 cites), in Section b (Variable B : asyms; Hypothesis TS :
+   - errno_seg_t, the cf layer's YGcfInstErrno.v:84-85 (lane F1; the same text at :86-87,
+     the line CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row 35 cites), in Section b (Variable B : asyms; Hypothesis TS :
      im_syms B, :75-76):
        Definition errno_seg_t : Prop :=
        forall a, as_errno B <= a < as_errno B + 4 -> seg_rom im_segs (Z_to_bv 64 a) <> None.
-     cgif's discharge: YGcfInstErrnocgif.v:38-42 errno_seg_cgif (commit cadcb4a0f830), through YB13.tfib_rw_rom.
-     At image B: errno is TFIB_ERRNO = 0x5d994c (B/YF0m.v:21; ts_errno, B/YF0m.v:874), so its 4 bytes
+     cgif's discharge: YGcfInstErrnocgif.v:38-42 errno_seg_cgif, through YB13.tfib_rw_rom.
+     At image B: errno is TFIB_ERRNO = 0x5d994c (B/YF0m.v:22; ts_errno, B/YF0m.v:875), so its 4 bytes
      [0x5d994c, 0x5d9950) lie in the read-write window [0x9d000, 0x5fc000), where every byte is a segment byte of the
      image (B/YB13.v:109 tfib_rw_rom: the proof image's segments 2 = [0x9d000, 0x9f000) and 3 = [0x9f000, 0x5fc000)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -35,7 +36,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import AGif2reply.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require YB13.
 Open Scope Z_scope.
 
-(* errno_seg_t at image B (YGcfInstErrno.v:83-84): errno's 4 bytes [0x5d994c, 0x5d9950) (TFIB_ERRNO, B/YF0m.v:21) are
+(* errno_seg_t at image B (YGcfInstErrno.v:84-85): errno's 4 bytes [0x5d994c, 0x5d9950) (TFIB_ERRNO, B/YF0m.v:22) are
    segment bytes of AImg_reply's im_segs = tfibsegs, by B/YB13.tfib_rw_rom over [0x9d000, 0x5fc000). *)
 Lemma errno_seg_B : forall B, @im_syms AImg_reply B ->
   forall a, as_errno B <= a < as_errno B + 4 -> seg_rom (@im_segs AImg_reply) (Z_to_bv 64 a) <> None.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 asan 1be0f53d, unstripped twin bff8519b), ex_value piece 5
    (ev_number), lane FT of S8aNumCut.v: the sub-pieces
      F  CD +0x9e4 -> CT +0x9f4   (0x83c88-0x83c94; report arm +0xd74 = 0x84018 not reached)
@@ -155,7 +156,7 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* the entry of ex_value in the listing (DERIVED: slot 1841 * 4; discharged at PI_prog_A by A_entry_ex_value) *)
 Hypothesis Hent : SIGMA AS_ex_value = BASE + 7364.
-(* lane M's ev_mid preservation statements (S8aNumCut.v:204-216) *)
+(* lane M's ev_mid preservation statements (S8aNumCut.v:205-217) *)
 Hypothesis MIDK : forall a, ev_mid_keep_stmt B ARx SK a.
 Hypothesis MIDC : forall a, ev_mid_cur_stmt B ARx SK a.
 (* the pc at offset off of ex_value *)

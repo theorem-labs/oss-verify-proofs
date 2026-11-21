@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the kit of check_reply_answer's ASan walk (plugin-hostd/fuzz_command), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v (the walk's kit: regions, facts, register files, seed lemma cl_seed) over fuzz_command's listing (lib/A/Prog/CmdList.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_answer_k.v, with its module paths and module names changed; 883 of its 932 lines of code are new or changed and 380 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_words_chain_s3.v, with its module paths and module names changed; 657 of its 738 lines of code are new or changed and 851 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the JOIN LOOP of segment A11b of reac_segconf_parse_file's
    walk (0x87a78), part of segment A11b's proof, by the G3 walk owner, 2026-10-30.
 
@@ -11,13 +12,13 @@
    origin/release/pau-projects-recipes, the unreleased proof delivery, cold/* heads, image-A address 0x87a78 /
    the released-proof index's query for reac_segconf_parse_file): this file proves one internal cut of
    that walk; the lookup is CONFIRMed (the rule-24 check 2026-10-30T15:42:08Z, the unit's internal record,
-   commit dfb49d6ad789, path records/segp/g3-lookup.md), reuse
+    path records/segp/g3-lookup.md), reuse
    verdict none: written new.
 
    Theorem pfj_kloop_ok : forall n, HA_KEXIT B n -> forall ti, ti < 11 -> H_KLOOP B n ti
    (lib/A/Prog/pf_a11b_d.v's cuts KLOOP 0x8865c and KEXIT 0x886c8).
 
-   The code (the excerpt in the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   The code (the excerpt in the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s, 27 instructions 0x8865c .. 0x886c4, eleven passes):
      0x8865c addi a0,zero,1 ; beq s3,a0 (s3 = ti + 1)         the separator: 0x88670 a3 = 0x21860 "" at pass 0,
                                                                0x88664 a3 = 0x21840 "|" after (auipc / addi, listing
@@ -41,7 +42,7 @@
    destination [known + kn, known + kn + |T| + 1) and the scratch window below s1 is kept): pfj_carry, over
    pf_a11b_jk.v's pfj_keep and pfj_kmem_step; the registers come back because they are callee-saved and the
    pass writes none of pf_fi's / PF_RL's / PF_RM's. The loop is pfj_loop, by induction on the passes left
-   (cwc_turn / cwc_loop_ok of proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_words_chain_s3.v at 501c0d516c69).
+   (cwc_turn / cwc_loop_ok of proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_words_chain_s3.v).
    Section hypotheses: SNP (the interceptor owner's row 4 at the listing's snprintf trampoline) and OBJ (SegObj.seg_val_objs,
    for the three literal atoms). No SSPX, no VRO, no SIGP, no TL: the stack-protector cells, the read-only view and
    the image facts come from the cut's own pf_obj and the step's keep clause. *)
@@ -202,7 +203,7 @@ Lemma pfj_soff0 : forall E n v, ew E n = w64 v -> sv_denot E (SOff n 0) = w64 v.
 Proof. intros E n v H. cbn [sv_denot]. rewrite H, Z.add_0_r, Z_to_bv_bv_unsigned. reflexivity. Qed.
 
 (* what a call keeps of a read-only region (cwc_mb_kept / cwc_region_kept of
-   proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_words_chain_s3.v at 501c0d516c69) *)
+   proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_words_chain_s3.v) *)
 Lemma pfj_mb_kept : forall (W : world SEGS) (m m' : word -> option byte) a,
   rdW W m' a = rdW W m a -> mbyte SEGS (mrestrict (w_H W) m') a = mbyte SEGS (mrestrict (w_H W) m) a.
 Proof.

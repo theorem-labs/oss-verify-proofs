@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/DMrcDefs.v (a working branch 5ad50e61fc6a, file sha256 4c6b0aaa171e), CfF2b's DoRecycle re-hide lane (image-free; row A25); module paths changed only: 7 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/DMrcDefs.v (a working branch, file sha256 4c6b0aaa171e), CfF2b's DoRecycle re-hide lane (image-free; row A25); module paths changed only: 7 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4; F1 row R3): new file. rule 24: no function proved here (kind: a
    definition moved out of DMrc.v, unchanged).
    [rc_split_t]: the model's ARM SPLIT of H4's read record, i.e. the recycled chunk is a primary chunk or a live

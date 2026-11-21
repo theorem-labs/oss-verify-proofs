@@ -1,15 +1,15 @@
 (* lib/A/Prog/Seg/R19F_on.v -- route (C) (a Theorem Labs lane 09:20Z; wave lead a Theorem Labs lane): the `_on` twins of lib/A/Prog/Seg/R19F.v's (not in this delivery) two
    footprint runs, r19_run_F_on and r19_evt_F_on (WORKLIST.md row L2 (a working note, not in this delivery) run (Seg) lib/A/Prog/Seg/R19F.v (not in this delivery)).
    Written by a Theorem Labs lane with the R19F.v (not in this delivery) owner's consent (a Theorem Labs lane, 12:52Z, relayed by a Theorem Labs lane):
-   a NEW file; Seg/R19F.v (an earlier version, blob 14257b56dec, not in this delivery) stays byte-identical (the same on a working branch 1502cba0417 and on a Theorem Labs lane's fold
-   a working branch 4bae33fdf54).  rule 24: no function proved (kind: segment run lemma, a mechanical
+   a NEW file; Seg/R19F.v (an earlier version, blob 14257b56dec, not in this delivery) stays byte-identical (the same on a working branch and on a Theorem Labs lane's fold
+   a working branch).  rule 24: no function proved (kind: segment run lemma, a mechanical
    re-run of R19F.v's (not in this delivery) two scripts under the callee's narrowed contract).
 
    WHAT CHANGES against R19F.v's (not in this delivery) r19_run_F / r19_evt_F (and nothing else; the pattern is a Theorem Labs lane's r19_run_on /
-   r19_evt_on, Seg/R19.v (a version not in this delivery; written on a working branch 1b5bd4f4555)):
+   r19_evt_on, Seg/R19.v (a version not in this delivery; written on a working branch)):
    - the callee premise bcmp_wrap_contract_F -> bcmp_wrap_contract_F_on (lib/A/Prog/bcmp_wrap_c_on.v, a Theorem Labs lane's
      leaf, blob ca2f37ea2b6; its proof bcmp_wrap_holds_F_on is in lib/A/Prog/bcmp_wrap_on.v, blob defebf6ef6f, both
-     at a working branch b1fad972898);
+     at a working branch);
    - the premise `shadow_rw m` -> `shadow_rw_on (bcmp_wrap_shadow_R (phi + 18) s2a 32) m`: the shadow bytes the run
      reads are only the wrapper's, at the call 0x818e4 where a0 = s11 = phi + 18, a1 = s2 = s2a and a2 = 32 (the five
      instructions before the call touch no memory).  This is the R of a Theorem Labs lane's WORKLIST.md:1383-1384 (a working note, not in this delivery) rows;

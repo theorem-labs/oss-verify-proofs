@@ -6,14 +6,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/U/Prog/pcap_source_open.v, with its module paths and module names changed; 547 of its 622 lines of code are new or changed and 991 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Prog/CF/KindBGlue.v, with its module paths and module names changed; 2130 of its 2257 lines of code are new or changed and 495 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Prog/CF/pj_free.v, with its module names changed; 185 of its 269 lines of code are new or changed and 2173 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_free's walk (lib/A/FSW_pj_free.v), the data half: lemmas over the reader statements' data predicates
    (lib/Prog/PjStruct.v pj_fd / pf_items / pj_u64, FSH_Fn_reader.v udrop / rd_heads / rd_hblocks / rd_sum) that the walk
    needs between its machine segments. No machine code is read here and no function's contract is proved (rule 24).
    Port-from (bodies copied, not imported, so that no plain-image module enters this ASan file):
    pjf_items_frame / pjf_fd_frame / pjf_items_mono: fs's RELEASED plain proof lib/Prog/pj_free.v:435-504
-   (c8557374ad2e pf_items_frame / pf_fd_frame / pf_items_mono), the memory premise restated in PjStruct's
+   (pf_items_frame / pf_fd_frame / pf_items_mono), the memory premise restated in PjStruct's
    equality form (PjStruct.pj_hdr_eq / pj_u64_eq, as PjStruct.pj_node_frame states it).
-   The PjStruct field -> val_mem bridges are a Theorem Labs lane's kit lib/A/FSW_pj.v (f098a0c2fa8), imported. *)
+   The PjStruct field -> val_mem bridges are a Theorem Labs lane's kit lib/A/FSW_pj.v, imported. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

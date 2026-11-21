@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Entry_r1.v, with its module paths and module names changed; 1686 of its 1727 lines of code are new or changed and 256 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): segment X1 of the walk of check_reject_clean_starved against the kit's
    text tcheck_reject_clean_starved_specX, row X1_B (a Theorem Labs lane's internal file BRIEF-crcs-Bprime-seg.md; lane CrsX1H1,
-   a working branch; ported to the batch kit's cut 7cdbb61b5fa0 on a working branch). It proves the row's
+   a working branch; ported to the batch kit's cut on a working branch). It proves the row's
    closing lemma over the B' kit lib/B/Prog/CrsKitBp.v, at the kit's own crs_from_X1_B (no FIX twin since the cut):
      crs_seg_X1_B : HT_fuzz_alloc_fail -> HT_check_reject_clean -> HT_pj_parse (the text PRH_FnPj.tpj_parse_specX, with
                     its guarded THE OUTCOME OF AN INJECTED READING, at every CW) -> HI_hull -> HK -> crs_from_R_B .. ->
@@ -13,15 +14,15 @@
    CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its released rows
    were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). This file is one SEGMENT of that walk (kind: segment lemma); it is new.
-   DONOR (rule 24, reuse): this lane's A' file lib/A/Prog/CrsSeg_X1.v (a working branch 5a39b8409c94): the
+   DONOR (rule 24, reuse): this lane's A' file lib/A/Prog/CrsSeg_X1.v (a working branch): the
    same call rules, transport lemmas, grant-list agreement and closing proof, with the kit's `_B` names, every class
    instance passed by name (prh_img_B / PI_prog_B; image A's instances are also loaded here, through S1ImgB) and every
    number re-read at B'.
    INPUTS.
-   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml).
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (a Theorem Labs lane's listings v3).
      Entry 0x820e0 = slot 645 (B_entry_check_reject_clean_starved). X1 is slots 749 .. 763.
-   - The kit texts at the batch kit's cut 7cdbb61b5fa0 (a working branch): tfuzz_alloc_fail_specX
+   - The kit texts at the batch kit's cut (a working branch): tfuzz_alloc_fail_specX
      (lib/A/PRH_FnAlloc.v blob 4d8aeba047e5), tcheck_reject_clean_specX and tcheck_reject_clean_starved_specX
      (PRH_FnCheck.v blob c40cf3fdcd2a), tpj_parse_specX (PRH_FnPj.v blob 5aca5cbe2cfb), PRH_Base.v blob ef7c8ca98529
      (fpre ends with frm_zero of the callee's float state, FRM0-ENTRY: x_callee_fpre takes it from crs_base_B), all
@@ -36,7 +37,7 @@
    are YCbqGcall.v's aj_call_x (a Theorem Labs lane) and YCbqGwild.v's aj_call_xWFbR restated over the concrete configuration
    (no symbolic state), the footprint side condition
    being YCbqG.v's fp_sub_x; the call-site helpers x_chain / x_callee_fpre / x_ap* are lane CrsX2H2's CrsSeg_X2.v
-   crs_chain / crs_callee_fpre / cx_ap* (a working branch d381430f890) restated. crs_base_B after each
+   crs_chain / crs_callee_fpre / cx_ap* (a working branch) restated. crs_base_B after each
    call is x_base_call (the callee journal keeps the frame, its flag and shadow, the saved words and the read-only view:
    its footprint is inside the struct pj local), after pj_parse x_base_call_rbR at the rebased context; the input and
    the tree at the exit are x_dat_entry / x_tree_entry, from
@@ -135,7 +136,7 @@ Local Ltac hpost := intros; hcanon; hsig; rewrite ?h_vaddi0; hgetr.
 
 (* ======================================================================================================== *)
 (* ---- a tree's block predicate matters only on its own blocks (Cno102_FKit.v pjf_*_lblk, lane CnoA102f,
-   origin/cold/h-rw-pre-5-cno102a-f 574c27759c8, moved here by path under the x_ prefix: the kit is not on this base) *)
+    moved here by path under the x_ prefix: the kit is not on this base) *)
 Section pjl.
 Variable segs : list Segment.
 Lemma x_cstrR_lblk : forall m lblk lblk' a k s, pj_cstrR segs m lblk a k s -> (lblk a k -> lblk' a k) ->
@@ -830,7 +831,7 @@ Qed.
 #[local] Notation LEDGER := (prh_ledger (PI := prh_img_B) (PA := PA) B).
 
 (* ---- THE CALL SITE'S ENTRY FACTS (lane CrsX2H2's lib/A/Prog/CrsSeg_X2.v cx_keep_above / cx_fpchain_keep /
-   crs_chain / crs_callee_fpre, origin/cold/h-w6u-rep-p102-CR-X2 d381430f890, restated here under the x_ prefix:
+   crs_chain / crs_callee_fpre, restated here under the x_ prefix:
    check_reject_clean_starved keeps s0 = its entry sp, ra at s0 - 8 and the caller's s0 at s0 - 16) ---- *)
 Lemma x_keep_above : forall (R : world SEGS -> world SEGS -> Prop) C ly3 S3 Hp3 W3 mem3 md3 k,
   JJR R C ly3 S3 Hp3 W3 mem3 md3 k ->
@@ -1347,7 +1348,7 @@ Qed.
 
 (* ==== THE pj_parse CALL AT THE KIT'S CUT: its two new entry facts, its cursor set and room, its budgeted call rule ==== *)
 (* the live set (PresetRoom.rs_live of the cf room) is the allocator blocks' sizes: a permutation of the blocks
-   permutes it (A' x_live_perm, lib/A/Prog/CrsSeg_X1.v:1164 at a working branch 7f61536759ab, the instance
+   permutes it (A' x_live_perm, lib/A/Prog/CrsSeg_X1.v:1165 at a working branch, the instance
    swapped) *)
 Lemma x_live_perm : forall ly S ly' S', Permutation (ablocks B ly S) (ablocks B ly' S') ->
   Permutation (PresetRoom.rs_live (YGcfRoom.room_of_cf S)) (PresetRoom.rs_live (YGcfRoom.room_of_cf S')).
@@ -1358,7 +1359,7 @@ Qed.
 
 (* the input's home ends strictly below alloc_ceiling (tpj_parse_specX's `t0 + len < YM05.alloc_ceiling`): a live
    allocator block ends at least 8 bytes below it (alx_blocks_ceil8), a harness block lies inside one, an image home
-   ends below the image top (A' x_text_ceil, CrsSeg_X1.v:1174 at 7f61536759ab, the instance swapped) *)
+   ends below the image top (A' x_text_ceil, CrsSeg_X1.v:1174, the instance swapped) *)
 Lemma x_text_ceil : forall CTX0 C, PREp CTX0 C -> cb_data C + cSize_B C < YM05.alloc_ceiling.
 Proof.
 intros CTX0 C HP.
@@ -1380,8 +1381,8 @@ destruct Hhm as [[(b & m & Hbm & Hb1 & Hb2) | [(_ & _ & Hi & _) | (_ & Hi & _)]]
   pose proof (alx_blocks_ceil8 _ _ _ LAWS _ _ _ _ _ _ _ _ HAR0 Hbm) as Hc8. lia.
 Qed.
 
-(* THE CURSOR SET of this call, in a Theorem Labs lane's pn_cw form (a working branch d8d35af5457c
-   lib/B/Prog/PN102BCuts.v:276-293), at crcs's arguments: parse_items' trace at the cursor end data + size,
+(* THE CURSOR SET of this call, in a Theorem Labs lane's pn_cw form (a working branch
+   lib/B/Prog/PN102BCuts.v:277-294), at crcs's arguments: parse_items' trace at the cursor end data + size,
    parse_string's at the slot word memory holds at pj_parse's sp - pi_frame F_pj_parse (B' reads that word; it is
    not chosen). Its two traces are WILD on B' (a data word), so the post's budget is carried, not dropped. *)
 Definition x_slotw (W : world SEGS) (mem : word -> option byte) (sp : Z) : Z :=
@@ -1715,7 +1716,7 @@ assert (HFRm : Z.of_nat (length (frames S3)) + Z.of_nat DOC_D <= fs_frames 0).
 (* ---- THE ENTRY FACTS THE KIT'S CUT ADDS TO pj_parse's TEXT (PRH_FnPj.v:592-656): the cursor set and its room (B'
    CW wild, x_cw), the strict ceiling of the text (x_text_ceil), the requests within g_most (crs_pre_B), the two room
    counts at the CALL state (crs_pre_B's at entry, the live set a permutation of the entry's: x_live_perm and
-   PresetRun.pkR_mono, A' CrsSeg_X1.v:1404-1415's route) ---- *)
+   PresetRun.pkR_mono, A' CrsSeg_X1.v:1405-1416's route) ---- *)
 set (CWx := x_cw C W4 mem4 (spZ rC2)).
 assert (HCW : prh_cw_pj (PI := prh_img_B) (PA := PA) B CWx W4 mem4 rC2 (cb_data C) (cSize_B C)) by exact (x_cw_pj C W4 mem4 rC2).
 assert (Hwr : YCbqGwild.wild_room (as_universe B) CWx 0 (st_depot S3))

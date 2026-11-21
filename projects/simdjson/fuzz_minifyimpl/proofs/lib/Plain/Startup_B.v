@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the twenty-word auxv (pauxv20) is replaced by the launch's auxv (pauxv) with or without the CONFIG_RSEQ pair, and the libc start-up auxv scan is proved for both layouts, split on the CONFIG_RSEQ flag, with keys above AUX_CNT skipped; taken in part from projects/simdjson/fuzz_parser/proofs/lib/Plain/Startup_B.v, 58 lines within its lines 231-553. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
@@ -228,10 +229,33 @@ Qed.
 
 
 (* [comment removed for export] *)
-Definition pauxv20 (hw uid rnd : word) : list word :=
-  [Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10; Z_to_bv 64 16; hw;
-   Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; z64;
-   Z_to_bv 64 25; rnd; z64; z64].
+(* The auxv [StackLayout.auxv_entries] lays for this image: ARCH_DLINFO's ten
+   entries, [create_elf_tables]' sixteen, the CONFIG_RSEQ pair when the
+   launch's kernel has it, and AT_NULL.  Keys and the image's own PhdrInfo are
+   literal; every other value is the launch's. *)
+Definition pauxv (la : LaunchAuxv) (hw ent uid gid rnd efn : word) : list word :=
+  [Z_to_bv 64 33; la_sysinfo_ehdr la;
+   Z_to_bv 64 40; cw_l1i_size (la_cache la); Z_to_bv 64 41; cw_l1i_geom (la_cache la);
+   Z_to_bv 64 42; cw_l1d_size (la_cache la); Z_to_bv 64 43; cw_l1d_geom (la_cache la);
+   Z_to_bv 64 44; cw_l2_size (la_cache la); Z_to_bv 64 45; cw_l2_geom (la_cache la);
+   Z_to_bv 64 46; cw_l3_size (la_cache la); Z_to_bv 64 47; cw_l3_geom (la_cache la);
+   Z_to_bv 64 51; la_minsigstksz la;
+   Z_to_bv 64 16; hw; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 17; Z_to_bv 64 100;
+   Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
+   Z_to_bv 64 7; z64; Z_to_bv 64 8; z64; Z_to_bv 64 9; ent;
+   Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 13; gid; Z_to_bv 64 14; gid;
+   Z_to_bv 64 23; z64; Z_to_bv 64 25; rnd; Z_to_bv 64 31; efn]
+  ++ (if la_rseq la then [Z_to_bv 64 27; Z_to_bv 64 28; Z_to_bv 64 28; Z_to_bv 64 32] else [])
+  ++ [z64; z64].
+
+Lemma pauxv_length : forall la hw ent uid gid rnd efn,
+  length (pauxv la hw ent uid gid rnd efn) = (2 * auxv_count (la_rseq la))%nat.
+Proof. intros. unfold pauxv. destruct (la_rseq la); reflexivity. Qed.
+
+Lemma pauxv_auxv_words : forall la ent sp top argv envp execfn uid gid hw,
+  auxv_words la PImg.p_phdrs ent sp top argv envp execfn uid gid hw
+  = pauxv la hw ent uid gid (Z_to_bv 64 (rnd_addr (la_rseq la) sp argv envp)) (Z_to_bv 64 (xfn_base top argv envp execfn)).
+Proof. intros. unfold auxv_words, auxv_entries, pauxv. destruct (la_rseq la); reflexivity. Qed.
 
 Notation RENVIRON := 0xe3958%Z (only parsing).
 Notation RPROGNAME := 0x103ca8%Z (only parsing).   (* [comment removed for export] *)
@@ -275,7 +299,8 @@ Section RInitLibc.
   Variables (ra sp gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
             (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z)
             (E : Z) (eps : list word) (R : Z) (P : Z) (s : list byte)
-            (pn0 pnf0 hw0 env0 uid hw cr : word) (gjunk : list byte).
+            (pn0 pnf0 hw0 env0 uid hw cr : word) (gjunk : list byte)
+            (la : LaunchAuxv) (ent gid efn : word).
   Notation W := [(bv_unsigned sp - 448, bv_unsigned sp); (RENVIRON, 0xe3960); (0xe3960, 0xe3ab0); (0x103a38, 0x103a68);
                  (RGUARD, 0x103ca0); (RPROGNAME, 0x103cb8); (RLIBC, 0x103d28)]%Z.
   Notation AUXV := (E + 8 * (Z.of_nat (length eps) + 1))%Z.
@@ -300,7 +325,7 @@ Section RInitLibc.
     /\ rw_cells rsegs m' RGOT3 [C8 (Z_to_bv 64 RENVIRON); C8 (Z_to_bv 64 0x103cb0); C8 (Z_to_bv 64 RPROGNAME)]
     /\ rw_cells rsegs m' RGOT_SSP [C8 (Z_to_bv 64 RGUARD)]
     /\ rw_cells rsegs m' RGOT_DYNAMIC [C8 z64]
-    /\ bytes_at rsegs m' E (u64s eps ++ le8 z64 ++ u64s (pauxv20 hw uid (Z_to_bv 64 R)))
+    /\ bytes_at rsegs m' E (u64s eps ++ le8 z64 ++ u64s (pauxv la hw ent uid gid (Z_to_bv 64 R) efn))
     /\ bytes_at rsegs m' P (s ++ [Z_to_bv 8 0])
     /\ bytes_at rsegs m' R (le8 cr)
     /\ (0 < t < 4194304)%Z.
@@ -371,9 +396,14 @@ Section RInitLibc.
     end);
     lstep; lstep; ldaux AUXB ki; lstep; astep.
 
+  (* A key at or above AUX_CNT (the cache words, AT_MINSIGSTKSZ): [bgeu] skips
+     the store and the loop loads the next key. *)
+  Ltac skip_it AUXB ki :=
+    lstep; if_true; ldaux AUXB ki; lstep; astep.
+
   Lemma rinit_libc_spec : forall tp a0 a1,
     stk rsegs m lo (bv_unsigned sp) ->
-    bytes_at rsegs m E (u64s eps ++ le8 z64 ++ u64s (pauxv20 hw uid (Z_to_bv 64 R))) ->
+    bytes_at rsegs m E (u64s eps ++ le8 z64 ++ u64s (pauxv la hw ent uid gid (Z_to_bv 64 R) efn)) ->
     bytes_at rsegs m P (s ++ [Z_to_bv 8 0]) ->
     bytes_at rsegs m R (le8 cr) ->
     rw_cells rsegs m RPROGNAME [C8 pn0; C8 pnf0] ->
@@ -394,84 +424,177 @@ Section RInitLibc.
          (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
              F (Z_to_bv 64 0xb2ce8) fc None m (seg_rom rsegs)).
   Proof.
-    intros tp a0 a1 ST ENV STR RND G2 HW ENVC SI LC TDC MT DS GU GOT3 GG GD MI -> ->.
-    unfold td_cells, libc_cells in *.
-    pose proof (munch_refl W m) as MU. pose proof (wmono_refl rsegs m) as WM.
-    pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-    pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB. cbn [length pauxv20] in EB.
-    pose proof (bytes_at_bound _ _ _ _ STR) as PB. rewrite app_length in PB. cbn [length] in PB.
-    pose proof (bytes_at_bound _ _ _ _ RND) as RB. rewrite length_le8 in RB.
-    pose proof (bv_unsigned_in_range 64 hw) as RHW. unfold bv_modulus in RHW. cbn in RHW.
-    iprefix.
-    carve_frame 384%nat ST.
-    do 10 lstep.
-    (* [comment removed for export] *)
-    apply (rw_cells_split_CB rsegs _ _ [] 352 _ _ [48; 304]%nat) in FR; [|reflexivity]. cbn [mk_CB_cells app] in FR.
-    apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [FRlo FR]. cbn [cells_size csize Nat.add] in FR.
-    apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [AUX FRhi]. cbn [cells_size csize Nat.add] in FRhi.
-    change (Z.of_nat 48) with 48%Z in *. change (Z.of_nat 304) with 304%Z in *.
-    replace (bv_unsigned sp + -384 + 48)%Z with (bv_unsigned sp + -336)%Z in AUX by lia.
-    replace (bv_unsigned sp + -384 + 48 + 304)%Z with (bv_unsigned sp + -32)%Z in FRhi by lia.
-    lstep. call (rmemset_specZ (bv_unsigned sp + -336) 304 0); [exact AUX | exact MI | reflexivity | reflexivity | reflexivity | lia | lia | lia |].
-    rename POST into AUX. change (Z.to_nat 304) with 304%nat in AUX. try rename MI0 into MI.
-    apply (rw_cells_recast rsegs _ _ _ (repeat (C8 z64) 38)) in AUX;
-      [| cbn; repeat split; exact I | vm_compute; reflexivity | reflexivity]. cbn [repeat] in AUX.
-    (* [comment removed for export] *)
-    lstep. lstep. lstep.
-    eapply (renvp_count_loop eps); [exact EPS | exact ENV |].
-    (* [comment removed for export] *)
-    lstep. lstep. lstep.
-    pose proof ENV as AUXB. apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB].
-    apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB]. rewrite u64s_length, length_le8 in AUXB.
-    replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
-    ldaux AUXB 0%nat. lstep. if_false. lstep. lstep. lstep. lstep.
-    (* [comment removed for export] *)
-    rscan_it AUXB 1%nat 2%nat. rscan_it AUXB 3%nat 4%nat. rscan_it AUXB 5%nat 6%nat. rscan_it AUXB 7%nat 8%nat.
-    rscan_it AUXB 9%nat 10%nat. rscan_it AUXB 11%nat 12%nat. rscan_it AUXB 13%nat 14%nat. rscan_it AUXB 15%nat 16%nat.
-    rscan_it AUXB 17%nat 18%nat.
-    (* [comment removed for export] *)
-    steps_to 0xb2da4%Z.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-    (* [comment removed for export] *)
-    steps_to 0xb2de4%Z.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
-      call (rpn_loop (length s) 1 mm mm); [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact STR | exact G2 | ] end.
-    rename POST into G2. try rename MI0 into MI.
-    (* [comment removed for export] *)
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUXa AUX].
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUX3 AUXb].
-    cbn [cells_size csize Nat.add] in AUX3, AUXb. change (Z.of_nat 24) with 24%Z in *.
-    replace (bv_unsigned sp + -336 + 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
-    replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
-    lstep. lstep.
-    name_sp sp (-384)%Z. name_sp sp (-336)%Z.
-    icallk (rinit_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-               lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
-    all: lazymatch goal with
-         | |- forall _, _ => ipost rsegs; unname_sp; unname_sp
-         | |- _ => unname_sp; unname_sp;
-                   first [ hyp_by_addr | reflexivity | lia
-                         | lazymatch goal with |- rw_cells _ _ (?b + -336 + 24)%Z _ =>
-                             replace (b + -336 + 24)%Z with (b + -312)%Z by lia; hyp_by_addr end ]
-         end.
-    rename PC into ST. unfold td_cells, libc_cells in *.
-    (* [comment removed for export] *)
-    lstep. lstep.
-    call_sp (rinit_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R cr).
-    all: lazymatch goal with
-         | |- evt _ _ _ => idtac
-         | |- ?g => first [ hyp_by_addr | reflexivity | lia ]
-         end.
-    match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
-    (* [comment removed for export] *)
-    do 3 lstep. if_false. lstep. lstep. lstep. if_false. lstep. lstep. if_true.
-    do 5 lstep.
-    join2 FRlo AUXa. join2 FRlo AUX3. join2 FRlo AUXb. join2 FRlo FRhi.
-    release_frame FRlo ST (bv_unsigned sp).
-    lstep.
-    unfold rinit_libc_post, td_cells, rtd_cells, libc_cells in *. sys_finish; try lia.
-    all: hyp_by_addr.
+    (* The walk is the same for both kernels up to the CONFIG_RSEQ pair, which
+       only a CONFIG_RSEQ kernel lays; the two cases are walked separately. *)
+    destruct (la_rseq la) eqn:RS.
+    - intros tp a0 a1 ST ENV STR RND G2 HW ENVC SI LC TDC MT DS GU GOT3 GG GD MI -> ->.
+      unfold td_cells, libc_cells in *.
+      pose proof (munch_refl W m) as MU. pose proof (wmono_refl rsegs m) as WM.
+      pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
+      pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB. rewrite pauxv_length, RS in EB. cbn [auxv_count] in EB.
+      pose proof (bytes_at_bound _ _ _ _ STR) as PB. rewrite app_length in PB. cbn [length] in PB.
+      pose proof (bytes_at_bound _ _ _ _ RND) as RB. rewrite length_le8 in RB.
+      pose proof (bv_unsigned_in_range 64 hw) as RHW. unfold bv_modulus in RHW. cbn in RHW.
+      iprefix.
+      carve_frame 384%nat ST.
+      do 10 lstep.
+      (* [comment removed for export] *)
+      apply (rw_cells_split_CB rsegs _ _ [] 352 _ _ [48; 304]%nat) in FR; [|reflexivity]. cbn [mk_CB_cells app] in FR.
+      apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [FRlo FR]. cbn [cells_size csize Nat.add] in FR.
+      apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [AUX FRhi]. cbn [cells_size csize Nat.add] in FRhi.
+      change (Z.of_nat 48) with 48%Z in *. change (Z.of_nat 304) with 304%Z in *.
+      replace (bv_unsigned sp + -384 + 48)%Z with (bv_unsigned sp + -336)%Z in AUX by lia.
+      replace (bv_unsigned sp + -384 + 48 + 304)%Z with (bv_unsigned sp + -32)%Z in FRhi by lia.
+      lstep. call (rmemset_specZ (bv_unsigned sp + -336) 304 0); [exact AUX | exact MI | reflexivity | reflexivity | reflexivity | lia | lia | lia |].
+      rename POST into AUX. change (Z.to_nat 304) with 304%nat in AUX. try rename MI0 into MI.
+      apply (rw_cells_recast rsegs _ _ _ (repeat (C8 z64) 38)) in AUX;
+        [| cbn; repeat split; exact I | vm_compute; reflexivity | reflexivity]. cbn [repeat] in AUX.
+      (* [comment removed for export] *)
+      lstep. lstep. lstep.
+      eapply (renvp_count_loop eps); [exact EPS | exact ENV |].
+      (* [comment removed for export] *)
+      lstep. lstep. lstep.
+      pose proof ENV as AUXB. apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB].
+      apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB]. rewrite u64s_length, length_le8 in AUXB.
+      replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
+      unfold pauxv in AUXB. rewrite RS in AUXB. cbn [app] in AUXB.
+      ldaux AUXB 0%nat. lstep. if_false. lstep. lstep. lstep. lstep.
+      (* [comment removed for export] *)
+      rscan_it AUXB 1%nat 2%nat.
+      skip_it AUXB 4%nat. skip_it AUXB 6%nat. skip_it AUXB 8%nat. skip_it AUXB 10%nat. skip_it AUXB 12%nat.
+      skip_it AUXB 14%nat. skip_it AUXB 16%nat. skip_it AUXB 18%nat. skip_it AUXB 20%nat.
+      rscan_it AUXB 21%nat 22%nat. rscan_it AUXB 23%nat 24%nat. rscan_it AUXB 25%nat 26%nat. rscan_it AUXB 27%nat 28%nat.
+      rscan_it AUXB 29%nat 30%nat. rscan_it AUXB 31%nat 32%nat. rscan_it AUXB 33%nat 34%nat. rscan_it AUXB 35%nat 36%nat.
+      rscan_it AUXB 37%nat 38%nat. rscan_it AUXB 39%nat 40%nat. rscan_it AUXB 41%nat 42%nat. rscan_it AUXB 43%nat 44%nat.
+      rscan_it AUXB 45%nat 46%nat. rscan_it AUXB 47%nat 48%nat. rscan_it AUXB 49%nat 50%nat. rscan_it AUXB 51%nat 52%nat.
+      (* The CONFIG_RSEQ pair: AT_RSEQ_FEATURE_SIZE and AT_RSEQ_ALIGN are below AUX_CNT. *)
+      rscan_it AUXB 53%nat 54%nat. rscan_it AUXB 55%nat 56%nat.
+      (* [comment removed for export] *)
+      steps_to 0xb2da4%Z.
+      astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
+      astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
+      (* [comment removed for export] *)
+      steps_to 0xb2de4%Z.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+        call (rpn_loop (length s) 1 mm mm); [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact STR | exact G2 | ] end.
+      rename POST into G2. try rename MI0 into MI.
+      (* [comment removed for export] *)
+      apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUXa AUX].
+      apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUX3 AUXb].
+      cbn [cells_size csize Nat.add] in AUX3, AUXb. change (Z.of_nat 24) with 24%Z in *.
+      replace (bv_unsigned sp + -336 + 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
+      replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
+      lstep. lstep.
+      name_sp sp (-384)%Z. name_sp sp (-336)%Z.
+      icallk (rinit_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+                 lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
+      all: lazymatch goal with
+           | |- forall _, _ => ipost rsegs; unname_sp; unname_sp
+           | |- _ => unname_sp; unname_sp;
+                     first [ hyp_by_addr | reflexivity | lia
+                           | lazymatch goal with |- rw_cells _ _ (?b + -336 + 24)%Z _ =>
+                               replace (b + -336 + 24)%Z with (b + -312)%Z by lia; hyp_by_addr end ]
+           end.
+      rename PC into ST. unfold td_cells, libc_cells in *.
+      (* [comment removed for export] *)
+      lstep. lstep.
+      call_sp (rinit_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R cr).
+      all: lazymatch goal with
+           | |- evt _ _ _ => idtac
+           | |- ?g => first [ hyp_by_addr | reflexivity | lia ]
+           end.
+      match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+      (* [comment removed for export] *)
+      do 3 lstep. if_false. lstep. lstep. lstep. if_false. lstep. lstep. if_true.
+      do 5 lstep.
+      join2 FRlo AUXa. join2 FRlo AUX3. join2 FRlo AUXb. join2 FRlo FRhi.
+      release_frame FRlo ST (bv_unsigned sp).
+      lstep.
+      unfold rinit_libc_post, td_cells, rtd_cells, libc_cells in *. sys_finish; try lia.
+      all: hyp_by_addr.
+    - intros tp a0 a1 ST ENV STR RND G2 HW ENVC SI LC TDC MT DS GU GOT3 GG GD MI -> ->.
+      unfold td_cells, libc_cells in *.
+      pose proof (munch_refl W m) as MU. pose proof (wmono_refl rsegs m) as WM.
+      pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
+      pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB. rewrite pauxv_length, RS in EB. cbn [auxv_count] in EB.
+      pose proof (bytes_at_bound _ _ _ _ STR) as PB. rewrite app_length in PB. cbn [length] in PB.
+      pose proof (bytes_at_bound _ _ _ _ RND) as RB. rewrite length_le8 in RB.
+      pose proof (bv_unsigned_in_range 64 hw) as RHW. unfold bv_modulus in RHW. cbn in RHW.
+      iprefix.
+      carve_frame 384%nat ST.
+      do 10 lstep.
+      (* [comment removed for export] *)
+      apply (rw_cells_split_CB rsegs _ _ [] 352 _ _ [48; 304]%nat) in FR; [|reflexivity]. cbn [mk_CB_cells app] in FR.
+      apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [FRlo FR]. cbn [cells_size csize Nat.add] in FR.
+      apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [AUX FRhi]. cbn [cells_size csize Nat.add] in FRhi.
+      change (Z.of_nat 48) with 48%Z in *. change (Z.of_nat 304) with 304%Z in *.
+      replace (bv_unsigned sp + -384 + 48)%Z with (bv_unsigned sp + -336)%Z in AUX by lia.
+      replace (bv_unsigned sp + -384 + 48 + 304)%Z with (bv_unsigned sp + -32)%Z in FRhi by lia.
+      lstep. call (rmemset_specZ (bv_unsigned sp + -336) 304 0); [exact AUX | exact MI | reflexivity | reflexivity | reflexivity | lia | lia | lia |].
+      rename POST into AUX. change (Z.to_nat 304) with 304%nat in AUX. try rename MI0 into MI.
+      apply (rw_cells_recast rsegs _ _ _ (repeat (C8 z64) 38)) in AUX;
+        [| cbn; repeat split; exact I | vm_compute; reflexivity | reflexivity]. cbn [repeat] in AUX.
+      (* [comment removed for export] *)
+      lstep. lstep. lstep.
+      eapply (renvp_count_loop eps); [exact EPS | exact ENV |].
+      (* [comment removed for export] *)
+      lstep. lstep. lstep.
+      pose proof ENV as AUXB. apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB].
+      apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB]. rewrite u64s_length, length_le8 in AUXB.
+      replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
+      unfold pauxv in AUXB. rewrite RS in AUXB. cbn [app] in AUXB.
+      ldaux AUXB 0%nat. lstep. if_false. lstep. lstep. lstep. lstep.
+      (* [comment removed for export] *)
+      rscan_it AUXB 1%nat 2%nat.
+      skip_it AUXB 4%nat. skip_it AUXB 6%nat. skip_it AUXB 8%nat. skip_it AUXB 10%nat. skip_it AUXB 12%nat.
+      skip_it AUXB 14%nat. skip_it AUXB 16%nat. skip_it AUXB 18%nat. skip_it AUXB 20%nat.
+      rscan_it AUXB 21%nat 22%nat. rscan_it AUXB 23%nat 24%nat. rscan_it AUXB 25%nat 26%nat. rscan_it AUXB 27%nat 28%nat.
+      rscan_it AUXB 29%nat 30%nat. rscan_it AUXB 31%nat 32%nat. rscan_it AUXB 33%nat 34%nat. rscan_it AUXB 35%nat 36%nat.
+      rscan_it AUXB 37%nat 38%nat. rscan_it AUXB 39%nat 40%nat. rscan_it AUXB 41%nat 42%nat. rscan_it AUXB 43%nat 44%nat.
+      rscan_it AUXB 45%nat 46%nat. rscan_it AUXB 47%nat 48%nat. rscan_it AUXB 49%nat 50%nat. rscan_it AUXB 51%nat 52%nat.
+      (* [comment removed for export] *)
+      steps_to 0xb2da4%Z.
+      astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
+      astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
+      (* [comment removed for export] *)
+      steps_to 0xb2de4%Z.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+        call (rpn_loop (length s) 1 mm mm); [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact STR | exact G2 | ] end.
+      rename POST into G2. try rename MI0 into MI.
+      (* [comment removed for export] *)
+      apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUXa AUX].
+      apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUX3 AUXb].
+      cbn [cells_size csize Nat.add] in AUX3, AUXb. change (Z.of_nat 24) with 24%Z in *.
+      replace (bv_unsigned sp + -336 + 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
+      replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
+      lstep. lstep.
+      name_sp sp (-384)%Z. name_sp sp (-336)%Z.
+      icallk (rinit_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+                 lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
+      all: lazymatch goal with
+           | |- forall _, _ => ipost rsegs; unname_sp; unname_sp
+           | |- _ => unname_sp; unname_sp;
+                     first [ hyp_by_addr | reflexivity | lia
+                           | lazymatch goal with |- rw_cells _ _ (?b + -336 + 24)%Z _ =>
+                               replace (b + -336 + 24)%Z with (b + -312)%Z by lia; hyp_by_addr end ]
+           end.
+      rename PC into ST. unfold td_cells, libc_cells in *.
+      (* [comment removed for export] *)
+      lstep. lstep.
+      call_sp (rinit_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R cr).
+      all: lazymatch goal with
+           | |- evt _ _ _ => idtac
+           | |- ?g => first [ hyp_by_addr | reflexivity | lia ]
+           end.
+      match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+      (* [comment removed for export] *)
+      do 3 lstep. if_false. lstep. lstep. lstep. if_false. lstep. lstep. if_true.
+      do 5 lstep.
+      join2 FRlo AUXa. join2 FRlo AUX3. join2 FRlo AUXb. join2 FRlo FRhi.
+      release_frame FRlo ST (bv_unsigned sp).
+      lstep.
+      unfold rinit_libc_post, td_cells, rtd_cells, libc_cells in *. sys_finish; try lia.
+      all: hyp_by_addr.
   Qed.
 End RInitLibc.
 

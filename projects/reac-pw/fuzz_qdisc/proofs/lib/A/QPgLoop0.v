@@ -6,11 +6,12 @@
    proofs/libreac/fuzz_knock/lib/A/APgLoop0.v (its part 0, the walk helpers a9's lib/A framework set does
    not carry: lines 73-270) and proofs/libreac/fuzz_knock/lib/A/APgMain1.v (its local part, lines 120-260:
    the region-move lemmas, in_region, rd_run, br_go, pin_reg, in_bytes and the byte-bound lemmas) and
-   lines 98-112 of APgMain3.v (in_region_keep), at origin/ossv/recipes 6ebe35ba632, with their module paths
+   lines 98-112 of APgMain3.v (in_region_keep), with their module paths
    changed and knock's frame arguments (fpos, F, EFA) dropped from every tactic, because fuzz_qdisc's
    harness owns no fake frame (lib/A/QPgRt.v, change Q1). This file adds fuzz_qdisc's own Z-level model of
    the harness loop: the frame-rate table and the selector's magic division by 6. rule 24 (reuse): no
    function is proved here; helpers, two model lemmas, the walk states and the loop invariants only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

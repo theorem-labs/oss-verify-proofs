@@ -1,10 +1,10 @@
 (* fuzz_preset image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43): the walks of alloc.c's
    five accessors of the test harness's allocator statics (alloc.c :129-152) against the kit's texts
-   (lib/A/PRH_FnAlloc.v:109-163, blob 740f4d11d144, kit of record f97c8b2f046b):
+   (lib/A/PRH_FnAlloc.v:109-163, blob 740f4d11d144, kit of record):
    fuzz_alloc_live_holds, fuzz_alloc_peak_holds, fuzz_alloc_peak_reset_holds, fuzz_alloc_count_holds and
    fuzz_alloc_fail_holds. Every conclusion is SRr (srealizes, YA0n.v). The B' twin of lib/A/Prog/PwAllocSurf.v
    (a Theorem Labs lane's A' file, blob 428e59506566): the edits that file made old A -> A' are made here old B -> B'.
-   RELOCATED 2026-10-29 from the old-pin B file (a working branch 5f6a2b85e1b9, blob dc0aa313d4ab, image
+   RELOCATED 2026-10-29 from the old-pin B file (a working branch, blob dc0aa313d4ab, image
    f8f98a95 / twin 3b5e1a09). The five bodies are instruction-equal mod pc-relative fields on the two B pins
    (a Theorem Labs lane's internal file cmp5.py over the twins 3b5e1a09 / c90d4fa5: EQUAL-mod-pcrel, every word equal but
    the auipc / ld / sd immediates, every auipc pair resolves to the same symbol + offset); this file names no address,
@@ -23,7 +23,7 @@
                             or a0,a1,a0 ; auipc a1 ; sd a0 -> g_fail_at ; ret                           (9 words)
    The walks read these words from the image (build_table over the segments), so a different body fails them. None
    makes an instrumented access: the readers load a static, the writers store into a static, which is PST.
-   Shape (h-hpreset-7's split; origin/cold/h-hpreset-7-walk-S8b b8cc8ce5f57 ExUtf8.v / ExUtf8W.v / lib/B ExUtf8B.v):
+   Shape (h-hpreset-7's split; ExUtf8.v / ExUtf8W.v / lib/B ExUtf8B.v):
    1. pas_rd_run / pas_wr_run state a byte run as machine behaviour over ANY segments (no journal, no ledger);
    2. the cores pas_<fn>_core, parametric in the image ({PI : PrhImg} {PA : PAImg L}) and in the allocator relation
       ARx, build fpost (YCbqG's apost_base_x at PST := prh_pst) from the byte run: a reader by ajournal_x_init and
@@ -37,7 +37,7 @@
       computation (S1ImgA.v's image-free checkers copied, as S1ImgB.v runs them on image B; neither file is Required);
    4. the five texts at PA := PI_prog_B, PI := prh_img_B, cp := CfParams_preset, ARx := FuzzStrdup.v's ARcf /\
       xs_placed_cf. LAWS is the allocator laws' lift (h-mani-a8's AR_laws_ok_cf -> YGcallcf.v's AR_laws_x_xs, as
-      FuzzStrdup.v:234-235 cites it). Opened hypothesis: PST_unowned (PST_ok's B half).
+      FuzzStrdup.v:235-236 cites it). Opened hypothesis: PST_unowned (PST_ok's B half).
    fuzz_alloc_fail's saturating sum is pas_sat: s = (c + k) mod 2 ^ 64, and s | -(s <u c) is the kit's
    `if k <? SIZE_MAXZ - c then c + k else SIZE_MAXZ` in all three cases (no wrap; c + k = SIZE_MAX, no wrap; wrap).
    Mechanics from lib/A/Prog/PwLive.v (the reader, old vocabulary), PwRanOutReset.v (a one-static writer) and
@@ -765,7 +765,7 @@ Context {SK : YI16.sink_head}.
 Variable B : asyms.
 #[local] Abbreviation ARc := (fun ly S Hp W mem md => ARcf (cp := CP) SEGS B ly S Hp W mem md /\ xs_placed_cf ly S).
 (* the allocator's laws at ARcf: h-mani-a8's AR_laws_ok_cf (YG0lawscf.v), and AR_laws_x from them (YGcallcf.v),
-   exactly as FuzzStrdup.v:234-235 *)
+   exactly as FuzzStrdup.v:235-236 *)
 Let LAWS_cf : AR_laws_cf (cp := CP) SEGS B := AR_laws_ok_cf (cp := CP) SEGS B.
 Let LAWS : AR_laws_x SEGS B ARc (@cf_head CP) := AR_laws_x_xs (cp := CP) SEGS B LAWS_cf.
 (* PST_ok's B half: the seven statics are not runtime-owned statics of B (its image half is pas_pst_img_B). Its
@@ -797,7 +797,7 @@ exact (pas_fail_core B ARc SK _ LAWS PST_OK pas_pst_sep_B pas_pst_al_B pas_pst_r
 Qed.
 
 (* THE FIVE TOPS, at the kit's room-live instance h-mani-a8's prh_room_live_a8 (PRH_Base.v:218, from YGcfRoomLive's
-   proved laws), as S1's FuzzStrdup.v:532 / FuzzFree.v:896 state theirs; the owner's form for the signature *)
+   proved laws), as S1's FuzzStrdup.v:533 / FuzzFree.v:896 state theirs; the owner's form for the signature *)
 Theorem fuzz_alloc_live_holds :
   tfuzz_alloc_live_specX (cp := CP) (PI := PIA) (RL := prh_room_live_a8 (cp := CP)) (PA := PA) B ARc SK.
 Proof. exact (fuzz_alloc_live_holds_rl (RL := prh_room_live_a8 (cp := CP))). Qed.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a load that misses on the vvar range, and the new fetch-failure cases). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -134,7 +135,7 @@ Proof.
   intros t H. induction H as [c Hc | c | c | c | c | c | n a k Hk IH | n a v k Hk IH]; intros m r Hr;
     cbn [interp_eff_accesses] in Hr; try discriminate.
   - injection Hr as <-. exact Hc.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k _) m) as [ra| |] eqn:E; try discriminate.
     injection Hr as <-. cbn. exact (IH _ m ra E).
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -158,7 +159,7 @@ Qed.
 Lemma fetch_failure_not_ok : forall m addr st', fetch_failure segs m addr <> MachineOk st'.
 Proof.
   intros m addr st'. unfold fetch_failure.
-  destruct (negb _); [discriminate|]. destruct (_ || _)%bool; discriminate.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 Lemma step_full : forall ms ms', RiscvSemantics.step segs ms = MachineOk ms' -> rfull (ms_regs ms) -> rfull (ms_regs ms').
@@ -184,7 +185,7 @@ Lemma interp_mem_inv : forall t m r, interp_eff_accesses segs t m = MachineOk r 
 Proof.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m r Hr HI; cbn [interp_eff_accesses] in Hr; try discriminate.
   - injection Hr as <-. exact HI.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k _) m) as [ra| |] eqn:E; try discriminate.
     injection Hr as <-. cbn. exact (IH _ m ra E HI).
   - destruct (store_ok segs m a (width_bytes n)) eqn:Hok; [|discriminate].

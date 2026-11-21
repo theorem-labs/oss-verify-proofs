@@ -23,9 +23,9 @@
    asan / side-stack conjunct, so the stretch needs only the premises it reads); amainF, reac_ctrl_build_as_F_holds
    and reac_ctrl_build_as_holds_of_F keep their statements. The glue lifts reac_ctrl_build_as_stretch_F_holds
    (the 21 premises amain_stretchF uses, post = the jump state or the return of 0; no ctrl_emit_as premise).
-   PROVENANCE: source proved run a working branch d69f7c708f6 (lib/A/Prog/reac_ctrl_build_as{,_c,F}.v);
+   PROVENANCE: source proved run a working branch (lib/A/Prog/reac_ctrl_build_as{,_c,F}.v);
    image root (internal path), ELF sha256
-   aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (= FACTS ed6b6b7b0ab index/binaries.tsv (a working note, not in this delivery));
+   aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (= FACTS index/binaries.tsv (a working note, not in this delivery));
    symbols from the unstripped twin (internal path) (same PT_LOADs); tool:
    none (the script re-run over lib/Lib/StepF, no relocation); compare:
    basf_consts.py, 10 checks OK (REAC_CTRL_BUILD_AS, BA_SW and its 7

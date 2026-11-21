@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102L4ADefs.v, with its module paths changed; 250 of its 440 lines of code are new or changed and 311 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, PIN sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): the SUPPORT LEMMAS of segment L4 of
    LLVMFuzzerTestOneInput (entry 0x815e0), +0x1b8 .. +0x2f0, for the segment proof lib/A/Prog/Ent102L4A.v, that the
@@ -19,13 +20,13 @@
      position (the starved check's run premise from the call's run, and cut_crs0's index).
    Everything else this lane uses is cited from lib/A/Prog/Ent102L6AfLem.v (blob a37e0dc13d12) and lib/A/Prog/Ent102CallA.v
    (blob aefcab75548d, with ec_ledger_cells for the ledger's two harness cells), as on the statement line.
-   STATEMENT read: lib/A/Ent102CutsA.v (a working branch 83576a163e5b, statements of CUT STABLE 2ab248e3b164:
+   STATEMENT read: lib/A/Ent102CutsA.v (a working branch, statements of CUT STABLE:
    ec_frame_shadow, ec_doc, ecx, ec_rej, ec_pn, ec_sc, ec_cno_evs, ec_ranout, ec_trip) and lib/A/Ent102PosA.v
    (ec_supply_run, ec_run_split, ec_call_evs_ranout_false).
    LISTING: lib/A/Listing_prog.v blob 1ab147923c5d (slot k = byte offset 4k from the entry), through the PAListing
    PL_102_A of lib/A/Ent102PLA.v (blob a55fa7414ddf); lib/A/PAImg_prog.v is not loaded, no vm_compute on pa_val /
    pa_sigma.
-   The kit TEXTS (the kit of record f97c8b2f046b, names only): lib/A/PRH_Base.v (prh_run_at), lib/A/PRH_FnCheck.v
+   The kit TEXTS (the kit of record, names only): lib/A/PRH_Base.v (prh_run_at), lib/A/PRH_FnCheck.v
    (ck_crcs_evs, ck_ncalls).
    rule 24: proves function LLVMFuzzerTestOneInput, segment L4 (reuse search: main / ossv/recipes / ossv/candidates /
    release/pau-projects-recipes + the internal lemma index / proof-index LLVMFuzzerTestOneInput exit=0, checker CONFIRM;

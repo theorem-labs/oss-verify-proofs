@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: the concrete list of registered globals, in the form of
-   proofs/libreac/fuzz_identity/lib/A/Prog/IdentEntryLink.v:150-168 (origin/ossv/recipes 4b6f0df50aa7: IDENT_GLOBS and
+   proofs/libreac/fuzz_identity/lib/A/Prog/IdentEntryLink.v:150-168 (IDENT_GLOBS and
    globs_In_b), for libdiginet/fuzz_codec's ASan + UBSan build (image B). *)
 (* The registered globals of fuzz_codec.asan-ubsan (sha256 73109e32e77b...): the (beg, size) of each of the 40
    descriptors of its asan_globals section (0xa2ce0, 64 bytes each), in section order, read with pyelftools from the

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the initial stack-pointer fact nstep_init_sp passed on to the child state). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -192,8 +193,9 @@ Proof.
       rewrite (mprotect_refusal_iff addr len prot s mo kk eff mo1 z s1 Hvis Hst Hkv) in R1.
       destruct (z =? 0) eqn:E; [apply Z.eqb_eq in E; exact E | discriminate R1]. }
   destruct (nstep_vm_const _ _ _ _ _ Hst) as [E1 E2].
+  pose proof (nstep_init_sp _ _ _ _ _ Hst) as E3.
   exact (IH z D (event_post L e z) s1 mo1 (HP z Hpz) (HQk z Ha) (NK2 z)
-           (NI_child ETOT NR RBY D L _ s s1 mo mo1 HNI HK1 HLI1 E1 E2 (HCC_any L (ps_brk s) mo e z HK Hpre))
+           (NI_child ETOT NR RBY D L _ s s1 mo mo1 HNI HK1 HLI1 E1 E2 E3 (HCC_any L (ps_brk s) mo e z HK Hpre))
            (LEAF_child SMAX e k s mo kk eff mo1 z s1 Hvis Hst Hkv HL) r mo' Hrest).
 Qed.
 End PATHCFG.

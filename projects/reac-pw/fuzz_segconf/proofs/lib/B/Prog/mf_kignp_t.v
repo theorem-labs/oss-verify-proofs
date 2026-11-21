@@ -1,7 +1,7 @@
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, twin 80e82127e8ca; 0x86140), segment S_MF_KIGNP
    (KIGN 0x86968 -> KKNOCK 0x86a7c or KDONE 0x86c1c): the facts of the model and of the reader its walk
    (mf_kignp_*.v) uses. A walk lane of the image-B m_file-family owner's G2B. ADAPTED from the image-A m_file-family lane's image-A
-   lib/A/Prog/m_file_s_kign_t.v and m_file_s_kign_e.v (commit a11e040adbd4): pure lemmas, the
+   lib/A/Prog/m_file_s_kign_t.v and m_file_s_kign_e.v: pure lemmas, the
    same text over image B's copies (only the Require lines and this header differ; the struct mconf layout is the
    same in both images).
    proves no function (kind: model lemma of m_file's walk, segment S_MF_KIGNP).

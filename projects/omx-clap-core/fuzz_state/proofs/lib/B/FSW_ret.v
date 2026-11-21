@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_string.v, with its module paths and module names changed; 114 of its 182 lines of code are new or changed and 1533 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_ret.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_ret.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The resume state after a program call in an INSTRUMENTED function, for walks that go on to read heap objects (or other
    memory outside the frame) after the call: fss_retT is FSW_K.fss_ret plus fss0T's shadow-base cells (the GOT word
    tfib_D_GOT_asan_shadow_memory_dynamic_address and the cell tfib_D_asan_shadow_memory_dynamic_address, as regions; the
    shadow base SHADOW_OFF as extra atom 32), plus a caller-chosen list of extra regions rs (e.g. a heap object the
    callee returned in a0, as a region based at atom 10, the a0 of the resumed env) with extra atom facts gf: the same
-   premise shape as FSW_K.fsw_entryT_args (fss0T_args / fsT_regions_args, a working branch 7dee8c7178b).
+   premise shape as FSW_K.fsw_entryT_args (fss0T_args / fsT_regions_args, a working branch).
    fsw_after_callU_args is FSW_K.fsw_after_callU resuming in it. The SHADOW of an extra object is NOT a region here:
    the walk's inline shadow checks go through FSW_K's token run (fsw_run_tok_AJU / fsw_aj_run_tokU with Bx := fs_Bx,
    Bspan := fs_Bspan, one shent per object atom), the donor's way (A/ACes.v:28-29, Reusable/YCbn.v:345-346).
@@ -160,8 +161,8 @@ rewrite restrict_mkst_fx. unfold fss_retT, fsT_ret_regions in *. cbn [app] in *.
   + rewrite Z.pow_0_r. split; [lia | split; [apply Z.mod_1_r | lia]].
 Qed.
 
-(* ---- the RETURN of a function stated in fpostU (FSH_Gen.v: the reader specs' form, a working branch
-   d3689f592c6): at the final `ret` (RET_WORD_r at ss_pc), the walk's journal over the unpoisoned memories, its ARU at the
+(* ---- the RETURN of a function stated in fpostU (FSH_Gen.v: the reader specs' form, a working branch):
+   at the final `ret` (RET_WORD_r at ss_pc), the walk's journal over the unpoisoned memories, its ARU at the
    final memory and the callee-saved registers give fpostU, leaving Q. The U form of FSW_K's fsw_ret (fpost, U = []):
    fpostU's two extra conjuncts upoison_ok / upoisoned are ARU's last two, at the U' the spec names. ---- *)
 Lemma fsw_retU : forall B tbl (tbl_ok : table_ok tfibsegs tbl) W2 E ssf msf mdf STK sp0 FP regs0 ly S U W mem md lyf

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: both sections take entry_launch_ok_va (VE) and pass it to me_geometry, args_init and main_entry_handoff, and the lemmas that reach args_geo declare it, SBK is the launch's entry_stack_image, LO is ATOP + 2252800 (was ATOP + 4096), args_comp spans the image's length less 8 (was 16), and prog_main_impl takes the launch's inputs and the image's length and top alignment. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -36,6 +37,12 @@ Section Run.
   Hypothesis ASH0 : forall p : word, bv_unsigned p mod 4096 = 0 ->
      shad (al_space_beg (mkALayout (LV V) w U)) <= bv_unsigned p < shad (al_space_beg (mkALayout (LV V) w U)) + 17179869184 -> AL p.
   Hypothesis VI : valid_input inp.
+  (* [Run.valid_entry_va]'s fifth conjunct (Run.v:3732-3739).  It replaces the
+     deleted [build_stack_bytes_within_span] / [entry_stack_image_top] route;
+     see MainEntryA__A3D.v's header.  Discharged at E2/A3D/ImplTopA.v:144-146
+     (twin :294-296) by [valid_entry_launch _ _ _ VI VE] from that file's own
+     [VE : valid_entry IMG enT inp] -- IMPL_A_real's statement does not move. *)
+  Hypothesis VE : entry_launch_ok_va Sv48 en inp.
   Hypothesis VSP : valid_sp (en_sp en).
   Hypothesis FITS : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
 
@@ -60,9 +67,10 @@ Section Run.
   Hypothesis U_FUZZ : incl fuzz_traces U.
 
   Notation USP := (bv_unsigned (en_sp en)).
-  Notation SBK := (build_stack_bytes a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)).
+  Notation ENTRYW := (Z_to_bv 64 (Z.of_N a_init_pc)).
+  Notation SBK := (entry_stack_image inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)).
   Notation L := (mkALayout (LV V) w U).
-  Notation LO := (ATOP + 4096).
+  Notation LO := (ATOP + 2252800).
   Notation RNG := (fp_ok lz AL).
   Notation AI := (AI_of CI CIB).
   Notation AF := (afake_inst CI CIB).
@@ -80,7 +88,7 @@ Section Run.
   Variable cb : Z.
   Definition cs4 : list gcomp := [files_comp; env_comp; strerr_comp].   (* [comment removed for export] *)
   Definition cs_mine : list gcomp :=
-    [args_comp USP (Z.of_nat (length SBK) - 16); unp_comp; exitci_comp; globals_comp; stdinp_comp; stacksh_comp; tlsobj_comp].
+    [args_comp USP (Z.of_nat (length SBK) - 8); unp_comp; exitci_comp; globals_comp; stdinp_comp; stacksh_comp; tlsobj_comp].
   Definition cs_mineX : list gcomp := atx_comp cb :: cs_mine.
   Definition cs_all : list gcomp := cs_mineX ++ harn_comp :: cs4.
   Notation GIOA := (GIOA_real AI (GSTAT_of cs_all)).
@@ -96,15 +104,15 @@ Section Run.
     exact (strerr_init _ _ _ _ _ _ _ _ AM HTLS U HU L RNG s0 []).
   Qed.
 
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS HU"] Lemma args_geo : ATOP + 64 <= USP /\ 16 <= Z.of_nat (length SBK) /\ USP + Z.of_nat (length SBK) <= 2^47.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS HU"] Lemma args_geo : ATOP + 64 <= USP /\ 16 <= Z.of_nat (length SBK) /\ USP + Z.of_nat (length SBK) <= 2^47.
   Proof.
-    pose proof (me_atop _ _ _ _ _ _ _ _ AM HAT U HU) as A. (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VSP FITS) 6%nat; intros _ _ _ _ _ B47; nd_post).
-    pose proof (raw_len_nonneg a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as RN.
-    pose proof (build_stack_bytes_length a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as BL.
+    pose proof (me_atop _ _ _ _ _ _ _ _ AM HAT U HU) as A. (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VE VSP FITS) 6%nat; intros _ _ _ _ _ B47; nd_post).
+    pose proof (raw_len_nonneg inp (en_sp en) (en_draw en)) as RN.
+    pose proof (build_stack_bytes_length inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)) as BL.
     split; [lia|]. split; [rewrite BL; unfold raw_len in *; lia| exact B47].
   Qed.
 
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX HU BTLS"] Lemma cs_mine_ok : Forall (gcomp_ok AI) cs_mine.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX HU BTLS"] Lemma cs_mine_ok : Forall (gcomp_ok AI) cs_mine.
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post). unfold cs_mine.
     apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]]]]]]].
@@ -116,19 +124,19 @@ Section Run.
     - apply (stacksh_ok AI AF).
     - apply (tlsobj_ok AI AF BTLS).
   Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX HU BTLS"] Lemma cs_mineX_ok : Forall (gcomp_ok AI) cs_mineX.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX HU BTLS"] Lemma cs_mineX_ok : Forall (gcomp_ok AI) cs_mineX.
   Proof. unfold cs_mineX. apply Forall_cons; [exact (atx_ok AI AF CI_ATX cb)| exact cs_mine_ok]. Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma cs_all_ok : Forall (gcomp_ok AI) cs_all.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma cs_all_ok : Forall (gcomp_ok AI) cs_all.
   Proof. unfold cs_all. apply Forall_app. split; [exact cs_mineX_ok|]. apply Forall_cons; [exact (harn_ok AI AF CI_HARN)| exact CSOK4]. Qed.
 
   (* [comment removed for export] *)
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS HU"] Lemma cs_mine_indep : Forall harn_indep cs_mine.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS HU"] Lemma cs_mine_indep : Forall harn_indep cs_mine.
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post). pose proof atop_range as AR.
     unfold cs_mine.
     apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]]]]]]];
       (split; [intros L1 R1 s1 FB1 m1 o HPc; exact HPc|]); intros L1 s1 FB1 a Da R; unfold OUTFILE_ADDR in R; cbn [gc_dom args_comp unp_comp exitci_comp globals_comp stdinp_comp stacksh_comp tlsobj_comp] in Da.
-    - destruct (args_dom_band USP (Z.of_nat (length SBK) - 16) G1 ltac:(lia) a Da) as [B _]. clear - B R AR. Z.div_mod_to_equations. lia.
+    - destruct (args_dom_band USP (Z.of_nat (length SBK) - 8) G1 ltac:(lia) a Da) as [B _]. clear - B R AR. Z.div_mod_to_equations. lia.
     - unfold unp_dom, AIMSH_LO in Da. lia.
     - unfold exitci_dom, exit_dom in Da. destruct Da as [D|[(k & Hk & Rk)|D]].
       + pose proof ATPv_img as TI. lia.
@@ -140,7 +148,7 @@ Section Run.
     - destruct (tlsobj_band a Da) as (B & _). lia.
   Qed.
 
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS HU"] Lemma cs_mineX_indep : Forall harn_indep cs_mineX.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS HU"] Lemma cs_mineX_indep : Forall harn_indep cs_mineX.
   Proof. unfold cs_mineX. apply Forall_cons; [exact (atx_harn_indep cb)| exact cs_mine_indep]. Qed.
 
   (* [comment removed for export] *)
@@ -156,7 +164,7 @@ Section Run.
 
   Definition GD_run : gia_drv_laws GIOA USP SBK :=
     GD_inst CI CIB cs_all cs_all_ok USP SBK (proj1 args_geo) (proj1 (proj2 args_geo)) (proj2 (proj2 args_geo)) CI_RS
-      (in_mine (args_comp USP (Z.of_nat (length SBK) - 16)) ltac:(unfold cs_mine; cbn [In]; solve [ repeat first [ left; reflexivity | right ] ])) (in_mine unp_comp ltac:(unfold cs_mine; cbn [In]; solve [ repeat first [ left; reflexivity | right ] ])).
+      (in_mine (args_comp USP (Z.of_nat (length SBK) - 8)) ltac:(unfold cs_mine; cbn [In]; solve [ repeat first [ left; reflexivity | right ] ])) (in_mine unp_comp ltac:(unfold cs_mine; cbn [In]; solve [ repeat first [ left; reflexivity | right ] ])).
   Definition MALLOC_run := malloc_inst CI CIB cs_all cs_all_ok.
   Definition FREE_run := free_inst CI CIB cs_all cs_all_ok.
   Definition FREENULL_run := free_null_inst CI CIB cs_all cs_all_ok.
@@ -169,7 +177,7 @@ Section Run.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GSL : gia_stdio_laws GIOA.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GSL : gia_stdio_laws GIOA.
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post).
     assert (OKS : Forall (gcomp_ok AI) ((cs_mineX ++ [harn_comp]) ++ [env_comp; strerr_comp])).
@@ -201,7 +209,7 @@ Section Run.
   (* [comment removed for export] *)
   #[using="Type"] Lemma cs_all_strerr : cs_all = (cs_mineX ++ [harn_comp; files_comp; env_comp]) ++ strerr_comp :: [].
   Proof. unfold cs_all, cs4. rewrite <- app_assoc. reflexivity. Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GSE_run : gia_strerr_laws GIOA.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GSE_run : gia_strerr_laws GIOA.
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post).
     assert (OKS : Forall (gcomp_ok AI) ((cs_mineX ++ [harn_comp; files_comp; env_comp]) ++ [])).
@@ -243,7 +251,7 @@ Section Run.
   Definition FCLOSE : fclose_stmt_o asan_ops GIOA TP :=
     fclose_o_proofA asan_ops (asan_fo site_frameA) GIOA TP fflagA_real GL_run GSL (gr_addr AI _) EQB_run FREE_run FREENULL_run TP_real_fclose.
   Let GSP := inst_GS_pres CI CIB cs_all cs_all_ok.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC HU BTLS BAHM GSP"] Lemma FUZZ : fuzz_one_stmt asan_ops (asan_fo site_frameA) stk GIOA TP.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC HU BTLS BAHM GSP"] Lemma FUZZ : fuzz_one_stmt asan_ops (asan_fo site_frameA) stk GIOA TP.
   Proof.
     (* [comment removed for export] *)
     eapply (fuzz_one_closedA asan_ops (asan_fo site_frameA) stk GIOA TP fflagA_real);
@@ -294,13 +302,13 @@ Section Run.
   Notation GIOA := (GIOA_real AI (GSTAT_of (cs_all 0))).
   Notation GIOA1 := (GIOA_real AI (GSTAT_of (cs_all 1))).
   (* [comment removed for export] *)
-  #[using="lim ms mo AM HAT HTLS LU A0I VSP FITS HU"] Lemma cs_all_init : gconj (cs_all 0) L RNG s0 [] m.
+  #[using="lim ms mo AM HAT HTLS LU A0I VE VSP FITS HU"] Lemma cs_all_init : gconj (cs_all 0) L RNG s0 [] m.
   Proof.
     pose proof (me_facts _ _ _ _ _ _ _ _ AM) as [HM HP].
     unfold cs_all. apply (proj2 (gconj_app _ _ _ _ _ _ _)). split.
     - unfold cs_mineX, cs_mine. cbn [gconj gc_P atx_comp args_comp unp_comp exitci_comp globals_comp stdinp_comp stacksh_comp tlsobj_comp].
       split; [exists false; exact (atx_init V m HM)|].
-      split; [exact (args_init _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL HU A0I VSP FITS L s0 [])|].
+      split; [exact (args_init _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL HU A0I VE VSP FITS L s0 [])|].
       split; [exact (unp_init _ _ _ _ _ _ _ _ AM U HU L RNG s0 [])|].
       split; [exists (V 44%nat); exact (exit_ci_init V m HM HP HTLS)|].
       split; [exact (globals_init _ _ _ _ _ _ _ _ AM U HU L RNG s0 [])|].
@@ -312,9 +320,9 @@ Section Run.
 
 
   (* [comment removed for export] *)
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma atx_rest_ok : Forall (gcomp_ok AI) ([] ++ (cs_mine ++ harn_comp :: cs4)).
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma atx_rest_ok : Forall (gcomp_ok AI) ([] ++ (cs_mine ++ harn_comp :: cs4)).
   Proof. cbn [app]. apply Forall_app. split; [exact cs_mine_ok|]. apply Forall_cons; [exact (harn_ok AI AF CI_HARN)| exact CSOK4]. Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS HU BTLS"] Lemma atx_rest_indep : Forall atx_indep ([] ++ (cs_mine ++ harn_comp :: cs4)).
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS HU BTLS"] Lemma atx_rest_indep : Forall atx_indep ([] ++ (cs_mine ++ harn_comp :: cs4)).
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post). cbn [app]. apply Forall_app. split.
     - unfold cs_mine.
@@ -324,9 +332,9 @@ Section Run.
     - apply Forall_cons; [exact harn_atx|]. unfold cs4.
       apply Forall_cons; [exact files_atx|]. apply Forall_cons; [exact env_atx|]. apply Forall_cons; [exact strerr_atx| apply Forall_nil].
   Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GA_run : gia_atx_laws GIOA.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GA_run : gia_atx_laws GIOA.
   Proof. exact (gia_atx_laws_real AI AF CI_ATX CI_RS BTLS [] (cs_mine ++ harn_comp :: cs4) atx_rest_ok atx_rest_indep). Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GCB_run : gia_cb_laws GIOA GIOA1.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GCB_run : gia_cb_laws GIOA GIOA1.
   Proof. exact (gia_cb_laws_real AI AF CI_ATX CI_RS BTLS [] (cs_mine ++ harn_comp :: cs4) atx_rest_ok atx_rest_indep). Qed.
 
   #[using="U_FUZZ"] Lemma TRF : traces_fuzz_one TP L RA_FUZZ [].
@@ -345,20 +353,20 @@ Section Run.
   Proof. exact SX_real_frame. Qed.
   #[using="Type"] Lemma STDIO_EXIT : stdio_exit_stmtA (@s_stdio_exit aheap aptr) SX stdio_exit_frame.
   Proof. exact (stdio_exit_stmtA_anti _ _ _ _ SX_real_sxa STDIO_EXIT_SXA). Qed.
-  #[using="lim m ms mo AM HAT LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma SX_of_gioa : forall RNG1 (s : PS) CL FB (m1 : mem), GIOA L RNG1 s CL FB [] m1 -> SX s RNG1 m1.
+  #[using="lim m ms mo AM HAT LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma SX_of_gioa : forall RNG1 (s : PS) CL FB (m1 : mem), GIOA L RNG1 s CL FB [] m1 -> SX s RNG1 m1.
   Proof. intros RNG1 s CL FB m1 G. exact (SX_real_of_gioa (asan_fo site_frameA) GIOA fflagA_real (GL_run 0) (GSL 0) L RNG1 s CL FB [] m1 G). Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC HU BTLS BAHM"] Lemma TRUN_run : target_run_stmt_o asan_ops (asan_fo site_frameA) stk GIOA TP.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC HU BTLS BAHM"] Lemma TRUN_run : target_run_stmt_o asan_ops (asan_fo site_frameA) stk GIOA TP.
   Proof.
     (* [comment removed for export] *)
     exact (target_run_proof asan_ops (asan_fo site_frameA) stk GIOA TP fflagA_real USP SBK GIOA1 (GL_run 0) (GL_run 1) (GD_run 0) GA_run GCB_run
              (MALLOC_run 0) (FREE_run 0) (FREENULL_run 0) (FUZZ 1) (VPR 0)).
   Qed.
 
-  #[using="lim m ms mo AM HAT LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GX_run : forall RNG1 s CL FB m1, GIOA L RNG1 s CL FB [] m1 ->
+  #[using="lim m ms mo AM HAT LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GX_run : forall RNG1 s CL FB m1, GIOA L RNG1 s CL FB [] m1 ->
     (exists t, exit_ci t m1) /\ (exists (Hh : aholes) st LB, AHEAP_P Hh L RNG1 st LB m1) /\ SX s RNG1 m1.
   Proof.
     intros RNG1 s CL FB m1 G. (pose proof G as ndP__; nd_pre ndP__ 7%nat; intros AH _ _ _ _ _ (_ & GC); nd_post).
@@ -369,13 +377,17 @@ Section Run.
   #[using="U_DRV"] Lemma TRD_run : traces_drv L.
   Proof. intros tr Htr. cbn [al_U]. exact (U_DRV tr Htr). Qed.
 
-  #[using="tlsI en lim w m mo AM HAT HTLS U LU FU A0I ASH0 VI VSP FITS CI CIB CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC SITE_RS U_DRV U_FUZZ HU BTLS BAHM"] Theorem impl_run : forall Q, implMG RNG (prog_main asan_ops (asan_fo site_frameA) stk (argv_Z (in_argv inp))) s0 Q ms.
+  #[using="tlsI en lim w m mo AM HAT HTLS U LU FU A0I ASH0 VI VE VSP FITS CI CIB CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC SITE_RS U_DRV U_FUZZ HU BTLS BAHM"] Theorem impl_run : forall Q, implMG RNG (prog_main asan_ops (asan_fo site_frameA) stk (argv_Z (in_argv inp))) s0 Q ms.
   Proof.
-    intros Q. (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VSP FITS) 6%nat; intros M1 M2 M3 M4 M5 M6; nd_post).
-    eapply (prog_main_impl asan_ops (asan_fo site_frameA) stk GIOA TP fflagA_real (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) L LO
-              (GL_run 0) (GD_run 0) GA_run (MALLOC_D_run 0) (FREE_D_run 0) (EPR_USAGE 0) (EPR_OPEN 0) (EPR_READ 0) (EPR_BIG 0) (EFW 0) SITE_RS TRUN_run M1 M2 M3 M4 M5 M6 TRD_run TRF
+    intros Q. (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VE VSP FITS) 6%nat; intros M1 M2 M3 M4 M5 M6; nd_post).
+    (* [IMGTOP]: the image ends at [ed_top].  [en_image_length] is the vendored
+       equality that replaced the deleted [entry_stack_image_top]. *)
+    eapply (prog_main_impl asan_ops (asan_fo site_frameA) stk GIOA TP fflagA_real inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en) L LO
+              (GL_run 0) (GD_run 0) GA_run (MALLOC_D_run 0) (FREE_D_run 0) (EPR_USAGE 0) (EPR_OPEN 0) (EPR_READ 0) (EPR_BIG 0) (EFW 0) SITE_RS TRUN_run M1 M2 M3 M4 M5 M6
+              ltac:(split; [pose proof (en_image_length en inp a_phdrs ENTRYW VE) as EL__; clear - EL__; lia
+                           | exact (en_top_mod8 en inp VE)]) TRD_run TRF
               SX stdio_exit_frame stdio_exit_frame_nonneg stdio_exit_fits SX_frame STDIO_EXIT GX_run).
-    eapply (main_entry_handoff _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL HU A0I VI VSP FITS GIOA s0 []).
+    eapply (main_entry_handoff _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL HU A0I VI VE VSP FITS GIOA s0 []).
     exact (gioa_at_main _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL LU FU A0I ASH0 CI CIB (cs_all 0) libc_init None 6165744 cs_all_init).
   Qed.
 End Run.
@@ -420,6 +432,8 @@ Section Run.
   Hypothesis ASH0 : forall p : word, bv_unsigned p mod 4096 = 0 ->
      shad (al_space_beg (mkALayout (LV V) w U)) <= bv_unsigned p < shad (al_space_beg (mkALayout (LV V) w U)) + 17179869184 -> AL p.
   Hypothesis VI : valid_input inp.
+  (* see the twin at :39 *)
+  Hypothesis VE : entry_launch_ok_va Sv48 en inp.
   Hypothesis VSP : valid_sp (en_sp en).
   Hypothesis FITS : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
 
@@ -444,9 +458,10 @@ Section Run.
   Hypothesis U_FUZZ : incl fuzz_traces U.
 
   Notation USP := (bv_unsigned (en_sp en)).
-  Notation SBK := (build_stack_bytes a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)).
+  Notation ENTRYW := (Z_to_bv 64 (Z.of_N a_init_pc)).
+  Notation SBK := (entry_stack_image inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)).
   Notation L := (mkALayout (LV V) w U).
-  Notation LO := (ATOP + 4096).
+  Notation LO := (ATOP + 2252800).
   Notation RNG := (fp_ok lz AL).
   Notation AI := (AI_of CI CIB).
   Notation AF := (afake_inst CI CIB).
@@ -464,7 +479,7 @@ Section Run.
   Variable cb : Z.
   Definition cs4 : list gcomp := [files_comp; env_comp; strerr_comp].   (* [comment removed for export] *)
   Definition cs_mine : list gcomp :=
-    [args_comp USP (Z.of_nat (length SBK) - 16); unp_comp; exitci_comp; globals_comp; stdinp_comp; stacksh_comp; tlsobj_comp].
+    [args_comp USP (Z.of_nat (length SBK) - 8); unp_comp; exitci_comp; globals_comp; stdinp_comp; stacksh_comp; tlsobj_comp].
   Definition cs_mineX : list gcomp := atx_comp cb :: cs_mine.
   Definition cs_all : list gcomp := cs_mineX ++ harn_comp :: cs4.
   Notation GIOA := (GIOA_real AI (GSTAT_of cs_all)).
@@ -480,15 +495,15 @@ Section Run.
     exact (strerr_init _ _ _ _ _ _ _ _ AM HTLS U HU L RNG s0 []).
   Qed.
 
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS HU"] Lemma args_geo : ATOP + 64 <= USP /\ 16 <= Z.of_nat (length SBK) /\ USP + Z.of_nat (length SBK) <= 2^47.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS HU"] Lemma args_geo : ATOP + 64 <= USP /\ 16 <= Z.of_nat (length SBK) /\ USP + Z.of_nat (length SBK) <= 2^47.
   Proof.
-    pose proof (me_atop _ _ _ _ _ _ _ _ AM HAT U HU) as A. (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VSP FITS) 6%nat; intros _ _ _ _ _ B47; nd_post).
-    pose proof (raw_len_nonneg a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as RN.
-    pose proof (build_stack_bytes_length a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as BL.
+    pose proof (me_atop _ _ _ _ _ _ _ _ AM HAT U HU) as A. (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VE VSP FITS) 6%nat; intros _ _ _ _ _ B47; nd_post).
+    pose proof (raw_len_nonneg inp (en_sp en) (en_draw en)) as RN.
+    pose proof (build_stack_bytes_length inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)) as BL.
     split; [lia|]. split; [rewrite BL; unfold raw_len in *; lia| exact B47].
   Qed.
 
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX HU BTLS"] Lemma cs_mine_ok : Forall (gcomp_ok AI) cs_mine.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX HU BTLS"] Lemma cs_mine_ok : Forall (gcomp_ok AI) cs_mine.
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post). unfold cs_mine.
     apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]]]]]]].
@@ -500,19 +515,19 @@ Section Run.
     - apply (stacksh_ok AI AF).
     - apply (tlsobj_ok AI AF BTLS).
   Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX HU BTLS"] Lemma cs_mineX_ok : Forall (gcomp_ok AI) cs_mineX.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX HU BTLS"] Lemma cs_mineX_ok : Forall (gcomp_ok AI) cs_mineX.
   Proof. unfold cs_mineX. apply Forall_cons; [exact (atx_ok AI AF CI_ATX cb)| exact cs_mine_ok]. Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma cs_all_ok : Forall (gcomp_ok AI) cs_all.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma cs_all_ok : Forall (gcomp_ok AI) cs_all.
   Proof. unfold cs_all. apply Forall_app. split; [exact cs_mineX_ok|]. apply Forall_cons; [exact (harn_ok AI AF CI_HARN)| exact CSOK4]. Qed.
 
   (* [comment removed for export] *)
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS HU"] Lemma cs_mine_indep : Forall harn_indep cs_mine.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS HU"] Lemma cs_mine_indep : Forall harn_indep cs_mine.
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post). pose proof atop_range as AR.
     unfold cs_mine.
     apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]]]]]]];
       (split; [intros L1 R1 s1 FB1 m1 o HPc; exact HPc|]); intros L1 s1 FB1 a Da R; unfold OUTFILE_ADDR in R; cbn [gc_dom args_comp unp_comp exitci_comp globals_comp stdinp_comp stacksh_comp tlsobj_comp] in Da.
-    - destruct (args_dom_band USP (Z.of_nat (length SBK) - 16) G1 ltac:(lia) a Da) as [B _]. clear - B R AR. Z.div_mod_to_equations. lia.
+    - destruct (args_dom_band USP (Z.of_nat (length SBK) - 8) G1 ltac:(lia) a Da) as [B _]. clear - B R AR. Z.div_mod_to_equations. lia.
     - unfold unp_dom, AIMSH_LO in Da. lia.
     - unfold exitci_dom, exit_dom in Da. destruct Da as [D|[(k & Hk & Rk)|D]].
       + pose proof ATPv_img as TI. lia.
@@ -524,7 +539,7 @@ Section Run.
     - destruct (tlsobj_band a Da) as (B & _). lia.
   Qed.
 
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS HU"] Lemma cs_mineX_indep : Forall harn_indep cs_mineX.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS HU"] Lemma cs_mineX_indep : Forall harn_indep cs_mineX.
   Proof. unfold cs_mineX. apply Forall_cons; [exact (atx_harn_indep cb)| exact cs_mine_indep]. Qed.
 
   (* [comment removed for export] *)
@@ -540,7 +555,7 @@ Section Run.
 
   Definition GD_run : gia_drv_laws GIOA USP SBK :=
     GD_inst CI CIB cs_all cs_all_ok USP SBK (proj1 args_geo) (proj1 (proj2 args_geo)) (proj2 (proj2 args_geo)) CI_RS
-      (in_mine (args_comp USP (Z.of_nat (length SBK) - 16)) ltac:(unfold cs_mine; cbn [In]; solve [ repeat first [ left; reflexivity | right ] ])) (in_mine unp_comp ltac:(unfold cs_mine; cbn [In]; solve [ repeat first [ left; reflexivity | right ] ])).
+      (in_mine (args_comp USP (Z.of_nat (length SBK) - 8)) ltac:(unfold cs_mine; cbn [In]; solve [ repeat first [ left; reflexivity | right ] ])) (in_mine unp_comp ltac:(unfold cs_mine; cbn [In]; solve [ repeat first [ left; reflexivity | right ] ])).
   Definition MALLOC_run := malloc_inst CI CIB cs_all cs_all_ok.
   Definition FREE_run := free_inst CI CIB cs_all cs_all_ok.
   Definition FREENULL_run := free_null_inst CI CIB cs_all cs_all_ok.
@@ -553,7 +568,7 @@ Section Run.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GSL : gia_stdio_laws GIOA.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GSL : gia_stdio_laws GIOA.
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post).
     assert (OKS : Forall (gcomp_ok AI) ((cs_mineX ++ [harn_comp]) ++ [env_comp; strerr_comp])).
@@ -585,7 +600,7 @@ Section Run.
   (* [comment removed for export] *)
   #[using="Type"] Lemma cs_all_strerr : cs_all = (cs_mineX ++ [harn_comp; files_comp; env_comp]) ++ strerr_comp :: [].
   Proof. unfold cs_all, cs4. rewrite <- app_assoc. reflexivity. Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GSE_run : gia_strerr_laws GIOA.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GSE_run : gia_strerr_laws GIOA.
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post).
     assert (OKS : Forall (gcomp_ok AI) ((cs_mineX ++ [harn_comp; files_comp; env_comp]) ++ [])).
@@ -627,7 +642,7 @@ Section Run.
   Definition FCLOSE : fclose_stmt_o asan_ops GIOA TP :=
     fclose_o_proofA asan_ops (asan_fo site_frameA) GIOA TP fflagA_real GL_run GSL (gr_addr AI _) EQB_run FREE_run FREENULL_run TP_real_fclose.
   Let GSP := inst_GS_pres CI CIB cs_all cs_all_ok.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC HU BTLS BAHM GSP"] Lemma FUZZ : fuzz_one_stmt asan_ops (asan_fo site_frameA) stk GIOA TP.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC HU BTLS BAHM GSP"] Lemma FUZZ : fuzz_one_stmt asan_ops (asan_fo site_frameA) stk GIOA TP.
   Proof.
     (* [comment removed for export] *)
     eapply (fuzz_one_closedA asan_ops (asan_fo site_frameA) stk GIOA TP fflagA_real);
@@ -678,13 +693,13 @@ Section Run.
   Notation GIOA := (GIOA_real AI (GSTAT_of (cs_all 0))).
   Notation GIOA1 := (GIOA_real AI (GSTAT_of (cs_all 1))).
   (* [comment removed for export] *)
-  #[using="lim ms mo AM HAT HTLS LU A0I VSP FITS HU"] Lemma cs_all_init : gconj (cs_all 0) L RNG s0 [] m.
+  #[using="lim ms mo AM HAT HTLS LU A0I VE VSP FITS HU"] Lemma cs_all_init : gconj (cs_all 0) L RNG s0 [] m.
   Proof.
     pose proof (me_facts _ _ _ _ _ _ _ _ AM) as [HM HP].
     unfold cs_all. apply (proj2 (gconj_app _ _ _ _ _ _ _)). split.
     - unfold cs_mineX, cs_mine. cbn [gconj gc_P atx_comp args_comp unp_comp exitci_comp globals_comp stdinp_comp stacksh_comp tlsobj_comp].
       split; [exists false; exact (atx_init V m HM)|].
-      split; [exact (args_init _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL HU A0I VSP FITS L s0 [])|].
+      split; [exact (args_init _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL HU A0I VE VSP FITS L s0 [])|].
       split; [exact (unp_init _ _ _ _ _ _ _ _ AM U HU L RNG s0 [])|].
       split; [exists (V 44%nat); exact (exit_ci_init V m HM HP HTLS)|].
       split; [exact (globals_init _ _ _ _ _ _ _ _ AM U HU L RNG s0 [])|].
@@ -696,9 +711,9 @@ Section Run.
 
 
   (* [comment removed for export] *)
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma atx_rest_ok : Forall (gcomp_ok AI) ([] ++ (cs_mine ++ harn_comp :: cs4)).
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma atx_rest_ok : Forall (gcomp_ok AI) ([] ++ (cs_mine ++ harn_comp :: cs4)).
   Proof. cbn [app]. apply Forall_app. split; [exact cs_mine_ok|]. apply Forall_cons; [exact (harn_ok AI AF CI_HARN)| exact CSOK4]. Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS HU BTLS"] Lemma atx_rest_indep : Forall atx_indep ([] ++ (cs_mine ++ harn_comp :: cs4)).
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS HU BTLS"] Lemma atx_rest_indep : Forall atx_indep ([] ++ (cs_mine ++ harn_comp :: cs4)).
   Proof.
     (nd_pre args_geo 3%nat; intros G1 G2 G3; nd_post). cbn [app]. apply Forall_app. split.
     - unfold cs_mine.
@@ -708,9 +723,9 @@ Section Run.
     - apply Forall_cons; [exact harn_atx|]. unfold cs4.
       apply Forall_cons; [exact files_atx|]. apply Forall_cons; [exact env_atx|]. apply Forall_cons; [exact strerr_atx| apply Forall_nil].
   Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GA_run : gia_atx_laws GIOA.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GA_run : gia_atx_laws GIOA.
   Proof. exact (gia_atx_laws_real AI AF CI_ATX CI_RS BTLS [] (cs_mine ++ harn_comp :: cs4) atx_rest_ok atx_rest_indep). Qed.
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GCB_run : gia_cb_laws GIOA GIOA1.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GCB_run : gia_cb_laws GIOA GIOA1.
   Proof. exact (gia_cb_laws_real AI AF CI_ATX CI_RS BTLS [] (cs_mine ++ harn_comp :: cs4) atx_rest_ok atx_rest_indep). Qed.
 
   #[using="U_FUZZ"] Lemma TRF : traces_fuzz_one TP L RA_FUZZ [].
@@ -729,20 +744,20 @@ Section Run.
   Proof. exact SX_real_frame. Qed.
   #[using="Type"] Lemma STDIO_EXIT : stdio_exit_stmtA (@s_stdio_exit aheap aptr) SX stdio_exit_frame.
   Proof. exact (stdio_exit_stmtA_anti _ _ _ _ SX_real_sxa STDIO_EXIT_SXA). Qed.
-  #[using="lim m ms mo AM HAT LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma SX_of_gioa : forall RNG1 (s : PS) CL FB (m1 : mem), GIOA L RNG1 s CL FB [] m1 -> SX s RNG1 m1.
+  #[using="lim m ms mo AM HAT LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma SX_of_gioa : forall RNG1 (s : PS) CL FB (m1 : mem), GIOA L RNG1 s CL FB [] m1 -> SX s RNG1 m1.
   Proof. intros RNG1 s CL FB m1 G. exact (SX_real_of_gioa (asan_fo site_frameA) GIOA fflagA_real (GL_run 0) (GSL 0) L RNG1 s CL FB [] m1 G). Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[using="lim w V m ms mo AM HAT U LU VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC HU BTLS BAHM"] Lemma TRUN_run : target_run_stmt_o asan_ops (asan_fo site_frameA) stk GIOA TP.
+  #[using="lim w V m ms mo AM HAT U LU VE VSP FITS CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC HU BTLS BAHM"] Lemma TRUN_run : target_run_stmt_o asan_ops (asan_fo site_frameA) stk GIOA TP.
   Proof.
     (* [comment removed for export] *)
     exact (target_run_proof asan_ops (asan_fo site_frameA) stk GIOA TP fflagA_real USP SBK GIOA1 (GL_run 0) (GL_run 1) (GD_run 0) GA_run GCB_run
              (MALLOC_run 0) (FREE_run 0) (FREENULL_run 0) (FUZZ 1) (VPR 0)).
   Qed.
 
-  #[using="lim m ms mo AM HAT LU VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GX_run : forall RNG1 s CL FB m1, GIOA L RNG1 s CL FB [] m1 ->
+  #[using="lim m ms mo AM HAT LU VE VSP FITS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HU BTLS BAHM"] Lemma GX_run : forall RNG1 s CL FB m1, GIOA L RNG1 s CL FB [] m1 ->
     (exists t, exit_ci t m1) /\ (exists (Hh : aholes) st LB, AHEAP_P Hh L RNG1 st LB m1) /\ SX s RNG1 m1.
   Proof.
     intros RNG1 s CL FB m1 G. (pose proof G as ndP__; nd_pre ndP__ 7%nat; intros AH _ _ _ _ _ (_ & GC); nd_post).
@@ -753,13 +768,16 @@ Section Run.
   #[using="U_DRV"] Lemma TRD_run : traces_drv L.
   Proof. intros tr Htr. cbn [al_U]. exact (U_DRV tr Htr). Qed.
 
-  #[using="tlsI en lim w m mo AM HAT HTLS U LU FU A0I ASH0 VI VSP FITS CI CIB CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC SITE_RS U_DRV U_FUZZ HU BTLS BAHM"] Theorem impl_run : forall Q, implMG RNG (prog_main asan_ops (asan_fo site_frameA) stk (argv_Z (in_argv inp))) s0 Q ms.
+  #[using="tlsI en lim w m mo AM HAT HTLS U LU FU A0I ASH0 VI VE VSP FITS CI CIB CI_RS CI_EXIT CI_ATX CI_HARN CI_ST1 CI_ST2 CI_ENV CI_LOC HCPC HRPC SITE_RS U_DRV U_FUZZ HU BTLS BAHM"] Theorem impl_run : forall Q, implMG RNG (prog_main asan_ops (asan_fo site_frameA) stk (argv_Z (in_argv inp))) s0 Q ms.
   Proof.
-    intros Q. (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VSP FITS) 6%nat; intros M1 M2 M3 M4 M5 M6; nd_post).
-    eapply (prog_main_impl asan_ops (asan_fo site_frameA) stk GIOA TP fflagA_real (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) L LO
-              (GL_run 0) (GD_run 0) GA_run (MALLOC_D_run 0) (FREE_D_run 0) (EPR_USAGE 0) (EPR_OPEN 0) (EPR_READ 0) (EPR_BIG 0) (EFW 0) SITE_RS TRUN_run M1 M2 M3 M4 M5 M6 TRD_run TRF
+    intros Q. (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VE VSP FITS) 6%nat; intros M1 M2 M3 M4 M5 M6; nd_post).
+    (* see the twin at :376 *)
+    eapply (prog_main_impl asan_ops (asan_fo site_frameA) stk GIOA TP fflagA_real inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en) L LO
+              (GL_run 0) (GD_run 0) GA_run (MALLOC_D_run 0) (FREE_D_run 0) (EPR_USAGE 0) (EPR_OPEN 0) (EPR_READ 0) (EPR_BIG 0) (EFW 0) SITE_RS TRUN_run M1 M2 M3 M4 M5 M6
+              ltac:(split; [pose proof (en_image_length en inp a_phdrs ENTRYW VE) as EL__; clear - EL__; lia
+                           | exact (en_top_mod8 en inp VE)]) TRD_run TRF
               SX stdio_exit_frame stdio_exit_frame_nonneg stdio_exit_fits SX_frame STDIO_EXIT GX_run).
-    eapply (main_entry_handoff _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL HU A0I VI VSP FITS GIOA s0 []).
+    eapply (main_entry_handoff _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL HU A0I VI VE VSP FITS GIOA s0 []).
     exact (gioa_at_main _ _ _ _ _ _ _ _ AM HAT HTLS U lz AL LU FU A0I ASH0 CI CIB (cs_all 0) libc_init None 6166768 cs_all_init).
   Qed.
 End Run.

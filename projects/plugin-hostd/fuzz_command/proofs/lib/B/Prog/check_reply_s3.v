@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s3.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses; the UBSan alignment check of w (0x87024) decided by atom 19's alignment, the null and alignment checks of w->w (0x8705c, 0x87064) by atom 40's fact (at least 4096, 8-aligned by the statement's `ww mod 8 = 0`). *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s3.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses; the UBSan alignment check of w (0x87024) decided by atom 19's alignment, the null and alignment checks of w->w (0x8705c, 0x87064) by atom 40's fact (at least 4096, 8-aligned by the statement's `ww mod 8 = 0`). *)
 (* Modified by Theorem Labs, 2026-10: the third segment of check_reply's walk (fuzz_command.asan-ubsan, 0x86e64), from the
    return of sup_reply_code (0x8701c) to the snprintf call (0x870b0), the strlen call (0x87080) or the shape join
-   (0x870e4), ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close) at
-   origin/ossv/recipes c8557374ad2e.
+   (0x870e4), ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close).
+   
 
    The walk seeds the mid-walk state at 0x8701c (check_reply_sd.v cr_seed, the frame's shadow read-only) and adds
    the harness's words: the fields w->w and w->n at w + 16 and w + 24 (base atom 19 = s3 = w, chunk values atoms 40
@@ -17,6 +17,7 @@
      checks #7 (0x87050) and #8 (0x87070), both covered, to the strlen call with s3 = a0 = w->w[0].
    No step stores, so the mid-walk invariant carries over by the run's frame_of (only the frame header [F, F + 32)
    is a writable window). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

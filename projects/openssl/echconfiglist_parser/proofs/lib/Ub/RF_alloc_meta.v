@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv claim is taken apart and rebuilt in its Lib/AuxvTable.v form, its length read by length_auxv_words_Z). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -56,11 +57,13 @@ Proof. try hcb. try hsb. intros H AG HC H0 H1. eapply RA2.rwr_at_agree; [exact H
 Lemma rauxv_ok_magree C m m' B :
   rauxv_ok m B -> magree C m m' -> (forall a, C a -> a < B /\ ~ (RAUXV_CELL <= a < RAUXV_CELL + 8)) -> rauxv_ok m' B.
 Proof. try hcb. try hsb.
-  intros (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) AG HC.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros (av & v & rnd & execfn & r & AC & AL & RN & H) AG HC.
+  pose proof (auxv_vec_bytes_range r) as AVR.
+  exists av, v, rnd, execfn, r. split; [|split; [|split; [|exact H]]].
   - eapply rrw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
   - eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold rauxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.
+    unfold rauxv_list in Ha. rewrite u64s_length, map_length, length_auxv_words_Z in Ha.
+    destruct r; cbn in Ha; lia.
   - eapply rbytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.
 Qed.
 End HCW.

@@ -5,9 +5,10 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 265 of its 300 lines of code are new or changed and 219 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim's image-B walk, the trailing-blank loop (0x896f4 .. 0x8973c): tr_trail_ok : TR_FIN_stmt -> TR_TRAIL_stmt
    (lib/B/Prog/trim_k.v), by induction on j, the bytes of s1 = dropwhile blank s still before e. ADAPTED from
-   the image-A G3 walk owner's image-A loop lib/A/Prog/trim_tr.v (commit 07dedd5b93c6), re-derived on image B's
+   the image-A G3 walk owner's image-A loop lib/A/Prog/trim_tr.v, re-derived on image B's
    code, in the form of fuzz_command's answer_l.v (a loop with inline checks, re-seeded at each iteration). One
    iteration at e = p + lead + j:
      0x896f4 `beq a2,a3` (a3 = 1), UBSan trap site 2 of 3 (e - 1 = 0 goes to the unimp 0x89770): decided not taken by
@@ -18,7 +19,7 @@
        mask: c not blank goes to FIN through 0x8973c `mv a1,a2` (a1 = e, and then te s j = j); c blank steps a0 and a2
        down and either loops (`bltu s0,a1`: s0 < e - 1) or jumps to FIN 0x89740 with a1 = e - 1 = s0 (j = 1,
        te s 1 = 0).
-   The plain proof of the same loop: the unit owner's lib/Prog/trim.v LOOP2 at db8c4beebf62; the UBSan walk's trap
+   The plain proof of the same loop: the unit owner's lib/Prog/trim.v LOOP2; the UBSan walk's trap
    discharge of the same test: lib/U/Prog/trim.v:134-135 (e >= s0 + 1 >= 2). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

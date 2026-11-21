@@ -19,9 +19,9 @@
      every disjunctive hypothesis in context, and each chain statement carries two (the destination's separation
      premises), so a proof that leaves them visible pays the split at every arithmetic side condition.
    - cj_bz_msteps / cj_bz_evt: the CJ -> Bz direction of RT_gxa_calls.v's vocabulary bridge (that file, and
-     a Theorem Labs lane's relocated copy FMgxa_bzcj.v on a working branch 534b701a600, prove only Bz -> CJ).
+     a Theorem Labs lane's relocated copy FMgxa_bzcj.v on a working branch, prove only Bz -> CJ).
    - pf_evt_fwd: one step forward past a trampoline when the post does not already hold (the donor's pattern,
-     omx-clap-core/fuzz_state lib/A/Prog/snprintf_wrap.v snp_evt_fwd at 840c4afa7e2).
+     omx-clap-core/fuzz_state lib/A/Prog/snprintf_wrap.v snp_evt_fwd).
    - the segment list and the stack-protector / GLOBALS_TOP numerals at BOTH instances, and ssp_cells_vsn proved
      by rewriting to them. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.

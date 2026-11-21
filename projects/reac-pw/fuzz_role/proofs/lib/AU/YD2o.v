@@ -5,6 +5,7 @@
    origin/ossv/recipes: module names A.Axyz -> AU.Yxyz, the program contract lib/AU/RPgLibX.v role_lib_x_all (closed,
    so image A's role_lib_x_all_closed step has no twin), the allocator parts lib/AU/YRoleAllocClose.v, RoleClose's
    Section asan_ubsan in place of Section asan, names role_* -> role_*_U / role_asan_ubsan_*. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states computed in the build per CONFIG_RSEQ flag). *)
 (* fuzz_role's two image-B (asan-ubsan) statements from lib/A/RoleClose.v's parts, with no hypothesis: the entry
    function's program contract is lib/AU/RPgLibX.v role_lib_x_all (the image-B walks of LLVMFuzzerTestOneInput 0x80020
    and its callees, of type lib/AU/RPgLib.v role_lib_x_all_stmt), which leaves no Section hypothesis; its premises are
@@ -17,7 +18,7 @@ From OSSVerify.reac_pw.fuzz_role Require Statements.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib Require AgreeRole.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require Import YK11 YK0o YG00 YG01 YG0f YG0d YC5d YCbp YM05.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YG0q YK15 YO09.
-From OSSVerify.Proofs.reac_pw.fuzz_role.lib.AU Require YB1v YB01 YB12 YB1n YCej YCejTfib YD2l YD2m YD1k YD1o YD1l YD1j YD1p YCfn.
+From OSSVerify.Proofs.reac_pw.fuzz_role.lib.AU Require YB1v YB01 YB01r YB12 YB1n YCej YCejTfib YD2l YD2m YD1k YD1o YD1l YD1j YD1p YCfn.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.AU Require RPgLib RPgLibX YRoleAllocClose.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.A Require RoleAsanTop RoleClose.
 Import ListNotations.
@@ -57,7 +58,7 @@ Lemma role_driver_TfibB_U : forall rc : YM05.RunCeil,
   (forall fx : YK11.FPState, @aintrin_realizes fx rc segs B OCpy (pc_wrap_memcpy (as_code B))) ->
   universe_ok (as_universe B) ->
   (forall t, In t YCejTfib.Tfib_drv_traces -> In t (as_universe B)) ->
-  RoleClose.drv_mainU YB01.HS_tfib YB12.TFIB rc.
+  RoleClose.drv_mainU YB01r.HS_tfib_r YB12.TFIB rc.
 Proof.
   intros rc AM AF AI _ _.
   exact (@YD1p.tfib_drv_main rc RoleAsanTop.role_shape (fun fx : YK11.FPState => frm_zero (@fp_csr fx)) fp_frm_zero_fx0
@@ -79,12 +80,12 @@ Proof.
 Qed.
 
 (* RoleClose's asan_ubsan Section at its parts, every argument in order: HS_TBL_U / TFIB_TBL_U / H_STARTUP_U from
-   image B's start-up certificate (YB01.HS_tfib, YB12.TFIB, YB1n.tfib_startup_T1), B_U := YD2l.TfibB, the allocator
+   image B's start-up certificate (YB01r.HS_tfib_r, YB12.TFIB, YB1n.tfib_startup_T1), B_U := YD2l.TfibB, the allocator
    parts from lib/AU/YRoleAllocClose.v, the trace tables from YCej / YCejTfib with H_TRACES_B_U by reflexivity, and
    H_DRIVER_U from role_driver_TfibB_U. *)
 Theorem ASAN_UBSAN_T_closed : RoleAsanTop.ASAN_UBSAN_T.
 Proof.
-  exact (RoleClose.ASAN_UBSAN_T_of_parts YB01.HS_tfib YB12.TFIB YB1n.tfib_startup_T1 B
+  exact (RoleClose.ASAN_UBSAN_T_of_parts YB01r.HS_tfib_r YB12.TFIB YB1n.tfib_startup_T1 B
     YRoleAllocClose.role_amalloc_closed_U YRoleAllocClose.role_afree_closed_U YRoleAllocClose.role_aicpy_closed_U
     YCej.Tfib_universe YCej.Tfib_universe_ok eq_refl YCejTfib.Tfib_drv_traces YCejTfib.Tfib_universe_drv
     role_driver_TfibB_U).

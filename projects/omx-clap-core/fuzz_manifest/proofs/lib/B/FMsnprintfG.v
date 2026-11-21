@@ -4,7 +4,8 @@
    (pairwise_disjoint_of_extents, facts_ok), the return-address step and the epilogue state built from the saved slots
    are adapted from A/AE35.v (tfib_vprintf_icpt_A / tfib_vprintf_icpt_E). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsni.v, with its module paths changed; 396 of its 461 lines of code are new or changed and 705 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfG.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfG.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's snprintf: __wrap_snprintf 0x41374 (`j 0x45cf0`) and __interceptor_snprintf 0x45cf0 (frame 0x60; a3..a7 spilled
    at sp + 0x38, the va area P; TryAsanInitFromRtl; __interceptor_vsnprintf (str, size, format, ap = P)), and
    HarnessDesign's asnprintf_realizes (FMH_Rt.v) from the chain's contracts. Written new (no released proof names

@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v at 6ebe35ba632; its rt_chain is ported here as rl_c23_chain (statement kept, proof by the kernel's achain_push); the rest of this file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostMal.v at 01f4363fe7d; ported to reac-pw/fuzz_headamp image A: role's C2 -> C3 step (malloc(pod), rh_S_C23_stmt) restated as headamp's C6 -> C7 step (malloc(first), lib/A/HPgSegM.v hq_S_C67_stmt) with the prefix rl_c23 / c23 -> hk, the jal 0x820c0 -> 0x83740, malloc's entry 0x52428 -> 0x53060, role's frame 0x1a0 -> headamp's 0x1e0, k = 1 -> 3 events, role's request len -> 3 max(rc, 0) + (it == 0); the call runs at the float state fx2 the cut states (AMALLOC quantified over the float state); the post is HPgSegM's whole hq_cut_C7 (role's rh_at_C3 asked the call's post only), built from the rule's post with the allocator invariant at the new state, acall_kept and image A's cut lists; the errno cell's readability is new (every byte of image A's four segments has an image byte). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM24Mal.v at be048d930b4; its C6 -> C7 step
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v; its rt_chain is ported here as rl_c23_chain (statement kept, proof by the kernel's achain_push); the rest of this file is new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostMal.v; ported to reac-pw/fuzz_headamp image A: role's C2 -> C3 step (malloc(pod), rh_S_C23_stmt) restated as headamp's C6 -> C7 step (malloc(first), lib/A/HPgSegM.v hq_S_C67_stmt) with the prefix rl_c23 / c23 -> hk, the jal 0x820c0 -> 0x83740, malloc's entry 0x52428 -> 0x53060, role's frame 0x1a0 -> headamp's 0x1e0, k = 1 -> 3 events, role's request len -> 3 max(rc, 0) + (it == 0); the call runs at the float state fx2 the cut states (AMALLOC quantified over the float state); the post is HPgSegM's whole hq_cut_C7 (role's rh_at_C3 asked the call's post only), built from the rule's post with the allocator invariant at the new state, acall_kept and image A's cut lists; the errno cell's readability is new (every byte of image A's four segments has an image byte). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM24Mal.v; its C6 -> C7 step
    (malloc(first)) restated as the C4 -> C5 step (malloc(out)): the cut C4 and the post hq_at_C5 are stated here in
    the form of lib/A/HPgSegM.v's hq_cut_C6 / hq_at_C7 (image B's lib/AU/HPgSegM.v hqu_cut_C4 / hqu_at_C5 at image A),
    the jal 0x83740 -> 0x82e94, the return 0x83744 -> 0x82e98, k = 3 -> 2 events, the request
@@ -10,6 +10,7 @@
    hi_L6 / hi_L7 -> hi_L4 / hi_L5 (HPgSiteA headamp_A_site_cut5), the shadow pattern hi_shB -> hi_shA; the post also
    states the out block apart from the pod block; the image helpers (hk_errno_rd, hk_cell, hk_chain, hk_ch,
    hk_shadow_apart, hk_getr_eq, hk_csaved, hk_rk) are Required from HPgM24Mal, not copied. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, same loaded bytes except .note.gnu.build-id): THE malloc(out) STEP of the

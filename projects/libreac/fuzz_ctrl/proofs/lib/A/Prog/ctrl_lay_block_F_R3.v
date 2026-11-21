@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 414 of its 429 lines of code are new or changed and 233 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block, image A (asan, entry 0x855f4): region R3 of the cgif glue (0x85828, the return of
    reac_box_model_block, -> 0x858f4, after the class-1 flag release).  A Theorem Labs lane.  Re-base plan
    ctrl_lay_block-rebase.md section 3 R3, sections 4 and 5 (a working note, not in this delivery).
@@ -12,7 +13,7 @@
    awr_byte or the flag byte) needs and the stretches do not state:
    - lay_F_R3_box_arm / lay_F_R3_cpy: RE-BASED copy of stretch k = 5 (ctrl_lay_block_F_5.v lay_F5_box_arm
      :284-328, lay_F5_cpy :201-278).  The original post (lay_F5_post_args) keeps only LC's coarse write set
-     (ctrl_lay_block.v:924, lay_X :557: class-0/1 hint words, flag arrays, other frames, the window's shadow -- not
+     (ctrl_lay_block.v:925, lay_X :557: class-0/1 hint words, flag arrays, other frames, the window's shadow -- not
      awr).  The exact set is the memcpy contract's own munch `MUc` (ctrl_lay_block_F_5.v:268-270); the copy adds it to
      the post (lay_F_R3_post_args).
    - ly_args_F_R3_g0: stretch k = 6 (ctrl_lay_block_F_6.v ly_args_F :269-300) at g = 0, the only case the contract
@@ -20,7 +21,7 @@
      post states the memory unchanged (the original hides it, ctrl_lay_block_F_6.v:256).
    - lay_F_R3_release: the inline class-1 flag release, `ld a0,120(s2)` (0x858ec) and `sb zero,0(a0)` (0x858f0),
      which no stretch takes (k = 7 stops at 0x858ec, k = 8 starts at 0x858f4).  Re-stepped from ly_epi_side
-     (ctrl_lay_block.v:1460-1488) verbatim: the ro_cells of the flag-pointer word, the load, the tracked flag cell
+     (ctrl_lay_block.v:1461-1489) verbatim: the ro_cells of the flag-pointer word, the load, the tracked flag cell
      and its store_ok, the store.  Footprint: the word (frb + 120) 8 and the flag byte fa 1.
    k7 (ctrl_lay_block_F_7.v) needs no copy: its post already states its exact writes (:117).
 
@@ -40,7 +41,7 @@
       no new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header and goes to the auditor a Theorem Labs lane
       who signs it against its proved run before it counts.
@@ -52,10 +53,10 @@
      -> (internal path)
    - ELF sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd
    - compare: fuzz_ctrl.objdump.txt (a working note, not in this delivery), ctrl_lay_block 0x855f4 .. 0x85988
-   - FACTS of record ed6b6b7b0ab (origin/regen/libreac-v190-on-338), PAU (internal path)
-   - copied from ctrl_lay_block_F_5.v (not in this delivery) (a working branch 7e0119cf3f3) and ctrl_lay_block_F_6.v (not in this delivery)
-     (a working branch 77cd0613fcf), merged 9d33dba1444; the release from ctrl_lay_block.v ly_epi_side at
-     a working branch d69f7c708f6. *)
+   - FACTS of record (origin/regen/libreac-v190-on-338), PAU (internal path)
+   - copied from ctrl_lay_block_F_5.v (not in this delivery) (a working branch) and ctrl_lay_block_F_6.v (not in this delivery)
+     (a working branch), merged; the release from ctrl_lay_block.v ly_epi_side at
+     a working branch. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import ctrl_lay_block_F_common.
 (* The skeleton's Require list, repeated in its order (Import is not transitive; lib.Lib ExecF StepF LAST, so StepF's
    step / if_false / finish / store_done shadow the evt engine's). *)
@@ -73,7 +74,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_cF
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
 (* stretch k = 7, Required qualified (the region run below composes it) *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require ctrl_lay_block_F_7.
-(* Local copy of ctrl_lay_block.v:215's store hook: the base made it Local (a Theorem Labs lane; from a working branch c9390e308b8); this file's rd_mono steps need it. *)
+(* Local copy of ctrl_lay_block.v:216's store hook: the base made it Local (a Theorem Labs lane; from a working branch); this file's rd_mono steps need it. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -89,7 +90,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* ---- the inline class-1 flag release, 0x858ec -> 0x858f4 (ctrl_lay_block.v ly_epi_side :1460-1488) ----
-   Pre: k = 7's post state (lay_F_pre_release, ctrl_lay_block_F_7.v:108-120): s2 = frb, the flag-pointer word at
+   Pre: k = 7's post state (lay_F_pre_release, ctrl_lay_block_F_7.v:109-121): s2 = frb, the flag-pointer word at
    frb + 120 holds fa (bytes_at, F_7:119); the flag byte fa is present and writable at m'.  Post: pc 0x858f4, a0 =
    the loaded word, the flag byte is 0, and the only byte written is fa. *)
 Lemma lay_F_R3_release : forall (RNG : ExecF.footprint)
@@ -145,14 +146,14 @@ Proof.
 Qed.
 
 Section L5R.
-  (* Section L's Variables (ctrl_lay_block.v:404-405), verbatim. *)
+  (* Section L's Variables (ctrl_lay_block.v:405-406), verbatim. *)
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (m : word -> option byte) (p f md g FS : Z) (fr ob tb mb nb gb : list byte).
 
   Local Notation S := (bv_unsigned sp).
   Local Notation K := CTRL_LAY_BLOCK_K.
 
-  (* Section L's Hypotheses (ctrl_lay_block.v:410-474), verbatim.  The four callee / runtime contracts of Section L
+  (* Section L's Hypotheses (ctrl_lay_block.v:411-475), verbatim.  The four callee / runtime contracts of Section L
      (HSM, MEMS, MEMC, BOX) are NOT taken here: this stretch contains only the checked copy, and takes a Theorem Labs lane's
      footprint contract asan_memcpy_contract_F for it (MEMCF below). *)
   Hypothesis Rp : 0 <= p < 2^64.
@@ -283,7 +284,7 @@ Section L5R.
       munch [(p + 18, p + 18 + 32); (spc - ASAN_MEMCPY_K, spc)] mc0 mc'.
 
   (* 0x8583c: the checked copy of the 32 bytes at src (the box result at frb + 32) into the output block, then the
-     ly_args entry at 0x85840.  Footprint re-run of ly_cpy (ctrl_lay_block.v:1932-1993) up to its hand-over to
+     ly_args entry at 0x85840.  Footprint re-run of ly_cpy (ctrl_lay_block.v:1933-1994) up to its hand-over to
      ly_args; the only access-bearing step is the call, which goes through asan_memcpy_contract_F. *)
   Lemma lay_F_R3_cpy : forall (RNG : footprint) (mc : word -> option byte) (gj X sb : list byte)
       (src frb sfr spc j : Z)
@@ -369,7 +370,7 @@ Section L5R.
   (* 0x85828 -> 0x85840: `li a1,1; bne a0,a1,0x85840`.  r <> 1 (the callee found no model, or md = 0): BASE is
      ly_zero and the zeroed output block already holds BASE, so the run is at the ly_args entry; r = 1: three moves
      (a2 = 32, a0 = s5 = p + 18, a1 = s7 = frb + 32) and the checked copy of the box result.  Footprint re-run of
-     ly_box's KB continuation (ctrl_lay_block.v:4141-4157). *)
+     ly_box's KB continuation (ctrl_lay_block.v:4142-4158). *)
   Lemma lay_F_R3_box_arm : forall (RNG : footprint) (mc : word -> option byte) (gj : list byte)
       (r frb sfr spc j : Z) (w120 : word)
       (xra t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word),
@@ -469,7 +470,7 @@ Section L5R.
       (* k = 5 / k = 6: the memcpy's write set, the ly_args / EPI_T bundle at mc1 *)
       munch [(p + 18, p + 18 + 32); (spc - ASAN_MEMCPY_K, spc)] mc0 mc1 /\
       FI mc1 frb frb spc j w120 /\ LC mc1 gj1 LAY /\
-      (* k = 7 (lay_F_pre_release, ctrl_lay_block_F_7.v:117-120) *)
+      (* k = 7 (lay_F_pre_release, ctrl_lay_block_F_7.v:118-121) *)
       munch [(shadow_addr frb, shadow_addr frb + 16); (frb, frb + 8)] mc1 m3 /\
       wmono rsegs mc1 m3 /\ rd_mono mc1 m3 /\
       (* the release (lay_F_R3_release) *)

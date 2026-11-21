@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the Hrdr hypothesis that the channel reader is present, passed to the tail lemmas; the argv pointer p1 takes the entry draw; mem0_none_low reads the image through main_entry_launch; tail_mem's stack window moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608); cut_tail_mem takes cut_mem with the entry draw rd). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -59,7 +60,7 @@ Qed.
 (* [comment removed for export] *)
 
 Record tail_mem (sp0 : word) (tid : Z) (M : word -> option byte) : Prop := TAIL_MEM {
-  tm_win : forall a : word, (bv_unsigned sp0 - 8388608 <= bv_unsigned a < bv_unsigned sp0)%Z -> wview RSEGS M a <> None;
+  tm_win : forall a : word, (bv_unsigned sp0 - 6144512 <= bv_unsigned a < bv_unsigned sp0)%Z -> wview RSEGS M a <> None;
   tm_ro  : forall a : Z, (0x10000 <= a < 0x4bcd8)%Z -> M (Z_to_bv 64 a) = None;
   tm_got : rdn RSEGS M (Z_to_bv 64 0x4bcd8) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x7d330));
   tm_data : forall a : Z, (0x4bce0 <= a < 0x4cf20)%Z -> M (Z_to_bv 64 a) = None;
@@ -82,6 +83,8 @@ Section Kit.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev reads the channel reader (recipes/channel-reader-premise.md) *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -102,30 +105,30 @@ Section Kit.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Theorem oom_tail : ltac2:(CDefT.buildp (gd_tbl_P_tailkit ()) "Ppc,$2.PR,(10.&5.(0.&40.))PM,P,(0.&40.)(1.(0.&8.))P,(11.(9.$2.R3.+1=4;4.)(9.$2.R3.+1=4?4.))P,(9.(0.&40.)(12.R3.(13.&5.+2.$14.))(<.&40.(15.(16.&40.Vsp0,)+80.)))P,(9.(0.&40.)(12.R4.(13.&5.+3.$14.))(<.&40.+10800.))P,(9.(0.&40.)(12.R5.(13.&5.+4.$14.))(<.&40.+5=0<8.))P,(17.Vsp0,Vtid,R5.)(18.$4.(19.(1:.$1;.R7.(<.&40.R8.)R6.(1<.$4.))Vmodel,)(1=.$1>.(1?.Vmodel,)))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Theorem oom_tail : ltac2:(CDefT.buildp (gd_tbl_P_tailkit ()) "Ppc,$2.PR,(10.&5.(0.&40.))PM,P,(0.&40.)(1.(0.&8.))P,(11.(9.$2.R3.+1=4;4.)(9.$2.R3.+1=4?4.))P,(9.(0.&40.)(12.R3.(13.&5.+2.$14.))(<.&40.(15.(16.&40.Vsp0,)+80.)))P,(9.(0.&40.)(12.R4.(13.&5.+3.$14.))(<.&40.+10800.))P,(9.(0.&40.)(12.R5.(13.&5.+4.$14.))(<.&40.+5=0<8.))P,(17.Vsp0,Vtid,R5.)(18.$4.(19.(1:.$1;.R7.(<.&40.R8.)R6.(1<.$4.))Vmodel,)(1=.$1>.(1?.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     intros pc R M Hpc Rsp Rgp Rtp TM. pose proof TM as TM'. destruct TM' as [W RO GOT DA CO TI TR LO [canw CA] NL SI OF AT].
-    apply (ref_oom_tail sp0 [] model Hvsp Hh Hlazy Hfd2 tid R M canw Rsp Rgp Rtp
+    apply (ref_oom_tail sp0 [] model Hvsp Hh Hlazy Hfd2 Hrdr tid R M canw Rsp Rgp Rtp
              (tm_stack_writable M TM) (tm_img M TM) GOT CO TI TR LO CA NL SI OF pc Hpc).
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Theorem refused_tail : ltac2:(CDefT.buildp (gd_tbl_P_tailkit ()) "PR,(10.&5.(0.&40.))PM,P,(0.&40.)(1.(0.&8.))P,(9.(0.&40.)(12.R2.(13.&5.+2.$14.))(<.&40.(15.(16.&40.Vsp0,)+80.)))P,(9.(0.&40.)(12.R3.(13.&5.+3.$14.))(<.&40.+10800.))P,(9.(0.&40.)(12.R4.(13.&5.+4.$14.))(<.&40.+5=0<8.))P,(17.Vsp0,Vtid,R4.)(18.$4.(19.(1:.$1;.R6.(<.&40.+1=494.)R5.(1<.$4.))Vmodel,)(1=.$20.(1?.Vmodel,)))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Theorem refused_tail : ltac2:(CDefT.buildp (gd_tbl_P_tailkit ()) "PR,(10.&5.(0.&40.))PM,P,(0.&40.)(1.(0.&8.))P,(9.(0.&40.)(12.R2.(13.&5.+2.$14.))(<.&40.(15.(16.&40.Vsp0,)+80.)))P,(9.(0.&40.)(12.R3.(13.&5.+3.$14.))(<.&40.+10800.))P,(9.(0.&40.)(12.R4.(13.&5.+4.$14.))(<.&40.+5=0<8.))P,(17.Vsp0,Vtid,R4.)(18.$4.(19.(1:.$1;.R6.(<.&40.+1=494.)R5.(1<.$4.))Vmodel,)(1=.$20.(1?.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     intros R M Rsp Rgp Rtp TM. pose proof TM as TM'. destruct TM' as [W RO GOT DA CO TI TR LO [canw CA] NL SI OF AT].
-    apply (ref_refused_tail sp0 [] model Hvsp Hh Hlazy Hfd2 tid R M canw Rsp Rgp Rtp
+    apply (ref_refused_tail sp0 [] model Hvsp Hh Hlazy Hfd2 Hrdr tid R M canw Rsp Rgp Rtp
              (tm_stack_writable M TM) (tm_img M TM) GOT CO TI TR LO CA NL SI OF).
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Theorem dir_tail {AMB : Amb} : forall (a0s : list byte) (envv : list (list byte)) (tidw : word) (rd : EntryDraw)
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Theorem dir_tail {AMB : Amb} : forall (a0s : list byte) (envv : list (list byte)) (tidw : word) (rd : EntryDraw)
       (regs0 : bvmap 5 word) (mem0 : word -> option byte) R M,
     valid_argv [a0s; dot_path] -> valid_envp envv -> (0 < bv_unsigned tidw < 2 ^ 22)%Z ->
     main_entry sp0 [a0s; dot_path] envv tidw rd regs0 mem0 ->
     getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr R 3 = Z_to_bv 64 0x10800 -> getr R 4 = Z_to_bv 64 0x5d0c8 ->
-    getr R 18 = p1 sp0 a0s dot_path envv ->
+    getr R 18 = p1 a0s dot_path envv rd ->
     tail_mem sp0 tid M ->
     (forall a : word, (bv_unsigned sp0 <= bv_unsigned a)%Z -> M a = mem0 a) ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1d478) M (seg_rom RSEGS)) model)
@@ -137,8 +140,8 @@ Section Kit.
     edestruct (main_strN sp0 [a0s; dot_path] envv tidw rd regs0 mem0 Hva Hve Hvsp ME 1%nat) as (Sr & Slo & Shi & Slen & t8 & Ht8);
       [cbn; lia|].
     cbn [nth length Nat.add dot_path app] in Sr, Slo, Shi, Ht8.
-    set (pp := p1 sp0 a0s dot_path envv) in *.
-    change (cat_argv_ptr sp0 [a0s; dot_path] envv 1) with pp in Sr, Slo, Shi, Ht8.
+    set (pp := p1 a0s dot_path envv rd) in *.
+    change (cat_argv_ptr (ed_top rd) [a0s; dot_path] envv a_execfn 1) with pp in Sr, Slo, Shi, Ht8.
     change (Z.of_nat 1) with 1%Z in Ht8.
     pose proof (u64_range pp) as Hppr.
     assert (Hstr : rdn RSEGS M pp 2 = Some [Z_to_bv 8 46; Z_to_bv 8 0]).
@@ -146,7 +149,7 @@ Section Kit.
     assert (Ht8' : rdn RSEGS M (Z_to_bv 64 (bv_unsigned pp + 1)) 8 = Some t8).
     { rewrite <- Ht8. apply rdn_agree. intros j Hj. apply Habove.
       rewrite (u_small (bv_unsigned pp + 1)) by lia. rewrite u_small by lia. lia. }
-    apply (ref_read_error_dot sp0 [] model Hvsp Hh Hlazy Hfd2 pp tid R M canw
+    apply (ref_read_error_dot sp0 [] model Hvsp Hh Hlazy Hfd2 Hrdr pp tid R M canw
              Rsp Rgp Rtp Rs2 (tm_stack_writable M TM) (tm_img M TM) GOT CO TI TR LO CA NL SI OF Slo t8 ltac:(lia) Hstr Ht8').
   Qed.
 End Kit.
@@ -181,7 +184,8 @@ Section AtCut.
   #[using="AMB sp0 a0s path envv tid rd regs0 Hvsp ME SPlo"] Lemma mem0_none_low : forall a : Z, (0 <= a < 0x4cf20 \/ 0x7d108 <= a < 0x7d120)%Z -> mem0 (Z_to_bv 64 a) = None.
   Proof.
     intros a Ha. pose proof SPlo as Hlo. unfold sp_window_lo in Hlo.
-    rewrite (main_entry_mem_data sp0 [a0s; path] envv tid rd regs0 mem0 ME)
+    destruct (main_entry_launch sp0 [a0s; path] envv tid rd regs0 mem0 ME) as (inp & mbase & brk & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & MD & _).
+    rewrite MD
       by (rewrite stack_max_size_val, u_small by lia; lia).
     pose proof (u64_range tid).
     unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc.
@@ -197,16 +201,16 @@ Section AtCut.
     intros a n Hb. apply (main_entry_rdn_image sp0 [a0s; path] envv tid rd SPlo regs0 mem0 ME). exact Hb.
   Qed.
 
-  #[using="AMB rd regs0 Hvsp Htid ME SPlo SPhi"] Theorem cut_tail_mem : forall M, cut_mem sp0 a0s path envv mem0 M -> tail_mem sp0 (bv_unsigned tid) M.
+  #[using="AMB rd regs0 Hvsp Htid ME SPlo SPhi"] Theorem cut_tail_mem : forall M, cut_mem sp0 a0s path envv rd mem0 M -> tail_mem sp0 (bv_unsigned tid) M.
   Proof.
     intros M CM. pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (u64_range tid) as Htr.
     assert (BE : forall a : Z, (0 <= a < 0x7e000)%Z -> M (Z_to_bv 64 a) = mem0 (Z_to_bv 64 a)).
-    { intros a Ha. apply (cm_below _ _ _ _ _ _ CM). rewrite u_small by lia. lia. }
+    { intros a Ha. apply (cm_below _ _ _ _ _ _ _ CM). rewrite u_small by lia. lia. }
     assert (RD : forall (a : Z) (n : nat), (0 <= a)%Z -> (a + Z.of_nat n <= 0x7e000)%Z ->
                  rdn RSEGS M (Z_to_bv 64 a) n = rdn RSEGS mem0 (Z_to_bv 64 a) n).
     { intros a n Ha Hn. apply rdn_agree. intros j Hj. rewrite u_small by lia. apply BE. lia. }
     split.
-    - apply (cm_win _ _ _ _ _ _ CM).
+    - apply (cm_win _ _ _ _ _ _ _ CM).
     - intros a Ha. rewrite BE by lia. apply mem0_none_low. lia.
     - rewrite RD by (cbn; lia). rewrite mem0_img_rdn by (vm_compute; reflexivity). exact img_48590_8.
     - intros a Ha. rewrite BE by lia. apply mem0_none_low. lia.

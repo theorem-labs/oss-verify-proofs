@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the stack window is 6144513 bytes, was 8388608. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -90,7 +91,7 @@ Section Stdio.
   (* [comment removed for export] *)
   Lemma stk_wr : forall vals ebs MV kn a n,
     know_ok ASEGS (Env (vals_ev vals) ebs) MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
-    usp - 8388608 <= a -> a + n <= usp ->
+    usp - 6144513 <= a -> a + n <= usp ->
     forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true.
   Proof.
     intros vals ebs MV kn a n HK Hw P0 Ha Hn d k Hd Hk.
@@ -99,7 +100,7 @@ Section Stdio.
   Qed.
   Lemma stk_def : forall vals ebs MV kn a n,
     know_ok ASEGS (Env (vals_ev vals) ebs) MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
-    usp - 8388608 <= a -> a + n <= usp ->
+    usp - 6144513 <= a -> a + n <= usp ->
     forall i, 0 <= i < n -> MV (Z_to_bv 64 (a + i)) <> None.
   Proof.
     intros vals ebs MV kn a n HK Hw P0 Ha Hn i Hi. pose proof Hsp.

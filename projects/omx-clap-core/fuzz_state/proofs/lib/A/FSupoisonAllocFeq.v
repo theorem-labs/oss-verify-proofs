@@ -1,6 +1,6 @@
 (* fuzz_state: enqueue (lib/A/AFew.v) under ARU for ANY set UP of user-poisoned heads: tfib_enqueue_roomU, tfib_enqueue_nbU. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* The twins of the released cgif_file_fuzzer theorems tfib_enqueue_room (lib/A/AFg4.v:381) and tfib_enqueue_nb
+(* The twins of the released cgif_file_fuzzer theorems tfib_enqueue_room (lib/A/AFg4.v:382) and tfib_enqueue_nb
    (lib/A/AFg6.v:904). The donor walks are kept: their facts, their runs (AFh3.segP, AFh4.segQH, AFh5.segR1, AFh6.segT)
    and their leaf lemmas (AFg4.FINPH, AFg5.FINQH, AFg6.FINR) are applied unchanged, over FSupoison.unpoison UP mem where
    they read memory and over the real memory where the machine runs; FSupoisonAllocFeqR.v carries the two transfers.
@@ -78,7 +78,7 @@ Lemma cfg_ret : forall (regs' : bvmap 5 word) (m0 : word -> option byte) (md' : 
 Proof. intros regs' m0 md'. unfold cfg_at, raZ, w64. rewrite Z_to_bv_bv_unsigned. reflexivity. Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 1. Room in the last batch (lib/A/AFg4.v:371 tfib_enqueue_room_arm).                                               *)
+(* 1. Room in the last batch (lib/A/AFg4.v:372 tfib_enqueue_room_arm).                                               *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Section room.
 Hypothesis HNB : need_new_batch (st_qthread X) = false.
@@ -134,7 +134,7 @@ Qed.
 End room.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 2. A new batch, taken from the batch-class cache (lib/A/AFg5.v:629 tfib_enqueue_hit_arm).                          *)
+(* 2. A new batch, taken from the batch-class cache (lib/A/AFg5.v:630 tfib_enqueue_hit_arm).                          *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Section hit.
 Hypothesis HNB : need_new_batch (st_qthread X) = true.
@@ -317,7 +317,7 @@ End miss.
 End e.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 4. The two exported contracts (lib/A/AFg4.v:381 and lib/A/AFg6.v:904), for any UP.                                 *)
+(* 4. The two exported contracts (lib/A/AFg4.v:382 and lib/A/AFg6.v:904), for any UP.                                 *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Theorem tfib_enqueue_roomU : forall B, AR_laws tfibsegs B -> TfibSyms B -> FK.tfib_enqueue_spec_nbU B false.
 Proof.

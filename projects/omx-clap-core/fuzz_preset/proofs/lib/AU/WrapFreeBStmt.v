@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset, the free interceptor walk of image B (asan-ubsan, stripped pin
    d663f82d7f48, unstripped twin c90d4fa54d43; relocated from pin f8f98a95bc52) over the second allocator instance ARcf: the
    statements the walk proves, the two fields of the primed keep record wrap_free_walk_keep_cf_rh
@@ -9,7 +10,7 @@
      regsD, dealloc_pre (lib/Reusable/DeallocG.v), below the interceptor's frame of 2128) is acall_pre_cf's own conjunct
      ly_bot ly + ACALL_PREFIX < spZ regs (YG0dcf.v:225, ACALL_PREFIX := 4096, YG0d.v:21), so the field takes no premise more.
    - wf_ret_stmt: field wfrk_ret (YGcfMallocComposeKeep.v:408-422) verbatim: Deallocate's post is the primed
-     YGcfRehidePost.dealloc_post_raw_rh (YGcfRehidePost.v:395), the memnorm keep right after RGtop.rwin.
+     YGcfRehidePost.dealloc_post_raw_rh (YGcfRehidePost.v:396), the memnorm keep right after RGtop.rwin.
    - wf_call_of_record / wf_ret_of_record / wf_record_of: the text checks, by conversion, both ways.
    No image constant here (rule 24). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

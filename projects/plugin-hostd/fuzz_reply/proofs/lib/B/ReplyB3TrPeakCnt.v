@@ -1,5 +1,5 @@
 (* The image-B (fuzz_reply.asan-ubsan) port of the helpers of lib/A/ReplyTrPeakCnt.v
-   (sha256 88b1c07a8cac; internal record) at c653c819019 that lib/B/ReplyB3TrPeakCnl.v reads,
+   (sha256 88b1c07a8cac; internal record) that lib/B/ReplyB3TrPeakCnl.v reads,
    a Theorem Labs lane row G-BCNL: tc_ref, tc_ref_step, tc_lines_short, tc_inv, tc_projg, w_sec_range / _small,
    w_cls_range / _small, pair_bytes, pair_bytes_nonneg, tc_ref_state, and Section inst's tc_out_pos / tc_rm_cap, under
    A's names, statements and proofs, in A's order.  The rest of A's file (the walk tc_pc, tc_dr / tc_rr and the LS

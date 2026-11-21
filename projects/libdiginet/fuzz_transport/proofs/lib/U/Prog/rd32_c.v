@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/rd32_c.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/rd32_c.v to fuzz_transport's images *)
 (* Contract of rd32 (static) in fuzz_transport.ubsan. fuzz_transport.plain inlines this function into
    diginet_frame_parse, so it has no plain twin; its caller here takes this contract as a
    hypothesis.

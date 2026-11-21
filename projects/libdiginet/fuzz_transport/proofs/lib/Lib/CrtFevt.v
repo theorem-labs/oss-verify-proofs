@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_crt1_fevt.v, with its module paths changed; 40 of its 160 lines of code are new or changed and 318 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fetch and load arms over the vDSO text and the vvar pages); internal commit ids in comments replaced by public commits or removed. *)
 (* CrtFevt: a footprint run (lib/Lib/ExecF.v evtF / mstepsF) whose footprint avoids the world's hidden bytes is a
-   silent prefix of cgif's world walk SRr (lib/Reusable/YA0n.v:35), for ANY segment list.  This is the
-   image-neutral half of image B's origin/cold/port-libreac-fuzz_decode-crtB 82cbfac97a3
+   silent prefix of cgif's world walk SRr (lib/Reusable/YA0n.v:36), for ANY segment list.  This is the
+   image-neutral half of image B
    proofs/libreac/fuzz_decode/lib/B/Prog/crtB_fevt.v (its Sections d and f, the two list helpers, and its Section g
    stated over the segment list), with B's `crtB_` prefix renamed `crt_fevt_`.  Image B's lane may Require this file
    in place of its own copies; each image then gives only its wx_segs_nowrap fact (A: lib/A/Prog/crtA_fevt.v).
-   crtB_fevt.v is a port of the target-independent kit origin/cold/h-rw-man-14-kit eea54967566
+   crtB_fevt.v is a port of the target-independent kit
    proofs/libreac/fuzz_grant/lib/Reusable/YK04R.v (the converse of YK04.step_accesses_restrict, and fsteps_restrict)
    and YA0nR.v (SRr_fsteps, SRr_fevt), with the kit's `fstep` / `fsteps` read as ExecF.mstepF / mstepsF, which have
    the same bodies (ExecF.v:98-105). *)
@@ -45,7 +46,7 @@ Proof.
   induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
     intros m c mf' rs Hi Hrs; cbn [interp_eff_accesses] in Hi |- *; try discriminate.
   - injection Hi as <- <- <-. reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|] eqn:Hrd; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|] eqn:Hrd; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m)
       as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
     cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
@@ -103,7 +104,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (crt_fevt_decode_exec_accesses_restrict_conv ms w ms' rs Hs Hrs). }
   exfalso. unfold fetch_failure in Hs.
-  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
     || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
        | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)

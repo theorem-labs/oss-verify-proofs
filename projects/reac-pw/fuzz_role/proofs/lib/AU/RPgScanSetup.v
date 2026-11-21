@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95b for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v for
    reac-pw/fuzz_headamp image A: its start-fact record hd_c3 / hd_c3_of, its bounds lemma hd_bounds and its walk hd_A
    (a nonzero test of a block, a register move, a zero test of the length, the __asan_memcpy, its return) restated for
    headamp's segment M04a (C7 0x83744 -> C8 0x83764) as h4a_c7 / h4a_c7_of / h4a_bounds / h4a_copy over HPgSeg.hs_scx,
@@ -14,21 +14,21 @@
    no copy (h4a_zero), the extra-atom register lemma h4a_reg_at and the post construction h4a_close are new; role's
    parse step, .rodata zone and string lemmas are not taken (M04a calls no parse). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgM04a.v, with its module paths changed; 468 of its 504 lines of code are new or changed and 433 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanSetup.v at a1fdf6ce036f for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanSetup.v for
    reac-pw/fuzz_rate's image A: role's pcs (E 0x8212c, O 0x821bc, MAL 0x823fc, ABS 0x82380) become rate's (0x82930,
    0x829c0, 0x82c9c, 0x82b7c), the registers are renamed as rate's code has them (pp + 0x4000 s5 -> s7, the shadow
    offset s7 -> s2, ra := -1 -> s11 := -1, n_ent t2 -> t3, s4 -> s3, s10 -> s9, the operands s11 t3 -> s10 t2), the
    real-frame cells 0x68 / 0x78 / 0x80 / 0x28 become 0xa8 / 0xb8 / 0xc0 / 0x78, the exits' kept registers are rate's
    (s6 and s10 at MAL), the cut file is lib/A/RtPgSeg.v (rl_ -> rt_, e_ -> q_), the list lemmas come from
    lib/A/RtPgScanKit.v, the memory facts from lib/A/RtPgMem.v and the image facts from lib/A/RtPgSteps.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanSetup.v at fa28558fbb17 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanSetup.v for image B
    (fuzz_rate.asan-ubsan); image B's pcs (E 0x82aac, O 0x82b48, MAL 0x82de0, ABS 0x82d1c) and registers (a0 =
    pp + 0x4008 at E, the shadow offset in s4, rc in s10, the scan's operands s2 a7 t2 s7 s11 t0 t1 t3 s10 a2), the
    real-frame cells 0xf8 / 0x120 / 0x138 / 0x168; image B's set-up writes rc to R+0x170 and 0x4018 to R+0x138, so the
    run's regions carry two write windows and each exit's post states the written memory; the cut file is
    lib/AU/RtPgSegB.v, the list lemmas lib/AU/RtPgScanKitB.v, the model facts lib/AU/RtPgScanFB.v, the memory facts
    lib/AU/RtPgMemB.v and the image facts lib/AU/RtPgStepsB.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgScanSetupB.v at e4ef964f482f for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgScanSetupB.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments are
    lib/AU/Img0.v rsegs, the cut file is lib/AU/RPgSeg.v (rsb_ -> rs_, RSB_ -> RS_, rt_ -> rl_, q_ -> e_, the hz
    cell -> rs_role_at), the kit lib/AU/RPgScanKit.v (skb_ -> sk_), the model facts lib/AU/RPgScanF.v (rkb_ ->
@@ -37,6 +37,7 @@
    s10 (mask, flags, rc) -> s6 / s8 / s9 / s10 (pp, flags, rc, F), the scan's operands s2 a7 t2 s7 s11 t3 s10 ->
    s10 a7 t3 t2 s6 t4 s9, pp read into a5 instead of s7), real-frame cells (0xf8 / 0x120 / 0x138 / 0x168 -> 0xe8 /
    0xc0 / 0x120 / 0x140, F R+0x60 -> R+0x38); rate's header cells and mask have no twin. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the set-up of the inlined

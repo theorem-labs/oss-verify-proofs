@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's check_value in the caller-journal form of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (origin/ossv/recipes 88154566652a; cgif_file_fuzzer lib/A/ACey.v trfc_specX, lib/YC20.v tlzw_spec), at this unit's core names and image A. *)
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's check_value in the caller-journal form of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (cgif_file_fuzzer lib/A/ACey.v trfc_specX, lib/YC20.v tlzw_spec), at this unit's core names and image A. *)
 (* check_value_cg: the ASan walk contract of check_value (fuzz_uci.asan 0x7f62c = uci_sigma US_check_value,
    AF_check_value = 0x344 of lib/A/Prog/UciPList.v), as STATEMENTS only (no proof).
 

@@ -27,6 +27,7 @@
    Rule 24: no released or cold proof walks this function on an asan-ubsan image (index v5 2026-10-28T21:58:24Z /
    23:22:17Z, a search of the proof index for LLVMFuzzerTestOneInput rc=0, no row names libreac/fuzz_pcap; the released fuzz_pcap
    harness walks lib/U/Prog/Slot/USegE.v etc. are for the v1.8 UBSAN image: CONFIRMED by a Theorem Labs lane, 23:47Z). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.libreac.fuzz_pcap Require Symbols.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.B.Prog Require Import PcapEntry PcapEntryDefs PcapEntryPhases.
@@ -2941,7 +2942,7 @@ Qed.
    aa_asan_memcpy / aa_asan_memset at pc_asan_memcpy / pc_asan_memset), and pcap_source_open's contract at the
    listing's image data (path literal object 3, g_file_len object 4, g_file object 2), with its own
    statement variables FM_RA / CTX / ROI; HROI, HPATH, HCTX, HFMU are lib/A's harness-tail premises
-   (lib/A/Prog/PcapHarnessTail.v:162-170) at this call site PP_K2. *)
+   (lib/A/Prog/PcapHarnessTail.v:163-171) at this call site PP_K2. *)
 Hypothesis HMCPY : aintrin_realizes SEGS B OCpy (pa_sigma PS___asan_memcpy).
 Hypothesis HMSET : aintrin_realizes SEGS B OSet (pa_sigma PS___asan_memset).
 Variable FM_RA : Z.

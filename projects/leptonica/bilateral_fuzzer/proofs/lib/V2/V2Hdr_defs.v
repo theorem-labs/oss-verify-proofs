@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proofs as pix_orient_fuzzer's copy). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.H Require GcFlushS2.   (* [comment removed for export] *)
@@ -113,9 +114,7 @@ Lemma h_itinS :
   /\ (sc_ret h_scS, sc_f h_scS, sc_fd h_scS, sc_s h_scS, sc_l h_scS) = (0x3e818%Z, 0x45f30%Z, 2%Z, ELit 0x121e7, ELit 31)
   /\ (s_pc (fst (fst h_rS2)), snd (fst h_rS2), log_win_b 0 (s_log (fst (fst h_rS2)))) = (0x17a5c%Z, [], true)
   /\ (sr_mismatch f_rvlS idb h_srS2 sr_F2 0, kn_missing h_knS2 (map (kmap f_rvlS idb) kn_F2)) = ([0%nat], []).
-Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+Proof. vm_compute. repeat split; reflexivity. Qed.
 
 Lemma h_itinO :
   (s_pc (fst (fst h_rO)), snd (fst h_rO)) = (0x3e37c%Z, [SCBr true BC_LTU (EVar 7) (EAlu ALU_ADD cfglen_x (ELit 6)); SCBr false BC_GEU (ELit 5) (EVar 7)])
@@ -123,9 +122,7 @@ Lemma h_itinO :
   /\ (sc_ret h_scO, sc_f h_scO, sc_fd h_scO, sc_s h_scO, sc_l h_scO) = (0x3e818%Z, 0x45f30%Z, 2%Z, ELit 0x10bfc, ELit 31)
   /\ (s_pc (fst (fst h_rO2)), snd (fst h_rO2), log_win_b 0 (s_log (fst (fst h_rO2)))) = (0x17a5c%Z, [], true)
   /\ (sr_mismatch f_rvlO idb h_srO2 sr_F2 0, kn_missing h_knO2 (map (kmap f_rvlO idb) kn_F2)) = ([0%nat], []).
-Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+Proof. vm_compute. repeat split; reflexivity. Qed.
 
 Lemma f_itin :
   (s_pc (fst (fst f_r1)), snd (fst f_r1), s_log (fst (fst f_r1))) = (0x3c230%Z, [], [])
@@ -134,9 +131,7 @@ Lemma f_itin :
   /\ kn_vars_lt 39 f_kn1 = true /\ kn_acall f_kn1 = f_kn2i
   /\ (s_pc (fst (fst f_r2)), snd (fst f_r2), s_log (fst (fst f_r2))) = (0x3bef8%Z, [], [])
   /\ (nth 10 f_sr2 (ELit 0), nth 2 f_sr2 (ELit 0), nth 4 f_sr2 (ELit 0)) = (ELit 2, EAlu ALU_ADD (EVar 0) (ELit (-48)), ELit 0x56270).
-Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+Proof. vm_compute. repeat split; reflexivity. Qed.
 
 Lemma h_itinK :
   (s_pc (fst (fst h_rK)), s_log (fst (fst h_rK)), s_next (fst (fst h_rK))) = (0x17b38%Z, [], 48%nat)
@@ -144,6 +139,5 @@ Lemma h_itinK :
   /\ pay_x = EAlu ALU_ADD (EAlu ALU_ADD (EVar 6) cfglen_x) (ELit 6)
   /\ (sr_mismatch r_rvl idb h_srK sr_R 0, kn_missing h_knK (map (kmap r_rvl idb) kn_R)) = ([], []).
 Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity. Qed.
 End VP1.

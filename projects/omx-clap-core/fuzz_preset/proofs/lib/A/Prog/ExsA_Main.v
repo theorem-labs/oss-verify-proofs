@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb, facts 8f3e7e1a07f1): ex_string
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb, facts): ex_string
    (fuzz_preset.c :185-239, A_prog_sigma AS_ex_string = 0x84034) against the kit's tex_string_specX (lib/A/PRH_FnEx.v).
    THE WALK: the entry segment (ExsA_Entry.v) to the loop head LH_AT at x0 + i0 + 1; the loop head by strong induction
    on in->end - p: LH_AT p from CUT_CONT (p + 1) and CUT_ESC p (ExsA_LH.v); CUT_ESC p from CUT_CONT (p + 2) and
@@ -17,7 +18,7 @@
    palib_A at B := AD2l.TfibB). ex_string_walk_A also takes HHEX4 / HUTF8 (the callees' run forms), discharged in
    Section d.
    rule 24: proves function ex_string (reuse search: proof-index ex_string, index v5 2026-10-30T12:30:20Z, CONFIRM
-   by lane ExStringLookupCheck; donor a Theorem Labs lane's lib/B/Prog/ExsB_*.v at a working branch 66eac2b9522a). *)
+   by lane ExStringLookupCheck; donor a Theorem Labs lane's lib/B/Prog/ExsB_*.v at a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

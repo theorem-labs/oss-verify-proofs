@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10 (lane RealSegA, a working branch; plan row (b)): the PRIMED free composition of the cf
    layer, beside YGcfMallocCompose's released one, for the units' free instances under the re-hide.  rule 24: no
    function proved (kind: a composition of contracts over an abstract walk).

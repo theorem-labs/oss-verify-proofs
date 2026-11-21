@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the Env section over the launch's ProcInput and entry draw: the env pointers read off the new entry-stack layout, and the image's fit below sp_window_hi in place of the argv and envp bounds). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -67,44 +68,48 @@ Proof.
 Qed.
 
 Section Env.
+(* LPS 727298f3: the env pointers sit above the head and the pad, so they are read off the launch
+   ([InitLayout.env_bytes inp sp draw]); the image ends at or below [sp_window_hi] (Lib/InitState.v's
+   [LEN_fit]). *)
+Variable inp : ProcInput.
 Variable sp : word.
-Variable argv envp : list (list byte).
+Variable draw : EntryDraw.
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hargv : valid_argv argv.
-Hypothesis Henvp : valid_envp envp.
+Hypothesis Hinp : valid_input_either inp.
+Hypothesis Hfit : bv_unsigned sp + Z.of_nat (img_len inp sp draw) <= sp_window_hi.
 
+Let argv := in_argv inp.
+Let envp := in_envp inp.
 Let ENVC := Z.of_nat (length envp).
 
-Lemma env_bytes_flat : ltac2:(tb__ "0|3|
-S3S9S0Q8A1M0A1S17Vsp;Vargv;Venvp;A3S18S0Q40M1A1M2G0S10SdG2S16Vsp;Vargv;Venvp;A3SbG2S1G1Z0A2ScG2A1A3A3A4A3").
+Lemma env_bytes_flat : ltac2:(tb__ "0|0|
+S3S9S0Q8A1A1S17Vinp;Vsp;Vdraw;A3S18S0Q40A1S0Q8A1S10SdS0Q40A1S16Vinp;Vsp;Vdraw;A3SbS0Q40A1S1Q40Z0A2ScS0Q40A1A1A3A3A4A3").
 Proof using . unfold env_bytes. rewrite flat_map_app. cbn [flat_map]. rewrite app_nil_r. reflexivity. Qed.
 
 Lemma envp_ptrs_length : ltac2:(tb__ "0|0|
-S3SaS8S0Q40A1S16Vsp;Vargv;Venvp;A3A2S8S9S0Q8A1A1Venvp;A2A3").
+S3SaS8S0Q40A1S16Vinp;Vsp;Vdraw;A3A2S8S9S0Q8A1A1Venvp;A2A3").
 Proof using . unfold envp_ptrs. apply string_addrs_fst_length. Qed.
 
-Lemma envp_ptr_nz : ltac2:(tb__ "0|2|
-SaS12R1S8S9S0Q8A1A1Venvp;A2A2S6S3S7S2Q40M0SfS0G0A1R2S16Vsp;Vargv;Venvp;A3S1G0Z0M1A2A4A2G1A3A1F_;Fk;").
-Proof using Hargv Henvp Hsp.
+Lemma envp_ptr_nz : ltac2:(tb__ "0|0|
+SaS12R1S8S9S0Q8A1A1Venvp;A2A2S6S3S7S2Q40SfS0Q40A1R2S16Vinp;Vsp;Vdraw;A3S1Q40Z0A2A4A2Z0A3A1F_;Fk;").
+Proof using Hfit Hinp Hsp.
   intros k Hk. unfold envp_ptrs. rewrite string_addrs_nth by exact Hk.
   unfold env_str_base. rewrite string_addrs_snd. unfold str_base, nat_to_word.
   pose proof Hsp as (Hlo & Hhi & _). unfold sp_window_lo in Hlo. unfold sp_window_hi in Hhi.
-  pose proof Hargv as (_ & Ha & _). pose proof Henvp as (_ & He & _).
-  rewrite total_arg_bytes_tab in Ha, He.
-  assert (Htf : Z.of_nat (tab (firstn k envp)) <= Z.of_nat (tab envp)).
-  { rewrite <- (firstn_skipn k envp) at 2. rewrite tab_app. lia. }
-  assert (Hso : Z.of_nat (str_off argv envp) <= 184 + 8 * 1024 + 8 * 256).
-  { unfold str_off, aux_off, argc, envc. pose proof (proj1 Hargv). pose proof (proj1 Henvp). lia. }
+  pose proof Hfit as LF. unfold img_len, launch_string_bytes in LF. rewrite !length_flatten_strings in LF.
+  unfold sp_window_hi in LF. unfold envp, argv in *.
+  assert (Htf : Z.of_nat (tab (firstn k (in_envp inp))) <= Z.of_nat (tab (in_envp inp))).
+  { rewrite <- (firstn_skipn k (in_envp inp)) at 2. rewrite tab_app. lia. }
   rewrite !Z_to_bv_unsigned, bv_add_unsigned, Z_to_bv_unsigned. unfold bv_wrap. rewrite two64.
-  rewrite (Z.mod_small (Z.of_nat (str_off argv envp))) by lia.
+  rewrite (Z.mod_small (Z.of_nat (str_off inp sp draw))) by lia.
   rewrite (Z.mod_small (bv_unsigned sp + _)) by lia.
-  rewrite (Z.mod_small (_ + Z.of_nat (tab argv))) by lia.
+  rewrite (Z.mod_small (_ + Z.of_nat (tab (in_argv inp)))) by lia.
   rewrite Z.mod_small by lia. lia.
 Qed.
 
-Lemma env_word : ltac2:(tb__ "0|4|
-S7S5S19Z0M0R1A2S19R1S1aZ8M1VENVC;A2M2A2A2S3S7S1cR2G1A2G0A3S11S14R3G1S17Vsp;Vargv;Venvp;A3A3A1S0Q40M3A1S4S3S7S2G3R1A2G0A3S3S7R4G2A3A2Tw;F_;F_;Fo;").
-Proof using Hargv Henvp Hsp.
+Lemma env_word : ltac2:(tb__ "0|0|
+S7S5S19Z0R1A2S19R1S1aZ8VENVC;A2A2A2S3S7S1cR2Z8A2Z0A3S11S14R3Z8S17Vinp;Vsp;Vdraw;A3A3A1S0Q40A1S4S3S7S2Q40R1A2Z0A3S3S7R4S1aZ8VENVC;A2A3A2Tw;F_;F_;Fo;").
+Proof using Hfit Hinp Hsp.
   intros o Ho Hm. cbv zeta.
   apply Z.mod_divide in Hm; [|lia]. destruct Hm as [k Hk].
   assert (Hk0 : 0 <= k <= ENVC) by lia.

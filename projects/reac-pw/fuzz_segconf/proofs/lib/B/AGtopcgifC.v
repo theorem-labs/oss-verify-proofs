@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGtopcgifC.v (cold/c-frame-alloc-dgraw-frozen ced28ed2383, file sha256 847ee765efb4) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGtopcgifC.v (file sha256 847ee765efb4) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_state/lib/A/AGtopcgifC.v (donor image sha256 64b53ff86172), with its module paths changed, names TfibSyms -> SegBSyms and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AGtopcgifC.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
 (* The cgif_file primary-size Allocate contract with its MISS arms discharged: AllocGcgif.aalloc_prim_realizes_cgif,
@@ -12,8 +12,8 @@
    cgif's AIfaceM instance is AGif1m.iface_cgif_m (h-decbox-a9's frozen-dm AGif0n), which takes tfib_depot_spec B
    ([HD1]) for the interface field if_depot_miss.  That field is what the arms read after a depot miss; it replaced
    if_U_refill, which is false for fuzz_state, whose universe reads st_nev.
-   The discharges follow h-rw-dec-3's AGtop.aalloc_prim_realizes_if at cold/h-rw-dec-3-agtop2 0b82402d3e3, which was
-   written on the c5 tree before the AGtop split (c-asan-realloc-c5 2bd8ae006ef); here they sit above the split
+   The discharges follow h-rw-dec-3's AGtop.aalloc_prim_realizes_if, which was
+   written on the c5 tree before the AGtop split (c-asan-realloc-c5); here they sit above the split
    AGtopcgif.v, and the AIfaceM instance is no longer a premise. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

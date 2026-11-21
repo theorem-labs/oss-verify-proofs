@@ -3,9 +3,9 @@
    composition only: no function of the binary is proved here, and every lemma below is closed (no segment lemma
    is assumed: each is a premise).
 
-   THE FORM: the image-B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s02.v (image A's cut-statement commit
-   6888a1bad128), with the same lemma names and image B's cuts (plugin-hostd/fuzz_command's lib/B/Prog/
-   LLVMFuzzerTestOneInput_s02.v at origin/ossv/recipes 3abc3740de97 is its A file with B's cut names, as here):
+   THE FORM: the image-B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s02.v (image A's cut-statement),
+   with the same lemma names and image B's cuts (plugin-hostd/fuzz_command's lib/B/Prog/
+   LLVMFuzzerTestOneInput_s02.v is its A file with B's cut names, as here):
    - lt_file_loop, the file loop (head K85110, PLAN-asanubsan-main section 1.2: at most 4 turns, nfiles =
      1 + (in[2] & 3)), by downward induction on the turn with the base case refuted by K85110's `f < nfiles` and
      lt_nfiles_range;

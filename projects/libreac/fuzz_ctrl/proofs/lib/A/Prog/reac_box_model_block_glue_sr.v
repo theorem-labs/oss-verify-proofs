@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_model_block (0x85b44) on fuzz_ctrl's ASan build, image A: the route (C) shadow premise of the narrowed
    _F files, `shadow_rw_on (C_ON.reac_box_model_block_shadow_R Sp (ly_F ly) p b o row nb) (normalize rsegs mem)`, at
    ANY AR state of the cgif world, for a Theorem Labs lane's TMB glue (lib/A/Prog/reac_box_model_block_glue.v).  The proof
@@ -7,7 +8,7 @@
    contains shadow_rw.  rule 24: no function is proved here (a program-world fact over the core's AR).
    Writer: a Theorem Labs lane; a working branch.
 
-   The disjuncts of R (lib/A/Prog/reac_box_model_block_c_on.v 552ee645503 (the blob this tree had at release c5e779efe8c)) and the world fact that covers each.
+   The disjuncts of R (lib/A/Prog/reac_box_model_block_c_on.v 552ee645503 (the blob this tree had at release)) and the world fact that covers each.
    sh_word_on x n is the shadow of the 64-aligned app blocks around [x, x + n) (8-aligned shadow WORDS), so each cover
    needs a region whose app range is 64-aligned at both ends:
      window  sh_word_on (Sp - K) K      cut_shadow (Z), the machine stack's zero_shadow range
@@ -29,7 +30,7 @@
    glob's OWN granules, while sh_word_on reaches the shadow words of the granules before q and after q + sz; no
    premise covers those (img_shadow_vis needs the app address in [IMG_LO, IMG_HI), and AR's ahs_pres,
    YG0n.v:442-444, leaves visible vis0 bytes not present).  a Theorem Labs lane DECIDED (20:04Z) to append three premises:
-   ROW (the text of C_reac_box_model_block.v:152 under p <> 0), NAME (the in_roP conjunct of :162-163 under the name
+   ROW (the text of C_reac_box_model_block.v:153 under p <> 0), NAME (the in_roP conjunct of :162-163 under the name
    guards), RELRO (pb_reac_box_model_block_stmt's RELRO, :185).  reac_box_model_block_sr_on_img below is that
    statement.  The first form is NOT proved here. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
@@ -161,7 +162,7 @@ Proof.
   unfold A.Prog.CtrlRo.IMG_LO, A.Prog.CtrlRo.IMG_HI. lia.
 Qed.
 
-(* NAME's conversion (a Theorem Labs lane 20:04Z): bytes in in_roP (C_reac_box_model_block.v:163) under RELRO lie in the image,
+(* NAME's conversion (a Theorem Labs lane 20:04Z): bytes in in_roP (C_reac_box_model_block.v:164) under RELRO lie in the image,
    so the name's shadow words are in img_shadow.  The one lemma that reads the NAME premise's form. *)
 Lemma name_cover_of_roP : forall RLO RHI q n a,
   (forall a, RLO <= a < RHI -> in_img AB1v.tfibsegs a) ->
@@ -302,7 +303,7 @@ Proof.
   unfold lib.Reusable.YG0f.shadow_addr. lia.
 Qed.
 
-(* o, either home (tbmb_o_home, C_reac_box_model_block.v:116-118). *)
+(* o, either home (tbmb_o_home, C_reac_box_model_block.v:117-119). *)
 Lemma sr_o : lib.Reusable.YG0d.AR_laws AB1v.tfibsegs B ->
   forall ly S (W : lib.Reusable.YA0n.world AB1v.tfibsegs) (mem : word -> option byte) md o,
   lib.Reusable.YG0n.AR AB1v.tfibsegs B ly S W mem md ->
@@ -337,7 +338,7 @@ Proof.
     unfold JOIN_0014, A.Prog.CtrlRo.IMG_LO, A.Prog.CtrlRo.IMG_HI; lia.
 Qed.
 
-(* row: the 296 bytes at p, inside the image by ROW (C_reac_box_model_block.v:152). *)
+(* row: the 296 bytes at p, inside the image by ROW (C_reac_box_model_block.v:153). *)
 Lemma sr_row : A.Prog.CtrlRo.img_shadow_vis AB1v.tfibsegs B ->
   forall ly S (W : lib.Reusable.YA0n.world AB1v.tfibsegs) (mem : word -> option byte) md p,
   lib.Reusable.YG0n.AR AB1v.tfibsegs B ly S W mem md ->
@@ -349,7 +350,7 @@ Proof.
   intros a Ha. apply (img_cover p 296 a); [lia | lia | lia | exact Ha].
 Qed.
 
-(* name: the n bytes at q, in in_roP (C_reac_box_model_block.v:163) under RELRO. *)
+(* name: the n bytes at q, in in_roP (C_reac_box_model_block.v:164) under RELRO. *)
 Lemma sr_name : A.Prog.CtrlRo.img_shadow_vis AB1v.tfibsegs B ->
   forall ly S (W : lib.Reusable.YA0n.world AB1v.tfibsegs) (mem : word -> option byte) md RLO RHI q n,
   lib.Reusable.YG0n.AR AB1v.tfibsegs B ly S W mem md ->

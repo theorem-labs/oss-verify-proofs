@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_state/lib/A/Rt/StrcmpLoop.v (donor image sha256 64b53ff86172), with its module paths changed, names AB1v -> YB1v, AE34 -> YE34, AF0l -> YF0l, AF0m -> YF0m, AF0x -> YF0x, AB1w -> YB1w, AE20 -> YE20, AE2y -> YE2y and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
 (* Read from: fuzz_state.asan-ubsan (omx-clap-core/fuzz_state asan-ubsan) sha256 5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204; unstripped twin sha256 b1566a1ca816049d20588a70b9b43f152a338319c8ebea649df5b62ff5c4cc00 *)
 (* Modified by Theorem Labs, 2026-10: image B. The donor measured this walk on fuzz_grant.asan.debug; a Theorem Labs lane
-   moved it to fuzz_state.asan (lib/A/Rt at 812b439a657) and port_core.py 718254b3f4dd moved it from there to
+   moved it to fuzz_state.asan (lib/A/Rt) and port_core.py 718254b3f4dd moved it from there to
    fuzz_state.asan-ubsan: every address below is fuzz_state.asan-ubsan's, checked against this image's bytes, and
    the image modules are lib/B's twins of lib/A's (YB1v YE34 YF0l YF0m YF0x YB1w YE20 YE2y). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_grant's ASan build: the byte loop of ___interceptor_strcmp,
    as a plain machine walk (msteps), in the form of A/AE3a.v's byte loop (mc_tail). MEASURED on
    fuzz_grant.asan.debug with elfdis.py:

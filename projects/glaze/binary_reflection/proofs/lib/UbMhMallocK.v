@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: supply vDSO reservation inclusion to the slot specification and unpack strengthened returns. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -668,6 +669,9 @@ Section Spec.
       WF st' ((p, n) :: L) /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\ nojunk st' /\ nolimbo st' /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
       m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      (* [m_channel_reader] rides with the group above; see UbMhUnmap.with_vmmaps_rdr. *)
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
       vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl).
 
   (* [comment removed for export] *)
@@ -681,6 +685,8 @@ Section Spec.
       WF st' L /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\ nojunk st' /\ nolimbo st' /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
       m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
       vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl).
 
   (* [comment removed for export] *)
@@ -696,6 +702,8 @@ Section Spec.
       WF st' ((p, n) :: L) /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\ nojunk st' /\ nolimbo st' /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
       m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      m_channel_reader mdl' = m_channel_reader mdl /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
       vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\ PX st'.
 
   Lemma postkX_postk : forall PX stk L n sp regs M mdl rom c',
@@ -722,6 +730,7 @@ Section Small.
   Hypothesis Hh : m_halted mdl = None.
   Hypothesis Hlz : m_vm_lazy mdl = [].
   Hypothesis Hmat : m_vm_materialized mdl = [].
+  Hypothesis HVDSO : incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
   Hypothesis HBUD : PHI L + MBASE <= vm_limit (m_vmmaps mdl).
   Hypothesis HLL : Z.of_nat (length L) + 1 <= LMAX.
   Hypothesis Hn : 1 <= n < MMAP_THRESHOLD.
@@ -780,7 +789,10 @@ Section Small.
   Lemma small_tail : forall s (Mx : mem) mdlx rr (sc g idx : Z),
     WF s L -> REP s Mx -> LEDGER s (m_vmmaps mdlx) -> s_limbo s = [] ->
     m_halted mdlx = None -> m_vm_lazy mdlx = [] -> m_vm_materialized mdlx = [] ->
-    m_fs mdlx = m_fs mdl -> m_fds mdlx = m_fds mdl -> vm_limit (m_vmmaps mdlx) = vm_limit (m_vmmaps mdl) ->
+    m_fs mdlx = m_fs mdl -> m_fds mdlx = m_fds mdl ->
+    m_channel_reader mdlx = m_channel_reader mdl ->
+    incl (vdso_reserved (m_kernel mdlx) (vdso_top (m_vmmaps mdlx))) (vm_reserved (m_vmmaps mdlx)) ->
+    vm_limit (m_vmmaps mdlx) = vm_limit (m_vmmaps mdl) ->
     0 <= sc < 48 -> (sc = sc0 \/ (sc = sc0 + 1 /\ sc0 mod 2 = 0 /\ 4 <= sc0 < 32 /\ sc0 <> 6)) ->
     head_of (s_alist s sc) = g -> is_group s g -> g_sc s g = sc -> 0 <= idx <= g_lastidx s g ->
     s_slot s g idx = SJunk 0 -> only_junk s g idx -> n + 4 <= g_stride s g ->
@@ -792,7 +804,7 @@ Section Small.
     (forall off, PX (UbMhEnfr.st' s g idx n off)) ->
     kat RSEGS (mkCfg (mkst rr (0x67264%bv : word) Mx rom) mdlx) (kfx F false).
   Proof.
-    intros s Mx mdlx rr sc g idx W RP LG NL Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hsc CLS Hhd Hg Hgsc Hidx Hsl OJ Hstr FRx DFx STKx T19 T18 T9 T8 T2 K HPX.
+    intros s Mx mdlx rr sc g idx W RP LG NL Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hrdr1 HVDSO1 Hlim1 Hsc CLS Hhd Hg Hgsc Hidx Hsl OJ Hstr FRx DFx STKx T19 T18 T9 T8 T2 K HPX.
     pose proof (wG_each s L (WF_groups s L W) g Hg) as WG. pose proof (glast_rng s g) as GL.
     pose proof (wg_stride s L g WG) as [S16 Smod]. pose proof (wg_q s L g WG ltac:(lia)) as Q20. pose proof (wg_mem s L g WG) as (GM1 & GM2 & GM3).
     ceil; unfold SSTK, ASSTK, AMSTK in Hsp. cbn in Hsp.
@@ -892,7 +904,8 @@ Section Small.
       rewrite s_slot_set_slot. destruct (Z.eqb x g && (k =? idx))%bool eqn:B; [discriminate|].
       intros E. destruct (OJ x k o Hx Hk E) as [-> ->]. rewrite !Z.eqb_refl in B. discriminate B. }
     split; [exact NL|].
-    split; [exact Hh1|]. split; [exact Hlz1|]. split; [exact Hmat1|]. split; [exact Hfs1|]. split; [exact Hfds1|]. split; [exact Hlim1|].
+    split; [exact Hh1|]. split; [exact Hlz1|]. split; [exact Hmat1|]. split; [exact Hfs1|]. split; [exact Hfds1|].
+    split; [exact Hrdr1|]. split; [exact HVDSO1|]. split; [exact Hlim1|].
     apply HPX.
   Qed.
 
@@ -946,7 +959,7 @@ Section Small.
       set (dd := dbound (16 * size_class sc)). pose proof (dbound_le6 (16 * size_class sc) ltac:(lia)) as D6. fold dd in D6.
       assert (AS6 : ASSTK dd <= 1152) by (unfold ASSTK, AMSTK; lia).
       apply (kat_of_kfx F bo). replace (0x672b0%bv : word) with (Z_to_bv 64 AS_ENTRY) by (apply bv_eq; reflexivity).
-      apply (HAS dd F false bo st L M1 mdl r5 rom (sp - 48) sc n HL ltac:(intros Hbo; right; exact (SIDE Hbo)) HWF RP1 HLG NJ Hh Hlz Hmat Hsc).
+      apply (HAS dd F false bo st L M1 mdl r5 rom (sp - 48) sc n HL ltac:(intros Hbo; right; exact (SIDE Hbo)) HWF RP1 HLG NJ Hh Hlz Hmat HVDSO Hsc).
       { apply le_n. }
       { rewrite NLB. unfold zlen. cbn [length]. lia. }
       { exact REQ. }
@@ -961,7 +974,7 @@ Section Small.
       { intros y Hy. apply DF1. rewrite SSTK_val. lia. }
       2: { (* [comment removed for export] *)
         intros c' PF.
-        destruct PF as (s3 & M3 & mdl3 & r6 & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hlim3 & NJ3 & EL3 & Hcan3 &
+        destruct PF as (s3 & M3 & mdl3 & r6 & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hrdr3 & HVDSO3 & Hlim3 & NJ3 & EL3 & Hcan3 &
                         LM3 & MU3 & F10 & F2 & K6 & FRM3 & DEF3).
         rewrite D1. replace (Z_to_bv 64 422480) with (0x67250%bv : word) by (apply bv_eq; reflexivity).
         apply (kf_of_kat F HL).
@@ -995,16 +1008,17 @@ Section Small.
           - rewrite E. apply DF1. rewrite SSTK_val. lia.
           - destruct (FRM3 y ltac:(lia) NE3) as [A|[A|[A|A]]]; [apply DEF3; exact A | exfalso; ceil; unfold HEAPLO in A; lia | exfalso; unfold CTX_END, CTX in A; lia | exfalso; unfold A_ERRNO, TPV in A; lia]. }
         split; [exact W3|]. split; [exact RP3|]. split; [exact LG3|]. split; [exact NJ3|]. split; [unfold nolimbo; rewrite EL3; exact NLB|].
-        split; [exact Hh3|]. split; [exact Hlz3|]. split; [exact Hmat3|]. split; [exact Hfs3|]. split; [exact Hfds3|]. exact Hlim3. }
+        split; [exact Hh3|]. split; [exact Hlz3|]. split; [exact Hmat3|]. split; [exact Hfs3|]. split; [exact Hfds3|].
+        split; [exact Hrdr3|]. split; [exact HVDSO3|]. exact Hlim3. }
       intros c' POST. apply (kfx_of_kat F HL false).
-      destruct POST as (s3 & M3 & mdl3 & r6 & g' & idx & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hlim3 & EL3 & Hcan3 & Herr3 &
+      destruct POST as (s3 & M3 & mdl3 & r6 & g' & idx & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hrdr3 & HVDSO3 & Hlim3 & EL3 & Hcan3 & Herr3 &
                         Hhd3 & Hg3 & Hgsc3 & Hidx3 & Hsl3 & OJ3 & Hstr3 & Hbig3 & BL3 & LM3 & MU3 & F10 & F2 & K6 & FRM3 & DEF3).
       rewrite D1. replace (Z_to_bv 64 422480) with (0x67250%bv : word) by (apply bv_eq; reflexivity).
       pose proof (glast_rng s3 g') as GL3.
       pose proof (rc_active s3 M3 (rp_ctx s3 M3 RP3) sc Hsc) as Ract. rewrite (wc_active s3 (WF_ctx s3 L W3) sc Hsc), Hhd3 in Ract.
       destruct (mRet M3 sc idx g' Hsc ltac:(lia) Ract r6 rom F10 ltac:(kept_rw K6; exact D18) ltac:(kept_rw K6; kept_rw K5; exact D9)) as (r7 & RUN7 & E19 & E18 & K7).
       eapply kat_msteps; [exact Hh3 | exact Hlz3 | exact RUN7 |].
-      apply (small_tail s3 M3 mdl3 r7 sc g' idx W3 RP3 LG3 ltac:(rewrite EL3; exact NLB) Hh3 Hlz3 Hmat3 Hfs3 Hfds3 Hlim3 Hsc CLS Hhd3 Hg3 Hgsc3 Hidx3 Hsl3 OJ3 Hstr3).
+      apply (small_tail s3 M3 mdl3 r7 sc g' idx W3 RP3 LG3 ltac:(rewrite EL3; exact NLB) Hh3 Hlz3 Hmat3 Hfs3 Hfds3 Hrdr3 HVDSO3 Hlim3 Hsc CLS Hhd3 Hg3 Hgsc3 Hidx3 Hsl3 OJ3 Hstr3).
       - intros a Ha NE. destruct (decide (M3 (Z_to_bv 64 a) = M1 (Z_to_bv 64 a))) as [E|NE3].
         + rewrite E in NE. left. pose proof (M1_writes a Ha NE). rewrite SSTK_val. lia.
         + destruct (FRM3 a Ha NE3) as [A|[A|[A|A]]]; [left; rewrite SSTK_val; lia | right; left; exact A | right; right; left; exact A | right; right; right; exact A].
@@ -1061,7 +1075,10 @@ Section Small.
         apply (small_tail s2 M2 mdl r5 sc g i W2' RP2).
         * apply (LEDGER_same st); [reflexivity | reflexivity | exact HLG].
         * exact NLB.
-        * exact Hh. * exact Hlz. * exact Hmat. * reflexivity. * reflexivity. * reflexivity.
+        * exact Hh. * exact Hlz. * exact Hmat. * reflexivity. * reflexivity.
+        * (* m_channel_reader: this arm keeps the entry model [mdl]. *) reflexivity.
+        * exact HVDSO.
+        * reflexivity.
         * exact Hsc.
         * exact CLS.
         * subst g. reflexivity.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: open_spec, in F_syscalls and its TwB twin, takes the pathname walk's access_ok bound (the path and its NUL end at or below 2^47), and nret_MSsvc_gen, in both RT_stubs copies, states that a returning system call clears the load reservation. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -389,6 +390,8 @@ Definition open_spec__stmt : Prop := forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1
   (errno_addr tp + 4 <= ssp_guard \/ ssp_guard + 8 <= errno_addr tp)%Z ->
   (got_ssp + 8 <= errno_addr tp \/ errno_addr tp + 4 <= got_ssp)%Z ->
   (164 <= bv_unsigned tp)%Z ->
+  (* the pathname walk's access_ok bound, which [at_node]'s NOpen case carries at LPS 727298f3 *)
+  (bv_unsigned a0 + Z.of_nat (length path) + 1 <= 2^47)%Z ->
   (* [comment removed for export] *)
   rng RNG lo (bv_unsigned sp - lo) ->
   rng RNG (errno_addr tp) 4 ->
@@ -441,7 +444,7 @@ Variable lo : ltac2:(SecDietF.SzSecF.ty 'open_spec__stmt 38).
 #[using="Type"] Lemma open_spec__body : ltac:(let T := type of (fun (h : open_spec__stmt) => h RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m path errv canary lo) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
 Proof.
   pose proof (fun (_ : True) => (RNG, (ra, (sp, (gp, (tp, (t0, (t1, (t2, (s0, (s1, (a0, (a1, (a2, (a3, (a4, (a5, (a6, (a7, (s2, (s3, (s4, (s5, (s6, (s7, (s8, (s9, (s10, (s11, (t3, (t4, (t5, (t6, (F, (fc, (m, (path, (errv, (canary, lo))))))))))))))))))))))))))))))))))))))) as _.
- intros ST SRC ERR GOT SSP MI -> NUL NSL NDD LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP RSTK RERR RSRC RIMG.
+ intros ST SRC ERR GOT SSP MI -> NUL NSL NDD LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP P47 RSTK RERR RSRC RIMG.
   unfold got_ssp, ssp_guard in *.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl asegs m) as WM.
@@ -842,6 +845,8 @@ Definition open_spec__stmt : Prop := forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1
   (errno_addr tp + 4 <= ssp_guard \/ ssp_guard + 8 <= errno_addr tp)%Z ->
   (got_ssp + 8 <= errno_addr tp \/ errno_addr tp + 4 <= got_ssp)%Z ->
   (164 <= bv_unsigned tp)%Z ->
+  (* the pathname walk's access_ok bound, which [at_node]'s NOpen case carries at LPS 727298f3 *)
+  (bv_unsigned a0 + Z.of_nat (length path) + 1 <= 2^47)%Z ->
   (* [comment removed for export] *)
   rng RNG lo (bv_unsigned sp - lo) ->
   rng RNG (errno_addr tp) 4 ->
@@ -894,7 +899,7 @@ Variable lo : ltac2:(SecDietF.SzSecF.ty 'open_spec__stmt 38).
 #[using="Type"] Lemma open_spec__body : ltac:(let T := type of (fun (h : open_spec__stmt) => h RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m path errv canary lo) in lazymatch (eval cbv beta in T) with _ -> ?B => exact B end).
 Proof.
   pose proof (fun (_ : True) => (RNG, (ra, (sp, (gp, (tp, (t0, (t1, (t2, (s0, (s1, (a0, (a1, (a2, (a3, (a4, (a5, (a6, (a7, (s2, (s3, (s4, (s5, (s6, (s7, (s8, (s9, (s10, (s11, (t3, (t4, (t5, (t6, (F, (fc, (m, (path, (errv, (canary, lo))))))))))))))))))))))))))))))))))))))) as _.
- intros ST SRC ERR GOT SSP MI -> NUL NSL NDD LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP RSTK RERR RSRC RIMG.
+ intros ST SRC ERR GOT SSP MI -> NUL NSL NDD LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP P47 RSTK RERR RSRC RIMG.
   unfold got_ssp, ssp_guard in *.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl asegs m) as WM.
@@ -956,7 +961,7 @@ Definition eff_mem (m : word -> option byte) (e : resp) : word -> option byte :=
   apply_writes (apply_copies m (apply_zeros (apply_unmaps m (eff_unmaps e)) (eff_zeros e)) (eff_copies e)) (eff_writes e).
 
 #[using="Type"] Lemma nret_MSsvc_gen : forall R F pc x8 fc rv m ro e,
-  nret (MSsvc R F pc x8 fc rv m ro) e = MS (bvmap_set 10 (eff_ret e) R) F (pc + Z_to_bv 64 4) fc rv (eff_mem m e) ro.
+  nret (MSsvc R F pc x8 fc rv m ro) e = MS (bvmap_set 10 (eff_ret e) R) F (pc + Z_to_bv 64 4) fc None (eff_mem m e) ro.
 Proof. intros. destruct e. reflexivity. Qed.
 
 #[using="Type"] Lemma eff_mem_efferr : forall m e, eff_mem m (efferr e) = m.      (* [comment removed for export] *)
@@ -1108,7 +1113,7 @@ Definition eff_mem (m : word -> option byte) (e : resp) : word -> option byte :=
   apply_writes (apply_copies m (apply_zeros (apply_unmaps m (eff_unmaps e)) (eff_zeros e)) (eff_copies e)) (eff_writes e).
 
 #[using="Type"] Lemma nret_MSsvc_gen : forall R F pc x8 fc rv m ro e,
-  nret (MSsvc R F pc x8 fc rv m ro) e = MS (bvmap_set 10 (eff_ret e) R) F (pc + Z_to_bv 64 4) fc rv (eff_mem m e) ro.
+  nret (MSsvc R F pc x8 fc rv m ro) e = MS (bvmap_set 10 (eff_ret e) R) F (pc + Z_to_bv 64 4) fc None (eff_mem m e) ro.
 Proof. intros. destruct e. reflexivity. Qed.
 
 #[using="Type"] Lemma eff_mem_efferr : forall m e, eff_mem m (efferr e) = m.      (* [comment removed for export] *)

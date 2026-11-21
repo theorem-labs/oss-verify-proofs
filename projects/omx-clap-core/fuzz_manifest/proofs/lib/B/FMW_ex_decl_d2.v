@@ -6,8 +6,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_strkit.v, with its module paths and module names changed; 240 of its 267 lines of code are new or changed and 303 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head.v; 373 of its 419 lines of code are new or changed and 221 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_decl_d2.v, with its module paths, module names and numbers changed; 128 of its 395 lines of code are new or changed and 152 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExDecl, IMAGE B: expected's name loop at D2 (0x8155c..0x815b4, fuzz_manifest.c:149) on fm.asan-ubsan: dseg_D2.
-   B twin of lib/A/FMW_ex_decl_d2.v (06d82004dc3); B's code (fm_b_expected_iface.out lines 199-228):
+   B twin of lib/A/FMW_ex_decl_d2.v; B's code (fm_b_expected_iface.out lines 199-228):
    one iteration from D2 at j: the byte c at p1 + j (a1) is decided on its value alone (a closed valuation over the
    256 byte values) by 0x81564 `bltu t0 (= ':'), a1`, 0x81570 `bnez (t1 (= the mask) >> a1) & 1`, 0x81574
    `beq a1, t0`: a name byte passes the UBSan guard 0x81578 `beq a3, s0` (a3 = s4 + s5 = text + p1 + j), loads the

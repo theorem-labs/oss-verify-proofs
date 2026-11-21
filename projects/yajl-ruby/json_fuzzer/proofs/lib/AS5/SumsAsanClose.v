@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ value rz is a section variable and the XSTMT notation passes it to x_stmt). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -52,6 +53,7 @@ Section AsanNodes.
 Variable SC : SpuriousCfg.   (* [comment removed for export] *)
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> AP.CEIL <= bv_unsigned a.
@@ -61,7 +63,7 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis NX0_S : APS.nx0_sp_ok nx0.   (* [comment removed for export] *)
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt ASEGS SC AsanPlanImages5.ASAN5 nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt ASEGS SC AsanPlanImages5.ASAN5 nx0 LIMIT rz SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;

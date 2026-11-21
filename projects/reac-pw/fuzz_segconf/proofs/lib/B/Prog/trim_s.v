@@ -5,9 +5,10 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 296 of its 332 lines of code are new or changed and 218 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim's image-B walk, the strlen call (0x896c4 .. 0x896f0): tr_after_ok : TR_TRAIL_stmt -> TR_FIN_stmt ->
-   TR_AFTER_stmt (lib/B/Prog/trim_k.v). ADAPTED from the image-A G3 walk owner's image-A segment lib/A/Prog/trim_s.v
-   (commit 07dedd5b93c6), re-derived on image B's code. From the leading loop's exit
+   TR_AFTER_stmt (lib/B/Prog/trim_k.v). ADAPTED from the image-A G3 walk owner's image-A segment lib/A/Prog/trim_s.v,
+   re-derived on image B's code. From the leading loop's exit
    (s0 = p + lead, s2 = 1 - s0): 0x896c4 `mv a0,s0`, 0x896c8 `jal` the strlen trampoline (the listing's pa_sigma
    SS___interceptor_trampoline_strlen, image B 0x43a98), stepped by lib/B/Prog/PaArt.v aj_art_at with the walk's
    hypothesis ASTRLEN (the image-A wrapper-layer owner's interface row 16, RtString.astrlen_realizes); then
@@ -39,7 +40,7 @@ From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Prog Require Import
 PaTable PaSym PaStep PaRun PaShadow PaJournal SegSyms SegList SegPa SegPaLib PaCall PaDenot.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Prog Require Import PaLibG PaLibF PaLibH PaSB PaCallRun.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Rt Require Import RtDefs.
-(* interface row 16's carrier (the image-B wrapper-layer owner, 5b814360ea8f): RtString.astrlen_realizes *)
+(* interface row 16's carrier (the image-B wrapper-layer owner): RtString.astrlen_realizes *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Rt Require RtString.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Prog Require Import PaArt.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Spec Require SegModel.

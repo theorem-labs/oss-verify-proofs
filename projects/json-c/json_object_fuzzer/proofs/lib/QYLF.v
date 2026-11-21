@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's extra reserved intervals in the brk nodes' ledger, and the brk chunk free of the whole reserved ledger; munmap/brk/mprotect node changes: munmap's exact cut of the removed entry, keeping the reserved ledger, the vDSO pair and the channel reader, and mprotect missing the vDSO pair; mmap placement at the NULL hint, with the place_declined_b premise discharged; the CONFIG_RSEQ flag of the start-up layer: the env, program-name and layout scan nodes at its value rz; the launch's ProcInput: the scan sections over the launch's input, mmap base and entry point with valid_launch and entry_launch_ok_va, and the entry stack layout from cat_string_off and entry_stack_image; APS.vis_add_sound, A_wf_allowA and maps_match_exact, and QxyE's gap_ok_sound, mmap_fixed_old_facts and slice_args, taken in either argument form; three unused section abbreviations dropped; node_sys_sound filling the munmap node lemma's unconstrained HS XN XE XB; the fixed mmap's classic path below the node's new resx_clear ceiling, carried to the KHI bound mmap_fixed_old_facts takes; QxyE's refuse_ok and refuse_cont at the section arguments they now take). *)
 
 From Stdlib Require ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -547,8 +548,9 @@ unfold budget_ok in Hbudget. apply Z.leb_le in Hbudget.
 destruct (brk_req_sound E cs R FULL model d HC Hreq) as (D1 & D2 & D3 & Dm).
 destruct (brk_base_ok_sound E cs R FULL model d HC Hbase) as (B1 & B2 & B3 & B4).
 pose proof (brk_req_val E cs R FULL model d HC Hreq Hbase) as G10.
-pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
-pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
+(* LPS 727298f3: the ledger is the image's intervals plus the launch's extra ones, a page above KHI *)
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & HGrx & _ & _).
+first [pose proof (proj1 (APS.maps_match_exact nx0 E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps | pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps].
 pose proof (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hlim. pose proof (co_sbrk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hsbrk.
 pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk.
 set (h := m_vmmaps model) in *. set (b := vm_brk h) in *.
@@ -584,9 +586,12 @@ bv_unsigned (edenot E (am_base m)) + bv_unsigned (edenot E (am_len m)) <= bv_uns
 set (dw := Z_to_bv 64 d). assert (Udw : bv_unsigned dw = d) by (unfold dw; apply u64_lit; unfold KHI in *; lia).
 assert (Hrf : region_free (vm_reserved h ++ vm_maps h) b dw = true).
 { apply region_free_intro. intros a sz Hin. apply in_app_iff in Hin as [Hin|Hin].
-- rewrite Hres in Hin.
-pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
+- rewrite Hres in Hin. apply in_app_iff in Hin as [Hin|Hin].
++ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
 unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
++ pose proof (proj1 (Forall_forall _ _) HGrx _ Hin) as (_ & _ & _ & _ & Rk & _). cbn [fst] in Rk.
+unfold iv_overlap. rewrite ?Udw, ?Udwg. apply andb_false_iff. right. apply Z.ltb_ge.
+unfold KHI, page_size in *; lia.
 - rewrite Hmaps in Hin. apply in_map_iff in Hin as (m & Em & Hin).
 unfold amap_den in Em. injection Em as <- <-.
 unfold iv_overlap. rewrite Udw. apply andb_false_iff.
@@ -596,14 +601,17 @@ set (dwg := Z_to_bv 64 (d + page_size)).
 assert (Udwg : bv_unsigned dwg = d + page_size) by (unfold dwg; apply u64_lit; unfold KHI, page_size in *; lia).
 assert (Hrfg : region_free (vm_reserved h ++ vm_maps h) b dwg = true).
 { apply region_free_intro. intros a sz Hin. apply in_app_iff in Hin as [Hin|Hin].
-- rewrite Hres in Hin.
-pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
+- rewrite Hres in Hin. apply in_app_iff in Hin as [Hin|Hin].
++ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
 unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
++ pose proof (proj1 (Forall_forall _ _) HGrx _ Hin) as (_ & _ & _ & _ & Rk & _). cbn [fst] in Rk.
+unfold iv_overlap. rewrite ?Udw, ?Udwg. apply andb_false_iff. right. apply Z.ltb_ge.
+unfold KHI, page_size in *; lia.
 - rewrite Hmaps in Hin. apply in_map_iff in Hin as (m & Em & Hin).
 unfold amap_den in Em. injection Em as <- <-.
 unfold iv_overlap. rewrite Udwg. apply andb_false_iff.
 destruct (APARTG m Hin) as [Hm|Hm]; [left; apply Z.ltb_ge; lia | right; apply Z.ltb_ge; unfold page_size in *; lia]. }
-pose proof (A_wf_allowA A (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) 0%nat E cs) as HAwf.
+first [pose proof (A_wf_allowA A 0%nat E cs) as HAwf | pose proof (A_wf_allowA A (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) 0%nat E cs) as HAwf | pose proof (A_wf_allowA A E cs) as HAwf].
 assert (Hused : vm_backing_used model <= a_eager cs + a_abytes cs).
 { pose proof (vm_backing_used_le _ _ HAwf (co_minv _ _ _ _ _ _ _ _ _ _ _ _ HC)).
 pose proof (co_eager _ _ _ _ _ _ _ _ _ _ _ _ HC). pose proof (co_abytes _ _ _ _ _ _ _ _ _ _ _ _ HC). lia. }
@@ -647,14 +655,20 @@ assert (Wb : iv_wf (b, dw)) by (unfold iv_wf, B, S; cbn [fst snd]; rewrite Udw; 
 rewrite (v_addi_pc (pc cs) Hpc0 Hpc4).
 replace (pc cs + 4) with (pc csb) by (rewrite HpcB'; reflexivity).
 apply (HkB E R' FULL' model'); [split; apply env_agree_refl | | reflexivity].
-apply (vis_add_sound SEGS A LIMIT USP (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat
-E csB (a_brk cs) (ELit d) _ csb R' FULL' model' Hva).
+first
+  [ apply (vis_add_sound SEGS A LIMIT USP SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat
+      E csB (a_brk cs) (ELit d) _ csb R' FULL' model' Hva)
+  | apply (vis_add_sound SEGS A LIMIT USP (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat
+      E csB (a_brk cs) (ELit d) _ csb R' FULL' model' Hva)
+  | apply (vis_add_sound SEGS A LIMIT USP SHADOW_ok USP_ok SINV argH argH_sp FS0
+      E csB (a_brk cs) (ELit d) _ csb R' FULL' model' Hva) ].
 +
 subst b. subst h.
 destruct HC; constructor; unfold csB;
 cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn mk_ss s_regs s_log s_know s_pc s_next];
 fold csB; try assumption; try reflexivity.
 all: try (change (m_halted model') with (m_halted model); assumption).
+all: try (change (m_channel_reader model') with (m_channel_reader model); assumption).
 all: lazymatch goal with
 | |- regs_ok _ _ _ =>
 apply regs_ok_regupd_same; [exact co_regs0 | exact G10 | intros X; apply (f_equal bv_unsigned) in X; discriminate]
@@ -672,6 +686,13 @@ rewrite Hmaps; apply Forall_forall; intros iv Hin; apply in_map_iff in Hin as (m
 unfold iv_disjoint, amap_den; cbn [fst snd]; rewrite Udw; destruct (APART m Hin); lia
 | |- model_ivs_wf _ =>
 apply model_ivs_wf_with_vmmaps; [exact co_wf0 | apply ivs_wf_cons; [exact Wb | exact Wf] | exact (proj1 (proj2 co_wf0)) | reflexivity]
+| |- context [iv_disjoint] =>
+(* [co_mres]: the chunk the brk grows by is free of the whole reserved ledger (as coturn's
+   Asan/AsanNodesMmB.v) *)
+rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps]; constructor; [|exact co_mres0];
+apply Forall_forall; intros iv Hiv; destruct iv as [rb rs];
+pose proof (Q6EJ.Mq1.region_free_In _ _ _ rb rs Hrf ltac:(apply in_or_app; left; exact Hiv)) as Hov;
+unfold iv_disjoint; cbn [fst snd]; pose proof Udw; lia
 | |- Forall _ (vm_maps _) =>
 rewrite Hvm'; unfold h'; cbn [vm_maps]; constructor; [|exact co_bounds0];
 cbn [fst snd]; rewrite Udw; unfold CEIL, KHI, ATOP_MAX in *; lia
@@ -797,8 +818,9 @@ unfold budget_ok in Hbudget. apply Z.leb_le in Hbudget.
 destruct (brk_req_sound E cs R FULL model d HC Hreq) as (D1 & D2 & D3 & Dm).
 destruct (brk_base_ok_sound E cs R FULL model d HC Hbase) as (B1 & B2 & B3 & B4).
 pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk.
-pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
-pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
+(* LPS 727298f3: the ledger is the image's intervals plus the launch's extra ones, a page above KHI *)
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & HGrx & _ & _).
+first [pose proof (proj1 (APS.maps_match_exact nx0 E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps | pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps].
 pose proof (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hlim.
 set (h := m_vmmaps model) in *. set (b := vm_brk h) in *. pose proof (u64_range b) as Hbr.
 assert (Eb : edenot E (a_brk cs) = b) by (symmetry; exact Hbrk).
@@ -824,14 +846,17 @@ set (dwg := Z_to_bv 64 (d + page_size)).
 assert (Udwg : bv_unsigned dwg = d + page_size) by (unfold dwg; apply u64_lit; unfold KHI, page_size in *; lia).
 assert (Hrfg : region_free (vm_reserved h ++ vm_maps h) b dwg = true).
 { apply region_free_intro. intros a sz Hin. apply in_app_iff in Hin as [Hin|Hin].
-- rewrite Hres in Hin.
-pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
+- rewrite Hres in Hin. apply in_app_iff in Hin as [Hin|Hin].
++ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
 unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
++ pose proof (proj1 (Forall_forall _ _) HGrx _ Hin) as (_ & _ & _ & _ & Rk & _). cbn [fst] in Rk.
+unfold iv_overlap. rewrite ?Udw, ?Udwg. apply andb_false_iff. right. apply Z.ltb_ge.
+unfold KHI, page_size in *; lia.
 - rewrite Hmaps in Hin. apply in_map_iff in Hin as (m & Em & Hin).
 unfold amap_den in Em. injection Em as <- <-.
 unfold iv_overlap. rewrite Udwg. apply andb_false_iff.
 destruct (APARTG m Hin) as [Hm|Hm]; [left; apply Z.ltb_ge; lia | right; apply Z.ltb_ge; unfold page_size in *; lia]. }
-pose proof (A_wf_allowA A (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) 0%nat E cs) as HAwf.
+first [pose proof (A_wf_allowA A 0%nat E cs) as HAwf | pose proof (A_wf_allowA A (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) 0%nat E cs) as HAwf | pose proof (A_wf_allowA A E cs) as HAwf].
 assert (Hused : vm_backing_used model <= a_eager cs + a_abytes cs).
 { pose proof (vm_backing_used_le _ _ HAwf (co_minv _ _ _ _ _ _ _ _ _ _ _ _ HC)).
 pose proof (co_eager _ _ _ _ _ _ _ _ _ _ _ _ HC). pose proof (co_abytes _ _ _ _ _ _ _ _ _ _ _ _ HC). lia. }
@@ -871,9 +896,10 @@ pose proof (brk_req_val E cs R FULL model d HC Hreq Hbase) as G10.
 destruct (reg_lit_sound SEGS A LIMIT USP SINV argH FS0 E cs R FULL model 17 214 HC ltac:(lia) H17) as [G17 _].
 pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hh.
 pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk.
-pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
+(* LPS 727298f3: the ledger is the image's intervals plus the launch's extra ones, a page above KHI *)
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & HGrx & _ & _).
 pose proof (co_sbrk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hsbrk.
-pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
+first [pose proof (proj1 (APS.maps_match_exact nx0 E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps | pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps].
 set (h := m_vmmaps model) in *. set (b := vm_brk h) in *. pose proof (u64_range b) as Hbr.
 destruct (Mmap.brk_grow_ok model (Z_to_bv 64 (bv_unsigned b + d)) (Z_to_bv 64 (bv_unsigned b + d))) eqn:Hok.
 -
@@ -944,8 +970,8 @@ Let regs_ok_set_n' := APS.regs_ok_set_n.
 Let in_ivs_map_den' := APS.in_ivs_map_den.
 Let kimg_clip_in_hull' := APS.kimg_clip_in_hull A.
 Let hid_agree' := APS.hid_agree A nx0 USP argH argH_agree.
-Let vis_add_sound' := APS.vis_add_sound SEGS A LIMIT USP HS XN XE XB SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat.
-Let A_wf_allowA' := APS.A_wf_allowA A HS XN XE XB 0%nat.
+Let vis_add_sound' := ltac:(first [exact (APS.vis_add_sound SEGS A LIMIT USP HS XN XE XB SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat) | exact (APS.vis_add_sound SEGS A LIMIT USP SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat) | exact (APS.vis_add_sound SEGS A LIMIT USP SHADOW_ok USP_ok SINV argH argH_sp FS0)]).
+Let A_wf_allowA' := ltac:(first [exact (APS.A_wf_allowA A HS XN XE XB 0%nat) | exact (APS.A_wf_allowA A 0%nat) | exact (APS.A_wf_allowA A)]).
 Let know_ok_unhide' := APS.know_ok_unhide SEGS A.
 Let hid_hull' := APS.hid_hull A USP HULL_ok argH argH_high.
 Let H_off_segments_cs' := APS.H_off_segments_cs SEGS A USP SEGS_in_hull HULL_ok argH argH_high.
@@ -1293,7 +1319,22 @@ set (cs' := ACS _ _ _ _ _ _ _ _ _ _ _) in HK.
 specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
 unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
 
-assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+{ (* LPS 727298f3: the exact arm cuts the range; on this ledger the cut removes the one entry [amap_den E m]
+     fills (as coturn's Asan/AsanNodesMmB.v) *)
+transitivity (maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned addr)
+(bv_unsigned addr + bv_unsigned n)); [reflexivity|].
+apply maps_subtract_exact.
+- pose proof (BPOS _ HIN) as Hpn. unfold amap_den in Hpn. cbn [snd] in Hpn. exact Hpn.
+- intros pb ps Hpin. exact (BPOS (pb, ps) Hpin).
+- intros pb ps Hpin Hpb. pose proof (UNIQ (pb, ps) Hpin Hpb) as Hpq.
+unfold amap_den in Hpq. injection Hpq as _ Hps. exact Hps.
+- intros pb ps Hpin Hpne.
+assert (Hpne' : (pb, ps) <> amap_den E m).
+{ intros Hpeq. apply Hpne. unfold amap_den in Hpeq. rewrite Haddr in Hpeq.
+injection Hpeq as Hpb _. exact Hpb. }
+pose proof (DISJl (pb, ps) Hpin Hpne') as Hpd. cbn [fst snd] in Hpd.
+unfold hi, lo in Hpd. lia. }
 assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
 assert (PL : m_vm_lazy model' = maps_subtract (m_vm_lazy model) lo (lo + bv_unsigned n)) by reflexivity.
 assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.
@@ -1363,7 +1404,7 @@ assert (Hne' : m <> m').
 split; [exact Hm'|]. split; [exact Hne'|]. intros Hnf'. exact (DISJ' m' Hm' Hnf' Hne'). }
 assert (KNF : forall m', am_kind m' = KNONE \/ am_kind m' = KNONELAZY \/ am_kind m' = KRWLAZY -> is_fog m' = false).
 { intros m' Hk. unfold is_fog. destruct Hk as [-> |[-> | ->]]; reflexivity. }
-destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xisp Xsp0 Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv].
+destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xisp Xsp0 Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xmres Xvdso Xrdr].
 destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
 assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) (kept ++ gone ++ a_ghost cs)) by reflexivity.
 constructor; rewrite ?HAeq; subst cs'; cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn s_regs s_log s_know s_next mk_ss];
@@ -1491,6 +1532,16 @@ pose proof (G3 x Hpx) as Z0. unfold Mr, mrestrict, hid in Z0. rewrite Hold in Z0
 destruct (argH E x); [discriminate|]. cbn in Z0. exact Z0.
 -  eapply SINV_frame; [|exact Xsinv]. intros x Hx. unfold FULL'. apply unfill_out. pose proof (argH_sp _ _ Hx). rewrite Un. subst hi.
 unfold APS.ATOP, STACK_MAX in L2. lia.
+(* LPS 727298f3: munmap keeps the reserved ledger, the kernel build, the placement base and the initial
+   stack pointer (Sys/Mm/Mmap.v's mmap_fixed_destroyed_next and with_mmap_destroyed), so the vDSO pair and
+   the reserved intervals are the same; the tracked maps only lose the removed entry *)
+-  rewrite PM. unfold map_remove. apply Forall_forall. intros iv Hiv. apply filter_In in Hiv as [Hiv _].
+change (vm_reserved (m_vmmaps model')) with (vm_reserved (m_vmmaps model)).
+exact (proj1 (Forall_forall _ _) Xmres iv Hiv).
+-  change (vdso_reserved (m_kernel model') (vdso_top (m_vmmaps model')))
+with (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))).
+change (vm_reserved (m_vmmaps model')) with (vm_reserved (m_vmmaps model)). exact Xvdso.
+-  exact Xrdr.
 Qed.
 
 Theorem node_sys_sound_YMunmap : sys_stmt SEGS A nx0 LIMIT USP SINV argH FS0 YMunmap.
@@ -1518,12 +1569,15 @@ Hypothesis USP_ok : APS.usp_ok USP.
 Hypothesis NX0_ge : APS.nx0_ge nx0.
 Hypothesis argH_sp : forall E (a : word), argH E a = true -> USP <= bv_unsigned a.
 
+(* at the revision node_sys_sound_YMunmap also takes SoundMunmap's HS XN XE XB; no hypothesis of that
+   section constrains them, so any closure fills them *)
 Local Ltac feed t :=
 lazymatch type of t with
 | forall _ : ?T, _ =>
 first [ feed (t SEGS) | feed (t A) | feed (t nx0) | feed (t LIMIT) | feed (t USP) | feed (t SINV) | feed (t argH) | feed (t FS0)
 | feed (t RES_len) | feed (t HULL_ok) | feed (t SHADOW_ok) | feed (t argH_high) | feed (t argH_agree)
-| feed (t SINV_frame) | feed (t SINV_agree) | feed (t USP_ok) | feed (t NX0_ge) | feed (t argH_sp) | exact t ]
+| feed (t SINV_frame) | feed (t SINV_agree) | feed (t USP_ok) | feed (t NX0_ge) | feed (t argH_sp)
+| feed (t (fun _ : nat => @None acs)) | feed (t (fun _ _ _ => None)) | exact t ]
 | _ => exact t
 end.
 Theorem node_sys_sound : forall y, sys_stmt SEGS A nx0 LIMIT USP SINV argH FS0 y.
@@ -1560,6 +1614,7 @@ Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 
 Variable sp : word.
 #[local] Notation USP := (bv_unsigned sp).
@@ -1604,98 +1659,151 @@ Hypothesis Dp3 : decode_any wp3 = Some (Branch BC_EQ 13 12 8180, 4%Z).
 Hypothesis Dp4 : decode_any wp4 = Some (Branch BC_NE 13 0 8180, 4%Z).
 
 Variable ph : PhdrInfo.
+Variable inp : ProcInput.
+Variable mbase : word.
+Variable entry : word.
+Variable brk : word.
 Variable rdraw : EntryDraw.
-Variables argv envp : list (list byte).
-Variable uid : word.
-Variable hw : word.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp.
 Hypothesis Hsp_lo : sp_window_lo <= bv_unsigned sp.
 Hypothesis Hsp_hi : bv_unsigned sp <= sp_window_hi.
 
+Let argv := in_argv inp.
+Let envp := in_envp inp.
+Let execfn := in_execfn inp.
+Let rseq := kb_rseq (in_kernel inp).
+Let top := ed_top rdraw.
 Let usp := bv_unsigned sp.
 Let argc := Z.of_nat (length argv).
 Let envc := Z.of_nat (length envp).
 Let s0 := nth 0 argv [].
-Let bsb := build_stack_bytes ph sp argv envp uid hw rdraw.
+Let bsb := entry_stack_image inp mbase ph entry sp rdraw.
 
 Let EA := usp + 8 * argc + 16.
-Let STR0 := usp + 8 * argc + 8 * envc + 184.
+Let STR0 := usp + Z.of_nat (cat_string_off rseq sp top argv envp execfn).
 
 Hypothesis SINV_vals : forall E M, SINV E M ->
-uE E e_envp = EA /\ ev E V_ENVC = Z_to_bv 64 envc /\ uE E e_str0 = STR0.
+uE E e_envp = EA /\ ev E V_ENVC = Z_to_bv 64 envc /\ uE E (e_str0 rz) = STR0.
 Hypothesis SINV_envp : forall E M (a : word), SINV E M ->
-EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a.
 Hypothesis SINV_str0 : forall E M (a : word), SINV E M ->
-STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem inp mbase ph entry sp rdraw a.
 
 Lemma len_av : 1 <= argc <= 1024.
-Proof. unfold argc. destruct Hva as [H _]. lia. Qed.
+Proof. unfold argc, argv. destruct Hva as [H _]. lia. Qed.
 Lemma len_ev : 0 <= envc <= 256.
-Proof. unfold envc. destruct Hve as [H _]. lia. Qed.
+Proof. unfold envc, envp. destruct Hve as [H _]. lia. Qed.
 Lemma len_s0 : Z.of_nat (length s0) <= 131071.
-Proof. unfold s0. apply (valid_argv_str_len argv 0 Hva). destruct Hva as [H _]. lia. Qed.
+Proof. unfold s0, argv. apply (valid_argv_str_len (in_argv inp) 0 Hva). destruct Hva as [H _]. lia. Qed.
 Lemma usp_lo : 0x7fff80000000 <= usp.
 Proof. unfold usp. unfold sp_window_lo in Hsp_lo. lia. Qed.
 Lemma usp_hi : usp <= 0x800000000000.
 Proof. unfold usp. unfold sp_window_hi in Hsp_hi. lia. Qed.
 Lemma bsb_nw : usp + Z.of_nat (length bsb) < 2 ^ 64.
-Proof. unfold usp, bsb. apply lay_bsb_nw; assumption. Qed.
-
-Lemma STR0_eq : cat_argv_ptr sp argv envp 0 = Z_to_bv 64 STR0.
 Proof.
-pose proof len_av. pose proof len_ev. pose proof usp_hi.
-rewrite (cat_argv_ptr_offset sp argv envp 0) by (destruct Hva as [Hl _]; lia).
-unfold cat_string_base. rewrite nat_to_word_add_merge, word_add_nat.
-lazymatch goal with |- Z_to_bv 64 ?a = Z_to_bv 64 ?b => replace a with b; [reflexivity|] end.
-change (total_arg_bytes_nat (firstn 0 argv)) with 0%nat.
-unfold cat_struct_size, auxv_size, STR0, usp, argc, envc. lia.
+unfold usp, bsb.
+exact (entry_stack_image_no_wrap Sv48 inp mbase ph entry sp brk rdraw Hlau).
+Qed.
+
+Lemma length_bsb_sum : Z.of_nat (length bsb)
+= Z.of_nat (cat_string_off rseq sp top argv envp execfn)
++ Z.of_nat (launch_string_bytes argv envp execfn) + 8.
+Proof.
+unfold bsb. rewrite entry_stack_image_block, length_build_stack_bytes.
+unfold cat_string_off, rseq, argv, envp, execfn, top.
+change (la_rseq (launch_auxv inp sp mbase)) with (kb_rseq (in_kernel inp)). lia.
+Qed.
+
+Lemma s0_le_strings :
+Z.of_nat (length s0) + 1 <= Z.of_nat (launch_string_bytes argv envp execfn).
+Proof.
+unfold launch_string_bytes, s0, argv, envp.
+pose proof (Nat2Z.is_nonneg (length (flatten_strings (in_envp inp)))).
+pose proof (Nat2Z.is_nonneg (length (in_execfn inp))).
+destruct (in_argv inp) as [|a t] eqn:Ea.
+- destruct Hva as [[Hc _] _]. cbn in Hc. lia.
+- cbn [flatten_strings flat_map nth]. rewrite !length_app. cbn [length]. lia.
+Qed.
+
+Lemma str0_hi : STR0 + Z.of_nat (length s0) + 9 <= usp + Z.of_nat (length bsb).
+Proof.
+pose proof s0_le_strings. pose proof length_bsb_sum. unfold STR0, usp in *. lia.
+Qed.
+
+Lemma str0_ge : usp <= STR0.
+Proof. unfold STR0, usp. lia. Qed.
+
+Lemma str0_nw : STR0 + Z.of_nat (length s0) + 2 < 2 ^ 64.
+Proof. pose proof str0_hi. pose proof bsb_nw. lia. Qed.
+
+Lemma STR0_eq : cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0 = Z_to_bv 64 STR0.
+Proof.
+pose proof len_av. pose proof len_ev. pose proof usp_hi. pose proof usp_lo. pose proof bsb_nw.
+unfold STR0, usp, rseq, argv, envp, execfn, top in *.
+rewrite (cat_argv_ptr_offset (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0)
+by (destruct Hva as [Hl _]; lia).
+change (total_arg_bytes_nat (firstn 0 (in_argv inp))) with 0%nat.
+rewrite (cat_string_base_offset Sv48 inp mbase sp brk rdraw Hlau).
+rewrite nat_to_word_add_merge, word_add_nat. f_equal. lia.
 Qed.
 
 Lemma rd_envp_k : forall M k, (k < length envp)%nat ->
-(forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a) ->
-rdn SEGS M (Z_to_bv 64 (EA + 8 * Z.of_nat k)) 8 = Some (word_to_le_bytes 8 (cat_envp_ptr sp argv envp k)).
+(forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
+rdn SEGS M (Z_to_bv 64 (EA + 8 * Z.of_nat k)) 8 = Some (word_to_le_bytes 8 (cat_envp_ptr top argv envp execfn k)).
 Proof.
 intros M k Hk HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi.
 assert (Hk' : Z.of_nat k < envc) by (unfold envc; lia).
-rewrite (rdn_ext SEGS 8 M (wrap_mem ph sp argv envp uid hw rdraw)).
+rewrite (rdn_ext SEGS 8 M (wrap_mem inp mbase ph entry sp rdraw)).
 - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold EA in *; lia | rewrite u64_lit; unfold EA in *; [change (Z.of_nat 8) with 8|]; lia].
+unfold argv, envp, execfn, top.
 rewrite <- n_to_le_8_spec.
-rewrite <- (read_envp_ptr_k SEGS ph sp rdraw argv envp uid hw Hva Hve Hsp_hi k Hk).
-f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, usp. lia.
+rewrite <- (read_envp_ptr_k SEGS Sv48 inp mbase ph entry sp brk rdraw Hvl Hlau Hsp_hi k Hk).
+f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, argv, envp, usp. lia.
 - rewrite u64_lit; unfold EA in *; [change (Z.of_nat 8) with 8|]; lia.
 - intros a Ha. rewrite u64_lit in Ha by (unfold EA in *; lia). change (Z.of_nat 8) with 8 in Ha. apply HM. lia.
 Qed.
 
 Lemma rd_envp_null : forall M,
-(forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a) ->
+(forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
 rdn SEGS M (Z_to_bv 64 (EA + 8 * Z.of_nat (length envp))) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
 Proof.
 intros M HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi.
-rewrite (rdn_ext SEGS 8 M (wrap_mem ph sp argv envp uid hw rdraw)).
+rewrite (rdn_ext SEGS 8 M (wrap_mem inp mbase ph entry sp rdraw)).
 - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold EA, envc in *; lia | rewrite u64_lit; unfold EA, envc in *; [change (Z.of_nat 8) with 8|]; lia].
+unfold argv, envp, execfn, top.
 rewrite <- n_to_le_8_spec.
-rewrite <- (read_envp_null SEGS ph sp rdraw argv envp uid hw Hva Hve Hsp_hi).
-f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, usp. lia.
+rewrite <- (read_envp_null SEGS Sv48 inp mbase ph entry sp brk rdraw Hvl Hlau Hsp_hi).
+f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, argv, envp, usp. lia.
 - rewrite u64_lit; unfold EA, envc in *; [change (Z.of_nat 8) with 8|]; lia.
 - intros a Ha. rewrite u64_lit in Ha by (unfold EA, envc in *; lia). change (Z.of_nat 8) with 8 in Ha. apply HM. unfold envc. lia.
 Qed.
 
 Lemma rd_str0_j : forall M j, (j <= length s0)%nat ->
-(forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem ph sp argv envp uid hw rdraw a) ->
+(forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
 rdn SEGS M (Z_to_bv 64 (STR0 + Z.of_nat j)) 1 = Some [byte_at s0 j].
 Proof.
 intros M j Hj HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi. pose proof len_s0.
-rewrite (rdn_ext SEGS 1 M (wrap_mem ph sp argv envp uid hw rdraw)).
-- rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold STR0 in *; lia | rewrite u64_lit; unfold STR0 in *; [change (Z.of_nat 1) with 1|]; lia].
-unfold byte_at, s0.
-rewrite <- (read_argv_byte_k ph SEGS sp argv envp 0 j uid hw rdraw ltac:(destruct Hva as [Hl _]; lia) Hj bsb_nw).
-f_equal. rewrite STR0_eq, word_add_nat, u64_lit by (unfold STR0 in *; lia). reflexivity.
-- rewrite u64_lit; unfold STR0 in *; [change (Z.of_nat 1) with 1|]; lia.
-- intros a Ha. rewrite u64_lit in Ha by (unfold STR0 in *; lia). change (Z.of_nat 1) with 1 in Ha. apply HM. lia.
+pose proof bsb_nw. pose proof str0_hi. pose proof str0_ge. pose proof str0_nw.
+rewrite (rdn_ext SEGS 1 M (wrap_mem inp mbase ph entry sp rdraw)).
+- rewrite rdn_wrap_stack_above; [| rewrite u64_lit; lia | rewrite u64_lit; [change (Z.of_nat 1) with 1|]; lia].
+unfold byte_at, s0, argv, envp, execfn, top.
+rewrite <- (read_argv_byte_k Sv48 SEGS inp mbase ph entry sp brk rdraw 0 j Hlau ltac:(destruct Hva as [Hl _]; lia) Hj).
+f_equal. rewrite STR0_eq, word_add_nat, u64_lit by lia. reflexivity.
+- rewrite u64_lit; [change (Z.of_nat 1) with 1|]; lia.
+- intros a Ha. rewrite u64_lit in Ha by lia. change (Z.of_nat 1) with 1 in Ha. apply HM. lia.
 Qed.
 
-Theorem x_sound_envscan : x_stmt SEGS A nx0 LIMIT USP SINV argH FS0 XEnvScan.
+Lemma envp_ptr_nz : forall k, (k < length envp)%nat ->
+bv_unsigned (cat_envp_ptr top argv envp execfn k) <> 0.
+Proof.
+intros k Hk.
+exact (cat_envp_ptr_nz Sv48 inp mbase ph entry sp brk rdraw Hvl Hlau Hsp_lo Hsp_hi k Hk).
+Qed.
+
+Theorem x_sound_envscan : x_stmt SEGS A nx0 LIMIT rz USP SINV argH FS0 XEnvScan.
 Proof.
 intros args cs cs' E R FULL model T HC _ Hn Hk. cbn [node_x] in Hn. unfold node_envscan in Hn.
 destruct (Z.eqb (pc cs) (x_envscan A) && len_eqb (kn cs) (reg cs 9) e_envp)%bool eqn:Hc; [|discriminate].
@@ -1712,12 +1820,12 @@ assert (H9' : getr R 9%bv = Z_to_bv 64 (EA + 8 * Z.of_nat 0)).
 
 set (H2 := Hv E cs model).
 set (ms := mkst R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS)).
-assert (HM : forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> mrestrict H2 FULL a = wrap_mem ph sp argv envp uid hw rdraw a).
+assert (HM : forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> mrestrict H2 FULL a = wrap_mem inp mbase ph entry sp rdraw a).
 { intros a Ha. unfold H2. rewrite mrestrict_Hv_high by (unfold EA, APS.ATOP, STACK_MAX in *; lia). eapply SINV_envp; [exact HS | exact Ha]. }
 destruct (env_loop SEGS (x_envscan A) we1 we2 we3 ltac:(lia) Fe1 Fe2 Fe3 Ee1 Ee2 Ee3 De1 De2 De3
-(mrestrict H2 FULL) (seg_rom SEGS) EA (length envp) (cat_envp_ptr sp argv envp)
+(mrestrict H2 FULL) (seg_rom SEGS) EA (length envp) (cat_envp_ptr top argv envp execfn)
 ltac:(unfold EA, envc in *; lia)
-ltac:(intros k Kk; split; [apply rd_envp_k; [exact Kk | exact HM] | apply (cat_envp_ptr_nz ph sp rdraw argv envp uid hw Hva Hve Hsp_lo Hsp_hi k Kk)])
+ltac:(intros k Kk; split; [apply rd_envp_k; [exact Kk | exact HM] | apply (envp_ptr_nz k Kk)])
 (rd_envp_null _ HM) (length envp) 0%nat R ltac:(lia) H9') as [R' [Hms Hpost]].
 unfold cfg_of. fold ms.
 assert (Hms' : msteps SEGS (restrict H2 ms) (mkst R' (Z_to_bv 64 (x_envscan A + 12)) (mrestrict H2 FULL) (seg_rom SEGS))).
@@ -1745,7 +1853,7 @@ rewrite Z.mod_small by (unfold EA; lia). unfold envc. lia.
 - intros r N1 N2. apply (Pag r). intros [H|H]; [exact (N1 H) | exact (N2 H)].
 Qed.
 
-Theorem x_sound_pnscan : x_stmt SEGS A nx0 LIMIT USP SINV argH FS0 XPnScan.
+Theorem x_sound_pnscan : x_stmt SEGS A nx0 LIMIT rz USP SINV argH FS0 XPnScan.
 Proof.
 intros args cs cs' E R FULL model T HC _ Hn Hk. cbn [node_x] in Hn. unfold node_pnscan in Hn.
 destruct (reg_lit cs 10) as [p|] eqn:Hp10; [|discriminate].
@@ -1758,6 +1866,7 @@ apply andb_prop in Hc as [Hc Hfresh]. apply andb_prop in Hc as [Hc Hhi]. apply a
 apply andb_prop in Hc as [Hc Hwr]. apply andb_prop in Hc as [Hpc Heq].
 apply Z.eqb_eq in Hpc. apply Z.leb_le in Hlo. apply Z.leb_le in Hhi.
 pose proof len_av as Lav. pose proof len_ev as Lev. pose proof usp_lo as U1. pose proof usp_hi as U2. pose proof len_s0 as Ls0.
+pose proof str0_ge as Sge. pose proof str0_nw as Snw. pose proof bsb_nw as Snb.
 destruct Xpn as (X1 & X2 & X3). destruct Ep as (Ep0 & Ep1 & Ep2 & Ep3 & Ep4).
 pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (HU0 & HU1 & HU2 & HU3).
 pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC) as HS.
@@ -1768,12 +1877,12 @@ destruct (reg_lit_sound SEGS A LIMIT USP SINV argH FS0 E cs R FULL model 10 p HC
 replace (Z_to_bv 5 (Z.of_nat 10)) with (10%bv : bv 5) in H10 by (apply bv_eq; reflexivity).
 destruct (reg_lit_sound SEGS A LIMIT USP SINV argH FS0 E cs R FULL model 12 _ HC ltac:(lia) Hp12) as [H12 _].
 replace (Z_to_bv 5 (Z.of_nat 12)) with (12%bv : bv 5) in H12 by (apply bv_eq; reflexivity).
-pose proof (len_eqb_sound SEGS E _ (kn cs) (reg cs 11) (eaddz e_str0 1) HK Heq) as H11e.
+pose proof (len_eqb_sound SEGS E _ (kn cs) (reg cs 11) (eaddz (e_str0 rz) 1) HK Heq) as H11e.
 pose proof (reg_sound SEGS A LIMIT USP SINV argH FS0 E cs R FULL model 11 HC ltac:(lia)) as H11.
 replace (Z_to_bv 5 (Z.of_nat 11)) with (11%bv : bv 5) in H11 by (apply bv_eq; reflexivity). rewrite H11e in H11.
 assert (H11' : getr R 11%bv = Z_to_bv 64 (STR0 + Z.of_nat 0 + 1)).
-{ rewrite H11. unfold eaddz. rewrite mkAlu_denot, edenot_lit. apply bv_eq. rewrite u_add64, !u64_lit by (unfold STR0; lia).
-unfold uE in V3. rewrite V3. rewrite Z.mod_small by (unfold STR0; lia). lia. }
+{ rewrite H11. unfold eaddz. rewrite mkAlu_denot, edenot_lit. apply bv_eq. rewrite u_add64, !u64_lit by lia.
+unfold uE in V3. rewrite V3. rewrite Z.mod_small by lia. lia. }
 
 destruct (kwritable_sound SEGS E _ (kn cs) (kn cs) (ELit 0) p 8 HK HK Hwr ltac:(lia)) as (HKW & _ & _).
 unfold estart in HKW. cbn [a_base a_off] in HKW. rewrite edenot_lit, u64_lit in HKW by lia. rewrite Z.add_0_l in HKW.
@@ -1784,12 +1893,12 @@ set (M0 := mrestrict H2 FULL).
 set (ms := mkst R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS)).
 assert (Hst0 : store_ok SEGS M0 (Z_to_bv 64 p) 8 = true).
 { eapply store_ok_mono; [apply Mr_grows_Hv | exact HKW]. }
-assert (HM : forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M0 a = wrap_mem ph sp argv envp uid hw rdraw a).
+assert (HM : forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M0 a = wrap_mem inp mbase ph entry sp rdraw a).
 { intros a Ha. unfold M0, H2. rewrite mrestrict_Hv_high by (unfold STR0, APS.ATOP, STACK_MAX in *; lia). eapply SINV_str0; [exact HS | exact Ha]. }
 destruct (pn_loop SEGS (x_pnscan A) wp0 wp1 wp2 wp3 wp4 ltac:(lia) Fp0 Fp1 Fp2 Fp3 Fp4 Ep0 Ep1 Ep2 Ep3 Ep4 Dp0 Dp1 Dp2 Dp3 Dp4
 M0 (seg_rom SEGS) p STR0 s0
-ltac:(unfold KHI in *; lia) ltac:(unfold STR0; lia) ltac:(left; unfold STR0, KHI in *; lia)
-(valid_argv_str_nz argv 0 Hva ltac:(destruct Hva as [Hl _]; lia))
+ltac:(unfold KHI in *; lia) ltac:(lia) ltac:(left; unfold KHI in *; lia)
+(valid_argv_str_nz (in_argv inp) 0 Hva ltac:(destruct Hva as [Hl _]; lia))
 (fun j Hj => rd_str0_j M0 j Hj HM) Hst0
 s0 0%nat R M0 eq_refl ltac:(lia) H10 H11' H12 (cellrel_refl M0 p)) as (R' & M' & Hms & Hpost & HM').
 unfold cfg_of. fold ms.
@@ -1846,19 +1955,20 @@ Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable USP : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.
 Variable FS0 : Fs.Fs.
 
-Lemma e_argv1w_ge2 : forall E, 2 <= bv_unsigned (ev E V_ARGC) -> edenot E e_argv1w = edenot E e_str1.
+Lemma e_argv1w_ge2 : forall E, 2 <= bv_unsigned (ev E V_ARGC) -> edenot E (e_argv1w rz) = edenot E (e_str1 rz).
 Proof.
 intros E H. unfold e_argv1w. cbn [edenot]. apply bv_eq. rewrite u_mul64, u_sltu64, u64_lit by lia.
 replace (1 <? bv_unsigned (ev E V_ARGC)) with true by (symmetry; apply Z.ltb_lt; lia).
-pose proof (u64_range (edenot E e_str1)). rewrite Z.mul_1_l. apply Z.mod_small. lia.
+pose proof (u64_range (edenot E (e_str1 rz))). rewrite Z.mul_1_l. apply Z.mod_small. lia.
 Qed.
 
-Lemma e_argv1w_le1 : forall E, bv_unsigned (ev E V_ARGC) <= 1 -> edenot E e_argv1w = edenot E (ELit 0).
+Lemma e_argv1w_le1 : forall E, bv_unsigned (ev E V_ARGC) <= 1 -> edenot E (e_argv1w rz) = edenot E (ELit 0).
 Proof.
 intros E H. unfold e_argv1w. cbn [edenot]. apply bv_eq. rewrite u_mul64, u_sltu64, !u64_lit by lia.
 replace (1 <? bv_unsigned (ev E V_ARGC)) with false by (symmetry; apply Z.ltb_ge; lia).
@@ -1869,19 +1979,19 @@ Lemma kw_argv1_respell : forall E M v v',
 kentry_ok SEGS E M (kw_argv1 v) -> edenot E v' = edenot E v -> kentry_ok SEGS E M (kw_argv1 v').
 Proof. intros E M v v' HK Hv. unfold kw_argv1 in *. cbn [kentry_ok] in *. rewrite Hv. exact HK. Qed.
 
-Theorem x_sound_layout : x_stmt SEGS A nx0 LIMIT USP SINV argH FS0 XLayout.
+Theorem x_sound_layout : x_stmt SEGS A nx0 LIMIT rz USP SINV argH FS0 XLayout.
 Proof.
 intros args cs cs' E R FULL model T HC _ Hn Hk. cbn [node_x] in Hn. unfold node_layout in Hn.
-destruct (existsb (kentry_eqb (kw_argv1 e_argv1w)) (kn cs)) eqn:Hex; [|discriminate]. cbn [negb] in Hn.
+destruct (existsb (kentry_eqb (kw_argv1 (e_argv1w rz))) (kn cs)) eqn:Hex; [|discriminate]. cbn [negb] in Hn.
 pose proof (co_know _ _ _ _ _ _ _ _ _ _ _ _ HC) as HK.
 
 apply existsb_exists in Hex as [K0 [Hin Heqb]]. apply kentry_eqb_eq in Heqb. subst K0.
 pose proof (proj1 (Forall_forall _ _) HK _ Hin) as HK0.
 assert (HK' : know_ok SEGS E (Mr A USP argH E cs model FULL)
-(List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) (kn cs)))
+(List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w rz)) K)) (kn cs)))
 by (apply know_ok_filter; exact HK).
-assert (FIN : forall v, edenot E v = edenot E e_argv1w ->
-cs' = set_kn cs (kw_argv1 v :: List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) (kn cs)) ->
+assert (FIN : forall v, edenot E v = edenot E (e_argv1w rz) ->
+cs' = set_kn cs (kw_argv1 v :: List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w rz)) K)) (kn cs)) ->
 srealizes SEGS (cfg_of SEGS R (pc cs) FULL model) T).
 { intros v Hv ->. specialize (Hk E R FULL model (conj (env_agree_refl nx0 E) (env_agree_refl (nxt cs) E))).
 rewrite pc_set_kn in Hk. apply Hk; [|reflexivity].
@@ -1899,7 +2009,7 @@ apply (FIN (ELit 0)); [|symmetry; exact Hn]. symmetry. apply e_argv1w_le1. lia.
 destruct (xlo (kn cs) (EVar V_ARGC)) as [lo|] eqn:Hlo; [|discriminate].
 destruct (Z.leb 2 lo) eqn:Hle; [|discriminate]. apply Z.leb_le in Hle. apply some_inj_acs in Hn.
 pose proof (xlo_sound SEGS E _ (kn cs) (EVar V_ARGC) lo HK Hlo) as B. cbn [edenot] in B.
-apply (FIN e_str1); [|symmetry; exact Hn]. symmetry. apply e_argv1w_ge2. lia.
+apply (FIN (e_str1 rz)); [|symmetry; exact Hn]. symmetry. apply e_argv1w_ge2. lia.
 Qed.
 End LayoutSound.
 
@@ -2000,12 +2110,12 @@ Let kimg_clip_in_hull' := APS.kimg_clip_in_hull A.
 Let cs_ok_agree' := APS.cs_ok_agree SEGS A nx0 LIMIT USP NX0_ge SINV argH argH_agree SINV_agree FS0.
 Let cs_ok_frame' := APS.cs_ok_frame SEGS A LIMIT USP SINV argH SINV_frame FS0.
 Let hid_agree' := APS.hid_agree A nx0 USP argH argH_agree.
-Let vis_add_sound' := APS.vis_add_sound SEGS A LIMIT USP HS XN XE XB SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat.
-Let A_wf_allowA' := APS.A_wf_allowA A HS XN XE XB 0%nat.
+Let vis_add_sound' := ltac:(first [exact (APS.vis_add_sound SEGS A LIMIT USP HS XN XE XB SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat) | exact (APS.vis_add_sound SEGS A LIMIT USP SHADOW_ok USP_ok SINV argH argH_sp FS0 0%nat) | exact (APS.vis_add_sound SEGS A LIMIT USP SHADOW_ok USP_ok SINV argH argH_sp FS0)]).
+Let A_wf_allowA' := ltac:(first [exact (APS.A_wf_allowA A HS XN XE XB 0%nat) | exact (APS.A_wf_allowA A 0%nat) | exact (APS.A_wf_allowA A)]).
 Let know_ok_unhide' := APS.know_ok_unhide SEGS A.
 Let hid_hull' := APS.hid_hull A USP HULL_ok argH argH_high.
 Let H_off_segments_cs' := APS.H_off_segments_cs SEGS A USP SEGS_in_hull HULL_ok argH argH_high.
-Let maps_match_exact' := APS.maps_match_exact nx0 HS XN XE XB.
+Let maps_match_exact' := ltac:(first [exact (APS.maps_match_exact nx0 HS XN XE XB) | exact (APS.maps_match_exact nx0) | exact APS.maps_match_exact]).
 Let ATOP_range' : CEIL <= ATOP <= ATOP_MAX := APS.ATOP_range USP USP_ok.
 
 Let budget_slack := QxyE.budget_slack SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok.
@@ -2014,9 +2124,12 @@ Let escale_4096_denot := QxyE.escale_4096_denot SEGS A RES_len HULL_ok.
 Let find_containing_sound := QxyE.find_containing_sound SEGS A RES_len.
 Let fixed_args_sound := QxyE.fixed_args_sound SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok.
 Let fixed_cs1 := QxyE.fixed_cs1 A.
-Let gap_ok_sound := QxyE.gap_ok_sound SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok SHADOW_ok.
+Let gap_ok_sound := ltac:(first
+  [ exact (QxyE.gap_ok_sound SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok SHADOW_ok)
+  | exact (QxyE.gap_ok_sound SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok)
+  | exact (QxyE.gap_ok_sound SEGS A LIMIT USP SINV argH FS0 RES_len SHADOW_ok)
+  | exact (QxyE.gap_ok_sound SEGS A LIMIT USP SINV argH FS0 RES_len) ]).
 Let gap_weight_eq := QxyE.gap_weight_eq SEGS A RES_len.
-Let grant_cs1_ok := QxyE.grant_cs1_ok SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok SINV_frame USP_ok argH_sp.
 Let grant_eager_le := QxyE.grant_eager_le SEGS A RES_len HULL_ok.
 Let grant_keep_apart := QxyE.grant_keep_apart SEGS A RES_len HULL_ok.
 Let grant_new_facts := QxyE.grant_new_facts SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok argH_sp.
@@ -2038,7 +2151,9 @@ Let kn_rezero_ok_gen := QxyE.kn_rezero_ok_gen SEGS A RES_len HULL_ok.
 Let kn_unfill_clip_ok := QxyE.kn_unfill_clip_ok SEGS A RES_len HULL_ok.
 Let maps_match_disjoint := QxyE.maps_match_disjoint SEGS A RES_len.
 Let mmap_fixed_grant_cs1 := QxyE.mmap_fixed_grant_cs1 SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok SHADOW_ok SINV_frame USP_ok argH_sp.
-Let mmap_fixed_old_facts := QxyE.mmap_fixed_old_facts SEGS A nx0 LIMIT USP SINV argH FS0 RES_len RES_hull HULL_ok USP_ok.
+Let mmap_fixed_old_facts := ltac:(first
+  [ exact (QxyE.mmap_fixed_old_facts SEGS A nx0 LIMIT USP SINV argH FS0 RES_len RES_hull HULL_ok SHADOW_ok USP_ok)
+  | exact (QxyE.mmap_fixed_old_facts SEGS A nx0 LIMIT USP SINV argH FS0 RES_len RES_hull HULL_ok USP_ok) ]).
 Let mmap_fixed_hole_facts := QxyE.mmap_fixed_hole_facts SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok SHADOW_ok USP_ok.
 Let fixed_pre := QxyE.fixed_pre SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok.
 Let mmap_len_sound := QxyE.mmap_len_sound SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok.
@@ -2046,15 +2161,17 @@ Let mmap_null_cs1 := QxyE.mmap_null_cs1 SEGS A nx0 LIMIT USP SINV argH FS0 RES_l
 Let null_cs1 := QxyE.null_cs1 A.
 Let overlap_sum_contained := QxyE.overlap_sum_contained SEGS A RES_len HULL_ok.
 Let page_aligned_sound := QxyE.page_aligned_sound SEGS A RES_len.
-Let refuse_cont := QxyE.refuse_cont SEGS A nx0 LIMIT USP SINV argH FS0 RES_len SINV_frame.
-Let refuse_ok := QxyE.refuse_ok SEGS A LIMIT USP SINV argH FS0 RES_len SINV_frame.
-Let region_free_of_apart := QxyE.region_free_of_apart SEGS A nx0 LIMIT USP SINV argH FS0 RES_len RES_hull HULL_ok.
+Let refuse_cont := QxyE.refuse_cont SEGS A nx0 LIMIT USP SINV argH FS0 SINV_frame.
+Let refuse_ok := QxyE.refuse_ok SEGS A LIMIT USP SINV argH FS0 SINV_frame.
 Let regs_ok_regupd_same := QxyE.regs_ok_regupd_same SEGS A RES_len.
 Let reserved_free_above := QxyE.reserved_free_above SEGS A RES_len RES_hull HULL_ok.
 Let safe_range_apart := QxyE.safe_range_apart SEGS A RES_len HULL_ok.
 Let seps_map_disjoint := QxyE.seps_map_disjoint SEGS A RES_len.
 Let shadow_facts_new_ok := QxyE.shadow_facts_new_ok SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok SHADOW_ok USP_ok.
-Let slice_args := QxyE.slice_args SEGS A LIMIT USP SINV argH FS0 RES_len RES_hull HULL_ok USP_ok.
+Let slice_args := ltac:(first
+  [ exact (QxyE.slice_args SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok SHADOW_ok USP_ok)
+  | exact (QxyE.slice_args SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok USP_ok)
+  | exact (QxyE.slice_args SEGS A LIMIT USP SINV argH FS0 RES_len RES_hull HULL_ok USP_ok) ]).
 Let slice_hyps := QxyE.slice_hyps SEGS A LIMIT USP SINV argH FS0.
 Let split_flat_estart := QxyE.split_flat_estart SEGS A RES_len HULL_ok.
 Let vis_add_inv := QxyE.vis_add_inv A LIMIT.
@@ -2076,7 +2193,6 @@ Let d_sub_out := QxyE.d_sub_out SEGS A LIMIT USP SINV argH FS0 RES_len.
 Let d_vis_in := QxyE.d_vis_in SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok USP_ok.
 Let d_vis_out := QxyE.d_vis_out SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok USP_ok.
 Let d_wf' := QxyE.d_wf' SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok USP_ok.
-Let dest_cs1_ok := QxyE.dest_cs1_ok SEGS A LIMIT USP SINV argH FS0 RES_len RES_hull HULL_ok SHADOW_ok SINV_frame USP_ok argH_sp.
 Let page_base_aligned := QxyE.page_base_aligned SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok.
 Let sl_MR_out := QxyE.sl_MR_out SEGS A LIMIT USP SINV argH FS0 RES_len HULL_ok USP_ok.
 Let sl_bounds := QxyE.sl_bounds SEGS A LIMIT USP SINV argH FS0.
@@ -2129,18 +2245,22 @@ destruct (mmap_len_sound E cs R FULL model ne nlo nhi HC HML) as (R11 & Hlen & H
 change (Z_to_bv 5 11) with (Z_to_bv 5 (Z.of_nat 11)) in R11. rewrite <- bv5_11 in R11.
 set (len := bv_unsigned (edenot E (reg cs 11))) in *. set (nZ := page_round_up_Z len) in *.
 set (n := Z_to_bv 64 nZ).
-destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia)) as [a0 Ha0].
+pose proof (page_round_up_Z_bounds len ltac:(lia)) as PBn. fold nZ in PBn. unfold page_size in PBn.
+assert (HnZp : 0 < nZ) by lia.
+assert (HnZpg : nZ mod page_size = 0) by (unfold page_size; exact HnZal).
+destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia) HnZpg) as [a0 Ha0].
 pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt.
 pose proof (proj2 (proj2 (proj2 (co_wf _ _ _ _ _ _ _ _ _ _ _ _ HC)))) as Hisp.
 
-pose proof (grant_ok_na_pin_of_gate _ _ _ _ Hisp Ha0) as Ha0'.
+(* LPS 727298f3: the call's hint is the literal NULL in x10 *)
+assert (Ha0' : grant_ok_na_pin (getr R 10) model a0 nZ = true) by (rewrite R10; exact Ha0).
 
 assert (CONT : forall (a : word) model' FULL',
-grant_ok_na_pin model a nZ = true ->
+grant_ok_na_pin (getr R 10) model a nZ = true ->
 grant_post kd a n model model' -> grant_mem kd a n FULL FULL' -> m_fs model' = m_fs model ->
 srealizes SEGS (mkCfg (mkst (regupd R 10 a) (v_addi (Z_to_bv 64 (pc cs)) 4) FULL' (seg_rom SEGS)) model') TB).
 { intros a model' FULL' Hg GPo GM Hfs.
-destruct (mmap_null_cs1 cs kd eager ne nlo nhi E R FULL model a model' FULL' HC HML Hfresh Hnev
+destruct (mmap_null_cs1 cs kd eager ne nlo nhi E R FULL model (getr R 10) a model' FULL' HC HML Hfresh Hnev
 ltac:(intros ->; cbn in Hbud; unfold budget_ok in Hbud; apply Z.leb_le in Hbud; exact Hbud)
 Hkind Hkfog Hnoh Hg GPo GM) as (HC1 & Hbase & HneE' & Un & Hag0 & NEW).
 fold len nZ n in HC1, HneE', Un, NEW.
@@ -2155,8 +2275,8 @@ destruct visible.
 -
 assert (Hrw : kind_none kd = false) by (destruct kd; cbn in Hvisible |- *; congruence).
 pose proof (u64_range a) as Ra.
-unfold grant_ok_na_pin in Hg. apply andb_prop in Hg as [Hg _].
-apply andb_prop in Hg as [Hg Hceil]. apply Z.leb_le in Hceil. pose proof (alloc_top_lt (m_vmmaps model)) as Htoplt. unfold two_pow_64 in Htoplt.
+destruct (grant_ok_na_pin_unpack _ _ _ _ HnZp HnZpg Hg) as (_ & _ & Hceil & _).
+pose proof (alloc_top_lt (m_vmmaps model)) as Htoplt. unfold two_pow_64 in Htoplt.
 eapply (grant_vis_add E' (null_cs1 cs kd eager ne nlo nhi) cs' _ ne _ FULL' model' a n nZ HC1 Hn).
 + unfold null_cs1, add_entry. cbn [kn a_ss mk_ss s_know]. apply kimg_in_hull_app; [|apply kimg_clip_in_hull'].
 apply kimg_in_hull_pure.
@@ -2171,11 +2291,15 @@ apply Forall_cons; [exact I | apply null_kend_pure].
 + intros x Hx. rewrite (proj2 GM x) by (rewrite Un; exact Hx). rewrite Hrw. reflexivity.
 - injection Hn as <-. exact HC1. }
 
+(* LPS 727298f3: a NULL hint is never declined (Sys/Mm/Mmap.v [place_declined_b]) *)
+assert (HdNull : place_declined_b (m_kernel model) (m_vmmaps model) (getr R 10)
+  (page_round_up_Z (bv_unsigned (getr R 11))) = false)
+  by (rewrite R10; unfold place_declined_b, hint_address; change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; reflexivity).
 unfold cfg_of.
 destruct kd; cbn [kind_none kind_lazy negb orb] in *; [| | | | discriminate Hkfog | discriminate Hkfog].
 -
 destruct eager; [|discriminate].
-eapply (srz_mmap_rw2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
+eapply (srz_mmap_rw2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 HdNull).
 + exists a0. split; [exact Ha0'|]. unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22.
 apply Z.leb_le. cbn in Hbud. eapply Z.le_trans; [|eapply (budget_slack E cs R FULL model nhi HC Hbud)]. fold nZ. lia.
 + intros a Hg _. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
@@ -2183,30 +2307,28 @@ apply Z.leb_le. cbn in Hbud. eapply Z.le_trans; [|eapply (budget_slack E cs R FU
 * split; [intros x Hx; apply zfill_out; exact Hx | intros x Hx; apply zfill_in; exact Hx].
 -
 destruct eager; [discriminate|].
-eapply (srz_mmap_rw2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15).
+eapply (srz_mmap_rw2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15 HdNull).
 + exists a0. split; [exact Ha0'|]. unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_4022. reflexivity.
 + intros a Hg _. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
-* pose proof Hg as Hg'. unfold grant_ok_na_pin in Hg'. apply andb_prop in Hg' as [Hg' _].
-apply andb_prop in Hg' as [Hg' Hceil]. apply andb_prop in Hg' as [Hal Hpos].
-apply Z.eqb_eq in Hal. apply Z.leb_le in Hceil. pose proof (alloc_top_lt (m_vmmaps model)) as Htoplt. unfold two_pow_64 in Htoplt. unfold page_size in Hal.
+* destruct (grant_ok_na_pin_unpack _ _ _ _ HnZp HnZpg Hg) as (Hal & Hpos & Hceil & _).
+pose proof (alloc_top_lt (m_vmmaps model)) as Htoplt. unfold two_pow_64 in Htoplt. unfold page_size in Hal.
 constructor; try reflexivity.
 unfold vm_add_lazy. rewrite m_vm_lazy_with_vm_backing. rewrite lazy_interior_fresh; [reflexivity | exact Hal | | |]; subst n; rewrite u64_lit by lia; [exact HnZal | lia | lia].
 * split; [intros x Hx; apply zfill_out; exact Hx | intros x Hx; apply zfill_in; exact Hx].
 -
 destruct eager; [discriminate|].
-eapply (srz_mmap_none2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
+eapply (srz_mmap_none2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 HdNull).
 + exists a0. exact Ha0'.
 + intros a Hg. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
 * constructor; reflexivity.
 * split; [intros x Hx; apply unfill_out; exact Hx | intros x Hx; apply unfill_in; exact Hx].
 -
 destruct eager; [discriminate|].
-eapply (srz_mmap_none2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15).
+eapply (srz_mmap_none2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15 HdNull).
 + exists a0. exact Ha0'.
 + intros a Hg. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
-* pose proof Hg as Hg'. unfold grant_ok_na_pin in Hg'. apply andb_prop in Hg' as [Hg' _].
-apply andb_prop in Hg' as [Hg' Hceil]. apply andb_prop in Hg' as [Hal Hpos].
-apply Z.eqb_eq in Hal. apply Z.leb_le in Hceil. pose proof (alloc_top_lt (m_vmmaps model)) as Htoplt. unfold two_pow_64 in Htoplt. unfold page_size in Hal.
+* destruct (grant_ok_na_pin_unpack _ _ _ _ HnZp HnZpg Hg) as (Hal & Hpos & Hceil & _).
+pose proof (alloc_top_lt (m_vmmaps model)) as Htoplt. unfold two_pow_64 in Htoplt. unfold page_size in Hal.
 constructor; try reflexivity.
 unfold vm_add_lazy. rewrite m_vm_lazy_with_vm_backing. rewrite lazy_interior_fresh; [reflexivity | exact Hal | | |]; subst n; rewrite u64_lit by lia; [exact HnZal | lia | lia].
 * split; [intros x Hx; apply unfill_out; exact Hx | intros x Hx; apply unfill_in; exact Hx].
@@ -2403,14 +2525,26 @@ srealizes SEGS (cfg R (pc cs) FULL model) TB.
 Proof.
 intros cs kd eager visible cs' E R FULL model TB flg HC Hec H17 H12 H13 FLG H14 H15 Hkind Hkfog Hvisible Hn HK.
 unfold mmap_fixed_free in Hn.
-destruct (fixed_args A cs KHI) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA.
+(* LPS 727298f3: the classic path's ceiling is QDlz's [resx_clear cs] = [Z.min KHI (a_ylo cs)]; a range
+   below it is below KHI, the ceiling mmap_fixed_old_facts and the grant lemma take *)
+destruct (fixed_args A cs (resx_clear cs)) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA.
 -
+assert (HFAK : fixed_args A cs KHI = Some (b, off, ne, nlo, nhi)).
+{ revert HFA. unfold fixed_args. cbv zeta.
+destruct (split_lit (reg cs 10)) as [b1 off1].
+destruct (mmap_len cs) as [[[ne1 nlo1] nhi1]|]; [|discriminate].
+destruct (xlo (kn cs) (reg cs 10)) as [alo|]; [|discriminate].
+destruct (xhi (kn cs) (reg cs 10)) as [ahi|]; [|discriminate].
+cbv beta iota zeta.
+destruct (Z.leb_spec (ahi + nhi1) (resx_clear cs)) as [Hle|Hle].
++ rewrite (proj2 (Z.leb_le (ahi + nhi1) KHI)) by (unfold resx_clear in Hle; lia). exact (fun H => H).
++ rewrite !andb_false_r. discriminate. }
 match type of Hn with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
 apply andb_prop in Hcond as [Hcond Hav]. apply andb_prop in Hcond as [Hcond Hnev].
 apply andb_prop in Hcond as [Hcond Hbud]. apply andb_prop in Hcond as [Hnf Hall].
-destruct (mmap_fixed_old_facts cs b off ne nlo nhi E R FULL model HC HFA Hnf Hall) as (HC0 & Hrf & Hholes & Hside).
+destruct (mmap_fixed_old_facts cs b off ne nlo nhi E R FULL model HC HFAK Hnf Hall) as (HC0 & Hrf & Hholes & Hside).
 eapply (mmap_fixed_grant_sound2 cs (a_maps cs) KHI b off ne nlo nhi kd eager visible cs' E R FULL model TB flg
-HC Hec H17 H12 H13 FLG H14 H15 Hkind Hkfog Hvisible HFA ltac:(unfold KHI, TOPIN; lia) Hbud
+HC Hec H17 H12 H13 FLG H14 H15 Hkind Hkfog Hvisible HFAK ltac:(unfold KHI, TOPIN; lia) Hbud
 HC0 Hrf Hholes Hside Hn HK).
 -
 destruct (fixed_args A cs TOPIN) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA2; [|discriminate].
@@ -2466,6 +2600,11 @@ unfold cfg_of.
 eapply (srz_mprotect2 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len TB Hf He Hhalt R17 R10 Hal R11 ltac:(lia)).
 - unfold two_pow_64. fold nZ. pose proof ATOP_range' as AT. unfold CEIL, ATOP_MAX in AT. lia.
 - exact R12.
+- (* LPS 727298f3: mprotect must also miss the vDSO, which [co_vdso] places inside the
+     reserved ledger [slice_args] proved free (as coturn's Asan/AsanNodesMmA.v) *)
+  change (region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true).
+  apply region_free_intro. intros vb vs Hv.
+  exact (region_free_In _ addr n vb vs Hrfres (co_vdso _ _ _ _ _ _ _ _ _ _ _ _ HC (vb, vs) Hv)).
 - exact Hna.
 - exact Hmc.
 - apply mprotect_budget_ok_intro_gen; [exact Hwf|]. pose proof (budget_slack E cs R FULL model nhi HC ltac:(unfold budget_ok; apply Z.leb_le; exact Hbud)). fold nZ n. lia.

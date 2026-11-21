@@ -1,6 +1,6 @@
 (* crtA_close: the close of the cgif-form walk of check_round_trip, image A: the four pieces of the walk
    (lib/A/Prog/crtA_cuts.v cut points) compose into the contract dec_check_round_trip_cg of the FROZEN statement
-   lib/A/Prog/check_round_trip_cg.v (a working branch cc88c36cf66), in cgif's
+   lib/A/Prog/check_round_trip_cg.v (a working branch), in cgif's
    backward-chain form (origin/ossv/recipes proofs/cgif/cgif_file_fuzzer/lib/A/ACet.v:36-43, the composition of
    ACey.v's RFC_*_stmt pieces).
 
@@ -71,7 +71,7 @@ Hypothesis MIDP : crtA_at_loopout B MT DEC_RO_RD -> crtA_at_calloc B MT DEC_RO_R
 
 (* Piece 1 is proved: lib/A/Prog/crtA_w_head.v. *)
 Definition HEADP := crtA_head B MT DEC_RO_RD HMPC HCELLS LAWS MTL AMALLOC ACALLOC.
-(* Piece 3 is proved: a Theorem Labs lane's lib/A/Prog/crtA_encw.v (a working branch 80da47845a8),
+(* Piece 3 is proved: a Theorem Labs lane's lib/A/Prog/crtA_encw.v (a working branch),
    at the statement's DEC_RO_RD with the braid leaf's read-only set contained in it by computation. *)
 Definition ENCP : crtA_at_bcmp B MT DEC_RO_RD -> crtA_at_loopout B MT DEC_RO_RD :=
   @crtA_enc_piece_dec rc B MT LAWS HCELLS ABCMP ALEAF.

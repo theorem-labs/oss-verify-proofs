@@ -6,6 +6,7 @@
    __asan_stack_malloc_7 (not 0: `bnez s2` skips the real-stack fallback), the frame's header and shadow, the two
    shadow fills, up to the BODY cut (answer_s1.v AN_BODY_stmt). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/answer_e.v, with its module paths, module names and numbers changed; 255 of its 346 lines of code are new or changed and 504 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, stage 1: the entry block 0x8a400 .. the call
    of record() at 0x8a534 (listing slots 4020-4097), then record's call and return to M1 (sup_add_s1b.v).
 
@@ -17,7 +18,7 @@
    description, pc) at F; s9 := SHADOW_OFF + F / 8; s11 := -8; the 16 shadow bytes (f1 x4, f8 f8, f2 f2, f8 x4,
    f3 x4); a0 := REC_ADD; `jal record`.
 
-   The walk follows the A walk's stage 1 (a working branch 87f17ee4716, lib/A/Prog/sup_add_s1.v): its
+   The walk follows the A walk's stage 1 (a working branch, lib/A/Prog/sup_add_s1.v): its
    symbolic runs, the realignment step, the side-stack frame's atoms (44 = F, 1028 = its flag pointer, 1029 = its
    shadow) and regions; B differs in the frame size, the saves' offsets, the shadow layout and the register roles,
    and B calls record() where A inlined it. *)

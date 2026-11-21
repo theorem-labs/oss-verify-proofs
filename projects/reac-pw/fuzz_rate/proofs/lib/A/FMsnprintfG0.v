@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfGvsni0.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan: module paths changed; 6 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); 0x140000 kept: a bound over vsni_rodata's regions (r_hi r <= 0x140000), not an address; the tool's label __sanitizer::useCounts+0xc3c0 is a coincidence (the A lane's decision for the same line in FMsnprintfGvsni.v); re-pointed Requires: FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfGvsni0.v (a working branch) to libreac/fuzz_boxreg.asan: module paths changed; 6 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); 0x140000 kept: a bound over vsni_rodata's regions (r_hi r <= 0x140000), not an address; the tool's label __sanitizer::useCounts+0xc3c0 is a coincidence (the A lane's decision for the same line in FMsnprintfGvsni.v); re-pointed Requires: FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: a new walk of fm.asan's __interceptor_vsnprintf 0x458a0; the entry-state tactics
@@ -9,8 +9,9 @@
    ra_xfer, hull_xfer, EOK_havoc_lt, ro_low, saved_range); it reaches no file that fixes fm's stack bands
    (FMsnprintfImg / Gk0 / Gt0 in place of I / GI / Gk / Gt, no FMH_Rt). FMsnprintfGvsni.v re-exports it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Rt/FMsnprintfGvsni0.v, with its module paths changed; 54 of its 76 lines of code are new or changed and 59 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfG0.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfG0.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfG0.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfG0.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfG0.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfG0.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fm's snprintf glue, the window-free part of FMsnprintfG.v: what the snprintf walks read off their runs (reg_is,
    KEPT), the entry facts of atom 2 (sn_facts0), st_ok with the stack region only (st_ok_take1) and the stack's zero
    shadow (stack_zero_shadow). Moved unchanged from FMsnprintfG.v (which Requires Export this file), so that a walk

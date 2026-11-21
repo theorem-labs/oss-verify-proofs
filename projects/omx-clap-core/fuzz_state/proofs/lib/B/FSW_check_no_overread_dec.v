@@ -16,9 +16,9 @@
    lemmas below are A's statements at B's addresses; 0x814b0 `bne a0,s10` (the second *lenp against the first) and the
    in-function block's 0x815f0 `beq a0,s10` (back to 0x814c8) take cno_br_81490's form as well.
    Template (text only; no byte offset is copied): lib/A/FSW_check_no_overread_dec.v at
-   a working branch fc18e8b431b. The generic facts (cno_nums, cno_fpre, cno_arodata, cno_zone_unp,
+   a working branch. The generic facts (cno_nums, cno_fpre, cno_arodata, cno_zone_unp,
    cno_blk_unp, cno_frame_shadow_disj, cno_pstat_img, cno_frames_callee, cno_tick, cno_stk) are
-   lib/B/FSW_check_no_overread.v's (a working branch c20439f478a). *)
+   lib/B/FSW_check_no_overread.v's (a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -144,7 +144,7 @@ Variable B : asyms.
 Let LAWS : AR_laws tfibsegs B := AR_laws_ok tfibsegs B.
 
 (* ---- the decoder's contract, CTX-free (lib/B/FSH_Fn_writer.v decode_spec_ff, the hunks of
-   a working branch 4a13d26d577: the bad-text arm states ablocks EQUALITY, and *lenp's granule is taken
+   a working branch: the bad-text arm states ablocks EQUALITY, and *lenp's granule is taken
    addressable), and the image facts ---- *)
 Hypothesis DEC : FSH_Fn_writer.decode_spec_ff B tfibsegs.
 Hypothesis IMG : fs_img_facts tfibsegs B.

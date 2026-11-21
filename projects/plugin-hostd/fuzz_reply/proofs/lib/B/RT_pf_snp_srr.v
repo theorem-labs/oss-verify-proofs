@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_reply.asan-ubsan's snprintf at __wrap_snprintf (0x42234 = SIGMA WS_snprintf, RT_pf_Tbl.v
    PF_WRAP_SNPRINTF) at the SRr level, for reply's ONE format, at a generic allocator relation ARx, with the FP state
-   KEPT (route (C) of SNP-ROUTE.md (sha256 5a5fabe9f628; internal record) section 7.5).  Image B's twin of lib/A/RT_pf_snp_srr.v (at
-   ca8b83ec0a2: the statement, snp_xn's proof, snp_xn_closed, snp_xn_ARX), relocated: module paths lib.A -> lib.B,
+   KEPT (route (C) of SNP-ROUTE.md (sha256 5a5fabe9f628; internal record) section 7.5).  Image B's twin of lib/A/RT_pf_snp_srr.v (
+   the statement, snp_xn's proof, snp_xn_closed, snp_xn_ARX), relocated: module paths lib.A -> lib.B,
    AB1v / AF0m / AF0x / AD2l -> YB1v / YF0m / YF0x / YD2l, image numerals (GLOBALS_TOP 0x5fb000 -> 0x5fc000, the GOT
    word of __stack_chk_guard 0x9e658 -> 0x9ebd8, the guard 0x5f94b0 -> 0x5f9a30; SNPSRRB-numerals.tsv (sha256 b8c04c0261ed; internal record)); the
    comments, the sanity lemmas and snp_xn_ARX's statement are image B's (B's applications, B's top_x ARX body).
@@ -12,7 +13,7 @@
    (lib/B/RT_pf_stmt_k.v snprintf_icpt_stmt_k: ___interceptor_snprintf -> ___interceptor_vsnprintf -> musl vsnprintf ->
    ___interceptor_vfprintf -> musl vfprintf, proved from the GXAK keep-FP twin of GXA: lib/B/RT_pf_chain_k.v
    snprintf_chain_closed_k_seam); this file feeds it the contract's premises on the normalized store and reads its
-   post back, in the steps of a Theorem Labs lane's FMgxaSeam.v fm_vfprintf_seamP (a working branch 3242941dc96,
+   post back, in the steps of a Theorem Labs lane's FMgxaSeam.v fm_vfprintf_seamP (a working branch,
    :340-604). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -89,24 +90,24 @@ Section c.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
 
-(* asnprintf_realizes_xn: lib/B/W_sites_x.v:387-415 asnprintf_realizes_x VERBATIM (its Section-local names applied to
-   B ARx; the same 21 lines as lib/A/W_sites_x.v:301-321), plus FOUR premises right after `pf_parse fmt = Some ps`,
+(* asnprintf_realizes_xn: lib/B/W_sites_x.v:388-416 asnprintf_realizes_x VERBATIM (its Section-local names applied to
+   B ARx; the same 21 lines as lib/A/W_sites_x.v:302-322), plus FOUR premises right after `pf_parse fmt = Some ps`,
    each of which NARROWS the contract (lib/A/RT_pf_snp_srr.v's premises, the same text):
    - the pieces are reply's one format "%s %d ";
    - (M1) the format lies in the image's read-only data below the GOT word: 65536 <= f, f + |fmt| + 1 <= 0x9ebd8
-     (FR_GOT_GUARD, lib/B/W_sites.v:301);
+     (FR_GOT_GUARD, lib/B/W_sites.v:302);
    - (M3) the %s string (the first argument, a3 = getr regs 13, its bytes by apf_arg_ok's astr_at) likewise, with
      the 8 bytes past its NUL: 65536 <= r13, r13 + |s| + 1 + 8 <= 0x9ebd8;
    - (M2) the destination lies above the image: GLOBALS_TOP = 0x5fc000 <= d (lib/B/RT_pf_Tbl.v PF_GLOBALS_TOP =
      GXA's GLOBALS_TOP at B's A_img: B's last PT_LOAD 0x9fc60 + 0x55b670 rounded to a page).
-   The chain needs exactly these: GXA's statement reads the format as image data (RT_pf_stmt_k.v:112,
+   The chain needs exactly these: GXA's statement reads the format as image data (RT_pf_stmt_k.v:113,
    VFB_GUARD's `A + |fmt| <= sym 0x22e18`), its %s argument with the slack to its granule end apart from the
    destination and app_mem 7 bytes past each byte (GXA/G_printf_core_common.v:257-270), and its destination off the
-   image (RT_pf_stmt_k.v:114).
+   image (RT_pf_stmt_k.v:115).
    (a) this narrowing was granted (SNP-ROUTE.md (sha256 5a5fabe9f628; internal record) section 7.5: "Image B has no application yet. When B reaches
        this point it gets the same narrowed contract"); image B's walked applications satisfy all four literally:
-       lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:663 (p1_fmt / p1_ps, :116-118) and
-       W_LLVMFuzzerTestOneInput_gone_p1_x.v:538 both pass "%s %d " at f = VAL (A_OBJ 17) = 0x20f80 (.str.9), the %s
+       lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:664 (p1_fmt / p1_ps, :116-118) and
+       W_LLVMFuzzerTestOneInput_gone_p1_x.v:539 both pass "%s %d " at f = VAL (A_OBJ 17) = 0x20f80 (.str.9), the %s
        string "param_gesture" at VAL A_lit_gesture = 0x20f20 (.str.6) and a 48-byte buffer FF + 32 in a live fake
        frame (FF = frame_addr ly 1 fpos).  The lemmas san_M1 / san_M2_AR / san_M2_x / san_M3 below prove each
        premise from those applications' own facts.
@@ -115,7 +116,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
        - four runtime / libc callers, each the same symbol + offset as image A's four (lib/A/RT_pf_snp_srr.v), on no
          proved path: libunwind UnwindCursor::getFunctionName (0x87aa8), vsyslog (0x917f8) and __strftime_fmt_1
          (0x9c1e4, 0x9c208);
-       - relay_instance_gone (0x82eb8): image A walks its twin (W_rig_top.v:3028, RIG_FMT "%s %d "), image B has no
+       - relay_instance_gone (0x82eb8): image A walks its twin (W_rig_top.v:3029, RIG_FMT "%s %d "), image B has no
          walk of it yet (the B top takes it as the callee spec RIG_x).
        If one of them is ever walked at another format or location, these premises are where it bites. *)
 Definition asnprintf_realizes_xn (pc gotw guard : Z) : Prop :=
@@ -138,7 +139,7 @@ atail_vis W mem (f + Z.of_nat (length fmt)) ->
 apf_args_ok (3 * ESTACK) W regs mem d n
 [getr regs 13; getr regs 14; getr regs 15; getr regs 16; getr regs 17] args ->
 awrite_ok B (3 * ESTACK) ly S W regs mem d n ->
-(* seven bytes past the buffer in application memory (W6 f4dbfd816b6, W_sites.v:315-319, mirrored) *)
+(* seven bytes past the buffer in application memory (W6, W_sites.v:316-320, mirrored) *)
 amem_range d (n + 7) ->
 rt_rom_view B W mem ->
 SRr SEGS W (cfg_at SEGS pc regs mem md)
@@ -243,11 +244,11 @@ Qed.
 Lemma snp_pf_dec_eq : forall v, PTx.pf_dec v = PFC.pf_dec v.
 Proof. intros v. unfold PTx.pf_dec, PFC.pf_dec. rewrite !snp_pf_digits_eq. reflexivity. Qed.
 
-(* ---- THE NARROWING IS SATISFIED AT IMAGE B'S TWO APPLICATIONS (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:663,
-   W_LLVMFuzzerTestOneInput_gone_p1_x.v:538), each premise from the facts the application itself holds there ---- *)
+(* ---- THE NARROWING IS SATISFIED AT IMAGE B'S TWO APPLICATIONS (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:664,
+   W_LLVMFuzzerTestOneInput_gone_p1_x.v:539), each premise from the facts the application itself holds there ---- *)
 Section San. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* M1: both pass f = VAL (A_OBJ 17) (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:637 V17, lib/B/W_LLVMFuzzerTestOneInput_gone_p1_x.v:512 V17) and the format p1_fmt, which parses to
+(* M1: both pass f = VAL (A_OBJ 17) (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:638 V17, lib/B/W_LLVMFuzzerTestOneInput_gone_p1_x.v:513 V17) and the format p1_fmt, which parses to
    the four pieces p1_ps (:116-118), so |fmt| = 6 *)
 Lemma san_M1 : forall fmt, PFC.pf_parse fmt = Some snp_ps ->
   65536 <= @pa_val _ fr_prog_listing PB_fr (A_OBJ 17) /\
@@ -259,7 +260,7 @@ rewrite V17. unfold FR_GOT_GUARD. cbn [length snp_fmtb]. lia.
 Qed.
 
 (* M3: both pass a3 = VAL A_lit_gesture (gone_p1.v:693 U13, gone_p1_x.v:568 U13) with the arguments
-   [APtr K_GESTURE; AInt id] (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:663, lib/B/W_LLVMFuzzerTestOneInput_gone_p1_x.v:538), so |s| = 13 *)
+   [APtr K_GESTURE; AInt id] (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:664, lib/B/W_LLVMFuzzerTestOneInput_gone_p1_x.v:539), so |s| = 13 *)
 Lemma san_M3 : forall (r13 : word) (id : Z) s, bv_unsigned r13 = @pa_val _ fr_prog_listing PB_fr A_lit_gesture ->
   hd_error [PFC.APtr RelayModel.K_GESTURE; PFC.AInt id] = Some (PFC.APtr s) ->
   65536 <= bv_unsigned r13 /\ bv_unsigned r13 + Z.of_nat (length s) + 1 + 8 <= FR_GOT_GUARD.
@@ -269,7 +270,7 @@ assert (V18 : @pa_val _ fr_prog_listing PB_fr A_lit_gesture = 134944) by (vm_com
 rewrite E, V18. unfold FR_GOT_GUARD, RelayModel.K_GESTURE. cbn [length]. lia.
 Qed.
 
-(* M2 at the AR application: the buffer is frame_addr ly 1 fpos + 32 for a live class-1 fake frame (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:522-523
+(* M2 at the AR application: the buffer is frame_addr ly 1 fpos + 32 for a live class-1 fake frame (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v:523-524
    FF / Hfin with HART, :618).  AR's ledger puts ly_img over every segment (W_img.fr_img_cover: its top is at least
    0x5fc000), and a fake frame lies above ly_img: the fake stack is disjoint from ly_img (YG0s.frame_facts), starts at
    or above 4096 and is longer than kImgLo (layout_ok's lo_img) - YCbqG.v's field-17 argument (:1306-1315) *)
@@ -386,7 +387,7 @@ unfold wview, SBa.cjstore, mrestrict. rewrite E, (w_Hoff W _ E). reflexivity.
 Qed.
 End hk.
 
-(* ---- the image's owned read-only bytes are pinned by YF0m's const cells (lib/A/W_LLVMFuzzerTestOneInput_G.v:557-645's
+(* ---- the image's owned read-only bytes are pinned by YF0m's const cells (lib/A/W_LLVMFuzzerTestOneInput_G.v:558-646's
    lemmas, as lib/A/RT_pf_snp_srr.v copies them; image-generic text over tfibsegs) ---- *)
 Definition snp_num_of (e : YG0f.aexp) : option Z := match e with YG0f.ANum z => Some z | _ => None end.
 Definition snp_av_num (v : YG0f.aval) : option Z := match v with YG0f.AV (YG0f.ANum z) => Some z | _ => None end.
@@ -519,7 +520,7 @@ Hypothesis CHAIN_K : PK.snprintf_icpt_stmt_k GM.set_ready (PS.vf_ready_icpt VFB_
 (* REAL(vsnprintf) = musl vsnprintf (RT_pf_bz.v sni_cells' last cell), in HGOTG's shape (gone_p1_x.v:123).  TRUE at
    the pin: the cell 0x9fcf0 (_ZN14__interception14real_vsnprintfE) is in the RW PT_LOAD at 0x9fc60, and the ELF's
    file bytes there are 0x963b4 (vsnprintf; every Bz interceptor walk was relocated with it,
-   Bz/K/I_vsnprintfw.v:253).  YF0m.v's Tfib_const has no row for it (it has 0x9fce0 :119 and 0x9fce8 :120), so no
+   Bz/K/I_vsnprintfw.v:254).  YF0m.v's Tfib_const has no row for it (it has 0x9fce0 :119 and 0x9fce8 :120), so no
    law gives it yet; it is discharged by alx_const_cells in the commit that takes the new YF0m row. *)
 Hypothesis REALVSN : forall ly S Hp (W : world tfibsegs) mem md, ARx ly S Hp W mem md ->
   rdword (aview tfibsegs (w_H W) mem) PF_REAL_VSNPRINTF = Some PF_MUSL_VSNPRINTF.
@@ -1256,7 +1257,7 @@ split.
     reflexivity.
   - (* the kept bytes (W0' kept_x): image bytes (YCeg.tfib_img_range: below 0x5fc000), so outside the chain's window -
        the stack range lies above the image and the buffer [d, d + dn) starts at or above PF_GLOBALS_TOP = 0x5fc000
-       (the B twin of a Theorem Labs lane's lib/A bullet, a working branch 35fd3f6c046) *)
+       (the B twin of a Theorem Labs lane's lib/A bullet, a working branch) *)
     intros a Ha Hk. apply (SPo.munrestrict_out (w_H W) mem m' _ (Z_to_bv 64 a) MU').
     rewrite CJMS.unsigned_lit by lia. cbn [CJF.outside].
     pose proof (YCeg.tfib_img_range a (proj1 Hk)) as HIa.
@@ -1316,7 +1317,7 @@ Proof. exact (snp_xn B ARx hl LAWS LAY BANDP TB W_H8 RT_pf_chain_k.snprintf_chai
 
 End closed.
 
-(* ---- the B top's instance: snp_xn_closed at the B top's ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:154-155), written
+(* ---- the B top's instance: snp_xn_closed at the B top's ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:155-156), written
    with ARX's BODY so that the top's `exact` goes through by conversion; LAWS by ARX_laws' proof (FMgxaSeamARX.v
    ARX_seam_laws = top_x.v:156-160), LAY / BANDP by FMgxaSeamARX.v ARX_LAY / ARX_BANDP (ARX_seam is the same body), TB
    by YD2l.TfibB_syms.  Left: W_H8 (field form until the field lands) and REALVSN at ARX ---- *)

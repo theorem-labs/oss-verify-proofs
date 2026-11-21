@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the three vDSO step arms and the budget refusal at a vDSO call, and the run's segments). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import Vdso.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Dispatch.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -57,8 +59,10 @@ Proof.
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_exit_group_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_set_tid_address_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_futex_relim |].
+  constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_set_robust_list_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_nanosleep_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_clock_gettime_relim |].
+  constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_clock_getres_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_sched_setscheduler_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_sched_getaffinity_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_sched_yield_relim |].
@@ -109,6 +113,7 @@ Proof.
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_wait4_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_prlimit64_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_getrandom_relim |].
+  constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_pwritev2_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_clone3_relim |].
   constructor; [ unfold arm_ok; intros L i eff m HL HB Hfit Hn; apply arm_faccessat2_relim |].
   constructor.
@@ -241,7 +246,11 @@ Lemma nbr_instr : forall segs ms model report, ~ budget_refused_at segs (mkCfg m
   m_halted model = None -> ms_svc_pending ms = None ->
   RiscvSemantics.step_accesses segs ms = MachineOk report ->
   materialize_model_accesses model (@accessed_ranges _ report) <> None.
-Proof. intros segs ms model report Hn Hh Hs Hst Hm. apply Hn. split; [exact Hh|]. left. split; [exact Hs|]. exists report. split; assumption. Qed.
+Proof.
+  (* at 08b1429 the instruction arm of [budget_refused_at] is a disjunction (the
+     vDSO-call arm is new) *)
+  intros segs ms model report Hn Hh Hs Hst Hm. apply Hn. split; [exact Hh|]. left. split; [exact Hs|]. left. exists report. split; assumption.
+Qed.
 
 Lemma nbr_sys_b : forall segs ms model x8, ~ budget_refused_at segs (mkCfg ms model) ->
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
@@ -312,11 +321,52 @@ Proof.
     split; intros H; discriminate H.
 Qed.
 
+(* At 08b1429 [sstep_cfg] has three vDSO arms (recipes/vdso-step-arms.md).
+   The vDSO functions' syscalls are not in the alloc family, [vdso_post] and
+   [with_vdso_bump] read/write only [m_vdso], so all three commute with
+   [relim]. *)
+Lemma vdso_ab_false : forall segs ms model fn n, vdso_fn_sysno fn = Some n ->
+  alloc_budget_refused_b (sys_input segs ms (Z_to_bv 64 n)) model = false.
+Proof.
+  intros segs ms model fn n H. destruct fn; cbn in H; try discriminate H; injection H as <-;
+    first [reflexivity | (unfold alloc_budget_refused_b; cbn; reflexivity)].
+Qed.
+
+Lemma nbr_vdso_mat : forall segs ms model fn n eff model' evs, ~ budget_refused_at segs (mkCfg ms model) ->
+  m_halted model = None -> ms_svc_pending ms = None -> mi_account_step segs ms model = MachineUnmodeled ->
+  vdso_entry_fn segs (ms_pc ms) = Some fn -> vdso_fn_sysno fn = Some n ->
+  syscall_spec (sys_input segs ms (Z_to_bv 64 n)) model (Ok eff model' evs) -> eff_ret eff <> errno_ret EFAULT ->
+  m_halted model' = None -> materialize_model_accesses model' (syscall_effect_accesses eff) <> None.
+Proof.
+  intros segs ms model fn n eff model' evs Hn Hh Hs Ha Hfn Hno Hsp Hef Hh' Hm. apply Hn.
+  split; [exact Hh|]. left. split; [exact Hs|]. right. split; [exact Ha|].
+  exists fn, n, eff, model', evs. repeat split; assumption.
+Qed.
+
+Lemma vdso_unm_relim : forall segs L ms m fn, (vm_limit (m_vmmaps m) <= L)%Z -> vm_fit (m_vmmaps m) ->
+  vdso_call_unmodeled segs ms (relim L m) fn <-> vdso_call_unmodeled segs ms m fn.
+Proof.
+  intros segs L ms m fn HL Hf. unfold vdso_call_unmodeled. split.
+  - intros [H|[(n & Hn & Hu)|(n & eff & m2 & evs & Hn & Hsp & Hor)]]; [left; exact H | right; left | right; right].
+    + exists n. split; [exact Hn|].
+      exact (proj1 (syscall_spec_relim_unm L _ m HL (vdso_ab_false segs ms m fn n Hn) Hf) Hu).
+    + destruct (syscall_spec_relim_ok_inv L _ m eff m2 evs HL (vdso_ab_false segs ms m fn n Hn) Hf Hsp) as (m' & -> & Hsp').
+      exists n, eff, m', evs. split; [exact Hn|]. split; [exact Hsp'|]. exact Hor.
+  - intros [H|[(n & Hn & Hu)|(n & eff & m2 & evs & Hn & Hsp & Hor)]]; [left; exact H | right; left | right; right].
+    + exists n. split; [exact Hn|].
+      exact (proj2 (syscall_spec_relim_unm L _ m HL (vdso_ab_false segs ms m fn n Hn) Hf) Hu).
+    + exists n, eff, (relim L m2), evs. split; [exact Hn|].
+      split; [exact (syscall_spec_relim_ok L _ m eff m2 evs HL (vdso_ab_false segs ms m fn n Hn) Hf Hsp)|]. exact Hor.
+Qed.
+
 Lemma sstep_relim_up : forall segs cfg L c evs r, (climit c <= L)%Z -> ~ budget_refused_at segs c -> cfit c ->
   sstep_cfg segs cfg c evs r -> sstep_cfg segs cfg (relimc L c) evs (relim_to L r).
 Proof.
   intros segs cfg L c evs r HL Hn Hf H. unfold climit in HL. unfold cfit in Hf.
   destruct H as [ms model ms' model' Hh Hs Ha | ms model Hh Hs Ha | ms model Hh Hs Ha
+                | ms model fn n eff model' model'' evs Hh Hs Ha Hfn Hno Hspec Hef Hh' Hmat
+                | ms model fn n eff model' evs Hh Hs Ha Hfn Hno Hspec Hef Hh' Hmat
+                | ms model fn Hh Hs Ha Hfn Hun
                 | ms model x8 eff model' model'' evs Hh Hs Hspec Hsp Hh' Hmat
                 | ms model x8 eff model' evs Hh Hs Hspec Hsp Hh' Hmat
                 | ms model x8 eff model' evs code Hh Hs Hspec Hh' Hk
@@ -324,7 +374,16 @@ Proof.
                 | ms model x8 Hh Hs Hspec ]; cbn [relimc relim_to cfg_ms cfg_model] in *.
   - apply sstep_cfg_instr; [exact Hh | exact Hs | exact (account_relim_up segs L ms model ms' model' HL Ha)].
   - apply sstep_cfg_instr_fault; [exact Hh | exact Hs | exact (account_relim_fault_up segs L ms model HL Hn Hh Hs Ha)].
-  - apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hs | apply account_relim_unm; exact Ha].
+  - apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hs | apply account_relim_unm; exact Ha | assumption].
+  - pose proof (vdso_ab_false segs ms model fn n Hno) as HB.
+    pose proof (syscall_spec_limit _ _ _ _ _ HB Hf Hspec) as Hlim.
+    refine (sstep_cfg_vdso_call segs cfg ms (relim L model) fn n eff (relim L model') (relim L model'') evs
+              Hh Hs _ Hfn Hno (syscall_spec_relim_ok L _ model eff model' evs HL HB Hf Hspec) Hef Hh' _).
+    + apply account_relim_unm; exact Ha.
+    + apply materialize_relim_some; [rewrite Hlim; exact HL | exact Hmat].
+  - exfalso. exact (nbr_vdso_mat segs ms model fn n eff model' evs Hn Hh Hs Ha Hfn Hno Hspec Hef Hh' Hmat).
+  - apply (sstep_cfg_vdso_unmodeled segs cfg ms (relim L model) fn);
+      [exact Hh | exact Hs | apply account_relim_unm; exact Ha | exact Hfn | apply (proj2 (vdso_unm_relim segs L ms model fn HL Hf)); exact Hun].
   - pose proof (nbr_sys_b segs ms model x8 Hn Hh Hs) as HB.
     pose proof (syscall_spec_limit _ _ _ _ _ HB Hf Hspec) as Hlim.
     apply (sstep_cfg_syscall segs cfg ms (relim L model) x8 eff (relim L model') (relim L model'') evs);
@@ -349,6 +408,9 @@ Proof.
   unfold relimc in H. cbn [cfg_ms cfg_model] in H.
   remember (mkCfg ms (relim L model)) as c2 eqn:Ec.
   destruct H as [ms0 model0 ms' m2 Hh Hs Ha | ms0 model0 Hh Hs Ha | ms0 model0 Hh Hs Ha
+                | ms0 model0 fn n eff m2' m2'' evs Hh Hs Ha Hfn Hno Hspec Hef Hh' Hmat
+                | ms0 model0 fn n eff m2' evs Hh Hs Ha Hfn Hno Hspec Hef Hh' Hmat
+                | ms0 model0 fn Hh Hs Ha Hfn Hun
                 | ms0 model0 x8 eff m2' m2'' evs Hh Hs Hspec Hsp Hh' Hmat
                 | ms0 model0 x8 eff m2' evs Hh Hs Hspec Hsp Hh' Hmat
                 | ms0 model0 x8 eff m2' evs code Hh Hs Hspec Hh' Hk
@@ -358,7 +420,25 @@ Proof.
   - destruct (account_relim_down segs L ms model ms' m2 HL Hn Hh Hs Ha) as (model' & Ha' & ->).
     exists (SNext (mkCfg ms' model')). split; [apply sstep_cfg_instr; assumption | reflexivity].
   - exists SError. split; [apply sstep_cfg_instr_fault; [exact Hh | exact Hs | exact (account_relim_fault_down segs L ms model HL Ha)] | reflexivity].
-  - exists SError. split; [apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hs | apply (account_relim_unm segs L); exact Ha] | reflexivity].
+  - exists SError. split; [apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hs | apply (account_relim_unm segs L); exact Ha | assumption] | reflexivity].
+  - pose proof (vdso_ab_false segs ms model fn n Hno) as HB.
+    destruct (syscall_spec_relim_ok_inv L _ model eff m2' evs HL HB Hf Hspec) as (model' & -> & Hspec').
+    pose proof (syscall_spec_limit _ _ _ _ _ HB Hf Hspec') as Hlim.
+    assert (HL' : (vm_limit (m_vmmaps model') <= L)%Z) by (rewrite Hlim; exact HL).
+    assert (Ha0 : mi_account_step segs ms model = MachineUnmodeled) by (apply (account_relim_unm segs L); exact Ha).
+    destruct (materialize_relim_inv L model' _ m2'' HL' Hmat) as [E0 | (model'' & E1 & ->)].
+    + exfalso. exact (nbr_vdso_mat segs ms model fn n eff model' evs Hn Hh Hs Ha0 Hfn Hno Hspec' Hef Hh' E0).
+    + exists (SNext (mkCfg (vdso_post segs ms model (vdso_frame segs) eff) (with_vdso_bump model''))). split; [|reflexivity].
+      exact (sstep_cfg_vdso_call segs cfg ms model fn n eff model' model'' evs Hh Hs Ha0 Hfn Hno Hspec' Hef Hh' E1).
+  - pose proof (vdso_ab_false segs ms model fn n Hno) as HB.
+    destruct (syscall_spec_relim_ok_inv L _ model eff m2' evs HL HB Hf Hspec) as (model' & -> & Hspec').
+    pose proof (syscall_spec_limit _ _ _ _ _ HB Hf Hspec') as Hlim.
+    assert (HL' : (vm_limit (m_vmmaps model') <= L)%Z) by (rewrite Hlim; exact HL).
+    assert (Ha0 : mi_account_step segs ms model = MachineUnmodeled) by (apply (account_relim_unm segs L); exact Ha).
+    exfalso. exact (nbr_vdso_mat segs ms model fn n eff model' evs Hn Hh Hs Ha0 Hfn Hno Hspec' Hef Hh' (materialize_relim_none L model' _ HL' Hmat)).
+  - exists SError. split; [|reflexivity].
+    apply (sstep_cfg_vdso_unmodeled segs cfg ms model fn);
+      [exact Hh | exact Hs | apply (account_relim_unm segs L); exact Ha | exact Hfn | apply (proj1 (vdso_unm_relim segs L ms model fn HL Hf)); exact Hun].
   - pose proof (nbr_sys_b segs ms model x8 Hn Hh Hs) as HB.
     destruct (syscall_spec_relim_ok_inv L _ model eff m2' evs HL HB Hf Hspec) as (model' & -> & Hspec').
     pose proof (syscall_spec_limit _ _ _ _ _ HB Hf Hspec') as Hlim.
@@ -390,7 +470,8 @@ Lemma sstep_limit : forall segs cfg c evs c', ~ budget_refused_at segs c -> cfit
   sstep_cfg segs cfg c evs (SNext c') -> climit c' = climit c.
 Proof.
   intros segs cfg c evs c' Hn Hf H. unfold climit. unfold cfit in Hf.
-  inversion H as [ms model ms' model' Hh Hs Ha | | | ms model x8 eff model' model'' evs0 Hh Hs Hspec Hsp Hh' Hmat
+  inversion H as [ms model ms' model' Hh Hs Ha | | | ms model fn n eff model' model'' evs0 Hh Hs Ha Hfn Hno Hspec Hef Hh' Hmat | |
+                 | ms model x8 eff model' model'' evs0 Hh Hs Hspec Hsp Hh' Hmat
                  | | ms model x8 eff model' evs0 code Hh Hs Hspec Hh' Hk | ms model x8 eff model' evs0 sig Hh Hs Hspec Hk | ];
     subst; cbn [cfg_model] in *.
   - pose proof (mi_account_step_model_frame segs ms model ms' model' Ha) as Hfr.
@@ -398,6 +479,8 @@ Proof.
     destruct (RiscvSemantics.step_accesses segs ms) as [report| |]; try discriminate Ha.
     destruct (materialize_model_accesses model _) as [m1|] eqn:E; [|discriminate Ha].
     injection Ha as _ <-. exact (materialize_limit _ _ _ E).
+  - change (m_vmmaps (with_vdso_bump model'')) with (m_vmmaps model'').
+    rewrite (materialize_limit _ _ _ Hmat). exact (syscall_spec_limit _ _ _ _ _ (vdso_ab_false segs ms model fn n Hno) Hf Hspec).
   - pose proof (nbr_sys_b segs ms model x8 Hn Hh Hs) as HB.
     rewrite (materialize_limit _ _ _ Hmat). exact (syscall_spec_limit _ _ _ _ _ HB Hf Hspec).
   - exact (syscall_spec_limit _ _ _ _ _ (nbr_sys_b segs ms model x8 Hn Hh Hs) Hf Hspec).
@@ -410,13 +493,16 @@ Proof. intros m r m' H. destruct (materialize_model_accesses_frame m r m' H) as 
 Lemma sstep_fit : forall segs cfg c evs c', sstep_cfg segs cfg c evs (SNext c') -> cfit c -> cfit c'.
 Proof.
   intros segs cfg c evs c' H Hf. unfold cfit in *.
-  inversion H as [ms model ms' model' Hh Hs Ha | | | ms model x8 eff model' model'' evs0 Hh Hs Hspec Hsp Hh' Hmat
+  inversion H as [ms model ms' model' Hh Hs Ha | | | ms model fn n eff model' model'' evs0 Hh Hs Ha Hfn Hno Hspec Hef Hh' Hmat | |
+                 | ms model x8 eff model' model'' evs0 Hh Hs Hspec Hsp Hh' Hmat
                  | | ms model x8 eff model' evs0 code Hh Hs Hspec Hh' Hk | ms model x8 eff model' evs0 sig Hh Hs Hspec Hk | ];
     subst; cbn [cfg_model] in *.
   - unfold mi_account_step in Ha.
     destruct (RiscvSemantics.step_accesses segs ms) as [report| |]; try discriminate Ha.
     destruct (materialize_model_accesses model _) as [m1|] eqn:E; [|discriminate Ha].
     injection Ha as _ <-. rewrite (materialize_vmmaps _ _ _ E). exact Hf.
+  - change (m_vmmaps (with_vdso_bump model'')) with (m_vmmaps model'').
+    rewrite (materialize_vmmaps _ _ _ Hmat). exact (syscall_spec_preserves_fit _ _ _ _ _ Hspec Hf).
   - rewrite (materialize_vmmaps _ _ _ Hmat). exact (syscall_spec_preserves_fit _ _ _ _ _ Hspec Hf).
   - exact (syscall_spec_preserves_fit _ _ _ _ _ Hspec Hf).
   - exact (syscall_spec_preserves_fit _ _ _ _ _ Hspec Hf).
@@ -516,7 +602,11 @@ Theorem run_budget_bridge : forall cfg img en inp L1 L2, (L1 <= L2)%Z ->
   /\ (bh_errors (run_scfg cfg img L1 en inp) <-> bh_errors (run_scfg cfg img L2 en inp)).
 Proof.
   intros cfg [segs pc ph] [sp brk mb rnd] inp L1 L2 HL Hn. cbn [run_scfg bh_traces bh_errors run_scfg_budget_refused] in *.
-  rewrite <- (init_config_relim segs pc ph sp brk mb rnd L1 L2 inp).
+  (* 08b1429: [run_scfg] runs the binary against [run_segments segs inp sp mb]
+     (the vDSO/vvar pair appended, run-segments.md), so the run's config is
+     [init_config (run_segments ..) ..]; the budget relimit is polymorphic in
+     the segment list *)
+  rewrite <- (init_config_relim (run_segments segs inp sp mb) pc ph sp brk mb rnd L1 L2 inp).
   split.
   - apply obs_relim; [rewrite init_config_limit; exact HL | exact Hn | apply init_config_fit].
   - apply err_relim; [rewrite init_config_limit; exact HL | exact Hn | apply init_config_fit].

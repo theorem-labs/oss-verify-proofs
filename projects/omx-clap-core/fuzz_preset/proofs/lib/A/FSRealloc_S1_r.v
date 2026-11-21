@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_r.v (hub ddc081c1a03, blob 85a1ffc06e6a) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), every image numeral moved by symbol + offset; record, the internal file A5.md. *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_r.v (blob 85a1ffc06e6a) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), every image numeral moved by symbol + offset; record, the internal file A5.md. *)
 (* fuzz_state image A, realloc segment S1 (RtS1, 2026-10-29).
    The symbolic states of the walk (SS_L1R .. SS_ER) and its regions R_SCRR / R_IMR / R_OBJR.
-   Port of cgif_rgb_fuzzer lib/YF6r.v (released donor of the realloc prefix; hub checkout 102d6008296,
+   Port of cgif_rgb_fuzzer lib/YF6r.v (released donor of the realloc prefix; hub checkout theorem-labs/oss-verify-proofs@6b32741d849a,
    byte-equal to h-state-a5/realloc-thin/donor/), translated by h-state-a5/realloc-thin/s1/translate_rgb_to_fs.py:
    module names mapped to fs's (the map checked on cgif_rgb YF2w / YF2i / YF1y against fs's A/AFh1 / AFgn / AFg3),
    img_* tactics to plain ones, (addr + D_xxx) to fs.asan addresses (the internal file fs-addr-map.tsv; 0x53b7c = return pc
    of 0x53b78 `jal 0xb440` (-> 0x5efb8), disassembled).
    Changed: SS_ER runs to Allocate's entry 0x325b8 (through Reallocate's `jal -0xa9c` 0x33054) instead of 0x33054 *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

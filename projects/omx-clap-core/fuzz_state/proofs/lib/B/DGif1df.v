@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1df.v (a working branch ced28ed2383, file sha256 cfa852fc7073) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: moved from ced28ed2383 to a working branch 86aa4177b94 (cgif file sha256 3a073230d2da; FS-INSTANCE 1.1 W): EV_MAX removed from the unfold list of the 100000 bound (YFer.L is the literal 16384). By 3-way merge (base = agreloc of ced28ed2383, theirs = agreloc of 86aa4177b94, ours = this file's image-B rows); no numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: moved from 86aa4177b94 to a Theorem Labs lane's c5 install head a working branch 57e82b93d43 (cgif file sha256 5227e7dd65a6; the errno-kept twins of ad994c27165, additive). By 3-way merge (base = agreloc of 86aa4177b94, theirs = agreloc of 57e82b93d43 with port_addr_check 16f8a030c869 PREDICT rows for it, ours = this file's image-B rows and L edits). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1df.v (a working branch, file sha256 cfa852fc7073) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: moved to a working branch (cgif file sha256 3a073230d2da; FS-INSTANCE 1.1 W): EV_MAX removed from the unfold list of the 100000 bound (YFer.L is the literal 16384). By 3-way merge (base = agreloc, theirs = agreloc, ours = this file's image-B rows); no numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: moved to a Theorem Labs lane's c5 install head a working branch (cgif file sha256 5227e7dd65a6; the errno-kept twins, additive). By 3-way merge (base = agreloc, theirs = agreloc with port_addr_check 16f8a030c869 PREDICT rows for it, ours = this file's image-B rows and L edits). *)
 (* Modified by Theorem Labs, 2026-10: cgif_file's released Drain walk (YFet.v: tfib_drain_arm, with FIN_a, EPI) restated to
    the drain field of DGif0.DIface (DMspec.tfib_drain_spec_cf at ARX_cgif / aowned / drain_body / qloose): the post is
    DMspec.acall_post_x, whose raw frame clause comes from the walk's raw MEQ frames (YFgj.at_RETD, YFer.ATDR) and the
    raw frame of DoRecycle (DGif1dc.tfib_dorecycle_ok_x), and DoRecycle runs with the recycle callees in DIface's types. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

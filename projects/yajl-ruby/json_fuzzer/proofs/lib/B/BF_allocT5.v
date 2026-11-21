@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the RES0_low lemma states the reserved ledger by res0_ok, which also admits the launch's vDSO/vvar pair above the high shadow). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -62,7 +63,7 @@ Proof. exact (BF_caT2.ca_srz E0 FSB0 HR0 L0 RES0 EB0 PL0 HR0_ok EB0_ok ENV_depot
 Lemma LS_L0 : In (Z_to_bv 64 0x7fff7000, Z_to_bv 64 (2^28)) L0. Proof. exact (proj1 L0OK). Qed.
 Lemma GS_L0 : In (Z_to_bv 64 0x8fff7000, Z_to_bv 64 (2^41)) L0. Proof. exact (proj1 (proj2 L0OK)). Qed.
 Lemma HS_L0 : In (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 0xdfff0001000) L0. Proof. exact (proj1 (proj2 (proj2 L0OK))). Qed.
-Lemma RES0_low : Forall (fun e => 0x10000 <= elo e /\ ehi e <= 0x603000) RES0. Proof. exact (proj1 (proj2 (proj2 (proj2 L0OK)))). Qed.
+Lemma RES0_low : Forall (res0_ok E0) RES0. Proof. exact (proj1 (proj2 (proj2 (proj2 L0OK)))). Qed.
 
 #[local] Notation RTOKc := (RTOK E0 FSB0 HR0 L0 RES0 EB0).
 #[local] Notation ATOKc := (ATOK E0 FSB0 HR0 L0 RES0 EB0).

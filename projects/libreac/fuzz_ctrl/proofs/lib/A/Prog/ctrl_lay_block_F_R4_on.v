@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_classify_box_frameLib.v, with its module paths, module names, addresses and numbers changed; 4015 of its 4198 lines of code are new or changed and 806 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/ctrl_lay_blockF_on.v, with its module paths, addresses and numbers changed; 20 of its 69 lines of code are new or changed and 4149 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block, image A (asan, entry 0x855f4): ROUTE (C) twin of region R4's run (0x858f4, after the class-1 flag
    release, -> ret).  A Theorem Labs lane (a Theorem Labs lane), brief
    (a working note, not in this delivery).  rule 24: no function proved.  This file proves no
    function (kind: segment lemma).
 
-   lay_tail_F_R4_on is lay_tail_F_R4 (ctrl_lay_block_F_R4.v (at head lib/A/Prog/ctrl_lay_block_F_R4.v:73-101; written on a working branch 63a02bb46d7)) in
+   lay_tail_F_R4_on is lay_tail_F_R4 (ctrl_lay_block_F_R4.v (at head lib/A/Prog/ctrl_lay_block_F_R4.v:74-102; written on a working branch)) in
    the route (C) form of record (a Theorem Labs lane's ASSIGN.md (a working note, not in this delivery; its form frozen by a Theorem Labs lane 09:38Z) and the 10:34Z amendment):
    - PRE: lay_tail_F_R4's universal premise `shadow_rw m'` (F_R4.v:81) is DROPPED.  R = the shadow bytes the run reads
      or stores through that premise = NONE (measured below), so there is no region predicate and no _sub lemma.
@@ -19,7 +20,7 @@
    R DERIVATION (for the auditor a Theorem Labs lane), against the source:
    - a Theorem Labs lane's consumer table shadow-rw-consumers-A.md row 420 (a working note, not in this delivery): "lay_tail_F_R4
      premise `shadow_rw m'` (ctrl_lay_block_F_R4.v:81) into post Q (ctrl_lay_block.v:491) ... none (epilogue makes no
-     shadow access)" (the row's ctrl_lay_block.v:491 is Q's `shadow_rw m'` conjunct, at head lib/A/Prog/ctrl_lay_block.v:509; Definition Q is at head :498).  CHECKED: in lay_tail_F_R4's proof the premise is the intro name SR (F_R4.v:90) and its only use
+     shadow access)" (the row's ctrl_lay_block.v:492 is Q's `shadow_rw m'` conjunct, at head lib/A/Prog/ctrl_lay_block.v:510; Definition Q is at head :498).  CHECKED: in lay_tail_F_R4's proof the premise is the intro name SR (F_R4.v:90) and its only use
      is `exact SR` (F_R4.v:99), the post's own shadow_rw conjunct.  The 16 steps (F_R4.v:95) are the `j` and
      lay_tail's 12 restores from the SAVES cells at [S - 96, S) (rw_cells, F_R4.v:76), `addi sp` and `ret`: no
      instruction touches a shadow byte (the footprint premise is rng (S - 96) 96 only, F_R4.v:75).
@@ -32,7 +33,7 @@
    `shadow_rw m'` conjunct (at head :509) replaced by the transport from m0.
 
    PROVENANCE: as ctrl_lay_block_F_R4.v (image root (internal path), ELF
-   sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd, FACTS of record ed6b6b7b0ab). *)
+   sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd, FACTS of record). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import ctrl_lay_block_F_common.
 (* The skeleton's Require list, repeated in its order (Import is not transitive; lib.Lib ExecF StepF LAST, so StepF's
    step / if_false / finish / store_done shadow the evt engine's). *)
@@ -68,7 +69,7 @@ Section K8R_on.
   (* Section L's HHM (:450). *)
   Hypothesis HHM : HIGHMEM_BEG <= S - K.
 
-  (* Section L's Q (ctrl_lay_block.v:480-494), verbatim, except its `shadow_rw m'` conjunct (:491): the route (C)
+  (* Section L's Q (ctrl_lay_block.v:481-495), verbatim, except its `shadow_rw m'` conjunct (:491): the route (C)
      post, every shadow region present at the region's start memory m0 is present at the end memory m'. *)
   Definition lay_Q_on (m0 : word -> option byte) : machine_state -> Prop :=
     fun ms' => exists (t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word)

@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the position-abstract-listing runner of
-   proofs/cgif/cgif_file_fuzzer/lib/YC80.v (origin/ossv/recipes c8557374ad2e :52-140) restated over YCbqG.v's journal
+   proofs/cgif/cgif_file_fuzzer/lib/YC80.v (theorem-labs/oss-verify-proofs@6b32741d849a :52-140) restated over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp threaded as YCbqG.v's SRr_chain_tok_AJx does,
    program statics PST); plus mixed-write twins (suffix m) whose write premise also admits the program's own statics PST,
    from the journal lemma ajournal_x_exec_mixed below. Generic: no image class, no address, no ledger.
    SK (YI16.sink_head) is a Context parameter of every lemma here. Global sink_head instances exist in this tree
    (YI5b.v src0_sink_head, YE2k.v / AE2k.v tfib_sink_head): pass SK explicitly at every use, never let it be inferred. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YC80x.v, with its module paths changed; 70 of its 197 lines of code are new or changed and 586 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-31 (a Theorem Labs lane, route R; a Theorem Labs lane's relay_add row): the G twins of YCbqG.v's SRr_chain_AJxR and
    YC80x.v's token runs: the same runs with the step relation SRrG segs R and the journal at R (RULE-SHAPES.md (sha256 2e856ce788dd; internal record) sec 0, 3),
    for walks whose continuation crosses a re-hide.  Reply-own: YC80x.v and YCbqG.v are carried and stay unchanged.  Each

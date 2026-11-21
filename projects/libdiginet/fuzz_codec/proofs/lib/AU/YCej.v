@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_codec's ASan+UBSan build (image B) in the form of proofs/cgif/cgif_file_fuzzer/lib/YCej.v (commit 25e3d17bdb50); module paths changed (cgif lib/X -> lib/Reusable/X, libreac/fuzz_knock's layout at commit 4b6f0df50aa7). *)
+(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_codec's ASan+UBSan build (image B) in the form of proofs/cgif/cgif_file_fuzzer/lib/YCej.v (commit theorem-labs/oss-verify-proofs@6b32741d849a); module paths changed (cgif lib/X -> lib/Reusable/X, libreac/fuzz_knock's layout). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* YCej: the trace universe of fuzz_codec's start-up certificate, image B.
 (* Read from: fuzz_codec.asan-ubsan (libdiginet/fuzz_codec asan-ubsan) sha256 73109e32e77beff294d41ae6f16d607479ad1884485781b322645e6f8afa99c3; unstripped twin sha256 43feeaa314a42fe569b4443c710a74561e9077e617f7412cc54fbf4a6557b266 *)
    Image: the pinned bin/fuzz_codec/fuzz_codec.asan-ubsan of libdiginet,
@@ -17,7 +18,7 @@
    (8 traces, from 6 call sites in 2 functions; stderr empty), and reassembled into this unit by
    fuzz_decode's acej.py (sha256 5db4ca1babf0; internal record),
    whose controls re-emit the donor's released
-   lib/YCej.v and lib/A/ACej.v (commit 25e3d17bdb50) byte for byte from their own data. The ipc are the return
+   lib/YCej.v and lib/A/ACej.v byte for byte from their own data. The ipc are the return
    addresses of the GetCurrentPc calls on the unwinding arm of __interceptor_malloc (0x530d4) and
    __interceptor_free (0x52f74).
    No --fp: at each allocation site s0 holds the frame of the calling function (main or target_run), which sets

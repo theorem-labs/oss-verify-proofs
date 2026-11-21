@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: the parts of sup_worker_env's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan) that need no callee statement: the walk's entry in B's listing, the listing's 34 slots,
    the symbolic state and seed of the entry, the call targets, the model's step, and the verb literal "worker_env"
-   with the premise rec_shape_of's statement (lib/B/Prog/rec_shape_of_c.v:92-95, a Theorem Labs lane fc8bcbd8b42) asks of it. In
-   the form of lib/B/Prog/sup_reset_aux.v (a working branch c79a9f2daf7, whose B code is this one's with
+   with the premise rec_shape_of's statement (lib/B/Prog/rec_shape_of_c.v:92-95, a Theorem Labs lane) asks of it. In
+   the form of lib/B/Prog/sup_reset_aux.v (a working branch, whose B code is this one's with
    one call of arg_s for three, a 32-byte frame for 48, FN 10 for 16 and the verb 0x21e00 for 0x21f00), after the A
-   walk lib/A/Prog/sup_worker_env.v (a working branch 65a6716e4ad: sup_worker_env_s4.v:2151-2250 swe_r3_vb,
+   walk lib/A/Prog/sup_worker_env.v (a working branch: sup_worker_env_s4.v:2151-2250 swe_r3_vb,
    swe_r3_fits, swe_r3_verb), re-derived on B's code, which differs from A's (below). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* sup_worker_env on B (recorder.c:454-462; entry BASE + AF_sup_worker_env = 0x8c13c, 34 instructions, 136 bytes;
    measured with capstone 5.0.7 on the .symtab entry of fuzz_command.asan-ubsan, sha256

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx (generic allocator relation) conversion of image B's block `reset` of SEG_EXIT
    (fuzz_reply.asan-ubsan 0x84fe8 `ld a0,208(s1); jal check_shape_done`, the loop set-up 0x84ff0..0x85000 and the four
    trips of `mv a0,s3; jal source_reset; addi s3,s3,96; bne s3,s2` to 0x85014): it proves lib/B/W_bx_defs_x.v's
    lx_reset_S_x.  The AR file is NOT edited.
    SOURCE: lib/B/W_bx_reset.v (lx_reset, Qed), converted lemma by lemma.  TEMPLATE: image A's conversion of the same
-   block, e60b29a425a lib/A/W_LLVMFuzzerTestOneInput_exit_x.v :3573-4389
+   block, lib/A/W_LLVMFuzzerTestOneInput_exit_x.v :3573-4389
    (lx_reset_post_x .. lx_reset_x; its lx_afn_pre_at_x :246-342), against its AR original
-   b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v :5898-7421.
+   lib/A/W_LLVMFuzzerTestOneInput_exit.v :5898-7421.
    What changes against the AR proof, and nothing else:
    - the journal is ajournal_gx_x over ARx with the ghost head list [] (HP0 makes it [] in every ARx state; the
      source_reset post's Hp' is read [] through HP0 at its journal); AR's laws are AR_laws_x (alx_blocks, alx_sep,
@@ -75,7 +76,7 @@ Local Notation A_LLVMF := YCfn.A_LLVMF.
 Local Notation RA_LLVMF := YCfn.RA_LLVMF.
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -110,7 +111,7 @@ Hypothesis MLM : ameter_laws MT.
 Hypothesis ERR : errno_law_x B ARx.
 Hypothesis AZS_s : azs B (rg_s fr_RG) (4 * ASRC).
 Hypothesis CSD : csd_spec_x B PST ARx (BASE + AF_fr_check_shape_done).
-(* ---- the room round (image A's exit_x at 5a9b16eac9e): the allocator rules' room record RP, whose room invariant is
+(* ---- the room round (image A's exit_x): the allocator rules' room record RP, whose room invariant is
    the cut's NP (cand13's kit, W_journal_x.v Record roomp) ---- *)
 Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
@@ -378,7 +379,7 @@ Definition xr_inv_x (cx : lfcx) (m : lmod) (fpos : Z) (ly3 : alayout) (S3 : asta
     NP S /\ cnt_ok_pk RP (fun _ => 0%nat) (ablocks B ly S).
 
 (* ================================================================== route R: the block at a world relation R (the
-   reply's shape, a working branch 7d2979ecc661 cut_x).  Each <name>R is <name> with the journal
+   reply's shape, a working branch cut_x).  Each <name>R is <name> with the journal
    ajournal_gx_x segs B PST ARx -> ajournal_gx_xR segs B PST ARx R, SRr segs -> SRrG segs R, the post / statement
    lx_reset_post_x / lx_reset_S_x -> lib/B/W_bx_defs_x.v's _xR twins, the callees' contracts CSD / SR -> CSD_R / SR_R,
    the runs / branch -> their SRrG forms, the journal lemmas -> their _xR twins (W_journal_x.v, YCbqG.v, W_frame_x.v)
@@ -390,8 +391,8 @@ Variable R : world segs -> world segs -> Prop.
 Hypothesis R_refl : forall W, R W W.
 Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', @wle segs W W' -> R W W'.
-(* the callees at R (lib/B/W_contract_srlf_xR.v, a working branch bcac56210a75): SR_R is the G4 row
-   W_bx_reset_x.v:114 SR (source_reset's contract) at R; CSD_R is CSD (:109, check_shape_done's contract) at R *)
+(* the callees at R (lib/B/W_contract_srlf_xR.v, a working branch): SR_R is the G4 row
+   W_bx_reset_x.v:115 SR (source_reset's contract) at R; CSD_R is CSD (:109, check_shape_done's contract) at R *)
 Hypothesis CSD_R : csd_spec_xR B PST ARx R (BASE + AF_fr_check_shape_done).
 Hypothesis SR_R : sr_spec_g_xR B PST ARx R MT RP (BASE + AF_fr_source_reset).
 (* the runs and the branch at R (W_journal_x.v paj_run_x_xG / paj_run_to_x_xG, W_kit.v paj_branch_xR): the walks
@@ -1097,7 +1098,7 @@ Lemma xr_inv_x_wle : xr_inv_x = xr_inv_xR (@wle segs). Proof. reflexivity. Qed.
    the strict hypothesis of the same name, and the three laws hold for wle *)
 Ltac wle_inst := first [ eassumption | exact SR | exact CSD | intros ? ? H; exact H | intros ?; apply wle_refl
   | intros ? ? ? H1 H2; eapply wle_trans; [exact H1 | exact H2] ].
-(* ------------------------------------------------------------------ W_bx_defs.v:586 lx_afn_pre_at, over ARx
+(* ------------------------------------------------------------------ W_bx_defs.v:587 lx_afn_pre_at, over ARx
    (A's lx_afn_pre_at_x, :246-342, without the spine, over bx_frame) *)
 Lemma lx_afn_pre_at_x : forall cx ly3 S3 fpos k (W : world segs) mem md regs STK1,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx [] ->

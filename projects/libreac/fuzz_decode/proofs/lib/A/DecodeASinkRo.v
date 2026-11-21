@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: row D-A-sink-ro of fuzz_decode's composition step 5b: four Section hypotheses of
-   lib/A/DecodeClose.v (a working branch 45061c42804), each in DecodeClose's text, at image
+   lib/A/DecodeClose.v (a working branch), each in DecodeClose's text, at image
    A's instance of the Section variables: segs = decodesegs0, B = GrantB (lib/A/AD2l.v, the record the composition
    binds), KS = lib/A/AE2k.v:44 tfib_K, ameta_inv = Reusable/YE01.v:142 ameta_inv, asink_img_laws = Reusable/YE01.v:29
    asink_img_laws at SK = dec_A_sink_head, ro_below_ofl = lib/A/Prog/PaBase.v:23 ro_below_ofl at SK = dec_A_sink_head
-   (the Theorem Labs lane forms lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:175-181 names). The sink names are the ones lib/A/ACfn.v
+   (the Theorem Labs lane forms lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:176-182 names). The sink names are the ones lib/A/ACfn.v
    fixes for the driver (asink_none :46 / :59, ameta_inv :49 / :60).
    proves no function (kind: image facts): HB_META_KEPT and HB_SINK_IMG_LAWS are exact applications of the core's
    YE01.v:156 ameta_inv_kept and lib/A/AD1u.v:44 tfib_AIL at GrantB; HB_RO_BELOW_OFL and HB_ROM_NO_ERRNO are
    vm_compute checks over the image's loaded segments.
    dec_HB_SINK_KEPT is HB_SINK_KEPT in its AMENDED text: the HSINK_KEPT premise of the statement
-   on a working branch at cb3945d8e0b (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:231-234), which
+   on a working branch (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:232-235), which
    adds `~ YI16.sink_open_fp FP` right after the journal premise, the premise YE01.v:85 asink_none_kept takes (:87).
-   The text before the amendment (DecodeClose.v:334-337 on -close 45061c42804) is false: lib/A/DecodeASinkRoProbe.v
+   The text before the amendment (DecodeClose.v:334-337 on -close) is false: lib/A/DecodeASinkRoProbe.v
    HB_SINK_KEPT_false. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -54,9 +55,9 @@ Local Abbreviation asink_img_laws := (@YE01.asink_img_laws dec_A_sink_head).
 Local Abbreviation ro_below_ofl := dec_A_ro_below_ofl.
 
 (* ---- HB_SINK_IMG_LAWS (DecodeClose.v:358) ---------------------------------------------------------------------- *)
-(* The core's sink record laws at GrantB: lib/A/AD1u.v:44 tfib_AIL is stated at tfibsegs (lib/A/AB1v.v:13) and the
+(* The core's sink record laws at GrantB: lib/A/AD1u.v:44 tfib_AIL is stated at tfibsegs (lib/A/AB1v.v:14) and the
    instance tfib_sink_head (lib/A/AE2k.v:36, ofl head A_ofl_head); both are by definition decodesegs0 and
-   dec_A_sink_head (DecodeTFIB.v:19 and AB1v.v:13 are Asan.M.loaded_segments; AE2k.v:27 A_ofl_head and
+   dec_A_sink_head (DecodeTFIB.v:19 and AB1v.v:14 are Asan.M.loaded_segments; AE2k.v:27 A_ofl_head and
    DecodeCalloc.v:97 DEC_A_ofl_head are the same symbol, musl's ofl_head). *)
 Lemma dec_HB_SINK_IMG_LAWS : asink_img_laws segs B KS.
 Proof. apply AD1u.tfib_AIL; first [exact AD2l.GrantB_syms | apply AR_laws_ok]. Qed.
@@ -73,7 +74,7 @@ exact (YE01.ameta_inv_kept (rc := rc) (SK := dec_A_sink_head) segs B KS dec_HB_S
   STK sp0 FP ly S W0 mem0 md0 own ly' S' W' mem' md' k M HJ HM).
 Qed.
 
-(* ---- HB_SINK_KEPT, amended (a Theorem Labs lane cb3945d8e0b, LLVMFuzzerTestOneInput_cg.v:231-234) ------------------------- *)
+(* ---- HB_SINK_KEPT, amended (a Theorem Labs lane, LLVMFuzzerTestOneInput_cg.v:231-234) ------------------------- *)
 (* The amended premise at the instance (cg.v:188 rd W mem = mrestrict (w_H W) mem). Reusable/YE01.v:85
    asink_none_kept. *)
 Lemma dec_HB_SINK_KEPT : forall (rc : YM05.RunCeil),

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AFeu.v, with its module paths changed; 76 of its 100 lines of code are new or changed and 258 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v (c-asan, frozen), module paths changed only. *)
 (* The image-free base of the Deallocate interface DGif0.DIface and its drain contract (DMspec / DMiface), beside
    ImgBase.
 

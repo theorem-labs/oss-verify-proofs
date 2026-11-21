@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* rp_uci_int_cgW: the proof of lib/A/Prog/rp_uci_int_cg.v's frozen uci_rp_uci_int_holds_stmt, for every float
    state, run ceiling and record B. The walk is the cgif-form walk of libreac/fuzz_decode's released
-   lib/A/Prog/crtA_walk.v (origin/ossv/recipes 88154566652a): the function's own code runs as footprint runs
+   lib/A/Prog/crtA_walk.v: the function's own code runs as footprint runs
    (lib/A/Prog/rp_uci_int_cgW_runs.v), each carried into SRr by the leaf kit's bridge (lib/A/Prog/LeafCgFacts.v
    bridge_evtF_stmt_YA0n) after the state transport of lib/A/Prog/LeafCgGlue.v; the one call, memchr (0x7ff30), is
    cut by the statement's memchr premise (lib/A/Rt/MemchrDef.v amemchr_realizesM at c = '\n').

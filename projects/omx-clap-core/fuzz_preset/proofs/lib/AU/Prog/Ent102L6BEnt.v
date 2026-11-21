@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, PIN sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): the ENTRY
    STATE of segment L6x of LLVMFuzzerTestOneInput (B' entry 0x816cc), the exit lane (listing +0x1c4 .. the `ret` at
@@ -7,7 +8,7 @@
      l6_geom     - the geometry of the fake frame this lane releases, read off the cf AR laws of
                    lib/Reusable/YG0lawscf.v (alc_frames, alc_flag, alc_sep, alc_client_img);
      l6_entry_ok - the symbolic state ss_l6 of lib/AU/Prog/Ent102L6BDefs.v describes the machine at cut_exit.
-   PORTED from lib/A/Prog/Ent102L6AEnt.v (blob 27556495d288, a working branch a2d6bb26a279) by
+   PORTED from lib/A/Prog/Ent102L6AEnt.v (blob 27556495d288, a working branch) by
    port/a2b.py (sha256 f5113cbc90e503da, no --map). Hand fixes: the Require routing (lib.B Listing_prog Ent102PLB,
    lib.AU Ent102CutsB, lib.AU.Prog Ent102L6BDefs) and A_prog_listing -> B_prog_listing. The literals a2b leaves
    untranslated (0x7fff8000, 0x10007fff8000) are ASan constants, the same on both images.
@@ -18,7 +19,7 @@
    a Theorem Labs lane record, the internal file idx-llvm-newpin.txt exit=0; NEW walk; proof-index seg_L6x_B: 0 hits).
    This file: the entry-state lemma of that segment.
    The A' file's own source (by path, image-free shape): lib/B/Prog/EntS7EntB.v of a working branch
-   c3e54cc5ad62 (s7_geom, s7_entry_ok; image B, old pin). Register map (s2 = s11 = fk, s10 = shadow_addr fk,
+   (s7_geom, s7_entry_ok; image B, old pin). Register map (s2 = s11 = fk, s10 = shadow_addr fk,
    s0 = sp0) and frame (128 bytes, the saved block at sp0 - 8 .. sp0 - 104): the same on both #102 images (listing
    slots 113 .. 177 are the A' words).
    NUMERALS: 128 / 120 / 104 / 16 / 8 are LENGTHs of this frame (EC_SAVE / EC_FRAME_BYTES and the saved-block slots);

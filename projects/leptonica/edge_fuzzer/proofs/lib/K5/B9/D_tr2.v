@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor lo := rt_sp0 - STACK_SPAN, the span the start state guarantees writable). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -76,7 +77,7 @@ Proof using AF AF_DRV FUZZ VPR OUT_loc ERR_loc XENV1_loc LIB_loc IO_img XENV_img
                   & t3 & t4 & t5 & t6 & c0 & c1 & c2 & c3 & c4 & c5 & c6 & c7 & F & fc & m & HA & HT & Hk14 & HCR).
   pose proof HT as (ART0 & MI0 & CLX0 & FR0 & TF0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & PL & PB & BD & P0 & P1 & CAP0 & UT0 & FL0).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 160)) = usp - 160) by (apply unsigned_lit; ul).
   assert (DPOS : 0 < d /\ ((exists p n, In (p, n) (rt_live RT Σ) /\ p <= d /\ d + Z.of_nat (length payload) <= p + n /\ d mod 8 = 0) \/ payload = [])).
   { destruct (Z.eq_dec plen 0) as [Z0|NZ].
@@ -88,7 +89,7 @@ Proof using AF AF_DRV FUZZ VPR OUT_loc ERR_loc XENV1_loc LIB_loc IO_img XENV_img
       split; [lia|]. left. exists owned, plen. split; [exact IN|]. split; [lia|]. split; [lia|]. clear - AL16. Z.div_mod_to_equations. lia. }
   apply (FUZZ Σ (PMfd fds0 fs) (Z_to_bv 64 0xe71a0) (Z_to_bv 64 (usp - 160)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 plen)
            (Z_to_bv 64 d) (Z_to_bv 64 d) (Z_to_bv 64 plen) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 owned) s3 (Z_to_bv 64 TR_BASE)
-           (Z_to_bv 64 k) (Z_to_bv 64 0) (Z_to_bv 64 (-2)) s8 s9 s10 s11 t3 t4 t5 t6 F fc m d payload lo); try reflexivity; try assumption.
+           (Z_to_bv 64 k) (Z_to_bv 64 0) (Z_to_bv 64 (-2)) s8 s9 s10 s11 t3 t4 t5 t6 F fc m d payload lo); try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
   - apply PMfd_fdfs_only.
   - apply PMfd_mat_stable.
   - rewrite <- PL. reflexivity.
@@ -158,7 +159,7 @@ Proof using AF AF_DRV FUZZ VPR OUT_loc ERR_loc XENV1_loc LIB_loc IO_img XENV_img
     apply (VPR Σ1 fds0 fs (Z_to_bv 64 0xe7298) (Z_to_bv 64 (usp - 160 - 80)) gp (Z_to_bv 64 TP_A) t0' t1' t2' (Z_to_bv 64 plen)
              (Z_to_bv 64 d) (Z_to_bv 64 FMT_emit) (Z_to_bv 64 (usp - 160 - 80 + 24)) a2' a3' a4' a5' a6' a7' (Z_to_bv 64 owned)
              (Z_to_bv 64 0) (Z_to_bv 64 TR_BASE) (Z_to_bv 64 k) (Z_to_bv 64 0) (Z_to_bv 64 (-2)) s8 s9 s10 s11 t3' t4' t5' t6' F' fc' m2 so
-             (usp - 160 - 80 + 24) lo); try reflexivity; try assumption.
+             (usp - 160 - 80 + 24) lo); try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
     + rewrite EU2. reflexivity.
     + destruct Hso as [->|(j & Hj & ->)]; [left; reflexivity| right; exists j; split; [lia| reflexivity]].
     + io_ssp_tac AF_DRV.
@@ -231,7 +232,7 @@ Proof using AF AF_DRV FUZZ VPR OUT_loc ERR_loc XENV1_loc LIB_loc IO_img XENV_img
       { intros fl FL4.
         apply (TCTX_agree RT OUT_rep ERR_rep XENV1 LIB AF Σ1 Σ1 so (emit0_next so) 1 fl usp buf cap plen d owned payload
                  c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m1 m4 HT1 ART4 MI4 (wmono_trans asegs m1 m3 m4 WM13 WM4));
-          try reflexivity; try assumption.
+          try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
         - rewrite SP1. exact ST4.
         - exact (CLX4 _ FL4). }
       destruct Hcase as [(K1 & -> & FL4)|(K1 & -> & FL4)].

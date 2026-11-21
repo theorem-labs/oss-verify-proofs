@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-hcw-A of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record); merger ReallocPrimary.CfW).
    rule 24: no function proved (kind: image row; a closed fact over reply's image A, fuzz_reply.asan).
-   Reuse search: the row's own cgif discharge, YGcfInstHitcgif.v:95 HCW_cgif (a working branch ee95275bccb), and
+   Reuse search: the row's own cgif discharge, YGcfInstHitcgif.v:95 HCW_cgif (a working branch), and
    reply's ReplyImg_depkeep.v (a Theorem Labs lane, the constant cells' zone at reply A): no HCW discharge at reply.
 
-   HCW is the cf layer's YGcfInstHit.v:160-162 (commit ee95275bccb):
+   HCW is the cf layer's YGcfInstHit.v:161-163:
      forall ly' c j cl', layout_ok ly' -> im_img_cover ly' -> ly_tsd ly' = as_tsd B ->
        In c (as_const B ly') -> 0 <= j < Z.max 1 (Z.of_nat (c_w c)) -> 1 <= cl' <= 31 ->
        ~ ImgBaseAG.WINT ly' cl' (aeval B ly' (c_at c) + j).
-   Every name in it is on reply already (ImgBase.AImg at AImg_reply, A/AGif2reply.v; ImgBaseAG.WINT, A/ImgBaseAG.v:123),
+   Every name in it is on reply already (ImgBase.AImg at AImg_reply, A/AGif2reply.v; ImgBaseAG.WINT, A/ImgBaseAG.v:124),
    so [hcw_A] states it verbatim at reply's instance and a consumer closes the layer's row with `exact`.
-   The proof is HCW_cgif's: the constant cells lie in reply's constant-cell zone AGif0reply.CZONE (A/AGif0reply.v:63),
+   The proof is HCW_cgif's: the constant cells lie in reply's constant-cell zone AGif0reply.CZONE (A/AGif0reply.v:64),
    by ReplyImg_depkeep.const_cells_zone (cgif's AGix.const_cells_zone at reply's tables); CZONE misses every WINT cell,
    since WINT lies in the thread object at offsets >= 208 (Pv = T + t_cache + 80 * cl), 2768 (the literal
    [T + 2768, T + 2824)), 2912 + 8 * cl (SSLOTv = T + t_stats + 112 + 8 * cl) and 3168 (t_unwinding), all above CZONE's
@@ -42,7 +43,7 @@ Local Open Scope Z_scope.
 
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* HCW at image A (YGcfInstHit.v:160-162 at reply's instance; cgif: YGcfInstHitcgif.v:95 HCW_cgif). *)
+(* HCW at image A (YGcfInstHit.v:161-163 at reply's instance; cgif: YGcfInstHitcgif.v:95 HCW_cgif). *)
 Theorem hcw_A : forall B, @im_syms AImg_reply B ->
   forall ly' c j cl', layout_ok ly' -> @im_img_cover AImg_reply ly' -> ly_tsd ly' = as_tsd B ->
   In c (as_const B ly') -> 0 <= j < Z.max 1 (Z.of_nat (c_w c)) -> 1 <= cl' <= 31 ->

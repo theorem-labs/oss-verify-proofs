@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvIR, which gained the vDSO conjunct, taken apart by minvir_dest and built by minvir_split; IN_ok takes the vDSO fact from the walk's world predicate for the call's invariant). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -230,7 +231,7 @@ Proof using HC HF HMI HP HU Hhd Hkey Hsm Htop0.
   pose proof B_win as (W1 & W2 & W3 & W4 & W5 & W6). pose proof B_4096 as W7.
   pose proof HF as (F1 & F2 & F3 & F4 & F5 & F6).
   constructor; cbn [ia_s ia_L ia_X ia_R ia_U ia_sc ia_req ia_rho ia_m ia_gd ia_erv ia_vm ia_mW mkia].
-  - exact (mig_I HMI).
+  - exact (mig_I (proj1 HMI)).
   - exact (proj1 HC).
   - exact P1.
   - split; [exact P2 | exact P3].
@@ -633,10 +634,10 @@ Qed.
 
 Lemma IN_ok : ltac2:(tb__ "0|0|
 SfS6eS6dVmd;A1Vvm;A3VKc;Vtr;Vmd;A2S114S9fVtr;Vmd;A3F_;F_;").
-Proof using HR0 HagF Hi Hnest HsmC HsmF Htier.
+Proof using HKF HR0 HagF Hi Hnest HsmC HsmF Htier.
   intros Hvm HKc. pose proof N_facts as (F1 & F2 & F3 & F4 & F5 & F6 & F7). pose proof N_sp as (_ & _ & _ & D1 & _).
   pose proof (iok_depth ia Hi) as [DP _]. fold sc u15 in DP.
-  split; [|exact E_a0]. split; [exact (MI_call Hvm)|]. split; [exact (iok_Xr ia Hi)|]. split; [exact HKc|].
+  split; [|exact E_a0]. split; [exact (conj (MI_call Hvm) (proj2 (proj2 HKF)))|]. split; [exact (iok_Xr ia Hi)|]. split; [exact HKc|].
   split.
   - cbn zeta. rewrite E_a0, E_a1. change (bv_unsigned (rw rho1 V_DEPTH)) with (bv_unsigned (rw rho1 15%positive)). rewrite E_depth1.
     split; [exact F5|]. split; [lia|]. split; [exact F6|].
@@ -732,7 +733,7 @@ Lemma MI_patch R2 md2 : ltac2:(tb__ "0|2|
 S71S3dS5bS0S41Vm;VX;A3M0VR2;VU;VA2;VrhoL;Vmd2;A8Se3G0Sb0VA2;A1M1A2SfS5S49G1A1S3A3S71S3dS5bG0VR2;VU;VA2;Sd8Vmd2;A8F_;F_;F_;").
 Proof using HagF Hi Hkept Htop2 Hlink Htier u10 u15.
   pose proof Htop2 as ET. clear Htop2.
-  destruct A2 as [s2 L2]. cbn [ma_s]. intros HM HX1 Hinit1. unfold MInvIR, MInvI in *. cbn [ma_s ma_L] in *.
+  destruct A2 as [s2 L2]. cbn [ma_s]. intros HM HX1 Hinit1. minvir_dest HM. minvir_split. unfold MInvI in *. cbn [ma_s ma_L] in *.
   pose proof N_sp as (S1 & S2 & SH & D1 & D2 & U10). top_ranges.
   apply (minvG_frame_core C_U (m :: X) R2 U s2 L2 _ _ _ _ (m_vmmaps md2) inFrm HM HX1).
   - intros a Ha NF.
@@ -831,7 +832,7 @@ Proof using HagF HagL Hi Hlink HsmC HsmF HsmL Htier.
     split; [exact (contN_frame_P (L_as_fail IEC_U) rhoL tr' ms' md' HsmL eq_refl HagL rho'' Hlink Hcan2)|].
     split; [exact HKc2|].
     exists A2.
-    split; [exact (MI_patch (L_as_fail IEC_U) rhoL A2 Hkept2 (layout_extends_top _ _ _ Hext2) rho'' Hlink None mdw HM2 HX2 (init_of_xraw _ _ _ _ (mig_I HM2) HX2 ltac:(left; reflexivity)))|].
+    split; [exact (MI_patch (L_as_fail IEC_U) rhoL A2 Hkept2 (layout_extends_top _ _ _ Hext2) rho'' Hlink None mdw HM2 HX2 (init_of_xraw _ _ _ _ (mig_I (proj1 HM2)) HX2 ltac:(left; reflexivity)))|].
     split; [exact HX2|]. split; [exact Hext2|].
     cbn zeta in Hhb2, Hy2. rewrite E_a0 in Hhb2, Hy2. rewrite E_a1 in Hy2.
     split; [exact Hhb2|]. split; [exact Hub2|].
@@ -874,7 +875,7 @@ Proof using HagF HagL Hi Hlink HsmC HsmF HsmL Htier.
     split; [exact (contN_frame_P (L_as_ok IEC_U) rhoL tr' ms' md' HsmL eq_refl HagL rho'' Hlink Hcan2)|].
     split; [exact HKc2|].
     exists A2, g, amg.
-    split; [exact (MI_patch (L_as_ok IEC_U) rhoL A2 Hkept2 (layout_extends_top _ _ _ Hext2) rho'' Hlink (Some (g, bv_unsigned (rw rhoL V_RES))) mdw HM2 HX2 (init_of_xraw _ _ _ _ (mig_I HM2) HX2 ltac:(left; reflexivity)))|].
+    split; [exact (MI_patch (L_as_ok IEC_U) rhoL A2 Hkept2 (layout_extends_top _ _ _ Hext2) rho'' Hlink (Some (g, bv_unsigned (rw rhoL V_RES))) mdw HM2 HX2 (init_of_xraw _ _ _ _ (mig_I (proj1 HM2)) HX2 ltac:(left; reflexivity)))|].
     split; [exact HX2|]. split; [exact Hext2|].
     cbn zeta in Hhd2, Hsc2, Hfit2, Hhb2, Hy2. rewrite E_a0 in Hhd2, Hsc2, Hhb2, Hy2. rewrite E_a1 in Hfit2, Hy2.
     split; [exact Hhd2|]. split; [exact Hu2|]. split; [exact Hsc2|]. split; [exact Hfit2|]. split; [exact Hidx2|].
@@ -897,7 +898,7 @@ VTR;S52Vkas;VkB;A2S12cS3dS11eVKc;Via;A2S11fVia;VmW;A2Sc7A4VQ;A3").
 Proof using AS CONT_fail CONT_ok HR0 Hi HkB Hkas Hnest Htier RR.
   unfold WalkSeg.POST. (apply (trr_ex RR); [lia|]). intros rhoF.
   (apply (trr_inhP RR); [lia|]). intros [tr [msF md]] [HagF [HsmF HKF]]. change (agrees (rho2 ia mW) rhoF) in HagF.
-  pose proof HKF as [HKc Hvm]. cbn [w_tr w_cfg cfg_model] in HKc, Hvm.
+  pose proof HKF as [HKc [Hvm VDF]]. cbn [w_tr w_cfg cfg_model] in HKc, Hvm.
   set (K0 := fun tr' md' => Kc tr' md' /\ tr' = tr /\ md' = md).
   exists (SPJ segsU (liftK K0) EvN (rhoB rhoF msF)). split.
   { apply (SPJ_unbase segsU (liftK K0) (rhoB rhoF msF) SNS 0 (-144) EvN _ EvN_ok).
@@ -905,7 +906,7 @@ Proof using AS CONT_fail CONT_ok HR0 Hi HkB Hkas Hnest Htier RR.
   apply ((trr_callP RR) kas kB (liftK K0) JN EvN (Pre_as IEC_U) sN RcN (Posts_asG segsU C_U IEC_U Nf Og (m :: X) U A1 Kc) Q (rhoB rhoF msF) HkB entN chkN AS).
   -
     intros tr1 ms1 md1 HsmE [HK [-> ->]].
-    exact (IN_ok rhoF tr msF md HagF HsmF ms1 HsmE Hvm HKc).
+    exact (IN_ok rhoF tr msF md HagF HsmF HKF ms1 HsmE Hvm HKc).
   -
     intros L1 JL tr1 ms1 md1 rhoL tr' ms' md' HinL HsmE [HK [-> ->]] HagL HsmL HJL.
     cbn [Posts_asG In] in HinL. destruct HinL as [HinL | [HinL | []]]; injection HinL as HL HJLe; subst L1 JL; [destruct HJL as [HG HJL] | destruct HJL as [HG HJL]].
@@ -1232,7 +1233,7 @@ Qed.
 Lemma MI_exit X1 (A1 : MA) : ltac2:(tb__ "0|1|
 S71S3dS5bVX1;S8S7S41S3fA2A1M0VU;VA1;VrhoK;Vmd;A8Se3VX1;Sb0VA1;A1A2S71S3dS5bVX1;G0VU;VA1;S12fVmd;A8F_;F_;").
 Proof using HC HSP Hab K.
-  destruct A1 as [s1 L1]. cbn [ma_s]. intros HM HX1. unfold MInvIR, MInvI in *. cbn [ma_s ma_L rm rhoF rho_set_rl rho_sub rhoR] in *.
+  destruct A1 as [s1 L1]. cbn [ma_s]. intros HM HX1. minvir_dest HM. minvir_split. unfold MInvI in *. cbn [ma_s ma_L rm rhoF rho_set_rl rho_sub rhoR] in *.
   apply (minvG_frame_core C_U X1 None U s1 L1 _ _ _ _ (m_vmmaps md) (fun _ => False) HM HX1).
   - intros a Ha _. exact (m'_views a Ha).
   - intros a [].

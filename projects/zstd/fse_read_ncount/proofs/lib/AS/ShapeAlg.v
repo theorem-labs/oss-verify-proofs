@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adds rz_silent_all: a node whose answers are all silent realizes T when every successor does; rz_node takes RomBase.sys_rob, so rz_silent1, rz_silent_all and rz_emit1 take it too, discharged at the exit node (rz_exit) by sys_rob_exit; imports RomBase). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -8,6 +9,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import SimInv ExitSim CatSim MmapSim AllocSim WallSim.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Cfg.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Lemma is_prefix_app_split {A} : forall (l a b : list A),
@@ -71,6 +73,9 @@ Inductive realizes : config -> TSet -> Prop :=
 | rz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
 (T : I -> TSet) (i0 : I),
 node_ok c I evs nx ->
+    (* LPS 727298f3: the node's system call reads no byte the run's backing adds
+       ([RomBase.sys_rob]; [RomStable.run_init] lifts a walk to the run's start) *)
+    sys_rob segs c ->
 (forall i, realizes (nx i) (T i)) ->
 realizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | rz_halt : forall c,
@@ -80,7 +85,7 @@ realizes c t_nil
 realizes c T -> t_eq T T' -> realizes c T'.
 #[using="Type"] Lemma realizes_nonempty : forall c T, realizes c T -> T [].
 Proof.
-intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
 - exists i0. left. apply is_prefix_nil.
 - reflexivity.
 - apply Heq. exact IH.
@@ -88,7 +93,7 @@ Qed.
 #[using="Type"] Lemma realizes_star_only : forall c T, realizes c T ->
 forall tr c', star_cfg segs ACFG c tr c' -> T tr.
 Proof.
-intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
 intros tr c' Hstar.
 - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
 + exists i0. left. apply is_prefix_nil.
@@ -107,26 +112,41 @@ Proof.
 intros f tr. split; [intros [[] Hf]; exact Hf | intro Hf; exists tt; exact Hf].
 Qed.
 #[using="Type"] Lemma rz_silent1 : forall c c' T,
-node_ok c unit (fun _ => []) (fun _ => c') ->
+  node_ok c unit (fun _ => []) (fun _ => c') -> sys_rob segs c ->
 realizes c' T ->
 realizes c T.
 Proof.
-intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
 apply (rz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-- apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
 intros []; exact Hc.
 - eapply t_eq_trans;
 [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
 | apply t_emit_nil_eq; eapply realizes_nonempty; exact Hc ].
 Qed.
+Lemma rz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok c I (fun _ => []) nx -> sys_rob segs c ->
+  (forall i, realizes (nx i) T) ->
+  realizes c T.
+Proof.
+  intros c I nx T i0 Hnode Hrob HT.
+  assert (HT0 : T []) by (eapply realizes_nonempty; apply (HT i0)).
+  apply (rz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (rz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode Hrob).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
+
 #[using="Type"] Lemma rz_emit1 : forall c c' e T,
-node_ok c unit (fun _ => e) (fun _ => c') ->
+  node_ok c unit (fun _ => e) (fun _ => c') -> sys_rob segs c ->
 realizes c' T ->
 realizes c (t_emit e T).
 Proof.
-intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
 apply (rz_conseq c (t_alt (fun _ : unit => t_emit e T))).
-- apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
 intros []; exact Hc.
 - apply t_alt_unit.
 Qed.
@@ -155,6 +175,7 @@ rewrite in_sysno_sys_input; exact Hx8
 + intros e st Hss.
 destruct (sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 Hss) as [-> ->].
 exists tt. split; reflexivity.
+  - exact (sys_rob_exit segs ms model x8 Hsvc Hx8).
 - apply rz_halt. cbn. discriminate.
 Qed.
 End WithSegs.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); the CONFIG_RSEQ flag; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0DrvB.v, lines 80, 102-104, 139-152. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -29,6 +30,9 @@ Tactic Notation "run_block_keep" constr(scr) constr(NX) := run_block_gen FUEL ST
 Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 Variable scfg : SpuriousCfg.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma vals_lo : forall (vals ext : list word) (n j : nat),
   (n <= length vals)%nat -> (j < n)%nat -> vals_ev (firstn n vals ++ ext) j = vals_ev vals j.
 Proof.
@@ -55,6 +59,7 @@ Proof.
     pose proof (H (ridx r) ltac:(pose proof (ridx_range r); lia)) as Hx. rewrite ridx_roundtrip in Hx. exact Hx.
 Qed.
 
+(* [comment removed for export] *)
 Lemma store_ok_of_defined : forall M (a : Z) (m : nat),
   (0 <= a)%Z -> (a + Z.of_nat m <= 2 ^ 64)%Z -> (forall i, (0 <= i < Z.of_nat m)%Z -> M (Z_to_bv 64 (a + i)) <> None) ->
   store_ok RSEGS M (Z_to_bv 64 a) m = true.
@@ -66,6 +71,7 @@ Proof.
   rewrite Z_to_bv_bv_unsigned in Hdef. destruct (M x); [discriminate | exfalso; apply Hdef; reflexivity].
 Qed.
 
+(* [comment removed for export] *)
 Lemma stage_store_ok : forall M (n : nat), (Z.of_nat n <= 65536)%Z -> store_ok RSEGS M (Z_to_bv 64 0xb9609) n = true.
 Proof.
   intros M n Hn. eapply (store_ok_window RSEGS M (Z_to_bv 64 0xb9000) _ 208896%nat n 0xb9000 0xec000);
@@ -73,7 +79,7 @@ Proof.
 Qed.
 
 Section DrvB.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable L : heap_layout.
   Variable HI : heap_iface.
   Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -95,7 +101,9 @@ Section DrvB.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
   Hypothesis Hplen : (length path <= 4095)%nat.
@@ -108,8 +116,9 @@ Section DrvB.
   Let ENVb (vals : list word) : env := ENV a0s path hw rdraw fdata vals.
   Let above (M : word -> option byte) : Prop := above_sp0 sp0 mem0 M.
 
+  (* [comment removed for export] *)
   Definition model2 (VM : VmMaps) : Model := mkModelE fds0 VM stdin0 fs0 None (Some tid) None.
-
+  (* [comment removed for export] *)
   Definition model1o (off : Z) (VM : VmMaps) : Model := mkModelE (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 off))) VM stdin0 fs0 None (Some tid) None.
 
   Lemma model1_o : forall VM, model1 path tid fs0 stdin0 VM = model1o 0 VM. Proof. reflexivity. Qed.
@@ -129,10 +138,23 @@ Section DrvB.
   Proof. intros. reflexivity. Qed.
 
   Lemma hiv_facts' : forall vals,
-    vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv ->
+    vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp ->
     forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
-  Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen vals P3 P4 i Hi). Qed.
+  (* [hiv_facts] (Es0DrvA.v:147) goes through [auxvp_u] and [rnd_u], and [rnd] now reads
+     [kb_rseq (in_kernel inp)], so Es0DrvA's section discharges
+     [sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME]
+     ahead of [vals].  The old call stopped at [rdraw] and then put [Hva] where [tid] goes -
+     "The term "Hva" has type "valid_argv [a0s; path]" while it is expected to have type
+     "word"" - and carried [Hplen], which this lemma does not use. *)
+  Proof.
+    intros vals P3 P4 i Hi.
+    (* the kernel then named the next slot: after [ME] comes [Hplen] -
+       "The term "vals" has type "list word" while it is expected to have type
+       "(length path <= 4095)%nat"" *)
+    exact (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen vals P3 P4 i Hi).
+  Qed.
 
+  (* [comment removed for export] *)
   Lemma content_block' : forall vals M log (A : Z) (data : list byte),
     vals_ev vals 0 = sp0 -> log_in_b 0 (2 ^ 40) (2 ^ 40) [] [] IMG_W log = true ->
     hz sp0 A (Z.of_nat (length data)) ->
@@ -143,12 +165,15 @@ Section DrvB.
     rewrite (rdn_heap_frame sp0 Hsp vals _ M log A (length data) P0 Hlog HZ). exact Hc.
   Qed.
 
+  (* [comment removed for export] *)
   Lemma above_wbytes : forall M (a : Z) bs,
     (0 <= a)%Z -> (a + Z.of_nat (length bs) <= bv_unsigned sp0)%Z -> above M -> above (wbytes M (Z_to_bv 64 a) bs).
   Proof.
     clear Htid Hplen Hal LEN. intros M a bs Ha Hab HA x Hx. pose proof Hsp as Hsp'. rewrite wbytes_out; [apply HA; exact Hx | rewrite u_small by lia; lia | rewrite u_small by lia; lia].
   Qed.
 
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
   Lemma heap_stagewrite : forall LB cr M VM bs,
     (Z.of_nat (length bs) <= 65536)%Z -> hi_heap HI LB cr M VM -> hi_heap HI LB cr (wbytes M (Z_to_bv 64 0xb9609) bs) VM.
   Proof.
@@ -163,6 +188,7 @@ Section DrvB.
     - intros x Hx. exact (wbytes_grows bs M (Z_to_bv 64 0xb9609) x Hx).
   Qed.
 
+  (* [comment removed for export] *)
   Definition IMG_NOSTAGE : list (Z * Z) := [(0x10000, 0xb9609); (0xc9609, 0xcaf9c); (0xcafa0, 0xeb448); (0xeb7f0, 0xec000)]%Z.
   Definition CPout_stage (n : Z) (a : Z) : Prop := ~ (0xb9609 <= a < 0xb9609 + n)%Z.
 
@@ -211,6 +237,8 @@ Section DrvB.
     - apply wbytes_grows.
     - exact HK.
   Qed.
+
+
 
 End DrvB.
 End FPX_1.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv lies at least 16 bytes above the stack top (ar_sptop ar + 16 <= av), the auxv fact is the launch's vector (L5USA.auxv_okA) in place of the ten-pair auxv20A, and it is read through the visible memory (auxv_vis) and passed with the CONFIG_RSEQ flag to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -146,7 +147,7 @@ Lemma e3_s7A :
     forall (RNDR : 0 <= rnd < 2 ^ 64),
     forall (CANR : 0 <= canary < 2 ^ 64),
     forall (HWR : 0 <= hw < 2 ^ 64),
-    forall (AVS : ar_sptop ar <= av),
+    forall (AVS : ar_sptop ar + 16 <= av),
     forall (HH : ri_inv HI ([(d1, 64); (d2, 64); (d3, 64); (d4, 64)] ++ LB1) (L5DSA.ff_e3 FF Sp F1a F3a F1b F3b F1c F1d) LKt cr A M (vml_of model)),
     forall (AM : amodel_ok A model),
     forall (HK : K []),
@@ -358,7 +359,7 @@ Lemma e3_s7A :
     forall (FRN : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M21 (Sp - 712 + 8 * Z.of_nat j) (nth j [F3a; nz w10; nz w9; L5DSA.RETIRE_MAGIC; F1b; S F1b; F1b + 32; Sp - 504; nz xo; F1b; Sp - 608; Sp - 512; L5DSA.DIV_RET_N] 0)),
     forall (FRZ : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M21 (Sp - 1064 + 8 * Z.of_nat j) (nth j [F1c; F3b + 48; nz w9; nz xo; F1b + 32; nz xo; SB; F3b + 96; F3b + 32; S F3b; Sp - 960; Sp - 608; L5DSA.RESIZE_RET_G] 0)),
     forall (FRA : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M21 (Sp - 1192 + 8 * Z.of_nat j) (nth j [F1d; nz (S (xo + 8)); nz (Z.of_nat lenX); SB; F1c; S F1c; nz (xo + 8); nz xo; 2 ^ 64 - 1; F1c; Sp - 1088; Sp - 960; L5DSA.RESERVE_RET] 0)),
-    forall (AUXV : forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M21 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)),
+    forall (AUXV : L5USA.auxv_okA M21 av uid rnd hw),
     forall (RD42 : rdn RSEGS M21 (Z_to_bv 64 msg) 42 = Some (firstn 41 L5AE3K.at_buf ++ [Z_to_bv 8 0])),
     forall (IC3 : L5.img_clear M21 892784 (892784 + 8)),
     forall (IC2 : L5.img_clear M21 892736 892768),
@@ -386,9 +387,9 @@ Lemma e3_s7A :
 Proof.
   intros.
   (* [comment removed for export] *)
-  expand_arr_at AUXV 20%nat av 0. expand_arr_at FRA 13%nat (Sp - 1216) 24. expand_arr_at FRZ 13%nat (Sp - 1216) 152. expand_arr_at FRN 13%nat (Sp - 1216) 504. expand_arr_at FRQ 11%nat (Sp - 1216) 616.
+  auxv_vis CI21 AUXV rx. expand_arr_at FRA 13%nat (Sp - 1216) 24. expand_arr_at FRZ 13%nat (Sp - 1216) 152. expand_arr_at FRN 13%nat (Sp - 1216) 504. expand_arr_at FRQ 11%nat (Sp - 1216) 616.
   expand_arr_at FRU 3%nat (Sp - 1216) 744. expand_arr_at FRD 13%nat (Sp - 1216) 1016. expand_arr_at FRO 11%nat (Sp - 1216) 1128.
-  pose proof (ue3t2_v1_conc HFILL HCOPY HTLS fx21 R21 (mrestrict (ahid A14 model21) M21)
+  pose proof (ue3t2_v1_conc HFILL HCOPY HTLS rx fx21 R21 (mrestrict (ahid A14 model21) M21)
                 (fun j => match j with 2%nat => Sp - 1216 | 10%nat => obj | 32%nat => av | 33%nat => canary | 34%nat => uid | 36%nat => rnd | 39%nat => hw | 40%nat => U R21 10 | 41%nat => ctx | 42%nat => th | 43%nat => blk | 44%nat => tbv | 45%nat => tev | 46%nat => 861464 | 47%nat => F1d | 48%nat => F1c | 49%nat => 2 ^ 64 - 1 | 50%nat => nz xo | 51%nat => nz (xo + 8) | 52%nat => S F1c | 53%nat => F1c | 54%nat => SB | 55%nat => nz (Z.of_nat lenX) | 56%nat => nz (S (xo + 8)) | 57%nat => S F3b | 58%nat => F3b + 32 | 59%nat => F3b + 96 | 60%nat => SB | 61%nat => nz xo | 62%nat => F1b + 32 | 63%nat => nz xo | 64%nat => nz w9 | 65%nat => F3b + 48 | 66%nat => F1b | 67%nat => nz xo | 68%nat => F1b + 32 | 69%nat => S F1b | 70%nat => F1b | 71%nat => L5DSA.RETIRE_MAGIC | 72%nat => nz w9 | 73%nat => nz w10 | 74%nat => F3a | 75%nat => nz xo | 76%nat => nz xs | 77%nat => S F3a | 78%nat => nz xo | 79%nat => F3a + 32 | 80%nat => F3a + 96 | 81%nat => F1a + 32 | 82%nat => nz (S xo) | 83%nat => F3a | 84%nat => F1a | 85%nat => nz xo | 86%nat => nz bo | 87%nat => F1a + 32 | 88%nat => F1a / 8 + SB | 89%nat => F1a | 90%nat => L5DSA.RETIRE_MAGIC | 91%nat => L5DSA.U R0 25 | 92%nat => L5DSA.U R0 26 | 93%nat => L5DSA.U R0 27 | 94%nat => L5DSA.U R0 8 | 95%nat => L5DSA.U R0 18 | 96%nat => L5DSA.U R0 19 | 97%nat => L5DSA.U R0 20 | 98%nat => L5DSA.U R0 21 | 99%nat => L5DSA.U R0 22 | 100%nat => L5DSA.U R0 23 | 101%nat => L5DSA.U R0 24 | _ => 0 end)) as P. cbn beta iota in P.
   feed_rng P ltac:(first [ apply nz_range | apply UR | apply BL.bvu_range | (unfold L5DSA.U; apply BL.bvu_range) | nlia | (unfold S, SB, L5DSA.RETIRE_MAGIC; unfold numg in FN; clear - FN; lia) ]).
   Time feed P ltac:(first [fcell CI21 | fdp CI21]).

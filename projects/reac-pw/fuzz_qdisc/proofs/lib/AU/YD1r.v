@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1r.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AD1r.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_qdisc's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AD1r.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_qdisc's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AD1r.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput and its entry-launch facts; the channel-reader conjunct of fdchan; the CONFIG_RSEQ-symbolic auxiliary vector; the stack strings at the top of the stack VMA (with the exec file name)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -182,20 +183,24 @@ Hypothesis FREE : free_site_tfa B.
 Hypothesis FREEN : free_null_site_tfa B.
 Hypothesis EXITL : exit_leaf_tfa B xst.
 Hypothesis XFR : xst_frame_tfa xst.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hvfs : valid_fs (in_fs inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YP08.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+pose proof (YP08.z_rand_end TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau) as Hz.
+rewrite Hargv in Hz. pose proof (u64_range sp).
 unfold z_rand in *. rewrite u64_lit by lia. lia.
 Qed.
 Lemma arodata_keep : forall (H H' : word -> bool) m m',
@@ -590,7 +595,7 @@ Proof.
 induction r as [|r IH]; [intros; lia|].
 intros j E W ms md ly S data buf cap q fs N Hlk Hok HEE HEd E41 E61 E62 E63 E65 HS _ HjrN HN4 HBL HPL Hfr HQT HAI HAR HTOP Hnev Hcap HLc Hlen HSO HRO HFI HMD.
 assert (Hjr : (j + Datatypes.S r <= 4)%nat) by lia.
-pose proof HMD as (Hfdl0 & Hnames0 & Hmfs & Hsorted0).
+pose proof HMD as (Hfdl0 & Hcr0 & Hnames0 & Hmfs & Hsorted0).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YM05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 pose proof (config_len_bound data) as Hcl.
@@ -721,15 +726,16 @@ split; [rewrite HspV; intros a Ha; apply HwinV; unfold PF_STK in Ha; lia|].
 split; [rewrite (ts_gp B HB); exact RV3|]. split; [rewrite (ts_tp B HB); exact RV4|].
 split; [exact RV10|]. split; [rewrite RV11, HspV; unfold w64; f_equal; lia | exact HRD]. }
 assert (HfdlV : forall fd, fd_lookup (m_fds mdV) fd = fd_lookup APSG.fds_std fd) by (intros fd; subst mdV; rewrite wvb_fds', Hfdl; apply Hfdl0).
+assert (HcrV : m_channel_reader mdV = true) by (subst mdV; rewrite YK04.wvb_channel_reader, (YCbq.aos_step_channel_reader _ _ _ Hos); exact Hcr0).
 assert (POST : printf_post B xst ly' S' W' regsV memV mdV (Datatypes.S j) (lib_iter (payload data) r (run_tail (N - 1)) (ll_fs l))).
 2:{ rewrite HshapeV, PCV. fold regsV memV.
 change (mkCfg (mkst regsV (Z_to_bv 64 A_icpt_vprintf) memV (seg_rom tfibsegs)) mdV) with (cfg_at tfibsegs A_icpt_vprintf regsV memV mdV).
 destruct j as [|j'].
 -
 cbn [Kstep]. replace (N - 1)%nat with r in POST by lia.
-exact (PF1 ly' S' W' regsV memV mdV _ PREV ltac:(unfold EV_LIB, EV_MAX in *; lia) ltac:(destruct HSOV as [[_ X]|[X _]]; [exact X | exfalso; lia]) HfdlV HAI3 POST).
+exact (PF1 ly' S' W' regsV memV mdV _ PREV ltac:(unfold EV_LIB, EV_MAX in *; lia) ltac:(destruct HSOV as [[_ X]|[X _]]; [exact X | exfalso; lia]) HfdlV HcrV HAI3 POST).
 -
-cbn [Kstep]. exact (PFN ly' S' W' regsV memV mdV _ (Datatypes.S j') PREV ltac:(unfold EV_LIB, EV_MAX in *; lia) ltac:(destruct HSOV as [[X _]|[_ X]]; [exfalso; lia | exact X]) ltac:(lia) HfdlV HAI3 POST). }
+cbn [Kstep]. exact (PFN ly' S' W' regsV memV mdV _ (Datatypes.S j') PREV ltac:(unfold EV_LIB, EV_MAX in *; lia) ltac:(destruct HSOV as [[X _]|[_ X]]; [exfalso; lia | exact X]) ltac:(lia) HfdlV HcrV HAI3 POST). }
 intros regs4 mem4 md4 HAR4 HP4 Hs4 Ha04 HX4 Hfr4 Hpres4 HAI4. unfold cfg_at. rewrite HraV. rewrite HspV in Hfr4.
 pose proof (same_but_materialized_frame _ _ Hs4) as (_ & _ & _ & _ & _ & _ & _ & _ & Hfds4 & _ & _ & Hfs4 & _).
 rewrite HshapeV, restrict_mkst_fx in HSV. fold regsV memV in HSV. rewrite PCV in HSV.
@@ -766,6 +772,7 @@ assert (HROB : arodata_ok B (aview tfibsegs (w_H W') (ms_mem msB))).
 { exact (arodata_frame (w_H W') E4 (ss_mem S_VP) _ _ HFrB WOKV ltac:(rewrite E4_0; exact Ulo) HRO4). }
 assert (HfsB : m_fs mdB = ll_fs l) by (subst mdB; rewrite wvb_fs', Hfs4; subst mdV; rewrite wvb_fs'; exact Hmfs').
 assert (HfdB : m_fds mdB = m_fds md') by (subst mdB; rewrite wvb_fds', Hfds4; subst mdV; rewrite wvb_fds'; reflexivity).
+assert (HcrB : m_channel_reader mdB = m_channel_reader md') by (subst mdB; rewrite YK04.wvb_channel_reader, (YK04.sbm_channel_reader _ _ Hs4); subst mdV; rewrite YK04.wvb_channel_reader; reflexivity).
 assert (HFIB : FINV ly' (w_H W') (ms_mem msB)).
 { assert (HFIV : FINV ly' (w_H W') memV) by exact (finv_run B ly' S' W' mem' md' (w_H W') E2 L_mem _ _ usp HAR' HFrV (proj2 (proj2 (proj2 L_mem_wf))) E2_0 Ulo Uhi HTOP' HFI').
 assert (HFI4 : FINV ly' (w_H W') mem4) by exact (finv_printf B HB ARL ly' S' W' memV mdV mem4 usp (usp - 288) HARV HTOP' Ulo Uhi ltac:(lia) Hfr4 HFIV).
@@ -935,7 +942,7 @@ set (E9 := E_CM E8 (ms_regs msX)) in *.
 rewrite Hr0. cbn [lib_iter]. apply (srz_conseq tfibsegs _ (wr ch_stdout (concat (repeat line0 (N - 1))) (ex 0 (ll_fs l)))); [| apply run_tail_eq].
 replace (N - 1)%nat with (Datatypes.S j - 1)%nat by lia.
 replace (ex 0 (ll_fs l)) with (ex (if count_mode data then 0 else 0) (ll_fs l)) by (destruct (count_mode data); reflexivity).
-apply (tfib_main_tail B HB ARL ML xst FREE EXITL XFR sp inp xw xd a0 p Hsp Hva Hve E9 W4 msX mdX ly6 S6 data pb6 cap 0 (Datatypes.S j) (ll_fs l)).
+apply (tfib_main_tail B HB ARL ML xst FREE EXITL XFR sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau E9 W4 msX mdX ly6 S6 data pb6 cap 0 (Datatypes.S j) (ll_fs l)).
 + intros i Hi. rewrite ECold by (unfold K_CM, K_M1 in *; lia). rewrite E8old by (unfold K_FQ, K_M1 in *; lia). rewrite E4old by (unfold K_VP, K_M1 in *; lia).
 rewrite E2old by (unfold K_LR, K_M1 in *; lia). apply HEE. exact Hi.
 + change (ed E9 2) with (ed E 2). exact HEd.
@@ -952,6 +959,8 @@ rewrite E2old by (unfold K_LR, K_M1 in *; lia). apply HEE. exact Hi.
 + rewrite Hnev6. unfold EV_LIB, EV_MAX in *. lia.
 + exact HSOX.
 + intros fd. subst mdX. rewrite wvb_fds', Efds6. subst mdF. rewrite wvb_fds', HfdB, Hfdl. apply Hfdl0.
++ subst mdX. rewrite YK04.wvb_channel_reader, (same_io_channel_reader _ _ Hio6). subst mdF.
+rewrite YK04.wvb_channel_reader, HcrB, (YCbq.aos_step_channel_reader _ _ _ Hos). exact Hcr0.
 + subst mdX. rewrite wvb_fs', Efs6. subst mdF. rewrite wvb_fs'. exact HfsB.
 -
 assert (HSB' : st_ok tfibsegs E4 (add_cond S_BR cond_BRt) (restrict (w_H W') msB)).
@@ -1008,7 +1017,9 @@ exact (proj2 (al_client_img _ _ ARL ly' S' W' mem' md' a HAR' (or_introl (ex_int
 + exact HSOL.
 + exact HROL.
 + exact (finv_run B ly' S' W' (ms_mem msB) mdB (w_H W') E4 (ss_mem S_VP) _ _ usp HARB HFrL WOKV E4_0 Ulo Uhi HTOP' HFIB).
-+ split; [intros fd; subst mdL; rewrite wvb_fds', HfdB, Hfdl; apply Hfdl0|]. split; [subst mdL; rewrite wvb_fds', HfdB; exact Hnames'|].
++ split; [intros fd; subst mdL; rewrite wvb_fds', HfdB, Hfdl; apply Hfdl0|].
+split; [subst mdL; rewrite YK04.wvb_channel_reader, HcrB, (YCbq.aos_step_channel_reader _ _ _ Hos); exact Hcr0|].
+split; [subst mdL; rewrite wvb_fds', HfdB; exact Hnames'|].
 split; [subst mdL; rewrite wvb_fs'; exact HfsB | exact Hsorted].
 Qed.
 Theorem tfib_loop_L_at : forall E (W : world tfibsegs) ms md ly S data (pb pq : sptr) (cap q : Z) (j r : nat) (fs : Fs),
@@ -1058,7 +1069,7 @@ Theorem tfib_loop_L (B : asyms) (HB : TfibSyms B) (ARL : AR_laws tfibsegs B) (ML
 (LIB : lib_site_x B) (PF1 : printf_first_tfa B xst) (PFN : printf_next_tfa B xst)
 (FREE : free_site_tfa B) (FREEN : free_null_site_tfa B) (EXITL : exit_leaf_tfa B xst) (XFR : xst_frame_tfa xst) : loop_L_x B xst.
 Proof.
-intros sp inp xw xd E W ms md ly S a0 p data pb pq cap q j r fs Hargv Hsp Hva Hve Hvfs.
-exact (tfib_loop_L_at B HB ARL ML xst LIB PF1 PFN FREE FREEN EXITL XFR sp inp xw xd a0 p Hsp Hva Hve E W ms md ly S data pb pq cap q j r fs).
+intros sp brk mbase inp rnd xw xd E W ms md ly S a0 p data pb pq cap q j r fs Hargv Hsp Hva Hve Hvfs Hvl Hlau Hvi.
+eapply tfib_loop_L_at; eassumption.
 Qed.
 End e.

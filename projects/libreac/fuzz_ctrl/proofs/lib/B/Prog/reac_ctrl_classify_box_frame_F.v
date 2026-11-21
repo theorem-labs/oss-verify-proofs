@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1137 of its 1175 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v, with its numbers changed; 1348 of its 1517 lines of code are new or changed and 1006 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -1585,7 +1586,7 @@ Ltac slia := sc; lia.
       - unfold IMG_LO, IMG_LEN. exact RIMG.
       - apply (rng_sub' RNG (S - 8864) 8864); [exact RWIN | split; lia].
       - (* parse's window shadow, byte-exact [shadow_addr (S - 8864), shadow_addr (S - 64)) since a Theorem Labs lane's
-           narrowed parse_x_F (5e63b605f9b): inside this frame's window shadow word cover *)
+           narrowed parse_x_F: inside this frame's window shadow word cover *)
         replace (S + -64 - 8800) with (S - 8864) by ring.
         pose proof RWINs as Hw. unfold shw in Hw. rewrite Hoff in Hw. unfold shadow_addr.
         apply (rng_sub' RNG _ _ _ _ Hw). Z.div_mod_to_equations; lia.

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: ARM_add (op 0) of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput (image B,
    fuzz_reply.asan-ubsan) OVER ARx (a Theorem Labs lane's route (b)): the ARx conversion of
-   lib/B/W_LLVMFuzzerTestOneInput_add.v's lf_arm_add (k1's AR head of record a working branch e234f421174,
-   adapted on this branch to the B cut e879350a388 and W2's W_op_add.v of record; its Theorem lines unchanged).
+   lib/B/W_LLVMFuzzerTestOneInput_add.v's lf_arm_add (k1's AR head of record a working branch,
+   adapted on this branch to the B cut and W2's W_op_add.v of record; its Theorem lines unchanged).
    lf_arm_add_x's statement is the text of B cut_x Section w's hypothesis ARM_add
-   (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:625), checked at the end (lf_arm_add_x_check restates it at cut_x's names
+   (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:626), checked at the end (lf_arm_add_x_check restates it at cut_x's names
    and closes it by `exact`; lf_arm_add_x_cut_x feeds it to cut_x's own lf_arm_x as its ARM_add argument).
-   The template is image A's lib/A/W_LLVMFuzzerTestOneInput_add_x.v (a working branch b4343cabfa9); every
+   The template is image A's lib/A/W_LLVMFuzzerTestOneInput_add_x.v (a working branch); every
    conversion step below is that file's: AR -> ARx with the ghost lists (Hpe at the entry, Hp3 at the cut, Hp' after
    the call), al_* -> alx_*, the journal lemmas -> W_journal_x / YCbqG's _x twins, op_add's keep lemmas -> W2's
    W_op_add.v ones over the generic journal (oa_call_keep takes HPST), paj_run_to_tok -> paj_run_to_tok_x.
@@ -25,7 +26,7 @@
      0 <= n as a premise, given here by BLKN); ad_nodup / ad_fp_avoid / ad_call_keep_frm / ad_gxp / ad_carry are
      converted here under their names + _x with the AR file's proofs.
    - Section hypotheses beyond the header, in the AR file's order:
-       OA    - op_add: W2's lib/B/W_op_add.v:1882 oa_spec_g_x (a working branch 11fb7104fb5, merged here;
+       OA    - op_add: W2's lib/B/W_op_add.v:1883 oa_spec_g_x (a working branch, merged here;
                pb_op_add_g_x :1889 proves it), at PI := PB_fr, the walk's PST / ARx (as B pro_x's OA);
        HEV / HZS / HGOBJ / HRO - the AR file's instance facts, verbatim;
        ERRL  - cut_x's errno_law_x (the _x form of the AR file's ERRL : errno_law B);
@@ -86,7 +87,7 @@ Open Scope Z_scope.
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
 Section addx.
-(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:200-244) ---- *)
+(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:201-245) ---- *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
@@ -112,7 +113,7 @@ Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
 
 (* ---------------------------------------------------------------- ARM_add's own hypotheses, in _add.v's order *)
-(* ---- the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) 0.2; image A's re-fit bcd04daf1a1): the allocator rules' room record RP,
+(* ---- the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) 0.2; image A's re-fit): the allocator rules' room record RP,
    whose room invariant is the cut's NP (the walk's RM := fun S _ => NP S; at top_x rp_RM RP := fun S _ => room_live_cf S = NP) ---- *)
 Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
@@ -156,8 +157,8 @@ Hypothesis LS_add_open : forall cx t m i q pj ev ly S (ly' : alayout) (S' : asta
 Hypothesis LS_add_none : forall cx t m ly S,
   LSx cx t m ly S -> RINV cx t m -> ad_at_op cx m -> oa_first (ad_os (lm_hs m)) = None ->
   LSx cx (t + 1) (ad_none m) ly S.
-(* the room round's count row (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c); image A's text at bcd04daf1a1, ReplyLScnt.v
-   fr_LS3cp_cnt_add at ba8e99b5bd2): at the cut, the live counts plus op_add's premise peak oa_peak stay under RP's
+(* the room round's count row (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c); image A's text at ReplyLScnt.v
+   fr_LS3cp_cnt_add): at the cut, the live counts plus op_add's premise peak oa_peak stay under RP's
    bounds.  The guards are the walk's facts at the cut (the model's sizes come from amodel_at) *)
 Hypothesis LS_cnt : forall cx t m ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> ad_at_op cx m -> amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->
@@ -298,7 +299,7 @@ Ltac ad_meq HF Em := lazymatch type of HF with frame_of ?E ?rs ?m ?m' =>
   pose proof (frame_of_read_only E rs m m' ltac:(vm_compute; reflexivity) HF) as Em end.
 
 (* ---------------------------------------------------------------- the arm *)
-(* the text of B cut_x Section w's hypothesis ARM_add (W_LLVMFuzzerTestOneInput_cut_x.v:625) *)
+(* the text of B cut_x Section w's hypothesis ARM_add (W_LLVMFuzzerTestOneInput_cut_x.v:626) *)
 Theorem lf_arm_add_x : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_x B NP G_fr fr_FP PST ARx LSx RINV 0 cx Hp t W c -> SRr segs W c (INV_K_x B NP G_fr fr_FP PST ARx LSx RINV cx Hp t).
@@ -796,7 +797,7 @@ Proof.
     + reflexivity.
 Qed.
 
-(* ---- THE CHECK: B cut_x Section w's ARM_add (W_LLVMFuzzerTestOneInput_cut_x.v:625), restated in its text at cut_x's
+(* ---- THE CHECK: B cut_x Section w's ARM_add (W_LLVMFuzzerTestOneInput_cut_x.v:626), restated in its text at cut_x's
    names and closed by `exact` from lf_arm_add_x ---- *)
 Local Notation BASEx cx Hp := (lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp).
 Local Notation IA := (INV_A_x B NP G_fr fr_FP PST ARx LSx RINV).

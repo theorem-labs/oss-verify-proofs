@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the global set G_fr of fuzz_reply.asan's LLVMFuzzerTestOneInput, concretely, and
    every G_fr / errno fact that the W8 segment files (W_LLVMFuzzerTestOneInput_*.v, W_x*.v) take as a Section
    hypothesis, proved for it.  One witness that satisfies all of them at once is the check that those hypotheses do
-   not contradict each other (at 45b95aa1834 SEG_EXIT's HG_SL and HG_err did); at integration these lemmas discharge
+   not contradict each other (SEG_EXIT's HG_SL and HG_err did); at integration these lemmas discharge
    the hypotheses.
 
    G_fr_c = the program's 20 objects [addr, addr + plain size) (maps/EvBound/GLOBALS.md: exactly the complement of
@@ -13,12 +13,13 @@
    Premises, each a start-up / instance fact discharged at the milestone:
      HEV  : as_errno B = 0x5d93cc      - AF0m's ts_errno (TFIB_ERRNO = TFIB_TP - 164; maps/EvBound/GLOBALS.md);
      HOWN : the bytes of G_fr_c are not in as_owned_static B - AF0m's ts_owned (as_owned_static B = Tfib_owned_static),
-            by vm_compute at the milestone (AF0m is not in this tree).  Measured on cold/port-reply-startup
-            56fc92fe6b0's AF0m.v: 0 of G_fr_c's 513 bytes lie in its 61 Tfib_owned_static ranges, and Tfib_zero_shadow
+            by vm_compute at the milestone (AF0m is not in this tree).  Measured on a commit's
+             AF0m.v: 0 of G_fr_c's 513 bytes lie in its 61 Tfib_owned_static ranges, and Tfib_zero_shadow
             has the range (0x5d88e0, 0x180) that makes `azs B (rg_s fr_RG) (4 * ASRC)` (HZS / AZS_s) true under ts_zsh
             (script and output: port-reply's w8/vac/own-zsh-check.txt). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_G.v, with its module paths changed; 347 of its 535 lines of code are new or changed and 16 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_G.v, with its module names changed; 14 of its 38 lines of code are new or changed and 511 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G_fr witness lemmas for Section hypotheses that name a set defined in a segment file, so they cannot live in
    W_LLVMFuzzerTestOneInput_G.v (which those files' consumers import below them): proved for the same G_fr_c.
    XR_HGM / XR_ERRNO (_exit.v's source_reset piece lx_reset, at _exit.v's xr_GM): proofs by a Theorem Labs lane

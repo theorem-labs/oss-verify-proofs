@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the plan invariant cs_ok lets the reserved list carry the vDSO pair after the image's reservations and gains four facts: the allocation ceiling at or below the allocation top, mappings clear of the reserved list, the vDSO pair kept reserved, and the channel's reader bit set; the checker and x_stmt take the run's CONFIG_RSEQ flag rz; adds munmap2_stmt. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -24,6 +25,11 @@ Open Scope Z_scope.
 
 Module APS.
 Import AX2. Import AX2S. Import AP.
+(* [ceilnum] puts CEIL's alignment and bounds in context for lia.  The model's
+   [Common/AsanNodesMmA.v:43] defines it #[local] over a CEIL parameter; here CEIL is
+   AsanPlanCore's constant and [ceil_facts] its proved facts, stated as [ceil_ok], which
+   has to be unfolded before lia can read it. *)
+Local Ltac ceilnum := let H := fresh "CEILF" in pose proof ceil_facts as H; unfold ceil_ok in H.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
@@ -105,6 +111,12 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The run's rseq flag as 0/1, in APC's and AsanPlan's position (AFTER LIMIT) so that the
+   discharged argument order of this section agrees with theirs.  node_x and check_all both
+   carry it now; nothing here pins it to a literal. *)
+Variable rz : Z.
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Variable HS : nat -> option acs.
 
 Variable XN : nat -> list expr -> acs -> option acs.
@@ -137,7 +149,20 @@ Variable FS0 : Fs.Fs.
 
 Variable KC : nat.
 
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
+(* [comment removed for export] *)
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  (* [comment removed for export] *)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  (* [comment removed for export] *)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
+(* [comment removed for export] *)
+
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT rz XN XE XB HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -258,14 +283,22 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  co_res   : exists rx : list (word * word),
+               vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+               /\ Forall resx_entry_ok rx
+               /\ (length rx <= n_resx A)%nat
+               /\ sum_sizes rx <= resx_bytes A;
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
 
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
   co_holes : Forall (hole_ok E (a_ylo cs) (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model))) (a_maps cs);
   co_seps  : seps (vm_maps (m_vmmaps model));
   co_wf    : model_ivs_wf model;
-
+  (* [comment removed for export] *)
+  (* The constant ceiling sits at or below the run's allocation top.  An EQUATION with
+     [page_round_down_Z (alloc_top ..)] is false at the launch for every stack pointer
+     but the lowest the window admits, so [AsanInit.init_cs_ok] could not establish it. *)
+  co_ceil  : CEIL <= alloc_top (m_vmmaps model);
   co_bounds : Forall (fun iv => 0 < bv_unsigned (snd iv)
                                 /\ bv_unsigned (fst iv) mod 4096 = 0 /\ bv_unsigned (snd iv) mod 4096 = 0
                                 /\ 0 < bv_unsigned (fst iv)
@@ -305,7 +338,18 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_lazyin : lazy_in_maps model;
 
   co_naal : Forall (fun iv => bv_unsigned (fst iv) mod 4096 = 0 /\ bv_unsigned (snd iv) mod 4096 = 0 /\ 0 < bv_unsigned (snd iv))
-              (vm_noaccess (m_vmmaps model))
+              (vm_noaccess (m_vmmaps model));
+  (* [comment removed for export] *)
+  co_mres  : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                    (vm_maps (m_vmmaps model));
+  (* [comment removed for export] *)
+  co_vdso  : incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                  (vm_reserved (m_vmmaps model));
+  (* LPS 727298f3: the channel's reader bit, which the hand-off's [PMfd] consumes
+     (A|B/HandoffStart.v).  [State.init_model] seeds [m_channel_reader] from
+     [in_channel_reader inp], and every step the plan takes keeps [m_proc].  Appended
+     last so that positional destructs keep their meaning. *)
+  co_rdr   : m_channel_reader model = true
 }.
 
 Lemma e_band_eq : e_band = eaddz e_sp0 (-8388608).
@@ -422,7 +466,7 @@ Lemma H_off_segments_cs : forall E cs model, H_off_segments SEGS (hid E cs model
 Proof using HULL_ok SEGS_in_hull argH_high.
   intros E cs model a Hh. unfold hid in Hh. apply orb_prop in Hh as [Ha|Hv].
   - apply SEGS_in_hull. unfold in_hull. pose proof (argH_high _ _ Ha). pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (?&?&?&?).
-    unfold CEIL, KHI in *. apply andb_false_iff. right. apply Z.ltb_ge. lia.
+    unfold KHI in *. ceilnum. apply andb_false_iff. right. apply Z.ltb_ge. lia.
   - apply negb_true_iff in Hv. unfold vis in Hv. apply orb_false_iff in Hv as [Hv _]. apply orb_false_iff in Hv as [Hv _].
     apply SEGS_in_hull. exact Hv.
 Qed.
@@ -468,8 +512,10 @@ Proof using SINV_frame.
   pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
   assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
   assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+  assert (Ekn : m_kernel model' = m_kernel model) by (rewrite Hs; reflexivity).
+  assert (Erd : m_channel_reader model' = m_channel_reader model) by (rewrite Hs; reflexivity).
   destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-    rewrite ?Evm, ?Elz; try assumption.
+    rewrite ?Evm, ?Elz, ?Ekn, ?Erd; try assumption.
   - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
   - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
   - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -898,7 +944,7 @@ Proof using HULL_ok argH_high.
   intros E cs model a Hh. unfold hid, vis. rewrite Hh. cbn [orb].
   destruct (argH E a) eqn:Ha; [|reflexivity]. exfalso.
   pose proof (argH_high _ _ Ha). unfold in_hull in Hh. apply andb_prop in Hh as [_ Hh]. apply Z.ltb_lt in Hh.
-  pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (?&?&?&?). unfold CEIL, KHI in *. lia.
+  pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (?&?&?&?). unfold KHI in *. ceilnum. lia.
 Qed.
 
 Lemma rdn_visible : forall (H : word -> bool) FULL (a : word) w bs,
@@ -1393,9 +1439,9 @@ Proof using HS KC SHADOW_ok XB XE XN.
       rewrite u_srl64 in D.
       unfold S0, estart in *. cbn [a_base a_off] in *.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
-      rewrite !u64_lit in D by (unfold CEIL in *; lia).
+      rewrite !u64_lit in D by (ceilnum; lia).
       change (2 ^ (3 mod 64)) with 8 in D.
-      rewrite (Z.mod_small (bv_unsigned (edenot E b) / 8 + shadow_off A)) in D by (unfold CEIL, KHI in *; lia).
+      rewrite (Z.mod_small (bv_unsigned (edenot E b) / 8 + shadow_off A)) in D by (unfold KHI in *; ceilnum; lia).
       lia.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false). }
 
@@ -1516,7 +1562,7 @@ Proof using HS KC SHADOW_ok XB XE XN.
       unfold Mr, mrestrict. rewrite Hvis2.
       apply (co_zero _ _ _ _ _ HC a Hhid1 Hm1 Hna Hlz (or_intror Hsw)). }
     assert (Hfl : flat E (SA sb sk) (elenZ E (mkSrl (kn cs) n 3))).
-    { unfold flat. fold S0. rewrite Usn. unfold CEIL in *.
+    { unfold flat. fold S0. rewrite Usn. ceilnum.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false). }
     constructor; [|constructor; [|constructor]].
@@ -2084,13 +2130,26 @@ Definition always (cs : acs) : bool := true.
 
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
 
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 
 Definition join_stmt : Prop := forall b off n, node1_stmt always (fun cs => node_join SEGS cs b off n).
 
 
+(* [comment removed for export] *)
+Definition munmap2_stmt : Prop :=
+  forall cs csa csb E R FULL model TA TB,
+    cs_ok E cs R FULL model -> is_ecall_at SEGS cs = true -> node_munmap2 A cs = Some (csa, csb) ->
+    (forall E' R' FULL' model',
+        env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' csa R' FULL' model' -> m_fs model' = m_fs model ->
+        srealizes SEGS (cfg R' (pc csa) FULL' model') TA) ->
+    (forall E' R' FULL' model',
+        env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' csb R' FULL' model' -> m_fs model' = m_fs model ->
+        srealizes SEGS (cfg R' (pc csb) FULL' model') TB) ->
+    srealizes SEGS (cfg R (pc cs) FULL model) (t_alt2 TA TB).
+
+(* [comment removed for export] *)
 Definition exit_stmt : Prop :=
   forall cs code E R FULL model,
     cs_ok E cs R FULL model -> is_ecall_at SEGS cs = true -> node_exit cs = Some code ->
@@ -3683,7 +3742,7 @@ Lemma nxt_inst : forall inv J e, nxt (inst inv J e) = nxt inv.
 Proof using . reflexivity. Qed.
 
 Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
-  check_all A chk k css = COk s ->
+  check_all A rz chk k css = COk s ->
   (exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
 Proof using .
   intros chk k css s H. unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
@@ -3751,7 +3810,7 @@ Proof using .
   - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mprotect2 A LIMIT cs) as [[csa csb]|]; [|discriminate].
     exact (IH _ qb _ s Hc).
   - discriminate Hc.
-  - destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+  - destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -4931,7 +4990,7 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
   -
     discriminate Hc.
   -
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
   -
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].

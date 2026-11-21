@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the exit step takes the channel-reader premise (m_channel_reader) the model's new write arms read, required only for a nonempty flush. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -304,11 +305,12 @@ Qed.
       tp = wz TPV ->
       stk rsegs (aview A m) lo (bv_unsigned sp) -> lo + EXIT_STACK <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
       (pending_of sof <> [] -> fd_lookup (m_fds md) (wz 1) = Some (FdChannel (wz 1))) ->
+      (pending_of sof <> [] -> m_channel_reader md = true) ->   (* 08b1429: channel-reader-premise, conditional: only a nonempty flush writes *)
       srealizes rsegs (mkCfg (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
                                  F (wz EXIT_ENTRY) fc None m (seg_rom rsegs)) md)
                 (t_emit (W 1 (pending_of sof)) (t_exit (bv_and a0 (wz 255)) (m_fs md))).
   Proof.
-    intros EXIT. intros until ini. intros AINV MI CC GOT TP ST LO CEIL SPH FD1.
+    intros EXIT. intros until ini. intros AINV MI CC GOT TP ST LO CEIL SPH FD1 RDR.
     (first [ pose proof ((exit_ready A m md tid sof ini AINV CC)) as dR_14; dex11 dR_14 as fin bss b1 b2 b3 b4 junk0 wp0 rp0 wp2 rp2; rename dR_14 into EC | pose proof ((exit_ready A m md tid sof ini AINV CC)) as dR_14; dand12 dR_14 as fin bss b1 b2 b3 b4 junk0 wp0 rp0 wp2 rp2 EC | destruct (exit_ready A m md tid sof ini AINV CC) as (fin & bss & b1 & b2 & b3 & b4 & junk0 & wp0 & rp0 & wp2 & rp2 & EC) ]).
     pose proof (as_minv LPA A m md AINV) as [HMI HH]. pose proof (as_hull_segs LPA A m md AINV) as HOFF.
     (first [ dand4 CC as MC FE SO TR | destruct CC as (MC & FE & SO & TR) ]). pose proof (mc_canary _ _ MC) as CAN.
@@ -317,8 +319,14 @@ Qed.
       eapply (EXIT ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m md
                    (ahull A) (alhull A) (aeager A) lo tid ini fin bss b1 b2 b3 b4 junk0 wp0 rp0 wp2 rp2 []);
         try eassumption. left. split; [reflexivity| exact CL].
-    - eapply (EXIT ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m md
+    - destruct PN as (wb & wp & wend & bufp & bufsz & rp1 & canary & SP & FD).
+      (* 08b1429: the flush branch supplies the nonemptiness the conditional reader premise needs. *)
+      assert (NE : pending_of sof <> []).
+      { pose proof SP as SPq. destruct SPq as [_ _ _ _ _ _ _ RNG LEN _ _ _].
+        destruct RNG as [[_ RLT] _]. intros EQ. rewrite EQ in LEN. cbn [length Z.of_nat] in LEN. lia. }
+      eapply (EXIT ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m md
                    (ahull A) (alhull A) (aeager A) lo tid ini fin bss b1 b2 b3 b4 junk0 wp0 rp0 wp2 rp2 (pending_of sof));
-        try eassumption. right. exact PN.
+        try eassumption. right. exists wb, wp, wend, bufp, bufsz, rp1, canary.
+      split; [exact SP|]. split; [exact FD| exact (RDR NE)].
   Qed.
 End S.

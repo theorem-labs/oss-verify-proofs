@@ -1,7 +1,7 @@
 (* ctrl_lay_block (0x86104) of fuzz_ctrl's ASan+UBSan build (image B, libreac v1.9.0): its contract in cgif's
-   CALLER-JOURNAL form (CONVENTIONS.md section 2 (a working note, not in this delivery); cgif lib/YC20.v:311-365 on origin/ossv/recipes
-   c8557374ad2e, `tlzw_kept` / `tlzw_post` / `tlzw_spec`), because the call writes its caller's 32 bytes
-   [p + 18, p + 50).  The image-B twin of a Theorem Labs lane's image-A file (a working branch b3f8a5cf908
+   CALLER-JOURNAL form (CONVENTIONS.md section 2 (a working note, not in this delivery); cgif lib/YC20.v:311-365,
+   `tlzw_kept` / `tlzw_post` / `tlzw_spec`), because the call writes its caller's 32 bytes
+   [p + 18, p + 50).  The image-B twin of a Theorem Labs lane's image-A file (a working branch
    lib/A/Prog/C_ctrl_lay_block.v), kept GENERAL in its arguments (the B ctrl_emit_as draft consumes it at
    0x8572c with general p, f, md, g), under a Theorem Labs lane's B decisions
    (decisions.md items 1-17 (a working note, not in this delivery)).
@@ -13,7 +13,7 @@
    statement lib/B/Prog/ctrl_lay_block_c.v `ctrl_lay_block_contract_F_on`).  The glue is modelled on cgif
    lib/A/AChf.v (a function with a side-stack frame) with the caller-journal shape of cgif lib/YC20.v:311-365.
 
-   Segments: image B's core twin Reusable.YB1v.tfibsegs (decisions.md items 1, 16; planning core 9afb8c9070a); the
+   Segments: image B's core twin Reusable.YB1v.tfibsegs (decisions.md items 1, 16; planning core); the
    link to the _F runs is ProgBridge.tfibsegs_rsegs.  The sink head stays a context until Reusable/YE2k.v is clear
    of refusal tokens (one-line marker below).
 

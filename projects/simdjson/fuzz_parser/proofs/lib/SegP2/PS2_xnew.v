@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv bound is read from the auxv premise in its new shape (27 or 29 key-value pairs), with a comment. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import gmap.
@@ -116,7 +117,9 @@ Section XN.
     pose proof (scan_S1OUT d idx Hscan) as S1. pose proof (s1_n _ _ _ S1) as Sn.
     pose proof Hlo2 as Hlo2'. unfold PS2_STACK, OPNEW_NT_STACK, OPNEW_STACK, RMALLOC_STACK in Hlo2'. atop_facts.
     pose proof (u_rng' sp) as Rsp.
-    assert (HAUXB : B <= 2 ^ 64 - 160) by (destruct HAUX as (av & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hbb & Hav & _); lia).
+    (* LPS 727298f3: the auxv the scan sees is 27 or 29 pairs, so at least 54 words lie above B. *)
+    assert (HAUXB : B <= 2 ^ 64 - 160) by (destruct HAUX as (av & vs & r & rnd & _ & _ & _ & _ & Hbb & Hav & _);
+      first [ (unfold rauxv_list in Hav; rewrite length_map in Hav; destruct r; cbn in Hav; lia) | (destruct r; cbn in Hav; lia) ]).
     pose proof (s2_reg_of s LB m sp lo B d idx pim psi pcp ptp psb poc pia THIS ASI ACP ATP ASB AOC AIA DOC BUF nim nsi ncp ntp nsb noc nia
                   HR ND Ith Hnim Isi Hnsi Icp Hb1 Hb2 Itp Isb Ioc Hnoc Iia Hnia Hntp8 Hntp Hnsb3 Hnsb Hlen ltac:(lia) Hspd Hdb Hda HAUXB Hlo1
                   ltac:(lia) Hsp16 Hsp47) as REG.

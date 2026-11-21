@@ -1,7 +1,7 @@
 # reloc-Bwrap: image-B (fuzz_segconf.asan-ubsan) interceptor-layer relocation records
 
 The run inputs and as-run records of the image-B relocations and derivations of this unit's interceptor layer are kept
-in an internal record, commit 747a89295eabbb57a2ff065075f951c51cdfc240, under reloc-Bwrap/. Each file, by path in that
+in an internal record, under reloc-Bwrap/. Each file, by path in that
 record, and its sha256:
 
 reloc-Bwrap/bcore0/a/alreloc/main.out 7945ecebdd3607b973551e79786c09cfe40b253bc7c40d0efa050abc1f9bb6ea
@@ -283,7 +283,7 @@ reloc-Bwrap/pc/tools/xcheck.py b15744d11d3ae41ecadaad409201ac5687052c61155b1f584
 reloc-Bwrap/README.md 4cb4b7cda2a08f8bc1a884e3607802f4da5eb59fa8d2286927d473868ffc0d1c
 
 The relocations of the image-A strings, fm and snprintf / vsnprintf walks to image B (nw-strs, nw-fm, nw-pf) are kept in the
-internal record commit 359033f69c63b81a6bb37223d18e6e8e1cf8ce66, under reloc-Bwrap/; that commit also holds every file above, unchanged. Each
+internal record, under reloc-Bwrap/; that commit also holds every file above, unchanged. Each
 file, by path in that record, and its sha256:
 
 reloc-Bwrap/nw-strs/RtLStrtol-fix.diff 6826158fe7bf8553352b5f3f2660182142ca86e58045fba08c56a5ecabf47887
@@ -622,7 +622,7 @@ reloc-Bwrap/nw-pf/unfold-loop7.log 87a80c56b847b8e0bef48c2afd872aea5cf205d2eb208
 reloc-Bwrap/nw-pf/unfold-loop8.log b48669418922fe66d86202b0d6360486b36b5ce8dcc9ff88a4c766e8016bd745
 
 The relocation of the image-A calloc route (row 13: the 61 AG files, nw-calloc-ag, and the other 23, nw-calloc) to image B is kept
-in the internal record commit dc2726ed68b9c9199ca8f96d31448956473d6602, under reloc-Bwrap/; that commit also holds every file above,
+in the internal record, under reloc-Bwrap/; that commit also holds every file above,
 unchanged. Each file, by path in that record, and its sha256:
 
 reloc-Bwrap/nw-calloc-ag/a-names.txt a3d071820b8810565561d0aa3e8c81a2a0c85de5204bff7504d825604e3413c9

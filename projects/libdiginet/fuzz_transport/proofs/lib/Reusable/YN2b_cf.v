@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2b.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YN2b_cf.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YN2b_cf.v for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO-aware reserved-pair capacity, native brk guards, kernel identity ledger transports and new-brk mmap-base callers); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -11,7 +12,7 @@ From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YO0i YO0f YO0g YO0x YO0u YO0d.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN03 YN31.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
-From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN2b YM06_cf YO0d_cf.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN2b YM06_cf YO0d_cf YM01.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
@@ -77,5 +78,18 @@ getr regs 10 = Z_to_bv 64 n -> 0 <= n < MMAP_THRESHOLD ->
 mreal_cf segs (mkCfg (mkst regs (Z_to_bv 64 (ms_malloc B)) mem (seg_rom segs)) md)
 (malloc n A)
 (malloc_leaf B (MRx B) L A regs mem md n).
+Lemma node_ledger_of : forall L A md, ledger_ok B L A md -> ledger_x L A md ->
+  (length (segments_reserved (ms_segs B)) <= 6)%nat -> ivs_bytes (segments_reserved (ms_segs B)) <= 2 ^ 30 - 20 * page_size ->
+  Z.of_nat (length (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))) <= nslots A + KRES /\
+  ivs_bytes (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) <= live_bytes A + 2 ^ 30 /\
+  140735332483072 <= alloc_top (m_vmmaps md).
+Proof.
+intros L A md G LX RL RB. split; [|split].
+- rewrite length_app, (lg_reserved _ _ _ _ G), length_app.
+  pose proof (lg_count _ _ _ _ G). pose proof (vdso_reserved_len (m_kernel md) (vdso_top (m_vmmaps md))). unfold KRES. lia.
+- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G), ivs_bytes_app, (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))).
+  pose proof (vdso_reserved_bytes (m_kernel md) (vdso_top (m_vmmaps md))). pose proof (lx_lb _ _ _ LX). lia.
+- pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)). pose proof (proj1 alloc_ceiling_value). lia.
+Qed.
 End o.
 End d.

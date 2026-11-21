@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfVa.v (origin/cold/port-fm-rtprintf-param 7e395de08f5, itself
-   taken by path from cold/h-disco-6-snpva 5724ded508c) for fuzz_preset's snprintf chain over ARx (route (a),
+(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfVa.v (itself
+   taken by path) for fuzz_preset's snprintf chain over ARx (route (a),
    c-omx-hpreset 10:51Z): module paths fuzz_manifest -> fuzz_preset, FMsnprintfShared -> PSnpShared; the unused
    FMupoison and FMsnprintfPf imports dropped. No statement changes: no allocator invariant, no U, no address. In lib/A
    because 0x60 / 0x38 / 40 are ___interceptor_snprintf's frame geometry, re-measured at preset A (capstone, this

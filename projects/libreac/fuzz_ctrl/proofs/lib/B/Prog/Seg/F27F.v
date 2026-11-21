@@ -3,11 +3,11 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source: lib/B/Prog/Seg/F27.v seg_F27's two inline stretches (no stated run lemma) at
-     a working branch 3803efccea0 (blob a0b51aa2c6b8217fd46ab70c42eab6ef70d0fbf3);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
-   compare: split stretches, both calls-free.  seg_F27_F re-runs F27.v:340-362 (r = t_rp = 0:
-     0x828b4 -> 0x8292c, the port-slot loop head) and seg_F27_rp_F re-runs F27.v:409-426 (r <> 0:
+     a working branch (blob a0b51aa2c6b8217fd46ab70c42eab6ef70d0fbf3);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
+   compare: split stretches, both calls-free.  seg_F27_F re-runs F27.v:341-363 (r = t_rp = 0:
+     0x828b4 -> 0x8292c, the port-slot loop head) and seg_F27_rp_F re-runs F27.v:410-427 (r <> 0:
      0x828b4 -> 0x82aa4, the three ports words are -7).  Neither stretch calls anything, so neither is split
      further. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
@@ -98,7 +98,7 @@ Proof.
   rewrite Z.mod_add by lia. reflexivity.
 Qed.
 
-(* The r = 0 arm of seg_F27's inline stretch, 0x828b4 -> 0x8292c (F27.v:340-362): the port counts agree, the
+(* The r = 0 arm of seg_F27's inline stretch, 0x828b4 -> 0x8292c (F27.v:341-363): the port counts agree, the
    ports result r is 0, and the port-slot loop registers are set.  The only access is the block spill
    [A + 312, A + 320) (read twice). *)
 Lemma seg_F27_F : forall (RNG : footprint)
@@ -148,7 +148,7 @@ Proof.
   exact (f27f_a6_eq phi Hphi0 Hphi50).
 Qed.
 
-(* The r <> 0 arm of seg_F27's inline stretch, 0x828b4 -> 0x82aa4 (F27.v:409-426): r = unk = -1 and the three
+(* The r <> 0 arm of seg_F27's inline stretch, 0x828b4 -> 0x82aa4 (F27.v:410-427): r = unk = -1 and the three
    ports words at s5 = fr + 128 are -7, so every FAIL branch falls through to the jump at 0x828ec.  The only
    accesses are the three 4-byte words [fr + 128, fr + 140). *)
 Lemma seg_F27_rp_F : forall (RNG : footprint)

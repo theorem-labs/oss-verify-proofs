@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) the MEMBER LOOP's call-site invariants of parse_items on
-   image B. B-LOCAL PORT of the A walk's lib/A/FSW_parse_items_loop.v (a working branch 4480a5df1ae,
+   image B. B-LOCAL PORT of the A walk's lib/A/FSW_parse_items_loop.v (a working branch,
    a Theorem Labs lane): pi_jc / pi_stack / pi_blocks / pi_obj / pi_Q are A's text (renamed pib_); pi_regsP, the frame words,
    pi_IG / pi_IP / pi_IK / pi_IM / pi_IV are re-read on image B:
      - the base atoms of a member-loop resume are s1 = q (atom 9) and s3 = v (atom 19) (A: s0 = q at 8, s4 = v at 20);
@@ -21,6 +21,7 @@
              parse_value call step gives (the facts of the A walk's pic_call_pv_84d98 continuation); the resume state is
              fss_retT 0x851d0 144 pib_csL pib_rs pib_gfP under pib_xsK, the base of FSW_parse_items_seg.pib_ss_H.
    rule 24: no function is proved in this file (definitions of the walk of parse_items). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

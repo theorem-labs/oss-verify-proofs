@@ -40,7 +40,7 @@ Ltac shadow_passF a0 m0 off w g h U G H M k SK MB RB RS :=
    meet at the same pc in the same state but for one scratch register: the andi destination, which the postcondition
    quantifies (an a1'..a4' slot). v is what that register holds on the path k = 0. sk_join proves the meeting point
    once, for every value x of the register, and closes both paths with it: each shadow check leaves one goal, not two
-   (shadow_passF doubles the goals, 64 at the end of this proof). Same join as the A twin (a Theorem Labs lane 87f7a42a104). *)
+   (shadow_passF doubles the goals, 64 at the end of this proof). Same join as the A twin (a Theorem Labs lane). *)
 Local Ltac sk_join a0 off U k SK MB v x :=
   lazymatch goal with
   | |- ExecF.evtF ?segs ?RNG ?Q (MS ?R ?F (if _ then _ else Z_to_bv 64 ?pc) ?fc ?rv ?m ?ro) =>

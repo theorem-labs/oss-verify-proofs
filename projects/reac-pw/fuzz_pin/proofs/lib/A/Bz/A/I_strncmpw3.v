@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/A/I_strncmpw3.v, with its module paths and addresses changed; 5 of its 80 lines of code are new or changed and 5 lines of the source are left out. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/A/I_strncmpw3.v at origin/ossv/recipes f26f9fbd8777; module paths changed; 3 address numerals relocated from fuzz_boxreg.asan to fuzz_pin.asan (provenance/reloc-WStrncmp/ledger-bz.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/A/I_strncmpw3.v; module paths changed; 3 address numerals relocated from fuzz_boxreg.asan to fuzz_pin.asan (provenance/reloc-WStrncmp/ledger-bz.tsv). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

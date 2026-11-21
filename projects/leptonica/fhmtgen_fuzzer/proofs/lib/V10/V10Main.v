@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch input ProcInput, the m_channel_reader premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -63,13 +64,15 @@ Section Main.
       valid_sp sp -> valid_brk rsegs brk -> (2 ^ 34 <= lim)%Z ->
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
       entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+      in_channel_reader inp = true -> valid_launch inp ->
+      entry_launch_ok_va Sv48 (mkEntry sp brk mbase draw) inp ->
       realizes rsegs (init_config rsegs rpc rph sp brk mbase draw lim inp) (spec (in_argv inp) (in_fs inp)).
   Proof.
-    intros sp brk mbase draw lim inp Hsp Hbrk Hlim Hva Hve Hfits.
-    apply ref_startup; [exact Hsp | exact Hva | exact Hve |].
+    intros sp brk mbase draw lim inp Hsp Hbrk Hlim Hva Hve Hfits Hrd Hvl Hlau.
+    apply (ref_startup sp brk mbase draw lim inp _ Hrd Hsp Hva Hve Hvl Hlau).
     intros tid regs mem Htid ME.
-    rewrite <- (init_model_C_of (segments_reserved rsegs) brk mbase sp lim inp draw).
-    set (AMB := amb_of inp draw) in *.
+    rewrite <- (init_model_C_of (segments_reserved rsegs) brk mbase sp lim inp draw mbase Hrd).
+    set (AMB := amb_of inp draw mbase Hrd) in *.
     remember (in_argv inp) as argv eqn:Eargv. remember (in_envp inp) as envp eqn:Eenvp.
     remember (in_fs inp) as fs0 eqn:Efs0. remember (in_stdin inp) as stdin0 eqn:Estdin0.
     clear Eargv Eenvp Efs0 Estdin0.
@@ -128,6 +131,8 @@ Theorem ref_realizes_spec_pins {AL : AllocLayout} {CL : CallocLayout} {ASR : All
     valid_sp sp -> valid_brk rsegs brk -> (2 ^ 34 <= lim)%Z ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    in_channel_reader inp = true -> valid_launch inp ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase draw) inp ->
     realizes rsegs (init_config rsegs rpc rph sp brk mbase draw lim inp) (spec (in_argv inp) (in_fs inp)).
 Proof.
   intros [P1 P2 P3 P4 P5 P6 P7 P8 P9 P10 P11 P12 P13 P14] FZ.

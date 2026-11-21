@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sl_norm_in rewrites for the mprotect vDSO gate's m_kernel and vdso_top, and fq unfolding option-valued spec continuations). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -289,6 +290,10 @@ Ltac sl_norm_in H :=
   cbv zeta in H;
   repeat match type of H with
          | context [m_vmmaps (sl ?L ?m)] => change (m_vmmaps (sl L m)) with (vml L (m_vmmaps m)) in H
+         (* LPS 08b1429: the mprotect vDSO gate reads the kernel build and [vdso_top];
+            [sl] keeps both *)
+         | context [m_kernel (sl ?L ?m)] => change (m_kernel (sl L m)) with (m_kernel m) in H
+         | context [vdso_top (vml ?L ?h)] => change (vdso_top (vml L h)) with (vdso_top h) in H
          end;
   cbn [vml vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp] in H.
 
@@ -345,4 +350,13 @@ Ltac fq_step :=
   | |- FR _ _ _ ?cb ?cs =>
       let hb := head_of cb in let hs := head_of cs in constr_eq hb hs; progress (unfold hb)
   end.
-Ltac fq := repeat fq_step.
+(* [comment removed for export] *)
+Ltac fq_opt_step :=
+  lazymatch goal with
+  | |- FR _ _ _ (match ?e with Some _ => _ | None => _ end) _ =>
+      lazymatch type of e with
+      | option (Sys SyscallEffect -> Sys SyscallEffect) =>
+          let h := head_of e in progress (unfold h); cbv beta iota zeta
+      end
+  end.
+Ltac fq := repeat (first [fq_opt_step | fq_step]).

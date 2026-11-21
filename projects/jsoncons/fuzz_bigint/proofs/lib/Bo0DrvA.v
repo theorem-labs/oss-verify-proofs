@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, drv_openA takes the auxv base (auxvp, slot 5 of the main environment) in place of argv[0]'s pointer (p0), the path pointer is shown below TASK_SIZE, and the driver invariant keeps the channel reader (with_fds_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -70,7 +71,7 @@ Section DrvA.
   Variables a0s path : list byte.
   Variable fs0 : Fs.Fs.
   Variable fdata : list byte.
-  Variables p0 p1 can : word.
+  Variables auxvp p1 can : word.
   Variable M0 : word -> option byte.                    (* [comment removed for export] *)
   Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
@@ -110,7 +111,7 @@ Section DrvA.
   (* [comment removed for export] *)
   Definition file_kA (KF : TSet) : Prop :=
     forall vals R M (model : Model) A (A1 : Z),
-      length vals = 70%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 1 = p0 -> vals_ev vals 2 = p1 -> vals_ev vals 3 = can ->
+      length vals = 70%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 5 = auxvp -> vals_ev vals 2 = p1 -> vals_ev vals 3 = can ->
       vals_ev vals 48 = Z_to_bv 64 A1 ->
       regs_ok (ENVA vals) srC0 R -> know_ok ASEGS (ENVA vals) (mrestrict (ahid A model) M) knC0 ->
       dinvA [(A1, 65536)] LK0 (adebit L cr0 65536) A M model -> incl A0 A ->
@@ -123,18 +124,18 @@ Section DrvA.
     intros x k. rewrite alu_add. unfold v_add. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Zplus_mod_idemp_r. reflexivity.
   Qed.
 
-  Theorem drv_openA : forall KA KF R (model : Model) (tid : word),
-    let vals := vals_mainA sp0 p0 p1 can tid R in
+  Theorem drv_openA : forall KA KF R (model : Model) (tid a0p : word),
+    let vals := vals_mainA sp0 a0p p1 can tid auxvp R in
     regs_ok (ENVA vals) sr_mainA R -> know_ok ASEGS (ENVA vals) (mrestrict (ahid A0 model) M0) kn_mainA ->
     dinvA [] LK0 cr0 A0 M0 model -> m_fds model = fds0 -> m_fs model = fs0 ->
     open_err_kA KA -> file_kA KF -> KF [] ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x8dc68) M0 (seg_rom ASEGS)) model) (t_alt2 KA KF).
   Proof.
-    intros KA KF R model tid vals HR HK DI Hfds Hfs0 HKA HKF HKF0.
+    intros KA KF R model tid a0p vals HR HK DI Hfds Hfs0 HKA HKF HKF0.
     pose proof Hsp as Hsp'. pose proof Hal as Hal'.
     assert (HL : length vals = 38%nat) by (subst vals; unfold vals_mainA; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0) by reflexivity.
+    assert (P1 : vals_ev vals 5 = auxvp) by reflexivity.
     assert (P2 : vals_ev vals 2 = p1) by reflexivity.
     assert (P3 : vals_ev vals 3 = can) by reflexivity.
     clearbody vals.
@@ -157,7 +158,9 @@ Section DrvA.
       apply (nolazy_of_inv scfg L ar C IL HI HIok sp0 Hsp DL _ _ _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ _ _ _ _ DI0)); [lia|].
       intros k Hk. right. left. lia.
     - rewrite F1. reflexivity.
-    - split; [exact Hplen|]. split; [exact Hnonul|].
+    - split; [exact Hplen|]. split; [exact Hnonul|]. split.
+      { regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2.
+        unfold TASK_SIZE. pose proof (proj2 P1lo). lia. }
       regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2. exact Sr'.
     - exact Hpne.
     - exact Hppl.
@@ -186,7 +189,7 @@ Section DrvA.
       rewrite F1. change (alloc_fd fds0) with (Z_to_bv 64 3).
       set (model1 := with_fds (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0))) model0).
       assert (DI1 : dinvA [] LK0 cr0 A0 M model1).
-      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model0 model1 DI0); [apply with_fds_vm|].
+      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model0 model1 DI0); [apply with_fds_vm| |apply with_fds_rdr].
         unfold model1. rewrite with_fds_halted'. exact (di_halt _ _ _ _ _ _ _ _ _ _ DI0). }
       assert (HK1 : know_ok ASEGS (ENVA vals) (mrestrict (ahid A0 model1) M) knA) by exact HK0.
       assert (G1 : m_fds model1 = fds1) by (unfold model1; apply with_fds_fds).

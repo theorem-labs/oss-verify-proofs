@@ -2,17 +2,17 @@
    lib/A/Prog/S4_Ps*.v) and image B's walk (BParseString, lib/B/Prog/PSB_*.v). Nothing here reads a listing: it is
    generic over {L : ptable asym} {PA : PAImg L} and the image's PrhImg, so each image writes only its RUN lemmas.
    rule 24: proves no function (kind: statement text / segment glue).
-   SOURCE, VERBATIM but for the instance binding: WalkS4's lib/A/Prog/S4_PsBase.v (a working branch
-   83f3e37ac7e): ps_in, ps_x, ps_pre, ps_Qres, ps_Q, ps_post, PS_FRAME / PS_WSTK / PS_WSP / PS_SP, ps_saved, ps_carry,
+   SOURCE, VERBATIM but for the instance binding: WalkS4's lib/A/Prog/S4_PsBase.v (a working branch):
+   ps_in, ps_x, ps_pre, ps_Qres, ps_Q, ps_post, PS_FRAME / PS_WSTK / PS_WSP / PS_SP, ps_saved, ps_carry,
    ps_gptp, ps_dec_rel, ps_alloc, ps_at_ret0. There the image instances are local Instances of image A; here they are
   Context, so the same text serves image B. The goal is the KIT TEXT tparse_string_specX of the announced the kit cut
-  7cdbb61b5fa0 (owner 06:11Z; PRH_FnReader.v blob f1ae32e3b2cd :517-681; prepped on the batch kit's
+  (owner 06:11Z; PRH_FnReader.v blob f1ae32e3b2cd :517-681; prepped on the batch kit's
   preset-tree-at-2026-10-30T02-01-18Z.tsv (sha256 a12cae64b2b5; internal record), then rebuilt on the cut): POST-IMPLICATION, the cursor set CW (prh_cw_ok in the slot prh_cur_ok
   vacated, `wild_room (as_universe B) CW 0 (st_depot S)` at entry) and the post BUDGETED at wbudget CW 0. The earlier
   statement (PS_Draft.v, the f97c text with the callee's refusal ledger) is deleted, and the change from it was NOT a
   conversion: the kit's refused arm adds the outcome-exclusion conjunct (:622-629) and counts ((cnt + 1) mod 2 ^ 64)
   (:633-635); both are proved here (ps_excl_of_malloc from fuzz_malloc's outcome clause; the mod is prh_alloc_post's).
-   ONE DIFFERENCE: the caller-window kit is the ENGINE's lib/Reusable/YCbqGcallW.v (a working branch 63997a07aa6: fwin_x,
+   ONE DIFFERENCE: the caller-window kit is the ENGINE's lib/Reusable/YCbqGcallW.v (a working branch: fwin_x,
    fpostW_x, cj_kept, fpostW_x_of_kept; WalkS4's PRW_CallerJ.v moved there with the same bodies, its credit line
    :6), not lib/A/Prog/PRW_CallerJ.v, so the call rules aj_call_xW / aj_call_xW_sp of the engine produce these very
    predicates.
@@ -47,7 +47,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YG0p YCbqG YGcfNames YK06.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0d YP0c YC80 YPsym YC4aP YC1fP.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YCbqGcallW.
-(* the generic-P carriers (from a working branch 161f89a71b4d, whose YSRrMemnorm.v a1c1ece77b14 had srr_inv_laws,
+(* the generic-P carriers (from a working branch, whose YSRrMemnorm.v a1c1ece77b14 had srr_inv_laws,
    srr_inv_laws_imp, srr_inv_call, srr_inv_call_imp, srr_inv_mn; YAkMemnorm.v 96c72061b4d4; no LiaTwx2 `lia ::=`) *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YAkMemnorm.
 (* srr_inv_laws lives in YC80x since the s1b collapse (preset-tree-at-2026-10-29T12-55-44Z.tsv (sha256 7967f42d1cd6; internal record)); YSRrMemnorm keeps the lemmas *)
@@ -126,12 +126,12 @@ Definition ps_live (D : ps_in) (E : list PresetReqAt.hev) (S : astate) : Prop :=
   Permutation (PresetRoom.rs_live (YGcfRoom.room_of_cf S))
     (PresetReqAt.hlive_from (PresetRoom.rs_live (YGcfRoom.room_of_cf (pi_S D))) E).
 
-(* tparse_string_specX's premises (the kit cut 7cdbb61b5fa0, PRH_FnReader.v f1ae32e3b2cd :520-576), at one record, in the
+(* tparse_string_specX's premises (the kit cut, PRH_FnReader.v f1ae32e3b2cd :520-576), at one record, in the
    text's order: no position and no run premise. ONE CONJUNCT PER PREMISE but two: the fourth is prh_cur_low and the
    fifth prh_cw_ok (the cursor set CW, in the slot prh_cur_ok vacated, :539 / :544), the eighth the wild room (:550),
    and the ninth carries the two live counts (the PEAK along the all-granted events, :554-557) and the hull budget over
    the same events, so the conjuncts keep their positions in every stretch's destruct. The LAST is the cut's per-event
-   form (:566-576): the request bound and prh_live_evs over the all-granted events (it replaced K1-tip e45217a4c7ba's
+   form (:566-576): the request bound and prh_live_evs over the all-granted events (it replaced K1-tip
    entry sum `blocks_bytes S + LIVE_parse_string Q <= LIVE_MAX`; ps_room_entry below gives the walk's fuzz_malloc room
    from its event 0) *)
 Definition ps_pre (CTX : list (list Z)) (CW : list (list Z)) (D : ps_in) : Prop :=
@@ -223,7 +223,7 @@ Definition ps_Qres (D : ps_in) (res : Z) (ly' : alayout) (S' : astate) (Hp' : li
        pj_in_okR segs (rdW W' mem') (pi_q D) (pi_text D) (pi_len D) (pi_p D + Z.of_nat Q + 2) (pi_d D) (pi_tb D) /\
        ps_rpos D [PresetReqAt.HMal (Z.of_nat Q + 1 + cf_head)] S')
   end.
-(* THE TEXT'S ARMS (the kit cut 7cdbb61b5fa0, PRH_FnReader.v f1ae32e3b2cd :584-681), VERBATIM at one record: the chosen
+(* THE TEXT'S ARMS (the kit cut, PRH_FnReader.v f1ae32e3b2cd :584-681), VERBATIM at one record: the chosen
    failure and the refusal also state blocks_bytes S' = blocks_bytes S, the refusal its outcome exclusion (ps_excl),
    and every arm states the live requests and the position after its own events prhPs_evs x okA (ps_live / ps_rposK /
    ps_excl unfold to the text's Permutation and forall clauses) *)
@@ -637,7 +637,7 @@ assert (E2 : YGcfRoomLive.ccnt24 (pi_S D) =
   by reflexivity.
 rewrite E1, E2. split; lia.
 Qed.
-(* ---- THE ROOM AT THE fuzz_malloc CALL (the kit cut 7cdbb61b5fa0, PRH_FnReader.v f1ae32e3b2cd :566-576): the text's
+(* ---- THE ROOM AT THE fuzz_malloc CALL (the kit cut, PRH_FnReader.v f1ae32e3b2cd :566-576): the text's
    prh_live_evs over the all-granted events, at its event 0 (the fuzz_malloc of Q + 1 + cf_head bytes, the head of
    prhPs_evs x [] for a closed quote, ps_evs_all_head), is `prh_live_at S E 0 + (Q + 1 + cf_head) <= LIVE_MAX`; the
    live bytes at event 0 are the entry's live requests (firstn 0 = [], hlive_from_nil), whose sum is blocks_bytes S
@@ -703,7 +703,7 @@ Lemma ps_at_ret0_R_wle : forall CW D ly S Hp W regs mem md,
   ps_at_ret0 CW D ly S Hp W regs mem md = ps_at_ret0R (@wle segs) CW D ly S Hp W regs mem md.
 Proof. reflexivity. Qed.
 
-(* ---- THE CHAIN FROM q AT A CALL (WalkS4's S4_PsBase.v 91d94986c47 transfer, restated on walkkit 4eb03b7b7e8, where
+(* ---- THE CHAIN FROM q AT A CALL (WalkS4's S4_PsBase.v transfer, restated on walkkit, where
    the kit's text gives the chain from prh_s0 F_parse_string q, the cursor facts (prh_cw_ok / prh_cur_low since the batch kit;
    prh_cur_ok before it) and the gap
    spZ regs + 16 <= q, so the PS_CHAIN / PS_QGAP stand-ins are GONE). parse_string's four calls (fuzz_malloc, hex4,
@@ -751,7 +751,7 @@ intros CTX CW D rd (_ & _ & _ & HLOW & HCW & _) Hgap Htop Hrd. split.
 Qed.
 
 (* ---- THE CHAIN AND THE CURSOR WORDS AT A CALL, OFF THE CALLER WORD (PsbTail2's lemmas, a working branch
-   1585744db56 PSB_Tail.v:72-118, moved here verbatim). ps_chain_call / ps_cur_call ask the call view to be the entry
+   PSB_Tail.v:73-119, moved here verbatim). ps_chain_call / ps_cur_call ask the call view to be the entry
    view on all of [sp, 2 ^ 64); a cut whose carried relations exempt FP = [(q, q + 8)] gives it only off the caller
    word [q, q + 8). That suffices: the chain from s0 = prh_s0 F_parse_string q <= q is at most ONE record, because its
    next frame word (at s0 - 16) is below alloc_ceiling (the kit's prh_cur_low) and so at or below s0 (bad_next stops the
@@ -821,7 +821,7 @@ exact (YCbqGwild.fpostW_xb_of_kept (SK := SK) segs B PST ARx (YCbqGwild.wbudget 
 Qed.
 
 
-(* ==== THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; WalkS4's S4_PsBase.v be8c964d45c, mirrored). An SRr post is
+(* ==== THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; WalkS4's S4_PsBase.v, mirrored). An SRr post is
    OPAQUE once Qed, so an end-state invariant must be in the segment's statement: every stretch is stated over an
    invariant P of the memory with srr_inv_laws segs P (and srr_inv_call segs P where it crosses a kit call), carried at
    every cut (ps_carryP: ps_carry with `/\ P mem` last) and at the post (ps_postP: ps_Q /\ P mem'). The function's top
@@ -1082,7 +1082,7 @@ intros R CW D ly S Hp W regs mem md. split; intros (Hc & H); split; try exact H.
 Qed.
 
 (* the entry stretch at one record, at the top instance P := ps_mn D, IS the kit's m-form budgeted text AT THAT RECORD
-   (the kit cut 7cdbb61b5fa0, PRH_FnReader.v f1ae32e3b2cd, primed: SRr' segs RZ_cf, and fpostWbm, AFTER-FREE-ONLY, is at
+   (the kit cut, PRH_FnReader.v f1ae32e3b2cd, primed: SRr' segs RZ_cf, and fpostWbm, AFTER-FREE-ONLY, is at
    wle' segs RZ_cf; ps_pre is its premises in its order, fpostWbm .. (wbudget CW 0) .. (ps_QT D) its post):
    fpostWbm .. Q is fpostW_xbR (wle' ..) .. (fQmn mem Q), and ps_QP (ps_mn D) D gives fQmn (pi_mem D) (ps_QT D) with
    ps_Q's conjuncts put in the text's order (ps_QT_of_Q) *)
@@ -1108,8 +1108,8 @@ intros CTX CW H D HP. unfold SRr'. eapply (SRrG_mono segs (wle' segs YGcfRehideP
 intros W' c' _ HQ. exact (ps_postm_is_K0 CW D W' c' HQ).
 Qed.
 
-(* THE TEXT FROM THE RECORDS: the per-record statement at every record is the KIT TEXT tparse_string_specX (the kit cut
-   7cdbb61b5fa0). This type-checks only because ps_pre is exactly its premises (24, in its order; the two live counts
+(* THE TEXT FROM THE RECORDS: the per-record statement at every record is the KIT TEXT tparse_string_specX (the kit cut).
+   This type-checks only because ps_pre is exactly its premises (24, in its order; the two live counts
    and the hull budget are ps_pre's ninth conjunct) over the record's fields and fpostWbm .. (ps_QT D) exactly its post
    (ps_live / ps_rposK / ps_excl unfold to its Permutation / forall clauses). No per-record premise: the
    post-implication form needs none *)

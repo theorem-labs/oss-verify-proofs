@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgKcLib.v at 723a83a0833b; the same library for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgKcLib.v; the same library for
    image B's key piece: image B's cuts (lib/AU/HPgSegM.v, prefix hqu_), B's write ranges (res and x at F + 0x2a0 .. F + 0x348,
    their shadow granules 0x54 .. 0x69, the real-frame cells [R, R+0x160)), B's frame shadow length 116, B's register
    list of hku_L, B's strings, and B's read-only segments (lib/AU/Img0U.v); strncmp against the prefix is not

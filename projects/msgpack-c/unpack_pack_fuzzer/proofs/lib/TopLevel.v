@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ms0, mo0 and init_config_eq take the launch's ProcInput and mmap base, and mo0 the vDSO state the launch draws, with_vdso and vdso_run_init; mo0_minv takes the channel-reader premise, which valid_input_either_reader gives; valid_input_either_va_size finds its conjunct by search after the new fs_keys_relative and fs_image_real; valid_entry_either has the fifth conjunct entry_launch_ok_va; imports Vdso). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run Vdso.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib Require Import PropExec MState Frame Exec ITree Nodes RegsEquiv FP InitMem.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -14,39 +15,66 @@ Definition prog_tree (R : Type) : Type := ProcInput -> ExecEntry -> itree node R
 
 Definition ms0 (segs : list Segment) (pc : N) (ph : PhdrInfo)
     (en : ExecEntry) (inp : ProcInput) : machine_state :=
-  init_ms segs pc ph (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en).
+  init_ms segs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp.
 
 Lemma ms0_eq : forall segs pc ph en inp,
   ms0 segs pc ph en inp =
   MS (mkR_init (en_sp en)) bvmap_empty (Z_to_bv 64 (Z.of_N pc)) (Z_to_bv 32 0) None
-     (wrap_mem ph (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) (seg_rom segs).
+     (wrap_mem inp (en_mmap_base en) ph (Z_to_bv 64 (Z.of_N pc)) (en_sp en) (en_draw en)) (seg_rom segs).
 Proof. reflexivity. Qed.
 
 Definition mo0 (segs : list Segment) (lim : Z) (en : ExecEntry) (inp : ProcInput) : Model :=
-  init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp.
+  with_vdso (vdso_run_init (ed_vdso (en_draw en)))
+    (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
 
 Lemma init_config_eq : forall segs pc ph lim en inp,
   init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp
-  = mkCfg (init_machine_state segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (mo0 segs lim en inp).
+  = mkCfg (init_machine_state segs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp) (mo0 segs lim en inp).
 Proof. reflexivity. Qed.
 
 Lemma mo0_not_halted : forall segs lim en inp, m_halted (mo0 segs lim en inp) = None.
 Proof. reflexivity. Qed.
 
-Lemma mo0_minv : forall segs pc ph lim en inp,
-  valid_entry (mkImage segs pc ph) en inp -> in_va_size inp = Sv48 -> minv (mo0 segs lim en inp).
+(* valid_input and valid_input_either both pin the far-end reader. *)
+Lemma valid_input_either_reader : forall inp, valid_input_either inp -> in_channel_reader inp = true.
 Proof.
-  intros segs pc ph lim [sp brk mb dr] inp Hve Hsv48.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hve. destruct Hve as (Vsp & _ & _ & _). apply minv_init.
+  intros inp H. red in H.
+  repeat match goal with H : _ /\ _ |- _ => destruct H end.
+  assumption.
+Qed.
+
+Lemma mo0_minv : forall segs pc ph lim en inp,
+  valid_entry (mkImage segs pc ph) en inp -> in_va_size inp = Sv48 -> in_channel_reader inp = true ->
+  minv (mo0 segs lim en inp).
+Proof.
+  intros segs pc ph lim [sp brk mb dr] inp Hve Hsv48 Hrdr.
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hve. destruct Hve as (Vsp & _ & _ & _). apply minv_init; [|exact Hrdr].
   destruct Vsp as (L & H & _). cbn [en_sp]. lia.
 Qed.
 
+(* The revision put [fs_keys_relative] and [fs_image_real] into [valid_input_either]
+   ahead of the Sv48 conjunct (75d69e00 Run.v:4680-4696), so a positional pattern
+   lands one conjunct short.  Destruct and discharge by search, as
+   [valid_input_either_reader] above does, so the next inserted conjunct is free. *)
 Lemma valid_input_either_va_size : forall inp, valid_input_either inp -> in_va_size inp = Sv48.
-Proof. intros inp (_ & _ & _ & _ & _ & _ & _ & _ & H & _). exact H. Qed.
+Proof.
+  intros inp H. red in H.
+  repeat match goal with H : _ /\ _ |- _ => destruct H end.
+  assumption.
+Qed.
 
+(* [valid_entry_sv48] (75d69e00 Run.v:3748-3758) now exposes FIVE conjuncts: the
+   launch conjunct [entry_launch_ok_va Sv48 en inp] was added last (75d69e00
+   Run.v:3723-3740), and it is a fifth rather than a replacement because it
+   implies the older [valid_sp]/[valid_mmap_base]/[entry_stack_fits] facts
+   ([entry_launch_ok_va_sp], [entry_launch_ok_va_base], [entry_launch_ok_va_fits]
+   at 75d69e00 Run.v:3994/4031/4059).  Mirror the model's shape and conjunct
+   order exactly so this stays a [reflexivity]-free one-liner. *)
 Lemma valid_entry_either : forall segs pc ph sp brk mb dr inp, valid_input_either inp ->
   valid_entry (mkImage segs pc ph) (mkEntry sp brk mb dr) inp <->
-  (valid_sp sp /\ valid_brk segs brk /\ valid_mmap_base mb /\ entry_stack_fits sp (in_argv inp) (in_envp inp)).
+  (valid_sp sp /\ valid_brk segs brk /\ valid_mmap_base mb
+   /\ entry_stack_fits sp (in_argv inp) (in_envp inp)
+   /\ entry_launch_ok_va Sv48 (mkEntry sp brk mb dr) inp).
 Proof. intros. apply valid_entry_sv48. apply valid_input_either_va_size. assumption. Qed.
 
 Lemma mo0_vm_init_sp : forall segs lim en inp, vm_init_sp (m_vmmaps (mo0 segs lim en inp)) = en_sp en.

@@ -1,4 +1,4 @@
-(* lib/A/Prog/strstr_c.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8) with the local-shadow
+(* lib/A/Prog/strstr_c.v (RtStr's port, unchanged) with the local-shadow
    change (FMss_shv.v): the premise `shadow_rw m` and the post's `shadow_rw m'` become `shv2 m a0 a1 hb nb` /
    `shv2 m' a0 a1 hb nb` (FMss_TwAsan.v).  Same names as the original for the post and the contract, which shadow
    it: import strstr_c first (constants), then this module. *)

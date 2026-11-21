@@ -1,9 +1,10 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the frame KL1 carries the run's channel reader, LPS 08b1429, written as plain text, kept by KL1_vmi and passed at the two write sums; the lifted world predicate Ks carries the vDSO fact, which Ks_intro takes from deJ_vdso; Kw_trace and Kw_KL1 take Ks's vDSO conjunct apart). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "eq"; "and"; "False"; "not"; "ex"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Code"; "segs"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "valuation"; "sstate"; "sobj"; "rw"; "ss_next"; "sv"; "sprop"; "ss_facts"; "SVar"; "ss_objs"; "rm"; "SLit"; "SPNot"; "swf"; "rl"; "ss_lenient"; "SAlu"; "SPBranch"; "agree_below"; "holds"; "obj_range"; "ranges_disjoint"; "eval"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@Corelib.Init.Datatypes"; "list"; "bool"; "true"; "cons"; "app"; "Some"; "option"; "pair"; "prod"; "nil"; "fst"; "None"; "nat"; "andb"; "false"; "snd"; "length"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "Z_to_bv"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "VmMaps"; "event"; "Model"; "FdEntry"; "m_vm_materialized"; "m_vmmaps"; "m_fds"; "m_fs"; "FdChannel"; "fd_lookup"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_hl0_states"; "tvL"; "PreFZ"; "PDfz"; "NX0"; "O_payL"; "S_0"; "X_1"; "LCUTS"; "N_1"; "robj_inwi"; "E_io"; "E_w"; "E_wc"; "T_w"; "T_wDi"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_hl.HL"; "Ks"; "TL"; "SIDEL"; "KL1"; "bs1"; "bs2"; "fork_ne"; "PRw"; "TR1"; "PAY"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_P"; "mc_img_hi"; "mc_img_lo"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SP"; "SPJ"; "LQ"; "ok_frame"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "etriple"; "triple"; "world"; "assn"; "w_tr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvJ"; "DTrue"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Spec.DriverSpec"; "calls"; "payload_len"; "wr"; "zeros"; "ex"; "msg_zero"; "MAX_INPUT"; "config_len"; "@Stdlib.ZArith.BinInt.Z"; "le"; "lt"; "add"; "opp"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "leaf"; "RsCut"; "mkLeaf"; "sym_run"; "set_objs"; "@Stdlib.PArith.BinPos.Pos"; "le"; "succ"; "lt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.SumConv"; "NF"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_hl.HL.Ex"; "QN"; "@Corelib.Lists.ListDef"; "firstn"; "skipn"; "map"; "Forall"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymExit"; "K_tcons"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymFrame"; "wsub_get"; "wsub"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.FuzzOneIface"; "FZ_P"; "L_fuzz"; "fz_rets"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvStatics"; "statics_objs"; "app_objs"; "a_got"; "a_guard"; "a_nl"; "statics_disjoint"; "static3"; "statics_view"; "@Stdlib.Lists.List"; "In"; "forallb"; "nth_error"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvLoop"; "robjs_missT_statics"; "tv_geo"; "CAP"; "snapJ"; "tv_eval_eq"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Musl_wl__G1.Musl_wl_out.WLout"; "Kw"; "MSG"; "Posts_wl"; "chw"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "is_prefix"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymEntail"; "entails_fr"; "entails"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "agree_vals"; "wsub_dom_below"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "T_afterN"; "call_checkT";
-"new_objs_tv"; "robjs_check"; "tvL_ok"; "T_ok"; "T0"; "aceil"; "tv_below"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_ht__G1.Drv_ht_states"; "E_f0"; "F2"; "tvP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_r__G1.Drv_r"; "tvK"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_r__G1.Drv_r_states"; "FUEL"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Musl_wl__G1.Musl_wl_out.WLoutS"; "Pre_wl2"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "vm_insensitive"; "ok_sideK"; "@LinuxProcessSemantics.LinuxProcessSem.Fs"; "Fs"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "@LinuxProcessSemantics.Riscv.Instr"; "ALU_ADD"; "BC_NE"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_hl0_states.LAddr"; "nl_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_hl1_states"; "NX1"; "NX2"; "NX3"; "S_1"; "S_2"; "S_3"; "X_2"; "X_3"; "X_4"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_open__G1.Drv_open"; "std_fds"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "ok_pframe"].
+"new_objs_tv"; "robjs_check"; "tvL_ok"; "T_ok"; "T0"; "aceil"; "tv_below"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_ht__G1.Drv_ht_states"; "E_f0"; "F2"; "tvP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_r__G1.Drv_r"; "tvK"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_r__G1.Drv_r_states"; "FUEL"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Musl_wl__G1.Musl_wl_out.WLoutS"; "Pre_wl2"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "vm_insensitive"; "ok_sideK"; "@LinuxProcessSemantics.LinuxProcessSem.Fs"; "Fs"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "@LinuxProcessSemantics.Riscv.Instr"; "ALU_ADD"; "BC_NE"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_hl0_states.LAddr"; "nl_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_hl1_states"; "NX1"; "NX2"; "NX3"; "S_1"; "S_2"; "S_3"; "X_2"; "X_3"; "X_4"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_open__G1.Drv_open"; "std_fds"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "ok_pframe"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "vdso_ok"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 From Stdlib Require Import ZArith NArith List Bool PArith Lia.
 From Stdlib Require Import Strings.Ascii Strings.String.
@@ -71,11 +72,12 @@ Proof using .
 Qed.
 
 Definition TR1 : list event := wr 1 msg_zero.
-Definition KL1 : list event -> Model -> Prop := ltac2:(tb__ "0|1|
-S1fS34A1M0S35S1S0G0R2S54A3S1S0S1fS27S30Q40A1S36A2A1S39R1A1SbeA3S0Sb0S3aR1A1Vfs;A3A2A2Lmd;Ltr;").
+(* LPS 08b1429: the frame carries the run's channel reader (a nonempty writev needs it). *)
+Definition KL1 : list event -> Model -> Prop :=
+  fun tr md => tr = TR1 /\ m_fds md = std_fds /\ m_fs md = fs /\ m_channel_reader md = true.
 
 Definition Ks (K : list event -> Model -> Prop) (vm : VmMaps) (mat : list word) : list event -> Model -> Prop := ltac2:(tb__ "0|0|
-S1fS34A1S35S1VK;R2R1A2S1S0S33S38R1A1Vvm;A3S0S1fS30Q40A1A1S37R1A1Vmat;A3A2A2Lmd;Ltr;").
+S1fS34A1S35S1VK;R2R1A2S1S0S33S38R1A1Vvm;A3S1S0S1fS30Q40A1A1S37R1A1Vmat;A3Sc0R1A1A2A2A2Lmd;Ltr;").
 
 Lemma zeros_succ : ltac2:(tb__ "0|1|
 S1dS6bZ0R1A2S0S1fS30Q8A1M0A1S66S6dR2Z1A2A1S23G0S68S66R2A1A3A3F_;Fn;").
@@ -87,7 +89,8 @@ S1dS1fS30Q8A1M0A1M1G1S0S1fS34A1S65R3S23G0R2R1A3A2S23S34S65R3R2A2S65R3R1A2A3A3Fb;
 Proof using . intros ch a b. unfold wr. apply map_app. Qed.
 
 Lemma KL1_vmi : vm_insensitive KL1.
-Proof using . split; [intros tr md vm (A & B & C) | intros tr md lz mt (A & B & C)]; (split; [exact A|]; split; autorewrite with model; assumption). Qed.
+Proof using . split; [intros tr md vm (A & B & C & R) | intros tr md lz mt (A & B & C & R)];
+  (split; [exact A|]; split; [autorewrite with model; assumption|]; split; [autorewrite with model; assumption | exact R]). Qed.
 Lemma KH_tcons : K_tcons SpecT KH. Proof using inp. exact (P.Drv_h__G1.Drv_h.KH_tcons cx). Qed.
 Lemma KH_vmi : vm_insensitive KH. Proof using cx. exact (P.Drv_h__G1.Drv_h.KH_vmi cx). Qed.
 Lemma Ks_tcons : ltac2:(tb__ "0|0|
@@ -97,9 +100,9 @@ Lemma Ks_okf : ltac2:(tb__ "0|0|
 S1fS34A1S35OF_;F_;S33S1fS30Q40A1A1S7dVSpecT;R3A2S5cS5Vok;S4cR4R3R2A3A3F_;Fmat;Fvm;FK;"). Proof using HokK. intros. apply HokK, Ks_tcons. assumption. Qed.
 Lemma Ks_okp : ltac2:(tb__ "0|0|
 S1fS34A1S35OF_;F_;S33S1fS30Q40A1A1S7dVSpecT;R3A2SbfS5Vok;S4cR4R3R2A3A3F_;Fmat;Fvm;FK;"). Proof using HokP. intros. apply HokP, Ks_tcons. assumption. Qed.
-Lemma Ks_intro : ltac2:(tb__ "0|1|
-S1fS34A1M0S35OF_;F_;G0S35R3R2R1A2S4cR4S38R2A1S37R2A1R3R2A5F_;Fmd;Ftr;FK;").
-Proof using . intros K tr md H. split; [exact H | split; reflexivity]. Qed.
+Lemma Ks_intro : ltac2:(tb__ "0|0|
+S1fS34A1S35OF_;F_;S1fS34A1S35R3R2R1A2Sc0R2A1S4cR5S38R3A1S37R3A1R4R3A5F_;F_;Fmd;Ftr;FK;").
+Proof using . intros K tr md H V. split; [exact H | split; [reflexivity | split; [reflexivity | exact V]]]. Qed.
 Lemma okside_K : ltac2:(tb__ "0|0|
 S1fS34A1S35OF_;F_;S7dVSpecT;R1A2SaeR2A1SafS5Vok;R3A3F_;F_;FK;").
 Proof using HokK HokP. intros K HK HV. split; [apply HokK, HK|]. split; [apply HokP, HK | exact HV]. Qed.
@@ -320,13 +323,13 @@ Proof using HL6 HLM.
     + exact Vg.
     + subst rho1. apply rho_set_rw_at.
     + apply (TL_rw rho rho1); [intros i Hi'; apply RW; lia | exact HT].
-  - split; [rewrite <- HPS; exact Hsm' | apply Ks_intro; exact Hk].
+  - split; [rewrite <- HPS; exact Hsm' | apply Ks_intro; [exact Hk | eapply deJ_vdso; exact HJi]].
 Qed.
 
 Lemma fromN : ltac2:(tb__ "0|2|
 S1fS34A1M0S35OF_;F_;S7S7S1eS6S1dS33S1fS30Q40A1A1G0Sb1S35S0S1fS8A1SfRaA1M1S23S8SfR9A1S83S56R8A2A3A3S0S20S9cS73RbG1A2RaS28S27S1eSbA2A1A3S21A3S76Pf1RaA2S4eRbRaR9R8R7A5S59S5S4cRfR9R8A3ReRbS26G0S98R7S99R6R5A2A4A5S4S6S6S1S4dR1A1S5aS5VJD;R11R1S3dS62A4RfR1S26G0S98R9S99R8R7A2A4A5A2Lrho';A2F_;F_;F_;F_;F_;Fmd;Fms;Ftr;Fmat;Fvm;Fg;Frho;Fv;FS;FN;FK;").
 Proof using .
-  intros K N S v rho g vm mat tr ms md HN He Hv (HSn & HG & HV & Hvv & HT) [Hsm (Hk & Hvm & Hmat)].
+  intros K N S v rho g vm mat tr ms md HN He Hv (HSn & HG & HV & Hvv & HT) [Hsm (Hk & Hvm & Hmat & VDk)].
   destruct (release_statics segs C_P statics_layout_P statics_wseg_P rho N (tr, mkCfg ms md) (ss_objs S) g v Hsm HN HV Hvv)
     as (m' & Hsm1 & Hout & RD & WK & _).
   pose proof (entails_sound segs _ _ [] _ _ He Hsm1) as Hsm2.
@@ -395,7 +398,7 @@ Qed.
 Lemma Kw_trace : ltac2:(tb__ "0|3|
 S33S1fS30Q40A1M0A1M1S2bS1fS34A1M2S35S94S4cVKH;R5R4A3S50S51R3R2R1A6S1S0G2R3S65Z1S79S30Q8A1R4S68A3A2A3S1S0S1fS27G0S36A2A1S39R2A1SbeA3S1S0Sb0S3aR2A1Vfs;A3S1S0S33S38R2A1R6A3S0G1S37R2A1R5A3A2A2A2A2F_;Fmd;Ftr;Fk;Fmat;Fvm;").
 Proof using inp.
-  intros vm mat k tr md (tr0 & ((-> & Hf & Hs) & Hv & Hm) & ->). split; [|auto]. unfold WLout.TRk, WLout.MSG, wr. rewrite msg_zero_eq. reflexivity.
+  intros vm mat k tr md (tr0 & ((-> & Hf & Hs & _) & Hv & Hm & _) & ->). split; [|auto]. unfold WLout.TRk, WLout.MSG, wr. rewrite msg_zero_eq. reflexivity.
 Qed.
 Lemma Kw_tcons : ltac2:(tb__ "0|0|
 S33S1fS30Q40A1A1S2bS7dVSpecT;S94S4cVKH;R3R2A3S50S51R1A4A2Fk;Fmat;Fvm;").
@@ -407,8 +410,9 @@ Qed.
 Lemma Kw_KL1 : ltac2:(tb__ "0|0|
 S33S1fS30Q40A1A1S1fS34A1S35S94S4cVKH;R4R3A3S50S51S2fS30Q8A1S95S50S51A2A2R2R1A6S4cS4fR5R4R3R2A5F_;Fmd;Ftr;Fmat;Fvm;").
 Proof using .
-  intros vm mat tr md HK. destruct (Kw_trace vm mat _ tr md HK) as (-> & Hf & Hs & Hv & Hm).
-  split; [|split; [exact Hv | exact Hm]]. split; [|split; [exact Hf | exact Hs]]. unfold WLout.MSG, bs1, bs2. reflexivity.
+  intros vm mat tr md HK. pose proof HK as (tr1 & ((_ & _ & _ & Hr) & _ & _ & VD) & _).
+  destruct (Kw_trace vm mat _ tr md HK) as (-> & Hf & Hs & Hv & Hm).
+  split; [|split; [exact Hv | split; [exact Hm | exact VD]]]. split; [|split; [exact Hf | split; [exact Hs | exact Hr]]]. unfold WLout.MSG, bs1, bs2. reflexivity.
 Qed.
 Definition PRw (rho1 : valuation) : Prop := ltac2:(tb__ "0|3|
 S1S0S1fS30Q8A1A1M0S14Vrho1;P5A2S50A3S1S0G0S14Vrho1;P6A2S51A3S1S0S1dS31Q40M1S9Vrho1;PdA2A2Z1M2A3S0S1dS31G1S9Vrho1;PfA2A2G2A3A2A2A2").
@@ -422,6 +426,7 @@ Proof using HL6 HLM Hargc HokK HokP JD P0 TVc cap fs.
   - intros k. apply HokK, Kw_tcons.
   - intros k. apply HokP, Kw_tcons.
   - apply Ks_fd1.
+  - intros tr md ((_ & _ & _ & R) & _). exact R.
   - cbn. lia.
 Qed.
 
@@ -754,6 +759,7 @@ Proof using Hargc JD L P0 TVc cap.
   apply (WLout.wl2_sum_ex (Ks KH vm mat) rho1 bs1 bs2 H5 H6 H13 H15).
   - unfold WLout.MSG, max_write_total. cbn. lia.
   - apply Ks_fd1.
+  - intros tr md ((_ & _ & _ & R) & _). exact R.
   - cbn. lia.
 Qed.
 

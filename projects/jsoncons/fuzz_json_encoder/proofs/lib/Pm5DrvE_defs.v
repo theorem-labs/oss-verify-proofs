@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed loop2_itinerary_okA, loop_itinerary_okA. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -43,12 +44,12 @@ Definition rQfA := Eval vm_compute in runTA (SCR [false] [] []) (SS 0xb0e14 srQ0
 Definition summE (r : sym_state * list sidecond * scripts) := (s_pc (fst (fst r)), snd (fst r), s_next (fst (fst r)), length (s_log (fst (fst r)))).
 
 Lemma loop_itinerary_okA :
-  summE rPA = (0x6c228, [SCStoreOk (SA (ELit 0) 6946324) 1], 134%nat, 10%nat)      (* [comment removed for export] *)
+  summE rPA = (0x6c228, [SCStoreOk (SA (ELit 0) 6946324) 1], 134%nat, 10%nat)
   /\ (nth 1 srPA (ELit 0), nth 2 srPA (ELit 0), nth 10 srPA (ELit 0), nth 11 srPA (ELit 0))
      = (ELit 0xb0e14, EAlu ALU_ADD (EVar 0) (ELit (-288)), ELit 86338, EAlu ALU_ADD (EVar 0) (ELit (-264)))
-  (* [comment removed for export] *)
+
   /\ forallb (fun K => existsb (kentry_eqb K) knPA)
-       [KWr (SA (EVar 0) (-8388608)) 8388608; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1466368; KWord (SA (ELit 0) 7084240) 8 (EVar 3)] = true
+       [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1466368; KWord (SA (ELit 0) 7084240) 8 (EVar 3)] = true
   /\ sr_vars_lt 134 srPA = true /\ kn_vars_lt 134 knPA = true
   /\ (s_pc (fst (fst rQtA)), snd (fst rQtA), s_log (fst (fst rQtA))) = (0xb0d08, [SCBr true BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (s_pc (fst (fst rQfA)), snd (fst rQfA), s_log (fst (fst rQfA))) = (0x82690, [SCBr false BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
@@ -56,10 +57,6 @@ Lemma loop_itinerary_okA :
   /\ kn_after rQtA knQ0A = knQ0A /\ kn_after rQfA knQ0A = knQ0A.
 Proof. vm_compute. repeat split; reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition knLH2A : list kentry := Eval vm_compute in filter (kentry_vars_lt 81) knQ0A.
 Definition rLB2A := Eval vm_compute in runTA scr0 (SS 0xb0d08 srLHA [] knLH2A 102).
 Definition knLB2A : list kentry := Eval vm_compute in kn_after rLB2A knLH2A.      (* [comment removed for export] *)
@@ -91,7 +88,7 @@ Lemma loop2_itinerary_okA :
   /\ summE rLB2A = summE rLB1A /\ s_regs (fst (fst rLB2A)) = srLBA /\ kn_after rLB2A knLH2A = knLB2A
   /\ summE rP2A = (0x6c228, [SCStoreOk (SA (ELit 0) 6946324) 1], 134%nat, 10%nat) /\ s_regs (fst (fst rP2A)) = srPA
   /\ forallb (fun K => existsb (kentry_eqb K) knP2A)
-       [KWr (SA (EVar 0) (-8388608)) 8388608; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1466368; KWord (SA (ELit 0) 7084240) 8 (EVar 3)] = true
+       [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1466368; KWord (SA (ELit 0) 7084240) 8 (EVar 3)] = true
   /\ (s_pc (fst (fst rSt2A)), snd (fst rSt2A), s_log (fst (fst rSt2A))) = (0xb0d08, [SCBr true BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (s_pc (fst (fst rSf2A)), snd (fst rSf2A), s_log (fst (fst rSf2A))) = (0x82690, [SCBr false BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (nth 1 srSf2A (ELit 0), nth 10 srSf2A (ELit 0), nth 21 srSt2A (ELit 0)) = (ELit 0xb0d48, EVar 83, EAluw ALU_ADD (EVar 81) (ELit (-1)))

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Vdso import; sstep_instr_inv closes the three new vDSO step cases; the entry-stack lemmas, enum_state, init_eq_enum_state and the exit run and equivalence lemmas decoded from encoded statements to plain text and restated over the launch input, the mmap base and run_segments, with the vDSO initial model and the stack_window_lo window floor). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit OmniEquivalence.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run OmniRun.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import SimInv.
 
 Import ListNotations.
@@ -193,6 +194,18 @@ Proof.
       rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
       rewrite Hstep in H; discriminate end.
   - (* [comment removed for export] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_call *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_materialization_fault *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_unmodeled *)
     match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
       rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
       rewrite Hstep in H; discriminate end.
@@ -452,84 +465,102 @@ Proof.
   - apply Z.ltb_ge in E2. lia.
 Qed.
 
-Lemma build_stack_starts_with_argc : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Pph,$48.Psp,(;.&40.)Pargv,(<.(<.(;.&8.)))Penvp,(<.(<.(;.&8.)))Puid,(;.&40.)Phw,(;.&40.)Prnd,$49.(3<.(<.(;.&8.))Lrest,(<.(;.&8.))(14.(<.(;.&8.))(4:.R8.R7.R6.R5.R4.R3.R2.)(4;.(;.&8.)(4<.(4=.(42.(<.(;.&8.))R6.)))R1.)))")
-(* [comment removed for export] *).
+Lemma build_stack_starts_with_argc :
+  forall inp mbase ph entry (sp : word) draw,
+  exists rest,
+    entry_stack_image inp mbase ph entry sp draw =
+    word_le8 (nat_to_word (length (in_argv inp))) ++ rest.
 Proof.
-  intros ph sp argv envp uid hw rnd. unfold build_stack_bytes, len_word, nat_to_word.
-  destruct (string_addrs _ argv) as [? ?]. destruct (string_addrs _ envp) as [? ?].
+  intros inp mbase ph entry sp draw.
+  unfold entry_stack_image, build_stack_bytes, len_word, nat_to_word.
+  cbv zeta.
+  destruct (string_addrs _ (in_argv inp)) as [? ?].
+  destruct (string_addrs _ (in_envp inp)) as [? ?].
   eexists. exact (eq_sym (app_assoc _ _ _)).
 Qed.
 
 Lemma word_le8_length : forall v, length (word_le8 v) = 8%nat.
 Proof. intro v. reflexivity. Qed.
 
-Lemma build_stack_min_length : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Pph,$48.Psp,(;.&40.)Pargv,(<.(<.(;.&8.)))Penvp,(<.(<.(;.&8.)))Puid,(;.&40.)Phw,(;.&40.)Prnd,$49.(4>.#8.(42.(;.&8.)(4:.R7.R6.R5.R4.R3.R2.R1.)))")
-(* [comment removed for export] *).
+Lemma build_stack_min_length : forall inp mbase ph entry (sp : word) draw,
+  (8 <= length (entry_stack_image inp mbase ph entry sp draw))%nat.
 Proof.
-  intros ph sp argv envp uid hw rnd.
-  destruct (build_stack_starts_with_argc ph sp argv envp uid hw rnd) as [rest Hr].
+  intros inp mbase ph entry sp draw.
+  destruct (build_stack_starts_with_argc inp mbase ph entry sp draw)
+    as [rest Hr].
   rewrite Hr, length_app, word_le8_length. lia.
 Qed.
 
 (* [comment removed for export] *)
-Lemma init_first8 : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psegs,(<.$4?.)Pinit_pc,$50.Pph,$48.Pinit_sp,(;.&40.)Pinit_rnd,$49.Pargv,(<.(<.(;.&8.)))Penvp,(<.(<.(;.&8.)))Paddr,(;.&40.)Pi,$>.Puid,(;.&40.)Phw,(;.&40.)P,(41.R3.#8.)P,(14.$43.(23.&40.R5.)(44.(23.&40.R9.)(45.R4.)))(14.(16.(;.&8.))(51.(52.R=.R<.R;.R:.R9.R8.R7.R4.R3.)R6.)(47.(;.&8.)(4<.(4=.(42.(<.(;.&8.))R8.)))R5.))")
-(* [comment removed for export] *).
+Lemma init_first8 :
+  forall segs init_pc ph init_sp mbase init_rnd inp addr i, (i < 8)%nat ->
+  bv_unsigned addr = (bv_unsigned init_sp + Z.of_nat i)%Z ->
+  ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp) addr =
+  nth_error (word_le8 (nat_to_word (length (in_argv inp)))) i.
 Proof.
-  intros segs init_pc ph init_sp init_rnd argv envp addr i uid hw Hi Haddr.
-  assert (Hstk : stack_to_mem init_sp (entry_stack_image ph init_sp argv envp uid hw init_rnd) addr
-                 = nth_error (word_le8 (nat_to_word (length argv))) i).
-  { rewrite stack_to_mem_image_in_block
-      by (pose proof (build_stack_min_length ph init_sp argv envp uid hw init_rnd);
-          unfold entry_block_top; lia).
-    rewrite (stm_at init_sp _ addr i);
-      [ | pose proof (build_stack_min_length ph init_sp argv envp uid hw init_rnd); lia
+  intros segs init_pc ph init_sp mbase init_rnd inp addr i Hi Haddr.
+  assert (Hstk : stack_to_mem init_sp
+                   (entry_stack_image inp mbase ph
+                      (Z_to_bv 64 (Z.of_N init_pc)) init_sp init_rnd) addr
+                 = nth_error (word_le8 (nat_to_word (length (in_argv inp)))) i).
+  { rewrite (stm_at init_sp _ addr i);
+      [ | pose proof (build_stack_min_length inp mbase ph
+                        (Z_to_bv 64 (Z.of_N init_pc)) init_sp init_rnd); lia
         | exact Haddr ].
-    destruct (build_stack_starts_with_argc ph init_sp argv envp uid hw init_rnd) as [rest Hr].
+    destruct (build_stack_starts_with_argc inp mbase ph
+                (Z_to_bv 64 (Z.of_N init_pc)) init_sp init_rnd) as [rest Hr].
     rewrite Hr. apply nth_error_app1. rewrite word_le8_length. lia. }
-  change (ms_mem (init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw) addr)
-    with (match stack_to_mem init_sp (entry_stack_image ph init_sp argv envp uid hw init_rnd) addr with
+  change (ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp)
+            addr)
+    with (match stack_to_mem init_sp
+                  (entry_stack_image inp mbase ph
+                     (Z_to_bv 64 (Z.of_N init_pc)) init_sp init_rnd) addr with
           | Some b => Some b
           | None =>
-              if andb (Z.leb (bv_unsigned init_sp - stack_max_size)
+              if andb (Z.leb (stack_window_lo (in_kernel inp) mbase init_rnd)
                              (bv_unsigned addr))
                       (Z.ltb (bv_unsigned addr) (bv_unsigned init_sp))
               then Some (Z_to_bv 8 0) else None
           end).
   rewrite Hstk.
-  destruct (nth_error (word_le8 (nat_to_word (length argv))) i) eqn:E; [reflexivity|].
+  destruct (nth_error (word_le8 (nat_to_word (length (in_argv inp)))) i) eqn:E;
+    [reflexivity|].
   apply nth_error_None in E. rewrite word_le8_length in E. lia.
 Qed.
 
-Lemma actual_mem_is_overlay : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psegs,(<.$4?.)Pinit_pc,$50.Pph,$48.Pinit_sp,(;.&40.)Pinit_rnd,$49.Pargv,(<.(<.(;.&8.)))Penvp,(<.(<.(;.&8.)))Puid,(;.&40.)Phw,(;.&40.)(14.P,(;.&40.)(16.(;.&8.))(51.(52.R9.R8.R7.R6.R5.R4.R3.R2.R1.))(53.R6.(42.(<.(;.&8.))R4.)(51.(52.R9.R8.R7.R6.R5.R4.R3.R2.R1.))))")
-(* [comment removed for export] *).
+Lemma actual_mem_is_overlay :
+  forall segs init_pc ph init_sp mbase init_rnd inp,
+  ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp) =
+  overlay_argc_bytes init_sp (length (in_argv inp))
+    (ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp)).
 Proof.
-  intros segs init_pc ph init_sp init_rnd argv envp uid hw.
+  intros segs init_pc ph init_sp mbase init_rnd inp.
   apply functional_extensionality. intro addr.
   unfold overlay_argc_bytes.
   destruct ((bv_unsigned addr =? bv_unsigned init_sp)%Z) eqn:E0;
     [ apply Z.eqb_eq in E0;
-      apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 0 uid hw); lia | ].
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 0); lia | ].
   destruct ((bv_unsigned addr =? bv_unsigned init_sp + 1)%Z) eqn:E1;
     [ apply Z.eqb_eq in E1;
-      apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 1 uid hw); lia | ].
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 1); lia | ].
   destruct ((bv_unsigned addr =? bv_unsigned init_sp + 2)%Z) eqn:E2;
     [ apply Z.eqb_eq in E2;
-      apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 2 uid hw); lia | ].
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 2); lia | ].
   destruct ((bv_unsigned addr =? bv_unsigned init_sp + 3)%Z) eqn:E3;
     [ apply Z.eqb_eq in E3;
-      apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 3 uid hw); lia | ].
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 3); lia | ].
   destruct ((bv_unsigned addr =? bv_unsigned init_sp + 4)%Z) eqn:E4;
     [ apply Z.eqb_eq in E4;
-      apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 4 uid hw); lia | ].
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 4); lia | ].
   destruct ((bv_unsigned addr =? bv_unsigned init_sp + 5)%Z) eqn:E5;
     [ apply Z.eqb_eq in E5;
-      apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 5 uid hw); lia | ].
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 5); lia | ].
   destruct ((bv_unsigned addr =? bv_unsigned init_sp + 6)%Z) eqn:E6;
     [ apply Z.eqb_eq in E6;
-      apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 6 uid hw); lia | ].
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 6); lia | ].
   destruct ((bv_unsigned addr =? bv_unsigned init_sp + 7)%Z) eqn:E7;
     [ apply Z.eqb_eq in E7;
-      apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 7 uid hw); lia | ].
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 7); lia | ].
   reflexivity.
 Qed.
 
@@ -539,17 +570,28 @@ Proof. intros []; reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition enum_state (segs : list Segment) (init_pc : N) (ph : PhdrInfo)
-    (init_sp : word) (init_rnd : EntryDraw) (argc : nat)
-    (base : word -> option byte) (uid : word)
-    (hw : word) : machine_state := ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "(54.(55.(52.O9.O8.O7.O6.O5.(9.(<.(;.&8.)))(9.(<.(;.&8.)))O2.O1.))(56.(52.O9.O8.O7.O6.O5.(9.(<.(;.&8.)))(9.(<.(;.&8.)))O2.O1.))(57.(52.O9.O8.O7.O6.O5.(9.(<.(;.&8.)))(9.(<.(;.&8.)))O2.O1.))(17.(52.O9.O8.O7.O6.O5.(9.(<.(;.&8.)))(9.(<.(;.&8.)))O2.O1.))(58.(52.O9.O8.O7.O6.O5.(9.(<.(;.&8.)))(9.(<.(;.&8.)))O2.O1.))(59.(52.O9.O8.O7.O6.O5.(9.(<.(;.&8.)))(9.(<.(;.&8.)))O2.O1.))(53.O6.O4.O3.)(5:.(52.O9.O8.O7.O6.O5.(9.(<.(;.&8.)))(9.(<.(;.&8.)))O2.O1.)))")
-(* [comment removed for export] *).
+    (init_sp mbase : word) (init_rnd : EntryDraw) (inp : ProcInput)
+    (argc : nat) (base : word -> option byte) : machine_state :=
+  {| ms_regs       := ms_regs (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_fregs      := ms_fregs (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_pc_val     := ms_pc_val (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_svc_pending := ms_svc_pending (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_resv       := ms_resv (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_fcsr       := ms_fcsr (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_mem        := overlay_argc_bytes init_sp argc base;
+     ms_rom        := ms_rom (init_machine_state segs init_pc ph init_sp mbase init_rnd inp) |}.
 
 (* [comment removed for export] *)
-Lemma init_eq_enum_state : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psegs,(<.$4?.)Pinit_pc,$50.Pph,$48.Pinit_sp,(;.&40.)Pinit_rnd,$49.Pargv,(<.(<.(;.&8.)))Penvp,(<.(<.(;.&8.)))Puid,(;.&40.)Phw,(;.&40.)(14.$15.(52.R9.R8.R7.R6.R5.R4.R3.R2.R1.)(5;.R9.R8.R7.R6.R5.(42.(<.(;.&8.))R4.)(51.(52.R9.R8.R7.R6.R5.R4.R3.R2.R1.))R2.R1.))")
-(* [comment removed for export] *).
+Lemma init_eq_enum_state :
+  forall segs init_pc ph init_sp mbase init_rnd inp,
+  init_machine_state segs init_pc ph init_sp mbase init_rnd inp =
+  enum_state segs init_pc ph init_sp mbase init_rnd inp
+    (length (in_argv inp))
+    (ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp)).
 Proof.
-  intros segs init_pc ph init_sp init_rnd argv envp uid hw. unfold enum_state.
-  rewrite (machine_state_eta (init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw)) at 1.
+  intros segs init_pc ph init_sp mbase init_rnd inp. unfold enum_state.
+  rewrite (machine_state_eta
+             (init_machine_state segs init_pc ph init_sp mbase init_rnd inp)) at 1.
   f_equal; try reflexivity. apply actual_mem_is_overlay.
 Qed.
 
@@ -558,19 +600,24 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Lemma exit_omni_run : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psegs,(<.$4?.)Ppc,$50.Pph,$48.Psp,(;.&40.)Pbrk0,(;.&40.)Pmb,(;.&40.)Prnd,$49.Plim,$43.Pcode,(;.&40.)Pinp,$5<.PF,$>.P,(14.$1<.(5=.R;.R3.R1.(52.R;.R:.R9.R8.R5.(5>.R2.)(5?.R2.)(60.R2.)(61.R2.)))$1>.)(62.(63.R<.R;.R:.)R5.(64.R9.R8.R7.R6.)R3.(65.R4.(66.R3.)))")
-(* [comment removed for export] *).
+Lemma exit_omni_run : forall segs pc ph sp brk0 mb rnd lim code inp F,
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
+    (exit_post code (in_fs inp)).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim code inp F Hsim.
   cbn [omni_run]. unfold init_config.
-  exact (to_exit_exec segs code
-           (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-           (init_model (segments_reserved segs) brk0 mb sp lim inp)
-           eq_refl eq_refl (sim_c_to_exit segs code F _ Hsim)).
+  exact (to_exit_exec (run_segments segs inp sp mb) code
+           (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+           (with_vdso (vdso_run_init (ed_vdso rnd))
+              (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp))
+           eq_refl eq_refl (sim_c_to_exit (run_segments segs inp sp mb) code F _ Hsim)).
 Qed.
 
-Lemma exit_obs_iff : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psegs,(<.$4?.)Ppc,$50.Pph,$48.Psp,(;.&40.)Pbrk0,(;.&40.)Pmb,(;.&40.)Prnd,$49.Plim,$43.Pcode,(;.&40.)Pinp,$5<.PF,$>.P,(14.$1<.(5=.R;.R3.R1.(52.R;.R:.R9.R8.R5.(5>.R2.)(5?.R2.)(60.R2.)(61.R2.)))$1>.)Ptr,(<.$12.)(67.(68.R=.(69.R=.R<.R;.R:.R9.R8.R7.R6.R4.)R1.)(6:.$12.R1.(31.$12.(32.(10.&40.R5.(8.&40.+??.))(66.R4.))(9.$12.))))")
-(* [comment removed for export] *).
+Lemma exit_obs_iff : forall segs pc ph sp brk0 mb rnd lim code inp F,
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  forall tr, obs_trace (run_segments segs inp sp mb) (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
+             <-> is_prefix tr [ExitEv (bv_and code (Z_to_bv 64 255)) (in_fs inp)].
 Proof.
   intros segs pc ph sp brk0 mb rnd lim code inp F Hsim tr.
   apply exec_obs_iff.
@@ -578,8 +625,9 @@ Proof.
   intros tr' o (Heq & Hx). split; [exact Heq | exact (exits_with_never_errors _ _ _ Hx)].
 Qed.
 
-Lemma exit_no_error_run : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psegs,(<.$4?.)Ppc,$50.Pph,$48.Psp,(;.&40.)Pbrk0,(;.&40.)Pmb,(;.&40.)Prnd,$49.Plim,$43.Pcode,(;.&40.)Pinp,$5<.PF,$>.P,(14.$1<.(5=.R;.R3.R1.(52.R;.R:.R9.R8.R5.(5>.R2.)(5?.R2.)(60.R2.)(61.R2.)))$1>.)(3?.(40.R<.(69.R<.R;.R:.R9.R8.R7.R6.R5.R3.)))")
-(* [comment removed for export] *).
+Lemma exit_no_error_run : forall segs pc ph sp brk0 mb rnd lim code inp F,
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  ~ reaches_error (run_segments segs inp sp mb) (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim code inp F Hsim. apply exec_no_error.
   eapply exec_conseq; [exact (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) |].
@@ -587,16 +635,19 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma exit_must_exit_with : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psegs,(<.$4?.)Ppc,$50.Pph,$48.Psp,(;.&40.)Pbrk0,(;.&40.)Pmb,(;.&40.)Prnd,$49.Plim,$43.Pcode,(;.&40.)Pinp,$5<.PF,$>.P,(14.$1<.(5=.R;.R3.R1.(52.R;.R:.R9.R8.R5.(5>.R2.)(5?.R2.)(60.R2.)(61.R2.)))$1>.)(6;.(10.&40.R4.(8.&40.+??.))(63.R<.R;.R:.)R5.(64.R9.R8.R7.R6.)R3.)")
-(* [comment removed for export] *).
+Lemma exit_must_exit_with : forall segs pc ph sp brk0 mb rnd lim code inp F,
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  must_exit_with (bv_and code (Z_to_bv 64 255)) (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim code inp F Hsim. apply must_exit_with_iff.
   eapply exec_conseq; [exact (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) |].
   intros tr o (_ & Hx). exact Hx.
 Qed.
 
-Lemma exit_omni_run_code_unique : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psegs,(<.$4?.)Ppc,$50.Pph,$48.Psp,(;.&40.)Pbrk0,(;.&40.)Pmb,(;.&40.)Prnd,$49.Plim,$43.Pcode,(;.&40.)Pinp,$5<.PF,$>.Pcode',(;.&40.)P,(14.$1<.(5=.R<.R4.R2.(52.R<.R;.R:.R9.R6.(5>.R3.)(5?.R3.)(60.R3.)(61.R3.)))$1>.)P,(62.(63.R=.R<.R;.)R6.(64.R:.R9.R8.R7.)R4.(35.R2.))(14.(;.&40.)R3.(10.&40.R6.(8.&40.+??.)))")
-(* [comment removed for export] *).
+Lemma exit_omni_run_code_unique : forall segs pc ph sp brk0 mb rnd lim code inp F code',
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (exits_with code') ->
+  code' = bv_and code (Z_to_bv 64 255).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim code inp F code' Hsim Hex.
   pose proof (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) as Hrun.
@@ -608,13 +659,19 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma exit_omni_strong_equiv : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psource_segs,(<.$4?.)Prpc,$50.Prph,$48.Prsp,(;.&40.)Prbrk,(;.&40.)Prmb,(;.&40.)Prrnd,$49.Ptarget_segs,(<.$4?.)Papc,$50.Paph,$48.Pasp,(;.&40.)Pabrk,(;.&40.)Pamb,(;.&40.)Parnd,$49.Pcode,(;.&40.)Pinp,$5<.PFR,$>.PFA,$>.P,(14.$1<.(5=.R12.R4.R2.(52.R12.R11.R10.R?.R<.(5>.R3.)(5?.R3.)(60.R3.)(61.R3.)))$1>.)P,(14.$1<.(5=.R<.R5.R2.(52.R<.R;.R:.R9.R6.(5>.R4.)(5?.R4.)(60.R4.)(61.R4.)))$1>.)(6<.(63.R14.R13.R12.)(63.R=.R<.R;.)(64.R11.R10.R?.R>.)(64.R:.R9.R8.R7.)R5.)")
-(* [comment removed for export] *).
+Lemma exit_omni_strong_equiv :
+  forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd code inp FR FA,
+  sim_c (run_segments source_segs inp rsp rmb) code FR
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) = true ->
+  sim_c (run_segments target_segs inp asp amb) code FA
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) = true ->
+  omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+                    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd code inp FR FA
     Hsource Htarget.
   split.
-  { cbn [img_segments].
+  { cbn [image_run_segments img_segments en_sp en_mmap_base].
     eapply coexec_conseq;
       [apply exec_coexec;
        exact (exit_omni_run source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit code inp FR Hsource) |].
@@ -630,8 +687,15 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma exit_strong_equiv : ltac2:(CDefT.buildp (gd_tbl_ExitSim ()) "Psource_segs,(<.$4?.)Prpc,$50.Prph,$48.Prsp,(;.&40.)Prbrk,(;.&40.)Prmb,(;.&40.)Prrnd,$49.Prlim,$43.Ptarget_segs,(<.$4?.)Papc,$50.Paph,$48.Pasp,(;.&40.)Pabrk,(;.&40.)Pamb,(;.&40.)Parnd,$49.Palim,$43.Pcode,(;.&40.)Pinp,$5<.PFR,$>.PFA,$>.P,(14.$1<.(5=.R14.R4.R2.(52.R14.R13.R12.R11.R>.(5>.R3.)(5?.R3.)(60.R3.)(61.R3.)))$1>.)P,(14.$1<.(5=.R=.R5.R2.(52.R=.R<.R;.R:.R7.(5>.R4.)(5?.R4.)(60.R4.)(61.R4.)))$1>.)(13.(6=.(6>.(63.R16.R15.R14.)R?.(64.R13.R12.R11.R10.)R5.))(6?.(6>.(63.R16.R15.R14.)R?.(64.R13.R12.R11.R10.)R5.)(6>.(63.R>.R=.R<.)R7.(64.R;.R:.R9.R8.)R5.)))")
-(* [comment removed for export] *).
+Lemma exit_strong_equiv :
+  forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim code inp FR FA,
+  sim_c (run_segments source_segs inp rsp rmb) code FR
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) = true ->
+  sim_c (run_segments target_segs inp asp amb) code FA
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) = true ->
+  Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+  /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+                       (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim code inp FR FA
     Hsource Htarget.

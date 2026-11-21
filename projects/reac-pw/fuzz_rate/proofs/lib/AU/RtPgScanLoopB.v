@@ -1,7 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanLoop.v at 45269e15197c for reac-pw/fuzz_rate:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanLoop.v for reac-pw/fuzz_rate:
    the cut file is lib/A/RtPgSeg.v, the model facts lib/A/RtPgScanF.v, and the key match's fourth exit is the asked
    set-up A (rs_from_A) where role's was its tail T. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanLoop.v at fa28558fbb17 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanLoop.v for image B
    (fuzz_rate.asan-ubsan): the cut file is lib/AU/RtPgSegB.v (rs_ -> rsb_), the model facts lib/AU/RtPgScanFB.v
    (rk_ -> rkb_); the closure itself is image A's. *)
 (* reac-pw/fuzz_rate, the image-B walk of LLVMFuzzerTestOneInput: THE CLOSURE OF THE TWO SCAN LOOPS of M02, the

@@ -11,7 +11,8 @@
    image), where UP is not. Post transfer (mem -> unpoison UP mem): the post of each run (AFh3.segP, AFh4.segQH,
    AFh5.segR1, AFh6.segT) on the real final memory gives the same post for the unpoisoned reading, and UP keeps its 0xf7
    bytes, since each run's write window misses the shadow band. FSupoisonAllocFeq.v is the twin itself. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFeqR.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: A_Enqueue, A_Refill, PC_ENQ_RA. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFeqR.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: A_Enqueue, A_Refill, PC_ENQ_RA. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -36,7 +37,7 @@ Local Set Warnings "-abstract-large-number".
 Local Set Warnings "-notation-for-abbreviation".
 Open Scope Z_scope.
 (* The pcs inside a function, by name: the entry is lib/B/YFeu.v / lib/B/YFew.v A_xxx or the lib/B/YB1w.v row, the offset is the B donor's pc minus that entry. *)
-(* the return address of Enqueue's new-batch call (lib/B/YFgr.v:128, SS0's pc; lib/B/YFg6.v:276 R_ra). *)
+(* the return address of Enqueue's new-batch call (lib/B/YFgr.v:129, SS0's pc; lib/B/YFg6.v:276 R_ra). *)
 Definition PC_ENQ_RA : Z := A_Enqueue + 0x154.
 Module FSP := OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A.FSupoison.
 Module FSU := OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A.FSupoisonU.

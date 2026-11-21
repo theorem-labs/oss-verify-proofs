@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: ARM_gone (op 5) of the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    LLVMFuzzerTestOneInput over the GENERIC allocator relation ARx - THE ARM'S COMPOSITION: lf_arm_gone_x, whose statement
    is the text of the Section hypothesis ARM_gone of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v Section w (:410), checked at
    the end (lf_arm_gone_x_check).
-   The AR proof is a Theorem Labs lane's (a working branch 4118c28f01e: lib/B/W_LLVMFuzzerTestOneInput_gone.v
+   The AR proof is a Theorem Labs lane's (a working branch: lib/B/W_LLVMFuzzerTestOneInput_gone.v
    lf_arm_gone over _gone_base / _tk / _p0 .. _p6), with our two adaptations to the current kit and cut, which change
-   no Theorem line (4c35818d04c: gone_base's HB-clause `& _`; gone_p3 / gone's RIG at the kit's CTX_AFREE rig_spec, as
-   image A's 95cae0d4740).  No AR file and no kit file is edited here.  Template: SmallX's image-A conversion
-   lib/A/W_LLVMFuzzerTestOneInput_gone*_x.v (a working branch 95a5de32ab2), merged per item into B's
+   no Theorem line (gone_base's HB-clause `& _`; gone_p3 / gone's RIG at the kit's CTX_AFREE rig_spec, as
+   image A).  No AR file and no kit file is edited here.  Template: SmallX's image-A conversion
+   lib/A/W_LLVMFuzzerTestOneInput_gone*_x.v (a working branch), merged per item into B's
    files (3-way: A's AR item, SmallX's ARx item, B's AR item) and finished by hand.
    Proves no function (kind: segment walk - a segment of the entry function; its callees are named contracts).
    THIS FILE IS THE ARM'S COMPOSITION, as _gone.v's: lf_arm_gone_x from the seven phase lemmas, by SRr_bind.  The phases
@@ -23,7 +24,7 @@
        slot), RRDS_x cut_x's (a Theorem Labs lane proves it); ERRL cut_x's errno_law_x; HGOTG and GN_LIT_GES / GN_LIT_FMT over
        ARx (W_contract_x.v ashp_x for W_shadow_pin.v's ashp);
      the generic relation's facts, as on image A: BLKN (W_kit_x.v's text), HPST (add_x's text), FRMF (W_frame_x.v's);
-     the room round's items (image A's re-fit d3a30b1562c..6e8e0f9f8148, ported at B's names): the room record RP that
+     the room round's items (image A's re-fit.., ported at B's names): the room record RP that
        RIG / CNL / CSHE are taken at, the arm's peak gn_pk, RPNP (RM is NP at the instance), CNTRIG (_gone_base.v's
        GN_CNT_rig at rig_pk), LSCNT (_gone_base_x.v's GN_LS_cnt_x) and CNTSTEP (_gone_base.v's GN_CNT_step at
        cnl_pk).  INV_A_x / INV_K_x take NP (cut_x's lcut_x carries NP S3 since the room cut). *)
@@ -82,7 +83,7 @@ Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
 (* @@ SECTION gxx *)
 Section gxx.
-(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim *)
+(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.
@@ -111,8 +112,8 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* the cut's two laws (_cut.v:316, :318): glob_wr_law verbatim, errno_law as cut_x's errno_law_x *)
 Hypothesis GWR : glob_wr_law G_fr.
 Hypothesis ERRL : errno_law_x B ARx.
-(* relay_reads (0x864e8), phase 2: cut_x's Section hypothesis RRDS_x (W_LLVMFuzzerTestOneInput_cut_x.v:580), verbatim
-   (a Theorem Labs lane proves it, 72c71080dd0) *)
+(* relay_reads (0x864e8), phase 2: cut_x's Section hypothesis RRDS_x (W_LLVMFuzzerTestOneInput_cut_x.v:581), verbatim
+   (a Theorem Labs lane proves it) *)
 Hypothesis RRDS_x : forall W ly S Hp (regs : bvmap 5 word) mem md ch T es HA h,
   afn_pre_x segs B ARx RRDS_STK ly S Hp W regs mem md ch ->
   getr regs 10 = w64 HA -> 0 < HA -> HA mod 8 = 0 -> azs B HA 4 ->
@@ -163,7 +164,7 @@ Hypothesis RIend : GN_RI_end B MT LSx RINV.
 Hypothesis HLSRIG : GN_LS_rig MT LSx RINV MMAX.
 (* the room round's count row and model count rules (top_x's rows): gn_pk is the arm's peak (s5-r1d's pk_gone at the
    instance); LSCNT is GN_LS_cnt_x (_gone_base_x.v); CNTRIG is GN_CNT_rig at relay_instance_gone's premise peak
-   rig_pk (W_contract_x.v:307) of its trace; CNTSTEP (phase 5) is GN_CNT_step at check_no_loss's cnl_pk *)
+   rig_pk (W_contract_x.v:308) of its trace; CNTSTEP (phase 5) is GN_CNT_step at check_no_loss's cnl_pk *)
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Hypothesis RPNP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis CNTRIG : GN_CNT_rig gn_pk (fun cx m hs =>
@@ -194,7 +195,7 @@ Let GP5 := gp5_t0_csd_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr fr_FP PS
   HROMPIN HZS HCE RIend GWR ERRL HERR MMAX RP CNL CSHE RIstep gn_pk RPNP LSCNT CNTSTEP ML BLKN HPST FRMF.
 Let GP6 := gp6_csd_latch_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr fr_FP PST ARx LAWS HG LSx RINV TL BLKN.
 
-(* ---- ARM_gone: the text of cut_x's Section w hypothesis (W_LLVMFuzzerTestOneInput_cut_x.v:630) ---- *)
+(* ---- ARM_gone: the text of cut_x's Section w hypothesis (W_LLVMFuzzerTestOneInput_cut_x.v:631) ---- *)
 Theorem lf_arm_gone_x : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_x B NP G_fr fr_FP PST ARx LSx RINV 5 cx Hp t W c -> SRr segs W c (INV_K_x B NP G_fr fr_FP PST ARx LSx RINV cx Hp t).
@@ -219,7 +220,7 @@ Proof.
 Qed.
 
 (* CHECK (cut_x's scope): lf_arm_gone_x's type is the Section w hypothesis ARM_gone of
-   W_LLVMFuzzerTestOneInput_cut_x.v:630, restated with the generic invariants at this Section's variables *)
+   W_LLVMFuzzerTestOneInput_cut_x.v:631, restated with the generic invariants at this Section's variables *)
 Lemma lf_arm_gone_x_check : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_A_x B NP G_fr fr_FP PST ARx LSx RINV 5 cx Hp t W c -> SRr segs W c (INV_K_x B NP G_fr fr_FP PST ARx LSx RINV cx Hp t).

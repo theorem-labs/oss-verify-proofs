@@ -4,11 +4,11 @@
    of 128 bytes (`__asan_stack_malloc_1` with a0 = 0x80 at 0x85f30, descriptor "1 32 64 9 low.i:212" at 0x1d8f6:
    the 64-byte buffer low.i at frame + 32), 43 inline checks, 32 calls): the contract of the ASan build's code, in
    plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the entry, SRr of apost_baseF at the return).
-   Drafted by the G2 walk lane at commit 66967dd64303; this is the text of
+   Drafted by the G2 walk lane; this is the text of
    record, committed by the image-A contracts lane with the corrections its commit lists (the parameter order;
    m_key.words / m_key.role and the image label pinned at every allocator state; STK_m_file's window).
 
-   Functional content: the plain contract lib/Prog/m_file_c.v at 440d61eaa8c8 (m_file_pre :119-135, the
+   Functional content: the plain contract lib/Prog/m_file_c.v (m_file_pre :119-135, the
    post `mconf_at m' c (m_file mc s lab)` and the footprint M_FILE_W :111-117, the model's counters :266-331, the
    call sites :93-97), restated over the ASan reader rd = aview segs (w_H W) mem with SegABase's forms. The cut map
    of the ASan code is the G2 walk lane's MF-CUTS-A.md (sha256 8761669a9b3d); its pcs are cited below.
@@ -93,24 +93,24 @@
    gives it: fuzz_catalogue_row 64 + 2 * ESTACK = 8,256 (its 64-byte frame and the kit's abcmp_realizes window,
    lib/Reusable/YG0d.v:364) - the DEEPEST; m_refuse 48 + 2 * ESTACK = 8,240 and m_find 48 + 2 * ESTACK = 8,240;
    m_file's own snprintf 2 * ESTACK = 8,192 (row 4's text is fuzz_command's asnprintf_realizes, whose window is
-   CMD_SNP_K = 2 * ESTACK, its lib/A/Rt/RtPFCmd.v:65; fuzz_command's CHECK_REPLY_STK counted 3 * ESTACK, more than
+   CMD_SNP_K = 2 * ESTACK, its lib/A/Rt/RtPFCmd.v:66; fuzz_command's CHECK_REPLY_STK counted 3 * ESTACK, more than
    that text asks); ieq 48 + ESTACK; bcmp 2 * ESTACK; strchr 2 * ESTACK (row 6's accepted text,
-   RtSeg.astrchr_realizes at commit 80d098bd1905, lib/A/Rt/RtSeg.v:72); strlen / memchr /
+   RtSeg.astrchr_realizes at lib/A/Rt/RtSeg.v:72); strlen / memchr /
    __asan_memcpy / __asan_memset / __asan_stack_malloc_1 ESTACK. m_file's own deepest write, the
    probe word at sp0 - 288, lies inside 288 + 16. STK is a parameter: this number is image A's instance (SegInstA),
    not contract text.
    IMAGE-INDEPENDENT: no image module is Required; A_m_file, STK_m_file, RLO, RHI, WORDS, ROLES, CAT, GOTW, GUARD and
    lit are parameters (or fields of B).
-   The WALK takes these as Section hypotheses (the interceptor lane's interface rows as at a7281bdd8928,
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); the image-A owner's frame
+   The WALK takes these as Section hypotheses (the interceptor lane's interface rows as,
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; the image-A owner's frame
    texts; the program callees' contracts from the contracts lane), each `forall fx0 : YK11.FPState`:
      the class-1 side-stack frame: astack_malloc_realizes 1, stack_malloc_progressP B, astack_free_law SEGS B,
        frame_flag_lawP SEGS B (the inline release; AWALK-FORM.md 2.6);
      `__asan_memcpy` / `__asan_memset`: aintrin_realizes OCpy / OSet (lib/Reusable/YG0d.v:326) at the listing's
        SS___asan_memcpy / SS___asan_memset;
-     row 4 RtPFSeg.seg_asnprintf_realizes (img_lo img_hi cr pc gotw guard; commit 755e9278f8ff,
-       RtPFSeg.v:228) at SS___interceptor_trampoline_snprintf, GOTW, GUARD;
-     row 6 RtSeg.astrchr_realizes (pc) (accepted at commit 80d098bd1905, RtSeg.v:72; its strchr
+     row 4 RtPFSeg.seg_asnprintf_realizes (img_lo img_hi cr pc gotw guard;,
+       RtPFSeg.v:229) at SS___interceptor_trampoline_snprintf, GOTW, GUARD;
+     row 6 RtSeg.astrchr_realizes (pc) (accepted at RtSeg.v:72; its strchr
        site 0x860d8 takes its premises from m_file_pre's text facts, with amem_range t (|s| + 8) added for it
        after the interceptor lane's review, O3), row 16 RtString.astrlen_realizes, row 19 abcmp_realizes, row 20
        MemchrDef.amemchr_realizes (both memchr sites: c = 0x5d at 0x862d4, c = 0x3d at 0x86344), each at its
@@ -187,7 +187,7 @@ sa_lit segs B rd wp (nth i MF_ROLE_WORDS []).
 Definition mf_roles (rd : reader) (roles : Z) : Prop :=
 sa_pinned segs B roles 20 /\ sa_img segs B roles 20 /\
 forall i, (i < 5)%nat -> sa_val rd (roles + 4 * Z.of_nat i) 4 (Z.of_nat i).
-(* the plain m_file_pre (lib/Prog/m_file_c.v:119-135 at 440d61eaa8c8) over the reader rd = aview segs (w_H W) mem:
+(* the plain m_file_pre (lib/Prog/m_file_c.v:119-135) over the reader rd = aview segs (w_H W) mem:
    the mconf block c holding mc, a live heap block, addressable, with the 4 bytes after it mapped (snprintf's %s of
    c->reading reads to the next 8-byte boundary, plain blk_slack); the counters' room (plain); the text t, a C string
    s with its slack (sa_str), at most 65,535 bytes, in a live heap block, its bytes and NUL addressable, its read
@@ -201,7 +201,7 @@ forall i, (i < 5)%nat -> sa_val rd (roles + 4 * Z.of_nat i) 4 (Z.of_nat i).
    stack_ok / apart-from-the-stack / mem_inv / printf_env conjuncts are afn_pre's, the locations' and the
    contract's image premises here.
    amem_range t (|s| + 8), the band room past the text (added 2026-10-30 after the interceptor lane's review, O3): row
-   6, RtSeg.astrchr_realizes (commit 80d098bd1905, lib/A/Rt/RtSeg.v:72-79), asks
+   6, RtSeg.astrchr_realizes (lib/A/Rt/RtSeg.v:72-79), asks
    amem_range x (astr_len s' + 8) of its string at the strchr site 0x860d8, where x is the line cursor (s11) in
    [t, t + |s|] and x + astr_len s' = t + |s|; one conjunct at t gives it at every cursor, since amem_range's end is
    the same and its high-memory arm only needs kHighMemBeg <= t <= x (lib/Reusable/YG0d.v:325). sa_addr gives only
@@ -257,7 +257,7 @@ End c.
 End b.
 
 (* ===================================== the model's counters ===================================== *)
-(* Restated from the plain / UBSan owner's lib/Prog/m_file_c.v:266-331 at 440d61eaa8c8, statements and proofs unchanged
+(* Restated from the plain / UBSan owner's lib/Prog/m_file_c.v:266-331, statements and proofs unchanged
    (that file Requires the plain image module Img0, so this file cannot Require it). gen goes up by one per call,
    refused and overflow by at most one per line, hence by at most the text's length: with m = calloc's zeros and at
    most 4 calls, a caller meets m_file_pre's gen, refused and overflow bounds at the next call. *)

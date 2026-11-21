@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed xubsan_half. *)
 (* ubsan_agrees from its two halves (rename of PmXasanBaseW): the source half xsrc_half16 at ShippedBudgets.lim_source
    and the target half, the Section hypothesis TGTU : pm_xubsan_tgt_stmt cfgU PHI0U. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import ShapeAlg Spi
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require PropExec Pm6DrvD.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require Import PmXubsanStmt PmXsrcHalf16.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.U5 Require PmPhiX_s34.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.Common.Cfg Require SRomStable.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -36,10 +38,15 @@ Section Glue.
   Proof.
     intros [ssp sbrk smb srnd] [sp brk mb rnd] inp Hens Hent Hvalid Hwb.
     pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
-    pose proof Hent as Hent'. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent'. destruct Hent' as [Hsp [Hbrk [Hmb Hfit]]].
-    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _).
+    (* LPS 727298f3: [valid_entry] has a fifth conjunct (the launch) and [valid_input_abort]
+       sixteen; the SIGPIPE disposition is free (no conjunct names it). *)
+    pose proof Hent as Hent'. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent'. destruct Hent' as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & _ & Hcreds & _ & _ & Hhw & _ & _ & _ & Hvl & Hcr & _ & _).
     apply half_ok_of_srealizes.
-    - apply (TGTU sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds Hhw Hsv48).
+    - (* the run reads the binary's segments with the run's vDSO appended ([Run.run_segments]);
+         [SRomStable.srun_init] lifts the walk over the binary's own segments *)
+      apply (SRomStable.srun_init cfgU Ubsan.M.loaded_segments inp sp mb _ _ _ _ _ _ eq_refl).
+      apply (TGTU sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds Hhw Hsv48 Hvl Hlau Hcr).
       intros a0s path Hinargv. unfold phi_okU. intros Hlen Hne Hnd data Hlk Hhdr.
       rewrite <- payload_eq.
       exact (PmXsrcHalf16.phi_of_premise16 ssp sbrk smb srnd inp Hens Hvalid Hwb a0s path data Hinargv Hlen Hne Hnd Hlk Hhdr).

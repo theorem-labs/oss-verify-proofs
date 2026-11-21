@@ -1,13 +1,14 @@
-(* CARRIED from commit ae2fa80b0325f09472155bcfce1c36e649d6ff60,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG01cf.v, sha256 2095ee6b5c9f86335bc49d7af33622d40ebff459946c0d4968ffaded631867dc (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
    (lib.Spec -> fuzz_reply.lib.Spec). *)
-(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG01cf.v@6e9ff2e6573c487199f2990b43c5e19cce86e581, do not edit (single writer: a Theorem Labs lane; send change requests to a Theorem Labs lane as diffs). *)
+(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG01cf.v, do not edit (single writer: a Theorem Labs lane; send change requests to a Theorem Labs lane as diffs). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: WfP_cf gains wfc_qsize, every quarantined item is at most kQuarantineMax
    (free_cf's enqueue arm, YG00cf.free_cf's size test); WfP_cf_of_WfP derives it from cgif's MALLOC_MAX. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the STATE INVARIANT.
    Wf_cf is cgif's Wf (YG01.v:431-454) re-keyed on LIVE state, so that it holds at preset's event counts
    (about 3.0e7 allocator events per harness call, where cgif's regime admits at most 8,192).
@@ -296,7 +297,7 @@ split; [lia|]. unfold kFreeArrayOffset, kFreeArrayMax in *. lia.
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* Slack weakening, the cf form of YG06.v:197-201 / AFf2.v:131-136.               *)
+(* Slack weakening, the cf form of YG06.v:197-201 / AFf2.v:132-137.               *)
 Lemma WfP_cf_weaken : forall U pp cc bb pp' cc' bb' s,
 WfP_cf U pp cc bb s -> 0 <= pp' <= pp -> 0 <= cc' <= cc -> 0 <= bb' <= bb -> WfP_cf U pp' cc' bb' s.
 Proof.

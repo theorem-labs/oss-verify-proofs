@@ -37,8 +37,8 @@
      aintrin_realizes OSet (lib/Reusable/YG0d.v:326) asks it addressable with its band (sa_addr) and in a place the
      call may write (the block: sa_heap). strncpy (row 12) reads parent and writes [tab + 18 count, + 15):
      amem_range parent (length p + 8) and amem_range tab (RVLAN_SIZE * max + 8) are the band room row 12's
-     template, RtString.astrcpy_realizes (fuzz_command lib/A/Rt/RtString.v:214-238 at origin/ossv/recipes
-     501c0d516c69), asks of its source and of its destination (tab + 18 count + 15 + 8 <= tab + 18 max + 8 for
+     template, RtString.astrcpy_realizes (fuzz_command lib/A/Rt/RtString.v:214-238),
+     asks of its source and of its destination (tab + 18 count + 15 + 8 <= tab + 18 max + 8 for
      count < max).
    - where each object lies: the table by sa_heap over its max + 1 entries (the harness's calloc(cap + 1, 18) at
      LLVMFuzzerTestOneInput 0x857b8; the guard entry tab[max] is the block's last 18 bytes); the count cell by
@@ -74,10 +74,10 @@
    IMAGE-INDEPENDENT: no image module is Required; A_reac_declared_vlan_add, STK_reac_declared_vlan_add, RLO, RHI
    and every image cell are parameters (or fields of B).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626): row 17 in the accepted v1,
-   5e0b8a44fdc; row 12 accepted at 80d098bd1905):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md: row 17 in the accepted v1,;
+   row 12 accepted):
      RtString.astrcmp_realizes (row 17), at the strcmp trampoline (image A 0x43a14);
-     RtSeg.astrncpy_realizes (pc) (row 12, lib/A/Rt/RtSeg.v:197 at 80d098bd1905), at the strncpy trampoline
+     RtSeg.astrncpy_realizes (pc) (row 12, lib/A/Rt/RtSeg.v:197), at the strncpy trampoline
        (image A 0x43ab4);
      aintrin_realizes OSet (lib/Reusable/YG0d.v:326; the frame's text, not the interceptor lane's), at pc_memset
        (image A __asan_memset 0x55d7c).

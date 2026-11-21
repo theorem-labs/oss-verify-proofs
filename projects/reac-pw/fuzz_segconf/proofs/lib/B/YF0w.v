@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the chain proves malloc at __asan::asan_malloc's entry 0x34528 with the trace its caller built (lib/A/Rt/RtDDefs.v amalloc_inner_realizes, cmd_amalloc_inner); the interceptor body 0x58b58 (lib/A/Rt/RtDMallocBody.v) calls it, and cgif's trampoline form tfib_amalloc_realizes at 0x58984 (lib/A/Rt/RtDMallocTramp.v) follows from the body, so every caller is served by this one chain. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0w.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build; tfib_malloc_sec_spec takes In (call_trace ...) (as_universe B) \/ st_nev S < EV_MAX; the walks get tr_admit (tr_admit_call). *)
-(* Relocated from proofs/plugin-hostd/fuzz_command/lib/A/AF0w.v at 501c0d516c69 by port_core e0e94a04094b onto reac-pw/fuzz_segconf (asan). *)
+(* Relocated from proofs/plugin-hostd/fuzz_command/lib/A/AF0w.v by port_core e0e94a04094b onto reac-pw/fuzz_segconf (asan). *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AF0w.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

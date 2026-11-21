@@ -3,8 +3,8 @@
    names instantiated at them are per build: lib/A/FSH_Base.v, FSH_Rt.v, FSH_Harness.v over fs.asan and lib/B/FSH_*.v
    over fs.asan-ubsan (FSH_Fn_FORM.md section 0). Definitions only (rule 24: no function proved); the one lemma,
    fpost_ot_sp, relates two of these definitions.
-   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Base.v, FMH_Rt.v, FMH_Fn.v (a working branch
-   e48bf3cce32, with the FMH_* text of 706affbdbe6, 3e0aa997be6, 137702429de and a1902517c68: stk_sh0 out of the
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Base.v, FMH_Rt.v, FMH_Fn.v (a working branch,
+   with the FMH_* text: stk_sh0 out of the
    contracts, str_homeA / cstr_kept, image facts out of fpre, reader blocks with n > 0); donor
    proofs/cgif/cgif_file_fuzzer/lib (YCbq.v:331-370 astk_ok / afn_pre / ajournal, YG0d.v:225-283 acall_pre / ecall_pre,
    YG0d.v:311-326 dest_ok / aintrin_realizes, YC20.v:43-48, :90-96 via FSH_YC20.v; A/ACes.v:164 the raised window of
@@ -61,8 +61,8 @@ Definition PRESET_FILE_MAX_BYTES : Z := 3 * 2 ^ 20.    (* preset_file.h:61; fs.c
    (check_round_trip_c.v:17, :54). ENTRY 23:35Z: accepted-path callee increments 84 - the callee posts on the accepted
    path force cno 3 + decode_ff 1 + crt 78 + starved 2 = 84, above the 74 this estimate gave; 96 leaves slack. *)
 Definition FS_CNT_LIB : Z := 96.
-(* the shared core's per-call event bound: fs keeps cgif's EV_LIB = 2000 (A/ACfn.v:23) against the Theorem Labs core's
-   EV_MAX = 11776 (Reusable/YG00.v:38, from a Theorem Labs lane d834f9653ac via a working branch 5e580eb5ab5): 4 * 2000 + 3 = 8003 <= 11776
+(* the shared core's per-call event bound: fs keeps cgif's EV_LIB = 2000 (A/ACfn.v:24) against the Theorem Labs core's
+   EV_MAX = 11776 (Reusable/YG00.v:38, from a Theorem Labs lane via a working branch): 4 * 2000 + 3 = 8003 <= 11776
    (the driver's 4 calls, A/AD1r.v:582). *)
 Definition FS_EV_LIB : Z := 2000.
 (* allocator ticks (one per malloc, one per free, YG00.v:233, :540; a realloc 3 in cgif_rgb's model, lib/YG0f.v:15-21
@@ -107,9 +107,9 @@ Definition STK_RT_REALLOC : Z := ASTACK + 0x8a0.
                                               (* realloc: ASTACK + its own runtime prefix 0x8a0 (interceptor 0x7f0 +
                                                  unwind 0x70 + asan_realloc 0x10 + Reallocate 0x30), which sits ABOVE
                                                  the inner Allocate / Deallocate whose contracts need ly_bot < sp_callee
-                                                 (AllocG.v:75, DeallocG.v:81; ReallocG.v:121 RSTACK); FSupoisonRealloc's
-                                                 arealloc_realizesU takes `ly_bot ly + 0x8a0 < spZ regs` (a Theorem Labs lane
-                                                 e0461c947a1; ruled by a Theorem Labs lane 2026-10-29T08:04Z). *)
+                                                 (AllocG.v:76, DeallocG.v:82; ReallocG.v:122 RSTACK); FSupoisonRealloc's
+                                                 arealloc_realizesU takes `ly_bot ly + 0x8a0 < spZ regs` (a Theorem Labs lane;
+                                                 ruled by a Theorem Labs lane 2026-10-29T08:04Z). *)
 (* strtod: the released plain walk's stack, lib/Prog/strtod_c.v:13 STRTOD_K (same musl code in fs.asan,
    FsExtraSources.md 2.3; ESTIMATED for the ASan walk). Its only call (parse_value) is unreachable on fs's document, whose
    leaves are strings (check_round_trip_stages_b.v:48-49 crt_doc); kept so the bound covers the code. *)
@@ -121,7 +121,7 @@ Definition zmaxl (l : list Z) : Z := fold_right Z.max 0 l.
 (* ---- fake frames live at a call (the donor's per-spec premise `Z.of_nat (length (frames S)) <= N`, cgif lib/YC21.v:38;
    ajournal keeps frames S' = frames S at return, YCbq.v:354); a spec's N = the fake-frame functions above it on the
    harness's call path (FSH_Fn_FORM.md section 2) ---- *)
-Definition FRL_LLVMF : Z := 0.                (* tfib_lib_pre_x: frames S = [] (A/ACfn.v:40) *)
+Definition FRL_LLVMF : Z := 0.                (* tfib_lib_pre_x: frames S = [] (A/ACfn.v:41) *)
 Definition FRL_CHECK : Z := 1.                (* called by LLVMFuzzerTestOneInput: its class-0 frame *)
 Definition FRL_CRT_CALLEE : Z := 2.           (* called (transitively) by check_round_trip outside parse_value *)
 Definition FRL_parse_value (k : Z) : Z := 2 + k.   (* parse_value at level k: k parse_value frames above it *)
@@ -168,7 +168,7 @@ Definition hex4z (v : Z) : list Z :=
 Definition fregs_kept (f f' : YK11.FPState) : Prop := ReaderRes.fregs_kept f f'.
 
 (* ---- the narrow form of fs's document, shared by WRITER and READER (owner 21:26Z). Definitions only, byte-for-byte
-   from a working branch f995a01189d: plain_byte / plain_bytes from lib/A/FSW_writer_model.v:17-18 and
+   from a working branch: plain_byte / plain_bytes from lib/A/FSW_writer_model.v:17-18 and
    jv_plain from lib/A/FSH_Fn_writer.v:121-131. Under plain_bytes put_string's escape arms (the two-char escapes and the
    \u%04x snprintf at A 0x85d04 / B 0x86214) are unreachable, which is why fs's snprintf walk left the port; READER's
    FS_DOC_STRS discharges the premise for the document fs.c:237-248 builds. FSW_writer_model.v's lemmas
@@ -198,7 +198,7 @@ Variable B : asyms.
 (* ---- the per-function wrappers in U FORM (all program-part lanes, 20:41Z): every fs function runs with live user-poisoned
    heads (fuzz_malloc poisons a 16-byte head per block), so the pre is afn_preU (afn_pre read through ARU, as FSupoisonU's
    acall_preU reads acall_pre) and the post fpostU gives the heads back as U'. fpostU takes the window top sp0 as a
-   parameter, as the donor's ajournal does (YCbq.v:348; A/ACfn.v:50 passes spZ regs, A/ACes.v:164 rd_entry a raised one):
+   parameter, as the donor's ajournal does (YCbq.v:348; A/ACfn.v:51 passes spZ regs, A/ACes.v:164 rd_entry a raised one):
    a callee that writes a caller's real-stack object above its sp (pj_write's pj_out, pj_parse's struct pj_in,
    parse_string's slot hex4 writes) passes window size STK_f + (ot - spZ regs) and top ot, and gives the slack back with
    wkeep. The U = [] forms fpre / fpost (the donor's afn_pre / apost_base) are corollaries: fpreU_of_pre, fpost_of_U. *)
@@ -241,7 +241,7 @@ intros STK FP regs ly S W mem md k Q W' c' (ly' & S' & regs' & mem' & md' & Ec &
 exists ly', S', regs', mem', md'. split; [exact Ec|]. split; [exact J|]. split; [exact R | exact HQ].
 Qed.
 (* the keep conjunct of a window-relative post, shared by WRITER and READER (text of WRITER's
-   working branch 4b4015d615 lib/A/FSH_Fn_writer.v:124, unchanged): every byte of [s, ot) outside the caller's object
+   working branch lib/A/FSH_Fn_writer.v:124, unchanged): every byte of [s, ot) outside the caller's object
    [o, o + n) keeps its value and its writability (pj_out n = 32; struct pj_in per READER) *)
 Definition wkeep (W W' : world segs) (mem mem' : word -> option byte) (s ot o n : Z) : Prop :=
   forall a, s <= a < ot -> ~ (o <= a < o + n) ->
@@ -330,15 +330,15 @@ Definition fs_glob_at (gl gp gc gf : Z) (W : world segs) (mem : word -> option b
   val_mem segs (rdW W mem) gl 8 live /\ val_mem segs (rdW W mem) gp 8 peak /\
   val_mem segs (rdW W mem) gc 8 cnt /\ val_mem segs (rdW W mem) gf 8 fail /\
   0 <= live <= peak /\ peak < 2 ^ 64 /\ 0 <= cnt < 2 ^ 64 /\ 0 <= fail < 2 ^ 64.
-(* a reader block (fuzz/alloc.c own :41-49): the asan block (p - 16, n + 16) is live, its head holds n, n > 0 (a Theorem Labs lane
-   a1902517c68: the granule after the head is in the block, as the poison walks ask); while live its 16-byte head is
+(* a reader block (fuzz/alloc.c own :41-49): the asan block (p - 16, n + 16) is live, its head holds n, n > 0 (a Theorem Labs lane:
+   the granule after the head is in the block, as the poison walks ask); while live its 16-byte head is
    user-poisoned, (p - 16, 16) in U *)
 Definition fs_rblock (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte) (p n : Z) : Prop :=
   In (p - HEAD, n + HEAD) (ablocks B ly S) /\ p mod 16 = 0 /\ 0 < n /\
   val_mem segs (rdW W mem) (p - HEAD) 8 n.
 
 (* the shadow of the STACK reads 0. AR gives it: ARm's am_zshadow (YG0n.v:217) covers zero_shadow_ranges, whose head is the
-   stack (YG0n.v:187-190). Not a contract premise (a Theorem Labs lane 706affbdbe6): derive it from AR where needed. No shadow-zero
+   stack (YG0n.v:187-190). Not a contract premise (a Theorem Labs lane): derive it from AR where needed. No shadow-zero
    fact over fs's .data / .bss is stated: fs registers 34 asan globals with poisoned redzones (A/AF0m.v:278-279). *)
 Definition stk_sh0 (W : world segs) (mem : word -> option byte) (lo hi : Z) : Prop :=
   forall a, lo <= a < hi -> aview segs (w_H W) mem (shadow_addr a) = Some 0.
@@ -355,7 +355,7 @@ Definition str_homeA_at (rlo rhi : Z) (ly : alayout) (S : astate) (U : list (Z *
 Definition fs_canary_at (gcan can : Z) (W : world segs) (mem : word -> option byte) : Prop :=
   exists cval, val_mem segs (rdW W mem) gcan 8 can /\ val_mem segs (rdW W mem) can 8 cval /\ 0 <= cval < 2 ^ 64.
 (* the premise every fs function takes besides its own: the donor's afn_pre and the relro / rom view (it rides through
-   ajournal's image clause); image facts come from fs_img_facts (FSH_Rt.v), a Theorem Labs lane 3e0aa997be6 *)
+   ajournal's image clause); image facts come from fs_img_facts (FSH_Rt.v), a Theorem Labs lane *)
 Definition fpre_at (rlo rhi STK : Z) ly S (W : world segs) regs mem md ch : Prop :=
   afn_pre segs B STK ly S W regs mem md ch /\ arodata_okP segs rlo rhi B (aview segs (w_H W) mem).
 Definition fpreU_at (rlo rhi STK : Z) ly S (U : list (Z * Z)) (W : world segs) regs mem md ch : Prop :=
@@ -371,7 +371,7 @@ Qed.
    P1-P4): fs keeps reader blocks live across later reader allocations (grow's realloc of keys while keys[0]'s head is
    poisoned, pf.c:51-57, :224-233), so at fs's malloc / free / realloc calls U <> []. a Theorem Labs lane's FMupoison covers allocator
    calls only at U = [] (ARU_nil). The named predicate for the U fs carries is FSupoisonU.fs_heads (a Theorem Labs lane,
-   a working branch c811a33348d: every range the 16-byte head at the start of a live block), with ARU_free_outside
+   a working branch: every range the 16-byte head at the start of a live block), with ARU_free_outside
    for free sites and the allocator / runtime contracts in ARU form there (P1, P3); P2 (unpoison anywhere) is proved
    there; the realloc leaf is ALLOC's (FSH_ReallocModel.v). Not restated here. ---- *)
 
@@ -565,8 +565,8 @@ Definition asnprintf_realizes_at (fmts : list (Z * list fpiece)) (gcan can : Z) 
           ~ (spZ regs - STK_RT_PRINTF <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
        (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
 
-(* the image facts the build's code and runtime calls take, as one constant fact about B (a Theorem Labs lane 3e0aa997be6 /
-   137702429de fm_img_facts): rom_view, the stack-protector cells, cstr_ok and the non-owned read-only home of every
+(* the image facts the build's code and runtime calls take, as one constant fact about B (a Theorem Labs lane /
+   fm_img_facts): rom_view, the stack-protector cells, cstr_ok and the non-owned read-only home of every
    read-only string strs and format fmts, and (ALLOC a Theorem Labs lane, 21:36Z) that the journal footprint of fuzz/alloc.c's
    statics is not runtime-owned. The last one is what lets a static store keep AR: AR_frame_law (YG0d.v:438-445) and
    AR_owned_image_law (:473-474) let a walk change an image byte only where it is not owned, and nothing else about B

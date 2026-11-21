@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's caps and far-end reader passed on; the library hypothesis of both CONFIG_RSEQ copies of the certificates, at the launch's mmap base too, which the start environment reads; the plain walk lifted to the run's segment list by RzBridge.run_init_our). *)
 From Stdlib Require Import ZArith NArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require MainEntry Main
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AsanW Require AImg.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.BothW Require BImg.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA Require TopAsanSkel2 TopBothSkel2.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA Require RzBridge.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import Fcfg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -31,15 +33,18 @@ Proof. intros inp H. unfold valid_input_either in H. unfold valid_core. tauto. Q
 
 Lemma RZ_SRC31 : forall sp brk0 mb rnd inp,
   valid_core inp -> valid_entry SRC (mkEntry sp brk0 mb rnd) inp ->
-  realizes SRC_SEGS (init_config SRC_SEGS SRC_PC SRC_PH sp brk0 mb rnd SanitizerBudgets.lim_source inp) (DrvShape.DrvShape.K inp).
+  realizes (run_segments SRC_SEGS inp sp mb)
+    (init_config (run_segments SRC_SEGS inp sp mb) SRC_PC SRC_PH sp brk0 mb rnd SanitizerBudgets.lim_source inp) (DrvShape.DrvShape.K inp).
 Proof.
-  intros sp brk0 mb rnd inp Hc Hen. pose proof Hc as (Hva & Hve & _ & _ & _ & _ & Hhw & Hsz).
-  exact (@HS.rz inp sp brk0 mb rnd SanitizerBudgets.lim_source Hva Hve Hhw Hsz Hen lim31 (TopLib.G0_S inp sp rnd Hva)).
+  intros sp brk0 mb rnd inp Hc Hen. pose proof Hc as (Hva & Hve & _ & _ & _ & _ & Hhw & Hsz & Hvl & Hrdr).
+  apply RzBridge.RzBridge.run_init_our; [reflexivity|].
+  exact (@HS.rz inp sp brk0 mb rnd SanitizerBudgets.lim_source Hva Hve Hhw Hsz Hvl Hrdr Hen lim31 (TopLib.G0_S inp sp mb rnd Hva) (TopLib.G0_SR inp sp mb rnd Hva)).
 Qed.
 
 Lemma SRC_either31 : forall en inp, valid_entry (mkImage SRC_SEGS SRC_PC SRC_PH) en inp -> valid_input_either inp ->
   ~ run_scfg_budget_refused fcfg (mkImage SRC_SEGS SRC_PC SRC_PH) SanitizerBudgets.lim_source en inp ->
-  realizes SRC_SEGS (init_config SRC_SEGS SRC_PC SRC_PH (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) SanitizerBudgets.lim_source inp)
+  realizes (run_segments SRC_SEGS inp (en_sp en) (en_mmap_base en))
+           (init_config (run_segments SRC_SEGS inp (en_sp en) (en_mmap_base en)) SRC_PC SRC_PH (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) SanitizerBudgets.lim_source inp)
            (DrvShape.DrvShape.K inp).
 Proof.
   intros [sp brk0 mb rnd] inp Hen Hi _. cbn [en_sp en_brk en_mmap_base en_draw].

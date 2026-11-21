@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: GENERATED, not relocated. HS_tfib are the 50 hand-off states a Theorem Labs lane's collector (tools/startup colrun.py Pass2, ColA collecting both mmap arms, on the donor checker of cgif_file_fuzzer at c8557374ad2) walked on fuzz_state.asan, with this tree's plan A/AB05.v (35 XMemset pairs per tail), atable A/AB12.v and join state A/AB03.v; no hole filled; all 50 at main 0x80a7c; hsform.py hs --image (KImg gate PASS); log (internal path) *)
+(* Modified by Theorem Labs, 2026-10: GENERATED, not relocated. HS_tfib are the 50 hand-off states a Theorem Labs lane's collector (tools/startup colrun.py Pass2, ColA collecting both mmap arms, on the donor checker of cgif_file_fuzzer) walked on fuzz_state.asan, with this tree's plan A/AB05.v (35 XMemset pairs per tail), atable A/AB12.v and join state A/AB03.v; no hole filled; all 50 at main 0x80a7c; hsform.py hs --image (KImg gate PASS); log (internal path) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_state.asan (omx-clap-core/fuzz_state asan) sha256 64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0; unstripped twin sha256 7c4afaee248b8017a370860e6a03a41f552f7666067c565774544e0b8115b23b *)
 (* malloc_context_size: common_flags 0x139a68 + 36 reads 30 in all 50 hand-off states (the originals; the toolchain-N image reads 1) *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

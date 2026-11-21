@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MP_relx, in both sections, carries the run predicate's new far-end channel-reader conjunct across acct_rel). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -68,7 +69,12 @@ Lemma AI_frame_topx : forall L RNG st LB m m',
 Proof. exact (FakeLaw.AIu_frame_top ExhFirst.exh_first). Qed.
 
 Lemma MP_relx : forall inp mo mo', AsanDrun.MP inp mo -> Acct.acct_rel mo mo' -> AsanDrun.MP inp mo'.
-Proof. intros inp mo mo' H R. unfold AsanDrun.MP in *. rewrite (Acct.acct_rel_fs mo mo' R). exact H. Qed.
+Proof.
+  intros inp mo mo' [H HR] R. unfold AsanDrun.MP in *. rewrite (Acct.acct_rel_fs mo mo' R). split; [exact H|].
+  destruct R as ((_ & _ & _ & PR & _) & _).
+  destruct mo as [fd [mp lzz mt] io fs pr lm tm], mo' as [fd' [mp' lzz' mt'] io' fs' pr' lm' tm'].
+  cbn in PR, HR |- *. unfold m_channel_reader in *. cbn in *. rewrite PR. exact HR.
+Qed.
 
 Lemma OTHER_relx : forall mo mo', Acct.acct_rel mo mo' -> AsanRun.OTHERA mo mo'.
 Proof. intros mo mo' R. exact (Acct.acct_rel_fds mo mo' R). Qed.
@@ -156,7 +162,12 @@ Lemma AI_frame_topx : forall L RNG st LB m m',
 Proof. exact (FakeLaw.TwinB.AIu_frame_top ExhFirst.TwinB.exh_first). Qed.
 
 Lemma MP_relx : forall inp mo mo', AsanDrun.TwinB.MP inp mo -> Acct.TwinB.acct_rel mo mo' -> AsanDrun.TwinB.MP inp mo'.
-Proof. intros inp mo mo' H R. unfold AsanDrun.TwinB.MP in *. rewrite (Acct.TwinB.acct_rel_fs mo mo' R). exact H. Qed.
+Proof.
+  intros inp mo mo' [H HR] R. unfold AsanDrun.TwinB.MP in *. rewrite (Acct.TwinB.acct_rel_fs mo mo' R). split; [exact H|].
+  destruct R as ((_ & _ & _ & PR & _) & _).
+  destruct mo as [fd [mp lzz mt] io fs pr lm tm], mo' as [fd' [mp' lzz' mt'] io' fs' pr' lm' tm'].
+  cbn in PR, HR |- *. unfold m_channel_reader in *. cbn in *. rewrite PR. exact HR.
+Qed.
 
 Lemma OTHER_relx : forall mo mo', Acct.TwinB.acct_rel mo mo' -> AsanRun.TwinB.OTHERA mo mo'.
 Proof. intros mo mo' R. exact (Acct.TwinB.acct_rel_fds mo mo' R). Qed.

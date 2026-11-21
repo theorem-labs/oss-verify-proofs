@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO layer: realizes_canon's equality argument, eq_refl). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -112,7 +113,7 @@ change (QEpW.MS R F (Z_to_bv 64 PRINTF_SYM) fc None m (seg_rom rsegs)) with (@mk
 unfold PRINTF_SYM. eapply (QRjH.rz_msteps rsegs); [exact (proj1 MOK)| exact (proj2 MOK)| exact STEPS|].
 
 change (mkst R' (Z_to_bv 64 0x20d6c) m' (seg_rom rsegs)) with (QEpW.MS R' F (Z_to_bv 64 0x20d6c) fc None m' (seg_rom rsegs)).
-apply (realizes_canon rsegs). rewrite canonR_getr.
+apply (realizes_canon rsegs eq_refl). rewrite canonR_getr.
 rewrite (KCS 2%bv ltac:(cbn; repeat (first [left; reflexivity| right]))).
 rewrite (KCS 3%bv ltac:(cbn; repeat (first [left; reflexivity| right]))).
 rewrite (KCS 4%bv ltac:(cbn; repeat (first [left; reflexivity| right]))).

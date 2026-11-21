@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_link.v
-   at bc49657c087a; module path and this unit's callees. *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_link.v;
+   module path and this unit's callees. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/Prog/LLVMFuzzerTestOneInput_link.v, with its module paths changed; 33 of its 59 lines of code are new or changed and 23 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The plain slot contract of fuzz_frame's LLVMFuzzerTestOneInput from the contracts of its callees, in the form
-   of libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_link.v (bf7779f81ed7). malloc and free are the
+   of libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_link.v. malloc and free are the
    allocator contracts of llvm_frame (frame_allocator); the image links no calloc. The other callees are taken
    through their contracts: memcpy, memset, diginet_frame_parse, check_parse_refusal, check_parse_fields,
    check_announce, and check_round_trip for every allocator that llvm_frame and llvm_binds describe

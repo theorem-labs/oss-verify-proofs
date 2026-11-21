@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE23.v, with its module paths changed, names TfibSyms -> BoxregSyms and its addresses moved to libreac/fuzz_boxreg's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/AE23.v, with its module paths and module names changed; 300 of its 331 lines of code are new or changed and 1644 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -147,7 +148,7 @@ Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : Cf
 Variable B : asyms.
 Hypothesis LAWS : AR_laws_cf tfibsegs B.
 Hypothesis TB : TfibSyms B.
-(* the image-A text of RT_kit.FrShadowSyms B (A/RT_kit.v:234) at this image: the GOT slot of the shadow-offset cell
+(* the image-A text of RT_kit.FrShadowSyms B (A/RT_kit.v:235) at this image: the GOT slot of the shadow-offset cell
    and the cell, at fuzz_reply.asan-ubsan's addresses (as lib/B/W_relay_src_c.v pb_relay_source_fr takes them). *)
 Hypothesis TL : as_got_shadow B = 0x9df50 /\ as_shadow_cell B = 0xa6638.
 (* the ASan range check at 0x559b4 returning 0 (RtDStrndupCfRt.v); RtDStrndupZ.v reply_region_zero_stk_cf proves it *)

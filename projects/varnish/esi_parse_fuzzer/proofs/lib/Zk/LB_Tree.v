@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: minv's first half is the lazy-list fact. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -128,7 +129,7 @@ Proof.
   intros L pbrk mo a n HK Hb. unfold mprotect_budget_ok, vm_backing_within_limit. apply Z.leb_le.
   rewrite mprotect_model_next_eq.
   etransitivity; [apply vm_backing_used_le_live| ].
-  - unfold mprotect_model. rewrite with_vmmaps_lazy'. exact (kl_minv _ _ _ HK).
+  - unfold mprotect_model. rewrite with_vmmaps_lazy'. exact (proj1 (kl_minv _ _ _ HK)).
   - unfold mprotect_model. cbn. exact (kl_mat _ _ _ HK).
   - unfold mprotect_model. rewrite with_vmmaps_vm. cbn [vm_limit]. unfold vm_live_bytes in *. cbn [vm_maps]. exact Hb.
 Qed.

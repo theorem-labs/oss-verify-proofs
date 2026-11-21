@@ -1,6 +1,6 @@
 (* fuzz_state's user poison for ANY set U of live heads (POISON-U lane, a Theorem Labs lane; lane table
    (internal path)). New file over lib/A/FSupoison.v (a Theorem Labs lane's FMupoison.v,
-   a working branch 7ba11794c88, relocated). fm needs U = [] at every allocator call (design/POISON.md:13-17,
+   a working branch, relocated). fm needs U = [] at every allocator call (design/POISON.md:13-17,
    101-104); fuzz_state calls malloc / realloc / free and the runtime walks with OTHER heads poisoned (grow's
    realloc(v->keys) while keys[0]'s head is live; pj_free frees in any order: (internal path) section 5, P1-P4).
 

@@ -21,17 +21,17 @@
        `plain_bytes`, and write_value / pj_write the tree form `jv_plain`: no string byte below 0x20, no 0x22 and no 0x5c. READER's named hypothesis FS_DOC_STRS (owner a Theorem Labs lane) discharges it for the document
        fs.c:237-248 builds. With it put_string takes only its plain-byte path: its two-char escape arm and its
        \u%04x arm (the escape dispatch PS_ESC 0x85c84, whose snprintf call is at 0x85d04 (callee
-       PS_FMT 0x42694, returning to PS_FMT_RET 0x85d08; S0 FSH_Fn_FORM section 4 names the call site); the generation-N image-A proof, commit 211ff3e9df0 lib/A/Prog/put_string_blocks.v:447-451, not in this tree) are unreachable, so snprintf leaves this
+       PS_FMT 0x42694, returning to PS_FMT_RET 0x85d08; S0 FSH_Fn_FORM section 4 names the call site); the generation-N image-A proof, lib/A/Prog/put_string_blocks.v:447-451, not in this tree) are unreachable, so snprintf leaves this
        group. The premise is stated, never assumed silently, and the posts keep the general `spieces` / `wdoc`
        text, under which it makes `esc` the identity.
 
    Form: S0's FSH_Fn_FORM.md sections 1-3 (no CTX: dropped 2026-10-29 once RELOC's C5 landed; the frames premise, the
    16-aligned window top `ot` with `wkeep` covering the slack, and the level-indexed recursion
    write_value_spec_at k with STK_write_value (2 - k)).
-   Ported from: a Theorem Labs lane's lib/A/FMH_Fn.v (form), S0 a working branch 0433af44ccd (names and numerals).
+   Ported from: a Theorem Labs lane's lib/A/FMH_Fn.v (form), S0 a working branch (names and numerals).
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0, read from a file, not a pipe): put, indent,
    put_string, write_value, pj_write, preset_base64_encode and preset_base64_decode have RELEASED proofs for fs's
-   PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog, ossv/recipes@566eb6ffa5, release/pau-projects-recipes@b6a0088adc),
+   PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog, ossv/recipes, release/pau-projects-recipes),
    none for an ASan build. Those plain contracts / proofs are the templates used here, not drop-ins. *)
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -99,7 +99,7 @@ Definition wcalls (st : WriterApp.wst) : Z := Z.of_nat (length (WriterApp.w_call
    tail-calling fuzz_malloc, one event (FSH_Gen.v:76). A call that starts from w0 (cap = 0, calls = []) makes
    exactly one such request, its first, because put1 only grows a buffer it has just allocated. pj_write is
    that case and uses wev0; put / indent / put_string / write_value start from a caller's buffer whose cap may
-   be anything, so they keep the uniform 3 per request. Found by a Theorem Labs lane on S0 7c46ddd1720 (reloc-check
+   be anything, so they keep the uniform 3 per request. Found by a Theorem Labs lane on S0 (reloc-check
    item 3, D2): with 3 charged for the first request too, check_round_trip's two-realloc path summed to 80
    against its reserved 78. *)
 Definition wev0 (st : WriterApp.wst) : Z :=

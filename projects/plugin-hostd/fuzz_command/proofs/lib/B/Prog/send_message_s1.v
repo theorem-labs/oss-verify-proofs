@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/send_message_s1.v (the ASan walk,
-   a working branch 4f5a539710b) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B): B's program
+   a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B): B's program
    points (the same offsets from the entry 0x86bf8) and B's listing (the GOT words 0xa5f50 and 0xa5fa8, A_OBJ 0 and
-   A_OBJ 1). Re-fitted to a Theorem Labs lane's statement passes 4, 4b and 5 (a working branch f490061c104): the runtime entries at every
+   A_OBJ 1). Re-fitted to a Theorem Labs lane's statement passes 4, 4b and 5 (a working branch): the runtime entries at every
    FP state (forall fx0), used at the entry's, and rounding mode 0 in place of astack_pres. *)
 (* Modified by Theorem Labs, 2026-10: send_message's first walk segment on plugin-hostd/fuzz_command's ASan+UBSan
    image, from the entry 0x86bf8 to the malloc wrapper's return 0x86d10, ported from
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close) at origin/ossv/recipes
-   c8557374ad2e, with the class-1 side-stack frame steps of A/ACk1.v (cgif_newgif) and the realigned stack pointer
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close),
+   with the class-1 side-stack frame steps of A/ACk1.v (cgif_newgif) and the realigned stack pointer
    of A/AChf.v (flushFrame): fuzz_command's listing, send_message's symbolic states. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

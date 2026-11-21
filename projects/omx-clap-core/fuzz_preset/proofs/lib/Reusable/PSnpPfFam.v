@@ -1,11 +1,11 @@
-(* The format-family constructors of port-fm's FMsnprintfShared.v (origin/cold/port-fm-rtprintf-param 7e395de08f5,
-   :42-69 str_end / pf_arg_asan / pf_args_asan / fmt_at and :83-97 pf_prec_pos / pf_family), which PSnpShared.v leaves
+(* The format-family constructors of port-fm's FMsnprintfShared.v (:
+   42-69 str_end / pf_arg_asan / pf_args_asan / fmt_at and :83-97 pf_prec_pos / pf_family), which PSnpShared.v leaves
    out because the chain is generic in FF, and the families printf_common's contract is stated for: port-fm's FF_pcom
    (lib/A/RT_pf_sh.v:157-171) with its pieces widened to literals, %c, %04x, %s and %.*s and the image top a parameter
-   (FF_pcom_x), and h-mani-a8's FF_preset (origin/cold/h-mani-a8-preset-alloc a8439a761af0 lib/A/CfSnprintfPreset.v:
+   (FF_pcom_x), and h-mani-a8's FF_preset (lib/A/CfSnprintfPreset.v:
    pieces literal, %c, %04x; the format between the image's low end and the stack-protector GOT cell; nonempty) with
    those two bounds parameters instead of CfImg_A fields (FF_preset_x), and the inclusion FF_preset_x -> FF_pcom_x.
-   Pieces, parser and renderer: lib/Reusable/FMsnprintfPf.v, h-mani-a8's copy taken by path from a8439a761af0
+   Pieces, parser and renderer: lib/Reusable/FMsnprintfPf.v, h-mani-a8's copy taken by path
    (blob 9f89f54c01c4). No image numeral. *)
 (* Modified by Theorem Labs, 2026-10: c-libc-stdio's file for fuzz_preset (route (a) P2, ASan's printf_common over ARx;
    parent c-libc-stdio 13:0xZ). New file; the definitions above are copied unchanged from the sources named. *)

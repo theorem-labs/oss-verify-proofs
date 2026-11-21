@@ -1,13 +1,31 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: main-phase entry facts computed at LPS 727298f3 from the four main-entry states of the start-up chain, under a variable map read from probe runs. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
-From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import AxSymExec3 AsanPlan MainExport StartupHS2Asan.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import AxSymExec3 AsanPlanCore AsanPlan MainExport MainRename StartupHS2Asan.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require PlanRegen.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
 
-Definition asan_mem_facts : list mfact := [
+(* The main phase's entry facts of the ASan image.  The [*_rec] lists are the facts exported from
+   the recorded main-phase hand-off states (before LPS 727298f3), in that run's numbering; the
+   main phase reads the lists below, in the same numbering, through the valuation
+   [fun n => uev E (vgA n)] of the LPS 727298f3 run ([MainEntry]).  Each is computed here from
+   its recorded list and the four states the start-up chain hands the main phase
+   ([StartupHS2Asan]: hand-offs 1 and 2 at each CONFIG_RSEQ value): a recorded fact stays when
+   every state that list is read at justifies its renumbered copy, and is replaced in place by
+   the filler [MainRename.mfill] / [pfill] otherwise (the launch block's layout changed). *)
+
+(* the run's state map, old numbering -> the LPS 727298f3 run's, read from the probe runs
+   (notes/probe-pupnp__FuzzHttp.md): the launch variables below 11 stay; the fresh ones move by 2
+   (the launch's two new variables [V_G], [V_GID]), from 44 by 4 (the exit-code and stack-guard
+   cells' variables 44 and 45 are 48 and 49 in the run), from 78 by 4 and from 310 by 6 *)
+Definition VTBL_A : list (nat * nat) := [(11, 2); (44, 4); (78, 4); (310, 6)]%nat.
+Definition vgA : nat -> nat := PlanRegen.tshift VTBL_A.
+
+Definition asan_mem_facts_rec : list mfact := [
 
   MCell (ZLit 721472) 8 (ZLit 1)
   ; MCell (ZLit 721480) 1 (ZLit 1)
@@ -1171,7 +1189,7 @@ Definition asan_mem_facts : list mfact := [
   ; MWr (ZAdd (ZMul (ZLit 512) (ZV 471)) (ZLit 2147450880)) 512
 ].
 
-Definition asan_pure_facts : list pfact := [
+Definition asan_pure_facts_rec : list pfact := [
 
   PVar 0 4294901760 4294967295
   ; PVar 1 1 1024
@@ -1396,7 +1414,7 @@ Definition asan_pure_facts : list pfact := [
   ; PDisjS (ZAdd (ZMul (ZLit 512) (ZV 78)) (ZLit 2147450880)) (ZLit 8192) (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))
 ].
 
-Definition asan_mem_facts_w1 : list mfact := [
+Definition asan_mem_facts_w1_rec : list mfact := [
   MCell (ZLit 1595336) 8 (ZLit 3)
   ; MCell (ZLit 1595360) 4 (ZLit 3)
   ; MCell (ZLit 4066076) 4 (ZLit 1)
@@ -1408,7 +1426,7 @@ Definition asan_mem_facts_w1 : list mfact := [
   ; MZero (ZAdd (ZMul (ZLit 4096) (ZV 454)) (ZLit 24)) 8388584
 ].
 
-Definition asan_mem_facts_w2 : list mfact := [
+Definition asan_mem_facts_w2_rec : list mfact := [
   MCell (ZLit 1595336) 8 (ZLit 2)
   ; MCell (ZLit 1595360) 4 (ZLit 2)
   ; MCell (ZLit 4470424) 4 (ZLit 1)
@@ -1419,11 +1437,11 @@ Definition asan_mem_facts_w2 : list mfact := [
   ; MZero (ZAdd (ZMul (ZLit 4096) (ZV 454)) (ZLit 16)) 8388592
 ].
 
-Definition asan_pure_facts_w1 : list pfact := [
+Definition asan_pure_facts_w1_rec : list pfact := [
   PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 0 4030
 ].
 
-Definition asan_pure_facts_w2 : list pfact := [
+Definition asan_pure_facts_w2_rec : list pfact := [
   PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 4031 4095
 ].
 
@@ -1477,36 +1495,22 @@ Definition asan_ledger : list lentry := [
   ; LMap (ZLit 2147446784) 268435456 KRWLAZY
 ].
 
-Definition asan_totsz : Z := 17729664626688.
-Definition asan_ylo : Z := 23387528589312.
-Definition asan_eager : Z := 16519168.
-Definition asan_abytes : Z := 2460832256.
+(* the knowledge of the states each list is read at *)
+Definition AKN : list (list kentry) := [kn aS21_0; kn aS22_0; kn aS21_1; kn aS22_1].
+Definition AKN1 : list (list kentry) := [kn aS21_0; kn aS21_1].
+Definition AKN2 : list (list kentry) := [kn aS22_0; kn aS22_1].
 
-Lemma asan_mem_facts_justified_w1 :
-  forallb (mjustify (s_know (a_ss HS_asan2_1)) (var_ranges (s_know (a_ss HS_asan2_1))) 65536 6328320) (asan_mem_facts ++ asan_mem_facts_w1) = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma asan_pure_facts_justified_w1 :
-  forallb (pjustify (s_know (a_ss HS_asan2_1)) (var_ranges (s_know (a_ss HS_asan2_1)))) (asan_pure_facts ++ asan_pure_facts_w1) = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma asan_vis_justified_w1 :
-  vis_match (var_ranges (s_know (a_ss HS_asan2_1))) (a_vis HS_asan2_1) asan_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_asan2_1))) (a_ghost HS_asan2_1) asan_ghost = true.
-Proof. split; vm_compute; reflexivity. Qed.
-Lemma asan_ledger_justified_w1 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_asan2_1))) (a_maps HS_asan2_1) asan_ledger = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma asan_consts_w1 : a_totsz HS_asan2_1 = asan_totsz /\ a_ylo HS_asan2_1 = asan_ylo /\ a_eager HS_asan2_1 = asan_eager /\ a_abytes HS_asan2_1 = asan_abytes.
-Proof. repeat split; reflexivity. Qed.
-Lemma asan_mem_facts_justified_w2 :
-  forallb (mjustify (s_know (a_ss HS_asan2_2)) (var_ranges (s_know (a_ss HS_asan2_2))) 65536 6328320) (asan_mem_facts ++ asan_mem_facts_w2) = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma asan_pure_facts_justified_w2 :
-  forallb (pjustify (s_know (a_ss HS_asan2_2)) (var_ranges (s_know (a_ss HS_asan2_2)))) (asan_pure_facts ++ asan_pure_facts_w2) = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma asan_vis_justified_w2 :
-  vis_match (var_ranges (s_know (a_ss HS_asan2_2))) (a_vis HS_asan2_2) asan_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_asan2_2))) (a_ghost HS_asan2_2) asan_ghost = true.
-Proof. split; vm_compute; reflexivity. Qed.
-Lemma asan_ledger_justified_w2 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_asan2_2))) (a_maps HS_asan2_2) asan_ledger = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma asan_consts_w2 : a_totsz HS_asan2_2 = asan_totsz /\ a_ylo HS_asan2_2 = asan_ylo /\ a_eager HS_asan2_2 = asan_eager /\ a_abytes HS_asan2_2 = asan_abytes.
-Proof. repeat split; reflexivity. Qed.
+Definition asan_mem_facts : list mfact := Eval vm_compute in mkeep vgA AKN 65536 6328320 asan_mem_facts_rec.
+Definition asan_pure_facts : list pfact := Eval vm_compute in pkeep vgA AKN asan_pure_facts_rec.
+Definition asan_mem_facts_w1 : list mfact := Eval vm_compute in mkeep vgA AKN1 65536 6328320 asan_mem_facts_w1_rec.
+Definition asan_mem_facts_w2 : list mfact := Eval vm_compute in mkeep vgA AKN2 65536 6328320 asan_mem_facts_w2_rec.
+Definition asan_pure_facts_w1 : list pfact := Eval vm_compute in pkeep vgA AKN1 asan_pure_facts_w1_rec.
+Definition asan_pure_facts_w2 : list pfact := Eval vm_compute in pkeep vgA AKN2 asan_pure_facts_w2_rec.
+
+(* the four sizes the main phase's model bounds: the largest of the four states' *)
+Definition asan_totsz : Z := Eval vm_compute in
+  Z.max (Z.max (a_totsz aS21_0) (a_totsz aS22_0)) (Z.max (a_totsz aS21_1) (a_totsz aS22_1)).
+Definition asan_eager : Z := Eval vm_compute in
+  Z.max (Z.max (a_eager aS21_0) (a_eager aS22_0)) (Z.max (a_eager aS21_1) (a_eager aS22_1)).
+Definition asan_abytes : Z := Eval vm_compute in
+  Z.max (Z.max (a_abytes aS21_0) (a_abytes aS22_0)) (Z.max (a_abytes aS21_1) (a_abytes aS22_1)).

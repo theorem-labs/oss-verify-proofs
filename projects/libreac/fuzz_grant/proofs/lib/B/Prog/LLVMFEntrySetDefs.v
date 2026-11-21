@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySetDefs), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySetDefs.v. *)
-(* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntrySetDefs.v, ported from a working branch 7c8c67da870
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntrySetDefs.v, ported from a working branch
    (blob 7818e2549e1; the image-A file carries no licence lines, so none are copied).
    Every lemma name is image A's, so that the phase files need no
    renaming; every address, register and spill slot is image B's own, read from fuzz_grant.asan-ubsan

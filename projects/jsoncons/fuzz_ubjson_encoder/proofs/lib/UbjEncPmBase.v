@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: some recorded proofs replaced by tactic proofs. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -101,15 +102,18 @@ Theorem ue_ubsan_base :
   strong_universal_error_free_T_scfg_budgets_abort cfg0 ShippedBudgets.lim_source ShippedBudgets.lim_target
     (mkImage ES.loaded_segments ES.init_pc ES.phdrs) (mkImage EU.loaded_segments EU.init_pc EU.phdrs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmBase ()) ["Base"] "p;2g02G1j20Tg02HOg02I['0o"). Qed.
+  exact (ue_ubsan_base_stated LIBS LIBU).
+Qed.
 
 Theorem ue_halts_plain :
   halts_allowed_T_scfg_budgets forced_only_cfg ShippedBudgets.lim_source codes02 (mkImage ES.loaded_segments ES.init_pc ES.phdrs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmBase ()) ["Base"] "p;2g02Jgj20Tg01h2g02HO'0o"). Qed.
+  exact (ue_halts_plain_stated G_U LIBS).
+Qed.
 
 Theorem ue_halts_ubsan :
   halts_allowed_T_scfg_budgets forced_only_cfg ShippedBudgets.lim_source codes02 (mkImage EU.loaded_segments EU.init_pc EU.phdrs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmBase ()) ["Base"] "p;1p;2g0000j10Tg005@j14Tg005^j12Tg009Wj11Tg02LKj23Tg003G#0#0#0#4#2#1g00PPUg02Mo'3o"). Qed.
+  exact (ue_halts_ubsan_stated (fun _ => True) LIBUh).
+Qed.
 End Base.

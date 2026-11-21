@@ -142,7 +142,7 @@ Proof.
   intros e1 e2 H. induction H; intros m; cbn [interp_eff_accesses]; try exact I.
   - cbn [access_value fst snd]. split; [exact H | reflexivity].
   - match goal with |- context [match ov_read_bytes ?s ?mm ?aa ?nn with _ => _ end] =>
-      destruct (ov_read_bytes s mm aa nn) as [bs|] end; [|exact I].
+      destruct (ov_read_bytes s mm aa nn) as [bs|]; [|destruct (range_meets_vvar s aa nn); exact I] end.
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k1 _) m), (interp_eff_accesses segs (k2 _) m); try contradiction; try exact I.
     cbn [access_value]. exact H0.

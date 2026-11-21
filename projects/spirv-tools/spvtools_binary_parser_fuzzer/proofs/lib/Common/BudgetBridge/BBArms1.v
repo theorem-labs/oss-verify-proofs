@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a normalisation step after the arm unification). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia.
@@ -30,4 +31,7 @@ Proof. unif_arm. Qed.
 Lemma arm_getsockopt_relim : forall L i eff m, ca_check arm_getsockopt i eff (relim L m) = map_cr (relim L) (ca_check arm_getsockopt i eff m).
 Proof. unif_arm. Qed.
 Lemma arm_mprotect_relim_b : forall L i eff m, (vm_limit (m_vmmaps m) <= L)%Z -> Sys.Mm.Mprotect.mprotect_budget_refused_b (in_arg i 0) (in_arg i 1) (in_arg i 2) m = false -> ca_check arm_mprotect i eff (relim L m) = map_cr (relim L) (ca_check arm_mprotect i eff m).
-Proof. intros L i eff m HL HB. revert HL. unif_arm_b HB. Qed.
+Proof. intros L i eff m HL HB. revert HL. unif_arm_b HB.
+  all: limnorm.
+  (* any goal left prints its environment in the build log *) all: exact I.
+Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -34,7 +35,9 @@ Section CTX.
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATPA).
 
-  Definition LO : Z := usp0 - 8388608.
+  (* The stack floor: the launch zero-maps [stack_window_lo, sp) and stack_window_lo <= sp - 6144513
+     ([InitStack.launch_facts]).  The allocation ceiling stays sp - 8 MiB ([alloc_ceiling]). *)
+  Definition LO : Z := usp0 - 6144512.
 
   Definition MFRAME (mm : mem) (pad : list byte) (s7v s6v s5v s4v : word) : Prop :=
     rw_cells asegs mm (usp0 + -128)

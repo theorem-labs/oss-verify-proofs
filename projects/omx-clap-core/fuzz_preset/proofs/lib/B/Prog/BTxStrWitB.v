@@ -2,10 +2,10 @@
    rule 24: proves no function (kind: merge)
    fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b): the
    relocation checks and the INSTANCE WITNESSES of the static image premises of tx_string's B' walk
-   (lib/B/Prog/BTxString.v + BTxStep.v, relocated from cold/h-rw-pre-5-b-tx 043041dbb091 by lane TxStrBp). Every lemma
+   (lib/B/Prog/BTxString.v + BTxStep.v, relocated by lane TxStrBp). Every lemma
    is CLOSED: a vm_compute on a closed goal at the whole-program instance PI_prog_B and the B' asyms YD2l.TfibB, or a
    citation of PALibB. This file Requires none of the walk (it builds while S10's glue has no #102 copy).
-   THE IMAGE DATA (blobs on the kit's cut 7cdbb61b5fa0, the same as int102 d1659777b723): lib/B/Listing_prog.v c97cc46b3e13,
+   THE IMAGE DATA (blobs on the kit's cut, the same as int102): lib/B/Listing_prog.v c97cc46b3e13,
    lib/B/PAImg_prog.v 15fab93fe702, lib/B/Img0.v (rsegs), lib/B/PRH_ImgB.v 3216eca68342, lib/Reusable/YD2l.v
    95803a8b9493 (TfibB), lib/Reusable/YF0m.v f82202ebccdf, lib/Reusable/YImgTop.v d2a97d3111ce, lib/B/PALibB.v
    5baa19c890f7.

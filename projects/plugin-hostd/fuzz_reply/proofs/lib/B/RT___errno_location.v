@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the runtime site contract aerrno_realizes (lib/B/W_sites.v:121) proved for
+(* Modified by Theorem Labs, 2026-10: the runtime site contract aerrno_realizes (lib/B/W_sites.v:122) proved for
    fuzz_reply.asan-ubsan's musl __errno_location at 0x8cf28, the image-B twin of lib/A/RT___errno_location.v
-   (af13e68c3aa, sha256 8aba4a088ba6; internal record): the same proof, with image B's own addresses
+   (sha256 8aba4a088ba6; internal record): the same proof, with image B's own addresses
    read from fuzz_reply.asan-ubsan (sha256 10ffb5f9202ae2bd) and its nm table. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The code is `mv a0,tp ; addi a0,a0,-164 ; ret` (fuzz_reply.asan-ubsan 0x8cf28 .. 0x8cf33, words 00020513 f5c50513
    00008067: the same 12 bytes as image A's 0x8c9a8 and the plain build's lib/Prog/__errno_location.v).
    It reads and writes no memory, so the proof steps the three instructions
@@ -130,7 +131,7 @@ split; [intros a _ _ _; reflexivity|].
 intros a Ha. exact Ha.
 Qed.
 
-(* The same, in the form the walks take it (lib/B/W_send_line_cx.v:108 `AERRNO : aerrno_realizes B (SIGMA
+(* The same, in the form the walks take it (lib/B/W_send_line_cx.v:109 `AERRNO : aerrno_realizes B (SIGMA
    WS_errno_location)`, SIGMA = pa_sigma of the placement): at PB_fr, pa_sigma is fr_sigma (lib/B/W_img.v). *)
 Corollary rt___errno_location_site : forall B, AR_laws frsegs B ->
 aerrno_realizes (PI := PB_fr) B (@pa_sigma _ fr_prog_listing PB_fr WS_errno_location).

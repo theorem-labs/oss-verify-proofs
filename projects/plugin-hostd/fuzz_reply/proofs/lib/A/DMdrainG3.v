@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainG3.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 0aeb58cc6713) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainG3.v (Quarantine::Drain walk set; file sha256 0aeb58cc6713) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the GEOMETRY facts Drain's entry shell asks - where the caches'
    first and last batches sit, the two counts, and the global list's last batch (YFgj.free_hyps' fh_glast) - from
    DMiface.qview's qv_geom / qv_wf / qv_bytes / qv_bpres / qv_cells and layout_ok, instead of cgif's allocator

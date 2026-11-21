@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10-31: the ALLOCATE part of lib/AU/YGcfInstF1WB.v at a working branch 7a128776b225
-   (round 6g; build of record the internal file zf-fuzz-preset-7a128776b2.build-20261030T181859Z.log), relocated onto round
-   misstop-3c ae35a5e5462 with the same names and proof texts: the depot field that preset's B' Allocate top
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-31: the ALLOCATE part of lib/AU/YGcfInstF1WB.v at a working branch
+   (round 6g; build of record the internal file zf-fuzz-preset.build-20261030T181859Z.log), relocated onto round
+   misstop-3c with the same names and proof texts: the depot field that preset's B' Allocate top
    (lib/AU/AllocGtopPresetMB.v, section c, hypothesis HDEP) takes, with every image hypothesis discharged at preset's
    image B' (asan-ubsan, #102 pin d663f82d).  The twin at B' of lib/A/YGcfInstF1WA.v's if_depot_cf_at_A:
    - [IMG_COVER_B]: YGcfDIface.IMG_COVER at B' (the image window from the ledger, over B''s segment table);
@@ -120,8 +121,8 @@ End h.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* 6. The field at the layer's walk relation YGcfInstBase.ARXq_cf B IOK Hp and universe U_cf B (U_cf B is cf_tr_ok B
-   by definition, YGcfInstBase.v:597): the text of lib/AU/AllocGtopPresetMB.v's hypothesis HDEP.  ARXq_cf's first
-   conjunct is ARX_cf (YGcfInstBase.v:480-482), whose second conjunct is ARcf (YGcfInstBase.v:67-69).  Then closed at
+   by definition, YGcfInstBase.v:598): the text of lib/AU/AllocGtopPresetMB.v's hypothesis HDEP.  ARXq_cf's first
+   conjunct is ARX_cf (YGcfInstBase.v:481-483), whose second conjunct is ARcf (YGcfInstBase.v:68-70).  Then closed at
    B''s symbol record YD2l.TfibB.                                                                                  *)
 Section rec.
 Variable B : asyms.

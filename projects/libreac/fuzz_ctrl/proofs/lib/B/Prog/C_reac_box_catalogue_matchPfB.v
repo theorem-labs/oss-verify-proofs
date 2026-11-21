@@ -2,8 +2,8 @@
    of pb_reac_box_catalogue_match, the cgif-form world walk of reac_box_catalogue_match (0x84e40) that proves
    C_reac_box_catalogue_match.treac_box_catalogue_match_spec B.  Brief:
    PB-H2-BRIEF.md (a working note, not in this delivery).  rule 24: no function proved; this file composes
-   this lane's own Qed stretches (C_reac_box_catalogue_matchLibW.v, pinned at a working branch
-   69fe060f529), the two walked callees' specs by name (TPARSE, TMB) and shared Qed lemmas (core YCbq / YCbqMalloc,
+   this lane's own Qed stretches (C_reac_box_catalogue_matchLibW.v, pinned at a working branch),
+   the two walked callees' specs by name (TPARSE, TMB) and shared Qed lemmas (core YCbq / YCbqMalloc,
    image-B ProgWorld, ProgBridge, H1's Pf.v, H3's PfV.v).
 
    cmPfB_mid: from H1's interface C_reac_box_catalogue_matchPf.cmPf_sm2_ret (the class-2 return, pc 0x84eb4) to H3's
@@ -23,8 +23,8 @@
    clauses with the journal's AR, aview to raw bytes at present, visible, off-image addresses).
 
    SECTION HYPOTHESES (core / callee specs only, decisions.md item 15 (a working note, not in this delivery)): LAWS, segs_low, errno_low, ML (as in
-   C_reac_box_catalogue_matchPf.v's header); TPARSE (a Theorem Labs lane ea59dbb03aa, lib/B/Prog/C_reac_ctrl_parse.v) and TMB
-   (a Theorem Labs lane 5487787da37 / 572f4b58796, lib/B/Prog/C_reac_box_model_block.v blob b8cb937a37f), by name;
+   C_reac_box_catalogue_matchPf.v's header); TPARSE (a Theorem Labs lane, lib/B/Prog/C_reac_ctrl_parse.v) and TMB
+   (a Theorem Labs lane, lib/B/Prog/C_reac_box_model_block.v blob b8cb937a37f), by name;
    ABCMP = bcmp_wrap_c_on.bcmp_wrap_contract_F_on (inside stretch 4; route (C)).
    FRAME-ROUTE PREMISES (of cmPfB_mid, each named at its premise): HBASE (cmPfB_base_all: cmBase at every journal
    state from the entry with own = [(2, pos)], Lib's CLAUSE MAP; H3's shared cmPf_base_of_AR discharges it), HG17
@@ -60,7 +60,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require GlueLift.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require C_reac_box_catalogue_match C_reac_box_catalogue_matchPf
   C_reac_box_catalogue_matchPfI.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require C_reac_ctrl_parse C_reac_box_model_block.
-(* H3's side-stack visibility (cmPf_fs_vis, 88d3b215222). *)
+(* H3's side-stack visibility (cmPf_fs_vis). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require C_reac_box_catalogue_matchPfV.
 Import ListNotations.
 Open Scope Z_scope.
@@ -76,7 +76,7 @@ Hypothesis LAWS : lib.Reusable.YG0d.AR_laws rsegs B.
 Hypothesis segs_low : forall a, lib.Reusable.YG0d.in_img rsegs a -> 0 <= a < lib.Reusable.YG0f.kLowMemEnd.
 Hypothesis errno_low : lib.Reusable.YCbq.api_env rsegs B.
 Hypothesis ML : lib.Reusable.YG0d.model_laws (lib.Reusable.YG0f.as_universe B).
-(* The two walked callees, by name (a Theorem Labs lane ea59dbb03aa; a Theorem Labs lane 5487787da37 / 572f4b58796). *)
+(* The two walked callees, by name (a Theorem Labs lane; a Theorem Labs lane). *)
 Hypothesis TPARSE : C_reac_ctrl_parse.treac_ctrl_parse_spec (SK := SK) rsegs B RLO RHI.
 Hypothesis TMB : C_reac_box_model_block.treac_box_model_block_spec RLO RHI B GLOBS.
 (* The bcmp wrapper inside stretch 4, route (C) (lib/B/Prog/bcmp_wrap_c_on.v). *)
@@ -243,7 +243,7 @@ Proof.
     (fun md' Hs => Hk ms' md' HP Hgr Hhid Hs)).
 Qed.
 
-(* Item 2: the journal across one re-based stretch whose writes are cmWst Sp fr (C_reac_box_catalogue_matchLibW.v:243):
+(* Item 2: the journal across one re-based stretch whose writes are cmWst Sp fr (C_reac_box_catalogue_matchLibW.v:244):
    the window [Sp - 9136, Sp) (awr_byte's window arm, CM_STK = 9136), the class-2 frame [fr, fr + 256) and its shadow
    [shadow_addr fr, shadow_addr fr + 32) (awr_byte's in_frames arm for (2, pos) in own; fs_frame_bytes 2 = 256 and
    B.AsanRT.shadow_addr = YG0f.shadow_addr by unfolding).  YCbq.ajournal_exec with Wr := the bytes inside cmWst, on
@@ -402,7 +402,7 @@ Proof.
 Qed.
 
 (* Item 3, the side stack: its header [FS, fs_frame FS 0 0) and every fp_w [0; 1; 2] FS range, FS := ly_F lyc:
-   C_reac_box_catalogue_matchPfV.cmPf_fs_vis (Qed, 88d3b215222) at the journal's head AR. *)
+   C_reac_box_catalogue_matchPfV.cmPf_fs_vis (Qed) at the journal's head AR. *)
 Lemma cmPfB_jr_rng_fs : forall (Sp : Z) ly0 S0 (W0 : lib.Reusable.YA0n.world rsegs) mem0 md0 own lyc Sc
     (Wc : lib.Reusable.YA0n.world rsegs) (mb : word -> option byte) mdc k,
   lib.Reusable.YCbq.ajournal rsegs B C_reac_box_catalogue_match.CM_STK Sp [] ly0 S0 W0 mem0 md0 own lyc Sc Wc mb mdc k ->
@@ -482,8 +482,8 @@ Qed.
 
 (* ============================================================================================================
    pa: the reac_ctrl_parse event (E2, return address 0x85058) of reac_box_catalogue_match, image B.
-   cmPfB_pa_call : TPARSE (C_reac_ctrl_parse.v:58-73) at the parse call, every premise discharged.
-   cmPfB_pa_ret  : from TPARSE's post (C_reac_ctrl_parse.v:45-57), the return state, its journal, and the premises
+   cmPfB_pa_call : TPARSE (C_reac_ctrl_parse.v:59-74) at the parse call, every premise discharged.
+   cmPfB_pa_ret  : from TPARSE's post (C_reac_ctrl_parse.v:46-58), the return state, its journal, and the premises
                    C_reac_box_catalogue_matchLibW.cmRBw_post_parse takes at its base memory (the return memory)
                    with call memory mc: the callee window's stk, the 36 output bytes as rw_cells, cmRB_kept.
    Pinned frame values: FS := ly_F ly, fr := fs_frame FS 2 pos, nn := 1, jj := pos, sp2 := CA Sp.
@@ -529,7 +529,7 @@ Proof.
   rewrite Z.shiftl_mul_pow2 by lia. change (2 ^ 20) with 1048576. change (Z.of_nat 2) with 2. change (2 ^ 2) with 4. lia.
 Qed.
 
-(* CA's arithmetic (CA Sp = (Sp - 128) / 32 * 32, reac_box_catalogue_matchF_on.v:316). *)
+(* CA's arithmetic (CA Sp = (Sp - 128) / 32 * 32, reac_box_catalogue_matchF_on.v:317). *)
 Lemma cmPfB_pa_CA : forall Sp, CA Sp mod 16 = 0 /\ Sp - 159 <= CA Sp <= Sp - 128.
 Proof. intros Sp. unfold CA. Z.div_mod_to_equations. lia. Qed.
 
@@ -603,7 +603,7 @@ Lemma cmPfB_pa_call :
     lyc Sc Wc mc mdc 0 ->
   lib.Reusable.YG01.frames Sc = (2, pos) :: lib.Reusable.YG01.frames S ->
   lib.Reusable.YG0d.ablocks B lyc Sc = lib.Reusable.YG0d.ablocks B ly S ->
-  (* stretch 2's end at the call (C_reac_box_catalogue_matchLibW.v:1690) *)
+  (* stretch 2's end at the call (C_reac_box_catalogue_matchLibW.v:1691) *)
   C_reac_box_catalogue_matchLibW.cmRBw_AtParse ra tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 mb f len Sp
     (lib.Reusable.YG0f.ly_F ly) fb (B.Prog.asan_stack_malloc_c.fs_frame (lib.Reusable.YG0f.ly_F ly) 2 pos)
     (CA Sp) pos 1 mc ->
@@ -703,7 +703,7 @@ Lemma cmPfB_pa_ret :
     (exists ff, S3 = lib.Reusable.YG00.set_fs ff Sc) /\
     lib.Reusable.YG0d.aregs_preserved regsP regs3 /\
     lib.Reusable.YK11.getr regs3 10 = lib.Reusable.YG0d.w64 (fst (ctrlparse len fb)) /\
-    (* cmRBw_post_parse's return-memory premises (C_reac_box_catalogue_matchLibW.v:1940-1942), call memory mc *)
+    (* cmRBw_post_parse's return-memory premises (C_reac_box_catalogue_matchLibW.v:1941-1943), call memory mc *)
     lib.Lib.Frame.stk rsegs mem3 (CA Sp - 8800) (CA Sp) /\
     lib.Lib.Step.rw_cells rsegs mem3 (B.Prog.asan_stack_malloc_c.fs_frame (lib.Reusable.YG0f.ly_F ly) 2 pos + 32)
       [lib.Lib.Cells.CB 36 (snd (ctrlparse len fb))] /\
@@ -993,7 +993,7 @@ Proof. intros i Hi. do 11 (destruct i as [|i]; [vm_compute; reflexivity|]). lia.
    Premise sources:
      J      the journal from the entry (own = [(2, pos)], k = 0) to the call memory mc: the walk's journal at the
             row's call (H1's J2 carried by the stretches before the row);
-     HAT    row i's ctrl call facts, LibW cmRBw_AtMB (C_reac_box_catalogue_matchLibW.v:1730) at the pinned frame
+     HAT    row i's ctrl call facts, LibW cmRBw_AtMB (C_reac_box_catalogue_matchLibW.v:1731) at the pinned frame
             fr := fs_frame (ly_F ly) 2 pos, sp2 := CA Sp, jj := pos, nn := 1 (of these only i < 11 and
             addressable mc (fr + 112) 32 are read);
      HRO    the spec's P2, C_reac_box_catalogue_match.v:87, at the entry memory;
@@ -1143,12 +1143,12 @@ Qed.
    frames and blocks, the callee-saved registers (aregs_preserved spelled out), a0 = rc (cm_row i) 0 = 1 (cm_rc), and
    the return-memory premises of C_reac_box_catalogue_matchLibW.cmRBw_post_mb at mb := mem4, m1 := mc,
    sp2 := CA Sp:
-     stk mem4 (CA Sp - 4272) (CA Sp)    <- tcj_kept's window presence (CtrlCallerJ.v:54), cmPf_stk_of_apresent;
+     stk mem4 (CA Sp - 4272) (CA Sp)    <- tcj_kept's window presence (CtrlCallerJ.v:55), cmPf_stk_of_apresent;
      bytes_at mem4 (fr + 112) (nth i DECLS [])
                                         <- the post's garr8 of synth (cm_row i) 0 [] = nth i DECLS [] (cm_rc),
                                            B.ProgWorld.ctl_out_bytes (off the image: AR_client_img_law);
      cmRB_kept mc mem4 (cmRB_callee_kept Sp fr (CA Sp) (CA Sp - 4272) 112 32)
-                                        <- tcj_kept (its alloc_ceiling is YM05's, CtrlCallerJ.v:44): the window outside
+                                        <- tcj_kept (its alloc_ceiling is YM05's, CtrlCallerJ.v:45): the window outside
                                            [CA Sp - 4272, CA Sp) by the high-memory clause (the window lies above YM05's
                                            alloc_ceiling, astk_ok), the flag word [fr + 248, fr + 256) and the buffer's
                                            shadow bytes by the frame clause (the frame (2, pos) of Sc and its shadow),

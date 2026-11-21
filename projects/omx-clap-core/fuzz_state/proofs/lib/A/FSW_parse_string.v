@@ -6,7 +6,7 @@
    template.
 
    THE SHAPE. parse_string runs at FP = FS_PSTAT_FP and calls fuzz_malloc, which also runs at FP = FS_PSTAT_FP; the
-   journals compose over RELOC's FP-keyed core (a working branch 4aa3d96b823: ajournal's image clause
+   journals compose over RELOC's FP-keyed core (a working branch: ajournal's image clause
    exempts `inFP FP a`, so alloc.c's statics may change under the FP; on S0's own core they are frozen and the
    callee's post cannot hold). So:
      stage 1  pstr_stage1      entry 0x850b8 -> the fuzz_malloc call 0x85180 (the escape-free scan loop), in
@@ -18,7 +18,7 @@
      stage 2  pstr_stage2      the return 0x85184 -> the `ret` 0x855fc (the copy loop, the NUL, the in->p store, the
                                epilogue), concluding parse_string_spec's fpostU through FSW_ret.v's fsw_retU.
    THE COMPOSITION parse_string_proof : fuzz_malloc_spec tfibsegs B -> parse_string_spec tfibsegs B (FSH_Fn_reader.v,
-   S0 CTX-drop form, a working branch faa7e2570e5). It replaces the interim parse_string_proof_c5, which
+   S0 CTX-drop form, a working branch). It replaces the interim parse_string_proof_c5, which
    carried a per-instance `In (RA_PSTR_MALLOC :: spine chq) CTXm` premise only to discharge fuzz_malloc_spec's old
    In-CTX clause; the owner dropped that clause and its CTX binder from the allocator, writer and reader specs
    (a Theorem Labs lane 2026-10-29T05:00-05:05Z), so neither the premise nor a CTX list appears here. No Admitted, no Axiom,
@@ -43,13 +43,13 @@
    - the decode table lib/A/FSW_parse_string_tbl.v (this lane).
    - the stack's shadow-zero range (pstr_RA_stack below) is lib/A/ACex.v:322-339 (stack_cells8 / RA_stack) restated,
      and pstr_shx is lib/A/ACep.v:203-213 (denot_shx) restated: ACex.v and ACep.v cannot be imported on this head
-     (they Require A/ACej.v, which still carries RELOC's refusal marker port_core_refused_80878 at ACej.v:30, and
+     (they Require A/ACej.v, which still carries RELOC's refusal marker port_core_refused_80878 at ACej.v:31, and
      A/AD25.v's file AD2i.v fails to compile too).
    - the block arm is Reusable/YCbq.v:2686 range_addressable_of_block (imported, not restated).
-   - the stack's shadow under unpoison U is lib/A/FSupoisonStack.v's fsw_ARU_stack_ra (a working branch
-     52f226102ef, a Theorem Labs lane's kit item; it replaced this file's own pstr_ush_stk). No existing lemma was found for the
+   - the stack's shadow under unpoison U is lib/A/FSupoisonStack.v's fsw_ARU_stack_ra (a working branch,
+     a Theorem Labs lane's kit item; it replaced this file's own pstr_ush_stk). No existing lemma was found for the
      block case (pstr_ush_blk: no head of U covers a live block's user byte): FSupoisonU / FSupoisonStack have none on
-     this head, and ALLOC's lib/A/FSW_strkit.v (a working branch 8a3773fd93f) has only the converse
+     this head, and ALLOC's lib/A/FSW_strkit.v (a working branch) has only the converse
      direction ush_off_addressable; that branch is not merged here.
    - stage 2's helpers (Section W2, prefix ps2_), searched before writing: `req_size n = n` has a hit only in another
      unit (tcpreplay A1AinvW.v:52), so ps2_req; `frame_of E rs m m' ->` is empty (YI04.frame_of_ro covers read-only
@@ -1998,7 +1998,7 @@ End W2.
    FP-generic form, a Theorem Labs lane), fuzz_malloc_spec at n = Q + 1, and the journal
    composition by FSW_K3's fsw_rt_atU3 (its third FP arm: the four statics are image bytes, pc_fp_img).
    parse_string_proof_c5: stage 1, the call step, stage 2. Proved by a Theorem Labs lane in scratch; at the move to S0
-   400b2a240b3 + hv5a its hand-applied afn_pre_at became fsw_fpreU_atFP. *)
+   + hv5a its hand-applied afn_pre_at became fsw_fpreU_atFP. *)
 Section W3. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
 Hypothesis HSS : FsShadowSyms B.

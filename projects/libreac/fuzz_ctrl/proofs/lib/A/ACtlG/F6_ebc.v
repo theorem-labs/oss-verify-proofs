@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2252 of its 2377 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R10A.v, with its numbers changed; 2171 of its 2324 lines of code are new or changed and 2224 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R10.v, with its module paths changed; 645 of its 706 lines of code are new or changed and 2263 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F6_ebc.v -- GLUE for stage seg_F6_ebc of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v seg_F6_ebc, W piece W4b): the frame turn's reac_ctrl_parse call at 0x81f60.  Written by a Theorem Labs lane
    (brief stage-parse-sites.md (a working note, not in this delivery)); single writer.
@@ -59,7 +60,7 @@
 
    SECTION HYPOTHESES (exact text below)
    - ACtl.v's own: RELRO_IMG, LAWS, TFIB_SYMS (same names and texts as ACtl.v's Section Ctl).
-   - TPARSE: a Theorem Labs lane's parse spec of record (a working branch 621a4ba64dc,
+   - TPARSE: a Theorem Labs lane's parse spec of record (a working branch,
      lib/A/Prog/C_reac_ctrl_parse.v, REAC_CTRL_PARSE_STK = 8800), the route's named callee hypothesis.
    - none for the exit's runtime conjunct: route (C) (L3-recipe.md (a working note, not in this delivery)) takes ctl_rt_C from the post's AR by
      A.ProgWorldCtlRtC.ctl_rt_C_of_AR, which needs neither A.ProgWorld.AR_states_vis0_shadow nor
@@ -73,12 +74,12 @@
    CLOSURE (glue closure rule): every project Require is qualified; the _F file Seg/F6Fs.v brings Seg/F6.v and the
    frame route of record into the closure (rule 1), named in the commit message with blobs (rule 5).
 
-   BUILD STATE: type-check on the stand-in-free image-A glue base a working branch 29ddfc3ea99
-   (interim core 5da74c9c931; its lib/A/AF0m.v and AF0l.v are ctrl's record blobs, the same as
-   a working branch e56483f863b).  This proof reads the bundle's start-up tables in two steps
+   BUILD STATE: type-check on the stand-in-free image-A glue base a working branch
+   (interim core; its lib/A/AF0m.v and AF0l.v are ctrl's record blobs, the same as
+   a working branch).  This proof reads the bundle's start-up tables in two steps
    only (KKN, b5_KN): KIND_NAME's 112 bytes avoid Tfib_owned_static and lie in a Tfib_zero_shadow row.  Both are
    decided by a boolean search (forallb / existsb, vm_compute), so they do not depend on the tables' order (record
-   AF0m.v:2963 row (0x21aa0, 0x9e7d0 - 0x21aa0); the first owned row past KIND_NAME, (0x9e7d0, 0x30) at :2979, starts
+   AF0m.v:2964 row (0x21aa0, 0x9e7d0 - 0x21aa0); the first owned row past KIND_NAME, (0x9e7d0, 0x30) at :2979, starts
    at KIND_NAME + 112).  TFIB_ERRNO = 0x5db76c.  No Axiom, no Parameter, no Admitted, no admit. *)
 
 From Coq Require Import ZArith List Lia Permutation.

@@ -10,7 +10,7 @@
    This file proves only the AR side of a store. The journal side (awr_byte / ajournal_after_write accepting a write
    whose bytes are inFP FP a /\ in_img segs a) is the core's (a Theorem Labs lane) and FSW_K's fsw_ajournal_writeU.
    port-from: the AR_frame_law use of cgif_file lib/A/AE2x.v:253-264 (al_frame over a write that leaves owned bytes
-   alone); the unpoison bookkeeping of FSW_K.v:62-83 (fsw_unpoison_high). No rename. *)
+   alone); the unpoison bookkeeping of FSW_K.v:63-84 (fsw_unpoison_high). No rename. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

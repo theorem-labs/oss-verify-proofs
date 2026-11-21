@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YCbo.v:1527-1530,
    1556-1561, for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_D4.v, with its module names changed; 39 of its 89 lines of code are new or changed and 888 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* seg_K of lib/A/Prog/LLVMFuzzerTestOneInput_inv.v (fuzz_identity.asan 0x81e60 .. 0x82090, 140 slots), composed
    from the pieces proved for it:
      LLVMFuzzerTestOneInput_Klib.v  k_rne    the r <> 0 path, 0x81e60 -> 0x82090
@@ -80,7 +81,7 @@ m_fds md' = m_fds md /\ m_fs md' = m_fs md.
    (check_str.v:70, ESTACK = 4096 at YG0d.v:19). Every callee reached inside seg_K's range writes only inside
    its own window, and each of those windows fits in it:
      wrapper strlen                2 * ESTACK = 8192   lib/A/Rt/StrlenDef.v:39,43,53
-     wrapper strcmp                2 * ESTACK = 8192   lib/Reusable/AStrcmpDef.v:47,52,62
+     wrapper strcmp                2 * ESTACK = 8192   lib/Reusable/AStrcmpDef.v:48,52,62
      check_str                     16 + 2 * ESTACK     lib/A/Prog/check_str.v:70
      reac_box_catalogue            16 + ESTACK = 4112  lib/A/Prog/reac_box_catalogue.v:48
      reac_box_catalogue_defect     16 + 2 * ESTACK     lib/A/Prog/reac_box_catalogue_defect.v:86

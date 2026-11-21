@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 1536 of its 1692 lines of code are new or changed and 1217 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_write_value.v, with its module paths and module names changed; 32 of its 88 lines of code are new or changed and 1636 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* write_value (fs.asan-ubsan 0x84010, preset_file.c:525-575): the CLOSING theorem of the image-B ASan walk of fs's recursive
-   value writer, against lib/B/FSH_Fn_writer.v's write_value_spec_at (statement set a working branch
-   50968be8342: no CTX binder and no `In (raZ regs :: spine ch) CTX` premise; the buffer-head-in-U premise).
+   value writer, against lib/B/FSH_Fn_writer.v's write_value_spec_at (statement set a working branch:
+   no CTX binder and no `In (raZ regs :: spine ch) CTX` premise; the buffer-head-in-U premise).
    The image-B twin of image A's closing section (a Theorem Labs lane's lib/A/FSW_write_value.v, wv_spec_or / wv_level /
-   write_value_holds; CTX-dropped text a working branch 1a5dc5b2e7c:1812-1863, CTX text
-   a working branch e64687560bd:1768-1817). The arm form (wv_chain_o, wv_post, wv_spec_on, wv_spec_of_arms) and
+   write_value_holds; CTX-dropped text a working branch:1812-1863, CTX text
+   a working branch:1768-1817). The arm form (wv_chain_o, wv_post, wv_spec_on, wv_spec_of_arms) and
    the leaf arms wv_null / wv_false / wv_true / wv_str are lib/B/FSW_write_value_entry.v's (a Theorem Labs lane); wv_num is
    lib/B/FSW_write_value_num.v's (a Theorem Labs lane); wv_arr / wv_obj are lib/B/ZZwvB_cont.v's (a Theorem Labs lane). The callees are
    Section hypotheses (put_spec, put_string_spec, indent_spec at image B, and the strlen interceptor's
@@ -111,7 +112,7 @@ Qed.
 End W.
 
 (* ================= write_value, every level: image A's top theorem, form and name ================= *)
-(* image A's lib/A/ZZwv_arm.v:194 write_value_spec_holds (S0 2b91e53c5db), binder list and premises word for word, over
+(* image A's lib/A/ZZwv_arm.v:194 write_value_spec_holds (S0), binder list and premises word for word, over
    image B's modules, so that ENTRY composes both images the same way. Image B's write_value_holds already has the
    container arms discharged (ZZwvB_cont.wv_arr / wv_obj); what remains are the callees' specs and the image / runtime
    facts, each owned elsewhere. *)

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HC is stated over AsanInitL's SINV0L and argH0 of the run's input; two ledger-membership goals take the entry's non-zero size; akernel_main proves the reserved-ledger conjunct over the image's reservations and the launch's vDSO/vvar pair, through res_low and hlen_le_sizes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,7 +9,7 @@ From OSSVerify.openssl.echconfiglist_parser.images Require Import AsanUbsan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame Arr CellsX TacX.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import HeapCeil AsanAllocModel LazyRestrict LazyLedger LazySR BackingAlgebra.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AllocWf AllocRep AllocRepX FakeStackRep AS_InstWF AS_InstMainDefs.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsStartupHSF AsMainVM. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazy AsMainCells AsMainIface AsMainIfaceFS AsMainIfaceAlloc.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsanInitL AsStartupHSF AsMainVM. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazy AsMainCells AsMainIface AsMainIfaceFS AsMainIfaceAlloc.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import AsImages AsPlanImages.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import AsMainSyms.
 Import ListNotations. Import AX2. Import AP. Import APS.
@@ -25,8 +26,8 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH AsanUbsan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -151,6 +152,8 @@ Section AT_MAIN.
   #[local] Notation ak1 := (AsMainIfaceAlloc.ak1 sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation ak1_lo := (AsMainIfaceAlloc.ak1_lo sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation ak9 := (AsMainIfaceAlloc.ak9 sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
+  #[local] Notation ak_rx := (AsMainIfaceAlloc.ak_rx sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
+  #[local] Notation ak_res_apart := (AsMainIfaceAlloc.ak_res_apart sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation zz_in := (AsMainIfaceAlloc.zz_in sp0 brk0) (only parsing).
   #[local] Notation zz_cases := (AsMainIfaceAlloc.zz_cases sp0 brk0) (only parsing).
   #[local] Notation zz_out := (AsMainIfaceAlloc.zz_out sp0 brk0) (only parsing).
@@ -258,6 +261,18 @@ Section AT_MAIN.
     pose proof (co_wf _ _ _ _ _ _ _ _ _ _ _ HC) as (W1 & W2 & _). split; intros e He; unfold entry_nowrap, hi;
       [pose proof (W1 e He) as W | pose proof (W2 e He) as W]; unfold iv_wf, BackingAlgebra.B, BackingAlgebra.S in W; exact W.
   Qed.
+  (* LPS 727298f3: the image's reservations end below [AHI_LO], and [hlen] counts at most the
+     sizes of a ledger's entries *)
+  Lemma res_low : Forall (fun e => KInv.ehi e <= AsShadow.AHI_LO) (segments_reserved ASEGS).
+  Proof.
+    eapply Forall_impl; [| exact asan_res_hull]. intros e [_ H2]. cbn [img_hi ASAN_H] in H2.
+    unfold KInv.ehi, AsShadow.AHI_LO. lia.
+  Qed.
+  Lemma hlen_le_sizes : forall l : list (word * word), hlen l <= APS.sum_sizes l.
+  Proof.
+    induction l as [|e l IH]; [rewrite hlen_nil; cbn [APS.sum_sizes]; lia|].
+    pose proof (hlen_cons_le e l) as C. cbn [APS.sum_sizes]. lia.
+  Qed.
 
   Theorem akernel_main : akernel s0 model.
   Proof.
@@ -265,7 +280,19 @@ Section AT_MAIN.
     pose proof (al_ceil HCEIL Hceil) as AC. pose proof al_SB as (S1 & S2 & S3 & S4 & S5 & S6).
     pose proof al_CTX as (GC1 & GC2 & GC3 & GC4 & GC5). cbn [fst snd] in GC1, GC2, GC3, GC4, GC5.
     unfold akernel. cbv zeta. rewrite E1, E2, E3, E4, E5, E6, E7, E9. unfold kPageSize, kSpaceSize, kPtrArrayReserve, kRegionSize, kNumClasses, AFS_SIZE.
-    split; [exact ak1|].
+    (* LPS 727298f3: the reserved ledger is the image's reservations and the launch's vDSO/vvar
+       pair ([ak1]); each entry lies apart from the primary space's and the pointer array's
+       mappings ([ak_res_apart]); the pair is at most two entries of 81920 bytes ([ak_rx]) *)
+    split.
+    { split; [| split].
+      - intros e He. pose proof (ak1 e He) as K.
+        pose proof (ak_res_apart (ps_b06 X) 0x2000011000 e ltac:(unfold PM_MAPS; cbn [In]; tauto) He) as D6.
+        pose proof (ak_res_apart (ps_b08 X) 0x800000 e ltac:(unfold PM_MAPS; cbn [In]; tauto) He) as D8.
+        unfold ASegs.AIMG_TOP, AsShadow.AHI_LO. clear - K S2 S3 S4 D6 D8. split; [lia| split; lia].
+      - destruct ak_rx as (rx & Erx & _ & RXN & _). rewrite Erx, hcnt_app, (hcnt_low _ res_low).
+        pose proof (hcnt_le_len rx) as C. unfold zlen in C. unfold ARXC. lia.
+      - destruct ak_rx as (rx & Erx & _ & _ & RXS). rewrite Erx, hlen_app, (hlen_low _ res_low).
+        pose proof (hlen_le_sizes rx) as C. unfold ARXB. lia. }
     split; [split; [exact ak_limit | exact (proj1 (al_top HCEIL Hceil))]|].
     split. { intros x [Hx|[Hx|[Hx|[Hx|[Hx|Hx]]]]].
       - apply ak3_T. lia.
@@ -350,9 +377,9 @@ Section AT_MAIN.
     unfold amaps_in_ledger. cbv zeta. change (a_st s0) with st0. rewrite E11, E7, E9. unfold kSpaceSize, kPageSize, kPtrArrayReserve.
     split. { (* [comment removed for export] *)
       intros mp Hin K1 K2 K3 K4. cbn [In] in Hin. destruct Hin as [<-|[<-|[<-|[]]]]; cbn [mp_kind mp_base mp_size] in *.
-      - split; [apply (ak_maps_exact (ps_b06 X) 0x2000011000); unfold PM_MAPS; cbn [In]; tauto| clear - S5 S6 AC AR; lia].
+      - split; [intros _; apply (ak_maps_exact (ps_b06 X) 0x2000011000); unfold PM_MAPS; cbn [In]; tauto| clear - S5 S6 AC AR; lia].
       - exfalso. exact (K1 eq_refl).
-      - split; [apply (ak_maps_exact (ps_b08 X) 0x800000); unfold PM_MAPS; cbn [In]; tauto| clear - GP2 GP3 AC AR; lia]. }
+      - split; [intros _; apply (ak_maps_exact (ps_b08 X) 0x800000); unfold PM_MAPS; cbn [In]; tauto| clear - GP2 GP3 AC AR; lia]. }
     split. { intros mp Hin Hk x Hx. cbn [In] in Hin. destruct Hin as [<-|[<-|[<-|[]]]]; cbn [mp_kind mp_base mp_size] in *.
       - exfalso. destruct Hk as [Hk|[[c [Hk|Hk]]|Hk]]; discriminate Hk.
       - apply ri_accessible. rewrite S3. lia.

@@ -1,13 +1,13 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMH_Rt.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMH_Rt.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* fm program part: the runtime contracts fm's target code needs that the donor core does not state, in the donor's
-   per-call form (YG0d.v:317-419: ecall_pre, argument registers, range premises on aview, SRr to the return address with
+   per-call form (YG0d.v:318-420: ecall_pre, argument registers, range premises on aview, SRr to the return address with
    AR kept, callee-saved registers kept, same_but_materialized, a memory frame). Statements only; the walks are
    RtScan's (strlen, strchr, strncmp, memchr), RtStr's (strstr, strncasecmp, isalnum) and RtPrintf's (snprintf);
    a sibling that proves its own donor-form Definition of the same name replaces the one here.
-   bcmp: the donor's abcmp_realizes (YG0d.v:352) at PC_bcmp. Poison / unpoison: Poison's tfib_poison16 /
+   bcmp: the donor's abcmp_realizes (YG0d.v:353) at PC_bcmp. Poison / unpoison: Poison's tfib_poison16 /
    tfib_unpoison16 (design/POISON.md section 7). Design: port-fm design/HARNESS.md section 4. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMH_Rt.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMH_Rt.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMH_Rt.v keeps its donor's comment text) is kept as lib/A/FMH_Rt.v writes it. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v (cold/port-fm-rtprintf-param 3e35620c52e) *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMH_Rt.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMH_Rt.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMH_Rt.v keeps its donor's comment text) is kept as lib/A/FMH_Rt.v writes it. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v *)
 (* Modified by Theorem Labs, 2026-10 (h-decbox-a4, G9 row P8-A-base): fuzz_disco.asan's SUBSET of fm's file, the two
    names the G9 snprintf route reads (FMbz_clean.v, FMrt_lift.v; g9/P0/pieces/P8-A-base.md): rt_post_ro and
    rt_post_roU, fm's text, module paths changed (no numeral in them). Dropped: the pure answer models, fm's format

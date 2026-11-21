@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstRcSec.v (commit ce1a656b52b7, file sha256 cb8dee0851e5) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 2 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRcSec.v (commit f02099425ace, round-3 cf layer, field round 3 (d0377850faa + 91bb9319bae); reply-rccf; file sha256 b249de0dd331) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstRcSec.v at commit 2c35faeeaec, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstRcSec.v (file sha256 cb8dee0851e5) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 2 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRcSec.v (round-3 cf layer, field round 3; reply-rccf; file sha256 b249de0dd331) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstRcSec.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (second hand of the lane): the SECONDARY arm of
    __asan::QuarantineCallback::Recycle's read fields over the drain's cut relation, the cf twin of
    YFf4.rs_fin_ARm (YFf4.v:1080).
    rule 24: no function proved (kind: relational transport of the RChunk post to the cf cut relation ARcfR).
 
-   Lane B1's slice H4 states the secondary fields (commit a7bbacac3615, proofs/cgif/cgif_file_fuzzer/lib/
+   Lane B1's slice H4 states the secondary fields (proofs/cgif/cgif_file_fuzzer/lib/
    DMrcSecReads.v: rc_sec_cut_t, rc_sec_mapr_t, rc_sec_step_t) over `world tfibsegs` and over its own machine
    predicates (DMrcSecGv.at_RET / WIN3, DMrcSecMun.LINKD / WPRE, DMrcSecFc.sec_cut, the literal TFIB_TSD), so that
    text cannot be stated at the cf instance, which is generic in ImgBase.AImg.  CfF2b (2026-10-30 02:4xZ) approved
@@ -1242,7 +1243,7 @@ destruct (find_chunk_at B ly l1 g) as [y|] eqn:F1.
       destruct fa_poison' as (FP1 & FP2 & EF & EF2). rewrite EF. rewrite EF2 in R'. rewrite in_rangesb_remove by lia. rewrite R'. exact HS'.
 Qed.
 
-(* The weak shadow (CfF2b 68f3ef3b4ba): a pending chunk other than the dead one is still pending at rsX2; the dead
+(* The weak shadow (CfF2b): a pending chunk other than the dead one is still pending at rsX2; the dead
    chunk's user granules lie in its map, which ashadow_X2 excludes. *)
 Lemma shadow' : shadow_ok_weak_cf B ly Hp rd' rsX2.
 Proof.
@@ -1879,7 +1880,8 @@ Lemma xs_keep : forall md', amwf md -> xs_mapped_cf ly X md ->
 m_vmmaps md' = m_vmmaps (YK0v.munmap_model (w64 MAP) (w64 LEN) md) -> xs_mapped_cf ly rsX2 md'.
 Proof.
 intros md' MW Hm Ev. apply (YGcfXsMapped.xs_mapped_cf_frame ly X md ly rsX2 md' [(MAP, LEN)] Hm xs_cf_X2).
-- intros q Hq HD. rewrite Ev. exact (YGcfXsMapped.mkeep_munmap MAP LEN (w64 LEN) md q Hq HD).
+- intros q Hq HD. rewrite Ev. pose proof MR as (_ & LED & _). pose proof KFACTS as (_ & _ & _ & _ & GI & _).
+  exact (YGcfXsMapped.mkeep_munmap MAP LEN (w64 LEN) md MW (alc_sec _ _ _ _ LED _ GI) q Hq HD).
 - apply Forall_forall. intros e He. constructor; [|constructor]. cbn [fst].
   pose proof (proj1 (Forall_forall _ _) (amr_xs_placed _ _ _ _ _ rM) e He) as (P1 & P2 & P3 & P4).
   pose proof KFACTS as (_ & _ & _ & _ & GI & _).

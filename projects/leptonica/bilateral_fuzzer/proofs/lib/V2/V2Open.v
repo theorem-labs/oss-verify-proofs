@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO and vvar pages; recorded (KReplay) proofs re-proved by tactics, as pix_orient_fuzzer's copy). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -62,9 +63,9 @@ Section Open.
   Definition fds0 : list (word * FdEntry) :=
     [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
      (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))].
-  Definition vm0 : VmMaps := mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk lim mbase sp0.
+  Definition vm0 : VmMaps := mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp0 a_kernel) [] [] brk brk lim mbase sp0.
   Definition model0 : Model :=
-    with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 lim (mkProcInputC [a0s; path] envv fs0 stdin0)).
+    with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso a_draw)) (init_model (segments_reserved RSEGS) brk mbase sp0 lim (mkProcInputC [a0s; path] envv fs0 stdin0))).
   (* [comment removed for export] *)
   Definition fds1g (fd3 : FdEntry) : list (word * FdEntry) := fd_insert fds0 (Z_to_bv 64 3) fd3.
   Definition model1g (fd3 : FdEntry) : Model := mkModelC (fds1g fd3) vm0 stdin0 fs0 None (Some tid) None.
@@ -129,7 +130,7 @@ ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "p'0h01Hh12H0h21li001lh32H1h42Hlh5
     forall e vals R M,
       In e openat_errnos ->
       length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 38 = errno_ret e ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+      vals_ev vals 1 = p0 a0s path envv -> vals_ev vals 2 = p1 a0s path envv ->
       vals_ev vals 5 = tid ->
       regs_ok (ENV vals) (sr_upd srA (ridx 10) (EVar 38)) R -> know_ok RSEGS (ENV vals) M knA ->
       above_sp0 M ->
@@ -139,7 +140,7 @@ ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "p'0h01Hh12H0h21li001lh32H1h42Hlh5
   Definition at_malloc (fd3 : FdEntry) (KB : TSet) : Prop :=
     forall vals R M,
       length vals = 38%nat -> vals_ev vals 0 = sp0 ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv -> vals_ev vals 5 = tid ->
+      vals_ev vals 1 = p0 a0s path envv -> vals_ev vals 2 = p1 a0s path envv -> vals_ev vals 5 = tid ->
       regs_ok (ENV vals) o_srB R -> know_ok RSEGS (ENV vals) M o_knB ->
       out_win M ->
       realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x3c370) M (seg_rom RSEGS)) (model1g fd3)) KB.
@@ -148,28 +149,39 @@ ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "p'0h01Hh12H0h21li001lh32H1h42Hlh5
   Lemma open_ok_blockB : forall fd3 KB vals R M,
     at_malloc fd3 KB ->
     length vals = 38%nat -> vals_ev vals 0 = sp0 ->
-    vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv -> vals_ev vals 5 = tid ->
+    vals_ev vals 1 = p0 a0s path envv -> vals_ev vals 2 = p1 a0s path envv -> vals_ev vals 5 = tid ->
     regs_ok (ENV vals) (sr_upd srA (ridx 10) (ELit 3)) R -> know_ok RSEGS (ENV vals) M knA ->
     out_win M ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x43d68) M (seg_rom RSEGS)) (model1g fd3)) KB.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h02Hah12HKh22HRh32M0h44__x1h51bh61xh73EQMh82HAh93HKBh:2HLh;3HL0h<2Hhh=3Hhih>3Hloh?2Hxh@2KBhA1MhB2P0hC2P1hD2P2hE2P5hF5P6_KNhG5P6_SRhH1RhI2R0hJ7__arithhK4__ffhL6__sat6hM6__sat7hN6__sat8hO6__sat9hP8__varmaphQ5__withR4cstrhS3fd3hT1ohU4valshV1yp%0p&0p;1p;2p;3p;4p;5p;7p;<p;8p;6p;Ng0045j10Tg004Zj1kTg0058j1{Tg00:aj1TTg005[j11Tg00d6k20ZTg009;k102Tg00dbk20OTg000Gj2mTg00eZj15Tg00Q4j38j1wTg00f9j2`Tg00g=k40lTg00h3k40_Tg00hij1WTg006@j12Tg00i[k20XTg00j>k30VTg00jak10UTg00khk30RTg00m1j3zTg00nAj4yTg00Edj1xTg00FZj2\Tg00GDj2CTg00D6j1lTg00oQk10:Tg010Gk209Tg011Fk108Tg009]j1|Tg012=j1ATg013Fj19Tg014Oj1rTg014mj3qTg0166k40YTg00@7j1VTg017?j2pTg018Jj3hTg019Uk201Tg01:`j2ETg01;jj4~Tg01=5k30MTg01>@j2PTg01?Kj5_Tg01@Yk30BTg01Aek10ATg00?Wj2[Tg01Baj4cTg007Dj2STg01CAk70@Tg01DLj1vTg01ETk30?Tg01F\k30>Tg01Gmk20=Tg01HNk10<Tg01IWj3uk40;Tg00S:j2bTg00HHj2RTg00R_j2dTg00^Uj1eTg01Jik20CTg00Hdj2tTg00\AS00j1gTg01L0k20GTg01LSk30HTg01M0m<0ITg01MUk40JTg01N<k10KTg00G`j2sTg00IAk300Tg00Iek207Tg00K?k106Tg00K]k10PTg01Naj2}Tg00LHk205Tg00Lkk403Tg01ODk30kTg00OBk80jTg00Ofk20iTg00PHk20hTg00QNk30gTg00Qmk40fTg0023j6jTg01Ogk20eTg01Plk80dTg01R;k10^Tg006^k20`Tg01SBk50aTg01T;k20]Tg01U0k30bTg00[aj3;Tg01Uoj3ZTg00TOk70\Tg01W:mN0[Tf0R0#5#5p=D%20#Ap=<%10#1#1#1p=Y%00#0#0#0p==%00#0#0#0#0#0#0#0p=F%00#0#0#2p=3%00#0p=H%00#0#0p=L%00#1p=^%10#1p=Q%10#0#0#0p=6%10#0#1#1p=:%10#1#0#0p=7%00#1#0p=a%00#1#0#0p=>%10#1#1#0p=ig01X?R1f4R2f3R3f2R4f1R5=;105;15;13;p=N%10#0p>0W%10#0#1#0p=U%00#1#1#0p=B%10#0#0#1p=O%r0,E5p>0T1E34?Z50p>0S%00#1#0#1p=]%20,E5p>0Q%00#0#0#1p=?%00#0#1#0p=J%20,P5p>0N%10#1#0#1p=f%10#1#0p=K%00#0#1#1p=o%25/P0p>0Lg01YHR6A;6507;4p=M%05#2,P4=;60p=n%04#2/P5=;60p=I1E23?Z45=;60p=G1P45=;60p>0F%23,E2?Z45=;60p=@1P231P45=;605;6p>0Ef6R7f5R8;Z2AZ345=;605;6p>0D%r3,E2?Z45=;60p=4g00W2R9/C0p=XP5g00U3S01g00URR:P:g00V2R;P0g00VRK0\p>04g01ZSS02g01[KR<g01\]S03g01]YS04g01^SS05P0g01_OS06g01`IR=P5P4P3P2P8P7f7R>f8R?f9R@f:f;f<S07f=S08f>RAf?RBf@RCfAS09fBRDfCREfDS0:fERFfFS0;NN0[p>0cg007^g01aDg008VRG#0RH#0RI#0RJ#0RK#0RL#0RM#kRN#{RO#T%1HRP#kRQ00ZOS0<%kJ#{$02RR\ORS20O23g01b=RT1mO3g01b\RU#5RV#5RW#5RX#5RY#5RZ#5#DR[#D#DR\#5R]#D#D#DR^#5R_#5R`#5Ra#5Rb#5#D#D#D#D#DRc#5Rd#5Re#5Rf#5Rg381`2Up,3sp0Rh58O1`8VPhp,3a0sRip,4pathRjp,4envvRkH0l58O1`7WPhPiPjPkH0_58O1`>Zp,3tid58O%W?g01c;%0PRk#2Rjg00cZ20XQjd60VQ$0U%1GRQ#<Ri40R;z>P<%W@P>P=Cy%x?p,4SPloS0=%1QR?#1R@#Y#Y#YRl#=#F#F#F#3Rm1\NhRn'Cp,4SPhi%0MRo#HRp#LRq#=Rr#L#=Rs#0Rt#=#F#F#3Ru,Cn%lBRv&0:B+09&02ORw&08v%|ORv38%A9Rx%^G#Q#6#:#7#<g01d6Ry%9URz%ro#A3q%6K#F#<%aG#7#>#i#3R{#A%9WR|%9\%9]%2HRH#AR]P]%2rRr#AR\g00b9PWP9P[H0YR}P}PiPxPxPx%L?R?#<S0>P|%2LS0?#A9qyzRLPiP\PxPxPxPxPxPx%9c%9d%9e%9f%V1RfDNDNDNDNDNDNDNDN%T1Pz%0QRQ#6S0@#0P[P}Pz%1IR}$0WR1#HS0AP[%9`Pz%HkR`#0Re#0RdP[%9_Pz%6kP[%9^Pz%1PR^#0Rk#HS0B#0P[PLPz%6JS0CP[%9bPz%L}R}#0S0DP[%9aPz%0QRa#1Rb#LR_P[P]Pz%0aRc#0S0E#0R\#0P[P]Pz%1^R~#LP[%^G#Q#6#U#6#<Pz%L@S0FP[PxPz%0?R@P[PxPzQ0@P[PxPzP\P[PxPzQ0BP[PLPzPeP[%^G#Q#6#B#6#<PzP}P[P]PzPMP[%2JRJ#ARL9qyzPzP?P[%1G#:#O#Y#7#<%2KRK,pzAhzmu20TzsRu%2sRs+01PzP9P[P]H0SPzPJP[%9VPzPKP[P|Pz%2cRcP[Px%9XRX%6t#F#F#3Rt7hm%9YRz?hmtPuPs1EX9Rt%2dC~PuPs1Ez9PKC~1pXJ1pzJPtP[Pi1EXJP[%1p#H#=#<PXPKP[%<IPXPcP[Q0>PXQ0?P[%<PPX%2`RPP[%AjPXQ0EP[%AKPXPMP[%<QPXP}P[%2qRq#AR}PXPeP[%<^PXP\P[%<aPXP@P[%<~PXQ0FP[PxPXPoP[%<bPXQ0CP[PzPXQ0DP[PxPXQ0AP[Px%HG#]#=#F-0Qx%L_#=#3+01%HG#B#?#J#=-0Nr%HG#B#?#J#?#2%HG#B#?#B#O#2RrPr%^G#B#?#B#O#2Rr%0G#:#=#f#=%0G#:#?#>#>%KG#7#]#o#3Px%aG#7#o#]#3R_P[%A_Px%^G#B#?#7#6PY%9ZRZ%0G#:#=#i#U%aG#7#>#>#3%0G#:#?#?#>%aG#7#>#6#3%0G#:#?#J#>%aG#7#>#7#3%0G#:#?#>#=%1G#:#?#]#6%KG#7#O#:#3RY1ExY@0MLW%QG#B#>#i#=%KG#7#O#f#3+0L%QG#B#>#Y#O#2%KG#7#U#=#3RLPxPLP[PX%1G#:#J#6#>%KG#7#U#J#3%1G#:#J#O#=%KG#7#U#]#3RXPxPXP[P}%1G#:#J#O#6%KG#7#U#7#3%1G#:#J#:#>%KG#f#J#o#3R}%1G#:#6#F%2G%Ql#Y#25hZ1P9q%V63M5n}3I3IDG3I3IDG40F3M3I5n{3I3I3ID@DG3I5nrI0E3MD@D@D@D@D@D@D@D@D@D@D@DGDGDGDGK0D3M3M3MDGDGDG3M3MD4D4D4D4D4D4D4D4D4D4D4D4D4D4D4D4D4D4D4%T6R6%0G#?#Q#U#f#3RrPg%QG#6#B#i#3R{P5g01db#VR}P=PgD_Rqg01emRZ#VRlg00ZDR[#VRX@0BfXRfP0PlPX%WCRxPA&0A<RLPB%lDQ09g01g:RW%TZRY'[R_g01hHRz'[RbP_PzPWPYPqPlCcPfCcRf'SP<Q03g00ZdRWQ04Q05PrQ06P}P=PgD_PlK0@=8bfd1[6YRf%T[Rb'[RrPfPbP6PYP0PlCcPXCcRl'S%vq@0?=X=8rldP>P7B0><Ax-0=ZRZPZ1Swv1[OORv#T%Vv'SQ0<%WDP{P3P}P=PgD_$0<;z5P<%WEP5P3CyQ0:#WP{P8P}P=PgD_#v7uD98S4PDPFP2P3Q09PCPBPAQ08P4P51bns1\N0Rs'C1Rsn'd#ePSfGRA#WRB?uF}P0P4O1p,4mem0P4O1RC58RX3SPRPFP5O1A8R0CXTRQ07P5P0O2PBPFP}P5H0;PBPFP}PUP51S[WRF20CU}=8[WdPOPh1tHPRR/CsX5O1mOARC=8Tgg00WlRv%gCRw%21R138RZPTPv%wTQ00%wv%g5%g058vA8T5020G5040HXVTX6TPCPw1SvwPgP11Sv1N<0IPEH0JPZfH,mORZ$0K%gZ#X1sHP1R9HRZ%XP1R9R[[%XHREg00WPR1B00HP5UW0%XR\1^0E%2kRk,sH%Xk1tHkRP,R9[\ZB00Hk5V1X0E%XP\1^0Eg00XJRE#V%TE207v5&06v&0PvREQ01P:P:P;Pv1}vmg00Y6R1205vGRGH03-04E%|:Pv1}vH%k`60kvP1PGH03-04EL0j20iE;P0P4PF20h04=8[WdB0gv95H0fbKbPbQX4v1Cm01CR5[^4vP0PnQ0=O2bJbLbMbNbObRb;1`AURvPDEj20eBU,\NRB,CRePOPhg01iTRh,bs1\N4RR'C1RRs'd#eX5OP01bnh1\N5R5'C1R5n'd#eePvPDEj1bBh/C51R5B'd#eeL0dEjP8P4EjW?X6O%x3eO;Q02P2P{P7P}P=PgD_$0^-0`NP3PLI0a%lA+0]Q0;60b<eW7W1W2X3SWING0cbFbGb<b=b>W8W1W2WEWDWCWBW:W9WAWHWUW@WSo"). Qed.
+  Proof.
+    intros fd3 KB vals R M HKB HL P0 P1 P2 P5 HR HK HA.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    pose proof (mp_halted _ (m1_pure fd3)) as Hh.
+    change (sr_upd srA (ridx 10) (ELit 3)) with o_srB0 in HR.
+    run_block_keep scr0 38%nat.
+    apply (HKB vals); try assumption.
+    intros x Hx. rewrite EQM. rewrite (mem_denot_out_win (ENV vals) M _ 0%nat);
+      [apply HA; exact Hx | vm_compute; reflexivity | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; unfold WIN; exact Hx].
+  Qed.
 
   (* [comment removed for export] *)
   Lemma openat_regs : forall vals R,
-    vals_ev vals 2 = p1 sp0 a0s path envv -> regs_ok (ENV vals) srA R ->
-    bv_unsigned (getr R 17) = 56%Z /\ getr R 10 = AT_FDCWD /\ getr R 11 = p1 sp0 a0s path envv
+    vals_ev vals 2 = p1 a0s path envv -> regs_ok (ENV vals) srA R ->
+    bv_unsigned (getr R 17) = 56%Z /\ getr R 10 = AT_FDCWD /\ getr R 11 = p1 a0s path envv
     /\ Z.ldiff (bv_unsigned (getr R 12)) open_ignored_flags = 0%Z.
 Proof.
-ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h01bh12b1h22b2h31nh41Hh52HRh62P2h71Rh84valsp;1p;2p;4p;3p;5p;6g0045j15Tg004Zj1FTg0058j17Tg00:aj1PTg005[j10Tg00d6j2OTg00eZj1GTg00f9j2NTg00h3j4LTg00Q4j31Tg00hij1DTg00m1j3ITg006@j16Tg00j>j3?Tg01jUj2>Tg00FZj22Tg01kNj2<Tg00R_R0j2HTg01kmj2;Tg01m6j24Tg007Dj2BTg012=j1ATg01n?j5:Tg0023j6=Tg01oCj3MTg006^j2ETg013Fj1JTg01ogj4@Tf0R1#5#5p=3g00WlR2g00W2R3711p=9%01#0p=C%01#0#0#0p=K%01#0#0#0#0#0#0#0p=8g008VR4#5R5#3R6#5#3R7#FR8#7R9#P%05R5#FR:/O9f1R;g01b\#G#GR<'Np,3sp0p,3a0sp,4pathp,4envvCLR=519f2R>#Dg01c;R?;I;%06#6g00cZR65?:R@,>>RA,28%04R4#0RB#5#3#6RC512%55#6=?:6RD,>>REg020BRF519RG%05#6=?:6R5,>>RH=19=RI%34#6=?:6R6,>>R:,28g021<R4'<#9RJ'HRK'HP9f3RL#DRM1;?@'41281RN=12CX091B2C%AC,4M,28=12CePAPMP?P>P@P1D:E=PGPKP91;?D,4MA191FX09g022CRK%71RG%7;R@P0%7>?1;112L>12L;512R0[12>;12>1512%7L?1>;[RAf4#7?1L>\0AM>;1P1n2001000000120000000W2W1W3PA^2@^1G^3KP1P8%CB#K#8#8#8#8#8#8#3#0#C#3#6RB,E8PF128F,B2O4b4%AB,4M=19FePEPMP?P>PDP1D:E=PIPJP91;?5,4MA191=X09P;%J<,4M=19=ePHPMP?P>P5P1D:E=P91;?6,4M1<N4#9X091B23%57#3#3#3#3#6R7,E8,28/<4#9d%A7,4M,28/<4#9eP:PMP?P>P6P1D:E=C@C@C@W5W6W7W8o"). Qed.
+ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h01bh12b1h22b2h31nh41Hh52HRh62P2h71Rh84valsp;1p;2p;4p;3p;5p;6g0045j15Tg004Zj1FTg0058j17Tg00:aj1PTg005[j10Tg00d6j2OTg00eZj1GTg00f9j2NTg00h3j4LTg00Q4j31Tg00hij1DTg00m1j3ITg006@j16Tg00j>j3?Tg01jUj2>Tg00FZj22Tg01kNj2<Tg00R_R0j2HTg01kmj2;Tg01m6j24Tg007Dj2BTg012=j1ATg01n?j5:Tg0023j6=Tg01oCj3MTg006^j2ETg013Fj1JTg01ogj4@Tf0R1#5#5p=3g00WlR2g00W2R3711p=9%01#0p=C%01#0#0#0p=K%01#0#0#0#0#0#0#0p=8g008VR4#5R5#3R6#5#3R7#FR8#7R9#P%05R5#FR:/O9f1R;g01b\#G#GR<'Np,3AMBp,3a0sp,4pathp,4envvCLR=519f2R>#Dg01c;R?;I;%06#6g00cZR65?:R@,>>RA,28%04R4#0RB#5#3#6RC512%55#6=?:6RD,>>REg020BRF519RG%05#6=?:6R5,>>RH=19=RI%34#6=?:6R6,>>R:,28g021<R4'<#9RJ'HRK'HP9f3RL#DRM1;?@'41281RN=12CX091B2C%AC,4M,28=12CePAPMP?P>P@P1D:E=PGPKP91;?D,4MA191FX09g022CRK%71RG%7;R@P0%7>?1;112L>12L;512R0[12>;12>1512%7L?1>;[RAf4#7?1L>\0AM>;1P1n2001000000120000000W2W1W3PA^2@^1G^3KP1P8%CB#K#8#8#8#8#8#8#3#0#C#3#6RB,E8PF128F,B2O4b4%AB,4M=19FePEPMP?P>PDP1D:E=PIPJP91;?5,4MA191=X09P;%J<,4M=19=ePHPMP?P>P5P1D:E=P91;?6,4M1<N4#9X091B23%57#3#3#3#3#6R7,E8,28/<4#9d%A7,4M,28/<4#9eP:PMP?P>P6P1D:E=C@C@C@W5W6W7W8o"). Qed.
 
   Lemma path_facts :
-    rdn RSEGS mem0 (p1 sp0 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])
-    /\ (bv_unsigned sp0 <= bv_unsigned (p1 sp0 a0s path envv))%Z
-    /\ (bv_unsigned (p1 sp0 a0s path envv) <= bv_unsigned sp0 + 2107576)%Z
+    rdn RSEGS mem0 (p1 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])
+    /\ (bv_unsigned sp0 <= bv_unsigned (p1 a0s path envv))%Z
+    /\ (bv_unsigned (p1 a0s path envv) <= bv_unsigned sp0 + 2107576)%Z
     /\ (Z.of_nat (length path) <= 131071)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h01Hh12Hah23Shih34Slenh43Sloh52Srh67__arithh74__ffh86__sat1h96__sat2h:8__varmaph;5__with<1ap;1p;2p;3p;4p;7p;>p;<g00eZj1DTg022aR0j2^Tg006@j15Tg0045j10Tg00HHR1j29Tg007Dj2;Tg00G`j2OTg00GDj22Tg00Hdj2ITg00IAj3GTg00@7j18Tg00:aj1FTg00JCj1\Tg00K?j1YTg00K]j1XTg01Naj2CTg00Lkj4WTg00TOj7UTg00Ofj2TTg00PHj2STg00Q4j36Tg00QNj3QTg00Qmj4PTg0239j4NTg023dl>MTg004Zj1@Tg0058j1KTg009;j1JTg00[aj37Tg024`j4HTg025`j4LTg000Gj2?Tg026<j2ATg026Sj4=Tg006^j2RTg027Kj3>Tg00:?j2BTg00FZj2:Tg005[j14Tg027hj2]Tg00\AR2j1ETg00R_R3j23Tg00h3j4[Tg01ogj4<Tg01M0l<ZTg01b=g00WlR4P0P2P1g028Ef5R1f4f3f2R2f1R0f0R5M<Zp=V%45#4p=1p,3AMBp,3sp0R6p,3a0sR7p,4pathR8p,4envvR9p,3tidp,5regs0p,4mem0R:p,3Hvap,3Hvep,4Hvspp,2MEg01b\#DR;%D;R<,^;g008VR=#5R>%0=R?#5R@'9RAP;P>1;4>P<P@1;4@EV%1?#0#5R<,O@g00W2RB/9@12B<1I@<RC,9B[[12B@RDg00WPREAG@<0UW112BC\E^1Dg00XJRD#8%FD%\4%Y4%X4RDg00U3g00URREPEg00V2REP41C4>g00Y]1C4@CWg00VRFU1TDEP5P2g00ZDREg00ZdRD';1S52=6EDdAQ4B0CPb7b:b;PAP5b6b8b9CNM>M%0?#0R?#@RA#KR4#FRD#JREg01[KR2P:P6%8D97D897D7R@P9P;CHR>PDP;P@%84R@CLRC,?4R</A;C=1RAB=74@R@9>4C,BD36RC%0?#0#0R?#@RA/:6RB1:A>RF'2RG%0?#4#0#4#0#0#0#4#0#4#1#0#0#0#5,]BR?,2FRF%E<%1=#1#1#1#1#1#1#1#5R='2R<'3RH'3RI'3P3PCPIP2P:P6P7P8P9C[R91?48R7/A;R;C=A>48@,BDRD56E1:A9R9,2B129?%E7/2=R='3'3'3R7P5P3PGPHP7P5P3PFP<P7P5P2P:P>P;C==6ED13F=RD,3Gf9PGPDP1PFP=P0P5C<C<C<P7eX3<X2FP0P5O2n2001000010121000000X0HX4GP0P5O2n2001000010121000000X0IX5CP0P5O2n2111000010121000000b<o"). Qed.
+  Proof.
+    destruct (main_str sp0 a0s path envv tid regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
+    cbn [nth] in Sr, Slo, Shi, Slen.
+    exact (conj Sr (conj Slo (conj Shi Slen))).
+  Qed.
 
   (* [comment removed for export] *)
   Lemma open_pipeline_gen : forall fd3 KA KB,
@@ -177,6 +189,7 @@ ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h01Hh12Hah23Shih34Slenh43Sloh52Sr
        bv_unsigned (getr R 17) = 56%Z -> getr R 10 = AT_FDCWD ->
        Z.ldiff (bv_unsigned (getr R 12)) open_ignored_flags = 0%Z ->
        rdn RSEGS M (getr R 11) (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
+       (bv_unsigned (getr R 11) + Z.of_nat (length path) < TASK_SIZE)%Z ->
        (forall e, In e openat_errnos ->
           realizes RSEGS (mkCfg (mkst (regupd R 10 (errno_ret e)) (v_addi (Z_to_bv 64 0x43d64) 4) M (seg_rom RSEGS)) model0) KA) ->
        realizes RSEGS (mkCfg (mkst (regupd R 10 (alloc_fd (m_fds model0))) (v_addi (Z_to_bv 64 0x43d64) 4) M (seg_rom RSEGS))
@@ -184,22 +197,78 @@ ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h01Hh12Hah23Shih34Slenh43Sloh52Sr
        realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x43d64) M (seg_rom RSEGS)) model0) (t_alt2 KA KB)) ->
     open_err_branch KA -> at_malloc fd3 KB ->
     realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x17868) mem0 (seg_rom RSEGS)) model0) (t_alt2 KA KB).
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h03HL0h14cstrh25cstr0h31bh41nh57__arithh64__ffh77__sat18h87__sat19h97__sat20h:7__sat21h;8__varmaph<5__with=1Hh>2Hah?4__x1h@4__x2hA4__x3hB1mhC1xhD3HR2hE3Hj0hF1MhG1RhH4__x4hI1ahJ5cstr1hK1ehL3A10hM3A11hN3A12hO3A17hP2HKhQ3HK2hR3HKAhS3HKBhT2HLhU2HRhV6HabovehW2HehX3HhihY2HjhZ3Hloh[4Houth\3Hprh]2KAh^2KBh_4NODEh`2P0ha2P1hb2P2hc2P5hd3Shihe4Slenhf3Slohg2Srhh3fd3hi1jhj1lhk1ohl4valshm1yhn1zp%0p&0p;1p;2p;3p;4p;;p;7p;6p;8p;>p;Dp;5p;Bp;<g0045j11Tg005[j1<Tg004Zj1vTg0058k10FTg00d6k20hTg009;k10<Tg006@j1>Tg00i[j2oTg00j>j3ITg01jUj22Tg00:aj1rTg000Gj2=Tg00eZj17Tg026<j2nTg026Sj4lTg006^j2CTg00@7j1kTg00[aj3ATg027Kj3^Tg00:?k20]Tg00Q4j30k108Tg00^>k30ZTg028gj1gTg029_j3FTg02:Zk20TTg01Aek10PTg02;Uk10HTg02<Ij1dTg02=@j3~Tg02>8j2}Tg02>ok10uTg00dbk20sTg00FZj2ZTg00GDj24Tg00h3k40fTg027hR0j2LTg00\AR1j1BTg00R_R2j28Tg02?mk10eTg00Hdk20=Tg00HHR3j2;Tg00>^m;0dTg02@kj2mTg00f9j26k109Tg00g=k40bTg02Afk40;Tg00m1j3wTg00nAk40:Tg00S:k20aTg00^Uk10`Tg02B\k40_Tg022aR4j2DTg01MUj4bTg01L0k20\Tg01LSk30[Tg01N<j1\Tg00G`k207Tg00IAk306Tg02CVk205Tg02D?j2tTg00Iej2uTg00Jaj4fTg00K?k10YTg00K]k10XTg01Nak204Tg00LHj2_Tg009]k10WTg02Dkj3]Tg00Ofk20VTg007Dj2[Tg00PHk20UTg00QNk30STg00Qmk40RTg00JCk10OTg01ODk30NTg00N:k70MTg02ENk20KTg0023j69Tg02F^k60JTg001Wj6cTg02Ggk30ITg02Hak10QTg02Ihk202Tg02Jok70GTg02L;k203Tg02MCk20ETg02NJk80|Tg02OVk30{Tg0239j4iTg02P5j4pTg02QBR5k20yTg02Qbk30xTg02Rok10wTg00hik10DTg013Fk10vTg01m6k20CTg02SSk70BTg02T]k30?Tg00D6k10>Tg00?Wk20rTg012=k10qTg00jak10pTg00khk30lTg02Ufm>0kTg00Dlj1yTg01Baj4zTg02Vck30jTg02W_k10mTg02X]mD0iTg01kNk20nTg01SBk50oTg01T;k20ATg01U0j3|Tg02YYmB0gTg01M0l<xTg02Z?k30tTg00Lkk400Tg00TOj7qTg00OBk80@Tf0R6#1#1p=?f2R7f1R8/26'Zp=e%16#>p=@g00WlR9?086p=Hg020B9086p=Y1286,Z7g021<+0ng00W2R:509p=M%16#<p=W%<6#<p=5%<6#1p=`g01ZSf3R;P7P8P6I0op=:g00AVR<-0A6p=Rg01[KR=?|86p>0120A78=|=6p=P1m869|=7p=S%16#1#1#1p={%16#1#1#1#1#1#1#1p=U14:6p=3%76#7p>0c%76#7#7#7p=Vg01b=R>?086p=K1[96p=GP>P>P>P9P9P9P5P1P1P1P0g02Zhf5R0f4R5P;P7P8P6NB0gp>0^P>P9P4P1P3g028ER?P0P5P;P7P8P6M<xp=jP>P9P6P1P8P7P;P5P0f6R@f7RAf8RBM<xp=h20596p=TB0t986p=JP7g00U3RCg00URRDPDg00V2REP9P8g00Y6RFP6H00g00VRRGFqp=sP0PCPDPDPEP5PCPDPDPEP9P;PFP7H00PGFqP8P6L0@p=Ng00ZDS00g00ZdRF706p=a20496p=EP9P8g00Y]P6H00p=QP8PCPDPDPEP6PGFqp=XP5PCPDPDPEP;PCPDPDPEP7PGFqP8P6L0@p>0LP>P5P;P7P8P6E9p=OP>P9P4P1P3P?g01b\R?P:P;P7P8P6M<xp>0zg007^S01g01aDS02Q02g008VR3#1R1#<R4#vRG%11RH#1RI#1#?RJ#vRK$0FRL+0hS03%vIRM$0FRN$0<RO\LS04%<I#>RIg00cZRP1oGId5IGRQ9eK8%<3RR#<RS#?#@RT'H%@4RUPP1oGUd5IGRV,27,YL%1R#@RWPP1oGWd5IGRX9MK;%rNRY$0<RZP=P;%<4R[#>R\PP1oG\d5IGR],25p,4pathR^,=NR_%7?R`'nRaCl1CM:%kN5AN9^N^-0]YS0530g02[K:0Z96S06%g8S079FAV%13#?#W#5#`#`#5#?#`#@RY,CKRN%>HS08+0TS09P@&0P=RMC:#Rf9Rb+01[^K9&0H<Rc#dRd9F@VQ09P0PMC:A~cdb/}<;PAPAPNP@PMC:#R?SbB[[[[[[]F]G&0u720s57p,4SPlo%<S#5#5#5#5#5#5RS#?#{#U#U#U#@S0:p,3sp0Re,ZKRf'4p,4SPhi%1JRg#U#URh#1#?#{#U#U#@S0;,4fg02\MP=p,4mem0RiPep,3a0sRjP^p,4envvRkH0fRlPaClRmQ0550ZS0<1ZKlRn,4fS0=%<g#W#?#W#W#5#?#@S0>,Lf,4nS0?%B_Rg%<S#>S0@'4S0A'8S0B'8S0C'8P2Q0<Q0Cp,5regs0RS%13#5#5#{#5#W#?#@,CKPiPMC:Ro#RRp?SBAP6Q0<Q0CP2Q0=Q0Bf<Rqf;Rr5SpP6Q0=Q0BP2Q0?Q0Af@S0Df?Rs5SpP6Q0?Q0A&0el%3n%>1Rp%>JRJ+0=Rt,;n'8g00<CRup,3AMBRvPePjP^Pkp,3tidS0Ep,3brkRwp,5mbaseRxp,3fs0Ryp,6stdin0Rzp,3limR{N;0dS0FfES0GfDS0H'm9Po6XBuPvPePjP^PkQ0EPSPiPwPxPyPzP{p,3Hvap,3Hvep,4Hvspp,4Htidp,2MEQ0HfCR{'m%rLQ03Q041=L7%7`Rz#7S0I#7S0J#7Ry#7S0K#7S0L#7$0c#V#V#V#V#V#V#VRx'K16;?=0Le165z=0Ll160`PePjP^PkH0bS0M50L16@yQ0E50LPvPjP^PAH0;g01c;Rk;w@P=PvPjP^PBH0;P@g01`IRwH0:1ZK6RS,4fPbP8O1PiP8O1Ro50O[^CL%>h-0af/4S1;Sf'8$0`f:RSP8O1=0Oo[^CLPuP<PrPNPSPMC:fQRofP'm7P6XBuPrPSP@P;H0_AeKSQ/HT12SV,YL12S]=0LlAMKSX'8'8'8P2AIGIPRI9eKr/HTAIGUPRU,2r,YLAIG\PR\,2r=0LlAIGWPRW9MKr'8'8PqPNPrPMC:#RfR;SoP6f==eKI/HTf>S0N/2U,YLQ0N/2\=0LlQ0N=MKW'8'8P212sU,YL12s\=0LlAMKsW'8Q0DPNPsPMC:#RfVS0OfU3SP6fA/2U,YLfBRs/2\=0LlAMKsW'8P212{\=0LlAMK{WQ0HPNP{PMC:#RfZS0PfY3SP6Q0G/2\=0LlfFS0Q=MKWf[S0RfGRWQ0QPbP0P6PLPlP=PWP6PaClQ0550ZX3LPZPmP=PWPlPaCl=0Z6XkZP=Q0QPiPaPl1D6aQ0D%B8Ri,LnS0S,CKS0TP9Q0S14f6Xn91D8a%>3RZ,LgRm,;iS0UP8Pi%GiPaPmP_Pg%GgP`PZ%GZS0VJ0^EjP6CbS0WQ0UfKRm,=LS0X/KxQ0X#BRa%5H#@RN'HS0Y&08>S0Z&089S0[%B6,Hi1K8620\8640[Xm>XC>S0\Q0XPa%GaPxPN%GNRaM9hfHRiCbS0]Q0Y%\_R_%3gR2fMS0^,=LRT#\S0_%BT#3S0`%\0S0a%B0#3S0b207pJRT1;:pRI%3J1;:t[[Ro%3pRqg00WPRPB06pJ8UW>RJ%3t\P^>qRG%@[R[-07pRS%3[20=p[RX,;:[\IRIB06p[8VPX>qR[%3X\P^>qRqg00XJRP%TzS0c%T`2059?S0d'JS0e'Jg02]FS0f't%kPRX3A%rPR]P91u97P81u9;S0gCf&0Y9RQ&0X9ROPO2049:Rh1_9RR|&0WDR}POPO1_93R~1_91R1P}A]91|9sO~ENEN20VOER|P6P7Q00/[FS0020U67#adB0S9:8H0RRFb6b;b<X?9X@9XA9%3714871L;5,47[[^?9^@9^A9P6%BrS0hPnPfP0Q0RO5b5b7b8b9b:bJb2b1b0bEQ0T,ZKQ0SQ0WQ0UQ0]Q0YP_P2Q0_Q0`Q0aQ0bPTPoPJPGPSPIP[PqQ0K#T%TyQ0J#TQ0cQ0d'J'J'J'JQ0f'tQ0L#TQ0I#TQ0e'J'JQ0f't=APX5APP]P9P9Q0gP7&0O9RPCfP8P91u95P5PPCfCfPQPOPOPhP1P}POPO1_94S0g%EZRr5]9,Q1P}POPOQ0gQ0@#EP}POPOP~1_9HRHQ0>#E5]9P}POPOPHP~P}POPOPHQ0;#EP}POPOQ0:#EPHP}POPCPDPDPEA]9~1R19sOh%EpR~>0N9KRE,Q1,XOK0MENENENENENI0LENP|PFb6b;b<X?9X@9XA9XH9%381L5Z,;7Q0@,40Q0>,L0,4;14@5Q0;,4AQ0:/4B1LABRB#31;Bt'8[[[[[[[^?9^@9^A9^H9P6PgPfQ0hPnP0PbQ0OfWQ0RfcfdO;b5b7b8b9b:bJb2b1b0bE+0KE9O2WYXi>J0JQ05fSEc12W\P8E9Q06PLQ08,LYR\,CKRbfJR0%g7Rn7FUP6fIRfPMC:#Rf`+01X3LP0Q07%kLRg5ALRBB0Ivj^$0QRvPkPfPx2026k#aX4>Q00202xk#ad1=L0RjPWDOPsK0GA^L0B$09003v?wkfP=PmAALngRnPvPfPwPx20E6w#aX4>Q0020Exw#adQ0XPiDOPsL0|P=A^Lmn$09003vPfPwH0:f^RwP;fLRv%g;R;=ALgRn5^LR=AFmU;P0P71=LvR71=Ln'n%7xR0,K6X4>Px%g5R5=ALgRg,=L,n6/K0X4>1[>0P7PfDO1=L=B0{LvnDOPL16v?A0L6eX3LPi16=?PvPnP?Px1D?6X4>1D?x1;:NRe1[9:PxPNPaH0z1K7x%B7R0/HNRBQ0ZQ0[Q0\P7P0%G0PxPNPaM9hPfCbR^PBP_P2fN,=LRA#\R@%BA#3RAPTPoPJPGPSPIP[PqPXP]PPPQ%ENR1,Qh,XOP|PFb6b;b<PeP6b5b7b8b9b:b2b1b0CiP7PfDOCpE9P>P7Q0^=^Lg/66=0L5X4>RgP>20y7?PgPL16n?A0L65X3L1[L;1n7?,6=B0xvn?E9P7&0w7EcPxPfEcR?PL16v`Q0M90L6X3LQ0Q16=`PvPnP`Px1D`6X4>1D`x1;ZNR5P`PZQ0VPxPNPaEjP^PBP_P2P@PAPTPoPJPGPSPIP[PqPXP]PPPQ1Qr1,XOP|PFb6b;b<P5P6b5b7b8b9b:b2b1b0CiP7PfDOCpE9PL16vzA0L6lX3LPW16=zPvPnPzPx1Dz6X4>1Dzx1;pNRlPzPp%GpPxPNPaEjP^PBP_P2P@PAPTPoPJPGPSPIP[PqPXP]PPPQ1Q~1,XOP|PFb6b;b<PlP6b5b7b8b9b:b2b1b0CiP7PfDOCpE9PL16vyQ0E90L6X3LQ0G16=yPvPnPyPx1Dy6X4>1Dyx%>4R4/;NR>PyP4%G4PxPNPaEjP^PBP_P2P@PAPTPoPJPGPSPIP[PqPXP]PPPQ%E4/Q1,XOP|PFb6b;b<P>P6b5b7b8b9b:b2b1b0CiP7PfDOCpE9&0D=R=PkPmP;&0vxRmP8P?20C=m=0L;eK0BP6PsO>bQbDQ091Kjx%BjR;/HNRmQ0ZQ0[Q0\PjP;%G;PxPNPaM9hPWCbR=PmP_P2%\7R7%30R0PTPoPJPGPSPIP[PqPXP]PPPQ%EYR?9sOhP|PFb6b;b<%3YP6b5b7b8b9b:Rhb2b1b0P=PmP_P2P7P0PTPoPJPGPSPIP[PqPXP]PPPQQ08#E9]9?/QE,XOP|PFb6b;b<1;\tP6b5b7b8b9b:R\b2b1b060?YE9WWXK9PLPbAFiUdRbP6PWPMC:f_R99~cd/}<f]Rt3PX3LPu&0>wRFPb%13#?#W#5#`#`#5#W#?#@,CKR3PWPMC:?P6tXBuQ01-0rLRu#rRbg00=9R|%d69FiUP3PWPMC:&0>9RO;PtXjbPL%>RRR,CKRbAFiU6P3PWPMC:?POtX3L&0DiROPkPWPb&0qRRRQ0D20COR,[LK0B&0pV>0lkRAFWVb5wOP9PtPfAFiUbPWQ0PQ0QQ0GP{Q0HPsP6Q0DQ0NN>0kbDPLQ011CK:R:%y:R:CzPLQ011CKZRZ%yZRZCzPLQ011CKpRp%ypRpCz%ku5Au5Au5Au#dB0j:ZpE9%d|9FWUP3Q0QPMC:f\7PFePcg02^2E9A~cdw/}<&0mwE9Q091=LiRi/Kx%BiRL/HNRwQ0ZQ0[Q0\PiPL%GLPxPNPaM9hQ0GCbRaPwP_P2%\jRj%3;R;Phb2b1b0PaPwP_P2PjP;P\b2b1b060?YE9O8WNWMP8P6O2n2001000000121000000W=WLP8P6O2n2001000000121000000W=WOP8P6O2n2001000000121000000bIQ0Fg02^gRYEcW[WVWPWUWcWaWbW`WTWFWGWlND0iP<PYE9b\WeWdP8P6O2n2001000000121000000W=WfP8P6O2n2001000000121000000W=WgP8P6O2n2001000000121000000bIbXbZWSWRW_W^W]Who"). Qed.
+  Proof.
+    intros fd3 KA KB NODE HKA HKB.
+    pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+    destruct path_facts as (Sr & Slo & Shi & Slen). pose proof (u64_range (p1 a0s path envv)) as Hpr.
+    rewrite model0_OF.
+    apply (V2OpenFail.of_blockA sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 lim Hva Hve Hvsp Htid ME).
+    intros vals R M HL P0 P2 P1 P5 HR HK Habove Hout. rewrite <- model0_OF.
+    destruct (openat_regs vals R P2 HR) as (A17 & A10 & A11 & A12).
+    apply (NODE R M A17 A10 A12).
+    - rewrite A11, <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by lia. lia.
+    - rewrite A11.
+      assert (Hft : (bv_unsigned (p1 a0s path envv) + Z.of_nat (length path) + 1 <= TASK_SIZE)%Z)
+        by (eapply path_fits_task; eassumption).
+      lia.
+    - (* [comment removed for export] *)
+      intros e He. rewrite v_addi_pc4 by lia. change (0x43d64 + 4)%Z with 0x43d68%Z.
+      lazymatch type of HR with regs_ok _ ?sr ?Rc =>
+        pose proof (env_app_regs vals [errno_ret e] _ sr Rc ltac:(rewrite HL; vm_compute; reflexivity) HR) as HR2 end.
+      lazymatch type of HK with know_ok _ _ ?Mc ?kn =>
+        pose proof (env_app_know RSEGS vals [errno_ret e] _ Mc kn ltac:(rewrite HL; vm_compute; reflexivity) HK) as HK2 end.
+      change (Env (vals_ev (vals ++ [errno_ret e])) (blobs_ev (blobs0 a0s path))) with (ENV (vals ++ [errno_ret e])) in HR2, HK2.
+      eapply (HKA e (vals ++ [errno_ret e])); try eassumption.
+      + rewrite length_app, HL. reflexivity.
+      + rewrite vals_ev_app_l by (rewrite HL; lia). exact P0.
+      + rewrite <- HL, <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity.
+      + rewrite vals_ev_app_l by (rewrite HL; lia). exact P1.
+      + rewrite vals_ev_app_l by (rewrite HL; lia). exact P2.
+      + rewrite vals_ev_app_l by (rewrite HL; lia). exact P5.
+      + apply regs_set_a0; [exact HR2|]. cbn [edenot ev ENV].
+        rewrite <- HL, <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity.
+    - (* [comment removed for export] *)
+      rewrite v_addi_pc4 by lia. change (0x43d64 + 4)%Z with 0x43d68%Z.
+      rewrite model1_with_fds. rewrite m0_fds. unfold fds0. rewrite alloc_fd_init.
+      pose proof (regs_set_a0 (ENV vals) _ _ (Z_to_bv 64 3) (ELit 3) HR eq_refl) as HR2.
+      eapply (open_ok_blockB fd3 KB vals); try eassumption.
+  Qed.
 
   (* [comment removed for export] *)
   Theorem open_file_pipeline : forall fdata KA KB,
     fs_lookup fs0 path = Some fdata -> path <> [] -> path <> dot_path -> (length path <= 4095)%nat ->
     open_err_branch KA -> at_malloc (FdFile path (Z_to_bv 64 0)) KB ->
     realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x17868) mem0 (seg_rom RSEGS)) model0) (t_alt2 KA KB).
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h03A10h13A12h23A17h32HAh42HBh52HFh63HKAh73HKBh85Hfileh95Hplenh:4Hpndh;4Hpneh<4Hstrh=2KAh>2KBh?1Mh@1RhA1ehB1fhC5fdatahD1lp;1p;2p;3p;4p;5p;7p;6p;Hg0045j14Tg004Zj1<Tg0058j1=Tg00:aj1?Tg009;j1;Tg02__j2DTg00:?j2:Tg00Q4j33Tg00@7j1TTg00^Uj1@Tg000Gj2LTg00eZj11Tg02`Tj2[Tg02>oj1ZTg006^j28Tg02`nj2WTg00dbj2VTg005[j12Tg00d6j2UTg006@j15Tg00j>j37Tg01jUj29Tg00FZj2ATg01kNj2QTg026<j2PTg026Sj4KTg00[aj3MTg027Kj3NTg00^>j3JTg028gj1OTg029_j3BTg02:Zj2RTg01Aej1STg01SBj5CTg01T;j2HTg01U0j3GTg02;Uj1kTg02<Ij1FTg02=@j3iTg02>8j2hTg02afj2eTg007Dj2cTg02bYj2_Tg02c[j7]Tg02d_j4\Tg02e\j1^Tg0023j6ETg00?Wj2`Tg02fOj2aTg009]j1bTg00Dlj1>Tg02gGj3dTg02hFj6XTg02iFlHgTf0R0#1#1p=I%10#1#1#1p=l%10#1#1#1#1#1#1#1p=j%10#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=f%10#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=0%40#4p=6g01ZSR1g01[KR2P0f1R3f2R4g00AVR5g02jNR6f3R7f4R8f5R9f6R:g02kTf7R;g02lJf8R<f9f:f;R=f<R>f=R?f>R@f?RAf@RBfARCMHgp=Yg008VRD#4RE#4RF#4RG#<RH#=RI#?RJg01aDRK%;JRLp,3fs0RMp,4pathRN'D1:J433%TIRO93JN#@g02mY93JN#@1LINRPg01b\#1RQ#I#l#j#f#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0'[%Z9%6GRR#4#<RSg00W2RT'8RU,WNRV/V9PVP;P:%2ERW#<RX%=SRY'U%;I\Yg00WlRZ%2G#5g00cZRG57X,93,AS%2DR[#2#6R\#4#533%4W#5=7XGR],94g020B53Y%6[#5=7XG,97,ASg021<'Q=3ZTP2P7%2W#5=7XGRG,981PPQCK18HT=MIO9NIN,:J53Lg02[K9JZ0P1%O39B;]%6D#6#2#2#2#2#4#2#4#2#2#6#2#6#5,8SRI%5F'RRFP:%S2RODC/H5=G2A[^AZP1%k5R1#FRZ9B:]PFP9PODCAi1ZV/h5'H=G2?%<RRR#=RZ#;RV%2\#2#5R\1eR\57R,:Z'c1_2I1:Z653VRVdPVP<PIP;PNPCPBPAP0P:P9P8P2P;19<GPNP=g02n\P7F]P?p,3a0sPNp,3HvaP>C\g002QR>PM1D0NfB,:J53LXB>P@%^5g02oUEEg007^R5,`Y#?RYg00=9%;5%F0,a0%b533XDY%>U%5D,8S#>%5E,8S#>3dP1g02^2EEP4P3MBYb5W4W3W<W1W0W2W?W@P3P0EXW7W6W9W:W;W8X>KW=WCo"). Qed.
+  Proof.
+    intros fdata KA KB Hfile Hpne Hpnd Hplen HKA HKB.
+    apply (open_pipeline_gen (FdFile path (Z_to_bv 64 0)) KA KB); [| exact HKA | exact HKB].
+    intros R M A17 A10 A12 Hstr Htask HA HB.
+    assert (HF : fetch_word RSEGS (Z_to_bv 64 0x43d64) = Some ECALLW) by (vm_compute; reflexivity).
+    eapply (rz_openat_file_at RSEGS R _ M model0 ECALLW path fdata KA KB m0_pure HF is_ecall_ECALLW A17 A10 A12).
+    - apply (read_cstr_of_rdn RSEGS M _ path Hplen path_nonul Htask Hstr).
+    - exact Hpne.
+    - apply (V2OpenFail.path_plain a0s path Hva). exact Hpnd.
+    - rewrite m0_fs. exact Hfile.
+    - rewrite m0_fds. apply fd_lookup_init_3.
+    - exact HA.
+    - exact HB.
+  Qed.
 
   (* [comment removed for export] *)
   Theorem open_dir_pipeline : forall KA KB,
     path = dot_path ->
     open_err_branch KA -> at_malloc FdDir KB ->
     realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x17868) mem0 (seg_rom RSEGS)) model0) (t_alt2 KA KB).
-Proof.
-ltac2:(KReplay.run1 (kr_t_V2Open ()) ["Open"] "h02Hah11lh24pathh33A10h43A12h53A17h61Hh72HAh82HBh92HFh:3HKAh;3HKBh<4Hdoth=4Hstrh>2KAh?2KBh@1MhA1RhB7__arithhC4__ffhD7__sat18hE7__sat19hF8__varmaphG5__withH1ep;1p;3p;2p;4p;5p;6p;7p;<p;Cg0045j14Tg004Zj1<Tg0058j1@Tg00:aj1?Tg00Q4j33Tg02>oj1jTg00dbj2aTg005[j15Tg00d6j2UTg009;j1>Tg006@j12Tg00j>j3;Tg01jUj28Tg00FZj2NTg01kNj2vTg000Gj2BTg00eZj11Tg026<j2bTg026Sj4`Tg006^j29Tg00@7j1MTg00[aj3]Tg027Kj3ZTg00:?j2DTg00^>j3XTg028gj1VTg029_j3JTg02:Zj2TTg01Aej1STg01SBj5HTg01T;j2GTg01U0j3FTg02;Uj1QTg02<Ij1ITg02=@j3PTg02>8j2OTg02afj2RTg007Dj2:Tg02bYj2~Tg0023j6ETg030Ij2}Tg031@j2|Tg0328j1{Tg02`TR0j2ATg00GDR1j2=Tg00G`j2hTg00HHj2KTg00Hdj2cTg00IAj3dTg00JCj1eTg00K?j1fTg00K]j1gTg01Naj2LTg00Lkj4_Tg00TOj7kTg00Ofj2lTg00PHj2^Tg00QNj3mTg00Qmj4nTg0239j4\Tg02c[j7[Tg001Wj6pTg00?Wj2qTg02fOj2rTg009]j1sTg00Dlj1CTg02gGj3YTg02hFj6WTg01M0l<xTg0334lCyTf0R2#4#4p=7%52#5p=6%12#1p=z%12#1#1#1p=u%12#1#1#1#1#1#1#1p=t%12#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=o%12#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=0g01b=g00WlR3P0g00\AP1g034;f5R1f4R0f3R4f2R5f1R6P2M<xp=ig01ZSR7g01[KR8P2P6P5g00AVR9g02jNR:P4P0g02kTP1g02lJf6R;f7R<f8R=f9R>f:R?f;R@f<RAMCyp=wg01aDRBg008VRC#4RD#4RE#4RF#<RG#@RH#?RIp,4pathRJg02mYRK33%j5g034]RL/a5PLP0P4%5DRM#<RN%7FRO#4#<RP#@RQ'U%>H\Q%5F#2g00cZRF5;N,86,NP%5CRR#5RS#7RT#4#2533%4M#2=;NFRU,85g020B53Q%7R#2=;NF,84,NPg021<'vg00W2RR533%>IP8P4%5MRM#2=;NFRF,801BHJg01b\#1RN'bC`19GR%MH5]H9ZHJ,DI33g02[K9X32P7%V69J<U%7C#7#6#6#4#5#4#6#7#5#7#2,9PRG%2E'TREP;%S8R4DH/G9=F8A[^H3P7%Q9R7#IRV9J;UPEP1P4DHAP7VL/O9'G=F8?%<ORO#@R9#>RV%6T#2RT1ROT5;O,D9':1~8G1D9:53VRVdPVP=PGP<f=PAP2P;P1P0PIPKg035UR193I2X2I1:I1PJP@EEA3IJ1PIPJg036O1}8>18?F'|%{233X1IP8P=18>FPJPIPK1BH2%zN#u#t#o#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0RF'AX2I1ANF%2CRC%5S#6#6#6#6#2RS'=RIPNPC1:3CPFPS1:3SEi%2DRD%4M#2RM'h1KRD1=RM1cDMRN,KR[[1=RDR>g00WPR=AdDM6UW01=RN\=^0>g00XJR>#M%?>%e3%f3%g3R>g00U3g00URR=P=g00V2R=P31L3Cg00Y61L3SC_g00VRFk1l>=P2P5g00ZDR=g00ZdR>':1^25=3=>dAm3R6CnbCbFbGPIP2bBbDbEC\1BHK/AFePJPAEEg02n\P0F[P1P2Epb6g007^R1,qQ#?RQg00=9%>1%I2,r2%s133X1Q19PR#C19PC#C19PD#C3YP7g02^2EEP5P6M=wb9W8W7W=W4W3W5W@WAP6P2EWW;W:W<X?BW>o"). Qed.
+  Proof.
+    intros KA KB Hdot HKA HKB.
+    apply (open_pipeline_gen FdDir KA KB); [| exact HKA | exact HKB].
+    intros R M A17 A10 A12 Hstr Htask HA HB.
+    assert (HF : fetch_word RSEGS (Z_to_bv 64 0x43d64) = Some ECALLW) by (vm_compute; reflexivity).
+    eapply (rz_openat_dir_at RSEGS R _ M model0 ECALLW KA KB m0_pure HF is_ecall_ECALLW A17 A10 A12).
+    - replace Uapi.dot_path with path by (rewrite Hdot; reflexivity).
+      apply (read_cstr_of_rdn RSEGS M _ path ltac:(rewrite Hdot; cbn; lia) path_nonul Htask Hstr).
+    - rewrite m0_fds. apply fd_lookup_init_3.
+    - exact HA.
+    - exact HB.
+  Qed.
 End Open.

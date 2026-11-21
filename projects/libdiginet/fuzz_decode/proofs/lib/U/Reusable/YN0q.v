@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0q.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN0q.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN0q.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the Checks.Placement imports and the ledger-preservation obligations); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -109,7 +110,7 @@ intros G ER EB.
 assert (RO : forall k, region_of A2 k = region_of A1 k) by (intros k; unfold region_of; rewrite ER; reflexivity).
 assert (NS : nslots A2 = nslots A1) by (unfold nslots; rewrite ER; reflexivity).
 assert (LBy : live_bytes A2 = live_bytes A1) by (unfold live_bytes; rewrite ER; reflexivity).
-split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact (lg_brk0 _ _ _ _ G)).
+split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact (lg_rclim _ _ _ _ G) || exact (lg_brk0 _ _ _ _ G)).
 - intros k rg Hk. rewrite RO in Hk. exact (lg_maps _ _ _ _ G k rg Hk).
 - intros k rg off Hk. rewrite RO in Hk. exact (lg_noaccess _ _ _ _ G k rg off Hk).
 - rewrite EB. exact (lg_brk _ _ _ _ G).
@@ -118,6 +119,10 @@ split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact
 - rewrite LBy. exact (lg_sizes _ _ _ _ G).
 - rewrite LBy. exact (lg_backing _ _ _ _ G).
 -   exact (lg_ceil _ _ _ _ G).
+- exact (lg_vdso _ _ _ _ G).
+- intros k rg Hk. rewrite RO in Hk. exact (lg_rfree _ _ _ _ G k rg Hk).
+- exact (lg_vdso_lo _ _ _ _ G).
+- exact (lg_brk0_hi _ _ _ _ G).
 Qed.
 Lemma layout_ok_same' L A1 A2 : layout_ok L A1 -> st_regions A2 = st_regions A1 -> footprint A2 = footprint A1 -> layout_ok L A2.
 Proof.

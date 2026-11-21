@@ -56,8 +56,8 @@ The definitions not read as cells:
 
 Removal list, next series:
 - lib/A/AB1w.v and lib/B/YB1w.v tfib_at_stops_more — lists 12 of atable's 13 self-loops (missing
-  SealedRepairReservation+0xc0), unread; removed in the next series. Measured here with atable --fields (start-up set
-  8cd71d3a4bb) on the pinned images 5973b76807d8 (A) and 5d05689fd5b1 (B): lib/A/AB1w.v lists 12 addresses, each one
+  SealedRepairReservation+0xc0), unread; removed in the next series. Measured here with atable --fields (start-up set)
+  on the pinned images 5973b76807d8 (A) and 5d05689fd5b1 (B): lib/A/AB1w.v lists 12 addresses, each one
   of atable's 13 self-loops, and lacks 0x6ddc0; lib/B/YB1w.v lists 12 and lacks 0x6de0c. Both are
   `_ZN11__sanitizerL23SealedRepairReservationEmm+0xc0`, the self-loop atable appends after its stop list. A missing
   entry can only make a start-up check fail, so the count judged the cell sound; it is unread either way.

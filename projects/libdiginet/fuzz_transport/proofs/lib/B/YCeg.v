@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *) (* Modified by Theorem Labs, 2026-10: lib_const_addr is libreac/fuzz_decode.asan-ubsan's own measured constant reads (decode/RO-READS.md, ro_reads.py sha256 a123cf5811d89e7b...): the four .rodata literals 0x10310, 0x10338, 0x10360 and 0x103c8 (the signed and unsigned div-36 multipliers) and reac_braid_encode's float clamp 0x20dcc, which is past the padded end 0x20dc0 of the last registered global, so none of them is an owned static or a redzone; the program reads no GOT word of its own (the two it loads, 0x992e8 and 0x99340, are the runtime's) *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCeg.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: TFIB_IMG_LO / TFIB_IMG_END are the numerals vm_compute gives for the unit's Reusable/YImgTop.v IMG_LO / IMG_TOP, with the lemmas TFIB_IMG_LO_eq_g / TFIB_IMG_END_eq_g back to them, as image A's A/ACeg.v does (RELOC-GATES G17). *)
-(* Relocated from proofs/libreac/fuzz_decode/lib/YCeg.v at 88154566652a by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_decode/lib/YCeg.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B Require Import YImgTop.

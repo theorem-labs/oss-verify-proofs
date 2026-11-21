@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v for fuzz_reply's ASan image and checksum_shape; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (TFIB_T and TFIB_B_T take the fifth conjunct of the model's valid_entry, entry_launch_ok_va). *)
 (* What the ASan sides of fuzz_reply's four ASan statements prove: from every valid start, the ASan build (TFIB_T)
    and the ASan+UBSan build (TFIB_B_T) realize the same trace set SPECX as the plain build (lib/Reusable/YK18.v
    srealizes, no cut). *)
@@ -20,6 +21,8 @@ Definition TFIB_T : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk replysegs0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+(* LPS 727298f3: [Run.valid_entry]'s fifth conjunct, which the ASan start-up reads; the statements give it *)
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes replysegs0
 (init_config replysegs0 Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=checksum_shape) inp).
@@ -28,6 +31,7 @@ Definition TFIB_B_T : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk replysegsB brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes replysegsB
 (init_config replysegsB AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=checksum_shape) inp).

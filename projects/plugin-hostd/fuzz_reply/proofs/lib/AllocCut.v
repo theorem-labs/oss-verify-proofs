@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YN03.v, with its module paths and module names changed; 426 of its 462 lines of code are new or changed and 500 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode (the ledger's counting fields in the forced mode only; munmap's errno arm a real outcome in the may-fail mode); the reserved-region ledger). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -13,6 +14,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YO10 Y
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YI04.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Lib Require Mem.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib Require Import Contract.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
@@ -96,9 +98,11 @@ Definition rw_ivl (B : malloc_syms) : list (Z * Z) :=
 [ (ms_lock B, ms_lock B + 4); (ms_libc B + 3, ms_libc B + 4); (ms_libc B + 8, ms_libc B + 16);
 (ms_libc B + 48, ms_libc B + 56); (ms_guard B, ms_guard B + 8);
 (ms_ctx B, ms_ctx B + CTX_SIZE); (errno_addr B, errno_addr B + 4); (vml_lo B, vml_lo B + vml_len B) ].
+(* 727298f3: [Run.segments_reserved] leaves out the kernel-installed (vDSO) segments, so a
+   read-only segment this check accepts must also be the loader's. *)
 Definition ro_apart_b (B : malloc_syms) : bool :=
 forallb (fun s => seg_writable s ||
-((Z.of_N (seg_base s) + Z.of_N (seg_size s) <=? CEIL_MIN) &&
+(negb (seg_kernel_map s) && (Z.of_N (seg_base s) + Z.of_N (seg_size s) <=? CEIL_MIN) &&
 forallb (ivl_disjoint (Z.of_N (seg_base s), Z.of_N (seg_base s) + Z.of_N (seg_size s))) (rw_ivl B)))
 (ms_segs B).
 Lemma ro_apart_sound : forall B a, ro_apart_b B = true -> 0 <= a < 2 ^ 64 ->
@@ -111,11 +115,19 @@ destruct (find_segment (ms_segs B) a 1) as [s|] eqn:F; [|discriminate].
 apply negb_true_iff in Hro.
 pose proof (find_segment_in _ _ _ _ F) as Hin. destruct (find_segment_range _ _ _ _ F) as [R1 R2].
 unfold ro_apart_b in H. rewrite forallb_forall in H. specialize (H s Hin). rewrite Hro in H. cbn [orb] in H.
-apply andb_prop in H as [H1 H2]. apply Z.leb_le in H1. rewrite forallb_forall in H2.
+apply andb_prop in H as [H H2]. apply andb_prop in H as [HK H1]. apply Z.leb_le in H1. rewrite forallb_forall in H2.
 assert (CM : CEIL_MIN < 2 ^ 63) by lia.
 split; [|split; [lia|]].
 - split; [intros E; rewrite E in Hin; destruct Hin|].
-exists (segment_reservation s). split; [apply in_map; exact Hin|].
+exists (segment_reservation s). split.
+{ apply in_map. clear - Hin HK. revert Hin. generalize (ms_segs B) as l. intros l.
+(* the model's [filter] is reduced by [cbn], whichever constant it is (as Reusable/YG0h.v) *)
+induction l as [|x l IH]; intros Hin; cbn; [destruct Hin|].
+destruct Hin as [Ex|Hin].
++ subst x. first [ rewrite HK; left; reflexivity
+                  | destruct (seg_kernel_map s); cbn in HK |- *; [discriminate HK | left; reflexivity] ].
++ first [ destruct (negb (seg_kernel_map x)); [right|]; exact (IH Hin)
+        | destruct (seg_kernel_map x); cbn; [|right]; exact (IH Hin) ]. }
 unfold segment_reservation, page_round_down_Z, page_round_up_Z, page_size. cbn [fst snd].
 set (lo := Z.of_N (seg_base s)) in *. set (hi := lo + Z.of_N (seg_size s)) in *.
 assert (L0 : 0 <= lo) by (unfold lo; lia).
@@ -237,7 +249,7 @@ pose proof (Z.div_mod (o + 16 + stride_of am * idx + 16 * fr_off fr + fr_n fr + 
 pose proof (Z.mod_pos_bound (o + 16 + stride_of am * idx + 16 * fr_off fr + fr_n fr + 7) 8 ltac:(lia)) as MV.
 lia.
 Qed.
-Lemma MRx_block_slack : forall B L A mem md p n a, MRx B L A mem md -> In (p, n) (blocks L A) ->
+Lemma MRx_block_slack {AM : AllocMode} : forall B L A mem md p n a, MRx B L A mem md -> In (p, n) (blocks L A) ->
 p + n <= a < 8 * ((p + n + 7) / 8) -> present mem a.
 Proof using.
 intros B L A mem md p n a M Hin Ha. pose proof (MRx_MRc B L A mem md M) as Mc.
@@ -254,7 +266,7 @@ pose proof (Z.mod_pos_bound (ly_reg L k + o + n + 7) 8 ltac:(lia)) as M1.
 pose proof (Z.div_mod (o + n + 7) 8 ltac:(lia)) as D2. pose proof (Z.mod_pos_bound (o + n + 7) 8 ltac:(lia)) as M2.
 lia.
 Qed.
-Lemma MRx_ctx_owned : forall B L A mem md a, MRx B L A mem md -> ms_ctx B <= a < ms_ctx B + CTX_SIZE ->
+Lemma MRx_ctx_owned {AM : AllocMode} : forall B L A mem md a, MRx B L A mem md -> ms_ctx B <= a < ms_ctx B + CTX_SIZE ->
 owned B L A a.
 Proof using.
 intros B L A mem md a M Ha. pose proof (MRx_MRc B L A mem md M) as Mc. left. split.
@@ -426,6 +438,14 @@ split; [exact (YI04.init_done_of_block A' (q, n) HW' Hin)|].
 split; [exact (regions_grow_malloc A n tr (Some q) A' HW ltac:(lia) Hp)|].
 exact HRA'.
 Qed.
+End c.
+(* The structural facts below hold for an allocator API of either allocation mode. *)
+Section cm.
+Context {AM : AllocMode}.
+Variable B : malloc_syms.
+Variable API : AllocAPI B.
+Let segs := ms_segs B.
+Let MR := aa_MR API.
 Theorem blocks_low_ok : blocks_low B API.
 Proof using.
 intros L A mem md p n HM Hin. apply YI04.blocks_In in Hin as (q & <- & Hq).
@@ -462,5 +482,5 @@ destruct (seg_wbyte (ms_segs B) (Z_to_bv 64 (ms_got_guard B + i))) as [b1|] eqn:
 destruct (seg_wbyte (ms_segs B) (Z_to_bv 64 (ms_guard B + i))) as [b2|] eqn:E2; [|discriminate].
 split; [exact (writable_of_seg _ mem _ b1 E1) | exact (writable_of_seg _ mem _ b2 E2)].
 Qed.
-End c.
+End cm.
 End a.

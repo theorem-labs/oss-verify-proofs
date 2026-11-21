@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_c5.v (a working branch e2e59892bef),
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_c5.v (a working branch),
    re-walked on B. B's tail after fuzz_free is new code (B-readings.lst lines 42-69):
      0x81f38 beqz s5            found: 0x81f3c li s9,1; j RD_R 0x82374
      0x81f44 .. 0x81f48         F+0x28 := s1 (uri_len), F+0x10 := s0 (rp)

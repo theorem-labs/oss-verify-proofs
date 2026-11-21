@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at a529a88a618 (pa_i_memset_at, as
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (pa_i_memset_at, as
    hbp_i_memset_at; pa_i_bv5_cases, pa_i_cs, pa_i_pres and pa_i_mod16_sub, as hbp_i_*; pa_int7's route, one engine state
-   up to each call and a fresh one after it) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v at a529a88a618
+   up to each call and a fresh one after it) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
    (pa_piece_int7, as hbp_piece_int7) for reac-pw/fuzz_headamp's image B: the block walked new against image B's own
    instructions (the scope stores of e, __asan_memset of e's body, the two header words, the out-of-line pod_write_ent
    under PweSpec.pod_write_ent_specX, the restores of the loop's three values), the cut states of lib/AU/HPgSeg.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgPropInt.v, with its module paths and module names changed; 134 of its 183 lines of code are new or changed and 912 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Odd.v at 111d25b4415f (its plan of rebuilding the cut G from a walk's post, and oa_pc_len, oa_at_get) for reac-pw/fuzz_rate's image A; the block is the DIG arm (c < 200, the digits of c mod 64) in place of ODD, with rate's registers, cut states and write set. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgEnt0Dig.v at 21da95a5fcd3 for image B (fuzz_rate.asan-ubsan): lib/AU/RtPgEnt0DefB.v's statement rt7b_dig_stmt over lib/AU/RtPgSegB.v's cuts; the walk lib/AU/RtPgEnt0DigWB.v rt7bd_walk with image B's registers, the class-4 frame, the cell R+0xd8 and s8 = -8 from the DIG cut; G's location list is the arm's without s8; e62 at F+0x210; names rt7_ -> rt7b_, rt7d_ -> rt7bd_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgEnt0DigB.v at cc5ce244897b for reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; lib/AU/RPgEnt0Def.v's statement r7b_dig_stmt over lib/AU/RPgSeg.v's cuts (no header cells); the walk lib/AU/RPgEnt0DigW.v r7bd_walk with role B's registers (the shadow offset in s11, &r in s5, the multiplier in s7, s10 = -8), the cell R+0xc8 and the real frame of 0x200 bytes; G's location list is the arm's without s10 = -8 and s4 = 1; names rt7b_ -> r7b_, rt7bd_ -> r7bd_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Odd.v (its plan of rebuilding the cut G from a walk's post, and oa_pc_len, oa_at_get) for reac-pw/fuzz_rate's image A; the block is the DIG arm (c < 200, the digits of c mod 64) in place of ODD, with rate's registers, cut states and write set. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgEnt0Dig.v for image B (fuzz_rate.asan-ubsan): lib/AU/RtPgEnt0DefB.v's statement rt7b_dig_stmt over lib/AU/RtPgSegB.v's cuts; the walk lib/AU/RtPgEnt0DigWB.v rt7bd_walk with image B's registers, the class-4 frame, the cell R+0xd8 and s8 = -8 from the DIG cut; G's location list is the arm's without s8; e62 at F+0x210; names rt7_ -> rt7b_, rt7d_ -> rt7bd_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgEnt0DigB.v for reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; lib/AU/RPgEnt0Def.v's statement r7b_dig_stmt over lib/AU/RPgSeg.v's cuts (no header cells); the walk lib/AU/RPgEnt0DigW.v r7bd_walk with role B's registers (the shadow offset in s11, &r in s5, the multiplier in s7, s10 = -8), the cell R+0xc8 and the real frame of 0x200 bytes; G's location list is the arm's without s10 = -8 and s4 = 1; names rt7b_ -> r7b_, rt7bd_ -> r7bd_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; addresses measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a): lib/AU/RPgEnt0Def.v r7b_dig_stmt, the DIG

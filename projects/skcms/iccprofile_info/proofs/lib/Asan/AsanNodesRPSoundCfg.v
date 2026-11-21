@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section takes the launch's CONFIG_RSEQ layout (rz), and asan_rp_ext_sound is stated over that layout's table (INFO_ASAN_at rz). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1150,6 +1151,8 @@ End Sound.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section AsanNode.
+(* LPS 727298f3: the image's table at either CONFIG_RSEQ layout [r]. *)
+Context {rz : Z}.
 Variable nx0 : nat.
 Variable LIMIT : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
@@ -1176,9 +1179,9 @@ Proof.
     exact Hms.
 Qed.
 
-Theorem asan_rp_ext_sound : forall id args, APSC.node1_stmt_fp ASEGS INFO_ASAN nx0 LIMIT SINV argH FS0 FP always (RPN.xn ASEGS nx0 RPN.RP_ASAN id args).
+Theorem asan_rp_ext_sound : forall id args, APSC.node1_stmt_fp ASEGS (INFO_ASAN_at rz) nx0 LIMIT SINV argH FS0 FP always (RPN.xn ASEGS nx0 RPN.RP_ASAN id args).
 Proof.
-  exact (rp_xn_sound ASEGS INFO_ASAN nx0 LIMIT asan_wx asan_in_hull asan_hull_ok asan_segs_wr SINV argH argH_high argH_agree SINV_frame SINV_agree NX0_sp FS0
+  exact (rp_xn_sound ASEGS (INFO_ASAN_at rz) nx0 LIMIT asan_wx asan_in_hull asan_hull_ok asan_segs_wr SINV argH argH_high argH_agree SINV_frame SINV_agree NX0_sp FS0
            RPN.RP_ASAN asan_rp_img asan_rp_spec asan_rc_spec asan_qc_spec).
 Qed.
 End AsanNode.

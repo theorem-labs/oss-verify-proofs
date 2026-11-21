@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/D_iface.v, lines 44, 65, 80. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -40,7 +41,7 @@ Definition open_contract : Prop :=
   bytes_at asegs m path (s ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) s ->
   path_has_slash s = false -> path_eqb s dotdot_path = false ->
   open_ent s fs0 = Some ent -> fd_lookup F0 (alloc_fd F0) = None ->
-  stk asegs m lo (bv_unsigned sp) -> lo + 128 <= bv_unsigned sp -> rt_sp0 RT Σ - STACK_WIN <= lo ->
+  stk asegs m lo (bv_unsigned sp) -> lo + 128 <= bv_unsigned sp -> rt_sp0 RT Σ - STACK_SPAN <= lo ->
   rw_cells asegs m (errno_cell tp) [C4 (Z_to_bv 64 0)] \/ (exists v, rw_cells asegs m (errno_cell tp) [C4 v]) ->
   ssp_cells m -> ART RT Σ m -> mem_inv asegs m ->
   tp = Z_to_bv 64 0x6b0128 -> (path + Z.of_nat (length s) + 1 <= lo \/ bv_unsigned sp <= path) ->
@@ -61,7 +62,7 @@ Definition open_refused_contract : Prop :=
   a0 = Z_to_bv 64 path -> a1 = Z_to_bv 64 0 ->
   bytes_at asegs m path (s ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) s ->
   path_has_slash s = false -> path_eqb s dotdot_path = false -> open_ent s fs0 = None ->
-  stk asegs m lo (bv_unsigned sp) -> lo + 128 <= bv_unsigned sp -> rt_sp0 RT Σ - STACK_WIN <= lo ->
+  stk asegs m lo (bv_unsigned sp) -> lo + 128 <= bv_unsigned sp -> rt_sp0 RT Σ - STACK_SPAN <= lo ->
   (exists v, rw_cells asegs m (errno_cell tp) [C4 v]) ->
   ssp_cells m -> ART RT Σ m -> mem_inv asegs m ->
   tp = Z_to_bv 64 0x6b0128 -> (path + Z.of_nat (length s) + 1 <= lo \/ bv_unsigned sp <= path) ->
@@ -76,7 +77,7 @@ Definition close_contract : Prop :=
   forall (Σ : rts RT) F0 fs0 (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
          F fc (m : mem) (fd lo : Z),
   a0 = Z_to_bv 64 fd -> 3 <= fd < 2^31 -> fd_lookup F0 (Z_to_bv 64 fd) <> None ->
-  stk asegs m lo (bv_unsigned sp) -> lo + 128 <= bv_unsigned sp -> rt_sp0 RT Σ - STACK_WIN <= lo ->
+  stk asegs m lo (bv_unsigned sp) -> lo + 128 <= bv_unsigned sp -> rt_sp0 RT Σ - STACK_SPAN <= lo ->
   ART RT Σ m -> mem_inv asegs m ->
   cps asegs (ASTA RT Σ (PMfd F0 fs0) (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9
                                                     s10 s11 t3 t4 t5 t6 F fc e_close m)))

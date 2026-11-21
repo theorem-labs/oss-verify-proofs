@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, PIN sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4):
    SEGMENT L5b of LLVMFuzzerTestOneInput (entry 0x815e0), the call check_round_trip (&doc), proved against
@@ -20,8 +21,8 @@
              (pj_footR (&doc) D: the node in this call's fake frame, the blocks of D in Lam).
    (A' 0x818e0 -> 0x818e8; B' 0x819cc -> 0x819d4.)
    STATEMENT: lib/A/Ent102CutsA.v, read at blob eef90bf355e6
-   (commit b1ed4e6c944d = 8422ba84f257 on the batch kit's pre-merge tip d607d12e4b0f + the
-   CallA / CallB fix 3ea93d01b97c + the row helpers, which leave the statements unchanged; no DW, ec_pjf in
+   (= on the batch kit's pre-merge tip + the
+   CallA / CallB fix + the row helpers, which leave the statements unchanged; no DW, ec_pjf in
    cut_pno .. cut_free, ec_inv's journal at a wild budget wk: `exists WS, ajournal_xw .. WS /\ wbudget [] wk WS`,
    ec_wk_rm at cut_rm, ec_wk_crt at cut_crt): seg_L5b_stmt, cut_rm, cut_crt, ec_room_at, ec_wk_values,
    ec_hyps (ech_texts / ech_img / ech_univ / ech_ccut_ok
@@ -40,14 +41,14 @@
    MAXB bound and e_i0 = |hruns|, ec_ranout, the bound from ec_rt_run's own run); the wild room
    `wild_room (as_universe B) [] (prh_wk F_check_round_trip) (st_depot S)` is Ent102CutsA.ec_room_at at the cut's
    journal and budget ec_wk_rm (ec_wk_rm + prh_wk F_check_round_trip = ec_wk_crt = 74 <= K_LLVMF = 140,
-   ec_wk_values). The text takes no room-count premise. Its LAST premise (the kit 4b8f95c0455c), the live real stack
+   ec_wk_values). The text takes no room-count premise. Its LAST premise (the kit), the live real stack
    `YGcallStackUp.astack_up_x segs ly W (spZ regs) mem` at the call, is ec_pre's entry fact at e_sp0 E carried by the
    cut's journal from the entry to the callee's sp e_A E (a Theorem Labs lane's YGcallStackUp.astack_up_at_xw, any wild
-   budget; the step of a Theorem Labs lane's crt_up_at_call_A, a working branch dd5c35f62c70).
+   budget; the step of a Theorem Labs lane's crt_up_at_call_A, a working branch).
    PURE FACTS CITED: lib/A/Ent102ReqA.v ec_req_bound_holds (RQA_crt t <= g_most and RQ_crt t + cf_head <
    cf_malloc_max), lib/Prog/SlotSizes.v wlen_false_read / wlen_true_read (the two writer lengths).
    ONE NAMED PREMISE: sat_rq_crt, Ent102ReqA.v's own premise in its exact text (owner a Theorem Labs lane). It is DISCHARGED at
-   the preset instance by Ent102ReqA.v ec_req_bound_holds_preset (a working branch 1d8b9491bb66), through
+   the preset instance by Ent102ReqA.v ec_req_bound_holds_preset (a working branch), through
    a Theorem Labs lane's lib/Spec/PjReqBoundC.v (blob 196cc949112c) rq_crt_abs `RQ_crt t + cf_head <= 352321446` /
    rq_crt_cf_bound, stated at cp := CfParamsPreset.CfParams_preset. This Section is generic over {cp : CfParams},
    where the fact is not derivable, so the premise stays named here and the instantiation cites that lemma.
@@ -57,7 +58,7 @@
    lib/A/Prog/Ent102CallA.v's (ec_chain_at, ec_ctx_call_img); the window lemma's use follows lib/A/Prog/Ent102L4A.v's;
    the footprint agreement follows lib/A/Prog/Ent102L3AHelp.v's ec_doc_state keep; the journal's
    budget across the row's own plain steps is Ent102CutsA.v's shared adapters ec_journal_rebase / ec_journal_unbase
-   around YCbqG.v's ajournal_x_materialize (LL0A's use at commit aabc9294a5b9 the worked example).
+   around YCbqG.v's ajournal_x_materialize (LL0A's use the worked example).
    rule 24: proves function LLVMFuzzerTestOneInput, segment L5b (reuse search: proof-index LLVMFuzzerTestOneInput
    check_round_trip check_reject_clean_starved on main / ossv/recipes / ossv/candidates / release/pau-projects-recipes,
    exit=0, + 364 cold refs by name and by every cut address, checker CONFIRM; NEW walk on the #102 pins).
@@ -398,7 +399,7 @@ eapply SRrG_mono.
         exact HWR.
       - (* THE CONSUMER WINDOW (the batch kit's entry premise; HWIN above) *)
         rewrite <- Hsm. exact HWIN.
-      - (* THE LIVE REAL STACK at the call (the kit 4b8f95c0455c's last premise; HUPC above) *)
+      - (* THE LIVE REAL STACK at the call (the kit's last premise; HUPC above) *)
         exact HUPC. }
     intros W' c' _ HPOST. unfold fpostFbm, fpostFb, YCbqGwild.apost_base_xbF in HPOST.
     destruct HPOST as (fx' & ly' & S' & Hp' & regs' & mem' & md' & k' & WS' & Hc' & Hz' & Hfk' & HPW' & HJ' & Hpr'

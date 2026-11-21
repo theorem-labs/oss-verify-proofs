@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Disp_word.v, with its module paths and module names changed; 116 of its 154 lines of code are new or changed and 465 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of check_as_written on image A': the segments' SHARED STATE KIT (lane CawA102).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma kit).
    A segment proof rebuilds its symbolic state at its cut from the cut's facts: the function's frame [sp0 - 80, sp0)
    with the words a stage reads as atoms 33, 34, .. (atom 32 is the shadow base), every register its own atom.
-   PORTED from origin/cold/h-hpreset-7-walk-H2H5 1934271f1f4 lib/A/Prog/H2CawBase.v (blob f20e6e557cb1, Section bld
+   PORTED from lib/A/Prog/H2CawBase.v (blob f20e6e557cb1, Section bld
    :94-256), the old walk of check_as_written on the old pin, to the PARAMETRIC image {PA : PAImg A_prog_listing}: the
    only change is PI_prog_A -> the section's PA. Inputs as Caw102A_Base.v's header.
    Numerals: 80 (LENGTH: the frame), 32 / 33 / 200 (DERIVED: the engine's atom numbering), 2 (WORD: sp), 8 (LENGTH:

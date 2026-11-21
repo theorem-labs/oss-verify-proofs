@@ -1,11 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the start-up section reads the launch input, mmap base and launch facts (valid_launch, entry_launch_ok_va), as the launch's stack image needs. *)
 
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -18,47 +14,50 @@ From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
+Local Set Default Proof Using "All".
 
 Abbreviation SEGS := Plain.M.loaded_segments.
 
-(* [comment removed for export] *)
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Abbreviation RPH := Plain.M.phdrs.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require PropExec.
 Section FPX_1. Context {fx : PropExec.FPState}.
 
-
-(* [comment removed for export] *)
 Definition regs_init (sp0 : word) : bvmap 5 word :=
   regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp0.
 
 Section P1.
-  Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Variable sp0 brk : word.
   Variable rdraw : EntryDraw.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp ev.
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rdraw) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation mem0 := (wrap_mem RPH sp0 av ev uid hw rdraw) (only parsing).
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rdraw)) (only parsing).
+  Local Notation mem0 := (wrap_mem inp mbase RPH entry sp0 rdraw) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rdraw)) (only parsing).
 
-  Let argc : word := argcN av.
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
 
   Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof. exact (u_argcN av Hva). Qed.
+  Proof. exact (u_argcN inp Hva). Qed.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
 
-  (* [comment removed for export] *)
   Definition J1 (J : word -> option byte) : word -> option byte :=
     wbytes (wbytes (wbytes (wbytes
     (wbytes (wbytes (wbytes (wbytes J
@@ -92,76 +91,67 @@ Section P1.
     pose proof len_av as Hlen. pose proof u_argc as Hargc.
     eexists. split.
     - unfold regs_init.
-      stepn F_1ffac D_1ffac.    (* [comment removed for export] *)
-      stepn F_1ffb0 D_1ffb0.    (* [comment removed for export] *)
-      stepn F_1ffb4 D_1ffb4.    (* [comment removed for export] *)
-      stepn F_1ffb8 D_1ffb8.    (* [comment removed for export] *)
-      stepn F_1ffbc D_1ffbc.    (* [comment removed for export] *)
+      stepn F_1ffac D_1ffac.
+      stepn F_1ffb0 D_1ffb0.
+      stepn F_1ffb4 D_1ffb4.
+      stepn F_1ffb8 D_1ffb8.
+      stepn F_1ffbc D_1ffbc.
       stepiv F_1ffc0 D_1ffc0 sp0 ltac:(gres; imm_norm; apply v_andi_m16_aligned; exact Hal).
-                                (* [comment removed for export] *)
-      stepn F_1ffc4 D_1ffc4.    (* [comment removed for export] *)
-      (* [comment removed for export] *)
+      stepn F_1ffc4 D_1ffc4.
       chain_step; [reflexivity | eapply step_lw with (bs := word_to_le_bytes 4 argc) (v := argc);
         [ exact F_1ffc8 | reflexivity | exact D_1ffc8
         | addr_norm; rewrite rdn_cmem_above by region_side;
           apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-          exact (read_argc_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hhi)
+          eapply read_argc_w; first [exact Hva | exact Hvl | exact Hlau | exact Hlo | exact Hhi]
         | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
         | step_simpl]; vnorm.
       rewrite (v_lw_small argc) by (rewrite Hargc; lia).
-      stepn F_1ffcc D_1ffcc.    (* [comment removed for export] *)
-      stepn F_1ffd0 D_1ffd0.    (* [comment removed for export] *)
-      stepn F_1ffd4 D_1ffd4.    (* [comment removed for export] *)
-      (* [comment removed for export] *)
+      stepn F_1ffcc D_1ffcc.
+      stepn F_1ffd0 D_1ffd0.
+      stepn F_1ffd4 D_1ffd4.
       chain_step; [reflexivity | eapply step_ld with (v := Z_to_bv 64 0x200f8);
         [exact F_1ffd8 | reflexivity | exact D_1ffd8 | rd_img img_5e4a8_8 | vm_compute; reflexivity] | step_simpl]; vnorm.
       chain_step; [reflexivity | eapply step_ld with (v := Z_to_bv 64 0x4abb8);
         [exact F_1ffdc | reflexivity | exact D_1ffdc | rd_img img_5e4b0_8 | vm_compute; reflexivity] | step_simpl]; vnorm.
       chain_step; [reflexivity | eapply step_ld with (v := Z_to_bv 64 0x4b40c);
         [exact F_1ffe0 | reflexivity | exact D_1ffe0 | rd_img img_5e4b8_8 | vm_compute; reflexivity] | step_simpl]; vnorm.
-      sv F_1ffe4 D_1ffe4 (Z_to_bv 64 (bv_unsigned sp0 + 8)).   (* [comment removed for export] *)
-      stepn F_1ffe8 D_1ffe8.    (* [comment removed for export] *)
-      stepn F_1ffec D_1ffec.    (* [comment removed for export] *)
-      stepn F_1fff0 D_1fff0.    (* [comment removed for export] *)
-      (* [comment removed for export] *)
-      sv F_4ae34 D_4ae34 (Z_to_bv 64 (bv_unsigned sp0 - 32)).   (* [comment removed for export] *)
+      sv F_1ffe4 D_1ffe4 (Z_to_bv 64 (bv_unsigned sp0 + 8)).
+      stepn F_1ffe8 D_1ffe8.
+      stepn F_1ffec D_1ffec.
+      stepn F_1fff0 D_1fff0.
+      sv F_4ae34 D_4ae34 (Z_to_bv 64 (bv_unsigned sp0 - 32)).
       stw F_4ae38 D_4ae38 (Z_to_bv 64 (bv_unsigned sp0 - 8)) (Z_to_bv 64 0) ltac:(ok_win HJ).
       stw F_4ae3c D_4ae3c (Z_to_bv 64 (bv_unsigned sp0 - 16)) (Z_to_bv 64 0) ltac:(ok_win HJ).
       stw F_4ae40 D_4ae40 (Z_to_bv 64 (bv_unsigned sp0 - 24)) (Z_to_bv 64 0) ltac:(ok_win HJ).
       stw F_4ae44 D_4ae44 (Z_to_bv 64 (bv_unsigned sp0 - 32)) (Z_to_bv 64 0) ltac:(ok_win HJ).
-      stepn F_4ae48 D_4ae48.    (* [comment removed for export] *)
-      stepn F_4ae4c D_4ae4c.    (* [comment removed for export] *)
-      stepn F_4ae50 D_4ae50.    (* [comment removed for export] *)
-      (* [comment removed for export] *)
+      stepn F_4ae48 D_4ae48.
+      stepn F_4ae4c D_4ae4c.
+      stepn F_4ae50 D_4ae50.
       chain_step; [reflexivity | eapply step_ld with (bs := word_to_le_bytes 8 pn) (v := pn);
         [ exact F_4ae54 | reflexivity | exact D_4ae54
         | addr_norm; rewrite rdn_cmem_above by region_side;
           replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
             by (rewrite word_add_nat; f_equal; lia);
-          exact (read_argv_ptr_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hlo Hhi 0 ltac:(lia))
+          eapply read_argv_ptr_w; first [exact Hva | exact Hvl | exact Hlau | exact Hlo | exact Hhi | lia]
         | apply bytes_le_to_Z_8 ]
         | step_simpl]; vnorm.
       stepiv F_4ae58 D_4ae58 (Z_to_bv 64 (8 * Z.of_nat (length av)))
         ltac:(gres; imm_norm; rewrite <- Hargc; unfold v_slli; f_equal; rewrite Z.shiftl_mul_pow2 by lia; change (2^3)%Z with 8%Z; lia).
-                                (* [comment removed for export] *)
       stepiv F_4ae5c D_4ae5c (Z_to_bv 64 (bv_unsigned sp0 + 8 + 8 * Z.of_nat (length av))) vclose.
-                                (* [comment removed for export] *)
       stepiv F_4ae60 D_4ae60 envp
         ltac:(gres; imm_norm; unfold envp, envp_ptr, v_addi; unorm; f_equal; lia).
-                                (* [comment removed for export] *)
-      stepn F_4ae64 D_4ae64.    (* [comment removed for export] *)
-      (* [comment removed for export] *)
-      sv F_4abbc D_4abbc (Z_to_bv 64 (bv_unsigned sp0 - 416)).   (* [comment removed for export] *)
+      stepn F_4ae64 D_4ae64.
+      sv F_4abbc D_4abbc (Z_to_bv 64 (bv_unsigned sp0 - 416)).
       stw F_4abc0 D_4abc0 (Z_to_bv 64 (bv_unsigned sp0 - 40)) (Z_to_bv 64 0x4ae68) ltac:(ok_win HJ).
       stw F_4abc4 D_4abc4 (Z_to_bv 64 (bv_unsigned sp0 - 48)) (Z_to_bv 64 (bv_unsigned sp0 + 8)) ltac:(ok_win HJ).
       stw F_4abc8 D_4abc8 (Z_to_bv 64 (bv_unsigned sp0 - 56)) argc ltac:(ok_win HJ).
       stw F_4abcc D_4abcc (Z_to_bv 64 (bv_unsigned sp0 - 64)) (Z_to_bv 64 0x200f8) ltac:(ok_win HJ).
-      stepn F_4abd0 D_4abd0.    (* [comment removed for export] *)
-      stepn F_4abd4 D_4abd4.    (* [comment removed for export] *)
-      sv F_4abd8 D_4abd8 (Z_to_bv 64 (bv_unsigned sp0 - 368)).   (* [comment removed for export] *)
-      stepn F_4abdc D_4abdc.    (* [comment removed for export] *)
-      stepn F_4abe0 D_4abe0.    (* [comment removed for export] *)
-      stepn F_4abe4 D_4abe4.    (* [comment removed for export] *)
+      stepn F_4abd0 D_4abd0.
+      stepn F_4abd4 D_4abd4.
+      sv F_4abd8 D_4abd8 (Z_to_bv 64 (bv_unsigned sp0 - 368)).
+      stepn F_4abdc D_4abdc.
+      stepn F_4abe0 D_4abe0.
+      stepn F_4abe4 D_4abe4.
       apply mst_refl.
     - repeat split; gres; try reflexivity.
       intros r Hr. cbn [In] in Hr.
@@ -170,6 +160,5 @@ Section P1.
   Qed.
 End P1.
 End FPX_1.
-
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

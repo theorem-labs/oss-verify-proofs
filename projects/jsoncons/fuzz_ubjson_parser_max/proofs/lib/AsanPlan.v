@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: added a section variable rz and threaded it into node_pnscan, node_layout and init_acs_of in the AsanPlan node dispatch and empty-case error; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanPlan.v, lines 34, 125-126, 152. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -22,6 +23,7 @@ Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Inductive snode : Type :=
 | YMunmap
 | YBrk
@@ -97,8 +99,8 @@ match x with
 | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
 | XMemIsZero => summary_miz A nx0 cs
 | XEnvScan => node_envscan A cs
-| XPnScan => node_pnscan A nx0 cs
-| XLayout => node_layout cs args
+| XPnScan => node_pnscan A nx0 rz cs
+| XLayout => node_layout rz cs args
 | XIStrncpy => summary_istrncpy A nx0 cs
 | XPopFree => summary_popfree A nx0 cs args
 | XSniff => summary_sniff segs A nx0 cs
@@ -114,7 +116,7 @@ Variable KC : nat.
 Variable bfuel : nat.
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
 match css with
-| [] => CErr 3 k (init_acs_of A)
+| [] => CErr 3 k (init_acs_of rz A)
 | cs0 :: rest =>
 match chk cs0 k with
 | COk s0 =>

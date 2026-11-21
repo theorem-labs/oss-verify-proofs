@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: SEG_EXIT of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput over a generic allocator
    relation ARx (a Theorem Labs lane's route (b)): the ARx conversion of lib/A/W_LLVMFuzzerTestOneInput_exit.v's lf_seg_exit,
    stated as the Section hypothesis SEG_EXIT of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v Section w.  The AR file is NOT
    edited.
-   SOURCE: a Theorem Labs lane's proof, a working branch at b86949b953d (lf_seg_exit Qed on base ec4dd616ed1:
+   SOURCE: a Theorem Labs lane's proof, a working branch (lf_seg_exit Qed on base:
    fresh rc=0 wall 1198 s, Print Assumptions 13 Prim* + functional_extensionality_dep), adapted to the current cut on
-   a working branch d223491e85e (b5 w8make rc=0).
+   a working branch (b5 w8make rc=0).
    - Cited from the AR file (they do not mention AR): every lemma and definition of its Section lx whose statement and
      Section arguments are AR-free (the byte, table, register and model lemmas of the five blocks), through the local
      abbreviations below where they take Section arguments.
@@ -64,7 +65,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_LLVMFuzzerT
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
-(* the zify flag as the AR file's proofs expect it (W_LLVMFuzzerTestOneInput_exit.v:72 sets it false) *)
+(* the zify flag as the AR file's proofs expect it (W_LLVMFuzzerTestOneInput_exit.v:73 sets it false) *)
 #[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Open Scope bv_scope.
 Open Scope Z_scope.
@@ -75,7 +76,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:194-235), verbatim ---- *)
+(* ---- cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:195-236), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -148,7 +149,7 @@ Local Notation xr_kb := (W_LLVMFuzzerTestOneInput_exit.xr_kb B).
 Local Notation xr_cost := (W_LLVMFuzzerTestOneInput_exit.xr_cost MT).
 
 (* ---- the model rules at X, verbatim (LS is cut_x's LSx) ---- *)
-(* TX_LS_rf_room (a Theorem Labs lane, lib/A/ReplyLSI.v:185): lregs_X's t bound after LSx *)
+(* TX_LS_rf_room (a Theorem Labs lane, lib/A/ReplyLSI.v:186): lregs_X's t bound after LSx *)
 Hypothesis LS_rf_room : forall cx t m ly S,
   LSx cx t m ly S -> 0 <= t <= OPS_MAX ->
   lx_rf_room (blocks_bytes S) (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m).
@@ -176,7 +177,7 @@ Hypothesis RI_exit_ends : forall cx t m, RINV cx t m -> (0 < length (lm_es m))%n
    c_W / c_mem and the return's W' / mem', given by the journal from the entry); the other premises and conclusions are
    the AR text's.  The post's NP is NOT concluded here (the room round, ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (d)): the walk threads
    it through the cuts (lcut_x's NP) and every allocator call's post to the return.  Its four premises before the last
-   are a Theorem Labs lane's LS_exit_end3e's (lib/A/ReplyLS3e.v:420, commit 0e01204c80c): relay_finish's final capacity
+   are a Theorem Labs lane's LS_exit_end3e's (lib/A/ReplyLS3e.v:420): relay_finish's final capacity
    (lx_rf_post_site_x's last conjunct), lregs_X's t bound, the return's held blocks (HFH) and their NoDup (HND), all
    held at lx_end_of_ffexit_x; its last premise is the start model's non-empty key texts (exit_keys_nonempty at X's
    amodel_at, passed down to lx_end_of_ffexit_x) *)
@@ -210,8 +211,8 @@ Hypothesis LS_exit_cnt : forall cx t m ly3 S3 rest (ly' : alayout) (S' : astate)
 Hypothesis LS_exit_cap : forall cx t m ly S,
   LSx cx t m ly S -> RINV cx t m -> 0 <= t <= OPS_MAX ->
   gse_cap (lx_rf_run (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)) <= CAPOUT_MAX.
-(* the room round's count row at X (a Theorem Labs lane's ROOM-TEXTS (c); a Theorem Labs lane's lib/A/ReplyLScnt.v fr_LS3cp_cnt_exit
-   at commit ba8e99b5bd2, pk_exit = 5 = relay_finish's rf_pk): the live counts at X plus relay_finish's peak stay under
+(* the room round's count row at X (a Theorem Labs lane's ROOM-TEXTS (c); a Theorem Labs lane's lib/A/ReplyLScnt.v fr_LS3cp_cnt_exit,
+   pk_exit = 5 = relay_finish's rf_pk): the live counts at X plus relay_finish's peak stay under
    RP's bounds; check_shape_ends and source_reset later only free.  The guards are the walk's facts at X (the model's
    sizes come from amodel_at; lregs_X's t bound, which reaches OPS_MAX at X) *)
 Hypothesis LS_cnt : forall cx t m ly S (W : world segs) mem,
@@ -419,11 +420,11 @@ Qed.
 (* ------------------------------------------------------------------ the five blocks
    Each is developed by one hand of this segment (its scratch file and branch named below) and pasted here with
    its development; the statements are the hands' own text, as agreed with the spine.
-     lx_order   0x84bf8 .. 0x84c6c / 0x84d44   (W8SegExit.XOrder,       W_xorder.v,  a working branch 9926c033c53)
-     lx_rf_site 0x84c6c / 0x84d44, two insns   (W8SegExit.XRelayFinish, W_xrf.v,     a working branch 5b50c9aba97)
-     lx_ends    0x84c74 .. 0x84d4c             (W8SegExit.XEnds,        W_xends.v,   a working branch bc1d2565a0b)
-     lx_reset   0x84d4c .. 0x84d7c             (W8SegExit.XReset,       W_xreset.v,  a working branch 598bfe67783)
-     lx_ffexit  0x84d7c .. the ret             (W8SegExit.XFfExit,      W_xffexit.v, a working branch 56d4e6281db) *)
+     lx_order   0x84bf8 .. 0x84c6c / 0x84d44   (W8SegExit.XOrder,       W_xorder.v,  a working branch)
+     lx_rf_site 0x84c6c / 0x84d44, two insns   (W8SegExit.XRelayFinish, W_xrf.v,     a working branch)
+     lx_ends    0x84c74 .. 0x84d4c             (W8SegExit.XEnds,        W_xends.v,   a working branch)
+     lx_reset   0x84d4c .. 0x84d7c             (W8SegExit.XReset,       W_xreset.v,  a working branch)
+     lx_ffexit  0x84d7c .. the ret             (W8SegExit.XFfExit,      W_xffexit.v, a working branch) *)
 (* the symbolic-run scaffolding every block's walk uses *)
 Ltac lxk_low :=
   cbn [fst snd gfp]; unfold LXK_CEIL8 in *;
@@ -1385,7 +1386,7 @@ Definition lx_rf_post_site_x (cx : lfcx) (pcj : Z) (m : lmod) (fpos : Z) (ly3 : 
     frames S' = frames S3 /\
     mo_le MT S3 S' (lx_rf_cost (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)) /\
     (* g_capout after relay_finish is its run's final capacity (the witness m' sets it): the exit's LS rule in its
-       ReplyLS3o.v form (LS_exit_end3_x, commit 60ac1457a44) takes it at the return *)
+       ReplyLS3o.v form (LS_exit_end3_x) takes it at the return *)
     lm_cap m' = gse_cap (lx_rf_run (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)) /\
     (* the room round: the cut's NP after relay_finish (its post's rp_RM), and the live counts after it within RP's
        bounds with no further peak (relay_finish's peak rf_pk covers its net growth; the later callees only free) *)
@@ -2260,7 +2261,7 @@ Definition lx_ends_post_x (cx : lfcx) (t fpos : Z) (ly3 : alayout) (S3 : astate)
     NP S' /\ cnt_ok_pk RP (fun _ => 0%nat) (ablocks B ly' S').
 
 (* ============================================================ the pieces of the block ============== *)
-(* the three addresses inside the two loops the RT walk names (a working branch 38a6eaf28b2
+(* the three addresses inside the two loops the RT walk names (a working branch
    lib/A/Prog/SlotExitScan.v asc_setup / asc_head / asc_adv / asc_tail, SlotExitScanRun.v axe_scan_step) *)
 Lemma xe_keeps_of_journal_x : forall G FP F AT W mem md ly S ly' S' W' mem' md' kk,
   gx_ok segs B G ->
@@ -4800,7 +4801,7 @@ Qed.
 
 (* ================================================================== the spine (W8SegExit.XSpine)
    lf_seg_exit chains the five blocks in program order, as the donor's aexit_holds chains fin / scan / end
-   (a working branch 38a6eaf28b2 lib/A/Prog/SlotExit.v:78): lx_order; lx_rf_site at AX_noord (no relay entry)
+   (a working branch lib/A/Prog/SlotExit.v:78): lx_order; lx_rf_site at AX_noord (no relay entry)
    or at AX_join; on the join path lx_ends; then lx_reset, lx_ffexit, lx_end_of_ffexit and lx_post_of_end.
    LS and RINV are the loop's invariants and hold at X only (relay_finish empties the table), so each model fact a
    later block needs is read off them AT X (the obligations below) and carried through the blocks' posts: the meter
@@ -5255,7 +5256,7 @@ Proof.
     + exact (HR5 rest (HR4 rest HPz0)).
 Qed.
 
-(* ---- cut_x Section w's SEG_EXIT (W_LLVMFuzzerTestOneInput_cut_x.v:566): the entry's ghost list is [] by HP0 at
+(* ---- cut_x Section w's SEG_EXIT (W_LLVMFuzzerTestOneInput_cut_x.v:567): the entry's ghost list is [] by HP0 at
    lf_base_x's afn_pre_x, and the walk above is lx_seg_exit_nil_x ---- *)
 Theorem lf_seg_exit_x : forall cx Hp W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
@@ -5269,7 +5270,7 @@ Proof.
   subst Hp. exact (lx_seg_exit_nil_x cx W c HB HX).
 Qed.
 
-(* ---- THE CHECK: cut_x Section w's SEG_EXIT hypothesis (W_LLVMFuzzerTestOneInput_cut_x.v:566), restated in its text
+(* ---- THE CHECK: cut_x Section w's SEG_EXIT hypothesis (W_LLVMFuzzerTestOneInput_cut_x.v:567), restated in its text
    at cut_x's names (the forms top_x.v:92-98 uses) and closed by `exact` from lf_seg_exit_x ---- *)
 Local Notation BASEx cx Hp := (lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp).
 Local Notation IX := (INV_X_x B NP G_fr fr_FP PST ARx LSx RINV).
@@ -6147,7 +6148,7 @@ Definition lx_rf_post_site_xR (cx : lfcx) (pcj : Z) (m : lmod) (fpos : Z) (ly3 :
     frames S' = frames S3 /\
     mo_le MT S3 S' (lx_rf_cost (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)) /\
     (* g_capout after relay_finish is its run's final capacity (the witness m' sets it): the exit's LS rule in its
-       ReplyLS3o.v form (LS_exit_end3_x, commit 60ac1457a44) takes it at the return *)
+       ReplyLS3o.v form (LS_exit_end3_x) takes it at the return *)
     lm_cap m' = gse_cap (lx_rf_run (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)) /\
     (* the room round: the cut's NP after relay_finish (its post's rp_RM), and the live counts after it within RP's
        bounds with no further peak (relay_finish's peak rf_pk covers its net growth; the later callees only free) *)
@@ -9067,7 +9068,7 @@ Proof.
   subst Hp. exact (lx_seg_exit_nil_xR cx W c HB HX).
 Qed.
 
-(* ---- THE CHECK: cut_x Section wR's SEG_EXIT_R hypothesis (W_LLVMFuzzerTestOneInput_cut_x.v:473), restated in its
+(* ---- THE CHECK: cut_x Section wR's SEG_EXIT_R hypothesis (W_LLVMFuzzerTestOneInput_cut_x.v:474), restated in its
    text at cut_x's names and closed by `exact` from lf_seg_exit_xR ---- *)
 Lemma lf_seg_exit_xR_check : forall cx Hp W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->

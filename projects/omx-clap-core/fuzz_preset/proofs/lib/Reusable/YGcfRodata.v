@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRodata.v at commit e8a7dd66acf2 (the cf layer of record, field round 3 part 3: MP), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRodata.v (the cf layer of record, field round 3 part 3: MP), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, cf layer field round 3; integrator ReallocPrimary).
    rule 24: no function proved (kind: frame corollaries of the leaf posts' raw frames).
    The keep of arodata_ok_cf (YG0dcf.v, value form: an overlay byte at a non-owned address of aro_addr_cf, the

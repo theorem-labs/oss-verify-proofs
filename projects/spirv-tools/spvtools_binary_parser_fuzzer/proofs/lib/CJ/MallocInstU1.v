@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocator invariant carries the model's channel reader, and the partition fixes the kernel build the reserved ledger reads). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -59,8 +60,12 @@ Definition caps_ok (PL : Z -> Z) (big : Z) (NR RBY : Z) : Prop :=
     /\ PHI PL + big + BIGUNIT <= LBUDGET
     /\ (forall c, 0 <= PL c).
 
-Definition kpart (s : PState) (X : list (bptr * Z)) (PL : Z -> Z) (NR RBY : Z) (h : VmMaps) : Prop :=
-  (forall mo, m_vmmaps mo = h -> mstd' mo -> OWN (map fst X) GT s mo /\ QI X PL s mo)
+(* 08b1429: the heap ledger also reads the kernel build, for the vDSO pair
+   ([CJ.Spec.KInv.kresv]), so a model that agrees on [m_vmmaps] is no longer
+   interchangeable here: [kpart] fixes the build as well. Every caller passes
+   the run's own kernel, which no mm step changes ([Nodes.nstep_mm_kernel]). *)
+Definition kpart (s : PState) (X : list (bptr * Z)) (PL : Z -> Z) (NR RBY : Z) (kb : KernelBuild) (h : VmMaps) : Prop :=
+  (forall mo, m_vmmaps mo = h -> m_kernel mo = kb -> mstd' mo -> OWN (map fst X) GT s mo /\ QI X PL s mo)
   /\ LBUDGET <= vm_limit h /\ RSV NR RBY h.
 
 Definition in_gotb (a : word) : bool := (RGOT_SSP <=? bv_unsigned a) && (bv_unsigned a <? RGOT_SSP + 8).
@@ -70,12 +75,12 @@ Definition a_inv (A : mstateA) (M : LibIface.mem) (mo : Model) : Prop :=
   RHEAP (a_s A) (a_LB A) (got_clear M)
   /\ c_init_done (ctx (ps_m (a_s A))) = 1
   /\ m_vm_lazy mo = []
-  /\ exists NR RBY, kpart (a_s A) (a_X A) (a_PL A) NR RBY (m_vmmaps mo) /\ caps_ok (a_PL A) (a_big A) NR RBY.
+  /\ exists NR RBY, kpart (a_s A) (a_X A) (a_PL A) NR RBY (m_kernel mo) (m_vmmaps mo) /\ caps_ok (a_PL A) (a_big A) NR RBY.
 
 Definition a_invX (A : mstateA) (M : LibIface.mem) (mo : Model) : Prop :=
   RHEAP (a_s A) (a_LB A) (got_clear M)
   /\ m_vm_lazy mo = []
-  /\ exists NR RBY, kpart (a_s A) (a_X A) (a_PL A) NR RBY (m_vmmaps mo) /\ caps_ok (a_PL A) (a_big A) NR RBY.
+  /\ exists NR RBY, kpart (a_s A) (a_X A) (a_PL A) NR RBY (m_kernel mo) (m_vmmaps mo) /\ caps_ok (a_PL A) (a_big A) NR RBY.
 
 Lemma a_inv_X A M mo : a_inv A M mo -> a_invX A M mo /\ c_init_done (ctx (ps_m (a_s A))) = 1.
 Proof. intros (H1 & H2 & H3 & H4). repeat split; assumption. Qed.
@@ -197,9 +202,9 @@ Qed.
 Lemma L_frame : forall A M M' mo mo', a_inv A M mo ->
   (forall a : word, a_owned A (bv_unsigned a) -> M' a = M a) ->
   (forall a : word, M a <> None -> M' a <> None) ->
-  m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> a_inv A M' mo'.
+  m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> m_kernel mo' = m_kernel mo -> a_inv A M' mo'.
 Proof.
-  intros A M M' mo mo' (HH & HI & HL & HK) OW DEF EV EL. split; [| split; [exact HI| split; [rewrite EL; exact HL| rewrite EV; exact HK]]].
+  intros A M M' mo mo' (HH & HI & HL & HK) OW DEF EV EL EK. split; [| split; [exact HI| split; [rewrite EL; exact HL| rewrite EV, EK; exact HK]]].
   apply (RHEAP_frame_pw _ _ (got_clear M) (got_clear M') HH).
   - intros a Ha. unfold got_clear. destruct (in_gotb (wa a)); [reflexivity|]. apply OW.
     unfold wa. rewrite unsigned_lit; [exact Ha|]. destruct Ha as [ST|(_ & R & _)]; [pose proof (mng_static_img a ST); unfold RRW_LO, RIMG_HI in *; lia| pose proof ac_bounds_lit as ?ACBL; lia].
@@ -284,7 +289,7 @@ Proof.
     + intros a Ha. apply (img_ro_clear_num M RO); unfold RGOT_SSP, RIMG_LO, RIMG_HI, RRW_LO in *; lia.
     + intros x. unfold wview. rewrite (got_clear_id M RO). exact (fun H => H).
   - apply mem_inv_of_clear. apply img_ro_clear_num. exact RO.
-  - exists NR, RBY. destruct (KP mo eq_refl ltac:(split; [exact Hh| split; [exact Hl| split; [exact Hm| exact Hc]]])) as [HO HQ]. auto 10.
+  - exists NR, RBY. destruct (KP mo eq_refl eq_refl ltac:(split; [exact Hh| split; [exact Hl| split; [exact Hm| exact Hc]]])) as [HO HQ]. auto 10.
 Qed.
 
 Lemma a_inv_call A M mo : a_inv A M mo -> mstd mo -> img_ro_clear L M ->
@@ -362,12 +367,12 @@ Proof. intros s s' mo mo' _ _ V H. unfold GV in *. eapply vm_only_trans; [exact 
 
 Lemma kpart_intro s X PL NR RBY mo :
   OWN (map fst X) GT s mo -> QI X PL s mo -> LBUDGET <= vm_limit (m_vmmaps mo) -> RSV NR RBY (m_vmmaps mo) ->
-  kpart s X PL NR RBY (m_vmmaps mo).
+  kpart s X PL NR RBY (m_kernel mo) (m_vmmaps mo).
 Proof.
   intros HO HQ LIM HR. split; [| split; [exact LIM| exact HR]].
-  intros mo' EV (Hh & Hl & Hm & _).
+  intros mo' EV EK (Hh & Hl & Hm & _).
   assert (KT : forall L pbrk, KL L pbrk mo -> KL L pbrk mo').
-  { intros L0 pbrk HK. apply (KL_vm_eq L0 pbrk mo mo' HK); [split; assumption| exact Hh| rewrite EV; reflexivity ..]. }
+  { intros L0 pbrk HK. apply (KL_vm_eq L0 pbrk mo mo' HK); [split; assumption| exact Hh| | | | | | exact EK | |]; rewrite EV; reflexivity. }
   split.
   - destruct HO as [(L0 & HC & HK & HI) [ND _]]. split; [| split; [exact ND| exact I]]. exists L0. split; [exact HC|]. split; [apply KT; exact HK| exact HI].
   - destruct HQ as [(st & L0 & BL & LS & E & INV & SI & HAQ & HK & HLI & HP) HB]. split; [| exact HB].
@@ -385,6 +390,7 @@ Theorem L_free_gen (LP : mstate -> Prop) : forall (fx : FPState) (A : mstateA) R
   LP (ps_m (a_s A)) ->
   (forall slot g idx, (s_slots (ps_m (a_s A))) !! slot = Some (g, idx) -> lall LP (cfree (ps_m (a_s A)) (Some slot))) ->
   (forall A' R' M' mo', a_inv A' M' mo' -> LP (ps_m (a_s A')) -> mstd mo' -> m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
+      m_channel_reader mo' = m_channel_reader mo ->
       kept R R' -> live_del p (a_live A) (a_live A') -> a_P A' = a_P A -> a_big A' = a_big A ->
       (forall a, a_owned A' a -> a_owned A a \/ (p <= a < p + n)) ->
       frame_eq (fun a => a_owned A a \/ (p <= a < p + n) \/ zwin (sp - MNG_MALLOC_STACK) sp a \/ errno_win L a) M M' ->
@@ -415,7 +421,7 @@ Proof.
       destruct Hk as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]]]];
         first [exact (eq_sym Cra) | exact (eq_sym Csp) | exact (eq_sym Cgp) | exact (eq_sym Ctp) | reflexivity]. }
     rewrite Ex. rewrite Cra, (ret_pc_of_ret_ok ret Cretr Cret).
-    apply (HK A (ms_regs x) M mo AI LP0 SM eq_refl eq_refl KEPT).
+    apply (HK A (ms_regs x) M mo AI LP0 SM eq_refl eq_refl eq_refl KEPT).
     + intros q k. split; [| intros [H _]; exact H]. intros H. split; [exact H|].
       destruct (L_live_block A M mo q k AI H) as (_ & _ & P0 & _). lia.
     + reflexivity.
@@ -515,6 +521,7 @@ Proof.
       - destruct SM' as (Sh' & Sl' & Sm' & Sc'). split; assumption.
       - apply vm_only_fs. exact (OWN_G _ _ _ _ HO2).
       - apply vm_only_fds. exact (OWN_G _ _ _ _ HO2).
+      - apply vm_only_rdr. exact (OWN_G _ _ _ _ HO2).
       - exact KEPT.
       -   intros q k. unfold a_live. cbn [a_LB A']. rewrite !in_map_iff. split.
         + intros (b' & E & Hb'). apply In_lb_remove in Hb'. destruct Hb' as [Hb' NE]. split; [exists b'; auto|].
@@ -566,6 +573,7 @@ Theorem L_free : forall (fx : FPState) (A : mstateA) R M mo (p n sp ret : Z) (K 
   stack_room SEGS M sp MNG_MALLOC_STACK ->
   (forall a, zwin (sp - MNG_MALLOC_STACK) sp a -> ~ a_owned A a) ->
   (forall A' R' M' mo', a_inv A' M' mo' -> mstd mo' -> m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
+      m_channel_reader mo' = m_channel_reader mo ->
       kept R R' -> live_del p (a_live A) (a_live A') -> a_P A' = a_P A -> a_big A' = a_big A ->
       (forall a, a_owned A' a -> a_owned A a \/ (p <= a < p + n)) ->
       frame_eq (fun a => a_owned A a \/ (p <= a < p + n) \/ zwin (sp - MNG_MALLOC_STACK) sp a \/ errno_win L a) M M' ->
@@ -660,6 +668,7 @@ Hypothesis SOW : forall a, zwin (sp - MNG_MALLOC_STACK) sp a -> ~ a_owned A a.
 Hypothesis ROOM : a_room A n.
 Hypothesis KS : forall A' R' M' mo' (p : Z),
   a_inv A' M' mo' -> LP (ps_m (a_s A')) -> mstd mo' -> m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
+  m_channel_reader mo' = m_channel_reader mo ->
   kept R R' -> getr R' 10%bv = Z_to_bv 64 p -> 0 < p ->
   live_add p n (a_live A) (a_live A') -> a_P A' = a_P A -> a_big A' = a_big A ->
   (forall a, a_owned A' a -> a_owned A a \/ (~ in_ranges (ly_img L) a /\ M (Z_to_bv 64 a) = None)) ->
@@ -715,7 +724,7 @@ Proof.
     destruct r as [|[[pb|] s'']]; [exact (False_ind _ (proj1 (proj1 HPr))) | reflexivity |]. exfalso.
     destruct CO as (SMAX & ETOT & SMAX0 & NR0 & RBY0 & B0 & HSM & HET & HGAP & CAPB & P0).
     exact (raw_malloc_all_succ (a_PL A) SMAX ETOT NR RBY MNG_NMAX SMAX0 RBY0 HSM HET ltac:(unfold MNG_NMAX, LIB_NMAX; lia) HGAP
-             (a_X A) n (a_s A) mo HQ HRX HB HN LIM HRSV None s'' mo' Hp eq_refl). }
+             (a_X A) n (a_s A) mo HQ HRX HB HN LIM HRSV Sc None s'' mo' Hp eq_refl). }
   pose proof (twf_cfg_with_path _ _ _ (fun r _ => good r = true) (twf_twf_cfg _ _ _ TW) ALLSUCC) as TWC. cbv beta in TWC.
 
   match type of IM2 with impl _ _ _ ?Q _ => match type of TWC with twf_cfg _ _ ?P =>
@@ -779,6 +788,7 @@ Proof.
       + destruct SM' as (Sh' & Sl' & Sm' & Sc'). split; assumption.
       + apply vm_only_fs. exact (OWN_G _ _ _ _ (proj1 HO2)).
       + apply vm_only_fds. exact (OWN_G _ _ _ _ (proj1 HO2)).
+      + apply vm_only_rdr. exact (OWN_G _ _ _ _ (proj1 HO2)).
       + exact KEPT.
       + exact RA0.
       + exact BR1.
@@ -834,6 +844,7 @@ Hypothesis SR : stack_room SEGS M sp MNG_MALLOC_STACK.
 Hypothesis ROOM : a_room A n.
 Hypothesis KS : forall A' R' M' mo' (p : Z),
   a_inv A' M' mo' -> mstd mo' -> m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
+  m_channel_reader mo' = m_channel_reader mo ->
   kept R R' -> getr R' 10%bv = Z_to_bv 64 p -> 0 < p ->
   live_add p n (a_live A) (a_live A') -> a_P A' = a_P A -> a_big A' = a_big A ->
   (forall a, a_owned A' a -> a_owned A a \/ (~ in_ranges (ly_img L) a /\ M (Z_to_bv 64 a) = None)) ->
@@ -855,9 +866,15 @@ Proof.
 Qed.
 End MALLOC_MI.
 
+(* LPS 727298f3: the interface's [ainv] also carries the launch's channel reader
+   ([LibIface.ai_rdr]): malloc and free keep it ([L_malloc]'s and [L_free]'s
+   continuations say so), and so does a frame that keeps it. *)
+Definition a_invR (A : mstateA) (M : LibIface.mem) (mo : Model) : Prop :=
+  a_inv A M mo /\ m_channel_reader mo = true.
+
 Definition MI_U1 : MallocIface SEGS L :=
   {| AS := mstateA;
-     ainv := a_inv;
+     ainv := a_invR;
      live := a_live;
      owned := a_owned;
      size_class := mng_size_class;
@@ -873,23 +890,30 @@ Definition MI_U1 : MallocIface SEGS L :=
      ai_round_big_mono := L_round_big_mono;
      ai_round_big_nonneg := L_round_big_nonneg;
      ai_size_class_range := L_size_class_range;
-     room_small := L_room_small;
-     room_big := L_room_big;
-     ai_mstd := L_mstd;
-     ai_live_block := L_live_block;
-     ai_live_nodup := fun A M mo H => proj2 (NoDup_ListNoDup _) (L_live_nodup A M mo H);
-     ai_live_disjoint := L_live_disjoint;
-     ai_owned_not_img_ro := L_owned_not_img_ro;
-     ai_owned_below_ceiling := L_owned_below_ceiling;
+     room_small := fun A M mo n H => L_room_small A M mo n (proj1 H);
+     room_big := fun A M mo n H => L_room_big A M mo n (proj1 H);
+     ai_mstd := fun A M mo H => L_mstd A M mo (proj1 H);
+     ai_rdr := fun A M mo H => proj2 H;
+     ai_live_block := fun A M mo p n H => L_live_block A M mo p n (proj1 H);
+     ai_live_nodup := fun A M mo H => proj2 (NoDup_ListNoDup _) (L_live_nodup A M mo (proj1 H));
+     ai_live_disjoint := fun A M mo p n q k H => L_live_disjoint A M mo p n q k (proj1 H);
+     ai_owned_not_img_ro := fun A M mo a H => L_owned_not_img_ro A M mo a (proj1 H);
+     ai_owned_below_ceiling := fun A M mo a H => L_owned_below_ceiling A M mo a (proj1 H);
      static_cells := mng_static_cells;
-     ai_static_cells := L_static_cells;
-     ai_static_cells_owned := L_static_cells_owned;
-     ai_frame := L_frame;
+     ai_static_cells := fun A M mo a bs H => L_static_cells A M mo a bs (proj1 H);
+     ai_static_cells_owned := fun A M mo a bs i H => L_static_cells_owned A M mo a bs i (proj1 H);
+     ai_frame_k := fun A M M' mo mo' H OW DEF EV EL EK ER =>
+                   conj (L_frame A M M' mo mo' (proj1 H) OW DEF EV EL EK) (eq_trans ER (proj2 H));
      may_fail := a_may_fail;
      may_fail_big := fun A n H => or_introl H;
-     mi_malloc := fun fx A R M mo n sp ret Ks AI SM RO CR A0 HN SPC SR SOW ROOM KS =>
-                    L_malloc_MI fx A R M mo n sp ret Ks AI SM RO CR A0 HN SPC SR ROOM KS;
-     mi_free := L_free |}.
+     mi_malloc_r := fun fx A R M mo n sp ret Ks AI SM RO CR A0 HN SPC SR SOW ROOM KS =>
+                    L_malloc_MI fx A R M mo n sp ret Ks (proj1 AI) SM RO CR A0 HN SPC SR ROOM
+                      (fun A' R' M' mo' p H1 H2 H3 H4 H5 =>
+                         KS A' R' M' mo' p (conj H1 (eq_trans H5 (proj2 AI))) H2 H3 H4 H5);
+     mi_free_r := fun fx A R M mo p n sp ret K AI SM RO CR A0 HP SPC SR SOW HK =>
+                  L_free fx A R M mo p n sp ret K (proj1 AI) SM RO CR A0 HP SPC SR SOW
+                    (fun A' R' M' mo' H1 H2 H3 H4 H5 =>
+                       HK A' R' M' mo' (conj H1 (eq_trans H5 (proj2 AI))) H2 H3 H4 H5) |}.
 
 Lemma MI_U1_consts_ok : mi_consts_ok SEGS L MI_U1.
 Proof. constructor; reflexivity. Qed.

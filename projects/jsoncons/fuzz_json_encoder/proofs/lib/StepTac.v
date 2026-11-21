@@ -1,8 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the rseq-dependent auxv): changed bsb_bound; added block_head_size_le, launch_sp_le_top, launch_top_minus_sp; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/StepTac.v, lines 768-849. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim WallSim StreamSim DrainSim.
@@ -15,11 +14,6 @@ Open Scope bv_scope.
 Section WithFP1.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 End WithFP1.
 Ltac chain_step :=
   first [ eapply mst_step
@@ -38,18 +32,12 @@ Ltac chain_step :=
 Section WithFP2.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP2.
 Ltac step_intro := chain_step.
 
 Section WithFP3.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 End WithFP3.
 Ltac expand_ctx_defs p :=
   match goal with
@@ -63,7 +51,6 @@ Ltac expand_ctx_defs p :=
 Section WithFP4.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP4.
 Ltac check_closed_term p :=
   let p' := expand_ctx_defs p in
@@ -78,7 +65,6 @@ Ltac check_closed_term p :=
 Section WithFP5.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP5.
 Ltac vm_eval t :=
   let _ := match goal with _ => check_closed_term t end in
@@ -87,7 +73,6 @@ Ltac vm_eval t :=
 Section WithFP6.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP6.
 Ltac word_lit p :=
   let u := vm_eval (bv_unsigned p) in
@@ -96,7 +81,6 @@ Ltac word_lit p :=
 Section WithFP7.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP7.
 Ltac wlit_replace p :=
   let l := word_lit p in
@@ -105,7 +89,6 @@ Ltac wlit_replace p :=
 Section WithFP8.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP8.
 Ltac wlit p :=
   try (lazymatch p with
@@ -116,7 +99,6 @@ Ltac wlit p :=
 Section WithFP9.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP9.
 Ltac wlits :=
   repeat match goal with
@@ -129,8 +111,6 @@ Ltac wlits :=
 Section WithFP10.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 End WithFP10.
 Ltac norm_pc_state st :=
   tryif has_evar st then idtac
@@ -159,12 +139,6 @@ Ltac norm_pc :=
 Section WithFP12.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 End WithFP12.
 Ltac reduce_bv_eqb_ifs :=
   repeat match goal with
@@ -185,14 +159,12 @@ Ltac reduce_bv_eqb_ifs :=
 Section WithFP13.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP13.
 Ltac step_simpl := reduce_bv_eqb_ifs; rewrite ?skipn_O; norm_pc.
 
 Section WithFP14.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP14.
 Ltac stepi_search F D :=
   first
@@ -210,7 +182,7 @@ Ltac stepi_search F D :=
     | exact (step_mul _ _ _ _ _ _ _ _ _ F eq_refl D)
     | exact (step_ori _ _ _ _ _ _ _ _ _ F eq_refl D)
     | exact (step_subw _ _ _ _ _ _ _ _ _ F eq_refl D)
-    (* [comment removed for export] *)
+
     | exact (step_slti _ _ _ _ _ _ _ _ _ F eq_refl D)
     | exact (step_srai _ _ _ _ _ _ _ _ _ F eq_refl D)
     | exact (step_and _ _ _ _ _ _ _ _ _ F eq_refl D)
@@ -242,8 +214,6 @@ Ltac stepi_search F D :=
 Section WithFP15.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 End WithFP15.
 Ltac stepi F D :=
   chain_step;
@@ -344,7 +314,6 @@ Ltac stepi F D :=
 Section WithFP16.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP16.
 Ltac stepiv F D vv tac :=
   chain_step;
@@ -386,7 +355,6 @@ Ltac stepiv F D vv tac :=
 Section WithFP17.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP17.
 Ltac stepiwv F D vv tac :=
   chain_step;
@@ -398,7 +366,6 @@ Ltac stepiwv F D vv tac :=
 Section WithFP18.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP18.
 Ltac stepj F D :=
   chain_step;
@@ -410,7 +377,6 @@ Ltac stepj F D :=
 Section WithFP19.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP19.
 Ltac stepjr F D tv tac :=
   chain_step;
@@ -424,11 +390,6 @@ Ltac stepjr F D tv tac :=
 Section WithFP20.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma u_Z2bv : forall z, (0 <= z)%Z -> (z < 2^64)%Z ->
   bv_unsigned (Z_to_bv 64 z) = z.
 Proof.
@@ -437,7 +398,6 @@ Proof.
   exact Hhi.
 Qed.
 
-(* [comment removed for export] *)
 Lemma v_addi_m1 : forall x, (1 <= bv_unsigned x)%Z ->
   v_addi x (-1) = Z_to_bv 64 (bv_unsigned x - 1).
 Proof. intros x H1. apply (v_addi_m x 1); lia. Qed.
@@ -462,20 +422,17 @@ Lemma v_addi_m80 : forall x, (80 <= bv_unsigned x)%Z ->
   v_addi x (-80) = Z_to_bv 64 (bv_unsigned x - 80).
 Proof. intros x H80. apply (v_addi_m x 80); lia. Qed.
 
-(* [comment removed for export] *)
 Lemma v_addi_nneg_t : forall x imm, (0 <= imm)%Z ->
   (bv_unsigned x + imm < 2^64)%Z ->
   v_addi x imm = Z_to_bv 64 (bv_unsigned x + imm).
 Proof. intros x imm _ _. reflexivity. Qed.
 
-(* [comment removed for export] *)
 End WithFP20.
 Ltac u_norm := repeat rewrite u_Z2bv by lia.
 
 Section WithFP21.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP21.
 Ltac imm_norm :=
   repeat match goal with
@@ -496,7 +453,6 @@ Ltac imm_norm :=
 Section WithFP22.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP22.
 Ltac sp_norm :=
   imm_norm;
@@ -517,7 +473,6 @@ Ltac sp_norm :=
 Section WithFP23.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP23.
 Ltac stepi_at F D val :=
   chain_step;
@@ -535,11 +490,6 @@ Ltac stepi_at F D val :=
 Section WithFP24.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 End WithFP24.
 Ltac bveq :=
   apply bv_eq;
@@ -555,7 +505,7 @@ Ltac bveq :=
                "see it; instantiate the machine state (eexists / "
                "chain_step) before normalizing."
       else
-        (* [comment removed for export] *)
+
         first
           [ reflexivity
           | fail 1 "bveq: the goal is OPEN (it mentions a context "
@@ -567,13 +517,11 @@ Ltac bveq :=
 Section WithFP25.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 Goal v_addi (Z_to_bv 64 5) 3 = Z_to_bv 64 8.
 Proof. bveq. Abort.
 Goal forall regs (v : word), getr (regupd regs 11 v) 11 = v.
 Proof. intros. assert_fails bveq. getr_resolve. reflexivity. Abort.
 
-(* [comment removed for export] *)
 Goal forall v : word, exists w : word, w = v.
 Proof.
   intros v. eexists.
@@ -586,12 +534,11 @@ Proof.
   assert_fails (check_closed_term (v_addi k2 1)).
   let u := vm_eval (bv_unsigned (v_addi (Z_to_bv 64 5) 3)) in
   lazymatch u with 8%Z => idtac end.
-  (* [comment removed for export] *)
+
   try (let u := vm_eval (bv_unsigned (v_addi v 4)) in
        fail 1 "vm_eval accepted an open term").
 Abort.
 
-(* [comment removed for export] *)
 Goal forall v : word, v_addi v 4 = v_addi v 4.
 Proof. intros v. wlit (v_addi v 4). wlits. reflexivity. Abort.
 Goal forall v : word,
@@ -602,7 +549,6 @@ Proof.
   f_equal. bveq.
 Abort.
 
-(* [comment removed for export] *)
 End WithFP25.
 Ltac stepw_addr :=
   getr_resolve; regupd_resolve; sp_norm;
@@ -611,7 +557,6 @@ Ltac stepw_val :=
   getr_resolve; regupd_resolve; cbv beta; reduce_bv_eqb_ifs;
   first [ reflexivity | sp_norm; first [ reflexivity | f_equal; lia ] | bveq ].
 
-(* [comment removed for export] *)
 Ltac stepw_addr_hyps :=
   getr_resolve; regupd_resolve;
   repeat match goal with
@@ -624,7 +569,6 @@ Ltac stepw_addr_hyps :=
 Section WithFP27.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP27.
 Ltac stepw F D aa vv oktac :=
   chain_step;
@@ -646,7 +590,6 @@ Ltac stepw F D aa vv oktac :=
     end
   | step_simpl ].
 
-(* [comment removed for export] *)
 Ltac stepsd F D aexp vexp vtac oktac :=
   step_intro;
   [ reflexivity
@@ -668,7 +611,6 @@ Ltac stepld F D aexp vexp readtac :=
 Section WithFP28.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP28.
 Ltac vm_refl_bv :=
   lazymatch goal with
@@ -678,7 +620,6 @@ Ltac vm_refl_bv :=
 Section WithFP29.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP29.
 Ltac wlit_closed p :=
   check_closed_term p;
@@ -688,7 +629,6 @@ Ltac wlit_closed p :=
 Section WithFP30.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP30.
 Ltac wlits_closed :=
   repeat match goal with
@@ -700,11 +640,10 @@ Ltac wlits_closed :=
 Section WithFP32.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
 End WithFP32.
 Ltac rdn_ext_lit :=
   erewrite rdn_ext;
-    [ (* [comment removed for export] *)
+    [
     | imm_norm; u_norm; lia
     | let x := fresh "x" in
       let Hx := fresh "Hx" in
@@ -713,24 +652,17 @@ Ltac rdn_ext_lit :=
 Section WithFP33.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma byte_nz_u : forall b : byte, b <> Z_to_bv 8 0 -> (bv_unsigned b <> 0)%Z.
 Proof.
   intros b Hb Hc. apply Hb. apply bv_eq. rewrite Hc. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma u_zext8 : forall b : byte,
   bv_unsigned (Z_to_bv 64 (bv_unsigned b)) = bv_unsigned b.
 Proof.
   intro b. apply u_Z2bv; pose proof (u8_range b); lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma zext8_byte : forall b : byte,
   Z_to_bv 8 (bv_unsigned (Z_to_bv 64 (bv_unsigned b))) = b.
 Proof.
@@ -740,7 +672,6 @@ Proof.
   change (bv_modulus 8) with 256%Z. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma byte_neq_lit_u : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
   b <> Z_to_bv 8 z -> (bv_unsigned b <> z)%Z.
 Proof.
@@ -750,7 +681,6 @@ Proof.
   change (bv_modulus 8) with 256%Z. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma c_eq_zext_lit_false : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
   b <> Z_to_bv 8 z ->
   c_eq (Z_to_bv 64 (bv_unsigned b)) (Z_to_bv 64 z) = false.
@@ -760,12 +690,10 @@ Proof.
   exact (byte_neq_lit_u b z Hz Hb).
 Qed.
 
-(* [comment removed for export] *)
 Lemma u_ntw : forall n : nat, (Z.of_nat n < 2^64)%Z ->
   bv_unsigned (nat_to_word n) = Z.of_nat n.
 Proof. intros n Hn. unfold nat_to_word. apply u_Z2bv; lia. Qed.
 
-(* [comment removed for export] *)
 Lemma word_add_nat : forall (a : word) (n : nat),
   a + nat_to_word n = Z_to_bv 64 (bv_unsigned a + Z.of_nat n).
 Proof.
@@ -774,14 +702,12 @@ Proof.
   reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Lemma word_add_nat_0 : forall x : word, x + nat_to_word 0 = x.
 Proof.
   intro x. apply bv_eq. rewrite word_add_nat.
   rewrite u_Z2bv by (pose proof (u64_range x); lia). lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma word_add_nat_1 : forall (a : word) (m : nat),
   v_addi (a + nat_to_word m) 1 = a + nat_to_word (S m).
 Proof.
@@ -798,7 +724,6 @@ Proof.
   rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma v_add_comm : forall x y : word, v_add x y = y + x.
 Proof.
   intros x y. apply bv_eq.
@@ -806,7 +731,6 @@ Proof.
   rewrite !bv_add_unsigned. f_equal. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma v_add_wrap : forall x y : word,
   (2^64 <= bv_unsigned x + bv_unsigned y)%Z ->
   v_add x y = Z_to_bv 64 (bv_unsigned x + bv_unsigned y - 2^64).
@@ -817,7 +741,6 @@ Proof.
   f_equal. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma v_sub_0_neg : forall y : word,
   v_sub (Z_to_bv 64 0) y = Z_to_bv 64 (- bv_unsigned y).
 Proof.
@@ -826,7 +749,6 @@ Proof.
   f_equal.
 Qed.
 
-(* [comment removed for export] *)
 Lemma u_neg_small : forall z : Z, (0 < z)%Z -> (z <= 2^64)%Z ->
   bv_unsigned (Z_to_bv 64 (- z)) = (2^64 - z)%Z.
 Proof.
@@ -836,7 +758,6 @@ Proof.
   apply Z.mod_small. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma v_addi_neg_S : forall d : nat,
   v_addi (Z_to_bv 64 (- Z.of_nat (S d))) 1 = Z_to_bv 64 (- Z.of_nat d).
 Proof.
@@ -845,18 +766,89 @@ Proof.
   rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
 
-(* [comment removed for export] *)
-Lemma bsb_bound : forall ph (sp : word) (a e : list (list byte)) uid hw rnd,
-  valid_argv a -> valid_envp e ->
-  (Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd)) <= 2240000)%Z.
+Lemma block_head_size_le : forall rseq argv envp,
+  (Z.of_nat (block_head_size rseq argv envp)
+   <= 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 512)%Z.
 Proof.
-  intros ph sp a e uid hw rnd Hva Hve.
-  pose proof (build_stack_bytes_within_span ph sp a e uid hw rnd).
-  pose proof (entry_stack_span_bound a e Hva Hve).
-  unfold entry_stack_span_max in *. lia.
+  intros rseq argv envp.
+  unfold block_head_size, block_items, auxv_size, auxv_count.
+  pose proof (Nat.mod_upper_bound
+                (length argv + length envp + 3) 2 ltac:(lia)).
+  destruct rseq; lia.
 Qed.
 
-(* [comment removed for export] *)
+(** The entry stack pointer is below the stack VMA's end:
+    [create_elf_tables] only ever subtracts from [bprm->p], which
+    already sits [8 + L] below the end. *)
+Lemma launch_sp_le_top : forall inp (top sp : word),
+  valid_launch_sp top inp sp ->
+  (bv_unsigned sp <= bv_unsigned top)%Z.
+Proof.
+  intros inp top sp [_ [_ Hhi]].
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Nat2Z.is_nonneg
+    (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))) 16 ltac:(lia)).
+  lia.
+Qed.
+
+(** The entry stack pointer is below the stack VMA's end:
+    [create_elf_tables] only ever subtracts from [bprm->p], which
+    already sits [8 + L] below the end. *)
+
+Lemma launch_top_minus_sp : forall inp (top sp : word),
+  valid_launch inp ->
+  valid_launch_sp top inp sp ->
+  (bv_unsigned top - bv_unsigned sp <= 2101782)%Z.
+Proof.
+  intros inp top sp [_ Hb] [_ [Hlo _]].
+  unfold launch_bytes, e2big_limit in Hb.
+  unfold launch_sp_lo, align_down16 in Hlo.
+  pose proof (block_head_size_le (kb_rseq (in_kernel inp))
+                (in_argv inp) (in_envp inp)).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))
+     - 4095) 16 ltac:(lia)).
+  lia.
+Qed.
+
+(** Upper bound on the initial stack image (feeds every read lemma's
+    no-overflow side condition).
+
+    Derived rather than computed, and now from the LAUNCH rather than
+    from [valid_argv]/[valid_envp]: the image is exactly the block
+    between [sp] and the stack VMA's end
+    ([PropExec.length_entry_stack_image_launch]), and
+    [launch_top_minus_sp] bounds that distance.  The older derivation
+    went through [PropExec.build_stack_bytes_within_span] and
+    [Run.entry_stack_span_bound]; that span counted neither the exec
+    file name nor [arch_align_stack]'s pad, so it is no longer an upper
+    bound on the block and the lemma behind it is retired. *)
+
+Lemma bsb_bound : forall v inp mbase ph entry (sp brk : word) draw,
+  valid_launch inp ->
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+   <= 2101782)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hvl Hlau.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw
+             Hlau).
+  destruct Hlau as (_ & Hsp & _).
+  exact (launch_top_minus_sp inp (ed_top draw) sp Hvl Hsp).
+Qed.
+
+(** A store range at/above the ends of both segments of a two-segment
+    image passes the read-only-avoidance check (per-image
+    [*_avoids_ro] facts specialize the two [Z.ltb] hypotheses). *)
+
 Lemma range_avoids_two : forall (s0 s1 : Segment) (a n : Z),
   Z.ltb a (Z.of_N (seg_base s0) + Z.of_N (seg_size s0)) = false ->
   Z.ltb a (Z.of_N (seg_base s1) + Z.of_N (seg_size s1)) = false ->
@@ -867,7 +859,6 @@ Proof.
   reflexivity.
 Qed.
 
-(* [comment removed for export] *)
 Definition ro_segs_below (segs : list Segment) (data_base : Z) : bool :=
   forallb (fun seg =>
              seg_writable seg
@@ -889,18 +880,11 @@ Proof.
   apply Z.ltb_ge. lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
 Section DispatchSmoke.
   Variable segs : list Segment.
   Variable regs : bvmap 5 word.
   Variable mem rom : word -> option byte.
 
-  (* [comment removed for export] *)
   Ltac smoke enc sh :=
     let F := fresh "F" in
     intro F;
@@ -908,147 +892,118 @@ Section DispatchSmoke.
     assert (D : decode_any enc = Some (sh, 4%Z)) by vm_refl_bv;
     eexists; stepi F D; apply mst_refl.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00152513 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00152513 : bv 32) (OpImm ALU_SLT 10 10 1). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x40155513 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x40155513 : bv 32) (ShiftImm ALU_SRA 10 10 1). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B57533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B57533 : bv 32) (Op ALU_AND 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B56533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B56533 : bv 32) (Op ALU_OR 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B54533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B54533 : bv 32) (Op ALU_XOR 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B51533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B51533 : bv 32) (Op ALU_SLL 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B55533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B55533 : bv 32) (Op ALU_SRL 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x40B55533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x40B55533 : bv 32) (Op ALU_SRA 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B52533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B52533 : bv 32) (Op ALU_SLT 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B53533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B53533 : bv 32) (Op ALU_SLTU 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B5053B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B5053B : bv 32) (Op32 ALU_ADD 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B5153B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B5153B : bv 32) (Op32 ALU_SLL 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00B5553B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x00B5553B : bv 32) (Op32 ALU_SRL 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x40B5553B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x40B5553B : bv 32) (Op32 ALU_SRA 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x0015051B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x0015051B : bv 32) (OpImm32 10 10 1). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x0015151B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x0015151B : bv 32) (ShiftImm32 ALU_SLL 10 10 1). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x0015551B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x0015551B : bv 32) (ShiftImm32 ALU_SRL 10 10 1). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x4015551B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x4015551B : bv 32) (ShiftImm32 ALU_SRA 10 10 1). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B51533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B51533 : bv 32) (Mul M_MULH 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B52533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B52533 : bv 32) (Mul M_MULHSU 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B53533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B53533 : bv 32) (Mul M_MULHU 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B54533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B54533 : bv 32) (Mul M_DIV 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B56533 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B56533 : bv 32) (Mul M_REM 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B5053B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B5053B : bv 32) (Mul32 M_MUL 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B5453B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B5453B : bv 32) (Mul32 M_DIV 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B5553B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B5553B : bv 32) (Mul32 M_DIVU 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B5653B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B5653B : bv 32) (Mul32 M_REM 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B5753B : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof. smoke (0x02B5753B : bv 32) (Mul32 M_REMU 10 10 11). Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B55533 : bv 32) ->
     (bv_unsigned (getr regs 11) <> 0)%Z ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
@@ -1059,7 +1014,6 @@ Section DispatchSmoke.
     eexists. stepi F D. apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x02B57533 : bv 32) ->
     (bv_unsigned (getr regs 11) <> 0)%Z ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
@@ -1070,7 +1024,6 @@ Section DispatchSmoke.
     eexists. stepi F D. apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00151513 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof.
@@ -1081,7 +1034,6 @@ Section DispatchSmoke.
     apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00157513 : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof.
@@ -1092,7 +1044,6 @@ Section DispatchSmoke.
     apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00A13023 : bv 32) ->
     RiscvSemantics.store_ok segs mem (v_addi (getr regs 2) 0) 8%nat = true ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
@@ -1104,7 +1055,6 @@ Section DispatchSmoke.
     apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00A12023 : bv 32) ->
     RiscvSemantics.store_ok segs mem (v_addi (getr regs 2) 0) 4%nat = true ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
@@ -1116,7 +1066,6 @@ Section DispatchSmoke.
     apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00A11023 : bv 32) ->
     RiscvSemantics.store_ok segs mem (v_addi (getr regs 2) 0) 2%nat = true ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
@@ -1128,7 +1077,6 @@ Section DispatchSmoke.
     apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00A10023 : bv 32) ->
     RiscvSemantics.store_ok segs mem (v_addi (getr regs 2) 0) 1%nat = true ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
@@ -1140,7 +1088,6 @@ Section DispatchSmoke.
     apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x0080006F : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof.
@@ -1150,7 +1097,6 @@ Section DispatchSmoke.
     eexists. stepj F D. apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x008000EF : bv 32) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
   Proof.
@@ -1160,7 +1106,6 @@ Section DispatchSmoke.
     eexists. stepj F D. apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x00008067 : bv 32) ->
     getr regs 1 = (0x20000 : word) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.
@@ -1172,7 +1117,6 @@ Section DispatchSmoke.
     apply mst_refl.
   Abort.
 
-  (* [comment removed for export] *)
   Goal fetch_word segs (0x10000 : word) = Some (0x000500E7 : bv 32) ->
     getr regs 10 = (0x20000 : word) ->
     exists st', msteps segs (mkst regs (0x10000 : word) mem rom) st'.

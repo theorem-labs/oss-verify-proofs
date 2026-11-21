@@ -4,7 +4,7 @@ Each file below is part of one record (RECORD.md). It measures again, with the c
 
 | file | sha256 | role |
 |---|---|---|
-| RECORD.md | dbb9926ab786d63bc10a11f51e6a09d0e57aac3b61c87309c616da6f4db3fafa | the record: why, the inventory, the images, the commands, the verdicts (one changed), the scans, the hand traces of the kit's known fail-opens, the citation changes |
+| RECORD.md | fe40fd78deb3eba8665f6d85b87f26555d6c1c027b05996f26d19571de9413a4 | the record: why, the inventory, the images, the commands, the verdicts (one changed), the scans, the hand traces of the kit's known fail-opens, the citation changes |
 | amb-AB.tsv | ff3299a695e89f96cf670a7df9cd0027fbc51a7a24442079164570bf3e7e0f58 | ambiscan over the earlier fuzz_command.asan / asan-ubsan compare outputs: 0 ambiguous hits |
 | amb-grant.tsv | b3f2063716d5bbb955897481363845e16b3136085b7d089e3c88f39777b5142a | ambiscan over the earlier fuzz_grant / fuzz_command compare outputs: 0 by-name compares read, 0 hits |
 | amb-intrin.tsv | dce65e054bf5f203f587001af66c43483ca093458f3114d9832e96365243e145 | ambiscan over the earlier cgif / fuzz_command compare output: 0 ambiguous hits |

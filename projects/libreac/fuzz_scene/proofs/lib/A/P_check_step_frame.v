@@ -8,13 +8,13 @@
    - frame_setup_stmt / frame_setup: the frame-region setup after the class's stack-malloc call, parametric in the
      class `cid` and the size `n` whose shadow the call zeroed (the shadow length is n / 8; the number k of 8-byte
      zero chunks and the write window [wlo, whi) are quantified). The text of fzero_chunks, frame_ss and
-     frame_setup_stmt is a Theorem Labs lane's, word for word (at f8e11ff3ccb,
+     frame_setup_stmt is a Theorem Labs lane's, word for word (at
      lib/A/P_LLVMFuzzerTestOneInput.v:129-156), a port of cgif_file_fuzzer A/ACk1.v:209-277 (class 1 there).
      Instances: LLVMFuzzerTestOneInput `frame_setup SEGS VAL B 8 9408` (its HFRAME8); check_step
-     `frame_setup SEGS VAL B 2 (fs_frame_bytes 2)` after A/Prog/YC85.v:292 aj_stack_malloc_atS, whose post zeroes
+     `frame_setup SEGS VAL B 2 (fs_frame_bytes 2)` after A/Prog/YC85.v:293 aj_stack_malloc_atS, whose post zeroes
      the shadow of the whole 256-byte class-2 frame (Reusable/YG0d.v:295).
    - afobj_of_own: a caller's journal whose `own` holds the frame of a local, the local inside that frame, 8-aligned
-     and marked usable, gives the per-function frame-object premise `afobj` (A/Prog/SceneBase.v:51) at the caller's
+     and marked usable, gives the per-function frame-object premise `afobj` (A/Prog/SceneBase.v:52) at the caller's
      current state (cgif_file_fuzzer YC21.v:41, :96 take such an object). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -38,7 +38,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 (* The sink head is an explicit Section Context the glue instantiates with scene's own (a Theorem Labs lane 22:57Z): never chosen by
    instance search (a global src0_sink_head comes into scope with the relocated core's YI5b). *)
 Context (SK : YI16.sink_head). #[local] Existing Instance SK.
-(* ---- the fake-frame region setup (a Theorem Labs lane's text, P_LLVMFuzzerTestOneInput.v:129-156 at f8e11ff3ccb) ---- *)
+(* ---- the fake-frame region setup (a Theorem Labs lane's text, P_LLVMFuzzerTestOneInput.v:129-156) ---- *)
 Definition fzero_chunks (k : nat) : list YP09.chunk :=
 map (fun j => YP09.mkChunk (8 * Z.of_nat j) (CVal 8 (SLit 0))) (seq 0 k).
 Definition frame_ss (f fl s bx : nat) (cid : Z) (k : nat) (wlo whi : Z) (ss : sstate) : sstate :=

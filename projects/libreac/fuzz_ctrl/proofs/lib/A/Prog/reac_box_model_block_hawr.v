@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* reac_box_model_block (0x85b44) on fuzz_ctrl's ASan build, image A: obligation Hawr of the glue proof of
    pb_reac_box_model_block (lib/A/Prog/reac_box_model_block_glue.v, bmb_body's premise at :2737-2738): every byte
    the tail may write (reac_box_model_block_glue_defs.bmb_WR) is a byte the caller's journal lets this call write
@@ -144,7 +145,7 @@ Proof.
   intros _ Ho a Ha. exact (proj1 (Htwr Ho a Ha)).
 Qed.
 
-(* Hawr from the spec's whole premise on o (HOs of treac_box_model_block_spec, C_reac_box_model_block.v:167-171):
+(* Hawr from the spec's whole premise on o (HOs of treac_box_model_block_spec, C_reac_box_model_block.v:168-172):
    the theorem passes HOs as it is. *)
 Lemma bmb_hawr_hos : forall (STK sp0 : Z) (FP : list (Z * Z)) (ly : alayout) (S : astate) (own : list (Z * Z))
     (lyc : alayout) (Sc : astate) (W : YA0n.world AB1v.tfibsegs) (memc : word -> option byte)

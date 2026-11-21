@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised stack window). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,7 +25,12 @@ Definition sr8 : list expr :=
 Definition kn8 : list kentry :=
   [ KRange (EVar 0) 0x7fff80000000 0x800000000000;
     KAlign (EVar 0) 16;
-    KWr (SA (EVar 0) (-8388608)) (ELit 8388608);
+    (* #38 rule 12i: the certified window is [[wok_lo sp0, sp0)].  This is the row
+       an earlier farm round caught: S1StartInit.v:401's
+       [apply store_ok_cmem_win; [exact HJ8 | region_side | region_side]] fails
+       "Cannot find witness" because the second premise is [wok_lo sp0 <= a] and
+       this row offered [a = sp0 - 8388608 + d] for every d >= 0. *)
+    KWr (SA (EVar 0) (- stack_window_depth)) (ELit stack_window_depth);
     KWord (SA (EVar 0) (-56)) 8 (ELit 0xcfaa0);
     KWord (SA (EVar 0) (-64)) 8 (spx 8);
     KWord (SA (EVar 0) (-72)) 8 (EVar 1);

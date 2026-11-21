@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair in the reserved ledger). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -48,7 +49,14 @@ Proof.
         cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia. }
     destruct Hin as (e & He & He1 & He2).
     apply (madvise_dontneed_ok_intro _ _ _ e He); rewrite ?Eua, ?Eul; [exact He1| exact He2| |].
-    + rewrite Eres. apply reserved_free_above. rewrite Eua. unfold SEGTOP_A. lia.
+    (* LPS@75d69e00: [Eres] is no longer a bare equality -- the launch's vDSO pair follows
+       the image's reservations in the ledger.  The range being advised lies inside the
+       shadow mapping [e] the runtime already tracks, and ARTM_A's reserved clause puts
+       every tracked mapping apart from the tail, which is what carves the pair out. *)
+    + apply (artm_res_free_in_maps mo _ _ _ Eres He);
+        [ rewrite Eua; exact He1
+        | rewrite Eua, Eul; exact He2
+        | apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia ].
     + apply region_free_noaccess_of_uncovered; [exact Hnp| rewrite Eul; exact Hlen| rewrite Eua, Eul; unfold len; lia|].
       intros a Ha. rewrite Eua, Eul in Ha.
       refine (proj2 (Hsl a _)). unfold shreg, Shadow.SHB, K_LOW_SHADOW_lo, K_LOW_SHADOW_hi, K_HIGH_SHADOW_lo, K_HIGH_SHADOW_hi. unfold len in Ha. lia.

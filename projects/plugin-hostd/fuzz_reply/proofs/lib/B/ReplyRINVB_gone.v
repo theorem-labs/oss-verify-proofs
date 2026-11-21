@@ -11,7 +11,7 @@
      gn_pair_ok source is at slot k (fr_RINV's distinct fds, RI_fds_holds), so after relay_instance_gone slot k holds
      rig_post's source for entry j, which rig_rel's dr_rel leaves drained (pending list empty, offset 0).
    - RI_gone_read_sat: one state meets all of RI_gone_read's premises (and RI_gone_pairs's).
-   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts (bb9dae5d905, a1a3591c77c),
+   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts,
      which were false at the instance; machine-checked counter-instances, not proofs of the rows.
    Part 2 (over W_LLVMFuzzerTestOneInput_gone_base.v's own model): RI_gone_pairs_plug / RI_gone_read_plug restate
    part 1 at gone_base's GN_RI_pairs / GN_RI_read; then the step and end rows.
@@ -19,22 +19,23 @@
      check_no_loss and check_shape_ends left of what relay_instance_gone left there; when gone = 0, `at` is the
      entry's position in the stream relay_instance_gone sent (rg_acc_pos), which is the entries' drained lines and
      then their ended keys' end lines (rg_rel_dec, rg_strm).
-   - RI_gone_step_holds(_c): GN_RI_step of a working branch a39b599f92e (copied verbatim as
+   - RI_gone_step_holds(_c): GN_RI_step of a working branch (copied verbatim as
      GN_RI_step_d) at MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B / fr_LS3c B.  The LS-side
-     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v at b25d82fcf04); mo_ok is True at
+     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v); mo_ok is True at
      ameter_triv; the rest is RINV-side (rg_step_rinv_side).
-   - RI_gone_end_holds_q5(_c): GN_RI_end of a39b599f92e (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
-     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and a39b599f92e's gn_cnl_ok
+   - RI_gone_end_holds_q5(_c): GN_RI_end (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
+     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and's gn_cnl_ok
      does not carry `hl_cap (hs_held h) <= hl_cap H'` from which ReplyLS3cTopxGoneH.v's gxh_req5 derives it.
-   - GN_RI_step_r3 (Section rg3): the record of round 3 (aa34c06e82c): without re_U NUL-free the step row is false.
+   - GN_RI_step_r3 (Section rg3): the record of round 3: without re_U NUL-free the step row is false.
    Local helpers rg_lines_nz / rg_upds_in / rg_W_read_lines_nz state what a Theorem Labs lane's ReplyRINV_a12.v
    (lines_nul_free / upds_nul_free) states; they stay local. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV_gone.v, with its module paths and module names changed; 459 of its 2492 lines of code are new or changed and 890 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (rule 24; kind: segment lemma): the RINV side of the four closing model lemmas of image B's
-   composed top (lib/B/ReplyBTop.v Section btop :146-149 at a6411d87d214, B-TOPX-OWNERS.md (sha256 705727227472; internal record) rows 94-97)
+   composed top (lib/B/ReplyBTop.v Section btop :146-149, B-TOPX-OWNERS.md (sha256 705727227472; internal record) rows 94-97)
    GN_RI_pairs_x / GN_RI_read_x / GN_RI_step_x / GN_RI_end_x, at RINV := ReplyRINVB.fr_RINV.  Relocated from the
    proved image-A twin ReplyRINV_gone.v (sha256 eb31e3d6b9bf; internal record; "A" below).
-   STATE (2026-10-30, on the room's gone_base text fe02f5257368 = a2ff0ba990a4 except GN_LS_rig, which no proof here
+   STATE (2026-10-30, on the room's gone_base text = except GN_LS_rig, which no proof here
    names; see textdiff.md (sha256 51991567ad9e; internal record)):
    - GN_RI_pairs_x, GN_RI_read_x: PROVED, in k3's text verbatim (A's RI_gone_pairs_holds / RI_gone_read_holds).
    - GN_RI_step_x, GN_RI_end_x: split (a Theorem Labs lane's ruling 06:00Z) into the RINV half (RG.GN_RI_step_ri_holds /
@@ -43,7 +44,7 @@
      fr_OUT /\ fr_ENT, row G-BLS3-port; A's twins are lib/A/ReplyLS3cTopxGoneF.v and ReplyLS3oGn.v).
      RG.GN_RI_step_of_parts / RG.GN_RI_end_of_parts give each row from its two halves.
    - KF-COUNT (a Theorem Labs lane 09:35Z): no lemma here is specialised to a meter.  The step's LS half splits further, as A's
-     (lib/A/ReplyLS3cTopxGone8.v at 6e8e0f9f8148), into the room conjunct RG.GN_RI_step_room and the two meter
+     (lib/A/ReplyLS3cTopxGone8.v), into the room conjunct RG.GN_RI_step_room and the two meter
      conjuncts RG.GN_RI_step_cnl_meter / RG.GN_RI_step_cshe_meter; RG.GN_RI_step_ls_of_room_mt gives the LS half from
      the three at EVERY meter MT (k3's B instance takes MT := MT_sec), and RG.GN_RI_step_ls_of_room is its corollary at
      ameter_triv, where both meter conjuncts are True.
@@ -57,11 +58,11 @@
    lib/A/ReplyRINV -> lib/B/ReplyRINVB (fr_RINV and its parts are A's text, conjunct for conjunct); A's oa_new_src
    (lib/A/W_op_add.v) -> ReplyRINVB.pro_new_src (a verbatim copy of lib/B/W_op_add.v oa_new_src); the helpers of A's
    ReplyRINV.v that ReplyRINVB.v did not port (fr_comb_inj, fr_pair_of_open, RI_fds_holds, fr_F2_nth, fr_combine_of_F2,
-   fr_pair_cost_nonneg, fr_ctl_*, fr_bzs_line(s), fr_ru, rm_set_nth and its lemmas; lib/A/ReplyRINV.v at 6d6d967f58cb
-   :234-1413) are copied verbatim into Section rh.  The model definitions both rows read (gn_pairs, gn_after_rig,
+   fr_pair_cost_nonneg, fr_ctl_*, fr_bzs_line(s), fr_ru, rm_set_nth and its lemmas; lib/A/ReplyRINV.v:
+   234-1413) are copied verbatim into Section rh.  The model definitions both rows read (gn_pairs, gn_after_rig,
    gn_rig_ok, gn_run, gn_cshe_ok, gn_at1, gn_op, gn_pre, ...) and the W_contract callee models (dr_rel, rig_rel,
    rig_slots, geik, sl_sends, ...) are the same text in A and B (compared by script, textdiff.md (sha256 51991567ad9e; internal record)); gn_cnl_ok is A's
-   6e8e0f9f8148 text (REQ5 and C1 its last two conjuncts, gone_base a2ff0ba990a4), which no RINV-half proof reads.
+   text (REQ5 and C1 its last two conjuncts, gone_base), which no RINV-half proof reads.
    No image numeral is read by any proof here: the constants are the model's (4 slots, FIRST_FD 100, CLIENT_FD 3,
    2 ^ 26, 2 ^ 32), which ReplyRINVB.v checked against B's binary (its CONSTANT-SWAP TABLE). *)
 From Stdlib Require Import Permutation.
@@ -92,7 +93,7 @@ Import W_LLVMFuzzerTestOneInput_gone_base.
 Import ListNotations.
 Local Open Scope Z_scope.
 
-(* ================================================================== helpers of lib/A/ReplyRINV.v (6d6d967f58cb), verbatim *)
+(* ================================================================== helpers of lib/A/ReplyRINV.v, verbatim *)
 Section rh.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Definition RI_fds_obl : Prop := forall cx t m i1 i2 h1 h2,
@@ -2359,12 +2360,12 @@ Qed.
 End rows.
 
 (* ================================================================== the split of the two rows (a Theorem Labs lane 06:00Z):
-   each row's premise list, VERBATIM from lib/B/W_LLVMFuzzerTestOneInput_gone_base.v (187cede058c, GN_RI_step :599-638,
+   each row's premise list, VERBATIM from lib/B/W_LLVMFuzzerTestOneInput_gone_base.v (GN_RI_step :599-638,
    GN_RI_end :640-661: REQ1-REQ3 after the per-entry premise, REQ4 last in the step; KF-COUNT's binder q and
    premises gn_runc .. q / gn_cst cx m m1 q cst, and the step's check_no_loss post at its own cost), with its
    conclusion cut into the RINV half (_ri, proved below for ANY LS and ANY meter MT at RINV := fr_RINV) and the LS /
    meter half (_ls; for the step also split into the room conjunct _room and the meter conjuncts _cnl_meter /
-   _cshe_meter, A's texts at 6e8e0f9f8148 verbatim).  GN_RI_step_of_parts / GN_RI_end_of_parts give the row from its
+   _cshe_meter, A's texts verbatim).  GN_RI_step_of_parts / GN_RI_end_of_parts give the row from its
    two halves. *)
 Section ri.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -2373,7 +2374,7 @@ Variable MT : ameter_ops.
 Variable LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
 Variable MMAX : Z.
-(* KF-COUNT (gone_base 187cede058c): the loop's meter cost and the arm's cost bound, at this Section's meter, so the
+(* KF-COUNT (gone_base): the loop's meter cost and the arm's cost bound, at this Section's meter, so the
    premise texts below read as gone_base's *)
 Local Notation gn_runc := (W_LLVMFuzzerTestOneInput_gone_base.gn_runc MT).
 Local Notation gn_cst := (W_LLVMFuzzerTestOneInput_gone_base.gn_cst MT).
@@ -2775,7 +2776,7 @@ Proof. intros rc fx. exact RG.RI_gone_read_holds. Qed.
 (* ================================================================== one Check per obligation *)
 Check (GN_RI_pairs_x : GN_RI_pairs_x_T).
 Check (GN_RI_read_x : GN_RI_read_x_T).
-(* the report's text (btop-open-goals-e43cf0c7bef.md (sha256 2ebe7c5acf07; internal record) :112-113), in context rc fx *)
+(* the report's text (btop-open-goals.md (sha256 2ebe7c5acf07; internal record) :112-113), in context rc fx *)
 Check (fun (rc : YM05.RunCeil) (fx : YK11.FPState) =>
   GN_RI_pairs_x rc fx : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_pairs ReplyRINVB.fr_RINV).
 Check (fun (rc : YM05.RunCeil) (fx : YK11.FPState) =>

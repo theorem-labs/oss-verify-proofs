@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the bounds below the top of user memory). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -317,10 +318,15 @@ Lemma open_spec : forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s
            F (Z_to_bv 64 0x26afb4) fc None m (seg_rom rsegs)).
 Proof.
   intros until lo. intros ST SRC ERR GOT SSP MI -> NUL LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP.
+  pose proof (bytes_at_below rsegs m _ _ MI SRC ltac:(intros E; apply app_eq_nil in E; destruct E as [_ E]; discriminate)) as BPATH.
+  rewrite length_app in BPATH. cbn [length] in BPATH. unfold UTOP in BPATH.
   unfold got_ssp, ssp_guard in *.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl rsegs m) as WM.
   pose proof (bytes_at_bound _ _ _ _ SRC) as BP. rewrite length_app in BP. cbn [length] in BP.
+  (* the open node's path lies below TASK_SIZE (mem_inv: every readable byte is below UTOP) *)
+  pose proof (bytes_at_below _ _ _ _ MI SRC ltac:(destruct path; discriminate)) as BU.
+  rewrite length_app in BU. cbn [length] in BU. unfold UTOP in BU.
   apply impl_enode.
   carve_frame 96%nat ST.
   zidle_begin sp 96%Z MUz WMz.

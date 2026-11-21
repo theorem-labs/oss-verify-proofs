@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (second hand of the lane): lane B1 slice H3's read
-   fields of the CacheDealloc walk (DMcdR.v at commit a9be0b35655) at the cf instance, ARXr := YGcfInstDrainR.ARXr_cf
+   fields of the CacheDealloc walk (DMcdR.v) at the cf instance, ARXr := YGcfInstDrainR.ARXr_cf
    at reply A's image (AGif2reply.AImg_reply; DMcdR is stated over world tfibsegs and the image cover / TSD slot).
    rule 24: no function proved (kind: relational facts of the cf cut relation ARXr_cf for the CacheDealloc walk).
 
@@ -15,7 +16,7 @@
    discharges it as a closed image row) and PROVED at reply A ([CONST_CD_APART_reply], from AFg7.Tfib_const_locr).
    CacheDealloc writes the thread object only at or above its per-class caches (t_cache = 208): the count / slot words
    at T + 208 + 80 c (AFgk.WINF), T + 2784 .. 2792, and the two stats windows T + 2768 .. 2800 / T + 2872 .. 2888
-   (DMcdR.v:180).  A constant cell of the image may lie in the thread object (cell_owned's core extents include
+   (DMcdR.v:181).  A constant cell of the image may lie in the thread object (cell_owned's core extents include
    (ly_T, kThreadObjSize)), so the const cells after the call hold only if none lies in that part.  The premise reads
    the image's segments as the cut relation's ledger places them (alc_img) and the TSD slot as ARmcfR pins it (amr_tsd).
    Section hypotheses (non-vacuity): TS : TfibSyms B (reply A's symbol record, AF0m.v) and HIOK : IOK_ok B IOK
@@ -156,7 +157,7 @@ intros ly X md a LO L Ha. apply (off_img_of ly X md (ly_prim ly) kPrimResvSize a
 exact (in_high_app _ _ (lo_high _ LO)).
 Qed.
 
-(* copies of YFf4.v:34-43 (as in YGcfInstRcSec.v) *)
+(* copies of YFf4.v:35-44 (as in YGcfInstRcSec.v) *)
 Lemma in_combine_seq_iff : forall {A} (l : list A) s j (x : A),
 In (j, x) (combine (seq s (length l)) l) <-> exists j', j = (s + j')%nat /\ nth_error l j' = Some x.
 Proof.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up stack layout (the strings above the random bytes, up to ed_top)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -82,10 +83,13 @@ Definition RG_DUMMY : region := RG (lconst 0) (lconst 0) RW TEmpty.
 Definition DROPB : list lin := Eval vm_compute in List.map (fun k => rg_base (List.nth k (s_rgs S1) RG_DUMMY)) [0;2;4;6;9;11;13;15;17;19;21;23;42;43]%nat.
 (* [comment removed for export] *)
 Definition FARGC_U : fact := FCond BC_NE (lvar 5) (lconst 2) true.
-Definition FEND0 : fact := FRange (ladd P0 (lvar 11)) 0x7fff7f800000 (0x800000000000 - 17).
+(* 75d69e00: argv[0]'s NUL is at P0 + L0 <= ed_top - 8 - LZ + L0 <= ed_top - 10 (LZ >= L0 + 2:
+   StackLayout.launch_string_bytes counts argv[0] with its NUL and the exec name's NUL), and
+   ed_top <= va_stack_top Sv48 = 2^47 (Run.valid_stack_top_va), hence the [- 10] *)
+Definition FEND0 : fact := FRange (ladd P0 (lvar 11)) 0x7fff7f800000 (0x800000000000 - 10).
 Definition FEND1 : fact := FRange (lsub P0 (sm_sp M1)) 0 4194304.
 Definition FEND2 : fact := FRange (lsub (ladd P0 (lvar 11)) (sm_sp M1)) 0 4194304.
-Definition FRZU : fact := FRange (lsub (laddc RANDP16 (-16)) (ladd P0 (lvar 11))) 1 4194304.
+Definition FRZU : fact := FRange (lsub TOPS (ladd P0 (lvar 11))) 1 4194304.
 Definition FSU : list fact := [FARGC_U; FEND0; FEND1; FEND2; FRZU].
 Definition SUC : sst := add_facts (drop_post S1 (drop_f DROPB)) FSU.
 

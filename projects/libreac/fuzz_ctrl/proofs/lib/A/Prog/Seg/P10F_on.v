@@ -5,16 +5,17 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its addresses and numbers changed; 417 of its 446 lines of code are new or changed and 367 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P10.v; 23 of its 84 lines of code are new or changed and 385 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/P10F_on.v -- route (C): the region form of Seg/P10F.v's (not in this delivery) p10_evt_F, for the image-A glue stage
    seg_P10 (lib/A/ACtlG/P10.v).  Written by a Theorem Labs lane under a Theorem Labs lane's standing consent (12:55Z,
    relayed by a Theorem Labs lane) for beside-files <S>F_on.v; Seg/P10F.v (not in this delivery) itself is byte-identical.  rule 24: no function
    proved.
 
-   SOURCE.  Seg/P10F.v (not in this delivery) at a Theorem Labs lane's fold a working branch 4bae33fdf54 (blob 77baaf12b29): the
+   SOURCE.  Seg/P10F.v (not in this delivery) at a Theorem Labs lane's fold a working branch (blob 77baaf12b29): the
    lemma p10_evt_F, its statement and its proof, with exactly two changes:
    - the callee premise HPUF : reac_ports_unknown_contract_F becomes HPUF_on : reac_ports_unknown_contract_F_on
-     (lib/A/Prog/reac_ports_unknown_c.v 5c6c0bd6556 (the blob this tree had at release c5e779efe8c), a Theorem Labs lane d4f70537e6f; proved by a Theorem Labs lane's
-     reac_ports_unknownF.reac_ports_unknown_F_holds_on, 4038362e590);
+     (lib/A/Prog/reac_ports_unknown_c.v 5c6c0bd6556 (the blob this tree had at release), a Theorem Labs lane; proved by a Theorem Labs lane's
+     reac_ports_unknownF.reac_ports_unknown_F_holds_on);
    - the premise `shadow_rw m` is DROPPED (and its intro HSW): the run reads and stores no shadow byte itself, and
      its one use was the callee's shadow premise, which reac_ports_unknown_contract_F_on drops (R = none: the
      callee's checks read the shadow of c through addressable m c 1 and the runtime cells).

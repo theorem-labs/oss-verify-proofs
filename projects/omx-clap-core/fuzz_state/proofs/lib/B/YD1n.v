@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1n.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10-29: A/AD1n.v's delta 4aa3d96b823 -> 946ad86dc9f (08df179fd3c, C5: the allocator sites pass the left disjunct of their trace premise) applied by 3-way merge; B's literals unchanged. *)
+(* Modified by Theorem Labs, 2026-10-29: A/AD1n.v's delta -> (C5: the allocator sites pass the left disjunct of their trace premise) applied by 3-way merge; B's literals unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

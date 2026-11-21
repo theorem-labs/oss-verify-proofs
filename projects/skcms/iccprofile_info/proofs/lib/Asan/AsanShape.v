@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the shape sections take AsanInit's LPS 727298f3 launch (the input, kernel build, exec file name, gid, groups, network queue, file limits and SIGPIPE disposition), which the class facts read, and qval_bounds_sh restates AsanMainLib.qval_bounds' proof. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -425,8 +426,46 @@ Section ShapeSound.
   Variable uid : word.
   Variable hw : word.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Context {sigpipe_default : bool}.   (* AsanInit's: the launch's SIGPIPE disposition at entry *)
+  (* LPS 727298f3: [facts_of_class_sound] reads the launch (AsanInit.uE0), so these sections
+     carry the launch input and its two premises as AsanMainLib's ClassSound does. *)
+  Variable apc : N.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variable urnd : InputStream.
+  Hypothesis Hkernel : in_kernel (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default))
+    = pinned_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default))).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default)).
 
   Let c := content_of argv fs.
+
+  (* AsanMainLib.qval_bounds's proof, with its four range lemmas inlined: their abstracted
+     argument lists are AsanMainLib's Section's, and this needs only [argv], [fs] and [Hva]. *)
+  Lemma qval_bounds_sh : forall q, QMIN <= qval q argv fs <= QMAX.
+  Proof.
+    assert (HA : 1 <= Z.of_nat (length argv) <= 1024) by (destruct Hva as [H _]; lia).
+    assert (HL0 : 0 <= Z.of_nat (length (nth 0 argv [])) <= 131071).
+    { pose proof (CatExec.valid_argv_str_len argv 0 Hva ltac:(destruct Hva as [Hl _]; lia)). lia. }
+    assert (HL1 : 0 <= Z.of_nat (length (nth 1 argv [])) <= 131071).
+    { destruct (Nat.lt_ge_cases 1 (length argv)) as [Hl|Hl].
+      - pose proof (CatExec.valid_argv_str_len argv 1 Hva Hl). lia.
+      - rewrite nth_overflow by lia. cbn. lia. }
+    assert (HQ : 0 <= qlook argv fs <= 4).
+    { pose proof (qlook_cases argv fs) as Q. clear -Q. destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q; lia).
+      destruct Q as [[-> _]|[[-> _]|[[-> _]|[-> _]]]]; lia. }
+    pose proof (cfglen_range (content_of argv fs)). pose proof (flen_range (content_of argv fs)).
+    pose proof (bz_range 2 (content_of argv fs)). pose proof (bz_range 1 (content_of argv fs)).
+    pose proof (Z.mod_pos_bound (bz 2 (content_of argv fs)) 4 ltac:(lia)).
+    assert (0 <= bz 1 (content_of argv fs) / 128 <= 1).
+    { split; [apply Z.div_pos; lia |]. assert (bz 1 (content_of argv fs) / 128 < 2) by (apply Z.div_lt_upper_bound; lia). lia. }
+    pose proof (room_eq (content_of argv fs)). pose proof (cmod_eq (content_of argv fs)).
+    unfold QMIN, QMAX. intros q; destruct q; cbn [qval]; lia.
+  Qed.
 
   Lemma variant_in : In (variant_of c) variants.
   Proof.
@@ -436,11 +475,11 @@ Section ShapeSound.
   Qed.
 
   Lemma variant_consistent : forall C, in_class C argv fs = true -> vconsistent C (variant_of c) = true.
-  Proof.
+  Proof using ph sp rdraw argv envp fs Hva uid hw Hfit.
     intros C HC. unfold vconsistent, variant_of, v_cfg0, v_cmod, v_cnt. cbn [fst snd].
-    pose proof (cbounds_sound C QCfgLen argv fs HC (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit QCfgLen)) as B1.
-    pose proof (cbounds_sound C QCmod argv fs HC (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit QCmod)) as B2.
-    pose proof (cbounds_sound C QCnt argv fs HC (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit QCnt)) as B3.
+    pose proof (cbounds_sound C QCfgLen argv fs HC (qval_bounds_sh QCfgLen)) as B1.
+    pose proof (cbounds_sound C QCmod argv fs HC (qval_bounds_sh QCmod)) as B2.
+    pose proof (cbounds_sound C QCnt argv fs HC (qval_bounds_sh QCnt)) as B3.
     cbn [qval] in B1, B2, B3. fold c in B1, B2, B3. pose proof (cfglen_range c). rewrite cmod_eq in B2. pose proof (bz_range 1 c) as R1.
     apply andb_true_intro; split; [apply andb_true_intro; split; [apply andb_true_intro; split|]|]; try (apply Z.leb_le; lia).
     - destruct (Z.eqb_spec (cfglen c) 0); apply Z.leb_le; lia.
@@ -454,9 +493,9 @@ Section ShapeSound.
     in_class C argv fs = true -> target_of C = Some (TOpen x) ->
     argv = [a0; p] -> qlook argv fs = 4 -> fs_lookup fs p = Some c' ->
     t_eq (sd HOLES D E fs (shape_of_tgt (tv x (variant_of c')))) (t_body c' fs).
-  Proof.
+  Proof using ph sp rdraw argv envp fs Hva uid hw Hfit.
     intros C x E HOLES D a0 p c' HC HT Hargv Hq Hlk.
-    pose proof (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit) as QB.
+    pose proof qval_bounds_sh as QB.
     assert (HLK : look_of C = qlook argv fs \/ look_of C = -1).
     { unfold look_of. destruct (Z.eqb_spec (fst (cbounds C QLook)) (snd (cbounds C QLook))); [|right; reflexivity].
       left. pose proof (cbounds_sound C QLook argv fs HC (QB QLook)) as BL. cbn [qval] in BL. lia. }
@@ -507,7 +546,7 @@ Section ShapeSound.
     t_eq (sd HOLES D E fs (shape_of_tgt (tv t (variant_of c)))) (spec argv fs).
   Proof.
     intros C t E HOLES D HC HT HB1 HB2.
-    pose proof (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit) as QB.
+    pose proof qval_bounds_sh as QB.
     assert (HLK : look_of C = qlook argv fs \/ look_of C = -1).
     { unfold look_of. destruct (Z.eqb_spec (fst (cbounds C QLook)) (snd (cbounds C QLook))); [|right; reflexivity].
       left. pose proof (cbounds_sound C QLook argv fs HC (QB QLook)) as BL. cbn [qval] in BL. lia. }
@@ -562,7 +601,7 @@ Section ShapeSound.
   (* [comment removed for export] *)
   Theorem class_shape_sound : forall SEGS C s E M HOLES D,
     in_class C argv fs = true -> class_shape_ok C s = true ->
-    (forall n, (n < 8)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    (forall n, (n < 8)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp uid kern execfn) n) ->
     eb E 1%nat = nth 0 argv [] -> eb E 2%nat = nth 1 argv [] ->
     know_ok SEGS E M (vfacts (variant_of c)) ->
     t_eq (sd HOLES D E fs s) (spec argv fs).
@@ -573,7 +612,7 @@ Section ShapeSound.
     rewrite (variant_consistent C HC) in HS. cbn [negb orb] in HS.
     destruct (sresolve (vfacts (variant_of c) ++ facts_of_class C) s) as [s'|] eqn:HR; [|discriminate].
     assert (HF : know_ok SEGS E M (vfacts (variant_of c) ++ facts_of_class C)).
-    { apply Forall_app. split; [exact HV | eapply facts_of_class_sound; eassumption]. }
+    { apply Forall_app. split; [exact HV | eapply (facts_of_class_sound ph sp rdraw brk0 mbase argv envp fs stdin uid hw Hsp Hva Hve Hfit apc gid groups net nofile sigmask urnd kern execfn Hkernel Hlau); eassumption]. }
     eapply t_eq_trans; [exact (sresolve_sound SEGS E M _ HF HOLES D fs s s' HR)|].
     eapply t_eq_trans; [exact (shape_equiv_sound HOLES D E fs s' _ (sresolve_nocase _ _ _ HR) (shape_of_tgt_nocase _) HS)|].
     eapply target_of_sound; eassumption.
@@ -920,6 +959,21 @@ Section LevelSound.
   Variable uid : word.
   Variable hw : word.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Context {sigpipe_default : bool}.   (* AsanInit's: the launch's SIGPIPE disposition at entry *)
+  (* LPS 727298f3: [facts_of_class_sound] reads the launch (AsanInit.uE0), so these sections
+     carry the launch input and its two premises as AsanMainLib's ClassSound does. *)
+  Variable apc : N.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variable urnd : InputStream.
+  Hypothesis Hkernel : in_kernel (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default))
+    = pinned_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default))).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default)).
 
   (* [comment removed for export] *)
   Lemma look4_input : forall C, in_class C argv fs = true -> look_of C = 4 ->
@@ -927,7 +981,7 @@ Section LevelSound.
                     fs_lookup fs p = Some c' /\ content_of argv fs = c' /\ qlook argv fs = 4.
   Proof.
     intros C HC HL.
-    pose proof (look_of_sound ph sp rdraw argv envp fs uid hw Hva Hfit C HC ltac:(lia)) as HLK. rewrite HL in HLK.
+    assert (HLK : look_of C = qlook argv fs) by (eapply look_of_sound; first [eassumption | lia]). rewrite HL in HLK.
     pose proof (qlook_cases argv fs) as Q. clear Hva Hfit.
     destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q in HLK; discriminate).
     destruct Q as [[Hq _]|[[Hq _]|[[Hq _]|[Hq (Hne & Hnd & Hl & c' & Hlk & Hc)]]]]; try (rewrite Hq in HLK; discriminate).
@@ -956,7 +1010,7 @@ Section LevelSound.
   (* [comment removed for export] *)
   Theorem class_pay_sound : forall SEGS L C s E M HOLES D,
     in_class C argv fs = true -> class_pay_ok L C s = true ->
-    (forall n, (n < 8)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    (forall n, (n < 8)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp uid kern execfn) n) ->
     eb E 1%nat = nth 0 argv [] -> eb E 2%nat = nth 1 argv [] ->
     know_ok SEGS E M (vfacts (variant_of (content_of argv fs))) ->
     t_eq (sd HOLES D E fs s) (t_res L argv fs).
@@ -970,7 +1024,7 @@ Section LevelSound.
     destruct (look4_input C HC HL) as (a0 & p & c' & Hargv & Hl & Hne & Hnd & Hlk & Hc & Hq).
     pose proof (target4_sound ph sp rdraw argv envp fs Hva uid hw Hfit C x E HOLES D a0 p c' HC HT Hargv Hq Hlk) as T4.
     assert (HF : know_ok SEGS E M (vfacts (variant_of (content_of argv fs)) ++ facts_of_class C)).
-    { apply Forall_app. split; [exact HV | eapply facts_of_class_sound; eassumption]. }
+    { apply Forall_app. split; [exact HV | eapply (facts_of_class_sound ph sp rdraw brk0 mbase argv envp fs stdin uid hw Hsp Hva Hve Hfit apc gid groups net nofile sigmask urnd kern execfn Hkernel Hlau); eassumption]. }
     rewrite Hc in HF.
     assert (RS : forall y, strip (S L') (TOpen x) = Some y ->
               forallb (fun v => negb (vconsistent C v) ||
@@ -993,7 +1047,7 @@ Section LevelSound.
   (* [comment removed for export] *)
   Theorem class_seg_sound : forall SEGS lv L C s E M HOLES D,
     in_class C argv fs = true -> class_seg_ok lv L C s = true ->
-    (forall n, (n < 8)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    (forall n, (n < 8)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp uid kern execfn) n) ->
     eb E 1%nat = nth 0 argv [] -> eb E 2%nat = nth 1 argv [] ->
     know_ok SEGS E M (vfacts (variant_of (content_of argv fs))) ->
     (forall h L', lv h = Some L' -> exists L'', (L <= L'')%nat /\ (L'' <= L')%nat /\ t_eq (HOLES h E fs) (t_res L'' argv fs)) ->
@@ -1004,7 +1058,7 @@ Section LevelSound.
     rewrite forallb_forall in HS. specialize (HS (variant_of (content_of argv fs)) (variant_in argv fs)).
     rewrite (variant_consistent ph sp rdraw argv envp fs Hva uid hw Hfit C HC) in HS. cbn [negb orb] in HS.
     assert (HF : know_ok SEGS E M (vfacts (variant_of (content_of argv fs)) ++ facts_of_class C)).
-    { apply Forall_app. split; [exact HV | eapply facts_of_class_sound; eassumption]. }
+    { apply Forall_app. split; [exact HV | eapply (facts_of_class_sound ph sp rdraw brk0 mbase argv envp fs stdin uid hw Hsp Hva Hve Hfit apc gid groups net nofile sigmask urnd kern execfn Hkernel Hlau); eassumption]. }
     destruct (look4_input C HC HL) as (a0 & p & c' & Hargv & Hl & Hne & Hnd & Hlk & Hc & Hq).
     refine (seg_ok_sound SEGS E M _ HF HOLES D fs (fun L => t_res L argv fs) _ _ _ L lv HH s HS).
     - (* [comment removed for export] *) intros L1 L2 Hle tr. rewrite Hargv. destruct L1 as [|[|L1]]; destruct L2 as [|[|L2]]; try lia; cbn [t_res]; rewrite ?Hlk; try (intros H; exact H).

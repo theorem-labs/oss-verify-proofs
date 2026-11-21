@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: module names for libreac/fuzz_grant. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YF0v.v of the release at recipes commit 4f87de75d67 (donor image fuzz_grant.asan, sha256 c2c7559b29bd; symbols from its unstripped twin 57c26f993615) to reac-repacer/fuzz_uci, for image A (fuzz_uci.asan, sha256 6ea017c24525 = the asan pin of harness.yaml; symbols from its unstripped twin 56822e263d76) by port_core 0e4e065eab9f: module paths changed, and shadow_apart's last step nia replaced by lia (the goal is linear once the divisions by 8 are rewritten); the file states no image value, so it is shared (lib/Reusable). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YF0v.v of the release at recipes (donor image fuzz_grant.asan, sha256 c2c7559b29bd; symbols from its unstripped twin 57c26f993615) to reac-repacer/fuzz_uci, for image A (fuzz_uci.asan, sha256 6ea017c24525 = the asan pin of harness.yaml; symbols from its unstripped twin 56822e263d76) by port_core 0e4e065eab9f: module paths changed, and shadow_apart's last step nia replaced by lia (the goal is linear once the divisions by 8 are rewritten); the file states no image value, so it is shared (lib/Reusable). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

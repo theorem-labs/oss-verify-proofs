@@ -1,7 +1,8 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/EVroom.v @ 86aa4177b94 (c-asan, cold/c-asan-nmax-param: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/EVroom.v (c-asan, cold/c-asan-nmax-param: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The one fact about the VALUE of EV_MAX that the Allocate / Deallocate walk files use, image-free.
 
    YG06.mapped_user_bound bounds the mapped user part of a region by kUserMapSize * EV_MAX.  A walk step that places

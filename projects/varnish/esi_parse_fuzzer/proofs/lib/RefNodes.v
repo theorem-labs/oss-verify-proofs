@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at each node, the per-byte access_ok of the openat path below TASK_SIZE, the page-rounded brk grant, the PROT_NONE mmap grant at Linux's own placement from the hint with the place_declined_b premise, and the vDSO-reserved range premise of mprotect). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.  (* 08b1429: LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is, read qualified *)
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Dest4xs.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
@@ -26,12 +28,20 @@ Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Amb OSSVerify.Proofs.varnis
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require LiaSec.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require Import BWorld.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 (* [comment removed for export] *)
 Local Ltac Stdlib.micromega.Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 Local Ltac lia ::= OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.LiaSec.lia_sec.
 (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
+
+(* LPS 727298f3: [RomBase.sys_rob] at a node whose system call does not read [in_mem], from the
+   equation naming its number. *)
+Ltac rob_mf Heq :=
+  eapply RomBase.sys_rob_memfree;
+    [ first [reflexivity | eassumption]
+    | rewrite Heq; first [RomBase.memfree_lit | rewrite u64_lit by lia; RomBase.memfree_lit] ].
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -137,7 +147,7 @@ Lemma rz_close : forall regs (pc : word) mem model w fd e K,
 Proof.
   intros regs pc mem model w fd e K HF HE Hh Hlazy H17 Hfd Hfd32 Hlk Hc.
   eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-  eapply rz_ret_only_silent; [exact Hh | reflexivity | | | | rewrite adv_set_epend; exact Hc].
+  eapply rz_ret_only_silent; [exact Hh | reflexivity | | | | rob_mf H17 | rewrite adv_set_epend; exact Hc].
   - intros o. rewrite (syscall_spec_57 _ model o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
     rewrite in_arg0_si, ms_gpr_epend0, Hfd, (fd32_id fd Hfd32). exact (close_outcome fd _ model e o Hlk).
   - rewrite with_fds_halted'. exact Hh.
@@ -161,7 +171,11 @@ Lemma rz_ioctl_winsz : forall regs (pc : word) mem model w fd (c : word) K,
 Proof.
   intros regs pc mem model w fd c K HF HE Hh Hlazy H17 Hfd Hfd32 Hlk H11 Hc.
   eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-  eapply rz_ret_only_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+  eapply rz_ret_only_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy
+                             | eapply RomBase.ioctl_tty_rob;
+                                 [ reflexivity | rewrite H17; apply u64_lit; lia
+                                 | rewrite ms_gpr_epend1, H11; reflexivity ]
+                             | rewrite adv_set_epend; exact Hc].
   intros o. rewrite (syscall_spec_29 _ model o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
   rewrite in_arg0_si, in_arg1_si, ms_gpr_epend0, ms_gpr_epend1, Hfd, (fd32_id fd Hfd32), H11.
   apply (ioctl_tty_outcome fd _ _ model c o Hlk). reflexivity.
@@ -243,7 +257,7 @@ Proof.
   eapply (rz_det segs _ model _ (mkEffect (len_word bs) (delivered_writes (getr regs 11) bs) [])
             (with_fds (fd_insert (m_fds model) fd (FdFile p (off + len_word bs))) model));
     [exact Hh | reflexivity | exact Hchk
-    | rewrite with_fds_halted'; exact Hh | rewrite with_fds_lazy; exact Hlazy | ].
+    | rewrite with_fds_halted'; exact Hh | rewrite with_fds_lazy; exact Hlazy | rob_mf Hno | ].
   destruct bs as [|b bsr]; cbn [delivered_writes].
   - unfold ms. rewrite adv_ret_epend. cbn [wbytes] in Hc. exact Hc.
   - unfold ms. rewrite adv_write1_epend. exact Hc.
@@ -289,29 +303,43 @@ Section Openat.
   #[using="Hfl"] Lemma open_flags_modeled : modeled_open_flags (getr regs 12) = true.
   Proof. exact (modeled_open_flags_rd _ Hfl). Qed.
 
+  (* LPS 727298f3: an openat whose path read does not fault reads the same over a larger backing *)
+  #[using="ms H17"] Lemma openat_node_rob : read_cstr (mrb segs mem) (getr regs 11) <> CstrFault ->
+    RomBase.sys_rob segs (mkCfg ms model).
+  Proof.
+    intros Hnf. apply (RomBase.openat_rob segs ms model (getr regs 17) eq_refl Hno56).
+    unfold ms. rewrite ms_read_byte_epend, ms_gpr_epend1. exact Hnf.
+  Qed.
+
   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
+  (* 08b1429: read_cstr refuses a byte at or above TASK_SIZE (read-cstr-accessok), so the 4096 bytes lie below it *)
   #[using="ms Hfl H10 H17 Hlazy Hh HE HF w"] Lemma rz_openat_toolong : forall bs K,
     rdn segs mem (getr regs 11) 4096 = Some bs -> ~ In (Z_to_bv 8 0) bs ->
+    (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z ->
     realizes segs (mkCfg (post (errno_ret ENAMETOOLONG)) model) K ->
     realizes segs (mkCfg (mkst regs pc mem (seg_rom segs)) model) K.
   Proof.
-    intros bs K Hrd Hnz Hc. cbv delta [post] in *.
-    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hrd) as Hp.
+    intros bs K Hrd Hnz Hlo Hc. cbv delta [post] in *.
+    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hlo Hrd) as Hp.
     eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply rz_ret_only_copyins_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+    eapply rz_ret_only_copyins_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy
+                                       | apply openat_node_rob; rewrite Hp; discriminate
+                                       | rewrite adv_set_epend; exact Hc].
     intros o. fold ms. rewrite openat_spec_head.
     apply (openat_toolong_outcome _ _ _ _ model open_flags_modeled). rewrite open_in_mem. exact Hp.
   Qed.
 
   (* [comment removed for export] *)
+  (* 08b1429: with the string's end below TASK_SIZE (read_cstr's per-byte access_ok) *)
   Definition path_at (p : list byte) : Prop :=
     (length p <= 4095)%nat /\ ~ In (Z_to_bv 8 0) p
+    /\ (bv_unsigned (getr regs 11) + Z.of_nat (length p) < TASK_SIZE)%Z
     /\ rdn segs mem (getr regs 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]).
 
   Lemma path_at_cstr : forall p, path_at p -> read_cstr (mrb segs mem) (getr regs 11) = CstrOk p.
-  Proof. (intros p; (first [ intro dR_8; dand3 dR_8 as H1 H2 H3 | intros (H1 & H2 & H3) ])). apply read_cstr_of_rdn; assumption. Qed.
+  Proof. intros p (H1 & H2 & H3 & H4). apply read_cstr_of_rdn; assumption. Qed.
 
   (* [comment removed for export] *)
   #[using="ms Hfl H10 H17 Hlazy Hh HE HF w"] Lemma rz_openat_empty : forall K,
@@ -321,7 +349,9 @@ Section Openat.
   Proof.
     intros K Hp Hc. cbv delta [post] in *.
     eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply rz_ret_only_copyins_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+    eapply rz_ret_only_copyins_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy
+                                       | apply openat_node_rob; rewrite (path_at_cstr [] Hp); discriminate
+                                       | rewrite adv_set_epend; exact Hc].
     intros o. fold ms. rewrite openat_spec_head.
     apply (openat_empty_outcome _ _ _ _ model open_flags_modeled). rewrite open_in_mem. exact (path_at_cstr [] Hp).
   Qed.
@@ -336,7 +366,9 @@ Section Openat.
   Proof.
     intros p K Hp Hne Hnd Hndd Hsl Hfs Hc. cbv delta [post] in *.
     eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply rz_ret_only_copyins_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+    eapply rz_ret_only_copyins_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy
+                                       | apply openat_node_rob; rewrite (path_at_cstr p Hp); discriminate
+                                       | rewrite adv_set_epend; exact Hc].
     intros o. fold ms. rewrite openat_spec_head.
     apply (openat_absent_outcome _ _ _ _ model open_flags_modeled eq_refl Hfl p);
       [rewrite open_in_mem; exact (path_at_cstr p Hp) | exact Hne | exact Hnd | exact Hndd | exact Hsl | exact Hfs].
@@ -353,7 +385,8 @@ Section Openat.
   Proof.
     intros KA KB Hp HA HB. cbv delta [post] in *.
     eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply rz_open; [exact Hh | exact Hlazy | reflexivity | | | | exact Hfree | |].
+    eapply rz_open; [exact Hh | exact Hlazy | reflexivity | | | | exact Hfree
+                    | apply openat_node_rob; rewrite (path_at_cstr _ Hp); discriminate | |].
     - intros o. rewrite acfg_si_nonalloc by (rewrite Hno56; reflexivity). fold ms. rewrite openat_spec_head.
       apply (openat_dot_outcome _ _ _ _ model open_flags_modeled eq_refl Hfl).
       rewrite open_in_mem. exact (path_at_cstr _ Hp).
@@ -375,7 +408,8 @@ Section Openat.
   Proof.
     intros p d KA KB Hp Hne Hnd Hndd Hsl Hfs HA HB. cbv delta [post] in *.
     eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply rz_open; [exact Hh | exact Hlazy | reflexivity | | | | exact Hfree | |].
+    eapply rz_open; [exact Hh | exact Hlazy | reflexivity | | | | exact Hfree
+                    | apply openat_node_rob; rewrite (path_at_cstr p Hp); discriminate | |].
     - intros o. rewrite acfg_si_nonalloc by (rewrite Hno56; reflexivity). fold ms. rewrite openat_spec_head.
       apply (openat_file_outcome _ _ _ _ model open_flags_modeled eq_refl Hfl p d);
         [rewrite open_in_mem; exact (path_at_cstr p Hp) | exact Hne | exact Hnd | exact Hndd | exact Hsl | exact Hfs].
@@ -464,8 +498,7 @@ Lemma brk_model_grow_eq : forall m (d : Z),
   brk_model (Z_to_bv 64 (bv_unsigned b + d)) (Z_to_bv 64 (bv_unsigned b + d)) m
   = with_vmmaps (mkVmMapsFull (vm_reserved h) ((b, Z_to_bv 64 d) :: vm_maps h)
                    (vm_noaccess h) (vm_start_brk h)
-                   (Z_to_bv 64 (bv_unsigned b + d)) (vm_limit h) (vm_mmap_base h)
-                   (vm_init_sp h)) m.
+                   (Z_to_bv 64 (bv_unsigned b + d)) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m.
 Proof.
   intros m d h b Hd Hb0 Hnw Hbal Hdal.
   pose proof (u64_range b) as Hbr.
@@ -480,10 +513,16 @@ Proof.
   unfold brk_model_next, brk_maps_next. fold b.
   rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned b))) by lia. rewrite andb_false_r.
   rewrite (brk_grants_grow req req b Hreq0 Hb0 Hlt), (brk_unmaps_grow req b) by lia.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b)) by (first [lia | exact Hbal]).
+  rewrite Hureq.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b + d))
+    by (first [lia | rewrite Zplus_mod, Hbal, Hdal; reflexivity]).
+  unfold brk_page_range. rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned b + d))) by lia.
   cbn [app maps_subtract_ranges fold_left].
-  replace (req - b) with (Z_to_bv 64 d); [reflexivity|].
-  apply bv_eq. rewrite bv_sub_unsigned, Hureq.
-  rewrite bv_wrap_small by (unfold bv_modulus; lia). rewrite u64_lit by lia. lia.
+  replace (Z_to_bv 64 (bv_unsigned b)) with b
+    by (apply bv_eq; rewrite u64_lit by lia; reflexivity).
+  replace (bv_unsigned b + d - bv_unsigned b)%Z with d by lia.
+  reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -505,11 +544,34 @@ Definition noaccess_model (a n : word) (m : Model) : Model :=
                  (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
 
 (* [comment removed for export] *)
+(* 08b1429: the first conjunct is the spec's placement rule ([Mmap.linux_place], decided by
+   [Placement.linux_place_is]); the four old conjuncts stay for the consumers that destruct them. *)
 Definition grant_ok_na (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n).
 
+Lemma grant_ok_na_intro : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true ->
+  grant_ok_na hint m a n = true.
+Proof.
+  intros hint m a n Hn Hnal Hpl.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_admissible _ _ _ _ _ Hn Hnal Hpl)
+    as (Hal & Hpos & Htop & Hfree).
+  unfold grant_ok_na. rewrite Hpl, Hfree.
+  rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos), (proj2 (Z.leb_le _ _) Htop).
+  reflexivity.
+Qed.
+
+Lemma grant_ok_na_place : forall hint m a n,
+  grant_ok_na hint m a n = true ->
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true.
+Proof.
+  intros hint m a n H. unfold grant_ok_na in H.
+  rewrite !andb_true_iff in H. tauto.
+Qed.
 (* [comment removed for export] *)
 
 Definition mmap_noaccess_args_ok (ms : machine_state) : Prop :=
@@ -520,64 +582,63 @@ Definition mmap_noaccess_args_ok (ms : machine_state) : Prop :=
 (* [comment removed for export] *)
 Lemma mmap_noaccess_outcome_si : forall ms x8 model,
   bv_unsigned x8 = 222%Z -> m_halted model = None -> mmap_noaccess_args_ok ms ->
+  (* LPS 727298f3: off the [place_declined_b] decline, as [mmap_noaccess_outcome] needs. *)
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let n := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   forall o, syscall_spec_acfg (sys_input segs ms x8) model o <->
-    (exists e, In e (mmap_errnos_when (mmap_reserve_refusable model n))
+    (exists e, In e (mmap_errnos_when (mmap_reserve_refusable (ms_gpr ms 0) model n))
                /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
     \/ (exists a, grant_ok_na (ms_gpr ms 0) model a n = true
          /\ o = Ok (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) (noaccess_model a (Z_to_bv 64 n) model) []).
 Proof.
-  (intros ms x8 model Hno Hh; (first [ intro dR_9; dand5 dR_9 as H1 H2 H3 H4 H5 | intros (H1 & H2 & H3 & H4 & H5) ]); intros n).
+  (intros ms x8 model Hno Hh; (first [ intro dR_9; dand5 dR_9 as H1 H2 H3 H4 H5 | intros (H1 & H2 & H3 & H4 & H5) ]); intros Hdecl n).
+  assert (E1 : w_is0 (ms_gpr ms 1) = false) by (unfold w_is0; apply bv_eqb_neq; exact H1).
+  assert (Hn0 : (0 < n)%Z).
+  { unfold n. pose proof (page_round_up_Z_pos _ (w_is0_false_pos _ E1)). unfold page_size in *. lia. }
+  assert (Hnal : (n mod page_size = 0)%Z)
+    by (unfold n; apply LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.page_round_up_Z_aligned).
   refine (acfg_lift_mmap_when (sys_input segs ms x8) model
             (fun o => exists a, grant_ok_na (ms_gpr ms 0) model a n = true
                /\ o = Ok (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) (noaccess_model a (Z_to_bv 64 n) model) [])
-            (mmap_reserve_refusable model n) _ Hh _ _ _ _).
+            (mmap_reserve_refusable (ms_gpr ms 0) model n) _ Hh _ _ _ _).
   - rewrite in_sysno_si. exact Hno.
   - intros o. cbv beta.
     rewrite (syscall_spec_222 _ model o) by (rewrite in_sysno_si; exact Hno).
     rewrite in_arg0_si, in_arg1_si, in_arg2_si, in_arg3_sys_input, in_arg4_sys_input, in_arg5_sys_input.
     rewrite H2, H3, H4, H5.
-    assert (E1 : w_is0 (ms_gpr ms 1) = false) by (unfold w_is0; apply bv_eqb_neq; exact H1).
     rewrite (mmap_noaccess_outcome (ms_gpr ms 0) (ms_gpr ms 1) (Z_to_bv 64 0) (Z_to_bv 64 34)
                (Z_to_bv 64 (-1)) (Z_to_bv 64 0) (sys_input segs ms x8) model o E1
-               ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)).
-    unfold mmap_err_out, grant_ok_na, noaccess_model, with_mmap_backing.
+               ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) Hdecl).
+    unfold mmap_err_out, noaccess_model, with_mmap_backing.
     replace (mmap_noreserve_b (Z_to_bv 64 34)) with false by (vm_compute; reflexivity). fold n.
     split; (intros [H | (a & Hg & ->)]; [left; exact H | right; exists a; split; [|reflexivity]]).
-    + (first [ dand4 Hg as G1 G2 G3 G4 | destruct Hg as (G1 & G2 & G3 & G4) ]).
-      rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4. reflexivity.
-    + rewrite !andb_true_iff in Hg. destruct Hg as [[[G1 G2] G3] G4].
-      apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. auto 10.
+    + apply grant_ok_na_intro; [exact Hn0 | exact Hnal |].
+      exact (proj2 (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_iff _ _ _ _ _ Hn0 Hnal) Hg).
+    + exact (proj1 (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_iff _ _ _ _ _ Hn0 Hnal)
+               (grant_ok_na_place _ _ _ _ Hg)).
   - intros o (a & Hg & ->). do 3 eexists. split; [reflexivity|]. split; [|exact Hh].
-    unfold grant_ok_na in Hg. rewrite !andb_true_iff in Hg. destruct Hg as [[[G1 _] _] _].
+    unfold grant_ok_na in Hg. rewrite !andb_true_iff in Hg. destruct Hg as [[[[_ G1] _] _] _].
     apply Z.eqb_eq in G1. exact G1.
-  - intros o (a & Hg & _). unfold grant_ok_na in Hg. rewrite !andb_true_iff in Hg.
-    destruct Hg as [[[G1 G2] G3] G4].
-    apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3.
-    exact (mmap_reserve_not_refusable model n a G1 G2 G3 G4).
-  - intros Hf. destruct (mmap_reserve_refusable_false _ _ Hf) as (a & G1 & G2 & G3 & G4).
-    eexists. exists a. split; [|reflexivity]. unfold grant_ok_na.
-    rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4.
-    reflexivity.
+  - intros o (a & Hg & _).
+    exact (mmap_reserve_not_refusable (ms_gpr ms 0) model n a (grant_ok_na_place _ _ _ _ Hg)).
+  - intros Hf. destruct (mmap_reserve_refusable_false _ _ _ Hn0 Hnal Hf) as (a & Hp).
+    eexists. exists a. split; [|reflexivity]. exact (grant_ok_na_intro _ _ _ _ Hn0 Hnal Hp).
 Qed.
 
 Lemma grant_ok_na_not_refusable : forall hint m a n,
-  grant_ok_na hint m a n = true -> mmap_reserve_refusable m n = false.
+  grant_ok_na hint m a n = true -> mmap_reserve_refusable hint m n = false.
 Proof.
-  intros hint m a n H. unfold grant_ok_na in H. rewrite !andb_true_iff in H.
-  destruct H as [[[H1 H2] H3] H4].
-  apply Z.eqb_eq in H1. apply Z.ltb_lt in H2. apply Z.leb_le in H3.
-  exact (mmap_reserve_not_refusable m n a H1 H2 H3 H4).
+  intros hint m a n H. exact (mmap_reserve_not_refusable hint m n a (grant_ok_na_place _ _ _ _ H)).
 Qed.
 
 Lemma reserve_refusable_false_iff : forall hint m n,
-  mmap_reserve_refusable m n = false <-> exists a, grant_ok_na hint m a n = true.
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  mmap_reserve_refusable hint m n = false <-> exists a, grant_ok_na hint m a n = true.
 Proof.
-  intros hint m n. split.
-  - intros H. destruct (mmap_reserve_refusable_false _ _ H) as (a & H1 & H2 & H3 & H4).
-    exists a. unfold grant_ok_na.
-    rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2), (proj2 (Z.leb_le _ _) H3), H4.
-    reflexivity.
+  intros hint m n Hn Hnal. split.
+  - intros H. destruct (mmap_reserve_refusable_false _ _ _ Hn Hnal H) as (a & Hp).
+    exists a. exact (grant_ok_na_intro _ _ _ _ Hn Hnal Hp).
   - intros (a & Ha). exact (grant_ok_na_not_refusable hint m a n Ha).
 Qed.
 
@@ -608,6 +669,7 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   ms_gpr ms 2 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   forall o, syscall_spec_acfg (sys_input segs ms x8) model o <->
@@ -616,7 +678,7 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
     \/ (mprotect_budget_ok model addr n = true
         /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model addr n model) []).
 Proof.
-  intros ms x8 model addr len Hno Hh H0 Hal H1 Hlen Hnw H2 n Hna Hma.
+  intros ms x8 model addr len Hno Hh H0 Hal H1 Hlen Hnw H2 n Hvd Hna Hma.
   refine (acfg_lift_mprotect_when (sys_input segs ms x8) model
             (fun o => mprotect_budget_ok model addr n = true
                /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model addr n model) [])
@@ -631,7 +693,7 @@ Proof.
     rewrite <- mprotect_model_next_eq. subst n. rewrite <- Hu1.
     apply (mprotect_expose_outcome addr (ms_gpr ms 1) (Z_to_bv 64 3) _ model o);
       [vm_compute; reflexivity | exact Hal | | rewrite Hu1; exact Hnw | vm_compute; reflexivity
-      | rewrite Hu1; exact Hna | rewrite Hu1; exact Hma].
+      | rewrite Hu1; exact Hvd | rewrite Hu1; exact Hna | rewrite Hu1; exact Hma].
     unfold w_is0, bv_eqb. rewrite Hu1. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. apply Z.eqb_neq. lia.
   - intros o (_ & ->). do 3 eexists. split; [reflexivity|]. split; [vm_compute; reflexivity | exact Hh].
   - intros o (Hb & _). exact (mprotect_not_refusable _ _ _ Hb).
@@ -790,8 +852,9 @@ Proof.
     - intros [t Ht]. exists t. split; [exact Ht|reflexivity].
     - (intros o; (first [ intro dR_11; dex1 dR_11 as t; destruct dR_11 as [Ht ->] | intro dR_11; dand3 dR_11 as t Ht -> | intros (t & Ht & ->) ])). exists (exist _ t Ht). reflexivity.
     - intros i. rewrite with_tid_halted. exact Hh.
-    - intros i. rewrite with_tid_lazy. exact Hlazy. }
-  destruct Hnode as [Hn1 Hn2]. split.
+    - intros i. rewrite with_tid_lazy. exact Hlazy.
+    - eapply RomBase.sys_rob_memfree; [exact Hsvc | rewrite Hno; exact RomBase.memfree_96]. }
+  destruct Hnode as [Hn1 [Hn2 Hrob]]. split; [| split; [| exact Hrob]].
   - intros i. rewrite Enx. apply Hn1.
   - intros e st Hss. (first [ pose proof ((Hn2 e st Hss)) as dR_5; dex1 dR_5 as i; destruct dR_5 as [-> ->] | pose proof ((Hn2 e st Hss)) as dR_5; dand3 dR_5 as i -> -> | destruct (Hn2 e st Hss) as (i & -> & ->) ]). exists i. rewrite Enx. split; reflexivity.
 Qed.

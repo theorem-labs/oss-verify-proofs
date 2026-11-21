@@ -3,12 +3,13 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 230 of its 278 lines of code are new or changed and 526 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment L03 of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (plain, ELF 8dec0b814e6f): [0x13ad8, 0x13adc], the end
    of file turn f. K13ad8 f -> K138e8 (S f) or K13ae0 (Prog/LLVMFuzzerTestOneInput_c.v's S_L03 at the cut record
    CPseg, Prog/Seg/SegWalkMainA.v).
    Part of the proof of LLVMFuzzerTestOneInput (its segment L03); no released proof of fuzz_segconf's
-   LLVMFuzzerTestOneInput exists; written new in the style of reac-pw/fuzz_role's Prog/Seg/X01.v (commit
-   cb8205fb6109).
+   LLVMFuzzerTestOneInput exists; written new in the style of reac-pw/fuzz_role's Prog/Seg/X01.v.
+   
    The cut is at its own FP state (Tac_b8.b8_cut_open): every step below runs at it. 0x13ad8 `jal free` (ra 0x13adc;
    free at 0x16a3c = frame_facts_plain's ms_free; a0 = text from P_K13ad8) through Tac_b8.b8_free_call with hb1 = [],
    the text block (t, nt) at the head and hb2 = [m; c]: its continuation gives FR with hb = [m; c], the callee-saved

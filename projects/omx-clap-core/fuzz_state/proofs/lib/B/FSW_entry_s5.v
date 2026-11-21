@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v, with its module paths and module names changed; 958 of its 1043 lines of code are new or changed and 1288 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, lane ENTRY, IMAGE B (fs.asan-ubsan, pinned 5ac5ce0954f8): segment S5 of the LLVMFuzzerTestOneInput
    walk (0x810bc-0x8110c, fs.c:324-326, fuzz_copy inlined), the B twin of lib/A/FSW_entry_s5.v with the same lemma
    names and argument order: `text = malloc(n + 1)` (0x810c0, __wrap_malloc 0x530e4, ra 0x810c4), `beqz a0` to the
@@ -16,10 +17,10 @@
    INV_A5: malloc returned) and M at 0x810e0 (PC_M5, INV_M5: the text holds the payload's first n bytes).
    fe_seg5 = fe_s5_malloc (C2 -> A) . fe_s5_mid (A -> M) . fe_s5_tail (M -> C5).
    rule 24: proves function LLVMFuzzerTestOneInput (segment S5; reuse search: proof-index LLVMFuzzerTestOneInput,
-   ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_s5.v on a working branch 0d34d65d2b7 (itself from the donor
+   ported from a working branch).
+   Ported from: lib/A/FSW_entry_s5.v on a working branch (itself from the donor
    cgif_file_fuzzer lib/A/ACev.v:227-262 and lib/A/ACfi.v:120), every address from the B listing; the B-only steps from
-   the old bespoke B proof lib/B/Prog/ASlotStgMemcpy.v on a working branch 179c25520a7 (its argument:
+   the old bespoke B proof lib/B/Prog/ASlotStgMemcpy.v on a working branch (its argument:
    s5 + s3 = text + n and text + n + 1 <= alloc_ceiling < 2^64, so neither UBSan check traps), restated in the walk form.
    Decisions (A's, at B's numerals, and the B-only point (5)):
    (1) the malloc: U = [] at the call, so the S form composes: FsEntryRt's fe_malloc (U form) gives the plain contract by

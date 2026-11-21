@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, in both copies: Rndoff (the AT_RANDOM block's offset, block_head_size - 16) replaces Wblk as slot 4, hidden_arg's strings start at sp + C + pad, am_reserved is init_reserved (the segments and the vDSO pair) and the new am_resfree says every mapping misses it (from mf_resx), the new am_rdr says the model's channel reader is set (from mf_rdr and Run.valid_input_channel_reader), the stack window is 6144512 bytes (was 8388608), EB, V_of and wrap_mem take mbase, the boot indices move up by 16 through V'_keep's vsrc, and argv[0]'s length bound is CatExec's valid_argv_str_len. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -78,7 +79,7 @@ Section Entry.
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   Let usp := bv_unsigned sp.
 
   (* [comment removed for export] *)
@@ -103,7 +104,7 @@ Section Entry.
     assert (IN : In (KRange (EVar 0) 140735340871680 140737488355136) (if w1 then OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn8a__A3.BootKn11w1.KN_MAIN else A3.BootKn11w2.KN_MAIN))
       by (destruct w1; apply in_kn_b; vmeq_refl).
     pose proof (proj1 (Forall_forall _ _) HKN _ IN) as R0. cbn [kentry_ok edenot] in R0.
-    rewrite (ev_EB_sp sp draw inp a tid c pl js) in R0. fold usp in R0. lia.
+    rewrite (ev_EB_sp sp mbase draw inp a tid c pl js) in R0. fold usp in R0. lia.
   Qed.
 
   #[using="VI VE usp"] Theorem at_main_facts : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
@@ -127,8 +128,8 @@ Section Entry.
     pose proof (KIN (KRange (EVar 0) 140735340871680 140737488355136) ltac:(vmeq_refl)) as R0. cbn [kentry_ok edenot] in R0. rewrite E0 in R0. fold usp in R0.
     (* [comment removed for export] *)
     pose proof (p8_factsG sp brk mbase draw lim inp (L_MAIN lb)
-                  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-                   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
+                  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+                   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
     assert (KOK : know_ok SEGS (tgt_env E) (mrestrict (H_MAIN sp p8 sb p10 p12 a W p24) M) (vr_entries VR_A3 ++ tr_kn D_A3 VR_A3 KNw)).
     { apply (trx_A3_sound E); [| | | | | | | exact HKN].
       - (* [comment removed for export] *) rewrite E0. exact S16.
@@ -138,33 +139,34 @@ Section Entry.
                      bv_unsigned (ev E i) mod 4096 = 0 /\ 4096 * lo <= bv_unsigned (ev E i) <= 4096 * hi)
           by (intros i n lo hi Hin Hn Hlo Hhi; exact (page_of_map E (L_MAIN lb) i n lo hi HMO Hin ltac:(lia) Hn Hlo Hhi)).
         unfold PAGES4. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd].
-        + apply (PG 26%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 27%nat 3727360); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 42%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 43%nat 3727360); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
         + (* [comment removed for export] *)
-          destruct (PG 28%nat 137439023104 1 34326181871 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve_e) eq_refl ltac:(lia) eq_refl) as [A1 A2].
+          destruct (PG 44%nat 137439023104 1 34326181871 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve_e) eq_refl ltac:(lia) eq_refl) as [A1 A2].
           split; [exact A1|]. rewrite E28 in *. unfold SHB_HI in P2. lia.
-        + apply (PG 36%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 37%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 38%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 46%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 60%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 83%nat 11571200); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 52%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 53%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 54%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 62%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 76%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 99%nat 11571200); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
         + (* [comment removed for export] *)
-          pose proof (KIN (KAlign (EVar 101) 4096) ltac:(vmeq_refl)) as KA.
-          pose proof (KIN (KRange (EVar 101) 6303744 1080045568) ltac:(vmeq_refl)) as KR.
+          pose proof (KIN (KAlign (EVar 117) 4096) ltac:(vmeq_refl)) as KA.
+          pose proof (KIN (KRange (EVar 117) 6303744 1080045568) ltac:(vmeq_refl)) as KR.
           cbn [kentry_ok edenot] in KA, KR. destruct KA as [_ KA]. split; [exact KA | lia].
-        + apply (PG 104%nat 1048576); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 105%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 106%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 107%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 120%nat 1048576); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 121%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 122%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 123%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
       - (* [comment removed for export] *)
         unfold VR_REN. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd]; (split; [unfold RENAMES; cbn [In]; in_solve_e|]).
         + exact (KIN (KRange (EVar 1) 1 1024) ltac:(vmeq_refl)).
         + exact (KIN (KRange (EVar 2) 0 256) ltac:(vmeq_refl)).
         + exact (KIN (KRange (EVar 3) 0 131071) ltac:(vmeq_refl)).
-        + exact (KIN (KRange (EVar 4) 0 280000) ltac:(vmeq_refl)).
+        + (* the random block's offset C - 16: the entry table's own range *)
+          pose proof (KIN (KRange (EVar 4) 464 10736) ltac:(vmeq_refl)) as K4. cbn [kentry_ok edenot] in K4 |- *. lia.
         + exact (KIN (KRange (EVar 5) 0 4294967294) ltac:(vmeq_refl)).
-        + exact (KIN (KRange (EVar 8) 1 4194303) ltac:(vmeq_refl)).
+        + exact (KIN (KRange (EVar 24) 1 4194303) ltac:(vmeq_refl)).
       - (* [comment removed for export] *) rewrite E29, E28, Hsb. unfold SBV. lia.
       - (* [comment removed for export] *) rewrite E62, E0. fold usp.
         unfold STv. fold usp. apply u_small.
@@ -200,7 +202,7 @@ Section Entry.
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
     (forall i, 0x10000 <= i < 0xa4000 -> M (wa i) = None)
-    /\ stk SEGS M (usp - 8388608) usp.
+    /\ stk SEGS M (usp - 6144512) usp.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl Hjs HM.
     destruct (at_main_facts w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl Hjs HM) as [HMF _].
@@ -210,7 +212,7 @@ Section Entry.
     split.
     - intros i Hi. exact (mimg_cover SEGS _ M asan_mem_facts_kn 0x10000 0xa4000 HMFc ltac:(vmeq_refl) i Hi).
     - pose proof (mwr_find SEGS _ M asan_mem_facts_kn
-                    (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8388608))) 8388608
+                    (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-6144512))) 6144512
                     HMFc ltac:(vmeq_refl)) as WR.
       cbn [zv] in WR.
       (* [comment removed for export] *)
@@ -221,7 +223,7 @@ Section Entry.
         pose proof (sp_digits (EB' a tid c pl js)) as SD. cbv beta in SD. rewrite E0 in SD. fold usp in SD.
         destruct (SD S16 ltac:(lia)) as [D1 _]. rewrite E0. fold usp. lia. }
       rewrite DG in WR.
-      apply wr_at_stk; [replace (usp - (usp - 8388608)) with 8388608 by lia; exact WR|].
+      apply wr_at_stk; [replace (usp - (usp - 6144512)) with 6144512 by lia; exact WR|].
       intros x Hx. apply off_img_Z. unfold IMG_HI. lia.
   Qed.
 End Entry.
@@ -257,7 +259,7 @@ Section Entry.
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   Let usp := bv_unsigned sp.
 
   (* [comment removed for export] *)
@@ -282,7 +284,7 @@ Section Entry.
     assert (IN : In (KRange (EVar 0) 140735340871680 140737488355136) (if w1 then OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn10b__B3.BootKn11w1.KN_MAIN else OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn10b__B3.BootKn11w2.KN_MAIN))
       by (destruct w1; apply in_kn_b; vmeq_refl).
     pose proof (proj1 (Forall_forall _ _) HKN _ IN) as R0. cbn [kentry_ok edenot] in R0.
-    rewrite (ev_EB_sp sp draw inp a tid c pl js) in R0. fold usp in R0. lia.
+    rewrite (ev_EB_sp sp mbase draw inp a tid c pl js) in R0. fold usp in R0. lia.
   Qed.
 
   #[using="VI VE usp"] Theorem at_main_facts : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
@@ -306,8 +308,8 @@ Section Entry.
     pose proof (KIN (KRange (EVar 0) 140735340871680 140737488355136) ltac:(vmeq_refl)) as R0. cbn [kentry_ok edenot] in R0. rewrite E0 in R0. fold usp in R0.
     (* [comment removed for export] *)
     pose proof (p8_factsG sp brk mbase draw lim inp (L_MAIN lb)
-                  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-                   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
+                  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+                   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
     assert (KOK : know_ok SEGS (tgt_env E) (mrestrict (H_MAIN sp p8 sb p10 p12 a W p24) M) (vr_entries VR_A3 ++ tr_kn D_A3 VR_A3 KNw)).
     { apply (trx_A3_sound E); [| | | | | | | exact HKN].
       - (* [comment removed for export] *) rewrite E0. exact S16.
@@ -317,33 +319,34 @@ Section Entry.
                      bv_unsigned (ev E i) mod 4096 = 0 /\ 4096 * lo <= bv_unsigned (ev E i) <= 4096 * hi)
           by (intros i n lo hi Hin Hn Hlo Hhi; exact (page_of_map E (L_MAIN lb) i n lo hi HMO Hin ltac:(lia) Hn Hlo Hhi)).
         unfold PAGES4. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd].
-        + apply (PG 26%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 27%nat 3727360); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 42%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 43%nat 3727360); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
         + (* [comment removed for export] *)
-          destruct (PG 28%nat 137439023104 1 34326181871 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve_e) eq_refl ltac:(lia) eq_refl) as [A1 A2].
+          destruct (PG 44%nat 137439023104 1 34326181871 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve_e) eq_refl ltac:(lia) eq_refl) as [A1 A2].
           split; [exact A1|]. rewrite E28 in *. unfold SHB_HI in P2. lia.
-        + apply (PG 36%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 37%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 38%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 46%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 60%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 83%nat 11571200); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 52%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 53%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 54%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 62%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 76%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 99%nat 11571200); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
         + (* [comment removed for export] *)
-          pose proof (KIN (KAlign (EVar 101) 4096) ltac:(vmeq_refl)) as KA.
-          pose proof (KIN (KRange (EVar 101) 6307840 1080049664) ltac:(vmeq_refl)) as KR.
+          pose proof (KIN (KAlign (EVar 117) 4096) ltac:(vmeq_refl)) as KA.
+          pose proof (KIN (KRange (EVar 117) 6307840 1080049664) ltac:(vmeq_refl)) as KR.
           cbn [kentry_ok edenot] in KA, KR. destruct KA as [_ KA]. split; [exact KA | lia].
-        + apply (PG 104%nat 1048576); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 105%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 106%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
-        + apply (PG 107%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 120%nat 1048576); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 121%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 122%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
+        + apply (PG 123%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve_e | reflexivity | lia | reflexivity].
       - (* [comment removed for export] *)
         unfold VR_REN. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd]; (split; [unfold RENAMES; cbn [In]; in_solve_e|]).
         + exact (KIN (KRange (EVar 1) 1 1024) ltac:(vmeq_refl)).
         + exact (KIN (KRange (EVar 2) 0 256) ltac:(vmeq_refl)).
         + exact (KIN (KRange (EVar 3) 0 131071) ltac:(vmeq_refl)).
-        + exact (KIN (KRange (EVar 4) 0 280000) ltac:(vmeq_refl)).
+        + (* the random block's offset C - 16: the entry table's own range *)
+          pose proof (KIN (KRange (EVar 4) 464 10736) ltac:(vmeq_refl)) as K4. cbn [kentry_ok edenot] in K4 |- *. lia.
         + exact (KIN (KRange (EVar 5) 0 4294967294) ltac:(vmeq_refl)).
-        + exact (KIN (KRange (EVar 8) 1 4194303) ltac:(vmeq_refl)).
+        + exact (KIN (KRange (EVar 24) 1 4194303) ltac:(vmeq_refl)).
       - (* [comment removed for export] *) rewrite E29, E28, Hsb. unfold SBV. lia.
       - (* [comment removed for export] *) rewrite E62, E0. fold usp.
         unfold STv. fold usp. apply u_small.
@@ -379,7 +382,7 @@ Section Entry.
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
     (forall i, 0x10000 <= i < 0xa5000 -> M (wa i) = None)
-    /\ stk SEGS M (usp - 8388608) usp.
+    /\ stk SEGS M (usp - 6144512) usp.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl Hjs HM.
     destruct (at_main_facts w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl Hjs HM) as [HMF _].
@@ -389,7 +392,7 @@ Section Entry.
     split.
     - intros i Hi. exact (mimg_cover SEGS _ M asan_mem_facts_kn 0x10000 0xa5000 HMFc ltac:(vmeq_refl) i Hi).
     - pose proof (mwr_find SEGS _ M asan_mem_facts_kn
-                    (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8388608))) 8388608
+                    (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-6144512))) 6144512
                     HMFc ltac:(vmeq_refl)) as WR.
       cbn [zv] in WR.
       (* [comment removed for export] *)
@@ -400,7 +403,7 @@ Section Entry.
         pose proof (sp_digits (EB' a tid c pl js)) as SD. cbv beta in SD. rewrite E0 in SD. fold usp in SD.
         destruct (SD S16 ltac:(lia)) as [D1 _]. rewrite E0. fold usp. lia. }
       rewrite DG in WR.
-      apply wr_at_stk; [replace (usp - (usp - 8388608)) with 8388608 by lia; exact WR|].
+      apply wr_at_stk; [replace (usp - (usp - 6144512)) with 6144512 by lia; exact WR|].
       intros x Hx. apply off_img_Z. unfold IMG_HI. lia.
   Qed.
 End Entry.
@@ -543,17 +546,50 @@ Definition asan_mem_facts : list mfact := asan_mem_facts_kn ++ asan_mem_facts_d.
 Definition asan_pure_facts : list pfact := asan_pure_facts_kn ++ asan_pure_facts_d.
 
 (* [comment removed for export] *)
-Definition Wblk (en : ExecEntry) (inp : ProcInput) : Z :=
-  (Z.of_nat (length (build_stack_bytes PH (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en))) - 16
-   - (8 * Z.of_nat (length (in_argv inp)) + 8 * Z.of_nat (length (in_envp inp)) + 184)) / 8.
+(* PORT NOTE (LPS f1006fe8 -> 75d69e00).  [Rndoff] REPLACES the
+   pre-revision [Wblk], and the change is arithmetic, not arity.
+
+   [Wblk] counted the eight-byte words from the strings UP to the
+   sixteen AT_RANDOM bytes, which the old block laid LAST.  At
+   75d69e00 the random bytes sit BELOW the strings
+   (75d69e00:theories/LinuxProcessSem/StackLayout.v:388-401), so that
+   count does not exist; what slot 4 of Lib/EntryKn.v's [vals0] now
+   carries is the random block's OFFSET above sp, [C - 16], which is
+   [StackLayout.at_random_ptr]'s own offset.  EntryKn renamed its
+   [V_W] to [V_RNDOFF] for the same reason and this is its mirror.
+
+   [C] is [block_head_size rseq argv envp]
+   (75d69e00:theories/LinuxProcessSem/StackLayout.v:399), i.e. exactly
+   E2/Musl/InitMem.v's [struct_size] (InitMem.v:392).  The old [184]
+   was [160 + 24] -- ten auxv pairs plus argc and the two NULs -- and
+   both numbers are gone with the ten-pair table; NOTHING here names a
+   byte count.  CONFIG_RSEQ is carried symbolically: [C] is parametric
+   in [kb_rseq (in_kernel inp)], which [Run.valid_input]'s conjunct 17
+   leaves free, and the only bound used below is
+   [Run.block_head_size_bounds] (75d69e00 Run.v:3889), which holds for
+   both cases of the flag.
+
+   [en] is kept in the signature so that the call shape at the four use
+   sites is unchanged. *)
+Definition Rndoff (en : ExecEntry) (inp : ProcInput) : Z :=
+  Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) - 16.
 
 (* [comment removed for export] *)
 Definition hidden_arg (en : ExecEntry) (inp : ProcInput) (a : Z) : Prop :=
   let usp := bv_unsigned (en_sp en) in
   let argc := Z.of_nat (length (in_argv inp)) in
   let envc := Z.of_nat (length (in_envp inp)) in
+  (* C, PAD and L, the three lengths the kernel's block is made of
+     (75d69e00 StackLayout.v:399, :439-444, :406-409).  The strings run
+     from [sp + C + PAD] to [ed_top - 8]; the pre-revision second
+     disjunct started at [sp + 184 + 8*argc + 8*envc], the old head's
+     size, and ran for [8 * Wblk] bytes. *)
+  let C := Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) in
+  let pad := Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) (en_sp en) (ed_top (en_draw en))
+                         (in_argv inp) (in_envp inp) (in_execfn inp)) in
+  let strl := Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp)) in
   (usp + 8 * argc + 16 <= a < usp + 8 * argc + 8 * envc + 24)
-  \/ (usp + 8 * argc + 8 * envc + 184 <= a < usp + 8 * argc + 8 * envc + 184 + 8 * Wblk en inp).
+  \/ (usp + C + pad <= a < usp + C + pad + strl + 8).
 
 (* [comment removed for export] *)
 Definition ashadow (a : Z) : Prop := (0x7fff7000 <= a < 0x8fff7000) \/ (0x2008fff7000 <= a < 0x10007fff8000).
@@ -578,7 +614,7 @@ Record amodel (V : nat -> Z) (en : ExecEntry) (inp : ProcInput) (lim : Z) (mo : 
   am_fds      : m_fds mo = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
                             (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))];
   am_fs       : m_fs mo = in_fs inp;
-  am_reserved : vm_reserved (m_vmmaps mo) = segments_reserved SEGS;
+  am_reserved : vm_reserved (m_vmmaps mo) = init_reserved (segments_reserved SEGS) (en_mmap_base en) (en_sp en) (in_kernel inp);
   am_limit    : vm_limit (m_vmmaps mo) = lim;
   am_brk      : exists lb, (lb = 0 \/ lb = 8192) /\ vm_brk (m_vmmaps mo) = Z_to_bv 64 (bv_unsigned (en_brk en) + lb);
   am_start_brk : vm_start_brk (m_vmmaps mo) = en_brk en;
@@ -611,7 +647,12 @@ Record amodel (V : nat -> Z) (en : ExecEntry) (inp : ProcInput) (lim : Z) (mo : 
   am_tid      : forall t, m_tid mo = Some t -> 0 < bv_unsigned t < PID_MAX_ENVELOPE;
   am_ivs_wf   : model_ivs_wf mo;
   am_sh_lo    : NodesA.sh_entry_ok (m_vmmaps mo) (0x7fff7000, 0x10000000);
-  am_sh_hi    : NodesA.sh_entry_ok (m_vmmaps mo) (0x2008fff7000, 0xdfff0001000)
+  am_sh_hi    : NodesA.sh_entry_ok (m_vmmaps mo) (0x2008fff7000, 0xdfff0001000);
+  (* LPS 727298f3: every mapping misses the whole reserved ledger, the launch's vDSO pair included
+     (BootState's mf_resx); no bound on the ledger's own entries, since the pair sits near the stack *)
+  am_resfree  : forall iv, In iv (vm_maps (m_vmmaps mo)) -> region_free (vm_reserved (m_vmmaps mo)) (fst iv) (snd iv) = true;
+  (* LPS c0dd863a: the far end of descriptors 1 and 2 has a reader (the launch's, BootState's mf_rdr) *)
+  am_rdr      : m_channel_reader mo = true
 }.
 
 Definition amain_open (en : ExecEntry) (inp : ProcInput) (lim : Z) (w : bool) (V : nat -> Z) (m : word -> option byte)
@@ -627,14 +668,14 @@ Definition amain_open (en : ExecEntry) (inp : ProcInput) (lim : Z) (w : bool) (V
         /\ 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp
         /\ V 1%nat = argc /\ V 2%nat = envc
         /\ V 3%nat = Z.of_nat (length (nth 0 (in_argv inp) []))
-        /\ V 4%nat = Wblk en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
+        /\ V 4%nat = Rndoff en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
         /\ V 9%nat = bv_unsigned (in_hwcap inp))
     /\ Forall (mfact_ok SEGS V m) (asan_mem_facts ++ asan_mem_facts_w w)
     /\ Forall (pfact_ok V) (asan_pure_facts ++ asan_pure_facts_w w)
     /\ mem_inv SEGS m
-    /\ stk SEGS m (usp - 8388608) usp
+    /\ stk SEGS m (usp - 6144512) usp
     /\ (forall a, usp <= a < 2 ^ 64 ->
-          m (wa a) = wrap_mem PH (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (wa a))
+          m (wa a) = wrap_mem inp (en_mmap_base en) PH (Z_to_bv 64 (Z.of_N PC0)) (en_sp en) (en_draw en) (wa a))
     /\ ashadow0 V m
     /\ amodel V en inp lim mo
     /\ ashadow1 V m.
@@ -650,7 +691,7 @@ Section Entry.
   Variables (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput).
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation en := (mkEntry sp brk mbase draw).
   Let usp := bv_unsigned sp.
   Let argc := Z.of_nat (length (in_argv inp)).
@@ -672,35 +713,35 @@ Section Entry.
                             kentry_ok SEGS E (mrestrict (H_MAIN sp p8 sb p10 p12 a W p24) M) K).
     { intros K HK. apply andb_prop in HK as [K1 K2]. apply (proj1 (Forall_forall _ _) HKN). unfold KNw. destruct w1; apply in_kn_b; assumption. }
     pose proof (p8_factsG sp brk mbase draw lim inp (L_MAIN lb)
-                  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-                   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
+                  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+                   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
     assert (PG : forall i n lo hi, In (EVar i, n) (l_maps (L_MAIN lb)) -> n mod 4096 = 0 -> lo <= 1 -> 4096 * hi = 2 ^ 47 - 8388608 - n ->
                  bv_unsigned (ev E i) mod 4096 = 0 /\ 4096 * lo <= bv_unsigned (ev E i) <= 4096 * hi)
       by (intros i n lo hi Hin Hn Hlo Hhi; exact (page_of_map sp E (L_MAIN lb) i n lo hi HMO Hin ltac:(fold usp; lia) Hn Hlo Hhi)).
     unfold PAGES4. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd].
-    + apply (PG 26%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 27%nat 3727360); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + destruct (PG 28%nat 137439023104 1 34326181871 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl ltac:(lia) eq_refl) as [A1 A2].
+    + apply (PG 42%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 43%nat 3727360); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + destruct (PG 44%nat 137439023104 1 34326181871 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl ltac:(lia) eq_refl) as [A1 A2].
       split; [exact A1|]. rewrite E28 in *. unfold SHB_HI in P2. lia.
-    + apply (PG 36%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 37%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 38%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 46%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 60%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 83%nat 11571200); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + pose proof (KIN (KAlign (EVar 101) 4096) ltac:(vmeq_refl)) as KA.
-      pose proof (KIN (KRange (EVar 101) 6303744 1080045568) ltac:(vmeq_refl)) as KR.
+    + apply (PG 52%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 53%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 54%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 62%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 76%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 99%nat 11571200); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + pose proof (KIN (KAlign (EVar 117) 4096) ltac:(vmeq_refl)) as KA.
+      pose proof (KIN (KRange (EVar 117) 6303744 1080045568) ltac:(vmeq_refl)) as KR.
       cbn [kentry_ok edenot] in KA, KR. destruct KA as [_ KA]. split; [exact KA | lia].
-    + apply (PG 104%nat 1048576); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 105%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 106%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 107%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 120%nat 1048576); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 121%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 122%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 123%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
   Qed.
 
   (* [comment removed for export] *)
   #[using="VI VE usp argc envc"] Lemma V_page_addr : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    forall i k, In (i, k) PAGES -> 4096 * V_of sp draw inp a tid c pl js k = bv_unsigned (ev (EB' a tid c pl js) i).
+    forall i k, In (i, k) PAGES -> 4096 * V_of sp mbase draw inp a tid c pl js k = bv_unsigned (ev (EB' a tid c pl js) i).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM i k Hin.
     pose proof (at_main_pages _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as HAL.
@@ -712,7 +753,7 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE envc"] Lemma at_main_regs : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     regs_eqv0 R (mkRl (main_regs usp argc 6165944 (V 1098%nat) (V 1099%nat) (V 1100%nat))).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM V.
@@ -720,14 +761,14 @@ Section Entry.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. fold usp in SLo, ULT.
     assert (E0 : ev (EB' a tid c pl js) 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev (EB' a tid c pl js) 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (K98 : ev (EB' a tid c pl js) 98%nat = Z_to_bv 64 (V 1098%nat))
-      by (unfold V, V_of; change 1098%nat with (KEEP + 98)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 98); symmetry; apply Z_to_bv_bv_unsigned).
-    assert (K99 : ev (EB' a tid c pl js) 99%nat = Z_to_bv 64 (V 1099%nat))
-      by (unfold V, V_of; change 1099%nat with (KEEP + 99)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 99); symmetry; apply Z_to_bv_bv_unsigned).
-    assert (K100 : ev (EB' a tid c pl js) 100%nat = Z_to_bv 64 (V 1100%nat))
-      by (unfold V, V_of; change 1100%nat with (KEEP + 100)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 100); symmetry; apply Z_to_bv_bv_unsigned).
+    assert (K98 : ev (EB' a tid c pl js) 114%nat = Z_to_bv 64 (V 1098%nat))
+      by (unfold V, V_of; change 1098%nat with (KEEP + 98)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 98 114 eq_refl); symmetry; apply Z_to_bv_bv_unsigned).
+    assert (K99 : ev (EB' a tid c pl js) 115%nat = Z_to_bv 64 (V 1099%nat))
+      by (unfold V, V_of; change 1099%nat with (KEEP + 99)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 99 115 eq_refl); symmetry; apply Z_to_bv_bv_unsigned).
+    assert (K100 : ev (EB' a tid c pl js) 116%nat = Z_to_bv 64 (V 1100%nat))
+      by (unfold V, V_of; change 1100%nat with (KEEP + 100)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 100 116 eq_refl); symmetry; apply Z_to_bv_bv_unsigned).
     assert (E1 : ev (EB' a tid c pl js) 1%nat = Z_to_bv 64 argc) by reflexivity.
-    assert (E7 : ev (EB' a tid c pl js) 7%nat = a) by reflexivity.
+    assert (E7 : ev (EB' a tid c pl js) 23%nat = a) by reflexivity.
     assert (ARGC : 1 <= argc <= 1024) by (destruct VI as ((A1 & _) & _); exact A1).
     destruct HM as (HB & _). destruct HB as [HR _ _ _ _ _ _ _ _ _ _ _].
     assert (HR' : regs_ok (EB' a tid c pl js) OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn8a__A3.BootKn11w1.SR_MAIN R) by (destruct w1; exact HR).
@@ -749,13 +790,13 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE"] Lemma at_main_pins : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     (forall n, 0 <= V n < 2 ^ 64)
     /\ (V 0%nat = usp / 32768 /\ V 6%nat = usp mod 4096 / 16 /\ V 10%nat = usp mod 32768 / 4096
         /\ 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp
         /\ V 1%nat = argc /\ V 2%nat = envc
         /\ V 3%nat = Z.of_nat (length (nth 0 (in_argv inp) []))
-        /\ V 4%nat = Wblk en inp /\ V 5%nat = bv_unsigned brk / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
+        /\ V 4%nat = Rndoff en inp /\ V 5%nat = bv_unsigned brk / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
         /\ V 9%nat = bv_unsigned (in_hwcap inp)).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM V.
@@ -766,8 +807,11 @@ Section Entry.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
     assert (H16 : bv_unsigned (ev E 0%nat) mod 16 = 0) by (rewrite E0; exact S16).
     destruct VI as (VA & VEn & _). pose proof VA as ((A1 & A2) & _). pose proof VEn as (B1 & _).
-    pose proof (W_range PH sp draw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) VA VEn) as (W1 & _ & W2).
-    pose proof (L0_range PH sp draw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) VA) as L0R.
+    (* [W_range] is gone with [V_W]; [Run.block_head_size_bounds] bounds
+       [Rndoff] for both cases of CONFIG_RSEQ, and [valid_argv_str_len]
+       bounds [L0] exactly as Lib/EntryKn.v:314 does. *)
+    pose proof (block_head_size_bounds (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) as HC.
+    pose proof (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.CatSim__Common.CatExec.valid_argv_str_len (in_argv inp) 0 VA ltac:(destruct VA as [[? ?] _]; lia)) as L0R.
     destruct HM as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & E101 & _). fold E in E101.
     split; [intros n; unfold V, V_of, uev; apply u64_range|].
     unfold V, V_of. fold E.
@@ -777,11 +821,11 @@ Section Entry.
     rewrite (V'_ren E 1 1 ltac:(unfold RENAMES; cbn [In]; in_solve)), (V'_ren E 2 2 ltac:(unfold RENAMES; cbn [In]; in_solve)),
             (V'_ren E 3 3 ltac:(unfold RENAMES; cbn [In]; in_solve)), (V'_ren E 4 4 ltac:(unfold RENAMES; cbn [In]; in_solve)),
             (V'_ren E 5 8 ltac:(unfold RENAMES; cbn [In]; in_solve)), (V'_ren E 6 9 ltac:(unfold RENAMES; cbn [In]; in_solve)),
-            (V'_page E 101 5 ltac:(apply in_nat2_b; vmeq_refl)), E101.
+            (V'_page E 117 5 ltac:(apply in_nat2_b; vmeq_refl)), E101.
     split; [change (ev E 1%nat) with (Z_to_bv 64 argc); apply u_small; unfold argc; lia|].
     split; [change (ev E 2%nat) with (Z_to_bv 64 envc); apply u_small; unfold envc; lia|].
     split; [apply u_small; lia|].
-    split; [change (ev E 4%nat) with (Z_to_bv 64 (Wblk en inp)); apply u_small; unfold Wblk; cbn [en_sp en_draw]; lia|].
+    split; [change (ev E 4%nat) with (Z_to_bv 64 (Rndoff en inp)); apply u_small; unfold Rndoff; lia|].
     split; [reflexivity|]. split; reflexivity.
   Qed.
 
@@ -954,17 +998,50 @@ Definition asan_mem_facts : list mfact := asan_mem_facts_kn ++ asan_mem_facts_d.
 Definition asan_pure_facts : list pfact := asan_pure_facts_kn ++ asan_pure_facts_d.
 
 (* [comment removed for export] *)
-Definition Wblk (en : ExecEntry) (inp : ProcInput) : Z :=
-  (Z.of_nat (length (build_stack_bytes PH (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en))) - 16
-   - (8 * Z.of_nat (length (in_argv inp)) + 8 * Z.of_nat (length (in_envp inp)) + 184)) / 8.
+(* PORT NOTE (LPS f1006fe8 -> 75d69e00).  [Rndoff] REPLACES the
+   pre-revision [Wblk], and the change is arithmetic, not arity.
+
+   [Wblk] counted the eight-byte words from the strings UP to the
+   sixteen AT_RANDOM bytes, which the old block laid LAST.  At
+   75d69e00 the random bytes sit BELOW the strings
+   (75d69e00:theories/LinuxProcessSem/StackLayout.v:388-401), so that
+   count does not exist; what slot 4 of Lib/EntryKn.v's [vals0] now
+   carries is the random block's OFFSET above sp, [C - 16], which is
+   [StackLayout.at_random_ptr]'s own offset.  EntryKn renamed its
+   [V_W] to [V_RNDOFF] for the same reason and this is its mirror.
+
+   [C] is [block_head_size rseq argv envp]
+   (75d69e00:theories/LinuxProcessSem/StackLayout.v:399), i.e. exactly
+   E2/Musl/InitMem.v's [struct_size] (InitMem.v:392).  The old [184]
+   was [160 + 24] -- ten auxv pairs plus argc and the two NULs -- and
+   both numbers are gone with the ten-pair table; NOTHING here names a
+   byte count.  CONFIG_RSEQ is carried symbolically: [C] is parametric
+   in [kb_rseq (in_kernel inp)], which [Run.valid_input]'s conjunct 17
+   leaves free, and the only bound used below is
+   [Run.block_head_size_bounds] (75d69e00 Run.v:3889), which holds for
+   both cases of the flag.
+
+   [en] is kept in the signature so that the call shape at the four use
+   sites is unchanged. *)
+Definition Rndoff (en : ExecEntry) (inp : ProcInput) : Z :=
+  Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) - 16.
 
 (* [comment removed for export] *)
 Definition hidden_arg (en : ExecEntry) (inp : ProcInput) (a : Z) : Prop :=
   let usp := bv_unsigned (en_sp en) in
   let argc := Z.of_nat (length (in_argv inp)) in
   let envc := Z.of_nat (length (in_envp inp)) in
+  (* C, PAD and L, the three lengths the kernel's block is made of
+     (75d69e00 StackLayout.v:399, :439-444, :406-409).  The strings run
+     from [sp + C + PAD] to [ed_top - 8]; the pre-revision second
+     disjunct started at [sp + 184 + 8*argc + 8*envc], the old head's
+     size, and ran for [8 * Wblk] bytes. *)
+  let C := Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) in
+  let pad := Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) (en_sp en) (ed_top (en_draw en))
+                         (in_argv inp) (in_envp inp) (in_execfn inp)) in
+  let strl := Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp)) in
   (usp + 8 * argc + 16 <= a < usp + 8 * argc + 8 * envc + 24)
-  \/ (usp + 8 * argc + 8 * envc + 184 <= a < usp + 8 * argc + 8 * envc + 184 + 8 * Wblk en inp).
+  \/ (usp + C + pad <= a < usp + C + pad + strl + 8).
 
 (* [comment removed for export] *)
 Definition ashadow (a : Z) : Prop := (0x7fff7000 <= a < 0x8fff7000) \/ (0x2008fff7000 <= a < 0x10007fff8000).
@@ -989,7 +1066,7 @@ Record amodel (V : nat -> Z) (en : ExecEntry) (inp : ProcInput) (lim : Z) (mo : 
   am_fds      : m_fds mo = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
                             (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))];
   am_fs       : m_fs mo = in_fs inp;
-  am_reserved : vm_reserved (m_vmmaps mo) = segments_reserved SEGS;
+  am_reserved : vm_reserved (m_vmmaps mo) = init_reserved (segments_reserved SEGS) (en_mmap_base en) (en_sp en) (in_kernel inp);
   am_limit    : vm_limit (m_vmmaps mo) = lim;
   am_brk      : exists lb, (lb = 0 \/ lb = 8192) /\ vm_brk (m_vmmaps mo) = Z_to_bv 64 (bv_unsigned (en_brk en) + lb);
   am_start_brk : vm_start_brk (m_vmmaps mo) = en_brk en;
@@ -1022,7 +1099,12 @@ Record amodel (V : nat -> Z) (en : ExecEntry) (inp : ProcInput) (lim : Z) (mo : 
   am_tid      : forall t, m_tid mo = Some t -> 0 < bv_unsigned t < PID_MAX_ENVELOPE;
   am_ivs_wf   : model_ivs_wf mo;
   am_sh_lo    : NodesA.sh_entry_ok (m_vmmaps mo) (0x7fff7000, 0x10000000);
-  am_sh_hi    : NodesA.sh_entry_ok (m_vmmaps mo) (0x2008fff7000, 0xdfff0001000)
+  am_sh_hi    : NodesA.sh_entry_ok (m_vmmaps mo) (0x2008fff7000, 0xdfff0001000);
+  (* LPS 727298f3: every mapping misses the whole reserved ledger, the launch's vDSO pair included
+     (BootState's mf_resx); no bound on the ledger's own entries, since the pair sits near the stack *)
+  am_resfree  : forall iv, In iv (vm_maps (m_vmmaps mo)) -> region_free (vm_reserved (m_vmmaps mo)) (fst iv) (snd iv) = true;
+  (* LPS c0dd863a: the far end of descriptors 1 and 2 has a reader (the launch's, BootState's mf_rdr) *)
+  am_rdr      : m_channel_reader mo = true
 }.
 
 Definition amain_open (en : ExecEntry) (inp : ProcInput) (lim : Z) (w : bool) (V : nat -> Z) (m : word -> option byte)
@@ -1038,14 +1120,14 @@ Definition amain_open (en : ExecEntry) (inp : ProcInput) (lim : Z) (w : bool) (V
         /\ 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp
         /\ V 1%nat = argc /\ V 2%nat = envc
         /\ V 3%nat = Z.of_nat (length (nth 0 (in_argv inp) []))
-        /\ V 4%nat = Wblk en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
+        /\ V 4%nat = Rndoff en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
         /\ V 9%nat = bv_unsigned (in_hwcap inp))
     /\ Forall (mfact_ok SEGS V m) (asan_mem_facts ++ asan_mem_facts_w w)
     /\ Forall (pfact_ok V) (asan_pure_facts ++ asan_pure_facts_w w)
     /\ mem_inv SEGS m
-    /\ stk SEGS m (usp - 8388608) usp
+    /\ stk SEGS m (usp - 6144512) usp
     /\ (forall a, usp <= a < 2 ^ 64 ->
-          m (wa a) = wrap_mem PH (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (wa a))
+          m (wa a) = wrap_mem inp (en_mmap_base en) PH (Z_to_bv 64 (Z.of_N PC0)) (en_sp en) (en_draw en) (wa a))
     /\ ashadow0 V m
     /\ amodel V en inp lim mo
     /\ ashadow1 V m.
@@ -1061,7 +1143,7 @@ Section Entry.
   Variables (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput).
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation en := (mkEntry sp brk mbase draw).
   Let usp := bv_unsigned sp.
   Let argc := Z.of_nat (length (in_argv inp)).
@@ -1083,35 +1165,35 @@ Section Entry.
                             kentry_ok SEGS E (mrestrict (H_MAIN sp p8 sb p10 p12 a W p24) M) K).
     { intros K HK. apply andb_prop in HK as [K1 K2]. apply (proj1 (Forall_forall _ _) HKN). unfold KNw. destruct w1; apply in_kn_b; assumption. }
     pose proof (p8_factsG sp brk mbase draw lim inp (L_MAIN lb)
-                  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-                   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
+                  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+                   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
     assert (PG : forall i n lo hi, In (EVar i, n) (l_maps (L_MAIN lb)) -> n mod 4096 = 0 -> lo <= 1 -> 4096 * hi = 2 ^ 47 - 8388608 - n ->
                  bv_unsigned (ev E i) mod 4096 = 0 /\ 4096 * lo <= bv_unsigned (ev E i) <= 4096 * hi)
       by (intros i n lo hi Hin Hn Hlo Hhi; exact (page_of_map sp E (L_MAIN lb) i n lo hi HMO Hin ltac:(fold usp; lia) Hn Hlo Hhi)).
     unfold PAGES4. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd].
-    + apply (PG 26%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 27%nat 3727360); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + destruct (PG 28%nat 137439023104 1 34326181871 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl ltac:(lia) eq_refl) as [A1 A2].
+    + apply (PG 42%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 43%nat 3727360); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + destruct (PG 44%nat 137439023104 1 34326181871 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl ltac:(lia) eq_refl) as [A1 A2].
       split; [exact A1|]. rewrite E28 in *. unfold SHB_HI in P2. lia.
-    + apply (PG 36%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 37%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 38%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 46%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 60%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 83%nat 11571200); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + pose proof (KIN (KAlign (EVar 101) 4096) ltac:(vmeq_refl)) as KA.
-      pose proof (KIN (KRange (EVar 101) 6307840 1080049664) ltac:(vmeq_refl)) as KR.
+    + apply (PG 52%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 53%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 54%nat 65536); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 62%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 76%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 99%nat 11571200); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + pose proof (KIN (KAlign (EVar 117) 4096) ltac:(vmeq_refl)) as KA.
+      pose proof (KIN (KRange (EVar 117) 6307840 1080049664) ltac:(vmeq_refl)) as KR.
       cbn [kentry_ok edenot] in KA, KR. destruct KA as [_ KA]. split; [exact KA | lia].
-    + apply (PG 104%nat 1048576); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 105%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 106%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
-    + apply (PG 107%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 120%nat 1048576); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 121%nat 8388608); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 122%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
+    + apply (PG 123%nat 4096); [rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity | lia | reflexivity].
   Qed.
 
   (* [comment removed for export] *)
   #[using="VI VE usp argc envc"] Lemma V_page_addr : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    forall i k, In (i, k) PAGES -> 4096 * V_of sp draw inp a tid c pl js k = bv_unsigned (ev (EB' a tid c pl js) i).
+    forall i k, In (i, k) PAGES -> 4096 * V_of sp mbase draw inp a tid c pl js k = bv_unsigned (ev (EB' a tid c pl js) i).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM i k Hin.
     pose proof (at_main_pages _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as HAL.
@@ -1123,7 +1205,7 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE envc"] Lemma at_main_regs : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     regs_eqv0 R (mkRl (main_regs usp argc 6166968 (V 1098%nat) (V 1099%nat) (V 1100%nat))).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM V.
@@ -1131,14 +1213,14 @@ Section Entry.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. fold usp in SLo, ULT.
     assert (E0 : ev (EB' a tid c pl js) 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev (EB' a tid c pl js) 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (K98 : ev (EB' a tid c pl js) 98%nat = Z_to_bv 64 (V 1098%nat))
-      by (unfold V, V_of; change 1098%nat with (KEEP + 98)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 98); symmetry; apply Z_to_bv_bv_unsigned).
-    assert (K99 : ev (EB' a tid c pl js) 99%nat = Z_to_bv 64 (V 1099%nat))
-      by (unfold V, V_of; change 1099%nat with (KEEP + 99)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 99); symmetry; apply Z_to_bv_bv_unsigned).
-    assert (K100 : ev (EB' a tid c pl js) 100%nat = Z_to_bv 64 (V 1100%nat))
-      by (unfold V, V_of; change 1100%nat with (KEEP + 100)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 100); symmetry; apply Z_to_bv_bv_unsigned).
+    assert (K98 : ev (EB' a tid c pl js) 114%nat = Z_to_bv 64 (V 1098%nat))
+      by (unfold V, V_of; change 1098%nat with (KEEP + 98)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 98 114 eq_refl); symmetry; apply Z_to_bv_bv_unsigned).
+    assert (K99 : ev (EB' a tid c pl js) 115%nat = Z_to_bv 64 (V 1099%nat))
+      by (unfold V, V_of; change 1099%nat with (KEEP + 99)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 99 115 eq_refl); symmetry; apply Z_to_bv_bv_unsigned).
+    assert (K100 : ev (EB' a tid c pl js) 116%nat = Z_to_bv 64 (V 1100%nat))
+      by (unfold V, V_of; change 1100%nat with (KEEP + 100)%nat; rewrite (V'_keep (EB' a tid c pl js) HSP 100 116 eq_refl); symmetry; apply Z_to_bv_bv_unsigned).
     assert (E1 : ev (EB' a tid c pl js) 1%nat = Z_to_bv 64 argc) by reflexivity.
-    assert (E7 : ev (EB' a tid c pl js) 7%nat = a) by reflexivity.
+    assert (E7 : ev (EB' a tid c pl js) 23%nat = a) by reflexivity.
     assert (ARGC : 1 <= argc <= 1024) by (destruct VI as ((A1 & _) & _); exact A1).
     destruct HM as (HB & _). destruct HB as [HR _ _ _ _ _ _ _ _ _ _ _].
     assert (HR' : regs_ok (EB' a tid c pl js) OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3.BootKn10b__B3.BootKn11w1.SR_MAIN R) by (destruct w1; exact HR).
@@ -1160,13 +1242,13 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE"] Lemma at_main_pins : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     (forall n, 0 <= V n < 2 ^ 64)
     /\ (V 0%nat = usp / 32768 /\ V 6%nat = usp mod 4096 / 16 /\ V 10%nat = usp mod 32768 / 4096
         /\ 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp
         /\ V 1%nat = argc /\ V 2%nat = envc
         /\ V 3%nat = Z.of_nat (length (nth 0 (in_argv inp) []))
-        /\ V 4%nat = Wblk en inp /\ V 5%nat = bv_unsigned brk / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
+        /\ V 4%nat = Rndoff en inp /\ V 5%nat = bv_unsigned brk / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
         /\ V 9%nat = bv_unsigned (in_hwcap inp)).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM V.
@@ -1177,8 +1259,11 @@ Section Entry.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
     assert (H16 : bv_unsigned (ev E 0%nat) mod 16 = 0) by (rewrite E0; exact S16).
     destruct VI as (VA & VEn & _). pose proof VA as ((A1 & A2) & _). pose proof VEn as (B1 & _).
-    pose proof (W_range PH sp draw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) VA VEn) as (W1 & _ & W2).
-    pose proof (L0_range PH sp draw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) VA) as L0R.
+    (* [W_range] is gone with [V_W]; [Run.block_head_size_bounds] bounds
+       [Rndoff] for both cases of CONFIG_RSEQ, and [valid_argv_str_len]
+       bounds [L0] exactly as Lib/EntryKn.v:314 does. *)
+    pose proof (block_head_size_bounds (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) as HC.
+    pose proof (OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.CatSim__Common.CatExec.valid_argv_str_len (in_argv inp) 0 VA ltac:(destruct VA as [[? ?] _]; lia)) as L0R.
     destruct HM as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & E101 & _). fold E in E101.
     split; [intros n; unfold V, V_of, uev; apply u64_range|].
     unfold V, V_of. fold E.
@@ -1188,11 +1273,11 @@ Section Entry.
     rewrite (V'_ren E 1 1 ltac:(unfold RENAMES; cbn [In]; in_solve)), (V'_ren E 2 2 ltac:(unfold RENAMES; cbn [In]; in_solve)),
             (V'_ren E 3 3 ltac:(unfold RENAMES; cbn [In]; in_solve)), (V'_ren E 4 4 ltac:(unfold RENAMES; cbn [In]; in_solve)),
             (V'_ren E 5 8 ltac:(unfold RENAMES; cbn [In]; in_solve)), (V'_ren E 6 9 ltac:(unfold RENAMES; cbn [In]; in_solve)),
-            (V'_page E 101 5 ltac:(apply in_nat2_b; vmeq_refl)), E101.
+            (V'_page E 117 5 ltac:(apply in_nat2_b; vmeq_refl)), E101.
     split; [change (ev E 1%nat) with (Z_to_bv 64 argc); apply u_small; unfold argc; lia|].
     split; [change (ev E 2%nat) with (Z_to_bv 64 envc); apply u_small; unfold envc; lia|].
     split; [apply u_small; lia|].
-    split; [change (ev E 4%nat) with (Z_to_bv 64 (Wblk en inp)); apply u_small; unfold Wblk; cbn [en_sp en_draw]; lia|].
+    split; [change (ev E 4%nat) with (Z_to_bv 64 (Rndoff en inp)); apply u_small; unfold Rndoff; lia|].
     split; [reflexivity|]. split; reflexivity.
   Qed.
 
@@ -1256,7 +1341,7 @@ Section Entry.
   Variables (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput).
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation en := (mkEntry sp brk mbase draw).
   Let usp := bv_unsigned sp.
   Let argc := Z.of_nat (length (in_argv inp)).
@@ -1281,7 +1366,7 @@ Section Entry.
   #[using="VI VE usp argc envc"] Lemma at_main_stack_shadow : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     forall i, 0 <= i < zv V STKSH_LEN -> M (wa (zv V STKSH_BASE + i)) = Some (Z_to_bv 8 0).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl Hjs HM V i Hi.
@@ -1298,20 +1383,20 @@ Section Entry.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
     (* [comment removed for export] *)
     assert (V84 : V 1084%nat = W).
-    { unfold V, V_of. fold E. change 1084%nat with (KEEP + 84)%nat. rewrite (V'_keep E HSP 84), E84. apply u_small.
+    { unfold V, V_of. fold E. change 1084%nat with (KEEP + 84)%nat. rewrite (V'_keep E HSP 84 100 eq_refl), E84. apply u_small.
       unfold SHB_HI, CSH in *. fold usp in WL. clear - WL WH SLo. Z.div_mod_to_equations. lia. }
     assert (WD : 0 <= Wdst sp /\ Wdst sp + 8 <= SHB_HI /\ IMG_HI <= Wdst sp).
     { unfold Wdst, SHB_HI, CSH, IMG_HI. fold usp. clear - SLo ULT. Z.div_mod_to_equations. lia. }
     assert (V85 : V 1085%nat = Wdst sp).
-    { unfold V, V_of. fold E. change 1085%nat with (KEEP + 85)%nat. rewrite (V'_keep E HSP 85), E85. apply u_small.
+    { unfold V, V_of. fold E. change 1085%nat with (KEEP + 85)%nat. rewrite (V'_keep E HSP 85 101 eq_refl), E85. apply u_small.
       unfold SHB_HI in WD. clear - WD. lia. }
     pose proof (mfact_find SEGS V M _ (MZeroC (ZV 1084) 8) HMF ltac:(vmeq_refl)) as ZW. cbn [mfact_ok zv] in ZW. rewrite V84 in ZW.
     pose proof (mfact_find SEGS V M _ (MZeroC (ZV 1085) 8) HMF ltac:(vmeq_refl)) as ZD. cbn [mfact_ok zv] in ZD. rewrite V85 in ZD.
     (* [comment removed for export] *)
     pose proof (p8_factsG sp brk mbase draw lim inp (L_MAIN lb)
-                  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-                   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
-    pose proof (proj1 (Forall_forall _ _) HMO (EVar 38, 65536) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO12.
+                  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+                   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
+    pose proof (proj1 (Forall_forall _ _) HMO (EVar 54, 65536) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO12.
     unfold map_ok in MO12. cbn [fst snd edenot] in MO12. fold E in MO12. rewrite E38 in MO12. destruct MO12 as (Q1 & _ & _ & Q4 & _).
     destruct HT as (T1 & _ & T3 & T4). unfold stack_max_size in *. fold usp in Q4, T3, P3.
     set (x := zv V STKSH_BASE + i).
@@ -1342,21 +1427,21 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE usp argc envc"] Lemma at_main_ashadow0 : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    ashadow0 (V_of sp draw inp a tid c pl js) M.
+    ashadow0 (V_of sp mbase draw inp a tid c pl js) M.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM x HS NV.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     destruct (at_main_pins sp brk mbase draw lim inp VI VE w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM) as (HVR & PV0 & PV6 & PV10 & USP & _).
     fold V in HVR, PV0, PV6, PV10, USP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. fold usp in SLo, ULT.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
-    pose proof (VP 38%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
-    pose proof (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
+    pose proof (VP 54%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
+    pose proof (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
     pose proof (at_main_shadow_zero sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as SZ.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     set (E := EB' a tid c pl js) in *.
-    assert (E7 : ev E 7%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208.
+    assert (E7 : ev E 23%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208.
     assert (V209 : V 209%nat = bv_unsigned p8 mod 65536 / 4096) by (unfold V, V_of; fold E; rewrite (V'_209 E), E28; reflexivity).
     assert (PD : 32768 * V 0%nat + 4096 * V 10%nat = usp / 4096 * 4096) by (rewrite PV0, PV10; clear; Z.div_mod_to_equations; lia).
     assert (UX : bv_unsigned (wa x) = x) by (unfold wa; apply u_small; unfold ashadow in HS; lia).
@@ -1414,10 +1499,10 @@ Section Entry.
 
   #[using="VI VE usp argc envc"] Lemma at_main_pure_win : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    Forall (pfact_ok (V_of sp draw inp a tid c pl js)) asan_pure_facts_win.
+    Forall (pfact_ok (V_of sp mbase draw inp a tid c pl js)) asan_pure_facts_win.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     destruct (at_main_pins sp brk mbase draw lim inp VI VE w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM) as (HVR & PV0 & PV6 & PV10 & USP & _).
     fold V in HVR, PV0, PV6, PV10, USP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
@@ -1428,8 +1513,8 @@ Section Entry.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
     assert (PD : 32768 * V 0%nat + 4096 * V 10%nat = usp / 4096 * 4096) by (rewrite PV0, PV10; clear; Z.div_mod_to_equations; lia).
-    assert (K103 : V 1103%nat = bv_unsigned (ev E 103%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP)).
-    assert (K102 : V 1102%nat = bv_unsigned (ev E 102%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP)).
+    assert (K103 : V 1103%nat = bv_unsigned (ev E 119%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP 103 119 eq_refl)).
+    assert (K102 : V 1102%nat = bv_unsigned (ev E 118%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP 102 118 eq_refl)).
     assert (PGB : forall i k n, In (i, k) PAGES -> In (EVar i, n) (l_maps (L_MAIN lb)) -> n mod 4096 = 0 ->
                   pfact_ok V (PDisj (ZMul (ZLit 4096) (ZV k)) n STKWIN_BASE STKWIN_LEN)).
     { intros i k n HP Hin Hn. cbn [pfact_ok zv STKWIN_BASE]. left. rewrite (VP i k HP). pose proof (BW i n Hin Hn) as B. clear - B PD. lia. }
@@ -1441,36 +1526,36 @@ Section Entry.
             let i := eval vm_compute in (fst (hd (0%nat, 0%nat) (List.filter (fun p => Nat.eqb (snd p) k) PAGES))) in
             apply (PGB i k n); [apply in_nat2_b; vmeq_refl | rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity]
         end
-      | cbn [pfact_ok zv STKWIN_BASE]; left; rewrite K103; pose proof (BW 103%nat 4096 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl) as B; clear - B PD; lia
-      | cbn [pfact_ok zv STKWIN_BASE]; left; rewrite K102; pose proof (BW 102%nat 8192 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl) as B; clear - B PD; lia ] |]).
+      | cbn [pfact_ok zv STKWIN_BASE]; left; rewrite K103; pose proof (BW 119%nat 4096 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl) as B; clear - B PD; lia
+      | cbn [pfact_ok zv STKWIN_BASE]; left; rewrite K102; pose proof (BW 118%nat 8192 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl) as B; clear - B PD; lia ] |]).
     apply Forall_nil.
   Qed.
 
   (* [comment removed for export] *)
   #[using="VI VE usp argc envc"] Lemma at_main_pure_x : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    Forall (pfact_ok (V_of sp draw inp a tid c pl js)) asan_pure_facts_x.
+    Forall (pfact_ok (V_of sp mbase draw inp a tid c pl js)) asan_pure_facts_x.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     destruct (at_main_pins sp brk mbase draw lim inp VI VE w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM) as (HVR & PV0 & PV6 & PV10 & USP & _).
     fold V in HVR, PV0, PV6, PV10, USP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. pose proof (SA16 sp brk mbase draw inp VI VE) as S16. fold usp in SLo, ULT, S16.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
-    pose proof (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
+    pose proof (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
-    assert (V209 : V 209%nat = bv_unsigned (ev E 28%nat) mod 65536 / 4096) by (unfold V, V_of; fold E; apply (V'_209 E)).
+    assert (V209 : V 209%nat = bv_unsigned (ev E 44%nat) mod 65536 / 4096) by (unfold V, V_of; fold E; apply (V'_209 E)).
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (HST : bv_unsigned (ev E 62%nat) = (bv_unsigned (ev E 0%nat) + 3935) / 4096 * 4096).
+    assert (HST : bv_unsigned (ev E 78%nat) = (bv_unsigned (ev E 0%nat) + 3935) / 4096 * 4096).
     { rewrite E62, E0. fold usp. unfold STv. fold usp. apply u_small. clear - SLo ULT. Z.div_mod_to_equations. lia. }
-    assert (V344 : V 344%nat = (bv_unsigned (ev E 62%nat) - bv_unsigned (ev E 0%nat) / 4096 * 4096) / 4096) by (unfold V, V_of; fold E; apply (V'_344 E); assumption).
+    assert (V344 : V 344%nat = (bv_unsigned (ev E 78%nat) - bv_unsigned (ev E 0%nat) / 4096 * 4096) / 4096) by (unfold V, V_of; fold E; apply (V'_344 E); assumption).
     unfold asan_pure_facts_x. repeat apply Forall_cons; try apply Forall_nil; cbn [pfact_ok zv].
     - (* [comment removed for export] *)
       change 65535 with (Z.ones 16). rewrite Z.land_ones by lia. rewrite V208, V209. change (2 ^ 16) with 65536.
-      set (u := bv_unsigned (ev E 28%nat)) in *.
+      set (u := bv_unsigned (ev E 44%nat)) in *.
       assert (UA : u mod 4096 = 0) by (clear - V208; Z.div_mod_to_equations; lia).
       replace (-4096 * (u mod 65536 / 4096) + u mod 65536) with 0 by (clear - UA; Z.div_mod_to_equations; lia).
       change (0 mod MainExport.two64) with 0. lia.
@@ -1486,7 +1571,7 @@ Section Entry.
   #[using="VI VE usp argc envc"] Lemma at_main_stackstore : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     wr_at SEGS M (4096 * V 470%nat) 8388608
     /\ (forall i, 0 <= i < 8384512 -> M (wa (4096 * V 470%nat + 4096 + i)) = Some (Z_to_bv 8 0)).
   Proof.
@@ -1494,11 +1579,11 @@ Section Entry.
     destruct (at_main_facts sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hjs HM) as [HMF _].
     apply Forall_app in HMF as [HMF _]. fold V in HMF.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
-    pose proof (VP 105%nat 470%nat ltac:(apply in_nat2_b; vmeq_refl)) as V470.
+    pose proof (VP 121%nat 470%nat ltac:(apply in_nat2_b; vmeq_refl)) as V470.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     rewrite E105 in V470.
     pose proof HB as [HR HKN HA HZ HLZ HMI F HMO RG HT Hcl Ht].
-    pose proof (proj1 (Forall_forall _ _) HMO (EVar 105, 8388608) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO.
+    pose proof (proj1 (Forall_forall _ _) HMO (EVar 121, 8388608) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO.
     unfold map_ok in MO. cbn [fst snd edenot] in MO. rewrite E105 in MO. destruct MO as (Q1 & Q2 & _ & Q4 & _).
     pose proof (SH sp brk mbase draw inp VI VE) as SHi. unfold stack_max_size in Q4. fold usp in SHi, Q4.
     pose proof (mwr_find SEGS V M _ (ZMul (ZLit 4096) (ZV 470)) 4096 HMF ltac:(vmeq_refl)) as W1. cbn [zv] in W1.
@@ -1521,27 +1606,27 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE usp argc envc"] Lemma at_main_ashadow1 : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    ashadow1 (V_of sp draw inp a tid c pl js) M.
+    ashadow1 (V_of sp mbase draw inp a tid c pl js) M.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM x HS NV.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. fold usp in SLo, ULT.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
-    pose proof (VP 38%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
-    pose proof (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
+    pose proof (VP 54%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
+    pose proof (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
     pose proof (at_main_shadow_zero sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as SZ.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (E7 : ev E 7%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208.
+    assert (E7 : ev E 23%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208.
     assert (V209 : V 209%nat = bv_unsigned p8 mod 65536 / 4096) by (unfold V, V_of; fold E; rewrite (V'_209 E), E28; reflexivity).
     assert (V84 : V 1084%nat = W).
-    { unfold V, V_of. fold E. change 1084%nat with (KEEP + 84)%nat. rewrite (V'_keep E HSP 84), E84. apply u_small.
+    { unfold V, V_of. fold E. change 1084%nat with (KEEP + 84)%nat. rewrite (V'_keep E HSP 84 100 eq_refl), E84. apply u_small.
       unfold SHB_HI, CSH in *. fold usp in WL. clear - WL WH SLo. Z.div_mod_to_equations. lia. }
     assert (V85 : V 1085%nat = Wdst sp).
-    { unfold V, V_of. fold E. change 1085%nat with (KEEP + 85)%nat. rewrite (V'_keep E HSP 85), E85. apply u_small.
+    { unfold V, V_of. fold E. change 1085%nat with (KEEP + 85)%nat. rewrite (V'_keep E HSP 85 101 eq_refl), E85. apply u_small.
       unfold Wdst, CSH. fold usp. clear - SLo ULT. Z.div_mod_to_equations. lia. }
     assert (UX : bv_unsigned (wa x) = x) by (unfold wa; apply u_small; unfold ashadow in HS; lia).
     unfold ashadow_exposed, ASHOFF in NV. rewrite V84, V85, V228, V208, V209 in NV.
@@ -1590,7 +1675,7 @@ Section Entry.
   Variables (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput).
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation en := (mkEntry sp brk mbase draw).
   Let usp := bv_unsigned sp.
   Let argc := Z.of_nat (length (in_argv inp)).
@@ -1615,7 +1700,7 @@ Section Entry.
   #[using="VI VE usp argc envc"] Lemma at_main_stack_shadow : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     forall i, 0 <= i < zv V STKSH_LEN -> M (wa (zv V STKSH_BASE + i)) = Some (Z_to_bv 8 0).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl Hjs HM V i Hi.
@@ -1632,20 +1717,20 @@ Section Entry.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
     (* [comment removed for export] *)
     assert (V84 : V 1084%nat = W).
-    { unfold V, V_of. fold E. change 1084%nat with (KEEP + 84)%nat. rewrite (V'_keep E HSP 84), E84. apply u_small.
+    { unfold V, V_of. fold E. change 1084%nat with (KEEP + 84)%nat. rewrite (V'_keep E HSP 84 100 eq_refl), E84. apply u_small.
       unfold SHB_HI, CSH in *. fold usp in WL. clear - WL WH SLo. Z.div_mod_to_equations. lia. }
     assert (WD : 0 <= Wdst sp /\ Wdst sp + 8 <= SHB_HI /\ IMG_HI <= Wdst sp).
     { unfold Wdst, SHB_HI, CSH, IMG_HI. fold usp. clear - SLo ULT. Z.div_mod_to_equations. lia. }
     assert (V85 : V 1085%nat = Wdst sp).
-    { unfold V, V_of. fold E. change 1085%nat with (KEEP + 85)%nat. rewrite (V'_keep E HSP 85), E85. apply u_small.
+    { unfold V, V_of. fold E. change 1085%nat with (KEEP + 85)%nat. rewrite (V'_keep E HSP 85 101 eq_refl), E85. apply u_small.
       unfold SHB_HI in WD. clear - WD. lia. }
     pose proof (mfact_find SEGS V M _ (MZeroC (ZV 1084) 8) HMF ltac:(vmeq_refl)) as ZW. cbn [mfact_ok zv] in ZW. rewrite V84 in ZW.
     pose proof (mfact_find SEGS V M _ (MZeroC (ZV 1085) 8) HMF ltac:(vmeq_refl)) as ZD. cbn [mfact_ok zv] in ZD. rewrite V85 in ZD.
     (* [comment removed for export] *)
     pose proof (p8_factsG sp brk mbase draw lim inp (L_MAIN lb)
-                  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-                   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
-    pose proof (proj1 (Forall_forall _ _) HMO (EVar 38, 65536) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO12.
+                  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+                   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
+    pose proof (proj1 (Forall_forall _ _) HMO (EVar 54, 65536) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO12.
     unfold map_ok in MO12. cbn [fst snd edenot] in MO12. fold E in MO12. rewrite E38 in MO12. destruct MO12 as (Q1 & _ & _ & Q4 & _).
     destruct HT as (T1 & _ & T3 & T4). unfold stack_max_size in *. fold usp in Q4, T3, P3.
     set (x := zv V STKSH_BASE + i).
@@ -1676,21 +1761,21 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE usp argc envc"] Lemma at_main_ashadow0 : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    ashadow0 (V_of sp draw inp a tid c pl js) M.
+    ashadow0 (V_of sp mbase draw inp a tid c pl js) M.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM x HS NV.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     destruct (at_main_pins sp brk mbase draw lim inp VI VE w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM) as (HVR & PV0 & PV6 & PV10 & USP & _).
     fold V in HVR, PV0, PV6, PV10, USP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. fold usp in SLo, ULT.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
-    pose proof (VP 38%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
-    pose proof (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
+    pose proof (VP 54%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
+    pose proof (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
     pose proof (at_main_shadow_zero sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as SZ.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     set (E := EB' a tid c pl js) in *.
-    assert (E7 : ev E 7%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208.
+    assert (E7 : ev E 23%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208.
     assert (V209 : V 209%nat = bv_unsigned p8 mod 65536 / 4096) by (unfold V, V_of; fold E; rewrite (V'_209 E), E28; reflexivity).
     assert (PD : 32768 * V 0%nat + 4096 * V 10%nat = usp / 4096 * 4096) by (rewrite PV0, PV10; clear; Z.div_mod_to_equations; lia).
     assert (UX : bv_unsigned (wa x) = x) by (unfold wa; apply u_small; unfold ashadow in HS; lia).
@@ -1748,10 +1833,10 @@ Section Entry.
 
   #[using="VI VE usp argc envc"] Lemma at_main_pure_win : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    Forall (pfact_ok (V_of sp draw inp a tid c pl js)) asan_pure_facts_win.
+    Forall (pfact_ok (V_of sp mbase draw inp a tid c pl js)) asan_pure_facts_win.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     destruct (at_main_pins sp brk mbase draw lim inp VI VE w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM) as (HVR & PV0 & PV6 & PV10 & USP & _).
     fold V in HVR, PV0, PV6, PV10, USP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
@@ -1762,8 +1847,8 @@ Section Entry.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
     assert (PD : 32768 * V 0%nat + 4096 * V 10%nat = usp / 4096 * 4096) by (rewrite PV0, PV10; clear; Z.div_mod_to_equations; lia).
-    assert (K103 : V 1103%nat = bv_unsigned (ev E 103%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP)).
-    assert (K102 : V 1102%nat = bv_unsigned (ev E 102%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP)).
+    assert (K103 : V 1103%nat = bv_unsigned (ev E 119%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP 103 119 eq_refl)).
+    assert (K102 : V 1102%nat = bv_unsigned (ev E 118%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP 102 118 eq_refl)).
     assert (PGB : forall i k n, In (i, k) PAGES -> In (EVar i, n) (l_maps (L_MAIN lb)) -> n mod 4096 = 0 ->
                   pfact_ok V (PDisj (ZMul (ZLit 4096) (ZV k)) n STKWIN_BASE STKWIN_LEN)).
     { intros i k n HP Hin Hn. cbn [pfact_ok zv STKWIN_BASE]. left. rewrite (VP i k HP). pose proof (BW i n Hin Hn) as B. clear - B PD. lia. }
@@ -1775,36 +1860,36 @@ Section Entry.
             let i := eval vm_compute in (fst (hd (0%nat, 0%nat) (List.filter (fun p => Nat.eqb (snd p) k) PAGES))) in
             apply (PGB i k n); [apply in_nat2_b; vmeq_refl | rewrite L_MAIN_maps; cbn [In]; in_solve | reflexivity]
         end
-      | cbn [pfact_ok zv STKWIN_BASE]; left; rewrite K103; pose proof (BW 103%nat 4096 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl) as B; clear - B PD; lia
-      | cbn [pfact_ok zv STKWIN_BASE]; left; rewrite K102; pose proof (BW 102%nat 8192 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl) as B; clear - B PD; lia ] |]).
+      | cbn [pfact_ok zv STKWIN_BASE]; left; rewrite K103; pose proof (BW 119%nat 4096 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl) as B; clear - B PD; lia
+      | cbn [pfact_ok zv STKWIN_BASE]; left; rewrite K102; pose proof (BW 118%nat 8192 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) eq_refl) as B; clear - B PD; lia ] |]).
     apply Forall_nil.
   Qed.
 
   (* [comment removed for export] *)
   #[using="VI VE usp argc envc"] Lemma at_main_pure_x : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    Forall (pfact_ok (V_of sp draw inp a tid c pl js)) asan_pure_facts_x.
+    Forall (pfact_ok (V_of sp mbase draw inp a tid c pl js)) asan_pure_facts_x.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     destruct (at_main_pins sp brk mbase draw lim inp VI VE w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM) as (HVR & PV0 & PV6 & PV10 & USP & _).
     fold V in HVR, PV0, PV6, PV10, USP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. pose proof (SA16 sp brk mbase draw inp VI VE) as S16. fold usp in SLo, ULT, S16.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
-    pose proof (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
+    pose proof (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
-    assert (V209 : V 209%nat = bv_unsigned (ev E 28%nat) mod 65536 / 4096) by (unfold V, V_of; fold E; apply (V'_209 E)).
+    assert (V209 : V 209%nat = bv_unsigned (ev E 44%nat) mod 65536 / 4096) by (unfold V, V_of; fold E; apply (V'_209 E)).
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (HST : bv_unsigned (ev E 62%nat) = (bv_unsigned (ev E 0%nat) + 3935) / 4096 * 4096).
+    assert (HST : bv_unsigned (ev E 78%nat) = (bv_unsigned (ev E 0%nat) + 3935) / 4096 * 4096).
     { rewrite E62, E0. fold usp. unfold STv. fold usp. apply u_small. clear - SLo ULT. Z.div_mod_to_equations. lia. }
-    assert (V344 : V 344%nat = (bv_unsigned (ev E 62%nat) - bv_unsigned (ev E 0%nat) / 4096 * 4096) / 4096) by (unfold V, V_of; fold E; apply (V'_344 E); assumption).
+    assert (V344 : V 344%nat = (bv_unsigned (ev E 78%nat) - bv_unsigned (ev E 0%nat) / 4096 * 4096) / 4096) by (unfold V, V_of; fold E; apply (V'_344 E); assumption).
     unfold asan_pure_facts_x. repeat apply Forall_cons; try apply Forall_nil; cbn [pfact_ok zv].
     - (* [comment removed for export] *)
       change 65535 with (Z.ones 16). rewrite Z.land_ones by lia. rewrite V208, V209. change (2 ^ 16) with 65536.
-      set (u := bv_unsigned (ev E 28%nat)) in *.
+      set (u := bv_unsigned (ev E 44%nat)) in *.
       assert (UA : u mod 4096 = 0) by (clear - V208; Z.div_mod_to_equations; lia).
       replace (-4096 * (u mod 65536 / 4096) + u mod 65536) with 0 by (clear - UA; Z.div_mod_to_equations; lia).
       change (0 mod AS.MainExport.TwB.two64) with 0. lia.
@@ -1820,7 +1905,7 @@ Section Entry.
   #[using="VI VE usp argc envc"] Lemma at_main_stackstore : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     wr_at SEGS M (4096 * V 470%nat) 8388608
     /\ (forall i, 0 <= i < 8384512 -> M (wa (4096 * V 470%nat + 4096 + i)) = Some (Z_to_bv 8 0)).
   Proof.
@@ -1828,11 +1913,11 @@ Section Entry.
     destruct (at_main_facts sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hjs HM) as [HMF _].
     apply Forall_app in HMF as [HMF _]. fold V in HMF.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
-    pose proof (VP 105%nat 470%nat ltac:(apply in_nat2_b; vmeq_refl)) as V470.
+    pose proof (VP 121%nat 470%nat ltac:(apply in_nat2_b; vmeq_refl)) as V470.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     rewrite E105 in V470.
     pose proof HB as [HR HKN HA HZ HLZ HMI F HMO RG HT Hcl Ht].
-    pose proof (proj1 (Forall_forall _ _) HMO (EVar 105, 8388608) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO.
+    pose proof (proj1 (Forall_forall _ _) HMO (EVar 121, 8388608) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO.
     unfold map_ok in MO. cbn [fst snd edenot] in MO. rewrite E105 in MO. destruct MO as (Q1 & Q2 & _ & Q4 & _).
     pose proof (SH sp brk mbase draw inp VI VE) as SHi. unfold stack_max_size in Q4. fold usp in SHi, Q4.
     pose proof (mwr_find SEGS V M _ (ZMul (ZLit 4096) (ZV 470)) 4096 HMF ltac:(vmeq_refl)) as W1. cbn [zv] in W1.
@@ -1855,27 +1940,27 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE usp argc envc"] Lemma at_main_ashadow1 : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    ashadow1 (V_of sp draw inp a tid c pl js) M.
+    ashadow1 (V_of sp mbase draw inp a tid c pl js) M.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM x HS NV.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. fold usp in SLo, ULT.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
-    pose proof (VP 38%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
-    pose proof (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
+    pose proof (VP 54%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
+    pose proof (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
     pose proof (at_main_shadow_zero sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as SZ.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (E7 : ev E 7%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208.
+    assert (E7 : ev E 23%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208.
     assert (V209 : V 209%nat = bv_unsigned p8 mod 65536 / 4096) by (unfold V, V_of; fold E; rewrite (V'_209 E), E28; reflexivity).
     assert (V84 : V 1084%nat = W).
-    { unfold V, V_of. fold E. change 1084%nat with (KEEP + 84)%nat. rewrite (V'_keep E HSP 84), E84. apply u_small.
+    { unfold V, V_of. fold E. change 1084%nat with (KEEP + 84)%nat. rewrite (V'_keep E HSP 84 100 eq_refl), E84. apply u_small.
       unfold SHB_HI, CSH in *. fold usp in WL. clear - WL WH SLo. Z.div_mod_to_equations. lia. }
     assert (V85 : V 1085%nat = Wdst sp).
-    { unfold V, V_of. fold E. change 1085%nat with (KEEP + 85)%nat. rewrite (V'_keep E HSP 85), E85. apply u_small.
+    { unfold V, V_of. fold E. change 1085%nat with (KEEP + 85)%nat. rewrite (V'_keep E HSP 85 101 eq_refl), E85. apply u_small.
       unfold Wdst, CSH. fold usp. clear - SLo ULT. Z.div_mod_to_equations. lia. }
     assert (UX : bv_unsigned (wa x) = x) by (unfold wa; apply u_small; unfold ashadow in HS; lia).
     unfold ashadow_exposed, ASHOFF in NV. rewrite V84, V85, V228, V208, V209 in NV.
@@ -1951,25 +2036,25 @@ Section Entry.
   Variables (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput).
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation en := (mkEntry sp brk mbase draw).
   Let usp := bv_unsigned sp.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Lemma at_main_maps : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    vm_maps (m_vmmaps mdl) = ledger_list (V_of sp draw inp a tid c pl js) asan_ledger.
+    vm_maps (m_vmmaps mdl) = ledger_list (V_of sp mbase draw inp a tid c pl js) asan_ledger.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. fold usp in SLo, ULT.
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (K103 : V 1103%nat = bv_unsigned (ev E 103%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP)).
-    assert (K102 : V 1102%nat = bv_unsigned (ev E 102%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP)).
+    assert (K103 : V 1103%nat = bv_unsigned (ev E 119%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP 103 119 eq_refl)).
+    assert (K102 : V 1102%nat = bv_unsigned (ev E 118%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP 102 118 eq_refl)).
     destruct HM as (HB & _). destruct HB as [_ _ _ _ _ _ F _ _ _ _ _].
     rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps. fold E.
     unfold ledger_list, asan_ledger, dl. cbn [List.map flat_map app fst snd edenot zv].
@@ -2027,16 +2112,16 @@ Section Entry.
     { intros l HF q Hq. pose proof (proj1 (Forall_forall _ _) HF q Hq) as [_ X]. unfold iv_wf, B, BackingAlgebra.S. lia. }
     assert (L16 : Forall (fun iv : word * word => P (bv_unsigned (fst iv)) (bv_unsigned (fst iv) + bv_unsigned (snd iv))) (LZ16 p8)).
     { unfold LZ16, LZ5. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd]; unfold P.
-      - exact (MO 28%nat OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE p8 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E28 ltac:(unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE; lia)).
+      - exact (MO 44%nat OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE p8 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E28 ltac:(unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE; lia)).
       - rewrite HI_A_val, HI_N_val. unfold AIMG_LO, AIMG_HI. lia.
       - rewrite GAP_A_val, GAP_N_val. unfold AIMG_LO, AIMG_HI. lia.
       - rewrite LO_N_val. change (bv_unsigned LO_A) with 0x7fff7000. unfold AIMG_LO, AIMG_HI. lia. }
     assert (L18 : Forall (fun iv : word * word => P (bv_unsigned (fst iv)) (bv_unsigned (fst iv) + bv_unsigned (snd iv))) (LZ18 p8 sb p10)).
     { unfold LZ18. apply Forall_cons.
-      - cbn [fst snd]. unfold P. exact (MO 36%nat N_PA p10 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E36 ltac:(unfold N_PA; lia)).
+      - cbn [fst snd]. unfold P. exact (MO 52%nat N_PA p10 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E36 ltac:(unfold N_PA; lia)).
       - unfold LZ17. apply (Forall_maps_subtract P); [apply WF; exact L16 | exact PM | exact L16]. }
     rewrite HLZ. unfold LZ_MAIN, LZ30, LZ24. apply Forall_cons.
-    - cbn [fst snd]. exact (MO 105%nat 8388608 p24 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E105 ltac:(lia)).
+    - cbn [fst snd]. exact (MO 121%nat 8388608 p24 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E105 ltac:(lia)).
     - apply (Forall_maps_subtract P); [apply WF; exact L18 | exact PM | exact L18].
   Qed.
 
@@ -2047,14 +2132,18 @@ Section Entry.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
     rewrite (at_main_maps _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM).
     destruct HM as (HB & _). destruct HB as [_ _ _ _ _ _ F _ _ _ _ _].
-    rewrite (mf_res _ _ _ _ _ _ _ _ _ F), ivs_sum_app, resv_sum, ivs_sum_ledger_list.
-    vm_compute. discriminate.
+    rewrite (mf_res _ _ _ _ _ _ _ _ _ F), !ivs_sum_app, resv_sum, ivs_sum_ledger_list.
+    (* LPS c0dd863a: the reserved list ends with the launch's vDSO pair (mf_res's VD); its sizes are
+       the recorded kernel's (Run.valid_input_vdso_text_pages); [cbn [ivs_sum snd]] drops its base,
+       which names sp and mbase, before vm_compute sees it. *)
+    unfold VD, vdso_reserved. cbv zeta. rewrite (valid_input_vdso_text_pages inp VI).
+    destruct (Z.ltb _ page_size); cbn [ivs_sum snd]; vm_compute; discriminate.
   Qed.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Lemma at_main_vis_ok : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     Forall (fun bn : zexp * zexp => 0 <= zv V (fst bn) /\ 0 <= zv V (snd bn) /\ zv V (fst bn) mod 4096 = 0 /\ zv V (snd bn) mod 4096 = 0) asan_vis
     /\ zv V (snd (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZMul (ZLit 4096) (ZV 10))) (ZLit (-8388608)),
                   ZAdd (ZAdd (ZMul (ZLit (-32768)) (ZV 0)) (ZMul (ZLit (-4096)) (ZV 10))) (ZLit 140737496743936))) <= 2155876351.
@@ -2068,28 +2157,28 @@ Section Entry.
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (K103 : V 1103%nat = bv_unsigned (ev E 103%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP)).
-    assert (K102 : V 1102%nat = bv_unsigned (ev E 102%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP)).
+    assert (K103 : V 1103%nat = bv_unsigned (ev E 119%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP 103 119 eq_refl)).
+    assert (K102 : V 1102%nat = bv_unsigned (ev E 118%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP 102 118 eq_refl)).
     assert (PD : 32768 * V 0%nat + 4096 * V 10%nat = usp / 4096 * 4096) by (rewrite PV0, PV10; clear; Z.div_mod_to_equations; lia).
     assert (V209 : 0 <= V 209%nat <= 15).
     { unfold V, V_of. fold E. rewrite (V'_209 E). clear. Z.div_mod_to_equations. lia. }
     assert (V208 : 4096 <= 4096 * V 208%nat).
-    { rewrite (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)).
+    { rewrite (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)).
       destruct HM as (HB & _). destruct HB as [_ _ _ _ _ _ _ HMO _ _ _ _].
-      pose proof (proj1 (Forall_forall _ _) HMO (EVar 28, 137439023104) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO.
+      pose proof (proj1 (Forall_forall _ _) HMO (EVar 44, 137439023104) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO.
       unfold map_ok in MO. cbn [fst snd edenot] in MO. fold E in MO. lia. }
     assert (AL : forall i n, In (EVar i, n) (l_maps (L_MAIN lb)) -> bv_unsigned (ev E i) mod 4096 = 0).
     { intros i n Hin. destruct HM as (HB & _). destruct HB as [_ _ _ _ _ _ _ HMO _ _ _ _].
       pose proof (proj1 (Forall_forall _ _) HMO _ Hin) as MO. unfold map_ok in MO. cbn [fst snd edenot] in MO. exact (proj1 MO). }
-    pose proof (AL 103%nat 4096 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as A103.
-    pose proof (AL 102%nat 8192 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as A102.
+    pose proof (AL 119%nat 4096 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as A103.
+    pose proof (AL 118%nat 8192 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as A102.
     split.
     - unfold asan_vis, asan_vis_app, asan_ghost. cbn [app].
       repeat (apply Forall_cons; [cbn [fst snd zv];
         (* [comment removed for export] *)
         first [ match goal with |- 0 <= 4096 * V ?k /\ _ => pose proof (HVR k); split; [lia|]; split; [lia|]; split; [rewrite Z.mul_comm; apply Z_mod_mult | reflexivity] end
               | split; [lia|]; split; [lia|]; split; reflexivity
-              | rewrite ?K103, ?K102; pose proof (u64_range (ev E 103%nat)); pose proof (u64_range (ev E 102%nat)); split; [lia|]; split; [lia|]; split; [assumption | reflexivity]
+              | rewrite ?K103, ?K102; pose proof (u64_range (ev E 119%nat)); pose proof (u64_range (ev E 118%nat)); split; [lia|]; split; [lia|]; split; [assumption | reflexivity]
               | idtac ] |]); try apply Forall_nil.
       + (* [comment removed for export] *) split; [lia|]. split; [lia|]. split; [|reflexivity]. clear. Z.div_mod_to_equations. lia.
       + (* [comment removed for export] *)
@@ -2101,7 +2190,7 @@ Section Entry.
 
   #[using="VI VE usp"] Lemma at_main_abytes : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     ivz_bytes (allow_of ASHOFF V asan_vis) <= asan_abytes /\ ivz_wf (allow_of ASHOFF V asan_vis).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM V.
@@ -2123,10 +2212,10 @@ Section Entry.
   #[using="VI VE usp"] Lemma at_main_allowed : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
     forall p : word, bv_unsigned p mod 4096 = 0 -> page_allowedb (A_MAIN sp sb p12 a W p24) p = true ->
-    aallowed (allow_of ASHOFF (V_of sp draw inp a tid c pl js) asan_vis) p.
+    aallowed (allow_of ASHOFF (V_of sp mbase draw inp a tid c pl js) asan_vis) p.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM p PA HP.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     destruct (at_main_pins sp brk mbase draw lim inp VI VE w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM) as (HVR & PV0 & PV6 & PV10 & USP & _).
     fold V in HVR, PV0, PV6, PV10, USP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
@@ -2134,10 +2223,10 @@ Section Entry.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     set (E := EB' a tid c pl js) in *.
-    pose proof (VP 38%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
-    pose proof (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
-    pose proof (VP 105%nat 470%nat ltac:(apply in_nat2_b; vmeq_refl)) as V470.
-    assert (E7 : ev E 7%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208. rewrite E105 in V470.
+    pose proof (VP 54%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
+    pose proof (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
+    pose proof (VP 121%nat 470%nat ltac:(apply in_nat2_b; vmeq_refl)) as V470.
+    assert (E7 : ev E 23%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208. rewrite E105 in V470.
     assert (V209 : V 209%nat = bv_unsigned p8 mod 65536 / 4096) by (unfold V, V_of; fold E; rewrite (V'_209 E), E28; reflexivity).
     assert (PD : 32768 * V 0%nat + 4096 * V 10%nat = usp / 4096 * 4096) by (rewrite PV0, PV10; clear; Z.div_mod_to_equations; lia).
     assert (TU : usp - 4095 <= usp / 4096 * 4096 <= usp) by (clear; Z.div_mod_to_equations; lia).
@@ -2204,10 +2293,10 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE usp"] Lemma at_main_pure_led : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    Forall (pfact_ok (V_of sp draw inp a tid c pl js)) (all_pairs asan_ledger).
+    Forall (pfact_ok (V_of sp mbase draw inp a tid c pl js)) (all_pairs asan_ledger).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     pose proof (at_main_maps _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as MAPS. fold V in MAPS.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
@@ -2215,17 +2304,17 @@ Section Entry.
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (K103 : V 1103%nat = bv_unsigned (ev E 103%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP)).
-    assert (K102 : V 1102%nat = bv_unsigned (ev E 102%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP)).
+    assert (K103 : V 1103%nat = bv_unsigned (ev E 119%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP 103 119 eq_refl)).
+    assert (K102 : V 1102%nat = bv_unsigned (ev E 118%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP 102 118 eq_refl)).
     apply (all_pairs_ok V asan_ledger (vm_maps (m_vmmaps mdl))).
     - rewrite MAPS. reflexivity.
     - unfold asan_ledger. repeat (apply Forall_cons; [cbn [led_ok zv]; first
         [ (* [comment removed for export] *)
           match goal with |- 0 <= 4096 * V ?k < _ /\ _ =>
-            let i := match k with 487%nat => constr:(107%nat) | 568%nat => constr:(106%nat) | 470%nat => constr:(105%nat) | 469%nat => constr:(104%nat)
-                                | 393%nat => constr:(83%nat) | 310%nat => constr:(60%nat) | 245%nat => constr:(46%nat) | 228%nat => constr:(38%nat)
-                                | 227%nat => constr:(37%nat) | 226%nat => constr:(36%nat) | 208%nat => constr:(28%nat) | 207%nat => constr:(27%nat)
-                                | 78%nat => constr:(26%nat) | 700%nat => constr:(7%nat) end in
+            let i := match k with 487%nat => constr:(123%nat) | 568%nat => constr:(122%nat) | 470%nat => constr:(121%nat) | 469%nat => constr:(120%nat)
+                                | 393%nat => constr:(99%nat) | 310%nat => constr:(76%nat) | 245%nat => constr:(62%nat) | 228%nat => constr:(54%nat)
+                                | 227%nat => constr:(53%nat) | 226%nat => constr:(52%nat) | 208%nat => constr:(44%nat) | 207%nat => constr:(43%nat)
+                                | 78%nat => constr:(42%nat) | 700%nat => constr:(7%nat) end in
             rewrite (VP i k ltac:(apply in_nat2_b; vmeq_refl)); split; [apply u64_range | lia] end
         | split; lia
         | rewrite ?K103, ?K102; split; [apply u64_range | lia] ] |]). apply Forall_nil.
@@ -2290,25 +2379,25 @@ Section Entry.
   Variables (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput).
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation en := (mkEntry sp brk mbase draw).
   Let usp := bv_unsigned sp.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Lemma at_main_maps : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    vm_maps (m_vmmaps mdl) = ledger_list (V_of sp draw inp a tid c pl js) asan_ledger.
+    vm_maps (m_vmmaps mdl) = ledger_list (V_of sp mbase draw inp a tid c pl js) asan_ledger.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
     pose proof (SL sp brk mbase draw inp VI VE) as SLo. fold usp in SLo, ULT.
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (K103 : V 1103%nat = bv_unsigned (ev E 103%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP)).
-    assert (K102 : V 1102%nat = bv_unsigned (ev E 102%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP)).
+    assert (K103 : V 1103%nat = bv_unsigned (ev E 119%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP 103 119 eq_refl)).
+    assert (K102 : V 1102%nat = bv_unsigned (ev E 118%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP 102 118 eq_refl)).
     destruct HM as (HB & _). destruct HB as [_ _ _ _ _ _ F _ _ _ _ _].
     rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps. fold E.
     unfold ledger_list, asan_ledger, dl. cbn [List.map flat_map app fst snd edenot zv].
@@ -2366,16 +2455,16 @@ Section Entry.
     { intros l HF q Hq. pose proof (proj1 (Forall_forall _ _) HF q Hq) as [_ X]. unfold iv_wf, B, BackingAlgebra.S. lia. }
     assert (L16 : Forall (fun iv : word * word => P (bv_unsigned (fst iv)) (bv_unsigned (fst iv) + bv_unsigned (snd iv))) (LZ16 p8)).
     { unfold LZ16, LZ5. repeat apply Forall_cons; try apply Forall_nil; cbn [fst snd]; unfold P.
-      - exact (MO 28%nat OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.TwB.N_SPACE p8 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E28 ltac:(unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.TwB.N_SPACE; lia)).
+      - exact (MO 44%nat OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.TwB.N_SPACE p8 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E28 ltac:(unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.TwB.N_SPACE; lia)).
       - rewrite HI_A_val, HI_N_val. unfold AIMG_LO, AIMG_HI. lia.
       - rewrite GAP_A_val, GAP_N_val. unfold AIMG_LO, AIMG_HI. lia.
       - rewrite LO_N_val. change (bv_unsigned LO_A) with 0x7fff7000. unfold AIMG_LO, AIMG_HI. lia. }
     assert (L18 : Forall (fun iv : word * word => P (bv_unsigned (fst iv)) (bv_unsigned (fst iv) + bv_unsigned (snd iv))) (LZ18 p8 sb p10)).
     { unfold LZ18. apply Forall_cons.
-      - cbn [fst snd]. unfold P. exact (MO 36%nat N_PA p10 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E36 ltac:(unfold N_PA; lia)).
+      - cbn [fst snd]. unfold P. exact (MO 52%nat N_PA p10 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E36 ltac:(unfold N_PA; lia)).
       - unfold LZ17. apply (Forall_maps_subtract P); [apply WF; exact L16 | exact PM | exact L16]. }
     rewrite HLZ. unfold LZ_MAIN, LZ30, LZ24. apply Forall_cons.
-    - cbn [fst snd]. exact (MO 105%nat 8388608 p24 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E105 ltac:(lia)).
+    - cbn [fst snd]. exact (MO 121%nat 8388608 p24 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve) E105 ltac:(lia)).
     - apply (Forall_maps_subtract P); [apply WF; exact L18 | exact PM | exact L18].
   Qed.
 
@@ -2386,14 +2475,15 @@ Section Entry.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
     rewrite (at_main_maps _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM).
     destruct HM as (HB & _). destruct HB as [_ _ _ _ _ _ F _ _ _ _ _].
-    rewrite (mf_res _ _ _ _ _ _ _ _ _ F), ivs_sum_app, resv_sum, ivs_sum_ledger_list.
-    vm_compute. discriminate.
+    rewrite (mf_res _ _ _ _ _ _ _ _ _ F), !ivs_sum_app, resv_sum, ivs_sum_ledger_list.
+    unfold VD, vdso_reserved. cbv zeta. rewrite (valid_input_vdso_text_pages inp VI).
+    destruct (Z.ltb _ page_size); cbn [ivs_sum snd]; vm_compute; discriminate.
   Qed.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Lemma at_main_vis_ok : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     Forall (fun bn : zexp * zexp => 0 <= zv V (fst bn) /\ 0 <= zv V (snd bn) /\ zv V (fst bn) mod 4096 = 0 /\ zv V (snd bn) mod 4096 = 0) asan_vis
     /\ zv V (snd (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZMul (ZLit 4096) (ZV 10))) (ZLit (-8388608)),
                   ZAdd (ZAdd (ZMul (ZLit (-32768)) (ZV 0)) (ZMul (ZLit (-4096)) (ZV 10))) (ZLit 140737496743936))) <= 2155876351.
@@ -2407,28 +2497,28 @@ Section Entry.
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (K103 : V 1103%nat = bv_unsigned (ev E 103%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP)).
-    assert (K102 : V 1102%nat = bv_unsigned (ev E 102%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP)).
+    assert (K103 : V 1103%nat = bv_unsigned (ev E 119%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP 103 119 eq_refl)).
+    assert (K102 : V 1102%nat = bv_unsigned (ev E 118%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP 102 118 eq_refl)).
     assert (PD : 32768 * V 0%nat + 4096 * V 10%nat = usp / 4096 * 4096) by (rewrite PV0, PV10; clear; Z.div_mod_to_equations; lia).
     assert (V209 : 0 <= V 209%nat <= 15).
     { unfold V, V_of. fold E. rewrite (V'_209 E). clear. Z.div_mod_to_equations. lia. }
     assert (V208 : 4096 <= 4096 * V 208%nat).
-    { rewrite (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)).
+    { rewrite (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)).
       destruct HM as (HB & _). destruct HB as [_ _ _ _ _ _ _ HMO _ _ _ _].
-      pose proof (proj1 (Forall_forall _ _) HMO (EVar 28, 137439023104) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO.
+      pose proof (proj1 (Forall_forall _ _) HMO (EVar 44, 137439023104) ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as MO.
       unfold map_ok in MO. cbn [fst snd edenot] in MO. fold E in MO. lia. }
     assert (AL : forall i n, In (EVar i, n) (l_maps (L_MAIN lb)) -> bv_unsigned (ev E i) mod 4096 = 0).
     { intros i n Hin. destruct HM as (HB & _). destruct HB as [_ _ _ _ _ _ _ HMO _ _ _ _].
       pose proof (proj1 (Forall_forall _ _) HMO _ Hin) as MO. unfold map_ok in MO. cbn [fst snd edenot] in MO. exact (proj1 MO). }
-    pose proof (AL 103%nat 4096 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as A103.
-    pose proof (AL 102%nat 8192 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as A102.
+    pose proof (AL 119%nat 4096 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as A103.
+    pose proof (AL 118%nat 8192 ltac:(rewrite L_MAIN_maps; cbn [In]; in_solve)) as A102.
     split.
     - unfold asan_vis, asan_vis_app, asan_ghost. cbn [app].
       repeat (apply Forall_cons; [cbn [fst snd zv];
         (* [comment removed for export] *)
         first [ match goal with |- 0 <= 4096 * V ?k /\ _ => pose proof (HVR k); split; [lia|]; split; [lia|]; split; [rewrite Z.mul_comm; apply Z_mod_mult | reflexivity] end
               | split; [lia|]; split; [lia|]; split; reflexivity
-              | rewrite ?K103, ?K102; pose proof (u64_range (ev E 103%nat)); pose proof (u64_range (ev E 102%nat)); split; [lia|]; split; [lia|]; split; [assumption | reflexivity]
+              | rewrite ?K103, ?K102; pose proof (u64_range (ev E 119%nat)); pose proof (u64_range (ev E 118%nat)); split; [lia|]; split; [lia|]; split; [assumption | reflexivity]
               | idtac ] |]); try apply Forall_nil.
       + (* [comment removed for export] *) split; [lia|]. split; [lia|]. split; [|reflexivity]. clear. Z.div_mod_to_equations. lia.
       + (* [comment removed for export] *)
@@ -2440,7 +2530,7 @@ Section Entry.
 
   #[using="VI VE usp"] Lemma at_main_abytes : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     ivz_bytes (allow_of ASHOFF V asan_vis) <= asan_abytes /\ ivz_wf (allow_of ASHOFF V asan_vis).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM V.
@@ -2462,10 +2552,10 @@ Section Entry.
   #[using="VI VE usp"] Lemma at_main_allowed : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
     forall p : word, bv_unsigned p mod 4096 = 0 -> page_allowedb (A_MAIN sp sb p12 a W p24) p = true ->
-    aallowed (allow_of ASHOFF (V_of sp draw inp a tid c pl js) asan_vis) p.
+    aallowed (allow_of ASHOFF (V_of sp mbase draw inp a tid c pl js) asan_vis) p.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM p PA HP.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     destruct (at_main_pins sp brk mbase draw lim inp VI VE w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM) as (HVR & PV0 & PV6 & PV10 & USP & _).
     fold V in HVR, PV0, PV6, PV10, USP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
@@ -2473,10 +2563,10 @@ Section Entry.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
     pose proof HM as (HB & HW & Hlb & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101 & E105 & AP24).
     set (E := EB' a tid c pl js) in *.
-    pose proof (VP 38%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
-    pose proof (VP 28%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
-    pose proof (VP 105%nat 470%nat ltac:(apply in_nat2_b; vmeq_refl)) as V470.
-    assert (E7 : ev E 7%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208. rewrite E105 in V470.
+    pose proof (VP 54%nat 228%nat ltac:(apply in_nat2_b; vmeq_refl)) as V228.
+    pose proof (VP 44%nat 208%nat ltac:(apply in_nat2_b; vmeq_refl)) as V208.
+    pose proof (VP 121%nat 470%nat ltac:(apply in_nat2_b; vmeq_refl)) as V470.
+    assert (E7 : ev E 23%nat = a) by reflexivity. rewrite E38 in V228. rewrite E28 in V208. rewrite E105 in V470.
     assert (V209 : V 209%nat = bv_unsigned p8 mod 65536 / 4096) by (unfold V, V_of; fold E; rewrite (V'_209 E), E28; reflexivity).
     assert (PD : 32768 * V 0%nat + 4096 * V 10%nat = usp / 4096 * 4096) by (rewrite PV0, PV10; clear; Z.div_mod_to_equations; lia).
     assert (TU : usp - 4095 <= usp / 4096 * 4096 <= usp) by (clear; Z.div_mod_to_equations; lia).
@@ -2543,10 +2633,10 @@ Section Entry.
   (* [comment removed for export] *)
   #[using="VI VE usp"] Lemma at_main_pure_led : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    Forall (pfact_ok (V_of sp draw inp a tid c pl js)) (all_pairs asan_ledger).
+    Forall (pfact_ok (V_of sp mbase draw inp a tid c pl js)) (all_pairs asan_ledger).
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     pose proof (at_main_maps _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as MAPS. fold V in MAPS.
     pose proof (V_page_addr sp brk mbase draw lim inp VI VE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as VP. fold V in VP.
     pose proof (at_main_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HM) as ULT.
@@ -2554,17 +2644,17 @@ Section Entry.
     set (E := EB' a tid c pl js) in *.
     assert (E0 : ev E 0%nat = sp) by apply ev_EB_sp.
     assert (HSP : 0x7fff80000000 <= bv_unsigned (ev E 0%nat) < 2 ^ 47) by (rewrite E0; fold usp; lia).
-    assert (K103 : V 1103%nat = bv_unsigned (ev E 103%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP)).
-    assert (K102 : V 1102%nat = bv_unsigned (ev E 102%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP)).
+    assert (K103 : V 1103%nat = bv_unsigned (ev E 119%nat)) by (unfold V, V_of; fold E; change 1103%nat with (KEEP + 103)%nat; apply (V'_keep E HSP 103 119 eq_refl)).
+    assert (K102 : V 1102%nat = bv_unsigned (ev E 118%nat)) by (unfold V, V_of; fold E; change 1102%nat with (KEEP + 102)%nat; apply (V'_keep E HSP 102 118 eq_refl)).
     apply (all_pairs_ok V asan_ledger (vm_maps (m_vmmaps mdl))).
     - rewrite MAPS. reflexivity.
     - unfold asan_ledger. repeat (apply Forall_cons; [cbn [led_ok zv]; first
         [ (* [comment removed for export] *)
           match goal with |- 0 <= 4096 * V ?k < _ /\ _ =>
-            let i := match k with 487%nat => constr:(107%nat) | 568%nat => constr:(106%nat) | 470%nat => constr:(105%nat) | 469%nat => constr:(104%nat)
-                                | 393%nat => constr:(83%nat) | 310%nat => constr:(60%nat) | 245%nat => constr:(46%nat) | 228%nat => constr:(38%nat)
-                                | 227%nat => constr:(37%nat) | 226%nat => constr:(36%nat) | 208%nat => constr:(28%nat) | 207%nat => constr:(27%nat)
-                                | 78%nat => constr:(26%nat) | 700%nat => constr:(7%nat) end in
+            let i := match k with 487%nat => constr:(123%nat) | 568%nat => constr:(122%nat) | 470%nat => constr:(121%nat) | 469%nat => constr:(120%nat)
+                                | 393%nat => constr:(99%nat) | 310%nat => constr:(76%nat) | 245%nat => constr:(62%nat) | 228%nat => constr:(54%nat)
+                                | 227%nat => constr:(53%nat) | 226%nat => constr:(52%nat) | 208%nat => constr:(44%nat) | 207%nat => constr:(43%nat)
+                                | 78%nat => constr:(42%nat) | 700%nat => constr:(7%nat) end in
             rewrite (VP i k ltac:(apply in_nat2_b; vmeq_refl)); split; [apply u64_range | lia] end
         | split; lia
         | rewrite ?K103, ?K102; split; [apply u64_range | lia] ] |]). apply Forall_nil.
@@ -2633,17 +2723,17 @@ Section Entry.
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   Hypothesis HLIM : 2 ^ 33 <= lim.
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation en := (mkEntry sp brk mbase draw).
   Let usp := bv_unsigned sp.
 
   #[using="VI VE HLIM usp"] Theorem at_main_amodel : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    amodel (V_of sp draw inp a tid c pl js) en inp lim mdl.
+    amodel (V_of sp mbase draw inp a tid c pl js) en inp lim mdl.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl Hjs HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     pose proof (at_main_model sp brk mbase draw lim inp (mkst R (Z_to_bv 64 A_main) M ROM) mdl
                   (ex_intro _ w1 (ex_intro _ a (ex_intro _ tid (ex_intro _ c (ex_intro _ pl (ex_intro _ p8 (ex_intro _ sb (ex_intro _ p10
                   (ex_intro _ p12 (ex_intro _ p15 (ex_intro _ p24 (ex_intro _ W (ex_intro _ lb (ex_intro _ js (ex_intro _ R (ex_intro _ M
@@ -2681,13 +2771,15 @@ Section Entry.
     - exact G11.
     - unfold NodesA.sh_entry_ok. cbn [fst snd]. repeat split; try lia; assumption.
     - unfold NodesA.sh_entry_ok. cbn [fst snd]. repeat split; try lia; assumption.
+    - exact (mf_resx _ _ _ _ _ _ _ _ _ F).
+    - rewrite (mf_rdr _ _ _ _ _ _ _ _ _ F). exact (valid_input_channel_reader inp VI).
   Qed.
 
   (* [comment removed for export] *)
   #[using="VI VE HLIM"] Theorem at_main_open : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     let ms' := MS (mkRl (main_regs usp (Z.of_nat (length (in_argv inp))) 6165944 (V 1098%nat) (V 1099%nat) (V 1100%nat)))
                   bvmap_empty (Z_to_bv 64 AMAIN) (Z_to_bv 32 0) None M (seg_rom SEGS) in
     amain_open en inp lim w1 V M ms' mdl
@@ -2807,17 +2899,17 @@ Section Entry.
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   Hypothesis HLIM : 2 ^ 33 <= lim.
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
   #[local] Notation en := (mkEntry sp brk mbase draw).
   Let usp := bv_unsigned sp.
 
   #[using="VI VE HLIM usp"] Theorem at_main_amodel : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    amodel (V_of sp draw inp a tid c pl js) en inp lim mdl.
+    amodel (V_of sp mbase draw inp a tid c pl js) en inp lim mdl.
   Proof.
     intros w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl Hjs HM.
-    set (V := V_of sp draw inp a tid c pl js) in *.
+    set (V := V_of sp mbase draw inp a tid c pl js) in *.
     pose proof (at_main_model sp brk mbase draw lim inp (mkst R (Z_to_bv 64 A_main) M ROM) mdl
                   (ex_intro _ w1 (ex_intro _ a (ex_intro _ tid (ex_intro _ c (ex_intro _ pl (ex_intro _ p8 (ex_intro _ sb (ex_intro _ p10
                   (ex_intro _ p12 (ex_intro _ p15 (ex_intro _ p24 (ex_intro _ W (ex_intro _ lb (ex_intro _ js (ex_intro _ R (ex_intro _ M
@@ -2855,13 +2947,15 @@ Section Entry.
     - exact G11.
     - unfold NodesA.sh_entry_ok. cbn [fst snd]. repeat split; try lia; assumption.
     - unfold NodesA.sh_entry_ok. cbn [fst snd]. repeat split; try lia; assumption.
+    - exact (mf_resx _ _ _ _ _ _ _ _ _ F).
+    - rewrite (mf_rdr _ _ _ _ _ _ _ _ _ F). exact (valid_input_channel_reader inp VI).
   Qed.
 
   (* [comment removed for export] *)
   #[using="VI VE HLIM"] Theorem at_main_open : forall (w1 : bool) a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     length js = 92%nat ->
     at_mainW sp brk mbase draw lim inp w1 a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
-    let V := V_of sp draw inp a tid c pl js in
+    let V := V_of sp mbase draw inp a tid c pl js in
     let ms' := MS (mkRl (main_regs usp (Z.of_nat (length (in_argv inp))) 6166968 (V 1098%nat) (V 1099%nat) (V 1100%nat)))
                   bvmap_empty (Z_to_bv 64 AMAIN) (Z_to_bv 32 0) None M (seg_rom SEGS) in
     amain_open en inp lim w1 V M ms' mdl

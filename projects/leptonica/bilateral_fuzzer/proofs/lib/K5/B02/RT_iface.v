@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (writev's channel-reader flag; STACK_SPAN, the stack span the start state guarantees below sp, beside STACK_WIN; recorded (KReplay) proofs re-proved by tactics). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -30,6 +31,8 @@ Definition SEGTOP_A : Z := 0x66f000.
 (* [comment removed for export] *)
 Definition USTACK_TOP : Z := 0x800000000000.
 Definition STACK_WIN : Z := 0x800000.
+(* LPS 727298f3: role (b) of STACK_WIN, the guaranteed stack span (see the twin in K5/A02). *)
+Notation STACK_SPAN := 0x5D0000%Z (only parsing).
 (* [comment removed for export] *)
 Definition RT_STACK : Z := 0x10000.
 (* [comment removed for export] *)
@@ -128,7 +131,8 @@ Record rt_sig : Type := mkRTS {
 
 (* [comment removed for export] *)
 Definition fdfs_only (PMc : Model -> Prop) : Prop :=
-  forall mo mo', m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> PMc mo -> PMc mo'.
+  forall mo mo', m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> m_channel_reader mo' = m_channel_reader mo ->
+    PMc mo -> PMc mo'.
 
 (* [comment removed for export] *)
 Definition frmW (Pm : machine_state -> Prop) : machine_state -> Prop := fun ms => Pm ms /\ FP.frm0 (ms_fcsr ms).
@@ -178,7 +182,7 @@ Definition rt_pres_ex (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (
 Definition rng_class (RT : rt_sig) (Σ : rts RT) (s n : Z) : Prop :=
   (exists p k, In (p, k) (rt_live RT Σ) /\ p <= s /\ s + n <= p + k)
   \/ (exists f k, In (f, k) (rt_frames RT Σ) /\ f <= s /\ s + n <= f + fs_size k - 8)
-  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 16)
+  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 9)
   \/ (0x10000 <= s /\ s + n <= SEGTOP_A).
 
 (* [comment removed for export] *)
@@ -216,8 +220,7 @@ Definition rt_after_f (RT : rt_sig) (Σ' : rts RT) (sp lo : Z) (m m' : mem) : Pr
   ART RT Σ' m' /\ mem_inv asegs m' /\ stk asegs m' lo sp.
 
 Lemma rt_after_f_of : forall RT Σ' sp lo m m', rt_after RT Σ' sp lo m m' -> rt_after_f RT Σ' sp lo m m'.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_iface ()) [] "h01Hh12H1h22H2h32H4h42RTh52_Hh62loh71mh82m'h92sph:3Σ'p;1p;6p;3p;2p;4p-1p100[1p4p710p8p100[Ep4p70p100\5p4p710R0p8p100\Sp4p70P0p8g00]Aj1>Tg00CAj13Tg00^9j18Tg00^Wj17Tg00_:j1=Tg00_\j6:Tg00`Yj35Tg00aQj24Tg00OXR0j20Tg00bHj66Tg00cGj49Tg00cbj3<Tg00dYj4;Tg00eNR1f1R2f0R33<p=2P1f2R4P2P3C;p=1g00fF%>3g00G1R5g00Ka#3#3#3R6#3#3#3#8#7%86#7#=[R6f5R7f4R8f3R9P4P2P3E:P0f6R:?57214121242A1298'0'0f7R;P:P7P8P9P4E6P3f8R4?5;914181278A18:;'0'0P0141712:7A17;4'0f;R8f:R9f9R<P4P;P:E6P3141;12<4A1498'0P0129<f<R091<8f?R4f>R;f=R:P0P8P9E6P31208A10;4fBfA;5:141:R1f@91:4R:'0P<P1P:P7P3C9C9W3W5P2P3O2n2001000000120000000W0W2P2P3O2n2001000000120000000W0W1P2P3O2n2001000000120000000W0X86W7X65W9W:W4o"). Qed.
+Proof. intros RT Σ' sp lo m m' (H1 & H2 & _ & H4). exact (conj H1 (conj H2 H4)). Qed.
 
 (* [comment removed for export] *)
 Definition icpt_post (RT : rt_sig) (Σ : rts RT) (PMc : Model -> Prop)
@@ -562,11 +565,13 @@ End Contracts.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition PMfd (F0 : list (word * FdEntry)) (fs0 : Fs) : Model -> Prop := fun mo => m_fds mo = F0 /\ m_fs mo = fs0.
+(* LPS 08b1429: the channel reader travels with the fd frame. [Run.valid_input] pins it true at
+   launch and no step writes it; a nonempty writev needs it ([writev_spec]'s SIGPIPE arm). *)
+Definition PMfd (F0 : list (word * FdEntry)) (fs0 : Fs) : Model -> Prop :=
+  fun mo => m_fds mo = F0 /\ m_fs mo = fs0 /\ m_channel_reader mo = true.
 
 Lemma PMfd_fdfs_only : forall F0 fs0, fdfs_only (PMfd F0 fs0).
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_iface ()) [] "h02E1h12E2h22F0h31Hh42H1h52H2h63fs0h72moh83mo'p;1p;2p;3p;6p;4g00CAj12Tg00^9j1<Tg00^Wj17Tg001bj26Tg002Bj1;Tg00lDj11Tg0082j30Tg00m8j13Tg00mkj34j29Tg00\5j65Tg00cGj48Tg00ndj1:Tg00Ka#2#2#2#2#2#2#<#7g00ob'6#;R0g00\SR1g010ZR2f0R3#1f1R4#1500%34f2#3501f5R5f4R6f334g00OX%16f6R7500%36=015f7R8?476P3%17f8R6500%38R9=016%18R8f:R:500f9R;9019P0P8%16P:P7P4E5P1P9%36P;P5P3E5C8W5W4P4P3O2n2001000000120000000W3W1W0X82W71943#:eW6W2o"). Qed.
+Proof. intros F0 fs0 mo mo' E1 E2 E3 (H1 & H2 & H3). split; [congruence|]. split; congruence. Qed.
 
 (* [comment removed for export] *)
 Definition rt_pres_fp (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (W : list (Z * Z)) (m m' : mem) : Prop :=
@@ -671,7 +676,7 @@ Definition fprintf_stderr_icontract : Prop :=
        /\ bv_unsigned sp <= a
        /\ exists slack, bytes_at asegs m (a + Z.of_nat (length s) + 1) slack
             /\ (- (a + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16) ->
+            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8) ->
   fd_lookup F0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
   ERR_rep m -> io_ssp m ->
   ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo ->

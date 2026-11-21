@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Open_sh.v, with its module paths and module names changed; 1178 of its 1215 lines of code are new or changed and 43 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of check_as_written on image A' (ASan build): SEGMENT WA2 (lane CawA102R,
-   a Theorem Labs lane, INT102-READY on the kit's cut 7cdbb61b5fa0, prover CawA102R.KWA2; first proved by CawA102.CawA102WA2 at
-   a0785435cdc, then by CawA102R.CawRWA2 on the caw_pst base, by CawA102R.CawDWA2 on the decff base e7a40f4137aa and
-   by CawA102R.CawGWA2 on the f97c base a5641d45bc36).
+   a Theorem Labs lane, INT102-READY on the kit's cut, prover CawA102R.KWA2; first proved by CawA102.CawA102WA2,
+   then by CawA102R.CawRWA2 on the caw_pst base, by CawA102R.CawDWA2 on the decff base e7a40f4137aa and
+   by CawA102R.CawGWA2 on the f97c base).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    WHAT IT PROVES: caw_wa2_holds : caw_seg_WA2R (fx := fx) B SK CTX0 P (YA0nH.wle' SEGS YGcfRehidePost.RZ_cf)
    (Caw102A_Base.v; the refused arm frees the scratch under the re-hide, so past the free the run is at wle'), for an
@@ -33,7 +34,7 @@
    caw_pre_frm0. caw_carry still carries caw_cnt D (the top supplies it by caw_pre_cnt; the named argument CAW_CNT is
    gone), and RL_free_step's class-24 count reads it as before.
    (3) THE OUTCOME (:879-888) does not reach this segment: caw_dead rides on caw_at_null and caw_at_END's r = 1 arm only;
-   caw_at_OOM, caw_prog, caw_ledger and the journal are unchanged; caw_at_X / caw_at_R end with hull_budget (Caw102A_Base.v:579, :607).
+   caw_at_OOM, caw_prog, caw_ledger and the journal are unchanged; caw_at_X / caw_at_R end with hull_budget (Caw102A_Base.v:580, :608).
    CARRIED FROM THE f97c BASE: the cuts carry THE PROGRESS FACT caw_prog D E S (for any run position i at the entry
    state whose next events are E, a position i + length E of the cut's state): caw_ev1 D = [HMal (size + 1)] at
    caw_at_X / caw_at_R, caw_evs D = [HMal (size + 1); HFr (size + 1)] at caw_at_OOM. ex_value keeps it (its post's
@@ -315,7 +316,7 @@ destruct (Z.eq_dec (k + cf_head) (cw_size D + 1)) as [Eq | Ne].
   pose proof (req_size_pos _ Hk1). pose proof (req_size_pos _ Hs1). lia.
 Qed.
 
-(* ---- the shadow of a range inside a live block (ExvB_Open_sh.v exv_sh_blk, origin/cold/h-mani-a4-img 9b7851e2734,
+(* ---- the shadow of a range inside a live block (ExvB_Open_sh.v exv_sh_blk,
    restated over the walk's ARcfx) ---- *)
 Lemma wa2_hull_sub : forall rd x n x' n',
   shadow_hull_vis rd x n -> x <= x' -> x' + n' <= x + n -> shadow_hull_vis rd x' n'.
@@ -611,8 +612,8 @@ apply (f_equal (map snd)) in E. rewrite map_app, !Hm in E.
 unfold YGcfRoomLive.ccnt24, PresetRoom.ccnt. rewrite E. apply wa2_filter_app_len.
 Qed.
 
-(* ---- the free's chain and trace: s0 holds rc (an int), never a frame pointer (H2CawBase.v caw_chain / caw_trace,
-   origin/cold/h-hpreset-7-walk-H2H5 1934271f1f4) ---- *)
+(* ---- the free's chain and trace: s0 holds rc (an int), never a frame pointer (H2CawBase.v caw_chain / caw_trace)
+   ---- *)
 Lemma wa2_chain : forall ly rd regs rc0, 4096 <= raZ regs -> getr regs 8 = w64 rc0 -> - 2 ^ 31 <= rc0 < 2 ^ 31 ->
   2 ^ 31 <= spZ regs -> ly_top ly <= 2 ^ 47 -> chain_pre ly rd regs [].
 Proof.

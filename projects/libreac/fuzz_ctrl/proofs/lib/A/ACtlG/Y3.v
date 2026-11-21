@@ -3,8 +3,8 @@
    fixes it").  Written by a Theorem Labs lane's glue lane; single writer of this file.
    rule 24: no function proved - glue of an already-proved segment run through an already-proved bridge to a
    fixed stage statement; the released-proof position of LLVMFuzzerTestOneInput was settled earlier for this
-   unit (At ossv/recipes c5e779efe8c (2026-10-31), no released proof of it outside this unit; the released ASan donor is cgif/cgif_file_fuzzer at origin/ossv/recipes
-   c8557374ad2e, whose own exit lx_leaf_fail, A/ACfj.v:180-207, is the pattern this file follows).
+   unit (At (2026-10-31), no released proof of it outside this unit; the released ASan donor is cgif/cgif_file_fuzzer,
+   whose own exit lx_leaf_fail, A/ACfj.v:180-207, is the pattern this file follows).
 
    WHAT IT PROVES
      glue_seg_Y3 : CF ctl_post_leaf C_A82bb0
@@ -57,14 +57,14 @@
    SECTION HYPOTHESES LEFT (exact text at their declarations below; both listed in the lane report)
    - LAWS: ACtl.v's own (ACtl.v:183); ACtl.v discharges it where it discharges the donor-form laws (its
      section 9, Reusable.YG0q.AR_laws_ok).
-   - AIL: the image's sink laws `asink_img_laws segs B tfib_K` (YE01.v:28), the premise of YE01's two kept
+   - AIL: the image's sink laws `asink_img_laws segs B tfib_K` (YE01.v:29), the premise of YE01's two kept
      lemmas, exactly as the donor's walk takes it (its Section hypothesis AIL, A/ACfj.v:193 and :199).  It is
      PROVED in the core as A.AD1u.tfib_AIL (AD1u.v:34) from ACtl.v's TFIB_SYMS, so ACtl.v discharges it with
      `A.AD1u.tfib_AIL B TFIB_SYMS`.  It is a hypothesis here and not a citation for ONE reason, the closure:
      AD1u Requires AD1y, which Requires the core's program walks (AB12, AB1h, AB13, AD2j, AD2i, AD1t, AE22,
      YCe5); a glue file of one epilogue should not carry them, and on the D5 pack AB1h does not even compile
-     (measured: AB1h.v:50, the image's third segment is 8192 bytes, AB1h states 12288).
-   - MO_LE: the meter, ACtl.v's own Section Ctl hypothesis (ACtl.v:217 at glue base 8ee48574229, Batch3), the
+     (measured: AB1h.v:51, the image's third segment is 8192 bytes, AB1h states 12288).
+   - MO_LE: the meter, ACtl.v's own Section Ctl hypothesis (ACtl.v:217 at glue base, Batch3), the
      same name and text, so ACtl.v passes it by `exact`.  tfib_lib_post_x's thirteenth conjunct is
      `mo_le MT S S' (XN_LIB n)`, and NOTHING in the cut layer carries a meter fact: ctl_base has only
      `mo_ok MT S (XM_LIB n)` and no cut body or ctl_from premise mentions MT.  ACtl.v discharges it in its
@@ -72,7 +72,7 @@
 
    FROM THE SHARED KIT lib/A/ACtlG/Kit.v (Required qualified, never copied): Kit.kit_wx (G4), Kit.kit_segs_low,
    Kit.kit_ajournal_fp_nil and Kit.kit_ev_llvmf_le (G5).  The last two are a Theorem Labs lane's kit lemmas (Kit.v
-   :120 and :138 at glue base 8ee48574229); this file's former local copies (y3_ajournal_fp_nil, the inline lia
+   :120 and :138 at glue base); this file's former local copies (y3_ajournal_fp_nil, the inline lia
    for EV_LLVMF <= EV_LIB) are deleted.
 
    CLOSURE (the glue closure rule, a Theorem Labs lane 23:32Z, porter 23:38Z / 23:40Z): every Require below is qualified, no
@@ -134,7 +134,7 @@ Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 (* The meter: ACtl.v's Section Ctl hypothesis MO_LE (ACtl.v:217), its exact name and text.  See the header: the cut
    layer carries no meter fact. *)
 Hypothesis MO_LE : forall (S S' : Reusable.YG00.astate) (m : Z), Reusable.YC5d.mo_le MT S S' m.
-(* The image's sink laws (YE01.v:28), the premise of YE01.asink_none_kept / ameta_inv_kept; the donor's walk
+(* The image's sink laws (YE01.v:29), the premise of YE01.asink_none_kept / ameta_inv_kept; the donor's walk
    takes the same Section hypothesis (A/ACfj.v:193, :199).  Discharged in ACtl.v by A.AD1u.tfib_AIL B TFIB_SYMS
    (PROVED, AD1u.v:34); see the header for why it is not cited here. *)
 Hypothesis AIL : Reusable.YE01.asink_img_laws (SK := A.AE2k.tfib_sink_head) segs B A.AE2k.tfib_K.

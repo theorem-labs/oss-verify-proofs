@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (LIBMID's resolved vdso_func cell holds hvdso, the vDSO's clock_gettime entry, not 0). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -40,7 +41,7 @@ Definition errst_fits (E : errst) : Prop :=
 Definition LIBMID (LB : list block) (m : mem) (M : libmid) : Prop :=
      IMPL_mem m /\ MEMFLAG m (mid_flag M)
   /\ CTXPH LB m (mid_ctx M) /\ ERRPH_mid LB m (mid_ctx M) (mid_err M) /\ ERRX m (mid_err M) (mid_E M)
-  /\ rw_cells asegs m A_vdso_func [C8 (wz (if mid_vdso M then 0 else P_cgt_init))]
+  /\ rw_cells asegs m A_vdso_func [C8 (wz (if mid_vdso M then hvdso else P_cgt_init))]
   /\ m (wa A_global_cleanup) = None
   /\ errst_fits (mid_E M)
   /\ GOT_mem m /\ GOT_echfree m /\ GOT_x509vpm m /\ METH_mem m /\ METH_b64 m /\ HPKE_tabs m /\ relro_lib m

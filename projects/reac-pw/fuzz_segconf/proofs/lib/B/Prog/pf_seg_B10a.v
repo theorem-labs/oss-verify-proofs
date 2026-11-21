@@ -3,9 +3,9 @@
    B10a segment lane of the image-B G3 walk owner, 2026-10-30.
    proves function reac_segconf_parse_file (segment B10a; reuse search and CONFIRM:
    the rule-24 lookup record, the rule-24 checker 2026-10-30T16:55:47Z; reuse verdict none).
-   ADAPTED from a working branch (the image-A G3 walk owner's image-A lane of the same segment, lib/A/Prog/pf_a10a_k.v
-   73bafa8e5cd9) and the UBSan piece walk of the same fold (a working branch's lib/U/Prog/pf_p6.v);
-   closed against G3 FINAL at 6f783602b5e3 (B kit 694f3575dda2).
+   ADAPTED from a working branch (the image-A G3 walk owner's image-A lane of the same segment, lib/A/Prog/pf_a10a_k.v)
+   and the UBSan piece walk of the same fold (a working branch's lib/U/Prog/pf_p6.v);
+   closed against G3 FINAL (B kit).
    The segment (61 instructions: 0x88630-0x886d4, 0x888bc-0x888e4, the slow arms 0x88fb4-0x88fcc and the error
    calls 0x8923c-0x89244, 0x89280-0x89288), in four runs (lib/B/Prog/pf_seg_B10a_s.v):
      P0  low's eight shadow cells in scope (plain run)                        pf_seg_B10a_p.v b10_role_ok

@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v (the context record, rt_from, rt_entry,
    rt_E_havoc / rt_E_ewset, awrRT / keptRT / relowRT / rt_hand / rt_prelude, fs_roF / fs_rwF) and
-   proofs/libreac/fuzz_knock/lib/A/APgLoop0.v (the shape of the shared cut states and their invariants) at
-   origin/ossv/recipes 6ebe35ba632, made the interface of the walk of reac-pw/fuzz_pin's reac_box_pin_parse on image A
+   proofs/libreac/fuzz_knock/lib/A/APgLoop0.v (the shape of the shared cut states and their invariants),
+   made the interface of the walk of reac-pw/fuzz_pin's reac_box_pin_parse on image A
    (fuzz_pin.asan, 0x80b44, 832 bytes). *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/PPgParseCx.v of this library: the interface of the
    walk of reac_box_pin_parse in image B (fuzz_pin.asan-ubsan, sha256
@@ -49,6 +49,7 @@
    REGION ORDER at every cut: shadow of F (88) :: frame F (75) :: the sp1 spills (70; not at P4) :: the save area (2).
    The frame's shadow region is read-only at every cut (the token runner cannot justify a writable window in the
    shadow band); pp_fs_rw / pp_fs_ro re-window it for the shadow stores. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

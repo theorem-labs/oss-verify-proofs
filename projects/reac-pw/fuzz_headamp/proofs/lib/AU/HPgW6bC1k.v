@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bCall.v at f3898085bda (w7_strlen_at,
-   as hb1_strlen_at), RPgW7bKit.v at f3898085bda (w7_strok_cstr, as hb1_strok_cstr; that file is [Apache-2.0 OR
-   MIT], used here under Apache-2.0), RPgW6aTail.v at f3898085bda (tl_atom, tl_in, as hb1_atom, hb1_in),
-   RPgW6aC2h.v at f3898085bda (c2_all256, as hb1_chk256), RPgW6bC1a.v at f3898085bda (c1_reg, as hb1_reg) and
-   RPgMem.v at f3898085bda (rm_nth_map, as hb1_nth_map) for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bCall.v (w7_strlen_at,
+   as hb1_strlen_at), RPgW7bKit.v (w7_strok_cstr, as hb1_strok_cstr; that file is [Apache-2.0 OR
+   MIT], used here under Apache-2.0), RPgW6aTail.v (tl_atom, tl_in, as hb1_atom, hb1_in),
+   RPgW6aC2h.v (c2_all256, as hb1_chk256), RPgW6bC1a.v (c1_reg, as hb1_reg) and
+   RPgMem.v (rm_nth_map, as hb1_nth_map) for
    reac-pw/fuzz_headamp's image B: image B's segments (lib/AU/Img0U.v rsegs, HPgSteps.img_segs_low and
    same_io_wvb), the strlen wrapper at its image-B trampoline StrlenDef.STRLEN_ENTRY_B, the 256-value check stated
    for any value function. The cb_* helpers this file first took from RPgW7bBase.v,
-   RPgW7bKit.v, RPgCfgChanges.v, RPgW6aTail.v, RPgW6aC2h.v and RPgW7bIter.v at f3898085bda are lib/AU/HPgCaseB.v's
+   RPgW7bKit.v, RPgCfgChanges.v, RPgW6aTail.v, RPgW6aC2h.v and RPgW7bIter.v are lib/AU/HPgCaseB.v's
    since the dedup. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): the kit of the walk of case 1

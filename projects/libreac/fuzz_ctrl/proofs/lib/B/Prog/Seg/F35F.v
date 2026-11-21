@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 756 of its 937 lines of code are new or changed and 2376 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F18.v; 70 of its 133 lines of code are new or changed and 874 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F18F.v, with its addresses and numbers changed; 69 of its 116 lines of code are new or changed and 86 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint (ExecF.evtF) twins of the segment-F35 machine runs of lib/B/Prog/Seg/F35.v (fuzz_ctrl
    LLVMFuzzerTestOneInput, asan-ubsan image B). Bridge input for the cgif-form walk only.
    rule 24: no function proved. *)
@@ -14,9 +15,9 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F35.v f35_evt (:187), f35_evt_ro (:279) at
-     a working branch 3803efccea0 (blob cc6ce088e25cd712bb2687c0f2dc8296a121ed0b);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob cc6ce088e25cd712bb2687c0f2dc8296a121ed0b);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: both runs call wrapper_bcmp (jal at 0x82c34), so each is split: f35_evt_pre_F re-runs F35.v:226-228
      (0x82c24 up to the callee entry 0x42aac, ra = 0x82c38) and f35_evt_post_F re-runs F35.v:267-271 (from the
      return pc 0x82c38 to the exit cut 0x82c38, no step); f35_evt_ro_pre_F / f35_evt_ro_post_F are the same split

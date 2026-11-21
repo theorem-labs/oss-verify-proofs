@@ -1,7 +1,7 @@
 (* lib/A/ACtlG/X2.v -- GLUE for stage seg_X2 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    W5 tail), and the shared shadow-fill tail 0x82b24 -> 0x82b80 that seg_X1's byte-20 = 0 arm also runs
    (lib/A/ACtlG/X1.v Requires this file for x2_tail).  Written by a Theorem Labs lane; single writer.
-   rule 24: no function proved (stage glue of a walk; At ossv/recipes c5e779efe8c (2026-10-31), no released proof of this unit's LLVMFuzzerTestOneInput outside this unit).
+   rule 24: no function proved (stage glue of a walk; At (2026-10-31), no released proof of this unit's LLVMFuzzerTestOneInput outside this unit).
 
    WHAT IT PROVES
      glue_seg_X2 : forall POST, CF POST C_Jrel -> CF POST C_A82b20

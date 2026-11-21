@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the exit lemmas of Sections Exit and Plain take the channel-reader premise, carried across materialization by same_but_materialized_reader). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -257,10 +258,11 @@ Section Exit.
     (Z.of_nat (length pending) <= 1024)%Z ->
     rdn RSEGS M (Z_to_bv 64 0xc027a8) (length pending) = Some pending ->
     fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+    m_channel_reader mo = true ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst R (Z_to_bv 64 AEXIT) M (seg_rom RSEGS) ->
     realizes RSEGS (mkCfg msF mo) (t_emit (map (WriteEv (Z_to_bv 64 1)) pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs mo))).
   Proof.
-    intros vals R M msF mo pending code HL P0 P2 HR HK LEN MAX RDP Hfd1 OK RS.
+    intros vals R M msF mo pending code HL P0 P2 HR HK LEN MAX RDP Hfd1 Hrd1 OK RS.
     pose proof (know_nth RSEGS _ _ (ax_kn true false true) 1%nat _ HK eq_refl) as Hrg. cbn [kentry_ok edenot ev ENV] in Hrg. rewrite P0 in Hrg.
     pose proof (know_nth RSEGS _ _ (ax_kn true false true) 25%nat _ HK eq_refl) as Hwp. cbn [kentry_ok edenot ev ENV] in Hwp.
     unfold ASP_LO, ASP_HI in Hrg. pose proof (u64_range sp0) as Hsp.
@@ -348,6 +350,8 @@ Section Exit.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ SB5), (same_but_materialized_fds _ _ SB4), (same_but_materialized_fds _ _ SB3),
               (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1). exact Hfd1.
+    - rewrite (same_but_materialized_reader _ _ SB5), (same_but_materialized_reader _ _ SB4), (same_but_materialized_reader _ _ SB3),
+              (same_but_materialized_reader _ _ SB2), (same_but_materialized_reader _ _ SB1). exact Hrd1.
     - exact OK5.
     - exact RS5.
     - apply t_emit_has_nil.
@@ -448,10 +452,11 @@ Section Exit.
     (Z.of_nat (length pending) <= 1024)%Z ->
     rdn RSEGS M (Z_to_bv 64 0xc027a8) (length pending) = Some pending ->
     fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+    m_channel_reader mo = true ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst R (Z_to_bv 64 AEXIT) M (seg_rom RSEGS) ->
     realizes RSEGS (mkCfg msF mo) (t_emit (map (WriteEv (Z_to_bv 64 1)) pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs mo))).
   Proof.
-    intros vals R M msF mo pending code HL P0 P2 HR HK LEN MAX RDP Hfd1 OK RS.
+    intros vals R M msF mo pending code HL P0 P2 HR HK LEN MAX RDP Hfd1 Hrd1 OK RS.
     pose proof (know_nth RSEGS _ _ (ax_kn true true true) 1%nat _ HK eq_refl) as Hrg. cbn [kentry_ok edenot ev ENV] in Hrg. rewrite P0 in Hrg.
     pose proof (know_nth RSEGS _ _ (ax_kn true true true) 25%nat _ HK eq_refl) as Hwp. cbn [kentry_ok edenot ev ENV] in Hwp.
     unfold ASP_LO, ASP_HI in Hrg. pose proof (u64_range sp0) as Hsp.
@@ -539,6 +544,8 @@ Section Exit.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ SB5), (same_but_materialized_fds _ _ SB4), (same_but_materialized_fds _ _ SB3),
               (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1). exact Hfd1.
+    - rewrite (same_but_materialized_reader _ _ SB5), (same_but_materialized_reader _ _ SB4), (same_but_materialized_reader _ _ SB3),
+              (same_but_materialized_reader _ _ SB2), (same_but_materialized_reader _ _ SB1). exact Hrd1.
     - exact OK5.
     - exact RS5.
     - apply t_emit_has_nil.
@@ -753,16 +760,17 @@ Section Plain.
     rdn RSEGS mem (Z_to_bv 64 0xc027a8) (length pending) = Some pending ->
     getr regs 2 = sp -> getr regs 4 = Z_to_bv 64 0xbe1c90 -> getr regs 10 = code ->
     fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+    m_channel_reader mo = true ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 AEXIT) mem (seg_rom RSEGS) ->
     realizes RSEGS (mkCfg msF mo) (t_emit (map (WriteEv (Z_to_bv 64 1)) pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs mo))).
   Proof.
-    intros regs mem msF mo sp code we re ro tid can wp bi pending XH Hbi Hbir Xwp Xfc Hwp LEN RDP R2 R4 R10 Hfd1 OK RS.
+    intros regs mem msF mo sp code we re ro tid can wp bi pending XH Hbi Hbir Xwp Xfc Hwp LEN RDP R2 R4 R10 Hfd1 Hrd1 OK RS.
     assert (Z0 : bv_unsigned (Z_to_bv 64 0) = 0%Z) by reflexivity.
     assert (E4 : forall b, ev (ENV (x_vals regs sp tid code can wp we re ro b)) 4 = Z_to_bv 64 wp) by reflexivity.
     destruct (Z.eq_dec bi 0) as [->|Hnz].
     - apply (ax_sound_2zf sp L S Zr (x_vals regs sp tid code can wp we re ro 0) regs mem msF mo pending code);
         [ apply x_vals_len | reflexivity | reflexivity | apply x_regs_ok; assumption | | cbn [vals_ev x_vals nth app]; rewrite u64_lit by lia; lia
-        | lia | exact RDP | exact Hfd1 | exact OK | exact RS ].
+        | lia | exact RDP | exact Hfd1 | exact Hrd1 | exact OK | exact RS ].
       unfold ax_kn. apply (x_know_ok_common true false true); [exact XH | exact Hbi |].
       apply (proj2 (know_ok_app RSEGS _ _ _ _)). split; [| apply cells_know; [vm_compute; reflexivity | exact Xfc]].
       repeat (apply Forall_cons); [ .. | apply Forall_nil ].
@@ -770,7 +778,7 @@ Section Plain.
       + apply krange_intro. cbn [edenot]. rewrite (E4 0%Z), u64_lit by lia. lia.
     - apply (ax_sound_2nf sp L S Zr (x_vals regs sp tid code can wp we re ro bi) regs mem msF mo pending code);
         [ apply x_vals_len | reflexivity | reflexivity | apply x_regs_ok; assumption | | cbn [vals_ev x_vals nth app]; rewrite u64_lit by lia; lia
-        | lia | exact RDP | exact Hfd1 | exact OK | exact RS ].
+        | lia | exact RDP | exact Hfd1 | exact Hrd1 | exact OK | exact RS ].
       unfold ax_kn. apply (x_know_ok_common true true true); [exact XH | split; [exact Hbi | lia] |].
       apply (proj2 (know_ok_app RSEGS _ _ _ _)). split; [| apply cells_know; [vm_compute; reflexivity | exact Xfc]].
       repeat (apply Forall_cons); [ .. | apply Forall_nil ].

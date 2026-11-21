@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: al_free_tailA and array_list_free_A_cps take it after alloc_ceiling <= lo, and the al_free_tailA calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -98,7 +99,7 @@ forall (x1 t0 t1 t2 x9 a0 a1 a2 a3 a4 a5 a6 a7 x18 x20 x22 x23 x24 x25 t3 t4 t5 
 HEAPAx A ((a, AL_SZ) :: (arr, 8 * size) :: LB) LM FRS B0 m md ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_free A4H) ra u ->
 al_hdr asegs A4F m a arr len size ->
-stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -96 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m (bv_unsigned sp + -96) [CB 8 fjunk; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -111,7 +112,7 @@ AJ5 A4L HIx A T md
 x18 (Z_to_bv 64 A_SB) x20 (Z_to_bv 64 (a / 8)) x22 x23 x24 x25 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0xa0550) fc None m (seg_rom asegs)).
 Proof.
-intros until u. intros HP UW UWK HDR ST LO LOS SPA HT FR ERR RA VM0 HPR BB BD K.
+intros until u. intros HP UW UWK HDR ST LO HBT LOS SPA HT FR ERR RA VM0 HPR BB BD K.
 unfold al_hdr in HDR. unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 blk_factsA A4L HIx HP a 32 Hal Hlo Hhi Himg.
@@ -170,7 +171,7 @@ forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word)
 HEAPAx A (BS ++ LB) LM FRS B0 m0 md0 ->
 uw_at (hiA_top A4L HIx) m0 (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_free A4H) ra u ->
 alist asegs A4F m0 BS a ps -> Forall (fun p => p = 0) ps ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] ->
 bv_unsigned ra mod 2 = 0 ->
@@ -181,7 +182,7 @@ AJ5 A4L HIx A T md0
 (MS (mkR ra sp gp (Z_to_bv 64 A_TP) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 array_list_free_A_entry) fc None m0 (seg_rom asegs)).
 Proof.
-intros until u. intros HP UW UWK AL NUL ST LO LOS SPA HT ERR RA A0 BB BD K.
+intros until u. intros HP UW UWK AL NUL ST LO HBT LOS SPA HT ERR RA A0 BB BD K.
 destruct (alist_open asegs A4F m0 BS a ps AL) as (arr & size & junk & -> & HDR & ARR & JK & Hlen & Hsz).
 cbn [app] in HP. unfold al_hdr in HDR.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO, array_list_free_A_entry in *. word_range sp SPR.
@@ -219,7 +220,7 @@ destruct (Z.eq_dec (Z.of_nat (length ps)) 0) as [Z0|NZ].
 - rewrite Z0. if_true.
 evt_done5.
 eapply (al_free_tailA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m1 md0 A arr 0 size errv _ u);
-[exact HP1 | exact UW1 | exact UWK | unfold al_hdr; rewrite <- Z0; assumption | exact ST | clia | clia | exact SPA | exact HT
+[exact HP1 | exact UW1 | exact UWK | unfold al_hdr; rewrite <- Z0; assumption | exact ST | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | exact FR | assumption | exact RA | apply model_vm_only_refl | exact HPR1 | exact BB | exact BD | exact K].
 - if_falsex.
 step. step. step.
@@ -235,7 +236,7 @@ eapply (al_free_loopA (Z.to_nat (Z.of_nat (length ps) - 1)) 0);
 intros ms' <-.
 evt_done5.
 eapply (al_free_tailA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m1 md0 A arr (Z.of_nat (length ps)) size errv _ u);
-[exact HP1 | exact UW1 | exact UWK | unfold al_hdr; assumption | exact ST | clia | clia | exact SPA | exact HT
+[exact HP1 | exact UW1 | exact UWK | unfold al_hdr; assumption | exact ST | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | exact FR | assumption | exact RA | apply model_vm_only_refl | exact HPR1 | exact BB | exact BD | exact K].
 Qed.
 End AAlFree.
@@ -363,7 +364,7 @@ forall (x1 t0 t1 t2 x9 a1 a2 a3 a4 a5 a6 a7 x18 x20 x21 x22 x23 x24 t3 t4 t5 t6 
 HEAPAx A ((a, AL_SZ) :: (arr, 8 * size) :: LB) LM FRS B0 m md ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_free A4H) ra u ->
 al_hdr asegs A4F m a arr len size ->
-stk asegs m lo (bv_unsigned sp + -80) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -80 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -80) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -80 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m (bv_unsigned sp + -80) [C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra] ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -376,7 +377,7 @@ AJ5 A4L HIx A T md
 x18 (Z_to_bv 64 A_SB) x20 x21 x22 x23 x24 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0xa2474) fc None m (seg_rom asegs)).
 Proof.
-intros until u. intros HP UW UWK HDR ST LO LOS SPA HT FR ERR RA VM0 HPR BB BD K.
+intros until u. intros HP UW UWK HDR ST LO HBT LOS SPA HT FR ERR RA VM0 HPR BB BD K.
 unfold al_hdr in HDR. unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 blk_factsA A4L HIx HP a 32 Hal Hlo Hhi Himg.
@@ -430,7 +431,7 @@ forall (t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word)
 HEAPAx A (BS ++ LB) LM FRS B0 m0 md0 ->
 uw_at (hiA_top A4L HIx) m0 (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_free A4H) ra u ->
 alist asegs A4F m0 BS a ps -> Forall (fun p => p = 0) ps ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] ->
 bv_unsigned ra mod 2 = 0 ->
@@ -441,7 +442,7 @@ AJ5 A4L HIx A T md0
 (MS (mkR ra sp gp (Z_to_bv 64 A_TP) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 array_list_free_A_entry) fc None m0 (seg_rom asegs)).
 Proof.
-intros until u. intros HP UW UWK AL NUL ST LO LOS SPA HT ERR RA A0 BB BD K.
+intros until u. intros HP UW UWK AL NUL ST LO HBT LOS SPA HT ERR RA A0 BB BD K.
 destruct (alist_open asegs A4F m0 BS a ps AL) as (arr & size & junk & -> & HDR & ARR & JK & Hlen & Hsz).
 cbn [app] in HP. unfold al_hdr in HDR.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO, array_list_free_A_entry in *. word_range sp SPR.
@@ -482,7 +483,7 @@ destruct (Z.eq_dec (Z.of_nat (length ps)) 0) as [Z0|NZ].
 - rewrite Z0. if_true.
 evt_done5.
 eapply (al_free_tailA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m1 md0 A arr 0 size errv u);
-[exact HP1 | exact UW1 | exact UWK | unfold al_hdr; rewrite <- Z0; assumption | exact ST | clia | clia | exact SPA | exact HT
+[exact HP1 | exact UW1 | exact UWK | unfold al_hdr; rewrite <- Z0; assumption | exact ST | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | exact FR | assumption | exact RA | apply model_vm_only_refl | exact HPR1 | exact BB | exact BD | exact K].
 - if_falsex.
 step. step. step.
@@ -498,7 +499,7 @@ eapply (al_free_loopA (Z.to_nat (Z.of_nat (length ps) - 1)) 0);
 intros ms' <-.
 evt_done5.
 eapply (al_free_tailA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m1 md0 A arr (Z.of_nat (length ps)) size errv u);
-[exact HP1 | exact UW1 | exact UWK | unfold al_hdr; assumption | exact ST | clia | clia | exact SPA | exact HT
+[exact HP1 | exact UW1 | exact UWK | unfold al_hdr; assumption | exact ST | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | exact FR | assumption | exact RA | apply model_vm_only_refl | exact HPR1 | exact BB | exact BD | exact K].
 Qed.
 End AAlFree.

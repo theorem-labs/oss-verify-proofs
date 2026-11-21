@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtl.v -- the TOP and the COMPOSITION of fuzz_ctrl image B's (asan-ubsan) walk of LLVMFuzzerTestOneInput
    (libreac v1.9.0), in the released cgif_file_fuzzer form.  Written by a Theorem Labs lane as the image-B twin of
-   a Theorem Labs lane's lib/A/ACtl.v (a working branch e76ced8e847 with a Theorem Labs lane's frame-law fix b535733d786);
+   a Theorem Labs lane's lib/A/ACtl.v (a working branch with a Theorem Labs lane's frame-law fix);
    single writer.  It states every segment's stage as a named Section hypothesis, PROVES the loop combinators and
    the backward chain, and PROVES the step from the chain to the core's lib contract
    Reusable.YCfn.tfib_lib_contract_x.  Section 9 instantiates that top at the B core's own symbol bundle CtrlB
@@ -14,12 +15,12 @@
 
    PROVENANCE
    - RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28
-     20:16:23Z from e966c513ee6, ossv/recipes@a8831f7c5c), second-agent check a Theorem Labs lane 21:10Z CONFIRM:
+     20:16:23Z, ossv/recipes), second-agent check a Theorem Labs lane 21:10Z CONFIRM:
      cgif/cgif_file_fuzzer is the only released ASan donor on this branch, LPS and framework.  This file follows
-     that donor's own composition, proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v at origin/ossv/recipes c8557374ad2e
+     that donor's own composition, proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v at theorem-labs/oss-verify-proofs@6b32741d849a
      (image B's twin: the root YCfj.v): the loop lemma rt_G_allX (:157-163), the leaf lx_leaf_fail (:180-207),
      tfib_lib_x_body (:230-257) and tfib_lib_x (:258).  ctrl's own assembly of the same cuts, lib/B/Prog/Seg/Slot.v
-     at 3803efccea0 (S_ forms :48-259, vac_* :381-397, turn_* / loop_* :400-516, slot_entry :520-551), is the
+     (S_ forms :48-259, vac_* :381-397, turn_* / loop_* :400-516, slot_entry :520-551), is the
      segment graph and the proof pattern of the loops.
    - cut layer: lib/B/ACtlCut.v (ctlcx, ctl_base, ctlcut, ctl_from, ix_cut / ctl_from_ix, ctl_post, ctl_rt) and
      lib/B/ACtlCutP.v (the cut records C_<cut>), written in the same commit as this file.  Segment rows: the
@@ -28,7 +29,7 @@
    - route (lead, 22:15Z, via a Theorem Labs lane): route (a).  ctrl's proved v1.9 segment runs are re-run in footprint form
      (_F over StepF) and the cut glue lifts each through the bridge into a stage.  The comment line "glue:" above
      each stage hypothesis names the proved run(s) its glue lifts (segment file, seg_ lemma, its line and commit,
-     and the run lemmas, from section 2.3 column 7).  UB = 3803efccea0, EB = d574f6c66de (A5 / R1 / R2: WIP,
+     and the run lemmas, from section 2.3 column 7).  UB =, EB = (A5 / R1 / R2: WIP,
      iteration-only, build not checked).
 
    WHAT IS A HYPOTHESIS HERE, AND WHAT IS NOT
@@ -71,8 +72,8 @@
    NAMES THIS FILE TAKES FROM THE CORE (the relocated cgif core, porter's flat layout; nothing here is restated)
      Reusable.YCfn   tfib_lib_contract_x (the statement proved), tfib_lib_post_x (ctl_post_leaf), A_LLVMF,
                      RA_LLVMF, LLVMF_STK, EV_LIB (the donor's root YCfn.v, image B's twin of A/ACfn.v)
-     Reusable.YB1v   tfibsegs, the core's segment list (donor root YB1v.v:11; porter 22:45Z)
-     Reusable.YE2k   tfib_sink_head, the core's sink head (donor root YE2k.v:44, ofl_head 0x5fcd48 = ctrl's B)
+     Reusable.YB1v   tfibsegs, the core's segment list (donor root YB1v.v:12; porter 22:45Z)
+     Reusable.YE2k   tfib_sink_head, the core's sink head (donor root YE2k.v:45, ofl_head 0x5fcd48 = ctrl's B)
      Reusable.YK11   FPState                         Reusable.YM05  RunCeil
      Reusable.YG0f   asyms (donor YG0f.v:154)        Reusable.YC5d  ameter_ops
      Reusable.YG0d   cfg_at, spZ                     Reusable.YI16  sink_head
@@ -146,7 +147,7 @@ Section Ctl.
 (* ACtlCut.v's Section shape (its contexts and variables, in its order), with SK and FP instantiated in the
    notation block below instead of declared (section 1).  Image B has no callee-constant Variables: its
    ACtlCutP.v keeps reac_ctrl_identity_reply_c / reac_ctrl_parse_c as qualified modules (their closures are clean
-   at 23a791566db, ACtlCutP.v's CLOSURE). *)
+   at ACtlCutP.v's CLOSURE). *)
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil} {LS : lib.Reusable.YO09.lib_shape}.
 Variable B : Reusable.YG0f.asyms.
 Variable MT : Reusable.YC5d.ameter_ops.
@@ -156,8 +157,8 @@ Variables RLO RHI : Z.
    form (a Theorem Labs lane 00:35Z, both images), which the stages read where a read-only byte must be an image byte.  The top at
    the B core's values discharges it by relro_img_CtrlB (section 9). *)
 Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> Reusable.YG0d.in_img segs a.
-(* The core's two symbol records for B, as named Section hypotheses (porter 23:10Z; image A's names, a Theorem Labs lane
-   8d0116e86e0): the donor's Section h takes them the same way (root YCfj.v:91-95, `Hypothesis TL : TfibLib B`;
+(* The core's two symbol records for B, as named Section hypotheses (porter 23:10Z; image A's names, a Theorem Labs lane):
+   the donor's Section h takes them the same way (root YCfj.v:91-95, `Hypothesis TL : TfibLib B`;
    HB as AD2o.v:31 binds it), the stage lemmas that discharge the stage hypotheses below read them, and
    ctl_lib_x stays generic in B.  Section 9 supplies TFIB_SYMS := CtrlB_syms and TFIB_LIB := CtrlB_libS. *)
 Hypothesis TFIB_SYMS : Reusable.YF0m.CtrlTSyms B.
@@ -167,7 +168,7 @@ Hypothesis TFIB_LIB : Reusable.YCeg.TfibLib B.
    1. The cut layer with its Section arguments absorbed once (the only place they appear).  After ACtlCut.v's
    End CtlCut: ctlcx / ctlcut and their fields take nothing, ctl_base takes B MT XM_LIB RLO RHI, ctl_from
    B MT XM_LIB RLO RHI FP, ctl_post B MT XN_LIB (ACtlCut.v's closing note).  The walk is instantiated HERE, once:
-   - the journal's sink head SK := Reusable.YE2k.tfib_sink_head, the core's (donor root YE2k.v:44, ofl_head =
+   - the journal's sink head SK := Reusable.YE2k.tfib_sink_head, the core's (donor root YE2k.v:45, ofl_head =
      ctrl's B ofl_head 0x5fcd48; porter 22:45Z), by NAME, so instance search never picks YL0j's global
      src0_sink_head.  It is the instance the core's tfib_lib_post_x journal is elaborated with (donor YCfn.v Imports
      YE2k, whose instance is #[export]), so the walk's journal and the post's are over the same head;
@@ -369,8 +370,8 @@ Hypothesis CTLRT_ENTRY : forall cx : ctlcx, CB cx ->
    allocator sites of the walk -- malloc / free of the round trip (returns 0x81764 / 0x81aa0, the cuts B81764_at /
    B81aa0_at) and of the frame loop (0x81f50 / 0x82d1c, B81f50_at / B82d1c_at).  The saved-register bytes are
    FRAC's (ACtlCutP.v's saved_bytes, ctrl's SlotInv.v:275-279, written out); s0 = S and the spill-base window
-   (S - 4096 < sp, sp + 448 <= S) are FRAC's too.  Statement: a Theorem Labs lane's HCHAIN (lib/B/ACtlW2a.v section 2,
-   ffb9cb21497), over the walk's journal (sink head and FP as in CF, FP quantified).  A HYPOTHESIS, not a lemma:
+   (S - 4096 < sp, sp + 448 <= S) are FRAC's too.  Statement: a Theorem Labs lane's HCHAIN (lib/B/ACtlW2a.v section 2),
+   over the walk's journal (sink head and FP as in CF, FP quantified).  A HYPOTHESIS, not a lemma:
    its proof needs the entry chain of the core's afn_pre, the journal's kept view above S and the bridge from
    lib/Lib's bytes_at to the core's aview (a Theorem Labs lane's lib/B/ProgBridge.v / lib/B/ProgWorld.v). *)
 Hypothesis CHAIN_OF_CUT : forall (FP : list (Z * Z)) (cx : ctlcx) own ly3 S3 W3 mem3 md3 k (regsT : bvmap 5 word)

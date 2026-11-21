@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane): copied from lib/A/AsmTopX.v (a working branch dac32c4fd94) for fuzz_reply.asan-ubsan (image B): the module paths changed, CfImgA dropped, and asm1_pres_ARX states class 1 over lib/B/RT_asan_stack_malloc_1_x.v. *)
+(* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane): copied from lib/A/AsmTopX.v (a working branch) for fuzz_reply.asan-ubsan (image B): the module paths changed, CfImgA dropped, and asm1_pres_ARX states class 1 over lib/B/RT_asan_stack_malloc_1_x.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane): image B's (fuzz_reply.asan-ubsan) twin of lib/A/AsmTopX.v
-   (a working branch dac32c4fd94): the fs_iface-form contract of __asan_stack_malloc_0
+   (a working branch): the fs_iface-form contract of __asan_stack_malloc_0
    (lib/B/RT_asan_stack_malloc_0_x.v) at B top_x's relation. Rule 24: no function is proved here (instance
    discharge); the function's reuse search is lib/B/RT_asan_stack_malloc_0.v's header:
    RULE 24: `proof-index __asan_stack_malloc_0 0x3d1c0`: 0 released lemmas for either key; no released FUNCTION proof found. Second-agent
@@ -21,7 +22,7 @@
    Row ASM0 (TOPX-HYPS.md (sha256 47b88854dcb3; internal record) table) asks for `astack_malloc_pres_x segs TfibB ARX 0` at B
    top_x's relation
      ARX := fun ly S Hp W mem md => ARcf (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = []
-   (lib/B/W_LLVMFuzzerTestOneInput_top_x.v's Definition ARX; segs = pa_segs PB_fr = tfibsegs by reflexivity, lib/B/Rt/Bcmp.v:44).
+   (lib/B/W_LLVMFuzzerTestOneInput_top_x.v's Definition ARX; segs = pa_segs PB_fr = tfibsegs by reflexivity, lib/B/Rt/Bcmp.v:45).
    The class walk is proved for ANY relation with FCiface.fs_iface; FCifaceCf.fs_iface_ARcf gives it for ARcf from
    AR_laws_cf, and YG0lawscf.AR_laws_ok_cf discharges AR_laws_cf unconditionally. The one step this file adds is the
    Hp = [] conjunct ([fs_iface_and_hp]): every field of fs_iface is either a projection of the relation (read at the

@@ -5,6 +5,7 @@
    projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC05.v:110-141, 221-225, 227-235, 264-270 [Apache-2.0 OR MIT], for
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module paths, module names and numbers changed; 4940 of its 5001 lines of code are new or changed and 1019 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -634,7 +635,7 @@ Definition decL_str : YP09.region := YP09.mkRegion (Some 47%nat) 0 1 0 1 [].
 Definition decL_lpr : YP09.region := YP09.mkRegion (Some 33%nat) 0 8 0 8 [].
 
 (* the token engine's shadow base: the CUT's register atom of s4 (x20), whose atom fact is the single point
-   SHADOW_OFF; every cut is an fss_retT state with sr_atoms registers (lib/B/FSW_ret.v:45-47) *)
+   SHADOW_OFF; every cut is an fss_retT state with sr_atoms registers (lib/B/FSW_ret.v:46-48) *)
 Definition decL_Bx : sv := SOff 20 0.
 Definition decL_hSH : list shent := [mkSHE 18 0 1].
 Definition decL_mSH : list shent := [mkSHE 47 0 1].

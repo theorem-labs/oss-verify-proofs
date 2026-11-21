@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrchr.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrchr.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's runtime contract for the strchr interceptor in the donor's form: astrchr_realizes (lib/A/FMH_Rt.v:115) at
    PC_strchr = 0x41340, the four-byte jump to the interceptor at 0x42ee8 (REAL = musl strchr 0x92d9c).
    Proved inputs: A/Bz/A/I_strchrw.v tramp_strchr (the jump) and istrchr_spec (the interceptor, any character whose

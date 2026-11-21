@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of PHASE p4 of ARM_gone of fuzz_reply's LLVMFuzzerTestOneInput
    walk (lib/A/W_LLVMFuzzerTestOneInput_gone_p4.v, a Theorem Labs lane's, Qed: GC1 q -> GT0, 0x84848 -> 0x84864, the
    check_no_loss_read loop of fuzz_reply.c:643-645) to the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v
@@ -90,7 +91,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 Hypothesis HZS : GN_HZS B.
 (* the slots the loop calls check_no_loss_read on have no pending record (relay_instance_gone drained them) *)
 Hypothesis RIR : GN_RI_read RINV.
-(* check_no_loss_read (0x85904): W_contract_x.v:434 cnlr_spec_x, the twin of _gone_p4.v's CNLR (W_contract.v:483) *)
+(* check_no_loss_read (0x85904): W_contract_x.v:435 cnlr_spec_x, the twin of _gone_p4.v's CNLR (W_contract.v:484) *)
 Hypothesis CNLR : cnlr_spec_x B PST ARx (BASE + AF_fr_check_no_loss_read).
 (* what carries the model and the read-only image across that call (_gone_p4.v's text, verbatim) *)
 Hypothesis HGcells : GN_HGcells G_fr.

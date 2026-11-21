@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC9.v at f3898085bda (w6b_c9: the split
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC9.v (w6b_c9: the split
    head / call / tail and the assembly of e at J) for reac-pw/fuzz_headamp's image B: the statement is
    lib/AU/HPgW6bBase.v's hw6b_c9_stmt (the post HPgSteps.hdu_blk_postE with HPgCaseBJ.cj_wr and cj_J_R), the
    object is e62 at F+0x210 in the class-4 frame (4, pos), the copy's source facts come from HPgBase.hd_cstr, the

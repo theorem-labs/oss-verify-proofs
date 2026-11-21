@@ -8,15 +8,16 @@
    (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACai.v:156-159. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v, with its module paths and module names changed; 1279 of its 1357 lines of code are new or changed and 927 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch
-   60d0985773d, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_K.v; 191 of its 280 lines of code are new or changed and 1268 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_rres.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_rres.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The resume state after a RUNTIME call (strlen, __asan_memcpy, __asan_memset, the poison / unpoison helpers,
    __asan_stack_malloc_N, any callee whose contract gives back ARU and a frame, not a journal): FSW_K's fsw_intrin_atU puts
    the caller's journal back on the memory after the call and keeps ARU there, but builds no symbolic state at the return
@@ -34,7 +35,7 @@
    bridge). The window bytes are present after the call by the journal's stack-window presence (the window lies in
    [sp0 - STK, sp0)) and ARU. The st_ok half of FSW_K's fsw_after_callU / fsw_after_callU_s0 and FSW_ret's
    fsw_after_callU_args, without the journal composition; the proved instance generalized is a Theorem Labs lane's crcs_resume_sm
-   (a working branch c4bfd3bc057, lib/A/FSH_check_reject_clean_starved.v). Owner: a Theorem Labs lane (walk
+   (a working branch, lib/A/FSH_check_reject_clean_starved.v). Owner: a Theorem Labs lane (walk
    kit). A kit: no function's contract is proved here (rule 24). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

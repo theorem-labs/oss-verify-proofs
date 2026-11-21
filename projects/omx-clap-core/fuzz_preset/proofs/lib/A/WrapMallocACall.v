@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A (asan, pin 1be0f53d96cb, unstripped twin bff8519bbe3e;
    relocated from d83eb25d by symbol + offset, the internal file RELOC102-A1.md), the
    CALL SEGMENT of the malloc interceptor over ARcf: __wrap_malloc's entry (A 0x53738 `j ___interceptor_malloc`,
@@ -13,7 +14,7 @@
    - the prefix to UnwindImpl and its return: lib/A/AFjh.v:458-613 seg0 (in the released file, deleted in this series; srr_run_to_sh to UnwindImpl, A 0x5b4d4 =
      AB1w.v:421, the unwinder's spec, the stack object's regions); its U1 premises at the free donor's region list as
      lib/A/AFh1.v:218-275 states them (the seed here is AFgn.REG0, WrapMallocASeed.v);
-   - asan_malloc to Allocate's entry: the first run of lib/A/AGji.v:401 seg1 (s_runP from S_1 through asan_malloc
+   - asan_malloc to Allocate's entry: the first run of lib/A/AGji.v:402 seg1 (s_runP from S_1 through asan_malloc
      into Allocate), stopped at Allocate's entry;
    - UnwindImpl is the donors' named premise U1 : tfib_unwind_spec (AFl0.v:23-57), relation-generic, taken as is
      (a Theorem Labs lane: discharged by A's tfib_unwind_ok, AFl0.v).
@@ -432,7 +433,7 @@ assert (Z4 : val_mem tfibsegs (mrestrict (w_H W) (ms_mem ms)) (sp0 - 2120 + 4) 4
 rewrite (Z8 (4 + k)%nat ltac:(zlia)). rewrite !le_byte_zero. reflexivity. }
 eapply val_mem_frame; [intros k Hk; apply Hfr; rewrite ?Q2; unfold w64; rewrite ?unsigned_lit_small by (clear - Usp Hlo LB Hk; numconst; unfold sp0 in *; zlia); unfold UNW_STK, BST_SIZE; clear - Usp Hlo LB Hk; unfold sp0 in *; numconst; zlia| exact Z4]. }
 rewrite <- (restrict_mkst_fx (w_H W)) in HS1. rewrite R1. clear HS. rename HS1 into HS.
-(* AGji.v:411's first run (through asan_malloc), stopped at Allocate's entry (A 0x325b8, cf_pc_allocate). *)
+(* AGji.v:412's first run (through asan_malloc), stopped at Allocate's entry (A 0x325b8, cf_pc_allocate). *)
 srr_run_to_sh tfibtbl_rtA_ok HS PC_ALLOCATE.
 lazymatch type of HS with st_ok _ _ _ (restrict _ ?msx) => rename msx into msA end.
 pose proof (st_ok_restrict_mkst tfibsegs (w_H W) En1 _ _ HS eq_refl) as HshA; cbn [ss_pc] in HshA.

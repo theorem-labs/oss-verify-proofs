@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the tail takes the output channel's reader ([ia_channel_reader]) and passes it on). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63.
@@ -54,6 +55,7 @@ Definition leaf_tail_stmt (KT : list byte -> Fs -> TSet) : Prop :=
   forall (sp0 : word) (k buf : Z) (can : word) (content : list byte) (VM : VmMaps) (R : bvmap 5 word) (M : word -> option byte)
          (stdin0 : AmbIn) (fs0 : Fs) (tid : word),
     valid_sp sp0 -> 0 < bv_unsigned tid < 2 ^ 22 ->
+    ia_channel_reader stdin0 = true ->     (* LPS 08b1429: from the launch's valid_input_channel_reader *)
     tgt_entry_full sp0 k buf can content VM R M ->
     root_extra sp0 VM M ->
     forall (mb bw B : word) (sec tdz err : Z),
@@ -67,9 +69,9 @@ Definition leaf_tail_stmt (KT : list byte -> Fs -> TSet) : Prop :=
 
 Theorem tail_of_leaves : forall KT, leaf_tail_stmt KT -> tail_stmt KT.
 Proof.
-  intros KT HL sp0 tid stdin0 fs0 can k buf fdata V' R' M' Hsp Htid TF.
+  intros KT HL sp0 tid stdin0 fs0 can k buf fdata V' R' M' Hsp Htid Hrdr TF.
   change (realizes_cfg ConeCfg.CFG RSEGS (mkCfg (fi_ms R' M') (fi_m V' stdin0 fs0 tid)) (KT fdata fs0)).
   apply (fi_universal sp0 k buf can fdata V' R' M' stdin0 fs0 tid TF FUEL (KT fdata fs0)).
   intros mb bw B sec tdz err HR F' L' n' r rho' ms' m' Hleaf HD Hext Hec.
-  exact (HL sp0 k buf can fdata V' R' M' stdin0 fs0 tid Hsp Htid TF (root_extra_of_full _ _ _ _ _ _ _ _ TF) mb bw B sec tdz err HR F' L' n' r rho' ms' m' Hleaf HD Hext Hec).
+  exact (HL sp0 k buf can fdata V' R' M' stdin0 fs0 tid Hsp Htid Hrdr TF (root_extra_of_full _ _ _ _ _ _ _ _ TF) mb bw B sec tdz err HR F' L' n' r rho' ms' m' Hleaf HD Hext Hec).
 Qed.

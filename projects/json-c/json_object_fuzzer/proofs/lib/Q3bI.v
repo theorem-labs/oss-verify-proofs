@@ -1,9 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap placement by the model's linux_place in free_gap_of_totals; the channel-reader conjunct m_channel_reader model = true in fd1chan and fdchan). *)
 
 From Stdlib Require ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase State Monad Specs.
+(* [linux_place_exists] (used below) lives in Checks/Placement.v; nothing this
+   file already required re-exports it. *)
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQny QWXq.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -11,6 +15,7 @@ Module Mq0.
 
 Import Stdlib.ZArith.ZArith Stdlib.Lists.List Stdlib.Bool.Bool Stdlib.micromega.Lia.
 Import LinuxProcessSemantics.LinuxProcessSem.BvBase LinuxProcessSemantics.LinuxProcessSem.State LinuxProcessSemantics.LinuxProcessSem.Monad LinuxProcessSemantics.LinuxProcessSem.Specs.
+Import LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.
 Import QQny.Mq0 QWXq.Mq1.
 Import ListNotations.
 Open Scope bv_scope.
@@ -165,19 +170,21 @@ intros nZ l. induction l as [|[b s] l IH]; cbn -[Z.of_nat Z.mul Z.add]; [reflexi
 rewrite IH, Nat2Z.inj_succ. lia.
 Qed.
 
-Theorem free_gap_of_totals : forall (h : VmMaps) nZ tot,
-0 <= nZ ->
-gw_sizes (vm_reserved h ++ vm_maps h) <= tot ->
-bottomup_floor + nZ + tot + Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (nZ + 4095) <= alloc_ceiling ->
-exists g, g mod page_size = 0 /\ bottomup_floor <= g /\ g + nZ <= alloc_ceiling
-/\ region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true
-/\ hint_placement_ok_b (Z_to_bv 64 0) h g nZ = true.
+Theorem free_gap_of_totals : forall (h : VmMaps) (thp : bool) nZ tot,
+  0 < nZ -> nZ mod page_size = 0 ->
+  alloc_ceiling <= alloc_top h ->
+  gw_sizes (vm_reserved h ++ vm_maps h) <= tot ->
+  bottomup_floor + nZ + tot + Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (nZ + 4095) <= alloc_ceiling ->
+  exists g, linux_place h thp (Z_to_bv 64 0) nZ g.
 Proof.
-intros h nZ tot HnZ Htot Hband.
-destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ HnZ) as (g & Hal & Hfl & Hc & Hfree).
-{ rewrite gap_weight_sizes. lia. }
-exists g. split; [exact Hal|]. split; [exact Hfl|]. split; [exact Hc|]. split; [exact Hfree|].
-apply hint_placement_ok_b_of_floor. exact Hfl.
+  intros h thp nZ tot HnZ HnAl Htop Htot Hband.
+  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ ltac:(lia))
+    as (g & Hal & Hfl & Hc & Hfree).
+  { rewrite gap_weight_sizes. lia. }
+  apply (linux_place_exists h thp (Z_to_bv 64 0) nZ HnZ HnAl).
+  exists g. right. unfold gap_fits.
+  pose proof bottomup_floor_val as Hfv.
+  repeat split; [exact Hal | unfold task_unmapped_base; lia | lia | exact Hfree].
 Qed.
 
 Definition ledger_split (l : list (word * word)) (K Y : Z) : Prop :=
@@ -747,7 +754,8 @@ reflexivity.
 Qed.
 
 Definition fd1chan (model : Model) : Prop :=
-fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+  /\ m_channel_reader model = true.
 
 Definition buf_modeled (b : list byte) : Prop :=
 (Z.of_nat (length b) <= rw_bytes_max)%Z.
@@ -827,7 +835,8 @@ fun tr o =>
 End WithSegs.
 
 Definition fdchan (fd ch : word) (model : Model) : Prop :=
-fd_lookup (m_fds model) fd = Some (FdChannel ch) /\ w_is0 ch = false.
+  fd_lookup (m_fds model) fd = Some (FdChannel ch) /\ w_is0 ch = false
+  /\ m_channel_reader model = true.
 
 Section WithSegsCh.
 Variable segs : list Segment.

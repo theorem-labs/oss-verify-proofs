@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v, with its module paths and module names changed; 137 of its 219 lines of code are new or changed and 1627 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Lib-level pieces of image-A segment F17b of fuzz_ctrl LLVMFuzzerTestOneInput (asan, libreac v1.9.0;
    lib/A/Prog/Seg/F17.v): the call `jal __asan_memcpy` at 0x823d4, which copies the first fragment's body
    gg[27 .. 27 + gg[26]) (src = s7 + 27 = phi + 27) into the frame object first.sroa.7 (dst = [A+32] = fr + 2880),
@@ -12,7 +13,7 @@
    for it: f17_mc runs the contract on MemNorm.normalize m (mem_inv_normalize) and carries the run back to m by
    MemNorm.evt_normalize. The lemmas below move the contract's premises to the normalized memory and its post back;
    every address they speak of is at or above GT, where no segment lies.
-   Ported from image B's twin, proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_f17b.v @ 3803efccea0. Two changes:
+   Ported from image B's twin, proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_f17b.v. Two changes:
    the call's post keeps the contract's literal register file (image A runs four more instructions after the
    return, 0x823d8 .. 0x823e4, so the caller steps on it), and the segment-top bound is a local copy of
    Seg/P4.v's p4_find_below (image A's Tac_slot has no sl_find_below). *)

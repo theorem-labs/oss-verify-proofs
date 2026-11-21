@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's base (lib/A/W_LLVMFuzzerTestOneInput_gone_base.v,
-   a Theorem Labs lane's, adapted to integ at commit 95cae0d4740), for the conversion of ARM_gone to
+   a Theorem Labs lane's, adapted to integ), for the conversion of ARM_gone to
    the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v (a Theorem Labs lane's route (b), step 7). _gone_base.v is
    not edited; its AR-free definitions (gn_Bx, gframe, gn_kregs, gn_op, the model notions, the GN_* texts, the cut
    points' addresses) are CITED from it.  What reads AR is restated here under its name + _x:
@@ -162,7 +163,7 @@ Proof.
   - exact (SRr_SRrG pa_segs R WLE_R W c _ H).
   - intros W' c' _ (-> & H'). exact H'.
 Qed.
-(* W_frame_x.v:212 SRr_run_pi_AJ_x over the journal at R (local twin, gone-prefixed: W_frame_x has no R twin) *)
+(* W_frame_x.v:213 SRr_run_pi_AJ_x over the journal at R (local twin, gone-prefixed: W_frame_x has no R twin) *)
 Lemma gn_SRr_run_pi_AJ_xR : forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
   img_env pa_val A_LIM E ->
   st_ok_pi pa_segs pa_val E ss (restrict (w_H W) ms) ->
@@ -187,7 +188,7 @@ Proof.
   | destruct ss; exact Hwr | ].
   intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
 Qed.
-(* W_frame_x.v:230 SRr_run_to_pi_AJ_x over the journal at R (local twin) *)
+(* W_frame_x.v:231 SRr_run_to_pi_AJ_x over the journal at R (local twin) *)
 Lemma gn_SRr_run_to_pi_AJ_xR : forall W n stop E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
   img_env pa_val A_LIM E ->
   st_ok_pi pa_segs pa_val E ss (restrict (w_H W) ms) ->
@@ -212,7 +213,7 @@ Proof.
   | destruct ss; exact Hwr | ].
   intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
 Qed.
-(* W_frame_x.v:641 SRr_run_pi_AJ_call_x over the journal at R (local twin) *)
+(* W_frame_x.v:642 SRr_run_pi_AJ_call_x over the journal at R (local twin) *)
 Lemma gn_SRr_run_pi_AJ_call_xR : forall W n E ss ss' s ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
   img_env pa_val A_LIM E ->
   st_ok_pi pa_segs pa_val E ss (restrict (w_H W) ms) ->
@@ -411,8 +412,8 @@ Local Notation gn_tie := (W_LLVMFuzzerTestOneInput_gone_base.gn_tie B).
 Local Notation gn_cst := (W_LLVMFuzzerTestOneInput_gone_base.gn_cst MT).
 (* ---- the room round's count row of the arm (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c)).  RP is the room record the callees are taken at;
    gn_pk is the arm's peak (s5-r1d's pk_gone at the instance).  GN_LS_cnt_x: at the operation's LS state the live
-   counts plus the arm's peak stay under the bounds.  Its guards are s5-r1d's fr_LS3cp_cnt_gone's exactly (commit
-   29956454065, lib/A/ReplyLScntRP.v / ReplyLScnt.v), with RINV for fr_RINV and LSx for fr_LS3cp; the walk holds each
+   counts plus the arm's peak stay under the bounds.  Its guards are s5-r1d's fr_LS3cp_cnt_gone's exactly (
+   lib/A/ReplyLScntRP.v / ReplyLScnt.v), with RINV for fr_RINV and LSx for fr_LS3cp; the walk holds each
    at GRG and carries them to the loop in gdone ---- *)
 Variable RP : roomp.
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.

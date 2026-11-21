@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -136,6 +137,14 @@ Proof.
   - rewrite asan_res_sizes. reflexivity.
   - cbn [rw_lo rw_len ASAN_H]. split; [lia|]. intros m x Hx. apply asan_rw_window. lia.
   - exact asan_shadow_ok.
+  (* [if_resx], the EIGHTH field: the revision added the launch's extra reserved
+     intervals to [img_facts] (As/AsanInit.v:41-43), so [constructor] now opens
+     eight goals and seven bullets left one unclosed - which is exactly what
+     a farm round reported, "(in proof asan_img_facts): Attempt
+     to save an incomplete proof".  The TABLE already carries the field
+     ([As/AsImages.v:18]: n_resx := 2, p_resx := 20, the vDSO pair at twenty
+     pages, [State.vdso_len_bounds]); only the proof had not caught up. *)
+  - cbn [n_resx p_resx ASAN_H]. split; lia.
 Qed.
 
 (* [comment removed for export] *)

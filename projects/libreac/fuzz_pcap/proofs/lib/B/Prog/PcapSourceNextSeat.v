@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: ge_achain adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v (rt_chain) for the call chain of libreac/fuzz_grant's entry function; the rest of the file is written for fuzz_grant's entry walk. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySeat.v, with its module paths, module names and numbers changed; 1307 of its 1499 lines of code are new or changed and 739 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: ported from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySeat.v (ge_seat / ge_land) to libreac/fuzz_pcap's pcap_source_next: the region list, the atoms, the spill slots and the frame (class 0, its header and flag word) are this function's; nx_land0 / nx_land, the struct's region, the shadow entry, the first-seat environment and the kept-relation step are new. *)
-(* Modified by Theorem Labs, 2026-10: the lib/B (asan-ubsan) twin of lib/A/Prog/PcapSourceNextSeat.v (a Theorem Labs lane): it Require-Exports lib/A/Prog/PcapSourceNextSeatG.v (a Theorem Labs lane's image-free part of the seat, 5dda8acaa6a; never lib/A's PcapSourceNextSeat, whose closure holds lib/A's image: porter) and restates, over lib/B's listing, kit (lib/B/Prog PcapPa, PcapPaLib, PcapFrame, YC1g, YC1h) and phase layer (lib/B/Prog/PcapSourceNextDefs.v), what names lib/B's image: the spill slots of the 0x100 machine frame and their chunks, the region list, the standard symbolic registers (s9 holds the frame's shadow; lib/B's body fixes no s2 / s3), the stack bounds (NX_STK_B, sp1 = sp0 - 256 or - 272), and every lemma of lib/A's PI Section (nx_env .. nx_shent_ts). *)
+(* Modified by Theorem Labs, 2026-10: the lib/B (asan-ubsan) twin of lib/A/Prog/PcapSourceNextSeat.v (a Theorem Labs lane): it Require-Exports lib/A/Prog/PcapSourceNextSeatG.v (a Theorem Labs lane's image-free part of the seat; never lib/A's PcapSourceNextSeat, whose closure holds lib/A's image: porter) and restates, over lib/B's listing, kit (lib/B/Prog PcapPa, PcapPaLib, PcapFrame, YC1g, YC1h) and phase layer (lib/B/Prog/PcapSourceNextDefs.v), what names lib/B's image: the spill slots of the 0x100 machine frame and their chunks, the region list, the standard symbolic registers (s9 holds the frame's shadow; lib/B's body fixes no s2 / s3), the stack bounds (NX_STK_B, sp1 = sp0 - 256 or - 272), and every lemma of lib/A's PI Section (nx_env .. nx_shent_ts). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seat and the landing of a phase of the walk of pcap_source_next (fuzz_pcap.asan-ubsan 0x815b8, listing
    offset AF_pcap_source_next = 0xe30) on the ASan+UBSan build of libreac v1.9.0, stated once for all of its
    phases: lib/A's design (see lib/A/Prog/PcapSourceNextSeat.v's header) at this image.
@@ -18,7 +19,7 @@
    s0, s1, s2..s11 at the same places, 0x815c0..0x815f0), of the frame's header and of its shadow bytes; the
    regions nx_saved_region, nx_frame_region, nx_shadow_region, nx_ps_region, nx_buf_region, nx_ts_region and
    nx_ps_chunks, nx_SH, nx_facts0; the chunk tests nx_hasb / nx_hasb_sound; the list lemmas; and the lemmas
-   over any segs / val: nx_rdword_range, nx_shent_ok, nx_U_Bx, nx_U_shx, nx_img_env_ewset (a Theorem Labs lane 5dda8acaa6a);
+   over any segs / val: nx_rdword_range, nx_shent_ok, nx_U_Bx, nx_U_shx, nx_img_env_ewset (a Theorem Labs lane);
    nx_div8_64, nx_bufn_le.
 
    RESTATED HERE (lib/B's image):

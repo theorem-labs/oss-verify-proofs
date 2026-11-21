@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO04.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YO04.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a free claims no credit, since a refused munmap keeps the region; the read loop's bound keeps the outgrown buffers). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YK15 YM02.
@@ -33,22 +34,19 @@ eapply leaves_mono; [|exact HL]. intros [r s'] HP. unfold MPost in HP. cbn [snd]
 destruct HR as (_ & B1 & B2 & B3 & B4). destruct HP as (II' & P1 & P2 & P3 & P4 & P5).
 unfold res_ok, rb_malloc. cbn. repeat split; try exact II'; try lia. all: apply II'.
 Qed.
+(* 727298f3: [leaves] covers every answer of the free's KMunmap ask, a refused one too,
+   and on a refused munmap [YO0i.free] keeps the region, so this bound claims no credit
+   ([YO0k.free_credit] gives it on the granted paths only). *)
 Lemma free_leaves_res s b p n : WF s -> In (p, n) (user_blocks s) -> res_ok s b ->
-leaves (fun r => free_postP s p n r /\ res_ok (snd r) (rb_free b n)) (free (Some p) s).
+leaves (fun r => free_postP s p n r /\ res_ok (snd r) b) (free (Some p) s).
 Proof.
 intros HW Hin HR. apply leaves_and.
 - apply itok_leaves. apply free_itok; [exact HW | exact Hin].
 - pose proof (free_reqs_ok s p n HW Hin) as RQ.
 pose proof (OK4_free (Some p) s RQ (proj1 HR)) as [_ HL].
-assert (HK : leaves (fun r => res_ok (snd r) b) (free (Some p) s)).
-{ eapply leaves_mono; [|exact HL]. intros [u s'] HP. unfold FPost in HP. cbn [snd] in HP |- *.
+eapply leaves_mono; [|exact HL]. intros [u s'] HP. unfold FPost in HP. cbn [snd] in HP |- *.
 destruct HR as (_ & B1 & B2 & B3 & B4). destruct HP as (II' & P1 & P2 & P3 & P4 & P5 & _).
-unfold res_ok. repeat split; try exact II'; try lia. all: apply II'. }
-unfold rb_free. destruct (MMAP_THRESHOLD <? n) eqn:E; [|exact HK]. apply Z.ltb_lt in E.
-pose proof (free_credit s p n HW (proj1 HR) Hin E) as [_ HC].
-pose proof (leaves_and _ _ _ HK HC) as HKC. eapply leaves_mono; [|exact HKC]. intros [u s'] [H1 [C1 C2]]. cbn [snd] in *.
-destruct HR as (_ & B1 & B2 & B3 & B4). destruct H1 as (II' & P1 & P2 & P3 & P4).
-unfold res_ok. cbn. repeat split; try exact II'; try lia. all: apply II'.
+unfold res_ok. repeat split; try exact II'; try lia. all: apply II'.
 Qed.
 Lemma II_init : II init_state.
 Proof.
@@ -76,36 +74,50 @@ Lemma shcap_845 h : h <= 845 -> shcap h <= 18.
 Proof. intros H. pose proof (shcap_mono h 845 H) as M. replace (shcap 845) with 18 in M by reflexivity. exact M. Qed.
 Lemma res_ok_DRB s b : res_ok s b -> rb_bytes b <= 2 ^ 28 -> rb_cnt b <= 13 -> rb_hand b <= 845 -> rb_brk b <= 106496 -> res_ok s DRB.
 Proof. intros HR H1 H2 H3 H4. eapply res_ok_mono; [|exact HR]. unfold rb_le, DRB. cbn. lia. Qed.
+(* 727298f3: a free's munmap may be refused ([YO0i.free] keeps the region on [ok = false])
+   and [leaves] covers every answer, so a free gives no credit here: the bound keeps each
+   buffer the read loop has outgrown.  [K] collects them -- [mdelta] of every earlier
+   capacity -- and [K + capflag cap <= MMAX + cap + PGSZ * c] bounds it: the earlier
+   capacities double up to [cap], so they sum below [cap] plus a page each, and the one
+   small capacity counts [MMAX]. *)
 Definition RPinv (K c : Z) (cap : Z) (b : rbound) : Prop :=
 rb_bytes b <= K + mdelta cap /\ rb_cnt b <= c /\ rb_hand b <= 65 * c /\ rb_brk b <= 2 * PGSZ * c /\ 0 <= K.
 Definition capflag (cap : Z) : Z := if cap <=? MMAP_THRESHOLD then MMAX else 0.
 Lemma read_phase_res : forall fuel L cap k buf s b K c,
 WF s -> In (buf, cap) (user_blocks s) -> cap = 2 ^ k -> 16 <= k -> cap <= MAX_INPUT ->
-res_ok s b -> RPinv K c cap b -> K + capflag cap <= 2 ^ 24 -> 0 <= c -> c + Z.of_nat fuel <= 12 ->
+res_ok s b -> RPinv K c cap b -> K + capflag cap <= MMAX + cap + PGSZ * c -> 0 <= c -> c + Z.of_nat fuel <= 12 ->
 leaves (fun r => match fst r with
 | RdLoaded buf' cap' => WF (snd r) /\ L < cap' /\ cap' <= MAX_INPUT /\
-exists b', res_ok (snd r) b' /\ RPinv (K + capflag cap) (c + Z.of_nat fuel) cap' b'
+exists b' K', res_ok (snd r) b' /\ RPinv K' (c + Z.of_nat fuel) cap' b' /\
+K' + capflag cap' <= MMAX + cap' + PGSZ * (c + Z.of_nat fuel)
 | _ => res_ok (snd r) DRB
 end) (read_phase fuel L cap buf s).
 Proof.
 induction fuel as [|fuel IH]; intros L cap k buf s b K c HW Hin Hk Hk16 Hmax HR (V1 & V2 & V3 & V4 & V5) HK Hc Hcf; cbn [read_phase].
 - apply leaves_ret. cbn [fst snd]. pose proof (mdelta_le cap). pose proof (Z.pow_pos_nonneg 2 k).
 assert (0 <= capflag cap) by (unfold capflag; destruct (cap <=? MMAP_THRESHOLD); unfold MMAX; lia).
-eapply res_ok_DRB; [exact HR | | lia | lia | unfold PGSZ in *; lia]. unfold MAX_INPUT, MMAX, IB, UNIT in *. lia.
+eapply res_ok_DRB; [exact HR | | lia | lia | unfold PGSZ in *; lia]. unfold MAX_INPUT, MMAX, IB, UNIT, PGSZ in *. lia.
 - assert (Hcap : 65536 <= cap).
 { subst cap. change 65536 with (2 ^ 16). apply Z.pow_le_mono_r; lia. }
 assert (Hfl : 0 <= capflag cap) by (unfold capflag; destruct (cap <=? MMAP_THRESHOLD); unfold MMAX; lia).
 pose proof (mdelta_le cap ltac:(lia)) as Hmd.
 destruct (L <? cap) eqn:EL.
 { apply Z.ltb_lt in EL. apply leaves_ret. cbn [fst snd]. split; [exact HW|]. split; [exact EL|]. split; [exact Hmax|].
-exists b. split; [exact HR|]. unfold RPinv. unfold PGSZ in *. repeat split; lia. }
+exists b, K. split; [exact HR|]. unfold RPinv. unfold PGSZ in *. repeat split; lia. }
 destruct (MAX_INPUT <=? cap) eqn:EM.
-{ apply leaves_ret. cbn [fst snd]. eapply res_ok_DRB; [exact HR | | lia | lia | unfold PGSZ in *; lia]. unfold MAX_INPUT, MMAX, IB, UNIT in *. lia. }
+{ apply leaves_ret. cbn [fst snd]. eapply res_ok_DRB; [exact HR | | lia | lia | unfold PGSZ in *; lia]. unfold MAX_INPUT, MMAX, IB, UNIT, PGSZ in *. lia. }
 apply Z.leb_gt in EM.
 assert (Hmd2 : mdelta (2 * cap) = 2 * cap + PGSZ).
 { rewrite mdelta_big by (unfold MMAP_THRESHOLD; lia). apply page_round_exact; [|lia].
 subst cap. replace (2 * 2 ^ k) with ((2 * 2 ^ (k - 12)) * PGSZ); [apply Z_mod_mult|].
 unfold PGSZ. change 4096 with (2 ^ 12). rewrite <- Z.mul_assoc, <- Z.pow_add_r by lia. f_equal. f_equal. lia. }
+assert (Hmd1 : MMAP_THRESHOLD < cap -> mdelta cap = cap + PGSZ).
+{ intros Hbig. rewrite mdelta_big by lia. apply page_round_exact; [|lia].
+subst cap. replace (2 ^ k) with (2 ^ (k - 12) * PGSZ); [apply Z_mod_mult|].
+unfold PGSZ. change 4096 with (2 ^ 12). rewrite <- Z.pow_add_r by lia. f_equal. lia. }
+assert (H2max : 2 * cap <= MAX_INPUT).
+{ subst cap. unfold MAX_INPUT in *. change 67108864 with (2 ^ 26) in *. rewrite <- Z.pow_succ_r by lia.
+apply Z.pow_le_mono_r; [lia|]. apply Z.pow_lt_mono_r_iff in EM; lia. }
 pose proof (shcap_845 (rb_hand b) ltac:(lia)) as SC.
 eapply leaves_mbind.
 { apply (malloc_leaves_res s b (2 * cap) HW HR). unfold room. rewrite <- mdelta_big by (unfold MMAP_THRESHOLD; lia). rewrite Hmd2.
@@ -122,21 +134,20 @@ eapply leaves_mbind; [apply (free_leaves_res s1 _ buf cap HW1 Hin1 HR1)|].
 intros [] s2 tr2 Hy2 [[HW2 (m1 & m2 & F1 & F2)] HR2]; cbn [fst snd] in HW2, F1, F2, HR2.
 assert (Hin2 : In (nb, 2 * cap) (user_blocks s2)).
 { rewrite F2. eapply in_remove_other; [rewrite <- F1; exact Hnb1 |]. intros E. injection E. lia. }
-assert (H2max : 2 * cap <= MAX_INPUT).
-{ subst cap. unfold MAX_INPUT in *. change 67108864 with (2 ^ 26) in *. rewrite <- Z.pow_succ_r by lia.
-apply Z.pow_le_mono_r; [lia|]. apply Z.pow_lt_mono_r_iff in EM; lia. }
 assert (Hfl2 : capflag (2 * cap) = 0).
 { unfold capflag. replace (2 * cap <=? MMAP_THRESHOLD) with false by (symmetry; apply Z.leb_gt; unfold MMAP_THRESHOLD; lia). reflexivity. }
 eapply leaves_mono.
-2:{ apply (IH L (2 * cap) (k + 1) nb s2 (rb_free (rb_malloc b (2 * cap)) cap) (K + capflag cap) (c + 1) HW2 Hin2);
-[subst cap; rewrite Z.pow_add_r by lia; lia | lia | exact H2max | exact HR2 | | rewrite Hfl2; lia | lia | lia].
-unfold RPinv, rb_free, rb_malloc. rewrite Hmd2.
-destruct (MMAP_THRESHOLD <? cap) eqn:Et; cbn.
-- apply Z.ltb_lt in Et. rewrite <- (mdelta_big cap) by lia. unfold PGSZ in *. repeat split; lia.
-- apply Z.ltb_ge in Et. unfold capflag. replace (cap <=? MMAP_THRESHOLD) with true by (symmetry; apply Z.leb_le; exact Et).
-unfold PGSZ, MMAX, MMAP_THRESHOLD, IB, UNIT in *. repeat split; lia. }
+2:{ apply (IH L (2 * cap) (k + 1) nb s2 (rb_malloc b (2 * cap)) (K + mdelta cap) (c + 1) HW2 Hin2);
+[subst cap; rewrite Z.pow_add_r by lia; lia | lia | exact H2max | exact HR2 | | | lia | lia].
+- unfold RPinv, rb_malloc. cbn -[mdelta]. pose proof (mdelta_nonneg cap ltac:(lia)). unfold PGSZ in *. repeat split; lia.
+- rewrite Hfl2. destruct (MMAP_THRESHOLD <? cap) eqn:Et.
++ apply Z.ltb_lt in Et. rewrite (Hmd1 Et). unfold capflag in HK.
+replace (cap <=? MMAP_THRESHOLD) with false in HK by (symmetry; apply Z.leb_gt; lia). cbv iota in HK. unfold PGSZ in *. lia.
++ apply Z.ltb_ge in Et. unfold capflag in HK.
+replace (cap <=? MMAP_THRESHOLD) with true in HK by (symmetry; apply Z.leb_le; exact Et). cbv iota in HK.
+assert (mdelta cap <= MMAX) by (unfold MMAX, MMAP_THRESHOLD, IB, UNIT in *; lia). unfold PGSZ in *. lia. }
 intros [rd s3] Hr. cbn [fst snd] in Hr |- *. destruct rd as [ | | buf' cap']; try exact Hr.
-rewrite Hfl2, Z.add_0_r in Hr. replace (c + 1 + Z.of_nat fuel) with (c + Z.of_nat (S fuel)) in Hr by lia. exact Hr.
+replace (c + 1 + Z.of_nat fuel) with (c + Z.of_nat (S fuel)) in Hr by lia. exact Hr.
 Qed.
 Theorem driver_res data : leaves (fun r => res_ok (snd r) DRB) (driver_tree data).
 Proof.
@@ -153,15 +164,16 @@ eapply leaves_mbind.
 { apply (read_phase_res READ_FUEL (dlen data) CAP0 16 b0 s1 (rb_malloc (RB 0 0 0 0) CAP0) 0 1 HW1 Hin1);
 [reflexivity | lia | unfold CAP0, MAX_INPUT; lia | exact HR1 | | | lia | unfold READ_FUEL; cbn; lia].
 - unfold RPinv, rb_malloc. cbn -[mdelta]. rewrite HmdC. unfold PGSZ. repeat split; lia.
-- unfold capflag, CAP0, MMAP_THRESHOLD, MMAX. cbn. lia. }
+- unfold capflag, CAP0, MMAP_THRESHOLD, MMAX, PGSZ. cbn. lia. }
 intros rd s2 tr2 Hy2 Hr. cbn [fst snd] in Hr.
-assert (Hfl : capflag CAP0 = MMAX) by reflexivity. rewrite Hfl in Hr. unfold READ_FUEL in Hr. cbn [Z.of_nat Pos.of_succ_nat Pos.succ Z.add Pos.add] in Hr.
+unfold READ_FUEL in Hr. cbn [Z.of_nat Pos.of_succ_nat Pos.succ Z.add Pos.add] in Hr.
 destruct rd as [ | | buf cap]; [apply leaves_ret; exact Hr | apply leaves_ret; exact Hr |].
-destruct Hr as (HW2 & HL & Hmax & b' & HR2 & (V1 & V2 & V3 & V4 & V5)).
+destruct Hr as (HW2 & HL & Hmax & b' & K' & HR2 & (V1 & V2 & V3 & V4 & V5) & HK').
 assert (Hdl : 0 <= dlen data) by (unfold dlen; lia).
 pose proof (mdelta_le cap ltac:(lia)) as Hmd.
+assert (Hcf0 : 0 <= capflag cap) by (unfold capflag; destruct (cap <=? MMAP_THRESHOLD); unfold MMAX; lia).
 assert (DRB2 : res_ok s2 DRB).
-{ eapply res_ok_DRB; [exact HR2 | | lia | lia | unfold PGSZ in *; lia]. unfold MAX_INPUT, MMAX, IB, UNIT in *. lia. }
+{ eapply res_ok_DRB; [exact HR2 | | lia | lia | unfold PGSZ in *; lia]. unfold MAX_INPUT, MMAX, IB, UNIT, PGSZ in *. lia. }
 destruct (dlen data <? HDR_MIN); [apply leaves_ret; exact DRB2|].
 destruct (dlen data <? HDR_MIN + config_len data) eqn:E6; [apply leaves_ret; exact DRB2|].
 destruct (payload_len data =? 0) eqn:Ep; [apply leaves_ret; exact DRB2|].

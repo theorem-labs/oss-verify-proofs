@@ -4,11 +4,11 @@
    DROP / NEXT / REST and their shared memchr join (lib/B/W_drain_join.v, W_drain_next.v, W_drain_rest.v) need over
    lib/B/W_drain_cx.v's cut predicates.  Proves no function (kind: segment lemma).
    COPIED, with the prefix dtk_ renamed dnk_ and nothing else changed:
-     dnk_low .. dnk_garr8_kept  from a working branch c0a3958f203
+     dnk_low .. dnk_garr8_kept  from a working branch
                                 lib/B/W_drain_topb_bk.v:101-478 (the TOP tail lane's bookkeeping, itself ported from
                                 lib/A/W_drain_epi.v; not yet on the drain base, so copied, not imported);
      dnk_nth_le_bytes, dnk_garr8_le, dnk_le_garr8, dnk_le8_bytes, dnk_le4_bytes, dnk_writable_view
-                                from lib/B/W_gse_tail.v:65-185 (its gt_ lemmas), on the drain base.
+                                from lib/B/W_gse_tail.v:66-186 (its gt_ lemmas), on the drain base.
    NEW here: dnk_entry_len, the entry field readers dnk_entry_skip / dnk_entry_buf / dnk_entry_used, and
    dnk_DMEM_call (DMEM survives a call whose writes all lie in its scratch below drain's frame: memchr's, at the
    memchr join 0x83990).
@@ -17,6 +17,7 @@
    Section cx (dend_*_x of DR_x slice B), where these lemmas came from; the journals are at W_contract_x.v's
    DRAIN_STK_x.  Section c is unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_drain_dnrk.v; 4397 of its 5046 lines of code are new or changed and 746 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -3299,7 +3300,7 @@ End b.
 End a.
 
 (* ---- THE GENERIC WALK (an internal work row, the ARx drain walk DR_x; the image-B twin of lib/A/W_drain_topb.v's generic Section
-   c, a working branch ad3100d63f5).  dr_toptail_x : W_drain_topb_cx.v dr_toptail_stmt_x, over any
+   c, a working branch).  dr_toptail_x : W_drain_topb_cx.v dr_toptail_stmt_x, over any
    allocator relation ARx with its laws, at the room parameter RP: the AR walk above (dt1_eintr / dt2_end / dt3_data
    and dr_toptail), copied with the AR forms converted to their _x forms (W_drain_cx_x.v Section c's hypotheses).
    The tail calls no allocator, so the cut's ghost list Hp1 and its dbud_x (room and counts at ly1 / S1 / tl) carry

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main precondition gains am_rdr, the launch's channel reader; astr_at's room above an argument string is 10 bytes, the exec name's NUL and the top slot of the revised entry block; the main statement concludes over the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,6 +17,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame MState SysStep Exec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsCXXHeap AsDriverLaws AsStack0 AsAuxv
   ECH_Xpres ECH_Iface AsPrintfFirst AsDrvDefs.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -28,6 +30,9 @@ Abbreviation RSEGS := AsanUbsan.M.loaded_segments.
 
 Section MainPre.
   Context {HCEIL : HeapCeil}.
+  (* the run's tail ([RunTail.RunTail]): main reaches the target, which calls time(), so main's
+     walk is over the run's segment list *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Variable L : alib.
 
@@ -39,8 +44,13 @@ Section MainPre.
     12 * (as_Cm H (2 ^ 26) + as_Cf H (2 ^ 26)) + (as_Cm H (2 ^ 26) + as_Cf H (2 ^ 26) + 4 * fuzz_cost H L (2 ^ 26)).
 
   (* [comment removed for export] *)
+  (* LPS 727298f3: the strings sit at the TOP of the entry block, so above an argv string's NUL there are at
+     least the exec name's NUL and the eight-byte top slot (StackLayout.launch_string_bytes,
+     StackLayout.string_base_addr), and the block ends at or below 0x800000000000 (Run.valid_stack_top_va):
+     hence 10, where the old block's sixteen AT_RANDOM bytes above the strings gave 17.  Proved in
+     AsMainIfaceArgs.arg_string. *)
   Definition astr_at (mem : word -> option byte) (sp0 : word) (p : Z) (s : list byte) : Prop :=
-    bv_unsigned sp0 <= p /\ p + Z.of_nat (length s) + 17 <= 0x800000000000 /\ ~ In (Z_to_bv 8 0) s
+    bv_unsigned sp0 <= p /\ p + Z.of_nat (length s) + 10 <= 0x800000000000 /\ ~ In (Z_to_bv 8 0) s
     /\ rdn RSEGS mem (Z_to_bv 64 p) (length s + 1) = Some (s ++ [Z_to_bv 8 0])
     /\ exists t8, rdn RSEGS mem (Z_to_bv 64 (p + Z.of_nat (length s))) 8 = Some t8.
 
@@ -86,6 +96,9 @@ Section MainPre.
     am_tr   : adrv_traces H L;
     (* [comment removed for export] *)
     am_fds : m_fds mo = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1)); (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))];
+    (* 08b1429: the far end of the standard channels has a reader; [Run.valid_input] pins it,
+       [State.init_model] copies it and no step writes it *)
+    am_rdr : m_channel_reader mo = true;
     (* [comment removed for export] *)
     am_musl0 : amusl0 mem }.
 
@@ -95,5 +108,6 @@ Section MainPre.
            (regs : bvmap 5 word) (mem : word -> option byte) (B tid can : Z),
       valid_argv argv -> valid_fs (m_fs mo) ->
       AMpre sp0 argv s0 msF mo regs mem B tid can ->
-      realizes asegs (mkCfg msF mo) (spec argv (m_fs mo)).
+      realizes (asegs ++ RunTail.rt_tail)
+        (RomBase.cwrom (mkCfg msF mo) (seg_rom (asegs ++ RunTail.rt_tail))) (spec argv (m_fs mo)).
 End MainPre.

@@ -5,7 +5,7 @@
    sources, every pc walked and every report site). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value.v, with its module names and numbers changed; 1163 of its 1272 lines of code are new or changed and 1247 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/FSW_put_string.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
@@ -14,13 +14,14 @@
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_put_string.v; 280 of its 343 lines of code are new or changed and 1209 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/ZZpskeep.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
    Every address, cut, branch, offset and register of put_string's own code is RE-MEASURED on image B
    (A_put_string 0x85fc8, 928 bytes; the neutral excerpt put_string.fuzz_state.asan-ubsan.s), never copied.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* SCRATCH (a Theorem Labs lane): put_string's TRANSPORT facts, image B (fs.asan-ubsan). Folded into FSW_put_string.v.
    Each put_string_spec premise about the out-object, the globals, the string and the buffer survives a memory change
    that agrees, off a write set Wr, with the memory before it (pske_agree). a Theorem Labs lane feeds Wr twice: the prologue's
@@ -32,7 +33,7 @@
      wview (LinuxProcessSem RiscvSemantics.v:528-540) falls back to WRITABLE segments only, mbyte (YP09.v:18-21) to
      any segment, so a byte that appears in mem' at a read-only image address agrees on mbyte but is writable only at
      W'. The forward direction (pske_writable_fwd) needs nothing beyond the agreement.
-   Templates: FSW_strkit.v:152-219 (cstr_ok_unpoison / cstr_ok_poison, the conjunct-by-conjunct transport). *)
+   Templates: FSW_strkit.v:153-220 (cstr_ok_unpoison / cstr_ok_poison, the conjunct-by-conjunct transport). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -89,7 +90,7 @@ Proof. intros s n t H0 H1 Ht. unfold shadow_addr, SHADOW_OFF in Ht. Z.div_mod_to
 Lemma pske_tail : forall y a, y < a < y - y mod 8 + 8 -> y < a < y + 8.
 Proof. intros y a H. pose proof (Z.mod_pos_bound y 8 ltac:(lia)). lia. Qed.
 
-(* cstr_ok's ceiling conjunct is `p + len + 1 <= alloc_ceiling` (a Theorem Labs lane 2d9cdf6a160; was `+ 8`): the bytes this
+(* cstr_ok's ceiling conjunct is `p + len + 1 <= alloc_ceiling` (a Theorem Labs lane; was `+ 8`): the bytes this
    file transports reach p + len + 7 (the word holding the NUL), still inside the address space *)
 Lemma pske_ar_cstr : forall c s n x, c < 2 ^ 47 -> 4096 <= s -> s + n + 1 <= c -> s <= x < s + n + 8 ->
   0 <= x < 2 ^ 64.

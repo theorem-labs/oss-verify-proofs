@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/A/AC93.v:56-59, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_name (fuzz_identity.asan-ubsan 0x82d74, 0x85c bytes, AF_reac_box_name = 0x2600): the predicates its
    contract states (moved here from lib/B/Prog/reac_box_name.v so that the segment files of the walk can use them
    without requiring that file) and the states at the cut points of its program walk.
@@ -41,7 +42,7 @@ From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import PaRun PaSh
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.B.Prog Require Import IdentBSyms IdentBList IdentBPa IdentBPaLib.
 (* The model of the three buffers (sbm_ch / sbm_str: what the sb_ch / sb_dec calls do to a buffer). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.B.Prog Require Import reac_box_name_sbm.
-(* The plain model of reac_box_name (released, origin/ossv/recipes c8557374ad2e), used as it is. *)
+(* The plain model of reac_box_name (released), used as it is. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Prog Require Import disco_box_name_model.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Prog Require reac_box_name_c.
 Import ListNotations.

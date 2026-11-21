@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFfy.v, with its module paths changed; its ADDRESS literals moved to omx-clap-core/fuzz_preset's ASan build where h-mani-a2's maps/reloc-cgif-preset.A.tsv (hex) and reloc-cgif-preset.A.dec.tsv (decimal) classify and map them; every other literal is still cgif_file_fuzzer.asan's (listed in the commits that moved them). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AFfy.v, with its module paths and module names changed; 297 of its 352 lines of code are new or changed and 504 lines of the source are left out. *)
-(* The any-U twins of free(NULL) (donor lib/A/AFg3.v:399 afree_null_arm, :416 afree_null) and of free with room in the last batch and no drain (donor lib/A/AFfy.v:442 afree_common_arm, lib/A/AFfu.v:710 afree_common): afree_nullU, afree_commonU. *)
+(* The any-U twins of free(NULL) (donor lib/A/AFg3.v:399 afree_null_arm, :416 afree_null) and of free with room in the last batch and no drain (donor lib/A/AFfy.v:442 afree_common_arm, lib/A/AFfu.v:711 afree_common): afree_nullU, afree_commonU. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
 (* The donor walk text is kept: the facts (AFg3.FH_ok, AFfu.FH_ok and the lemmas they rest on) are applied UNCHANGED
    at mu = FSupoison.unpoison UP mem, the runs (AFh1.segN; AFga.segA, AFgc.segB, the depot call, AFge.segC) are
@@ -19,7 +19,8 @@
    it with the same region condition.
    The trace premise is afree_realizesU's (In ... (as_universe B) \/ st_nev S < EV_MAX), turned into tr_admit by
    tr_admit_call; the depot call takes its length (tr_admit_len), as the donor AFfu.v / AFfy.v do. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFnc.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: pc_free_ra0 Tfib_code, pc_wrap_free Tfib_code, A_StackDepotPut. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFnc.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: pc_free_ra0 Tfib_code, pc_wrap_free Tfib_code, A_StackDepotPut. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -139,7 +140,7 @@ eapply SRr_mono.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* free of a block with room in the last batch and no drain, any UP (donor lib/B/YFfy.v:439, lib/B/YFfu.v:707).     *)
+(* free of a block with room in the last batch and no drain, any UP (donor lib/B/YFfy.v:439, lib/B/YFfu.v:708).     *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Theorem afree_commonU : forall B, AR_laws tfibsegs B -> TfibSyms B ->
   forall ly S UP W regs mem md p n ch lastb initr,

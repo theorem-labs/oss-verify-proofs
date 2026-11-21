@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: the allocator-rule subset of cgif c8557374ad2e lib/A/ACed.v:27-104 (tfibX_lib :40,
+(* Modified by Theorem Labs, 2026-10: the allocator-rule subset of cgif lib/A/ACed.v:27-104 (tfibX_lib :40,
    tfibX_LAWS :73, tfibX_ML :74-75, tfibX_env :76, tfibX_AMALLOC4 / tfibX_AFREE4 / tfibX_AFREEN4 :102-104), stated for
    libreac/fuzz_pcap's ASan build at B := PcapB (lib/A/AD2l.v) and segs := tfibsegs (lib/A/AB1v.v, = Asan.M.loaded_segments).
    Adapted:
@@ -15,6 +15,7 @@
      pcap_afree_realizes, the same closures (tfib_amalloc_realizes / afree_realizes_closed at PcapB, PcapB_syms).
    - The three rules are stated for every sink head SK, passed by name: the donor lets instance search pick it.
    - The donor's PB_tfib / PALib / sink-image parts of ACed.v are not part of this file. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

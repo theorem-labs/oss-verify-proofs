@@ -2,23 +2,24 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_instance_info (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch
-   2ba4488ce71: a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
-   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch 0de7ca03d26: the
+   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch:
+   a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
+   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch: the
    recorder's chain through record, arg_s, rec_shape_of and answer and the post), re-derived on B's code, against
-   a Theorem Labs lane's statement (a working branch f490061c104). The snprintf step through the shared contract and the change of FP
-   state after it follow a working branch 07b554c4785 (lib/B/Prog/answer_code.v:943-1070), the release
-   by the flag store answer_code.v's end, the post's block algebra a working branch b5e1a22725a
-   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch c79a9f2daf7. *)
+   a Theorem Labs lane's statement (a working branch). The snprintf step through the shared contract and the change of FP
+   state after it follow a working branch (lib/B/Prog/answer_code.v:943-1070), the release
+   by the flag store answer_code.v's end, the post's block algebra a working branch
+   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_instance_info.v, with its module paths and module names changed; 378 of its 447 lines of code are new or changed and 1753 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 1 of the walk of cross_check on reac-pw/fuzz_segconf's ASan+UBSan IMAGE B (fuzz_segconf.asan-ubsan,
    pin c3796c0b38f3; cross_check 0x897cc): cross_check_d.v's cc_S1P, from the entry 0x897cc through the prologue,
    the two entry UBSan trap tests, the shadow base's GOT load, the inline check of c->n and the preheader, to the
    loop head CC_LOOP 0x89874 at pass 0 (n > 0) or to the epilogue CC_EPI 0x899fc (n <= 0). Proves no function: it
    is a segment lemma of cross_check's image-B walk, chained by cross_check_a.v / cross_check.v.
-   ADAPTED from the image-A G3 walk owner's image-A lib/A/Prog/cross_check_s1.v (commit c5ef7330de64), itself in
-   the form of plugin-hostd/fuzz_command's lib/A/Prog/chain_words_s1.v and numberE.v (origin/ossv/recipes
-   501c0d516c69): an entry seed of this file's own (cc1_entry), one token run to the branch on n (0x89840), the
+   ADAPTED from the image-A G3 walk owner's image-A lib/A/Prog/cross_check_s1.v, itself in
+   the form of plugin-hostd/fuzz_command's lib/A/Prog/chain_words_s1.v and numberE.v:
+   an entry seed of this file's own (cc1_entry), one token run to the branch on n (0x89840), the
    split, and a token run to each cut, whose facts are read back from the symbolic state. The structure is image
    A's; every number, the register map at the loop head, the three spill slots and the two trap sites are image
    B's (cross_check.fuzz_segconf.asan-ubsan.s lines 2-45 and 158-162).

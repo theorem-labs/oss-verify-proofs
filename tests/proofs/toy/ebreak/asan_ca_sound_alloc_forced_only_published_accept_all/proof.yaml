@@ -1,0 +1,3 @@
+refutes: toy/ebreak/asan_ca_sound_alloc_forced_only_published_accept_all
+approach: the classifier, lps's exit0 image, answers yes on lps's finite-input witness, on which the builds disagree
+uses: [lps-checks]

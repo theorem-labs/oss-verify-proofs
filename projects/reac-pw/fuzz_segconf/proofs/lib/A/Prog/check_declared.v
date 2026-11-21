@@ -16,11 +16,12 @@
      0x89fb4 and 0x89fec (a + 56i < a, b + 56i < b unsigned) and 0x8a064, 0x8a068 (~(a[i].args) < 8k, ~(b[i].args) < 8k)
      are refuted at the branch from the values of their operands. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 910 of its 1180 lines of code are new or changed and 1322 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The program walk of check_declared on reac-pw/fuzz_segconf image A (fuzz_segconf.asan, BASE + AF_check_declared =
    0x87658, 94 instructions), against check_declared_contract (lib/A/Prog/check_declared_c.v); the strcmp wrapper's
    contract (RtString.astrcmp_realizes) is a Section hypothesis. Control flow: the plain / UBSan owner's plain walk
-   lib/Prog/check_declared.v. Form: plugin-hostd/fuzz_command's lib/A/Prog/rec_calls_equal.v (origin/ossv/recipes
-   501c0d516c69): the symbolic executor over the position-abstract listing (SegPaLib.v), the inline checks removed
+   lib/Prog/check_declared.v. Form: plugin-hostd/fuzz_command's lib/A/Prog/rec_calls_equal.v:
+   the symbolic executor over the position-abstract listing (SegPaLib.v), the inline checks removed
    by the shadow tokens (PaShadow.v), the wrapper call stepped through by its contract (PaArt.v aj_art_at), the loop
    cut at its head and re-seeded from the concrete state there, the loop proved by induction. Step plan:
    provenance/evidence/listing-plans/plan-check_declared.md.

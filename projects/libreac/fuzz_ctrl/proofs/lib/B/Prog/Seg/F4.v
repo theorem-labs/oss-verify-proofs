@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1665 of its 1776 lines of code are new or changed and 900 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F5.v, with its numbers changed; 216 of its 323 lines of code are new or changed and 1669 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F4 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan build of libreac v1.9.0, image B), frame-loop turn j:
    0x81fbc (the return point of the first reac_ctrl_parse call 0x81fb8, long frame) to 0x82098 (the head of the
    32-byte block-sum loop, first turn). rule 24: no function proved (a slot segment). The image-B port of image A's
@@ -30,7 +31,7 @@
    holds). The UBSan bound a0 = -18 - Phi is below 2^64 - 17, so a3 = -18 - Phi = -(Phi + 18). The only memory write
    is the spill word [A+272, A+280): FRA and ENT move by F5's c_fra_spill, the frame-loop bundles by c_lk_keep /
    c_fsj_keep / c_fturn_keep / c_rec0_keep / c_fps_keep. Entry and exit are the official Inv_B81fbc_at and
-   Inv_B82098_at (217aa9d4cd9). *)
+   Inv_B82098_at. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

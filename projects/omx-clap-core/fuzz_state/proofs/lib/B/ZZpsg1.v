@@ -5,7 +5,7 @@
    sources, every pc walked and every report site). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value.v, with its module names and numbers changed; 1163 of its 1272 lines of code are new or changed and 1247 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/FSW_put_string.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
@@ -14,13 +14,14 @@
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_put_string.v; 630 of its 709 lines of code are new or changed and 1193 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/ZZpsg1.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
    Every address, cut, branch, offset and register of put_string's own code is RE-MEASURED on image B
    (A_put_string 0x85fc8, 928 bytes; the neutral excerpt put_string.fuzz_state.asan-ubsan.s), never copied.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* SEG1 of ZZpsclose.ps_close on image B (fs.asan-ubsan, put_string 0x85fc8) - put_string's entry, the fake-frame
    grant, the opening-quote put at PS_OPEN_CALL 0x860d8 and its return PS_OPEN_RET 0x860dc, in ps_inv.
    Route (all reused by name): FSW_put_string.ps_to_put1 (entry, grant, stretch to the call) -> ps_aj_raise (the
@@ -302,7 +303,7 @@ Hypothesis HUCELL : as_uar_cell B = fs_D_uar_cell.
 Hypothesis HIMG : fs_img_facts tfibsegs B.
 
 (* where a byte of the scanned string lives at a later state: a live block there, or the image
-   (the text of ZZpssep.pss_str_off_fr's Hloc, ZZpssep.v:243-253) *)
+   (the text of ZZpssep.pss_str_off_fr's Hloc, ZZpssep.v:244-254) *)
 Lemma psg1_str_home : forall ly S U (W : world tfibsegs) mem buf s (bs : list Z) ly' S',
   FSH_Fn_writer.wsrc_kept B tfibsegs ly S U W mem buf s (bs ++ [0]) ->
   (forall p n, In (p, n) (ablocks B ly S) -> p <> buf - HEAD -> In (p, n) (ablocks B ly' S')) ->

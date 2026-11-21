@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 ([hf_shapes_at] and [hf_agree] run each binary against the launch's run segments, by [HtHaltsLib.full_stmt_init_cfg]). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -34,16 +35,13 @@ Section Pair.
   Lemma hf_shapes_at : forall ls lt, (H0Lim.LIM <= ls)%Z -> (AsanInit.LIMIT <= lt)%Z ->
     forall inp, valid_input inp -> forall en1 en2, valid_entry P0 en1 inp -> valid_entry X0 en2 inp ->
     exists T : TSet,
-      ShapeCfg.realizes_cfg ConeCfg.CFG (img_segments P0) (ShapeCfg.init_cfg P0 ls en1 inp) T
-      /\ ShapeCfg.realizes_cfg ConeCfg.CFG (img_segments X0) (ShapeCfg.init_cfg X0 lt en2 inp) T.
+      ShapeCfg.realizes_cfg ConeCfg.CFG (image_run_segments P0 en1 inp) (ShapeCfg.init_cfg P0 ls en1 inp) T
+      /\ ShapeCfg.realizes_cfg ConeCfg.CFG (image_run_segments X0 en2 inp) (ShapeCfg.init_cfg X0 lt en2 inp) T.
   Proof.
-    intros ls lt Hls Hlt inp Hv [ssp sbrk smb srnd] [tsp tbrk tmb trnd] Hens Hent.
-    pose proof (valid_input_va_size _ Hv) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-    destruct Hens as (Hssp & Hsbrk & Hsmb & Hsfit). destruct Hent as (Htsp & Htbrk & Htmb & Htfit).
+    intros ls lt Hls Hlt inp Hv en1 en2 Hens Hent.
     exists (spec_g KT (in_argv inp) (in_fs inp)). split.
-    - apply (h0_full_all ls Hls); assumption.
-    - exact (FX lt Hlt tsp tbrk tmb trnd inp Htsp Htbrk Htmb Htfit Hv).
+    - exact (HtHaltsLib.full_stmt_init_cfg ConeCfg.CFG P0 ls KT en1 inp eq_refl (h0_full_all ls Hls) Hens Hv).
+    - exact (HtHaltsLib.full_stmt_init_cfg ConeCfg.CFG X0 lt KT en2 inp eq_refl (FX lt Hlt) Hent Hv).
   Qed.
 
   (* [comment removed for export] *)
@@ -60,14 +58,13 @@ Section Pair.
   Theorem hf_agree : forall f, valid_fin_input f ->
     agree_s ConeCfg.CFG P0 P0 source_alloc_limit (to_proc_input f) /\ agree_s ConeCfg.CFG X0 X0 target_alloc_limit (to_proc_input f).
   Proof.
-    intros f Hv. pose proof Hv as Hvi. pose proof (valid_input_va_size _ Hvi) as Hsv48.
-    split.
+    intros f Hv. split.
     - apply (ShapeCfg.shape_cfg_agree_s_self ConeCfg.CFG P0 source_alloc_limit (to_proc_input f) (spec_g KT (in_argv (to_proc_input f)) (in_fs (to_proc_input f)))).
-      intros [sp brk mb rnd] Hen. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as (H1 & H2 & H3 & H4).
-      apply (h0_full_all source_alloc_limit p_lim_src); assumption.
+      intros en Hen.
+      exact (HtHaltsLib.full_stmt_init_cfg ConeCfg.CFG P0 source_alloc_limit KT en (to_proc_input f) eq_refl (h0_full_all source_alloc_limit p_lim_src) Hen Hv).
     - apply (ShapeCfg.shape_cfg_agree_s_self ConeCfg.CFG X0 target_alloc_limit (to_proc_input f) (spec_g KT (in_argv (to_proc_input f)) (in_fs (to_proc_input f)))).
-      intros [sp brk mb rnd] Hen. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as (H1 & H2 & H3 & H4).
-      exact (FX target_alloc_limit x_lim_tgt sp brk mb rnd (to_proc_input f) H1 H2 H3 H4 Hvi).
+      intros en Hen.
+      exact (HtHaltsLib.full_stmt_init_cfg ConeCfg.CFG X0 target_alloc_limit KT en (to_proc_input f) eq_refl (FX target_alloc_limit x_lim_tgt) Hen Hv).
   Qed.
 
   (* [comment removed for export] *)

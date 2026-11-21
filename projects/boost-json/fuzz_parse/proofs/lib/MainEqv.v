@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision, the system-call robustness premise (sys_rob). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import Scfg PropExec ShapeAlg SReach RegsEquivM.
+From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Common.Cfg Require RomBase.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import MState Frame.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
@@ -24,10 +26,27 @@ Section Eqv.
   Variable segs : ltac2:(zQ "20!iud!jia@1$0$1").
   Context {SC : StepCfg}.
 
+  (* LPS 727298f3: [rz_node] asks [RomBase.sys_rob]; it moves across [cfg_eqv], which keeps the
+     model and every component [sys_input] reads. *)
+  Lemma ms_eqv_wrom : forall ms ms' r, ms_eqv ms ms' -> ms_eqv (RomBase.wrom ms r) (RomBase.wrom ms' r).
+  Proof.
+    intros ms ms' r (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro).
+    unfold ms_eqv, RomBase.wrom; cbn. repeat split; auto.
+  Qed.
+
+  Lemma sys_rob_cfg_eqv : forall c c', cfg_eqv c c' -> RomBase.sys_rob segs c -> RomBase.sys_rob segs c'.
+  Proof.
+    intros [ms m] [ms' m'] [He Hmo] Hrob r x8 Hr Hs v o. cbn [cfg_ms cfg_model] in *. subst m'.
+    pose proof He as (_ & _ & _ & Hsvc & _ & _ & _ & Hro).
+    rewrite <- (sys_input_eqv segs (RomBase.wrom ms r) (RomBase.wrom ms' r) x8 (ms_eqv_wrom ms ms' r He)).
+    rewrite <- (sys_input_eqv segs ms ms' x8 He).
+    apply (Hrob r x8); cbn [cfg_ms]; [rewrite Hro; exact Hr | rewrite Hsvc; exact Hs].
+  Qed.
+
   (* [comment removed for export] *)
   Theorem realizes_eqv : ltac2:(zQ "40!ic!mf!r7!s1>1c$0>1T$3>0@4$1?4segs?2SC^2^1>2c'$0>0@2$2^4^1@4$1?4segs?2SC^2^4").
   Proof.
-    intros c T H. induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
+    intros c T H. induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
     - (* [comment removed for export] *)
       destruct Hnode as [N1 N2].
       set (I' := { p : I * config | sstep_cfg segs the_scfg c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
@@ -45,6 +64,7 @@ Section Eqv.
              ndestruct (N2 e X' Hs) as (i & -> & ->).
              destruct st as [c2|]; cbn in HX; [|contradiction].
              exists (exist _ (i, c2) (conj Hst (cfg_eqv_sym _ _ HX))). cbn. auto.
+        * exact (sys_rob_cfg_eqv c c' Heqv Hrob).
         * intros [[i c2] [Hs He]]. cbn. apply (IH i). exact He.
       + (* [comment removed for export] *)
         intros tr. split.

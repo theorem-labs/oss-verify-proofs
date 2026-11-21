@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Bz/A/I_tramp.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 16 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the trampolines of bcmp, strcpy, strcat and atoi removed (fuzz_headamp.asan has none of the four). *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Bz/A/I_tramp.v; module paths changed to reac-pw/fuzz_headamp; 16 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the trampolines of bcmp, strcpy, strcat and atoi removed (fuzz_headamp.asan has none of the four). *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

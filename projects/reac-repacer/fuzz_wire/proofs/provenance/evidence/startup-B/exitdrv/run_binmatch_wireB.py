@@ -6,7 +6,7 @@ Same driver shape as the fuzz_uci image-B lane's run_binmatch_uciB.py: only binm
   binmatch.py   $UCI/sub/exitdrv/tools/binmatch.py (sha256 0e042d7f8220..., asserted below), imported read-only
   NEW (pinned)  $UB  = fuzz_wire.asan-ubsan pin, sha256 af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6
   NEW (twin)    $UBs = its unstripped twin, sha256 51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3
-  OTHER         $CB  = cgif donor clone (25e3d17bdb50) cgif_file_fuzzer.asan-ubsan, sha256 1c29845fe6058de6e1db...
+  OTHER         $CB  = cgif donor clone cgif_file_fuzzer.asan-ubsan, sha256 1c29845fe6058de6e1db...
   output        $LT/exitdrv/binmatch/
 TARGET / TARGET_FILES only label rows (kind); they do not change a match.
 Usage: run_binmatch_wireB.py --other cgif --builds asan-ubsan

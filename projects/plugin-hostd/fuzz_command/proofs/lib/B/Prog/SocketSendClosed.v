@@ -9,8 +9,9 @@
    cmd_frame_flag_law (LAWS is the core's AR_laws_ok, inside verbs_receive_top.v). What remains is the statement's own
    hypotheses (the callees' contracts and the runtime entries), HB, MTL and MTFL. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/VerbsReceiveClosed.v, with its module paths and module names changed; 14 of its 39 lines of code are new or changed and 93 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing file of socket_send's ASan+UBSan walk (a Theorem Labs lane's PASS4-REFIT.md section F): `tsocket_send_closed` proves
-   the same `tsocket_send_spec B MT` (lib/B/Prog/socket_send_c.v, a working branch fc8bcbd8b42) as the walk's
+   the same `tsocket_send_spec B MT` (lib/B/Prog/socket_send_c.v, a working branch) as the walk's
    tsocket_send_holds (lib/B/Prog/socket_send.v), at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose
    segments are B's tfibsegs, and the sink head YE2k.tfib_sink_head), with the per-binary facts the walk names as
    Section hypotheses discharged by a Theorem Labs lane's lemmas of the same names: cmd_val_objs_PB, cmd_palib, cmd_sig_prog_PB and

@@ -4,7 +4,7 @@
    0x82ef8, 12 bytes. build_table steps pc + 4 (Reusable/YP02.v), so the count is in 32-bit words: 3. MEASURED on the
    pinned fs.asan-ubsan (sha256 5ac5ce09...): those 12 bytes decode to exactly 3 instructions, each 4 bytes (capstone,
    RISCV64 + C): `auipc a0, 0x558; ld a0, -0x42c(a0); ret`, a0 := the 8 bytes at 0x5daac0 = lib/B/FSH_Base.v G_LIVE.
-   Twin of lib/A/FSW_fuzz_alloc_live_tbl.v (a working branch 3694074f8f1). *)
+   Twin of lib/A/FSW_fuzz_alloc_live_tbl.v (a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

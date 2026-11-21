@@ -18,7 +18,7 @@
                       16-aligned and >= 4096; W_traps.v trap_w_snez / trap_w_base_ok) -> RRL 0 at 0x8426c.
    No trap edge lies in this segment.  After the lock a fresh state is seated at 0x84238 with g_nsrc and g_src as
    read-only regions (the runs after it write nothing). *)
-(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane f4cd818e98d
+(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane
    lib/A/W_rr_pro.v): PRO over ARx in the room form, IN PLACE (the AR proof is dropped, a Theorem Labs lane 10:34Z).  Section c
    is W_relay_remove_cx.v's generic block; the runs are W_journal_x.v's paj_run_x_x / paj_run_to_x_x (W_kit_x.v
    paj_run_tok_x / paj_run_to_tok_x), the entry journal is ajournal_gx_init_x at RR_STK_x (in place of RR_STK), the
@@ -28,6 +28,7 @@
    the lock keeps S and the head set Hp, so every cut's head set is the entry's Hp and RHELD's two room conjuncts are
    RBASE's (rp_RM RP S (Z.to_nat (tr_cost MT_rk tr) + kr) and cnt_ok_pk RP (rr_pk tr) at the entry's blocks); the
    fd < 0 arm returns rr_post_x (in place of rr_post), whose budget kr is below RBASE's by RMM_of. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -832,7 +833,7 @@ eapply (SRrG_bind SEGS R R_trans).
         exact (proj1 (RGIMG a ltac:(unfold rg_rng; left; lia))).
       * exact (HNOWN a ltac:(lia)).
       * rewrite HSPc. unfold ESTACK. unfold spZ in *. lia.
-    + (* QMm W1 (B engine 9015b6a6f732): the lock word is in G_RR, and gx_ok's kept clause puts it off as_kept *)
+    + (* QMm W1 (B engine): the lock word is in G_RR, and gx_ok's kept clause puts it off as_kept *)
       intros a Ha HK. exact (proj2 (proj2 (HG a ltac:(unfold G_RR; apply inG_cons; left; unfold in_zr; cbn [fst snd]; lia))) (proj1 (proj2 HK))). }
 cbv beta. intros W3 c3 _ (-> & regs3 & mem3 & md3 & -> & HJ3 & HP3 & HLK3 & Hfr3 & Hpres3).
 (* the bytes the walk reads, kept by the lock (which writes g_lock's lock word and its scratch only) *)

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset image A' (#102 pin, asan, binary sha256 1be0f53d96cb, facts 8f3e7e1a07f1):
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset image A' (#102 pin, asan, binary sha256 1be0f53d96cb, facts):
    ex_utf8 (fuzz_preset.c :157-183; entry A_prog_sigma AS_ex_utf8 = 0x84764, 0x84764 .. 0x84968, 130 instructions)
    against ExsA_Callee.v's achain-free run form texutf8_runA, proved AS STATED: ex_utf8_run_A.
-   PORTED from lib/B/Prog/ExUtf8RunB.v (image B', asan-ubsan, a Theorem Labs lane's proved walk ex_utf8_run_B, on the cut
-   7cdbb61b5fa0): the same per-(arm, zone) run plan, the same helpers exu_*, re-pointed at image A' (A_prog_sigma,
+   PORTED from lib/B/Prog/ExUtf8RunB.v (image B', asan-ubsan, a Theorem Labs lane's proved walk ex_utf8_run_B, on the cut):
+   the same per-(arm, zone) run plan, the same helpers exu_*, re-pointed at image A' (A_prog_sigma,
    A_prog_base, A_prog_listing, PI_prog_A, PL_prog_A, lib/A/Img0.v rsegs, lib/A/Prog/ExsA_Callee.v).
    WHAT CHANGED vs B':
    - pcs: entry A' 0x84764 (B' 0x84b54), the `ret` A' 0x848e4 (B' 0x84d18); the engine walks the A' listing.
@@ -38,8 +39,8 @@
    since (x & 7) < k), both from the token obligation `range_addressable (rd_of m) SHADOW_OFF (o + i) 1` (saddr_ok's
    two disjuncts) that the run of exu_i_<arm>_<zone> leaves and exu_ob discharges from the premise range_addressable o n.
    REUSED: the donor's image-free helpers verbatim (exu_arm1..4, exu_low_byte_mod .. exu_garr8_cons, exu_srlw16_U,
-   exu_garr1..4, exu_aview_frame, exu_ob, exu_wr_byte, exu_entry's region proofs; there ported from ExUtf8W.v,
-   dafa4151f913). Runner paj_run_x_inv / paj_ret_at / pa_entry_st_ok_full (YC1fP / YC1fPx), awr_byte_cases_x /
+   exu_garr1..4, exu_aview_frame, exu_ob, exu_wr_byte, exu_entry's region proofs; there ported from ExUtf8W.v).
+   Runner paj_run_x_inv / paj_ret_at / pa_entry_st_ok_full (YC1fP / YC1fPx), awr_byte_cases_x /
    blk_img_x / frm_img_x / ajournal_x_materialize (YCbqG), the memnorm carrier of YSRrMemnorm.
    Numerals: 16 (LENGTH: the frame), 1 .. 4 (LENGTH: the UTF-8 byte counts), 127 / 2047 / 65535 / 2 ^ 21 (WORD: the arm
    bounds of the code), 512, 8 (DERIVED: shadow granule arithmetic), 663568 / 700088 (DERIVED: VAL (A_OBJ 0) /
@@ -65,7 +66,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import Img0 Listin
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PjGrammar.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import ExsA_Callee.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YI5b.
-(* the PLAIN build's sink head must never fill SK here (YC1fP.v:23-33): every SK below is passed explicitly *)
+(* the PLAIN build's sink head must never fill SK here (YC1fP.v:24-34): every SK below is passed explicitly *)
 #[global] Remove Hints YI5b.src0_sink_head : typeclass_instances.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -75,7 +76,7 @@ Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(tr
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- the model's four arms (ExUtf8W.v u8_arm1..4, dafa4151f913) ---- *)
+(* ---- the model's four arms (ExUtf8W.v u8_arm1..4) ---- *)
 Lemma exu_arm1 : forall cp, 0 <= cp < 128 -> PjGrammar.utf8 cp = [cp].
 Proof. intros cp H. unfold PjGrammar.utf8. rewrite (proj2 (Z.ltb_lt _ _) (proj2 H)). reflexivity. Qed.
 Lemma exu_arm2 : forall cp, 128 <= cp < 2048 -> PjGrammar.utf8 cp = [192 + cp / 64; 128 + cp mod 64].
@@ -120,7 +121,7 @@ Ltac exu_lia :=
   unfold EXU_Z1, EXU_Z2, EXU_Z3, EXU_Z4, exu_zin, EXU_STK in *; cbn [fst snd] in *;
   unfold kLowShadowBeg, kHighMemBeg, SHADOW_OFF in *; lia.
 
-(* ---- image-free helpers, ported from ExUtf8W.v (dafa4151f913; there from h-verbs-1's put_utf8_xw.v cfcf4ad0554) ---- *)
+(* ---- image-free helpers, ported from ExUtf8W.v (there from h-verbs-1's put_utf8_xw.v) ---- *)
 Lemma exu_low_byte_mod : forall u n k, 0 <= u -> (k < n)%nat ->
   Z_to_bv 8 (Z.shiftr (u mod 2 ^ (8 * Z.of_nat n)) (8 * Z.of_nat k)) = Z_to_bv 8 (Z.shiftr u (8 * Z.of_nat k)).
 Proof.

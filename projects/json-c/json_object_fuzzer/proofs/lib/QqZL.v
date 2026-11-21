@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the silent step: P_of_silent1 and SP_of_silent1 take the no-pending-system-call premise, which gives srz_silent1 its RomBase.sys_rob_instr). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q3bI Q85Z QsSk Q6EJ.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -26,16 +28,17 @@ Hypothesis Hwx : wx_segs_nowrap segs.
 Let P_of (T : TSet) : config -> Prop := fun c => realizes segs c T.
 
 Let P_of_silent1 (T : TSet) : forall c c',
-QsSk.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+QsSk.node_ok segs c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None ->
 P_of T c' -> P_of T c :=
-fun c c' Hn Hr => rz_silent1 segs c c' T Hn Hr.
+fun c c' Hn _ Hr => rz_silent1 segs c c' T Hn Hr.
 
 Let SP_of (T : TSet) : config -> Prop := fun c => srealizes segs c T.
 
+(* LPS 727298f3: the silent step is an instruction step, whose node has [RomBase.sys_rob_instr] *)
 Let SP_of_silent1 (T : TSet) : forall c c',
-QsSk.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+QsSk.node_ok segs c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None ->
 SP_of T c' -> SP_of T c :=
-fun c c' Hn Hr => srz_silent1 segs c c' T Hn Hr.
+fun c c' Hn Hsvc Hr => srz_silent1 segs c c' T Hn (RomBase.sys_rob_instr segs c Hsvc) Hr.
 
 Theorem srz_msteps_restricted_T : forall A ms msr' model T,
 lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->

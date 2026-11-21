@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the NBrk robustness bound counts brk_grow_bytes, not the distance from the current break. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -60,7 +61,7 @@ Definition mmap_fixed_span_repl (flags addr n : word) (mo : Model) : Model :=
 Definition nslack (n : node) (mo : Model) : Prop :=
   match n with
   | NBrk req =>
-      robust NMAX (nonlazy_bytes mo + bv_unsigned (bv_sub (Z_to_bv 64 req) (vm_brk (m_vmmaps mo)))) (vm_limit (m_vmmaps mo))
+      robust NMAX (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) (Z_to_bv 64 req)) (vm_limit (m_vmmaps mo))
   | NMmap addr len prot flags =>
       let nZ := page_round_up_Z (bv_unsigned (Z_to_bv 64 len)) in
       (mmap_noreserve_b (Z_to_bv 64 flags) = true \/ robust NMAX (nonlazy_bytes mo + nZ) (vm_limit (m_vmmaps mo)))

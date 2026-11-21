@@ -8,9 +8,10 @@
    (s8 >> 3) + s7), a plain run through the 88 shadow stores to the branch on ntok < 3, and the cut facts (cw_pc)
    read back from the symbolic state at the cut. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s1.v, with its module paths and module names changed; 430 of its 477 lines of code are new or changed and 519 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The segment interface of the walk of pin_set_words on the ASan+UBSan build of plugin-hostd/fuzz_command (image B,
-   fuzz_command.asan-ubsan, entry 0x8e17c), on the B statement lib/B/Prog/pin_set_words_c.v (a working branch
-   357b1f0783f: apost_baseF post, rounding-mode-0 pre, per-event meter), in the form of a Theorem Labs lane's A walk
+   fuzz_command.asan-ubsan, entry 0x8e17c), on the B statement lib/B/Prog/pin_set_words_c.v (a working branch:
+   apost_baseF post, rounding-mode-0 pre, per-event meter), in the form of a Theorem Labs lane's A walk
    (lib/A/Prog/pin_set_words_s4.v on a working branch): a context record for the statement's
    binders, its premises as a record, the post, and the cut points stated over the machine state; each segment file
    seeds its own symbolic state.

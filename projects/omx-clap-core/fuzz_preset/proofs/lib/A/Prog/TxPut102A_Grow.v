@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1405 of its 1477 lines of code are new or changed and 442 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset lib/A, the #102 re-walk of tx_put on image A' (ASan build): segment S_GROW,
    from the cut TP_PC_GROW (+172, A' 0x84d98) to the cut TP_PC_FIT (+248) on a granted
    realloc, or TP_PC_NULL (+392) on a refused one.
@@ -727,7 +728,7 @@ Proof. intros r H. unfold acallee_saved. right. right. right. right. right. exac
    arm advances the position by the grow's event, tp_pre's guarded entry premise (f0 = 0 and cap0 < need hold at
    the GROW cut), at the call's admission (the trace is wild in the kit's text) (PresetRoomPosKeep.room_pos_keep_realloc /
    _realloc0, through TxPutCall102.tp_pos_after_grow / _grow0). The kit's text states the refused arm and marks it
-   DEAD (PRH_FnTx.v:463-465; TxPut102A_Base.v:328-329): the realloc's NULL is refuted at the call (tpg_refute_null). *)
+   DEAD (PRH_FnTx.v:463-465; TxPut102A_Base.v:329-330): the realloc's NULL is refuted at the call (tpg_refute_null). *)
 Lemma tpg_pos_after_call : forall D ly Hp W regs mem md ch tr trc q S2,
   tp_pre B CTX0 D -> tp_f0 D = 0 -> tp_cap0 D < tp_need D ->
   acall_pre_x segs B (ARcfx B) (QMm_cf segs B) ly (tp_S D) Hp W regs mem md ch -> admits (as_universe B) tr (tp_S D) ->

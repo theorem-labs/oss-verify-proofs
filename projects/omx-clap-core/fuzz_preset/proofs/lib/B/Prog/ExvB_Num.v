@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX; memnorm only through EXB's exv_rm keep and EXV_PRE's entry memnorm (kit 4f18c75d4900). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX; memnorm only through EXB's exv_rm keep and EXV_PRE's entry memnorm (kit). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's NUMBER SEGMENT: ExvB_Top.v's Section hypothesis `seg_num` PROVED, with EXV_HYP as its premise -
    CUT_CX at every float state gives CUT_CN (B 0x837a4 = exv_pc 0x278) at every float state.
@@ -44,7 +45,7 @@ rewrite <- Hb. exact (exn_skip_head _ b y (eq_sym Hsk)).
 Qed.
 
 (* ExvB_Top.v's `seg_num`: CUT_CX at every float state gives CUT_CN at every float state. The strtod site's
-   whole-overlay memory facts come from EXV_PRE's entry memnorm and EXB's exv_rm keep (kit 4f18c75d4900); the
+   whole-overlay memory facts come from EXV_PRE's entry memnorm and EXB's exv_rm keep (kit); the
    segment's own steps keep it through the engine's _inv runners and the runtime rows' m-form keeps. *)
 Lemma exvB_num : forall {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {RL : PrhRoomLive}
   (B : asyms) (ARx : alayout -> astate -> list Z -> world rsegs -> (word -> option byte) -> Model -> Prop)

@@ -3,18 +3,19 @@
 (* Modified by Theorem Labs, 2026-10: the runtime site contract astrncmp_realizes (lib/A/W_sites.v) proved for
    fuzz_reply.asan's strncmp interceptor, entered at the trampoline __interceptor_trampoline_strncmp 0x4219c. *)
 (* Modified by Theorem Labs, 2026-10-29: from lib/A/RT_strncmp.v, as the module RT_strncmp_x: cut to the proof of rt_strncmp (the helper lemmas are used by Import) and restated over a generic allocator invariant ARx under lib/Rt/RTx.v's rt_laws (rt_strncmp_x_walk, rt_strncmp_x; the cell premise FrRtCells replaced by RT_kit_cells_x's FrWalkCells_x, which rt_strncmp_x derives from rt_laws, FrShadowSyms and TfibSyms); the corollaries rt_strncmp_of_x (rt_strncmp's statement, unchanged) and rt_strncmp_cf added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/RT_strncmp.v's runtime contract rt_strncmp restated over a generic
    allocator invariant ARx (ghost head set Hp threaded) under the five-law record rt_laws of lib/Rt/RTx.v
    (a Theorem Labs lane's, the one record for both images: rtl_frame, rtl_stack, rtl_const, rtl_layout, rtl_const_cells).
    RT_strncmp.v is not edited; its helper lemmas are used by Import. The statement is W_sites_x.v's
    astrncmp_realizes_x; the proof of rt_strncmp_x is RT_strncmp.v's with AR -> ARx (am_layout of proj1 HAR ->
    rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
+   Measured (lines at a working branch): the original reads AR through
    al_const (through RT_kit.walk_cells, :286), al_frame / al_stack (through RT_post.aentry_post_of_walk, :361) and
-   the ARm field am_layout (:281 and RT_post.v:249), the layout law here; a Theorem Labs lane's three-law note
+   the ARm field am_layout (:281 and RT_post.v:250), the layout law here; a Theorem Labs lane's three-law note
    (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not count the ARm fields, hence the record's rtl_layout and rtl_const_cells.
-   The original's named premise FrRtCells (RT_kit.v:230) is not needed over ARx: the walk reads only conjuncts 1-10
-   of fr_rt_rest (through RT_kit.walk_cells, RT_kit.v:211), all const rows. So rt_strncmp_x_walk takes the walk's
+   The original's named premise FrRtCells (RT_kit.v:231) is not needed over ARx: the walk reads only conjuncts 1-10
+   of fr_rt_rest (through RT_kit.walk_cells, RT_kit.v:212), all const rows. So rt_strncmp_x_walk takes the walk's
    cells RT_kit_cells_x.FrWalkCells_x, and the twin rt_strncmp_x derives them from rt_laws + FrShadowSyms +
    TfibSyms (RT_kit_cells_x.walk_cells_x_of_syms): no cell premise.
    At the end: rt_strncmp_of_x, whose statement is byte for byte RT_strncmp.v's rt_strncmp, from rt_strncmp_x_walk

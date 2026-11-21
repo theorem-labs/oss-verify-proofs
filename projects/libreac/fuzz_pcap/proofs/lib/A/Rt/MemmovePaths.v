@@ -1,8 +1,9 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap's v1.9.0 ASan build. *)
-(* Declaration: the structure follows proofs/cgif/cgif_file_fuzzer/lib/A/AE6l.v .. A/AE6s.v (origin/ossv/recipes c8557374ad2e); its image-symbol record TfibSyms is renamed PcapSyms, and every numeral is pcap's own, measured on the v1.9.0 asan pin. *)
+(* Declaration: the structure follows proofs/cgif/cgif_file_fuzzer/lib/A/AE6l.v .. A/AE6s.v; its image-symbol record TfibSyms is renamed PcapSyms, and every numeral is pcap's own, measured on the v1.9.0 asan pin. *)
 (* The paths of the walk of __asan_memmove (0x51bf0): one lemma per shape of the quick shadow check of
    each range (t = g1 - g0 in 0..8 granules for n <= 64) and one per half of the
    __asan_region_is_poisoned path (n > 64, low and high memory), for the source phase (entry -> 0x51c84)

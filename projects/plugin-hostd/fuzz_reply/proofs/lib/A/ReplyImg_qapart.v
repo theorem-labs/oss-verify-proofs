@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs (for the cf layer at plugin-hostd/fuzz_reply; row img-constapart-A, its IMG_QAPART half).
    rule 24: no function proved (kind: image row; a closed computation over reply image A's symbol table,
    fuzz_reply.asan, pin 42c58610e125).
 
    IMG_QAPART at image A.  The cf layer's Definition IMG_QAPART
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:65-68 @ 8b12df2b772) is stated over the image class under
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:65-68) is stated over the image class under
    [Context {IM : AImg}].  The reply tree does not carry that layer file, so the Lemma below states IMG_QAPART's body at
-   reply's instance IM := AImg_reply (proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:23 @ d2bd679271c,
-   im_syms := lib/A/AF0m.v's TfibSyms), with qhdr_inst (YGcfInstDrainX.v:62-63 @ 8b12df2b772) UNFOLDED.
+   reply's instance IM := AImg_reply (proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:24,
+   im_syms := lib/A/AF0m.v's TfibSyms), with qhdr_inst (YGcfInstDrainX.v:62-63) UNFOLDED.
    The quarantine header words TFIB_INST 0xa2a58 + o_quar + 152 .. 156 and + 160 .. 192 ([0xa2dc8, 0xa2dcc),
    [0xa2dd0, 0xa2df0)) lie below the internal allocator 0xa72c0, the flag 0x135b48, the store 0x177f88 and the depot
-   0x187f98 (proofs/plugin-hostd/fuzz_reply/lib/A/AF0m.v:17-20 @ d2bd679271c).  cgif's discharge pattern: by the
+   0x187f98 (proofs/plugin-hostd/fuzz_reply/lib/A/AF0m.v:18-21).  cgif's discharge pattern: by the
    numerals (proofs/cgif/cgif_file_fuzzer/lib/YFey.v:578 / :585 / :638).  The error-message buffer's object is the
    separate row ERRB_QAPART (lib/A/ReplyImg_errbqapart.v). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -30,7 +31,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import ImgBas
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AGif2reply.
 Open Scope Z_scope.
 
-(* IMG_QAPART at image A: proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:65-68 @ 8b12df2b772, with qhdr_inst
+(* IMG_QAPART at image A: proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:65-68, with qhdr_inst
    (:62-63) unfolded. *)
 Lemma IMG_QAPART_A : forall B, @im_syms AImg_reply B -> forall a,
   ((as_inst B + o_quar + 152 <= a < as_inst B + o_quar + 156) \/ (as_inst B + o_quar + 160 <= a < as_inst B + o_quar + 192)) ->

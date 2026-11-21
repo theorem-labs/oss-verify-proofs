@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepArmD.v (commit 4d286b2e618d, file sha256 f70945d10847) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 24 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 15 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepArmD.v (commit f01d79f3fb5, cf refill round 3; file sha256 f95c06b6fbf9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 24 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 17 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 7 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance (the internal file accept.tsv, re-measured each run): _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17PopulateFreeArrayEPNS_14AllocatorStatsEmPNS5_10RegionInfoEm+0xb0 (lui-in-section: CONSTANT (size; enters a store base only as a scaled count into a runtime array): kUserMapSize = 0x40000)), and 21 pcs named in comments; 1 hand maps (the internal file resolve-run-f01d79f3fb5.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepArmD.v (file sha256 f70945d10847) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 24 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 15 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepArmD.v (cf refill round 3; file sha256 f95c06b6fbf9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 24 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 17 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 7 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance (the internal file accept.tsv, re-measured each run): _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17PopulateFreeArrayEPNS_14AllocatorStatsEmPNS5_10RegionInfoEm+0xb0 (lui-in-section: CONSTANT (size; enters a store base only as a scaled count into a runtime array): kUserMapSize = 0x40000)), and 21 pcs named in comments; 1 hand maps (the internal file resolve-run.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, RepF1Top): the SYMBOLIC STATES of PopulateFreeArray's class-full report
    arm, in the vocabulary of the B3 refill walk (YFk8cf / YFkpcf / YFhz).  Each state is `Eval vm_compute in` a run
    from the previous one, and [rep_arm_stops] checks every pc, status and register this file's users rely on.
 
-   The arm, from the B3 walk's state R3_M4 (YFk8cf.v:60, pc 0x37970, the `bgeu a3, a1` of
+   The arm, from the B3 walk's state R3_M4 (YFk8cf.v:61, pc 0x37970, the `bgeu a3, a1` of
    `rg_mapped_user + kUserMapSize` against kFreeArrayOffset + 1):
    - the branch TAKEN (kFreeArrayOffset < mu + kUserMapSize) reaches 0x370b0 `lbu a0, 0x44(s0)` and stops at the
      `beqz a0` of 0x37b28 on the class's exhausted byte, the junk atom rJEX ([R3_X]);
@@ -14,13 +15,13 @@
      populate-false return 0x37038, and the run ends at the refill's own `ret` 0x374ec with a0 = 0 ([R3_XN]);
    - byte = 0: 0x370f0 loads *SanitizerToolName through the GOT (0x9e240 -> 0xa00e0 -> 0x202c7), stores 1 into the
      byte and calls Printf.  The two read-only image cells are None-based literal regions ([RGOT], [RTNM]), since a
-     data load reads mem before seg_rom; their values are cells of Tfib_const (YF0m.v:180) and of rep_img_facts
+     data load reads mem before seg_rom; their values are cells of Tfib_const (YF0m.v:181) and of rep_img_facts
      (RepIFcf.v).  [R3_XP] is the state at Printf's entry 0x67f24.
    - after Printf #1 returns at 0x37b88 ([R3_XC1], the frame kept is the caller's own 0x40 bytes [STKC]), the inline
      ClassID -> Size of 0x37118-0x37174 splits on the class exactly as 0x378d4 / 0x378dc do, and the three arms join
      at Printf #2's entry with a3 pinned to the class size ([R3_XK31] / [R3_XK16] / [R3_XKM], equal after the pin).
    rule 24: proves no function (kind: measurement). *)
-(* Built against the report interface at RepIFcf 2d6dcb3547a (errb_call_pre's lk / errb_slack). *)
+(* Built against the report interface at RepIFcf (errb_call_pre's lk / errb_slack). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

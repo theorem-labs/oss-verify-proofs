@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_headamp_tx_set_resweep on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxSetResweep.v at a working branch 5651bf66924 (blob 2f92e82a66a, the blob the walk was ported from), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; on B the shadow-base cell is listing object 35 (A: 32, the shadow-base atom stays 32), the entry offset is 0x543c, and the 4-byte store at tx + 456 lies in the block's last partial granule (shadow 4), whose slow path returns to the store. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxSetResweep.v at a working branch (blob 2f92e82a66a, the blob the walk was ported from), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; on B the shadow-base cell is listing object 35 (A: 32, the shadow-base atom stays 32), the entry offset is 0x543c, and the 4-byte store at tx + 456 lies in the block's last partial granule (shadow 4), whose slow path returns to the store. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxSetResweep.v (source cited in the line above): the same
    walk over image B's listing and walk layer (lib/B/Prog), against the contract GrantBContracts.v states.
    reac_headamp_tx_set_resweep (image B 0x85e78, 33 instructions; image A 0x85058, 29): the two stores that set
@@ -185,7 +186,7 @@ unfold tb_reac_headamp_tx_set_resweep_spec.
    refuted from the block's own shadow entry rsw_SH = [mkSHE 10 0 460] at the `shent_ok_of_block` step below:
    ((tx + 456) & 7) + 3 = 3 < 4 sends the slow block's `blt` back to the store, exactly as image A discharges its
    own 456 store. The contract no longer carries a separate `bytes_ok W mem (tx + 456) 4` premise for it
-   (dropped at a working branch 4d7ced43548). *)
+   (dropped at a working branch). *)
 intros ly S W regs mem md ch0 tx T HPRE H10 Htx HTl HTo.
 pose proof (paj_run B LAWS) as RUN.
 pose proof (paj_ret_at (PL := PL_grant) (PI := PI)) as RET.

@@ -5,7 +5,7 @@
    walk from the two semantic cuts of lib/B/Prog/PcapSourceOpenPh.v to the return. op_from_null and op_from_read prove
    `op_from op_gi_null` and `op_from op_gi_read`, i.e. lib/A's image-generic post tpcap_source_open_post (with
    topen_kept, lib/A/Prog/PcapSourceOpenDefs.v) at this image (SEGS = pa_segs, the relro window pa_relro_lo /
-   pa_relro_hi of the lib/B PAImg instance PI); PcapSourceOpen.v (the head) composes them. At ossv/recipes 25e3d17bdb50 (2026-10-29), this image had no released
+   pa_relro_hi of the lib/B PAImg instance PI); PcapSourceOpen.v (the head) composes them. At (2026-10-29), this image had no released
    proof (rule 24, a Theorem Labs lane, 22:35Z); the released v1.8 UBSan proof lib/U/Prog/pcap_source_open.v is the guard
    template only.
 
@@ -30,10 +30,10 @@
    (Reusable/YP0e.v:932) maps BC_GEU to the negation of decide_ltu2 (:922), and decide_ltu (Reusable/YP0m.v:673) finds
    atom 20 (s4) below the literal 2^64 - 3 from its range fact [4128, 0x7fffff800020] (rd_facts), which rd_entry
    proves from frames_bounds on the class-1 frame (F + 128 <= alloc_ceiling <= 0x7fffff800000). Templates: the released
-   UBSan proof of the v1.8 image, proofs/libreac/fuzz_pcap/lib/U/Prog/pcap_source_open.v on origin/ossv/recipes
-   c8557374ad2e, open_mid :286 (premise bv_unsigned sp0 < 2 ^ 63 at :291, frame bounds :295-299), which decides the
+   UBSan proof of the v1.8 image, proofs/libreac/fuzz_pcap/lib/U/Prog/pcap_source_open.v,
+   open_mid :286 (premise bv_unsigned sp0 < 2 ^ 63 at :291, frame bounds :295-299), which decides the
    guard at :410-412; and the earlier walk of this image, on a working branch
-   (a8ccd33b1a7) pcap_source_open_tl.v (sha256 4aaa5af08467; internal record) pso_rdchk :36-67 (premise bv_unsigned s4 < 2 ^ 64 - 3 at :44,
+   pcap_source_open_tl.v (sha256 4aaa5af08467; internal record) pso_rdchk :36-67 (premise bv_unsigned s4 < 2 ^ 64 - 3 at :44,
    `step; step; if_false` at :65).
 
    THE REPORT PATHS are proved unreachable; no run steps into one. Every shadow test of ps in this stretch
@@ -54,6 +54,7 @@
    imported. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapSourceOpenB.v, with its module paths, module names and numbers changed; 660 of its 725 lines of code are new or changed and 1681 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/A/Prog/fuzz_recv_entry.v, with its module names changed; 1450 of its 1521 lines of code are new or changed and 654 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_link, image A: the walk of kernel (fuzz_link.asan 0x83d30): the FRAME of the cut invariant
    (kernel_defs.v `kat`), which every phase shares (the phases' brief
    link-a/plan/kernel-lanes.md (internal record, sha256 18c8d69749d5)).
@@ -968,7 +969,7 @@ Proof.
   exact (conj Hw0 (conj Hwl (conj (kk_nlw_present_grows SEGS _ _ _ HG Hp) (conj Hn (conj Hf (conj Hnr Hfr)))))).
 Qed.
 
-(* ---- the dispatch phase's read-set facts (kernel_disp.v 5365315da590 kdp_*, the same proofs under kn_ names) ---- *)
+(* ---- the dispatch phase's read-set facts (kernel_disp.v kdp_*, the same proofs under kn_ names) ---- *)
 
 (* the bytes of kernel's class-8 frame F at slot fpos, and its shadow bytes *)
 Definition kn_fside (cx : kcx) (fpos a : Z) : Prop :=
@@ -1184,7 +1185,7 @@ Proof.
   lia.
 Qed.
 
-(* ---- kernel_msg0_kit.v's kit (a09af0a0165f, km_* / kat_move / kshadow_w2 / kslots_*: the same proofs
+(* ---- kernel_msg0_kit.v's kit (km_* / kat_move / kshadow_w2 / kslots_*: the same proofs
    under kn_ names): the call's numbers, the read set's places, the moves of a cut's views, the read set's
    shadow facts and values at a cut ---- *)
 Lemma kn_nth_rep : forall (a d : Z) m n, (n < m)%nat -> nth n (repeat a m) d = a.

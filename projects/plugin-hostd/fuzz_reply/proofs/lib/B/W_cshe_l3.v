@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: loop 3 of image B's (fuzz_reply.asan-ubsan) walk of check_shape_ends (0x85770),
    the `while (want-- > 0)` loop of the g_gone = 0 path, from its head 0x8597c at first entry (W_cshe_epi.v cshe_l3_in)
    to the epilogue's entry 0x8592c (W_cshe_epi.v cshe_out_B).  A segment lemma for BCheckShapeEvent's
-   pb_check_shape_ends (lib/B/W_check_shape_ends.v).  Structure ported from lib/A/W_cshe_l3.v (a working branch
-   8a2058dadf4: l3_inv / l3_ab / l3_A1 / l3_A2 and the ends_run step lemmas, copied below with the prefix bl3) and, for the
-   out-of-line list_drop, lib/B/W_check_no_loss.v (a working branch 5ef01234da3: cnl_drop's LDROP call, the
+   pb_check_shape_ends (lib/B/W_check_shape_ends.v).  Structure ported from lib/A/W_cshe_l3.v (a working branch:
+   l3_inv / l3_ab / l3_A1 / l3_A2 and the ends_run step lemmas, copied below with the prefix bl3) and, for the
+   out-of-line list_drop, lib/B/W_check_no_loss.v (a working branch: cnl_drop's LDROP call, the
    journal splice and the block step).
    The B body (B_cshe.dis (sha256 ad90d15b451b; internal record) 0x8597c-0x85a0c) is not A's: B has no inline shadow checks here, keeps the line
    and its length in sp + 8 / sp (next_line's out cells), checks line + len with four UBSan traps (0x859a8 PTR_BLTU,
    0x859ac / 0x859b0 NONNULL, 0x859b4 PTR_DEC), CALLS list_drop at 0x85a00 (A inlines free + __asan_memmove), and its
    back-edge 0x85a0c `blt a0,s8` falls through to the unimp at 0x85a10 (DECW_FT).  Each abort arm (0x85a14) is refuted
    from cshe_spec's functional pre `gone = 0 -> ends_run ... <> None`, carried as the loop invariant's ends_run. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -402,7 +403,7 @@ Qed.
 
 Section c.
 Variable B : asyms.
-(* ARx conversion (route (b); A's lib/A/W_check_shape_ends.v Section c on a working branch 4f281bf9308): the
+(* ARx conversion (route (b); A's lib/A/W_check_shape_ends.v Section c on a working branch): the
    generic allocator relation ARx with its laws, the placement PST, the room record RP; HP0 (every ghost list is []),
    IMGC (the image's cover) and BLKN (a block's size is >= 0) as W_check_no_loss.v's Section c takes them *)
 Variable PST : list (Z * Z).
@@ -418,7 +419,7 @@ Hypothesis IMGC : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
 Hypothesis BLKN : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
 (* The agreed Section hypotheses of the pieces (W_cshe_epi.v Section io's comment), by those names; LDROP in the form
    BCheckShapeEvent fixed at 2026-10-29 (B's pb_list_drop's Section form, a working branch
-   436074f627e lib/B/W_list_drop.v:561-572): list_drop is taken at its own globals G' and lifted to G. *)
+   lib/B/W_list_drop.v:562-573): list_drop is taken at its own globals G' and lifted to G. *)
 (* W_frame_x.v Section q's FRMF (the fake frames' alignment: the generic counterpart of YG0s.v frame_facts; at ARi0:
    W_frame_x.FRMF_AR) *)
 Hypothesis FRMF : forall ly S Hp W mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
@@ -684,7 +685,7 @@ Lemma cl3_set_held_id : forall h, CheckRep.set_held h (hs_held h) = h.
 Proof. intros [? ? ? ? ? ? ? ? ? ? ? ? ?]. reflexivity. Qed.
 
 (* the source with its held list replaced: every other byte and block kept (lib/B/W_check_no_loss.v
-   a working branch 5ef01234da3 nls_src_swap, over CheckRep.set_held) *)
+   a working branch nls_src_swap, over CheckRep.set_held) *)
 Lemma cl3_src_swap : forall ly1 S1 (W1 : world SEGS) m1 ly2 S2 (W2 : world SEGS) m2 HA0 (h0 : hsrc) (H' : hlist),
 asrc_at B ly1 S1 W1 m1 HA0 h0 ->
 (forall a, HA0 <= a < HA0 + 80 -> abyte_kept W1 m1 W2 m2 a) ->
@@ -809,7 +810,7 @@ Hypothesis HAimg : forall a, HA <= a < HA + ASRC -> in_img SEGS a /\ ~ Exists (i
   ~ (as_errno B <= a < as_errno B + 4) /\ ~ in_rom SEGS a.
 Hypothesis HAgs : VAL (A_OBJ 19) <= HA /\ HA + ASRC <= VAL (A_OBJ 19) + 384.
 (* the prefix P at PF, NUL-terminated, with its entry shadow facts, and where it lives (W3's ruling, a working branch
-   fb87b19890f W_contract.v:1840-1841): a read-only literal with a const shadow (ashp), or a local in one of S's fake
+   W_contract.v:1841-1842): a read-only literal with a const shadow (ashp), or a local in one of S's fake
    frames, whose bytes and shadow the journal's frame clause keeps *)
 Hypothesis HPz : ~ In (Z_to_bv 8 0) P.
 Hypothesis HPl : PLEN + 1 < 2 ^ 32.
@@ -1747,7 +1748,7 @@ split; [rewrite N10, OLDba by lia; exact E9|].
 rewrite N11, OLDb by lia. exact F36.
 Qed.
 
-(* ---- helpers of the drop step (lib/B/W_check_no_loss.v a working branch 5ef01234da3, at any index) *)
+(* ---- helpers of the drop step (lib/B/W_check_no_loss.v a working branch, at any index) *)
 Lemma cl3_set_held2 : forall h0 a b, CheckRep.set_held (CheckRep.set_held h0 a) b = CheckRep.set_held h0 b.
 Proof. intros [? ? ? ? ? ? ? ? ? ? ? ? ?] a b. reflexivity. Qed.
 Lemma cl3_map_drop : forall {Y : Type} (f : Z * list byte -> Y) (rs : list (Z * list byte)) i, (i < length rs)%nat ->
@@ -2239,7 +2240,7 @@ Qed.
 End loop.
 
 (* ------------------------------------------------------------------ the piece: loop 3, cshe_l3_in -> cshe_out_B *)
-(* Its premises are cshe_spec's (W3's text at a working branch fb87b19890f W_contract.v Section w3e, with P a ROM
+(* Its premises are cshe_spec's (W3's text at a working branch W_contract.v Section w3e, with P a ROM
    literal OR a fake-frame local; CSHE_STK read as CSHE_STK_B, g_s as B's A_OBJ 19, `let H := hs_held h` and
    `let PLEN := Z.of_nat (length P)` expanded, `cshe_cost H` unfolded), only those loop 3 uses, in cshe_spec's
    order. *)

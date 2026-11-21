@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (with_vm_backing_with_vm restated in plain text over the VM state record's two new fields). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -171,14 +172,19 @@ Definition with_vm (v : VmState) (m : Model) : Model := ltac2:(tb__ "0|0|
 S51S4aVm;A1Vv;S4cVm;A1S4bVm;A1S4eVm;A1S4dVm;A1S4fVm;A1A7").
 Definition Kc_ok (Kc : KcA) : Prop := ltac2:(tb__ "0|0|
 S1S47A1S46S49VKc;R3R2A2VKc;R4Sc0R2R3A2A2F_;Fv;Fmd;Ftr;").
-Lemma with_vm_backing_with_vm : ltac2:(tb__ "0|1|
-S1S3S2dQ40A1M0G0A2A1S1G0A1S46S10S46S48R3R2R1A3Sc0S52S50R1A1R3R2A3R1A2A3Fm;Fp;Fl;").
+(* The statement below was a TermBlob-encoded term (`ltac2:(tb__ "0|1|S1S3S2dQ40A1M0G0A2A1S1G0A1
+   S46S10S46S48R3R2R1A3Sc0S52S50R1A1R3R2A3R1A2A3Fm;Fp;Fl;")`). The revision gave `VmState` two more
+   fields, so the encoded 3-argument `mkVmState` no longer elaborates, and the generator that wrote
+   the blob is NOT in this repository -- only its decoder is (`Lib/TermBlob.v`). Written out in
+   plain text instead, decoded with that decoder; the encoded text above is the old term verbatim. *)
+Lemma with_vm_backing_with_vm : forall (l : list (word * word)) (p : list word) (m : Model),
+  with_vm_backing l p m = with_vm (mkVmState (m_vmmaps m) l p (m_kernel m) (m_vdso m)) m.
 Proof. reflexivity. Qed.
 Lemma Kc_ok_mat : ltac2:(tb__ "0|3|
 S8eS1S47A1S46S1S3S2dQ40A1M0G0A2A1M1S1G0A1M2G1G2S8fR7A1R8R7S48R5R4R6A3A2R9R8S48R4R3R7A3A2F_;F_;Fp';Fl';Fp;Fl;Fmd;Ftr;FKc;").
 Proof.
   intros Kc tr md l p l' p' HK H.
-  replace (with_vm_backing l' p' md) with (with_vm (mkVmState (m_vmmaps md) l' p') (with_vm_backing l p md)) by (destruct md; reflexivity).
+  replace (with_vm_backing l' p' md) with (with_vm (mkVmState (m_vmmaps md) l' p' (m_kernel md) (m_vdso md)) (with_vm_backing l p md)) by (destruct md; reflexivity).
   apply HK. exact H.
 Qed.
 

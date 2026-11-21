@@ -6,7 +6,7 @@ From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Prog Require Import FrameBytes 
 Import ListNotations.
 Open Scope Z_scope.
 
-(* Ported from libreac/fuzz_decode lib/Prog/reac_frame_counter.v (origin/ossv/recipes 25e3d17bdb5, blob 52dfb2ae061e):
+(* Ported from libreac/fuzz_decode lib/Prog/reac_frame_counter.v (blob 52dfb2ae061e):
    fuzz_wire's rp_counter (0x13608) is decode's reac_frame_counter without the slli/srli 48 pair before `ret`, so the
    walk takes 5 steps in place of 7 and the value needs no shift rewrite. *)
 

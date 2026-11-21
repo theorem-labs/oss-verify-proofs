@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU8.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail; file sha256 9a62bc6647de) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU8.v (drain recycle tail; file sha256 9a62bc6647de) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the drain's EPILOGUE after DoRecycle returns.  DoRecycle returns
    to 0x33b00 (DMwalkIF.dr_leaf_r: c' = cfg_at (raZ regs) ...), where Recycle restores ra / s0 .. s4 from its
    frame and returns (YFh8.segX, post YFgt.at_RETX).  The six saved words sit at sp1 + 32 .. sp1 + 80, above
    everything DoRecycle may change: its scratch is [sp1 - DRSTACK_X, sp1) (and errno, an image address), its
    extra window is the temp list's header [sp1, sp1 + 32), and the stack is not owned (AOX), so the callee
-   post's view frame (DMspec.acall_post_x, DMspec.v:103-111) carries them over unchanged.
+   post's view frame (DMspec.acall_post_x, DMspec.v:104-112) carries them over unchanged.
    - [saved_kept]: a word of Recycle's saved area reads the same after DoRecycle as at the call.
    - [epi_after_recycle]: YFh8.segX from DoRecycle's return, through DMdrainT9.epi_free_hyps.
    rule 24: no function proved (kind: the seed and run of a segment already walked, YFh8.segX; the lane's reuse

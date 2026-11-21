@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the closing statements take the run's CONFIG_RSEQ flag (rz), left free since every leaf they close with holds at any value of it. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -49,6 +50,14 @@ Section AsanNodes.
 Variable scfg : SpuriousCfg.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* the run's CONFIG_RSEQ flag as 0 or 1, [APK.check]'s sixth argument and
+   [APSK.x_stmt]'s.  FREE here: every provider this file closes with is UNIFORM
+   in rz, e.g.
+     APSXK.node_x_sound_XIMemset : forall SEGS scfg A nx0 (LIMIT rz : Z), .. ->
+       APSK.x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XIMemset
+   and [AsanXAllK.v:24] already carries its own free [Variable rz : Z] and applies
+   these theorems, so a free variable here is what its [eapply] needs. *)
+Variable rz : Z.
 Variable SINV : AX2K.env -> (word -> option byte) -> Prop.
 Variable argH : AX2K.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> APK.CEIL <= bv_unsigned a /\ APSK.uE E APCK.e_sp0 <= bv_unsigned a.   (* [comment removed for export] *)
@@ -58,7 +67,7 @@ Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a)
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APSK.x_stmt ASEGS0 scfg ASAN0 nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APSK.x_stmt ASEGS0 scfg ASAN0 nx0 LIMIT rz SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;

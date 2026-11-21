@@ -5,10 +5,11 @@
    fuzz_command.asan-ubsan, 0x8aa10 .. 0x8ab6c): the walk tactics answer_s1.v does not carry (as sup_resp's walk lane
    carried them over from cgif lib/A/ACkc.v), the symbolic entry state and its seed (cgif's flushFrame seed,
    lib/A/ACj0.v, as sup_resp's sr_entry), and the recorder's representation carried over a step that keeps the
-   recorder's bytes. The B twin of lib/A/Prog/answer_e1.v (a working branch d28426fbb96) with the B kit's module
+   recorder's bytes. The B twin of lib/A/Prog/answer_e1.v (a working branch) with the B kit's module
    paths (lib/B, lib/B/Prog, lib/B/Rt): B's entry code is A's instruction for instruction, and the objects the seed
    names (A_OBJ 0, the shadow-base GOT word 0xa5f50; A_OBJ 1, the use-after-return GOT word 0xa5fa8; A_OBJ 12, the
    shadow cell 0xb0c38) are A's slots. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

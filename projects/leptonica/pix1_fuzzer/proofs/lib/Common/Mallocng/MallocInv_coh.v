@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (VMok_init over the image's reservations followed by the launch's vDSO pair heap_resx). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -108,17 +109,18 @@ Lemma reserved_top_RSEGS : reserved_top (segments_reserved ml_segs) = IMG_HI.
 Proof. exact mlo_reserved_top. Qed.
 
 Lemma VMok_init : forall h,
-  vm_maps h = [] -> vm_noaccess h = [] -> vm_reserved h = segments_reserved ml_segs ->
+  vm_maps h = [] -> vm_noaccess h = [] -> vm_reserved h = segments_reserved ml_segs ++ heap_resx ->
+  (length heap_resx <= 2)%nat -> live_bytes heap_resx <= 0x14000 ->
   vm_start_brk h = vm_brk h -> valid_brk ml_segs (vm_brk h) -> alloc_top h = alloc_ceiling ->
   VMok A0 h.
 Proof.
-  intros h Hm Hn Hr Hsb (Hlo & Hhi & Hal) Htop. rewrite reserved_top_RSEGS in Hlo, Hhi. unfold page_size in Hal. unfold brk_aslr_max in Hhi.
+  intros h Hm Hn Hr Hrl Hrb Hsb (Hlo & Hhi & Hal) Htop. rewrite reserved_top_RSEGS in Hlo, Hhi. unfold page_size in Hal. unfold brk_aslr_max in Hhi.
   pose proof layout_nums.
   constructor; cbn; rewrite ?Hm, ?Hn, ?Hsb.
   - intros ma mt aib slots H0. discriminate H0.
   - left. reflexivity.
   - unfold A0, ctx0. cbn. intros H0. lia.
-  - exact Hr.
+  - split; [split; [exact Hr|]; split; [exact Hrl | exact Hrb]|]. intros b sz Hin. rewrite ?Hm in Hin. destruct Hin.
   - unfold page_aligned. lia.
   - exact I.
   - intros b sz [].

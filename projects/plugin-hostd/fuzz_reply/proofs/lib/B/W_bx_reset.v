@@ -4,13 +4,14 @@
    0x84fe8 (`ld a0,208(s1); jal check_shape_done`) through the loop set-up 0x84ff0..0x85000 (g_s = 0x5d8e60 in s3,
    g_s + 384 in s2, s4 = F+80 = FF, s8 = F+96 = SB + FF/8) and the four trips of `mv a0,s3; jal source_reset;
    addi s3,s3,96; bne s3,s2` (0x85004..0x85010) to 0x85014; lib/B/W_bx_defs.v lx_reset_S.  Ported from the image-A
-   donor b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v:5898-7419 (xr_* kit, xr_at_entry,
+   donor lib/A/W_LLVMFuzzerTestOneInput_exit.v:5899-7420 (xr_* kit, xr_at_entry,
    xr_entry0, the loop, xr_set_entry, lx_reset).  B vs A: the frame is bx_frame (no F+152) on both sides; the set-up
    loads no s7 (A's `ld s7,88(s1)`), so the loop invariant and the post carry x20 and x24 only; source_reset's spec
    takes `HA mod 8 = 0`; gx_rt's shadow cell is A_OBJ 30; ablocks_sep's footprint clause is over req_size; g_s's image
    atom, the return offsets and the image range [0x10000, 0x5fc000) are B's (the objdump of fuzz_reply.asan-ubsan,
    sha256 10ffb5f9202ae2bdb01b7a49df9866843a6a6a0e0c50bc67cdba6ce2f6d3cf2c, lib/B/W_rep.v fr_globals_b,
    lib/B/W_kit.v pa_img_range). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1530,7 +1531,7 @@ Proof.
   assert (HK : xr_kb [] [] FF F sp0 ly3 S3 W mem ly3 S3 W2 mem2).
   { apply (xr_kb_of_j [] [] CSD_STK F sp0 FF fpos ly3 S3 W mem mdc ly3 S3 W2 mem2 md2 0 (ablocks B ly3 S3)
       (gx_ok_nil segs B) HJc0 HAR (Permutation_refl _) (Permutation_refl _)
-      (* the kit's csd_spec post (fb28b53a2b8 lib/B/W_contract.v) pairs the presence clause with an
+      (* the kit's csd_spec post (lib/B/W_contract.v) pairs the presence clause with an
          errno-view clause, so the presence half is its first projection *)
       (fun a _ _ _ Hp => proj1 HPRES2 a Hp));
       [unfold CSD_STK; lia | unfold CSD_STK, LLVMF_STK in *; lia | lia | exact Hin1 | reflexivity]. }

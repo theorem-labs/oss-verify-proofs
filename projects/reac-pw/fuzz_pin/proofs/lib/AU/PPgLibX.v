@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the program-contract part of lib/A/AD2o.v of this library (pin_bind,
-   pin_lib_x_of, pin_lib_x; made there from proofs/libreac/fuzz_knock/lib/A/APgLib.v:305-312 at origin/ossv/recipes
-   6ebe35ba632), taken for reac-pw/fuzz_pin's image B (fuzz_pin.asan-ubsan, sha256
+   pin_lib_x_of, pin_lib_x; made there from proofs/libreac/fuzz_knock/lib/A/APgLib.v:305-312),
+   taken for reac-pw/fuzz_pin's image B (fuzz_pin.asan-ubsan, sha256
    d6f83d30152279dadae39fc626707a0037090a8909a186dac3c362b12088201f): lib/AU/PPgLib.v's pin_lib_x_all, from image B's
    program walks' top lemmas (lib/AU/PPgMain.v pin_lib_x_A, PPgRow.v, PPgParse.v with PPgCat.v's reac_box_catalogue,
    PPgLeaf.v) with their wrapper, runtime and image hypotheses bound at image B's record lib/AU/YD2l.v TfibB
@@ -12,6 +12,7 @@
    H_DRIVER_U. pin_lib_x is the same claim closed with image B's own allocator theorems (lib/AU/YF0w.v
    tfib_amalloc_realizes, lib/AU/YF0q.v afree_realizes_closed, as lib/A/PinAllocClose.v does for image A).
    Rule 24: proves no function (kind: assembly). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require Import YK11 YG00 YG01 YG0f YG0d YC5d YCbp YM05.

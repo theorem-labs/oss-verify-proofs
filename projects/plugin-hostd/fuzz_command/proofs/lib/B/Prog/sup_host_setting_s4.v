@@ -5,6 +5,7 @@
    record()'s arms to the tail jump into answer, after proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v and ACh2.v (a walk
    segment: run, call out by cl_callS, resume) over fuzz_command's listing. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/descriptors_get_s3.v, with its module paths and module names changed; 166 of its 212 lines of code are new or changed and 967 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment lemmas of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan), on the
    points and statements of sup_host_setting_s0.v:
    - hs_seg_as1: from AS1 (0x8b684, back from arg_s(c, b)) the poison of b again (`sb s2,4(s9); sb s2,5(s9)`,
@@ -12,7 +13,7 @@
      0x8b7d8 .. 0x8b7f4 with its store1 check 0x8b7f0 -> report 0x8b8e0 is not reached), the spills of c, F, F to the
      realigned stack (0x8b690 .. 0x8b698), and the length loop's init (`mv s4,zero; snez s2,s8; andi a0,s8,7;
      seqz a0,a0; and s7,a0,s2; mv s11,s5; mv s3,s8; mv s6,s8`), to the loop's head L1H at token 0 (0x8b6bc).
-   The B twin of the ASan walk's hs_seg_ai (lib/A/Prog/sup_host_setting_s4.v on e323bbe76d2), with B's frame shadow
+   The B twin of the ASan walk's hs_seg_ai (lib/A/Prog/sup_host_setting_s4.v), with B's frame shadow
    store and spills; the run stores shadow, so it is the plain run (SRr_run_to_pi_AJ, the brief's speed rule). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
@@ -148,7 +149,7 @@ assert (HS : st_ok_pi SEGS VAL E hs4_ssA (restrict (w_H Wc) (mkst regs1 (Z_to_bv
 clearbody E.
 (* 0x8b684 .. 0x8b6b8: b poisoned again, blez (not taken), the spills, the loop's init.
    0x8b68c `blez s5` (to 0x8b7d8, the ntok <= 0 arm with the store1 check 0x8b7f0 -> report 0x8b8e0): refuted by
-   paj_run_to_sh at sup_host_setting_s4.v:147 (SRr_run_to_pi_AJ; the run stops only at L1H, so the branch is decided
+   paj_run_to_sh at sup_host_setting_s4.v:148 (SRr_run_to_pi_AJ; the run stops only at L1H, so the branch is decided
    not taken), from
    the seed fact s5 in [1, 64] (hs4_ssA, atom 21), that is hs_cx's 1 <= length toks <= 64 *)
 paj_run_to_sh RUNTOP HS HJ HS_L1H.

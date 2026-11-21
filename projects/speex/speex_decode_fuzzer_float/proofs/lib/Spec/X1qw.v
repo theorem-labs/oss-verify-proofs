@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (GI_init reads the launch's reserved ledger as the image's reservations followed by the vDSO/vvar pair and proves KL's three vDSO facts, under the placement base and the brk window the launch gives, and takes the launch's channel-reader fact for minv, which prog_model_ok reads off valid_input_core; GI_with_vdso lifts it to the start model, which State.with_vdso gives its vDSO run state; GI_fds and GI_after_node carry the kernel build with nstep_kernel; the images' reservation bounds are computed over segments_reserved, which now leaves out the kernel's segments). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -26,8 +27,9 @@ Definition GI (X : list bptr) : assn PState := OWN X Gso.
 Lemma GI_minv : forall X s mo, GI X s mo -> minv mo /\ m_halted mo = None.
 Proof. intros X s mo H. exact (OWN_minv _ _ _ _ H). Qed.
 
-Lemma GI_fds : forall X s mo mo', GI X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> GI X s mo'.
-Proof. intros X s mo mo' H Hvm Hmi Hh. eapply OWN_vmmaps; eauto. exact (OWN_G _ _ _ _ H). Qed.
+Lemma GI_fds : forall X s mo mo', GI X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None ->
+m_kernel mo' = m_kernel mo -> GI X s mo'.
+Proof. intros X s mo mo' H Hvm Hmi Hh Hker. eapply OWN_vmmaps; [exact H| exact Hvm| exact Hmi| exact Hh| exact Hker|]. exact (OWN_G _ _ _ _ H). Qed.
 
 Lemma GI_perm : forall X Y s mo, Permutation X Y -> GI X s mo -> GI Y s mo.
 Proof. intros. eapply OWN_perm; eauto. Qed.
@@ -38,7 +40,8 @@ match n with NMmap _ _ _ flags => mmap_noreserve_b (Z_to_bv 64 flags) = false | 
 GI X s mo'.
 Proof.
 intros X s mo n rsp mo' evs Ho Hst Hvm Hfl. destruct (GI_minv _ _ _ Ho) as [Hmi Hh].
-destruct (minv_preserved n mo rsp mo' evs Hfl Hmi Hh Hst) as [Hh' Hmi']. eapply GI_fds; eauto.
+destruct (minv_preserved n mo rsp mo' evs Hfl Hmi Hh Hst) as [Hh' Hmi'].
+eapply GI_fds; [exact Ho| exact Hvm| exact Hmi'| exact Hh'| exact (nstep_kernel n mo rsp mo' evs Hfl Hst)].
 Qed.
 
 Lemma GI_set_so : forall X s mo v, GI X s mo -> so_ok v -> GI X (set_so_ps v s) mo.
@@ -329,28 +332,80 @@ Proof. intros. unfold reservedZ, wwZ. reflexivity. Qed.
 
 Lemma GI_init : forall segs brk0 mbase sp lim inp,
 valid_brk segs brk0 -> 0 < reserved_top (segments_reserved segs) -> valid_sp sp ->
+(* the launch's placement base, which [State.init_model] reserves the vDSO/vvar pair
+   just below, and the brk window, which stays below 2^40 *)
+valid_mmap_base mbase ->
 reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo ->
+reserved_top (segments_reserved segs) + brk_aslr_max + PGSZ <= 2^40 ->
+(* the launch's reader of the standard channels ([Run.valid_input]), which [minv] carries *)
+in_channel_reader inp = true ->
 GI [] (ps_init (bv_unsigned sp - stack_max_size) (reservedZ segs)) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos (Hsl & Hsh & _) Hceil. unfold GI, OWN.
+intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos (Hsl & Hsh & Hs16) (Hmb1 & Hmb2 & Hmb3) Hceil H40 Hrdr. unfold GI, OWN.
+pose proof (vdso_len_bounds (in_kernel inp)) as Hvl.
+assert (HV1 : mmap_base_min - page_size
+<= page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))).
+{ unfold page_round_down_Z, page_size, mmap_base_min, sp_window_lo, sp_window_hi, stack_max_size in *. lia. }
+assert (HV2 : page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)) < two_pow_64).
+{ unfold page_round_down_Z, page_size, mmap_base_max, sp_window_lo, sp_window_hi, stack_max_size, two_pow_64 in *. lia. }
+assert (Hresv : exists lo hi,
+vm_reserved (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)) = lo ++ hi
+/\ ld_resv (led_init (bv_unsigned sp - stack_max_size) (reservedZ segs)) = map wwZ lo).
+{ exists (segments_reserved segs),
+(vdso_reserved (in_kernel inp) (vdso_top (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)))).
+split; [apply vm_reserved_init_model| apply reservedZ_wwZ]. }
+assert (Hrtop : forall e,
+In e (vm_reserved (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp))) ->
+ehi e <= bv_unsigned (vm_start_brk (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)))
+\/ In e (vdso_reserved (m_kernel (init_model (segments_reserved segs) brk0 mbase sp lim inp))
+(vdso_top (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp))))).
+{ rewrite m_kernel_init_model, vdso_top_init_model, m_vmmaps_init_model.
+cbn [vm_reserved vm_start_brk]. intros e Hin.
+unfold init_reserved in Hin. apply in_app_or in Hin as [Hin|Hin].
+- left. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia.
+- right. exact Hin. }
+assert (Hvdi : incl (vdso_reserved (m_kernel (init_model (segments_reserved segs) brk0 mbase sp lim inp))
+(vdso_top (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp))))
+(vm_reserved (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)))).
+{ rewrite vm_reserved_init_model, m_kernel_init_model. apply incl_appr, incl_refl. }
+assert (Hvda : forall e,
+In e (vdso_reserved (m_kernel (init_model (segments_reserved segs) brk0 mbase sp lim inp))
+(vdso_top (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)))) ->
+bv_unsigned (vm_start_brk (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp))) + 4 * PGSZ <= elo e).
+{ rewrite m_kernel_init_model, vdso_top_init_model, m_vmmaps_init_model. cbn [vm_start_brk].
+intros [ea en] Hin.
+pose proof (vdso_reserved_above (in_kernel inp) _ ea en HV2 Hin) as [Hge _].
+unfold elo. cbn [fst]. change (2^40) with 1099511627776 in H40.
+unfold PGSZ, mmap_base_min, page_size in *. lia. }
+assert (Hvdd : forall r,
+In r (vm_reserved (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp))) ->
+forall e, In e (vm_maps (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp))) -> edisj e r).
+{ rewrite m_vmmaps_init_model. cbn [vm_maps]. intros r Hr e []. }
 unfold sp_window_lo in Hsl. unfold sp_window_hi in Hsh. unfold alloc_ceiling_lo in Hceil.
 split; [|split; [apply List.NoDup_nil| unfold Gso, so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia]].
 exists (led_init (bv_unsigned sp - stack_max_size) (reservedZ segs)). split.
 { apply creach_init. unfold stack_max_size, alloc_ceiling_lo, alloc_ceiling_hi. lia. }
 split; [|intros c []].
-constructor; rewrite ?m_vmmaps_init_model; cbn -[Z.pow Z.mul Z.add Z.sub init_model].
-- apply minv_init.
+constructor; try exact Hresv; try exact Hrtop; try exact Hvdi; try exact Hvda; try exact Hvdd;
+rewrite ?m_vmmaps_init_model; cbn -[Z.pow Z.mul Z.add Z.sub init_model].
+- apply minv_init. exact Hrdr.
 - apply m_halted_init_model.
 - unfold alloc_top, stack_max_size, alloc_ceiling_lo, alloc_ceiling_hi. cbn [vm_init_sp]. lia.
 - split; [intros e []| apply pwdisj_nil].
-- apply reservedZ_wwZ.
-- intros e Hin. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia.
 - unfold PGSZ in *. unfold page_size in Hal. unfold stack_max_size. lia.
 - intros b l [].
 - intros b l k [].
 - apply List.NoDup_nil.
 - intros b l H. discriminate.
 - split; reflexivity.
+Qed.
+
+(* [mo0] is [State.with_vdso] over [State.init_model]: it rebuilds the VM subsystem from its own parts
+   with a new vDSO run state, which neither [KL] nor [Gso] reads, so [GI] holds of it by conversion *)
+Lemma GI_with_vdso : forall X s v mo, GI X s mo -> GI X s (with_vdso v mo).
+Proof.
+intros X s v mo H. unfold GI, OWN in *. destruct H as ((L & HC & HK & HI) & HN & HG).
+split; [exists L; split; [exact HC| split; [destruct HK; constructor; assumption| exact HI]]| split; [exact HN| exact HG]].
 Qed.
 
 Lemma argv_Z_short : forall argv, valid_argv argv -> Forall (fun a => zlength a < 2^17) (argv_Z argv).
@@ -369,18 +424,19 @@ Qed.
 Theorem prog_model_ok : forall segs rs pc ph lim en inp,
 0 < reserved_top (segments_reserved segs) ->
 reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo ->
+reserved_top (segments_reserved segs) + brk_aslr_max + PGSZ <= 2^40 ->
 valid_entry (mkImage segs pc ph) en inp -> valid_input_core inp ->
 
 tsafe nstep no_enomem (prog segs rs (ceil_of en) (in_argv inp)) (mo0 segs lim en inp) ->
 leaves_unreachable_m nstep (prog segs rs (ceil_of en) (in_argv inp)) (mo0 segs lim en inp)
 /\ tsafe nstep nsafe (prog segs rs (ceil_of en) (in_argv inp)) (mo0 segs lim en inp).
 Proof.
-intros segs rs pc ph lim [sp brk0 mbase dr] inp Hpos Hceil VE VI Hne.
-pose proof (valid_entry_parts _ _ _ _ _ _ _ _ VI VE) as (Hsp & Hbrk & _). pose proof VI as (Hargv & _).
+intros segs rs pc ph lim [sp brk0 mbase dr] inp Hpos Hceil H40 VE VI Hne.
+pose proof (valid_entry_parts _ _ _ _ _ _ _ _ VI VE) as (Hsp & Hbrk & Hmb & _). pose proof VI as (Hargv & _).
 unfold prog, mo0, ceil_of in Hne |- *. cbn [en_brk en_mmap_base en_sp] in Hne |- *.
 apply (mspec_program (GI []) (prog_with rs (argv_Z (in_argv inp)))).
 - apply prog_with_GI; [apply argv_Z_short; exact Hargv| apply argv_Z_paths; exact Hargv].
-- apply GI_init; [exact Hbrk| exact Hpos| exact Hsp| exact Hceil].
+- apply GI_with_vdso. apply GI_init; [exact Hbrk| exact Hpos| exact Hsp| exact Hmb| exact Hceil| exact H40| exact (valid_input_core_reader _ VI)].
 - exact Hne.
 Qed.
 
@@ -390,58 +446,34 @@ From OSSVerify.speex.speex_decode_fuzzer_float.images Require Import Ubsan.
 Local Notation psegs := Plain.M.loaded_segments.
 Local Notation usegs := Ubsan.M.loaded_segments.
 
+(* LPS 727298f3: [Run.segments_reserved] leaves out the segments the kernel installs, with stdpp's
+   [filter], which a [cbn] list does not open; each bound below is a closed term, computed whole (as
+   AS/X0lj.v computes [if_top]). *)
 Lemma reserved_top_psegs : 0 < reserved_top (segments_reserved psegs).
-Proof.
-unfold segments_reserved, segment_reservation, Plain.M.loaded_segments, Plain_loaded_segments.
-cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
-cbn [seg_base seg_size Plain_segment_000 Plain_segment_001 Plain_segment_002 Plain_segment_003]. vm_compute. reflexivity.
-Qed.
+Proof. vm_compute. reflexivity. Qed.
 Lemma ceil_psegs : reserved_top (segments_reserved psegs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo.
-Proof.
-unfold segments_reserved, segment_reservation, Plain.M.loaded_segments, Plain_loaded_segments.
-cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
-cbn [seg_base seg_size Plain_segment_000 Plain_segment_001 Plain_segment_002 Plain_segment_003]. vm_compute. discriminate.
-Qed.
+Proof. vm_compute. discriminate. Qed.
 
 Lemma sbk_psegs : reserved_top (segments_reserved psegs) + brk_aslr_max + PGSZ <= 2^40.
-Proof.
-unfold segments_reserved, segment_reservation, Plain.M.loaded_segments, Plain_loaded_segments.
-cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
-cbn [seg_base seg_size Plain_segment_000 Plain_segment_001 Plain_segment_002 Plain_segment_003]. vm_compute. discriminate.
-Qed.
+Proof. vm_compute. discriminate. Qed.
 Lemma reserved_top_usegs : 0 < reserved_top (segments_reserved usegs).
-Proof.
-unfold segments_reserved, segment_reservation, Ubsan.M.loaded_segments, Ubsan_loaded_segments.
-cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
-cbn [seg_base seg_size Ubsan_segment_000 Ubsan_segment_001 Ubsan_segment_002 Ubsan_segment_003].
-vm_compute. reflexivity.
-Qed.
+Proof. vm_compute. reflexivity. Qed.
 Lemma ceil_usegs : reserved_top (segments_reserved usegs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo.
-Proof.
-unfold segments_reserved, segment_reservation, Ubsan.M.loaded_segments, Ubsan_loaded_segments.
-cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
-cbn [seg_base seg_size Ubsan_segment_000 Ubsan_segment_001 Ubsan_segment_002 Ubsan_segment_003].
-vm_compute. discriminate.
-Qed.
+Proof. vm_compute. discriminate. Qed.
 
 Lemma sbk_usegs : reserved_top (segments_reserved usegs) + brk_aslr_max + PGSZ <= 2^40.
-Proof.
-unfold segments_reserved, segment_reservation, Ubsan.M.loaded_segments, Ubsan_loaded_segments.
-cbn [map reserved_top fst snd]. rewrite !Z_to_bv_unsigned.
-cbn [seg_base seg_size Ubsan_segment_000 Ubsan_segment_001 Ubsan_segment_002 Ubsan_segment_003].
-vm_compute. discriminate.
-Qed.
+Proof. vm_compute. discriminate. Qed.
 
 Theorem prog_plain_model_okN : forall en inp,
 valid_entry (mkImage psegs Plain.M.init_pc Plain.M.phdrs) en inp -> valid_input_core inp ->
 tsafe nstep no_enomem (prog_plain psegs RSTAGE_plain (ceil_of en) (in_argv inp)) (mo0 psegs source_alloc_limit en inp) ->
 leaves_unreachable_m nstep (prog_plain psegs RSTAGE_plain (ceil_of en) (in_argv inp)) (mo0 psegs source_alloc_limit en inp)
 /\ tsafe nstep nsafe (prog_plain psegs RSTAGE_plain (ceil_of en) (in_argv inp)) (mo0 psegs source_alloc_limit en inp).
-Proof. intros en inp Hv Hi Hne. unfold prog_plain in *. eapply prog_model_ok; [apply reserved_top_psegs| apply ceil_psegs| exact Hv| exact Hi| exact Hne]. Qed.
+Proof. intros en inp Hv Hi Hne. unfold prog_plain in *. eapply prog_model_ok; [apply reserved_top_psegs| apply ceil_psegs| apply sbk_psegs| exact Hv| exact Hi| exact Hne]. Qed.
 
 Theorem prog_ubsan_model_okN : forall en inp,
 valid_entry (mkImage usegs Ubsan.M.init_pc Ubsan.M.phdrs) en inp -> valid_input_core inp ->
 tsafe nstep no_enomem (prog_ubsan usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp) ->
 leaves_unreachable_m nstep (prog_ubsan usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp)
 /\ tsafe nstep nsafe (prog_ubsan usegs RSTAGE_ubsan (ceil_of en) (in_argv inp)) (mo0 usegs target_alloc_limit en inp).
-Proof. intros en inp Hv Hi Hne. unfold prog_ubsan in *. eapply prog_model_ok; [apply reserved_top_usegs| apply ceil_usegs| exact Hv| exact Hi| exact Hne]. Qed.
+Proof. intros en inp Hv Hi Hne. unfold prog_ubsan in *. eapply prog_model_ok; [apply reserved_top_usegs| apply ceil_usegs| apply sbk_usegs| exact Hv| exact Hi| exact Hne]. Qed.

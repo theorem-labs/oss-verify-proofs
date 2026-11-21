@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (amain_open's pure facts read through keep_facts; minvA_std_fds's channel-reader premise discharged from amL_reader). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Common Require Import RunDraw.
 (* [comment removed for export] *)
@@ -94,8 +95,8 @@ Section Asm.
     set (rc := run_consts_of en (Z_to_bv 64 0) (valid_sp_of_entry en inp Hv Hi)).
     assert (HA : atop_of (en_sp en) = @ATOP rc) by reflexivity.
     exists NMAX, (RNG0 V mo), (A0 V), (epostF TT).
-    pose proof HM as (_ & HV & _ & _ & HP & _ & _ & _ & _ & [HLIM HMOD]).   (* [comment removed for export] *)
-    apply Forall_app in HP as [HP _].
+    pose proof HM as (_ & HV & _ & HMF0 & HPF0 & _ & _ & _ & _ & _ & [HLIM HMOD]).   (* [comment removed for export] *)
+    destruct (keep_facts _ _ _ _ _ HMF0 HPF0) as (_ & _ & HP).
     rewrite HA.
     split; [exact (ADRV rc en inp w V m ms mo Hv Hi HM HA)|].
     split. { (* [comment removed for export] *)
@@ -103,9 +104,10 @@ Section Asm.
                                  PREAD_STAGE ASTAGE V (en_sp en) _ _ _ en inp mo Hv Hi HMOD HP) as [_ HL].
       exact HL. }
     split. { rewrite m_halted_MX. exact (amL_halted _ _ _ _ _ HMOD). }
-    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (amL_fds _ _ _ _ _ HMOD) | reflexivity |].
-             rewrite m_vmmaps_MX, (amL_top _ _ _ _ _ HMOD). pose proof (amL_usp _ _ _ _ _ HMOD). unfold sp_window_lo, sp_window_hi. Local Ltac2 Set LiaHints.tbl := fun () => "0010>44775902271.22000003S1H".
-lia. }
+    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (amL_fds _ _ _ _ _ HMOD) | reflexivity | |].
+             - rewrite m_vmmaps_MX, (amL_top _ _ _ _ _ HMOD). pose proof (amL_usp _ _ _ _ _ HMOD). unfold sp_window_lo, sp_window_hi. Local Ltac2 Set LiaHints.tbl := fun () => "0010>44775902271.22000003S1H".
+lia.
+             - rewrite m_channel_reader_MX. exact (amL_reader _ _ _ _ _ HMOD). }
     split. { exact (MODEL_OK rc en inp w V m ms mo Hv Hi HM HA). }
     (* [comment removed for export] *)
     change (MX mo []) with (canon mo). apply mrel_canon.

@@ -9,6 +9,7 @@
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
 (* Modified by Theorem Labs, 2026-10: new file; it proves malloc_missgU, malloc_misskU and malloc_primU over FSupoison.ARU for any user-poisoned head list UP. *)
 (* Modified by Theorem Labs, 2026-10: refill_leafU re-exports the raw memory frame (AGif0n.rleaf / CLrefill0.refill_leafR), for the ARU lift of route 1. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -508,7 +509,7 @@ Lemma Hcnt' : 1 <= cnt' <= 16.
 Proof. exact (@AFiy.Hcnt' _ W' ly regs0 (FSP.unpoison UP memR) n cl cnt' v' kz Hv2' Hsp DPOST' Hkz1 Nrange B S' l off HARm'u CI Hcache' Hcl_class Hcnt_def' Hoff_def'). Qed.
 
 (* The new chunk and its shadow are off UP: the chunk is high application memory, and its shadow bytes read 250. *)
-(* Port-from: lib/A/FSupoisonAllocMp2.v:183-201 (OKv / OKS of malloc_hitgU), at the state the refill left. *)
+(* Port-from: lib/A/FSupoisonAllocMp2.v:184-202 (OKv / OKS of malloc_hitgU), at the state the refill left. *)
 Lemma OKv' : forall a, AFis.Kv ly cl v' <= a < AFis.Kv ly cl v' + csz -> AllocR.offU UP a.
 Proof.
 intros a Ha. pose proof (@AFis.derived_ranges _ ly regs0 memR n cl cnt' v' kz Hcl Hv' Hcnt' Hv2' LY IMG DPOST' Hkz1 Nrange) as DR.

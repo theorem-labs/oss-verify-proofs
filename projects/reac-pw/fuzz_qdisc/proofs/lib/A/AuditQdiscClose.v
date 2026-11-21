@@ -11,10 +11,11 @@
    H_ALLOC_FREE, H_RT_MEMCPY, H_TRACES_B, H_DRIVER (and their _U twins), so after End they are functions of those
    premises; their Print Assumptions shows axioms only, not those premises. The closed Statements.* come from the
    AD2o assembly, not from these conditional parts. *)
-(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AuditKnockClose.v
-   at origin/ossv/recipes 6ebe35ba632: the same pairs for qdisc's AD2o, QdiscAllocClose, QdiscAsanTop and QdiscClose;
+(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AuditKnockClose.v:
+   the same pairs for qdisc's AD2o, QdiscAllocClose, QdiscAsanTop and QdiscClose;
    qdisc's allocator closure is the one-trace text of fuzz_identity (no AD3j); names knock_* -> qdisc_*, module paths
    changed (h-small-a3). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.A Require AD2o QdiscAllocClose QdiscAsanTop QdiscClose.
 Check AD2o.ASAN_T_closed.
 Print Assumptions AD2o.ASAN_T_closed.

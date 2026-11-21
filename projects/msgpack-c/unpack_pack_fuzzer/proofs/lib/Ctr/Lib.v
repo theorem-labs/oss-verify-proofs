@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sysret clears the LR/SC reservation, as a system call return now does). *)
 From Stdlib Require Import ZArith Bool List.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -174,7 +175,11 @@ Definition havoc_errno (errno_addr : int) (st : sstate) : option sstate :=
 
 End WithSegs.
 
-Definition sysret (st : sstate) (v : sv) : sstate := setpc (setr st X10 v) (PrimInt63.add (s_pc st) 4%uint63).
+(* LPS 08b1429 (at 75d69e00, Run.v advance_past_svc): a syscall return clears the
+   LR/SC reservation, so the symbolic return state carries RNone.  Glue/Nodes.v:352
+   svc_ret is the ported sibling of this definition. *)
+Definition sysret (st : sstate) (v : sv) : sstate :=
+  setresv (setpc (setr st X10 v) (PrimInt63.add (s_pc st) 4%uint63)) RNone.
 
 Definition known_ltu (fs : list fact) (a b : sv) : bool := dec_true (decide_ltu fs a b).
 Definition known_leu (fs : list fact) (a b : sv) : bool := dec_false (decide_ltu fs b a).

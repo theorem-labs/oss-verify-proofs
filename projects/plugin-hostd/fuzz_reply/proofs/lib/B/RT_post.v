@@ -4,13 +4,14 @@
    `aentry_post_of_walk`: a Bz interceptor/intrinsic walk that ends at the return address with a0 = r, whose only
    memory change is the stack window [sp - D, sp) and a list WR of written ranges, read back as W_sites.v's
    `aentry_post`.  Written here (R3Mem) by agreement with R1Str so that RT_kit.v imports it rather than restating it;
-   it is FSstrlen.v's post_of_walk (commit 3210d71ee38, a Theorem Labs lane, itself a Theorem Labs lane's) with
+   it is FSstrlen.v's post_of_walk (a Theorem Labs lane, itself a Theorem Labs lane's) with
    three changes: the pre is `ecall_pre` (no POISON-U), the post is W_sites' aentry_post at PI := PB_fr, and the
    written set WR / the result predicate Pr are parameters, so one lemma serves the read-only interceptors
    (WR := []) and the intrinsics (WR := [(d, d + n)]).
    The image facts (FR_IMG_TOP, cj_keep_high, mrd_high) are FSstrlen.v:97-147, 444-449 at fuzz_reply's image end;
    0x600000 is a valid ceiling for fuzz_reply.asan-ubsan too (its last segment ends in the page below 0x5fc000). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_post.v at commit debcdf3fa6a, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_post.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,13 +1,14 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ASan-image walk of musl mseek for libreac/fuzz_pcap -- PFmopsM.v's
    amseek_rewind_spec, PROVED for the ORIGINAL v1.9.0 ASan image at mseek's measured entry 0x8ec28.
 
    PORTED from proofs/libreac/fuzz_pcap/lib/Prog/mseek_c.v and mseek_ro_c.v: facts, case split and pcs
    only, restated in the core's ASan vocabulary. The PLAIN proofs are not importable (lib/Lib's mkst
    empties the FP state). The released-proof lookup (ossv proof index v5, 2026-10-28T20:16:23Z,
-   main@e966c513ee6c) found 4 files named for mseek and 4 related (mseek_ro), all on the plain image:
+   main) found 4 files named for mseek and 4 related (mseek_ro), all on the plain image:
    no released proof stated mseek on pcap's ASan image.
 
    THE BODY, read off fuzz_pcap.objdump.txt (sha256 bf9d80d6e30f; internal record) (39 instructions, frame 48):

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (twf, etwf and their tsafe and tpath consequences over nstep_cfg acfg). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
-From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import ITree Nodes.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import ITree Nodes NodesCfg.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Spec Require Import Monad.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -14,10 +15,18 @@ Import ITree.Exc.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* LPS 75d69e00: this layer is stated over [nstep_cfg acfg], not over plain
+   [nstep].  [ev_step_L] over plain [nstep] is FALSE for [EMunmap] -- the
+   -ENOMEM arm leaves live bytes while [gm] falls -- and [nstep_cfg] is the
+   relation that excludes exactly those spurious refusals ([Lib/NodesCfg.v:65],
+   with [nstep_cfg_sub] giving the plain relation back for free).  [ITree.v]'s
+   [tsafe]/[tpath]/[leaves_unreachable_m] take the step relation as a Section
+   Variable ([ITree.v:57]), so they are reused here with the new argument and
+   that file is unchanged. *)
 Fixpoint twf {R} (t : itree node R) (mo : Model) (P : R -> Model -> Prop) : Prop :=
   match t with
   | Ret r => P r mo
-  | Vis n k => nsafe n mo /\ forall rsp mo' evs, nstep n mo rsp mo' evs -> twf (k rsp) mo' P
+  | Vis n k => nsafe n mo /\ forall rsp mo' evs, nstep_cfg acfg n mo rsp mo' evs -> twf (k rsp) mo' P
   end.
 
 Lemma twf_mono : forall {R} (t : itree node R) mo (P P' : R -> Model -> Prop),
@@ -36,14 +45,14 @@ Proof.
   - destruct H as [Hs Hk]. split; [exact Hs|]. intros rsp mo' evs Hst. apply IH. eapply Hk; eauto.
 Qed.
 
-Lemma twf_tsafe : forall {R} (t : itree node R) mo P, twf t mo P -> tsafe nstep nsafe t mo.
+Lemma twf_tsafe : forall {R} (t : itree node R) mo P, twf t mo P -> tsafe (nstep_cfg acfg) nsafe t mo.
 Proof.
   intros R t. induction t as [r|n k IH]; intros mo P H; cbn in *; [exact I|].
   destruct H as [Hs Hk]. split; [exact Hs|]. intros rsp mo' evs Hst. eapply IH. eapply Hk; eauto.
 Qed.
 
 Lemma twf_tpath : forall {R} (t : itree node R) mo P tr r mo',
-  twf t mo P -> tpath nstep t mo tr r mo' -> P r mo'.
+  twf t mo P -> tpath (nstep_cfg acfg) t mo tr r mo' -> P r mo'.
 Proof.
   intros R t. induction t as [r0|n k IH]; intros mo P tr r mo' H Hp; cbn in *.
   - destruct Hp as (<- & -> & ->). exact H.
@@ -74,7 +83,7 @@ Proof. intros A a mo Q H. exact H. Qed.
 
 Lemma etwf_enode : forall {A} n (pl : resp -> option A) mo (Q : A -> Model -> Prop),
   nsafe n mo ->
-  (forall rsp mo' evs, nstep n mo rsp mo' evs -> exists a, pl rsp = Some a /\ Q a mo') ->
+  (forall rsp mo' evs, nstep_cfg acfg n mo rsp mo' evs -> exists a, pl rsp = Some a /\ Q a mo') ->
   etwf (enode n pl) mo Q.
 Proof.
   intros A n pl mo Q Hs Hk. unfold etwf, enode. cbn. split; [exact Hs|].
@@ -82,7 +91,7 @@ Proof.
 Qed.
 
 Lemma etwf_leaves : forall {A} (t : itree node (exc A)) mo,
-  etwf t mo (fun _ _ => False) -> leaves_unreachable_m nstep t mo /\ tsafe nstep nsafe t mo.
+  etwf t mo (fun _ _ => False) -> leaves_unreachable_m (nstep_cfg acfg) t mo /\ tsafe (nstep_cfg acfg) nsafe t mo.
 Proof.
   intros A t mo H. split.
   - intros tr r mo' Hp. pose proof (twf_tpath t mo _ tr r mo' H Hp) as HP. destruct r; exact HP.
@@ -150,7 +159,7 @@ Proof. intros H s mo HP. cbn. apply H. exact HP. Qed.
 Lemma mspec_sys {A} (n : node) (dec : resp -> option A) (P : assn) (Q : A -> assn) :
   (forall s mo, P s mo ->
      nsafe n mo /\
-     forall rsp mo' evs, nstep n mo rsp mo' evs -> exists a, dec rsp = Some a /\ Q a s mo') ->
+     forall rsp mo' evs, nstep_cfg acfg n mo rsp mo' evs -> exists a, dec rsp = Some a /\ Q a s mo') ->
   mspec P (msys n dec) Q.
 Proof.
   intros H s mo HP. destruct (H s mo HP) as [Hs Hk]. unfold msys. cbn. split; [exact Hs|].
@@ -215,7 +224,7 @@ Proof. intros Hm Hf. eapply mspec_bind; [exact Hm|]. intros a. apply Hf. Qed.
 Lemma mspec_program {A} (P : assn) (m : M St A) s mo :
   mspec P m (fun _ _ _ => False) -> P s mo ->
   forall {B} (f : A * St -> itree node (exc B)),
-  leaves_unreachable_m nstep (ebind (m s) f) mo /\ tsafe nstep nsafe (ebind (m s) f) mo.
+  leaves_unreachable_m (nstep_cfg acfg) (ebind (m s) f) mo /\ tsafe (nstep_cfg acfg) nsafe (ebind (m s) f) mo.
 Proof.
   intros Hm HP B f. apply etwf_leaves. apply etwf_ebind.
   eapply etwf_mono; [exact (Hm s mo HP)|]. intros [a s'] mo' [].

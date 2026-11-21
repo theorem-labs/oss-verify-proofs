@@ -4,20 +4,21 @@
    their fuzz_scene form, cold/h-small-a3-sceport lib/A/SceneAsanTop.v) for fuzz_knock: the plain side is fuzz_knock's
    released realization (built as its lib/AgreeFrame.v builds it for the ubsan agreement, at AgreeKnock.ag_sil_shape,
    with the plain entry-function contract that lib/AgreeKnock.v gives it), module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/KnockAsanTop.v at
-   origin/ossv/recipes 6ebe35ba632: the plain side is fuzz_qdisc's (lib/AgreeQdisc.v ag_sil_shape, lib/Prog/QdiscSlot.v
+(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/KnockAsanTop.v:
+   the plain side is fuzz_qdisc's (lib/AgreeQdisc.v ag_sil_shape, lib/Prog/QdiscSlot.v
    qdisc_slot in the roles of AgreeKnock / KnockSlot), names knock_* -> qdisc_*, module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/QdiscAsanTop.v at 56ce9edaafc, for reac-pw/fuzz_role image A:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/QdiscAsanTop.v, for reac-pw/fuzz_role image A:
    role_shape := AgreeShape.ag_shape ZTraceSpec.checksum_shape (the shape fuzz_role's ubsan agreement takes, as fuzz_pin's
    lib/AgreePin.v does); the plain entry-function slot at that shape is the named premise PLAIN_SLOT_AG (the plain-slot
    premise of lib/AgreeFrame.v ubsan_agrees_of_slots), which the agreement closings discharge, in place of a Require of a
    plain slot file; names qdisc_* -> role_*; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RoleAsanTop.v at fa745625e7df, for reac-pw/fuzz_rate image A:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RoleAsanTop.v, for reac-pw/fuzz_rate image A:
    rate_shape := the same AgreeShape.ag_shape ZTraceSpec.checksum_shape (fuzz_rate's lib/ZTraceSpec.v, AgreeShape.v,
    AgreeFrame.v, AgreeTop.v and the other frame files used here are fuzz_role's up to module paths; ZImage.v and
    FrameAPI.v differ by addresses and the text count only); PLAIN_SLOT_AG is the type of fuzz_rate's planned
    lib/AgreeRate.v plain_slot_ag (fuzz_pin's AgreePin.v:81-83 at fuzz_rate's names); names role_* -> rate_*,
    HaltsSpecR -> HaltsSpecRt; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput, mmap base and entry draw; the mmap base kept by every step); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_rate's asan_agrees, asan_halts, asan_ubsan_agrees and asan_ubsan_halts, each from ONE ASan-side obligation,
    in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v:
    - ASAN_T / ASAN_UBSAN_T: from every valid start, the ASan (ASan+UBSan) build realizes, with no cut
@@ -101,6 +102,8 @@ Definition ASAN_T : Prop :=
   forall sp brk mbase rnd inp,
   valid_sp sp -> valid_brk Asan.M.loaded_segments brk -> valid_mmap_base mbase ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  (* 727298f3: [valid_entry]'s fifth conjunct, the launch's own check, read by the start-up's invariant. *)
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   srealizes Asan.M.loaded_segments
     (init_config Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
     (SPECX (LS:=rate_shape) inp).
@@ -109,6 +112,8 @@ Definition ASAN_UBSAN_T : Prop :=
   forall sp brk mbase rnd inp,
   valid_sp sp -> valid_brk AsanUbsan.M.loaded_segments brk -> valid_mmap_base mbase ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  (* 727298f3: [valid_entry]'s fifth conjunct, the launch's own check, read by the start-up's invariant. *)
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   srealizes AsanUbsan.M.loaded_segments
     (init_config AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd
        target_alloc_limit inp)
@@ -122,12 +127,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=rate_shape) inp) (SPECX (LS:=rate_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem asan_ubsan_agrees_of_asan_side : PLAIN_SLOT_AG -> ASAN_UBSAN_T -> Statements.asan_ubsan_agrees.
@@ -138,12 +143,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=rate_shape) inp) (SPECX (LS:=rate_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 (* The halting statements (Budgets.Standard.lim_source) from the same obligations, as cgif_file_fuzzer's
@@ -161,8 +166,8 @@ Proof.
     Asan.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=rate_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 
@@ -176,8 +181,8 @@ Proof.
     (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=rate_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 

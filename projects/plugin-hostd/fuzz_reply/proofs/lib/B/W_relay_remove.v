@@ -7,12 +7,13 @@
    MATCH is W_rr_match.v rr_match.  WAKE is a Theorem Labs lane's W_wake.v pb_wake.
    The Section block is regenerated from the cx file whenever the cx file changes. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)) in the room form,
-   lane RRX, the image-A twin's (a Theorem Labs lane, commit f4cd818e98d, lib/A/W_relay_remove.v Section c), IN PLACE:
+   lane RRX, the image-A twin's (a Theorem Labs lane, lib/A/W_relay_remove.v Section c), IN PLACE:
    pb_relay_remove_x : rr_spec_x over ANY allocator relation ARx with its laws (W_contract_x.v, at RR_STK_x), from the
    generic segments composed by W_rr_all.v rr_all.  The AR theorem pb_relay_remove and its Section are deleted
    (a Theorem Labs lane 10:34Z: no consumer; the B top takes rr_spec_x as a hypothesis).  The Section is the cx file's generic
    block with WAKE built here from W_wake_x.v pb_wake_x (wake's own hypotheses are this Section's LAWS / TL / TLF / WFx /
    WFL / SFREE / SMALLOC / OWNLOW / IMGC / ASMP / ASF / FFL and the B-only HV8 / HWK / HERRS, W_wake.v's texts). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -142,7 +143,7 @@ Hypothesis HEND5L : forall k, (k < 5)%nat -> YG0d.in_rom SEGS (VAL A_lit_end5 + 
 Hypothesis PSTR : forall a, in_rom SEGS a -> ~ Exists (in_zr a) PST.
 Hypothesis PSTG : forall a, Exists (fun r => fst r <= a < snd r) (rr_gcells B RG) -> ~ Exists (in_zr a) PST.
 (* B only: wake (tail-called at 0x843e8; image A inlines it).  Its contract is W_wake_x.v pb_wake_x over this ARx;
-   its own hypotheses beyond the Section's above, W_wake.v:113-129's texts: HV8 (g_wake's placement, A_OBJ 8 of
+   its own hypotheses beyond the Section's above, W_wake.v:114-130's texts: HV8 (g_wake's placement, A_OBJ 8 of
    lib/B/W_listing.v; PB_fr by W_wake_x.v wk_hv8_fr), HWK (g_wake[1]'s bytes are image bytes, not the runtime's owned
    statics, not errno), HERRS (errno is not one of the runtime's owned statics). *)
 Hypothesis HV8 : VAL (A_OBJ 8) = rg_wake RG.

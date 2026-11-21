@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failing sc, which stores the word back). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -196,17 +197,6 @@ Proof. LiaFast.lf_pins (fun (Hfetch Hecall : LiaFast.U) => LiaFast.u0).
   intros wd aq rl rd rs1 rs2 r Hd Hal Hrv Hr Hok. subst rv. unfold getr in *. rewrite ?bv_eqb0_is_x0 in *.
   gpipe Hfetch Hecall Hd. rewrite Hal. cbv beta iota delta [negb]. rewrite Hr, Z.eqb_refl. cbv beta iota.
   destruct wd; cbn [nbytes amo_sz st_word] in Hok |- *; cbv beta iota; rewrite Hok; cbv beta iota; gfin.
-Qed.
-
-#[using="Hfetch Hecall"] Lemma g_sc_fail : forall wd aq rl rd rs1 rs2, decode_any w = Some (Sc wd aq rl rd rs1 rs2, 4%Z) ->
-  amo_aligned wd (getr regs rs1) = true ->
-  match rv with Some r => Z.eqb (bv_unsigned r) (bv_unsigned (getr regs rs1)) = false | None => True end ->
-  RiscvSemantics.step segs (mks fr fc regs pc rv mem rom) =
-  MachineOk (mks fr fc (rupd regs rd (Z_to_bv 64 1)) (pc + Z_to_bv 64 4) None mem rom).
-Proof. LiaFast.lf_pins (fun (Hfetch Hecall : LiaFast.U) => LiaFast.u0).
-  intros wd aq rl rd rs1 rs2 Hd Hal Hrv. unfold getr in *. rewrite ?bv_eqb0_is_x0 in *.
-  gpipe Hfetch Hecall Hd. rewrite Hal. cbv beta iota delta [negb].
-  destruct rv as [r|]; [rewrite Hrv|]; cbv beta iota; gfin.
 Qed.
 
 #[using="Hfetch Hecall"] Lemma g_amo : forall op wd aq rl rd rs1 rs2 bs, decode_any w = Some (Amo op wd aq rl rd rs1 rs2, 4%Z) ->
